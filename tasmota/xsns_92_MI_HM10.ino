@@ -30,11 +30,14 @@
 
 #define XSNS_92                    92
 
+#define HM_PIN_RX  5   // D1 Hardcoded while developing
+#define HM_PIN_TX  4   // D2
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *HM10Serial;
 
-#define  HM10_MAX_TASK_NUMBER      12
+#define  HM10_MAX_TASK_NUMBER      8
 uint8_t  HM10_TASK_LIST[HM10_MAX_TASK_NUMBER+1][2];   // first value: kind of task - second value: delay in x * 100ms
 uint8_t  HM10_CURRENT_TASK_DELAY = 0;                // number of 100ms-cycles
 uint8_t  HM10_LAST_COMMAND;                          // task command code 
@@ -44,8 +47,13 @@ uint16_t HM10_CURRENT_PAYLOAD    = 0;                // payload of a supported c
 #define  HM10_MAX_RX_BUF         512
 char     HM10_RX_STRING[HM10_MAX_RX_BUF]      = {0};  // make a buffer bigger than the usual 10-byte-message
 
-
-
+struct {
+  uint8_t current_task_delay;
+  struct {
+    uint32_t init:1;
+    // TODO: more to come
+  } mode;
+} HM10;
 
 
 /*********************************************************************************************\
@@ -72,12 +80,23 @@ enum HM10_Commands {
 
 
 
+
 /*********************************************************************************************\
  * Task codes defines
 \*********************************************************************************************/
 
 #define TASK_HM10_NOTASK          0                         // nothing to be done
-#define TASK_HM10_FEEDBACK        1                         // check the feedback from the device
+#define TASK_HM10_ROLE1           1                         // change role to 1
+#define TASK_HM10_IMME1           2                         // change imme to 1
+#define TASK_HM10_RENEW           3                         // device factory setting
+#define TASK_HM10_RESET           4                         // device reset
+#define TASK_HM10_DISC            5                         // device discovery scan
+#define TASK_HM10_CONN            6                         // connect to given MAC
+#define TASK_HM10_VERSION         7                         // query FW version
+#define TASK_HM10_NAME            8                         // query device name
+#define TASK_HM10_FEEDBACK        9                         // get device response
+
+
 #define TASK_HM10_DONE            99                        // used, if there was a task in the slot or just to wait
 
 /*********************************************************************************************\
@@ -96,12 +115,14 @@ void HM10_TaskReplaceInSlot(uint8_t task, uint8_t slot){
                           HM10_TASK_LIST[slot][0]   = task;  
 }
 
-void HM10_Reset(void) {    HM10_LAST_COMMAND         = TASK_HM10_DONE;             // task command code 
-                          HM10State.activeFolder    = 0;                         // see the line above
-                          HM10_Launchtask(TASK_HM10_DONE,0,10);                   // just wait for some time , equals delay(1000) -> 10 * 100
-                          HM10_Launchtask(TASK_HM10_RESET_DEVICE,   1,0);         // reset Device
-                          HM10_Launchtask(TASK_HM10_Q_VERSION,      2,10);        // read SW Version at startup
-                          }                    // ASAP
+void HM10_Reset(void) {   HM10_Launchtask(TASK_HM10_ROLE1,0,10);         // set role to 1
+                          HM10_Launchtask(TASK_HM10_IMME1,1,10);         // set imme to 1
+                          HM10_Launchtask(TASK_HM10_RESET,2,10);         // reset Device
+                          HM10_Launchtask(TASK_HM10_VERSION,3,10);       // read SW Version
+                          HM10_Launchtask(TASK_HM10_NAME,4,10);          // read name
+                          }                    
+
+
 
 
 /*********************************************************************************************\
@@ -110,15 +131,17 @@ void HM10_Reset(void) {    HM10_LAST_COMMAND         = TASK_HM10_DONE;          
 \*********************************************************************************************/
 
 void HM10SerialInit(void) {
-  HM10Serial = new TasmotaSerial(pin[GPIO_RXD], pin[GPIO_TXD], 1, 0, HM10_MAX_RX_BUF); 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sstart serial communication fixed to 115200 baud"),S_CONTROL_HM10);
+  HM10.mode.init = false;
+  HM10Serial = new TasmotaSerial(HM_PIN_RX, HM_PIN_TX, 1, 0, HM10_MAX_RX_BUF); 
   if (HM10Serial->begin(115200)) {
-    if (UBXSerial->hardwareSerial()) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sstart serial communication fixed to 115200 baud"),D_CMND_HM10);
+    if (HM10Serial->hardwareSerial()) {
       ClaimSerial();
       DEBUG_SENSOR_LOG(PSTR("HM10: claim HW"));
     }
     HM10_Reset();
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sHM10_TASK_LIST initialized, now return to main loop"),S_CONTROL_HM10);
+    HM10.mode.init = true;
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sHM10_TASK_LIST initialized, now return to main loop"),D_CMND_HM10);
   }
   return;
 }
@@ -127,10 +150,22 @@ void HM10SerialInit(void) {
  * create the HM10 commands payload, and send it via serial interface to the HM10 player
  \*********************************************************************************************/
 
-void HM10_CMD(uint8_t _cmd,uint16_t _val) {
+// void HM10_CMD(uint8_t _cmd,uint16_t _val) {
 
-  HM10Serial->write(cmd, sizeof(cmd));               /
-  return;
+//   HM10Serial->write(cmd, sizeof(cmd));               /
+//   return;
+// }
+
+/*********************************************************************************************\
+ * parse the response
+\*********************************************************************************************/
+void HM10ParseResponse(char *buf) {
+     if (!strncmp(buf,"OK",2)) {
+       DEBUG_SENSOR_LOG(PSTR("HM10: got OK"));
+     }
+     else {
+       DEBUG_SENSOR_LOG(PSTR("HM10: empty response"));
+     }
 }
 
 /*********************************************************************************************\
@@ -138,19 +173,26 @@ void HM10_CMD(uint8_t _cmd,uint16_t _val) {
 \*********************************************************************************************/
 
 bool HM10SerialHandleFeedback(){
-  bool success    = true;                           // true disables possible repetition of commands, set to false only for debugging
-  uint8_t i       = 0;
-  uint8_t ret[HM10_MAX_RX_BUF] = {0};                // reset array with zeros
-  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%swaiting for response"),S_CONTROL_HM10);
-  bool receive_data_message = false;                // special response with the format d,a, ...,a,d
-
+  bool success    = false;                           // true disables possible repetition of commands, set to false only for debugging
+  uint32_t i       = 0;
+  char ret[HM10_MAX_RX_BUF] = {0};                // reset array with zeros
+  
+ 
   while(HM10Serial->available()) {
     // delay(0);
     if(i<HM10_MAX_RX_BUF){
       ret[i] = HM10Serial->read();
     }
     i++;
-  }  
+    success = true;
+  }
+  if(success) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s response: %s"),D_CMND_HM10, (char *)ret);
+    HM10ParseResponse(ret);
+  }
+  else {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s got no response"),D_CMND_HM10);
+  }
   return success;
 }
 
@@ -159,65 +201,82 @@ bool HM10SerialHandleFeedback(){
 \*********************************************************************************************/
 
 void HM10_TaskEvery100ms(){
-  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sHM10_TASK to be done %u"),S_CONTROL_HM10,HM10_TASK_LIST[0][0]);
+  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sHM10_TASK to be done %u"),D_CMND_HM10,HM10_TASK_LIST[0][0]);
   if (HM10_CURRENT_TASK_DELAY == 0)  {
     uint8_t i = 0;
     bool runningTaskLoop = true;
     while (runningTaskLoop) {                                          // always iterate through the whole task list
       switch(HM10_TASK_LIST[i][0]) {                                 // handle the kind of task
-        case TASK_HM10_FEEDBACK:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s%sFeedback"),S_CONTROL_HM10,S_TASK_HM10);
-          if(HM10_RETRIES>0) {
-            if (HM10SerialHandleFeedback()) {
-              HM10_TASK_LIST[i][0] = TASK_HM10_DONE;                 // mark slot as handled if successful
-              HM10_CURRENT_TASK_DELAY = HM10_TASK_LIST[i+1][1];      // assign the delay of the next slot to the current global delay
-            }
-            else {
-              HM10_TASK_LIST[i][0] = HM10_LAST_COMMAND;           // reinsert unsuccessful task into the current slot
-              HM10_CURRENT_TASK_DELAY++;
-              HM10_RETRIES--;
-            }
-          }
-          else {
-            HM10_TASK_LIST[i][0] = TASK_HM10_DONE;                 // mark slot as handled even if not successful
-            HM10_CURRENT_TASK_DELAY = HM10_TASK_LIST[i+1][1];      // assign the delay of the next slot to the current global delay
-            HM10_RETRIES = 3;
-          }
-          runningTaskLoop = false;                               // return to main loop
+        case TASK_HM10_ROLE1:
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s set role to 1"),D_CMND_HM10);
+          HM10_CURRENT_TASK_DELAY = 5;                    // set task delay
+          HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
+          runningTaskLoop = false;
+          HM10Serial->write("AT+ROLE1");
           break;
-        case TASK_HM10_PLAY:
-          HM10_CMD(HM10_CMD_PLAY, 0);
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s%sPlay"),S_CONTROL_HM10,S_TASK_HM10);
-          HM10State.PlayMode = 1;
-          HM10_TaskReplaceInSlot(TASK_HM10_Q_TRACK,i);
+        case TASK_HM10_IMME1:
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s set imme to 1"),D_CMND_HM10);
+          HM10_CURRENT_TASK_DELAY = 5;                    // set task delay
+          HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
+          runningTaskLoop = false;
+          HM10Serial->write("AT+IMME1");
+          break;
+        case TASK_HM10_DISC:
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s set role to 1"),D_CMND_HM10);
+          HM10_CURRENT_TASK_DELAY = 35;                    // set task delay
+          HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
+          runningTaskLoop = false;
+          HM10Serial->write("AT+DISC?");
+          break;
+        case TASK_HM10_VERSION:
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s read version"),D_CMND_HM10);
+          HM10_CURRENT_TASK_DELAY = 5;                    // set task delay
+          HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
+          runningTaskLoop = false;
+          HM10Serial->write("AT+VERR?");
+          break;
+        case TASK_HM10_NAME:
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s read name"),D_CMND_HM10);
+          HM10_CURRENT_TASK_DELAY = 5;                    // set task delay
+          HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
+          runningTaskLoop = false;
+          HM10Serial->write("AT+NAME?");
+          break;
+        
+        case TASK_HM10_RESET:
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s Reset Device"),D_CMND_HM10);
+          HM10Serial->write("AT+RESET");
+          HM10_CURRENT_TASK_DELAY = 5;                    // set task delay
+          HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           break;
         
-        case TASK_HM10_RESET_DEVICE:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s%sReset Device"),S_CONTROL_HM10,S_TASK_HM10);
-          HM10_CMD(HM10_CMD_RESET, HM10_CMD_RESET_VALUE);
-          HM10_CURRENT_TASK_DELAY = HM10_TASK_LIST[i+1][1];      // set task delay
+        case TASK_HM10_FEEDBACK:
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s get response"),D_CMND_HM10);
+          HM10SerialHandleFeedback();
+          HM10_CURRENT_TASK_DELAY = HM10_TASK_LIST[i+1][1];;     // set task delay
           HM10_TASK_LIST[i][0] = TASK_HM10_DONE;                 // no feedback for reset
-          runningTaskLoop = false;                             // return to main loop
+          runningTaskLoop = false;
           break;
 
         case TASK_HM10_DONE:                                    // this entry was already handled
-          // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sFound done HM10_TASK"),S_CONTROL_HM10);
+          // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sFound done HM10_TASK"),D_CMND_HM10);
+          // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%snext slot:%u, i: %u"),D_CMND_HM10, HM10_TASK_LIST[i+1][0],i);
           if(HM10_TASK_LIST[i+1][0] == TASK_HM10_NOTASK) {             // check the next entry and if there is none
-            // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s%sno Tasks left"),S_CONTROL_HM10,S_TASK_HM10);
-            // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sHM10_TASK_DONE current slot %u"),S_CONTROL_HM10, i);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sno Tasks left"),D_CMND_HM10);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sHM10_TASK_DONE current slot %u"),D_CMND_HM10, i);
             for (uint8_t j = 0; j < HM10_MAX_TASK_NUMBER+1; j++) {   // do a clean-up:
-              // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sHM10_TASK cleanup slot %u"),S_CONTROL_HM10, j);
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sHM10_TASK cleanup slot %u"),D_CMND_HM10, j);
               HM10_TASK_LIST[j][0] = TASK_HM10_NOTASK;                // reset all task entries
               HM10_TASK_LIST[j][1] = 0;                              // reset all delays
             }
             runningTaskLoop = false;                                  // return to main loop
-            // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sUpdate GUI via AJAX"),S_CONTROL_HM10);
+            // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sUpdate GUI via AJAX"),D_CMND_HM10);
             // HM10_GUI_NEEDS_UPDATE = true;
             break; 
           }
       }
-      i++;
+      i++; 
     }
   }
   else {
@@ -231,26 +290,29 @@ void HM10_TaskEvery100ms(){
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv92(uint8_t function)
+bool Xsns92(uint8_t function)
 {
   bool result = false;
 
-  if ((pin[GPIO_RXD] < 99) && (pin[GPIO_TXD] < 99)) { 
+  // if ((pin[HM_PIN_RX] < 99) && (pin[HM_PIN_TX] < 99)) { 
+  if (true) { 
     switch (function) {
-      case FUNC_PRE_INIT:
+      case FUNC_INIT:
         HM10SerialInit();                                    // init and start communication
         break;
       case FUNC_EVERY_100_MSECOND:
         if (HM10_TASK_LIST[0][0] == TASK_HM10_NOTASK) {       // no task running 
+          // DEBUG_SENSOR_LOG(PSTR("HM10: no TASK in array"));
           HM10SerialHandleFeedback();                        // -> sniff for device feedback
           break;
         }
         else {
+          // DEBUG_SENSOR_LOG(PSTR("HM10: every 100msec"));
           HM10_TaskEvery100ms();                             // something has to be done, we'll check in the next step
           break;
         }
+        break;
       }
   }
   return result;
 }
-
