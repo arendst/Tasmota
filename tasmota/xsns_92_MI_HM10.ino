@@ -34,20 +34,20 @@
 #define HM_PIN_TX  4   // D2
 
 #include <TasmotaSerial.h>
+#include <vector>
 
 TasmotaSerial *HM10Serial;
 
 #define  HM10_MAX_TASK_NUMBER      12
 uint8_t  HM10_TASK_LIST[HM10_MAX_TASK_NUMBER+1][2];   // first value: kind of task - second value: delay in x * 100ms
-// uint8_t  HM10.current_task_delay = 0;                // number of 100ms-cycles
-// uint8_t HM10.last_command;
+
 
 
 #define  HM10_MAX_RX_BUF         512
-char     HM10_RX_STRING[HM10_MAX_RX_BUF]      = {0};  // make a buffer bigger than the usual 10-byte-message
+char     HM10_RX_STRING[HM10_MAX_RX_BUF]      = {0};
 
 struct {
-  uint8_t current_task_delay;
+  uint8_t current_task_delay;                // number of 100ms-cycles
   uint8_t last_command;
   uint16_t firmware;
   struct {
@@ -63,6 +63,32 @@ struct {
   uint8_t hum;
 } LYWSD03;
 #pragma pack(0)
+
+struct mi_sensor_t{
+  uint8_t type; //flora = 1; MI-HT_V1=2; LYWSD02=3; LYWSD03=4
+  uint8_t serial[6];
+  uint8_t showedUp;
+  union {
+    struct {
+      float temp;
+      float moisture;
+      float fertility;
+      uint16_t lux;
+    } Flora;
+    struct {
+      float temp;
+      float hum;
+      uint8_t bat;
+    } MJ_HT_V1;
+    struct {
+      float temp;
+      float hum;
+      uint8_t bat;
+    } LYWSD0x; // LYWSD02 and LYWSD03
+  };
+};
+
+std::vector<mi_sensor_t> MIBLEsensors;
 
 /*********************************************************************************************\
  * constants
@@ -140,7 +166,56 @@ void HM10_Reset(void) {   HM10_Launchtask(TASK_HM10_ROLE1,0,1);         // set r
                           HM10_Launchtask(TASK_HM10_DISCONN,11,250);          // disconnect
                           }                    
 
-
+/**
+ * @brief Return the slot number of a known sensor or return create new sensor slot
+ *
+ * @param _serial     BLE address of the sensor
+ * @param _type       Type number of the sensor
+ * @return uint32_t   Known or new slot in the sensors-vector
+ */
+uint32_t MIBLEgetSensorSlot(uint8_t (&_serial)[6], uint8_t _type){
+  DEBUG_SENSOR_LOG(PSTR("MIBLE: vector size %u"), MIBLEsensors.size());
+  for(uint32_t i=0; i<MIBLEsensors.size(); i++){
+    if(memcmp(_serial,MIBLEsensors.at(i).serial,sizeof(_serial))==0){
+      DEBUG_SENSOR_LOG(PSTR("MIBLE: known sensor at slot: %u"), i);
+      if(MIBLEsensors.at(i).showedUp < 3){ // if we got an intact packet, the sensor should show up several times
+        MIBLEsensors.at(i).showedUp++;     // count up to the above number ... now we are pretty sure
+      }
+      return i;
+    }
+    DEBUG_SENSOR_LOG(PSTR("MIBLE i: %x %x %x %x %x %x"), MIBLEsensors.at(i).serial[5], MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]);
+    DEBUG_SENSOR_LOG(PSTR("MIBLE n: %x %x %x %x %x %x"), _serial[5], _serial[4], _serial[3],_serial[2],_serial[1],_serial[0]);
+  }
+  DEBUG_SENSOR_LOG(PSTR("MIBLE: found new sensor"));
+  mi_sensor_t _newSensor;
+  memcpy(_newSensor.serial,_serial, sizeof(_serial));
+  _newSensor.type = _type;
+  _newSensor.showedUp = 1;
+  switch (_type)
+    {
+    case 1:
+      _newSensor.Flora.temp =-1000.0f;
+      _newSensor.Flora.moisture =-1000.0f;
+      _newSensor.Flora.fertility =-1000.0f;
+      _newSensor.Flora.lux = 0xffff;
+      break;
+    case 2:
+      _newSensor.MJ_HT_V1.temp=-1000.0f;
+      _newSensor.MJ_HT_V1.hum=-1.0f;
+      _newSensor.MJ_HT_V1.bat=0xff;
+      break;
+    case 3: case 4:
+      _newSensor.LYWSD0x.temp=-1000.0f;
+      _newSensor.LYWSD0x.hum=-1.0f;
+      _newSensor.LYWSD0x.bat=0xff;
+      break;
+    default:
+      break;
+    }
+  MIBLEsensors.push_back(_newSensor);
+  DEBUG_SENSOR_LOG(PSTR("MIBLE: new sensor at slot: %u"), MIBLEsensors.size()-1);
+  return MIBLEsensors.size()-1;
+};
 
 
 /*********************************************************************************************\
@@ -216,6 +291,19 @@ bool HM10SerialHandleFeedback(){
     if(ret[0] != 0 && ret[1] != 0){
       memcpy(&LYWSD03,(void *)ret,3);
       DEBUG_SENSOR_LOG(PSTR("HM10: Temperature * 100: %u, Humidity: %u"),LYWSD03.temp,LYWSD03.hum);
+      uint8_t _serial[6] = {0};
+      uint32_t _slot = MIBLEgetSensorSlot(_serial, 4);
+      DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
+      static float _tempFloat;
+      _tempFloat=(float)(LYWSD03.temp)/100.0f;
+      if(_tempFloat<60){
+          MIBLEsensors.at(_slot).LYWSD0x.temp=_tempFloat;
+      }
+      _tempFloat=(float)LYWSD03.hum;
+      if(_tempFloat<100){
+        MIBLEsensors.at(_slot).LYWSD0x.hum = _tempFloat;
+        DEBUG_SENSOR_LOG(PSTR("MJ_HT_V1: hum updated"));
+      }
     }
   }
   else if(success) {
@@ -355,34 +443,29 @@ const char HTTP_HM10[] PROGMEM =
 
 void HM10Show(bool json)
 {
-  if (HM10.firmware>0) {
-    char temperature[33];
-    float _temp = (float)LYWSD03.temp/100.0F;
-    dtostrfd(_temp, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(LYWSD03.hum, Settings.flag2.humidity_resolution, humidity);
-
     if (json) {
+      if (MIBLEsensors.size()==0) return;
+
+      char temperature[33];
+      dtostrfd(MIBLEsensors.at(0).LYWSD0x.temp, Settings.flag2.temperature_resolution, temperature);
+      char humidity[33];
+      dtostrfd(MIBLEsensors.at(0).LYWSD0x.hum, Settings.flag2.humidity_resolution, humidity);
+
       ResponseAppend_P(JSON_SNS_TEMPHUM, F("LYWSD03"), temperature, humidity);
-#ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
-        DomoticzTempHumSensor(temperature, humidity);
-      }
-#endif  // USE_DOMOTICZ
-#ifdef USE_KNX
-      if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, _temp);
-        KnxSensor(KNX_HUMIDITY, LYWSD03.hum);
-      }
-#endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
       WSContentSend_PD(HTTP_HM10, HM10.firmware);
+      if (MIBLEsensors.size()==0) return;
+
+      char temperature[33];
+      dtostrfd(MIBLEsensors.at(0).LYWSD0x.temp, Settings.flag2.temperature_resolution, temperature);
+      char humidity[33];
+      dtostrfd(MIBLEsensors.at(0).LYWSD0x.hum, Settings.flag2.humidity_resolution, humidity);
+
       WSContentSend_PD(HTTP_SNS_TEMP, F("LYWSD03"), temperature, TempUnit());
       WSContentSend_PD(HTTP_SNS_HUM, F("LYWSD03"), humidity);
 #endif  // USE_WEBSERVER
     }
-  }
 }
 
 /*********************************************************************************************\
