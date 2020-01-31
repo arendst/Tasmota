@@ -169,7 +169,7 @@ enum UserSelectablePins {
   GPIO_SM16716_SEL,    // SM16716 SELECT
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
-  GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
+  GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2) - Not used anymore 20200121
   GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_ARIRFRCV,       // AriLux RF Receive input
   GPIO_TXD,            // Serial interface
@@ -311,7 +311,7 @@ enum UserSelectableAdc0 {
   ADC0_LIGHT,          // Light sensor
   ADC0_BUTTON,         // Button
   ADC0_BUTTON_INV,
-  ADC0_MOIST,          // Moisture
+  ADC0_RANGE,          // Range
   ADC0_CT_POWER,       // Current
 //  ADC0_SWITCH,         // Switch
 //  ADC0_SWITCH_INV,
@@ -328,7 +328,7 @@ const char kAdc0Names[] PROGMEM =
   D_SENSOR_NONE "|" D_ANALOG_INPUT "|"
   D_TEMPERATURE "|" D_LIGHT "|"
   D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "i|"
-  D_MOISTURE "|"
+  D_RANGE "|"
   D_CT_POWER "|"
 //  D_SENSOR_SWITCH "|" D_SENSOR_SWITCH "i|"
   ;

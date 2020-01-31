@@ -79,6 +79,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 2
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "sensors"
 
 #undef USE_DISCOVERY                             // Disable mDNS (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
 
@@ -228,6 +230,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 3
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "knx"
 
 #ifndef USE_KNX
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
@@ -248,6 +252,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 5
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "display"
 
 #undef USE_EMULATION                             // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
@@ -313,6 +319,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 6
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "ir"
 
 #undef USE_EMULATION
 #undef USE_EMULATION_HUE                         // Disable Hue emulation - only for lights and relays
@@ -406,6 +414,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 4
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "lite"
 
 #undef APP_SLEEP
 #define APP_SLEEP 1                              // Default to sleep = 1 for FIRMWARE_LITE
@@ -511,6 +521,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 1
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "minimal"
 
 #undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled

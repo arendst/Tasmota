@@ -522,26 +522,19 @@ void CmndEnergyReset(void)
     }
   }
   else if ((XdrvMailbox.index > 3) && (XdrvMailbox.index <= 5)) {
-    char *p;
-    char *str = strtok_r(XdrvMailbox.data, ", ", &p);
-    int32_t position = -1;
-    uint32_t values[2];
-
-    while ((str != nullptr) && (position < 1)) {
-      uint32_t value = strtoul(str, nullptr, 10);
-      position++;
-      values[position] = value *100;
-      str = strtok_r(nullptr, ", ", &p);
-    }
+    uint32_t values[2] = { 0 };
+    uint32_t position = ParseParameters(2, values);
+    values[0] *= 100;
+    values[1] *= 100;
 
     switch (XdrvMailbox.index)
     {
       case 4:
         // Reset energy_usage.usage totals
-        if (position > -1) {
+        if (position > 0) {
           RtcSettings.energy_usage.usage1_kWhtotal = values[0];
         }
-        if (position > 0) {
+        if (position > 1) {
           RtcSettings.energy_usage.usage2_kWhtotal = values[1];
         }
         Settings.energy_usage.usage1_kWhtotal = RtcSettings.energy_usage.usage1_kWhtotal;
@@ -549,10 +542,10 @@ void CmndEnergyReset(void)
         break;
       case 5:
         // Reset energy_usage.return totals
-        if (position > -1) {
+        if (position > 0) {
           RtcSettings.energy_usage.return1_kWhtotal = values[0];
         }
-        if (position > 0) {
+        if (position > 1) {
           RtcSettings.energy_usage.return2_kWhtotal = values[1];
         }
         Settings.energy_usage.return1_kWhtotal = RtcSettings.energy_usage.return1_kWhtotal;

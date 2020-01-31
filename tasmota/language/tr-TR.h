@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Yazılım Boyutu"
 #define D_PROJECT "Proje"
 #define D_RAIN "Rain"
+#define D_RANGE "Range"
 #define D_RECEIVED "Alınan"
 #define D_RESTART "Yeniden Başlat"
 #define D_RESTARTING "Yeniden Başlatılıyor"

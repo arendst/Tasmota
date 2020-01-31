@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "프로그램 용량"
 #define D_PROJECT "프로젝트"
 #define D_RAIN "비"
+#define D_RANGE "Range"
 #define D_RECEIVED "받음"
 #define D_RESTART "재시작"
 #define D_RESTARTING "재시작 중.."

@@ -114,6 +114,7 @@
 #define D_JSON_ACTIVE_POWERUSAGE "ActivePower"
 #define D_JSON_APPARENT_POWERUSAGE "ApparentPower"
 #define D_JSON_REACTIVE_POWERUSAGE "ReactivePower"
+#define D_JSON_RANGE "Range"
 #define D_JSON_PRESSURE "Pressure"
 #define D_JSON_PRESSUREATSEALEVEL "SeaPressure"
 #define D_JSON_PRESSURE_UNIT "PressureUnit"
@@ -466,26 +467,32 @@
 #define D_JSON_TUYA_MCU_RECEIVED "TuyaReceived"
 
 // Commands xdrv_23_zigbee.ino
+#define D_PRFX_ZB "Zb"
+#define D_PRFX_ZIGBEE "Zigbee"
 #define D_ZIGBEE_NOT_STARTED "Zigbee not started (yet)"
-#define D_CMND_ZIGBEE_PERMITJOIN "ZigbeePermitJoin"
-#define D_CMND_ZIGBEE_STATUS "ZigbeeStatus"
-#define D_CMND_ZIGBEE_RESET "ZigbeeReset"
+#define D_CMND_ZIGBEE_PERMITJOIN "PermitJoin"
+#define D_CMND_ZIGBEE_STATUS "Status"
+#define D_CMND_ZIGBEE_RESET "Reset"
   #define D_JSON_ZIGBEE_CC2530 "CC2530"
-#define D_CMND_ZIGBEEZNPRECEIVE "ZigbeeZNPReceive"      // only for debug
-#define D_CMND_ZIGBEEZNPSEND "ZigbeeZNPSend"
-  #define D_JSON_ZIGBEE_STATE "ZigbeeState"
-  #define D_JSON_ZIGBEEZNPRECEIVED "ZigbeeZNPReceived"
-  #define D_JSON_ZIGBEEZNPSENT "ZigbeeZNPSent"
-  #define D_JSON_ZIGBEEZCL_RECEIVED "ZigbeeZCLReceived"
-  #define D_JSON_ZIGBEEZCL_RAW_RECEIVED "ZigbeeZCLRawReceived"
+#define D_CMND_ZIGBEEZNPRECEIVE "ZNPReceive"      // only for debug
+#define D_CMND_ZIGBEEZNPSEND "ZNPSend"
+  #define D_JSON_ZIGBEE_STATE "ZbState"
+  #define D_JSON_ZIGBEEZNPRECEIVED "ZbZNPReceived"
+  #define D_JSON_ZIGBEEZNPSENT "ZbZNPSent"
+  #define D_JSON_ZIGBEEZCL_RECEIVED "ZbZCLReceived"
+  #define D_JSON_ZIGBEEZCL_RAW_RECEIVED "ZbZCLRawReceived"
   #define D_JSON_ZIGBEE_DEVICE "Device"
   #define D_JSON_ZIGBEE_NAME "Name"
-#define D_CMND_ZIGBEE_PROBE "ZigbeeProbe"
-#define D_CMND_ZIGBEE_RECEIVED "ZigbeeReceived"
+#define D_CMND_ZIGBEE_NAME "Name"
+#define D_CMND_ZIGBEE_PROBE "Probe"
+#define D_CMND_ZIGBEE_FORGET "Forget"
+#define D_CMND_ZIGBEE_SAVE "Save"
   #define D_CMND_ZIGBEE_LINKQUALITY "LinkQuality"
-#define D_CMND_ZIGBEE_READ "ZigbeeRead"
-#define D_CMND_ZIGBEE_SEND "ZigbeeSend"
-  #define D_JSON_ZIGBEE_ZCL_SENT "ZigbeeZCLSent"
+#define D_CMND_ZIGBEE_READ "Read"
+#define D_CMND_ZIGBEE_SEND "Send"
+  #define D_JSON_ZIGBEE_ZCL_SENT "ZbZCLSent"
+#define D_JSON_ZIGBEE_RECEIVED "ZbReceived"
+#define D_JSON_ZIGBEE_RECEIVED_LEGACY "ZigbeeReceived"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"
@@ -602,6 +609,7 @@ const char JSON_SNS_TEMPHUM[] PROGMEM = ",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,
 
 const char JSON_SNS_ILLUMINANCE[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}";
 const char JSON_SNS_MOISTURE[] PROGMEM = ",\"%s\":{\"" D_JSON_MOISTURE "\":%d}";
+const char JSON_SNS_RANGE[] PROGMEM = ",\"%s\":{\"" D_JSON_RANGE "\":%d}";
 
 const char JSON_SNS_GNGPM[] PROGMEM = ",\"%s\":{\"" D_JSON_TOTAL_USAGE "\":%s,\"" D_JSON_FLOWRATE "\":%s}";
 
@@ -633,6 +641,7 @@ const char HTTP_SNS_CO2EAVG[] PROGMEM = "{s}%s " D_ECO2 "{m}%d " D_UNIT_PARTS_PE
 const char HTTP_SNS_GALLONS[] PROGMEM = "{s}%s " D_TOTAL_USAGE "{m}%s " D_UNIT_GALLONS " {e}";
 const char HTTP_SNS_GPM[] PROGMEM = "{s}%s " D_FLOW_RATE "{m}%s " D_UNIT_GALLONS_PER_MIN" {e}";
 const char HTTP_SNS_MOISTURE[] PROGMEM = "{s}%s " D_MOISTURE "{m}%d %%{e}";
+const char HTTP_SNS_RANGE[] PROGMEM = "{s}%s " D_RANGE "{m}%d{e}";
 
 const char HTTP_SNS_VOLTAGE[] PROGMEM = "{s}" D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}";
 const char HTTP_SNS_CURRENT[] PROGMEM = "{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}";

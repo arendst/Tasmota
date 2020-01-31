@@ -493,6 +493,17 @@ bool ParseIp(uint32_t* addr, const char* str)
   return (3 == i);
 }
 
+uint32_t ParseParameters(uint32_t count, uint32_t *params)
+{
+  char *p;
+  uint32_t i = 0;
+  for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p)) {
+    params[i] = strtoul(str, nullptr, 0);
+    i++;
+  }
+  return i;
+}
+
 // Function to parse & check if version_str is newer than our currently installed version.
 bool NewerVersion(char* version_str)
 {
@@ -1521,11 +1532,7 @@ bool I2cSetDevice(uint32_t addr)
     return false;       // If already active report as not present;
   }
   Wire.beginTransmission((uint8_t)addr);
-  bool result = (0 == Wire.endTransmission());
-  if (result) {
-    I2cSetActive(addr, 1);
-  }
-  return result;
+  return (0 == Wire.endTransmission());
 }
 #endif  // USE_I2C
 
@@ -1631,8 +1638,12 @@ void AddLog(uint32_t loglevel)
     if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
   }
 #endif  // USE_WEBSERVER
-  if (!global_state.mqtt_down && (loglevel <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
-  if (!global_state.wifi_down && (loglevel <= syslog_level)) { Syslog(); }
+  if (Settings.flag.mqtt_enabled &&        // SetOption3 - Enable MQTT
+      !global_state.mqtt_down &&
+      (loglevel <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
+
+  if (!global_state.wifi_down &&
+      (loglevel <= syslog_level)) { Syslog(); }
 }
 
 void AddLog_P(uint32_t loglevel, const char *formatP)
