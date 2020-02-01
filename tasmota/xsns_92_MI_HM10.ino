@@ -47,14 +47,19 @@ uint8_t  HM10_TASK_LIST[HM10_MAX_TASK_NUMBER+1][2];   // first value: kind of ta
 char     HM10_RX_STRING[HM10_MAX_RX_BUF]      = {0};
 
 struct {
-  uint8_t current_task_delay;                // number of 100ms-cycles
+  uint8_t current_task_delay;  // number of 100ms-cycles
   uint8_t last_command;
   uint16_t firmware;
   struct {
     uint32_t init:1;
     uint32_t subscribed:1;
+    uint32_t pending_task:1;
     // TODO: more to come
   } mode;
+  struct {
+    uint8_t   sensor;           // points to to the number 0...255
+    // TODO: more to come
+  } state;
 } HM10;
 
 #pragma pack(1)
@@ -96,17 +101,32 @@ std::vector<mi_sensor_t> MIBLEsensors;
 
 #define D_CMND_HM10 "HM10"
 
-const char S_JSON_HM10_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_HM10 "%s\":%d}";
-const char S_JSON_HM10_COMMAND[] PROGMEM        = "{\"" D_CMND_HM10 "%s\"}";
-const char kHM10_Commands[] PROGMEM             = "Track|Play";
+// const char S_JSON_HM10_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_HM10 "%s\":%d}";
+// const char S_JSON_HM10_COMMAND[] PROGMEM        = "{\"" D_CMND_HM10 "%s\"}";
+// const char kHM10_Commands[] PROGMEM             = "Track|Play";
+
+const char kHM10SlaveID0[] PROGMEM = "";
+const char kHM10SlaveID1[] PROGMEM = "";
+const char kHM10SlaveID2[] PROGMEM = "";
+const char kHM10SlaveID3[] PROGMEM = "";
+const char kHM10SlaveID4[] PROGMEM = "A4C138";
+const char * kHM10SlaveID[] PROGMEM = {kHM10SlaveID0,kHM10SlaveID1,kHM10SlaveID2,kHM10SlaveID3,kHM10SlaveID4};
+
+
+// const char kHM10Mac0[] PROGMEM = "A4C138ED815A";
+// const char kHM10Mac1[] PROGMEM = "A4C1382AC8B3";
+// const char * kHM10Mac[] PROGMEM ={kHM10Mac0, kHM10Mac1};
+
+uint8_t HM10Mac[2][6]={0xA4,0xC1,0x38,0xED,0x81,0x5A, 
+                       0xA4,0xC1,0x38,0x2A,0xC8,0xB3};
 
 /*********************************************************************************************\
  * enumerations
 \*********************************************************************************************/
 
-enum HM10_Commands {
-  CMND_HM10_TRACK
-};
+// enum HM10_Commands {
+//   CMND_HM10_TRACK
+// };
                         
 /*********************************************************************************************\
  * command defines
@@ -130,9 +150,11 @@ enum HM10_Commands {
 #define TASK_HM10_NAME            8                         // query device name
 #define TASK_HM10_FEEDBACK        9                         // get device response
 #define TASK_HM10_DISCONN         10                        // disconnect
-#define TASK_HM10_SUBSCR          11                        // subscribe to service handle
-#define TASK_HM10_READ            12                        // read from handle
+#define TASK_HM10_SUBSCR          11                        // subscribe to service handle 37
+#define TASK_HM10_READ            12                        // read from handle 36
 #define TASK_HM10_FINDALLCHARS    13                        // read all available characteristics
+#define TASK_HM10_UNSUBSCR        14                        // subscribe  service handle 37
+#define TASK_HM10_DELAY_SUB       15                        // start reading from subscription delayed
 
 #define TASK_HM10_DONE            99                        // used, if there was a task in the slot or just to wait
 
@@ -152,19 +174,33 @@ void HM10_TaskReplaceInSlot(uint8_t task, uint8_t slot){
                           HM10_TASK_LIST[slot][0]   = task;  
 }
 
-void HM10_Reset(void) {   HM10_Launchtask(TASK_HM10_ROLE1,0,1);         // set role to 1
-                          HM10_Launchtask(TASK_HM10_IMME1,1,1);         // set imme to 1
-                          HM10_Launchtask(TASK_HM10_RESET,2,1);         // reset Device
-                          HM10_Launchtask(TASK_HM10_VERSION,3,10);       // read SW Version
-                          HM10_Launchtask(TASK_HM10_DISC,4,1);           // disscovery
-                          HM10_Launchtask(TASK_HM10_CONN,5,5);          // connect
-                          HM10_Launchtask(TASK_HM10_FEEDBACK,6,35);      // get OK+CONN
-                          HM10_Launchtask(TASK_HM10_SUBSCR,7,20);        // subscribe
-                          HM10_Launchtask(TASK_HM10_READ,8,35);          // read
-                          HM10_Launchtask(TASK_HM10_READ,9,35);          // read
-                          HM10_Launchtask(TASK_HM10_READ,10,35);          // read
-                          HM10_Launchtask(TASK_HM10_DISCONN,11,250);          // disconnect
-                          }                    
+void HM10_Reset(void) {   HM10_Launchtask(TASK_HM10_DISCONN,0,1);      // disconnect
+                          HM10_Launchtask(TASK_HM10_ROLE1,1,1);         // set role to 1
+                          HM10_Launchtask(TASK_HM10_IMME1,2,1);         // set imme to 1
+                          HM10_Launchtask(TASK_HM10_RESET,3,1);         // reset Device
+                          HM10_Launchtask(TASK_HM10_VERSION,4,10);       // read SW Version
+                          HM10_Launchtask(TASK_HM10_DISC,5,1);           // disscovery
+                          }
+
+void HM10_Read_Sensor(void) {
+                          HM10_Launchtask(TASK_HM10_CONN,0,1);           // connect
+                          HM10_Launchtask(TASK_HM10_FEEDBACK,1,35);      // get OK+CONN
+                          HM10_Launchtask(TASK_HM10_SUBSCR,2,10);        // subscribe
+                          HM10_Launchtask(TASK_HM10_READ,3,15);          // read
+                          HM10_Launchtask(TASK_HM10_READ,4,15);          // read
+                          HM10_Launchtask(TASK_HM10_READ,5,15);          // read
+                          HM10_Launchtask(TASK_HM10_UNSUBSCR,6,10);      // unsubscribe
+                          HM10_Launchtask(TASK_HM10_DISCONN,7,0);        // disconnect
+                          }
+                          
+void HM10_Read_Sensor1(void) {
+                          HM10_Launchtask(TASK_HM10_CONN,0,1);           // connect
+                          HM10_Launchtask(TASK_HM10_FEEDBACK,1,35);      // get OK+CONN
+                          HM10_Launchtask(TASK_HM10_SUBSCR,2,10);        // subscribe
+                          HM10_Launchtask(TASK_HM10_UNSUBSCR,3,60);      // unsubscribe
+                          HM10_Launchtask(TASK_HM10_DISCONN,4,0);        // disconnect
+                          }
+
 
 /**
  * @brief Return the slot number of a known sensor or return create new sensor slot
@@ -233,7 +269,8 @@ void HM10SerialInit(void) {
       DEBUG_SENSOR_LOG(PSTR("HM10: claim HW"));
     }
     HM10_Reset();
-    HM10.mode.init = true;
+    HM10.mode.pending_task = 1;
+    HM10.mode.init = 1;
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s_TASK_LIST initialized, now return to main loop"),D_CMND_HM10);
   }
   return;
@@ -268,12 +305,33 @@ void HM10ParseResponse(char *buf) {
     }
 }
 
+void HM10readTempHum(char *_buf){
+  DEBUG_SENSOR_LOG(PSTR("HM10: raw data: %x%x%x%x%x%x%x"),_buf[0],_buf[1],_buf[2],_buf[3],_buf[4],_buf[5],_buf[6]);
+  if(_buf[0] != 0 && _buf[1] != 0){
+    memcpy(&LYWSD03,(void *)_buf,3);
+    DEBUG_SENSOR_LOG(PSTR("HM10: Temperature * 100: %u, Humidity: %u"),LYWSD03.temp,LYWSD03.hum);
+    // uint8_t _serial[6] = {0};
+    uint32_t _slot = MIBLEgetSensorSlot(HM10Mac[HM10.state.sensor], 4);
+    DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
+    static float _tempFloat;
+    _tempFloat=(float)(LYWSD03.temp)/100.0f;
+    if(_tempFloat<60){
+        MIBLEsensors.at(_slot).LYWSD0x.temp=_tempFloat;
+    }
+    _tempFloat=(float)LYWSD03.hum;
+    if(_tempFloat<100){
+      MIBLEsensors.at(_slot).LYWSD0x.hum = _tempFloat;
+      DEBUG_SENSOR_LOG(PSTR("LYWSD03: hum updated"));
+    }
+  }
+}
+
 /*********************************************************************************************\
  * handle the return value from the HM10
 \*********************************************************************************************/
 
 bool HM10SerialHandleFeedback(){
-  bool success    = false;                           // true disables possible repetition of commands, set to false only for debugging
+  bool success    = false;                        // true disables possible repetition of commands, set to false only for debugging
   uint32_t i       = 0;
   char ret[HM10_MAX_RX_BUF] = {0};                // reset array with zeros
   
@@ -287,31 +345,14 @@ bool HM10SerialHandleFeedback(){
     success = true;
   }
   if(HM10.mode.subscribed) {
-    DEBUG_SENSOR_LOG(PSTR("HM10: raw data: %x%x%x%x%x%x%x"),ret[0],ret[1],ret[2],ret[3],ret[4],ret[5],ret[6]);
-    if(ret[0] != 0 && ret[1] != 0){
-      memcpy(&LYWSD03,(void *)ret,3);
-      DEBUG_SENSOR_LOG(PSTR("HM10: Temperature * 100: %u, Humidity: %u"),LYWSD03.temp,LYWSD03.hum);
-      uint8_t _serial[6] = {0};
-      uint32_t _slot = MIBLEgetSensorSlot(_serial, 4);
-      DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
-      static float _tempFloat;
-      _tempFloat=(float)(LYWSD03.temp)/100.0f;
-      if(_tempFloat<60){
-          MIBLEsensors.at(_slot).LYWSD0x.temp=_tempFloat;
-      }
-      _tempFloat=(float)LYWSD03.hum;
-      if(_tempFloat<100){
-        MIBLEsensors.at(_slot).LYWSD0x.hum = _tempFloat;
-        DEBUG_SENSOR_LOG(PSTR("MJ_HT_V1: hum updated"));
-      }
-    }
+    HM10readTempHum(ret);
   }
   else if(success) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s response: %s"),D_CMND_HM10, (char *)ret);
     HM10ParseResponse(ret);
   }
   else {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s got no response"),D_CMND_HM10);
+    // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s got no response"),D_CMND_HM10);
   }
   return success;
 }
@@ -321,6 +362,7 @@ bool HM10SerialHandleFeedback(){
 \*********************************************************************************************/
 
 void HM10_TaskEvery100ms(){
+  HM10SerialHandleFeedback();
   // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sHM10_TASK to be done %u"),D_CMND_HM10,HM10_TASK_LIST[0][0]);
   if (HM10.current_task_delay == 0)  {
     uint8_t i = 0;
@@ -367,7 +409,11 @@ void HM10_TaskEvery100ms(){
           HM10.current_task_delay = 2;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
-          HM10Serial->write("AT+CONA4C138ED815A");
+          // HM10Serial->write("AT+CONA4C138ED815A");
+          char _con[20];
+          sprintf_P(_con,"AT+CON%02x%02x%02x%02x%02x%02x",HM10Mac[HM10.state.sensor][0],HM10Mac[HM10.state.sensor][1],HM10Mac[HM10.state.sensor][2],HM10Mac[HM10.state.sensor][3],HM10Mac[HM10.state.sensor][4],HM10Mac[HM10.state.sensor][5]);
+          HM10Serial->write(_con);
+          // HM10Serial->write(kHM10Mac[HM10.state.sensor]);
           break;
         case TASK_HM10_DISCONN:
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s disconnect"),D_CMND_HM10);
@@ -375,7 +421,6 @@ void HM10_TaskEvery100ms(){
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           HM10Serial->write("AT");
-          HM10.mode.subscribed = false;
           break;
         case TASK_HM10_RESET:
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s Reset Device"),D_CMND_HM10);
@@ -386,11 +431,19 @@ void HM10_TaskEvery100ms(){
           break;
         case TASK_HM10_SUBSCR:
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s subscribe"),D_CMND_HM10);
-          HM10.current_task_delay = 15;                    // set task delay
-          HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
+          HM10.current_task_delay = 25;                   // set task delay
+          HM10_TaskReplaceInSlot(TASK_HM10_DELAY_SUB,i);
           runningTaskLoop = false;
           HM10Serial->write("AT+NOTIFY_ON0037");
-          
+          break;
+        case TASK_HM10_UNSUBSCR:
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s un-subscribe"),D_CMND_HM10);
+          HM10.current_task_delay = 5;                    // set task delay
+          HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
+          runningTaskLoop = false;
+          HM10.mode.subscribed = false;
+          HM10Serial->write("AT+NOTIFYOFF0037");
+          break;
         case TASK_HM10_READ:
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s read handle 0036"),D_CMND_HM10);
           HM10.current_task_delay = 0;                    // set task delay
@@ -398,17 +451,27 @@ void HM10_TaskEvery100ms(){
           runningTaskLoop = false;
           HM10Serial->write("AT+READDATA0036?");
           HM10.mode.subscribed = true;
+          break;
         case TASK_HM10_FINDALLCHARS:
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s find all chars"),D_CMND_HM10);
           HM10.current_task_delay = 35;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           HM10Serial->write("AT+FINDALLCHARS?");
+          break;
         case TASK_HM10_FEEDBACK:
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s get response"),D_CMND_HM10);
           HM10SerialHandleFeedback();
           HM10.current_task_delay = HM10_TASK_LIST[i+1][1];;     // set task delay
           HM10_TASK_LIST[i][0] = TASK_HM10_DONE;                 // no feedback for reset
+          runningTaskLoop = false;
+          break;
+        case TASK_HM10_DELAY_SUB:
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s start reading"),D_CMND_HM10);
+          HM10SerialHandleFeedback();
+          HM10.current_task_delay = HM10_TASK_LIST[i+1][1];;     // set task delay
+          HM10_TASK_LIST[i][0] = TASK_HM10_DONE;                 // no feedback for reset
+          HM10.mode.subscribed = true;
           runningTaskLoop = false;
           break;
 
@@ -426,6 +489,7 @@ void HM10_TaskEvery100ms(){
             runningTaskLoop = false;                                  // return to main loop
             // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sUpdate GUI via AJAX"),D_CMND_HM10);
             // HM10_GUI_NEEDS_UPDATE = true;
+            HM10.mode.pending_task = 0;
             break; 
           }
       }
@@ -437,6 +501,26 @@ void HM10_TaskEvery100ms(){
   }
 }
 
+void HM10EverySecond(){
+  if(HM10.firmware == 0) return;
+  if(HM10.mode.pending_task == 1) return;
+  static uint32_t _counter = 0;
+  if(_counter == 0) {
+    HM10_Read_Sensor1();
+    HM10.mode.pending_task == 1;
+    _counter = 60;
+    HM10.state.sensor++;
+    if (HM10.state.sensor>1) {
+      HM10.state.sensor=0;
+    }
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s active sensor now: %u"),D_CMND_HM10, HM10.state.sensor);
+  }
+  _counter--;
+}
+
+/*********************************************************************************************\
+ * Presentation
+\*********************************************************************************************/
 
 const char HTTP_HM10[] PROGMEM =
  "{s}HM10" " Firmware " "{m}%u{e}";
@@ -493,6 +577,10 @@ bool Xsns92(uint8_t function)
           HM10_TaskEvery100ms();                             // something has to be done, we'll check in the next step
           break;
         }
+        break;
+      case FUNC_EVERY_SECOND:
+        HM10EverySecond();
+        DEBUG_SENSOR_LOG(PSTR("HM10: every second"));
         break;
       case FUNC_JSON_APPEND:
         HM10Show(1);
