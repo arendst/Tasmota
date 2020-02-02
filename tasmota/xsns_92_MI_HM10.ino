@@ -41,8 +41,6 @@ TasmotaSerial *HM10Serial;
 #define  HM10_MAX_TASK_NUMBER      12
 uint8_t  HM10_TASK_LIST[HM10_MAX_TASK_NUMBER+1][2];   // first value: kind of task - second value: delay in x * 100ms
 
-
-
 #define  HM10_MAX_RX_BUF         512
 char     HM10_RX_STRING[HM10_MAX_RX_BUF]      = {0};
 
@@ -535,28 +533,26 @@ void HM10_TaskEvery100ms(){
 void HM10EverySecond(){
   if(HM10.firmware == 0) return;
   if(HM10.mode.pending_task == 1) return;
-  static uint32_t _counter = 0;
-  if(_counter==0 && HM10.mode.pending_task==0) {
-    if (MIBLEsensors.size()>0) {
-      if(MIBLEsensors.at(HM10.state.sensor).type==3) {
-        HM10.mode.pending_task = 1;
-        HM10_Read_Sensor1();
-        }
-      else {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s active sensor not type 3: %u"),D_CMND_HM10, HM10.state.sensor);
-      }
-    }
-    else {
+  if (MIBLEsensors.size()==0) {
       HM10.mode.pending_task = 1;
       HM10_Launchtask(TASK_HM10_DISC,0,1); // start new discovery
       return;
+  }
+  static uint32_t _counter = 0;
+  static uint32_t _nextSensorSlot = 0;
+  if(_counter==0) {
+      HM10.state.sensor = _nextSensorSlot;
+      _nextSensorSlot++;
+    if(MIBLEsensors.at(HM10.state.sensor).type==4) {
+      HM10.mode.pending_task = 1;
+      HM10_Read_Sensor1();
+      }
+    else {
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s active sensor not type 3: %u"),D_CMND_HM10, HM10.state.sensor);
     }
     if (HM10.state.sensor==MIBLEsensors.size()-1) {
-      HM10.state.sensor=0;
+      _nextSensorSlot= 0;
       _counter = 60;
-    }
-    else {
-      HM10.state.sensor++;
     }
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s active sensor now: %u"),D_CMND_HM10, HM10.state.sensor);
   }
@@ -573,32 +569,86 @@ const char HTTP_HM10[] PROGMEM =
 const char HTTP_HM10_SERIAL[] PROGMEM =
  "{s}%s" " Address" "{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
 
+const char HTTP_BATTERY[] PROGMEM =
+ "{s}%s" " Battery" "{m}%u%%{e}";
+
+const char HTTP_HM10_FLORA_DATA[] PROGMEM =
+  "{s}%s" " Fertility" "{m}%sus/cm{e}";
+
 void HM10Show(bool json)
 {
   if (json) {
     for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
-      // char slave[33];
-      // sprintf_P(slave,"%s-%02x%02x%02x",MIBLESlaveFlora,MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]);
+      char slave[33];
+      sprintf_P(slave,"%s-%02x%02x%02x",kHM10SlaveType[MIBLEsensors.at(i).type-1],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]);
       char temperature[33]; // all sensors have temperature
       dtostrfd(MIBLEsensors.at(i).temp, Settings.flag2.temperature_resolution, temperature);
-      if (MIBLEsensors.at(i).type>1){
-        char humidity[33];
-        dtostrfd(MIBLEsensors.at(i).hum, Settings.flag2.humidity_resolution, humidity);
-        ResponseAppend_P(JSON_SNS_TEMPHUM, kHM10SlaveType[MIBLEsensors.at(i).type-1], temperature, humidity);
-      }
+
+      ResponseAppend_P(PSTR(",\"%s\":{"),slave);
+        if(MIBLEsensors.at(i).temp!=-1000.0f){ // this is the error code -> no temperature
+          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"), temperature);
+        }
+        if (MIBLEsensors.at(i).type==1){
+          char lux[33];
+          char moisture[33];
+          char fertility[33];
+          dtostrfd((float)MIBLEsensors.at(i).lux, 0, lux);
+          dtostrfd(MIBLEsensors.at(i).moisture, 0, moisture);
+          dtostrfd(MIBLEsensors.at(i).fertility, 0, fertility);
+          if(MIBLEsensors.at(i).lux!=0xffff){ // this is the error code -> no temperature
+            ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%s"), lux);
+          }
+          if(MIBLEsensors.at(i).moisture!=-1000.0f){ // this is the error code -> no temperature
+            ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%s"), moisture);
+          }
+          if(MIBLEsensors.at(i).fertility!=-1000.0f){ // this is the error code -> no temperature
+            ResponseAppend_P(PSTR(",\"Fertility\":%s"), fertility);
+          }
+        }
+        if (MIBLEsensors.at(i).type>1){ 
+          char humidity[33];
+          dtostrfd(MIBLEsensors.at(i).hum, Settings.flag2.humidity_resolution, humidity);
+          if(MIBLEsensors.at(i).hum!=-1.0f){ // this is the error code -> no temperature
+              ResponseAppend_P(PSTR(",\"" D_JSON_HUMIDITY "\":%s"), humidity);
+          }
+          if(MIBLEsensors.at(i).bat!=0xff){ // this is the error code -> no temperature
+            ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors.at(i).bat);
+          }
+        }
+        ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_WEBSERVER
     } else {
       WSContentSend_PD(HTTP_HM10, HM10.firmware);
       for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
         WSContentSend_PD(HTTP_HM10_SERIAL, kHM10SlaveType[MIBLEsensors.at(i).type-1], MIBLEsensors.at(i).serial[5], MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]); 
-        char temperature[33];
-        dtostrfd(MIBLEsensors.at(i).temp, Settings.flag2.temperature_resolution, temperature);
-        WSContentSend_PD(HTTP_SNS_TEMP, kHM10SlaveType[MIBLEsensors.at(i).type-1], temperature, TempUnit());
+        if(MIBLEsensors.at(i).temp!=-1000.0f){
+          char temperature[33];
+          dtostrfd(MIBLEsensors.at(i).temp, Settings.flag2.temperature_resolution, temperature);
+          WSContentSend_PD(HTTP_SNS_TEMP, kHM10SlaveType[MIBLEsensors.at(i).type-1], temperature, TempUnit());
+        }
+        if (MIBLEsensors.at(i).type==1){
+          if(MIBLEsensors.at(i).lux!=0xffff){ // this is the error code -> no temperature
+            WSContentSend_PD(HTTP_SNS_ILLUMINANCE, kHM10SlaveType[MIBLEsensors.at(i).type-1], MIBLEsensors.at(i).lux);
+          }
+          if(MIBLEsensors.at(i).moisture!=-1000.0f){ // this is the error code -> no temperature
+            WSContentSend_PD(HTTP_SNS_MOISTURE, kHM10SlaveType[MIBLEsensors.at(i).type-1], MIBLEsensors.at(i).moisture);
+          }
+          if(MIBLEsensors.at(i).fertility!=-1000.0f){ // this is the error code -> no temperature
+            char fertility[33];
+            dtostrfd(MIBLEsensors.at(i).fertility, 0, fertility);
+            WSContentSend_PD(HTTP_HM10_FLORA_DATA, kHM10SlaveType[MIBLEsensors.at(i).type-1], fertility);
+          }
+        }
         if (MIBLEsensors.at(i).type>1){ // everything "above" Flora
-        char humidity[33];
-        dtostrfd(MIBLEsensors.at(i).hum, Settings.flag2.humidity_resolution, humidity);
-        WSContentSend_PD(HTTP_SNS_HUM, kHM10SlaveType[MIBLEsensors.at(i).type-1], humidity);
+          if(MIBLEsensors.at(i).hum!=-1.0f){ // this is the error code -> no humidity
+            char humidity[33];
+            dtostrfd(MIBLEsensors.at(i).hum, Settings.flag2.humidity_resolution, humidity);
+            WSContentSend_PD(HTTP_SNS_HUM, kHM10SlaveType[MIBLEsensors.at(i).type-1], humidity);
+          }
+          if(MIBLEsensors.at(i).bat!=0xff){
+            WSContentSend_PD(HTTP_BATTERY, kHM10SlaveType[MIBLEsensors.at(i).type-1], MIBLEsensors.at(i).bat);
+          }
         }
       }
 #endif  // USE_WEBSERVER
