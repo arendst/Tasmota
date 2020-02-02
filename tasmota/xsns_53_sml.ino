@@ -2129,6 +2129,11 @@ uint32_t SML_Write(uint32_t meter,char *hstr) {
   if (meter<1 || meter>meters_used) return 0;
   meter--;
   if (!meter_ss[meter]) return 0;
+
+  SML_Send_Seq(meter,hstr);
+
+  /*
+
   uint8_t sbuff[32];
   uint8_t *ucp=sbuff,slen=0;
   char *cp=hstr;
@@ -2142,6 +2147,8 @@ uint32_t SML_Write(uint32_t meter,char *hstr) {
   }
   meter_ss[meter]->write(sbuff,slen);
   return slen;
+  */
+  return 1;
 }
 #endif
 
