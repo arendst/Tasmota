@@ -4,6 +4,7 @@
 
 - Change wifi connectivity stability (#7602)
 - Add ``SetOption84 1`` sends AWS IoT device shadow updates (alternative to retained)
+- Add ``ZbBind`` (experimental) and bug fixes
 
 ### 8.1.0.4 20200116
 

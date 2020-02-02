@@ -71,6 +71,8 @@ public:
   uint16_t isKnownIndex(uint32_t index) const;
   uint16_t isKnownFriendlyName(const char * name) const;
 
+  uint64_t getDeviceLongAddr(uint16_t shortaddr) const;
+
   // Add new device, provide ShortAddr and optional longAddr
   // If it is already registered, update information, otherwise create the entry
   void updateDevice(uint16_t shortaddr, uint64_t longaddr = 0);
@@ -142,6 +144,7 @@ private:
   static int32_t findClusterEndpoint(const std::vector<uint32_t>  & vecOfElements, uint16_t element);
 
   Z_Device & getShortAddr(uint16_t shortaddr);   // find Device from shortAddr, creates it if does not exist
+  const Z_Device & getShortAddrConst(uint16_t shortaddr) const ;   // find Device from shortAddr, creates it if does not exist
   Z_Device & getLongAddr(uint64_t longaddr);     // find Device from shortAddr, creates it if does not exist
 
   int32_t findShortAddr(uint16_t shortaddr) const;
@@ -159,6 +162,9 @@ private:
 };
 
 Z_Devices zigbee_devices = Z_Devices();
+
+// Local coordinator information
+uint64_t localIEEEAddr = 0;
 
 // https://thispointer.com/c-how-to-find-an-element-in-vector-and-get-its-index/
 template < typename T>
@@ -326,6 +332,11 @@ uint16_t Z_Devices::isKnownFriendlyName(const char * name) const {
   }
 }
 
+uint64_t Z_Devices::getDeviceLongAddr(uint16_t shortaddr) const {
+  const Z_Device & device = getShortAddrConst(shortaddr);
+  return device.longaddr;
+}
+
 //
 // We have a seen a shortaddr on the network, get the corresponding
 //
@@ -335,8 +346,17 @@ Z_Device & Z_Devices::getShortAddr(uint16_t shortaddr) {
   if (found >= 0) {
     return _devices[found];
   }
-//Serial.printf("Device entry created for shortaddr = 0x%02X, found = %d\n", shortaddr, found);
+  //Serial.printf("Device entry created for shortaddr = 0x%02X, found = %d\n", shortaddr, found);
   return createDeviceEntry(shortaddr, 0);
+}
+// Same version but Const
+const Z_Device & Z_Devices::getShortAddrConst(uint16_t shortaddr) const {
+  if (!shortaddr) { return *(Z_Device*) nullptr; }   // this is not legal
+  int32_t found = findShortAddr(shortaddr);
+  if (found >= 0) {
+    return _devices[found];
+  }
+  return *((Z_Device*)nullptr);
 }
 
 // find the Device object by its longaddr (unique key if not null)
