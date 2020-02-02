@@ -37,7 +37,6 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-// Use PWM from core 2.4.0 as all versions below 2.5.0-beta3 produce LED flickering when settings are saved to flash
 #include <core_version.h>
 #if defined(ARDUINO_ESP8266_RELEASE_2_6_1) || defined(ARDUINO_ESP8266_RELEASE_2_6_2) || defined(ARDUINO_ESP8266_RELEASE_2_6_3)
 #warning **** Tasmota is using a patched PWM Arduino version as planned ****
