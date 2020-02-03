@@ -29,13 +29,8 @@
 // Increase rescan interval from 44 to 5 minutes to improve ability for devices to reach network harmony
 #define WIFI_RESCAN_MINUTES     5          // Number of minutes between wifi network rescan
 #endif
-#ifndef WIFI_RETRY_INTERVALS
-// Retry interval is WIFI_RETRY_OFFSET_SEC + 0 to 15 (dependant on ESP.getChipId())
-// 0=disabled, 9=device restart after 3.0 to 5.3 minutes of failed connectivity (based on retry interval)
-#define WIFI_RETRY_INTERVALS    9          // Number of wifi connect retries before restarting wifi
-#endif
 
-const uint8_t WIFI_CONFIG_SEC = 180;       // seconds in AP mode before restart 
+const uint8_t WIFI_CONFIG_SEC = 180;       // seconds before restart
 // Drop from 20 seconds to 5 seconds since we control the reconnections, not the Arduino SDK
 const uint8_t WIFI_CHECK_SEC = 5;          // seconds
 const uint8_t WIFI_RETRY_OFFSET_SEC = 20;  // seconds
@@ -52,7 +47,6 @@ struct WIFI {
   uint8_t counter;
   uint8_t retry_init;
   uint8_t retry;
-  uint8_t restart;                         // Number of wifi retry attempts before restarting
   uint8_t status;
   uint8_t config_type = 0;
   uint8_t config_counter = 0;
@@ -488,14 +482,7 @@ void WifiCheckIp(void)
       }
       Wifi.counter = 1;
       Wifi.retry--;
-    } else { 
-      // decrement the failed retry interval counter if restart after failed retry is enabled
-      if (Wifi.restart) {
-        if ((wifi_config_tool == WIFI_RETRY) && (--Wifi.restart == 0)) {
-          // switch to wifi restart to reboot the device
-          wifi_config_tool = WIFI_RESTART;
-        }
-      }
+    } else {
       WifiConfig(wifi_config_tool);
       Wifi.counter = 1;
       Wifi.retry = Wifi.retry_init;
@@ -644,7 +631,6 @@ void WifiConnect(void)
   // Wifi.retry_init = WIFI_RETRY_OFFSET_SEC + ((ESP.getChipId() & 0xF) * 2);
   Wifi.retry_init = WIFI_RETRY_OFFSET_SEC + (ESP.getChipId() & 0xF);
   Wifi.retry = Wifi.retry_init;
-  Wifi.restart = WIFI_RETRY_INTERVALS;
   Wifi.counter = 1;
 }
 
