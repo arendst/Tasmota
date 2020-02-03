@@ -22,18 +22,21 @@
 \*********************************************************************************************/
 
 #ifndef WIFI_RSSI_THRESHOLD
-// decrease the roam threshold to address devices connecting at very low RSSI and being close to inoperative
-//#define WIFI_RSSI_THRESHOLD     10         // Difference in dB between current network and scanned network
+// Decrease the roam threshold from 10 to 5 to address devices connecting at very low RSSI and being close to inoperative
 #define WIFI_RSSI_THRESHOLD     5          // Difference in dB between current network and scanned network
 #endif
 #ifndef WIFI_RESCAN_MINUTES
-// increase rescan interval to 5 minutes to improve ability for devices to reach network harmony
-//#define WIFI_RESCAN_MINUTES     44         // Number of minutes between wifi network rescan
-#define WIFI_RESCAN_MINUTES    5           // Number of minutes between wifi network rescan
+// Increase rescan interval from 44 to 5 minutes to improve ability for devices to reach network harmony
+#define WIFI_RESCAN_MINUTES     5          // Number of minutes between wifi network rescan
+#endif
+#ifndef WIFI_RETRY_INTERVALS
+// Retry interval is WIFI_RETRY_OFFSET_SEC + 0 to 15 (dependant on ESP.getChipId())
+// 0=disabled, 9=device restart after 3.0 to 5.3 minutes of failed connectivity (based on retry interval)
+#define WIFI_RETRY_INTERVALS    9          // Number of wifi connect retries before restarting wifi
 #endif
 
-const uint8_t WIFI_CONFIG_SEC = 180;       // seconds before restart
-// drop from 20 seconds to 5 seconds since we control the reconnections, not the Arduino SDK
+const uint8_t WIFI_CONFIG_SEC = 180;       // seconds in AP mode before restart 
+// Drop from 20 seconds to 5 seconds since we control the reconnections, not the Arduino SDK
 const uint8_t WIFI_CHECK_SEC = 5;          // seconds
 const uint8_t WIFI_RETRY_OFFSET_SEC = 20;  // seconds
 
@@ -49,6 +52,7 @@ struct WIFI {
   uint8_t counter;
   uint8_t retry_init;
   uint8_t retry;
+  uint8_t restart;                         // Number of wifi retry attempts before restarting
   uint8_t status;
   uint8_t config_type = 0;
   uint8_t config_counter = 0;
@@ -56,6 +60,7 @@ struct WIFI {
   uint8_t scan_state;
   uint8_t bssid[6] = {0};
   uint8_t bssid_last[6] = {0};             // store the last connect bssid
+  int8_t best_network_db;
 } Wifi;
 
 int WifiGetRssiAsQuality(int rssi)
@@ -168,7 +173,6 @@ void WiFiSetSleepMode(void)
 void WifiBegin(uint8_t flag, uint8_t channel)
 {
   const char kWifiPhyMode[] = " BGN";
-  char hex_char[18];
 
 #ifdef USE_EMULATION
   UdpDisconnect();
@@ -189,9 +193,8 @@ void WifiBegin(uint8_t flag, uint8_t channel)
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11G) { WiFi.setPhyMode(WIFI_PHY_MODE_11G); }  // B/G
   if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
-//  WiFi.setAutoReconnect(true);
-  // handle the reconnection in WifiCheckIp() since the autoreconnect keeps sending deauthentication messages which causes the AP to block traffic as it looks like an DoS attack
-// this needs to be explicitly called as "false" otherwise the default is enabled
+  // Handle the reconnection in WifiCheckIp() since the autoreconnect keeps sending deauthentication messages which causes the AP to block traffic as it looks like an DoS attack
+  // This needs to be explicitly called as "false" otherwise the default is enabled
   WiFi.setAutoReconnect(false);
   switch (flag) {
   case 0:  // AP1
@@ -208,17 +211,19 @@ void WifiBegin(uint8_t flag, uint8_t channel)
     WiFi.config(Settings.ip_address[0], Settings.ip_address[1], Settings.ip_address[2], Settings.ip_address[3]);  // Set static IP
   }
   WiFi.hostname(my_hostname);
+
+  char stemp[40] = { 0 };
   if (channel) {
     WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active), channel, Wifi.bssid);
-    // add debug output to console to show connected BSSID and channel for multi-AP installations
-	AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s Channel %d BSSId %s " D_IN_MODE " 11%c " D_AS " %s..."),
-      Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), channel, ToHex_P((unsigned char*)Wifi.bssid, 6, hex_char, sizeof(hex_char), ':'),kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
+    // Add connected BSSID and channel for multi-AP installations
+    char hex_char[18];
+    snprintf_P(stemp, sizeof(stemp), PSTR(" Channel %d BSSId %s"), channel, ToHex_P((unsigned char*)Wifi.bssid, 6, hex_char, sizeof(hex_char), ':'));
   } else {
     WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active));
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
-      Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
   }
-  
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s..."),
+    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), stemp, kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
+
 #if LWIP_IPV6
   for (bool configured = false; !configured;) {
     uint16_t cfgcnt = 0;
@@ -236,22 +241,22 @@ void WifiBegin(uint8_t flag, uint8_t channel)
 
 void WifiBeginAfterScan(void)
 {
-  static int8_t best_network_db;
-
   // Not active
   if (0 == Wifi.scan_state) { return; }
   // Init scan when not connected
   if (1 == Wifi.scan_state) {
     memset((void*) &Wifi.bssid, 0, sizeof(Wifi.bssid));
-    best_network_db = -127;
+    Wifi.best_network_db = -127;
     Wifi.scan_state = 3;
   }
   // Init scan when connected
   if (2 == Wifi.scan_state) {
     uint8_t* bssid = WiFi.BSSID();                  // Get current bssid
     memcpy((void*) &Wifi.bssid, (void*) bssid, sizeof(Wifi.bssid));
-    best_network_db = WiFi.RSSI();                  // Get current rssi and add threshold
-    if (best_network_db < -WIFI_RSSI_THRESHOLD) { best_network_db += WIFI_RSSI_THRESHOLD; }
+    Wifi.best_network_db = WiFi.RSSI();                  // Get current rssi and add threshold
+    if (Wifi.best_network_db < -WIFI_RSSI_THRESHOLD) {
+      Wifi.best_network_db += WIFI_RSSI_THRESHOLD;
+    }
     Wifi.scan_state = 3;
   }
   // Init scan
@@ -302,7 +307,7 @@ void WifiBeginAfterScan(void)
           if (ssid_scan == SettingsText(SET_STASSID1 + j)) {  // SSID match
             known = true;
             number_known++;
-            if (rssi_scan > best_network_db) {      // Best network
+            if (rssi_scan > Wifi.best_network_db) {      // Best network
               if (sec_scan == ENC_TYPE_NONE || SettingsText(SET_STAPWD1 + j)) {  // Check for passphrase if not open wlan
                 // store the max values in case there is only one AP and we need to try to reconnect
                 memcpy((void*) &bssid_max, (void*) bssid_scan, sizeof(bssid_max));
@@ -311,7 +316,7 @@ void WifiBeginAfterScan(void)
                 // if the bssid is not the same as the last failed attempt, force picking the next strongest AP to prevent getting stuck on a strong RSSI, but poor channel health
                 for (uint32_t i = 0; i < sizeof(Wifi.bssid_last); i++) {
                   if (bssid_scan[i] != Wifi.bssid_last[i]) {
-                    best_network_db = (int8_t)rssi_scan;
+                    Wifi.best_network_db = (int8_t)rssi_scan;
                     channel = chan_scan;
                     ap = j;                             // AP1 or AP2
                     memcpy((void*) &Wifi.bssid, (void*) bssid_scan, sizeof(Wifi.bssid));
@@ -483,7 +488,14 @@ void WifiCheckIp(void)
       }
       Wifi.counter = 1;
       Wifi.retry--;
-    } else {
+    } else { 
+      // decrement the failed retry interval counter if restart after failed retry is enabled
+      if (Wifi.restart) {
+        if ((wifi_config_tool == WIFI_RETRY) && (--Wifi.restart == 0)) {
+          // switch to wifi restart to reboot the device
+          wifi_config_tool = WIFI_RESTART;
+        }
+      }
       WifiConfig(wifi_config_tool);
       Wifi.counter = 1;
       Wifi.retry = Wifi.retry_init;
@@ -632,6 +644,7 @@ void WifiConnect(void)
   // Wifi.retry_init = WIFI_RETRY_OFFSET_SEC + ((ESP.getChipId() & 0xF) * 2);
   Wifi.retry_init = WIFI_RETRY_OFFSET_SEC + (ESP.getChipId() & 0xF);
   Wifi.retry = Wifi.retry_init;
+  Wifi.restart = WIFI_RETRY_INTERVALS;
   Wifi.counter = 1;
 }
 
