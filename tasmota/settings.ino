@@ -700,7 +700,11 @@ void EspErase(uint32_t start_sector, uint32_t end_sector)
 //    bool result = EsptoolEraseSector(sector);    // Esptool - erases flash completely (slow)
 
     if (serial_output) {
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+      Serial.printf(D_LOG_APPLICATION D_ERASED_SECTOR " %d %s\n", sector, (result) ? D_OK : D_ERROR);
+#else
       Serial.printf_P(PSTR(D_LOG_APPLICATION D_ERASED_SECTOR " %d %s\n"), sector, (result) ? D_OK : D_ERROR);
+#endif
       delay(10);
     } else {
       yield();

@@ -102,6 +102,8 @@ void ShutterRtc50mS(void)
 
 int32_t ShutterPercentToRealPosition(uint32_t percent, uint32_t index)
 {
+  if (0 == percent) return 0;
+  if (100 == percent) return Shutter.open_max[index];
 	if (Settings.shutter_set50percent[index] != 50) {
     return (percent <= 5) ? Settings.shuttercoeff[2][index] * percent : Settings.shuttercoeff[1][index] * percent + Settings.shuttercoeff[0][index];
 	} else {
@@ -136,6 +138,8 @@ int32_t ShutterPercentToRealPosition(uint32_t percent, uint32_t index)
 
 uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
 {
+  if (0 >= realpos) return 0;
+  if (Shutter.open_max[index] <= realpos) return 100;
 	if (Settings.shutter_set50percent[index] != 50) {
 		return (Settings.shuttercoeff[2][index] * 5 > realpos) ? SHT_DIV_ROUND(realpos, Settings.shuttercoeff[2][index]) : SHT_DIV_ROUND(realpos-Settings.shuttercoeff[0][index], Settings.shuttercoeff[1][index]);
 	} else {
@@ -229,7 +233,7 @@ void ShutterInit(void)
 
       Shutter.real_position[i] = ShutterPercentToRealPosition(Settings.shutter_position[i], i);
       //Shutter.real_position[i] =   Settings.shutter_position[i] <= 5 ?  Settings.shuttercoeff[2][i] * Settings.shutter_position[i] : Settings.shuttercoeff[1][i] * Settings.shutter_position[i] + Settings.shuttercoeff[0,i];
-      Shutter.start_position[i] = Shutter.real_position[i];
+      Shutter.start_position[i] = Shutter.target_position[i] = Shutter.real_position[i];
       Shutter.motordelay[i] = Settings.shutter_motordelay[i];
 
       char shutter_open_chr[10];
@@ -509,11 +513,11 @@ void ShutterRelayChanged(void)
 	}
 }
 
-bool ShutterButtonIsSimultaneousHold(uint32_t button_index) {
+bool ShutterButtonIsSimultaneousHold(uint32_t button_index, uint32_t shutter_index) {
   // check for simultaneous shutter button hold
   uint32 min_shutterbutton_hold_timer = -1;
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
-    if ((Settings.shutter_button[i] & (1<<31)) && (Button.hold_timer[i] < min_shutterbutton_hold_timer))
+    if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index) && (Button.hold_timer[i] < min_shutterbutton_hold_timer))
       min_shutterbutton_hold_timer = Button.hold_timer[i];
   }
   return (min_shutterbutton_hold_timer > (Button.hold_timer[button_index]>>1));
@@ -558,10 +562,10 @@ void ShutterButtonHandler(void)
       }
       if ((Button.press_counter[button_index]<99) && (Button.hold_timer[button_index] == loops_per_second * Settings.param[P_HOLD_TIME] / 10)) {  // press still valid && SetOption32 (40) - Button hold
         // check for simultaneous shutter button hold
-        if (ShutterButtonIsSimultaneousHold(button_index)) {
+        if (ShutterButtonIsSimultaneousHold(button_index, shutter_index)) {
           // simultaneous shutter button hold detected
           for (uint32_t i = 0; i < MAX_KEYS; i++)
-            if (Settings.shutter_button[i] & (1<<31))
+            if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index))
               Button.press_counter[i] = 99; // Remember to discard further action for press & hold within button timings
           press_index = 0;
           buttonState = SHT_PRESSED_HOLD_SIMULTANEOUS;
@@ -574,7 +578,7 @@ void ShutterButtonHandler(void)
       }
       if ((Button.press_counter[button_index]==0) && (Button.hold_timer[button_index] == loops_per_second * IMMINENT_RESET_FACTOR * Settings.param[P_HOLD_TIME] / 10)) {  // SetOption32 (40) - Button held for factor times longer
         // check for simultaneous shutter button extend hold
-        if (ShutterButtonIsSimultaneousHold(button_index)) {
+        if (ShutterButtonIsSimultaneousHold(button_index, shutter_index)) {
           // simultaneous shutter button extend hold detected
           press_index = 0;
           buttonState = SHT_PRESSED_EXT_HOLD_SIMULTANEOUS;
@@ -592,14 +596,14 @@ void ShutterButtonHandler(void)
           // check for simultaneous shutter button press
           uint32 min_shutterbutton_press_counter = -1;
           for (uint32_t i = 0; i < MAX_KEYS; i++) {
-            if ((Settings.shutter_button[i] & (1<<31)) && (Button.press_counter[i] < min_shutterbutton_press_counter))
+            if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index) && (Button.press_counter[i] < min_shutterbutton_press_counter))
               min_shutterbutton_press_counter = Button.press_counter[i];
           }
           if (min_shutterbutton_press_counter == Button.press_counter[button_index]) {
             // simultaneous shutter button press detected
             press_index = Button.press_counter[button_index];
             for (uint32_t i = 0; i < MAX_KEYS; i++)
-              if (Settings.shutter_button[i] & (1<<31))
+              if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index))
                 Button.press_counter[i] = 99; // Remember to discard further action for press & hold within button timings
             buttonState = SHT_PRESSED_MULTI_SIMULTANEOUS;
           }
@@ -774,18 +778,16 @@ void CmndShutterPosition(void)
       target_pos_percent = ((Settings.shutter_options[index] & 1) && (SRC_WEBGUI != last_source)) ? 100 - target_pos_percent : target_pos_percent;
       if (XdrvMailbox.payload != -99) {
         //target_pos_percent = (Settings.shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent;
-        if (0 == target_pos_percent) {
-          Shutter.target_position[index] = (Settings.shutter_options[index] & 4) ? (-1 * 2000) : 0;
-        } else if (100 == target_pos_percent) {
-          Shutter.target_position[index] = (Settings.shutter_options[index] & 4) ? (Shutter.open_max[index] + 1 * 2000) : Shutter.open_max[index];
-      	} else {
-          Shutter.target_position[index] = ShutterPercentToRealPosition(target_pos_percent, index);
-        }
+        Shutter.target_position[index] = ShutterPercentToRealPosition(target_pos_percent, index);
         Shutter.accelerator[index] = Shutter.max_pwm_frequency / ((Shutter.motordelay[index] > 0) ? Shutter.motordelay[index] : 1);
         //Shutter.target_position[index] = XdrvMailbox.payload < 5 ?  Settings.shuttercoeff[2][index] * XdrvMailbox.payload : Settings.shuttercoeff[1][index] * XdrvMailbox.payload + Settings.shuttercoeff[0,index];
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: lastsource %d:, real %d, target %d, payload %d"), last_source, Shutter.real_position[index] ,Shutter.target_position[index],target_pos_percent);
       }
       if ( (target_pos_percent >= 0) && (target_pos_percent <= 100) && abs(Shutter.target_position[index] - Shutter.real_position[index] ) / Shutter.close_velocity[index] > 2) {
+        if (Settings.shutter_options[index] & 4) {
+          if (0   == target_pos_percent) Shutter.target_position[index] -= 1 * 2000;
+          if (100 == target_pos_percent) Shutter.target_position[index] += 1 * 2000;
+        }
         int8_t new_shutterdirection = Shutter.real_position[index] < Shutter.target_position[index] ? 1 : -1;
         if (Shutter.direction[index] == -new_shutterdirection) {
           // direction need to be changed. on momentary switches first stop the Shutter
@@ -806,26 +808,32 @@ void CmndShutterPosition(void)
             ShutterWaitForMotorStop(index);
             ExecuteCommandPower(Settings.shutter_startrelay[index], 0, SRC_SHUTTER);
             ShutterStartInit(index, new_shutterdirection, Shutter.target_position[index]);
-            // Code for shutters with circuit safe configuration, switch the direction Relay
-            ExecuteCommandPower(Settings.shutter_startrelay[index] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
-            // power on
-            ExecuteCommandPower(Settings.shutter_startrelay[index], 1, SRC_SHUTTER);
+            if (Shutter.skip_relay_change == 0) {
+              // Code for shutters with circuit safe configuration, switch the direction Relay
+              ExecuteCommandPower(Settings.shutter_startrelay[index] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
+              // power on
+              ExecuteCommandPower(Settings.shutter_startrelay[index], 1, SRC_SHUTTER);
+            }
           } else {
             // now start the motor for the right direction, work for momentary and normal shutters.
             AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Start in dir %d"), Shutter.direction[index]);
             ShutterStartInit(index, new_shutterdirection, Shutter.target_position[index]);
-            ExecuteCommandPower(Settings.shutter_startrelay[index] + (new_shutterdirection == 1 ? 0 : 1), 1, SRC_SHUTTER);
+            if (Shutter.skip_relay_change == 0) {
+              ExecuteCommandPower(Settings.shutter_startrelay[index] + (new_shutterdirection == 1 ? 0 : 1), 1, SRC_SHUTTER);
+            }
             //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Delay6 5s, xdrv %d"), XdrvMailbox.payload);
           }
           Shutter.switched_relay = 0;
         }
       } else {
         target_pos_percent = ShutterRealToPercentPosition(Shutter.real_position[index], index);
+        ShutterReportPosition(true);
       }
       XdrvMailbox.index = index +1;  // Fix random index for ShutterClose
       if (XdrvMailbox.command)
         ResponseCmndIdxNumber((Settings.shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent);
     } else {
+      ShutterReportPosition(true);
       if (XdrvMailbox.command)
         ResponseCmndIdxChar("Locked");
     }
