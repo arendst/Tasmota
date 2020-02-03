@@ -683,7 +683,9 @@ void TuyaSerialInput(void)
           uint8_t dpidStart = 6;
           while (dpidStart + 4 < Tuya.byte_counter) {
             uint16_t dpDataLen = Tuya.buffer[dpidStart + 2] << 8 | Tuya.buffer[dpidStart + 3];
-            ResponseAppend_P(PSTR(",\"%d\":{\"DpId\":%d,\"DpIdType\":%d,\"DpIdData\":\"%s\""), Tuya.buffer[dpidStart], Tuya.buffer[dpidStart], Tuya.buffer[dpidStart + 1], ToHex_P((unsigned char*)&Tuya.buffer[dpidStart + 4], dpDataLen, hex_char, sizeof(hex_char)));
+            const char *dpData = ToHex_P((unsigned char*)&Tuya.buffer[dpidStart + 4], dpDataLen, hex_char, sizeof(hex_char));
+            ResponseAppend_P(PSTR(",\"Cmnd%dDpId%dDpType%d\":\"%s\""), Tuya.buffer[3], Tuya.buffer[dpidStart], Tuya.buffer[dpidStart + 1], dpData);
+            ResponseAppend_P(PSTR(",\"%d\":{\"DpId\":%d,\"DpIdType\":%d,\"DpIdData\":\"%s\""), Tuya.buffer[dpidStart], Tuya.buffer[dpidStart], Tuya.buffer[dpidStart + 1], dpData);
             if (TUYA_TYPE_STRING == Tuya.buffer[dpidStart + 1]) {
               ResponseAppend_P(PSTR(",\"Type3Data\":\"%.*s\""), dpDataLen, (char *)&Tuya.buffer[dpidStart + 4]);
             }
