@@ -2232,6 +2232,7 @@ namespace IRAcUtils {
 #if DECODE_COOLIX
       case decode_type_t::COOLIX: {
         IRCoolixAC ac(kGpioUnused);
+        ac.on();
         ac.setRaw(decode->value);  // Uses value instead of state.
         *result = ac.toCommon(prev);
         break;
