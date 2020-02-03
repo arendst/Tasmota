@@ -682,12 +682,29 @@ void TuyaSerialInput(void)
           // 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19
           uint8_t dpidStart = 6;
           while (dpidStart + 4 < Tuya.byte_counter) {
+            uint8_t dpId = Tuya.buffer[dpidStart];
+            uint8_t dpDataType = Tuya.buffer[dpidStart + 1];
             uint16_t dpDataLen = Tuya.buffer[dpidStart + 2] << 8 | Tuya.buffer[dpidStart + 3];
-            const char *dpData = ToHex_P((unsigned char*)&Tuya.buffer[dpidStart + 4], dpDataLen, hex_char, sizeof(hex_char));
-            ResponseAppend_P(PSTR(",\"Cmnd%dDpId%dDpType%d\":\"%s\""), Tuya.buffer[3], Tuya.buffer[dpidStart], Tuya.buffer[dpidStart + 1], dpData);
-            ResponseAppend_P(PSTR(",\"%d\":{\"DpId\":%d,\"DpIdType\":%d,\"DpIdData\":\"%s\""), Tuya.buffer[dpidStart], Tuya.buffer[dpidStart], Tuya.buffer[dpidStart + 1], dpData);
-            if (TUYA_TYPE_STRING == Tuya.buffer[dpidStart + 1]) {
-              ResponseAppend_P(PSTR(",\"Type3Data\":\"%.*s\""), dpDataLen, (char *)&Tuya.buffer[dpidStart + 4]);
+            const unsigned char *dpData = (unsigned char*)&Tuya.buffer[dpidStart + 4];
+            const char *dpHexData = ToHex_P(dpData, dpDataLen, hex_char, sizeof(hex_char));
+
+            ResponseAppend_P(PSTR(",\"Cmnd%dDpId%dDpType%d\":"), Tuya.buffer[3], dpId, dpDataType);
+            if (TUYA_TYPE_BOOL == dpDataType && dpDataLen == 1) {
+              ResponseAppend_P(PSTR("\"%d\""), dpData[0]);
+            } else if (TUYA_TYPE_VALUE == dpDataType && dpDataLen == 4) {
+              uint32_t dpValue = (uint32_t)dpData[0] << 24 | (uint32_t)dpData[1] << 16 | (uint32_t)dpData[2] << 8 | (uint32_t)dpData[3] << 0;
+              ResponseAppend_P(PSTR("\"%u\""), dpValue);
+            } else if (TUYA_TYPE_STRING == dpDataType) {
+              ResponseAppend_P(PSTR("\"%.*s\""), dpDataLen, dpData);
+            } else if (TUYA_TYPE_ENUM == dpDataType && dpDataLen == 1) {
+              ResponseAppend_P(PSTR("\"%d\""), dpData[0]);
+            } else {
+              ResponseAppend_P(PSTR("\"0x%s\""), dpHexData);
+            }
+
+            ResponseAppend_P(PSTR(",\"%d\":{\"DpId\":%d,\"DpIdType\":%d,\"DpIdData\":\"%s\""), dpId, dpId, dpDataType, dpHexData);
+            if (TUYA_TYPE_STRING == dpDataType) {
+              ResponseAppend_P(PSTR(",\"Type3Data\":\"%.*s\""), dpDataLen, dpData);
             }
             ResponseAppend_P(PSTR("}"));
             dpidStart += dpDataLen + 4;
