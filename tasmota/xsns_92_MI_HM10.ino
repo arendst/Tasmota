@@ -355,6 +355,8 @@ void HM10readTempHum(char *_buf){
     _tempFloat=(float)(LYWSD03.temp)/100.0f;
     if(_tempFloat<60){
         MIBLEsensors.at(_slot).temp=_tempFloat;
+        HM10.mode.awaitingHT = false;
+        HM10.current_task_delay = 0;
     }
     _tempFloat=(float)LYWSD03.hum;
     if(_tempFloat<100){
@@ -399,8 +401,6 @@ bool HM10SerialHandleFeedback(){
   }
   if(HM10.mode.awaitingHT) {
     HM10readTempHum(ret);
-    HM10.mode.awaitingHT = false;
-    HM10.current_task_delay = 0;
   }
   else if(HM10.mode.awaitingB) {
     HM10readBat(ret);
