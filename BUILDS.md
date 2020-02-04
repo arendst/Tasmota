@@ -128,6 +128,7 @@
 |                       |   |   |   |   |   |   |   |
 | USE_IR_REMOTE         | - | - | x | x | x | x | x |
 | USE_IR_RECEIVE        | - | - | x | x | x | x | x |
+| USE_IR_REMOTE_FULL    | - | - | - | - | - | x | - | Enable ALL protocols
 |                       |   |   |   |   |   |   |   |
 | USE_SR04              | - | - | x | x | x | - | x |
 | USE_TM1638            | - | - | - | - | x | - | - |
