@@ -48,6 +48,7 @@ struct {
   uint8_t current_task_delay;  // number of 100ms-cycles
   uint8_t last_command;
   uint16_t firmware;
+  uint32_t period;             // set manually in addition to TELE-period
   struct {
     uint32_t init:1;
     uint32_t pending_task:1;
@@ -95,6 +96,10 @@ std::vector<mi_sensor_t> MIBLEsensors;
 
 #define D_CMND_HM10 "HM10"
 
+const char S_JSON_HM10_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_HM10 "%s\":%d}";
+const char S_JSON_HM10_COMMAND[] PROGMEM        = "{\"" D_CMND_HM10 "%s\"}";
+const char kHM10_Commands[] PROGMEM             = "Scan|Period";
+
 #define FLORA       1
 #define MJ_HT_V1    2
 #define LYWSD02     3
@@ -120,14 +125,15 @@ const char * kHM10SlaveType[] PROGMEM = {kHM10SlaveType1,kHM10SlaveType2,kHM10Sl
  * enumerations
 \*********************************************************************************************/
 
-// enum HM10_Commands {
-//   CMND_HM10_TRACK
-// };
+enum HM10_Commands {                                 // commands useable in console or rules
+  CMND_HM10_DISC_SCAN,
+  CMND_HM10_PERIOD
+  };                                   // set dac, 1=off, 0=on, DAC is turned on (0) by default
+
                         
 /*********************************************************************************************\
  * command defines
 \*********************************************************************************************/
-
 
 
 
@@ -179,22 +185,16 @@ void HM10_Reset(void) {   HM10_Launchtask(TASK_HM10_DISCONN,0,1);       // disco
                           HM10_Launchtask(TASK_HM10_DISC,5,50);         // discovery
                           }
 
-void HM10_Read_Sensor(void) {
-                          HM10_Launchtask(TASK_HM10_CONN,0,1);           // connect
-                          HM10_Launchtask(TASK_HM10_FEEDBACK,1,35);      // get OK+CONN
-                          HM10_Launchtask(TASK_HM10_SUBSCR,2,10);        // subscribe
-                          HM10_Launchtask(TASK_HM10_READ_HT,3,15);          // read
-                          HM10_Launchtask(TASK_HM10_READ_HT,4,15);          // read
-                          HM10_Launchtask(TASK_HM10_READ_HT,5,15);          // read
-                          HM10_Launchtask(TASK_HM10_UNSUBSCR,6,10);      // unsubscribe
-                          HM10_Launchtask(TASK_HM10_DISCONN,7,0);        // disconnect
+void HM10_Discovery_Scan(void) {
+                          HM10_Launchtask(TASK_HM10_DISCONN,0,1);       // disconnect
+                          HM10_Launchtask(TASK_HM10_DISC,1,1);         // discovery
                           }
                           
 void HM10_Read_Sensor1(void) {
                           HM10_Launchtask(TASK_HM10_CONN,0,1);           // connect
                           HM10_Launchtask(TASK_HM10_FEEDBACK,1,35);      // get OK+CONN
                           HM10_Launchtask(TASK_HM10_SUBSCR,2,10);        // subscribe
-                          HM10_Launchtask(TASK_HM10_UNSUBSCR,3,40);      // unsubscribe
+                          HM10_Launchtask(TASK_HM10_UNSUBSCR,3,60);      // unsubscribe
                           HM10_Launchtask(TASK_HM10_READ_BT,4,5);       // read Battery
                           HM10_Launchtask(TASK_HM10_DISCONN,5,5);        // disconnect
                           }
@@ -277,6 +277,7 @@ void HM10SerialInit(void) {
     HM10_Reset();
     HM10.mode.pending_task = 1;
     HM10.mode.init = 1;
+    HM10.period = Settings.tele_period;
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s_TASK_LIST initialized, now return to main loop"),D_CMND_HM10);
   }
   return;
@@ -569,6 +570,10 @@ void HM10_TaskEvery100ms(){
   }
 }
 
+/*
+|*  Loops
+\*                       */
+
 void HM10EverySecond(){
   if(HM10.firmware == 0) return;
   if(HM10.mode.pending_task == 1) return;
@@ -591,12 +596,43 @@ void HM10EverySecond(){
     }
     if (HM10.state.sensor==MIBLEsensors.size()-1) {
       _nextSensorSlot= 0;
-      _counter = 60;
+      _counter = HM10.period;
     }
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s active sensor now: %u"),D_CMND_HM10, HM10.state.sensor);
   }
   if(_counter>0) _counter--;
 }
+
+bool HM10Cmd(void) {
+  char command[CMDSZ];
+  bool serviced = true;
+  uint8_t disp_len = strlen(D_CMND_HM10);
+
+  if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_HM10), disp_len)) {  // prefix
+    uint32_t command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + disp_len, kHM10_Commands);
+    switch (command_code) {
+      case CMND_HM10_PERIOD:
+        if (XdrvMailbox.data_len > 0) {
+          if (command_code == CMND_HM10_PERIOD)    { HM10.period = XdrvMailbox.payload; }
+        }
+        Response_P(S_JSON_HM10_COMMAND_NVALUE, command, XdrvMailbox.payload);
+        break;
+      case CMND_HM10_DISC_SCAN:
+        if (command_code == CMND_HM10_DISC_SCAN)     { HM10_Discovery_Scan(); }
+
+        Response_P(S_JSON_HM10_COMMAND, command, XdrvMailbox.payload);
+        break;
+      default:
+    	  // else for Unknown command
+    	  serviced = false;
+    	break;
+    }
+  } else {
+    return false;
+  }
+  return serviced;
+}
+
 
 /*********************************************************************************************\
  * Presentation
@@ -726,6 +762,9 @@ bool Xsns92(uint8_t function)
       case FUNC_EVERY_SECOND:
         HM10EverySecond();
         // DEBUG_SENSOR_LOG(PSTR("HM10: every second"));
+        break;
+      case FUNC_COMMAND:
+        result = HM10Cmd();
         break;
       case FUNC_JSON_APPEND:
         HM10Show(1);
