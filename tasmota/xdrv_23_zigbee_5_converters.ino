@@ -39,10 +39,10 @@ class ZCLFrame {
 public:
 
   ZCLFrame(uint8_t frame_control, uint16_t manuf_code, uint8_t transact_seq, uint8_t cmd_id,
-    const char *buf, size_t buf_len, uint16_t clusterid = 0, uint16_t groupid = 0,
-    uint16_t srcaddr = 0, uint8_t srcendpoint = 0, uint8_t dstendpoint = 0, uint8_t wasbroadcast = 0,
-    uint8_t linkquality = 0, uint8_t securityuse = 0, uint8_t seqnumber = 0,
-    uint32_t timestamp = 0):
+    const char *buf, size_t buf_len, uint16_t clusterid, uint16_t groupid,
+    uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
+    uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
+    uint32_t timestamp):
     _cmd_id(cmd_id), _manuf_code(manuf_code), _transact_seq(transact_seq),
     _payload(buf_len ? buf_len : 250),      // allocate the data frame from source or preallocate big enough
     _cluster_id(clusterid), _group_id(groupid),
@@ -74,9 +74,9 @@ public:
   }
 
   static ZCLFrame parseRawFrame(const SBuffer &buf, uint8_t offset, uint8_t len, uint16_t clusterid, uint16_t groupid,
-                                uint16_t srcaddr = 0, uint8_t srcendpoint = 0, uint8_t dstendpoint = 0, uint8_t wasbroadcast = 0,
-                                uint8_t linkquality = 0, uint8_t securityuse = 0, uint8_t seqnumber = 0,
-                                uint32_t timestamp = 0) { // parse a raw frame and build the ZCL frame object
+                                uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
+                                uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
+                                uint32_t timestamp) { // parse a raw frame and build the ZCL frame object
     uint32_t i = offset;
     ZCLHeaderFrameControl_t frame_control;
     uint16_t manuf_code = 0;
@@ -92,7 +92,10 @@ public:
     cmd_id = buf.get8(i++);
     ZCLFrame zcl_frame(frame_control.d8, manuf_code, transact_seq, cmd_id,
                        (const char *)(buf.buf() + i), len + offset - i,
-                       clusterid, groupid);
+                       clusterid, groupid,
+                       srcaddr, srcendpoint, dstendpoint, wasbroadcast,
+                       linkquality, securityuse, seqnumber,
+                       timestamp);
     return zcl_frame;
   }
 

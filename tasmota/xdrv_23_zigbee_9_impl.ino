@@ -33,19 +33,19 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEE_PERMITJOIN "|"
   D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND "|"
   D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ "|" D_CMND_ZIGBEEZNPRECEIVE "|"
-  D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME ;
+  D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|" D_CMND_ZIGBEE_BIND ;
 
 const char kZigbeeCommands[] PROGMEM = D_PRFX_ZIGBEE "|"    // legacy prefix -- deprecated
   D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEE_PERMITJOIN "|"
   D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND "|"
   D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ "|" D_CMND_ZIGBEEZNPRECEIVE "|"
-  D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME ;
+  D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|" D_CMND_ZIGBEE_BIND ;
 
 void (* const ZigbeeCommand[])(void) PROGMEM = {
-  &CmndZigbeeZNPSend, &CmndZigbeePermitJoin,
-  &CmndZigbeeStatus, &CmndZigbeeReset, &CmndZigbeeSend,
-  &CmndZigbeeProbe, &CmndZigbeeRead, &CmndZigbeeZNPReceive,
-  &CmndZigbeeForget, &CmndZigbeeSave, &CmndZigbeeName
+  &CmndZbZNPSend, &CmndZbPermitJoin,
+  &CmndZbStatus, &CmndZbReset, &CmndZbSend,
+  &CmndZbProbe, &CmndZbRead, &CmndZbZNPReceive,
+  &CmndZbForget, &CmndZbSave, &CmndZbName, &CmndZbBind
   };
 
 int32_t ZigbeeProcessInput(class SBuffer &buf) {
@@ -257,7 +257,7 @@ const unsigned char ZIGBEE_FACTORY_RESET[] PROGMEM =
   { Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_STARTUP_OPTION, 0x01 /* len */, 0x01 /* STARTOPT_CLEAR_CONFIG */};
 //"2605030101";  // Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_STARTUP_OPTION, 0x01 len, 0x01 STARTOPT_CLEAR_CONFIG
 // Do a factory reset of the CC2530
-void CmndZigbeeReset(void) {
+void CmndZbReset(void) {
   if (ZigbeeSerial) {
     switch (XdrvMailbox.payload) {
     case 1:
@@ -272,7 +272,7 @@ void CmndZigbeeReset(void) {
   }
 }
 
-void CmndZigbeeZNPSendOrReceive(bool send)
+void CmndZbZNPSendOrReceive(bool send)
 {
   if (ZigbeeSerial && (XdrvMailbox.data_len > 0)) {
     uint8_t code;
@@ -300,14 +300,14 @@ void CmndZigbeeZNPSendOrReceive(bool send)
 }
 
 // For debug purposes only, simulates a message received
-void CmndZigbeeZNPReceive(void)
+void CmndZbZNPReceive(void)
 {
-  CmndZigbeeZNPSendOrReceive(false);
+  CmndZbZNPSendOrReceive(false);
 }
 
-void CmndZigbeeZNPSend(void)
+void CmndZbZNPSend(void)
 {
-  CmndZigbeeZNPSendOrReceive(true);
+  CmndZbZNPSendOrReceive(true);
 }
 
 void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
@@ -442,7 +442,7 @@ void zigbeeZCLSendStr(uint16_t dstAddr, uint8_t endpoint, const char *data) {
   ResponseCmndDone();
 }
 
-void CmndZigbeeSend(void) {
+void CmndZbSend(void) {
   // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Power":1} }
   // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Power":"3"} }
   // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Power":"0xFF"} }
@@ -465,9 +465,14 @@ void CmndZigbeeSend(void) {
   uint8_t  endpoint = 0x00;       // 0x00 is invalid for the dst endpoint
   String   cmd_str = "";          // the actual low-level command, either specified or computed
 
-  const JsonVariant &val_device = getCaseInsensitive(json, PSTR("device"));
-  if (nullptr != &val_device) { device = strToUInt(val_device); }
-  const JsonVariant &val_endpoint = getCaseInsensitive(json, PSTR("endpoint"));
+  const JsonVariant &val_device = getCaseInsensitive(json, PSTR("Device"));
+  if (nullptr != &val_device) {
+    device = zigbee_devices.parseDeviceParam(val_device.as<char*>());
+    if (0xFFFF == device) { ResponseCmndChar("Invalid parameter"); return; }
+  }
+  if ((nullptr == &val_device) || (0x000 == device)) { ResponseCmndChar("Unknown device"); return; }
+
+  const JsonVariant &val_endpoint = getCaseInsensitive(json, PSTR("Endpoint"));
   if (nullptr != &val_endpoint) { endpoint = strToUInt(val_endpoint); }
   const JsonVariant &val_cmd = getCaseInsensitive(json, PSTR("Send"));
   if (nullptr != &val_cmd) {
@@ -547,8 +552,64 @@ void CmndZigbeeSend(void) {
 
 }
 
+ZBM(ZBS_BIND_REQ, Z_SREQ | Z_ZDO, ZDO_BIND_REQ,
+      0,0,                // dstAddr - 16 bits, device to send the bind to
+      0,0,0,0,0,0,0,0,    // srcAddr - 64 bits, IEEE binding source
+      0x00,               // source endpoint
+      0x00, 0x00,         // cluster
+      0x03,               // DstAddrMode - 0x03 = ADDRESS_64_BIT
+      0,0,0,0,0,0,0,0,    // dstAddr - 64 bits, IEEE binding destination, i.e. coordinator
+      0x01                // dstEndpoint - 0x01 for coordinator
+)
+
+void CmndZbBind(void) {
+  // ZbBind { "device":"0x1234", "endpoint":1, "cluster":6 }
+
+  // local endpoint is always 1, IEEE addresses are calculated
+  if (zigbee.init_phase) { ResponseCmndChar(D_ZIGBEE_NOT_STARTED); return; }
+  DynamicJsonBuffer jsonBuf;
+  JsonObject &json = jsonBuf.parseObject(XdrvMailbox.data);
+  if (!json.success()) { ResponseCmndChar(D_JSON_INVALID_JSON); return; }
+
+  // params
+  // static char delim[] = ", ";    // delimiters for parameters
+  uint16_t device = 0xFFFF;         // 0xFFFF is broadcast, so considered valid
+  uint8_t  endpoint = 0x00;         // 0x00 is invalid for the dst endpoint
+  uint16_t cluster  = 0;            // 0xFFFF is invalid
+  uint32_t group = 0xFFFFFFFF;      // 16 bits values, otherwise 0xFFFFFFFF is unspecified
+
+  const JsonVariant &val_device = getCaseInsensitive(json, PSTR("Device"));
+  if (nullptr != &val_device) {
+    device = zigbee_devices.parseDeviceParam(val_device.as<char*>());
+    if (0xFFFF == device) { ResponseCmndChar("Invalid parameter"); return; }
+  }
+  if ((nullptr == &val_device) || (0x000 == device)) { ResponseCmndChar("Unknown device"); return; }
+
+  const JsonVariant &val_endpoint = getCaseInsensitive(json, PSTR("Endpoint"));
+  if (nullptr != &val_endpoint) { endpoint = strToUInt(val_endpoint); }
+  const JsonVariant &val_cluster = getCaseInsensitive(json, PSTR("Cluster"));
+  if (nullptr != &val_cluster) { cluster = strToUInt(val_cluster); }
+
+  // TODO compute endpoint from cluster
+
+  SBuffer buf(sizeof(ZBS_BIND_REQ));
+  buf.add8(Z_SREQ | Z_ZDO);
+  buf.add8(ZDO_BIND_REQ);
+  buf.add16(device);
+  buf.add64(zigbee_devices.getDeviceLongAddr(device));
+  buf.add8(endpoint);
+  buf.add16(cluster);
+  buf.add8(0x03);             // DstAddrMode - 0x03 = ADDRESS_64_BIT
+  buf.add64(localIEEEAddr);   // coordinatore IEEE address
+  buf.add8(0x01);             // local endpoint = 1
+
+  ZigbeeZNPSend(buf.getBuffer(), buf.len());
+
+  ResponseCmndDone();
+}
+
 // Probe a specific device to get its endpoints and supported clusters
-void CmndZigbeeProbe(void) {
+void CmndZbProbe(void) {
   if (zigbee.init_phase) { ResponseCmndChar(D_ZIGBEE_NOT_STARTED); return; }
   uint16_t shortaddr = zigbee_devices.parseDeviceParam(XdrvMailbox.data);
   if (0x0000 == shortaddr) { ResponseCmndChar("Unknown device"); return; }
@@ -560,7 +621,7 @@ void CmndZigbeeProbe(void) {
 }
 
 // Specify, read or erase a Friendly Name
-void CmndZigbeeName(void) {
+void CmndZbName(void) {
   // Syntax is:
   //  ZigbeeName <device_id>,<friendlyname>  - assign a friendly name
   //  ZigbeeName <device_id>                 - display the current friendly name
@@ -589,7 +650,7 @@ void CmndZigbeeName(void) {
 }
 
 // Remove an old Zigbee device from the list of known devices, use ZigbeeStatus to know all registered devices
-void CmndZigbeeForget(void) {
+void CmndZbForget(void) {
   if (zigbee.init_phase) { ResponseCmndChar(D_ZIGBEE_NOT_STARTED); return; }
   uint16_t shortaddr = zigbee_devices.parseDeviceParam(XdrvMailbox.data);
   if (0x0000 == shortaddr) { ResponseCmndChar("Unknown device"); return; }
@@ -604,7 +665,7 @@ void CmndZigbeeForget(void) {
 }
 
 // Save Zigbee information to flash
-void CmndZigbeeSave(void) {
+void CmndZbSave(void) {
   if (zigbee.init_phase) { ResponseCmndChar(D_ZIGBEE_NOT_STARTED); return; }
 
   saveZigbeeDevices();
@@ -613,7 +674,7 @@ void CmndZigbeeSave(void) {
 }
 
 // Send an attribute read command to a device, specifying cluster and list of attributes
-void CmndZigbeeRead(void) {
+void CmndZbRead(void) {
   // ZigbeeRead {"Device":"0xF289","Cluster":0,"Endpoint":3,"Attr":5}
   // ZigbeeRead {"Device":"0xF289","Cluster":"0x0000","Endpoint":"0x0003","Attr":"0x0005"}
   // ZigbeeRead {"Device":"0xF289","Cluster":0,"Endpoint":3,"Attr":[5,6,7,4]}
@@ -629,10 +690,14 @@ void CmndZigbeeRead(void) {
   size_t   attrs_len = 0;
   uint8_t* attrs = nullptr;       // empty string is valid
 
-
   const JsonVariant &val_device = getCaseInsensitive(json, PSTR("Device"));
-  if (nullptr != &val_device) { device = strToUInt(val_device); }
-  const JsonVariant val_cluster = getCaseInsensitive(json, PSTR("Cluster"));
+  if (nullptr != &val_device) {
+    device = zigbee_devices.parseDeviceParam(val_device.as<char*>());
+    if (0xFFFF == device) { ResponseCmndChar("Invalid parameter"); return; }
+  }
+  if ((nullptr == &val_device) || (0x000 == device)) { ResponseCmndChar("Unknown device"); return; }
+
+  const JsonVariant &val_cluster = getCaseInsensitive(json, PSTR("Cluster"));
   if (nullptr != &val_cluster) { cluster = strToUInt(val_cluster); }
   const JsonVariant &val_endpoint = getCaseInsensitive(json, PSTR("Endpoint"));
   if (nullptr != &val_endpoint) { endpoint = strToUInt(val_endpoint); }
@@ -659,14 +724,18 @@ void CmndZigbeeRead(void) {
     }
   }
 
-  ZigbeeZCLSend(device, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, false /* we do want a response */);
+  if ((0 != endpoint) && (attrs_len > 0)) {
+    ZigbeeZCLSend(device, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, false /* we do want a response */);
+    ResponseCmndDone();
+  } else {
+    ResponseCmndChar("Missing parameters");
+  }
 
   if (attrs) { delete[] attrs; }
-  ResponseCmndDone();
 }
 
 // Allow or Deny pairing of new Zigbee devices
-void CmndZigbeePermitJoin(void)
+void CmndZbPermitJoin(void)
 {
   if (zigbee.init_phase) { ResponseCmndChar(D_ZIGBEE_NOT_STARTED); return; }
   uint32_t payload = XdrvMailbox.payload;
@@ -683,7 +752,7 @@ void CmndZigbeePermitJoin(void)
   ResponseCmndDone();
 }
 
-void CmndZigbeeStatus(void) {
+void CmndZbStatus(void) {
   if (ZigbeeSerial) {
     if (zigbee.init_phase) { ResponseCmndChar(D_ZIGBEE_NOT_STARTED); return; }
     uint16_t shortaddr = zigbee_devices.parseDeviceParam(XdrvMailbox.data);
