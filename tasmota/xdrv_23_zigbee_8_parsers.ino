@@ -33,6 +33,9 @@ int32_t Z_ReceiveDeviceInfo(int32_t res, class SBuffer &buf) {
   uint8_t device_state = buf.get8(14);
   uint8_t device_associated = buf.get8(15);
 
+  // keep track of the local IEEE address
+  localIEEEAddr = long_adr;
+
   char hex[20];
   Uint64toHex(long_adr, hex, 64);
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
