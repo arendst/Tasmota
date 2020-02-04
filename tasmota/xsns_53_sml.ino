@@ -2129,25 +2129,7 @@ uint32_t SML_Write(uint32_t meter,char *hstr) {
   if (meter<1 || meter>meters_used) return 0;
   meter--;
   if (!meter_ss[meter]) return 0;
-
   SML_Send_Seq(meter,hstr);
-
-  /*
-
-  uint8_t sbuff[32];
-  uint8_t *ucp=sbuff,slen=0;
-  char *cp=hstr;
-  while (*cp) {
-    if (!*cp || !*(cp+1)) break;
-    uint8_t iob=(sml_hexnibble(*cp) << 4) | sml_hexnibble(*(cp+1));
-    cp+=2;
-    *ucp++=iob;
-    slen++;
-    if (slen>=sizeof(sbuff)) break;
-  }
-  meter_ss[meter]->write(sbuff,slen);
-  return slen;
-  */
   return 1;
 }
 #endif
