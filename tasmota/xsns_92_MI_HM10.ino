@@ -22,8 +22,7 @@
   --------------------------------------------------------------------------------------------
 
   ---
-  0.9.0.0 20200130  started - further development by Christian Baars
-                    base    - no real base project
+  0.9.0.0 20200130  started - initial development by Christian Baars
                     forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
 
 */
@@ -37,6 +36,7 @@
 #include <vector>
 
 TasmotaSerial *HM10Serial;
+#define HM10_BAUDRATE              115200  // default with FW>700 is 115200
 
 #define  HM10_MAX_TASK_NUMBER      12
 uint8_t  HM10_TASK_LIST[HM10_MAX_TASK_NUMBER+1][2];   // first value: kind of task - second value: delay in x * 100ms
@@ -49,6 +49,7 @@ struct {
   uint8_t last_command;
   uint16_t firmware;
   uint32_t period;             // set manually in addition to TELE-period
+  uint32_t serialSpeed;
   struct {
     uint32_t init:1;
     uint32_t pending_task:1;
@@ -97,8 +98,8 @@ std::vector<mi_sensor_t> MIBLEsensors;
 #define D_CMND_HM10 "HM10"
 
 const char S_JSON_HM10_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_HM10 "%s\":%d}";
-const char S_JSON_HM10_COMMAND[] PROGMEM        = "{\"" D_CMND_HM10 "%s\"}";
-const char kHM10_Commands[] PROGMEM             = "Scan|Period";
+const char S_JSON_HM10_COMMAND[] PROGMEM        = "{\"" D_CMND_HM10 "%s%s\"}";
+const char kHM10_Commands[] PROGMEM             = "Scan|AT|Period|Baud";
 
 #define FLORA       1
 #define MJ_HT_V1    2
@@ -123,7 +124,9 @@ const char * kHM10SlaveType[] PROGMEM = {kHM10SlaveType1,kHM10SlaveType2,kHM10Sl
 
 enum HM10_Commands {          // commands useable in console or rules
   CMND_HM10_DISC_SCAN,        // re-scan for sensors
-  CMND_HM10_PERIOD            // set period like TELE-period in seconds between read-cycles
+  CMND_HM10_AT,               // send AT-command for debugging and special configuration
+  CMND_HM10_PERIOD,            // set period like TELE-period in seconds between read-cycles
+  CMND_HM10_BAUD              // serial speed of ESP8266 (<-> HM10), does not change baud rate of HM10
   };
 
 /*********************************************************************************************\
@@ -179,11 +182,11 @@ void HM10_Discovery_Scan(void) {
                           HM10_Launchtask(TASK_HM10_DISC,1,1);         // discovery
                           }
                           
-void HM10_Read_Sensor1(void) {
+void HM10_Read_Sensor(void) {
                           HM10_Launchtask(TASK_HM10_CONN,0,1);           // connect
                           HM10_Launchtask(TASK_HM10_FEEDBACK,1,35);      // get OK+CONN
                           HM10_Launchtask(TASK_HM10_SUBSCR,2,10);        // subscribe
-                          HM10_Launchtask(TASK_HM10_UNSUBSCR,3,60);      // unsubscribe
+                          HM10_Launchtask(TASK_HM10_UNSUBSCR,3,80);      // unsubscribe
                           HM10_Launchtask(TASK_HM10_READ_BT,4,5);       // read Battery
                           HM10_Launchtask(TASK_HM10_DISCONN,5,5);        // disconnect
                           }
@@ -256,8 +259,9 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_serial)[6], uint8_t _type){
 
 void HM10SerialInit(void) {
   HM10.mode.init = false;
+  HM10.serialSpeed = HM10_BAUDRATE;
   HM10Serial = new TasmotaSerial(HM_PIN_RX, HM_PIN_TX, 1, 0, HM10_MAX_RX_BUF); 
-  if (HM10Serial->begin(115200)) {
+  if (HM10Serial->begin(HM10.serialSpeed)) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s start serial communication fixed to 115200 baud"),D_CMND_HM10);
     if (HM10Serial->hardwareSerial()) {
       ClaimSerial();
@@ -555,11 +559,8 @@ void HM10_TaskEvery100ms(){
 void HM10EverySecond(){
   if(HM10.firmware == 0) return;
   if(HM10.mode.pending_task == 1) return;
-  if (MIBLEsensors.size()==0) {
-      HM10.mode.pending_task = 1;
-      HM10_Launchtask(TASK_HM10_DISC,0,50); // start new discovery
-      return;
-  }
+  if (MIBLEsensors.size()==0) return;
+
   static uint32_t _counter = 0;
   static uint32_t _nextSensorSlot = 0;
   if(_counter==0) {
@@ -567,15 +568,17 @@ void HM10EverySecond(){
     _nextSensorSlot++;
     if(MIBLEsensors.at(HM10.state.sensor).type==LYWSD03MMC) { // only this sensor for now
       HM10.mode.pending_task = 1;
-      HM10_Read_Sensor1();
+      HM10_Read_Sensor();
     }
     if (HM10.state.sensor==MIBLEsensors.size()-1) {
       _nextSensorSlot= 0;
-      _counter = HM10.period;
+      _counter++;
     }
+    
     DEBUG_SENSOR_LOG(PSTR("%s active sensor now: %u"),D_CMND_HM10, HM10.state.sensor);
   }
-  if(_counter>0) _counter--;
+  else _counter++;
+  if (_counter>HM10.period) _counter = 0;
 }
 
 bool HM10Cmd(void) {
@@ -595,10 +598,30 @@ bool HM10Cmd(void) {
         }
         Response_P(S_JSON_HM10_COMMAND_NVALUE, command, XdrvMailbox.payload);
         break;
+      case CMND_HM10_BAUD:
+        if (XdrvMailbox.data_len > 0) {
+          if (command_code == CMND_HM10_BAUD) {
+            HM10.serialSpeed = XdrvMailbox.payload;
+            HM10Serial->begin(HM10.serialSpeed);
+            }
+        }
+        else {
+          if (command_code == CMND_HM10_BAUD) XdrvMailbox.payload = HM10.serialSpeed;
+        }
+        Response_P(S_JSON_HM10_COMMAND_NVALUE, command, XdrvMailbox.payload);
+        break;
+      case CMND_HM10_AT:
+        HM10Serial->write("AT");               // without an argument this will disconnect
+        if (strlen(XdrvMailbox.data)!=0) {
+          HM10Serial->write("+");
+          HM10Serial->write(XdrvMailbox.data); // pass everything without checks
+          Response_P(S_JSON_HM10_COMMAND, ":AT+",XdrvMailbox.data);
+        }
+        else Response_P(S_JSON_HM10_COMMAND, ":AT",XdrvMailbox.data);
+        break;
       case CMND_HM10_DISC_SCAN:
-        if (command_code == CMND_HM10_DISC_SCAN)     { HM10_Discovery_Scan(); }
-
-        Response_P(S_JSON_HM10_COMMAND, command, XdrvMailbox.payload);
+        if (command_code == CMND_HM10_DISC_SCAN) { HM10_Discovery_Scan(); }
+        Response_P(S_JSON_HM10_COMMAND, command, "");
         break;
       default:
     	  // else for Unknown command
