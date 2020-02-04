@@ -50,8 +50,10 @@ struct {
   uint16_t firmware;
   struct {
     uint32_t init:1;
-    uint32_t subscribed:1;
     uint32_t pending_task:1;
+    uint32_t subscribed:1;
+    uint32_t awaitingHT:1;
+    uint32_t awaitingB:1;
     // TODO: more to come
   } mode;
   struct {
@@ -92,6 +94,11 @@ std::vector<mi_sensor_t> MIBLEsensors;
 \*********************************************************************************************/
 
 #define D_CMND_HM10 "HM10"
+
+#define FLORA       1
+#define MJ_HT_V1    2
+#define LYWSD02     3
+#define LYWSD03MMC  4
 
 uint8_t kHM10SlaveID[4][3]  = { 0xC4,0x7C,0x8D, // Flora
                                 0x58,0x2D,0x34, // MJ_HT_V1
@@ -140,10 +147,11 @@ const char * kHM10SlaveType[] PROGMEM = {kHM10SlaveType1,kHM10SlaveType2,kHM10Sl
 #define TASK_HM10_FEEDBACK        9                         // get device response
 #define TASK_HM10_DISCONN         10                        // disconnect
 #define TASK_HM10_SUBSCR          11                        // subscribe to service handle 37
-#define TASK_HM10_READ            12                        // read from handle 36
+#define TASK_HM10_READ_HT         12                        // read from handle 36 -> Hum & Temp
 #define TASK_HM10_FINDALLCHARS    13                        // read all available characteristics
 #define TASK_HM10_UNSUBSCR        14                        // subscribe  service handle 37
 #define TASK_HM10_DELAY_SUB       15                        // start reading from subscription delayed
+#define TASK_HM10_READ_BT         16                        // read from handle 3A -> Battery
 
 #define TASK_HM10_DONE            99                        // used, if there was a task in the slot or just to wait
 
@@ -175,9 +183,9 @@ void HM10_Read_Sensor(void) {
                           HM10_Launchtask(TASK_HM10_CONN,0,1);           // connect
                           HM10_Launchtask(TASK_HM10_FEEDBACK,1,35);      // get OK+CONN
                           HM10_Launchtask(TASK_HM10_SUBSCR,2,10);        // subscribe
-                          HM10_Launchtask(TASK_HM10_READ,3,15);          // read
-                          HM10_Launchtask(TASK_HM10_READ,4,15);          // read
-                          HM10_Launchtask(TASK_HM10_READ,5,15);          // read
+                          HM10_Launchtask(TASK_HM10_READ_HT,3,15);          // read
+                          HM10_Launchtask(TASK_HM10_READ_HT,4,15);          // read
+                          HM10_Launchtask(TASK_HM10_READ_HT,5,15);          // read
                           HM10_Launchtask(TASK_HM10_UNSUBSCR,6,10);      // unsubscribe
                           HM10_Launchtask(TASK_HM10_DISCONN,7,0);        // disconnect
                           }
@@ -186,8 +194,9 @@ void HM10_Read_Sensor1(void) {
                           HM10_Launchtask(TASK_HM10_CONN,0,1);           // connect
                           HM10_Launchtask(TASK_HM10_FEEDBACK,1,35);      // get OK+CONN
                           HM10_Launchtask(TASK_HM10_SUBSCR,2,10);        // subscribe
-                          HM10_Launchtask(TASK_HM10_UNSUBSCR,3,60);      // unsubscribe
-                          HM10_Launchtask(TASK_HM10_DISCONN,4,0);        // disconnect
+                          HM10_Launchtask(TASK_HM10_UNSUBSCR,3,40);      // unsubscribe
+                          HM10_Launchtask(TASK_HM10_READ_BT,4,5);       // read Battery
+                          HM10_Launchtask(TASK_HM10_DISCONN,5,5);        // disconnect
                           }
 
 
@@ -222,14 +231,14 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_serial)[6], uint8_t _type){
       }
       return i;
     }
-    DEBUG_SENSOR_LOG(PSTR("MIBLE i: %x %x %x %x %x %x"), MIBLEsensors.at(i).serial[5], MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]);
-    DEBUG_SENSOR_LOG(PSTR("MIBLE n: %x %x %x %x %x %x"), _serial[5], _serial[4], _serial[3],_serial[2],_serial[1],_serial[0]);
+    DEBUG_SENSOR_LOG(PSTR("MIBLE i: %x %x %x %x %x %x"), MIBLEsensors.at(i).serial[0], MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[5]);
+    DEBUG_SENSOR_LOG(PSTR("MIBLE n: %x %x %x %x %x %x"), _serial[0], _serial[1], _serial[2],_serial[3],_serial[4],_serial[5]);
   }
   DEBUG_SENSOR_LOG(PSTR("MIBLE: found new sensor"));
   mi_sensor_t _newSensor;
   memcpy(_newSensor.serial,_serial, sizeof(_serial));
   _newSensor.type = _type;
-  _newSensor.showedUp = 1;
+  _newSensor.showedUp = 1; // does not matter for HM-10
   _newSensor.temp =-1000.0f;
   switch (_type)
     {
@@ -355,6 +364,21 @@ void HM10readTempHum(char *_buf){
   }
 }
 
+void HM10readBat(char *_buf){
+  DEBUG_SENSOR_LOG(PSTR("HM10: raw data: %x%x%x%x%x%x%x"),_buf[0],_buf[1],_buf[2],_buf[3],_buf[4],_buf[5],_buf[6]);
+  if(_buf[0] != 0){
+    DEBUG_SENSOR_LOG(PSTR("HM10: Battery: %u"),_buf[0]);
+    // uint8_t _serial[6] = {0};
+    // uint32_t _slot = MIBLEgetSensorSlot(HM10Mac[HM10.state.sensor], 4);
+    uint32_t _slot = HM10.state.sensor;
+
+    DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
+    if(_buf[0]<101){
+        MIBLEsensors.at(_slot).bat=_buf[0];
+    }
+  }
+}
+
 /*********************************************************************************************\
  * handle the return value from the HM10
 \*********************************************************************************************/
@@ -373,8 +397,15 @@ bool HM10SerialHandleFeedback(){
     i++;
     success = true;
   }
-  if(HM10.mode.subscribed) {
+  if(HM10.mode.awaitingHT) {
     HM10readTempHum(ret);
+    HM10.mode.awaitingHT = false;
+    HM10.current_task_delay = 0;
+  }
+  else if(HM10.mode.awaitingB) {
+    HM10readBat(ret);
+    HM10.mode.awaitingB = false;
+    HM10.current_task_delay = 0;
   }
   else if(success) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s response: %s"),D_CMND_HM10, (char *)ret);
@@ -442,7 +473,7 @@ void HM10_TaskEvery100ms(){
           char _con[20];
           sprintf_P(_con,"AT+CON%02x%02x%02x%02x%02x%02x",MIBLEsensors.at(HM10.state.sensor).serial[0],MIBLEsensors.at(HM10.state.sensor).serial[1],MIBLEsensors.at(HM10.state.sensor).serial[2],MIBLEsensors.at(HM10.state.sensor).serial[3],MIBLEsensors.at(HM10.state.sensor).serial[4],MIBLEsensors.at(HM10.state.sensor).serial[5]);
           HM10Serial->write(_con);
-          // HM10Serial->write(kHM10Mac[HM10.state.sensor]);
+          HM10.mode.awaitingB = false;
           break;
         case TASK_HM10_DISCONN:
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s disconnect"),D_CMND_HM10);
@@ -470,20 +501,28 @@ void HM10_TaskEvery100ms(){
           HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
-          HM10.mode.subscribed = false;
+          HM10.mode.awaitingHT = false;
           HM10Serial->write("AT+NOTIFYOFF0037");
           break;
-        case TASK_HM10_READ:
+        case TASK_HM10_READ_HT:
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s read handle 0036"),D_CMND_HM10);
           HM10.current_task_delay = 0;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           HM10Serial->write("AT+READDATA0036?");
-          HM10.mode.subscribed = true;
+          HM10.mode.awaitingHT = true;
+          break;
+        case TASK_HM10_READ_BT:
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s read handle 003A"),D_CMND_HM10);
+          HM10.current_task_delay = 0;                    // set task delay
+          HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
+          runningTaskLoop = false;
+          HM10Serial->write("AT+READDATA003A?");
+          HM10.mode.awaitingB = true;
           break;
         case TASK_HM10_FINDALLCHARS:
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s find all chars"),D_CMND_HM10);
-          HM10.current_task_delay = 35;                    // set task delay
+          HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           HM10Serial->write("AT+FINDALLCHARS?");
@@ -500,7 +539,7 @@ void HM10_TaskEvery100ms(){
           HM10SerialHandleFeedback();
           HM10.current_task_delay = HM10_TASK_LIST[i+1][1];;     // set task delay
           HM10_TASK_LIST[i][0] = TASK_HM10_DONE;                 // no feedback for reset
-          HM10.mode.subscribed = true;
+          HM10.mode.awaitingHT = true;
           runningTaskLoop = false;
           break;
 
@@ -580,7 +619,7 @@ void HM10Show(bool json)
   if (json) {
     for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
       char slave[33];
-      sprintf_P(slave,"%s-%02x%02x%02x",kHM10SlaveType[MIBLEsensors.at(i).type-1],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]);
+      sprintf_P(slave,"%s-%02x%02x%02x",kHM10SlaveType[MIBLEsensors.at(i).type-1],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[5]);
       char temperature[33]; // all sensors have temperature
       dtostrfd(MIBLEsensors.at(i).temp, Settings.flag2.temperature_resolution, temperature);
 
@@ -588,7 +627,7 @@ void HM10Show(bool json)
         if(MIBLEsensors.at(i).temp!=-1000.0f){ // this is the error code -> no temperature
           ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"), temperature);
         }
-        if (MIBLEsensors.at(i).type==1){
+        if (MIBLEsensors.at(i).type==FLORA){
           char lux[33];
           char moisture[33];
           char fertility[33];
@@ -605,7 +644,7 @@ void HM10Show(bool json)
             ResponseAppend_P(PSTR(",\"Fertility\":%s"), fertility);
           }
         }
-        if (MIBLEsensors.at(i).type>1){ 
+        if (MIBLEsensors.at(i).type>FLORA){ 
           char humidity[33];
           dtostrfd(MIBLEsensors.at(i).hum, Settings.flag2.humidity_resolution, humidity);
           if(MIBLEsensors.at(i).hum!=-1.0f){ // this is the error code -> no temperature
@@ -621,13 +660,13 @@ void HM10Show(bool json)
     } else {
       WSContentSend_PD(HTTP_HM10, HM10.firmware);
       for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
-        WSContentSend_PD(HTTP_HM10_SERIAL, kHM10SlaveType[MIBLEsensors.at(i).type-1], MIBLEsensors.at(i).serial[5], MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]); 
+        WSContentSend_PD(HTTP_HM10_SERIAL, kHM10SlaveType[MIBLEsensors.at(i).type-1], MIBLEsensors.at(i).serial[0], MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[5]); 
         if(MIBLEsensors.at(i).temp!=-1000.0f){
           char temperature[33];
           dtostrfd(MIBLEsensors.at(i).temp, Settings.flag2.temperature_resolution, temperature);
           WSContentSend_PD(HTTP_SNS_TEMP, kHM10SlaveType[MIBLEsensors.at(i).type-1], temperature, TempUnit());
         }
-        if (MIBLEsensors.at(i).type==1){
+        if (MIBLEsensors.at(i).type==FLORA){
           if(MIBLEsensors.at(i).lux!=0xffff){ // this is the error code -> no temperature
             WSContentSend_PD(HTTP_SNS_ILLUMINANCE, kHM10SlaveType[MIBLEsensors.at(i).type-1], MIBLEsensors.at(i).lux);
           }
@@ -640,7 +679,7 @@ void HM10Show(bool json)
             WSContentSend_PD(HTTP_HM10_FLORA_DATA, kHM10SlaveType[MIBLEsensors.at(i).type-1], fertility);
           }
         }
-        if (MIBLEsensors.at(i).type>1){ // everything "above" Flora
+        if (MIBLEsensors.at(i).type>FLORA){ // everything "above" Flora
           if(MIBLEsensors.at(i).hum!=-1.0f){ // this is the error code -> no humidity
             char humidity[33];
             dtostrfd(MIBLEsensors.at(i).hum, Settings.flag2.humidity_resolution, humidity);
