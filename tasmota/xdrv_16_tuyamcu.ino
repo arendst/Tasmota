@@ -688,18 +688,20 @@ void TuyaSerialInput(void)
             const unsigned char *dpData = (unsigned char*)&Tuya.buffer[dpidStart + 4];
             const char *dpHexData = ToHex_P(dpData, dpDataLen, hex_char, sizeof(hex_char));
 
-            ResponseAppend_P(PSTR(",\"Cmnd%dDpId%dDpType%d\":"), Tuya.buffer[3], dpId, dpDataType);
-            if (TUYA_TYPE_BOOL == dpDataType && dpDataLen == 1) {
-              ResponseAppend_P(PSTR("\"%d\""), dpData[0]);
-            } else if (TUYA_TYPE_VALUE == dpDataType && dpDataLen == 4) {
-              uint32_t dpValue = (uint32_t)dpData[0] << 24 | (uint32_t)dpData[1] << 16 | (uint32_t)dpData[2] << 8 | (uint32_t)dpData[3] << 0;
-              ResponseAppend_P(PSTR("\"%u\""), dpValue);
-            } else if (TUYA_TYPE_STRING == dpDataType) {
-              ResponseAppend_P(PSTR("\"%.*s\""), dpDataLen, dpData);
-            } else if (TUYA_TYPE_ENUM == dpDataType && dpDataLen == 1) {
-              ResponseAppend_P(PSTR("\"%d\""), dpData[0]);
-            } else {
-              ResponseAppend_P(PSTR("\"0x%s\""), dpHexData);
+            if (TUYA_CMD_STATE == Tuya.buffer[3]) {
+              ResponseAppend_P(PSTR(",\"DpType%uId%u\":"), dpDataType, dpId);
+              if (TUYA_TYPE_BOOL == dpDataType && dpDataLen == 1) {
+                ResponseAppend_P(PSTR("\"%u\""), dpData[0]);
+              } else if (TUYA_TYPE_VALUE == dpDataType && dpDataLen == 4) {
+                uint32_t dpValue = (uint32_t)dpData[0] << 24 | (uint32_t)dpData[1] << 16 | (uint32_t)dpData[2] << 8 | (uint32_t)dpData[3] << 0;
+                ResponseAppend_P(PSTR("\"%u\""), dpValue);
+              } else if (TUYA_TYPE_STRING == dpDataType) {
+                ResponseAppend_P(PSTR("\"%.*s\""), dpDataLen, dpData);
+              } else if (TUYA_TYPE_ENUM == dpDataType && dpDataLen == 1) {
+                ResponseAppend_P(PSTR("\"%u\""), dpData[0]);
+              } else {
+                ResponseAppend_P(PSTR("\"0x%s\""), dpHexData);
+              }
             }
 
             ResponseAppend_P(PSTR(",\"%d\":{\"DpId\":%d,\"DpIdType\":%d,\"DpIdData\":\"%s\""), dpId, dpId, dpDataType, dpHexData);
