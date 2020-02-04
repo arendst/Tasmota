@@ -4,6 +4,7 @@
 
 - Change wifi connectivity stability (#7602)
 - Add ``SetOption84 1`` sends AWS IoT device shadow updates (alternative to retained)
+- Change update IRRemoteESP8266 v2.7.3
 - Add ``ZbBind`` (experimental) and bug fixes
 - Fix PWM flickering at low levels (#7415)
 
