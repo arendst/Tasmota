@@ -48,7 +48,7 @@ struct {
   uint8_t current_task_delay;  // number of 100ms-cycles
   uint8_t last_command;
   uint16_t firmware;
-  uint32_t period;             // set manually in addition to TELE-period
+  uint32_t period;             // set manually in addition to TELE-period, is set to TELE-period after start
   uint32_t serialSpeed;
   struct {
     uint32_t init:1;
@@ -59,7 +59,7 @@ struct {
     // TODO: more to come
   } mode;
   struct {
-    uint8_t   sensor;           // points to to the number 0...255
+    uint8_t sensor;           // points to to the number 0...255
     // TODO: more to come
   } state;
 } HM10;
@@ -68,7 +68,7 @@ struct {
 struct {
   uint16_t temp;
   uint8_t hum;
-} LYWSD03;
+} LYWSD03_HT;
 #pragma pack(0)
 
 struct mi_sensor_t{
@@ -125,7 +125,7 @@ const char * kHM10SlaveType[] PROGMEM = {kHM10SlaveType1,kHM10SlaveType2,kHM10Sl
 enum HM10_Commands {          // commands useable in console or rules
   CMND_HM10_DISC_SCAN,        // re-scan for sensors
   CMND_HM10_AT,               // send AT-command for debugging and special configuration
-  CMND_HM10_PERIOD,            // set period like TELE-period in seconds between read-cycles
+  CMND_HM10_PERIOD,           // set period like TELE-period in seconds between read-cycles
   CMND_HM10_BAUD              // serial speed of ESP8266 (<-> HM10), does not change baud rate of HM10
   };
 
@@ -169,6 +169,10 @@ void HM10_TaskReplaceInSlot(uint8_t task, uint8_t slot){
                           HM10_TASK_LIST[slot][0]   = task;  
 }
 
+/*********************************************************************************************\
+ * chained tasks
+\*********************************************************************************************/
+
 void HM10_Reset(void) {   HM10_Launchtask(TASK_HM10_DISCONN,0,1);       // disconnect
                           HM10_Launchtask(TASK_HM10_ROLE1,1,1);         // set role to 1
                           HM10_Launchtask(TASK_HM10_IMME1,2,1);         // set imme to 1
@@ -179,18 +183,17 @@ void HM10_Reset(void) {   HM10_Launchtask(TASK_HM10_DISCONN,0,1);       // disco
 
 void HM10_Discovery_Scan(void) {
                           HM10_Launchtask(TASK_HM10_DISCONN,0,1);       // disconnect
-                          HM10_Launchtask(TASK_HM10_DISC,1,1);         // discovery
+                          HM10_Launchtask(TASK_HM10_DISC,1,1);          // discovery
                           }
-                          
+
 void HM10_Read_Sensor(void) {
                           HM10_Launchtask(TASK_HM10_CONN,0,1);           // connect
                           HM10_Launchtask(TASK_HM10_FEEDBACK,1,35);      // get OK+CONN
                           HM10_Launchtask(TASK_HM10_SUBSCR,2,10);        // subscribe
                           HM10_Launchtask(TASK_HM10_UNSUBSCR,3,80);      // unsubscribe
-                          HM10_Launchtask(TASK_HM10_READ_BT,4,5);       // read Battery
+                          HM10_Launchtask(TASK_HM10_READ_BT,4,5);        // read Battery
                           HM10_Launchtask(TASK_HM10_DISCONN,5,5);        // disconnect
                           }
-
 
 /**
  * @brief Return the slot number of a known sensor or return create new sensor slot
@@ -276,16 +279,16 @@ void HM10SerialInit(void) {
   return;
 }
 
-/*********************************************************************************************\
- * create the HM10 commands payload, and send it via serial interface to the HM10 module
- \*********************************************************************************************/
+/**
+ * @brief convert Mac-String to byte array
+ * 
+ * @param string Hex-string, must contain 12 chars (no error checking)
+ * @param _mac Must be a uint8_t[6], filled with zeros
+ */
 
-void HM10datahex(const char* string, uint8_t _mac[]) {
-    uint32_t slength = 12;
-    // uint8_t _mac[6] = {0};
+void HM10MACStringToBytes(const char* string, uint8_t _mac[]) {
     uint32_t index = 0;
-    DEBUG_SENSOR_LOG(PSTR("HM10: mac-string %s"), string);
-    while (index < slength) {
+    while (index < 12) {
         char c = string[index];
         uint32_t value = 0;
         if(c >= '0' && c <= '9')
@@ -303,6 +306,7 @@ void HM10datahex(const char* string, uint8_t _mac[]) {
 /*********************************************************************************************\
  * parse the response
 \*********************************************************************************************/
+
 void HM10ParseResponse(char *buf) {
     if (!strncmp(buf,"OK",2)) {
        DEBUG_SENSOR_LOG(PSTR("HM10: got OK"));
@@ -320,7 +324,7 @@ void HM10ParseResponse(char *buf) {
       memcpy((void *)_mac,(void *)(_pos+4),12);
       DEBUG_SENSOR_LOG(PSTR("HM10: found Mac: %s"), _mac);
       uint8_t _newMacArray[6] = {0};
-      HM10datahex(_mac, _newMacArray);
+      HM10MACStringToBytes(_mac, _newMacArray);
       DEBUG_SENSOR_LOG(PSTR("HM10:  MAC-array: %x%x%x%x%x%x"),_newMacArray[0],_newMacArray[1],_newMacArray[2],_newMacArray[3],_newMacArray[4],_newMacArray[5]);
       MIBLEgetSensorSlot(_newMacArray, 0xff);
     } 
@@ -332,21 +336,19 @@ void HM10ParseResponse(char *buf) {
 void HM10readTempHum(char *_buf){
   DEBUG_SENSOR_LOG(PSTR("HM10: raw data: %x%x%x%x%x%x%x"),_buf[0],_buf[1],_buf[2],_buf[3],_buf[4],_buf[5],_buf[6]);
   if(_buf[0] != 0 && _buf[1] != 0){
-    memcpy(&LYWSD03,(void *)_buf,3);
-    DEBUG_SENSOR_LOG(PSTR("HM10: Temperature * 100: %u, Humidity: %u"),LYWSD03.temp,LYWSD03.hum);
-    // uint8_t _serial[6] = {0};
-    // uint32_t _slot = MIBLEgetSensorSlot(HM10Mac[HM10.state.sensor], 4);
+    memcpy(&LYWSD03_HT,(void *)_buf,3);
+    DEBUG_SENSOR_LOG(PSTR("HM10: Temperature * 100: %u, Humidity: %u"),LYWSD03_HT.temp,LYWSD03_HT.hum);
     uint32_t _slot = HM10.state.sensor;
 
     DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
     static float _tempFloat;
-    _tempFloat=(float)(LYWSD03.temp)/100.0f;
+    _tempFloat=(float)(LYWSD03_HT.temp)/100.0f;
     if(_tempFloat<60){
         MIBLEsensors.at(_slot).temp=_tempFloat;
         HM10.mode.awaitingHT = false;
         HM10.current_task_delay = 0;
     }
-    _tempFloat=(float)LYWSD03.hum;
+    _tempFloat=(float)LYWSD03_HT.hum;
     if(_tempFloat<100){
       MIBLEsensors.at(_slot).hum = _tempFloat;
       DEBUG_SENSOR_LOG(PSTR("LYWSD03: hum updated"));
@@ -371,7 +373,7 @@ void HM10readBat(char *_buf){
 \*********************************************************************************************/
 
 bool HM10SerialHandleFeedback(){                  // every 50 milliseconds
-  bool success    = false;                        // true disables possible repetition of commands, set to false only for debugging
+  bool success    = false;
   uint32_t i       = 0;
   char ret[HM10_MAX_RX_BUF] = {0};                // reset array with zeros
   
@@ -407,7 +409,6 @@ bool HM10SerialHandleFeedback(){                  // every 50 milliseconds
 \*********************************************************************************************/
 
 void HM10_TaskEvery100ms(){
-  // HM10SerialHandleFeedback();
   if (HM10.current_task_delay == 0)  {
     uint8_t i = 0;
     bool runningTaskLoop = true;
@@ -525,7 +526,6 @@ void HM10_TaskEvery100ms(){
           HM10.mode.awaitingHT = true;
           runningTaskLoop = false;
           break;
-
         case TASK_HM10_DONE:                                    // this entry was already handled
           // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sFound done HM10_TASK"),D_CMND_HM10);
           // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%snext slot:%u, i: %u"),D_CMND_HM10, HM10_TASK_LIST[i+1][0],i);
@@ -538,9 +538,7 @@ void HM10_TaskEvery100ms(){
               HM10_TASK_LIST[j][1] = 0;                              // reset all delays
             }
             runningTaskLoop = false;                                  // return to main loop
-            // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sUpdate GUI via AJAX"),D_CMND_HM10);
-            // HM10_GUI_NEEDS_UPDATE = true;
-            HM10.mode.pending_task = 0;
+            HM10.mode.pending_task = 0;                               // back to main loop control
             break; 
           }
       }
@@ -552,9 +550,10 @@ void HM10_TaskEvery100ms(){
   }
 }
 
-/*
-|*  Loops
-\*                       */
+/**
+ * @brief Main loop of the driver, "high level"-loop
+ * 
+ */
 
 void HM10EverySecond(){
   if(HM10.firmware == 0) return;
@@ -574,7 +573,6 @@ void HM10EverySecond(){
       _nextSensorSlot= 0;
       _counter++;
     }
-    
     DEBUG_SENSOR_LOG(PSTR("%s active sensor now: %u"),D_CMND_HM10, HM10.state.sensor);
   }
   else _counter++;
@@ -736,14 +734,14 @@ bool Xsns92(uint8_t function)
   if (true) { 
     switch (function) {
       case FUNC_INIT:
-        HM10SerialInit();                                    // init and start communication
+        HM10SerialInit();                                  // init and start communication
         break;
       case FUNC_EVERY_50_MSECOND:
         HM10SerialHandleFeedback();                        // -> sniff for device feedback very often
        break;
       case FUNC_EVERY_100_MSECOND:
         if (HM10_TASK_LIST[0][0] != TASK_HM10_NOTASK) {
-          HM10_TaskEvery100ms();                             // something has to be done, we'll check in the next step
+          HM10_TaskEvery100ms();                           // something has to be done, we'll check in the next step
         }
         break;
       case FUNC_EVERY_SECOND:
