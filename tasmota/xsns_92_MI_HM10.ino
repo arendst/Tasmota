@@ -638,9 +638,10 @@ bool HM10Cmd(void) {
 \*********************************************************************************************/
 
 const char HTTP_HM10[] PROGMEM = "{s}HM10" " Firmware " "{m}%u{e}";
-const char HTTP_HM10_SERIAL[] PROGMEM = "{s}%s" " Address" "{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
+const char HTTP_HM10_SERIAL[] PROGMEM = "{s}%s %s{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u%%{e}";
 const char HTTP_HM10_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%sus/cm{e}";
+const char HTTP_HM10_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 
 void HM10Show(bool json)
 {
@@ -688,20 +689,21 @@ void HM10Show(bool json)
     } else {
       WSContentSend_PD(HTTP_HM10, HM10.firmware);
       for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
-        WSContentSend_PD(HTTP_HM10_SERIAL, kHM10SlaveType[MIBLEsensors.at(i).type-1], MIBLEsensors.at(i).serial[0], MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[5]); 
+        WSContentSend_PD(HTTP_HM10_HL);
+        WSContentSend_PD(HTTP_HM10_SERIAL, kHM10SlaveType[MIBLEsensors.at(i).type-1], D_MAC_ADDRESS, MIBLEsensors.at(i).serial[0], MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[5]); 
         if(MIBLEsensors.at(i).temp!=-1000.0f){
           char temperature[33];
           dtostrfd(MIBLEsensors.at(i).temp, Settings.flag2.temperature_resolution, temperature);
           WSContentSend_PD(HTTP_SNS_TEMP, kHM10SlaveType[MIBLEsensors.at(i).type-1], temperature, TempUnit());
         }
         if (MIBLEsensors.at(i).type==FLORA){
-          if(MIBLEsensors.at(i).lux!=0xffff){ // this is the error code -> no temperature
+          if(MIBLEsensors.at(i).lux!=0xffff){ // this is the error code -> no valid value
             WSContentSend_PD(HTTP_SNS_ILLUMINANCE, kHM10SlaveType[MIBLEsensors.at(i).type-1], MIBLEsensors.at(i).lux);
           }
-          if(MIBLEsensors.at(i).moisture!=-1000.0f){ // this is the error code -> no temperature
+          if(MIBLEsensors.at(i).moisture!=-1000.0f){ // this is the error code -> no valid value
             WSContentSend_PD(HTTP_SNS_MOISTURE, kHM10SlaveType[MIBLEsensors.at(i).type-1], MIBLEsensors.at(i).moisture);
           }
-          if(MIBLEsensors.at(i).fertility!=-1000.0f){ // this is the error code -> no temperature
+          if(MIBLEsensors.at(i).fertility!=-1000.0f){ // this is the error code -> no valid value
             char fertility[33];
             dtostrfd(MIBLEsensors.at(i).fertility, 0, fertility);
             WSContentSend_PD(HTTP_HM10_FLORA_DATA, kHM10SlaveType[MIBLEsensors.at(i).type-1], fertility);
