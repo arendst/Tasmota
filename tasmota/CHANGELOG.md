@@ -2,7 +2,7 @@
 
 ### 8.1.0.6 20200205
 
-- Add support for sensor DS18x20 on Shelly 1 and Shelly 1PM using Shelly Add-On adapter
+- Add support for sensor DS18x20 on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
 
 ### 8.1.0.5 20200126
 
