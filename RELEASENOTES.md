@@ -56,7 +56,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 - Change Lights: simplified gamma correction and 10 bits internal computation
 - Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
-- Change IRremoteESP8266 library updated to v2.7.2
+- Change IRremoteESP8266 library updated to v2.7.3
 - Change Zigbee command prefix from ``Zigbee*`` to ``Zb*``
 - Change wifi connectivity stability (#7602)
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
@@ -69,8 +69,10 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix exception 9 restart on log message in Ticker interrupt service routines NTP, Wemos and Hue emulation (#7496)
 - Fix ``PowerDelta`` zero power detection (#7515)
 - Fix ``RGBWWTable`` ignored (#7572)
+- Fix PWM flickering at low levels (#7415)
 - Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
 - Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
+- Add command ``SetOption84 1`` to send AWS IoT device shadow updates (alternative to retained)
 - Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
 - Add ``SwitchMode 8`` ToggleMulti, ``SwitchMode 9`` FollowMulti and ``SwitchMode 10`` FollowMultiInverted (#7522)
 - Add SerialConfig to ``Status 1``
@@ -87,3 +89,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add SoftwareSerial to CSE7766 driver allowing different GPIOs (#7563)
 - Add optional parameter <startcolor> to command ``Scheme <scheme>, <startcolor>`` to control initial start color
 - Add rule trigger on one level deeper using syntax with two ``#`` like ``on zigbeereceived#vibration_sensor#aqaracubeside=0 do ...``
+- Add support for sensor DS18x20 on Shelly 1 and Shelly 1PM using Shelly Add-On adapter

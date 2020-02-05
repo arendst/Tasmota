@@ -50,7 +50,9 @@ struct DS18X20STRUCT {
   float   temperature;
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_sensors = 0;
-uint8_t ds18x20_pin = 0;
+uint8_t ds18x20_pin = 0;           // Shelly GPIO3 input only
+uint8_t ds18x20_pin_out = 0;       // Shelly GPIO00 output only
+bool ds18x20_dual_mode = false;    // Single pin mode
 char ds18x20_types[12];
 #ifdef W1_PARASITE_POWER
 uint8_t ds18x20_sensor_curr = 0;
@@ -69,25 +71,38 @@ uint8_t onewire_last_family_discrepancy = 0;
 bool onewire_last_device_flag = false;
 unsigned char onewire_rom_id[8] = { 0 };
 
+/*------------------------------------------------------------------------------------------*/
+
 uint8_t OneWireReset(void)
 {
   uint8_t retries = 125;
 
-  //noInterrupts();
-  pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
-  do {
-    if (--retries == 0) {
-      return 0;
-    }
-    delayMicroseconds(2);
-  } while (!digitalRead(ds18x20_pin));
-  pinMode(ds18x20_pin, OUTPUT);
-  digitalWrite(ds18x20_pin, LOW);
-  delayMicroseconds(480);
-  pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+  if (!ds18x20_dual_mode) {
+    pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+    do {
+      if (--retries == 0) {
+        return 0;
+      }
+      delayMicroseconds(2);
+    } while (!digitalRead(ds18x20_pin));
+    pinMode(ds18x20_pin, OUTPUT);
+    digitalWrite(ds18x20_pin, LOW);
+    delayMicroseconds(480);
+    pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+  } else {
+    digitalWrite(ds18x20_pin_out, HIGH);
+    do {
+      if (--retries == 0) {
+        return 0;
+      }
+      delayMicroseconds(2);
+    } while (!digitalRead(ds18x20_pin));
+    digitalWrite(ds18x20_pin_out, LOW);
+    delayMicroseconds(480);
+    digitalWrite(ds18x20_pin_out, HIGH);
+  }
   delayMicroseconds(70);
   uint8_t r = !digitalRead(ds18x20_pin);
-  //interrupts();
   delayMicroseconds(410);
   return r;
 }
@@ -98,28 +113,38 @@ void OneWireWriteBit(uint8_t v)
   static const uint8_t delay_high[2] = { 5, 55 };
 
   v &= 1;
-  //noInterrupts();
-  digitalWrite(ds18x20_pin, LOW);
-  pinMode(ds18x20_pin, OUTPUT);
-  delayMicroseconds(delay_low[v]);
-  digitalWrite(ds18x20_pin, HIGH);
-  //interrupts();
+  if (!ds18x20_dual_mode) {
+    digitalWrite(ds18x20_pin, LOW);
+    pinMode(ds18x20_pin, OUTPUT);
+    delayMicroseconds(delay_low[v]);
+    digitalWrite(ds18x20_pin, HIGH);
+  } else {
+    digitalWrite(ds18x20_pin_out, LOW);
+    delayMicroseconds(delay_low[v]);
+    digitalWrite(ds18x20_pin_out, HIGH);
+  }
   delayMicroseconds(delay_high[v]);
 }
 
 uint8_t OneWireReadBit(void)
 {
-  //noInterrupts();
-  pinMode(ds18x20_pin, OUTPUT);
-  digitalWrite(ds18x20_pin, LOW);
-  delayMicroseconds(3);
-  pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+  if (!ds18x20_dual_mode) {
+    pinMode(ds18x20_pin, OUTPUT);
+    digitalWrite(ds18x20_pin, LOW);
+    delayMicroseconds(3);
+    pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+  } else {
+    digitalWrite(ds18x20_pin_out, LOW);
+    delayMicroseconds(3);
+    digitalWrite(ds18x20_pin_out, HIGH);
+  }
   delayMicroseconds(10);
   uint8_t r = digitalRead(ds18x20_pin);
-  //interrupts();
   delayMicroseconds(53);
   return r;
 }
+
+/*------------------------------------------------------------------------------------------*/
 
 void OneWireWrite(uint8_t v)
 {
@@ -259,6 +284,12 @@ void Ds18x20Init(void)
   uint64_t ids[DS18X20_MAX_SENSORS];
 
   ds18x20_pin = pin[GPIO_DSB];
+  if (pin[GPIO_DSB_OUT] < 99) {
+    ds18x20_pin_out = pin[GPIO_DSB_OUT];
+    ds18x20_dual_mode = true;    // Dual pins mode as used by Shelly
+    pinMode(ds18x20_pin_out, OUTPUT);
+    pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+  }
 
   OneWireResetSearch();
 
