@@ -22,22 +22,23 @@
 #define XDRV_12 12
 
 // List of sensors ready for discovery
-const char kHassJsonSensorTypes[] PROGMEM =
+const char kHAssJsonSensorTypes[] PROGMEM =
   D_JSON_TEMPERATURE "|" D_JSON_PRESSURE "|" D_JSON_PRESSUREATSEALEVEL "|"
   D_JSON_APPARENT_POWERUSAGE "|Battery|" D_JSON_CURRENT "|" D_JSON_DISTANCE "|" D_JSON_FREQUENCY "|" D_JSON_HUMIDITY "|" D_JSON_ILLUMINANCE "|"
   D_JSON_MOISTURE "|PB0.3|PB0.5|PB1|PB2.5|PB5|PB10|PM1|PM2.5|PM10|" D_JSON_POWERFACTOR "|" D_JSON_POWERUSAGE "|"
   D_JSON_REACTIVE_POWERUSAGE "|" D_JSON_TODAY "|" D_JSON_TOTAL "|" D_JSON_VOLTAGE "|" D_JSON_WEIGHT "|" D_JSON_YESTERDAY;
-const char kHassJsonSensorUnits[] PROGMEM =
+const char kHAssJsonSensorUnits[] PROGMEM =
   "|||"
   "W|%|A|Cm|Hz|%|LX|"
   "%|ppd|ppd|ppd|ppd|ppd|ppd|µg/m³|µg/m³|µg/m³||W|"
   "W|KWh|KWh|V|Kg|KWh";
-const char kHassJsonSensorDevCla[] PROGMEM =
+const char kHAssJsonSensorDevCla[] PROGMEM =
   "dev_cla\":\"temperature|dev_cla\":\"pressure|dev_cla\":\"pressure|"
   "dev_cla\":\"power|dev_cla\":\"battery|ic\":\"mdi:alpha-a-circle-outline|ic\":\"mdi:leak|ic\":\"mdi:current-ac|dev_cla\":\"humidity|dev_cla\":\"illuminance|"
   "ic\":\"mdi:cup-water|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|"
   "ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:alpha-f-circle-outline|dev_cla\":\"power|"
   "dev_cla\":\"power|dev_cla\":\"power|dev_cla\":\"power|ic\":\"mdi:alpha-v-circle-outline|ic\":\"mdi:scale|dev_cla\":\"power";
+// List of sensors ready for discovery
 
 const char HASS_DISCOVER_SENSOR[] PROGMEM =
     ",\"unit_of_meas\":\"%s\",\"%s\","           // unit of measure and class (or icon)
@@ -51,21 +52,15 @@ const char HASS_DISCOVER_BASE[] PROGMEM =
     "\"pl_avail\":\"" D_ONLINE "\","             // Online
     "\"pl_not_avail\":\"" D_OFFLINE "\"";        // Offline
 
-const char HASS_DISCOVER_RELAY[] PROGMEM =	
-  "{\"name\":\"%s\","                             // dualr2 1	                            
-  "\"cmd_t\":\"%s\","                             // cmnd/dualr2/POWER2	            
-  "\"stat_t\":\"%s\","                            // stat/dualr2/RESULT                            
-  "\"val_tpl\":\"{{value_json.%s}}\","            // POWER2	   
-  "\"pl_off\":\"%s\","                            // OFF	
-  "\"pl_on\":\"%s\","                             // ON	
-  "\"avty_t\":\"%s\","                            // tele/dualr2/LWT	
-  "\"pl_avail\":\"" D_ONLINE "\","                // Online	
-  "\"pl_not_avail\":\"" D_OFFLINE "\"";           // Offline
+const char HASS_DISCOVER_RELAY[] PROGMEM =
+    ",\"cmd_t\":\"%s\","                         // cmnd/dualr2/POWER2	                           
+    "\"val_tpl\":\"{{value_json.%s}}\","         // POWER2	  
+    "\"pl_off\":\"%s\","                         // OFF	  
+    "\"pl_on\":\"%s\"";                          // ON
 
 const char HASS_DISCOVER_BUTTON_TOGGLE[] PROGMEM =
-    ",\"value_template\":\"{{value_json.%s}}\"," // STATE
-    "\"pl_on\":\"%s\","                          // TOGGLE
-    "\"off_delay\":1";                           // Hass has no support for TOGGLE, fake it by resetting to OFF after 1s
+    ",\"value_template\":\"{%%if is_state(entity_id,\\\"off\\\")-%%}ON{%%-endif%%}\"," // STATE
+    "\"off_delay\":1";                           // HAss has no support for TOGGLE, fake it by resetting to OFF after 1s
 
 const char HASS_DISCOVER_BUTTON_SWITCH_ONOFF[] PROGMEM =
     ",\"value_template\":\"{{value_json.%s}}\"," // STATE
@@ -122,34 +117,9 @@ const char HASS_DISCOVER_DEVICE_INFO_SHORT[] PROGMEM =
     "\"device\":{\"identifiers\":[\"%06X\"],"
     "\"connections\":[[\"mac\",\"%s\"]]}";
 
-const char HASS_DISCOVER_TOPIC_PREFIX[] PROGMEM =
-    ",\"~\":\"%s\"";
-
 uint8_t hass_init_step = 0;
 uint8_t hass_mode = 0;
 int hass_tele_period = 0;
-
-static void FindPrefix(char *s1, char *s2, char *out)
-{
-  int prefixlen = 0;
-
-  while (s1[prefixlen] != '\0' && s2[prefixlen] != '\0' && s1[prefixlen] == s2[prefixlen])
-  {
-    prefixlen++;
-  }
-  strlcpy(out, s1, prefixlen + 1);
-}
-
-static void Shorten(char **s, char *prefix)
-{
-  size_t len = strlen(*s);
-  size_t prefixlen = strlen(prefix);
-  if (len > prefixlen && prefixlen != 0 && !strncmp(*s, prefix, prefixlen))
-  {
-    *s += prefixlen - 1;
-    *s[0] = '~';
-  }
-}
 
 void TryResponseAppend_P(const char *format, ...)
 {
@@ -223,17 +193,12 @@ void HAssAnnounceRelayLight(void)
       }
       GetPowerDevice(value_template, i, sizeof(value_template), Settings.flag.device_index_enable); // SetOption26 - Switch between POWER or POWER1
       GetTopic_P(command_topic, CMND, mqtt_topic, value_template);
-      //GetTopic_P(state_topic, STAT, mqtt_topic, S_RSLT_RESULT);
       GetTopic_P(state_topic, TELE, mqtt_topic, D_RSLT_STATE);
       GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
-      FindPrefix(command_topic, state_topic, prefix);
-      Shorten(&command_topic, prefix);
-      Shorten(&state_topic, prefix);
-      Shorten(&availability_topic, prefix);
 
-      Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic, HASS_DISCOVER_RELAY, command_topic, value_template, SettingsText(SET_STATE_TXT1), SettingsText(SET_STATE_TXT2));
+      Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
+      TryResponseAppend_P(HASS_DISCOVER_RELAY, command_topic, value_template, SettingsText(SET_STATE_TXT1), SettingsText(SET_STATE_TXT2));
       TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
-      TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
 
 #ifdef USE_LIGHT
       if (is_light)
@@ -241,7 +206,6 @@ void HAssAnnounceRelayLight(void)
         char *brightness_command_topic = stemp1;
 
         GetTopic_P(brightness_command_topic, CMND, mqtt_topic, D_CMND_DIMMER);
-        Shorten(&brightness_command_topic, prefix);
         strncpy_P(stemp3, Settings.flag.not_power_linked ? PSTR("last") : PSTR("brightness"), sizeof(stemp3)); // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
         TryResponseAppend_P(HASS_DISCOVER_LIGHT_DIMMER, brightness_command_topic, state_topic, stemp3);
 
@@ -250,12 +214,10 @@ void HAssAnnounceRelayLight(void)
           char *rgb_command_topic = stemp1;
 
           GetTopic_P(rgb_command_topic, CMND, mqtt_topic, D_CMND_COLOR);
-          Shorten(&rgb_command_topic, prefix);
           TryResponseAppend_P(HASS_DISCOVER_LIGHT_COLOR, rgb_command_topic, state_topic);
 
           char *effect_command_topic = stemp1;
           GetTopic_P(effect_command_topic, CMND, mqtt_topic, D_CMND_SCHEME);
-          Shorten(&effect_command_topic, prefix);
           TryResponseAppend_P(HASS_DISCOVER_LIGHT_SCHEME, effect_command_topic, state_topic);
         }
         if (LST_RGBW == Light.subtype)
@@ -263,7 +225,6 @@ void HAssAnnounceRelayLight(void)
           char *white_temp_command_topic = stemp1;
 
           GetTopic_P(white_temp_command_topic, CMND, mqtt_topic, D_CMND_WHITE);
-          Shorten(&white_temp_command_topic, prefix);
           TryResponseAppend_P(HASS_DISCOVER_LIGHT_WHITE, white_temp_command_topic, state_topic);
         }
         if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype))
@@ -271,7 +232,6 @@ void HAssAnnounceRelayLight(void)
           char *color_temp_command_topic = stemp1;
 
           GetTopic_P(color_temp_command_topic, CMND, mqtt_topic, D_CMND_COLORTEMPERATURE);
-          Shorten(&color_temp_command_topic, prefix);
           TryResponseAppend_P(HASS_DISCOVER_LIGHT_CT, color_temp_command_topic, state_topic);
         }
       }
@@ -310,20 +270,15 @@ void HAssAnnounceButtonSwitch(uint8_t device, char *topic, uint8_t present, uint
     snprintf_P(jsoname, sizeof(jsoname), PSTR("%s%d"), key ? "SWITCH" : "BUTTON", device + 1);
     GetPowerDevice(value_template, device + 1, sizeof(value_template),
                    key + Settings.flag.device_index_enable); // Force index for Switch 1, Index on Button1 is controlled by SetOption26 - Switch between POWER or POWER1
-    //GetTopic_P(state_topic, CMND, topic, value_template); // State of button is sent as CMND TOGGLE, state of switch is sent as ON/OFF
     GetTopic_P(state_topic, STAT, mqtt_topic, (PSTR("/'%s'"), jsoname));
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
-    FindPrefix(state_topic, availability_topic, prefix);
 
-    Shorten(&state_topic, prefix);
-    Shorten(&availability_topic, prefix);
     Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
     TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
-    if (strlen(prefix) > 0)
-      TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
+
     if (toggle) {
       if (!key) {
-        TryResponseAppend_P(HASS_DISCOVER_BUTTON_TOGGLE, PSTR(D_RSLT_STATE), SettingsText(SET_STATE_TXT2));
+        TryResponseAppend_P(HASS_DISCOVER_BUTTON_TOGGLE);
       } else { // A switch must maintain his state until the next update
         TryResponseAppend_P(",\"value_template\":\"{%%if is_state(entity_id,\\\"on\\\")-%%}OFF{%%-else-%%}ON{%%-endif%%}\"");
       }
@@ -361,7 +316,6 @@ void HAssAnnounceSwitches(void)
       {
         toggle = 0; // MQTT message will be ON/OFF
       }
-
       HAssAnnounceButtonSwitch(switch_index, sw_topic, switch_present, 1, toggle);
     }
   }
@@ -399,7 +353,6 @@ void HAssAnnounceButtons(void)
       {
         toggle = 0; // MQTT message will be ON/OFF
       }
-
       HAssAnnounceButtonSwitch(button_index, key_topic, button_present, 0, toggle);
     }
   }
@@ -428,19 +381,16 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
     GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_SENSOR));
     snprintf_P(name, sizeof(name), PSTR("%s %s %s"), SettingsText(SET_FRIENDLYNAME1), sensorname, MultiSubName);
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
-    FindPrefix(state_topic, availability_topic, prefix);
-    Shorten(&state_topic, prefix);
-    Shorten(&availability_topic, prefix);
 
     Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
     TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
-    TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
+
 
     char jname[32];
-    int sensor_index = GetCommandCode(jname, sizeof(jname), subsensortype, kHassJsonSensorTypes);
+    int sensor_index = GetCommandCode(jname, sizeof(jname), subsensortype, kHAssJsonSensorTypes);
     if (sensor_index > -1) {
       char param1[20];
-      GetTextIndexed(param1, sizeof(param1), sensor_index, kHassJsonSensorUnits);
+      GetTextIndexed(param1, sizeof(param1), sensor_index, kHAssJsonSensorUnits);
       switch (sensor_index) {
         case 0:   // Temperature
           snprintf_P(param1, sizeof(param1), PSTR("°%c"),TempUnit()); // C or F
@@ -451,7 +401,7 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
           break;
       }
       char param2[50];
-      GetTextIndexed(param2, sizeof(param2), sensor_index, kHassJsonSensorDevCla);
+      GetTextIndexed(param2, sizeof(param2), sensor_index, kHAssJsonSensorDevCla);
       TryResponseAppend_P(HASS_DISCOVER_SENSOR, param1, param2, sensorname, subsensortype);
       if (subidx) {
         TryResponseAppend_P(PSTR("[%d]"), subqty -1);
@@ -547,15 +497,12 @@ void HAssAnnounceStatusSensor(void)
     snprintf_P(name, sizeof(name), PSTR("%s status"), SettingsText(SET_FRIENDLYNAME1));
     GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_HASS_STATE));
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
-    FindPrefix(state_topic, availability_topic, prefix);
-    Shorten(&state_topic, prefix);
-    Shorten(&availability_topic, prefix);
 
     Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
     TryResponseAppend_P(HASS_DISCOVER_SENSOR_HASS_STATUS, state_topic);
     TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP.getChipId(), WiFi.macAddress().c_str(),
                         SettingsText(SET_FRIENDLYNAME1), ModuleName().c_str(), my_version, my_image);
-    TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
+  
     TryResponseAppend_P(PSTR("}"));
   }
   MqttPublish(stopic, true);
@@ -585,11 +532,6 @@ void HAssDiscovery(void)
     Settings.flag.decimal_text = 1;        // SetOption17 - Switch between decimal or hexadecimal output - Respond with decimal color values
     Settings.flag3.hass_tele_on_power = 1; // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT - send tele/STATE message as stat/RESULT
     Settings.light_scheme = 0;             // To just control color it needs to be Scheme 0
-    if (strcmp_P(SettingsText(SET_MQTT_FULLTOPIC), PSTR("%topic%/%prefix%/"))) {
-      SettingsUpdateText(SET_MQTT_FULLTOPIC, "%topic%/%prefix%/");
-      restart_flag = 2;
-      return;                                // As full topic has changed do restart first before sending discovery data
-    }
   }
 
   if (Settings.flag.hass_discovery || (1 == hass_mode))
@@ -631,8 +573,7 @@ void HAssAnyKey(void)
   char scommand[CMDSZ];
   snprintf_P(scommand, sizeof(scommand), PSTR("%s%d"), (key) ? "SWITCH" : "BUTTON", device);
   char stopic[TOPSZ];
-  //GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);  // SetOption4 - Switch between MQTT RESULT or COMMAND
-  //Response_P(S_JSON_COMMAND_SVALUE, scommand, GetStateText(state));
+
   GetTopic_P(stopic, STAT, mqtt_topic, scommand);
   Response_P(S_JSON_COMMAND_SVALUE, PSTR(D_RSLT_STATE), GetStateText(state));
   MqttPublish(stopic);
