@@ -1588,7 +1588,7 @@ chknext:
         if (!strncmp(vname,"sw[",3)) {
           // tasmota switch state
           GetNumericResult(vname+3,OPER_EQU,&fvar,0);
-          fvar=SwitchLastState((uint8_t)fvar);
+          fvar=SwitchLastState((uint32_t)fvar);
           // skip ] bracket
           len++;
           goto exit;

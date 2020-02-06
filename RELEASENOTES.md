@@ -92,3 +92,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add rule trigger on one level deeper using syntax with two ``#`` like ``on zigbeereceived#vibration_sensor#aqaracubeside=0 do ...``
 - Add support for sensor DS18x20 on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
 - Add support for sensor DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
+- Add switch modes 11 (PUSHHOLDMULTI) and 12 (PUSHHOLDMULTI_INV) (#7603)
