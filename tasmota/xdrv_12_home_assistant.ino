@@ -51,11 +51,16 @@ const char HASS_DISCOVER_BASE[] PROGMEM =
     "\"pl_avail\":\"" D_ONLINE "\","             // Online
     "\"pl_not_avail\":\"" D_OFFLINE "\"";        // Offline
 
-const char HASS_DISCOVER_RELAY[] PROGMEM =
-    ",\"cmd_t\":\"%s\","                         // cmnd/dualr2/POWER2
-    "\"val_tpl\":\"{{value_json.%s}}\","         // POWER2
-    "\"pl_off\":\"%s\","                         // OFF
-    "\"pl_on\":\"%s\"";                          // ON
+const char HASS_DISCOVER_RELAY[] PROGMEM =	
+  "{\"name\":\"%s\","                             // dualr2 1	                            
+  "\"cmd_t\":\"%s\","                             // cmnd/dualr2/POWER2	            
+  "\"stat_t\":\"%s\","                            // stat/dualr2/RESULT                            
+  "\"val_tpl\":\"{{value_json.%s}}\","            // POWER2	   
+  "\"pl_off\":\"%s\","                            // OFF	
+  "\"pl_on\":\"%s\","                             // ON	
+  "\"avty_t\":\"%s\","                            // tele/dualr2/LWT	
+  "\"pl_avail\":\"" D_ONLINE "\","                // Online	
+  "\"pl_not_avail\":\"" D_OFFLINE "\"";           // Offline
 
 const char HASS_DISCOVER_BUTTON_TOGGLE[] PROGMEM =
     ",\"value_template\":\"{{value_json.%s}}\"," // STATE
@@ -579,12 +584,12 @@ void HAssDiscovery(void)
     Settings.flag.mqtt_response = 0;       // SetOption4  - Switch between MQTT RESULT or COMMAND - Response always as RESULT and not as uppercase command
     Settings.flag.decimal_text = 1;        // SetOption17 - Switch between decimal or hexadecimal output - Respond with decimal color values
     Settings.flag3.hass_tele_on_power = 1; // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT - send tele/STATE message as stat/RESULT
-                                           //    Settings.light_scheme = 0;             // To just control color it needs to be Scheme 0
-                                           //    if (strcmp_P(SettingsText(SET_MQTT_FULLTOPIC), PSTR("%topic%/%prefix%/"))) {
-                                           //      SettingsUpdateText(SET_MQTT_FULLTOPIC, "%topic%/%prefix%/");
-                                           //      restart_flag = 2;
-                                           //      return;                                // As full topic has changed do restart first before sending discovery data
-                                           //    }
+    Settings.light_scheme = 0;             // To just control color it needs to be Scheme 0
+    if (strcmp_P(SettingsText(SET_MQTT_FULLTOPIC), PSTR("%topic%/%prefix%/"))) {
+      SettingsUpdateText(SET_MQTT_FULLTOPIC, "%topic%/%prefix%/");
+      restart_flag = 2;
+      return;                                // As full topic has changed do restart first before sending discovery data
+    }
   }
 
   if (Settings.flag.hass_discovery || (1 == hass_mode))
