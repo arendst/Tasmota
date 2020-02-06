@@ -34,7 +34,9 @@
 uint32_t dht_max_cycles;
 uint8_t dht_data[5];
 uint8_t dht_sensors = 0;
+uint8_t dht_pin_out = 0;                      // Shelly GPIO00 output only
 bool dht_active = true;                       // DHT configured
+bool dht_dual_mode = false;                   // Single pin mode
 
 struct DHTSTRUCT {
   uint8_t     pin;
@@ -49,7 +51,11 @@ struct DHTSTRUCT {
 void DhtReadPrep(void)
 {
   for (uint32_t i = 0; i < dht_sensors; i++) {
-    digitalWrite(Dht[i].pin, HIGH);
+    if (!dht_dual_mode) {
+      digitalWrite(Dht[i].pin, HIGH);
+    } else {
+      digitalWrite(dht_pin_out, HIGH);
+    }
   }
 }
 
@@ -77,11 +83,19 @@ bool DhtRead(uint8_t sensor)
 
   if (Dht[sensor].lastresult > DHT_MAX_RETRY) {
     Dht[sensor].lastresult = 0;
-    digitalWrite(Dht[sensor].pin, HIGH);  // Retry read prep
+    if (!dht_dual_mode) {
+      digitalWrite(Dht[sensor].pin, HIGH);  // Retry read prep
+    } else {
+      digitalWrite(dht_pin_out, HIGH);
+    }
     delay(250);
   }
-  pinMode(Dht[sensor].pin, OUTPUT);
-  digitalWrite(Dht[sensor].pin, LOW);
+  if (!dht_dual_mode) {
+    pinMode(Dht[sensor].pin, OUTPUT);
+    digitalWrite(Dht[sensor].pin, LOW);
+  } else {
+    digitalWrite(dht_pin_out, LOW);
+  }
 
   if (GPIO_SI7021 == Dht[sensor].type) {
     delayMicroseconds(500);
@@ -90,9 +104,14 @@ bool DhtRead(uint8_t sensor)
   }
 
   noInterrupts();
-  digitalWrite(Dht[sensor].pin, HIGH);
-  delayMicroseconds(40);
-  pinMode(Dht[sensor].pin, INPUT_PULLUP);
+  if (!dht_dual_mode) {
+    digitalWrite(Dht[sensor].pin, HIGH);
+    delayMicroseconds(40);
+    pinMode(Dht[sensor].pin, INPUT_PULLUP);
+  } else {
+    digitalWrite(dht_pin_out, HIGH);
+    delayMicroseconds(40);
+  }
   delayMicroseconds(10);
   if (-1 == DhtExpectPulse(sensor, LOW)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_LOW " " D_PULSE));
@@ -109,6 +128,7 @@ bool DhtRead(uint8_t sensor)
     }
   }
   interrupts();
+
   if (error) { return false; }
 
   for (uint32_t i = 0; i < 40; ++i) {
@@ -187,6 +207,13 @@ void DhtInit(void)
   if (dht_sensors) {
     dht_max_cycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
 
+    if (pin[GPIO_DHT11_OUT] < 99) {
+      dht_pin_out = pin[GPIO_DHT11_OUT];
+      dht_dual_mode = true;    // Dual pins mode as used by Shelly
+      dht_sensors = 1;         // We only support one sensor in pseudo mode
+      pinMode(dht_pin_out, OUTPUT);
+    }
+
     for (uint32_t i = 0; i < dht_sensors; i++) {
       pinMode(Dht[i].pin, INPUT_PULLUP);
       Dht[i].lastreadtime = 0;
@@ -196,6 +223,7 @@ void DhtInit(void)
         snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s%c%02d"), Dht[i].stype, IndexSeparator(), Dht[i].pin);
       }
     }
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_SENSORS_FOUND " %d"), dht_sensors);
   } else {
     dht_active = false;
   }

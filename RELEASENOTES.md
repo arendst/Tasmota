@@ -70,6 +70,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix ``PowerDelta`` zero power detection (#7515)
 - Fix ``RGBWWTable`` ignored (#7572)
 - Fix PWM flickering at low levels (#7415)
+- Fix Hass sensor discovery part 1/4 by Federico Leoni (#7582, #7548)
 - Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
 - Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
 - Add command ``SetOption84 1`` to send AWS IoT device shadow updates (alternative to retained)
@@ -90,3 +91,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add optional parameter <startcolor> to command ``Scheme <scheme>, <startcolor>`` to control initial start color
 - Add rule trigger on one level deeper using syntax with two ``#`` like ``on zigbeereceived#vibration_sensor#aqaracubeside=0 do ...``
 - Add support for sensor DS18x20 on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
+- Add support for sensor DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)

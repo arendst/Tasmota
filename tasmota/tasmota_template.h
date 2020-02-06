@@ -217,6 +217,7 @@ enum UserSelectablePins {
   GPIO_GPS_RX,         // GPS serial interface
   GPIO_GPS_TX,         // GPS serial interface
   GPIO_DSB_OUT,        // Pseudo Single wire DS18B20 or DS18S20
+  GPIO_DHT11_OUT,      // Pseudo Single wire DHT11, DHT21, DHT22, AM2301, AM2302, AM2321
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -298,7 +299,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
   D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX "|"
-  D_SENSOR_DS18X20 "o|"
+  D_SENSOR_DS18X20 "o|" D_SENSOR_DHT11 "o|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -561,6 +562,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_DHT11,          // DHT11
   GPIO_DHT22,          // DHT21, DHT22, AM2301, AM2302, AM2321
   GPIO_SI7021,         // iTead SI7021
+  GPIO_DHT11_OUT,      // Pseudo Single wire DHT11, DHT21, DHT22, AM2301, AM2302, AM2321
 #endif
 #ifdef USE_DS18x20
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
