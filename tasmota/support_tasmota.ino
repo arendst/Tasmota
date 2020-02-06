@@ -347,6 +347,9 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
     }
     DigitalWrite(GPIO_LED1 + led, bitRead(led_inverted, led) ? !state : state);
   }
+  #ifdef USE_BUZZER
+  if (led == 0) { BuzzerSetStateToLed(state); }
+  #endif // USE_BUZZER
 }
 
 void SetLedPower(uint32_t state)
@@ -382,6 +385,9 @@ void SetLedLink(uint32_t state)
     if (state) { state = 1; }
     digitalWrite(led_pin, (led_inv) ? !state : state);
   }
+  #ifdef USE_BUZZER
+  BuzzerSetStateToLed(state);
+  #endif // USE_BUZZER
 }
 
 void SetPulseTimer(uint32_t index, uint32_t time)

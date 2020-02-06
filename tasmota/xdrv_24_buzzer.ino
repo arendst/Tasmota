@@ -26,10 +26,12 @@
 
 struct BUZZER {
   uint32_t tune = 0;
+  uint32_t tune_reload = 0;
   bool active = true;
   bool enable = false;
   uint8_t inverted = 0;            // Buzzer inverted flag (1 = (0 = On, 1 = Off))
   uint8_t count = 0;               // Number of buzzes
+  uint8_t mode = 0;                // Buzzer mode (0 = (0 = regular, 2 = infinite, 3 = follow LED))
   uint8_t set[2];
   uint8_t duration;
   uint8_t state = 0;
@@ -42,13 +44,15 @@ void BuzzerOff(void)
   DigitalWrite(GPIO_BUZZER, Buzzer.inverted);  // Buzzer Off
 }
 
-//void BuzzerBeep(uint32_t count = 1, uint32_t on = 1, uint32_t off = 1, uint32_t tune = 0);
-void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune)
+//void BuzzerBeep(uint32_t count = 1, uint32_t on = 1, uint32_t off = 1, uint32_t tune = 0, uint32_t mode = 0);
+void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune, uint32_t mode)
 {
   Buzzer.set[0] = off;         // off duration in 100 mSec steps
   Buzzer.set[1] = on;          // on duration in 100 mSec steps
   Buzzer.duration = 1;         // Start buzzer on first step
-  Buzzer.tune = 0;
+  Buzzer.tune_reload = 0;
+  Buzzer.mode = mode;
+
   if (tune) {
     uint32_t tune1 = tune;
     uint32_t tune2 = tune;
@@ -56,15 +60,14 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune)
       if (!(tune2 & 0x80000000)) {
         tune2 <<= 1;           // Skip leading silence
       } else {
-        Buzzer.tune <<= 1;     // Add swapped tune
-        Buzzer.tune |= tune1 & 1;
+        Buzzer.tune_reload <<= 1;     // Add swapped tune
+        Buzzer.tune_reload |= tune1 & 1;
         tune1 >>= 1;
       }
     }
-    Buzzer.count = 1;          // Allow tune only once
-  } else {
-    Buzzer.count = count * 2;  // Start buzzer
+    Buzzer.tune = Buzzer.tune_reload;
   }
+  Buzzer.count = count * 2;  // Start buzzer
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BUZ: %d(%d),%d,%d,0x%08X(0x%08X)"), count, Buzzer.count, on, off, tune, Buzzer.tune);
 
@@ -74,14 +77,21 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune)
   }
 }
 
+void BuzzerSetStateToLed(uint32_t state) {
+  if ((Buzzer.enable) && (Buzzer.mode==2)) {
+    Buzzer.state = (state!=0);
+    DigitalWrite(GPIO_BUZZER, (Buzzer.inverted) ? !Buzzer.state : Buzzer.state);
+  }
+}
+
 void BuzzerBeep(uint32_t count) {
-  BuzzerBeep(count, 1, 1, 0);
+  BuzzerBeep(count, 1, 1, 0, 0);
 }
 
 void BuzzerEnabledBeep(uint32_t count, uint32_t duration)
 {
   if (Settings.flag3.buzzer_enable) {  // SetOption67 - Enable buzzer when available
-    BuzzerBeep(count, duration, 1, 0);
+    BuzzerBeep(count, duration, 1, 0, 0);
   }
 }
 
@@ -109,7 +119,7 @@ void BuzzerInit(void)
 
 void BuzzerEvery100mSec(void)
 {
-  if (Buzzer.enable) {
+  if ((Buzzer.enable) && (Buzzer.mode != 2)) {
     if (Buzzer.count) {
       if (Buzzer.duration) {
         Buzzer.duration--;
@@ -118,8 +128,10 @@ void BuzzerEvery100mSec(void)
             Buzzer.state = Buzzer.tune & 1;
             Buzzer.tune >>= 1;
           } else {
-            Buzzer.count--;
+            Buzzer.tune = Buzzer.tune_reload;
+            Buzzer.count-= (Buzzer.tune_reload) ? 2 : 1;
             Buzzer.state = Buzzer.count & 1;
+            if (Buzzer.mode) { Buzzer.count |= 2; }
           }
           Buzzer.duration = Buzzer.set[Buzzer.state];
         }
@@ -151,16 +163,20 @@ void CmndBuzzer(void)
   // Buzzer 2           = Beep twice with duration 200mS and pause 100mS
   // Buzzer 2,3         = Beep twice with duration 300mS and pause 100mS
   // Buzzer 2,3,4       = Beep twice with duration 300mS and pause 400mS
-  // Buzzer 2,3,4,0xF54 = Beep a sequence once indicated by 0xF54 = 1111 0101 01 with duration 300mS and pause 400mS
+  // Buzzer 2,3,4,0xF54 = Beep a sequence twice indicated by 0xF54 = 1111 0101 01 with duration 300mS and pause 400mS
 
   if (XdrvMailbox.data_len > 0) {
-    if (XdrvMailbox.payload > 0) {
-      uint32_t parm[4] = { 0 };
+    if (XdrvMailbox.payload != 0) {
+      uint32_t parm[4] = { 0 }, mode = 0;
       ParseParameters(4, parm);
-      for (uint32_t i = 0; i < 3; i++) {
-        if (parm[i] < 1) { parm[i] = 1; }  // Default Count, On time, Off time
+      if (XdrvMailbox.payload <= 0) {
+        parm[0] = 1; // Default Count
+        mode = -XdrvMailbox.payload;
       }
-      BuzzerBeep(parm[0], parm[1], parm[2], parm[3]);
+      for (uint32_t i = 1; i < 3; i++) {
+        if (parm[i] < 1) { parm[i] = 1; }  // Default On time, Off time
+      }
+      BuzzerBeep(parm[0], parm[1], parm[2], parm[3], mode);
     } else {
       BuzzerBeep(0);
     }
