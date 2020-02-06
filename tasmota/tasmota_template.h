@@ -300,7 +300,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
   D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
-  D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX "|" D_SENSOR_HM10_RX "|" D_SENSOR_HM10_TX
+  D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX "|"
+  D_SENSOR_DS18X20 "o|" D_SENSOR_DHT11 "o|"
+  D_SENSOR_HM10_RX "|" D_SENSOR_HM10_TX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -563,9 +565,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_DHT11,          // DHT11
   GPIO_DHT22,          // DHT21, DHT22, AM2301, AM2302, AM2321
   GPIO_SI7021,         // iTead SI7021
+  GPIO_DHT11_OUT,      // Pseudo Single wire DHT11, DHT21, DHT22, AM2301, AM2302, AM2321
 #endif
 #ifdef USE_DS18x20
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
+  GPIO_DSB_OUT,        // Pseudo Single wire DS18B20 or DS18S20
 #endif
 
 // Light
@@ -1690,10 +1694,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0
   },
   { "Shelly 1",        // SHELLY1 - Shelly1 Open Source (ESP8266 - 2MB) - https://shelly.cloud/shelly1-open-source/
-     0,                // GPIO00 - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
-     0,                // GPIO01 Serial RXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
+     GPIO_USER,        // GPIO00 - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
+     GPIO_USER,        // GPIO01 Serial RXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
      0,
-     0,                // GPIO03 Serial TXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
+     GPIO_USER,        // GPIO03 Serial TXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
      GPIO_REL1,        // GPIO04 Relay (0 = Off, 1 = On)
      GPIO_SWT1_NP,     // GPIO05 SW pin
                        // GPIO06 (SD_CLK   Flash)

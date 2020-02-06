@@ -1,9 +1,20 @@
 ## Unreleased (development)
 
+### 8.1.0.6 20200205
+
+- Fix Hass sensor discovery part 1/4 by Federico Leoni (#7582, #7548)
+- Add support for sensor DS18x20 on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
+- Add support for sensor DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
+- Add commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
+- Add command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
+
 ### 8.1.0.5 20200126
 
 - Change wifi connectivity stability (#7602)
+- Change IRremoteESP8266 library updated to v2.7.3
+- Fix PWM flickering at low levels (#7415)
 - Add ``SetOption84 1`` sends AWS IoT device shadow updates (alternative to retained)
+- Add ``ZbBind`` (experimental) and bug fixes
 
 ### 8.1.0.4 20200116
 

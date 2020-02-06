@@ -1588,7 +1588,7 @@ chknext:
         if (!strncmp(vname,"sw[",3)) {
           // tasmota switch state
           GetNumericResult(vname+3,OPER_EQU,&fvar,0);
-          fvar=SwitchLastState((uint8_t)fvar);
+          fvar=SwitchLastState((uint32_t)fvar);
           // skip ] bracket
           len++;
           goto exit;
@@ -1711,6 +1711,30 @@ chknext:
           lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
           fvar=sqrtf(fvar);
           lp++;
+          len=0;
+          goto exit;
+        }
+#endif
+#ifdef USE_SML_SCRIPT_CMD
+        if (!strncmp(vname,"sml(",4)) {
+          lp+=4;
+          float fvar1;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
+          SCRIPT_SKIP_SPACES
+          float fvar2;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+          SCRIPT_SKIP_SPACES
+          if (fvar2==0) {
+            float fvar3;
+            lp=GetNumericResult(lp,OPER_EQU,&fvar3,0);
+            fvar=SML_SetBaud(fvar1,fvar3);
+          } else {
+            char str[SCRIPT_MAXSSIZE];
+            lp=GetStringResult(lp,OPER_EQU,str,0);
+            fvar=SML_Write(fvar1,str);
+          }
+          lp++;
+          fvar=0;
           len=0;
           goto exit;
         }
