@@ -216,6 +216,8 @@ enum UserSelectablePins {
   GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
   GPIO_GPS_RX,         // GPS serial interface
   GPIO_GPS_TX,         // GPS serial interface
+  GPIO_HM10_RX,        // HM10-BLE-Mijia-bridge serial interface
+  GPIO_HM10_TX,        // HM10-BLE-Mijia-bridge serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -296,7 +298,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
   D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
-  D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX
+  D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX "|" D_SENSOR_HM10_RX "|" D_SENSOR_HM10_TX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -736,6 +738,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_GPS
   GPIO_GPS_RX,         // GPS serial interface
   GPIO_GPS_TX,         // GPS serial interface
+#endif
+#ifdef USE_HM10
+  GPIO_HM10_RX,         // GPS serial interface
+  GPIO_HM10_TX,         // GPS serial interface
 #endif
 
 #ifdef USE_MGC3130

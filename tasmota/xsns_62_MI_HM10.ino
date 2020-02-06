@@ -22,15 +22,13 @@
   --------------------------------------------------------------------------------------------
 
   ---
-  0.9.0.0 20200130  started - initial development by Christian Baars
+  0.9.0.0 20200130  started - initial development by Christian Baars (support LYWSD03 only)
                     forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
 
 */
+#ifdef USE_HM10
 
-#define XSNS_92                    92
-
-#define HM_PIN_RX  5   // D1 Hardcoded while developing
-#define HM_PIN_TX  4   // D2
+#define XSNS_62                    62
 
 #include <TasmotaSerial.h>
 #include <vector>
@@ -263,7 +261,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_serial)[6], uint8_t _type){
 void HM10SerialInit(void) {
   HM10.mode.init = false;
   HM10.serialSpeed = HM10_BAUDRATE;
-  HM10Serial = new TasmotaSerial(HM_PIN_RX, HM_PIN_TX, 1, 0, HM10_MAX_RX_BUF); 
+  HM10Serial = new TasmotaSerial(pin[GPIO_HM10_RX], pin[GPIO_HM10_TX], 1, 0, HM10_MAX_RX_BUF);
   if (HM10Serial->begin(HM10.serialSpeed)) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s start serial communication fixed to 115200 baud"),D_CMND_HM10);
     if (HM10Serial->hardwareSerial()) {
@@ -728,18 +726,17 @@ void HM10Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns92(uint8_t function)
+bool Xsns62(uint8_t function)
 {
   bool result = false;
 
-  // if ((pin[HM_PIN_RX] < 99) && (pin[HM_PIN_TX] < 99)) { 
-  if (true) { 
+  if ((pin[GPIO_HM10_RX] < 99) && (pin[GPIO_HM10_TX] < 99)) { 
     switch (function) {
       case FUNC_INIT:
         HM10SerialInit();                                  // init and start communication
         break;
       case FUNC_EVERY_50_MSECOND:
-        HM10SerialHandleFeedback();                        // -> sniff for device feedback very often
+        HM10SerialHandleFeedback();                        // check for device feedback very often
        break;
       case FUNC_EVERY_100_MSECOND:
         if (HM10_TASK_LIST[0][0] != TASK_HM10_NOTASK) {
@@ -764,3 +761,4 @@ bool Xsns92(uint8_t function)
   }
   return result;
 }
+#endif //USE_HM10
