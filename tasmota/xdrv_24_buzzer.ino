@@ -31,7 +31,7 @@ struct BUZZER {
   bool enable = false;
   uint8_t inverted = 0;            // Buzzer inverted flag (1 = (0 = On, 1 = Off))
   uint8_t count = 0;               // Number of buzzes
-  uint8_t mode = 0;                // Buzzer mode (0 = (0 = regular, 2 = infinite, 3 = follow LED))
+  uint8_t mode = 0;                // Buzzer mode (0 = regular, 1 = infinite, 2 = follow LED)
   uint8_t set[2];
   uint8_t duration;
   uint8_t state = 0;
@@ -77,14 +77,16 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune, uint32
   }
 }
 
-void BuzzerSetStateToLed(uint32_t state) {
-  if ((Buzzer.enable) && (Buzzer.mode==2)) {
-    Buzzer.state = (state!=0);
+void BuzzerSetStateToLed(uint32_t state)
+{
+  if (Buzzer.enable && (2 == Buzzer.mode)) {
+    Buzzer.state = (state != 0);
     DigitalWrite(GPIO_BUZZER, (Buzzer.inverted) ? !Buzzer.state : Buzzer.state);
   }
 }
 
-void BuzzerBeep(uint32_t count) {
+void BuzzerBeep(uint32_t count)
+{
   BuzzerBeep(count, 1, 1, 0, 0);
 }
 
@@ -119,7 +121,7 @@ void BuzzerInit(void)
 
 void BuzzerEvery100mSec(void)
 {
-  if ((Buzzer.enable) && (Buzzer.mode != 2)) {
+  if (Buzzer.enable && (Buzzer.mode != 2)) {
     if (Buzzer.count) {
       if (Buzzer.duration) {
         Buzzer.duration--;
@@ -129,9 +131,11 @@ void BuzzerEvery100mSec(void)
             Buzzer.tune >>= 1;
           } else {
             Buzzer.tune = Buzzer.tune_reload;
-            Buzzer.count-= (Buzzer.tune_reload) ? 2 : 1;
+            Buzzer.count -= (Buzzer.tune_reload) ? 2 : 1;
             Buzzer.state = Buzzer.count & 1;
-            if (Buzzer.mode) { Buzzer.count |= 2; }
+            if (Buzzer.mode) {
+              Buzzer.count |= 2;
+            }
           }
           Buzzer.duration = Buzzer.set[Buzzer.state];
         }
@@ -164,14 +168,17 @@ void CmndBuzzer(void)
   // Buzzer 2,3         = Beep twice with duration 300mS and pause 100mS
   // Buzzer 2,3,4       = Beep twice with duration 300mS and pause 400mS
   // Buzzer 2,3,4,0xF54 = Beep a sequence twice indicated by 0xF54 = 1111 0101 01 with duration 300mS and pause 400mS
+  // Buzzer -1          = Beep infinite
+  // Buzzer -2          = Beep following link led
 
   if (XdrvMailbox.data_len > 0) {
     if (XdrvMailbox.payload != 0) {
-      uint32_t parm[4] = { 0 }, mode = 0;
+      uint32_t parm[4] = { 0 };
+      uint32_t mode = 0;
       ParseParameters(4, parm);
       if (XdrvMailbox.payload <= 0) {
-        parm[0] = 1; // Default Count
-        mode = -XdrvMailbox.payload;
+        parm[0] = 1;                       // Default Count
+        mode = -XdrvMailbox.payload;       // 0, 1 or 2
       }
       for (uint32_t i = 1; i < 3; i++) {
         if (parm[i] < 1) { parm[i] = 1; }  // Default On time, Off time

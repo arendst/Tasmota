@@ -75,7 +75,9 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
 - Add command ``SetOption84 1`` to send AWS IoT device shadow updates (alternative to retained)
 - Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
-- Add ``SwitchMode 8`` ToggleMulti, ``SwitchMode 9`` FollowMulti and ``SwitchMode 10`` FollowMultiInverted (#7522)
+- Add commands ``SwitchMode 8`` ToggleMulti, ``SwitchMode 9`` FollowMulti and ``SwitchMode 10`` FollowMultiInverted (#7522)
+- Add commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
+- Add command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
 - Add SerialConfig to ``Status 1``
 - Add WifiPower to ``Status 5``
 - Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
@@ -92,4 +94,3 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add rule trigger on one level deeper using syntax with two ``#`` like ``on zigbeereceived#vibration_sensor#aqaracubeside=0 do ...``
 - Add support for sensor DS18x20 on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
 - Add support for sensor DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
-- Add switch modes 11 (PUSHHOLDMULTI) and 12 (PUSHHOLDMULTI_INV) (#7603)
