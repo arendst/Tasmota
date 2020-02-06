@@ -216,6 +216,8 @@ enum UserSelectablePins {
   GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
   GPIO_GPS_RX,         // GPS serial interface
   GPIO_GPS_TX,         // GPS serial interface
+  GPIO_DSB_OUT,        // Pseudo Single wire DS18B20 or DS18S20
+  GPIO_DHT11_OUT,      // Pseudo Single wire DHT11, DHT21, DHT22, AM2301, AM2302, AM2321
   GPIO_HM10_RX,        // HM10-BLE-Mijia-bridge serial interface
   GPIO_HM10_TX,        // HM10-BLE-Mijia-bridge serial interface
   GPIO_SENSOR_END };
