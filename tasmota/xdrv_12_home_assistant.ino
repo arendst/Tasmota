@@ -366,8 +366,10 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
   char unique_id[30];
 
   mqtt_data[0] = '\0'; // Clear retained message
-  // Clear or Set topic
-  snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%s"), ESP.getChipId(), sensorname, MultiSubName);
+  // Clear or Set topic  
+  char subname[20];
+  NoAlNumToUnderscore(subname, MultiSubName); //Replace all non alphaumeric characters to '_' to avoid topic name issues
+  snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%s"), ESP.getChipId(), sensorname, subname);
   snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);;
 
   if (Settings.flag.hass_discovery)
@@ -384,7 +386,6 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
 
     Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
     TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
-
 
     char jname[32];
     int sensor_index = GetCommandCode(jname, sizeof(jname), subsensortype, kHAssJsonSensorTypes);
@@ -436,7 +437,6 @@ void HAssAnnounceSensors(void)
       snprintf_P(sensordata, sizeof(sensordata), PSTR("%s}"), sensordata); // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
       // USE THE FOLLOWING LINE TO TEST JSON
       //snprintf_P(sensordata, sizeof(sensordata), PSTR("{\"HX711\":{\"Weight\":[22,34,1023.4], \"Battery\":25}}"));
-      //snprintf_P(sensordata, sizeof(sensordata), (PSTR("{\"PMS5003\":{\"PB0.3\":1,\"PB0.5\":2.3,\"PB1\":2,\"PB2.5\":1,\"PB5\":0,\"PB10\":1,\"CF1\":1,\"CF2.5\":0,\"CF10\":0,\"PM1\":0,\"PM2.5\":0,\"PM10\":0}}")));
 
       StaticJsonBuffer<500> jsonBuffer;
       JsonObject &root = jsonBuffer.parseObject(sensordata);
@@ -462,7 +462,7 @@ void HAssAnnounceSensors(void)
             subqty = subsensors.size();
             char MultiSubName[20];
             for (int i = 1; i <= subqty; i++) {
-              snprintf_P(MultiSubName, sizeof(MultiSubName), PSTR("%s_%d"), subsensor.key, i);
+              snprintf_P(MultiSubName, sizeof(MultiSubName), PSTR("%s %d"), subsensor.key, i);
               HAssAnnounceSensor(sensorname, subsensor.key, MultiSubName, i, 1);
             }
           } else { HAssAnnounceSensor(sensorname, subsensor.key, subsensor.key, 0, 0);}
