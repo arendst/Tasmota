@@ -92,5 +92,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add SoftwareSerial to CSE7766 driver allowing different GPIOs (#7563)
 - Add optional parameter <startcolor> to command ``Scheme <scheme>, <startcolor>`` to control initial start color
 - Add rule trigger on one level deeper using syntax with two ``#`` like ``on zigbeereceived#vibration_sensor#aqaracubeside=0 do ...``
-- Add support for sensor DS18x20 on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
-- Add support for sensor DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
+- Add support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
+- Add support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)

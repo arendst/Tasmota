@@ -3,10 +3,10 @@
 ### 8.1.0.6 20200205
 
 - Fix Hass sensor discovery part 1/4 by Federico Leoni (#7582, #7548)
-- Add support for sensor DS18x20 on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
-- Add support for sensor DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
+- Add support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
 - Add commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
 - Add command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
+- Add support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
 
 ### 8.1.0.5 20200126
 
