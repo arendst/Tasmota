@@ -184,6 +184,9 @@ String GetDateAndTime(uint8_t time_type)
   uint32_t time = Rtc.local_time;
 
   switch (time_type) {
+    case DT_BOOTCOUNT:
+      time = Settings.bootcount_reset_time;
+      break;
     case DT_ENERGY:
       time = Settings.energy_kWhtotal_time;
       break;
@@ -438,7 +441,12 @@ void RtcSecond(void)
     }
     Rtc.local_time += Rtc.time_timezone;
     Rtc.time_timezone /= 60;
-    if (!Settings.energy_kWhtotal_time) { Settings.energy_kWhtotal_time = Rtc.local_time; }
+    if (!Settings.energy_kWhtotal_time) {
+      Settings.energy_kWhtotal_time = Rtc.local_time;
+    }
+    if (Settings.bootcount_reset_time < START_VALID_TIME) {
+      Settings.bootcount_reset_time = Rtc.local_time;
+    }
   }
 
   BreakTime(Rtc.local_time, RtcTime);

@@ -467,8 +467,9 @@ struct SYSCFG {
   uint8_t       hotplug_scan;              // F03
   uint8_t       reserved1;                 // F04 - reserved for s-hadinger
 
-  uint8_t       free_f05[211];             // F05
+  uint8_t       free_f05[207];             // F05
 
+  uint32_t      bootcount_reset_time;      // FD4
   int           adc_param4;                // FD8
   uint32_t      shutter_button[MAX_KEYS];  // FDC
   uint32_t      i2c_drivers[3];            // FEC I2cDriver

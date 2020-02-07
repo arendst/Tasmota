@@ -7,6 +7,7 @@
 - Add commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
 - Add command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
 - Add support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
+- Add BootCount Reset Time as BCResetTime to ``Status 1``
 
 ### 8.1.0.5 20200126
 
