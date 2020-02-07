@@ -542,7 +542,7 @@
 //#define USE_IBEACON                              // Add support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 //#define USE_GPS                                  // Add support for GPS and NTP Server for becoming Stratus 1 Time Source (+ 3.1kb flash, +132 bytes RAM)
 //  #define USE_FLOG                               // Add support for GPS logging in OTA's Flash (Experimental) (+ 2.9kb flash, +8 bytes RAM)
-#define USE_HM10                                   // Add support for HM-10 as a BLE-bridge for the LYWSD03 (+... code)
+//#define USE_HM10                                   // Add support for HM-10 as a BLE-bridge for the LYWSD03 (+... code)
 
 // -- Power monitoring sensors --------------------
 #define USE_ENERGY_MARGIN_DETECTION              // Add support for Energy Margin detection (+1k6 code)
