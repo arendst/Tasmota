@@ -202,9 +202,13 @@ void ZigbeeInput(void)
 			SBuffer znp_buffer = zigbee_buffer->subBuffer(2, zigbee_frame_len - 3);	// remove SOF, LEN and FCS
 
 			ToHex_P((unsigned char*)znp_buffer.getBuffer(), znp_buffer.len(), hex_char, sizeof(hex_char));
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPRECEIVED " %s"),
-                                 hex_char);
-
+      Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
+      if (Settings.flag3.tuya_serial_mqtt_publish) {
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
+        XdrvRulesProcess();
+      } else {
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);
+      }
 			// now process the message
       ZigbeeProcessInput(znp_buffer);
 		}

@@ -58,7 +58,7 @@ public:
   void log(void) {
     char hex_char[_payload.len()*2+2];
 		ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
+    Response_P(PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
                     "\"groupid\":%d," "\"clusterid\":%d," "\"srcaddr\":\"0x%04X\","
                     "\"srcendpoint\":%d," "\"dstendpoint\":%d," "\"wasbroadcast\":%d,"
                     "\"" D_CMND_ZIGBEE_LINKQUALITY "\":%d," "\"securityuse\":%d," "\"seqnumber\":%d,"
@@ -71,6 +71,12 @@ public:
                     _timestamp,
                     _frame_control, _manuf_code, _transact_seq, _cmd_id,
                     hex_char);
+    if (Settings.flag3.tuya_serial_mqtt_publish) {
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
+      XdrvRulesProcess();
+    } else {
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);
+    }
   }
 
   static ZCLFrame parseRawFrame(const SBuffer &buf, uint8_t offset, uint8_t len, uint16_t clusterid, uint16_t groupid,

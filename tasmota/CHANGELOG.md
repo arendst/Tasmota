@@ -8,6 +8,7 @@
 - Add command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
 - Add support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
 - Add BootCount Reset Time as BCResetTime to ``Status 1``
+- Add ``ZbZNPReceived``and ``ZbZCLReceived``are published to MQTT when ``SetOption66 1``
 
 ### 8.1.0.5 20200126
 
