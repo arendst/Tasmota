@@ -114,6 +114,7 @@ void (* const TuyaCommand[])(void) PROGMEM = {
 
 TuyaSend<x> dpId,data
 
+TuyaSend0 -> Sends TUYA_CMD_QUERY_STATE
 TuyaSend1 11,1 -> Sends boolean (Type 1) data 0/1 to dpId 11 (Max data length 1 byte)
 TuyaSend2 11,100 -> Sends integer (Type 2) data 100 to dpId 11 (Max data length 4 bytes)
 TuyaSend2 11,0xAABBCCDD -> Sends 4 bytes (Type 2) data to dpId 11 (Max data length 4 bytes)
@@ -124,9 +125,13 @@ TuyaSend4 11,1 -> Sends enum (Type 4) data 0/1/2/3/4/5 to dpId 11 (Max data leng
 
 
 void CmndTuyaSend(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
+  if (XdrvMailbox.index > 4) {
+    return;
+  }
+  if (XdrvMailbox.index == 0) {
+    TuyaRequestState();
+  } else {
     if (XdrvMailbox.data_len > 0) {
-
       char *p;
       char *data;
       uint8_t i = 0;
@@ -150,8 +155,8 @@ void CmndTuyaSend(void) {
         TuyaSendEnum(dpId, strtoul(data, nullptr, 0));
       }
     }
-    ResponseCmndDone();
   }
+  ResponseCmndDone();
 }
 
 /*
