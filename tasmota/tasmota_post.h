@@ -377,6 +377,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_I2C                                   // Disable all I2C sensors
 #undef USE_SPI                                   // Disable all SPI devices
 
+#undef USE_DISPLAY                               // Disable support for displays
+
 #undef USE_MHZ19                                 // Disable support for MH-Z19 CO2 sensor
 #undef USE_SENSEAIR                              // Disable support for SenseAir K30, K70 and S8 CO2 sensor
 #undef USE_PMS5003                               // Disable support for PMS5003 and PMS7003 particle concentration sensor
