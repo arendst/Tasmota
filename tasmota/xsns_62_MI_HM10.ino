@@ -21,7 +21,7 @@
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
 
-  0.9.1.0 20200130  added   - LYWSD02-support, including setting the time
+  0.9.1.0 20200209  added   - LYWSD02-support, including setting the time
   ---
   0.9.0.0 20200130  started - initial development by Christian Baars (support LYWSD03 only)
                     forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
@@ -217,7 +217,7 @@ void HM10_Time_LYWSD02(void) {
                           HM10_Launchtask(TASK_HM10_DISCONN,0,0);        // disconnect
                           HM10_Launchtask(TASK_HM10_CONN,1,5);           // connect
                           HM10_Launchtask(TASK_HM10_FEEDBACK,2,35);      // get OK+CONN
-                          HM10_Launchtask(TASK_HM10_TIME_L2,3,20);        // subscribe
+                          HM10_Launchtask(TASK_HM10_TIME_L2,3,20);       // subscribe
                           HM10_Launchtask(TASK_HM10_DISCONN,4,5);        // disconnect
                           }
 
@@ -634,7 +634,7 @@ void HM10EverySecond(){
   if(_counter==0) {
     HM10.state.sensor = _nextSensorSlot;
     _nextSensorSlot++;
-    if(MIBLEsensors.at(HM10.state.sensor).type==LYWSD03MMC) { // only this sensor for now
+    if(MIBLEsensors.at(HM10.state.sensor).type==LYWSD03MMC) {
       HM10.mode.pending_task = 1;
       HM10_Read_LYWSD03();
     }
@@ -750,20 +750,20 @@ void HM10Show(bool json)
           if(MIBLEsensors.at(i).lux!=0xffff){ // this is the error code -> no temperature
             ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%s"), lux);
           }
-          if(MIBLEsensors.at(i).moisture!=-1000.0f){ // this is the error code -> no temperature
+          if(MIBLEsensors.at(i).moisture!=-1000.0f){ // this is the error code -> no moisture
             ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%s"), moisture);
           }
-          if(MIBLEsensors.at(i).fertility!=-1000.0f){ // this is the error code -> no temperature
+          if(MIBLEsensors.at(i).fertility!=-1000.0f){ // this is the error code -> no fertility
             ResponseAppend_P(PSTR(",\"Fertility\":%s"), fertility);
           }
         }
         if (MIBLEsensors.at(i).type>FLORA){ 
           char humidity[33];
           dtostrfd(MIBLEsensors.at(i).hum, Settings.flag2.humidity_resolution, humidity);
-          if(MIBLEsensors.at(i).hum!=-1.0f){ // this is the error code -> no temperature
+          if(MIBLEsensors.at(i).hum!=-1.0f){ // this is the error code -> no humidity
               ResponseAppend_P(PSTR(",\"" D_JSON_HUMIDITY "\":%s"), humidity);
           }
-          if(MIBLEsensors.at(i).bat!=0xff){ // this is the error code -> no temperature
+          if(MIBLEsensors.at(i).bat!=0xff){ // this is the error code -> no battery
             ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors.at(i).bat);
           }
         }
