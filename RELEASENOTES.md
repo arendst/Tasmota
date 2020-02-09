@@ -71,6 +71,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix ``RGBWWTable`` ignored (#7572)
 - Fix PWM flickering at low levels (#7415)
 - Fix Hass sensor discovery part 1/4 by Federico Leoni (#7582, #7548)
+- Fix MaxPower functionality (#7647)
 - Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
 - Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
 - Add command ``SetOption84 1`` to send AWS IoT device shadow updates (alternative to retained)
@@ -95,3 +96,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
 - Add support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
 - Add BootCount Reset Time as BCResetTime to ``Status 1``
+- Add ``ZbZNPReceived``and ``ZbZCLReceived`` being published to MQTT when ``SetOption66 1``

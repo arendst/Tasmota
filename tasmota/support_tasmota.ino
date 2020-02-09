@@ -235,7 +235,8 @@ void SetDevicePower(power_t rpower, uint32_t source)
 void RestorePower(bool publish_power, uint32_t source)
 {
   if (power != last_power) {
-    SetDevicePower(last_power, source);
+    power = last_power;
+    SetDevicePower(power, source);
     if (publish_power) {
       MqttPublishAllPowerState();
     }

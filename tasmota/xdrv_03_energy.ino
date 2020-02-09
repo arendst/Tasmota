@@ -365,7 +365,7 @@ void EnergyMarginCheck(void)
           EnergyMqttShow();
           SetAllPower(POWER_ALL_OFF, SRC_MAXPOWER);
           if (!Energy.mplr_counter) {
-            Energy.mplr_counter = Settings.param[P_MAX_POWER_RETRY] +1;
+            Energy.mplr_counter = Settings.param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
           }
           Energy.mplw_counter = Settings.energy_max_power_limit_window;
         }
@@ -390,6 +390,7 @@ void EnergyMarginCheck(void)
             ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
             MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
             EnergyMqttShow();
+            SetAllPower(POWER_ALL_OFF, SRC_MAXPOWER);
           }
         }
       }
