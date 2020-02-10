@@ -79,6 +79,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 2
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "sensors"
 
 #undef USE_DISCOVERY                             // Disable mDNS (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
 
@@ -183,6 +185,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #define USE_RDM6300                              // Add support for RDM6300 125kHz RFID Reader (+0k8)
 #define USE_IBEACON                              // Add support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 //#define USE_GPS                                  // Add support for GPS and NTP Server for becoming Stratus 1 Time Source (+ 3.1kb flash, +132 bytes RAM)
+#define USE_HM10                                 // Add support for HM-10 as a BLE-bridge for the LYWSD03 (+5k1 code)
 
 #define USE_ENERGY_SENSOR                        // Add energy sensors (-14k code)
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
@@ -229,6 +232,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 3
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "knx"
 
 #ifndef USE_KNX
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
@@ -249,6 +254,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 5
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "display"
 
 #undef USE_EMULATION                             // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
@@ -315,6 +322,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 6
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "ir"
 
 #undef USE_EMULATION
 #undef USE_EMULATION_HUE                         // Disable Hue emulation - only for lights and relays
@@ -371,6 +380,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_I2C                                   // Disable all I2C sensors
 #undef USE_SPI                                   // Disable all SPI devices
 
+#undef USE_DISPLAY                               // Disable support for displays
+
 #undef USE_MHZ19                                 // Disable support for MH-Z19 CO2 sensor
 #undef USE_SENSEAIR                              // Disable support for SenseAir K30, K70 and S8 CO2 sensor
 #undef USE_PMS5003                               // Disable support for PMS5003 and PMS7003 particle concentration sensor
@@ -383,6 +394,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_RDM6300                               // Disable support for RDM6300 125kHz RFID Reader (+0k8)
 #undef USE_IBEACON                               // Disable support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 #undef USE_GPS                                   // Disable support for GPS and NTP Server for becoming Stratus 1 Time Source (+ 3.1kb flash, +132 bytes RAM)
+#undef USE_HM10                                  // Disable support for HM-10 as a BLE-bridge for the LYWSD03 (+5k1 code)
 
 //#define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -409,6 +421,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 4
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "lite"
 
 #undef APP_SLEEP
 #define APP_SLEEP 1                              // Default to sleep = 1 for FIRMWARE_LITE
@@ -473,6 +487,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_RDM6300                               // Disable support for RDM6300 125kHz RFID Reader (+0k8)
 #undef USE_IBEACON                               // Disable support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 #undef USE_GPS                                   // Disable support for GPS and NTP Server for becoming Stratus 1 Time Source (+ 3.1kb flash, +132 bytes RAM)
+#undef USE_HM10                                  // Disable support for HM-10 as a BLE-bridge for the LYWSD03 (+5k1 code)
 
 //#undef USE_ENERGY_SENSOR                         // Disable energy sensors
 #undef USE_PZEM004T                              // Disable PZEM004T energy sensor
@@ -515,6 +530,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 1
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "minimal"
 
 #undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
@@ -585,6 +602,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_RDM6300                               // Disable support for RDM6300 125kHz RFID Reader (+0k8)
 #undef USE_IBEACON                               // Disable support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 #undef USE_GPS                                   // Disable support for GPS and NTP Server for becoming Stratus 1 Time Source (+ 3.1kb flash, +132 bytes RAM)
+#undef USE_HM10                                  // Disable support for HM-10 as a BLE-bridge for the LYWSD03 (+5k1 code)
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
 #undef USE_PZEM004T                              // Disable PZEM004T energy sensor

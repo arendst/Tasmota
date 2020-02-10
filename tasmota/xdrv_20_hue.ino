@@ -100,7 +100,8 @@ void HueRespondToMSearch(void)
   } else {
     snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_HUE " %s " D_TO " %s:%d"),
+  // Do not use AddLog_P2 here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
+  PrepLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_HUE " %s " D_TO " %s:%d"),
     message, udp_remote_ip.toString().c_str(), udp_remote_port);
 
   udp_response_mutex = false;
@@ -279,7 +280,7 @@ void HueLightStatus1(uint8_t device, String *response)
 
 #ifdef USE_SHUTTER
   if (ShutterState(device)) {
-    bri = (float)(Settings.shutter_invert[device-1] ? 100 - Settings.shutter_position[device-1] : Settings.shutter_position[device-1]) / 100;
+    bri = (float)((Settings.shutter_options[device-1] & 1) ? 100 - Settings.shutter_position[device-1] : Settings.shutter_position[device-1]) / 100;
   }
 #endif
 
@@ -681,7 +682,7 @@ void HueLights(String *path)
       if (change) {
 #ifdef USE_SHUTTER
         if (ShutterState(device)) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"), Settings.shutter_invert[device-1]);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"), Settings.shutter_options[device-1] & 1);
           ShutterSetPosition(device, bri * 100.0f );
         } else
 #endif

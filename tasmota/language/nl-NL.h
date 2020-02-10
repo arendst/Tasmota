@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Programma Grootte"
 #define D_PROJECT "Project"
 #define D_RAIN "Regen"
+#define D_RANGE "Range"
 #define D_RECEIVED "Ontvangen"
 #define D_RESTART "Herstart"
 #define D_RESTARTING "Herstarten"
@@ -634,6 +635,8 @@
 #define D_SENSOR_SLAVE_RESET   "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
 #define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
 #define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
 

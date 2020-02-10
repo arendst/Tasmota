@@ -21,6 +21,8 @@
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
 
+
+  0.9.1.0 20200117  integrate - Added support for the LYWSD02
   ---
   0.9.0.0 20191127  started - further development by Christian Baars
                     base    - code base from cbm80amiga, floe, Dmitry.GR
@@ -52,7 +54,7 @@
 
 const char MIBLESlaveFlora[] PROGMEM = "Flora";
 const char MIBLESlaveMJ_HT_V1[] PROGMEM = "MJ_HT_V1";
-
+const char MIBLESlaveLYWSD02[] PROGMEM = "LYWSD02";
 
 #pragma pack(1)  // important!!
 struct MJ_HT_V1Header_t {// related to the payload
@@ -148,6 +150,19 @@ union MJ_HT_V1Packet_t {    // related to the whole 32-byte-packet/buffer
   // We do NOT need the isolated T and H packet
 };
 
+union LYWSD02Packet_t {    // related to the whole 32-byte-packet/buffer
+  struct {
+      uint16_t idWord;
+      uint8_t padding;
+      uint8_t serial[6];
+      uint8_t padding4;
+      uint8_t mode;
+      uint8_t valueTen;
+      uint8_t effectiveDataLength;
+      uint16_t data;
+  } TH;    // mode 04 or 06
+};
+
 struct bleAdvPacket_t { // for nRF24L01 max 32 bytes = 2+6+24
   uint8_t pduType;
   uint8_t payloadSize;
@@ -205,6 +220,7 @@ union FIFO_t{
   bleAdvPacket_t bleAdv;
   floraPacket_t floraPacket;
   MJ_HT_V1Packet_t MJ_HT_V1Packet;
+  LYWSD02Packet_t LYWSD02Packet;
   uint8_t raw[32];
 };
 
@@ -227,7 +243,7 @@ struct {
 } MIBLE;
 
 struct mi_sensor_t{
-  uint8_t type; //flora = 1; MI-HT_V1=2
+  uint8_t type; //flora = 1; MI-HT_V1=2; LYWSD02=3
   uint8_t serial[6];
   uint8_t showedUp;
   union {
@@ -242,6 +258,10 @@ struct mi_sensor_t{
       float hum;
       uint8_t bat;
     } MJ_HT_V1;
+    struct {
+      float temp;
+      float hum;
+    } LYWSD02;
   };
 };
 
@@ -311,6 +331,9 @@ bool MIBLEreceivePacket(void)
       break;
       case 2:
       MIBLEwhiten((uint8_t *)&MIBLE.buffer, sizeof(MIBLE.buffer),  0x72); // "MJ_HT_V1" mode 0x72
+      break;
+      case 3:
+      MIBLEwhiten((uint8_t *)&MIBLE.buffer, sizeof(MIBLE.buffer),  0x17); // "LYWSD02" mode 0x17
       break;
     }
     // DEBUG_SENSOR_LOG(PSTR("MIBLE: LSFR:%x"),_lsfr);
@@ -403,6 +426,9 @@ void MIBLEchangePacketModeTo(uint8_t _mode) {
     case 2: // special MJ_HT_V1 packet
       NRF24radio.openReadingPipe(0,0xdbcc0cd3); // 95 fe 50 20 -> MJ_HT_V1, needs lsfr 0x72
     break;
+    case 3: // special LYWSD02 packet
+      NRF24radio.openReadingPipe(0,0xef3b0730); // 95 fe 70 20 -> LYWSD02, needs lfsr 0x17
+    break;
   }
   DEBUG_SENSOR_LOG(PSTR("MIBLE: Change Mode to %u"),_mode);
   MIBLE.timer = 0;
@@ -446,6 +472,10 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_serial)[6], uint8_t _type){
       _newSensor.MJ_HT_V1.temp=-1000.0f;
       _newSensor.MJ_HT_V1.hum=-1.0f;
       _newSensor.MJ_HT_V1.bat=0xff;
+      break;
+    case 3:
+      _newSensor.LYWSD02.temp=-1000.0f;
+      _newSensor.LYWSD02.hum=-1.0f;
       break;
     default:
       break;
@@ -544,7 +574,34 @@ void MIBLEhandleMJ_HT_V1Packet(void){
     DEBUG_SENSOR_LOG(PSTR("MJ_HT_V1 mode:0x0a: U8: %x %%"), MIBLE.buffer.MJ_HT_V1Packet.B.battery);
     break;
   }
+}
 
+void MIBLEhandleLYWSD02Packet(void){
+  if(MIBLE.buffer.LYWSD02Packet.TH.valueTen!=0x10){
+    DEBUG_SENSOR_LOG(PSTR("MIBLE: unexpected LYWSD02-packet"));
+    MIBLE_LOG_BUFFER(MIBLE.buffer.raw);
+    return;
+  }
+  uint32_t _slot = MIBLEgetSensorSlot(MIBLE.buffer.LYWSD02Packet.TH.serial, 3); // H would be possible too
+  DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
+
+  static float _tempFloat;
+  switch(MIBLE.buffer.LYWSD02Packet.TH.mode) { // we can use any struct with a mode, they are all same at this point
+    case 4:
+    _tempFloat=(float)(MIBLE.buffer.LYWSD02Packet.TH.data)/10.0f;
+    if(_tempFloat<60){
+        MIBLEsensors.at(_slot).LYWSD02.temp=_tempFloat;
+    }
+    DEBUG_SENSOR_LOG(PSTR("LYWSD02: Mode 4: U16:  %x Temp"), MIBLE.buffer.LYWSD02Packet.TH.data );
+    break;
+    case 6:
+    _tempFloat=(float)(MIBLE.buffer.LYWSD02Packet.TH.data)/10.0f;
+    if(_tempFloat<101){
+        MIBLEsensors.at(_slot).LYWSD02.hum=_tempFloat;
+    }
+    DEBUG_SENSOR_LOG(PSTR("LYWSD02: Mode 6: U16:  %x Hum"), MIBLE.buffer.LYWSD02Packet.TH.data );
+    break;
+  }
 }
 
 void MIBLE_EVERY_100_MSECOND() { // Every 100mseconds, with many sensors 50ms could make sense
@@ -555,7 +612,7 @@ void MIBLE_EVERY_100_MSECOND() { // Every 100mseconds, with many sensors 50ms co
       MIBLEpurgeFakeSensors();
     }
     DEBUG_SENSOR_LOG(PSTR("MIBLE: Change packet mode after 60 seconds, MIBLE.timer: %u"),MIBLE.timer);
-    if (MIBLE.packetMode == 2){
+    if (MIBLE.packetMode == 3){
       MIBLEinitBLE(1); // no real ble packets in release mode, otherwise for developing use 0
     }
     else {
@@ -592,7 +649,10 @@ void MIBLE_EVERY_100_MSECOND() { // Every 100mseconds, with many sensors 50ms co
   }
   if (MIBLE.packetMode == 2){ // "MJ_HT_V1" mode
     MIBLEhandleMJ_HT_V1Packet();
-    }
+  }
+  if (MIBLE.packetMode == 3){ // "LYWSD02" mode
+    MIBLEhandleLYWSD02Packet();
+  }
 
     MIBLEhopChannel();
     NRF24radio.startListening();
@@ -666,6 +726,23 @@ void MIBLEShow(bool json)
           }
           ResponseAppend_P(PSTR("}"));
           break;
+        case 3:
+          if(MIBLEsensors.at(i).showedUp < 3){
+            DEBUG_SENSOR_LOG(PSTR("MIBLE: sensor not fully registered yet"));
+            break;
+          }
+          sprintf_P(slave,"%s-%02x%02x%02x",MIBLESlaveLYWSD02,MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]);
+          dtostrfd(MIBLEsensors.at(i).LYWSD02.temp, Settings.flag2.temperature_resolution, temperature);
+          dtostrfd(MIBLEsensors.at(i).LYWSD02.hum, 1, humidity);
+          ResponseAppend_P(PSTR(",\"%s\":{"),slave);
+          if(MIBLEsensors.at(i).LYWSD02.temp!=-1000.0f){ // this is the error code -> no temperature
+            ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"), temperature);
+          }
+          if(MIBLEsensors.at(i).LYWSD02.hum!=-1000.0f){ // this is the error code -> no temperature
+            ResponseAppend_P(PSTR(",\"" D_JSON_HUMIDITY "\":%s"), humidity);
+          }
+          ResponseAppend_P(PSTR("}"));
+          break;
       }
     }
 #ifdef USE_WEBSERVER
@@ -721,11 +798,27 @@ void MIBLEShow(bool json)
           }
           if(MIBLEsensors.at(i).MJ_HT_V1.bat!=0xff){
             WSContentSend_PD(HTTP_BATTERY, MIBLESlaveMJ_HT_V1, MIBLEsensors.at(i).MJ_HT_V1.bat);
+          }
+          break;
+        case 3:
+          if(MIBLEsensors.at(i).showedUp < 3){
+            DEBUG_SENSOR_LOG(PSTR("MIBLE: sensor not fully registered yet"));
+            break;
+          }
+          dtostrfd(MIBLEsensors.at(i).LYWSD02.temp, Settings.flag2.temperature_resolution, temperature);
+          dtostrfd(MIBLEsensors.at(i).LYWSD02.hum, 1, humidity);
+
+          WSContentSend_PD(HTTP_MIBLE_SERIAL, MIBLESlaveLYWSD02, MIBLEsensors.at(i).serial[5], MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]);
+          if(MIBLEsensors.at(i).LYWSD02.temp!=-1000.0f){
+            WSContentSend_PD(HTTP_SNS_TEMP, MIBLESlaveLYWSD02, temperature, TempUnit());
+          }
+          if(MIBLEsensors.at(i).LYWSD02.hum!=-1.0f){
+            WSContentSend_PD(HTTP_SNS_HUM, MIBLESlaveLYWSD02, humidity);
+          }
           break;
         }
       }
     }
-  }
 #endif  // USE_WEBSERVER
 }
 

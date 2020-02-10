@@ -184,6 +184,9 @@ String GetDateAndTime(uint8_t time_type)
   uint32_t time = Rtc.local_time;
 
   switch (time_type) {
+    case DT_BOOTCOUNT:
+      time = Settings.bootcount_reset_time;
+      break;
     case DT_ENERGY:
       time = Settings.energy_kWhtotal_time;
       break;
@@ -396,9 +399,9 @@ void RtcSecond(void)
         Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
         Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
 
-        // Do not use AddLog here if syslog is enabled. UDP will force exception 9
-  //      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
-        ntp_synced_message = true;
+        // Do not use AddLog_P2 here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
+        PrepLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: Drift %d, (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+          DriftTime(), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
 
         if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
           rules_flag.time_init = 1;
@@ -438,7 +441,12 @@ void RtcSecond(void)
     }
     Rtc.local_time += Rtc.time_timezone;
     Rtc.time_timezone /= 60;
-    if (!Settings.energy_kWhtotal_time) { Settings.energy_kWhtotal_time = Rtc.local_time; }
+    if (!Settings.energy_kWhtotal_time) {
+      Settings.energy_kWhtotal_time = Rtc.local_time;
+    }
+    if (Settings.bootcount_reset_time < START_VALID_TIME) {
+      Settings.bootcount_reset_time = Rtc.local_time;
+    }
   }
 
   BreakTime(Rtc.local_time, RtcTime);

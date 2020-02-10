@@ -1,17 +1,59 @@
 ## Unreleased (development)
 
+### 8.1.0.6 20200205
+
+- Fix Hass sensor discovery part 1/4 by Federico Leoni (#7582, #7548)
+- Fix MaxPower functionality (#7647)
+- Add support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
+- Add commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
+- Add command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
+- Add support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
+- Add BootCount Reset Time as BCResetTime to ``Status 1``
+- Add ``ZbZNPReceived``and ``ZbZCLReceived`` being published to MQTT when ``SetOption66 1``
+- Add optional Wifi AccessPoint passphrase define WIFI_AP_PASSPHRASE in my_user_config.h (#7690)
+
+### 8.1.0.5 20200126
+
+- Change wifi connectivity stability (#7602)
+- Change IRremoteESP8266 library updated to v2.7.3
+- Fix PWM flickering at low levels (#7415)
+- Add ``SetOption84 1`` sends AWS IoT device shadow updates (alternative to retained)
+- Add ``ZbBind`` (experimental) and bug fixes
+
+### 8.1.0.4 20200116
+
+- Change Zigbee command prefix from ``Zigbee*`` to ``Zb*``
+- Fix ``PowerDelta`` zero power detection (#7515)
+- Fix OTA minimal gzipped detection regression from 8.1.0.3
+- Fix ``RGBWWTable`` ignored (#7572)
+- Add web page sliders when ``SetOption37 128`` is active allowing control of white(s)
+- Add Zigbee persistence and friendly names
+- Add most SetOptions as defines to my_user_config.h
+- Add SoftwareSerial to CSE7766 driver allowing different GPIOs (#7563)
+- Add optional parameter <startcolor> to command ``Scheme <scheme>, <startcolor>`` to control initial start color
+- Add rule trigger on one level deeper using syntax with two ``#`` like ``on zigbeereceived#vibration_sensor#aqaracubeside=0 do ...``
+
+### 8.1.0.3 20200106
+
+- Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
+- Change IRremoteESP8266 library updated to v2.7.2
+- Fix ``WakeUp <x>`` ignores provided value (#7473)
+- Fix exception 9 restart on log message in Ticker interrupt service routines NTP, Wemos and Hue emulation (#7496)
+- Add support for gzipped binaries
+- Add ``SwitchMode 8`` ToggleMulti, ``SwitchMode 9`` FollowMulti and ``SwitchMode 10`` FollowMultiInverted (#7522)
+
 ### 8.1.0.2 20191230
 
-- Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
-- Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
-- Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
-- Add experimental support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
-- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
 - Fix LCD line and column positioning (#7387)
 - Fix Display handling of hexadecimal escape characters (#7387)
 - Fix Improved fade linearity with gamma correction
 - Fix wrong gamma correction for Module 48 lights (PWM5 for CT)
-- Add SetOption82 to limit the CT range for Alexa to 200..380
+- Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
+- Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
+- Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
+- Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
+- Add experimental support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
+- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
 
 ### 8.1.0.1 20191225
 

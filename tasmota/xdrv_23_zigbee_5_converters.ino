@@ -39,10 +39,10 @@ class ZCLFrame {
 public:
 
   ZCLFrame(uint8_t frame_control, uint16_t manuf_code, uint8_t transact_seq, uint8_t cmd_id,
-    const char *buf, size_t buf_len, uint16_t clusterid = 0, uint16_t groupid = 0,
-    uint16_t srcaddr = 0, uint8_t srcendpoint = 0, uint8_t dstendpoint = 0, uint8_t wasbroadcast = 0,
-    uint8_t linkquality = 0, uint8_t securityuse = 0, uint8_t seqnumber = 0,
-    uint32_t timestamp = 0):
+    const char *buf, size_t buf_len, uint16_t clusterid, uint16_t groupid,
+    uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
+    uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
+    uint32_t timestamp):
     _cmd_id(cmd_id), _manuf_code(manuf_code), _transact_seq(transact_seq),
     _payload(buf_len ? buf_len : 250),      // allocate the data frame from source or preallocate big enough
     _cluster_id(clusterid), _group_id(groupid),
@@ -58,7 +58,7 @@ public:
   void log(void) {
     char hex_char[_payload.len()*2+2];
 		ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
+    Response_P(PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
                     "\"groupid\":%d," "\"clusterid\":%d," "\"srcaddr\":\"0x%04X\","
                     "\"srcendpoint\":%d," "\"dstendpoint\":%d," "\"wasbroadcast\":%d,"
                     "\"" D_CMND_ZIGBEE_LINKQUALITY "\":%d," "\"securityuse\":%d," "\"seqnumber\":%d,"
@@ -71,12 +71,18 @@ public:
                     _timestamp,
                     _frame_control, _manuf_code, _transact_seq, _cmd_id,
                     hex_char);
+    if (Settings.flag3.tuya_serial_mqtt_publish) {
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
+      XdrvRulesProcess();
+    } else {
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);
+    }
   }
 
   static ZCLFrame parseRawFrame(const SBuffer &buf, uint8_t offset, uint8_t len, uint16_t clusterid, uint16_t groupid,
-                                uint16_t srcaddr = 0, uint8_t srcendpoint = 0, uint8_t dstendpoint = 0, uint8_t wasbroadcast = 0,
-                                uint8_t linkquality = 0, uint8_t securityuse = 0, uint8_t seqnumber = 0,
-                                uint32_t timestamp = 0) { // parse a raw frame and build the ZCL frame object
+                                uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
+                                uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
+                                uint32_t timestamp) { // parse a raw frame and build the ZCL frame object
     uint32_t i = offset;
     ZCLHeaderFrameControl_t frame_control;
     uint16_t manuf_code = 0;
@@ -92,7 +98,10 @@ public:
     cmd_id = buf.get8(i++);
     ZCLFrame zcl_frame(frame_control.d8, manuf_code, transact_seq, cmd_id,
                        (const char *)(buf.buf() + i), len + offset - i,
-                       clusterid, groupid);
+                       clusterid, groupid,
+                       srcaddr, srcendpoint, dstendpoint, wasbroadcast,
+                       linkquality, securityuse, seqnumber,
+                       timestamp);
     return zcl_frame;
   }
 
@@ -356,7 +365,12 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
 
     // TODO
     case 0x39:      // float
-      i += 4;
+      {
+        uint32_t uint32_val = buf.get32(i);
+        float  * float_val = (float*) &uint32_val;
+        i += 4;
+        json[attrid_str] = *float_val;
+      }
       break;
 
     case 0xE0:      // ToD
@@ -401,7 +415,12 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
       i += 2;
       break;
     case 0x3A:      // double precision
-      i += 8;
+      {
+        uint64_t uint64_val = buf.get64(i);
+        double  * double_val = (double*) &uint64_val;
+        i += 8;
+        json[attrid_str] = *double_val;
+      }
       break;
   }
 
@@ -473,7 +492,7 @@ void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
   uint32_t len = _payload.len();
 
   char attrid_str[12];
-  snprintf_P(attrid_str, sizeof(attrid_str), PSTR("%04X!%02X"), _cmd_id, _cluster_id);
+  snprintf_P(attrid_str, sizeof(attrid_str), PSTR("%04X!%02X"), _cluster_id, _cmd_id);
 
   char hex_char[_payload.len()*2+2];
   ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
@@ -561,7 +580,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x000C, 0x0041,  "MaxPresentValue",      &Z_Copy },
   { 0x000C, 0x0045,  "MinPresentValue",      &Z_Copy },
   { 0x000C, 0x0051,  "OutOfService",         &Z_Copy },
-  { 0x000C, 0x0055,  "PresentValue",         &Z_Copy },
+  { 0x000C, 0x0055,  "AqaraRotate",          &Z_Copy },
   { 0x000C, 0x0057,  "PriorityArray",        &Z_Copy },
   { 0x000C, 0x0067,  "Reliability",          &Z_Copy },
   { 0x000C, 0x0068,  "RelinquishDefault",    &Z_Copy },
@@ -569,6 +588,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x000C, 0x006F,  "StatusFlags",          &Z_Copy },
   { 0x000C, 0x0075,  "EngineeringUnits",     &Z_Copy },
   { 0x000C, 0x0100,  "ApplicationType",      &Z_Copy },
+  { 0x000C, 0xFF05,  "Aqara_FF05",           &Z_Copy },
   // Binary Output cluster
   { 0x0010, 0x0004,  "ActiveText",           &Z_Copy },
   { 0x0010, 0x001C,  "Description",          &Z_Copy },
@@ -830,10 +850,10 @@ int32_t Z_FloatDiv10(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& 
 
 // Publish a message for `"Occupancy":0` when the timer expired
 int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, uint32_t value) {
-  // send Occupancy:false message
-  Response_P(PSTR("{\"" D_CMND_ZIGBEE_RECEIVED "\":{\"0x%04X\":{\"" OCCUPANCY "\":0}}}"), shortaddr);
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-  XdrvRulesProcess();
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& json = jsonBuffer.createObject();
+  json[F(OCCUPANCY)] = 0;
+  zigbee_devices.jsonPublishNow(shortaddr, json);
 }
 
 // Aqara Cube

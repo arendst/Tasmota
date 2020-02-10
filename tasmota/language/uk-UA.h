@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Розмір програми"
 #define D_PROJECT "Проект"
 #define D_RAIN "Дощ"
+#define D_RANGE "Range"
 #define D_RECEIVED "Отримано"
 #define D_RESTART "Перезавантаження"
 #define D_RESTARTING "Перезавантаження"
@@ -634,6 +635,8 @@
 #define D_SENSOR_SLAVE_RESET   "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
 #define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
 #define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
 

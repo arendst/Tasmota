@@ -31,6 +31,7 @@
 \*********************************************************************************************/
 
 #define CODE_IMAGE 0
+#define CODE_IMAGE_STR "tasmota"
 
 #define USE_LIGHT                           // Enable light control
 #define USE_ENERGY_SENSOR                   // Use energy sensors (+14k code)
@@ -73,6 +74,10 @@ const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 5
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
 
 // Changes to the following MAX_ defines need to be in line with enum SettingsTextIndex
+const uint8_t MAX_MQTT_PREFIXES = 3;        // Max number of MQTT prefixes (cmnd, stat, tele)
+const uint8_t MAX_SSIDS = 2;                // Max number of SSIDs
+const uint8_t MAX_STATE_TEXT = 4;           // Max number of State names (OFF, ON, TOGGLE, HOLD)
+const uint8_t MAX_NTP_SERVERS = 3;          // Max number of NTP servers
 const uint8_t MAX_RULE_MEMS = 16;           // Max number of saved vars
 const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
 const uint8_t MAX_BUTTON_TEXT = 16;         // Max number of GUI button labels
@@ -221,13 +226,14 @@ enum WeekInMonthOptions {Last, First, Second, Third, Fourth};
 enum DayOfTheWeekOptions {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
 enum MonthNamesOptions {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 enum HemisphereOptions {North, South};
-enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_ENERGY };
+enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_ENERGY, DT_BOOTCOUNT };
 
 enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
 
 enum WifiConfigOptions {WIFI_RESTART, EX_WIFI_SMARTCONFIG, WIFI_MANAGER, EX_WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, WIFI_SERIAL, WIFI_MANAGER_RESET_ONLY, MAX_WIFI_OPTION};
 
-enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, MAX_SWITCH_OPTION};
+enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, TOGGLEMULTI,
+                        FOLLOWMULTI, FOLLOWMULTI_INV, PUSHHOLDMULTI, PUSHHOLDMULTI_INV, MAX_SWITCH_OPTION};
 
 enum LedStateOptions {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT, MAX_LED_OPTION};
 
@@ -238,7 +244,7 @@ enum TopicOptions { CMND, STAT, TELE, nu1, RESULT_OR_CMND, RESULT_OR_STAT, RESUL
 enum ExecuteCommandPowerOptions { POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK, POWER_BLINK_STOP,
                                   POWER_OFF_NO_STATE = 8, POWER_ON_NO_STATE, POWER_TOGGLE_NO_STATE,
                                   POWER_SHOW_STATE = 16 };
-enum SendKeyPowerOptions { POWER_HOLD = 3, CLEAR_RETAIN = 9 };
+enum SendKeyPowerOptions { POWER_HOLD = 3, POWER_INCREMENT = 4, POWER_INV = 5, POWER_CLEAR = 6, CLEAR_RETAIN = 9 };
 enum SendKeyOptions { KEY_BUTTON, KEY_SWITCH };
 
 enum PowerOnStateOptions { POWER_ALL_OFF, POWER_ALL_ON, POWER_ALL_SAVED_TOGGLE, POWER_ALL_SAVED, POWER_ALL_ALWAYS_ON, POWER_ALL_OFF_PULSETIME_ON };

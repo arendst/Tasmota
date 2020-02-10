@@ -116,6 +116,7 @@ void ILI9488_InitDriver()
     if (I2cEnabled(XI2C_38) && I2cSetDevice(FT6236_address)) {
       FT6236begin(FT6236_address);
       FT6236_found=1;
+      I2cSetActiveFound(FT6236_address, "FT6236");
     } else {
       FT6236_found=0;
     }
