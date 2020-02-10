@@ -519,4 +519,48 @@ void GetFeatures(void)
 //  feature5 |= 0x40000000;
 //  feature5 |= 0x80000000;
 
+/*********************************************************************************************/
+
+  feature6 = 0x00000000;
+
+//  feature6 |= 0x00000001;
+//  feature6 |= 0x00000002;
+//  feature6 |= 0x00000004;
+//  feature6 |= 0x00000008;
+
+//  feature6 |= 0x00000010;
+//  feature6 |= 0x00000020;
+//  feature6 |= 0x00000040;
+//  feature6 |= 0x00000080;
+
+//  feature6 |= 0x00000100;
+//  feature6 |= 0x00000200;
+//  feature6 |= 0x00000400;
+//  feature6 |= 0x00000800;
+
+//  feature6 |= 0x00001000;
+//  feature6 |= 0x00002000;
+//  feature6 |= 0x00004000;
+//  feature6 |= 0x00008000;
+
+//  feature6 |= 0x00010000;
+//  feature6 |= 0x00020000;
+//  feature6 |= 0x00040000;
+//  feature6 |= 0x00080000;
+
+//  feature6 |= 0x00100000;
+//  feature6 |= 0x00200000;
+//  feature6 |= 0x00400000;
+//  feature6 |= 0x00800000;
+
+//  feature6 |= 0x01000000;
+//  feature6 |= 0x02000000;
+//  feature6 |= 0x04000000;
+//  feature6 |= 0x08000000;
+
+//  feature6 |= 0x10000000;
+//  feature6 |= 0x20000000;
+//  feature6 |= 0x40000000;
+//  feature6 |= 0x80000000;
+
 }

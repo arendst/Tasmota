@@ -98,3 +98,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add BootCount Reset Time as BCResetTime to ``Status 1``
 - Add ``ZbZNPReceived``and ``ZbZCLReceived`` being published to MQTT when ``SetOption66 1``
 - Add optional Wifi AccessPoint passphrase define WIFI_AP_PASSPHRASE in my_user_config.h (#7690)
+- Add support for FiF LE-01MR energy meter by saper-2 (#7584)

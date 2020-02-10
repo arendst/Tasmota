@@ -16,29 +16,30 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_LE01MR
 /*********************************************************************************************\
- * F&F LE-01MR - This is a single phase energy meter with rs485 modbus interface 
+ * F&F LE-01MR - This is a single phase energy meter with rs485 modbus interface
  *               (and bidirectional energy counting - enabled by RS485).
  * It measure: Active energy imported AE+ [kWh] , Reactive energy imported RE+ [kvarh],
  *             Voltage V [V], Current I [A], Frequency F [Hz], power factor (aka "cos-phi"),
  *             Active power P [kW], Reactive power Q [kVAr], Apparent power S [kVA],
- *             *Active energy exported AE- [kWh] (when meter is switched to bi-directional counting then 
+ *             *Active energy exported AE- [kWh] (when meter is switched to bi-directional counting then
  *                  reactive energy imported register contains value of Active energy exported).
  *
  * Meter descriptions at manufacturer page (english version have some description errors):
  *    EN: https://www.fif.com.pl/en/usage-electric-power-meters/517-electricity-consumption-meter-le-01mr.html
  *    PL: https://www.fif.com.pl/pl/liczniki-zuzycia-energii-elektrycznej/517-licznik-zuzycia-energii-le-01mr.html
- * 
- * Note about communication settings: The meter must be reconfigured to use baudrate 2400 (or 9600) *without* 
- *                                    parity bit - by default the meter is configured to 9600 8E1 
- *                                    (Frame format: "EVEN 1") . To make those changes, use LE-Config 
+ *
+ * Note about communication settings: The meter must be reconfigured to use baudrate 2400 (or 9600) *without*
+ *                                    parity bit - by default the meter is configured to 9600 8E1
+ *                                    (Frame format: "EVEN 1") . To make those changes, use LE-Config
  *                                    software (can be found in download tab in product page - link above)
  *                                    and USB-RS485 dongle (those cheap ~2$ from ali works fine)
- * 
+ *
  * Register descriptions (not all, only those that are being read):
- * 
+ *
  * /----------------------------------- Register address
  * |        /-------------------------- Registers count
  * |        |   /---------------------- Datatype and size
@@ -54,14 +55,14 @@
  * 0x0158   1   S16  0.001  -     Power factor
  * 0xA000   2   U32  0.01   kWh   Active energy imported
  * 0xA01E   2   U32  0.01   kvarh Reactive energy imported
- * 
- * Datatype: S = signed int, U = unsigend int, 
- *           U32 - the first (lower) register contains high word, 
+ *
+ * Datatype: S = signed int, U = unsigend int,
+ *           U32 - the first (lower) register contains high word,
  *                 second register contains lower word of 32bit dword:
- *                   value_32bit = (register+0)<<16 | (register+1); 
+ *                   value_32bit = (register+0)<<16 | (register+1);
  *                   /or/ val32bit = (reg+0)*65536 + (reg+1);
- * 
- * Note about MQTT/JSON: In fields "ENERGY.TotalActive" and "ENERGY.TotalReactive" there are 
+ *
+ * Note about MQTT/JSON: In fields "ENERGY.TotalActive" and "ENERGY.TotalReactive" there are
  *                        counters values directly from the meter (without Tasmota calculation,
  *                        energy used calculated by Tasmota is in Total/Today fields ).
  *                       Filed "ENERGY.Period" is always zero.
@@ -87,7 +88,7 @@ const uint16_t le01mr_register_addresses[] {
             // IDX                               (reg count/datatype)    [unit]
   0x0130,   // 00 . LE01MR_FREQUENCY             (1/U16)    [Hz]
   0x0131,   // 01 . LE01MR_VOLTAGE               (1/U16)    [V]
-  0x0158,   // 02 . LE01MR_POWER_FACTOR          (1/S16)      
+  0x0158,   // 02 . LE01MR_POWER_FACTOR          (1/S16)
   0x0139,   // 03 . LE01MR_CURRENT               (2/U32)    [A]
   0x0140,   // 04 . LE01MR_ACTIVE_POWER          (2/U32)    [kW]
   0x0148,   // 05 . LE01MR_REACTIVE_POWER        (2/U32)    [kvar]
@@ -143,8 +144,8 @@ void FifLEEvery250ms(void)
       // S16 -  int16_t
       // everything drop into uint32 value, but depending on register ther will be 2 or 4 bytes
       uint32_t value_buff = 0;
-      // for register table items 0..2 use 2 bytes (U16) 
-      if (Le01mr.read_state >= 0 &&  Le01mr.read_state < 3) { // 
+      // for register table items 0..2 use 2 bytes (U16)
+      if (Le01mr.read_state >= 0 &&  Le01mr.read_state < 3) { //
         value_buff = ((uint32_t)buffer[3])<<8 | buffer[4];
       } else {
         value_buff = ((uint32_t)buffer[3])<<24 | ((uint32_t)buffer[4])<<16 | ((uint32_t)buffer[5])<<8 | buffer[6];
@@ -166,7 +167,7 @@ void FifLEEvery250ms(void)
         case 3:
           Energy.current[0] = value_buff * 0.001f; // 114 => 0.114 A
           break;
-        
+
         case 4:
           Energy.active_power[0] = value_buff * 1.0f; // P [W]
           break;
@@ -247,7 +248,6 @@ void FifLEShow(bool json)
   dtostrfd(Le01mr.total_reactive, Settings.flag2.energy_resolution, total_reactive_chr);
   char total_active_chr[FLOATSZ];
   dtostrfd(Le01mr.total_active, Settings.flag2.energy_resolution, total_active_chr);
-  
 
   if (json) {
     ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_ACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s"),
@@ -270,7 +270,7 @@ bool Xnrg13(uint8_t function)
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
       if (uptime > 4) {
-          FifLEEvery250ms(); 
+          FifLEEvery250ms();
       }
       break;
     case FUNC_JSON_APPEND:
