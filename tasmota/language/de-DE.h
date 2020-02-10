@@ -683,7 +683,7 @@
 #define D_TOTAL_REACTIVE  "Total Blind"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Grad"
-#define D_TOTAL_ACTIVE    "Total Active"
+#define D_TOTAL_ACTIVE    "Total Wirk"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Spannung"
