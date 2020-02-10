@@ -2,7 +2,7 @@
 
 ### 8.1.0.7 20200210
 
-- Bump version
+- Add new DHT driver. The old driver can still be used using define USE_DHT_OLD (#7468)
 
 ### 8.1.0.6 20200205
 

@@ -99,3 +99,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add ``ZbZNPReceived``and ``ZbZCLReceived`` being published to MQTT when ``SetOption66 1``
 - Add optional Wifi AccessPoint passphrase define WIFI_AP_PASSPHRASE in my_user_config.h (#7690)
 - Add support for FiF LE-01MR energy meter by saper-2 (#7584)
+- Add new DHT driver. The old driver can still be used using define USE_DHT_OLD (#7468)
