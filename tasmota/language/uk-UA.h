@@ -637,6 +637,8 @@
 #define D_SENSOR_GPS_TX        "GPS TX"
 #define D_SENSOR_HM10_RX       "HM10 RX"
 #define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
 
 // Units
 #define D_UNIT_AMPERE                    "А"
@@ -672,7 +674,7 @@
 #define D_UNIT_WATTHOUR                  "Вт/г"
 #define D_UNIT_WATT_METER_QUADRAT        "Вт/м²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Кут фази"
 #define D_IMPORT_ACTIVE   "Активна вхід"
 #define D_EXPORT_ACTIVE   "Активна вихід"
@@ -681,6 +683,7 @@
 #define D_TOTAL_REACTIVE  "Всього реактивна"
 #define D_UNIT_KWARH      "кВАр/г"
 #define D_UNIT_ANGLE      "Град"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Напруга"

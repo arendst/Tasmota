@@ -637,6 +637,8 @@
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_HM10_RX       "HM10 RX"
 #define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -672,7 +674,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Angle de phase"
 #define D_IMPORT_ACTIVE   "Énergie act conso"
 #define D_EXPORT_ACTIVE   "Énergie act fournie"
@@ -681,6 +683,7 @@
 #define D_TOTAL_REACTIVE  "Énergie réa totale"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "°"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "Tension PV1"

@@ -510,8 +510,9 @@ void GetFeatures(void)
 #ifdef USE_HM10
   feature5 |= 0x04000000;  // xsns_62_MI_HM10.ino
 #endif
-
-//  feature5 |= 0x08000000;
+#ifdef USE_LE01MR
+  feature5 |= 0x08000000;  // xnrg_13_fif_le01mr.ino
+#endif
 
 //  feature5 |= 0x10000000;
 //  feature5 |= 0x20000000;
