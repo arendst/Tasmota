@@ -683,13 +683,13 @@
 #define D_TOTAL_REACTIVE  "P. Reactiva Total"
 #define D_UNIT_KWARH      "kVArH"
 #define D_UNIT_ANGLE      "Grados"
-#define D_TOTAL_ACTIVE    "Total Active"
+#define D_TOTAL_ACTIVE    "P. Total Activa"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltaje"
 #define D_PV1_CURRENT     "PV1 Corriente"
 #define D_PV1_POWER       "PV1 Potencia"
-#define D_PV2_VOLTAGE     "PV2 Voltaee"
+#define D_PV2_VOLTAGE     "PV2 Voltaje"
 #define D_PV2_CURRENT     "PV2 Corriente"
 #define D_PV2_POWER       "PV2 Potencia"
 #define D_SOLAR_POWER     "Potencia Solar"
