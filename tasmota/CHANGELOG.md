@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.1.0.7 20200210
+
+- Bump version
+
 ### 8.1.0.6 20200205
 
 - Fix Hass sensor discovery part 1/4 by Federico Leoni (#7582, #7548)
