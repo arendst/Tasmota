@@ -169,7 +169,7 @@ enum UserSelectablePins {
   GPIO_SM16716_SEL,    // SM16716 SELECT
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
-  GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
+  GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2) - Not used anymore 20200121
   GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_ARIRFRCV,       // AriLux RF Receive input
   GPIO_TXD,            // Serial interface
@@ -216,6 +216,12 @@ enum UserSelectablePins {
   GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
   GPIO_GPS_RX,         // GPS serial interface
   GPIO_GPS_TX,         // GPS serial interface
+  GPIO_DSB_OUT,        // Pseudo Single wire DS18B20 or DS18S20
+  GPIO_DHT11_OUT,      // Pseudo Single wire DHT11, DHT21, DHT22, AM2301, AM2302, AM2321
+  GPIO_HM10_RX,        // HM10-BLE-Mijia-bridge serial interface
+  GPIO_HM10_TX,        // HM10-BLE-Mijia-bridge serial interface
+  GPIO_LE01MR_RX,      // F&F LE-01MR energy meter
+  GPIO_LE01MR_TX,      // F&F LE-01MR energy meter
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -296,7 +302,10 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
   D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
-  D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX
+  D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX "|"
+  D_SENSOR_DS18X20 "o|" D_SENSOR_DHT11 "o|"
+  D_SENSOR_HM10_RX "|" D_SENSOR_HM10_TX "|"
+  D_SENSOR_LE01MR_RX "|" D_SENSOR_LE01MR_TX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -311,7 +320,7 @@ enum UserSelectableAdc0 {
   ADC0_LIGHT,          // Light sensor
   ADC0_BUTTON,         // Button
   ADC0_BUTTON_INV,
-  ADC0_MOIST,          // Moisture
+  ADC0_RANGE,          // Range
   ADC0_CT_POWER,       // Current
 //  ADC0_SWITCH,         // Switch
 //  ADC0_SWITCH_INV,
@@ -328,7 +337,7 @@ const char kAdc0Names[] PROGMEM =
   D_SENSOR_NONE "|" D_ANALOG_INPUT "|"
   D_TEMPERATURE "|" D_LIGHT "|"
   D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "i|"
-  D_MOISTURE "|"
+  D_RANGE "|"
   D_CT_POWER "|"
 //  D_SENSOR_SWITCH "|" D_SENSOR_SWITCH "i|"
   ;
@@ -559,9 +568,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_DHT11,          // DHT11
   GPIO_DHT22,          // DHT21, DHT22, AM2301, AM2302, AM2321
   GPIO_SI7021,         // iTead SI7021
+  GPIO_DHT11_OUT,      // Pseudo Single wire DHT11, DHT21, DHT22, AM2301, AM2302, AM2321
 #endif
 #ifdef USE_DS18x20
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
+  GPIO_DSB_OUT,        // Pseudo Single wire DS18B20 or DS18S20
 #endif
 
 // Light
@@ -676,6 +687,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
 #endif // USE_SOLAX_X1
+#ifdef USE_LE01MR
+  GPIO_LE01MR_RX,     // F7F LE-01MR energy meter rx pin
+  GPIO_LE01MR_TX,     // F7F LE-01MR energy meter tx pin
+#endif // IFDEF:USE_LE01MR
 #endif  // USE_ENERGY_SENSOR
 
 // Serial
@@ -736,6 +751,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_GPS
   GPIO_GPS_RX,         // GPS serial interface
   GPIO_GPS_TX,         // GPS serial interface
+#endif
+#ifdef USE_HM10
+  GPIO_HM10_RX,         // GPS serial interface
+  GPIO_HM10_TX,         // GPS serial interface
 #endif
 
 #ifdef USE_MGC3130
@@ -1682,10 +1701,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0
   },
   { "Shelly 1",        // SHELLY1 - Shelly1 Open Source (ESP8266 - 2MB) - https://shelly.cloud/shelly1-open-source/
-     0,                // GPIO00 - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
-     0,                // GPIO01 Serial RXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
+     GPIO_USER,        // GPIO00 - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
+     GPIO_USER,        // GPIO01 Serial RXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
      0,
-     0,                // GPIO03 Serial TXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
+     GPIO_USER,        // GPIO03 Serial TXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
      GPIO_REL1,        // GPIO04 Relay (0 = Off, 1 = On)
      GPIO_SWT1_NP,     // GPIO05 SW pin
                        // GPIO06 (SD_CLK   Flash)

@@ -164,7 +164,7 @@ void MqttDiscoverServer(void)
 
 // Max message size calculated by PubSubClient is (MQTT_MAX_PACKET_SIZE < 5 + 2 + strlen(topic) + plength)
 #if (MQTT_MAX_PACKET_SIZE -TOPSZ -7) < MIN_MESSZ  // If the max message size is too small, throw an error at compile time. See PubSubClient.cpp line 359
-  #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 1000"
+  #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 1200"
 #endif
 
 #ifdef USE_MQTT_TLS
@@ -221,6 +221,15 @@ void MqttUnsubscribeLib(const char *topic)
 
 bool MqttPublishLib(const char* topic, bool retained)
 {
+  // If Prefix1 equals Prefix2 disable next MQTT subscription to prevent loop
+  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
+    char *str = strstr(topic, SettingsText(SET_MQTTPREFIX1));
+    if (str == topic) {
+      mqtt_cmnd_blocked_reset = 4;  // Allow up to four seconds before resetting residual cmnd blocks
+      mqtt_cmnd_blocked++;
+    }
+  }
+
   bool result = MqttClient.publish(topic, mqtt_data, retained);
   yield();  // #3313
   return result;
@@ -238,12 +247,8 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   // Do not execute multiple times if Prefix1 equals Prefix2
   if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
     char *str = strstr(mqtt_topic, SettingsText(SET_MQTTPREFIX1));
-    if ((str == mqtt_topic) && mqtt_cmnd_publish) {
-      if (mqtt_cmnd_publish > 3) {
-        mqtt_cmnd_publish -= 3;
-      } else {
-        mqtt_cmnd_publish = 0;
-      }
+    if ((str == mqtt_topic) && mqtt_cmnd_blocked) {
+      mqtt_cmnd_blocked--;
       return;
     }
   }
@@ -291,52 +296,41 @@ void MqttUnsubscribe(const char *topic)
 
 void MqttPublishLogging(const char *mxtime)
 {
-  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if (MqttIsConnected()) {
+  char saved_mqtt_data[strlen(mqtt_data) +1];
+  memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
 
-      char saved_mqtt_data[MESSZ];
-      memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
-//      ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), log_data);  // Will fail as some messages contain JSON
-      Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
+//    ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), log_data);  // Will fail as some messages contain JSON
+  Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
+  char stopic[TOPSZ];
+  GetTopic_P(stopic, STAT, mqtt_topic, PSTR("LOGGING"));
+  MqttPublishLib(stopic, false);
 
-      char romram[33];
-      char stopic[TOPSZ];
-      snprintf_P(romram, sizeof(romram), PSTR("LOGGING"));
-      GetTopic_P(stopic, STAT, mqtt_topic, romram);
-
-      char *me;
-      if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
-        me = strstr(stopic, SettingsText(SET_MQTTPREFIX1));
-        if (me == stopic) {
-          mqtt_cmnd_publish += 3;
-        }
-      }
-      MqttPublishLib(stopic, false);
-
-      memcpy(mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
-    }
-  }
+  memcpy(mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
 }
 
-void MqttPublishDirect(const char* topic, bool retained)
+void MqttPublish(const char* topic, bool retained)
 {
-  char sretained[CMDSZ];
-  char slog_type[20];
-
 #ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("MqttPublishDirect"));
+  ShowFreeMem(PSTR("MqttPublish"));
 #endif
 
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+//  if (retained) {
+//    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
+//  }
+  retained = false;   // AWS IoT does not support retained, it will disconnect if received
+#endif
+
+  char sretained[CMDSZ];
   sretained[0] = '\0';
+  char slog_type[20];
   snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
 
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if (MqttIsConnected()) {
-      if (MqttPublishLib(topic, retained)) {
-        snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
-        if (retained) {
-          snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
-        }
+    if (MqttPublishLib(topic, retained)) {
+      snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
+      if (retained) {
+        snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
       }
     }
   }
@@ -354,25 +348,6 @@ void MqttPublishDirect(const char* topic, bool retained)
   }
 }
 
-void MqttPublish(const char* topic, bool retained)
-{
-  char *me;
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  if (retained) {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
-  }
-  retained = false;   // AWS IoT does not support retained, it will disconnect if received
-#endif
-
-  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
-    me = strstr(topic, SettingsText(SET_MQTTPREFIX1));
-    if (me == topic) {
-      mqtt_cmnd_publish += 3;
-    }
-  }
-  MqttPublishDirect(topic, retained);
-}
-
 void MqttPublish(const char* topic)
 {
   MqttPublish(topic, false);
@@ -387,7 +362,7 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
  * prefix 5 = stat using subtopic or RESULT
  * prefix 6 = tele using subtopic or RESULT
  */
-  char romram[33];
+  char romram[64];
   char stopic[TOPSZ];
 
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !Settings.flag.mqtt_response) ? S_RSLT_RESULT : subtopic);  // SetOption4 - Switch between MQTT RESULT or COMMAND
@@ -397,6 +372,36 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
   prefix &= 3;
   GetTopic_P(stopic, prefix, mqtt_topic, romram);
   MqttPublish(stopic, retained);
+
+#ifdef USE_MQTT_AWS_IOT
+  if ((prefix > 0) && (Settings.flag4.awsiot_shadow)) {    // placeholder for SetOptionXX
+    // compute the target topic
+    char *topic = SettingsText(SET_MQTT_TOPIC);
+    char topic2[strlen(topic)+1];       // save buffer onto stack
+    strcpy(topic2, topic);
+    // replace any '/' with '_'
+    char *s = topic2;
+    while (*s) {
+      if ('/' == *s) {
+        *s = '_';
+      }
+      s++;
+    }
+    // update topic is "$aws/things/<topic>/shadow/update"
+    snprintf_P(romram, sizeof(romram), PSTR("$aws/things/%s/shadow/update"), topic2);
+
+    // copy buffer
+    char *mqtt_save = (char*) malloc(strlen(mqtt_data)+1);
+    if (!mqtt_save) { return; }    // abort
+    strcpy(mqtt_save, mqtt_data);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"state\":{\"reported\":%s}}"), mqtt_save);
+    free(mqtt_save);
+
+    bool result = MqttClient.publish(romram, mqtt_data, false);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Updated shadow: %s"), romram);
+    yield();  // #3313
+  }
+#endif // USE_MQTT_AWS_IOT
 }
 
 void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic)
@@ -692,11 +697,6 @@ void MqttCheck(void)
     if (!MqttIsConnected()) {
       global_state.mqtt_down = 1;
       if (!Mqtt.retry_counter) {
-#ifdef USE_DISCOVERY
-#ifdef MQTT_HOST_DISCOVERY
-        if (!strlen(SettingsText(SET_MQTT_HOST)) && !Wifi.mdns_begun) { return; }
-#endif  // MQTT_HOST_DISCOVERY
-#endif  // USE_DISCOVERY
         MqttReconnect();
       } else {
         Mqtt.retry_counter--;
@@ -706,7 +706,9 @@ void MqttCheck(void)
     }
   } else {
     global_state.mqtt_down = 0;
-    if (Mqtt.initial_connection_state) MqttReconnect();
+    if (Mqtt.initial_connection_state) {
+      MqttReconnect();
+    }
   }
 }
 
@@ -789,14 +791,18 @@ void CmndMqttRetry(void)
 
 void CmndStateText(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
-    if (XdrvMailbox.data_len > 0) {
-      for (uint32_t i = 0; i <= XdrvMailbox.data_len; i++) {
-        if (XdrvMailbox.data[i] == ' ') XdrvMailbox.data[i] = '_';
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_STATE_TEXT)) {
+    if (!XdrvMailbox.usridx) {
+      ResponseCmndAll(SET_STATE_TXT1, MAX_STATE_TEXT);
+    } else {
+      if (XdrvMailbox.data_len > 0) {
+        for (uint32_t i = 0; i <= XdrvMailbox.data_len; i++) {
+          if (XdrvMailbox.data[i] == ' ') XdrvMailbox.data[i] = '_';
+        }
+        SettingsUpdateText(SET_STATE_TXT1 + XdrvMailbox.index -1, XdrvMailbox.data);
       }
-      SettingsUpdateText(SET_STATE_TXT1 + XdrvMailbox.index -1, XdrvMailbox.data);
+      ResponseCmndIdxChar(GetStateText(XdrvMailbox.index -1));
     }
-    ResponseCmndIdxChar(GetStateText(XdrvMailbox.index -1));
   }
 }
 
@@ -828,32 +834,35 @@ void CmndFullTopic(void)
 
 void CmndPrefix(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
-
-    if (XdrvMailbox.data_len > 0) {
-      MakeValidMqtt(0, XdrvMailbox.data);
-      SettingsUpdateText(SET_MQTTPREFIX1 + XdrvMailbox.index -1,
-        (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index) ? SUB_PREFIX : (2==XdrvMailbox.index) ? PUB_PREFIX : PUB_PREFIX2 : XdrvMailbox.data);
-      restart_flag = 2;
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_MQTT_PREFIXES)) {
+    if (!XdrvMailbox.usridx) {
+      ResponseCmndAll(SET_MQTTPREFIX1, MAX_MQTT_PREFIXES);
+    } else {
+      if (XdrvMailbox.data_len > 0) {
+        MakeValidMqtt(0, XdrvMailbox.data);
+        SettingsUpdateText(SET_MQTTPREFIX1 + XdrvMailbox.index -1,
+          (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index) ? SUB_PREFIX : (2==XdrvMailbox.index) ? PUB_PREFIX : PUB_PREFIX2 : XdrvMailbox.data);
+        restart_flag = 2;
+      }
+      ResponseCmndIdxChar(SettingsText(SET_MQTTPREFIX1 + XdrvMailbox.index -1));
     }
-    ResponseCmndIdxChar(SettingsText(SET_MQTTPREFIX1 + XdrvMailbox.index -1));
   }
 }
 
 void CmndPublish(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    char *mqtt_part = strtok(XdrvMailbox.data, " ");
+    char *payload_part;
+    char *mqtt_part = strtok_r(XdrvMailbox.data, " ", &payload_part);
     if (mqtt_part) {
       char stemp1[TOPSZ];
       strlcpy(stemp1, mqtt_part, sizeof(stemp1));
-      mqtt_part = strtok(nullptr, " ");
-      if (mqtt_part) {
-        strlcpy(mqtt_data, mqtt_part, sizeof(mqtt_data));
+      if ((payload_part != nullptr) && strlen(payload_part)) {
+        strlcpy(mqtt_data, payload_part, sizeof(mqtt_data));
       } else {
         mqtt_data[0] = '\0';
       }
-      MqttPublishDirect(stemp1, (XdrvMailbox.index == 2));
+      MqttPublish(stemp1, (XdrvMailbox.index == 2));
 //      ResponseCmndDone();
       mqtt_data[0] = '\0';
     }
@@ -979,8 +988,10 @@ void CmndSensorRetain(void)
 \*********************************************************************************************/
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
 
-const static uint16_t tls_spi_start_sector = SPIFFS_END + 4;  // 0xXXFF
-const static uint8_t* tls_spi_start    = (uint8_t*) ((tls_spi_start_sector * SPI_FLASH_SEC_SIZE) + 0x40200000);  // 0x40XFF000
+// const static uint16_t tls_spi_start_sector = SPIFFS_END + 4;  // 0xXXFF
+// const static uint8_t* tls_spi_start    = (uint8_t*) ((tls_spi_start_sector * SPI_FLASH_SEC_SIZE) + 0x40200000);  // 0x40XFF000
+const static uint16_t tls_spi_start_sector = 0xFF;  // Force last bank of first MB
+const static uint8_t* tls_spi_start    = (uint8_t*) 0x402FF000;  // 0x402FF000
 const static size_t   tls_spi_len      = 0x1000;  // 4kb blocs
 const static size_t   tls_block_offset = 0x0400;
 const static size_t   tls_block_len    = 0x0400;   // 1kb
@@ -1137,8 +1148,12 @@ void CmndTlsDump(void) {
   uint32_t start = (uint32_t)tls_spi_start + tls_block_offset;
   uint32_t end   = start + tls_block_len -1;
   for (uint32_t pos = start; pos < end; pos += 0x10) {
-      uint32_t* values = (uint32_t*)(pos);
-      Serial.printf_P(PSTR("%08x:  %08x %08x %08x %08x\n"), pos, bswap32(values[0]), bswap32(values[1]), bswap32(values[2]), bswap32(values[3]));
+    uint32_t* values = (uint32_t*)(pos);
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+    Serial.printf("%08x:  %08x %08x %08x %08x\n", pos, bswap32(values[0]), bswap32(values[1]), bswap32(values[2]), bswap32(values[3]));
+#else
+    Serial.printf_P(PSTR("%08x:  %08x %08x %08x %08x\n"), pos, bswap32(values[0]), bswap32(values[1]), bswap32(values[2]), bswap32(values[3]));
+#endif
   }
 }
 #endif  // DEBUG_DUMP_TLS

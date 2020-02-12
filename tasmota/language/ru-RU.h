@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Размер программы "
 #define D_PROJECT "Проект"
 #define D_RAIN "Rain"
+#define D_RANGE "Range"
 #define D_RECEIVED "Получено"
 #define D_RESTART "Перезапуск"
 #define D_RESTARTING "Перезапуск"
@@ -634,6 +635,10 @@
 #define D_SENSOR_SLAVE_RESET "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
 
 // Units
 #define D_UNIT_AMPERE "А"
@@ -669,7 +674,7 @@
 #define D_UNIT_WATTHOUR "ВтЧ"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Угол фазы"
 #define D_IMPORT_ACTIVE   "Импорт активной мощности"
 #define D_EXPORT_ACTIVE   "Экспорт активной мощности"
@@ -678,6 +683,7 @@
 #define D_TOTAL_REACTIVE  "Итого реактивная мощность"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Град"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltage"

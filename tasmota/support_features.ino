@@ -484,32 +484,83 @@ void GetFeatures(void)
   feature5 |= 0x00020000;  // xsns_55_hih_series.ino
 #endif
 #ifdef USE_HPMA
-  feature5 |= 0x00040000;
+  feature5 |= 0x00040000;  // xsns_56_hpma.ino
 #endif
 #ifdef USE_TSL2591
-  feature5 |= 0x00080000;
+  feature5 |= 0x00080000;  // xsns_57_tsl2591.ino
 #endif
 #ifdef USE_DHT12
-  feature5 |= 0x00100000;
+  feature5 |= 0x00100000;  // xsns_58_dht12.ino
 #endif
 #ifdef USE_DS1624
-  feature5 |= 0x00200000;
+  feature5 |= 0x00200000;  // xsns_59_ds1624.ino
 #endif
 #ifdef USE_GPS
-  feature5 |= 0x00400000;
+  feature5 |= 0x00400000;  // xsns_60_GPS.ino
 #endif
 #ifdef USE_HOTPLUG
-  feature5 |= 0x00800000;
+  feature5 |= 0x00800000;  // xdrv_32_hotplug.ino
 #endif
-
-//  feature5 |= 0x01000000;
-//  feature5 |= 0x02000000;
-//  feature5 |= 0x04000000;
-//  feature5 |= 0x08000000;
+#ifdef USE_NRF24
+  feature5 |= 0x01000000;  // xsns_33_nrf24l01.ino
+#endif
+#ifdef USE_MIBLE
+  feature5 |= 0x02000000;  // xsns_61_MI_BLE.ino
+#endif
+#ifdef USE_HM10
+  feature5 |= 0x04000000;  // xsns_62_MI_HM10.ino
+#endif
+#ifdef USE_LE01MR
+  feature5 |= 0x08000000;  // xnrg_13_fif_le01mr.ino
+#endif
 
 //  feature5 |= 0x10000000;
 //  feature5 |= 0x20000000;
 //  feature5 |= 0x40000000;
 //  feature5 |= 0x80000000;
+
+/*********************************************************************************************/
+
+  feature6 = 0x00000000;
+
+//  feature6 |= 0x00000001;
+//  feature6 |= 0x00000002;
+//  feature6 |= 0x00000004;
+//  feature6 |= 0x00000008;
+
+//  feature6 |= 0x00000010;
+//  feature6 |= 0x00000020;
+//  feature6 |= 0x00000040;
+//  feature6 |= 0x00000080;
+
+//  feature6 |= 0x00000100;
+//  feature6 |= 0x00000200;
+//  feature6 |= 0x00000400;
+//  feature6 |= 0x00000800;
+
+//  feature6 |= 0x00001000;
+//  feature6 |= 0x00002000;
+//  feature6 |= 0x00004000;
+//  feature6 |= 0x00008000;
+
+//  feature6 |= 0x00010000;
+//  feature6 |= 0x00020000;
+//  feature6 |= 0x00040000;
+//  feature6 |= 0x00080000;
+
+//  feature6 |= 0x00100000;
+//  feature6 |= 0x00200000;
+//  feature6 |= 0x00400000;
+//  feature6 |= 0x00800000;
+
+//  feature6 |= 0x01000000;
+//  feature6 |= 0x02000000;
+//  feature6 |= 0x04000000;
+//  feature6 |= 0x08000000;
+
+//  feature6 |= 0x10000000;
+//  feature6 |= 0x20000000;
+//  feature6 |= 0x40000000;
+//  feature6 |= 0x80000000;
 
 }

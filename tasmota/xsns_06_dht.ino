@@ -34,7 +34,9 @@
 uint32_t dht_max_cycles;
 uint8_t dht_data[5];
 uint8_t dht_sensors = 0;
+uint8_t dht_pin_out = 0;                      // Shelly GPIO00 output only
 bool dht_active = true;                       // DHT configured
+bool dht_dual_mode = false;                   // Single pin mode
 
 struct DHTSTRUCT {
   uint8_t     pin;
@@ -49,7 +51,11 @@ struct DHTSTRUCT {
 void DhtReadPrep(void)
 {
   for (uint32_t i = 0; i < dht_sensors; i++) {
-    digitalWrite(Dht[i].pin, HIGH);
+    if (!dht_dual_mode) {
+      digitalWrite(Dht[i].pin, HIGH);
+    } else {
+      digitalWrite(dht_pin_out, HIGH);
+    }
   }
 }
 
@@ -72,28 +78,91 @@ bool DhtRead(uint8_t sensor)
 
   dht_data[0] = dht_data[1] = dht_data[2] = dht_data[3] = dht_data[4] = 0;
 
-//  digitalWrite(Dht[sensor].pin, HIGH);
-//  delay(250);
-
   if (Dht[sensor].lastresult > DHT_MAX_RETRY) {
     Dht[sensor].lastresult = 0;
-    digitalWrite(Dht[sensor].pin, HIGH);  // Retry read prep
+    if (!dht_dual_mode) {
+      digitalWrite(Dht[sensor].pin, HIGH);  // Retry read prep
+    } else {
+      digitalWrite(dht_pin_out, HIGH);
+    }
     delay(250);
   }
-  pinMode(Dht[sensor].pin, OUTPUT);
-  digitalWrite(Dht[sensor].pin, LOW);
 
-  if (GPIO_SI7021 == Dht[sensor].type) {
-    delayMicroseconds(500);
+  // Activate sensor using its protocol
+  noInterrupts();
+  if (!dht_dual_mode) {
+    pinMode(Dht[sensor].pin, OUTPUT);
+    digitalWrite(Dht[sensor].pin, LOW);
   } else {
-    delay(20);
+    digitalWrite(dht_pin_out, LOW);
   }
 
-  noInterrupts();
-  digitalWrite(Dht[sensor].pin, HIGH);
-  delayMicroseconds(40);
+  switch (Dht[sensor].type) {
+    case GPIO_SI7021: // Start protocol for iTead SI7021
+      /*
+      Protocol:
+      Reverse-engineered on https://github.com/arendst/Tasmota/issues/735#issuecomment-348718383:
+      1. MCU PULLS LOW data bus for at 500us to activate sensor
+      2. MCU PULLS UP data bus for ~40us to ask sensor for response
+      3. SENSOR starts sending data (LOW 40us then HIGH ~25us for "0" or ~75us for "1")
+      4. SENSOR sends "1" start bit as a response
+      5. SENSOR sends 16 bits (2 bytes) of a humidity with one decimal (i.e. 35.6% is sent as 356)
+      6. SENSOR sends 16 bits (2 bytes) of a temperature with one decimal (i.e. 23.4C is sent as 234)
+      7. SENSOR sends 8 bits (1 byte) checksum of 4 data bytes
+      */
+//      digitalWrite(Dht[sensor].pin, LOW);
+      delayMicroseconds(500);
+      if (!dht_dual_mode) {
+        digitalWrite(Dht[sensor].pin, HIGH);
+      } else {
+        digitalWrite(dht_pin_out, HIGH);
+      }
+      delayMicroseconds(40);
+      break;
+
+    case GPIO_DHT22: // Start protocol for DHT21, DHT22, AM2301, AM2302, AM2321
+      /*
+      Protocol:
+      1. MCU PULLS LOW data bus for 1 to 10ms to activate sensor
+      2. MCU PULLS UP data bus for 20-40us to ask sensor for response
+      3. SENSOR PULLS LOW data bus for 80us as a response
+      4. SENSOR PULLS UP data bus for 80us for data sending preparation
+      5. SENSOR starts sending data (LOW 50us then HIGH 26-28us for "0" or 70us for "1")
+      */
+//      digitalWrite(Dht[sensor].pin, LOW);
+      delayMicroseconds(1100); // data sheet says "at least 1ms to 10ms"
+      if (!dht_dual_mode) {
+        digitalWrite(Dht[sensor].pin, HIGH);
+      } else {
+        digitalWrite(dht_pin_out, HIGH);
+      }
+      delayMicroseconds(30); // data sheet says "20 to 40us"
+      break;
+
+    case GPIO_DHT11: // Start protocol for DHT11
+      /*
+        Protocol:
+        1. MCU PULLS LOW data bus for at least 18ms to activate sensor
+        2. MCU PULLS UP data bus for 20-40us to ask sensor for response
+        3. SENSOR PULLS LOW data bus for 80us as a response
+        4. SENSOR PULLS UP data bus for 80us for data sending preparation
+        5. SENSOR starts sending data (LOW 50us then HIGH 26-28us for "0" or 70 us for "1")
+      */
+    default:
+//      digitalWrite(Dht[sensor].pin, LOW);
+      delay(20); // data sheet says at least 18ms, 20ms just to be safe
+      if (!dht_dual_mode) {
+        digitalWrite(Dht[sensor].pin, HIGH);
+      } else {
+        digitalWrite(dht_pin_out, HIGH);
+      }
+      delayMicroseconds(30); // data sheet says "20 to 40us"
+      break;
+  }
+
+  // Listen to the sensor response
   pinMode(Dht[sensor].pin, INPUT_PULLUP);
-  delayMicroseconds(10);
+
   if (-1 == DhtExpectPulse(sensor, LOW)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_LOW " " D_PULSE));
     error = 1;
@@ -111,6 +180,7 @@ bool DhtRead(uint8_t sensor)
   interrupts();
   if (error) { return false; }
 
+  // Decode response
   for (uint32_t i = 0; i < 40; ++i) {
     int32_t lowCycles  = cycles[2*i];
     int32_t highCycles = cycles[2*i+1];
@@ -124,6 +194,7 @@ bool DhtRead(uint8_t sensor)
     }
   }
 
+  // Check response
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
   if (dht_data[4] != checksum) {
     char hex_char[15];
@@ -187,6 +258,13 @@ void DhtInit(void)
   if (dht_sensors) {
     dht_max_cycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
 
+    if (pin[GPIO_DHT11_OUT] < 99) {
+      dht_pin_out = pin[GPIO_DHT11_OUT];
+      dht_dual_mode = true;    // Dual pins mode as used by Shelly
+      dht_sensors = 1;         // We only support one sensor in pseudo mode
+      pinMode(dht_pin_out, OUTPUT);
+    }
+
     for (uint32_t i = 0; i < dht_sensors; i++) {
       pinMode(Dht[i].pin, INPUT_PULLUP);
       Dht[i].lastreadtime = 0;
@@ -196,6 +274,7 @@ void DhtInit(void)
         snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s%c%02d"), Dht[i].stype, IndexSeparator(), Dht[i].pin);
       }
     }
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_SENSORS_FOUND " %d"), dht_sensors);
   } else {
     dht_active = false;
   }

@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Tamaño Programa"
 #define D_PROJECT "Proyecto"
 #define D_RAIN "Lluvia"
+#define D_RANGE "Range"
 #define D_RECEIVED "Recibido"
 #define D_RESTART "Reiniciar"
 #define D_RESTARTING "Reiniciando"
@@ -634,6 +635,10 @@
 #define D_SENSOR_SLAVE_RESET   "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -669,7 +674,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Ángulo de Fase"
 #define D_IMPORT_ACTIVE   "P. Activa Entrante"
 #define D_EXPORT_ACTIVE   "P. Activa Saliente"
@@ -678,12 +683,13 @@
 #define D_TOTAL_REACTIVE  "P. Reactiva Total"
 #define D_UNIT_KWARH      "kVArH"
 #define D_UNIT_ANGLE      "Grados"
+#define D_TOTAL_ACTIVE    "P. Total Activa"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltaje"
 #define D_PV1_CURRENT     "PV1 Corriente"
 #define D_PV1_POWER       "PV1 Potencia"
-#define D_PV2_VOLTAGE     "PV2 Voltaee"
+#define D_PV2_VOLTAGE     "PV2 Voltaje"
 #define D_PV2_CURRENT     "PV2 Corriente"
 #define D_PV2_POWER       "PV2 Potencia"
 #define D_SOLAR_POWER     "Potencia Solar"

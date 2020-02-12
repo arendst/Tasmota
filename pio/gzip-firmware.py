@@ -13,17 +13,11 @@ def bin_gzip(source, target, env):
     gzip_file = "{}firmware{}{}.bin.gz".format(OUTPUT_DIR, os.path.sep, variant)
 
     # check if new target files exist and remove if necessary
-    for f in [gzip_file]:
-        if os.path.isfile(f):
-            os.remove(f)
+    if os.path.isfile(gzip_file): os.remove(gzip_file)
 
     # write gzip firmware file
-    fp = open(bin_file,"rb")
-    data = fp.read()
-    bindata = bytearray(data)
-    with gzip.open(gzip_file, "wb") as f:
-        f.write(bindata)
-    fp.close()
-    f.close()
+    with open(bin_file,"rb") as fp:
+        with gzip.open(gzip_file, "wb") as f:
+            shutil.copyfileobj(fp, f)
 
 env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [bin_gzip])

@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Programstorlek"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Regn"
+#define D_RANGE "Range"
 #define D_RECEIVED "Mottagen"
 #define D_RESTART "Omstart"
 #define D_RESTARTING "Startar om"
@@ -634,6 +635,10 @@
 #define D_SENSOR_SLAVE_RESET "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -669,7 +674,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Fasvinkel"
 #define D_IMPORT_ACTIVE   "Import aktiv"
 #define D_EXPORT_ACTIVE   "Export aktiv"
@@ -678,6 +683,7 @@
 #define D_TOTAL_REACTIVE  "Total reaktiv"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
+#define D_TOTAL_ACTIVE    "Total aktiv"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltage"
