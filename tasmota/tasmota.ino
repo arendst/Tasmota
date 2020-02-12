@@ -19,7 +19,7 @@
 /*====================================================
   Prerequisites:
     - Change libraries/PubSubClient/src/PubSubClient.h
-        #define MQTT_MAX_PACKET_SIZE 1000
+        #define MQTT_MAX_PACKET_SIZE 1200
 
     - Select IDE Tools - Flash Mode: "DOUT"
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"

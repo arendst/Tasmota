@@ -666,7 +666,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #endif
 
 #ifndef MQTT_MAX_PACKET_SIZE
-#define MQTT_MAX_PACKET_SIZE   1000              // Bytes
+#define MQTT_MAX_PACKET_SIZE   1200              // Bytes
 #endif
 #ifndef MQTT_KEEPALIVE
 #define MQTT_KEEPALIVE         30                // Seconds
@@ -679,7 +679,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #endif
 
 #ifndef MESSZ
-//#define MESSZ                  893               // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1000)
+//#define MESSZ                  1040              // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1200)
 #define MESSZ                  (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string
 #endif
 

@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.1.0.8 20200212
+
+- Change MQTT message size with additional 200 characters
+
 ### 8.1.0.7 20200210
 
 - Add new DHT driver. The old driver can still be used using define USE_DHT_OLD (#7468)
