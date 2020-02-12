@@ -187,15 +187,11 @@ void WifiBegin(uint8_t flag, uint8_t channel)
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11G) { WiFi.setPhyMode(WIFI_PHY_MODE_11G); }  // B/G
   if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
+
   // Handle the reconnection in WifiCheckIp() since the autoreconnect keeps sending deauthentication messages which causes the AP to block traffic as it looks like an DoS attack
   // This needs to be explicitly called as "false" otherwise the default is enabled
-#ifdef USE_DEEPSLEEP 
-  if (!(DeepSleepEnabled())) { // #7621
-#endif
-    WiFi.setAutoReconnect(false);
-#ifdef USE_DEEPSLEEP
-  }
-#endif
+//    WiFi.setAutoReconnect(false);  // See #7621
+
   switch (flag) {
   case 0:  // AP1
   case 1:  // AP2
