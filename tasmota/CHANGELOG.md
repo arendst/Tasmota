@@ -7,6 +7,7 @@
 ### 8.1.0.7 20200210
 
 - Add new DHT driver. The old driver can still be used using define USE_DHT_OLD (#7468)
+- Fix wrong encoding of Zigbee persistent data
 
 ### 8.1.0.6 20200205
 
