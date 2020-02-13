@@ -31,7 +31,7 @@
 //
 // [Array of devices]
 // [Offset = 2]
-// uint8  - length of revice record
+// uint8  - length of device record
 // uint16 - short address
 // uint64 - long IEEE address
 // uint8  - number of endpoints
@@ -43,6 +43,7 @@
 //
 // str    - ModelID (null terminated C string, 32 chars max)
 // str    - Manuf   (null terminated C string, 32 chars max)
+// str    - FriendlyName   (null terminated C string, 32 chars max)
 // reserved for extensions
 
 // Memory footprint

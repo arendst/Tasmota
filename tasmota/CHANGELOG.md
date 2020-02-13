@@ -3,10 +3,13 @@
 ### 8.1.0.8 20200212
 
 - Change MQTT message size with additional 200 characters
+- Change some wifi code to attempt faster connection (#7621)
+- Add another new DHT driver based on ESPEasy. The old driver can still be used using define USE_DHT_OLD. The previous new driver can be used with define USE_DHT_V2 (#7717)
 
 ### 8.1.0.7 20200210
 
 - Add new DHT driver. The old driver can still be used using define USE_DHT_OLD (#7468)
+- Fix wrong encoding of Zigbee persistent data
 
 ### 8.1.0.6 20200205
 

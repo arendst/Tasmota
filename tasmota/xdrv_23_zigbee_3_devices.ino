@@ -138,7 +138,7 @@ private:
   static bool findInVector(const std::vector<T>  & vecOfElements, const T  & element);
 
   template < typename T>
-  static int32_t findEndpointInVector(const std::vector<T>  & vecOfElements, const T  & element);
+  static int32_t findEndpointInVector(const std::vector<T>  & vecOfElements, uint8_t element);
 
   // find the first endpoint match for a cluster
   static int32_t findClusterEndpoint(const std::vector<uint32_t>  & vecOfElements, uint16_t element);
@@ -180,12 +180,12 @@ bool Z_Devices::findInVector(const std::vector<T>  & vecOfElements, const T  & e
 }
 
 template < typename T>
-int32_t Z_Devices::findEndpointInVector(const std::vector<T>  & vecOfElements, const T  & element) {
+int32_t Z_Devices::findEndpointInVector(const std::vector<T>  & vecOfElements, uint8_t element) {
 	// Find given element in vector
 
   int32_t found = 0;
   for (auto &elem : vecOfElements) {
-    if ((elem >> 16) & 0xFF == element) { return found; }
+    if ( ((elem >> 16) & 0xFF) == element) { return found; }
     found++;
   }
 
@@ -427,7 +427,7 @@ void Z_Devices::addEndoint(uint16_t shortaddr, uint8_t endpoint) {
   Z_Device &device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
   _updateLastSeen(device);
-  if (findEndpointInVector(device.endpoints, ep_profile) < 0) {
+  if (findEndpointInVector(device.endpoints, endpoint) < 0) {
     device.endpoints.push_back(ep_profile);
     dirty();
   }
@@ -439,7 +439,7 @@ void Z_Devices::addEndointProfile(uint16_t shortaddr, uint8_t endpoint, uint16_t
   Z_Device &device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
   _updateLastSeen(device);
-  int32_t found = findEndpointInVector(device.endpoints, ep_profile);
+  int32_t found = findEndpointInVector(device.endpoints, endpoint);
   if (found < 0) {
     device.endpoints.push_back(ep_profile);
     dirty();

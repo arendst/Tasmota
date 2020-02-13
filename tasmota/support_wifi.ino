@@ -429,6 +429,10 @@ void WifiCheckIp(void)
     WifiSetState(1);
     Wifi.counter = WIFI_CHECK_SEC;
     Wifi.retry = Wifi.retry_init;
+    if (Wifi.status != WL_CONNECTED) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECTED));
+    }
+    Wifi.status = WL_CONNECTED;
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
     if (2 == Wifi.mdns_begun) {
@@ -450,9 +454,29 @@ void WifiCheckIp(void)
         break;
       case WL_NO_SSID_AVAIL:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_NOT_REACHED));
+
+        if (WIFI_WAIT == Settings.sta_config) {
+          Wifi.retry = Wifi.retry_init;
+        } else {
+          if (Wifi.retry > (Wifi.retry_init / 2)) {
+            Wifi.retry = Wifi.retry_init / 2;
+          }
+          else if (Wifi.retry) {
+            Wifi.retry = 0;
+          }
+        }
+
         break;
       case WL_CONNECT_FAILED:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_WRONG_PASSWORD));
+
+        if (Wifi.retry > (Wifi.retry_init / 2)) {
+          Wifi.retry = Wifi.retry_init / 2;
+        }
+        else if (Wifi.retry) {
+          Wifi.retry = 0;
+        }
+
         break;
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
         // log on the 1/2 or full interval
