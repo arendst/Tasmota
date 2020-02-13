@@ -31,7 +31,7 @@
 #define WIFI_SOFT_AP_CHANNEL                  1          // Soft Access Point Channel number between 1 and 11 as used by WifiManager web GUI
 #endif
 
-const uint16_t CHUNKED_BUFFER_SIZE = 400;                // Chunk buffer size (should be smaller than half mqtt_date size)
+const uint16_t CHUNKED_BUFFER_SIZE = 400;                // Chunk buffer size (should be smaller than half mqtt_date size = MESSZ)
 
 const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
 #define HTTP_RESTART_RECONNECT_TIME           9000       // milliseconds

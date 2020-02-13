@@ -59,6 +59,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Change IRremoteESP8266 library updated to v2.7.3
 - Change Zigbee command prefix from ``Zigbee*`` to ``Zb*``
 - Change wifi connectivity stability (#7602)
+- Change some wifi code to attempt faster connection (#7621)
 - Change MQTT message size with additional 200 characters
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
@@ -101,3 +102,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add optional Wifi AccessPoint passphrase define WIFI_AP_PASSPHRASE in my_user_config.h (#7690)
 - Add support for FiF LE-01MR energy meter by saper-2 (#7584)
 - Add new DHT driver. The old driver can still be used using define USE_DHT_OLD (#7468)
+- Add another new DHT driver based on ESPEasy. The old driver can still be used using define USE_DHT_OLD. The previous new driver can be used with define USE_DHT_V2 (#7717)

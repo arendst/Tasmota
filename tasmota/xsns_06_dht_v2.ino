@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_DHT
+#ifdef USE_DHT_V2
 /*********************************************************************************************\
  * DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321), SI7021 - Temperature and Humidy
  *
@@ -274,7 +274,7 @@ void DhtInit(void)
         snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s%c%02d"), Dht[i].stype, IndexSeparator(), Dht[i].pin);
       }
     }
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_SENSORS_FOUND " %d"), dht_sensors);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "(v2) " D_SENSORS_FOUND " %d"), dht_sensors);
   } else {
     dht_active = false;
   }
