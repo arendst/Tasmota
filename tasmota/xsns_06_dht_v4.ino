@@ -17,14 +17,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_DHT_V3
+#ifdef USE_DHT
 /*********************************************************************************************\
  * DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321), SI7021 - Temperature and Humidy
  *
  * Reading temperature or humidity takes about 250 milliseconds!
  * Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
  *
- * This version is based on ESPEasy _P005_DHT.ino 20191201
+ * This version is based on ESPEasy _P005_DHT.ino 20191201 and stripped
 \*********************************************************************************************/
 
 #define XSNS_06          6
@@ -48,7 +48,7 @@ struct DHTSTRUCT {
   float    h = NAN;
 } Dht[DHT_MAX_SENSORS];
 
-bool DhtExpectPulse(uint8_t sensor, int level)
+bool DhtExpectPulse(uint32_t sensor, uint32_t level)
 {
   unsigned long timeout = micros() + 100;
   while (digitalRead(Dht[sensor].pin) != level) {
@@ -58,23 +58,7 @@ bool DhtExpectPulse(uint8_t sensor, int level)
   return true;
 }
 
-int DhtReadDat(uint8_t sensor)
-{
-  uint8_t result = 0;
-  for (uint32_t i = 0; i < 8; i++) {
-    if (!DhtExpectPulse(sensor, HIGH)) { return -1; }
-
-    delayMicroseconds(35); // was 30
-    if (digitalRead(Dht[sensor].pin)) {
-      result |= (1 << (7 - i));
-    }
-
-    if (!DhtExpectPulse(sensor, LOW)) { return -1; }
-  }
-  return result;
-}
-
-bool DhtRead(uint8_t sensor)
+bool DhtRead(uint32_t sensor)
 {
   dht_data[0] = dht_data[1] = dht_data[2] = dht_data[3] = dht_data[4] = 0;
 
@@ -86,13 +70,13 @@ bool DhtRead(uint8_t sensor)
   }
 
   switch (Dht[sensor].type) {
-    case GPIO_DHT11:
+    case GPIO_DHT11:                                    // DHT11
       delay(19);  // minimum 18ms
       break;
-    case GPIO_DHT22:
+    case GPIO_DHT22:                                    // DHT21, DHT22, AM2301, AM2302, AM2321
       delay(2);   // minimum 1ms
       break;
-    case GPIO_SI7021:
+    case GPIO_SI7021:                                   // iTead SI7021
       delayMicroseconds(500);
       break;
   }
@@ -104,44 +88,49 @@ bool DhtRead(uint8_t sensor)
   }
 
   switch (Dht[sensor].type) {
-    case GPIO_DHT11:
-    case GPIO_DHT22:
+    case GPIO_DHT11:                                    // DHT11
+    case GPIO_DHT22:                                    // DHT21, DHT22, AM2301, AM2302, AM2321
       delayMicroseconds(50);
       break;
-    case GPIO_SI7021:
-      // See: https://github.com/letscontrolit/ESPEasy/issues/1798
-      delayMicroseconds(20);
+    case GPIO_SI7021:                                   // iTead SI7021
+      delayMicroseconds(20);                            // See: https://github.com/letscontrolit/ESPEasy/issues/1798
       break;
   }
 
+  uint32_t level = 9;
   noInterrupts();
-  if (!DhtExpectPulse(sensor, LOW)) {
-    interrupts();
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_LOW " " D_PULSE));
-    return false;
+  for (uint32_t i = 0; i < 3; i++) {
+    level = i &1;
+    if (!DhtExpectPulse(sensor, level)) { break; }      // Expect LOW, HIGH, LOW
+    level = 9;
   }
-  if (!DhtExpectPulse(sensor, HIGH)) {
-    interrupts();
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_HIGH " " D_PULSE));
-    return false;
-  }
-  if (!DhtExpectPulse(sensor, LOW)) {
-    interrupts();
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_LOW " " D_PULSE));
-    return false;
-  }
+  if (9 == level) {
+    int data = 0;
+    for (uint32_t i = 0; i < 5; i++) {
+      data = 0;
+      for (uint32_t j = 0; j < 8; j++) {
+        level = 1;
+        if (!DhtExpectPulse(sensor, level)) { break; }  // Expect HIGH
 
-  int data = 0;
-  for (uint32_t i = 0; i < 5; i++) {
-    data = DhtReadDat(sensor);
-    if (-1 == data) {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_PULSE));
-      break;
+        delayMicroseconds(35);                          // Was 30
+        if (digitalRead(Dht[sensor].pin)) {
+          data |= (1 << (7 - j));
+        }
+
+        level = 0;
+        if (!DhtExpectPulse(sensor, level)) { break; }  // Expect LOW
+        level = 9;
+      }
+      if (level < 2) { break; }
+
+      dht_data[i] = data;
     }
-    dht_data[i] = data;
   }
   interrupts();
-  if (-1 == data) { return false; }
+  if (level < 2) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " %s " D_PULSE), (0 == level) ? D_START_SIGNAL_LOW : D_START_SIGNAL_HIGH);
+    return false;
+  }
 
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
   if (dht_data[4] != checksum) {
@@ -154,7 +143,7 @@ bool DhtRead(uint8_t sensor)
   return true;
 }
 
-void DhtReadTempHum(uint8_t sensor)
+void DhtReadTempHum(uint32_t sensor)
 {
   if ((NAN == Dht[sensor].h) || (Dht[sensor].lastresult > DHT_MAX_RETRY)) {  // Reset after 8 misses
     Dht[sensor].t = NAN;
@@ -220,7 +209,7 @@ void DhtInit(void)
         snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s%c%02d"), Dht[i].stype, IndexSeparator(), Dht[i].pin);
       }
     }
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "(v3) " D_SENSORS_FOUND " %d"), dht_sensors);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "(v4) " D_SENSORS_FOUND " %d"), dht_sensors);
   } else {
     dht_active = false;
   }
@@ -229,8 +218,6 @@ void DhtInit(void)
 void DhtEverySecond(void)
 {
   if (uptime &1) {
-    // <1mS
-//    DhtReadPrep();
   } else {
     for (uint32_t i = 0; i < dht_sensors; i++) {
       // DHT11 and AM2301 25mS per sensor, SI7021 5mS per sensor
