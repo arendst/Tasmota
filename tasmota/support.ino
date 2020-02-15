@@ -497,9 +497,8 @@ uint32_t ParseParameters(uint32_t count, uint32_t *params)
 {
   char *p;
   uint32_t i = 0;
-  for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p)) {
+  for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p), i++) {
     params[i] = strtoul(str, nullptr, 0);
-    i++;
   }
   return i;
 }
@@ -1255,7 +1254,8 @@ void TemplateJson(void)
  * Sleep aware time scheduler functions borrowed from ESPEasy
 \*********************************************************************************************/
 
-inline int32_t TimeDifference(uint32_t prev, uint32_t next) {
+inline int32_t TimeDifference(uint32_t prev, uint32_t next)
+{
   return ((int32_t) (next - prev));
 }
 
@@ -1285,6 +1285,18 @@ void SetNextTimeInterval(unsigned long& timer, const unsigned long step)
   }
   // Try to get in sync again.
   timer = millis() + (step - passed);
+}
+
+int32_t TimePassedSinceUsec(uint32_t timestamp)
+{
+  return TimeDifference(timestamp, micros());
+}
+
+bool TimeReachedUsec(uint32_t timer)
+{
+  // Check if a certain timeout has been reached.
+  const long passed = TimePassedSinceUsec(timer);
+  return (passed >= 0);
 }
 
 /*********************************************************************************************\
