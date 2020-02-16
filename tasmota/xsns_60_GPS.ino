@@ -23,6 +23,8 @@
   Version Date      Action    Description
   --------------------------------------------------------------------------------------------
 
+  0.9.3.0 20200214  integrate - fix set lat/lon via commandd 13, V-Port now works parallel
+  ---
   0.9.2.0 20200110  integrate - Added UART-over-TCP/IP-bridge (virtual serial port). Minor tweaks.
   ---
   0.9.1.0 20191216  integrate - Added pin specifications from Tasmota WEB UI. Minor tweaks.
@@ -244,8 +246,6 @@ struct UBX_t {
 
   struct {
     uint32_t last_iTOW;
-    int32_t last_lat;
-    int32_t last_lon;
     int32_t last_alt;
     uint32_t last_hAcc;
     uint32_t last_vAcc;
@@ -273,6 +273,8 @@ struct UBX_t {
     CFG_RATE cfgRate;
     } Message;
 
+  uint8_t TCPbuf[UBX_SERIAL_BUFFER_SIZE];
+  size_t TCPbufSize;
 } UBX;
 
 enum UBXMsgType {
@@ -377,6 +379,10 @@ uint32_t UBXprocessGPS()
   while ( UBXSerial->available() ) {
     data_bytes++;
     byte c = UBXSerial->read();
+    if (UBX.mode.runningVPort){
+      UBX.TCPbuf[data_bytes-1] = c; // immediately copy byte to TCP-buf
+      UBX.TCPbufSize = data_bytes;
+    }
     if ( fpos < 2 ) {
       // For the first two bytes we are simply looking for a match with the UBX header bytes (0xB5,0x62)
       if ( c == UBX.UBX_HEADER[fpos] ) {
@@ -585,8 +591,8 @@ void UBXSelectMode(uint16_t mode)
       UBX.mode.forceUTCupdate = false;
       break;
     case 13:
-      Settings.latitude = UBX.state.last_lat;
-      Settings.longitude = UBX.state.last_lon;
+      Settings.latitude = UBX.rec_buffer.values.lat/10;
+      Settings.longitude = UBX.rec_buffer.values.lon/10;
       break;
     case 14:
       vPortServer.begin();
@@ -680,49 +686,24 @@ void UBXHandleOther(void)
 
 /********************************************************************************************/
 
-void UBXhandleVPort(){
-  static uint32_t idx = 0;
-  static uint8_t buf[UBX_SERIAL_BUFFER_SIZE];
-  // static uint32_t tBufMax = 0;
-  // static uint32_t sBufMax = 0;
-
-  if(!vPortClient.connected()) {
-    vPortClient = vPortServer.available();
-  }
-
-  while(vPortClient.available()) {
-    buf[idx] = (uint8_t)vPortClient.read();
-    if(idx<sizeof(buf)-1) idx++;
-  }
-  if(idx!=0) {
-    UBXSerial->write(buf, idx);
-    // if(idx>tBufMax) {
-    //   tBufMax = idx;
-    //   AddLog_P2(LOG_LEVEL_INFO, PSTR("VPORT: new max. tcp buffer size: %u"),tBufMax);
-    // }
-  }
-  idx = 0;
-
-  while(UBXSerial->available()) {
-    buf[idx] = (char)UBXSerial->read();
-    if(idx<sizeof(buf)-1) idx++;
-  }
-  if(idx!=0) {
-    vPortClient.write((char*)buf, idx);
-    // if(idx>sBufMax) {
-    //   sBufMax = idx;
-    //   AddLog_P2(LOG_LEVEL_INFO, PSTR("VPORT: new max. serial buffer size: %u"),sBufMax);
-    // }
-  }
-  idx = 0;
-}
-
-void UBXTimeServer()
+void UBXLoop50msec(void)
 {
-  if(UBX.mode.runningVPort){
-      UBXhandleVPort();
-      return;
+  // handle virtual serial port
+  if (UBX.mode.runningVPort){
+    if(!vPortClient.connected()) {
+      vPortClient = vPortServer.available();
     }
+    while(vPortClient.available()) {
+      byte _newByte = vPortClient.read();
+      UBXSerial->write(_newByte);
+    }
+
+    if (UBX.TCPbufSize!=0){
+      vPortClient.write((char*)UBX.TCPbuf, UBX.TCPbufSize);
+      UBX.TCPbufSize = 0;
+    }
+  }
+  // handle NTP-server
   if(UBX.mode.runningNTP){
     timeServer.processOneRequest(Rtc.utc_time, UBX.state.last_iTOW%1000);
   }
@@ -732,10 +713,6 @@ void UBXLoop(void)
 {
   static uint16_t counter; //count up every 100 msec
   static bool new_position;
-
-  if(UBX.mode.runningVPort) {
-    return;
-  }
 
   uint32_t msgType = UBXprocessGPS();
 
@@ -899,7 +876,7 @@ bool Xsns60(uint8_t function)
         }
         break;
       case FUNC_EVERY_50_MSECOND:
-        UBXTimeServer(); // handles virtual serial port too
+        UBXLoop50msec(); // handles virtual serial port and NTP server
         break;
       case FUNC_EVERY_100_MSECOND:
 #ifdef USE_FLOG
