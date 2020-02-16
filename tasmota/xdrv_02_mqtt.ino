@@ -314,7 +314,7 @@ void MqttPublish(const char* topic, bool retained)
   ShowFreeMem(PSTR("MqttPublish"));
 #endif
 
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT) || defined(MQTT_NO_RETAIN)
 //  if (retained) {
 //    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
 //  }
