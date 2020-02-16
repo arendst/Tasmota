@@ -152,12 +152,7 @@ bool DhtRead(uint32_t sensor)
       }
       break;
   }
-  if (temperature == NAN || humidity == NAN) {
-    Dht[sensor].lastresult++;
-    if (Dht[sensor].lastresult > DHT_MAX_RETRY) {  // Reset after 8 misses
-      Dht[sensor].t = NAN;
-      Dht[sensor].h = NAN;
-    }
+  if (isnan(temperature) || isnan(humidity)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "Invalid NAN reading"));
     return false;
   }
@@ -201,6 +196,7 @@ void DhtInit(void)
 
     for (uint32_t i = 0; i < dht_sensors; i++) {
       pinMode(Dht[i].pin, INPUT_PULLUP);
+      Dht[i].lastresult = DHT_MAX_RETRY;  // Start with NAN
       GetTextIndexed(Dht[i].stype, sizeof(Dht[i].stype), Dht[i].type, kSensorNames);
       if (dht_sensors > 1) {
         snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s%c%02d"), Dht[i].stype, IndexSeparator(), Dht[i].pin);
@@ -214,11 +210,16 @@ void DhtInit(void)
 
 void DhtEverySecond(void)
 {
-  if (uptime &1) {
-  } else {
-    for (uint32_t i = 0; i < dht_sensors; i++) {
+  if (uptime &1) {  // Every 2 seconds
+    for (uint32_t sensor = 0; sensor < dht_sensors; sensor++) {
       // DHT11 and AM2301 25mS per sensor, SI7021 5mS per sensor
-      DhtRead(i);
+      if (!DhtRead(sensor)) {
+        Dht[sensor].lastresult++;
+        if (Dht[sensor].lastresult > DHT_MAX_RETRY) {  // Reset after 8 misses
+          Dht[sensor].t = NAN;
+          Dht[sensor].h = NAN;
+        }
+      }
     }
   }
 }
