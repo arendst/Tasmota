@@ -56,12 +56,12 @@ bool begin()
     else
     {
         return false;
-    }   
+    }
 }
 
 bool AHT10Read(void)
 {
-  unsigned long result, temp[6];
+  unsigned long result_t, result_h, temp[6];
 
   if (AHT10.valid) { AHT10.valid--; }
 
@@ -69,15 +69,17 @@ bool AHT10Read(void)
     Wire.write(eSensorMeasureCmd, 3);
     Wire.endTransmission();
     delay(100);
-    
-    Wire.requestFrom(AHT10_ADDR, 6);  
+
+    Wire.requestFrom(AHT10_ADDR, 6);
     for(unsigned char i = 0; Wire.available() > 0; i++)
     {
         temp[i] = Wire.read();
-    }   
+    }
+    result_h = ((temp[1] << 16) | (temp[2] << 8) | temp[3]) >> 4;
+    result_t = ((temp[3] & 0x0F) << 16) | (temp[4] << 8) | temp[5];
 
-  AHT10.humidity = (((temp[1] << 16) | (temp[2] << 8) | temp[3]) >> 4)* 100 / 1048576;
-  AHT10.temperature  =  ((200 * (((temp[3] & 0x0F) << 16) | (temp[4] << 8) | temp[5])) / 1048576) - 50;
+  AHT10.humidity = result_h * 100 / 1048576;
+  AHT10.temperature  =  ((200 * result_t) / 1048576) - 50;
 
   if (isnan(AHT10.temperature) || isnan(AHT10.humidity)) { return false; }
 
@@ -97,12 +99,12 @@ unsigned char readStatus(void)
 
 void AHT10Detect(void)
 {
-  if (I2cActive(AHT10_ADDR)) 
-  { 
-  return; 
+  if (I2cActive(AHT10_ADDR))
+  {
+  return;
   }
 
-  if (begin()) 
+  if (begin())
   {
     I2cSetActiveFound(AHT10_ADDR, AHT10.name);
     AHT10.count = 1;
