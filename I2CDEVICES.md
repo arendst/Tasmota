@@ -64,4 +64,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   41  | USE_DHT12           | xsns_58 | DHT12    | 0x5C        | Temperature and humidity sensor
   42  | USE_DS1624          | xsns_59 | DS1621   | 0x48 - 0x4F | Temperature sensor
   42  | USE_DS1624          | xsns_59 | DS1624   | 0x48 - 0x4F | Temperature sensor
-
+  43  | USE_AHT10           | xsns_64 | AHT10    | 0x38        | Temperature and humidity sensor
