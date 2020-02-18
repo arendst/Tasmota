@@ -514,7 +514,7 @@ void GetFeatures(void)
   feature5 |= 0x08000000;  // xnrg_13_fif_le01mr.ino
 #endif
 #ifdef USE_AHT10
-  feature5 |= 0x10000000;  // xsns_64_dht12.ino
+  feature5 |= 0x10000000;  // xsns_64_aht10.ino
 #endif
 //  feature5 |= 0x10000000;
 //  feature5 |= 0x20000000;
