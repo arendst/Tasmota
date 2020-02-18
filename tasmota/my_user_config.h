@@ -486,7 +486,7 @@
 //  #define USE_HIH6                               // [I2cDriver36] Enable Honeywell HIH Humidity and Temperature sensor (I2C address 0x27) (+0k6)
 //  #define USE_DHT12                              // [I2cDriver41] Enable DHT12 humidity and temperature sensor (I2C address 0x5C) (+0k7 code)
 //  #define USE_DS1624                             // [I2cDriver42] Enable DS1624, DS1621 temperature sensor (I2C addresses 0x48 - 0x4F) (+1k2 code)
-//  #define USE_AHT10                              // [I2cDriver43] Enable AHT10 humidity and temperature sensor (I2C address 0x58) (+0k8 code)
+  #define USE_AHT10                              // [I2cDriver43] Enable AHT10 humidity and temperature sensor (I2C address 0x38) (+0k8 code)
 
 //  #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
