@@ -43,21 +43,6 @@ struct AHT10 {
   char    name[6] = "AHT10";
 } AHT10;
 
-bool begin()
-{
-    Wire.begin(AHT10_ADDR);
-    Wire.beginTransmission(AHT10_ADDR);
-    Wire.write(eSensorCalibrateCmd, 3);
-    Wire.endTransmission();
-    delay(500);
-
-    if((readStatus() & 0x68) == 0x08)
-        return true;
-    else
-    {
-        return false;
-    }
-}
 
 bool AHT10Read(void)
 {
@@ -88,7 +73,21 @@ bool AHT10Read(void)
 }
 
 /********************************************************************************************/
-unsigned char readStatus(void)
+bool aht10init()
+{
+    Wire.begin(AHT10_ADDR);
+    Wire.beginTransmission(AHT10_ADDR);
+    Wire.write(eSensorCalibrateCmd, 3);
+    Wire.endTransmission();
+    delay(500);
+
+    if((aht10ReadStatus() & 0x68) == 0x08) {
+        return true;}
+    else
+      { return false; }
+}
+
+unsigned char aht10ReadStatus(void)
 {
     unsigned char result = 0;
     Wire.requestFrom(AHT10_ADDR, 1);
@@ -96,12 +95,21 @@ unsigned char readStatus(void)
     return result;
 }
 
+void aht10Reset(void)
+{
+    Wire.beginTransmission(AHT10_ADDR);
+    Wire.write(eSensorResetCmd);
+    Wire.endTransmission();
+    delay(20);
+}
+
+/********************************************************************************************/
 void AHT10Detect(void)
 {
   if (I2cActive(AHT10_ADDR))
   {return;}
 
-  if (begin())
+  if (aht10init())
   {
     I2cSetActiveFound(AHT10_ADDR, AHT10.name);
     AHT10.count = 1;
