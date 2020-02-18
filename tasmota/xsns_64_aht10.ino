@@ -73,7 +73,7 @@ bool AHT10Read(void)
 }
 
 /********************************************************************************************/
-bool aht10init()
+bool AHT10Init()
 {
     Wire.begin(AHT10_ADDR);
     Wire.beginTransmission(AHT10_ADDR);
@@ -81,13 +81,13 @@ bool aht10init()
     Wire.endTransmission();
     delay(500);
 
-    if((aht10ReadStatus() & 0x68) == 0x08) {
+    if((AHT10ReadStatus() & 0x68) == 0x08) {
         return true;}
     else
       { return false; }
 }
 
-unsigned char aht10ReadStatus(void)
+unsigned char AHT10ReadStatus(void)
 {
     unsigned char result = 0;
     Wire.requestFrom(AHT10_ADDR, 1);
@@ -95,7 +95,7 @@ unsigned char aht10ReadStatus(void)
     return result;
 }
 
-void aht10Reset(void)
+void AHT10Reset(void)
 {
     Wire.beginTransmission(AHT10_ADDR);
     Wire.write(eSensorResetCmd);
@@ -109,7 +109,7 @@ void AHT10Detect(void)
   if (I2cActive(AHT10_ADDR))
   {return;}
 
-  if (aht10init())
+  if (AHT10Init())
   {
     I2cSetActiveFound(AHT10_ADDR, AHT10.name);
     AHT10.count = 1;
