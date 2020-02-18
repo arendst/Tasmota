@@ -91,7 +91,6 @@ bool AHT10Read(void)
 unsigned char readStatus(void)
 {
     unsigned char result = 0;
-
     Wire.requestFrom(AHT10_ADDR, 1);
     result = Wire.read();
     return result;
@@ -100,9 +99,7 @@ unsigned char readStatus(void)
 void AHT10Detect(void)
 {
   if (I2cActive(AHT10_ADDR))
-  {
-  return;
-  }
+  {return;}
 
   if (begin())
   {
