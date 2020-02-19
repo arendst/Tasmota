@@ -40,13 +40,13 @@ struct AHT10 {
   float   temperature = NAN;
   uint8_t valid = 0;
   uint8_t count = 0;
-  char    name[9] = "AHT10/15";
+  char    name[6] = "AHT1x";
 } AHT10;
 
 
 bool AHT10Read(void)
 {
-  unsigned long result_t, result_h, temp[6];
+  unsigned long result_t, result_h, data[6];
 
   if (AHT10.valid) { AHT10.valid--; }
 
@@ -58,11 +58,11 @@ bool AHT10Read(void)
     Wire.requestFrom(AHT10_ADDR, 6);
     for(uint8_t i = 0; Wire.available() > 0; i++)
     {
-        temp[i] = Wire.read();
+        data[i] = Wire.read();
     }
 
-    result_h = ((temp[1] << 16) | (temp[2] << 8) | temp[3]) >> 4;
-    result_t = ((temp[3] & 0x0F) << 16) | (temp[4] << 8) | temp[5];
+    result_h = ((data[1] << 16) | (data[2] << 8) | data[3]) >> 4;
+    result_t = ((data[3] & 0x0F) << 16) | (data[4] << 8) | data[5];
 
   AHT10.humidity = result_h * 100 / 1048576;
   AHT10.temperature  =  ((200 * result_t) / 1048576) - 50;
