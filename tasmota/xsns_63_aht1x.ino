@@ -56,7 +56,7 @@ bool AHT10Read(void)
     delay(100);
 
     Wire.requestFrom(AHT10_ADDR, 6);
-    for(unsigned char i = 0; Wire.available() > 0; i++)
+    for(uint8_t i = 0; Wire.available() > 0; i++)
     {
         temp[i] = Wire.read();
     }
