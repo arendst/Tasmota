@@ -50,22 +50,22 @@ bool AHT10Read(void)
 
   if (AHT10.valid) { AHT10.valid--; }
 
-    Wire.beginTransmission(AHT10_ADDR);
-    Wire.write(eSensorMeasureCmd, 3);
-    Wire.endTransmission();
-    delay(100);
+   Wire.beginTransmission(AHT10_ADDR);
+   Wire.write(eSensorMeasureCmd, 3);
+   Wire.endTransmission();
+   delay(100);
 
-    Wire.requestFrom(AHT10_ADDR, 6);
-    for(uint8_t i = 0; Wire.available() > 0; i++)
-    {
-        data[i] = Wire.read();
-    }
+   Wire.requestFrom(AHT10_ADDR, 6);
+   for(uint8_t i = 0; Wire.available() > 0; i++)
+   {
+      data[i] = Wire.read();
+   }
 
-    result_h = ((data[1] << 16) | (data[2] << 8) | data[3]) >> 4;
-    result_t = ((data[3] & 0x0F) << 16) | (data[4] << 8) | data[5];
+   result_h = ((data[1] << 16) | (data[2] << 8) | data[3]) >> 4;
+   result_t = ((data[3] & 0x0F) << 16) | (data[4] << 8) | data[5];
 
-  AHT10.humidity = result_h * 100 / 1048576;
-  AHT10.temperature  =  ((200 * result_t) / 1048576) - 50;
+   AHT10.humidity = result_h * 100 / 1048576;
+   AHT10.temperature  =  ((200 * result_t) / 1048576) - 50;
 
   if (isnan(AHT10.temperature) || isnan(AHT10.humidity)) { return false; }
 
