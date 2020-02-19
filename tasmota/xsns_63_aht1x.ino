@@ -1,7 +1,7 @@
 /*
-  xsns_64_AHT10.ino - AHT10 I2C temperature and humidity sensor support for Tasmota
+  xsns_63_AHT1x.ino - AHT10 I2C temperature and humidity sensor support for Tasmota
 
-  Copyright (C) 2020  M. Wagner
+  Copyright (C) 2020  Martin Wagner
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,14 +18,14 @@
 */
 
 #ifdef USE_I2C
-#ifdef USE_AHT10
+#ifdef USE_AHT1x
 /*********************************************************************************************\
- * AHT10 - Temperature and Humidity
+ * AHT10/15 - Temperature and Humidity
  *
  * I2C Address: 0x38
 \*********************************************************************************************/
 
-#define XSNS_64              64
+#define XSNS_63              63
 #define XI2C_43              43  // See I2CDEVICES.md
 
 #define AHT10_ADDR           0x38
@@ -40,7 +40,7 @@ struct AHT10 {
   float   temperature = NAN;
   uint8_t valid = 0;
   uint8_t count = 0;
-  char    name[6] = "AHT10";
+  char    name[9] = "AHT10/15";
 } AHT10;
 
 
@@ -60,6 +60,7 @@ bool AHT10Read(void)
     {
         temp[i] = Wire.read();
     }
+
     result_h = ((temp[1] << 16) | (temp[2] << 8) | temp[3]) >> 4;
     result_t = ((temp[3] & 0x0F) << 16) | (temp[4] << 8) | temp[5];
 
@@ -160,7 +161,7 @@ void AHT10Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns64(uint8_t function)
+bool Xsns63(uint8_t function)
 {
   if (!I2cEnabled(XI2C_43)) { return false; }
 
