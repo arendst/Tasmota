@@ -170,8 +170,8 @@ String GetDT(uint32_t time)
 /*
  * timestamps in https://en.wikipedia.org/wiki/ISO_8601 format
  *
- *  DT_UTC - current data and time in Greenwich, England (aka GMT)
- *  DT_LOCAL - current date and time taking timezone into account
+ *  DT_UTC     - current data and time in Greenwich, England (aka GMT)
+ *  DT_LOCAL   - current date and time taking timezone into account
  *  DT_RESTART - the date and time this device last started, in local timezone
  *
  * Format:
@@ -184,14 +184,17 @@ String GetDateAndTime(uint8_t time_type)
   uint32_t time = Rtc.local_time;
 
   switch (time_type) {
-    case DT_BOOTCOUNT:
-      time = Settings.bootcount_reset_time;
-      break;
-    case DT_ENERGY:
-      time = Settings.energy_kWhtotal_time;
-      break;
     case DT_UTC:
       time = Rtc.utc_time;
+      break;
+//    case DT_LOCALNOTZ:  // Is default anyway but allows for not appendig timezone
+//      time = Rtc.local_time;
+//      break;
+    case DT_DST:
+      time = Rtc.daylight_saving_time;
+      break;
+    case DT_STD:
+      time = Rtc.standard_time;
       break;
     case DT_RESTART:
       if (Rtc.restart_time == 0) {
@@ -199,29 +202,18 @@ String GetDateAndTime(uint8_t time_type)
       }
       time = Rtc.restart_time;
       break;
+    case DT_ENERGY:
+      time = Settings.energy_kWhtotal_time;
+      break;
+    case DT_BOOTCOUNT:
+      time = Settings.bootcount_reset_time;
+      break;
   }
   String dt = GetDT(time);  // 2017-03-07T11:08:02
   if (Settings.flag3.time_append_timezone && (DT_LOCAL == time_type)) {  // SetOption52 - Append timezone to JSON time
     dt += GetTimeZone();    // 2017-03-07T11:08:02-07:00
   }
   return dt;  // 2017-03-07T11:08:02-07:00
-}
-
-String GetTime(int type)
-{
-  /* type 1 - Local time
-   * type 2 - Daylight Savings time
-   * type 3 - Standard time
-   */
-  char stime[25];   // Skip newline
-
-  uint32_t time = Rtc.utc_time;
-  if (1 == type) time = Rtc.local_time;
-  if (2 == type) time = Rtc.daylight_saving_time;
-  if (3 == type) time = Rtc.standard_time;
-  snprintf_P(stime, sizeof(stime), sntp_get_real_time(time));
-
-  return String(stime);  // Thu Nov 01 11:41:02 2018
 }
 
 uint32_t UpTime(void)
@@ -400,8 +392,8 @@ void RtcSecond(void)
         Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
 
         // Do not use AddLog_P2 here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
-        PrepLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: Drift %d, (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-          DriftTime(), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
+        PrepLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: Drift %d, (" D_UTC_TIME ")%s, (" D_DST_TIME ")%s, (" D_STD_TIME ")%s"),
+          DriftTime(), GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
 
         if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
           rules_flag.time_init = 1;
