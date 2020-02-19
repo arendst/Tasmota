@@ -23,3 +23,5 @@ platformio_override.ini
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 *.bak
+platformio_override.bak.ini
+tasmota/user_config_override.h.bak2
