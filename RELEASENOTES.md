@@ -52,14 +52,12 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.1.0.8
+### Version 8.1.0.9
 
 - Change Lights: simplified gamma correction and 10 bits internal computation
 - Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
 - Change IRremoteESP8266 library updated to v2.7.3
 - Change Zigbee command prefix from ``Zigbee*`` to ``Zb*``
-- Change wifi connectivity stability (#7602)
-- Change some wifi code to attempt faster connection (#7621)
 - Change MQTT message size with additional 200 characters
 - Change display of some date and time messages from "Wed Feb 19 10:45:12 2020" to "2020-02-19T10:45:12"
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
@@ -75,6 +73,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix PWM flickering at low levels (#7415)
 - Fix Hass sensor discovery part 1/4 by Federico Leoni (#7582, #7548)
 - Fix MaxPower functionality (#7647)
+- Fix relation between RSSI and signal strength
 - Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
 - Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
 - Add command ``SetOption84 1`` to send AWS IoT device shadow updates (alternative to retained)
@@ -104,3 +103,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for FiF LE-01MR energy meter by saper-2 (#7584)
 - Add new DHT driver. The old driver can still be used using define USE_DHT_OLD (#7468)
 - Add another new DHT driver based on ESPEasy. The old driver can still be used using define USE_DHT_OLD. The previous new driver can be used with define USE_DHT_V2 (#7717)
+- Add initial support for Sensors AHT10 and AHT15 by Martin Wagner (#7596)
