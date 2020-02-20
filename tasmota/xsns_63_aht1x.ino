@@ -30,10 +30,10 @@
 
 #define AHT10_ADDR           0x38
 
-unsigned char eSensorCalibrateCmd[3] = {0xE1, 0x08, 0x00};
-unsigned char eSensorNormalCmd[3]    = {0xA8, 0x00, 0x00};
-unsigned char eSensorMeasureCmd[3]   = {0xAC, 0x33, 0x00};
-unsigned char eSensorResetCmd        = 0xBA;
+uint8_t eSensorCalibrateCmd[3] = {0xE1, 0x08, 0x00};
+uint8_t eSensorNormalCmd[3]    = {0xA8, 0x00, 0x00};
+uint8_t eSensorMeasureCmd[3]   = {0xAC, 0x33, 0x00};
+uint8_t eSensorResetCmd        = 0xBA;
 
 struct AHT10 {
   float   humidity = NAN;
@@ -43,75 +43,73 @@ struct AHT10 {
   char    name[6] = "AHT1x";
 } AHT10;
 
-
 bool AHT10Read(void)
 {
-  unsigned long result_t, result_h, data[6];
-
   if (AHT10.valid) { AHT10.valid--; }
 
-   Wire.beginTransmission(AHT10_ADDR);
-   Wire.write(eSensorMeasureCmd, 3);
-   Wire.endTransmission();
-   delay(100);
+  uint8_t data[6];
 
-   Wire.requestFrom(AHT10_ADDR, 6);
-   for(uint8_t i = 0; Wire.available() > 0; i++)
-   {
-      data[i] = Wire.read();
-   }
+  Wire.beginTransmission(AHT10_ADDR);
+  Wire.write(eSensorMeasureCmd, 3);
+  Wire.endTransmission();
+  delay(100);
 
-   result_h = ((data[1] << 16) | (data[2] << 8) | data[3]) >> 4;
-   result_t = ((data[3] & 0x0F) << 16) | (data[4] << 8) | data[5];
+  Wire.requestFrom(AHT10_ADDR, 6);
+  for (uint32_t i = 0; Wire.available() > 0; i++) {
+    data[i] = Wire.read();
+  }
 
-   AHT10.humidity = result_h * 100 / 1048576;
-   AHT10.temperature  =  ((200 * result_t) / 1048576) - 50;
+  uint32_t result_h = ((data[1] << 16) | (data[2] << 8) | data[3]) >> 4;
+  uint32_t result_t = ((data[3] & 0x0F) << 16) | (data[4] << 8) | data[5];
 
-  if (isnan(AHT10.temperature) || isnan(AHT10.humidity)) { return false; }
+  float humidity = result_h * 100 / 1048576;
+  float temperature = ((200 * result_t) / 1048576) - 50;
+
+  if (isnan(temperature) || isnan(humidity)) { return false; }
+
+  AHT10.humidity = ConvertHumidity(humidity);
+  AHT10.temperature  = ConvertTemp(temperature);
 
   AHT10.valid = SENSOR_MAX_MISS;
   return true;
 }
 
 /********************************************************************************************/
-bool AHT10Init()
-{
-    Wire.begin(AHT10_ADDR);
-    Wire.beginTransmission(AHT10_ADDR);
-    Wire.write(eSensorCalibrateCmd, 3);
-    Wire.endTransmission();
-    delay(500);
 
-    if((AHT10ReadStatus() & 0x68) == 0x08) {
-        return true;}
-    else
-      { return false; }
+bool AHT10Init(void)
+{
+  Wire.begin(AHT10_ADDR);
+  Wire.beginTransmission(AHT10_ADDR);
+  Wire.write(eSensorCalibrateCmd, 3);
+  Wire.endTransmission();
+
+  delay(500);  // ?!?! too long
+
+  return (0x08 == (AHT10ReadStatus() & 0x68));
 }
 
-unsigned char AHT10ReadStatus(void)
+uint8_t AHT10ReadStatus(void)
 {
-    unsigned char result = 0;
-    Wire.requestFrom(AHT10_ADDR, 1);
-    result = Wire.read();
-    return result;
+  Wire.requestFrom(AHT10_ADDR, 1);
+  uint8_t result = Wire.read();
+  return result;
 }
 
 void AHT10Reset(void)
 {
-    Wire.beginTransmission(AHT10_ADDR);
-    Wire.write(eSensorResetCmd);
-    Wire.endTransmission();
-    delay(20);
+  Wire.beginTransmission(AHT10_ADDR);
+  Wire.write(eSensorResetCmd);
+  Wire.endTransmission();
+  delay(20);
 }
 
 /********************************************************************************************/
+
 void AHT10Detect(void)
 {
-  if (I2cActive(AHT10_ADDR))
-  {return;}
+  if (I2cActive(AHT10_ADDR)) { return; }
 
-  if (AHT10Init())
-  {
+  if (AHT10Init()) {
     I2cSetActiveFound(AHT10_ADDR, AHT10.name);
     AHT10.count = 1;
   }

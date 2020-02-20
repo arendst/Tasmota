@@ -3,6 +3,7 @@
 ### 8.1.0.9 20200220
 
 - Revert most wifi connectivity changes introduced in 8.1.0.5 (#7746, #7602, #7621)
+- Add initial support for Sensors AHT10 and AHT15 by Martin Wagner (#7596)
 
 ### 8.1.0.8 20200212
 
