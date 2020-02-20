@@ -513,8 +513,10 @@ void GetFeatures(void)
 #ifdef USE_LE01MR
   feature5 |= 0x08000000;  // xnrg_13_fif_le01mr.ino
 #endif
+#ifdef USE_WEMOS_MOTOR_V1
+  feature5 |= 0x10000000;  // xdrv_34_wemos_motor_v1.ino
+#endif
 
-//  feature5 |= 0x10000000;
 //  feature5 |= 0x20000000;
 //  feature5 |= 0x40000000;
 //  feature5 |= 0x80000000;
