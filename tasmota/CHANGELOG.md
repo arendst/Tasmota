@@ -5,6 +5,7 @@
 - Change MQTT message size with additional 200 characters
 - Change some wifi code to attempt faster connection (#7621)
 - Change display of some date and time messages from "Wed Feb 19 10:45:12 2020" to "2020-02-19T10:45:12"
+- Fix relation between RSSI and signal strength
 - Add another new DHT driver based on ESPEasy. The old driver can still be used using define USE_DHT_OLD. The previous new driver can be used with define USE_DHT_V2 (#7717)
 
 ### 8.1.0.7 20200210
