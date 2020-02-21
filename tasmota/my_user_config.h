@@ -487,6 +487,7 @@
 //  #define USE_HIH6                               // [I2cDriver36] Enable Honeywell HIH Humidity and Temperature sensor (I2C address 0x27) (+0k6)
 //  #define USE_DHT12                              // [I2cDriver41] Enable DHT12 humidity and temperature sensor (I2C address 0x5C) (+0k7 code)
 //  #define USE_DS1624                             // [I2cDriver42] Enable DS1624, DS1621 temperature sensor (I2C addresses 0x48 - 0x4F) (+1k2 code)
+//  #define USE_AHT1x                              // [I2cDriver43] Enable AHT10/15 humidity and temperature sensor (I2C address 0x38) (+0k8 code)
 
 //  #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
@@ -618,7 +619,9 @@
 #define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
 //  #define USE_HX711_GUI                          // Add optional web GUI to HX711 as scale (+1k8 code)
 
-//#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k code)
+// Select none or only one of the below defines
+//#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+1k3 code)
+//#define USE_TX23_WIND_SENSOR                     // Add support for La Crosse TX23 anemometer (+1k4 code)
 
 //#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
 

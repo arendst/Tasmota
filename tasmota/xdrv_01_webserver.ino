@@ -1719,16 +1719,17 @@ void HandleWifiConfiguration(void)
         //display networks in page
         for (uint32_t i = 0; i < n; i++) {
           if (-1 == indices[i]) { continue; }  // skip dups
+          int32_t rssi = WiFi.RSSI(indices[i])
           DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
-            WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), WiFi.RSSI(indices[i]));
-          int quality = WifiGetRssiAsQuality(WiFi.RSSI(indices[i]));
+            WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), rssi);
+          int quality = WifiGetRssiAsQuality(rssi);
           int auth = WiFi.encryptionType(indices[i]);
           char encryption[20];
           WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a>&nbsp;(%d)&nbsp<span class='q'>%s %d%% (%d dBm)</span></div>"),
             HtmlEscape(WiFi.SSID(indices[i])).c_str(),
             WiFi.channel(indices[i]),
             GetTextIndexed(encryption, sizeof(encryption), auth +1, kEncryptionType),
-            quality, WiFi.RSSI(indices[i])
+            quality, rssi
           );
           delay(0);
 
@@ -2067,7 +2068,8 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, SettingsText(SET_FRIENDLYNAME1 +i));
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
-  WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.RSSI());
+  int32_t rssi = WiFi.RSSI();
+  WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WifiGetRssiAsQuality(rssi), rssi);
   WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "");
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();

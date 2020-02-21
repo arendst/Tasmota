@@ -128,7 +128,7 @@ enum UserSelectablePins {
   GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
   GPIO_HX711_SCK,      // HX711 Load Cell clock
   GPIO_HX711_DAT,      // HX711 Load Cell data
-  GPIO_TX20_TXD_BLACK, // TX20 Transmission Pin
+  GPIO_TX2X_TXD_BLACK, // TX20/TX23 Transmission Pin
   GPIO_RFSEND,         // RF transmitter
   GPIO_RFRECV,         // RF receiver
   GPIO_TUYA_TX,        // Tuya Serial interface
@@ -267,7 +267,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PZEM016_RX "|" D_SENSOR_PZEM017_RX "|"
   D_SENSOR_DFR562 "|" D_SENSOR_SDS0X1_TX "|"
   D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
-  D_SENSOR_TX20_TX "|"
+  D_SENSOR_TX2X_TX "|"
   D_SENSOR_RFSEND "|" D_SENSOR_RFRECV "|"
   D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX "|"
   D_SENSOR_MGC3130_XFER "|" D_SENSOR_MGC3130_RESET "|"
@@ -721,8 +721,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_PMS5003
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
 #endif
-#ifdef USE_TX20_WIND_SENSOR
-  GPIO_TX20_TXD_BLACK, // TX20 Transmission Pin
+#if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
+  GPIO_TX2X_TXD_BLACK, // TX20/TX23 Transmission Pin
 #endif
 #ifdef USE_MP3_PLAYER
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
