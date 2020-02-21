@@ -1767,6 +1767,10 @@ void LightAnimate(void)
       Light.update = true;
     }
     if (Light.update) {
+#ifdef USE_DEVICE_GROUPS
+      if (Light.power) LightSendDeviceGroupStatus();
+#endif  // USE_DEVICE_GROUPS
+
       uint16_t cur_col_10[LST_MAX];   // 10 bits resolution
       Light.update = false;
 
@@ -2077,6 +2081,86 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
   }
 }
 
+#ifdef USE_DEVICE_GROUPS
+void LightSendDeviceGroupStatus()
+{
+  uint8_t channels[LST_MAX];
+  light_state.getChannels(channels);
+  SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme, DGR_ITEM_LIGHT_CHANNELS, channels,
+    DGR_ITEM_LIGHT_BRI, (power ? light_state.getBri() : 0));
+}
+
+void LightHandleDeviceGroupRequest()
+{
+  static bool send_state = false;
+  uint32_t value = XdrvMailbox.payload;
+  switch (XdrvMailbox.command_code) {
+    case DGR_ITEM_EOL:
+      LightAnimate();
+      if (send_state && !(XdrvMailbox.index & DGR_FLAG_MORE_TO_COME)) {
+        light_controller.saveSettings();
+        if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+          MqttPublishTeleState();
+        }
+        send_state = false;
+      }
+      break;
+    case DGR_ITEM_LIGHT_BRI:
+      if (light_state.getBri() != value) {
+        light_controller.changeBri(value);
+        send_state = true;
+      }
+      break;
+    case DGR_ITEM_LIGHT_SCHEME:
+      if (Settings.light_scheme != value) {
+        Settings.light_scheme = value;
+        send_state = true;
+      }
+      break;
+    case DGR_ITEM_LIGHT_CHANNELS:
+      light_controller.changeChannels((uint8_t *)XdrvMailbox.data);
+      send_state = true;
+      break;
+    case DGR_ITEM_LIGHT_FIXED_COLOR:
+      {
+        power_t save_power = Light.power;
+        if (value) {
+          bool save_decimal_text = Settings.flag.decimal_text;
+          char str[16];
+          XdrvMailbox.index = 2;
+          XdrvMailbox.data_len = sprintf_P(str, PSTR("%u"), value);
+          XdrvMailbox.data = str;
+          CmndSupportColor();
+          Settings.flag.decimal_text = save_decimal_text;
+        }
+        else {
+          Light.fixed_color_index = 0;
+          XdrvMailbox.index = 1;
+          XdrvMailbox.payload = light_state.BriToDimmer(light_state.getBri());
+          CmndWhite();
+        }
+        if (Light.power != save_power) {
+          XdrvMailbox.index = save_power;
+          LightSetPower();
+        }
+        send_state = true;
+      }
+      break;
+    case DGR_ITEM_LIGHT_SPEED:
+      if (Settings.light_speed != value && value > 0 && value <= 40) {
+        Settings.light_speed = value;
+        send_state = true;
+      }
+      break;
+    case DGR_ITEM_STATUS:
+      SendLocalDeviceGroupMessage(DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade,
+        DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
+      LightSendDeviceGroupStatus();
+      break;
+  }
+}
+#endif  // USE_DEVICE_GROUPS
+
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -2339,6 +2423,9 @@ void CmndScheme(void)
         Light.wheel = parm[1];
       }
       Settings.light_scheme = XdrvMailbox.payload;
+#ifdef USE_DEVICE_GROUPS
+      SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
+#endif  // USE_DEVICE_GROUPS
       if (LS_WAKEUP == Settings.light_scheme) {
         Light.wakeup_active = 3;
       }
@@ -2516,6 +2603,9 @@ void CmndFade(void)
     Settings.light_fade ^= 1;
     break;
   }
+#ifdef USE_DEVICE_GROUPS
+  if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
+#endif  // USE_DEVICE_GROUPS
   if (!Settings.light_fade) { Light.fade_running = false; }
   ResponseCmndStateText(Settings.light_fade);
 }
@@ -2536,6 +2626,9 @@ void CmndSpeed(void)
   }
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 40)) {
     Settings.light_speed = XdrvMailbox.payload;
+#ifdef USE_DEVICE_GROUPS
+    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
+#endif  // USE_DEVICE_GROUPS
   }
   ResponseCmndNumber(Settings.light_speed);
 }
@@ -2588,6 +2681,11 @@ bool Xdrv04(uint8_t function)
       case FUNC_EVERY_50_MSECOND:
         LightAnimate();
         break;
+#ifdef USE_DEVICE_GROUPS
+      case FUNC_DEVICE_GROUP_REQUEST:
+        LightHandleDeviceGroupRequest();
+        break;
+#endif  // USE_DEVICE_GROUPS
       case FUNC_SET_POWER:
         LightSetPower();
         break;

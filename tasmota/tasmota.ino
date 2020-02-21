@@ -290,6 +290,9 @@ void setup(void)
 #ifdef USE_ARDUINO_OTA
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
+#ifdef USE_DEVICE_GROUPS
+  DeviceGroupsInit();
+#endif  // USE_DEVICE_GROUPS
 
   XdrvCall(FUNC_INIT);
   XsnsCall(FUNC_INIT);
@@ -329,6 +332,9 @@ void loop(void)
 #ifdef ROTARY_V1
   RotaryLoop();
 #endif
+#ifdef USE_DEVICE_GROUPS
+  DeviceGroupsLoop();
+#endif  // USE_DEVICE_GROUPS
   BacklogLoop();
 
   if (TimeReached(state_50msecond)) {

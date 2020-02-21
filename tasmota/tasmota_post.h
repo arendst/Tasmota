@@ -55,6 +55,9 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #ifdef USE_EMULATION_WEMO
 #define USE_EMULATION
 #endif
+#ifdef USE_DEVICE_GROUPS
+#define USE_EMULATION
+#endif
 
 #ifdef USE_MQTT_TLS
   const uint16_t WEB_LOG_SIZE = 2000;            // Max number of characters in weblog
@@ -691,6 +694,14 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #ifdef ARDUINO_ESP8266_RELEASE_2_3_0             // Disable not supported features in core 2.3.0
 #undef USE_MQTT_TLS_CA_CERT
 #endif
+
+#ifdef USE_DEVICE_GROUPS
+#define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)
+#define SendLocalDeviceGroupMessage(REQUEST_TYPE, ...) _SendDeviceGroupMessage(0, REQUEST_TYPE, __VA_ARGS__, 0)
+#define DEVICE_GROUP_MESSAGE "M-TASMOTA_DGR/"
+const char kDeviceGroupMessage[] PROGMEM = DEVICE_GROUP_MESSAGE;
+uint8_t device_group_count = 1;
+#endif  // USE_DEVICE_GROUPS
 
 #ifdef DEBUG_TASMOTA_CORE
 #define DEBUG_CORE_LOG(...) AddLog_Debug(__VA_ARGS__)

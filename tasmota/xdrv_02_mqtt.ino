@@ -871,10 +871,17 @@ void CmndPublish(void)
 
 void CmndGroupTopic(void)
 {
+#ifdef USE_DEVICE_GROUPS
+  uint32_t settings_text_index = (XdrvMailbox.index <= 1 ? SET_MQTT_GRP_TOPIC : SET_MQTT_GRP_TOPIC2 + XdrvMailbox.index - 2);
+#endif  // USE_DEVICE_GROUPS
   if (XdrvMailbox.data_len > 0) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
+#ifdef USE_DEVICE_GROUPS
+    SettingsUpdateText(settings_text_index, (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data);
+#else  // USE_DEVICE_GROUPS
     SettingsUpdateText(SET_MQTT_GRP_TOPIC, (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data);
+#endif  // USE_DEVICE_GROUPS
     restart_flag = 2;
   }
   ResponseCmndChar(SettingsText(SET_MQTT_GRP_TOPIC));

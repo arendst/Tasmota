@@ -602,7 +602,11 @@ void WifiCheck(uint8_t param)
           StopWebserver();
         }
 #ifdef USE_EMULATION
-        if (Settings.flag2.emulation) { UdpConnect(); }
+#ifdef USE_DEVICE_GROUPS
+        if (Settings.flag2.emulation || Settings.flag.device_groups_enabled) { UdpConnect(); }
+#else // USE_DEVICE_GROUPS
+      if (Settings.flag2.emulation) { UdpConnect(); }
+#endif // USE_DEVICE_GROUPS
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
 

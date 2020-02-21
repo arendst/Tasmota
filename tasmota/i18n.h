@@ -289,6 +289,7 @@
 #define D_CMND_WIFIPOWER "WifiPower"
 #define D_CMND_I2CSCAN "I2CScan"
 #define D_CMND_I2CDRIVER "I2CDriver"
+#define D_CMND_DEVGROUP_SHARE "DevGroupShare"
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"

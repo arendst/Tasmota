@@ -30,6 +30,9 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
+#ifdef USE_DEVICE_GROUPS
+  D_CMND_DEVGROUP_SHARE "|"
+#endif  // USE_DEVICE_GROUPS
   D_CMND_SENSOR "|" D_CMND_DRIVER;
 
 void (* const TasmotaCommand[])(void) PROGMEM = {
@@ -45,6 +48,9 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #ifdef USE_I2C
   &CmndI2cScan, CmndI2cDriver,
 #endif
+#ifdef USE_DEVICE_GROUPS
+  &CmndDevGroupShare,
+#endif  // USE_DEVICE_GROUPS
   &CmndSensor, &CmndDriver };
 
 const char kWifiConfig[] PROGMEM =
@@ -1663,6 +1669,17 @@ void CmndI2cDriver(void)
   ResponseJsonEnd();
 }
 #endif  // USE_I2C
+
+#ifdef USE_DEVICE_GROUPS
+void CmndDevGroupShare(void)
+{
+  uint32_t parm[2] = { Settings.device_group_share_in, Settings.device_group_share_out };
+  ParseParameters(2, parm);
+  Settings.device_group_share_in = parm[0];
+  Settings.device_group_share_out = parm[1];
+  Response_P(PSTR("{\"" D_CMND_DEVGROUP_SHARE "\":{\"In\":%d,\"Out\":%d}}"), Settings.device_group_share_in, Settings.device_group_share_out);
+}
+#endif  // USE_DEVICE_GROUPS
 
 void CmndSensor(void)
 {

@@ -2968,7 +2968,11 @@ bool Xdrv01(uint8_t function)
     case FUNC_LOOP:
       PollDnsWebserver();
 #ifdef USE_EMULATION
+#ifdef USE_DEVICE_GROUPS
+      if (Settings.flag2.emulation || Settings.flag.device_groups_enabled) { PollUdp(); }
+#else // USE_DEVICE_GROUPS
       if (Settings.flag2.emulation) { PollUdp(); }
+#endif // USE_DEVICE_GROUPS
 #endif  // USE_EMULATION
       break;
     case FUNC_COMMAND:
