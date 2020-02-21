@@ -47,7 +47,6 @@ struct RTC {
   uint32_t ntp_time = 0;
   uint32_t midnight = 0;
   uint32_t restart_time = 0;
-  int32_t drift_time = 0;
   int32_t time_timezone = 0;
   uint8_t ntp_sync_minute = 0;
   bool midnight_now = false;
@@ -62,11 +61,6 @@ uint32_t UtcTime(void)
 uint32_t LocalTime(void)
 {
   return Rtc.local_time;
-}
-
-int32_t DriftTime(void)
-{
-  return Rtc.drift_time;
 }
 
 uint32_t Midnight(void)
@@ -380,7 +374,6 @@ void RtcSecond(void)
       Rtc.ntp_time = sntp_get_current_timestamp();
       if (Rtc.ntp_time > START_VALID_TIME) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
         ntp_force_sync = false;
-        if (Rtc.utc_time > START_VALID_TIME) { Rtc.drift_time = Rtc.ntp_time - Rtc.utc_time; }
         Rtc.utc_time = Rtc.ntp_time;
         Rtc.ntp_sync_minute = 60;  // Sync so block further requests
         if (Rtc.restart_time == 0) {
@@ -392,8 +385,8 @@ void RtcSecond(void)
         Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
 
         // Do not use AddLog_P2 here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
-        PrepLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: Drift %d, (" D_UTC_TIME ")%s, (" D_DST_TIME ")%s, (" D_STD_TIME ")%s"),
-          DriftTime(), GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
+        PrepLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: " D_UTC_TIME " %s, " D_DST_TIME " %s, " D_STD_TIME " %s"),
+          GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
 
         if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
           rules_flag.time_init = 1;

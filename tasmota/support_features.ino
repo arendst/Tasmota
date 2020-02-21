@@ -367,7 +367,7 @@ void GetFeatures(void)
 #ifdef USE_PZEM_DC
   feature_sns2 |= 0x00001000;  // xnrg_06_pzem_dc.ino
 #endif
-#ifdef USE_TX20_WIND_SENSOR
+#if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
   feature_sns2 |= 0x00002000;  // xsns_35_tx20.ino
 #endif
 #ifdef USE_MGC3130
