@@ -20,7 +20,7 @@
 #ifndef _TASMOTA_VERSION_H_
 #define _TASMOTA_VERSION_H_
 
-const uint32_t VERSION = 0x08010008;
+const uint32_t VERSION = 0x08010009;
 
 // Lowest compatible version
 const uint32_t VERSION_COMPATIBLE = 0x07010006;

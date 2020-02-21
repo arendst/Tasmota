@@ -367,7 +367,7 @@ void GetFeatures(void)
 #ifdef USE_PZEM_DC
   feature_sns2 |= 0x00001000;  // xnrg_06_pzem_dc.ino
 #endif
-#ifdef USE_TX20_WIND_SENSOR
+#if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
   feature_sns2 |= 0x00002000;  // xsns_35_tx20.ino
 #endif
 #ifdef USE_MGC3130
@@ -513,11 +513,13 @@ void GetFeatures(void)
 #ifdef USE_LE01MR
   feature5 |= 0x08000000;  // xnrg_13_fif_le01mr.ino
 #endif
+#ifdef USE_AHT1x
+  feature5 |= 0x10000000;  // xsns_63_aht1x.ino
+#endif
 #ifdef USE_WEMOS_MOTOR_V1
-  feature5 |= 0x10000000;  // xdrv_34_wemos_motor_v1.ino
+  feature5 |= 0x20000000;  // xdrv_34_wemos_motor_v1.ino
 #endif
 
-//  feature5 |= 0x20000000;
 //  feature5 |= 0x40000000;
 //  feature5 |= 0x80000000;
 

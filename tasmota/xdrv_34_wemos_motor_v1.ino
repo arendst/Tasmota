@@ -24,7 +24,7 @@
  *
  * I2C Address: 0x30
  * Command format:
- * driver43 <command>,<motor>,<direction>{,<duty>}
+ * driver44 <command>,<motor>,<direction>{,<duty>}
  * command:
  *    RESET - reset a motor shield
  *    SETMOTOR - seter motor state
@@ -42,7 +42,7 @@
 \*********************************************************************************************/
 
 #define XDRV_34 34
-#define XI2C_43 43 // See I2CDEVICES.md
+#define XI2C_44 44 // See I2CDEVICES.md
 
 #define MOTOR_A 0
 #define MOTOR_B 1
@@ -164,7 +164,7 @@ bool Motor_Command(void)
 
 bool Xdrv34(uint8_t function)
 {
-  if (!I2cEnabled(XI2C_43))
+  if (!I2cEnabled(XI2C_44))
   {
     return false;
   }
@@ -176,7 +176,7 @@ bool Xdrv34(uint8_t function)
   }
   else if (wemos_driver_detected)
   {
-    if (FUNC_COMMAND_DRIVER == function && XI2C_43 == XdrvMailbox.index)
+    if (FUNC_COMMAND_DRIVER == function && XI2C_44 == XdrvMailbox.index)
     {
       result = Motor_Command();
     }
