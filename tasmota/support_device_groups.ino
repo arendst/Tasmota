@@ -36,7 +36,6 @@ struct device_group_member {
 
 struct device_group {
   uint32_t next_ack_check_time;
-  power_t power;
   uint16_t last_full_status_sequence;
   uint16_t message_length;
   uint8_t message_header_length;
@@ -64,7 +63,7 @@ void DeviceGroupsInit(void)
   if (Settings.flag.device_groups_enabled) {
     device_groups = (struct device_group *)calloc(device_group_count, sizeof(struct device_group));
     if (device_groups == nullptr) {
-      AddLog_P2(LOG_LEVEL_ERROR, "DeviceGroups: error allocating %u-element device group array", device_group_count);
+      AddLog_P2(LOG_LEVEL_ERROR, "DGR: error allocating %u-element device group array", device_group_count);
       Settings.flag.device_groups_enabled = false;
       return;
     }
@@ -132,7 +131,7 @@ void SendDeviceGroupPacket(IPAddress ip, char * packet, int len, const char * la
     }
     delay(10);
   }
-  AddLog_P2(LOG_LEVEL_ERROR, "DeviceGroups: error sending %s packet", label);
+  AddLog_P2(LOG_LEVEL_ERROR, "DGR: error sending %s packet", label);
 }
 
 void _SendDeviceGroupMessage(uint8_t device_group_index, DeviceGroupMessageType message_type, ...)
@@ -377,7 +376,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DeviceGroupMessageType 
 
   // Broadcast the packet.
 #ifdef DEVICE_GROUPS_DEBUG
-  AddLog_P2(LOG_LEVEL_DEBUG, "DeviceGroups: sending %u-byte device group %s packet via broadcast, sequence=%u", device_group->message_length, device_group->group_name, device_group->message[device_group->message_header_length] | device_group->message[device_group->message_header_length + 1] << 8);
+  AddLog_P2(LOG_LEVEL_DEBUG, "DGR: sending %u-byte device group %s packet via broadcast, sequence=%u", device_group->message_length, device_group->group_name, device_group->message[device_group->message_header_length] | device_group->message[device_group->message_header_length + 1] << 8);
 #endif  // DEVICE_GROUPS_DEBUG
   SendDeviceGroupPacket(IPAddress(239,255,255,250), device_group->message, device_group->message_length, "Broadcast");
   device_group->next_ack_check_time = millis() + 100;
@@ -419,11 +418,11 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
     if (!device_group_member) {
       device_group_member = (struct device_group_member *)calloc(1, sizeof(struct device_group_member));
       if (device_group_member == nullptr) {
-        AddLog_P2(LOG_LEVEL_ERROR, "DeviceGroups: error allocating device group member block");
+        AddLog_P2(LOG_LEVEL_ERROR, "DGR: error allocating device group member block");
         return;
       }
 #ifdef DEVICE_GROUPS_DEBUG
-      AddLog_P2(LOG_LEVEL_DEBUG, "DeviceGroups: adding member %s (%p)", IPAddressToString(remote_ip), device_group_member);
+      AddLog_P2(LOG_LEVEL_DEBUG, "DGR: adding member %s (%p)", IPAddressToString(remote_ip), device_group_member);
 #endif  // DEVICE_GROUPS_DEBUG
       device_group_member->ip_address = remote_ip;
       *flink = device_group_member;
@@ -538,7 +537,7 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
       case DGR_ITEM_LIGHT_CHANNELS:
         break;
       default:
-        AddLog_P2(LOG_LEVEL_ERROR, "DeviceGroups: ********** invalid item=%u received from device group %s member %s", item, device_group->group_name, IPAddressToString(remote_ip));
+        AddLog_P2(LOG_LEVEL_ERROR, "DGR: ********** invalid item=%u received from device group %s member %s", item, device_group->group_name, IPAddressToString(remote_ip));
     }
 #endif  // DEVICE_GROUPS_DEBUG
 
@@ -607,7 +606,7 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
   return;
 
 badmsg:
-  AddLog_P2(LOG_LEVEL_ERROR, "DeviceGroups: malformed message received from %s", IPAddressToString(remote_ip));
+  AddLog_P2(LOG_LEVEL_ERROR, "DGR: malformed message received from %s", IPAddressToString(remote_ip));
 #ifdef DEVICE_GROUPS_DEBUG
   AddLog_P2(LOG_LEVEL_DEBUG, "packet_length=%u, offset=%u", packet_length, message_ptr - packet);
 #endif  // DEVICE_GROUPS_DEBUG
@@ -650,7 +649,7 @@ void DeviceGroupsLoop(void)
           if (device_group->next_ack_check_time <= now) {
             if (device_group->initial_status_requests_remaining) {
 #ifdef DEVICE_GROUPS_DEBUG
-              AddLog_P2(LOG_LEVEL_DEBUG, "DeviceGroups: sending initial status request for group %s", device_group->group_name);
+              AddLog_P2(LOG_LEVEL_DEBUG, "DGR: sending initial status request for group %s", device_group->group_name);
 #endif  // DEVICE_GROUPS_DEBUG
               if (--device_group->initial_status_requests_remaining) {
                 SendDeviceGroupPacket(IPAddress(239,255,255,250), device_group->message, device_group->message_length, "Initial");
@@ -672,14 +671,14 @@ void DeviceGroupsLoop(void)
 
                   if (device_group_member->timeout_time && device_group_member->timeout_time < now) {
 #ifdef DEVICE_GROUPS_DEBUG
-                    AddLog_P2(LOG_LEVEL_DEBUG, "DeviceGroups: removing member %s (%p)", IPAddressToString(device_group_member->ip_address), device_group_member);
+                    AddLog_P2(LOG_LEVEL_DEBUG, "DGR: removing member %s (%p)", IPAddressToString(device_group_member->ip_address), device_group_member);
 #endif  // DEVICE_GROUPS_DEBUG
                     *flink = device_group_member->flink;
                     free(device_group_member);
                   }
                   else {
 #ifdef DEVICE_GROUPS_DEBUG
-                    AddLog_P2(LOG_LEVEL_DEBUG, "DeviceGroups: sending %u-byte device group %s packet via unicast to %s, sequence %u, last message acked=%u", device_group->message_length, device_group->group_name, IPAddressToString(device_group_member->ip_address), outgoing_sequence, device_group_member->acked_sequence);
+                    AddLog_P2(LOG_LEVEL_DEBUG, "DGR: sending %u-byte device group %s packet via unicast to %s, sequence %u, last message acked=%u", device_group->message_length, device_group->group_name, IPAddressToString(device_group_member->ip_address), outgoing_sequence, device_group_member->acked_sequence);
 #endif  // DEVICE_GROUPS_DEBUG
                     SendDeviceGroupPacket(device_group_member->ip_address, device_group->message, device_group->message_length, "Unicast");
                     if (!device_group_member->timeout_time) device_group_member->timeout_time = now + 15000;
