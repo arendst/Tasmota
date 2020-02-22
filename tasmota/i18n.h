@@ -489,6 +489,7 @@
 #define D_CMND_ZIGBEE_FORGET "Forget"
 #define D_CMND_ZIGBEE_SAVE "Save"
   #define D_CMND_ZIGBEE_LINKQUALITY "LinkQuality"
+  #define D_CMND_ZIGBEE_ENDPOINT "Endpoint"
 #define D_CMND_ZIGBEE_READ "Read"
 #define D_CMND_ZIGBEE_SEND "Send"
   #define D_JSON_ZIGBEE_ZCL_SENT "ZbZCLSent"
