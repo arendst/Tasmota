@@ -223,6 +223,9 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 //#define USE_ARDUINO_SLAVE                        // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
+#define USE_WEMOS_MOTOR_V1
+  #define USE_WEMOS_MOTOR_V1_ADDR  0x30
+  #define USE_WEMOS_MOTOR_V1_FREQ  1000
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
