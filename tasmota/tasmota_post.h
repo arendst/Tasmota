@@ -165,6 +165,9 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 //#define USE_PCF8574                              // Enable PCF8574 I/O Expander (I2C addresses 0x20 - 0x26 and 0x39 - 0x3F) (+1k9 code)
 #define USE_HIH6                                 // Enable Honywell HIH Humidity and Temperature sensor (I2C address 0x27) (+0k6)
 //#define USE_AHT1x                                // Enable AHT10/15 humidity and temperature sensor (I2C address 0x38) (+0k8 code)
+#define USE_WEMOS_MOTOR_V1                       // Enable Wemos motor driver V1 (I2C addresses 0x2D - 0x30) (+0k7 code)
+  #define WEMOS_MOTOR_V1_ADDR  0x30              // Default I2C address 0x30
+  #define WEMOS_MOTOR_V1_FREQ  1000              // Default frequency
 
 #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
@@ -223,9 +226,6 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 //#define USE_ARDUINO_SLAVE                        // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
-#define USE_WEMOS_MOTOR_V1
-  #define USE_WEMOS_MOTOR_V1_ADDR  0x30
-  #define USE_WEMOS_MOTOR_V1_FREQ  1000
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
