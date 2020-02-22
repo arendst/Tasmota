@@ -62,6 +62,7 @@
 | USE_DDS2382           | - | - | - | - | x | - | - |
 | USE_DDSU666           | - | - | - | - | x | - | - |
 | USE_SOLAX_X1          | - | - | - | - | - | - | - |
+| USE_LE01MR            | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | USE_ADC_VCC           | x | x | - | - | - | - | - |
 | USE_COUNTER           | - | - | x | x | x | x | x |
@@ -109,6 +110,8 @@
 | USE_HIH6              | - | - | - | - | x | - | - |
 | USE_DHT12             | - | - | - | - | x | - | - |
 | USE_DS1624            | - | - | - | - | x | - | - |
+| USE_AHT1x             | - | - | - | - | - | - | - |
+| USE_WEMOS_MOTOR_V1    | - | - | - | - | x | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
@@ -124,6 +127,10 @@
 | USE_RDM6300           | - | - | - | - | x | - | - |
 | USE_IBEACON           | - | - | - | - | x | - | - |
 | USE_GPS               | - | - | - | - | - | - | - |
+| USE_HM10              | - | - | - | - | x | - | - |
+|                       |   |   |   |   |   |   |   |
+| USE_NRF24             | - | - | - | - | - | - | - |
+| USE_MIBLE             | - | - | - | - | - | - | - |
 | USE_ZIGBEE            | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | USE_IR_REMOTE         | - | - | x | x | x | x | x |
