@@ -502,7 +502,7 @@
       #define MTX_ADDRESS7     0x00              // [DisplayAddress7] I2C address of seventh 8x8 matrix module
       #define MTX_ADDRESS8     0x00              // [DisplayAddress8] I2C address of eigth 8x8 matrix module
 //    #define USE_DISPLAY_SH1106                   // [DisplayModel 7] [I2cDriver6] Enable SH1106 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
-  #define USE_WEMOS_MOTOR_V1
+//  #define USE_WEMOS_MOTOR_V1
     #define USE_WEMOS_MOTOR_V1_ADDR  0x30
     #define USE_WEMOS_MOTOR_V1_FREQ  1000
 #endif  // USE_I2C
