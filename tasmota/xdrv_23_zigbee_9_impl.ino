@@ -344,7 +344,7 @@ void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
                                		ToHex_P(msg, len, hex_char, sizeof(hex_char)));
 }
 
-void ZigbeeZCLSend(uint16_t dtsAddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool disableDefResp, uint8_t transacId) {
+void ZigbeeZCLSend(uint16_t dtsAddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool needResponse, uint8_t transacId) {
   SBuffer buf(25+len);
   buf.add8(Z_SREQ | Z_AF);        // 24
   buf.add8(AF_DATA_REQUEST);      // 01
@@ -357,7 +357,7 @@ void ZigbeeZCLSend(uint16_t dtsAddr, uint16_t clusterId, uint8_t endpoint, uint8
   buf.add8(0x1E);                 // 1E radius
 
   buf.add8(3 + len);
-  buf.add8((disableDefResp ? 0x10 : 0x00) | (clusterSpecific ? 0x01 : 0x00));                 // Frame Control Field
+  buf.add8((needResponse ? 0x00 : 0x10) | (clusterSpecific ? 0x01 : 0x00));                 // Frame Control Field
   buf.add8(transacId);            // Transaction Sequance Number
   buf.add8(cmdId);
   if (len > 0) {
@@ -438,7 +438,7 @@ void zigbeeZCLSendStr(uint16_t dstAddr, uint8_t endpoint, const char *data) {
   }
 
   // everything is good, we can send the command
-  ZigbeeZCLSend(dstAddr, cluster, endpoint, cmd, clusterSpecific, buf.getBuffer(), buf.len());
+  ZigbeeZCLSend(dstAddr, cluster, endpoint, cmd, clusterSpecific, buf.getBuffer(), buf.len(), false, zigbee_devices.getNextSeqNumber(dstAddr));
   // now set the timer, if any, to read back the state later
   if (clusterSpecific) {
     zigbeeSetCommandTimer(dstAddr, cluster, endpoint);
@@ -469,6 +469,7 @@ void CmndZbSend(void) {
   uint8_t  endpoint = 0x00;       // 0x00 is invalid for the dst endpoint
   String   cmd_str = "";          // the actual low-level command, either specified or computed
 
+  // parse JSON
   const JsonVariant &val_device = getCaseInsensitive(json, PSTR("Device"));
   if (nullptr != &val_device) {
     device = zigbee_devices.parseDeviceParam(val_device.as<char*>());
@@ -729,7 +730,7 @@ void CmndZbRead(void) {
   }
 
   if ((0 != endpoint) && (attrs_len > 0)) {
-    ZigbeeZCLSend(device, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, false /* we do want a response */);
+    ZigbeeZCLSend(device, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, true /* we do want a response */, zigbee_devices.getNextSeqNumber(device));
     ResponseCmndDone();
   } else {
     ResponseCmndChar("Missing parameters");
