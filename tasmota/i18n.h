@@ -496,6 +496,8 @@
 #define D_JSON_ZIGBEE_RECEIVED "ZbReceived"
 #define D_JSON_ZIGBEE_RECEIVED_LEGACY "ZigbeeReceived"
 #define D_CMND_ZIGBEE_BIND "Bind"
+#define D_CMND_ZIGBEE_PING "Ping"
+  #define D_JSON_ZIGBEE_PING "ZbPing"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"
