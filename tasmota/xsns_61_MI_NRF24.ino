@@ -83,11 +83,11 @@ const uint32_t kMINRFMJPDU[3]  = {0x4760cd66,0xdbcc0cd3,0x33048df5};
 const uint32_t kMINRFL2PDU[3]  = {0x3eaa057d,0xef3b0730,0x71da7646}; // 1 and 3 unsure
 // const uint32_t kMINRFL3PDU[3]  = {0x4760dd78,0xdbcc1ccd,0xffffffff}; //encrypted - 58 58
 const uint32_t kMINRFL3PDU[3]  = {0x4760cb78,0xdbcc0acd,0x33048beb}; //unencrypted  - 30 58
-const uint32_t kMINRFCGPDU[3]  = {0x4760cd78,0xdbcc0ccd,0x33048deb}; // very unsure!!!
+const uint32_t kMINRFCGPDU[3]  = {0x4760cd6e,0xdbcc0cdb,0x33048dfd};
 
 // start-LSFR for different channels 37-39
 const uint8_t kMINRFlsfrList_A[3] = {0x4b,0x17,0x23};  // Flora, LYWSD02
-const uint8_t kMINRFlsfrList_B[3] = {0x21,0x72,0x43};  // MJ_HT_V1, LYWSD03, ???CGG1????
+const uint8_t kMINRFlsfrList_B[3] = {0x21,0x72,0x43};  // MJ_HT_V1, LYWSD03, CGG1
 
 
 #pragma pack(1)  // important!!
@@ -720,6 +720,10 @@ void MINRFhandleCGG1Packet(void){ // we assume, that the packet structure is equ
   }
 }
 
+/*********************************************************************************************\
+ * Main loop of the driver
+\*********************************************************************************************/
+
 void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
   
   if(MINRF.timer>6000){ // happens every 6000/20 = 300 seconds
@@ -771,7 +775,7 @@ void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
   else {
     MINRFinitBLE(++MINRF.packetMode);
   }
-  
+
   MINRFhopChannel();
   NRF24radio.startListening();
 }
