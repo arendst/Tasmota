@@ -19,6 +19,10 @@
 
 #ifdef USE_ZIGBEE
 
+#ifndef ZIGBEERECEIVED
+#define ZIGBEERECEIVED 1
+#endif
+
 #include <vector>
 #include <map>
 
@@ -725,18 +729,22 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":{\"%s\":%s}}"), fname->c_str(), msg.c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
     XdrvRulesProcess();
+#if ZIGBEERECEIVED
     // DEPRECATED TODO
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED_LEGACY "\":{\"%s\":%s}}"), fname->c_str(), msg.c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
     XdrvRulesProcess();
+#endif
   } else {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":{\"0x%04X\":%s}}"), shortaddr, msg.c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
     XdrvRulesProcess();
+#if ZIGBEERECEIVED
     // DEPRECATED TODO
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED_LEGACY "\":{\"0x%04X\":%s}}"), shortaddr, msg.c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
     XdrvRulesProcess();
+#endif
   }
   // MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
   // XdrvRulesProcess();

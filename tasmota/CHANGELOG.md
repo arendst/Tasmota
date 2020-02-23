@@ -6,6 +6,7 @@
 - Add initial support for Sensors AHT10 and AHT15 by Martin Wagner (#7596)
 - Add support for Wemos Motor Shield V1 by Denis Sborets (#7764)
 - Fix Zigbee auto-increment transaction number (#7757)
+- Add Zigbee enhanced commands decoding, added ``ZbPing``
 
 ### 8.1.0.8 20200212
 
