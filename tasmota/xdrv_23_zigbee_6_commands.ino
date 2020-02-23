@@ -84,6 +84,8 @@ const Z_CommandConverter Z_Commands[] = {
   { "ArrowClick",     0x0005, 0x07, 0x01,   "xx" },         // xx == 0x01 = left, 0x00 = right
   { "ArrowHold",      0x0005, 0x08, 0x01,   "xx" },         // xx == 0x01 = left, 0x00 = right
   { "ArrowRelease",   0x0005, 0x09, 0x01,   "" },
+  // IAS - Intruder Alarm System + leak/fire detection
+  { "ZoneStatusChange",0x0500, 0x00, 0x02,  "xxxxyyzz" },   // xxxx = zone status, yy = extended status, zz = zone id, Delay is ignored
   // responses for Group cluster commands
   { "AddGroupResp",   0x0004, 0x00, 0x02,   "xxyyyy" },       // xx = status, yy = group id
   { "ViewGroupResp",  0x0004, 0x01, 0x02,   "xxyyyy" },       // xx = status, yy = group id, name ignored
