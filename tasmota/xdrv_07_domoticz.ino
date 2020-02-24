@@ -296,6 +296,7 @@ bool DomoticzMqttData(void)
           found = true;
         } else
 #endif // USE_SHUTTER
+#ifdef USE_LIGHT
         if (iscolordimmer && 10 == nvalue) {  // Color_SetColor
           // https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Set_a_light_to_a_certain_color_or_color_temperature
           JsonObject& color = domoticz["Color"];
@@ -333,8 +334,9 @@ bool DomoticzMqttData(void)
           snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_DIMMER));
           snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), nvalue);
           found = true;
-        }
-        else if (1 == nvalue || 0 == nvalue) {
+        } else
+#endif  // USE_LIGHT
+        if (1 == nvalue || 0 == nvalue) {
           if (((power >> i) &1) == (power_t)nvalue) {
             return true;  // Stop loop
           }

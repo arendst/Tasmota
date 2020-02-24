@@ -100,6 +100,7 @@ bool DhtRead(uint32_t sensor)
       break;
   }
 
+/*
   bool error = false;
   noInterrupts();
   if (DhtWaitState(sensor, 0) && DhtWaitState(sensor, 1) && DhtWaitState(sensor, 0)) {
@@ -127,6 +128,22 @@ bool DhtRead(uint32_t sensor)
   }
   interrupts();
   if (error) { return false; }
+*/
+
+  uint32_t i = 0;
+  noInterrupts();
+  if (DhtWaitState(sensor, 0) && DhtWaitState(sensor, 1) && DhtWaitState(sensor, 0)) {
+    for (i = 0; i < 40; i++) {
+      if (!DhtWaitState(sensor, 1)) { break; }
+      delayMicroseconds(35);                          // Was 30
+      if (digitalRead(Dht[sensor].pin)) {
+        dht_data[i / 8] |= (1 << (7 - i % 8));
+      }
+      if (!DhtWaitState(sensor, 0)) { break; }
+    }
+  }
+  interrupts();
+  if (i < 40) { return false; }
 
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
   if (dht_data[4] != checksum) {
