@@ -504,8 +504,10 @@
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Dirección del Viento"
+#define D_TX20_WIND_DEGREES "Ángulo del Viento"
 #define D_TX20_WIND_SPEED "Vel. del Viento"
 #define D_TX20_WIND_SPEED_AVG "Vel. Prom. del Viento"
+#define D_TX20_WIND_SPEED_MIN "Vel. Min. del Viento"
 #define D_TX20_WIND_SPEED_MAX "Vel. Max. del Viento"
 #define D_TX20_NORTH "N"
 #define D_TX20_EAST "E"
