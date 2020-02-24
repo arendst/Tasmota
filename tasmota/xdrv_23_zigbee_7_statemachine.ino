@@ -33,6 +33,7 @@ const uint8_t  ZIGBEE_STATUS_NODE_DESC = 31;            // Node descriptor
 const uint8_t  ZIGBEE_STATUS_ACTIVE_EP = 32;            // Endpoints descriptor
 const uint8_t  ZIGBEE_STATUS_SIMPLE_DESC = 33;          // Simple Descriptor (clusters)
 const uint8_t  ZIGBEE_STATUS_DEVICE_INDICATION = 34;    // Device announces its address
+const uint8_t  ZIGBEE_STATUS_DEVICE_IEEE = 35;          // Request of device address
 const uint8_t  ZIGBEE_STATUS_CC_VERSION = 50;           // Status: CC2530 ZNP Version
 const uint8_t  ZIGBEE_STATUS_CC_INFO = 51;              // Status: CC2530 Device Configuration
 const uint8_t  ZIGBEE_STATUS_UNSUPPORTED_VERSION = 98;  // Unsupported ZNP version
