@@ -176,15 +176,24 @@ int32_t Z_ReceivePermitJoinStatus(int32_t res, const class SBuffer &buf) {
   return -1;
 }
 
+// Send ZDO_IEEE_ADDR_REQ request to get IEEE long address
+void Z_SendIEEEAddrReq(uint16_t shortaddr) {
+  uint8_t IEEEAddrReq[] = { Z_SREQ | Z_ZDO, ZDO_IEEE_ADDR_REQ,
+              Z_B0(shortaddr), Z_B1(shortaddr), 0x00, 0x00 };
+
+  ZigbeeZNPSend(IEEEAddrReq, sizeof(IEEEAddrReq));
+}
+
 // Send ACTIVE_EP_REQ to collect active endpoints for this address
 void Z_SendActiveEpReq(uint16_t shortaddr) {
   uint8_t ActiveEpReq[] = { Z_SREQ | Z_ZDO, ZDO_ACTIVE_EP_REQ,
               Z_B0(shortaddr), Z_B1(shortaddr), Z_B0(shortaddr), Z_B1(shortaddr) };
 
-  uint8_t NodeDescReq[] = { Z_SREQ | Z_ZDO, ZDO_NODE_DESC_REQ,
-              Z_B0(shortaddr), Z_B1(shortaddr), Z_B0(shortaddr), Z_B1(shortaddr) };
-
   ZigbeeZNPSend(ActiveEpReq, sizeof(ActiveEpReq));
+
+  // uint8_t NodeDescReq[] = { Z_SREQ | Z_ZDO, ZDO_NODE_DESC_REQ,
+  //             Z_B0(shortaddr), Z_B1(shortaddr), Z_B0(shortaddr), Z_B1(shortaddr) };
+
   //ZigbeeZNPSend(NodeDescReq, sizeof(NodeDescReq));      Not sure this is useful
 }
 
@@ -335,6 +344,40 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
   return -1;
 }
 
+int32_t Z_ReceiveIEEEAddr(int32_t res, const class SBuffer &buf) {
+  uint8_t           status = buf.get8(2);
+  Z_IEEEAddress     ieeeAddr = buf.get64(3);
+  Z_ShortAddress    nwkAddr = buf.get16(11);
+  // uint8_t           startIndex = buf.get8(13);
+  // uint8_t           numAssocDev = buf.get8(14);
+
+  if (0 == status) {    // SUCCESS
+    zigbee_devices.updateDevice(nwkAddr, ieeeAddr);
+    char hex[20];
+    Uint64toHex(ieeeAddr, hex, 64);
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
+                    "\"Status\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
+                    "}}"),
+                    ZIGBEE_STATUS_DEVICE_IEEE, hex, nwkAddr
+                    );
+
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+    XdrvRulesProcess();
+    // Ping response
+    const String * friendlyName = zigbee_devices.getFriendlyName(nwkAddr);
+    if (friendlyName) {
+      Response_P(PSTR("{\"" D_JSON_ZIGBEE_PING "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""
+                      ",\"" D_JSON_ZIGBEE_NAME "\":\"%s\"}}"), nwkAddr, friendlyName->c_str());
+    } else {
+      Response_P(PSTR("{\"" D_JSON_ZIGBEE_PING "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\"}}"), nwkAddr);
+    }
+
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+    XdrvRulesProcess();
+  }
+  return -1;
+}
+
 int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
   Z_ShortAddress    srcAddr = buf.get16(2);
   Z_ShortAddress    nwkAddr = buf.get16(4);
@@ -451,6 +494,8 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":%s}"), srcaddr, msg.c_str());
 
   zcl_received.postProcessAttributes(srcaddr, json);
+  // Add Endpoint
+  json[F(D_CMND_ZIGBEE_ENDPOINT)] = srcendpoint;
   // Add linkquality
   json[F(D_CMND_ZIGBEE_LINKQUALITY)] = linkquality;
 
@@ -482,6 +527,7 @@ ZBM(AREQ_END_DEVICE_TC_DEV_IND, Z_AREQ | Z_ZDO, ZDO_TC_DEV_IND)   // 45CA
 ZBM(AREQ_PERMITJOIN_OPEN_XX, Z_AREQ | Z_ZDO, ZDO_PERMIT_JOIN_IND )    // 45CB
 ZBM(AREQ_ZDO_ACTIVEEPRSP, Z_AREQ | Z_ZDO, ZDO_ACTIVE_EP_RSP)    // 4585
 ZBM(AREQ_ZDO_SIMPLEDESCRSP, Z_AREQ | Z_ZDO, ZDO_SIMPLE_DESC_RSP)    // 4584
+ZBM(AREQ_ZDO_IEEE_ADDR_RSP, Z_AREQ | Z_ZDO, ZDO_IEEE_ADDR_RSP)    // 4581
 
 const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
   { AREQ_AF_INCOMING_MESSAGE,     &Z_ReceiveAfIncomingMessage },
@@ -491,6 +537,7 @@ const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
   { AREQ_ZDO_NODEDESCRSP,         &Z_ReceiveNodeDesc },
   { AREQ_ZDO_ACTIVEEPRSP,         &Z_ReceiveActiveEp },
   { AREQ_ZDO_SIMPLEDESCRSP,       &Z_ReceiveSimpleDesc },
+  { AREQ_ZDO_IEEE_ADDR_RSP,       &Z_ReceiveIEEEAddr },
 };
 
 int32_t Z_Recv_Default(int32_t res, const class SBuffer &buf) {
