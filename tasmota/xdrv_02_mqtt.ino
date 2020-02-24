@@ -398,7 +398,7 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
     free(mqtt_save);
 
     bool result = MqttClient.publish(romram, mqtt_data, false);
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Updated shadow: %s"), romram);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Updated shadow: %s"), romram);
     yield();  // #3313
   }
 #endif // USE_MQTT_AWS_IOT
