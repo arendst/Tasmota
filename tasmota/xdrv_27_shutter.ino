@@ -429,15 +429,14 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
 
 void ShutterWaitForMotorStop(uint32_t i)
 {
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Wait for Motorstop..dir %d, akt freq: %d, max %d, maxclose %d"),Shutter.direction[i],Shutter.pwm_frequency[i], Shutter.max_pwm_frequency, Shutter.max_close_pwm_frequency[i]);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Wait for Motorstop.."));
   if ((SHT_OFF_ON__OPEN_CLOSE == Shutter.mode) || (SHT_OFF_ON__OPEN_CLOSE_STEPPER == Shutter.mode)) {
     if (SHT_OFF_ON__OPEN_CLOSE_STEPPER == Shutter.mode) {
       //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Frequency change %d"), Shutter.pwm_frequency);
       while (Shutter.pwm_frequency[i] > 0) {
-        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Frequency: %ld, delta: %d"), Shutter.pwm_frequency[i], (int32_t)((Shutter.direction[i] == 1 ? Shutter.max_pwm_frequency : Shutter.max_close_pwm_frequency[i])/(Shutter.motordelay[i]+1)) );
-
+        //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Frequency: %ld, delta: %d"), Shutter.pwm_frequency[i], (int32_t)((Shutter.direction[i] == 1 ? Shutter.max_pwm_frequency : Shutter.max_close_pwm_frequency[i])/(Shutter.motordelay[i]+1)) );
         Shutter.pwm_frequency[i] = tmax(Shutter.pwm_frequency[i]-((Shutter.direction[i] == 1 ? Shutter.max_pwm_frequency : Shutter.max_close_pwm_frequency[i])/(Shutter.motordelay[i]+1)) , 0);
-        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Frequency: %ld"),  Shutter.pwm_frequency[i]);
+        //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Frequency: %ld"),  Shutter.pwm_frequency[i]);
         analogWriteFreq(Shutter.pwm_frequency[i]);
         analogWrite(pin[GPIO_PWM1+i], 50);
         delay(50);
@@ -528,10 +527,6 @@ void ShutterButtonHandler(void)
   uint8_t shutter_index = Settings.shutter_button[button_index] & 0x03;
 
   uint16_t loops_per_second = 1000 / Settings.button_debounce;  // ButtonDebounce (50)
-  if ( button != Button.last_state[button_index]) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: shutter %d, button %d, presstate %d, lasttate %d, Settings.flag.button_single %d)"), shutter_index+1, button_index+1, button, Button.last_state[button_index], Settings.flag.button_single);
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Button.press_counter[button_index] %d, Button.hold_timer[button_index] %d, Button.window_timer[button_index] %d "), Button.press_counter[button_index],  Button.hold_timer[button_index], Button.window_timer[button_index] );
-  }
   if ((PRESSED == button) && (NOT_PRESSED == Button.last_state[button_index])) {
     if (Settings.flag.button_single) {                   // SetOption13 (0) - Allow only single button press for immediate action
         buttonState = SHT_PRESSED_MULTI;
@@ -543,7 +538,6 @@ void ShutterButtonHandler(void)
         Button.press_counter[button_index] = 99; // Remember to discard further action for press & hold within button timings
       } else {
         Button.press_counter[button_index] = (Button.window_timer[button_index]) ? Button.press_counter[button_index] +1 : 1;
-        Button.window_timer[button_index] = loops_per_second / 2;  // 0.5 second multi press window
       }
     }
     blinks = 201;
@@ -597,7 +591,7 @@ void ShutterButtonHandler(void)
           uint32 min_shutterbutton_press_counter = -1;
           for (uint32_t i = 0; i < MAX_KEYS; i++) {
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Settings.shutter_button[i] %ld, shutter_index %d, Button.press_counter[i] %d, min_shutterbutton_press_counter %d"), Settings.shutter_button[i], shutter_index, Button.press_counter[i] , min_shutterbutton_press_counter);
-            if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) != shutter_index) && (Button.press_counter[i] < min_shutterbutton_press_counter)) {
+            if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index) && (Button.press_counter[i] < min_shutterbutton_press_counter))            
               min_shutterbutton_press_counter = Button.press_counter[i];
             }
 
@@ -621,13 +615,9 @@ void ShutterButtonHandler(void)
       }
     }
   }
-  if (buttonState) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Final buttonState %d"),  buttonState);
-  }
 
  if (buttonState != SHT_NOT_PRESSED) {
    if (buttonState == SHT_PRESSED_MULTI_SIMULTANEOUS) {
-     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: SHT_PRESSED_MULTI_SIMULTANEOUS"));
      if ((press_index>=5) && (press_index<=7) && (!Settings.flag.button_restrict)) { // 5x..7x && no SetOption1 (0)
        // simultaneous shutter button press 5x, 6x, 7x detected
        char scmnd[20];
@@ -636,7 +626,6 @@ void ShutterButtonHandler(void)
        return;
      }
    } else if (buttonState == SHT_PRESSED_EXT_HOLD_SIMULTANEOUS) {
-     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: SHT_PRESSED_EXT_HOLD_SIMULTANEOUS"));// simultaneous shutter button extend hold detected
      if (!Settings.flag.button_restrict) { // no SetOption1 (0)
        char scmnd[20];
        snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
@@ -644,7 +633,6 @@ void ShutterButtonHandler(void)
        return;
      }
    } else if (buttonState <= SHT_PRESSED_IMMEDIATE) {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: SHT_PRESSED_IMMEDIATE"));
       if (Settings.shutter_startrelay[shutter_index] && Settings.shutter_startrelay[shutter_index] <9) {
         uint8_t pos_press_index = (buttonState == SHT_PRESSED_HOLD) ? 3 : (press_index-1);
         if (pos_press_index>3) pos_press_index=3;
@@ -656,15 +644,13 @@ void ShutterButtonHandler(void)
         XdrvMailbox.data = databuf;
         XdrvMailbox.command = NULL;
         if (buttonState == SHT_PRESSED_IMMEDIATE) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: SHT_PRESSED_IMMEDIATE stop"));
-          //XdrvMailbox.payload = XdrvMailbox.index;
-          //CmndShutterStop();
+          XdrvMailbox.payload = XdrvMailbox.index;
+          CmndShutterStop();
         } else {
           uint8_t position = (Settings.shutter_button[button_index]>>(6*pos_press_index + 2)) & 0x03f;
           if (position) {
             if (Shutter.direction[shutter_index]) {
               XdrvMailbox.payload = XdrvMailbox.index;
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: immegency stop"));
               CmndShutterStop();
             } else {
               XdrvMailbox.payload = position = (position-1)<<1;
