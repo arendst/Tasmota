@@ -104,7 +104,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t alexa_ct_range : 1;           // bit 0 (v8.1.0.2)   - SetOption82 - Reduced CT range for Alexa
     uint32_t zigbee_use_names : 1;         // bit 1 (v8.1.0.4)   - SetOption83 - Use FriendlyNames instead of ShortAddresses when possible
     uint32_t awsiot_shadow : 1;            // bit 2 (v8.1.0.5)   - SetOption84 - (AWS IoT) publish MQTT state to a device shadow
-    uint32_t spare03 : 1;
+    uint32_t device_groups_enabled : 1;    // bit 3 (v8.1.0.10)  - SetOption85 - Enable device groups
     uint32_t spare04 : 1;
     uint32_t spare05 : 1;
     uint32_t spare06 : 1;
@@ -467,8 +467,10 @@ struct SYSCFG {
   uint8_t       hotplug_scan;              // F03
   uint8_t       reserved1;                 // F04 - reserved for s-hadinger
 
-  uint8_t       free_f05[207];             // F05
+  uint8_t       free_f05[199];             // F05
 
+  uint32_t      device_group_share_in;     // FCC - Bitmask of device group items imported
+  uint32_t      device_group_share_out;    // FD0 - Bitmask of device group items exported
   uint32_t      bootcount_reset_time;      // FD4
   int           adc_param4;                // FD8
   uint32_t      shutter_button[MAX_KEYS];  // FDC
@@ -572,10 +574,5 @@ typedef union {
 #ifdef USE_ADC_VCC
   ADC_MODE(ADC_VCC);                       // Set ADC input for Power Supply Voltage usage
 #endif
-
-// Settings re-purposed for device groups
-#define device_groups_enabled  ws_clock_reverse   // SetOption16 - Enable device groups
-#define device_group_share_in  domoticz_sensor_idx[0]    // Bitmask of device group items imported
-#define device_group_share_out domoticz_sensor_idx[1]    // Bitmask of device group items exported
 
 #endif  // _SETTINGS_H_

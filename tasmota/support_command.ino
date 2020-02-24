@@ -1677,7 +1677,7 @@ void CmndDevGroupShare(void)
   ParseParameters(2, parm);
   Settings.device_group_share_in = parm[0];
   Settings.device_group_share_out = parm[1];
-  Response_P(PSTR("{\"" D_CMND_DEVGROUP_SHARE "\":{\"In\":%d,\"Out\":%d}}"), Settings.device_group_share_in, Settings.device_group_share_out);
+  Response_P(PSTR("{\"" D_CMND_DEVGROUP_SHARE "\":{\"In\":%x,\"Out\":%x}}"), Settings.device_group_share_in, Settings.device_group_share_out);
 }
 #endif  // USE_DEVICE_GROUPS
 

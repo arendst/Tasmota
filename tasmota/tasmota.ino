@@ -290,9 +290,6 @@ void setup(void)
 #ifdef USE_ARDUINO_OTA
   ArduinoOTAInit();
 #endif  // USE_ARDUINO_OTA
-#ifdef USE_DEVICE_GROUPS
-  DeviceGroupsInit();
-#endif  // USE_DEVICE_GROUPS
 
   XdrvCall(FUNC_INIT);
   XsnsCall(FUNC_INIT);
