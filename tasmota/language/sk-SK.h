@@ -504,8 +504,10 @@
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Smer vetra"
+#define D_TX20_WIND_DEGREES "Uhol vetra"
 #define D_TX20_WIND_SPEED "Rýchlosť vetra"
 #define D_TX20_WIND_SPEED_AVG "Priemerná rýchlosť vetra"
+#define D_TX20_WIND_SPEED_MIN "Minimálna rýchlosť vetra"
 #define D_TX20_WIND_SPEED_MAX "Maximálna rýchlosť vetra"
 #define D_TX20_NORTH "S"
 #define D_TX20_EAST "V"
