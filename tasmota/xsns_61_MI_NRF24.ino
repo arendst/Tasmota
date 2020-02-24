@@ -21,6 +21,9 @@
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
 
+  0.9.3.0 20200222  integrate - use now the correct id-word instead of MAC-OUI, 
+                                add CGG1
+  ---
   0.9.2.0 20200212  integrate - "backports" from MI-HM10, change reading pattern, 
                                 add missing PDU-types, renaming driver
   ---
@@ -58,18 +61,21 @@
 #define MJ_HT_V1    2
 #define LYWSD02     3
 #define LYWSD03     4
+#define CGG1        5
 
-uint8_t kMINRFSlaveID[4][3]  = { 0xC4,0x7C,0x8D, // Flora
-                                0x58,0x2D,0x34, // MJ_HT_V1
-                                0xE7,0x2E,0x00, // LYWSD02
-                                0xA4,0xC1,0x38, // LYWSD03
-                                };
+const uint16_t kMINRFSlaveID[5]={ 0x0098, // Flora
+                                  0x01aa, // MJ_HT_V1
+                                  0x045b, // LYWSD02
+                                  0x055b, // LYWSD03
+                                  0x0347  // CGG1
+                                  };
 
 const char kMINRFSlaveType1[] PROGMEM = "Flora";
 const char kMINRFSlaveType2[] PROGMEM = "MJ_HT_V1";
 const char kMINRFSlaveType3[] PROGMEM = "LYWSD02";
 const char kMINRFSlaveType4[] PROGMEM = "LYWSD03";
-const char * kMINRFSlaveType[] PROGMEM = {kMINRFSlaveType1,kMINRFSlaveType2,kMINRFSlaveType3,kMINRFSlaveType4};
+const char kMINRFSlaveType5[] PROGMEM = "CGG1";
+const char * kMINRFSlaveType[] PROGMEM = {kMINRFSlaveType1,kMINRFSlaveType2,kMINRFSlaveType3,kMINRFSlaveType4,kMINRFSlaveType5};
 
 // PDU's or different channels 37-39
 const uint32_t kMINRFFloPDU[3] = {0x3eaa857d,0xef3b8730,0x71da7b46};
@@ -77,10 +83,11 @@ const uint32_t kMINRFMJPDU[3]  = {0x4760cd66,0xdbcc0cd3,0x33048df5};
 const uint32_t kMINRFL2PDU[3]  = {0x3eaa057d,0xef3b0730,0x71da7646}; // 1 and 3 unsure
 // const uint32_t kMINRFL3PDU[3]  = {0x4760dd78,0xdbcc1ccd,0xffffffff}; //encrypted - 58 58
 const uint32_t kMINRFL3PDU[3]  = {0x4760cb78,0xdbcc0acd,0x33048beb}; //unencrypted  - 30 58
+const uint32_t kMINRFCGPDU[3]  = {0x4760cd6e,0xdbcc0cdb,0x33048dfd};
 
 // start-LSFR for different channels 37-39
 const uint8_t kMINRFlsfrList_A[3] = {0x4b,0x17,0x23};  // Flora, LYWSD02
-const uint8_t kMINRFlsfrList_B[3] = {0x21,0x72,0x43};  // MJ_HT_V1, LYWSD03
+const uint8_t kMINRFlsfrList_B[3] = {0x21,0x72,0x43};  // MJ_HT_V1, LYWSD03, CGG1
 
 
 #pragma pack(1)  // important!!
@@ -269,7 +276,7 @@ struct {
 } MINRF;
 
 struct mi_sensor_t{
-  uint8_t type; //Flora = 1; MJ_HT_V1=2; LYWSD02=3; LYWSD03=4
+  uint8_t type; //Flora = 1; MJ_HT_V1=2; LYWSD02=3; LYWSD03=4; ; CGG1=5
   uint8_t serial[6];
   uint8_t showedUp;
   float temp; //Flora, MJ_HT_V1, LYWSD0x
@@ -361,6 +368,9 @@ bool MINRFreceivePacket(void)
       break;
       case 4:
       MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_B[MINRF.currentChan]); // "LYWSD03" mode
+      break;
+      case 5:
+      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_B[MINRF.currentChan]); // "CGG1" mode
       break;
     }
     // DEBUG_SENSOR_LOG(PSTR("MINRF: LSFR:%x"),_lsfr);
@@ -470,6 +480,9 @@ void MINRFchangePacketModeTo(uint8_t _mode) {
       if(kMINRFL3PDU[_nextchannel]==0xffffffff) break;
       NRF24radio.openReadingPipe(0,kMINRFL3PDU[_nextchannel]);// 95 fe 58 30 -> LYWSD03 (= no data message)
     break;
+    case 5: // special CGG1 packet
+      NRF24radio.openReadingPipe(0,kMINRFCGPDU[_nextchannel]); // 95 fe 50 30 -> CGG1
+    break;
   }
   // DEBUG_SENSOR_LOG(PSTR("MINRF: Change Mode to %u"),_mode);
   MINRF.packetMode = _mode;
@@ -479,24 +492,25 @@ void MINRFchangePacketModeTo(uint8_t _mode) {
  * @brief Return the slot number of a known sensor or return create new sensor slot
  *
  * @param _serial     BLE address of the sensor
- * @param _type       Type number of the sensor, 0xff for Auto-type
+ * @param _type       Type number of the sensor
  * @return uint32_t   Known or new slot in the sensors-vector
  */
-uint32_t MINRFgetSensorSlot(uint8_t (&_serial)[6], uint8_t _type){
-  if(_type==0xff){
-    DEBUG_SENSOR_LOG(PSTR("MINRF: will test MAC-type"));
-    for (uint32_t i=0;i<4;i++){
-      if(memcmp(_serial,kMINRFSlaveID+i,3)==0){
-        DEBUG_SENSOR_LOG(PSTR("MINRF: MAC is type %u"), i);
-        _type = i+1;
-      }
-      else {
-        DEBUG_SENSOR_LOG(PSTR("MINRF: MAC-type is unknown"));
-      }
+uint32_t MINRFgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
+
+  DEBUG_SENSOR_LOG(PSTR("MINRF: will test ID-type: %x"), _type);
+  bool _success = false;
+  for (uint32_t i=0;i<5;i++){
+    if(_type == kMINRFSlaveID[i]){
+      DEBUG_SENSOR_LOG(PSTR("MINRF: ID is type %u"), i);
+      _type = i+1;
+      _success = true;
+    }
+    else {
+      DEBUG_SENSOR_LOG(PSTR("MINRF: ID-type is not: %x"),kMINRFSlaveID[i]);
     }
   }
-  if(_type==0xff) return _type; // error
-
+  if(!_success) return 0xff;
+ 
   DEBUG_SENSOR_LOG(PSTR("MINRF: vector size %u"), MIBLEsensors.size());
   for(uint32_t i=0; i<MIBLEsensors.size(); i++){
     if(memcmp(_serial,MIBLEsensors.at(i).serial,sizeof(_serial))==0){
@@ -550,13 +564,13 @@ void MINRFpurgeFakeSensors(void){
 
 
 void MINRFhandleFloraPacket(void){
-  if(MINRF.buffer.floraPacket.T.idWord!=0x9800 && MINRF.buffer.floraPacket.T.valueTen!=0x10){
+  if(MINRF.buffer.floraPacket.T.valueTen!=0x10){
     DEBUG_SENSOR_LOG(PSTR("MINRF: unexpected Flora packet"));
     MINRF_LOG_BUFFER(MINRF.buffer.raw);
     return;
   }
   MINRFreverseMAC(MINRF.buffer.floraPacket.T.serial);
-  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.floraPacket.T.serial, 0xff); // T is not specific, any struct would be possible to use
+  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.floraPacket.T.serial, MINRF.buffer.floraPacket.T.idWord); // T is not specific, any struct would be possible to use
   DEBUG_SENSOR_LOG(PSTR("MINRF: Sensor slot: %u"), _slot);
   if(_slot==0xff) return;
 
@@ -593,13 +607,13 @@ void MINRFhandleFloraPacket(void){
 }
 
 void MINRFhandleMJ_HT_V1Packet(void){
-  if(MINRF.buffer.MJ_HT_V1Packet.TH.idWord != 0xaa01 && MINRF.buffer.MJ_HT_V1Packet.TH.valueTen!=0x10){
+  if(MINRF.buffer.MJ_HT_V1Packet.TH.valueTen!=0x10){
     DEBUG_SENSOR_LOG(PSTR("MINRF: unexpected MJ_HT_V1-packet"));
     MINRF_LOG_BUFFER(MINRF.buffer.raw);
     return;
   }
   MINRFreverseMAC(MINRF.buffer.MJ_HT_V1Packet.TH.serial);
-  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.MJ_HT_V1Packet.TH.serial, 0xff); // B would be possible too
+  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.MJ_HT_V1Packet.TH.serial, MINRF.buffer.MJ_HT_V1Packet.TH.idWord); // B would be possible too
   DEBUG_SENSOR_LOG(PSTR("MINRF: Sensor slot: %u"), _slot);
   if(_slot==0xff) return;
 
@@ -635,9 +649,9 @@ void MINRFhandleLYWSD02Packet(void){
     return;
   }
   MINRFreverseMAC(MINRF.buffer.LYWSD02Packet.TH.serial);
-  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.LYWSD02Packet.TH.serial, 0xff); // H would be possible too
+  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.LYWSD02Packet.TH.serial, MINRF.buffer.LYWSD02Packet.TH.idWord); // H would be possible too
   DEBUG_SENSOR_LOG(PSTR("MINRF: Sensor slot: %u"), _slot);
-    if(_slot==0xff) return;
+  if(_slot==0xff) return;
 
   static float _tempFloat;
   switch(MINRF.buffer.LYWSD02Packet.TH.mode) { // we can use any struct with a mode, they are all same at this point
@@ -661,7 +675,7 @@ void MINRFhandleLYWSD02Packet(void){
 void MINRFhandleLYWSD03Packet(void){
   // not much to do ATM, just show the sensor without data
   MINRFreverseMAC(MINRF.buffer.LYWSD02Packet.TH.serial); //the beginning is equal to the LYWSD02-packet
-  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.LYWSD02Packet.TH.serial, 0xff);
+  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.LYWSD02Packet.TH.serial, MINRF.buffer.LYWSD02Packet.TH.idWord);
   DEBUG_SENSOR_LOG(PSTR("MINRF: Sensor slot: %u"), _slot);
     if(_slot==0xff) return;
 
@@ -669,6 +683,46 @@ void MINRFhandleLYWSD03Packet(void){
   MINRF_LOG_BUFFER(MINRF.lsfrBuffer);
   MINRF_LOG_BUFFER(MINRF.buffer.raw);
 }
+
+void MINRFhandleCGG1Packet(void){ // we assume, that the packet structure is equal to the MJ_HT_V1
+  if(MINRF.buffer.MJ_HT_V1Packet.TH.valueTen!=0x10){
+    DEBUG_SENSOR_LOG(PSTR("MINRF: unexpected CGG1-packet"));
+    MINRF_LOG_BUFFER(MINRF.buffer.raw);
+    return;
+  }
+  MINRFreverseMAC(MINRF.buffer.MJ_HT_V1Packet.TH.serial);
+  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.MJ_HT_V1Packet.TH.serial, MINRF.buffer.MJ_HT_V1Packet.TH.idWord); // B would be possible too
+  DEBUG_SENSOR_LOG(PSTR("MINRF: Sensor slot: %u"), _slot);
+  if(_slot==0xff) return;
+
+  static float _tempFloat;
+  switch(MINRF.buffer.MJ_HT_V1Packet.TH.mode) { // we can use any struct with a mode, they are all same at this point
+    case 0x0d:
+    _tempFloat=(float)(MINRF.buffer.MJ_HT_V1Packet.TH.temp)/10.0f;
+    if(_tempFloat<60){
+        MIBLEsensors.at(_slot).temp = _tempFloat;
+        DEBUG_SENSOR_LOG(PSTR("CGG1: temp updated"));
+    }
+    _tempFloat=(float)(MINRF.buffer.MJ_HT_V1Packet.TH.hum)/10.0f;
+    if(_tempFloat<100){
+        MIBLEsensors.at(_slot).hum = _tempFloat;
+        DEBUG_SENSOR_LOG(PSTR("CGG1: hum updated"));
+    }
+    DEBUG_SENSOR_LOG(PSTR("CGG1 mode:0x0d: U16:  %x Temp U16: %x Hum"), MINRF.buffer.MJ_HT_V1Packet.TH.temp,  MINRF.buffer.MJ_HT_V1Packet.TH.hum);
+    break;
+    case 0x0a:
+    if(MINRF.buffer.MJ_HT_V1Packet.B.battery<101){
+        MIBLEsensors.at(_slot).bat = MINRF.buffer.MJ_HT_V1Packet.B.battery;
+        DEBUG_SENSOR_LOG(PSTR("CGG1: bat updated"));
+    }
+    DEBUG_SENSOR_LOG(PSTR("CGG1 mode:0x0a: U8: %x %%"), MINRF.buffer.MJ_HT_V1Packet.B.battery);
+    break;
+  }
+}
+
+/*********************************************************************************************\
+ * Main loop of the driver
+\*********************************************************************************************/
 
 void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
   
@@ -712,15 +766,16 @@ void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
   else if (MINRF.packetMode == LYWSD03){
     MINRFhandleLYWSD03Packet();
   }
-  
-  // DEBUG_SENSOR_LOG(PSTR("MINRF: Change packet mode every 50 msec"));
-  if (MINRF.packetMode == LYWSD03){
+  else if (MINRF.packetMode == CGG1){
+    MINRFhandleCGG1Packet();
+  }
+  if (MINRF.packetMode == CGG1){
     MINRFinitBLE(1); // no real ble packets in release mode, otherwise for developing use 0
   }
   else {
     MINRFinitBLE(++MINRF.packetMode);
   }
-  
+
   MINRFhopChannel();
   NRF24radio.startListening();
 }

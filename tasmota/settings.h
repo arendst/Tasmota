@@ -578,4 +578,18 @@ typedef union {
 #define device_group_share_in  domoticz_sensor_idx[0]    // Bitmask of device group items imported
 #define device_group_share_out domoticz_sensor_idx[1]    // Bitmask of device group items exported
 
+// Settings re-purposed for the PWM_DIMMER module
+#ifdef USE_PWM_DIMMER
+#define led_timeout            light_signal       // SetOption18 - Turn brightness LED's off 5 seconds after last change
+#define powered_off_led        buzzer_enable      // SetOption67 - Turn red LED on when powered off
+#define bri_power_on           pcf8574_config[0]  // Brightness when next powered-on
+#define bri_min                pcf8574_config[1]  // Minimum brightness
+#define bri_preset_low         pcf8574_config[2]  // Bri preset low
+#define bri_preset_high        pcf8574_config[3]  // Bri preset high
+#define button_devices         pcf8574_config[4]  // Button-device map
+#ifdef USE_PWM_DIMMER_REMOTE
+#define remote_device_mode     dds2382_model      // SetOption71 - Buttons control remote devices
+#endif  // USE_PWM_DIMMER_REMOTE
+#endif // USE_PWM_DIMMER
+
 #endif  // _SETTINGS_H_

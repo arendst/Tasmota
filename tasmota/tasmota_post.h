@@ -708,6 +708,16 @@ const char kDeviceGroupMessage[] PROGMEM = DEVICE_GROUP_MESSAGE;
 uint8_t device_group_count = 1;
 #endif  // USE_DEVICE_GROUPS
 
+#ifdef USE_PWM_DIMMER_REMOTE
+#ifdef USE_PWM_DIMMER
+#ifndef USE_DEVICE_GROUPS
+#define USE_DEVICE_GROUPS 
+#endif  // USE_DEVICE_GROUPS
+#else  // USE_PWM_DIMMER
+#undef USE_PWM_DIMMER_REMOTE
+#endif  // USE_PWM_DIMMER
+#endif  // USE_PWM_DIMMER_REMOTE
+
 #ifdef DEBUG_TASMOTA_CORE
 #define DEBUG_CORE_LOG(...) AddLog_Debug(__VA_ARGS__)
 #else

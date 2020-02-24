@@ -516,7 +516,10 @@ void GetFeatures(void)
 #ifdef USE_AHT1x
   feature5 |= 0x10000000;  // xsns_63_aht1x.ino
 #endif
-//  feature5 |= 0x20000000;
+#ifdef USE_WEMOS_MOTOR_V1
+  feature5 |= 0x20000000;  // xdrv_34_wemos_motor_v1.ino
+#endif
+
 //  feature5 |= 0x40000000;
 //  feature5 |= 0x80000000;
 
