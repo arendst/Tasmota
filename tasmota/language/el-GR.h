@@ -504,8 +504,10 @@
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Κατεύθυνση ανέμου"
+#define D_TX20_WIND_DEGREES "Βαθμός ανέμου"
 #define D_TX20_WIND_SPEED "Ταχύτητα ανέμου"
 #define D_TX20_WIND_SPEED_AVG "Μέση ταχύτητα ανέμου"
+#define D_TX20_WIND_SPEED_MIN "Ελάχιστη ταχύτητα ανέμου"
 #define D_TX20_WIND_SPEED_MAX "Μέγιστη ταχύτητα ανέμου"
 #define D_TX20_NORTH "Β"
 #define D_TX20_EAST "Α"
