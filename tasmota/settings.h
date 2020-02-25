@@ -132,7 +132,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
     uint32_t spare30 : 1;
-    uint32_t spare31 : 1;
+    uint32_t force_sdk_erase : 1;          // bit 31 (v8.1.0.9)  - SetOption113 - Force erase of SDK wifi calibrate secore on restart
   };
 } SysBitfield4;
 

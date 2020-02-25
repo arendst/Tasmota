@@ -745,6 +745,7 @@ void SettingsErase(uint8_t type)
     1 = Erase 16k SDK parameter area near end of flash as seen by SDK (0x0xFCxxx - 0x0xFFFFF) solving possible wifi errors
     2 = Erase Tasmota parameter area (0x0xF3xxx - 0x0xFBFFF)
     3 = Erase Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
+    4 = Erase SDK parameter area used for wifi calibration (0x0FCxxx - 0x0FCFFF)
   */
 
 #ifndef FIRMWARE_MINIMAL
@@ -762,16 +763,17 @@ void SettingsErase(uint8_t type)
     _sectorStart = SETTINGS_LOCATION - CFG_ROTATES;                       // Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
     _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;             // Flash size as seen by SDK
   }
-#ifdef USE_WIFI_SDK_ERASE
   else if (4 == type) {
+//    _sectorStart = (ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE) - 4;     // SDK phy area and Core calibration sector (0x0FC000)
     _sectorStart = SETTINGS_LOCATION +1;                                  // SDK phy area and Core calibration sector (0x0FC000)
     _sectorEnd = _sectorStart +1;                                         // SDK end of phy area and Core calibration sector (0x0FCFFF)
   }
+/*
   else if (5 == type) {
     _sectorStart = (ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE) -4;  // SDK phy area and Core calibration sector (0xxFC000)
     _sectorEnd = _sectorStart +1;                                         // SDK end of phy area and Core calibration sector (0xxFCFFF)
   }
-#endif  // USE_WIFI_SDK_ERASE
+*/
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " from 0x%08X to 0x%08X"), _sectorStart * SPI_FLASH_SEC_SIZE, (_sectorEnd * SPI_FLASH_SEC_SIZE) -1);
 
 //  EspErase(_sectorStart, _sectorEnd);                                     // Arduino core and SDK - erases flash as seen by SDK
@@ -785,16 +787,6 @@ void SettingsSdkErase(void)
   SettingsErase(1);
   delay(1000);
 }
-
-#ifdef USE_WIFI_SDK_ERASE
-void SettingsSdkWifiErase(void)
-{
-  WiFi.disconnect(false);    // Delete SDK wifi config
-  SettingsErase(4);
-  SettingsErase(5);
-  delay(200);
-}
-#endif  // USE_WIFI_SDK_ERASE
 
 /********************************************************************************************/
 
