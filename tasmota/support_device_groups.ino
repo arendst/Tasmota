@@ -49,7 +49,8 @@ struct device_group {
 
 struct device_group * device_groups;
 uint16_t outgoing_sequence = 0;
-bool device_groups_active = false;
+bool device_groups_initialized = false;
+bool device_groups_initialization_failed = false;
 bool building_status_message = false;
 bool processing_remote_device_message = false;
 bool waiting_for_acks;
@@ -57,12 +58,11 @@ bool udp_was_connected = false;
 
 void DeviceGroupsInit(void)
 {
-  /*
-    Initialize the device information for each device group. The group name is the MQTT group topic.
-  */
+  // Initialize the device information for each device group. The group name is the MQTT group topic.
   device_groups = (struct device_group *)calloc(device_group_count, sizeof(struct device_group));
   if (device_groups == nullptr) {
     AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: error allocating %u-element device group array"), device_group_count);
+    device_groups_initialization_failed = true;
     return;
   }
 
@@ -80,7 +80,7 @@ void DeviceGroupsInit(void)
     Settings.device_group_share_in = Settings.device_group_share_out = 0xffffffff;
   }
 
-  device_groups_active = true;
+  device_groups_initialized = true;
 }
 
 char * IPAddressToString(const IPAddress& ip_address)
@@ -133,8 +133,8 @@ void SendDeviceGroupPacket(IPAddress ip, char * packet, int len, const char * la
 
 void _SendDeviceGroupMessage(uint8_t device_group_index, DeviceGroupMessageType message_type, ...)
 {
-  // If device groups are not active, ignore this request.
-  if (!device_groups_active) return;
+  // If device groups are not enabled, ignore this request.
+  if (!Settings.flag4.device_groups_enabled) return;
 
   // If UDP is not set up, ignore this request.
   if (!udp_connected) return;
@@ -164,7 +164,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DeviceGroupMessageType 
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Building device group %s full status packet"), device_group->group_name);
 #endif  // DEVICE_GROUPS_DEBUG
     device_group->message_length = 0;
-    _SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_POWER, power);
+    SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_POWER, power);
     XdrvMailbox.command_code = DGR_ITEM_STATUS;
     XdrvCall(FUNC_DEVICE_GROUP_REQUEST);
     building_status_message = false;
@@ -300,7 +300,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DeviceGroupMessageType 
         }
       }
 #ifdef DEVICE_GROUPS_DEBUG
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%u items carried over from previous update"), kept_item_count);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%u items carried over from previous update"), kept_item_count);
 #endif  // DEVICE_GROUPS_DEBUG
     }
 
@@ -390,9 +390,6 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DeviceGroupMessageType 
 
 void ProcessDeviceGroupMessage(char * packet, int packet_length)
 {
-  // If device groups are not active, ignore this request.
-  if (!device_groups_active) return;
-
   // Make the group name a null-terminated string.
   char * message_group_name = packet + sizeof(DEVICE_GROUP_MESSAGE) - 1;
   char * message_ptr = strchr(message_group_name, ' ');
@@ -617,13 +614,11 @@ void DeviceGroupsLoop(void)
 {
   if (!Settings.flag4.device_groups_enabled) return;
   if (udp_connected) {
-    if (!device_groups_active) {
-      DeviceGroupsInit();
-      if (!device_groups_active) return;
-    }
-
     if (!udp_was_connected) {
       udp_was_connected = true;
+
+      if (!device_groups_initialized) DeviceGroupsInit();
+      if (device_groups_initialization_failed) return;
 
       for (uint32_t device_group_index = 0; device_group_index < device_group_count; device_group_index++) {
         device_group * device_group = &device_groups[device_group_index];
@@ -635,11 +630,13 @@ void DeviceGroupsLoop(void)
         *message_ptr++ = 0;
         device_group->message_length = message_ptr - device_group->message;
         device_group->initial_status_requests_remaining = 5;
-        device_group->next_ack_check_time = millis() + 2000;
+        device_group->next_ack_check_time = millis() + 1000;
       }
 
       waiting_for_acks = true;
     }
+
+    if (device_groups_initialization_failed) return;
 
     if (waiting_for_acks) {
       uint32_t now = millis();
