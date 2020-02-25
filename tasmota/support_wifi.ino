@@ -21,6 +21,10 @@
  * Wifi
 \*********************************************************************************************/
 
+// Enable only one of two below debug options
+//#define WIFI_RF_MODE_RF_CAL                // Set RF_MODE to RF_CAL for restart and deepsleep during user_rf_pre_init
+//#define WIFI_RF_PRE_INIT                   // Set RF_MODE to RF_CAL for restart, deepsleep and power on during user_rf_pre_init
+
 #ifndef WIFI_RSSI_THRESHOLD
 #define WIFI_RSSI_THRESHOLD     10         // Difference in dB between current network and scanned network
 #endif
@@ -559,7 +563,11 @@ void WifiCheck(uint8_t param)
           StopWebserver();
         }
 #ifdef USE_EMULATION
-        if (Settings.flag2.emulation) { UdpConnect(); }
+#ifdef USE_DEVICE_GROUPS
+        if (Settings.flag2.emulation || Settings.flag4.device_groups_enabled) { UdpConnect(); }
+#else // USE_DEVICE_GROUPS
+      if (Settings.flag2.emulation) { UdpConnect(); }
+#endif // USE_DEVICE_GROUPS
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
 
@@ -605,6 +613,32 @@ void WifiSetOutputPower(void)
   WiFi.setOutputPower((float)(Settings.wifi_output_power) / 10);
 }
 
+/*
+  See Esp.h, core_esp8266_phy.cpp and test_overrides.ino
+  RF_DEFAULT = 0,  // RF_CAL or not after deep-sleep wake up, depends on init data byte 108.
+  RF_CAL = 1,      // RF_CAL after deep-sleep wake up, there will be large current.
+  RF_NO_CAL = 2,   // no RF_CAL after deep-sleep wake up, there will only be small current.
+  RF_DISABLED = 4  // disable RF after deep-sleep wake up, just like modem sleep, there will be the smallest current.
+*/
+#ifdef WIFI_RF_MODE_RF_CAL
+#ifndef USE_DEEPSLEEP
+RF_MODE(RF_CAL);
+#endif  // USE_DEEPSLEEP
+#endif  // WIFI_RF_MODE_RF_CAL
+
+#ifdef WIFI_RF_PRE_INIT
+bool rf_pre_init_flag = false;
+RF_PRE_INIT()
+{
+#ifndef USE_DEEPSLEEP
+  system_deep_sleep_set_option(1);   // The option is 1 by default.
+  system_phy_set_rfoption(RF_CAL);
+#endif  // USE_DEEPSLEEP
+  system_phy_set_powerup_option(3);  // 3: RF initialization will do the whole RF calibration which will take about 200ms; this increases the current consumption.
+  rf_pre_init_flag = true;
+}
+#endif  // WIFI_RF_PRE_INIT
+
 void WifiConnect(void)
 {
   WifiSetState(0);
@@ -614,37 +648,47 @@ void WifiConnect(void)
   Wifi.retry_init = WIFI_RETRY_OFFSET_SEC + ((ESP.getChipId() & 0xF) * 2);
   Wifi.retry = Wifi.retry_init;
   Wifi.counter = 1;
+
+#ifdef WIFI_RF_PRE_INIT
+  if (rf_pre_init_flag) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Pre-init done"));
+  }
+#endif  // WIFI_RF_PRE_INIT
 }
 
-// Enable from 6.0.0a until 6.1.0a - disabled due to possible cause of bad wifi connect on core 2.3.0
-// Re-enabled from 6.3.0.7 with ESP.restart replaced by ESP.reset
-void WifiDisconnect(void)
+void WifiShutdown(bool option = false)
 {
-#ifdef USE_WIFI_SDK_ERASE     // Do not enable with DeepSleep as it will wear out flash
-  SettingsSdkWifiErase();
-#else
-  // Courtesy of EspEasy
-  WiFi.persistent(true);      // use SDK storage of SSID/WPA parameters
-  ETS_UART_INTR_DISABLE();
-  wifi_station_disconnect();  // this will store empty ssid/wpa into sdk storage
-  ETS_UART_INTR_ENABLE();
-  WiFi.persistent(false);     // Do not use SDK storage of SSID/WPA parameters
-  delay(100);                 // Flush anything in the network buffers.
-#endif  // USE_WIFI_SDK_ERASE
-}
-
-void WifiShutdown(void)
-{
+  // option = false - Legacy disconnect also used by DeepSleep
+  // option = true  - Disconnect with SDK wifi calibrate sector erase
   delay(100);                 // Allow time for message xfer - disabled v6.1.0b
+
+#ifdef USE_EMULATION
+  UdpDisconnect();
+#endif  // USE_EMULATION
+
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     MqttDisconnect();
   }
-  WifiDisconnect();
+
+  if (option && Settings.flag4.force_sdk_erase) {  // SetOption113 - Force erase of SDK wifi calibrate sector on restart
+    WiFi.disconnect(false);   // Disconnect wifi
+    SettingsErase(4);         // Delete SDK wifi config and calibrate data
+  } else {
+    // Enable from 6.0.0a until 6.1.0a - disabled due to possible cause of bad wifi connect on core 2.3.0
+    // Re-enabled from 6.3.0.7 with ESP.restart replaced by ESP.reset
+    // Courtesy of EspEasy
+    WiFi.persistent(true);      // use SDK storage of SSID/WPA parameters
+    ETS_UART_INTR_DISABLE();
+    wifi_station_disconnect();  // this will store empty ssid/wpa into sdk storage
+    ETS_UART_INTR_ENABLE();
+    WiFi.persistent(false);     // Do not use SDK storage of SSID/WPA parameters
+  }
+  delay(100);                 // Flush anything in the network buffers.
 }
 
 void EspRestart(void)
 {
-  WifiShutdown();
+  WifiShutdown(true);
   CrashDumpClear();           // Clear the stack dump in RTC
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();

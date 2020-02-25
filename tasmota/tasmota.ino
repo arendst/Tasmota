@@ -329,6 +329,9 @@ void loop(void)
 #ifdef ROTARY_V1
   RotaryLoop();
 #endif
+#ifdef USE_DEVICE_GROUPS
+  DeviceGroupsLoop();
+#endif  // USE_DEVICE_GROUPS
   BacklogLoop();
 
   if (TimeReached(state_50msecond)) {
