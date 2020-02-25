@@ -80,7 +80,6 @@ bool button_hold_sent[3];
 bool button_pressed[3] = { false, false, false };
 #ifdef USE_PWM_DIMMER_REMOTE
 struct remote_pwm_dimmer * remote_pwm_dimmers;
-struct device_group * active_device_group;
 struct remote_pwm_dimmer * active_remote_pwm_dimmer;
 uint8_t buttons_pressed = 0;
 bool active_device_is_local;
@@ -136,13 +135,12 @@ void PWMDimmerInit(void)
   if (Settings.flag3.remote_device_mode) {
     if (device_group_count > 1) {
       if ((remote_pwm_dimmers = (struct remote_pwm_dimmer *) calloc(device_group_count - 1, sizeof(struct remote_pwm_dimmer))) == nullptr) {
-        AddLog_P2(LOG_LEVEL_ERROR, "PWMDimmer: error allocating PWM dimmer array");
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("PWMDimmer: error allocating PWM dimmer array"));
         Settings.flag3.remote_device_mode = false;
       }
     }
   }
 
-  active_device_group = &device_groups[0];
   active_device_is_local = true;
 #endif  // USE_PWM_DIMMER_REMOTE
 }
@@ -220,7 +218,6 @@ void PWMDimmerAnimate(bool no_fade)
   if (relay_is_on != (current_bri > 0)) {
     bool power_is_on = ((power & 1) != 0);
     if (power_is_on == relay_is_on) {
-AddLog_P2(LOG_LEVEL_DEBUG, "****************** ExecuteCommandPower(1, %d, SRC_SWITCH)", (relay_is_on ? 0 : 1));
       ExecuteCommandPower(1, (relay_is_on ? POWER_OFF : POWER_ON), SRC_SWITCH);
     }
 
@@ -377,8 +374,7 @@ void PWMDimmerHandleButton()
         power_button_index = button_index;
         up_button_index = (button_index == 2 ? 1 : 2);
         down_button_index = (button_index ? 0 : 1);
-        active_device_group = &device_groups[power_button_index];
-        active_device_is_local = active_device_group->local;
+        active_device_is_local = device_groups[power_button_index].local;
         if (!active_device_is_local) active_remote_pwm_dimmer = &remote_pwm_dimmers[power_button_index - 1];
       }
       if (button_index == power_button_index) {
@@ -553,11 +549,11 @@ void PWMDimmerHandleButton()
                 // Publish MQTT Event SwitchTrigger#.
                 char topic[TOPSZ];
 #ifdef USE_PWM_DIMMER_REMOTE
-                snprintf(topic, sizeof(topic), "%s/cmnd/Event", active_device_group->group_name);
+                snprintf_P(topic, sizeof(topic), PSTR("%s/cmnd/Event"), device_groups[power_button_index].group_name);
 #else  // USE_PWM_DIMMER_REMOTE
-                snprintf(topic, sizeof(topic), "%s/cmnd/Event", SettingsText(SET_MQTT_GRP_TOPIC));
+                snprintf_P(topic, sizeof(topic), PSTR("%s/cmnd/Event"), SettingsText(SET_MQTT_GRP_TOPIC));
 #endif  // USE_PWM_DIMMER_REMOTE
-                sprintf(mqtt_data, "SwitchTrigger%u", (down_button_is_held ? 1 : 2));
+                sprintf_P(mqtt_data, PSTR("SwitchTrigger%u"), (down_button_is_held ? 1 : 2));
                 MqttPublish(topic);
               }
               break;
