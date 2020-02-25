@@ -708,11 +708,11 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #endif
 
 #ifndef MESSZ
-//#define MESSZ                  1040              // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1200)
+//#define MESSZ                  1040            // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1200)
 #define MESSZ                  (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string
 #endif
 
-//#include <core_version.h>                        // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+//#include <core_version.h>                      // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
 #ifndef ARDUINO_ESP8266_RELEASE
 #define ARDUINO_ESP8266_RELEASE "STAGE"
 #endif
