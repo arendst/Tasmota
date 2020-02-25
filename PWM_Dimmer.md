@@ -97,6 +97,8 @@ Holding the power button, pressing the down/up buttons a given number of times a
 
 Holding any button for over 10 seconds executes the WiFiConfig 2 command.
 
+Pressing and releasing a button publishes an MQTT TOGGLE command. Holding a button publishes an MQTT HOLD command followed by an MQTT OFF command when the button is released.
+
 When Device Groups are enabled, the PWM Dimmer minimum brightness and brightness presets are kept in sync across all switches in the group. The powered-off LED and LED timeout settings are specific to each switch. Changing them does not replicate the change to the other switches in the group.
 
 
