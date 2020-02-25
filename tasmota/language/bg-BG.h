@@ -504,8 +504,10 @@
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Посока на вятъра"
+#define D_TX20_WIND_DEGREES "Степени на вятъра"
 #define D_TX20_WIND_SPEED "Скорост на вятъра"
 #define D_TX20_WIND_SPEED_AVG "Средна скорост на вятъра"
+#define D_TX20_WIND_SPEED_MIN "Мини. скорост на вятъра"
 #define D_TX20_WIND_SPEED_MAX "Макс. скорост на вятъра"
 #define D_TX20_NORTH "С"
 #define D_TX20_EAST "И"
