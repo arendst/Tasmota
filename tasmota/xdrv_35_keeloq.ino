@@ -69,15 +69,15 @@ void CmdSet(void)
       Settings.keeloq_master_lsb = param[1];
       Settings.keeloq_serial = param[2];
       Settings.keeloq_count = param[3];
-      
+
       jaroliftDevice.serial = param[2];
       jaroliftDevice.count = param[3];
- 
+
       GenerateDeviceCryptKey();
       ResponseCmndDone();
     } else {
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("no payload"));      
-    } 
+    }
   } else {
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("no param"));
   }
@@ -88,7 +88,7 @@ void GenerateDeviceCryptKey()
   Keeloq k(Settings.keeloq_master_msb, Settings.keeloq_master_lsb);
   jaroliftDevice.device_key_msb = k.decrypt(jaroliftDevice.serial | 0x60000000L);
   jaroliftDevice.device_key_lsb = k.decrypt(jaroliftDevice.serial | 0x20000000L);
-  
+
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("device keys: %08x %08x"), jaroliftDevice.device_key_msb, jaroliftDevice.device_key_lsb);
 }
 
@@ -96,7 +96,7 @@ void CmdSendButton(void)
 {
   noInterrupts();
   entertx();
-  
+
   if (XdrvMailbox.data_len > 0)
   {
     if (XdrvMailbox.payload > 0)
@@ -107,24 +107,27 @@ void CmdSendButton(void)
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("count: %08x"), jaroliftDevice.count);
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("serial: %08x"), jaroliftDevice.serial);
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("disc: %08x"), jaroliftDevice.disc);
-      
+
       CreateKeeloqPacket();
       jaroliftDevice.count++;
       Settings.keeloq_count = jaroliftDevice.count;
 
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("sync frame"));
-      digitalWrite(TX_PORT, LOW);      // CC1101 in TX Mode+
-      delayMicroseconds(1150);
-      SendSyncPreamble(13);
-      delayMicroseconds(3500);
-      for(int i=72; i>0; i--)
+      for(int repeat = 0; repeat <= 1; repeat++)
       {
-        SendBit(jaroliftDevice.pack & 0x0000000000000001);
-        jaroliftDevice.pack >>= 1;
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("sync frame"));
+        digitalWrite(TX_PORT, LOW);      // CC1101 in TX Mode+
+        delayMicroseconds(1150);
+        SendSyncPreamble(13);
+        delayMicroseconds(3500);
+        for(int i=72; i>0; i--)
+        {
+          SendBit(jaroliftDevice.pack & 0x0000000000000001);
+          jaroliftDevice.pack >>= 1;
+        }
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("finished sending bits at %d"), micros());
+
+        delay(16); // delay in loop context is save for wdt
       }
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("finished sending bits at %d"), micros());
-  
-      delay(16); // delay in loop context is save for wdt
     }
   }
 
@@ -157,7 +160,7 @@ void CmndSendRaw(void)
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("cmd send called at %d"), micros());
   noInterrupts();
   entertx();
-  for(int repeat = 0; repeat < 1; repeat++)
+  for(int repeat = 0; repeat <= 1; repeat++)
   {
     if (XdrvMailbox.data_len > 0)
     {
@@ -172,7 +175,7 @@ void CmndSendRaw(void)
         SendBit(XdrvMailbox.data[i] == '1');
       }
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("finished sending bits at %d"), micros());
-  
+
       delay(16);                       // delay in loop context is save for wdt
     }
     interrupts();
@@ -190,11 +193,8 @@ void enterrx() {
   {
     if (micros() - rx_time > 50000) break; // Quit when marcState does not change...
   }
-} // void enterrx
+}
 
-//####################################################################
-// put CC1101 to send mode
-//####################################################################
 void entertx() {
   unsigned char marcState = 0;
   cc1101.setTxState();
@@ -204,7 +204,7 @@ void entertx() {
   {
     if (micros() - rx_time > 50000) break; // Quit when marcState does not change...
   }
-} // void entertx
+}
 
 void SendSyncPreamble(int l)
 {
@@ -257,7 +257,7 @@ void InitKeeloq()
 bool Xdrv35(uint8_t function)
 {
   bool result = false;
-     
+
   switch (function) {
     case FUNC_INIT:
       InitKeeloq();
