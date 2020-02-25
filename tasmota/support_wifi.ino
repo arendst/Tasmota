@@ -23,7 +23,7 @@
 
 // Enable only one of two below debug options
 //#define WIFI_RF_MODE_RF_CAL                // Set RF_MODE to RF_CAL for restart and deepsleep during user_rf_pre_init
-#define WIFI_RF_PRE_INIT                   // Set RF_MODE to RF_CAL for restart, deepsleep and power on during user_rf_pre_init
+//#define WIFI_RF_PRE_INIT                   // Set RF_MODE to RF_CAL for restart, deepsleep and power on during user_rf_pre_init
 
 #ifndef WIFI_RSSI_THRESHOLD
 #define WIFI_RSSI_THRESHOLD     10         // Difference in dB between current network and scanned network
