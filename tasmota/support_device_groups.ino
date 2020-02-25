@@ -22,7 +22,7 @@
 */
 #ifdef USE_DEVICE_GROUPS
 
-//#define DEVICE_GROUPS_DEBUG
+#define DEVICE_GROUPS_DEBUG
 
 extern bool udp_connected;
 
