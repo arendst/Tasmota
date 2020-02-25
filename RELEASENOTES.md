@@ -105,3 +105,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add another new DHT driver based on ESPEasy. The old driver can still be used using define USE_DHT_OLD. The previous new driver can be used with define USE_DHT_V2 (#7717)
 - Add initial support for Sensors AHT10 and AHT15 by Martin Wagner (#7596)
 - Add support for Wemos Motor Shield V1 by Denis Sborets (#7764)
+- Add Zigbee enhanced commands decoding, added ``ZbPing``
+- Add commands ``SetOption85 0/1`` and ``DevGroupShare`` supporting UDP Group command using ``GroupTopic`` without MQTT by Paul Diem (#7790)
