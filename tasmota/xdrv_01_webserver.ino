@@ -2824,6 +2824,7 @@ void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_EMULATION
 void CmndEmulation(void)
 {
+#if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE)
 #if defined(USE_EMULATION_WEMO) && defined(USE_EMULATION_HUE)
   if ((XdrvMailbox.payload >= EMUL_NONE) && (XdrvMailbox.payload < EMUL_MAX)) {
 #else
@@ -2837,6 +2838,7 @@ void CmndEmulation(void)
     Settings.flag2.emulation = XdrvMailbox.payload;
     restart_flag = 2;
   }
+#endif
   ResponseCmndNumber(Settings.flag2.emulation);
 }
 #endif  // USE_EMULATION
