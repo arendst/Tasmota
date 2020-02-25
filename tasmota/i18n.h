@@ -289,6 +289,7 @@
 #define D_CMND_WIFIPOWER "WifiPower"
 #define D_CMND_I2CSCAN "I2CScan"
 #define D_CMND_I2CDRIVER "I2CDriver"
+#define D_CMND_DEVGROUP_SHARE "DevGroupShare"
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
@@ -489,12 +490,15 @@
 #define D_CMND_ZIGBEE_FORGET "Forget"
 #define D_CMND_ZIGBEE_SAVE "Save"
   #define D_CMND_ZIGBEE_LINKQUALITY "LinkQuality"
+  #define D_CMND_ZIGBEE_ENDPOINT "Endpoint"
 #define D_CMND_ZIGBEE_READ "Read"
 #define D_CMND_ZIGBEE_SEND "Send"
   #define D_JSON_ZIGBEE_ZCL_SENT "ZbZCLSent"
 #define D_JSON_ZIGBEE_RECEIVED "ZbReceived"
 #define D_JSON_ZIGBEE_RECEIVED_LEGACY "ZigbeeReceived"
 #define D_CMND_ZIGBEE_BIND "Bind"
+#define D_CMND_ZIGBEE_PING "Ping"
+  #define D_JSON_ZIGBEE_PING "ZbPing"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"

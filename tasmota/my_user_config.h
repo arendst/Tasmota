@@ -416,6 +416,7 @@
 //  #define EXS_MCU_CMNDS                            // Add command to send MCU commands (+0k8 code)
 //#define USE_HOTPLUG                              // Add support for sensor HotPlug
 //#define USE_KEELOQ
+//#define USE_DEVICE_GROUPS                      // Add support for device groups (+5k6 code)
 
 // -- Optional light modules ----------------------
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //

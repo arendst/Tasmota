@@ -504,8 +504,10 @@
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "风向"
+#define D_TX20_WIND_DEGREES "风度"
 #define D_TX20_WIND_SPEED "风速"
 #define D_TX20_WIND_SPEED_AVG "平均风速"
+#define D_TX20_WIND_SPEED_MIN "最低风速"
 #define D_TX20_WIND_SPEED_MAX "最高风速"
 #define D_TX20_NORTH "北"
 #define D_TX20_EAST "东"
