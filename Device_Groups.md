@@ -6,7 +6,7 @@ UDP multicasts, followed by UDP unicasts if necessary, are used to send updates 
 
 To include device groups support in the build, define USE_DEVICE_GROUPS in your user_config_override. This adds 3.5K to the code size. All devices in a group must be running firmware with device group support and have device groups enabled.
 
-To enable device groups, set Option16 to 1 and **restart the device**.
+To enable device groups, set Option85 to 1.
 
 
 ## Device Groups Operation
