@@ -560,7 +560,7 @@ void WifiCheck(uint8_t param)
         }
 #ifdef USE_EMULATION
 #ifdef USE_DEVICE_GROUPS
-        if (Settings.flag2.emulation || Settings.flag.device_groups_enabled) { UdpConnect(); }
+        if (Settings.flag2.emulation || Settings.flag4.device_groups_enabled) { UdpConnect(); }
 #else // USE_DEVICE_GROUPS
       if (Settings.flag2.emulation) { UdpConnect(); }
 #endif // USE_DEVICE_GROUPS

@@ -575,11 +575,6 @@ typedef union {
   ADC_MODE(ADC_VCC);                       // Set ADC input for Power Supply Voltage usage
 #endif
 
-// Settings re-purposed for device groups
-#define device_groups_enabled  ws_clock_reverse   // SetOption16 - Enable device groups
-#define device_group_share_in  domoticz_sensor_idx[0]    // Bitmask of device group items imported
-#define device_group_share_out domoticz_sensor_idx[1]    // Bitmask of device group items exported
-
 // Settings re-purposed for the PWM_DIMMER module
 #ifdef USE_PWM_DIMMER
 #define led_timeout            light_signal       // SetOption18 - Turn brightness LED's off 5 seconds after last change

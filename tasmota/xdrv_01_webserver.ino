@@ -2982,7 +2982,7 @@ bool Xdrv01(uint8_t function)
       PollDnsWebserver();
 #ifdef USE_EMULATION
 #ifdef USE_DEVICE_GROUPS
-      if (Settings.flag2.emulation || Settings.flag.device_groups_enabled) { PollUdp(); }
+      if (Settings.flag2.emulation || Settings.flag4.device_groups_enabled) { PollUdp(); }
 #else // USE_DEVICE_GROUPS
       if (Settings.flag2.emulation) { PollUdp(); }
 #endif // USE_DEVICE_GROUPS

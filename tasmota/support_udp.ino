@@ -137,7 +137,7 @@ void PollUdp(void)
       }
 
 #ifdef USE_DEVICE_GROUPS
-      if (Settings.flag.device_groups_enabled && !strncmp_P(packet_buffer, kDeviceGroupMessage, sizeof(DEVICE_GROUP_MESSAGE) - 1)) {
+      if (Settings.flag4.device_groups_enabled && !strncmp_P(packet_buffer, kDeviceGroupMessage, sizeof(DEVICE_GROUP_MESSAGE) - 1)) {
         ProcessDeviceGroupMessage(packet_buffer, len);
       }
 #endif  // USE_DEVICE_GROUPS
