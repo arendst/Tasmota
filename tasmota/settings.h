@@ -104,7 +104,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t alexa_ct_range : 1;           // bit 0 (v8.1.0.2)   - SetOption82 - Reduced CT range for Alexa
     uint32_t zigbee_use_names : 1;         // bit 1 (v8.1.0.4)   - SetOption83 - Use FriendlyNames instead of ShortAddresses when possible
     uint32_t awsiot_shadow : 1;            // bit 2 (v8.1.0.5)   - SetOption84 - (AWS IoT) publish MQTT state to a device shadow
-    uint32_t device_groups_enabled : 1;    // bit 3 (v8.1.0.10)  - SetOption85 - Enable device groups
+    uint32_t device_groups_enabled : 1;    // bit 3 (v8.1.0.9)   - SetOption85 - Enable Device Groups
     uint32_t spare04 : 1;
     uint32_t spare05 : 1;
     uint32_t spare06 : 1;

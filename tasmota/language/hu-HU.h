@@ -504,8 +504,10 @@
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Szélirány"
+#define D_TX20_WIND_DEGREES "Szél mértéke"
 #define D_TX20_WIND_SPEED "Szélsebesség"
 #define D_TX20_WIND_SPEED_AVG "Átlag szélsebesség"
+#define D_TX20_WIND_SPEED_MIN "Min. szélsebesség"
 #define D_TX20_WIND_SPEED_MAX "Max. szélsebesség"
 #define D_TX20_NORTH "É"
 #define D_TX20_EAST "K"

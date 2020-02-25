@@ -504,8 +504,10 @@
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Напрям вітру"
+#define D_TX20_WIND_DEGREES "Кут вітру"
 #define D_TX20_WIND_SPEED "Швидкість вітру"
 #define D_TX20_WIND_SPEED_AVG "Середня швидкість вітру"
+#define D_TX20_WIND_SPEED_MIN "Мінімальна швидкість вітру"
 #define D_TX20_WIND_SPEED_MAX "Максимальна швидкість вітру"
 #define D_TX20_NORTH "Пн"
 #define D_TX20_EAST "Сх"

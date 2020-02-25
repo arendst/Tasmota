@@ -41,7 +41,8 @@
 #define XSNS_35                  35
 
 #define TX2X_BIT_TIME          1220  // microseconds
-#define TX2X_RESET_VALUES        60  // seconds
+#define TX2X_WEIGHT_AVG_SAMPLE  150  // seconds
+#define TX23_READ_INTERVAL        4  // seconds (don't use less than 3)
 
 // The Arduino standard GPIO routines are not enough,
 // must use some from the Espressif SDK as well
@@ -59,8 +60,9 @@ extern "C" {
 const char HTTP_SNS_TX2X[] PROGMEM =
    "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
    "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED_AVG "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
+   "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED_MIN "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
    "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED_MAX "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
-   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION "{m}%s (%s&deg;){e}";
+   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION "{m}%s %s&deg;{e}";
 #endif  // USE_WEBSERVER
 
 const char kTx2xDirections[] PROGMEM = D_TX20_NORTH "|"
@@ -88,11 +90,12 @@ uint16_t tx2x_sc = 0;
 uint16_t tx2x_sf = 0;
 
 float tx2x_wind_speed_kmh = 0;
+float tx2x_wind_speed_min = 200.0;
 float tx2x_wind_speed_max = 0;
 float tx2x_wind_speed_avg = 0;
-float tx2x_wind_sum = 0;
-int tx2x_count = 0;
 uint8_t tx2x_wind_direction = 0;
+int tx2x_count = 0;
+uint16_t tx2x_avg_samples;
 
 bool tx2x_available = false;
 
@@ -121,7 +124,6 @@ void TX2xStartRead(void)
    * La Crosse TX23 Anemometer datagram after setting TxD to low/high
    * 1-1 0 1 0-0 11011 0011 111010101111 0101 1100 000101010000 1-1 - Received pin data at 1200 uSec per bit
    *     t s c   sa    sb   sc           sd   se   sf
-   *     1 0 1-1 00100 1100 000101010000 1010 1100 000101010000     - sa to sd inverted user data, LSB first
    * t  - host pulls TxD low - signals TX23 to sent measurement
    * s  - TxD released - TxD is pulled high due to pullup
    * c  - TX23U pulls TxD low - calculation in progress
@@ -152,26 +154,8 @@ void TX2xStartRead(void)
       for (int32_t bitcount = 41; bitcount > 0; bitcount--) {
         uint8_t dpin = (digitalRead(pin[GPIO_TX2X_TXD_BLACK]));
 #ifdef USE_TX23_WIND_SENSOR
-        if (bitcount > 41 - 5) {
-          // start
-          tx2x_sa = (tx2x_sa << 1) | (dpin);
-        } else if (bitcount > 41 - 5 - 4) {
-          // wind dir
-          tx2x_sb = tx2x_sb >> 1 | ((dpin) << 3);
-        } else if (bitcount > 41 - 5 - 4 - 12) {
-          // windspeed
-          tx2x_sc = tx2x_sc >> 1 | ((dpin) << 11);
-        } else if (bitcount > 41 - 5 - 4 - 12 - 4) {
-          // checksum
-          tx2x_sd = tx2x_sd >> 1 | ((dpin) << 3);
-        } else if (bitcount > 41 - 5 - 4 - 12 - 4 - 4) {
-          // wind dir (invert)
-          tx2x_se = tx2x_se >> 1 | ((dpin ^ 1) << 3);
-        } else {
-          // windspeed (invert)
-          tx2x_sf = tx2x_sf >> 1 | ((dpin ^ 1) << 11);
-        }
-#else
+        dpin ^= 1;
+#endif
         if (bitcount > 41 - 5) {
           // start frame (invert)
           tx2x_sa = (tx2x_sa << 1) | (dpin ^ 1);
@@ -191,23 +175,14 @@ void TX2xStartRead(void)
           // windspeed
           tx2x_sf = tx2x_sf >> 1 | (dpin << 11);
         }
-#endif
         delayMicroseconds(TX2X_BIT_TIME);
       }
 
       uint8_t chk = (tx2x_sb + (tx2x_sc & 0xf) + ((tx2x_sc >> 4) & 0xf) + ((tx2x_sc >> 8) & 0xf));
       chk &= 0xf;
 
-#ifdef USE_TX23_WIND_SENSOR
       // check checksum, non-inverted with inverted values and max. speed
-      if ((chk == tx2x_sd) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511)) {
-        tx2x_available = true;
-      }
-#else
-      if ((chk == tx2x_sd) && (tx2x_sc < 511)) {  // if checksum seems to be ok and wind speed below 51.1 m/s
-        tx2x_available = true;
-      }
-#endif
+      tx2x_available = ((chk == tx2x_sd) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511));
 #ifdef USE_TX23_WIND_SENSOR
     }
     tx23_stage++;
@@ -219,49 +194,82 @@ void TX2xStartRead(void)
   GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << pin[GPIO_TX2X_TXD_BLACK]);
 }
 
-void Tx2xReset(void) 
+void Tx2xResetStat(void) 
 {
+  tx2x_wind_speed_min = tx2x_wind_speed_kmh;
+  tx2x_wind_speed_max = tx2x_wind_speed_kmh;
+  uint16_t tx2x_prev_avg_samples = tx2x_avg_samples;
+  if (Settings.tele_period) {
+    // number for avg samples = teleperiod value if set
+    tx2x_avg_samples = Settings.tele_period;
+  } else {
+    // otherwise use default number of samples for this driver
+    tx2x_avg_samples = TX2X_WEIGHT_AVG_SAMPLE;
+  }
+  if (tx2x_prev_avg_samples != tx2x_avg_samples) {
+    tx2x_wind_speed_avg = tx2x_wind_speed_kmh;
     tx2x_count = 0;
-    tx2x_wind_sum = 0;
-    tx2x_wind_speed_max = 0;
+  }
 }
 
 void Tx2xRead(void)
 {
 #ifdef USE_TX23_WIND_SENSOR
+  // TX23 needs to trigger start transmission - TxD Line
+  // ___________      _             ___   ___
+  //            |____| |___________|   |_|   |__XXXXXXXXXX
+  //           trigger  start conv  Startframe  Data
+  //
   // note: TX23 speed calculation is unstable when conversion starts 
   //       less than 2 seconds after last request
-  if ((uptime % 3)==0) {
+  if ((uptime % TX23_READ_INTERVAL)==0) {
     // TX23 start transmission by pulling down TxD line for at minimum 500ms
     // so we pull TxD signal to low every 3 seconds
     tx23_stage = 0;
     pinMode(pin[GPIO_TX2X_TXD_BLACK], OUTPUT);
     digitalWrite(pin[GPIO_TX2X_TXD_BLACK], LOW);
-  } else if ((uptime % 3)==1) {
-    // after pulling down TxD every 3 second we pull-up TxD every 3+1 seconds
-    // to trigger start transmission
+  } else if ((uptime % TX23_READ_INTERVAL)==1) {
+    // after pulling down TxD: pull-up TxD every x+1 seconds
+    // to trigger TX23 start transmission
     tx23_stage = 1; // first rising signal is invalid
     pinMode(pin[GPIO_TX2X_TXD_BLACK], INPUT_PULLUP);
   }
 #endif
-  if (0==Settings.tele_period && !(uptime % TX2X_RESET_VALUES)) {
-    Tx2xReset();
+  if (0!=Settings.tele_period && Settings.tele_period!=tx2x_avg_samples) {
+    // new teleperiod value
+    Tx2xResetStat();
   }
-  else if (tx2x_available) {
+  if (tx2x_available) {
     // Wind speed spec: 0 to 180 km/h (0 to 50 m/s)
     tx2x_wind_speed_kmh = float(tx2x_sc) * 0.36;
+    if (tx2x_wind_speed_kmh < tx2x_wind_speed_min) {
+      tx2x_wind_speed_min = tx2x_wind_speed_kmh;
+    }
     if (tx2x_wind_speed_kmh > tx2x_wind_speed_max) {
       tx2x_wind_speed_max = tx2x_wind_speed_kmh;
     }
-    tx2x_count++;
-    tx2x_wind_sum += tx2x_wind_speed_kmh;
-    tx2x_wind_speed_avg = tx2x_wind_sum / tx2x_count;
+    // exponentially weighted average is not quite as smooth as the arithmetic average 
+    // but close enough to the moving average and does not require the regular reset 
+    // of the divider with the associated jump in avg values after period is over
+    if (tx2x_count <= tx2x_avg_samples) {
+      tx2x_count++;
+    }
+    tx2x_wind_speed_avg -= tx2x_wind_speed_avg / tx2x_count;
+    tx2x_wind_speed_avg += tx2x_wind_speed_kmh / tx2x_count;
+
     tx2x_wind_direction = tx2x_sb;
+
+    if (!(uptime % tx2x_avg_samples)) {
+      tx2x_wind_speed_min = tx2x_wind_speed_kmh;
+      tx2x_wind_speed_max = tx2x_wind_speed_kmh;
+
+    }
   }
 }
 
 void Tx2xInit(void) 
 {
+  Tx2xResetStat();
 #ifdef USE_TX23_WIND_SENSOR
   tx23_stage = 0;
   pinMode(pin[GPIO_TX2X_TXD_BLACK], OUTPUT);
@@ -276,22 +284,46 @@ void Tx2xShow(bool json)
 {
   char wind_speed_string[33];
   dtostrfd(tx2x_wind_speed_kmh, 1, wind_speed_string);
+  char wind_speed_min_string[33];
+  dtostrfd(tx2x_wind_speed_min, 1, wind_speed_min_string);
   char wind_speed_max_string[33];
   dtostrfd(tx2x_wind_speed_max, 1, wind_speed_max_string);
   char wind_speed_avg_string[33];
   dtostrfd(tx2x_wind_speed_avg, 1, wind_speed_avg_string);
+  char wind_direction_degree_string[33];
+  dtostrfd(tx2x_wind_direction*22.5, 1, wind_direction_degree_string);
   char wind_direction_string[4];
   GetTextIndexed(wind_direction_string, sizeof(wind_direction_string), tx2x_wind_direction, kTx2xDirections);
-  char wind_direction_degree[33];
-  dtostrfd(tx2x_wind_direction*22.5, 1, wind_direction_degree);
 
   if (json) {
+#ifdef USE_TX2x_LEGACY_JSON
     ResponseAppend_P(PSTR(",\"" D_TX2x_NAME "\":{\"Speed\":%s,\"SpeedAvg\":%s,\"SpeedMax\":%s,\"Direction\":\"%s\",\"Degree\":%s}"),
       wind_speed_string, wind_speed_avg_string, wind_speed_max_string, wind_direction_string, wind_direction_degree);
-    Tx2xReset();
+#else
+    // new format grouped by Speed and Dir(ection)
+    // Card = cardianal (N../O../S../W..)
+    // Deg = Degree
+    ResponseAppend_P(
+      PSTR(",\"" D_TX2x_NAME "\":{\"Speed\":{\"Act\":%s,\"Avg\":%s,\"Min\":%s,\"Max\":%s},\"Direction\":{\"Cardinal\":\"%s\",\"Degree\":%s}}"),
+      wind_speed_string, 
+      wind_speed_avg_string, 
+      wind_speed_min_string, 
+      wind_speed_max_string, 
+      wind_direction_string, 
+      wind_direction_degree_string
+    );
+#endif
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_TX2X, wind_speed_string, wind_speed_avg_string, wind_speed_max_string, wind_direction_string, wind_direction_degree);
+    WSContentSend_PD(
+      HTTP_SNS_TX2X, 
+      wind_speed_string, 
+      wind_speed_avg_string, 
+      wind_speed_min_string, 
+      wind_speed_max_string, 
+      wind_direction_string, 
+      wind_direction_degree_string
+    );
 #endif  // USE_WEBSERVER
   }
 }
@@ -313,11 +345,11 @@ bool Xsns35(uint8_t function)
         Tx2xRead();
         break;
       case FUNC_JSON_APPEND:
-        Tx2xShow(1);
+        Tx2xShow(true);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
-        Tx2xShow(0);
+        Tx2xShow(false);
         break;
 #endif  // USE_WEBSERVER
     }
