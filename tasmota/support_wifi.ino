@@ -21,7 +21,8 @@
  * Wifi
 \*********************************************************************************************/
 
-// Enable only one of two below debug options
+// Enable one of three below options for wifi re-connection debugging
+//#define WIFI_FORCE_RF_CAL_ERASE            // Erase rf calibration sector on restart only
 //#define WIFI_RF_MODE_RF_CAL                // Set RF_MODE to RF_CAL for restart and deepsleep during user_rf_pre_init
 //#define WIFI_RF_PRE_INIT                   // Set RF_MODE to RF_CAL for restart, deepsleep and power on during user_rf_pre_init
 
@@ -34,7 +35,7 @@
 
 const uint8_t WIFI_CONFIG_SEC = 180;       // seconds before restart
 const uint8_t WIFI_CHECK_SEC = 20;         // seconds
-const uint8_t WIFI_RETRY_OFFSET_SEC = 20;  // seconds
+const uint8_t WIFI_RETRY_OFFSET_SEC = 12;  // seconds
 
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #if LWIP_IPV6
@@ -645,7 +646,7 @@ void WifiConnect(void)
   WifiSetOutputPower();
   WiFi.persistent(false);     // Solve possible wifi init errors
   Wifi.status = 0;
-  Wifi.retry_init = WIFI_RETRY_OFFSET_SEC + ((ESP.getChipId() & 0xF) * 2);
+  Wifi.retry_init = WIFI_RETRY_OFFSET_SEC + (ESP.getChipId() & 0xF);  // Add extra delay to stop overrun by simultanous re-connects
   Wifi.retry = Wifi.retry_init;
   Wifi.counter = 1;
 
@@ -659,29 +660,34 @@ void WifiConnect(void)
 void WifiShutdown(bool option = false)
 {
   // option = false - Legacy disconnect also used by DeepSleep
-  // option = true  - Disconnect with SDK wifi calibrate sector erase
+  // option = true  - Disconnect with SDK wifi calibrate sector erase when WIFI_FORCE_RF_CAL_ERASE enabled
   delay(100);                 // Allow time for message xfer - disabled v6.1.0b
 
 #ifdef USE_EMULATION
   UdpDisconnect();
+  delay(100);                 // Flush anything in the network buffers.
 #endif  // USE_EMULATION
 
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     MqttDisconnect();
+    delay(100);               // Flush anything in the network buffers.
   }
 
-  if (option && Settings.flag4.force_sdk_erase) {  // SetOption113 - Force erase of SDK wifi calibrate sector on restart
+#ifdef WIFI_FORCE_RF_CAL_ERASE
+  if (option) {
     WiFi.disconnect(false);   // Disconnect wifi
     SettingsErase(4);         // Delete SDK wifi config and calibrate data
-  } else {
+  } else
+#endif  // WIFI_FORCE_RF_CAL_ERASE
+  {
     // Enable from 6.0.0a until 6.1.0a - disabled due to possible cause of bad wifi connect on core 2.3.0
     // Re-enabled from 6.3.0.7 with ESP.restart replaced by ESP.reset
     // Courtesy of EspEasy
-    WiFi.persistent(true);      // use SDK storage of SSID/WPA parameters
+    WiFi.persistent(true);    // use SDK storage of SSID/WPA parameters
     ETS_UART_INTR_DISABLE();
     wifi_station_disconnect();  // this will store empty ssid/wpa into sdk storage
     ETS_UART_INTR_ENABLE();
-    WiFi.persistent(false);     // Do not use SDK storage of SSID/WPA parameters
+    WiFi.persistent(false);   // Do not use SDK storage of SSID/WPA parameters
   }
   delay(100);                 // Flush anything in the network buffers.
 }
