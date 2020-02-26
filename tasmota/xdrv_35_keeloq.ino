@@ -113,14 +113,15 @@ void CmdSendButton(void)
 
       for(int repeat = 0; repeat <= 1; repeat++)
       {
-        digitalWrite(TX_PORT, LOW);      // CC1101 in TX Mode+
+        uint64_t bitsToSend = jaroliftDevice.pack;
+        digitalWrite(TX_PORT, LOW);
         delayMicroseconds(1150);
         SendSyncPreamble(13);
         delayMicroseconds(3500);
         for(int i=72; i>0; i--)
         {
-          SendBit(jaroliftDevice.pack & 0x0000000000000001);
-          jaroliftDevice.pack >>= 1;
+          SendBit(bitsToSend & 0x0000000000000001);
+          bitsToSend >>= 1;
         }
         DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("finished sending bits at %d"), micros());
 
