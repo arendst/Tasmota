@@ -24,19 +24,6 @@
  *
  * I2C Address: 0x38, 0x39
 \*********************************************************************************************/
-#ifdef USE_ADE7953
-#warning **** There are may conflict driver Address with driver ADE7953 ****
-#elif  defined USE_PCF8574
-#warning **** There are may conflict driver Address with driver PCF8574 ****
-#elif  defined USE_VEML6070
-#warning **** There are may conflict driver Address with driver VEML6070 ****
-#elif  defined USE_APDS9960
-#warning **** There are may conflict driver Address with driver APDS9960 ****
-#elif  defined USE_DISPLAY_ILI9488
-#warning **** There are may conflict driver Address with driver ILI9488 ****
-#elif  defined USE_DISPLAY_RA8876
-#warning **** There are may conflict driver Address with driver RA8876 ****
-#endif
 /* Status Bits
 BUSY = (1 << 7);
 MODE = ((1 << 6) | (1 << 5));
@@ -46,7 +33,6 @@ FIFO_ENABLE = (1 << 2);
 FIFO_FULL = (1 << 1);
 FIFO_EMPTY = (1 << 0);
 */
-
 #define XSNS_63              63
 #define XI2C_43              43  // See I2CDEVICES.md
 
@@ -103,11 +89,9 @@ bool AHT1XRead(uint8_t aht1x_address, float &tem, float &hum)
 /********************************************************************************************/
 bool AHT1XInit(uint8_t aht1x_address)
 {
-  uint8_t init_count = 0;
   Wire.begin(aht1x_address);
   Wire.beginTransmission(aht1x_address);
   Wire.write(CalibrateCmd, 3);
-
   if (Wire.endTransmission() != 0) return false;
   delay(AHT1X_CMD_DELAY);
 
@@ -158,9 +142,9 @@ void AHT1XShow(bool json)
        char types[11]; // AHT1X-0x38
        snprintf_P(types, sizeof(types), PSTR("%s%c0x%02X"), aht1x_sensors[i].types, IndexSeparator(), aht1x_sensors[i].address);  // "X-0xXX"
        char temperature[33];
-       dtostrfd(ConvertTemp(tem), Settings.flag2.temperature_resolution, temperature);
+       dtostrfd(tem, Settings.flag2.temperature_resolution, temperature);
        char humidity[33];
-       dtostrfd(ConvertHumidity(hum), Settings.flag2.humidity_resolution, humidity);
+       dtostrfd(hum, Settings.flag2.humidity_resolution, humidity);
 
        if (json) {
            ResponseAppend_P(JSON_SNS_TEMPHUM, types, temperature, humidity);
