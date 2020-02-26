@@ -139,12 +139,15 @@ void AHT1XShow(bool json)
      float tem,hum;
      if (AHT1XRead(aht1x_sensors[i].address, tem, hum))
      {
+       float aht_temp = ConvertTemp(tem);
+       float aht_hum = ConvertPressure(hum);
+
        char types[11]; // AHT1X-0x38
        snprintf_P(types, sizeof(types), PSTR("%s%c0x%02X"), aht1x_sensors[i].types, IndexSeparator(), aht1x_sensors[i].address);  // "X-0xXX"
        char temperature[33];
-       dtostrfd(tem, Settings.flag2.temperature_resolution, temperature);
+       dtostrfd(aht_temp, Settings.flag2.temperature_resolution, temperature);
        char humidity[33];
-       dtostrfd(hum, Settings.flag2.humidity_resolution, humidity);
+       dtostrfd(aht_hum, Settings.flag2.humidity_resolution, humidity);
 
        if (json) {
            ResponseAppend_P(JSON_SNS_TEMPHUM, types, temperature, humidity);
