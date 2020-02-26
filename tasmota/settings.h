@@ -470,8 +470,7 @@ struct SYSCFG {
   uint8_t       bri_preset_low;            // F06
   uint8_t       bri_preset_high;           // F07
   uint8_t       button_devices;            // F08
-
-  uint8_t       free_f05[179];             // F09
+  uint8_t       free_f09[179];             // F09
 
   uint32_t      keeloq_master_msb;         // FBC
   uint32_t      keeloq_master_lsb;         // FC0
