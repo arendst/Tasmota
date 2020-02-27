@@ -519,9 +519,12 @@ void GetFeatures(void)
 #ifdef USE_WEMOS_MOTOR_V1
   feature5 |= 0x20000000;  // xdrv_34_wemos_motor_v1.ino
 #endif
-
-//  feature5 |= 0x40000000;
-//  feature5 |= 0x80000000;
+#ifdef USE_DEVICE_GROUPS
+  feature5 |= 0x40000000;  // support_device_groups.ino
+#endif
+#ifdef USE_PWM_DIMMER
+  feature5 |= 0x80000000;  // xdrv_35_pwm_dimmer
+#endif
 
 /*********************************************************************************************/
 
