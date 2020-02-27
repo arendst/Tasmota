@@ -8,6 +8,7 @@
 - Add support for Wemos Motor Shield V1 by Denis Sborets (#7764)
 - Add Zigbee enhanced commands decoding, added ``ZbPing``
 - Add commands ``SetOption85 0/1`` and ``DevGroupShare`` supporting UDP Group command using ``GroupTopic`` without MQTT by Paul Diem (#7790)
+- Add support for Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM dimmer switches by Paul Diem (#7791)
 
 ### 8.1.0.8 20200212
 

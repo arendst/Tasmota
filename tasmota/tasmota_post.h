@@ -76,9 +76,9 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #ifdef USE_PWM_DIMMER_REMOTE
 #ifdef USE_PWM_DIMMER
 #ifndef USE_DEVICE_GROUPS
-#define USE_DEVICE_GROUPS 
+#define USE_DEVICE_GROUPS
 #endif  // USE_DEVICE_GROUPS
-#else  // USE_PWM_DIMMER
+#else   // USE_PWM_DIMMER
 #undef USE_PWM_DIMMER_REMOTE
 #endif  // USE_PWM_DIMMER
 #endif  // USE_PWM_DIMMER_REMOTE
@@ -115,6 +115,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #define USE_DEEPSLEEP                            // Add support for deepsleep (+1k code)
 #define USE_EXS_DIMMER                           // Add support for EX-Store WiFi Dimmer
 #define USE_HOTPLUG                              // Add support for sensor HotPlug
+#define USE_PWM_DIMMER                           // Add support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
 
 // -- Optional light modules ----------------------
 #define USE_LIGHT                                // Add Dimmer/Light support
@@ -299,6 +300,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
 #undef USE_HOTPLUG                               // Disable support for HotPlug
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
+#undef USE_PWM_DIMMER                            // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
 #undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors (-14k code)
@@ -377,6 +379,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
 #undef USE_HOTPLUG                               // Disable support for HotPlug
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
+#undef USE_PWM_DIMMER                            // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
 #undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
 
 // -- Optional light modules ----------------------
@@ -600,6 +603,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
 #undef USE_HOTPLUG                               // Disable support for HotPlug
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
+#undef USE_PWM_DIMMER                            // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
 #undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
 
 // -- Optional light modules ----------------------
