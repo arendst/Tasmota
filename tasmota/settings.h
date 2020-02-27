@@ -469,9 +469,12 @@ struct SYSCFG {
   uint8_t       bri_min;                   // F05
   uint8_t       bri_preset_low;            // F06
   uint8_t       bri_preset_high;           // F07
+  uint8_t       free_f08[180];             // F08
 
-  uint8_t       free_f05[196];             // F08
-
+  uint32_t      keeloq_master_msb;         // FBC
+  uint32_t      keeloq_master_lsb;         // FC0
+  uint32_t      keeloq_serial;             // FC4
+  uint32_t      keeloq_count;              // FC8
   uint32_t      device_group_share_in;     // FCC - Bitmask of device group items imported
   uint32_t      device_group_share_out;    // FD0 - Bitmask of device group items exported
   uint32_t      bootcount_reset_time;      // FD4
