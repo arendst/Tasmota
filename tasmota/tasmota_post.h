@@ -73,6 +73,16 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #define MODULE                 SONOFF_BASIC      // [Module] Select default model
 #endif
 
+#ifdef USE_PWM_DIMMER_REMOTE
+#ifdef USE_PWM_DIMMER
+#ifndef USE_DEVICE_GROUPS
+#define USE_DEVICE_GROUPS 
+#endif  // USE_DEVICE_GROUPS
+#else  // USE_PWM_DIMMER
+#undef USE_PWM_DIMMER_REMOTE
+#endif  // USE_PWM_DIMMER
+#endif  // USE_PWM_DIMMER_REMOTE
+
 /*********************************************************************************************\
  * [tasmota-sensors.bin]
  * Provide an image with useful supported sensors enabled
@@ -250,6 +260,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
 #undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
+#undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_KNX_NO_EMULATION
@@ -288,6 +299,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
 #undef USE_HOTPLUG                               // Disable support for HotPlug
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
+#undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors (-14k code)
   #undef USE_PZEM004T                            // Disable PZEM004T energy sensor
@@ -365,6 +377,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
 #undef USE_HOTPLUG                               // Disable support for HotPlug
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
+#undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
 
 // -- Optional light modules ----------------------
 //#undef USE_LIGHT                                 // Also disable all Dimmer/Light support
@@ -587,6 +600,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
 #undef USE_HOTPLUG                               // Disable support for HotPlug
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
+#undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
 
 // -- Optional light modules ----------------------
 #undef USE_LIGHT                                 // Disable support for lights

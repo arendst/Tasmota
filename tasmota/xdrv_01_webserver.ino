@@ -1123,6 +1123,17 @@ void HandleRoot(void)
       }  // Settings.flag3.pwm_multi_channels
     }
 #endif // USE_LIGHT
+#ifdef USE_PWM_DIMMER
+    if (PWM_DIMMER == my_module_type) {
+      WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Brightness - Black to White
+        "c",               // c - Unique HTML id
+        "#000", "#fff",    // Black to White
+        4,                 // sl4 - Unique range HTML id - Used as source for Saturation begin color
+        Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100%
+        Settings.light_dimmer,
+        'd', 0);           // d0 - Value id is related to lc("d0", value) and WebGetArg("d0", tmp, sizeof(tmp));
+    }
+#endif  // USE_PWM_DIMMER
 #ifdef USE_SHUTTER
     if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
       for (uint32_t i = 0; i < shutters_present; i++) {

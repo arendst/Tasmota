@@ -640,6 +640,12 @@ void MqttShowState(void)
         break;
       }
 #endif  // USE_SONOFF_IFAN
+#ifdef USE_PWM_DIMMER
+      if (PWM_DIMMER == my_module_type) {
+        ResponseAppend_P(PSTR(",\"" D_CMND_DIMMER "\":%d,\"" D_CMND_FADE "\":\"%s\",\"" D_CMND_SPEED "\":%d"),
+          Settings.light_dimmer, GetStateText(Settings.light_fade), Settings.light_speed);
+      }
+#endif  // USE_PWM_DIMMER
 #ifdef USE_LIGHT
     }
 #endif
