@@ -27,8 +27,8 @@
 #define Lowpulse         400
 #define Highpulse        800
 
-#define TX_PORT            4              // Outputport for transmission
-#define RX_PORT            5              // Inputport for reception
+#define TX_PORT          pin[GPIO_CC1101_GDO2]              // Outputport for transmission
+#define RX_PORT          pin[GPIO_CC1101_GDO0]              // Inputport for reception
 
 const char kJaroliftCommands[] PROGMEM = "Keeloq|" // prefix
   "SendRaw|SendButton|Set";
