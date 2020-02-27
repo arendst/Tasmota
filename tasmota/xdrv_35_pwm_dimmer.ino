@@ -48,10 +48,10 @@ void (* const PWMDimmerCommand[])(void) PROGMEM = {
 struct remote_pwm_dimmer {
   power_t power;
   uint8_t light_speed;
-  uint8_t x_bri_power_on;
-  uint8_t x_bri_min;
-  uint8_t x_bri_preset_low;
-  uint8_t x_bri_preset_high;
+  uint8_t bri_power_on;
+  uint8_t bri_min;
+  uint8_t bri_preset_low;
+  uint8_t bri_preset_high;
   uint8_t fixed_color_index;
   uint8_t bri;
   bool power_button_increases_bri;
@@ -98,14 +98,14 @@ void PWMModuleInit()
   Settings.flag.pwm_control = 0;  // Use basic PWM control instead of Light    
 
   if (Settings.last_module != Settings.module) {
-    Settings.bri_min = 8;
+    Settings.bri_min = 25;
     Settings.bri_power_on = 50;
-    Settings.bri_preset_low = 8;
+    Settings.bri_preset_low = 25;
     Settings.bri_preset_high = 255;
     Settings.last_module = Settings.module;
   }
   else {
-    if (Settings.bri_min < 1) Settings.bri_min = 8;
+    if (Settings.bri_min < 1) Settings.bri_min = 25;
     PWMDimmerCheckBri(&Settings.bri_power_on);
     PWMDimmerCheckBri(&Settings.bri_preset_low);
     PWMDimmerCheckBri(&Settings.bri_preset_high);
@@ -132,11 +132,11 @@ void PWMModuleInit()
 void PWMDimmerInit(void)
 {
 #ifdef USE_PWM_DIMMER_REMOTE
-  if (Settings.flag3.remote_device_mode) {
+  if (Settings.flag4.remote_device_mode) {
     if (device_group_count > 1) {
       if ((remote_pwm_dimmers = (struct remote_pwm_dimmer *) calloc(device_group_count - 1, sizeof(struct remote_pwm_dimmer))) == nullptr) {
         AddLog_P2(LOG_LEVEL_ERROR, PSTR("PWMDimmer: error allocating PWM dimmer array"));
-        Settings.flag3.remote_device_mode = false;
+        Settings.flag4.remote_device_mode = false;
       }
     }
   }
@@ -166,7 +166,7 @@ void PWMDimmerSetBrightnessLeds(int32_t operation)
     }
 
     // If enabled, set the LED timeout.
-    if (!operation) led_timeout_time = (current_bri && Settings.flag.led_timeout ? millis() + 5000 : 0);
+    if (!operation) led_timeout_time = (current_bri && Settings.flag4.led_timeout ? millis() + 5000 : 0);
   }
 }
 
@@ -174,7 +174,7 @@ void PWMDimmerSetPoweredOffLed(void)
 {
   // Set the powered-off LED state.
   if (pin[GPIO_LEDLNK] < 99) {
-    bool power_off_led_on = !power && Settings.flag3.powered_off_led;
+    bool power_off_led_on = !power && Settings.flag4.powered_off_led;
     if (ledlnk_inverted) power_off_led_on ^= 1;
     digitalWrite(pin[GPIO_LEDLNK], power_off_led_on);
   }
@@ -370,7 +370,7 @@ void PWMDimmerHandleButton()
 
       // If there are no other buttons pressed right now and remote mode is enabled, make the device
       // associated with this button the device we're going to control.
-      if (buttons_pressed == 1 && Settings.flag3.remote_device_mode) {
+      if (buttons_pressed == 1 && Settings.flag4.remote_device_mode) {
         power_button_index = button_index;
         up_button_index = (button_index == 2 ? 1 : 2);
         down_button_index = (button_index ? 0 : 1);
@@ -439,7 +439,7 @@ void PWMDimmerHandleButton()
         else {
 #ifdef USE_PWM_DIMMER_REMOTE
           if (!active_device_is_local) {
-            active_remote_pwm_dimmer->bri = active_remote_pwm_dimmer->x_bri_preset_low;
+            active_remote_pwm_dimmer->bri = active_remote_pwm_dimmer->bri_preset_low;
             active_remote_pwm_dimmer->power_button_increases_bri = true;
           }
           else {
@@ -496,7 +496,7 @@ void PWMDimmerHandleButton()
               else {
 #ifdef USE_PWM_DIMMER_REMOTE
                 if (!active_device_is_local)
-                  active_remote_pwm_dimmer->bri = (down_button_is_held ? active_remote_pwm_dimmer->x_bri_preset_low : active_remote_pwm_dimmer->x_bri_preset_high);
+                  active_remote_pwm_dimmer->bri = (down_button_is_held ? active_remote_pwm_dimmer->bri_preset_low : active_remote_pwm_dimmer->bri_preset_high);
                 else
 #endif  // USE_PWM_DIMMER_REMOTE
                   target_bri = (down_button_is_held ? Settings.bri_preset_low : Settings.bri_preset_high);
@@ -563,7 +563,7 @@ void PWMDimmerHandleButton()
                 // Decrease/increase the minimum brightness.
 #ifdef USE_PWM_DIMMER_REMOTE
                 if (!active_device_is_local)
-                  uint8_value = active_remote_pwm_dimmer->x_bri_min;
+                  uint8_value = active_remote_pwm_dimmer->bri_min;
                 else
 #endif // USE_PWM_DIMMER_REMOTE
                   uint8_value = Settings.bri_min;
@@ -575,8 +575,8 @@ void PWMDimmerHandleButton()
                 }
 #ifdef USE_PWM_DIMMER_REMOTE
                 if (!active_device_is_local) {
-                  active_remote_pwm_dimmer->x_bri_min = uint8_value;
-                  if (active_remote_pwm_dimmer->x_bri_power_on < uint8_value) active_remote_pwm_dimmer->x_bri_power_on = uint8_value;
+                  active_remote_pwm_dimmer->bri_min = uint8_value;
+                  if (active_remote_pwm_dimmer->bri_power_on < uint8_value) active_remote_pwm_dimmer->bri_power_on = uint8_value;
                 }
                 else {
 #endif // USE_PWM_DIMMER_REMOTE
@@ -618,8 +618,8 @@ void PWMDimmerHandleButton()
                 // Decrease/increase the low brightness preset.
 #ifdef USE_PWM_DIMMER_REMOTE
                 if (!active_device_is_local) {
-                  uint8_value = active_remote_pwm_dimmer->x_bri_preset_low;
-                  min_uint8_value =active_remote_pwm_dimmer->x_bri_min;
+                  uint8_value = active_remote_pwm_dimmer->bri_preset_low;
+                  min_uint8_value =active_remote_pwm_dimmer->bri_min;
                 }
                 else {
 #endif // USE_PWM_DIMMER_REMOTE
@@ -636,7 +636,7 @@ void PWMDimmerHandleButton()
                 }
 #ifdef USE_PWM_DIMMER_REMOTE
                 if (!active_device_is_local)
-                  active_remote_pwm_dimmer->x_bri_preset_low = uint8_value;
+                  active_remote_pwm_dimmer->bri_preset_low = uint8_value;
                 else
 #endif // USE_PWM_DIMMER_REMOTE
                   Settings.bri_preset_low = uint8_value;
@@ -647,7 +647,7 @@ void PWMDimmerHandleButton()
                 // Decrease/increase the high brightness preset.
 #ifdef USE_PWM_DIMMER_REMOTE
                 if (!active_device_is_local)
-                  uint8_value = active_remote_pwm_dimmer->x_bri_preset_high;
+                  uint8_value = active_remote_pwm_dimmer->bri_preset_high;
                 else
 #endif // USE_PWM_DIMMER_REMOTE
                   uint8_value = Settings.bri_preset_high;
@@ -659,7 +659,7 @@ void PWMDimmerHandleButton()
                 }
 #ifdef USE_PWM_DIMMER_REMOTE
                 if (!active_device_is_local)
-                  active_remote_pwm_dimmer->x_bri_preset_high = uint8_value;
+                  active_remote_pwm_dimmer->bri_preset_high = uint8_value;
                 else
 #endif // USE_PWM_DIMMER_REMOTE
                   Settings.bri_preset_high = uint8_value;
@@ -714,7 +714,7 @@ void PWMDimmerHandleButton()
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_PWM_DIMMER_REMOTE
         if (!active_device_is_local)
-          active_remote_pwm_dimmer->x_bri_power_on = active_remote_pwm_dimmer->bri = new_bri;
+          active_remote_pwm_dimmer->bri_power_on = active_remote_pwm_dimmer->bri = new_bri;
         else {
 #endif  // USE_PWM_DIMMER_REMOTE
           Settings.bri_power_on = target_bri = new_bri;
@@ -772,7 +772,7 @@ void PWMDimmerHandleButton()
 #ifdef USE_PWM_DIMMER_REMOTE
               if (active_device_is_local) {
 #endif // USE_PWM_DIMMER_REMOTE
-                Settings.flag3.powered_off_led ^= 1;
+                Settings.flag4.powered_off_led ^= 1;
                 PWMDimmerSetPoweredOffLed();
 #ifdef USE_PWM_DIMMER_REMOTE
               }
@@ -803,8 +803,8 @@ void PWMDimmerHandleButton()
 #ifdef USE_PWM_DIMMER_REMOTE
               if (active_device_is_local) {
 #endif // USE_PWM_DIMMER_REMOTE
-                Settings.flag.led_timeout ^= 1;
-                if (relay_is_on) PWMDimmerSetBrightnessLeds(Settings.flag.led_timeout ? -1 : 0);
+                Settings.flag4.led_timeout ^= 1;
+                if (relay_is_on) PWMDimmerSetBrightnessLeds(Settings.flag4.led_timeout ? -1 : 0);
 #ifdef USE_PWM_DIMMER_REMOTE
               }
 #endif // USE_PWM_DIMMER_REMOTE
@@ -818,7 +818,7 @@ void PWMDimmerHandleButton()
       else {
 #ifdef USE_PWM_DIMMER_REMOTE
         if (!active_device_is_local)
-          active_remote_pwm_dimmer->bri = active_remote_pwm_dimmer->x_bri_power_on;
+          active_remote_pwm_dimmer->bri = active_remote_pwm_dimmer->bri_power_on;
         else
 #endif  // USE_PWM_DIMMER_REMOTE
           target_bri = Settings.bri_power_on;
@@ -1021,14 +1021,14 @@ void CmndLedTimeout(void)
   switch (XdrvMailbox.payload) {
   case 0: // Off
   case 1: // On
-    Settings.flag.led_timeout = XdrvMailbox.payload;
+    Settings.flag4.led_timeout = XdrvMailbox.payload;
     break;
   case 2: // Toggle
-    Settings.flag.led_timeout ^= 1;
+    Settings.flag4.led_timeout ^= 1;
     break;
   }
   if (relay_is_on) PWMDimmerSetBrightnessLeds(0);
-  ResponseCmndStateText(Settings.flag.led_timeout);
+  ResponseCmndStateText(Settings.flag4.led_timeout);
 }
 
 void CmndPoweredOffLed(void)
@@ -1037,14 +1037,14 @@ void CmndPoweredOffLed(void)
   switch (XdrvMailbox.payload) {
   case 0: // Off
   case 1: // On
-    Settings.flag3.powered_off_led = XdrvMailbox.payload;
+    Settings.flag4.powered_off_led = XdrvMailbox.payload;
     break;
   case 2: // Toggle
-    Settings.flag3.powered_off_led ^= 1;
+    Settings.flag4.powered_off_led ^= 1;
     break;
   }
   PWMDimmerSetPoweredOffLed();
-  ResponseCmndStateText(Settings.flag3.powered_off_led);
+  ResponseCmndStateText(Settings.flag4.powered_off_led);
 }
 
 /*********************************************************************************************\
@@ -1118,7 +1118,7 @@ bool Xdrv35(uint8_t function)
 #ifdef USE_PWM_DIMMER_REMOTE
       // If remote device mode is enabled, set the device group count to the number of buttons
       // present.
-      if (Settings.flag3.remote_device_mode) {
+      if (Settings.flag4.remote_device_mode) {
         for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
           if (pin[GPIO_KEY1 + button_index] < 99) device_group_count++;
         }

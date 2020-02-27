@@ -469,9 +469,8 @@ struct SYSCFG {
   uint8_t       bri_min;                   // F05
   uint8_t       bri_preset_low;            // F06
   uint8_t       bri_preset_high;           // F07
-  uint8_t       button_devices;            // F08
 
-  uint8_t       free_f05[195];             // F09
+  uint8_t       free_f05[196];             // F08
 
   uint32_t      device_group_share_in;     // FCC - Bitmask of device group items imported
   uint32_t      device_group_share_out;    // FD0 - Bitmask of device group items exported
@@ -578,19 +577,5 @@ typedef union {
 #ifdef USE_ADC_VCC
   ADC_MODE(ADC_VCC);                       // Set ADC input for Power Supply Voltage usage
 #endif
-
-// Settings re-purposed for the PWM_DIMMER module
-#ifdef USE_PWM_DIMMER
-#define led_timeout            light_signal       // SetOption18 - Turn brightness LED's off 5 seconds after last change
-#define powered_off_led        buzzer_enable      // SetOption67 - Turn red LED on when powered off
-#define bri_power_on           pcf8574_config[0]  // Brightness when next powered-on
-#define bri_min                pcf8574_config[1]  // Minimum brightness
-#define bri_preset_low         pcf8574_config[2]  // Bri preset low
-#define bri_preset_high        pcf8574_config[3]  // Bri preset high
-#define button_devices         pcf8574_config[4]  // Button-device map
-#ifdef USE_PWM_DIMMER_REMOTE
-#define remote_device_mode     dds2382_model      // SetOption71 - Buttons control remote devices
-#endif  // USE_PWM_DIMMER_REMOTE
-#endif // USE_PWM_DIMMER
 
 #endif  // _SETTINGS_H_

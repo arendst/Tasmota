@@ -415,9 +415,9 @@
 //#define USE_EXS_DIMMER                           // Add support for ES-Store WiFi Dimmer (+1k5 code)
 //  #define EXS_MCU_CMNDS                            // Add command to send MCU commands (+0k8 code)
 //#define USE_HOTPLUG                              // Add support for sensor HotPlug
-//#define USE_DEVICE_GROUPS                       // Add support for device groups (+3k5 code)
+#define USE_DEVICE_GROUPS                       // Add support for device groups (+3k5 code)
 #define USE_PWM_DIMMER                          // Add support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
-//#define USE_PWM_DIMMER_REMOTE                   // Add support for remote switches to PWM Dimmer, also adds device groups support (+0k7 code, also includes device groups)
+#define USE_PWM_DIMMER_REMOTE                   // Add support for remote switches to PWM Dimmer, also adds device groups support (+0k7 code, also includes device groups)
 
 // -- Optional light modules ----------------------
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
