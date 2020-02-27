@@ -36,20 +36,19 @@
 #define MAX_FIXED_COLOR     12
 #endif  // MAX_FIXED_COLOR
 
+// Note: CmndFade and CmndSpeed are in xdrv_04_light.
 const char kPWMDimmerCommands[] PROGMEM = "|"  // No prefix
-   D_CMND_BRI_MIN "|" D_CMND_BRI_PRESET "|" D_CMND_DIMMER "|" D_CMND_FADE "|" D_CMND_LED_TIMEOUT "|"
-   D_CMND_POWERED_OFF_LED "|" D_CMND_SPEED;
+   D_CMND_BRI_PRESET "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_FADE "|" D_CMND_SPEED;
 
 void (* const PWMDimmerCommand[])(void) PROGMEM = {
-  &CmndBriMin, &CmndBriPreset, &PWMDmmerCmndDimmer, &CmndFade, &CmndLedTimeout,
-  &CmndPoweredOffLed, &CmndSpeed };
+  CmndBriPreset, &PWMDmmerCmndDimmer, &CmndDimmerRange, &CmndFade, &CmndSpeed };
 
 #ifdef USE_PWM_DIMMER_REMOTE
 struct remote_pwm_dimmer {
   power_t power;
+  uint32_t dimmer_range;
   uint8_t light_speed;
   uint8_t bri_power_on;
-  uint8_t bri_min;
   uint8_t bri_preset_low;
   uint8_t bri_preset_high;
   uint8_t fixed_color_index;
@@ -85,11 +84,6 @@ uint8_t buttons_pressed = 0;
 bool active_device_is_local;
 #endif  // USE_PWM_DIMMER_REMOTE
 
-void PWMDimmerCheckBri(uint8_t * value_ptr)
-{
-  if (*value_ptr < Settings.bri_min) *value_ptr = Settings.bri_min;
-}
-
 void PWMModuleInit()
 {
   Settings.seriallog_level = 0;
@@ -98,28 +92,22 @@ void PWMModuleInit()
   Settings.flag.pwm_control = 0;  // Use basic PWM control instead of Light    
 
   if (Settings.last_module != Settings.module) {
-    Settings.bri_min = 25;
+    Settings.dimmer_hw_min = 102;
+    Settings.dimmer_hw_max = 1023;
     Settings.bri_power_on = 50;
     Settings.bri_preset_low = 25;
     Settings.bri_preset_high = 255;
     Settings.last_module = Settings.module;
   }
-  else {
-    if (Settings.bri_min < 1) Settings.bri_min = 25;
-    PWMDimmerCheckBri(&Settings.bri_power_on);
-    PWMDimmerCheckBri(&Settings.bri_preset_low);
-    PWMDimmerCheckBri(&Settings.bri_preset_high);
-  }
 
   if (Settings.light_speed < 1) Settings.light_speed = 1;
 
   target_bri = ((Settings.power & 1) ? changeUIntScale(Settings.light_dimmer, 0, 100, 0, 255) : 0);
-  PWMDimmerCheckBri(&target_bri);
   current_bri = target_bri;
 
   if (pin[GPIO_PWM1] < 99) {
-    uint32_t pwm_value = changeUIntScale(current_bri, 0, 255, 0, Settings.pwm_range);
-    analogWrite(pin[GPIO_PWM1], bitRead(pwm_inverted, 0) ? Settings.pwm_range - pwm_value : pwm_value);
+    uint32_t pwm_value = (current_bri ? changeUIntScale(current_bri, 1, 255, Settings.dimmer_hw_min, Settings.dimmer_hw_max) : 0);
+    analogWrite(pin[GPIO_PWM1], bitRead(pwm_inverted, 0) ? Settings.dimmer_hw_max - pwm_value : pwm_value);
   }
 
   relay_is_on = (current_bri > 0);
@@ -149,7 +137,7 @@ void PWMDimmerInit(void)
 void PWMDimmerSetBrightnessLeds(int32_t operation)
 {
   if (leds_present) {
-    uint32_t step = (!operation ? (255 - Settings.bri_min) / (leds_present + 1) : operation < 0 ? 255 : 0);
+    uint32_t step = (!operation ? 256 / (leds_present + 1) : operation < 0 ? 255 : 0);
     uint32_t level = step;
     SetLedPowerIdx(0, current_bri >= level);
     if (leds_present > 1) {
@@ -188,30 +176,23 @@ void PWMDimmerAnimate(bool no_fade)
 
   // Advance the current brightness towards the target.
   if (!no_fade && Settings.light_fade) {
-    if (current_bri < Settings.bri_min) {
-      current_bri = Settings.bri_min;
-    }
-    else {
-      uint8_t offset = current_bri / Settings.light_speed / 5 + 1;
-      uint8_t max_offset = abs(target_bri - current_bri);
-      if (offset > max_offset) offset = max_offset;
-      if (current_bri < target_bri)
-        current_bri += offset;
-      else
-        current_bri -= offset;
-    }
+    uint8_t offset = current_bri / Settings.light_speed / 5 + 1;
+    uint8_t max_offset = abs(target_bri - current_bri);
+    if (offset > max_offset) offset = max_offset;
+    if (current_bri < target_bri)
+      current_bri += offset;
+    else
+      current_bri -= offset;
   }
   else {
     current_bri = target_bri;
   }
 
-  // If the current brightness is now < bri_min, set the current and target brightness to 0.
-  if (current_bri < Settings.bri_min) current_bri = target_bri = 0;
-
-  // Sset the new PWM value.
+  // Set the new PWM value.
   if (pin[GPIO_PWM1] < 99) {
-    uint32_t pwm_value = changeUIntScale(current_bri, 0, 255, 0, Settings.pwm_range);
-    analogWrite(pin[GPIO_PWM1], bitRead(pwm_inverted, 0) ? Settings.pwm_range - pwm_value : pwm_value);
+    uint32_t pwm_value = (current_bri ? changeUIntScale(current_bri, 1, 255, Settings.dimmer_hw_min, Settings.dimmer_hw_max) : 0);
+//AddLog_P2(LOG_LEVEL_INFO, PSTR("PWMDimmerAnimate: current_bri=%u, pwm_value =%u"), current_bri, pwm_value);
+    analogWrite(pin[GPIO_PWM1], bitRead(pwm_inverted, 0) ? Settings.dimmer_hw_max - pwm_value : pwm_value);
   }
 
   // Handle a power state change.
@@ -236,7 +217,6 @@ void PWMDimmerSetBri(uint8_t bri)
 {
   if (bri == target_bri) return;
   target_bri = bri;
-  if (target_bri && target_bri < Settings.bri_min) target_bri = Settings.bri_min;
   Settings.bri_power_on = target_bri;
   Settings.light_dimmer = changeUIntScale(target_bri, 0, 255, 0, 100);
   if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
@@ -249,20 +229,7 @@ void PWMDimmerSetBri(uint8_t bri)
 void PWMDimmerHandleDeviceGroupRequest()
 {
   static bool send_state = false;
-  uint8_t value = XdrvMailbox.payload;
-  switch (XdrvMailbox.command_code) {
-    case DGR_ITEM_BRI_MIN:
-      Settings.bri_min = 1;
-    case DGR_ITEM_BRI_PRESET_LOW:
-    case DGR_ITEM_BRI_PRESET_HIGH:
-    case DGR_ITEM_BRI_POWER_ON:
-      PWMDimmerCheckBri(&value);
-      break;
-    case DGR_ITEM_LIGHT_BRI:
-      if (value) PWMDimmerCheckBri(&value);
-      break;
-  }
-
+  uint32_t value = XdrvMailbox.payload;
   switch (XdrvMailbox.command_code) {
     case DGR_ITEM_EOL:
       if (send_state && !(XdrvMailbox.index & DGR_FLAG_MORE_TO_COME)) {
@@ -284,11 +251,9 @@ void PWMDimmerHandleDeviceGroupRequest()
         send_state = true;
       }
       break;
-    case DGR_ITEM_BRI_MIN:
-      if (Settings.bri_min != value) {
-        Settings.bri_min = value;
-        send_state = true;
-      }
+    case DGR_ITEM_DIMMER_RANGE:
+      Settings.dimmer_hw_min = value & 0xffff;
+      Settings.dimmer_hw_max = value >> 16;
       break;
     case DGR_ITEM_BRI_PRESET_LOW:
       if (Settings.bri_preset_low != value) {
@@ -311,8 +276,9 @@ void PWMDimmerHandleDeviceGroupRequest()
     case DGR_ITEM_STATUS:
       SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade,
         DGR_ITEM_LIGHT_SPEED, Settings.light_speed, DGR_ITEM_LIGHT_BRI, target_bri,
-        DGR_ITEM_BRI_MIN, Settings.bri_min, DGR_ITEM_BRI_PRESET_LOW, Settings.bri_preset_low,
-        DGR_ITEM_BRI_PRESET_HIGH, Settings.bri_preset_high, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
+        DGR_ITEM_BRI_PRESET_LOW, Settings.bri_preset_low, DGR_ITEM_BRI_PRESET_HIGH, Settings.bri_preset_high,
+        DGR_ITEM_DIMMER_RANGE, Settings.dimmer_hw_min | Settings.dimmer_hw_max << 16,
+        DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
       break;
   }
 }
@@ -473,12 +439,12 @@ void PWMDimmerHandleButton()
       if (active_device_is_local == !button_pressed[power_button_index]) {
 #endif  // USE_PWM_DIMMER_REMOTE
         if (button_hold_time[button_index] < now) {
-
           uint8_t uint8_value;
-          uint8_t min_uint8_value;
           bool down_button_is_held = (button_index == down_button_index);
           bool down_button_was_tapped = (button_press_count[down_button_index] > 0);
           uint8_t tap_count = (down_button_was_tapped ? button_press_count[down_button_index] : button_press_count[up_button_index]);
+          uint16_t uint16_value;
+
           switch (tap_count) {
             case 0:
               // If the power is on, adjust the brightness. Set the direction based on which button is
@@ -563,30 +529,29 @@ void PWMDimmerHandleButton()
                 // Decrease/increase the minimum brightness.
 #ifdef USE_PWM_DIMMER_REMOTE
                 if (!active_device_is_local)
-                  uint8_value = active_remote_pwm_dimmer->bri_min;
+                  uint16_value = active_remote_pwm_dimmer->dimmer_range & 0xffff;
                 else
 #endif // USE_PWM_DIMMER_REMOTE
-                  uint8_value = Settings.bri_min;
+                  uint16_value = Settings.dimmer_hw_min;
                 if (down_button_is_held) {
-                  if (uint8_value > 4) uint8_value--;
+                  if (uint16_value > 0) uint16_value--;
                 }
-                else if (uint8_value < 255) {
-                  uint8_value++;
+                else if (uint16_value < 65535) {
+                  uint16_value++;
                 }
 #ifdef USE_PWM_DIMMER_REMOTE
+                dgr_item = DGR_ITEM_DIMMER_RANGE;
                 if (!active_device_is_local) {
-                  active_remote_pwm_dimmer->bri_min = uint8_value;
-                  if (active_remote_pwm_dimmer->bri_power_on < uint8_value) active_remote_pwm_dimmer->bri_power_on = uint8_value;
+                  active_remote_pwm_dimmer->dimmer_range &= 0xffff0000 | uint16_value;
+                  dgr_value = active_remote_pwm_dimmer->dimmer_range;
                 }
                 else {
 #endif // USE_PWM_DIMMER_REMOTE
-                  Settings.bri_min = uint8_value;
-                  if (Settings.bri_power_on < uint8_value) Settings.bri_power_on = uint8_value;
+                  Settings.dimmer_hw_min = uint16_value;
+                  dgr_value = Settings.dimmer_hw_min | Settings.dimmer_hw_max << 16;
 #ifdef USE_PWM_DIMMER_REMOTE
                 }
 #endif // USE_PWM_DIMMER_REMOTE
-                dgr_item = DGR_ITEM_BRI_MIN;
-                dgr_value = uint8_value;
               }
               else {
                 // Decrease/increase the fade speed.
@@ -617,19 +582,13 @@ void PWMDimmerHandleButton()
               if (down_button_was_tapped) {
                 // Decrease/increase the low brightness preset.
 #ifdef USE_PWM_DIMMER_REMOTE
-                if (!active_device_is_local) {
+                if (!active_device_is_local)
                   uint8_value = active_remote_pwm_dimmer->bri_preset_low;
-                  min_uint8_value =active_remote_pwm_dimmer->bri_min;
-                }
-                else {
+                else
 #endif // USE_PWM_DIMMER_REMOTE
                   uint8_value = Settings.bri_preset_low;
-                  min_uint8_value = Settings.bri_min;
-#ifdef USE_PWM_DIMMER_REMOTE
-                }
-#endif // USE_PWM_DIMMER_REMOTE
                 if (down_button_is_held) {
-                  if (uint8_value > min_uint8_value) uint8_value--;
+                  if (uint8_value > 3) uint8_value--;
                 }
                 else if (uint8_value < 255) {
                   uint8_value++;
@@ -652,7 +611,7 @@ void PWMDimmerHandleButton()
 #endif // USE_PWM_DIMMER_REMOTE
                   uint8_value = Settings.bri_preset_high;
                 if (down_button_is_held) {
-                  if (uint8_value > 4) uint8_value--;
+                  if (uint8_value > 3) uint8_value--;
                 }
                 else if (uint8_value < 255) {
                   uint8_value++;
@@ -706,7 +665,7 @@ void PWMDimmerHandleButton()
       }
       else {
         new_bri = bri - offset;
-        if (new_bri < Settings.bri_min) new_bri = Settings.bri_min;
+        if (new_bri < 3) new_bri = 3;
       }
       if (new_bri != bri) {
 #ifdef USE_DEVICE_GROUPS
@@ -917,36 +876,6 @@ void PWMDimmerHandleButton()
  * Commands
 \*********************************************************************************************/
 
-void CmndBriMin(void)
-{
-  uint8_t new_bri_min = Settings.bri_min;
-  if (XdrvMailbox.payload > 0 && XdrvMailbox.payload <= 255) {
-    new_bri_min = (XdrvMailbox.payload < 4 ? 4 : XdrvMailbox.payload);
-  }
-  else if (1 == XdrvMailbox.data_len) {
-    if ('-' == XdrvMailbox.data[0]) {
-      if (new_bri_min > 4) new_bri_min--;
-    }
-    else if ('+' == XdrvMailbox.data[0] && new_bri_min < 255)
-      new_bri_min++;
-  }
-
-  if (new_bri_min != Settings.bri_min) {
-    Settings.bri_min = new_bri_min;
-    PWMDimmerCheckBri(&Settings.bri_power_on);
-    PWMDimmerCheckBri(&Settings.bri_preset_low);
-    PWMDimmerCheckBri(&Settings.bri_preset_high);
-
-#ifdef DEVICE_GROUPS
-    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_BRI_MIN, Settings.bri_min,
-      DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on, DGR_ITEM_BRI_PRESET_LOW, Settings.bri_preset_low,
-      DGR_ITEM_BRI_PRESET_HIGH, Settings.bri_preset_high);
-#endif  // DEVICE_GROUPS
-  }
-
-  ResponseCmndNumber(Settings.bri_min);
-}
-
 void CmndBriPreset(void)
 {
   if (XdrvMailbox.data_len > 0) {
@@ -962,7 +891,7 @@ void CmndBriPreset(void)
         if (parm[i] < 255) parm[i]++;
       }
       else if (*ptr == '-') {
-        if (parm[i] > Settings.bri_min) parm[i]--;
+        if (parm[i] > 0) parm[i]--;
       }
       else {
         value = strtoul(ptr, &ptr, 0);
@@ -971,7 +900,7 @@ void CmndBriPreset(void)
           break;
         }
         parm[i] = value;
-        PWMDimmerCheckBri(&parm[i]);
+
         if (*ptr != ',') break;
       }
       ptr++;
@@ -985,9 +914,9 @@ void CmndBriPreset(void)
         Settings.bri_preset_low = parm[1];
         Settings.bri_preset_high = parm[0];
       }
-#ifdef DEVICE_GROUPS
+#ifdef USE_DEVICE_GROUPS
       SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_BRI_PRESET_LOW, Settings.bri_preset_low, DGR_ITEM_BRI_PRESET_HIGH, Settings.bri_preset_high);
-#endif  // DEVICE_GROUPS
+#endif  // USE_DEVICE_GROUPS
     }
   }
   Response_P(PSTR("{\"" D_CMND_BRI_PRESET "\":{\"Low\":%d,\"High\":%d}}"), Settings.bri_preset_low, Settings.bri_preset_high);
@@ -1013,38 +942,6 @@ void PWMDmmerCmndDimmer(void)
   }
 
   ResponseCmndNumber(Settings.light_dimmer);
-}
-
-void CmndLedTimeout(void)
-{
-  // Set the brightness LED timeout state.
-  switch (XdrvMailbox.payload) {
-  case 0: // Off
-  case 1: // On
-    Settings.flag4.led_timeout = XdrvMailbox.payload;
-    break;
-  case 2: // Toggle
-    Settings.flag4.led_timeout ^= 1;
-    break;
-  }
-  if (relay_is_on) PWMDimmerSetBrightnessLeds(0);
-  ResponseCmndStateText(Settings.flag4.led_timeout);
-}
-
-void CmndPoweredOffLed(void)
-{
-  // Set the powered-off LED state.
-  switch (XdrvMailbox.payload) {
-  case 0: // Off
-  case 1: // On
-    Settings.flag4.powered_off_led = XdrvMailbox.payload;
-    break;
-  case 2: // Toggle
-    Settings.flag4.powered_off_led ^= 1;
-    break;
-  }
-  PWMDimmerSetPoweredOffLed();
-  ResponseCmndStateText(Settings.flag4.powered_off_led);
 }
 
 /*********************************************************************************************\

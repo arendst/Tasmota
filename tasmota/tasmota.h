@@ -309,14 +309,14 @@ enum DeviceGroupMessageFlag { DGR_FLAG_RESET = 1, DGR_FLAG_STATUS_REQUEST = 2, D
 
 enum DeviceGroupItem { DGR_ITEM_EOL, DGR_ITEM_STATUS,
                        DGR_ITEM_LIGHT_FADE, DGR_ITEM_LIGHT_SPEED, DGR_ITEM_LIGHT_BRI, DGR_ITEM_LIGHT_SCHEME, DGR_ITEM_LIGHT_FIXED_COLOR,
-                       DGR_ITEM_BRI_MIN, DGR_ITEM_BRI_PRESET_LOW, DGR_ITEM_BRI_PRESET_HIGH, DGR_ITEM_BRI_POWER_ON,
+                       DGR_ITEM_BRI_PRESET_LOW, DGR_ITEM_BRI_PRESET_HIGH, DGR_ITEM_BRI_POWER_ON,
                        // Add new 8-bit items before this line
                        DGR_ITEM_LAST_8BIT, DGR_ITEM_MAX_8BIT = 63,
                        DGR_ITEM_ACK,
                        DGR_ITEM_ANALOG1, DGR_ITEM_ANALOG2, DGR_ITEM_ANALOG3, DGR_ITEM_ANALOG4, DGR_ITEM_ANALOG5,
                        // Add new 16-bit items before this line
                        DGR_ITEM_LAST_16BIT, DGR_ITEM_MAX_16BIT = 127,
-                       DGR_ITEM_POWER,
+                       DGR_ITEM_POWER, DGR_ITEM_DIMMER_RANGE,
                        // Add new 32-bit items before this line
                        DGR_ITEM_LAST_32BIT, DGR_ITEM_MAX_32BIT = 191,                       
                        // Add new string items before this line
@@ -324,7 +324,7 @@ enum DeviceGroupItem { DGR_ITEM_EOL, DGR_ITEM_STATUS,
                        DGR_ITEM_LIGHT_CHANNELS };
 
 enum DeviceGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE_LIGHT_FADE = 4, DGR_SHARE_LIGHT_SCHEME = 8,
-                            DGR_SHARE_LIGHT_COLOR = 16, DGR_SHARE_BRI_MIN = 32 };
+                            DGR_SHARE_LIGHT_COLOR = 16, DGR_SHARE_DIMMER_RANGE = 32 };
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
                      SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_SHUTTER,

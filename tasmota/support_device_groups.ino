@@ -112,8 +112,8 @@ bool DeviceGroupItemShared(bool incoming, uint8_t item)
     case DGR_ITEM_LIGHT_SPEED:
       mask = DGR_SHARE_LIGHT_FADE;
       break;
-    case DGR_ITEM_BRI_MIN:
-      mask = DGR_SHARE_BRI_MIN;
+    case DGR_ITEM_DIMMER_RANGE:
+      mask = DGR_SHARE_DIMMER_RANGE;
       break;
   }
   return (!mask || ((incoming ? Settings.device_group_share_in : Settings.device_group_share_out) & mask));
