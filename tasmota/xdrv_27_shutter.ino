@@ -75,6 +75,7 @@ struct SHUTTER {
   uint16_t max_close_pwm_frequency[MAX_SHUTTERS];// maximum of PWM frequency for closeing the shutter. depend on the motor and drivers
   uint8_t skip_relay_change;                 // avoid overrun at endstops
   int32_t accelerator[MAX_SHUTTERS];         // speed of ramp-up, ramp down of shutter
+  uint8_t start_reported = 0;
 } Shutter;
 
 void ShutterLogPos(uint32_t i)
@@ -264,12 +265,15 @@ void ShutterReportPosition(bool always)
       ShutterLogPos(i);
     }
     if (i) { ResponseAppend_P(PSTR(",")); }
-    ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings.shutter_options[i] & 1) ? 100-position : position, Shutter.direction[i], ShutterRealToPercentPosition(Shutter.target_position[i], i));
+    uint32_t target = ShutterRealToPercentPosition(Shutter.target_position[i], i);
+    ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings.shutter_options[i] & 1) ? 100-position : position, Shutter.direction[i],(Settings.shutter_options[i] & 1) ? 100-target : target );
   }
   ResponseJsonEnd();
   if (always || (rules_flag.shutter_moving)) {
     MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
+    //XdrvRulesProcess();  //removed because to many exceptions and reboots.
   }
+
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
 
 }
@@ -294,6 +298,11 @@ void ShutterUpdatePosition(void)
         // Calculate position with counter. Much more accurate and no need for motordelay workaround
         //                        adding some steps to stop early
         Shutter.real_position[i] =  ShutterCounterBasedPosition(i);
+        if (!Shutter.start_reported) {
+          ShutterReportPosition(true);
+          XdrvRulesProcess();
+          Shutter.start_reported = 1;
+        }
 
         int32_t  max_frequency = Shutter.direction[i] == 1 ? Shutter.max_pwm_frequency : Shutter.max_close_pwm_frequency[i];
         int32_t  max_freq_change_per_sec =  Shutter.max_pwm_frequency*steps_per_second / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
@@ -303,11 +312,7 @@ void ShutterUpdatePosition(void)
 
         int32_t  next_possible_stop = Shutter.real_position[i] + minstopway ;
         stop_position_delta =200 * Shutter.pwm_frequency[i]/max_frequency + Shutter.direction[i] * (next_possible_stop - Shutter.target_position[i]);
-        if (Shutter.time[i] == 1) {
-          ShutterReportPosition(true);
-          rules_flag.shutter_moving = 1;
-          XdrvRulesProcess();
-        }
+
         //Shutter.accelerator[i] = tmin(tmax(max_freq_change_per_sec*(100-(Shutter.direction[i]*(Shutter.target_position[i]-next_possible_stop)    ))/2000 , max_freq_change_per_sec*9/200), max_freq_change_per_sec*11/200);
         //int32_t act_freq_change = max_freq_change_per_sec/20;
         AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: time: %d, velocity %d, minstopway %d,cur_freq %d, max_frequency %d, act_freq_change %d, min_runtime_ms %d, act.pos %d, next_stop %d, target: %d"),Shutter.time[i],velocity,minstopway,
@@ -415,10 +420,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
       Shutter.pwm_frequency[i] = 0;
       analogWriteFreq(Shutter.pwm_frequency[i]);
       analogWrite(pin[GPIO_PWM1+i], 0);
-      // can be operated without counter, but then not that acurate.
-      if (pin[GPIO_CNTR1+i] < 99) {
-        RtcSettings.pulse_counter[i] = 0;
-      }
+      RtcSettings.pulse_counter[i] = 0;
       Shutter.accelerator[i] = Shutter.max_pwm_frequency / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Ramp up: %d"), Shutter.accelerator[i]);
     }
@@ -429,6 +431,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     Shutter.direction[i] = direction;
     rules_flag.shutter_moving = 1;
     rules_flag.shutter_moved  = 0;
+    Shutter.start_reported = 0;
     //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: real %d, start %d, counter %d, max_freq %d, dir %d, freq %d"),Shutter.real_position[i], Shutter.start_position[i] ,RtcSettings.pulse_counter[i],Shutter.max_pwm_frequency , Shutter.direction[i] ,Shutter.max_pwm_frequency );
   }
   //AddLog_P2(LOG_LEVEL_INFO,  PSTR("SHT: Start shutter: %d from %d to %d in directin %d"), i, Shutter.start_position[i], Shutter.target_position[i], Shutter.direction[i]);
@@ -1155,9 +1158,11 @@ bool Xdrv27(uint8_t function)
         break;
       case FUNC_JSON_APPEND:
         for (uint8_t i = 0; i < shutters_present; i++) {
-          uint8_t position =  (Settings.shutter_options[i] & 1) ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i];
+          uint8_t position = (Settings.shutter_options[i] & 1) ? 100 - Settings.shutter_position[i] : Settings.shutter_position[i];
+          uint8_t target   = (Settings.shutter_options[i] & 1) ? 100 - ShutterRealToPercentPosition(Shutter.target_position[i], i) : ShutterRealToPercentPosition(Shutter.target_position[i], i);
+
           ResponseAppend_P(",");
-          ResponseAppend_P(JSON_SHUTTER_POS, i+1, position, Shutter.direction[i]);
+          ResponseAppend_P(JSON_SHUTTER_POS, i+1, position, Shutter.direction[i],target);
 #ifdef USE_DOMOTICZ
           if ((0 == tele_period) && (0 == i)) {
              DomoticzSensor(DZ_SHUTTER, position);

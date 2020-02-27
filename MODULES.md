@@ -76,5 +76,6 @@ Module            | Description
 70 Sonoff L1      | Sonoff L1 light strip
 71 Sonoff iFan03  | Sonoff iFan03 Wifi Smart Ceiling Fan with Light
 72 EXS Dimmer     | EXS Wifi Dimmer v4
+73 PWM Dimmer     | Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM Dimmer Switches
 
 Over 600 additional devices are supported using [templates](TEMPLATES.md).

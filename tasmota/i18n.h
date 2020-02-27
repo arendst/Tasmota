@@ -535,6 +535,14 @@
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"
 
+// Commands xdrv_34_pwm_dimmer.ino
+#ifdef USE_PWM_DIMMER
+#define D_CMND_BRI_MIN "BriMin"
+#define D_CMND_BRI_PRESET "BriPreset"
+#define D_CMND_LED_TIMEOUT "LedTimeout"
+#define D_CMND_POWERED_OFF_LED "PoweredOffLed"
+#endif
+
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
 

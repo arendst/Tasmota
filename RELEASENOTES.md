@@ -52,8 +52,9 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.1.0.9
+### Version 8.1.0.10
 
+- Change default my_user_config.h driver and sensor support removing most sensors and adding most drivers
 - Change Lights: simplified gamma correction and 10 bits internal computation
 - Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
 - Change IRremoteESP8266 library updated to v2.7.3
@@ -107,3 +108,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for Wemos Motor Shield V1 by Denis Sborets (#7764)
 - Add Zigbee enhanced commands decoding, added ``ZbPing``
 - Add commands ``SetOption85 0/1`` and ``DevGroupShare`` supporting UDP Group command using ``GroupTopic`` without MQTT by Paul Diem (#7790)
+- Add support for Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM dimmer switches by Paul Diem (#7791)

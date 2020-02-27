@@ -418,6 +418,7 @@ enum SupportedModules {
   SONOFF_L1,
   SONOFF_IFAN03,
   EXS_DIMMER,
+  PWM_DIMMER,
   MAXMODULE};
 
 #define USER_MODULE        255
@@ -864,6 +865,9 @@ const uint8_t kModuleNiceList[] PROGMEM = {
 #endif
 #ifdef USE_EXS_DIMMER
   EXS_DIMMER,
+#endif
+#ifdef USE_PWM_DIMMER
+  PWM_DIMMER,
 #endif
   H801,                // Light Devices
   MAGICHOME,
@@ -2204,6 +2208,33 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14
      0,                // GPIO15
      0, 0
+  },
+  { "PWM Dimmer",      // PWM_DIMMER - Support for Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM
+                       // dimmer switches. The brightness of the load for these dimmers is
+                       // controlled by a PWM GPIO pin. There are typically power, up & down
+                       // buttons and 4 LED's. Examples are:
+                       // https://www.amazon.com/dp/B07FXYSVR1
+                       // https://www.amazon.com/dp/B07V26Q3VD
+                       // https://www.amazon.com/dp/B07K67D43J
+                       // https://www.amazon.com/dp/B07TTGFWFM
+     GPIO_KEY3,        // GPIO00 Up button
+     GPIO_KEY2,        // GPIO01 Down button
+     0,                // GPIO02
+     GPIO_LED4_INV,    // GPIO03 Level 5 LED
+     GPIO_LEDLNK_INV,  // GPIO04 LED Link
+     GPIO_LED3_INV,    // GPIO05 Level 4 LED
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_LED2_INV,    // GPIO12 Level 3 LED
+     GPIO_PWM1,        // GPIO13 Dimmer PWM
+     GPIO_LED1_INV,    // GPIO12 Level 2 LED
+     GPIO_KEY1_INV,    // GPIO15 Power button
+     GPIO_REL1_INV,    // GPIO16 Power relay/Level 1 LED
+     0
   }
 };
 
