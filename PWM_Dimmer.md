@@ -218,7 +218,7 @@ Remote device mode allows PWM Dimmer switches to control remote devices. With re
 
 To include remote device mode support in the build, define USE_PWM_DIMMER_REMOTE in your user_config_override. Remote device mode support requires device group support so USE_DEVICE_GROUPS is automatically defined if USE_PWM_DIMMER_REMOTE is defined. Remote device mode support adds 0.7K to the code size in addition to the code size required for device groups support.
 
-To enable remote device mode, set Option71 to 1. Each remote device must be running firmware with device group support and have remote device support enabled. The remote devices do not need to be built with PWM dimmer support nor do they need to be switches.
+To enable remote device mode, set Option88 to 1. Each remote device must be running firmware with device group support and have remote device support enabled. The remote devices do not need to be built with PWM dimmer support nor do they need to be switches.
 
 If a remote device is a PWM dimmer, the device acts like a 3-way dimmer switch would and may or may not have a load connected to it. It’s also possible to use a PWM dimmer switch without a load to act as a wall switch to control the power, brightness and color of one or more smart lights with Tasmota with device group support loaded on them.
 
