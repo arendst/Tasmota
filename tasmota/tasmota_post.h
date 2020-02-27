@@ -263,6 +263,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
 #undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
+#undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_KNX_NO_EMULATION
