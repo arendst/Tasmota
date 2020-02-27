@@ -1,5 +1,5 @@
 /*
-  xdrv_35
+  xdrv_36
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 #ifdef USE_KEELOQ
 
-#define XDRV_35 35
+#define XDRV_36 36
 
 #include "cc1101.h"
 #include <KeeloqLib.h>
@@ -252,7 +252,7 @@ void InitKeeloq()
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xdrv35(uint8_t function)
+bool Xdrv36(uint8_t function)
 {
   bool result = false;
 
