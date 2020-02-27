@@ -11,7 +11,7 @@ To enable PWM dimmer operation, select the PWM Dimmer module.
 
 Pressing and releasing the power button toggles the power on/off. If the toggle turns the power on, the load is returned to the last brightness it was adjusted to. If Fade is enabled, the load is faded on/off at the rate defined by the Speed setting.
 
-When the power is on, holding the down or up button decreases/increases the brightness (PWM value). The brightness is changed faster as higher brightnesses. The BriMin command defines the lowest value the brightness can be decreased to.
+When the power is on, holding the down or up button decreases/increases the brightness (PWM value). The brightness is changed faster at higher brightnesses. The BriMin command defines the lowest value the brightness can be decreased to.
 
 The brightness can also be changed using just the power button. When the power is on, holding the power button alternately increases or decreases the brightness. Initially, holding the power button increases the brightness. Releasing and then holding the power button again decreases the brightness.
 
@@ -99,7 +99,7 @@ Holding any button for over 10 seconds executes the WiFiConfig 2 command.
 
 Pressing and releasing a button publishes an MQTT TOGGLE command. Holding a button publishes an MQTT HOLD command followed by an MQTT OFF command when the button is released.
 
-When Device Groups are enabled, the PWM Dimmer minimum brightness and brightness presets are kept in sync across all switches in the group. The powered-off LED and LED timeout settings are specific to each switch. Changing them does not replicate the change to the other switches in the group.
+When Device Groups are enabled, the PWM Dimmer minimum brightness, brightness presets, fade and speed settings are kept in sync across all switches in the group. The powered-off LED and LED timeout settings are specific to each switch. Changing them does not replicate the change to the other switches in the group.
 
 
 ### Commands
@@ -125,7 +125,7 @@ When Device Groups are enabled, the PWM Dimmer minimum brightness and brightness
   <tr>
    <td>BriPreset
    </td>
-   <td><low>,&lt;high> = set brightness low and high presets
+   <td> &lt;low>,&lt;high> = set brightness low and high presets
 <p>
 1..255 = set brightness preset
 <p>
@@ -176,6 +176,36 @@ When Device Groups are enabled, the PWM Dimmer minimum brightness and brightness
 + = increase speed
 <p>
 - = decrease speed
+   </td>
+  </tr>
+  <tr>
+   <td>SetOption86
+   </td>
+   <td>Set brightness LED timeout
+<p>
+0 = disable timeout (default)
+<p>
+1 = enable timeout
+   </td>
+  </tr>
+  <tr>
+   <td>SetOption87
+   </td>
+   <td>Set powered-off LED (nightlight)
+<p>
+0 = disable powered-off LED (default)
+<p>
+1 = enable powered-off LED
+   </td>
+  </tr>
+  <tr>
+   <td>SetOption88
+   </td>
+   <td>Set remote device mode
+<p>
+0 = disable remote device mode(default)
+<p>
+1 = enable remote device mode
    </td>
   </tr>
 </table>
