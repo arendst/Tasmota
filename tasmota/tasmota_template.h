@@ -419,6 +419,7 @@ enum SupportedModules {
   SONOFF_IFAN03,
   EXS_DIMMER,
   PWM_DIMMER,
+  SONOFF_D1,
   MAXMODULE};
 
 #define USER_MODULE        255
@@ -808,6 +809,9 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   SONOFF_T11,
   SONOFF_T12,
   SONOFF_T13,
+#ifdef USE_SONOFF_D1
+  SONOFF_D1,           // Sonoff D1
+#endif
   SONOFF_LED,          // Sonoff Light Devices
   SONOFF_BN,
 #ifdef USE_SONOFF_L1
@@ -2235,6 +2239,21 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY1_INV,    // GPIO15 Power button
      GPIO_REL1_INV,    // GPIO16 Power relay/Level 1 LED
      0
+  },
+  { "Sonoff D1",       // SONOFF_D1 - Sonoff D1 RF Dimmer 433 (ESP8285)
+     GPIO_USER,        // GPIO00 Pad
+     GPIO_TXD,         // GPIO01 D1 control
+     0,                // GPIO02
+     GPIO_RXD,         // GPIO03 D1 control
+     0,                // GPIO04 DEBUG_RX
+     0,                // GPIO05 DEBUG_TX
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09
+     0,                // GPIO10
+                       // GPIO11 (SD_CMD   Flash)
+     0, 0, 0, 0, 0, 0
   }
 };
 

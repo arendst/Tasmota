@@ -1,5 +1,10 @@
 ## Unreleased (development)
 
+### 8.1.0.10 20200227
+
+- Change default my_user_config.h driver and sensor support removing most sensors and adding most drivers
+- Add support for Jarolift rollers by Keeloq algorithm
+
 ### 8.1.0.9 20200220
 
 - Revert most wifi connectivity changes introduced in 8.1.0.5 (#7746, #7602, #7621)
