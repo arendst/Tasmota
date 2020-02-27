@@ -32,16 +32,18 @@
 | ROTARY_V1             | - | - | - | - | - | - | - |
 | USE_SONOFF_RF         | - | - | x | x | x | - | - |
 | USE_RF_FLASH          | - | - | x | x | x | - | - |
-| USE_SONOFF_SC         | - | - | x | - | x | - | - |
+| USE_SONOFF_SC         | - | - | x | x | x | - | - |
 | USE_TUYA_MCU          | - | x | x | x | x | - | x |
 | USE_ARMTRONIX_DIMMERS | - | - | x | x | - | - | - |
 | USE_PS_16_DZ          | - | - | x | x | x | - | - |
 | USE_SONOFF_IFAN       | - | - | x | x | x | - | - |
 | USE_BUZZER            | - | - | x | x | x | - | - |
 | USE_ARILUX_RF         | - | - | x | x | x | - | - |
-| USE_SHUTTER           | - | - | - | - | - | - | - |
+| USE_SHUTTER           | - | - | x | x | - | - | - |
 | USE_DEEPSLEEP         | - | - | x | - | x | - | - |
 | USE_EXS_DIMMER        | - | - | x | x | - | - | - |
+| USE_DEVICE_GROUPS     | - | - | x | - | - | - | - |
+| USE_PWM_DIMMER        | - | - | x | x | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_LIGHT             | - | x | x | x | x | x | x |
@@ -73,28 +75,28 @@
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_I2C               | - | - | x | x | x | - | x |
-| USE_SHT               | - | - | x | x | x | - | x |
-| USE_HTU               | - | - | x | x | x | - | x |
-| USE_BMP               | - | - | x | x | x | - | x |
+| USE_SHT               | - | - | - | - | x | - | - |
+| USE_HTU               | - | - | - | - | x | - | - |
+| USE_BMP               | - | - | - | - | x | - | - |
 | USE_BME680            | - | - | - | - | x | - | - |
-| USE_BH1750            | - | - | x | x | x | - | x |
+| USE_BH1750            | - | - | - | - | x | - | - |
 | USE_VEML6070          | - | - | - | - | x | - | - |
 | USE_ADS1115           | - | - | - | - | x | - | - |
 | USE_ADS1115_I2CDEV    | - | - | - | - | - | - | - |
 | USE_INA219            | - | - | - | - | x | - | - |
 | USE_INA226            | - | - | - | - | - | - | - |
-| USE_SHT3X             | - | - | x | x | x | - | x |
+| USE_SHT3X             | - | - | - | - | x | - | - |
 | USE_TSL2561           | - | - | - | - | x | - | - |
 | USE_TSL2591           | - | - | - | - | - | - | - |
 | USE_MGS               | - | - | - | - | x | - | - |
-| USE_SGP30             | - | - | x | x | x | - | x |
+| USE_SGP30             | - | - | - | - | x | - | - |
 | USE_SI1145            | - | - | - | - | - | - | - |
-| USE_LM75AD            | - | - | x | x | x | - | x |
+| USE_LM75AD            | - | - | - | - | x | - | - |
 | USE_APDS9960          | - | - | - | - | - | - | - |
 | USE_MCP230xx          | - | - | - | - | - | - | - |
 | USE_PCA9685           | - | - | - | - | - | - | - |
 | USE_MPR121            | - | - | - | - | - | - | - |
-| USE_CCS811            | - | - | - | - | - | - | - |
+| USE_CCS811            | - | - | - | - | x | - | - |
 | USE_MPU6050           | - | - | - | - | - | - | - |
 | USE_DS3231            | - | - | - | - | - | - | - |
 | USE_MGC3130           | - | - | - | - | - | - | - |
@@ -115,10 +117,10 @@
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
-| USE_MHZ19             | - | - | x | x | x | - | x |
-| USE_SENSEAIR          | - | - | x | x | x | - | x |
-| USE_PMS5003           | - | - | x | x | x | - | x |
-| USE_NOVA_SDS          | - | - | x | x | x | - | x |
+| USE_MHZ19             | - | - | - | - | x | - | - |
+| USE_SENSEAIR          | - | - | - | - | x | - | - |
+| USE_PMS5003           | - | - | - | - | x | - | - |
+| USE_NOVA_SDS          | - | - | - | - | x | - | - |
 | USE_HPMA              | - | - | - | - | x | - | - |
 | USE_SERIAL_BRIDGE     | - | - | x | x | x | - | x |
 | USE_MP3_PLAYER        | - | - | - | - | x | - | - |
@@ -137,9 +139,9 @@
 | USE_IR_RECEIVE        | - | - | x | x | x | x | x |
 | USE_IR_REMOTE_FULL    | - | - | - | - | - | x | - | Enable ALL protocols
 |                       |   |   |   |   |   |   |   |
-| USE_SR04              | - | - | x | x | x | - | x |
+| USE_SR04              | - | - | - | - | x | - | - |
 | USE_TM1638            | - | - | - | - | x | - | - |
-| USE_HX711             | - | - | x | x | x | - | x |
+| USE_HX711             | - | - | - | - | x | - | - |
 | USE_TX20_WIND_SENSOR  | - | - | - | - | x | - | - |
 | USE_RC_SWITCH         | - | - | - | - | x | - | - |
 | USE_RF_SENSOR         | - | - | - | - | x | - | - | AlectoV2 only

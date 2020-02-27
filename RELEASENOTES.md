@@ -52,8 +52,9 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.1.0.9
+### Version 8.1.0.10
 
+- Change default my_user_config.h driver and sensor support removing most sensors and adding most drivers
 - Change Lights: simplified gamma correction and 10 bits internal computation
 - Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
 - Change IRremoteESP8266 library updated to v2.7.3
