@@ -80,8 +80,8 @@ bool AHT1XRead(uint8_t aht1x_address, float &tem, float &hum)
     data[i] = Wire.read();
   }
 
-  hum = (((data[1] << 12)| (data[2] << 4) | data[3] >> 4) * AHT_HUMIDITY_CONST / KILOBYTE_CONST);
-  tem = ((AHT_TEMPERATURE_CONST * (((data[3] & 0x0F) << 16) | (data[4] << 8) | data[5]) / KILOBYTE_CONST) - AHT_TEMPERATURE_OFFSET);
+  hum = ConvertHumidity(((data[1] << 12)| (data[2] << 4) | data[3] >> 4) * AHT_HUMIDITY_CONST / KILOBYTE_CONST);
+  tem = ConvertTemp(((AHT_TEMPERATURE_CONST * ((data[3] & 0x0F) << 16) | (data[4] << 8) | data[5]) / KILOBYTE_CONST) - AHT_TEMPERATURE_OFFSET);
 
   return (!isnan(tem) && !isnan(hum) && (hum != 0));
 }
@@ -139,15 +139,12 @@ void AHT1XShow(bool json)
      float tem,hum;
      if (AHT1XRead(aht1x_sensors[i].address, tem, hum))
      {
-       float aht_temp = ConvertTemp(tem);
-       float aht_hum = ConvertPressure(hum);
-
        char types[11]; // AHT1X-0x38
        snprintf_P(types, sizeof(types), PSTR("%s%c0x%02X"), aht1x_sensors[i].types, IndexSeparator(), aht1x_sensors[i].address);  // "X-0xXX"
        char temperature[33];
-       dtostrfd(aht_temp, Settings.flag2.temperature_resolution, temperature);
+       dtostrfd(tem, Settings.flag2.temperature_resolution, temperature);
        char humidity[33];
-       dtostrfd(aht_hum, Settings.flag2.humidity_resolution, humidity);
+       dtostrfd(hum, Settings.flag2.humidity_resolution, humidity);
 
        if (json) {
            ResponseAppend_P(JSON_SNS_TEMPHUM, types, temperature, humidity);
