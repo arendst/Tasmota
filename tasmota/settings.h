@@ -469,6 +469,7 @@ struct SYSCFG {
   uint8_t       bri_min;                   // F05
   uint8_t       bri_preset_low;            // F06
   uint8_t       bri_preset_high;           // F07
+
   uint8_t       free_f08[180];             // F08
 
   uint32_t      keeloq_master_msb;         // FBC
