@@ -659,7 +659,12 @@ bool Z_Devices::jsonIsConflict(uint16_t shortaddr, const JsonObject &values) {
   for (auto kv : values) {
     String key_string = kv.key;
 
-    if (strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_LINKQUALITY))) {  // exception = ignore duplicates for LinkQuality
+    if (0 == strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_ENDPOINT))) {
+      // attribute "Endpoint"
+      if (kv.value.as<unsigned int>() != device.json->get<unsigned int>(kv.key)) {
+        return true;
+      }
+    } else if (strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_LINKQUALITY))) {  // exception = ignore duplicates for LinkQuality
       if (device.json->containsKey(kv.key)) {
         return true;          // conflict!
       }

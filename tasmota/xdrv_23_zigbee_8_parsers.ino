@@ -504,10 +504,9 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
     if (zigbee_devices.jsonIsConflict(srcaddr, json)) {
       // there is conflicting values, force a publish of the previous message now and don't coalesce
       zigbee_devices.jsonPublishFlush(srcaddr);
-    } else {
-      zigbee_devices.jsonAppend(srcaddr, json);
-      zigbee_devices.setTimer(srcaddr, USE_ZIGBEE_COALESCE_ATTR_TIMER, clusterid, srcendpoint, 0, &Z_PublishAttributes);
     }
+    zigbee_devices.jsonAppend(srcaddr, json);
+    zigbee_devices.setTimer(srcaddr, USE_ZIGBEE_COALESCE_ATTR_TIMER, clusterid, srcendpoint, 0, &Z_PublishAttributes);
   } else {
     // Publish immediately
     zigbee_devices.jsonPublishNow(srcaddr, json);
