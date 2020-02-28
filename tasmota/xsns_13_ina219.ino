@@ -97,10 +97,11 @@
 uint8_t ina219_type[4] = {0,0,0,0};
 uint8_t ina219_addresses[] = { INA219_ADDRESS1, INA219_ADDRESS2, INA219_ADDRESS3, INA219_ADDRESS4 };
 
-#define __DEBUG__(a)
-
-__DEBUG__(char __dbg1[20];)
-__DEBUG__(char __dbg2[20];)
+#ifdef DEBUG_TASMOTA_SENSOR
+// temporary strings for floating point in debug messages
+char __ina219_dbg1[10];
+char __ina219_dbg2[10];
+#endif
 
 // The following multiplier is used to convert shunt voltage (in mV) to current (in A)
 // Current_A = ShuntVoltage_mV / ShuntResistor_milliOhms = ShuntVoltage_mV * ina219_current_multiplier
@@ -132,13 +133,15 @@ bool Ina219SetCalibration(uint8_t mode, uint16_t addr)
 {
   uint16_t config = 0;
 
-  __DEBUG__(printf("mode = %d\n",mode);)
+  DEBUG_SENSOR_LOG("Ina219SetCalibration: mode=%d",mode);
   if (mode < 5)
   {
     // All legacy modes 0..2 are handled the same and consider default 0.1 shunt resistor
     ina219_current_multiplier = 1.0 / INA219_DEFAULT_SHUNT_RESISTOR_MILLIOHMS;
-    __DEBUG__(dtostrfd(ina219_current_multiplier,5,__dbg1);)
-    __DEBUG__(printf("cur_mul=%s\n",__dbg1);)
+    #ifdef DEBUG_TASMOTA_SENSOR
+    dtostrfd(ina219_current_multiplier,5,__ina219_dbg1);
+    DEBUG_SENSOR_LOG("Ina219SetCalibration: cur_mul=%s",__ina219_dbg1);
+    #endif
   }
   else if (mode >= 10)
   {
@@ -147,8 +150,10 @@ bool Ina219SetCalibration(uint8_t mode, uint16_t addr)
     for ( ; mult > 0 ; mult-- )
       shunt_milliOhms *= 10;
     ina219_current_multiplier = 1.0 / shunt_milliOhms;
-    __DEBUG__(dtostrfd(ina219_current_multiplier,5,__dbg1);)
-    __DEBUG__(printf("shunt = %dmO => cur_mul=%s\n",shunt_milliOhms,__dbg1);)
+    #ifdef DEBUG_TASMOTA_SENSOR
+    dtostrfd(ina219_current_multiplier,5,__ina219_dbg1);
+    DEBUG_SENSOR_LOG("Ina219SetCalibration: shunt=%dmO => cur_mul=%s",shunt_milliOhms,__ina219_dbg1);
+    #endif
   }
   config = INA219_CONFIG_BVOLTAGERANGE_32V
          | INA219_CONFIG_GAIN_8_320MV               // Use max scale
@@ -163,7 +168,7 @@ float Ina219GetShuntVoltage_mV(uint16_t addr)
 {
   // raw shunt voltage (16-bit signed integer, so +-32767)
   int16_t value = I2cReadS16(addr, INA219_REG_SHUNTVOLTAGE);
-  __DEBUG__(printf("ShR = 0x%04X\n",value);)
+  DEBUG_SENSOR_LOG("Ina219GetShuntVoltage_mV: ShReg = 0x%04X",value);
   // convert to shunt voltage in mV (so +-327mV) (LSB=10µV=0.01mV)
   return value * 0.01;
 }
@@ -172,12 +177,12 @@ float Ina219GetBusVoltage_V(uint16_t addr)
 {
   // Shift 3 to the right to drop CNVR and OVF as unsigned
   uint16_t value = I2cRead16(addr, INA219_REG_BUSVOLTAGE) >> 3;
-  __DEBUG__(printf("BusR = 0x%04X\n",value);)
+  DEBUG_SENSOR_LOG("Ina219GetBusVoltage_V: BusReg = 0x%04X",value);
   // and multiply by LSB raw bus voltage to return bus voltage in volts (LSB=4mV=0.004V)
   return value * 0.004;
 }
 
-/*
+/* Not used any more
 float Ina219GetCurrent_mA(uint16_t addr)
 {
   // Sometimes a sharp load will reset the INA219, which will reset the cal register,
@@ -200,16 +205,20 @@ bool Ina219Read(void)
     uint16_t addr = ina219_addresses[i];
     float bus_voltage_V = Ina219GetBusVoltage_V(addr);
     float shunt_voltage_mV = Ina219GetShuntVoltage_mV(addr);
-    __DEBUG__(dtostrfd(bus_voltage_V,5,__dbg1);)
-    __DEBUG__(dtostrfd(shunt_voltage_mV,5,__dbg2);)
-    __DEBUG__(printf("bV=%sV, sV=%smV\n",__dbg1,__dbg2);)
+    #ifdef DEBUG_TASMOTA_SENSOR
+    dtostrfd(bus_voltage_V,5,__ina219_dbg1);
+    dtostrfd(shunt_voltage_mV,5,__ina219_dbg2);
+    DEBUG_SENSOR_LOG("Ina219Read: bV=%sV, sV=%smV",__ina219_dbg1,__ina219_dbg2);
+    #endif
     // we return the power-supply-side voltage (as bus_voltage register provides the load-side voltage)
     ina219_voltage[i] = bus_voltage_V + (shunt_voltage_mV / 1000);
     // current is simply calculted from shunt voltage using pre-calculated multiplier
     ina219_current[i] = shunt_voltage_mV * ina219_current_multiplier;
-    __DEBUG__(dtostrfd(ina219_voltage[i],5,__dbg1);)
-    __DEBUG__(dtostrfd(ina219_current[i],5,__dbg2);)
-    __DEBUG__(printf("V=%sV, I=%smA\n",__dbg1,__dbg2);)
+    #ifdef DEBUG_TASMOTA_SENSOR
+    dtostrfd(ina219_voltage[i],5,__ina219_dbg1);
+    dtostrfd(ina219_current[i],5,__ina219_dbg2);
+    DEBUG_SENSOR_LOG("Ina219Read: V=%sV, I=%smA",__ina219_dbg1,__ina219_dbg2);
+    #endif
     ina219_valid[i] = SENSOR_MAX_MISS;
     //  AddLogMissed(ina219_types, ina219_valid);
   }
@@ -240,7 +249,6 @@ void Ina219Detect(void)
     if (I2cActive(addr)) { continue; }
     if (Ina219SetCalibration(Settings.ina219_mode, addr)) {
       I2cSetActiveFound(addr, ina219_types);
-      __DEBUG__(printf("found INA#%d @ 0x%02X\n",i,addr);)
       ina219_type[i] = 1;
       ina219_count++;
     }
