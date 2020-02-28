@@ -643,6 +643,7 @@
 #define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
 #define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
 #define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
 
 // Units
 #define D_UNIT_AMPERE                    "А"

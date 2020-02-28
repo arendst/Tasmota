@@ -224,6 +224,7 @@ enum UserSelectablePins {
   GPIO_LE01MR_TX,      // F&F LE-01MR energy meter
   GPIO_CC1101_GDO0,    // CC1101 pin for RX
   GPIO_CC1101_GDO2,    // CC1101 pin for RX
+  GPIO_HRXL_RX,       // Data from MaxBotix HRXL sonar range sensor
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -308,7 +309,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DS18X20 "o|" D_SENSOR_DHT11 "o|"
   D_SENSOR_HM10_RX "|" D_SENSOR_HM10_TX "|"
   D_SENSOR_LE01MR_RX "|" D_SENSOR_LE01MR_TX "|"
-  D_SENSOR_CC1101_GDO0 "|" D_SENSOR_CC1101_GDO2
+  D_SENSOR_CC1101_GDO0 "|" D_SENSOR_CC1101_GDO2 "|"
+  D_SENSOR_HRXL_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -796,6 +798,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_KEELOQ
   GPIO_CC1101_GDO0,    // CC1101 pin for RX
   GPIO_CC1101_GDO2,    // CC1101 pin for RX
+#endif
+#ifdef USE_HRXL
+  GPIO_HRXL_RX,
 #endif
 };
 
