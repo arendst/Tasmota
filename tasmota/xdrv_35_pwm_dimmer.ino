@@ -60,6 +60,7 @@ struct remote_pwm_dimmer {
 
 uint32_t led_timeout_time = 0;
 uint32_t turn_off_brightness_leds_time = 0;
+uint32_t button_press_count_timeout = 0;
 uint32_t button_hold_time[3];
 uint8_t current_bri;
 uint8_t target_bri;
@@ -68,6 +69,7 @@ uint8_t power_button_index = 0;
 uint8_t down_button_index = 1;
 uint8_t up_button_index = 2;
 uint8_t fixed_color_index;
+uint8_t buttons_pressed = 0;
 uint8_t button_press_count[3] = { 0, 0, 0 };
 bool relay_is_on = false;
 bool ignore_power_button_hold;
@@ -81,7 +83,6 @@ bool button_pressed[3] = { false, false, false };
 #ifdef USE_PWM_DIMMER_REMOTE
 struct remote_pwm_dimmer * remote_pwm_dimmers;
 struct remote_pwm_dimmer * active_remote_pwm_dimmer;
-uint8_t buttons_pressed = 0;
 bool active_device_is_local;
 #endif  // USE_PWM_DIMMER_REMOTE
 
@@ -378,15 +379,13 @@ void PWMDimmerHandleButton()
   if (!XdrvMailbox.payload) {
     int8_t bri_direction = 0;
 
-    // If the button was just pressed, reset the press count if it was released for longer than 1
-    // second, flag the button as pressed, clear the hold sent flag and increment the buttons
-    // pressed count.
+    // If the button was just pressed, flag the button as pressed, clear the hold sent flag and
+    // increment the buttons pressed count.
     if (!button_pressed[button_index]) {
-      if (now > button_hold_time[button_index] && now - button_hold_time[button_index] > 1000) button_press_count[button_index] = 0;
       button_pressed[button_index] = true;
       button_hold_sent[button_index] = false;
-#ifdef USE_PWM_DIMMER_REMOTE
       buttons_pressed++;
+#ifdef USE_PWM_DIMMER_REMOTE
 
       // If there are no other buttons pressed right now and remote mode is enabled, make the device
       // associated with this button the device we're going to control.
@@ -410,7 +409,7 @@ void PWMDimmerHandleButton()
 
       // If this is not about the power button, load the new hold time. Note that the hold time for
       // the power button is longer than the hold time for the other buttons.
-      button_hold_time[button_index] = now + 100;
+      button_hold_time[button_index] = now + 500;
     }
 
     // If the button is being held, send a button hold.
@@ -842,16 +841,9 @@ void PWMDimmerHandleButton()
       if (button_was_held) {
         button_was_held = false;
 
-        // If the button was tapped before it was held, we used the brightness LEDs to inidcate the
-        // operation so reset the brightness LEDs.
-        if (button_press_count[down_button_index] > 0 || button_press_count[up_button_index]) {
-          turn_off_brightness_leds_time = 0;
-          PWMDimmerSetBrightnessLeds(0);
-        }
-
         // If the button was not tapped before it was held, we changed the brightness and sent
         // updates with the more-to-come message type. Send a final update.
-        else {
+        if (button_press_count[down_button_index] == 0 && button_press_count[up_button_index == 0]) {
           dgr_item = DGR_ITEM_LIGHT_BRI;
 #ifdef USE_PWM_DIMMER_REMOTE
           if (!active_device_is_local)
@@ -879,9 +871,13 @@ void PWMDimmerHandleButton()
 
     // Flag the button as released.
     button_pressed[button_index] = false;
-#ifdef USE_PWM_DIMMER_REMOTE
     buttons_pressed--;
-#endif  // USE_PWM_DIMMER_REMOTE
+    button_press_count_timeout = now + 500;
+  }
+
+  // If 
+  else if (buttons_pressed == 0 && button_press_count_timeout && button_press_count_timeout < now) {
+    button_press_count[0] = button_press_count[1] = button_press_count[2] = 0;
   }
 
   if (toggle_power) {

@@ -2123,7 +2123,9 @@ void LightHandleDeviceGroupRequest()
       break;
     case DGR_ITEM_LIGHT_FIXED_COLOR:
       {
+        struct XDRVMAILBOX save_XdrvMailbox;
         power_t save_power = Light.power;
+
         if (value) {
           bool save_decimal_text = Settings.flag.decimal_text;
           char str[16];
@@ -2143,6 +2145,7 @@ void LightHandleDeviceGroupRequest()
           XdrvMailbox.index = save_power;
           LightSetPower();
         }
+        XdrvMailbox = save_XdrvMailbox;
         send_state = true;
       }
       break;
