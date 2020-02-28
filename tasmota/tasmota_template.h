@@ -222,6 +222,8 @@ enum UserSelectablePins {
   GPIO_HM10_TX,        // HM10-BLE-Mijia-bridge serial interface
   GPIO_LE01MR_RX,      // F&F LE-01MR energy meter
   GPIO_LE01MR_TX,      // F&F LE-01MR energy meter
+  GPIO_CC1101_GDO0,    // CC1101 pin for RX
+  GPIO_CC1101_GDO2,    // CC1101 pin for RX
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -305,7 +307,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX "|"
   D_SENSOR_DS18X20 "o|" D_SENSOR_DHT11 "o|"
   D_SENSOR_HM10_RX "|" D_SENSOR_HM10_TX "|"
-  D_SENSOR_LE01MR_RX "|" D_SENSOR_LE01MR_TX
+  D_SENSOR_LE01MR_RX "|" D_SENSOR_LE01MR_TX "|"
+  D_SENSOR_CC1101_GDO0 "|" D_SENSOR_CC1101_GDO2
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -790,7 +793,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DEEPSLEEP
   GPIO_DEEPSLEEP,
 #endif
-
+#ifdef USE_KEELOQ
+  GPIO_CC1101_GDO0,    // CC1101 pin for RX
+  GPIO_CC1101_GDO2,    // CC1101 pin for RX
+#endif
 };
 
 const uint8_t kModuleNiceList[] PROGMEM = {
