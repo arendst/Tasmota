@@ -72,6 +72,7 @@ uint8_t button_press_count[3] = { 0, 0, 0 };
 bool relay_is_on = false;
 bool ignore_power_button_hold;
 bool ignore_power_button_release;
+bool ignore_up_down_button_release = false;
 bool button_was_held = false;
 bool power_button_increases_bri = true;
 bool invert_power_button_bri_direction = false;
@@ -506,6 +507,7 @@ void PWMDimmerHandleButton()
             target_bri = (is_down_button ? Settings.bri_preset_low : Settings.bri_preset_high);
           toggle_power = true;
           button_hold_time[button_index] = now + 500;
+          ignore_up_down_button_release = true;
 
           // If the power button is also pressed, set the power button hold dimmer direction
           // so holding the power switch adjusts the brightness away from the brightness we
@@ -519,7 +521,6 @@ void PWMDimmerHandleButton()
         // number of times the down or up button was pressed and released before holding it.
         else if (button_hold_time[button_index] < now) {
           uint8_t uint8_value;
-          bool is_down_button = (button_index == down_button_index);
           bool down_button_was_tapped = (button_press_count[down_button_index] > 0);
           uint8_t tap_count = (down_button_was_tapped ? button_press_count[down_button_index] : button_press_count[up_button_index]);
           uint16_t uint16_value;
@@ -864,8 +865,13 @@ void PWMDimmerHandleButton()
         button_press_count[button_index] = 0;
       }
 
-      // If the button was tapped (pressed and released quickly), increment the count of how many
-      // times this button has been pressed.
+      // If the power was off and we turned it on with the down or up button, ignore it's release.
+      if (ignore_up_down_button_release) {
+        ignore_up_down_button_release = false;
+      }
+
+      // If the button was tapped (pressed and released quickly) and the power is on, increment the
+      // count of how many times this button has been pressed.
       else if (button_hold_time[button_index] >= now) {
         button_press_count[button_index]++;
       }
@@ -899,7 +905,7 @@ void PWMDimmerHandleButton()
       SendDeviceGroupMessage(power_button_index, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_BRI, new_bri, DGR_ITEM_POWER, new_power);
     else
       SendDeviceGroupMessage(power_button_index, DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, new_power);
-#endif  // USE_DEVICE_GROUPS
+#endif  //0 USE_DEVICE_GROUPS
 
 #ifdef USE_PWM_DIMMER_REMOTE
     // The target brightness has already been set. Execute the toggle power command with a source of
