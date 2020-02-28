@@ -1,5 +1,7 @@
 /*
-  xdrv_36
+  xdrv_36_keeloq.ino - Jarolift Keeloq shutter support for Tasmota
+
+  Copyright (C) 2020  he-so
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -16,6 +18,14 @@
 */
 
 #ifdef USE_KEELOQ
+/*********************************************************************************************\
+ * Keeloq shutter support
+ *
+ * Uses hardware SPI and two user configurable GPIO's (CC1101 GDO0 and CC1101 GDO2)
+ *
+ * Considering the implementation these two user GPIO's are fake.
+ * Only CC1101 GDO0 is used and must always be GPIO05 dictated by the used CC1101 library.
+\*********************************************************************************************/
 
 #define XDRV_36 36
 
@@ -26,9 +36,6 @@
 
 #define Lowpulse         400
 #define Highpulse        800
-
-#define TX_PORT          pin[GPIO_CC1101_GDO2]              // Outputport for transmission
-#define RX_PORT          pin[GPIO_CC1101_GDO0]              // Inputport for reception
 
 const char kJaroliftCommands[] PROGMEM = "Keeloq|" // prefix
   "SendRaw|SendButton|Set";
@@ -47,6 +54,8 @@ struct JAROLIFT_DEVICE {
   uint64_t pack            = 0;   // Contains data to send.
   int count                = 0;
   uint32_t serial          = 0x0;
+  uint8_t port_tx;
+  uint8_t port_rx;
 } jaroliftDevice;
 
 void CmdSet(void)
@@ -75,7 +84,7 @@ void CmdSet(void)
       GenerateDeviceCryptKey();
       ResponseCmndDone();
     } else {
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("no payload"));      
+      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("no payload"));
     }
   } else {
     DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("no param"));
@@ -114,7 +123,7 @@ void CmdSendButton(void)
       for(int repeat = 0; repeat <= 1; repeat++)
       {
         uint64_t bitsToSend = jaroliftDevice.pack;
-        digitalWrite(TX_PORT, LOW);
+        digitalWrite(jaroliftDevice.port_tx, LOW);
         delayMicroseconds(1150);
         SendSyncPreamble(13);
         delayMicroseconds(3500);
@@ -140,16 +149,16 @@ void SendBit(byte bitToSend)
 {
   if (bitToSend==1)
   {
-    digitalWrite(TX_PORT, LOW);  // Simple encoding of bit state 1
+    digitalWrite(jaroliftDevice.port_tx, LOW);  // Simple encoding of bit state 1
     delayMicroseconds(Lowpulse);
-    digitalWrite(TX_PORT, HIGH);
+    digitalWrite(jaroliftDevice.port_tx, HIGH);
     delayMicroseconds(Highpulse);
   }
   else
   {
-    digitalWrite(TX_PORT, LOW);  // Simple encoding of bit state 0
+    digitalWrite(jaroliftDevice.port_tx, LOW);  // Simple encoding of bit state 0
     delayMicroseconds(Highpulse);
-    digitalWrite(TX_PORT, HIGH);
+    digitalWrite(jaroliftDevice.port_tx, HIGH);
     delayMicroseconds(Lowpulse);
   }
 }
@@ -163,7 +172,7 @@ void CmndSendRaw(void)
   {
     if (XdrvMailbox.data_len > 0)
     {
-      digitalWrite(TX_PORT, LOW);
+      digitalWrite(jaroliftDevice.port_tx, LOW);
       delayMicroseconds(1150);
       SendSyncPreamble(13);
       delayMicroseconds(3500);
@@ -208,9 +217,9 @@ void SendSyncPreamble(int l)
 {
   for (int i = 0; i < l; ++i)
   {
-    digitalWrite(TX_PORT, LOW);
+    digitalWrite(jaroliftDevice.port_tx, LOW);
     delayMicroseconds(400);
-    digitalWrite(TX_PORT, HIGH);
+    digitalWrite(jaroliftDevice.port_tx, HIGH);
     delayMicroseconds(380);
   }
 }
@@ -231,8 +240,11 @@ void CreateKeeloqPacket()
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("pack low:  %08x"), jaroliftDevice.pack);
 }
 
-void InitKeeloq()
+void KeeloqInit()
 {
+  jaroliftDevice.port_tx = pin[GPIO_CC1101_GDO2];              // Output port for transmission
+  jaroliftDevice.port_rx = pin[GPIO_CC1101_GDO0];              // Input port for reception
+
   DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("cc1101.init()"));
   delay(100);
   cc1101.init();
@@ -241,8 +253,8 @@ void InitKeeloq()
   cc1101.setCarrierFreq(CFREQ_433);
   cc1101.disableAddressCheck();
 
-  pinMode(TX_PORT, OUTPUT); 
-  pinMode(RX_PORT, INPUT_PULLUP);
+  pinMode(jaroliftDevice.port_tx, OUTPUT);
+  pinMode(jaroliftDevice.port_rx, INPUT_PULLUP);
 
   jaroliftDevice.serial = Settings.keeloq_serial;
   jaroliftDevice.count = Settings.keeloq_count;
@@ -254,16 +266,18 @@ void InitKeeloq()
 \*********************************************************************************************/
 bool Xdrv36(uint8_t function)
 {
+  if ((99 == pin[GPIO_CC1101_GDO0]) || (99 == pin[GPIO_CC1101_GDO2])) { return false; }
+
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      InitKeeloq();
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("init done."));
-      break;
     case FUNC_COMMAND:
       AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("calling command"));
       result = DecodeCommand(kJaroliftCommands, jaroliftCommand);
+      break;
+    case FUNC_INIT:
+      KeeloqInit();
+      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("init done."));
       break;
   }
 
