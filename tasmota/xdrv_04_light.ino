@@ -2123,7 +2123,9 @@ void LightHandleDeviceGroupRequest()
       break;
     case DGR_ITEM_LIGHT_FIXED_COLOR:
       {
+        struct XDRVMAILBOX save_XdrvMailbox;
         power_t save_power = Light.power;
+
         if (value) {
           bool save_decimal_text = Settings.flag.decimal_text;
           char str[16];
@@ -2143,6 +2145,7 @@ void LightHandleDeviceGroupRequest()
           XdrvMailbox.index = save_power;
           LightSetPower();
         }
+        XdrvMailbox = save_XdrvMailbox;
         send_state = true;
       }
       break;
@@ -2526,6 +2529,8 @@ void CmndDimmer(void)
   }
 }
 
+#endif  // USE_LIGHT
+#if defined(USE_LIGHT) || defined(USE_PWM_DIMMER)
 void CmndDimmerRange(void)
 {
   // DimmerRange       - Show current dimmer range as used by Tuya and PS16DZ Dimmers
@@ -2542,10 +2547,15 @@ void CmndDimmerRange(void)
       Settings.dimmer_hw_min = parm[1];
       Settings.dimmer_hw_max = parm[0];
     }
-    restart_flag = 2;
+#ifdef USE_DEVICE_GROUPS
+    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_DIMMER_RANGE, Settings.dimmer_hw_min | Settings.dimmer_hw_max << 16);
+#endif  // USE_DEVICE_GROUPS
+    if (PWM_DIMMER != my_module_type) restart_flag = 2;
   }
   Response_P(PSTR("{\"" D_CMND_DIMMER_RANGE "\":{\"Min\":%d,\"Max\":%d}}"), Settings.dimmer_hw_min, Settings.dimmer_hw_max);
 }
+#endif  // #if defined(USE_LIGHT) || defined(USE_PWM_DIMMER)
+#ifdef USE_LIGHT
 
 void CmndLedTable(void)
 {

@@ -539,8 +539,6 @@
 #ifdef USE_PWM_DIMMER
 #define D_CMND_BRI_MIN "BriMin"
 #define D_CMND_BRI_PRESET "BriPreset"
-#define D_CMND_LED_TIMEOUT "LedTimeout"
-#define D_CMND_POWERED_OFF_LED "PoweredOffLed"
 #endif
 
 // Commands xsns_02_analog.ino
