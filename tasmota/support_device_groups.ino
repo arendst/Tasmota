@@ -502,7 +502,7 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
     bool          grpflg
     bool          usridx
     uint16_t      command_code    Item code
-    uint32_t      index           Flags
+    uint32_t      index           0:15 Flags, 16:23 Device group index
     uint32_t      data_len        String item value length
     int32_t       payload         Integer item value
     char         *topic
@@ -510,7 +510,8 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
     char         *command         nullptr
   */
   XdrvMailbox.command = nullptr;  // Indicates the source is a device group update
-  XdrvMailbox.index = flags;
+  XdrvMailbox.index = flags | device_group_index << 16;
+
   light_fade = Settings.light_fade;
   if (flags & (DGR_FLAG_MORE_TO_COME | DGR_FLAG_DIRECT)) Settings.light_fade = false;
 
@@ -526,12 +527,12 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
       case DGR_ITEM_LIGHT_BRI:
       case DGR_ITEM_LIGHT_SCHEME:
       case DGR_ITEM_LIGHT_FIXED_COLOR:
-      case DGR_ITEM_BRI_MIN:
       case DGR_ITEM_BRI_PRESET_LOW:
       case DGR_ITEM_BRI_PRESET_HIGH:
       case DGR_ITEM_BRI_POWER_ON:
       case DGR_ITEM_POWER:
       case DGR_ITEM_LIGHT_CHANNELS:
+      case DGR_ITEM_DIMMER_RANGE:
         break;
       default:
         AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: ********** invalid item=%u received from device group %s member %s"), item, device_group->group_name, IPAddressToString(remote_ip));
