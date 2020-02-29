@@ -787,6 +787,7 @@ void PerformEverySecond(void)
 #endif  // USE_RULES
         }
 
+        XsnsCall(FUNC_AFTER_TELEPERIOD);
         XdrvCall(FUNC_AFTER_TELEPERIOD);
       }
     }

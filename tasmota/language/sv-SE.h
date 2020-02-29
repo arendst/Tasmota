@@ -504,9 +504,7 @@
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Vindriktning"
-#define D_TX20_WIND_DEGREES "Vindvinkel"
 #define D_TX20_WIND_SPEED "Vindstyrka"
-#define D_TX20_WIND_SPEED_AVG "Vindstyrka medel"
 #define D_TX20_WIND_SPEED_MIN "Vindstyrka min"
 #define D_TX20_WIND_SPEED_MAX "Vindstyrka max"
 #define D_TX20_NORTH "N"

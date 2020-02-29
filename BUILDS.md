@@ -142,7 +142,7 @@
 | USE_SR04              | - | - | - | - | x | - | - |
 | USE_TM1638            | - | - | - | - | x | - | - |
 | USE_HX711             | - | - | - | - | x | - | - |
-| USE_TX20_WIND_SENSOR  | - | - | - | - | x | - | - |
+| USE_TX2x_WIND_SENSOR  | - | - | - | - | - | - | - |
 | USE_RC_SWITCH         | - | - | - | - | x | - | - |
 | USE_RF_SENSOR         | - | - | - | - | x | - | - | AlectoV2 only
 | USE_HRE               | - | - | - | - | x | - | - |
