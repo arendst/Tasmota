@@ -51,23 +51,30 @@
 #define INA219_CONFIG_GAIN_8_320MV              (0x1800)  // Gain 8, 320mV Range
 
 #define INA219_CONFIG_BADCRES_MASK              (0x0780)  // Bus ADC Resolution Mask
-#define INA219_CONFIG_BADCRES_9BIT              (0x0080)  // 9-bit bus res = 0..511
-#define INA219_CONFIG_BADCRES_10BIT             (0x0100)  // 10-bit bus res = 0..1023
-#define INA219_CONFIG_BADCRES_11BIT             (0x0200)  // 11-bit bus res = 0..2047
-#define INA219_CONFIG_BADCRES_12BIT             (0x0400)  // 12-bit bus res = 0..4097
+#define INA219_CONFIG_BADCRES_9BIT_1S_84US      (0x0<<7)  // 9-bit bus res = 0..511
+#define INA219_CONFIG_BADCRES_10BIT_1S_148US    (0x1<<7)  // 10-bit bus res = 0..1023
+#define INA219_CONFIG_BADCRES_11BIT_1S_276US    (0x2<<7)  // 11-bit bus res = 0..2047
+#define INA219_CONFIG_BADCRES_12BIT_1S_532US    (0x3<<7)  // 12-bit bus res = 0..4097
+#define INA219_CONFIG_BADCRES_12BIT_2S_1060US   (0x9<<7)  // 2 x 12-bit bus samples averaged together
+#define INA219_CONFIG_BADCRES_12BIT_4S_2130US   (0xA<<7)  // 4 x 12-bit bus samples averaged together
+#define INA219_CONFIG_BADCRES_12BIT_8S_4260US   (0xB<<7)  // 8 x 12-bit bus samples averaged together
+#define INA219_CONFIG_BADCRES_12BIT_16S_8510US  (0xC<<7)  // 16 x 12-bit bus samples averaged together
+#define INA219_CONFIG_BADCRES_12BIT_32S_17MS    (0xD<<7)  // 32 x 12-bit bus samples averaged together
+#define INA219_CONFIG_BADCRES_12BIT_64S_34MS    (0xE<<7)  // 64 x 12-bit bus samples averaged together
+#define INA219_CONFIG_BADCRES_12BIT_128S_69MS   (0xF<<7)  // 128 x 12-bit bus samples averaged together
 
 #define INA219_CONFIG_SADCRES_MASK              (0x0078)  // Shunt ADC Resolution and Averaging Mask
-#define INA219_CONFIG_SADCRES_9BIT_1S_84US      (0x0000)  // 1 x 9-bit shunt sample
-#define INA219_CONFIG_SADCRES_10BIT_1S_148US    (0x0008)  // 1 x 10-bit shunt sample
-#define INA219_CONFIG_SADCRES_11BIT_1S_276US    (0x0010)  // 1 x 11-bit shunt sample
-#define INA219_CONFIG_SADCRES_12BIT_1S_532US    (0x0018)  // 1 x 12-bit shunt sample
-#define INA219_CONFIG_SADCRES_12BIT_2S_1060US   (0x0048)  // 2 x 12-bit shunt samples averaged together
-#define INA219_CONFIG_SADCRES_12BIT_4S_2130US   (0x0050)  // 4 x 12-bit shunt samples averaged together
-#define INA219_CONFIG_SADCRES_12BIT_8S_4260US   (0x0058)  // 8 x 12-bit shunt samples averaged together
-#define INA219_CONFIG_SADCRES_12BIT_16S_8510US  (0x0060)  // 16 x 12-bit shunt samples averaged together
-#define INA219_CONFIG_SADCRES_12BIT_32S_17MS    (0x0068)  // 32 x 12-bit shunt samples averaged together
-#define INA219_CONFIG_SADCRES_12BIT_64S_34MS    (0x0070)  // 64 x 12-bit shunt samples averaged together
-#define INA219_CONFIG_SADCRES_12BIT_128S_69MS   (0x0078)  // 128 x 12-bit shunt samples averaged together
+#define INA219_CONFIG_SADCRES_9BIT_1S_84US      (0x0<<3)  // 1 x 9-bit shunt sample
+#define INA219_CONFIG_SADCRES_10BIT_1S_148US    (0x1<<3)  // 1 x 10-bit shunt sample
+#define INA219_CONFIG_SADCRES_11BIT_1S_276US    (0x2<<3)  // 1 x 11-bit shunt sample
+#define INA219_CONFIG_SADCRES_12BIT_1S_532US    (0x3<<3)  // 1 x 12-bit shunt sample
+#define INA219_CONFIG_SADCRES_12BIT_2S_1060US   (0x9<<3)  // 2 x 12-bit shunt samples averaged together
+#define INA219_CONFIG_SADCRES_12BIT_4S_2130US   (0xA<<3)  // 4 x 12-bit shunt samples averaged together
+#define INA219_CONFIG_SADCRES_12BIT_8S_4260US   (0xB<<3)  // 8 x 12-bit shunt samples averaged together
+#define INA219_CONFIG_SADCRES_12BIT_16S_8510US  (0xC<<3)  // 16 x 12-bit shunt samples averaged together
+#define INA219_CONFIG_SADCRES_12BIT_32S_17MS    (0xD<<3)  // 32 x 12-bit shunt samples averaged together
+#define INA219_CONFIG_SADCRES_12BIT_64S_34MS    (0xE<<3)  // 64 x 12-bit shunt samples averaged together
+#define INA219_CONFIG_SADCRES_12BIT_128S_69MS   (0xF<<3)  // 128 x 12-bit shunt samples averaged together
 
 #define INA219_CONFIG_MODE_MASK                 (0x0007)  // Operating Mode Mask
 #define INA219_CONFIG_MODE_POWERDOWN            (0x0000)
@@ -85,12 +92,21 @@
 #define INA219_REG_CURRENT                      (0x04)
 #define INA219_REG_CALIBRATION                  (0x05)
 
+#define INA219_DEFAULT_SHUNT_RESISTOR_MILLIOHMS (100.0) // 0.1 Ohm
+
 uint8_t ina219_type[4] = {0,0,0,0};
 uint8_t ina219_addresses[] = { INA219_ADDRESS1, INA219_ADDRESS2, INA219_ADDRESS3, INA219_ADDRESS4 };
 
-uint32_t ina219_cal_value = 0;
-// The following multiplier is used to convert raw current values to mA, taking into account the current config settings
-uint32_t ina219_current_divider_ma = 0;
+#ifdef DEBUG_TASMOTA_SENSOR
+// temporary strings for floating point in debug messages
+char __ina219_dbg1[10];
+char __ina219_dbg2[10];
+#endif
+
+// The following multiplier is used to convert shunt voltage (in mV) to current (in A)
+// Current_A = ShuntVoltage_mV / ShuntResistor_milliOhms = ShuntVoltage_mV * ina219_current_multiplier
+// ina219_current_multiplier = 1 / ShuntResistor_milliOhms
+float ina219_current_multiplier;
 
 uint8_t ina219_valid[4] = {0,0,0,0};
 float ina219_voltage[4] = {0,0,0,0};
@@ -98,54 +114,75 @@ float ina219_current[4] = {0,0,0,0};
 char ina219_types[] = "INA219";
 uint8_t ina219_count = 0;
 
+/*********************************************************************************************\
+ * Calculate current multiplier depending on the selected mode
+ * For mode = 0, 1, 2 : legacy modes simplified as Vmax: 32V, Imax: 3.2A range
+ * For mode = 10..255 : specify Rshunt encoded as RRM where resistor value is RR * 10^M milliOhms
+ *                      Vmax: 32V, Imax: 0.320 / Rshunt
+ * Exemple:
+ *     10: Rshunt = 1 * 10^0 =  1 millOhms   => Max current = 320A !
+ *     11: Rshunt = 1 * 10^1 = 10 milliOhms  => Max current = 32A
+ *     21: Rshunt = 2 * 10^1 = 20 milliOhms  => Max current = 16A
+ *     12: Rshunt = 1 * 10^2 = 100 milliOhms => Max current = 3.2A == mode 0,1,2
+ *     13: Rshunt = 1 * 10^3 =   1 Ohms      => Max current = 320mA
+ * Note that some shunt values can be represented by 2 different encoded values such as
+ *     11 or 100 both present 10 milliOhms
+ * Because it is difficult to make a range check on such encoded value, none is performed
+\*********************************************************************************************/
 bool Ina219SetCalibration(uint8_t mode, uint16_t addr)
 {
   uint16_t config = 0;
 
-  switch (mode &3) {
-    case 0:  // 32V 2A
-    case 3:
-      ina219_cal_value = 4096;
-      ina219_current_divider_ma = 10;  // Current LSB = 100uA per bit (1000/100 = 10)
-      config = INA219_CONFIG_BVOLTAGERANGE_32V | INA219_CONFIG_GAIN_8_320MV | INA219_CONFIG_BADCRES_12BIT | INA219_CONFIG_SADCRES_12BIT_1S_532US | INA219_CONFIG_MODE_SANDBVOLT_CONTINUOUS;
-      break;
-    case 1:  // 32V 1A
-      ina219_cal_value = 10240;
-      ina219_current_divider_ma = 25;  // Current LSB = 40uA per bit (1000/40 = 25)
-      config |= INA219_CONFIG_BVOLTAGERANGE_32V | INA219_CONFIG_GAIN_8_320MV | INA219_CONFIG_BADCRES_12BIT | INA219_CONFIG_SADCRES_12BIT_1S_532US | INA219_CONFIG_MODE_SANDBVOLT_CONTINUOUS;
-      break;
-    case 2:  // 16V 0.4A
-      ina219_cal_value = 8192;
-      ina219_current_divider_ma = 20;  // Current LSB = 50uA per bit (1000/50 = 20)
-      config |= INA219_CONFIG_BVOLTAGERANGE_16V | INA219_CONFIG_GAIN_1_40MV | INA219_CONFIG_BADCRES_12BIT | INA219_CONFIG_SADCRES_12BIT_1S_532US | INA219_CONFIG_MODE_SANDBVOLT_CONTINUOUS;
-      break;
+  DEBUG_SENSOR_LOG("Ina219SetCalibration: mode=%d",mode);
+  if (mode < 5)
+  {
+    // All legacy modes 0..2 are handled the same and consider default 0.1 shunt resistor
+    ina219_current_multiplier = 1.0 / INA219_DEFAULT_SHUNT_RESISTOR_MILLIOHMS;
+    #ifdef DEBUG_TASMOTA_SENSOR
+    dtostrfd(ina219_current_multiplier,5,__ina219_dbg1);
+    DEBUG_SENSOR_LOG("Ina219SetCalibration: cur_mul=%s",__ina219_dbg1);
+    #endif
   }
-  // Set Calibration register to 'Cal' calculated above
-  bool success = I2cWrite16(addr, INA219_REG_CALIBRATION, ina219_cal_value);
-  if (success) {
-    // Set Config register to take into account the settings above
-    I2cWrite16(addr, INA219_REG_CONFIG, config);
+  else if (mode >= 10)
+  {
+    int mult = mode % 10;
+    int shunt_milliOhms = mode / 10;
+    for ( ; mult > 0 ; mult-- )
+      shunt_milliOhms *= 10;
+    ina219_current_multiplier = 1.0 / shunt_milliOhms;
+    #ifdef DEBUG_TASMOTA_SENSOR
+    dtostrfd(ina219_current_multiplier,5,__ina219_dbg1);
+    DEBUG_SENSOR_LOG("Ina219SetCalibration: shunt=%dmO => cur_mul=%s",shunt_milliOhms,__ina219_dbg1);
+    #endif
   }
-  return success;
+  config = INA219_CONFIG_BVOLTAGERANGE_32V
+         | INA219_CONFIG_GAIN_8_320MV               // Use max scale
+         | INA219_CONFIG_BADCRES_12BIT_16S_8510US   // use averaging to improve accuracy
+         | INA219_CONFIG_SADCRES_12BIT_16S_8510US   // use averaging to improve accuracy
+         | INA219_CONFIG_MODE_SANDBVOLT_CONTINUOUS;
+  // Set Config register to take into account the settings above
+  return I2cWrite16(addr, INA219_REG_CONFIG, config);
 }
 
 float Ina219GetShuntVoltage_mV(uint16_t addr)
 {
   // raw shunt voltage (16-bit signed integer, so +-32767)
   int16_t value = I2cReadS16(addr, INA219_REG_SHUNTVOLTAGE);
-  // shunt voltage in mV (so +-327mV)
+  DEBUG_SENSOR_LOG("Ina219GetShuntVoltage_mV: ShReg = 0x%04X",value);
+  // convert to shunt voltage in mV (so +-327mV) (LSB=10µV=0.01mV)
   return value * 0.01;
 }
 
 float Ina219GetBusVoltage_V(uint16_t addr)
 {
-  // Shift to the right 3 to drop CNVR and OVF and multiply by LSB
-  // raw bus voltage (16-bit signed integer, so +-32767)
-  int16_t value = (int16_t)(((uint16_t)I2cReadS16(addr, INA219_REG_BUSVOLTAGE) >> 3) * 4);
-  // bus voltage in volts
-  return value * 0.001;
+  // Shift 3 to the right to drop CNVR and OVF as unsigned
+  uint16_t value = I2cRead16(addr, INA219_REG_BUSVOLTAGE) >> 3;
+  DEBUG_SENSOR_LOG("Ina219GetBusVoltage_V: BusReg = 0x%04X",value);
+  // and multiply by LSB raw bus voltage to return bus voltage in volts (LSB=4mV=0.004V)
+  return value * 0.004;
 }
 
+/* Not used any more
 float Ina219GetCurrent_mA(uint16_t addr)
 {
   // Sometimes a sharp load will reset the INA219, which will reset the cal register,
@@ -159,14 +196,29 @@ float Ina219GetCurrent_mA(uint16_t addr)
   // current value in mA, taking into account the config settings and current LSB
   return value;
 }
+*/
 
 bool Ina219Read(void)
 {
   for (int i=0; i<sizeof(ina219_type); i++) {
     if (!ina219_type[i]) { continue; }
     uint16_t addr = ina219_addresses[i];
-    ina219_voltage[i] = Ina219GetBusVoltage_V(addr) + (Ina219GetShuntVoltage_mV(addr) / 1000);
-    ina219_current[i] = Ina219GetCurrent_mA(addr) / 1000;
+    float bus_voltage_V = Ina219GetBusVoltage_V(addr);
+    float shunt_voltage_mV = Ina219GetShuntVoltage_mV(addr);
+    #ifdef DEBUG_TASMOTA_SENSOR
+    dtostrfd(bus_voltage_V,5,__ina219_dbg1);
+    dtostrfd(shunt_voltage_mV,5,__ina219_dbg2);
+    DEBUG_SENSOR_LOG("Ina219Read: bV=%sV, sV=%smV",__ina219_dbg1,__ina219_dbg2);
+    #endif
+    // we return the power-supply-side voltage (as bus_voltage register provides the load-side voltage)
+    ina219_voltage[i] = bus_voltage_V + (shunt_voltage_mV / 1000);
+    // current is simply calculted from shunt voltage using pre-calculated multiplier
+    ina219_current[i] = shunt_voltage_mV * ina219_current_multiplier;
+    #ifdef DEBUG_TASMOTA_SENSOR
+    dtostrfd(ina219_voltage[i],5,__ina219_dbg1);
+    dtostrfd(ina219_current[i],5,__ina219_dbg2);
+    DEBUG_SENSOR_LOG("Ina219Read: V=%sV, I=%smA",__ina219_dbg1,__ina219_dbg2);
+    #endif
     ina219_valid[i] = SENSOR_MAX_MISS;
     //  AddLogMissed(ina219_types, ina219_valid);
   }
@@ -175,15 +227,11 @@ bool Ina219Read(void)
 
 /*********************************************************************************************\
  * Command Sensor13
- *
- * 0 - Max 32V 2A range
- * 1 - Max 32V 1A range
- * 2 - Max 16V 0.4A range
 \*********************************************************************************************/
 
 bool Ina219CommandSensor(void)
 {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
     Settings.ina219_mode = XdrvMailbox.payload;
     restart_flag = 2;
   }
