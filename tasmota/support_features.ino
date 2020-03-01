@@ -531,9 +531,11 @@ void GetFeatures(void)
   feature6 = 0x00000000;
 
 #ifdef USE_KEELOQ
-  feature6 |= 0x00000001;  // xdrv_36keeloq.ino
+  feature6 |= 0x00000001;  // xdrv_36_keeloq.ino
 #endif
-//  feature6 |= 0x00000002;
+#ifdef USE_HRXL
+  feature6 |= 0x00000002;  // xsns_64_hrxl.ino
+#endif
 //  feature6 |= 0x00000004;
 //  feature6 |= 0x00000008;
 

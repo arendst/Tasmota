@@ -3,9 +3,11 @@
 ### 8.1.0.10 20200227
 
 - Change default my_user_config.h driver and sensor support removing most sensors and adding most drivers
-- Add support for Jarolift rollers by Keeloq algorithm
 - Change IRremoteESP8266 library updated to v2.7.4
-- Add Zigbee features and improvements
+- Change switchmode 6 according to issue 7778 (#7831)
+- Add support for Jarolift rollers by Keeloq algorithm
+- Add Zigbee features and improvements and remove support for Zigbee commands starting with ``Zigbee...``
+- Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)
 
 ### 8.1.0.9 20200220
 
