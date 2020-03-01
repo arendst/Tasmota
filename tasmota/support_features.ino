@@ -536,7 +536,9 @@ void GetFeatures(void)
 #ifdef USE_HRXL
   feature6 |= 0x00000002;  // xsns_64_hrxl.ino
 #endif
-//  feature6 |= 0x00000004;
+#ifdef USE_SONOFF_D1
+  feature6 |= 0x00000004;
+#endif
 //  feature6 |= 0x00000008;
 
 //  feature6 |= 0x00000010;

@@ -117,6 +117,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #define USE_HOTPLUG                              // Add support for sensor HotPlug
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+5k6 code)
 #undef USE_PWM_DIMMER                            // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
+#undef USE_KEELOQ                                // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
+#define USE_SONOFF_D1                            // Add support for Sonoff D1 Dimmer (+0k7 code)
 
 // -- Optional light modules ----------------------
 #define USE_LIGHT                                // Add Dimmer/Light support
@@ -305,6 +307,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
 #undef USE_PWM_DIMMER                            // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
 #undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
+#undef USE_KEELOQ                                // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
+#undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors (-14k code)
   #undef USE_PZEM004T                            // Disable PZEM004T energy sensor
@@ -384,6 +388,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
 #undef USE_PWM_DIMMER                            // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
 #undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
+#undef USE_KEELOQ                                // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
+#undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
 
 // -- Optional light modules ----------------------
 //#undef USE_LIGHT                                 // Also disable all Dimmer/Light support
@@ -495,6 +501,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
 #undef USE_PWM_DIMMER                            // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
 #undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
+#undef USE_KEELOQ                                // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
+//#undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
 
 // -- Optional light modules ----------------------
 //#undef USE_LIGHT                                 // Also disable all Dimmer/Light support
@@ -613,6 +621,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
 #undef USE_PWM_DIMMER                            // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
 #undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
+#undef USE_KEELOQ                                // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
+#undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
 
 // -- Optional light modules ----------------------
 #undef USE_LIGHT                                 // Disable support for lights

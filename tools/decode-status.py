@@ -198,7 +198,7 @@ a_features = [[
     "USE_NRF24","USE_MIBLE","USE_HM10","USE_LE01MR",
     "USE_AHT1x","USE_WEMOS_MOTOR_V1","USE_DEVICE_GROUPS","USE_PWM_DIMMER"
     ],[
-    "USE_KEELOQ","USE_HRXL","","",
+    "USE_KEELOQ","USE_HRXL","USE_SONOFF_D1","",
     "","","","",
     "","","","",
     "","","","",

@@ -2264,7 +2264,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09
      0,                // GPIO10
                        // GPIO11 (SD_CMD   Flash)
-     0, 0, 0, 0, 0, 0
+     0,                // GPIO12
+     GPIO_LED1_INV,    // GPIO13 WiFi Blue Led - Link and Power status
+     0, 0, 0, 0
   }
 };
 
