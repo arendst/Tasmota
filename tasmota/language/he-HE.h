@@ -504,9 +504,7 @@
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "כיוון הרוח"
-#define D_TX20_WIND_DEGREES "זווית הרוח"
 #define D_TX20_WIND_SPEED "מהירות הרוח"
-#define D_TX20_WIND_SPEED_AVG "מהירות הרוח ממוצעת"
 #define D_TX20_WIND_SPEED_MIN "מהירות הרוח היא מינימלית"
 #define D_TX20_WIND_SPEED_MAX "מהירות הרוח מקסימלית"
 #define D_TX20_NORTH "N"

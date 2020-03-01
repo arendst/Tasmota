@@ -627,8 +627,8 @@
 //  #define USE_HX711_GUI                          // Add optional web GUI to HX711 as scale (+1k8 code)
 
 // Select none or only one of the below defines
-//#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+1k3 code)
-//#define USE_TX23_WIND_SENSOR                     // Add support for La Crosse TX23 anemometer (+1k4 code)
+//#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k6/0k8 code)
+//#define USE_TX23_WIND_SENSOR                     // Add support for La Crosse TX23 anemometer (+2k7/1k code)
 
 //#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
 
