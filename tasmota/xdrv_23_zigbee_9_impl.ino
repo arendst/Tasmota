@@ -33,22 +33,16 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEE_PERMITJOIN "|"
   D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND "|"
   D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ "|" D_CMND_ZIGBEEZNPRECEIVE "|"
-  D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|" D_CMND_ZIGBEE_BIND "|"
-  D_CMND_ZIGBEE_PING ;
-
-const char kZigbeeCommands[] PROGMEM = D_PRFX_ZIGBEE "|"    // legacy prefix -- deprecated
-  D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEE_PERMITJOIN "|"
-  D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND "|"
-  D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ "|" D_CMND_ZIGBEEZNPRECEIVE "|"
-  D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|" D_CMND_ZIGBEE_BIND "|"
-  D_CMND_ZIGBEE_PING ;
+  D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|"
+  D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID
+  ;
 
 void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbZNPSend, &CmndZbPermitJoin,
   &CmndZbStatus, &CmndZbReset, &CmndZbSend,
   &CmndZbProbe, &CmndZbRead, &CmndZbZNPReceive,
-  &CmndZbForget, &CmndZbSave, &CmndZbName, &CmndZbBind,
-  &CmndZbPing,
+  &CmndZbForget, &CmndZbSave, &CmndZbName,
+  &CmndZbBind, &CmndZbPing, &CmndZbModelId,
   };
 
 int32_t ZigbeeProcessInput(class SBuffer &buf) {
@@ -547,35 +541,75 @@ void CmndZbBind(void) {
 
   // params
   // static char delim[] = ", ";    // delimiters for parameters
-  uint16_t device = 0xFFFF;         // 0xFFFF is broadcast, so considered valid
-  uint8_t  endpoint = 0x00;         // 0x00 is invalid for the dst endpoint
+  uint16_t srcDevice = 0xFFFF;         // 0xFFFF is broadcast, so considered invalid
+  uint16_t dstDevice = 0xFFFF;      // 0xFFFF is broadcast, so considered invalid
+  uint64_t dstLongAddr = 0;
+  uint8_t  endpoint = 0x00;         // 0x00 is invalid for the src endpoint
+  uint8_t  toendpoint = 0x00;       // 0x00 is invalid for the dst endpoint
+  uint16_t toGroup = 0x0000;        // group address
   uint16_t cluster  = 0;            // 0xFFFF is invalid
   uint32_t group = 0xFFFFFFFF;      // 16 bits values, otherwise 0xFFFFFFFF is unspecified
 
+  // Information about source device: "Device", "Endpoint", "Cluster"
+  //  - the source endpoint must have a known IEEE address
   const JsonVariant &val_device = getCaseInsensitive(json, PSTR("Device"));
   if (nullptr != &val_device) {
-    device = zigbee_devices.parseDeviceParam(val_device.as<char*>());
-    if (0xFFFF == device) { ResponseCmndChar("Invalid parameter"); return; }
+    srcDevice = zigbee_devices.parseDeviceParam(val_device.as<char*>());
+    if (0xFFFF == srcDevice) { ResponseCmndChar("Invalid parameter"); return; }
   }
-  if ((nullptr == &val_device) || (0x000 == device)) { ResponseCmndChar("Unknown device"); return; }
-
+  if ((nullptr == &val_device) || (0x0000 == srcDevice)) { ResponseCmndChar("Unknown source device"); return; }
+  // check if IEEE address is known
+  uint64_t srcLongAddr = zigbee_devices.getDeviceLongAddr(srcDevice);
+  if (0 == srcLongAddr) { ResponseCmndChar("Unknown source IEEE address"); return; }
+  // look for source endpoint
   const JsonVariant &val_endpoint = getCaseInsensitive(json, PSTR("Endpoint"));
   if (nullptr != &val_endpoint) { endpoint = strToUInt(val_endpoint); }
+  // look for source cluster
   const JsonVariant &val_cluster = getCaseInsensitive(json, PSTR("Cluster"));
   if (nullptr != &val_cluster) { cluster = strToUInt(val_cluster); }
 
-  // TODO compute endpoint from cluster
+  // Either Device address
+  // In this case the following parameters are mandatory
+  //  - "ToDevice" and the device must have a known IEEE address
+  //  - "ToEndpoint"
+  const JsonVariant &dst_device = getCaseInsensitive(json, PSTR("ToDevice"));
+  if (nullptr != &dst_device) {
+    dstDevice = zigbee_devices.parseDeviceParam(dst_device.as<char*>());
+    if (0xFFFF == dstDevice) { ResponseCmndChar("Invalid parameter"); return; }
+    if (0x0000 == dstDevice) {
+      dstLongAddr = localIEEEAddr;
+    } else {
+      dstLongAddr = zigbee_devices.getDeviceLongAddr(dstDevice);
+    }
+    if (0 == dstLongAddr) { ResponseCmndChar("Unknown dest IEEE address"); return; }
+
+    const JsonVariant &val_toendpoint = getCaseInsensitive(json, PSTR("ToEndpoint"));
+    if (nullptr != &val_toendpoint) { toendpoint = strToUInt(val_endpoint); } else { toendpoint = endpoint; }
+  }
+
+  // Or Group Address - we don't need a dstEndpoint in this case
+  const JsonVariant &to_group = getCaseInsensitive(json, PSTR("ToGroup"));
+  if (nullptr != &to_group) { toGroup = strToUInt(to_group); }
+
+  // make sure we don't have conflicting parameters
+  if (toGroup && dstLongAddr) { ResponseCmndChar("Cannot have both \"ToDevice\" and \"ToGroup\""); return; }
+  if (!toGroup && !dstLongAddr) { ResponseCmndChar("Missing \"ToDevice\" or \"ToGroup\""); return; }
 
   SBuffer buf(sizeof(ZBS_BIND_REQ));
   buf.add8(Z_SREQ | Z_ZDO);
   buf.add8(ZDO_BIND_REQ);
-  buf.add16(device);
-  buf.add64(zigbee_devices.getDeviceLongAddr(device));
+  buf.add16(srcDevice);
+  buf.add64(srcLongAddr);
   buf.add8(endpoint);
   buf.add16(cluster);
-  buf.add8(0x03);             // DstAddrMode - 0x03 = ADDRESS_64_BIT
-  buf.add64(localIEEEAddr);   // coordinatore IEEE address
-  buf.add8(0x01);             // local endpoint = 1
+  if (dstLongAddr) {
+    buf.add8(Z_Addr_IEEEAddress);         // DstAddrMode - 0x03 = ADDRESS_64_BIT
+    buf.add64(dstLongAddr);
+    buf.add8(toendpoint);
+  } else {
+    buf.add8(Z_Addr_Group);               // DstAddrMode - 0x01 = GROUP_ADDRESS
+    buf.add16(toGroup);
+  }
 
   ZigbeeZNPSend(buf.getBuffer(), buf.len());
 
@@ -632,6 +666,35 @@ void CmndZbName(void) {
   } else {
     zigbee_devices.setFriendlyName(shortaddr, p);
     Response_P(PSTR("{\"0x%04X\":{\"" D_JSON_ZIGBEE_NAME "\":\"%s\"}}"), shortaddr, p);
+  }
+}
+
+// Specify, read or erase a ModelId, only for debug purposes
+void CmndZbModelId(void) {
+  // Syntax is:
+  //  ZigbeeName <device_id>,<friendlyname>  - assign a friendly name
+  //  ZigbeeName <device_id>                 - display the current friendly name
+  //  ZigbeeName <device_id>,                - remove friendly name
+  //
+  // Where <device_id> can be: short_addr, long_addr, device_index, friendly_name
+
+  if (zigbee.init_phase) { ResponseCmndChar(D_ZIGBEE_NOT_STARTED); return; }
+
+  // check if parameters contain a comma ','
+  char *p;
+  char *str = strtok_r(XdrvMailbox.data, ", ", &p);
+
+  // parse first part, <device_id>
+  uint16_t shortaddr = zigbee_devices.parseDeviceParam(XdrvMailbox.data, true);  // in case of short_addr, it must be already registered
+  if (0x0000 == shortaddr) { ResponseCmndChar("Unknown device"); return; }
+  if (0xFFFF == shortaddr) { ResponseCmndChar("Invalid parameter"); return; }
+
+  if (p == nullptr) {
+    const String * modelId = zigbee_devices.getModelId(shortaddr);
+    Response_P(PSTR("{\"0x%04X\":{\"" D_JSON_ZIGBEE_MODELID "\":\"%s\"}}"), shortaddr, modelId ? modelId->c_str() : "");
+  } else {
+    zigbee_devices.setModelId(shortaddr, p);
+    Response_P(PSTR("{\"0x%04X\":{\"" D_JSON_ZIGBEE_MODELID "\":\"%s\"}}"), shortaddr, p);
   }
 }
 
@@ -775,7 +838,6 @@ bool Xdrv23(uint8_t function)
       case FUNC_LOOP:
         if (ZigbeeSerial) { ZigbeeInput(); }
 				if (zigbee.state_machine) {
-					//ZigbeeStateMachine();
           ZigbeeStateMachine_Run();
 				}
         break;
@@ -784,7 +846,6 @@ bool Xdrv23(uint8_t function)
         break;
       case FUNC_COMMAND:
         result = DecodeCommand(kZbCommands, ZigbeeCommand);
-        result = result || DecodeCommand(kZigbeeCommands, ZigbeeCommand);   // deprecated
         break;
     }
   }
