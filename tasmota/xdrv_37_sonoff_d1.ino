@@ -159,29 +159,33 @@ bool SonoffD1SerialInput(void)
 
 /********************************************************************************************/
 
-bool SonoffD1SendPower(void)
+void SonoffD1Send(uint8_t lpower, uint8_t dimmer)
 {
-  uint8_t buffer[17] = { 0xAA,0x55,0x01,0x04,0x00,0x0A,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00 };
+  //                        0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16
+  uint8_t buffer[17] = { 0xAA,0x55,0x01,0x04,0x00,0x0A,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00 };
 
-  buffer[6] = XdrvMailbox.index;
+  buffer[6] = lpower;
+  buffer[7] = dimmer;
 
   for (uint32_t i = 0; i < sizeof(buffer); i++) {
     if ((i > 1) && (i < sizeof(buffer) -1)) { buffer[16] += buffer[i]; }
     Serial.write(buffer[i]);
   }
+}
+
+bool SonoffD1SendPower(void)
+{
+  SonoffD1Send(XdrvMailbox.index &1, 0xFF);
   return true;
 }
 
 bool SonoffD1SendDimmer(void)
 {
-  uint8_t buffer[17] = { 0xAA,0x55,0x01,0x04,0x00,0x0A,0xFF,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00 };
+  uint8_t dimmer = changeUIntScale(((uint16_t *)XdrvMailbox.data)[0], 0, 255, 0, 100);
+  dimmer = (dimmer < Settings.dimmer_hw_min) ? Settings.dimmer_hw_min : dimmer;
+  dimmer = (dimmer > Settings.dimmer_hw_max) ? Settings.dimmer_hw_max : dimmer;
 
-  buffer[7] = changeUIntScale(((uint16_t *)XdrvMailbox.data)[0], 0, 255, 0, 100);
-
-  for (uint32_t i = 0; i < sizeof(buffer); i++) {
-    if ((i > 1) && (i < sizeof(buffer) -1)) { buffer[16] += buffer[i]; }
-    Serial.write(buffer[i]);
-  }
+  SonoffD1Send(0xFF, dimmer);
   return true;
 }
 
