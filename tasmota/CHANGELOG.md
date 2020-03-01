@@ -5,6 +5,7 @@
 - Change default my_user_config.h driver and sensor support removing most sensors and adding most drivers
 - Add support for Jarolift rollers by Keeloq algorithm
 - Change IRremoteESP8266 library updated to v2.7.4
+- Add Zigbee features and improvements
 
 ### 8.1.0.9 20200220
 

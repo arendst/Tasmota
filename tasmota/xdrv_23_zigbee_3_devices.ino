@@ -19,10 +19,6 @@
 
 #ifdef USE_ZIGBEE
 
-#ifndef ZIGBEERECEIVED
-#define ZIGBEERECEIVED 1
-#endif
-
 #include <vector>
 #include <map>
 
@@ -97,7 +93,8 @@ public:
   void setManufId(uint16_t shortaddr, const char * str);
   void setModelId(uint16_t shortaddr, const char * str);
   void setFriendlyName(uint16_t shortaddr, const char * str);
-  const String * getFriendlyName(uint16_t) const;
+  const String * getFriendlyName(uint16_t shortaddr) const;
+  const String * getModelId(uint16_t shortaddr) const;
 
   // device just seen on the network, update the lastSeen field
   void updateLastSeen(uint16_t shortaddr);
@@ -537,6 +534,17 @@ const String * Z_Devices::getFriendlyName(uint16_t shortaddr) const {
   return nullptr;
 }
 
+const String * Z_Devices::getModelId(uint16_t shortaddr) const {
+  int32_t found = findShortAddr(shortaddr);
+  if (found >= 0) {
+    const Z_Device & device = devicesAt(found);
+    if (device.modelId.length() > 0) {
+      return &device.modelId;
+    }
+  }
+  return nullptr;
+}
+
 // device just seen on the network, update the lastSeen field
 void Z_Devices::updateLastSeen(uint16_t shortaddr) {
   Z_Device & device = getShortAddr(shortaddr);
@@ -656,13 +664,31 @@ bool Z_Devices::jsonIsConflict(uint16_t shortaddr, const JsonObject &values) {
     return false;                                           // if no previous value, no conflict
   }
 
+  // compare groups
+  uint16_t group1 = 0;
+  uint16_t group2 = 0;
+  if (device.json->containsKey(D_CMND_ZIGBEE_GROUP)) {
+    group1 = device.json->get<unsigned int>(D_CMND_ZIGBEE_GROUP);
+  }
+  if (values.containsKey(D_CMND_ZIGBEE_GROUP)) {
+    group2 = values.get<unsigned int>(D_CMND_ZIGBEE_GROUP);
+  }
+  if (group1 != group2) {
+    return true;      // if group addresses differ, then conflict
+  }
+
+  // parse all other parameters
   for (auto kv : values) {
     String key_string = kv.key;
 
-    if (0 == strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_ENDPOINT))) {
-      // attribute "Endpoint"
-      if (kv.value.as<unsigned int>() != device.json->get<unsigned int>(kv.key)) {
-        return true;
+    if (0 == strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_GROUP))) {
+      // ignore group, it was handled already
+    } else if (0 == strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_ENDPOINT))) {
+      // attribute "Endpoint" or "Group"
+      if (device.json->containsKey(kv.key)) {
+        if (kv.value.as<unsigned int>() != device.json->get<unsigned int>(kv.key)) {
+          return true;
+        }
       }
     } else if (strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_LINKQUALITY))) {  // exception = ignore duplicates for LinkQuality
       if (device.json->containsKey(kv.key)) {
@@ -734,25 +760,11 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":{\"%s\":%s}}"), fname->c_str(), msg.c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
     XdrvRulesProcess();
-#if ZIGBEERECEIVED
-    // DEPRECATED TODO
-    Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED_LEGACY "\":{\"%s\":%s}}"), fname->c_str(), msg.c_str());
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-    XdrvRulesProcess();
-#endif
   } else {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":{\"0x%04X\":%s}}"), shortaddr, msg.c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
     XdrvRulesProcess();
-#if ZIGBEERECEIVED
-    // DEPRECATED TODO
-    Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED_LEGACY "\":{\"0x%04X\":%s}}"), shortaddr, msg.c_str());
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-    XdrvRulesProcess();
-#endif
   }
-  // MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-  // XdrvRulesProcess();
 }
 
 void Z_Devices::jsonPublishNow(uint16_t shortaddr, JsonObject & values) {

@@ -36,8 +36,14 @@ typedef struct Z_XYZ_Var {    // Holds values for vairables X, Y and Z
   uint8_t     z_type = 0;
 } Z_XYZ_Var;
 
-// list of post-processing directives
-const Z_CommandConverter Z_Commands[] = {
+// Cluster specific commands
+// Note: the table is both for sending commands, but also displaying received commands
+// - tasmota_cmd: the human-readable name of the command as entered or displayed, use '|' to split into multiple commands when displayed
+// - cluster: cluster number of the command
+// - cmd: the command number, of 0xFF if it's actually a variable to be assigned from 'xx'
+// - direction: the direction of the command (bit field). 0x01=from client to server (coord to device), 0x02= from server to client (response), 0x80=needs specific decoding
+// - param: the paylod template, x/y/z are substituted with arguments, little endian. For command display, payload must match until x/y/z character or until the end of the paylod. '??' means ignore.
+const Z_CommandConverter Z_Commands[] PROGMEM = {
   // Group adress commands
   { "AddGroup",       0x0004, 0x00, 0x01,   "xxxx00" },       // Add group id, group name is not supported
   { "ViewGroup",      0x0004, 0x01, 0x01,   "xxxx" },         // Ask for the group name
@@ -65,7 +71,7 @@ const Z_CommandConverter Z_Commands[] = {
   { "ShutterTilt",    0x0102, 0x08, 0x01,   "xx" },            // Tilt percentage
   { "Shutter",        0x0102, 0xFF, 0x01,   "" },
   // Blitzwolf PIR
-  { "Occupancy",      0xEF00, 0x01, 0x01,   "xx"},                // Specific decoder for Blitzwolf PIR, empty name means special treatment
+  { "Occupancy",      0xEF00, 0x01, 0x82,   ""},                // Specific decoder for Blitzwolf PIR, empty name means special treatment
   // Decoders only - normally not used to send, and names may be masked by previous definitions
   { "Dimmer",         0x0008, 0x00, 0x01,   "xx" },
   { "DimmerMove",     0x0008, 0x01, 0x01,   "xx0A" },
@@ -85,14 +91,13 @@ const Z_CommandConverter Z_Commands[] = {
   { "ArrowHold",      0x0005, 0x08, 0x01,   "xx" },         // xx == 0x01 = left, 0x00 = right
   { "ArrowRelease",   0x0005, 0x09, 0x01,   "" },
   // IAS - Intruder Alarm System + leak/fire detection
-  { "ZoneStatusChange",0x0500, 0x00, 0x02,  "xxxxyyzz" },   // xxxx = zone status, yy = extended status, zz = zone id, Delay is ignored
+  { "ZoneStatusChange",0x0500, 0x00, 0x82,  "xxxxyyzz" },   // xxxx = zone status, yy = extended status, zz = zone id, Delay is ignored
   // responses for Group cluster commands
-  { "AddGroupResp",   0x0004, 0x00, 0x02,   "xxyyyy" },       // xx = status, yy = group id
-  { "ViewGroupResp",  0x0004, 0x01, 0x02,   "xxyyyy" },       // xx = status, yy = group id, name ignored
-  { "GetGroupResp",   0x0004, 0x02, 0x02,   "xxyyzzzz" },     // xx = capacity, yy = count, zzzz = first group id, following groups ignored
-  { "RemoveGroup",    0x0004, 0x03, 0x02,   "xxyyyy" },       // xx = status, yy = group id
+  { "AddGroup",       0x0004, 0x00, 0x82,   "xxyyyy" },       // xx = status, yy = group id
+  { "ViewGroup",      0x0004, 0x01, 0x82,   "xxyyyy" },       // xx = status, yy = group id, name ignored
+  { "GetGroup",       0x0004, 0x02, 0x82,   "xxyyzzzz" },     // xx = capacity, yy = count, zzzz = first group id, following groups ignored
+  { "RemoveGroup",    0x0004, 0x03, 0x82,   "xxyyyy" },       // xx = status, yy = group id
 };
-
 
 #define ZLE(x) ((x) & 0xFF), ((x) >> 8)     // Little Endian
 
@@ -235,16 +240,20 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
   ToHex_P((unsigned char*)payload.getBuffer(), payload.len(), hex_char, hex_char_len);
 
   const __FlashStringHelper* command_name = nullptr;
+  uint8_t conv_direction;
   Z_XYZ_Var xyz;
 
 //AddLog_P2(LOG_LEVEL_INFO, PSTR(">>> len = %d - %02X%02X%02X"), payload.len(), payload.get8(0), payload.get8(1), payload.get8(2));
   for (uint32_t i = 0; i < sizeof(Z_Commands) / sizeof(Z_Commands[0]); i++) {
     const Z_CommandConverter *conv = &Z_Commands[i];
-    if (conv->cluster == cluster) {
+    uint16_t conv_cluster = pgm_read_word(&conv->cluster);
+    if (conv_cluster == cluster) {
       // cluster match
-      if ((0xFF == conv->cmd) || (cmd == conv->cmd)) {
+      uint8_t conv_cmd = pgm_read_byte(&conv->cmd);
+      conv_direction = pgm_read_byte(&conv->direction);
+      if ((0xFF == conv_cmd) || (cmd == conv_cmd)) {
           // cmd match
-        if ((direction && (conv->direction & 0x02)) || (!direction && (conv->direction & 0x01))) {
+        if ((direction && (conv_direction & 0x02)) || (!direction && (conv_direction & 0x01))) {
           // check if we have a match for params too
           // Match if:
           //  - payload exactly matches conv->param (conv->param may be longer)
@@ -271,7 +280,7 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
           if (match) {
             command_name = (const __FlashStringHelper*) conv->tasmota_cmd;
             parseXYZ(conv->param, payload, &xyz);
-            if (0xFF == conv->cmd) {
+            if (0xFF == conv_cmd) {
               // shift all values
               xyz.z = xyz.y;
               xyz.z_type = xyz.y_type;
@@ -296,31 +305,63 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
   free(hex_char);
 
   if (command_name) {
-    if (0 == xyz.x_type) {
-      json[command_name] = true;    // no parameter
-    } else if (0 == xyz.y_type) {
-      json[command_name] = xyz.x;       // 1 parameter
+    // Now try to transform into a human readable format
+    // if (direction & 0x80) then specific transform
+    if (conv_direction & 0x80) {
+      // TODO need to create a specific command
+      // IAS
+      String command_name2 = String(command_name);
+      if ((cluster == 0x0500) && (cmd == 0x00)) {
+        // "ZoneStatusChange"
+        json[command_name] = xyz.x;
+        json[command_name2 + "Ext"] = xyz.y;
+        json[command_name2 + "Zone"] = xyz.z;
+      } else if ((cluster == 0x0004) && ((cmd == 0x00) || (cmd == 0x01) || (cmd == 0x03))) {
+        // AddGroupResp or ViewGroupResp (group name ignored) or RemoveGroup
+        json[command_name] = xyz.y;
+        json[command_name2 + "Status"] = xyz.x;
+        json[command_name2 + "StatusMsg"] = getZigbeeStatusMessage(xyz.x);
+      } else if ((cluster == 0x0004) && (cmd == 0x02)) {
+        // GetGroupResp
+        json[command_name2 + "Capacity"] = xyz.x;
+        json[command_name2 + "Count"] = xyz.y;
+        JsonArray &arr = json.createNestedArray(command_name);
+        for (uint32_t i = 0; i < xyz.y; i++) {
+          arr.add(payload.get16(2 + 2*i));
+        }
+        //arr.add(xyz.z);
+      }
     } else {
-      // multiple answers, create an array
-      JsonArray &arr = json.createNestedArray(command_name);
-      arr.add(xyz.x);
-      arr.add(xyz.y);
-      if (xyz.z_type) {
-        arr.add(xyz.z);
+      if (0 == xyz.x_type) {
+        json[command_name] = true;    // no parameter
+      } else if (0 == xyz.y_type) {
+        json[command_name] = xyz.x;       // 1 parameter
+      } else {
+        // multiple answers, create an array
+        JsonArray &arr = json.createNestedArray(command_name);
+        arr.add(xyz.x);
+        arr.add(xyz.y);
+        if (xyz.z_type) {
+          arr.add(xyz.z);
+        }
       }
     }
   }
 }
 
 // Find the command details by command name
+// Only take commands outgoing, i.e. direction == 0
 // If not found:
 //  - returns nullptr
 const __FlashStringHelper* zigbeeFindCommand(const char *command, uint16_t *cluster, uint16_t *cmd) {
   for (uint32_t i = 0; i < sizeof(Z_Commands) / sizeof(Z_Commands[0]); i++) {
     const Z_CommandConverter *conv = &Z_Commands[i];
-    if (0 == strcasecmp_P(command, conv->tasmota_cmd)) {
-      *cluster = conv->cluster;
-      *cmd = conv->cmd;
+    uint8_t conv_direction = pgm_read_byte(&conv->direction);
+    uint8_t conv_cmd = pgm_read_byte(&conv->cmd);
+    uint16_t conv_cluster = pgm_read_word(&conv->cluster);
+    if ((conv_direction & 0x01) && (0 == strcasecmp_P(command, conv->tasmota_cmd))) {
+      *cluster = conv_cluster;
+      *cmd = conv_cmd;
       return (const __FlashStringHelper*) conv->param;
     }
   }
