@@ -56,7 +56,6 @@
 #endif // USE_TX20_WIND_SENSOR && USE_TX23_WIND_SENSOR
 
 // #define USE_TX2X_WIND_SENSOR_NOSTATISTICS        // suppress statistics (speed/dir avg/min/max/range)
-
 #define TX2X_BIT_TIME          1220  // microseconds
 #define TX2X_WEIGHT_AVG_SAMPLE  150  // seconds
 #define TX2X_TIMEOUT             10  // seconds
@@ -79,26 +78,28 @@ extern "C" {
 #ifdef USE_WEBSERVER
 #define D_TX20_WIND_AVG "&empty;"
 #define D_TX20_WIND_ANGLE "&ang;"
+#define D_TX20_WIND_DEGREE "&deg;"
 const char HTTP_SNS_TX2X[] PROGMEM =
-   "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
+   "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED "{m}%s %s{e}"
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
-   "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED " " D_TX20_WIND_AVG "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
-   "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED_MIN "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
-   "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED_MAX "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
+   "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED " " D_TX20_WIND_AVG "{m}%s %s{e}"
+   "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED_MIN "{m}%s %s{e}"
+   "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED_MAX "{m}%s %s{e}"
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
-   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION "{m}%s %s&deg;{e}"
+   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION "{m}%s %s" D_TX20_WIND_DEGREE "{e}"
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
-   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION " " D_TX20_WIND_AVG "{m}%s %s&deg;{e}"
-   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION " " D_TX20_WIND_ANGLE "{m}%s&deg; (%s&deg;,%s&deg;)";
+   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION " " D_TX20_WIND_AVG "{m}%s %s" D_TX20_WIND_DEGREE "{e}"
+   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION " " D_TX20_WIND_ANGLE "{m}%s" D_TX20_WIND_DEGREE " (%s,%s)" D_TX20_WIND_DEGREE;
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
    ;
 #endif  // USE_WEBSERVER
 
 // float saves 48 byte
-float const ff_pi           = 3.1415926535897932384626433;  // Pi
-float const ff_halfpi       = ff_pi / 2.0;
-float const ff_pi180        = ff_pi / 180.0;
+float const tx2x_f_pi           = 3.1415926535897932384626433;  // Pi
+float const tx2x_f_halfpi       = tx2x_f_pi / 2.0;
+float const tx2x_f_pi180        = tx2x_f_pi / 180.0;
 
+#define TX2X_DIRECTIONS_MAXSIZE   3
 const char kTx2xDirections[] PROGMEM = D_TX20_NORTH "|"
                                        D_TX20_NORTH D_TX20_NORTH D_TX20_EAST "|"
                                        D_TX20_NORTH D_TX20_EAST "|"
@@ -116,12 +117,12 @@ const char kTx2xDirections[] PROGMEM = D_TX20_NORTH "|"
                                        D_TX20_NORTH D_TX20_WEST "|"
                                        D_TX20_NORTH D_TX20_NORTH D_TX20_WEST;
 
-float tx2x_wind_speed_kmh = 0;
+int32_t tx2x_wind_speed = 0;
 int32_t tx2x_wind_direction = 0;
 
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
-float tx2x_wind_speed_min = 200.0;
-float tx2x_wind_speed_max = 0;
+int32_t tx2x_wind_speed_min = 0xfff;
+int32_t tx2x_wind_speed_max = 0;
 float tx2x_wind_speed_avg = 0;
 float tx2x_wind_direction_avg_x = 0;
 float tx2x_wind_direction_avg_y = 0;
@@ -131,7 +132,7 @@ int32_t tx2x_wind_direction_max = 0;
 
 uint32_t tx2x_count = 0;
 uint32_t tx2x_avg_samples;
-uint32_t last_uptime = 0;
+uint32_t tx2x_last_uptime = 0;
 bool tx2x_valuesread = false;
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
 
@@ -143,7 +144,7 @@ uint32_t tx2x_sd = 0;
 uint32_t tx2x_se = 0;
 uint32_t tx2x_sf = 0;
 #endif  // DEBUG_TASMOTA_SENSOR
-uint32_t last_available = 0;
+uint32_t tx2x_last_available = 0;
 
 #ifdef USE_TX23_WIND_SENSOR
 uint32_t tx23_stage = 0;
@@ -237,9 +238,9 @@ void TX2xStartRead(void)
       // check checksum, start frame,non-inverted==inverted values and max. speed
       ;
       if ((chk == tx2x_sd) && (0x1b==tx2x_sa) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511)) {
-        last_available = uptime;
+        tx2x_last_available = uptime;
         // Wind speed spec: 0 to 180 km/h (0 to 50 m/s)
-        tx2x_wind_speed_kmh = float(tx2x_sc) * 0.36;
+        tx2x_wind_speed = tx2x_sc;
         tx2x_wind_direction = tx2x_sb;
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
         if (!tx2x_valuesread) {
@@ -263,7 +264,7 @@ void TX2xStartRead(void)
 
 bool Tx2xAvailable(void)
 {
-  return ((uptime - last_available) < TX2X_TIMEOUT);
+  return ((uptime - tx2x_last_available) < TX2X_TIMEOUT);
 }
 
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
@@ -273,13 +274,13 @@ float atan2f(float a, float b)
     if (b > 0) {
         atan2val = atanf(a/b);
     } else if ((b < 0) && (a >= 0)) {
-        atan2val = atanf(a/b) + ff_pi;
+        atan2val = atanf(a/b) + tx2x_f_pi;
     } else if ((b < 0) && (a < 0)) {
-        atan2val = atanf(a/b) - ff_pi;
+        atan2val = atanf(a/b) - tx2x_f_pi;
     } else if ((b == 0) && (a > 0)) {
-        atan2val = ff_halfpi;
+        atan2val = tx2x_f_halfpi;
     } else if ((b == 0) && (a < 0)) {
-        atan2val = 0 - (ff_halfpi);
+        atan2val = 0 - (tx2x_f_halfpi);
     } else if ((b == 0) && (a == 0)) {
         atan2val = 1000;               //represents undefined
     }
@@ -297,7 +298,7 @@ void Tx2xCheckSampleCount(void)
     tx2x_avg_samples = TX2X_WEIGHT_AVG_SAMPLE;
   }
   if (tx2x_prev_avg_samples != tx2x_avg_samples) {
-    tx2x_wind_speed_avg = tx2x_wind_speed_kmh;
+    tx2x_wind_speed_avg = tx2x_wind_speed;
     tx2x_count = 0;
   }
 }
@@ -305,14 +306,14 @@ void Tx2xCheckSampleCount(void)
 void Tx2xResetStat(void)
 {
   DEBUG_SENSOR_LOG(PSTR(D_TX2x_NAME ": reset statistics"));
-  last_uptime = uptime;
+  tx2x_last_uptime = uptime;
   Tx2xResetStatData();
 }
 
 void Tx2xResetStatData(void)
 {
-  tx2x_wind_speed_min = tx2x_wind_speed_kmh;
-  tx2x_wind_speed_max = tx2x_wind_speed_kmh;
+  tx2x_wind_speed_min = tx2x_wind_speed;
+  tx2x_wind_speed_max = tx2x_wind_speed;
 
   tx2x_wind_direction_min = tx2x_wind_direction;
   tx2x_wind_direction_max = tx2x_wind_direction;
@@ -347,11 +348,11 @@ void Tx2xRead(void)
     DEBUG_SENSOR_LOG(PSTR(D_TX2x_NAME ": sa=0x%02lx sb=%ld (0x%02lx), sc=%ld (0x%03lx), sd=0x%02lx, se=%ld, sf=%ld"), tx2x_sa,tx2x_sb,tx2x_sb,tx2x_sc,tx2x_sc,tx2x_sd,tx2x_se,tx2x_sf);
 #endif  // DEBUG_TASMOTA_SENSOR
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
-    if (tx2x_wind_speed_kmh < tx2x_wind_speed_min) {
-      tx2x_wind_speed_min = tx2x_wind_speed_kmh;
+    if (tx2x_wind_speed < tx2x_wind_speed_min) {
+      tx2x_wind_speed_min = tx2x_wind_speed;
     }
-    if (tx2x_wind_speed_kmh > tx2x_wind_speed_max) {
-      tx2x_wind_speed_max = tx2x_wind_speed_kmh;
+    if (tx2x_wind_speed > tx2x_wind_speed_max) {
+      tx2x_wind_speed_max = tx2x_wind_speed;
     }
 
     // exponentially weighted average is not quite as smooth as the arithmetic average
@@ -361,13 +362,13 @@ void Tx2xRead(void)
       tx2x_count++;
     }
     tx2x_wind_speed_avg -= tx2x_wind_speed_avg / tx2x_count;
-    tx2x_wind_speed_avg += tx2x_wind_speed_kmh / tx2x_count;
+    tx2x_wind_speed_avg += float(tx2x_wind_speed) / tx2x_count;
 
     tx2x_wind_direction_avg_x -= tx2x_wind_direction_avg_x / tx2x_count;
-    tx2x_wind_direction_avg_x += cosf((tx2x_wind_direction*22.5) * ff_pi180) / tx2x_count;
+    tx2x_wind_direction_avg_x += cosf((tx2x_wind_direction*22.5) * tx2x_f_pi180) / tx2x_count;
     tx2x_wind_direction_avg_y -= tx2x_wind_direction_avg_y / tx2x_count;
-    tx2x_wind_direction_avg_y += sinf((tx2x_wind_direction*22.5) * ff_pi180) / tx2x_count;
-    tx2x_wind_direction_avg = atan2f(tx2x_wind_direction_avg_y, tx2x_wind_direction_avg_x) * 180.0f / ff_pi;
+    tx2x_wind_direction_avg_y += sinf((tx2x_wind_direction*22.5) * tx2x_f_pi180) / tx2x_count;
+    tx2x_wind_direction_avg = atan2f(tx2x_wind_direction_avg_y, tx2x_wind_direction_avg_x) * 180.0f / tx2x_f_pi;
     if (tx2x_wind_direction_avg<0.0) {
       tx2x_wind_direction_avg += 360.0;
     }
@@ -411,14 +412,14 @@ void Tx2xRead(void)
     }
 
 #ifdef DEBUG_TASMOTA_SENSOR
-    char diravg[33];
+    char diravg[FLOATSZ];
     dtostrfd(tx2x_wind_direction_avg, 1, diravg);
-    char cosx[33];
+    char cosx[FLOATSZ];
     dtostrfd(tx2x_wind_direction_avg_x, 1, cosx);
-    char siny[33];
+    char siny[FLOATSZ];
     dtostrfd(tx2x_wind_direction_avg_y, 1, siny);
     DEBUG_SENSOR_LOG(PSTR(D_TX2x_NAME ": dir stat - counter=%ld, actint=%ld, avgint=%ld, avg=%s (cosx=%s, siny=%s), min %d, max %d"),
-      (uptime-last_uptime),
+      (uptime-tx2x_last_uptime),
       tx2x_wind_direction,
       tx2x_wind_direction_avg_int,
       diravg,
@@ -431,7 +432,7 @@ void Tx2xRead(void)
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
   } else {
     DEBUG_SENSOR_LOG(PSTR(D_TX2x_NAME ": not available"));
-    tx2x_wind_speed_kmh = 0;
+    tx2x_wind_speed = 0;
     tx2x_wind_direction = 0;
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
     tx2x_wind_speed_avg = 0;
@@ -442,7 +443,7 @@ void Tx2xRead(void)
 
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
   Tx2xCheckSampleCount();
-  if (0==Settings.tele_period && (uptime-last_uptime)>=tx2x_avg_samples) {
+  if (0==Settings.tele_period && (uptime-tx2x_last_uptime)>=tx2x_avg_samples) {
     Tx2xResetStat();
   }
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
@@ -450,6 +451,9 @@ void Tx2xRead(void)
 
 void Tx2xInit(void)
 {
+  if (!Settings.flag2.speed_conversion) {
+    Settings.flag2.speed_conversion = 2;  // 0 = none, 1 = m/s, 2 = km/h, 3 = kn, 4 = mph, 5 = ft/s, 6 = yd/s
+  }
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
   tx2x_valuesread = false;
   Tx2xResetStat();
@@ -478,35 +482,37 @@ int32_t Tx2xNormalize(int32_t value)
 
 void Tx2xShow(bool json)
 {
-  char wind_speed_string[17];
-  dtostrfd(tx2x_wind_speed_kmh, 1, wind_speed_string);
-  char wind_direction_string[17];
+  if (!Tx2xAvailable()) { return; }
+
+  char wind_speed_string[FLOATSZ];
+  dtostrfd(ConvertSpeed(tx2x_wind_speed)/10, 1, wind_speed_string);
+  char wind_direction_string[FLOATSZ];
   dtostrfd(tx2x_wind_direction*22.5, 1, wind_direction_string);
-  char wind_direction_cardinal_string[4];
+  char wind_direction_cardinal_string[TX2X_DIRECTIONS_MAXSIZE+1];
   GetTextIndexed(wind_direction_cardinal_string, sizeof(wind_direction_cardinal_string), tx2x_wind_direction, kTx2xDirections);
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
-  char wind_speed_min_string[17];
-  dtostrfd(tx2x_wind_speed_min, 1, wind_speed_min_string);
-  char wind_speed_max_string[17];
-  dtostrfd(tx2x_wind_speed_max, 1, wind_speed_max_string);
-  char wind_speed_avg_string[17];
-  dtostrfd(tx2x_wind_speed_avg, 1, wind_speed_avg_string);
-  char wind_direction_avg_string[17];
+  char wind_speed_min_string[FLOATSZ];
+  dtostrfd(ConvertSpeed(tx2x_wind_speed_min)/10, 1, wind_speed_min_string);
+  char wind_speed_max_string[FLOATSZ];
+  dtostrfd(ConvertSpeed(tx2x_wind_speed_max)/10, 1, wind_speed_max_string);
+  char wind_speed_avg_string[FLOATSZ];
+  dtostrfd(ConvertSpeed(tx2x_wind_speed_avg)/10, 1, wind_speed_avg_string);
+  char wind_direction_avg_string[FLOATSZ];
   dtostrfd(tx2x_wind_direction_avg, 1, wind_direction_avg_string);
   char wind_direction_avg_cardinal_string[4];
   GetTextIndexed(wind_direction_avg_cardinal_string, sizeof(wind_direction_avg_cardinal_string), int((tx2x_wind_direction_avg/22.5f)+0.5f) % 16, kTx2xDirections);
-  char wind_direction_range_string[17];
+  char wind_direction_range_string[FLOATSZ];
   dtostrfd(Tx2xNormalize(tx2x_wind_direction_max-tx2x_wind_direction_min)*22.5, 1, wind_direction_range_string);
-  char wind_direction_min_string[17];
+  char wind_direction_min_string[FLOATSZ];
   dtostrfd(Tx2xNormalize(tx2x_wind_direction_min)*22.5, 1, wind_direction_min_string);
-  char wind_direction_max_string[17];
+  char wind_direction_max_string[FLOATSZ];
   dtostrfd(Tx2xNormalize(tx2x_wind_direction_max)*22.5, 1, wind_direction_max_string);
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
 
   if (json) {
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
 #ifdef USE_TX2x_LEGACY_JSON
-    ResponseAppend_P(Tx2xAvailable()?PSTR(",\"" D_TX2x_NAME "\":{\"Speed\":%s,\"SpeedAvg\":%s,\"SpeedMax\":%s,\"Direction\":\"%s\",\"Degree\":%s}"):PSTR(""),
+    ResponseAppend_P(PSTR(",\"" D_TX2x_NAME "\":{\"" D_JSON_SPEED "\":%s,\"SpeedAvg\":%s,\"SpeedMax\":%s,\"Direction\":\"%s\",\"Degree\":%s}"),
       wind_speed_string,
       wind_speed_avg_string,
       wind_speed_max_string,
@@ -514,7 +520,7 @@ void Tx2xShow(bool json)
       wind_direction_string
     );
 #else  // USE_TX2x_LEGACY_JSON
-    ResponseAppend_P(Tx2xAvailable()?PSTR(",\"" D_TX2x_NAME "\":{\"Speed\":{\"Act\":%s,\"Avg\":%s,\"Min\":%s,\"Max\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s,\"Avg\":%s,\"AvgCard\":\"%s\",\"Min\":%s,\"Max\":%s,\"Range\":%s}}"):PSTR(""),
+    ResponseAppend_P(PSTR(",\"" D_TX2x_NAME "\":{\"" D_JSON_SPEED "\":{\"Act\":%s,\"Avg\":%s,\"Min\":%s,\"Max\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s,\"Avg\":%s,\"AvgCard\":\"%s\",\"Min\":%s,\"Max\":%s,\"Range\":%s}}"),
       wind_speed_string,
       wind_speed_avg_string,
       wind_speed_min_string,
@@ -530,23 +536,25 @@ void Tx2xShow(bool json)
 #endif  // USE_TX2x_LEGACY_JSON
 #else  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
 #ifdef USE_TX2x_LEGACY_JSON
-    ResponseAppend_P(Tx2xAvailable()?PSTR(",\"" D_TX2x_NAME "\":{\"Speed\":%s,\"Direction\":\"%s\",\"Degree\":%s}"):PSTR(""),
+    ResponseAppend_P(PSTR(",\"" D_TX2x_NAME "\":{\"" D_JSON_SPEED "\":%s,\"Direction\":\"%s\",\"Degree\":%s}"),
       wind_speed_string, wind_direction_cardinal_string, wind_direction_string);
 #else  // USE_TX2x_LEGACY_JSON
-    ResponseAppend_P(Tx2xAvailable()?PSTR(",\"" D_TX2x_NAME "\":{\"Speed\":{\"Act\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s}}"):PSTR(""),
+    ResponseAppend_P(PSTR(",\"" D_TX2x_NAME "\":{\"" D_JSON_SPEED "\":{\"Act\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s}}"),
       wind_speed_string, wind_direction_cardinal_string, wind_direction_string);
 #endif  // USE_TX2x_LEGACY_JSON
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
-
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(
-      Tx2xAvailable()?HTTP_SNS_TX2X:PSTR(""),
+    WSContentSend_PD(HTTP_SNS_TX2X,
       wind_speed_string,
+      SpeedUnit().c_str(),
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
       wind_speed_avg_string,
+      SpeedUnit().c_str(),
       wind_speed_min_string,
+      SpeedUnit().c_str(),
       wind_speed_max_string,
+      SpeedUnit().c_str(),
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
       wind_direction_cardinal_string,
       wind_direction_string
