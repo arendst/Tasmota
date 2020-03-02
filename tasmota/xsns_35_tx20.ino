@@ -79,6 +79,7 @@ extern "C" {
 #ifdef USE_WEBSERVER
 #define D_TX20_WIND_AVG "&empty;"
 #define D_TX20_WIND_ANGLE "&ang;"
+#define D_TX20_WIND_DEGREE "&deg;"
 const char HTTP_SNS_TX2X[] PROGMEM =
    "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
@@ -86,10 +87,10 @@ const char HTTP_SNS_TX2X[] PROGMEM =
    "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED_MIN "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
    "{s}" D_TX2x_NAME " " D_TX20_WIND_SPEED_MAX "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
-   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION "{m}%s %s&deg;{e}"
+   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION "{m}%s %s" D_TX20_WIND_DEGREE "{e}"
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
-   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION " " D_TX20_WIND_AVG "{m}%s %s&deg;{e}"
-   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION " " D_TX20_WIND_ANGLE "{m}%s&deg; (%s&deg;,%s&deg;)";
+   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION " " D_TX20_WIND_AVG "{m}%s %s" D_TX20_WIND_DEGREE "{e}"
+   "{s}" D_TX2x_NAME " " D_TX20_WIND_DIRECTION " " D_TX20_WIND_ANGLE "{m}%s" D_TX20_WIND_DEGREE " (%s,%s)" D_TX20_WIND_DEGREE;
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
    ;
 #endif  // USE_WEBSERVER
@@ -514,7 +515,7 @@ void Tx2xShow(bool json)
       wind_direction_string
     );
 #else  // USE_TX2x_LEGACY_JSON
-    ResponseAppend_P(Tx2xAvailable()?PSTR(",\"" D_TX2x_NAME "\":{\"Speed\":{\"Act\":%s,\"Avg\":%s,\"Min\":%s,\"Max\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s,\"Avg\":%s,\"AvgCard\":\"%s\",\"Min\":%s,\"Max\":%s,\"Range\":%s}}"):PSTR(""),
+    ResponseAppend_P(Tx2xAvailable()?PSTR(",\"" D_TX2x_NAME "\":{\"Speed\":{\"Act\":%s,\"Avg\":%s,\"Min\":%s,\"Max\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s,\"Avg\":%s,\"AvgCard\":\"%s\",\"Min\":%s,\"Max\":%s,\"Range\":%s}},\"SpeedUnit\":\"km/h\""):PSTR(""),
       wind_speed_string,
       wind_speed_avg_string,
       wind_speed_min_string,
@@ -533,7 +534,7 @@ void Tx2xShow(bool json)
     ResponseAppend_P(Tx2xAvailable()?PSTR(",\"" D_TX2x_NAME "\":{\"Speed\":%s,\"Direction\":\"%s\",\"Degree\":%s}"):PSTR(""),
       wind_speed_string, wind_direction_cardinal_string, wind_direction_string);
 #else  // USE_TX2x_LEGACY_JSON
-    ResponseAppend_P(Tx2xAvailable()?PSTR(",\"" D_TX2x_NAME "\":{\"Speed\":{\"Act\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s}}"):PSTR(""),
+    ResponseAppend_P(Tx2xAvailable()?PSTR(",\"" D_TX2x_NAME "\":{\"Speed\":{\"Act\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s}},\"SpeedUnit\":\"km/h\""):PSTR(""),
       wind_speed_string, wind_direction_cardinal_string, wind_direction_string);
 #endif  // USE_TX2x_LEGACY_JSON
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
