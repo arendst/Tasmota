@@ -991,6 +991,7 @@ void HandleWifiLogin(void)
   WSContentStop();
 }
 
+#ifdef USE_LIGHT
 void WebSliderColdWarm(void)
 {
   WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Cold Warm
@@ -1001,6 +1002,7 @@ void WebSliderColdWarm(void)
     LightGetColorTemp(),
     't', 0);         // t0 - Value id releated to lc("t0", value) and WebGetArg("t0", tmp, sizeof(tmp));
 }
+#endif  // USE_LIGHT
 
 void HandleRoot(void)
 {
