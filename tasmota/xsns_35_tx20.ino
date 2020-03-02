@@ -95,9 +95,9 @@ const char HTTP_SNS_TX2X[] PROGMEM =
 #endif  // USE_WEBSERVER
 
 // float saves 48 byte
-float const ff_pi           = 3.1415926535897932384626433;  // Pi
-float const ff_halfpi       = ff_pi / 2.0;
-float const ff_pi180        = ff_pi / 180.0;
+float const tx2x_f_pi           = 3.1415926535897932384626433;  // Pi
+float const tx2x_f_halfpi       = tx2x_f_pi / 2.0;
+float const tx2x_f_pi180        = tx2x_f_pi / 180.0;
 
 const char kTx2xDirections[] PROGMEM = D_TX20_NORTH "|"
                                        D_TX20_NORTH D_TX20_NORTH D_TX20_EAST "|"
@@ -131,7 +131,7 @@ int32_t tx2x_wind_direction_max = 0;
 
 uint32_t tx2x_count = 0;
 uint32_t tx2x_avg_samples;
-uint32_t last_uptime = 0;
+uint32_t tx2x_last_uptime = 0;
 bool tx2x_valuesread = false;
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
 
@@ -143,7 +143,7 @@ uint32_t tx2x_sd = 0;
 uint32_t tx2x_se = 0;
 uint32_t tx2x_sf = 0;
 #endif  // DEBUG_TASMOTA_SENSOR
-uint32_t last_available = 0;
+uint32_t tx2x_last_available = 0;
 
 #ifdef USE_TX23_WIND_SENSOR
 uint32_t tx23_stage = 0;
@@ -237,7 +237,7 @@ void TX2xStartRead(void)
       // check checksum, start frame,non-inverted==inverted values and max. speed
       ;
       if ((chk == tx2x_sd) && (0x1b==tx2x_sa) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511)) {
-        last_available = uptime;
+        tx2x_last_available = uptime;
         // Wind speed spec: 0 to 180 km/h (0 to 50 m/s)
         tx2x_wind_speed_kmh = float(tx2x_sc) * 0.36;
         tx2x_wind_direction = tx2x_sb;
@@ -263,7 +263,7 @@ void TX2xStartRead(void)
 
 bool Tx2xAvailable(void)
 {
-  return ((uptime - last_available) < TX2X_TIMEOUT);
+  return ((uptime - tx2x_last_available) < TX2X_TIMEOUT);
 }
 
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
@@ -273,13 +273,13 @@ float atan2f(float a, float b)
     if (b > 0) {
         atan2val = atanf(a/b);
     } else if ((b < 0) && (a >= 0)) {
-        atan2val = atanf(a/b) + ff_pi;
+        atan2val = atanf(a/b) + tx2x_f_pi;
     } else if ((b < 0) && (a < 0)) {
-        atan2val = atanf(a/b) - ff_pi;
+        atan2val = atanf(a/b) - tx2x_f_pi;
     } else if ((b == 0) && (a > 0)) {
-        atan2val = ff_halfpi;
+        atan2val = tx2x_f_halfpi;
     } else if ((b == 0) && (a < 0)) {
-        atan2val = 0 - (ff_halfpi);
+        atan2val = 0 - (tx2x_f_halfpi);
     } else if ((b == 0) && (a == 0)) {
         atan2val = 1000;               //represents undefined
     }
@@ -305,7 +305,7 @@ void Tx2xCheckSampleCount(void)
 void Tx2xResetStat(void)
 {
   DEBUG_SENSOR_LOG(PSTR(D_TX2x_NAME ": reset statistics"));
-  last_uptime = uptime;
+  tx2x_last_uptime = uptime;
   Tx2xResetStatData();
 }
 
@@ -364,10 +364,10 @@ void Tx2xRead(void)
     tx2x_wind_speed_avg += tx2x_wind_speed_kmh / tx2x_count;
 
     tx2x_wind_direction_avg_x -= tx2x_wind_direction_avg_x / tx2x_count;
-    tx2x_wind_direction_avg_x += cosf((tx2x_wind_direction*22.5) * ff_pi180) / tx2x_count;
+    tx2x_wind_direction_avg_x += cosf((tx2x_wind_direction*22.5) * tx2x_f_pi180) / tx2x_count;
     tx2x_wind_direction_avg_y -= tx2x_wind_direction_avg_y / tx2x_count;
-    tx2x_wind_direction_avg_y += sinf((tx2x_wind_direction*22.5) * ff_pi180) / tx2x_count;
-    tx2x_wind_direction_avg = atan2f(tx2x_wind_direction_avg_y, tx2x_wind_direction_avg_x) * 180.0f / ff_pi;
+    tx2x_wind_direction_avg_y += sinf((tx2x_wind_direction*22.5) * tx2x_f_pi180) / tx2x_count;
+    tx2x_wind_direction_avg = atan2f(tx2x_wind_direction_avg_y, tx2x_wind_direction_avg_x) * 180.0f / tx2x_f_pi;
     if (tx2x_wind_direction_avg<0.0) {
       tx2x_wind_direction_avg += 360.0;
     }
@@ -418,7 +418,7 @@ void Tx2xRead(void)
     char siny[33];
     dtostrfd(tx2x_wind_direction_avg_y, 1, siny);
     DEBUG_SENSOR_LOG(PSTR(D_TX2x_NAME ": dir stat - counter=%ld, actint=%ld, avgint=%ld, avg=%s (cosx=%s, siny=%s), min %d, max %d"),
-      (uptime-last_uptime),
+      (uptime-tx2x_last_uptime),
       tx2x_wind_direction,
       tx2x_wind_direction_avg_int,
       diravg,
@@ -442,7 +442,7 @@ void Tx2xRead(void)
 
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
   Tx2xCheckSampleCount();
-  if (0==Settings.tele_period && (uptime-last_uptime)>=tx2x_avg_samples) {
+  if (0==Settings.tele_period && (uptime-tx2x_last_uptime)>=tx2x_avg_samples) {
     Tx2xResetStat();
   }
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
