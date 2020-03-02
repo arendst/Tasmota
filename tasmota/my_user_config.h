@@ -630,6 +630,7 @@
 // Select none or only one of the below defines
 //#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k6/0k8 code)
 //#define USE_TX23_WIND_SENSOR                     // Add support for La Crosse TX23 anemometer (+2k7/1k code)
+  //#define USE_TX2x_WIND_SPEED_UNIT 0             // TX2x default speed unit (0 = km/h, 1 = m/s, 2 = kn, 3 = mph, 4 = ft/s, 5 = yd/s)
 
 //#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
 
