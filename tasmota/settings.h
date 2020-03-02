@@ -140,10 +140,8 @@ typedef union {
   uint32_t data;                           // Allow bit manipulation
   struct {
     uint32_t spare00 : 1;
-    uint32_t spare01 : 1;
-    uint32_t spare02 : 1;
-    uint32_t spare03 : 1;
-    uint32_t time_format : 2;              // (v6.6.0.9) - CMND_TIME
+    uint32_t speed_conversion : 3;         // (v8.1.0.10) - Tx2x sensor
+    uint32_t time_format : 2;              // (v6.6.0.9)  - CMND_TIME
     uint32_t calc_resolution : 3;
     uint32_t weight_resolution : 2;
     uint32_t frequency_resolution : 2;
