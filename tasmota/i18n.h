@@ -139,6 +139,8 @@
 #define D_JSON_SERIALRECEIVED "SerialReceived"
 #define D_JSON_SET "Set"
 #define D_JSON_SIGNAL "Signal"
+#define D_JSON_SPEED "Speed"
+#define D_JSON_SPEED_UNIT "SpeedUnit"
 #define D_JSON_SSID "SSId"
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
@@ -287,6 +289,7 @@
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_LEDMASK "LedMask"
 #define D_CMND_WIFIPOWER "WifiPower"
+#define D_CMND_SPEEDUNIT "SpeedUnit"
 #define D_CMND_I2CSCAN "I2CScan"
 #define D_CMND_I2CDRIVER "I2CDriver"
 #define D_CMND_DEVGROUP_SHARE "DevGroupShare"
@@ -646,6 +649,16 @@ const char S_OFFLINE[] PROGMEM = D_OFFLINE;
 
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;
+
+const char kSpeedUnit[] PROGMEM = "|m/s|km/h|kn|mph|ft/s|yd/s";
+const float kSpeedConversionFactor[] = {1,            // none
+                                        1,            // m/s
+                                        3.6,          // km/h
+                                        1.943844492,  // kn
+                                        2.236936292,  // mph
+                                        3.280839895,  // ft/s
+                                        1.093613298   // yd/s
+                                       };
 
 // xdrv_02_webserver.ino
 #ifdef USE_WEBSERVER

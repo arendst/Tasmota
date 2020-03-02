@@ -289,8 +289,8 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     str_value = (*obj)[rule_name];                     // "CURRENT"
   }
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
-//    rule_task.c_str(), rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
+//  rule_task.c_str(), rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
 
   Rules.event_value = str_value;                       // Prepare %value%
 
@@ -330,6 +330,9 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     }
   } else match = true;
 
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match 1 %d"), match);
+
+
   if (bitRead(Settings.rule_once, rule_set)) {
     if (match) {                                       // Only allow match state changes
       if (!bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set])) {
@@ -341,6 +344,8 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
       bitClear(Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
     }
   }
+
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match 2 %d"), match);
 
   return match;
 }

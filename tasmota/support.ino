@@ -641,6 +641,18 @@ String PressureUnit(void)
   return (Settings.flag.pressure_conversion) ? String(D_UNIT_MILLIMETER_MERCURY) : String(D_UNIT_PRESSURE);
 }
 
+float ConvertSpeed(float s)
+{
+  // Entry in m/s
+  return s * kSpeedConversionFactor[Settings.flag2.speed_conversion];
+}
+
+String SpeedUnit(void)
+{
+  char speed[8];
+  return String(GetTextIndexed(speed, sizeof(speed), Settings.flag2.speed_conversion, kSpeedUnit));
+}
+
 void ResetGlobalValues(void)
 {
   if ((uptime - global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
