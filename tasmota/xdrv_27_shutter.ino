@@ -34,7 +34,7 @@ uint16_t messwerte[5] = {30,50,70,90,100};
 uint16_t last_execute_step;
 
 enum ShutterModes { SHT_OFF_OPEN__OFF_CLOSE, SHT_OFF_ON__OPEN_CLOSE, SHT_PULSE_OPEN__PULSE_CLOSE, SHT_OFF_ON__OPEN_CLOSE_STEPPER,};
-enum ShutterButtonStates { SHT_NOT_PRESSED, SHT_PRESSED_MULTI, SHT_PRESSED_HOLD, SHT_PRESSED_IMMEDIATE, SHT_PRESSED_MULTI_SIMULTANEOUS, SHT_PRESSED_HOLD_SIMULTANEOUS, SHT_PRESSED_EXT_HOLD_SIMULTANEOUS,};
+enum ShutterButtonStates { SHT_NOT_PRESSED, SHT_PRESSED_MULTI, SHT_PRESSED_HOLD, SHT_PRESSED_IMMEDIATE, SHT_PRESSED_EXT_HOLD, SHT_PRESSED_MULTI_SIMULTANEOUS, SHT_PRESSED_HOLD_SIMULTANEOUS, SHT_PRESSED_EXT_HOLD_SIMULTANEOUS,};
 
 const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_OPEN "|" D_CMND_SHUTTER_CLOSE "|" D_CMND_SHUTTER_STOP "|" D_CMND_SHUTTER_POSITION  "|"
@@ -520,12 +520,12 @@ void ShutterRelayChanged(void)
 
 bool ShutterButtonIsSimultaneousHold(uint32_t button_index, uint32_t shutter_index) {
   // check for simultaneous shutter button hold
-  uint32 min_shutterbutton_hold_timer = -1;
+  uint32 min_shutterbutton_hold_timer = -1; // -1 == max(uint32)
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
-    if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index) && (Button.hold_timer[i] < min_shutterbutton_hold_timer))
+    if ((button_index != i) && (Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index) && (Button.hold_timer[i] < min_shutterbutton_hold_timer))
       min_shutterbutton_hold_timer = Button.hold_timer[i];
   }
-  return (min_shutterbutton_hold_timer > (Button.hold_timer[button_index]>>1));
+  return ((-1 != min_shutterbutton_hold_timer) && (min_shutterbutton_hold_timer > (Button.hold_timer[button_index]>>1)));
 }
 
 void ShutterButtonHandler(void)
@@ -535,8 +535,8 @@ void ShutterButtonHandler(void)
   uint8_t press_index;
   uint32_t button_index = XdrvMailbox.index;
   uint8_t shutter_index = Settings.shutter_button[button_index] & 0x03;
-
   uint16_t loops_per_second = 1000 / Settings.button_debounce;  // ButtonDebounce (50)
+
   if ((PRESSED == button) && (NOT_PRESSED == Button.last_state[button_index])) {
     if (Settings.flag.button_single) {                   // SetOption13 (0) - Allow only single button press for immediate action
         buttonState = SHT_PRESSED_MULTI;
@@ -582,11 +582,13 @@ void ShutterButtonHandler(void)
         Button.press_counter[button_index] = 0;
       }
       if ((Button.press_counter[button_index]==0) && (Button.hold_timer[button_index] == loops_per_second * IMMINENT_RESET_FACTOR * Settings.param[P_HOLD_TIME] / 10)) {  // SetOption32 (40) - Button held for factor times longer
+        press_index = -1;
         // check for simultaneous shutter button extend hold
         if (ShutterButtonIsSimultaneousHold(button_index, shutter_index)) {
           // simultaneous shutter button extend hold detected
-          press_index = 0;
           buttonState = SHT_PRESSED_EXT_HOLD_SIMULTANEOUS;
+        } else {
+          buttonState = SHT_PRESSED_EXT_HOLD;
         }
       }
     }
@@ -599,14 +601,13 @@ void ShutterButtonHandler(void)
       if (!restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0)) {
         if (Button.press_counter[button_index]<99) {
           // check for simultaneous shutter button press
-          uint32 min_shutterbutton_press_counter = -1;
+          uint32 min_shutterbutton_press_counter = -1; // -1 == max(uint32)
           for (uint32_t i = 0; i < MAX_KEYS; i++) {
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Settings.shutter_button[i] %ld, shutter_index %d, Button.press_counter[i] %d, min_shutterbutton_press_counter %d, i %d"), Settings.shutter_button[i], shutter_index, Button.press_counter[i] , min_shutterbutton_press_counter, i);
-            if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index) && (i != button_index) && (Button.press_counter[i] < min_shutterbutton_press_counter)) {
+            if ((button_index != i) && (Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index) && (i != button_index) && (Button.press_counter[i] < min_shutterbutton_press_counter)) {
               min_shutterbutton_press_counter = Button.press_counter[i];
               AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: min_shutterbutton_press_counter %d"), min_shutterbutton_press_counter);
             }
-
           }
           if (min_shutterbutton_press_counter == Button.press_counter[button_index]) {
             // simultaneous shutter button press detected
@@ -628,23 +629,32 @@ void ShutterButtonHandler(void)
     }
   }
 
- if (buttonState != SHT_NOT_PRESSED) {
-   if (buttonState == SHT_PRESSED_MULTI_SIMULTANEOUS) {
-     if ((press_index>=5) && (press_index<=7) && (!Settings.flag.button_restrict)) { // 5x..7x && no SetOption1 (0)
-       // simultaneous shutter button press 5x, 6x, 7x detected
-       char scmnd[20];
-       GetTextIndexed(scmnd, sizeof(scmnd), press_index -3, kCommands);
-       ExecuteCommand(scmnd, SRC_BUTTON);
-       return;
-     }
-   } else if (buttonState == SHT_PRESSED_EXT_HOLD_SIMULTANEOUS) {
-     if (!Settings.flag.button_restrict) { // no SetOption1 (0)
-       char scmnd[20];
-       snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
-       ExecuteCommand(scmnd, SRC_BUTTON);
-       return;
-     }
-   } else if (buttonState <= SHT_PRESSED_IMMEDIATE) {
+  if (buttonState != SHT_NOT_PRESSED) {
+    if ((!Settings.flag.button_restrict) && (((press_index>=5) && (press_index<=7)) || (buttonState == SHT_PRESSED_EXT_HOLD) || (buttonState == SHT_PRESSED_EXT_HOLD_SIMULTANEOUS))){
+      // check number of buttons for this shutter
+      uint8_t shutter_index_num_buttons = 0;
+      for (uint32_t i = 0; i < MAX_KEYS; i++) {
+        if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index)) {
+          shutter_index_num_buttons++;
+        }
+      }
+      if ((buttonState == SHT_PRESSED_MULTI_SIMULTANEOUS) || ((shutter_index_num_buttons==1) && (buttonState == SHT_PRESSED_MULTI))){
+        // 5x..7x && no SetOption1 (0) checked above
+        // simultaneous or stand alone button press 5x, 6x, 7x detected
+        char scmnd[20];
+        GetTextIndexed(scmnd, sizeof(scmnd), press_index -3, kCommands);
+        ExecuteCommand(scmnd, SRC_BUTTON);
+        return;
+      } else if ((buttonState == SHT_PRESSED_EXT_HOLD_SIMULTANEOUS) || ((shutter_index_num_buttons==1) && (buttonState == SHT_PRESSED_EXT_HOLD))){
+        // no SetOption1 (0) checked above
+        // simultaneous or stand alone button extended hold detected
+        char scmnd[20];
+        snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
+        ExecuteCommand(scmnd, SRC_BUTTON);
+        return;
+      }
+    }
+    if (buttonState <= SHT_PRESSED_IMMEDIATE) {
       if (Settings.shutter_startrelay[shutter_index] && Settings.shutter_startrelay[shutter_index] <9) {
         uint8_t pos_press_index = (buttonState == SHT_PRESSED_HOLD) ? 3 : (press_index-1);
         if (pos_press_index>3) pos_press_index=3;
@@ -686,7 +696,7 @@ void ShutterButtonHandler(void)
       } // if   if (Settings.shutter_startrelay[shutter_index]
     }
     Response_P(PSTR("{"));
-    ResponseAppend_P(JSON_SHUTTER_BUTTON, shutter_index+1, (buttonState <= SHT_PRESSED_IMMEDIATE) ? (button_index+1) : 0, press_index);
+    ResponseAppend_P(JSON_SHUTTER_BUTTON, shutter_index+1, (buttonState <= SHT_PRESSED_EXT_HOLD) ? (button_index+1) : 0, press_index);
     ResponseJsonEnd();
     MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
     XdrvRulesProcess();
