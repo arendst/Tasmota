@@ -548,7 +548,8 @@ void ShutterButtonHandler(void)
         Button.press_counter[button_index] = 99; // Remember to discard further action for press & hold within button timings
       } else {
         Button.press_counter[button_index] = (Button.window_timer[button_index]) ? Button.press_counter[button_index] +1 : 1;
-        Button.window_timer[button_index] = loops_per_second / 2;  // 0.5 second multi press window
+        // Button.window_timer[button_index] = (Button.press_counter[button_index]==1) ? loops_per_second / 2 : loops_per_second;  // 0.5 second multi press window after 1st press, 1s afterwards
+        Button.window_timer[button_index] = (loops_per_second >> 2) * 3; // 0.75 second multi press window 
       }
     }
     blinks = 201;
