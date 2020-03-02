@@ -1767,6 +1767,10 @@ void LightAnimate(void)
       Light.update = true;
     }
     if (Light.update) {
+#ifdef USE_DEVICE_GROUPS
+      if (Light.power) LightSendDeviceGroupStatus();
+#endif  // USE_DEVICE_GROUPS
+
       uint16_t cur_col_10[LST_MAX];   // 10 bits resolution
       Light.update = false;
 
@@ -2077,6 +2081,89 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
   }
 }
 
+#ifdef USE_DEVICE_GROUPS
+void LightSendDeviceGroupStatus()
+{
+  uint8_t channels[LST_MAX];
+  light_state.getChannels(channels);
+  SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme, DGR_ITEM_LIGHT_CHANNELS, channels,
+    DGR_ITEM_LIGHT_BRI, (power ? light_state.getBri() : 0));
+}
+
+void LightHandleDeviceGroupRequest()
+{
+  static bool send_state = false;
+  uint32_t value = XdrvMailbox.payload;
+  switch (XdrvMailbox.command_code) {
+    case DGR_ITEM_EOL:
+      LightAnimate();
+      if (send_state && !(XdrvMailbox.index & DGR_FLAG_MORE_TO_COME)) {
+        light_controller.saveSettings();
+        if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+          MqttPublishTeleState();
+        }
+        send_state = false;
+      }
+      break;
+    case DGR_ITEM_LIGHT_BRI:
+      if (light_state.getBri() != value) {
+        light_controller.changeBri(value);
+        send_state = true;
+      }
+      break;
+    case DGR_ITEM_LIGHT_SCHEME:
+      if (Settings.light_scheme != value) {
+        Settings.light_scheme = value;
+        send_state = true;
+      }
+      break;
+    case DGR_ITEM_LIGHT_CHANNELS:
+      light_controller.changeChannels((uint8_t *)XdrvMailbox.data);
+      send_state = true;
+      break;
+    case DGR_ITEM_LIGHT_FIXED_COLOR:
+      {
+        struct XDRVMAILBOX save_XdrvMailbox;
+        power_t save_power = Light.power;
+
+        if (value) {
+          bool save_decimal_text = Settings.flag.decimal_text;
+          char str[16];
+          XdrvMailbox.index = 2;
+          XdrvMailbox.data_len = sprintf_P(str, PSTR("%u"), value);
+          XdrvMailbox.data = str;
+          CmndSupportColor();
+          Settings.flag.decimal_text = save_decimal_text;
+        }
+        else {
+          Light.fixed_color_index = 0;
+          XdrvMailbox.index = 1;
+          XdrvMailbox.payload = light_state.BriToDimmer(light_state.getBri());
+          CmndWhite();
+        }
+        if (Light.power != save_power) {
+          XdrvMailbox.index = save_power;
+          LightSetPower();
+        }
+        XdrvMailbox = save_XdrvMailbox;
+        send_state = true;
+      }
+      break;
+    case DGR_ITEM_LIGHT_SPEED:
+      if (Settings.light_speed != value && value > 0 && value <= 40) {
+        Settings.light_speed = value;
+        send_state = true;
+      }
+      break;
+    case DGR_ITEM_STATUS:
+      SendLocalDeviceGroupMessage(DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade,
+        DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
+      LightSendDeviceGroupStatus();
+      break;
+  }
+}
+#endif  // USE_DEVICE_GROUPS
+
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -2339,6 +2426,9 @@ void CmndScheme(void)
         Light.wheel = parm[1];
       }
       Settings.light_scheme = XdrvMailbox.payload;
+#ifdef USE_DEVICE_GROUPS
+      SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
+#endif  // USE_DEVICE_GROUPS
       if (LS_WAKEUP == Settings.light_scheme) {
         Light.wakeup_active = 3;
       }
@@ -2439,6 +2529,8 @@ void CmndDimmer(void)
   }
 }
 
+#endif  // USE_LIGHT
+#if defined(USE_LIGHT) || defined(USE_PWM_DIMMER)
 void CmndDimmerRange(void)
 {
   // DimmerRange       - Show current dimmer range as used by Tuya and PS16DZ Dimmers
@@ -2455,10 +2547,15 @@ void CmndDimmerRange(void)
       Settings.dimmer_hw_min = parm[1];
       Settings.dimmer_hw_max = parm[0];
     }
-    restart_flag = 2;
+#ifdef USE_DEVICE_GROUPS
+    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_DIMMER_RANGE, Settings.dimmer_hw_min | Settings.dimmer_hw_max << 16);
+#endif  // USE_DEVICE_GROUPS
+    if (PWM_DIMMER != my_module_type) restart_flag = 2;
   }
   Response_P(PSTR("{\"" D_CMND_DIMMER_RANGE "\":{\"Min\":%d,\"Max\":%d}}"), Settings.dimmer_hw_min, Settings.dimmer_hw_max);
 }
+#endif  // #if defined(USE_LIGHT) || defined(USE_PWM_DIMMER)
+#ifdef USE_LIGHT
 
 void CmndLedTable(void)
 {
@@ -2501,6 +2598,8 @@ void CmndRgbwwTable(void)
   ResponseCmndChar(scolor);
 }
 
+#endif  // USE_LIGHT
+#if defined(USE_LIGHT) || defined(USE_PWM_DIMMER)
 void CmndFade(void)
 {
   // Fade        - Show current Fade state
@@ -2516,7 +2615,12 @@ void CmndFade(void)
     Settings.light_fade ^= 1;
     break;
   }
+#ifdef USE_DEVICE_GROUPS
+  if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
+#endif  // USE_DEVICE_GROUPS
+#ifdef USE_LIGHT
   if (!Settings.light_fade) { Light.fade_running = false; }
+#endif  // USE_LIGHT
   ResponseCmndStateText(Settings.light_fade);
 }
 
@@ -2536,9 +2640,14 @@ void CmndSpeed(void)
   }
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 40)) {
     Settings.light_speed = XdrvMailbox.payload;
+#ifdef USE_DEVICE_GROUPS
+    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
+#endif  // USE_DEVICE_GROUPS
   }
   ResponseCmndNumber(Settings.light_speed);
 }
+#endif  // #if defined(USE_LIGHT) || defined(USE_PWM_DIMMER)
+#ifdef USE_LIGHT
 
 void CmndWakeupDuration(void)
 {
@@ -2571,7 +2680,10 @@ bool Xdrv04(uint8_t function)
   bool result = false;
 
   if (FUNC_MODULE_INIT == function) {
-    return LightModuleInit();
+#ifdef USE_PWM_DIMMER
+    if (PWM_DIMMER != my_module_type)
+#endif  // USE_PWM_DIMMER
+      return LightModuleInit();
   }
   else if (light_type) {
     switch (function) {
@@ -2588,6 +2700,11 @@ bool Xdrv04(uint8_t function)
       case FUNC_EVERY_50_MSECOND:
         LightAnimate();
         break;
+#ifdef USE_DEVICE_GROUPS
+      case FUNC_DEVICE_GROUP_REQUEST:
+        LightHandleDeviceGroupRequest();
+        break;
+#endif  // USE_DEVICE_GROUPS
       case FUNC_SET_POWER:
         LightSetPower();
         break;

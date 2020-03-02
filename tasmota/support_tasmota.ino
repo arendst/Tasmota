@@ -541,6 +541,9 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
     case POWER_TOGGLE:
       power ^= mask;
     }
+#ifdef USE_DEVICE_GROUPS
+    if (SRC_REMOTE != source && SRC_RETRY != source) SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, power);
+#endif  // USE_DEVICE_GROUPS
     SetDevicePower(power, source);
 #ifdef USE_DOMOTICZ
     DomoticzUpdatePowerState(device);
@@ -637,6 +640,12 @@ void MqttShowState(void)
         break;
       }
 #endif  // USE_SONOFF_IFAN
+#ifdef USE_PWM_DIMMER
+      if (PWM_DIMMER == my_module_type) {
+        ResponseAppend_P(PSTR(",\"" D_CMND_DIMMER "\":%d,\"" D_CMND_FADE "\":\"%s\",\"" D_CMND_SPEED "\":%d"),
+          Settings.light_dimmer, GetStateText(Settings.light_fade), Settings.light_speed);
+      }
+#endif  // USE_PWM_DIMMER
 #ifdef USE_LIGHT
     }
 #endif
@@ -686,6 +695,9 @@ bool MqttShowSensor(void)
   }
   if (strstr_P(mqtt_data, PSTR(D_JSON_TEMPERATURE)) != nullptr) {
     ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
+  }
+  if ((strstr_P(mqtt_data, PSTR(D_JSON_SPEED)) != nullptr) && Settings.flag2.speed_conversion) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_SPEED_UNIT "\":\"%s\""), SpeedUnit().c_str());
   }
   ResponseJsonEnd();
 
@@ -778,6 +790,7 @@ void PerformEverySecond(void)
 #endif  // USE_RULES
         }
 
+        XsnsCall(FUNC_AFTER_TELEPERIOD);
         XdrvCall(FUNC_AFTER_TELEPERIOD);
       }
     }

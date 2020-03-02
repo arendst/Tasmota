@@ -991,6 +991,7 @@ void HandleWifiLogin(void)
   WSContentStop();
 }
 
+#ifdef USE_LIGHT
 void WebSliderColdWarm(void)
 {
   WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Cold Warm
@@ -1001,6 +1002,7 @@ void WebSliderColdWarm(void)
     LightGetColorTemp(),
     't', 0);         // t0 - Value id releated to lc("t0", value) and WebGetArg("t0", tmp, sizeof(tmp));
 }
+#endif  // USE_LIGHT
 
 void HandleRoot(void)
 {
@@ -1123,6 +1125,17 @@ void HandleRoot(void)
       }  // Settings.flag3.pwm_multi_channels
     }
 #endif // USE_LIGHT
+#ifdef USE_PWM_DIMMER
+    if (PWM_DIMMER == my_module_type) {
+      WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Brightness - Black to White
+        "c",               // c - Unique HTML id
+        "#000", "#fff",    // Black to White
+        4,                 // sl4 - Unique range HTML id - Used as source for Saturation begin color
+        Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100%
+        Settings.light_dimmer,
+        'd', 0);           // d0 - Value id is related to lc("d0", value) and WebGetArg("d0", tmp, sizeof(tmp));
+    }
+#endif  // USE_PWM_DIMMER
 #ifdef USE_SHUTTER
     if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
       for (uint32_t i = 0; i < shutters_present; i++) {
@@ -1882,6 +1895,7 @@ void HandleOtherConfiguration(void)
   }
 
 #ifdef USE_EMULATION
+#if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE)
   WSContentSend_P(PSTR("<p></p><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend><p>"));  // Keep close to Friendlynames so do not use <br>
   for (uint32_t i = 0; i < EMUL_MAX; i++) {
 #ifndef USE_EMULATION_WEMO
@@ -1899,6 +1913,7 @@ void HandleOtherConfiguration(void)
     }
   }
   WSContentSend_P(PSTR("</p></fieldset>"));
+#endif  // USE_EMULATION_WEMO || USE_EMULATION_HUE
 #endif  // USE_EMULATION
 
   WSContentSend_P(HTTP_FORM_END);
@@ -1917,8 +1932,10 @@ void OtherSaveSettings(void)
   SettingsUpdateText(SET_WEBPWD, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? SettingsText(SET_WEBPWD) : tmp);
   Settings.flag.mqtt_enabled = WebServer->hasArg("b1");  // SetOption3 - Enable MQTT
 #ifdef USE_EMULATION
+#if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE)
   WebGetArg("b2", tmp, sizeof(tmp));
   Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
+#endif  // USE_EMULATION_WEMO || USE_EMULATION_HUE
 #endif  // USE_EMULATION
 
   snprintf_P(message, sizeof(message), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
@@ -2824,6 +2841,7 @@ void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_EMULATION
 void CmndEmulation(void)
 {
+#if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE)
 #if defined(USE_EMULATION_WEMO) && defined(USE_EMULATION_HUE)
   if ((XdrvMailbox.payload >= EMUL_NONE) && (XdrvMailbox.payload < EMUL_MAX)) {
 #else
@@ -2837,6 +2855,7 @@ void CmndEmulation(void)
     Settings.flag2.emulation = XdrvMailbox.payload;
     restart_flag = 2;
   }
+#endif
   ResponseCmndNumber(Settings.flag2.emulation);
 }
 #endif  // USE_EMULATION
@@ -2970,7 +2989,11 @@ bool Xdrv01(uint8_t function)
     case FUNC_LOOP:
       PollDnsWebserver();
 #ifdef USE_EMULATION
+#ifdef USE_DEVICE_GROUPS
+      if (Settings.flag2.emulation || Settings.flag4.device_groups_enabled) { PollUdp(); }
+#else // USE_DEVICE_GROUPS
       if (Settings.flag2.emulation) { PollUdp(); }
+#endif // USE_DEVICE_GROUPS
 #endif  // USE_EMULATION
       break;
     case FUNC_COMMAND:

@@ -52,14 +52,16 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.1.0.9
+### Version 8.1.0.10
 
+- Change default my_user_config.h driver and sensor support removing most sensors and adding most drivers
 - Change Lights: simplified gamma correction and 10 bits internal computation
 - Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
-- Change IRremoteESP8266 library updated to v2.7.3
+- Change IRremoteESP8266 library updated to v2.7.4
 - Change Zigbee command prefix from ``Zigbee*`` to ``Zb*``
 - Change MQTT message size with additional 200 characters
 - Change display of some date and time messages from "Wed Feb 19 10:45:12 2020" to "2020-02-19T10:45:12"
+- Change switchmode 6 according to issue 7778 (#7831)
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
 - Fix ``White`` added to light status (#7142)
@@ -104,3 +106,10 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add new DHT driver. The old driver can still be used using define USE_DHT_OLD (#7468)
 - Add another new DHT driver based on ESPEasy. The old driver can still be used using define USE_DHT_OLD. The previous new driver can be used with define USE_DHT_V2 (#7717)
 - Add initial support for Sensors AHT10 and AHT15 by Martin Wagner (#7596)
+- Add support for Wemos Motor Shield V1 by Denis Sborets (#7764)
+- Add Zigbee enhanced commands decoding, added ``ZbPing``
+- Add Zigbee features and improvements
+- Add commands ``SetOption85 0/1`` and ``DevGroupShare`` supporting UDP Group command using ``GroupTopic`` without MQTT by Paul Diem (#7790)
+- Add support for Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM dimmer switches by Paul Diem (#7791)
+- Add support for Jarolift rollers by Keeloq algorithm
+- Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)

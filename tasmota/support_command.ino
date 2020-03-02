@@ -27,9 +27,13 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SERIALDELIMITER "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|"
   D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|"
+  D_CMND_SPEEDUNIT "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
+#ifdef USE_DEVICE_GROUPS
+  D_CMND_DEVGROUP_SHARE "|"
+#endif  // USE_DEVICE_GROUPS
   D_CMND_SENSOR "|" D_CMND_DRIVER;
 
 void (* const TasmotaCommand[])(void) PROGMEM = {
@@ -42,9 +46,13 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndSerialDelimiter, &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig,
   &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndWifiPower, &CmndTempOffset,
+  &CmndSpeedUnit,
 #ifdef USE_I2C
   &CmndI2cScan, CmndI2cDriver,
 #endif
+#ifdef USE_DEVICE_GROUPS
+  &CmndDevGroupShare,
+#endif  // USE_DEVICE_GROUPS
   &CmndSensor, &CmndDriver };
 
 const char kWifiConfig[] PROGMEM =
@@ -871,6 +879,14 @@ void CmndWeightResolution(void)
   ResponseCmndNumber(Settings.flag2.weight_resolution);
 }
 
+void CmndSpeedUnit(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6)) {
+    Settings.flag2.speed_conversion = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Settings.flag2.speed_conversion);
+}
+
 void CmndModule(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= MAXMODULE)) {
@@ -1663,6 +1679,17 @@ void CmndI2cDriver(void)
   ResponseJsonEnd();
 }
 #endif  // USE_I2C
+
+#ifdef USE_DEVICE_GROUPS
+void CmndDevGroupShare(void)
+{
+  uint32_t parm[2] = { Settings.device_group_share_in, Settings.device_group_share_out };
+  ParseParameters(2, parm);
+  Settings.device_group_share_in = parm[0];
+  Settings.device_group_share_out = parm[1];
+  Response_P(PSTR("{\"" D_CMND_DEVGROUP_SHARE "\":{\"In\":\"%X\",\"Out\":\"%X\"}}"), Settings.device_group_share_in, Settings.device_group_share_out);
+}
+#endif  // USE_DEVICE_GROUPS
 
 void CmndSensor(void)
 {

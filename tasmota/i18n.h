@@ -139,6 +139,8 @@
 #define D_JSON_SERIALRECEIVED "SerialReceived"
 #define D_JSON_SET "Set"
 #define D_JSON_SIGNAL "Signal"
+#define D_JSON_SPEED "Speed"
+#define D_JSON_SPEED_UNIT "SpeedUnit"
 #define D_JSON_SSID "SSId"
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
@@ -287,8 +289,10 @@
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_LEDMASK "LedMask"
 #define D_CMND_WIFIPOWER "WifiPower"
+#define D_CMND_SPEEDUNIT "SpeedUnit"
 #define D_CMND_I2CSCAN "I2CScan"
 #define D_CMND_I2CDRIVER "I2CDriver"
+#define D_CMND_DEVGROUP_SHARE "DevGroupShare"
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
@@ -469,10 +473,10 @@
 
 // Commands xdrv_23_zigbee.ino
 #define D_PRFX_ZB "Zb"
-#define D_PRFX_ZIGBEE "Zigbee"
 #define D_ZIGBEE_NOT_STARTED "Zigbee not started (yet)"
 #define D_CMND_ZIGBEE_PERMITJOIN "PermitJoin"
 #define D_CMND_ZIGBEE_STATUS "Status"
+  #define D_JSON_ZIGBEE_Status "Status"
 #define D_CMND_ZIGBEE_RESET "Reset"
   #define D_JSON_ZIGBEE_CC2530 "CC2530"
 #define D_CMND_ZIGBEEZNPRECEIVE "ZNPReceive"      // only for debug
@@ -485,16 +489,27 @@
   #define D_JSON_ZIGBEE_DEVICE "Device"
   #define D_JSON_ZIGBEE_NAME "Name"
 #define D_CMND_ZIGBEE_NAME "Name"
+#define D_CMND_ZIGBEE_MODELID "ModelId"
+  #define D_JSON_ZIGBEE_MODELID "ModelId"
 #define D_CMND_ZIGBEE_PROBE "Probe"
 #define D_CMND_ZIGBEE_FORGET "Forget"
 #define D_CMND_ZIGBEE_SAVE "Save"
   #define D_CMND_ZIGBEE_LINKQUALITY "LinkQuality"
+  #define D_CMND_ZIGBEE_ENDPOINT "Endpoint"
+  #define D_CMND_ZIGBEE_GROUP "Group"
 #define D_CMND_ZIGBEE_READ "Read"
 #define D_CMND_ZIGBEE_SEND "Send"
   #define D_JSON_ZIGBEE_ZCL_SENT "ZbZCLSent"
 #define D_JSON_ZIGBEE_RECEIVED "ZbReceived"
-#define D_JSON_ZIGBEE_RECEIVED_LEGACY "ZigbeeReceived"
 #define D_CMND_ZIGBEE_BIND "Bind"
+  #define D_JSON_ZIGBEE_BIND "ZbBind"
+#define D_CMND_ZIGBEE_PING "Ping"
+  #define D_JSON_ZIGBEE_PING "ZbPing"
+  #define D_JSON_ZIGBEE_IEEE "IEEEAddr"
+#define D_JSON_ZIGBEE_RESPONSE "ZbResponse"
+  #define D_JSON_ZIGBEE_CMD "Command"
+  #define D_JSON_ZIGBEE_STATUS "Status"
+  #define D_JSON_ZIGBEE_STATUS_MSG "StatusMessage"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"
@@ -530,6 +545,12 @@
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"
+
+// Commands xdrv_34_pwm_dimmer.ino
+#ifdef USE_PWM_DIMMER
+#define D_CMND_BRI_MIN "BriMin"
+#define D_CMND_BRI_PRESET "BriPreset"
+#endif
 
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
@@ -628,6 +649,16 @@ const char S_OFFLINE[] PROGMEM = D_OFFLINE;
 
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;
+
+const char kSpeedUnit[] PROGMEM = "|m/s|km/h|kn|mph|ft/s|yd/s";
+const float kSpeedConversionFactor[] = {1,            // none
+                                        1,            // m/s
+                                        3.6,          // km/h
+                                        1.943844492,  // kn
+                                        2.236936292,  // mph
+                                        3.280839895,  // ft/s
+                                        1.093613298   // yd/s
+                                       };
 
 // xdrv_02_webserver.ino
 #ifdef USE_WEBSERVER

@@ -516,17 +516,29 @@ void GetFeatures(void)
 #ifdef USE_AHT1x
   feature5 |= 0x10000000;  // xsns_63_aht1x.ino
 #endif
-//  feature5 |= 0x20000000;
-//  feature5 |= 0x40000000;
-//  feature5 |= 0x80000000;
+#ifdef USE_WEMOS_MOTOR_V1
+  feature5 |= 0x20000000;  // xdrv_34_wemos_motor_v1.ino
+#endif
+#ifdef USE_DEVICE_GROUPS
+  feature5 |= 0x40000000;  // support_device_groups.ino
+#endif
+#ifdef USE_PWM_DIMMER
+  feature5 |= 0x80000000;  // xdrv_35_pwm_dimmer
+#endif
 
 /*********************************************************************************************/
 
   feature6 = 0x00000000;
 
-//  feature6 |= 0x00000001;
-//  feature6 |= 0x00000002;
-//  feature6 |= 0x00000004;
+#ifdef USE_KEELOQ
+  feature6 |= 0x00000001;  // xdrv_36_keeloq.ino
+#endif
+#ifdef USE_HRXL
+  feature6 |= 0x00000002;  // xsns_64_hrxl.ino
+#endif
+#ifdef USE_SONOFF_D1
+  feature6 |= 0x00000004;
+#endif
 //  feature6 |= 0x00000008;
 
 //  feature6 |= 0x00000010;

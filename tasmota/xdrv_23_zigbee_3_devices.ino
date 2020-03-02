@@ -49,6 +49,8 @@ typedef struct Z_Device {
   // json buffer used for attribute reporting
   DynamicJsonBuffer    *json_buffer;
   JsonObject           *json;
+  // sequence number for Zigbee frames
+  uint8_t              seqNumber;
 } Z_Device;
 
 // All devices are stored in a Vector
@@ -91,10 +93,14 @@ public:
   void setManufId(uint16_t shortaddr, const char * str);
   void setModelId(uint16_t shortaddr, const char * str);
   void setFriendlyName(uint16_t shortaddr, const char * str);
-  const String * getFriendlyName(uint16_t) const;
+  const String * getFriendlyName(uint16_t shortaddr) const;
+  const String * getModelId(uint16_t shortaddr) const;
 
   // device just seen on the network, update the lastSeen field
   void updateLastSeen(uint16_t shortaddr);
+
+  // get next sequence number for (increment at each all)
+  uint8_t getNextSeqNumber(uint16_t shortaddr);
 
   // Dump json
   String dump(uint32_t dump_mode, uint16_t status_shortaddr = 0) const;
@@ -133,6 +139,7 @@ public:
 private:
   std::vector<Z_Device> _devices = {};
   uint32_t              _saveTimer = 0;   
+  uint8_t               _seqNumber = 0;     // global seqNumber if device is unknown
 
   template < typename T>
   static bool findInVector(const std::vector<T>  & vecOfElements, const T  & element);
@@ -226,7 +233,9 @@ Z_Device & Z_Devices::createDeviceEntry(uint16_t shortaddr, uint64_t longaddr) {
                       std::vector<uint32_t>(),
                       0,0,0,0,
                       nullptr,
-                      nullptr, nullptr };
+                      nullptr, nullptr,
+                      0,          // seqNumber
+                      };
   device.json_buffer = new DynamicJsonBuffer();
   _devices.push_back(device);
   dirty();
@@ -525,11 +534,35 @@ const String * Z_Devices::getFriendlyName(uint16_t shortaddr) const {
   return nullptr;
 }
 
+const String * Z_Devices::getModelId(uint16_t shortaddr) const {
+  int32_t found = findShortAddr(shortaddr);
+  if (found >= 0) {
+    const Z_Device & device = devicesAt(found);
+    if (device.modelId.length() > 0) {
+      return &device.modelId;
+    }
+  }
+  return nullptr;
+}
+
 // device just seen on the network, update the lastSeen field
 void Z_Devices::updateLastSeen(uint16_t shortaddr) {
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
   _updateLastSeen(device);
+}
+
+// get the next sequance number for the device, or use the global seq number if device is unknown
+uint8_t Z_Devices::getNextSeqNumber(uint16_t shortaddr) {
+  int32_t short_found = findShortAddr(shortaddr);
+  if (short_found >= 0) {
+    Z_Device &device = getShortAddr(shortaddr);
+    device.seqNumber += 1;
+    return device.seqNumber;
+  } else {
+    _seqNumber += 1;
+    return _seqNumber;
+  }
 }
 
 // Per device timers
@@ -631,10 +664,33 @@ bool Z_Devices::jsonIsConflict(uint16_t shortaddr, const JsonObject &values) {
     return false;                                           // if no previous value, no conflict
   }
 
+  // compare groups
+  uint16_t group1 = 0;
+  uint16_t group2 = 0;
+  if (device.json->containsKey(D_CMND_ZIGBEE_GROUP)) {
+    group1 = device.json->get<unsigned int>(D_CMND_ZIGBEE_GROUP);
+  }
+  if (values.containsKey(D_CMND_ZIGBEE_GROUP)) {
+    group2 = values.get<unsigned int>(D_CMND_ZIGBEE_GROUP);
+  }
+  if (group1 != group2) {
+    return true;      // if group addresses differ, then conflict
+  }
+
+  // parse all other parameters
   for (auto kv : values) {
     String key_string = kv.key;
 
-    if (strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_LINKQUALITY))) {  // exception = ignore duplicates for LinkQuality
+    if (0 == strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_GROUP))) {
+      // ignore group, it was handled already
+    } else if (0 == strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_ENDPOINT))) {
+      // attribute "Endpoint" or "Group"
+      if (device.json->containsKey(kv.key)) {
+        if (kv.value.as<unsigned int>() != device.json->get<unsigned int>(kv.key)) {
+          return true;
+        }
+      }
+    } else if (strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_LINKQUALITY))) {  // exception = ignore duplicates for LinkQuality
       if (device.json->containsKey(kv.key)) {
         return true;          // conflict!
       }
@@ -704,21 +760,11 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":{\"%s\":%s}}"), fname->c_str(), msg.c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
     XdrvRulesProcess();
-    // DEPRECATED TODO
-    Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED_LEGACY "\":{\"%s\":%s}}"), fname->c_str(), msg.c_str());
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-    XdrvRulesProcess();
   } else {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":{\"0x%04X\":%s}}"), shortaddr, msg.c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
     XdrvRulesProcess();
-    // DEPRECATED TODO
-    Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED_LEGACY "\":{\"0x%04X\":%s}}"), shortaddr, msg.c_str());
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-    XdrvRulesProcess();
   }
-  // MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-  // XdrvRulesProcess();
 }
 
 void Z_Devices::jsonPublishNow(uint16_t shortaddr, JsonObject & values) {
