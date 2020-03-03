@@ -1074,7 +1074,7 @@ void CmndKnxEnhanced(void)
 void CmndKnxPa(void)
 {
   if (XdrvMailbox.data_len) {
-    if (strstr(XdrvMailbox.data, ".") != nullptr) {  // Process parameter entry
+    if (strchr(XdrvMailbox.data, '.') != nullptr) {  // Process parameter entry
       char sub_string[XdrvMailbox.data_len];
 
       int pa_area = atoi(subStr(sub_string, XdrvMailbox.data, ".", 1));
@@ -1102,7 +1102,7 @@ void CmndKnxGa(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNX_GA)) {
     if (XdrvMailbox.data_len) {
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len];
 
         int ga_option = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
@@ -1153,7 +1153,7 @@ void CmndKnxCb(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNX_CB)) {
     if (XdrvMailbox.data_len) {
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len];
 
         int cb_option = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));

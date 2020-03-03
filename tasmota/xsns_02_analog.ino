@@ -342,7 +342,7 @@ void CmndAdcParam(void)
         (ADC0_LIGHT == XdrvMailbox.payload) ||
         (ADC0_RANGE == XdrvMailbox.payload) ||
         (ADC0_CT_POWER == XdrvMailbox.payload)) {
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
         // AdcParam 2, 32000, 10000, 3350
         // AdcParam 3, 10000, 12518931, -1.405

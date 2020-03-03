@@ -1898,7 +1898,7 @@ void CmndScale(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
 
         float valueIN = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 1));

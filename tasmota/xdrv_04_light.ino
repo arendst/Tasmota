@@ -2199,7 +2199,7 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
     buffer_length--;  // remove all trailing '='
     memcpy(&Light.entry_color, &Light.current_color, sizeof(Light.entry_color));
   }
-  if (strstr(buffer, ",") != nullptr) {             // Decimal entry
+  if (strchr(buffer, ',') != nullptr) {             // Decimal entry
     int8_t i = 0;
     for (str = strtok_r(buffer, ",", &p); str && i < 6; str = strtok_r(nullptr, ",", &p)) {
       if (i < LST_MAX) {

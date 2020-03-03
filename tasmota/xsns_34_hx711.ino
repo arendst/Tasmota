@@ -205,7 +205,7 @@ bool HxCommand(void)
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, "Reset");
       break;
     case 2:  // Calibrate
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.weight_reference = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       Hx.scale = 1;
@@ -215,26 +215,26 @@ bool HxCommand(void)
       HxCalibrationStateTextJson(3);
       break;
     case 3:  // WeightRef to user reference
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.weight_reference = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       show_parms = true;
       break;
     case 4:  // WeightCal to user calculated value
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.weight_calibration = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
         Hx.scale = Settings.weight_calibration;
       }
       show_parms = true;
       break;
     case 5:  // WeightMax
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.weight_max = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10) / 1000;
       }
       show_parms = true;
       break;
     case 6:  // WeightItem
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.weight_item = (unsigned long)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 10);
       }
       show_parms = true;
@@ -244,13 +244,13 @@ bool HxCommand(void)
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, D_JSON_DONE);
       break;
     case 8:  // Json on weight change
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings.SensorBits1.hx711_json_weight_change = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10) & 1;
       }
       show_parms = true;
       break;
     case 9:  // WeightDelta
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
 	Settings.weight_change = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
 	SetWeightDelta();
       }

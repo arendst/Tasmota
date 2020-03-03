@@ -244,8 +244,8 @@ void CmndIrSend(void)
   uint8_t error = IE_SYNTAX_IRSEND;
 
   if (XdrvMailbox.data_len) {
-//    error = (strstr(XdrvMailbox.data, "{") == nullptr) ? IrRemoteCmndIrSendRaw() : IrRemoteCmndIrSendJson();
-    if (strstr(XdrvMailbox.data, "{") == nullptr) {
+//    error = (strchr(XdrvMailbox.data, '{') == nullptr) ? IrRemoteCmndIrSendRaw() : IrRemoteCmndIrSendJson();
+    if (strchr(XdrvMailbox.data, '{') == nullptr) {
       error = IE_INVALID_JSON;
     } else {
       error = IrRemoteCmndIrSendJson();

@@ -592,7 +592,7 @@ void CmndIrSend(void)
   uint8_t error = IE_SYNTAX_IRSEND;
 
   if (XdrvMailbox.data_len) {
-    if (strstr(XdrvMailbox.data, "{") == nullptr) {
+    if (strchr(XdrvMailbox.data, '{') == nullptr) {
       error = IrRemoteCmndIrSendRaw();
     } else {
       error = IrRemoteCmndIrSendJson();
