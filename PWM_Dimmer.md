@@ -11,17 +11,17 @@ To enable PWM dimmer operation, select the PWM Dimmer module.
 
 Pressing and releasing the power button toggles the power on/off. If the toggle turns the power on, the load is returned to the last brightness it was adjusted to. If Fade is enabled, the load is faded on/off at the rate defined by the Speed setting.
 
-When the power is on, holding the down or up button decreases/increases the brightness (PWM value). The brightness is changed faster at higher brightnesses. The BriMin command defines the lowest value the brightness can be decreased to.
+When the power is on, holding the down or up button decreases/increases the brightness (PWM value). The brightness is changed faster at higher brightnesses. The DimmerRange command sets the minimum and maximum PWM values. Brightness values (0 through 255) are scaled to dimmerMin through dimmerMax. Typically, dimmerMin would be set to the lowest value at which the lights show visible light and dimmerMax would be set 1023. If you want to increase the lowest brightness level and/or decrease the highest brightness level, set higher dimmerMin and/or lower dimmerMax values.
 
 The brightness can also be changed using just the power button. When the power is on, holding the power button alternately increases or decreases the brightness. Initially, holding the power button increases the brightness. Releasing and then holding the power button again decreases the brightness.
 
-When the power is off, holding the down or up button turns the power on at a temporary brightness of the low/high levels set by the BriPreset command (default =10,255). Turning the power on at the low preset can also be accomplished by holding the power button while the power is off. The brightness presets are intended to enable quickly turning on a light to a dim or bright level without changing the normal desired brightness. Turning the power on to a preset does not change the brightness the load will be set to when the switch is turned on the next time. For example, if the light is on and you adjust the brightness to 80 and then turn the light off, when you turn it back on, the brightness will return to 80. If you turn the power off again and then press the down button, the light will be turned on with a brightness of the low preset. If you then turn the light off and on again, the brightness will return to 80.
+When the power is off, pressing the down or up button turns the power on at a temporary brightness of the low/high levels set by the BriPreset command (default =10,255). Turning the power on at the low preset can also be accomplished by holding the power button while the power is off. The brightness presets are intended to enable quickly turning on a light to a dim or bright level without changing the normal desired brightness. Turning the power on to a preset does not change the brightness the load will be set to when the switch is turned on the next time. For example, if the light is on and you adjust the brightness to 80 and then turn the light off, when you turn it back on, the brightness will return to 80. If you turn the power off again and then press the down button, the light will be turned on with a brightness of the low preset. If you then turn the light off and on again, the brightness will return to 80.
 
 If there are LED’s defined in the template, they are turned on to indicate the current brightness. More LEDs are turned on at higher brightnesses. The LedTimeout command enables/disables an LED timeout. If LED timeout is enabled, the LED’s turn off five seconds after the last change in brightness. Note that the lowest LED and the blue power LED are always on when the power is on.
 
 The LEDLink LED can be used as a nightlight/powered-off indicator. The PoweredOffLed command enables/disables turning the LEDLink LED on when the power is off.
 
-Tapping (pressing and releasing quickly) the down or up buttons a given number of times and then holding the down or up button decreases or increases settings according to the table below. For example, tapping the down button once and then holding the up button sets all RGB lights in the device group to the next fixed color. Tapping the up button three times and then holding the down button decreases the high brightness preset.
+When the power is on, tapping (pressing and releasing quickly) the down or up buttons a given number of times and then holding the down or up button decreases or increases settings according to the table below. For example, tapping the down button once and then holding the up button sets all RGB lights in the device group to the next fixed color. Tapping the up button three times and then holding the down button decreases the high brightness preset.
 
 
 <table>
@@ -99,7 +99,7 @@ Holding any button for over 10 seconds executes the WiFiConfig 2 command.
 
 Pressing and releasing a button publishes an MQTT TOGGLE command. Holding a button publishes an MQTT HOLD command followed by an MQTT OFF command when the button is released.
 
-When Device Groups are enabled, the PWM Dimmer minimum brightness, brightness presets, fade and speed settings are kept in sync across all switches in the group. The powered-off LED and LED timeout settings are specific to each switch. Changing them does not replicate the change to the other switches in the group.
+When Device Groups are enabled, the PWM Dimmer brightness presets, dimmer minimum and maximum values, fade and speed settings are kept in sync across all switches in the group. The powered-off LED and LED timeout settings are specific to each switch. Changing them does not replicate the change to the other switches in the group.
 
 
 ### Commands
@@ -113,98 +113,42 @@ When Device Groups are enabled, the PWM Dimmer minimum brightness, brightness pr
    </td>
   </tr>
   <tr>
-   <td>BriMin
-   </td>
-   <td>1..255 = set minimum brightness
-<p>
-+ = increase minimum brightness
-<p>
-- = decrease minimum brightness
-   </td>
-  </tr>
-  <tr>
    <td>BriPreset
    </td>
-   <td> &lt;low>,&lt;high> = set brightness low and high presets
-<p>
-1..255 = set brightness preset
-<p>
-+ = increase brightness preset
-<p>
+   <td> &lt;low>,&lt;high> = set brightness low and high presets<br>
+1..255 = set brightness preset<br>
++ = increase brightness preset<br>
 - = decrease brightness preset
    </td>
   </tr>
   <tr>
-   <td>Dimmer
+   <td>DimmerRange
    </td>
-   <td>0..100 = set dimmer value from 0 to 100%
-<p>
-+ = increase by 10
-<p>
-- = decrease by 10
-   </td>
-  </tr>
-  <tr>
-   <td>Fade
-   </td>
-   <td>0 = do not use fade <em>(default)</em>
-<p>
-1 = use fade
-   </td>
-  </tr>
-  <tr>
-   <td>LedTimeout
-   </td>
-   <td>0 = disable LED timeout
-<p>
-1 = enable LED timeout
-   </td>
-  </tr>
-  <tr>
-   <td>PoweredOffLed
-   </td>
-   <td>0 = disable powered-off LED
-<p>
-1 = disable powered-off LED
-   </td>
-  </tr>
-  <tr>
-   <td>Speed
-   </td>
-   <td>1..20 = set fade speed from fast 1 to very slow 20
-<p>
-+ = increase speed
-<p>
-- = decrease speed
+   <td>Change dimming range<br>
+<dimmerMin>,<DimmerMax> = set minimum and maximum PWM values. Dimmer/brightness is scaled to this range.<br>
    </td>
   </tr>
   <tr>
    <td>SetOption86
    </td>
-   <td>Set brightness LED timeout
-<p>
-0 = disable timeout (default)
-<p>
+   <td>Set brightness LED timeout<br>
+0 = disable timeout (default)<br>
 1 = enable timeout
    </td>
   </tr>
   <tr>
    <td>SetOption87
    </td>
-   <td>Set powered-off LED (nightlight)
-<p>
-0 = disable powered-off LED (default)
-<p>
+   <td>Set powered-off LED (nightlight)<br>
+0 = disable powered-off LED (default)<br>
 1 = enable powered-off LED
    </td>
   </tr>
   <tr>
    <td>SetOption88
    </td>
-   <td>Set remote device mode
-<p>
-0 = disable remote device mode(default)
-<p>
+   <td>Set remote device mode<br>
+0 = disable remote device mode(default)<br>
 1 = enable remote device mode
    </td>
   </tr>

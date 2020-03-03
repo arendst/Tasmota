@@ -222,6 +222,9 @@ enum UserSelectablePins {
   GPIO_HM10_TX,        // HM10-BLE-Mijia-bridge serial interface
   GPIO_LE01MR_RX,      // F&F LE-01MR energy meter
   GPIO_LE01MR_TX,      // F&F LE-01MR energy meter
+  GPIO_CC1101_GDO0,    // CC1101 pin for RX
+  GPIO_CC1101_GDO2,    // CC1101 pin for RX
+  GPIO_HRXL_RX,       // Data from MaxBotix HRXL sonar range sensor
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -305,7 +308,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX "|"
   D_SENSOR_DS18X20 "o|" D_SENSOR_DHT11 "o|"
   D_SENSOR_HM10_RX "|" D_SENSOR_HM10_TX "|"
-  D_SENSOR_LE01MR_RX "|" D_SENSOR_LE01MR_TX
+  D_SENSOR_LE01MR_RX "|" D_SENSOR_LE01MR_TX "|"
+  D_SENSOR_CC1101_GDO0 "|" D_SENSOR_CC1101_GDO2 "|"
+  D_SENSOR_HRXL_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -790,7 +795,13 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DEEPSLEEP
   GPIO_DEEPSLEEP,
 #endif
-
+#ifdef USE_KEELOQ
+  GPIO_CC1101_GDO0,    // CC1101 pin for RX
+  GPIO_CC1101_GDO2,    // CC1101 pin for RX
+#endif
+#ifdef USE_HRXL
+  GPIO_HRXL_RX,
+#endif
 };
 
 const uint8_t kModuleNiceList[] PROGMEM = {
@@ -2253,7 +2264,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09
      0,                // GPIO10
                        // GPIO11 (SD_CMD   Flash)
-     0, 0, 0, 0, 0, 0
+     0,                // GPIO12
+     GPIO_LED1_INV,    // GPIO13 WiFi Blue Led - Link and Power status
+     0, 0, 0, 0
   }
 };
 

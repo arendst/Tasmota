@@ -36,20 +36,19 @@
 #define MAX_FIXED_COLOR     12
 #endif  // MAX_FIXED_COLOR
 
+// Note: CmndFade and CmndSpeed are in xdrv_04_light.
 const char kPWMDimmerCommands[] PROGMEM = "|"  // No prefix
-   D_CMND_BRI_MIN "|" D_CMND_BRI_PRESET "|" D_CMND_DIMMER "|" D_CMND_FADE "|" D_CMND_LED_TIMEOUT "|"
-   D_CMND_POWERED_OFF_LED "|" D_CMND_SPEED;
+   D_CMND_BRI_PRESET "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_FADE "|" D_CMND_SPEED;
 
 void (* const PWMDimmerCommand[])(void) PROGMEM = {
-  &CmndBriMin, &CmndBriPreset, &PWMDmmerCmndDimmer, &CmndFade, &CmndLedTimeout,
-  &CmndPoweredOffLed, &CmndSpeed };
+  CmndBriPreset, &PWMDmmerCmndDimmer, &CmndDimmerRange, &CmndFade, &CmndSpeed };
 
 #ifdef USE_PWM_DIMMER_REMOTE
 struct remote_pwm_dimmer {
   power_t power;
+  uint32_t dimmer_range;
   uint8_t light_speed;
   uint8_t bri_power_on;
-  uint8_t bri_min;
   uint8_t bri_preset_low;
   uint8_t bri_preset_high;
   uint8_t fixed_color_index;
@@ -61,6 +60,7 @@ struct remote_pwm_dimmer {
 
 uint32_t led_timeout_time = 0;
 uint32_t turn_off_brightness_leds_time = 0;
+uint32_t button_press_count_timeout = 0;
 uint32_t button_hold_time[3];
 uint8_t current_bri;
 uint8_t target_bri;
@@ -69,10 +69,12 @@ uint8_t power_button_index = 0;
 uint8_t down_button_index = 1;
 uint8_t up_button_index = 2;
 uint8_t fixed_color_index;
+uint8_t buttons_pressed = 0;
 uint8_t button_press_count[3] = { 0, 0, 0 };
 bool relay_is_on = false;
 bool ignore_power_button_hold;
 bool ignore_power_button_release;
+bool ignore_up_down_button_release = false;
 bool button_was_held = false;
 bool power_button_increases_bri = true;
 bool invert_power_button_bri_direction = false;
@@ -81,14 +83,8 @@ bool button_pressed[3] = { false, false, false };
 #ifdef USE_PWM_DIMMER_REMOTE
 struct remote_pwm_dimmer * remote_pwm_dimmers;
 struct remote_pwm_dimmer * active_remote_pwm_dimmer;
-uint8_t buttons_pressed = 0;
 bool active_device_is_local;
 #endif  // USE_PWM_DIMMER_REMOTE
-
-void PWMDimmerCheckBri(uint8_t * value_ptr)
-{
-  if (*value_ptr < Settings.bri_min) *value_ptr = Settings.bri_min;
-}
 
 void PWMModuleInit()
 {
@@ -98,28 +94,22 @@ void PWMModuleInit()
   Settings.flag.pwm_control = 0;  // Use basic PWM control instead of Light    
 
   if (Settings.last_module != Settings.module) {
-    Settings.bri_min = 25;
+    Settings.dimmer_hw_min = 102;
+    Settings.dimmer_hw_max = 1023;
     Settings.bri_power_on = 50;
     Settings.bri_preset_low = 25;
     Settings.bri_preset_high = 255;
     Settings.last_module = Settings.module;
   }
-  else {
-    if (Settings.bri_min < 1) Settings.bri_min = 25;
-    PWMDimmerCheckBri(&Settings.bri_power_on);
-    PWMDimmerCheckBri(&Settings.bri_preset_low);
-    PWMDimmerCheckBri(&Settings.bri_preset_high);
-  }
 
   if (Settings.light_speed < 1) Settings.light_speed = 1;
 
   target_bri = ((Settings.power & 1) ? changeUIntScale(Settings.light_dimmer, 0, 100, 0, 255) : 0);
-  PWMDimmerCheckBri(&target_bri);
   current_bri = target_bri;
 
   if (pin[GPIO_PWM1] < 99) {
-    uint32_t pwm_value = changeUIntScale(current_bri, 0, 255, 0, Settings.pwm_range);
-    analogWrite(pin[GPIO_PWM1], bitRead(pwm_inverted, 0) ? Settings.pwm_range - pwm_value : pwm_value);
+    uint32_t pwm_value = (current_bri ? changeUIntScale(current_bri, 1, 255, Settings.dimmer_hw_min, Settings.dimmer_hw_max) : 0);
+    analogWrite(pin[GPIO_PWM1], bitRead(pwm_inverted, 0) ? Settings.dimmer_hw_max - pwm_value : pwm_value);
   }
 
   relay_is_on = (current_bri > 0);
@@ -149,7 +139,7 @@ void PWMDimmerInit(void)
 void PWMDimmerSetBrightnessLeds(int32_t operation)
 {
   if (leds_present) {
-    uint32_t step = (!operation ? (255 - Settings.bri_min) / (leds_present + 1) : operation < 0 ? 255 : 0);
+    uint32_t step = (!operation ? 256 / (leds_present + 1) : operation < 0 ? 255 : 0);
     uint32_t level = step;
     SetLedPowerIdx(0, current_bri >= level);
     if (leds_present > 1) {
@@ -188,30 +178,23 @@ void PWMDimmerAnimate(bool no_fade)
 
   // Advance the current brightness towards the target.
   if (!no_fade && Settings.light_fade) {
-    if (current_bri < Settings.bri_min) {
-      current_bri = Settings.bri_min;
-    }
-    else {
-      uint8_t offset = current_bri / Settings.light_speed / 5 + 1;
-      uint8_t max_offset = abs(target_bri - current_bri);
-      if (offset > max_offset) offset = max_offset;
-      if (current_bri < target_bri)
-        current_bri += offset;
-      else
-        current_bri -= offset;
-    }
+    uint8_t offset = current_bri / Settings.light_speed / 5 + 1;
+    uint8_t max_offset = abs(target_bri - current_bri);
+    if (offset > max_offset) offset = max_offset;
+    if (current_bri < target_bri)
+      current_bri += offset;
+    else
+      current_bri -= offset;
   }
   else {
     current_bri = target_bri;
   }
 
-  // If the current brightness is now < bri_min, set the current and target brightness to 0.
-  if (current_bri < Settings.bri_min) current_bri = target_bri = 0;
-
-  // Sset the new PWM value.
+  // Set the new PWM value.
   if (pin[GPIO_PWM1] < 99) {
-    uint32_t pwm_value = changeUIntScale(current_bri, 0, 255, 0, Settings.pwm_range);
-    analogWrite(pin[GPIO_PWM1], bitRead(pwm_inverted, 0) ? Settings.pwm_range - pwm_value : pwm_value);
+    uint32_t pwm_value = (current_bri ? changeUIntScale(current_bri, 1, 255, Settings.dimmer_hw_min, Settings.dimmer_hw_max) : 0);
+//AddLog_P2(LOG_LEVEL_INFO, PSTR("PWMDimmerAnimate: current_bri=%u, pwm_value =%u"), current_bri, pwm_value);
+    analogWrite(pin[GPIO_PWM1], bitRead(pwm_inverted, 0) ? Settings.dimmer_hw_max - pwm_value : pwm_value);
   }
 
   // Handle a power state change.
@@ -236,7 +219,6 @@ void PWMDimmerSetBri(uint8_t bri)
 {
   if (bri == target_bri) return;
   target_bri = bri;
-  if (target_bri && target_bri < Settings.bri_min) target_bri = Settings.bri_min;
   Settings.bri_power_on = target_bri;
   Settings.light_dimmer = changeUIntScale(target_bri, 0, 255, 0, 100);
   if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
@@ -249,19 +231,12 @@ void PWMDimmerSetBri(uint8_t bri)
 void PWMDimmerHandleDeviceGroupRequest()
 {
   static bool send_state = false;
-  uint8_t value = XdrvMailbox.payload;
-  switch (XdrvMailbox.command_code) {
-    case DGR_ITEM_BRI_MIN:
-      Settings.bri_min = 1;
-    case DGR_ITEM_BRI_PRESET_LOW:
-    case DGR_ITEM_BRI_PRESET_HIGH:
-    case DGR_ITEM_BRI_POWER_ON:
-      PWMDimmerCheckBri(&value);
-      break;
-    case DGR_ITEM_LIGHT_BRI:
-      if (value) PWMDimmerCheckBri(&value);
-      break;
-  }
+  uint32_t value = XdrvMailbox.payload;
+#ifdef USE_PWM_DIMMER_REMOTE
+  uint8_t device_group_index = XdrvMailbox.index >> 16 & 0xff;
+  bool device_is_local = device_groups[device_group_index].local;
+  struct remote_pwm_dimmer * remote_pwm_dimmer = &remote_pwm_dimmers[device_group_index];
+#endif  // USE_PWM_DIMMER_REMOTE
 
   switch (XdrvMailbox.command_code) {
     case DGR_ITEM_EOL:
@@ -273,46 +248,92 @@ void PWMDimmerHandleDeviceGroupRequest()
       }
       break;
     case DGR_ITEM_LIGHT_BRI:
+#ifdef USE_PWM_DIMMER_REMOTE
+      if (!device_is_local) {
+        remote_pwm_dimmer->bri = value;
+      }
+      else
+#endif  // USE_PWM_DIMMER_REMOTE
       if (target_bri != value) {
         PWMDimmerSetBri(value);
         send_state = true;
       }
       break;
     case DGR_ITEM_LIGHT_SPEED:
+#ifdef USE_PWM_DIMMER_REMOTE
+      if (!device_is_local) {
+        remote_pwm_dimmer->light_speed = value;
+      }
+      else
+#endif  // USE_PWM_DIMMER_REMOTE
       if (Settings.light_speed != value && value > 0 && value <= 40) {
         Settings.light_speed = value;
         send_state = true;
       }
       break;
-    case DGR_ITEM_BRI_MIN:
-      if (Settings.bri_min != value) {
-        Settings.bri_min = value;
-        send_state = true;
+    case DGR_ITEM_LIGHT_FIXED_COLOR:
+#ifdef USE_PWM_DIMMER_REMOTE
+      if (!device_is_local) {
+        remote_pwm_dimmer->fixed_color_index = value;
       }
+      else
+#endif  // USE_PWM_DIMMER_REMOTE
+        fixed_color_index = value;
+      break;
+    case DGR_ITEM_DIMMER_RANGE:
+#ifdef USE_PWM_DIMMER_REMOTE
+      if (!device_is_local)
+        remote_pwm_dimmer->dimmer_range = value;
+      else {
+#endif  // USE_PWM_DIMMER_REMOTE
+        Settings.dimmer_hw_min = value & 0xffff;
+        Settings.dimmer_hw_max = value >> 16;
+#ifdef USE_PWM_DIMMER_REMOTE
+      }
+#endif  // USE_PWM_DIMMER_REMOTE
       break;
     case DGR_ITEM_BRI_PRESET_LOW:
+#ifdef USE_PWM_DIMMER_REMOTE
+      if (!device_is_local)
+        remote_pwm_dimmer->bri_preset_low = value;
+      else
+#endif  // USE_PWM_DIMMER_REMOTE
       if (Settings.bri_preset_low != value) {
         Settings.bri_preset_low = value;
         send_state = true;
       }
       break;
     case DGR_ITEM_BRI_PRESET_HIGH:
+#ifdef USE_PWM_DIMMER_REMOTE
+      if (!device_is_local)
+        remote_pwm_dimmer->bri_preset_high = value;
+      else
+#endif  // USE_PWM_DIMMER_REMOTE
       if (Settings.bri_preset_high != value) {
         Settings.bri_preset_high = value;
         send_state = true;
       }
    break;
     case DGR_ITEM_BRI_POWER_ON:
+#ifdef USE_PWM_DIMMER_REMOTE
+      if (!device_is_local)
+        remote_pwm_dimmer->bri_power_on = value;
+      else
+#endif  // USE_PWM_DIMMER_REMOTE
       if (Settings.bri_power_on != value) {
         Settings.bri_power_on = value;
         send_state = true;
       }
       break;
     case DGR_ITEM_STATUS:
-      SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade,
-        DGR_ITEM_LIGHT_SPEED, Settings.light_speed, DGR_ITEM_LIGHT_BRI, target_bri,
-        DGR_ITEM_BRI_MIN, Settings.bri_min, DGR_ITEM_BRI_PRESET_LOW, Settings.bri_preset_low,
-        DGR_ITEM_BRI_PRESET_HIGH, Settings.bri_preset_high, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
+#ifdef USE_PWM_DIMMER_REMOTE
+      if (device_is_local)
+#endif  // USE_PWM_DIMMER_REMOTE
+        SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade,
+          DGR_ITEM_LIGHT_SPEED, Settings.light_speed, DGR_ITEM_LIGHT_BRI, target_bri,
+          DGR_ITEM_BRI_PRESET_LOW, Settings.bri_preset_low, DGR_ITEM_BRI_PRESET_HIGH, Settings.bri_preset_high,
+          DGR_ITEM_DIMMER_RANGE, Settings.dimmer_hw_min | Settings.dimmer_hw_max << 16,
+          DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
       break;
   }
 }
@@ -358,15 +379,13 @@ void PWMDimmerHandleButton()
   if (!XdrvMailbox.payload) {
     int8_t bri_direction = 0;
 
-    // If the button was just pressed, reset the press count if it was released for longer than 1
-    // second, flag the button as pressed, clear the hold sent flag and increment the buttons
-    // pressed count.
+    // If the button was just pressed, flag the button as pressed, clear the hold sent flag and
+    // increment the buttons pressed count.
     if (!button_pressed[button_index]) {
-      if (now > button_hold_time[button_index] && now - button_hold_time[button_index] > 1000) button_press_count[button_index] = 0;
       button_pressed[button_index] = true;
       button_hold_sent[button_index] = false;
-#ifdef USE_PWM_DIMMER_REMOTE
       buttons_pressed++;
+#ifdef USE_PWM_DIMMER_REMOTE
 
       // If there are no other buttons pressed right now and remote mode is enabled, make the device
       // associated with this button the device we're going to control.
@@ -390,7 +409,7 @@ void PWMDimmerHandleButton()
 
       // If this is not about the power button, load the new hold time. Note that the hold time for
       // the power button is longer than the hold time for the other buttons.
-      button_hold_time[button_index] = now + 250;
+      button_hold_time[button_index] = now + 500;
     }
 
     // If the button is being held, send a button hold.
@@ -466,50 +485,50 @@ void PWMDimmerHandleButton()
         ignore_power_button_release = ignore_power_button_hold = true;
       }
 
-      // If the active device is local or the power button if also pressed, then if the down/up
-      // button has been held, handle the action based on the number of times the down or up button
-      // was pressed and released before holding it.
+      // If the active device is local or the power button if also pressed, ...
 #ifdef USE_PWM_DIMMER_REMOTE
       if (active_device_is_local == !button_pressed[power_button_index]) {
 #endif  // USE_PWM_DIMMER_REMOTE
-        if (button_hold_time[button_index] < now) {
+        bool is_down_button = (button_index == down_button_index);
 
+        // If the power is not on, turn it on using a temporary brightness of bri_preset_low if the
+        // down button is pressed or bri_preset_low if the up button is pressed.
+#ifdef USE_PWM_DIMMER_REMOTE
+        if ((!active_device_is_local ? !active_remote_pwm_dimmer->power : !power)) {
+#else // USE_PWM_DIMMER_REMOTE
+        if (!power) {
+#endif  // USE_PWM_DIMMER_REMOTE
+#ifdef USE_PWM_DIMMER_REMOTE
+          if (!active_device_is_local)
+            active_remote_pwm_dimmer->bri = (is_down_button ? active_remote_pwm_dimmer->bri_preset_low : active_remote_pwm_dimmer->bri_preset_high);
+          else
+#endif  // USE_PWM_DIMMER_REMOTE
+            target_bri = (is_down_button ? Settings.bri_preset_low : Settings.bri_preset_high);
+          toggle_power = true;
+          button_hold_time[button_index] = now + 500;
+          ignore_up_down_button_release = true;
+
+          // If the power button is also pressed, set the power button hold dimmer direction
+          // so holding the power switch adjusts the brightness away from the brightness we
+          // just set.
+#ifdef USE_PWM_DIMMER_REMOTE
+          if (button_pressed[power_button_index]) active_remote_pwm_dimmer->power_button_increases_bri = is_down_button;
+#endif  // USE_PWM_DIMMER_REMOTE
+        }
+
+        // If the power is on and the down/up button has been held, handle the action based on the
+        // number of times the down or up button was pressed and released before holding it.
+        else if (button_hold_time[button_index] < now) {
           uint8_t uint8_value;
-          uint8_t min_uint8_value;
-          bool down_button_is_held = (button_index == down_button_index);
           bool down_button_was_tapped = (button_press_count[down_button_index] > 0);
           uint8_t tap_count = (down_button_was_tapped ? button_press_count[down_button_index] : button_press_count[up_button_index]);
+          uint16_t uint16_value;
+
           switch (tap_count) {
             case 0:
-              // If the power is on, adjust the brightness. Set the direction based on which button is
-              // pressed. The new brightness will be calculated below.
-#ifdef USE_PWM_DIMMER_REMOTE
-              if ((!active_device_is_local ? active_remote_pwm_dimmer->power : power)) {
-#else // USE_PWM_DIMMER_REMOTE
-              if (power) {
-#endif  // USE_PWM_DIMMER_REMOTE
-                bri_direction = (down_button_is_held ? -1 : 1);
-              }
-
-              // If the power is not on, turn it on using a temporary brightness of bri_preset_low if
-              // the down button is pressed or bri_preset_low if the up button is pressed.
-              else {
-#ifdef USE_PWM_DIMMER_REMOTE
-                if (!active_device_is_local)
-                  active_remote_pwm_dimmer->bri = (down_button_is_held ? active_remote_pwm_dimmer->bri_preset_low : active_remote_pwm_dimmer->bri_preset_high);
-                else
-#endif  // USE_PWM_DIMMER_REMOTE
-                  target_bri = (down_button_is_held ? Settings.bri_preset_low : Settings.bri_preset_high);
-                toggle_power = true;
-                button_hold_time[button_index] = now + 1000;
-
-                // If the power button is also pressed, set the power button hold dimmer direction
-                // so holding the power switch adjusts the brightness away from the brightness we
-                // just set.
-#ifdef USE_PWM_DIMMER_REMOTE
-                if (button_pressed[power_button_index]) active_remote_pwm_dimmer->power_button_increases_bri = down_button_is_held;
-#endif  // USE_PWM_DIMMER_REMOTE
-              }
+              // Adjust the brightness. Set the direction based on which button is pressed. The new
+              // brightness will be calculated below.
+              bri_direction = (is_down_button ? -1 : 1);
               break;
 
             case 1:
@@ -522,7 +541,7 @@ void PWMDimmerHandleButton()
                 else
 #endif  // USE_PWM_DIMMER_REMOTE
                   uint8_value = fixed_color_index;
-                if (down_button_is_held) {
+                if (is_down_button) {
                   if (uint8_value)
                     uint8_value--;
                   else
@@ -553,7 +572,7 @@ void PWMDimmerHandleButton()
 #else  // USE_PWM_DIMMER_REMOTE
                 snprintf_P(topic, sizeof(topic), PSTR("%s/cmnd/Event"), SettingsText(SET_MQTT_GRP_TOPIC));
 #endif  // USE_PWM_DIMMER_REMOTE
-                sprintf_P(mqtt_data, PSTR("SwitchTrigger%u"), (down_button_is_held ? 1 : 2));
+                sprintf_P(mqtt_data, PSTR("SwitchTrigger%u"), (is_down_button ? 1 : 2));
                 MqttPublish(topic);
               }
               break;
@@ -563,30 +582,29 @@ void PWMDimmerHandleButton()
                 // Decrease/increase the minimum brightness.
 #ifdef USE_PWM_DIMMER_REMOTE
                 if (!active_device_is_local)
-                  uint8_value = active_remote_pwm_dimmer->bri_min;
+                  uint16_value = active_remote_pwm_dimmer->dimmer_range & 0xffff;
                 else
 #endif // USE_PWM_DIMMER_REMOTE
-                  uint8_value = Settings.bri_min;
-                if (down_button_is_held) {
-                  if (uint8_value > 4) uint8_value--;
+                  uint16_value = Settings.dimmer_hw_min;
+                if (is_down_button) {
+                  if (uint16_value > 0) uint16_value--;
                 }
-                else if (uint8_value < 255) {
-                  uint8_value++;
+                else if (uint16_value < 65535) {
+                  uint16_value++;
                 }
 #ifdef USE_PWM_DIMMER_REMOTE
+                dgr_item = DGR_ITEM_DIMMER_RANGE;
                 if (!active_device_is_local) {
-                  active_remote_pwm_dimmer->bri_min = uint8_value;
-                  if (active_remote_pwm_dimmer->bri_power_on < uint8_value) active_remote_pwm_dimmer->bri_power_on = uint8_value;
+                  active_remote_pwm_dimmer->dimmer_range &= 0xffff0000 | uint16_value;
+                  dgr_value = active_remote_pwm_dimmer->dimmer_range;
                 }
                 else {
 #endif // USE_PWM_DIMMER_REMOTE
-                  Settings.bri_min = uint8_value;
-                  if (Settings.bri_power_on < uint8_value) Settings.bri_power_on = uint8_value;
+                  Settings.dimmer_hw_min = uint16_value;
+                  dgr_value = Settings.dimmer_hw_min | Settings.dimmer_hw_max << 16;
 #ifdef USE_PWM_DIMMER_REMOTE
                 }
 #endif // USE_PWM_DIMMER_REMOTE
-                dgr_item = DGR_ITEM_BRI_MIN;
-                dgr_value = uint8_value;
               }
               else {
                 // Decrease/increase the fade speed.
@@ -596,7 +614,7 @@ void PWMDimmerHandleButton()
                 else
 #endif // USE_PWM_DIMMER_REMOTE
                   uint8_value = Settings.light_speed;
-                if (down_button_is_held) {
+                if (is_down_button) {
                   if (uint8_value > 1) uint8_value--;
                 }
                 else if (uint8_value < 40) {
@@ -617,19 +635,13 @@ void PWMDimmerHandleButton()
               if (down_button_was_tapped) {
                 // Decrease/increase the low brightness preset.
 #ifdef USE_PWM_DIMMER_REMOTE
-                if (!active_device_is_local) {
+                if (!active_device_is_local)
                   uint8_value = active_remote_pwm_dimmer->bri_preset_low;
-                  min_uint8_value =active_remote_pwm_dimmer->bri_min;
-                }
-                else {
+                else
 #endif // USE_PWM_DIMMER_REMOTE
                   uint8_value = Settings.bri_preset_low;
-                  min_uint8_value = Settings.bri_min;
-#ifdef USE_PWM_DIMMER_REMOTE
-                }
-#endif // USE_PWM_DIMMER_REMOTE
-                if (down_button_is_held) {
-                  if (uint8_value > min_uint8_value) uint8_value--;
+                if (is_down_button) {
+                  if (uint8_value > 3) uint8_value--;
                 }
                 else if (uint8_value < 255) {
                   uint8_value++;
@@ -651,8 +663,8 @@ void PWMDimmerHandleButton()
                 else
 #endif // USE_PWM_DIMMER_REMOTE
                   uint8_value = Settings.bri_preset_high;
-                if (down_button_is_held) {
-                  if (uint8_value > 4) uint8_value--;
+                if (is_down_button) {
+                  if (uint8_value > 3) uint8_value--;
                 }
                 else if (uint8_value < 255) {
                   uint8_value++;
@@ -671,17 +683,13 @@ void PWMDimmerHandleButton()
 
           button_was_held = true;
 
-          // If the button was tapped before it was held, reset the button hold time to one second and
-          // turn all the brightness LEDs on for 250ms.
+          // If the button was tapped before it was held, reset the button hold time to 1/2 second
+          // and turn all the brightness LEDs on for 250ms.
           if (tap_count > 0) {
-            button_hold_time[button_index] = now + 1000;
+            button_hold_time[button_index] = now + 500;
             turn_off_brightness_leds_time = now + 250;
             PWMDimmerSetBrightnessLeds(1);
           }
-        }
-        else if (turn_off_brightness_leds_time && turn_off_brightness_leds_time < millis()) {
-          turn_off_brightness_leds_time = 0;
-          PWMDimmerSetBrightnessLeds(-1);
         }
 #ifdef USE_PWM_DIMMER_REMOTE
       }
@@ -706,7 +714,7 @@ void PWMDimmerHandleButton()
       }
       else {
         new_bri = bri - offset;
-        if (new_bri < Settings.bri_min) new_bri = Settings.bri_min;
+        if (new_bri < 3) new_bri = 3;
       }
       if (new_bri != bri) {
 #ifdef USE_DEVICE_GROUPS
@@ -833,16 +841,9 @@ void PWMDimmerHandleButton()
       if (button_was_held) {
         button_was_held = false;
 
-        // If the button was tapped before it was held, we used the brightness LEDs to inidcate the
-        // operation so reset the brightness LEDs.
-        if (button_press_count[down_button_index] > 0 || button_press_count[up_button_index]) {
-          turn_off_brightness_leds_time = 0;
-          PWMDimmerSetBrightnessLeds(0);
-        }
-
         // If the button was not tapped before it was held, we changed the brightness and sent
         // updates with the more-to-come message type. Send a final update.
-        else {
+        if (button_press_count[down_button_index] == 0 && button_press_count[up_button_index == 0]) {
           dgr_item = DGR_ITEM_LIGHT_BRI;
 #ifdef USE_PWM_DIMMER_REMOTE
           if (!active_device_is_local)
@@ -856,8 +857,13 @@ void PWMDimmerHandleButton()
         button_press_count[button_index] = 0;
       }
 
-      // If the button was tapped (pressed and released quickly), increment the count of how many
-      // times this button has been pressed.
+      // If the power was off and we turned it on with the down or up button, ignore it's release.
+      if (ignore_up_down_button_release) {
+        ignore_up_down_button_release = false;
+      }
+
+      // If the button was tapped (pressed and released quickly) and the power is on, increment the
+      // count of how many times this button has been pressed.
       else if (button_hold_time[button_index] >= now) {
         button_press_count[button_index]++;
       }
@@ -865,9 +871,13 @@ void PWMDimmerHandleButton()
 
     // Flag the button as released.
     button_pressed[button_index] = false;
-#ifdef USE_PWM_DIMMER_REMOTE
     buttons_pressed--;
-#endif  // USE_PWM_DIMMER_REMOTE
+    button_press_count_timeout = now + 500;
+  }
+
+  // If 
+  else if (buttons_pressed == 0 && button_press_count_timeout && button_press_count_timeout < now) {
+    button_press_count[0] = button_press_count[1] = button_press_count[2] = 0;
   }
 
   if (toggle_power) {
@@ -891,7 +901,7 @@ void PWMDimmerHandleButton()
       SendDeviceGroupMessage(power_button_index, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_BRI, new_bri, DGR_ITEM_POWER, new_power);
     else
       SendDeviceGroupMessage(power_button_index, DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, new_power);
-#endif  // USE_DEVICE_GROUPS
+#endif  //0 USE_DEVICE_GROUPS
 
 #ifdef USE_PWM_DIMMER_REMOTE
     // The target brightness has already been set. Execute the toggle power command with a source of
@@ -911,41 +921,16 @@ void PWMDimmerHandleButton()
       MqttPublishTeleState();
     }
   }
+
+  if (turn_off_brightness_leds_time && turn_off_brightness_leds_time < millis()) {
+    turn_off_brightness_leds_time = 0;
+    PWMDimmerSetBrightnessLeds(-1);
+  }
 }
 
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
-
-void CmndBriMin(void)
-{
-  uint8_t new_bri_min = Settings.bri_min;
-  if (XdrvMailbox.payload > 0 && XdrvMailbox.payload <= 255) {
-    new_bri_min = (XdrvMailbox.payload < 4 ? 4 : XdrvMailbox.payload);
-  }
-  else if (1 == XdrvMailbox.data_len) {
-    if ('-' == XdrvMailbox.data[0]) {
-      if (new_bri_min > 4) new_bri_min--;
-    }
-    else if ('+' == XdrvMailbox.data[0] && new_bri_min < 255)
-      new_bri_min++;
-  }
-
-  if (new_bri_min != Settings.bri_min) {
-    Settings.bri_min = new_bri_min;
-    PWMDimmerCheckBri(&Settings.bri_power_on);
-    PWMDimmerCheckBri(&Settings.bri_preset_low);
-    PWMDimmerCheckBri(&Settings.bri_preset_high);
-
-#ifdef DEVICE_GROUPS
-    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_BRI_MIN, Settings.bri_min,
-      DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on, DGR_ITEM_BRI_PRESET_LOW, Settings.bri_preset_low,
-      DGR_ITEM_BRI_PRESET_HIGH, Settings.bri_preset_high);
-#endif  // DEVICE_GROUPS
-  }
-
-  ResponseCmndNumber(Settings.bri_min);
-}
 
 void CmndBriPreset(void)
 {
@@ -962,7 +947,7 @@ void CmndBriPreset(void)
         if (parm[i] < 255) parm[i]++;
       }
       else if (*ptr == '-') {
-        if (parm[i] > Settings.bri_min) parm[i]--;
+        if (parm[i] > 0) parm[i]--;
       }
       else {
         value = strtoul(ptr, &ptr, 0);
@@ -971,7 +956,7 @@ void CmndBriPreset(void)
           break;
         }
         parm[i] = value;
-        PWMDimmerCheckBri(&parm[i]);
+
         if (*ptr != ',') break;
       }
       ptr++;
@@ -985,9 +970,9 @@ void CmndBriPreset(void)
         Settings.bri_preset_low = parm[1];
         Settings.bri_preset_high = parm[0];
       }
-#ifdef DEVICE_GROUPS
+#ifdef USE_DEVICE_GROUPS
       SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_BRI_PRESET_LOW, Settings.bri_preset_low, DGR_ITEM_BRI_PRESET_HIGH, Settings.bri_preset_high);
-#endif  // DEVICE_GROUPS
+#endif  // USE_DEVICE_GROUPS
     }
   }
   Response_P(PSTR("{\"" D_CMND_BRI_PRESET "\":{\"Low\":%d,\"High\":%d}}"), Settings.bri_preset_low, Settings.bri_preset_high);
@@ -1013,38 +998,6 @@ void PWMDmmerCmndDimmer(void)
   }
 
   ResponseCmndNumber(Settings.light_dimmer);
-}
-
-void CmndLedTimeout(void)
-{
-  // Set the brightness LED timeout state.
-  switch (XdrvMailbox.payload) {
-  case 0: // Off
-  case 1: // On
-    Settings.flag4.led_timeout = XdrvMailbox.payload;
-    break;
-  case 2: // Toggle
-    Settings.flag4.led_timeout ^= 1;
-    break;
-  }
-  if (relay_is_on) PWMDimmerSetBrightnessLeds(0);
-  ResponseCmndStateText(Settings.flag4.led_timeout);
-}
-
-void CmndPoweredOffLed(void)
-{
-  // Set the powered-off LED state.
-  switch (XdrvMailbox.payload) {
-  case 0: // Off
-  case 1: // On
-    Settings.flag4.powered_off_led = XdrvMailbox.payload;
-    break;
-  case 2: // Toggle
-    Settings.flag4.powered_off_led ^= 1;
-    break;
-  }
-  PWMDimmerSetPoweredOffLed();
-  ResponseCmndStateText(Settings.flag4.powered_off_led);
 }
 
 /*********************************************************************************************\

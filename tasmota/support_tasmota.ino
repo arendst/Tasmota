@@ -696,6 +696,9 @@ bool MqttShowSensor(void)
   if (strstr_P(mqtt_data, PSTR(D_JSON_TEMPERATURE)) != nullptr) {
     ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
   }
+  if ((strstr_P(mqtt_data, PSTR(D_JSON_SPEED)) != nullptr) && Settings.flag2.speed_conversion) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_SPEED_UNIT "\":\"%s\""), SpeedUnit().c_str());
+  }
   ResponseJsonEnd();
 
   if (json_data_available) { XdrvCall(FUNC_SHOW_SENSOR); }
@@ -787,6 +790,7 @@ void PerformEverySecond(void)
 #endif  // USE_RULES
         }
 
+        XsnsCall(FUNC_AFTER_TELEPERIOD);
         XdrvCall(FUNC_AFTER_TELEPERIOD);
       }
     }

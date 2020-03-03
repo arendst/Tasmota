@@ -504,9 +504,7 @@
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Kierunek"
-#define D_TX20_WIND_DEGREES "Grad"
 #define D_TX20_WIND_SPEED "Prędkość"
-#define D_TX20_WIND_SPEED_AVG "Średnia prędkość"
 #define D_TX20_WIND_SPEED_MIN "Minimalna prędkość"
 #define D_TX20_WIND_SPEED_MAX "Maksymalna prędkość"
 #define D_TX20_NORTH "N"
@@ -641,6 +639,9 @@
 #define D_SENSOR_HM10_TX       "HM10 TX"
 #define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
 #define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
+#define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
+#define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
