@@ -1,7 +1,7 @@
 /*
   ro-RO.h - localization for Romanian - Romania and Moldova for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2020  Augustin Marti
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@
 #define D_COUNTER "Contor"
 #define D_CT_POWER "Putere Transformată"
 #define D_CURRENT "Curent"          // As in Voltage and Current
-#define D_DA;TA "Date"
+#define D_DATA "Date"
 #define D_DARKLIGHT "Întunecat"
 #define D_DEBUG "Depanare"
 #define D_DISABLED "Dezactivat"
@@ -520,7 +520,7 @@
 #define D_SENSOR_SI7021        "SI7021"
 #define D_SENSOR_DS18X20       "DS18x20"
 #define D_SENSOR_I2C_SCL       "I2C SCL"
-#define D_SENSOR_I2C_SDA      ; "I2C SDA"
+#define D_SENSOR_I2C_SDA       "I2C SDA"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 Player"
 #define D_SENSOR_IRSEND        "IRsend"
