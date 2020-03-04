@@ -9,6 +9,7 @@
 - Add Zigbee features and improvements and remove support for Zigbee commands starting with ``Zigbee...``
 - Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)
 - Add support for Romanian language translations by Augustin Marti
+- Add Zigbee use distinct MQTT topics per device for SENSOR, allowing retained messages (#7835)
 
 ### 8.1.0.9 20200220
 
