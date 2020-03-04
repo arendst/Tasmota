@@ -190,7 +190,7 @@ void DS1624Show(bool json)
         DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-        KnxSensor(KNX_TEMPERATURE, temperature);
+        KnxSensor(KNX_TEMPERATURE, ds1624_sns[i].value);
 #endif // USE_KNX
         once = false;
       }
