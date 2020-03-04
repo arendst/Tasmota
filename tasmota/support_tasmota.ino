@@ -921,14 +921,17 @@ void Every250mSeconds(void)
             // Replace tasmota.xyz                                     with tasmota-minimal.xyz
             // Replace tasmota.bin.gz                                  with tasmota-minimal.bin.gz
             // Replace tasmota.xyz.gz                                  with tasmota-minimal.xyz.gz
+            // Replace tasmota.ino.bin                                 with tasmota-minimal.ino.bin
             // Replace http://domus1:80/api/arduino/tasmota.bin        with http://domus1:80/api/arduino/tasmota-minimal.bin
             // Replace http://domus1:80/api/arduino/tasmota.bin.gz     with http://domus1:80/api/arduino/tasmota-minimal.bin.gz
             // Replace http://domus1:80/api/arduino/tasmota-DE.bin.gz  with http://domus1:80/api/arduino/tasmota-minimal.bin.gz
             // Replace http://domus1:80/api/ard-uino/tasmota-DE.bin.gz with http://domus1:80/api/ard-uino/tasmota-minimal.bin.gz
+            // Replace http://192.168.2.17:80/api/arduino/tasmota.bin  with http://192.168.2.17:80/api/arduino/tasmota-minimal.bin
+            // Replace http://192.168.2.17/api/arduino/tasmota.bin.gz  with http://192.168.2.17/api/arduino/tasmota-minimal.bin.gz
 
             char *bch = strrchr(mqtt_data, '/');                       // Only consider filename after last backslash prevent change of urls having "-" in it
             if (bch == nullptr) { bch = mqtt_data; }                   // No path found so use filename only
-
+/*
             char *ech = strrchr(bch, '.');                             // Find file type in filename (none, .bin or .gz)
             if ((ech != nullptr) && (0 == strncasecmp_P(ech, PSTR(".GZ"), 3))) {
               char *fch = ech;
@@ -936,9 +939,14 @@ void Every250mSeconds(void)
               ech = strrchr(bch, '.');                                 // Find file type .bin.gz
               *fch = '.';
             }
+*/
+            char *ech = strchr(bch, '.');                              // Find file type in filename (none, .ino.bin, .ino.bin.gz, .bin, .bin.gz or .gz)
             if (ech == nullptr) { ech = mqtt_data + strlen(mqtt_data); }
+
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("OTA: File type [%s]"), ech);
+
             char ota_url_type[strlen(ech) +1];
-            strncpy(ota_url_type, ech, sizeof(ota_url_type));          // Either empty, .bin or .bin.gz
+            strncpy(ota_url_type, ech, sizeof(ota_url_type));          // Either empty, .ino.bin, .ino.bin.gz, .bin, .bin.gz or .gz
 
             char *pch = strrchr(bch, '-');                             // Find last dash (-) and ignore remainder - handles tasmota-DE
             if (pch == nullptr) { pch = ech; }                         // No dash so ignore filetype
