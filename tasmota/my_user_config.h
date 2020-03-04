@@ -326,6 +326,7 @@
 //#define MY_LANGUAGE            pl-PL           // Polish in Poland
 //#define MY_LANGUAGE            pt-BR           // Portuguese in Brazil
 //#define MY_LANGUAGE            pt-PT           // Portuguese in Portugal
+//#define MY_LANGUAGE            ro-RO           // Romanian in Romania
 //#define MY_LANGUAGE            ru-RU           // Russian in Russia
 //#define MY_LANGUAGE            sk-SK           // Slovak in Slovakia
 //#define MY_LANGUAGE            sv-SE           // Swedish in Sweden
