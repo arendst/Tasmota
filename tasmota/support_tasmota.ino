@@ -424,6 +424,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
   char scommand[CMDSZ];
   char key_topic[TOPSZ];
   bool result = false;
+  uint32_t device_save = device;
 
   char *tmp = (key) ? SettingsText(SET_MQTT_SWITCH_TOPIC) : SettingsText(SET_MQTT_BUTTON_TOPIC);
   Format(key_topic, tmp, sizeof(key_topic));
@@ -459,7 +460,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
     result = XdrvRulesProcess();
   }
   int32_t payload_save = XdrvMailbox.payload;
-  XdrvMailbox.payload = key << 16 | state << 8 | device;
+  XdrvMailbox.payload = device_save << 24 | key << 16 | state << 8 | device;
   XdrvCall(FUNC_ANY_KEY);
   XdrvMailbox.payload = payload_save;
   return result;
@@ -922,6 +923,7 @@ void Every250mSeconds(void)
             // Replace tasmota.bin.gz                                  with tasmota-minimal.bin.gz
             // Replace tasmota.xyz.gz                                  with tasmota-minimal.xyz.gz
             // Replace tasmota.ino.bin                                 with tasmota-minimal.ino.bin
+            // Replace tasmota.ino.bin.gz                              with tasmota-minimal.ino.bin.gz
             // Replace http://domus1:80/api/arduino/tasmota.bin        with http://domus1:80/api/arduino/tasmota-minimal.bin
             // Replace http://domus1:80/api/arduino/tasmota.bin.gz     with http://domus1:80/api/arduino/tasmota-minimal.bin.gz
             // Replace http://domus1:80/api/arduino/tasmota-DE.bin.gz  with http://domus1:80/api/arduino/tasmota-minimal.bin.gz
@@ -941,7 +943,7 @@ void Every250mSeconds(void)
             }
 */
             char *ech = strchr(bch, '.');                              // Find file type in filename (none, .ino.bin, .ino.bin.gz, .bin, .bin.gz or .gz)
-            if (ech == nullptr) { ech = mqtt_data + strlen(mqtt_data); }
+            if (ech == nullptr) { ech = mqtt_data + strlen(mqtt_data); }  // Point to '/0' at end of mqtt_data becoming an empty string
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("OTA: File type [%s]"), ech);
 
