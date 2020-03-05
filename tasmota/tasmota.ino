@@ -159,6 +159,7 @@ bool spi_flg = false;                       // SPI configured
 bool soft_spi_flg = false;                  // Software SPI configured
 bool ntp_force_sync = false;                // Force NTP sync
 bool is_8285 = false;                       // Hardware device ESP8266EX (0) or ESP8285 (1)
+bool skip_light_fade;                       // Temporarily skip light fading
 myio my_module;                             // Active copy of Module GPIOs (17 x 8 bits)
 gpio_flag my_module_flag;                   // Active copy of Template GPIO flags
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)

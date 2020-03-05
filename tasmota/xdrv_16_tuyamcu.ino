@@ -68,6 +68,7 @@ struct TUYA {
   int byte_counter = 0;                  // Index in serial receive buffer
   bool low_power_mode = false;           // Normal or Low power mode protocol
   bool send_success_next_second = false; // Second command success in low power mode
+  uint32_t ignore_dimmer_cmd_timeout = 0;// Time until which received dimmer commands should be ignored
 } Tuya;
 
 
@@ -366,6 +367,7 @@ bool TuyaSetPower(void)
 
   if (source != SRC_SWITCH && TuyaSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
     TuyaSendBool(dpid, bitRead(rpower, active_device-1) ^ bitRead(rel_inverted, active_device-1));
+    delay(20); // Hack when power is off and dimmer is set then both commands go too soon to Serial out.
     status = true;
   }
   return status;
@@ -374,7 +376,7 @@ bool TuyaSetPower(void)
 bool TuyaSetChannels(void)
 {
   LightSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
-  delay(20); // Hack when power is off and dimmer is set then both commands go too soon to Serial out.
+  //delay(20); // Hack when power is off and dimmer is set then both commands go too soon to Serial out.
   return true;
 }
 
@@ -386,6 +388,7 @@ void LightSerialDuty(uint16_t duty)
     if (duty < Settings.dimmer_hw_min) { duty = Settings.dimmer_hw_min; }  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     if (Tuya.new_dim != duty) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Send dim value=%d (id=%d)"), duty, dpid);
+      Tuya.ignore_dimmer_cmd_timeout = millis() + 250; // Ignore serial received dim commands for the next 250ms
       TuyaSendValue(dpid, duty);
     }
   } else if (dpid > 0) {
@@ -456,12 +459,14 @@ void TuyaProcessStatePacket(void) {
         if (fnId == TUYA_MCU_FUNC_DIMMER) {
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Dim State=%d"), packetValue);
           Tuya.new_dim = changeUIntScale(packetValue, 0, Settings.dimmer_hw_max, 0, 100);
-          if ((power || Settings.flag3.tuya_apply_o20) &&  // SetOption54 - Apply SetOption20 settings to Tuya device
-              (Tuya.new_dim > 0) && (abs(Tuya.new_dim - Settings.light_dimmer) > 1)) {
-            Tuya.ignore_dim = true;
+          if (Tuya.ignore_dimmer_cmd_timeout < millis()) {
+            if ((power || Settings.flag3.tuya_apply_o20) &&  // SetOption54 - Apply SetOption20 settings to Tuya device
+                (Tuya.new_dim > 0) && (abs(Tuya.new_dim - Settings.light_dimmer) > 1)) {
+              Tuya.ignore_dim = true;
 
-            snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), Tuya.new_dim );
-            ExecuteCommand(scmnd, SRC_SWITCH);
+              snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER "3 %d"), Tuya.new_dim );
+              ExecuteCommand(scmnd, SRC_SWITCH);
+            }
           }
         }
 
