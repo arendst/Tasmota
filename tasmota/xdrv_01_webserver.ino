@@ -1264,6 +1264,7 @@ bool HandleRootStatusRefresh(void)
     }
 #endif  // USE_SONOFF_IFAN
   }
+#ifdef USE_LIGHT
   WebGetArg("d0", tmp, sizeof(tmp));  // 0 - 100 Dimmer value
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), tmp);
@@ -1299,6 +1300,7 @@ bool HandleRootStatusRefresh(void)
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_HSBCOLOR  "2 %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
+#endif  // USE_LIGHT
 #ifdef USE_SHUTTER
   for (uint32_t j = 1; j <= shutters_present; j++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("u%d"), j);
