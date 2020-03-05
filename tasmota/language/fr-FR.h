@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Taille programme"
 #define D_PROJECT "Projet"
 #define D_RAIN "Pluie"
+#define D_RANGE "Range"
 #define D_RECEIVED "Reçu"
 #define D_RESTART "Redémarrage"
 #define D_RESTARTING "Redémarre"
@@ -504,7 +505,7 @@
 //xsns_35_TX20.ino
 #define D_TX20_WIND_DIRECTION "Direction du vent"
 #define D_TX20_WIND_SPEED "Vitesse du vent"
-#define D_TX20_WIND_SPEED_AVG "Vitesse Moy."
+#define D_TX20_WIND_SPEED_MIN "Vitesse Min"
 #define D_TX20_WIND_SPEED_MAX "Vitesse Max"
 #define D_TX20_NORTH "N"
 #define D_TX20_EAST "E"
@@ -563,7 +564,7 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
-#define D_SENSOR_TX20_TX       "TX20"
+#define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RF TX"
 #define D_SENSOR_RFRECV        "RF RX"
 #define D_SENSOR_TUYA_TX       "Tuya TX"
@@ -634,6 +635,13 @@
 #define D_SENSOR_SLAVE_RESET   "Esclave Rst"
 #define D_SENSOR_GPS_TX        "GPS TX"
 #define D_SENSOR_GPS_RX        "GPS RX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
+#define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
+#define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -669,7 +677,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Angle de phase"
 #define D_IMPORT_ACTIVE   "Énergie act conso"
 #define D_EXPORT_ACTIVE   "Énergie act fournie"
@@ -678,6 +686,7 @@
 #define D_TOTAL_REACTIVE  "Énergie réa totale"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "°"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "Tension PV1"

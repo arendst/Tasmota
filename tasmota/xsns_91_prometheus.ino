@@ -56,7 +56,7 @@ void HandleMetrics(void)
   dtostrfd(Energy.current[0], Settings.flag2.current_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE current gauge\ncurrent %s\n"), parameter);
   dtostrfd(Energy.active_power[0], Settings.flag2.wattage_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE active_power guage\nactive_power %s\n"), parameter);
+  WSContentSend_P(PSTR("# TYPE active_power gauge\nactive_power %s\n"), parameter);
   dtostrfd(Energy.daily, Settings.flag2.energy_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_daily gauge\nenergy_daily %s\n"), parameter);
   dtostrfd(Energy.total, Settings.flag2.energy_resolution, parameter);

@@ -23,6 +23,10 @@
   Version Date      Action    Description
   --------------------------------------------------------------------------------------------
 
+  0.9.3.0 20200214  integrate - fix set lat/lon via commandd 13, V-Port now works parallel
+  ---
+  0.9.2.0 20200110  integrate - Added UART-over-TCP/IP-bridge (virtual serial port). Minor tweaks.
+  ---
   0.9.1.0 20191216  integrate - Added pin specifications from Tasmota WEB UI. Minor tweaks.
   ---
   0.9.0.0 20190817  started   - further development by Christian Baars  - https://github.com/Staars/Sonoff-Tasmota
@@ -38,11 +42,11 @@ Driver is tested on a NEO-6m and a Beitian-220. Series 7 should work too. This a
 - can log postion data with timestamp to flash with a small memory footprint of only 12 Bytes per record
 - constructs a GPX-file for download of this data
 - Web-UI
-- simplified NTP-server
+- simplified NTP-server and UART-over-TCP/IP-bridge (virtual serial port)
 - command interface
 
 ## Usage:
-The serial pins are GPX_RX and GPS_TX, no further installation steps needed. To get more debug information compile it with option "DEBUG_TASMOTA_SENSOR".
+The serial pins are GPS_RX and GPS_TX, no further installation steps needed. To get more debug information compile it with option "DEBUG_TASMOTA_SENSOR".
 
 
 ## Commands:
@@ -89,7 +93,11 @@ The serial pins are GPX_RX and GPS_TX, no further installation steps needed. To 
 + sensor60 13
   set latitude and longitude in settings
 
++ sensor60 14
+  open virtual serial port over TCP, usable for u-center 
 
++ sensor60 15
+  pause virtual serial port over TCP
 
 ## Rules examples for SSD1306 32x128
 
@@ -118,6 +126,9 @@ const char S_JSON_UBX_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_UBX "%s\":%d}";
 const char kUBXTypes[] PROGMEM = "UBX";
 
 #define UBX_LAT_LON_THRESHOLD 1000 // filter out some noise of local drift
+
+#define UBX_SERIAL_BUFFER_SIZE 256
+#define UBX_TCP_PORT           1234
 
 /********************************************************************************************\
 | *globals
@@ -235,8 +246,6 @@ struct UBX_t {
 
   struct {
     uint32_t last_iTOW;
-    int32_t last_lat;
-    int32_t last_lon;
     int32_t last_alt;
     uint32_t last_hAcc;
     uint32_t last_vAcc;
@@ -252,6 +261,7 @@ struct UBX_t {
     uint32_t send_UI_only:1;
     uint32_t runningNTP:1;
     uint32_t forceUTCupdate:1;
+    uint32_t runningVPort:1;
     // TODO: more to come
   } mode;
 
@@ -263,6 +273,8 @@ struct UBX_t {
     CFG_RATE cfgRate;
     } Message;
 
+  uint8_t TCPbuf[UBX_SERIAL_BUFFER_SIZE];
+  size_t TCPbufSize;
 } UBX;
 
 enum UBXMsgType {
@@ -279,6 +291,9 @@ FLOG *Flog = nullptr;
 TasmotaSerial *UBXSerial;
 
 NtpServer timeServer(PortUdp);
+
+WiFiServer vPortServer(UBX_TCP_PORT);
+WiFiClient vPortClient;
 
 /*********************************************************************************************\
  * helper function
@@ -324,7 +339,7 @@ void UBXDetect(void)
 {
   UBX.mode.init = 0;
   if ((pin[GPIO_GPS_RX] < 99) && (pin[GPIO_GPS_TX] < 99)) {
-    UBXSerial = new TasmotaSerial(pin[GPIO_GPS_RX], pin[GPIO_GPS_TX], 1, 0, 96); // 64 byte buffer is NOT enough
+    UBXSerial = new TasmotaSerial(pin[GPIO_GPS_RX], pin[GPIO_GPS_TX], 1, 0, UBX_SERIAL_BUFFER_SIZE); // 64 byte buffer is NOT enough
     if (UBXSerial->begin(9600)) {
       DEBUG_SENSOR_LOG(PSTR("UBX: started serial"));
       if (UBXSerial->hardwareSerial()) {
@@ -364,6 +379,10 @@ uint32_t UBXprocessGPS()
   while ( UBXSerial->available() ) {
     data_bytes++;
     byte c = UBXSerial->read();
+    if (UBX.mode.runningVPort){
+      UBX.TCPbuf[data_bytes-1] = c; // immediately copy byte to TCP-buf
+      UBX.TCPbufSize = data_bytes;
+    }
     if ( fpos < 2 ) {
       // For the first two bytes we are simply looking for a match with the UBX header bytes (0xB5,0x62)
       if ( c == UBX.UBX_HEADER[fpos] ) {
@@ -572,8 +591,16 @@ void UBXSelectMode(uint16_t mode)
       UBX.mode.forceUTCupdate = false;
       break;
     case 13:
-      Settings.latitude = UBX.state.last_lat;
-      Settings.longitude = UBX.state.last_lon;
+      Settings.latitude = UBX.rec_buffer.values.lat/10;
+      Settings.longitude = UBX.rec_buffer.values.lon/10;
+      break;
+    case 14:
+      vPortServer.begin();
+      UBX.mode.runningVPort = 1;
+      break;
+    case 15:
+      // vPortServer.stop(); // seems not to work reliably
+      UBX.mode.runningVPort = 0;
       break;
     default:
       if (mode>1000 && mode <1066) {
@@ -629,7 +656,7 @@ void UBXHandleSTATUS()
 void UBXHandleTIME()
 {
   DEBUG_SENSOR_LOG(PSTR("UBX: UTC-Time: %u-%u-%u %u:%u:%u"), UBX.Message.navTime.year, UBX.Message.navTime.month ,UBX.Message.navTime.day,UBX.Message.navTime.hour,UBX.Message.navTime.min,UBX.Message.navTime.sec);
-  if (UBX.Message.navTime.valid.UTC) {
+  if (UBX.Message.navTime.valid.UTC == 1) {
     DEBUG_SENSOR_LOG(PSTR("UBX: UTC-Time is valid"));
     if (Rtc.user_time_entry == false || UBX.mode.forceUTCupdate) {
       AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: UTC-Time is valid, set system time"));
@@ -649,6 +676,7 @@ void UBXHandleTIME()
 void UBXHandleOther(void)
 {
   if (UBX.state.non_empty_loops>6) {  // we expect only 4-5 non-empty loops in a row, could change with other sensor speed (Hz)
+    if(UBX.mode.runningVPort) return;
     UBXinitCFG();                     // this should only happen with lots of NMEA-messages, but it is only a guess!!
     AddLog_P(LOG_LEVEL_ERROR, PSTR("UBX: possible device-reset, will re-init"));
     UBXSerial->flush();
@@ -658,8 +686,24 @@ void UBXHandleOther(void)
 
 /********************************************************************************************/
 
-void UBXTimeServer()
+void UBXLoop50msec(void)
 {
+  // handle virtual serial port
+  if (UBX.mode.runningVPort){
+    if(!vPortClient.connected()) {
+      vPortClient = vPortServer.available();
+    }
+    while(vPortClient.available()) {
+      byte _newByte = vPortClient.read();
+      UBXSerial->write(_newByte);
+    }
+
+    if (UBX.TCPbufSize!=0){
+      vPortClient.write((char*)UBX.TCPbuf, UBX.TCPbufSize);
+      UBX.TCPbufSize = 0;
+    }
+  }
+  // handle NTP-server
   if(UBX.mode.runningNTP){
     timeServer.processOneRequest(Rtc.utc_time, UBX.state.last_iTOW%1000);
   }
@@ -832,7 +876,7 @@ bool Xsns60(uint8_t function)
         }
         break;
       case FUNC_EVERY_50_MSECOND:
-        UBXTimeServer();
+        UBXLoop50msec(); // handles virtual serial port and NTP server
         break;
       case FUNC_EVERY_100_MSECOND:
 #ifdef USE_FLOG

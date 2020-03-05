@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Розмір програми"
 #define D_PROJECT "Проект"
 #define D_RAIN "Дощ"
+#define D_RANGE "Range"
 #define D_RECEIVED "Отримано"
 #define D_RESTART "Перезавантаження"
 #define D_RESTARTING "Перезавантаження"
@@ -504,7 +505,7 @@
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Напрям вітру"
 #define D_TX20_WIND_SPEED "Швидкість вітру"
-#define D_TX20_WIND_SPEED_AVG "Середня швидкість вітру"
+#define D_TX20_WIND_SPEED_MIN "Мінімальна швидкість вітру"
 #define D_TX20_WIND_SPEED_MAX "Максимальна швидкість вітру"
 #define D_TX20_NORTH "Пн"
 #define D_TX20_EAST "Сх"
@@ -563,7 +564,7 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
-#define D_SENSOR_TX20_TX       "TX20"
+#define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFRecv"
 #define D_SENSOR_TUYA_TX       "Tuya Tx"
@@ -634,6 +635,13 @@
 #define D_SENSOR_SLAVE_RESET   "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
+#define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
+#define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
 
 // Units
 #define D_UNIT_AMPERE                    "А"
@@ -669,7 +677,7 @@
 #define D_UNIT_WATTHOUR                  "Вт/г"
 #define D_UNIT_WATT_METER_QUADRAT        "Вт/м²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Кут фази"
 #define D_IMPORT_ACTIVE   "Активна вхід"
 #define D_EXPORT_ACTIVE   "Активна вихід"
@@ -678,6 +686,7 @@
 #define D_TOTAL_REACTIVE  "Всього реактивна"
 #define D_UNIT_KWARH      "кВАр/г"
 #define D_UNIT_ANGLE      "Град"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Напруга"
