@@ -78,7 +78,12 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix relation between RSSI and signal strength
 - Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
 - Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
-- Add command ``SetOption84 1`` to send AWS IoT device shadow updates (alternative to retained)
+- Add command ``SetOption84 0/1`` to send AWS IoT device shadow updates (alternative to retained)
+- Add commands ``SetOption85 0/1`` and ``DevGroupShare`` supporting UDP Group command using ``GroupTopic`` without MQTT by Paul Diem (#7790)
+- Add command ``SetOption86 0/1`` for PWM dimmer to turn brightness LED's off 5 seconds after last change
+- Add command ``SetOption87 0/1`` for PWM dimmer to turn red LED on when powered off
+- Add command ``SetOption88 0/1`` for PWM dimmer to let buttons control remote devices
+- Add command ``SetOption89 0/1`` for Zigbee distinct MQTT topics per device for SENSOR, allowing retained messages (#7835)
 - Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
 - Add commands ``SwitchMode 8`` ToggleMulti, ``SwitchMode 9`` FollowMulti and ``SwitchMode 10`` FollowMultiInverted (#7522)
 - Add commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
@@ -109,7 +114,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for Wemos Motor Shield V1 by Denis Sborets (#7764)
 - Add Zigbee enhanced commands decoding, added ``ZbPing``
 - Add Zigbee features and improvements
-- Add commands ``SetOption85 0/1`` and ``DevGroupShare`` supporting UDP Group command using ``GroupTopic`` without MQTT by Paul Diem (#7790)
 - Add support for Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM dimmer switches by Paul Diem (#7791)
 - Add support for Jarolift rollers by Keeloq algorithm
 - Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)

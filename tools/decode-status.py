@@ -143,7 +143,7 @@ a_setoption = [[
     "PWM Dimmer Turn brightness LED's off 5 seconds after last change",
     "PWM Dimmer Turn red LED on when powered off",
     "PWM Dimmer Buttons control remote devices",
-    "",
+    "Distinct MQTT topics per device for Zigbee",
     "","","","",
     "","","","",
     "","","","",
@@ -239,7 +239,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20200301 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20200305 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

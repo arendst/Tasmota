@@ -537,7 +537,7 @@ void GetFeatures(void)
   feature6 |= 0x00000002;  // xsns_64_hrxl.ino
 #endif
 #ifdef USE_SONOFF_D1
-  feature6 |= 0x00000004;
+  feature6 |= 0x00000004;  // xdrv_37_sonoff_d1.ino
 #endif
 //  feature6 |= 0x00000008;
 
