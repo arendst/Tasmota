@@ -9,7 +9,7 @@
 - Add Zigbee features and improvements and remove support for Zigbee commands starting with ``Zigbee...``
 - Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)
 - Add support for Romanian language translations by Augustin Marti
-- Add Zigbee use distinct MQTT topics per device for SENSOR, allowing retained messages (#7835)
+- Add command ``SetOption89 0/1`` for Zigbee distinct MQTT topics per device for SENSOR, allowing retained messages (#7835)
 
 ### 8.1.0.9 20200220
 
@@ -20,6 +20,9 @@
 - Add Zigbee enhanced commands decoding, added ``ZbPing``
 - Add commands ``SetOption85 0/1`` and ``DevGroupShare`` supporting UDP Group command using ``GroupTopic`` without MQTT by Paul Diem (#7790)
 - Add support for Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM dimmer switches by Paul Diem (#7791)
+- Add command ``SetOption86 0/1`` for PWM dimmer to turn brightness LED's off 5 seconds after last change
+- Add command ``SetOption87 0/1`` for PWM dimmer to turn red LED on when powered off
+- Add command ``SetOption88 0/1`` for PWM dimmer to let buttons control remote devices
 
 ### 8.1.0.8 20200212
 
@@ -52,7 +55,7 @@
 - Change wifi connectivity stability (#7602)
 - Change IRremoteESP8266 library updated to v2.7.3
 - Fix PWM flickering at low levels (#7415)
-- Add ``SetOption84 1`` sends AWS IoT device shadow updates (alternative to retained)
+- Add ``SetOption84 0/1`` sends AWS IoT device shadow updates (alternative to retained)
 - Add ``ZbBind`` (experimental) and bug fixes
 
 ### 8.1.0.4 20200116
