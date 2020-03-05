@@ -53,9 +53,9 @@ const char HASS_DISCOVER_BASE[] PROGMEM =
     "\"pl_not_avail\":\"" D_OFFLINE "\"";        // Offline
 
 const char HASS_DISCOVER_RELAY[] PROGMEM =
-    ",\"cmd_t\":\"%s\","                         // cmnd/dualr2/POWER2	                           
-    "\"val_tpl\":\"{{value_json.%s}}\","         // POWER2	  
-    "\"pl_off\":\"%s\","                         // OFF	  
+    ",\"cmd_t\":\"%s\","                         // cmnd/dualr2/POWER2
+    "\"val_tpl\":\"{{value_json.%s}}\","         // POWER2
+    "\"pl_off\":\"%s\","                         // OFF
     "\"pl_on\":\"%s\"";                          // ON
 
 const char HASS_DISCOVER_BUTTON_TOGGLE[] PROGMEM =
@@ -368,7 +368,7 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
   char unique_id[30];
 
   mqtt_data[0] = '\0'; // Clear retained message
-  // Clear or Set topic  
+  // Clear or Set topic
   char subname[20];
   NoAlNumToUnderscore(subname, MultiSubName); //Replace all non alphaumeric characters to '_' to avoid topic name issues
   snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%s"), ESP.getChipId(), sensorname, subname);
@@ -504,7 +504,7 @@ void HAssAnnounceStatusSensor(void)
     TryResponseAppend_P(HASS_DISCOVER_SENSOR_HASS_STATUS, state_topic);
     TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP.getChipId(), WiFi.macAddress().c_str(),
                         SettingsText(SET_FRIENDLYNAME1), ModuleName().c_str(), my_version, my_image);
-  
+
     TryResponseAppend_P(PSTR("}"));
   }
   MqttPublish(stopic, true);
@@ -568,9 +568,13 @@ void HAssAnyKey(void)
     return;
   } // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
 
-  uint32_t key = (XdrvMailbox.payload >> 16) & 0xFF;
-  uint32_t device = XdrvMailbox.payload & 0xFF;
-  uint32_t state = (XdrvMailbox.payload >> 8) & 0xFF;
+  uint32_t key = (XdrvMailbox.payload >> 16) & 0xFF;   // 0 = Button, 1 = Switch
+  uint32_t device = XdrvMailbox.payload & 0xFF;        // Device number or 1 if more Buttons than Devices
+  uint32_t state = (XdrvMailbox.payload >> 8) & 0xFF;  // 0 = Off, 1 = On, 2 = Toggle
+
+  if (!key && ButtonTopicActive()) {                   // Button and ButtonTopic is active
+    device = (XdrvMailbox.payload >> 24) & 0xFF;       // Button number
+  }
 
   char scommand[CMDSZ];
   snprintf_P(scommand, sizeof(scommand), PSTR("%s%d"), (key) ? "SWITCH" : "BUTTON", device);
