@@ -1496,6 +1496,40 @@ chknext:
           fvar=!global_state.mqtt_down;
           goto exit;
         }
+        if (!strncmp(vname,"mp(",3)) {
+          lp+=3;
+          float fvar1;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
+          SCRIPT_SKIP_SPACES
+          while (*lp!=')') {
+            char str[SCRIPT_MAXSSIZE];
+            lp=GetStringResult(lp,OPER_EQU,str,0);
+            SCRIPT_SKIP_SPACES
+            char *pstr=str;
+            pstr++;
+            float fvar2;
+            pstr=GetNumericResult(pstr,OPER_EQU,&fvar2,0);
+            while (*pstr==' ') pstr++;
+            fvar=fvar1;
+            if ((str[0]=='<' && fvar1<fvar2) || 
+                (str[0]=='>' && fvar1>fvar2) || 
+                (str[0]=='=' && fvar1==fvar2)) 
+            {
+              if (*pstr==':') {
+                pstr++;
+                while (*pstr==' ') pstr++;
+                float fvar3;
+                pstr=GetNumericResult(pstr,OPER_EQU,&fvar3,0);
+                fvar=fvar3;
+              } else {
+                fvar=fvar2;
+              }
+              break;
+            }
+          }
+          len=0;
+          goto exit;
+        }
         break;
       case 'p':
         if (!strncmp(vname,"pin[",4)) {
