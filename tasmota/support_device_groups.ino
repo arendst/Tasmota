@@ -511,9 +511,7 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
   */
   XdrvMailbox.command = nullptr;  // Indicates the source is a device group update
   XdrvMailbox.index = flags | device_group_index << 16;
-
-  light_fade = Settings.light_fade;
-  if (flags & (DGR_FLAG_MORE_TO_COME | DGR_FLAG_DIRECT)) Settings.light_fade = false;
+  if (flags & (DGR_FLAG_MORE_TO_COME | DGR_FLAG_DIRECT)) skip_light_fade = true;
 
   for (;;) {
     if (packet_length - (message_ptr - packet) < 1) goto badmsg;  // Malformed message
@@ -548,9 +546,6 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
           value |= *message_ptr++ << 16;
           value |= *message_ptr++ << 24;
         }
-      }
-      else if (item == DGR_ITEM_LIGHT_FADE) {
-        light_fade = value;
       }
 #ifdef DEVICE_GROUPS_DEBUG
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("<item=%u, value=%u"), item, value);
@@ -595,7 +590,7 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
 
   XdrvMailbox.command_code = DGR_ITEM_EOL;
   XdrvCall(FUNC_DEVICE_GROUP_REQUEST);
-  Settings.light_fade = light_fade;
+  skip_light_fade = false;
 
   processing_remote_device_message = false;
 #ifdef DEVICE_GROUPS_DEBUG
