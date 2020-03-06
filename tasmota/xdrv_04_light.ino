@@ -1832,7 +1832,7 @@ void LightAnimate(void)
         cur_col_10[i] = orig_col_10bits[Light.color_remap[i]];
       }
 
-      if (!Settings.light_fade || power_off || (!Light.fade_initialized)) { // no fade
+      if (!Settings.light_fade || skip_light_fade || power_off || (!Light.fade_initialized)) { // no fade
         // record the current value for a future Fade
         memcpy(Light.fade_start_10, cur_col_10, sizeof(Light.fade_start_10));
         // push the final values at 8 and 10 bits resolution to the PWMs
@@ -2146,6 +2146,12 @@ void LightHandleDeviceGroupRequest()
           LightSetPower();
         }
         XdrvMailbox = save_XdrvMailbox;
+        send_state = true;
+      }
+      break;
+    case DGR_ITEM_LIGHT_FADE:
+      if (Settings.light_fade != value) {
+        Settings.light_fade = value;
         send_state = true;
       }
       break;
@@ -2488,10 +2494,17 @@ void CmndDimmer(void)
   // Dimmer0 0..100 - Change both RGB and W(W) Dimmers
   // Dimmer1 0..100 - Change RGB Dimmer
   // Dimmer2 0..100 - Change W(W) Dimmer
+  // Dimmer3 0..100 - Change both RGB and W(W) Dimmers with no fading
   // Dimmer<x> +    - Incerement Dimmer in steps of 10
   // Dimmer<x> -    - Decrement Dimmer in steps of 10
   uint32_t dimmer;
-  if (XdrvMailbox.index > 2) { XdrvMailbox.index = 1; }
+  if (XdrvMailbox.index == 3) {
+    skip_light_fade = true;
+    XdrvMailbox.index = 0;
+  }
+  else if (XdrvMailbox.index > 2) {
+    XdrvMailbox.index = 1;
+  }
 
   if ((light_controller.isCTRGBLinked()) || (0 == XdrvMailbox.index)) {
     dimmer = light_state.getDimmer();
@@ -2524,9 +2537,11 @@ void CmndDimmer(void)
       }
     }
     Light.update = true;
+    if (skip_light_fade) LightAnimate();
   } else {
     ResponseCmndNumber(dimmer);
   }
+  skip_light_fade = false;
 }
 
 #endif  // USE_LIGHT
