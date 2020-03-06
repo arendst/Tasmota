@@ -21,6 +21,9 @@
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
 
+  0.9.4.0 20200304  integrate - sensor types can be ignored (default for LYWSD03),
+                                add CGD1 (Alarm clock), correct PDU-types for LYWSD02
+  ---
   0.9.3.0 20200222  integrate - use now the correct id-word instead of MAC-OUI, 
                                 add CGG1
   ---
@@ -48,7 +51,7 @@
 
 /*********************************************************************************************\
 * MINRF
-* BLE-Sniffer/Bridge for MIJIA/XIAOMI Temperatur/Humidity-Sensor, Mi Flora, LYWSD02
+* BLE-Sniffer/Bridge for MIJIA/XIAOMI Temperatur/Humidity-Sensor, Mi Flora, LYWSD02, GCx
 *
 * Usage: Configure NRF24
 \*********************************************************************************************/
@@ -62,12 +65,19 @@
 #define LYWSD02     3
 #define LYWSD03     4
 #define CGG1        5
+#define CGD1        6
 
-const uint16_t kMINRFSlaveID[5]={ 0x0098, // Flora
+/* define sensors to ignore, which can improve performance
+  pattern: #define IGNORE_sensorname
+*/
+#define IGNORE_LYWSD03
+
+const uint16_t kMINRFSlaveID[6]={ 0x0098, // Flora
                                   0x01aa, // MJ_HT_V1
                                   0x045b, // LYWSD02
                                   0x055b, // LYWSD03
-                                  0x0347  // CGG1
+                                  0x0347, // CGG1
+                                  0x0576  // CGD1
                                   };
 
 const char kMINRFSlaveType1[] PROGMEM = "Flora";
@@ -75,19 +85,21 @@ const char kMINRFSlaveType2[] PROGMEM = "MJ_HT_V1";
 const char kMINRFSlaveType3[] PROGMEM = "LYWSD02";
 const char kMINRFSlaveType4[] PROGMEM = "LYWSD03";
 const char kMINRFSlaveType5[] PROGMEM = "CGG1";
-const char * kMINRFSlaveType[] PROGMEM = {kMINRFSlaveType1,kMINRFSlaveType2,kMINRFSlaveType3,kMINRFSlaveType4,kMINRFSlaveType5};
+const char kMINRFSlaveType6[] PROGMEM = "CGD1";
+const char * kMINRFSlaveType[] PROGMEM = {kMINRFSlaveType1,kMINRFSlaveType2,kMINRFSlaveType3,kMINRFSlaveType4,kMINRFSlaveType5,kMINRFSlaveType6};
 
 // PDU's or different channels 37-39
 const uint32_t kMINRFFloPDU[3] = {0x3eaa857d,0xef3b8730,0x71da7b46};
 const uint32_t kMINRFMJPDU[3]  = {0x4760cd66,0xdbcc0cd3,0x33048df5};
-const uint32_t kMINRFL2PDU[3]  = {0x3eaa057d,0xef3b0730,0x71da7646}; // 1 and 3 unsure
+const uint32_t kMINRFL2PDU[3]  = {0x3eaa057d,0xef3b0730,0x71dafb46};
 // const uint32_t kMINRFL3PDU[3]  = {0x4760dd78,0xdbcc1ccd,0xffffffff}; //encrypted - 58 58
 const uint32_t kMINRFL3PDU[3]  = {0x4760cb78,0xdbcc0acd,0x33048beb}; //unencrypted  - 30 58
-const uint32_t kMINRFCGPDU[3]  = {0x4760cd6e,0xdbcc0cdb,0x33048dfd};
+const uint32_t kMINRFCGGPDU[3]  = {0x4760cd6e,0xdbcc0cdb,0x33048dfd};
+const uint32_t kMINRFCGDPDU[3]  = {0x5da0d752,0xc10c16e7,0x29c497c1};
 
 // start-LSFR for different channels 37-39
 const uint8_t kMINRFlsfrList_A[3] = {0x4b,0x17,0x23};  // Flora, LYWSD02
-const uint8_t kMINRFlsfrList_B[3] = {0x21,0x72,0x43};  // MJ_HT_V1, LYWSD03, CGG1
+const uint8_t kMINRFlsfrList_B[3] = {0x21,0x72,0x43};  // MJ_HT_V1, LYWSD03, CGx
 
 
 #pragma pack(1)  // important!!
@@ -196,6 +208,15 @@ union LYWSD02Packet_t {    // related to the whole 32-byte-packet/buffer
   } TH;    // mode 04 or 06
 };
 
+union CGDPacket_t {    // related to the whole 32-byte-packet/buffer
+  struct {
+      uint8_t serial[6];
+      uint16_t mode;
+      int16_t temp;  // -9 - 59 °C
+      uint16_t hum;
+  } TH;    // This is no MiBeacon
+};
+
 struct bleAdvPacket_t { // for nRF24L01 max 32 bytes = 2+6+24
   uint8_t pduType;
   uint8_t payloadSize;
@@ -254,6 +275,7 @@ union FIFO_t{
   floraPacket_t floraPacket;
   MJ_HT_V1Packet_t MJ_HT_V1Packet;
   LYWSD02Packet_t LYWSD02Packet;
+  CGDPacket_t CGDPacket;
   uint8_t raw[32];
 };
 
@@ -266,7 +288,7 @@ struct {
   uint16_t timer;
   uint8_t currentChan=0;
   FIFO_t buffer;
-  uint8_t packetMode; // 0 - normal BLE-advertisements, 1 - special "flora"-packet, 2 - special "MJ_HT_V1"-packet
+  uint8_t packetMode; // 0 - normal BLE-advertisements, 1 - 6 "special" sensor packets
 
 #ifdef DEBUG_TASMOTA_SENSOR
   uint8_t streamBuffer[sizeof(buffer)]; //  raw data stream bytes
@@ -276,10 +298,10 @@ struct {
 } MINRF;
 
 struct mi_sensor_t{
-  uint8_t type; //Flora = 1; MJ_HT_V1=2; LYWSD02=3; LYWSD03=4; ; CGG1=5
+  uint8_t type; //Flora = 1; MJ_HT_V1=2; LYWSD02=3; LYWSD03=4; CGG1=5; CGD1=6
   uint8_t serial[6];
   uint8_t showedUp;
-  float temp; //Flora, MJ_HT_V1, LYWSD0x
+  float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
   union {
     struct {
       float moisture;
@@ -289,7 +311,7 @@ struct mi_sensor_t{
     struct {
       float hum;
       uint8_t bat;
-    }; // MJ_HT_V1, LYWSD0x
+    }; // MJ_HT_V1, LYWSD0x, CGx
   };
 };
 
@@ -371,6 +393,9 @@ bool MINRFreceivePacket(void)
       break;
       case 5:
       MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_B[MINRF.currentChan]); // "CGG1" mode
+      break;
+      case 6:
+      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_B[MINRF.currentChan]); // "CGD1" mode
       break;
     }
     // DEBUG_SENSOR_LOG(PSTR("MINRF: LSFR:%x"),_lsfr);
@@ -481,7 +506,10 @@ void MINRFchangePacketModeTo(uint8_t _mode) {
       NRF24radio.openReadingPipe(0,kMINRFL3PDU[_nextchannel]);// 95 fe 58 30 -> LYWSD03 (= no data message)
     break;
     case 5: // special CGG1 packet
-      NRF24radio.openReadingPipe(0,kMINRFCGPDU[_nextchannel]); // 95 fe 50 30 -> CGG1
+      NRF24radio.openReadingPipe(0,kMINRFCGGPDU[_nextchannel]); // 95 fe 50 30 -> CGG1
+    break;
+    case 6: // special CGD1 packet
+      NRF24radio.openReadingPipe(0,kMINRFCGDPDU[_nextchannel]); // cd fd 08 0c -> CGD1
     break;
   }
   // DEBUG_SENSOR_LOG(PSTR("MINRF: Change Mode to %u"),_mode);
@@ -499,7 +527,7 @@ uint32_t MINRFgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
 
   DEBUG_SENSOR_LOG(PSTR("MINRF: will test ID-type: %x"), _type);
   bool _success = false;
-  for (uint32_t i=0;i<5;i++){
+  for (uint32_t i=0;i<6;i++){ // i < sizeof(kMINRFSlaveID) gives compiler warning
     if(_type == kMINRFSlaveID[i]){
       DEBUG_SENSOR_LOG(PSTR("MINRF: ID is type %u"), i);
       _type = i+1;
@@ -536,9 +564,9 @@ uint32_t MINRFgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
       _newSensor.fertility =-1000.0f;
       _newSensor.lux = 0x00ffffff;
       break;
-    case 2: case 3: case 4:
+    case 2: case 3: case 4: case 5: case 6:
       _newSensor.hum=-1.0f;
-      _newSensor.bat=0xff;
+      _newSensor.bat=0x00;
       break;
     default:
       break;
@@ -574,7 +602,7 @@ void MINRFhandleFloraPacket(void){
   DEBUG_SENSOR_LOG(PSTR("MINRF: Sensor slot: %u"), _slot);
   if(_slot==0xff) return;
 
-  static float _tempFloat;
+  float _tempFloat;
   switch(MINRF.buffer.floraPacket.L.mode) { // we can use any struct with a mode, they are all same at this point
     case 4:
     _tempFloat=(float)(MINRF.buffer.floraPacket.T.data)/10.0f;
@@ -617,7 +645,7 @@ void MINRFhandleMJ_HT_V1Packet(void){
   DEBUG_SENSOR_LOG(PSTR("MINRF: Sensor slot: %u"), _slot);
   if(_slot==0xff) return;
 
-  static float _tempFloat;
+  float _tempFloat;
   switch(MINRF.buffer.MJ_HT_V1Packet.TH.mode) { // we can use any struct with a mode, they are all same at this point
     case 0x0d:
     _tempFloat=(float)(MINRF.buffer.MJ_HT_V1Packet.TH.temp)/10.0f;
@@ -653,7 +681,7 @@ void MINRFhandleLYWSD02Packet(void){
   DEBUG_SENSOR_LOG(PSTR("MINRF: Sensor slot: %u"), _slot);
   if(_slot==0xff) return;
 
-  static float _tempFloat;
+  float _tempFloat;
   switch(MINRF.buffer.LYWSD02Packet.TH.mode) { // we can use any struct with a mode, they are all same at this point
     case 4:
     _tempFloat=(float)(MINRF.buffer.LYWSD02Packet.TH.data)/10.0f;
@@ -695,7 +723,7 @@ void MINRFhandleCGG1Packet(void){ // we assume, that the packet structure is equ
   DEBUG_SENSOR_LOG(PSTR("MINRF: Sensor slot: %u"), _slot);
   if(_slot==0xff) return;
 
-  static float _tempFloat;
+  float _tempFloat;
   switch(MINRF.buffer.MJ_HT_V1Packet.TH.mode) { // we can use any struct with a mode, they are all same at this point
     case 0x0d:
     _tempFloat=(float)(MINRF.buffer.MJ_HT_V1Packet.TH.temp)/10.0f;
@@ -718,6 +746,31 @@ void MINRFhandleCGG1Packet(void){ // we assume, that the packet structure is equ
     DEBUG_SENSOR_LOG(PSTR("CGG1 mode:0x0a: U8: %x %%"), MINRF.buffer.MJ_HT_V1Packet.B.battery);
     break;
   }
+}
+
+void MINRFhandleCGD1Packet(void){ // 
+  if(MINRF.buffer.CGDPacket.TH.mode!=0x0401){ // not really a mode
+    DEBUG_SENSOR_LOG(PSTR("MINRF: unexpected CGD1-packet"));
+    MINRF_LOG_BUFFER(MINRF.buffer.raw);
+    return;
+  }
+  MINRFreverseMAC(MINRF.buffer.CGDPacket.TH.serial);
+  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.CGDPacket.TH.serial, 0x0576); // This must be hard-coded, no object-id in Cleargrass-packet
+  DEBUG_SENSOR_LOG(PSTR("MINRF: Sensor slot: %u"), _slot);
+  if(_slot==0xff) return;
+
+  float _tempFloat;
+  _tempFloat=(float)(MINRF.buffer.CGDPacket.TH.temp)/10.0f;
+  if(_tempFloat<60){
+      MIBLEsensors.at(_slot).temp = _tempFloat;
+      DEBUG_SENSOR_LOG(PSTR("CGD1: temp updated"));
+  }
+  _tempFloat=(float)(MINRF.buffer.CGDPacket.TH.hum)/10.0f;
+  if(_tempFloat<100){
+      MIBLEsensors.at(_slot).hum = _tempFloat;
+      DEBUG_SENSOR_LOG(PSTR("CGD1: hum updated"));
+  }
+  DEBUG_SENSOR_LOG(PSTR("CGD1: U16:  %x Temp U16: %x Hum"), MINRF.buffer.CGDPacket.TH.temp,  MINRF.buffer.CGDPacket.TH.hum);
 }
 
 /*********************************************************************************************\
@@ -769,11 +822,32 @@ void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
   else if (MINRF.packetMode == CGG1){
     MINRFhandleCGG1Packet();
   }
-  if (MINRF.packetMode == CGG1){
-    MINRFinitBLE(1); // no real ble packets in release mode, otherwise for developing use 0
+  else if (MINRF.packetMode == CGD1){
+    MINRFhandleCGD1Packet();
   }
-  else {
-    MINRFinitBLE(++MINRF.packetMode);
+
+#ifdef IGNORE_FLORA
+    if (MINRF.packetMode+1 == FLORA) MINRF.packetMode++;
+#endif // IGNORE_LYWSD03
+#ifdef IGNORE_MJ_HT_V1
+    if (MINRF.packetMode+1 == MJ_HT_V1) MINRF.packetMode++;
+#endif //IGNORE_MJ_HT_V1
+#ifdef IGNORE_LYWSD02
+    if (MINRF.packetMode+1 == LYWSD02) MINRF.packetMode++;
+#endif // IGNORE_LYWSD02
+#ifdef IGNORE_LYWSD03
+    if (MINRF.packetMode+1 == LYWSD03) MINRF.packetMode++;
+#endif // IGNORE_LYWSD03
+#ifdef IGNORE_CGG1
+    if (MINRF.packetMode+1 == CGG1) MINRF.packetMode++;
+#endif // IGNORE_CGG1
+#ifdef IGNORE_CGD1
+    if (MINRF.packetMode+1 == CGD1) MINRF.packetMode=0;
+#endif // IGNORE_CGD1
+  MINRFinitBLE(++MINRF.packetMode);
+
+if (MINRF.packetMode > CGD1){
+    MINRFinitBLE(1); // no real ble packets in release mode, otherwise for developing use 0
   }
 
   MINRFhopChannel();
@@ -828,7 +902,7 @@ void MINRFShow(bool json)
           if(MIBLEsensors.at(i).hum!=-1.0f){ // this is the error code -> no humidity
               ResponseAppend_P(PSTR(",\"" D_JSON_HUMIDITY "\":%s"), humidity);
           }
-          if(MIBLEsensors.at(i).bat!=0xff){ // this is the error code -> no battery
+          if(MIBLEsensors.at(i).bat!=0x00){ // this is the error code -> no battery
             ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors.at(i).bat);
           }
         }
@@ -868,7 +942,7 @@ void MINRFShow(bool json)
             dtostrfd(MIBLEsensors.at(i).hum, Settings.flag2.humidity_resolution, humidity);
             WSContentSend_PD(HTTP_SNS_HUM, kMINRFSlaveType[MIBLEsensors.at(i).type-1], humidity);
           }
-          if(MIBLEsensors.at(i).bat!=0xff){
+          if(MIBLEsensors.at(i).bat!=0x00){ // without "juice" nothing can be done
             WSContentSend_PD(HTTP_BATTERY, kMINRFSlaveType[MIBLEsensors.at(i).type-1], MIBLEsensors.at(i).bat);
           }
         }
