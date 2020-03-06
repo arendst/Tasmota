@@ -1,7 +1,7 @@
 /*
   settings.h - setting variables for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -92,7 +92,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t bootcount_update : 1;         // bit 26 (v7.0.0.4)  - SetOption76 - Enable incrementing bootcount when deepsleep is enabled
     uint32_t slider_dimmer_stay_on : 1;    // bit 27 (v7.0.0.6)  - SetOption77 - Do not power off if slider moved to far left
     uint32_t compatibility_check : 1;      // bit 28 (v7.1.2.6)  - SetOption78 - Disable OTA compatibility check
-    uint32_t spare29 : 1;
+    uint32_t counter_reset_on_tele : 1;    // bit 29 (v8.1.0.1)  - SetOption79 - Enable resetting of counters after telemetry was sent
     uint32_t shutter_mode : 1;             // bit 30 (v6.6.0.14) - SetOption80 - Enable shutter support
     uint32_t pcf8574_ports_inverted : 1;   // bit 31 (v6.6.0.14) - SetOption81 - Invert all ports on PCF8574 devices
   };
@@ -101,14 +101,14 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption82 .. SetOption113
-    uint32_t spare00 : 1;
-    uint32_t spare01 : 1;
-    uint32_t spare02 : 1;
-    uint32_t spare03 : 1;
-    uint32_t spare04 : 1;
-    uint32_t spare05 : 1;
-    uint32_t spare06 : 1;
-    uint32_t spare07 : 1;
+    uint32_t alexa_ct_range : 1;           // bit 0 (v8.1.0.2)   - SetOption82 - Reduced CT range for Alexa
+    uint32_t zigbee_use_names : 1;         // bit 1 (v8.1.0.4)   - SetOption83 - Use FriendlyNames instead of ShortAddresses when possible
+    uint32_t awsiot_shadow : 1;            // bit 2 (v8.1.0.5)   - SetOption84 - (AWS IoT) publish MQTT state to a device shadow
+    uint32_t device_groups_enabled : 1;    // bit 3 (v8.1.0.9)   - SetOption85 - Enable Device Groups
+    uint32_t led_timeout : 1;              // bit 4 (v8.1.0.9)   - SetOption86 - PWM Dimmer Turn brightness LED's off 5 seconds after last change
+    uint32_t powered_off_led : 1;          // bit 5 (v8.1.0.9)   - SetOption87 - PWM Dimmer Turn red LED on when powered off
+    uint32_t remote_device_mode : 1;       // bit 6 (v8.1.0.9)   - SetOption88 - PWM Dimmer Buttons control remote devices
+    uint32_t zigbee_distinct_topics : 1;   // bit 7 (v8.1.0.10)  - SetOption89 - Distinct MQTT topics per device for Zigbee (#7835)
     uint32_t spare08 : 1;
     uint32_t spare09 : 1;
     uint32_t spare10 : 1;
@@ -132,7 +132,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
     uint32_t spare30 : 1;
-    uint32_t spare31 : 1;
+    uint32_t spare31 : 1;                  // bit 31
   };
 } SysBitfield4;
 
@@ -140,10 +140,8 @@ typedef union {
   uint32_t data;                           // Allow bit manipulation
   struct {
     uint32_t spare00 : 1;
-    uint32_t spare01 : 1;
-    uint32_t spare02 : 1;
-    uint32_t spare03 : 1;
-    uint32_t time_format : 2;              // (v6.6.0.9) - CMND_TIME
+    uint32_t speed_conversion : 3;         // (v8.1.0.10) - Tx2x sensor
+    uint32_t time_format : 2;              // (v6.6.0.9)  - CMND_TIME
     uint32_t calc_resolution : 3;
     uint32_t weight_resolution : 2;
     uint32_t frequency_resolution : 2;
@@ -432,7 +430,7 @@ struct SYSCFG {
   uint16_t      shutter_opentime[MAX_SHUTTERS];      // E40
   uint16_t      shutter_closetime[MAX_SHUTTERS];     // E48
   int16_t       shuttercoeff[5][MAX_SHUTTERS];       // E50
-  uint8_t       shutter_invert[MAX_SHUTTERS];        // E78
+  uint8_t       shutter_options[MAX_SHUTTERS];        // E78
   uint8_t       shutter_set50percent[MAX_SHUTTERS];  // E7C
   uint8_t       shutter_position[MAX_SHUTTERS];      // E80
   uint8_t       shutter_startrelay[MAX_SHUTTERS];    // E84
@@ -464,9 +462,23 @@ struct SYSCFG {
   uint8_t       shutter_accuracy;          // F00
   uint8_t       mqttlog_level;             // F01
   uint8_t       sps30_inuse_hours;         // F02
+  uint8_t       hotplug_scan;              // F03
+  uint8_t       bri_power_on;              // F04
+  uint8_t       bri_min;                   // F05
+  uint8_t       bri_preset_low;            // F06
+  uint8_t       bri_preset_high;           // F07
 
-  uint8_t       free_f03[233];             // F03
+  uint8_t       free_f08[180];             // F08
 
+  uint32_t      keeloq_master_msb;         // FBC
+  uint32_t      keeloq_master_lsb;         // FC0
+  uint32_t      keeloq_serial;             // FC4
+  uint32_t      keeloq_count;              // FC8
+  uint32_t      device_group_share_in;     // FCC - Bitmask of device group items imported
+  uint32_t      device_group_share_out;    // FD0 - Bitmask of device group items exported
+  uint32_t      bootcount_reset_time;      // FD4
+  int           adc_param4;                // FD8
+  uint32_t      shutter_button[MAX_KEYS];  // FDC
   uint32_t      i2c_drivers[3];            // FEC I2cDriver
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC

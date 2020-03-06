@@ -1,7 +1,7 @@
 /*
   xdrv_10_scripter.ino - script support for Tasmota
 
-  Copyright (C) 2019  Gerhard Mutz and Theo Arends
+  Copyright (C) 2020  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -1588,7 +1588,7 @@ chknext:
         if (!strncmp(vname,"sw[",3)) {
           // tasmota switch state
           GetNumericResult(vname+3,OPER_EQU,&fvar,0);
-          fvar=SwitchLastState((uint8_t)fvar);
+          fvar=SwitchLastState((uint32_t)fvar);
           // skip ] bracket
           len++;
           goto exit;
@@ -1711,6 +1711,30 @@ chknext:
           lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
           fvar=sqrtf(fvar);
           lp++;
+          len=0;
+          goto exit;
+        }
+#endif
+#ifdef USE_SML_SCRIPT_CMD
+        if (!strncmp(vname,"sml(",4)) {
+          lp+=4;
+          float fvar1;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
+          SCRIPT_SKIP_SPACES
+          float fvar2;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+          SCRIPT_SKIP_SPACES
+          if (fvar2==0) {
+            float fvar3;
+            lp=GetNumericResult(lp,OPER_EQU,&fvar3,0);
+            fvar=SML_SetBaud(fvar1,fvar3);
+          } else {
+            char str[SCRIPT_MAXSSIZE];
+            lp=GetStringResult(lp,OPER_EQU,str,0);
+            fvar=SML_Write(fvar1,str);
+          }
+          lp++;
+          fvar=0;
           len=0;
           goto exit;
         }
@@ -3033,11 +3057,6 @@ void Scripter_save_pvars(void) {
 #ifdef USE_WEBSERVER
 
 #define WEB_HANDLE_SCRIPT "s10"
-#define D_CONFIGURE_SCRIPT "Edit script"
-#define D_SCRIPT "edit script"
-#define D_SDCARD_UPLOAD "file upload"
-#define D_SDCARD_DIR "sd card directory"
-#define D_UPL_DONE "Done"
 
 const char S_CONFIGURE_SCRIPT[] PROGMEM = D_CONFIGURE_SCRIPT;
 
@@ -3051,7 +3070,7 @@ const char HTTP_FORM_SCRIPT[] PROGMEM =
 
 const char HTTP_FORM_SCRIPT1[] PROGMEM =
     "<div style='text-align:right' id='charNum'> </div>"
-    "<input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>script enable</b><br/>"
+    "<input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>" D_SCRIPT_ENABLE "</b><br/>"
     "<br><textarea  id='t1' name='t1' rows='8' cols='80' maxlength='%d' style='font-size: 12pt' >";
 
 const char HTTP_FORM_SCRIPT1b[] PROGMEM =
@@ -3064,9 +3083,9 @@ const char HTTP_FORM_SCRIPT1b[] PROGMEM =
     "var ml=this.getAttribute('maxlength');"
     "var cl=this.value.length;"
     "if(cl>=ml){"
-      "eb('charNum').innerHTML='no more chars';"
+    "eb('charNum').innerHTML='" D_SCRIPT_CHARS_NO_MORE "';"
     "}else{"
-      "eb('charNum').innerHTML=ml-cl+' chars left';"
+    "eb('charNum').innerHTML=ml-cl+' " D_SCRIPT_CHARS_LEFT "';"
     "}"
 
 #if 0
@@ -3137,13 +3156,13 @@ const char HTTP_SCRIPT_FORM_END[] PROGMEM =
 
 #ifdef USE_SCRIPT_FATFS
 const char HTTP_FORM_SCRIPT1c[] PROGMEM =
-"<button name='d%d' type='submit' class='button bgrn'>Download '%s'</button>";
+    "<button name='d%d' type='submit' class='button bgrn'>" D_SCRIPT_DOWNLOAD " '%s'</button>";
 #ifdef SDCARD_DIR
 const char HTTP_FORM_SCRIPT1d[] PROGMEM =
-"<button method='post' name='upl' type='submit' class='button bgrn'>SD card directory</button>";
+    "<button method='post' name='upl' type='submit' class='button bgrn'>" D_SDCARD_DIR "</button>";
 #else
 const char HTTP_FORM_SCRIPT1d[] PROGMEM =
-"<button method='post' name='upl' type='submit' class='button bgrn'>Upload files</button>";
+    "<button method='post' name='upl' type='submit' class='button bgrn'>" D_SCRIPT_UPLOAD_FILES "</button>";
 #endif
 
 #ifdef SDCARD_DIR
@@ -3286,7 +3305,7 @@ void Script_FileUploadConfiguration(void)
   WSContentStart_P(S_SCRIPT_FILE_UPLOAD);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_FILE_UPLOAD,D_SDCARD_DIR);
-  WSContentSend_P(HTTP_FORM_FILE_UPG, "upload");
+  WSContentSend_P(HTTP_FORM_FILE_UPG, D_SCRIPT_UPLOAD);
 #ifdef SDCARD_DIR
   WSContentSend_P(HTTP_FORM_SDC_DIRa);
   if (glob_script_mem.script_sd_found) {
@@ -4780,6 +4799,7 @@ bool Xdrv10(uint8_t function)
           glob_script_mem.script_pram_size=MAX_SCRIPT_SIZE;
 
           glob_script_mem.flags=1;
+          I2cSetActiveFound(EEPROM_ADDRESS, "EEPROM");
         }
       }
 #endif

@@ -1,7 +1,7 @@
 /*
   support_command.ino - command support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,9 +27,13 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SERIALDELIMITER "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|"
   D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|"
+  D_CMND_SPEEDUNIT "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
+#ifdef USE_DEVICE_GROUPS
+  D_CMND_DEVGROUP_SHARE "|"
+#endif  // USE_DEVICE_GROUPS
   D_CMND_SENSOR "|" D_CMND_DRIVER;
 
 void (* const TasmotaCommand[])(void) PROGMEM = {
@@ -42,9 +46,13 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndSerialDelimiter, &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig,
   &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndWifiPower, &CmndTempOffset,
+  &CmndSpeedUnit,
 #ifdef USE_I2C
   &CmndI2cScan, CmndI2cDriver,
 #endif
+#ifdef USE_DEVICE_GROUPS
+  &CmndDevGroupShare,
+#endif  // USE_DEVICE_GROUPS
   &CmndSensor, &CmndDriver };
 
 const char kWifiConfig[] PROGMEM =
@@ -87,6 +95,15 @@ void ResponseCmndDone(void)
 void ResponseCmndIdxChar(const char* value)
 {
   Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, value);
+}
+
+void ResponseCmndAll(uint32_t text_index, uint32_t count)
+{
+  mqtt_data[0] = '\0';
+  for (uint32_t i = 0; i < count; i++) {
+    ResponseAppend_P(PSTR("%c\"%s%d\":\"%s\""), (i) ? ',' : '{', XdrvMailbox.command, i +1, SettingsText(text_index +i));
+  }
+  ResponseJsonEnd();
 }
 
 /********************************************************************************************/
@@ -132,8 +149,8 @@ void ExecuteCommand(const char *cmnd, uint32_t source)
 /********************************************************************************************/
 
 // topicBuf:                    /power1  dataBuf: toggle  = Console command
-// topicBuf:         cmnd/tasmota/power1  dataBuf: toggle  = Mqtt command using topic
-// topicBuf:        cmnd/tasmotas/power1  dataBuf: toggle  = Mqtt command using a group topic
+// topicBuf:        cmnd/tasmota/power1  dataBuf: toggle  = Mqtt command using topic
+// topicBuf:       cmnd/tasmotas/power1  dataBuf: toggle  = Mqtt command using a group topic
 // topicBuf: cmnd/DVES_83BB10_fb/power1  dataBuf: toggle  = Mqtt command using fallback topic
 
 void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
@@ -193,7 +210,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 //    backlog_delay = millis() + (100 * MIN_BACKLOG_DELAY);
     backlog_delay = millis() + Settings.param[P_BACKLOG_DELAY];
 
-    char command[CMDSZ];
+    char command[CMDSZ] = { 0 };
     XdrvMailbox.command = command;
     XdrvMailbox.index = index;
     XdrvMailbox.data_len = data_len;
@@ -228,9 +245,9 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 
   if (type == nullptr) {
     blinks = 201;
-    snprintf_P(topicBuf, sizeof(topicBuf), PSTR(D_JSON_COMMAND));
+    snprintf_P(stemp1, sizeof(stemp1), PSTR(D_JSON_COMMAND));
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_UNKNOWN "\"}"));
-    type = (char*)topicBuf;
+    type = (char*)stemp1;
   }
 
   if (mqtt_data[0] != '\0') {
@@ -329,13 +346,12 @@ void CmndStatus(void)
   char stemp2[TOPSZ];
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
-  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2)) && (!payload)) { option++; }  // TELE
+  // Commented on 20200118 as it seems to be no longer needed
+//  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2)) && (!payload)) { option++; }  // TELE
 
   if ((!Settings.flag.mqtt_enabled) && (6 == payload)) { payload = 99; }  // SetOption3 - Enable MQTT
   if (!energy_flg && (9 == payload)) { payload = 99; }
-
-  bool exception_flg = (ResetReason() == REASON_EXCEPTION_RST);
-  if (!exception_flg && (12 == payload)) { payload = 99; }
+  if (!CrashFlag() && (12 == payload)) { payload = 99; }
 
   if ((0 == payload) || (99 == payload)) {
     uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
@@ -368,12 +384,12 @@ void CmndStatus(void)
   }
 
   if ((0 == payload) || (1 == payload)) {
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS1_PARAMETER "\":{\"" D_JSON_BAUDRATE "\":%d,\"" D_CMND_GROUPTOPIC "\":\"%s\",\"" D_CMND_OTAURL "\":\"%s\",\""
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS1_PARAMETER "\":{\"" D_JSON_BAUDRATE "\":%d,\"" D_CMND_SERIALCONFIG "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\",\"" D_CMND_OTAURL "\":\"%s\",\""
                           D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_JSON_STARTUPUTC "\":\"%s\",\"" D_CMND_SLEEP "\":%d,\""
-                          D_JSON_CONFIG_HOLDER "\":%d,\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_JSON_SAVEADDRESS "\":\"%X\"}}"),
-                          baudrate, SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
+                          D_JSON_CONFIG_HOLDER "\":%d,\"" D_JSON_BOOTCOUNT "\":%d,\"BCResetTime\":\"%s\",\"" D_JSON_SAVECOUNT "\":%d,\"" D_JSON_SAVEADDRESS "\":\"%X\"}}"),
+                          Settings.baudrate * 300, GetSerialConfig().c_str(), SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
                           GetResetReason().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
-                          Settings.cfg_holder, Settings.bootcount, Settings.save_flag, GetSettingsAddress());
+                          Settings.cfg_holder, Settings.bootcount, GetDateAndTime(DT_BOOTCOUNT).c_str(), Settings.save_flag, GetSettingsAddress());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "1"));
   }
 
@@ -403,10 +419,10 @@ void CmndStatus(void)
   if ((0 == payload) || (4 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\""
                           D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d,\"" D_JSON_FLASHCHIPID "\":\"%06X\",\"" D_JSON_FLASHMODE "\":%d,\""
-                          D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
+                          D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
                           ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024,
                           ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipId(), ESP.getFlashChipMode(),
-                          LANGUAGE_LCID, feature_drv1, feature_drv2, feature_sns1, feature_sns2, feature5);
+                          LANGUAGE_LCID, feature_drv1, feature_drv2, feature_sns1, feature_sns2, feature5, feature6);
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
     XsnsSensorState();
@@ -417,10 +433,10 @@ void CmndStatus(void)
   if ((0 == payload) || (5 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"" D_JSON_GATEWAY "\":\"%s\",\""
                           D_JSON_SUBNETMASK "\":\"%s\",\"" D_JSON_DNSSERVER "\":\"%s\",\"" D_JSON_MAC "\":\"%s\",\""
-                          D_CMND_WEBSERVER "\":%d,\"" D_CMND_WIFICONFIG "\":%d}}"),
+                          D_CMND_WEBSERVER "\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
                           my_hostname, WiFi.localIP().toString().c_str(), IPAddress(Settings.ip_address[1]).toString().c_str(),
                           IPAddress(Settings.ip_address[2]).toString().c_str(), IPAddress(Settings.ip_address[3]).toString().c_str(), WiFi.macAddress().c_str(),
-                          Settings.webserver, Settings.sta_config);
+                          Settings.webserver, Settings.sta_config, WifiGetOutputPower().c_str());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "5"));
   }
 
@@ -441,13 +457,13 @@ void CmndStatus(void)
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS7_TIME "\":{\"" D_JSON_UTC_TIME "\":\"%s\",\"" D_JSON_LOCAL_TIME "\":\"%s\",\"" D_JSON_STARTDST "\":\"%s\",\""
                           D_JSON_ENDDST "\":\"%s\",\"" D_CMND_TIMEZONE "\":%s,\"" D_JSON_SUNRISE "\":\"%s\",\"" D_JSON_SUNSET "\":\"%s\"}}"),
-                          GetTime(0).c_str(), GetTime(1).c_str(), GetTime(2).c_str(),
-                          GetTime(3).c_str(), stemp, GetSun(0).c_str(), GetSun(1).c_str());
+                          GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_LOCALNOTZ).c_str(), GetDateAndTime(DT_DST).c_str(),
+                          GetDateAndTime(DT_STD).c_str(), stemp, GetSun(0).c_str(), GetSun(1).c_str());
 #else
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS7_TIME "\":{\"" D_JSON_UTC_TIME "\":\"%s\",\"" D_JSON_LOCAL_TIME "\":\"%s\",\"" D_JSON_STARTDST "\":\"%s\",\""
                           D_JSON_ENDDST "\":\"%s\",\"" D_CMND_TIMEZONE "\":%s}}"),
-                          GetTime(0).c_str(), GetTime(1).c_str(), GetTime(2).c_str(),
-                          GetTime(3).c_str(), stemp);
+                          GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_LOCALNOTZ).c_str(), GetDateAndTime(DT_DST).c_str(),
+                          GetDateAndTime(DT_STD).c_str(), stemp);
 #endif  // USE_TIMERS and USE_SUNRISE
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "7"));
   }
@@ -482,7 +498,7 @@ void CmndStatus(void)
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "11"));
   }
 
-  if (exception_flg) {
+  if (CrashFlag()) {
     if ((0 == payload) || (12 == payload)) {
       Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS12_STATUS "\":"));
       CrashDump();
@@ -574,6 +590,12 @@ void CmndRestart(void)
     break;
   case -1:
     CmndCrash();    // force a crash
+    break;
+  case -2:
+    CmndWDT();
+    break;
+  case -3:
+    CmndBlockedLoop();
     break;
   case 99:
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
@@ -857,6 +879,14 @@ void CmndWeightResolution(void)
   ResponseCmndNumber(Settings.flag2.weight_resolution);
 }
 
+void CmndSpeedUnit(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6)) {
+    Settings.flag2.speed_conversion = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Settings.flag2.speed_conversion);
+}
+
 void CmndModule(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= MAXMODULE)) {
@@ -1087,7 +1117,7 @@ void CmndBaudrate(void)
 {
   if (XdrvMailbox.payload >= 300) {
     XdrvMailbox.payload /= 300;  // Make it a valid baudrate
-    baudrate = (XdrvMailbox.payload & 0xFFFF) * 300;
+    uint32_t baudrate = (XdrvMailbox.payload & 0xFFFF) * 300;
     SetSerialBaudrate(baudrate);
   }
   ResponseCmndNumber(Settings.baudrate * 300);
@@ -1216,16 +1246,20 @@ void CmndIpAddress(void)
 
 void CmndNtpServer(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
-    uint32_t ntp_server = SET_NTPSERVER1 + XdrvMailbox.index -1;
-    if (XdrvMailbox.data_len > 0) {
-      SettingsUpdateText(ntp_server,
-        (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? NTP_SERVER1 : (2 == XdrvMailbox.index) ? NTP_SERVER2 : NTP_SERVER3 : XdrvMailbox.data);
-      SettingsUpdateText(ntp_server, ReplaceCommaWithDot(SettingsText(ntp_server)));
-//        restart_flag = 2;  // Issue #3890
-      ntp_force_sync = true;
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_NTP_SERVERS)) {
+    if (!XdrvMailbox.usridx) {
+      ResponseCmndAll(SET_NTPSERVER1, MAX_NTP_SERVERS);
+    } else {
+      uint32_t ntp_server = SET_NTPSERVER1 + XdrvMailbox.index -1;
+      if (XdrvMailbox.data_len > 0) {
+        SettingsUpdateText(ntp_server,
+          (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? NTP_SERVER1 : (2 == XdrvMailbox.index) ? NTP_SERVER2 : NTP_SERVER3 : XdrvMailbox.data);
+        SettingsUpdateText(ntp_server, ReplaceCommaWithDot(SettingsText(ntp_server)));
+  //        restart_flag = 2;  // Issue #3890
+        ntp_force_sync = true;
+      }
+      ResponseCmndIdxChar(SettingsText(ntp_server));
     }
-    ResponseCmndIdxChar(SettingsText(ntp_server));
   }
 }
 
@@ -1247,14 +1281,18 @@ void CmndAp(void)
 
 void CmndSsid(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
-    if (XdrvMailbox.data_len > 0) {
-      SettingsUpdateText(SET_STASSID1 + XdrvMailbox.index -1,
-              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_SSID1 : STA_SSID2 : XdrvMailbox.data);
-      Settings.sta_active = XdrvMailbox.index -1;
-      restart_flag = 2;
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SSIDS)) {
+    if (!XdrvMailbox.usridx) {
+      ResponseCmndAll(SET_STASSID1, MAX_SSIDS);
+    } else {
+      if (XdrvMailbox.data_len > 0) {
+        SettingsUpdateText(SET_STASSID1 + XdrvMailbox.index -1,
+                (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_SSID1 : STA_SSID2 : XdrvMailbox.data);
+        Settings.sta_active = XdrvMailbox.index -1;
+        restart_flag = 2;
+      }
+      ResponseCmndIdxChar(SettingsText(SET_STASSID1 + XdrvMailbox.index -1));
     }
-    ResponseCmndIdxChar(SettingsText(SET_STASSID1 + XdrvMailbox.index -1));
   }
 }
 
@@ -1304,16 +1342,20 @@ void CmndWifiConfig(void)
 void CmndFriendlyname(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_FRIENDLYNAMES)) {
-    if (XdrvMailbox.data_len > 0) {
-      char stemp1[TOPSZ];
-      if (1 == XdrvMailbox.index) {
-        snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME));
-      } else {
-        snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME "%d"), XdrvMailbox.index);
+    if (!XdrvMailbox.usridx) {
+      ResponseCmndAll(SET_FRIENDLYNAME1, MAX_FRIENDLYNAMES);
+    } else {
+      if (XdrvMailbox.data_len > 0) {
+        char stemp1[TOPSZ];
+        if (1 == XdrvMailbox.index) {
+          snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME));
+        } else {
+          snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME "%d"), XdrvMailbox.index);
+        }
+        SettingsUpdateText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : (SC_DEFAULT == Shortcut()) ? stemp1 : XdrvMailbox.data);
       }
-      SettingsUpdateText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : (SC_DEFAULT == Shortcut()) ? stemp1 : XdrvMailbox.data);
+      ResponseCmndIdxChar(SettingsText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1));
     }
-    ResponseCmndIdxChar(SettingsText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1));
   }
 }
 
@@ -1369,6 +1411,11 @@ void CmndInterlock(void)
           SetDevicePower(power, SRC_IGNORE);                    // Remove multiple relays if set
         }
       }
+#ifdef USE_SHUTTER
+      if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
+        ShutterInit(); // to update shutter mode
+      }
+#endif  // USE_SHUTTER
     }
     Response_P(PSTR("{\"" D_CMND_INTERLOCK "\":\"%s\",\"" D_JSON_GROUPS "\":\""), GetStateText(Settings.flag.interlock));
     uint32_t anygroup = 0;
@@ -1422,6 +1469,7 @@ void CmndReset(void)
     break;
   case 99:
     Settings.bootcount = 0;
+    Settings.bootcount_reset_time = 0;
     ResponseCmndDone();
     break;
   default:
@@ -1607,7 +1655,7 @@ void CmndWifiPower(void)
     }
     WifiSetOutputPower();
   }
-  ResponseCmndFloat((float)(Settings.wifi_output_power) / 10, 1);
+  ResponseCmndChar(WifiGetOutputPower().c_str());
 }
 
 #ifdef USE_I2C
@@ -1631,6 +1679,17 @@ void CmndI2cDriver(void)
   ResponseJsonEnd();
 }
 #endif  // USE_I2C
+
+#ifdef USE_DEVICE_GROUPS
+void CmndDevGroupShare(void)
+{
+  uint32_t parm[2] = { Settings.device_group_share_in, Settings.device_group_share_out };
+  ParseParameters(2, parm);
+  Settings.device_group_share_in = parm[0];
+  Settings.device_group_share_out = parm[1];
+  Response_P(PSTR("{\"" D_CMND_DEVGROUP_SHARE "\":{\"In\":\"%X\",\"Out\":\"%X\"}}"), Settings.device_group_share_in, Settings.device_group_share_out);
+}
+#endif  // USE_DEVICE_GROUPS
 
 void CmndSensor(void)
 {

@@ -1,7 +1,7 @@
 /*
   de-DE.h - localization for German - Germany for Tasmota
 
-  Copyright (C) 2019  VinceMasuka
+  Copyright (C) 2020  VinceMasuka
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v8.0.0
+ * Updated until v8.1.0.1
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -66,7 +66,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Kanal"
-#define D_CO2 "CO²"
+#define D_CO2 "CO₂"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "kalt"
 #define D_COMMAND "Befehl"
@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "zählen"
 #define D_COUNTER "Zähler"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Strom"          // As in Voltage and Current
 #define D_DATA "Daten"
 #define D_DARKLIGHT "dunkel"
@@ -83,7 +84,7 @@
 #define D_DNS_SERVER "DNS-Server"
 #define D_DONE "erledigt"
 #define D_DST_TIME "DST"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "Emulation"
 #define D_ENABLED "aktiviert"
 #define D_ERASE "löschen"
@@ -136,6 +137,7 @@
 #define D_PROGRAM_SIZE "Ben. Flash Speicher"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Regen"
+#define D_RANGE "Range"
 #define D_RECEIVED "erhalten"
 #define D_RESTART "Neustart"
 #define D_RESTARTING "starte neu"
@@ -501,10 +503,10 @@
 #define D_CALIBRATION "Kalibrierung"
 
 //xsns_35_tx20.ino
-#define D_TX20_WIND_DIRECTION "Wind Richtung"
+#define D_TX20_WIND_DIRECTION "Windrichtung"
 #define D_TX20_WIND_SPEED "Windgeschwindigkeit"
-#define D_TX20_WIND_SPEED_AVG "Ø Windgeschwindigkeit"
-#define D_TX20_WIND_SPEED_MAX "max Windgeschwindigkeit"
+#define D_TX20_WIND_SPEED_MIN "Windgeschwindigkeit Min"
+#define D_TX20_WIND_SPEED_MAX "Windgeschwindigkeit Max"
 #define D_TX20_NORTH "N"
 #define D_TX20_EAST "O"
 #define D_TX20_SOUTH "S"
@@ -562,7 +564,7 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
-#define D_SENSOR_TX20_TX       "TX20"
+#define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFrecv"
 #define D_SENSOR_TUYA_TX       "Tuya Tx"
@@ -633,6 +635,13 @@
 #define D_SENSOR_SLAVE_RESET "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
+#define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
+#define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -647,7 +656,7 @@
 #define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m3"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
@@ -668,7 +677,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Phasenwinkel"
 #define D_IMPORT_ACTIVE   "Importiere Wirk"
 #define D_EXPORT_ACTIVE   "Exportiere Wirk"
@@ -677,6 +686,7 @@
 #define D_TOTAL_REACTIVE  "Total Blind"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Grad"
+#define D_TOTAL_ACTIVE    "Total Wirk"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Spannung"
@@ -701,5 +711,18 @@
 #define D_SOLAX_ERROR_6   "Übertemperatur"
 #define D_SOLAX_ERROR_7   "Lüfterfehler"
 #define D_SOLAX_ERROR_8   "sonstiger Fehler"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Skript konfigurieren"
+#define D_SCRIPT               "Skript bearbeiten"
+#define D_SDCARD_UPLOAD        "Datei speichern"
+#define D_SDCARD_DIR           "SD Card Verzeichnis"
+#define D_UPL_DONE             "Fertig"
+#define D_SCRIPT_CHARS_LEFT    "Zeichen übrig"
+#define D_SCRIPT_CHARS_NO_MORE "kein Speicher mehr"
+#define D_SCRIPT_DOWNLOAD      "Download"
+#define D_SCRIPT_ENABLE        "Skript aktivieren"
+#define D_SCRIPT_UPLOAD        "Upload"
+#define D_SCRIPT_UPLOAD_FILES  "Upload Dateien"
 
 #endif  // _LANGUAGE_DE_DE_H_

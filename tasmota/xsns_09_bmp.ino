@@ -1,7 +1,7 @@
 /*
   xsns_09_bmp.ino - BMP pressure, temperature, humidity and gas sensor support for Tasmota
 
-  Copyright (C) 2019  Heiko Krupp and Theo Arends
+  Copyright (C) 2020  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -39,6 +39,10 @@
 #define BME680_CHIPID        0x61
 
 #define BMP_REGISTER_CHIPID  0xD0
+
+#define BMP_REGISTER_RESET   0xE0 // Register to reset to power on defaults (used for sleep)
+
+#define BMP_CMND_RESET       0xB6 // I2C Parameter for RESET to put BMP into reset state
 
 #define BMP_MAX_SENSORS      2
 
@@ -601,6 +605,25 @@ void BmpShow(bool json)
   }
 }
 
+#ifdef USE_DEEPSLEEP
+
+void BMP_EnterSleep(void)
+{
+  for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
+    switch (bmp_sensors[bmp_idx].bmp_type) {
+      case BMP180_CHIPID:
+      case BMP280_CHIPID:
+      case BME280_CHIPID:
+        I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP_REGISTER_RESET, BMP_CMND_RESET);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+#endif // USE_DEEPSLEEP
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -627,6 +650,11 @@ bool Xsns09(uint8_t function)
         BmpShow(0);
         break;
 #endif  // USE_WEBSERVER
+#ifdef USE_DEEPSLEEP
+      case FUNC_SAVE_BEFORE_RESTART:
+        BMP_EnterSleep();
+        break;
+#endif // USE_DEEPSLEEP
     }
   }
   return result;

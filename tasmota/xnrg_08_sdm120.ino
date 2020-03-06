@@ -1,7 +1,7 @@
 /*
   xnrg_08_sdm120.ino - Eastron SDM120-Modbus energy meter support for Tasmota
 
-  Copyright (C) 2019  Gennaro Tortone and Theo Arends
+  Copyright (C) 2020  Gennaro Tortone and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

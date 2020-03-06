@@ -132,7 +132,7 @@ People helping to keep the show on the road:
 - Adrian Scillato for his (security)fixes and implementing and maintaining KNX
 - Gennaro Tortone for implementing and maintaining Eastron drivers
 - Raymond Mouthaan for managing Wemos Wiki information
-- Norbert Richter for his decode-config.py tool
+- Norbert Richter for his [decode-config.py](https://github.com/tasmota/decode-config) tool
 - Andre Thomas for providing [thehackbox](http://thehackbox.org/tasmota/) OTA support and daily development builds
 - Joel Stein, digiblur and Shantur Rathore for their Tuya research and driver
 - Frogmore42 and Jason2866 for providing many issue answers

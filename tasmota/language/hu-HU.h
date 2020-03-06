@@ -1,7 +1,7 @@
 /*
   hu-HU.h - localization for Hungarian in Hungary for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Szám"
 #define D_COUNTER "Számláló"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Áramerősség"          // As in Voltage and Current
 #define D_DATA "Adat"
 #define D_DARKLIGHT "Min. fényerő"
@@ -83,7 +84,7 @@
 #define D_DNS_SERVER "DNS szerver"
 #define D_DONE "Kész"
 #define D_DST_TIME "nyári idő"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "Emuláció"
 #define D_ENABLED "Engedélyezve"
 #define D_ERASE "Törlés"
@@ -136,6 +137,7 @@
 #define D_PROGRAM_SIZE "Program méret"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Eső"
+#define D_RANGE "Range"
 #define D_RECEIVED "Érkezett"
 #define D_RESTART "Újraindítás"
 #define D_RESTARTING "Újraindítás"
@@ -503,7 +505,7 @@
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Szélirány"
 #define D_TX20_WIND_SPEED "Szélsebesség"
-#define D_TX20_WIND_SPEED_AVG "Átlag szélsebesség"
+#define D_TX20_WIND_SPEED_MIN "Min. szélsebesség"
 #define D_TX20_WIND_SPEED_MAX "Max. szélsebesség"
 #define D_TX20_NORTH "É"
 #define D_TX20_EAST "K"
@@ -562,7 +564,7 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
-#define D_SENSOR_TX20_TX       "TX20"
+#define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFrecv"
 #define D_SENSOR_TUYA_TX       "Tuya Tx"
@@ -633,6 +635,13 @@
 #define D_SENSOR_SLAVE_RESET "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
+#define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
+#define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -644,11 +653,11 @@
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
-#define D_UNIT_KILOOHM "kOhm"
+#define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
-#define D_UNIT_MICROMETER "um"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
+#define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLIMETER "mm"
@@ -668,7 +677,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Fázisszög"
 #define D_IMPORT_ACTIVE   "Bejövő aktív"
 #define D_EXPORT_ACTIVE   "Kimenő aktív"
@@ -677,6 +686,7 @@
 #define D_TOTAL_REACTIVE  "Összes reaktív"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "fok"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltage"
@@ -701,5 +711,18 @@
 #define D_SOLAX_ERROR_6   "Over Temperature Fault"
 #define D_SOLAX_ERROR_7   "Fan Fault"
 #define D_SOLAX_ERROR_8   "Other Device Fault"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Edit script"
+#define D_SCRIPT               "edit script"
+#define D_SDCARD_UPLOAD        "file upload"
+#define D_SDCARD_DIR           "sd card directory"
+#define D_UPL_DONE             "Done"
+#define D_SCRIPT_CHARS_LEFT    "chars left"
+#define D_SCRIPT_CHARS_NO_MORE "no more chars"
+#define D_SCRIPT_DOWNLOAD      "Download"
+#define D_SCRIPT_ENABLE        "script enable"
+#define D_SCRIPT_UPLOAD        "Upload"
+#define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
 #endif  // _LANGUAGE_HU_HU_H_

@@ -3,7 +3,7 @@
 """
   decode-status.py - decode status for Tasmota
 
-  Copyright (C) 2019 Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -132,12 +132,18 @@ a_setoption = [[
     "Enable incrementing bootcount when deepsleep is enabled",
     "Do not power off if slider moved to far left",
     "Bypass Compatibility check",
-    "",
+    "Enable resetting of counters after telemetry was sent",
     "Enable shutter support",
     "Invert PCF8574 ports"
     ],[
-    "","","","",
-    "","","","",
+    "Reduced CT range for Alexa",
+    "Use FriendlyNames instead of ShortAddresses when possible",
+    "(AWS IoT) publish MQTT state to a device shadow",
+    "Enable Device Groups",
+    "PWM Dimmer Turn brightness LED's off 5 seconds after last change",
+    "PWM Dimmer Turn red LED on when powered off",
+    "PWM Dimmer Buttons control remote devices",
+    "Distinct MQTT topics per device for Zigbee",
     "","","","",
     "","","","",
     "","","","",
@@ -188,7 +194,16 @@ a_features = [[
     "USE_SHUTTER","USE_PCF8574","USE_DDSU666","USE_DEEPSLEEP",
     "USE_SONOFF_SC","USE_SONOFF_RF","USE_SONOFF_L1","USE_EXS_DIMMER",
     "USE_ARDUINO_SLAVE","USE_HIH6","USE_HPMA","USE_TSL2591",
-    "USE_DHT12","","USE_GPS","",
+    "USE_DHT12","USE_DS1624","USE_GPS","USE_HOTPLUG",
+    "USE_NRF24","USE_MIBLE","USE_HM10","USE_LE01MR",
+    "USE_AHT1x","USE_WEMOS_MOTOR_V1","USE_DEVICE_GROUPS","USE_PWM_DIMMER"
+    ],[
+    "USE_KEELOQ","USE_HRXL","USE_SONOFF_D1","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
     "","","","",
     "","","",""
     ]]
@@ -224,7 +239,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20190819 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20200305 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

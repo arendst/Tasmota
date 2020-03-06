@@ -1,7 +1,7 @@
 /*
   xsns_29_mcp230xx.ino - Support for I2C MCP23008/MCP23017 GPIO Expander on Tasmota
 
-  Copyright (C) 2019  Andre Thomas and Theo Arends
+  Copyright (C) 2020  Andre Thomas and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

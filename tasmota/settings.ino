@@ -1,7 +1,7 @@
 /*
   settings.ino - user settings for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -277,6 +277,23 @@ bool RtcRebootValid(void)
 
 /*********************************************************************************************\
  * Config - Flash
+ *
+ * Tasmota 1M flash usage
+ * 0x00000000 - Unzipped binary bootloader
+ * 0x00001000 - Unzipped binary code start
+ *    ::::
+ * 0x000xxxxx - Unzipped binary code end
+ * 0x000x1000 - First page used by Core OTA
+ *    ::::
+ * 0x000F3000 - Tasmota Quick Power Cycle counter (SETTINGS_LOCATION - CFG_ROTATES) - First four bytes only
+ * 0x000F4000 - First Tasmota rotating settings page
+ *    ::::
+ * 0x000FA000 - Last Tasmota rotating settings page = Last page used by Core OTA
+ * 0x000FB000 - Core SPIFFS end = Core EEPROM = Tasmota settings page during OTA and when no flash rotation is active (SETTINGS_LOCATION)
+ * 0x000FC000 - SDK - Uses first 128 bytes for phy init data mirrored by Core in RAM. See core_esp8266_phy.cpp phy_init_data[128] = Core user_rf_cal_sector
+ * 0x000FD000 - SDK - Uses scattered bytes from 0x340 (iTead use as settings storage from 0x000FD000)
+ * 0x000FE000 - SDK - Uses scattered bytes from 0x340 (iTead use as mirrored settings storage from 0x000FE000)
+ * 0x000FF000 - SDK - Uses at least first 32 bytes of this page - Tasmota Zigbee persistence from 0x000FF800 to 0x000FFFFF
 \*********************************************************************************************/
 
 extern "C" {
@@ -343,10 +360,10 @@ void SetFlashModeDout(void)
   delete[] _buffer;
 }
 
-uint32_t OtaVersion(void)
+bool VersionCompatible(void)
 {
   if (Settings.flag3.compatibility_check) {
-    return 0xFFFFFFFF;
+    return true;
   }
 
   eboot_command ebcmd;
@@ -359,13 +376,18 @@ uint32_t OtaVersion(void)
   bool found = false;
   for (uint32_t address = start_address; address < end_address; address = address + FLASH_SECTOR_SIZE) {
     ESP.flashRead(address, (uint32_t*)buffer, FLASH_SECTOR_SIZE);
-    for (uint32_t i = 0; i < (FLASH_SECTOR_SIZE / 4); i++) {
-      version[0] = version[1];
-      version[1] = version[2];
-      version[2] = buffer[i];
-      if ((version[0] == MARKER_START) && (version[2] == MARKER_END)) {
-        found = true;
-        break;
+    if ((address == start_address) && (0x1F == (buffer[0] & 0xFF))) {
+      version[1] = 0xFFFFFFFF;  // Ota file is gzipped and can not be checked for compatibility
+      found = true;
+    } else {
+      for (uint32_t i = 0; i < (FLASH_SECTOR_SIZE / 4); i++) {
+        version[0] = version[1];
+        version[1] = version[2];
+        version[2] = buffer[i];
+        if ((MARKER_START == version[0]) && (MARKER_END == version[2])) {
+          found = true;
+          break;
+        }
       }
     }
     if (found) { break; }
@@ -376,13 +398,13 @@ uint32_t OtaVersion(void)
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("OTA: Version 0x%08X, Compatible 0x%08X"), version[1], VERSION_COMPATIBLE);
 
-  return version[1];
-}
+  if (version[1] < VERSION_COMPATIBLE) {
+    uint32_t eboot_magic = 0;  // Abandon OTA result
+    ESP.rtcUserMemoryWrite(0, (uint32_t*)&eboot_magic, sizeof(eboot_magic));
+    return false;
+  }
 
-void AbandonOta(void)
-{
-  uint32_t eboot_magic = 0;
-  ESP.rtcUserMemoryWrite(0, (uint32_t*)&eboot_magic, sizeof(eboot_magic));
+  return true;
 }
 
 void SettingsBufferFree(void)
@@ -695,7 +717,11 @@ void EspErase(uint32_t start_sector, uint32_t end_sector)
 //    bool result = EsptoolEraseSector(sector);    // Esptool - erases flash completely (slow)
 
     if (serial_output) {
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+      Serial.printf(D_LOG_APPLICATION D_ERASED_SECTOR " %d %s\n", sector, (result) ? D_OK : D_ERROR);
+#else
       Serial.printf_P(PSTR(D_LOG_APPLICATION D_ERASED_SECTOR " %d %s\n"), sector, (result) ? D_OK : D_ERROR);
+#endif
       delay(10);
     } else {
       yield();
@@ -719,6 +745,7 @@ void SettingsErase(uint8_t type)
     1 = Erase 16k SDK parameter area near end of flash as seen by SDK (0x0xFCxxx - 0x0xFFFFF) solving possible wifi errors
     2 = Erase Tasmota parameter area (0x0xF3xxx - 0x0xFBFFF)
     3 = Erase Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
+    4 = Erase SDK parameter area used for wifi calibration (0x0FCxxx - 0x0FCFFF)
   */
 
 #ifndef FIRMWARE_MINIMAL
@@ -736,8 +763,22 @@ void SettingsErase(uint8_t type)
     _sectorStart = SETTINGS_LOCATION - CFG_ROTATES;                       // Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
     _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;             // Flash size as seen by SDK
   }
+  else if (4 == type) {
+//    _sectorStart = (ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE) - 4;     // SDK phy area and Core calibration sector (0x0FC000)
+    _sectorStart = SETTINGS_LOCATION +1;                                  // SDK phy area and Core calibration sector (0x0FC000)
+    _sectorEnd = _sectorStart +1;                                         // SDK end of phy area and Core calibration sector (0x0FCFFF)
+  }
+/*
+  else if (5 == type) {
+    _sectorStart = (ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE) -4;  // SDK phy area and Core calibration sector (0xxFC000)
+    _sectorEnd = _sectorStart +1;                                         // SDK end of phy area and Core calibration sector (0xxFCFFF)
+  }
+*/
+  else {
+    return;
+  }
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " %d " D_UNIT_SECTORS), _sectorEnd - _sectorStart);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " from 0x%08X to 0x%08X"), _sectorStart * SPI_FLASH_SEC_SIZE, (_sectorEnd * SPI_FLASH_SEC_SIZE) -1);
 
 //  EspErase(_sectorStart, _sectorEnd);                                     // Arduino core and SDK - erases flash as seen by SDK
   EsptoolErase(_sectorStart, _sectorEnd);                                 // Esptool - erases flash completely
@@ -746,7 +787,7 @@ void SettingsErase(uint8_t type)
 
 void SettingsSdkErase(void)
 {
-  WiFi.disconnect(true);    // Delete SDK wifi config
+  WiFi.disconnect(false);    // Delete SDK wifi config
   SettingsErase(1);
   delay(1000);
 }
@@ -777,8 +818,13 @@ void SettingsDefaultSet2(void)
 {
   memset((char*)&Settings +16, 0x00, sizeof(SYSCFG) -16);
 
-//  Settings.flag.value_units = 0;
-//  Settings.flag.stop_flash_rotate = 0;
+  Settings.flag.stop_flash_rotate = APP_FLASH_CYCLE;
+  Settings.flag.global_state = APP_ENABLE_LEDLINK;
+  Settings.flag3.sleep_normal = APP_NORMAL_SLEEP;
+  Settings.flag3.no_power_feedback = APP_NO_RELAY_SCAN;
+  Settings.flag3.fast_power_cycle_disable = APP_DISABLE_POWERCYCLE;
+  Settings.flag3.bootcount_update = DEEPSLEEP_BOOTCOUNT;
+  Settings.flag3.compatibility_check = OTA_COMPATIBILITY;
   Settings.save_data = SAVE_DATA;
   Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
   Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
@@ -819,6 +865,8 @@ void SettingsDefaultSet2(void)
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 
   // Wifi
+  Settings.flag3.use_wifi_scan = WIFI_SCAN_AT_RESTART;
+  Settings.flag3.use_wifi_rescan = WIFI_SCAN_REGULARLY;
   Settings.wifi_output_power = 170;
   ParseIp(&Settings.ip_address[0], WIFI_IP_ADDRESS);
   ParseIp(&Settings.ip_address[1], WIFI_GATEWAY);
@@ -839,16 +887,17 @@ void SettingsDefaultSet2(void)
 
   // Webserver
   Settings.flag2.emulation = EMULATION;
+  Settings.flag3.gui_hostname_ip = GUI_SHOW_HOSTNAME;
+  Settings.flag3.mdns_enabled = MDNS_ENABLED;
   Settings.webserver = WEB_SERVER;
   Settings.weblog_level = WEB_LOG_LEVEL;
   SettingsUpdateText(SET_WEBPWD, WEB_PASSWORD);
-  Settings.flag3.mdns_enabled = MDNS_ENABLED;
   SettingsUpdateText(SET_CORS, CORS_DOMAIN);
 
   // Button
-//  Settings.flag.button_restrict = 0;
-//  Settings.flag.button_swap = 0;
-//  Settings.flag.button_single = 0;
+  Settings.flag.button_restrict = KEY_DISABLE_MULTIPRESS;
+  Settings.flag.button_swap = KEY_SWAP_DOUBLE_PRESS;
+  Settings.flag.button_single = KEY_ONLY_SINGLE_PRESS;
   Settings.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
 
   // Switch
@@ -856,16 +905,19 @@ void SettingsDefaultSet2(void)
 
   // MQTT
   Settings.flag.mqtt_enabled = MQTT_USE;
-//  Settings.flag.mqtt_response = 0;
+  Settings.flag.mqtt_response = MQTT_RESULT_COMMAND;
+  Settings.flag.mqtt_offline = MQTT_LWT_MESSAGE;
   Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-  Settings.flag3.button_switch_force_local = MQTT_BUTTON_SWITCH_FORCE_LOCAL;
-  Settings.flag3.hass_tele_on_power = TELE_ON_POWER;
-//  Settings.flag.mqtt_sensor_retain = 0;
-//  Settings.flag.mqtt_offline = 0;
+  Settings.flag.mqtt_sensor_retain = MQTT_SENSOR_RETAIN;
 //  Settings.flag.mqtt_serial = 0;
-//  Settings.flag.device_index_enable = 0;
+  Settings.flag.device_index_enable = MQTT_POWER_FORMAT;
+  Settings.flag3.time_append_timezone = MQTT_APPEND_TIMEZONE;
+  Settings.flag3.button_switch_force_local = MQTT_BUTTON_SWITCH_FORCE_LOCAL;
+  Settings.flag3.no_hold_retain = MQTT_NO_HOLD_RETAIN;
+  Settings.flag3.use_underscore = MQTT_INDEX_SEPARATOR;
+  Settings.flag3.grouptopic_mode = MQTT_GROUPTOPIC_FORMAT;
   SettingsUpdateText(SET_MQTT_HOST, MQTT_HOST);
   Settings.mqtt_port = MQTT_PORT;
   SettingsUpdateText(SET_MQTT_CLIENT, MQTT_CLIENT_ID);
@@ -899,10 +951,13 @@ void SettingsDefaultSet2(void)
   Settings.mqttlog_level = MQTT_LOG_LEVEL;
 
   // Energy
+  Settings.flag.no_power_on_check = ENERGY_VOLTAGE_ALWAYS;
   Settings.flag2.current_resolution = 3;
 //  Settings.flag2.voltage_resolution = 0;
 //  Settings.flag2.wattage_resolution = 0;
   Settings.flag2.energy_resolution = ENERGY_RESOLUTION;
+  Settings.flag3.dds2382_model = ENERGY_DDS2382_MODE;
+  Settings.flag3.hardware_energy_total = ENERGY_HARDWARE_TOTALS;
   Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
 //  Settings.energy_power_delta = 0;
   Settings.energy_power_calibration = HLW_PREF_PULSE;
@@ -932,9 +987,12 @@ void SettingsDefaultSet2(void)
   Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
 
   // IRRemote
+  Settings.flag.ir_receive_decimal = IR_DATA_RADIX;
+  Settings.flag3.receive_raw = IR_ADD_RAW_DATA;
   Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
 
   // RF Bridge
+  Settings.flag.rf_receive_decimal = RF_DATA_RADIX;
 //  for (uint32_t i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
   memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
 
@@ -955,6 +1013,8 @@ void SettingsDefaultSet2(void)
   Settings.flag2.pressure_resolution = PRESSURE_RESOLUTION;
   Settings.flag2.humidity_resolution = HUMIDITY_RESOLUTION;
   Settings.flag2.temperature_resolution = TEMP_RESOLUTION;
+  Settings.flag3.ds18x20_internal_pullup = DS18X20_PULL_UP;
+  Settings.flag3.counter_reset_on_tele = COUNTER_RESET;
 //  Settings.altitude = 0;
 
   // Rules
@@ -963,19 +1023,28 @@ void SettingsDefaultSet2(void)
 //  for (uint32_t i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
   Settings.flag2.calc_resolution = CALC_RESOLUTION;
 
+  // Timer
+  Settings.flag3.timers_enable = TIMERS_ENABLED;
+
   // Home Assistant
+  Settings.flag.hass_light = HASS_AS_LIGHT;
   Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
+  Settings.flag3.hass_tele_on_power = TELE_ON_POWER;
 
   // Knx
-//  Settings.flag.knx_enabled = 0;
-//  Settings.flag.knx_enable_enhancement = 0;
+  Settings.flag.knx_enabled = KNX_ENABLED;
+  Settings.flag.knx_enable_enhancement = KNX_ENHANCED;
 
   // Light
-  Settings.flag.pwm_control = 1;
-  //Settings.flag.ws_clock_reverse = 0;
-  //Settings.flag.light_signal = 0;
-  //Settings.flag.not_power_linked = 0;
-  //Settings.flag.decimal_text = 0;
+  Settings.flag.pwm_control = LIGHT_MODE;
+  Settings.flag.ws_clock_reverse = LIGHT_CLOCK_DIRECTION;
+  Settings.flag.light_signal = LIGHT_PAIRS_CO2;
+  Settings.flag.not_power_linked = LIGHT_POWER_CONTROL;
+  Settings.flag.decimal_text = LIGHT_COLOR_RADIX;
+  Settings.flag3.pwm_multi_channels = LIGHT_CHANNEL_MODE;
+  Settings.flag3.slider_dimmer_stay_on = LIGHT_SLIDER_POWER;
+  Settings.flag4.alexa_ct_range = LIGHT_ALEXA_CT_RANGE;
+
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
   for (uint32_t i = 0; i < MAX_PWMS; i++) {
@@ -1038,7 +1107,7 @@ void SettingsDefaultSet2(void)
   SettingsUpdateText(SET_NTPSERVER1, NTP_SERVER1);
   SettingsUpdateText(SET_NTPSERVER2, NTP_SERVER2);
   SettingsUpdateText(SET_NTPSERVER3, NTP_SERVER3);
-  for (uint32_t i = 0; i < 3; i++) {
+  for (uint32_t i = 0; i < MAX_NTP_SERVERS; i++) {
     SettingsUpdateText(SET_NTPSERVER1 +i, ReplaceCommaWithDot(SettingsText(SET_NTPSERVER1 +i)));
   }
   Settings.latitude = (int)((double)LATITUDE * 1000000);
@@ -1059,6 +1128,15 @@ void SettingsDefaultSet2(void)
 
   memset(&Settings.monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
   SettingsEnableAllI2cDrivers();
+
+  // Tuya
+  Settings.flag3.tuya_apply_o20 = TUYA_SETOPTION_20;
+  Settings.flag3.tuya_serial_mqtt_publish = MQTT_TUYA_RECEIVED;
+
+  Settings.flag3.buzzer_enable = BUZZER_ENABLE;
+  Settings.flag3.shutter_mode = SHUTTER_SUPPORT;
+  Settings.flag3.pcf8574_ports_inverted = PCF8574_INVERT_PORTS;
+  Settings.flag4.zigbee_use_names = ZIGBEE_FRIENDLY_NAMES;
 }
 
 /********************************************************************************************/

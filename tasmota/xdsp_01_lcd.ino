@@ -1,7 +1,7 @@
 /*
   xdsp_01_lcd.ino - Display LCD support for Tasmota
 
-  Copyright (C) 2019  Theo Arends and Adafruit
+  Copyright (C) 2020  Theo Arends and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -85,6 +85,10 @@ void LcdInitDriver(void)
 
 void LcdDrawStringAt(void)
 {
+  if (dsp_flag) {  // Supply Line and Column starting with Line 1 and Column 1
+    dsp_x--;
+    dsp_y--;
+  }
   lcd->setCursor(dsp_x, dsp_y);
   lcd->print(dsp_str);
 }

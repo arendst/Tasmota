@@ -1,7 +1,7 @@
 /*
   xsns_33_ds3231.ino - ds3231 RTC chip, act like sensor support for Tasmota
 
-  Copyright (C) 2019  Guy Elgabsi (guy.elg AT gmail.com)
+  Copyright (C) 2020  Guy Elgabsi (guy.elg AT gmail.com)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -143,7 +143,7 @@ void DS3231EverySecond(void)
     Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
     Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
     AddLog_P2(LOG_LEVEL_INFO, PSTR("Set time from DS3231 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-                GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
+                GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
     if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
       rules_flag.time_init = 1;
     } else {
@@ -152,7 +152,7 @@ void DS3231EverySecond(void)
   }
   else if (!ds3231WriteStatus && Rtc.utc_time > START_VALID_TIME && abs(Rtc.utc_time - ReadFromDS3231()) > 60) {//if time is valid and is drift from RTC in more that 60 second
     AddLog_P2(LOG_LEVEL_INFO, PSTR("Write Time TO DS3231 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-                GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
+                GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
     SetDS3231Time (Rtc.utc_time); //update the DS3231 time
     ds3231WriteStatus = true;
   }

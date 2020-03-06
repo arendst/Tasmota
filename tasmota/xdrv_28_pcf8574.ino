@@ -1,7 +1,7 @@
 /*
   xdrv_28_pcf8574.ino - PCF8574 I2C support for Tasmota
 
-  Copyright (C) 2019  Stefan Bode
+  Copyright (C) 2020  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -93,6 +93,12 @@ void Pcf8574Init(void)
     }
 
     pcf8574_address++;
+#ifdef USE_MCP230xx_ADDR
+    if (USE_MCP230xx_ADDR == pcf8574_address) {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("PCF: Addr: 0x%x reserved for MCP320xx, skipping PCF8574 probe"), pcf8574_address);
+      pcf8574_address++;
+    }
+#endif
     if ((PCF8574_ADDR1 +7) == pcf8574_address) {  // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
       pcf8574_address = PCF8574_ADDR2 +1;
     }

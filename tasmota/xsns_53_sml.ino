@@ -4,7 +4,7 @@
   Created by Gerhard Mutz on 07.10.11.
   adapted for Tasmota
 
-  Copyright (C) 2019  Gerhard Mutz and Theo Arends
+  Copyright (C) 2020  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -2107,6 +2107,32 @@ init10:
   }
 
 }
+
+
+#ifdef USE_SML_SCRIPT_CMD
+uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
+  if (meter<1 || meter>meters_used) return 0;
+  meter--;
+  if (!meter_ss[meter]) return 0;
+  if (meter_ss[meter]->begin(br)) {
+    meter_ss[meter]->flush();
+  }
+  if (meter_ss[meter]->hardwareSerial()) {
+    if (meter_desc_p[meter].type=='M') {
+      Serial.begin(br, SERIAL_8E1);
+    }
+  }
+  return 1;
+}
+
+uint32_t SML_Write(uint32_t meter,char *hstr) {
+  if (meter<1 || meter>meters_used) return 0;
+  meter--;
+  if (!meter_ss[meter]) return 0;
+  SML_Send_Seq(meter,hstr);
+  return 1;
+}
+#endif
 
 
 void SetDBGLed(uint8_t srcpin, uint8_t ledpin) {

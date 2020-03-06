@@ -1,7 +1,7 @@
 /*
   xdrv_15_pca9685.ino - Support for I2C PCA9685 12bit 16 pin hardware PWM driver on Tasmota
 
-  Copyright (C) 2019  Andre Thomas and Theo Arends
+  Copyright (C) 2020  Andre Thomas and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

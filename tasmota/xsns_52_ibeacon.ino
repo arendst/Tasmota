@@ -1,7 +1,7 @@
 /*
   xsns_52_ibeacon.ino - Support for HM17 BLE Module + ibeacon reader on Tasmota
 
-  Copyright (C) 2019  Gerhard Mutz and Theo Arends
+  Copyright (C) 2020  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,7 +27,11 @@
 
 #define HM17_BAUDRATE 9600
 
-//#define IBEACON_DEBUG
+#define IBEACON_DEBUG
+
+// use this for Version 110
+#define HM17_V110
+
 
 // keyfob expires after N seconds
 #define IB_TIMEOUT_INTERVAL 30
@@ -325,6 +329,14 @@ void hm17_decode(void) {
 #endif
         break;
       }
+      if (!strncmp(hm17_sbuffer,"OK+DISIS",8)) {
+        hm17_sbclr();
+        hm17_result=1;
+#ifdef IBEACON_DEBUG
+        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("DISIS OK"));
+#endif
+        break;
+      }
       if (!strncmp(hm17_sbuffer,"OK+DISCE",8)) {
         hm17_sbclr();
         hm17_result=HM17_SUCESS;
@@ -348,19 +360,26 @@ void hm17_decode(void) {
         break;
       }
       if (!strncmp(hm17_sbuffer,"OK+DIS0:",8)) {
-        if (hm17_sindex==20) {
-          hm17_result=HM17_SUCESS;
-#ifdef IBEACON_DEBUG
-          if (hm17_debug) {
-            AddLog_P2(LOG_LEVEL_INFO, PSTR("DIS0 OK"));
-            AddLog_P2(LOG_LEVEL_INFO, PSTR(">>%s"),&hm17_sbuffer[8]);
-          }
+        if (hm17_cmd==HM17_DISI) {
+#ifdef HM17_V110
+          goto hm17_v110;
 #endif
-          hm17_sbclr();
+        } else {
+          if (hm17_sindex==20) {
+            hm17_result=HM17_SUCESS;
+#ifdef IBEACON_DEBUG
+            if (hm17_debug) {
+              AddLog_P2(LOG_LEVEL_INFO, PSTR("DIS0 OK"));
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(">>%s"),&hm17_sbuffer[8]);
+            }
+#endif
+            hm17_sbclr();
+          }
         }
         break;
       }
       if (!strncmp(hm17_sbuffer,"OK+DISC:",8)) {
+hm17_v110:
         if (hm17_cmd==HM17_DISI) {
           if (hm17_sindex==78) {
 #ifdef IBEACON_DEBUG

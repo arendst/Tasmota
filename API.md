@@ -25,7 +25,7 @@ FUNC_EVERY_250_MSECOND      |      |  1   |  3   |  2   |      |
 FUNC_EVERY_SECOND           |      |  1   |  2   |      |      |
 FUNC_SAVE_AT_MIDNIGHT       |      |      |  x   |      |      | At midnight
 FUNC_SAVE_BEFORE_RESTART    |      |  2   |  1   |      |      | Just before a planned restart
-FUNC_AFTER_TELEPERIOD       |      |  x   |      |      |      | At end of teleperiod
+FUNC_AFTER_TELEPERIOD       |      |  2   |  1   |      |      | At end of teleperiod
 FUNC_JSON_APPEND            |      |  2   |  1   |  3   |      | Extend teleperiod JSON text
 FUNC_WEB_SENSOR             |      |  2   |  1   |  3   |      | Add sensor data to web GUI
 FUNC_COMMAND                |  x   |  1   |  2   |  3   |  4   | When a command is not recognized

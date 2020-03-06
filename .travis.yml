@@ -4,7 +4,7 @@ python:
 sudo: false
 install:
   - pip install -U platformio
-  - platformio upgrade
+  - platformio upgrade --dev
   - platformio update
 
 cache: false
@@ -32,6 +32,7 @@ env:
   - ENV=tasmota-NL
   - ENV=tasmota-PL
   - ENV=tasmota-PT
+  - ENV=tasmota-RO
   - ENV=tasmota-RU
   - ENV=tasmota-SE
   - ENV=tasmota-SK

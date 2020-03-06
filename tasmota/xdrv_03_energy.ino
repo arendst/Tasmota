@@ -1,7 +1,7 @@
 /*
   xdrv_03_energy.ino - Energy sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -289,14 +289,19 @@ void EnergyMarginCheck(void)
 
   if (Settings.energy_power_delta) {
     uint16_t delta = abs(Energy.power_history[0] - energy_power_u);
-    uint16_t min_power = (Energy.power_history[0] > energy_power_u) ? energy_power_u : Energy.power_history[0];
-
-    DEBUG_DRIVER_LOG(PSTR("NRG: Delta %d, Power %d"), delta, min_power);
-
-    if ((delta > 0) && (min_power > 0)) {  // Fix divide by 0 exception (#6741)
-      if (((Settings.energy_power_delta < 101) && (((delta * 100) / min_power) > Settings.energy_power_delta)) ||  // 1..100 = Percentage
-          ((Settings.energy_power_delta > 100) && (delta > (Settings.energy_power_delta -100)))) {                 // 101..32000 = Absolute
-        Energy.power_delta = true;
+    if (delta > 0) {
+      if (Settings.energy_power_delta < 101) {  // 1..100 = Percentage
+        uint16_t min_power = (Energy.power_history[0] > energy_power_u) ? energy_power_u : Energy.power_history[0];
+        if (0 == min_power) { min_power++; }    // Fix divide by 0 exception (#6741)
+        if (((delta * 100) / min_power) > Settings.energy_power_delta) {
+          Energy.power_delta = true;
+        }
+      } else {                                  // 101..32000 = Absolute
+        if (delta > (Settings.energy_power_delta -100)) {
+          Energy.power_delta = true;
+        }
+      }
+      if (Energy.power_delta) {
         Energy.power_history[1] = Energy.active_power[0];  // We only want one report so reset history
         Energy.power_history[2] = Energy.active_power[0];
       }
@@ -360,7 +365,7 @@ void EnergyMarginCheck(void)
           EnergyMqttShow();
           SetAllPower(POWER_ALL_OFF, SRC_MAXPOWER);
           if (!Energy.mplr_counter) {
-            Energy.mplr_counter = Settings.param[P_MAX_POWER_RETRY] +1;
+            Energy.mplr_counter = Settings.param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
           }
           Energy.mplw_counter = Settings.energy_max_power_limit_window;
         }
@@ -385,6 +390,7 @@ void EnergyMarginCheck(void)
             ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
             MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
             EnergyMqttShow();
+            SetAllPower(POWER_ALL_OFF, SRC_MAXPOWER);
           }
         }
       }
@@ -517,26 +523,19 @@ void CmndEnergyReset(void)
     }
   }
   else if ((XdrvMailbox.index > 3) && (XdrvMailbox.index <= 5)) {
-    char *p;
-    char *str = strtok_r(XdrvMailbox.data, ", ", &p);
-    int32_t position = -1;
-    uint32_t values[2];
-
-    while ((str != nullptr) && (position < 1)) {
-      uint32_t value = strtoul(str, nullptr, 10);
-      position++;
-      values[position] = value *100;
-      str = strtok_r(nullptr, ", ", &p);
-    }
+    uint32_t values[2] = { 0 };
+    uint32_t position = ParseParameters(2, values);
+    values[0] *= 100;
+    values[1] *= 100;
 
     switch (XdrvMailbox.index)
     {
       case 4:
         // Reset energy_usage.usage totals
-        if (position > -1) {
+        if (position > 0) {
           RtcSettings.energy_usage.usage1_kWhtotal = values[0];
         }
-        if (position > 0) {
+        if (position > 1) {
           RtcSettings.energy_usage.usage2_kWhtotal = values[1];
         }
         Settings.energy_usage.usage1_kWhtotal = RtcSettings.energy_usage.usage1_kWhtotal;
@@ -544,10 +543,10 @@ void CmndEnergyReset(void)
         break;
       case 5:
         // Reset energy_usage.return totals
-        if (position > -1) {
+        if (position > 0) {
           RtcSettings.energy_usage.return1_kWhtotal = values[0];
         }
-        if (position > 0) {
+        if (position > 1) {
           RtcSettings.energy_usage.return2_kWhtotal = values[1];
         }
         Settings.energy_usage.return1_kWhtotal = RtcSettings.energy_usage.return1_kWhtotal;
@@ -1062,15 +1061,12 @@ void EnergyShow(bool json)
 #ifdef USE_WEBSERVER
   } else {
     if (Energy.voltage_available) {
-      WSContentSend_PD(PSTR("{s}" D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"),
-        EnergyFormat(value_chr, voltage_chr[0], json, Energy.voltage_common));
+      WSContentSend_PD(HTTP_SNS_VOLTAGE, EnergyFormat(value_chr, voltage_chr[0], json, Energy.voltage_common));
     }
     if (Energy.current_available) {
-      WSContentSend_PD(PSTR("{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"),
-        EnergyFormat(value_chr, current_chr[0], json));
+      WSContentSend_PD(HTTP_SNS_CURRENT, EnergyFormat(value_chr, current_chr[0], json));
     }
-    WSContentSend_PD(PSTR("{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}"),
-      EnergyFormat(value_chr, active_power_chr[0], json));
+    WSContentSend_PD(HTTP_SNS_POWER, EnergyFormat(value_chr, active_power_chr[0], json));
     if (!Energy.type_dc) {
       if (Energy.current_available && Energy.voltage_available) {
         WSContentSend_PD(HTTP_ENERGY_SNS1, EnergyFormat(value_chr, apparent_power_chr[0], json),

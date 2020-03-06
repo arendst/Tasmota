@@ -1,7 +1,7 @@
 /*
   xnrg_interface.ino - Energy driver interface support for Tasmota
 
-  Copyright (C) 2019  Theo Arends inspired by ESPEasy
+  Copyright (C) 2020  Theo Arends inspired by ESPEasy
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

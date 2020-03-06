@@ -1,7 +1,7 @@
 /*
   support_buffer.ino - Static binary buffer for Zigbee on Tasmota
 
-  Copyright (C) 2019  Theo Arends and Stephan Hadinger
+  Copyright (C) 2020  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -80,11 +80,24 @@ public:
     return _buf->len;
   }
   size_t add32(const uint32_t data) {           // append 32 bits value
-    if (_buf->len < _buf->size - 3) {     // do we have room for 2 bytes
+    if (_buf->len < _buf->size - 3) {     // do we have room for 4 bytes
       _buf->buf[_buf->len++] = data;
       _buf->buf[_buf->len++] = data >> 8;
       _buf->buf[_buf->len++] = data >> 16;
       _buf->buf[_buf->len++] = data >> 24;
+    }
+    return _buf->len;
+  }
+  size_t add64(const uint64_t data) {           // append 64 bits value
+    if (_buf->len < _buf->size - 7) {     // do we have room for 8 bytes
+      _buf->buf[_buf->len++] = data;
+      _buf->buf[_buf->len++] = data >> 8;
+      _buf->buf[_buf->len++] = data >> 16;
+      _buf->buf[_buf->len++] = data >> 24;
+      _buf->buf[_buf->len++] = data >> 32;
+      _buf->buf[_buf->len++] = data >> 40;
+      _buf->buf[_buf->len++] = data >> 48;
+      _buf->buf[_buf->len++] = data >> 56;
     }
     return _buf->len;
   }
@@ -150,6 +163,20 @@ public:
             ((uint64_t)_buf->buf[offset+6] << 48) | ((uint64_t)_buf->buf[offset+7] << 56);
     }
     return 0;
+  }
+
+  // if no NULL is found, returns length until the end of the buffer
+  inline size_t strlen(const size_t offset) const {
+    return strnlen((const char*) &_buf->buf[offset], len() - offset);
+  }
+
+  size_t strlen_s(const size_t offset) const {
+    size_t slen = this->strlen(offset);
+    if (slen == len() - offset) {
+      return 0;   // we didn't find a NULL char
+    } else {
+      return slen;
+    }
   }
 
   SBuffer subBuffer(const size_t start, size_t len) const {

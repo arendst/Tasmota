@@ -2,7 +2,7 @@
 /*
   xdrv_25_a4988_stepper.ino - A4988 StepMotorDriverCircuit- support for Tasmota
 
-  Copyright (C) 2019  Tim Leuscher and Theo Arends
+  Copyright (C) 2020  Tim Leuscher and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
