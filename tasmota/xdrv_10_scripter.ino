@@ -1512,7 +1512,7 @@ chknext:
                 (*opp=='>' && fvar1>fvar2) || 
                 (*opp=='=' && fvar1==fvar2)) 
             {
-              if (*lp!='<' && *lp!='>' && *lp!='=') {
+              if (*lp!='<' && *lp!='>' && *lp!='=' && *lp!=')' && *lp!=SCRIPT_EOL) {
                 float fvar3;
                 lp=GetNumericResult(lp,OPER_EQU,&fvar3,0);
                 SCRIPT_SKIP_SPACES
