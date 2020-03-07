@@ -1502,30 +1502,27 @@ chknext:
           lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
           SCRIPT_SKIP_SPACES
           while (*lp!=')') {
-            char str[SCRIPT_MAXSSIZE];
-            lp=GetStringResult(lp,OPER_EQU,str,0);
-            SCRIPT_SKIP_SPACES
-            char *pstr=str;
-            pstr++;
+            char *opp=lp;
+            lp++;
             float fvar2;
-            pstr=GetNumericResult(pstr,OPER_EQU,&fvar2,0);
-            while (*pstr==' ') pstr++;
+            lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+            SCRIPT_SKIP_SPACES
             fvar=fvar1;
-            if ((str[0]=='<' && fvar1<fvar2) || 
-                (str[0]=='>' && fvar1>fvar2) || 
-                (str[0]=='=' && fvar1==fvar2)) 
+            if ((*opp=='<' && fvar1<fvar2) || 
+                (*opp=='>' && fvar1>fvar2) || 
+                (*opp=='=' && fvar1==fvar2)) 
             {
-              if (*pstr==':') {
-                pstr++;
-                while (*pstr==' ') pstr++;
+              if (*lp!='<' && *lp!='>' && *lp!='=' && *lp!=')' && *lp!=SCRIPT_EOL) {
                 float fvar3;
-                pstr=GetNumericResult(pstr,OPER_EQU,&fvar3,0);
+                lp=GetNumericResult(lp,OPER_EQU,&fvar3,0);
+                SCRIPT_SKIP_SPACES
                 fvar=fvar3;
               } else {
                 fvar=fvar2;
               }
               break;
             }
+            while (*lp!='<' && *lp!='>' && *lp!='=' && *lp!=')' && *lp!=SCRIPT_EOL) lp++;
           }
           len=0;
           goto exit;
