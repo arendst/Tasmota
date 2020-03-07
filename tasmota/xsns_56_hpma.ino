@@ -1,8 +1,8 @@
 /*
   xsns_56_hpma.ino - Honeywell HPMA115S0 particle concentration sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
-  Copyright (C) 2019  David Hunt
+  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2020  David Hunt
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -64,11 +64,10 @@ void HpmaSecond(void)                 // Every second
 void HpmaInit(void)
 {
   hpma_type = 0;
-  Serial.println("SDS init");
   if (pin[GPIO_HPMA_RX] < 99 && pin[GPIO_HPMA_TX] < 99) {
     HpmaSerial = new TasmotaSerial(pin[GPIO_HPMA_RX], pin[GPIO_HPMA_TX], 1);
     hpma115S0 = new HPMA115S0(*HpmaSerial);
-    
+
     if (HpmaSerial->begin(9600)) {
       if (HpmaSerial->hardwareSerial()) {
         ClaimSerial();

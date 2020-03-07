@@ -1,7 +1,7 @@
 /*
   xsns_34_hx711.ino - HX711 load cell support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -57,6 +57,8 @@
 #define D_JSON_WEIGHT_MAX    "WeightMax"
 #define D_JSON_WEIGHT_ITEM   "WeightItem"
 #define D_JSON_WEIGHT_CHANGE "WeightChange"
+#define D_JSON_WEIGHT_RAW    "WeightRaw"
+#define D_JSON_WEIGHT_DELTA  "WeightDelta"
 
 enum HxCalibrationSteps { HX_CAL_END, HX_CAL_LIMBO, HX_CAL_FINISH, HX_CAL_FAIL, HX_CAL_DONE, HX_CAL_FIRST, HX_CAL_RESET, HX_CAL_START };
 
@@ -64,8 +66,10 @@ const char kHxCalibrationStates[] PROGMEM = D_HX_CAL_FAIL "|" D_HX_CAL_DONE "|" 
 
 struct HX {
   long weight = 0;
+  long raw = 0;
   long last_weight = 0;
   long sum_weight = 0;
+  long sum_raw = 0;
   long offset = 0;
   long scale = 1;
   long weight_diff = 0;
@@ -78,6 +82,7 @@ struct HX {
   uint8_t pin_dout;
   bool tare_flg = false;
   bool weight_changed = false;
+  uint16_t weight_delta = 4;
 } Hx;
 
 /*********************************************************************************************/
@@ -146,6 +151,24 @@ void HxCalibrationStateTextJson(uint8_t msg_id)
   if (msg_id < 3) { MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("Sensor34")); }
 }
 
+void SetWeightDelta()
+{
+  // backwards compatible: restore old default value of 4 grams
+  if (Settings.weight_change == 0) {
+    Hx.weight_delta = 4;
+    return;
+  }
+
+  // map upper values 101-255 to
+  if (Settings.weight_change > 100) {
+    Hx.weight_delta = (Settings.weight_change - 100) * 10 + 100;
+    return;
+  }
+
+  // map 1..100 to 0..99 grams
+  Hx.weight_delta = Settings.weight_change - 1;
+}
+
 /*********************************************************************************************\
  * Supported commands for Sensor34:
  *
@@ -163,6 +186,7 @@ void HxCalibrationStateTextJson(uint8_t msg_id)
  * Sensor34 7                      - Save current weight to be used as start weight on restart
  * Sensor34 8 0                    - Disable JSON weight change message
  * Sensor34 8 1                    - Enable JSON weight change message
+ * Sensor34 9 <weight code>        - Set minimum delta to trigger JSON message
 \*********************************************************************************************/
 
 bool HxCommand(void)
@@ -225,6 +249,13 @@ bool HxCommand(void)
       }
       show_parms = true;
       break;
+    case 9:  // WeightDelta
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+	Settings.weight_change = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
+	SetWeightDelta();
+      }
+      show_parms = true;
+      break;
     default:
       show_parms = true;
   }
@@ -232,8 +263,10 @@ bool HxCommand(void)
   if (show_parms) {
     char item[33];
     dtostrfd((float)Settings.weight_item / 10, 1, item);
-    Response_P(PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\"" D_JSON_WEIGHT_ITEM "\":%s,\"" D_JSON_WEIGHT_CHANGE "\":\"%s\"}}"),
-      Settings.weight_reference, Settings.weight_calibration, Settings.weight_max * 1000, item, GetStateText(Settings.SensorBits1.hx711_json_weight_change));
+    Response_P(PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\""
+		    D_JSON_WEIGHT_ITEM "\":%s,\"" D_JSON_WEIGHT_CHANGE "\":%s,\"" D_JSON_WEIGHT_DELTA "\":%d}}"),
+	       Settings.weight_reference, Settings.weight_calibration, Settings.weight_max * 1000,
+	       item, GetStateText(Settings.SensorBits1.hx711_json_weight_change), Settings.weight_change);
   }
 
   return serviced;
@@ -258,6 +291,8 @@ void HxInit(void)
 
     digitalWrite(Hx.pin_sck, LOW);
 
+    SetWeightDelta();
+
     if (HxIsReady(8 * HX_TIMEOUT)) {                 // Can take 600 milliseconds after power on
       if (!Settings.weight_max) { Settings.weight_max = HX_MAX_WEIGHT / 1000; }
       if (!Settings.weight_calibration) { Settings.weight_calibration = HX_SCALE; }
@@ -272,13 +307,17 @@ void HxInit(void)
 
 void HxEvery100mSecond(void)
 {
-  Hx.sum_weight += HxRead();
+  long raw = HxRead();
+  Hx.sum_raw += raw;
+  Hx.sum_weight += raw;
 
   Hx.sample_count++;
   if (HX_SAMPLES == Hx.sample_count) {
     long average = Hx.sum_weight / Hx.sample_count;  // grams
+    long raw_average = Hx.sum_raw / Hx.sample_count;  // grams
     long value = average - Hx.offset;                // grams
     Hx.weight = value / Hx.scale;                    // grams
+    Hx.raw = raw_average / Hx.scale;
     if (Hx.weight < 0) {
       if (Settings.energy_frequency_calibration) {
         long difference = Settings.energy_frequency_calibration + Hx.weight;
@@ -351,7 +390,7 @@ void HxEvery100mSecond(void)
       Hx.weight += Hx.last_weight;                   // grams
 
       if (Settings.SensorBits1.hx711_json_weight_change) {
-        if (abs(Hx.weight - Hx.weight_diff) > 4) {     // Use 4 gram threshold to decrease "ghost" weights
+        if (abs(Hx.weight - Hx.weight_diff) > Hx.weight_delta) {     // Use weight_delta threshold to decrease "ghost" weights
           Hx.weight_diff = Hx.weight;
           Hx.weight_changed = true;
         }
@@ -367,6 +406,7 @@ void HxEvery100mSecond(void)
     }
 
     Hx.sum_weight = 0;
+    Hx.sum_raw = 0;
     Hx.sample_count = 0;
   }
 }
@@ -405,7 +445,7 @@ void HxShow(bool json)
   dtostrfd(weight, Settings.flag2.weight_resolution, weight_chr);
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"HX711\":{\"" D_JSON_WEIGHT "\":%s%s}"), weight_chr, scount);
+    ResponseAppend_P(PSTR(",\"HX711\":{\"" D_JSON_WEIGHT "\":%s%s, \"" D_JSON_WEIGHT_RAW "\":%d}"), weight_chr, scount, Hx.raw);
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_HX711_WEIGHT, weight_chr);

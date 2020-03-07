@@ -1,7 +1,7 @@
 /*
   support_features.ino - feature support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -367,7 +367,7 @@ void GetFeatures(void)
 #ifdef USE_PZEM_DC
   feature_sns2 |= 0x00001000;  // xnrg_06_pzem_dc.ino
 #endif
-#ifdef USE_TX20_WIND_SENSOR
+#if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
   feature_sns2 |= 0x00002000;  // xsns_35_tx20.ino
 #endif
 #ifdef USE_MGC3130
@@ -484,24 +484,96 @@ void GetFeatures(void)
   feature5 |= 0x00020000;  // xsns_55_hih_series.ino
 #endif
 #ifdef USE_HPMA
-  feature5 |= 0x00040000;
+  feature5 |= 0x00040000;  // xsns_56_hpma.ino
 #endif
 #ifdef USE_TSL2591
-  feature5 |= 0x00080000;
+  feature5 |= 0x00080000;  // xsns_57_tsl2591.ino
 #endif
-//  feature5 |= 0x00100000;
-//  feature5 |= 0x00200000;
-//  feature5 |= 0x00400000;
-//  feature5 |= 0x00800000;
+#ifdef USE_DHT12
+  feature5 |= 0x00100000;  // xsns_58_dht12.ino
+#endif
+#ifdef USE_DS1624
+  feature5 |= 0x00200000;  // xsns_59_ds1624.ino
+#endif
+#ifdef USE_GPS
+  feature5 |= 0x00400000;  // xsns_60_GPS.ino
+#endif
+#ifdef USE_HOTPLUG
+  feature5 |= 0x00800000;  // xdrv_32_hotplug.ino
+#endif
+#ifdef USE_NRF24
+  feature5 |= 0x01000000;  // xsns_33_nrf24l01.ino
+#endif
+#ifdef USE_MIBLE
+  feature5 |= 0x02000000;  // xsns_61_MI_BLE.ino
+#endif
+#ifdef USE_HM10
+  feature5 |= 0x04000000;  // xsns_62_MI_HM10.ino
+#endif
+#ifdef USE_LE01MR
+  feature5 |= 0x08000000;  // xnrg_13_fif_le01mr.ino
+#endif
+#ifdef USE_AHT1x
+  feature5 |= 0x10000000;  // xsns_63_aht1x.ino
+#endif
+#ifdef USE_WEMOS_MOTOR_V1
+  feature5 |= 0x20000000;  // xdrv_34_wemos_motor_v1.ino
+#endif
+#ifdef USE_DEVICE_GROUPS
+  feature5 |= 0x40000000;  // support_device_groups.ino
+#endif
+#ifdef USE_PWM_DIMMER
+  feature5 |= 0x80000000;  // xdrv_35_pwm_dimmer
+#endif
 
-//  feature5 |= 0x01000000;
-//  feature5 |= 0x02000000;
-//  feature5 |= 0x04000000;
-//  feature5 |= 0x08000000;
+/*********************************************************************************************/
 
-//  feature5 |= 0x10000000;
-//  feature5 |= 0x20000000;
-//  feature5 |= 0x40000000;
-//  feature5 |= 0x80000000;
+  feature6 = 0x00000000;
+
+#ifdef USE_KEELOQ
+  feature6 |= 0x00000001;  // xdrv_36_keeloq.ino
+#endif
+#ifdef USE_HRXL
+  feature6 |= 0x00000002;  // xsns_64_hrxl.ino
+#endif
+#ifdef USE_SONOFF_D1
+  feature6 |= 0x00000004;  // xdrv_37_sonoff_d1.ino
+#endif
+//  feature6 |= 0x00000008;
+
+//  feature6 |= 0x00000010;
+//  feature6 |= 0x00000020;
+//  feature6 |= 0x00000040;
+//  feature6 |= 0x00000080;
+
+//  feature6 |= 0x00000100;
+//  feature6 |= 0x00000200;
+//  feature6 |= 0x00000400;
+//  feature6 |= 0x00000800;
+
+//  feature6 |= 0x00001000;
+//  feature6 |= 0x00002000;
+//  feature6 |= 0x00004000;
+//  feature6 |= 0x00008000;
+
+//  feature6 |= 0x00010000;
+//  feature6 |= 0x00020000;
+//  feature6 |= 0x00040000;
+//  feature6 |= 0x00080000;
+
+//  feature6 |= 0x00100000;
+//  feature6 |= 0x00200000;
+//  feature6 |= 0x00400000;
+//  feature6 |= 0x00800000;
+
+//  feature6 |= 0x01000000;
+//  feature6 |= 0x02000000;
+//  feature6 |= 0x04000000;
+//  feature6 |= 0x08000000;
+
+//  feature6 |= 0x10000000;
+//  feature6 |= 0x20000000;
+//  feature6 |= 0x40000000;
+//  feature6 |= 0x80000000;
 
 }

@@ -1,7 +1,7 @@
 /*
   xdrv_22_sonoff_ifan.ino - sonoff iFan02 and iFan03 support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -217,9 +217,7 @@ void CmndFanspeed(void)
 bool SonoffIfanInit(void)
 {
   if (SONOFF_IFAN03 == my_module_type) {
-    Settings.flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
-    baudrate = 9600;
-    SetSeriallog(LOG_LEVEL_NONE);
+    SetSerial(9600, TS_SERIAL_8N1);
   }
   return false;  // Continue init chain
 }

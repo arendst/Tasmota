@@ -1,7 +1,7 @@
 /*
   xdrv_08_serial_bridge.ino - serial bridge support for Tasmota
 
-  Copyright (C) 2019  Theo Arends and Dániel Zoltán Tolnai
+  Copyright (C) 2020  Theo Arends and Dániel Zoltán Tolnai
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -71,8 +71,11 @@ void SerialBridgeInput(void)
   if (serial_bridge_in_byte_counter && (millis() > (serial_bridge_polling_window + SERIAL_POLLING))) {
     serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                   // Serial data completed
     char hex_char[(serial_bridge_in_byte_counter * 2) + 2];
-    Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\"%s\"}"),
-      (serial_bridge_raw) ? ToHex_P((unsigned char*)serial_bridge_buffer, serial_bridge_in_byte_counter, hex_char, sizeof(hex_char)) : serial_bridge_buffer);
+    bool assume_json = (!serial_bridge_raw && (serial_bridge_buffer[0] == '{'));
+    Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":%s%s%s}"),
+      (assume_json) ? "" : """",
+      (serial_bridge_raw) ? ToHex_P((unsigned char*)serial_bridge_buffer, serial_bridge_in_byte_counter, hex_char, sizeof(hex_char)) : serial_bridge_buffer,
+      (assume_json) ? "" : """");
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
     XdrvRulesProcess();
     serial_bridge_in_byte_counter = 0;

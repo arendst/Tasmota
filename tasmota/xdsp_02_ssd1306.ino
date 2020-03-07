@@ -1,7 +1,7 @@
 /*
   xdsp_02_ssd1306.ino - Display Oled SSD1306 support for Tasmota
 
-  Copyright (C) 2019  Theo Arends and Adafruit
+  Copyright (C) 2020  Theo Arends and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ void SSD1306InitDriver(void)
     // init renderer
     // oled1306 = new Adafruit_SSD1306(SSD1306_LCDWIDTH,SSD1306_LCDHEIGHT);
     oled1306 = new Adafruit_SSD1306(Settings.display_width, Settings.display_height, &Wire, reset_pin);
-    oled1306->begin(SSD1306_SWITCHCAPVCC, Settings.display_address[0], 0);
+    oled1306->begin(SSD1306_SWITCHCAPVCC, Settings.display_address[0], reset_pin >= 0);
     renderer = oled1306;
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
     renderer->setTextColor(1,0);
@@ -124,8 +124,7 @@ void Ssd1306PrintLog(void)
       strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
       DisplayFillScreen(last_row);
 
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
 
       renderer->println(disp_screen_buffer[last_row]);
       renderer->Updateframe();

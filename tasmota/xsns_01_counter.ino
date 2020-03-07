@@ -1,7 +1,7 @@
 /*
   xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Tasmota
 
-  Copyright (C) 2019  Maarten Damen and Theo Arends
+  Copyright (C) 2020  Maarten Damen and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -157,6 +157,9 @@ void CounterShow(bool json)
           dsxflg++;
         }
 #endif  // USE_DOMOTICZ
+        if ((0 == tele_period ) && (Settings.flag3.counter_reset_on_tele)) {
+          RtcSettings.pulse_counter[i] = 0;
+        }
 #ifdef USE_WEBSERVER
       } else {
         WSContentSend_PD(PSTR("{s}" D_COUNTER "%d{m}%s%s{e}"),

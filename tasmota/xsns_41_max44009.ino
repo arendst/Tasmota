@@ -1,7 +1,7 @@
 /*
   xsns_41_max44009.ino - MAX44009 ambient light sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -75,8 +75,7 @@ void Max4409Detect(void)
 
     if ((I2cValidRead8(&buffer1, max44009_address, REG_LOWER_THRESHOLD)) &&
         (I2cValidRead8(&buffer2, max44009_address, REG_THRESHOLD_TIMER))) {
-      //snprintf(log_data, sizeof(log_data), "MAX44009 %x: %x, %x", max44009_address, (int)buffer1, (int)buffer2);
-      //AddLog(LOG_LEVEL_DEBUG_MORE);
+      //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("MAX44009 %x: %x, %x"), max44009_address, (int)buffer1, (int)buffer2);
       if ((0x00 == buffer1) &&
           (0xFF == buffer2)) {
 

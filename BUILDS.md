@@ -1,6 +1,6 @@
 ## Available Features and Sensors
 
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 |-----------------------|---------|-------|--------|-----|---------|----|---------|--------
 | MY_LANGUAGE en-GB     | x | x | x | x | x | x | x |
 | USE_ARDUINO_OTA       | - | - | - | - | - | - | - |
@@ -26,23 +26,26 @@
 | USE_SCRIPT            | - | - | - | - | - | - | - |
 | USE_EXPRESSION        | - | - | - | - | - | - | - |
 | SUPPORT_IF_STATEMENT  | - | - | - | - | - | - | - |
+| USE_HOTPLUG           | - | - | - | - | x | - | - |
 |                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | ROTARY_V1             | - | - | - | - | - | - | - |
 | USE_SONOFF_RF         | - | - | x | x | x | - | - |
 | USE_RF_FLASH          | - | - | x | x | x | - | - |
-| USE_SONOFF_SC         | - | - | x | - | x | - | - |
+| USE_SONOFF_SC         | - | - | x | x | x | - | - |
 | USE_TUYA_MCU          | - | x | x | x | x | - | x |
 | USE_ARMTRONIX_DIMMERS | - | - | x | x | - | - | - |
 | USE_PS_16_DZ          | - | - | x | x | x | - | - |
 | USE_SONOFF_IFAN       | - | - | x | x | x | - | - |
 | USE_BUZZER            | - | - | x | x | x | - | - |
 | USE_ARILUX_RF         | - | - | x | x | x | - | - |
-| USE_SHUTTER           | - | - | - | - | - | - | - |
+| USE_SHUTTER           | - | - | x | x | - | - | - |
 | USE_DEEPSLEEP         | - | - | x | - | x | - | - |
 | USE_EXS_DIMMER        | - | - | x | x | - | - | - |
+| USE_DEVICE_GROUPS     | - | - | x | - | - | - | - |
+| USE_PWM_DIMMER        | - | - | x | x | - | - | - |
 |                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_LIGHT             | - | x | x | x | x | x | x |
 | USE_WS2812            | - | - | x | x | x | - | x |
 | USE_WS2812_DMA        | - | - | - | - | - | - | - |
@@ -61,6 +64,7 @@
 | USE_DDS2382           | - | - | - | - | x | - | - |
 | USE_DDSU666           | - | - | - | - | x | - | - |
 | USE_SOLAX_X1          | - | - | - | - | - | - | - |
+| USE_LE01MR            | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | USE_ADC_VCC           | x | x | - | - | - | - | - |
 | USE_COUNTER           | - | - | x | x | x | x | x |
@@ -69,30 +73,30 @@
 | USE_MAX31855          | - | - | - | - | x | - | - |
 | USE_MAX31865          | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_I2C               | - | - | x | x | x | - | x |
-| USE_SHT               | - | - | x | x | x | - | x |
-| USE_HTU               | - | - | x | x | x | - | x |
-| USE_BMP               | - | - | x | x | x | - | x |
+| USE_SHT               | - | - | - | - | x | - | - |
+| USE_HTU               | - | - | - | - | x | - | - |
+| USE_BMP               | - | - | - | - | x | - | - |
 | USE_BME680            | - | - | - | - | x | - | - |
-| USE_BH1750            | - | - | x | x | x | - | x |
+| USE_BH1750            | - | - | - | - | x | - | - |
 | USE_VEML6070          | - | - | - | - | x | - | - |
 | USE_ADS1115           | - | - | - | - | x | - | - |
 | USE_ADS1115_I2CDEV    | - | - | - | - | - | - | - |
 | USE_INA219            | - | - | - | - | x | - | - |
 | USE_INA226            | - | - | - | - | - | - | - |
-| USE_SHT3X             | - | - | x | x | x | - | x |
+| USE_SHT3X             | - | - | - | - | x | - | - |
 | USE_TSL2561           | - | - | - | - | x | - | - |
 | USE_TSL2591           | - | - | - | - | - | - | - |
 | USE_MGS               | - | - | - | - | x | - | - |
-| USE_SGP30             | - | - | x | x | x | - | x |
+| USE_SGP30             | - | - | - | - | x | - | - |
 | USE_SI1145            | - | - | - | - | - | - | - |
-| USE_LM75AD            | - | - | x | x | x | - | x |
+| USE_LM75AD            | - | - | - | - | x | - | - |
 | USE_APDS9960          | - | - | - | - | - | - | - |
 | USE_MCP230xx          | - | - | - | - | - | - | - |
 | USE_PCA9685           | - | - | - | - | - | - | - |
 | USE_MPR121            | - | - | - | - | - | - | - |
-| USE_CCS811            | - | - | - | - | - | - | - |
+| USE_CCS811            | - | - | - | - | x | - | - |
 | USE_MPU6050           | - | - | - | - | - | - | - |
 | USE_DS3231            | - | - | - | - | - | - | - |
 | USE_MGC3130           | - | - | - | - | - | - | - |
@@ -106,34 +110,47 @@
 | USE_PAJ7620           | - | - | - | - | - | - | - |
 | USE_PCF8574           | - | - | - | - | - | - | - |
 | USE_HIH6              | - | - | - | - | x | - | - |
+| USE_DHT12             | - | - | - | - | x | - | - |
+| USE_DS1624            | - | - | - | - | x | - | - |
+| USE_AHT1x             | - | - | - | - | - | - | - |
+| USE_WEMOS_MOTOR_V1    | - | - | - | - | x | - | - |
 |                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
-| USE_MHZ19             | - | - | x | x | x | - | x |
-| USE_SENSEAIR          | - | - | x | x | x | - | x |
-| USE_PMS5003           | - | - | x | x | x | - | x |
-| USE_NOVA_SDS          | - | - | x | x | x | - | x |
+| USE_MHZ19             | - | - | - | - | x | - | - |
+| USE_SENSEAIR          | - | - | - | - | x | - | - |
+| USE_PMS5003           | - | - | - | - | x | - | - |
+| USE_NOVA_SDS          | - | - | - | - | x | - | - |
 | USE_HPMA              | - | - | - | - | x | - | - |
 | USE_SERIAL_BRIDGE     | - | - | x | x | x | - | x |
 | USE_MP3_PLAYER        | - | - | - | - | x | - | - |
 | USE_AZ7798            | - | - | - | - | - | - | - |
 | USE_PN532_HSU         | - | - | - | - | x | - | - |
+| USE_RDM6300           | - | - | - | - | x | - | - |
+| USE_IBEACON           | - | - | - | - | x | - | - |
+| USE_GPS               | - | - | - | - | - | - | - |
+| USE_HM10              | - | - | - | - | x | - | - |
+| USE_HRXL              | - | - | - | - | x | - | - |
+|                       |   |   |   |   |   |   |   |
+| USE_NRF24             | - | - | - | - | - | - | - |
+| USE_MIBLE             | - | - | - | - | - | - | - |
 | USE_ZIGBEE            | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | USE_IR_REMOTE         | - | - | x | x | x | x | x |
 | USE_IR_RECEIVE        | - | - | x | x | x | x | x |
+| USE_IR_REMOTE_FULL    | - | - | - | - | - | x | - | Enable ALL protocols
 |                       |   |   |   |   |   |   |   |
-| USE_SR04              | - | - | x | x | x | - | x |
+| USE_SR04              | - | - | - | - | x | - | - |
 | USE_TM1638            | - | - | - | - | x | - | - |
-| USE_HX711             | - | - | x | x | x | - | x |
-| USE_TX20_WIND_SENSOR  | - | - | - | - | x | - | - |
+| USE_HX711             | - | - | - | - | x | - | - |
+| USE_TX2x_WIND_SENSOR  | - | - | - | - | - | - | - |
 | USE_RC_SWITCH         | - | - | - | - | x | - | - |
 | USE_RF_SENSOR         | - | - | - | - | x | - | - | AlectoV2 only
 | USE_HRE               | - | - | - | - | x | - | - |
 | USE_A4988_STEPPER     | - | - | - | - | - | - | - |
 | USE_TASMOTA_SLAVE     | - | - | - | - | - | - | - | Experimental
 |                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_DISPLAY           | - | - | - | - | - | - | x |
 | USE_DISPLAY_LCD       | - | - | - | - | - | - | x |
 | USE_DISPLAY_SSD1306   | - | - | - | - | - | - | x |

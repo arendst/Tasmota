@@ -1,7 +1,7 @@
 /*
   ko-KO.h - localization for Korean - Korean for Tasmota
 
-  Copyright (C) 2019  Theo Arends (translated by NyaamZ)
+  Copyright (C) 2020  Theo Arends (translated by NyaamZ)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -72,7 +72,9 @@
 #define D_COMMAND "커맨드"
 #define D_CONNECTED "연결됨"
 #define D_COUNT "횟수"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNTER "Counter"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "전류"          // As in Voltage and Current
 #define D_DATA "Data"
 #define D_DARKLIGHT "어둡게"
@@ -82,7 +84,7 @@
 #define D_DNS_SERVER "DNS 서버"
 #define D_DONE "완료"
 #define D_DST_TIME "DST"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "에뮬레이션"
 #define D_ENABLED "사용"
 #define D_ERASE "삭제"
@@ -112,6 +114,7 @@
 #define D_LIGHT "밝게"
 #define D_LWT "LWT"
 #define D_MODULE "모듈"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "multi-press"
 #define D_NOISE "소음"
@@ -134,6 +137,7 @@
 #define D_PROGRAM_SIZE "프로그램 용량"
 #define D_PROJECT "프로젝트"
 #define D_RAIN "비"
+#define D_RANGE "Range"
 #define D_RECEIVED "받음"
 #define D_RESTART "재시작"
 #define D_RESTARTING "재시작 중.."
@@ -353,6 +357,7 @@
 #define D_UPLOAD_ERR_11 "RF 칩 삭제 실패"
 #define D_UPLOAD_ERR_12 "RF 칩 쓰기 실패"
 #define D_UPLOAD_ERR_13 "RF 펌웨어 decode 실패"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "업로드 에러 코드"
 
 #define D_ENTER_COMMAND "커맨드 입력"
@@ -501,8 +506,8 @@
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "풍향"
 #define D_TX20_WIND_SPEED "풍속"
-#define D_TX20_WIND_SPEED_AVG "평균 풍속"
-#define D_TX20_WIND_SPEED_MAX "최대 풍속"
+#define D_TX20_WIND_SPEED_MIN "풍속 최소"
+#define D_TX20_WIND_SPEED_MAX "풍속 최대"
 #define D_TX20_NORTH "N"
 #define D_TX20_EAST "E"
 #define D_TX20_SOUTH "S"
@@ -560,7 +565,7 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
-#define D_SENSOR_TX20_TX       "TX20"
+#define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFrecv"
 #define D_SENSOR_TUYA_TX       "Tuya Tx"
@@ -629,6 +634,15 @@
 #define D_SENSOR_SLAVE_TX    "Slave TX"
 #define D_SENSOR_SLAVE_RX    "Slave RX"
 #define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_GPS_RX        "GPS RX"
+#define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
+#define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
+#define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -640,10 +654,10 @@
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
-#define D_UNIT_KILOOHM "kOhm"
+#define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
 #define D_UNIT_MICROMETER "마이크로미터"
 #define D_UNIT_MICROSECOND "마이크로초"
 #define D_UNIT_MILLIAMPERE "mA"
@@ -664,7 +678,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Phase Angle"
 #define D_IMPORT_ACTIVE   "Import Active"
 #define D_EXPORT_ACTIVE   "Export Active"
@@ -673,6 +687,7 @@
 #define D_TOTAL_REACTIVE  "Total Reactive"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltage"
@@ -697,5 +712,18 @@
 #define D_SOLAX_ERROR_6   "Over Temperature Fault"
 #define D_SOLAX_ERROR_7   "Fan Fault"
 #define D_SOLAX_ERROR_8   "Other Device Fault"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Edit script"
+#define D_SCRIPT               "edit script"
+#define D_SDCARD_UPLOAD        "file upload"
+#define D_SDCARD_DIR           "sd card directory"
+#define D_UPL_DONE             "Done"
+#define D_SCRIPT_CHARS_LEFT    "chars left"
+#define D_SCRIPT_CHARS_NO_MORE "no more chars"
+#define D_SCRIPT_DOWNLOAD      "Download"
+#define D_SCRIPT_ENABLE        "script enable"
+#define D_SCRIPT_UPLOAD        "Upload"
+#define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
 #endif  // _LANGUAGE_KO_KO_H_

@@ -1,7 +1,7 @@
 /*
   xsns_48_chirp.ino - soil moisture sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends & Christian Baars
+  Copyright (C) 2020  Theo Arends & Christian Baars
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -397,21 +397,16 @@ void ChirpEvery100MSecond(void)
 }
 
 /********************************************************************************************/
+
 // normaly in i18n.h
-
-#define D_JSON_MOISTURE "Moisture"
-#define D_JSON_DARKNESS "Darkness"
-
 #ifdef USE_WEBSERVER
   // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
- const char HTTP_SNS_MOISTURE[] PROGMEM = "{s} " D_JSON_MOISTURE "{m}%s %{e}";
- const char HTTP_SNS_DARKNESS[] PROGMEM = "{s} " D_JSON_DARKNESS "{m}%s %{e}";
- const char HTTP_SNS_CHIRPVER[] PROGMEM = "{s} CHIRP-sensor %u at address{m}0x%x{e}"
-                                          "{s} FW-version{m}%s {e}";                                                                                            ;
- const char HTTP_SNS_CHIRPSLEEP[] PROGMEM = "{s} {m} is sleeping ...{e}";
+const char HTTP_SNS_DARKNESS[] PROGMEM = "{s} " D_JSON_DARKNESS "{m}%s %%{e}";
+const char HTTP_SNS_CHIRPVER[] PROGMEM = "{s} CHIRP-sensor %u at address{m}0x%x{e}"
+                                         "{s} FW-version{m}%s {e}";                                                                                            ;
+const char HTTP_SNS_CHIRPSLEEP[] PROGMEM = "{s} {m} is sleeping ...{e}";
 #endif  // USE_WEBSERVER
-
 
 /********************************************************************************************/
 
@@ -420,8 +415,6 @@ void ChirpShow(bool json)
   for (uint32_t i = 0; i < chirp_found_sensors; i++) {
     if (chirp_sensor[i].version) {
       // convert double values to string
-      char str_moisture[33];
-      dtostrfd(chirp_sensor[i].moisture, 0, str_moisture);
       char str_temperature[33];
       double t_temperature = ((double) chirp_sensor[i].temperature )/10.0;
       dtostrfd(t_temperature, Settings.flag2.temperature_resolution, str_temperature);
@@ -434,9 +427,10 @@ void ChirpShow(bool json)
       else{
         sprintf(str_version, "%x", chirp_sensor[i].version);
       }
+
       if (json) {
         if(!chirp_sensor[i].explicitSleep) {
-          ResponseAppend_P(PSTR(",\"%s%u\":{\"" D_JSON_MOISTURE "\":%s"),chirp_name, i, str_moisture);
+          ResponseAppend_P(PSTR(",\"%s%u\":{\"" D_JSON_MOISTURE "\":%d"), chirp_name, i, chirp_sensor[i].moisture);
           if(chirp_sensor[i].temperature!=-1){ // this is the error code -> no temperature
             ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"),str_temperature);
           }
@@ -447,9 +441,11 @@ void ChirpShow(bool json)
         }
   #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
-              DomoticzTempHumSensor(str_temperature, str_moisture);
-              DomoticzSensor(DZ_ILLUMINANCE,chirp_sensor[i].light); // this is not LUX!!
-        }
+        char str_moisture[33];
+        dtostrfd(chirp_sensor[i].moisture, 0, str_moisture);
+        DomoticzTempHumSensor(str_temperature, str_moisture);
+        DomoticzSensor(DZ_ILLUMINANCE,chirp_sensor[i].light); // this is not LUX!!
+      }
   #endif  // USE_DOMOTICZ
   #ifdef USE_WEBSERVER
       } else {
@@ -458,10 +454,10 @@ void ChirpShow(bool json)
           WSContentSend_PD(HTTP_SNS_CHIRPSLEEP);
         }
         else {
-          WSContentSend_PD(HTTP_SNS_MOISTURE, str_moisture);
+          WSContentSend_PD(HTTP_SNS_MOISTURE, "", chirp_sensor[i].moisture);
           WSContentSend_PD(HTTP_SNS_DARKNESS, str_light);
-          if(chirp_sensor[i].temperature!=-1){ // this is the error code -> no temperature
-            WSContentSend_PD(HTTP_SNS_TEMP, " ",str_temperature, TempUnit());
+          if (chirp_sensor[i].temperature!=-1) { // this is the error code -> no temperature
+            WSContentSend_PD(HTTP_SNS_TEMP, "", str_temperature, TempUnit());
           }
         }
 

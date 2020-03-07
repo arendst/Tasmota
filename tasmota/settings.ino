@@ -1,7 +1,7 @@
 /*
   settings.ino - user settings for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -140,6 +140,10 @@
 #ifndef DEFAULT_LIGHT_COMPONENT
 #define DEFAULT_LIGHT_COMPONENT     255
 #endif
+#ifndef CORS_ENABLED_ALL
+#define CORS_ENABLED_ALL            "*"
+#endif
+
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
@@ -155,6 +159,23 @@ const char kWebColors[] PROGMEM =
   COLOR_TEXT_WARNING "|" COLOR_TEXT_SUCCESS "|"
   COLOR_BUTTON_TEXT "|" COLOR_BUTTON "|" COLOR_BUTTON_HOVER "|" COLOR_BUTTON_RESET "|" COLOR_BUTTON_RESET_HOVER "|" COLOR_BUTTON_SAVE "|" COLOR_BUTTON_SAVE_HOVER "|"
   COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND "|" COLOR_TITLE_TEXT;
+
+enum TasmotaSerialConfig {
+  TS_SERIAL_5N1, TS_SERIAL_6N1, TS_SERIAL_7N1, TS_SERIAL_8N1,
+  TS_SERIAL_5N2, TS_SERIAL_6N2, TS_SERIAL_7N2, TS_SERIAL_8N2,
+  TS_SERIAL_5E1, TS_SERIAL_6E1, TS_SERIAL_7E1, TS_SERIAL_8E1,
+  TS_SERIAL_5E2, TS_SERIAL_6E2, TS_SERIAL_7E2, TS_SERIAL_8E2,
+  TS_SERIAL_5O1, TS_SERIAL_6O1, TS_SERIAL_7O1, TS_SERIAL_8O1,
+  TS_SERIAL_5O2, TS_SERIAL_6O2, TS_SERIAL_7O2, TS_SERIAL_8O2 };
+
+const uint8_t kTasmotaSerialConfig[] PROGMEM = {
+  SERIAL_5N1, SERIAL_6N1, SERIAL_7N1, SERIAL_8N1,
+  SERIAL_5N2, SERIAL_6N2, SERIAL_7N2, SERIAL_8N2,
+  SERIAL_5E1, SERIAL_6E1, SERIAL_7E1, SERIAL_8E1,
+  SERIAL_5E2, SERIAL_6E2, SERIAL_7E2, SERIAL_8E2,
+  SERIAL_5O1, SERIAL_6O1, SERIAL_7O1, SERIAL_8O1,
+  SERIAL_5O2, SERIAL_6O2, SERIAL_7O2, SERIAL_8O2
+};
 
 /*********************************************************************************************\
  * RTC memory
@@ -256,6 +277,23 @@ bool RtcRebootValid(void)
 
 /*********************************************************************************************\
  * Config - Flash
+ *
+ * Tasmota 1M flash usage
+ * 0x00000000 - Unzipped binary bootloader
+ * 0x00001000 - Unzipped binary code start
+ *    ::::
+ * 0x000xxxxx - Unzipped binary code end
+ * 0x000x1000 - First page used by Core OTA
+ *    ::::
+ * 0x000F3000 - Tasmota Quick Power Cycle counter (SETTINGS_LOCATION - CFG_ROTATES) - First four bytes only
+ * 0x000F4000 - First Tasmota rotating settings page
+ *    ::::
+ * 0x000FA000 - Last Tasmota rotating settings page = Last page used by Core OTA
+ * 0x000FB000 - Core SPIFFS end = Core EEPROM = Tasmota settings page during OTA and when no flash rotation is active (SETTINGS_LOCATION)
+ * 0x000FC000 - SDK - Uses first 128 bytes for phy init data mirrored by Core in RAM. See core_esp8266_phy.cpp phy_init_data[128] = Core user_rf_cal_sector
+ * 0x000FD000 - SDK - Uses scattered bytes from 0x340 (iTead use as settings storage from 0x000FD000)
+ * 0x000FE000 - SDK - Uses scattered bytes from 0x340 (iTead use as mirrored settings storage from 0x000FE000)
+ * 0x000FF000 - SDK - Uses at least first 32 bytes of this page - Tasmota Zigbee persistence from 0x000FF800 to 0x000FFFFF
 \*********************************************************************************************/
 
 extern "C" {
@@ -320,6 +358,53 @@ void SetFlashModeDout(void)
     }
   }
   delete[] _buffer;
+}
+
+bool VersionCompatible(void)
+{
+  if (Settings.flag3.compatibility_check) {
+    return true;
+  }
+
+  eboot_command ebcmd;
+  eboot_command_read(&ebcmd);
+  uint32_t start_address = ebcmd.args[0];
+  uint32_t end_address = start_address + (ebcmd.args[2] & 0xFFFFF000) + FLASH_SECTOR_SIZE;
+  uint32_t* buffer = new uint32_t[FLASH_SECTOR_SIZE / 4];
+
+  uint32_t version[3] = { 0 };
+  bool found = false;
+  for (uint32_t address = start_address; address < end_address; address = address + FLASH_SECTOR_SIZE) {
+    ESP.flashRead(address, (uint32_t*)buffer, FLASH_SECTOR_SIZE);
+    if ((address == start_address) && (0x1F == (buffer[0] & 0xFF))) {
+      version[1] = 0xFFFFFFFF;  // Ota file is gzipped and can not be checked for compatibility
+      found = true;
+    } else {
+      for (uint32_t i = 0; i < (FLASH_SECTOR_SIZE / 4); i++) {
+        version[0] = version[1];
+        version[1] = version[2];
+        version[2] = buffer[i];
+        if ((MARKER_START == version[0]) && (MARKER_END == version[2])) {
+          found = true;
+          break;
+        }
+      }
+    }
+    if (found) { break; }
+  }
+  delete[] buffer;
+
+  if (!found) { version[1] = 0; }
+
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("OTA: Version 0x%08X, Compatible 0x%08X"), version[1], VERSION_COMPATIBLE);
+
+  if (version[1] < VERSION_COMPATIBLE) {
+    uint32_t eboot_magic = 0;  // Abandon OTA result
+    ESP.rtcUserMemoryWrite(0, (uint32_t*)&eboot_magic, sizeof(eboot_magic));
+    return false;
+  }
+
+  return true;
 }
 
 void SettingsBufferFree(void)
@@ -419,6 +504,85 @@ void UpdateQuickPowerCycle(bool update)
     }
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Reset"));
   }
+}
+
+/*********************************************************************************************\
+ * Config Settings.text char array support
+\*********************************************************************************************/
+
+uint32_t GetSettingsTextLen(void)
+{
+  char* position = Settings.text_pool;
+  for (uint32_t size = 0; size < SET_MAX; size++) {
+    while (*position++ != '\0') { }
+  }
+  return position - Settings.text_pool;
+}
+
+bool SettingsUpdateText(uint32_t index, const char* replace_me)
+{
+  if (index >= SET_MAX) {
+    return false;  // Setting not supported - internal error
+  }
+
+  // Make a copy first in case we use source from Settings.text
+  uint32_t replace_len = strlen(replace_me);
+  char replace[replace_len +1];
+  memcpy(replace, replace_me, sizeof(replace));
+
+  uint32_t start_pos = 0;
+  uint32_t end_pos = 0;
+  char* position = Settings.text_pool;
+  for (uint32_t size = 0; size < SET_MAX; size++) {
+    while (*position++ != '\0') { }
+    if (1 == index) {
+      start_pos = position - Settings.text_pool;
+    }
+    else if (0 == index) {
+      end_pos = position - Settings.text_pool -1;
+    }
+    index--;
+  }
+  uint32_t char_len = position - Settings.text_pool;
+
+  uint32_t current_len = end_pos - start_pos;
+  int diff = replace_len - current_len;
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TST: start %d, end %d, len %d, current %d, replace %d, diff %d"),
+//    start_pos, end_pos, char_len, current_len, replace_len, diff);
+
+  int too_long = (char_len + diff) - settings_text_size;
+  if (too_long > 0) {
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Text overflow by %d char(s)"), too_long);
+    return false;  // Replace text too long
+  }
+
+  if (diff != 0) {
+    // Shift Settings.text up or down
+    memmove_P(Settings.text_pool + start_pos + replace_len, Settings.text_pool + end_pos, char_len - end_pos);
+  }
+  // Replace text
+  memmove_P(Settings.text_pool + start_pos, replace, replace_len);
+  // Fill for future use
+  memset(Settings.text_pool + char_len + diff, 0x00, settings_text_size - char_len - diff);
+
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d"), GetSettingsTextLen(), settings_text_size);
+
+  return true;
+}
+
+char* SettingsText(uint32_t index)
+{
+  char* position = Settings.text_pool;
+
+  if (index >= SET_MAX) {
+    position += settings_text_size -1;  // Setting not supported - internal error - return empty string
+  } else {
+    for (;index > 0; index--) {
+      while (*position++ != '\0') { }
+    }
+  }
+  return position;
 }
 
 /*********************************************************************************************\
@@ -553,7 +717,11 @@ void EspErase(uint32_t start_sector, uint32_t end_sector)
 //    bool result = EsptoolEraseSector(sector);    // Esptool - erases flash completely (slow)
 
     if (serial_output) {
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+      Serial.printf(D_LOG_APPLICATION D_ERASED_SECTOR " %d %s\n", sector, (result) ? D_OK : D_ERROR);
+#else
       Serial.printf_P(PSTR(D_LOG_APPLICATION D_ERASED_SECTOR " %d %s\n"), sector, (result) ? D_OK : D_ERROR);
+#endif
       delay(10);
     } else {
       yield();
@@ -577,6 +745,7 @@ void SettingsErase(uint8_t type)
     1 = Erase 16k SDK parameter area near end of flash as seen by SDK (0x0xFCxxx - 0x0xFFFFF) solving possible wifi errors
     2 = Erase Tasmota parameter area (0x0xF3xxx - 0x0xFBFFF)
     3 = Erase Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
+    4 = Erase SDK parameter area used for wifi calibration (0x0FCxxx - 0x0FCFFF)
   */
 
 #ifndef FIRMWARE_MINIMAL
@@ -594,8 +763,22 @@ void SettingsErase(uint8_t type)
     _sectorStart = SETTINGS_LOCATION - CFG_ROTATES;                       // Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
     _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;             // Flash size as seen by SDK
   }
+  else if (4 == type) {
+//    _sectorStart = (ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE) - 4;     // SDK phy area and Core calibration sector (0x0FC000)
+    _sectorStart = SETTINGS_LOCATION +1;                                  // SDK phy area and Core calibration sector (0x0FC000)
+    _sectorEnd = _sectorStart +1;                                         // SDK end of phy area and Core calibration sector (0x0FCFFF)
+  }
+/*
+  else if (5 == type) {
+    _sectorStart = (ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE) -4;  // SDK phy area and Core calibration sector (0xxFC000)
+    _sectorEnd = _sectorStart +1;                                         // SDK end of phy area and Core calibration sector (0xxFCFFF)
+  }
+*/
+  else {
+    return;
+  }
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " %d " D_UNIT_SECTORS), _sectorEnd - _sectorStart);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " from 0x%08X to 0x%08X"), _sectorStart * SPI_FLASH_SEC_SIZE, (_sectorEnd * SPI_FLASH_SEC_SIZE) -1);
 
 //  EspErase(_sectorStart, _sectorEnd);                                     // Arduino core and SDK - erases flash as seen by SDK
   EsptoolErase(_sectorStart, _sectorEnd);                                 // Esptool - erases flash completely
@@ -604,7 +787,7 @@ void SettingsErase(uint8_t type)
 
 void SettingsSdkErase(void)
 {
-  WiFi.disconnect(true);    // Delete SDK wifi config
+  WiFi.disconnect(false);    // Delete SDK wifi config
   SettingsErase(1);
   delay(1000);
 }
@@ -635,8 +818,13 @@ void SettingsDefaultSet2(void)
 {
   memset((char*)&Settings +16, 0x00, sizeof(SYSCFG) -16);
 
-//  Settings.flag.value_units = 0;
-//  Settings.flag.stop_flash_rotate = 0;
+  Settings.flag.stop_flash_rotate = APP_FLASH_CYCLE;
+  Settings.flag.global_state = APP_ENABLE_LEDLINK;
+  Settings.flag3.sleep_normal = APP_NORMAL_SLEEP;
+  Settings.flag3.no_power_feedback = APP_NO_RELAY_SCAN;
+  Settings.flag3.fast_power_cycle_disable = APP_DISABLE_POWERCYCLE;
+  Settings.flag3.bootcount_update = DEEPSLEEP_BOOTCOUNT;
+  Settings.flag3.compatibility_check = OTA_COMPATIBILITY;
   Settings.save_data = SAVE_DATA;
   Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
   Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
@@ -652,11 +840,11 @@ void SettingsDefaultSet2(void)
   Settings.module = MODULE;
   ModuleDefault(WEMOS);
 //  for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
-  strlcpy(Settings.friendlyname[0], FRIENDLY_NAME, sizeof(Settings.friendlyname[0]));
-  strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
-  strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
-  strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));
-  strlcpy(Settings.ota_url, OTA_URL, sizeof(Settings.ota_url));
+  SettingsUpdateText(SET_FRIENDLYNAME1, FRIENDLY_NAME);
+  SettingsUpdateText(SET_FRIENDLYNAME2, FRIENDLY_NAME"2");
+  SettingsUpdateText(SET_FRIENDLYNAME3, FRIENDLY_NAME"3");
+  SettingsUpdateText(SET_FRIENDLYNAME4, FRIENDLY_NAME"4");
+  SettingsUpdateText(SET_OTAURL, OTA_URL);
 
   // Power
   Settings.flag.save_state = SAVE_STATE;
@@ -670,17 +858,15 @@ void SettingsDefaultSet2(void)
 //  for (uint32_t i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
 
   // Serial
-
-  SerialCfg config = SettingToSerialCfg(Settings.serial_config);
-  config.baudrate = APP_BAUDRATE / 300;
-  Settings.serial_config = SerialCfgToSetting(config);
-
+  Settings.serial_config = TS_SERIAL_8N1;
+  Settings.baudrate = APP_BAUDRATE / 300;
   Settings.sbaudrate = SOFT_BAUDRATE / 300;
-  //Settings.serial_config = SERIAL_8N1;
   Settings.serial_delimiter = 0xff;
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 
   // Wifi
+  Settings.flag3.use_wifi_scan = WIFI_SCAN_AT_RESTART;
+  Settings.flag3.use_wifi_rescan = WIFI_SCAN_REGULARLY;
   Settings.wifi_output_power = 170;
   ParseIp(&Settings.ip_address[0], WIFI_IP_ADDRESS);
   ParseIp(&Settings.ip_address[1], WIFI_GATEWAY);
@@ -688,28 +874,30 @@ void SettingsDefaultSet2(void)
   ParseIp(&Settings.ip_address[3], WIFI_DNS);
   Settings.sta_config = WIFI_CONFIG_TOOL;
 //  Settings.sta_active = 0;
-  strlcpy(Settings.sta_ssid[0], STA_SSID1, sizeof(Settings.sta_ssid[0]));
-  strlcpy(Settings.sta_pwd[0], STA_PASS1, sizeof(Settings.sta_pwd[0]));
-  strlcpy(Settings.sta_ssid[1], STA_SSID2, sizeof(Settings.sta_ssid[1]));
-  strlcpy(Settings.sta_pwd[1], STA_PASS2, sizeof(Settings.sta_pwd[1]));
-  strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
+  SettingsUpdateText(SET_STASSID1, STA_SSID1);
+  SettingsUpdateText(SET_STASSID2, STA_SSID2);
+  SettingsUpdateText(SET_STAPWD1, STA_PASS1);
+  SettingsUpdateText(SET_STAPWD2, STA_PASS2);
+  SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
 
   // Syslog
-  strlcpy(Settings.syslog_host, SYS_LOG_HOST, sizeof(Settings.syslog_host));
+  SettingsUpdateText(SET_SYSLOG_HOST, SYS_LOG_HOST);
   Settings.syslog_port = SYS_LOG_PORT;
   Settings.syslog_level = SYS_LOG_LEVEL;
 
   // Webserver
   Settings.flag2.emulation = EMULATION;
+  Settings.flag3.gui_hostname_ip = GUI_SHOW_HOSTNAME;
+  Settings.flag3.mdns_enabled = MDNS_ENABLED;
   Settings.webserver = WEB_SERVER;
   Settings.weblog_level = WEB_LOG_LEVEL;
-  strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
-  Settings.flag3.mdns_enabled = MDNS_ENABLED;
+  SettingsUpdateText(SET_WEBPWD, WEB_PASSWORD);
+  SettingsUpdateText(SET_CORS, CORS_DOMAIN);
 
   // Button
-//  Settings.flag.button_restrict = 0;
-//  Settings.flag.button_swap = 0;
-//  Settings.flag.button_single = 0;
+  Settings.flag.button_restrict = KEY_DISABLE_MULTIPRESS;
+  Settings.flag.button_swap = KEY_SWAP_DOUBLE_PRESS;
+  Settings.flag.button_single = KEY_ONLY_SINGLE_PRESS;
   Settings.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
 
   // Switch
@@ -717,34 +905,37 @@ void SettingsDefaultSet2(void)
 
   // MQTT
   Settings.flag.mqtt_enabled = MQTT_USE;
-//  Settings.flag.mqtt_response = 0;
+  Settings.flag.mqtt_response = MQTT_RESULT_COMMAND;
+  Settings.flag.mqtt_offline = MQTT_LWT_MESSAGE;
   Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-  Settings.flag3.button_switch_force_local = MQTT_BUTTON_SWITCH_FORCE_LOCAL;
-  Settings.flag3.hass_tele_on_power = TELE_ON_POWER;
-//  Settings.flag.mqtt_sensor_retain = 0;
-//  Settings.flag.mqtt_offline = 0;
+  Settings.flag.mqtt_sensor_retain = MQTT_SENSOR_RETAIN;
 //  Settings.flag.mqtt_serial = 0;
-//  Settings.flag.device_index_enable = 0;
-  strlcpy(Settings.mqtt_host, MQTT_HOST, sizeof(Settings.mqtt_host));
+  Settings.flag.device_index_enable = MQTT_POWER_FORMAT;
+  Settings.flag3.time_append_timezone = MQTT_APPEND_TIMEZONE;
+  Settings.flag3.button_switch_force_local = MQTT_BUTTON_SWITCH_FORCE_LOCAL;
+  Settings.flag3.no_hold_retain = MQTT_NO_HOLD_RETAIN;
+  Settings.flag3.use_underscore = MQTT_INDEX_SEPARATOR;
+  Settings.flag3.grouptopic_mode = MQTT_GROUPTOPIC_FORMAT;
+  SettingsUpdateText(SET_MQTT_HOST, MQTT_HOST);
   Settings.mqtt_port = MQTT_PORT;
-  strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));
-  strlcpy(Settings.mqtt_user, MQTT_USER, sizeof(Settings.mqtt_user));
-  strlcpy(Settings.mqtt_pwd, MQTT_PASS, sizeof(Settings.mqtt_pwd));
-  strlcpy(Settings.mqtt_topic, MQTT_TOPIC, sizeof(Settings.mqtt_topic));
-  strlcpy(Settings.button_topic, MQTT_BUTTON_TOPIC, sizeof(Settings.button_topic));
-  strlcpy(Settings.switch_topic, MQTT_SWITCH_TOPIC, sizeof(Settings.switch_topic));
-  strlcpy(Settings.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(Settings.mqtt_grptopic));
-  strlcpy(Settings.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(Settings.mqtt_fulltopic));
+  SettingsUpdateText(SET_MQTT_CLIENT, MQTT_CLIENT_ID);
+  SettingsUpdateText(SET_MQTT_USER, MQTT_USER);
+  SettingsUpdateText(SET_MQTT_PWD, MQTT_PASS);
+  SettingsUpdateText(SET_MQTT_TOPIC, MQTT_TOPIC);
+  SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, MQTT_BUTTON_TOPIC);
+  SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, MQTT_SWITCH_TOPIC);
+  SettingsUpdateText(SET_MQTT_GRP_TOPIC, MQTT_GRPTOPIC);
+  SettingsUpdateText(SET_MQTT_FULLTOPIC, MQTT_FULLTOPIC);
   Settings.mqtt_retry = MQTT_RETRY_SECS;
-  strlcpy(Settings.mqtt_prefix[0], SUB_PREFIX, sizeof(Settings.mqtt_prefix[0]));
-  strlcpy(Settings.mqtt_prefix[1], PUB_PREFIX, sizeof(Settings.mqtt_prefix[1]));
-  strlcpy(Settings.mqtt_prefix[2], PUB_PREFIX2, sizeof(Settings.mqtt_prefix[2]));
-  strlcpy(Settings.state_text[0], MQTT_STATUS_OFF, sizeof(Settings.state_text[0]));
-  strlcpy(Settings.state_text[1], MQTT_STATUS_ON, sizeof(Settings.state_text[1]));
-  strlcpy(Settings.state_text[2], MQTT_CMND_TOGGLE, sizeof(Settings.state_text[2]));
-  strlcpy(Settings.state_text[3], MQTT_CMND_HOLD, sizeof(Settings.state_text[3]));
+  SettingsUpdateText(SET_MQTTPREFIX1, SUB_PREFIX);
+  SettingsUpdateText(SET_MQTTPREFIX2, PUB_PREFIX);
+  SettingsUpdateText(SET_MQTTPREFIX3, PUB_PREFIX2);
+  SettingsUpdateText(SET_STATE_TXT1, MQTT_STATUS_OFF);
+  SettingsUpdateText(SET_STATE_TXT2, MQTT_STATUS_ON);
+  SettingsUpdateText(SET_STATE_TXT3, MQTT_CMND_TOGGLE);
+  SettingsUpdateText(SET_STATE_TXT4, MQTT_CMND_HOLD);
   char fingerprint[60];
   strlcpy(fingerprint, MQTT_FINGERPRINT1, sizeof(fingerprint));
   char *p = fingerprint;
@@ -760,10 +951,13 @@ void SettingsDefaultSet2(void)
   Settings.mqttlog_level = MQTT_LOG_LEVEL;
 
   // Energy
+  Settings.flag.no_power_on_check = ENERGY_VOLTAGE_ALWAYS;
   Settings.flag2.current_resolution = 3;
 //  Settings.flag2.voltage_resolution = 0;
 //  Settings.flag2.wattage_resolution = 0;
   Settings.flag2.energy_resolution = ENERGY_RESOLUTION;
+  Settings.flag3.dds2382_model = ENERGY_DDS2382_MODE;
+  Settings.flag3.hardware_energy_total = ENERGY_HARDWARE_TOTALS;
   Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
 //  Settings.energy_power_delta = 0;
   Settings.energy_power_calibration = HLW_PREF_PULSE;
@@ -793,9 +987,12 @@ void SettingsDefaultSet2(void)
   Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
 
   // IRRemote
+  Settings.flag.ir_receive_decimal = IR_DATA_RADIX;
+  Settings.flag3.receive_raw = IR_ADD_RAW_DATA;
   Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
 
   // RF Bridge
+  Settings.flag.rf_receive_decimal = RF_DATA_RADIX;
 //  for (uint32_t i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
   memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
 
@@ -816,6 +1013,8 @@ void SettingsDefaultSet2(void)
   Settings.flag2.pressure_resolution = PRESSURE_RESOLUTION;
   Settings.flag2.humidity_resolution = HUMIDITY_RESOLUTION;
   Settings.flag2.temperature_resolution = TEMP_RESOLUTION;
+  Settings.flag3.ds18x20_internal_pullup = DS18X20_PULL_UP;
+  Settings.flag3.counter_reset_on_tele = COUNTER_RESET;
 //  Settings.altitude = 0;
 
   // Rules
@@ -824,19 +1023,28 @@ void SettingsDefaultSet2(void)
 //  for (uint32_t i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
   Settings.flag2.calc_resolution = CALC_RESOLUTION;
 
+  // Timer
+  Settings.flag3.timers_enable = TIMERS_ENABLED;
+
   // Home Assistant
+  Settings.flag.hass_light = HASS_AS_LIGHT;
   Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
+  Settings.flag3.hass_tele_on_power = TELE_ON_POWER;
 
   // Knx
-//  Settings.flag.knx_enabled = 0;
-//  Settings.flag.knx_enable_enhancement = 0;
+  Settings.flag.knx_enabled = KNX_ENABLED;
+  Settings.flag.knx_enable_enhancement = KNX_ENHANCED;
 
   // Light
-  Settings.flag.pwm_control = 1;
-  //Settings.flag.ws_clock_reverse = 0;
-  //Settings.flag.light_signal = 0;
-  //Settings.flag.not_power_linked = 0;
-  //Settings.flag.decimal_text = 0;
+  Settings.flag.pwm_control = LIGHT_MODE;
+  Settings.flag.ws_clock_reverse = LIGHT_CLOCK_DIRECTION;
+  Settings.flag.light_signal = LIGHT_PAIRS_CO2;
+  Settings.flag.not_power_linked = LIGHT_POWER_CONTROL;
+  Settings.flag.decimal_text = LIGHT_COLOR_RADIX;
+  Settings.flag3.pwm_multi_channels = LIGHT_CHANNEL_MODE;
+  Settings.flag3.slider_dimmer_stay_on = LIGHT_SLIDER_POWER;
+  Settings.flag4.alexa_ct_range = LIGHT_ALEXA_CT_RANGE;
+
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
   for (uint32_t i = 0; i < MAX_PWMS; i++) {
@@ -896,15 +1104,11 @@ void SettingsDefaultSet2(void)
     Settings.timezone = APP_TIMEZONE / 60;
     Settings.timezone_minutes = abs(APP_TIMEZONE % 60);
   }
-  strlcpy(Settings.ntp_server[0], NTP_SERVER1, sizeof(Settings.ntp_server[0]));
-  strlcpy(Settings.ntp_server[1], NTP_SERVER2, sizeof(Settings.ntp_server[1]));
-  strlcpy(Settings.ntp_server[2], NTP_SERVER3, sizeof(Settings.ntp_server[2]));
-  for (uint32_t j = 0; j < 3; j++) {
-    for (uint32_t i = 0; i < strlen(Settings.ntp_server[j]); i++) {
-      if (Settings.ntp_server[j][i] == ',') {
-        Settings.ntp_server[j][i] = '.';
-      }
-    }
+  SettingsUpdateText(SET_NTPSERVER1, NTP_SERVER1);
+  SettingsUpdateText(SET_NTPSERVER2, NTP_SERVER2);
+  SettingsUpdateText(SET_NTPSERVER3, NTP_SERVER3);
+  for (uint32_t i = 0; i < MAX_NTP_SERVERS; i++) {
+    SettingsUpdateText(SET_NTPSERVER1 +i, ReplaceCommaWithDot(SettingsText(SET_NTPSERVER1 +i)));
   }
   Settings.latitude = (int)((double)LATITUDE * 1000000);
   Settings.longitude = (int)((double)LONGITUDE * 1000000);
@@ -924,6 +1128,15 @@ void SettingsDefaultSet2(void)
 
   memset(&Settings.monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
   SettingsEnableAllI2cDrivers();
+
+  // Tuya
+  Settings.flag3.tuya_apply_o20 = TUYA_SETOPTION_20;
+  Settings.flag3.tuya_serial_mqtt_publish = MQTT_TUYA_RECEIVED;
+
+  Settings.flag3.buzzer_enable = BUZZER_ENABLE;
+  Settings.flag3.shutter_mode = SHUTTER_SUPPORT;
+  Settings.flag3.pcf8574_ports_inverted = PCF8574_INVERT_PORTS;
+  Settings.flag4.zigbee_use_names = ZIGBEE_FRIENDLY_NAMES;
 }
 
 /********************************************************************************************/
@@ -1064,11 +1277,8 @@ void SettingsDelta(void)
       }
     }
     if (Settings.version < 0x06060009) {
-      SerialCfg config = SettingToSerialCfg(Settings.serial_config);
-      config.baudrate = Settings.ex_baudrate * 4;
-      Settings.serial_config = SerialCfgToSetting(config);
-
-      Settings.sbaudrate = Settings.ex_sbaudrate * 4;
+      Settings.baudrate = APP_BAUDRATE / 300;
+      Settings.sbaudrate = SOFT_BAUDRATE / 300;
     }
     if (Settings.version < 0x0606000A) {
       uint8_t tuyaindex = 0;
@@ -1107,8 +1317,8 @@ void SettingsDelta(void)
       memset((char*)&Settings +0x1D6, 0x00, 16);
     }
     if (Settings.version < 0x0606000F) {
-      Settings.shutter_accuracy = 0;
-      Settings.mqttlog_level = MQTT_LOG_LEVEL;
+      Settings.ex_shutter_accuracy = 0;
+      Settings.ex_mqttlog_level = MQTT_LOG_LEVEL;
     }
     if (Settings.version < 0x06060011) {
       Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
@@ -1147,8 +1357,8 @@ void SettingsDelta(void)
       Settings.ex_energy_power_delta = 0;
     }
     if (Settings.version < 0x06060015) {
-      if ((EX_WIFI_SMARTCONFIG == Settings.sta_config) || (EX_WIFI_WPSCONFIG == Settings.sta_config)) {
-        Settings.sta_config = WIFI_MANAGER;
+      if ((EX_WIFI_SMARTCONFIG == Settings.ex_sta_config) || (EX_WIFI_WPSCONFIG == Settings.ex_sta_config)) {
+        Settings.ex_sta_config = WIFI_MANAGER;
       }
     }
 
@@ -1161,33 +1371,103 @@ void SettingsDelta(void)
       SettingsEnableAllI2cDrivers();
     }
     if (Settings.version < 0x07000004) {
-      Settings.wifi_output_power = 170;
+      Settings.ex_wifi_output_power = 170;
+    }
+    if (Settings.version < 0x07010202) {
+      Settings.ex_serial_config = TS_SERIAL_8N1;
+    }
+    if (Settings.version < 0x07010204) {
+      if (Settings.flag3.ex_cors_enabled == 1) {
+        strlcpy(Settings.ex_cors_domain, CORS_ENABLED_ALL, sizeof(Settings.ex_cors_domain));
+      } else {
+        Settings.ex_cors_domain[0] = 0;
+      }
+    }
+    if (Settings.version < 0x07010205) {
+      Settings.seriallog_level = Settings.ex_seriallog_level;  // 09E -> 452
+      Settings.sta_config = Settings.ex_sta_config;            // 09F -> EC7
+      Settings.sta_active = Settings.ex_sta_active;            // 0A0 -> EC8
+      memcpy((char*)&Settings.rule_stop, (char*)&Settings.ex_rule_stop, 47);  // 1A7 -> EC9
+    }
+    if (Settings.version < 0x07010206) {
+      Settings.flag4 = Settings.ex_flag4;                      // 1E0 -> EF8
+      Settings.mqtt_port = Settings.ex_mqtt_port;              // 20A -> EFC
+      memcpy((char*)&Settings.serial_config, (char*)&Settings.ex_serial_config, 5);  // 1E4 -> EFE
+    }
+
+    if (Settings.version < 0x08000000) {
+      char temp[strlen(Settings.text_pool) +1];           strncpy(temp, Settings.text_pool, sizeof(temp));  // Was ota_url
+      char temp21[strlen(Settings.ex_mqtt_prefix[0]) +1]; strncpy(temp21, Settings.ex_mqtt_prefix[0], sizeof(temp21));
+      char temp22[strlen(Settings.ex_mqtt_prefix[1]) +1]; strncpy(temp22, Settings.ex_mqtt_prefix[1], sizeof(temp22));
+      char temp23[strlen(Settings.ex_mqtt_prefix[2]) +1]; strncpy(temp23, Settings.ex_mqtt_prefix[2], sizeof(temp23));
+      char temp31[strlen(Settings.ex_sta_ssid[0]) +1];    strncpy(temp31, Settings.ex_sta_ssid[0], sizeof(temp31));
+      char temp32[strlen(Settings.ex_sta_ssid[1]) +1];    strncpy(temp32, Settings.ex_sta_ssid[1], sizeof(temp32));
+      char temp41[strlen(Settings.ex_sta_pwd[0]) +1];     strncpy(temp41, Settings.ex_sta_pwd[0], sizeof(temp41));
+      char temp42[strlen(Settings.ex_sta_pwd[1]) +1];     strncpy(temp42, Settings.ex_sta_pwd[1], sizeof(temp42));
+      char temp5[strlen(Settings.ex_hostname) +1];        strncpy(temp5, Settings.ex_hostname, sizeof(temp5));
+      char temp6[strlen(Settings.ex_syslog_host) +1];     strncpy(temp6, Settings.ex_syslog_host, sizeof(temp6));
+      char temp7[strlen(Settings.ex_mqtt_host) +1];       strncpy(temp7, Settings.ex_mqtt_host, sizeof(temp7));
+      char temp8[strlen(Settings.ex_mqtt_client) +1];     strncpy(temp8, Settings.ex_mqtt_client, sizeof(temp8));
+      char temp9[strlen(Settings.ex_mqtt_user) +1];       strncpy(temp9, Settings.ex_mqtt_user, sizeof(temp9));
+      char temp10[strlen(Settings.ex_mqtt_pwd) +1];       strncpy(temp10, Settings.ex_mqtt_pwd, sizeof(temp10));
+      char temp11[strlen(Settings.ex_mqtt_topic) +1];     strncpy(temp11, Settings.ex_mqtt_topic, sizeof(temp11));
+      char temp12[strlen(Settings.ex_button_topic) +1];   strncpy(temp12, Settings.ex_button_topic, sizeof(temp12));
+      char temp13[strlen(Settings.ex_mqtt_grptopic) +1];  strncpy(temp13, Settings.ex_mqtt_grptopic, sizeof(temp13));
+
+      memset(Settings.text_pool, 0x00, settings_text_size);
+      SettingsUpdateText(SET_OTAURL, temp);
+      SettingsUpdateText(SET_MQTTPREFIX1, temp21);
+      SettingsUpdateText(SET_MQTTPREFIX2, temp22);
+      SettingsUpdateText(SET_MQTTPREFIX3, temp23);
+      SettingsUpdateText(SET_STASSID1, temp31);
+      SettingsUpdateText(SET_STASSID2, temp32);
+      SettingsUpdateText(SET_STAPWD1, temp41);
+      SettingsUpdateText(SET_STAPWD2, temp42);
+      SettingsUpdateText(SET_HOSTNAME, temp5);
+      SettingsUpdateText(SET_SYSLOG_HOST, temp6);
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+      if (!strlen(Settings.ex_mqtt_user)) {
+        SettingsUpdateText(SET_MQTT_HOST, temp7);
+        SettingsUpdateText(SET_MQTT_USER, temp9);
+      } else {
+        char aws_mqtt_host[66];
+        snprintf_P(aws_mqtt_host, sizeof(aws_mqtt_host), PSTR("%s%s"), temp9, temp7);
+        SettingsUpdateText(SET_MQTT_HOST, aws_mqtt_host);
+        SettingsUpdateText(SET_MQTT_USER, "");
+      }
+#else
+      SettingsUpdateText(SET_MQTT_HOST, temp7);
+      SettingsUpdateText(SET_MQTT_USER, temp9);
+#endif
+      SettingsUpdateText(SET_MQTT_CLIENT, temp8);
+      SettingsUpdateText(SET_MQTT_PWD, temp10);
+      SettingsUpdateText(SET_MQTT_TOPIC, temp11);
+      SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, temp12);
+      SettingsUpdateText(SET_MQTT_GRP_TOPIC, temp13);
+
+      SettingsUpdateText(SET_WEBPWD, Settings.ex_web_password);
+      SettingsUpdateText(SET_CORS, Settings.ex_cors_domain);
+      SettingsUpdateText(SET_MQTT_FULLTOPIC, Settings.ex_mqtt_fulltopic);
+      SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, Settings.ex_switch_topic);
+      SettingsUpdateText(SET_STATE_TXT1, Settings.ex_state_text[0]);
+      SettingsUpdateText(SET_STATE_TXT2, Settings.ex_state_text[1]);
+      SettingsUpdateText(SET_STATE_TXT3, Settings.ex_state_text[2]);
+      SettingsUpdateText(SET_STATE_TXT4, Settings.ex_state_text[3]);
+      SettingsUpdateText(SET_NTPSERVER1, Settings.ex_ntp_server[0]);
+      SettingsUpdateText(SET_NTPSERVER2, Settings.ex_ntp_server[1]);
+      SettingsUpdateText(SET_NTPSERVER3, Settings.ex_ntp_server[2]);
+      SettingsUpdateText(SET_MEM1, Settings.script_pram[0]);
+      SettingsUpdateText(SET_MEM2, Settings.script_pram[1]);
+      SettingsUpdateText(SET_MEM3, Settings.script_pram[2]);
+      SettingsUpdateText(SET_MEM4, Settings.script_pram[3]);
+      SettingsUpdateText(SET_MEM5, Settings.script_pram[4]);
+      SettingsUpdateText(SET_FRIENDLYNAME1, Settings.ex_friendlyname[0]);
+      SettingsUpdateText(SET_FRIENDLYNAME2, Settings.ex_friendlyname[1]);
+      SettingsUpdateText(SET_FRIENDLYNAME3, Settings.ex_friendlyname[2]);
+      SettingsUpdateText(SET_FRIENDLYNAME4, Settings.ex_friendlyname[3]);
     }
 
     Settings.version = VERSION;
     SettingsSave(1);
   }
-}
-
-/* Performs the bitwise operations needed for translating the serial port settings 16-bit word
-  to the SerialCfg struct: */
-SerialCfg SettingToSerialCfg(uint16_t setting)
-{
-  SerialCfg serial_config;
-
-  serial_config.baudrate = (uint16_t) (setting >> 2) & 0x3FFF;
-  serial_config.mode = (uint8_t) (setting) & 0x3;
-
-  return serial_config;
-}
-
-/* Performs the bitwise operations needed for translating from the SerialCfg struct 
-  to the serial port settings 16-bit word: */
-uint16_t SerialCfgToSetting(SerialCfg serial_config)
-{
-  uint16_t setting;
-
-  setting = (uint16_t) ((uint16_t) (serial_config.baudrate << 2 & 0xFFFC)) | (serial_config.mode & 0x3);
-
-  return setting;
 }

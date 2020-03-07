@@ -1,7 +1,7 @@
 /*
   xsns_39_max31855.ino - MAX31855 thermocouple sensor support for Tasmota
 
-  Copyright (C) 2019  Markus Past
+  Copyright (C) 2020  Markus Past
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

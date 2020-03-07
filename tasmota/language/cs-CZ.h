@@ -1,7 +1,7 @@
 /*
   cs-CZ.h - localization for Czech with diacritics - Czech for Tasmota
 
-  Copyright (C) 2019  Vladimír Synek
+  Copyright (C) 2020  Vladimír Synek
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -71,8 +71,10 @@
 #define D_COLDLIGHT "Studené světlo"
 #define D_COMMAND "Příkaz"
 #define D_CONNECTED "...připojeno"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Počítej"
 #define D_COUNTER "Počítadlo"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Proud"          // As in Voltage and Current
 #define D_DATA "Data"
 #define D_DARKLIGHT "Tmavý"
@@ -82,7 +84,7 @@
 #define D_DNS_SERVER "Server DNS"
 #define D_DONE "Provedeno"
 #define D_DST_TIME "DST"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "Emulace"
 #define D_ENABLED "Otevřený"
 #define D_ERASE "Smaž"
@@ -112,6 +114,7 @@
 #define D_LIGHT "Světlo"
 #define D_LWT "LWT"
 #define D_MODULE "Modul"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "několikeré-stisknutí"
 #define D_NOISE "Hluk"
@@ -134,6 +137,7 @@
 #define D_PROGRAM_SIZE "Velikost programu"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Rain"
+#define D_RANGE "Range"
 #define D_RECEIVED "Přijatý"
 #define D_RESTART "Restart"
 #define D_RESTARTING "Restartování"
@@ -353,6 +357,7 @@
 #define D_UPLOAD_ERR_11 "Chyba smazání RF chipu"
 #define D_UPLOAD_ERR_12 "Chyba při zápisu do RF chipu"
 #define D_UPLOAD_ERR_13 "Chyba dekódování RF firmwaru"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Chyba nahrávání"
 
 #define D_ENTER_COMMAND "Vlož příkaz"
@@ -501,7 +506,7 @@
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Směr větru"
 #define D_TX20_WIND_SPEED "Rychlost větru"
-#define D_TX20_WIND_SPEED_AVG "Průměrná rychlost větru"
+#define D_TX20_WIND_SPEED_MIN "Minimální rychlost větru"
 #define D_TX20_WIND_SPEED_MAX "Maximální rychlost větru"
 #define D_TX20_NORTH "S"
 #define D_TX20_EAST "V"
@@ -560,7 +565,7 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
-#define D_SENSOR_TX20_TX       "TX20"
+#define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFrecv"
 #define D_SENSOR_TUYA_TX       "Tuya Tx"
@@ -629,6 +634,15 @@
 #define D_SENSOR_SLAVE_TX    "Slave TX"
 #define D_SENSOR_SLAVE_RX    "Slave RX"
 #define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_GPS_RX        "GPS RX"
+#define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
+#define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
+#define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -640,7 +654,7 @@
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
-#define D_UNIT_KILOOHM "kOhm"
+#define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
@@ -664,7 +678,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Phase Angle"
 #define D_IMPORT_ACTIVE   "Import Active"
 #define D_EXPORT_ACTIVE   "Export Active"
@@ -673,6 +687,7 @@
 #define D_TOTAL_REACTIVE  "Total Reactive"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltage"
@@ -697,5 +712,18 @@
 #define D_SOLAX_ERROR_6   "Over Temperature Fault"
 #define D_SOLAX_ERROR_7   "Fan Fault"
 #define D_SOLAX_ERROR_8   "Other Device Fault"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Edit script"
+#define D_SCRIPT               "edit script"
+#define D_SDCARD_UPLOAD        "file upload"
+#define D_SDCARD_DIR           "sd card directory"
+#define D_UPL_DONE             "Done"
+#define D_SCRIPT_CHARS_LEFT    "chars left"
+#define D_SCRIPT_CHARS_NO_MORE "no more chars"
+#define D_SCRIPT_DOWNLOAD      "Download"
+#define D_SCRIPT_ENABLE        "script enable"
+#define D_SCRIPT_UPLOAD        "Upload"
+#define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
 #endif  // _LANGUAGE_CS_CZ_H_

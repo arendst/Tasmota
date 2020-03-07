@@ -1,7 +1,7 @@
 /*
   support_rotary.ino - rotary switch support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -36,41 +36,34 @@ struct ROTARY {
 
 /********************************************************************************************/
 
-void update_position(void)
-{
-  uint8_t s;
-
-  /*
-   * https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
-   */
-
-  s = Rotary.state & 3;
-  if (digitalRead(pin[GPIO_ROT1A])) s |= 4;
-  if (digitalRead(pin[GPIO_ROT1B])) s |= 8;
-  switch (s) {
-    case 0: case 5: case 10: case 15:
-      break;
-    case 1: case 7: case 8: case 14:
-      Rotary.position++; break;
-    case 2: case 4: case 11: case 13:
-      Rotary.position--; break;
-    case 3: case 12:
-      Rotary.position = Rotary.position + 2; break;
-    default:
-      Rotary.position = Rotary.position - 2; break;
-  }
-  Rotary.state = (s >> 2);
-}
-
 #ifndef ARDUINO_ESP8266_RELEASE_2_3_0      // Fix core 2.5.x ISR not in IRAM Exception
 void update_rotary(void) ICACHE_RAM_ATTR;
 #endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
 void update_rotary(void)
 {
-  if (MI_DESK_LAMP == my_module_type){
-    if (LightPower()) {
-      update_position();
+  if (MI_DESK_LAMP == my_module_type) {
+    if (LightPowerIRAM()) {
+      /*
+      * https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
+      */
+
+      uint8_t s = Rotary.state & 3;
+      if (digitalRead(pin[GPIO_ROT1A])) { s |= 4; }
+      if (digitalRead(pin[GPIO_ROT1B])) { s |= 8; }
+      switch (s) {
+        case 0: case 5: case 10: case 15:
+          break;
+        case 1: case 7: case 8: case 14:
+          Rotary.position++; break;
+        case 2: case 4: case 11: case 13:
+          Rotary.position--; break;
+        case 3: case 12:
+          Rotary.position = Rotary.position + 2; break;
+        default:
+          Rotary.position = Rotary.position - 2; break;
+      }
+      Rotary.state = (s >> 2);
     }
   }
 }

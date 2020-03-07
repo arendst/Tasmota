@@ -1,7 +1,7 @@
 /*
   xsns_27_apds9960.ino - Support for I2C APDS9960 Proximity Sensor for Tasmota
 
-  Copyright (C) 2019  Shawn Hymel/Sparkfun and Theo Arends
+  Copyright (C) 2020  Shawn Hymel/Sparkfun and Theo Arends
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -240,7 +240,7 @@ const char HTTP_APDS_9960_SNS[] PROGMEM =
 #define DEFAULT_GCONF3          0       // All photodiodes active during gesture
 #define DEFAULT_GIEN            0       // Disable gesture interrupts
 
-#define ERROR                   0xFF
+#define APDS9960_ERROR          0xFF
 
 /* Direction definitions */
 enum {
@@ -1530,7 +1530,7 @@ int16_t readGesture(void)
                                                 (uint8_t*)fifo_data,
                                                 (fifo_level * 4) );
                 if( bytes_read == -1 ) {
-                    return ERROR;
+                    return APDS9960_ERROR;
                 }
 
                 /* If at least 1 set of data, sort the data into U/D/L/R */

@@ -1,7 +1,7 @@
 /*
   tasmota.ino - Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,10 +19,15 @@
 /*====================================================
   Prerequisites:
     - Change libraries/PubSubClient/src/PubSubClient.h
-        #define MQTT_MAX_PACKET_SIZE 1000
+        #define MQTT_MAX_PACKET_SIZE 1200
 
-    - Select IDE Tools - Flash Mode: "DOUT"
-    - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
+  Arduino IDE 1.8.12 and up parameters
+    - Select IDE Tools - Board: "Generic ESP8266 Module"
+    - Select IDE Tools - Flash Mode: "DOUT (compatible)"
+    - Select IDE Tools - Flash Size: "1M (FS:none OTA:~502KB)"
+    - Select IDE Tools - LwIP Variant: "v2 Higher Bandwidth (no feature)"
+    - Select IDE Tools - VTables: "Flash"
+    - Select IDE Tools - Espressif FW: "nonos-sdk-2.2.1+100 (190703)"
   ====================================================*/
 
 // Location specific includes
@@ -68,13 +73,9 @@
 // Structs
 #include "settings.h"
 
-const char kCodeImage[] PROGMEM = "tasmota|minimal|sensors|knx|basic|display|ir";
-
 /*********************************************************************************************\
  * Global variables
 \*********************************************************************************************/
-
-SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
@@ -83,6 +84,7 @@ unsigned long feature_drv2;                 // Compiled driver feature map
 unsigned long feature_sns1;                 // Compiled sensor feature map
 unsigned long feature_sns2;                 // Compiled sensor feature map
 unsigned long feature5;                     // Compiled feature map
+unsigned long feature6;                     // Compiled feature map
 unsigned long serial_polling_window = 0;    // Serial polling window
 unsigned long state_second = 0;             // State second timer
 unsigned long state_50msecond = 0;          // State 50msecond timer
@@ -98,7 +100,6 @@ power_t blink_mask = 0;                     // Blink relay active mask
 power_t blink_powersave;                    // Blink start power save state
 power_t latching_power = 0;                 // Power state at latching start
 power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
-int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 int serial_in_byte_counter = 0;             // Index in receive buffer
 int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
@@ -112,14 +113,14 @@ uint32_t web_log_index = 1;                 // Index in Web log buffer (should n
 float global_temperature = 9999;            // Provide a global temperature to be used by some sensors
 float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
 float global_pressure = 0;                  // Provide a global pressure to be used by some sensors
-char *ota_url;                              // OTA url string pointer
 uint16_t tele_period = 9999;                // Tele period timer
-uint16_t mqtt_cmnd_publish = 0;             // ignore flag for publish command
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
 uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
 RulesBitfield rules_flag;                   // Rule state flags (16 bits)
+uint8_t mqtt_cmnd_blocked = 0;              // Ignore flag for publish command
+uint8_t mqtt_cmnd_blocked_reset = 0;        // Count down to reset if needed
 uint8_t state_250mS = 0;                    // State 250msecond per second flag
 uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
 uint8_t sleep;                              // Current copy of Settings.sleep
@@ -143,6 +144,7 @@ uint8_t my_module_type;                     // Current copy of Settings.module o
 uint8_t my_adc0;                            // Active copy of Module ADC0
 uint8_t last_source = 0;                    // Last command source
 uint8_t shutters_present = 0;               // Number of actual define shutters
+uint8_t prepped_loglevel = 0;               // Delayed log level message
 //uint8_t mdns_delayed_start = 0;             // mDNS delayed start
 bool serial_local = false;                  // Handle serial locally;
 bool fallback_topic_flag = false;           // Use Topic or FallbackTopic
@@ -156,16 +158,16 @@ bool i2c_flg = false;                       // I2C configured
 bool spi_flg = false;                       // SPI configured
 bool soft_spi_flg = false;                  // Software SPI configured
 bool ntp_force_sync = false;                // Force NTP sync
-bool ntp_synced_message = false;            // NTP synced message flag
 bool is_8285 = false;                       // Hardware device ESP8266EX (0) or ESP8285 (1)
+bool skip_light_fade;                       // Temporarily skip light fading
 myio my_module;                             // Active copy of Module GPIOs (17 x 8 bits)
 gpio_flag my_module_flag;                   // Active copy of Template GPIO flags
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
 char my_version[33];                        // Composed version string
 char my_image[33];                          // Code image and/or commit
 char my_hostname[33];                       // Composed Wifi hostname
-char mqtt_client[33];                       // Composed MQTT Clientname
-char mqtt_topic[33];                        // Composed MQTT topic
+char mqtt_client[TOPSZ];                    // Composed MQTT Clientname
+char mqtt_topic[TOPSZ];                     // Composed MQTT topic
 char serial_in_buffer[INPUT_BUFFER_SIZE];   // Receive buffer
 char mqtt_data[MESSZ];                      // MQTT publish buffer and web page ajax buffer
 char log_data[LOGSZ];                       // Logging
@@ -196,17 +198,15 @@ void setup(void)
   RtcReboot.fast_reboot_count++;
   RtcRebootSave();
 
-  Serial.begin(baudrate);
-  delay(10);
-  Serial.println();
+  Serial.begin(APP_BAUDRATE);
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
   snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
   if (VERSION & 0xff) {  // Development or patched version 6.3.0.10
     snprintf_P(my_version, sizeof(my_version), PSTR("%s.%d"), my_version, VERSION & 0xff);
   }
-  char code_image[20];
-  snprintf_P(my_image, sizeof(my_image), PSTR("(%s)"), GetTextIndexed(code_image, sizeof(code_image), CODE_IMAGE, kCodeImage));
+  // Thehackbox inserts "release" or "commit number" before compiling using sed -i -e 's/PSTR("(%s)")/PSTR("(85cff52-%s)")/g' tasmota.ino
+  snprintf_P(my_image, sizeof(my_image), PSTR("(%s)"), CODE_IMAGE_STR);  // Results in (85cff52-tasmota) or (release-tasmota)
 
   SettingsLoad();
   SettingsDelta();
@@ -220,9 +220,6 @@ void setup(void)
     XdrvCall(FUNC_SETTINGS_OVERRIDE);
   }
 
-  SerialCfg config = SettingToSerialCfg(Settings.serial_config);
-
-  baudrate = config.baudrate * 300;
 //  mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
   seriallog_level = Settings.seriallog_level;
   seriallog_timer = SERIALLOG_TIMER;
@@ -269,75 +266,30 @@ void setup(void)
     }
   }
 
-  Format(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
-  Format(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));
-  if (strstr(Settings.hostname, "%") != nullptr) {
-    strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
-    snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname, mqtt_topic, ESP.getChipId() & 0x1FFF);
+  Format(mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(mqtt_client));
+  Format(mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(mqtt_topic));
+  if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
+    SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
+    snprintf_P(my_hostname, sizeof(my_hostname)-1, SettingsText(SET_HOSTNAME), mqtt_topic, ESP.getChipId() & 0x1FFF);
   } else {
-    snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname);
+    snprintf_P(my_hostname, sizeof(my_hostname)-1, SettingsText(SET_HOSTNAME));
   }
 
   GetEspHardwareType();
   GpioInit();
 
-  SetSerialBaudrate(baudrate);
+//  SetSerialBaudrate(Settings.baudrate * 300);  // Allow reset of serial interface if current baudrate is different from requested baudrate
 
   WifiConnect();
 
-  if (MOTOR == my_module_type) { Settings.poweronstate = POWER_ALL_ON; }  // Needs always on else in limbo!
-  if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {
-    SetDevicePower(1, SRC_RESTART);
-  } else {
-    if ((ResetReason() == REASON_DEFAULT_RST) || (ResetReason() == REASON_EXT_SYS_RST)) {
-      switch (Settings.poweronstate) {
-      case POWER_ALL_OFF:
-      case POWER_ALL_OFF_PULSETIME_ON:
-        power = 0;
-        SetDevicePower(power, SRC_RESTART);
-        break;
-      case POWER_ALL_ON:  // All on
-        power = (1 << devices_present) -1;
-        SetDevicePower(power, SRC_RESTART);
-        break;
-      case POWER_ALL_SAVED_TOGGLE:
-        power = (Settings.power & ((1 << devices_present) -1)) ^ POWER_MASK;
-        if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart
-          SetDevicePower(power, SRC_RESTART);
-        }
-        break;
-      case POWER_ALL_SAVED:
-        power = Settings.power & ((1 << devices_present) -1);
-        if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart
-          SetDevicePower(power, SRC_RESTART);
-        }
-        break;
-      }
-    } else {
-      power = Settings.power & ((1 << devices_present) -1);
-      if (Settings.flag.save_state) {    // SetOption0 - Save power state and use after restart
-        SetDevicePower(power, SRC_RESTART);
-      }
-    }
-  }
+  SetPowerOnState();
 
-  // Issue #526 and #909
-  for (uint32_t i = 0; i < devices_present; i++) {
-    if (!Settings.flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
-      if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
-        bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
-      }
-    }
-    if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate))) {
-      SetPulseTimer(i, Settings.pulse_timer[i]);
-    }
-  }
-  blink_powersave = power;
-
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE), PROJECT, Settings.friendlyname[0], my_version, my_image);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE), PROJECT, SettingsText(SET_FRIENDLYNAME1), my_version, my_image);
 #ifdef FIRMWARE_MINIMAL
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
+
+  memcpy_P(log_data, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
 
   RtcInit();
 
@@ -353,15 +305,18 @@ void BacklogLoop(void)
 {
   if (TimeReached(backlog_delay)) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {
-      backlog_mutex = true;
 #ifdef SUPPORT_IF_STATEMENT
-      ExecuteCommand((char*)backlog.shift().c_str(), SRC_BACKLOG);
+      backlog_mutex = true;
+      String cmd = backlog.shift();
+      backlog_mutex = false;
+      ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
 #else
+      backlog_mutex = true;
       ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
       backlog_pointer++;
       if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
-#endif
       backlog_mutex = false;
+#endif
     }
   }
 }
@@ -380,6 +335,9 @@ void loop(void)
 #ifdef ROTARY_V1
   RotaryLoop();
 #endif
+#ifdef USE_DEVICE_GROUPS
+  DeviceGroupsLoop();
+#endif  // USE_DEVICE_GROUPS
   BacklogLoop();
 
   if (TimeReached(state_50msecond)) {
@@ -409,10 +367,7 @@ void loop(void)
   if (!serial_local) { SerialInput(); }
 
 #ifdef USE_ARDUINO_OTA
-  MDNS.update();
-  ArduinoOTA.handle();
-  // Once OTA is triggered, only handle that and dont do other stuff. (otherwise it fails)
-  while (arduino_ota_triggered) ArduinoOTA.handle();
+  ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
 
   uint32_t my_activity = millis() - my_sleep;

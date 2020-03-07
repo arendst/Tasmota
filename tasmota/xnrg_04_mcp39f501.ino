@@ -1,7 +1,7 @@
 /*
   xnrg_04_mcp39f501.ino - MCP39F501 energy sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -570,9 +570,7 @@ void McpSnsInit(void)
     } else {
       mcp_buffer = (char*)(malloc(MCP_BUFFER_SIZE));
     }
-    if (pin[GPIO_MCP39F5_RST] < 99) {
-      digitalWrite(pin[GPIO_MCP39F5_RST], 1);  // MCP enable
-    }
+    DigitalWrite(GPIO_MCP39F5_RST, 1);  // MCP enable
   } else {
     energy_flg = ENERGY_NONE;
   }

@@ -1,7 +1,7 @@
 /*
   xdrv_17_rcswitch.ino - RF transceiver using RcSwitch library for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -85,6 +85,7 @@ void RfInit(void)
     mySwitch.enableTransmit(pin[GPIO_RFSEND]);
   }
   if (pin[GPIO_RFRECV] < 99) {
+    pinMode( pin[GPIO_RFRECV], INPUT);
     mySwitch.enableReceive(pin[GPIO_RFRECV]);
   }
 }
@@ -104,7 +105,7 @@ void CmndRfSend(void)
     int repeat = 10;
     int pulse = 350;
 
-    char dataBufUc[XdrvMailbox.data_len];
+    char dataBufUc[XdrvMailbox.data_len + 1];
     UpperCase(dataBufUc, XdrvMailbox.data);
     StaticJsonBuffer<150> jsonBuf;  // ArduinoJSON entry used to calculate jsonBuf: JSON_OBJECT_SIZE(5) + 40 = 134
     JsonObject &root = jsonBuf.parseObject(dataBufUc);

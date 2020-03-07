@@ -1,7 +1,7 @@
 /*
   xdrv_10_scripter.ino - script support for Tasmota
 
-  Copyright (C) 2019  Gerhard Mutz and Theo Arends
+  Copyright (C) 2020  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -56,7 +56,8 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define SCRIPT_MAXSSIZE 48
 #define SCRIPT_EOL '\n'
 #define SCRIPT_FLOAT_PRECISION 2
-#define SCRIPT_MAXPERM (MAX_RULE_MEMS*10)-4/sizeof(float)
+#define PMEM_SIZE sizeof(Settings.script_pram)
+#define SCRIPT_MAXPERM (PMEM_SIZE)-4/sizeof(float)
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
 // offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
@@ -1030,8 +1031,10 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
             if ((*jo).is<char*>(vn)) {
               if (!strncmp(str_value,"ON",2)) {
                 if (fp) *fp=1;
+                goto nexit;
               } else if (!strncmp(str_value,"OFF",3)) {
                 if (fp) *fp=0;
+                goto nexit;
               } else {
                 *vtype=STR_RES;
                 tind->bits.constant=1;
@@ -1039,6 +1042,7 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
                 if (sp) strlcpy(sp,str_value,SCRIPT_MAXSSIZE);
                 return lp+len;
               }
+
             } else {
               if (fp) {
                 if (!strncmp(vn.c_str(),"Epoch",5)) {
@@ -1047,6 +1051,7 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
                   *fp=CharToFloat((char*)str_value);
                 }
               }
+              nexit:
               *vtype=NUM_RES;
               tind->bits.constant=1;
               tind->bits.is_string=0;
@@ -1366,7 +1371,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname,"gtopic",6)) {
-          if (sp) strlcpy(sp,Settings.mqtt_grptopic,glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTT_GRP_TOPIC),glob_script_mem.max_ssize);
           goto strexit;
         }
         break;
@@ -1491,6 +1496,37 @@ chknext:
           fvar=!global_state.mqtt_down;
           goto exit;
         }
+        if (!strncmp(vname,"mp(",3)) {
+          lp+=3;
+          float fvar1;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
+          SCRIPT_SKIP_SPACES
+          while (*lp!=')') {
+            char *opp=lp;
+            lp++;
+            float fvar2;
+            lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+            SCRIPT_SKIP_SPACES
+            fvar=fvar1;
+            if ((*opp=='<' && fvar1<fvar2) || 
+                (*opp=='>' && fvar1>fvar2) || 
+                (*opp=='=' && fvar1==fvar2)) 
+            {
+              if (*lp!='<' && *lp!='>' && *lp!='=' && *lp!=')' && *lp!=SCRIPT_EOL) {
+                float fvar3;
+                lp=GetNumericResult(lp,OPER_EQU,&fvar3,0);
+                SCRIPT_SKIP_SPACES
+                fvar=fvar3;
+              } else {
+                fvar=fvar2;
+              }
+              break;
+            }
+            while (*lp!='<' && *lp!='>' && *lp!='=' && *lp!=')' && *lp!=SCRIPT_EOL) lp++;
+          }
+          len=0;
+          goto exit;
+        }
         break;
       case 'p':
         if (!strncmp(vname,"pin[",4)) {
@@ -1523,15 +1559,15 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname,"prefix1",7)) {
-          if (sp) strlcpy(sp,Settings.mqtt_prefix[0],glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX1),glob_script_mem.max_ssize);
           goto strexit;
         }
         if (!strncmp(vname,"prefix2",7)) {
-          if (sp) strlcpy(sp,Settings.mqtt_prefix[1],glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX2),glob_script_mem.max_ssize);
           goto strexit;
         }
         if (!strncmp(vname,"prefix3",7)) {
-          if (sp) strlcpy(sp,Settings.mqtt_prefix[2],glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX3),glob_script_mem.max_ssize);
           goto strexit;
         }
         if (!strncmp(vname,"pow(",4)) {
@@ -1571,7 +1607,7 @@ chknext:
 
       case 'r':
         if (!strncmp(vname,"ram",3)) {
-          fvar=glob_script_mem.script_mem_size+(glob_script_mem.script_size)+(MAX_RULE_MEMS*10);
+          fvar=glob_script_mem.script_mem_size+(glob_script_mem.script_size)+(PMEM_SIZE);
           goto exit;
         }
         break;
@@ -1583,7 +1619,7 @@ chknext:
         if (!strncmp(vname,"sw[",3)) {
           // tasmota switch state
           GetNumericResult(vname+3,OPER_EQU,&fvar,0);
-          fvar=SwitchLastState((uint8_t)fvar);
+          fvar=SwitchLastState((uint32_t)fvar);
           // skip ] bracket
           len++;
           goto exit;
@@ -1710,6 +1746,30 @@ chknext:
           goto exit;
         }
 #endif
+#ifdef USE_SML_SCRIPT_CMD
+        if (!strncmp(vname,"sml(",4)) {
+          lp+=4;
+          float fvar1;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
+          SCRIPT_SKIP_SPACES
+          float fvar2;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+          SCRIPT_SKIP_SPACES
+          if (fvar2==0) {
+            float fvar3;
+            lp=GetNumericResult(lp,OPER_EQU,&fvar3,0);
+            fvar=SML_SetBaud(fvar1,fvar3);
+          } else {
+            char str[SCRIPT_MAXSSIZE];
+            lp=GetStringResult(lp,OPER_EQU,str,0);
+            fvar=SML_Write(fvar1,str);
+          }
+          lp++;
+          fvar=0;
+          len=0;
+          goto exit;
+        }
+#endif
         break;
       case 't':
         if (!strncmp(vname,"time",4)) {
@@ -1740,7 +1800,7 @@ chknext:
           goto strexit;
         }
         if (!strncmp(vname,"topic",5)) {
-          if (sp) strlcpy(sp,Settings.mqtt_topic,glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTT_TOPIC),glob_script_mem.max_ssize);
           goto strexit;
         }
 #ifdef USE_DISPLAY
@@ -2199,8 +2259,7 @@ void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
 
 void toLog(const char *str) {
   if (!str) return;
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s"),str);
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P(LOG_LEVEL_INFO, str);
 }
 
 
@@ -2677,8 +2736,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                     }
                     cmd[count]=*lp++;
                   }
-                  //snprintf_P(log_data, sizeof(log_data), tmp);
-                  //AddLog(LOG_LEVEL_INFO);
+                  //AddLog_P(LOG_LEVEL_INFO, tmp);
                   // replace vars in cmd
                   char *tmp=cmdmem+SCRIPT_CMDMEM/2;
                   Replace_Cmd_Vars(cmd,tmp,SCRIPT_CMDMEM/2);
@@ -2690,8 +2748,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   } else {
                     if (!sflag) {
                       tasm_cmd_activ=1;
-                      snprintf_P(log_data, sizeof(log_data), PSTR("Script: performs \"%s\""), tmp);
-                      AddLog(glob_script_mem.script_loglevel&0x7f);
+                      AddLog_P2(glob_script_mem.script_loglevel&0x7f, PSTR("Script: performs \"%s\""), tmp);
                     } else if (sflag==2) {
                       // allow recursive call
                     } else {
@@ -2991,7 +3048,7 @@ void ScripterEvery100ms(void) {
   if (fast_script==99) Run_Scripter(">F",2,0);
 }
 
-//mems[MAX_RULE_MEMS] is 50 bytes in 6.5
+//mems[5] is 50 bytes in 6.5
 // can hold 11 floats or floats + strings
 // should report overflow later
 void Scripter_save_pvars(void) {
@@ -3003,7 +3060,7 @@ void Scripter_save_pvars(void) {
     if (vtp[count].bits.is_permanent && !vtp[count].bits.is_string) {
       uint8_t index=vtp[count].index;
       mlen+=sizeof(float);
-      if (mlen>MAX_RULE_MEMS*10) {
+      if (mlen>PMEM_SIZE) {
         vtp[count].bits.is_permanent=0;
         return;
       }
@@ -3017,7 +3074,7 @@ void Scripter_save_pvars(void) {
       char *sp=glob_script_mem.glob_snp+(index*glob_script_mem.max_ssize);
       uint8_t slen=strlen(sp);
       mlen+=slen+1;
-      if (mlen>MAX_RULE_MEMS*10) {
+      if (mlen>PMEM_SIZE) {
         vtp[count].bits.is_permanent=0;
         return;
       }
@@ -3031,11 +3088,6 @@ void Scripter_save_pvars(void) {
 #ifdef USE_WEBSERVER
 
 #define WEB_HANDLE_SCRIPT "s10"
-#define D_CONFIGURE_SCRIPT "Edit script"
-#define D_SCRIPT "edit script"
-#define D_SDCARD_UPLOAD "file upload"
-#define D_SDCARD_DIR "sd card directory"
-#define D_UPL_DONE "Done"
 
 const char S_CONFIGURE_SCRIPT[] PROGMEM = D_CONFIGURE_SCRIPT;
 
@@ -3049,7 +3101,7 @@ const char HTTP_FORM_SCRIPT[] PROGMEM =
 
 const char HTTP_FORM_SCRIPT1[] PROGMEM =
     "<div style='text-align:right' id='charNum'> </div>"
-    "<input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>script enable</b><br/>"
+    "<input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>" D_SCRIPT_ENABLE "</b><br/>"
     "<br><textarea  id='t1' name='t1' rows='8' cols='80' maxlength='%d' style='font-size: 12pt' >";
 
 const char HTTP_FORM_SCRIPT1b[] PROGMEM =
@@ -3062,9 +3114,9 @@ const char HTTP_FORM_SCRIPT1b[] PROGMEM =
     "var ml=this.getAttribute('maxlength');"
     "var cl=this.value.length;"
     "if(cl>=ml){"
-      "eb('charNum').innerHTML='no more chars';"
+    "eb('charNum').innerHTML='" D_SCRIPT_CHARS_NO_MORE "';"
     "}else{"
-      "eb('charNum').innerHTML=ml-cl+' chars left';"
+    "eb('charNum').innerHTML=ml-cl+' " D_SCRIPT_CHARS_LEFT "';"
     "}"
 
 #if 0
@@ -3135,13 +3187,13 @@ const char HTTP_SCRIPT_FORM_END[] PROGMEM =
 
 #ifdef USE_SCRIPT_FATFS
 const char HTTP_FORM_SCRIPT1c[] PROGMEM =
-"<button name='d%d' type='submit' class='button bgrn'>Download '%s'</button>";
+    "<button name='d%d' type='submit' class='button bgrn'>" D_SCRIPT_DOWNLOAD " '%s'</button>";
 #ifdef SDCARD_DIR
 const char HTTP_FORM_SCRIPT1d[] PROGMEM =
-"<button method='post' name='upl' type='submit' class='button bgrn'>SD card directory</button>";
+    "<button method='post' name='upl' type='submit' class='button bgrn'>" D_SDCARD_DIR "</button>";
 #else
 const char HTTP_FORM_SCRIPT1d[] PROGMEM =
-"<button method='post' name='upl' type='submit' class='button bgrn'>Upload files</button>";
+    "<button method='post' name='upl' type='submit' class='button bgrn'>" D_SCRIPT_UPLOAD_FILES "</button>";
 #endif
 
 #ifdef SDCARD_DIR
@@ -3284,7 +3336,7 @@ void Script_FileUploadConfiguration(void)
   WSContentStart_P(S_SCRIPT_FILE_UPLOAD);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_FILE_UPLOAD,D_SDCARD_DIR);
-  WSContentSend_P(HTTP_FORM_FILE_UPG, "upload");
+  WSContentSend_P(HTTP_FORM_FILE_UPG, D_SCRIPT_UPLOAD);
 #ifdef SDCARD_DIR
   WSContentSend_P(HTTP_FORM_SDC_DIRa);
   if (glob_script_mem.script_sd_found) {
@@ -3540,8 +3592,7 @@ void ScriptSaveSettings(void) {
   if (bitRead(Settings.rule_enabled, 0)) {
     int16_t res=Init_Scripter();
     if (res) {
-      snprintf_P(log_data, sizeof(log_data), PSTR("script init error: %d"),res);
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("script init error: %d"), res);
       return;
     }
     Run_Scripter(">B",2,0);
@@ -4750,8 +4801,8 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_ram=Settings.rules[0];
       glob_script_mem.script_size=MAX_SCRIPT_SIZE;
       glob_script_mem.flags=0;
-      glob_script_mem.script_pram=(uint8_t*)Settings.mems[0];
-      glob_script_mem.script_pram_size=MAX_RULE_MEMS*10;
+      glob_script_mem.script_pram=(uint8_t*)Settings.script_pram[0];
+      glob_script_mem.script_pram_size=PMEM_SIZE;
 
 #ifdef USE_BUTTON_EVENT
       for (uint32_t cnt=0;cnt<MAX_KEYS;cnt++) {
@@ -4779,6 +4830,7 @@ bool Xdrv10(uint8_t function)
           glob_script_mem.script_pram_size=MAX_SCRIPT_SIZE;
 
           glob_script_mem.flags=1;
+          I2cSetActiveFound(EEPROM_ADDRESS, "EEPROM");
         }
       }
 #endif
@@ -4843,6 +4895,12 @@ bool Xdrv10(uint8_t function)
       result = ScriptCommand();
       break;
     case FUNC_SET_POWER:
+#ifdef SCRIPT_POWER_SECTION
+      if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">P",2,0);
+#else
+      if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">E",2,0);
+#endif
+      break;
     case FUNC_RULES_PROCESS:
       if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">E",2,mqtt_data);
       break;

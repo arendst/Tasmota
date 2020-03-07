@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee.ino - zigbee support for Tasmota
 
-  Copyright (C) 2019  Theo Arends and Stephan Hadinger
+  Copyright (C) 2020  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -33,10 +33,13 @@ int32_t Z_ReceiveDeviceInfo(int32_t res, class SBuffer &buf) {
   uint8_t device_state = buf.get8(14);
   uint8_t device_associated = buf.get8(15);
 
+  // keep track of the local IEEE address
+  localIEEEAddr = long_adr;
+
   char hex[20];
   Uint64toHex(long_adr, hex, 64);
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
+                  "\"Status\":%d,\"IEEEAddr\":\"0x%s\",\"ShortAddr\":\"0x%04X\""
                   ",\"DeviceType\":%d,\"DeviceState\":%d"
                   ",\"NumAssocDevices\":%d"),
                   ZIGBEE_STATUS_CC_INFO, hex, short_adr, device_type, device_state,
@@ -173,15 +176,24 @@ int32_t Z_ReceivePermitJoinStatus(int32_t res, const class SBuffer &buf) {
   return -1;
 }
 
+// Send ZDO_IEEE_ADDR_REQ request to get IEEE long address
+void Z_SendIEEEAddrReq(uint16_t shortaddr) {
+  uint8_t IEEEAddrReq[] = { Z_SREQ | Z_ZDO, ZDO_IEEE_ADDR_REQ,
+              Z_B0(shortaddr), Z_B1(shortaddr), 0x00, 0x00 };
+
+  ZigbeeZNPSend(IEEEAddrReq, sizeof(IEEEAddrReq));
+}
+
 // Send ACTIVE_EP_REQ to collect active endpoints for this address
 void Z_SendActiveEpReq(uint16_t shortaddr) {
   uint8_t ActiveEpReq[] = { Z_SREQ | Z_ZDO, ZDO_ACTIVE_EP_REQ,
               Z_B0(shortaddr), Z_B1(shortaddr), Z_B0(shortaddr), Z_B1(shortaddr) };
 
-  uint8_t NodeDescReq[] = { Z_SREQ | Z_ZDO, ZDO_NODE_DESC_REQ,
-              Z_B0(shortaddr), Z_B1(shortaddr), Z_B0(shortaddr), Z_B1(shortaddr) };
-
   ZigbeeZNPSend(ActiveEpReq, sizeof(ActiveEpReq));
+
+  // uint8_t NodeDescReq[] = { Z_SREQ | Z_ZDO, ZDO_NODE_DESC_REQ,
+  //             Z_B0(shortaddr), Z_B1(shortaddr), Z_B0(shortaddr), Z_B1(shortaddr) };
+
   //ZigbeeZNPSend(NodeDescReq, sizeof(NodeDescReq));      Not sure this is useful
 }
 
@@ -332,6 +344,64 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
   return -1;
 }
 
+int32_t Z_ReceiveIEEEAddr(int32_t res, const class SBuffer &buf) {
+  uint8_t           status = buf.get8(2);
+  Z_IEEEAddress     ieeeAddr = buf.get64(3);
+  Z_ShortAddress    nwkAddr = buf.get16(11);
+  // uint8_t           startIndex = buf.get8(13);
+  // uint8_t           numAssocDev = buf.get8(14);
+
+  if (0 == status) {    // SUCCESS
+    zigbee_devices.updateDevice(nwkAddr, ieeeAddr);
+    char hex[20];
+    Uint64toHex(ieeeAddr, hex, 64);
+    // Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
+    //                 "\"Status\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
+    //                 "}}"),
+    //                 ZIGBEE_STATUS_DEVICE_IEEE, hex, nwkAddr
+    //                 );
+
+    // MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+    // XdrvRulesProcess();
+    // Ping response
+    const String * friendlyName = zigbee_devices.getFriendlyName(nwkAddr);
+    if (friendlyName) {
+      Response_P(PSTR("{\"" D_JSON_ZIGBEE_PING "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""
+                      ",\"" D_JSON_ZIGBEE_IEEE "\":\"0x%s\""
+                      ",\"" D_JSON_ZIGBEE_NAME "\":\"%s\"}}"), nwkAddr, hex, friendlyName->c_str());
+    } else {
+      Response_P(PSTR("{\"" D_JSON_ZIGBEE_PING "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""
+                      ",\"" D_JSON_ZIGBEE_IEEE "\":\"0x%s\""
+                      "}}"), nwkAddr, hex);
+    }
+
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+    XdrvRulesProcess();
+  }
+  return -1;
+}
+
+int32_t Z_BindRsp(int32_t res, const class SBuffer &buf) {
+  Z_ShortAddress    nwkAddr = buf.get16(2);
+  uint8_t           status = buf.get8(4);
+
+  const String * friendlyName = zigbee_devices.getFriendlyName(nwkAddr);
+  if (friendlyName) {
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_BIND "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""
+                    ",\"" D_JSON_ZIGBEE_NAME "\":\"%s\""
+                    ",\"" D_JSON_ZIGBEE_Status "\":%d"
+                    "}}"), nwkAddr, friendlyName->c_str(), status);
+  } else {
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_BIND "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""
+                    ",\"" D_JSON_ZIGBEE_Status "\":%d"
+                    "}}"), nwkAddr, status);
+  }
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+  XdrvRulesProcess();
+
+  return -1;
+}
+
 int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
   Z_ShortAddress    srcAddr = buf.get16(2);
   Z_ShortAddress    nwkAddr = buf.get16(4);
@@ -357,6 +427,56 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
   return -1;
 }
 
+// 45CA
+int32_t Z_ReceiveTCDevInd(int32_t res, const class SBuffer &buf) {
+  Z_ShortAddress    srcAddr = buf.get16(2);
+  Z_IEEEAddress     ieeeAddr = buf.get64(4);
+  Z_ShortAddress    parentNw = buf.get16(12);
+
+  zigbee_devices.updateDevice(srcAddr, ieeeAddr);
+
+  char hex[20];
+  Uint64toHex(ieeeAddr, hex, 64);
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
+                  "\"Status\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
+                  ",\"ParentNetwork\":\"0x%04X\"}}"),
+                  ZIGBEE_STATUS_DEVICE_INDICATION, hex, srcAddr, parentNw
+                  );
+
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+  XdrvRulesProcess();
+  //Z_SendActiveEpReq(srcAddr);
+  return -1;
+}
+
+// Aqara Occupancy behavior: the Aqara device only sends Occupancy: true events every 60 seconds.
+// Here we add a timer so if we don't receive a Occupancy event for 90 seconds, we send Occupancy:false
+const uint32_t OCCUPANCY_TIMEOUT = 90 * 1000;  // 90 s
+
+void Z_AqaraOccupancy(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, const JsonObject *json) {
+  // Read OCCUPANCY value if any
+  const JsonVariant &val_endpoint = getCaseInsensitive(*json, PSTR(OCCUPANCY));
+  if (nullptr != &val_endpoint) {
+    uint32_t occupancy = strToUInt(val_endpoint);
+
+    if (occupancy) {
+      zigbee_devices.setTimer(shortaddr, OCCUPANCY_TIMEOUT, cluster, endpoint, 0, &Z_OccupancyCallback);
+    }
+  }
+}
+
+
+// Publish the received values once they have been coalesced
+int32_t Z_PublishAttributes(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, uint32_t value) {
+  const JsonObject *json = zigbee_devices.jsonGet(shortaddr);
+  if (json == nullptr) { return 0; }                 // don't crash if not found
+  // Post-provess for Aqara Presence Senson
+  Z_AqaraOccupancy(shortaddr, cluster, endpoint, json);
+
+  zigbee_devices.jsonPublishFlush(shortaddr);
+  return 1;
+}
+
 int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   uint16_t        groupid = buf.get16(2);
   uint16_t        clusterid = buf.get16(4);
@@ -369,46 +489,61 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   uint32_t        timestamp = buf.get32(13);
   uint8_t         seqnumber = buf.get8(17);
 
+  bool            defer_attributes = false;     // do we defer attributes reporting to coalesce
+
   zigbee_devices.updateLastSeen(srcaddr);
-  ZCLFrame zcl_received = ZCLFrame::parseRawFrame(buf, 19, buf.get8(18), clusterid, groupid);
-
-#ifdef ZIGBEE_VERBOSE
-  zcl_received.publishMQTTReceived(groupid, clusterid, srcaddr,
-                                  srcendpoint, dstendpoint, wasbroadcast,
-                                  linkquality, securityuse, seqnumber,
-                                  timestamp);
-#endif
-
+  ZCLFrame zcl_received = ZCLFrame::parseRawFrame(buf, 19, buf.get8(18), clusterid, groupid,
+                              srcaddr,
+                              srcendpoint, dstendpoint, wasbroadcast,
+                              linkquality, securityuse, seqnumber,
+                              timestamp);
+  zcl_received.log();
   char shortaddr[8];
   snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
 
   DynamicJsonBuffer jsonBuffer;
-  JsonObject& json_root = jsonBuffer.createObject();
-  JsonObject& json1 = json_root.createNestedObject(F(D_CMND_ZIGBEE_RECEIVED));
-  JsonObject& json = json1.createNestedObject(shortaddr);
+  JsonObject& json = jsonBuffer.createObject();
 
-  // TODO add name field if it is known
-  if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
-   zcl_received.parseRawAttributes(json);
-  } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
-    zcl_received.parseReadAttributes(json);
-  } else if (zcl_received.isClusterSpecificCommand()) {
-   zcl_received.parseClusterSpecificCommand(json);
+  if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_DEFAULT_RESPONSE == zcl_received.getCmdId())) {
+      zcl_received.parseResponse();
+  } else {  
+    // Build the ZbReceive json
+    if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
+      zcl_received.parseRawAttributes(json);
+      if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
+    } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
+      zcl_received.parseReadAttributes(json);
+    } else if (zcl_received.isClusterSpecificCommand()) {
+      zcl_received.parseClusterSpecificCommand(json);
+    }
+    String msg("");
+    msg.reserve(100);
+    json.printTo(msg);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":%s}"), srcaddr, msg.c_str());
+
+    zcl_received.postProcessAttributes(srcaddr, json);
+    // Add Endpoint
+    json[F(D_CMND_ZIGBEE_ENDPOINT)] = srcendpoint;
+    // Add Group if non-zero
+    if (groupid) {
+      json[F(D_CMND_ZIGBEE_GROUP)] = groupid;
+    }
+    // Add linkquality
+    json[F(D_CMND_ZIGBEE_LINKQUALITY)] = linkquality;
+
+    if (defer_attributes) {
+      // Prepare for publish
+      if (zigbee_devices.jsonIsConflict(srcaddr, json)) {
+        // there is conflicting values, force a publish of the previous message now and don't coalesce
+        zigbee_devices.jsonPublishFlush(srcaddr);
+      }
+      zigbee_devices.jsonAppend(srcaddr, json);
+      zigbee_devices.setTimer(srcaddr, USE_ZIGBEE_COALESCE_ATTR_TIMER, clusterid, srcendpoint, 0, &Z_PublishAttributes);
+    } else {
+      // Publish immediately
+      zigbee_devices.jsonPublishNow(srcaddr, json);
+    }
   }
-  String msg("");
-  msg.reserve(100);
-  json_root.printTo(msg);
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeZCLRawReceived: %s"), msg.c_str());
-
-  zcl_received.postProcessAttributes(srcaddr, json);
-  // Add linkquality
-  json[F(D_CMND_ZIGBEE_LINKQUALITY)] = linkquality;
-
-  msg = "";
-  json_root.printTo(msg);
-  Response_P(PSTR("%s"), msg.c_str());
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-  XdrvRulesProcess();
   return -1;
 }
 
@@ -420,17 +555,23 @@ typedef struct Z_Dispatcher {
 // Filters for ZCL frames
 ZBM(AREQ_AF_INCOMING_MESSAGE, Z_AREQ | Z_AF, AF_INCOMING_MSG)              // 4481
 ZBM(AREQ_END_DEVICE_ANNCE_IND, Z_AREQ | Z_ZDO, ZDO_END_DEVICE_ANNCE_IND)   // 45C1
+ZBM(AREQ_END_DEVICE_TC_DEV_IND, Z_AREQ | Z_ZDO, ZDO_TC_DEV_IND)   // 45CA
 ZBM(AREQ_PERMITJOIN_OPEN_XX, Z_AREQ | Z_ZDO, ZDO_PERMIT_JOIN_IND )    // 45CB
 ZBM(AREQ_ZDO_ACTIVEEPRSP, Z_AREQ | Z_ZDO, ZDO_ACTIVE_EP_RSP)    // 4585
 ZBM(AREQ_ZDO_SIMPLEDESCRSP, Z_AREQ | Z_ZDO, ZDO_SIMPLE_DESC_RSP)    // 4584
+ZBM(AREQ_ZDO_IEEE_ADDR_RSP, Z_AREQ | Z_ZDO, ZDO_IEEE_ADDR_RSP)    // 4581
+ZBM(AREQ_ZDO_BIND_RSP, Z_AREQ | Z_ZDO, ZDO_BIND_RSP)    // 45A1
 
 const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
   { AREQ_AF_INCOMING_MESSAGE,     &Z_ReceiveAfIncomingMessage },
   { AREQ_END_DEVICE_ANNCE_IND,    &Z_ReceiveEndDeviceAnnonce },
+  { AREQ_END_DEVICE_TC_DEV_IND,   &Z_ReceiveTCDevInd },
   { AREQ_PERMITJOIN_OPEN_XX,      &Z_ReceivePermitJoinStatus },
   { AREQ_ZDO_NODEDESCRSP,         &Z_ReceiveNodeDesc },
   { AREQ_ZDO_ACTIVEEPRSP,         &Z_ReceiveActiveEp },
   { AREQ_ZDO_SIMPLEDESCRSP,       &Z_ReceiveSimpleDesc },
+  { AREQ_ZDO_IEEE_ADDR_RSP,       &Z_ReceiveIEEEAddr },
+  { AREQ_ZDO_BIND_RSP,            &Z_BindRsp },
 };
 
 int32_t Z_Recv_Default(int32_t res, const class SBuffer &buf) {
@@ -446,6 +587,12 @@ int32_t Z_Recv_Default(int32_t res, const class SBuffer &buf) {
     }
     return -1;
   }
+}
+
+int32_t Z_Load_Devices(uint8_t value) {
+  // try to hidrate from known devices
+  loadZigbeeDevices();
+  return 0;                              // continue
 }
 
 int32_t Z_State_Ready(uint8_t value) {

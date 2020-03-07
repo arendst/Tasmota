@@ -1,7 +1,7 @@
 /*
   xdrv_02_mqtt.ino - mqtt support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -32,9 +32,7 @@ const char kMqttCommands[] PROGMEM = "|"  // No prefix
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   D_CMND_MQTTFINGERPRINT "|"
 #endif
-#if !defined(USE_MQTT_TLS) || !defined(USE_MQTT_AWS_IOT) // user and password are disabled with AWS IoT
   D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|"
-#endif
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   D_CMND_TLSKEY "|"
 #endif
@@ -46,9 +44,7 @@ void (* const MqttCommand[])(void) PROGMEM = {
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   &CmndMqttFingerprint,
 #endif
-#if !defined(USE_MQTT_TLS) || !defined(USE_MQTT_AWS_IOT) // user and password are disabled with AWS IoT
   &CmndMqttUser, &CmndMqttPassword,
-#endif
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   &CmndTlsKey,
 #endif
@@ -91,10 +87,6 @@ tls_dir_t tls_dir;          // memory copy of tls_dir from flash
 
 #endif  // USE_MQTT_AWS_IOT
 
-// A typical AWS IoT endpoint is 50 characters long, it does not fit
-// in MqttHost field (32 chars). We need to concatenate both MqttUser and MqttHost
-char AWS_endpoint[65];    // aWS IOT endpoint, concatenation of user and host
-
 // check whether the fingerprint is filled with a single value
 // Filled with 0x00 = accept any fingerprint and learn it for next time
 // Filled with 0xFF = accept any fingerpring forever
@@ -106,21 +98,6 @@ bool is_fingerprint_mono_value(uint8_t finger[20], uint8_t value) {
 	}
 	return true;
 }
-
-#ifdef USE_MQTT_AWS_IOT
-void setLongMqttHost(const char *mqtt_host) {
-  if (strlen(mqtt_host) <= sizeof(Settings.mqtt_host)) {
-    strlcpy(Settings.mqtt_host, mqtt_host, sizeof(Settings.mqtt_host));
-    Settings.mqtt_user[0] = 0;
-  } else {
-    // need to split in mqtt_user first then mqtt_host
-    strlcpy(Settings.mqtt_user, mqtt_host, sizeof(Settings.mqtt_user));
-    strlcpy(Settings.mqtt_host, &mqtt_host[sizeof(Settings.mqtt_user)-1], sizeof(Settings.mqtt_host));
-  }
-  strlcpy(AWS_endpoint, mqtt_host, sizeof(AWS_endpoint));
-}
-#endif  // USE_MQTT_AWS_IOT
-
 #endif  // USE_MQTT_TLS
 
 void MakeValidMqtt(uint32_t option, char* str)
@@ -165,10 +142,10 @@ void MqttDiscoverServer(void)
       }
     }
 #endif  // MDNS_HOSTNAME
-    snprintf_P(Settings.mqtt_host, sizeof(Settings.mqtt_host), MDNS.IP(i).toString().c_str());
+    SettingsUpdateText(SET_MQTT_HOST, MDNS.IP(i).toString().c_str());
     Settings.mqtt_port = MDNS.port(i);
 
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"), MDNS.hostname(i).c_str(), Settings.mqtt_host, Settings.mqtt_port);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"), MDNS.hostname(i).c_str(), SettingsText(SET_MQTT_HOST), Settings.mqtt_port);
   }
 }
 #endif  // MQTT_HOST_DISCOVERY
@@ -187,7 +164,7 @@ void MqttDiscoverServer(void)
 
 // Max message size calculated by PubSubClient is (MQTT_MAX_PACKET_SIZE < 5 + 2 + strlen(topic) + plength)
 #if (MQTT_MAX_PACKET_SIZE -TOPSZ -7) < MIN_MESSZ  // If the max message size is too small, throw an error at compile time. See PubSubClient.cpp line 359
-  #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 1000"
+  #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 1200"
 #endif
 
 #ifdef USE_MQTT_TLS
@@ -202,8 +179,6 @@ void MqttInit(void)
   tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
 
 #ifdef USE_MQTT_AWS_IOT
-  snprintf_P(AWS_endpoint, sizeof(AWS_endpoint), PSTR("%s%s"), Settings.mqtt_user, Settings.mqtt_host);
-
   loadTlsDir();   // load key and certificate data from Flash
   tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
                              AWS_IoT_Private_Key,
@@ -246,6 +221,15 @@ void MqttUnsubscribeLib(const char *topic)
 
 bool MqttPublishLib(const char* topic, bool retained)
 {
+  // If Prefix1 equals Prefix2 disable next MQTT subscription to prevent loop
+  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
+    char *str = strstr(topic, SettingsText(SET_MQTTPREFIX1));
+    if (str == topic) {
+      mqtt_cmnd_blocked_reset = 4;  // Allow up to four seconds before resetting residual cmnd blocks
+      mqtt_cmnd_blocked++;
+    }
+  }
+
   bool result = MqttClient.publish(topic, mqtt_data, retained);
   yield();  // #3313
   return result;
@@ -261,14 +245,10 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   if (data_len >= MQTT_MAX_PACKET_SIZE) { return; }
 
   // Do not execute multiple times if Prefix1 equals Prefix2
-  if (!strcmp(Settings.mqtt_prefix[0], Settings.mqtt_prefix[1])) {
-    char *str = strstr(mqtt_topic, Settings.mqtt_prefix[0]);
-    if ((str == mqtt_topic) && mqtt_cmnd_publish) {
-      if (mqtt_cmnd_publish > 3) {
-        mqtt_cmnd_publish -= 3;
-      } else {
-        mqtt_cmnd_publish = 0;
-      }
+  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
+    char *str = strstr(mqtt_topic, SettingsText(SET_MQTTPREFIX1));
+    if ((str == mqtt_topic) && mqtt_cmnd_blocked) {
+      mqtt_cmnd_blocked--;
       return;
     }
   }
@@ -316,52 +296,41 @@ void MqttUnsubscribe(const char *topic)
 
 void MqttPublishLogging(const char *mxtime)
 {
-  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if (MqttIsConnected()) {
+  char saved_mqtt_data[strlen(mqtt_data) +1];
+  memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
 
-      char saved_mqtt_data[MESSZ];
-      memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
-//      ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), log_data);  // Will fail as some messages contain JSON
-      Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
+//    ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), log_data);  // Will fail as some messages contain JSON
+  Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
+  char stopic[TOPSZ];
+  GetTopic_P(stopic, STAT, mqtt_topic, PSTR("LOGGING"));
+  MqttPublishLib(stopic, false);
 
-      char romram[33];
-      char stopic[TOPSZ];
-      snprintf_P(romram, sizeof(romram), PSTR("LOGGING"));
-      GetTopic_P(stopic, STAT, mqtt_topic, romram);
-
-      char *me;
-      if (!strcmp(Settings.mqtt_prefix[0], Settings.mqtt_prefix[1])) {
-        me = strstr(stopic, Settings.mqtt_prefix[0]);
-        if (me == stopic) {
-          mqtt_cmnd_publish += 3;
-        }
-      }
-      MqttPublishLib(stopic, false);
-
-      memcpy(mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
-    }
-  }
+  memcpy(mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
 }
 
-void MqttPublishDirect(const char* topic, bool retained)
+void MqttPublish(const char* topic, bool retained)
 {
-  char sretained[CMDSZ];
-  char slog_type[20];
-
 #ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("MqttPublishDirect"));
+  ShowFreeMem(PSTR("MqttPublish"));
 #endif
 
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT) || defined(MQTT_NO_RETAIN)
+//  if (retained) {
+//    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
+//  }
+  retained = false;   // AWS IoT does not support retained, it will disconnect if received
+#endif
+
+  char sretained[CMDSZ];
   sretained[0] = '\0';
+  char slog_type[20];
   snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
 
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if (MqttIsConnected()) {
-      if (MqttPublishLib(topic, retained)) {
-        snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
-        if (retained) {
-          snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
-        }
+    if (MqttPublishLib(topic, retained)) {
+      snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
+      if (retained) {
+        snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
       }
     }
   }
@@ -379,25 +348,6 @@ void MqttPublishDirect(const char* topic, bool retained)
   }
 }
 
-void MqttPublish(const char* topic, bool retained)
-{
-  char *me;
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  if (retained) {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
-  }
-  retained = false;   // AWS IoT does not support retained, it will disconnect if received
-#endif
-
-  if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1])) {
-    me = strstr(topic,Settings.mqtt_prefix[0]);
-    if (me == topic) {
-      mqtt_cmnd_publish += 3;
-    }
-  }
-  MqttPublishDirect(topic, retained);
-}
-
 void MqttPublish(const char* topic)
 {
   MqttPublish(topic, false);
@@ -412,7 +362,7 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
  * prefix 5 = stat using subtopic or RESULT
  * prefix 6 = tele using subtopic or RESULT
  */
-  char romram[33];
+  char romram[64];
   char stopic[TOPSZ];
 
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !Settings.flag.mqtt_response) ? S_RSLT_RESULT : subtopic);  // SetOption4 - Switch between MQTT RESULT or COMMAND
@@ -422,6 +372,36 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
   prefix &= 3;
   GetTopic_P(stopic, prefix, mqtt_topic, romram);
   MqttPublish(stopic, retained);
+
+#ifdef USE_MQTT_AWS_IOT
+  if ((prefix > 0) && (Settings.flag4.awsiot_shadow)) {    // placeholder for SetOptionXX
+    // compute the target topic
+    char *topic = SettingsText(SET_MQTT_TOPIC);
+    char topic2[strlen(topic)+1];       // save buffer onto stack
+    strcpy(topic2, topic);
+    // replace any '/' with '_'
+    char *s = topic2;
+    while (*s) {
+      if ('/' == *s) {
+        *s = '_';
+      }
+      s++;
+    }
+    // update topic is "$aws/things/<topic>/shadow/update"
+    snprintf_P(romram, sizeof(romram), PSTR("$aws/things/%s/shadow/update"), topic2);
+
+    // copy buffer
+    char *mqtt_save = (char*) malloc(strlen(mqtt_data)+1);
+    if (!mqtt_save) { return; }    // abort
+    strcpy(mqtt_save, mqtt_data);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"state\":{\"reported\":%s}}"), mqtt_save);
+    free(mqtt_save);
+
+    bool result = MqttClient.publish(romram, mqtt_data, false);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Updated shadow: %s"), romram);
+    yield();  // #3313
+  }
+#endif // USE_MQTT_AWS_IOT
 }
 
 void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic)
@@ -505,11 +485,7 @@ void MqttDisconnected(int state)
 
   MqttClient.disconnect();
 
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), AWS_endpoint, Settings.mqtt_port, state, Mqtt.retry_counter);
-#else
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), Settings.mqtt_host, Settings.mqtt_port, state, Mqtt.retry_counter);
-#endif
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), SettingsText(SET_MQTT_HOST), Settings.mqtt_port, state, Mqtt.retry_counter);
   rules_flag.mqtt_disconnected = 1;
 }
 
@@ -533,7 +509,7 @@ void MqttConnected(void)
 
     GetTopic_P(stopic, CMND, mqtt_topic, PSTR("#"));
     MqttSubscribe(stopic);
-    if (strstr_P(Settings.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != nullptr) {
+    if (strstr_P(SettingsText(SET_MQTT_FULLTOPIC), MQTT_TOKEN_TOPIC) != nullptr) {
       GetGroupTopic_P(stopic, PSTR("#"));  // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/# or SetOption75 1: cmnd/<grouptopic>
       MqttSubscribe(stopic);
       GetFallbackTopic_P(stopic, PSTR("#"));
@@ -550,12 +526,23 @@ void MqttConnected(void)
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
     if (Settings.webserver) {
+#if LWIP_IPV6
+      Response_P(PSTR("{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"IPv6Address\":\"%s\"}"),
+        (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str(),WifiGetIPv6().c_str());
+#else
       Response_P(PSTR("{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\"}"),
         (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
+#endif // LWIP_IPV6 = 1
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "2"));
     }
 #endif  // USE_WEBSERVER
-    Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"), GetResetReasonInfo().c_str());
+    Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":"));
+    if (CrashFlag()) {
+      CrashDump();
+    } else {
+      ResponseAppend_P(PSTR("\"%s\""), GetResetReason().c_str());
+    }
+    ResponseJsonEnd();
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
     MqttPublishAllPowerState();
     if (Settings.tele_period) {
@@ -583,7 +570,7 @@ void MqttReconnect(void)
     MqttDiscoverServer();
 #endif  // MQTT_HOST_DISCOVERY
 #endif  // USE_DISCOVERY
-    if (!strlen(Settings.mqtt_host) || !Settings.mqtt_port) {
+    if (!strlen(SettingsText(SET_MQTT_HOST)) || !Settings.mqtt_port) {
       Mqtt.allowed = false;
     }
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
@@ -610,8 +597,12 @@ void MqttReconnect(void)
 
   char *mqtt_user = nullptr;
   char *mqtt_pwd = nullptr;
-  if (strlen(Settings.mqtt_user) > 0) mqtt_user = Settings.mqtt_user;
-  if (strlen(Settings.mqtt_pwd) > 0) mqtt_pwd = Settings.mqtt_pwd;
+  if (strlen(SettingsText(SET_MQTT_USER))) {
+    mqtt_user = SettingsText(SET_MQTT_USER);
+  }
+  if (strlen(SettingsText(SET_MQTT_PWD))) {
+    mqtt_pwd = SettingsText(SET_MQTT_PWD);
+  }
 
   GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
   Response_P(S_OFFLINE);
@@ -634,10 +625,8 @@ void MqttReconnect(void)
   tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
                              AWS_IoT_Private_Key,
                              0xFFFF /* all usages, don't care */, 0);
-  MqttClient.setServer(AWS_endpoint, Settings.mqtt_port);
-#else
-  MqttClient.setServer(Settings.mqtt_host, Settings.mqtt_port);
 #endif
+  MqttClient.setServer(SettingsText(SET_MQTT_HOST), Settings.mqtt_port);
 
   uint32_t mqtt_connect_time = millis();
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
@@ -651,8 +640,7 @@ void MqttReconnect(void)
   tlsClient->setPubKeyFingerprint(Settings.mqtt_fingerprint[0], Settings.mqtt_fingerprint[1], allow_all_fingerprints);
 #endif
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "AWS IoT endpoint: %s"), AWS_endpoint);
-  //if (MqttClient.connect(mqtt_client, nullptr, nullptr, nullptr, 0, false, nullptr)) {
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "AWS IoT endpoint: %s"), SettingsText(SET_MQTT_HOST));
   if (MqttClient.connect(mqtt_client, nullptr, nullptr, stopic, 1, false, mqtt_data, MQTT_CLEAN_SESSION)) {
 #else
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data, MQTT_CLEAN_SESSION)) {
@@ -709,11 +697,6 @@ void MqttCheck(void)
     if (!MqttIsConnected()) {
       global_state.mqtt_down = 1;
       if (!Mqtt.retry_counter) {
-#ifdef USE_DISCOVERY
-#ifdef MQTT_HOST_DISCOVERY
-        if (!strlen(Settings.mqtt_host) && !Wifi.mdns_begun) { return; }
-#endif  // MQTT_HOST_DISCOVERY
-#endif  // USE_DISCOVERY
         MqttReconnect();
       } else {
         Mqtt.retry_counter--;
@@ -723,8 +706,17 @@ void MqttCheck(void)
     }
   } else {
     global_state.mqtt_down = 0;
-    if (Mqtt.initial_connection_state) MqttReconnect();
+    if (Mqtt.initial_connection_state) {
+      MqttReconnect();
+    }
   }
+}
+
+bool ButtonTopicActive(void)
+{
+  char key_topic[TOPSZ];
+  Format(key_topic, SettingsText(SET_MQTT_BUTTON_TOPIC), sizeof(key_topic));
+  return ((strlen(key_topic) != 0) && strcmp(key_topic, "0"));
 }
 
 /*********************************************************************************************\
@@ -749,27 +741,25 @@ void CmndMqttFingerprint(void)
 }
 #endif
 
-#if !defined(USE_MQTT_TLS) || !defined(USE_MQTT_AWS_IOT) // user and password are disabled with AWS IoT
 void CmndMqttUser(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_user))) {
-    strlcpy(Settings.mqtt_user, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_USER : XdrvMailbox.data, sizeof(Settings.mqtt_user));
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_MQTT_USER, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_USER : XdrvMailbox.data);
     restart_flag = 2;
   }
-  ResponseCmndChar(Settings.mqtt_user);
+  ResponseCmndChar(SettingsText(SET_MQTT_USER));
 }
 
 void CmndMqttPassword(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_pwd))) {
-    strlcpy(Settings.mqtt_pwd, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_PASS : XdrvMailbox.data, sizeof(Settings.mqtt_pwd));
-    ResponseCmndChar(Settings.mqtt_pwd);
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_MQTT_PWD, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_PASS : XdrvMailbox.data);
+    ResponseCmndChar(SettingsText(SET_MQTT_PWD));
     restart_flag = 2;
   } else {
     Response_P(S_JSON_COMMAND_ASTERISK, XdrvMailbox.command);
   }
 }
-#endif // USE_MQTT_AWS_IOT
 
 void CmndMqttlog(void)
 {
@@ -781,19 +771,11 @@ void CmndMqttlog(void)
 
 void CmndMqttHost(void)
 {
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len <= sizeof(Settings.mqtt_host) + sizeof(Settings.mqtt_user) - 2)) {
-    setLongMqttHost((SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_HOST : XdrvMailbox.data);
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_MQTT_HOST, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_HOST : XdrvMailbox.data);
     restart_flag = 2;
   }
-  ResponseCmndChar(AWS_endpoint);
-#else
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_host))) {
-    strlcpy(Settings.mqtt_host, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_HOST : XdrvMailbox.data, sizeof(Settings.mqtt_host));
-    restart_flag = 2;
-  }
-  ResponseCmndChar(Settings.mqtt_host);
-#endif
+  ResponseCmndChar(SettingsText(SET_MQTT_HOST));
 }
 
 void CmndMqttPort(void)
@@ -816,70 +798,78 @@ void CmndMqttRetry(void)
 
 void CmndStateText(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.state_text[0]))) {
-      for (uint32_t i = 0; i <= XdrvMailbox.data_len; i++) {
-        if (XdrvMailbox.data[i] == ' ') XdrvMailbox.data[i] = '_';
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_STATE_TEXT)) {
+    if (!XdrvMailbox.usridx) {
+      ResponseCmndAll(SET_STATE_TXT1, MAX_STATE_TEXT);
+    } else {
+      if (XdrvMailbox.data_len > 0) {
+        for (uint32_t i = 0; i <= XdrvMailbox.data_len; i++) {
+          if (XdrvMailbox.data[i] == ' ') XdrvMailbox.data[i] = '_';
+        }
+        SettingsUpdateText(SET_STATE_TXT1 + XdrvMailbox.index -1, XdrvMailbox.data);
       }
-      strlcpy(Settings.state_text[XdrvMailbox.index -1], XdrvMailbox.data, sizeof(Settings.state_text[0]));
+      ResponseCmndIdxChar(GetStateText(XdrvMailbox.index -1));
     }
-    ResponseCmndIdxChar(GetStateText(XdrvMailbox.index -1));
   }
 }
 
 void CmndMqttClient(void)
 {
-  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_client))) {
-    strlcpy(Settings.mqtt_client, (SC_DEFAULT == Shortcut()) ? MQTT_CLIENT_ID : XdrvMailbox.data, sizeof(Settings.mqtt_client));
+  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
+    SettingsUpdateText(SET_MQTT_CLIENT, (SC_DEFAULT == Shortcut()) ? MQTT_CLIENT_ID : XdrvMailbox.data);
     restart_flag = 2;
   }
-  ResponseCmndChar(Settings.mqtt_client);
+  ResponseCmndChar(SettingsText(SET_MQTT_CLIENT));
 }
 
 void CmndFullTopic(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_fulltopic))) {
+  if (XdrvMailbox.data_len > 0) {
     MakeValidMqtt(1, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
     char stemp1[TOPSZ];
     strlcpy(stemp1, (SC_DEFAULT == Shortcut()) ? MQTT_FULLTOPIC : XdrvMailbox.data, sizeof(stemp1));
-    if (strcmp(stemp1, Settings.mqtt_fulltopic)) {
+    if (strcmp(stemp1, SettingsText(SET_MQTT_FULLTOPIC))) {
       Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
       MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);          // Offline or remove previous retained topic
-      strlcpy(Settings.mqtt_fulltopic, stemp1, sizeof(Settings.mqtt_fulltopic));
+      SettingsUpdateText(SET_MQTT_FULLTOPIC, stemp1);
       restart_flag = 2;
     }
   }
-  ResponseCmndChar(Settings.mqtt_fulltopic);
+  ResponseCmndChar(SettingsText(SET_MQTT_FULLTOPIC));
 }
 
 void CmndPrefix(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_prefix[0]))) {
-      MakeValidMqtt(0, XdrvMailbox.data);
-      strlcpy(Settings.mqtt_prefix[XdrvMailbox.index -1], (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index)?SUB_PREFIX:(2==XdrvMailbox.index)?PUB_PREFIX:PUB_PREFIX2 : XdrvMailbox.data, sizeof(Settings.mqtt_prefix[0]));
-//      if (Settings.mqtt_prefix[XdrvMailbox.index -1][strlen(Settings.mqtt_prefix[XdrvMailbox.index -1])] == '/') Settings.mqtt_prefix[XdrvMailbox.index -1][strlen(Settings.mqtt_prefix[XdrvMailbox.index -1])] = 0;
-      restart_flag = 2;
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_MQTT_PREFIXES)) {
+    if (!XdrvMailbox.usridx) {
+      ResponseCmndAll(SET_MQTTPREFIX1, MAX_MQTT_PREFIXES);
+    } else {
+      if (XdrvMailbox.data_len > 0) {
+        MakeValidMqtt(0, XdrvMailbox.data);
+        SettingsUpdateText(SET_MQTTPREFIX1 + XdrvMailbox.index -1,
+          (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index) ? SUB_PREFIX : (2==XdrvMailbox.index) ? PUB_PREFIX : PUB_PREFIX2 : XdrvMailbox.data);
+        restart_flag = 2;
+      }
+      ResponseCmndIdxChar(SettingsText(SET_MQTTPREFIX1 + XdrvMailbox.index -1));
     }
-    ResponseCmndIdxChar(Settings.mqtt_prefix[XdrvMailbox.index -1]);
   }
 }
 
 void CmndPublish(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    char *mqtt_part = strtok(XdrvMailbox.data, " ");
+    char *payload_part;
+    char *mqtt_part = strtok_r(XdrvMailbox.data, " ", &payload_part);
     if (mqtt_part) {
       char stemp1[TOPSZ];
       strlcpy(stemp1, mqtt_part, sizeof(stemp1));
-      mqtt_part = strtok(nullptr, " ");
-      if (mqtt_part) {
-        strlcpy(mqtt_data, mqtt_part, sizeof(mqtt_data));
+      if ((payload_part != nullptr) && strlen(payload_part)) {
+        strlcpy(mqtt_data, payload_part, sizeof(mqtt_data));
       } else {
         mqtt_data[0] = '\0';
       }
-      MqttPublishDirect(stemp1, (XdrvMailbox.index == 2));
+      MqttPublish(stemp1, (XdrvMailbox.index == 2));
 //      ResponseCmndDone();
       mqtt_data[0] = '\0';
     }
@@ -888,60 +878,67 @@ void CmndPublish(void)
 
 void CmndGroupTopic(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_grptopic))) {
+#ifdef USE_DEVICE_GROUPS
+  uint32_t settings_text_index = (XdrvMailbox.index <= 1 ? SET_MQTT_GRP_TOPIC : SET_MQTT_GRP_TOPIC2 + XdrvMailbox.index - 2);
+#endif  // USE_DEVICE_GROUPS
+  if (XdrvMailbox.data_len > 0) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
-    strlcpy(Settings.mqtt_grptopic, (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data, sizeof(Settings.mqtt_grptopic));
+#ifdef USE_DEVICE_GROUPS
+    SettingsUpdateText(settings_text_index, (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data);
+#else  // USE_DEVICE_GROUPS
+    SettingsUpdateText(SET_MQTT_GRP_TOPIC, (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data);
+#endif  // USE_DEVICE_GROUPS
     restart_flag = 2;
   }
-  ResponseCmndChar(Settings.mqtt_grptopic);
+  ResponseCmndChar(SettingsText(SET_MQTT_GRP_TOPIC));
 }
 
 void CmndTopic(void)
 {
-  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_topic))) {
+  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
     char stemp1[TOPSZ];
     strlcpy(stemp1, (SC_DEFAULT == Shortcut()) ? MQTT_TOPIC : XdrvMailbox.data, sizeof(stemp1));
-    if (strcmp(stemp1, Settings.mqtt_topic)) {
+    if (strcmp(stemp1, SettingsText(SET_MQTT_TOPIC))) {
       Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
       MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);          // Offline or remove previous retained topic
-      strlcpy(Settings.mqtt_topic, stemp1, sizeof(Settings.mqtt_topic));
+      SettingsUpdateText(SET_MQTT_TOPIC, stemp1);
       restart_flag = 2;
     }
   }
-  ResponseCmndChar(Settings.mqtt_topic);
+  ResponseCmndChar(SettingsText(SET_MQTT_TOPIC));
 }
 
 void CmndButtonTopic(void)
 {
-  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.button_topic))) {
+  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
     switch (Shortcut()) {
-      case SC_CLEAR: strlcpy(Settings.button_topic, "", sizeof(Settings.button_topic)); break;
-      case SC_DEFAULT: strlcpy(Settings.button_topic, mqtt_topic, sizeof(Settings.button_topic)); break;
-      case SC_USER: strlcpy(Settings.button_topic, MQTT_BUTTON_TOPIC, sizeof(Settings.button_topic)); break;
-      default: strlcpy(Settings.button_topic, XdrvMailbox.data, sizeof(Settings.button_topic));
+      case SC_CLEAR: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, ""); break;
+      case SC_DEFAULT: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, mqtt_topic); break;
+      case SC_USER: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, MQTT_BUTTON_TOPIC); break;
+      default: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, XdrvMailbox.data);
     }
   }
-  ResponseCmndChar(Settings.button_topic);
+  ResponseCmndChar(SettingsText(SET_MQTT_BUTTON_TOPIC));
 }
 
 void CmndSwitchTopic(void)
 {
-  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.switch_topic))) {
+  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
     switch (Shortcut()) {
-      case SC_CLEAR: strlcpy(Settings.switch_topic, "", sizeof(Settings.switch_topic)); break;
-      case SC_DEFAULT: strlcpy(Settings.switch_topic, mqtt_topic, sizeof(Settings.switch_topic)); break;
-      case SC_USER: strlcpy(Settings.switch_topic, MQTT_SWITCH_TOPIC, sizeof(Settings.switch_topic)); break;
-      default: strlcpy(Settings.switch_topic, XdrvMailbox.data, sizeof(Settings.switch_topic));
+      case SC_CLEAR: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, ""); break;
+      case SC_DEFAULT: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, mqtt_topic); break;
+      case SC_USER: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, MQTT_SWITCH_TOPIC); break;
+      default: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, XdrvMailbox.data);
     }
   }
-  ResponseCmndChar(Settings.switch_topic);
+  ResponseCmndChar(SettingsText(SET_MQTT_SWITCH_TOPIC));
 }
 
 void CmndButtonRetain(void)
@@ -1005,8 +1002,10 @@ void CmndSensorRetain(void)
 \*********************************************************************************************/
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
 
-const static uint16_t tls_spi_start_sector = SPIFFS_END + 4;  // 0xXXFF
-const static uint8_t* tls_spi_start    = (uint8_t*) ((tls_spi_start_sector * SPI_FLASH_SEC_SIZE) + 0x40200000);  // 0x40XFF000
+// const static uint16_t tls_spi_start_sector = SPIFFS_END + 4;  // 0xXXFF
+// const static uint8_t* tls_spi_start    = (uint8_t*) ((tls_spi_start_sector * SPI_FLASH_SEC_SIZE) + 0x40200000);  // 0x40XFF000
+const static uint16_t tls_spi_start_sector = 0xFF;  // Force last bank of first MB
+const static uint8_t* tls_spi_start    = (uint8_t*) 0x402FF000;  // 0x402FF000
 const static size_t   tls_spi_len      = 0x1000;  // 4kb blocs
 const static size_t   tls_block_offset = 0x0400;
 const static size_t   tls_block_len    = 0x0400;   // 1kb
@@ -1070,6 +1069,9 @@ void CmndTlsKey(void) {
         return;
       }
       memcpy_P(spi_buffer, tls_spi_start, tls_spi_len);
+
+      // remove any white space from the base64
+      RemoveAllSpaces(XdrvMailbox.data);
 
       // allocate buffer for decoded base64
       uint32_t bin_len = decode_base64_length((unsigned char*)XdrvMailbox.data);
@@ -1160,8 +1162,12 @@ void CmndTlsDump(void) {
   uint32_t start = (uint32_t)tls_spi_start + tls_block_offset;
   uint32_t end   = start + tls_block_len -1;
   for (uint32_t pos = start; pos < end; pos += 0x10) {
-      uint32_t* values = (uint32_t*)(pos);
-      Serial.printf_P(PSTR("%08x:  %08x %08x %08x %08x\n"), pos, bswap32(values[0]), bswap32(values[1]), bswap32(values[2]), bswap32(values[3]));
+    uint32_t* values = (uint32_t*)(pos);
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+    Serial.printf("%08x:  %08x %08x %08x %08x\n", pos, bswap32(values[0]), bswap32(values[1]), bswap32(values[2]), bswap32(values[3]));
+#else
+    Serial.printf_P(PSTR("%08x:  %08x %08x %08x %08x\n"), pos, bswap32(values[0]), bswap32(values[1]), bswap32(values[2]), bswap32(values[3]));
+#endif
   }
 }
 #endif  // DEBUG_DUMP_TLS
@@ -1187,10 +1193,8 @@ const char HTTP_FORM_MQTT1[] PROGMEM =
   "<p><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br><input id='ml' placeholder='" STR(MQTT_PORT) "' value='%d'></p>"
   "<p><b>" D_CLIENT "</b> (%s)<br><input id='mc' placeholder='%s' value='%s'></p>";
 const char HTTP_FORM_MQTT2[] PROGMEM =
-#if !defined(USE_MQTT_TLS) || !defined(USE_MQTT_AWS_IOT) // user and password disabled with AWS IoT
   "<p><b>" D_USER "</b> (" MQTT_USER ")<br><input id='mu' placeholder='" MQTT_USER "' value='%s'></p>"
   "<p><b>" D_PASSWORD "</b><input type='checkbox' onclick='sp(\"mp\")'><br><input id='mp' type='password' placeholder='" D_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
-#endif // USE_MQTT_AWS_IOT
   "<p><b>" D_TOPIC "</b> = %%topic%% (%s)<br><input id='mt' placeholder='%s' value='%s'></p>"
   "<p><b>" D_FULL_TOPIC "</b> (%s)<br><input id='mf' placeholder='%s' value='%s'></p>";
 
@@ -1206,22 +1210,18 @@ void HandleMqttConfiguration(void)
     return;
   }
 
-  char str[sizeof(Settings.mqtt_client)];
+  char str[TOPSZ];
 
   WSContentStart_P(S_CONFIGURE_MQTT);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_MQTT1,
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-    AWS_endpoint,
-#else
-    Settings.mqtt_host,
-#endif
+    SettingsText(SET_MQTT_HOST),
     Settings.mqtt_port,
-    Format(str, MQTT_CLIENT_ID, sizeof(str)), MQTT_CLIENT_ID, Settings.mqtt_client);
+    Format(str, MQTT_CLIENT_ID, sizeof(str)), MQTT_CLIENT_ID, SettingsText(SET_MQTT_CLIENT));
   WSContentSend_P(HTTP_FORM_MQTT2,
-    (Settings.mqtt_user[0] == '\0') ? "0" : Settings.mqtt_user,
-    Format(str, MQTT_TOPIC, sizeof(str)), MQTT_TOPIC, Settings.mqtt_topic,
-    MQTT_FULLTOPIC, MQTT_FULLTOPIC, Settings.mqtt_fulltopic);
+    (!strlen(SettingsText(SET_MQTT_USER))) ? "0" : SettingsText(SET_MQTT_USER),
+    Format(str, MQTT_TOPIC, sizeof(str)), MQTT_TOPIC, SettingsText(SET_MQTT_TOPIC),
+    MQTT_FULLTOPIC, MQTT_FULLTOPIC, SettingsText(SET_MQTT_FULLTOPIC));
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
@@ -1229,7 +1229,7 @@ void HandleMqttConfiguration(void)
 
 void MqttSaveSettings(void)
 {
-  char tmp[100];
+  char tmp[TOPSZ];
   char stemp[TOPSZ];
   char stemp2[TOPSZ];
 
@@ -1239,32 +1239,28 @@ void MqttSaveSettings(void)
   WebGetArg("mf", tmp, sizeof(tmp));
   strlcpy(stemp2, (!strlen(tmp)) ? MQTT_FULLTOPIC : tmp, sizeof(stemp2));
   MakeValidMqtt(1, stemp2);
-  if ((strcmp(stemp, Settings.mqtt_topic)) || (strcmp(stemp2, Settings.mqtt_fulltopic))) {
+  if ((strcmp(stemp, SettingsText(SET_MQTT_TOPIC))) || (strcmp(stemp2, SettingsText(SET_MQTT_FULLTOPIC)))) {
     Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
     MqttPublishPrefixTopic_P(TELE, S_LWT, true);                // Offline or remove previous retained topic
   }
-  strlcpy(Settings.mqtt_topic, stemp, sizeof(Settings.mqtt_topic));
-  strlcpy(Settings.mqtt_fulltopic, stemp2, sizeof(Settings.mqtt_fulltopic));
+  SettingsUpdateText(SET_MQTT_TOPIC, stemp);
+  SettingsUpdateText(SET_MQTT_FULLTOPIC, stemp2);
   WebGetArg("mh", tmp, sizeof(tmp));
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  setLongMqttHost((!strlen(tmp)) ? MQTT_HOST : (!strcmp(tmp,"0")) ? "" : tmp);
-#else
-  strlcpy(Settings.mqtt_host, (!strlen(tmp)) ? MQTT_HOST : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_host));
-#endif
+  SettingsUpdateText(SET_MQTT_HOST, (!strlen(tmp)) ? MQTT_HOST : (!strcmp(tmp,"0")) ? "" : tmp);
   WebGetArg("ml", tmp, sizeof(tmp));
   Settings.mqtt_port = (!strlen(tmp)) ? MQTT_PORT : atoi(tmp);
   WebGetArg("mc", tmp, sizeof(tmp));
-  strlcpy(Settings.mqtt_client, (!strlen(tmp)) ? MQTT_CLIENT_ID : tmp, sizeof(Settings.mqtt_client));
+  SettingsUpdateText(SET_MQTT_CLIENT, (!strlen(tmp)) ? MQTT_CLIENT_ID : tmp);
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
-    AWS_endpoint, Settings.mqtt_port, Settings.mqtt_client, Settings.mqtt_topic, Settings.mqtt_fulltopic);
+    SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_TOPIC), SettingsText(SET_MQTT_FULLTOPIC));
 #else // USE_MQTT_AWS_IOT
   WebGetArg("mu", tmp, sizeof(tmp));
-  strlcpy(Settings.mqtt_user, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_user));
+  SettingsUpdateText(SET_MQTT_USER, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp,"0")) ? "" : tmp);
   WebGetArg("mp", tmp, sizeof(tmp));
-  strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? "" : (!strcmp(tmp, D_ASTERISK_PWD)) ? Settings.mqtt_pwd : tmp, sizeof(Settings.mqtt_pwd));
+  SettingsUpdateText(SET_MQTT_PWD, (!strlen(tmp)) ? "" : (!strcmp(tmp, D_ASTERISK_PWD)) ? SettingsText(SET_MQTT_PWD) : tmp);
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
-    Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, Settings.mqtt_user, Settings.mqtt_topic, Settings.mqtt_fulltopic);
+    SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_USER), SettingsText(SET_MQTT_TOPIC), SettingsText(SET_MQTT_FULLTOPIC));
 #endif
 }
 #endif  // USE_WEBSERVER

@@ -1,7 +1,7 @@
 /*
   settings.h - setting variables for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -86,13 +86,13 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
     uint32_t dds2382_model : 1;            // bit 21 (v6.6.0.14) - SetOption71 - Select different Modbus registers for Active Energy (#6531)
     uint32_t hardware_energy_total : 1;    // bit 22 (v6.6.0.15) - SetOption72 - Enable hardware energy total counter as reference (#6561)
-    uint32_t cors_enabled : 1;             // bit 23 (v7.0.0.1)  - SetOption73 - Enable HTTP CORS
+    uint32_t ex_cors_enabled : 1;          // bit 23 (v7.0.0.1)  - SetOption73 - Enable HTTP CORS
     uint32_t ds18x20_internal_pullup : 1;  // bit 24 (v7.0.0.1)  - SetOption74 - Enable internal pullup for single DS18x20 sensor
     uint32_t grouptopic_mode : 1;          // bit 25 (v7.0.0.1)  - SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
     uint32_t bootcount_update : 1;         // bit 26 (v7.0.0.4)  - SetOption76 - Enable incrementing bootcount when deepsleep is enabled
     uint32_t slider_dimmer_stay_on : 1;    // bit 27 (v7.0.0.6)  - SetOption77 - Do not power off if slider moved to far left
-    uint32_t spare28 : 1;
-    uint32_t spare29 : 1;
+    uint32_t compatibility_check : 1;      // bit 28 (v7.1.2.6)  - SetOption78 - Disable OTA compatibility check
+    uint32_t counter_reset_on_tele : 1;    // bit 29 (v8.1.0.1)  - SetOption79 - Enable resetting of counters after telemetry was sent
     uint32_t shutter_mode : 1;             // bit 30 (v6.6.0.14) - SetOption80 - Enable shutter support
     uint32_t pcf8574_ports_inverted : 1;   // bit 31 (v6.6.0.14) - SetOption81 - Invert all ports on PCF8574 devices
   };
@@ -101,14 +101,14 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption82 .. SetOption113
-    uint32_t spare00 : 1;
-    uint32_t spare01 : 1;
-    uint32_t spare02 : 1;
-    uint32_t spare03 : 1;
-    uint32_t spare04 : 1;
-    uint32_t spare05 : 1;
-    uint32_t spare06 : 1;
-    uint32_t spare07 : 1;
+    uint32_t alexa_ct_range : 1;           // bit 0 (v8.1.0.2)   - SetOption82 - Reduced CT range for Alexa
+    uint32_t zigbee_use_names : 1;         // bit 1 (v8.1.0.4)   - SetOption83 - Use FriendlyNames instead of ShortAddresses when possible
+    uint32_t awsiot_shadow : 1;            // bit 2 (v8.1.0.5)   - SetOption84 - (AWS IoT) publish MQTT state to a device shadow
+    uint32_t device_groups_enabled : 1;    // bit 3 (v8.1.0.9)   - SetOption85 - Enable Device Groups
+    uint32_t led_timeout : 1;              // bit 4 (v8.1.0.9)   - SetOption86 - PWM Dimmer Turn brightness LED's off 5 seconds after last change
+    uint32_t powered_off_led : 1;          // bit 5 (v8.1.0.9)   - SetOption87 - PWM Dimmer Turn red LED on when powered off
+    uint32_t remote_device_mode : 1;       // bit 6 (v8.1.0.9)   - SetOption88 - PWM Dimmer Buttons control remote devices
+    uint32_t zigbee_distinct_topics : 1;   // bit 7 (v8.1.0.10)  - SetOption89 - Distinct MQTT topics per device for Zigbee (#7835)
     uint32_t spare08 : 1;
     uint32_t spare09 : 1;
     uint32_t spare10 : 1;
@@ -132,7 +132,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
     uint32_t spare30 : 1;
-    uint32_t spare31 : 1;
+    uint32_t spare31 : 1;                  // bit 31
   };
 } SysBitfield4;
 
@@ -140,10 +140,8 @@ typedef union {
   uint32_t data;                           // Allow bit manipulation
   struct {
     uint32_t spare00 : 1;
-    uint32_t spare01 : 1;
-    uint32_t spare02 : 1;
-    uint32_t spare03 : 1;
-    uint32_t time_format : 2;              // (v6.6.0.9) - CMND_TIME
+    uint32_t speed_conversion : 3;         // (v8.1.0.10) - Tx2x sensor
+    uint32_t time_format : 2;              // (v6.6.0.9)  - CMND_TIME
     uint32_t calc_resolution : 3;
     uint32_t weight_resolution : 2;
     uint32_t frequency_resolution : 2;
@@ -229,35 +227,9 @@ typedef struct {
   uint8_t dpid = 0;
 } TuyaFnidDpidMap;
 
+const uint32_t settings_text_size = 699;   // Settings.text_pool[size] = Settings.display_model (2D2) - Settings.text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
-/** 
- *  Structure used for holding the hardware serial port settings.
- *  
- *  Description of the fields:
- * 
- *  baudrate - the baud rate multiplier, which can range from 0 - 15360 (multiply by 300 to obtain the actual baud rate)
- *  mode - encodes a selection of the main serial port settings.
- * 
- *  The mode field can take the following values:
- * 
- *    0 - 7N1 (7 data bits / no parity / 1 stop bit)
- *    1 - 7E1 (7 data bits / even parity / 1 stop bit)
- *    2 - 8N1 (8 data bits / no parity / 1 stop bit)
- *    3 - 8E1 (8 data bits / even parity / 1 stop bit)
- */
-typedef struct {
-  uint16_t baudrate;          // the baud rate multiplier, which can range from 0 - 15360 (multiply by 300 to obtain the actual baud rate)
-  uint8_t  mode;              // encodes a selection of the main serial port settings: 8E1, 8N1, 7E1 and 7N1
-} SerialCfg;
-
-/*
-struct SYSCFG {
-  unsigned long cfg_holder;                // 000 Pre v6 header
-  unsigned long save_flag;                 // 004
-  unsigned long version;                   // 008
-  unsigned long bootcount;                 // 00C
-*/
 struct SYSCFG {
   uint16_t      cfg_holder;                // 000 v6 header
   uint16_t      cfg_size;                  // 002
@@ -268,42 +240,45 @@ struct SYSCFG {
   SysBitfield   flag;                      // 010
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
-  char          ota_url[101];              // 017
-  char          mqtt_prefix[3][11];        // 07C
-  uint8_t       ex_baudrate;               // 09D - Free since 6.6.0.9
-  uint8_t       seriallog_level;           // 09E
-  uint8_t       sta_config;                // 09F
-  uint8_t       sta_active;                // 0A0
-  char          sta_ssid[2][33];           // 0A1 - Keep together with sta_pwd as being copied as one chunck with reset 5
-  char          sta_pwd[2][65];            // 0E3 - Keep together with sta_ssid as being copied as one chunck with reset 5
-  char          hostname[33];              // 165
-  char          syslog_host[33];           // 186
-  uint8_t       rule_stop;                 // 1A7
-  uint16_t      syslog_port;               // 1A8
-  uint8_t       syslog_level;              // 1AA
-  uint8_t       webserver;                 // 1AB
-  uint8_t       weblog_level;              // 1AC
-  uint8_t       mqtt_fingerprint[2][20];   // 1AD
-  uint8_t       adc_param_type;            // 1D5
 
-  uint8_t       free_1d6[10];              // 1D6
+  // Start of char array storing all parameter strings
 
-  SysBitfield4  flag4;                     // 1E0
+  char          text_pool[101];            // 017 - was ota_url[101] - size is settings_text_size
 
-  uint8_t       free_1e4;                  // 1E4
+  char          ex_mqtt_prefix[3][11];     // 07C
+  uint8_t       ex_baudrate;               // 09D
+  uint8_t       ex_seriallog_level;        // 09E
+  uint8_t       ex_sta_config;             // 09F
+  uint8_t       ex_sta_active;             // 0A0
+  char          ex_sta_ssid[2][33];        // 0A1
+  char          ex_sta_pwd[2][65];         // 0E3
+  char          ex_hostname[33];           // 165
+  char          ex_syslog_host[33];        // 186
+  uint8_t       ex_rule_stop;              // 1A7
+  uint16_t      ex_syslog_port;            // 1A8
+  uint8_t       ex_syslog_level;           // 1AA
+  uint8_t       ex_webserver;              // 1AB
+  uint8_t       ex_weblog_level;           // 1AC
+  uint8_t       ex_mqtt_fingerprint[2][20];  // 1AD
+  uint8_t       ex_adc_param_type;         // 1D5
+  uint8_t       ex_free_1d6[10];           // 1D6
+  SysBitfield4  ex_flag4;                  // 1E0
+  uint8_t       ex_serial_config;          // 1E4
+  uint8_t       ex_wifi_output_power;      // 1E5
+  uint8_t       ex_shutter_accuracy;       // 1E6
+  uint8_t       ex_mqttlog_level;          // 1E7
+  uint8_t       ex_sps30_inuse_hours;      // 1E8
+  char          ex_mqtt_host[33];          // 1E9
+  uint16_t      ex_mqtt_port;              // 20A
+  char          ex_mqtt_client[33];        // 20C
+  char          ex_mqtt_user[33];          // 22D
+  char          ex_mqtt_pwd[33];           // 24E
+  char          ex_mqtt_topic[33];         // 26F
+  char          ex_button_topic[33];       // 290
+  char          ex_mqtt_grptopic[33];      // 2B1
 
-  uint8_t       wifi_output_power;         // 1E5
-  uint8_t       shutter_accuracy;          // 1E6
-  uint8_t       mqttlog_level;             // 1E7
-  uint8_t       sps30_inuse_hours;         // 1E8
-  char          mqtt_host[33];             // 1E9 - Keep together with below as being copied as one chunck with reset 6
-  uint16_t      mqtt_port;                 // 20A - Keep together
-  char          mqtt_client[33];           // 20C - Keep together
-  char          mqtt_user[33];             // 22D - Keep together
-  char          mqtt_pwd[33];              // 24E - Keep together
-  char          mqtt_topic[33];            // 26F - Keep together with above items as being copied as one chunck with reset 6
-  char          button_topic[33];          // 290
-  char          mqtt_grptopic[33];         // 2B1
+  // End of single char array of 698 chars max
+
   uint8_t       display_model;             // 2D2
   uint8_t       display_mode;              // 2D3
   uint8_t       display_refresh;           // 2D4
@@ -323,8 +298,10 @@ struct SYSCFG {
   uint8_t       param[PARAM8_SIZE];        // 2FC  SetOption32 .. SetOption49
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
-  char          state_text[4][11];         // 313
+
+  char          ex_state_text[4][11];      // 313
   uint8_t       ex_energy_power_delta;     // 33F - Free since 6.6.0.20
+
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
   unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
@@ -357,10 +334,12 @@ struct SYSCFG {
   uint16_t      light_rotation;            // 39E
   SysBitfield3  flag3;                     // 3A0
   uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
-  char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
-  char          switch_topic[33];          // 430
+
+  char          ex_friendlyname[4][33];    // 3AC
+  char          ex_switch_topic[33];       // 430
+
   char          serial_delimiter;          // 451
-  uint8_t       ex_sbaudrate;              // 452 - Free since 6.6.0.9
+  uint8_t       seriallog_level;           // 452
   uint8_t       sleep;                     // 453
   uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
   uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
@@ -382,15 +361,21 @@ struct SYSCFG {
   uint8_t       knx_GA_registered;         // 4A5  Number of Group Address to read
   uint16_t      light_wakeup;              // 4A6
   uint8_t       knx_CB_registered;         // 4A8  Number of Group Address to write
-  char          web_password[33];          // 4A9
+
+  char          ex_web_password[33];       // 4A9
+
   uint8_t       interlock[MAX_INTERLOCKS]; // 4CA
-  char          ntp_server[3][33];         // 4CE
+
+  char          ex_ntp_server[3][33];      // 4CE
+
   uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
   uint16_t      button_debounce;           // 542
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;           // 554
-  char          mqtt_fulltopic[100];       // 558
+
+  char          ex_mqtt_fulltopic[100];    // 558
+
   SysBitfield2  flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
   uint16_t      pulse_counter_type;        // 5D0
@@ -417,10 +402,9 @@ struct SYSCFG {
   uint8_t       web_color[18][3];          // 73E
   uint16_t      display_width;             // 774
   uint16_t      display_height;            // 776
-  uint16_t      serial_config;             // 778 - 14 MSB's define the baud rate; 2 LSB's define the serial config (e.g. 8N1). Maps to the SerialCfg struct.
+  uint16_t      baudrate;                  // 778
   uint16_t      sbaudrate;                 // 77A
   EnergyUsage   energy_usage;              // 77C
-//  uint32_t      drivers[3];                // 794 - 6.5.0.12 replaced by below three entries
   uint32_t      adc_param1;                // 794
   uint32_t      adc_param2;                // 798
   int           adc_param3;                // 79C
@@ -435,8 +419,10 @@ struct SYSCFG {
   unsigned long weight_calibration;        // 7C4
   unsigned long energy_frequency_calibration;  // 7C8 also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
-  char          mems[MAX_RULE_MEMS][10];   // 7CE
+  char          script_pram[5][10];        // 7CE
+
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
+
   TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00    32 bytes
   uint16_t      ina226_r_shunt[4];         // E20
   uint16_t      ina226_i_fs[4];            // E28
@@ -444,7 +430,7 @@ struct SYSCFG {
   uint16_t      shutter_opentime[MAX_SHUTTERS];      // E40
   uint16_t      shutter_closetime[MAX_SHUTTERS];     // E48
   int16_t       shuttercoeff[5][MAX_SHUTTERS];       // E50
-  uint8_t       shutter_invert[MAX_SHUTTERS];        // E78
+  uint8_t       shutter_options[MAX_SHUTTERS];        // E78
   uint8_t       shutter_set50percent[MAX_SHUTTERS];  // E7C
   uint8_t       shutter_position[MAX_SHUTTERS];      // E80
   uint8_t       shutter_startrelay[MAX_SHUTTERS];    // E84
@@ -455,13 +441,44 @@ struct SYSCFG {
   uint16_t      energy_power_delta;        // E98
   uint8_t       shutter_motordelay[MAX_SHUTTERS];    // E9A
   int8_t        temp_comp;                 // E9E
-
-  uint8_t       free_e9f[1];               // E9F
-
+  uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0 - Needs to be on integer / 3 distance from web_color
 
-  uint8_t       free_ea4[326];             // EA6
+  char          ex_cors_domain[33];        // EA6
 
+  uint8_t       sta_config;                // EC7
+  uint8_t       sta_active;                // EC8
+  uint8_t       rule_stop;                 // EC9
+  uint16_t      syslog_port;               // ECA
+  uint8_t       syslog_level;              // ECC
+  uint8_t       webserver;                 // ECD
+  uint8_t       weblog_level;              // ECE
+  uint8_t       mqtt_fingerprint[2][20];   // ECF
+  uint8_t       adc_param_type;            // EF7
+  SysBitfield4  flag4;                     // EF8
+  uint16_t      mqtt_port;                 // EFC
+  uint8_t       serial_config;             // EFE
+  uint8_t       wifi_output_power;         // EFF
+  uint8_t       shutter_accuracy;          // F00
+  uint8_t       mqttlog_level;             // F01
+  uint8_t       sps30_inuse_hours;         // F02
+  uint8_t       hotplug_scan;              // F03
+  uint8_t       bri_power_on;              // F04
+  uint8_t       bri_min;                   // F05
+  uint8_t       bri_preset_low;            // F06
+  uint8_t       bri_preset_high;           // F07
+
+  uint8_t       free_f08[180];             // F08
+
+  uint32_t      keeloq_master_msb;         // FBC
+  uint32_t      keeloq_master_lsb;         // FC0
+  uint32_t      keeloq_serial;             // FC4
+  uint32_t      keeloq_count;              // FC8
+  uint32_t      device_group_share_in;     // FCC - Bitmask of device group items imported
+  uint32_t      device_group_share_out;    // FD0 - Bitmask of device group items exported
+  uint32_t      bootcount_reset_time;      // FD4
+  int           adc_param4;                // FD8
+  uint32_t      shutter_button[MAX_KEYS];  // FDC
   uint32_t      i2c_drivers[3];            // FEC I2cDriver
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC

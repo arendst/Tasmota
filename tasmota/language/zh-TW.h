@@ -1,7 +1,7 @@
 /*
   zh-TW.h - localization for Chinese (Traditional) - Taiwan for Tasmota
 
-  Copyright (C) 2019  Theo Arends (translated by dannydu)
+  Copyright (C) 2020  Theo Arends (translated by dannydu)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -71,8 +71,10 @@
 #define D_COLDLIGHT "冷"
 #define D_COMMAND "命令:"
 #define D_CONNECTED "已連接"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "數量:"
 #define D_COUNTER "Counter"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "電流"          // As in Voltage and Current
 #define D_DATA "數據:"
 #define D_DARKLIGHT "Dark"
@@ -82,7 +84,7 @@
 #define D_DNS_SERVER "DNS伺服器"
 #define D_DONE "完成"
 #define D_DST_TIME "DST"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "設備模擬"
 #define D_ENABLED "啟用"
 #define D_ERASE "刪除"
@@ -112,6 +114,7 @@
 #define D_LIGHT "燈"
 #define D_LWT "LWT"
 #define D_MODULE "模組"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "多次按鍵"
 #define D_NOISE "雜訊"
@@ -134,6 +137,7 @@
 #define D_PROGRAM_SIZE "韌體大小"
 #define D_PROJECT "項目:"
 #define D_RAIN "Rain"
+#define D_RANGE "Range"
 #define D_RECEIVED "已接收"
 #define D_RESTART "重啟"
 #define D_RESTARTING "正在重啟"
@@ -353,6 +357,7 @@
 #define D_UPLOAD_ERR_11 "Failed to erase RF chip"
 #define D_UPLOAD_ERR_12 "Failed to write to RF chip"
 #define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "上傳錯誤代碼"
 
 #define D_ENTER_COMMAND "輸入命令"
@@ -501,7 +506,7 @@
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Wind Direction"
 #define D_TX20_WIND_SPEED "Wind Speed"
-#define D_TX20_WIND_SPEED_AVG "Wind Speed Avg"
+#define D_TX20_WIND_SPEED_MIN "Wind Speed Min"
 #define D_TX20_WIND_SPEED_MAX "Wind Speed Max"
 #define D_TX20_NORTH "N"
 #define D_TX20_EAST "E"
@@ -560,7 +565,7 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
-#define D_SENSOR_TX20_TX       "TX20"
+#define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFrecv"
 #define D_SENSOR_TUYA_TX       "Tuya Tx"
@@ -629,6 +634,15 @@
 #define D_SENSOR_SLAVE_TX    "Slave TX"
 #define D_SENSOR_SLAVE_RX    "Slave RX"
 #define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_GPS_RX        "GPS RX"
+#define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
+#define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
+#define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
 
 // Units
 #define D_UNIT_AMPERE "安"
@@ -664,7 +678,7 @@
 #define D_UNIT_WATTHOUR "瓦時"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Phase Angle"
 #define D_IMPORT_ACTIVE   "Import Active"
 #define D_EXPORT_ACTIVE   "Export Active"
@@ -673,6 +687,7 @@
 #define D_TOTAL_REACTIVE  "Total Reactive"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltage"
@@ -697,5 +712,18 @@
 #define D_SOLAX_ERROR_6   "Over Temperature Fault"
 #define D_SOLAX_ERROR_7   "Fan Fault"
 #define D_SOLAX_ERROR_8   "Other Device Fault"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Edit script"
+#define D_SCRIPT               "edit script"
+#define D_SDCARD_UPLOAD        "file upload"
+#define D_SDCARD_DIR           "sd card directory"
+#define D_UPL_DONE             "Done"
+#define D_SCRIPT_CHARS_LEFT    "chars left"
+#define D_SCRIPT_CHARS_NO_MORE "no more chars"
+#define D_SCRIPT_DOWNLOAD      "Download"
+#define D_SCRIPT_ENABLE        "script enable"
+#define D_SCRIPT_UPLOAD        "Upload"
+#define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
 #endif  // _LANGUAGE_ZH_TW_H_

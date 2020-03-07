@@ -1,7 +1,7 @@
 /*
   tasmota.h - Master header file for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 \*********************************************************************************************/
 
 #define CODE_IMAGE 0
+#define CODE_IMAGE_STR "tasmota"
 
 #define USE_LIGHT                           // Enable light control
 #define USE_ENERGY_SENSOR                   // Use energy sensors (+14k code)
@@ -58,7 +59,6 @@ const uint8_t MAX_PWMS = 5;                 // Max number of PWM channels
 const uint8_t MAX_COUNTERS = 4;             // Max number of counter sensors
 const uint8_t MAX_TIMERS = 16;              // Max number of Timers
 const uint8_t MAX_PULSETIMERS = 8;          // Max number of supported pulse timers
-const uint8_t MAX_FRIENDLYNAMES = 4;        // Max number of Friendly names
 const uint8_t MAX_DOMOTICZ_IDX = 4;         // Max number of Domoticz device, key and switch indices
 const uint8_t MAX_DOMOTICZ_SNS_IDX = 12;    // Max number of Domoticz sensors indices
 const uint8_t MAX_KNX_GA = 10;              // Max number of KNX Group Addresses to read that can be set
@@ -70,9 +70,17 @@ const uint8_t MAX_XSNS_DRIVERS = 96;        // Max number of allowed sensor driv
 const uint8_t MAX_I2C_DRIVERS = 96;         // Max number of allowed i2c drivers
 const uint8_t MAX_SHUTTERS = 4;             // Max number of shutters
 const uint8_t MAX_PCF8574 = 8;              // Max number of PCF8574 devices
-const uint8_t MAX_RULE_MEMS = 5;            // Max number of saved vars
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
+
+// Changes to the following MAX_ defines need to be in line with enum SettingsTextIndex
+const uint8_t MAX_MQTT_PREFIXES = 3;        // Max number of MQTT prefixes (cmnd, stat, tele)
+const uint8_t MAX_SSIDS = 2;                // Max number of SSIDs
+const uint8_t MAX_STATE_TEXT = 4;           // Max number of State names (OFF, ON, TOGGLE, HOLD)
+const uint8_t MAX_NTP_SERVERS = 3;          // Max number of NTP servers
+const uint8_t MAX_RULE_MEMS = 16;           // Max number of saved vars
+const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
+const uint8_t MAX_BUTTON_TEXT = 16;         // Max number of GUI button labels
 
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 
@@ -118,9 +126,9 @@ const uint8_t OTA_ATTEMPTS = 5;             // Number of times to try fetching t
 const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in (serial and http) command buffer
 const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
 const uint16_t CMDSZ = 24;                  // Max number of characters in command
-const uint16_t TOPSZ = 100;                 // Max number of characters in topic string
-const uint16_t LOGSZ = 520;                 // Max number of characters in log
-const uint16_t MIN_MESSZ = 893;             // Min number of characters in MQTT message
+const uint16_t TOPSZ = 151;                 // Max number of characters in topic string
+const uint16_t LOGSZ = 700;                 // Max number of characters in log
+const uint16_t MIN_MESSZ = 1040;            // Min number of characters in MQTT message (1000 - TOPSZ - 9 header bytes)
 
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
 
@@ -131,7 +139,7 @@ const uint32_t SOFT_BAUDRATE = 9600;        // Default software serial baudrate
 const uint32_t APP_BAUDRATE = 115200;       // Default serial baudrate
 const uint32_t SERIAL_POLLING = 100;        // Serial receive polling in ms
 const uint32_t ZIGBEE_POLLING = 100;        // Serial receive polling in ms
-const uint8_t MAX_STATUS = 11;              // Max number of status lines
+const uint8_t MAX_STATUS = 12;              // Max number of status lines
 
 const uint32_t START_VALID_TIME = 1451602800;  // Time is synced and after 2016-01-01
 
@@ -143,7 +151,7 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 \*********************************************************************************************/
 
 #define MAX_RULE_TIMERS        8            // Max number of rule timers (4 bytes / timer)
-#define MAX_RULE_VARS          5            // Max number of rule variables (10 bytes / variable)
+#define MAX_RULE_VARS          16           // Max number of rule variables (33 bytes / variable)
 
 /*
 // Removed from esp8266 core since 20171105
@@ -218,13 +226,14 @@ enum WeekInMonthOptions {Last, First, Second, Third, Fourth};
 enum DayOfTheWeekOptions {Sun=1, Mon, Tue, Wed, Thu, Fri, Sat};
 enum MonthNamesOptions {Jan=1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec};
 enum HemisphereOptions {North, South};
-enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_ENERGY };
+enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_LOCALNOTZ, DT_DST, DT_STD, DT_RESTART, DT_ENERGY, DT_BOOTCOUNT };
 
 enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
 
 enum WifiConfigOptions {WIFI_RESTART, EX_WIFI_SMARTCONFIG, WIFI_MANAGER, EX_WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, WIFI_SERIAL, WIFI_MANAGER_RESET_ONLY, MAX_WIFI_OPTION};
 
-enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, MAX_SWITCH_OPTION};
+enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, TOGGLEMULTI,
+                        FOLLOWMULTI, FOLLOWMULTI_INV, PUSHHOLDMULTI, PUSHHOLDMULTI_INV, MAX_SWITCH_OPTION};
 
 enum LedStateOptions {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT, MAX_LED_OPTION};
 
@@ -235,7 +244,7 @@ enum TopicOptions { CMND, STAT, TELE, nu1, RESULT_OR_CMND, RESULT_OR_STAT, RESUL
 enum ExecuteCommandPowerOptions { POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK, POWER_BLINK_STOP,
                                   POWER_OFF_NO_STATE = 8, POWER_ON_NO_STATE, POWER_TOGGLE_NO_STATE,
                                   POWER_SHOW_STATE = 16 };
-enum SendKeyPowerOptions { POWER_HOLD = 3, CLEAR_RETAIN = 9 };
+enum SendKeyPowerOptions { POWER_HOLD = 3, POWER_INCREMENT = 4, POWER_INV = 5, POWER_CLEAR = 6, CLEAR_RETAIN = 9 };
 enum SendKeyOptions { KEY_BUTTON, KEY_SWITCH };
 
 enum PowerOnStateOptions { POWER_ALL_OFF, POWER_ALL_ON, POWER_ALL_SAVED_TOGGLE, POWER_ALL_SAVED, POWER_ALL_ALWAYS_ON, POWER_ALL_OFF_PULSETIME_ON };
@@ -256,7 +265,7 @@ enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, D
 enum Ws2812ClockIndex { WS_SECOND, WS_MINUTE, WS_HOUR, WS_MARKER };
 enum Ws2812Color { WS_RED, WS_GREEN, WS_BLUE };
 
-enum LightSubtypes { LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB,   LST_RGBW, LST_RGBWC, LST_MAX=5 };   // Do not insert new fields
+enum LightSubtypes { LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB,   LST_RGBW, LST_RGBCW, LST_MAX=5 };   // Do not insert new fields
 enum LightTypes    { LT_BASIC, LT_PWM1,    LT_PWM2,      LT_PWM3,   LT_PWM4,  LT_PWM5,  LT_PWM6, LT_PWM7,
                      LT_NU8,   LT_SERIAL1, LT_SERIAL2,   LT_RGB,    LT_RGBW,  LT_RGBWC, LT_NU14, LT_NU15 };  // Do not insert new fields
 
@@ -268,9 +277,54 @@ enum XsnsFunctions {FUNC_SETTINGS_OVERRIDE, FUNC_PIN_STATE, FUNC_MODULE_INIT, FU
                     FUNC_SET_POWER, FUNC_SET_DEVICE_POWER, FUNC_SHOW_SENSOR, FUNC_ANY_KEY,
                     FUNC_ENERGY_EVERY_SECOND, FUNC_ENERGY_RESET,
                     FUNC_RULES_PROCESS, FUNC_SERIAL, FUNC_FREE_MEM, FUNC_BUTTON_PRESSED,
-                    FUNC_WEB_ADD_BUTTON, FUNC_WEB_ADD_MAIN_BUTTON, FUNC_WEB_ADD_HANDLER, FUNC_SET_CHANNELS, FUNC_SET_SCHEME};
+                    FUNC_WEB_ADD_BUTTON, FUNC_WEB_ADD_MAIN_BUTTON, FUNC_WEB_ADD_HANDLER, FUNC_SET_CHANNELS, FUNC_SET_SCHEME, FUNC_HOTPLUG_SCAN,
+                    FUNC_DEVICE_GROUP_REQUEST };
 
 enum AddressConfigSteps { ADDR_IDLE, ADDR_RECEIVE, ADDR_SEND };
+
+enum SettingsTextIndex { SET_OTAURL,
+                         SET_MQTTPREFIX1, SET_MQTTPREFIX2, SET_MQTTPREFIX3,
+                         SET_STASSID1, SET_STASSID2,
+                         SET_STAPWD1, SET_STAPWD2,
+                         SET_HOSTNAME, SET_SYSLOG_HOST,
+                         SET_WEBPWD, SET_CORS,
+                         SET_MQTT_HOST, SET_MQTT_CLIENT,
+                         SET_MQTT_USER, SET_MQTT_PWD,
+                         SET_MQTT_FULLTOPIC, SET_MQTT_TOPIC,
+                         SET_MQTT_BUTTON_TOPIC, SET_MQTT_SWITCH_TOPIC, SET_MQTT_GRP_TOPIC,
+                         SET_STATE_TXT1, SET_STATE_TXT2, SET_STATE_TXT3, SET_STATE_TXT4,
+                         SET_NTPSERVER1, SET_NTPSERVER2, SET_NTPSERVER3,
+                         SET_MEM1, SET_MEM2, SET_MEM3, SET_MEM4, SET_MEM5, SET_MEM6, SET_MEM7, SET_MEM8,
+                         SET_MEM9, SET_MEM10, SET_MEM11, SET_MEM12, SET_MEM13, SET_MEM14, SET_MEM15, SET_MEM16,
+                         SET_FRIENDLYNAME1, SET_FRIENDLYNAME2, SET_FRIENDLYNAME3, SET_FRIENDLYNAME4,
+                         SET_FRIENDLYNAME5, SET_FRIENDLYNAME6, SET_FRIENDLYNAME7, SET_FRIENDLYNAME8,
+                         SET_BUTTON1, SET_BUTTON2, SET_BUTTON3, SET_BUTTON4, SET_BUTTON5, SET_BUTTON6, SET_BUTTON7, SET_BUTTON8,
+                         SET_BUTTON9, SET_BUTTON10, SET_BUTTON11, SET_BUTTON12, SET_BUTTON13, SET_BUTTON14, SET_BUTTON15, SET_BUTTON16,
+                         SET_MQTT_GRP_TOPIC2, SET_MQTT_GRP_TOPIC3, SET_MQTT_GRP_TOPIC4,
+                         SET_MAX };
+
+enum DeviceGroupMessageType { DGR_MSGTYP_FULL_STATUS, DGR_MSGTYP_PARTIAL_UPDATE, DGR_MSGTYP_UPDATE, DGR_MSGTYP_UPDATE_MORE_TO_COME, DGR_MSGTYP_UPDATE_DIRECT, DGR_MSGTYP_REUPDATE };
+
+enum DeviceGroupMessageFlag { DGR_FLAG_RESET = 1, DGR_FLAG_STATUS_REQUEST = 2, DGR_FLAG_FULL_STATUS = 4, DGR_FLAG_ACK = 8, DGR_FLAG_MORE_TO_COME = 16, DGR_FLAG_DIRECT = 32 };
+
+enum DeviceGroupItem { DGR_ITEM_EOL, DGR_ITEM_STATUS,
+                       DGR_ITEM_LIGHT_FADE, DGR_ITEM_LIGHT_SPEED, DGR_ITEM_LIGHT_BRI, DGR_ITEM_LIGHT_SCHEME, DGR_ITEM_LIGHT_FIXED_COLOR,
+                       DGR_ITEM_BRI_PRESET_LOW, DGR_ITEM_BRI_PRESET_HIGH, DGR_ITEM_BRI_POWER_ON,
+                       // Add new 8-bit items before this line
+                       DGR_ITEM_LAST_8BIT, DGR_ITEM_MAX_8BIT = 63,
+                       DGR_ITEM_ACK,
+                       DGR_ITEM_ANALOG1, DGR_ITEM_ANALOG2, DGR_ITEM_ANALOG3, DGR_ITEM_ANALOG4, DGR_ITEM_ANALOG5,
+                       // Add new 16-bit items before this line
+                       DGR_ITEM_LAST_16BIT, DGR_ITEM_MAX_16BIT = 127,
+                       DGR_ITEM_POWER, DGR_ITEM_DIMMER_RANGE,
+                       // Add new 32-bit items before this line
+                       DGR_ITEM_LAST_32BIT, DGR_ITEM_MAX_32BIT = 191,                       
+                       // Add new string items before this line
+                       DGR_ITEM_LAST_STRING, DGR_ITEM_MAX_STRING = 223,
+                       DGR_ITEM_LIGHT_CHANNELS };
+
+enum DeviceGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE_LIGHT_FADE = 4, DGR_SHARE_LIGHT_SCHEME = 8,
+                            DGR_SHARE_LIGHT_COLOR = 16, DGR_SHARE_DIMMER_RANGE = 32 };
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
                      SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_SHUTTER,

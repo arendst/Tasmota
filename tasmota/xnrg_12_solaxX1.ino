@@ -1,7 +1,7 @@
 /*
   xnrg_12_solaxX1.ino - Solax X1 inverter RS485 support for Tasmota
 
-  Copyright (C) 2019  Pablo Zerón
+  Copyright (C) 2020  Pablo Zerón
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

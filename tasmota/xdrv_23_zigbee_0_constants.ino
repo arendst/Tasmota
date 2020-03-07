@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee_constants.ino - zigbee support for Tasmota
 
-  Copyright (C) 2019  Theo Arends and Stephan Hadinger
+  Copyright (C) 2020  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 #ifdef USE_ZIGBEE
 
-#define ZIGBEE_VERBOSE      // output versbose MQTT Zigbee logs. Will remain active for now
+#define OCCUPANCY "Occupancy"             // global define for Aqara
 
 typedef uint64_t Z_IEEEAddress;
 typedef uint16_t Z_ShortAddress;
@@ -169,43 +169,6 @@ enum Z_configuration {
   ZNP_HAS_CONFIGURED = 0xF00
 };
 
-// enum Z_nvItemIds {
-//   SCENE_TABLE = 145,
-//   MIN_FREE_NWK_ADDR = 146,
-//   MAX_FREE_NWK_ADDR = 147,
-//   MIN_FREE_GRP_ID = 148,
-//   MAX_FREE_GRP_ID = 149,
-//   MIN_GRP_IDS = 150,
-//   MAX_GRP_IDS = 151,
-//   OTA_BLOCK_REQ_DELAY = 152,
-//   SAPI_ENDPOINT = 161,
-//   SAS_SHORT_ADDR = 177,
-//   SAS_EXT_PANID = 178,
-//   SAS_PANID = 179,
-//   SAS_CHANNEL_MASK = 180,
-//   SAS_PROTOCOL_VER = 181,
-//   SAS_STACK_PROFILE = 182,
-//   SAS_STARTUP_CTRL = 183,
-//   SAS_TC_ADDR = 193,
-//   SAS_TC_MASTER_KEY = 194,
-//   SAS_NWK_KEY = 195,
-//   SAS_USE_INSEC_JOIN = 196,
-//   SAS_PRECFG_LINK_KEY = 197,
-//   SAS_NWK_KEY_SEQ_NUM = 198,
-//   SAS_NWK_KEY_TYPE = 199,
-//   SAS_NWK_MGR_ADDR = 200,
-//   SAS_CURR_TC_MASTER_KEY = 209,
-//   SAS_CURR_NWK_KEY = 210,
-//   SAS_CURR_PRECFG_LINK_KEY = 211,
-//   TCLK_TABLE_START = 257,
-//   TCLK_TABLE_END = 511,
-//   APS_LINK_KEY_DATA_START = 513,
-//   APS_LINK_KEY_DATA_END = 767,
-//   DUPLICATE_BINDING_TABLE = 768,
-//   DUPLICATE_DEVICE_LIST = 769,
-//   DUPLICATE_DEVICE_LIST_KA_TIMEOUT = 770,
-//};
-
 //
 enum Z_Status {
   Z_Success = 0x00,
@@ -261,16 +224,14 @@ enum Z_Device_Ids {
   // 0x0403	IAS Warning Device
 };
 
-// enum class AddrMode : uint8_t {
-//   NotPresent = 0,
-//   Group = 1,
-//   ShortAddress = 2,
-//   IEEEAddress = 3,
-//   Broadcast = 0xFF
-// };
-//
-//
-//
+ enum Z_AddrMode : uint8_t {
+  Z_Addr_NotPresent = 0,
+  Z_Addr_Group = 1,
+  Z_Addr_ShortAddress = 2,
+  Z_Addr_IEEEAddress = 3,
+  Z_Addr_Broadcast = 0xFF
+};
+
 // Commands in the AF subsystem
 enum AfCommand : uint8_t {
   AF_REGISTER = 0x00,
@@ -286,7 +247,7 @@ enum AfCommand : uint8_t {
   AF_INCOMING_MSG = 0x81,
   AF_INCOMING_MSG_EXT = 0x82
 };
-//
+
 // Commands in the ZDO subsystem
 enum : uint8_t {
   ZDO_NWK_ADDR_REQ = 0x00,
@@ -371,7 +332,7 @@ enum ZdoStates {
   ZDO_DEV_ZB_COORD = 0x09,          // Started as a a Zigbee Coordinator
   ZDO_DEV_NWK_ORPHAN = 0x0A,        // Device has lost information about its parent.
 };
-//
+
 // Commands in the UTIL subsystem
 enum Z_Util {
   Z_UTIL_GET_DEVICE_INFO = 0x00,
@@ -426,5 +387,58 @@ enum ZCL_Global_Commands {
 
 const uint16_t Z_ProfileIds[]   PROGMEM = { 0x0104, 0x0109, 0xA10E, 0xC05E };
 const char     Z_ProfileNames[] PROGMEM = "ZigBee Home Automation|ZigBee Smart Energy|ZigBee Green Power|ZigBee Light Link";
+
+typedef struct Z_StatusLine {
+  uint32_t     status;          // no need to use uint8_t since it uses 32 bits anyways
+  const char * status_msg;
+} Z_StatusLine;
+
+const Z_StatusLine Z_Status[] PROGMEM = {
+  0x00,   "SUCCESS",
+  0x01,   "FAILURE",
+  0x7E,   "NOT_AUTHORIZED",
+  0x7F,   "RESERVED_FIELD_NOT_ZERO",
+  0x80,   "MALFORMED_COMMAND",
+  0x81,   "UNSUP_CLUSTER_COMMAND",
+  0x82,   "UNSUP_GENERAL_COMMAND",
+  0x83,   "UNSUP_MANUF_CLUSTER_COMMAND",
+  0x84,   "UNSUP_MANUF_GENERAL_COMMAND",
+  0x85,   "INVALID_FIELD",
+  0x86,   "UNSUPPORTED_ATTRIBUTE",
+  0x87,   "INVALID_VALUE",
+  0x88,   "READ_ONLY",
+  0x89,   "INSUFFICIENT_SPACE",
+  0x8A,   "DUPLICATE_EXISTS",
+  0x8B,   "NOT_FOUND",
+  0x8C,   "UNREPORTABLE_ATTRIBUTE",
+  0x8D,   "INVALID_DATA_TYPE",
+  0x8E,   "INVALID_SELECTOR",
+  0x8F,   "WRITE_ONLY",
+  0x90,   "INCONSISTENT_STARTUP_STATE",
+  0x91,   "DEFINED_OUT_OF_BAND",
+  0x92,   "INCONSISTENT",
+  0x93,   "ACTION_DENIED",
+  0x94,   "TIMEOUT",
+  0x95,   "ABORT",
+  0x96,   "INVALID_IMAGE",
+  0x97,   "WAIT_FOR_DATA",
+  0x98,   "NO_IMAGE_AVAILABLE",
+  0x99,   "REQUIRE_MORE_IMAGE",
+  0x9A,   "NOTIFICATION_PENDING",
+  0xC0,   "HARDWARE_FAILURE",
+  0xC1,   "SOFTWARE_FAILURE",
+  0xC2,   "CALIBRATION_ERROR",
+  0xC3,   "UNSUPPORTED_CLUSTER",
+};
+
+const __FlashStringHelper* getZigbeeStatusMessage(uint8_t status) {
+  for (uint32_t i = 0; i < sizeof(Z_Status) / sizeof(Z_Status[0]); i++) {
+    const Z_StatusLine *statl = &Z_Status[i];
+    if (statl->status == status) {
+      return (const __FlashStringHelper*) statl->status_msg;
+    }
+  }
+  return nullptr;
+}
 
 #endif // USE_ZIGBEE

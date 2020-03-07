@@ -1,7 +1,7 @@
 /*
   support_wifi.ino - wifi support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,6 +21,11 @@
  * Wifi
 \*********************************************************************************************/
 
+// Enable one of three below options for wifi re-connection debugging
+//#define WIFI_FORCE_RF_CAL_ERASE            // Erase rf calibration sector on restart only
+//#define WIFI_RF_MODE_RF_CAL                // Set RF_MODE to RF_CAL for restart and deepsleep during user_rf_pre_init
+//#define WIFI_RF_PRE_INIT                   // Set RF_MODE to RF_CAL for restart, deepsleep and power on during user_rf_pre_init
+
 #ifndef WIFI_RSSI_THRESHOLD
 #define WIFI_RSSI_THRESHOLD     10         // Difference in dB between current network and scanned network
 #endif
@@ -30,7 +35,7 @@
 
 const uint8_t WIFI_CONFIG_SEC = 180;       // seconds before restart
 const uint8_t WIFI_CHECK_SEC = 20;         // seconds
-const uint8_t WIFI_RETRY_OFFSET_SEC = 20;  // seconds
+const uint8_t WIFI_RETRY_OFFSET_SEC = 12;  // seconds
 
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #if LWIP_IPV6
@@ -50,6 +55,7 @@ struct WIFI {
   uint8_t mdns_begun = 0;                  // mDNS active
   uint8_t scan_state;
   uint8_t bssid[6];
+  int8_t best_network_db;
 } Wifi;
 
 int WifiGetRssiAsQuality(int rssi)
@@ -191,18 +197,25 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   case 2:  // Toggle
     Settings.sta_active ^= 1;
   }        // 3: Current AP
-  if ('\0' == Settings.sta_ssid[Settings.sta_active][0]) { Settings.sta_active ^= 1; }  // Skip empty SSID
+  if (!strlen(SettingsText(SET_STASSID1 + Settings.sta_active))) {
+    Settings.sta_active ^= 1;  // Skip empty SSID
+  }
   if (Settings.ip_address[0]) {
     WiFi.config(Settings.ip_address[0], Settings.ip_address[1], Settings.ip_address[2], Settings.ip_address[3]);  // Set static IP
   }
   WiFi.hostname(my_hostname);
+
+  char stemp[40] = { 0 };
   if (channel) {
-    WiFi.begin(Settings.sta_ssid[Settings.sta_active], Settings.sta_pwd[Settings.sta_active], channel, Wifi.bssid);
+    WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active), channel, Wifi.bssid);
+    // Add connected BSSID and channel for multi-AP installations
+    char hex_char[18];
+    snprintf_P(stemp, sizeof(stemp), PSTR(" Channel %d BSSId %s"), channel, ToHex_P((unsigned char*)Wifi.bssid, 6, hex_char, sizeof(hex_char), ':'));
   } else {
-    WiFi.begin(Settings.sta_ssid[Settings.sta_active], Settings.sta_pwd[Settings.sta_active]);
+    WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active));
   }
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
-    Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s..."),
+    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), stemp, kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
 
 #if LWIP_IPV6
   for (bool configured = false; !configured;) {
@@ -221,22 +234,22 @@ void WifiBegin(uint8_t flag, uint8_t channel)
 
 void WifiBeginAfterScan(void)
 {
-  static int8_t best_network_db;
-
   // Not active
   if (0 == Wifi.scan_state) { return; }
   // Init scan when not connected
   if (1 == Wifi.scan_state) {
     memset((void*) &Wifi.bssid, 0, sizeof(Wifi.bssid));
-    best_network_db = -127;
+    Wifi.best_network_db = -127;
     Wifi.scan_state = 3;
   }
   // Init scan when connected
   if (2 == Wifi.scan_state) {
     uint8_t* bssid = WiFi.BSSID();                  // Get current bssid
     memcpy((void*) &Wifi.bssid, (void*) bssid, sizeof(Wifi.bssid));
-    best_network_db = WiFi.RSSI();                  // Get current rssi and add threshold
-    if (best_network_db < -WIFI_RSSI_THRESHOLD) { best_network_db += WIFI_RSSI_THRESHOLD; }
+    Wifi.best_network_db = WiFi.RSSI();             // Get current rssi and add threshold
+    if (Wifi.best_network_db < -WIFI_RSSI_THRESHOLD) {
+      Wifi.best_network_db += WIFI_RSSI_THRESHOLD;
+    }
     Wifi.scan_state = 3;
   }
   // Init scan
@@ -277,12 +290,12 @@ void WifiBeginAfterScan(void)
 
         bool known = false;
         uint32_t j;
-        for (j = 0; j < 2; j++) {
-          if (ssid_scan == Settings.sta_ssid[j]) {  // SSID match
+        for (j = 0; j < MAX_SSIDS; j++) {
+          if (ssid_scan == SettingsText(SET_STASSID1 + j)) {  // SSID match
             known = true;
-            if (rssi_scan > best_network_db) {      // Best network
-              if (sec_scan == ENC_TYPE_NONE || Settings.sta_pwd[j]) {  // Check for passphrase if not open wlan
-                best_network_db = (int8_t)rssi_scan;
+            if (rssi_scan > Wifi.best_network_db) {      // Best network
+              if (sec_scan == ENC_TYPE_NONE || SettingsText(SET_STAPWD1 + j)) {  // Check for passphrase if not open wlan
+                Wifi.best_network_db = (int8_t)rssi_scan;
                 channel = chan_scan;
                 ap = j;                             // AP1 or AP2
                 memcpy((void*) &Wifi.bssid, (void*) bssid_scan, sizeof(Wifi.bssid));
@@ -352,6 +365,14 @@ bool WifiCheckIPv6(void)
   return ipv6_global;
 }
 
+String WifiGetIPv6(void)
+{
+  for (auto a : addrList) {
+    if(!a.isLocal() && a.isV6()) return a.toString();
+  }
+  return "";
+}
+
 bool WifiCheckIPAddrStatus(void)	// Return false for 169.254.x.x or fe80::/64
 {
   bool ip_global=false;
@@ -374,8 +395,8 @@ void WifiCheckIp(void)
     WifiSetState(1);
     Wifi.counter = WIFI_CHECK_SEC;
     Wifi.retry = Wifi.retry_init;
-    AddLog_P((Wifi.status != WL_CONNECTED) ? LOG_LEVEL_INFO : LOG_LEVEL_DEBUG_MORE, S_LOG_WIFI, PSTR(D_CONNECTED));
     if (Wifi.status != WL_CONNECTED) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECTED));
 //      AddLog_P(LOG_LEVEL_INFO, PSTR("Wifi: Set IP addresses"));
       Settings.ip_address[1] = (uint32_t)WiFi.gatewayIP();
       Settings.ip_address[2] = (uint32_t)WiFi.subnetMask();
@@ -426,7 +447,7 @@ void WifiCheckIp(void)
         if (!Wifi.retry || ((Wifi.retry_init / 2) == Wifi.retry)) {
           AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
         } else {
-          if (('\0' == Settings.sta_ssid[0][0]) && ('\0' == Settings.sta_ssid[1][0])) {
+          if (!strlen(SettingsText(SET_STASSID1)) && !strlen(SettingsText(SET_STASSID2))) {
             wifi_config_tool = WIFI_MANAGER;  // Skip empty SSIDs and start Wifi config tool
             Wifi.retry = 0;
           } else {
@@ -472,13 +493,13 @@ void WifiCheck(uint8_t param)
       if (Wifi.config_counter) {
         if (!Wifi.config_counter) {
           if (strlen(WiFi.SSID().c_str())) {
-            strlcpy(Settings.sta_ssid[0], WiFi.SSID().c_str(), sizeof(Settings.sta_ssid[0]));
+            SettingsUpdateText(SET_STASSID1, WiFi.SSID().c_str());
           }
           if (strlen(WiFi.psk().c_str())) {
-            strlcpy(Settings.sta_pwd[0], WiFi.psk().c_str(), sizeof(Settings.sta_pwd[0]));
+            SettingsUpdateText(SET_STAPWD1, WiFi.psk().c_str());
           }
           Settings.sta_active = 0;
-          AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER D_CMND_SSID "1 %s"), Settings.sta_ssid[0]);
+          AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER D_CMND_SSID "1 %s"), SettingsText(SET_STASSID1));
         }
       }
       if (!Wifi.config_counter) {
@@ -543,7 +564,11 @@ void WifiCheck(uint8_t param)
           StopWebserver();
         }
 #ifdef USE_EMULATION
-        if (Settings.flag2.emulation) { UdpConnect(); }
+#ifdef USE_DEVICE_GROUPS
+        if (Settings.flag2.emulation || Settings.flag4.device_groups_enabled) { UdpConnect(); }
+#else // USE_DEVICE_GROUPS
+      if (Settings.flag2.emulation) { UdpConnect(); }
+#endif // USE_DEVICE_GROUPS
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
 
@@ -577,10 +602,43 @@ int WifiState(void)
   return state;
 }
 
+String WifiGetOutputPower(void)
+{
+  char stemp1[TOPSZ];
+  dtostrfd((float)(Settings.wifi_output_power) / 10, 1, stemp1);
+  return String(stemp1);
+}
+
 void WifiSetOutputPower(void)
 {
   WiFi.setOutputPower((float)(Settings.wifi_output_power) / 10);
 }
+
+/*
+  See Esp.h, core_esp8266_phy.cpp and test_overrides.ino
+  RF_DEFAULT = 0,  // RF_CAL or not after deep-sleep wake up, depends on init data byte 108.
+  RF_CAL = 1,      // RF_CAL after deep-sleep wake up, there will be large current.
+  RF_NO_CAL = 2,   // no RF_CAL after deep-sleep wake up, there will only be small current.
+  RF_DISABLED = 4  // disable RF after deep-sleep wake up, just like modem sleep, there will be the smallest current.
+*/
+#ifdef WIFI_RF_MODE_RF_CAL
+#ifndef USE_DEEPSLEEP
+RF_MODE(RF_CAL);
+#endif  // USE_DEEPSLEEP
+#endif  // WIFI_RF_MODE_RF_CAL
+
+#ifdef WIFI_RF_PRE_INIT
+bool rf_pre_init_flag = false;
+RF_PRE_INIT()
+{
+#ifndef USE_DEEPSLEEP
+  system_deep_sleep_set_option(1);   // The option is 1 by default.
+  system_phy_set_rfoption(RF_CAL);
+#endif  // USE_DEEPSLEEP
+  system_phy_set_powerup_option(3);  // 3: RF initialization will do the whole RF calibration which will take about 200ms; this increases the current consumption.
+  rf_pre_init_flag = true;
+}
+#endif  // WIFI_RF_PRE_INIT
 
 void WifiConnect(void)
 {
@@ -588,35 +646,56 @@ void WifiConnect(void)
   WifiSetOutputPower();
   WiFi.persistent(false);     // Solve possible wifi init errors
   Wifi.status = 0;
-  Wifi.retry_init = WIFI_RETRY_OFFSET_SEC + ((ESP.getChipId() & 0xF) * 2);
+  Wifi.retry_init = WIFI_RETRY_OFFSET_SEC + (ESP.getChipId() & 0xF);  // Add extra delay to stop overrun by simultanous re-connects
   Wifi.retry = Wifi.retry_init;
   Wifi.counter = 1;
+
+#ifdef WIFI_RF_PRE_INIT
+  if (rf_pre_init_flag) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Pre-init done"));
+  }
+#endif  // WIFI_RF_PRE_INIT
 }
 
-// Enable from 6.0.0a until 6.1.0a - disabled due to possible cause of bad wifi connect on core 2.3.0
-// Re-enabled from 6.3.0.7 with ESP.restart replaced by ESP.reset
-void WifiDisconnect(void)
+void WifiShutdown(bool option = false)
 {
-  // Courtesy of EspEasy
-  WiFi.persistent(true);      // use SDK storage of SSID/WPA parameters
-  ETS_UART_INTR_DISABLE();
-  wifi_station_disconnect();  // this will store empty ssid/wpa into sdk storage
-  ETS_UART_INTR_ENABLE();
-  WiFi.persistent(false);     // Do not use SDK storage of SSID/WPA parameters
-}
-
-void WifiShutdown(void)
-{
+  // option = false - Legacy disconnect also used by DeepSleep
+  // option = true  - Disconnect with SDK wifi calibrate sector erase when WIFI_FORCE_RF_CAL_ERASE enabled
   delay(100);                 // Allow time for message xfer - disabled v6.1.0b
+
+#ifdef USE_EMULATION
+  UdpDisconnect();
+  delay(100);                 // Flush anything in the network buffers.
+#endif  // USE_EMULATION
+
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     MqttDisconnect();
+    delay(100);               // Flush anything in the network buffers.
   }
-  WifiDisconnect();
+
+#ifdef WIFI_FORCE_RF_CAL_ERASE
+  if (option) {
+    WiFi.disconnect(false);   // Disconnect wifi
+    SettingsErase(4);         // Delete SDK wifi config and calibrate data
+  } else
+#endif  // WIFI_FORCE_RF_CAL_ERASE
+  {
+    // Enable from 6.0.0a until 6.1.0a - disabled due to possible cause of bad wifi connect on core 2.3.0
+    // Re-enabled from 6.3.0.7 with ESP.restart replaced by ESP.reset
+    // Courtesy of EspEasy
+    // WiFi.persistent(true);    // use SDK storage of SSID/WPA parameters
+    ETS_UART_INTR_DISABLE();
+    wifi_station_disconnect();  // this will store empty ssid/wpa into sdk storage
+    ETS_UART_INTR_ENABLE();
+    // WiFi.persistent(false);   // Do not use SDK storage of SSID/WPA parameters
+  }
+  delay(100);                 // Flush anything in the network buffers.
 }
 
 void EspRestart(void)
 {
-  WifiShutdown();
+  WifiShutdown(true);
+  CrashDumpClear();           // Clear the stack dump in RTC
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
 }

@@ -1,7 +1,7 @@
 /*
   pt-PT.h - localization for Portuguese - Portugal for Tasmota
 
-  Copyright (C) 2019  Paulo Paiva
+  Copyright (C) 2020  Paulo Paiva
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -71,8 +71,10 @@
 #define D_COLDLIGHT "Luz Fria"
 #define D_COMMAND "Comando"
 #define D_CONNECTED "Ligado"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Contagem"
 #define D_COUNTER "Contador"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Corrente"          // As in Voltage and Current
 #define D_DATA "Dados"
 #define D_DARKLIGHT "Luz Escura"
@@ -82,7 +84,7 @@
 #define D_DNS_SERVER "Servidor DNS"
 #define D_DONE "Concluído"
 #define D_DST_TIME "DST"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "Emulação"
 #define D_ENABLED "Habilitado"
 #define D_ERASE "Apagar"
@@ -112,6 +114,7 @@
 #define D_LIGHT "Luz"
 #define D_LWT "LWT"
 #define D_MODULE "Módulo"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "multi-pressão"
 #define D_NOISE "Ruído"
@@ -134,6 +137,7 @@
 #define D_PROGRAM_SIZE "Tamanho do Programa"
 #define D_PROJECT "Projeto"
 #define D_RAIN "Chuva"
+#define D_RANGE "Range"
 #define D_RECEIVED "Recebido"
 #define D_RESTART "Reiniciar"
 #define D_RESTARTING "A reiniciar"
@@ -353,6 +357,7 @@
 #define D_UPLOAD_ERR_11 "Falha ao apagar o chip de RF"
 #define D_UPLOAD_ERR_12 "Falha ao escrever no chip de RF"
 #define D_UPLOAD_ERR_13 "Falha ao descodificar o firmware RF"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Código de erro do envio"
 
 #define D_ENTER_COMMAND "Inserir comando"
@@ -501,7 +506,7 @@
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Direção do vento"
 #define D_TX20_WIND_SPEED "Velocidade do vento"
-#define D_TX20_WIND_SPEED_AVG "Velocidade média do vento"
+#define D_TX20_WIND_SPEED_MIN "Velocidade mínima do vento"
 #define D_TX20_WIND_SPEED_MAX "Velocidade máxima do vento"
 #define D_TX20_NORTH "N"
 #define D_TX20_EAST "E"
@@ -560,7 +565,7 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
-#define D_SENSOR_TX20_TX       "TX20"
+#define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFrecv"
 #define D_SENSOR_TUYA_TX       "Tuya Tx"
@@ -629,23 +634,32 @@
 #define D_SENSOR_SLAVE_TX    "Slave TX"
 #define D_SENSOR_SLAVE_RX    "Slave RX"
 #define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_GPS_RX        "GPS RX"
+#define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
+#define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
+#define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
-#define D_UNIT_HOUR "Hr"
+#define D_UNIT_HOUR "h"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
-#define D_UNIT_KILOOHM "kOhm"
+#define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
-#define D_UNIT_MICROMETER "um"
-#define D_UNIT_MICROSECOND "us"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
+#define D_UNIT_MICROMETER "µm"
+#define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
@@ -664,7 +678,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Ângulo de fase"
 #define D_IMPORT_ACTIVE   "Ativo importado"
 #define D_EXPORT_ACTIVE   "Ativo exportado"
@@ -673,6 +687,7 @@
 #define D_TOTAL_REACTIVE  "Reactivo total"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "Voltagem PV1"
@@ -697,5 +712,18 @@
 #define D_SOLAX_ERROR_6   "Falha de temperatura excessiva"
 #define D_SOLAX_ERROR_7   "Falha no ventilador"
 #define D_SOLAX_ERROR_8   "Outra falha no dispositivo"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Edit script"
+#define D_SCRIPT               "edit script"
+#define D_SDCARD_UPLOAD        "file upload"
+#define D_SDCARD_DIR           "sd card directory"
+#define D_UPL_DONE             "Done"
+#define D_SCRIPT_CHARS_LEFT    "chars left"
+#define D_SCRIPT_CHARS_NO_MORE "no more chars"
+#define D_SCRIPT_DOWNLOAD      "Download"
+#define D_SCRIPT_ENABLE        "script enable"
+#define D_SCRIPT_UPLOAD        "Upload"
+#define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
 #endif  // _LANGUAGE_PT_PT_H_

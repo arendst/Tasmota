@@ -1,7 +1,7 @@
 /*
   xdrv_06_snfbridge.ino - sonoff RF bridge 433 support for Tasmota
 
-  Copyright (C) 2019  Theo Arends and Erik Andrén Zachrisson (fw update)
+  Copyright (C) 2020  Theo Arends and Erik Andrén Zachrisson (fw update)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -578,8 +578,7 @@ bool Xdrv06(uint8_t function)
         SonoffBridgeSendCommand(0xA7);  // Stop reading RF signals enabling iTead default RF handling
         break;
       case FUNC_PRE_INIT:
-        Settings.flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
-        baudrate = 19200;
+        SetSerial(19200, TS_SERIAL_8N1);
         break;
     }
   }

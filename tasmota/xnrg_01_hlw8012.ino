@@ -1,7 +1,7 @@
 /*
   xnrg_01_hlw8012.ino - HLW8012 (Sonoff Pow) energy sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -143,9 +143,7 @@ void HlwEvery200ms(void)
     if (Hlw.cf1_timer >= 8) {
       Hlw.cf1_timer = 0;
       Hlw.select_ui_flag = (Hlw.select_ui_flag) ? false : true;
-      if (pin[GPIO_NRG_SEL] < 99) {
-        digitalWrite(pin[GPIO_NRG_SEL], Hlw.select_ui_flag);
-      }
+      DigitalWrite(GPIO_NRG_SEL, Hlw.select_ui_flag);
 
       if (Hlw.cf1_pulse_counter) {
         cf1_pulse_length = Hlw.cf1_summed_pulse_length / Hlw.cf1_pulse_counter;

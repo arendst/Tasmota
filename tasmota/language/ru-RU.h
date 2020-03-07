@@ -1,7 +1,7 @@
 /*
   ru-RU.h - localization for Russian - Rissia for Tasmota
 
-  Copyright (C) 2019  Theo Arends / roman-vn
+  Copyright (C) 2020  Theo Arends / roman-vn
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -71,8 +71,10 @@
 #define D_COLDLIGHT "Холодный"
 #define D_COMMAND "Команда"
 #define D_CONNECTED "Соединен"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Подсчет"
 #define D_COUNTER "Счетчик"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Ток"          // As in Voltage and Current
 #define D_DATA "Данные"
 #define D_DARKLIGHT "Темный"
@@ -82,7 +84,7 @@
 #define D_DNS_SERVER "DNS Сервер"
 #define D_DONE "Выполнено"
 #define D_DST_TIME "DST"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "Эмуляция"
 #define D_ENABLED "Активно"
 #define D_ERASE "Стирать"
@@ -112,6 +114,7 @@
 #define D_LIGHT "Свет"
 #define D_LWT "LWT"
 #define D_MODULE "Модуль"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "многократное нажатие"
 #define D_NOISE "Шум"
@@ -134,6 +137,7 @@
 #define D_PROGRAM_SIZE "Размер программы "
 #define D_PROJECT "Проект"
 #define D_RAIN "Rain"
+#define D_RANGE "Range"
 #define D_RECEIVED "Получено"
 #define D_RESTART "Перезапуск"
 #define D_RESTARTING "Перезапуск"
@@ -353,6 +357,7 @@
 #define D_UPLOAD_ERR_11 "Failed to erase RF chip"
 #define D_UPLOAD_ERR_12 "Failed to write to RF chip"
 #define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Код ошибки загрузки"
 
 #define D_ENTER_COMMAND "Введите команду"
@@ -501,7 +506,7 @@
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Wind Direction"
 #define D_TX20_WIND_SPEED "Wind Speed"
-#define D_TX20_WIND_SPEED_AVG "Wind Speed Avg"
+#define D_TX20_WIND_SPEED_MIN "Wind Speed Min"
 #define D_TX20_WIND_SPEED_MAX "Wind Speed Max"
 #define D_TX20_NORTH "N"
 #define D_TX20_EAST "E"
@@ -560,7 +565,7 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
-#define D_SENSOR_TX20_TX       "TX20"
+#define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFrecv"
 #define D_SENSOR_TUYA_TX       "Tuya Tx"
@@ -629,6 +634,15 @@
 #define D_SENSOR_SLAVE_TX    "Slave TX"
 #define D_SENSOR_SLAVE_RX    "Slave RX"
 #define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_GPS_RX        "GPS RX"
+#define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
+#define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
+#define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
 
 // Units
 #define D_UNIT_AMPERE "А"
@@ -643,7 +657,7 @@
 #define D_UNIT_KILOOHM "кОм"
 #define D_UNIT_KILOWATTHOUR "кВт"
 #define D_UNIT_LUX "лк"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "мкг/м3"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "мкг/м³"
 #define D_UNIT_MICROMETER "мкм"
 #define D_UNIT_MICROSECOND "мкс"
 #define D_UNIT_MILLIAMPERE "мА"
@@ -664,7 +678,7 @@
 #define D_UNIT_WATTHOUR "ВтЧ"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Угол фазы"
 #define D_IMPORT_ACTIVE   "Импорт активной мощности"
 #define D_EXPORT_ACTIVE   "Экспорт активной мощности"
@@ -673,6 +687,7 @@
 #define D_TOTAL_REACTIVE  "Итого реактивная мощность"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Град"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltage"
@@ -697,5 +712,18 @@
 #define D_SOLAX_ERROR_6   "Over Temperature Fault"
 #define D_SOLAX_ERROR_7   "Fan Fault"
 #define D_SOLAX_ERROR_8   "Other Device Fault"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Edit script"
+#define D_SCRIPT               "edit script"
+#define D_SDCARD_UPLOAD        "file upload"
+#define D_SDCARD_DIR           "sd card directory"
+#define D_UPL_DONE             "Done"
+#define D_SCRIPT_CHARS_LEFT    "chars left"
+#define D_SCRIPT_CHARS_NO_MORE "no more chars"
+#define D_SCRIPT_DOWNLOAD      "Download"
+#define D_SCRIPT_ENABLE        "script enable"
+#define D_SCRIPT_UPLOAD        "Upload"
+#define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
 #endif  // _LANGUAGE_RU_RU_H_

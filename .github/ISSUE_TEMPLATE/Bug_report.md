@@ -29,7 +29,7 @@ _Make sure your have performed every step and checked the applicable boxes befor
 
 - [ ] Read the [Contributing Guide and Policy](https://github.com/arendst/Tasmota/blob/development/CONTRIBUTING.md) and [the Code of Conduct](https://github.com/arendst/Tasmota/blob/development/CODE_OF_CONDUCT.md)
 - [ ] Searched the problem in [issues](https://github.com/arendst/Tasmota/issues)
-- [ ] Searched the problem in the [wiki](https://github.com/arendst/Tasmota/wiki/Troubleshooting)
+- [ ] Searched the problem in the [docs](https://tasmota.github.io/docs/#/help/FAQ)
 - [ ] Searched the problem in the [forum](https://groups.google.com/d/forum/sonoffusers)
 - [ ] Searched the problem in the [chat](https://discord.gg/Ks2Kzd4)
 - [ ] Device used (e.g., Sonoff Basic): _____
@@ -38,31 +38,31 @@ _Make sure your have performed every step and checked the applicable boxes befor
   - [ ] Self-compiled
     - [ ] IDE / Compiler used: _____
 - [ ] Flashing tools used: _____
-- [ ] Provide the output of command: ``Backlog Template; Module; GPIO 255``:
-  ```
+- [ ] Provide the output of command: `Backlog Template; Module; GPIO 255`:
+```
   Configuration output here:
 
 
-  ```
-- [ ] If using rules, provide the output of this command: ``Backlog Rule1; Rule2; Rule3``:
-  ```
+```
+- [ ] If using rules, provide the output of this command: `Backlog Rule1; Rule2; Rule3`:
+```
   Rules output here:
 
 
-  ```
-- [ ] Provide the output of this command: ``Status 0``:
-  ```
+```
+- [ ] Provide the output of this command: `Status 0`:
+```
   STATUS 0 output here:
 
 
-  ```
+```
 - [ ] Provide the output of the Console log output when you experience your issue; if applicable:
-  _(Please use_ ``weblog 4`` _for more debug information)_
-  ```
+  _(Please use_ `weblog 4` _for more debug information)_
+```
   Console output here:
 
 
-  ```
+```
 
 ### TO REPRODUCE
 _Steps to reproduce the behavior:_
