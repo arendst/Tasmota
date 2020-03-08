@@ -62,7 +62,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Change Zigbee command prefix from ``Zigbee*`` to ``Zb*``
 - Change MQTT message size with additional 200 characters
 - Change display of some date and time messages from "Wed Feb 19 10:45:12 2020" to "2020-02-19T10:45:12"
-- Change switchmode 6 according to issue 7778 (#7831)
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
 - Fix ``White`` added to light status (#7142)
