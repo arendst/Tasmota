@@ -15,6 +15,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 */
 
 #ifdef USE_I2C
@@ -23,6 +24,15 @@
  * AHT10/15 - Temperature and Humidity
  *
  * I2C Address: 0x38
+ *
+ * Attention: this Sensor is incompatible with other I2C devices on I2C bus.
+ * 
+ * The Datasheet write:
+ * "Only a single AHT10 can be connected to the I2C bus and no other I2C 
+ *  devices can be connected".
+ * 
+ * after lot of search and tests, now is confirmed that works only reliable with one sensor
+ * on I2C Bus
 \*********************************************************************************************/
 
 #define XSNS_63              63
@@ -31,7 +41,6 @@
 #define AHT10_ADDR           0x38
 
 uint8_t eSensorCalibrateCmd[3] = {0xE1, 0x08, 0x00};
-uint8_t eSensorNormalCmd[3]    = {0xA8, 0x00, 0x00};
 uint8_t eSensorMeasureCmd[3]   = {0xAC, 0x33, 0x00};
 uint8_t eSensorResetCmd        = 0xBA;
 
@@ -52,7 +61,7 @@ bool AHT10Read(void)
   Wire.beginTransmission(AHT10_ADDR);
   Wire.write(eSensorMeasureCmd, 3);
   Wire.endTransmission();
-  delay(100);
+  delay(80);
 
   Wire.requestFrom(AHT10_ADDR, 6);
   for (uint32_t i = 0; Wire.available() > 0; i++) {
@@ -80,12 +89,12 @@ bool AHT10Init(void)
 {
   Wire.begin(AHT10_ADDR);
   Wire.beginTransmission(AHT10_ADDR);
-  Wire.write(eSensorCalibrateCmd, 3);
+  Wire.write(eSensorCalibrateCmd, 3); // init with internal temp coef.
   Wire.endTransmission();
 
-  delay(500);  // ?!?! too long
+  delay(40);  //  after tests, its ok
 
-  return (0x08 == (AHT10ReadStatus() & 0x68));
+  return (0x08 == (AHT10ReadStatus() & 0x68)); 
 }
 
 uint8_t AHT10ReadStatus(void)
