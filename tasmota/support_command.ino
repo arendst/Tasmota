@@ -1113,35 +1113,6 @@ void CmndSwitchDebounce(void)
   ResponseCmndNumber(Settings.switch_debounce);
 }
 
-/**
- * Changes the Serial port number of bits, parity and stop bits.
- * For the time being this command only has effect on the hardware
- * serial port (GPIO1 and GPIO3)
- * 
- * Meaning of the values:
- * 
- *   0 - 7N1 (7 data bits / no parity / 1 stop bit)
- *   1 - 7E1 (7 data bits / even parity / 1 stop bit)
- *   2 - 8N1 (8 data bits / no parity / 1 stop bit)
- *   3 - 8E1 (8 data bits / even parity / 1 stop bit)
- * 
- */
-
-void CmndSerialConfig(void)
-{
-  // a frugal validation to check if the provided serial port mode is valid:
-
-  if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 3) {
-    uint8_t mode = (uint8_t) (XdrvMailbox.payload & 3);
-
-    SetSerialConfig(mode);
-  }
-
-  SerialCfg config = SettingToSerialCfg(Settings.serial_config);
-
-  ResponseCmndNumber(config.mode);
-}
-
 void CmndBaudrate(void)
 {
   if (XdrvMailbox.payload >= 300) {
