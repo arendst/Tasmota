@@ -55,6 +55,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 ### Version 8.1.0.10
 
 - Change default my_user_config.h driver and sensor support removing most sensors and adding most drivers
+- Change DHT driver (#7468, #7717)
 - Change Lights: simplified gamma correction and 10 bits internal computation
 - Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
 - Change IRremoteESP8266 library updated to v2.7.4
@@ -108,8 +109,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add ``ZbZNPReceived``and ``ZbZCLReceived`` being published to MQTT when ``SetOption66 1``
 - Add optional Wifi AccessPoint passphrase define WIFI_AP_PASSPHRASE in my_user_config.h (#7690)
 - Add support for FiF LE-01MR energy meter by saper-2 (#7584)
-- Add new DHT driver. The old driver can still be used using define USE_DHT_OLD (#7468)
-- Add another new DHT driver based on ESPEasy. The old driver can still be used using define USE_DHT_OLD. The previous new driver can be used with define USE_DHT_V2 (#7717)
 - Add initial support for Sensors AHT10 and AHT15 by Martin Wagner (#7596)
 - Add support for Wemos Motor Shield V1 by Denis Sborets (#7764)
 - Add Zigbee enhanced commands decoding, added ``ZbPing``
