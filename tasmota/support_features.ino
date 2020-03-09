@@ -257,10 +257,6 @@ void GetFeatures(void)
 #ifdef USE_HTU
   feature_sns1 |= 0x00000200;  // xsns_08_htu21.ino
 #endif
-// TODO not sure if is the correct feature setting for this sensor:
-#ifdef USE_HDC1080
-  feature_sns1 |= 0x00000200;  // xsns_92_hdc1080.ino
-#endif
 #ifdef USE_BMP
   feature_sns1 |= 0x00000400;  // xsns_09_bmp.ino
 #endif
@@ -327,7 +323,10 @@ void GetFeatures(void)
 #ifdef USE_TM1638
   feature_sns1 |= 0x80000000;  // xsns_28_tm1638.ino
 #endif
-
+// TODO not sure if is the correct feature setting for this sensor:
+#ifdef USE_HDC1080
+  feature_sns1 |= 0x00000200;  // xsns_92_hdc1080.ino
+#endif
 /*********************************************************************************************/
 
   feature_sns2 = 0x00000000;

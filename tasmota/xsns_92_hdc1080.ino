@@ -50,40 +50,46 @@
 
 // Possible values for the configuration register fields:
 
-#define HDC1080_HEAT_OFF    0x00
-#define HDC1080_HEAT_ON     0x01
-#define HDC1080_ACQ_SEQ_ON  1
-#define HDC1080_ACQ_SEQ_OFF 0
-#define HDC1080_MEAS_RES_14 0x00
-#define HDC1080_MEAS_RES_11 0x01
-#define HDC1080_MEAS_RES_8  0x02
+#define HDC1080_RST_ON      0x8000
+#define HDC1080_HEAT_ON     0x2000
+#define HDC1080_MODE_ON     0x1000  // acquision mode (temperature + humidity)
+#define HDC1080_TRES_11     0x400
+#define HDC1080_HRES_11     0x100
+#define HDC1080_HRES_8      0x80
 
-#define HDC1080_CONV_TIME   15      // Assume 6.50 + 6.35 ms + x of conversion delay for this device
+// Constants:
+
+#define HDC1080_CONV_TIME   25      // Assume 6.50 + 6.35 ms + x of conversion delay for this device
 #define HDC1080_TEMP_MULT   0.0025177
 #define HDC1080_RH_MULT     0.0025177
-#define HDC1080_TEMP_OFFSET 40
+#define HDC1080_TEMP_OFFSET 40.0
 
-const char kHdcTypes[] PROGMEM = "HDC1080";
-
+const char* hdc_type_name = "HDC1080";
 uint8_t hdc_address;
-uint8_t hdc_type = 0;
+uint16_t hdc_manufacturer_id = 0;
+uint16_t hdc_device_id = 0;
 
-float hdc_temperature = 0;
-float hdc_humidity = 0;
+float hdc_temperature = 0.0;
+float hdc_humidity = 0.0;
+
 uint8_t hdc_valid = 0;
-char hdc_types[1];
 
 /**
  * Reads the device ID register.
  * 
  */
 uint16_t HdcReadDeviceId(void) {
-  uint16_t deviceID = 0;
-
-  deviceID = I2cRead16(HDC1080_ADDR, HDC_REG_DEV_ID);
-
-  return deviceID;
+  return I2cRead16(HDC1080_ADDR, HDC_REG_DEV_ID);
 }
+
+/**
+ * Reads the manufacturer ID register.
+ * 
+ */
+uint16_t HdcReadManufacturerId(void) {
+  return I2cRead16(HDC1080_ADDR, HDC_REG_MAN_ID);
+}
+
 
 /**
  * Configures the acquisition mode of the sensor. The
@@ -94,7 +100,7 @@ uint16_t HdcReadDeviceId(void) {
  * MODE = 1 -> Temperature and Humidity are acquired in sequence, Temperature first
  * 
  */
-void HdcSetAcqMode(bool mode) {
+void HdcSetAcqMode(uint8_t mode) {
   uint16_t current = I2cRead16(HDC1080_ADDR, HDC_REG_CONFIG);
 
   // bit 12 of the register contains the MODE field
@@ -102,7 +108,7 @@ void HdcSetAcqMode(bool mode) {
   // apply the bit mask to preserve the remaining bits
   // of the register:
 
-  current &= (uint16_t) ((mode << 12) | 0xEFFF);
+  current = (current & 0xEFFF) |  ((uint16_t) (mode << 12));
 
   I2cWrite16(HDC1080_ADDR, HDC_REG_CONFIG, current);  
 }
@@ -124,7 +130,7 @@ void HdcSetTemperatureResolution(uint8_t resolution) {
   // apply the bit mask to preserve the remaining bits
   // of the register:
 
-  current &= (uint16_t) ((resolution << 10) | 0xFBFF);
+  current = (current & 0xFBFF) | ((uint16_t) (resolution << 10));
 
   I2cWrite16(HDC1080_ADDR, HDC_REG_CONFIG, current);
 }
@@ -147,28 +153,9 @@ void HdcSetHumidityResolution(uint8_t resolution) {
   // apply the bit mask to preserve the remaining bits
   // of the register:
 
-  current &= (uint16_t) ((resolution << 8) | 0xFCFF);
+  current = (current & 0xFCFF) | ((uint16_t) (resolution << 8));
 
   I2cWrite16(HDC1080_ADDR, HDC_REG_CONFIG, current);
-}
-
-/**
- * Performs a soft reset on the device.
- * 
- * RST = 1 -> software reset
- * 
- */
-void HdcReset(void) {
-  uint16_t current = I2cRead16(HDC1080_ADDR, HDC_REG_CONFIG);
-  
-  // bits 9:8 of the register contain the RST flag
-  // so we set it to 1:
-
-  current |= 0x8000;
-
-  I2cWrite16(HDC1080_ADDR, HDC_REG_CONFIG, current);
-
-  delay(15);  // Not sure how long it takes to reset. Assuming 15ms
 }
 
 /**
@@ -183,21 +170,54 @@ void HdcReset(void) {
 void HdcHeater(uint8_t heater) {
   uint16_t current = I2cRead16(HDC1080_ADDR, HDC_REG_CONFIG);
   
-  // bits 13 of the register contain the HEAT flag
+  // bits 13 of the configuration  register contains the HEAT flag
   // so we set it according to the value of the heater argument:
 
-  current &= (uint16_t) ((heater << 13) | 0xDFFF);
+  current = (current | 0xDFFF) | ((uint16_t) (heater << 13));
 
   I2cWrite16(HDC1080_ADDR, HDC_REG_CONFIG, current);
 }
 
-void HdcInit(void)
-{
+/**
+ * Overwrites the configuration register with the provided config
+ */
+void HdcConfig(uint16_t config) {
+  I2cWrite16(HDC1080_ADDR, HDC_REG_CONFIG, config);
+}
+
+/**
+ * Performs a soft reset on the device.
+ * 
+ * RST = 1 -> software reset
+ * 
+ */
+void HdcReset(void) {
+  uint16_t current = I2cRead16(HDC1080_ADDR, HDC_REG_CONFIG);
+  
+  // bit 15 of the configuration register contains the RST flag
+  // so we set it to 1:
+
+  current |= 0x8000;
+
+  I2cWrite16(HDC1080_ADDR, HDC_REG_CONFIG, current);
+
+  delay(30);  // Not sure how long it takes to reset. Assuming 15ms
+}
+
+
+/**
+ * The various initialization steps for this sensor.
+ * 
+ */
+void HdcInit(void)  {
   HdcReset();
-  HdcHeater(HDC1080_HEAT_OFF);
-  HdcSetAcqMode(HDC1080_ACQ_SEQ_ON);
-  HdcSetTemperatureResolution(HDC1080_MEAS_RES_14);
-  HdcSetHumidityResolution(HDC1080_MEAS_RES_14);
+  //HdcHeater(HDC1080_HEAT_OFF);
+  //HdcSetAcqMode(HDC1080_ACQ_SEQ_ON);
+  //HdcSetAcqMode(HDC1080_ACQ_SEQ_OFF);
+  //HdcSetTemperatureResolution(HDC1080_MEAS_RES_14);
+  //HdcSetHumidityResolution(HDC1080_MEAS_RES_14);
+  
+  HdcConfig(0);
 }
 
 /**
@@ -208,14 +228,13 @@ void HdcInit(void)
  */
 bool HdcRead(void) {
   int8_t status = 0;
-  uint16_t sensor_data[2];
+  //uint16_t sensor_data[2];
+
+  uint16_t sensor_data = 0;
 
   // In this sensor we must start by performing a write to the 
   // temperature register. This signals the sensor to begin a 
   // measurement:
-
-  // TODO initialize the measurement mode and 
-  // read both registers in a single transaction:
 
   Wire.beginTransmission(HDC1080_ADDR);
   Wire.write(HDC_REG_TEMP);
@@ -226,32 +245,46 @@ bool HdcRead(void) {
     return false; 
   }           
 
-  delay(HDC1080_CONV_TIME);                                    // Sensor time at max resolution
+  delay(HDC1080_CONV_TIME);  // Apply sensor conversion time at max resolution
 
   // reads the temperature and humidity in a single transaction:
 
-  status = I2cReadBuffer(HDC1080_ADDR, HDC_REG_TEMP, (uint8_t*) sensor_data, 4);
+  //status = I2cReadBuffer(HDC1080_ADDR, HDC_REG_TEMP, (uint8_t*) sensor_data, 4);
 
+  sensor_data = I2cRead16(HDC1080_ADDR, HDC_REG_TEMP);
+
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature raw data: 0x%04x"), sensor_data);
+
+  // status = I2cReadBuffer(HDC1080_ADDR, HDC_REG_TEMP, (uint8_t*) &sensor_data, 2);
+
+/*
   if(status != 0) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: failed to read HDC_REG_TEMP. Status = %d"), status);
 
     return false;
   }
-
+*/
   // read the temperature from the first 16 bits of the result
 
-  hdc_temperature = ConvertTemp(HDC1080_TEMP_MULT * (float) (sensor_data[0]) - HDC1080_TEMP_OFFSET);
+  //hdc_temperature = ConvertTemp(HDC1080_TEMP_MULT * (float) (sensor_data[0]) - HDC1080_TEMP_OFFSET);
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature successfully converted. Value = %f"), hdc_temperature);
+  hdc_temperature = ConvertTemp(HDC1080_TEMP_MULT * (float) (sensor_data) - HDC1080_TEMP_OFFSET);
+
+  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature successfully converted. Value = %f"), hdc_temperature);
 
   // read the humidity from the last 16 bits of the result
 
-  hdc_humidity = HDC1080_RH_MULT * (float) (sensor_data[1]);
+  sensor_data = I2cRead16(HDC1080_ADDR, HDC_REG_RH);
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: humidity successfully converted. Value = %f"), hdc_humidity);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: humidity raw data: 0x%04x"), sensor_data);
+
+  //hdc_humidity = HDC1080_RH_MULT * (float) (sensor_data[1]);
+
+  hdc_humidity = HDC1080_RH_MULT * (float) (sensor_data);
+
+  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: humidity successfully converted. Value = %f"), hdc_humidity);
 
   if (hdc_humidity > 100) { hdc_humidity = 100.0; }
-
   if (hdc_humidity < 0) { hdc_humidity = 0.01; }
 
   ConvertHumidity(hdc_humidity);  // Set global humidity
@@ -263,8 +296,7 @@ bool HdcRead(void) {
 
 /********************************************************************************************/
 
-void HdcDetect(void)
-{
+void HdcDetect(void) {
   hdc_address = HDC1080_ADDR;
 
   if (I2cActive(hdc_address)) { 
@@ -273,21 +305,21 @@ void HdcDetect(void)
     return; 
   }
 
-  hdc_type = HdcReadDeviceId();
+  hdc_manufacturer_id = HdcReadManufacturerId();
+  hdc_device_id = HdcReadDeviceId();
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcDetect: detected device with id = 0x%04X"), hdc_type);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcDetect: detected device with manufacturerId = 0x%04X and deviceId = 0x%04X"), hdc_manufacturer_id, hdc_device_id);
 
-  if (hdc_type == HDC1080_DEV_ID) {
+  if (hdc_device_id == HDC1080_DEV_ID) {
     HdcInit();
-    GetTextIndexed(hdc_types, sizeof(hdc_types), 0, kHdcTypes);
-    I2cSetActiveFound(hdc_address, hdc_types);
+    I2cSetActiveFound(hdc_address, hdc_type_name);
   }
 }
 
 void HdcEverySecond(void) {
   if (uptime &1) {  // Every 2 seconds
     if (!HdcRead()) {
-      AddLogMissed(hdc_types, hdc_valid);
+      AddLogMissed((char*) hdc_type_name, hdc_valid);
     }
   }
 }
@@ -301,7 +333,7 @@ void HdcShow(bool json) {
     dtostrfd(hdc_humidity, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      ResponseAppend_P(JSON_SNS_TEMPHUM, hdc_type, temperature, humidity);
+      ResponseAppend_P(JSON_SNS_TEMPHUM, hdc_device_id, temperature, humidity);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzTempHumSensor(temperature, humidity);
@@ -315,8 +347,8 @@ void HdcShow(bool json) {
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, hdc_types, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, hdc_types, humidity);
+      WSContentSend_PD(HTTP_SNS_TEMP, hdc_type_name, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, hdc_type_name, humidity);
 #endif  // USE_WEBSERVER
     }
   }
@@ -328,14 +360,18 @@ void HdcShow(bool json) {
 
 bool Xsns92(uint8_t function)
 {
-  if (!I2cEnabled(XI2C_92)) { return false; }
+  if (!I2cEnabled(XI2C_92)) { 
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("Xsns92: I2C driver not enabled for this device."));
+
+    return false; 
+  }
 
   bool result = false;
 
   if (FUNC_INIT == function) {
     HdcDetect();
   }
-  else if (hdc_type) {
+  else if (hdc_device_id) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         HdcEverySecond();
