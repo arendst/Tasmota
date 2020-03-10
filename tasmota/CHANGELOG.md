@@ -16,6 +16,7 @@
 - Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)
 - Add support for Romanian language translations by Augustin Marti
 - Add command ``SetOption89 0/1`` for Zigbee distinct MQTT topics per device for SENSOR, allowing retained messages (#7835)
+- Change Hue emulation code optimization
 
 ### 8.1.0.9 20200220
 
