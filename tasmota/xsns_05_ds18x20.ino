@@ -126,8 +126,6 @@ void OneWireWriteBit(uint8_t v)
   delayMicroseconds(delay_high[v]);
 }
 
-/*
-// Fails for reasons unknown to me
 uint8_t OneWireReadBit(void)
 {
   if (!ds18x20_dual_mode) {
@@ -135,44 +133,19 @@ uint8_t OneWireReadBit(void)
     digitalWrite(ds18x20_pin, LOW);
     delayMicroseconds(3);
     pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+    delayMicroseconds(10);
+    uint8_t r = digitalRead(ds18x20_pin);
+    delayMicroseconds(53);
+    return r;
   } else {
     digitalWrite(ds18x20_pin_out, LOW);
     delayMicroseconds(3);
     digitalWrite(ds18x20_pin_out, HIGH);
+    delayMicroseconds(10);
+    uint8_t r = digitalRead(ds18x20_pin);
+    delayMicroseconds(53);
+    return r;
   }
-  delayMicroseconds(10);
-  uint8_t r = digitalRead(ds18x20_pin);
-  delayMicroseconds(53);
-  return r;
-}
-*/
-// Works fine in contrast to above. Why?
-void OneWireReadBit1(void)
-{
-  pinMode(ds18x20_pin, OUTPUT);
-  digitalWrite(ds18x20_pin, LOW);
-  delayMicroseconds(3);
-  pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
-}
-
-void OneWireReadBit2(void)
-{
-  digitalWrite(ds18x20_pin_out, LOW);
-  delayMicroseconds(3);
-  digitalWrite(ds18x20_pin_out, HIGH);
-}
-
-uint8_t OneWireReadBit(void)
-{
-  if (!ds18x20_dual_mode) {
-    OneWireReadBit1();
-  } else {
-    OneWireReadBit2();
-  }
-  delayMicroseconds(10);
-  uint8_t r = digitalRead(ds18x20_pin);
-  delayMicroseconds(53);
-  return r;
 }
 
 /*------------------------------------------------------------------------------------------*/
