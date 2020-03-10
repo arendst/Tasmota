@@ -65,7 +65,7 @@
 #define HDC1080_TEMP_OFFSET 40.0
 
 
-char* hdc_type_name = "HDC1080";
+const char* hdc_type_name = "HDC1080";
 uint16_t hdc_manufacturer_id = 0;
 uint16_t hdc_device_id = 0;
 
@@ -213,7 +213,7 @@ void HdcDetect(void) {
 void HdcEverySecond(void) {
   if (uptime &1) {  // Every 2 seconds
     if (!HdcRead()) {
-      AddLogMissed(hdc_type_name, hdc_valid);
+      AddLogMissed((char*) hdc_type_name, hdc_valid);
     }
   }
 }
