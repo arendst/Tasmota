@@ -89,6 +89,10 @@ uint8_t OneWireReset(void)
     digitalWrite(ds18x20_pin, LOW);
     delayMicroseconds(480);
     pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+    delayMicroseconds(70);
+    uint8_t r = !digitalRead(ds18x20_pin);
+    delayMicroseconds(410);
+    return r;
   } else {
     digitalWrite(ds18x20_pin_out, HIGH);
     do {
@@ -100,11 +104,11 @@ uint8_t OneWireReset(void)
     digitalWrite(ds18x20_pin_out, LOW);
     delayMicroseconds(480);
     digitalWrite(ds18x20_pin_out, HIGH);
+    delayMicroseconds(70);
+    uint8_t r = !digitalRead(ds18x20_pin);
+    delayMicroseconds(410);
+    return r;
   }
-  delayMicroseconds(70);
-  uint8_t r = !digitalRead(ds18x20_pin);
-  delayMicroseconds(410);
-  return r;
 }
 
 void OneWireWriteBit(uint8_t v)
@@ -126,26 +130,27 @@ void OneWireWriteBit(uint8_t v)
   delayMicroseconds(delay_high[v]);
 }
 
-uint8_t OneWireReadBit(void)
+uint8_t OneWire1ReadBit(void)
 {
-  if (!ds18x20_dual_mode) {
-    pinMode(ds18x20_pin, OUTPUT);
-    digitalWrite(ds18x20_pin, LOW);
-    delayMicroseconds(3);
-    pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
-    delayMicroseconds(10);
-    uint8_t r = digitalRead(ds18x20_pin);
-    delayMicroseconds(53);
-    return r;
-  } else {
-    digitalWrite(ds18x20_pin_out, LOW);
-    delayMicroseconds(3);
-    digitalWrite(ds18x20_pin_out, HIGH);
-    delayMicroseconds(10);
-    uint8_t r = digitalRead(ds18x20_pin);
-    delayMicroseconds(53);
-    return r;
-  }
+  pinMode(ds18x20_pin, OUTPUT);
+  digitalWrite(ds18x20_pin, LOW);
+  delayMicroseconds(3);
+  pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+  delayMicroseconds(10);
+  uint8_t r = digitalRead(ds18x20_pin);
+  delayMicroseconds(53);
+  return r;
+}
+
+uint8_t OneWire2ReadBit(void)
+{
+  digitalWrite(ds18x20_pin_out, LOW);
+  delayMicroseconds(3);
+  digitalWrite(ds18x20_pin_out, HIGH);
+  delayMicroseconds(10);
+  uint8_t r = digitalRead(ds18x20_pin);
+  delayMicroseconds(53);
+  return r;
 }
 
 /*------------------------------------------------------------------------------------------*/
@@ -161,9 +166,17 @@ uint8_t OneWireRead(void)
 {
   uint8_t r = 0;
 
-  for (uint8_t bit_mask = 0x01; bit_mask; bit_mask <<= 1) {
-    if (OneWireReadBit()) {
-      r |= bit_mask;
+  if (!ds18x20_dual_mode) {
+    for (uint8_t bit_mask = 0x01; bit_mask; bit_mask <<= 1) {
+      if (OneWire1ReadBit()) {
+        r |= bit_mask;
+      }
+    }
+  } else {
+    for (uint8_t bit_mask = 0x01; bit_mask; bit_mask <<= 1) {
+      if (OneWire2ReadBit()) {
+        r |= bit_mask;
+      }
     }
   }
   return r;
@@ -207,9 +220,13 @@ uint8_t OneWireSearch(uint8_t *newAddr)
     }
     OneWireWrite(W1_SEARCH_ROM);
     do {
-      id_bit     = OneWireReadBit();
-      cmp_id_bit = OneWireReadBit();
-
+      if (!ds18x20_dual_mode) {
+        id_bit     = OneWire1ReadBit();
+        cmp_id_bit = OneWire1ReadBit();
+      } else {
+        id_bit     = OneWire2ReadBit();
+        cmp_id_bit = OneWire2ReadBit();
+      }
       if ((id_bit == 1) && (cmp_id_bit == 1)) {
         break;
       } else {
