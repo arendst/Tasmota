@@ -1,7 +1,7 @@
 /*
   xdrv_37_sonoff_d1.ino - sonoff D1 dimmer support for Tasmota
 
-  Copyright (C) 2020  Theo Arends and robbz23 (protocol analysis)
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -29,83 +29,43 @@
  *                      64                            - Dimmer percentage (01 to 64 = 1 to 100%)
  *                         FF FF FF FF FF FF FF FF    - Not used
  *                                                 6C - CRC over bytes 2 to F (Addition)
- *
- * Based on Gravitate1:
- * When I switch the light ON via the app, I get:
- * AA 55 01 04 00 0A 01 64 FF FF FF FF FF FF FF FF 6C
- *
- * When I switch it OFF, I get:
- * AA 55 01 04 00 0A 00 64 FF FF FF FF FF FF FF FF 6B
- *
- * When I set it to 1%, I get:
- * AA 55 01 04 00 0A FF 01 FF FF FF FF FF FF FF FF 07
- * AB 55 FD F7 FF FF F5 01 FF FF FF FF FF FF FF FF 09
- *
- * When I set it to 6%, I get:
- * AA 55 01 04 00 0A FF 06 FF FF FF FF FF FF FF FF 0C
- * AB 55 FD F7 FF FF F5 06 FF FF FF FF FF FF FF FF 0E
- *
- * When I set it to 100%, I get:
- * AA 55 01 04 00 0A FF 64 FF FF FF FF FF FF FF FF 6A
- * AB 55 FD F7 FF FF F5 64 FF FF FF FF FF FF FF FF 6C
- *
- * Based on robbz23:
- * 00:17:59 CMD: Baudrate 9600
- * 00:17:59 SER: Set to 8N1 9600 bit/s
- * 00:17:59 RSL: stat/tasmota_D9E56D/RESULT = {"Baudrate":9600}
- *
- * 00:25:32 CMD: SerialSend5 aa 55 01 04 00 0a 01 22 ffffffffffffffff 29
- * 00:25:32 RSL: stat/tasmota_D9E56D/RESULT = {"SerialSend":"Done"}
- *
- * 00:26:35 CMD: SerialSend5 aa 55 01 04 00 0a 01 22 ffffffffffffffff 2a
- * 00:26:35 RSL: stat/tasmota_D9E56D/RESULT = {"SerialSend":"Done"}
- * 00:26:35 RSL: tele/tasmota_D9E56D/RESULT = {"SerialReceived":AA 55 01 04 00 00 05}
- *
- * 00:28:58 CMD: SerialSend5 aa 55 01 04 00 0a 01 01 ffffffffffffffff 09
- * 00:28:58 RSL: stat/tasmota_D9E56D/RESULT = {"SerialSend":"Done"}
- * 00:28:58 RSL: tele/tasmota_D9E56D/RESULT = {"SerialReceived":AA 55 01 04 00 00 05}
- *
- * 00:29:12 RSL: tele/tasmota_D9E56D/RESULT = {"SerialReceived":AA 55 01 04 00 0A 01 3C FF FF FF FF FF FF FF FF 44}
- * 00:29:43 RSL: tele/tasmota_D9E56D/RESULT = {"SerialReceived":AA 55 01 04 00 0A 01 01 FF FF FF FF FF FF FF FF 09}
- * 00:29:53 RSL: tele/tasmota_D9E56D/RESULT = {"SerialReceived":AA 55 01 04 00 0A 01 64 FF FF FF FF FF FF FF FF 6C}
- *
- * 00:30:02 RSL: tele/tasmota_D9E56D/RESULT = {"SerialReceived":AA 55 01 04 00 0A FF 1E FF FF FF FF FF FF FF FF 24}
 \*********************************************************************************************/
 
 #define XDRV_37                   37
 
 struct SONOFFD1 {
-  uint8_t receive_flag = 0;
-  uint8_t dimmer;
+  uint8_t receive_len = 0;
+  uint8_t power = 255;      // Not initialized
+  uint8_t dimmer = 255;     // Not initialized
 } SnfD1;
 
 /********************************************************************************************/
 
 void SonoffD1Received(void)
 {
-  char svalue[32];
+  if (serial_in_byte_counter < 8) { return; }  // Received ack from Rf chip (aa 55 01 04 00 00 05)
 
-  uint8_t action = serial_in_buffer[6];
+  uint8_t action = serial_in_buffer[6] & 1;
+  if (action != SnfD1.power) {
+    SnfD1.power = action;
+
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SD1: Remote power (%d, %d)"), SnfD1.power, SnfD1.dimmer);
+
+    ExecuteCommandPower(1, action, SRC_SWITCH);
+  }
+
   uint8_t dimmer = serial_in_buffer[7];
-
-  if (action < 2) {
-    // AA 55 01 04 00 0A 01 64 FF FF FF FF FF FF FF FF 6C - Power On, Dimmer 100%
-    // AA 55 01 04 00 0A 00 64 FF FF FF FF FF FF FF FF 6B - Power Off, Dimmer 100%
-    bool is_switch_change = (action != power);
-    if (is_switch_change) {
-      ExecuteCommandPower(1, action, SRC_SWITCH);
-    }
-  }
-  else if (0xFF == action) {
+  if (dimmer != SnfD1.dimmer) {
     SnfD1.dimmer = dimmer;
-    bool is_brightness_change = SnfD1.dimmer != Settings.light_dimmer;
-    if (power && (SnfD1.dimmer > 0) && is_brightness_change) {
-      char scmnd[20];
-      snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), SnfD1.dimmer);
-      ExecuteCommand(scmnd, SRC_SWITCH);
-    }
+
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SD1: Remote dimmer (%d, %d)"), SnfD1.power, SnfD1.dimmer);
+
+    char scmnd[20];
+    snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), SnfD1.dimmer);
+    ExecuteCommand(scmnd, SRC_SWITCH);
   }
 
+/*
   // Send Acknowledge - Copy first 5 bytes, reset byte 6 and store crc in byte 7
   // AA 55 01 04 00 00 05
   serial_in_buffer[5] = 0;                      // Ack
@@ -114,41 +74,38 @@ void SonoffD1Received(void)
     if ((i > 1) && (i < 6)) { serial_in_buffer[6] += serial_in_buffer[i]; }
     Serial.write(serial_in_buffer[i]);
   }
+*/
 }
 
 bool SonoffD1SerialInput(void)
 {
-  uint8_t packet_length = 0;
-
   if (0xAA == serial_in_byte) {               // 0xAA - Start of text
     serial_in_byte_counter = 0;
-    SnfD1.receive_flag = true;
+    SnfD1.receive_len = 7;
   }
-  if (SnfD1.receive_flag) {
+  if (SnfD1.receive_len) {
     serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-    if (serial_in_byte_counter == 6) {
-      packet_length = 7 + serial_in_byte;  // 8 or 17
+    if (6 == serial_in_byte_counter) {
+      SnfD1.receive_len += serial_in_byte;  // 8 or 17
     }
-    if (serial_in_byte_counter == packet_length) {
+    if (serial_in_byte_counter == SnfD1.receive_len) {
 
       // Sonoff D1 codes
-      // AA 55 01 04 00 0A 01 64 FF FF FF FF FF FF FF FF 6C - Power On, Dimmer 100%
-      // AA 55 01 04 00 0A 00 64 FF FF FF FF FF FF FF FF 6B - Power Off, Dimmer 100%
-      // AA 55 01 04 00 0A FF 01 FF FF FF FF FF FF FF FF 07 - Power ignore, Dimmer 1%
-      // AB 55 FD F7 FF FF F5 01 FF FF FF FF FF FF FF FF 09 - Response 2
-      // AA 55 01 04 00 0A FF 06 FF FF FF FF FF FF FF FF 0C - Power ignore, Dimmer 6%
-      // AB 55 FD F7 FF FF F5 06 FF FF FF FF FF FF FF FF 0E - Response 2
-      // AA 55 01 04 00 0A FF 64 FF FF FF FF FF FF FF FF 6A - Power ignore, Dimmer 100%
-      // AB 55 FD F7 FF FF F5 64 FF FF FF FF FF FF FF FF 6C - Response 2
+      // aa 55 01 04 00 0a 01 01 ff ff ff ff ff ff ff ff 09 - Power On, Dimmer 1%
+      // aa 55 01 04 00 0a 01 28 ff ff ff ff ff ff ff ff 30 - Power On, Dimmer 40%
+      // aa 55 01 04 00 0a 01 3c ff ff ff ff ff ff ff ff 44 - Power On, Dimmer 60%
+      // aa 55 01 04 00 0a 01 64 ff ff ff ff ff ff ff ff 6c - Power On, Dimmer 100%
+      // aa 55 01 04 00 0a 00 64 ff ff ff ff ff ff ff ff 6b - Power Off (with last dimmer 100%)
+      // aa 55 01 04 00 0a 01 64 ff ff ff ff ff ff ff ff 6c - Power On (with last dimmer 100%)
 
       AddLogSerial(LOG_LEVEL_DEBUG);
       uint8_t crc = 0;
-      for (uint32_t i = 2; i < packet_length -1; i++) {
+      for (uint32_t i = 2; i < SnfD1.receive_len -1; i++) {
         crc += serial_in_buffer[i];
       }
-      if (crc == serial_in_buffer[packet_length -1]) {
+      if (crc == serial_in_buffer[SnfD1.receive_len -1]) {
         SonoffD1Received();
-        SnfD1.receive_flag = false;
+        SnfD1.receive_len = 0;
         return true;
       }
     }
@@ -159,13 +116,13 @@ bool SonoffD1SerialInput(void)
 
 /********************************************************************************************/
 
-void SonoffD1Send(uint8_t lpower, uint8_t dimmer)
+void SonoffD1Send()
 {
   //                        0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16
   uint8_t buffer[17] = { 0xAA,0x55,0x01,0x04,0x00,0x0A,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00 };
 
-  buffer[6] = lpower;
-  buffer[7] = dimmer;
+  buffer[6] = SnfD1.power;
+  buffer[7] = SnfD1.dimmer;
 
   for (uint32_t i = 0; i < sizeof(buffer); i++) {
     if ((i > 1) && (i < sizeof(buffer) -1)) { buffer[16] += buffer[i]; }
@@ -175,17 +132,29 @@ void SonoffD1Send(uint8_t lpower, uint8_t dimmer)
 
 bool SonoffD1SendPower(void)
 {
-  SonoffD1Send(XdrvMailbox.index &1, 0xFF);
+  uint8_t action = XdrvMailbox.index &1;
+  if (action != SnfD1.power) {
+    SnfD1.power = action;
+
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SD1: Tasmota power (%d, %d)"), SnfD1.power, SnfD1.dimmer);
+
+    SonoffD1Send();
+  }
   return true;
 }
 
 bool SonoffD1SendDimmer(void)
 {
-  uint8_t dimmer = changeUIntScale(((uint16_t *)XdrvMailbox.data)[0], 0, 255, 0, 100);
+  uint8_t dimmer = LightGetDimmer(1);
   dimmer = (dimmer < Settings.dimmer_hw_min) ? Settings.dimmer_hw_min : dimmer;
   dimmer = (dimmer > Settings.dimmer_hw_max) ? Settings.dimmer_hw_max : dimmer;
+  if (dimmer != SnfD1.dimmer) {
+    SnfD1.dimmer = dimmer;
 
-  SonoffD1Send(0xFF, dimmer);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SD1: Tasmota dimmer (%d, %d)"), SnfD1.power, SnfD1.dimmer);
+
+    SonoffD1Send();
+  }
   return true;
 }
 
