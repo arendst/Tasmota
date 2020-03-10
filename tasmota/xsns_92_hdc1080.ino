@@ -227,7 +227,7 @@ void HdcShow(bool json) {
     dtostrfd(hdc_humidity, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      ResponseAppend_P(JSON_SNS_TEMPHUM, hdc_device_id, temperature, humidity);
+      ResponseAppend_P(JSON_SNS_TEMPHUM, hdc_type_name, temperature, humidity);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzTempHumSensor(temperature, humidity);
