@@ -59,13 +59,13 @@
 
 // Constants:
 
-#define HDC1080_CONV_TIME   25      // Assume 6.50 + 6.35 ms + x of conversion delay for this device
+#define HDC1080_CONV_TIME   50      // Assume 6.50 + 6.35 ms + x of conversion delay for this device
 #define HDC1080_TEMP_MULT   0.0025177
 #define HDC1080_RH_MULT     0.0025177
 #define HDC1080_TEMP_OFFSET 40.0
 
-const char* hdc_type_name = "HDC1080";
-uint8_t hdc_address;
+
+char* hdc_type_name = "HDC1080";
 uint16_t hdc_manufacturer_id = 0;
 uint16_t hdc_device_id = 0;
 
@@ -88,94 +88,6 @@ uint16_t HdcReadDeviceId(void) {
  */
 uint16_t HdcReadManufacturerId(void) {
   return I2cRead16(HDC1080_ADDR, HDC_REG_MAN_ID);
-}
-
-
-/**
- * Configures the acquisition mode of the sensor. The
- * HDC1080 supports the acquisition of temperature
- * and humidity in a single I2C transaction.
- * 
- * MODE = 0 -> Temperature or Humidity is acquired.
- * MODE = 1 -> Temperature and Humidity are acquired in sequence, Temperature first
- * 
- */
-void HdcSetAcqMode(uint8_t mode) {
-  uint16_t current = I2cRead16(HDC1080_ADDR, HDC_REG_CONFIG);
-
-  // bit 12 of the register contains the MODE field
-  // so we shift our value to that position and 
-  // apply the bit mask to preserve the remaining bits
-  // of the register:
-
-  current = (current & 0xEFFF) |  ((uint16_t) (mode << 12));
-
-  I2cWrite16(HDC1080_ADDR, HDC_REG_CONFIG, current);  
-}
-
-/**
- * Configures the temperature sampling resolution of the sensor.
- * 
- * This particular device provides two options:
- * 
- * TRES = 0 -> 14 bit resolution
- * TRES = 1 -> 11 bit resolution
- * 
- */
-void HdcSetTemperatureResolution(uint8_t resolution) {
-  uint16_t current = I2cRead16(HDC1080_ADDR, HDC_REG_CONFIG);
-  
-  // bit 10 of the register contains the TRES field
-  // so we shift our value to that position and 
-  // apply the bit mask to preserve the remaining bits
-  // of the register:
-
-  current = (current & 0xFBFF) | ((uint16_t) (resolution << 10));
-
-  I2cWrite16(HDC1080_ADDR, HDC_REG_CONFIG, current);
-}
-
-/**
- * Configures the humidity sampling resolution of the sensor.
- * 
- * This particular device provides three options:
- * 
- * HRES = 0 -> 14 bit resolution
- * HRES = 1 -> 11 bit resolution
- * HRES = 2 -> 8 bit resolution
- * 
- */
-void HdcSetHumidityResolution(uint8_t resolution) {
-  uint16_t current = I2cRead16(HDC1080_ADDR, HDC_REG_CONFIG);
-  
-  // bits 9:8 of the register contain the HRES field
-  // so we shift our value to that position and 
-  // apply the bit mask to preserve the remaining bits
-  // of the register:
-
-  current = (current & 0xFCFF) | ((uint16_t) (resolution << 8));
-
-  I2cWrite16(HDC1080_ADDR, HDC_REG_CONFIG, current);
-}
-
-/**
- * Runs the heater in order to reduce the accumulated
- * offset when the sensor is exposed for long periods
- * at high humidity levels.
- * 
- * HEAT = 0 -> heater off
- * HEAT = 1 -> heater on
- * 
- */
-void HdcHeater(uint8_t heater) {
-  uint16_t current = I2cRead16(HDC1080_ADDR, HDC_REG_CONFIG);
-  
-  // bits 13 of the configuration  register contains the HEAT flag
-  // so we set it according to the value of the heater argument:
-
-  current = (current | 0xDFFF) | ((uint16_t) (heater << 13));
-
-  I2cWrite16(HDC1080_ADDR, HDC_REG_CONFIG, current);
 }
 
 /**
@@ -201,9 +113,32 @@ void HdcReset(void) {
 
   I2cWrite16(HDC1080_ADDR, HDC_REG_CONFIG, current);
 
-  delay(30);  // Not sure how long it takes to reset. Assuming 15ms
+  delay(HDC1080_CONV_TIME);  // Not sure how long it takes to reset. Assuming this value.
 }
 
+/**
+ * Performs the single transaction read of the HDC1080, providing the 
+ * adequate delay for the acquisition.
+ * 
+ */
+int8_t HdcReadBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len) {
+  Wire.beginTransmission((uint8_t)addr);
+  Wire.write((uint8_t)reg);
+  Wire.endTransmission();
+
+  delay(HDC1080_CONV_TIME);
+
+  if (len != Wire.requestFrom((uint8_t)addr, (uint8_t)len)) {
+    return 1;
+  }
+
+  while (len--) {
+    *reg_data = (uint8_t)Wire.read();
+    reg_data++;
+  }
+
+  return 0;
+}
 
 /**
  * The various initialization steps for this sensor.
@@ -211,13 +146,7 @@ void HdcReset(void) {
  */
 void HdcInit(void)  {
   HdcReset();
-  //HdcHeater(HDC1080_HEAT_OFF);
-  //HdcSetAcqMode(HDC1080_ACQ_SEQ_ON);
-  //HdcSetAcqMode(HDC1080_ACQ_SEQ_OFF);
-  //HdcSetTemperatureResolution(HDC1080_MEAS_RES_14);
-  //HdcSetHumidityResolution(HDC1080_MEAS_RES_14);
-  
-  HdcConfig(0);
+  HdcConfig(HDC1080_MODE_ON);
 }
 
 /**
@@ -228,61 +157,28 @@ void HdcInit(void)  {
  */
 bool HdcRead(void) {
   int8_t status = 0;
-  //uint16_t sensor_data[2];
+  uint8_t sensor_data[4];
+  uint16_t temp_data = 0;
+  uint16_t rh_data = 0;
 
-  uint16_t sensor_data = 0;
+  status = HdcReadBuffer(HDC1080_ADDR, HDC_REG_TEMP, sensor_data, 4);
 
-  // In this sensor we must start by performing a write to the 
-  // temperature register. This signals the sensor to begin a 
-  // measurement:
+  temp_data = (uint16_t) ((sensor_data[0] << 8) | sensor_data[1]);
+  rh_data = (uint16_t) ((sensor_data[2] << 8) | sensor_data[3]);
 
-  Wire.beginTransmission(HDC1080_ADDR);
-  Wire.write(HDC_REG_TEMP);
-
-  if (Wire.endTransmission() != 0) { // In case of error
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("HdcRead: failed to write to device for performing acquisition."));
-
-    return false; 
-  }           
-
-  delay(HDC1080_CONV_TIME);  // Apply sensor conversion time at max resolution
-
-  // reads the temperature and humidity in a single transaction:
-
-  //status = I2cReadBuffer(HDC1080_ADDR, HDC_REG_TEMP, (uint8_t*) sensor_data, 4);
-
-  sensor_data = I2cRead16(HDC1080_ADDR, HDC_REG_TEMP);
-
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature raw data: 0x%04x"), sensor_data);
-
-  // status = I2cReadBuffer(HDC1080_ADDR, HDC_REG_TEMP, (uint8_t*) &sensor_data, 2);
-
-/*
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature raw data: 0x%04x; humidity raw data: 0x%04x"), temp_data, rh_data);
+  
   if(status != 0) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: failed to read HDC_REG_TEMP. Status = %d"), status);
 
     return false;
   }
-*/
+
   // read the temperature from the first 16 bits of the result
 
-  //hdc_temperature = ConvertTemp(HDC1080_TEMP_MULT * (float) (sensor_data[0]) - HDC1080_TEMP_OFFSET);
+  hdc_temperature = ConvertTemp(HDC1080_TEMP_MULT * (float) (temp_data) - HDC1080_TEMP_OFFSET);
 
-  hdc_temperature = ConvertTemp(HDC1080_TEMP_MULT * (float) (sensor_data) - HDC1080_TEMP_OFFSET);
-
-  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature successfully converted. Value = %f"), hdc_temperature);
-
-  // read the humidity from the last 16 bits of the result
-
-  sensor_data = I2cRead16(HDC1080_ADDR, HDC_REG_RH);
-
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: humidity raw data: 0x%04x"), sensor_data);
-
-  //hdc_humidity = HDC1080_RH_MULT * (float) (sensor_data[1]);
-
-  hdc_humidity = HDC1080_RH_MULT * (float) (sensor_data);
-
-  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: humidity successfully converted. Value = %f"), hdc_humidity);
+  hdc_humidity = HDC1080_RH_MULT * (float) (rh_data);
 
   if (hdc_humidity > 100) { hdc_humidity = 100.0; }
   if (hdc_humidity < 0) { hdc_humidity = 0.01; }
@@ -297,10 +193,8 @@ bool HdcRead(void) {
 /********************************************************************************************/
 
 void HdcDetect(void) {
-  hdc_address = HDC1080_ADDR;
-
-  if (I2cActive(hdc_address)) { 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcDetect: Address = 0x%02X already in use."), hdc_address);
+  if (I2cActive(HDC1080_ADDR)) { 
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcDetect: Address = 0x%02X already in use."), HDC1080_ADDR);
 
     return; 
   }
@@ -312,14 +206,14 @@ void HdcDetect(void) {
 
   if (hdc_device_id == HDC1080_DEV_ID) {
     HdcInit();
-    I2cSetActiveFound(hdc_address, hdc_type_name);
+    I2cSetActiveFound(HDC1080_ADDR, hdc_type_name);
   }
 }
 
 void HdcEverySecond(void) {
   if (uptime &1) {  // Every 2 seconds
     if (!HdcRead()) {
-      AddLogMissed((char*) hdc_type_name, hdc_valid);
+      AddLogMissed(hdc_type_name, hdc_valid);
     }
   }
 }
