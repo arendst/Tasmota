@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Системният лог активиран"
 
 #define D_SET_BAUDRATE_TO "Задаване скорост на предаване (Baudrate)"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "Получен топик"
 #define D_DATA_SIZE "Размер на данните"
 #define D_ANALOG_INPUT "Аналогов вход"

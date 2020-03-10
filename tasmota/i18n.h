@@ -295,7 +295,6 @@
 #define D_CMND_DEVGROUP_SHARE "DevGroupShare"
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
-#define D_CMND_SERIALCONFIG "SerialConfig"
 #define D_CMND_BAUDRATE "Baudrate"
 #define D_CMND_SERIALCONFIG "SerialConfig"
 #define D_CMND_TEMPLATE "Template"

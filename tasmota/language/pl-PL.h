@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Wznowiono zapis do Syslog"
 
 #define D_SET_BAUDRATE_TO "Ustaw szybkość transmisji na"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "Otrzymany temat"
 #define D_DATA_SIZE "Wielkość danych"
 #define D_ANALOG_INPUT "Wejście analogowe"

@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Syslog-Logging aktiviert"
 
 #define D_SET_BAUDRATE_TO "Setze Baudrate auf"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "empfangenes topic"
 #define D_DATA_SIZE "Datengröße"
 #define D_ANALOG_INPUT "Analog"

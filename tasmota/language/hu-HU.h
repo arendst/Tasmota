@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Syslog logolás újraengedélyezve"
 
 #define D_SET_BAUDRATE_TO "Baudrate beállítása"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "Érkezett topic"
 #define D_DATA_SIZE "Adatméret"
 #define D_ANALOG_INPUT "Analóg"

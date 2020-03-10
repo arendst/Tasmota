@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "הופעל מחדש Syslog רישום"
 
 #define D_SET_BAUDRATE_TO "הגדר קצב שידור ל"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "Topic התקבל"
 #define D_DATA_SIZE "גודל נתונים"
 #define D_ANALOG_INPUT "אנלוגי"

@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Obnovený zápis do Syslog"
 
 #define D_SET_BAUDRATE_TO "Nastaviť rýchlosti prenosu na"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "Prijatý topic"
 #define D_DATA_SIZE "Veľkosť dát"
 #define D_ANALOG_INPUT "Analógový vstup"

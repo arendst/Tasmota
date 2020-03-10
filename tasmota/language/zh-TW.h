@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Syslog 日誌已開啟"
 
 #define D_SET_BAUDRATE_TO "設置波特率為:"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "接收到的主題:"
 #define D_DATA_SIZE "數據大小:"
 #define D_ANALOG_INPUT "Analog"

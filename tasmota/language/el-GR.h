@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Η καταγραφή Syslog επαναενεργοποιήθηκε"
 
 #define D_SET_BAUDRATE_TO "Ορισμός Baudrate σε"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "Received Topic"
 #define D_DATA_SIZE "Μέγεθος δεδομένων"
 #define D_ANALOG_INPUT "Αναλογικό"

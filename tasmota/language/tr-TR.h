@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Sistem loglaması tekrar aktif"
 
 #define D_SET_BAUDRATE_TO "Baud hızını şu şekilde değiştir"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "Alınan Başlık"
 #define D_DATA_SIZE "Veri Büyüklüğü"
 #define D_ANALOG_INPUT "Analog"

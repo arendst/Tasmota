@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Syslog återaktiverad"
 
 #define D_SET_BAUDRATE_TO "Ange Baudrate till"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "Mottaget ämne"
 #define D_DATA_SIZE "Datastorlek"
 #define D_ANALOG_INPUT "Analog"

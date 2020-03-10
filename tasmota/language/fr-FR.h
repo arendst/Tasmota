@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Jounalisation SysLog réactivée"
 
 #define D_SET_BAUDRATE_TO "Définir le débit à"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "Topic reçu"  // Terme MQTT
 #define D_DATA_SIZE "Taille données"
 #define D_ANALOG_INPUT "Analogique"

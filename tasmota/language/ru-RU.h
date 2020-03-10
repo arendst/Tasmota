@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Syslog logging включен"
 
 #define D_SET_BAUDRATE_TO "Установить скорость передачи (Baudrate)"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "Полученный Топик"
 #define D_DATA_SIZE "Размер данных"
 #define D_ANALOG_INPUT "Аналоговый вход"

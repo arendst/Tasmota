@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Syslog log 다시 사용"
 
 #define D_SET_BAUDRATE_TO "Set Baudrate to"
-#define D_SET_SERIAL_CONFIG_TO "Set serial port mode to"
 #define D_RECEIVED_TOPIC "Received Topic"
 #define D_DATA_SIZE "데이터 용량"
 #define D_ANALOG_INPUT "아날로그"

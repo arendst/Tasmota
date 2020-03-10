@@ -194,7 +194,6 @@
 #define D_SYSLOG_LOGGING_REENABLED "Registro do Syslog reativado"
 
 #define D_SET_BAUDRATE_TO "Ajuste da velocidade para"
-#define D_SET_SERIAL_CONFIG_TO "Ajuste do modo da porta série"
 #define D_RECEIVED_TOPIC "Tópico recebido"
 #define D_DATA_SIZE "Tamanho de dados"
 #define D_ANALOG_INPUT "Entrada analógica"
