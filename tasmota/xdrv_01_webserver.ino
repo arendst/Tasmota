@@ -1164,7 +1164,7 @@ void HandleRoot(void)
         int32_t ShutterWebButton;
         if (ShutterWebButton = IsShutterWebButton(idx)) {
           WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx,
-            (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : ((Settings.shutter_options[abs(ShutterWebButton)-1] & 2) /* is locked */ ? "-" : ((ShutterWebButton>0) ? "▲" : "▼")),
+            (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : ((Settings.shutter_options[abs(ShutterWebButton)-1] & 2) /* is locked */ ? "-" : ((Settings.shutter_options[abs(ShutterWebButton)-1] & 8) /* invert web buttons */ ? ((ShutterWebButton>0) ? "▼" : "▲") : ((ShutterWebButton>0) ? "▲" : "▼"))),
             "");
           continue;
         }
