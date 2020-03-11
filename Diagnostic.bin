@@ -1,0 +1,1 @@
+Sorry if I am not doing the right thing here. I'm trying to find out if it is possible/interesting to create some sort of diagnostic binairy that can be uploaded to a Sonoff and execute some basic test (IO-map, MEM-map) and output the result to the serial pins for interpretation and repair.
