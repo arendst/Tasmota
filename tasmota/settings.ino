@@ -1022,6 +1022,7 @@ void SettingsDefaultSet2(void)
   Settings.flag2.temperature_resolution = TEMP_RESOLUTION;
   Settings.flag3.ds18x20_internal_pullup = DS18X20_PULL_UP;
   Settings.flag3.counter_reset_on_tele = COUNTER_RESET;
+  Settings.flag4.ds18x20_parasite_power = DS18X20_PARASITE_POWER;
 //  Settings.altitude = 0;
 
   // Rules
