@@ -542,6 +542,7 @@
 #define D_CMND_SHUTTER_BUTTON "Button"
 #define D_CMND_SHUTTER_LOCK "Lock"
 #define D_CMND_SHUTTER_ENABLEENDSTOPTIME "EnableEndStopTime"
+#define D_CMND_SHUTTER_INVERTWEBBUTTONS "InvertWebButtons"
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"

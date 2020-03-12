@@ -40,13 +40,13 @@ const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_OPEN "|" D_CMND_SHUTTER_CLOSE "|" D_CMND_SHUTTER_STOP "|" D_CMND_SHUTTER_POSITION  "|"
   D_CMND_SHUTTER_OPENTIME "|" D_CMND_SHUTTER_CLOSETIME "|" D_CMND_SHUTTER_RELAY "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
-  D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME;
+  D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterStop, &CmndShutterPosition,
   &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay,
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
-  &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime};
+  &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons};
 
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d}";
   const char JSON_SHUTTER_BUTTON[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Button%d\":%d}";
@@ -239,10 +239,10 @@ void ShutterInit(void)
       dtostrfd((float)Shutter.open_time[i] / 10 , 1, shutter_open_chr);
       char shutter_close_chr[10];
       dtostrfd((float)Shutter.close_time[i] / 10, 1, shutter_close_chr);
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100, Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoeffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, is locked %d, end stop time enabled %d, shuttermode %d, motordelay %d"),
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100, Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoeffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, is locked %d, end stop time enabled %d, webButtons inverted %d, shuttermode %d, motordelay %d"),
         i+1, Settings.shutter_startrelay[i], Shutter.real_position[i], Settings.shutter_position[i], Shutter.close_velocity[i], Shutter.open_max[i], shutter_open_chr, shutter_close_chr,
         Settings.shuttercoeff[0][i], Settings.shuttercoeff[1][i], Settings.shuttercoeff[2][i], Settings.shuttercoeff[3][i], Settings.shuttercoeff[4][i],
-        Shutter.mask, (Settings.shutter_options[i]&1) ? 1 : 0, (Settings.shutter_options[i]&2) ? 1 : 0, (Settings.shutter_options[i]&4) ? 1 : 0, Shutter.mode, Shutter.motordelay[i]);
+        Shutter.mask, (Settings.shutter_options[i]&1) ? 1 : 0, (Settings.shutter_options[i]&2) ? 1 : 0, (Settings.shutter_options[i]&4) ? 1 : 0, (Settings.shutter_options[i]&8) ? 1 : 0, Shutter.mode, Shutter.motordelay[i]);
 
     } else {
       // terminate loop at first INVALID shutter.
@@ -549,7 +549,7 @@ void ShutterButtonHandler(void)
       } else {
         Button.press_counter[button_index] = (Button.window_timer[button_index]) ? Button.press_counter[button_index] +1 : 1;
         // Button.window_timer[button_index] = (Button.press_counter[button_index]==1) ? loops_per_second / 2 : loops_per_second;  // 0.5 second multi press window after 1st press, 1s afterwards
-        Button.window_timer[button_index] = (loops_per_second >> 2) * 3; // 0.75 second multi press window 
+        Button.window_timer[button_index] = (loops_per_second >> 2) * 3; // 0.75 second multi press window
       }
     }
     blinks = 201;
@@ -1140,6 +1140,18 @@ void CmndShutterEnableEndStopTime(void) {
       Settings.shutter_options[XdrvMailbox.index -1] |= (4);
     }
     ResponseCmndIdxNumber((Settings.shutter_options[XdrvMailbox.index -1] & 4) ? 1 : 0);
+  }
+}
+
+void CmndShutterInvertWebButtons(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    if (XdrvMailbox.payload == 0) {
+      Settings.shutter_options[XdrvMailbox.index -1] &= ~(8);
+    } else if (XdrvMailbox.payload == 1) {
+      Settings.shutter_options[XdrvMailbox.index -1] |= (8);
+    }
+    ResponseCmndIdxNumber((Settings.shutter_options[XdrvMailbox.index -1] & 8) ? 1 : 0);
   }
 }
 
