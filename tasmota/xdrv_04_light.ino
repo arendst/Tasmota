@@ -2090,7 +2090,7 @@ void LightSendDeviceGroupStatus()
     DGR_ITEM_LIGHT_BRI, (power ? light_state.getBri() : 0));
 }
 
-void LightHandleDeviceGroupRequest()
+void LightHandleDeviceGroupItem()
 {
   static bool send_state = false;
   uint32_t value = XdrvMailbox.payload;
@@ -2716,8 +2716,8 @@ bool Xdrv04(uint8_t function)
         LightAnimate();
         break;
 #ifdef USE_DEVICE_GROUPS
-      case FUNC_DEVICE_GROUP_REQUEST:
-        LightHandleDeviceGroupRequest();
+      case FUNC_DEVICE_GROUP_ITEM:
+        LightHandleDeviceGroupItem();
         break;
 #endif  // USE_DEVICE_GROUPS
       case FUNC_SET_POWER:
