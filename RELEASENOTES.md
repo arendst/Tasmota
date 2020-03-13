@@ -116,3 +116,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for Jarolift rollers by Keeloq algorithm
 - Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)
 - Add support for Romanian language translations by Augustin Marti
+- Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)

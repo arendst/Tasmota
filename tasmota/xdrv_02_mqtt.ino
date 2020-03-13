@@ -712,10 +712,13 @@ void MqttCheck(void)
   }
 }
 
-bool ButtonTopicActive(void)
+bool KeyTopicActive(uint32_t key)
 {
+  // key = 0 - Button topic
+  // key = 1 - Switch topic
+  key &= 1;
   char key_topic[TOPSZ];
-  Format(key_topic, SettingsText(SET_MQTT_BUTTON_TOPIC), sizeof(key_topic));
+  Format(key_topic, SettingsText(SET_MQTT_BUTTON_TOPIC + key), sizeof(key_topic));
   return ((strlen(key_topic) != 0) && strcmp(key_topic, "0"));
 }
 
