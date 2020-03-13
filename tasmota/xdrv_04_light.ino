@@ -2553,10 +2553,10 @@ void CmndDimmer(void)
         LightPreparePower();
       }
     }
-#ifdef USE_DEVICE_GROUPS
+#if defined(USE_PWM_DIMMER) && defined(USE_DEVICE_GROUPS)
     Settings.bri_power_on = light_state.getBri();;
     SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
-#endif  // USE_DEVICE_GROUPS
+#endif  // USE_PWM_DIMMER && USE_DEVICE_GROUPS
     Light.update = true;
     if (skip_light_fade) LightAnimate();
   } else {
