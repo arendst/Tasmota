@@ -60,11 +60,10 @@
 
 // Constants:
 
-#define HDC1080_CONV_TIME   80      // Assume 6.50 + 6.35 ms + x of conversion delay for this device
+#define HDC1080_CONV_TIME   15      // Assume 6.50 + 6.35 ms + x of conversion delay for this device
 #define HDC1080_TEMP_MULT   0.0025177
 #define HDC1080_RH_MULT     0.0025177
 #define HDC1080_TEMP_OFFSET 40.0
-
 
 const char* hdc_type_name = "HDC1080";
 uint16_t hdc_manufacturer_id = 0;
@@ -76,7 +75,7 @@ float hdc_humidity = 0.0;
 uint8_t hdc_valid = 0;
 
 bool is_reading = false;
-uint32_t timer = millis() + HDC1080_CONV_TIME;
+uint32_t hdc_next_read;
 
 /**
  * Reads the device ID register.
@@ -173,6 +172,8 @@ void HdcInit(void)  {
  */
 bool HdcTriggerRead(void) {
   int8_t status = HdcTransactionOpen(HDC1080_ADDR, HDC_REG_TEMP);
+
+  hdc_next_read = millis() + HDC1080_CONV_TIME;
 
   if(status) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcTriggerRead: failed to open the transaction for HDC_REG_TEMP. Status = %d"), status);
@@ -321,11 +322,10 @@ bool Xsns65(uint8_t function)
   else if (hdc_device_id) {
     switch (function) {
       case FUNC_EVERY_50_MSECOND:
-        if(is_reading && TimeReached(timer)) {
+        if(is_reading && TimeReached(hdc_next_read)) {
           if(!HdcRead()) {
             AddLogMissed((char*) hdc_type_name, hdc_valid);
           }
-          timer = millis() + HDC1080_CONV_TIME;
         }
         break;
       case FUNC_EVERY_SECOND:
