@@ -254,8 +254,8 @@ void GetFeatures(void)
 #ifdef USE_SHT
   feature_sns1 |= 0x00000100;  // xsns_07_sht1x.ino
 #endif
-#if defined(USE_HTU) || defined(USE_HDC1080)
-  feature_sns1 |= 0x00000200;  // xsns_08_htu21.ino or xsns_92_hdc1080.ino
+#ifdef USE_HTU
+  feature_sns1 |= 0x00000200;  // xsns_08_htu21.ino
 #endif
 #ifdef USE_BMP
   feature_sns1 |= 0x00000400;  // xsns_09_bmp.ino

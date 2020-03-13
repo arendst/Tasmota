@@ -19,6 +19,7 @@
 
 #ifdef USE_I2C
 #ifdef USE_HDC1080
+
 /*********************************************************************************************\
  * HDC1080 - Temperature and Humidy sensor
  *
@@ -27,8 +28,8 @@
  * I2C Address: 0x40
 \*********************************************************************************************/
 
-#define XSNS_92             92
-#define XI2C_92             92      // See I2CDEVICES.md
+#define XSNS_65             65
+#define XI2C_45             45      // See I2CDEVICES.md
 
 #define HDC1080_ADDR        0x40
 
@@ -59,7 +60,7 @@
 
 // Constants:
 
-#define HDC1080_CONV_TIME   50      // Assume 6.50 + 6.35 ms + x of conversion delay for this device
+#define HDC1080_CONV_TIME   80      // Assume 6.50 + 6.35 ms + x of conversion delay for this device
 #define HDC1080_TEMP_MULT   0.0025177
 #define HDC1080_RH_MULT     0.0025177
 #define HDC1080_TEMP_OFFSET 40.0
@@ -73,6 +74,9 @@ float hdc_temperature = 0.0;
 float hdc_humidity = 0.0;
 
 uint8_t hdc_valid = 0;
+
+bool is_reading = false;
+uint32_t timer = millis() + HDC1080_CONV_TIME;
 
 /**
  * Reads the device ID register.
@@ -117,18 +121,32 @@ void HdcReset(void) {
 }
 
 /**
- * Performs the single transaction read of the HDC1080, providing the 
- * adequate delay for the acquisition.
+ * Performs the write portion of the HDC1080 sensor transaction. This 
+ * action of writing to a register signals the beginning of the operation
+ * (e.g. data acquisition).
  * 
+ * addr: the address of the I2C device we are talking to.
+ * reg: the register where we are writing to.
+ * 
+ * returns: 0 if the transmission was successfully completed, != 0 otherwise.
  */
-int8_t HdcReadBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len) {
-  Wire.beginTransmission((uint8_t)addr);
-  Wire.write((uint8_t)reg);
-  Wire.endTransmission();
+int8_t HdcTransactionOpen(uint8_t addr, uint8_t reg) {
+  Wire.beginTransmission((uint8_t) addr);
+  Wire.write((uint8_t) reg);
+  return Wire.endTransmission();
+}
 
-  delay(HDC1080_CONV_TIME);
-
-  if (len != Wire.requestFrom((uint8_t)addr, (uint8_t)len)) {
+/**
+ * Performs the read portion of the HDC1080 sensor transaction.
+ * 
+ * addr: the address of the I2C device we are talking to.
+ * reg_data: the pointer to the memory location where we will place the bytes that were read from the device
+ * len: the number of bytes we expect to read
+ * 
+ * returns: if the read operation was successful. != 0 otherwise.
+ */
+int8_t HdcTransactionClose(uint8_t addr, uint8_t *reg_data, uint16_t len) {
+  if (len != Wire.requestFrom((uint8_t) addr, (uint8_t) len)) {
     return 1;
   }
 
@@ -150,9 +168,29 @@ void HdcInit(void)  {
 }
 
 /**
+  * Triggers the single transaction read of the T/RH sensor.
+  * 
+ */
+bool HdcTriggerRead(void) {
+  int8_t status = HdcTransactionOpen(HDC1080_ADDR, HDC_REG_TEMP);
+
+  if(status) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcTriggerRead: failed to open the transaction for HDC_REG_TEMP. Status = %d"), status);
+
+    return false;
+  }
+
+  is_reading = true;
+
+  return true;
+}
+
+/**
  * Performs a temperature and humidity measurement, and calls
  * the conversion function providing the results in the correct
  * unit according to the device settings.
+ * 
+ * returns: false if something failed during the read process.
  * 
  */
 bool HdcRead(void) {
@@ -161,18 +199,20 @@ bool HdcRead(void) {
   uint16_t temp_data = 0;
   uint16_t rh_data = 0;
 
-  status = HdcReadBuffer(HDC1080_ADDR, HDC_REG_TEMP, sensor_data, 4);
+  is_reading = false;
+
+  status = HdcTransactionClose(HDC1080_ADDR, sensor_data, 4);
+
+  if(status) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: failed to read HDC_REG_TEMP. Status = %d"), status);
+
+    return false;
+  }
 
   temp_data = (uint16_t) ((sensor_data[0] << 8) | sensor_data[1]);
   rh_data = (uint16_t) ((sensor_data[2] << 8) | sensor_data[3]);
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature raw data: 0x%04x; humidity raw data: 0x%04x"), temp_data, rh_data);
-  
-  if(status != 0) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcRead: failed to read HDC_REG_TEMP. Status = %d"), status);
-
-    return false;
-  }
 
   // read the temperature from the first 16 bits of the result
 
@@ -190,7 +230,10 @@ bool HdcRead(void) {
   return true;
 }
 
-/********************************************************************************************/
+/**
+ * Performs the detection of the HTC1080 sensor.
+ * 
+ */
 
 void HdcDetect(void) {
   if (I2cActive(HDC1080_ADDR)) { 
@@ -210,14 +253,24 @@ void HdcDetect(void) {
   }
 }
 
+/**
+ * As the name suggests, this function is called every second
+ * for performing driver related logic.
+ * 
+ */
 void HdcEverySecond(void) {
   if (uptime &1) {  // Every 2 seconds
-    if (!HdcRead()) {
+    if (!HdcTriggerRead()) {
       AddLogMissed((char*) hdc_type_name, hdc_valid);
     }
   }
 }
 
+/**
+ * Tasmota boilerplate for presenting the sensor data in the web UI, JSON for 
+ * the MQTT messages, and so on.
+ * 
+ */
 void HdcShow(bool json) {
   if (hdc_valid) {
     char temperature[33];
@@ -252,10 +305,10 @@ void HdcShow(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns92(uint8_t function)
+bool Xsns65(uint8_t function)
 {
-  if (!I2cEnabled(XI2C_92)) { 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("Xsns92: I2C driver not enabled for this device."));
+  if (!I2cEnabled(XI2C_45)) { 
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("Xsns65: I2C driver not enabled for this device."));
 
     return false; 
   }
@@ -267,6 +320,14 @@ bool Xsns92(uint8_t function)
   }
   else if (hdc_device_id) {
     switch (function) {
+      case FUNC_EVERY_50_MSECOND:
+        if(is_reading && TimeReached(timer)) {
+          if(!HdcRead()) {
+            AddLogMissed((char*) hdc_type_name, hdc_valid);
+          }
+          timer = millis() + HDC1080_CONV_TIME;
+        }
+        break;
       case FUNC_EVERY_SECOND:
         HdcEverySecond();
         break;
