@@ -417,15 +417,15 @@ void HAssAnnounceButtons(void)
     }
 
     // button matrix for triggers generation when buttontopic is set as custom (default TOGGLE = 1 HOLD = 0):
-    // N  SetOption1	SetOption11	SetOption13	PRESS	                        DOUBLE PRESS	                HOLD                        T,H
-    // 1	0	          0	          0	          TOGGLE (button_short_press)	  NONE (toggle real relay)	    NONE (reset device)         1,0
-    // 2	1	          0	          0	          TOGGLE (button_short_press)	  NONE (toggle real relay)	    HOLD (button_long_press)    1,2
-    // 3	0	          1	          0	          NONE (toggle real relay)	    TOGGLE (button_double_press)	NONE (reset device)         3,0
-    // 4	1	          1	          0	          NONE (toggle real relay)	    TOGGLE (button_double_press)	HOLD (button_long_press)    3,2
-    // 5	0	          0	          1	          TOGGLE (button_short_press)	  NONE (toggle real relay)	    NONE (reset device)         1,0
-    // 6	1	          0	          1	          TOGGLE (button_short_press)	  NONE (toggle real relay)	    NONE (MQTT HOLD)            1,0
-    // 7	0	          1	          1	          NONE (toggle real relay)	    NONE (toggle real relay)	    NONE (reset device)         0,0
-    // 8	1	          1	          1	          NONE (toggle real relay)	    NONE (toggle real relay)	    NONE (MQTT HOLD)            0.0
+    // N  SetOption1  SetOption11 SetOption13 PRESS                         DOUBLE PRESS                  HOLD                        T,H
+    // 1  0           0           0           TOGGLE (button_short_press)   NONE (toggle real relay)      NONE (reset device)         1,0
+    // 2  1           0           0           TOGGLE (button_short_press)   NONE (toggle real relay)      HOLD (button_long_press)    1,2
+    // 3  0           1           0           NONE (toggle real relay)      TOGGLE (button_double_press)  NONE (reset device)         3,0
+    // 4  1           1           0           NONE (toggle real relay)      TOGGLE (button_double_press)  HOLD (button_long_press)    3,2
+    // 5  0           0           1           TOGGLE (button_short_press)   NONE (toggle real relay)      NONE (reset device)         1,0
+    // 6  1           0           1           TOGGLE (button_short_press)   NONE (toggle real relay)      NONE (MQTT HOLD)            1,0
+    // 7  0           1           1           NONE (toggle real relay)      NONE (toggle real relay)      NONE (reset device)         0,0
+    // 8  1           1           1           NONE (toggle real relay)      NONE (toggle real relay)      NONE (MQTT HOLD)            0.0
 
     // Trigger types: "0 = none | 1 = button_short_press | 2 = button_long_press | 3 = button_double_press";
 
@@ -596,8 +596,8 @@ void HAssAnnounceStatusSensor(void)
 
     Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
     TryResponseAppend_P(HASS_DISCOVER_SENSOR_HASS_STATUS, state_topic);
-    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP.getChipId(), WiFi.macAddress().c_str(),
-                        SettingsText(SET_FRIENDLYNAME1), ModuleName().c_str(), my_version, my_image);
+    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP.getChipId(), SettingsText(SET_FRIENDLYNAME1),
+                        ModuleName().c_str(), my_version, my_image);
     TryResponseAppend_P(PSTR("}"));
   }
   MqttPublish(stopic, true);
