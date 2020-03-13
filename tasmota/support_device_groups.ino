@@ -480,7 +480,7 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
   // Send an ack message to the sender.
   if (!(flags & DGR_FLAG_MORE_TO_COME)) {
     *(message_ptr - 2) = DGR_FLAG_ACK;
-    *(message_ptr - 1) = 0;      
+    *(message_ptr - 1) = 0;
     SendDeviceGroupPacket(remote_ip, packet, message_ptr - packet, PSTR("Ack"));
   }
 
@@ -746,7 +746,9 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
         // the announcement interval plus a random number of milliseconds so that even if all the
         // devices booted at the same time, they don't all multicast their announcements at the same
         // time.
-AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: next_announcement_time=%u, now=%u"), device_group->next_announcement_time, now);
+#ifdef DEVICE_GROUPS_DEBUG
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: next_announcement_time=%u, now=%u"), device_group->next_announcement_time, now);
+#endif  // DEVICE_GROUPS_DEBUG
         if (device_group->next_announcement_time <= now) {
           device_group->message_length = BeginDeviceGroupMessage(device_group, DGR_FLAG_ANNOUNCEMENT) - device_group->message;
 #ifdef DEVICE_GROUPS_DEBUG
