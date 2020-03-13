@@ -111,6 +111,7 @@ bool DeviceGroupItemShared(bool incoming, uint8_t item)
   uint8_t mask = 0;
   switch (item) {
     case DGR_ITEM_LIGHT_BRI:
+    case DGR_ITEM_BRI_POWER_ON:
       mask = DGR_SHARE_LIGHT_BRI;
       break;
     case DGR_ITEM_POWER:
@@ -127,8 +128,9 @@ bool DeviceGroupItemShared(bool incoming, uint8_t item)
     case DGR_ITEM_LIGHT_SPEED:
       mask = DGR_SHARE_LIGHT_FADE;
       break;
-    case DGR_ITEM_DIMMER_RANGE:
-      mask = DGR_SHARE_DIMMER_RANGE;
+    case DGR_ITEM_BRI_PRESET_LOW:
+    case DGR_ITEM_BRI_PRESET_HIGH:
+      mask = DGR_SHARE_DIMMER_SETTINGS;
       break;
   }
   return (!mask || ((incoming ? Settings.device_group_share_in : Settings.device_group_share_out) & mask));
@@ -544,7 +546,6 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
       case DGR_ITEM_BRI_POWER_ON:
       case DGR_ITEM_POWER:
       case DGR_ITEM_LIGHT_CHANNELS:
-      case DGR_ITEM_DIMMER_RANGE:
         break;
       default:
         AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: ********** invalid item=%u received from device group %s member %s"), item, device_group->group_name, IPAddressToString(remote_ip));

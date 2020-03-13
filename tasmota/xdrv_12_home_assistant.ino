@@ -205,7 +205,7 @@ void HAssAnnounceRelayLight(void)
       TryResponseAppend_P(HASS_DISCOVER_RELAY, command_topic, value_template, SettingsText(SET_STATE_TXT1), SettingsText(SET_STATE_TXT2));
       TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId());
 
-#if defined(USE_LIGHT) || defined(USE_PWM_DIMMER)
+#ifdef USE_LIGHT
       if (is_light || PWM_DIMMER == my_module_type)
       {
         char *brightness_command_topic = stemp1;
@@ -214,7 +214,6 @@ void HAssAnnounceRelayLight(void)
         strncpy_P(stemp3, Settings.flag.not_power_linked ? PSTR("last") : PSTR("brightness"), sizeof(stemp3)); // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
         TryResponseAppend_P(HASS_DISCOVER_LIGHT_DIMMER, brightness_command_topic, state_topic, stemp3);
 
-#ifdef USE_LIGHT
         if (Light.subtype >= LST_RGB)
         {
           char *rgb_command_topic = stemp1;
@@ -240,9 +239,8 @@ void HAssAnnounceRelayLight(void)
           GetTopic_P(color_temp_command_topic, CMND, mqtt_topic, D_CMND_COLORTEMPERATURE);
           TryResponseAppend_P(HASS_DISCOVER_LIGHT_CT, color_temp_command_topic, state_topic);
         }
-#endif  // USE_LIGHT
       }
-#endif  // defined(USE_LIGHT) || defined(USE_PWM_DIMMER)
+#endif  // USE_LIGHT
       TryResponseAppend_P(PSTR("}"));
     }
     MqttPublish(stopic, true);
