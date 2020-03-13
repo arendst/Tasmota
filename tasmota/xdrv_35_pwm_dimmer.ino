@@ -228,7 +228,7 @@ void PWMDimmerSetBri(uint8_t bri)
 }
 
 #ifdef USE_DEVICE_GROUPS
-void PWMDimmerHandleDeviceGroupRequest()
+void PWMDimmerHandleDeviceGroupItem()
 {
   static bool send_state = false;
   uint32_t value = XdrvMailbox.payload;
@@ -1041,8 +1041,8 @@ bool Xdrv35(uint8_t function)
       break;
 
 #ifdef USE_DEVICE_GROUPS
-    case FUNC_DEVICE_GROUP_REQUEST:
-      PWMDimmerHandleDeviceGroupRequest();
+    case FUNC_DEVICE_GROUP_ITEM:
+      PWMDimmerHandleDeviceGroupItem();
       break;
 #endif  // USE_DEVICE_GROUPS
 

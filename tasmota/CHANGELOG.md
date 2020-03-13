@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.1.0.11 20200313
+
+- Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)
+
 ### 8.1.0.10 20200227
 
 - Change default my_user_config.h driver and sensor support removing most sensors and adding most drivers
