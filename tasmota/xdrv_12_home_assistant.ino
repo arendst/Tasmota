@@ -1,7 +1,7 @@
 /*
   xdrv_12_home_assistant.ino - home assistant support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2020  Erik Montnemery, Federico Leoni and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -339,7 +339,7 @@ void HAssAnnounceSwitches(void)
     uint8_t hold = 0;
 
     if (pin[GPIO_SWT1 + switch_index] < 99) { switch_present = 1; }
-    
+
     if (KeyTopicActive(1) && strcmp(SettingsText(SET_MQTT_SWITCH_TOPIC), mqtt_topic))   // Enable Discovery for Switches only if Switchtopic is set to a custom name
     {
 
@@ -361,7 +361,7 @@ void HAssAnnounceSwitches(void)
     // 12             PUSHHOLDMULTI_INV     NO            TOGGLE (button_short_press)   NONE                        CLEAR (button_long_press)   1,0
     //                                                    INV (not available)                                       INC_DEC (not available)
     // Please note: SwitchMode11 and 12 will register just TOGGLE (button_short_press)
-    
+
     // Trigger types: "0 = none | 1 = button_short_press | 2 = button_long_press | 3 = button_double_press";
 
       uint8_t swmode = Settings.switchmode[switch_index];
@@ -390,7 +390,7 @@ void HAssAnnounceSwitches(void)
           hold = 3;
           break;
       }
-    
+
     } else { switch_present = 0;}
 
     HAssAnnouncerTriggers(switch_index, switch_present, 1, toggle, hold);
@@ -431,7 +431,7 @@ void HAssAnnounceButtons(void)
 
     if (Settings.flag.button_restrict) {                  // [SetOption1]  Enable/Disable button multipress
       if (!Settings.flag.button_single) {
-        hold = 2;                                         // Default TOGGLE (button_short_press) + HOLD (button_long_press) trigger if [SetOption13] is OFF                                               
+        hold = 2;                                         // Default TOGGLE (button_short_press) + HOLD (button_long_press) trigger if [SetOption13] is OFF
       }
     }
 
@@ -440,19 +440,19 @@ void HAssAnnounceButtons(void)
           if (!Settings.flag.button_restrict) {
             hold = 0;                                     // TOGGLE (button_double_press) and remove HOLD (button_long_press) trigger if [SetOption1] is OFF
           }
-          toggle = 3;                                     // TOGGLE (button_double_press)            
+          toggle = 3;                                     // TOGGLE (button_double_press)
         } else {toggle = 0; hold = 0;}                    // [SetOption13] Immediate action on button press, no TOGGLE or HOLD triggers
     }
-   
+
     if (KeyTopicActive(0)) {                              // Enable Discovery for Buttons only if Buttontopic is set to 1 or a custom name
 
       if (!strcmp(SettingsText(SET_MQTT_BUTTON_TOPIC), mqtt_topic)) {
-        toggle = 0;                                       // When ButtonTopic is set to 1, TOGGLE is not allowed but an HOLD trigger can be generated. 
-      } 
-    
+        toggle = 0;                                       // When ButtonTopic is set to 1, TOGGLE is not allowed but an HOLD trigger can be generated.
+      }
+
     } else { button_present = 0; }
-    
-    HAssAnnouncerTriggers(button_index, button_present, 0, toggle, hold);    
+
+    HAssAnnouncerTriggers(button_index, button_present, 0, toggle, hold);
   }
 }
 
