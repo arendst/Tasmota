@@ -1,7 +1,7 @@
 /*
   xdrv_12_home_assistant.ino - home assistant support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2020  Erik Montnemery, Federico Leoni and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -339,7 +339,7 @@ void HAssAnnounceSwitches(void)
     uint8_t hold = 0;
 
     if (pin[GPIO_SWT1 + switch_index] < 99) { switch_present = 1; }
-    
+
     if (KeyTopicActive(1) && strcmp(SettingsText(SET_MQTT_SWITCH_TOPIC), mqtt_topic))   // Enable Discovery for Switches only if Switchtopic is set to a custom name
     {
 
@@ -361,7 +361,7 @@ void HAssAnnounceSwitches(void)
     // 12             PUSHHOLDMULTI_INV     NO            TOGGLE (button_short_press)   NONE                        CLEAR (button_long_press)   1,0
     //                                                    INV (not available)                                       INC_DEC (not available)
     // Please note: SwitchMode11 and 12 will register just TOGGLE (button_short_press)
-    
+
     // Trigger types: "0 = none | 1 = button_short_press | 2 = button_long_press | 3 = button_double_press";
 
       uint8_t swmode = Settings.switchmode[switch_index];
@@ -390,7 +390,7 @@ void HAssAnnounceSwitches(void)
           hold = 3;
           break;
       }
-    
+
     } else { switch_present = 0;}
 
     HAssAnnouncerTriggers(switch_index, switch_present, 1, toggle, hold);
@@ -417,21 +417,21 @@ void HAssAnnounceButtons(void)
     }
 
     // button matrix for triggers generation when buttontopic is set as custom (default TOGGLE = 1 HOLD = 0):
-    // N  SetOption1	SetOption11	SetOption13	PRESS	                        DOUBLE PRESS	                HOLD                        T,H
-    // 1	0	          0	          0	          TOGGLE (button_short_press)	  NONE (toggle real relay)	    NONE (reset device)         1,0
-    // 2	1	          0	          0	          TOGGLE (button_short_press)	  NONE (toggle real relay)	    HOLD (button_long_press)    1,2
-    // 3	0	          1	          0	          NONE (toggle real relay)	    TOGGLE (button_double_press)	NONE (reset device)         3,0
-    // 4	1	          1	          0	          NONE (toggle real relay)	    TOGGLE (button_double_press)	HOLD (button_long_press)    3,2
-    // 5	0	          0	          1	          TOGGLE (button_short_press)	  NONE (toggle real relay)	    NONE (reset device)         1,0
-    // 6	1	          0	          1	          TOGGLE (button_short_press)	  NONE (toggle real relay)	    NONE (MQTT HOLD)            1,0
-    // 7	0	          1	          1	          NONE (toggle real relay)	    NONE (toggle real relay)	    NONE (reset device)         0,0
-    // 8	1	          1	          1	          NONE (toggle real relay)	    NONE (toggle real relay)	    NONE (MQTT HOLD)            0.0
+    // N  SetOption1  SetOption11 SetOption13 PRESS                         DOUBLE PRESS                  HOLD                        T,H
+    // 1  0           0           0           TOGGLE (button_short_press)   NONE (toggle real relay)      NONE (reset device)         1,0
+    // 2  1           0           0           TOGGLE (button_short_press)   NONE (toggle real relay)      HOLD (button_long_press)    1,2
+    // 3  0           1           0           NONE (toggle real relay)      TOGGLE (button_double_press)  NONE (reset device)         3,0
+    // 4  1           1           0           NONE (toggle real relay)      TOGGLE (button_double_press)  HOLD (button_long_press)    3,2
+    // 5  0           0           1           TOGGLE (button_short_press)   NONE (toggle real relay)      NONE (reset device)         1,0
+    // 6  1           0           1           TOGGLE (button_short_press)   NONE (toggle real relay)      NONE (MQTT HOLD)            1,0
+    // 7  0           1           1           NONE (toggle real relay)      NONE (toggle real relay)      NONE (reset device)         0,0
+    // 8  1           1           1           NONE (toggle real relay)      NONE (toggle real relay)      NONE (MQTT HOLD)            0.0
 
     // Trigger types: "0 = none | 1 = button_short_press | 2 = button_long_press | 3 = button_double_press";
 
     if (Settings.flag.button_restrict) {                  // [SetOption1]  Enable/Disable button multipress
       if (!Settings.flag.button_single) {
-        hold = 2;                                         // Default TOGGLE (button_short_press) + HOLD (button_long_press) trigger if [SetOption13] is OFF                                               
+        hold = 2;                                         // Default TOGGLE (button_short_press) + HOLD (button_long_press) trigger if [SetOption13] is OFF
       }
     }
 
@@ -440,19 +440,19 @@ void HAssAnnounceButtons(void)
           if (!Settings.flag.button_restrict) {
             hold = 0;                                     // TOGGLE (button_double_press) and remove HOLD (button_long_press) trigger if [SetOption1] is OFF
           }
-          toggle = 3;                                     // TOGGLE (button_double_press)            
+          toggle = 3;                                     // TOGGLE (button_double_press)
         } else {toggle = 0; hold = 0;}                    // [SetOption13] Immediate action on button press, no TOGGLE or HOLD triggers
     }
-   
+
     if (KeyTopicActive(0)) {                              // Enable Discovery for Buttons only if Buttontopic is set to 1 or a custom name
 
       if (!strcmp(SettingsText(SET_MQTT_BUTTON_TOPIC), mqtt_topic)) {
-        toggle = 0;                                       // When ButtonTopic is set to 1, TOGGLE is not allowed but an HOLD trigger can be generated. 
-      } 
-    
+        toggle = 0;                                       // When ButtonTopic is set to 1, TOGGLE is not allowed but an HOLD trigger can be generated.
+      }
+
     } else { button_present = 0; }
-    
-    HAssAnnouncerTriggers(button_index, button_present, 0, toggle, hold);    
+
+    HAssAnnouncerTriggers(button_index, button_present, 0, toggle, hold);
   }
 }
 
@@ -596,8 +596,8 @@ void HAssAnnounceStatusSensor(void)
 
     Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
     TryResponseAppend_P(HASS_DISCOVER_SENSOR_HASS_STATUS, state_topic);
-    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP.getChipId(), WiFi.macAddress().c_str(),
-                        SettingsText(SET_FRIENDLYNAME1), ModuleName().c_str(), my_version, my_image);
+    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP.getChipId(), SettingsText(SET_FRIENDLYNAME1),
+                        ModuleName().c_str(), my_version, my_image);
     TryResponseAppend_P(PSTR("}"));
   }
   MqttPublish(stopic, true);
