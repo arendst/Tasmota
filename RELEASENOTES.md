@@ -54,28 +54,28 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ### Version 8.1.0.11
 
-- Change default my_user_config.h driver and sensor support removing most sensors and adding most drivers
+- Change default my_user_config.h driver and sensor support removing most sensors and adding most drivers to tasmota.bin
 - Change DHT driver (#7468, #7717)
 - Change Lights: simplified gamma correction and 10 bits internal computation
 - Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
-- Change IRremoteESP8266 library updated to v2.7.4
 - Change Zigbee command prefix from ``Zigbee*`` to ``Zb*``
 - Change MQTT message size with additional 200 characters
 - Change display of some date and time messages from "Wed Feb 19 10:45:12 2020" to "2020-02-19T10:45:12"
-- Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
-- Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
+- Change IRremoteESP8266 library updated to v2.7.4
+- Fix ``PowerDelta`` zero power detection (#7515)
 - Fix ``White`` added to light status (#7142)
+- Fix ``WakeUp <x>`` ignores provided value (#7473)
+- Fix ``RGBWWTable`` ignored (#7572)
+- Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
+- Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
 - Fix Improved fade linearity with gamma correction
+- Fix PWM flickering at low levels (#7415)
 - Fix LCD line and column positioning (#7387)
 - Fix Display handling of hexadecimal escape characters (#7387)
-- Fix ``WakeUp <x>`` ignores provided value (#7473)
 - Fix exception 9 restart on log message in Ticker interrupt service routines NTP, Wemos and Hue emulation (#7496)
-- Fix ``PowerDelta`` zero power detection (#7515)
-- Fix ``RGBWWTable`` ignored (#7572)
-- Fix PWM flickering at low levels (#7415)
-- Fix Hass sensor discovery part 1/4 by Federico Leoni (#7582, #7548)
+- Fix Hass sensor discovery by Federico Leoni (#7582, #7548)
 - Fix MaxPower functionality (#7647)
-- Fix relation between RSSI and signal strength
+- Fix relation between Wifi RSSI and signal strength
 - Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
 - Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
 - Add command ``SetOption84 0/1`` to send AWS IoT device shadow updates (alternative to retained)
@@ -89,33 +89,35 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
 - Add commands ``SwitchMode 13`` PushOn and ``SwitchMode 14`` PushOnInverted (#7912)
 - Add command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
-- Add SerialConfig to ``Status 1``
-- Add WifiPower to ``Status 5``
-- Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
-- Add Zigbee attribute decoder for Xiaomi Aqara Cube
 - Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
-- Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
-- Add experimental support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
-- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
-- Add support for gzipped binaries
-- Add web page sliders when ``SetOption37 128`` is active allowing control of white(s)
-- Add most SetOptions as defines to my_user_config.h
-- Add SoftwareSerial to CSE7766 driver allowing different GPIOs (#7563)
 - Add optional parameter <startcolor> to command ``Scheme <scheme>, <startcolor>`` to control initial start color
-- Add rule trigger on one level deeper using syntax with two ``#`` like ``on zigbeereceived#vibration_sensor#aqaracubeside=0 do ...``
-- Add support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
-- Add support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
+- Add web page sliders when ``SetOption37 128`` is active allowing control of white(s)
+- Add SerialConfig to ``Status 1``
 - Add BootCount Reset Time as BCResetTime to ``Status 1``
-- Add ``ZbZNPReceived``and ``ZbZCLReceived`` being published to MQTT when ``SetOption66 1``
+- Add WifiPower to ``Status 5``
+- Add most SetOptions as defines to my_user_config.h
 - Add optional Wifi AccessPoint passphrase define WIFI_AP_PASSPHRASE in my_user_config.h (#7690)
-- Add support for FiF LE-01MR energy meter by saper-2 (#7584)
-- Add initial support for Sensors AHT10 and AHT15 by Martin Wagner (#7596)
-- Add support for Wemos Motor Shield V1 by Denis Sborets (#7764)
+- Add SoftwareSerial to CSE7766 driver allowing different GPIOs (#7563)
+- Add rule trigger on one level deeper using syntax with two ``#`` like ``on zbreceived#vibration_sensor#aqaracubeside=0 do ...``
+- Add Zigbee attribute decoder for Xiaomi Aqara Cube
+- Add ``ZbZNPReceived``and ``ZbZCLReceived`` being published to MQTT when ``SetOption66 1``
 - Add Zigbee enhanced commands decoding, added ``ZbPing``
 - Add Zigbee features and improvements
+- Add Zigbee support for Hue emulation by Stefan Hadinger
+- Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)
+- Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
+- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
+- Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
+- Add support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
+- Add support for gzipped binaries
+- Add support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
+- Add support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
+- Add support for FiF LE-01MR energy meter by saper-2 (#7584)
+- Add support for Sensors AHT10 and AHT15 by Martin Wagner (#7596)
+- Add support for Wemos Motor Shield V1 by Denis Sborets (#7764)
 - Add support for Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM dimmer switches by Paul Diem (#7791)
+- Add support for UDP Group control without MQTT by Paul Diem (#7790)
 - Add support for Jarolift rollers by Keeloq algorithm
 - Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)
 - Add support for Romanian language translations by Augustin Marti
-- Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)
 - Add support for HDC1080 Temperature and Humidity sensor by Luis Teixeira (#7888)
