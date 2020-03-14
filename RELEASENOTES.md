@@ -87,6 +87,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
 - Add commands ``SwitchMode 8`` ToggleMulti, ``SwitchMode 9`` FollowMulti and ``SwitchMode 10`` FollowMultiInverted (#7522)
 - Add commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
+- Add commands ``SwitchMode 13`` PushOn and ``SwitchMode 14`` PushOnInverted (#7912)
 - Add command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
 - Add SerialConfig to ``Status 1``
 - Add WifiPower to ``Status 5``
