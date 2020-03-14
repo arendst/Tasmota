@@ -323,6 +323,7 @@ void GetFeatures(void)
 #ifdef USE_TM1638
   feature_sns1 |= 0x80000000;  // xsns_28_tm1638.ino
 #endif
+
 /*********************************************************************************************/
 
   feature_sns2 = 0x00000000;
@@ -538,7 +539,9 @@ void GetFeatures(void)
 #ifdef USE_SONOFF_D1
   feature6 |= 0x00000004;  // xdrv_37_sonoff_d1.ino
 #endif
-//  feature6 |= 0x00000008;
+#ifdef USE_HDC1080
+  feature6 |= 0x00000008;  // xsns_65_hdc1080.ino
+#endif
 
 //  feature6 |= 0x00000010;
 //  feature6 |= 0x00000020;

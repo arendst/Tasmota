@@ -1,5 +1,5 @@
 /*
-  xsns_92_hdc1080.ino - Texas Instruments HDC1080 temperature and humidity sensor support for Tasmota
+  xsns_65_hdc1080.ino - Texas Instruments HDC1080 temperature and humidity sensor support for Tasmota
 
   Copyright (C) 2020  Luis Teixeira
 
@@ -79,7 +79,7 @@ uint32_t hdc_next_read;
 
 /**
  * Reads the device ID register.
- * 
+ *
  */
 uint16_t HdcReadDeviceId(void) {
   return I2cRead16(HDC1080_ADDR, HDC_REG_DEV_ID);
@@ -87,7 +87,7 @@ uint16_t HdcReadDeviceId(void) {
 
 /**
  * Reads the manufacturer ID register.
- * 
+ *
  */
 uint16_t HdcReadManufacturerId(void) {
   return I2cRead16(HDC1080_ADDR, HDC_REG_MAN_ID);
@@ -102,13 +102,13 @@ void HdcConfig(uint16_t config) {
 
 /**
  * Performs a soft reset on the device.
- * 
+ *
  * RST = 1 -> software reset
- * 
+ *
  */
 void HdcReset(void) {
   uint16_t current = I2cRead16(HDC1080_ADDR, HDC_REG_CONFIG);
-  
+
   // bit 15 of the configuration register contains the RST flag
   // so we set it to 1:
 
@@ -120,13 +120,13 @@ void HdcReset(void) {
 }
 
 /**
- * Performs the write portion of the HDC1080 sensor transaction. This 
+ * Performs the write portion of the HDC1080 sensor transaction. This
  * action of writing to a register signals the beginning of the operation
  * (e.g. data acquisition).
- * 
+ *
  * addr: the address of the I2C device we are talking to.
  * reg: the register where we are writing to.
- * 
+ *
  * returns: 0 if the transmission was successfully completed, != 0 otherwise.
  */
 int8_t HdcTransactionOpen(uint8_t addr, uint8_t reg) {
@@ -137,11 +137,11 @@ int8_t HdcTransactionOpen(uint8_t addr, uint8_t reg) {
 
 /**
  * Performs the read portion of the HDC1080 sensor transaction.
- * 
+ *
  * addr: the address of the I2C device we are talking to.
  * reg_data: the pointer to the memory location where we will place the bytes that were read from the device
  * len: the number of bytes we expect to read
- * 
+ *
  * returns: if the read operation was successful. != 0 otherwise.
  */
 int8_t HdcTransactionClose(uint8_t addr, uint8_t *reg_data, uint16_t len) {
@@ -159,7 +159,7 @@ int8_t HdcTransactionClose(uint8_t addr, uint8_t *reg_data, uint16_t len) {
 
 /**
  * The various initialization steps for this sensor.
- * 
+ *
  */
 void HdcInit(void)  {
   HdcReset();
@@ -168,7 +168,7 @@ void HdcInit(void)  {
 
 /**
   * Triggers the single transaction read of the T/RH sensor.
-  * 
+  *
  */
 bool HdcTriggerRead(void) {
   int8_t status = HdcTransactionOpen(HDC1080_ADDR, HDC_REG_TEMP);
@@ -190,9 +190,9 @@ bool HdcTriggerRead(void) {
  * Performs a temperature and humidity measurement, and calls
  * the conversion function providing the results in the correct
  * unit according to the device settings.
- * 
+ *
  * returns: false if something failed during the read process.
- * 
+ *
  */
 bool HdcRead(void) {
   int8_t status = 0;
@@ -233,14 +233,14 @@ bool HdcRead(void) {
 
 /**
  * Performs the detection of the HTC1080 sensor.
- * 
+ *
  */
 
 void HdcDetect(void) {
-  if (I2cActive(HDC1080_ADDR)) { 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcDetect: Address = 0x%02X already in use."), HDC1080_ADDR);
+  if (I2cActive(HDC1080_ADDR)) {
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HdcDetect: Address = 0x%02X already in use."), HDC1080_ADDR);
 
-    return; 
+    return;
   }
 
   hdc_manufacturer_id = HdcReadManufacturerId();
@@ -257,7 +257,7 @@ void HdcDetect(void) {
 /**
  * As the name suggests, this function is called every second
  * for performing driver related logic.
- * 
+ *
  */
 void HdcEverySecond(void) {
   if (uptime &1) {  // Every 2 seconds
@@ -268,9 +268,9 @@ void HdcEverySecond(void) {
 }
 
 /**
- * Tasmota boilerplate for presenting the sensor data in the web UI, JSON for 
+ * Tasmota boilerplate for presenting the sensor data in the web UI, JSON for
  * the MQTT messages, and so on.
- * 
+ *
  */
 void HdcShow(bool json) {
   if (hdc_valid) {
@@ -308,10 +308,10 @@ void HdcShow(bool json) {
 
 bool Xsns65(uint8_t function)
 {
-  if (!I2cEnabled(XI2C_45)) { 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("Xsns65: I2C driver not enabled for this device."));
+  if (!I2cEnabled(XI2C_45)) {
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("Xsns65: I2C driver not enabled for this device."));
 
-    return false; 
+    return false;
   }
 
   bool result = false;

@@ -3,6 +3,7 @@
 ### 8.1.0.11 20200313
 
 - Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)
+- Add support for HDC1080 Temperature and Humidity sensor by Luis Teixeira (#7888)
 
 ### 8.1.0.10 20200227
 
