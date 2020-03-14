@@ -188,7 +188,7 @@ void SwitchHandler(uint8_t mode)
         }
       }
 
-// enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, TOGGLEMULTI, FOLLOWMULTI, FOLLOWMULTI_INV, PUSHHOLDMULTI, PUSHHOLDMULTI_INV, MAX_SWITCH_OPTION};
+// enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, TOGGLEMULTI, FOLLOWMULTI, FOLLOWMULTI_INV, PUSHHOLDMULTI, PUSHHOLDMULTI_INV, PUSHON, MAX_SWITCH_OPTION};
 
       if (button != Switch.last_state[i]) {
         switch (Settings.switchmode[i]) {
@@ -275,6 +275,9 @@ void SwitchHandler(uint8_t mode)
               switchflag = POWER_TOGGLE;   // Toggle with pushbutton
             Switch.hold_timer[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;
           }
+          break;
+        case PUSHON:
+          if (PRESSED == button) switchflag = POWER_ON;      // Power ON with pushbutton to Gnd
           break;
         }
         Switch.last_state[i] = button;
