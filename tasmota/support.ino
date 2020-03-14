@@ -1669,6 +1669,8 @@ void AddLog(uint32_t loglevel)
 
   if (!global_state.wifi_down &&
       (loglevel <= syslog_level)) { Syslog(); }
+
+  prepped_loglevel = 0;
 }
 
 void AddLog_P(uint32_t loglevel, const char *formatP)
