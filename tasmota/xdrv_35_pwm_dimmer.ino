@@ -75,20 +75,49 @@ struct remote_pwm_dimmer * active_remote_pwm_dimmer;
 bool active_device_is_local;
 #endif  // USE_PWM_DIMMER_REMOTE
 
-void PWMModuleInit()
+void PWMModulePreInit()
 {
   Settings.seriallog_level = 0;
   Settings.flag.mqtt_serial = 0;  // Disable serial logging
   Settings.ledstate = 0;          // Disable LED usage
 
-  if (Settings.last_module != Settings.module) {
-    Settings.bri_power_on = 128;
-    Settings.bri_preset_low = 10;
-    Settings.bri_preset_high = 255;
-    Settings.last_module = Settings.module;
-  }
+  if (!Settings.bri_power_on) Settings.bri_power_on = 128;
+  if (!Settings.bri_preset_low) Settings.bri_preset_low = 10;
+  if (Settings.bri_preset_high < Settings.bri_preset_low) Settings.bri_preset_high = 255;
 
   PWMDimmerSetPoweredOffLed();
+
+  // The relay initializes to on. If the power is supposed to be off, turn the relay off.
+  if (!power && pin[GPIO_REL1] < 99) digitalWrite(pin[GPIO_REL1], bitRead(rel_inverted, 0) ? 1 : 0);
+
+#ifdef USE_PWM_DIMMER_REMOTE
+  // If remote device mode is enabled, set the device group count to the number of buttons
+  // present.
+  if (Settings.flag4.remote_device_mode) {
+    Settings.flag4.device_groups_enabled = true;
+
+    for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
+      if (pin[GPIO_KEY1 + button_index] < 99) device_group_count++;
+    }
+
+    if (device_group_count > 1) {
+      uint8_t remote_pwm_dimmer_count = device_group_count - 1;
+      if ((remote_pwm_dimmers = (struct remote_pwm_dimmer *) calloc(remote_pwm_dimmer_count, sizeof(struct remote_pwm_dimmer))) == nullptr) {
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("PWMDimmer: error allocating PWM dimmer array"));
+        Settings.flag4.remote_device_mode = false;
+      }
+      else {
+        for (uint8_t i = 0; i < remote_pwm_dimmer_count; i++) {
+          active_remote_pwm_dimmer = &remote_pwm_dimmers[i];
+          active_remote_pwm_dimmer->bri_power_on = 128;
+          active_remote_pwm_dimmer->bri_preset_low = 10;
+          active_remote_pwm_dimmer->bri_preset_high = 255;
+        }
+      }
+    }
+  }
+  active_device_is_local = true;
+#endif  // USE_PWM_DIMMER_REMOTE
 }
 
 // operation: 0 = normal, -1 = all off, 1 = all on
@@ -417,6 +446,7 @@ void PWMDimmerHandleButton()
         // If we need to publish an MQTT trigger, do it.
         if (mqtt_trigger) {
           char topic[TOPSZ];
+          sprintf_P(mqtt_data, PSTR("Trigger%u"), mqtt_trigger);
 #ifdef USE_PWM_DIMMER_REMOTE
           if (!active_device_is_local) {
             snprintf_P(topic, sizeof(topic), PSTR("cmnd/%s/Event"), device_groups[power_button_index].group_name);
@@ -424,9 +454,7 @@ void PWMDimmerHandleButton()
           }
           else
 #endif  // USE_PWM_DIMMER_REMOTE
-            GetTopic_P(topic, CMND, mqtt_topic, PSTR("Event"));
-          sprintf_P(mqtt_data, PSTR("Trigger%u"), mqtt_trigger);
-          MqttPublishPrefixTopic_P(CMND, PSTR("Event"));
+            MqttPublishPrefixTopic_P(CMND, PSTR("Event"));
         }
       }
 
@@ -489,7 +517,7 @@ void PWMDimmerHandleButton()
 
   // If the button was just released, ...
   else {
-    if (now - button_press_time > Settings.button_debounce) {
+//    if (now - button_press_time > Settings.button_debounce) {
 
       // If the button was held, send a button off; otherwise, send a button toggle.
       SendKey(KEY_BUTTON, button_index + 1, (button_hold_sent[button_index] ? POWER_OFF : POWER_TOGGLE));
@@ -633,7 +661,7 @@ void PWMDimmerHandleButton()
           }
         }
       }
-    }
+//    }
 
     // Flag the button as released.
     button_pressed[button_index] = false;
@@ -790,31 +818,7 @@ bool Xdrv35(uint8_t function)
       break;
 
     case FUNC_PRE_INIT:
-      // The relay initializes to on. If the power is supposed to be off, turn the relay off.
-      if (!power && pin[GPIO_REL1] < 99) digitalWrite(pin[GPIO_REL1], bitRead(rel_inverted, 0) ? 1 : 0);
-
-#ifdef USE_PWM_DIMMER_REMOTE
-      // If remote device mode is enabled, set the device group count to the number of buttons
-      // present.
-      if (Settings.flag4.remote_device_mode) {
-        for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
-          if (pin[GPIO_KEY1 + button_index] < 99) device_group_count++;
-        }
-
-        if (device_group_count > 1) {
-          if ((remote_pwm_dimmers = (struct remote_pwm_dimmer *) calloc(device_group_count - 1, sizeof(struct remote_pwm_dimmer))) == nullptr) {
-            AddLog_P2(LOG_LEVEL_ERROR, PSTR("PWMDimmer: error allocating PWM dimmer array"));
-            Settings.flag4.remote_device_mode = false;
-          }
-        }
-      }
-      active_device_is_local = true;
-#endif  // USE_PWM_DIMMER_REMOTE
-      break;
-
-    case FUNC_MODULE_INIT:
-      PWMModuleInit();
-      result = true;
+      PWMModulePreInit();
       break;
   }
   return result;

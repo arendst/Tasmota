@@ -1823,9 +1823,13 @@ void LightAnimate(void)
       }
 
       // final adjusments for PMW, post-gamma correction
+      uint16_t min = 1;
+#ifdef USE_PWM_DIMMER
+      if (PWM_DIMMER == my_module_type) min = Settings.dimmer_hw_min;
+#endif  // USE_PWM_DIMMER
       for (uint32_t i = 0; i < LST_MAX; i++) {
         // scale from 0..1023 to 0..pwm_range, but keep any non-zero value to at least 1
-        cur_col_10[i] = (cur_col_10[i] > 0) ? changeUIntScale(cur_col_10[i], 1, 1023, 1, Settings.pwm_range) : 0;
+        cur_col_10[i] = (cur_col_10[i] > 0) ? changeUIntScale(cur_col_10[i], 1, 1023, min, Settings.pwm_range) : 0;
       }
 
       // apply port remapping on both 8 bits and 10 bits versions
