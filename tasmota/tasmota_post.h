@@ -185,6 +185,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #define USE_WEMOS_MOTOR_V1                       // Enable Wemos motor driver V1 (I2C addresses 0x2D - 0x30) (+0k7 code)
   #define WEMOS_MOTOR_V1_ADDR  0x30              // Default I2C address 0x30
   #define WEMOS_MOTOR_V1_FREQ  1000              // Default frequency
+//#define USE_HDC1080                              // Enable HDC1080 temperature/humidity sensor
 
 #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)

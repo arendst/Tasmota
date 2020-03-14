@@ -113,6 +113,7 @@
 | USE_DHT12             | - | - | - | - | x | - | - |
 | USE_DS1624            | - | - | - | - | x | - | - |
 | USE_AHT1x             | - | - | - | - | - | - | - |
+| USE_HDC1080           | - | - | - | - | - | - | - |
 | USE_WEMOS_MOTOR_V1    | - | - | - | - | x | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks

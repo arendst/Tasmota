@@ -45,6 +45,8 @@
 // str    - Manuf   (null terminated C string, 32 chars max)
 // str    - FriendlyName   (null terminated C string, 32 chars max)
 // reserved for extensions
+//  -- V2 -- 
+// int8_t - bulbtype
 
 // Memory footprint
 const static uint16_t z_spi_start_sector = 0xFF;  // Force last bank of first MB
@@ -141,22 +143,31 @@ class SBuffer hibernateDevice(const struct Z_Device &device) {
   }
 
   // ModelID
-  size_t model_len = device.modelId.length();
-  if (model_len > 32) { model_len = 32; }       // max 32 chars
-  buf.addBuffer(device.modelId.c_str(), model_len);
+  if (device.modelId) {
+    size_t model_len = strlen(device.modelId);
+    if (model_len > 32) { model_len = 32; }       // max 32 chars
+    buf.addBuffer(device.modelId, model_len);
+  }
   buf.add8(0x00);     // end of string marker
 
   // ManufID
-  size_t manuf_len = device.manufacturerId.length();
-  if (manuf_len > 32) {manuf_len = 32; }       // max 32 chars
-  buf.addBuffer(device.manufacturerId.c_str(), manuf_len);
+  if (device.manufacturerId) {
+    size_t manuf_len = strlen(device.manufacturerId);
+    if (manuf_len > 32) { manuf_len = 32; }       // max 32 chars
+    buf.addBuffer(device.manufacturerId, manuf_len);
+  }
   buf.add8(0x00);     // end of string marker
 
   // FriendlyName
-  size_t frname_len = device.friendlyName.length();
-  if (frname_len > 32) {frname_len = 32; }       // max 32 chars
-  buf.addBuffer(device.friendlyName.c_str(), frname_len);
+  if (device.friendlyName) {
+    size_t frname_len = strlen(device.friendlyName);
+    if (frname_len > 32) {frname_len = 32; }       // max 32 chars
+    buf.addBuffer(device.friendlyName, frname_len);
+  }
   buf.add8(0x00);     // end of string marker
+
+  // Hue Bulbtype
+  buf.add8(device.bulbtype);
 
   // update overall length
   buf.set8(0, buf.len());
@@ -193,17 +204,27 @@ class SBuffer hibernateDevices(void) {
   return buf;
 }
 
-void hidrateDevices(const SBuffer &buf) {
+void hydrateDevices(const SBuffer &buf) {
   uint32_t buf_len = buf.len();
   if (buf_len <= 10) { return; }
 
   uint32_t k = 0;
   uint32_t num_devices = buf.get8(k++);
-
+//size_t before = 0;
   for (uint32_t i = 0; (i < num_devices) && (k < buf_len); i++) {
     uint32_t dev_record_len = buf.get8(k);
 
+// AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device %d Before Memory = %d // DIFF %d // record_len %d"), i, ESP.getFreeHeap(), before - ESP.getFreeHeap(), dev_record_len);
+// before = ESP.getFreeHeap();
+
     SBuffer buf_d = buf.subBuffer(k, dev_record_len);
+
+// char *hex_char = (char*) malloc((dev_record_len * 2) + 2);
+// if (hex_char) {
+//   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "/// SUB %s"),
+//                                   ToHex_P(buf_d.getBuffer(), dev_record_len, hex_char, (dev_record_len * 2) + 2));
+//   free(hex_char);
+// }
 
     uint32_t d = 1;   // index in device buffer
     uint16_t shortaddr = buf_d.get16(d);  d += 2;
@@ -229,7 +250,9 @@ void hidrateDevices(const SBuffer &buf) {
         zigbee_devices.addCluster(shortaddr, ep, fromClusterCode(ep_cluster), true);
       }
     }
-    
+    zigbee_devices.shrinkToFit(shortaddr);
+//AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device 0x%04X Memory3.shrink = %d"), shortaddr, ESP.getFreeHeap());
+
     // parse 3 strings
     char empty[] = "";
 
@@ -251,14 +274,22 @@ void hidrateDevices(const SBuffer &buf) {
     zigbee_devices.setFriendlyName(shortaddr, ptr);
     d += s_len + 1;
 
+    // Hue bulbtype - if present
+    if (d < dev_record_len) {
+      zigbee_devices.setHueBulbtype(shortaddr, buf_d.get8(d));
+      d++;
+    }
+
     // next iteration
     k += dev_record_len;
+//AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device %d After  Memory = %d"), i, ESP.getFreeHeap());
   }
 }
 
 void loadZigbeeDevices(void) {
   z_flashdata_t flashdata;
   memcpy_P(&flashdata, z_dev_start, sizeof(z_flashdata_t));
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP.getFreeHeap());
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Zigbee signature in Flash: %08X - %d"), flashdata.name, flashdata.len);
 
   // Check the signature
@@ -268,11 +299,12 @@ void loadZigbeeDevices(void) {
     SBuffer buf(buf_len);
     buf.addBuffer(z_dev_start + sizeof(z_flashdata_t), buf_len);
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee devices data in Flash (%d bytes)"), buf_len);
-    hidrateDevices(buf);
+    hydrateDevices(buf);
     zigbee_devices.clean();   // don't write back to Flash what we just loaded
   } else {
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No zigbee devices data in Flash"));
   }
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP.getFreeHeap());
 }
 
 void saveZigbeeDevices(void) {

@@ -333,7 +333,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DeviceGroupMessageType 
           if (item > DGR_ITEM_MAX_16BIT) {
             value >>= 8;
             *message_ptr++ = value & 0xff;
-            *message_ptr++ = value >> 8;
+            *message_ptr++ = (item == DGR_ITEM_POWER ? devices_present : value >> 8);
           }
         }
       }
@@ -590,6 +590,8 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
 
     if (DeviceGroupItemShared(true, item)) {
       if (item == DGR_ITEM_POWER) {
+        uint8_t mask_devices = value >> 24;
+        if (mask_devices > devices_present) mask_devices = devices_present;
         for (uint32_t i = 0; i < devices_present; i++) {
           uint32_t mask = 1 << i;
           bool on = (value & mask);
