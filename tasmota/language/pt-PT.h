@@ -512,6 +512,26 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "O"
 
+//xsns_53_sml.ino 
+#define D_TPWRIN "Total-Consumo"
+#define D_TPWROUT "Total-Geração"
+#define D_TPWRCURR "Corrente-Consumo/Geração"
+#define D_TPWRCURR1 "Corrente-Consumo F1"
+#define D_TPWRCURR2 "Corrente-Consumo F2"
+#define D_TPWRCURR3 "Corrente-Consumo F3"
+#define D_Strom_L1 "Corrente F1"
+#define D_Strom_L2 "Corrente F2"
+#define D_Strom_L3 "Corrente F3"
+#define D_Spannung_L1 "Tensão F1"
+#define D_Spannung_L2 "Tensão F2"
+#define D_Spannung_L3 "Tensão F3"
+#define D_METERNR "Número_Contador"
+#define D_METERSID "ID Serviço"
+#define D_GasIN "Contador" 
+#define D_H2oIN "Contador"
+#define D_StL1L2L3 "Corrente F1+F2+F3"
+#define D_SpL1L2L3 "Tensão F1+F2+F3/3"
+
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Nenhum"
 #define D_SENSOR_USER          "User"
