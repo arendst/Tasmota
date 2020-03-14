@@ -1342,7 +1342,7 @@ void CmndWifiConfig(void)
 void CmndFriendlyname(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_FRIENDLYNAMES)) {
-    if (!XdrvMailbox.usridx) {
+    if (!XdrvMailbox.usridx && !XdrvMailbox.data_len) {
       ResponseCmndAll(SET_FRIENDLYNAME1, MAX_FRIENDLYNAMES);
     } else {
       if (XdrvMailbox.data_len > 0) {
