@@ -5,6 +5,7 @@
 - Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)
 - Add support for HDC1080 Temperature and Humidity sensor by Luis Teixeira (#7888)
 - Add commands ``SwitchMode 13`` PushOn and ``SwitchMode 14`` PushOnInverted (#7912)
+- Add Zigbee support for Hue emulation by Stefan Hadinger
 
 ### 8.1.0.10 20200227
 
@@ -75,7 +76,7 @@
 - Add Zigbee persistence and friendly names
 - Add most SetOptions as defines to my_user_config.h
 - Add SoftwareSerial to CSE7766 driver allowing different GPIOs (#7563)
-- Add optional parameter <startcolor> to command ``Scheme <scheme>, <startcolor>`` to control initial start color
+- Add optional parameter ``<startcolor>`` to command ``Scheme <scheme>, <startcolor>`` to control initial start color
 - Add rule trigger on one level deeper using syntax with two ``#`` like ``on zigbeereceived#vibration_sensor#aqaracubeside=0 do ...``
 
 ### 8.1.0.3 20200106

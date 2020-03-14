@@ -171,12 +171,12 @@ enum Z_configuration {
 
 //
 enum Z_Status {
-  Z_Success = 0x00,
-  Z_Failure = 0x01,
-  Z_InvalidParameter = 0x02,
-  Z_MemError = 0x03,
-  Z_Created = 0x09,
-  Z_BufferFull = 0x11
+  Z_SUCCESS = 0x00,
+  Z_FAILURE = 0x01,
+  Z_INVALIDPARAMETER = 0x02,
+  Z_MEMERROR = 0x03,
+  Z_CREATED = 0x09,
+  Z_BUFFERFULL = 0x11
 };
 
 enum Z_App_Profiles {
