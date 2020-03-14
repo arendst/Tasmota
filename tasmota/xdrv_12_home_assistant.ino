@@ -67,6 +67,12 @@ const char HASS_DISCOVER_BIN_SWITCH[] PROGMEM =
   "\"pl_on\":\"%s\","                          // ON
   "\"pl_off\":\"%s\"";                         // OFF
 
+const char HASS_DISCOVER_BIN_PIR[] PROGMEM =
+  ",\"val_tpl\":\"{{value_json.%s}}\","        // STATE
+  "\"frc_upd\":true,"                          // In ON/OFF case, enable force_update to make automations work
+  "\"pl_on\":\"%s\","                          // ON
+  "\"off_dly\":1";                             // Switchmode13 and Switchmode14 doesn't transmit an OFF state.
+
 const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
   ",\"bri_cmd_t\":\"%s\","                     // cmnd/led2/Dimmer
   "\"bri_stat_t\":\"%s\","                     // stat/led2/RESULT
@@ -292,7 +298,7 @@ void HAssAnnouncerTriggers(uint8_t device, uint8_t present, uint8_t key, uint8_t
   }
 }
 
-void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint8_t toggle)
+void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint8_t toggle, uint8_t pir)
 {
   char stopic[TOPSZ];
   char stemp1[TOPSZ];
@@ -321,7 +327,11 @@ void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint
 
       snprintf_P(name, sizeof(name), PSTR("%s Switch%d"), SettingsText(SET_FRIENDLYNAME1), device + 1);
       Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
-      TryResponseAppend_P(HASS_DISCOVER_BIN_SWITCH, PSTR(D_RSLT_STATE), SettingsText(SET_STATE_TXT2), SettingsText(SET_STATE_TXT1));
+      if (!pir) {
+        TryResponseAppend_P(HASS_DISCOVER_BIN_SWITCH, PSTR(D_RSLT_STATE), SettingsText(SET_STATE_TXT2), SettingsText(SET_STATE_TXT1));
+      } else {
+        TryResponseAppend_P(HASS_DISCOVER_BIN_PIR, PSTR(D_RSLT_STATE), SettingsText(SET_STATE_TXT2));
+      }
       TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId());
       TryResponseAppend_P(PSTR("}"));
     }
@@ -337,6 +347,7 @@ void HAssAnnounceSwitches(void)
     uint8_t dual = 0;
     uint8_t toggle = 1;
     uint8_t hold = 0;
+    uint8_t pir = 0;
 
     if (pin[GPIO_SWT1 + switch_index] < 99) { switch_present = 1; }
 
@@ -389,12 +400,16 @@ void HAssAnnounceSwitches(void)
           toggle = 0;
           hold = 3;
           break;
+        case 13:
+        case 14:
+          toggle = 0;
+          pir = 1;        // Binary sensor with only ON state and automatic OFF after 1 second.
       }
 
     } else { switch_present = 0;}
 
     HAssAnnouncerTriggers(switch_index, switch_present, 1, toggle, hold);
-    HAssAnnouncerBinSensors(switch_index, switch_present, dual, toggle);
+    HAssAnnouncerBinSensors(switch_index, switch_present, dual, toggle, pir);
   }
 }
 
@@ -533,6 +548,7 @@ void HAssAnnounceSensors(void)
       snprintf_P(sensordata, sizeof(sensordata), PSTR("%s}"), sensordata); // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
       // USE THE FOLLOWING LINE TO TEST JSON
       //snprintf_P(sensordata, sizeof(sensordata), PSTR("{\"HX711\":{\"Weight\":[22,34,1023.4], \"Battery\":25}}"));
+
       StaticJsonBuffer<500> jsonBuffer;
       JsonObject &root = jsonBuffer.parseObject(sensordata);
       if (!root.success())
