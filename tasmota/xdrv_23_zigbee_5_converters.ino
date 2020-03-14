@@ -39,13 +39,13 @@ class ZCLFrame {
 public:
 
   ZCLFrame(uint8_t frame_control, uint16_t manuf_code, uint8_t transact_seq, uint8_t cmd_id,
-    const char *buf, size_t buf_len, uint16_t clusterid, uint16_t groupid,
+    const char *buf, size_t buf_len, uint16_t clusterid, uint16_t groupaddr,
     uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
     uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
     uint32_t timestamp):
     _cmd_id(cmd_id), _manuf_code(manuf_code), _transact_seq(transact_seq),
     _payload(buf_len ? buf_len : 250),      // allocate the data frame from source or preallocate big enough
-    _cluster_id(clusterid), _group_id(groupid),
+    _cluster_id(clusterid), _groupaddr(groupaddr),
     _srcaddr(srcaddr), _srcendpoint(srcendpoint), _dstendpoint(dstendpoint), _wasbroadcast(wasbroadcast),
     _linkquality(linkquality), _securityuse(securityuse), _seqnumber(seqnumber),
     _timestamp(timestamp)
@@ -65,7 +65,7 @@ public:
                     "\"timestamp\":%d,"
                     "\"fc\":\"0x%02X\",\"manuf\":\"0x%04X\",\"transact\":%d,"
                     "\"cmdid\":\"0x%02X\",\"payload\":\"%s\"}}"),
-                    _group_id, _cluster_id, _srcaddr,
+                    _groupaddr, _cluster_id, _srcaddr,
                     _srcendpoint, _dstendpoint, _wasbroadcast,
                     _linkquality, _securityuse, _seqnumber,
                     _timestamp,
@@ -117,7 +117,7 @@ public:
   void postProcessAttributes(uint16_t shortaddr, JsonObject& json);
 
   inline void setGroupId(uint16_t groupid) {
-    _group_id = groupid;
+    _groupaddr = groupid;
   }
 
   inline void setClusterId(uint16_t clusterid) {
@@ -150,7 +150,7 @@ private:
   uint8_t                 _transact_seq = 0;    // transaction sequence number
   uint8_t                 _cmd_id = 0;
   uint16_t                _cluster_id = 0;
-  uint16_t                _group_id = 0;
+  uint16_t                _groupaddr = 0;
   SBuffer                 _payload;
   // information from decoded ZCL frame
   uint16_t                _srcaddr;
@@ -210,6 +210,7 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
       }
       break;
     case 0x20:      // uint8
+    case 0x30:      // enum8
       {
         uint8_t uint8_val = buf.get8(i);
         i += 1;
@@ -219,6 +220,7 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
       }
       break;
     case 0x21:      // uint16
+    case 0x31:      // enum16
       {
         uint16_t uint16_val = buf.get16(i);
         i += 2;
@@ -358,11 +360,6 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
         json[attrid_str] = uint32_val;
       }
       break;
-    // enum
-    case 0x30:      // enum8
-    case 0x31:      // enum16
-      i += attrtype - 0x2F;
-      break;
 
     // TODO
     case 0x39:      // float
@@ -499,9 +496,9 @@ void ZCLFrame::parseResponse(void) {
   snprintf_P(s, sizeof(s), PSTR("0x%04X"), _srcaddr);
   json[F(D_JSON_ZIGBEE_DEVICE)] = s;
   // "Name"
-  const String * friendlyName = zigbee_devices.getFriendlyName(_srcaddr);
+  const char * friendlyName = zigbee_devices.getFriendlyName(_srcaddr);
   if (friendlyName) {
-    json[F(D_JSON_ZIGBEE_NAME)] = *friendlyName;
+    json[F(D_JSON_ZIGBEE_NAME)] = (char*) friendlyName;
   }
   // "Command"
   snprintf_P(s, sizeof(s), PSTR("%04X!%02X"), _cluster_id, cmd);
@@ -516,8 +513,8 @@ void ZCLFrame::parseResponse(void) {
   // Add Endpoint
   json[F(D_CMND_ZIGBEE_ENDPOINT)] = _srcendpoint;
   // Add Group if non-zero
-  if (_group_id) {
-    json[F(D_CMND_ZIGBEE_GROUP)] = _group_id;
+  if (_groupaddr) {
+    json[F(D_CMND_ZIGBEE_GROUP)] = _groupaddr;
   }
   // Add linkquality
   json[F(D_CMND_ZIGBEE_LINKQUALITY)] = _linkquality;
@@ -534,6 +531,7 @@ void ZCLFrame::parseResponse(void) {
 // Parse non-normalized attributes
 void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
   convertClusterSpecific(json, _cluster_id, _cmd_id, _frame_control.b.direction, _payload);
+  sendHueUpdate(_srcaddr, _groupaddr, _cluster_id, _cmd_id, _frame_control.b.direction);
 }
 
 // return value:
@@ -566,7 +564,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0001, 0x0000,  "MainsVoltage",         &Z_Copy },
   { 0x0001, 0x0001,  "MainsFrequency",       &Z_Copy },
   { 0x0001, 0x0020,  "BatteryVoltage",       &Z_FloatDiv10 },
-  { 0x0001, 0x0021,  "BatteryPercentageRemaining",&Z_Copy },
+  { 0x0001, 0x0021,  "BatteryPercentage",    &Z_Copy },
 
   // Device Temperature Configuration cluster
   { 0x0002, 0x0000,  "CurrentTemperature",   &Z_Copy },
@@ -924,7 +922,7 @@ int32_t Z_FloatDiv2(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& j
 }
 
 // Publish a message for `"Occupancy":0` when the timer expired
-int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, uint32_t value) {
+int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& json = jsonBuffer.createObject();
   json[F(OCCUPANCY)] = 0;
@@ -1050,7 +1048,8 @@ int32_t Z_AqaraSensor(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject&
   char tmp[] = "tmp";   // for obscure reasons, it must be converted from const char* to char*, otherwise ArduinoJson gets confused
 
   JsonVariant sub_value;
-  const String * modelId = zigbee_devices.getModelId(shortaddr);  // null if unknown
+  const char * modelId_c = zigbee_devices.getModelId(shortaddr);  // null if unknown
+  String modelId((char*) modelId_c);
 
   while (len - i >= 2) {
     uint8_t attrid = buf2.get8(i++);
@@ -1064,8 +1063,8 @@ int32_t Z_AqaraSensor(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject&
       json[F("Battery")] = toPercentageCR2032(val);
     } else if ((nullptr != modelId) && (0 == zcl->getManufCode())) {
       translated = true;
-      if (modelId->startsWith(F("lumi.sensor_ht")) ||
-          modelId->startsWith(F("lumi.weather"))) {     // Temp sensor
+      if (modelId.startsWith(F("lumi.sensor_ht")) ||
+          modelId.startsWith(F("lumi.weather"))) {     // Temp sensor
         // Filter according to prefix of model name
         // onla Aqara Temp/Humidity has manuf_code of zero. If non-zero we skip the parameters
         if (0x64 == attrid) {
@@ -1076,11 +1075,11 @@ int32_t Z_AqaraSensor(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject&
           json[F(D_JSON_PRESSURE)] = val / 100.0f;
           json[F(D_JSON_PRESSURE_UNIT)] = F(D_UNIT_PRESSURE);   // hPa
         }
-      } else if (modelId->startsWith(F("lumi.sensor_smoke"))) {   // gas leak
+      } else if (modelId.startsWith(F("lumi.sensor_smoke"))) {   // gas leak
         if (0x64 == attrid) {
           json[F("SmokeDensity")] = val;
         }
-      } else if (modelId->startsWith(F("lumi.sensor_natgas"))) {   // gas leak
+      } else if (modelId.startsWith(F("lumi.sensor_natgas"))) {   // gas leak
         if (0x64 == attrid) {
           json[F("GasDensity")] = val;
         }
@@ -1119,6 +1118,42 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
       } else {
         attribute = strtoul(delimiter+1, &delimiter2, 16);
         suffix = strtoul(delimiter2+1, nullptr, 10);
+      }
+
+      // see if we need to update the Hue bulb status
+      if ((cluster == 0x0006) && ((attribute == 0x0000) || (attribute == 0x8000))) {
+        uint8_t power = value;
+        zigbee_devices.updateHueState(shortaddr, &power, nullptr, nullptr, nullptr,
+                                        nullptr, nullptr, nullptr, nullptr);
+      } else if ((cluster == 0x0008) && (attribute == 0x0000)) {
+        uint8_t dimmer = value;
+        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, &dimmer, nullptr,
+                                        nullptr, nullptr, nullptr, nullptr);
+      } else if ((cluster == 0x0300) && (attribute == 0x0000)) {
+        uint16_t hue8 = value;
+        uint16_t hue = changeUIntScale(hue8, 0, 254, 0, 360);     // change range from 0..254 to 0..360
+        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
+                                        nullptr, &hue, nullptr, nullptr);
+      } else if ((cluster == 0x0300) && (attribute == 0x0001)) {
+        uint8_t sat = value;
+        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, &sat,
+                                        nullptr, nullptr, nullptr, nullptr);
+      } else if ((cluster == 0x0300) && (attribute == 0x0003)) {
+        uint16_t x = value;
+        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
+                                        nullptr, nullptr, &x, nullptr);
+      } else if ((cluster == 0x0300) && (attribute == 0x0004)) {
+        uint16_t y = value;
+        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
+                                        nullptr, nullptr, nullptr, &y);
+      } else if ((cluster == 0x0300) && (attribute == 0x0007)) {
+        uint16_t ct = value;
+        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
+                                        &ct, nullptr, nullptr, nullptr);
+      } else if ((cluster == 0x0300) && (attribute == 0x0008)) {
+        uint8_t colormode = value;
+        zigbee_devices.updateHueState(shortaddr, nullptr, &colormode, nullptr, nullptr,
+                                        nullptr, nullptr, nullptr, nullptr);
       }
 
       // Iterate on filter

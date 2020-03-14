@@ -5,6 +5,7 @@
 - Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)
 - Add support for HDC1080 Temperature and Humidity sensor by Luis Teixeira (#7888)
 - Add commands ``SwitchMode 13`` PushOn and ``SwitchMode 14`` PushOnInverted (#7912)
+- Add Zigbee support for Hue emulation
 
 ### 8.1.0.10 20200227
 
