@@ -90,7 +90,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add commands ``SwitchMode 13`` PushOn and ``SwitchMode 14`` PushOnInverted (#7912)
 - Add command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
 - Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
-- Add optional parameter <startcolor> to command ``Scheme <scheme>, <startcolor>`` to control initial start color
+- Add optional parameter ``<startcolor>`` to command ``Scheme <scheme>, <startcolor>`` to control initial start color
 - Add web page sliders when ``SetOption37 128`` is active allowing control of white(s)
 - Add SerialConfig to ``Status 1``
 - Add BootCount Reset Time as BCResetTime to ``Status 1``
@@ -106,11 +106,12 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add Zigbee support for Hue emulation by Stefan Hadinger
 - Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)
 - Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
+- Add support for gzipped binaries
+- Add support for Romanian language translations by Augustin Marti
+- Add support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
 - Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
 - Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
 - Add support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
-- Add support for gzipped binaries
-- Add support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
 - Add support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
 - Add support for FiF LE-01MR energy meter by saper-2 (#7584)
 - Add support for Sensors AHT10 and AHT15 by Martin Wagner (#7596)
@@ -119,5 +120,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for UDP Group control without MQTT by Paul Diem (#7790)
 - Add support for Jarolift rollers by Keeloq algorithm
 - Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)
-- Add support for Romanian language translations by Augustin Marti
 - Add support for HDC1080 Temperature and Humidity sensor by Luis Teixeira (#7888)
