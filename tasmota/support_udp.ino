@@ -86,7 +86,7 @@ void PollUdp(void)
 
       // Simple Service Discovery Protocol (SSDP)
       if (Settings.flag2.emulation) {
-#ifdef USE_SCRIPT_HUE
+#if defined(USE_SCRIPT_HUE) || defined(USE_ZIGBEE)
         if (!udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
 #else
         if (devices_present && !udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {

@@ -51,6 +51,13 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { "GetAllGroups",   0x0004, 0x02, 0x01,   "00" },           // Get all groups membership
   { "RemoveGroup",    0x0004, 0x03, 0x01,   "xxxx" },         // Remove one group
   { "RemoveAllGroups",0x0004, 0x04, 0x01,   "" },             // Remove all groups
+  // Scenes
+  //{ "AddScene",       0x0005, 0x00, 0x01,   "xxxxyy0100" },
+  { "ViewScene",      0x0005, 0x01, 0x01,   "xxxxyy" },
+  { "RemoveScene",    0x0005, 0x02, 0x01,   "xxxxyy" },
+  { "RemoveAllScenes",0x0005, 0x03, 0x01,   "xxxx" },
+  { "RecallScene",    0x0005, 0x05, 0x01,   "xxxxyy" },
+  { "GetSceneMembership",0x0005, 0x06, 0x01,   "xxxx" },
   // Light & Shutter commands
   { "Power",          0x0006, 0xFF, 0x01,   "" },             // 0=Off, 1=On, 2=Toggle
   { "Dimmer",         0x0008, 0x04, 0x01,   "xx0A00" },       // Move to Level with On/Off, xx=0..254 (255 is invalid)
@@ -97,6 +104,13 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { "ViewGroup",      0x0004, 0x01, 0x82,   "xxyyyy" },       // xx = status, yy = group id, name ignored
   { "GetGroup",       0x0004, 0x02, 0x82,   "xxyyzzzz" },     // xx = capacity, yy = count, zzzz = first group id, following groups ignored
   { "RemoveGroup",    0x0004, 0x03, 0x82,   "xxyyyy" },       // xx = status, yy = group id
+  // responses for Scene cluster commands
+  { "AddScene",       0x0005, 0x00, 0x82,   "xxyyyyzz" },     // xx = status, yyyy = group id, zz = scene id
+  { "ViewScene",      0x0005, 0x01, 0x82,   "xxyyyyzz" },     // xx = status, yyyy = group id, zz = scene id
+  { "RemoveScene",    0x0005, 0x02, 0x82,   "xxyyyyzz" },     // xx = status, yyyy = group id, zz = scene id
+  { "RemoveAllScenes",0x0005, 0x03, 0x82,   "xxyyyy" },     // xx = status, yyyy = group id
+  { "StoreScene",     0x0005, 0x04, 0x82,   "xxyyyyzz" },     // xx = status, yyyy = group id, zz = scene id
+  { "GetSceneMembership",0x0005, 0x06, 0x82,   "" },     // specific
 };
 
 #define ZLE(x) ((x) & 0xFF), ((x) >> 8)     // Little Endian
@@ -105,10 +119,10 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
 const uint8_t CLUSTER_0006[] = { ZLE(0x0000) };    // Power
 const uint8_t CLUSTER_0008[] = { ZLE(0x0000) };    // CurrentLevel
 const uint8_t CLUSTER_0009[] = { ZLE(0x0000) };    // AlarmCount
-const uint8_t CLUSTER_0300[] = { ZLE(0x0000), ZLE(0x0001), ZLE(0x0003), ZLE(0x0004), ZLE(0x0007) };    // Hue, Sat, X, Y, CT
+const uint8_t CLUSTER_0300[] = { ZLE(0x0000), ZLE(0x0001), ZLE(0x0003), ZLE(0x0004), ZLE(0x0007), ZLE(0x0008) };    // Hue, Sat, X, Y, CT, ColorMode
 
 // This callback is registered after a cluster specific command and sends a read command for the same cluster
-int32_t Z_ReadAttrCallback(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, uint32_t value) {
+int32_t Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   size_t         attrs_len = 0;
   const uint8_t* attrs = nullptr;
 
@@ -131,12 +145,12 @@ int32_t Z_ReadAttrCallback(uint16_t shortaddr, uint16_t cluster, uint16_t endpoi
       break;
   }
   if (attrs) {
-    ZigbeeZCLSend(shortaddr, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, true /* we do want a response */, zigbee_devices.getNextSeqNumber(shortaddr));
+    ZigbeeZCLSend_Raw(shortaddr, groupaddr, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, true /* we do want a response */, zigbee_devices.getNextSeqNumber(shortaddr));
   }
 }
 
 // set a timer to read back the value in the future
-void zigbeeSetCommandTimer(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint) {
+void zigbeeSetCommandTimer(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint) {
   uint32_t wait_ms = 0;
 
   switch (cluster) {
@@ -153,7 +167,7 @@ void zigbeeSetCommandTimer(uint16_t shortaddr, uint16_t cluster, uint16_t endpoi
       break;
   }
   if (wait_ms) {
-    zigbee_devices.setTimer(shortaddr, wait_ms, cluster, endpoint, 0 /* value */, &Z_ReadAttrCallback);
+    zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms, cluster, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
   }
 }
 
@@ -229,7 +243,42 @@ void parseXYZ(const char *model, const SBuffer &payload, struct Z_XYZ_Var *xyz) 
 //  - cluster number
 //  - command number or 0xFF if command is part of the variable part
 //  - the payload in the form of a HEX string with x/y/z variables
+void sendHueUpdate(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t cmd, bool direction) {
+  if (direction) { return; }    // no need to update if server->client
 
+  int32_t z_cat = -1;
+  uint32_t wait_ms = 0;
+
+  switch (cluster) {
+    case 0x0006:
+      z_cat = Z_CAT_READ_0006;
+      wait_ms = 200;    // wait 0.2 s
+      break;
+    case 0x0008:
+      z_cat = Z_CAT_READ_0008;
+      wait_ms = 1050;   // wait 1.0 s
+      break;
+    case 0x0102:
+      z_cat = Z_CAT_READ_0102;
+      wait_ms = 10000;   // wait 10.0 s
+      break;
+    case 0x0300:
+      z_cat = Z_CAT_READ_0300;
+      wait_ms = 1050;   // wait 1.0 s
+      break;
+    default:
+      break;
+  }
+  if (z_cat >= 0) {
+    uint8_t endpoint = 0;
+    if (!groupaddr) {
+      endpoint = zigbee_devices.findClusterEndpointIn(shortaddr, cluster);
+    }
+    if ((endpoint) || (groupaddr)) {   // send only if we know the endpoint
+      zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms, cluster, endpoint, z_cat, 0 /* value */, &Z_ReadAttrCallback);
+    }
+  }
+}
 
 
 // Parse a cluster specific command, and try to convert into human readable
