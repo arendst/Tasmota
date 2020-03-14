@@ -179,7 +179,11 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   WifiSetMode(WIFI_OFF);
 #endif
 
+#ifdef WIFI_PERSISTENT
+  WiFi.persistent(true);    // Might help for some Wifi reconnect after hardware reset
+#else
   WiFi.persistent(false);   // Solve possible wifi init errors (re-add at 6.2.1.16 #4044, #4083)
+#endif
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
 //  WiFi.mode(WIFI_STA);      // Disable AP mode
