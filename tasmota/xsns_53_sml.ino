@@ -113,8 +113,8 @@ struct METER_DESC {
 struct METER_DESC const meter_desc[METERS_USED]={
   [0]={3,'o',0,SML_BAUDRATE,"OBIS",-1,1,0}};
 const uint8_t meter[]=
-"1,1-0:1.8.0*255(@1," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
-"1,1-0:2.8.0*255(@1," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"1,1-0:1.8.0*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
+"1,1-0:2.8.0*255(@1," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 "1,1-0:21.7.0*255(@1," D_TPWRCURR1 ",W," DJ_TPWRCURR1 ",0|"
 "1,1-0:41.7.0*255(@1," D_TPWRCURR2 ",W," DJ_TPWRCURR2 ",0|"
 "1,1-0:61.7.0*255(@1," D_TPWRCURR3 ",W," DJ_TPWRCURR3 ",0|"
@@ -131,8 +131,8 @@ const uint8_t meter[]=
 struct METER_DESC const meter_desc[METERS_USED]={
   [0]={3,'o',0,SML_BAUDRATE,"OBIS",-1,1,0}};
 const uint8_t meter[]=
-"1,1-0:1.8.1*255(@1," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
-"1,1-0:2.8.1*255(@1," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"1,1-0:1.8.1*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
+"1,1-0:2.8.1*255(@1," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 "1,=d 2 10 @1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 "1,1-0:0.0.0*255(@#)," D_METERNR ",," DJ_METERNR ",0";
 #endif
@@ -147,9 +147,9 @@ struct METER_DESC const meter_desc[METERS_USED]={
 // 2 Richtungszähler EHZ SML 8 bit 9600 baud, binär
 const uint8_t meter[]=
 //0x77,0x07,0x01,0x00,0x01,0x08,0x00,0xff
-"1,77070100010800ff@1000," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
+"1,77070100010800ff@1000," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
 //0x77,0x07,0x01,0x00,0x02,0x08,0x00,0xff
-"1,77070100020800ff@1000," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"1,77070100020800ff@1000," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 //0x77,0x07,0x01,0x00,0x10,0x07,0x00,0xff
 "1,77070100100700ff@1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 //0x77,0x07,0x01,0x00,0x00,0x00,0x09,0xff
@@ -167,9 +167,9 @@ struct METER_DESC const meter_desc[METERS_USED]={
 // verbrauch total
 const uint8_t meter[]=
 //0x77,0x07,0x01,0x00,0x01,0x08,0x00,0xff
-"1,77070100010800ff@1000," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
+"1,77070100010800ff@1000," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
 //0x77,0x07,0x01,0x00,0x01,0x08,0x01,0xff
-"1,77070100020800ff@1000," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"1,77070100020800ff@1000," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 //0x77,0x07,0x01,0x00,0x0f,0x07,0x00,0xff
 "1,770701000f0700ff@1," D_TPWRCURR ",W," DJ_TPWRCURR ",0";
 #endif
@@ -185,9 +185,9 @@ struct METER_DESC const meter_desc[METERS_USED]={
 // verbrauch total
 const uint8_t meter[]=
 //0x77,0x07,0x01,0x00,0x01,0x08,0x00,0xff
-"1,77070100010800ff@1000," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
+"1,77070100010800ff@1000," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
 //0x77,0x07,0x01,0x00,0x01,0x08,0x01,0xff
-"1,77070100020801ff@1000," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"1,77070100020801ff@1000," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 //0x77,0x07,0x01,0x00,0x0f,0x07,0x00,0xff
 "1,770701000f0700ff@1," D_TPWRCURR ",W," DJ_TPWRCURR ",0";
 #endif
@@ -199,13 +199,13 @@ struct METER_DESC const meter_desc[METERS_USED]={
   [0]={3,'s',0,SML_BAUDRATE,"strom",-1,1,0}};
 const uint8_t meter[]=
 //0x77,0x07,0x01,0x00,0x01,0x08,0x00,0xff
-"1,77070100010800ff@1000," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
+"1,77070100010800ff@1000," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
 // ..
-"1,77070100020800ff@1000," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"1,77070100020800ff@1000," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 //0x77,0x07,0x01,0x00,0x01,0x08,0x01,0xff
-"1,77070100010801ff@1000," D_TPWRCURR1 ",KWh," DJ_TPWRCURR1 ",4|"
+"1,77070100010801ff@1000," D_TPWRCURR1 ",kWh," DJ_TPWRCURR1 ",4|"
 //0x77,0x07,0x01,0x00,0x01,0x08,0x02,0xff
-"1,77070100010802ff@1000," D_TPWRCURR2 ",KWh," DJ_TPWRCURR2 ",4|"
+"1,77070100010802ff@1000," D_TPWRCURR2 ",kWh," DJ_TPWRCURR2 ",4|"
 // 77 07 01 00 10 07 00 FF
 "1,77070100100700ff@1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 // ..
@@ -222,9 +222,9 @@ struct METER_DESC const meter_desc[METERS_USED]={
   [0]={3,'s',0,SML_BAUDRATE,"SML",-1,1,0}};
 const uint8_t meter[]=
 //0x77,0x07,0x01,0x00,0x01,0x08,0x01,0xff
-"1,77070100010800ff@1000," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
+"1,77070100010800ff@1000," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
 //0x77,0x07,0x01,0x00,0x02,0x08,0x01,0xff
-"1,77070100020801ff@1000," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"1,77070100020801ff@1000," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 //0x77,0x07,0x01,0x00,0x01,0x07,0x00,0xff
 "1,77070100010700ff@1," D_TPWRCURR ",W," DJ_TPWRCURR ",0";
 #endif
@@ -241,18 +241,18 @@ struct METER_DESC const meter_desc[METERS_USED]={
 
 // 3 Zähler definiert
 const uint8_t meter[]=
-"1,1-0:1.8.0*255(@1," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
-"1,1-0:2.8.0*255(@1," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"1,1-0:1.8.0*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
+"1,1-0:2.8.0*255(@1," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 "1,1-0:21.7.0*255(@1," D_TPWRCURR1 ",W," DJ_TPWRCURR1 ",0|"
 "1,1-0:41.7.0*255(@1," D_TPWRCURR2 ",W," DJ_TPWRCURR2 ",0|"
 "1,1-0:61.7.0*255(@1," D_TPWRCURR3 ",W," DJ_TPWRCURR3 ",0|"
 "1,=m 3+4+5 @1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 "1,1-0:0.0.0*255(@#)," D_METERNR ",," DJ_METERNR ",0|"
-"2,77070100010800ff@1000," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
-"2,77070100020800ff@1000," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"2,77070100010800ff@1000," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
+"2,77070100020800ff@1000," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 "2,77070100100700ff@1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
-"3,1-0:1.8.1*255(@1," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
-"3,1-0:2.8.1*255(@1," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"3,1-0:1.8.1*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
+"3,1-0:2.8.1*255(@1," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 "3,=d 2 10 @1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 "3,1-0:0.0.0*255(@#)," D_METERNR ",," DJ_METERNR ",0";
 
@@ -269,13 +269,13 @@ struct METER_DESC const meter_desc[METERS_USED]={
 
 // 2 Zähler definiert
 const uint8_t meter[]=
-"1,1-0:1.8.1*255(@1," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
-"1,1-0:2.8.1*255(@1," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"1,1-0:1.8.1*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
+"1,1-0:2.8.1*255(@1," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 "1,=d 2 10 @1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 "1,1-0:0.0.0*255(@#)," D_METERNR ",," DJ_METERNR ",0|"
 
-"2,1-0:1.8.1*255(@1," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
-"2,1-0:2.8.1*255(@1," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"2,1-0:1.8.1*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
+"2,1-0:2.8.1*255(@1," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 "2,=d 6 10 @1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 "2,1-0:0.0.0*255(@#)," D_METERNR ",," DJ_METERNR ",0";
 
@@ -293,18 +293,18 @@ struct METER_DESC const meter_desc[METERS_USED]={
 // 3 Zähler definiert
 const uint8_t meter[]=
 "1,=h --- Zähler Nr 1 ---|"
-"1,1-0:1.8.1*255(@1," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
-"1,1-0:2.8.1*255(@1," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"1,1-0:1.8.1*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
+"1,1-0:2.8.1*255(@1," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 "1,=d 2 10 @1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 "1,1-0:0.0.0*255(@#)," D_METERNR ",," DJ_METERNR ",0|"
 "2,=h --- Zähler Nr 2 ---|"
-"2,1-0:1.8.1*255(@1," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
-"2,1-0:2.8.1*255(@1," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"2,1-0:1.8.1*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
+"2,1-0:2.8.1*255(@1," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 "2,=d 6 10 @1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 "2,1-0:0.0.0*255(@#)," D_METERNR ",," DJ_METERNR ",0|"
 "3,=h --- Zähler Nr 3 ---|"
-"3,1-0:1.8.1*255(@1," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
-"3,1-0:2.8.1*255(@1," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"3,1-0:1.8.1*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
+"3,1-0:2.8.1*255(@1," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 "3,=d 10 10 @1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 "3,1-0:0.0.0*255(@#)," D_METERNR ",," DJ_METERNR ",0";
 
@@ -318,7 +318,7 @@ const uint8_t meter[]=
 struct METER_DESC const meter_desc[METERS_USED]={
 [0]={3,'o',0,SML_BAUDRATE,"OBIS",-1,1,0}};
 const uint8_t meter[]=
-"1,1-0:1.8.1*255(@1," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
+"1,1-0:1.8.1*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
 "1,=d 1 10 @1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 "1,1-0:0.0.0*255(@#)," D_METERNR ",," DJ_METERNR ",0";
 #endif
@@ -333,13 +333,13 @@ struct METER_DESC const meter_desc[METERS_USED]={
 // 2 direction meter EHZ SML 8 bit 9600 baud, binary
 const uint8_t meter[]=
 //0x77,0x07,0x01,0x00,0x01,0x08,0x00,0xff
-"1,77070100010800ff@1000," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
+"1,77070100010800ff@1000," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
 //0x77,0x07,0x01,0x00,0x02,0x08,0x00,0xff
-"1,77070100020800ff@1000," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"1,77070100020800ff@1000," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 //0x77,0x07,0x01,0x00,0x01,0x08,0x01,0xff
-"1,77070100010801ff@1000," D_TPWRCURR1 ",KWh," DJ_TPWRCURR1 ",4|"
+"1,77070100010801ff@1000," D_TPWRCURR1 ",kWh," DJ_TPWRCURR1 ",4|"
 //0x77,0x07,0x01,0x00,0x01,0x08,0x02,0xff
-"1,77070100010802ff@1000," D_TPWRCURR2 ",KWh," DJ_TPWRCURR2 ",4|"
+"1,77070100010802ff@1000," D_TPWRCURR2 ",kWh," DJ_TPWRCURR2 ",4|"
 //0x77,0x07,0x01,0x00,0x10,0x07,0x00,0xff
 "1,77070100100700ff@1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 //0x77,0x07,0x01,0x00,0x00,0x00,0x09,0xff
@@ -357,8 +357,8 @@ struct METER_DESC const meter_desc[METERS_USED]={
 
 // 3 meters defined
 const uint8_t meter[]=
-"1,1-0:1.8.1*255(@1," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
-"1,1-0:2.8.1*255(@1," D_TPWROUT ",KWh," DJ_TPWROUT ",4|"
+"1,1-0:1.8.1*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
+"1,1-0:2.8.1*255(@1," D_TPWROUT ",kWh," DJ_TPWROUT ",4|"
 "1,=d 2 10 @1," D_TPWRCURR ",W," DJ_TPWRCURR ",0|"
 "1,1-0:0.0.0*255(@#)," D_METERNR ",," DJ_METERNR ",0|"
 
@@ -389,7 +389,7 @@ const uint8_t meter[]=
 //----------------------------Stromzähler-EHZ363W5--sensor53 d0----------------------------
 "3,=h==================|"
 //0x77,0x07,0x01,0x00,0x01,0x08,0x00,0xff
-"3,77070100010800ff@1000," D_TPWRIN ",KWh," DJ_TPWRIN ",3|"         // 3  Zählerstand Total
+"3,77070100010800ff@1000," D_TPWRIN ",kWh," DJ_TPWRIN ",3|"         // 3  Zählerstand Total
 "3,=h==================|"
 //0x77,0x07,0x01,0x00,0x10,0x07,0x00,0xff
 "3,77070100100700ff@1," D_TPWRCURR ",W," DJ_TPWRCURR ",2|"          // 4  Aktuelle Leistung
@@ -1548,7 +1548,7 @@ nextsect:
   }
 }
 
-//"1-0:1.8.0*255(@1," D_TPWRIN ",KWh," DJ_TPWRIN ",4|"
+//"1-0:1.8.0*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
 void SML_Immediate_MQTT(const char *mp,uint8_t index,uint8_t mindex) {
   char tpowstr[32];
   char jname[24];
