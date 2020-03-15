@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_ZIGBEE
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
 
 // Add global functions for Hue Emulation
 
@@ -296,4 +297,5 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
   free(buf);
 }
 
-#endif // USE_ZIGBEE
+#endif  // USE_WEBSERVER && USE_EMULATION && USE_EMULATION_HUE
+#endif  // USE_ZIGBEE

@@ -496,6 +496,7 @@ void ZigbeeStateMachine_Run(void) {
     zigbee.recv_until  = false;
     zigbee.state_no_timeout = false;   // reset the no_timeout for next instruction
 
+// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeStateMachine_Run PC = %d, Mem1 = %d"), zigbee.pc, ESP.getFreeHeap());
     if (zigbee.pc > (sizeof(zb_prog)/sizeof(zb_prog[0]))) {
       AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Invalid pc: %d, aborting"), zigbee.pc);
       zigbee.pc = -1;

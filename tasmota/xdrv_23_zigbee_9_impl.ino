@@ -219,6 +219,7 @@ void ZigbeeInput(void)
 
 void ZigbeeInit(void)
 {
+// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem1 = %d"), ESP.getFreeHeap());
   zigbee.active = false;
   if ((pin[GPIO_ZIGBEE_RX] < 99) && (pin[GPIO_ZIGBEE_TX] < 99)) {
 		AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "GPIOs Rx:%d Tx:%d"), pin[GPIO_ZIGBEE_RX], pin[GPIO_ZIGBEE_TX]);
@@ -230,13 +231,16 @@ void ZigbeeInit(void)
       uint32_t aligned_buffer = ((uint32_t)serial_in_buffer + 3) & ~3;
 			zigbee_buffer = new PreAllocatedSBuffer(sizeof(serial_in_buffer) - 3, (char*) aligned_buffer);
 		} else {
+// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem2 = %d"), ESP.getFreeHeap());
 			zigbee_buffer = new SBuffer(ZIGBEE_BUFFER_SIZE);
+// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem3 = %d"), ESP.getFreeHeap());
 		}
     zigbee.active = true;
 		zigbee.init_phase = true;			// start the state machine
     zigbee.state_machine = true;      // start the state machine
     ZigbeeSerial->flush();
   }
+// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem9 = %d"), ESP.getFreeHeap());
 }
 
 /*********************************************************************************************\
