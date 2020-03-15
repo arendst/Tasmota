@@ -513,12 +513,12 @@
 #define D_TX20_WEST "Зх"
 
 // xsns_53_sml.ino 
-#define D_TPWRIN "Total-In"
-#define D_TPWROUT "Total-Out"
-#define D_TPWRCURR "Current-In/Out"
-#define D_TPWRCURR1 "Current-In p1"
-#define D_TPWRCURR2 "Current-In p2"
-#define D_TPWRCURR3 "Current-In p3"
+#define D_TPWRIN "Energy Total-In"
+#define D_TPWROUT "Energy Total-Out"
+#define D_TPWRCURR "Active Power-In/Out"
+#define D_TPWRCURR1 "Active Power-In p1"
+#define D_TPWRCURR2 "Active Power-In p2"
+#define D_TPWRCURR3 "Active Power-In p3"
 #define D_Strom_L1 "Current L1"
 #define D_Strom_L2 "Current L2"
 #define D_Strom_L3 "Current L3"
