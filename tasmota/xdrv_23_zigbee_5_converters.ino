@@ -39,13 +39,13 @@ class ZCLFrame {
 public:
 
   ZCLFrame(uint8_t frame_control, uint16_t manuf_code, uint8_t transact_seq, uint8_t cmd_id,
-    const char *buf, size_t buf_len, uint16_t clusterid, uint16_t groupid,
+    const char *buf, size_t buf_len, uint16_t clusterid, uint16_t groupaddr,
     uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
     uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
     uint32_t timestamp):
     _cmd_id(cmd_id), _manuf_code(manuf_code), _transact_seq(transact_seq),
     _payload(buf_len ? buf_len : 250),      // allocate the data frame from source or preallocate big enough
-    _cluster_id(clusterid), _group_id(groupid),
+    _cluster_id(clusterid), _groupaddr(groupaddr),
     _srcaddr(srcaddr), _srcendpoint(srcendpoint), _dstendpoint(dstendpoint), _wasbroadcast(wasbroadcast),
     _linkquality(linkquality), _securityuse(securityuse), _seqnumber(seqnumber),
     _timestamp(timestamp)
@@ -65,7 +65,7 @@ public:
                     "\"timestamp\":%d,"
                     "\"fc\":\"0x%02X\",\"manuf\":\"0x%04X\",\"transact\":%d,"
                     "\"cmdid\":\"0x%02X\",\"payload\":\"%s\"}}"),
-                    _group_id, _cluster_id, _srcaddr,
+                    _groupaddr, _cluster_id, _srcaddr,
                     _srcendpoint, _dstendpoint, _wasbroadcast,
                     _linkquality, _securityuse, _seqnumber,
                     _timestamp,
@@ -117,7 +117,7 @@ public:
   void postProcessAttributes(uint16_t shortaddr, JsonObject& json);
 
   inline void setGroupId(uint16_t groupid) {
-    _group_id = groupid;
+    _groupaddr = groupid;
   }
 
   inline void setClusterId(uint16_t clusterid) {
@@ -150,7 +150,7 @@ private:
   uint8_t                 _transact_seq = 0;    // transaction sequence number
   uint8_t                 _cmd_id = 0;
   uint16_t                _cluster_id = 0;
-  uint16_t                _group_id = 0;
+  uint16_t                _groupaddr = 0;
   SBuffer                 _payload;
   // information from decoded ZCL frame
   uint16_t                _srcaddr;
@@ -210,6 +210,7 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
       }
       break;
     case 0x20:      // uint8
+    case 0x30:      // enum8
       {
         uint8_t uint8_val = buf.get8(i);
         i += 1;
@@ -219,6 +220,7 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
       }
       break;
     case 0x21:      // uint16
+    case 0x31:      // enum16
       {
         uint16_t uint16_val = buf.get16(i);
         i += 2;
@@ -358,11 +360,6 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
         json[attrid_str] = uint32_val;
       }
       break;
-    // enum
-    case 0x30:      // enum8
-    case 0x31:      // enum16
-      i += attrtype - 0x2F;
-      break;
 
     // TODO
     case 0x39:      // float
@@ -499,9 +496,9 @@ void ZCLFrame::parseResponse(void) {
   snprintf_P(s, sizeof(s), PSTR("0x%04X"), _srcaddr);
   json[F(D_JSON_ZIGBEE_DEVICE)] = s;
   // "Name"
-  const String * friendlyName = zigbee_devices.getFriendlyName(_srcaddr);
+  const char * friendlyName = zigbee_devices.getFriendlyName(_srcaddr);
   if (friendlyName) {
-    json[F(D_JSON_ZIGBEE_NAME)] = *friendlyName;
+    json[F(D_JSON_ZIGBEE_NAME)] = (char*) friendlyName;
   }
   // "Command"
   snprintf_P(s, sizeof(s), PSTR("%04X!%02X"), _cluster_id, cmd);
@@ -516,8 +513,8 @@ void ZCLFrame::parseResponse(void) {
   // Add Endpoint
   json[F(D_CMND_ZIGBEE_ENDPOINT)] = _srcendpoint;
   // Add Group if non-zero
-  if (_group_id) {
-    json[F(D_CMND_ZIGBEE_GROUP)] = _group_id;
+  if (_groupaddr) {
+    json[F(D_CMND_ZIGBEE_GROUP)] = _groupaddr;
   }
   // Add linkquality
   json[F(D_CMND_ZIGBEE_LINKQUALITY)] = _linkquality;
@@ -534,6 +531,7 @@ void ZCLFrame::parseResponse(void) {
 // Parse non-normalized attributes
 void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
   convertClusterSpecific(json, _cluster_id, _cmd_id, _frame_control.b.direction, _payload);
+  sendHueUpdate(_srcaddr, _groupaddr, _cluster_id, _cmd_id, _frame_control.b.direction);
 }
 
 // return value:
@@ -547,331 +545,419 @@ typedef struct Z_AttributeConverter {
   Z_AttrConverter func;
 } Z_AttributeConverter;
 
+ZF(ZCLVersion) ZF(AppVersion) ZF(StackVersion) ZF(HWVersion) ZF(Manufacturer) ZF(ModelId)
+ZF(DateCode) ZF(PowerSource) ZF(SWBuildID) ZF(Power) ZF(SwitchType) ZF(Dimmer)
+ZF(MainsVoltage) ZF(MainsFrequency) ZF(BatteryVoltage) ZF(BatteryPercentage)
+ZF(CurrentTemperature) ZF(MinTempExperienced) ZF(MaxTempExperienced) ZF(OverTempTotalDwell)
+ZF(AlarmCount) ZF(Time) ZF(TimeStatus) ZF(TimeZone) ZF(DstStart) ZF(DstEnd)
+ZF(DstShift) ZF(StandardTime) ZF(LocalTime) ZF(LastSetTime) ZF(ValidUntilTime)
+
+ZF(LocationType) ZF(LocationMethod) ZF(LocationAge) ZF(QualityMeasure) ZF(NumberOfDevices)
+
+ZF(AnalogInActiveText) ZF(AnalogInDescription) ZF(AnalogInInactiveText) ZF(AnalogInMaxValue)
+ZF(AnalogInMinValue) ZF(AnalogInOutOfService) ZF(AqaraRotate) ZF(AnalogInPriorityArray)
+ZF(AnalogInReliability) ZF(AnalogInRelinquishDefault) ZF(AnalogInResolution) ZF(AnalogInStatusFlags)
+ZF(AnalogInEngineeringUnits) ZF(AnalogInApplicationType) ZF(Aqara_FF05)
+
+ZF(AnalogOutDescription) ZF(AnalogOutMaxValue) ZF(AnalogOutMinValue) ZF(AnalogOutOutOfService)
+ZF(AnalogOutValue) ZF(AnalogOutPriorityArray) ZF(AnalogOutReliability) ZF(AnalogOutRelinquishDefault)
+ZF(AnalogOutResolution) ZF(AnalogOutStatusFlags) ZF(AnalogOutEngineeringUnits) ZF(AnalogOutApplicationType)
+
+ZF(AnalogDescription) ZF(AnalogOutOfService) ZF(AnalogValue) ZF(AnalogPriorityArray) ZF(AnalogReliability)
+ZF(AnalogRelinquishDefault) ZF(AnalogStatusFlags) ZF(AnalogEngineeringUnits) ZF(AnalogApplicationType)
+
+ZF(BinaryInActiveText) ZF(BinaryInDescription) ZF(BinaryInInactiveText) ZF(BinaryInOutOfService)
+ZF(BinaryInPolarity) ZF(BinaryInValue) ZF(BinaryInPriorityArray) ZF(BinaryInReliability)
+ZF(BinaryInStatusFlags) ZF(BinaryInApplicationType)
+
+ZF(BinaryOutActiveText) ZF(BinaryOutDescription) ZF(BinaryOutInactiveText) ZF(BinaryOutMinimumOffTime)
+ZF(BinaryOutMinimumOnTime) ZF(BinaryOutOutOfService) ZF(BinaryOutPolarity) ZF(BinaryOutValue)
+ZF(BinaryOutPriorityArray) ZF(BinaryOutReliability) ZF(BinaryOutRelinquishDefault) ZF(BinaryOutStatusFlags)
+ZF(BinaryOutApplicationType)
+
+ZF(BinaryActiveText) ZF(BinaryDescription) ZF(BinaryInactiveText) ZF(BinaryMinimumOffTime)
+ZF(BinaryMinimumOnTime) ZF(BinaryOutOfService) ZF(BinaryValue) ZF(BinaryPriorityArray) ZF(BinaryReliability)
+ZF(BinaryRelinquishDefault) ZF(BinaryStatusFlags) ZF(BinaryApplicationType)
+
+ZF(MultiInStateText) ZF(MultiInDescription) ZF(MultiInNumberOfStates) ZF(MultiInOutOfService)
+ZF(MultiInValue) ZF(MultiInReliability) ZF(MultiInStatusFlags) ZF(MultiInApplicationType)
+
+ZF(MultiOutStateText) ZF(MultiOutDescription) ZF(MultiOutNumberOfStates) ZF(MultiOutOutOfService)
+ZF(MultiOutValue) ZF(MultiOutPriorityArray) ZF(MultiOutReliability) ZF(MultiOutRelinquishDefault)
+ZF(MultiOutStatusFlags) ZF(MultiOutApplicationType)
+
+ZF(MultiStateText) ZF(MultiDescription) ZF(MultiNumberOfStates) ZF(MultiOutOfService) ZF(MultiValue)
+ZF(MultiReliability) ZF(MultiRelinquishDefault) ZF(MultiStatusFlags) ZF(MultiApplicationType)
+
+ZF(TotalProfileNum) ZF(MultipleScheduling) ZF(EnergyFormatting) ZF(EnergyRemote) ZF(ScheduleMode)
+
+ZF(CheckinInterval) ZF(LongPollInterval) ZF(ShortPollInterval) ZF(FastPollTimeout) ZF(CheckinIntervalMin)
+ZF(LongPollIntervalMin) ZF(FastPollTimeoutMax)
+
+ZF(PhysicalClosedLimit) ZF(MotorStepSize) ZF(Status) ZF(ClosedLimit) ZF(Mode)
+
+ZF(LockState) ZF(LockType) ZF(ActuatorEnabled) ZF(DoorState) ZF(DoorOpenEvents)
+ZF(DoorClosedEvents) ZF(OpenPeriod)
+
+ZF(AqaraVibrationMode) ZF(AqaraVibrationsOrAngle) ZF(AqaraVibration505) ZF(AqaraAccelerometer)
+
+ZF(WindowCoveringType) ZF(PhysicalClosedLimitLift) ZF(PhysicalClosedLimitTilt) ZF(CurrentPositionLift)
+ZF(CurrentPositionTilt) ZF(NumberofActuationsLift) ZF(NumberofActuationsTilt) ZF(ConfigStatus)
+ZF(CurrentPositionLiftPercentage) ZF(CurrentPositionTiltPercentage) ZF(InstalledOpenLimitLift)
+ZF(InstalledClosedLimitLift) ZF(InstalledOpenLimitTilt) ZF(InstalledClosedLimitTilt) ZF(VelocityLift)
+ZF(AccelerationTimeLift) ZF(DecelerationTimeLift) ZF(IntermediateSetpointsLift)
+ZF(IntermediateSetpointsTilt)
+
+ZF(Hue) ZF(Sat) ZF(RemainingTime) ZF(X) ZF(Y) ZF(DriftCompensation) ZF(CompensationText) ZF(CT)
+ZF(ColorMode) ZF(NumberOfPrimaries) ZF(Primary1X) ZF(Primary1Y) ZF(Primary1Intensity) ZF(Primary2X)
+ZF(Primary2Y) ZF(Primary2Intensity) ZF(Primary3X) ZF(Primary3Y) ZF(Primary3Intensity) ZF(WhitePointX)
+ZF(WhitePointY) ZF(ColorPointRX) ZF(ColorPointRY) ZF(ColorPointRIntensity) ZF(ColorPointGX) ZF(ColorPointGY)
+ZF(ColorPointGIntensity) ZF(ColorPointBX) ZF(ColorPointBY) ZF(ColorPointBIntensity)
+
+ZF(Illuminance) ZF(IlluminanceMinMeasuredValue) ZF(IlluminanceMaxMeasuredValue) ZF(IlluminanceTolerance)
+ZF(IlluminanceLightSensorType) ZF(IlluminanceLevelStatus)
+
+ZF(Temperature) ZF(TemperatureMinMeasuredValue) ZF(TemperatureMaxMeasuredValue) ZF(TemperatureTolerance)
+
+ZF(PressureUnit) ZF(Pressure) ZF(PressureMinMeasuredValue) ZF(PressureMaxMeasuredValue) ZF(PressureTolerance)
+ZF(PressureScaledValue) ZF(PressureMinScaledValue) ZF(PressureMaxScaledValue) ZF(PressureScaledTolerance)
+ZF(PressureScale)
+
+ZF(FlowRate) ZF(FlowMinMeasuredValue) ZF(FlowMaxMeasuredValue) ZF(FlowTolerance)
+
+ZF(Humidity) ZF(HumidityMinMeasuredValue) ZF(HumidityMaxMeasuredValue) ZF(HumidityTolerance)
+
+ZF(Occupancy) ZF(OccupancySensorType)
+
+ZF(CompanyName) ZF(MeterTypeID) ZF(DataQualityID) ZF(CustomerName) ZF(Model) ZF(PartNumber)
+ZF(SoftwareRevision) ZF(POD) ZF(AvailablePower) ZF(PowerThreshold)
+
+ZF(NumberOfResets) ZF(PersistentMemoryWrites) ZF(LastMessageLQI) ZF(LastMessageRSSI)
 // list of post-processing directives
 const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
-  { 0x0000, 0x0000,  "ZCLVersion",           &Z_Copy },
-  { 0x0000, 0x0001,  "AppVersion",           &Z_Copy },
-  { 0x0000, 0x0002,  "StackVersion",         &Z_Copy },
-  { 0x0000, 0x0003,  "HWVersion",            &Z_Copy },
-  { 0x0000, 0x0004,  "Manufacturer",         &Z_ManufKeep },    // record Manufacturer
-  { 0x0000, 0x0005,  D_JSON_MODEL D_JSON_ID, &Z_ModelKeep },    // record Model
-  { 0x0000, 0x0006,  "DateCode",             &Z_Copy },
-  { 0x0000, 0x0007,  "PowerSource",          &Z_Copy },
-  { 0x0000, 0x4000,  "SWBuildID",            &Z_Copy },
+  { 0x0000, 0x0000,  Z(ZCLVersion),           &Z_Copy },
+  { 0x0000, 0x0001,  Z(AppVersion),           &Z_Copy },
+  { 0x0000, 0x0002,  Z(StackVersion),         &Z_Copy },
+  { 0x0000, 0x0003,  Z(HWVersion),            &Z_Copy },
+  { 0x0000, 0x0004,  Z(Manufacturer),         &Z_ManufKeep },    // record Manufacturer
+  { 0x0000, 0x0005,  Z(ModelId), &Z_ModelKeep },    // record Model
+  { 0x0000, 0x0006,  Z(DateCode),             &Z_Copy },
+  { 0x0000, 0x0007,  Z(PowerSource),          &Z_Copy },
+  { 0x0000, 0x4000,  Z(SWBuildID),            &Z_Copy },
   { 0x0000, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
   // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
   { 0x0000, 0xFF01,  nullptr,                &Z_AqaraSensor },    // Occupancy (map8)
 
   // Power Configuration cluster
-  { 0x0001, 0x0000,  "MainsVoltage",         &Z_Copy },
-  { 0x0001, 0x0001,  "MainsFrequency",       &Z_Copy },
-  { 0x0001, 0x0020,  "BatteryVoltage",       &Z_FloatDiv10 },
-  { 0x0001, 0x0021,  "BatteryPercentageRemaining",&Z_Copy },
+  { 0x0001, 0x0000,  Z(MainsVoltage),         &Z_Copy },
+  { 0x0001, 0x0001,  Z(MainsFrequency),       &Z_Copy },
+  { 0x0001, 0x0020,  Z(BatteryVoltage),       &Z_FloatDiv10 },
+  { 0x0001, 0x0021,  Z(BatteryPercentage),    &Z_Copy },
 
   // Device Temperature Configuration cluster
-  { 0x0002, 0x0000,  "CurrentTemperature",   &Z_Copy },
-  { 0x0002, 0x0001,  "MinTempExperienced",   &Z_Copy },
-  { 0x0002, 0x0002,  "MaxTempExperienced",   &Z_Copy },
-  { 0x0002, 0x0003,  "OverTempTotalDwell",   &Z_Copy },
+  { 0x0002, 0x0000,  Z(CurrentTemperature),   &Z_Copy },
+  { 0x0002, 0x0001,  Z(MinTempExperienced),   &Z_Copy },
+  { 0x0002, 0x0002,  Z(MaxTempExperienced),   &Z_Copy },
+  { 0x0002, 0x0003,  Z(OverTempTotalDwell),   &Z_Copy },
 
   // On/off cluster
-  { 0x0006, 0x0000,  "Power",                &Z_Copy },
-  { 0x0006, 0x8000,  "Power",                &Z_Copy },   // See 7280
+  { 0x0006, 0x0000,  Z(Power),                &Z_Copy },
+  { 0x0006, 0x8000,  Z(Power),                &Z_Copy },   // See 7280
 
   // On/Off Switch Configuration cluster
-  { 0x0007, 0x0000,  "SwitchType",           &Z_Copy },
+  { 0x0007, 0x0000,  Z(SwitchType),           &Z_Copy },
 
   // Level Control cluster
-  { 0x0008, 0x0000,  "Dimmer",               &Z_Copy },
-  // { 0x0008, 0x0001,  "RemainingTime",        &Z_Copy },
-  // { 0x0008, 0x0010,  "OnOffTransitionTime",  &Z_Copy },
-  // { 0x0008, 0x0011,  "OnLevel",              &Z_Copy },
-  // { 0x0008, 0x0012,  "OnTransitionTime",     &Z_Copy },
-  // { 0x0008, 0x0013,  "OffTransitionTime",    &Z_Copy },
-  // { 0x0008, 0x0014,  "DefaultMoveRate",      &Z_Copy },
+  { 0x0008, 0x0000,  Z(Dimmer),               &Z_Copy },
+  // { 0x0008, 0x0001,  Z(RemainingTime",        &Z_Copy },
+  // { 0x0008, 0x0010,  Z(OnOffTransitionTime",  &Z_Copy },
+  // { 0x0008, 0x0011,  Z(OnLevel",              &Z_Copy },
+  // { 0x0008, 0x0012,  Z(OnTransitionTime",     &Z_Copy },
+  // { 0x0008, 0x0013,  Z(OffTransitionTime",    &Z_Copy },
+  // { 0x0008, 0x0014,  Z(DefaultMoveRate",      &Z_Copy },
 
   // Alarms cluster
-  { 0x0009, 0x0000,  "AlarmCount",           &Z_Copy },
+  { 0x0009, 0x0000,  Z(AlarmCount),           &Z_Copy },
   // Time cluster
-  { 0x000A, 0x0000,  "Time",                 &Z_Copy },
-  { 0x000A, 0x0001,  "TimeStatus",           &Z_Copy },
-  { 0x000A, 0x0002,  "TimeZone",             &Z_Copy },
-  { 0x000A, 0x0003,  "DstStart",             &Z_Copy },
-  { 0x000A, 0x0004,  "DstStart",             &Z_Copy },
-  { 0x000A, 0x0005,  "DstShift",             &Z_Copy },
-  { 0x000A, 0x0006,  "StandardTime",         &Z_Copy },
-  { 0x000A, 0x0007,  "LocalTime",            &Z_Copy },
-  { 0x000A, 0x0008,  "LastSetTime",          &Z_Copy },
-  { 0x000A, 0x0009,  "ValidUntilTime",       &Z_Copy },
+  { 0x000A, 0x0000,  Z(Time),                 &Z_Copy },
+  { 0x000A, 0x0001,  Z(TimeStatus),           &Z_Copy },
+  { 0x000A, 0x0002,  Z(TimeZone),             &Z_Copy },
+  { 0x000A, 0x0003,  Z(DstStart),             &Z_Copy },
+  { 0x000A, 0x0004,  Z(DstEnd),             &Z_Copy },
+  { 0x000A, 0x0005,  Z(DstShift),             &Z_Copy },
+  { 0x000A, 0x0006,  Z(StandardTime),         &Z_Copy },
+  { 0x000A, 0x0007,  Z(LocalTime),            &Z_Copy },
+  { 0x000A, 0x0008,  Z(LastSetTime),          &Z_Copy },
+  { 0x000A, 0x0009,  Z(ValidUntilTime),       &Z_Copy },
   // RSSI Location cluster
-  { 0x000B, 0x0000,  "LocationType",         &Z_Copy },
-  { 0x000B, 0x0000,  "LocationMethod",       &Z_Copy },
-  { 0x000B, 0x0000,  "LocationAge",          &Z_Copy },
-  { 0x000B, 0x0000,  "QualityMeasure",       &Z_Copy },
-  { 0x000B, 0x0000,  "NumberOfDevices",      &Z_Copy },
+  { 0x000B, 0x0000,  Z(LocationType),         &Z_Copy },
+  { 0x000B, 0x0000,  Z(LocationMethod),       &Z_Copy },
+  { 0x000B, 0x0000,  Z(LocationAge),          &Z_Copy },
+  { 0x000B, 0x0000,  Z(QualityMeasure),       &Z_Copy },
+  { 0x000B, 0x0000,  Z(NumberOfDevices),      &Z_Copy },
   // Analog Input cluster
-  { 0x000C, 0x0004,  "AnalogInActiveText",   &Z_Copy },
-  { 0x000C, 0x001C,  "AnalogInDescription",  &Z_Copy },
-  { 0x000C, 0x002E,  "AnalogInInactiveText", &Z_Copy },
-  { 0x000C, 0x0041,  "AnalogInMaxValue",     &Z_Copy },
-  { 0x000C, 0x0045,  "AnalogInMinValue",     &Z_Copy },
-  { 0x000C, 0x0051,  "AnalogInOutOfService", &Z_Copy },
-  { 0x000C, 0x0055,  "AqaraRotate",          &Z_Copy },
-  { 0x000C, 0x0057,  "AnalogInPriorityArray",&Z_Copy },
-  { 0x000C, 0x0067,  "AnalogInReliability",  &Z_Copy },
-  { 0x000C, 0x0068,  "AnalogInRelinquishDefault",&Z_Copy },
-  { 0x000C, 0x006A,  "AnalogInResolution",   &Z_Copy },
-  { 0x000C, 0x006F,  "AnalogInStatusFlags",  &Z_Copy },
-  { 0x000C, 0x0075,  "AnalogInEngineeringUnits",&Z_Copy },
-  { 0x000C, 0x0100,  "AnalogInApplicationType",&Z_Copy },
-  { 0x000C, 0xFF05,  "Aqara_FF05",           &Z_Copy },
+  { 0x000C, 0x0004,  Z(AnalogInActiveText),   &Z_Copy },
+  { 0x000C, 0x001C,  Z(AnalogInDescription),  &Z_Copy },
+  { 0x000C, 0x002E,  Z(AnalogInInactiveText), &Z_Copy },
+  { 0x000C, 0x0041,  Z(AnalogInMaxValue),     &Z_Copy },
+  { 0x000C, 0x0045,  Z(AnalogInMinValue),     &Z_Copy },
+  { 0x000C, 0x0051,  Z(AnalogInOutOfService), &Z_Copy },
+  { 0x000C, 0x0055,  Z(AqaraRotate),          &Z_Copy },
+  { 0x000C, 0x0057,  Z(AnalogInPriorityArray),&Z_Copy },
+  { 0x000C, 0x0067,  Z(AnalogInReliability),  &Z_Copy },
+  { 0x000C, 0x0068,  Z(AnalogInRelinquishDefault),&Z_Copy },
+  { 0x000C, 0x006A,  Z(AnalogInResolution),   &Z_Copy },
+  { 0x000C, 0x006F,  Z(AnalogInStatusFlags),  &Z_Copy },
+  { 0x000C, 0x0075,  Z(AnalogInEngineeringUnits),&Z_Copy },
+  { 0x000C, 0x0100,  Z(AnalogInApplicationType),&Z_Copy },
+  { 0x000C, 0xFF05,  Z(Aqara_FF05),           &Z_Copy },
   // Analog Output cluster
-  { 0x000D, 0x001C,  "AnalogOutDescription", &Z_Copy },
-  { 0x000D, 0x0041,  "AnalogOutMaxValue",    &Z_Copy },
-  { 0x000D, 0x0045,  "AnalogOutMinValue",    &Z_Copy },
-  { 0x000D, 0x0051,  "AnalogOutOutOfService",&Z_Copy },
-  { 0x000D, 0x0055,  "AnalogOutValue",       &Z_Copy },
-  { 0x000D, 0x0057,  "AnalogOutPriorityArray",&Z_Copy },
-  { 0x000D, 0x0067,  "AnalogOutReliability", &Z_Copy },
-  { 0x000D, 0x0068,  "AnalogOutRelinquishDefault",&Z_Copy },
-  { 0x000D, 0x006A,  "AnalogOutResolution",  &Z_Copy },
-  { 0x000D, 0x006F,  "AnalogOutStatusFlags", &Z_Copy },
-  { 0x000D, 0x0075,  "AnalogOutEngineeringUnits",&Z_Copy },
-  { 0x000D, 0x0100,  "AnalogOutApplicationType",&Z_Copy },
+  { 0x000D, 0x001C,  Z(AnalogOutDescription), &Z_Copy },
+  { 0x000D, 0x0041,  Z(AnalogOutMaxValue),    &Z_Copy },
+  { 0x000D, 0x0045,  Z(AnalogOutMinValue),    &Z_Copy },
+  { 0x000D, 0x0051,  Z(AnalogOutOutOfService),&Z_Copy },
+  { 0x000D, 0x0055,  Z(AnalogOutValue),       &Z_Copy },
+  { 0x000D, 0x0057,  Z(AnalogOutPriorityArray),&Z_Copy },
+  { 0x000D, 0x0067,  Z(AnalogOutReliability), &Z_Copy },
+  { 0x000D, 0x0068,  Z(AnalogOutRelinquishDefault),&Z_Copy },
+  { 0x000D, 0x006A,  Z(AnalogOutResolution),  &Z_Copy },
+  { 0x000D, 0x006F,  Z(AnalogOutStatusFlags), &Z_Copy },
+  { 0x000D, 0x0075,  Z(AnalogOutEngineeringUnits),&Z_Copy },
+  { 0x000D, 0x0100,  Z(AnalogOutApplicationType),&Z_Copy },
   // Analog Value cluster
-  { 0x000E, 0x001C,  "AnalogDescription",    &Z_Copy },
-  { 0x000E, 0x0051,  "AnalogOutOfService",   &Z_Copy },
-  { 0x000E, 0x0055,  "AnalogValue",          &Z_Copy },
-  { 0x000E, 0x0057,  "AnalogPriorityArray",  &Z_Copy },
-  { 0x000E, 0x0067,  "AnalogReliability",    &Z_Copy },
-  { 0x000E, 0x0068,  "AnalogRelinquishDefault",&Z_Copy },
-  { 0x000E, 0x006F,  "AnalogStatusFlags",    &Z_Copy },
-  { 0x000E, 0x0075,  "AnalogEngineeringUnits",&Z_Copy },
-  { 0x000E, 0x0100,  "AnalogApplicationType",&Z_Copy },
+  { 0x000E, 0x001C,  Z(AnalogDescription),    &Z_Copy },
+  { 0x000E, 0x0051,  Z(AnalogOutOfService),   &Z_Copy },
+  { 0x000E, 0x0055,  Z(AnalogValue),          &Z_Copy },
+  { 0x000E, 0x0057,  Z(AnalogPriorityArray),  &Z_Copy },
+  { 0x000E, 0x0067,  Z(AnalogReliability),    &Z_Copy },
+  { 0x000E, 0x0068,  Z(AnalogRelinquishDefault),&Z_Copy },
+  { 0x000E, 0x006F,  Z(AnalogStatusFlags),    &Z_Copy },
+  { 0x000E, 0x0075,  Z(AnalogEngineeringUnits),&Z_Copy },
+  { 0x000E, 0x0100,  Z(AnalogApplicationType),&Z_Copy },
   // Binary Input cluster
-  { 0x000F, 0x0004,  "BinaryInActiveText",  &Z_Copy },
-  { 0x000F, 0x001C,  "BinaryInDescription", &Z_Copy },
-  { 0x000F, 0x002E,  "BinaryInInactiveText",&Z_Copy },
-  { 0x000F, 0x0051,  "BinaryInOutOfService",&Z_Copy },
-  { 0x000F, 0x0054,  "BinaryInPolarity",    &Z_Copy },
-  { 0x000F, 0x0055,  "BinaryInValue",       &Z_Copy },
-  { 0x000F, 0x0057,  "BinaryInPriorityArray",&Z_Copy },
-  { 0x000F, 0x0067,  "BinaryInReliability", &Z_Copy },
-  { 0x000F, 0x006F,  "BinaryInStatusFlags", &Z_Copy },
-  { 0x000F, 0x0100,  "BinaryInApplicationType",&Z_Copy },
+  { 0x000F, 0x0004,  Z(BinaryInActiveText),  &Z_Copy },
+  { 0x000F, 0x001C,  Z(BinaryInDescription), &Z_Copy },
+  { 0x000F, 0x002E,  Z(BinaryInInactiveText),&Z_Copy },
+  { 0x000F, 0x0051,  Z(BinaryInOutOfService),&Z_Copy },
+  { 0x000F, 0x0054,  Z(BinaryInPolarity),    &Z_Copy },
+  { 0x000F, 0x0055,  Z(BinaryInValue),       &Z_Copy },
+  { 0x000F, 0x0057,  Z(BinaryInPriorityArray),&Z_Copy },
+  { 0x000F, 0x0067,  Z(BinaryInReliability), &Z_Copy },
+  { 0x000F, 0x006F,  Z(BinaryInStatusFlags), &Z_Copy },
+  { 0x000F, 0x0100,  Z(BinaryInApplicationType),&Z_Copy },
   // Binary Output cluster
-  { 0x0010, 0x0004,  "BinaryOutActiveText",  &Z_Copy },
-  { 0x0010, 0x001C,  "BinaryOutDescription", &Z_Copy },
-  { 0x0010, 0x002E,  "BinaryOutInactiveText",&Z_Copy },
-  { 0x0010, 0x0042,  "BinaryOutMinimumOffTime",&Z_Copy },
-  { 0x0010, 0x0043,  "BinaryOutMinimumOnTime",&Z_Copy },
-  { 0x0010, 0x0051,  "BinaryOutOutOfService",&Z_Copy },
-  { 0x0010, 0x0054,  "BinaryOutPolarity",    &Z_Copy },
-  { 0x0010, 0x0055,  "BinaryOutValue",       &Z_Copy },
-  { 0x0010, 0x0057,  "BinaryOutPriorityArray",&Z_Copy },
-  { 0x0010, 0x0067,  "BinaryOutReliability", &Z_Copy },
-  { 0x0010, 0x0068,  "BinaryOutRelinquishDefault",&Z_Copy },
-  { 0x0010, 0x006F,  "BinaryOutStatusFlags", &Z_Copy },
-  { 0x0010, 0x0100,  "BinaryOutApplicationType",&Z_Copy },
+  { 0x0010, 0x0004,  Z(BinaryOutActiveText),  &Z_Copy },
+  { 0x0010, 0x001C,  Z(BinaryOutDescription), &Z_Copy },
+  { 0x0010, 0x002E,  Z(BinaryOutInactiveText),&Z_Copy },
+  { 0x0010, 0x0042,  Z(BinaryOutMinimumOffTime),&Z_Copy },
+  { 0x0010, 0x0043,  Z(BinaryOutMinimumOnTime),&Z_Copy },
+  { 0x0010, 0x0051,  Z(BinaryOutOutOfService),&Z_Copy },
+  { 0x0010, 0x0054,  Z(BinaryOutPolarity),    &Z_Copy },
+  { 0x0010, 0x0055,  Z(BinaryOutValue),       &Z_Copy },
+  { 0x0010, 0x0057,  Z(BinaryOutPriorityArray),&Z_Copy },
+  { 0x0010, 0x0067,  Z(BinaryOutReliability), &Z_Copy },
+  { 0x0010, 0x0068,  Z(BinaryOutRelinquishDefault),&Z_Copy },
+  { 0x0010, 0x006F,  Z(BinaryOutStatusFlags), &Z_Copy },
+  { 0x0010, 0x0100,  Z(BinaryOutApplicationType),&Z_Copy },
   // Binary Value cluster
-  { 0x0011, 0x0004,  "BinaryActiveText",     &Z_Copy },
-  { 0x0011, 0x001C,  "BinaryDescription",    &Z_Copy },
-  { 0x0011, 0x002E,  "BinaryInactiveText",   &Z_Copy },
-  { 0x0011, 0x0042,  "BinaryMinimumOffTime", &Z_Copy },
-  { 0x0011, 0x0043,  "BinaryMinimumOnTime",  &Z_Copy },
-  { 0x0011, 0x0051,  "BinaryOutOfService",   &Z_Copy },
-  { 0x0011, 0x0055,  "BinaryValue",          &Z_Copy },
-  { 0x0011, 0x0057,  "BinaryPriorityArray",  &Z_Copy },
-  { 0x0011, 0x0067,  "BinaryReliability",    &Z_Copy },
-  { 0x0011, 0x0068,  "BinaryRelinquishDefault",&Z_Copy },
-  { 0x0011, 0x006F,  "BinaryStatusFlags",    &Z_Copy },
-  { 0x0011, 0x0100,  "BinaryApplicationType",&Z_Copy },
+  { 0x0011, 0x0004,  Z(BinaryActiveText),     &Z_Copy },
+  { 0x0011, 0x001C,  Z(BinaryDescription),    &Z_Copy },
+  { 0x0011, 0x002E,  Z(BinaryInactiveText),   &Z_Copy },
+  { 0x0011, 0x0042,  Z(BinaryMinimumOffTime), &Z_Copy },
+  { 0x0011, 0x0043,  Z(BinaryMinimumOnTime),  &Z_Copy },
+  { 0x0011, 0x0051,  Z(BinaryOutOfService),   &Z_Copy },
+  { 0x0011, 0x0055,  Z(BinaryValue),          &Z_Copy },
+  { 0x0011, 0x0057,  Z(BinaryPriorityArray),  &Z_Copy },
+  { 0x0011, 0x0067,  Z(BinaryReliability),    &Z_Copy },
+  { 0x0011, 0x0068,  Z(BinaryRelinquishDefault),&Z_Copy },
+  { 0x0011, 0x006F,  Z(BinaryStatusFlags),    &Z_Copy },
+  { 0x0011, 0x0100,  Z(BinaryApplicationType),&Z_Copy },
   // Multistate Input cluster
-  { 0x0012, 0x000E,  "MultiInStateText",     &Z_Copy },
-  { 0x0012, 0x001C,  "MultiInDescription",   &Z_Copy },
-  { 0x0012, 0x004A,  "MultiInNumberOfStates",&Z_Copy },
-  { 0x0012, 0x0051,  "MultiInOutOfService",  &Z_Copy },
-  { 0x0012, 0x0055,  "MultiInValue",         &Z_AqaraCube },
-  { 0x0012, 0x0067,  "MultiInReliability",   &Z_Copy },
-  { 0x0012, 0x006F,  "MultiInStatusFlags",   &Z_Copy },
-  { 0x0012, 0x0100,  "MultiInApplicationType",&Z_Copy },
+  { 0x0012, 0x000E,  Z(MultiInStateText),     &Z_Copy },
+  { 0x0012, 0x001C,  Z(MultiInDescription),   &Z_Copy },
+  { 0x0012, 0x004A,  Z(MultiInNumberOfStates),&Z_Copy },
+  { 0x0012, 0x0051,  Z(MultiInOutOfService),  &Z_Copy },
+  { 0x0012, 0x0055,  Z(MultiInValue),         &Z_AqaraCube },
+  { 0x0012, 0x0067,  Z(MultiInReliability),   &Z_Copy },
+  { 0x0012, 0x006F,  Z(MultiInStatusFlags),   &Z_Copy },
+  { 0x0012, 0x0100,  Z(MultiInApplicationType),&Z_Copy },
   // Multistate output
-  { 0x0013, 0x000E,  "MultiOutStateText",    &Z_Copy },
-  { 0x0013, 0x001C,  "MultiOutDescription",  &Z_Copy },
-  { 0x0013, 0x004A,  "MultiOutNumberOfStates",&Z_Copy },
-  { 0x0013, 0x0051,  "MultiOutOutOfService", &Z_Copy },
-  { 0x0013, 0x0055,  "MultiOutValue",        &Z_Copy },
-  { 0x0013, 0x0057,  "MultiOutPriorityArray",&Z_Copy },
-  { 0x0013, 0x0067,  "MultiOutReliability",  &Z_Copy },
-  { 0x0013, 0x0068,  "MultiOutRelinquishDefault",&Z_Copy },
-  { 0x0013, 0x006F,  "MultiOutStatusFlags",  &Z_Copy },
-  { 0x0013, 0x0100,  "MultiOutApplicationType",&Z_Copy },
+  { 0x0013, 0x000E,  Z(MultiOutStateText),    &Z_Copy },
+  { 0x0013, 0x001C,  Z(MultiOutDescription),  &Z_Copy },
+  { 0x0013, 0x004A,  Z(MultiOutNumberOfStates),&Z_Copy },
+  { 0x0013, 0x0051,  Z(MultiOutOutOfService), &Z_Copy },
+  { 0x0013, 0x0055,  Z(MultiOutValue),        &Z_Copy },
+  { 0x0013, 0x0057,  Z(MultiOutPriorityArray),&Z_Copy },
+  { 0x0013, 0x0067,  Z(MultiOutReliability),  &Z_Copy },
+  { 0x0013, 0x0068,  Z(MultiOutRelinquishDefault),&Z_Copy },
+  { 0x0013, 0x006F,  Z(MultiOutStatusFlags),  &Z_Copy },
+  { 0x0013, 0x0100,  Z(MultiOutApplicationType),&Z_Copy },
   // Multistate Value cluster
-  { 0x0014, 0x000E,  "MultiStateText",       &Z_Copy },
-  { 0x0014, 0x001C,  "MultiDescription",     &Z_Copy },
-  { 0x0014, 0x004A,  "MultiNumberOfStates",  &Z_Copy },
-  { 0x0014, 0x0051,  "MultiOutOfService",    &Z_Copy },
-  { 0x0014, 0x0055,  "MultiValue",           &Z_Copy },
-  { 0x0014, 0x0067,  "MultiReliability",     &Z_Copy },
-  { 0x0014, 0x0068,  "MultiRelinquishDefault",&Z_Copy },
-  { 0x0014, 0x006F,  "MultiStatusFlags",     &Z_Copy },
-  { 0x0014, 0x0100,  "MultiApplicationType", &Z_Copy },
+  { 0x0014, 0x000E,  Z(MultiStateText),       &Z_Copy },
+  { 0x0014, 0x001C,  Z(MultiDescription),     &Z_Copy },
+  { 0x0014, 0x004A,  Z(MultiNumberOfStates),  &Z_Copy },
+  { 0x0014, 0x0051,  Z(MultiOutOfService),    &Z_Copy },
+  { 0x0014, 0x0055,  Z(MultiValue),           &Z_Copy },
+  { 0x0014, 0x0067,  Z(MultiReliability),     &Z_Copy },
+  { 0x0014, 0x0068,  Z(MultiRelinquishDefault),&Z_Copy },
+  { 0x0014, 0x006F,  Z(MultiStatusFlags),     &Z_Copy },
+  { 0x0014, 0x0100,  Z(MultiApplicationType), &Z_Copy },
   // Power Profile cluster
-  { 0x001A, 0x0000,  "TotalProfileNum",      &Z_Copy },
-  { 0x001A, 0x0001,  "MultipleScheduling",   &Z_Copy },
-  { 0x001A, 0x0002,  "EnergyFormatting",     &Z_Copy },
-  { 0x001A, 0x0003,  "EnergyRemote",         &Z_Copy },
-  { 0x001A, 0x0004,  "ScheduleMode",         &Z_Copy },
+  { 0x001A, 0x0000,  Z(TotalProfileNum),      &Z_Copy },
+  { 0x001A, 0x0001,  Z(MultipleScheduling),   &Z_Copy },
+  { 0x001A, 0x0002,  Z(EnergyFormatting),     &Z_Copy },
+  { 0x001A, 0x0003,  Z(EnergyRemote),         &Z_Copy },
+  { 0x001A, 0x0004,  Z(ScheduleMode),         &Z_Copy },
   // Poll Control cluster
-  { 0x0020, 0x0000,  "CheckinInterval",      &Z_Copy },
-  { 0x0020, 0x0001,  "LongPollInterval",     &Z_Copy },
-  { 0x0020, 0x0002,  "ShortPollInterval",    &Z_Copy },
-  { 0x0020, 0x0003,  "FastPollTimeout",      &Z_Copy },
-  { 0x0020, 0x0004,  "CheckinIntervalMin",   &Z_Copy },
-  { 0x0020, 0x0005,  "LongPollIntervalMin",  &Z_Copy },
-  { 0x0020, 0x0006,  "FastPollTimeoutMax",   &Z_Copy },
+  { 0x0020, 0x0000,  Z(CheckinInterval),      &Z_Copy },
+  { 0x0020, 0x0001,  Z(LongPollInterval),     &Z_Copy },
+  { 0x0020, 0x0002,  Z(ShortPollInterval),    &Z_Copy },
+  { 0x0020, 0x0003,  Z(FastPollTimeout),      &Z_Copy },
+  { 0x0020, 0x0004,  Z(CheckinIntervalMin),   &Z_Copy },
+  { 0x0020, 0x0005,  Z(LongPollIntervalMin),  &Z_Copy },
+  { 0x0020, 0x0006,  Z(FastPollTimeoutMax),   &Z_Copy },
   // Shade Configuration cluster
-  { 0x0100, 0x0000,  "PhysicalClosedLimit",  &Z_Copy },
-  { 0x0100, 0x0001,  "MotorStepSize",        &Z_Copy },
-  { 0x0100, 0x0002,  "Status",               &Z_Copy },
-  { 0x0100, 0x0010,  "ClosedLimit",          &Z_Copy },
-  { 0x0100, 0x0011,  "Mode",                 &Z_Copy },
+  { 0x0100, 0x0000,  Z(PhysicalClosedLimit),  &Z_Copy },
+  { 0x0100, 0x0001,  Z(MotorStepSize),        &Z_Copy },
+  { 0x0100, 0x0002,  Z(Status),               &Z_Copy },
+  { 0x0100, 0x0010,  Z(ClosedLimit),          &Z_Copy },
+  { 0x0100, 0x0011,  Z(Mode),                 &Z_Copy },
   // Door Lock cluster
-  { 0x0101, 0x0000,  "LockState",            &Z_Copy },
-  { 0x0101, 0x0001,  "LockType",             &Z_Copy },
-  { 0x0101, 0x0002,  "ActuatorEnabled",      &Z_Copy },
-  { 0x0101, 0x0003,  "DoorState",            &Z_Copy },
-  { 0x0101, 0x0004,  "DoorOpenEvents",       &Z_Copy },
-  { 0x0101, 0x0005,  "DoorClosedEvents",     &Z_Copy },
-  { 0x0101, 0x0006,  "OpenPeriod",           &Z_Copy },
+  { 0x0101, 0x0000,  Z(LockState),            &Z_Copy },
+  { 0x0101, 0x0001,  Z(LockType),             &Z_Copy },
+  { 0x0101, 0x0002,  Z(ActuatorEnabled),      &Z_Copy },
+  { 0x0101, 0x0003,  Z(DoorState),            &Z_Copy },
+  { 0x0101, 0x0004,  Z(DoorOpenEvents),       &Z_Copy },
+  { 0x0101, 0x0005,  Z(DoorClosedEvents),     &Z_Copy },
+  { 0x0101, 0x0006,  Z(OpenPeriod),           &Z_Copy },
   // Aqara Lumi Vibration Sensor
-  { 0x0101, 0x0055,  "AqaraVibrationMode",   &Z_AqaraVibration },
-  { 0x0101, 0x0503,  "AqaraVibrationsOrAngle", &Z_Copy },
-  { 0x0101, 0x0505,  "AqaraVibration505",    &Z_Copy },
-  { 0x0101, 0x0508,  "AqaraAccelerometer",   &Z_AqaraVibration },
+  { 0x0101, 0x0055,  Z(AqaraVibrationMode),   &Z_AqaraVibration },
+  { 0x0101, 0x0503,  Z(AqaraVibrationsOrAngle), &Z_Copy },
+  { 0x0101, 0x0505,  Z(AqaraVibration505),    &Z_Copy },
+  { 0x0101, 0x0508,  Z(AqaraAccelerometer),   &Z_AqaraVibration },
   // Window Covering cluster
-  { 0x0102, 0x0000,  "WindowCoveringType",   &Z_Copy },
-  { 0x0102, 0x0001,  "PhysicalClosedLimitLift",&Z_Copy },
-  { 0x0102, 0x0002,  "PhysicalClosedLimitTilt",&Z_Copy },
-  { 0x0102, 0x0003,  "CurrentPositionLift",  &Z_Copy },
-  { 0x0102, 0x0004,  "CurrentPositionTilt",  &Z_Copy },
-  { 0x0102, 0x0005,  "NumberofActuationsLift",&Z_Copy },
-  { 0x0102, 0x0006,  "NumberofActuationsTilt",&Z_Copy },
-  { 0x0102, 0x0007,  "ConfigStatus",         &Z_Copy },
-  { 0x0102, 0x0008,  "CurrentPositionLiftPercentage",&Z_Copy },
-  { 0x0102, 0x0009,  "CurrentPositionTiltPercentage",&Z_Copy },
-  { 0x0102, 0x0010,  "InstalledOpenLimitLift",&Z_Copy },
-  { 0x0102, 0x0011,  "InstalledClosedLimitLift",&Z_Copy },
-  { 0x0102, 0x0012,  "InstalledOpenLimitTilt",&Z_Copy },
-  { 0x0102, 0x0013,  "InstalledClosedLimitTilt",&Z_Copy },
-  { 0x0102, 0x0014,  "VelocityLift",         &Z_Copy },
-  { 0x0102, 0x0015,  "AccelerationTimeLift",&Z_Copy },
-  { 0x0102, 0x0016,  "DecelerationTimeLift", &Z_Copy },
-  { 0x0102, 0x0017,  "Mode",                 &Z_Copy },
-  { 0x0102, 0x0018,  "IntermediateSetpointsLift",&Z_Copy },
-  { 0x0102, 0x0019,  "IntermediateSetpointsTilt",&Z_Copy },
+  { 0x0102, 0x0000,  Z(WindowCoveringType),   &Z_Copy },
+  { 0x0102, 0x0001,  Z(PhysicalClosedLimitLift),&Z_Copy },
+  { 0x0102, 0x0002,  Z(PhysicalClosedLimitTilt),&Z_Copy },
+  { 0x0102, 0x0003,  Z(CurrentPositionLift),  &Z_Copy },
+  { 0x0102, 0x0004,  Z(CurrentPositionTilt),  &Z_Copy },
+  { 0x0102, 0x0005,  Z(NumberofActuationsLift),&Z_Copy },
+  { 0x0102, 0x0006,  Z(NumberofActuationsTilt),&Z_Copy },
+  { 0x0102, 0x0007,  Z(ConfigStatus),         &Z_Copy },
+  { 0x0102, 0x0008,  Z(CurrentPositionLiftPercentage),&Z_Copy },
+  { 0x0102, 0x0009,  Z(CurrentPositionTiltPercentage),&Z_Copy },
+  { 0x0102, 0x0010,  Z(InstalledOpenLimitLift),&Z_Copy },
+  { 0x0102, 0x0011,  Z(InstalledClosedLimitLift),&Z_Copy },
+  { 0x0102, 0x0012,  Z(InstalledOpenLimitTilt),&Z_Copy },
+  { 0x0102, 0x0013,  Z(InstalledClosedLimitTilt),&Z_Copy },
+  { 0x0102, 0x0014,  Z(VelocityLift),         &Z_Copy },
+  { 0x0102, 0x0015,  Z(AccelerationTimeLift),&Z_Copy },
+  { 0x0102, 0x0016,  Z(DecelerationTimeLift), &Z_Copy },
+  { 0x0102, 0x0017,  Z(Mode),                 &Z_Copy },
+  { 0x0102, 0x0018,  Z(IntermediateSetpointsLift),&Z_Copy },
+  { 0x0102, 0x0019,  Z(IntermediateSetpointsTilt),&Z_Copy },
 
   // Color Control cluster
-  { 0x0300, 0x0000,  "Hue",                  &Z_Copy },
-  { 0x0300, 0x0001,  "Sat",                  &Z_Copy },
-  { 0x0300, 0x0002,  "RemainingTime",        &Z_Copy },
-  { 0x0300, 0x0003,  "X",                    &Z_Copy },
-  { 0x0300, 0x0004,  "Y",                    &Z_Copy },
-  { 0x0300, 0x0005,  "DriftCompensation",    &Z_Copy },
-  { 0x0300, 0x0006,  "CompensationText",     &Z_Copy },
-  { 0x0300, 0x0007,  "CT",                   &Z_Copy },
-  { 0x0300, 0x0008,  "ColorMode",            &Z_Copy },
-  { 0x0300, 0x0010,  "NumberOfPrimaries",    &Z_Copy },
-  { 0x0300, 0x0011,  "Primary1X",            &Z_Copy },
-  { 0x0300, 0x0012,  "Primary1Y",            &Z_Copy },
-  { 0x0300, 0x0013,  "Primary1Intensity",    &Z_Copy },
-  { 0x0300, 0x0015,  "Primary2X",            &Z_Copy },
-  { 0x0300, 0x0016,  "Primary2Y",            &Z_Copy },
-  { 0x0300, 0x0017,  "Primary2Intensity",    &Z_Copy },
-  { 0x0300, 0x0019,  "Primary3X",            &Z_Copy },
-  { 0x0300, 0x001A,  "Primary3Y",            &Z_Copy },
-  { 0x0300, 0x001B,  "Primary3Intensity",    &Z_Copy },
-  { 0x0300, 0x0030,  "WhitePointX",          &Z_Copy },
-  { 0x0300, 0x0031,  "WhitePointY",          &Z_Copy },
-  { 0x0300, 0x0032,  "ColorPointRX",         &Z_Copy },
-  { 0x0300, 0x0033,  "ColorPointRY",         &Z_Copy },
-  { 0x0300, 0x0034,  "ColorPointRIntensity", &Z_Copy },
-  { 0x0300, 0x0036,  "ColorPointGX",         &Z_Copy },
-  { 0x0300, 0x0037,  "ColorPointGY",         &Z_Copy },
-  { 0x0300, 0x0038,  "ColorPointGIntensity", &Z_Copy },
-  { 0x0300, 0x003A,  "ColorPointBX",         &Z_Copy },
-  { 0x0300, 0x003B,  "ColorPointBY",         &Z_Copy },
-  { 0x0300, 0x003C,  "ColorPointBIntensity", &Z_Copy },
+  { 0x0300, 0x0000,  Z(Hue),                  &Z_Copy },
+  { 0x0300, 0x0001,  Z(Sat),                  &Z_Copy },
+  { 0x0300, 0x0002,  Z(RemainingTime),        &Z_Copy },
+  { 0x0300, 0x0003,  Z(X),                    &Z_Copy },
+  { 0x0300, 0x0004,  Z(Y),                    &Z_Copy },
+  { 0x0300, 0x0005,  Z(DriftCompensation),    &Z_Copy },
+  { 0x0300, 0x0006,  Z(CompensationText),     &Z_Copy },
+  { 0x0300, 0x0007,  Z(CT),                   &Z_Copy },
+  { 0x0300, 0x0008,  Z(ColorMode),            &Z_Copy },
+  { 0x0300, 0x0010,  Z(NumberOfPrimaries),    &Z_Copy },
+  { 0x0300, 0x0011,  Z(Primary1X),            &Z_Copy },
+  { 0x0300, 0x0012,  Z(Primary1Y),            &Z_Copy },
+  { 0x0300, 0x0013,  Z(Primary1Intensity),    &Z_Copy },
+  { 0x0300, 0x0015,  Z(Primary2X),            &Z_Copy },
+  { 0x0300, 0x0016,  Z(Primary2Y),            &Z_Copy },
+  { 0x0300, 0x0017,  Z(Primary2Intensity),    &Z_Copy },
+  { 0x0300, 0x0019,  Z(Primary3X),            &Z_Copy },
+  { 0x0300, 0x001A,  Z(Primary3Y),            &Z_Copy },
+  { 0x0300, 0x001B,  Z(Primary3Intensity),    &Z_Copy },
+  { 0x0300, 0x0030,  Z(WhitePointX),          &Z_Copy },
+  { 0x0300, 0x0031,  Z(WhitePointY),          &Z_Copy },
+  { 0x0300, 0x0032,  Z(ColorPointRX),         &Z_Copy },
+  { 0x0300, 0x0033,  Z(ColorPointRY),         &Z_Copy },
+  { 0x0300, 0x0034,  Z(ColorPointRIntensity), &Z_Copy },
+  { 0x0300, 0x0036,  Z(ColorPointGX),         &Z_Copy },
+  { 0x0300, 0x0037,  Z(ColorPointGY),         &Z_Copy },
+  { 0x0300, 0x0038,  Z(ColorPointGIntensity), &Z_Copy },
+  { 0x0300, 0x003A,  Z(ColorPointBX),         &Z_Copy },
+  { 0x0300, 0x003B,  Z(ColorPointBY),         &Z_Copy },
+  { 0x0300, 0x003C,  Z(ColorPointBIntensity), &Z_Copy },
 
   // Illuminance Measurement cluster
-  { 0x0400, 0x0000,  D_JSON_ILLUMINANCE,     &Z_Copy },    // Illuminance (in Lux)
-  { 0x0400, 0x0001,  "IlluminanceMinMeasuredValue",     &Z_Copy },    //
-  { 0x0400, 0x0002,  "IlluminanceMaxMeasuredValue",     &Z_Copy },    //
-  { 0x0400, 0x0003,  "IlluminanceTolerance",            &Z_Copy },    //
-  { 0x0400, 0x0004,  "IlluminanceLightSensorType",      &Z_Copy },    //
+  { 0x0400, 0x0000,  Z(Illuminance),           &Z_Copy },    // Illuminance (in Lux)
+  { 0x0400, 0x0001,  Z(IlluminanceMinMeasuredValue),     &Z_Copy },    //
+  { 0x0400, 0x0002,  Z(IlluminanceMaxMeasuredValue),     &Z_Copy },    //
+  { 0x0400, 0x0003,  Z(IlluminanceTolerance),            &Z_Copy },    //
+  { 0x0400, 0x0004,  Z(IlluminanceLightSensorType),      &Z_Copy },    //
   { 0x0400, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
 
   // Illuminance Level Sensing cluster
-  { 0x0401, 0x0000,  "IlluminanceLevelStatus",          &Z_Copy },    // Illuminance (in Lux)
-  { 0x0401, 0x0001,  "IlluminanceLightSensorType",      &Z_Copy },    // LightSensorType
+  { 0x0401, 0x0000,  Z(IlluminanceLevelStatus),          &Z_Copy },    // Illuminance (in Lux)
+  { 0x0401, 0x0001,  Z(IlluminanceLightSensorType),      &Z_Copy },    // LightSensorType
   { 0x0401, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
 
   // Temperature Measurement cluster
-  { 0x0402, 0x0000,  D_JSON_TEMPERATURE,     &Z_FloatDiv100 },   // Temperature
-  { 0x0402, 0x0001,  "TemperatureMinMeasuredValue",     &Z_FloatDiv100 },    //
-  { 0x0402, 0x0002,  "TemperatureMaxMeasuredValue",     &Z_FloatDiv100 },    //
-  { 0x0402, 0x0003,  "TemperatureTolerance",            &Z_FloatDiv100 },    //
+  { 0x0402, 0x0000,  Z(Temperature),          &Z_FloatDiv100 },   // Temperature
+  { 0x0402, 0x0001,  Z(TemperatureMinMeasuredValue),     &Z_FloatDiv100 },    //
+  { 0x0402, 0x0002,  Z(TemperatureMaxMeasuredValue),     &Z_FloatDiv100 },    //
+  { 0x0402, 0x0003,  Z(TemperatureTolerance),            &Z_FloatDiv100 },    //
   { 0x0402, 0xFFFF,  nullptr,                &Z_Remove },     // Remove all other values
 
   // Pressure Measurement cluster
-  { 0x0403, 0x0000,  D_JSON_PRESSURE_UNIT,   &Z_AddPressureUnit },     // Pressure Unit
-  { 0x0403, 0x0000,  D_JSON_PRESSURE,        &Z_Copy },     // Pressure
-  { 0x0403, 0x0001,  "PressureMinMeasuredValue",     &Z_Copy },    //
-  { 0x0403, 0x0002,  "PressureMaxMeasuredValue",     &Z_Copy },    //
-  { 0x0403, 0x0003,  "PressureTolerance",            &Z_Copy },    //
-  { 0x0403, 0x0010,  "PressureScaledValue",          &Z_Copy },    //
-  { 0x0403, 0x0011,  "PressureMinScaledValue",       &Z_Copy },    //
-  { 0x0403, 0x0012,  "PressureMaxScaledValue",       &Z_Copy },    //
-  { 0x0403, 0x0013,  "PressureScaledTolerance",      &Z_Copy },    //
-  { 0x0403, 0x0014,  "PressureScale",                &Z_Copy },    //
+  { 0x0403, 0x0000,  Z(PressureUnit),                 &Z_AddPressureUnit },     // Pressure Unit
+  { 0x0403, 0x0000,  Z(Pressure),                     &Z_Copy },     // Pressure
+  { 0x0403, 0x0001,  Z(PressureMinMeasuredValue),     &Z_Copy },    //
+  { 0x0403, 0x0002,  Z(PressureMaxMeasuredValue),     &Z_Copy },    //
+  { 0x0403, 0x0003,  Z(PressureTolerance),            &Z_Copy },    //
+  { 0x0403, 0x0010,  Z(PressureScaledValue),          &Z_Copy },    //
+  { 0x0403, 0x0011,  Z(PressureMinScaledValue),       &Z_Copy },    //
+  { 0x0403, 0x0012,  Z(PressureMaxScaledValue),       &Z_Copy },    //
+  { 0x0403, 0x0013,  Z(PressureScaledTolerance),      &Z_Copy },    //
+  { 0x0403, 0x0014,  Z(PressureScale),                &Z_Copy },    //
   { 0x0403, 0xFFFF,  nullptr,                &Z_Remove },     // Remove all other Pressure values
 
   // Flow Measurement cluster
-  { 0x0404, 0x0000,  D_JSON_FLOWRATE,        &Z_FloatDiv10 },    // Flow (in m3/h)
-  { 0x0404, 0x0001,  "FlowMinMeasuredValue", &Z_Copy },    //
-  { 0x0404, 0x0002,  "FlowMaxMeasuredValue", &Z_Copy },    //
-  { 0x0404, 0x0003,  "FlowTolerance",        &Z_Copy },    //
+  { 0x0404, 0x0000,  Z(FlowRate),             &Z_FloatDiv10 },    // Flow (in m3/h)
+  { 0x0404, 0x0001,  Z(FlowMinMeasuredValue), &Z_Copy },    //
+  { 0x0404, 0x0002,  Z(FlowMaxMeasuredValue), &Z_Copy },    //
+  { 0x0404, 0x0003,  Z(FlowTolerance),        &Z_Copy },    //
   { 0x0404, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
 
   // Relative Humidity Measurement cluster
-  { 0x0405, 0x0000,  D_JSON_HUMIDITY,        &Z_FloatDiv100 },   // Humidity
-  { 0x0405, 0x0001,  "HumidityMinMeasuredValue",     &Z_Copy },    //
-  { 0x0405, 0x0002,  "HumidityMaxMeasuredValue",     &Z_Copy },    //
-  { 0x0405, 0x0003,  "HumidityTolerance",            &Z_Copy },    //
+  { 0x0405, 0x0000,  Z(Humidity),             &Z_FloatDiv100 },   // Humidity
+  { 0x0405, 0x0001,  Z(HumidityMinMeasuredValue),     &Z_Copy },    //
+  { 0x0405, 0x0002,  Z(HumidityMaxMeasuredValue),     &Z_Copy },    //
+  { 0x0405, 0x0003,  Z(HumidityTolerance),            &Z_Copy },    //
   { 0x0405, 0xFFFF,  nullptr,                &Z_Remove },     // Remove all other values
 
   // Occupancy Sensing cluster
-  { 0x0406, 0x0000,  OCCUPANCY,              &Z_Copy },    // Occupancy (map8)
-  { 0x0406, 0x0001,  "OccupancySensorType",  &Z_Copy },    // OccupancySensorType
+  { 0x0406, 0x0000,  Z(Occupancy),            &Z_Copy },    // Occupancy (map8)
+  { 0x0406, 0x0001,  Z(OccupancySensorType),  &Z_Copy },    // OccupancySensorType
   { 0x0406, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
 
   // Meter Identification cluster
-  { 0x0B01, 0x0000,  "CompanyName",          &Z_Copy },
-  { 0x0B01, 0x0001,  "MeterTypeID",          &Z_Copy },
-  { 0x0B01, 0x0004,  "DataQualityID",        &Z_Copy },
-  { 0x0B01, 0x0005,  "CustomerName",         &Z_Copy },
-  { 0x0B01, 0x0006,  "Model",                &Z_Copy },
-  { 0x0B01, 0x0007,  "PartNumber",           &Z_Copy },
-  { 0x0B01, 0x000A,  "SoftwareRevision",     &Z_Copy },
-  { 0x0B01, 0x000C,  "POD",                  &Z_Copy },
-  { 0x0B01, 0x000D,  "AvailablePower",       &Z_Copy },
-  { 0x0B01, 0x000E,  "PowerThreshold",       &Z_Copy },
+  { 0x0B01, 0x0000,  Z(CompanyName),          &Z_Copy },
+  { 0x0B01, 0x0001,  Z(MeterTypeID),          &Z_Copy },
+  { 0x0B01, 0x0004,  Z(DataQualityID),        &Z_Copy },
+  { 0x0B01, 0x0005,  Z(CustomerName),         &Z_Copy },
+  { 0x0B01, 0x0006,  Z(Model),                &Z_Copy },
+  { 0x0B01, 0x0007,  Z(PartNumber),           &Z_Copy },
+  { 0x0B01, 0x000A,  Z(SoftwareRevision),     &Z_Copy },
+  { 0x0B01, 0x000C,  Z(POD),                  &Z_Copy },
+  { 0x0B01, 0x000D,  Z(AvailablePower),       &Z_Copy },
+  { 0x0B01, 0x000E,  Z(PowerThreshold),       &Z_Copy },
 
   // Diagnostics cluster
-  { 0x0B05, 0x0000,  "NumberOfResets",       &Z_Copy },
-  { 0x0B05, 0x0001,  "PersistentMemoryWrites",&Z_Copy },
-  { 0x0B05, 0x011C,  "LastMessageLQI",       &Z_Copy },
-  { 0x0B05, 0x011D,  "LastMessageRSSI",      &Z_Copy },
+  { 0x0B05, 0x0000,  Z(NumberOfResets),       &Z_Copy },
+  { 0x0B05, 0x0001,  Z(PersistentMemoryWrites),&Z_Copy },
+  { 0x0B05, 0x011C,  Z(LastMessageLQI),       &Z_Copy },
+  { 0x0B05, 0x011D,  Z(LastMessageRSSI),      &Z_Copy },
 
 };
 
@@ -924,7 +1010,7 @@ int32_t Z_FloatDiv2(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& j
 }
 
 // Publish a message for `"Occupancy":0` when the timer expired
-int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, uint32_t value) {
+int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& json = jsonBuffer.createObject();
   json[F(OCCUPANCY)] = 0;
@@ -1050,7 +1136,8 @@ int32_t Z_AqaraSensor(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject&
   char tmp[] = "tmp";   // for obscure reasons, it must be converted from const char* to char*, otherwise ArduinoJson gets confused
 
   JsonVariant sub_value;
-  const String * modelId = zigbee_devices.getModelId(shortaddr);  // null if unknown
+  const char * modelId_c = zigbee_devices.getModelId(shortaddr);  // null if unknown
+  String modelId((char*) modelId_c);
 
   while (len - i >= 2) {
     uint8_t attrid = buf2.get8(i++);
@@ -1064,8 +1151,8 @@ int32_t Z_AqaraSensor(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject&
       json[F("Battery")] = toPercentageCR2032(val);
     } else if ((nullptr != modelId) && (0 == zcl->getManufCode())) {
       translated = true;
-      if (modelId->startsWith(F("lumi.sensor_ht")) ||
-          modelId->startsWith(F("lumi.weather"))) {     // Temp sensor
+      if (modelId.startsWith(F("lumi.sensor_ht")) ||
+          modelId.startsWith(F("lumi.weather"))) {     // Temp sensor
         // Filter according to prefix of model name
         // onla Aqara Temp/Humidity has manuf_code of zero. If non-zero we skip the parameters
         if (0x64 == attrid) {
@@ -1076,11 +1163,11 @@ int32_t Z_AqaraSensor(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject&
           json[F(D_JSON_PRESSURE)] = val / 100.0f;
           json[F(D_JSON_PRESSURE_UNIT)] = F(D_UNIT_PRESSURE);   // hPa
         }
-      } else if (modelId->startsWith(F("lumi.sensor_smoke"))) {   // gas leak
+      } else if (modelId.startsWith(F("lumi.sensor_smoke"))) {   // gas leak
         if (0x64 == attrid) {
           json[F("SmokeDensity")] = val;
         }
-      } else if (modelId->startsWith(F("lumi.sensor_natgas"))) {   // gas leak
+      } else if (modelId.startsWith(F("lumi.sensor_natgas"))) {   // gas leak
         if (0x64 == attrid) {
           json[F("GasDensity")] = val;
         }
@@ -1121,6 +1208,42 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
         suffix = strtoul(delimiter2+1, nullptr, 10);
       }
 
+      // see if we need to update the Hue bulb status
+      if ((cluster == 0x0006) && ((attribute == 0x0000) || (attribute == 0x8000))) {
+        uint8_t power = value;
+        zigbee_devices.updateHueState(shortaddr, &power, nullptr, nullptr, nullptr,
+                                        nullptr, nullptr, nullptr, nullptr);
+      } else if ((cluster == 0x0008) && (attribute == 0x0000)) {
+        uint8_t dimmer = value;
+        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, &dimmer, nullptr,
+                                        nullptr, nullptr, nullptr, nullptr);
+      } else if ((cluster == 0x0300) && (attribute == 0x0000)) {
+        uint16_t hue8 = value;
+        uint16_t hue = changeUIntScale(hue8, 0, 254, 0, 360);     // change range from 0..254 to 0..360
+        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
+                                        nullptr, &hue, nullptr, nullptr);
+      } else if ((cluster == 0x0300) && (attribute == 0x0001)) {
+        uint8_t sat = value;
+        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, &sat,
+                                        nullptr, nullptr, nullptr, nullptr);
+      } else if ((cluster == 0x0300) && (attribute == 0x0003)) {
+        uint16_t x = value;
+        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
+                                        nullptr, nullptr, &x, nullptr);
+      } else if ((cluster == 0x0300) && (attribute == 0x0004)) {
+        uint16_t y = value;
+        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
+                                        nullptr, nullptr, nullptr, &y);
+      } else if ((cluster == 0x0300) && (attribute == 0x0007)) {
+        uint16_t ct = value;
+        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
+                                        &ct, nullptr, nullptr, nullptr);
+      } else if ((cluster == 0x0300) && (attribute == 0x0008)) {
+        uint8_t colormode = value;
+        zigbee_devices.updateHueState(shortaddr, nullptr, &colormode, nullptr, nullptr,
+                                        nullptr, nullptr, nullptr, nullptr);
+      }
+
       // Iterate on filter
       for (uint32_t i = 0; i < sizeof(Z_PostProcess) / sizeof(Z_PostProcess[0]); i++) {
         const Z_AttributeConverter *converter = &Z_PostProcess[i];
@@ -1129,7 +1252,7 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
 
         if ((conv_cluster == cluster) &&
             ((conv_attribute == attribute) || (conv_attribute == 0xFFFF)) ) {
-          String new_name_str = converter->name;
+          String new_name_str = (const __FlashStringHelper*) converter->name;
           if (suffix > 1) { new_name_str += suffix; }   // append suffix number
           int32_t drop = (*converter->func)(this, shortaddr, json, key, value, new_name_str, conv_cluster, conv_attribute);
           if (drop) {

@@ -803,7 +803,6 @@ void Every100mSeconds(void)
 
   if (prepped_loglevel) {
     AddLog(prepped_loglevel);
-    prepped_loglevel = 0;
   }
 
   if (latching_relay_pulse) {

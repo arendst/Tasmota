@@ -476,7 +476,6 @@
 #define D_ZIGBEE_NOT_STARTED "Zigbee not started (yet)"
 #define D_CMND_ZIGBEE_PERMITJOIN "PermitJoin"
 #define D_CMND_ZIGBEE_STATUS "Status"
-  #define D_JSON_ZIGBEE_Status "Status"
 #define D_CMND_ZIGBEE_RESET "Reset"
   #define D_JSON_ZIGBEE_CC2530 "CC2530"
 #define D_CMND_ZIGBEEZNPRECEIVE "ZNPReceive"      // only for debug
@@ -488,6 +487,7 @@
   #define D_JSON_ZIGBEEZCL_RAW_RECEIVED "ZbZCLRawReceived"
   #define D_JSON_ZIGBEE_DEVICE "Device"
   #define D_JSON_ZIGBEE_NAME "Name"
+  #define D_JSON_ZIGBEE_CONFIRM "ZbConfirm"
 #define D_CMND_ZIGBEE_NAME "Name"
 #define D_CMND_ZIGBEE_MODELID "ModelId"
   #define D_JSON_ZIGBEE_MODELID "ModelId"
@@ -510,6 +510,8 @@
   #define D_JSON_ZIGBEE_CMD "Command"
   #define D_JSON_ZIGBEE_STATUS "Status"
   #define D_JSON_ZIGBEE_STATUS_MSG "StatusMessage"
+#define D_CMND_ZIGBEE_LIGHT "Light"
+  #define D_JSON_ZIGBEE_LIGHT "Light"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"

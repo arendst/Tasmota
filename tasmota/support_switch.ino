@@ -70,7 +70,8 @@ bool SwitchState(uint32_t index)
           (PUSHBUTTON_INV == switchmode) ||
           (PUSHBUTTONHOLD_INV == switchmode) ||
           (FOLLOWMULTI_INV == switchmode) ||
-          (PUSHHOLDMULTI_INV == switchmode)
+          (PUSHHOLDMULTI_INV == switchmode) ||
+          (PUSHON_INV == switchmode)
          ) ^ Switch.last_state[index];
 }
 
