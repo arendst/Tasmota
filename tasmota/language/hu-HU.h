@@ -512,6 +512,26 @@
 #define D_TX20_SOUTH "D"
 #define D_TX20_WEST "NY"
 
+// xsns_53_sml.ino 
+#define D_TPWRIN "Total-In"
+#define D_TPWROUT "Total-Out"
+#define D_TPWRCURR "Current-In/Out"
+#define D_TPWRCURR1 "Current-In p1"
+#define D_TPWRCURR2 "Current-In p2"
+#define D_TPWRCURR3 "Current-In p3"
+#define D_Strom_L1 "Current L1"
+#define D_Strom_L2 "Current L2"
+#define D_Strom_L3 "Current L3"
+#define D_Spannung_L1 "Voltage L1"
+#define D_Spannung_L2 "Voltage L2"
+#define D_Spannung_L3 "Voltage L3"
+#define D_METERNR "Meter_number"
+#define D_METERSID "Service ID"
+#define D_GasIN "Counter"
+#define D_H2oIN "Counter"
+#define D_StL1L2L3 "Current L1+L2+L3"
+#define D_SpL1L2L3 "Voltage L1+L2+L3/3"
+
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Nincs"
 #define D_SENSOR_USER          "User"
