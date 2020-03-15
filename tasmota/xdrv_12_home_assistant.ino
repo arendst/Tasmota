@@ -378,30 +378,30 @@ void HAssAnnounceSwitches(void)
       uint8_t swmode = Settings.switchmode[switch_index];
 
       switch (swmode) {
-        case 1:
-        case 2:
+        case FOLLOW:
+        case FOLLOW_INV:
           toggle = 0;     // Binary sensor and no triggers
           break;
-        case 3:
-        case 4:
+        case PUSHBUTTON:
+        case PUSHBUTTON_INV:
           dual = 1;       // Binary sensor and TOGGLE (button_short_press) trigger
           break;
-        case 5:
-        case 6:
+        case PUSHBUTTONHOLD:
+        case PUSHBUTTONHOLD_INV:
           dual = 1;       // Binary sensor, TOGGLE (button_short_press) and HOLD (button_long_press) triggers
           hold = 2;
           break;
-        case 8:
+        case TOGGLEMULTI:
           hold = 3;       // TOGGLE (button_short_press) and HOLD (button_double_press) triggers
           break;
-        case 9:
-        case 10:
+        case FOLLOWMULTI:
+        case FOLLOWMULTI_INV:
           dual = 1;       // Binary sensor and HOLD (button_long_press) trigger
           toggle = 0;
           hold = 3;
           break;
-        case 13:
-        case 14:
+        case PUSHON:
+        case PUSHON_INV:
           toggle = 0;
           pir = 1;        // Binary sensor with only ON state and automatic OFF after 1 second.
       }
