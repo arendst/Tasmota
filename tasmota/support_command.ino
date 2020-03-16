@@ -26,7 +26,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SYSLOG "|" D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALCONFIG "|"
   D_CMND_SERIALDELIMITER "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|"
   D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
-  D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|"
+  D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|"
   D_CMND_SPEEDUNIT "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
@@ -45,7 +45,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndButtonDebounce, &CmndSwitchDebounce, &CmndSyslog, &CmndLoghost, &CmndLogport, &CmndSerialSend, &CmndBaudrate, &CmndSerialConfig,
   &CmndSerialDelimiter, &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig,
   &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
-  &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndWifiPower, &CmndTempOffset,
+  &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndWifiPower, &CmndTempOffset, &CmndHumOffset,
   &CmndSpeedUnit,
 #ifdef USE_I2C
   &CmndI2cScan, CmndI2cDriver,
@@ -536,6 +536,17 @@ void CmndTempOffset(void)
     }
   }
   ResponseCmndFloat((float)(Settings.temp_comp) / 10, 1);
+}
+
+void CmndHumOffset(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    int value = (int)(CharToFloat(XdrvMailbox.data) * 10);
+    if ((value > -101) && (value < 101)) {
+      Settings.hum_comp = value;
+    }
+  }
+  ResponseCmndFloat((float)(Settings.hum_comp) / 10, 1);
 }
 
 void CmndSleep(void)
