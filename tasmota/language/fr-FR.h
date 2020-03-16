@@ -79,6 +79,7 @@
 #define D_DATA "Donnée"
 #define D_DARKLIGHT "Sombre"
 #define D_DEBUG "Debug"
+#define D_DEWPOINT "Dew point"
 #define D_DISABLED "Désactivé"
 #define D_DISTANCE "Distance"
 #define D_DNS_SERVER "Serveur DNS"
@@ -512,7 +513,7 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "O"
 
-// xsns_53_sml.ino 
+// xsns_53_sml.ino
 #define D_TPWRIN "Energy Total-In"
 #define D_TPWROUT "Energy Total-Out"
 #define D_TPWRCURR "Active Power-In/Out"

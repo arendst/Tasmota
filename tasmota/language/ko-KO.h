@@ -79,6 +79,7 @@
 #define D_DATA "Data"
 #define D_DARKLIGHT "어둡게"
 #define D_DEBUG "디버그"
+#define D_DEWPOINT "Dew point"
 #define D_DISABLED "사용안함"
 #define D_DISTANCE "거리"
 #define D_DNS_SERVER "DNS 서버"
@@ -512,7 +513,7 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
-// xsns_53_sml.ino 
+// xsns_53_sml.ino
 #define D_TPWRIN "Energy Total-In"
 #define D_TPWROUT "Energy Total-Out"
 #define D_TPWRCURR "Active Power-In/Out"

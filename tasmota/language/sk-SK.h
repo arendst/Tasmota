@@ -80,6 +80,7 @@
 #define D_FLOW_RATE "Flow rate"
 #define D_DARKLIGHT "Tmavý"
 #define D_DEBUG "Debug"
+#define D_DEWPOINT "Dew point"
 #define D_DISABLED "Zablokované"
 #define D_DISTANCE "Vzdialenosť"
 #define D_DNS_SERVER "Server DNS"
@@ -512,7 +513,7 @@
 #define D_TX20_SOUTH "J"
 #define D_TX20_WEST "Z"
 
-// xsns_53_sml.ino 
+// xsns_53_sml.ino
 #define D_TPWRIN "Energy Total-In"
 #define D_TPWROUT "Energy Total-Out"
 #define D_TPWRCURR "Active Power-In/Out"

@@ -79,6 +79,7 @@
 #define D_DATA "Date"
 #define D_DARKLIGHT "Întunecat"
 #define D_DEBUG "Depanare"
+#define D_DEWPOINT "Dew point"
 #define D_DISABLED "Dezactivat"
 #define D_DISTANCE "Distanță"
 #define D_DNS_SERVER "Server DNS"
@@ -512,7 +513,7 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "V"
 
-// xsns_53_sml.ino 
+// xsns_53_sml.ino
 #define D_TPWRIN "Energy Total-In"
 #define D_TPWROUT "Energy Total-Out"
 #define D_TPWRCURR "Active Power-In/Out"

@@ -79,6 +79,7 @@
 #define D_DATA "数据:"
 #define D_DARKLIGHT "暗"
 #define D_DEBUG "调试"
+#define D_DEWPOINT "Dew point"
 #define D_DISABLED "禁用"
 #define D_DISTANCE "距离"
 #define D_DNS_SERVER "DNS服务器"
@@ -512,7 +513,7 @@
 #define D_TX20_SOUTH "南"
 #define D_TX20_WEST "西"
 
-// xsns_53_sml.ino 
+// xsns_53_sml.ino
 #define D_TPWRIN "Energy Total-In"
 #define D_TPWROUT "Energy Total-Out"
 #define D_TPWRCURR "Active Power-In/Out"

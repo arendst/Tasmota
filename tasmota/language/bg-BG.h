@@ -79,6 +79,7 @@
 #define D_DATA "Данни"
 #define D_DARKLIGHT "Тъмна"
 #define D_DEBUG "Дебъгване"
+#define D_DEWPOINT "Dew point"
 #define D_DISABLED "Забранен"
 #define D_DISTANCE "Разстояние"
 #define D_DNS_SERVER "DNS Сървър"
@@ -512,7 +513,7 @@
 #define D_TX20_SOUTH "Ю"
 #define D_TX20_WEST "З"
 
-// xsns_53_sml.ino 
+// xsns_53_sml.ino
 #define D_TPWRIN "Energy Total-In"
 #define D_TPWROUT "Energy Total-Out"
 #define D_TPWRCURR "Active Power-In/Out"

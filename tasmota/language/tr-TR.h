@@ -79,6 +79,7 @@
 #define D_DATA "Data"
 #define D_DARKLIGHT "Karanlık"
 #define D_DEBUG "Hata Ayıklama"
+#define D_DEWPOINT "Dew point"
 #define D_DISABLED "Etkin Değil"
 #define D_DISTANCE "Mesage"
 #define D_DNS_SERVER "DNS Sunucu"
@@ -512,7 +513,7 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
-// xsns_53_sml.ino 
+// xsns_53_sml.ino
 #define D_TPWRIN "Energy Total-In"
 #define D_TPWROUT "Energy Total-Out"
 #define D_TPWRCURR "Active Power-In/Out"

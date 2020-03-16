@@ -79,6 +79,7 @@
 #define D_DATA "Dados"
 #define D_DARKLIGHT "Luz Escura"
 #define D_DEBUG "Depurar"
+#define D_DEWPOINT "Dew point"
 #define D_DISABLED "Disabilitado"
 #define D_DISTANCE "Distância"
 #define D_DNS_SERVER "Servidor DNS"
@@ -512,7 +513,7 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "O"
 
-//xsns_53_sml.ino 
+//xsns_53_sml.ino
 #define D_TPWRIN "Energia-Consumo"
 #define D_TPWROUT "Energia-Geração"
 #define D_TPWRCURR "Potência Ativa-Consumo/Geração"
@@ -527,7 +528,7 @@
 #define D_Spannung_L3 "Tensão F3"
 #define D_METERNR "Número_Contador"
 #define D_METERSID "ID Serviço"
-#define D_GasIN "Contagem" 
+#define D_GasIN "Contagem"
 #define D_H2oIN "Contagem"
 #define D_StL1L2L3 "Corrente F1+F2+F3"
 #define D_SpL1L2L3 "Tensão F1+F2+F3/3"

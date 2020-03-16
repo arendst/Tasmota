@@ -79,6 +79,7 @@
 #define D_DATA "נתונים"
 #define D_DARKLIGHT "חושך"
 #define D_DEBUG "באגים"
+#define D_DEWPOINT "Dew point"
 #define D_DISABLED "מבוטל"
 #define D_DISTANCE "מרחק"
 #define D_DNS_SERVER "DNS שרת"
@@ -512,7 +513,7 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
-// xsns_53_sml.ino 
+// xsns_53_sml.ino
 #define D_TPWRIN "Energy Total-In"
 #define D_TPWROUT "Energy Total-Out"
 #define D_TPWRCURR "Active Power-In/Out"

@@ -91,7 +91,7 @@ void Sht3xDetect(void)
     }
   }
 }
-
+/*
 void Sht3xShow(bool json)
 {
   for (uint32_t i = 0; i < sht3x_count; i++) {
@@ -126,6 +126,19 @@ void Sht3xShow(bool json)
         WSContentSend_PD(HTTP_SNS_HUM, types, humidity);
 #endif  // USE_WEBSERVER
       }
+    }
+  }
+}
+*/
+void Sht3xShow(bool json)
+{
+  for (uint32_t i = 0; i < sht3x_count; i++) {
+    float t;
+    float h;
+    if (Sht3xRead(t, h, sht3x_sensors[i].address)) {
+      char types[11];
+      snprintf_P(types, sizeof(types), PSTR("%s%c0x%02X"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address);  // "SHT3X-0xXX"
+      TempHumDewShow(json, ((0 == tele_period) && (0 == i)), types, t, h);
     }
   }
 }

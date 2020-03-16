@@ -79,6 +79,7 @@
 #define D_DATA "Adat"
 #define D_DARKLIGHT "Min. fényerő"
 #define D_DEBUG "Debug"
+#define D_DEWPOINT "Dew point"
 #define D_DISABLED "Letiltva"
 #define D_DISTANCE "Távolság"
 #define D_DNS_SERVER "DNS szerver"
@@ -512,7 +513,7 @@
 #define D_TX20_SOUTH "D"
 #define D_TX20_WEST "NY"
 
-// xsns_53_sml.ino 
+// xsns_53_sml.ino
 #define D_TPWRIN "Energy Total-In"
 #define D_TPWROUT "Energy Total-Out"
 #define D_TPWRCURR "Active Power-In/Out"

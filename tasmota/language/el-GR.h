@@ -79,6 +79,7 @@
 #define D_DATA "Δεδομένα"
 #define D_DARKLIGHT "Σκοτεινό"
 #define D_DEBUG "Debug"
+#define D_DEWPOINT "Dew point"
 #define D_DISABLED "Ανενεργό"
 #define D_DISTANCE "Απόσταση"
 #define D_DNS_SERVER "Διακομιστής DNS"
@@ -512,7 +513,7 @@
 #define D_TX20_SOUTH "Ν"
 #define D_TX20_WEST "Δ"
 
-// xsns_53_sml.ino 
+// xsns_53_sml.ino
 #define D_TPWRIN "Energy Total-In"
 #define D_TPWROUT "Energy Total-Out"
 #define D_TPWRCURR "Active Power-In/Out"
