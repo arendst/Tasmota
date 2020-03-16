@@ -641,12 +641,6 @@ void MqttShowState(void)
         break;
       }
 #endif  // USE_SONOFF_IFAN
-#ifdef USE_PWM_DIMMER
-      if (PWM_DIMMER == my_module_type) {
-        ResponseAppend_P(PSTR(",\"" D_CMND_DIMMER "\":%d,\"" D_CMND_FADE "\":\"%s\",\"" D_CMND_SPEED "\":%d"),
-          Settings.light_dimmer, GetStateText(Settings.light_fade), Settings.light_speed);
-      }
-#endif  // USE_PWM_DIMMER
 #ifdef USE_LIGHT
     }
 #endif
@@ -671,6 +665,38 @@ void MqttPublishTeleState(void)
 #if defined(USE_RULES) || defined(USE_SCRIPT)
   RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_SCRIPT
+}
+
+void TempHumDewShow(bool json, bool pass_on, const char *types, float f_temperature, float f_humidity)
+{
+  char temperature[33];
+  dtostrfd(f_temperature, Settings.flag2.temperature_resolution, temperature);
+  char humidity[33];
+  dtostrfd(f_humidity, Settings.flag2.humidity_resolution, humidity);
+  float f_dewpoint = CalcTempHumToDew(f_temperature, f_humidity);
+  char dewpoint[33];
+  dtostrfd(f_dewpoint, Settings.flag2.temperature_resolution, dewpoint);
+
+  if (json) {
+    ResponseAppend_P(JSON_SNS_TEMPHUMDEW, types, temperature, humidity, dewpoint);
+#ifdef USE_DOMOTICZ
+    if (pass_on) {
+      DomoticzTempHumSensor(temperature, humidity);
+    }
+#endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+    if (pass_on) {
+      KnxSensor(KNX_TEMPERATURE, f_temperature);
+      KnxSensor(KNX_HUMIDITY, f_humidity);
+    }
+#endif  // USE_KNX
+#ifdef USE_WEBSERVER
+  } else {
+    WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
+    WSContentSend_PD(HTTP_SNS_HUM, types, humidity);
+    WSContentSend_PD(HTTP_SNS_DEW, types, dewpoint, TempUnit());
+#endif  // USE_WEBSERVER
+  }
 }
 
 bool MqttShowSensor(void)
@@ -809,7 +835,6 @@ void Every100mSeconds(void)
 
   if (prepped_loglevel) {
     AddLog(prepped_loglevel);
-    prepped_loglevel = 0;
   }
 
   if (latching_relay_pulse) {
@@ -1478,6 +1503,10 @@ void GpioInit(void)
     pinMode(pin[GPIO_LEDLNK], OUTPUT);
     digitalWrite(pin[GPIO_LEDLNK], ledlnk_inverted);
   }
+
+#ifdef USE_PWM_DIMMER
+  if (PWM_DIMMER == my_module_type && pin[GPIO_REL1] < 99) devices_present--;
+#endif  // USE_PWM_DIMMER
 
   ButtonInit();
   SwitchInit();

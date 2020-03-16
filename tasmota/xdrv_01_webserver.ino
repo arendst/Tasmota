@@ -1125,17 +1125,6 @@ void HandleRoot(void)
       }  // Settings.flag3.pwm_multi_channels
     }
 #endif // USE_LIGHT
-#ifdef USE_PWM_DIMMER
-    if (PWM_DIMMER == my_module_type) {
-      WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Brightness - Black to White
-        "c",               // c - Unique HTML id
-        "#000", "#fff",    // Black to White
-        4,                 // sl4 - Unique range HTML id - Used as source for Saturation begin color
-        Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100%
-        Settings.light_dimmer,
-        'd', 0);           // d0 - Value id is related to lc("d0", value) and WebGetArg("d0", tmp, sizeof(tmp));
-    }
-#endif  // USE_PWM_DIMMER
 #ifdef USE_SHUTTER
     if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
       for (uint32_t i = 0; i < shutters_present; i++) {
@@ -1952,17 +1941,26 @@ void OtherSaveSettings(void)
   }
   AddLog_P(LOG_LEVEL_INFO, message);
 
+/*
+  // This sometimes provides intermittent watchdog
+  bool template_activate = WebServer->hasArg("t2");  // Try this to tackle intermittent watchdog after execution of Template command
   WebGetArg("t1", tmp, sizeof(tmp));
   if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
     char svalue[128];
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
 
-    if (WebServer->hasArg("t2")) {
+    if (template_activate) {
       snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_MODULE " 0"));
       ExecuteWebCommand(svalue, SRC_WEBGUI);
     }
-
+  }
+  // Try async execution of commands
+*/
+  WebGetArg("t1", tmp, sizeof(tmp));
+  if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
+    snprintf_P(message, sizeof(message), PSTR(D_CMND_BACKLOG " " D_CMND_TEMPLATE " %s%s"), tmp, (WebServer->hasArg("t2")) ? "; " D_CMND_MODULE " 0" : "");
+    ExecuteWebCommand(message, SRC_WEBGUI);
   }
 }
 

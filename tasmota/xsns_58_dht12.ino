@@ -86,7 +86,7 @@ void Dht12EverySecond(void)
     }
   }
 }
-
+/*
 void Dht12Show(bool json)
 {
   if (Dht12.valid) {
@@ -114,6 +114,13 @@ void Dht12Show(bool json)
       WSContentSend_PD(HTTP_SNS_HUM, Dht12.name, humidity);
 #endif // USE_WEBSERVER
     }
+  }
+}
+*/
+void Dht12Show(bool json)
+{
+  if (Dht12.valid) {
+    TempHumDewShow(json, (0 == tele_period), Dht12.name, Dht12.temperature, Dht12.humidity);
   }
 }
 

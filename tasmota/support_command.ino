@@ -783,6 +783,11 @@ void CmndSetoption(void)
           }
           else if (4 == ptype) {           // SetOption82 .. 113
             bitWrite(Settings.flag4.data, pindex, XdrvMailbox.payload);
+            switch (pindex) {
+              case 6:                      // SetOption88 - PWM Dimmer Buttons control remote devices
+                restart_flag = 2;
+                break;
+            }
           }
         } else {
           ptype = 99;                      // Command Error
@@ -1342,7 +1347,7 @@ void CmndWifiConfig(void)
 void CmndFriendlyname(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_FRIENDLYNAMES)) {
-    if (!XdrvMailbox.usridx) {
+    if (!XdrvMailbox.usridx && !XdrvMailbox.data_len) {
       ResponseCmndAll(SET_FRIENDLYNAME1, MAX_FRIENDLYNAMES);
     } else {
       if (XdrvMailbox.data_len > 0) {

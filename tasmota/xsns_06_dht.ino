@@ -240,7 +240,7 @@ void DhtEverySecond(void)
     }
   }
 }
-
+/*
 void DhtShow(bool json)
 {
   for (uint32_t i = 0; i < dht_sensors; i++) {
@@ -268,6 +268,13 @@ void DhtShow(bool json)
       WSContentSend_PD(HTTP_SNS_HUM, Dht[i].stype, humidity);
 #endif  // USE_WEBSERVER
     }
+  }
+}
+*/
+void DhtShow(bool json)
+{
+  for (uint32_t i = 0; i < dht_sensors; i++) {
+    TempHumDewShow(json, ((0 == tele_period) && (0 == i)), Dht[i].stype, Dht[i].t, Dht[i].h);
   }
 }
 

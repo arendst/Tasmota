@@ -623,6 +623,24 @@ float ConvertHumidity(float h)
   return h;
 }
 
+float CalcTempHumToDew(float t, float h)
+{
+  if (isnan(h) || isnan(t)) { return 0.0; }
+
+  if (Settings.flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
+    t = (t - 32) / 1.8;                                       // Celsius
+  }
+
+//  float gamma = log(h / 100) + 17.62 * t / (243.5 + t);
+  float gamma = TaylorLog(h / 100) + 17.62 * t / (243.5 + t);
+  float result = (243.5 * gamma / (17.62 - gamma));
+
+  if (Settings.flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
+    result = result * 1.8 + 32;                               // Fahrenheit
+  }
+  return result;
+}
+
 float ConvertPressure(float p)
 {
   float result = p;
@@ -1669,6 +1687,8 @@ void AddLog(uint32_t loglevel)
 
   if (!global_state.wifi_down &&
       (loglevel <= syslog_level)) { Syslog(); }
+
+  prepped_loglevel = 0;
 }
 
 void AddLog_P(uint32_t loglevel, const char *formatP)

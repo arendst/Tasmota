@@ -237,7 +237,7 @@ void HtuEverySecond(void)
     }
   }
 }
-
+/*
 void HtuShow(bool json)
 {
   if (htu_valid) {
@@ -265,6 +265,13 @@ void HtuShow(bool json)
       WSContentSend_PD(HTTP_SNS_HUM, htu_types, humidity);
 #endif  // USE_WEBSERVER
     }
+  }
+}
+*/
+void HtuShow(bool json)
+{
+  if (htu_valid) {
+    TempHumDewShow(json, (0 == tele_period), htu_types, htu_temperature, htu_humidity);
   }
 }
 
