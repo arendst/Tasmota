@@ -513,12 +513,12 @@
 #define D_TX20_WEST "O"
 
 // xsns_53_sml.ino 
-#define D_TPWRIN "Total de Entrada"
-#define D_TPWROUT "Total de Salida"
-#define D_TPWRCURR "Corriente-En/Sal"
-#define D_TPWRCURR1 "Corriente-Entr p1"
-#define D_TPWRCURR2 "Corriente-Entr p2"
-#define D_TPWRCURR3 "Corriente-Entr p3"
+#define D_TPWRIN "Energía Total-Entrada"
+#define D_TPWROUT "Energía Total-Salida"
+#define D_TPWRCURR "Potencia-En/Sal"
+#define D_TPWRCURR1 "Potencia-Entr p1"
+#define D_TPWRCURR2 "Potencia-Entr p2"
+#define D_TPWRCURR3 "Potencia-Entr p3"
 #define D_Strom_L1 "Corriente L1"
 #define D_Strom_L2 "Corriente L2"
 #define D_Strom_L3 "Corriente L3"
@@ -530,7 +530,7 @@
 #define D_GasIN "Contador"
 #define D_H2oIN "Contador"
 #define D_StL1L2L3 "Corriente L1+L2+L3"
-#define D_SpL1L2L3 "Voltage L1+L2+L3/3"
+#define D_SpL1L2L3 "Voltaje L1+L2+L3/3"
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Ninguno"
