@@ -92,7 +92,7 @@ void Hih6EverySecond(void)
     }
   }
 }
-
+/*
 void Hih6Show(bool json)
 {
   if (Hih6.valid) {
@@ -120,6 +120,13 @@ void Hih6Show(bool json)
       WSContentSend_PD(HTTP_SNS_HUM, Hih6.types, humidity);
 #endif  // USE_WEBSERVER
     }
+  }
+}
+*/
+void Hih6Show(bool json)
+{
+  if (Hih6.valid) {
+    TempHumDewShow(json, (0 == tele_period), Hih6.types, Hih6.temperature, Hih6.humidity);
   }
 }
 

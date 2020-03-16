@@ -79,6 +79,7 @@
 #define D_DATA "Daten"
 #define D_DARKLIGHT "dunkel"
 #define D_DEBUG "debug"
+#define D_DEWPOINT "Taupunkt"
 #define D_DISABLED "deaktiviert"
 #define D_DISTANCE "Abstand"
 #define D_DNS_SERVER "DNS-Server"
@@ -512,7 +513,7 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
-// xsns_53_sml.ino 
+// xsns_53_sml.ino
 #define D_TPWRIN "Verbrauch"
 #define D_TPWROUT "Einspeisung"
 #define D_TPWRCURR "Aktueller Verbrauch"

@@ -667,6 +667,38 @@ void MqttPublishTeleState(void)
 #endif  // USE_SCRIPT
 }
 
+void TempHumDewShow(bool json, bool pass_on, const char *types, float f_temperature, float f_humidity)
+{
+  char temperature[33];
+  dtostrfd(f_temperature, Settings.flag2.temperature_resolution, temperature);
+  char humidity[33];
+  dtostrfd(f_humidity, Settings.flag2.humidity_resolution, humidity);
+  float f_dewpoint = CalcTempHumToDew(f_temperature, f_humidity);
+  char dewpoint[33];
+  dtostrfd(f_dewpoint, Settings.flag2.temperature_resolution, dewpoint);
+
+  if (json) {
+    ResponseAppend_P(JSON_SNS_TEMPHUMDEW, types, temperature, humidity, dewpoint);
+#ifdef USE_DOMOTICZ
+    if (pass_on) {
+      DomoticzTempHumSensor(temperature, humidity);
+    }
+#endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+    if (pass_on) {
+      KnxSensor(KNX_TEMPERATURE, f_temperature);
+      KnxSensor(KNX_HUMIDITY, f_humidity);
+    }
+#endif  // USE_KNX
+#ifdef USE_WEBSERVER
+  } else {
+    WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
+    WSContentSend_PD(HTTP_SNS_HUM, types, humidity);
+    WSContentSend_PD(HTTP_SNS_DEW, types, dewpoint, TempUnit());
+#endif  // USE_WEBSERVER
+  }
+}
+
 bool MqttShowSensor(void)
 {
   ResponseAppendTime();

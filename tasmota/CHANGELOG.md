@@ -6,6 +6,7 @@
 - Add support for HDC1080 Temperature and Humidity sensor by Luis Teixeira (#7888)
 - Add commands ``SwitchMode 13`` PushOn and ``SwitchMode 14`` PushOnInverted (#7912)
 - Add Zigbee support for Hue emulation by Stefan Hadinger
+- Add Dew Point to Temperature and Humidity sensors
 
 ### 8.1.0.10 20200227
 

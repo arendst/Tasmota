@@ -105,6 +105,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add Zigbee features and improvements
 - Add Zigbee support for Hue emulation by Stefan Hadinger
 - Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)
+- Add Dew Point to Temperature and Humidity sensors
 - Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
 - Add support for gzipped binaries
 - Add support for Romanian language translations by Augustin Marti
