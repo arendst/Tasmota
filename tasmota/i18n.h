@@ -551,7 +551,6 @@
 
 // Commands xdrv_34_pwm_dimmer.ino
 #ifdef USE_PWM_DIMMER
-#define D_CMND_BRI_MIN "BriMin"
 #define D_CMND_BRI_PRESET "BriPreset"
 #endif
 

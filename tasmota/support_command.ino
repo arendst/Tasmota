@@ -783,6 +783,11 @@ void CmndSetoption(void)
           }
           else if (4 == ptype) {           // SetOption82 .. 113
             bitWrite(Settings.flag4.data, pindex, XdrvMailbox.payload);
+            switch (pindex) {
+              case 6:                      // SetOption88 - PWM Dimmer Buttons control remote devices
+                restart_flag = 2;
+                break;
+            }
           }
         } else {
           ptype = 99;                      // Command Error
