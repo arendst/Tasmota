@@ -882,7 +882,8 @@ void CmndPublish(void)
 void CmndGroupTopic(void)
 {
 #ifdef USE_DEVICE_GROUPS
-  uint32_t settings_text_index = (XdrvMailbox.index <= 1 ? SET_MQTT_GRP_TOPIC : SET_MQTT_GRP_TOPIC2 + XdrvMailbox.index - 2);
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
+    uint32_t settings_text_index = (XdrvMailbox.index <= 1 ? SET_MQTT_GRP_TOPIC : SET_MQTT_GRP_TOPIC2 + XdrvMailbox.index - 2);
 #endif  // USE_DEVICE_GROUPS
   if (XdrvMailbox.data_len > 0) {
     MakeValidMqtt(0, XdrvMailbox.data);
@@ -894,7 +895,12 @@ void CmndGroupTopic(void)
 #endif  // USE_DEVICE_GROUPS
     restart_flag = 2;
   }
+#ifdef USE_DEVICE_GROUPS
+    ResponseCmndChar(SettingsText(settings_text_index));
+  }
+#else  // USE_DEVICE_GROUPS
   ResponseCmndChar(SettingsText(SET_MQTT_GRP_TOPIC));
+#endif  // USE_DEVICE_GROUPS
 }
 
 void CmndTopic(void)
