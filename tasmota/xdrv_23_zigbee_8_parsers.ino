@@ -190,20 +190,6 @@ void Z_SendActiveEpReq(uint16_t shortaddr) {
               Z_B0(shortaddr), Z_B1(shortaddr), Z_B0(shortaddr), Z_B1(shortaddr) };
 
   ZigbeeZNPSend(ActiveEpReq, sizeof(ActiveEpReq));
-
-  // uint8_t NodeDescReq[] = { Z_SREQ | Z_ZDO, ZDO_NODE_DESC_REQ,
-  //             Z_B0(shortaddr), Z_B1(shortaddr), Z_B0(shortaddr), Z_B1(shortaddr) };
-
-  //ZigbeeZNPSend(NodeDescReq, sizeof(NodeDescReq));      Not sure this is useful
-}
-
-// Send ZDO_SIMPLE_DESC_REQ to get full list of supported Clusters for a specific endpoint
-void Z_SendSimpleDescReq(uint16_t shortaddr, uint8_t endpoint) {
-  uint8_t SimpleDescReq[] = { Z_SREQ | Z_ZDO, ZDO_SIMPLE_DESC_REQ,  // 2504
-              Z_B0(shortaddr), Z_B1(shortaddr), Z_B0(shortaddr), Z_B1(shortaddr),
-              endpoint };
-
-  ZigbeeZNPSend(SimpleDescReq, sizeof(SimpleDescReq));
 }
 
 const char* Z_DeviceType[] = { "Coordinator", "Router", "End Device", "Unknown" };
@@ -248,13 +234,8 @@ int32_t Z_ReceiveActiveEp(int32_t res, const class SBuffer &buf) {
   uint8_t           activeEpCount = buf.get8(7);
   uint8_t*          activeEpList = (uint8_t*) buf.charptr(8);
 
-
   for (uint32_t i = 0; i < activeEpCount; i++) {
-    zigbee_devices.addEndoint(nwkAddr, activeEpList[i]);
-  }
-
-  for (uint32_t i = 0; i < activeEpCount; i++) {
-    Z_SendSimpleDescReq(nwkAddr, activeEpList[i]);
+    zigbee_devices.addEndpoint(nwkAddr, activeEpList[i]);
   }
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
@@ -292,56 +273,6 @@ void Z_SendAFInfoRequest(uint16_t shortaddr, uint8_t endpoint, uint16_t clusteri
   ZigbeeZNPSend(buf.getBuffer(), buf.len());
 }
 
-
-int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
-  // Received ZDO_SIMPLE_DESC_RSP
-  Z_ShortAddress    srcAddr = buf.get16(2);
-  uint8_t           status  = buf.get8(4);
-  Z_ShortAddress    nwkAddr = buf.get16(5);
-  uint8_t           lenDescriptor = buf.get8(7);
-  uint8_t           endpoint = buf.get8(8);
-  uint16_t          profileId = buf.get16(9);  // The profile Id for this endpoint.
-  uint16_t          deviceId = buf.get16(11);   // The Device Description Id for this endpoint.
-  uint8_t           deviceVersion = buf.get8(13); // 0 – Version 1.00
-  uint8_t           numInCluster = buf.get8(14);
-  uint8_t           numOutCluster = buf.get8(15 + numInCluster*2);
-
-  if (0 == status) {
-    zigbee_devices.addEndointProfile(nwkAddr, endpoint, profileId);
-    for (uint32_t i = 0; i < numInCluster; i++) {
-      zigbee_devices.addCluster(nwkAddr, endpoint, buf.get16(15 + i*2), false);
-    }
-    for (uint32_t i = 0; i < numOutCluster; i++) {
-      zigbee_devices.addCluster(nwkAddr, endpoint, buf.get16(16 + numInCluster*2 + i*2), true);
-    }
-
-    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                    "\"Status\":%d,\"Endpoint\":\"0x%02X\""
-                    ",\"ProfileId\":\"0x%04X\",\"DeviceId\":\"0x%04X\",\"DeviceVersion\":%d"
-                    "\"InClusters\":["),
-                    ZIGBEE_STATUS_SIMPLE_DESC, endpoint,
-                    profileId, deviceId, deviceVersion);
-    for (uint32_t i = 0; i < numInCluster; i++) {
-      if (i > 0) { ResponseAppend_P(PSTR(",")); }
-      ResponseAppend_P(PSTR("\"0x%04X\""), buf.get16(15 + i*2));
-    }
-    ResponseAppend_P(PSTR("],\"OutClusters\":["));
-    for (uint32_t i = 0; i < numOutCluster; i++) {
-      if (i > 0) { ResponseAppend_P(PSTR(",")); }
-      ResponseAppend_P(PSTR("\"0x%04X\""), buf.get16(16 + numInCluster*2 + i*2));
-    }
-    ResponseAppend_P(PSTR("]}}"));
-    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
-    XdrvRulesProcess();
-
-    uint8_t cluster = zigbee_devices.findClusterEndpointIn(nwkAddr, 0x0000);
-    if (cluster) {
-      Z_SendAFInfoRequest(nwkAddr, cluster, 0x0000, 0x01); // TODO, do we need tarnsacId counter?
-    }
-  }
-  return -1;
-}
-
 int32_t Z_ReceiveIEEEAddr(int32_t res, const class SBuffer &buf) {
   uint8_t           status = buf.get8(2);
   Z_IEEEAddress     ieeeAddr = buf.get64(3);
@@ -353,14 +284,6 @@ int32_t Z_ReceiveIEEEAddr(int32_t res, const class SBuffer &buf) {
     zigbee_devices.updateDevice(nwkAddr, ieeeAddr);
     char hex[20];
     Uint64toHex(ieeeAddr, hex, 64);
-    // Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-    //                 "\"Status\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
-    //                 "}}"),
-    //                 ZIGBEE_STATUS_DEVICE_IEEE, hex, nwkAddr
-    //                 );
-
-    // MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
-    // XdrvRulesProcess();
     // Ping response
     const char * friendlyName = zigbee_devices.getFriendlyName(nwkAddr);
     if (friendlyName) {
@@ -442,7 +365,7 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
   char hex[20];
   Uint64toHex(ieeeAddr, hex, 64);
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
+                  "\"Status\":%d,\"IEEEAddr\":\"0x%s\",\"ShortAddr\":\"0x%04X\""
                   ",\"PowerSource\":%s,\"ReceiveWhenIdle\":%s,\"Security\":%s}}"),
                   ZIGBEE_STATUS_DEVICE_ANNOUNCE, hex, nwkAddr,
                   (capabilities & 0x04) ? "true" : "false",
@@ -467,7 +390,7 @@ int32_t Z_ReceiveTCDevInd(int32_t res, const class SBuffer &buf) {
   char hex[20];
   Uint64toHex(ieeeAddr, hex, 64);
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
+                  "\"Status\":%d,\"IEEEAddr\":\"0x%s\",\"ShortAddr\":\"0x%04X\""
                   ",\"ParentNetwork\":\"0x%04X\"}}"),
                   ZIGBEE_STATUS_DEVICE_INDICATION, hex, srcAddr, parentNw
                   );
@@ -600,7 +523,6 @@ const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
   { AREQ_PERMITJOIN_OPEN_XX,      &Z_ReceivePermitJoinStatus },
   { AREQ_ZDO_NODEDESCRSP,         &Z_ReceiveNodeDesc },
   { AREQ_ZDO_ACTIVEEPRSP,         &Z_ReceiveActiveEp },
-  { AREQ_ZDO_SIMPLEDESCRSP,       &Z_ReceiveSimpleDesc },
   { AREQ_ZDO_IEEE_ADDR_RSP,       &Z_ReceiveIEEEAddr },
   { AREQ_ZDO_BIND_RSP,            &Z_BindRsp },
 };
@@ -635,24 +557,21 @@ int32_t Z_Query_Bulbs(uint8_t value) {
 
     if (0 <= device.bulbtype) {
       uint16_t cluster;
-      uint8_t endpoint;
+      uint8_t endpoint = zigbee_devices.findFirstEndpoint(device.shortaddr);
 
       cluster = 0x0006;
-      endpoint = zigbee_devices.findClusterEndpointIn(device.shortaddr, cluster);
       if (endpoint) {   // send only if we know the endpoint
         zigbee_devices.setTimer(device.shortaddr, 0 /* groupaddr */, wait_ms, cluster, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
         wait_ms += inter_message_ms;
       }
 
       cluster = 0x0008;
-      endpoint = zigbee_devices.findClusterEndpointIn(device.shortaddr, cluster);
       if (endpoint) {   // send only if we know the endpoint
         zigbee_devices.setTimer(device.shortaddr, 0 /* groupaddr */, wait_ms, cluster, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
         wait_ms += inter_message_ms;
       }
 
       cluster = 0x0300;
-      endpoint = zigbee_devices.findClusterEndpointIn(device.shortaddr, cluster);
       if (endpoint) {   // send only if we know the endpoint
         zigbee_devices.setTimer(device.shortaddr, 0 /* groupaddr */, wait_ms, cluster, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
         wait_ms += inter_message_ms;

@@ -549,6 +549,7 @@ ZF(ZCLVersion) ZF(AppVersion) ZF(StackVersion) ZF(HWVersion) ZF(Manufacturer) ZF
 ZF(DateCode) ZF(PowerSource) ZF(SWBuildID) ZF(Power) ZF(SwitchType) ZF(Dimmer)
 ZF(MainsVoltage) ZF(MainsFrequency) ZF(BatteryVoltage) ZF(BatteryPercentage)
 ZF(CurrentTemperature) ZF(MinTempExperienced) ZF(MaxTempExperienced) ZF(OverTempTotalDwell)
+ZF(SceneCount) ZF(CurrentScene) ZF(CurrentGroup) ZF(SceneValid)
 ZF(AlarmCount) ZF(Time) ZF(TimeStatus) ZF(TimeZone) ZF(DstStart) ZF(DstEnd)
 ZF(DstShift) ZF(StandardTime) ZF(LocalTime) ZF(LastSetTime) ZF(ValidUntilTime)
 
@@ -659,6 +660,13 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0002, 0x0001,  Z(MinTempExperienced),   &Z_Copy },
   { 0x0002, 0x0002,  Z(MaxTempExperienced),   &Z_Copy },
   { 0x0002, 0x0003,  Z(OverTempTotalDwell),   &Z_Copy },
+
+  // Scenes cluster
+  { 0x0005, 0x0000,  Z(SceneCount),           &Z_Copy },
+  { 0x0005, 0x0001,  Z(CurrentScene),         &Z_Copy },
+  { 0x0005, 0x0002,  Z(CurrentGroup),         &Z_Copy },
+  { 0x0005, 0x0003,  Z(SceneValid),           &Z_Copy },
+  //{ 0x0005, 0x0004,  Z(NameSupport),           &Z_Copy },
 
   // On/off cluster
   { 0x0006, 0x0000,  Z(Power),                &Z_Copy },
@@ -933,7 +941,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0405, 0x0000,  Z(Humidity),             &Z_FloatDiv100 },   // Humidity
   { 0x0405, 0x0001,  Z(HumidityMinMeasuredValue),     &Z_Copy },    //
   { 0x0405, 0x0002,  Z(HumidityMaxMeasuredValue),     &Z_Copy },    //
-  { 0x0405, 0x0003,  Z(HumidityTolerance),            &Z_Copy },    //
+  { 0x0405, 0x0003,  "HumidityTolerance",            &Z_Copy },    //
   { 0x0405, 0xFFFF,  nullptr,                &Z_Remove },     // Remove all other values
 
   // Occupancy Sensing cluster

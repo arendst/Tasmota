@@ -394,7 +394,7 @@ void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, 
 
   if ((0 == endpoint) && (shortaddr)) {
     // endpoint is not specified, let's try to find it from shortAddr, unless it's a group address
-    endpoint = zigbee_devices.findClusterEndpointIn(shortaddr, cluster);
+    endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZbSend: guessing endpoint 0x%02X"), endpoint);
   }
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZbSend: shortaddr 0x%04X, groupaddr 0x%04X, cluster 0x%04X, endpoint 0x%02X, cmd 0x%02X, data %s"),
@@ -847,7 +847,7 @@ void CmndZbRead(void) {
   }
 
   if ((0 == endpoint) && (device)) {    // try to compute the endpoint
-    endpoint = zigbee_devices.findClusterEndpointIn(device, cluster);
+    endpoint = zigbee_devices.findFirstEndpoint(device);
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZbSend: guessing endpoint 0x%02X"), endpoint);
   }
   if (groupaddr) {
