@@ -272,6 +272,7 @@ void HdcEverySecond(void) {
  * the MQTT messages, and so on.
  *
  */
+/*
 void HdcShow(bool json) {
   if (hdc_valid) {
     char temperature[33];
@@ -299,6 +300,12 @@ void HdcShow(bool json) {
       WSContentSend_PD(HTTP_SNS_HUM, hdc_type_name, humidity);
 #endif  // USE_WEBSERVER
     }
+  }
+}
+*/
+void HdcShow(bool json) {
+  if (hdc_valid) {
+    TempHumDewShow(json, (0 == tele_period), hdc_type_name, hdc_temperature, hdc_humidity);
   }
 }
 

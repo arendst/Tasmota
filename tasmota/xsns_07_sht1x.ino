@@ -179,7 +179,7 @@ void ShtEverySecond(void)
     }
   }
 }
-
+/*
 void ShtShow(bool json)
 {
   if (sht_valid) {
@@ -207,6 +207,13 @@ void ShtShow(bool json)
       WSContentSend_PD(HTTP_SNS_HUM, sht_types, humidity);
 #endif  // USE_WEBSERVER
     }
+  }
+}
+*/
+void ShtShow(bool json)
+{
+  if (sht_valid) {
+    TempHumDewShow(json, (0 == tele_period), sht_types, sht_temperature, sht_humidity);
   }
 }
 

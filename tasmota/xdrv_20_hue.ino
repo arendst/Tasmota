@@ -461,7 +461,7 @@ uint32_t findEchoGeneration(void) {
     gen = 1;        // if no user-agent, also revert to gen v1
   }
 
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, D_LOG_HTTP D_HUE " User-Agent: %s, gen=%d", user_agent.c_str(), gen);  // Header collection is set in xdrv_01_webserver.ino, in StartWebserver()
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " User-Agent: %s, gen=%d"), user_agent.c_str(), gen);  // Header collection is set in xdrv_01_webserver.ino, in StartWebserver()
 
   return gen;
 }
@@ -705,8 +705,8 @@ void HueLights(String *path)
   uint32_t device_id;   // the raw device_id used by Hue emulation
   uint8_t maxhue = (devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : devices_present;
 
-  path->remove(0,path->indexOf("/lights"));          // Remove until /lights
-  if (path->endsWith("/lights")) {                   // Got /lights
+  path->remove(0,path->indexOf(F("/lights")));          // Remove until /lights
+  if (path->endsWith(F("/lights"))) {                   // Got /lights
     response = "{";
     bool appending = false;
     CheckHue(&response, appending);
@@ -718,9 +718,9 @@ void HueLights(String *path)
 #endif
     response += "}";
   }
-  else if (path->endsWith("/state")) {               // Got ID/state
+  else if (path->endsWith(F("/state"))) {               // Got ID/state
     path->remove(0,8);                               // Remove /lights/
-    path->remove(path->indexOf("/state"));           // Remove /state
+    path->remove(path->indexOf(F("/state")));           // Remove /state
     device_id = atoi(path->c_str());
     device = DecodeLightId(device_id);
 #ifdef USE_ZIGBEE
@@ -741,8 +741,8 @@ void HueLights(String *path)
     }
 
   }
-  else if(path->indexOf("/lights/") >= 0) {          // Got /lights/ID
-    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "/lights path=%s", path->c_str());
+  else if(path->indexOf(F("/lights/")) >= 0) {          // Got /lights/ID
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("/lights path=%s"), path->c_str());
     path->remove(0,8);                               // Remove /lights/
     device_id = atoi(path->c_str());
     device = DecodeLightId(device_id);
