@@ -237,37 +237,7 @@ void HtuEverySecond(void)
     }
   }
 }
-/*
-void HtuShow(bool json)
-{
-  if (htu_valid) {
-    char temperature[33];
-    dtostrfd(htu_temperature, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(htu_humidity, Settings.flag2.humidity_resolution, humidity);
 
-    if (json) {
-      ResponseAppend_P(JSON_SNS_TEMPHUM, htu_types, temperature, humidity);
-#ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
-        DomoticzTempHumSensor(temperature, humidity);
-      }
-#endif  // USE_DOMOTICZ
-#ifdef USE_KNX
-      if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, htu_temperature);
-        KnxSensor(KNX_HUMIDITY, htu_humidity);
-      }
-#endif  // USE_KNX
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, htu_types, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, htu_types, humidity);
-#endif  // USE_WEBSERVER
-    }
-  }
-}
-*/
 void HtuShow(bool json)
 {
   if (htu_valid) {

@@ -38,6 +38,7 @@ extern "C" {
 void KNX_CB_Action(message_t const &msg, void *arg);
 //#endif  // USE_KNX
 
+void DomoticzTempHumPressureSensor(float temp, float hum, float baro = -1);
 char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0');
 extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack, uint32_t stack_end);
 

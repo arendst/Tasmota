@@ -179,37 +179,7 @@ void ShtEverySecond(void)
     }
   }
 }
-/*
-void ShtShow(bool json)
-{
-  if (sht_valid) {
-    char temperature[33];
-    dtostrfd(sht_temperature, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(sht_humidity, Settings.flag2.humidity_resolution, humidity);
 
-    if (json) {
-      ResponseAppend_P(JSON_SNS_TEMPHUM, sht_types, temperature, humidity);
-#ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
-        DomoticzTempHumSensor(temperature, humidity);
-      }
-#endif  // USE_DOMOTICZ
-#ifdef USE_KNX
-      if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, sht_temperature);
-        KnxSensor(KNX_HUMIDITY, sht_humidity);
-      }
-#endif  // USE_KNX
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, sht_types, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, sht_types, humidity);
-#endif  // USE_WEBSERVER
-    }
-  }
-}
-*/
 void ShtShow(bool json)
 {
   if (sht_valid) {

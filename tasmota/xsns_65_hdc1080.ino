@@ -272,37 +272,6 @@ void HdcEverySecond(void) {
  * the MQTT messages, and so on.
  *
  */
-/*
-void HdcShow(bool json) {
-  if (hdc_valid) {
-    char temperature[33];
-
-    dtostrfd(hdc_temperature, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(hdc_humidity, Settings.flag2.humidity_resolution, humidity);
-
-    if (json) {
-      ResponseAppend_P(JSON_SNS_TEMPHUM, hdc_type_name, temperature, humidity);
-#ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
-        DomoticzTempHumSensor(temperature, humidity);
-      }
-#endif  // USE_DOMOTICZ
-#ifdef USE_KNX
-      if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, hdc_temperature);
-        KnxSensor(KNX_HUMIDITY, hdc_humidity);
-      }
-#endif  // USE_KNX
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, hdc_type_name, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, hdc_type_name, humidity);
-#endif  // USE_WEBSERVER
-    }
-  }
-}
-*/
 void HdcShow(bool json) {
   if (hdc_valid) {
     TempHumDewShow(json, (0 == tele_period), hdc_type_name, hdc_temperature, hdc_humidity);

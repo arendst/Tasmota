@@ -572,7 +572,7 @@ void BmpShow(bool json)
 
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (0 == bmp_idx)) {  // We want the same first sensor to report to Domoticz in case a read is missed
-          DomoticzTempHumPressureSensor(temperature, humidity, pressure);
+          DomoticzTempHumPressureSensor(bmp_temperature, bmp_sensors[bmp_idx].bmp_humidity, bmp_pressure);
 #ifdef USE_BME680
           if (bmp_sensors[bmp_idx].bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)bmp_sensors[bmp_idx].bmp_gas_resistance); }
 #endif  // USE_BME680
