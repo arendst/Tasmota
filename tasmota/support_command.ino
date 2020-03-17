@@ -77,6 +77,14 @@ void ResponseCmndIdxNumber(int value)
   Response_P(S_JSON_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, value);
 }
 
+void ResponseCmndChar_P(const char* value)
+{
+  size_t buf_size = strlen_P(value);
+  char buf[buf_size + 1];
+  strcpy_P(buf, value);
+  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, buf);
+}
+
 void ResponseCmndChar(const char* value)
 {
   Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, value);
@@ -602,7 +610,7 @@ void CmndRestart(void)
     EspRestart();
     break;
   default:
-    ResponseCmndChar(D_JSON_ONE_TO_RESTART);
+    ResponseCmndChar_P(PSTR(D_JSON_ONE_TO_RESTART));
   }
 }
 
@@ -1059,7 +1067,7 @@ void CmndTemplate(void)
     if (JsonTemplate(XdrvMailbox.data)) {    // Free 336 bytes StaticJsonBuffer stack space by moving code to function
       if (USER_MODULE == Settings.module) { restart_flag = 2; }
     } else {
-      ResponseCmndChar(D_JSON_INVALID_JSON);
+      ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON));
       error = true;
     }
   }
