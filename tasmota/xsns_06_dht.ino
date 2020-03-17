@@ -244,30 +244,7 @@ void DhtEverySecond(void)
 void DhtShow(bool json)
 {
   for (uint32_t i = 0; i < dht_sensors; i++) {
-    char temperature[33];
-    dtostrfd(Dht[i].t, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(Dht[i].h, Settings.flag2.humidity_resolution, humidity);
-
-    if (json) {
-      ResponseAppend_P(JSON_SNS_TEMPHUM, Dht[i].stype, temperature, humidity);
-#ifdef USE_DOMOTICZ
-      if ((0 == tele_period) && (0 == i)) {
-        DomoticzTempHumSensor(temperature, humidity);
-      }
-#endif  // USE_DOMOTICZ
-#ifdef USE_KNX
-      if ((0 == tele_period) && (0 == i)) {
-        KnxSensor(KNX_TEMPERATURE, Dht[i].t);
-        KnxSensor(KNX_HUMIDITY, Dht[i].h);
-      }
-#endif  // USE_KNX
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, Dht[i].stype, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, Dht[i].stype, humidity);
-#endif  // USE_WEBSERVER
-    }
+    TempHumDewShow(json, ((0 == tele_period) && (0 == i)), Dht[i].stype, Dht[i].t, Dht[i].h);
   }
 }
 

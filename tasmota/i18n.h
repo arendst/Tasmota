@@ -52,6 +52,7 @@
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
 #define D_JSON_DARKNESS "Darkness"
 #define D_JSON_DATA "Data"
+#define D_JSON_DEWPOINT "DewPoint"
 #define D_JSON_DISTANCE "Distance"
 #define D_JSON_DNSSERVER "DNSServer"
 #define D_JSON_DONE "Done"
@@ -303,6 +304,7 @@
   #define D_JSON_FLAG "FLAG"
   #define D_JSON_BASE "BASE"
 #define D_CMND_TEMPOFFSET "TempOffset"
+#define D_CMND_HUMOFFSET "HumOffset"
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTLOG "MqttLog"
@@ -551,7 +553,6 @@
 
 // Commands xdrv_34_pwm_dimmer.ino
 #ifdef USE_PWM_DIMMER
-#define D_CMND_BRI_MIN "BriMin"
 #define D_CMND_BRI_PRESET "BriPreset"
 #endif
 
@@ -631,7 +632,6 @@ const char S_JSON_DRIVER_INDEX_NVALUE[] PROGMEM =             "{\"" D_CMND_DRIVE
 const char S_JSON_DRIVER_INDEX_SVALUE[] PROGMEM =             "{\"" D_CMND_DRIVER "%d\":\"%s\"}";
 
 const char JSON_SNS_TEMP[] PROGMEM = ",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}";
-const char JSON_SNS_TEMPHUM[] PROGMEM = ",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}";
 
 const char JSON_SNS_ILLUMINANCE[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}";
 const char JSON_SNS_MOISTURE[] PROGMEM = ",\"%s\":{\"" D_JSON_MOISTURE "\":%d}";
@@ -668,6 +668,7 @@ const float kSpeedConversionFactor[] = {1,            // none
 // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_TEMP[] PROGMEM = "{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";
 const char HTTP_SNS_HUM[] PROGMEM = "{s}%s " D_HUMIDITY "{m}%s%%{e}";
+const char HTTP_SNS_DEW[] PROGMEM = "{s}%s " D_DEWPOINT "{m}%s&deg;%c{e}";
 const char HTTP_SNS_PRESSURE[] PROGMEM = "{s}%s " D_PRESSURE "{m}%s %s{e}";
 const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "{s}%s " D_PRESSUREATSEALEVEL "{m}%s %s{e}";
 const char HTTP_SNS_ANALOG[] PROGMEM = "{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";

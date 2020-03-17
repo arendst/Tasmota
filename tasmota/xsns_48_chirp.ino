@@ -441,9 +441,7 @@ void ChirpShow(bool json)
         }
   #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
-        char str_moisture[33];
-        dtostrfd(chirp_sensor[i].moisture, 0, str_moisture);
-        DomoticzTempHumSensor(str_temperature, str_moisture);
+        DomoticzTempHumPressureSensor(t_temperature, chirp_sensor[i].moisture);
         DomoticzSensor(DZ_ILLUMINANCE,chirp_sensor[i].light); // this is not LUX!!
       }
   #endif  // USE_DOMOTICZ

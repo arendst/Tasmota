@@ -617,10 +617,32 @@ char TempUnit(void)
 
 float ConvertHumidity(float h)
 {
+  float result = h;
+
   global_update = uptime;
   global_humidity = h;
 
-  return h;
+  result = result + (0.1 * Settings.hum_comp);
+
+  return result;
+}
+
+float CalcTempHumToDew(float t, float h)
+{
+  if (isnan(h) || isnan(t)) { return 0.0; }
+
+  if (Settings.flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
+    t = (t - 32) / 1.8;                                       // Celsius
+  }
+
+//  float gamma = log(h / 100) + 17.62 * t / (243.5 + t);
+  float gamma = TaylorLog(h / 100) + 17.62 * t / (243.5 + t);
+  float result = (243.5 * gamma / (17.62 - gamma));
+
+  if (Settings.flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
+    result = result * 1.8 + 32;                               // Fahrenheit
+  }
+  return result;
 }
 
 float ConvertPressure(float p)
@@ -1016,6 +1038,18 @@ int ResponseAppendTimeFormat(uint32_t format)
 int ResponseAppendTime(void)
 {
   return ResponseAppendTimeFormat(Settings.flag2.time_format);
+}
+
+int ResponseAppendTHD(float f_temperature, float f_humidity)
+{
+  char temperature[FLOATSZ];
+  dtostrfd(f_temperature, Settings.flag2.temperature_resolution, temperature);
+  char humidity[FLOATSZ];
+  dtostrfd(f_humidity, Settings.flag2.humidity_resolution, humidity);
+  char dewpoint[FLOATSZ];
+  dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings.flag2.temperature_resolution, dewpoint);
+
+  return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), temperature, humidity, dewpoint);
 }
 
 int ResponseJsonEnd(void)

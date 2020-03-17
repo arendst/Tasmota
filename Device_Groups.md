@@ -6,7 +6,7 @@ UDP multicasts, followed by UDP unicasts if necessary, are used to send updates 
 
 To include device groups support in the build, define USE_DEVICE_GROUPS in your user_config_override. This adds 3.5K to the code size. All devices in a group must be running firmware with device group support and have device groups enabled.
 
-To enable device groups, set Option85 to 1.
+To enable device groups, execute the command SetOption85 1.
 
 
 ## Device Groups Operation
@@ -29,17 +29,15 @@ The items that are sent to the group and the items that are received from the gr
   <tr>
    <td>DevGroupShare
    </td>
-   <td><in>,&lt;out> = set incoming and outgoing shared item mask (default = 0xffffffff,0xffffffff)
-<p>
-1 = Power, 2 = Light brightness, 4 = Light fade/speed, 8 = Light scheme, 16 = Light color, 32 = Minimum brightness
+   <td>&lt;in>,&lt;out> = set incoming and outgoing shared item mask (default = 0xffffffff,0xffffffff)<br>
+1 = Power, 2 = Light brightness, 4 = Light fade/speed, 8 = Light scheme, 16 = Light color, 32 = Dimmer settings (presets)
    </td>
   </tr>
   <tr>
    <td>GroupTopic&lt;x>
    </td>
-   <td>1 = reset device group &lt;x> MQTT group topic to firmware default (MQTT_GRPTOPIC) and restart
-<p>
-<value> = set device group &lt;x> MQTT group topic (32 chars max) and restart
+   <td>1 = reset device group &lt;x> MQTT group topic to firmware default (MQTT_GRPTOPIC) and restart<br>
+&lt;value> = set device group &lt;x> MQTT group topic (32 chars max) and restart
    </td>
   </tr>
 </table>

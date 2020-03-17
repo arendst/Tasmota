@@ -276,21 +276,17 @@ void AzInit(void)
 
 void AzShow(bool json)
 {
-  char temperature[33];
-  dtostrfd(az_temperature, Settings.flag2.temperature_resolution, temperature);
-  char humidity[33];
-  dtostrfd(az_humidity, Settings.flag2.humidity_resolution, humidity);
-
   if (json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"), ktype, az_co2, temperature, humidity);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_CO2 "\":%d,"), ktype, az_co2);
+    ResponseAppendTHD(az_temperature, az_humidity);
+    ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, az_co2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_SNS_CO2, ktype, az_co2);
-    WSContentSend_PD(HTTP_SNS_TEMP, ktype, temperature, TempUnit());
-    WSContentSend_PD(HTTP_SNS_HUM, ktype, humidity);
+    WSContentSend_THD(ktype, az_temperature, az_humidity);
 #endif  // USE_WEBSERVER
   }
 }

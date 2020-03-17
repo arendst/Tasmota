@@ -94,9 +94,9 @@ int32_t Z_Reboot(int32_t res, class SBuffer &buf) {
   GetTextIndexed(reason_str, sizeof(reason_str), reason, Z_RebootReason);
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"Message\":\"%s\",\"RestartReason\":\"%s\""
+                  "\"Status\":%d,\"Message\":\"CC2530 booted\",\"RestartReason\":\"%s\""
                   ",\"MajorRel\":%d,\"MinorRel\":%d}}"),
-                  ZIGBEE_STATUS_BOOT, "CC2530 booted", reason_str,
+                  ZIGBEE_STATUS_BOOT, reason_str,
                   major_rel, minor_rel);
 
   MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));

@@ -26,11 +26,11 @@
  * I2C Address: 0x38
  *
  * Attention: this Sensor is incompatible with other I2C devices on I2C bus.
- * 
+ *
  * The Datasheet write:
- * "Only a single AHT10 can be connected to the I2C bus and no other I2C 
+ * "Only a single AHT10 can be connected to the I2C bus and no other I2C
  *  devices can be connected".
- * 
+ *
  * after lot of search and tests, now is confirmed that works only reliable with one sensor
  * on I2C Bus
 \*********************************************************************************************/
@@ -38,129 +38,133 @@
 #define XSNS_63              63
 #define XI2C_43              43  // See I2CDEVICES.md
 
-#define AHT10_ADDR           0x38
+#define AHT1X_ADDR1          0x38
+#define AHT1X_ADDR2          0x39
 
-uint8_t eSensorCalibrateCmd[3] = {0xE1, 0x08, 0x00};
-uint8_t eSensorMeasureCmd[3]   = {0xAC, 0x33, 0x00};
-uint8_t eSensorResetCmd        = 0xBA;
+#define AHT1X_MAX_SENSORS    2
 
-struct AHT10 {
+#define AHT_HUMIDITY_CONST      100
+#define AHT_TEMPERATURE_CONST   200
+#define AHT_TEMPERATURE_OFFSET  50
+#define KILOBYTE_CONST          1048576.0f
+
+#define AHT1X_CMD_DELAY      40
+#define AHT1X_RST_DELAY      30
+#define AHT1X_MEAS_DELAY     80 // over 75ms in datasheet
+
+uint8_t AHTSetCalCmd[3]    = {0xE1, 0x08, 00}; //load factory calibration coeff
+uint8_t AHTSetCycleCmd[3]  = {0xE1, 0x28, 00}; //enable cycle mode
+uint8_t AHTMeasureCmd[3]   = {0xAC, 0x33, 00}; //start measurment command
+uint8_t AHTResetCmd        = 0xBA;             //soft reset command
+
+const char ahtTypes[] PROGMEM = "AHT1X|AHT1X";
+uint8_t aht1x_addresses[] = { AHT1X_ADDR1, AHT1X_ADDR2 };
+uint8_t aht1x_count  = 0;
+uint8_t aht1x_Pcount = 0;
+
+struct AHT1XSTRUCT
+{
   float   humidity = NAN;
   float   temperature = NAN;
-  uint8_t valid = 0;
-  uint8_t count = 0;
-  char    name[6] = "AHT1x";
-} AHT10;
+  uint8_t address;    // bus address
+  char    types[6];   // Sensor type name and address -
+} aht1x_sensors[AHT1X_MAX_SENSORS];
 
-bool AHT10Read(void)
+bool AHT1XWrite(uint8_t aht1x_idx)
 {
-  if (AHT10.valid) { AHT10.valid--; }
+  Wire.beginTransmission(aht1x_sensors[aht1x_idx].address);
+  Wire.write(AHTMeasureCmd, 3);
+  if (Wire.endTransmission() != 0)
+    return false;
+}
 
+bool AHT1XRead(uint8_t aht1x_idx)
+{
   uint8_t data[6];
+  Wire.requestFrom(aht1x_sensors[aht1x_idx].address, (uint8_t) 6);
+  for(uint8_t i = 0; Wire.available() > 0; i++){
+     data[i] = Wire.read();
+   }
+   if ((data[0] & 0x80) == 0x80) return false; //device is busy
 
-  Wire.beginTransmission(AHT10_ADDR);
-  Wire.write(eSensorMeasureCmd, 3);
-  Wire.endTransmission();
-  delay(80);
+  aht1x_sensors[aht1x_idx].humidity    = (((data[1] << 12)| (data[2] << 4) | data[3] >> 4) * AHT_HUMIDITY_CONST / KILOBYTE_CONST);
+  aht1x_sensors[aht1x_idx].temperature = ((AHT_TEMPERATURE_CONST * (((data[3] & 0x0F) << 16) | (data[4] << 8) | data[5]) / KILOBYTE_CONST) - AHT_TEMPERATURE_OFFSET);
 
-  Wire.requestFrom(AHT10_ADDR, 6);
-  for (uint32_t i = 0; Wire.available() > 0; i++) {
-    data[i] = Wire.read();
-  }
-
-  uint32_t result_h = ((data[1] << 16) | (data[2] << 8) | data[3]) >> 4;
-  uint32_t result_t = ((data[3] & 0x0F) << 16) | (data[4] << 8) | data[5];
-
-  float humidity = result_h * 100 / 1048576;
-  float temperature = ((200 * result_t) / 1048576) - 50;
-
-  if (isnan(temperature) || isnan(humidity)) { return false; }
-
-  AHT10.humidity = ConvertHumidity(humidity);
-  AHT10.temperature  = ConvertTemp(temperature);
-
-  AHT10.valid = SENSOR_MAX_MISS;
-  return true;
+  return (!isnan(aht1x_sensors[aht1x_idx].temperature) && !isnan(aht1x_sensors[aht1x_idx].humidity) && (aht1x_sensors[aht1x_idx].humidity != 0));
 }
 
 /********************************************************************************************/
 
-bool AHT10Init(void)
+// Test for Polling the device without delays
+// Incompatible with other devices on I2C bus
+void AHT1XPoll(void) // We have 100ms for read. Sensor needs 80-95 ms
 {
-  Wire.begin(AHT10_ADDR);
-  Wire.beginTransmission(AHT10_ADDR);
-  Wire.write(eSensorCalibrateCmd, 3); // init with internal temp coef.
-  Wire.endTransmission();
-
-  delay(40);  //  after tests, its ok
-
-  return (0x08 == (AHT10ReadStatus() & 0x68)); 
+  aht1x_Pcount++;
+   switch (aht1x_Pcount) {
+    case 10:
+      AHT1XWrite(0);
+      break;
+    case 11:
+      if (AHT1XRead(0)){
+        ConvertTemp(aht1x_sensors[0].temperature);   // Set global temperature
+        ConvertHumidity(aht1x_sensors[0].humidity);  // Set global humidity
+      }
+      aht1x_Pcount = 0;
+      break;
+    }
 }
 
-uint8_t AHT10ReadStatus(void)
+unsigned char AHT1XReadStatus(uint8_t aht1x_address)
 {
-  Wire.requestFrom(AHT10_ADDR, 1);
-  uint8_t result = Wire.read();
+  uint8_t result = 0;
+  Wire.requestFrom(aht1x_address, (uint8_t) 1);
+  result = Wire.read();
   return result;
 }
 
-void AHT10Reset(void)
+void AHT1XReset(uint8_t aht1x_address)
 {
-  Wire.beginTransmission(AHT10_ADDR);
-  Wire.write(eSensorResetCmd);
+  Wire.beginTransmission(aht1x_address);
+  Wire.write(AHTResetCmd);
   Wire.endTransmission();
-  delay(20);
+  delay(AHT1X_RST_DELAY);
 }
 
 /********************************************************************************************/
-
-void AHT10Detect(void)
+bool AHT1XInit(uint8_t aht1x_address)
 {
-  if (I2cActive(AHT10_ADDR)) { return; }
-
-  if (AHT10Init()) {
-    I2cSetActiveFound(AHT10_ADDR, AHT10.name);
-    AHT10.count = 1;
-  }
+  Wire.beginTransmission(aht1x_address);
+  Wire.write(AHTSetCalCmd, 3);
+  if (Wire.endTransmission() != 0) return false;
+  delay(AHT1X_CMD_DELAY);
+  if((AHT1XReadStatus(aht1x_address) & 0x68) == 0x08) // Sensor calcoef aktiv
+    return true;
+  return false;
 }
 
-void AHT10EverySecond(void)
+void AHT1XDetect(void)
 {
-  if (uptime &1) {
-    // AHT10: 55mS
-    if (!AHT10Read()) {
-      AddLogMissed(AHT10.name, AHT10.valid);
+  for (uint8_t i = 0; i < AHT1X_MAX_SENSORS; i++) {
+    if (I2cActive(aht1x_addresses[i])) { continue; }
+    if (AHT1XInit(aht1x_addresses[i]))
+    {
+      aht1x_sensors[aht1x_count].address = aht1x_addresses[i];
+      GetTextIndexed(aht1x_sensors[aht1x_count].types, sizeof(aht1x_sensors[aht1x_count].types), i, ahtTypes);
+      I2cSetActiveFound(aht1x_sensors[aht1x_count].address, aht1x_sensors[aht1x_count].types);
+      aht1x_count = 1;
+      break; // Only one Sensor allowed at the moment (I2C Sensor-Bug)
     }
   }
 }
 
-void AHT10Show(bool json)
+void AHT1XShow(bool json)
 {
-  if (AHT10.valid) {
-    char temperature[33];
-    dtostrfd(AHT10.temperature, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(AHT10.humidity, Settings.flag2.humidity_resolution, humidity);
-
-    if (json) {
-      ResponseAppend_P(JSON_SNS_TEMPHUM, AHT10.name, temperature, humidity);
-#ifdef USE_DOMOTICZ
-      if ((0 == tele_period)) {
-        DomoticzTempHumSensor(temperature, humidity);
-      }
-#endif // USE_DOMOTICZ
-#ifdef USE_KNX
-      if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, AHT10.temperature);
-        KnxSensor(KNX_HUMIDITY, AHT10.humidity);
-      }
-#endif // USE_KNX
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, AHT10.name, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, AHT10.name, humidity);
-#endif // USE_WEBSERVER
-    }
+  for (uint32_t i = 0; i < aht1x_count; i++) {
+    float tem = ConvertTemp(aht1x_sensors[i].temperature);
+    float hum = ConvertHumidity(aht1x_sensors[i].humidity);
+    char types[11]; // AHT1X-0x38
+    snprintf_P(types, sizeof(types), PSTR("%s%c0x%02X"), aht1x_sensors[i].types, IndexSeparator(), aht1x_sensors[i].address);  // "X-0xXX"
+    TempHumDewShow(json, ((0 == tele_period) && (0 == i)), types, tem, hum);
   }
 }
 
@@ -171,29 +175,28 @@ void AHT10Show(bool json)
 bool Xsns63(uint8_t function)
 {
   if (!I2cEnabled(XI2C_43)) { return false; }
-
   bool result = false;
 
   if (FUNC_INIT == function) {
-    AHT10Detect();
+    AHT1XDetect();
   }
-  else if (AHT10.count) {
+  else if (aht1x_count){
     switch (function) {
-    case FUNC_EVERY_SECOND:
-      AHT10EverySecond();
-      break;
-    case FUNC_JSON_APPEND:
-      AHT10Show(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      AHT10Show(0);
-      break;
-#endif  // USE_WEBSERVER
+      case FUNC_EVERY_100_MSECOND:
+        AHT1XPoll();
+        break;
+      case FUNC_JSON_APPEND:
+        AHT1XShow(1);
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        AHT1XShow(0);
+        break;
+  #endif  // USE_WEBSERVER
     }
   }
   return result;
 }
 
-#endif  // USE_AHT10
+#endif  // USE_AHT1X
 #endif  // USE_I2C
