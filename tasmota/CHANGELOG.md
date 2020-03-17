@@ -5,6 +5,7 @@
 - Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)
 - Add support for HDC1080 Temperature and Humidity sensor by Luis Teixeira (#7888)
 - Add commands ``SwitchMode 13`` PushOn and ``SwitchMode 14`` PushOnInverted (#7912)
+- Add command ``HumOffset -10.0 .. 10.0`` to set global humidity sensor offset (#7934)
 - Add Zigbee support for Hue emulation by Stefan Hadinger
 - Add Dew Point to Temperature and Humidity sensors
 
@@ -17,6 +18,7 @@
 - Add Zigbee features and improvements and remove support for Zigbee commands starting with ``Zigbee...``
 - Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)
 - Add support for Romanian language translations by Augustin Marti
+- Add support for La Crosse TX23 Anemometer by Norbert Richter (#3146, #7765)
 - Add command ``SetOption89 0/1`` for Zigbee distinct MQTT topics per device for SENSOR, allowing retained messages (#7835)
 - Change Hue emulation code optimization
 
