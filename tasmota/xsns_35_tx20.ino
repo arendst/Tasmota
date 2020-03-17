@@ -237,7 +237,11 @@ void TX2xStartRead(void)
 
       // check checksum, start frame,non-inverted==inverted values and max. speed
       ;
+#ifdef USE_TX23_WIND_SENSOR
       if ((chk == tx2x_sd) && (0x1b==tx2x_sa) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511)) {
+#else
+      if ((chk == tx2x_sd) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511)) {
+#endif
         tx2x_last_available = uptime;
         // Wind speed spec: 0 to 180 km/h (0 to 50 m/s)
         tx2x_wind_speed = tx2x_sc;
