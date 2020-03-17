@@ -89,6 +89,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
 - Add commands ``SwitchMode 13`` PushOn and ``SwitchMode 14`` PushOnInverted (#7912)
 - Add command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
+- Add command ``HumOffset -10.0 .. 10.0`` to set global humidity sensor offset (#7934)
 - Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
 - Add optional parameter ``<startcolor>`` to command ``Scheme <scheme>, <startcolor>`` to control initial start color
 - Add web page sliders when ``SetOption37 128`` is active allowing control of white(s)
@@ -117,6 +118,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for FiF LE-01MR energy meter by saper-2 (#7584)
 - Add support for Sensors AHT10 and AHT15 by Martin Wagner (#7596)
 - Add support for Wemos Motor Shield V1 by Denis Sborets (#7764)
+- Add support for La Crosse TX23 Anemometer by Norbert Richter (#3146, #7765)
 - Add support for Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM dimmer switches by Paul Diem (#7791)
 - Add support for UDP Group control without MQTT by Paul Diem (#7790)
 - Add support for Jarolift rollers by Keeloq algorithm

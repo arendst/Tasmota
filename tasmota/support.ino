@@ -617,10 +617,14 @@ char TempUnit(void)
 
 float ConvertHumidity(float h)
 {
+  float result = h;
+
   global_update = uptime;
   global_humidity = h;
+  
+  result = result + (0.1 * Settings.hum_comp);
 
-  return h;
+  return result;
 }
 
 float CalcTempHumToDew(float t, float h)

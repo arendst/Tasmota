@@ -305,6 +305,15 @@ ZBM(ZBS_PERMITJOINREQ_CLOSE, Z_SREQ | Z_ZDO, ZDO_MGMT_PERMIT_JOIN_REQ, 0x02 /* A
 ZBM(ZBR_PERMITJOINREQ, Z_SRSP | Z_ZDO, ZDO_MGMT_PERMIT_JOIN_REQ, Z_SUCCESS)    // 653600
 ZBM(ZBR_PERMITJOIN_AREQ_RSP,  Z_AREQ | Z_ZDO, ZDO_MGMT_PERMIT_JOIN_RSP, 0x00, 0x00 /* srcAddr*/, Z_SUCCESS )   // 45B6000000
 
+const char kCheckingDeviceConfiguration[] PROGMEM = D_LOG_ZIGBEE "checking device configuration";
+const char kConfigured[] PROGMEM = "Configured, starting coordinator";
+const char kStarted[] PROGMEM = "Started";
+const char kZigbeeStarted[] PROGMEM = D_LOG_ZIGBEE "Zigbee started";
+const char kResetting[] PROGMEM = "Resetting configuration";
+const char kZNP12[] PROGMEM = "Only ZNP 1.2 is currently supported";
+const char kAbort[] PROGMEM = "Abort";
+const char kZigbeeAbort[] PROGMEM = D_LOG_ZIGBEE "Abort";
+
 static const Zigbee_Instruction zb_prog[] PROGMEM = {
   ZI_LABEL(0)
     ZI_NOOP()
@@ -319,7 +328,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_RESET)                        // reboot cc2530 just in case we rebooted ESP8266 but not cc2530
     ZI_WAIT_RECV_FUNC(5000, ZBR_RESET, &Z_Reboot)             // timeout 5s
     ZI_WAIT(100)
-    ZI_LOG(LOG_LEVEL_DEBUG, D_LOG_ZIGBEE "checking device configuration")
+    ZI_LOG(LOG_LEVEL_DEBUG, kCheckingDeviceConfiguration)
     ZI_SEND(ZBS_ZNPHC)                        // check value of ZNP Has Configured
     ZI_WAIT_RECV(2000, ZBR_ZNPHC)
     ZI_SEND(ZBS_VERSION)                      // check ZNP software version
@@ -338,7 +347,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     // all is good, we can start
 
   ZI_LABEL(ZIGBEE_LABEL_START)                // START ZNP App
-    ZI_MQTT_STATE(ZIGBEE_STATUS_STARTING, "Configured, starting coordinator")
+    ZI_MQTT_STATE(ZIGBEE_STATUS_STARTING, kConfigured)
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     // Z_ZDO:startupFromApp
     //ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "starting zigbee coordinator")
@@ -367,8 +376,8 @@ ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_WAIT_UNTIL(1000, ZBR_PERMITJOIN_AREQ_RSP)
   
   ZI_LABEL(ZIGBEE_LABEL_READY)
-    ZI_MQTT_STATE(ZIGBEE_STATUS_OK, "Started")
-    ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "Zigbee started")
+    ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
+    ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
     ZI_CALL(&Z_Load_Devices, 0)
     ZI_CALL(&Z_Query_Bulbs, 0)
@@ -377,7 +386,7 @@ ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_GOTO(ZIGBEE_LABEL_READY)
 
   ZI_LABEL(50)                                    // reformat device
-    ZI_MQTT_STATE(ZIGBEE_STATUS_RESET_CONF, "Reseting configuration")
+    ZI_MQTT_STATE(ZIGBEE_STATUS_RESET_CONF, kResetting)
     //ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "zigbee bad configuration of device, doing a factory reset")
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_SEND(ZBS_FACTRES)                          // factory reset
@@ -410,12 +419,12 @@ ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_GOTO(ZIGBEE_LABEL_START)
 
   ZI_LABEL(ZIGBEE_LABEL_UNSUPPORTED_VERSION)
-    ZI_MQTT_STATE(ZIGBEE_STATUS_UNSUPPORTED_VERSION, "Only ZNP 1.2 is currently supported")
+    ZI_MQTT_STATE(ZIGBEE_STATUS_UNSUPPORTED_VERSION, kZNP12)
     ZI_GOTO(ZIGBEE_LABEL_ABORT)
 
   ZI_LABEL(ZIGBEE_LABEL_ABORT)                    // Label 99: abort
-    ZI_MQTT_STATE(ZIGBEE_STATUS_ABORT, "Abort")
-    ZI_LOG(LOG_LEVEL_ERROR, D_LOG_ZIGBEE "Abort")
+    ZI_MQTT_STATE(ZIGBEE_STATUS_ABORT, kAbort)
+    ZI_LOG(LOG_LEVEL_ERROR, kZigbeeAbort)
     ZI_STOP(ZIGBEE_LABEL_ABORT)
 };
 
@@ -573,10 +582,15 @@ void ZigbeeStateMachine_Run(void) {
         AddLog_P(cur_d8, (char*) cur_ptr1);
         break;
       case ZGB_INSTR_MQTT_STATE:
+        {
+        const char *f_msg = (const char*) cur_ptr1;
+        char buf[strlen_P(f_msg) + 1];
+        strcpy_P(buf, f_msg);
         Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":%d,\"Message\":\"%s\"}}"),
-                          cur_d8, (char*) cur_ptr1);
+                          cur_d8, buf);
       	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
       	XdrvRulesProcess();
+        }
         break;
       case ZGB_INSTR_SEND:
         ZigbeeZNPSend((uint8_t*) cur_ptr1, cur_d8 /* len */);
