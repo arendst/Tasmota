@@ -115,17 +115,13 @@ void SonoffScShow(bool json)
     float t = ConvertTemp(sc_value[1]);
     float h = ConvertHumidity(sc_value[0]);
 
-    char temperature[33];
-    dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
-
     if (json) {
-      ResponseAppend_P(PSTR(",\"SonoffSC\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_LIGHT "\":%d,\"" D_JSON_NOISE "\":%d,\"" D_JSON_AIRQUALITY "\":%d}"),
-        temperature, humidity, sc_value[2], sc_value[3], sc_value[4]);
+      ResponseAppend_P(PSTR(",\"SonoffSC\":{"));
+      ResponseAppendTHD(t, h);
+      ResponseAppend_P(PSTR(",\"" D_JSON_LIGHT "\":%d,\"" D_JSON_NOISE "\":%d,\"" D_JSON_AIRQUALITY "\":%d}"), sc_value[2], sc_value[3], sc_value[4]);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
-        DomoticzTempHumSensor(temperature, humidity);
+        DomoticzTempHumPressureSensor(t, h);
         DomoticzSensor(DZ_ILLUMINANCE, sc_value[2]);
         DomoticzSensor(DZ_COUNT, sc_value[3]);
         DomoticzSensor(DZ_AIRQUALITY, 500 + ((100 - sc_value[4]) * 20));
@@ -141,8 +137,7 @@ void SonoffScShow(bool json)
 
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, "", temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, "", humidity);
+      WSContentSend_THD("", t, h);
       WSContentSend_PD(HTTP_SNS_SCPLUS, sc_value[2], sc_value[3], sc_value[4]);
 #endif  // USE_WEBSERVER
     }

@@ -156,52 +156,7 @@ void AHT1XDetect(void)
     }
   }
 }
-/*
-void AHT1XShow(bool json)
-{
-  for (uint8_t i = 0; i < aht1x_count; i++)
-  {
-    float tem = ConvertTemp(aht1x_sensors[i].temperature);
-    float hum = ConvertHumidity(aht1x_sensors[i].humidity);
-    float dew = CalcTemHumToDew(aht1x_sensors[i].humidity, aht1x_sensors[i].temperature);
 
-    char types[11]; // AHT1X-0x38
-    snprintf_P(types, sizeof(types), PSTR("%s%c0x%02X"), aht1x_sensors[i].types, IndexSeparator(), aht1x_sensors[i].address);  // "X-0xXX"
-    char temperature[33];
-    dtostrfd(tem, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(hum, Settings.flag2.humidity_resolution, humidity);
-    char dewpoint[33];
-    dtostrfd(dew, Settings.flag2.temperature_resolution, dewpoint);
-
-    if (json) {
-      //ResponseAppend_P(JSON_SNS_TEMPHUM, types, temperature, humidity);
-      ResponseAppend_P(JSON_SNS_TEMPHUMDEW, types, temperature, humidity, dewpoint);
- #ifdef USE_DOMOTICZ
-    if ((0 == tele_period) && (0 == i));  // <-- fails
-    {
-      DomoticzTempHumSensor(temperature, humidity);
-    }
- #endif  // USE_DOMOTICZ
- #ifdef USE_KNX
-    if (0 == tele_period)
-    {
-      KnxSensor(KNX_TEMPERATURE, tem);
-      KnxSensor(KNX_HUMIDITY, hum);
-    }
- #endif  // USE_KNX
- #ifdef USE_WEBSERVER
-    }
-    else
-    {
-      WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, types, humidity);
-      WSContentSend_PD(HTTP_SNS_DEW, types, dewpoint,TempUnit());
- #endif  // USE_WEBSERVER
-      }
-   }
-}
-*/
 void AHT1XShow(bool json)
 {
   for (uint32_t i = 0; i < aht1x_count; i++) {

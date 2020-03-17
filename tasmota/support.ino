@@ -621,7 +621,7 @@ float ConvertHumidity(float h)
 
   global_update = uptime;
   global_humidity = h;
-  
+
   result = result + (0.1 * Settings.hum_comp);
 
   return result;
@@ -1038,6 +1038,18 @@ int ResponseAppendTimeFormat(uint32_t format)
 int ResponseAppendTime(void)
 {
   return ResponseAppendTimeFormat(Settings.flag2.time_format);
+}
+
+int ResponseAppendTHD(float f_temperature, float f_humidity)
+{
+  char temperature[FLOATSZ];
+  dtostrfd(f_temperature, Settings.flag2.temperature_resolution, temperature);
+  char humidity[FLOATSZ];
+  dtostrfd(f_humidity, Settings.flag2.humidity_resolution, humidity);
+  char dewpoint[FLOATSZ];
+  dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings.flag2.temperature_resolution, dewpoint);
+
+  return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), temperature, humidity, dewpoint);
 }
 
 int ResponseJsonEnd(void)

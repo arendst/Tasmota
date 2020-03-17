@@ -91,45 +91,7 @@ void Sht3xDetect(void)
     }
   }
 }
-/*
-void Sht3xShow(bool json)
-{
-  for (uint32_t i = 0; i < sht3x_count; i++) {
-    float t;
-    float h;
-    if (Sht3xRead(t, h, sht3x_sensors[i].address)) {
-      char temperature[33];
-      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
-      char humidity[33];
-      dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
-      char types[11];
-      snprintf_P(types, sizeof(types), PSTR("%s%c0x%02X"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address);  // "SHT3X-0xXX"
 
-      if (json) {
-        ResponseAppend_P(JSON_SNS_TEMPHUM, types, temperature, humidity);
-#ifdef USE_DOMOTICZ
-        if ((0 == tele_period) && (0 == i)) {  // We want the same first sensor to report to Domoticz in case a read is missed
-          DomoticzTempHumSensor(temperature, humidity);
-        }
-#endif  // USE_DOMOTICZ
-
-#ifdef USE_KNX
-      if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, t);
-        KnxSensor(KNX_HUMIDITY, h);
-      }
-#endif  // USE_KNX
-
-#ifdef USE_WEBSERVER
-      } else {
-        WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
-        WSContentSend_PD(HTTP_SNS_HUM, types, humidity);
-#endif  // USE_WEBSERVER
-      }
-    }
-  }
-}
-*/
 void Sht3xShow(bool json)
 {
   for (uint32_t i = 0; i < sht3x_count; i++) {
