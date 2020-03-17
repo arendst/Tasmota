@@ -23,7 +23,7 @@
 /*********************************************************************************************\
  * ElectriQ iQ-wifiMOODL
  * This RGBW mood lamp uses the TYWE3S module to transmit via UART to an unmarked MCU which
- * drives 8 MOSFETs. The MCU does not transmit; it ony receives commands from the TYWE3S.
+ * drives 8 MOSFETs. The MCU does not transmit; it only receives commands from the TYWE3S.
  * The MCU appears to use a modified/undocumented version of the TuyaMCU protocol.
  * The main PCB has 2 daughter boards which hold the RGBW LEDs - an upper deck and a lower deck.
  * The same RGBW data is transmitted to the upper and lower decks.
