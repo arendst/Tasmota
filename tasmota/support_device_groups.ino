@@ -591,12 +591,14 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
 
     if (DeviceGroupItemShared(true, item)) {
       if (item == DGR_ITEM_POWER) {
-        uint8_t mask_devices = value >> 24;
-        if (mask_devices > devices_present) mask_devices = devices_present;
-        for (uint32_t i = 0; i < devices_present; i++) {
-          uint32_t mask = 1 << i;
-          bool on = (value & mask);
-          if (on != (power & mask)) ExecuteCommandPower(i + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
+        if (device_group->local) {
+          uint8_t mask_devices = value >> 24;
+          if (mask_devices > devices_present) mask_devices = devices_present;
+          for (uint32_t i = 0; i < devices_present; i++) {
+            uint32_t mask = 1 << i;
+            bool on = (value & mask);
+            if (on != (power & mask)) ExecuteCommandPower(i + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
+          }
         }
       }
       else {
