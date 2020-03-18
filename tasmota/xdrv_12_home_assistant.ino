@@ -23,30 +23,31 @@
 
 // List of sensors ready for discovery
 const char kHAssJsonSensorTypes[] PROGMEM =
-  D_JSON_TEMPERATURE "|" D_JSON_PRESSURE "|" D_JSON_PRESSUREATSEALEVEL "|"
+  D_JSON_TEMPERATURE "|" D_JSON_DEWPOINT "|" D_JSON_PRESSURE "|" D_JSON_PRESSUREATSEALEVEL "|"
   D_JSON_APPARENT_POWERUSAGE "|Battery|" D_JSON_CURRENT "|" D_JSON_DISTANCE "|" D_JSON_FREQUENCY "|" D_JSON_HUMIDITY "|" D_JSON_ILLUMINANCE "|"
   D_JSON_MOISTURE "|PB0.3|PB0.5|PB1|PB2.5|PB5|PB10|PM1|PM2.5|PM10|" D_JSON_POWERFACTOR "|" D_JSON_POWERUSAGE "|"
-  D_JSON_REACTIVE_POWERUSAGE "|" D_JSON_TODAY "|" D_JSON_TOTAL "|" D_JSON_VOLTAGE "|" D_JSON_WEIGHT "|" D_JSON_YESTERDAY
-  D_JSON_CO2 "|" D_JSON_ECO2 "|" D_JSON_TVOC;
+  D_JSON_REACTIVE_POWERUSAGE "|" D_JSON_TODAY "|" D_JSON_TOTAL "|" D_JSON_VOLTAGE "|" D_JSON_WEIGHT "|" D_JSON_YESTERDAY "|"
+  D_JSON_CO2 "|" D_JSON_ECO2 "|" D_JSON_TVOC "|";
 const char kHAssJsonSensorUnits[] PROGMEM =
-  "|||"
+  "||||"
   "VA|%|A|Cm|Hz|%|LX|"
   "%|ppd|ppd|ppd|ppd|ppd|ppd|µg/m³|µg/m³|µg/m³|Cos φ|W|"
   "VAr|kWh|kWh|V|Kg|kWh|"
   "ppm|ppm|ppb|";
 const char kHAssJsonSensorDevCla[] PROGMEM =
-  "dev_cla\":\"temperature|dev_cla\":\"pressure|dev_cla\":\"pressure|"
+  "dev_cla\":\"temperature|ic\":\"mdi:weather-rainy|dev_cla\":\"pressure|dev_cla\":\"pressure|"
   "dev_cla\":\"power|dev_cla\":\"battery|ic\":\"mdi:alpha-a-circle-outline|ic\":\"mdi:leak|ic\":\"mdi:current-ac|dev_cla\":\"humidity|dev_cla\":\"illuminance|"
   "ic\":\"mdi:cup-water|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|"
   "ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:alpha-f-circle-outline|dev_cla\":\"power|"
-  "dev_cla\":\"power|dev_cla\":\"power|dev_cla\":\"power|ic\":\"mdi:alpha-v-circle-outline|ic\":\"mdi:scale|dev_cla\":\"power"
-  "ic\":\"mdi:periodic-table-co2|ic\":\"mdi:air-filter|ic\":\"mdi:periodic-table-co2";
+  "dev_cla\":\"power|dev_cla\":\"power|dev_cla\":\"power|ic\":\"mdi:alpha-v-circle-outline|ic\":\"mdi:scale|dev_cla\":\"power|"
+  "ic\":\"mdi:periodic-table-co2|ic\":\"mdi:air-filter|ic\":\"mdi:periodic-table-co2|";
+   //"ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|"
 // List of sensors ready for discovery
 
 const char HASS_DISCOVER_SENSOR[] PROGMEM =
   ",\"unit_of_meas\":\"%s\",\"%s\","           // unit of measure and class (or icon)
   "\"frc_upd\":true,"                          // force update for better graph representation
-  "\"val_tpl\":\"{{value_json['%s']['%s']";    // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].['C1']
+  "\"val_tpl\":\"{{value_json['%s']['%s']";    // "COUNTER":{"C1":0} -> {{ value_json['COUNTER']['C1']
 
 const char HASS_DISCOVER_BASE[] PROGMEM =
   "{\"name\":\"%s\","                          // dualr2 1
@@ -369,6 +370,8 @@ void HAssAnnounceSwitches(void)
     //                                                    INV (not available)                                       CLEAR (not available)
     // 12             PUSHHOLDMULTI_INV     NO            TOGGLE (button_short_press)   NONE                        CLEAR (button_long_press)   1,0
     //                                                    INV (not available)                                       INC_DEC (not available)
+    // 13             PUSHON                YES           NONE                          NONE                        NONE                        0,0
+    // 14             PUSHON_INV            YES           NONE                          NONE                        NONE                        0,0
     // Please note: SwitchMode11 and 12 will register just TOGGLE (button_short_press)
 
     // Trigger types: "0 = none | 1 = button_short_press | 2 = button_long_press | 3 = button_double_press";
@@ -469,17 +472,20 @@ void HAssAnnounceButtons(void)
   }
 }
 
-void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const char *MultiSubName, uint8_t subqty, uint8_t subidx)
+void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const char *MultiSubName, uint8_t subqty, uint8_t subidx, uint8_t nested, const char* SubKey)
 {
   char stopic[TOPSZ];
   char stemp1[TOPSZ];
   char stemp2[TOPSZ];
   char unique_id[30];
+  char subname[20];
 
   mqtt_data[0] = '\0'; // Clear retained message
-  // Clear or Set topic
-  snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%s"), ESP.getChipId(), sensorname, MultiSubName);
-  snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);;
+  
+  // Clear or Set topic  
+  NoAlNumToUnderscore(subname, MultiSubName); //Replace all non alphaumeric characters to '_' to avoid topic name issues
+  snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%s"), ESP.getChipId(), sensorname, subname);
+  snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);
 
   if (Settings.flag.hass_discovery)
   {                     // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
@@ -497,27 +503,43 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
 
 
     char jname[32];
-    int sensor_index = GetCommandCode(jname, sizeof(jname), subsensortype, kHAssJsonSensorTypes);
+    int sensor_index = GetCommandCode(jname, sizeof(jname), SubKey, kHAssJsonSensorTypes);
     if (sensor_index > -1) {
+
       char param1[20];
       GetTextIndexed(param1, sizeof(param1), sensor_index, kHAssJsonSensorUnits);
       switch (sensor_index) {
-        case 0:   // Temperature
+        case 0:   // Temperature and DewPoint
+        case 1:
           snprintf_P(param1, sizeof(param1), PSTR("°%c"),TempUnit()); // C or F
           break;
-        case 1:   // Pressure
-        case 2:
+        case 2:   // Pressure and Sea Level Pressure
+        case 3:
           snprintf_P(param1, sizeof(param1), PSTR("%s"), PressureUnit().c_str());
           break;
-      }
+        // case 4:   // Speed. Default to km/h if not set to have a graph representation under HAss   
+        // case 5:
+        // case 6:
+        // case 7:
+        //   if (Settings.flag2.speed_conversion == 0) {
+        //     snprintf_P(param1, sizeof(param1), PSTR("km/h"));
+        //   } else {
+        //     snprintf_P(param1, sizeof(param1), PSTR("%s"), SpeedUnit().c_str());
+        //   }
+        //   break;
+       }
       char param2[50];
       GetTextIndexed(param2, sizeof(param2), sensor_index, kHAssJsonSensorDevCla);
       TryResponseAppend_P(HASS_DISCOVER_SENSOR, param1, param2, sensorname, subsensortype);
+
       if (subidx) {
         TryResponseAppend_P(PSTR("[%d]"), subqty -1);
       }
     } else {
       TryResponseAppend_P(HASS_DISCOVER_SENSOR, " ", "ic\":\"mdi:eye", sensorname, subsensortype);
+    }
+    if (nested) {
+      TryResponseAppend_P(PSTR("['%s']"), SubKey);
     }
     TryResponseAppend_P(PSTR("}}\"}"));
   }
@@ -527,8 +549,6 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
 void HAssAnnounceSensors(void)
 {
   uint8_t hass_xsns_index = 0;
-  bool is_sensor = true;
-  uint8_t subqty = 0;
   do
   {
     mqtt_data[0] = '\0';
@@ -545,7 +565,8 @@ void HAssAnnounceSensors(void)
       sensordata[0] = '{';
       snprintf_P(sensordata, sizeof(sensordata), PSTR("%s}"), sensordata); // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
       // USE THE FOLLOWING LINE TO TEST JSON
-      //snprintf_P(sensordata, sizeof(sensordata), PSTR("{\"HX711\":{\"Weight\":[22,34,1023.4], \"Battery\":25}}"));
+      //snprintf_P(sensordata, sizeof(sensordata), PSTR("{\"HX711\":{\"Weight\":[22,34,1023.4]}}"));
+      //snprintf_P(sensordata, sizeof(sensordata), PSTR("{\"TX23\":{\"Speed\":{\"Act\":8.6,\"Avg\":8.2,\"Min\":0,\"Max\":15.8},\"Dir\":{\"Card\":\"SSO\",\"Deg\":157.5,\"Avg\":145.5,\"AvgCard\":\"SO\",\"Min\":112.5,\"Max\":292.5,\"Range\":180}}}"));
 
       StaticJsonBuffer<500> jsonBuffer;
       JsonObject &root = jsonBuffer.parseObject(sensordata);
@@ -563,19 +584,29 @@ void HAssAnnounceSensors(void)
           AddLog_P2(LOG_LEVEL_ERROR, PSTR("HASS: JsonObject failed to parse '%s'"), sensordata);
           continue;
         }
+
         for (auto subsensor : sensors)
         {
-          // If there is more than a value on sensor data, 'n' entitites will be created
-          if (subsensor.value.is<JsonArray&>()) {
+          if (subsensor.value.is<JsonObject&>()) {
+            // If there is a nested json on sensor data, second level entitites will be created
+            char NestedName[20];
+            char NewSensorName[20];
+            snprintf_P(NestedName, sizeof(NestedName), PSTR("%s"), subsensor.key);
+            JsonObject& subsensors = subsensor.value.as<JsonObject>();
+            for (auto subsensor : subsensors) {
+              snprintf_P(NewSensorName, sizeof(NewSensorName), PSTR("%s %s"), NestedName, subsensor.key);
+              HAssAnnounceSensor(sensorname, NestedName, NewSensorName, 0, 0, 1, subsensor.key);
+            }              
+          } else if (subsensor.value.is<JsonArray&>()) {           
+            // If there is more than a value on sensor data, 'n' entitites will be created
             JsonArray& subsensors = subsensor.value.as<JsonArray&>();
-            subqty = subsensors.size();
+            uint8_t subqty = subsensors.size();
             char MultiSubName[20];
             for (int i = 1; i <= subqty; i++) {
-              snprintf_P(MultiSubName, sizeof(MultiSubName), PSTR("%s_%d"), subsensor.key, i);
-              HAssAnnounceSensor(sensorname, subsensor.key, MultiSubName, i, 1);
-
+              snprintf_P(MultiSubName, sizeof(MultiSubName), PSTR("%s %d"), subsensor.key, i);
+              HAssAnnounceSensor(sensorname, subsensor.key, MultiSubName, i, 1, 0, subsensor.key);
             }
-          } else { HAssAnnounceSensor(sensorname, subsensor.key, subsensor.key, 0, 0);}
+          } else { HAssAnnounceSensor(sensorname, subsensor.key, subsensor.key, 0, 0, 0, subsensor.key);}
         }
       }
     }

@@ -8,13 +8,14 @@
 
 ### 8.1.0.11 20200313
 
+- Change Zigbee simplification of devices probing, saving Flash and memory
 - Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)
 - Add support for HDC1080 Temperature and Humidity sensor by Luis Teixeira (#7888)
 - Add commands ``SwitchMode 13`` PushOn and ``SwitchMode 14`` PushOnInverted (#7912)
 - Add command ``HumOffset -10.0 .. 10.0`` to set global humidity sensor offset (#7934)
 - Add Zigbee support for Hue emulation by Stefan Hadinger
 - Add Dew Point to Temperature and Humidity sensors
-- Change Zigbee simplification of devices probing, saving Flash and memory
+- Add support for ElectriQ iQ-wifiMOODL RGBW light by ianbyte (#7947)
 
 ### 8.1.0.10 20200227
 

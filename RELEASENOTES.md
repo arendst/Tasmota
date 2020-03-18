@@ -124,3 +124,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for Jarolift rollers by Keeloq algorithm
 - Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)
 - Add support for HDC1080 Temperature and Humidity sensor by Luis Teixeira (#7888)
+- Add support for ElectriQ iQ-wifiMOODL RGBW light by ianbyte (#7947)
