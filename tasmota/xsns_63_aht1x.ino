@@ -105,10 +105,7 @@ void AHT1XPoll(void) // We have 100ms for read. Sensor needs 80-95 ms
       AHT1XWrite(0);
       break;
     case 11:
-      if (AHT1XRead(0)){
-        ConvertTemp(aht1x_sensors[0].temperature);   // Set global temperature
-        ConvertHumidity(aht1x_sensors[0].humidity);  // Set global humidity
-      }
+      AHT1XRead(0);
       aht1x_Pcount = 0;
       break;
     }
