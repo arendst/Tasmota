@@ -127,7 +127,7 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z(RemoveScene),    0x0005, 0x02, 0x82,   Z(xxyyyyzz) },     // xx = status, yyyy = group id, zz = scene id
   { Z(RemoveAllScenes),0x0005, 0x03, 0x82,   Z(xxyyyy) },     // xx = status, yyyy = group id
   { Z(StoreScene),     0x0005, 0x04, 0x82,   Z(xxyyyyzz) },     // xx = status, yyyy = group id, zz = scene id
-  { Z(GetSceneMembership),0x0005, 0x06, 0x82,   Z() },     // specific
+  { Z(GetSceneMembership),0x0005, 0x06, 0x82,Z(xxyyzzzz) },     // specific
 };
 
 #define ZLE(x) ((x) & 0xFF), ((x) >> 8)     // Little Endian
@@ -289,7 +289,7 @@ void sendHueUpdate(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uin
   if (z_cat >= 0) {
     uint8_t endpoint = 0;
     if (!groupaddr) {
-      endpoint = zigbee_devices.findClusterEndpointIn(shortaddr, cluster);
+      endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
     }
     if ((endpoint) || (groupaddr)) {   // send only if we know the endpoint
       zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms, cluster, endpoint, z_cat, 0 /* value */, &Z_ReadAttrCallback);
@@ -395,7 +395,33 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
         for (uint32_t i = 0; i < xyz.y; i++) {
           arr.add(payload.get16(2 + 2*i));
         }
-        //arr.add(xyz.z);
+      } else if ((cluster == 0x0005) && ((cmd == 0x00) || (cmd == 0x02) || (cmd == 0x03))) {
+        // AddScene or RemoveScene or StoreScene
+        json[command_name2 + F("Status")] = xyz.x;
+        json[command_name2 + F("StatusMsg")] = getZigbeeStatusMessage(xyz.x);
+        json[F("GroupId")] = xyz.y;
+        json[F("SceneId")] = xyz.z;
+      } else if ((cluster == 0x0005) && (cmd == 0x01)) {
+        // ViewScene
+        json[command_name2 + F("Status")] = xyz.x;
+        json[command_name2 + F("StatusMsg")] = getZigbeeStatusMessage(xyz.x);
+        json[F("GroupId")] = xyz.y;
+        json[F("SceneId")] = xyz.z;
+        String scene_payload = json[attrid_str];
+        json[F("ScenePayload")] = scene_payload.substring(8); // remove first 8 characters
+      } else if ((cluster == 0x0005) && (cmd == 0x03)) {
+        // RemoveAllScenes
+        json[command_name2 + F("Status")] = xyz.x;
+        json[command_name2 + F("StatusMsg")] = getZigbeeStatusMessage(xyz.x);
+        json[F("GroupId")] = xyz.y;
+      } else if ((cluster == 0x0005) && (cmd == 0x06)) {
+        // GetSceneMembership
+        json[command_name2 + F("Status")] = xyz.x;
+        json[command_name2 + F("StatusMsg")] = getZigbeeStatusMessage(xyz.x);
+        json[F("Capacity")] = xyz.y;
+        json[F("GroupId")] = xyz.z;
+        String scene_payload = json[attrid_str];
+        json[F("ScenePayload")] = scene_payload.substring(8); // remove first 8 characters
       }
     } else {
       if (0 == xyz.x_type) {

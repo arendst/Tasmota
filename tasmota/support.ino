@@ -635,7 +635,6 @@ float CalcTempHumToDew(float t, float h)
     t = (t - 32) / 1.8;                                       // Celsius
   }
 
-//  float gamma = log(h / 100) + 17.62 * t / (243.5 + t);
   float gamma = TaylorLog(h / 100) + 17.62 * t / (243.5 + t);
   float result = (243.5 * gamma / (17.62 - gamma));
 

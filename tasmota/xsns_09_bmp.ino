@@ -511,8 +511,6 @@ void BmpRead(void)
 #endif  // USE_BME680
     }
   }
-  ConvertTemp(bmp_sensors[0].bmp_temperature);   // Set global temperature
-  ConvertHumidity(bmp_sensors[0].bmp_humidity);  // Set global humidity
 }
 
 void BmpShow(bool json)
@@ -539,9 +537,11 @@ void BmpShow(bool json)
       dtostrfd(bmp_pressure, Settings.flag2.pressure_resolution, pressure);
       char sea_pressure[33];
       dtostrfd(bmp_sealevel, Settings.flag2.pressure_resolution, sea_pressure);
+
+      float bmp_humidity = ConvertHumidity(bmp_sensors[bmp_idx].bmp_humidity);
       char humidity[33];
-      dtostrfd(bmp_sensors[bmp_idx].bmp_humidity, Settings.flag2.humidity_resolution, humidity);
-      float f_dewpoint = CalcTempHumToDew(bmp_temperature, bmp_sensors[bmp_idx].bmp_humidity);
+      dtostrfd(bmp_humidity, Settings.flag2.humidity_resolution, humidity);
+      float f_dewpoint = CalcTempHumToDew(bmp_temperature, bmp_humidity);
       char dewpoint[33];
       dtostrfd(f_dewpoint, Settings.flag2.temperature_resolution, dewpoint);
 #ifdef USE_BME680
@@ -572,7 +572,7 @@ void BmpShow(bool json)
 
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (0 == bmp_idx)) {  // We want the same first sensor to report to Domoticz in case a read is missed
-          DomoticzTempHumPressureSensor(bmp_temperature, bmp_sensors[bmp_idx].bmp_humidity, bmp_pressure);
+          DomoticzTempHumPressureSensor(bmp_temperature, bmp_humidity, bmp_pressure);
 #ifdef USE_BME680
           if (bmp_sensors[bmp_idx].bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)bmp_sensors[bmp_idx].bmp_gas_resistance); }
 #endif  // USE_BME680
@@ -582,7 +582,7 @@ void BmpShow(bool json)
 #ifdef USE_KNX
         if (0 == tele_period) {
           KnxSensor(KNX_TEMPERATURE, bmp_temperature);
-          KnxSensor(KNX_HUMIDITY, bmp_sensors[bmp_idx].bmp_humidity);
+          KnxSensor(KNX_HUMIDITY, bmp_humidity);
         }
 #endif  // USE_KNX
 

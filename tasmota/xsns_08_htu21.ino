@@ -187,7 +187,7 @@ bool HtuRead(void)
   if ((htu_temperature > 0.00) && (htu_temperature < 80.00)) {
     htu_humidity = (-0.15) * (25 - htu_temperature) + htu_humidity;
   }
-  ConvertHumidity(htu_humidity);  // Set global humidity
+  htu_humidity = ConvertHumidity(htu_humidity);
 
   htu_valid = SENSOR_MAX_MISS;
   return true;

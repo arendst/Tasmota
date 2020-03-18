@@ -14,6 +14,7 @@
 - Add command ``HumOffset -10.0 .. 10.0`` to set global humidity sensor offset (#7934)
 - Add Zigbee support for Hue emulation by Stefan Hadinger
 - Add Dew Point to Temperature and Humidity sensors
+- Change Zigbee simplification of devices probing, saving Flash and memory
 
 ### 8.1.0.10 20200227
 
