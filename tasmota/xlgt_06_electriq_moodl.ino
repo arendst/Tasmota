@@ -1,7 +1,7 @@
 /*
   xlgt_06_moodlamp.ino - ElectriQ iQ-wifiMOODL LED support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2020  ianbyte and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
 
 #ifdef USE_LIGHT
 #ifdef USE_ELECTRIQ_MOODL
-
 /*********************************************************************************************\
  * ElectriQ iQ-wifiMOODL
  * This RGBW mood lamp uses the TYWE3S module to transmit via UART to an unmarked MCU which
@@ -27,11 +26,11 @@
  * The MCU appears to use a modified/undocumented version of the TuyaMCU protocol.
  * The main PCB has 2 daughter boards which hold the RGBW LEDs - an upper deck and a lower deck.
  * The same RGBW data is transmitted to the upper and lower decks.
- * *********************************************************************************************/
+\*********************************************************************************************/
 
 #define XLGT_06                           6
 
-/********************************************************************************************/
+/*********************************************************************************************/
 
 bool ElectriqMoodLSetChannels(void)
 {
@@ -75,7 +74,7 @@ void ElectriqMoodLModuleSelected(void)
     SetSerial(9600, TS_SERIAL_8N1);
     light_type = LT_RGBW;
     light_flg = XLGT_06;
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: ElectriQ Mood Lamp Found"));
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: ElectriQ Mood Lamp Found"));
   }
 }
 

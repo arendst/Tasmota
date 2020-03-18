@@ -53,7 +53,7 @@
 | USE_SM16716           | - | - | x | x | x | - | x |
 | USE_SM2135            | - | - | x | x | x | - | x |
 | USE_SONOFF_L1         | - | - | x | x | x | - | x |
-| USE_ELECTRIQ_MOODL    | - | - | - | - | - | - | - |
+| USE_ELECTRIQ_MOODL    | - | - | x | x | x | - | x |
 |                       |   |   |   |   |   |   |   |
 | USE_ENERGY_SENSOR     | - | x | x | x | x | - | - |
 | USE_PZEM004T          | - | - | x | x | x | - | - |
