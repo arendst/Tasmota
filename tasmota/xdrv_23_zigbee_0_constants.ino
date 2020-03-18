@@ -388,9 +388,6 @@ enum ZCL_Global_Commands {
 #define ZF(s) static const char ZS_ ## s[] PROGMEM = #s;
 #define Z(s)  ZS_ ## s
 
-const uint16_t Z_ProfileIds[]   PROGMEM = { 0x0104, 0x0109, 0xA10E, 0xC05E };
-const char     Z_ProfileNames[] PROGMEM = "ZigBee Home Automation|ZigBee Smart Energy|ZigBee Green Power|ZigBee Light Link";
-
 typedef struct Z_StatusLine {
   uint32_t     status;          // no need to use uint8_t since it uses 32 bits anyways
   const char * status_msg;
