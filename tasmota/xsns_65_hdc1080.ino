@@ -223,8 +223,7 @@ bool HdcRead(void) {
 
   if (hdc_humidity > 100) { hdc_humidity = 100.0; }
   if (hdc_humidity < 0) { hdc_humidity = 0.01; }
-
-  ConvertHumidity(hdc_humidity);  // Set global humidity
+  hdc_humidity = ConvertHumidity(hdc_humidity);
 
   hdc_valid = SENSOR_MAX_MISS;
 
