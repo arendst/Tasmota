@@ -15,7 +15,7 @@
 - Add command ``HumOffset -10.0 .. 10.0`` to set global humidity sensor offset (#7934)
 - Add Zigbee support for Hue emulation by Stefan Hadinger
 - Add Dew Point to Temperature and Humidity sensors
-- Add support for ElectriQ iQ-wifiMOODL RGBW light by ianbyte (#7947)
+- Add support for ElectriQ iQ-wifiMOODL RGBW light by Ian King (#7947)
 
 ### 8.1.0.10 20200227
 
