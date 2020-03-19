@@ -248,17 +248,24 @@ int32_t Z_ReceiveActiveEp(int32_t res, const class SBuffer &buf) {
   ResponseAppend_P(PSTR("]}}"));
   MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   XdrvRulesProcess();
+
+  Z_SendAFInfoRequest(nwkAddr);       // probe for ModelId and ManufId
+
   return -1;
 }
 
-void Z_SendAFInfoRequest(uint16_t shortaddr, uint8_t endpoint, uint16_t clusterid, uint8_t transacid) {
+void Z_SendAFInfoRequest(uint16_t shortaddr) {
+  uint8_t endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
+  if (0x00 == endpoint) { endpoint = 0x01; }    // if we don't know the endpoint, try 0x01
+  uint8_t transacid = zigbee_devices.getNextSeqNumber(shortaddr);
+
   SBuffer buf(100);
   buf.add8(Z_SREQ | Z_AF);        // 24
   buf.add8(AF_DATA_REQUEST);      // 01
   buf.add16(shortaddr);
   buf.add8(endpoint);             // dest endpoint
   buf.add8(0x01);                 // source endpoint
-  buf.add16(clusterid);
+  buf.add16(0x0000);
   buf.add8(transacid);
   buf.add8(0x30);                 // 30 options
   buf.add8(0x1E);                 // 1E radius
