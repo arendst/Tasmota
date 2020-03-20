@@ -347,9 +347,7 @@ int32_t Z_DataConfirm(int32_t res, const class SBuffer &buf) {
   char              status_message[32];
 
   if (status) {   // only report errors
-    const char * statm = (const char*) getZigbeeStatusMessage(status);
-    if (nullptr == statm) { statm = PSTR(""); }
-    strncpy_P(status_message, statm, sizeof(status_message));
+    strncpy_P(status_message, (const char*) getZigbeeStatusMessage(status), sizeof(status_message));
     status_message[sizeof(status_message)-1] = 0;   // truncate if needed, strlcpy is safer but strlcpy_P does not exist
 
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_CONFIRM "\":{\"" D_CMND_ZIGBEE_ENDPOINT "\":%d"
