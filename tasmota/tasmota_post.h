@@ -107,19 +107,19 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #ifndef TUYA_DIMMER_ID
   #define TUYA_DIMMER_ID       0                 // Default dimmer Id
 #endif
-#undef USE_ARMTRONIX_DIMMERS                     // Disable support for Armtronix Dimmers (+1k4 code)
-#define USE_PS_16_DZ                             // Add support for PS-16-DZ Dimmer (+2k code)
-#define USE_SONOFF_IFAN                          // Add support for Sonoff iFan02 and iFan03 (+2k code)
+#undef USE_ARMTRONIX_DIMMERS                    // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_PS_16_DZ                             // Disable support for PS-16-DZ Dimmer (+2k code)
+#undef USE_SONOFF_IFAN                          // Disable support for Sonoff iFan02 and iFan03 (+2k code)
 #define USE_BUZZER                               // Add support for a buzzer (+0k6 code)
-#define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
-#undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
+#undef USE_ARILUX_RF                            // Disable support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
+#undef USE_SHUTTER                              // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
 #define USE_DEEPSLEEP                            // Add support for deepsleep (+1k code)
-#undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
-#define USE_HOTPLUG                              // Add support for sensor HotPlug
-#undef USE_DEVICE_GROUPS                         // Disable support for device groups (+5k6 code)
-#undef USE_PWM_DIMMER                            // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
-#undef USE_KEELOQ                                // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
-#define USE_SONOFF_D1                            // Add support for Sonoff D1 Dimmer (+0k7 code)
+#undef USE_EXS_DIMMER                           // Disable support for EX-Store WiFi Dimmer
+//#define USE_HOTPLUG                              // Add support for sensor HotPlug
+#undef USE_DEVICE_GROUPS                        // Disable support for device groups (+5k6 code)
+#undef USE_PWM_DIMMER                           // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
+#undef USE_KEELOQ                               // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
+#undef USE_SONOFF_D1                            // DIsable support for Sonoff D1 Dimmer (+0k7 code)
 
 // -- Optional light modules ----------------------
 #define USE_LIGHT                                // Add Dimmer/Light support
