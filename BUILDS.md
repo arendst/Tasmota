@@ -26,7 +26,7 @@
 | USE_SCRIPT            | - | - | - | - | - | - | - |
 | USE_EXPRESSION        | - | - | - | - | - | - | - |
 | SUPPORT_IF_STATEMENT  | - | - | - | - | - | - | - |
-| USE_HOTPLUG           | - | - | - | - | x | - | - |
+| USE_HOTPLUG           | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | ROTARY_V1             | - | - | - | - | - | - | - |
@@ -35,15 +35,17 @@
 | USE_SONOFF_SC         | - | - | x | x | x | - | - |
 | USE_TUYA_MCU          | - | x | x | x | x | - | x |
 | USE_ARMTRONIX_DIMMERS | - | - | x | x | - | - | - |
-| USE_PS_16_DZ          | - | - | x | x | x | - | - |
-| USE_SONOFF_IFAN       | - | - | x | x | x | - | - |
+| USE_PS_16_DZ          | - | - | x | x | - | - | - |
+| USE_SONOFF_IFAN       | - | - | x | x | - | - | - |
 | USE_BUZZER            | - | - | x | x | x | - | - |
-| USE_ARILUX_RF         | - | - | x | x | x | - | - |
+| USE_ARILUX_RF         | - | - | x | x | - | - | - |
 | USE_SHUTTER           | - | - | x | x | - | - | - |
 | USE_DEEPSLEEP         | - | - | x | - | x | - | - |
 | USE_EXS_DIMMER        | - | - | x | x | - | - | - |
 | USE_DEVICE_GROUPS     | - | - | x | - | - | - | - |
 | USE_PWM_DIMMER        | - | - | x | x | - | - | - |
+| USE_KEELOQ            | - | - | - | - | - | - | - |
+| USE_SONOFF_D1         | - | - | x | x | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_LIGHT             | - | x | x | x | x | x | x |
