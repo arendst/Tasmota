@@ -474,7 +474,7 @@ const __FlashStringHelper* getZigbeeStatusMessage(uint8_t status) {
       return (const __FlashStringHelper*) statl->status_msg;
     }
   }
-  return nullptr;
+  return F("");
 }
 
 #endif // USE_ZIGBEE
