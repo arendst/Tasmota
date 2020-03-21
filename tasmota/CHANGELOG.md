@@ -1,5 +1,11 @@
 ## Unreleased (development)
 
+## Released
+
+### 8.2.0 20200321
+
+- Release
+
 ### 8.1.0.11 20200313
 
 - Change Zigbee simplification of devices probing, saving Flash and memory
@@ -118,8 +124,6 @@
 - Add WifiPower to ``Status 5``
 - Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
 - Add Zigbee attribute decoder for Xiaomi Aqara Cube
-
-## Released
 
 ### 8.1.0 20191225
 
