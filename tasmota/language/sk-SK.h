@@ -1,7 +1,7 @@
 /*
   sk-SK.h - localization for Slovak with diacritics - Slovak for Tasmota
 
-  Copyright (C) 2019  Vladimír Jendroľ
+  Copyright (C) 2020  Vladimír Jendroľ
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -74,17 +74,19 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Počítaj"
 #define D_COUNTER "Počítadlo"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Prúd"          // As in Voltage and Current
 #define D_DATA "Dáta"
 #define D_FLOW_RATE "Flow rate"
 #define D_DARKLIGHT "Tmavý"
 #define D_DEBUG "Debug"
+#define D_DEWPOINT "Dew point"
 #define D_DISABLED "Zablokované"
 #define D_DISTANCE "Vzdialenosť"
 #define D_DNS_SERVER "Server DNS"
 #define D_DONE "Hotovo"
 #define D_DST_TIME "DST"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "Emulácia"
 #define D_ENABLED "Otvorený"
 #define D_ERASE "Zmaž"
@@ -136,6 +138,7 @@
 #define D_PROGRAM_SIZE "Veľkosť programu"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Dážď"
+#define D_RANGE "Range"
 #define D_RECEIVED "Prijatý"
 #define D_RESTART "Reštart"
 #define D_RESTARTING "Reštartuje sa"
@@ -503,12 +506,32 @@
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Smer vetra"
 #define D_TX20_WIND_SPEED "Rýchlosť vetra"
-#define D_TX20_WIND_SPEED_AVG "Priemerná rýchlosť vetra"
+#define D_TX20_WIND_SPEED_MIN "Minimálna rýchlosť vetra"
 #define D_TX20_WIND_SPEED_MAX "Maximálna rýchlosť vetra"
 #define D_TX20_NORTH "S"
 #define D_TX20_EAST "V"
 #define D_TX20_SOUTH "J"
 #define D_TX20_WEST "Z"
+
+// xsns_53_sml.ino
+#define D_TPWRIN "Energy Total-In"
+#define D_TPWROUT "Energy Total-Out"
+#define D_TPWRCURR "Active Power-In/Out"
+#define D_TPWRCURR1 "Active Power-In p1"
+#define D_TPWRCURR2 "Active Power-In p2"
+#define D_TPWRCURR3 "Active Power-In p3"
+#define D_Strom_L1 "Current L1"
+#define D_Strom_L2 "Current L2"
+#define D_Strom_L3 "Current L3"
+#define D_Spannung_L1 "Voltage L1"
+#define D_Spannung_L2 "Voltage L2"
+#define D_Spannung_L3 "Voltage L3"
+#define D_METERNR "Meter_number"
+#define D_METERSID "Service ID"
+#define D_GasIN "Counter"
+#define D_H2oIN "Counter"
+#define D_StL1L2L3 "Current L1+L2+L3"
+#define D_SpL1L2L3 "Voltage L1+L2+L3/3"
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Žiaden"
@@ -562,7 +585,7 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
-#define D_SENSOR_TX20_TX       "TX20"
+#define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFrecv"
 #define D_SENSOR_TUYA_TX       "Tuya Tx"
@@ -633,6 +656,14 @@
 #define D_SENSOR_SLAVE_RESET "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
+#define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
+#define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
+#define D_SENSOR_ELECTRIQ_MOODL "MOODL Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -644,12 +675,12 @@
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
-#define D_UNIT_KILOOHM "kOhm"
+#define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
-#define D_UNIT_MICROMETER "um"
-#define D_UNIT_MICROSECOND "us"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
+#define D_UNIT_MICROMETER "µm"
+#define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
@@ -668,7 +699,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Phase Angle"
 #define D_IMPORT_ACTIVE   "Import Active"
 #define D_EXPORT_ACTIVE   "Export Active"
@@ -677,6 +708,7 @@
 #define D_TOTAL_REACTIVE  "Total Reactive"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltage"
@@ -701,5 +733,18 @@
 #define D_SOLAX_ERROR_6   "Over Temperature Fault"
 #define D_SOLAX_ERROR_7   "Fan Fault"
 #define D_SOLAX_ERROR_8   "Other Device Fault"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Edit script"
+#define D_SCRIPT               "edit script"
+#define D_SDCARD_UPLOAD        "file upload"
+#define D_SDCARD_DIR           "sd card directory"
+#define D_UPL_DONE             "Done"
+#define D_SCRIPT_CHARS_LEFT    "chars left"
+#define D_SCRIPT_CHARS_NO_MORE "no more chars"
+#define D_SCRIPT_DOWNLOAD      "Download"
+#define D_SCRIPT_ENABLE        "script enable"
+#define D_SCRIPT_UPLOAD        "Upload"
+#define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
 #endif  // _LANGUAGE_SK_SK_H_

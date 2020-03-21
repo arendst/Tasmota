@@ -1,7 +1,7 @@
 /*
   xdsp_08_ILI9488.ino - Display ILI9488 support for Tasmota
 
-  Copyright (C) 2019  Theo Arends, Gerhard Mutz
+  Copyright (C) 2020  Theo Arends, Gerhard Mutz
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -116,6 +116,7 @@ void ILI9488_InitDriver()
     if (I2cEnabled(XI2C_38) && I2cSetDevice(FT6236_address)) {
       FT6236begin(FT6236_address);
       FT6236_found=1;
+      I2cSetActiveFound(FT6236_address, "FT6236");
     } else {
       FT6236_found=0;
     }

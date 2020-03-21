@@ -1,7 +1,7 @@
 /*
   xsns_43_hre.ino - Badger HR-E Water Meter Encoder interface
 
-  Copyright (C) 2019  Jon Little
+  Copyright (C) 2020  Jon Little
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

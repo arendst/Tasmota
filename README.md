@@ -20,7 +20,7 @@ In addition to the [release webpage](https://github.com/arendst/Tasmota/releases
 
 ## Development
 
-[![Dev Version](https://img.shields.io/badge/development%20version-v8.1.x.x-blue.svg)](https://github.com/arendst/Tasmota)
+[![Dev Version](https://img.shields.io/badge/development%20version-v8.2.x.x-blue.svg)](https://github.com/arendst/Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Build Status](https://img.shields.io/travis/arendst/Tasmota.svg)](https://travis-ci.org/arendst/Tasmota)
 
@@ -124,7 +124,8 @@ People helping to keep the show on the road:
 - reloxx13 for his [TasmoAdmin](https://github.com/reloxx13/TasmoAdmin) management tool
 - Joachim Banzhaf for his TSL2561 library and driver
 - Gijs Noorlander for his MHZ19, SenseAir and updated PubSubClient drivers
-- Emontnemery for his HomeAssistant Discovery concept and many code tuning tips
+- Erik Montnemery for his HomeAssistant Discovery concept and many code tuning tips
+- Federico Leoni for continued HomeAssistant Discovery support
 - Aidan Mountford for his HSB support
 - Daniel Ztolnai for his Serial Bridge implementation
 - Gerhard Mutz for multiple sensor & display drivers, Sunrise/Sunset, and scripting
@@ -132,15 +133,18 @@ People helping to keep the show on the road:
 - Adrian Scillato for his (security)fixes and implementing and maintaining KNX
 - Gennaro Tortone for implementing and maintaining Eastron drivers
 - Raymond Mouthaan for managing Wemos Wiki information
-- Norbert Richter for his decode-config.py tool
+- Norbert Richter for his [decode-config.py](https://github.com/tasmota/decode-config) tool
 - Andre Thomas for providing [thehackbox](http://thehackbox.org/tasmota/) OTA support and daily development builds
 - Joel Stein, digiblur and Shantur Rathore for their Tuya research and driver
-- Frogmore42 and Jason2866 for providing many issue answers
-- Blakadder for editing the wiki and providing template management
+- Frogmore42 for providing many issue answers
+- Jason2866 for platformio support and providing many issue answers
+- Blakadder for managing the new document site and providing template management
 - Stephan Hadinger for refactoring light driver, enhancing HueEmulation and Zigbee support
 - tmo for designing the official Tasmota logo
 - Stefan Bode for his Shutter and Deep sleep drivers
-- Jacek Ziółkowski for his [TDM](https://github.com/jziolkowski/tdm) management tool
+- Jacek Ziółkowski for his [TDM](https://github.com/jziolkowski/tdm) management tool and [Tasmotizer](https://github.com/tasmota/tasmotizer) flashing tool
+- Christian Staars for NRF24L01 and HM-10 Bluetooth sensor support
+- Pail Diem for UDP Group communication support
 - Many more providing Tips, Wips, Pocs, PRs and Donations
 
 ## License

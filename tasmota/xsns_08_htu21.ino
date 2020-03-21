@@ -1,7 +1,7 @@
 /*
   xsns_08_htu21.ino - HTU21 temperature and humidity sensor support for Tasmota
 
-  Copyright (C) 2019  Heiko Krupp and Theo Arends
+  Copyright (C) 2020  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -187,7 +187,7 @@ bool HtuRead(void)
   if ((htu_temperature > 0.00) && (htu_temperature < 80.00)) {
     htu_humidity = (-0.15) * (25 - htu_temperature) + htu_humidity;
   }
-  ConvertHumidity(htu_humidity);  // Set global humidity
+  htu_humidity = ConvertHumidity(htu_humidity);
 
   htu_valid = SENSOR_MAX_MISS;
   return true;
@@ -241,30 +241,7 @@ void HtuEverySecond(void)
 void HtuShow(bool json)
 {
   if (htu_valid) {
-    char temperature[33];
-    dtostrfd(htu_temperature, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(htu_humidity, Settings.flag2.humidity_resolution, humidity);
-
-    if (json) {
-      ResponseAppend_P(JSON_SNS_TEMPHUM, htu_types, temperature, humidity);
-#ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
-        DomoticzTempHumSensor(temperature, humidity);
-      }
-#endif  // USE_DOMOTICZ
-#ifdef USE_KNX
-      if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, htu_temperature);
-        KnxSensor(KNX_HUMIDITY, htu_humidity);
-      }
-#endif  // USE_KNX
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, htu_types, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, htu_types, humidity);
-#endif  // USE_WEBSERVER
-    }
+    TempHumDewShow(json, (0 == tele_period), htu_types, htu_temperature, htu_humidity);
   }
 }
 

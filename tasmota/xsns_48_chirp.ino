@@ -1,7 +1,7 @@
 /*
   xsns_48_chirp.ino - soil moisture sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends & Christian Baars
+  Copyright (C) 2020  Theo Arends & Christian Baars
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -441,9 +441,7 @@ void ChirpShow(bool json)
         }
   #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
-        char str_moisture[33];
-        dtostrfd(chirp_sensor[i].moisture, 0, str_moisture);
-        DomoticzTempHumSensor(str_temperature, str_moisture);
+        DomoticzTempHumPressureSensor(t_temperature, chirp_sensor[i].moisture);
         DomoticzSensor(DZ_ILLUMINANCE,chirp_sensor[i].light); // this is not LUX!!
       }
   #endif  // USE_DOMOTICZ

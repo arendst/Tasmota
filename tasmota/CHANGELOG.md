@@ -2,6 +2,129 @@
 
 ## Released
 
+### 8.2.0 20200321
+
+- Release
+
+### 8.1.0.11 20200313
+
+- Change Zigbee simplification of devices probing, saving Flash and memory
+- Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)
+- Add support for HDC1080 Temperature and Humidity sensor by Luis Teixeira (#7888)
+- Add commands ``SwitchMode 13`` PushOn and ``SwitchMode 14`` PushOnInverted (#7912)
+- Add command ``HumOffset -10.0 .. 10.0`` to set global humidity sensor offset (#7934)
+- Add Zigbee support for Hue emulation by Stefan Hadinger
+- Add Dew Point to Temperature and Humidity sensors
+- Add support for ElectriQ iQ-wifiMOODL RGBW light by Ian King (#7947)
+
+### 8.1.0.10 20200227
+
+- Change default my_user_config.h driver and sensor support removing most sensors and adding most drivers
+- Change IRremoteESP8266 library updated to v2.7.4
+- Revert switchmode 6 according to issue 7778 (#7831)
+- Add support for Jarolift rollers by Keeloq algorithm
+- Add Zigbee features and improvements and remove support for Zigbee commands starting with ``Zigbee...``
+- Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)
+- Add support for Romanian language translations by Augustin Marti
+- Add support for La Crosse TX23 Anemometer by Norbert Richter (#3146, #7765)
+- Add command ``SetOption89 0/1`` for Zigbee distinct MQTT topics per device for SENSOR, allowing retained messages (#7835)
+- Change Hue emulation code optimization
+
+### 8.1.0.9 20200220
+
+- Revert most wifi connectivity changes introduced in 8.1.0.5 (#7746, #7602, #7621)
+- Fix Zigbee auto-increment transaction number (#7757)
+- Add initial support for Sensors AHT10 and AHT15 by Martin Wagner (#7596)
+- Add support for Wemos Motor Shield V1 by Denis Sborets (#7764)
+- Add Zigbee enhanced commands decoding, added ``ZbPing``
+- Add commands ``SetOption85 0/1`` and ``DevGroupShare`` supporting UDP Group command using ``GroupTopic`` without MQTT by Paul Diem (#7790)
+- Add support for Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM dimmer switches by Paul Diem (#7791)
+- Add command ``SetOption86 0/1`` for PWM dimmer to turn brightness LED's off 5 seconds after last change
+- Add command ``SetOption87 0/1`` for PWM dimmer to turn red LED on when powered off
+- Add command ``SetOption88 0/1`` for PWM dimmer to let buttons control remote devices
+
+### 8.1.0.8 20200212
+
+- Change MQTT message size with additional 200 characters
+- Change some wifi code to attempt faster connection (#7621)
+- Change display of some date and time messages from "Wed Feb 19 10:45:12 2020" to "2020-02-19T10:45:12"
+- Fix relation between RSSI and signal strength
+- Add another new DHT driver based on ESPEasy. The old driver can still be used using define USE_DHT_OLD. The previous new driver can be used with define USE_DHT_V2 (#7717)
+
+### 8.1.0.7 20200210
+
+- Add new DHT driver. The old driver can still be used using define USE_DHT_OLD (#7468)
+- Fix wrong encoding of Zigbee persistent data
+
+### 8.1.0.6 20200205
+
+- Fix Hass sensor discovery part 1/4 by Federico Leoni (#7582, #7548)
+- Fix MaxPower functionality (#7647)
+- Add support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
+- Add commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
+- Add command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
+- Add support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
+- Add BootCount Reset Time as BCResetTime to ``Status 1``
+- Add ``ZbZNPReceived``and ``ZbZCLReceived`` being published to MQTT when ``SetOption66 1``
+- Add optional Wifi AccessPoint passphrase define WIFI_AP_PASSPHRASE in my_user_config.h (#7690)
+- Add support for FiF LE-01MR energy meter by saper-2 (#7584)
+
+### 8.1.0.5 20200126
+
+- Change wifi connectivity stability (#7602)
+- Change IRremoteESP8266 library updated to v2.7.3
+- Fix PWM flickering at low levels (#7415)
+- Add ``SetOption84 0/1`` sends AWS IoT device shadow updates (alternative to retained)
+- Add ``ZbBind`` (experimental) and bug fixes
+
+### 8.1.0.4 20200116
+
+- Change Zigbee command prefix from ``Zigbee*`` to ``Zb*``
+- Fix ``PowerDelta`` zero power detection (#7515)
+- Fix OTA minimal gzipped detection regression from 8.1.0.3
+- Fix ``RGBWWTable`` ignored (#7572)
+- Add web page sliders when ``SetOption37 128`` is active allowing control of white(s)
+- Add Zigbee persistence and friendly names
+- Add most SetOptions as defines to my_user_config.h
+- Add SoftwareSerial to CSE7766 driver allowing different GPIOs (#7563)
+- Add optional parameter ``<startcolor>`` to command ``Scheme <scheme>, <startcolor>`` to control initial start color
+- Add rule trigger on one level deeper using syntax with two ``#`` like ``on zigbeereceived#vibration_sensor#aqaracubeside=0 do ...``
+
+### 8.1.0.3 20200106
+
+- Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
+- Change IRremoteESP8266 library updated to v2.7.2
+- Fix ``WakeUp <x>`` ignores provided value (#7473)
+- Fix exception 9 restart on log message in Ticker interrupt service routines NTP, Wemos and Hue emulation (#7496)
+- Add support for gzipped binaries
+- Add ``SwitchMode 8`` ToggleMulti, ``SwitchMode 9`` FollowMulti and ``SwitchMode 10`` FollowMultiInverted (#7522)
+
+### 8.1.0.2 20191230
+
+- Fix LCD line and column positioning (#7387)
+- Fix Display handling of hexadecimal escape characters (#7387)
+- Fix Improved fade linearity with gamma correction
+- Fix wrong gamma correction for Module 48 lights (PWM5 for CT)
+- Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
+- Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
+- Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
+- Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
+- Add experimental support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
+- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
+
+### 8.1.0.1 20191225
+
+- Change Lights: simplified gamma correction and 10 bits internal computation
+- Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
+- Fix Serial initialization regression from previous fix
+- Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
+- Fix ``White`` added to light status (#7142)
+- Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
+- Add SerialConfig to ``Status 1``
+- Add WifiPower to ``Status 5``
+- Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
+- Add Zigbee attribute decoder for Xiaomi Aqara Cube
+
 ### 8.1.0 20191225
 
 - Release

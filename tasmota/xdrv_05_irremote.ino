@@ -1,7 +1,7 @@
 /*
   xdrv_05_irremote.ino - infra red support for Tasmota
 
-  Copyright (C) 2019  Heiko Krupp, Lazar Obradovic and Theo Arends
+  Copyright (C) 2020  Heiko Krupp, Lazar Obradovic and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -181,7 +181,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
   // IRsend { "protocol": "RC5", "bits": 12, "data":"0xC86" }
   // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
 
-  char dataBufUc[XdrvMailbox.data_len];
+  char dataBufUc[XdrvMailbox.data_len + 1];
   UpperCase(dataBufUc, XdrvMailbox.data);
   RemoveSpace(dataBufUc);
   if (strlen(dataBufUc) < 8) {
@@ -258,10 +258,10 @@ void IrRemoteCmndResponse(uint32_t error)
 {
   switch (error) {
     case IE_INVALID_RAWDATA:
-      ResponseCmndChar(D_JSON_INVALID_RAWDATA);
+      ResponseCmndChar_P(PSTR(D_JSON_INVALID_RAWDATA));
       break;
     case IE_INVALID_JSON:
-      ResponseCmndChar(D_JSON_INVALID_JSON);
+      ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON));
       break;
     case IE_SYNTAX_IRSEND:
       Response_P(PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_NO " " D_JSON_IR_PROTOCOL ", " D_JSON_IR_BITS " " D_JSON_OR " " D_JSON_IR_DATA "\"}"));

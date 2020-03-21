@@ -1,7 +1,7 @@
 /*
   xsns_58_dht12.ino - DHT12 I2C temperature and humidity sensor support for Tasmota
 
-  Copyright (C) 2019  Stefan Oskamp and Theo Arends
+  Copyright (C) 2020  Stefan Oskamp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -90,30 +90,7 @@ void Dht12EverySecond(void)
 void Dht12Show(bool json)
 {
   if (Dht12.valid) {
-    char temperature[33];
-    dtostrfd(Dht12.temperature, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(Dht12.humidity, Settings.flag2.humidity_resolution, humidity);
-
-    if (json) {
-      ResponseAppend_P(JSON_SNS_TEMPHUM, Dht12.name, temperature, humidity);
-#ifdef USE_DOMOTICZ
-      if ((0 == tele_period)) {
-        DomoticzTempHumSensor(temperature, humidity);
-      }
-#endif // USE_DOMOTICZ
-#ifdef USE_KNX
-      if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, Dht12.temperature);
-        KnxSensor(KNX_HUMIDITY, Dht12.humidity);
-      }
-#endif // USE_KNX
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, Dht12.name, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, Dht12.name, humidity);
-#endif // USE_WEBSERVER
-    }
+    TempHumDewShow(json, (0 == tele_period), Dht12.name, Dht12.temperature, Dht12.humidity);
   }
 }
 

@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee_constants.ino - zigbee support for Tasmota
 
-  Copyright (C) 2019  Theo Arends and Stephan Hadinger
+  Copyright (C) 2020  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -169,51 +169,14 @@ enum Z_configuration {
   ZNP_HAS_CONFIGURED = 0xF00
 };
 
-// enum Z_nvItemIds {
-//   SCENE_TABLE = 145,
-//   MIN_FREE_NWK_ADDR = 146,
-//   MAX_FREE_NWK_ADDR = 147,
-//   MIN_FREE_GRP_ID = 148,
-//   MAX_FREE_GRP_ID = 149,
-//   MIN_GRP_IDS = 150,
-//   MAX_GRP_IDS = 151,
-//   OTA_BLOCK_REQ_DELAY = 152,
-//   SAPI_ENDPOINT = 161,
-//   SAS_SHORT_ADDR = 177,
-//   SAS_EXT_PANID = 178,
-//   SAS_PANID = 179,
-//   SAS_CHANNEL_MASK = 180,
-//   SAS_PROTOCOL_VER = 181,
-//   SAS_STACK_PROFILE = 182,
-//   SAS_STARTUP_CTRL = 183,
-//   SAS_TC_ADDR = 193,
-//   SAS_TC_MASTER_KEY = 194,
-//   SAS_NWK_KEY = 195,
-//   SAS_USE_INSEC_JOIN = 196,
-//   SAS_PRECFG_LINK_KEY = 197,
-//   SAS_NWK_KEY_SEQ_NUM = 198,
-//   SAS_NWK_KEY_TYPE = 199,
-//   SAS_NWK_MGR_ADDR = 200,
-//   SAS_CURR_TC_MASTER_KEY = 209,
-//   SAS_CURR_NWK_KEY = 210,
-//   SAS_CURR_PRECFG_LINK_KEY = 211,
-//   TCLK_TABLE_START = 257,
-//   TCLK_TABLE_END = 511,
-//   APS_LINK_KEY_DATA_START = 513,
-//   APS_LINK_KEY_DATA_END = 767,
-//   DUPLICATE_BINDING_TABLE = 768,
-//   DUPLICATE_DEVICE_LIST = 769,
-//   DUPLICATE_DEVICE_LIST_KA_TIMEOUT = 770,
-//};
-
 //
 enum Z_Status {
-  Z_Success = 0x00,
-  Z_Failure = 0x01,
-  Z_InvalidParameter = 0x02,
-  Z_MemError = 0x03,
-  Z_Created = 0x09,
-  Z_BufferFull = 0x11
+  Z_SUCCESS = 0x00,
+  Z_FAILURE = 0x01,
+  Z_INVALIDPARAMETER = 0x02,
+  Z_MEMERROR = 0x03,
+  Z_CREATED = 0x09,
+  Z_BUFFERFULL = 0x11
 };
 
 enum Z_App_Profiles {
@@ -261,16 +224,14 @@ enum Z_Device_Ids {
   // 0x0403	IAS Warning Device
 };
 
-// enum class AddrMode : uint8_t {
-//   NotPresent = 0,
-//   Group = 1,
-//   ShortAddress = 2,
-//   IEEEAddress = 3,
-//   Broadcast = 0xFF
-// };
-//
-//
-//
+ enum Z_AddrMode : uint8_t {
+  Z_Addr_NotPresent = 0,
+  Z_Addr_Group = 1,
+  Z_Addr_ShortAddress = 2,
+  Z_Addr_IEEEAddress = 3,
+  Z_Addr_Broadcast = 0xFF
+};
+
 // Commands in the AF subsystem
 enum AfCommand : uint8_t {
   AF_REGISTER = 0x00,
@@ -286,7 +247,7 @@ enum AfCommand : uint8_t {
   AF_INCOMING_MSG = 0x81,
   AF_INCOMING_MSG_EXT = 0x82
 };
-//
+
 // Commands in the ZDO subsystem
 enum : uint8_t {
   ZDO_NWK_ADDR_REQ = 0x00,
@@ -371,7 +332,7 @@ enum ZdoStates {
   ZDO_DEV_ZB_COORD = 0x09,          // Started as a a Zigbee Coordinator
   ZDO_DEV_NWK_ORPHAN = 0x0A,        // Device has lost information about its parent.
 };
-//
+
 // Commands in the UTIL subsystem
 enum Z_Util {
   Z_UTIL_GET_DEVICE_INFO = 0x00,
@@ -424,7 +385,96 @@ enum ZCL_Global_Commands {
 
 };
 
-const uint16_t Z_ProfileIds[]   PROGMEM = { 0x0104, 0x0109, 0xA10E, 0xC05E };
-const char     Z_ProfileNames[] PROGMEM = "ZigBee Home Automation|ZigBee Smart Energy|ZigBee Green Power|ZigBee Light Link";
+#define ZF(s) static const char ZS_ ## s[] PROGMEM = #s;
+#define Z(s)  ZS_ ## s
+
+typedef struct Z_StatusLine {
+  uint32_t     status;          // no need to use uint8_t since it uses 32 bits anyways
+  const char * status_msg;
+} Z_StatusLine;
+
+ZF(SUCCESS)
+ZF(FAILURE)
+ZF(NOT_AUTHORIZED)
+ZF(RESERVED_FIELD_NOT_ZERO)
+ZF(MALFORMED_COMMAND)
+ZF(UNSUP_CLUSTER_COMMAND)
+ZF(UNSUP_GENERAL_COMMAND)
+ZF(UNSUP_MANUF_CLUSTER_COMMAND)
+ZF(UNSUP_MANUF_GENERAL_COMMAND)
+ZF(INVALID_FIELD)
+ZF(UNSUPPORTED_ATTRIBUTE)
+ZF(INVALID_VALUE)
+ZF(READ_ONLY)
+ZF(INSUFFICIENT_SPACE)
+ZF(DUPLICATE_EXISTS)
+ZF(NOT_FOUND)
+ZF(UNREPORTABLE_ATTRIBUTE)
+ZF(INVALID_DATA_TYPE)
+ZF(INVALID_SELECTOR)
+ZF(WRITE_ONLY)
+ZF(INCONSISTENT_STARTUP_STATE)
+ZF(DEFINED_OUT_OF_BAND)
+ZF(INCONSISTENT)
+ZF(ACTION_DENIED)
+ZF(TIMEOUT)
+ZF(ABORT)
+ZF(INVALID_IMAGE)
+ZF(WAIT_FOR_DATA)
+ZF(NO_IMAGE_AVAILABLE)
+ZF(REQUIRE_MORE_IMAGE)
+ZF(NOTIFICATION_PENDING)
+ZF(HARDWARE_FAILURE)
+ZF(SOFTWARE_FAILURE)
+ZF(CALIBRATION_ERROR)
+ZF(UNSUPPORTED_CLUSTER)
+
+const Z_StatusLine Z_Status[] PROGMEM = {
+  0x00,   Z(SUCCESS),
+  0x01,   Z(FAILURE),
+  0x7E,   Z(NOT_AUTHORIZED),
+  0x7F,   Z(RESERVED_FIELD_NOT_ZERO),
+  0x80,   Z(MALFORMED_COMMAND),
+  0x81,   Z(UNSUP_CLUSTER_COMMAND),
+  0x82,   Z(UNSUP_GENERAL_COMMAND),
+  0x83,   Z(UNSUP_MANUF_CLUSTER_COMMAND),
+  0x84,   Z(UNSUP_MANUF_GENERAL_COMMAND),
+  0x85,   Z(INVALID_FIELD),
+  0x86,   Z(UNSUPPORTED_ATTRIBUTE),
+  0x87,   Z(INVALID_VALUE),
+  0x88,   Z(READ_ONLY),
+  0x89,   Z(INSUFFICIENT_SPACE),
+  0x8A,   Z(DUPLICATE_EXISTS),
+  0x8B,   Z(NOT_FOUND),
+  0x8C,   Z(UNREPORTABLE_ATTRIBUTE),
+  0x8D,   Z(INVALID_DATA_TYPE),
+  0x8E,   Z(INVALID_SELECTOR),
+  0x8F,   Z(WRITE_ONLY),
+  0x90,   Z(INCONSISTENT_STARTUP_STATE),
+  0x91,   Z(DEFINED_OUT_OF_BAND),
+  0x92,   Z(INCONSISTENT),
+  0x93,   Z(ACTION_DENIED),
+  0x94,   Z(TIMEOUT),
+  0x95,   Z(ABORT),
+  0x96,   Z(INVALID_IMAGE),
+  0x97,   Z(WAIT_FOR_DATA),
+  0x98,   Z(NO_IMAGE_AVAILABLE),
+  0x99,   Z(REQUIRE_MORE_IMAGE),
+  0x9A,   Z(NOTIFICATION_PENDING),
+  0xC0,   Z(HARDWARE_FAILURE),
+  0xC1,   Z(SOFTWARE_FAILURE),
+  0xC2,   Z(CALIBRATION_ERROR),
+  0xC3,   Z(UNSUPPORTED_CLUSTER),
+};
+
+const __FlashStringHelper* getZigbeeStatusMessage(uint8_t status) {
+  for (uint32_t i = 0; i < sizeof(Z_Status) / sizeof(Z_Status[0]); i++) {
+    const Z_StatusLine *statl = &Z_Status[i];
+    if (statl->status == status) {
+      return (const __FlashStringHelper*) statl->status_msg;
+    }
+  }
+  return F("");
+}
 
 #endif // USE_ZIGBEE

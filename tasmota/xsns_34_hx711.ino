@@ -1,7 +1,7 @@
 /*
   xsns_34_hx711.ino - HX711 load cell support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -159,7 +159,7 @@ void SetWeightDelta()
     return;
   }
 
-  // map upper values 101-255 to 
+  // map upper values 101-255 to
   if (Settings.weight_change > 100) {
     Hx.weight_delta = (Settings.weight_change - 100) * 10 + 100;
     return;
@@ -292,7 +292,7 @@ void HxInit(void)
     digitalWrite(Hx.pin_sck, LOW);
 
     SetWeightDelta();
-    
+
     if (HxIsReady(8 * HX_TIMEOUT)) {                 // Can take 600 milliseconds after power on
       if (!Settings.weight_max) { Settings.weight_max = HX_MAX_WEIGHT / 1000; }
       if (!Settings.weight_calibration) { Settings.weight_calibration = HX_SCALE; }

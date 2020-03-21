@@ -1,7 +1,7 @@
 /*
   xdrv_13_display.ino - Display support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -328,7 +328,8 @@ uint8_t index=0;
 #define ESCAPE_CHAR '~'
 
 // decode text escapes, 1 hexbyte assumed
-void decode_te(char *line) {
+uint32_t decode_te(char *line) {
+  uint32_t skip = 0;
   char sbuf[3],*cp;
   while (*line) {
     if (*line==ESCAPE_CHAR) {
@@ -336,11 +337,12 @@ void decode_te(char *line) {
       if (*cp!=0 && *cp==ESCAPE_CHAR) {
         // escape escape, discard one
         memmove(cp,cp+1,strlen(cp));
+        skip++;
       } else {
         // escape HH
         if (strlen(cp)<2) {
           // illegal lenght, ignore
-          return;
+          return skip;
         }
         // take 2 hex chars
         sbuf[0]=*(cp);
@@ -349,10 +351,12 @@ void decode_te(char *line) {
         *line=strtol(sbuf,0,16);
         // must shift string 2 bytes shift zero also
         memmove(cp,cp+2,strlen(cp)-1);
+        skip += 2;
       }
     }
     line++;
   }
+  return skip;
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -829,10 +833,13 @@ void DisplayText(void)
   }
   exit:
   // now draw buffer
-    decode_te(linebuf);
+    dp -= decode_te(linebuf);
     if ((uint32_t)dp - (uint32_t)linebuf) {
-      if (!fill) *dp = 0;
-      else linebuf[abs(fill)] = 0;
+      if (!fill) {
+        *dp = 0;
+      } else {
+        linebuf[abs(fill)] = 0;
+      }
       if (fill<0) {
         // right align
         alignright(linebuf);
@@ -1276,7 +1283,7 @@ void DisplaySetPower(void)
 {
   disp_power = bitRead(XdrvMailbox.index, disp_device -1);
 
-AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DSP: Power %d"), disp_power);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DSP: Power %d"), disp_power);
 
   if (Settings.display_model) {
     if (!renderer) {

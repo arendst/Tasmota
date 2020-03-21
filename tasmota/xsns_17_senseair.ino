@@ -1,7 +1,7 @@
 /*
   xsns_17_senseair.ino - SenseAir CO2 sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -142,27 +142,25 @@ void SenseairInit(void)
 
 void SenseairShow(bool json)
 {
-  char temperature[33];
-  dtostrfd(senseair_temperature, Settings.flag2.temperature_resolution, temperature);
-  char humidity[33];
-  dtostrfd(senseair_humidity, Settings.flag2.temperature_resolution, humidity);
   GetTextIndexed(senseair_types, sizeof(senseair_types), senseair_type -1, kSenseairTypes);
 
   if (json) {
     ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_CO2 "\":%d"), senseair_types, senseair_co2);
     if (senseair_type != 2) {
-      ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s"), temperature, humidity);
+      ResponseAppend_P(PSTR(","));
+      ResponseAppendTHD(senseair_temperature, senseair_humidity);
     }
     ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
-    if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, senseair_co2);
+    if (0 == tele_period) {
+      DomoticzSensor(DZ_AIRQUALITY, senseair_co2);
+    }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_SNS_CO2, senseair_types, senseair_co2);
     if (senseair_type != 2) {
-      WSContentSend_PD(HTTP_SNS_TEMP, senseair_types, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, senseair_types, humidity);
+      WSContentSend_THD(senseair_types, senseair_temperature, senseair_humidity);
     }
 #endif  // USE_WEBSERVER
   }

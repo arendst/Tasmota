@@ -1,7 +1,7 @@
 /*
   xsns_14_sht3x.ino - SHT3X temperature and humidity sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ bool Sht3xRead(float &t, float &h, uint8_t sht3x_address)
     data[i] = Wire.read();             // cTemp msb, cTemp lsb, cTemp crc, humidity msb, humidity lsb, humidity crc
   };
   t = ConvertTemp((float)((((data[0] << 8) | data[1]) * 175) / 65535.0) - 45);
-  h = ConvertHumidity((float)((((data[3] << 8) | data[4]) * 100) / 65535.0));  // Set global humidity
+  h = ConvertHumidity((float)((((data[3] << 8) | data[4]) * 100) / 65535.0));
   return (!isnan(t) && !isnan(h) && (h != 0));
 }
 
@@ -98,34 +98,9 @@ void Sht3xShow(bool json)
     float t;
     float h;
     if (Sht3xRead(t, h, sht3x_sensors[i].address)) {
-      char temperature[33];
-      dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
-      char humidity[33];
-      dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
       char types[11];
       snprintf_P(types, sizeof(types), PSTR("%s%c0x%02X"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address);  // "SHT3X-0xXX"
-
-      if (json) {
-        ResponseAppend_P(JSON_SNS_TEMPHUM, types, temperature, humidity);
-#ifdef USE_DOMOTICZ
-        if ((0 == tele_period) && (0 == i)) {  // We want the same first sensor to report to Domoticz in case a read is missed
-          DomoticzTempHumSensor(temperature, humidity);
-        }
-#endif  // USE_DOMOTICZ
-
-#ifdef USE_KNX
-      if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, t);
-        KnxSensor(KNX_HUMIDITY, h);
-      }
-#endif  // USE_KNX
-
-#ifdef USE_WEBSERVER
-      } else {
-        WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
-        WSContentSend_PD(HTTP_SNS_HUM, types, humidity);
-#endif  // USE_WEBSERVER
-      }
+      TempHumDewShow(json, ((0 == tele_period) && (0 == i)), types, t, h);
     }
   }
 }

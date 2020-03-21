@@ -1,7 +1,7 @@
 /*
   xsns_07_sht1x.ino - SHT1x temperature and sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -149,7 +149,7 @@ bool ShtRead(void)
   float rhLinear = c1 + c2 * humRaw + c3 * humRaw * humRaw;
   sht_humidity = (sht_temperature - 25) * (t1 + t2 * humRaw) + rhLinear;
   sht_temperature = ConvertTemp(sht_temperature);
-  ConvertHumidity(sht_humidity);  // Set global humidity
+  sht_humidity = ConvertHumidity(sht_humidity);
 
   sht_valid = SENSOR_MAX_MISS;
   return true;
@@ -183,30 +183,7 @@ void ShtEverySecond(void)
 void ShtShow(bool json)
 {
   if (sht_valid) {
-    char temperature[33];
-    dtostrfd(sht_temperature, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(sht_humidity, Settings.flag2.humidity_resolution, humidity);
-
-    if (json) {
-      ResponseAppend_P(JSON_SNS_TEMPHUM, sht_types, temperature, humidity);
-#ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
-        DomoticzTempHumSensor(temperature, humidity);
-      }
-#endif  // USE_DOMOTICZ
-#ifdef USE_KNX
-      if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, sht_temperature);
-        KnxSensor(KNX_HUMIDITY, sht_humidity);
-      }
-#endif  // USE_KNX
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, sht_types, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, sht_types, humidity);
-#endif  // USE_WEBSERVER
-    }
+    TempHumDewShow(json, (0 == tele_period), sht_types, sht_temperature, sht_humidity);
   }
 }
 

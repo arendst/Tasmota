@@ -1,7 +1,7 @@
 /*
   xdrv_10_rules.ino - rule support for Tasmota
 
-  Copyright (C) 2019  ESP Easy Group and Theo Arends
+  Copyright (C) 2020  ESP Easy Group and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -255,27 +255,42 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   }
 
   // Step2: Search rule_task and rule_name
-  StaticJsonBuffer<1024> jsonBuf;
-  JsonObject &root = jsonBuf.parseObject(event);
-  if (!root.success()) { return false; }               // No valid JSON data
-
-  const char* str_value;
-  if ((pos = rule_name.indexOf("[")) > 0) {            // "CURRENT[1]"
-    int rule_name_idx = rule_name.substring(pos +1).toInt();
+  int rule_name_idx = 0;
+  if ((pos = rule_name.indexOf("[")) > 0) {            // "SUBTYPE1#CURRENT[1]"
+    rule_name_idx = rule_name.substring(pos +1).toInt();
     if ((rule_name_idx < 1) || (rule_name_idx > 6)) {  // Allow indexes 1 to 6
       rule_name_idx = 1;
     }
-    rule_name = rule_name.substring(0, pos);           // "CURRENT"
-    str_value = root[rule_task][rule_name][rule_name_idx -1];  // "ENERGY" and "CURRENT" and 0
+    rule_name = rule_name.substring(0, pos);           // "SUBTYPE1#CURRENT"
+  }
+
+  StaticJsonBuffer<1024> jsonBuf;
+  JsonObject &root = jsonBuf.parseObject(event);
+  if (!root.success()) { return false; }               // No valid JSON data
+  if (!root[rule_task].success()) { return false; }    // No rule_task in JSON data
+
+  JsonObject &obj1 = root[rule_task];
+  JsonObject *obj = &obj1;
+  String subtype;
+  uint32_t i = 0;
+  while ((pos = rule_name.indexOf("#")) > 0) {         // "SUBTYPE1#SUBTYPE2#CURRENT"
+    subtype = rule_name.substring(0, pos);
+    if (!(*obj)[subtype].success()) { return false; }  // No subtype in JSON data
+    JsonObject &obj2 = (*obj)[subtype];
+    obj = &obj2;
+    rule_name = rule_name.substring(pos +1);
+    if (i++ > 10) { return false; }                    // Abandon possible loop
+  }
+  if (!(*obj)[rule_name].success()) { return false; }  // No name in JSON data
+  const char* str_value;
+  if (rule_name_idx) {
+    str_value = (*obj)[rule_name][rule_name_idx -1];   // "CURRENT[1]"
   } else {
-    str_value = root[rule_task][rule_name];            // "INA219" and "CURRENT"
+    str_value = (*obj)[rule_name];                     // "CURRENT"
   }
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
 //  rule_task.c_str(), rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
-
-  if (!root[rule_task][rule_name].success()) { return false; }
-  // No value but rule_name is ok
 
   Rules.event_value = str_value;                       // Prepare %value%
 
@@ -315,6 +330,9 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     }
   } else match = true;
 
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match 1 %d"), match);
+
+
   if (bitRead(Settings.rule_once, rule_set)) {
     if (match) {                                       // Only allow match state changes
       if (!bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set])) {
@@ -326,6 +344,8 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
       bitClear(Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
     }
   }
+
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match 2 %d"), match);
 
   return match;
 }
@@ -437,8 +457,14 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       commands.trim();
       String ucommand = commands;
       ucommand.toUpperCase();
+
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
-      if ((ucommand.indexOf("EVENT ") != -1) && (ucommand.indexOf("BACKLOG ") == -1)) { commands = "backlog " + commands; }  // Always use Backlog with event to prevent rule event loop exception
+      // Use Backlog with event to prevent rule event loop exception unless IF is used which uses an implicit backlog
+      if ((ucommand.indexOf("IF ") == -1) &&
+          (ucommand.indexOf("EVENT ") != -1) &&
+          (ucommand.indexOf("BACKLOG ") == -1)) {
+        commands = "backlog " + commands;
+      }
 
       RulesVarReplace(commands, F("%VALUE%"), Rules.event_value);
       for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
@@ -557,8 +583,7 @@ void RulesEvery50ms(void)
 #else
           if (pin[GPIO_SWT1 +i] < 99) {
 #endif  // USE_TM1638
-            bool swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
-            snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (swm ^ SwitchLastState(i)));
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (SwitchState(i)));
             RulesProcessEvent(json_event);
           }
         }
@@ -1806,11 +1831,7 @@ void CmndMemory(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_MEMS)) {
     if (!XdrvMailbox.usridx) {
-      mqtt_data[0] = '\0';
-      for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
-        ResponseAppend_P(PSTR("%c\"Mem%d\":\"%s\""), (i) ? ',' : '{', i +1, SettingsText(SET_MEM1 +i));
-      }
-      ResponseJsonEnd();
+      ResponseCmndAll(SET_MEM1, MAX_RULE_MEMS);
     } else {
       if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION

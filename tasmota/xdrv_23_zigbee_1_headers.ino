@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee_1_headers.ino - zigbee support for Tasmota
 
-  Copyright (C) 2019  Theo Arends and Stephan Hadinger
+  Copyright (C) 2020  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 
 // contains some definitions for functions used before their declarations
 
-void ZigbeeZCLSend(uint16_t dtsAddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool disableDefResp = true, uint8_t transacId = 1);
+void ZigbeeZCLSend_Raw(uint16_t dtsAddr, uint16_t groupaddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool needResponse, uint8_t transacId);
 
 
 // Get an JSON attribute, with case insensitive key search
@@ -41,6 +41,17 @@ JsonVariant &getCaseInsensitive(const JsonObject &json, const char *needle) {
   }
   // if not found
   return *(JsonVariant*)nullptr;
+}
+
+uint32_t parseHex(const char **data, size_t max_len = 8) {
+  uint32_t ret = 0;
+  for (uint32_t i = 0; i < max_len; i++) {
+    int8_t v = hexValue(**data);
+    if (v < 0) { break; }     // non hex digit, we stop parsing
+    ret = (ret << 4) | v;
+    *data += 1;
+  }
+  return ret;
 }
 
 #endif // USE_ZIGBEE

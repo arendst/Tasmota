@@ -1,7 +1,7 @@
 /*
   nl-NL.h - localization for Dutch - Nederland for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -74,16 +74,18 @@
 #define D_COUNT "Aantal"
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNTER "Teller"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Stroom"          // As in Voltage and Current
 #define D_DATA "Data"
 #define D_DARKLIGHT "Donker"
 #define D_DEBUG "Debug"
+#define D_DEWPOINT "Dauwpunt"
 #define D_DISABLED "Uitgeschakeld"
 #define D_DISTANCE "Afstand"
 #define D_DNS_SERVER "DNS Server"
 #define D_DONE "Klaar"
 #define D_DST_TIME "ZT"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "Emulatie"
 #define D_ENABLED "Geactiveerd"
 #define D_ERASE "Wissen"
@@ -136,6 +138,7 @@
 #define D_PROGRAM_SIZE "Programma Grootte"
 #define D_PROJECT "Project"
 #define D_RAIN "Regen"
+#define D_RANGE "Range"
 #define D_RECEIVED "Ontvangen"
 #define D_RESTART "Herstart"
 #define D_RESTARTING "Herstarten"
@@ -503,12 +506,32 @@
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Windrichting"
 #define D_TX20_WIND_SPEED "Windsnelheid"
-#define D_TX20_WIND_SPEED_AVG "Windsnelheid gemiddeld"
+#define D_TX20_WIND_SPEED_MIN "Windsnelhied minimum"
 #define D_TX20_WIND_SPEED_MAX "Windsnelhied maximaal"
 #define D_TX20_NORTH "N"
 #define D_TX20_EAST "E"
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
+
+// xsns_53_sml.ino
+#define D_TPWRIN "Energy Total-In"
+#define D_TPWROUT "Energy Total-Out"
+#define D_TPWRCURR "Active Power-In/Out"
+#define D_TPWRCURR1 "Active Power-In p1"
+#define D_TPWRCURR2 "Active Power-In p2"
+#define D_TPWRCURR3 "Active Power-In p3"
+#define D_Strom_L1 "Current L1"
+#define D_Strom_L2 "Current L2"
+#define D_Strom_L3 "Current L3"
+#define D_Spannung_L1 "Voltage L1"
+#define D_Spannung_L2 "Voltage L2"
+#define D_Spannung_L3 "Voltage L3"
+#define D_METERNR "Meter_number"
+#define D_METERSID "Service ID"
+#define D_GasIN "Counter"
+#define D_H2oIN "Counter"
+#define D_StL1L2L3 "Current L1+L2+L3"
+#define D_SpL1L2L3 "Voltage L1+L2+L3/3"
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Geen"
@@ -562,7 +585,7 @@
 #define D_SENSOR_TM1638_STB    "TM16 STB"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
-#define D_SENSOR_TX20_TX       "TX20"
+#define D_SENSOR_TX2X_TX       "TX2x"
 #define D_SENSOR_RFSEND        "RFSend"
 #define D_SENSOR_RFRECV        "RFrecv"
 #define D_SENSOR_TUYA_TX       "Tuya Tx"
@@ -633,6 +656,14 @@
 #define D_SENSOR_SLAVE_RESET   "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_HM10_RX       "HM10 RX"
+#define D_SENSOR_HM10_TX       "HM10 TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
+#define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
+#define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
+#define D_SENSOR_HRXL_RX       "HRXL Rx"
+#define D_SENSOR_ELECTRIQ_MOODL "MOODL Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -647,7 +678,7 @@
 #define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m3"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
@@ -668,7 +699,7 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "Fase hoek"
 #define D_IMPORT_ACTIVE   "Import werkelijk"
 #define D_EXPORT_ACTIVE   "Export werkelijk"
@@ -677,6 +708,7 @@
 #define D_TOTAL_REACTIVE  "Totaal blind"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 spanning"
@@ -701,5 +733,18 @@
 #define D_SOLAX_ERROR_6   "Overtemperatuur"
 #define D_SOLAX_ERROR_7   "Ventilator"
 #define D_SOLAX_ERROR_8   "Overige"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Edit script"
+#define D_SCRIPT               "edit script"
+#define D_SDCARD_UPLOAD        "file upload"
+#define D_SDCARD_DIR           "sd card directory"
+#define D_UPL_DONE             "Done"
+#define D_SCRIPT_CHARS_LEFT    "chars left"
+#define D_SCRIPT_CHARS_NO_MORE "no more chars"
+#define D_SCRIPT_DOWNLOAD      "Download"
+#define D_SCRIPT_ENABLE        "script enable"
+#define D_SCRIPT_UPLOAD        "Upload"
+#define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
 #endif  // _LANGUAGE_NL_NL_H_

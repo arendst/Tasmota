@@ -24,7 +24,8 @@
 // MQTT_MAX_PACKET_SIZE : Maximum packet size
 #ifndef MQTT_MAX_PACKET_SIZE
 //#define MQTT_MAX_PACKET_SIZE 128
-#define MQTT_MAX_PACKET_SIZE 1000   // Tasmota v5.11.1c
+//#define MQTT_MAX_PACKET_SIZE 1000   // Tasmota v5.11.1c
+#define MQTT_MAX_PACKET_SIZE 1200   // Tasmota v8.1.0.8
 #endif
 
 // MQTT_KEEPALIVE : keepAlive interval in Seconds
@@ -141,7 +142,7 @@ public:
    boolean connect(const char* id, const char* willTopic, uint8_t willQos, boolean willRetain, const char* willMessage);
    boolean connect(const char* id, const char* user, const char* pass, const char* willTopic, uint8_t willQos, boolean willRetain, const char* willMessage);
    boolean connect(const char* id, const char* user, const char* pass, const char* willTopic, uint8_t willQos, boolean willRetain, const char* willMessage, boolean cleanSession);
-   void disconnect();
+   void disconnect(bool disconnect_package = false);
    boolean publish(const char* topic, const char* payload);
    boolean publish(const char* topic, const char* payload, boolean retained);
    boolean publish(const char* topic, const uint8_t * payload, unsigned int plength);

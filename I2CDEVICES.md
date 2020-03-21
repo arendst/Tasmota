@@ -62,4 +62,8 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   39  | USE_DISPLAY_RA8876  | xdsp_10 | FT5316   | 0x38        | Touch panel controller
   40  | USE_TSL2591         | xsns_57 | TLS2591  | 0x29        | Light intensity sensor
   41  | USE_DHT12           | xsns_58 | DHT12    | 0x5C        | Temperature and humidity sensor
-
+  42  | USE_DS1624          | xsns_59 | DS1621   | 0x48 - 0x4F | Temperature sensor
+  42  | USE_DS1624          | xsns_59 | DS1624   | 0x48 - 0x4F | Temperature sensor
+  43  | USE_AHT1x           | xsns_63 | AHT10/15 | 0x38        | Temperature and humidity sensor
+  44  | USE_WEMOS_MOTOR_V1  | xdrv_34 |          | 0x2D - 0x30 | WEMOS motor shield v1.0.0 (6612FNG)
+  45  | USE_HDC1080         | xsns_65 | HDC1080  | 0x40        | Temperature and Humidity sensor

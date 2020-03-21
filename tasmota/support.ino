@@ -1,7 +1,7 @@
 /*
   support.ino - support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -51,14 +51,20 @@ void OsWatchTicker(void)
   uint32_t last_run = abs(t - oswatch_last_loop_time);
 
 #ifdef DEBUG_THEO
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.RSSI(), last_run);
+  int32_t rssi = WiFi.RSSI();
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(rssi), rssi, last_run);
 #endif  // DEBUG_THEO
   if (last_run >= (OSWATCH_RESET_TIME * 1000)) {
 //    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));  // Save iram space
     RtcSettings.oswatch_blocked_loop = 1;
     RtcSettingsSave();
+
 //    ESP.restart();  // normal reboot
-    ESP.reset();  // hard reset
+//    ESP.reset();  // hard reset
+
+    // Force an exception to get a stackdump
+    volatile uint32_t dummy;
+    dummy = *((uint32_t*) 0x00000000);
   }
 }
 
@@ -488,23 +494,30 @@ bool ParseIp(uint32_t* addr, const char* str)
   return (3 == i);
 }
 
+uint32_t ParseParameters(uint32_t count, uint32_t *params)
+{
+  char *p;
+  uint32_t i = 0;
+  for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p), i++) {
+    params[i] = strtoul(str, nullptr, 0);
+  }
+  return i;
+}
+
 // Function to parse & check if version_str is newer than our currently installed version.
 bool NewerVersion(char* version_str)
 {
   uint32_t version = 0;
   uint32_t i = 0;
   char *str_ptr;
-  char* version_dup = strdup(version_str);  // Duplicate the version_str as strtok_r will modify it.
 
-  if (!version_dup) {
-    return false;  // Bail if we can't duplicate. Assume bad.
-  }
+  char version_dup[strlen(version_str) +1];
+  strncpy(version_dup, version_str, sizeof(version_dup));  // Duplicate the version_str as strtok_r will modify it.
   // Loop through the version string, splitting on '.' seperators.
   for (char *str = strtok_r(version_dup, ".", &str_ptr); str && i < sizeof(VERSION); str = strtok_r(nullptr, ".", &str_ptr), i++) {
     int field = atoi(str);
     // The fields in a version string can only range from 0-255.
     if ((field < 0) || (field > 255)) {
-      free(version_dup);
       return false;
     }
     // Shuffle the accumulated bytes across, and add the new byte.
@@ -516,7 +529,6 @@ bool NewerVersion(char* version_str)
       i++;
     }
   }
-  free(version_dup);  // We no longer need this.
   // A version string should have 2-4 fields. e.g. 1.2, 1.2.3, or 1.2.3a (= 1.2.3.1).
   // If not, then don't consider it a valid version string.
   if ((i < 2) || (i > sizeof(VERSION))) {
@@ -605,10 +617,31 @@ char TempUnit(void)
 
 float ConvertHumidity(float h)
 {
+  float result = h;
+
   global_update = uptime;
   global_humidity = h;
 
-  return h;
+  result = result + (0.1 * Settings.hum_comp);
+
+  return result;
+}
+
+float CalcTempHumToDew(float t, float h)
+{
+  if (isnan(h) || isnan(t)) { return 0.0; }
+
+  if (Settings.flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
+    t = (t - 32) / 1.8;                                       // Celsius
+  }
+
+  float gamma = TaylorLog(h / 100) + 17.62 * t / (243.5 + t);
+  float result = (243.5 * gamma / (17.62 - gamma));
+
+  if (Settings.flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
+    result = result * 1.8 + 32;                               // Fahrenheit
+  }
+  return result;
 }
 
 float ConvertPressure(float p)
@@ -627,6 +660,18 @@ float ConvertPressure(float p)
 String PressureUnit(void)
 {
   return (Settings.flag.pressure_conversion) ? String(D_UNIT_MILLIMETER_MERCURY) : String(D_UNIT_PRESSURE);
+}
+
+float ConvertSpeed(float s)
+{
+  // Entry in m/s
+  return s * kSpeedConversionFactor[Settings.flag2.speed_conversion];
+}
+
+String SpeedUnit(void)
+{
+  char speed[8];
+  return String(GetTextIndexed(speed, sizeof(speed), Settings.flag2.speed_conversion, kSpeedUnit));
 }
 
 void ResetGlobalValues(void)
@@ -731,6 +776,13 @@ bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void))
 {
   GetTextIndexed(XdrvMailbox.command, CMDSZ, 0, haystack);  // Get prefix if available
   int prefix_length = strlen(XdrvMailbox.command);
+  if (prefix_length) {
+    char prefix[prefix_length +1];
+    snprintf_P(prefix, sizeof(prefix), XdrvMailbox.topic);  // Copy prefix part only
+    if (strcasecmp(prefix, XdrvMailbox.command)) {
+      return false;                                         // Prefix not in command
+    }
+  }
   int command_code = GetCommandCode(XdrvMailbox.command + prefix_length, CMDSZ, XdrvMailbox.topic + prefix_length, haystack);
   if (command_code > 0) {                                   // Skip prefix
     XdrvMailbox.command_code = command_code -1;
@@ -781,33 +833,40 @@ String GetSerialConfig(void)
   return String(config);
 }
 
-void SetSerialBegin(uint32_t baudrate)
+void SetSerialBegin()
 {
-  if (seriallog_level) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Set Serial to %s %d bit/s"), GetSerialConfig().c_str(), baudrate);
-    delay(100);
-  }
+  uint32_t baudrate = Settings.baudrate * 300;
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), baudrate);
   Serial.flush();
   Serial.begin(baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings.serial_config));
-  delay(10);
-  Serial.println();
 }
 
 void SetSerialConfig(uint32_t serial_config)
 {
-  if (serial_config == Settings.serial_config) { return; }
-  if (serial_config > TS_SERIAL_8O2) { return; }
-
-  Settings.serial_config = serial_config;
-  SetSerialBegin(Serial.baudRate());
+  if (serial_config > TS_SERIAL_8O2) {
+    serial_config = TS_SERIAL_8N1;
+  }
+  if (serial_config != Settings.serial_config) {
+    Settings.serial_config = serial_config;
+    SetSerialBegin();
+  }
 }
 
-void SetSerialBaudrate(int baudrate)
+void SetSerialBaudrate(uint32_t baudrate)
 {
   Settings.baudrate = baudrate / 300;
-  if (Serial.baudRate() == baudrate) { return; }
+  if (Serial.baudRate() != baudrate) {
+    SetSerialBegin();
+  }
+}
 
-  SetSerialBegin(baudrate);
+void SetSerial(uint32_t baudrate, uint32_t serial_config)
+{
+  Settings.flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
+  Settings.serial_config = serial_config;
+  Settings.baudrate = baudrate / 300;
+  SetSeriallog(LOG_LEVEL_NONE);
+  SetSerialBegin();
 }
 
 void ClaimSerial(void)
@@ -815,8 +874,7 @@ void ClaimSerial(void)
   serial_local = true;
   AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
-  baudrate = Serial.baudRate();
-  Settings.baudrate = baudrate / 300;
+  Settings.baudrate = Serial.baudRate() / 300;
 }
 
 void SerialSendRaw(char *codes)
@@ -979,6 +1037,18 @@ int ResponseAppendTimeFormat(uint32_t format)
 int ResponseAppendTime(void)
 {
   return ResponseAppendTimeFormat(Settings.flag2.time_format);
+}
+
+int ResponseAppendTHD(float f_temperature, float f_humidity)
+{
+  char temperature[FLOATSZ];
+  dtostrfd(f_temperature, Settings.flag2.temperature_resolution, temperature);
+  char humidity[FLOATSZ];
+  dtostrfd(f_humidity, Settings.flag2.humidity_resolution, humidity);
+  char dewpoint[FLOATSZ];
+  dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings.flag2.temperature_resolution, dewpoint);
+
+  return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), temperature, humidity, dewpoint);
 }
 
 int ResponseJsonEnd(void)
@@ -1230,45 +1300,19 @@ void TemplateJson(void)
  * Sleep aware time scheduler functions borrowed from ESPEasy
 \*********************************************************************************************/
 
-long TimeDifference(unsigned long prev, unsigned long next)
+inline int32_t TimeDifference(uint32_t prev, uint32_t next)
 {
-  // Return the time difference as a signed value, taking into account the timers may overflow.
-  // Returned timediff is between -24.9 days and +24.9 days.
-  // Returned value is positive when "next" is after "prev"
-  long signed_diff = 0;
-  // To cast a value to a signed long, the difference may not exceed half 0xffffffffUL (= 4294967294)
-  const unsigned long half_max_unsigned_long = 2147483647u;  // = 2^31 -1
-  if (next >= prev) {
-    const unsigned long diff = next - prev;
-    if (diff <= half_max_unsigned_long) {                    // Normal situation, just return the difference.
-      signed_diff = static_cast<long>(diff);                 // Difference is a positive value.
-    } else {
-      // prev has overflow, return a negative difference value
-      signed_diff = static_cast<long>((0xffffffffUL - next) + prev + 1u);
-      signed_diff = -1 * signed_diff;
-    }
-  } else {
-    // next < prev
-    const unsigned long diff = prev - next;
-    if (diff <= half_max_unsigned_long) {                    // Normal situation, return a negative difference value
-      signed_diff = static_cast<long>(diff);
-      signed_diff = -1 * signed_diff;
-    } else {
-      // next has overflow, return a positive difference value
-      signed_diff = static_cast<long>((0xffffffffUL - prev) + next + 1u);
-    }
-  }
-  return signed_diff;
+  return ((int32_t) (next - prev));
 }
 
-long TimePassedSince(unsigned long timestamp)
+int32_t TimePassedSince(uint32_t timestamp)
 {
   // Compute the number of milliSeconds passed since timestamp given.
   // Note: value can be negative if the timestamp has not yet been reached.
   return TimeDifference(timestamp, millis());
 }
 
-bool TimeReached(unsigned long timer)
+bool TimeReached(uint32_t timer)
 {
   // Check if a certain timeout has been reached.
   const long passed = TimePassedSince(timer);
@@ -1287,6 +1331,18 @@ void SetNextTimeInterval(unsigned long& timer, const unsigned long step)
   }
   // Try to get in sync again.
   timer = millis() + (step - passed);
+}
+
+int32_t TimePassedSinceUsec(uint32_t timestamp)
+{
+  return TimeDifference(timestamp, micros());
+}
+
+bool TimeReachedUsec(uint32_t timer)
+{
+  // Check if a certain timeout has been reached.
+  const long passed = TimePassedSinceUsec(timer);
+  return (passed >= 0);
 }
 
 /*********************************************************************************************\
@@ -1534,11 +1590,7 @@ bool I2cSetDevice(uint32_t addr)
     return false;       // If already active report as not present;
   }
   Wire.beginTransmission((uint8_t)addr);
-  bool result = (0 == Wire.endTransmission());
-  if (result) {
-    I2cSetActive(addr, 1);
-  }
-  return result;
+  return (0 == Wire.endTransmission());
 }
 #endif  // USE_I2C
 
@@ -1644,8 +1696,14 @@ void AddLog(uint32_t loglevel)
     if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
   }
 #endif  // USE_WEBSERVER
-  if (!global_state.mqtt_down && (loglevel <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
-  if (!global_state.wifi_down && (loglevel <= syslog_level)) { Syslog(); }
+  if (Settings.flag.mqtt_enabled &&        // SetOption3 - Enable MQTT
+      !global_state.mqtt_down &&
+      (loglevel <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
+
+  if (!global_state.wifi_down &&
+      (loglevel <= syslog_level)) { Syslog(); }
+
+  prepped_loglevel = 0;
 }
 
 void AddLog_P(uint32_t loglevel, const char *formatP)
@@ -1662,6 +1720,16 @@ void AddLog_P(uint32_t loglevel, const char *formatP, const char *formatP2)
   snprintf_P(message, sizeof(message), formatP2);
   strncat(log_data, message, sizeof(log_data) - strlen(log_data) -1);
   AddLog(loglevel);
+}
+
+void PrepLog_P2(uint32_t loglevel, PGM_P formatP, ...)
+{
+  va_list arg;
+  va_start(arg, formatP);
+  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  va_end(arg);
+
+  prepped_loglevel = loglevel;
 }
 
 void AddLog_P2(uint32_t loglevel, PGM_P formatP, ...)

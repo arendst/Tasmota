@@ -1,7 +1,7 @@
 /*
   xdsp_07_SH1106.ino - Display Oled SH1106 support for Tasmota
 
-  Copyright (C) 2019  Theo Arends and Adafruit
+  Copyright (C) 2020  Theo Arends and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

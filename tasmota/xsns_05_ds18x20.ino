@@ -1,7 +1,7 @@
 /*
   xsns_05_ds18x20.ino - DS18x20 temperature sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -50,7 +50,9 @@ struct DS18X20STRUCT {
   float   temperature;
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_sensors = 0;
-uint8_t ds18x20_pin = 0;
+uint8_t ds18x20_pin = 0;           // Shelly GPIO3 input only
+uint8_t ds18x20_pin_out = 0;       // Shelly GPIO00 output only
+bool ds18x20_dual_mode = false;    // Single pin mode
 char ds18x20_types[12];
 #ifdef W1_PARASITE_POWER
 uint8_t ds18x20_sensor_curr = 0;
@@ -69,27 +71,44 @@ uint8_t onewire_last_family_discrepancy = 0;
 bool onewire_last_device_flag = false;
 unsigned char onewire_rom_id[8] = { 0 };
 
+/*------------------------------------------------------------------------------------------*/
+
 uint8_t OneWireReset(void)
 {
   uint8_t retries = 125;
 
-  //noInterrupts();
-  pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
-  do {
-    if (--retries == 0) {
-      return 0;
-    }
-    delayMicroseconds(2);
-  } while (!digitalRead(ds18x20_pin));
-  pinMode(ds18x20_pin, OUTPUT);
-  digitalWrite(ds18x20_pin, LOW);
-  delayMicroseconds(480);
-  pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
-  delayMicroseconds(70);
-  uint8_t r = !digitalRead(ds18x20_pin);
-  //interrupts();
-  delayMicroseconds(410);
-  return r;
+  if (!ds18x20_dual_mode) {
+    pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+    do {
+      if (--retries == 0) {
+        return 0;
+      }
+      delayMicroseconds(2);
+    } while (!digitalRead(ds18x20_pin));
+    pinMode(ds18x20_pin, OUTPUT);
+    digitalWrite(ds18x20_pin, LOW);
+    delayMicroseconds(480);
+    pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+    delayMicroseconds(70);
+    uint8_t r = !digitalRead(ds18x20_pin);
+    delayMicroseconds(410);
+    return r;
+  } else {
+    digitalWrite(ds18x20_pin_out, HIGH);
+    do {
+      if (--retries == 0) {
+        return 0;
+      }
+      delayMicroseconds(2);
+    } while (!digitalRead(ds18x20_pin));
+    digitalWrite(ds18x20_pin_out, LOW);
+    delayMicroseconds(480);
+    digitalWrite(ds18x20_pin_out, HIGH);
+    delayMicroseconds(70);
+    uint8_t r = !digitalRead(ds18x20_pin);
+    delayMicroseconds(410);
+    return r;
+  }
 }
 
 void OneWireWriteBit(uint8_t v)
@@ -98,28 +117,43 @@ void OneWireWriteBit(uint8_t v)
   static const uint8_t delay_high[2] = { 5, 55 };
 
   v &= 1;
-  //noInterrupts();
-  digitalWrite(ds18x20_pin, LOW);
-  pinMode(ds18x20_pin, OUTPUT);
-  delayMicroseconds(delay_low[v]);
-  digitalWrite(ds18x20_pin, HIGH);
-  //interrupts();
+  if (!ds18x20_dual_mode) {
+    digitalWrite(ds18x20_pin, LOW);
+    pinMode(ds18x20_pin, OUTPUT);
+    delayMicroseconds(delay_low[v]);
+    digitalWrite(ds18x20_pin, HIGH);
+  } else {
+    digitalWrite(ds18x20_pin_out, LOW);
+    delayMicroseconds(delay_low[v]);
+    digitalWrite(ds18x20_pin_out, HIGH);
+  }
   delayMicroseconds(delay_high[v]);
 }
 
-uint8_t OneWireReadBit(void)
+uint8_t OneWire1ReadBit(void)
 {
-  //noInterrupts();
   pinMode(ds18x20_pin, OUTPUT);
   digitalWrite(ds18x20_pin, LOW);
   delayMicroseconds(3);
   pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
   delayMicroseconds(10);
   uint8_t r = digitalRead(ds18x20_pin);
-  //interrupts();
   delayMicroseconds(53);
   return r;
 }
+
+uint8_t OneWire2ReadBit(void)
+{
+  digitalWrite(ds18x20_pin_out, LOW);
+  delayMicroseconds(3);
+  digitalWrite(ds18x20_pin_out, HIGH);
+  delayMicroseconds(10);
+  uint8_t r = digitalRead(ds18x20_pin);
+  delayMicroseconds(53);
+  return r;
+}
+
+/*------------------------------------------------------------------------------------------*/
 
 void OneWireWrite(uint8_t v)
 {
@@ -132,9 +166,17 @@ uint8_t OneWireRead(void)
 {
   uint8_t r = 0;
 
-  for (uint8_t bit_mask = 0x01; bit_mask; bit_mask <<= 1) {
-    if (OneWireReadBit()) {
-      r |= bit_mask;
+  if (!ds18x20_dual_mode) {
+    for (uint8_t bit_mask = 0x01; bit_mask; bit_mask <<= 1) {
+      if (OneWire1ReadBit()) {
+        r |= bit_mask;
+      }
+    }
+  } else {
+    for (uint8_t bit_mask = 0x01; bit_mask; bit_mask <<= 1) {
+      if (OneWire2ReadBit()) {
+        r |= bit_mask;
+      }
     }
   }
   return r;
@@ -178,9 +220,13 @@ uint8_t OneWireSearch(uint8_t *newAddr)
     }
     OneWireWrite(W1_SEARCH_ROM);
     do {
-      id_bit     = OneWireReadBit();
-      cmp_id_bit = OneWireReadBit();
-
+      if (!ds18x20_dual_mode) {
+        id_bit     = OneWire1ReadBit();
+        cmp_id_bit = OneWire1ReadBit();
+      } else {
+        id_bit     = OneWire2ReadBit();
+        cmp_id_bit = OneWire2ReadBit();
+      }
       if ((id_bit == 1) && (cmp_id_bit == 1)) {
         break;
       } else {
@@ -259,6 +305,13 @@ void Ds18x20Init(void)
   uint64_t ids[DS18X20_MAX_SENSORS];
 
   ds18x20_pin = pin[GPIO_DSB];
+
+  if (pin[GPIO_DSB_OUT] < 99) {
+    ds18x20_pin_out = pin[GPIO_DSB_OUT];
+    ds18x20_dual_mode = true;    // Dual pins mode as used by Shelly
+    pinMode(ds18x20_pin_out, OUTPUT);
+    pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+  }
 
   OneWireResetSearch();
 
@@ -388,6 +441,8 @@ void Ds18x20Name(uint8_t sensor)
 
 void Ds18x20EverySecond(void)
 {
+  if (!ds18x20_sensors) { return; }
+
 #ifdef W1_PARASITE_POWER
   // skip access if there is still an eeprom write ongoing
   unsigned long now = millis();

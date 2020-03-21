@@ -1,7 +1,7 @@
 /*
   support_udp.ino - Udp support for Tasmota
 
-  Copyright (C) 2019  Heiko Krupp and Theo Arends
+  Copyright (C) 2020  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ bool UdpDisconnect(void)
 
 bool UdpConnect(void)
 {
-  if (!udp_connected) {
+  if (!udp_connected && !restart_flag) {
     // Simple Service Discovery Protocol (SSDP)
     if (PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), 1900)) {
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
@@ -85,54 +85,62 @@ void PollUdp(void)
 //      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
 
       // Simple Service Discovery Protocol (SSDP)
-#ifdef USE_SCRIPT_HUE
-      if (!udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
+      if (Settings.flag2.emulation) {
+#if defined(USE_SCRIPT_HUE) || defined(USE_ZIGBEE)
+        if (!udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
 #else
-      if (devices_present && !udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
+        if (devices_present && !udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
 #endif
-        udp_response_mutex = true;
+          udp_response_mutex = true;
 
-        udp_remote_ip = PortUdp.remoteIP();
-        udp_remote_port = PortUdp.remotePort();
+          udp_remote_ip = PortUdp.remoteIP();
+          udp_remote_port = PortUdp.remotePort();
 
 //        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %s:%d\n%s"),
 //          udp_remote_ip.toString().c_str(), udp_remote_port, packet_buffer);
 
-        uint32_t response_delay = UDP_MSEARCH_SEND_DELAY + ((millis() &0x7) * 100);  // 1500 - 2200 msec
+          uint32_t response_delay = UDP_MSEARCH_SEND_DELAY + ((millis() &0x7) * 100);  // 1500 - 2200 msec
 
-        LowerCase(packet_buffer, packet_buffer);
-        RemoveSpace(packet_buffer);
+          LowerCase(packet_buffer, packet_buffer);
+          RemoveSpace(packet_buffer);
 
 #ifdef USE_EMULATION_WEMO
-        if (EMUL_WEMO == Settings.flag2.emulation) {
-          if (strstr_P(packet_buffer, URN_BELKIN_DEVICE) != nullptr) {     // type1 echo dot 2g, echo 1g's
-            TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 1);
-            return;
+          if (EMUL_WEMO == Settings.flag2.emulation) {
+            if (strstr_P(packet_buffer, URN_BELKIN_DEVICE) != nullptr) {     // type1 echo dot 2g, echo 1g's
+              TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 1);
+              return;
+            }
+            else if ((strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||  // type2 Echo 2g (echo & echo plus)
+                    (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
+                    (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
+              TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 2);
+              return;
+            }
           }
-          else if ((strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||  // type2 Echo 2g (echo & echo plus)
-                   (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
-                   (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
-            TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 2);
-            return;
-          }
-        }
 #endif  // USE_EMULATION_WEMO
 
 #ifdef USE_EMULATION_HUE
-        if (EMUL_HUE == Settings.flag2.emulation) {
-          if ((strstr_P(packet_buffer, PSTR(":device:basic:1")) != nullptr) ||
-              (strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||
-              (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
-              (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
-            TickerMSearch.attach_ms(response_delay, HueRespondToMSearch);
-            return;
+          if (EMUL_HUE == Settings.flag2.emulation) {
+            if ((strstr_P(packet_buffer, PSTR(":device:basic:1")) != nullptr) ||
+                (strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||
+                (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
+                (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
+              TickerMSearch.attach_ms(response_delay, HueRespondToMSearch);
+              return;
+            }
           }
-        }
 #endif  // USE_EMULATION_HUE
 
-        udp_response_mutex = false;
+          udp_response_mutex = false;
+          continue;
+        }
       }
 
+#ifdef USE_DEVICE_GROUPS
+      if (Settings.flag4.device_groups_enabled && !strncmp_P(packet_buffer, kDeviceGroupMessage, sizeof(DEVICE_GROUP_MESSAGE) - 1)) {
+        ProcessDeviceGroupMessage(packet_buffer, len);
+      }
+#endif  // USE_DEVICE_GROUPS
     }
     optimistic_yield(100);
   }

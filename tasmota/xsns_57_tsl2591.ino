@@ -1,7 +1,7 @@
 /*
   xsns_57_tsl2591.ino - TSL2591 light sensor support for Tasmota
 
-  Copyright (C) 2019  Markus Bösling and Theo Arends
+  Copyright (C) 2020  Markus Bösling and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

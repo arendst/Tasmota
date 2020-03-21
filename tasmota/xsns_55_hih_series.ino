@@ -1,7 +1,7 @@
 /*
   xsns_55_hih_series.ino - Honeywell HIH series temperature and humidity sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -96,30 +96,7 @@ void Hih6EverySecond(void)
 void Hih6Show(bool json)
 {
   if (Hih6.valid) {
-    char temperature[33];
-    dtostrfd(Hih6.temperature, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(Hih6.humidity, Settings.flag2.humidity_resolution, humidity);
-
-    if (json) {
-      ResponseAppend_P(JSON_SNS_TEMPHUM, Hih6.types, temperature, humidity);
-#ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
-        DomoticzTempHumSensor(temperature, humidity);
-      }
-#endif  // USE_DOMOTICZ
-#ifdef USE_KNX
-      if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, Hih6.temperature);
-        KnxSensor(KNX_HUMIDITY, Hih6.humidity);
-      }
-#endif  // USE_KNX
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, Hih6.types, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, Hih6.types, humidity);
-#endif  // USE_WEBSERVER
-    }
+    TempHumDewShow(json, (0 == tele_period), Hih6.types, Hih6.temperature, Hih6.humidity);
   }
 }
 

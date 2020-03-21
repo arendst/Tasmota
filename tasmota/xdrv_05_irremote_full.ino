@@ -1,7 +1,7 @@
 /*
   xdrv_05_irremote_full.ino - complete integration of IRremoteESP8266 for Tasmota
 
-  Copyright (C) 2019  Heiko Krupp, Lazar Obradovic, Theo Arends, Stephan Hadinger
+  Copyright (C) 2020  Heiko Krupp, Lazar Obradovic, Theo Arends, Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -280,7 +280,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   char parm_uc[12];
 
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received %s"), XdrvMailbox.data);
-  char dataBufUc[XdrvMailbox.data_len];
+  char dataBufUc[XdrvMailbox.data_len + 1];
   UpperCase(dataBufUc, XdrvMailbox.data);
   RemoveSpace(dataBufUc);
   if (strlen(dataBufUc) < 8) { return IE_INVALID_JSON; }
@@ -393,7 +393,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
   // ArduinoJSON entry used to calculate jsonBuf: JSON_OBJECT_SIZE(3) + 40 = 96
   // IRsend { "protocol": "RC5", "bits": 12, "data":"0xC86" }
   // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
-  char dataBufUc[XdrvMailbox.data_len];
+  char dataBufUc[XdrvMailbox.data_len + 1];
   UpperCase(dataBufUc, XdrvMailbox.data);
   RemoveSpace(dataBufUc);
   if (strlen(dataBufUc) < 8) { return IE_INVALID_JSON; }
@@ -605,10 +605,10 @@ void IrRemoteCmndResponse(uint32_t error)
 {
   switch (error) {
     case IE_INVALID_RAWDATA:
-      ResponseCmndChar(D_JSON_INVALID_RAWDATA);
+      ResponseCmndChar_P(PSTR(D_JSON_INVALID_RAWDATA));
       break;
     case IE_INVALID_JSON:
-      ResponseCmndChar(D_JSON_INVALID_JSON);
+      ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON));
       break;
     case IE_SYNTAX_IRSEND:
       Response_P(PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_NO " " D_JSON_IR_BITS " " D_JSON_OR " " D_JSON_IR_DATA "\"}"));
