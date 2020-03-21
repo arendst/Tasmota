@@ -473,8 +473,8 @@ struct SYSCFG {
 
   uint32_t      keeloq_master_msb;         // FBC
   uint32_t      keeloq_master_lsb;         // FC0
-  uint32_t      keeloq_serial;             // FC4
-  uint32_t      keeloq_count;              // FC8
+  uint32_t      rolling_code_serial;       // FC4
+  uint32_t      rolling_code_count;        // FC8
   uint32_t      device_group_share_in;     // FCC - Bitmask of device group items imported
   uint32_t      device_group_share_out;    // FD0 - Bitmask of device group items exported
   uint32_t      bootcount_reset_time;      // FD4

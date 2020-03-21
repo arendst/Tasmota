@@ -75,8 +75,8 @@ void CmdSet(void)
       DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("params: %08x %08x %08x %08x"), param[0], param[1], param[2], param[3]);
       Settings.keeloq_master_msb = param[0];
       Settings.keeloq_master_lsb = param[1];
-      Settings.keeloq_serial = param[2];
-      Settings.keeloq_count = param[3];
+      Settings.rolling_code_serial = param[2];
+      Settings.rolling_code_count = param[3];
 
       jaroliftDevice.serial = param[2];
       jaroliftDevice.count = param[3];
@@ -118,7 +118,7 @@ void CmdSendButton(void)
 
       CreateKeeloqPacket();
       jaroliftDevice.count++;
-      Settings.keeloq_count = jaroliftDevice.count;
+      Settings.rolling_code_count = jaroliftDevice.count;
 
       for(int repeat = 0; repeat <= 1; repeat++)
       {
@@ -256,8 +256,8 @@ void KeeloqInit()
   pinMode(jaroliftDevice.port_tx, OUTPUT);
   pinMode(jaroliftDevice.port_rx, INPUT_PULLUP);
 
-  jaroliftDevice.serial = Settings.keeloq_serial;
-  jaroliftDevice.count = Settings.keeloq_count;
+  jaroliftDevice.serial = Settings.rolling_code_serial;
+  jaroliftDevice.count = Settings.rolling_code_count;
   GenerateDeviceCryptKey();
 }
 

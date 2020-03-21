@@ -226,7 +226,8 @@ enum UserSelectablePins {
   GPIO_CC1101_GDO2,    // CC1101 pin for RX
   GPIO_HRXL_RX,       // Data from MaxBotix HRXL sonar range sensor
   GPIO_ELECTRIQ_MOODL_TX, // ElectriQ iQ-wifiMOODL Serial TX
-  GPIO_SENSOR_END };
+  GPIO_SENSOR_END,
+  GPIO_SOMFY_RTS_TX };
 
 // Programmer selectable GPIO functionality
 enum ProgramSelectablePins {
