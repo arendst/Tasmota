@@ -140,14 +140,14 @@ void CmdProg()
 
 void Cmd(byte cmdCode)
 {
-  //snprintf_P(svalue, ssvalue, PSTR("{\"Somfyup\":\"Command triggered\"}"));
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Sending using remote %08x. Current Somfy Rolling Code: %u"), Settings.rolling_code_serial, Settings.rolling_code_count);
   somfysetup();
   BuildFrame(frame, cmdCode);
   SendCommand(frame, 2);
   for(int i = 0; i<2; i++) {
     SendCommand(frame, 7);
   }
-  //PSTR("Sent using remote %x. Current Somfy Rolling Code: %u"), REMOTE, sysCfg.rollingCode);
+  ResponseCmndDone();
 }
 
 void CmdSomfySet(void)

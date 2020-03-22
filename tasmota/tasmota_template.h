@@ -226,8 +226,8 @@ enum UserSelectablePins {
   GPIO_CC1101_GDO2,    // CC1101 pin for RX
   GPIO_HRXL_RX,       // Data from MaxBotix HRXL sonar range sensor
   GPIO_ELECTRIQ_MOODL_TX, // ElectriQ iQ-wifiMOODL Serial TX
-  GPIO_SENSOR_END,
-  GPIO_SOMFY_RTS_TX };
+  GPIO_SOMFY_RTS_TX,  // Somfy RTS pin for tx
+  GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
 enum ProgramSelectablePins {
@@ -313,8 +313,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LE01MR_RX "|" D_SENSOR_LE01MR_TX "|"
   D_SENSOR_CC1101_GDO0 "|" D_SENSOR_CC1101_GDO2 "|"
   D_SENSOR_HRXL_RX "|"
-  D_SENSOR_ELECTRIQ_MOODL
-  ;
+  D_SENSOR_ELECTRIQ_MOODL "|"
+  D_SENSOR_SOMFY_RTS_TX;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_SPI_MISO "|" D_SENSOR_SPI_MOSI "|" D_SENSOR_SPI_CLK "|"
@@ -807,6 +807,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_HRXL
   GPIO_HRXL_RX,
+#endif
+#ifdef USE_SOMFY
+  GPIO_SOMFY_RTS_TX,
 #endif
 };
 
