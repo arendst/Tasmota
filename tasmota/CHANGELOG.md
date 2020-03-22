@@ -3,6 +3,7 @@
 ### 8.2.0.1 20200321
 
 - Change HM-10 sensor type detection and add features (#7962)
+- Add command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
 
 ## Released
 

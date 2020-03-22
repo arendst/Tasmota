@@ -105,9 +105,7 @@ public:
 
   // Add an endpoint to a device
   void addEndpoint(uint16_t shortaddr, uint8_t endpoint);
-
-  // Add cluster
-  void addCluster(uint16_t shortaddr, uint8_t endpoint, uint16_t cluster);
+  void clearEndpoints(uint16_t shortaddr);
 
   void setManufId(uint16_t shortaddr, const char * str);
   void setModelId(uint16_t shortaddr, const char * str);
@@ -121,6 +119,7 @@ public:
   // Dump json
   String dumpLightState(uint16_t shortaddr) const;
   String dump(uint32_t dump_mode, uint16_t status_shortaddr = 0) const;
+  int32_t deviceRestore(const JsonObject &json);
 
   // Hue support
   void setHueBulbtype(uint16_t shortaddr, int8_t bulbtype);
@@ -447,6 +446,20 @@ void Z_Devices::updateDevice(uint16_t shortaddr, uint64_t longaddr) {
     if (shortaddr || longaddr) {
       createDeviceEntry(shortaddr, longaddr);
     }
+  }
+}
+
+//
+// Clear all endpoints
+//
+void Z_Devices::clearEndpoints(uint16_t shortaddr) {
+  if (!shortaddr) { return; }
+  Z_Device &device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return; }                 // don't crash if not found
+
+  for (uint32_t i = 0; i < endpoints_max; i++) {
+    device.endpoints[i] = 0;
+    // no dirty here because it doesn't make sense to store it, does it?
   }
 }
 
@@ -994,6 +1007,9 @@ String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
       if (device.modelId) {
         dev[F(D_JSON_MODEL D_JSON_ID)] = device.modelId;
       }
+      if (-1 != device.bulbtype) {
+        dev[F(D_JSON_ZIGBEE_LIGHT)] = device.bulbtype;   // sign extend, 0xFF changed as -1
+      }
       if (device.manufacturerId) {
         dev[F("Manufacturer")] = device.manufacturerId;
       }
@@ -1011,6 +1027,79 @@ String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
   payload.reserve(200);
   json.printTo(payload);
   return payload;
+}
+
+// Restore a single device configuration based on json export
+// Input: json element as expported by `ZbStatus2``
+// Mandatory attribue: `Device`
+//
+// Returns:
+//  0 : Ok
+// <0 : Error
+//
+// Ex: {"Device":"0x5ADF","Name":"IKEA_Light","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"]}
+int32_t Z_Devices::deviceRestore(const JsonObject &json) {
+
+  // params
+  uint16_t device = 0x0000;                 // 0x0000 is coordinator so considered invalid
+  uint64_t ieeeaddr = 0x0000000000000000LL; // 0 means unknown
+  const char * modelid = nullptr;
+  const char * manufid = nullptr;
+  const char * friendlyname = nullptr;
+  int8_t   bulbtype = 0xFF;
+  size_t   endpoints_len = 0;
+
+  // read mandatory "Device"
+  const JsonVariant &val_device = getCaseInsensitive(json, PSTR("Device"));
+  if (nullptr != &val_device) {
+    device = strToUInt(val_device);
+  } else {
+    return -1;        // missing "Device" attribute
+  }
+
+  // read "IEEEAddr" 64 bits in format "0x0000000000000000"
+  const JsonVariant &val_ieeeaddr = getCaseInsensitive(json, PSTR("IEEEAddr"));
+  if (nullptr != &val_ieeeaddr) {
+    ieeeaddr = strtoull(val_ieeeaddr.as<const char*>(), nullptr, 0);
+  }
+
+  // read "Name"
+  friendlyname = getCaseInsensitiveConstCharNull(json, PSTR("Name"));
+
+  // read "ModelId"
+  modelid = getCaseInsensitiveConstCharNull(json, PSTR("ModelId"));
+
+  // read "Manufacturer"
+  manufid = getCaseInsensitiveConstCharNull(json, PSTR("Manufacturer"));
+
+  // read "Light"
+  const JsonVariant &val_bulbtype = getCaseInsensitive(json, PSTR(D_JSON_ZIGBEE_LIGHT));
+  if (nullptr != &val_bulbtype) { bulbtype = strToUInt(val_bulbtype);; }
+
+  // update internal device information
+  updateDevice(device, ieeeaddr);
+  if (modelid) { setModelId(device, modelid); }
+  if (manufid) { setManufId(device, manufid); }
+  if (friendlyname) { setFriendlyName(device, friendlyname); }
+  if (&val_bulbtype) { setHueBulbtype(device, bulbtype); }
+
+  // read "Endpoints"
+  const JsonVariant &val_endpoints = getCaseInsensitive(json, PSTR("Endpoints"));
+  if ((nullptr != &val_endpoints) && (val_endpoints.is<JsonArray>())) {
+    const JsonArray &arr_ep = val_endpoints.as<const JsonArray&>();
+    endpoints_len = arr_ep.size();
+    clearEndpoints(device);     // clear even if array is empty
+    if (endpoints_len) {
+      for (auto ep_elt : arr_ep) {
+        uint8_t ep = strToUInt(ep_elt);
+        if (ep) {
+          addEndpoint(device, ep);
+        }
+      }
+    }
+  }
+
+  return 0;
 }
 
 #endif // USE_ZIGBEE
