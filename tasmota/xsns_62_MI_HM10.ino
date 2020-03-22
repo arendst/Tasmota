@@ -1007,10 +1007,16 @@ void HM10StatusInfo(){
  * 
  */
 
-void HM10EverySecond(){
+void HM10EverySecond(bool restart){
   static uint32_t _counter = 0;
   static uint32_t _nextSensorSlot = 0;
   static uint32_t _lastDiscovery = 0;
+
+  if(restart){
+    _counter = 0;
+    _lastDiscovery = 0;
+    return;
+  }
 
   if(HM10.firmware == 0) return;
   if(HM10.mode.pending_task == 1) return;
@@ -1076,7 +1082,13 @@ bool HM10Cmd(void) {
     switch (command_code) {
       case CMND_HM10_PERIOD:
         if (XdrvMailbox.data_len > 0) {
-          HM10.period = XdrvMailbox.payload;
+          if (XdrvMailbox.payload==1) {
+            HM10EverySecond(true);
+            XdrvMailbox.payload = HM10.period;
+            }
+          else {
+            HM10.period = XdrvMailbox.payload;
+          }
         }
         else {
           XdrvMailbox.payload = HM10.period;
@@ -1122,6 +1134,7 @@ bool HM10Cmd(void) {
         break;
       case CMND_HM10_PAGE:
         if (XdrvMailbox.data_len > 0) {
+            if (XdrvMailbox.payload == 0) XdrvMailbox.payload = HM10.perPage; // ignore 0
             HM10.perPage = XdrvMailbox.payload;
           }
         else XdrvMailbox.payload = HM10.perPage;
@@ -1300,7 +1313,7 @@ bool Xsns62(uint8_t function)
         }
         break;
       case FUNC_EVERY_SECOND:
-        HM10EverySecond();
+        HM10EverySecond(false);
         break;
       case FUNC_COMMAND:
         result = HM10Cmd();
