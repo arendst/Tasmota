@@ -55,3 +55,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 ### Version 8.2.0.1
 
 - Change HM-10 sensor type detection and add features (#7962)
+- Change GPIO initialization solving possible Relay toggle on (OTA) restart
+- Add command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``

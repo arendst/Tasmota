@@ -694,6 +694,7 @@ void WifiShutdown(bool option = false)
 
 void EspRestart(void)
 {
+  ResetPwm();
   WifiShutdown(true);
   CrashDumpClear();           // Clear the stack dump in RTC
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
