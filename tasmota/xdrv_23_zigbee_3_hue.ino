@@ -130,6 +130,7 @@ void ZigbeeHuePower(uint16_t shortaddr, uint8_t power) {
 
 // Dimmer
 void ZigbeeHueDimmer(uint16_t shortaddr, uint8_t dimmer) {
+  if (dimmer > 0xFE) { dimmer = 0xFE; }
   char param[8];
   snprintf_P(param, sizeof(param), PSTR("%02X0A00"), dimmer);
   zigbeeZCLSendStr(shortaddr, 0, 0, true, 0x0008, 0x04, param);
@@ -138,6 +139,7 @@ void ZigbeeHueDimmer(uint16_t shortaddr, uint8_t dimmer) {
 
 // CT
 void ZigbeeHueCT(uint16_t shortaddr, uint16_t ct) {
+  if (ct > 0xFEFF) { ct = 0xFEFF; }
   AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeHueCT 0x%04X - %d"), shortaddr, ct);
   char param[12];
   snprintf_P(param, sizeof(param), PSTR("%02X%02X0A00"), ct & 0xFF, ct >> 8);
@@ -149,6 +151,8 @@ void ZigbeeHueCT(uint16_t shortaddr, uint16_t ct) {
 // XY
 void ZigbeeHueXY(uint16_t shortaddr, uint16_t x, uint16_t y) {
   char param[16];
+  if (x > 0xFEFF) { x = 0xFEFF; }
+  if (y > 0xFEFF) { y = 0xFEFF; }
   snprintf_P(param, sizeof(param), PSTR("%02X%02X%02X%02X0A00"), x & 0xFF, x >> 8, y & 0xFF, y >> 8);
   uint8_t colormode = 1;      // "xy"
   zigbeeZCLSendStr(shortaddr, 0, 0, true, 0x0300, 0x07, param);
@@ -159,6 +163,7 @@ void ZigbeeHueXY(uint16_t shortaddr, uint16_t x, uint16_t y) {
 void ZigbeeHueHS(uint16_t shortaddr, uint16_t hue, uint8_t sat) {
   char param[16];
   uint8_t hue8 = changeUIntScale(hue, 0, 360, 0, 254);
+  if (sat > 0xFE) { sat = 0xFE; }
   snprintf_P(param, sizeof(param), PSTR("%02X%02X0A00"), hue8, sat);
   uint8_t colormode = 0;      // "hs"
   zigbeeZCLSendStr(shortaddr, 0, 0, true, 0x0300, 0x06, param);
