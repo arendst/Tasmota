@@ -196,6 +196,7 @@ void initPins(void) {
   U0IE = 0;
   U1IE = 0;
 
+/*
   for (int i = 0; i <= 5; ++i) {
     pinMode(i, INPUT);
   }
@@ -203,6 +204,7 @@ void initPins(void) {
   for (int i = 12; i <= 16; ++i) {
     pinMode(i, INPUT);
   }
+*/
 
   ETS_GPIO_INTR_ATTACH(interrupt_handler, &interrupt_reg);
   ETS_GPIO_INTR_ENABLE();
