@@ -35,7 +35,7 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ "|" D_CMND_ZIGBEEZNPRECEIVE "|"
   D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|"
   D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID "|"
-  D_CMND_ZIGBEE_LIGHT
+  D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_RESTORE
   ;
 
 void (* const ZigbeeCommand[])(void) PROGMEM = {
@@ -44,7 +44,7 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbProbe, &CmndZbRead, &CmndZbZNPReceive,
   &CmndZbForget, &CmndZbSave, &CmndZbName,
   &CmndZbBind, &CmndZbPing, &CmndZbModelId,
-  &CmndZbLight,
+  &CmndZbLight, CmndZbRestore,
   };
 
 int32_t ZigbeeProcessInput(class SBuffer &buf) {
@@ -787,6 +787,60 @@ void CmndZbSave(void) {
 
   saveZigbeeDevices();
 
+  ResponseCmndDone();
+}
+
+
+// Restore a device configuration previously exported via `ZbStatus2``
+// Format:
+// Either the entire `ZbStatus3` export, or an array or just the device configuration.
+// If array, if can contain multiple devices
+//   ZbRestore {"ZbStatus3":[{"Device":"0x5ADF","Name":"Petite_Lampe","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"]}]}
+//   ZbRestore [{"Device":"0x5ADF","Name":"Petite_Lampe","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"]}]
+//   ZbRestore {"Device":"0x5ADF","Name":"Petite_Lampe","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"]}
+void CmndZbRestore(void) {
+  if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+  DynamicJsonBuffer jsonBuf;
+  const JsonVariant json_parsed = jsonBuf.parse((const char*)XdrvMailbox.data);   // const to force a copy of parameter
+  const JsonVariant * json = &json_parsed;    // root of restore, to be changed if needed
+  bool success = false;
+
+  // check if parsing succeeded
+  if (json_parsed.is<JsonObject>()) {
+    success = json_parsed.as<const JsonObject&>().success();
+  } else if (json_parsed.is<JsonArray>()) {
+    success = json_parsed.as<const JsonArray&>().success();
+  }
+  if (!success) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
+
+  // Check is root contains `ZbStatus<x>` key, if so change the root
+  const JsonVariant * zbstatus = &startsWithCaseInsensitive(*json, PSTR("ZbStatus"));
+  if (nullptr != zbstatus) {
+    json = zbstatus;
+  }
+
+  // check if the root is an array
+  if (json->is<JsonArray>()) {
+    const JsonArray& arr = json->as<const JsonArray&>();
+    for (auto elt : arr) {
+      // call restore on each item
+      int32_t res = zigbee_devices.deviceRestore(elt);
+      if (res < 0) {
+        ResponseCmndChar_P(PSTR("Restore failed"));
+        return;
+      }
+    }
+  } else if (json->is<JsonObject>()) {
+    int32_t res = zigbee_devices.deviceRestore(*json);
+    if (res < 0) {
+      ResponseCmndChar_P(PSTR("Restore failed"));
+      return;
+    }
+    // call restore on a single object
+  } else {
+    ResponseCmndChar_P(PSTR("Missing parameters"));
+    return;
+  }
   ResponseCmndDone();
 }
 

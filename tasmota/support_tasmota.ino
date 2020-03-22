@@ -1297,6 +1297,18 @@ void SerialInput(void)
 
 /********************************************************************************************/
 
+void ResetPwm(void)
+{
+  for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
+    if (pin[GPIO_PWM1 +i] < 99) {
+      analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range : 0);
+//      analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
+    }
+  }
+}
+
+/********************************************************************************************/
+
 void GpioInit(void)
 {
   uint32_t mpin;
@@ -1505,6 +1517,17 @@ void GpioInit(void)
 #ifdef ROTARY_V1
   RotaryInit();
 #endif
+
+  // Set any non-used GPIO to INPUT
+  for (uint32_t i = 0; i < sizeof(my_module.io); i++) {
+    mpin = ValidPin(i, my_module.io[i]);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
+    if (((i < 6) || (i > 11)) && (0 == mpin)) {  // Skip SPI flash interface
+      if (!((1 == i) || (3 == i))) {             // Skip serial
+        pinMode(i, INPUT);
+      }
+    }
+  }
 
   SetLedPower(Settings.ledstate &8);
   SetLedLink(Settings.ledstate &8);
