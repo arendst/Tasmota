@@ -756,7 +756,8 @@ void CmndZbLight(void) {
 
   if (p) {
     int8_t bulbtype = strtol(p, nullptr, 10);
-    if (bulbtype > 5) { bulbtype = 5; }
+    if (bulbtype > 5)  { bulbtype = 5; }
+    if (bulbtype < -1) { bulbtype = -1; }
     zigbee_devices.setHueBulbtype(shortaddr, bulbtype);
   }
   String dump = zigbee_devices.dumpLightState(shortaddr);
