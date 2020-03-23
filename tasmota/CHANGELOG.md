@@ -5,6 +5,7 @@
 - Change HM-10 sensor type detection and add features (#7962)
 - Change GPIO initialization solving possible Relay toggle on (OTA) restart
 - Add command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
+- Fix Zigbee sending wrong Sat value with Hue emulation
 
 ## Released
 
