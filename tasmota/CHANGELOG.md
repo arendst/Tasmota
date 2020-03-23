@@ -4,14 +4,14 @@
 
 - Change HM-10 sensor type detection and add features (#7962)
 - Change GPIO initialization solving possible Relay toggle on (OTA) restart
-- Add command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
 - Fix Zigbee sending wrong Sat value with Hue emulation
+- Add command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
 
 ## Released
 
 ### 8.2.0 20200321
 
-- Release
+- Release Elliot
 
 ### 8.1.0.11 20200313
 
@@ -134,7 +134,7 @@
 
 ### 8.1.0 20191225
 
-- Release
+- Release Doris
 
 ### 8.0.0.3 20191224
 
@@ -160,7 +160,7 @@
 
 ### 7.2.0 20191221
 
-- Release
+- Release Constance
 - Change basic version string to lite (#7291)
 - Fix Arduino IDE compile error (#7277)
 - Fix restore ShutterAccuracy, MqttLog, WifiConfig, WifiPower and SerialConfig (#7281)
@@ -243,7 +243,7 @@
 
 ### 7.1.0 20191129
 
-- Release
+- Release Doris
 
 ### 7.0.0.6 20191122
 
@@ -312,7 +312,7 @@
 
 ### 6.7.1 20191026
 
-- Release
+- Release Allison
 - Fix on energy monitoring devices using PowerDelta Exception0 with epc1:0x4000dce5 = Divide by zero (#6750)
 - Fix Script array bug (#6751)
 
