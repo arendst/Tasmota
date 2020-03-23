@@ -1007,7 +1007,7 @@ String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
       if (device.modelId) {
         dev[F(D_JSON_MODEL D_JSON_ID)] = device.modelId;
       }
-      if (-1 != device.bulbtype) {
+      if (device.bulbtype >= 0) {
         dev[F(D_JSON_ZIGBEE_LIGHT)] = device.bulbtype;   // sign extend, 0xFF changed as -1
       }
       if (device.manufacturerId) {
