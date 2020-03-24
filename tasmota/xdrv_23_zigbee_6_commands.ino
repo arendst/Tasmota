@@ -19,6 +19,10 @@
 
 #ifdef USE_ZIGBEE
 
+/*********************************************************************************************\
+ * ZCL Command Structures
+\*********************************************************************************************/
+
 typedef struct Z_CommandConverter {
   const char * tasmota_cmd;
   uint16_t     cluster;
@@ -130,6 +134,9 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z(GetSceneMembership),0x0005, 0x06, 0x82,Z(xxyyzzzz) },     // specific
 };
 
+/*********************************************************************************************\
+ * ZCL Read Light status based on cluster number
+\*********************************************************************************************/
 #define ZLE(x) ((x) & 0xFF), ((x) >> 8)     // Little Endian
 
 // Below are the attributes we wand to read from each cluster

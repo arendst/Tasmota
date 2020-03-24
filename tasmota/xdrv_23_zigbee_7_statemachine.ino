@@ -20,7 +20,7 @@
 #ifdef USE_ZIGBEE
 
 // Status code used for ZigbeeStatus MQTT message
-// Ex: {"ZigbeeStatus":{"Status": 3,"Message":"Configured, starting coordinator"}}
+// Ex: {"ZbStatus":{"Status": 3,"Message":"Configured, starting coordinator"}}
 const uint8_t  ZIGBEE_STATUS_OK = 0;                    // Zigbee started and working
 const uint8_t  ZIGBEE_STATUS_BOOT = 1;                  // CC2530 booting
 const uint8_t  ZIGBEE_STATUS_RESET_CONF = 2;            // Resetting CC2530 configuration
@@ -33,7 +33,6 @@ const uint8_t  ZIGBEE_STATUS_NODE_DESC = 31;            // Node descriptor
 const uint8_t  ZIGBEE_STATUS_ACTIVE_EP = 32;            // Endpoints descriptor
 const uint8_t  ZIGBEE_STATUS_SIMPLE_DESC = 33;          // Simple Descriptor (clusters)
 const uint8_t  ZIGBEE_STATUS_DEVICE_INDICATION = 34;    // Device announces its address
-//const uint8_t  ZIGBEE_STATUS_DEVICE_IEEE = 35;          // Request of device address
 const uint8_t  ZIGBEE_STATUS_CC_VERSION = 50;           // Status: CC2530 ZNP Version
 const uint8_t  ZIGBEE_STATUS_CC_INFO = 51;              // Status: CC2530 Device Configuration
 const uint8_t  ZIGBEE_STATUS_UNSUPPORTED_VERSION = 98;  // Unsupported ZNP version
@@ -50,9 +49,6 @@ typedef union Zigbee_Instruction {
   } i;
   const void *p;              // pointer
 } Zigbee_Instruction;
-//
-// Zigbee_Instruction z1 = { .i = {1,2,3}};
-// Zigbee_Instruction z3 = { .p = nullptr };
 
 typedef struct Zigbee_Instruction_Type {
   uint8_t instr;
@@ -488,7 +484,6 @@ void ZigbeeStateMachine_Run(void) {
   if (zigbee.state_waiting) {     // state machine is waiting for external event or timeout
     // checking if timeout expired
     if ((zigbee.next_timeout) && (now > zigbee.next_timeout)) {    // if next_timeout == 0 then wait forever
-      //AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "timeout occured pc=%d"), zigbee.pc);
       if (!zigbee.state_no_timeout) {
         AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "timeout, goto label %d"), zigbee.on_timeout_goto);
         ZigbeeGotoLabel(zigbee.on_timeout_goto);
@@ -505,7 +500,6 @@ void ZigbeeStateMachine_Run(void) {
     zigbee.recv_until  = false;
     zigbee.state_no_timeout = false;   // reset the no_timeout for next instruction
 
-// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeStateMachine_Run PC = %d, Mem1 = %d"), zigbee.pc, ESP.getFreeHeap());
     if (zigbee.pc > (sizeof(zb_prog)/sizeof(zb_prog[0]))) {
       AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Invalid pc: %d, aborting"), zigbee.pc);
       zigbee.pc = -1;
@@ -516,7 +510,6 @@ void ZigbeeStateMachine_Run(void) {
     }
 
     // load current instruction details
-    //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Executing instruction pc=%d"), zigbee.pc);
     const Zigbee_Instruction *cur_instr_line = &zb_prog[zigbee.pc];
     cur_instr = pgm_read_byte(&cur_instr_line->i.i);
     cur_d8    = pgm_read_byte(&cur_instr_line->i.d8);
@@ -553,7 +546,6 @@ void ZigbeeStateMachine_Run(void) {
       case ZGB_INSTR_WAIT_FOREVER:
         zigbee.next_timeout = 0;
         zigbee.state_waiting = true;
-        //zigbee.state_no_timeout = true;    // do not generate a timeout error when waiting is done
         break;
       case ZGB_INSTR_STOP:
         zigbee.state_machine = false;
@@ -614,6 +606,84 @@ void ZigbeeStateMachine_Run(void) {
         zigbee.state_waiting = true;
         break;
     }
+  }
+}
+
+//
+// Process a bytes buffer and call any callback that matches the received message
+//
+int32_t ZigbeeProcessInput(class SBuffer &buf) {
+  if (!zigbee.state_machine) { return -1; }     // if state machine is stopped, send 'ignore' message
+
+  // apply the receive filter, acts as 'startsWith()'
+  bool recv_filter_match = true;
+  bool recv_prefix_match = false;      // do the first 2 bytes match the response
+  if ((zigbee.recv_filter) && (zigbee.recv_filter_len > 0)) {
+    if (zigbee.recv_filter_len >= 2) {
+      recv_prefix_match = false;
+      if ( (pgm_read_byte(&zigbee.recv_filter[0]) == buf.get8(0)) &&
+           (pgm_read_byte(&zigbee.recv_filter[1]) == buf.get8(1)) ) {
+        recv_prefix_match = true;
+      }
+    }
+
+    for (uint32_t i = 0; i < zigbee.recv_filter_len; i++) {
+      if (pgm_read_byte(&zigbee.recv_filter[i]) != buf.get8(i)) {
+        recv_filter_match = false;
+        break;
+      }
+    }
+  }
+
+  // if there is a recv_callback, call it now
+  int32_t res = -1;         // default to ok
+                            // res  =  0   - proceed to next state
+                            // res  >  0   - proceed to the specified state
+                            // res  = -1  - silently ignore the message
+                            // res <= -2 - move to error state
+  // pre-compute the suggested value
+  if ((zigbee.recv_filter) && (zigbee.recv_filter_len > 0)) {
+    if (!recv_prefix_match) {
+      res = -1;    // ignore
+    } else {  // recv_prefix_match
+      if (recv_filter_match) {
+        res = 0;     // ok
+      } else {
+        if (zigbee.recv_until) {
+          res = -1;  // ignore until full match
+        } else {
+          res = -2;  // error, because message is expected but wrong value
+        }
+      }
+    }
+  } else {    // we don't have any filter, ignore message by default
+    res = -1;
+  }
+
+  if (recv_prefix_match) {
+    if (zigbee.recv_func) {
+      res = (*zigbee.recv_func)(res, buf);
+    }
+  }
+  if (-1 == res) {
+    // if frame was ignored up to now
+    if (zigbee.recv_unexpected) {
+      res = (*zigbee.recv_unexpected)(res, buf);
+    }
+  }
+
+  // change state accordingly
+  if (0 == res) {
+    // if ok, continue execution
+    zigbee.state_waiting = false;
+  } else if (res > 0) {
+    ZigbeeGotoLabel(res);     // if >0 then go to specified label
+  } else if (-1 == res) {
+    // -1 means ignore message
+    // just do nothing
+  } else {
+    // any other negative value means error
+    ZigbeeGotoLabel(zigbee.on_error_goto);
   }
 }
 

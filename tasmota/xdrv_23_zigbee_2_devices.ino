@@ -26,7 +26,9 @@
 #endif
 const uint16_t kZigbeeSaveDelaySeconds = ZIGBEE_SAVE_DELAY_SECONDS;    // wait for x seconds
 
-typedef int32_t (*Z_DeviceTimer)(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value);
+/*********************************************************************************************\
+ * Structures for device configuration
+\*********************************************************************************************/
 
 const size_t endpoints_max = 8;         // we limit to 8 endpoints
 
@@ -53,6 +55,12 @@ typedef struct Z_Device {
   uint16_t              x, y;           // last color [x,y]
 } Z_Device;
 
+/*********************************************************************************************\
+ * Structures for deferred callbacks
+\*********************************************************************************************/
+
+typedef int32_t (*Z_DeviceTimer)(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value);
+
 // Category for Deferred actions, this allows to selectively remove active deferred or update them
 typedef enum Z_Def_Category {
   Z_CAT_NONE = 0,             // no category, it will happen anyways
@@ -75,6 +83,10 @@ typedef struct Z_Deferred {
   uint32_t              value;          // any raw value to use for the timer
   Z_DeviceTimer         func;           // function to call when timer occurs
 } Z_Deferred;
+
+/*********************************************************************************************\
+ * Singleton for device configuration
+\*********************************************************************************************/
 
 // All devices are stored in a Vector
 // Invariants:
@@ -190,12 +202,21 @@ private:
   // Create a new entry in the devices list - must be called if it is sure it does not already exist
   Z_Device & createDeviceEntry(uint16_t shortaddr, uint64_t longaddr = 0);
   void freeDeviceEntry(Z_Device *device);
+
+  void setStringAttribute(char*& attr, const char * str);
 };
 
+/*********************************************************************************************\
+ * Singleton variable
+\*********************************************************************************************/
 Z_Devices zigbee_devices = Z_Devices();
 
 // Local coordinator information
 uint64_t localIEEEAddr = 0;
+
+/*********************************************************************************************\
+ * Implementation
+\*********************************************************************************************/
 
 // https://thispointer.com/c-how-to-find-an-element-in-vector-and-get-its-index/
 template < typename T>
@@ -493,73 +514,55 @@ uint8_t Z_Devices::findFirstEndpoint(uint16_t shortaddr) const {
   return device.endpoints[0];   // returns 0x00 if no endpoint
 }
 
-void Z_Devices::setManufId(uint16_t shortaddr, const char * str) {
-  Z_Device & device = getShortAddr(shortaddr);
-  if (&device == nullptr) { return; }                 // don't crash if not found
+void Z_Devices::setStringAttribute(char*& attr, const char * str) {
   size_t str_len = str ? strlen(str) : 0;             // len, handle both null ptr and zero length string
 
-  if ((!device.manufacturerId) && (0 == str_len)) { return; } // if both empty, don't do anything
-  if (device.manufacturerId) {
+  if ((nullptr == attr) && (0 == str_len)) { return; } // if both empty, don't do anything
+  if (attr) {
     // we already have a value
-    if (strcmp(device.manufacturerId, str) != 0) {
+    if (strcmp(attr, str) != 0) {
       // new value
-      free(device.manufacturerId);      // free previous value
-      device.manufacturerId = nullptr;
+      free(attr);      // free previous value
+      attr = nullptr;
     } else {
       return;        // same value, don't change anything
     }
   }
   if (str_len) {
-    device.manufacturerId = (char*) malloc(str_len + 1);
-    strlcpy(device.manufacturerId, str, str_len + 1);
+    attr = (char*) malloc(str_len + 1);
+    strlcpy(attr, str, str_len + 1);
   }
   dirty();
+}
+
+//
+// Sets the ManufId for a device.
+// No action taken if the device does not exist.
+// Inputs:
+// - shortaddr: 16-bits short address of the device. No action taken if the device is unknown
+// - str:       string pointer, if nullptr it is considered as empty string
+// Impact:
+// - Any actual change in ManufId (i.e. setting a different value) triggers a `dirty()` and saving to Flash
+//
+void Z_Devices::setManufId(uint16_t shortaddr, const char * str) {
+  Z_Device & device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return; }                 // don't crash if not found
+
+  setStringAttribute(device.manufacturerId, str);
 }
 
 void Z_Devices::setModelId(uint16_t shortaddr, const char * str) {
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
-  size_t str_len = str ? strlen(str) : 0;             // len, handle both null ptr and zero length string
 
-  if ((!device.modelId) && (0 == str_len)) { return; } // if both empty, don't do anything
-  if (device.modelId) {
-    // we already have a value
-    if (strcmp(device.modelId, str) != 0) {
-      // new value
-      free(device.modelId);      // free previous value
-      device.modelId = nullptr;
-    } else {
-      return;        // same value, don't change anything
-    }
-  }
-  if (str_len) {
-    device.modelId = (char*) malloc(str_len + 1);
-    strlcpy(device.modelId, str, str_len + 1);
-  }
-  dirty();
+  setStringAttribute(device.modelId, str);
 }
 
 void Z_Devices::setFriendlyName(uint16_t shortaddr, const char * str) {
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
-  size_t str_len = str ? strlen(str) : 0;             // len, handle both null ptr and zero length string
 
-  if ((!device.friendlyName) && (0 == str_len)) { return; } // if both empty, don't do anything
-  if (device.friendlyName) {
-    // we already have a value
-    if (strcmp(device.friendlyName, str) != 0) {
-      // new value
-      free(device.friendlyName);      // free previous value
-      device.friendlyName = nullptr;
-    } else {
-      return;        // same value, don't change anything
-    }
-  }
-  if (str_len) {
-    device.friendlyName = (char*) malloc(str_len + 1);
-    strlcpy(device.friendlyName, str, str_len + 1);
-  }
-  dirty();
+  setStringAttribute(device.friendlyName, str);
 }
 
 const char * Z_Devices::getFriendlyName(uint16_t shortaddr) const {
