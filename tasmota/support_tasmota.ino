@@ -1433,6 +1433,18 @@ void GpioInit(void)
   soft_spi_flg = ((pin[GPIO_SSPI_CS] < 99) && (pin[GPIO_SSPI_SCLK] < 99) && ((pin[GPIO_SSPI_MOSI] < 99) || (pin[GPIO_SSPI_MOSI] < 99)));
 #endif  // USE_SPI
 
+  // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
+  // Doing it here solves relay toggles at restart.
+  for (uint32_t i = 0; i < sizeof(my_module.io); i++) {
+    mpin = ValidPin(i, my_module.io[i]);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
+    if (((i < 6) || (i > 11)) && (0 == mpin)) {  // Skip SPI flash interface
+      if (!((1 == i) || (3 == i))) {             // Skip serial
+        pinMode(i, INPUT);
+      }
+    }
+  }
+
 #ifdef USE_I2C
   i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));
   if (i2c_flg) {
@@ -1517,17 +1529,6 @@ void GpioInit(void)
 #ifdef ROTARY_V1
   RotaryInit();
 #endif
-
-  // Set any non-used GPIO to INPUT
-  for (uint32_t i = 0; i < sizeof(my_module.io); i++) {
-    mpin = ValidPin(i, my_module.io[i]);
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
-    if (((i < 6) || (i > 11)) && (0 == mpin)) {  // Skip SPI flash interface
-      if (!((1 == i) || (3 == i))) {             // Skip serial
-        pinMode(i, INPUT);
-      }
-    }
-  }
 
   SetLedPower(Settings.ledstate &8);
   SetLedLink(Settings.ledstate &8);
