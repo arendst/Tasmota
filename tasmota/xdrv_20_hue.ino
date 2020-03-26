@@ -298,7 +298,7 @@ void HueLightStatus1(uint8_t device, String *response)
       prev_x_str[0] = prev_y_str[0] = 0;
     }
 
-    hue = changeUIntScale(hue, 0, 359, 0, 65535);
+    hue = changeUIntScale(hue, 0, 360, 0, 65535);
     if ((hue > prev_hue ? hue - prev_hue : prev_hue - hue) < 400) {
       hue = prev_hue;
     } else {  // if hue was changed outside of Alexa, reset xy
@@ -598,7 +598,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       uint8_t rr,gg,bb;
       LightStateClass::XyToRgb(x, y, &rr, &gg, &bb);
       LightStateClass::RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
-      prev_hue = changeUIntScale(hue, 0, 359, 0, 65535);  // calculate back prev_hue
+      prev_hue = changeUIntScale(hue, 0, 360, 0, 65535);  // calculate back prev_hue
       prev_sat = (sat > 254 ? 254 : sat);
       //AddLog_P2(LOG_LEVEL_DEBUG_MORE, "XY RGB (%d %d %d) HS (%d %d)", rr,gg,bb,hue,sat);
       if (resp) { response += ","; }
@@ -619,8 +619,8 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
                  device_id, "hue", hue);
       response += buf;
       if (LST_RGB <= Light.subtype) {
-        // change range from 0..65535 to 0..359
-        hue = changeUIntScale(hue, 0, 65535, 0, 359);
+        // change range from 0..65535 to 0..360
+        hue = changeUIntScale(hue, 0, 65535, 0, 360);
         g_gotct = false;
         change = true;
       }
