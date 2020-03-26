@@ -388,6 +388,31 @@ int32_t Z_BindRsp(int32_t res, const class SBuffer &buf) {
 
   return -1;
 }
+//
+// Handle Unbind Rsp incoming message
+//
+int32_t Z_UnbindRsp(int32_t res, const class SBuffer &buf) {
+  Z_ShortAddress    nwkAddr = buf.get16(2);
+  uint8_t           status = buf.get8(4);
+
+  const char * friendlyName = zigbee_devices.getFriendlyName(nwkAddr);
+  if (friendlyName) {
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_UNBIND "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""
+                    ",\"" D_JSON_ZIGBEE_NAME "\":\"%s\""
+                    ",\"" D_JSON_ZIGBEE_STATUS "\":%d"
+                    ",\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"%s\""
+                    "}}"), nwkAddr, friendlyName, status, getZigbeeStatusMessage(status).c_str());
+  } else {
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_UNBIND "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""
+                    ",\"" D_JSON_ZIGBEE_STATUS "\":%d"
+                    ",\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"%s\""
+                    "}}"), nwkAddr, status, getZigbeeStatusMessage(status).c_str());
+  }
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+  XdrvRulesProcess();
+
+  return -1;
+}
 
 /*********************************************************************************************\
  * Send specific ZNP messages
@@ -553,6 +578,7 @@ ZBM(AREQ_ZDO_ACTIVEEPRSP, Z_AREQ | Z_ZDO, ZDO_ACTIVE_EP_RSP)                // 4
 ZBM(AREQ_ZDO_SIMPLEDESCRSP, Z_AREQ | Z_ZDO, ZDO_SIMPLE_DESC_RSP)            // 4584
 ZBM(AREQ_ZDO_IEEE_ADDR_RSP, Z_AREQ | Z_ZDO, ZDO_IEEE_ADDR_RSP)              // 4581
 ZBM(AREQ_ZDO_BIND_RSP, Z_AREQ | Z_ZDO, ZDO_BIND_RSP)                        // 45A1
+ZBM(AREQ_ZDO_UNBIND_RSP, Z_AREQ | Z_ZDO, ZDO_UNBIND_RSP)                    // 45A2
 
 // Dispatcher callbacks table
 const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
@@ -565,6 +591,7 @@ const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
   { AREQ_ZDO_ACTIVEEPRSP,         &Z_ReceiveActiveEp },
   { AREQ_ZDO_IEEE_ADDR_RSP,       &Z_ReceiveIEEEAddr },
   { AREQ_ZDO_BIND_RSP,            &Z_BindRsp },
+  { AREQ_ZDO_UNBIND_RSP,          &Z_UnbindRsp },
 };
 
 /*********************************************************************************************\
