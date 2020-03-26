@@ -6,6 +6,7 @@
 - Change GPIO initialization solving possible Relay toggle on (OTA) restart
 - Fix Zigbee sending wrong Sat value with Hue emulation
 - Add command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
+- Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
 
 ## Released
 
