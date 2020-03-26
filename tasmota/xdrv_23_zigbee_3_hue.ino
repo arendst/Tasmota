@@ -32,10 +32,10 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
 
   zigbee_devices.getHueState(shortaddr, &power, &colormode, &bri, &sat, &ct, &hue, &x, &y);
 
-  if (bri > 254)  bri = 254;    // Philips Hue bri is between 1 and 254
-  if (bri < 1)    bri = 1;
-  if (sat > 254)  sat = 254;  // Philips Hue only accepts 254 as max hue
-  uint8_t hue8 = changeUIntScale(hue, 0, 360, 0, 254);    // default hue is 0..254, we don't use extended hue
+  if (bri > 254)   bri = 254;    // Philips Hue bri is between 1 and 254
+  if (bri < 1)     bri = 1;
+  if (sat > 254)   sat = 254;   // Philips Hue only accepts 254 as max hue
+  uint16_t hue16 = changeUIntScale(hue, 0, 360, 0, 65535);
 
   const size_t buf_size = 256;
   char * buf = (char*) malloc(buf_size);     // temp buffer for strings, avoid stack
@@ -56,7 +56,7 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
       float y_f = y / 65536.0f;
       snprintf_P(buf, buf_size, PSTR("%s\"xy\":[%s,%s],"), buf, String(x, 5).c_str(), String(y, 5).c_str());
     }
-    snprintf_P(buf, buf_size, PSTR("%s\"hue\":%d,\"sat\":%d,"), buf, hue, sat);
+    snprintf_P(buf, buf_size, PSTR("%s\"hue\":%d,\"sat\":%d,"), buf, hue16, sat);
   }
   if (LST_COLDWARM == local_light_subtype || LST_RGBW <= local_light_subtype) {  // white temp
     snprintf_P(buf, buf_size, PSTR("%s\"ct\":%d,"), buf, ct > 0 ? ct : 284);
@@ -164,7 +164,7 @@ void ZigbeeHueHS(uint16_t shortaddr, uint16_t hue, uint8_t sat) {
   char param[16];
   uint8_t hue8 = changeUIntScale(hue, 0, 360, 0, 254);
   if (sat > 0xFE) { sat = 0xFE; }
-  snprintf_P(param, sizeof(param), PSTR("%02X%02X0A00"), hue8, sat);
+  snprintf_P(param, sizeof(param), PSTR("%02X%02X0000"), hue8, sat);
   uint8_t colormode = 0;      // "hs"
   zigbeeZCLSendStr(shortaddr, 0, 0, true, 0x0300, 0x06, param);
   zigbee_devices.updateHueState(shortaddr, nullptr, &colormode, nullptr, &sat, nullptr, &hue, nullptr, nullptr);
@@ -250,8 +250,8 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
                  device_id, "hue", hue);
       response += buf;
       if (LST_RGB <= bulbtype) {
-        // change range from 0..65535 to 0..359
-        hue = changeUIntScale(hue, 0, 65535, 0, 359);
+        // change range from 0..65535 to 0..360
+        hue = changeUIntScale(hue, 0, 65535, 0, 360);
         huesat_changed = true;
       }
       resp = true;
