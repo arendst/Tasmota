@@ -308,6 +308,7 @@ int32_t Z_DataConfirm(int32_t res, const class SBuffer &buf) {
 
 //
 // Handle Receive End Device Announce incoming message
+// This message is also received when a previously paired device is powered up
 // Send back Active Ep Req message
 //
 int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
@@ -328,6 +329,9 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
                   (capabilities & 0x08) ? "true" : "false",
                   (capabilities & 0x40) ? "true" : "false"
                   );
+  // query the state of the bulb (for Alexa)
+  uint32_t wait_ms = 2000;    // wait for 2s
+  Z_Query_Bulb(nwkAddr, wait_ms);
 
   MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   XdrvRulesProcess();
@@ -375,6 +379,31 @@ int32_t Z_BindRsp(int32_t res, const class SBuffer &buf) {
                     "}}"), nwkAddr, friendlyName, status, getZigbeeStatusMessage(status).c_str());
   } else {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_BIND "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""
+                    ",\"" D_JSON_ZIGBEE_STATUS "\":%d"
+                    ",\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"%s\""
+                    "}}"), nwkAddr, status, getZigbeeStatusMessage(status).c_str());
+  }
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+  XdrvRulesProcess();
+
+  return -1;
+}
+//
+// Handle Unbind Rsp incoming message
+//
+int32_t Z_UnbindRsp(int32_t res, const class SBuffer &buf) {
+  Z_ShortAddress    nwkAddr = buf.get16(2);
+  uint8_t           status = buf.get8(4);
+
+  const char * friendlyName = zigbee_devices.getFriendlyName(nwkAddr);
+  if (friendlyName) {
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_UNBIND "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""
+                    ",\"" D_JSON_ZIGBEE_NAME "\":\"%s\""
+                    ",\"" D_JSON_ZIGBEE_STATUS "\":%d"
+                    ",\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"%s\""
+                    "}}"), nwkAddr, friendlyName, status, getZigbeeStatusMessage(status).c_str());
+  } else {
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_UNBIND "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""
                     ",\"" D_JSON_ZIGBEE_STATUS "\":%d"
                     ",\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"%s\""
                     "}}"), nwkAddr, status, getZigbeeStatusMessage(status).c_str());
@@ -513,6 +542,10 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
     // Add linkquality
     json[F(D_CMND_ZIGBEE_LINKQUALITY)] = linkquality;
 
+    // since we just receveived data from the device, it is reachable
+    zigbee_devices.resetTimersForDevice(srcaddr, 0 /* groupaddr */, Z_CAT_REACHABILITY);    // remove any reachability timer already there
+    zigbee_devices.setReachable(srcaddr, true);     // mark device as reachable
+
     if (defer_attributes) {
       // Prepare for publish
       if (zigbee_devices.jsonIsConflict(srcaddr, json)) {
@@ -545,6 +578,7 @@ ZBM(AREQ_ZDO_ACTIVEEPRSP, Z_AREQ | Z_ZDO, ZDO_ACTIVE_EP_RSP)                // 4
 ZBM(AREQ_ZDO_SIMPLEDESCRSP, Z_AREQ | Z_ZDO, ZDO_SIMPLE_DESC_RSP)            // 4584
 ZBM(AREQ_ZDO_IEEE_ADDR_RSP, Z_AREQ | Z_ZDO, ZDO_IEEE_ADDR_RSP)              // 4581
 ZBM(AREQ_ZDO_BIND_RSP, Z_AREQ | Z_ZDO, ZDO_BIND_RSP)                        // 45A1
+ZBM(AREQ_ZDO_UNBIND_RSP, Z_AREQ | Z_ZDO, ZDO_UNBIND_RSP)                    // 45A2
 
 // Dispatcher callbacks table
 const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
@@ -557,6 +591,7 @@ const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
   { AREQ_ZDO_ACTIVEEPRSP,         &Z_ReceiveActiveEp },
   { AREQ_ZDO_IEEE_ADDR_RSP,       &Z_ReceiveIEEEAddr },
   { AREQ_ZDO_BIND_RSP,            &Z_BindRsp },
+  { AREQ_ZDO_UNBIND_RSP,          &Z_UnbindRsp },
 };
 
 /*********************************************************************************************\
@@ -592,37 +627,35 @@ int32_t Z_Load_Devices(uint8_t value) {
 }
 
 //
+// Query the state of a bulb (light) if its type allows it
+//
+void Z_Query_Bulb(uint16_t shortaddr, uint32_t &wait_ms) {
+  const uint32_t inter_message_ms = 100;    // wait 100ms between messages
+
+  if (0 <= zigbee_devices.getHueBulbtype(shortaddr)) {
+    uint8_t endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
+
+    if (endpoint) {   // send only if we know the endpoint
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0006, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
+      wait_ms += inter_message_ms;
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0008, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
+      wait_ms += inter_message_ms;
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0300, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
+      wait_ms += inter_message_ms;
+      zigbee_devices.setTimer(shortaddr, 0, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, 0, endpoint, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
+    }
+  }
+}
+
+//
 // Send messages to query the state of each Hue emulated light
 //
 int32_t Z_Query_Bulbs(uint8_t value) {
   // Scan all devices and send deferred requests to know the state of bulbs
   uint32_t wait_ms = 1000;                  // start with 1.0 s delay
-  const uint32_t inter_message_ms = 100;    // wait 100ms between messages
   for (uint32_t i = 0; i < zigbee_devices.devicesSize(); i++) {
     const Z_Device &device = zigbee_devices.devicesAt(i);
-
-    if (0 <= device.bulbtype) {
-      uint16_t cluster;
-      uint8_t endpoint = zigbee_devices.findFirstEndpoint(device.shortaddr);
-
-      cluster = 0x0006;
-      if (endpoint) {   // send only if we know the endpoint
-        zigbee_devices.setTimer(device.shortaddr, 0 /* groupaddr */, wait_ms, cluster, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
-        wait_ms += inter_message_ms;
-      }
-
-      cluster = 0x0008;
-      if (endpoint) {   // send only if we know the endpoint
-        zigbee_devices.setTimer(device.shortaddr, 0 /* groupaddr */, wait_ms, cluster, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
-        wait_ms += inter_message_ms;
-      }
-
-      cluster = 0x0300;
-      if (endpoint) {   // send only if we know the endpoint
-        zigbee_devices.setTimer(device.shortaddr, 0 /* groupaddr */, wait_ms, cluster, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
-        wait_ms += inter_message_ms;
-      }
-    }
+    Z_Query_Bulb(device.shortaddr, wait_ms);
   }
   return 0;                              // continue
 }
