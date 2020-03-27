@@ -34,7 +34,7 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND "|"
   D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ "|" D_CMND_ZIGBEEZNPRECEIVE "|"
   D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|"
-  D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID "|"
+  D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_UNBIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID "|"
   D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_RESTORE
   ;
 
@@ -43,7 +43,7 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbStatus, &CmndZbReset, &CmndZbSend,
   &CmndZbProbe, &CmndZbRead, &CmndZbZNPReceive,
   &CmndZbForget, &CmndZbSave, &CmndZbName,
-  &CmndZbBind, &CmndZbPing, &CmndZbModelId,
+  &CmndZbBind, &CmndZbUnbind, &CmndZbPing, &CmndZbModelId,
   &CmndZbLight, CmndZbRestore,
   };
 
@@ -534,8 +534,9 @@ void CmndZbSend(void) {
 //
 // Command `ZbBind`
 //
-void CmndZbBind(void) {
+void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
   // ZbBind {"Device":"<device>", "Endpoint":<endpoint>, "Cluster":<cluster>, "ToDevice":"<to_device>", "ToEndpoint":<to_endpoint>, "ToGroup":<to_group> }
+  // ZbUnbind {"Device":"<device>", "Endpoint":<endpoint>, "Cluster":<cluster>, "ToDevice":"<to_device>", "ToEndpoint":<to_endpoint>, "ToGroup":<to_group> }
 
   // local endpoint is always 1, IEEE addresses are calculated
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
@@ -601,7 +602,11 @@ void CmndZbBind(void) {
 
   SBuffer buf(34);
   buf.add8(Z_SREQ | Z_ZDO);
-  buf.add8(ZDO_BIND_REQ);
+  if (unbind) {
+    buf.add8(ZDO_UNBIND_REQ);
+  } else {
+    buf.add8(ZDO_BIND_REQ);
+  }
   buf.add16(srcDevice);
   buf.add64(srcLongAddr);
   buf.add8(endpoint);
@@ -618,6 +623,20 @@ void CmndZbBind(void) {
   ZigbeeZNPSend(buf.getBuffer(), buf.len());
 
   ResponseCmndDone();
+}
+
+//
+// Command ZbBind
+//
+void CmndZbBind(void) {
+  ZbBindUnbind(false);
+}
+
+//
+// Command ZbBind
+//
+void CmndZbUnbind(void) {
+  ZbBindUnbind(true);
 }
 
 // Probe a specific device to get its endpoints and supported clusters

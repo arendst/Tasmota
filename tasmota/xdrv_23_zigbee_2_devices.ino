@@ -46,7 +46,7 @@ typedef struct Z_Device {
   uint8_t               seqNumber;
   // Light information for Hue integration integration, last known values
   int8_t                bulbtype;       // number of channel for the bulb: 0-5, or 0xFF if no Hue integration
-  uint8_t               power;          // power state (boolean)
+  uint8_t               power;          // power state (boolean), MSB (0x80) stands for reachable
   uint8_t               colormode;      // 0x00: Hue/Sat, 0x01: XY, 0x02: CT
   uint8_t               dimmer;         // last Dimmer value: 0-254
   uint8_t               sat;            // last Sat: 0..254
@@ -66,11 +66,14 @@ typedef enum Z_Def_Category {
   Z_CAT_NONE = 0,             // no category, it will happen anyways
   Z_CAT_READ_ATTR,            // Attribute reporting, either READ_ATTRIBUTE or REPORT_ATTRIBUTE, we coalesce all attributes reported if we can
   Z_CAT_VIRTUAL_ATTR,         // Creation of a virtual attribute, typically after a time-out. Ex: Aqara presence sensor
+  Z_CAT_REACHABILITY,         // timer set to measure reachability of device, i.e. if we don't get an answer after 1s, it is marked as unreachable (for Alexa)
   Z_CAT_READ_0006,            // Read 0x0006 cluster
   Z_CAT_READ_0008,            // Read 0x0008 cluster
   Z_CAT_READ_0102,            // Read 0x0300 cluster
   Z_CAT_READ_0300,            // Read 0x0300 cluster
 } Z_Def_Category;
+
+const uint32_t Z_CAT_REACHABILITY_TIMEOUT = 1000;     // 1000 ms or 1s
 
 typedef struct Z_Deferred {
   // below are per device timers, used for example to query the new state of the device
@@ -124,6 +127,7 @@ public:
   void setFriendlyName(uint16_t shortaddr, const char * str);
   const char * getFriendlyName(uint16_t shortaddr) const;
   const char * getModelId(uint16_t shortaddr) const;
+  void setReachable(uint16_t shortaddr, bool reachable);
 
   // get next sequence number for (increment at each all)
   uint8_t getNextSeqNumber(uint16_t shortaddr);
@@ -137,15 +141,17 @@ public:
   void setHueBulbtype(uint16_t shortaddr, int8_t bulbtype);
   int8_t getHueBulbtype(uint16_t shortaddr) const ;
   void updateHueState(uint16_t shortaddr,
-                        const uint8_t *power, const uint8_t *colormode,
+                        const bool *power, const uint8_t *colormode,
                         const uint8_t *dimmer, const uint8_t *sat,
                         const uint16_t *ct, const uint16_t *hue,
-                        const uint16_t *x, const uint16_t *y);
+                        const uint16_t *x, const uint16_t *y,
+                        const bool *reachable);
   bool getHueState(uint16_t shortaddr,
-                        uint8_t *power, uint8_t *colormode,
+                        bool *power, uint8_t *colormode,
                         uint8_t *dimmer, uint8_t *sat,
                         uint16_t *ct, uint16_t *hue,
-                        uint16_t *x, uint16_t *y) const ;
+                        uint16_t *x, uint16_t *y,
+                        bool *reachable) const ;
 
   // Timers
   void resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category);
@@ -262,7 +268,7 @@ Z_Device & Z_Devices::createDeviceEntry(uint16_t shortaddr, uint64_t longaddr) {
                       0,          // seqNumber
                       // Hue support
                       -1,         // no Hue support
-                      0,          // power
+                      0x80,       // power off + reachable
                       0,          // colormode
                       0,          // dimmer
                       0,          // sat
@@ -583,6 +589,12 @@ const char * Z_Devices::getModelId(uint16_t shortaddr) const {
   return nullptr;
 }
 
+void Z_Devices::setReachable(uint16_t shortaddr, bool reachable) {
+  Z_Device & device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return; }                 // don't crash if not found
+  bitWrite(device.power, 7, reachable);
+}
+
 // get the next sequance number for the device, or use the global seq number if device is unknown
 uint8_t Z_Devices::getNextSeqNumber(uint16_t shortaddr) {
   int32_t short_found = findShortAddr(shortaddr);
@@ -616,12 +628,13 @@ int8_t Z_Devices::getHueBulbtype(uint16_t shortaddr) const {
 
 // Hue support
 void Z_Devices::updateHueState(uint16_t shortaddr,
-                                const uint8_t *power, const uint8_t *colormode,
+                                const bool *power, const uint8_t *colormode,
                                 const uint8_t *dimmer, const uint8_t *sat,
                                 const uint16_t *ct, const uint16_t *hue,
-                                const uint16_t *x, const uint16_t *y) {
+                                const uint16_t *x, const uint16_t *y,
+                                const bool *reachable) {
   Z_Device &device = getShortAddr(shortaddr);
-  if (power)    { device.power = *power; }
+  if (power)    { bitWrite(device.power, 0, *power); }
   if (colormode){ device.colormode = *colormode; }
   if (dimmer)   { device.dimmer = *dimmer; }
   if (sat)      { device.sat = *sat; }
@@ -629,18 +642,20 @@ void Z_Devices::updateHueState(uint16_t shortaddr,
   if (hue)      { device.hue = *hue; }
   if (x)        { device.x = *x; }
   if (y)        { device.y = *y; }
+  if (reachable){ bitWrite(device.power, 7, *reachable); }
 }
 
 // return true if ok
 bool Z_Devices::getHueState(uint16_t shortaddr,
-                              uint8_t *power, uint8_t *colormode,
+                              bool *power, uint8_t *colormode,
                               uint8_t *dimmer, uint8_t *sat,
                               uint16_t *ct, uint16_t *hue,
-                              uint16_t *x, uint16_t *y) const {
+                              uint16_t *x, uint16_t *y,
+                              bool *reachable) const {
   int32_t found = findShortAddr(shortaddr);
   if (found >= 0) {
     const Z_Device &device = *(_devices[found]);
-    if (power)    { *power = device.power; }
+    if (power)    { *power = bitRead(device.power, 0); }
     if (colormode){ *colormode = device.colormode; }
     if (dimmer)   { *dimmer = device.dimmer; }
     if (sat)      { *sat = device.sat; }
@@ -648,6 +663,7 @@ bool Z_Devices::getHueState(uint16_t shortaddr,
     if (hue)      { *hue = device.hue; }
     if (x)        { *x = device.x; }
     if (y)        { *y = device.y; }
+    if (reachable){ *reachable = bitRead(device.power, 7); }
     return true;
   } else {
     return false;
@@ -951,7 +967,8 @@ String Z_Devices::dumpLightState(uint16_t shortaddr) const {
     dev[F(D_JSON_ZIGBEE_LIGHT)] = device.bulbtype;   // sign extend, 0xFF changed as -1
     if (0 <= device.bulbtype) {
       // bulbtype is defined
-      dev[F("Power")] = device.power;
+      dev[F("Power")] = bitRead(device.power, 0);
+      dev[F("Reachable")] = bitRead(device.power, 7);
       if (1 <= device.bulbtype) {
         dev[F("Dimmer")] = device.dimmer;
       }

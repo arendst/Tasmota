@@ -505,6 +505,8 @@
 #define D_JSON_ZIGBEE_RECEIVED "ZbReceived"
 #define D_CMND_ZIGBEE_BIND "Bind"
   #define D_JSON_ZIGBEE_BIND "ZbBind"
+#define D_CMND_ZIGBEE_UNBIND "Unbind"
+  #define D_JSON_ZIGBEE_UNBIND "ZbUnbind"
 #define D_CMND_ZIGBEE_PING "Ping"
   #define D_JSON_ZIGBEE_PING "ZbPing"
   #define D_JSON_ZIGBEE_IEEE "IEEEAddr"
