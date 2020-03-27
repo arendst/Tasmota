@@ -916,15 +916,22 @@ uint8_t *Adafruit_SSD1306::getBuffer(void) {
             of graphics commands, as best needed by one's own application.
 */
 void Adafruit_SSD1306::display(void) {
+  int16_t col_start = 0;
+  int16_t col_end = WIDTH - 1;
+  if ((64 == WIDTH) && (48 == HEIGHT)) {    // for 64x48, we need to shift by 32 in both directions
+    col_start += 32;
+    col_end += 32;
+  }
+
   TRANSACTION_START
   static const uint8_t PROGMEM dlist1[] = {
     SSD1306_PAGEADDR,
     0,                         // Page start address
     0xFF,                      // Page end (not really, but works here)
-    SSD1306_COLUMNADDR,
-    0 };                       // Column start address
+    SSD1306_COLUMNADDR };
   ssd1306_commandList(dlist1, sizeof(dlist1));
-  ssd1306_command1(WIDTH - 1); // Column end address
+  ssd1306_command1(col_start); // Column start address
+  ssd1306_command1(col_end); // Column end address
 
 #if defined(ESP8266)
   // ESP8266 needs a periodic yield() call to avoid watchdog reset.
