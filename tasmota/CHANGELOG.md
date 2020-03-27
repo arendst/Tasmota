@@ -8,6 +8,7 @@
 - Add command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
 - Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
 - Add Zigbee ``ZbUnbind``command
+- Add support for 64x48 SSD1306 OLED (#6740)
 
 ## Released
 
