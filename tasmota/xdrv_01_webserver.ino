@@ -2127,7 +2127,16 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_MQTT_CLIENT "}2%s"), mqtt_client);
     WSContentSend_P(PSTR("}1" D_MQTT_TOPIC "}2%s"), SettingsText(SET_MQTT_TOPIC));
 //    WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC "}2%s"), SettingsText(SET_MQTT_GRP_TOPIC));
-    WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC "}2%s"), GetGroupTopic_P(stopic, ""));
+#ifdef USE_GROUPTOPIC_SET
+    WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC " 1}2%s"), GetGroupTopic_P(stopic, "", SET_MQTT_GRP_TOPIC));
+    for(uint32_t i=0; i < 3; i++) {
+      if (strlen(SettingsText(SET_MQTT_GRP_TOPIC2+i))) {
+        WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC " %d}2%s"), 2+i, GetGroupTopic_P(stopic, "", SET_MQTT_GRP_TOPIC2+i));
+      }
+    }
+#else  // USE_GROUPTOPIC_SET
+    WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC "}2%s"), GetGroupTopic_P(stopic, "", SET_MQTT_GRP_TOPIC));
+#endif  // USE_GROUPTOPIC_SET
     WSContentSend_P(PSTR("}1" D_MQTT_FULL_TOPIC "}2%s"), GetTopic_P(stopic, CMND, mqtt_topic, ""));
     WSContentSend_P(PSTR("}1" D_MQTT " " D_FALLBACK_TOPIC "}2%s"), GetFallbackTopic_P(stopic, ""));
   } else {
