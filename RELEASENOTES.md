@@ -52,9 +52,13 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.2.0.1
+### Version 8.2.0.2
 
 - Change HM-10 sensor type detection and add features (#7962)
-- Change GPIO initialization solving possible Relay toggle on (OTA) restart
+- Fix possible Relay toggle on (OTA) restart
 - Fix Zigbee sending wrong Sat value with Hue emulation
-- Add command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
+- Add Zigbee command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
+- Add Zigbee command ``ZbUnbind``
+- Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
+- Add support for 64x48 SSD1306 OLED (#6740)
+- Add support for up to four MQTT GroupTopics using the same optional Device Group names (#8014)

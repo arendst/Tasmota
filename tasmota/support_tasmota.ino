@@ -130,7 +130,7 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
   return stopic;
 }
 
-char* GetGroupTopic_P(char *stopic, const char* subtopic, int itopic)
+char* GetGroupTopic_P(char *stopic, const char* subtopic, uint32_t itopic)
 {
   // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/#
   // SetOption75 1: cmnd/<grouptopic>

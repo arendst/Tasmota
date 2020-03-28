@@ -98,7 +98,6 @@ extern "C" void resetPins();
 #define CODE_IMAGE_STR "sensors"
 
 #undef USE_DISCOVERY                             // Disable mDNS (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
-#undef USE_GROUPTOPIC_SET                        // Disable multiple GROUPTOPIC<x>, x=1-4 (+0k1 code)
 
 // -- Optional modules ----------------------------
 //#define ROTARY_V1                                // Add support for MI Desk Lamp
@@ -274,7 +273,6 @@ extern "C" void resetPins();
 #undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
-#undef USE_GROUPTOPIC_SET                        // Disable multiple GROUPTOPIC<x>, x=1-4 (+0k1 code)
 #endif  // FIRMWARE_KNX_NO_EMULATION
 
 /*********************************************************************************************\
@@ -294,7 +292,6 @@ extern "C" void resetPins();
 #undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
 #undef USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
-#undef USE_GROUPTOPIC_SET                        // Disable multiple GROUPTOPIC<x>, x=1-4 (+0k1 code)
 
 // -- Optional modules ----------------------------
 #undef ROTARY_V1                                 // Disable support for MI Desk Lamp
@@ -376,7 +373,6 @@ extern "C" void resetPins();
 //#undef USE_SUNRISE                               // Disable support for Sunrise and sunset tools
 //#undef USE_RULES                                 // Disable support for rules
 #undef USE_DISCOVERY                             // Disable mDNS for the following services (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
-#undef USE_GROUPTOPIC_SET                        // Disable multiple GROUPTOPIC<x>, x=1-4 (+0k1 code)
 
 // -- Optional modules ----------------------------
 #undef ROTARY_V1                                 // Disable support for MI Desk Lamp
@@ -478,7 +474,6 @@ extern "C" void resetPins();
 #undef USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
 #undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
-#undef USE_GROUPTOPIC_SET                        // Disable multiple GROUPTOPIC<x>, x=1-4 (+0k1 code)
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
 #undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
@@ -600,7 +595,6 @@ extern "C" void resetPins();
 #undef USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
 //#undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
-#undef USE_GROUPTOPIC_SET                        // Disable multiple GROUPTOPIC<x>, x=1-4 (+0k1 code)
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
 #undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
