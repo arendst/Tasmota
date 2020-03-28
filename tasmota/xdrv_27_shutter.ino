@@ -685,7 +685,7 @@ void ShutterButtonHandler(void)
                 for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
                   if ((i==shutter_index) || (Settings.shutter_button[button_index] & (0x01<<30))) {
                     snprintf_P(scommand, sizeof(scommand),PSTR("ShutterPosition%d"), i+1);
-                    GetGroupTopic_P(stopic, scommand);
+                    GetGroupTopic_P(stopic, scommand, SET_MQTT_GRP_TOPIC);
                     Response_P("%d", position);
                     MqttPublish(stopic, false);
                   }
