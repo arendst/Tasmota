@@ -510,8 +510,16 @@ void MqttConnected(void)
     GetTopic_P(stopic, CMND, mqtt_topic, PSTR("#"));
     MqttSubscribe(stopic);
     if (strstr_P(SettingsText(SET_MQTT_FULLTOPIC), MQTT_TOKEN_TOPIC) != nullptr) {
-      GetGroupTopic_P(stopic, PSTR("#"));  // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/# or SetOption75 1: cmnd/<grouptopic>
+      GetGroupTopic_P(stopic, PSTR("#"), SET_MQTT_GRP_TOPIC);  // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/# or SetOption75 1: cmnd/<grouptopic>
       MqttSubscribe(stopic);
+#ifdef USE_GROUPTOPIC_SET
+      for(uint32_t i=0; i < 3; i++) {
+        if (strlen(SettingsText(SET_MQTT_GRP_TOPIC2+i))) {
+          GetGroupTopic_P(stopic, PSTR("#"), SET_MQTT_GRP_TOPIC2+i);
+          MqttSubscribe(stopic);
+        }
+      }
+#endif
       GetFallbackTopic_P(stopic, PSTR("#"));
       MqttSubscribe(stopic);
     }
@@ -522,7 +530,7 @@ void MqttConnected(void)
   if (Mqtt.initial_connection_state) {
     char stopic2[TOPSZ];
     Response_P(PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
-      ModuleName().c_str(), my_version, my_image, GetFallbackTopic_P(stopic, ""), GetGroupTopic_P(stopic2, ""));
+      ModuleName().c_str(), my_version, my_image, GetFallbackTopic_P(stopic, ""), GetGroupTopic_P(stopic2, "", SET_MQTT_GRP_TOPIC));
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
     if (Settings.webserver) {
@@ -881,26 +889,26 @@ void CmndPublish(void)
 
 void CmndGroupTopic(void)
 {
-#ifdef USE_DEVICE_GROUPS
+#if defined(USE_DEVICE_GROUPS ) || defined(USE_GROUPTOPIC_SET) 
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
     uint32_t settings_text_index = (XdrvMailbox.index <= 1 ? SET_MQTT_GRP_TOPIC : SET_MQTT_GRP_TOPIC2 + XdrvMailbox.index - 2);
-#endif  // USE_DEVICE_GROUPS
+#endif  // USE_DEVICE_GROUPS || USE_GROUPTOPIC_SET
   if (XdrvMailbox.data_len > 0) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
-#ifdef USE_DEVICE_GROUPS
+#if defined(USE_DEVICE_GROUPS ) || defined(USE_GROUPTOPIC_SET) 
     SettingsUpdateText(settings_text_index, (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data);
-#else  // USE_DEVICE_GROUPS
+#else  // USE_DEVICE_GROUPS || USE_GROUPTOPIC_SET
     SettingsUpdateText(SET_MQTT_GRP_TOPIC, (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data);
-#endif  // USE_DEVICE_GROUPS
+#endif  // USE_DEVICE_GROUPS || USE_GROUPTOPIC_SET
     restart_flag = 2;
   }
-#ifdef USE_DEVICE_GROUPS
+#if defined(USE_DEVICE_GROUPS ) || defined(USE_GROUPTOPIC_SET) 
     ResponseCmndChar(SettingsText(settings_text_index));
   }
-#else  // USE_DEVICE_GROUPS
+#else  // USE_DEVICE_GROUPS || USE_GROUPTOPIC_SET
   ResponseCmndChar(SettingsText(SET_MQTT_GRP_TOPIC));
-#endif  // USE_DEVICE_GROUPS
+#endif  // USE_DEVICE_GROUPS || USE_GROUPTOPIC_SET
 }
 
 void CmndTopic(void)
