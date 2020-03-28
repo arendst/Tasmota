@@ -1494,7 +1494,7 @@ void HandleTemplateConfiguration(void)
 
 void TemplateSaveSettings(void)
 {
-  char tmp[sizeof(Settings.user_template.name)];            // WebGetArg NAME and GPIO/BASE/FLAG byte value
+  char tmp[sizeof(Settings.user_template_name)];            // WebGetArg NAME and GPIO/BASE/FLAG byte value
   char webindex[5];                                         // WebGetArg name
   char svalue[128];                                         // Template command string
 

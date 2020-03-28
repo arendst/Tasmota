@@ -397,7 +397,8 @@ struct SYSCFG {
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
   uint8_t       user_template_base;        // 71F
-  mytmplt       user_template;             // 720  29 bytes
+  char          user_template_name[15];    // 720  15 bytes
+  mytmplt       user_template;             // 72F  14 bytes
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E
   uint16_t      display_width;             // 774

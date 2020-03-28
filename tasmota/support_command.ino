@@ -1064,7 +1064,7 @@ void CmndTemplate(void)
       if (Settings.module != USER_MODULE) {
         ModuleDefault(Settings.module);
       }
-      snprintf_P(Settings.user_template.name, sizeof(Settings.user_template.name), PSTR("Merged"));
+      snprintf_P(Settings.user_template_name, sizeof(Settings.user_template_name), PSTR("Merged"));
       uint32_t j = 0;
       for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
         if (6 == i) { j = 9; }

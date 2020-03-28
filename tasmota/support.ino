@@ -1098,9 +1098,10 @@ bool ValidModule(uint32_t index)
 String AnyModuleName(uint32_t index)
 {
   if (USER_MODULE == index) {
-    return String(Settings.user_template.name);
+    return String(Settings.user_template_name);
   } else {
-    return FPSTR(kModules[index].name);
+    char name[15];
+    return String(GetTextIndexed(name, sizeof(name), index, kModuleNames));
   }
 }
 
@@ -1153,6 +1154,7 @@ void ModuleDefault(uint32_t module)
 {
   if (USER_MODULE == module) { module = WEMOS; }  // Generic
   Settings.user_template_base = module;
+  GetTextIndexed(Settings.user_template_name, sizeof(Settings.user_template_name), module, kModuleNames);
   memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
 }
 
@@ -1268,7 +1270,7 @@ bool JsonTemplate(const char* dataBuf)
   // All parameters are optional allowing for partial changes
   const char* name = obj[D_JSON_NAME];
   if (name != nullptr) {
-    strlcpy(Settings.user_template.name, name, sizeof(Settings.user_template.name));
+    strlcpy(Settings.user_template_name, name, sizeof(Settings.user_template_name));
   }
   if (obj[D_JSON_GPIO].success()) {
     for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
@@ -1289,7 +1291,7 @@ bool JsonTemplate(const char* dataBuf)
 
 void TemplateJson(void)
 {
-  Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
+  Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template_name);
   for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
     ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings.user_template.gp.io[i]);
   }
