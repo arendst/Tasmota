@@ -3,6 +3,7 @@
 ### 8.2.0.2 20200328
 
 - Add support for up to four MQTT GroupTopics using the same optional Device Group names (#8014)
+- Add console command history (#7483, #8015)
 
 ### 8.2.0.1 20200321
 

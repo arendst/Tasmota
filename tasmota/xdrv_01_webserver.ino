@@ -213,12 +213,12 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "}"
 
   // Console command history - part 2
-  "var mh=20,hc=[],cn=0;"
+  "var hc=[],cn=0;"                       // hc = History commands, cn = Number of history being shown
   "function cH(a){"
     "var b=qs('#c1'),c=a.keyCode;"        // c1 = Console command id
     "38==c?(++cn>hc.length&&(cn=hc.length),b.value=hc[cn-1]||''):"   // Arrow Up
     "40==c?(0>--cn&&(cn=0),b.value=hc[cn-1]||''):"                   // Arrow Down
-    "13==c&&(hc.length>19&&hc.pop(),hc.unshift(b.value),cn=0)"       // Enter
+    "13==c&&(hc.length>19&&hc.pop(),hc.unshift(b.value),cn=0)"       // Enter, 19 = Max number -1 of commands in history
   "}"
 
   "wl(l);";
