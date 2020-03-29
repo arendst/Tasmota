@@ -1508,9 +1508,9 @@ chknext:
             lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
             SCRIPT_SKIP_SPACES
             fvar=fvar1;
-            if ((*opp=='<' && fvar1<fvar2) || 
-                (*opp=='>' && fvar1>fvar2) || 
-                (*opp=='=' && fvar1==fvar2)) 
+            if ((*opp=='<' && fvar1<fvar2) ||
+                (*opp=='>' && fvar1>fvar2) ||
+                (*opp=='=' && fvar1==fvar2))
             {
               if (*lp!='<' && *lp!='>' && *lp!='=' && *lp!=')' && *lp!=SCRIPT_EOL) {
                 float fvar3;
@@ -1759,13 +1759,18 @@ chknext:
             float fvar3;
             lp=GetNumericResult(lp,OPER_EQU,&fvar3,0);
             fvar=SML_SetBaud(fvar1,fvar3);
-          } else {
+          } else if (fvar2==1) {
             char str[SCRIPT_MAXSSIZE];
             lp=GetStringResult(lp,OPER_EQU,str,0);
             fvar=SML_Write(fvar1,str);
+          } else {
+#ifdef ED300L
+            fvar=SML_Status(fvar1);
+#else
+            fvar=0;
+#endif
           }
           lp++;
-          fvar=0;
           len=0;
           goto exit;
         }
