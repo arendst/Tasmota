@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.2.0.3 20200329
+
+- Add support for longer template names
+
 ### 8.2.0.2 20200328
 
 - Add support for up to four MQTT GroupTopics using the same optional Device Group names (#8014)

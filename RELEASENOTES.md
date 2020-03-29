@@ -52,7 +52,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.2.0.2
+### Version 8.2.0.3
 
 - Change HM-10 sensor type detection and add features (#7962)
 - Fix possible Relay toggle on (OTA) restart
@@ -63,3 +63,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for 64x48 SSD1306 OLED (#6740)
 - Add support for up to four MQTT GroupTopics using the same optional Device Group names (#8014)
 - Add console command history (#7483, #8015)
+- Add support for longer template names

@@ -1510,9 +1510,9 @@ void HandleTemplateConfiguration(void)
 
 void TemplateSaveSettings(void)
 {
-  char tmp[sizeof(Settings.user_template_name)];            // WebGetArg NAME and GPIO/BASE/FLAG byte value
+  char tmp[TOPSZ];                                          // WebGetArg NAME and GPIO/BASE/FLAG byte value
   char webindex[5];                                         // WebGetArg name
-  char svalue[128];                                         // Template command string
+  char svalue[200];                                         // Template command string
 
   WebGetArg("s1", tmp, sizeof(tmp));                        // NAME
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
@@ -1528,11 +1528,11 @@ void TemplateSaveSettings(void)
     j++;
   }
 
-  WebGetArg("g17", tmp, sizeof(tmp));                        // FLAG - ADC0
+  WebGetArg("g17", tmp, sizeof(tmp));                       // FLAG - ADC0
   uint32_t flag = atoi(tmp);
   for (uint32_t i = 0; i < GPIO_FLAG_USED; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("c%d"), i);
-    uint32_t state = WebServer->hasArg(webindex) << i +4;    // FLAG
+    uint32_t state = WebServer->hasArg(webindex) << i +4;   // FLAG
     flag += state;
   }
   WebGetArg("g99", tmp, sizeof(tmp));                       // BASE
