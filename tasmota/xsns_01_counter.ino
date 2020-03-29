@@ -27,16 +27,20 @@
 #define D_PRFX_COUNTER "Counter"
 #define D_CMND_COUNTERTYPE "Type"
 #define D_CMND_COUNTERDEBOUNCE "Debounce"
+#define D_CMND_COUNTERDEBOUNCELOW "DebounceLow"
+#define D_CMND_COUNTERDEBOUNCEHIGH "DebounceHigh"
 
 const char kCounterCommands[] PROGMEM = D_PRFX_COUNTER "|"  // Prefix
-  "|" D_CMND_COUNTERTYPE "|" D_CMND_COUNTERDEBOUNCE ;
+  "|" D_CMND_COUNTERTYPE "|" D_CMND_COUNTERDEBOUNCE  "|" D_CMND_COUNTERDEBOUNCELOW "|" D_CMND_COUNTERDEBOUNCEHIGH ;
 
 void (* const CounterCommand[])(void) PROGMEM = {
-  &CmndCounter, &CmndCounterType, &CmndCounterDebounce };
+  &CmndCounter, &CmndCounterType, &CmndCounterDebounce, &CmndCounterDebounceLow, &CmndCounterDebounceHigh };
 
 struct COUNTER {
   uint32_t timer[MAX_COUNTERS];  // Last counter time in micro seconds
+  uint32_t timer_low_high[MAX_COUNTERS];  // Last low/high counter time in micro seconds
   uint8_t no_pullup = 0;         // Counter input pullup flag (1 = No pullup)
+  uint8_t pin_state = 0;         // LSB0..3 Last state of counter pin; LSB7==0 IRQ is FALLING, LSB7==1 IRQ is CHANGE
   bool any_counter = false;
 } Counter;
 
@@ -51,7 +55,30 @@ void CounterUpdate4(void) ICACHE_RAM_ATTR;
 void CounterUpdate(uint8_t index)
 {
   uint32_t time = micros();
-  uint32_t debounce_time = time - Counter.timer[index];
+  uint32_t debounce_time;
+
+  if (Counter.pin_state) {
+    // handle low and high debounce times when configured
+    if (digitalRead(pin[GPIO_CNTR1 +index]) == bitRead(Counter.pin_state, index)) {
+      // new pin state to be ignored because debounce time was not met during last IRQ
+      return;
+    }
+    debounce_time = time - Counter.timer_low_high[index];
+    if bitRead(Counter.pin_state, index) {
+      // last valid pin state was high, current pin state is low
+      if (debounce_time <= Settings.pulse_counter_debounce_high * 1000) return;
+    } else {
+      // last valid pin state was low, current pin state is high
+      if (debounce_time <= Settings.pulse_counter_debounce_low * 1000) return;
+    }
+    // passed debounce check, save pin state and timing
+    Counter.timer_low_high[index] = time;
+    Counter.pin_state ^= (1<<index);
+    // do not count on rising edge
+    if bitRead(Counter.pin_state, index) return;
+  }
+
+  debounce_time = time - Counter.timer[index];
   if (debounce_time > Settings.pulse_counter_debounce * 1000) {
     Counter.timer[index] = time;
     if (bitRead(Settings.pulse_counter_type, index)) {
@@ -103,7 +130,13 @@ void CounterInit(void)
     if (pin[GPIO_CNTR1 +i] < 99) {
       Counter.any_counter = true;
       pinMode(pin[GPIO_CNTR1 +i], bitRead(Counter.no_pullup, i) ? INPUT : INPUT_PULLUP);
-      attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
+      if ((0 == Settings.pulse_counter_debounce_low) && (0 == Settings.pulse_counter_debounce_high)) {
+        Counter.pin_state = 0;
+        attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
+      } else {
+        Counter.pin_state = 0x8f;
+        attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], CHANGE);
+      }
     }
   }
 }
@@ -211,6 +244,24 @@ void CmndCounterDebounce(void)
     Settings.pulse_counter_debounce = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings.pulse_counter_debounce);
+}
+
+void CmndCounterDebounceLow(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
+    Settings.pulse_counter_debounce_low = XdrvMailbox.payload;
+    CounterInit();
+  }
+  ResponseCmndNumber(Settings.pulse_counter_debounce_low);
+}
+
+void CmndCounterDebounceHigh(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
+    Settings.pulse_counter_debounce_high = XdrvMailbox.payload;
+    CounterInit();
+  }
+  ResponseCmndNumber(Settings.pulse_counter_debounce_high);
 }
 
 /*********************************************************************************************\
