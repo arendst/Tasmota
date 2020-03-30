@@ -3,6 +3,7 @@
 ### 8.2.0.3 20200329
 
 - Add support for longer template names
+- Add Zigbee commands ``ZbBindState`` and ``manuf``attribute
 
 ### 8.2.0.2 20200328
 

@@ -35,7 +35,7 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ "|" D_CMND_ZIGBEEZNPRECEIVE "|"
   D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|"
   D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_UNBIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID "|"
-  D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_RESTORE
+  D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE
   ;
 
 void (* const ZigbeeCommand[])(void) PROGMEM = {
@@ -44,7 +44,7 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbProbe, &CmndZbRead, &CmndZbZNPReceive,
   &CmndZbForget, &CmndZbSave, &CmndZbName,
   &CmndZbBind, &CmndZbUnbind, &CmndZbPing, &CmndZbModelId,
-  &CmndZbLight, CmndZbRestore,
+  &CmndZbLight, &CmndZbRestore, &CmndZbBindState,
   };
 
 //
@@ -294,12 +294,12 @@ void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
 // - transacId: 8-bits, transation id of message (should be incremented at each message), used both for Zigbee message number and ZCL message number
 // Returns: None
 //
-void ZigbeeZCLSend_Raw(uint16_t shortaddr, uint16_t groupaddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool needResponse, uint8_t transacId) {
+void ZigbeeZCLSend_Raw(uint16_t shortaddr, uint16_t groupaddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, uint16_t manuf, const uint8_t *msg, size_t len, bool needResponse, uint8_t transacId) {
   
   SBuffer buf(32+len);
   buf.add8(Z_SREQ | Z_AF);          // 24
   buf.add8(AF_DATA_REQUEST_EXT);    // 02
-  if (groupaddr) {
+  if (0x0000 == shortaddr) {        // if no shortaddr we assume group address
     buf.add8(Z_Addr_Group);         // 01
     buf.add64(groupaddr);           // group address, only 2 LSB, upper 6 MSB are discarded
     buf.add8(0xFF);                 // dest endpoint is not used for group addresses
@@ -315,8 +315,11 @@ void ZigbeeZCLSend_Raw(uint16_t shortaddr, uint16_t groupaddr, uint16_t clusterI
   buf.add8(0x30);                   // 30 options
   buf.add8(0x1E);                   // 1E radius
 
-  buf.add16(3 + len);
-  buf.add8((needResponse ? 0x00 : 0x10) | (clusterSpecific ? 0x01 : 0x00));                 // Frame Control Field
+  buf.add16(3 + len + (manuf ? 2 : 0));
+  buf.add8((needResponse ? 0x00 : 0x10) | (clusterSpecific ? 0x01 : 0x00) | (manuf ? 0x04 : 0x00));                 // Frame Control Field
+  if (manuf) {
+    buf.add16(manuf);               // add Manuf Id if not null
+  }
   buf.add8(transacId);              // Transaction Sequance Number
   buf.add8(cmdId);
   if (len > 0) {
@@ -342,7 +345,7 @@ void ZigbeeZCLSend_Raw(uint16_t shortaddr, uint16_t groupaddr, uint16_t clusterI
 // - param:     pointer to HEX string for payload, should not be nullptr
 // Returns: None
 //
-void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, bool clusterSpecific,
+void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, bool clusterSpecific, uint16_t manuf,
                        uint16_t cluster, uint8_t cmd, const char *param) {
   size_t size = param ? strlen(param) : 0;
   SBuffer buf((size+2)/2);    // actual bytes buffer for data
@@ -368,7 +371,7 @@ void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, 
   }
 
   // everything is good, we can send the command
-  ZigbeeZCLSend_Raw(shortaddr, groupaddr, cluster, endpoint, cmd, clusterSpecific, buf.getBuffer(), buf.len(), true, zigbee_devices.getNextSeqNumber(shortaddr));
+  ZigbeeZCLSend_Raw(shortaddr, groupaddr, cluster, endpoint, cmd, clusterSpecific, manuf, buf.getBuffer(), buf.len(), true, zigbee_devices.getNextSeqNumber(shortaddr));
   // now set the timer, if any, to read back the state later
   if (clusterSpecific) {
     zigbeeSetCommandTimer(shortaddr, groupaddr, cluster, endpoint);
@@ -397,9 +400,10 @@ void CmndZbSend(void) {
 
   // params
   static char delim[] = ", ";     // delimiters for parameters
-  uint16_t device = 0x0000;       // 0xFFFF is broadcast, so considered valid
-  uint16_t groupaddr = 0x0000;    // ignore group address if 0x0000
+  uint16_t device = 0x0000;       // 0x0000 is local, so considered invalid
+  uint16_t groupaddr = 0x0000;    // group address
   uint8_t  endpoint = 0x00;       // 0x00 is invalid for the dst endpoint
+  uint16_t manuf = 0x0000;        // Manuf Id in ZCL frame
   // Command elements
   uint16_t cluster = 0;
   uint8_t  cmd = 0;
@@ -408,19 +412,25 @@ void CmndZbSend(void) {
   bool     clusterSpecific = true;
 
   // parse JSON
-  const JsonVariant &val_group = getCaseInsensitive(json, PSTR("Group"));
-  if (nullptr != &val_group) { groupaddr = strToUInt(val_group); }
-  if (0x0000 == groupaddr) {      // if no group address, we need a device address
-    const JsonVariant &val_device = getCaseInsensitive(json, PSTR("Device"));
-    if (nullptr != &val_device) {
-      device = zigbee_devices.parseDeviceParam(val_device.as<char*>());
-      if (0xFFFF == device) { ResponseCmndChar_P(PSTR("Invalid parameter")); return; }
+  const JsonVariant &val_device = getCaseInsensitive(json, PSTR("Device"));
+  if (nullptr != &val_device) {
+    device = zigbee_devices.parseDeviceParam(val_device.as<char*>());
+    if (0xFFFF == device) { ResponseCmndChar_P(PSTR("Invalid parameter")); return; }
+  }
+  if (0x0000 == device) {     // if not found, check if we have a group
+    const JsonVariant &val_group = getCaseInsensitive(json, PSTR("Group"));
+    if (nullptr != &val_group) {
+      groupaddr = strToUInt(val_group);
+    } else {                  // no device nor group
+      ResponseCmndChar_P(PSTR("Unknown device"));
+      return;
     }
-    if ((nullptr == &val_device) || (0x0000 == device)) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
   }
 
   const JsonVariant &val_endpoint = getCaseInsensitive(json, PSTR("Endpoint"));
   if (nullptr != &val_endpoint) { endpoint = strToUInt(val_endpoint); }
+  const JsonVariant &val_manuf = getCaseInsensitive(json, PSTR("Manuf"));
+  if (nullptr != &val_manuf) { manuf = strToUInt(val_manuf); }
   const JsonVariant &val_cmd = getCaseInsensitive(json, PSTR("Send"));
   if (nullptr != &val_cmd) {
     // probe the type of the argument
@@ -523,7 +533,7 @@ void CmndZbSend(void) {
 
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZigbeeZCLSend device: 0x%04X, group: 0x%04X, endpoint:%d, cluster:0x%04X, cmd:0x%02X, send:\"%s\""),
               device, groupaddr, endpoint, cluster, cmd, cmd_s);
-    zigbeeZCLSendStr(device, groupaddr, endpoint, clusterSpecific, cluster, cmd, cmd_s);
+    zigbeeZCLSendStr(device, groupaddr, endpoint, clusterSpecific, manuf, cluster, cmd, cmd_s);
     ResponseCmndDone();
   } else {
     Response_P(PSTR("Missing zigbee 'Send'"));
@@ -637,6 +647,26 @@ void CmndZbBind(void) {
 //
 void CmndZbUnbind(void) {
   ZbBindUnbind(true);
+}
+
+//
+// Command `ZbBindState`
+//
+void CmndZbBindState(void) {
+  if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+  uint16_t shortaddr = zigbee_devices.parseDeviceParam(XdrvMailbox.data);
+  if (0x0000 == shortaddr) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
+  if (0xFFFF == shortaddr) { ResponseCmndChar_P(PSTR("Invalid parameter")); return; }
+
+  SBuffer buf(10);
+  buf.add8(Z_SREQ | Z_ZDO);             // 25
+  buf.add8(ZDO_MGMT_BIND_REQ);          // 33
+  buf.add16(shortaddr);                 // shortaddr
+  buf.add8(0);                          // StartIndex = 0
+
+  ZigbeeZNPSend(buf.getBuffer(), buf.len());
+
+  ResponseCmndDone();
 }
 
 // Probe a specific device to get its endpoints and supported clusters
@@ -865,24 +895,31 @@ void CmndZbRead(void) {
   uint16_t groupaddr = 0x0000;    // if 0x0000 ignore group adress
   uint16_t cluster = 0x0000;      // default to general cluster
   uint8_t  endpoint = 0x00;       // 0x00 is invalid for the dst endpoint
+  uint16_t manuf = 0x0000;        // Manuf Id in ZCL frame
   size_t   attrs_len = 0;
   uint8_t* attrs = nullptr;       // empty string is valid
 
-  const JsonVariant &val_group = getCaseInsensitive(json, PSTR("Group"));
-  if (nullptr != &val_group) { groupaddr = strToUInt(val_group); }
-  if (0x0000 == groupaddr) {      // if no group address, we need a device address
-    const JsonVariant &val_device = getCaseInsensitive(json, PSTR("Device"));
-    if (nullptr != &val_device) {
-      device = zigbee_devices.parseDeviceParam(val_device.as<char*>());
-      if (0xFFFF == device) { ResponseCmndChar_P(PSTR("Invalid parameter")); return; }
+  const JsonVariant &val_device = getCaseInsensitive(json, PSTR("Device"));
+  if (nullptr != &val_device) {
+    device = zigbee_devices.parseDeviceParam(val_device.as<char*>());
+    if (0xFFFF == device) { ResponseCmndChar_P(PSTR("Invalid parameter")); return; }
+  }
+  if (0x0000 == device) {     // if not found, check if we have a group
+    const JsonVariant &val_group = getCaseInsensitive(json, PSTR("Group"));
+    if (nullptr != &val_group) {
+      groupaddr = strToUInt(val_group);
+    } else {                  // no device nor group
+      ResponseCmndChar_P(PSTR("Unknown device"));
+      return;
     }
-    if ((nullptr == &val_device) || (0x0000 == device)) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
   }
 
   const JsonVariant &val_cluster = getCaseInsensitive(json, PSTR("Cluster"));
   if (nullptr != &val_cluster) { cluster = strToUInt(val_cluster); }
   const JsonVariant &val_endpoint = getCaseInsensitive(json, PSTR("Endpoint"));
   if (nullptr != &val_endpoint) { endpoint = strToUInt(val_endpoint); }
+  const JsonVariant &val_manuf = getCaseInsensitive(json, PSTR("Manuf"));
+  if (nullptr != &val_manuf) { manuf = strToUInt(val_manuf); }
 
   const JsonVariant &val_attr = getCaseInsensitive(json, PSTR("Read"));
   if (nullptr != &val_attr) {
@@ -910,12 +947,12 @@ void CmndZbRead(void) {
     endpoint = zigbee_devices.findFirstEndpoint(device);
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZbSend: guessing endpoint 0x%02X"), endpoint);
   }
-  if (groupaddr) {
+  if (0x0000 == device) {
     endpoint = 0xFF;    // endpoint not used for group addresses
   }
 
   if ((0 != endpoint) && (attrs_len > 0)) {
-    ZigbeeZCLSend_Raw(device, groupaddr, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, true /* we do want a response */, zigbee_devices.getNextSeqNumber(device));
+    ZigbeeZCLSend_Raw(device, groupaddr, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, manuf, attrs, attrs_len, true /* we do want a response */, zigbee_devices.getNextSeqNumber(device));
     ResponseCmndDone();
   } else {
     ResponseCmndChar_P(PSTR("Missing parameters"));
