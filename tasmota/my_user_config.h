@@ -399,6 +399,13 @@
 //    #define SUPPORT_IF_STATEMENT                 // Add support for IF statement in rules (+4k2 code, -332 bytes mem)
 //  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 
+#ifdef USE_SCRIPT
+  #ifdef USE_RULES
+    #undef  USE_RULES
+    #warning "Scripts and Rules can't be used at the same time. Rules disabled" 
+  #endif
+#endif
+
 // -- Optional modules ----------------------------
 //#define ROTARY_V1                                // Add support for MI Desk Lamp
 #define USE_SONOFF_RF                            // Add support for Sonoff Rf Bridge (+3k2 code)
