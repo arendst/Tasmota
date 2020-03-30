@@ -169,7 +169,7 @@ int32_t Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t clus
       break;
   }
   if (attrs) {
-    ZigbeeZCLSend_Raw(shortaddr, groupaddr, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, true /* we do want a response */, zigbee_devices.getNextSeqNumber(shortaddr));
+    ZigbeeZCLSend_Raw(shortaddr, groupaddr, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, 0, attrs, attrs_len, true /* we do want a response */, zigbee_devices.getNextSeqNumber(shortaddr));
   }
 }
 
@@ -306,10 +306,10 @@ void sendHueUpdate(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uin
   }
   if (z_cat >= 0) {
     uint8_t endpoint = 0;
-    if (!groupaddr) {
+    if (shortaddr) {
       endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
     }
-    if ((endpoint) || (groupaddr)) {   // send only if we know the endpoint
+    if ((!shortaddr) || (endpoint)) {   // send if group address or endpoint is known
       zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms, cluster, endpoint, z_cat, 0 /* value */, &Z_ReadAttrCallback);
       if (shortaddr) {      // reachability test is not possible for group addresses, since we don't know the list of devices in the group
         zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, cluster, endpoint, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);

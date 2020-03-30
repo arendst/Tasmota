@@ -399,14 +399,14 @@ String getZigbeeStatusMessage(uint8_t status) {
                                              "|UNSUP_MANUF_CLUSTER_COMMAND|UNSUP_MANUF_GENERAL_COMMAND|INVALID_FIELD|UNSUPPORTED_ATTRIBUTE|INVALID_VALE|READ_ONLY"
                                              "|INSUFFICIENT_SPACE|DUPLICATE_EXISTS|NOT_FOUND|UNREPORTABLE_ATTRIBUTE|INVALID_DATA_TYPE|INVALID_SELECTOR|WRITE_ONLY"
                                              "|INCONSISTENT_STARTUP_STATE|DEFINED_OUT_OF_BAND|INCONSISTENT|ACTION_DENIED|TIMEOUT|ABORT|INVALID_IMAGE|WAIT_FOR_DATA"
-                                             "|NO_IMAGE_AVAILABLE|REQUIRE_MORE_IMAGE|NOTIFICATION_PENDING|HARDWARE_FAILURE|SOFTWARE_FAILURE|CALIBRATION_ERROR|UNSUPPORTED_CLUSTER"
+                                             "|NO_IMAGE_AVAILABLE|REQUIRE_MORE_IMAGE|NOTIFICATION_PENDING|HARDWARE_FAILURE|SOFTWARE_FAILURE|CALIBRATION_ERROR|UNSUPPORTED_CLUSTER|NO_ROUTE"
                                              "|CHANNEL_ACCESS_FAILURE|NO_ACK|NO_APP_ACK|NO_ROUTE"
                                              ;
   static const uint8_t StatusIdx[] PROGMEM = { 0x00, 0x01, 0x7E, 0x7F, 0x80, 0x81, 0x82,
                                                0x83, 0x84, 0x85, 0x86, 0x87, 0x88,
                                                0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
                                                0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97,
-                                               0x98, 0x99, 0x9A, 0xC0, 0xC1, 0xC2, 0xC3,
+                                               0x98, 0x99, 0x9A, 0xC0, 0xC1, 0xC2, 0xC3, 0xCD,
                                                0xE1, 0xE9, 0xA7, 0xD0};
 
   char msg[32];

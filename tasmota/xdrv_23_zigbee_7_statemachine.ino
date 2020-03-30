@@ -56,7 +56,7 @@ typedef struct Zigbee_Instruction_Type {
 } Zigbee_Instruction_Type;
 
 enum Zigbee_StateMachine_Instruction_Set {
-  // 2 bytes instructions
+  // 4 bytes instructions
   ZGB_INSTR_4_BYTES = 0,
   ZGB_INSTR_NOOP = 0,                   // do nothing
   ZGB_INSTR_LABEL,                      // define a label
@@ -67,7 +67,7 @@ enum Zigbee_StateMachine_Instruction_Set {
   ZGB_INSTR_WAIT_FOREVER,               // wait forever but state machine still active
   ZGB_INSTR_STOP,                       // stop state machine with optional error code
 
-  // 6 bytes instructions
+  // 8 bytes instructions
   ZGB_INSTR_8_BYTES = 0x80,
   ZGB_INSTR_CALL = 0x80,                // call a function
   ZGB_INSTR_LOG,                        // log a message, if more detailed logging required, call a function
@@ -77,7 +77,7 @@ enum Zigbee_StateMachine_Instruction_Set {
   ZGB_INSTR_WAIT_RECV,                  // wait for a message according to the filter
   ZGB_ON_RECV_UNEXPECTED,               // function to handle unexpected messages, or nullptr
 
-  // 10 bytes instructions
+  // 12 bytes instructions
   ZGB_INSTR_12_BYTES = 0xF0,
   ZGB_INSTR_WAIT_RECV_CALL,             // wait for a filtered message and call function upon receive
 };
