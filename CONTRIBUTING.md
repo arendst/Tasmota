@@ -8,7 +8,7 @@ Everybody is welcome and invited to contribute to Tasmota Project by:
 
 * Testing newly released features and reporting issues.
 * Providing Pull Requests (Features, Proof of Concepts, Language files or Fixes)
-* Contributing missing documentation for features and devices in our [documentation](https://tasmota.github.io/docs/#/Contributing)
+* Contributing missing documentation for features and devices in our [documentation](https://tasmota.github.io/docs/Contributing)
 
 This document describes rules that are in effect for this repository, meant for handling issues by contributors in the issue tracker and PRs.
 

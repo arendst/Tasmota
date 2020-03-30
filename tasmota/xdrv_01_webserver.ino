@@ -31,7 +31,7 @@
 #define WIFI_SOFT_AP_CHANNEL                  1          // Soft Access Point Channel number between 1 and 11 as used by WifiManager web GUI
 #endif
 
-const uint16_t CHUNKED_BUFFER_SIZE = 400;                // Chunk buffer size (should be smaller than half mqtt_date size = MESSZ)
+const uint16_t CHUNKED_BUFFER_SIZE = (MESSZ / 2) - 100;  // Chunk buffer size (should be smaller than half mqtt_data size = MESSZ)
 
 const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
 #define HTTP_RESTART_RECONNECT_TIME           9000       // milliseconds
@@ -184,7 +184,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "clearTimeout(lt);"
     "t=eb('t1');"
     "if(p==1){"
-      "c=eb('c1');"
+      "c=eb('c1');"                       // Console command id
       "o='&c1='+encodeURIComponent(c.value);"
       "c.value='';"
       "t.scrollTop=99999;"
@@ -211,6 +211,17 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "lt=setTimeout(l,%d);"
     "return false;"
   "}"
+
+  // Console command history - part 2
+  "var hc=[],cn=0;"                       // hc = History commands, cn = Number of history being shown
+  "function cH(a){"
+    "var b=qs('#c1'),c=a.keyCode;"        // c1 = Console command id
+    "if(38==c||40==c){b.autocomplete='off';}"  // Arrow up or down must be a keyboard so stop browser autocomplete
+    "38==c?(++cn>hc.length&&(cn=hc.length),b.value=hc[cn-1]||''):"   // Arrow Up
+    "40==c?(0>--cn&&(cn=0),b.value=hc[cn-1]||''):"                   // Arrow Down
+    "13==c&&(hc.length>19&&hc.pop(),hc.unshift(b.value),cn=0)"       // Enter, 19 = Max number -1 of commands in history
+  "}"
+
   "wl(l);";
 
 const char HTTP_MODULE_TEMPLATE_REPLACE[] PROGMEM =
@@ -329,6 +340,12 @@ const char HTTP_HEAD_LAST_SCRIPT[] PROGMEM =
       "}"
       "t++;"
     "}"
+
+    // Console command history - part 1
+    "if(qs('#c1')){"                      // c1 = Console command id
+      "qs('#c1').addEventListener('keydown',cH);"
+    "}"
+
   "}"
   "wl(jd);"                               // Add name='' to any id='' in input,button,textarea,select
   "</script>";
@@ -745,7 +762,7 @@ void _WSContentSend(const String& content)        // Low level sendContent for a
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("WSContentSend"));
 #endif
-  DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d"), len);
+  DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d/%d"), len, sizeof(mqtt_data));
 }
 
 void WSContentFlush(void)
@@ -1494,9 +1511,9 @@ void HandleTemplateConfiguration(void)
 
 void TemplateSaveSettings(void)
 {
-  char tmp[sizeof(Settings.user_template_name)];            // WebGetArg NAME and GPIO/BASE/FLAG byte value
+  char tmp[TOPSZ];                                          // WebGetArg NAME and GPIO/BASE/FLAG byte value
   char webindex[5];                                         // WebGetArg name
-  char svalue[128];                                         // Template command string
+  char svalue[200];                                         // Template command string
 
   WebGetArg("s1", tmp, sizeof(tmp));                        // NAME
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
@@ -1512,11 +1529,11 @@ void TemplateSaveSettings(void)
     j++;
   }
 
-  WebGetArg("g17", tmp, sizeof(tmp));                        // FLAG - ADC0
+  WebGetArg("g17", tmp, sizeof(tmp));                       // FLAG - ADC0
   uint32_t flag = atoi(tmp);
   for (uint32_t i = 0; i < GPIO_FLAG_USED; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("c%d"), i);
-    uint32_t state = WebServer->hasArg(webindex) << i +4;    // FLAG
+    uint32_t state = WebServer->hasArg(webindex) << i +4;   // FLAG
     flag += state;
   }
   WebGetArg("g99", tmp, sizeof(tmp));                       // BASE
@@ -1735,7 +1752,7 @@ void HandleWifiConfiguration(void)
         //display networks in page
         for (uint32_t i = 0; i < n; i++) {
           if (-1 == indices[i]) { continue; }  // skip dups
-          int32_t rssi = WiFi.RSSI(indices[i])
+          int32_t rssi = WiFi.RSSI(indices[i]);
           DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
             WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), rssi);
           int quality = WifiGetRssiAsQuality(rssi);

@@ -589,6 +589,12 @@ char* SettingsText(uint32_t index)
  * Config Save - Save parameters to Flash ONLY if any parameter has changed
 \*********************************************************************************************/
 
+void UpdateBackwardCompatibility(void)
+{
+  // Perform updates for backward compatibility
+  strlcpy(Settings.user_template_name, SettingsText(SET_TEMPLATE_NAME), sizeof(Settings.user_template_name));
+}
+
 uint32_t GetSettingsAddress(void)
 {
   return settings_location * SPI_FLASH_SEC_SIZE;
@@ -605,6 +611,7 @@ void SettingsSave(uint8_t rotate)
  * stop_flash_rotate 1 = Allow only eeprom flash slot use (SetOption12 1)
  */
 #ifndef FIRMWARE_MINIMAL
+  UpdateBackwardCompatibility();
   if ((GetSettingsCrc32() != settings_crc32) || rotate) {
     if (1 == rotate) {   // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
       stop_flash_rotate = 1;
@@ -1394,7 +1401,6 @@ void SettingsDelta(void)
       Settings.mqtt_port = Settings.ex_mqtt_port;              // 20A -> EFC
       memcpy((char*)&Settings.serial_config, (char*)&Settings.ex_serial_config, 5);  // 1E4 -> EFE
     }
-
     if (Settings.version < 0x08000000) {
       char temp[strlen(Settings.text_pool) +1];           strncpy(temp, Settings.text_pool, sizeof(temp));  // Was ota_url
       char temp21[strlen(Settings.ex_mqtt_prefix[0]) +1]; strncpy(temp21, Settings.ex_mqtt_prefix[0], sizeof(temp21));
@@ -1465,6 +1471,9 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_FRIENDLYNAME2, Settings.ex_friendlyname[1]);
       SettingsUpdateText(SET_FRIENDLYNAME3, Settings.ex_friendlyname[2]);
       SettingsUpdateText(SET_FRIENDLYNAME4, Settings.ex_friendlyname[3]);
+    }
+    if (Settings.version < 0x08020003) {
+      SettingsUpdateText(SET_TEMPLATE_NAME, Settings.user_template_name);
     }
 
     Settings.version = VERSION;
