@@ -684,4 +684,8 @@
   #error "Select either USE_DISCOVERY or USE_MQTT_AWS_IOT, mDNS takes too much code space and is not needed for AWS IoT"
 #endif
 
+#if defined(USE_RULES) && defined(USE_SCRIPT)
+  #error "Select either USE_RULES or USE_SCRIPT. They can't both be used at the same time"
+#endif
+
 #endif  // _MY_USER_CONFIG_H_
