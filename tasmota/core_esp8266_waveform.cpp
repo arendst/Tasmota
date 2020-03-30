@@ -37,6 +37,7 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
+#ifdef ESP8266
 #include <core_version.h>
 #if defined(ARDUINO_ESP8266_RELEASE_2_6_1) || defined(ARDUINO_ESP8266_RELEASE_2_6_2) || defined(ARDUINO_ESP8266_RELEASE_2_6_3) || !defined(ARDUINO_ESP8266_RELEASE)
 #warning **** Tasmota is using a patched PWM Arduino version as planned ****
@@ -328,3 +329,5 @@ static ICACHE_RAM_ATTR void timer1Interrupt() {
 };
 
 #endif  // ARDUINO_ESP8266_RELEASE
+
+#endif  // ESP8266
