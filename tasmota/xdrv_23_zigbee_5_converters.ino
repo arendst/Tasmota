@@ -202,13 +202,6 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
     case 0xFF:      // unk
       break;
     case 0x10:      // bool
-      {
-        uint8_t val_bool = buf.get8(i++);
-        if (0xFF != val_bool) {
-          json[attrid_str] = (bool) (val_bool ? true : false);
-        }
-      }
-      break;
     case 0x20:      // uint8
     case 0x30:      // enum8
       {
