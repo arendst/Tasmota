@@ -168,7 +168,7 @@ enum TasmotaSerialConfig {
   TS_SERIAL_5O1, TS_SERIAL_6O1, TS_SERIAL_7O1, TS_SERIAL_8O1,
   TS_SERIAL_5O2, TS_SERIAL_6O2, TS_SERIAL_7O2, TS_SERIAL_8O2 };
 
-const uint8_t kTasmotaSerialConfig[] PROGMEM = {
+const SerialConfig kTasmotaSerialConfig[] PROGMEM = {
   SERIAL_5N1, SERIAL_6N1, SERIAL_7N1, SERIAL_8N1,
   SERIAL_5N2, SERIAL_6N2, SERIAL_7N2, SERIAL_8N2,
   SERIAL_5E1, SERIAL_6E1, SERIAL_7E1, SERIAL_8E1,
@@ -200,14 +200,14 @@ void RtcSettingsSave(void)
 {
   if (GetRtcSettingsCrc() != rtc_settings_crc) {
     RtcSettings.valid = RTC_MEM_VALID;
-    ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
+    ESP_rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
     rtc_settings_crc = GetRtcSettingsCrc();
   }
 }
 
 void RtcSettingsLoad(void)
 {
-  ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));  // 0x290
+  ESP_rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));  // 0x290
   if (RtcSettings.valid != RTC_MEM_VALID) {
     memset(&RtcSettings, 0, sizeof(RTCMEM));
     RtcSettings.valid = RTC_MEM_VALID;
@@ -247,7 +247,7 @@ void RtcRebootSave(void)
 {
   if (GetRtcRebootCrc() != rtc_reboot_crc) {
     RtcReboot.valid = RTC_MEM_VALID;
-    ESP.rtcUserMemoryWrite(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));
+    ESP_rtcUserMemoryWrite(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));
     rtc_reboot_crc = GetRtcRebootCrc();
   }
 }
@@ -260,7 +260,7 @@ void RtcRebootReset(void)
 
 void RtcRebootLoad(void)
 {
-  ESP.rtcUserMemoryRead(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));  // 0x280
+  ESP_rtcUserMemoryRead(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));  // 0x280
   if (RtcReboot.valid != RTC_MEM_VALID) {
     memset(&RtcReboot, 0, sizeof(RTCRBT));
     RtcReboot.valid = RTC_MEM_VALID;
@@ -301,6 +301,7 @@ extern "C" {
 }
 #include "eboot_command.h"
 
+#ifdef ESP8266
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
 
 extern "C" uint32_t _SPIFFS_end;
@@ -328,6 +329,7 @@ const uint32_t SPIFFS_END = ((uint32_t)&_FS_end - 0x40200000) / SPI_FLASH_SEC_SI
 
 // Version 4.2 config = eeprom area
 const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses EEPROM area
+#endif
 // Version 5.2 allow for more flash space
 const uint8_t CFG_ROTATES = 8;          // Number of flash sectors used (handles uploads)
 
@@ -341,6 +343,7 @@ uint8_t *settings_buffer = nullptr;
  */
 void SetFlashModeDout(void)
 {
+#ifdef ESP8266
   uint8_t *_buffer;
   uint32_t address;
 
@@ -358,6 +361,7 @@ void SetFlashModeDout(void)
     }
   }
   delete[] _buffer;
+#endif
 }
 
 bool VersionCompatible(void)
@@ -366,6 +370,7 @@ bool VersionCompatible(void)
     return true;
   }
 
+#ifdef ESP8266
   eboot_command ebcmd;
   eboot_command_read(&ebcmd);
   uint32_t start_address = ebcmd.args[0];
@@ -403,7 +408,7 @@ bool VersionCompatible(void)
     ESP.rtcUserMemoryWrite(0, (uint32_t*)&eboot_magic, sizeof(eboot_magic));
     return false;
   }
-
+#endif
   return true;
 }
 
@@ -631,6 +636,7 @@ void SettingsSave(uint8_t rotate)
     Settings.cfg_crc = GetSettingsCrc();  // Keep for backward compatibility in case of fall-back just after upgrade
     Settings.cfg_crc32 = GetSettingsCrc32();
 
+#ifdef ESP8266
     if (ESP.flashEraseSector(settings_location)) {
       ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     }
@@ -641,7 +647,9 @@ void SettingsSave(uint8_t rotate)
         delay(1);
       }
     }
-
+#else
+    SettingsSaveMain(&Settings,sizeof(SYSCFG));
+#endif
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(SYSCFG));
 
     settings_crc32 = Settings.cfg_crc32;
@@ -665,8 +673,7 @@ void SettingsLoad(void)
   uint16_t cfg_holder = 0;
   for (uint32_t i = 0; i < CFG_ROTATES; i++) {
     flash_location--;
-    ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-
+    ESP_flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     bool valid = false;
     if (Settings.version > 0x06000000) {
       bool almost_valid = (Settings.cfg_crc32 == GetSettingsCrc32());
@@ -677,7 +684,7 @@ void SettingsLoad(void)
       if (almost_valid && (0 == cfg_holder)) { cfg_holder = Settings.cfg_holder; }  // At FB always active cfg_holder
       valid = (cfg_holder == Settings.cfg_holder);
     } else {
-      ESP.flashRead((flash_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
+      ESP_flashReadHeader((flash_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
       valid = (Settings.cfg_holder == _SettingsH.cfg_holder);
     }
     if (valid) {
@@ -693,7 +700,7 @@ void SettingsLoad(void)
     delay(1);
   }
   if (settings_location > 0) {
-    ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    ESP_flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
   }
 
@@ -730,6 +737,7 @@ void EspErase(uint32_t start_sector, uint32_t end_sector)
   }
 }
 
+#ifdef ESP8266
 void SettingsErase(uint8_t type)
 {
   /*
@@ -784,6 +792,7 @@ void SettingsErase(uint8_t type)
   EsptoolErase(_sectorStart, _sectorEnd);                                 // Esptool - erases flash completely
 #endif  // FIRMWARE_MINIMAL
 }
+#endif
 
 void SettingsSdkErase(void)
 {
@@ -1326,6 +1335,7 @@ void SettingsDelta(void)
     if (Settings.version < 0x06060012) {
       Settings.dimmer_hw_min = DEFAULT_DIMMER_MIN;
       Settings.dimmer_hw_max = DEFAULT_DIMMER_MAX;
+#ifdef ESP8266
       if (TUYA_DIMMER == Settings.module) {
         if (Settings.flag3.ex_tuya_dimmer_min_limit) {
           Settings.dimmer_hw_min = 25;
@@ -1338,6 +1348,7 @@ void SettingsDelta(void)
         Settings.dimmer_hw_min = 10;
         Settings.dimmer_hw_max = Settings.param[P_ex_DIMMER_MAX];
       }
+#endif
     }
     if (Settings.version < 0x06060014) {
       // Clear unused parameters for future use

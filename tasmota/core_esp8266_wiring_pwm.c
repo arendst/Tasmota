@@ -24,6 +24,7 @@
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
 #warning **** Tasmota is using v2.4.0 wiring_pwm.c as planned ****
 
+#ifdef ESP8266
 #include "wiring_private.h"
 #include "pins_arduino.h"
 #include "c_types.h"
@@ -232,3 +233,4 @@ extern void analogWriteFreq(uint32_t freq) __attribute__ ((weak, alias("__analog
 extern void analogWriteRange(uint32_t range) __attribute__ ((weak, alias("__analogWriteRange")));
 
 #endif  // ARDUINO_ESP8266_RELEASE
+#endif
