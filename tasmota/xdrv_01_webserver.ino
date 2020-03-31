@@ -211,18 +211,21 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "lt=setTimeout(l,%d);"
     "return false;"
   "}"
+  "wl(l);"                                // Load initial console text
 
-  // Console command history - part 2
+  // Console command history
   "var hc=[],cn=0;"                       // hc = History commands, cn = Number of history being shown
-  "function cH(a){"
-    "var b=qs('#c1'),c=a.keyCode;"        // c1 = Console command id
-    "if(38==c||40==c){b.autocomplete='off';}"  // Arrow up or down must be a keyboard so stop browser autocomplete
-    "38==c?(++cn>hc.length&&(cn=hc.length),b.value=hc[cn-1]||''):"   // Arrow Up
-    "40==c?(0>--cn&&(cn=0),b.value=hc[cn-1]||''):"                   // Arrow Down
-    "13==c&&(hc.length>19&&hc.pop(),hc.unshift(b.value),cn=0)"       // Enter, 19 = Max number -1 of commands in history
+  "function h(){"
+//    "if(!(navigator.maxTouchPoints||'ontouchstart'in document.documentElement)){eb('c1').autocomplete='off';}"  // No touch so stop browser autocomplete
+    "eb('c1').addEventListener('keydown',function(e){"
+      "var b=eb('c1'),c=e.keyCode;"       // c1 = Console command id
+      "if(38==c||40==c){b.autocomplete='off';}"  // ArrowUp or ArrowDown must be a keyboard so stop browser autocomplete
+      "38==c?(++cn>hc.length&&(cn=hc.length),b.value=hc[cn-1]||''):"   // ArrowUp
+      "40==c?(0>--cn&&(cn=0),b.value=hc[cn-1]||''):"                   // ArrowDown
+      "13==c&&(hc.length>19&&hc.pop(),hc.unshift(b.value),cn=0)"       // Enter, 19 = Max number -1 of commands in history
+    "});"
   "}"
-
-  "wl(l);";
+  "wl(h);";                               // Add console command key eventlistener after name has been synced with id (= wl(jd))
 
 const char HTTP_MODULE_TEMPLATE_REPLACE[] PROGMEM =
   "}2%d'>%s (%d}3";                       // }2 and }3 are used in below os.replace
@@ -340,12 +343,6 @@ const char HTTP_HEAD_LAST_SCRIPT[] PROGMEM =
       "}"
       "t++;"
     "}"
-
-    // Console command history - part 1
-    "if(qs('#c1')){"                      // c1 = Console command id
-      "qs('#c1').addEventListener('keydown',cH);"
-    "}"
-
   "}"
   "wl(jd);"                               // Add name='' to any id='' in input,button,textarea,select
   "</script>";
