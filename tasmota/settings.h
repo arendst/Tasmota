@@ -472,8 +472,10 @@ struct SYSCFG {
   uint8_t       bri_preset_high;           // F07
   int8_t        hum_comp;                  // F08
 
-  uint8_t       free_f09[179];             // F09
+  uint8_t       free_f09[175];             // F09
 
+  uint16_t      pulse_counter_debounce_low;  // FB8
+  uint16_t      pulse_counter_debounce_high; // FBA
   uint32_t      keeloq_master_msb;         // FBC
   uint32_t      keeloq_master_lsb;         // FC0
   uint32_t      keeloq_serial;             // FC4
