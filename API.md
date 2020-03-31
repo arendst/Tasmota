@@ -2,7 +2,7 @@
 
 # Basic API information
 
-Tasmota can easily be extended by developers using provided function pointers as callback Ids. This document lists the available callback function Ids. Read [Sensor API](https://tasmota.github.io/docs/#/Sensor-API) for more information.
+Tasmota can easily be extended by developers using provided function pointers as callback Ids. This document lists the available callback function Ids. Read [Sensor API](https://tasmota.github.io/docs/Sensor-API) for more information.
 
 Callback availability can be checked by searching for either XdrvCall, XsnsCall, XdspCall, XnrgCall and XlgtCall.
 

@@ -216,6 +216,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var hc=[],cn=0;"                       // hc = History commands, cn = Number of history being shown
   "function cH(a){"
     "var b=qs('#c1'),c=a.keyCode;"        // c1 = Console command id
+    "if(38==c||40==c){b.autocomplete='off';}"  // Arrow up or down must be a keyboard so stop browser autocomplete
     "38==c?(++cn>hc.length&&(cn=hc.length),b.value=hc[cn-1]||''):"   // Arrow Up
     "40==c?(0>--cn&&(cn=0),b.value=hc[cn-1]||''):"                   // Arrow Down
     "13==c&&(hc.length>19&&hc.pop(),hc.unshift(b.value),cn=0)"       // Enter, 19 = Max number -1 of commands in history
