@@ -6,6 +6,7 @@
 - Add support for longer template names
 - Add Zigbee command ``ZbBindState`` and ``manuf``attribute
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
+- Change remove floating point libs from IRAM
 
 ### 8.2.0.2 20200328
 
