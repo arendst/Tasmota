@@ -59,6 +59,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix Zigbee sending wrong Sat value with Hue emulation
 - Add Zigbee command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
 - Add Zigbee command ``ZbUnbind``
+- Add Zigbee command ``ZbBindState`` and ``manuf``attribute
+- Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
 - Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
 - Add support for 64x48 SSD1306 OLED (#6740)
 - Add support for up to four MQTT GroupTopics using the same optional Device Group names (#8014)

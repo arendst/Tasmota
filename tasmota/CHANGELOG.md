@@ -3,7 +3,8 @@
 ### 8.2.0.3 20200329
 
 - Add support for longer template names
-- Add Zigbee commands ``ZbBindState`` and ``manuf``attribute
+- Add Zigbee command ``ZbBindState`` and ``manuf``attribute
+- Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
 
 ### 8.2.0.2 20200328
 
@@ -15,7 +16,7 @@
 - Change HM-10 sensor type detection and add features (#7962)
 - Fix possible Relay toggle on (OTA) restart
 - Fix Zigbee sending wrong Sat value with Hue emulation
-- Add ZIgbee command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
+- Add Zigbee command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
 - Add Zigbee command ``ZbUnbind``
 - Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
 - Add support for 64x48 SSD1306 OLED (#6740)
