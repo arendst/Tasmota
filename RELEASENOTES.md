@@ -55,6 +55,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 ### Version 8.2.0.3
 
 - Change HM-10 sensor type detection and add features (#7962)
+- Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
 - Fix possible Relay toggle on (OTA) restart
 - Fix Zigbee sending wrong Sat value with Hue emulation
 - Add Zigbee command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``

@@ -1612,8 +1612,9 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
 
 void LightCycleColor(int8_t direction)
 {
-  if (Light.strip_timer_counter % (Settings.light_speed * 2)) {
-    return;
+  if (Settings.light_speed > 3) {
+//    if (Light.strip_timer_counter % (Settings.light_speed * 2)) { return; }
+    if (Light.strip_timer_counter % (Settings.light_speed - 2)) { return; }  // Speed 4: 24sec, 5: 36sec, 6: 48sec, etc
   }
 
   if (0 == direction) {
@@ -1630,7 +1631,11 @@ void LightCycleColor(int8_t direction)
 //    direction = (Light.random < Light.wheel) ? -1 : 1;
     direction = (Light.random &0x01) ? 1 : -1;
   }
+
+  if (Settings.light_speed < 3) { direction *= (4 - Settings.light_speed); }  // Speed 1: 12/3=4sec, 2: 12/2=6sec, 3: 12sec
+//  if (Settings.light_speed < 3) { direction <<= (3 - Settings.light_speed); }  // Speed 1: 12/4=3sec, 2: 12/2=6sec, 3: 12sec
   Light.wheel += direction;
+
   uint16_t hue = changeUIntScale(Light.wheel, 0, 255, 0, 359);  // Scale to hue to keep amount of steps low (max 255 instead of 359)
 
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
