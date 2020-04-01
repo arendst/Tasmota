@@ -9,6 +9,7 @@
 - Add Zigbee command ``ZbBindState`` and ``manuf``attribute
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
+- Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
 
 ### 8.2.0.2 20200328
 
