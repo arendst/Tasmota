@@ -56,12 +56,15 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 - Change HM-10 sensor type detection and add features (#7962)
 - Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
+- Change remove floating point libs from IRAM
+- Change remove MQTT Info messages on restart for DeepSleep Wake (#8044)
 - Fix possible Relay toggle on (OTA) restart
 - Fix Zigbee sending wrong Sat value with Hue emulation
 - Add Zigbee command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
 - Add Zigbee command ``ZbUnbind``
 - Add Zigbee command ``ZbBindState`` and ``manuf``attribute
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
+- Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
 - Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
 - Add support for 64x48 SSD1306 OLED (#6740)
 - Add support for up to four MQTT GroupTopics using the same optional Device Group names (#8014)

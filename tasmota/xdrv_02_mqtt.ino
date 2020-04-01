@@ -440,9 +440,11 @@ void MqttPublishPowerState(uint32_t device)
     Response_P(S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(power, device -1)));
     MqttPublish(stopic);
 
-    GetTopic_P(stopic, STAT, mqtt_topic, scommand);
-    Response_P(GetStateText(bitRead(power, device -1)));
-    MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
+    if (!Settings.flag4.only_json_message) {  // SetOption90 - Disable non-json MQTT response
+      GetTopic_P(stopic, STAT, mqtt_topic, scommand);
+      Response_P(GetStateText(bitRead(power, device -1)));
+      MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
+    }
 #ifdef USE_SONOFF_IFAN
   }
 #endif  // USE_SONOFF_IFAN
@@ -503,9 +505,11 @@ void MqttConnected(void)
     Response_P(PSTR(D_ONLINE));
     MqttPublish(stopic, true);
 
-    // Satisfy iobroker (#299)
-    mqtt_data[0] = '\0';
-    MqttPublishPrefixTopic_P(CMND, S_RSLT_POWER);
+    if (!Settings.flag4.only_json_message) {  // SetOption90 - Disable non-json MQTT response
+      // Satisfy iobroker (#299)
+      mqtt_data[0] = '\0';
+      MqttPublishPrefixTopic_P(CMND, S_RSLT_POWER);
+    }
 
     GetTopic_P(stopic, CMND, mqtt_topic, PSTR("#"));
     MqttSubscribe(stopic);
@@ -526,30 +530,33 @@ void MqttConnected(void)
   }
 
   if (Mqtt.initial_connection_state) {
-    char stopic2[TOPSZ];
-    Response_P(PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
-      ModuleName().c_str(), my_version, my_image, GetFallbackTopic_P(stopic, ""), GetGroupTopic_P(stopic2, "", SET_MQTT_GRP_TOPIC));
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "1"));
+    if (ResetReason() != REASON_DEEP_SLEEP_AWAKE) {
+      char stopic2[TOPSZ];
+      Response_P(PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
+        ModuleName().c_str(), my_version, my_image, GetFallbackTopic_P(stopic, ""), GetGroupTopic_P(stopic2, "", SET_MQTT_GRP_TOPIC));
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
-    if (Settings.webserver) {
+      if (Settings.webserver) {
 #if LWIP_IPV6
-      Response_P(PSTR("{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"IPv6Address\":\"%s\"}"),
-        (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str(),WifiGetIPv6().c_str());
+        Response_P(PSTR("{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"IPv6Address\":\"%s\"}"),
+          (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str(),WifiGetIPv6().c_str());
 #else
-      Response_P(PSTR("{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\"}"),
-        (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
+        Response_P(PSTR("{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\"}"),
+          (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
 #endif // LWIP_IPV6 = 1
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "2"));
-    }
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "2"));
+      }
 #endif  // USE_WEBSERVER
-    Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":"));
-    if (CrashFlag()) {
-      CrashDump();
-    } else {
-      ResponseAppend_P(PSTR("\"%s\""), GetResetReason().c_str());
+      Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":"));
+      if (CrashFlag()) {
+        CrashDump();
+      } else {
+        ResponseAppend_P(PSTR("\"%s\""), GetResetReason().c_str());
+      }
+      ResponseJsonEnd();
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
     }
-    ResponseJsonEnd();
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
+
     MqttPublishAllPowerState();
     if (Settings.tele_period) {
       tele_period = Settings.tele_period -5;  // Enable TelePeriod in 5 seconds

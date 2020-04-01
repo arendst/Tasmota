@@ -3,10 +3,12 @@
 ### 8.2.0.3 20200329
 
 - Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
+- Change remove floating point libs from IRAM
+- Change remove MQTT Info messages on restart for DeepSleep Wake (#8044)
 - Add support for longer template names
 - Add Zigbee command ``ZbBindState`` and ``manuf``attribute
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
-- Change remove floating point libs from IRAM
+- Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
 
 ### 8.2.0.2 20200328
 
