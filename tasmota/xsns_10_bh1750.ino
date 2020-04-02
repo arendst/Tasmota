@@ -25,17 +25,18 @@
  * I2C Address: 0x23 or 0x5C
 \*********************************************************************************************/
 
-#define XSNS_10              10
-#define XI2C_11              11  // See I2CDEVICES.md
+#define XSNS_10                          10
+#define XI2C_11                          11    // See I2CDEVICES.md
 
-#define BH1750_ADDR1         0x23
-#define BH1750_ADDR2         0x5C
+#define BH1750_ADDR1                     0x23
+#define BH1750_ADDR2                     0x5C
 
-#define BH1750_CONTINUOUS_HIGH_RES_MODE2 0x11 // Start measurement at 0.5 lx resolution. Measurement time is approx 120ms.
-#define BH1750_CONTINUOUS_HIGH_RES_MODE  0x10 // Start measurement at 1   lx resolution. Measurement time is approx 120ms.
-#define BH1750_CONTINUOUS_LOW_RES_MODE   0x13 // Start measurement at 4   lx resolution. Measurement time is approx 16ms.
+#define BH1750_CONTINUOUS_HIGH_RES_MODE2 0x11  // Start measurement at 0.5 lx resolution. Measurement time is approx 120ms.
+#define BH1750_CONTINUOUS_HIGH_RES_MODE  0x10  // Start measurement at 1   lx resolution. Measurement time is approx 120ms.
+#define BH1750_CONTINUOUS_LOW_RES_MODE   0x13  // Start measurement at 4   lx resolution. Measurement time is approx 16ms.
 
-const char kBhMessages[] PROGMEM = "Resolution High|Resolution High2|Resolution Low";
+#define BH1750_MEASUREMENT_TIME_HIGH     0x40  // Measurement Time register high 3 bits
+#define BH1750_MEASUREMENT_TIME_LOW      0x60  // Measurement Time register low 5 bits
 
 struct BH1750DATA {
   uint8_t address;
@@ -43,6 +44,7 @@ struct BH1750DATA {
   uint8_t resolution[3] = { BH1750_CONTINUOUS_HIGH_RES_MODE, BH1750_CONTINUOUS_HIGH_RES_MODE2, BH1750_CONTINUOUS_LOW_RES_MODE };
   uint8_t type = 0;
   uint8_t valid = 0;
+  uint8_t mtreg = 69;                          // Default Measurement Time
   uint16_t illuminance = 0;
   char types[7] = "BH1750";
 } Bh1750;
@@ -56,14 +58,29 @@ bool Bh1750SetResolution(void)
   return (!Wire.endTransmission());
 }
 
+bool Bh1750SetMTreg(void)
+{
+  Wire.beginTransmission(Bh1750.address);
+  uint8_t data = BH1750_MEASUREMENT_TIME_HIGH | ((Bh1750.mtreg >> 5) & 0x07);
+  Wire.write(data);
+  if (Wire.endTransmission()) { return false; }
+  Wire.beginTransmission(Bh1750.address);
+  data = BH1750_MEASUREMENT_TIME_LOW | (Bh1750.mtreg & 0x1F);
+  Wire.write(data);
+  if (Wire.endTransmission()) { return false; }
+  return Bh1750SetResolution();
+}
+
 bool Bh1750Read(void)
 {
   if (Bh1750.valid) { Bh1750.valid--; }
 
   if (2 != Wire.requestFrom(Bh1750.address, (uint8_t)2)) { return false; }
   Bh1750.illuminance = (Wire.read() << 8) | Wire.read();
-  if (1 == Settings.SensorBits1.bh1750_resolution) { Bh1750.illuminance >>= 1; }
-  Bh1750.illuminance /= 1.2;
+  Bh1750.illuminance /= (1.2 * (69 / Bh1750.mtreg));
+  if (1 == Settings.SensorBits1.bh1750_resolution) {
+    Bh1750.illuminance >>= 1;
+  }
 
   Bh1750.valid = SENSOR_MAX_MISS;
   return true;
@@ -77,7 +94,7 @@ void Bh1750Detect(void)
     Bh1750.address = Bh1750.addresses[i];
     if (I2cActive(Bh1750.address)) { continue; }
 
-    if (Bh1750SetResolution()) {
+    if (Bh1750SetMTreg()) {
       I2cSetActiveFound(Bh1750.address, Bh1750.types);
       Bh1750.type = 1;
       break;
@@ -96,27 +113,25 @@ void Bh1750EverySecond(void)
 /*********************************************************************************************\
  * Command Sensor10
  *
- * 0    - High resolution mode (default)
- * 1    - High resolution mode 2
- * 2    - Low resolution mode
+ * 0       - High resolution mode (default)
+ * 1       - High resolution mode 2
+ * 2       - Low resolution mode
+ * 31..254 - Measurement Time value (not persistent, default is 69)
 \*********************************************************************************************/
 
 bool Bh1750CommandSensor(void)
 {
-  uint32_t message_index = Settings.SensorBits1.bh1750_resolution;
   if (XdrvMailbox.data_len) {
-    switch (XdrvMailbox.payload) {
-      case 0:
-      case 1:
-      case 2:
-        Settings.SensorBits1.bh1750_resolution = XdrvMailbox.payload;
-        Bh1750SetResolution();
-        message_index = Settings.SensorBits1.bh1750_resolution;
-        break;
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
+      Settings.SensorBits1.bh1750_resolution = XdrvMailbox.payload;
+      Bh1750SetResolution();
+    }
+    else if ((XdrvMailbox.payload > 30) && (XdrvMailbox.payload < 255)) {
+      Bh1750.mtreg = XdrvMailbox.payload;
+      Bh1750SetMTreg();
     }
   }
-  char res_text[64];
-  Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_10, GetTextIndexed(res_text, sizeof(res_text), message_index, kBhMessages));
+  Response_P(PSTR("{\"" D_CMND_SENSOR "10\":{\"Resolution\":%d,\"MTime\":%d}}"), Settings.SensorBits1.bh1750_resolution, Bh1750.mtreg);
 
   return true;
 }
