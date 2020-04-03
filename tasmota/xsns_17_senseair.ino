@@ -84,7 +84,9 @@ void Senseair250ms(void)              // Every 250 mSec
             break;
           case 2:                // 0x03 (3) READ_CO2 - fe 04 02 06 2c af 59
             senseair_co2 = value;
+#ifdef USE_LIGHT
             LightSetSignal(CO2_LOW, CO2_HIGH, senseair_co2);
+#endif  // USE_LIGHT
             break;
           case 3:                // 0x04 (4) READ_TEMPERATURE - S8: fe 84 02 f2 f1 - Illegal Data Address
             senseair_temperature = ConvertTemp((float)value / 100);

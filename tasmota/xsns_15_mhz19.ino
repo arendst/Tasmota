@@ -230,7 +230,9 @@ void MhzEverySecond(void)
       mhz_type = (s) ? 1 : 2;
       if (MhzCheckAndApplyFilter(ppm, s)) {
         mhz_retry = MHZ19_RETRY_COUNT;
+#ifdef USE_LIGHT
         LightSetSignal(CO2_LOW, CO2_HIGH, mhz_last_ppm);
+#endif  // USE_LIGHT
 
         if (0 == s || 64 == s) {  // Reading is stable.
           if (mhz_abc_must_apply) {
