@@ -66,6 +66,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
 - Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
+- Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
 - Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
 - Add support for 64x48 SSD1306 OLED (#6740)
 - Add support for up to four MQTT GroupTopics using the same optional Device Group names (#8014)
