@@ -601,9 +601,7 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
           }
         }
       }
-      else {
-        XdrvCall(FUNC_DEVICE_GROUP_ITEM);
-      }
+      XdrvCall(FUNC_DEVICE_GROUP_ITEM);
     }
   }
 

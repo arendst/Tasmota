@@ -2115,7 +2115,7 @@ void LightHandleDeviceGroupItem()
   bool more_to_come;
   uint32_t value = XdrvMailbox.payload;
 #ifdef USE_PWM_DIMMER_REMOTE
-  if (XdrvMailbox.index & 0xff00) return; // Ignore updates from other device groups
+  if (XdrvMailbox.index & 0xff0000) return; // Ignore updates from other device groups
 #endif  // USE_PWM_DIMMER_REMOTE
   switch (XdrvMailbox.command_code) {
     case DGR_ITEM_EOL:
