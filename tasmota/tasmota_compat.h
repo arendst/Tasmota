@@ -33,6 +33,7 @@
 #undef USE_MY92X1
 #undef USE_TUYA_MCU
 #undef USE_ESPTOOL
+
 #endif
 
 #ifdef ESP8266
@@ -44,6 +45,9 @@
 #define ESP_getBootVersion() ESP.getBootVersion()
 #define ESP_getFlashChipId() ESP.getFlashChipId()
 
+//
+// we need different ESP_flashRead for ESP32
+//
 inline bool ESP_flashRead(uint32_t offset, uint32_t *data, size_t size) 
 {
     return ESP.flashRead(offset, data, size);
@@ -51,7 +55,7 @@ inline bool ESP_flashRead(uint32_t offset, uint32_t *data, size_t size)
 
 inline bool ESP_flashReadHeader(uint32_t offset, uint32_t *data, size_t size) 
 {
-    return ESP.flashReadHeader(offset, data, size);
+    return ESP.flashRead(offset, data, size);
 }
 
 extern "C" uint32 sntp_get_current_timestamp();

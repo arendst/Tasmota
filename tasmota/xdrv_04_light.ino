@@ -2067,7 +2067,7 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
       } else {
         cur_col_10[cw0] = white_bri10_1023;  // no gamma, extend to 10 bits
       }
-    } else 
+    } else
 #endif
     if (Settings.light_correction) {
       // if sum of both channels is > 255, then channels are probably uncorrelated
