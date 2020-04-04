@@ -1087,9 +1087,18 @@ void SettingsDefaultSet2(void)
 //  Settings.display_model = 0;
   Settings.display_mode = 1;
   Settings.display_refresh = 2;
+  #ifdef USE_DISPLAY_LCD_ROWS
+  Settings.display_rows = USE_DISPLAY_LCD_ROWS;
+  #else
   Settings.display_rows = 2;
+  #endif
+  #ifdef USE_DISPLAY_LCD_COLS
+  Settings.display_cols[0] = USE_DISPLAY_LCD_COLS;
+  Settings.display_cols[1] = USE_DISPLAY_LCD_COLS/2;
+  #else
   Settings.display_cols[0] = 16;
   Settings.display_cols[1] = 8;
+  #endif
   Settings.display_dimmer = 1;
   Settings.display_size = 1;
   Settings.display_font = 1;
