@@ -648,33 +648,33 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
     "o=qs('#mw');for(i=0;i<=15;i++){ce((i<10)?('0'+i):i,o);}"     // Create window minutes select options
     "o=qs('#d1');for(i=0;i<%d;i++){ce(i+1,o);}"                   // Create outputs
     "var a='" D_DAY3LIST "';"
-    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b> \"}"
+    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' type='checkbox'><label for='w\"+i+\"'>\"+a.substring(i*3,(i*3)+3)+\"</label> \"}"
     "eb('ds').innerHTML=s;"                                       // Create weekdays
     "eb('dP').click();"                                           // Get the element with id='dP' and click on it
   "}"
   "wl(it);";
 const char HTTP_TIMER_STYLE[] PROGMEM =
-  ".tl{float:left;border-radius:0;border:1px solid #%06x;padding:1px;width:6.25%%;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
+  ".tl{float:left;border-radius:0;border:1px solid #%06x;padding:1px;width:6.25%%;} label{font-weight: 700;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
 const char HTTP_FORM_TIMER1[] PROGMEM =
   "<fieldset style='min-width:470px;text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
-  "<br><input id='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b><br><br><hr>"
+  "<br><input id='e0' type='checkbox'%s><label for='e0'>" D_TIMER_ENABLE "</label><br><br><hr>"
   "<input id='t0' value='";
 const char HTTP_FORM_TIMER2[] PROGMEM =
   "' hidden><div id='bt'></div><br><br><br>"
   "<div id='oa' name='oa'></div><br>"
   "<div>"
-  "<input id='a0' type='checkbox'><b>" D_TIMER_ARM "</b>&emsp;"
-  "<input id='r0' type='checkbox'><b>" D_TIMER_REPEAT "</b>"
+  "<input id='a0' type='checkbox'><label for='a0'>" D_TIMER_ARM "</label>&emsp;"
+  "<input id='r0' type='checkbox'><label for='r0'>" D_TIMER_REPEAT "</label>"
   "</div><br>"
   "<div>";
 #ifdef USE_SUNRISE
 const char HTTP_FORM_TIMER3[] PROGMEM =
   "<fieldset style='width:%dpx;margin:auto;text-align:left;border:0;'>"
-  "<input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b><br>"
-  "<input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b> (%s)<br>"
-  "<input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b> (%s)<br>"
+  "<input id='b0' name='rd' type='radio' value='0' onclick='gt();'><label for='b0'>" D_TIMER_TIME "</label><br>"
+  "<input id='b1' name='rd' type='radio' value='1' onclick='gt();'><label for='b1'>" D_SUNRISE "</label> (%s)<br>"
+  "<input id='b2' name='rd' type='radio' value='2' onclick='gt();'><label for='b2'>" D_SUNSET "</label> (%s)<br>"
   "</fieldset>"
   "<p></p>"
   "<span><select style='width:46px;' id='dr'></select></span>"
