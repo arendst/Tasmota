@@ -19,6 +19,10 @@
 
 #ifdef USE_ZIGBEE
 
+/*********************************************************************************************\
+ * ZCL Command Structures
+\*********************************************************************************************/
+
 typedef struct Z_CommandConverter {
   const char * tasmota_cmd;
   uint16_t     cluster;
@@ -130,6 +134,9 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z(GetSceneMembership),0x0005, 0x06, 0x82,Z(xxyyzzzz) },     // specific
 };
 
+/*********************************************************************************************\
+ * ZCL Read Light status based on cluster number
+\*********************************************************************************************/
 #define ZLE(x) ((x) & 0xFF), ((x) >> 8)     // Little Endian
 
 // Below are the attributes we wand to read from each cluster
@@ -162,7 +169,15 @@ int32_t Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t clus
       break;
   }
   if (attrs) {
-    ZigbeeZCLSend_Raw(shortaddr, groupaddr, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, true /* we do want a response */, zigbee_devices.getNextSeqNumber(shortaddr));
+    ZigbeeZCLSend_Raw(shortaddr, groupaddr, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, 0, attrs, attrs_len, true /* we do want a response */, zigbee_devices.getNextSeqNumber(shortaddr));
+  }
+}
+
+
+// This callback is registered after a an attribute read command was made to a light, and fires if we don't get any response after 1000 ms
+int32_t Z_Unreachable(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+  if (shortaddr) {
+    zigbee_devices.setReachable(shortaddr, false);     // mark device as reachable
   }
 }
 
@@ -185,6 +200,9 @@ void zigbeeSetCommandTimer(uint16_t shortaddr, uint16_t groupaddr, uint16_t clus
   }
   if (wait_ms) {
     zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms, cluster, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
+    if (shortaddr) {      // reachability test is not possible for group addresses, since we don't know the list of devices in the group
+      zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, cluster, endpoint, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
+    }
   }
 }
 
@@ -288,11 +306,15 @@ void sendHueUpdate(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uin
   }
   if (z_cat >= 0) {
     uint8_t endpoint = 0;
-    if (!groupaddr) {
+    if (shortaddr) {
       endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
     }
-    if ((endpoint) || (groupaddr)) {   // send only if we know the endpoint
+    if ((!shortaddr) || (endpoint)) {   // send if group address or endpoint is known
       zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms, cluster, endpoint, z_cat, 0 /* value */, &Z_ReadAttrCallback);
+      if (shortaddr) {      // reachability test is not possible for group addresses, since we don't know the list of devices in the group
+        zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, cluster, endpoint, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
+      }
+
     }
   }
 }

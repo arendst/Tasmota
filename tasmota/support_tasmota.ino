@@ -130,11 +130,11 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
   return stopic;
 }
 
-char* GetGroupTopic_P(char *stopic, const char* subtopic)
+char* GetGroupTopic_P(char *stopic, const char* subtopic, uint32_t itopic)
 {
   // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/#
   // SetOption75 1: cmnd/<grouptopic>
-  return GetTopic_P(stopic, (Settings.flag3.grouptopic_mode) ? CMND +8 : CMND, SettingsText(SET_MQTT_GRP_TOPIC), subtopic);  // SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
+  return GetTopic_P(stopic, (Settings.flag3.grouptopic_mode) ? CMND +8 : CMND, SettingsText(itopic), subtopic);  // SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
 }
 
 char* GetFallbackTopic_P(char *stopic, const char* subtopic)
@@ -1286,12 +1286,24 @@ void SerialInput(void)
     char hex_char[(serial_in_byte_counter * 2) + 2];
     bool assume_json = (!Settings.flag.mqtt_serial_raw && (serial_in_buffer[0] == '{'));
     Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":%s%s%s}"),
-      (assume_json) ? "" : """",
+      (assume_json) ? "" : "\"",
       (Settings.flag.mqtt_serial_raw) ? ToHex_P((unsigned char*)serial_in_buffer, serial_in_byte_counter, hex_char, sizeof(hex_char)) : serial_in_buffer,
-      (assume_json) ? "" : """");
+      (assume_json) ? "" : "\"");
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
     XdrvRulesProcess();
     serial_in_byte_counter = 0;
+  }
+}
+
+/********************************************************************************************/
+
+void ResetPwm(void)
+{
+  for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
+    if (pin[GPIO_PWM1 +i] < 99) {
+      analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range : 0);
+//      analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
+    }
   }
 }
 
@@ -1420,6 +1432,18 @@ void GpioInit(void)
   }
   soft_spi_flg = ((pin[GPIO_SSPI_CS] < 99) && (pin[GPIO_SSPI_SCLK] < 99) && ((pin[GPIO_SSPI_MOSI] < 99) || (pin[GPIO_SSPI_MOSI] < 99)));
 #endif  // USE_SPI
+
+  // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
+  // Doing it here solves relay toggles at restart.
+  for (uint32_t i = 0; i < sizeof(my_module.io); i++) {
+    mpin = ValidPin(i, my_module.io[i]);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
+    if (((i < 6) || (i > 11)) && (0 == mpin)) {  // Skip SPI flash interface
+      if (!((1 == i) || (3 == i))) {             // Skip serial
+        pinMode(i, INPUT);
+      }
+    }
+  }
 
 #ifdef USE_I2C
   i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));

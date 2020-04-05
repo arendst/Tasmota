@@ -202,13 +202,6 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
     case 0xFF:      // unk
       break;
     case 0x10:      // bool
-      {
-        uint8_t val_bool = buf.get8(i++);
-        if (0xFF != val_bool) {
-          json[attrid_str] = (bool) (val_bool ? true : false);
-        }
-      }
-      break;
     case 0x20:      // uint8
     case 0x30:      // enum8
       {
@@ -1215,38 +1208,38 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
 
       // see if we need to update the Hue bulb status
       if ((cluster == 0x0006) && ((attribute == 0x0000) || (attribute == 0x8000))) {
-        uint8_t power = value;
+        bool power = value;
         zigbee_devices.updateHueState(shortaddr, &power, nullptr, nullptr, nullptr,
-                                        nullptr, nullptr, nullptr, nullptr);
+                                        nullptr, nullptr, nullptr, nullptr, nullptr);
       } else if ((cluster == 0x0008) && (attribute == 0x0000)) {
         uint8_t dimmer = value;
         zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, &dimmer, nullptr,
-                                        nullptr, nullptr, nullptr, nullptr);
+                                        nullptr, nullptr, nullptr, nullptr, nullptr);
       } else if ((cluster == 0x0300) && (attribute == 0x0000)) {
         uint16_t hue8 = value;
         uint16_t hue = changeUIntScale(hue8, 0, 254, 0, 360);     // change range from 0..254 to 0..360
         zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
-                                        nullptr, &hue, nullptr, nullptr);
+                                        nullptr, &hue, nullptr, nullptr, nullptr);
       } else if ((cluster == 0x0300) && (attribute == 0x0001)) {
         uint8_t sat = value;
         zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, &sat,
-                                        nullptr, nullptr, nullptr, nullptr);
+                                        nullptr, nullptr, nullptr, nullptr, nullptr);
       } else if ((cluster == 0x0300) && (attribute == 0x0003)) {
         uint16_t x = value;
         zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
-                                        nullptr, nullptr, &x, nullptr);
+                                        nullptr, nullptr, &x, nullptr, nullptr);
       } else if ((cluster == 0x0300) && (attribute == 0x0004)) {
         uint16_t y = value;
         zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
-                                        nullptr, nullptr, nullptr, &y);
+                                        nullptr, nullptr, nullptr, &y, nullptr), nullptr;
       } else if ((cluster == 0x0300) && (attribute == 0x0007)) {
         uint16_t ct = value;
         zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
-                                        &ct, nullptr, nullptr, nullptr);
+                                        &ct, nullptr, nullptr, nullptr, nullptr);
       } else if ((cluster == 0x0300) && (attribute == 0x0008)) {
         uint8_t colormode = value;
         zigbee_devices.updateHueState(shortaddr, nullptr, &colormode, nullptr, nullptr,
-                                        nullptr, nullptr, nullptr, nullptr);
+                                        nullptr, nullptr, nullptr, nullptr, nullptr);
       }
 
       // Iterate on filter

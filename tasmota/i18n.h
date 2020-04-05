@@ -505,6 +505,10 @@
 #define D_JSON_ZIGBEE_RECEIVED "ZbReceived"
 #define D_CMND_ZIGBEE_BIND "Bind"
   #define D_JSON_ZIGBEE_BIND "ZbBind"
+#define D_CMND_ZIGBEE_UNBIND "Unbind"
+  #define D_JSON_ZIGBEE_UNBIND "ZbUnbind"
+#define D_CMND_ZIGBEE_BIND_STATE "BindState"
+  #define D_JSON_ZIGBEE_BIND_STATE "ZbBindState"
 #define D_CMND_ZIGBEE_PING "Ping"
   #define D_JSON_ZIGBEE_PING "ZbPing"
   #define D_JSON_ZIGBEE_IEEE "IEEEAddr"
@@ -514,6 +518,7 @@
   #define D_JSON_ZIGBEE_STATUS_MSG "StatusMessage"
 #define D_CMND_ZIGBEE_LIGHT "Light"
   #define D_JSON_ZIGBEE_LIGHT "Light"
+#define D_CMND_ZIGBEE_RESTORE "Restore"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"

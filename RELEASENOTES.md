@@ -4,7 +4,7 @@
 
 ## Migration Information
 
-See [migration path](https://tasmota.github.io/docs/#/Upgrading?id=migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
+See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
 
 1. Migrate to **Sonoff-Tasmota 3.9.x**
 2. Migrate to **Sonoff-Tasmota 4.x**
@@ -21,13 +21,13 @@ While fallback or downgrading is common practice it was never supported due to S
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.6.3 + 372a3ec** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.6.3 + e64cb61** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 Although it might still compile on previous Core versions all support will be removed in the near future.
 
 ## Support of TLS
 
-To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/#/integrations/AWS-IoT)
+To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
 
 ## Initial configuration tools
 
@@ -35,7 +35,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Provided Binary Downloads
 
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.6.3 + 372a3ec**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.6.3 + e64cb61**.
 
 - **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
@@ -52,76 +52,23 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.2.0 Elliot
+### Version 8.2.1 Elliot
 
-- Change default my_user_config.h driver and sensor support removing most sensors and adding most drivers to tasmota.bin
-- Change DHT driver (#7468, #7717)
-- Change Lights: simplified gamma correction and 10 bits internal computation
-- Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
-- Change Zigbee command prefix from ``Zigbee*`` to ``Zb*``
-- Change MQTT message size with additional 200 characters
-- Change display of some date and time messages from "Wed Feb 19 10:45:12 2020" to "2020-02-19T10:45:12"
-- Change IRremoteESP8266 library updated to v2.7.4
-- Fix ``PowerDelta`` zero power detection (#7515)
-- Fix ``White`` added to light status (#7142)
-- Fix ``WakeUp <x>`` ignores provided value (#7473)
-- Fix ``RGBWWTable`` ignored (#7572)
-- Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
-- Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
-- Fix Improved fade linearity with gamma correction
-- Fix PWM flickering at low levels (#7415)
-- Fix LCD line and column positioning (#7387)
-- Fix Display handling of hexadecimal escape characters (#7387)
-- Fix exception 9 restart on log message in Ticker interrupt service routines NTP, Wemos and Hue emulation (#7496)
-- Fix Hass sensor discovery by Federico Leoni (#7582, #7548)
-- Fix MaxPower functionality (#7647)
-- Fix relation between Wifi RSSI and signal strength
-- Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
-- Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
-- Add command ``SetOption84 0/1`` to send AWS IoT device shadow updates (alternative to retained)
-- Add commands ``SetOption85 0/1`` and ``DevGroupShare`` supporting UDP Group command using ``GroupTopic`` without MQTT by Paul Diem (#7790)
-- Add command ``SetOption86 0/1`` for PWM dimmer to turn brightness LED's off 5 seconds after last change
-- Add command ``SetOption87 0/1`` for PWM dimmer to turn red LED on when powered off
-- Add command ``SetOption88 0/1`` for PWM dimmer to let buttons control remote devices
-- Add command ``SetOption89 0/1`` for Zigbee distinct MQTT topics per device for SENSOR, allowing retained messages (#7835)
-- Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
-- Add commands ``SwitchMode 8`` ToggleMulti, ``SwitchMode 9`` FollowMulti and ``SwitchMode 10`` FollowMultiInverted (#7522)
-- Add commands ``SwitchMode 11`` PushHoldMulti and ``SwitchMode 12`` PushHoldInverted (#7603)
-- Add commands ``SwitchMode 13`` PushOn and ``SwitchMode 14`` PushOnInverted (#7912)
-- Add command ``Buzzer -1`` for infinite mode and command ``Buzzer -2`` for following led mode (#7623)
-- Add command ``HumOffset -10.0 .. 10.0`` to set global humidity sensor offset (#7934)
-- Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
-- Add optional parameter ``<startcolor>`` to command ``Scheme <scheme>, <startcolor>`` to control initial start color
-- Add web page sliders when ``SetOption37 128`` is active allowing control of white(s)
-- Add SerialConfig to ``Status 1``
-- Add BootCount Reset Time as BCResetTime to ``Status 1``
-- Add WifiPower to ``Status 5``
-- Add most SetOptions as defines to my_user_config.h
-- Add optional Wifi AccessPoint passphrase define WIFI_AP_PASSPHRASE in my_user_config.h (#7690)
-- Add SoftwareSerial to CSE7766 driver allowing different GPIOs (#7563)
-- Add rule trigger on one level deeper using syntax with two ``#`` like ``on zbreceived#vibration_sensor#aqaracubeside=0 do ...``
-- Add Zigbee attribute decoder for Xiaomi Aqara Cube
-- Add ``ZbZNPReceived``and ``ZbZCLReceived`` being published to MQTT when ``SetOption66 1``
-- Add Zigbee enhanced commands decoding, added ``ZbPing``
-- Add Zigbee features and improvements
-- Add Zigbee support for Hue emulation by Stefan Hadinger
-- Add HAss Discovery support for Button and Switch triggers by Federico Leoni (#7901)
-- Add Dew Point to Temperature and Humidity sensors
-- Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
-- Add support for gzipped binaries
-- Add support for Romanian language translations by Augustin Marti
-- Add support for sensors DS18x20 and DHT family on Shelly 1 and Shelly 1PM using Shelly Add-On adapter (#7469)
-- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
-- Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
-- Add support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
-- Add support for MI-BLE sensors using HM-10 Bluetooth 4.0 module by Christian Staars (#7683)
-- Add support for FiF LE-01MR energy meter by saper-2 (#7584)
-- Add support for Sensors AHT10 and AHT15 by Martin Wagner (#7596)
-- Add support for Wemos Motor Shield V1 by Denis Sborets (#7764)
-- Add support for La Crosse TX23 Anemometer by Norbert Richter (#3146, #7765)
-- Add support for Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM dimmer switches by Paul Diem (#7791)
-- Add support for UDP Group control without MQTT by Paul Diem (#7790)
-- Add support for Jarolift rollers by Keeloq algorithm
-- Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders by Jon Little (#7814)
-- Add support for HDC1080 Temperature and Humidity sensor by Luis Teixeira (#7888)
-- Add support for ElectriQ iQ-wifiMOODL RGBW light by Ian King (#7947)
+- Change HM-10 sensor type detection and add features (#7962)
+- Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
+- Change remove floating point libs from IRAM
+- Change remove MQTT Info messages on restart for DeepSleep Wake (#8044)
+- Fix possible Relay toggle on (OTA) restart
+- Fix Zigbee sending wrong Sat value with Hue emulation
+- Add Zigbee command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
+- Add Zigbee command ``ZbUnbind``
+- Add Zigbee command ``ZbBindState`` and ``manuf``attribute
+- Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
+- Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
+- Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
+- Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
+- Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
+- Add support for 64x48 SSD1306 OLED (#6740)
+- Add support for up to four MQTT GroupTopics using the same optional Device Group names (#8014)
+- Add console command history (#7483, #8015)
+- Add support for longer template names

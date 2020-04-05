@@ -107,9 +107,11 @@ void ResponseCmndIdxChar(const char* value)
 
 void ResponseCmndAll(uint32_t text_index, uint32_t count)
 {
+  uint32_t real_index = text_index;
   mqtt_data[0] = '\0';
   for (uint32_t i = 0; i < count; i++) {
-    ResponseAppend_P(PSTR("%c\"%s%d\":\"%s\""), (i) ? ',' : '{', XdrvMailbox.command, i +1, SettingsText(text_index +i));
+    if ((SET_MQTT_GRP_TOPIC == text_index) && (1 == i)) { real_index = SET_MQTT_GRP_TOPIC2 -1; }
+    ResponseAppend_P(PSTR("%c\"%s%d\":\"%s\""), (i) ? ',' : '{', XdrvMailbox.command, i +1, SettingsText(real_index +i));
   }
   ResponseJsonEnd();
 }
@@ -1062,7 +1064,7 @@ void CmndTemplate(void)
       if (Settings.module != USER_MODULE) {
         ModuleDefault(Settings.module);
       }
-      snprintf_P(Settings.user_template.name, sizeof(Settings.user_template.name), PSTR("Merged"));
+      SettingsUpdateText(SET_TEMPLATE_NAME, "Merged");
       uint32_t j = 0;
       for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
         if (6 == i) { j = 9; }

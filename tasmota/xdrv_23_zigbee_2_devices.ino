@@ -26,7 +26,9 @@
 #endif
 const uint16_t kZigbeeSaveDelaySeconds = ZIGBEE_SAVE_DELAY_SECONDS;    // wait for x seconds
 
-typedef int32_t (*Z_DeviceTimer)(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value);
+/*********************************************************************************************\
+ * Structures for device configuration
+\*********************************************************************************************/
 
 const size_t endpoints_max = 8;         // we limit to 8 endpoints
 
@@ -44,7 +46,7 @@ typedef struct Z_Device {
   uint8_t               seqNumber;
   // Light information for Hue integration integration, last known values
   int8_t                bulbtype;       // number of channel for the bulb: 0-5, or 0xFF if no Hue integration
-  uint8_t               power;          // power state (boolean)
+  uint8_t               power;          // power state (boolean), MSB (0x80) stands for reachable
   uint8_t               colormode;      // 0x00: Hue/Sat, 0x01: XY, 0x02: CT
   uint8_t               dimmer;         // last Dimmer value: 0-254
   uint8_t               sat;            // last Sat: 0..254
@@ -53,16 +55,25 @@ typedef struct Z_Device {
   uint16_t              x, y;           // last color [x,y]
 } Z_Device;
 
+/*********************************************************************************************\
+ * Structures for deferred callbacks
+\*********************************************************************************************/
+
+typedef int32_t (*Z_DeviceTimer)(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value);
+
 // Category for Deferred actions, this allows to selectively remove active deferred or update them
 typedef enum Z_Def_Category {
   Z_CAT_NONE = 0,             // no category, it will happen anyways
   Z_CAT_READ_ATTR,            // Attribute reporting, either READ_ATTRIBUTE or REPORT_ATTRIBUTE, we coalesce all attributes reported if we can
   Z_CAT_VIRTUAL_ATTR,         // Creation of a virtual attribute, typically after a time-out. Ex: Aqara presence sensor
+  Z_CAT_REACHABILITY,         // timer set to measure reachability of device, i.e. if we don't get an answer after 1s, it is marked as unreachable (for Alexa)
   Z_CAT_READ_0006,            // Read 0x0006 cluster
   Z_CAT_READ_0008,            // Read 0x0008 cluster
   Z_CAT_READ_0102,            // Read 0x0300 cluster
   Z_CAT_READ_0300,            // Read 0x0300 cluster
 } Z_Def_Category;
+
+const uint32_t Z_CAT_REACHABILITY_TIMEOUT = 1000;     // 1000 ms or 1s
 
 typedef struct Z_Deferred {
   // below are per device timers, used for example to query the new state of the device
@@ -75,6 +86,10 @@ typedef struct Z_Deferred {
   uint32_t              value;          // any raw value to use for the timer
   Z_DeviceTimer         func;           // function to call when timer occurs
 } Z_Deferred;
+
+/*********************************************************************************************\
+ * Singleton for device configuration
+\*********************************************************************************************/
 
 // All devices are stored in a Vector
 // Invariants:
@@ -105,15 +120,14 @@ public:
 
   // Add an endpoint to a device
   void addEndpoint(uint16_t shortaddr, uint8_t endpoint);
-
-  // Add cluster
-  void addCluster(uint16_t shortaddr, uint8_t endpoint, uint16_t cluster);
+  void clearEndpoints(uint16_t shortaddr);
 
   void setManufId(uint16_t shortaddr, const char * str);
   void setModelId(uint16_t shortaddr, const char * str);
   void setFriendlyName(uint16_t shortaddr, const char * str);
   const char * getFriendlyName(uint16_t shortaddr) const;
   const char * getModelId(uint16_t shortaddr) const;
+  void setReachable(uint16_t shortaddr, bool reachable);
 
   // get next sequence number for (increment at each all)
   uint8_t getNextSeqNumber(uint16_t shortaddr);
@@ -121,20 +135,23 @@ public:
   // Dump json
   String dumpLightState(uint16_t shortaddr) const;
   String dump(uint32_t dump_mode, uint16_t status_shortaddr = 0) const;
+  int32_t deviceRestore(const JsonObject &json);
 
   // Hue support
   void setHueBulbtype(uint16_t shortaddr, int8_t bulbtype);
   int8_t getHueBulbtype(uint16_t shortaddr) const ;
   void updateHueState(uint16_t shortaddr,
-                        const uint8_t *power, const uint8_t *colormode,
+                        const bool *power, const uint8_t *colormode,
                         const uint8_t *dimmer, const uint8_t *sat,
                         const uint16_t *ct, const uint16_t *hue,
-                        const uint16_t *x, const uint16_t *y);
+                        const uint16_t *x, const uint16_t *y,
+                        const bool *reachable);
   bool getHueState(uint16_t shortaddr,
-                        uint8_t *power, uint8_t *colormode,
+                        bool *power, uint8_t *colormode,
                         uint8_t *dimmer, uint8_t *sat,
                         uint16_t *ct, uint16_t *hue,
-                        uint16_t *x, uint16_t *y) const ;
+                        uint16_t *x, uint16_t *y,
+                        bool *reachable) const ;
 
   // Timers
   void resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category);
@@ -191,12 +208,21 @@ private:
   // Create a new entry in the devices list - must be called if it is sure it does not already exist
   Z_Device & createDeviceEntry(uint16_t shortaddr, uint64_t longaddr = 0);
   void freeDeviceEntry(Z_Device *device);
+
+  void setStringAttribute(char*& attr, const char * str);
 };
 
+/*********************************************************************************************\
+ * Singleton variable
+\*********************************************************************************************/
 Z_Devices zigbee_devices = Z_Devices();
 
 // Local coordinator information
 uint64_t localIEEEAddr = 0;
+
+/*********************************************************************************************\
+ * Implementation
+\*********************************************************************************************/
 
 // https://thispointer.com/c-how-to-find-an-element-in-vector-and-get-its-index/
 template < typename T>
@@ -242,7 +268,7 @@ Z_Device & Z_Devices::createDeviceEntry(uint16_t shortaddr, uint64_t longaddr) {
                       0,          // seqNumber
                       // Hue support
                       -1,         // no Hue support
-                      0,          // power
+                      0x80,       // power off + reachable
                       0,          // colormode
                       0,          // dimmer
                       0,          // sat
@@ -451,6 +477,20 @@ void Z_Devices::updateDevice(uint16_t shortaddr, uint64_t longaddr) {
 }
 
 //
+// Clear all endpoints
+//
+void Z_Devices::clearEndpoints(uint16_t shortaddr) {
+  if (!shortaddr) { return; }
+  Z_Device &device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return; }                 // don't crash if not found
+
+  for (uint32_t i = 0; i < endpoints_max; i++) {
+    device.endpoints[i] = 0;
+    // no dirty here because it doesn't make sense to store it, does it?
+  }
+}
+
+//
 // Add an endpoint to a shortaddr
 //
 void Z_Devices::addEndpoint(uint16_t shortaddr, uint8_t endpoint) {
@@ -480,73 +520,55 @@ uint8_t Z_Devices::findFirstEndpoint(uint16_t shortaddr) const {
   return device.endpoints[0];   // returns 0x00 if no endpoint
 }
 
-void Z_Devices::setManufId(uint16_t shortaddr, const char * str) {
-  Z_Device & device = getShortAddr(shortaddr);
-  if (&device == nullptr) { return; }                 // don't crash if not found
+void Z_Devices::setStringAttribute(char*& attr, const char * str) {
   size_t str_len = str ? strlen(str) : 0;             // len, handle both null ptr and zero length string
 
-  if ((!device.manufacturerId) && (0 == str_len)) { return; } // if both empty, don't do anything
-  if (device.manufacturerId) {
+  if ((nullptr == attr) && (0 == str_len)) { return; } // if both empty, don't do anything
+  if (attr) {
     // we already have a value
-    if (strcmp(device.manufacturerId, str) != 0) {
+    if (strcmp(attr, str) != 0) {
       // new value
-      free(device.manufacturerId);      // free previous value
-      device.manufacturerId = nullptr;
+      free(attr);      // free previous value
+      attr = nullptr;
     } else {
       return;        // same value, don't change anything
     }
   }
   if (str_len) {
-    device.manufacturerId = (char*) malloc(str_len + 1);
-    strlcpy(device.manufacturerId, str, str_len + 1);
+    attr = (char*) malloc(str_len + 1);
+    strlcpy(attr, str, str_len + 1);
   }
   dirty();
+}
+
+//
+// Sets the ManufId for a device.
+// No action taken if the device does not exist.
+// Inputs:
+// - shortaddr: 16-bits short address of the device. No action taken if the device is unknown
+// - str:       string pointer, if nullptr it is considered as empty string
+// Impact:
+// - Any actual change in ManufId (i.e. setting a different value) triggers a `dirty()` and saving to Flash
+//
+void Z_Devices::setManufId(uint16_t shortaddr, const char * str) {
+  Z_Device & device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return; }                 // don't crash if not found
+
+  setStringAttribute(device.manufacturerId, str);
 }
 
 void Z_Devices::setModelId(uint16_t shortaddr, const char * str) {
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
-  size_t str_len = str ? strlen(str) : 0;             // len, handle both null ptr and zero length string
 
-  if ((!device.modelId) && (0 == str_len)) { return; } // if both empty, don't do anything
-  if (device.modelId) {
-    // we already have a value
-    if (strcmp(device.modelId, str) != 0) {
-      // new value
-      free(device.modelId);      // free previous value
-      device.modelId = nullptr;
-    } else {
-      return;        // same value, don't change anything
-    }
-  }
-  if (str_len) {
-    device.modelId = (char*) malloc(str_len + 1);
-    strlcpy(device.modelId, str, str_len + 1);
-  }
-  dirty();
+  setStringAttribute(device.modelId, str);
 }
 
 void Z_Devices::setFriendlyName(uint16_t shortaddr, const char * str) {
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
-  size_t str_len = str ? strlen(str) : 0;             // len, handle both null ptr and zero length string
 
-  if ((!device.friendlyName) && (0 == str_len)) { return; } // if both empty, don't do anything
-  if (device.friendlyName) {
-    // we already have a value
-    if (strcmp(device.friendlyName, str) != 0) {
-      // new value
-      free(device.friendlyName);      // free previous value
-      device.friendlyName = nullptr;
-    } else {
-      return;        // same value, don't change anything
-    }
-  }
-  if (str_len) {
-    device.friendlyName = (char*) malloc(str_len + 1);
-    strlcpy(device.friendlyName, str, str_len + 1);
-  }
-  dirty();
+  setStringAttribute(device.friendlyName, str);
 }
 
 const char * Z_Devices::getFriendlyName(uint16_t shortaddr) const {
@@ -565,6 +587,12 @@ const char * Z_Devices::getModelId(uint16_t shortaddr) const {
     return device.modelId;
   }
   return nullptr;
+}
+
+void Z_Devices::setReachable(uint16_t shortaddr, bool reachable) {
+  Z_Device & device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return; }                 // don't crash if not found
+  bitWrite(device.power, 7, reachable);
 }
 
 // get the next sequance number for the device, or use the global seq number if device is unknown
@@ -600,12 +628,13 @@ int8_t Z_Devices::getHueBulbtype(uint16_t shortaddr) const {
 
 // Hue support
 void Z_Devices::updateHueState(uint16_t shortaddr,
-                                const uint8_t *power, const uint8_t *colormode,
+                                const bool *power, const uint8_t *colormode,
                                 const uint8_t *dimmer, const uint8_t *sat,
                                 const uint16_t *ct, const uint16_t *hue,
-                                const uint16_t *x, const uint16_t *y) {
+                                const uint16_t *x, const uint16_t *y,
+                                const bool *reachable) {
   Z_Device &device = getShortAddr(shortaddr);
-  if (power)    { device.power = *power; }
+  if (power)    { bitWrite(device.power, 0, *power); }
   if (colormode){ device.colormode = *colormode; }
   if (dimmer)   { device.dimmer = *dimmer; }
   if (sat)      { device.sat = *sat; }
@@ -613,18 +642,20 @@ void Z_Devices::updateHueState(uint16_t shortaddr,
   if (hue)      { device.hue = *hue; }
   if (x)        { device.x = *x; }
   if (y)        { device.y = *y; }
+  if (reachable){ bitWrite(device.power, 7, *reachable); }
 }
 
 // return true if ok
 bool Z_Devices::getHueState(uint16_t shortaddr,
-                              uint8_t *power, uint8_t *colormode,
+                              bool *power, uint8_t *colormode,
                               uint8_t *dimmer, uint8_t *sat,
                               uint16_t *ct, uint16_t *hue,
-                              uint16_t *x, uint16_t *y) const {
+                              uint16_t *x, uint16_t *y,
+                              bool *reachable) const {
   int32_t found = findShortAddr(shortaddr);
   if (found >= 0) {
     const Z_Device &device = *(_devices[found]);
-    if (power)    { *power = device.power; }
+    if (power)    { *power = bitRead(device.power, 0); }
     if (colormode){ *colormode = device.colormode; }
     if (dimmer)   { *dimmer = device.dimmer; }
     if (sat)      { *sat = device.sat; }
@@ -632,6 +663,7 @@ bool Z_Devices::getHueState(uint16_t shortaddr,
     if (hue)      { *hue = device.hue; }
     if (x)        { *x = device.x; }
     if (y)        { *y = device.y; }
+    if (reachable){ *reachable = bitRead(device.power, 7); }
     return true;
   } else {
     return false;
@@ -935,7 +967,8 @@ String Z_Devices::dumpLightState(uint16_t shortaddr) const {
     dev[F(D_JSON_ZIGBEE_LIGHT)] = device.bulbtype;   // sign extend, 0xFF changed as -1
     if (0 <= device.bulbtype) {
       // bulbtype is defined
-      dev[F("Power")] = device.power;
+      dev[F("Power")] = bitRead(device.power, 0);
+      dev[F("Reachable")] = bitRead(device.power, 7);
       if (1 <= device.bulbtype) {
         dev[F("Dimmer")] = device.dimmer;
       }
@@ -994,6 +1027,9 @@ String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
       if (device.modelId) {
         dev[F(D_JSON_MODEL D_JSON_ID)] = device.modelId;
       }
+      if (device.bulbtype >= 0) {
+        dev[F(D_JSON_ZIGBEE_LIGHT)] = device.bulbtype;   // sign extend, 0xFF changed as -1
+      }
       if (device.manufacturerId) {
         dev[F("Manufacturer")] = device.manufacturerId;
       }
@@ -1011,6 +1047,79 @@ String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
   payload.reserve(200);
   json.printTo(payload);
   return payload;
+}
+
+// Restore a single device configuration based on json export
+// Input: json element as expported by `ZbStatus2``
+// Mandatory attribue: `Device`
+//
+// Returns:
+//  0 : Ok
+// <0 : Error
+//
+// Ex: {"Device":"0x5ADF","Name":"IKEA_Light","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"]}
+int32_t Z_Devices::deviceRestore(const JsonObject &json) {
+
+  // params
+  uint16_t device = 0x0000;                 // 0x0000 is coordinator so considered invalid
+  uint64_t ieeeaddr = 0x0000000000000000LL; // 0 means unknown
+  const char * modelid = nullptr;
+  const char * manufid = nullptr;
+  const char * friendlyname = nullptr;
+  int8_t   bulbtype = 0xFF;
+  size_t   endpoints_len = 0;
+
+  // read mandatory "Device"
+  const JsonVariant &val_device = getCaseInsensitive(json, PSTR("Device"));
+  if (nullptr != &val_device) {
+    device = strToUInt(val_device);
+  } else {
+    return -1;        // missing "Device" attribute
+  }
+
+  // read "IEEEAddr" 64 bits in format "0x0000000000000000"
+  const JsonVariant &val_ieeeaddr = getCaseInsensitive(json, PSTR("IEEEAddr"));
+  if (nullptr != &val_ieeeaddr) {
+    ieeeaddr = strtoull(val_ieeeaddr.as<const char*>(), nullptr, 0);
+  }
+
+  // read "Name"
+  friendlyname = getCaseInsensitiveConstCharNull(json, PSTR("Name"));
+
+  // read "ModelId"
+  modelid = getCaseInsensitiveConstCharNull(json, PSTR("ModelId"));
+
+  // read "Manufacturer"
+  manufid = getCaseInsensitiveConstCharNull(json, PSTR("Manufacturer"));
+
+  // read "Light"
+  const JsonVariant &val_bulbtype = getCaseInsensitive(json, PSTR(D_JSON_ZIGBEE_LIGHT));
+  if (nullptr != &val_bulbtype) { bulbtype = strToUInt(val_bulbtype);; }
+
+  // update internal device information
+  updateDevice(device, ieeeaddr);
+  if (modelid) { setModelId(device, modelid); }
+  if (manufid) { setManufId(device, manufid); }
+  if (friendlyname) { setFriendlyName(device, friendlyname); }
+  if (&val_bulbtype) { setHueBulbtype(device, bulbtype); }
+
+  // read "Endpoints"
+  const JsonVariant &val_endpoints = getCaseInsensitive(json, PSTR("Endpoints"));
+  if ((nullptr != &val_endpoints) && (val_endpoints.is<JsonArray>())) {
+    const JsonArray &arr_ep = val_endpoints.as<const JsonArray&>();
+    endpoints_len = arr_ep.size();
+    clearEndpoints(device);     // clear even if array is empty
+    if (endpoints_len) {
+      for (auto ep_elt : arr_ep) {
+        uint8_t ep = strToUInt(ep_elt);
+        if (ep) {
+          addEndpoint(device, ep);
+        }
+      }
+    }
+  }
+
+  return 0;
 }
 
 #endif // USE_ZIGBEE

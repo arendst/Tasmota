@@ -24,23 +24,29 @@
 
 // idx: index in the list of zigbee_devices
 void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, String *response) {
-  uint8_t  power, colormode, bri, sat;
+  static const char HUE_LIGHTS_STATUS_JSON1_SUFFIX_ZIGBEE[] PROGMEM =
+    "%s\"alert\":\"none\","
+    "\"effect\":\"none\","
+    "\"reachable\":%s}";
+
+  bool     power, reachable;
+  uint8_t  colormode, bri, sat;
   uint16_t ct, hue;
   uint16_t x, y;
   String light_status = "";
   uint32_t echo_gen = findEchoGeneration();   // 1 for 1st gen =+ Echo Dot 2nd gen, 2 for 2nd gen and above
 
-  zigbee_devices.getHueState(shortaddr, &power, &colormode, &bri, &sat, &ct, &hue, &x, &y);
+  zigbee_devices.getHueState(shortaddr, &power, &colormode, &bri, &sat, &ct, &hue, &x, &y, &reachable);
 
-  if (bri > 254)  bri = 254;    // Philips Hue bri is between 1 and 254
-  if (bri < 1)    bri = 1;
-  if (sat > 254)  sat = 254;  // Philips Hue only accepts 254 as max hue
-  uint8_t hue8 = changeUIntScale(hue, 0, 360, 0, 254);    // default hue is 0..254, we don't use extended hue
+  if (bri > 254)   bri = 254;    // Philips Hue bri is between 1 and 254
+  if (bri < 1)     bri = 1;
+  if (sat > 254)   sat = 254;   // Philips Hue only accepts 254 as max hue
+  uint16_t hue16 = changeUIntScale(hue, 0, 360, 0, 65535);
 
   const size_t buf_size = 256;
   char * buf = (char*) malloc(buf_size);     // temp buffer for strings, avoid stack
 
-  snprintf_P(buf, buf_size, PSTR("{\"on\":%s,"), (power & 1) ? "true" : "false");
+  snprintf_P(buf, buf_size, PSTR("{\"on\":%s,"), power ? "true" : "false");
   // Brightness for all devices with PWM
   if ((1 == echo_gen) || (LST_SINGLE <= local_light_subtype)) { // force dimmer for 1st gen Echo
     snprintf_P(buf, buf_size, PSTR("%s\"bri\":%d,"), buf, bri);
@@ -56,12 +62,12 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
       float y_f = y / 65536.0f;
       snprintf_P(buf, buf_size, PSTR("%s\"xy\":[%s,%s],"), buf, String(x, 5).c_str(), String(y, 5).c_str());
     }
-    snprintf_P(buf, buf_size, PSTR("%s\"hue\":%d,\"sat\":%d,"), buf, hue, sat);
+    snprintf_P(buf, buf_size, PSTR("%s\"hue\":%d,\"sat\":%d,"), buf, hue16, sat);
   }
   if (LST_COLDWARM == local_light_subtype || LST_RGBW <= local_light_subtype) {  // white temp
     snprintf_P(buf, buf_size, PSTR("%s\"ct\":%d,"), buf, ct > 0 ? ct : 284);
   }
-  snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON1_SUFFIX, buf);
+  snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON1_SUFFIX_ZIGBEE, buf, reachable ? "true" : "false");
 
   *response += buf;
   free(buf);
@@ -123,46 +129,51 @@ void ZigbeeHueGroups(String * lights) {
 
 // Send commands
 // Power On/Off
-void ZigbeeHuePower(uint16_t shortaddr, uint8_t power) {
-  zigbeeZCLSendStr(shortaddr, 0, 0, true, 0x0006, power, "");
-  zigbee_devices.updateHueState(shortaddr, &power, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+void ZigbeeHuePower(uint16_t shortaddr, bool power) {
+  zigbeeZCLSendStr(shortaddr, 0, 0, true, 0, 0x0006, power ? 1 : 0, "");
+  zigbee_devices.updateHueState(shortaddr, &power, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
 // Dimmer
 void ZigbeeHueDimmer(uint16_t shortaddr, uint8_t dimmer) {
+  if (dimmer > 0xFE) { dimmer = 0xFE; }
   char param[8];
   snprintf_P(param, sizeof(param), PSTR("%02X0A00"), dimmer);
-  zigbeeZCLSendStr(shortaddr, 0, 0, true, 0x0008, 0x04, param);
-  zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, &dimmer, nullptr, nullptr, nullptr, nullptr, nullptr);
+  zigbeeZCLSendStr(shortaddr, 0, 0, true, 0, 0x0008, 0x04, param);
+  zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, &dimmer, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
 // CT
 void ZigbeeHueCT(uint16_t shortaddr, uint16_t ct) {
+  if (ct > 0xFEFF) { ct = 0xFEFF; }
   AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeHueCT 0x%04X - %d"), shortaddr, ct);
   char param[12];
   snprintf_P(param, sizeof(param), PSTR("%02X%02X0A00"), ct & 0xFF, ct >> 8);
   uint8_t colormode = 2;      // "ct"
-  zigbeeZCLSendStr(shortaddr, 0, 0, true, 0x0300, 0x0A, param);
-  zigbee_devices.updateHueState(shortaddr, nullptr, &colormode, nullptr, nullptr, &ct, nullptr, nullptr, nullptr);
+  zigbeeZCLSendStr(shortaddr, 0, 0, true, 0, 0x0300, 0x0A, param);
+  zigbee_devices.updateHueState(shortaddr, nullptr, &colormode, nullptr, nullptr, &ct, nullptr, nullptr, nullptr, nullptr);
 }
 
 // XY
 void ZigbeeHueXY(uint16_t shortaddr, uint16_t x, uint16_t y) {
   char param[16];
+  if (x > 0xFEFF) { x = 0xFEFF; }
+  if (y > 0xFEFF) { y = 0xFEFF; }
   snprintf_P(param, sizeof(param), PSTR("%02X%02X%02X%02X0A00"), x & 0xFF, x >> 8, y & 0xFF, y >> 8);
   uint8_t colormode = 1;      // "xy"
-  zigbeeZCLSendStr(shortaddr, 0, 0, true, 0x0300, 0x07, param);
-  zigbee_devices.updateHueState(shortaddr, nullptr, &colormode, nullptr, nullptr, nullptr, nullptr, &x, &y);
+  zigbeeZCLSendStr(shortaddr, 0, 0, true, 0, 0x0300, 0x07, param);
+  zigbee_devices.updateHueState(shortaddr, nullptr, &colormode, nullptr, nullptr, nullptr, nullptr, &x, &y, nullptr);
 }
 
 // HueSat
 void ZigbeeHueHS(uint16_t shortaddr, uint16_t hue, uint8_t sat) {
   char param[16];
   uint8_t hue8 = changeUIntScale(hue, 0, 360, 0, 254);
-  snprintf_P(param, sizeof(param), PSTR("%02X%02X0A00"), hue8, sat);
+  if (sat > 0xFE) { sat = 0xFE; }
+  snprintf_P(param, sizeof(param), PSTR("%02X%02X0000"), hue8, sat);
   uint8_t colormode = 0;      // "hs"
-  zigbeeZCLSendStr(shortaddr, 0, 0, true, 0x0300, 0x06, param);
-  zigbee_devices.updateHueState(shortaddr, nullptr, &colormode, nullptr, &sat, nullptr, &hue, nullptr, nullptr);
+  zigbeeZCLSendStr(shortaddr, 0, 0, true, 0, 0x0300, 0x06, param);
+  zigbee_devices.updateHueState(shortaddr, nullptr, &colormode, nullptr, &sat, nullptr, &hue, nullptr, nullptr, nullptr);
 }
 
 void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
@@ -245,8 +256,8 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
                  device_id, "hue", hue);
       response += buf;
       if (LST_RGB <= bulbtype) {
-        // change range from 0..65535 to 0..359
-        hue = changeUIntScale(hue, 0, 65535, 0, 359);
+        // change range from 0..65535 to 0..360
+        hue = changeUIntScale(hue, 0, 65535, 0, 360);
         huesat_changed = true;
       }
       resp = true;

@@ -81,6 +81,7 @@ const uint8_t MAX_NTP_SERVERS = 3;          // Max number of NTP servers
 const uint8_t MAX_RULE_MEMS = 16;           // Max number of saved vars
 const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
 const uint8_t MAX_BUTTON_TEXT = 16;         // Max number of GUI button labels
+const uint8_t MAX_GROUP_TOPICS = 4;         // Max number of Group Topics
 
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 
@@ -301,6 +302,7 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_BUTTON1, SET_BUTTON2, SET_BUTTON3, SET_BUTTON4, SET_BUTTON5, SET_BUTTON6, SET_BUTTON7, SET_BUTTON8,
                          SET_BUTTON9, SET_BUTTON10, SET_BUTTON11, SET_BUTTON12, SET_BUTTON13, SET_BUTTON14, SET_BUTTON15, SET_BUTTON16,
                          SET_MQTT_GRP_TOPIC2, SET_MQTT_GRP_TOPIC3, SET_MQTT_GRP_TOPIC4,
+                         SET_TEMPLATE_NAME,
                          SET_MAX };
 
 enum DeviceGroupMessageType { DGR_MSGTYP_FULL_STATUS, DGR_MSGTYP_PARTIAL_UPDATE, DGR_MSGTYP_UPDATE, DGR_MSGTYP_UPDATE_MORE_TO_COME, DGR_MSGTYP_UPDATE_DIRECT, DGR_MSGTYP_REUPDATE };

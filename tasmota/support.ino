@@ -1098,9 +1098,10 @@ bool ValidModule(uint32_t index)
 String AnyModuleName(uint32_t index)
 {
   if (USER_MODULE == index) {
-    return String(Settings.user_template.name);
+    return String(SettingsText(SET_TEMPLATE_NAME));
   } else {
-    return FPSTR(kModules[index].name);
+    char name[TOPSZ];
+    return String(GetTextIndexed(name, sizeof(name), index, kModuleNames));
   }
 }
 
@@ -1153,6 +1154,8 @@ void ModuleDefault(uint32_t module)
 {
   if (USER_MODULE == module) { module = WEMOS; }  // Generic
   Settings.user_template_base = module;
+  char name[TOPSZ];
+  SettingsUpdateText(SET_TEMPLATE_NAME, GetTextIndexed(name, sizeof(name), module, kModuleNames));
   memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
 }
 
@@ -1261,14 +1264,14 @@ bool JsonTemplate(const char* dataBuf)
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
 
-  StaticJsonBuffer<350> jb;  // 331 from https://arduinojson.org/v5/assistant/
+  StaticJsonBuffer<400> jb;  // 331 from https://arduinojson.org/v5/assistant/
   JsonObject& obj = jb.parseObject(dataBuf);
   if (!obj.success()) { return false; }
 
   // All parameters are optional allowing for partial changes
   const char* name = obj[D_JSON_NAME];
   if (name != nullptr) {
-    strlcpy(Settings.user_template.name, name, sizeof(Settings.user_template.name));
+    SettingsUpdateText(SET_TEMPLATE_NAME, name);
   }
   if (obj[D_JSON_GPIO].success()) {
     for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
@@ -1289,7 +1292,7 @@ bool JsonTemplate(const char* dataBuf)
 
 void TemplateJson(void)
 {
-  Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
+  Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
   for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
     ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings.user_template.gp.io[i]);
   }

@@ -77,6 +77,16 @@ void Pcf8574Init(void)
   uint8_t pcf8574_address = PCF8574_ADDR1;
   while ((Pcf8574.max_devices < MAX_PCF8574) && (pcf8574_address < PCF8574_ADDR2 +8)) {
 
+#ifdef USE_MCP230xx_ADDR
+    if (USE_MCP230xx_ADDR == pcf8574_address) {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("PCF: Address 0x%02x reserved for MCP320xx skipped"), pcf8574_address);
+      pcf8574_address++;
+      if ((PCF8574_ADDR1 +7) == pcf8574_address) {  // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
+        pcf8574_address = PCF8574_ADDR2 +1;
+      }
+    }
+#endif
+
   //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PCF: Probing addr: 0x%x for PCF8574"), pcf8574_address);
 
     if (I2cSetDevice(pcf8574_address)) {
@@ -93,12 +103,6 @@ void Pcf8574Init(void)
     }
 
     pcf8574_address++;
-#ifdef USE_MCP230xx_ADDR
-    if (USE_MCP230xx_ADDR == pcf8574_address) {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("PCF: Addr: 0x%x reserved for MCP320xx, skipping PCF8574 probe"), pcf8574_address);
-      pcf8574_address++;
-    }
-#endif
     if ((PCF8574_ADDR1 +7) == pcf8574_address) {  // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
       pcf8574_address = PCF8574_ADDR2 +1;
     }
@@ -142,7 +146,7 @@ const char HTTP_BTN_MENU_PCF8574[] PROGMEM =
 const char HTTP_FORM_I2C_PCF8574_1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_PCF8574_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='" WEB_HANDLE_PCF8574 "'>"
-  "<p><input id='b1' name='b1' type='checkbox'%s><b>" D_INVERT_PORTS "</b></p><hr/>";
+  "<p><label><input id='b1' name='b1' type='checkbox'%s><b>" D_INVERT_PORTS "</b></label></p><hr/>";
 
 const char HTTP_FORM_I2C_PCF8574_2[] PROGMEM =
   "<tr><td><b>" D_DEVICE " %d " D_PORT " %d</b></td><td style='width:100px'><select id='i2cs%d' name='i2cs%d'>"

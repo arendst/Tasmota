@@ -2,9 +2,40 @@
 
 ## Released
 
+### 8.2.1 20200410
+
+- Release Elliot
+
+### 8.2.0.3 20200329
+
+- Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
+- Change remove floating point libs from IRAM
+- Change remove MQTT Info messages on restart for DeepSleep Wake (#8044)
+- Add support for longer template names
+- Add Zigbee command ``ZbBindState`` and ``manuf``attribute
+- Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
+- Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
+- Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
+- Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
+
+### 8.2.0.2 20200328
+
+- Add support for up to four MQTT GroupTopics using the same optional Device Group names (#8014)
+- Add console command history (#7483, #8015)
+
+### 8.2.0.1 20200321
+
+- Change HM-10 sensor type detection and add features (#7962)
+- Fix possible Relay toggle on (OTA) restart
+- Fix Zigbee sending wrong Sat value with Hue emulation
+- Add Zigbee command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
+- Add Zigbee command ``ZbUnbind``
+- Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
+- Add support for 64x48 SSD1306 OLED (#6740)
+
 ### 8.2.0 20200321
 
-- Release
+- Release Elliot
 
 ### 8.1.0.11 20200313
 
@@ -127,7 +158,7 @@
 
 ### 8.1.0 20191225
 
-- Release
+- Release Doris
 
 ### 8.0.0.3 20191224
 
@@ -153,7 +184,7 @@
 
 ### 7.2.0 20191221
 
-- Release
+- Release Constance
 - Change basic version string to lite (#7291)
 - Fix Arduino IDE compile error (#7277)
 - Fix restore ShutterAccuracy, MqttLog, WifiConfig, WifiPower and SerialConfig (#7281)
@@ -236,7 +267,7 @@
 
 ### 7.1.0 20191129
 
-- Release
+- Release Doris
 
 ### 7.0.0.6 20191122
 
@@ -305,7 +336,7 @@
 
 ### 6.7.1 20191026
 
-- Release
+- Release Allison
 - Fix on energy monitoring devices using PowerDelta Exception0 with epc1:0x4000dce5 = Divide by zero (#6750)
 - Fix Script array bug (#6751)
 

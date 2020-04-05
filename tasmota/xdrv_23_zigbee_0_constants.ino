@@ -393,88 +393,36 @@ typedef struct Z_StatusLine {
   const char * status_msg;
 } Z_StatusLine;
 
-ZF(SUCCESS)
-ZF(FAILURE)
-ZF(NOT_AUTHORIZED)
-ZF(RESERVED_FIELD_NOT_ZERO)
-ZF(MALFORMED_COMMAND)
-ZF(UNSUP_CLUSTER_COMMAND)
-ZF(UNSUP_GENERAL_COMMAND)
-ZF(UNSUP_MANUF_CLUSTER_COMMAND)
-ZF(UNSUP_MANUF_GENERAL_COMMAND)
-ZF(INVALID_FIELD)
-ZF(UNSUPPORTED_ATTRIBUTE)
-ZF(INVALID_VALUE)
-ZF(READ_ONLY)
-ZF(INSUFFICIENT_SPACE)
-ZF(DUPLICATE_EXISTS)
-ZF(NOT_FOUND)
-ZF(UNREPORTABLE_ATTRIBUTE)
-ZF(INVALID_DATA_TYPE)
-ZF(INVALID_SELECTOR)
-ZF(WRITE_ONLY)
-ZF(INCONSISTENT_STARTUP_STATE)
-ZF(DEFINED_OUT_OF_BAND)
-ZF(INCONSISTENT)
-ZF(ACTION_DENIED)
-ZF(TIMEOUT)
-ZF(ABORT)
-ZF(INVALID_IMAGE)
-ZF(WAIT_FOR_DATA)
-ZF(NO_IMAGE_AVAILABLE)
-ZF(REQUIRE_MORE_IMAGE)
-ZF(NOTIFICATION_PENDING)
-ZF(HARDWARE_FAILURE)
-ZF(SOFTWARE_FAILURE)
-ZF(CALIBRATION_ERROR)
-ZF(UNSUPPORTED_CLUSTER)
+// Undocumented Zigbee ZCL code here: https://github.com/dresden-elektronik/deconz-rest-plugin/wiki/Zigbee-Error-Codes-in-the-Log
+String getZigbeeStatusMessage(uint8_t status) {
+  static const char    StatusMsg[] PROGMEM = "SUCCESS|FAILURE|NOT_AUTHORIZED|RESERVED_FIELD_NOT_ZERO|MALFORMED_COMMAND|UNSUP_CLUSTER_COMMAND|UNSUP_GENERAL_COMMAND"
+                                             "|UNSUP_MANUF_CLUSTER_COMMAND|UNSUP_MANUF_GENERAL_COMMAND|INVALID_FIELD|UNSUPPORTED_ATTRIBUTE|INVALID_VALE|READ_ONLY"
+                                             "|INSUFFICIENT_SPACE|DUPLICATE_EXISTS|NOT_FOUND|UNREPORTABLE_ATTRIBUTE|INVALID_DATA_TYPE|INVALID_SELECTOR|WRITE_ONLY"
+                                             "|INCONSISTENT_STARTUP_STATE|DEFINED_OUT_OF_BAND|INCONSISTENT|ACTION_DENIED|TIMEOUT|ABORT|INVALID_IMAGE|WAIT_FOR_DATA"
+                                             "|NO_IMAGE_AVAILABLE|REQUIRE_MORE_IMAGE|NOTIFICATION_PENDING|HARDWARE_FAILURE|SOFTWARE_FAILURE|CALIBRATION_ERROR|UNSUPPORTED_CLUSTER|NO_ROUTE"
+                                             "|CHANNEL_ACCESS_FAILURE|NO_ACK|NO_APP_ACK|NO_ROUTE"
+                                             ;
+  static const uint8_t StatusIdx[] PROGMEM = { 0x00, 0x01, 0x7E, 0x7F, 0x80, 0x81, 0x82,
+                                               0x83, 0x84, 0x85, 0x86, 0x87, 0x88,
+                                               0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
+                                               0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97,
+                                               0x98, 0x99, 0x9A, 0xC0, 0xC1, 0xC2, 0xC3, 0xCD,
+                                               0xE1, 0xE9, 0xA7, 0xD0};
 
-const Z_StatusLine Z_Status[] PROGMEM = {
-  0x00,   Z(SUCCESS),
-  0x01,   Z(FAILURE),
-  0x7E,   Z(NOT_AUTHORIZED),
-  0x7F,   Z(RESERVED_FIELD_NOT_ZERO),
-  0x80,   Z(MALFORMED_COMMAND),
-  0x81,   Z(UNSUP_CLUSTER_COMMAND),
-  0x82,   Z(UNSUP_GENERAL_COMMAND),
-  0x83,   Z(UNSUP_MANUF_CLUSTER_COMMAND),
-  0x84,   Z(UNSUP_MANUF_GENERAL_COMMAND),
-  0x85,   Z(INVALID_FIELD),
-  0x86,   Z(UNSUPPORTED_ATTRIBUTE),
-  0x87,   Z(INVALID_VALUE),
-  0x88,   Z(READ_ONLY),
-  0x89,   Z(INSUFFICIENT_SPACE),
-  0x8A,   Z(DUPLICATE_EXISTS),
-  0x8B,   Z(NOT_FOUND),
-  0x8C,   Z(UNREPORTABLE_ATTRIBUTE),
-  0x8D,   Z(INVALID_DATA_TYPE),
-  0x8E,   Z(INVALID_SELECTOR),
-  0x8F,   Z(WRITE_ONLY),
-  0x90,   Z(INCONSISTENT_STARTUP_STATE),
-  0x91,   Z(DEFINED_OUT_OF_BAND),
-  0x92,   Z(INCONSISTENT),
-  0x93,   Z(ACTION_DENIED),
-  0x94,   Z(TIMEOUT),
-  0x95,   Z(ABORT),
-  0x96,   Z(INVALID_IMAGE),
-  0x97,   Z(WAIT_FOR_DATA),
-  0x98,   Z(NO_IMAGE_AVAILABLE),
-  0x99,   Z(REQUIRE_MORE_IMAGE),
-  0x9A,   Z(NOTIFICATION_PENDING),
-  0xC0,   Z(HARDWARE_FAILURE),
-  0xC1,   Z(SOFTWARE_FAILURE),
-  0xC2,   Z(CALIBRATION_ERROR),
-  0xC3,   Z(UNSUPPORTED_CLUSTER),
-};
-
-const __FlashStringHelper* getZigbeeStatusMessage(uint8_t status) {
-  for (uint32_t i = 0; i < sizeof(Z_Status) / sizeof(Z_Status[0]); i++) {
-    const Z_StatusLine *statl = &Z_Status[i];
-    if (statl->status == status) {
-      return (const __FlashStringHelper*) statl->status_msg;
+  char msg[32];
+  int32_t idx = -1;
+  for (uint32_t i = 0; i < sizeof(StatusIdx); i++) {
+    if (status == pgm_read_byte(&StatusIdx[i])) {
+      idx = i;
+      break;
     }
   }
-  return F("");
+  if (idx >= 0) {
+    GetTextIndexed(msg, sizeof(msg), idx, StatusMsg);
+  } else {
+    *msg = 0x00;    // empty string
+  }
+  return String(msg);
 }
 
 #endif // USE_ZIGBEE
