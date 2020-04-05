@@ -1242,7 +1242,7 @@ const char HTTP_FORM_MQTT1[] PROGMEM =
   "<p><b>" D_CLIENT "</b> (%s)<br><input id='mc' placeholder='%s' value='%s'></p>";
 const char HTTP_FORM_MQTT2[] PROGMEM =
   "<p><b>" D_USER "</b> (" MQTT_USER ")<br><input id='mu' placeholder='" MQTT_USER "' value='%s'></p>"
-  "<p><b>" D_PASSWORD "</b><input type='checkbox' onclick='sp(\"mp\")'><br><input id='mp' type='password' placeholder='" D_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
+  "<p><label><b>" D_PASSWORD "</b><input type='checkbox' onclick='sp(\"mp\")'></label><br><input id='mp' type='password' placeholder='" D_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
   "<p><b>" D_TOPIC "</b> = %%topic%% (%s)<br><input id='mt' placeholder='%s' value='%s'></p>"
   "<p><b>" D_FULL_TOPIC "</b> (%s)<br><input id='mf' placeholder='%s' value='%s'></p>";
 

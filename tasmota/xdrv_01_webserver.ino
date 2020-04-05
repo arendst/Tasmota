@@ -413,7 +413,7 @@ const char HTTP_FORM_TEMPLATE[] PROGMEM =
 const char HTTP_FORM_TEMPLATE_FLAG[] PROGMEM =
   "<p></p>"  // Keep close so do not use <br>
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE_FLAGS "&nbsp;</b></legend><p>"
-//  "<input id='c0' name='c0' type='checkbox'><b>" D_OPTION_TEXT "</b><br>"
+//  "<label><input id='c0' name='c0' type='checkbox'><b>" D_OPTION_TEXT "</b></label><br>"
   "</p></fieldset>";
 
 const char HTTP_FORM_MODULE[] PROGMEM =
@@ -426,9 +426,9 @@ const char HTTP_FORM_WIFI[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='wi'>"
   "<p><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br><input id='s1' placeholder='" STA_SSID1 "' value='%s'></p>"
-  "<p><b>" D_AP1_PASSWORD "</b><input type='checkbox' onclick='sp(\"p1\")'><br><input id='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
+  "<p><label><b>" D_AP1_PASSWORD "</b><input type='checkbox' onclick='sp(\"p1\")'></label><br><input id='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
   "<p><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br><input id='s2' placeholder='" STA_SSID2 "' value='%s'></p>"
-  "<p><b>" D_AP2_PASSWORD "</b><input type='checkbox' onclick='sp(\"p2\")'><br><input id='p2' type='password' placeholder='" D_AP2_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
+  "<p><label><b>" D_AP2_PASSWORD "</b><input type='checkbox' onclick='sp(\"p2\")'></label><br><input id='p2' type='password' placeholder='" D_AP2_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
   "<p><b>" D_HOSTNAME "</b> (%s)<br><input id='h' placeholder='%s' value='%s'></p>"
   "<p><b>" D_CORS_DOMAIN "</b><input id='c' placeholder='" CORS_DOMAIN "' value='%s'></p>";
 
@@ -446,12 +446,12 @@ const char HTTP_FORM_OTHER[] PROGMEM =
   "<p></p>"
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE "&nbsp;</b></legend>"
   "<p><input id='t1' placeholder='" D_TEMPLATE "' value='%s'></p>"
-  "<p><input id='t2' type='checkbox'%s><b>" D_ACTIVATE "</b></p>"
+  "<p><label><input id='t2' type='checkbox'%s><b>" D_ACTIVATE "</b></label></p>"
   "</fieldset>"
   "<br>"
-  "<b>" D_WEB_ADMIN_PASSWORD "</b><input type='checkbox' onclick='sp(\"wp\")'><br><input id='wp' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERISK_PWD "'><br>"
+  "<label><b>" D_WEB_ADMIN_PASSWORD "</b><input type='checkbox' onclick='sp(\"wp\")'></label><br><input id='wp' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERISK_PWD "'><br>"
   "<br>"
-  "<input id='b1' type='checkbox'%s><b>" D_MQTT_ENABLE "</b><br>"
+  "<label><input id='b1' type='checkbox'%s><b>" D_MQTT_ENABLE "</b></label><br>"
   "<br>";
 
 const char HTTP_FORM_END[] PROGMEM =
