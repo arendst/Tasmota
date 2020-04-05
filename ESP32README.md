@@ -2,7 +2,7 @@
 
 ## esp32 port with minimal changes
 This is my esp32 port, i try to make only minimal changes to the original
-source code from Theo Arendst.
+source code from Theo Arends.
 Here are the main things i have done 
 
 - in platformio.ini [common] and [env] i 
