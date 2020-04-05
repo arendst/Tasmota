@@ -21,7 +21,7 @@ While fallback or downgrading is common practice it was never supported due to S
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.6.3 + e64cb61** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.0** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 Although it might still compile on previous Core versions all support will be removed in the near future.
 
@@ -35,7 +35,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Provided Binary Downloads
 
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.6.3 + e64cb61**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.0**.
 
 - **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
