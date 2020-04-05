@@ -76,11 +76,12 @@ bool Bh1750Read(void)
   if (Bh1750.valid) { Bh1750.valid--; }
 
   if (2 != Wire.requestFrom(Bh1750.address, (uint8_t)2)) { return false; }
-  Bh1750.illuminance = (Wire.read() << 8) | Wire.read();
-  Bh1750.illuminance /= (1.2 * (69 / Bh1750.mtreg));
+  float illuminance = (Wire.read() << 8) | Wire.read();
+  illuminance /= (1.2 * (69 / (float)Bh1750.mtreg));
   if (1 == Settings.SensorBits1.bh1750_resolution) {
-    Bh1750.illuminance >>= 1;
+    illuminance /= 2;
   }
+  Bh1750.illuminance = illuminance;
 
   Bh1750.valid = SENSOR_MAX_MISS;
   return true;
