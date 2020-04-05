@@ -273,6 +273,9 @@ struct LIGHT {
 
   bool     fade_initialized = false;      // dont't fade at startup
   bool     fade_running = false;
+#ifdef USE_DEVICE_GROUPS
+  bool     devgrp_no_channels_out = false; // don't share channels with device group (e.g. if scheme set by other device)
+#endif  // USE_DEVICE_GROUPS
   uint16_t fade_start_10[LST_MAX] = {0,0,0,0,0};
   uint16_t fade_cur_10[LST_MAX];
   uint16_t fade_end_10[LST_MAX];         // 10 bits resolution target channel values
@@ -1429,6 +1432,9 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
 //    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Light signal %d"), signal);
     light_controller.changeRGB(signal, 255 - signal, 0, true);  // keep bri
     Settings.light_scheme = 0;
+#ifdef USE_DEVICE_GROUPS
+    LightUpdateScheme();
+#endif  // USE_DEVICE_GROUPS
     if (0 == light_state.getBri()) {
       light_controller.changeBri(50);
     }
@@ -1742,6 +1748,9 @@ void LightAnimate(void)
 
             Light.wakeup_active = 0;
             Settings.light_scheme = LS_POWER;
+#ifdef USE_DEVICE_GROUPS
+            LightUpdateScheme();
+#endif  // USE_DEVICE_GROUPS
           }
         }
         break;
@@ -1775,7 +1784,7 @@ void LightAnimate(void)
     }
     if (Light.update) {
 #ifdef USE_DEVICE_GROUPS
-      if (Light.power) LightSendDeviceGroupStatus();
+      if (Light.power) LightSendDeviceGroupStatus(false);
 #endif  // USE_DEVICE_GROUPS
 
       uint16_t cur_col_10[LST_MAX];   // 10 bits resolution
@@ -2097,18 +2106,29 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
 }
 
 #ifdef USE_DEVICE_GROUPS
-void LightSendDeviceGroupStatus()
+void LightSendDeviceGroupStatus(bool force)
 {
-  if (Light.subtype > LST_SINGLE) {
+  static uint8_t last_channels[LST_MAX];
+  static uint8_t last_bri;
+
+  uint8_t bri = light_state.getBri();
+  bool send_bri_update = (force || bri != last_bri);
+
+  if (Light.subtype > LST_SINGLE && !Light.devgrp_no_channels_out) {
     uint8_t channels[LST_MAX];
     light_state.getChannels(channels);
-    SendLocalDeviceGroupMessage(DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_LIGHT_CHANNELS, channels);
+    if (force || memcmp(last_channels, channels, LST_MAX)) {
+      memcpy(last_channels, channels, LST_MAX);
+      SendLocalDeviceGroupMessage((send_bri_update ? DGR_MSGTYP_PARTIAL_UPDATE : DGR_MSGTYP_UPDATE), DGR_ITEM_LIGHT_CHANNELS, channels);
+    }
   }
-  SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme,
-    DGR_ITEM_LIGHT_BRI, light_state.getBri());
+  if (send_bri_update) {
+    last_bri = bri;
+    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_BRI, light_state.getBri());
+  }
 }
 
-void LightHandleDeviceGroupItem()
+void LightHandleDeviceGroupItem(void)
 {
   static bool send_state = false;
   static bool restore_power = false;
@@ -2144,6 +2164,7 @@ void LightHandleDeviceGroupItem()
     case DGR_ITEM_LIGHT_SCHEME:
       if (Settings.light_scheme != value) {
         Settings.light_scheme = value;
+        Light.devgrp_no_channels_out = (value != 0);
         send_state = true;
       }
       break;
@@ -2162,6 +2183,7 @@ void LightHandleDeviceGroupItem()
           light_controller.changeChannels(Light.entry_color);
           light_controller.changeBri(old_bri);
           Settings.light_scheme = 0;
+          Light.devgrp_no_channels_out = false;
         }
         else {
           light_state.setColorMode(LCM_CT);
@@ -2188,10 +2210,21 @@ void LightHandleDeviceGroupItem()
       break;
     case DGR_ITEM_STATUS:
       SendLocalDeviceGroupMessage(DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade,
-        DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
-      LightSendDeviceGroupStatus();
+        DGR_ITEM_LIGHT_SPEED, Settings.light_speed, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
+      LightSendDeviceGroupStatus(true);
       break;
   }
+}
+
+void LightUpdateScheme(void)
+{
+  static uint8_t last_scheme;
+
+  if (Settings.light_scheme != last_scheme) {
+    last_scheme = Settings.light_scheme;
+    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
+  }
+  Light.devgrp_no_channels_out = false;
 }
 #endif  // USE_DEVICE_GROUPS
 
@@ -2291,6 +2324,9 @@ void CmndSupportColor(void)
         }
 
         Settings.light_scheme = 0;
+#ifdef USE_DEVICE_GROUPS
+        LightUpdateScheme();
+#endif  // USE_DEVICE_GROUPS
         coldim = true;
       } else {             // Color3, 4, 5 and 6
         for (uint32_t i = 0; i < LST_RGB; i++) {
@@ -2458,7 +2494,7 @@ void CmndScheme(void)
       }
       Settings.light_scheme = XdrvMailbox.payload;
 #ifdef USE_DEVICE_GROUPS
-      SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
+      LightUpdateScheme();
 #endif  // USE_DEVICE_GROUPS
       if (LS_WAKEUP == Settings.light_scheme) {
         Light.wakeup_active = 3;
@@ -2483,6 +2519,9 @@ void CmndWakeup(void)
   }
   Light.wakeup_active = 3;
   Settings.light_scheme = LS_WAKEUP;
+#ifdef USE_DEVICE_GROUPS
+  LightUpdateScheme();
+#endif  // USE_DEVICE_GROUPS
   LightPowerOn();
   ResponseCmndChar(D_JSON_STARTED);
 }
