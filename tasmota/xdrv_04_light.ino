@@ -1310,6 +1310,9 @@ void LightInit(void)
   Light.power = 0;
   Light.update = true;
   Light.wakeup_active = 0;
+  if (Settings.flag4.fade_at_startup) {
+    Light.fade_initialized = true;      // consider fade intialized starting from black
+  }
 
   LightUpdateColorMapping();
 }

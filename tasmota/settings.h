@@ -110,7 +110,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t remote_device_mode : 1;       // bit 6 (v8.1.0.9)   - SetOption88 - PWM Dimmer Buttons control remote devices
     uint32_t zigbee_distinct_topics : 1;   // bit 7 (v8.1.0.10)  - SetOption89 - Distinct MQTT topics per device for Zigbee (#7835)
     uint32_t only_json_message : 1;        // bit 8 (v8.2.0.3)   - SetOption90 - Disable non-json MQTT response
-    uint32_t spare09 : 1;
+    uint32_t fade_at_startup : 1;          // bit 9 (v8.2.0.3)   - SetOption91 - Enable light fading at start/power on
     uint32_t spare10 : 1;
     uint32_t spare11 : 1;
     uint32_t spare12 : 1;
