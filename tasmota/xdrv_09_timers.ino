@@ -648,7 +648,11 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
     "o=qs('#mw');for(i=0;i<=15;i++){ce((i<10)?('0'+i):i,o);}"     // Create window minutes select options
     "o=qs('#d1');for(i=0;i<%d;i++){ce(i+1,o);}"                   // Create outputs
     "var a='" D_DAY3LIST "';"
-    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b> \"}"
+
+//    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b> \"}"
+//    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' type='checkbox'><label for='w\"+i+\"'>\"+a.substring(i*3,(i*3)+3)+\"</label> \"}"
+    "s='';for(i=0;i<7;i++){s+=\"<label><input id='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b></label> \"}"
+
     "eb('ds').innerHTML=s;"                                       // Create weekdays
     "eb('dP').click();"                                           // Get the element with id='dP' and click on it
   "}"
@@ -659,22 +663,22 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
   "<fieldset style='min-width:470px;text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
-  "<br><input id='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b><br><br><hr>"
+  "<br><label><input id='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b></label><br><br><hr>"
   "<input id='t0' value='";
 const char HTTP_FORM_TIMER2[] PROGMEM =
   "' hidden><div id='bt'></div><br><br><br>"
   "<div id='oa' name='oa'></div><br>"
   "<div>"
-  "<input id='a0' type='checkbox'><b>" D_TIMER_ARM "</b>&emsp;"
-  "<input id='r0' type='checkbox'><b>" D_TIMER_REPEAT "</b>"
+  "<label><input id='a0' type='checkbox'><b>" D_TIMER_ARM "</b></label>&emsp;"
+  "<label><input id='r0' type='checkbox'><b>" D_TIMER_REPEAT "</b></label>"
   "</div><br>"
   "<div>";
 #ifdef USE_SUNRISE
 const char HTTP_FORM_TIMER3[] PROGMEM =
   "<fieldset style='width:%dpx;margin:auto;text-align:left;border:0;'>"
-  "<input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b><br>"
-  "<input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b> (%s)<br>"
-  "<input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b> (%s)<br>"
+  "<label><input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b></label><br>"
+  "<label><input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b> (%s)</label><br>"
+  "<label><input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b> (%s)</label><br>"
   "</fieldset>"
   "<p></p>"
   "<span><select style='width:46px;' id='dr'></select></span>"

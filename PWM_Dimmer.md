@@ -25,9 +25,9 @@ Holding the power button, tapping the down button and then tapping or holding th
 
 Holding the power button, tapping the up button and then tapping or holding the down or up button publishes an MQTT Event command. The command is sent/value is adjusted once every .5 seconds for as long as the button is held. The MQTT topic is as described above. The MQTT payload is Trigger#, where # is 3 if the down button is held or 4 if the up button is held.
 
-Holding the down or up button alone for over 10 seconds executes the WiFiConfig 2 command.
+Holding any button alone for over 10 seconds executes the WiFiConfig 2 command.
 
-Pressing and releasing any button publishes an MQTT TOGGLE command for the button. Holding a button publishes an MQTT HOLD command followed by an MQTT OFF command when the button is released.
+SetOption32 defines the button hold time. When the PWM Dimmer module is initially selected, SetOption32 is set to 5 (1/2 second). Button presses and holds execute the normal ButtonTopic and Rule processing. If ButtonTopic is set and SetOption61 is 0 or a the button press/hold matches a rule, the button press/hold is ignored by PWM Dimmer.
 
 When Device Groups are enabled, the PWM Dimmer brightness presets are kept in sync across all switches in the group. The powered-off LED and LED timeout settings are specific to each switch. Changing them does not replicate the change to the other switches in the group.
 
@@ -81,7 +81,7 @@ When Device Groups are enabled, the PWM Dimmer brightness presets are kept in sy
 
 Remote device mode allows PWM Dimmer switches to control remote devices. With remote device mode enabled, each button controls a different device. Note that dimmer switches with toggle-style down/up buttons have limited functionality as remote device mode switches because you can not push the down and up buttons simultaneously.
 
-To include remote device mode support in the build, define USE_PWM_DIMMER_REMOTE in your user_config_override. Remote device mode support requires device group support so USE_DEVICE_GROUPS is automatically defined if USE_PWM_DIMMER_REMOTE is defined. Remote device mode support adds 0.7K to the code size in addition to the code size required for device groups support.
+To include remote device mode support in the build, define USE_PWM_DIMMER_REMOTE in your user_config_override. Remote device mode support requires device group support so USE_DEVICE_GROUPS is automatically defined if USE_PWM_DIMMER_REMOTE is defined. Remote device mode support adds 1.2K to the code size in addition to the code size required for device groups support.
 
 To enable remote device mode, execute the command SetOption88 1 (the device will restart). Each remote device must be running firmware with device group support and have remote device support enabled. The remote devices do not need to be built with PWM dimmer support nor do they need to be switches.
 

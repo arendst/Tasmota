@@ -11,6 +11,7 @@
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
 - Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
 - Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
+- Add command ``SetOption91 1`` to enable fading at startup / power on
 
 ### 8.2.0.2 20200328
 
