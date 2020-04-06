@@ -82,6 +82,7 @@ const uint8_t MAX_RULE_MEMS = 16;           // Max number of saved vars
 const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
 const uint8_t MAX_BUTTON_TEXT = 16;         // Max number of GUI button labels
 const uint8_t MAX_GROUP_TOPICS = 4;         // Max number of Group Topics
+const uint8_t MAX_DEV_GROUP_NAMES = 4;      // Max number of Device Group names
 
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 
@@ -302,30 +303,30 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_BUTTON1, SET_BUTTON2, SET_BUTTON3, SET_BUTTON4, SET_BUTTON5, SET_BUTTON6, SET_BUTTON7, SET_BUTTON8,
                          SET_BUTTON9, SET_BUTTON10, SET_BUTTON11, SET_BUTTON12, SET_BUTTON13, SET_BUTTON14, SET_BUTTON15, SET_BUTTON16,
                          SET_MQTT_GRP_TOPIC2, SET_MQTT_GRP_TOPIC3, SET_MQTT_GRP_TOPIC4,
-                         SET_TEMPLATE_NAME,
+                         SET_TEMPLATE_NAME, SET_DEV_GROUP_NAME1, SET_DEV_GROUP_NAME2, SET_DEV_GROUP_NAME3, SET_DEV_GROUP_NAME4,
                          SET_MAX };
 
-enum DeviceGroupMessageType { DGR_MSGTYP_FULL_STATUS, DGR_MSGTYP_PARTIAL_UPDATE, DGR_MSGTYP_UPDATE, DGR_MSGTYP_UPDATE_MORE_TO_COME, DGR_MSGTYP_UPDATE_DIRECT, DGR_MSGTYP_REUPDATE };
+enum DevGroupMessageType { DGR_MSGTYP_FULL_STATUS, DGR_MSGTYP_PARTIAL_UPDATE, DGR_MSGTYP_UPDATE, DGR_MSGTYP_UPDATE_MORE_TO_COME, DGR_MSGTYP_UPDATE_DIRECT, DGR_MSGTYP_REUPDATE };
 
-enum DeviceGroupMessageFlag { DGR_FLAG_RESET = 1, DGR_FLAG_STATUS_REQUEST = 2, DGR_FLAG_FULL_STATUS = 4, DGR_FLAG_ACK = 8, DGR_FLAG_MORE_TO_COME = 16, DGR_FLAG_DIRECT = 32, DGR_FLAG_ANNOUNCEMENT = 64 };
+enum DevGroupMessageFlag { DGR_FLAG_RESET = 1, DGR_FLAG_STATUS_REQUEST = 2, DGR_FLAG_FULL_STATUS = 4, DGR_FLAG_ACK = 8, DGR_FLAG_MORE_TO_COME = 16, DGR_FLAG_DIRECT = 32, DGR_FLAG_ANNOUNCEMENT = 64 };
 
-enum DeviceGroupItem { DGR_ITEM_EOL, DGR_ITEM_STATUS,
-                       DGR_ITEM_LIGHT_FADE, DGR_ITEM_LIGHT_SPEED, DGR_ITEM_LIGHT_BRI, DGR_ITEM_LIGHT_SCHEME, DGR_ITEM_LIGHT_FIXED_COLOR,
-                       DGR_ITEM_BRI_PRESET_LOW, DGR_ITEM_BRI_PRESET_HIGH, DGR_ITEM_BRI_POWER_ON,
-                       // Add new 8-bit items before this line
-                       DGR_ITEM_LAST_8BIT, DGR_ITEM_MAX_8BIT = 63,
-                       DGR_ITEM_ANALOG1, DGR_ITEM_ANALOG2, DGR_ITEM_ANALOG3, DGR_ITEM_ANALOG4, DGR_ITEM_ANALOG5,
-                       // Add new 16-bit items before this line
-                       DGR_ITEM_LAST_16BIT, DGR_ITEM_MAX_16BIT = 127,
-                       DGR_ITEM_POWER, DGR_ITEM_DIMMER_RANGE,
-                       // Add new 32-bit items before this line
-                       DGR_ITEM_LAST_32BIT, DGR_ITEM_MAX_32BIT = 191,
-                       // Add new string items before this line
-                       DGR_ITEM_LAST_STRING, DGR_ITEM_MAX_STRING = 223,
-                       DGR_ITEM_LIGHT_CHANNELS };
+enum DevGroupItem { DGR_ITEM_EOL, DGR_ITEM_STATUS,
+                    DGR_ITEM_LIGHT_FADE, DGR_ITEM_LIGHT_SPEED, DGR_ITEM_LIGHT_BRI, DGR_ITEM_LIGHT_SCHEME, DGR_ITEM_LIGHT_FIXED_COLOR,
+                    DGR_ITEM_BRI_PRESET_LOW, DGR_ITEM_BRI_PRESET_HIGH, DGR_ITEM_BRI_POWER_ON,
+                    // Add new 8-bit items before this line
+                    DGR_ITEM_LAST_8BIT, DGR_ITEM_MAX_8BIT = 63,
+                    DGR_ITEM_ANALOG1, DGR_ITEM_ANALOG2, DGR_ITEM_ANALOG3, DGR_ITEM_ANALOG4, DGR_ITEM_ANALOG5,
+                    // Add new 16-bit items before this line
+                    DGR_ITEM_LAST_16BIT, DGR_ITEM_MAX_16BIT = 127,
+                    DGR_ITEM_POWER, DGR_ITEM_DIMMER_RANGE,
+                    // Add new 32-bit items before this line
+                    DGR_ITEM_LAST_32BIT, DGR_ITEM_MAX_32BIT = 191,
+                    // Add new string items before this line
+                    DGR_ITEM_LAST_STRING, DGR_ITEM_MAX_STRING = 223,
+                    DGR_ITEM_LIGHT_CHANNELS };
 
-enum DeviceGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE_LIGHT_FADE = 4, DGR_SHARE_LIGHT_SCHEME = 8,
-                            DGR_SHARE_LIGHT_COLOR = 16, DGR_SHARE_DIMMER_SETTINGS = 32 };
+enum DevGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE_LIGHT_FADE = 4, DGR_SHARE_LIGHT_SCHEME = 8,
+                         DGR_SHARE_LIGHT_COLOR = 16, DGR_SHARE_DIMMER_SETTINGS = 32 };
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
                      SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_SHUTTER,
