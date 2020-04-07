@@ -648,7 +648,7 @@ void SettingsSave(uint8_t rotate)
       }
     }
 #else
-    SettingsSaveMain(&Settings,sizeof(SYSCFG));
+    SettingsSaveMain(&Settings, sizeof(SYSCFG));
 #endif
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(SYSCFG));
 

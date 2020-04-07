@@ -25,16 +25,16 @@ struct rst_info resetInfo;
 
 String ESP_getResetReason(void)
 {
-    // CPU 0
-   return String(rtc_get_reset_reason(0));
+	// CPU 0
+	return String(rtc_get_reset_reason(0));
 }
 
-String ESP_getResetInfo(void) 
+String ESP_getResetInfo(void)
 {
-	return String(PSTR("0"));	
+	return String(PSTR("0"));
 }
 
-String ESP_getBootVersion(void) 
+String ESP_getBootVersion(void)
 {
 	return String(PSTR("Unknown"));
 }
@@ -56,13 +56,13 @@ void ESP_reset()
 
 uint32_t ESP_getFlashChipId()
 {
-    return 0;
+	return 0;
 }
 
 String String_ESP_getChipId()
 {
-    uint64_t mac= ESP.getEfuseMac();
-    return String(uint32_t(mac>>32)) + String(uint32_t(mac));
+	uint64_t mac = ESP.getEfuseMac();
+	return String(uint32_t(mac >> 32)) + String(uint32_t(mac));
 }
 
 /*
@@ -71,4 +71,3 @@ uint64_t ESP_getChipId()
 	return ESP.getEfuseMac();
 }
 */
-

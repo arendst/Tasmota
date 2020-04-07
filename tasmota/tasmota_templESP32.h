@@ -21,47 +21,28 @@
 #define _SONOFF_TEMPLATEESP32_H_
 
 #ifdef ESP32
-// not implemented
-#undef USE_ADC_VCC // Needs to be ported
-#undef USE_IR_REMOTE // IRremoteESP8266 needs to be ported
-#undef SNFBRIDGE // No commercial device, no sense porting
 // mqtt
 #undef MQTT_LIBRARY_TYPE
 #define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT
-// jsm Test
-#undef USE_DISCOVERY
-#undef USE_DOMOTICZ
-#undef USE_HOME_ASSISTANT
-#undef USE_I2C
-#undef USE_MHZ19
-#undef USE_SENSEAIR
-#undef USE_IR_REMOTE
-#undef USE_ASYNC_UDP
-#undef USE_RF_FLASH
-#undef USE_TX20_WIND_SENSOR
-#undef USE_MCP39F501
-//#undef USE_WS2812
-#undef USE_ARILUX_RF
-#undef USE_ARMTRONIX_DIMMERS
+// Hardware has no ESP32
 #undef USE_TUYA_DIMMER
+#undef USE_PWM_DIMMER
+#undef USE_EXS_DIMMER
+#undef USE_ARMTRONIX_DIMMERS
 #undef USE_SONOFF_RF
 #undef USE_SONOFF_SC
 #undef USE_SONOFF_IFAN
 #undef USE_SONOFF_L1
+#undef USE_SONOFF_D1
+#undef USE_RF_FLASH
+// not ported
+#undef USE_DISCOVERY
+#undef USE_ADC_VCC // Needs to be ported
 #undef USE_DEEPSLEEP
-#undef USE_EMULATION_WEMO
 #undef USE_MY92X1
 #undef USE_TUYA_MCU
-#undef USE_ESPTOOL
-#undef USE_PWM_DIMMER
-#undef USE_EXS_DIMMER
-#undef USE_SONOFF_D1
-#undef USE_CCS811
-#undef USE_DHT12
-#undef USE_DS1624
-#undef USE_WEMOS_MOTOR_V1
-#undef USE_HM10
-#undef USE_HRXL
+#undef USE_I2C
+#undef USE_PS_16_DZ
 
 /********************************************************************************************/
 // Supported hardware modules

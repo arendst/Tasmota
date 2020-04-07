@@ -35,13 +35,13 @@ void WiFiClass32::setSleepMode(int iSleepMode)
 
 int WiFiClass32::getPhyMode()
 {
-    return 0;   // " BGN"
+    return 0; // " BGN"
 }
 
 void WiFiClass32::wps_disable()
 {
-
 }
+
 void WiFiClass32::setOutputPower(int n)
 {
     wifi_power_t p = WIFI_POWER_2dBm;
@@ -68,14 +68,13 @@ void WiFiClass32::setOutputPower(int n)
 
 void WiFiClass32::forceSleepBegin()
 {
-
 }
+
 void WiFiClass32::forceSleepWake()
 {
-
 }
 
-bool WiFiClass32::getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, int32_t &rssi, uint8_t* &bssid, int32_t &channel, bool &hidden_scan)
+bool WiFiClass32::getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, int32_t &rssi, uint8_t *&bssid, int32_t &channel, bool &hidden_scan)
 {
     hidden_scan = false;
     return WiFi.getNetworkInfo(i, ssid, encType, rssi, bssid, channel);
@@ -89,7 +88,6 @@ void wifi_station_disconnect()
 
 void wifi_station_dhcpc_start()
 {
-
 }
 
 WiFiClass32 WiFi32;

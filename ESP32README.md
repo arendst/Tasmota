@@ -11,7 +11,7 @@ Here are the main things i have done
 - my "ESP32-to-ESP8266-compat" has all files that are not available in ESP32
   so you dont have to change the source code and i write code to get the informations from ESP32
 - all librarys that are not compatibel i add to lib_ignore
-- all code that is not for ESP32 i put in "#ifdef ESP8266" the define is from expessiv platform
+- all code that is not for ESP32 i put in "#ifdef ESP8266" the define is from espessif platform
 - all code for ESP32 is in "#ifdef ESP32"
 - changed SerialConfig variable  from uint8_t to SerialConfig
 - changed "HTTP_HEADER" to "HTTP_HEADER1", in ESP32 its an enum
@@ -24,6 +24,8 @@ Here are the main things i have done
 - in tasmota.ino i include "tasmota_compat.h"
 - in tasmota_template.h i use ifdef and tasmota_templESP32.h
 - defines for sensors that currently don't work, i undef in tasmota_templESP32.h
+- no warnig in "xdrv_20_hue.ino" thats th only warning had
+
 
 ## build info 
 copy platformio_override_esp32.ini to platformio_override.ini an select your imagetype

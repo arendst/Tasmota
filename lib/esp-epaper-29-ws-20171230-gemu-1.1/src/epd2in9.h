@@ -68,8 +68,8 @@ public:
     int16_t width;
     int16_t height;
 
-    Epd();
-    ~Epd();
+    //Epd();
+    //~Epd();
     int  Init(const unsigned char* lut);
     void Init(int8_t p);
     void SendCommand(unsigned char command);
@@ -82,16 +82,16 @@ public:
         uint16_t y,
         uint16_t image_width,
         uint16_t image_height
-    );
+        );
     void SetFrameMemory(const unsigned char* image_buffer);
     void ClearFrameMemory(unsigned char color);
     void DisplayFrame(void);
     void Sleep(void);
-    void fastSPIwrite(uint8_t d,uint8_t dc);
+    void fastSPIwrite(uint8_t d, uint8_t dc);
 
     void DisplayOnff(int8_t on);
-    void DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
-    int16_t Begin(int16_t p1,int16_t p2,int16_t p3);
+    void DisplayInit(int8_t p, int8_t size, int8_t rot, int8_t font);
+    int16_t Begin(int16_t p1, int16_t p2, int16_t p3);
     void Updateframe();
 
 private:
