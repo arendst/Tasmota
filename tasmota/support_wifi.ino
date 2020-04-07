@@ -442,6 +442,7 @@ void WifiCheckIp(void)
         break;
       case WL_CONNECT_FAILED:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_WRONG_PASSWORD));
+        Settings.channel = 0;  // Disable stored AP
         if (Wifi.retry > (Wifi.retry_init / 2)) {
           Wifi.retry = Wifi.retry_init / 2;
         }
@@ -450,6 +451,7 @@ void WifiCheckIp(void)
         }
         break;
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
+        Settings.channel = 0;  // Disable stored AP
         if (!Wifi.retry || ((Wifi.retry_init / 2) == Wifi.retry)) {
           AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
         } else {
@@ -724,7 +726,7 @@ extern "C" {
 unsigned long wifiTimer = 0;
 
 void stationKeepAliveNow(void) {
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Sending Gratuitous ARP"));
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI "Sending Gratuitous ARP"));
   for (netif* interface = netif_list; interface != nullptr; interface = interface->next)
     if (
           (interface->flags & NETIF_FLAG_LINK_UP)
