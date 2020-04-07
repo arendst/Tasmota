@@ -72,3 +72,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for up to four MQTT GroupTopics using the same optional Device Group names (#8014)
 - Add console command history (#7483, #8015)
 - Add support for longer template names
+- Add quick wifi connect using saved AP parameters when ``SetOption56 0`` (#3189)

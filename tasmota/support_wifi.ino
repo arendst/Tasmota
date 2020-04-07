@@ -401,6 +401,11 @@ void WifiCheckIp(void)
       Settings.ip_address[1] = (uint32_t)WiFi.gatewayIP();
       Settings.ip_address[2] = (uint32_t)WiFi.subnetMask();
       Settings.ip_address[3] = (uint32_t)WiFi.dnsIP();
+
+      // Save current AP parameters for quick reconnect
+      Settings.channel = WiFi.channel();
+      uint8_t *bssid = WiFi.BSSID();
+      memcpy((void*) &Settings.bssid, (void*) bssid, sizeof(Settings.bssid));
     }
     Wifi.status = WL_CONNECTED;
 #ifdef USE_DISCOVERY
@@ -423,6 +428,7 @@ void WifiCheckIp(void)
         break;
       case WL_NO_SSID_AVAIL:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_NOT_REACHED));
+        Settings.channel = 0;  // Disable stored AP
         if (WIFI_WAIT == Settings.sta_config) {
           Wifi.retry = Wifi.retry_init;
         } else {
@@ -462,7 +468,7 @@ void WifiCheckIp(void)
         }
       } else {
         if (Wifi.retry_init == Wifi.retry) {
-          WifiBegin(3, 0);        // Select default SSID
+          WifiBegin(3, Settings.channel);  // Select default SSID
         }
         if ((Settings.sta_config != WIFI_WAIT) && ((Wifi.retry_init / 2) == Wifi.retry)) {
           WifiBegin(2, 0);        // Select alternate SSID
@@ -649,6 +655,8 @@ void WifiConnect(void)
   Wifi.retry_init = WIFI_RETRY_OFFSET_SEC + (ESP.getChipId() & 0xF);  // Add extra delay to stop overrun by simultanous re-connects
   Wifi.retry = Wifi.retry_init;
   Wifi.counter = 1;
+
+  memcpy((void*) &Wifi.bssid, (void*) Settings.bssid, sizeof(Wifi.bssid));
 
 #ifdef WIFI_RF_PRE_INIT
   if (rf_pre_init_flag) {
