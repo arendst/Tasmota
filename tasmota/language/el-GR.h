@@ -210,7 +210,7 @@
 #define D_IN_MODE "σε mode"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Αποτυχία σύνδεσης, δεν απονεμήθηκε διεύθυνση IP"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Αποτυχία σύνδεσης, δεν ανταποκρίνεται το AP"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Αποτυχία σύνδεσης, λάθος κωδικός για το AP"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Αποτυχία σύνδεσης"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Αποτυχία σύνδεσης, λήξη ορίου απόκρισης από το AP"
 #define D_ATTEMPTING_CONNECTION "Προσπάθεια για σύνδεση..."
 #define D_CHECKING_CONNECTION "Έλεγχος σύνδεσης..."

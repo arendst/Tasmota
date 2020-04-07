@@ -210,7 +210,7 @@
 #define D_IN_MODE "v módu"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Chyba připojení, nebyla obdržena IP adresa"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Chyba připojení, nedostupný AP"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Chyba připojení, nesprávné heslo pro AP"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Chyba připojení"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Chyba připojení, uplynul AP timeout"
 #define D_ATTEMPTING_CONNECTION "Připojování..."
 #define D_CHECKING_CONNECTION "Zkouška spojení..."

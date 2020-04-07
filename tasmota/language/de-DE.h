@@ -210,7 +210,7 @@
 #define D_IN_MODE "in Modus"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Verbindung fehlgeschlagen, da keine IP-Adresse zugeteilt wurde"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Verbindung fehlgeschlagen, da AP nicht erreicht werden konnte"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Verbindung fehlgeschlagen, da das Passwort falsch ist"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Verbindung fehlgeschlagen"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Verbindung fehlgeschlagen, da der AP nicht antwortet (timeout)"
 #define D_ATTEMPTING_CONNECTION "Verbindungsversuch..."
 #define D_CHECKING_CONNECTION "Prüfe Verbindung..."
