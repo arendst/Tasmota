@@ -210,7 +210,7 @@
 #define D_IN_MODE "в режим"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Грешка при свързването, не е получен IP адрес"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Грешка при свързването, точката за достъп е недостижима"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Грешка при свързването, грешна парола към точката за достъп"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Грешка при свързването"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Грешка при свързването, превишено време за изчакване"
 #define D_ATTEMPTING_CONNECTION "Опитва свързване..."
 #define D_CHECKING_CONNECTION "Проверка на свързването..."

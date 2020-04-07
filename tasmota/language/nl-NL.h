@@ -210,7 +210,7 @@
 #define D_IN_MODE "in stand"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Verbinding mislukt omdat geen IP adres werd ontvangen"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Verbinding mislukt omdat AP onbereikbaar is"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Verbinding mislukt door fout wachtwoord"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Verbinding mislukt"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Verbinding mislukt door AP time-out"
 #define D_ATTEMPTING_CONNECTION "Verbinden..."
 #define D_CHECKING_CONNECTION "Controleer verbinding..."

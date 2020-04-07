@@ -470,8 +470,10 @@ struct SYSCFG {
   uint8_t       bri_preset_low;            // F06
   uint8_t       bri_preset_high;           // F07
   int8_t        hum_comp;                  // F08
+  uint8_t       channel;                   // F09
+  uint8_t       bssid[6];                  // F0A
 
-  uint8_t       free_f09[175];             // F09
+  uint8_t       free_f10[168];             // F10
 
   uint16_t      pulse_counter_debounce_low;  // FB8
   uint16_t      pulse_counter_debounce_high; // FBA

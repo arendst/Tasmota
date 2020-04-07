@@ -101,6 +101,7 @@ void PWMModulePreInit(void)
   if (Settings.flag4.remote_device_mode) {
     Settings.flag4.device_groups_enabled = true;
 
+    device_group_count = 0;
     for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
       if (pin[GPIO_KEY1 + button_index] < 99) device_group_count++;
     }
@@ -169,11 +170,11 @@ void PWMDimmerSetPower(void)
 }
 
 #ifdef USE_DEVICE_GROUPS
-void PWMDimmerHandleDeviceGroupItem(void)
+void PWMDimmerHandleDevGroupItem(void)
 {
   uint32_t value = XdrvMailbox.payload;
 #ifdef USE_PWM_DIMMER_REMOTE
-  uint8_t device_group_index = XdrvMailbox.index >> 16 & 0xff;
+  uint8_t device_group_index = *(uint8_t *)XdrvMailbox.topic;
   bool device_is_local = device_groups[device_group_index].local;
   struct remote_pwm_dimmer * remote_pwm_dimmer = &remote_pwm_dimmers[device_group_index];
 #endif  // USE_PWM_DIMMER_REMOTE
@@ -763,7 +764,7 @@ bool Xdrv35(uint8_t function)
 
 #ifdef USE_DEVICE_GROUPS
     case FUNC_DEVICE_GROUP_ITEM:
-      PWMDimmerHandleDeviceGroupItem();
+      PWMDimmerHandleDevGroupItem();
       break;
 #endif  // USE_DEVICE_GROUPS
 

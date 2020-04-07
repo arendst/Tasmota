@@ -210,7 +210,7 @@
 #define D_IN_MODE "במצב"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "IP החיבור נכשל מכיוון שלא התקבלה כתובת"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "זמין AP החיבור נכשל כיוון שאין"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "סיסמא שגויה , AP חיבור נכשל ל"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "AP חיבור נכשל ל"
 #define D_CONNECT_FAILED_AP_TIMEOUT "פג זמן המתנה , AP חיבור נכשל ל"
 #define D_ATTEMPTING_CONNECTION "...מנסה להתחבר"
 #define D_CHECKING_CONNECTION "...בודק חיבור"

@@ -2131,14 +2131,14 @@ void LightSendDeviceGroupStatus(bool force)
   }
 }
 
-void LightHandleDeviceGroupItem(void)
+void LightHandleDevGroupItem(void)
 {
   static bool send_state = false;
   static bool restore_power = false;
   bool more_to_come;
   uint32_t value = XdrvMailbox.payload;
 #ifdef USE_PWM_DIMMER_REMOTE
-  if (XdrvMailbox.index & 0xff0000) return; // Ignore updates from other device groups
+  if (*XdrvMailbox.topic) return; // Ignore updates from other device groups
 #endif  // USE_PWM_DIMMER_REMOTE
   switch (XdrvMailbox.command_code) {
     case DGR_ITEM_EOL:
@@ -2774,7 +2774,7 @@ bool Xdrv04(uint8_t function)
         break;
 #ifdef USE_DEVICE_GROUPS
       case FUNC_DEVICE_GROUP_ITEM:
-        LightHandleDeviceGroupItem();
+        LightHandleDevGroupItem();
         break;
 #endif  // USE_DEVICE_GROUPS
       case FUNC_SET_POWER:

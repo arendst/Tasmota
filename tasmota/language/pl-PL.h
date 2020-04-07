@@ -210,7 +210,7 @@
 #define D_IN_MODE "w trybie"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Połączenie nie powiodło się, ponieważ nie otrzymano adresu IP"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Połączenie nie powiodło się, AP nie osiągalny"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Połączenie nie powiodło się, nieprawidlowe hasło"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Połączenie nie powiodło się"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Nie udało się nawiązac połączenia, limit czasu przekroczony"
 #define D_ATTEMPTING_CONNECTION "Próba połączenia..."
 #define D_CHECKING_CONNECTION "Sprawdzanie połączenia..."
