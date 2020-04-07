@@ -210,7 +210,7 @@
 #define D_IN_MODE "v režime"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Chyba pripojenia, nebola obdržaná IP adresa"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Chyba pripojenia, nedostupný AP"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Chyba pripojenia, nesprávne heslo pre AP"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Chyba pripojenia"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Chyba pripojenia, uplynul AP timeout"
 #define D_ATTEMPTING_CONNECTION "Pripájanie..."
 #define D_CHECKING_CONNECTION "Skúška spojenia..."

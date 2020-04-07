@@ -210,7 +210,7 @@
 #define D_IN_MODE "in mode"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "IP 주소가 수신되지 않아 연결이 실패했습니다"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "연결이 닿지 않아 AP에 연결할 수 없습니다"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "비밀번호가 틀려 AP에 연결할 수 없습니다"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "연결할 수 없습니다"
 #define D_CONNECT_FAILED_AP_TIMEOUT "시간초과로 AP에 연결할 수 없습니다"
 #define D_ATTEMPTING_CONNECTION "연결 시도 중..."
 #define D_CHECKING_CONNECTION "연결 체크 중..."

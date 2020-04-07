@@ -210,7 +210,7 @@
 #define D_IN_MODE "in mode"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Conexiune eșuată, lipsă primire adresă IP"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Conexiune eșuată, nu s-a găsit AP"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Conexiune eșuată, parolă greșită AP"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Conexiune eșuată"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Conexiune eșuată, expirare timp AP"
 #define D_ATTEMPTING_CONNECTION "Conectare in curs ..."
 #define D_CHECKING_CONNECTION "Verificare conexiune..."

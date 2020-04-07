@@ -210,7 +210,7 @@
 #define D_IN_MODE "em modo"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "A ligação falhou porque nenhum endereço IP foi recebido"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "A ligação falhou porque o AP não pode ser alcançado"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "A ligação falhou porque a palavra chave está incorreta"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "A ligação falhou"
 #define D_CONNECT_FAILED_AP_TIMEOUT "A ligação falhou porque o tempo excedeu"
 #define D_ATTEMPTING_CONNECTION "A ligar..."
 #define D_CHECKING_CONNECTION "A verificar ligação..."

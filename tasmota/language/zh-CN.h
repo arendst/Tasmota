@@ -210,7 +210,7 @@
 #define D_IN_MODE "模式:"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "连接失败，因为没有获取到 IP 地址"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "连接失败，无法连接 AP"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "连接失败，AP 密码不正确"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "连接失败"
 #define D_CONNECT_FAILED_AP_TIMEOUT "连接失败，AP 超时"
 #define D_ATTEMPTING_CONNECTION "尝试连接..."
 #define D_CHECKING_CONNECTION "检查连接..."

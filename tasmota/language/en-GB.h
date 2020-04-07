@@ -210,7 +210,7 @@
 #define D_IN_MODE "in mode"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Connect failed as no IP address received"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Connect failed as AP cannot be reached"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Connect failed with AP incorrect password"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Connect failed"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Connect failed with AP timeout"
 #define D_ATTEMPTING_CONNECTION "Attempting connection..."
 #define D_CHECKING_CONNECTION "Checking connection..."
