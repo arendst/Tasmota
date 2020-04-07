@@ -32,7 +32,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
 #ifdef USE_DEVICE_GROUPS
-  D_CMND_DEVGROUP_SHARE "|"
+  D_CMND_DEVGROUP_NAME "|" D_CMND_DEVGROUP_SHARE "|"
 #endif  // USE_DEVICE_GROUPS
   D_CMND_SENSOR "|" D_CMND_DRIVER;
 
@@ -51,7 +51,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndI2cScan, CmndI2cDriver,
 #endif
 #ifdef USE_DEVICE_GROUPS
-  &CmndDevGroupShare,
+  &CmndDevGroupName, &CmndDevGroupShare,
 #endif  // USE_DEVICE_GROUPS
   &CmndSensor, &CmndDriver };
 
@@ -1707,6 +1707,21 @@ void CmndI2cDriver(void)
 #endif  // USE_I2C
 
 #ifdef USE_DEVICE_GROUPS
+void CmndDevGroupName(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DEV_GROUP_NAMES)) {
+    if (XdrvMailbox.data_len > 0) {
+      if (XdrvMailbox.data_len > TOPSZ)
+        XdrvMailbox.data[TOPSZ - 1] = 0;
+      else if (1 == XdrvMailbox.data_len && ('"' == XdrvMailbox.data[0] || '0' == XdrvMailbox.data[0]))
+        XdrvMailbox.data[0] = 0;
+      SettingsUpdateText(SET_DEV_GROUP_NAME1 + XdrvMailbox.index - 1, XdrvMailbox.data);
+      restart_flag = 2;
+    }
+    ResponseCmndAll(SET_DEV_GROUP_NAME1, MAX_DEV_GROUP_NAMES);
+  }
+}
+
 void CmndDevGroupShare(void)
 {
   uint32_t parm[2] = { Settings.device_group_share_in, Settings.device_group_share_out };
