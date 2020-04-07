@@ -13,6 +13,7 @@
 - Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
 - Add command ``SetOption91 1`` to enable fading at startup / power on
 - Add quick wifi connect using saved AP parameters when ``SetOption56 0`` (#3189)
+- Add command ``SetOption41 <x>`` to force sending gratuitous ARP every <x> seconds
 
 ### 8.2.0.2 20200328
 

@@ -814,6 +814,9 @@ void PerformEverySecond(void)
       }
     }
   }
+
+  // Wifi keep alive to send Gratuitous ARP
+  wifiKeepAlive();
 }
 
 /*-------------------------------------------------------------------------------------------*\

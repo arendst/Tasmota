@@ -708,3 +708,51 @@ void EspRestart(void)
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
 }
+
+//
+// Gratuitous ARP, backported from https://github.com/esp8266/Arduino/pull/6889
+//
+extern "C" {
+#if LWIP_VERSION_MAJOR == 1
+#include "netif/wlan_lwip_if.h" // eagle_lwip_getif()
+#include "netif/etharp.h" // gratuitous arp
+#else
+#include "lwip/etharp.h" // gratuitous arp
+#endif
+}
+
+unsigned long wifiTimer = 0;
+
+void stationKeepAliveNow(void) {
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Sending Gratuitous ARP"));
+  for (netif* interface = netif_list; interface != nullptr; interface = interface->next)
+    if (
+          (interface->flags & NETIF_FLAG_LINK_UP)
+      && (interface->flags & NETIF_FLAG_UP)
+#if LWIP_VERSION_MAJOR == 1
+      && interface == eagle_lwip_getif(STATION_IF) /* lwip1 does not set if->num properly */
+      && (!ip_addr_isany(&interface->ip_addr))
+#else
+      && interface->num == STATION_IF
+      && (!ip4_addr_isany_val(*netif_ip4_addr(interface)))
+#endif
+  )
+  {
+    etharp_gratuitous(interface);
+    break;
+  }
+}
+
+void wifiKeepAlive(void) {
+  uint32_t wifiTimerSec = Settings.param[P_ARP_GRATUITOUS];   // 8-bits number of seconds, or minutes if > 100
+
+  if ((WL_CONNECTED != Wifi.status) || (0 == wifiTimerSec)) { return; }   // quick exit if wifi not connected or feature disabled
+
+  if (TimeReached(wifiTimer)) {
+    stationKeepAliveNow();
+    if (wifiTimerSec > 100) {
+      wifiTimerSec = (wifiTimerSec - 100) * 60;                 // convert >100 as minutes, ex: 105 = 5 minutes, 110 = 10 minutes
+    }
+    SetNextTimeInterval(wifiTimer, wifiTimerSec * 1000);
+  }
+}
