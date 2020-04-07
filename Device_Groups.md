@@ -11,7 +11,7 @@ To enable device groups, execute the command SetOption85 1.
 
 ## Device Groups Operation
 
-The device group name is the MQTT group topic set with the GroupTopic command. All devices in the same IP network with the same group topic are in the same group. Some modules may define additional device groups. For example, if Remote Device Mode is enabled, the PWM Dimmer module defines three devices groups.
+The device group name is set with the DevGroupName command. If the device group name is not set for a group, the MQTT group topic is used (with the device group number appended for device group numbers > 1). All devices in the same IP network with the same device group name are in the same group. Some modules may define additional device groups. For example, if Remote Device Mode is enabled, the PWM Dimmer module defines three devices groups.
 
 The items that are sent to the group and the items that are received from the group are selected with the DevGroupShare command. By default all items are sent and received from the group. An example of when the DevGroupShare command would be used is when you have a group of lights that you control with a dimmer switch and home automation software. You want the dimmer switch to be able to control all items. The home automation software controls each light individually. When it controls the whole group, it actually sends command to each light in the group. If you use the home automation software to turn an individual light on or off or change it’s brightness, color or scheme, you do not want the change to be replicated to the other lights. In this case, you would set the incoming and outgoing item masks to 0xffffffff (all items) on the dimmer switch (DevGroupShare 0xffffffff,0xffffffff) and set the incoming item mask to 0xffffffff and outgoing item mask to 0 on all the lights (DevGroupShare 0xffffffff,0).
 
@@ -34,10 +34,10 @@ The items that are sent to the group and the items that are received from the gr
    </td>
   </tr>
   <tr>
-   <td>GroupTopic&lt;x>
+   <td>DevGroupName&lt;x>
    </td>
-   <td>1 = reset device group &lt;x> MQTT group topic to firmware default (MQTT_GRPTOPIC) and restart<br>
-&lt;value> = set device group &lt;x> MQTT group topic (32 chars max) and restart
+   <td>0 = clear device group &lt;x> name and restart<br>
+&lt;value> = set device group &lt;x>name and restart
    </td>
   </tr>
 </table>

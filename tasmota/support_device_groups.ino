@@ -62,7 +62,7 @@ bool udp_was_connected = false;
 
 void DeviceGroupsInit(void)
 {
-  // Initialize the device information for each device group. The group name is the MQTT group topic.
+  // Initialize the device information for each device group.
   device_groups = (struct device_group *)calloc(device_group_count, sizeof(struct device_group));
   if (device_groups == nullptr) {
     AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: error allocating %u-element device group array"), device_group_count);
@@ -72,7 +72,18 @@ void DeviceGroupsInit(void)
 
   for (uint32_t device_group_index = 0; device_group_index < device_group_count; device_group_index++) {
     struct device_group * device_group = &device_groups[device_group_index];
-    strcpy(device_group->group_name, SettingsText((device_group_index == 0 ? SET_MQTT_GRP_TOPIC : SET_MQTT_GRP_TOPIC2 + device_group_index - 1)));
+    strcpy(device_group->group_name, SettingsText(SET_DEV_GROUP_NAME1 + device_group_index));
+
+    // If the device group name is not set, use the MQTT group topic (with the device group index +
+    // 1 appended for device group indices > 0).
+    if (!device_group->group_name[0]) {
+      strcpy(device_group->group_name, SettingsText(SET_MQTT_GRP_TOPIC));
+      if (device_group_index) {
+        char str[10];
+        sprintf_P(str, PSTR("%u"), device_group_index + 1);
+        strcat(device_group->group_name, str);
+      }
+    }
     device_group->message_header_length = sprintf_P(device_group->message, PSTR("%s%s HTTP/1.1\n\n"), kDeviceGroupMessage, device_group->group_name);
     device_group->last_full_status_sequence = -1;
   }
@@ -106,7 +117,7 @@ char * BeginDeviceGroupMessage(struct device_group * device_group, uint16_t flag
 }
 
 // Return true if we're configured to share the specified item.
-bool DeviceGroupItemShared(bool incoming, uint8_t item)
+bool DevGroupItemShared(bool incoming, uint8_t item)
 {
   uint8_t mask = 0;
   switch (item) {
@@ -149,7 +160,7 @@ void SendDeviceGroupPacket(IPAddress ip, char * packet, int len, const char * la
   AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: error sending %s packet"), label);
 }
 
-void _SendDeviceGroupMessage(uint8_t device_group_index, DeviceGroupMessageType message_type, ...)
+void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType message_type, ...)
 {
   // If device groups are not enabled, ignore this request.
   if (!Settings.flag4.device_groups_enabled) return;
@@ -184,6 +195,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DeviceGroupMessageType 
     device_group->message_length = 0;
     SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_POWER, power);
     XdrvMailbox.command_code = DGR_ITEM_STATUS;
+    XdrvMailbox.topic = (char *)&device_group_index;
     XdrvCall(FUNC_DEVICE_GROUP_ITEM);
     building_status_message = false;
 
@@ -319,7 +331,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DeviceGroupMessageType 
     // Itertate through the passed items adding them and their values to the message.
     va_start(ap, message_type);
     while ((item = va_arg(ap, int))) {
-      shared = DeviceGroupItemShared(false, item);
+      shared = DevGroupItemShared(false, item);
       if (shared) *message_ptr++ = item;
       if (item <= DGR_ITEM_MAX_32BIT) {
         value = va_arg(ap, int);
@@ -384,10 +396,8 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DeviceGroupMessageType 
 
   uint32_t now = millis();
   if (message_type == DGR_MSGTYP_UPDATE_MORE_TO_COME) {
+    device_group->message_length = 0;
     device_group->next_ack_check_time = 0;
-//    for (struct device_group_member * device_group_member = device_group->device_group_members; device_group_member != nullptr; device_group_member = device_group_member->flink) {
-//      device_group_member->acked_sequence = outgoing_sequence;
-//    }
   }
   else {
     device_group->ack_check_interval = 100;
@@ -410,7 +420,7 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
 
   // Search for a device group with the target group name. If one isn't found, return.
   struct device_group * device_group;
-  uint32_t device_group_index = 0;
+  uint8_t device_group_index = 0;
   for (;;) {
     device_group = &device_groups[device_group_index];
     if (!strcmp(message_group_name, device_group->group_name)) break;
@@ -518,15 +528,16 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
     bool          grpflg
     bool          usridx
     uint16_t      command_code    Item code
-    uint32_t      index           0:15 Flags, 16:23 Device group index
+    uint32_t      index           0:15 Flags, 16:31 Message sequence
     uint32_t      data_len        String item value length
     int32_t       payload         Integer item value
-    char         *topic
+    char         *topic           Pointer to device group index
     char         *data            Pointer to non-integer item value
     char         *command         nullptr
   */
   XdrvMailbox.command = nullptr;  // Indicates the source is a device group update
-  XdrvMailbox.index = flags | device_group_index << 16;
+  XdrvMailbox.index = flags | message_sequence << 16;
+  XdrvMailbox.topic = (char *)&device_group_index;
   if (flags & (DGR_FLAG_MORE_TO_COME | DGR_FLAG_DIRECT)) skip_light_fade = true;
 
   for (;;) {
@@ -589,7 +600,7 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
       }
     }
 
-    if (DeviceGroupItemShared(true, item)) {
+    if (DevGroupItemShared(true, item)) {
       if (item == DGR_ITEM_POWER) {
         if (device_group->local) {
           uint8_t mask_devices = value >> 24;
@@ -744,7 +755,7 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
           if (device_group->next_ack_check_time < next_check_time) next_check_time = device_group->next_ack_check_time;
         }
 
-        // If it's time to send multicast announcement for this group, send it. This is to
+        // If it's time to send a multicast announcement for this group, send it. This is to
         // announcement ourself to any members that have somehow not heard about us. We send it at
         // the announcement interval plus a random number of milliseconds so that even if all the
         // devices booted at the same time, they don't all multicast their announcements at the same
@@ -753,11 +764,10 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: next_announcement_time=%u, now=%u"), device_group->next_announcement_time, now);
 #endif  // DEVICE_GROUPS_DEBUG
         if (device_group->next_announcement_time <= now) {
-          device_group->message_length = BeginDeviceGroupMessage(device_group, DGR_FLAG_ANNOUNCEMENT) - device_group->message;
 #ifdef DEVICE_GROUPS_DEBUG
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: sending %u-byte device group %s announcement"), device_group->message_length, device_group->group_name);
 #endif  // DEVICE_GROUPS_DEBUG
-          SendDeviceGroupPacket(0, device_group->message, device_group->message_length, PSTR("Announcement"));
+          SendDeviceGroupPacket(0, device_group->message, BeginDeviceGroupMessage(device_group, DGR_FLAG_ANNOUNCEMENT, true) - device_group->message, PSTR("Announcement"));
           device_group->next_announcement_time = now + DGR_ANNOUNCEMENT_INTERVAL + random(10000);
         }
         if (device_group->next_announcement_time < next_check_time) next_check_time = device_group->next_announcement_time;
