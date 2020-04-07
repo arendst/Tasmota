@@ -64,7 +64,9 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add Zigbee command ``ZbUnbind``
 - Add Zigbee command ``ZbBindState`` and ``manuf``attribute
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
+- Add command ``SetOption41 <x>`` to force sending gratuitous ARP every <x> seconds
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
+- Add command ``SetOption91 1`` to enable fading at startup / power on
 - Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
 - Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
 - Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
@@ -72,4 +74,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for up to four MQTT GroupTopics using the same optional Device Group names (#8014)
 - Add console command history (#7483, #8015)
 - Add support for longer template names
-- Add quick wifi connect using saved AP parameters when ``SetOption56 0`` (#3189)
+- Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
