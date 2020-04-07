@@ -1298,8 +1298,8 @@ void SettingsDelta(void)
         Settings.tuya_fnid_map[tuyaindex].dpid = 1;
         tuyaindex++;
       }
-      if (Settings.param[P_ex_TUYA_RELAYS] > 0) {
-        for (uint8_t i = 0 ; i < Settings.param[P_ex_TUYA_RELAYS]; i++) {  // ex SetOption41
+      if (Settings.param[P_ARP_GRATUITOUS] > 0) {            // Was P_ex_TUYA_RELAYS
+        for (uint8_t i = 0 ; i < Settings.param[P_ARP_GRATUITOUS]; i++) {  // ex SetOption41
           Settings.tuya_fnid_map[tuyaindex].fnid = 12 + i;   // TUYA_MCU_FUNC_REL2 -  Create FnID for Switches
           Settings.tuya_fnid_map[tuyaindex].dpid = i + 2;
           tuyaindex++;
