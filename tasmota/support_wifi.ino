@@ -748,11 +748,11 @@ void wifiKeepAlive(void) {
 
   if ((WL_CONNECTED != Wifi.status) || (0 == wifiTimerSec)) { return; }   // quick exit if wifi not connected or feature disabled
 
-  if (wifiTimerSec > 100) {
-    wifiTimerSec = (wifiTimerSec - 100) * 60;                 // convert >100 as minutes, ex: 105 = 5 minutes, 110 = 10 minutes
-  }
   if (TimeReached(wifiTimer)) {
     stationKeepAliveNow();
+    if (wifiTimerSec > 100) {
+      wifiTimerSec = (wifiTimerSec - 100) * 60;                 // convert >100 as minutes, ex: 105 = 5 minutes, 110 = 10 minutes
+    }
     SetNextTimeInterval(wifiTimer, wifiTimerSec * 1000);
   }
 }
