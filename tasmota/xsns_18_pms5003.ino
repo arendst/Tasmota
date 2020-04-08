@@ -37,6 +37,23 @@ TasmotaSerial *PmsSerial;
 uint8_t pms_type = 1;
 uint8_t pms_valid = 0;
 
+enum PmsCommands
+{
+  CMD_MODE_ACTIVE,
+  CMD_SLEEP,
+  CMD_WAKEUP,
+  CMD_MODE_PASSIVE,
+  CMD_READ_DATA
+};
+
+const uint8_t kPmsCommands[][7] PROGMEM = {
+    //  0     1    2    3     4     5     6
+    {0x42, 0x4D, 0xE1, 0x00, 0x01, 0x01, 0x71},  // pms_set_active_mode
+    {0x42, 0x4D, 0xE4, 0x00, 0x00, 0x01, 0x73},  // pms_sleep
+    {0x42, 0x4D, 0xE4, 0x00, 0x01, 0x01, 0x74},  // pms_wake
+    {0x42, 0x4D, 0xE1, 0x00, 0x00, 0x01, 0x70},  // pms_set_passive_mode
+    {0x42, 0x4D, 0xE2, 0x00, 0x00, 0x01, 0x71}}; // pms_passive_mode_read
+
 struct pmsX003data {
   uint16_t framelen;
   uint16_t pm10_standard, pm25_standard, pm100_standard;
@@ -49,6 +66,13 @@ struct pmsX003data {
 #endif  // PMS_MODEL_PMS3003
   uint16_t checksum;
 } pms_data;
+
+/*********************************************************************************************/
+
+size_t PmsSendCmd(uint8_t command_id)
+{
+  return MhzSerial->write(kPmsCommands[command_id], sizeof(kPmsCommands[command_id]));
+}
 
 /*********************************************************************************************/
 
