@@ -183,6 +183,12 @@ bool PmsCommandSensor(void)
     wake_mode = 0;
     pms_ready = 0;
   }
+  
+  if (pin[GPIO_PMS5003_TX] >= 99)
+  {
+    // setting interval not supported if TX pin not connected
+    Settings.novasds_startingoffset = 0;
+  }
 
   Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_18, Settings.novasds_startingoffset);
 
