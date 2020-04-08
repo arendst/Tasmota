@@ -40,6 +40,12 @@ TasmotaSerial *PmsSerial;
 
 uint8_t pms_type = 1;
 uint8_t pms_valid = 0;
+uint16_t pms_time = 0;
+uint8_t wake_mode = 1;
+uint8_t pms_ready = 1;
+
+const char ACTIVE_MODE[] = "Active Mode";
+const char PASSIVE_MODE[] = "Passive Mode";
 
 enum PmsCommands
 {
@@ -150,15 +156,82 @@ bool PmsReadData(void)
   return true;
 }
 
+/*********************************************************************************************\
+ * Command Sensor15
+ *
+ * 0    - Active Mode
+ * 1 .. 255 - Passive Mode (read sensor every x minutes)
+\*********************************************************************************************/
+
+bool PmsCommandSensor(void)
+{
+  if (XdrvMailbox.payload == 0) 
+  {
+    // Set Active Mode
+    Settings.novasds_startingoffset = 0;
+    wake_mode = 1;
+    pms_ready = 1;
+    PmsSendCmd(CMD_MODE_ACTIVE);
+  }
+  else if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 256)) 
+  {
+    // Set Passive Mode
+    Settings.novasds_startingoffset = XdrvMailbox.payload;
+    PmsSendCmd(CMD_MODE_PASSIVE);
+    PmsSendCmd(CMD_SLEEP);
+    wake_mode = 0;
+    pms_ready = 0;
+  }
+
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_18, Settings.novasds_startingoffset);
+
+  return true;
+}
+
 /*********************************************************************************************/
 
 void PmsSecond(void)                 // Every second
 {
-  if (PmsReadData()) {
-    pms_valid = 10;
-  } else {
-    if (pms_valid) {
-      pms_valid--;
+  if (Settings.novasds_startingoffset > 0)
+  {
+    // Passive Mode
+    pms_time++;
+    if ((((uint16_t)Settings.novasds_startingoffset) * 60 - pms_time <= WARMUP_PERIOD) && !wake_mode)
+    {
+      wake_mode = 1;
+      PmsSendCmd(CMD_WAKEUP);
+    }
+    if (pms_time >= ((uint16_t)Settings.novasds_startingoffset) * 60)
+    {
+      PmsSendCmd(CMD_READ_DATA);
+      pms_ready = 1;
+      pms_time = 0;
+    }
+  } 
+
+  if (pms_ready) 
+  {
+    if (PmsReadData())
+    {
+      pms_valid = 10;
+      if (Settings.novasds_startingoffset > 0)
+      {
+        PmsSendCmd(CMD_SLEEP);
+        wake_mode = 0;
+        pms_ready = 0;
+      }
+    }
+    else
+    {
+      if (pms_valid)
+      {
+        pms_valid--;
+        if (Settings.novasds_startingoffset > 0)
+        {
+          PmsSendCmd(CMD_READ_DATA);
+          pms_ready = 1;
+        }
+      }
     }
   }
 }
@@ -270,6 +343,12 @@ bool Xsns18(uint8_t function)
         break;
       case FUNC_EVERY_SECOND:
         PmsSecond();
+        break;
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_18 == XdrvMailbox.index)
+        {
+          result = PmsCommandSensor();
+        }
         break;
       case FUNC_JSON_APPEND:
         PmsShow(1);
