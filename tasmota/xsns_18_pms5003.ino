@@ -81,7 +81,7 @@ struct pmsX003data {
 
 size_t PmsSendCmd(uint8_t command_id)
 {
-  return MhzSerial->write(kPmsCommands[command_id], sizeof(kPmsCommands[command_id]));
+  return PmsSerial->write(kPmsCommands[command_id], sizeof(kPmsCommands[command_id]));
 }
 
 /*********************************************************************************************/
@@ -172,6 +172,7 @@ bool PmsCommandSensor(void)
     wake_mode = 1;
     pms_ready = 1;
     PmsSendCmd(CMD_MODE_ACTIVE);
+    PmsSendCmd(CMD_WAKEUP);
   }
   else if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 256)) 
   {
