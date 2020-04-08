@@ -140,10 +140,23 @@ void PmsSecond(void)                 // Every second
 void PmsInit(void)
 {
   pms_type = 0;
-  if (pin[GPIO_PMS5003] < 99) {
-    PmsSerial = new TasmotaSerial(pin[GPIO_PMS5003], -1, 1);
+  if ((pin[GPIO_PMS5003_RX] < 99) && (pin[GPIO_PMS5003_TX] < 99))
+  {
+    PmsSerial = new TasmotaSerial(pin[GPIO_PMS5003_RX], pin[GPIO_PMS5003_TX], 1);
     if (PmsSerial->begin(9600)) {
       if (PmsSerial->hardwareSerial()) { ClaimSerial(); }
+      pms_type = 1;
+    }
+  }
+  else if ((pin[GPIO_PMS5003_RX] < 99))
+  {
+    PmsSerial = new TasmotaSerial(pin[GPIO_PMS5003_RX], -1, 1);
+    if (PmsSerial->begin(9600))
+    {
+      if (PmsSerial->hardwareSerial())
+      {
+        ClaimSerial();
+      }
       pms_type = 1;
     }
   }
