@@ -24,6 +24,7 @@
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
 #warning **** Tasmota is using v2.4.0 wiring_digital.c as planned ****
 
+#ifdef ESP8266
 #define ARDUINO_MAIN
 #include "wiring_private.h"
 #include "pins_arduino.h"
@@ -217,3 +218,4 @@ extern void attachInterrupt(uint8_t pin, voidFuncPtr handler, int mode) __attrib
 extern void detachInterrupt(uint8_t pin) __attribute__ ((weak, alias("__detachInterrupt")));
 
 #endif  // ARDUINO_ESP8266_RELEASE
+#endif

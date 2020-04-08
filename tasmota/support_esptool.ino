@@ -16,8 +16,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#ifdef ESP8266
 #define USE_ESPTOOL
+#endif
 #ifdef USE_ESPTOOL
 /*********************************************************************************************\
  * EspTool Erase function based on Version 2.8

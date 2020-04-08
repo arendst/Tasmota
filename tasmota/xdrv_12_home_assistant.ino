@@ -213,7 +213,11 @@ void HAssAnnounceRelayLight(void)
       TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId());
 
 #ifdef USE_LIGHT
-      if (is_light || PWM_DIMMER == my_module_type)
+      if (is_light 
+#ifdef ESP8266
+      || PWM_DIMMER == my_module_type
+#endif
+      )
       {
         char *brightness_command_topic = stemp1;
 
@@ -423,10 +427,13 @@ void HAssAnnounceButtons(void)
     uint8_t toggle = 1;
     uint8_t hold = 0;
 
+    #ifdef ESP8266
     if (!button_index && ((SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)))
     {
       button_present = 1;
-    } else {
+    } else 
+    #endif
+    {
       if (pin[GPIO_KEY1 + button_index] < 99) {
         button_present = 1;
       }

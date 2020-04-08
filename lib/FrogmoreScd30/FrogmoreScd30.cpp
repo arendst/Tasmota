@@ -24,6 +24,8 @@ SOFTWARE.
 #include <twi.h>
 #include <FrogmoreScd30.h>
 
+#ifdef ESP8266
+
 #define COMMAND_SCD30_CONTINUOUS_MEASUREMENT      0x0010
 #define COMMAND_SCD30_MEASUREMENT_INTERVAL        0x4600
 #define COMMAND_SCD30_GET_DATA_READY              0x0202
@@ -651,3 +653,4 @@ int FrogmoreScd30::stopMeasuring(void)
     return (sendCommand(COMMAND_SCD30_STOP_MEASUREMENT));
 }
 
+#endif

@@ -691,11 +691,20 @@ const char kAdc0Names[] PROGMEM =
   ;
 
 /********************************************************************************************/
-
+#ifdef ESP8266
 #define MAX_GPIO_PIN       17   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
 
 const char PINS_WEMOS[] PROGMEM = "D3TXD4RXD2D1flashcFLFLolD6D7D5D8D0A0";
+
+#else
+// esp32 has more pins
+#define USER_MODULE        255
+#define MAX_GPIO_PIN       44   // Number of supported GPIO
+#define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
+
+const char PINS_WEMOS[] PROGMEM = "00010203040506070809101112131415161718192021222324252627282930313233343536373839";
+#endif
 
 typedef struct MYIO {
   uint8_t      io[MAX_GPIO_PIN];
@@ -727,6 +736,8 @@ typedef struct MYTMPLT {
   mycfgio      gp;
   gpio_flag    flag;
 } mytmplt;
+
+#ifdef ESP8266
 
 /********************************************************************************************/
 
@@ -2220,5 +2231,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     0, 0, 0, 0
   }
 };
+
+#endif
+#ifdef ESP32
+#include "tasmota_templESP32.h"
+#endif
 
 #endif  // _TASMOTA_TEMPLATE_H_

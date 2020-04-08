@@ -36,6 +36,7 @@
 static volatile timercallback timer1_user_cb = NULL;
 
 void ICACHE_RAM_ATTR timer1_isr_handler(void *para){
+#ifdef ESP8266
     (void) para;
     if ((T1C & ((1 << TCAR) | (1 << TCIT))) == 0) TEIE &= ~TEIE1;//edge int disable
     T1I = 0;
@@ -46,6 +47,7 @@ void ICACHE_RAM_ATTR timer1_isr_handler(void *para){
         timer1_user_cb();
         xt_wsr_ps(savedPS);
     }
+#endif
 }
 
 void ICACHE_RAM_ATTR timer1_isr_init(void){
@@ -58,24 +60,32 @@ void timer1_attachInterrupt(timercallback userFunc) {
 }
 
 void ICACHE_RAM_ATTR timer1_detachInterrupt(void) {
+#ifdef ESP8266
     timer1_user_cb = 0;
     TEIE &= ~TEIE1;//edge int disable
     ETS_FRC1_INTR_DISABLE();
+#endif
 }
 
 void timer1_enable(uint8_t divider, uint8_t int_type, uint8_t reload){
+#ifdef ESP8266
     T1C = (1 << TCTE) | ((divider & 3) << TCPD) | ((int_type & 1) << TCIT) | ((reload & 1) << TCAR);
     T1I = 0;
+#endif
 }
 
 void ICACHE_RAM_ATTR timer1_write(uint32_t ticks){
+#ifdef ESP8266
     T1L = ((ticks)& 0x7FFFFF);
     if ((T1C & (1 << TCIT)) == 0) TEIE |= TEIE1;//edge int enable
+#endif
 }
 
 void ICACHE_RAM_ATTR timer1_disable(void){
+#ifdef ESP8266
     T1C = 0;
     T1I = 0;
+#endif
 }
 
 //-------------------------------------------------------------------
@@ -84,6 +94,7 @@ void ICACHE_RAM_ATTR timer1_disable(void){
 static volatile timercallback timer0_user_cb = NULL;
 
 void ICACHE_RAM_ATTR timer0_isr_handler(void* para){
+#ifdef ESP8266
     (void) para;
     if (timer0_user_cb) {
         // to make ISR compatible to Arduino AVR model where interrupts are disabled
@@ -92,6 +103,7 @@ void ICACHE_RAM_ATTR timer0_isr_handler(void* para){
         timer0_user_cb();
         xt_wsr_ps(savedPS);
     }
+#endif
 }
 
 void timer0_isr_init(void){
