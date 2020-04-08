@@ -32,6 +32,10 @@
 
 #include <TasmotaSerial.h>
 
+#ifndef WARMUP_PERIOD
+#define WARMUP_PERIOD 30 // Turn on PMSX003 XX-seconds before read in passive mode
+#endif
+
 TasmotaSerial *PmsSerial;
 
 uint8_t pms_type = 1;
