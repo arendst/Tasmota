@@ -22,6 +22,10 @@
 //
 #define ESP_flashReadHeader(offset, data, size) ESP.flashRead(offset, data, size)
 #define ESP_flashRead(offset, data, size) ESP.flashRead(offset, data, size)
+//
 // UDP
 #define PortUdp_write(p,n) PortUdp.write(p, n)
+//
+// Serial minimal type to hold the config
+#define SerConfu8 uint8_t
 #endif // ESP32

@@ -41,8 +41,6 @@ void ESP_reset();
 String ESP_getResetInfo(void);
 uint32_t ESP_getFlashChipId();
 String String_ESP_getChipId();
-// UDB
-#define PortUdp_write(p,n) PortUdp.write((const uint8_t*)p, n)
 
 // Analog
 inline void analogWrite(uint8_t pin, int val)
@@ -71,16 +69,21 @@ typedef double real64_t;
 #define getFlashChipRealSize() getFlashChipSize()
 
 #define os_delay_us ets_delay_us
+// Serial minimal type to hold the config
+typedef int SerConfu8;
 typedef int SerialConfig;
 #define analogWrite(a, b)
-#define PortUdp_writestr(log_data) PortUdp.write((const uint8_t *)(log_data), strlen(log_data))
-#define PortUdp_write(log_data, n) PortUdp.write((const uint8_t *)(log_data), n)
+
 //
 // WS2812
 //
 #define NeoEsp8266BitBang800KbpsMethod NeoEsp32BitBang800KbpsMethod
 //
 // UDP
+//
+//#define PortUdp_writestr(log_data) PortUdp.write((const uint8_t *)(log_data), strlen(log_data))
+#define PortUdp_write(log_data, n) PortUdp.write((const uint8_t *)(log_data), n)
+
 //
 #define wifi_forceSleepBegin()
 

@@ -163,7 +163,7 @@ void SendDeviceGroupPacket(IPAddress ip, char * packet, int len, const char * la
   if (!ip) ip = IPAddress(239,255,255,250);
   for (int attempt = 1; attempt <= 5; attempt++) {
     if (PortUdp.beginPacket(ip, 1900)) {
-      PortUdp.write((const uint8_t *)packet, len);
+      PortUdp_write(packet, len);
       if (PortUdp.endPacket()) return;
     }
     delay(10);
