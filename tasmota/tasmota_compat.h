@@ -22,5 +22,6 @@
 //
 #define ESP_flashReadHeader(offset, data, size) ESP.flashRead(offset, data, size)
 #define ESP_flashRead(offset, data, size) ESP.flashRead(offset, data, size)
-
+// UDP
+#define PortUdp_write(p,n) PortUdp.write(p, n)
 #endif // ESP32

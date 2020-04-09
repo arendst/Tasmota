@@ -41,6 +41,8 @@ void ESP_reset();
 String ESP_getResetInfo(void);
 uint32_t ESP_getFlashChipId();
 String String_ESP_getChipId();
+// UDB
+#define PortUdp_write(p,n) PortUdp.write((const uint8_t*)p, n)
 
 // Analog
 inline void analogWrite(uint8_t pin, int val)
