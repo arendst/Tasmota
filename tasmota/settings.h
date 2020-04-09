@@ -240,7 +240,7 @@ struct SYSCFG {
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
 
-  // Start of char array storing all parameter strings
+  // Start of char array storing all parameter strings ********
 
   char          text_pool[101];            // 017 - was ota_url[101] - size is settings_text_size
 
@@ -276,7 +276,7 @@ struct SYSCFG {
   char          ex_button_topic[33];       // 290
   char          ex_mqtt_grptopic[33];      // 2B1
 
-  // End of single char array of 698 chars max
+  // End of single char array of 698 chars max ****************
 
   uint8_t       display_model;             // 2D2
   uint8_t       display_mode;              // 2D3
@@ -470,8 +470,8 @@ struct SYSCFG {
   uint8_t       bri_preset_low;            // F06
   uint8_t       bri_preset_high;           // F07
   int8_t        hum_comp;                  // F08
-  uint8_t       channel;                   // F09
-  uint8_t       bssid[6];                  // F0A
+  uint8_t       wifi_channel;              // F09
+  uint8_t       wifi_bssid[6];             // F0A
 
   uint8_t       free_f10[168];             // F10
 
