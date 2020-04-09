@@ -38,7 +38,7 @@
 #ifdef USE_MQTT_TLS
   #include <t_bearssl.h>                    // we need to include before "tasmota_post.h" to take precedence over the BearSSL version in Arduino
 #endif  // USE_MQTT_TLS
-#include "tasmota_post.h"                   // Configuration overrides for all previous includes
+#include "tasmota_globals.h"                // Function prototypes and global configuration
 #include "i18n.h"                           // Language support configured by my_user_config.h
 #include "tasmota_template.h"               // Hardware configuration
 
