@@ -16,6 +16,7 @@
 - Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
 - Fix PWM flickering during wifi connection (#8046)
 - Fix Zigbee crash with Occupancy sensor (#8089)
+- Change IRremoteESP8266 library updated to v2.7.5
 
 ### 8.2.0.2 20200328
 
