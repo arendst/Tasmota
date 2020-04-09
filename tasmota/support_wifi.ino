@@ -712,6 +712,7 @@ void EspRestart(void)
   ESP.reset();
 }
 
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
 //
 // Gratuitous ARP, backported from https://github.com/esp8266/Arduino/pull/6889
 //
@@ -759,3 +760,4 @@ void wifiKeepAlive(void) {
     SetNextTimeInterval(wifiTimer, wifiTimerSec * 1000);
   }
 }
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
