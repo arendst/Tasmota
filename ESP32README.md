@@ -5,8 +5,6 @@ This is my esp32 port, i try to make only minimal changes to the original
 source code from Theo Arends.
 Here are the main things i have done 
 
-- in platformio.ini [common] and [env] i 
-  need "lib_extra_dirs" and "lib_ignore" options
 - in "lib_extra_dirs" i have libesp32 directory for things missing in ESP32 framework
 - my "ESP32-to-ESP8266-compat" has all files that are not available in ESP32
   so you dont have to change the source code and i write code to get the informations from ESP32
@@ -33,6 +31,3 @@ copy platformio_override_esp32.ini to platformio_override.ini an select your ima
 have fun
 
 Jörg
-
-
-
