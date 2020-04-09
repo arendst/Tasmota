@@ -182,7 +182,13 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
     data_len--;
   }
 
-  bool grpflg = (strstr(topicBuf, SettingsText(SET_MQTT_GRP_TOPIC)) != nullptr);
+  bool grpflg = false;
+  uint32_t real_index = SET_MQTT_GRP_TOPIC;
+  for (uint32_t i = 0; i < MAX_GROUP_TOPICS; i++) {
+    if (1 == i) { real_index = SET_MQTT_GRP_TOPIC2 -1; }
+    grpflg = (strstr(topicBuf, SettingsText(real_index +i)) != nullptr);
+    if (grpflg) { break; }
+  }
 
   char stemp1[TOPSZ];
   GetFallbackTopic_P(stemp1, "");  // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/

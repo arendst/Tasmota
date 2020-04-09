@@ -403,9 +403,9 @@ void WifiCheckIp(void)
       Settings.ip_address[3] = (uint32_t)WiFi.dnsIP();
 
       // Save current AP parameters for quick reconnect
-      Settings.channel = WiFi.channel();
+      Settings.wifi_channel = WiFi.channel();
       uint8_t *bssid = WiFi.BSSID();
-      memcpy((void*) &Settings.bssid, (void*) bssid, sizeof(Settings.bssid));
+      memcpy((void*) &Settings.wifi_bssid, (void*) bssid, sizeof(Settings.wifi_bssid));
     }
     Wifi.status = WL_CONNECTED;
 #ifdef USE_DISCOVERY
@@ -428,7 +428,7 @@ void WifiCheckIp(void)
         break;
       case WL_NO_SSID_AVAIL:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_NOT_REACHED));
-        Settings.channel = 0;  // Disable stored AP
+        Settings.wifi_channel = 0;  // Disable stored AP
         if (WIFI_WAIT == Settings.sta_config) {
           Wifi.retry = Wifi.retry_init;
         } else {
@@ -442,7 +442,7 @@ void WifiCheckIp(void)
         break;
       case WL_CONNECT_FAILED:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_WRONG_PASSWORD));
-        Settings.channel = 0;  // Disable stored AP
+        Settings.wifi_channel = 0;  // Disable stored AP
         if (Wifi.retry > (Wifi.retry_init / 2)) {
           Wifi.retry = Wifi.retry_init / 2;
         }
@@ -453,10 +453,10 @@ void WifiCheckIp(void)
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
         if (!Wifi.retry || ((Wifi.retry_init / 2) == Wifi.retry)) {
           AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
-          Settings.channel = 0;  // Disable stored AP
+          Settings.wifi_channel = 0;  // Disable stored AP
         } else {
           if (!strlen(SettingsText(SET_STASSID1)) && !strlen(SettingsText(SET_STASSID2))) {
-            Settings.channel = 0;  // Disable stored AP
+            Settings.wifi_channel = 0;  // Disable stored AP
             wifi_config_tool = WIFI_MANAGER;  // Skip empty SSIDs and start Wifi config tool
             Wifi.retry = 0;
           } else {
@@ -471,7 +471,7 @@ void WifiCheckIp(void)
         }
       } else {
         if (Wifi.retry_init == Wifi.retry) {
-          WifiBegin(3, Settings.channel);  // Select default SSID
+          WifiBegin(3, Settings.wifi_channel);  // Select default SSID
         }
         if ((Settings.sta_config != WIFI_WAIT) && ((Wifi.retry_init / 2) == Wifi.retry)) {
           WifiBegin(2, 0);        // Select alternate SSID
@@ -659,7 +659,7 @@ void WifiConnect(void)
   Wifi.retry = Wifi.retry_init;
   Wifi.counter = 1;
 
-  memcpy((void*) &Wifi.bssid, (void*) Settings.bssid, sizeof(Wifi.bssid));
+  memcpy((void*) &Wifi.bssid, (void*) Settings.wifi_bssid, sizeof(Wifi.bssid));
 
 #ifdef WIFI_RF_PRE_INIT
   if (rf_pre_init_flag) {
