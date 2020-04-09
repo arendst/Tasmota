@@ -2,9 +2,9 @@
 
 ## Released
 
-### 8.2.1 20200410
+### 8.3.0 20200420
 
-- Release Elliot
+- Release Fred
 
 ### 8.2.0.3 20200329
 
