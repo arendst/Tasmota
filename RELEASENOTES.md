@@ -58,8 +58,11 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
 - Change remove floating point libs from IRAM
 - Change remove MQTT Info messages on restart for DeepSleep Wake (#8044)
+- Change IRremoteESP8266 library updated to v2.7.5
 - Fix possible Relay toggle on (OTA) restart
+- Fix PWM flickering during wifi connection (#8046)
 - Fix Zigbee sending wrong Sat value with Hue emulation
+- Fix Zigbee crash with Occupancy sensor (#8089)
 - Add Zigbee command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
 - Add Zigbee command ``ZbUnbind``
 - Add Zigbee command ``ZbBindState`` and ``manuf``attribute

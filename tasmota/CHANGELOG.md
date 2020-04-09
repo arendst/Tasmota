@@ -11,6 +11,9 @@
 - Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
 - Change remove floating point libs from IRAM
 - Change remove MQTT Info messages on restart for DeepSleep Wake (#8044)
+- Change IRremoteESP8266 library updated to v2.7.5
+- Fix PWM flickering during wifi connection (#8046)
+- Fix Zigbee crash with Occupancy sensor (#8089)
 - Add support for longer template names
 - Add Zigbee command ``ZbBindState`` and ``manuf``attribute
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
