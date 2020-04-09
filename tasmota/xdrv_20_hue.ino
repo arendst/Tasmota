@@ -542,7 +542,14 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
         }
       } else {
 #endif
-        ExecuteCommandPower(device, on ?  POWER_ON: POWER_OFF, SRC_HUE);
+        //ExecuteCommandPower(device, on ?  POWER_ON: POWER_OFF, SRC_HUE);
+        switch(on)
+        {
+          case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
+                      break;
+          case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
+                      break;
+        }
         response += buf;
         resp = true;
 #ifdef USE_SHUTTER

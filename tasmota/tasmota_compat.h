@@ -1,6 +1,4 @@
-
-#define Serial_Debug1(p) Serial.printf p
-#define Serial_DebugX(p)
+#pragma once
 
 #ifdef ESP32
 #include <esp8266toEsp32.h>
@@ -19,17 +17,10 @@
 #define ESP_reset() ESP.reset()
 #define ESP_getBootVersion() ESP.getBootVersion()
 #define ESP_getFlashChipId() ESP.getFlashChipId()
-
 //
 // we need different ESP_flashRead for ESP32
 //
-inline bool ESP_flashRead(uint32_t offset, uint32_t *data, size_t size)
-{
-    return ESP.flashRead(offset, data, size);
-}
+#define ESP_flashReadHeader(offset, data, size) ESP.flashRead(offset, data, size)
+#define ESP_flashRead(offset, data, size) ESP.flashRead(offset, data, size)
 
-inline bool ESP_flashReadHeader(uint32_t offset, uint32_t *data, size_t size)
-{
-    return ESP.flashRead(offset, data, size);
-}
-#endif
+#endif // ESP32

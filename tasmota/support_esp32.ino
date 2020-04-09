@@ -68,12 +68,12 @@ void SettingsSave(const char *sNvsName, const char *sName, const void *pSettings
   interrupts();
 }
 
-bool ESP_flashRead(uint32_t offset, uint32_t *data, size_t size)
+void ESP32_flashRead(uint32_t offset, uint32_t *data, size_t size)
 {
   SettingsLoad("main", "Settings", data, size);
 }
 
-bool ESP_flashReadHeader(uint32_t offset, uint32_t *data, size_t size)
+void ESP32_flashReadHeader(uint32_t offset, uint32_t *data, size_t size)
 {
   SettingsLoad("main", "SettingsH", data, size);
 }
