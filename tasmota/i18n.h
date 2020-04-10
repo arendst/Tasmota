@@ -563,6 +563,10 @@
 #define D_CMND_BRI_PRESET "BriPreset"
 #endif
 
+// Commands xdrv_38_ping.ino
+#define D_CMND_PING "Ping"
+#define D_JSON_PING "Ping"
+
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
 
