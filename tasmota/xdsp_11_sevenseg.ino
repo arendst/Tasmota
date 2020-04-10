@@ -105,10 +105,11 @@ void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uin
     // [prefix(es) chars]digits
     // Some combinations won't make sense.
     // Reference: https://learn.adafruit.com/adafruit-led-backpack/1-2-inch-7-segment-backpack-arduino-wiring-and-setup
-    // Valid combinations:
-    //  x32    =>    20
-    //  st:241 => 04:01
-    //  sT240  =>  4 01
+    // Some sample valid combinations:
+    // 787 -> 787
+    // x47 -> 2F
+    // st:241 -> 04:01
+    // sT241 -> 4 01
     switch (str[i]) {
       case 'x': // print given dec value as hex
         hex = true;
