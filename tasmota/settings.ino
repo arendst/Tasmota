@@ -40,14 +40,14 @@ void RtcSettingsSave(void)
 {
   if (GetRtcSettingsCrc() != rtc_settings_crc) {
     RtcSettings.valid = RTC_MEM_VALID;
-    ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
+    ESP_rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
     rtc_settings_crc = GetRtcSettingsCrc();
   }
 }
 
 void RtcSettingsLoad(void)
 {
-  ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));  // 0x290
+  ESP_rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));  // 0x290
   if (RtcSettings.valid != RTC_MEM_VALID) {
     memset(&RtcSettings, 0, sizeof(RTCMEM));
     RtcSettings.valid = RTC_MEM_VALID;
@@ -87,7 +87,7 @@ void RtcRebootSave(void)
 {
   if (GetRtcRebootCrc() != rtc_reboot_crc) {
     RtcReboot.valid = RTC_MEM_VALID;
-    ESP.rtcUserMemoryWrite(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));
+    ESP_rtcUserMemoryWrite(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));
     rtc_reboot_crc = GetRtcRebootCrc();
   }
 }
@@ -100,7 +100,7 @@ void RtcRebootReset(void)
 
 void RtcRebootLoad(void)
 {
-  ESP.rtcUserMemoryRead(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));  // 0x280
+  ESP_rtcUserMemoryRead(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));  // 0x280
   if (RtcReboot.valid != RTC_MEM_VALID) {
     memset(&RtcReboot, 0, sizeof(RTCRBT));
     RtcReboot.valid = RTC_MEM_VALID;
@@ -141,6 +141,8 @@ extern "C" {
 }
 #include "eboot_command.h"
 
+#ifdef ESP8266
+
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
 
 extern "C" uint32_t _SPIFFS_end;
@@ -168,6 +170,9 @@ const uint32_t SPIFFS_END = ((uint32_t)&_FS_end - 0x40200000) / SPI_FLASH_SEC_SI
 
 // Version 4.2 config = eeprom area
 const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses EEPROM area
+
+#endif  // ESP8266
+
 // Version 5.2 allow for more flash space
 const uint8_t CFG_ROTATES = 8;          // Number of flash sectors used (handles uploads)
 
@@ -181,6 +186,7 @@ uint8_t *settings_buffer = nullptr;
  */
 void SetFlashModeDout(void)
 {
+#ifdef ESP8266
   uint8_t *_buffer;
   uint32_t address;
 
@@ -198,10 +204,13 @@ void SetFlashModeDout(void)
     }
   }
   delete[] _buffer;
+#endif  // ESP8266
 }
 
 bool VersionCompatible(void)
 {
+#ifdef ESP8266
+
   if (Settings.flag3.compatibility_check) {
     return true;
   }
@@ -243,6 +252,8 @@ bool VersionCompatible(void)
     ESP.rtcUserMemoryWrite(0, (uint32_t*)&eboot_magic, sizeof(eboot_magic));
     return false;
   }
+
+#endif  // ESP8266
 
   return true;
 }
@@ -478,6 +489,7 @@ void SettingsSave(uint8_t rotate)
     Settings.cfg_crc = GetSettingsCrc();  // Keep for backward compatibility in case of fall-back just after upgrade
     Settings.cfg_crc32 = GetSettingsCrc32();
 
+#ifdef ESP8266
     if (ESP.flashEraseSector(settings_location)) {
       ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     }
@@ -488,6 +500,9 @@ void SettingsSave(uint8_t rotate)
         delay(1);
       }
     }
+#else  // ESP32
+    SettingsSaveMain(&Settings, sizeof(SYSCFG));
+#endif  // ESP8266
 
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(SYSCFG));
 
@@ -512,8 +527,7 @@ void SettingsLoad(void)
   uint16_t cfg_holder = 0;
   for (uint32_t i = 0; i < CFG_ROTATES; i++) {
     flash_location--;
-    ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-
+    ESP_flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     bool valid = false;
     if (Settings.version > 0x06000000) {
       bool almost_valid = (Settings.cfg_crc32 == GetSettingsCrc32());
@@ -524,7 +538,7 @@ void SettingsLoad(void)
       if (almost_valid && (0 == cfg_holder)) { cfg_holder = Settings.cfg_holder; }  // At FB always active cfg_holder
       valid = (cfg_holder == Settings.cfg_holder);
     } else {
-      ESP.flashRead((flash_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
+      ESP_flashReadHeader((flash_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
       valid = (Settings.cfg_holder == _SettingsH.cfg_holder);
     }
     if (valid) {
@@ -540,7 +554,7 @@ void SettingsLoad(void)
     delay(1);
   }
   if (settings_location > 0) {
-    ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    ESP_flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
   }
 
@@ -579,6 +593,7 @@ void EspErase(uint32_t start_sector, uint32_t end_sector)
 
 void SettingsErase(uint8_t type)
 {
+#ifdef ESP8266
   /*
     For Arduino core and SDK:
     Erase only works from flash start address to SDK recognized flash end address (flashchip->chip_size = ESP.getFlashChipSize).
@@ -630,6 +645,7 @@ void SettingsErase(uint8_t type)
 //  EspErase(_sectorStart, _sectorEnd);                                     // Arduino core and SDK - erases flash as seen by SDK
   EsptoolErase(_sectorStart, _sectorEnd);                                 // Esptool - erases flash completely
 #endif  // FIRMWARE_MINIMAL
+#endif  // ESP8266
 }
 
 void SettingsSdkErase(void)
@@ -1028,6 +1044,8 @@ void SettingsEnableAllI2cDrivers(void)
 void SettingsDelta(void)
 {
   if (Settings.version != VERSION) {      // Fix version dependent changes
+
+#ifdef ESP8266
     if (Settings.version < 0x06000000) {
       Settings.cfg_size = sizeof(SYSCFG);
       Settings.cfg_crc = GetSettingsCrc();
@@ -1315,6 +1333,7 @@ void SettingsDelta(void)
     if (Settings.version < 0x08020003) {
       SettingsUpdateText(SET_TEMPLATE_NAME, Settings.user_template_name);
     }
+#endif  // ESP8266
 
     Settings.version = VERSION;
     SettingsSave(1);

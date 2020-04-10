@@ -150,9 +150,11 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
     } else {
       Serial.begin(speed, SERIAL_8N1);
     }
+#ifdef ESP8266
     if (m_hardswap) {
       Serial.swap();
     }
+#endif  // ESP8266
   } else {
     // Use getCycleCount() loop to get as exact timing as possible
     m_bit_time = ESP.getCpuFreqMHz() * 1000000 / speed;

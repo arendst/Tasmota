@@ -41,8 +41,14 @@
  * Power Type
 \*********************************************************************************************/
 
+#ifdef ESP8266
 typedef unsigned long power_t;              // Power (Relay) type
 const uint32_t POWER_MASK = 0xffffffffUL;   // Power (Relay) full mask
+#endif  // ESP8266
+#ifdef ESP32
+typedef uint64_t power_t;                   // Power (Relay) type
+const uint64_t POWER_MASK = 0xffffffffffffffffull;  // Power (Relay) full mask
+#endif  // ESP32
 
 /*********************************************************************************************\
  * Constants
@@ -331,7 +337,7 @@ enum TasmotaSerialConfig {
   TS_SERIAL_5O1, TS_SERIAL_6O1, TS_SERIAL_7O1, TS_SERIAL_8O1,
   TS_SERIAL_5O2, TS_SERIAL_6O2, TS_SERIAL_7O2, TS_SERIAL_8O2 };
 
-const uint8_t kTasmotaSerialConfig[] PROGMEM = {
+const SerConfu8 kTasmotaSerialConfig[] PROGMEM = {
   SERIAL_5N1, SERIAL_6N1, SERIAL_7N1, SERIAL_8N1,
   SERIAL_5N2, SERIAL_6N2, SERIAL_7N2, SERIAL_8N2,
   SERIAL_5E1, SERIAL_6E1, SERIAL_7E1, SERIAL_8E1,
