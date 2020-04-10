@@ -1,5 +1,5 @@
 /*
-  xdsp_03_matrix.ino - Display 8x8 matrix support for Tasmota
+  xdsp_11_sevenseg.ino - Display seven segment support for Tasmota
 
   Copyright (C) 2020  Theo Arends and Adafruit
 
@@ -22,7 +22,7 @@
 #ifdef USE_DISPLAY_SEVENSEG
 
 #define XDSP_11                    11
-#define XI2C_46                    46  // See I2CDEVICES.md
+#define XI2C_47                    47  // See I2CDEVICES.md
 
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -268,7 +268,7 @@ void SevensegRefresh(void)  // Every second
 
 bool Xdsp11(uint8_t function)
 {
-  if (!I2cEnabled(XI2C_46)) { return false; }
+  if (!I2cEnabled(XI2C_47)) { return false; }
 
   bool result = false;
 
