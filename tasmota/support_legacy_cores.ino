@@ -162,7 +162,7 @@ void* memmove_P(void *dest, const void *src, size_t n)
  * Core overrides
 \*********************************************************************************************/
 
-// Add below line to tasmota_post.h
+// Add below line to tasmota_globals.h
 // extern "C" void resetPins();
 void resetPins()
 {

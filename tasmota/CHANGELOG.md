@@ -5,12 +5,23 @@
 - Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
 - Change remove floating point libs from IRAM
 - Change remove MQTT Info messages on restart for DeepSleep Wake (#8044)
+- Change IRremoteESP8266 library updated to v2.7.5
+- Fix PWM flickering during wifi connection (#8046)
+- Fix Zigbee crash with Occupancy sensor (#8089)
 - Add support for longer template names
 - Add Zigbee command ``ZbBindState`` and ``manuf``attribute
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
+- Add commands ``NrfPage``, ``NrfIgnore``, ``NrfScan`` and ``NrfBeacon`` to NRF24 Bluetooth driver (#8075)
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
 - Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
 - Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
+- Add command ``SetOption91 1`` to enable fading at startup / power on
+- Add command ``SetOption41 <x>`` to force sending gratuitous ARP every <x> seconds
+- Add command ``DevGroupName`` to specify up to four Device Group Names (#8087)
+- Add command ``DevGroupSend`` to send an update to a Device Group (#8093)
+- Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
+- Add more accuracy to GPS NTP server (#8088)
+- Add support for an iAQ sensor (#8107)
 
 ### 8.2.0.2 20200328
 

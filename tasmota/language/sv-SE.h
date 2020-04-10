@@ -210,7 +210,7 @@
 #define D_IN_MODE "i läge"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Anslutning misslyckades mottog ingen IP-adress"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Anslutning misslyckades, kunde inte nå AP"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Anslutning misslyckades, fel lösenord för AP"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Anslutning misslyckades"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Anslutning misslyckadess med AP, timeout"
 #define D_ATTEMPTING_CONNECTION "Försöker ansluta..."
 #define D_CHECKING_CONNECTION "Kontrollerar anslutning..."

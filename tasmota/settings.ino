@@ -17,166 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef DOMOTICZ_UPDATE_TIMER
-#define DOMOTICZ_UPDATE_TIMER       0          // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
-#endif
-
-#ifndef EMULATION
-#define EMULATION                   EMUL_NONE  // [Emulation] Select Belkin WeMo (single relay/light) or Hue Bridge emulation (multi relay/light) (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
-#endif
-
-#ifndef MTX_ADDRESS1                           // Add Display Support for up to eigth Matrices
-#define MTX_ADDRESS1                0
-#endif
-#ifndef MTX_ADDRESS2
-#define MTX_ADDRESS2                0
-#endif
-#ifndef MTX_ADDRESS3
-#define MTX_ADDRESS3                0
-#endif
-#ifndef MTX_ADDRESS4
-#define MTX_ADDRESS4                0
-#endif
-#ifndef MTX_ADDRESS5
-#define MTX_ADDRESS5                0
-#endif
-#ifndef MTX_ADDRESS6
-#define MTX_ADDRESS6                0
-#endif
-#ifndef MTX_ADDRESS7
-#define MTX_ADDRESS7                0
-#endif
-#ifndef MTX_ADDRESS8
-#define MTX_ADDRESS8                0
-#endif
-
-#ifndef HOME_ASSISTANT_DISCOVERY_ENABLE
-#define HOME_ASSISTANT_DISCOVERY_ENABLE 0
-#endif
-
-#ifndef LATITUDE
-#define LATITUDE                    48.858360  // [Latitude] Your location to be used with sunrise and sunset
-#endif
-#ifndef LONGITUDE
-#define LONGITUDE                   2.294442   // [Longitude] Your location to be used with sunrise and sunset
-#endif
-
-#ifndef WORKING_PERIOD
-#define WORKING_PERIOD              5          // Working period of the SDS Sensor, Takes a reading every X Minutes
-#endif
-
-#ifndef COLOR_TEXT
-#define COLOR_TEXT                  "#000"     // Global text color - Black
-#endif
-#ifndef COLOR_BACKGROUND
-#define COLOR_BACKGROUND            "#fff"     // Global background color - White
-#endif
-#ifndef COLOR_FORM
-#define COLOR_FORM                  "#f2f2f2"  // Form background color - Greyish
-#endif
-#ifndef COLOR_INPUT_TEXT
-#define COLOR_INPUT_TEXT            "#000"     // Input text color - Black
-#endif
-#ifndef COLOR_INPUT
-#define COLOR_INPUT                 "#fff"     // Input background color - White
-#endif
-#ifndef COLOR_CONSOLE_TEXT
-#define COLOR_CONSOLE_TEXT          "#000"     // Console text color - Black
-#endif
-#ifndef COLOR_CONSOLE
-#define COLOR_CONSOLE               "#fff"     // Console background color - White
-#endif
-#ifndef COLOR_TEXT_WARNING
-#define COLOR_TEXT_WARNING          "#f00"     // Warning text color - Red
-#endif
-#ifndef COLOR_TEXT_SUCCESS
-#define COLOR_TEXT_SUCCESS          "#008000"  // Success text color - Green
-#endif
-#ifndef COLOR_BUTTON_TEXT
-#define COLOR_BUTTON_TEXT           "#fff"     // Button text color - White
-#endif
-#ifndef COLOR_BUTTON
-#define COLOR_BUTTON                "#1fa3ec"  // Button color - Blueish
-#endif
-#ifndef COLOR_BUTTON_HOVER
-#define COLOR_BUTTON_HOVER          "#0e70a4"  // Button color when hovered over - Darker blueish
-#endif
-#ifndef COLOR_BUTTON_RESET
-#define COLOR_BUTTON_RESET          "#d43535"  // Restart/Reset/Delete button color - Redish
-#endif
-#ifndef COLOR_BUTTON_RESET_HOVER
-#define COLOR_BUTTON_RESET_HOVER    "#931f1f"  // Restart/Reset/Delete button color when hovered over - Darker redish
-#endif
-#ifndef COLOR_BUTTON_SAVE
-#define COLOR_BUTTON_SAVE           "#47c266"  // Save button color - Greenish
-#endif
-#ifndef COLOR_BUTTON_SAVE_HOVER
-#define COLOR_BUTTON_SAVE_HOVER     "#5aaf6f"  // Save button color when hovered over - Darker greenish
-#endif
-#ifndef COLOR_TIMER_TAB_TEXT
-#define COLOR_TIMER_TAB_TEXT        "#fff"     // Config timer tab text color - White
-#endif
-#ifndef COLOR_TIMER_TAB_BACKGROUND
-#define COLOR_TIMER_TAB_BACKGROUND  "#999"     // Config timer tab background color - Light grey
-#endif
-#ifndef COLOR_TITLE_TEXT
-#define COLOR_TITLE_TEXT			      COLOR_TEXT // Title text color defaults to global text color either dark or light
-#endif
-#ifndef IR_RCV_MIN_UNKNOWN_SIZE
-#define IR_RCV_MIN_UNKNOWN_SIZE     6          // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
-#endif
-#ifndef ENERGY_OVERTEMP
-#define ENERGY_OVERTEMP             90         // Overtemp in Celsius
-#endif
-#ifndef DEFAULT_DIMMER_MAX
-#define DEFAULT_DIMMER_MAX          100
-#endif
-#ifndef DEFAULT_DIMMER_MIN
-#define DEFAULT_DIMMER_MIN          0
-#endif
-#ifndef DEFAULT_LIGHT_DIMMER
-#define DEFAULT_LIGHT_DIMMER        10
-#endif
-#ifndef DEFAULT_LIGHT_COMPONENT
-#define DEFAULT_LIGHT_COMPONENT     255
-#endif
-#ifndef CORS_ENABLED_ALL
-#define CORS_ENABLED_ALL            "*"
-#endif
-
-
-enum WebColors {
-  COL_TEXT, COL_BACKGROUND, COL_FORM,
-  COL_INPUT_TEXT, COL_INPUT, COL_CONSOLE_TEXT, COL_CONSOLE,
-  COL_TEXT_WARNING, COL_TEXT_SUCCESS,
-  COL_BUTTON_TEXT, COL_BUTTON, COL_BUTTON_HOVER, COL_BUTTON_RESET, COL_BUTTON_RESET_HOVER, COL_BUTTON_SAVE, COL_BUTTON_SAVE_HOVER,
-  COL_TIMER_TAB_TEXT, COL_TIMER_TAB_BACKGROUND, COL_TITLE,
-  COL_LAST };
-
-const char kWebColors[] PROGMEM =
-  COLOR_TEXT "|" COLOR_BACKGROUND "|" COLOR_FORM "|"
-  COLOR_INPUT_TEXT "|" COLOR_INPUT "|" COLOR_CONSOLE_TEXT "|" COLOR_CONSOLE "|"
-  COLOR_TEXT_WARNING "|" COLOR_TEXT_SUCCESS "|"
-  COLOR_BUTTON_TEXT "|" COLOR_BUTTON "|" COLOR_BUTTON_HOVER "|" COLOR_BUTTON_RESET "|" COLOR_BUTTON_RESET_HOVER "|" COLOR_BUTTON_SAVE "|" COLOR_BUTTON_SAVE_HOVER "|"
-  COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND "|" COLOR_TITLE_TEXT;
-
-enum TasmotaSerialConfig {
-  TS_SERIAL_5N1, TS_SERIAL_6N1, TS_SERIAL_7N1, TS_SERIAL_8N1,
-  TS_SERIAL_5N2, TS_SERIAL_6N2, TS_SERIAL_7N2, TS_SERIAL_8N2,
-  TS_SERIAL_5E1, TS_SERIAL_6E1, TS_SERIAL_7E1, TS_SERIAL_8E1,
-  TS_SERIAL_5E2, TS_SERIAL_6E2, TS_SERIAL_7E2, TS_SERIAL_8E2,
-  TS_SERIAL_5O1, TS_SERIAL_6O1, TS_SERIAL_7O1, TS_SERIAL_8O1,
-  TS_SERIAL_5O2, TS_SERIAL_6O2, TS_SERIAL_7O2, TS_SERIAL_8O2 };
-
-const uint8_t kTasmotaSerialConfig[] PROGMEM = {
-  SERIAL_5N1, SERIAL_6N1, SERIAL_7N1, SERIAL_8N1,
-  SERIAL_5N2, SERIAL_6N2, SERIAL_7N2, SERIAL_8N2,
-  SERIAL_5E1, SERIAL_6E1, SERIAL_7E1, SERIAL_8E1,
-  SERIAL_5E2, SERIAL_6E2, SERIAL_7E2, SERIAL_8E2,
-  SERIAL_5O1, SERIAL_6O1, SERIAL_7O1, SERIAL_8O1,
-  SERIAL_5O2, SERIAL_6O2, SERIAL_7O2, SERIAL_8O2
-};
-
 /*********************************************************************************************\
  * RTC memory
 \*********************************************************************************************/
@@ -479,7 +319,7 @@ void SettingsSaveAll(void)
 
 void UpdateQuickPowerCycle(bool update)
 {
-  if (Settings.flag3.fast_power_cycle_disable) { return; }
+  if (Settings.flag3.fast_power_cycle_disable) { return; }  // SetOption65 - Disable fast power cycle detection for device reset
 
   uint32_t pc_register;
   uint32_t pc_location = SETTINGS_LOCATION - CFG_ROTATES;
@@ -1298,8 +1138,8 @@ void SettingsDelta(void)
         Settings.tuya_fnid_map[tuyaindex].dpid = 1;
         tuyaindex++;
       }
-      if (Settings.param[P_ex_TUYA_RELAYS] > 0) {
-        for (uint8_t i = 0 ; i < Settings.param[P_ex_TUYA_RELAYS]; i++) {  // ex SetOption41
+      if (Settings.param[P_ARP_GRATUITOUS] > 0) {            // Was P_ex_TUYA_RELAYS
+        for (uint8_t i = 0 ; i < Settings.param[P_ARP_GRATUITOUS]; i++) {  // ex SetOption41
           Settings.tuya_fnid_map[tuyaindex].fnid = 12 + i;   // TUYA_MCU_FUNC_REL2 -  Create FnID for Switches
           Settings.tuya_fnid_map[tuyaindex].dpid = i + 2;
           tuyaindex++;

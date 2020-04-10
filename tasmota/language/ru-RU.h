@@ -210,7 +210,7 @@
 #define D_IN_MODE "в режиме"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Ошибка подключения, IP-адрес не получен"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Ошибка соединения, AP не может быть достигнута"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Ошибка соединения, неверный пароль к AP"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Ошибка соединения"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Ошибка соединения с AP по тайм-ауту"
 #define D_ATTEMPTING_CONNECTION "Попытка подключения..."
 #define D_CHECKING_CONNECTION "Проверка соединения..."

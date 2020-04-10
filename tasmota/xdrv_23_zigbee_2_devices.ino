@@ -706,6 +706,7 @@ void Z_Devices::setTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait_m
 }
 
 // Run timer at each tick
+// WARNING: don't set a new timer within a running timer, this causes memory corruption
 void Z_Devices::runTimer(void) {
   // visit all timers
   for (auto it = _deferred.begin(); it != _deferred.end(); it++) {

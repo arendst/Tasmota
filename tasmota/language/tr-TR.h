@@ -210,7 +210,7 @@
 #define D_IN_MODE "modunda"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "IP adresi alınamadığı için bağlantı kurulamadı"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Ap'ye ulaşılamadı"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Girilen parolayı AP kabul etmedi"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Bağlantı sağlanamadı"
 #define D_CONNECT_FAILED_AP_TIMEOUT "AP'ye bağlanılırken süre aşımı oluştu"
 #define D_ATTEMPTING_CONNECTION "Yeniden bağlanılıyor..."
 #define D_CHECKING_CONNECTION "Bağlantı kontrol ediliyor..."

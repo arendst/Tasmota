@@ -814,6 +814,11 @@ void PerformEverySecond(void)
       }
     }
   }
+
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
+  // Wifi keep alive to send Gratuitous ARP
+  wifiKeepAlive();
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 }
 
 /*-------------------------------------------------------------------------------------------*\

@@ -210,7 +210,7 @@
 #define D_IN_MODE "mód:"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Sikertelen csatlakozás, nincs kiosztott IP cím"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Sikertelen csatlakozás, AP nem elérhető"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Sikertelen csatlakozás, hibás AP jelszó"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Sikertelen csatlakozás"
 #define D_CONNECT_FAILED_AP_TIMEOUT "Sikertelen csatlakozás AP időtúllépés miatt"
 #define D_ATTEMPTING_CONNECTION "Csatlakozás..."
 #define D_CHECKING_CONNECTION "Kapcsolat ellenőrzése..."

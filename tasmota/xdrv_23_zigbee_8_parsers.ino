@@ -526,10 +526,10 @@ void Z_SendAFInfoRequest(uint16_t shortaddr) {
 
 // Aqara Occupancy behavior: the Aqara device only sends Occupancy: true events every 60 seconds.
 // Here we add a timer so if we don't receive a Occupancy event for 90 seconds, we send Occupancy:false
-void Z_AqaraOccupancy(uint16_t shortaddr, uint16_t cluster, uint8_t endpoint, const JsonObject *json) {
+void Z_AqaraOccupancy(uint16_t shortaddr, uint16_t cluster, uint8_t endpoint, const JsonObject &json) {
   static const uint32_t OCCUPANCY_TIMEOUT = 90 * 1000;  // 90 s
   // Read OCCUPANCY value if any
-  const JsonVariant &val_endpoint = getCaseInsensitive(*json, PSTR(OCCUPANCY));
+  const JsonVariant &val_endpoint = getCaseInsensitive(json, PSTR(OCCUPANCY));
   if (nullptr != &val_endpoint) {
     uint32_t occupancy = strToUInt(val_endpoint);
 
@@ -544,8 +544,6 @@ void Z_AqaraOccupancy(uint16_t shortaddr, uint16_t cluster, uint8_t endpoint, co
 int32_t Z_PublishAttributes(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   const JsonObject *json = zigbee_devices.jsonGet(shortaddr);
   if (json == nullptr) { return 0; }                 // don't crash if not found
-  // Post-provess for Aqara Presence Senson
-  Z_AqaraOccupancy(shortaddr, cluster, endpoint, json);
 
   zigbee_devices.jsonPublishFlush(shortaddr);
   return 1;
@@ -612,6 +610,9 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
     // since we just receveived data from the device, it is reachable
     zigbee_devices.resetTimersForDevice(srcaddr, 0 /* groupaddr */, Z_CAT_REACHABILITY);    // remove any reachability timer already there
     zigbee_devices.setReachable(srcaddr, true);     // mark device as reachable
+
+    // Post-provess for Aqara Presence Senson
+    Z_AqaraOccupancy(srcaddr, clusterid, srcendpoint, json);
 
     if (defer_attributes) {
       // Prepare for publish

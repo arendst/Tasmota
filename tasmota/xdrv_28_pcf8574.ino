@@ -146,7 +146,7 @@ const char HTTP_BTN_MENU_PCF8574[] PROGMEM =
 const char HTTP_FORM_I2C_PCF8574_1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_PCF8574_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='" WEB_HANDLE_PCF8574 "'>"
-  "<p><input id='b1' name='b1' type='checkbox'%s><b>" D_INVERT_PORTS "</b></p><hr/>";
+  "<p><label><input id='b1' name='b1' type='checkbox'%s><b>" D_INVERT_PORTS "</b></label></p><hr/>";
 
 const char HTTP_FORM_I2C_PCF8574_2[] PROGMEM =
   "<tr><td><b>" D_DEVICE " %d " D_PORT " %d</b></td><td style='width:100px'><select id='i2cs%d' name='i2cs%d'>"
