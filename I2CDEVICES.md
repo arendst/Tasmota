@@ -69,3 +69,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   45  | USE_HDC1080         | xsns_65 | HDC1080  | 0x40        | Temperature and Humidity sensor
   46  | USE_IAQ             | xsns_66 | IAQ      | 0x5a        | Air quality sensor
   47  | USE_DISPLAY_SEVENSEG| xdsp_11 | HT16K33  | 0x70 - 0x77 | Seven segment LED
+  48  | USE_AS3935          | xsns_67 | AS3935   | 0x03        | Franklin Lightning Sensor 

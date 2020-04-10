@@ -211,6 +211,30 @@ typedef union {
   };
 } SensorCfg1;
 
+typedef union {
+  uint8_t data;
+  struct {           
+  uint8_t nf_autotune : 1;            // Autotune the NF Noise Level
+  uint8_t dist_autotune : 1;          // Autotune Disturber on/off  
+  uint8_t nf_autotune_both : 1;        // Autotune over both Areas: INDOORS/OUDOORS
+  uint8_t mqtt_only_Light_Event : 1;  // mqtt only if lightning Irq
+  uint8_t spare4 : 1;
+  uint8_t spare5 : 1;
+  uint8_t spare6 : 1;
+  uint8_t spare7 : 1;
+  };
+} As3935IntCfg;
+
+typedef union {
+  uint16_t data;
+  struct {           
+  uint16_t nf_autotune_time : 4;            // NF Noise Autotune Time
+  uint16_t dist_autotune_time : 4;          // Disturber Autotune Time  
+  uint16_t nf_autotune_min : 4;             // Min Stages
+  uint16_t spare3 : 4;
+  };
+} As3935Param;
+
 typedef struct {
   uint32_t usage1_kWhtotal;
   uint32_t usage2_kWhtotal;
@@ -472,8 +496,12 @@ struct PACKED SYSCFG {
   int8_t        hum_comp;                  // F08
   uint8_t       wifi_channel;              // F09
   uint8_t       wifi_bssid[6];             // F0A
+  uint8_t       as3935_sensor_cfg[5];      // F10
+  As3935IntCfg  as3935_functions;          // F15
+  As3935Param   as3935_parameter;          // F16
 
-  uint8_t       free_f10[168];             // F10
+  uint8_t       free_f18[160];             // F18
+
 
   uint16_t      pulse_counter_debounce_low;  // FB8
   uint16_t      pulse_counter_debounce_high; // FBA
