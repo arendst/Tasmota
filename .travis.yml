@@ -44,5 +44,3 @@ script:
   - platformio run -e $ENV
 before_deploy:
   - for file in .pioenvs/*/firmware.bin; do cp $file ${file%/*}.bin; done
-
-  
