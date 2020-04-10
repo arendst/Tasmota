@@ -22,6 +22,7 @@
 - Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
 - Add more accuracy to GPS NTP server (#8088)
 - Add support for an iAQ sensor (#8107)
+- Add support for Seven Segment display using HT16K33 (#8116)
 
 ### 8.2.0.2 20200328
 

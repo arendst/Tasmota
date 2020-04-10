@@ -77,6 +77,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``DevGroupSend`` to send an update to a Device Group (#8093)
 - Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
 - Add support for 64x48 SSD1306 OLED (#6740)
+- Add support for Seven Segment display using HT16K33 (#8116)
 - Add support for up to four MQTT GroupTopics (#8014)
 - Add support for longer template names
 - Add support for an iAQ sensor (#8107)
