@@ -199,7 +199,7 @@ a_features = [[
     "USE_AHT1x","USE_WEMOS_MOTOR_V1","USE_DEVICE_GROUPS","USE_PWM_DIMMER"
     ],[
     "USE_KEELOQ","USE_HRXL","USE_SONOFF_D1","USE_HDC1080",
-    "","","","",
+    "USE_IAQ","","","",
     "","","","",
     "","","","",
     "","","","",
