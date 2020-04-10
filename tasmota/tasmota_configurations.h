@@ -122,6 +122,7 @@
   #define WEMOS_MOTOR_V1_ADDR  0x30              // Default I2C address 0x30
   #define WEMOS_MOTOR_V1_FREQ  1000              // Default frequency
 //#define USE_HDC1080                              // Enable HDC1080 temperature/humidity sensor
+#define USE_IAQ                                  // [I2cDriver46] Enable iAQ-core air quality sensor (I2C address 0x5a) (+0k6 code)
 
 #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
