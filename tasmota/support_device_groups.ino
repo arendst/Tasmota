@@ -20,6 +20,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifdef USE_DEVICE_GROUPS
 
 //#define DEVICE_GROUPS_DEBUG
@@ -163,7 +164,7 @@ void SendDeviceGroupPacket(IPAddress ip, char * packet, int len, const char * la
   if (!ip) ip = IPAddress(239,255,255,250);
   for (int attempt = 1; attempt <= 5; attempt++) {
     if (PortUdp.beginPacket(ip, 1900)) {
-      PortUdp.write(packet, len);
+      PortUdp_write(packet, len);
       if (PortUdp.endPacket()) return;
     }
     delay(10);
@@ -552,7 +553,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
 #ifdef DEVICE_GROUPS_DEBUG
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: sending %u-byte device group %s packet via multicast, sequence=%u"), device_group->message_length, device_group->group_name, device_group->message[device_group->message_header_length] | device_group->message[device_group->message_header_length + 1] << 8);
 #endif  // DEVICE_GROUPS_DEBUG
-  SendDeviceGroupPacket(0, device_group->message, device_group->message_length, PSTR("Multicast"));
+  SendDeviceGroupPacket(IPAddress(0,0,0,0), device_group->message, device_group->message_length, PSTR("Multicast"));
 
   uint32_t now = millis();
   if (message_type == DGR_MSGTYP_UPDATE_MORE_TO_COME) {
@@ -857,7 +858,7 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
 #ifdef DEVICE_GROUPS_DEBUG
               AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: sending initial status request for group %s"), device_group->group_name);
 #endif  // DEVICE_GROUPS_DEBUG
-                SendDeviceGroupPacket(0, device_group->message, device_group->message_length, PSTR("Initial"));
+                SendDeviceGroupPacket(IPAddress(0,0,0,0), device_group->message, device_group->message_length, PSTR("Initial"));
                 device_group->message[device_group->message_header_length + 2] = DGR_FLAG_STATUS_REQUEST; // The reset flag is on only for the first packet - turn it off now
                 device_group->next_ack_check_time = now + 200;
               }
@@ -941,7 +942,7 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
 #ifdef DEVICE_GROUPS_DEBUG
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: sending device group %s announcement"), device_group->group_name);
 #endif  // DEVICE_GROUPS_DEBUG
-          SendDeviceGroupPacket(0, device_group->message, BeginDeviceGroupMessage(device_group, DGR_FLAG_ANNOUNCEMENT, true) - device_group->message, PSTR("Announcement"));
+          SendDeviceGroupPacket(IPAddress(0,0,0,0), device_group->message, BeginDeviceGroupMessage(device_group, DGR_FLAG_ANNOUNCEMENT, true) - device_group->message, PSTR("Announcement"));
           device_group->next_announcement_time = now + DGR_ANNOUNCEMENT_INTERVAL + random(10000);
         }
         if (device_group->next_announcement_time < next_check_time) next_check_time = device_group->next_announcement_time;

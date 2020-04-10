@@ -838,7 +838,7 @@ void DisplayText(void)
       if (!fill) {
         *dp = 0;
       } else {
-        linebuf[abs(fill)] = 0;
+        linebuf[abs(int(fill))] = 0;
       }
       if (fill<0) {
         // right align

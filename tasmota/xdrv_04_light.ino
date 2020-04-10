@@ -1216,6 +1216,7 @@ bool LightModuleInit(void)
   if (XlgtCall(FUNC_MODULE_INIT)) {
     // serviced
   }
+#ifdef ESP8266
   else if (SONOFF_BN == my_module_type) {   // PWM Single color led (White)
     light_type = LT_PWM1;
   }
@@ -1234,6 +1235,7 @@ bool LightModuleInit(void)
     }
     light_type = LT_PWM2;
   }
+#endif  // ESP8266
 
   if (light_type > LT_BASIC) {
     devices_present++;
@@ -1701,12 +1703,12 @@ void LightAnimate(void)
   // or set a maximum of PWM_MAX_SLEEP if light is on or Fade is running
   if (Light.power || Light.fade_running) {
     if (Settings.sleep > PWM_MAX_SLEEP) {
-      sleep = PWM_MAX_SLEEP;      // set a maxumum value of 50 milliseconds to ensure that animations are smooth
+      ssleep = PWM_MAX_SLEEP;      // set a maxumum value of 50 milliseconds to ensure that animations are smooth
     } else {
-      sleep = Settings.sleep;     // or keep the current sleep if it's lower than 50
+      ssleep = Settings.sleep;     // or keep the current sleep if it's lower than 50
     }
   } else {
-    sleep = Settings.sleep;
+    ssleep = Settings.sleep;
   }
 
   if (!Light.power) {                   // All channels powered off
@@ -1891,11 +1893,12 @@ void LightAnimate(void)
 bool isChannelGammaCorrected(uint32_t channel) {
   if (!Settings.light_correction) { return false; }   // Gamma correction not activated
   if (channel >= Light.subtype) { return false; }     // Out of range
-
+#ifdef ESP8266
   if (PHILIPS == my_module_type) {
     if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return false; }   // PMW reserved for CT
     if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return false; }   // PMW reserved for CT
   }
+#endif  // ESP8266
   return true;
 }
 
@@ -2070,6 +2073,7 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
     uint16_t white_bri10 = cur_col_10[cw0] + cur_col_10[cw1];   // cumulated brightness
     uint16_t white_bri10_1023 = (white_bri10 > 1023) ? 1023 : white_bri10;    // max 1023
 
+#ifdef ESP8266
     if (PHILIPS == my_module_type) {   // channel 1 is the color tone, mapped to cold channel (0..255)
       // Xiaomi Philips bulbs follow a different scheme:
       cur_col_10[cw1] = light_state.getCT10bits();
@@ -2079,7 +2083,9 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
       } else {
         cur_col_10[cw0] = white_bri10_1023;  // no gamma, extend to 10 bits
       }
-    } else if (Settings.light_correction) {
+    } else
+#endif  // ESP8266
+    if (Settings.light_correction) {
       // if sum of both channels is > 255, then channels are probably uncorrelated
       if (white_bri10 <= 1031) {      // take a margin of 8 above 1023 to account for rounding errors
         // we calculate the gamma corrected sum of CW + WW
@@ -2631,7 +2637,9 @@ void CmndDimmerRange(void)
       Settings.dimmer_hw_min = parm[1];
       Settings.dimmer_hw_max = parm[0];
     }
+#ifdef ESP8266
     if (PWM_DIMMER != my_module_type) restart_flag = 2;
+#endif  // ESP8266
   }
   Response_P(PSTR("{\"" D_CMND_DIMMER_RANGE "\":{\"Min\":%d,\"Max\":%d}}"), Settings.dimmer_hw_min, Settings.dimmer_hw_max);
 }

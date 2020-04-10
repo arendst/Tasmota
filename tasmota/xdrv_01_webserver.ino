@@ -48,7 +48,7 @@ enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTASLAVE };
 
 static const char * HEADER_KEYS[] = { "User-Agent", };
 
-const char HTTP_HEADER[] PROGMEM =
+const char HTTP_HEADER1[] PROGMEM =
   "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
   "<head>"
   "<meta charset='utf-8'>"
@@ -848,7 +848,7 @@ void WSContentStart_P(const char* title, bool auth)
   if (title != nullptr) {
     char ctitle[strlen_P(title) +1];
     strcpy_P(ctitle, title);                       // Get title from flash to RAM
-    WSContentSend_P(HTTP_HEADER, SettingsText(SET_FRIENDLYNAME1), ctitle);
+    WSContentSend_P(HTTP_HEADER1, SettingsText(SET_FRIENDLYNAME1), ctitle);
   }
 }
 
@@ -2175,7 +2175,7 @@ void HandleInformation(void)
 
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d"), ESP.getChipId());
-  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP.getFlashChipId());
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP_getFlashChipId());
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%dkB"), ESP.getFlashChipRealSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%dkB"), ESP.getFlashChipSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%dkB"), ESP.getSketchSize() / 1024);

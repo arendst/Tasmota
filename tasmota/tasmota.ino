@@ -32,6 +32,7 @@
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+#include "tasmota_compat.h"
 #include "tasmota_version.h"                // Tasmota version information
 #include "tasmota.h"                        // Enumeration used in my_user_config.h
 #include "my_user_config.h"                 // Fixed user configurable options
@@ -123,7 +124,7 @@ uint8_t mqtt_cmnd_blocked = 0;              // Ignore flag for publish command
 uint8_t mqtt_cmnd_blocked_reset = 0;        // Count down to reset if needed
 uint8_t state_250mS = 0;                    // State 250msecond per second flag
 uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
-uint8_t sleep;                              // Current copy of Settings.sleep
+uint8_t ssleep;                             // Current copy of Settings.sleep
 uint8_t blinkspeed = 1;                     // LED blink rate
 uint8_t pin[GPIO_MAX];                      // Possible pin configurations
 uint8_t active_device = 1;                  // Active device in ExecuteCommandPower
@@ -226,7 +227,7 @@ void setup(void)
   syslog_level = Settings.syslog_level;
   stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   save_data_counter = Settings.save_data;
-  sleep = Settings.sleep;
+  ssleep = Settings.sleep;
 #ifndef USE_EMULATION
   Settings.flag2.emulation = 0;
 #else
@@ -259,8 +260,13 @@ void setup(void)
         Settings.my_adc0 = ADC0_NONE;               // Reset user defined ADC0 disabling sensors
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +4) {  // Restarted 6 times
+#ifdef ESP8266
         Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
   //      Settings.last_module = SONOFF_BASIC;
+#endif  // ESP8266
+#ifdef ESP32
+        Settings.module = WEMOS;                    // Reset module to Wemos
+#endif  // ESP32
       }
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     }
@@ -374,10 +380,10 @@ void loop(void)
 
   if (Settings.flag3.sleep_normal) {              // SetOption60 - Enable normal sleep instead of dynamic sleep
     //  yield();                                  // yield == delay(0), delay contains yield, auto yield in loop
-    delay(sleep);                                 // https://github.com/esp8266/Arduino/issues/2021
+    delay(ssleep);                                // https://github.com/esp8266/Arduino/issues/2021
   } else {
-    if (my_activity < (uint32_t)sleep) {
-      delay((uint32_t)sleep - my_activity);       // Provide time for background tasks like wifi
+    if (my_activity < (uint32_t)ssleep) {
+      delay((uint32_t)ssleep - my_activity);      // Provide time for background tasks like wifi
     } else {
       if (global_state.wifi_down) {
         delay(my_activity /2);                    // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
@@ -386,7 +392,7 @@ void loop(void)
   }
 
   if (!my_activity) { my_activity++; }            // We cannot divide by 0
-  uint32_t loop_delay = sleep;
+  uint32_t loop_delay = ssleep;
   if (!loop_delay) { loop_delay++; }              // We cannot divide by 0
   uint32_t loops_per_second = 1000 / loop_delay;  // We need to keep track of this many loops per second
   uint32_t this_cycle_ratio = 100 * my_activity / loop_delay;

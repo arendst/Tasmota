@@ -426,7 +426,7 @@ void CmndStatus(void)
                           "\"Hardware\":\"%s\""
                           "%s}}"),
                           my_version, my_image, GetBuildDateAndTime().c_str(),
-                          ESP.getBootVersion(), ESP.getSdkVersion(),
+                          ESP_getBootVersion(), ESP.getSdkVersion(),
                           GetDeviceHardware().c_str(),
                           GetStatistics().c_str());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
@@ -448,7 +448,7 @@ void CmndStatus(void)
                           D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d,\"" D_JSON_FLASHCHIPID "\":\"%06X\",\"" D_JSON_FLASHMODE "\":%d,\""
                           D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
                           ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024,
-                          ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipId(), ESP.getFlashChipMode(),
+                          ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP_getFlashChipId(), ESP.getFlashChipMode(),
                           LANGUAGE_LCID, feature_drv1, feature_drv2, feature_sns1, feature_sns2, feature5, feature6);
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
@@ -580,10 +580,10 @@ void CmndSleep(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 251)) {
     Settings.sleep = XdrvMailbox.payload;
-    sleep = XdrvMailbox.payload;
+    ssleep = XdrvMailbox.payload;
     WiFiSetSleepMode();
   }
-  Response_P(S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, XdrvMailbox.command, Settings.sleep, sleep);
+  Response_P(S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, XdrvMailbox.command, Settings.sleep, ssleep);
 
 }
 
@@ -646,7 +646,10 @@ void CmndRestart(void)
 
 void CmndPowerOnState(void)
 {
-  if (my_module_type != MOTOR) {
+#ifdef ESP8266
+  if (my_module_type != MOTOR)
+#endif  // ESP8266
+  {
     /* 0 = Keep relays off after power on
       * 1 = Turn relays on after power on, if PulseTime set wait for PulseTime seconds, and turn relays off
       * 2 = Toggle relays after power on
