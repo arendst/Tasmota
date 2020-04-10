@@ -186,9 +186,10 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
   uint32_t real_index = SET_MQTT_GRP_TOPIC;
   for (uint32_t i = 0; i < MAX_GROUP_TOPICS; i++) {
     if (1 == i) { real_index = SET_MQTT_GRP_TOPIC2 -1; }
-    if (strlen(SettingsText(real_index +i))) {
-      grpflg = (strstr(topicBuf, SettingsText(real_index +i)) != nullptr);
-      if (grpflg) { break; }
+    char *group_topic = SettingsText(real_index +i);
+    if (*group_topic && strstr(topicBuf, group_topic) != nullptr) {
+      grpflg = true;
+      break;
     }
   }
 
