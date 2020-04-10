@@ -319,7 +319,7 @@ void SettingsSaveAll(void)
 
 void UpdateQuickPowerCycle(bool update)
 {
-  if (Settings.flag3.fast_power_cycle_disable) { return; }
+  if (Settings.flag3.fast_power_cycle_disable) { return; }  // SetOption65 - Disable fast power cycle detection for device reset
 
   uint32_t pc_register;
   uint32_t pc_location = SETTINGS_LOCATION - CFG_ROTATES;

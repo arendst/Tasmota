@@ -661,7 +661,7 @@
 
 /*********************************************************************************************\
  * Optional firmware configurations
- * Select none or just one for optional features and sensors as configured in tasmota_post.h
+ * Select none or just one for optional features and sensors as configured in tasmota_configurations.h
  * See RELEASENOTES.md for selected features
 \*********************************************************************************************/
 
