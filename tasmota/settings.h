@@ -499,9 +499,14 @@ struct PACKED SYSCFG {
   uint8_t       as3935_sensor_cfg[5];      // F10
   As3935IntCfg  as3935_functions;          // F15
   As3935Param   as3935_parameter;          // F16
+  uint64_t      zb_ext_panid;              // F18
+  uint64_t      zb_precfgkey_l;            // F20
+  uint64_t      zb_precfgkey_h;            // F28
+  uint16_t      zb_pan_id;                 // F30
+  uint8_t       zb_channel;                // F32
+  uint8_t       zb_free_byte;              // F33
 
-  uint8_t       free_f18[160];             // F18
-
+  uint8_t       free_f18[132];             // F34
 
   uint16_t      pulse_counter_debounce_low;  // FB8
   uint16_t      pulse_counter_debounce_high; // FBA
