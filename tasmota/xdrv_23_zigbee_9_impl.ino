@@ -1044,6 +1044,8 @@ void CmndZbConfig(void) {
     // Channel
     const JsonVariant &val_channel = getCaseInsensitive(json, PSTR("Channel"));
     if (nullptr != &val_channel) { zb_channel = strToUInt(val_channel); }
+    if (zb_channel < 11) { zb_channel = 11; }
+    if (zb_channel > 26) { zb_channel = 26; }
     // PanID
     const JsonVariant &val_pan_id = getCaseInsensitive(json, PSTR("PanID"));
     if (nullptr != &val_pan_id) { zb_pan_id = strToUInt(val_pan_id); }
