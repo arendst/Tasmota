@@ -93,7 +93,6 @@ enum UserSelectablePins {
   GPIO_SPI_CS,         // SPI Chip Select
   GPIO_SPI_DC,         // SPI Data Direction
   GPIO_BACKLIGHT,      // Display backlight control
-  GPIO_PMS5003_TX,     // Plantower PMS5003 Serial interface
   GPIO_PMS5003_RX,     // Plantower PMS5003 Serial interface  
   GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
   GPIO_SBR_TX,         // Serial Bridge Serial interface
@@ -228,6 +227,7 @@ enum UserSelectablePins {
   GPIO_HRXL_RX,       // Data from MaxBotix HRXL sonar range sensor
   GPIO_ELECTRIQ_MOODL_TX, // ElectriQ iQ-wifiMOODL Serial TX
   GPIO_AS3935,
+  GPIO_PMS5003_TX,     // Plantower PMS5003 Serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
