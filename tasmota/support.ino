@@ -109,7 +109,7 @@ String GetResetReason(void)
     strncpy_P(buff, PSTR(D_JSON_BLOCKED_LOOP), sizeof(buff));
     return String(buff);
   } else {
-    return ESP.getResetReason();
+    return ESP_getResetReason();
   }
 }
 
@@ -213,7 +213,7 @@ char* ulltoa(unsigned long long value, char *str, int radix)
 }
 
 // see https://stackoverflow.com/questions/6357031/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-in-c
-// char* ToHex_P(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0'); in tasmota_post.h
+// char* ToHex_P(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0'); in tasmota_globals.h
 char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween)
 {
   // ToHex_P(in, insz, out, outz)      -> "12345667"
@@ -1660,7 +1660,7 @@ void Syslog(void)
     memmove(log_data + strlen(syslog_preamble), log_data, sizeof(log_data) - strlen(syslog_preamble));
     log_data[sizeof(log_data) -1] = '\0';
     memcpy(log_data, syslog_preamble, strlen(syslog_preamble));
-    PortUdp.write(log_data, strlen(log_data));
+    PortUdp_write(log_data, strlen(log_data));
     PortUdp.endPacket();
     delay(1);  // Add time for UDP handling (#5512)
   } else {

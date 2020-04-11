@@ -1,5 +1,5 @@
 /*
-  tasmota_post.h - Post header file for Tasmota
+  tasmota_configurations.h - Configurations for Tasmota
 
   Copyright (C) 2020  Theo Arends
 
@@ -17,73 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _TASMOTA_POST_H_
-#define _TASMOTA_POST_H_
-
-/*********************************************************************************************\
- * Function prototypes
-\*********************************************************************************************/
-
-// Needed for core 2.3.0 compilation (#6721)
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "user_interface.h"
-#ifdef __cplusplus
-}
-#endif
-
-//#ifdef USE_KNX  // Enabling this will fail compilation. It has no impact if not used. (20180417)
-#include <esp-knx-ip.h>
-void KNX_CB_Action(message_t const &msg, void *arg);
-//#endif  // USE_KNX
-
-void DomoticzTempHumPressureSensor(float temp, float hum, float baro = -1);
-char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0');
-extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack, uint32_t stack_end);
-extern "C" void resetPins();
-
-/*********************************************************************************************\
- * Default global defines
-\*********************************************************************************************/
-
-#ifndef ENERGY_OVERTEMP
-#define ENERGY_OVERTEMP      90                  // Overtemp in Celsius
-#endif
-
-#ifdef USE_EMULATION_HUE
-#define USE_EMULATION
-#endif
-#ifdef USE_EMULATION_WEMO
-#define USE_EMULATION
-#endif
-#ifdef USE_DEVICE_GROUPS
-#define USE_EMULATION
-#endif
-
-#ifdef USE_MQTT_TLS
-  const uint16_t WEB_LOG_SIZE = 2000;            // Max number of characters in weblog
-#else
-  const uint16_t WEB_LOG_SIZE = 4000;            // Max number of characters in weblog
-#endif
-
-#if defined(USE_MQTT_TLS) && defined(ARDUINO_ESP8266_RELEASE_2_3_0)
-  #error "TLS is no more supported on Core 2.3.0, use 2.4.2 or higher."
-#endif
-
-#ifndef MODULE
-#define MODULE                 SONOFF_BASIC      // [Module] Select default model
-#endif
-
-#ifdef USE_PWM_DIMMER_REMOTE
-#ifdef USE_PWM_DIMMER
-#ifndef USE_DEVICE_GROUPS
-#define USE_DEVICE_GROUPS
-#endif  // USE_DEVICE_GROUPS
-#else   // USE_PWM_DIMMER
-#undef USE_PWM_DIMMER_REMOTE
-#endif  // USE_PWM_DIMMER
-#endif  // USE_PWM_DIMMER_REMOTE
+#ifndef _TASMOTA_CONFIGURATIONS_H_
+#define _TASMOTA_CONFIGURATIONS_H_
 
 /*********************************************************************************************\
  * [tasmota-sensors.bin]
@@ -92,8 +27,6 @@ extern "C" void resetPins();
 
 #ifdef FIRMWARE_SENSORS
 
-#undef CODE_IMAGE
-#define CODE_IMAGE 2
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "sensors"
 
@@ -189,6 +122,8 @@ extern "C" void resetPins();
   #define WEMOS_MOTOR_V1_ADDR  0x30              // Default I2C address 0x30
   #define WEMOS_MOTOR_V1_FREQ  1000              // Default frequency
 //#define USE_HDC1080                              // Enable HDC1080 temperature/humidity sensor
+#define USE_IAQ                                  // [I2cDriver46] Enable iAQ-core air quality sensor (I2C address 0x5a) (+0k6 code)
+#define USE_AS3935                               // [I2cDriver48] Enable AS3935 Franklin Lightning Sensor (I2C address 0x03) (+5k4 code)
 
 #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
@@ -257,8 +192,6 @@ extern "C" void resetPins();
 
 #ifdef FIRMWARE_KNX_NO_EMULATION
 
-#undef CODE_IMAGE
-#define CODE_IMAGE 3
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "knx"
 
@@ -282,8 +215,6 @@ extern "C" void resetPins();
 
 #ifdef FIRMWARE_DISPLAYS
 
-#undef CODE_IMAGE
-#define CODE_IMAGE 5
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "display"
 
@@ -332,6 +263,7 @@ extern "C" void resetPins();
     #define USE_DISPLAY_LCD                      // [DisplayModel 1] Enable Lcd display (I2C addresses 0x27 and 0x3F) (+6k code)
     #define USE_DISPLAY_SSD1306                  // [DisplayModel 2] Enable SSD1306 Oled 128x64 display (I2C addresses 0x3C and 0x3D) (+16k code)
     #define USE_DISPLAY_MATRIX                   // [DisplayModel 3] Enable 8x8 Matrix display (I2C adresseses see below) (+11k code)
+    #define USE_DISPLAY_SEVENSEG                 // [DisplayModel 11] [I2cDriver47] Enable sevenseg display (I2C addresses 0x70 - 0x77) (<+11k code)
     #define USE_DISPLAY_SH1106                   // [DisplayModel 7] Enable SH1106 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
 
 #define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
@@ -355,8 +287,6 @@ extern "C" void resetPins();
 
 #ifdef FIRMWARE_IR
 
-#undef CODE_IMAGE
-#define CODE_IMAGE 6
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "ir"
 
@@ -462,8 +392,6 @@ extern "C" void resetPins();
 
 #ifdef FIRMWARE_LITE
 
-#undef CODE_IMAGE
-#define CODE_IMAGE 4
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "lite"
 
@@ -579,8 +507,6 @@ extern "C" void resetPins();
 
 #ifdef FIRMWARE_MINIMAL
 
-#undef CODE_IMAGE
-#define CODE_IMAGE 1
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "minimal"
 
@@ -692,95 +618,4 @@ extern "C" void resetPins();
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_MINIMAL
 
-/*********************************************************************************************\
- * Mandatory defines satisfying possible disabled defines
-\*********************************************************************************************/
-
-                                                 // See https://github.com/esp8266/Arduino/pull/4889
-#undef NO_EXTRA_4K_HEAP                          // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
-
-#ifndef USE_SONOFF_RF
-#undef USE_RF_FLASH                              // Disable RF firmware flash when SOnoff Rf is disabled
-#endif
-
-#ifndef SWITCH_MODE
-#define SWITCH_MODE            TOGGLE            // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
-#endif
-
-#ifndef STARTING_OFFSET                          // NOVA SDS parameter used in settings
-#define STARTING_OFFSET        30
-#endif
-
-#ifndef MQTT_FINGERPRINT1
-// Set an all-zeros default fingerprint to activate auto-learning on first connection (AWS IoT)
-#define MQTT_FINGERPRINT1      "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
-#endif
-
-#ifndef MQTT_FINGERPRINT2
-#define MQTT_FINGERPRINT2      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
-#endif
-
-#ifndef WS2812_LEDS
-#define WS2812_LEDS            30                // [Pixels] Number of LEDs
-#endif
-
-#ifndef MQTT_MAX_PACKET_SIZE
-#define MQTT_MAX_PACKET_SIZE   1200              // Bytes
-#endif
-#ifndef MQTT_KEEPALIVE
-#define MQTT_KEEPALIVE         30                // Seconds
-#endif
-#ifndef MQTT_TIMEOUT
-#define MQTT_TIMEOUT           10000             // milli seconds
-#endif
-#ifndef MQTT_CLEAN_SESSION
-#define MQTT_CLEAN_SESSION     1                 // 0 = No clean session, 1 = Clean session (default)
-#endif
-
-#ifndef MESSZ
-//#define MESSZ                  1040            // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1200)
-#define MESSZ                  (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string
-#endif
-
-//#include <core_version.h>                      // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
-#ifndef ARDUINO_ESP8266_RELEASE
-#define ARDUINO_ESP8266_RELEASE "STAGE"
-#endif
-
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0             // Disable not supported features in core 2.3.0
-#undef USE_MQTT_TLS_CA_CERT
-#endif
-
-#ifdef USE_DEVICE_GROUPS
-#define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)
-#define SendLocalDeviceGroupMessage(REQUEST_TYPE, ...) _SendDeviceGroupMessage(0, REQUEST_TYPE, __VA_ARGS__, 0)
-#define DEVICE_GROUP_MESSAGE "M-TASMOTA_DGR/"
-const char kDeviceGroupMessage[] PROGMEM = DEVICE_GROUP_MESSAGE;
-uint8_t device_group_count = 1;
-#endif  // USE_DEVICE_GROUPS
-
-#ifdef DEBUG_TASMOTA_CORE
-#define DEBUG_CORE_LOG(...) AddLog_Debug(__VA_ARGS__)
-#else
-#define DEBUG_CORE_LOG(...)
-#endif
-
-#ifdef DEBUG_TASMOTA_DRIVER
-#define DEBUG_DRIVER_LOG(...) AddLog_Debug(__VA_ARGS__)
-#else
-#define DEBUG_DRIVER_LOG(...)
-#endif
-
-#ifdef DEBUG_TASMOTA_SENSOR
-#define DEBUG_SENSOR_LOG(...) AddLog_Debug(__VA_ARGS__)
-#else
-#define DEBUG_SENSOR_LOG(...)
-#endif
-
-#ifdef DEBUG_TASMOTA_TRACE
-#define DEBUG_TRACE_LOG(...) AddLog_Debug(__VA_ARGS__)
-#else
-#define DEBUG_TRACE_LOG(...)
-#endif
-
-#endif  // _TASMOTA_POST_H_
+#endif  // _TASMOTA_CONFIGURATIONS_H_
