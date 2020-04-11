@@ -1,5 +1,5 @@
 /*
-  XSNS_67_AS3935.ino - AS3935 Franklin Lightning Sensor support for Tasmota
+  xsns_67_as3935.ino - AS3935 Franklin Lightning Sensor support for Tasmota
 
   Copyright (C) 2020  Martin Wagner
 
@@ -15,9 +15,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  
 */
-
 
 #ifdef USE_I2C
 #ifdef USE_AS3935
@@ -25,7 +23,6 @@
  * AS3935 Lightning Sensor
  *
  * I2C Address: 0x03
- *
 \*********************************************************************************************/
 
 #define XSNS_67             67
@@ -36,13 +33,13 @@
 
 //                     Reg  mask shift
 #define IRQ_TBL       0x03, 0x0F, 0
-#define ENERGY_RAW_1  0x04, 0xFF, 0 
-#define ENERGY_RAW_2  0x05, 0xFF, 0 
-#define ENERGY_RAW_3  0x06, 0x1F, 0 
+#define ENERGY_RAW_1  0x04, 0xFF, 0
+#define ENERGY_RAW_2  0x05, 0xFF, 0
+#define ENERGY_RAW_3  0x06, 0x1F, 0
 #define LGHT_DIST     0x07, 0x3F, 0
 #define DISP_TRCO     0x08, 0x20, 5
 #define DISP_LCO      0x08, 0x80, 7
-#define TUNE_CAPS     0x08, 0x0F, 0 
+#define TUNE_CAPS     0x08, 0x0F, 0
 #define AFE_GB        0x00, 0x3E, 0
 #define WDTH          0x01, 0x0F, 0
 #define NF_LEVEL      0x01, 0x70, 4
@@ -79,10 +76,7 @@
 #define D_AS3935_OUTDOORS "Outdoors"
 #define D_AS3935_CAL_FAIL "calibration failed"
 #define D_AS3935_CAL_OK "calibration set to:"
-// Json
-#define D_JSON_EVENT "Event"
-#define D_JSON_DISTANCE "Distance"
-#define D_JSON_ENERGY "Energy"
+
 // Global
 const char HTTP_SNS_UNIT_KILOMETER[] PROGMEM = D_UNIT_KILOMETER;
 // Http
@@ -107,7 +101,7 @@ const char HTTP_SNS_AS3935_DISTURB[] PROGMEM = "{s}%s: " D_AS3935_DISTDET "{e}";
 const char HTTP_SNS_AS3935_INTNOEV[] PROGMEM = "{s}%s: " D_AS3935_INTNOEV "{e}";
 const char HTTP_SNS_AS3935_MSG[] PROGMEM = "{s}%s: " D_AS3935_LIGHT " " D_AS3935_APRX " %d " D_UNIT_KILOMETER " " D_AS3935_AWAY "{e}";
 const char* const HTTP_SNS_AS3935_TABLE_1[] PROGMEM = { HTTP_SNS_AS3935_EMPTY, HTTP_SNS_AS3935_MSG, HTTP_SNS_AS3935_OUT, HTTP_SNS_AS3935_NOT, HTTP_SNS_AS3935_ABOVE, HTTP_SNS_AS3935_NOISE, HTTP_SNS_AS3935_DISTURB, HTTP_SNS_AS3935_INTNOEV };
-// Json 
+// Json
 const char JSON_SNS_AS3935_EVENTS[] PROGMEM = ",\"%s\":{\"" D_JSON_EVENT "\":%d,\"" D_JSON_DISTANCE "\":%d,\"" D_JSON_ENERGY "\":%u}";
 // Json Command
 const char* const S_JSON_AS3935_COMMAND_ONOFF[] PROGMEM = {"\"" D_AS3935_OFF "\"","\"" D_AS3935_ON"\""};
@@ -133,10 +127,10 @@ enum AS3935_Commands {         // commands for Console
   CMND_AS3935_NFTIME,          // Threshhold Time for NF-Autotune
   CMND_AS3935_SET_DISTURBER,   // Set Disturber on/off
   CMND_AS3935_NF_AUTOTUNE,     // Autotune the NF Noise
-  CMND_AS3935_DIST_AUTOTUNE,   // Autotune Disturber on/off  
+  CMND_AS3935_DIST_AUTOTUNE,   // Autotune Disturber on/off
   CMND_AS3935_NF_ATUNE_BOTH,   // Autotune over both Areas: INDOORS/OUDOORS
   CMND_AS3935_MQTT_LIGHT_EVT,  // mqtt only if lightning Irq
-  CMND_AS3935_SETTINGS,        // Json output of all settings 
+  CMND_AS3935_SETTINGS,        // Json output of all settings
   CMND_AS3935_CALIBRATE        // caps autocalibrate
   };
 
@@ -205,7 +199,7 @@ bool AS3935AutoTuneCaps(uint8_t irqpin) {
     as3935_sensor.dispLCO = true;
     as3935_sensor.pulse = 0;
     attachInterrupt(digitalPinToInterrupt(irqpin), AS3935CountFreq, RISING);
-    delay(200); // 100ms callback not work accurat for fequ. measure 
+    delay(200); // 100ms callback not work accurat for fequ. measure
     as3935_sensor.dispLCO = false;
     detachInterrupt(irqpin);
     AS3935WriteRegister(DISP_LCO,0);
@@ -348,10 +342,10 @@ int16_t AS3935CalcDistance() {
     case 0x3F:  return -1;  // Out of Range
     case 0x01:  return 1;   // Storm is Overhead
     case 0x00:  return 0;   // Distance cannot be determined
-    default:    
-      if (40 < dist){ 
+    default:
+      if (40 < dist){
         return 40;// limited because higher is not accurate
-      }  
+      }
     return dist;
   }
 }
@@ -369,7 +363,7 @@ uint8_t AS3935GetTuneCaps() {
 }
 
 void AS3935SetTuneCaps(uint8_t tune) {
-  AS3935WriteRegister(TUNE_CAPS, tune); 
+  AS3935WriteRegister(TUNE_CAPS, tune);
   delay(2);
   AS3935CalibrateRCO();
 }
@@ -379,7 +373,7 @@ uint8_t AS3935GetDisturber() {
 }
 
 uint8_t AS3935SetDisturber(uint8_t stat) {
-  AS3935WriteRegister(DISTURBER, stat); 
+  AS3935WriteRegister(DISTURBER, stat);
 }
 
 uint8_t AS3935GetMinLights() {
@@ -408,8 +402,8 @@ uint8_t AS3935SetGain(uint8_t room) {
   AS3935WriteRegister(AFE_GB, room);
 }
 
-uint8_t AS3935GetGainInt() { 
-  if (AS3935ReadRegister(AFE_GB) == OUTDOORS)  
+uint8_t AS3935GetGainInt() {
+  if (AS3935ReadRegister(AFE_GB) == OUTDOORS)
   return 1;
 return 0;
 }
@@ -479,7 +473,7 @@ bool AS3935RaiseNoiseFloor() {
 
 /********************************************************************************************/
 // init functions
-bool AS3935SetDefault() { 
+bool AS3935SetDefault() {
   I2cWrite8(AS3935_ADDR, 0x3C, 0x96); // Set default
   delay(2);
   Settings.as3935_sensor_cfg[0] = I2cRead8(AS3935_ADDR, 0x00);
@@ -508,7 +502,7 @@ void AS3935InitSettings() {
 
 void AS3935Setup(void) {
   if (Settings.as3935_sensor_cfg[0] == 0x00) {
-    AS3935SetDefault(); 
+    AS3935SetDefault();
   } else {
     AS3935InitSettings();
   }
@@ -518,12 +512,12 @@ void AS3935Setup(void) {
 bool AS3935init() {
   uint8_t ret = I2cRead8(AS3935_ADDR, 0x00);
   if(INDOORS == ret || OUTDOORS == ret) //  0x24
-    return true;   
+    return true;
   return false;
 }
 
 void AS3935Detect(void) {
-  if (I2cActive(AS3935_ADDR)) return; 
+  if (I2cActive(AS3935_ADDR)) return;
   if (AS3935init())
   {
     I2cSetActiveFound(AS3935_ADDR, D_NAME_AS3935);
@@ -583,7 +577,7 @@ void AS3935EverySecond() {
   }
 
   if (as3935_sensor.http_count_start) as3935_sensor.http_count++;
-  // clear Http 
+  // clear Http
   if (as3935_sensor.http_count == as3935_sensor.http_timer) {
     as3935_sensor.http_count = 0;
     as3935_sensor.http_count_start = 0;
@@ -693,7 +687,7 @@ bool AS3935Cmd(void) {
           }
         }
         Response_P(S_JSON_AS3935_COMMAND_NVALUE, command, Settings.as3935_parameter.nf_autotune_time);
-        break;        
+        break;
       case CMND_AS3935_SET_DISTURBER:
         if (XdrvMailbox.data_len) {
           if (2 > XdrvMailbox.payload) {
@@ -773,56 +767,60 @@ bool AS3935Cmd(void) {
   }
 }
 
-void AH3935Show(bool json) {
-    if (json) {
-      ResponseAppend_P(JSON_SNS_AS3935_EVENTS, D_SENSOR_AS3935, as3935_sensor.mqtt_irq, as3935_sensor.distance, as3935_sensor.intensity );
+void AH3935Show(bool json)
+{
+  if (json) {
+    ResponseAppend_P(JSON_SNS_AS3935_EVENTS, D_SENSOR_AS3935, as3935_sensor.mqtt_irq, as3935_sensor.distance, as3935_sensor.intensity );
 
 #ifdef USE_WEBSERVER
-    } else {            
-      uint8_t gain = AS3935GetGainInt();
-      uint8_t disturber = AS3935GetDisturber();
-      uint16_t vrms;
-      uint8_t stage;  
-      AS3935CalcVrmsLevel(vrms, stage);
+  } else {
+    uint8_t gain = AS3935GetGainInt();
+    uint8_t disturber = AS3935GetDisturber();
+    uint16_t vrms;
+    uint8_t stage;
+    AS3935CalcVrmsLevel(vrms, stage);
 
-      WSContentSend_PD(HTTP_SNS_AS3935_TABLE_1[as3935_sensor.http_irq], D_NAME_AS3935, as3935_sensor.http_distance); 
-      WSContentSend_PD(HTTP_SNS_AS3935_DISTANZ, as3935_sensor.http_distance);
-      WSContentSend_PD(HTTP_SNS_AS3935_ENERGY, as3935_sensor.http_intensity);
-      WSContentSend_PD(HTTP_SNS_AS3935_GAIN[gain], D_NAME_AS3935);
-      WSContentSend_PD(HTTP_SNS_AS3935_DISTURBER[disturber], D_NAME_AS3935);    
-      WSContentSend_PD(HTTP_SNS_AS3935_VRMS, vrms, stage);
+    WSContentSend_PD(HTTP_SNS_AS3935_TABLE_1[as3935_sensor.http_irq], D_NAME_AS3935, as3935_sensor.http_distance);
+    WSContentSend_PD(HTTP_SNS_AS3935_DISTANZ, as3935_sensor.http_distance);
+    WSContentSend_PD(HTTP_SNS_AS3935_ENERGY, as3935_sensor.http_intensity);
+    WSContentSend_PD(HTTP_SNS_AS3935_GAIN[gain], D_NAME_AS3935);
+    WSContentSend_PD(HTTP_SNS_AS3935_DISTURBER[disturber], D_NAME_AS3935);
+    WSContentSend_PD(HTTP_SNS_AS3935_VRMS, vrms, stage);
 #endif // USE_WEBSERVER
-    }
+  }
 }
 
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
-bool Xsns67(uint8_t function) {
+bool Xsns67(uint8_t function)
+{
   if (!I2cEnabled(XI2C_48)) { return false; }
+
   bool result = false;
 
   if (FUNC_INIT == function) {
     AS3935Detect();
-  } else if (as3935_active){    
+  }
+  else if (as3935_active) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         AS3935EverySecond();
         break;
       case FUNC_COMMAND:
-       result = AS3935Cmd();
+        result = AS3935Cmd();
         break;
       case FUNC_JSON_APPEND:
         AH3935Show(1);
         break;
-    #ifdef USE_WEBSERVER
+#ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
         AH3935Show(0);
         break;
-    #endif  // USE_WEBSERVER
+#endif  // USE_WEBSERVER
+    }
   }
-}
   return result;
 }
 

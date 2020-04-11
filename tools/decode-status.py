@@ -201,7 +201,7 @@ a_features = [[
     "USE_AHT1x","USE_WEMOS_MOTOR_V1","USE_DEVICE_GROUPS","USE_PWM_DIMMER"
     ],[
     "USE_KEELOQ","USE_HRXL","USE_SONOFF_D1","USE_HDC1080",
-    "USE_IAQ","USE_DISPLAY_SEVENSEG","","",
+    "USE_IAQ","USE_DISPLAY_SEVENSEG","USE_AS3935","USE_PING",
     "","","","",
     "","","","",
     "","","","",
@@ -241,7 +241,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20200314 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20200411 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
