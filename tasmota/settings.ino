@@ -591,9 +591,9 @@ void EspErase(uint32_t start_sector, uint32_t end_sector)
   }
 }
 
+#ifdef ESP8266
 void SettingsErase(uint8_t type)
 {
-#ifdef ESP8266
   /*
     For Arduino core and SDK:
     Erase only works from flash start address to SDK recognized flash end address (flashchip->chip_size = ESP.getFlashChipSize).
@@ -645,8 +645,8 @@ void SettingsErase(uint8_t type)
 //  EspErase(_sectorStart, _sectorEnd);                                     // Arduino core and SDK - erases flash as seen by SDK
   EsptoolErase(_sectorStart, _sectorEnd);                                 // Esptool - erases flash completely
 #endif  // FIRMWARE_MINIMAL
-#endif  // ESP8266
 }
+#endif  // ESP8266
 
 void SettingsSdkErase(void)
 {
