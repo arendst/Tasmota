@@ -1332,6 +1332,7 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x08020003) {
       SettingsUpdateText(SET_TEMPLATE_NAME, Settings.user_template_name);
+      Settings.zb_channel = 0;      // set channel to zero to force reinit of zigbee parameters
     }
 #endif  // ESP8266
 

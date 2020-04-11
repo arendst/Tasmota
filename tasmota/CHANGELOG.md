@@ -25,6 +25,7 @@
 - Add support for an iAQ sensor (#8107)
 - Add support for Seven Segment display using HT16K33 (#8116)
 - Add support for AS3935 Lightning Sensor by device111 (#8130)
+- Add Zigbee command ``ZbConfig`` and configuration in Settings
 
 ### 8.2.0.2 20200328
 
