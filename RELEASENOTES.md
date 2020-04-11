@@ -75,12 +75,14 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
 - Add command ``DevGroupName`` to specify up to four Device Group Names (#8087)
 - Add command ``DevGroupSend`` to send an update to a Device Group (#8093)
+- Add command ``Ping`` (#7176)
 - Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
 - Add support for 64x48 SSD1306 OLED (#6740)
 - Add support for Seven Segment display using HT16K33 (#8116)
 - Add support for up to four MQTT GroupTopics (#8014)
 - Add support for longer template names
 - Add support for an iAQ sensor (#8107)
+- Add support for AS3935 Lightning Sensor by device111 (#8130)
 - Add console command history (#7483, #8015)
 - Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
 - Add more accuracy to GPS NTP server (#8088)

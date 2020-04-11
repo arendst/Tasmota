@@ -63,6 +63,7 @@
 #define D_JSON_ENERGY "Energy"
 #define D_JSON_ERASE "Erase"
 #define D_JSON_ERROR "Error"
+#define D_JSON_EVENT "Event"
 #define D_JSON_EVERY "Every"
 #define D_JSON_EXPORT_ACTIVE "ExportActive"
 #define D_JSON_EXPORT_REACTIVE "ExportReactive"
