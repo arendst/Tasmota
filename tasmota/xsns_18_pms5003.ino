@@ -161,7 +161,7 @@ bool PmsReadData(void)
 }
 
 /*********************************************************************************************\
- * Command Sensor18  (currently using mcp230xx_int_timer variable - should change)
+ * Command Sensor18
  *
  * Warmup time for sensor is 30 seconds, therfore setting interval time to less than 60
  * seconds doesn't really make sense.  
@@ -176,14 +176,14 @@ bool PmsCommandSensor(void)
   {
     if (XdrvMailbox.payload < MIN_INTERVAL_PERIOD) {
       // Set Active Mode if interval is less than 60 seconds
-      Settings.mcp230xx_int_timer = 0;
+      Settings.pms_wake_interval = 0;
       wake_mode = 1;
       pms_ready = 1;
       PmsSendCmd(CMD_MODE_ACTIVE);
       PmsSendCmd(CMD_WAKEUP);
     } else {
       // Set Passive Mode and schedule read once per interval time
-      Settings.mcp230xx_int_timer = XdrvMailbox.payload;
+      Settings.pms_wake_interval = XdrvMailbox.payload;
       PmsSendCmd(CMD_MODE_PASSIVE);
       PmsSendCmd(CMD_SLEEP);
       wake_mode = 0;
@@ -194,10 +194,10 @@ bool PmsCommandSensor(void)
   if (pin[GPIO_PMS5003_TX] >= 99)
   {
     // setting interval not supported if TX pin not connected
-    Settings.mcp230xx_int_timer = 0;
+    Settings.pms_wake_interval = 0;
   }
 
-  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_18, Settings.mcp230xx_int_timer);
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_18, Settings.pms_wake_interval);
 
   return true;
 }
@@ -206,17 +206,17 @@ bool PmsCommandSensor(void)
 
 void PmsSecond(void)                 // Every second
 {
-  if (Settings.mcp230xx_int_timer >= MIN_INTERVAL_PERIOD)
+  if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD)
   {
     // Passive Mode
     pms_time++;
-    if ((Settings.mcp230xx_int_timer - pms_time <= WARMUP_PERIOD) && !wake_mode)
+    if ((Settings.pms_wake_interval - pms_time <= WARMUP_PERIOD) && !wake_mode)
     {
       // wakeup sensor WARMUP_PERIOD before read interval
       wake_mode = 1;
       PmsSendCmd(CMD_WAKEUP);
     }
-    if (pms_time >= Settings.mcp230xx_int_timer)
+    if (pms_time >= Settings.pms_wake_interval)
     {
       // sensor is awake and warmed up, set up for reading
       PmsSendCmd(CMD_READ_DATA);
@@ -230,7 +230,7 @@ void PmsSecond(void)                 // Every second
     if (PmsReadData())
     {
       pms_valid = 10;
-      if (Settings.mcp230xx_int_timer >= MIN_INTERVAL_PERIOD)
+      if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD)
       {
         PmsSendCmd(CMD_SLEEP);
         wake_mode = 0;
@@ -242,7 +242,7 @@ void PmsSecond(void)                 // Every second
       if (pms_valid)
       {
         pms_valid--;
-        if (Settings.mcp230xx_int_timer >= MIN_INTERVAL_PERIOD)
+        if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD)
         {
           PmsSendCmd(CMD_READ_DATA);
           pms_ready = 1;
