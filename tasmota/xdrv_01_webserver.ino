@@ -1266,7 +1266,7 @@ bool HandleRootStatusRefresh(void)
 #ifdef USE_SHUTTER
       int32_t ShutterWebButton;
       if (ShutterWebButton = IsShutterWebButton(device)) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("ShutterPosition%d %s"), abs(ShutterWebButton), (ShutterWebButton>0) ? PSTR(D_CMND_SHUTTER_TOGGLEUP) : PSTR(D_CMND_SHUTTER_TOGGLEDOWN));
+        snprintf_P(svalue, sizeof(svalue), PSTR("ShutterPosition%d %s"), abs(ShutterWebButton), (ShutterWebButton>0) ? PSTR(D_CMND_SHUTTER_STOPOPEN) : PSTR(D_CMND_SHUTTER_STOPCLOSE));
         ExecuteWebCommand(svalue, SRC_WEBGUI);
       } else {
 #endif  // USE_SHUTTER
