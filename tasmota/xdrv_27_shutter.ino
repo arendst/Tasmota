@@ -37,16 +37,18 @@ enum ShutterModes { SHT_OFF_OPEN__OFF_CLOSE, SHT_OFF_ON__OPEN_CLOSE, SHT_PULSE_O
 enum ShutterButtonStates { SHT_NOT_PRESSED, SHT_PRESSED_MULTI, SHT_PRESSED_HOLD, SHT_PRESSED_IMMEDIATE, SHT_PRESSED_EXT_HOLD, SHT_PRESSED_MULTI_SIMULTANEOUS, SHT_PRESSED_HOLD_SIMULTANEOUS, SHT_PRESSED_EXT_HOLD_SIMULTANEOUS,};
 
 const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
-  D_CMND_SHUTTER_OPEN "|" D_CMND_SHUTTER_CLOSE "|" D_CMND_SHUTTER_STOP "|" D_CMND_SHUTTER_POSITION  "|"
+  D_CMND_SHUTTER_OPEN "|" D_CMND_SHUTTER_CLOSE "|" D_CMND_SHUTTER_TOGGLE "|" D_CMND_SHUTTER_STOP "|" D_CMND_SHUTTER_POSITION "|"
   D_CMND_SHUTTER_OPENTIME "|" D_CMND_SHUTTER_CLOSETIME "|" D_CMND_SHUTTER_RELAY "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
-  D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS;
+  D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
+  D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPPOSITION;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
-  &CmndShutterOpen, &CmndShutterClose, &CmndShutterStop, &CmndShutterPosition,
+  &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterStop, &CmndShutterPosition,
   &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay,
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
-  &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons};
+  &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
+  &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopPosition};
 
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d}";
   const char JSON_SHUTTER_BUTTON[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Button%d\":%d}";
@@ -677,7 +679,13 @@ void ShutterButtonHandler(void)
               CmndShutterStop();
             } else {
               XdrvMailbox.payload = position = (position-1)<<1;
-              CmndShutterPosition();
+              //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: shutter %d -> %d"), shutter_index+1, position);
+              if (102 == position) {
+                XdrvMailbox.payload = XdrvMailbox.index;
+                CmndShutterToggle();
+              } else {
+                CmndShutterPosition();
+              }
               if (Settings.shutter_button[button_index] & ((0x01<<26)<<pos_press_index)) {
                 // MQTT broadcast to grouptopic
                 char scommand[CMDSZ];
@@ -701,7 +709,6 @@ void ShutterButtonHandler(void)
     ResponseJsonEnd();
     MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
     XdrvRulesProcess();
-
   }
 }
 
@@ -718,7 +725,7 @@ void ShutterSetPosition(uint32_t device, uint32_t position)
 
 void CmndShutterOpen(void)
 {
-  //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Payload close: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.i);
+  //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Payload open: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.index);
   if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
     XdrvMailbox.index = XdrvMailbox.payload;
   }
@@ -727,9 +734,21 @@ void CmndShutterOpen(void)
   CmndShutterPosition();
 }
 
+void CmndShutterStopOpen(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    uint32_t index = XdrvMailbox.index-1;
+    if (Shutter.direction[index]) {
+      CmndShutterStop();
+    } else {
+      CmndShutterOpen();
+    }
+  }
+}
+
 void CmndShutterClose(void)
 {
-  //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Payload open: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.i);
+  //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Payload close: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.index);
   if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
     XdrvMailbox.index = XdrvMailbox.payload;
   }
@@ -737,6 +756,45 @@ void CmndShutterClose(void)
   XdrvMailbox.data_len = 0;
   last_source = SRC_WEBGUI;
   CmndShutterPosition();
+}
+
+void CmndShutterStopClose(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    uint32_t index = XdrvMailbox.index-1;
+    if (Shutter.direction[index]) {
+      CmndShutterStop();
+    } else {
+      CmndShutterClose();
+    }
+  }
+}
+
+void CmndShutterToggle(void)
+{
+  //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Payload toggle: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.index);
+  if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
+    XdrvMailbox.index = XdrvMailbox.payload;
+  }
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    uint32_t index = XdrvMailbox.index-1;
+    XdrvMailbox.payload = (50 < ShutterRealToPercentPosition(Shutter.real_position[index], index)) ? 0 : 100;
+    XdrvMailbox.data_len = 0;
+    last_source = SRC_WEBGUI;
+    CmndShutterPosition();
+  }
+}
+
+void CmndShutterStopToggle(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    uint32_t index = XdrvMailbox.index-1;
+    if (Shutter.direction[index]) {
+      CmndShutterStop();
+    } else {
+      CmndShutterToggle();
+    }
+  }
 }
 
 void CmndShutterStop(void)
@@ -779,15 +837,15 @@ void CmndShutterPosition(void)
       // special handling fo UP,DOWN,TOGGLE,STOP command comming with payload -99
       if ((XdrvMailbox.data_len > 1) && (XdrvMailbox.payload <= 0)) {
         //UpperCase(XdrvMailbox.data, XdrvMailbox.data);
-        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) || ((Shutter.direction[index]==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_TOGGLEUP))) {
+        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) || ((Shutter.direction[index]==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
           CmndShutterOpen();
           return;
         }
-        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_DOWN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE) || ((Shutter.direction[index]==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_TOGGLEDOWN))) {
+        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_DOWN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE) || ((Shutter.direction[index]==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE))) {
           CmndShutterClose();
           return;
         }
-        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP) || ((Shutter.direction[index]) && (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_TOGGLEUP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_TOGGLEDOWN)))) {
+        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP) || ((Shutter.direction[index]) && (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE)))) {
           XdrvMailbox.payload = -99;
           CmndShutterStop();
           return;
@@ -861,6 +919,18 @@ void CmndShutterPosition(void)
   }
 }
 
+void CmndShutterStopPosition(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    uint32_t index = XdrvMailbox.index-1;
+    if (Shutter.direction[index]) {
+      XdrvMailbox.payload = -99;
+      CmndShutterStop();
+    } else {
+      CmndShutterPosition();
+    }
+  }
+}
 void CmndShutterOpenTime(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
@@ -928,10 +998,10 @@ void CmndShutterButton(void)
     // (setting>>28)&(0x01) : mqtt broadcast tripple press
     // (setting>>27)&(0x01) : mqtt broadcast double press
     // (setting>>26)&(0x01) : mqtt broadcast single press
-    // (setting>>20)&(0x3f) : shutter_position hold; 0 disabled, 1..101 == 0..100%
-    // (setting>>14)&(0x3f) : shutter_position tripple press 0 disabled, 1..101 == 0..100%
-    // (setting>> 8)&(0x3f) : shutter_position double press 0 disabled, 1..101 == 0..100%
-    // (setting>> 2)&(0x3f) : shutter_position single press 0 disabled, 1..101 == 0..100%
+    // (setting>>20)&(0x3f) : shutter_position hold; 0 disabled, 1..101 == 0..100%, 102 == toggle
+    // (setting>>14)&(0x3f) : shutter_position tripple press 0 disabled, 1..101 == 0..100%, 102 == toggle
+    // (setting>> 8)&(0x3f) : shutter_position double press 0 disabled, 1..101 == 0..100%, 102 == toggle
+    // (setting>> 2)&(0x3f) : shutter_position single press 0 disabled, 1..101 == 0..100%, 102 == toggle
     // (setting>> 0)&(0x03) : shutter_index
     if (XdrvMailbox.data_len > 0) {
         uint32_t i = 0;
@@ -945,10 +1015,16 @@ void CmndShutterButton(void)
         // Loop through the data string, splitting on ' ' seperators.
         for (char *str = strtok_r(data_copy, " ", &str_ptr); str && i < (1+4+4+1); str = strtok_r(nullptr, " ", &str_ptr), i++) {
           int field;
-          if (str[0] == '-') {
-            field = -1;
-          } else {
-            field = atoi(str);
+          switch (str[0]) {
+            case '-':
+              field = -1;
+              break;
+            case 't':
+              field = 102;
+              break;
+            default:
+             field = atoi(str);
+             break;
           }
           switch (i) {
             case 0:
@@ -971,18 +1047,22 @@ void CmndShutterButton(void)
                 setting |= (((100>>1)+1)<<2) | (((0>>1)+1)<<8) | (((50>>1)+1)<<14);
                 isShortCommand = true;
                 break;
+              } else if (!strcmp_P(str, PSTR("toggle"))) {
+                setting |= (((102>>1)+1)<<2) | (((50>>1)+1)<<8);
+                isShortCommand = true;
+                break;
               }
             case 2:
               if (isShortCommand) {
                 if ((field==1) && (setting & (0x3F<<(2+6*3))))
-                  // if short command up or down then also enable MQTT broadcast
+                  // if short command up or down (hold press position set) then also enable MQTT broadcast
                   setting |= (0x3<<29);
                 done = true;
                 break;
               }
             case 3:
             case 4:
-              if ((field >= -1) && (field<=100))
+              if ((field >= -1) && (field<=102))
                 setting |= (((field>>1)+1)<<(i*6 + (2-6)));
             break;
             case 5:
@@ -1023,8 +1103,12 @@ void CmndShutterButton(void)
 
           for (uint32_t j=0 ; j < 4 ; j++) {
             int8_t pos = (((setting>> (2+6*j))&(0x3f))-1)<<1;
-            if (pos>=0)
-              setting_chr_ptr += snprintf_P(setting_chr_ptr, 5, PSTR(" %d"), pos);
+            if (0 <= pos)
+              if (102 == pos) {
+                setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR(" t"));
+              } else {
+                setting_chr_ptr += snprintf_P(setting_chr_ptr, 5, PSTR(" %d"), pos);
+              }
             else
               setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR(" -"));
           }
