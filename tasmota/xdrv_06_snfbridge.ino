@@ -565,6 +565,7 @@ bool Xdrv06(uint8_t function)
 {
   bool result = false;
 
+#ifdef ESP8266
   if (SONOFF_BRIDGE == my_module_type) {
     switch (function) {
       case FUNC_SERIAL:
@@ -582,6 +583,7 @@ bool Xdrv06(uint8_t function)
         break;
     }
   }
+#endif  // ESP8266
   return result;
 }
 

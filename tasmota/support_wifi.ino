@@ -156,10 +156,10 @@ void WiFiSetSleepMode(void)
 // Sleep explanation: https://github.com/esp8266/Arduino/blob/3f0c601cfe81439ce17e9bd5d28994a7ed144482/libraries/ESP8266WiFi/src/ESP8266WiFiGeneric.cpp#L255
 #if defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
 #else  // Enabled in 2.3.0, 2.4.0 and stage
-  if (sleep && Settings.flag3.sleep_normal) {  // SetOption60 - Enable normal sleep instead of dynamic sleep
-    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);       // Allow light sleep during idle times
+  if (ssleep && Settings.flag3.sleep_normal) {  // SetOption60 - Enable normal sleep instead of dynamic sleep
+    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);        // Allow light sleep during idle times
   } else {
-    WiFi.setSleepMode(WIFI_MODEM_SLEEP);       // Disable sleep (Esp8288/Arduino core and sdk default)
+    WiFi.setSleepMode(WIFI_MODEM_SLEEP);        // Disable sleep (Esp8288/Arduino core and sdk default)
   }
 #endif
   WifiSetOutputPower();
@@ -403,9 +403,9 @@ void WifiCheckIp(void)
       Settings.ip_address[3] = (uint32_t)WiFi.dnsIP();
 
       // Save current AP parameters for quick reconnect
-      Settings.channel = WiFi.channel();
+      Settings.wifi_channel = WiFi.channel();
       uint8_t *bssid = WiFi.BSSID();
-      memcpy((void*) &Settings.bssid, (void*) bssid, sizeof(Settings.bssid));
+      memcpy((void*) &Settings.wifi_bssid, (void*) bssid, sizeof(Settings.wifi_bssid));
     }
     Wifi.status = WL_CONNECTED;
 #ifdef USE_DISCOVERY
@@ -428,7 +428,7 @@ void WifiCheckIp(void)
         break;
       case WL_NO_SSID_AVAIL:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_NOT_REACHED));
-        Settings.channel = 0;  // Disable stored AP
+        Settings.wifi_channel = 0;  // Disable stored AP
         if (WIFI_WAIT == Settings.sta_config) {
           Wifi.retry = Wifi.retry_init;
         } else {
@@ -442,7 +442,7 @@ void WifiCheckIp(void)
         break;
       case WL_CONNECT_FAILED:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_WRONG_PASSWORD));
-        Settings.channel = 0;  // Disable stored AP
+        Settings.wifi_channel = 0;  // Disable stored AP
         if (Wifi.retry > (Wifi.retry_init / 2)) {
           Wifi.retry = Wifi.retry_init / 2;
         }
@@ -453,10 +453,10 @@ void WifiCheckIp(void)
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
         if (!Wifi.retry || ((Wifi.retry_init / 2) == Wifi.retry)) {
           AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
-          Settings.channel = 0;  // Disable stored AP
+          Settings.wifi_channel = 0;  // Disable stored AP
         } else {
           if (!strlen(SettingsText(SET_STASSID1)) && !strlen(SettingsText(SET_STASSID2))) {
-            Settings.channel = 0;  // Disable stored AP
+            Settings.wifi_channel = 0;  // Disable stored AP
             wifi_config_tool = WIFI_MANAGER;  // Skip empty SSIDs and start Wifi config tool
             Wifi.retry = 0;
           } else {
@@ -471,7 +471,7 @@ void WifiCheckIp(void)
         }
       } else {
         if (Wifi.retry_init == Wifi.retry) {
-          WifiBegin(3, Settings.channel);  // Select default SSID
+          WifiBegin(3, Settings.wifi_channel);  // Select default SSID
         }
         if ((Settings.sta_config != WIFI_WAIT) && ((Wifi.retry_init / 2) == Wifi.retry)) {
           WifiBegin(2, 0);        // Select alternate SSID
@@ -659,7 +659,7 @@ void WifiConnect(void)
   Wifi.retry = Wifi.retry_init;
   Wifi.counter = 1;
 
-  memcpy((void*) &Wifi.bssid, (void*) Settings.bssid, sizeof(Wifi.bssid));
+  memcpy((void*) &Wifi.bssid, (void*) Settings.wifi_bssid, sizeof(Wifi.bssid));
 
 #ifdef WIFI_RF_PRE_INIT
   if (rf_pre_init_flag) {
@@ -709,9 +709,10 @@ void EspRestart(void)
   WifiShutdown(true);
   CrashDumpClear();           // Clear the stack dump in RTC
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
-  ESP.reset();
+  ESP_reset();
 }
 
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
 //
 // Gratuitous ARP, backported from https://github.com/esp8266/Arduino/pull/6889
 //
@@ -759,3 +760,4 @@ void wifiKeepAlive(void) {
     SetNextTimeInterval(wifiTimer, wifiTimerSec * 1000);
   }
 }
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0

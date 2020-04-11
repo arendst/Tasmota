@@ -211,6 +211,30 @@ typedef union {
   };
 } SensorCfg1;
 
+typedef union {
+  uint8_t data;
+  struct {           
+  uint8_t nf_autotune : 1;            // Autotune the NF Noise Level
+  uint8_t dist_autotune : 1;          // Autotune Disturber on/off  
+  uint8_t nf_autotune_both : 1;        // Autotune over both Areas: INDOORS/OUDOORS
+  uint8_t mqtt_only_Light_Event : 1;  // mqtt only if lightning Irq
+  uint8_t spare4 : 1;
+  uint8_t spare5 : 1;
+  uint8_t spare6 : 1;
+  uint8_t spare7 : 1;
+  };
+} As3935IntCfg;
+
+typedef union {
+  uint16_t data;
+  struct {           
+  uint16_t nf_autotune_time : 4;            // NF Noise Autotune Time
+  uint16_t dist_autotune_time : 4;          // Disturber Autotune Time  
+  uint16_t nf_autotune_min : 4;             // Min Stages
+  uint16_t spare3 : 4;
+  };
+} As3935Param;
+
 typedef struct {
   uint32_t usage1_kWhtotal;
   uint32_t usage2_kWhtotal;
@@ -221,7 +245,7 @@ typedef struct {
 } EnergyUsage;
 
 
-typedef struct {
+typedef struct PACKED {
   uint8_t fnid = 0;
   uint8_t dpid = 0;
 } TuyaFnidDpidMap;
@@ -229,7 +253,7 @@ typedef struct {
 const uint32_t settings_text_size = 699;   // Settings.text_pool[size] = Settings.display_model (2D2) - Settings.text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
-struct SYSCFG {
+struct PACKED SYSCFG {
   uint16_t      cfg_holder;                // 000 v6 header
   uint16_t      cfg_size;                  // 002
   unsigned long save_flag;                 // 004
@@ -240,7 +264,7 @@ struct SYSCFG {
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
 
-  // Start of char array storing all parameter strings
+  // Start of char array storing all parameter strings ********
 
   char          text_pool[101];            // 017 - was ota_url[101] - size is settings_text_size
 
@@ -276,7 +300,7 @@ struct SYSCFG {
   char          ex_button_topic[33];       // 290
   char          ex_mqtt_grptopic[33];      // 2B1
 
-  // End of single char array of 698 chars max
+  // End of single char array of 698 chars max ****************
 
   uint8_t       display_model;             // 2D2
   uint8_t       display_mode;              // 2D3
@@ -470,10 +494,19 @@ struct SYSCFG {
   uint8_t       bri_preset_low;            // F06
   uint8_t       bri_preset_high;           // F07
   int8_t        hum_comp;                  // F08
-  uint8_t       channel;                   // F09
-  uint8_t       bssid[6];                  // F0A
+  uint8_t       wifi_channel;              // F09
+  uint8_t       wifi_bssid[6];             // F0A
+  uint8_t       as3935_sensor_cfg[5];      // F10
+  As3935IntCfg  as3935_functions;          // F15
+  As3935Param   as3935_parameter;          // F16
+  uint64_t      zb_ext_panid;              // F18
+  uint64_t      zb_precfgkey_l;            // F20
+  uint64_t      zb_precfgkey_h;            // F28
+  uint16_t      zb_pan_id;                 // F30
+  uint8_t       zb_channel;                // F32
+  uint8_t       zb_free_byte;              // F33
 
-  uint8_t       free_f10[168];             // F10
+  uint8_t       free_f18[132];             // F34
 
   uint16_t      pulse_counter_debounce_low;  // FB8
   uint16_t      pulse_counter_debounce_high; // FBA

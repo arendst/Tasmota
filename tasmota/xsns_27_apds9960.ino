@@ -39,18 +39,18 @@
 #define XSNS_27             27
 #define XI2C_21             21  // See I2CDEVICES.md
 
-#if defined(USE_SHT) || defined(USE_VEML6070) || defined(USE_TSL2561)
-  #warning **** Turned off conflicting drivers SHT and VEML6070 ****
-  #ifdef USE_SHT
-  #undef USE_SHT          // SHT-Driver blocks gesture sensor
-  #endif
-  #ifdef USE_VEML6070
-  #undef USE_VEML6070     // address conflict on the I2C-bus
-  #endif
-  #ifdef USE_TSL2561
-  #undef USE_TSL2561     // possible address conflict on the I2C-bus
-  #endif
-#endif
+// #if defined(USE_SHT) || defined(USE_VEML6070) || defined(USE_TSL2561)
+//   #warning **** Turned off conflicting drivers SHT and VEML6070 ****
+//   #ifdef USE_SHT
+//   #undef USE_SHT          // SHT-Driver blocks gesture sensor
+//   #endif
+//   #ifdef USE_VEML6070
+//   #undef USE_VEML6070     // address conflict on the I2C-bus
+//   #endif
+//   #ifdef USE_TSL2561
+//   #undef USE_TSL2561     // possible address conflict on the I2C-bus
+//   #endif
+// #endif
 
 #define APDS9960_I2C_ADDR         0x39
 

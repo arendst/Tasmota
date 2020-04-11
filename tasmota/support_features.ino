@@ -542,11 +542,18 @@ void GetFeatures(void)
 #ifdef USE_HDC1080
   feature6 |= 0x00000008;  // xsns_65_hdc1080.ino
 #endif
-
-//  feature6 |= 0x00000010;
-//  feature6 |= 0x00000020;
-//  feature6 |= 0x00000040;
-//  feature6 |= 0x00000080;
+#ifdef USE_IAQ
+  feature6 |= 0x00000010;  // xsns_66_iAQ.ino
+#endif
+#ifdef USE_DISPLAY_SEVENSEG
+  feature6 |= 0x00000020;  // xdsp_11_sevenseg.ino
+#endif
+#ifdef USE_AS3935
+  feature6 |= 0x00000040;  // xsns_67_as3935.ino
+#endif
+#ifdef USE_PING
+  feature6 |= 0x00000080;  // xdrv_38_ping.ino
+#endif
 
 //  feature6 |= 0x00000100;
 //  feature6 |= 0x00000200;

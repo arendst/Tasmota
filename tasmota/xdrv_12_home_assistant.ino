@@ -213,7 +213,11 @@ void HAssAnnounceRelayLight(void)
       TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId());
 
 #ifdef USE_LIGHT
-      if (is_light || PWM_DIMMER == my_module_type)
+      if (is_light
+#ifdef ESP8266
+      || PWM_DIMMER == my_module_type
+#endif
+      )
       {
         char *brightness_command_topic = stemp1;
 
@@ -423,10 +427,13 @@ void HAssAnnounceButtons(void)
     uint8_t toggle = 1;
     uint8_t hold = 0;
 
+#ifdef ESP8266
     if (!button_index && ((SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)))
     {
       button_present = 1;
-    } else {
+    } else
+#endif
+    {
       if (pin[GPIO_KEY1 + button_index] < 99) {
         button_present = 1;
       }
@@ -481,8 +488,8 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
   char subname[20];
 
   mqtt_data[0] = '\0'; // Clear retained message
-  
-  // Clear or Set topic  
+
+  // Clear or Set topic
   NoAlNumToUnderscore(subname, MultiSubName); //Replace all non alphaumeric characters to '_' to avoid topic name issues
   snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%s"), ESP.getChipId(), sensorname, subname);
   snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);
@@ -517,7 +524,7 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
         case 3:
           snprintf_P(param1, sizeof(param1), PSTR("%s"), PressureUnit().c_str());
           break;
-        // case 4:   // Speed. Default to km/h if not set to have a graph representation under HAss   
+        // case 4:   // Speed. Default to km/h if not set to have a graph representation under HAss
         // case 5:
         // case 6:
         // case 7:
@@ -596,8 +603,8 @@ void HAssAnnounceSensors(void)
             for (auto subsensor : subsensors) {
               snprintf_P(NewSensorName, sizeof(NewSensorName), PSTR("%s %s"), NestedName, subsensor.key);
               HAssAnnounceSensor(sensorname, NestedName, NewSensorName, 0, 0, 1, subsensor.key);
-            }              
-          } else if (subsensor.value.is<JsonArray&>()) {           
+            }
+          } else if (subsensor.value.is<JsonArray&>()) {
             // If there is more than a value on sensor data, 'n' entitites will be created
             JsonArray& subsensors = subsensor.value.as<JsonArray&>();
             uint8_t subqty = subsensors.size();

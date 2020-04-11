@@ -556,8 +556,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
 
   if (msg.data_len == 1) {
     // COMMAND
-    tempchar[0] = msg.data[0];
-    tempchar[1] = '\0';
+    sprintf(tempchar,"%d",msg.data[0]);
   }  else  {
     // VALUE
     float tempvar = knx.data_to_2byte_float(msg.data);

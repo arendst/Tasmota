@@ -119,6 +119,7 @@ void ButtonHandler(void)
     uint8_t button = NOT_PRESSED;
     uint8_t button_present = 0;
 
+#ifdef ESP8266
     if (!button_index && ((SONOFF_DUAL == my_module_type) || (CH4 == my_module_type))) {
       button_present = 1;
       if (Button.dual_code) {
@@ -131,7 +132,9 @@ void ButtonHandler(void)
         Button.dual_code = 0;
       }
     }
-    else if (pin[GPIO_KEY1 +button_index] < 99) {
+    else
+#endif  // ESP8266
+    if (pin[GPIO_KEY1 +button_index] < 99) {
       button_present = 1;
       button = (digitalRead(pin[GPIO_KEY1 +button_index]) != bitRead(Button.inverted_mask, button_index));
     }
@@ -153,6 +156,7 @@ void ButtonHandler(void)
       if (XdrvCall(FUNC_BUTTON_PRESSED)) {
         // Serviced
       }
+#ifdef ESP8266
       else if (SONOFF_4CHPRO == my_module_type) {
         if (Button.hold_timer[button_index]) { Button.hold_timer[button_index]--; }
 
@@ -172,6 +176,7 @@ void ButtonHandler(void)
           }
         }
       }
+#endif  // ESP8266
       else {
         if ((PRESSED == button) && (NOT_PRESSED == Button.last_state[button_index])) {
           if (Settings.flag.button_single) {                   // SetOption13 (0) - Allow only single button press for immediate action
@@ -227,9 +232,12 @@ void ButtonHandler(void)
             if (!restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0) && (Button.press_counter[button_index] < MAX_BUTTON_COMMANDS +3)) {
               bool single_press = false;
               if (Button.press_counter[button_index] < 3) {    // Single or Double press
+#ifdef ESP8266
                 if ((SONOFF_DUAL_R2 == my_module_type) || (SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)) {
                   single_press = true;
-                } else {
+                } else
+#endif  // ESP8266
+                {
                   single_press = (Settings.flag.button_swap +1 == Button.press_counter[button_index]);  // SetOption11 (0)
                   if ((1 == Button.present) && (2 == devices_present)) {  // Single Button with two devices only
                     if (Settings.flag.button_swap) {           // SetOption11 (0)

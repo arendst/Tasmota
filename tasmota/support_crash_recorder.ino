@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef ESP8266
+
 const uint32_t crash_magic = 0x53415400;   // Stack trace magic number (TASx)
 const uint32_t crash_rtc_offset = 32;      // Offset in RTC memory skipping OTA used block
 const uint32_t crash_dump_max_len = 31;    // Dump only 31 call addresses to satisfy max JSON length of about 600 characters
@@ -109,3 +111,5 @@ void CrashDump(void)
 
   ResponseJsonEnd();
 }
+
+#endif  // ESP8266

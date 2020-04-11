@@ -24,6 +24,8 @@ SOFTWARE.
 #include <twi.h>
 #include <FrogmoreScd30.h>
 
+#ifdef ESP8266
+
 #define COMMAND_SCD30_CONTINUOUS_MEASUREMENT      0x0010
 #define COMMAND_SCD30_MEASUREMENT_INTERVAL        0x4600
 #define COMMAND_SCD30_GET_DATA_READY              0x0202
@@ -253,7 +255,7 @@ int FrogmoreScd30::get16BitRegCheckCRC(void* pInput, uint16_t *pData)
 }
 
 // gets 32 bits, (2) 16-bit chunks, and validates the CRCs
-// 
+//
 int FrogmoreScd30::get32BitRegCheckCRC(void *pInput, float *pData)
 {
     uint16_t tempU16High;
@@ -458,7 +460,7 @@ int FrogmoreScd30::setTemperatureOffset(float offset_degC)
     {
         return (ERROR_SCD30_INVALID_VALUE);
     }
-    
+
 }
 
 int FrogmoreScd30::setTemperatureOffset(uint16_t offset_centiDegC)
@@ -568,7 +570,7 @@ int FrogmoreScd30::readMeasurement(
         return (error);
     }
 
-    error = get32BitRegCheckCRC(&bytes[12], &tempHumidity);  
+    error = get32BitRegCheckCRC(&bytes[12], &tempHumidity);
     if (error)
     {
 #ifdef SCD30_DEBUG
@@ -651,3 +653,4 @@ int FrogmoreScd30::stopMeasuring(void)
     return (sendCommand(COMMAND_SCD30_STOP_MEASUREMENT));
 }
 
+#endif  // ESP8266

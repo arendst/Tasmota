@@ -63,6 +63,7 @@
 #define D_JSON_ENERGY "Energy"
 #define D_JSON_ERASE "Erase"
 #define D_JSON_ERROR "Error"
+#define D_JSON_EVENT "Event"
 #define D_JSON_EVERY "Every"
 #define D_JSON_EXPORT_ACTIVE "ExportActive"
 #define D_JSON_EXPORT_REACTIVE "ExportReactive"
@@ -535,10 +536,13 @@
 #define D_PRFX_SHUTTER "Shutter"
 #define D_CMND_SHUTTER_OPEN "Open"
 #define D_CMND_SHUTTER_CLOSE "Close"
+#define D_CMND_SHUTTER_TOGGLE "Toggle"
 #define D_CMND_SHUTTER_UP "Up"
 #define D_CMND_SHUTTER_DOWN "Down"
-#define D_CMND_SHUTTER_TOGGLEUP "ToggleUp"
-#define D_CMND_SHUTTER_TOGGLEDOWN "ToggleDown"
+#define D_CMND_SHUTTER_STOPOPEN "StopOpen"
+#define D_CMND_SHUTTER_STOPCLOSE "StopClose"
+#define D_CMND_SHUTTER_STOPTOGGLE "StopToggle"
+#define D_CMND_SHUTTER_STOPPOSITION "StopPosition"
 #define D_CMND_SHUTTER_STOP "Stop"
 #define D_CMND_SHUTTER_POSITION "Position"
 #define D_CMND_SHUTTER_OPENTIME "OpenDuration"
@@ -562,6 +566,10 @@
 #ifdef USE_PWM_DIMMER
 #define D_CMND_BRI_PRESET "BriPreset"
 #endif
+
+// Commands xdrv_38_ping.ino
+#define D_CMND_PING "Ping"
+#define D_JSON_PING "Ping"
 
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
