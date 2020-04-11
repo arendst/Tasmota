@@ -36,6 +36,10 @@
 #define WARMUP_PERIOD 30 // Turn on PMSX003 XX-seconds before read in passive mode
 #endif
 
+#ifndef MIN_INTERVAL_PERIOD
+#define MIN_INTERVAL_PERIOD 60    // minimum interval period in seconds required for passive mode
+#endif
+
 TasmotaSerial *PmsSerial;
 
 uint8_t pms_type = 1;
@@ -157,40 +161,43 @@ bool PmsReadData(void)
 }
 
 /*********************************************************************************************\
- * Command Sensor15
+ * Command Sensor18  (currently using mcp230xx_int_timer variable - should change)
  *
- * 0    - Active Mode
- * 1 .. 255 - Passive Mode (read sensor every x minutes)
+ * Warmup time for sensor is 30 seconds, therfore setting interval time to less than 60
+ * seconds doesn't really make sense.  
+ * 
+ * 0 - 59   -   Active Mode (continuous sensor readings)
+ * 60 .. 65535 -  Passive Mode (read sensor every x seconds)
 \*********************************************************************************************/
 
 bool PmsCommandSensor(void)
 {
-  if (XdrvMailbox.payload == 0) 
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 65536))
   {
-    // Set Active Mode
-    Settings.novasds_startingoffset = 0;
-    wake_mode = 1;
-    pms_ready = 1;
-    PmsSendCmd(CMD_MODE_ACTIVE);
-    PmsSendCmd(CMD_WAKEUP);
-  }
-  else if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 256)) 
-  {
-    // Set Passive Mode
-    Settings.novasds_startingoffset = XdrvMailbox.payload;
-    PmsSendCmd(CMD_MODE_PASSIVE);
-    PmsSendCmd(CMD_SLEEP);
-    wake_mode = 0;
-    pms_ready = 0;
+    if (XdrvMailbox.payload < MIN_INTERVAL_PERIOD) {
+      // Set Active Mode if interval is less than 60 seconds
+      Settings.mcp230xx_int_timer = 0;
+      wake_mode = 1;
+      pms_ready = 1;
+      PmsSendCmd(CMD_MODE_ACTIVE);
+      PmsSendCmd(CMD_WAKEUP);
+    } else {
+      // Set Passive Mode and schedule read once per interval time
+      Settings.mcp230xx_int_timer = XdrvMailbox.payload;
+      PmsSendCmd(CMD_MODE_PASSIVE);
+      PmsSendCmd(CMD_SLEEP);
+      wake_mode = 0;
+      pms_ready = 0;
+    }
   }
   
   if (pin[GPIO_PMS5003_TX] >= 99)
   {
     // setting interval not supported if TX pin not connected
-    Settings.novasds_startingoffset = 0;
+    Settings.mcp230xx_int_timer = 0;
   }
 
-  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_18, Settings.novasds_startingoffset);
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_18, Settings.mcp230xx_int_timer);
 
   return true;
 }
@@ -199,17 +206,19 @@ bool PmsCommandSensor(void)
 
 void PmsSecond(void)                 // Every second
 {
-  if (Settings.novasds_startingoffset > 0)
+  if (Settings.mcp230xx_int_timer >= MIN_INTERVAL_PERIOD)
   {
     // Passive Mode
     pms_time++;
-    if ((((uint16_t)Settings.novasds_startingoffset) * 60 - pms_time <= WARMUP_PERIOD) && !wake_mode)
+    if ((Settings.mcp230xx_int_timer - pms_time <= WARMUP_PERIOD) && !wake_mode)
     {
+      // wakeup sensor WARMUP_PERIOD before read interval
       wake_mode = 1;
       PmsSendCmd(CMD_WAKEUP);
     }
-    if (pms_time >= ((uint16_t)Settings.novasds_startingoffset) * 60)
+    if (pms_time >= Settings.mcp230xx_int_timer)
     {
+      // sensor is awake and warmed up, set up for reading
       PmsSendCmd(CMD_READ_DATA);
       pms_ready = 1;
       pms_time = 0;
@@ -221,7 +230,7 @@ void PmsSecond(void)                 // Every second
     if (PmsReadData())
     {
       pms_valid = 10;
-      if (Settings.novasds_startingoffset > 0)
+      if (Settings.mcp230xx_int_timer >= MIN_INTERVAL_PERIOD)
       {
         PmsSendCmd(CMD_SLEEP);
         wake_mode = 0;
@@ -233,7 +242,7 @@ void PmsSecond(void)                 // Every second
       if (pms_valid)
       {
         pms_valid--;
-        if (Settings.novasds_startingoffset > 0)
+        if (Settings.mcp230xx_int_timer >= MIN_INTERVAL_PERIOD)
         {
           PmsSendCmd(CMD_READ_DATA);
           pms_ready = 1;
