@@ -1778,7 +1778,7 @@ void AddLogSerial(uint32_t loglevel)
   AddLogBuffer(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
 }
 
-void AddLogMissed(char *sensor, uint32_t misses)
+void AddLogMissed(const char *sensor, uint32_t misses)
 {
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
 }

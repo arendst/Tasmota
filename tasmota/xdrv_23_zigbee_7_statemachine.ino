@@ -148,6 +148,9 @@ SBuffer *zigbee_buffer = nullptr;
 #define Z_B7(a)            (uint8_t)( ((a) >> 56) & 0xFF )
 // Macro to define message to send and receive
 #define ZBM(n, x...) const uint8_t n[] PROGMEM = { x };
+// For commands that need to be changed with configuration, ZBR stores in RAM, and ZBW write new values
+#define ZBR(n, x...)       uint8_t n[]         = { x };   // same but in RAM to be modified
+#define ZBW(n, x...) { const uint8_t n##t[] = { x }; memcpy(n, n##t, sizeof(n)); }   // re-write content in RAM
 
 #define USE_ZIGBEE_CHANNEL_MASK (1 << (USE_ZIGBEE_CHANNEL))
 
@@ -165,24 +168,24 @@ ZBM(ZBR_ZNPHC, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS, 0x01 /* len */, 0x55
 // If not set, the response is 61-08-02-00 = Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_INVALIDPARAMETER, 0x00 /* len */
 
 ZBM(ZBS_PAN, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_PANID )				// 260483
-ZBM(ZBR_PAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PANID, 0x02 /* len */,
+ZBR(ZBR_PAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PANID, 0x02 /* len */,
               Z_B0(USE_ZIGBEE_PANID), Z_B1(USE_ZIGBEE_PANID) )				// 6604008302xxxx
 
 ZBM(ZBS_EXTPAN, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_EXTENDED_PAN_ID )				// 26042D
-ZBM(ZBR_EXTPAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_EXTENDED_PAN_ID,
+ZBR(ZBR_EXTPAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_EXTENDED_PAN_ID,
                 0x08 /* len */,
                 Z_B0(USE_ZIGBEE_EXTPANID), Z_B1(USE_ZIGBEE_EXTPANID), Z_B2(USE_ZIGBEE_EXTPANID), Z_B3(USE_ZIGBEE_EXTPANID),
                 Z_B4(USE_ZIGBEE_EXTPANID), Z_B5(USE_ZIGBEE_EXTPANID), Z_B6(USE_ZIGBEE_EXTPANID), Z_B7(USE_ZIGBEE_EXTPANID),
                 )				// 6604002D08xxxxxxxxxxxxxxxx
 
 ZBM(ZBS_CHANN, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_CHANLIST )				// 260484
-ZBM(ZBR_CHANN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_CHANLIST,
+ZBR(ZBR_CHANN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_CHANLIST,
                0x04 /* len */,
                Z_B0(USE_ZIGBEE_CHANNEL_MASK), Z_B1(USE_ZIGBEE_CHANNEL_MASK), Z_B2(USE_ZIGBEE_CHANNEL_MASK), Z_B3(USE_ZIGBEE_CHANNEL_MASK),
                )				// 6604008404xxxxxxxx
 
 ZBM(ZBS_PFGK, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_PRECFGKEY )				// 260462
-ZBM(ZBR_PFGK, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PRECFGKEY,
+ZBR(ZBR_PFGK, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PRECFGKEY,
               0x10 /* len */,
               Z_B0(USE_ZIGBEE_PRECFGKEY_L), Z_B1(USE_ZIGBEE_PRECFGKEY_L), Z_B2(USE_ZIGBEE_PRECFGKEY_L), Z_B3(USE_ZIGBEE_PRECFGKEY_L),
               Z_B4(USE_ZIGBEE_PRECFGKEY_L), Z_B5(USE_ZIGBEE_PRECFGKEY_L), Z_B6(USE_ZIGBEE_PRECFGKEY_L), Z_B7(USE_ZIGBEE_PRECFGKEY_L),
@@ -203,20 +206,20 @@ ZBM(ZBR_WNV_OK, Z_SRSP | Z_SYS, SYS_OSAL_NV_WRITE, Z_SUCCESS )				// 610900 - NV
 // Factory reset
 ZBM(ZBS_FACTRES, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_STARTUP_OPTION, 0x01 /* len */, 0x02 )				// 2605030102
 // Write PAN ID
-ZBM(ZBS_W_PAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PANID, 0x02 /* len */, Z_B0(USE_ZIGBEE_PANID), Z_B1(USE_ZIGBEE_PANID)  )				// 26058302xxxx
+ZBR(ZBS_W_PAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PANID, 0x02 /* len */, Z_B0(USE_ZIGBEE_PANID), Z_B1(USE_ZIGBEE_PANID)  )				// 26058302xxxx
 // Write EXT PAN ID
-ZBM(ZBS_W_EXTPAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_EXTENDED_PAN_ID, 0x08 /* len */,
+ZBR(ZBS_W_EXTPAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_EXTENDED_PAN_ID, 0x08 /* len */,
                   Z_B0(USE_ZIGBEE_EXTPANID), Z_B1(USE_ZIGBEE_EXTPANID), Z_B2(USE_ZIGBEE_EXTPANID), Z_B3(USE_ZIGBEE_EXTPANID),
                   Z_B4(USE_ZIGBEE_EXTPANID), Z_B5(USE_ZIGBEE_EXTPANID), Z_B6(USE_ZIGBEE_EXTPANID), Z_B7(USE_ZIGBEE_EXTPANID)
                   ) // 26052D086263151D004B1200
 // Write Channel ID
-ZBM(ZBS_W_CHANN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_CHANLIST, 0x04 /* len */,
+ZBR(ZBS_W_CHANN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_CHANLIST, 0x04 /* len */,
                 Z_B0(USE_ZIGBEE_CHANNEL_MASK), Z_B1(USE_ZIGBEE_CHANNEL_MASK), Z_B2(USE_ZIGBEE_CHANNEL_MASK), Z_B3(USE_ZIGBEE_CHANNEL_MASK),
                 /*0x00, 0x08, 0x00, 0x00*/ )				// 26058404xxxxxxxx
 // Write Logical Type = 00 = coordinator
 ZBM(ZBS_W_LOGTYP, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_LOGICAL_TYPE, 0x01 /* len */, 0x00 )				// 2605870100
 // Write precfgkey
-ZBM(ZBS_W_PFGK, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PRECFGKEY,
+ZBR(ZBS_W_PFGK, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PRECFGKEY,
                 0x10 /* len */,
                 Z_B0(USE_ZIGBEE_PRECFGKEY_L), Z_B1(USE_ZIGBEE_PRECFGKEY_L), Z_B2(USE_ZIGBEE_PRECFGKEY_L), Z_B3(USE_ZIGBEE_PRECFGKEY_L),
                 Z_B4(USE_ZIGBEE_PRECFGKEY_L), Z_B5(USE_ZIGBEE_PRECFGKEY_L), Z_B6(USE_ZIGBEE_PRECFGKEY_L), Z_B7(USE_ZIGBEE_PRECFGKEY_L),
@@ -300,6 +303,53 @@ ZBM(ZBS_PERMITJOINREQ_CLOSE, Z_SREQ | Z_ZDO, ZDO_MGMT_PERMIT_JOIN_REQ, 0x02 /* A
                               0x00, 0x00 /* DstAddr */, 0x00 /* Duration */, 0x00 /* TCSignificance */)
 ZBM(ZBR_PERMITJOINREQ, Z_SRSP | Z_ZDO, ZDO_MGMT_PERMIT_JOIN_REQ, Z_SUCCESS)    // 653600
 ZBM(ZBR_PERMITJOIN_AREQ_RSP,  Z_AREQ | Z_ZDO, ZDO_MGMT_PERMIT_JOIN_RSP, 0x00, 0x00 /* srcAddr*/, Z_SUCCESS )   // 45B6000000
+
+// Update the relevant commands with Settings
+void Z_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_panid, uint64_t zb_precfgkey_l, uint64_t zb_precfgkey_h) {
+  uint32_t zb_channel_mask = (1 << zb_channel);
+
+  ZBW(ZBR_PAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PANID, 0x02 /* len */,
+                Z_B0(zb_pan_id), Z_B1(zb_pan_id) )				// 6604008302xxxx
+
+  ZBW(ZBR_EXTPAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_EXTENDED_PAN_ID,
+                  0x08 /* len */,
+                  Z_B0(zb_ext_panid), Z_B1(zb_ext_panid), Z_B2(zb_ext_panid), Z_B3(zb_ext_panid),
+                  Z_B4(zb_ext_panid), Z_B5(zb_ext_panid), Z_B6(zb_ext_panid), Z_B7(zb_ext_panid),
+                  )				// 6604002D08xxxxxxxxxxxxxxxx
+
+  ZBW(ZBR_CHANN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_CHANLIST,
+                0x04 /* len */,
+                Z_B0(zb_channel_mask), Z_B1(zb_channel_mask), Z_B2(zb_channel_mask), Z_B3(zb_channel_mask),
+                )				// 6604008404xxxxxxxx
+
+  ZBW(ZBR_PFGK, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PRECFGKEY,
+                0x10 /* len */,
+                Z_B0(zb_precfgkey_l), Z_B1(zb_precfgkey_l), Z_B2(zb_precfgkey_l), Z_B3(zb_precfgkey_l),
+                Z_B4(zb_precfgkey_l), Z_B5(zb_precfgkey_l), Z_B6(zb_precfgkey_l), Z_B7(zb_precfgkey_l),
+                Z_B0(zb_precfgkey_h), Z_B1(zb_precfgkey_h), Z_B2(zb_precfgkey_h), Z_B3(zb_precfgkey_h),
+                Z_B4(zb_precfgkey_h), Z_B5(zb_precfgkey_h), Z_B6(zb_precfgkey_h), Z_B7(zb_precfgkey_h),
+                /*0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F,
+                0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D*/ )				// 660400621001030507090B0D0F00020406080A0C0D
+
+  ZBW(ZBS_W_PAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PANID, 0x02 /* len */, Z_B0(zb_pan_id), Z_B1(zb_pan_id)  )				// 26058302xxxx
+  // Write EXT PAN ID
+  ZBW(ZBS_W_EXTPAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_EXTENDED_PAN_ID, 0x08 /* len */,
+                    Z_B0(zb_ext_panid), Z_B1(zb_ext_panid), Z_B2(zb_ext_panid), Z_B3(zb_ext_panid),
+                    Z_B4(zb_ext_panid), Z_B5(zb_ext_panid), Z_B6(zb_ext_panid), Z_B7(zb_ext_panid)
+                    ) // 26052D086263151D004B1200
+  // Write Channel ID
+  ZBW(ZBS_W_CHANN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_CHANLIST, 0x04 /* len */,
+                  Z_B0(zb_channel_mask), Z_B1(zb_channel_mask), Z_B2(zb_channel_mask), Z_B3(zb_channel_mask),
+                  /*0x00, 0x08, 0x00, 0x00*/ )				// 26058404xxxxxxxx
+  // Write precfgkey
+  ZBW(ZBS_W_PFGK, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PRECFGKEY,
+                  0x10 /* len */,
+                  Z_B0(zb_precfgkey_l), Z_B1(zb_precfgkey_l), Z_B2(zb_precfgkey_l), Z_B3(zb_precfgkey_l),
+                  Z_B4(zb_precfgkey_l), Z_B5(zb_precfgkey_l), Z_B6(zb_precfgkey_l), Z_B7(zb_precfgkey_l),
+                  Z_B0(zb_precfgkey_h), Z_B1(zb_precfgkey_h), Z_B2(zb_precfgkey_h), Z_B3(zb_precfgkey_h),
+                  Z_B4(zb_precfgkey_h), Z_B5(zb_precfgkey_h), Z_B6(zb_precfgkey_h), Z_B7(zb_precfgkey_h),
+                  )				// 2605621001030507090B0D0F00020406080A0C0D
+}
 
 const char kCheckingDeviceConfiguration[] PROGMEM = D_LOG_ZIGBEE "checking device configuration";
 const char kConfigured[] PROGMEM = "Configured, starting coordinator";
