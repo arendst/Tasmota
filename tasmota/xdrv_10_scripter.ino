@@ -4720,7 +4720,13 @@ void ScriptWebShow(void) {
 
 
 #ifdef USE_SENDMAIL
+
+#ifdef ESP8266
 void script_send_email_body(BearSSL::WiFiClientSecure_light *client) {
+#else
+void script_send_email_body(WiFiClient *client) {
+#endif
+
 uint8_t msect=Run_Scripter(">m",-2,0);
   if (msect==99) {
     char line[128];
