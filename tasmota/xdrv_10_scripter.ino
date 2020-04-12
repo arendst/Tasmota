@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #ifdef USE_SCRIPT
 #ifndef USE_RULES
 /*********************************************************************************************\
@@ -59,6 +60,10 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define PMEM_SIZE sizeof(Settings.script_pram)
 #define SCRIPT_MAXPERM (PMEM_SIZE)-4/sizeof(float)
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
+
+
+uint32_t EncodeLightId(uint8_t relay_id);
+uint32_t DecodeLightId(uint32_t hue_id);
 
 // offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
 #define EPOCH_OFFSET 1546300800
@@ -2028,6 +2033,7 @@ char *getop(char *lp, uint8_t *operand) {
 }
 
 
+#ifdef ESP8266
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1)
 // All version before core 2.4.2
 // https://github.com/esp8266/Arduino/issues/2557
@@ -2048,6 +2054,12 @@ extern "C" {
 uint16_t GetStack(void) {
   register uint32_t *sp asm("a1");
   return (4 * (sp - g_pcont->stack));
+}
+#endif
+#else
+uint16_t GetStack(void) {
+  register uint8_t *sp asm("a1");
+  return (sp - pxTaskGetStackStart(NULL));
 }
 #endif
 
