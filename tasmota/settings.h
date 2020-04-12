@@ -505,8 +505,9 @@ struct PACKED SYSCFG {
   uint16_t      zb_pan_id;                 // F30
   uint8_t       zb_channel;                // F32
   uint8_t       zb_free_byte;              // F33
+  uint16_t      pms_wake_interval;
 
-  uint8_t       free_f18[132];             // F34
+  uint8_t       free_f18[130];             // F34
 
   uint16_t      pulse_counter_debounce_low;  // FB8
   uint16_t      pulse_counter_debounce_high; // FBA

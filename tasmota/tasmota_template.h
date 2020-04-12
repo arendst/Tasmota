@@ -93,7 +93,7 @@ enum UserSelectablePins {
   GPIO_SPI_CS,         // SPI Chip Select
   GPIO_SPI_DC,         // SPI Data Direction
   GPIO_BACKLIGHT,      // Display backlight control
-  GPIO_PMS5003,        // Plantower PMS5003 Serial interface
+  GPIO_PMS5003_RX,     // Plantower PMS5003 Serial interface  
   GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
@@ -227,6 +227,7 @@ enum UserSelectablePins {
   GPIO_HRXL_RX,       // Data from MaxBotix HRXL sonar range sensor
   GPIO_ELECTRIQ_MOODL_TX, // ElectriQ iQ-wifiMOODL Serial TX
   GPIO_AS3935,
+  GPIO_PMS5003_TX,     // Plantower PMS5003 Serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -260,7 +261,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PZEM0XX_TX "|" D_SENSOR_PZEM004_RX "|"
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
-  D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1_RX "|"
+  D_SENSOR_PMS5003_RX "|" D_SENSOR_SDS0X1_RX "|"
   D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
   D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO "|"
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
@@ -314,7 +315,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_CC1101_GDO0 "|" D_SENSOR_CC1101_GDO2 "|"
   D_SENSOR_HRXL_RX "|"
   D_SENSOR_ELECTRIQ_MOODL "|"
-  D_SENSOR_AS3935 
+  D_SENSOR_AS3935 "|" D_SENSOR_PMS5003_TX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -582,7 +583,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_HPMA_RX,      // Honeywell HPMA115S0 Serial interface
 #endif
 #ifdef USE_PMS5003
-  GPIO_PMS5003,        // Plantower PMS5003 Serial interface
+  GPIO_PMS5003_TX,        // Plantower PMS5003 Serial interface
+  GPIO_PMS5003_RX,        // Plantower PMS5003 Serial interface
 #endif
 #if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
   GPIO_TX2X_TXD_BLACK, // TX20/TX23 Transmission Pin

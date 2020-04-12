@@ -32,10 +32,41 @@
 
 #include <TasmotaSerial.h>
 
+#ifndef WARMUP_PERIOD
+#define WARMUP_PERIOD 30 // Turn on PMSX003 XX-seconds before read in passive mode
+#endif
+
+#ifndef MIN_INTERVAL_PERIOD
+#define MIN_INTERVAL_PERIOD 60    // minimum interval period in seconds required for passive mode
+#endif
+
 TasmotaSerial *PmsSerial;
 
 uint8_t pms_type = 1;
 uint8_t pms_valid = 0;
+uint16_t pms_time = 0;
+uint8_t wake_mode = 1;
+uint8_t pms_ready = 1;
+
+const char ACTIVE_MODE[] = "Active Mode";
+const char PASSIVE_MODE[] = "Passive Mode";
+
+enum PmsCommands
+{
+  CMD_MODE_ACTIVE,
+  CMD_SLEEP,
+  CMD_WAKEUP,
+  CMD_MODE_PASSIVE,
+  CMD_READ_DATA
+};
+
+const uint8_t kPmsCommands[][7] PROGMEM = {
+    //  0     1    2    3     4     5     6
+    {0x42, 0x4D, 0xE1, 0x00, 0x01, 0x01, 0x71},  // pms_set_active_mode
+    {0x42, 0x4D, 0xE4, 0x00, 0x00, 0x01, 0x73},  // pms_sleep
+    {0x42, 0x4D, 0xE4, 0x00, 0x01, 0x01, 0x74},  // pms_wake
+    {0x42, 0x4D, 0xE1, 0x00, 0x00, 0x01, 0x70},  // pms_set_passive_mode
+    {0x42, 0x4D, 0xE2, 0x00, 0x00, 0x01, 0x71}}; // pms_passive_mode_read
 
 struct pmsX003data {
   uint16_t framelen;
@@ -49,6 +80,13 @@ struct pmsX003data {
 #endif  // PMS_MODEL_PMS3003
   uint16_t checksum;
 } pms_data;
+
+/*********************************************************************************************/
+
+size_t PmsSendCmd(uint8_t command_id)
+{
+  return PmsSerial->write(kPmsCommands[command_id], sizeof(kPmsCommands[command_id]));
+}
 
 /*********************************************************************************************/
 
@@ -122,15 +160,94 @@ bool PmsReadData(void)
   return true;
 }
 
+/*********************************************************************************************\
+ * Command Sensor18
+ *
+ * Warmup time for sensor is 30 seconds, therfore setting interval time to less than 60
+ * seconds doesn't really make sense.  
+ * 
+ * 0 - 59   -   Active Mode (continuous sensor readings)
+ * 60 .. 65535 -  Passive Mode (read sensor every x seconds)
+\*********************************************************************************************/
+
+bool PmsCommandSensor(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 65536))
+  {
+    if (XdrvMailbox.payload < MIN_INTERVAL_PERIOD) {
+      // Set Active Mode if interval is less than 60 seconds
+      Settings.pms_wake_interval = 0;
+      wake_mode = 1;
+      pms_ready = 1;
+      PmsSendCmd(CMD_MODE_ACTIVE);
+      PmsSendCmd(CMD_WAKEUP);
+    } else {
+      // Set Passive Mode and schedule read once per interval time
+      Settings.pms_wake_interval = XdrvMailbox.payload;
+      PmsSendCmd(CMD_MODE_PASSIVE);
+      PmsSendCmd(CMD_SLEEP);
+      wake_mode = 0;
+      pms_ready = 0;
+    }
+  }
+  
+  if (pin[GPIO_PMS5003_TX] >= 99)
+  {
+    // setting interval not supported if TX pin not connected
+    Settings.pms_wake_interval = 0;
+  }
+
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_18, Settings.pms_wake_interval);
+
+  return true;
+}
+
 /*********************************************************************************************/
 
 void PmsSecond(void)                 // Every second
 {
-  if (PmsReadData()) {
-    pms_valid = 10;
-  } else {
-    if (pms_valid) {
-      pms_valid--;
+  if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD)
+  {
+    // Passive Mode
+    pms_time++;
+    if ((Settings.pms_wake_interval - pms_time <= WARMUP_PERIOD) && !wake_mode)
+    {
+      // wakeup sensor WARMUP_PERIOD before read interval
+      wake_mode = 1;
+      PmsSendCmd(CMD_WAKEUP);
+    }
+    if (pms_time >= Settings.pms_wake_interval)
+    {
+      // sensor is awake and warmed up, set up for reading
+      PmsSendCmd(CMD_READ_DATA);
+      pms_ready = 1;
+      pms_time = 0;
+    }
+  } 
+
+  if (pms_ready) 
+  {
+    if (PmsReadData())
+    {
+      pms_valid = 10;
+      if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD)
+      {
+        PmsSendCmd(CMD_SLEEP);
+        wake_mode = 0;
+        pms_ready = 0;
+      }
+    }
+    else
+    {
+      if (pms_valid)
+      {
+        pms_valid--;
+        if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD)
+        {
+          PmsSendCmd(CMD_READ_DATA);
+          pms_ready = 1;
+        }
+      }
     }
   }
 }
@@ -140,10 +257,23 @@ void PmsSecond(void)                 // Every second
 void PmsInit(void)
 {
   pms_type = 0;
-  if (pin[GPIO_PMS5003] < 99) {
-    PmsSerial = new TasmotaSerial(pin[GPIO_PMS5003], -1, 1);
+  if ((pin[GPIO_PMS5003_RX] < 99) && (pin[GPIO_PMS5003_TX] < 99))
+  {
+    PmsSerial = new TasmotaSerial(pin[GPIO_PMS5003_RX], pin[GPIO_PMS5003_TX], 1);
     if (PmsSerial->begin(9600)) {
       if (PmsSerial->hardwareSerial()) { ClaimSerial(); }
+      pms_type = 1;
+    }
+  }
+  else if ((pin[GPIO_PMS5003_RX] < 99))
+  {
+    PmsSerial = new TasmotaSerial(pin[GPIO_PMS5003_RX], -1, 1);
+    if (PmsSerial->begin(9600))
+    {
+      if (PmsSerial->hardwareSerial())
+      {
+        ClaimSerial();
+      }
       pms_type = 1;
     }
   }
@@ -229,6 +359,12 @@ bool Xsns18(uint8_t function)
         break;
       case FUNC_EVERY_SECOND:
         PmsSecond();
+        break;
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_18 == XdrvMailbox.index)
+        {
+          result = PmsCommandSensor();
+        }
         break;
       case FUNC_JSON_APPEND:
         PmsShow(1);
