@@ -845,6 +845,10 @@ void CmndShutterPosition(void)
           CmndShutterClose();
           return;
         }
+        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_TOGGLE)) {
+          CmndShutterToggle();
+          return;
+        }
         if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP) || ((Shutter.direction[index]) && (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE)))) {
           XdrvMailbox.payload = -99;
           CmndShutterStop();
