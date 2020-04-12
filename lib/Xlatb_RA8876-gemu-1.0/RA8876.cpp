@@ -66,9 +66,13 @@ RA8876::RA8876(int8_t cs,int8_t mosi,int8_t miso,int8_t sclk,int8_t bp) : Render
 //#define RA8876_CS_LOW digitalWrite(m_csPin, LOW)
 //#define RA8876_CS_HIGH digitalWrite(m_csPin, HIGH)
 
+#ifdef ESP8266
 #define RA8876_CS_LOW GPOC=(1<<m_csPin);
 #define RA8876_CS_HIGH GPOS=(1<<m_csPin);
-
+#else
+#define RA8876_CS_LOW digitalWrite(1<<m_csPin,0);
+#define RA8876_CS_HIGH digitalWrite(1<<m_csPin,1);
+#endif
 /*
 extern void ICACHE_RAM_ATTR RA8876_digitalWrite(uint8_t pin, uint8_t val) {
   //stopWaveform(pin);
