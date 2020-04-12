@@ -66,6 +66,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add Zigbee command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
 - Add Zigbee command ``ZbUnbind``
 - Add Zigbee command ``ZbBindState`` and ``manuf``attribute
+- Add Zigbee command ``ZbConfig`` and configuration in Settings
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
 - Add commands ``NrfPage``, ``NrfIgnore``, ``NrfScan`` and ``NrfBeacon`` to NRF24 Bluetooth driver (#8075)
 - Add command ``SetOption41 <x>`` to force sending gratuitous ARP every <x> seconds
@@ -86,3 +87,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add console command history (#7483, #8015)
 - Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
 - Add more accuracy to GPS NTP server (#8088)
+- Add interval to PMS5003 sensor to extend lifetime (#8128)

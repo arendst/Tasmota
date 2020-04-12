@@ -213,9 +213,9 @@ typedef union {
 
 typedef union {
   uint8_t data;
-  struct {           
+  struct {
   uint8_t nf_autotune : 1;            // Autotune the NF Noise Level
-  uint8_t dist_autotune : 1;          // Autotune Disturber on/off  
+  uint8_t dist_autotune : 1;          // Autotune Disturber on/off
   uint8_t nf_autotune_both : 1;        // Autotune over both Areas: INDOORS/OUDOORS
   uint8_t mqtt_only_Light_Event : 1;  // mqtt only if lightning Irq
   uint8_t spare4 : 1;
@@ -227,9 +227,9 @@ typedef union {
 
 typedef union {
   uint16_t data;
-  struct {           
+  struct {
   uint16_t nf_autotune_time : 4;            // NF Noise Autotune Time
-  uint16_t dist_autotune_time : 4;          // Disturber Autotune Time  
+  uint16_t dist_autotune_time : 4;          // Disturber Autotune Time
   uint16_t nf_autotune_min : 4;             // Min Stages
   uint16_t spare3 : 4;
   };
@@ -505,9 +505,9 @@ struct PACKED SYSCFG {
   uint16_t      zb_pan_id;                 // F30
   uint8_t       zb_channel;                // F32
   uint8_t       zb_free_byte;              // F33
-  uint16_t      pms_wake_interval;
+  uint16_t      pms_wake_interval;         // F34
 
-  uint8_t       free_f18[130];             // F34
+  uint8_t       free_f36[130];             // F36
 
   uint16_t      pulse_counter_debounce_low;  // FB8
   uint16_t      pulse_counter_debounce_high; // FBA

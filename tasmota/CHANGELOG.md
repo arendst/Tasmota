@@ -10,6 +10,7 @@
 - Fix Zigbee crash with Occupancy sensor (#8089)
 - Add support for longer template names
 - Add Zigbee command ``ZbBindState`` and ``manuf``attribute
+- Add Zigbee command ``ZbConfig`` and configuration in Settings
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
 - Add commands ``NrfPage``, ``NrfIgnore``, ``NrfScan`` and ``NrfBeacon`` to NRF24 Bluetooth driver (#8075)
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
@@ -25,7 +26,7 @@
 - Add support for an iAQ sensor (#8107)
 - Add support for Seven Segment display using HT16K33 (#8116)
 - Add support for AS3935 Lightning Sensor by device111 (#8130)
-- Add Zigbee command ``ZbConfig`` and configuration in Settings
+- Add interval to PMS5003 sensor to extend lifetime (#8128)
 
 ### 8.2.0.2 20200328
 

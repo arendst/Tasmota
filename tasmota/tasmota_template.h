@@ -93,7 +93,7 @@ enum UserSelectablePins {
   GPIO_SPI_CS,         // SPI Chip Select
   GPIO_SPI_DC,         // SPI Data Direction
   GPIO_BACKLIGHT,      // Display backlight control
-  GPIO_PMS5003_RX,     // Plantower PMS5003 Serial interface  
+  GPIO_PMS5003_RX,     // Plantower PMS5003 Serial interface
   GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
@@ -579,12 +579,12 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
 #endif
 #ifdef USE_HPMA
-  GPIO_HPMA_TX,      // Honeywell HPMA115S0 Serial interface
-  GPIO_HPMA_RX,      // Honeywell HPMA115S0 Serial interface
+  GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
+  GPIO_HPMA_RX,        // Honeywell HPMA115S0 Serial interface
 #endif
 #ifdef USE_PMS5003
-  GPIO_PMS5003_TX,        // Plantower PMS5003 Serial interface
-  GPIO_PMS5003_RX,        // Plantower PMS5003 Serial interface
+  GPIO_PMS5003_TX,     // Plantower PMS5003 Serial interface
+  GPIO_PMS5003_RX,     // Plantower PMS5003 Serial interface
 #endif
 #if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
   GPIO_TX2X_TXD_BLACK, // TX20/TX23 Transmission Pin
