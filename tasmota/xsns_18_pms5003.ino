@@ -171,7 +171,7 @@ bool PmsReadData(void)
 
 bool PmsCommandSensor(void)
 {
-  if ((pin[GPIO_PMS5003_TX] < 99) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 65536)) {
+  if ((pin[GPIO_PMS5003_TX] < 99) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
     if (XdrvMailbox.payload < MIN_INTERVAL_PERIOD) {
       // Set Active Mode if interval is less than 60 seconds
       Settings.pms_wake_interval = 0;
