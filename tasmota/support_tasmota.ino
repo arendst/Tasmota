@@ -210,6 +210,7 @@ void SetDevicePower(power_t rpower, uint32_t source)
   if (XdrvCall(FUNC_SET_DEVICE_POWER)) {  // Set power state and stop if serviced
     // Serviced
   }
+#ifdef ESP8266
   else if ((SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)) {
     Serial.write(0xA0);
     Serial.write(0x04);
@@ -221,7 +222,9 @@ void SetDevicePower(power_t rpower, uint32_t source)
   else if (EXS_RELAY == my_module_type) {
     SetLatchingRelay(rpower, 1);
   }
-  else {
+  else
+#endif  // ESP8266
+  {
     for (uint32_t i = 0; i < devices_present; i++) {
       power_t state = rpower &1;
       if (i < MAX_RELAYS) {
@@ -279,9 +282,11 @@ void SetAllPower(uint32_t state, uint32_t source)
 
 void SetPowerOnState(void)
 {
+#ifdef ESP8266
   if (MOTOR == my_module_type) {
     Settings.poweronstate = POWER_ALL_ON;   // Needs always on else in limbo!
   }
+#endif  // ESP8266
   if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {
     SetDevicePower(1, SRC_RESTART);
   } else {
@@ -625,7 +630,7 @@ void MqttShowState(void)
 
   ResponseAppend_P(PSTR(",\"" D_JSON_HEAPSIZE "\":%d,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u,\"MqttCount\":%u"),
     ESP.getFreeHeap()/1024, GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode),  // SetOption60 - Enable normal sleep instead of dynamic sleep
-    sleep, loop_load_avg, MqttConnectCount());
+    ssleep, loop_load_avg, MqttConnectCount());
 
   for (uint32_t i = 1; i <= devices_present; i++) {
 #ifdef USE_LIGHT
@@ -903,9 +908,11 @@ void Every250mSeconds(void)
   }
   if (Settings.ledstate &1 && (pin[GPIO_LEDLNK] < 99 || !(blinks || restart_flag || ota_state_flag)) ) {
     bool tstate = power & Settings.ledmask;
+#ifdef ESP8266
     if ((SONOFF_TOUCH == my_module_type) || (SONOFF_T11 == my_module_type) || (SONOFF_T12 == my_module_type) || (SONOFF_T13 == my_module_type)) {
       tstate = (!power) ? 1 : 0;                          // As requested invert signal for Touch devices to find them in the dark
     }
+#endif  // ESP8266
     SetLedPower(tstate);
   }
 
@@ -1213,13 +1220,14 @@ void SerialInput(void)
     delay(0);
     serial_in_byte = Serial.read();
 
+#ifdef ESP8266
 /*-------------------------------------------------------------------------------------------*\
  * Sonoff dual and ch4 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
     if ((SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)) {
       serial_in_byte = ButtonSerial(serial_in_byte);
     }
-
+#endif  // ESP8266
 /*-------------------------------------------------------------------------------------------*/
 
     if (XdrvCall(FUNC_SERIAL)) {
@@ -1320,7 +1328,15 @@ void GpioInit(void)
 
   if (!ValidModule(Settings.module)) {
     uint32_t module = MODULE;
-    if (!ValidModule(MODULE)) { module = SONOFF_BASIC; }
+    if (!ValidModule(MODULE)) {
+#ifdef ESP8266
+      module = SONOFF_BASIC;
+#endif  // ESP8266
+#ifdef ESP32
+      module = WEMOS;
+#endif  // ESP32
+    }
+
     Settings.module = module;
     Settings.last_module = module;
   }
@@ -1417,7 +1433,9 @@ void GpioInit(void)
     if (mpin) pin[mpin] = i;
   }
 
+#ifdef ESP8266
   if ((2 == pin[GPIO_TXD]) || (H801 == my_module_type)) { Serial.set_tx(2); }
+#endif  // ESP8266
 
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
@@ -1462,6 +1480,7 @@ void GpioInit(void)
   if (XdrvCall(FUNC_MODULE_INIT)) {
     // Serviced
   }
+#ifdef ESP8266
   else if (YTF_IR_BRIDGE == my_module_type) {
     ClaimSerial();  // Stop serial loopback mode
 //    devices_present = 1;
@@ -1479,6 +1498,7 @@ void GpioInit(void)
     SetSerial(19200, TS_SERIAL_8N1);
   }
 #endif  // USE_SONOFF_SC
+#endif  // ESP8266
 
   for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
     if (pin[GPIO_PWM1 +i] < 99) {
@@ -1497,10 +1517,12 @@ void GpioInit(void)
     if (pin[GPIO_REL1 +i] < 99) {
       pinMode(pin[GPIO_REL1 +i], OUTPUT);
       devices_present++;
+#ifdef ESP8266
       if (EXS_RELAY == my_module_type) {
         digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? 1 : 0);
         if (i &1) { devices_present--; }
       }
+#endif  // ESP8266
     }
   }
 

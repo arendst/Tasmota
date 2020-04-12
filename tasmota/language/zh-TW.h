@@ -567,7 +567,8 @@
 #define D_SENSOR_SPI_MOSI      "SPI MOSI"
 #define D_SENSOR_SPI_CLK       "SPI CLK"
 #define D_SENSOR_BACKLIGHT     "Backlight"
-#define D_SENSOR_PMS5003       "PMS5003"
+#define D_SENSOR_PMS5003_TX    "PMS5003 Tx"
+#define D_SENSOR_PMS5003_RX    "PMS5003 Rx"
 #define D_SENSOR_SDS0X1_RX     "SDS0X1 Rx"
 #define D_SENSOR_SDS0X1_TX     "SDS0X1 Tx"
 #define D_SENSOR_HPMA_RX       "HPMA Rx"
@@ -664,6 +665,7 @@
 #define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
 #define D_SENSOR_HRXL_RX       "HRXL Rx"
 #define D_SENSOR_ELECTRIQ_MOODL "MOODL Tx"
+#define D_SENSOR_AS3935         "AS3935"
 
 // Units
 #define D_UNIT_AMPERE "安"
@@ -673,6 +675,7 @@
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KILOMETER "km"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
 #define D_UNIT_KILOOHM "千歐"

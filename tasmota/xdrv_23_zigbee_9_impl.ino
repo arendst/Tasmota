@@ -35,7 +35,8 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ "|" D_CMND_ZIGBEEZNPRECEIVE "|"
   D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|"
   D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_UNBIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID "|"
-  D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE
+  D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|"
+  D_CMND_ZIGBEE_CONFIG
   ;
 
 void (* const ZigbeeCommand[])(void) PROGMEM = {
@@ -45,6 +46,7 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbForget, &CmndZbSave, &CmndZbName,
   &CmndZbBind, &CmndZbUnbind, &CmndZbPing, &CmndZbModelId,
   &CmndZbLight, &CmndZbRestore, &CmndZbBindState,
+  &CmndZbConfig,
   };
 
 //
@@ -145,6 +147,19 @@ void ZigbeeInputLoop(void)
 // Initialize internal structures
 void ZigbeeInit(void)
 {
+  // Check if settings if Flash are set
+  if (0 == Settings.zb_channel) {
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Initializing Zigbee parameters from defaults"));
+    Settings.zb_ext_panid = USE_ZIGBEE_EXTPANID;
+    Settings.zb_precfgkey_l = USE_ZIGBEE_PRECFGKEY_L;
+    Settings.zb_precfgkey_h = USE_ZIGBEE_PRECFGKEY_H;
+    Settings.zb_pan_id = USE_ZIGBEE_PANID;
+    Settings.zb_channel = USE_ZIGBEE_CHANNEL;
+    Settings.zb_free_byte = 0;
+  }
+  // update commands with the current settings
+  Z_UpdateConfig(Settings.zb_channel, Settings.zb_pan_id, Settings.zb_ext_panid, Settings.zb_precfgkey_l, Settings.zb_precfgkey_h);
+
 // AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem1 = %d"), ESP.getFreeHeap());
   zigbee.active = false;
   if ((pin[GPIO_ZIGBEE_RX] < 99) && (pin[GPIO_ZIGBEE_TX] < 99)) {
@@ -1005,6 +1020,79 @@ void CmndZbStatus(void) {
     String dump = zigbee_devices.dump(XdrvMailbox.index, shortaddr);
     Response_P(PSTR("{\"%s%d\":%s}"), XdrvMailbox.command, XdrvMailbox.index, dump.c_str());
   }
+}
+
+//
+// Command `ZbConfig`
+//
+void CmndZbConfig(void) {
+  // ZbConfig
+  // ZbConfig {"Channel":11,"PanID":"0x1A63","ExtPanID":"0xCCCCCCCCCCCCCCCC","KeyL":"0x0F0D0B0907050301L","KeyH":"0x0D0C0A0806040200L"}
+  uint8_t     zb_channel     = Settings.zb_channel;
+  uint16_t    zb_pan_id      = Settings.zb_pan_id;
+  uint64_t    zb_ext_panid   = Settings.zb_ext_panid;
+  uint64_t    zb_precfgkey_l = Settings.zb_precfgkey_l;
+  uint64_t    zb_precfgkey_h = Settings.zb_precfgkey_h;
+
+  // if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+  RemoveAllSpaces(XdrvMailbox.data);
+  if (strlen(XdrvMailbox.data) > 0) {
+    DynamicJsonBuffer jsonBuf;
+    const JsonObject &json = jsonBuf.parseObject((const char*) XdrvMailbox.data);
+    if (!json.success()) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
+
+    // Channel
+    const JsonVariant &val_channel = getCaseInsensitive(json, PSTR("Channel"));
+    if (nullptr != &val_channel) { zb_channel = strToUInt(val_channel); }
+    if (zb_channel < 11) { zb_channel = 11; }
+    if (zb_channel > 26) { zb_channel = 26; }
+    // PanID
+    const JsonVariant &val_pan_id = getCaseInsensitive(json, PSTR("PanID"));
+    if (nullptr != &val_pan_id) { zb_pan_id = strToUInt(val_pan_id); }
+    // ExtPanID
+    const JsonVariant &val_ext_pan_id = getCaseInsensitive(json, PSTR("ExtPanID"));
+    if (nullptr != &val_ext_pan_id) { zb_ext_panid = strtoull(val_ext_pan_id.as<const char*>(), nullptr, 0); }
+    // KeyL
+    const JsonVariant &val_key_l = getCaseInsensitive(json, PSTR("KeyL"));
+    if (nullptr != &val_key_l) { zb_precfgkey_l = strtoull(val_key_l.as<const char*>(), nullptr, 0); }
+    // KeyH
+    const JsonVariant &val_key_h = getCaseInsensitive(json, PSTR("KeyH"));
+    if (nullptr != &val_key_h) { zb_precfgkey_h = strtoull(val_key_h.as<const char*>(), nullptr, 0); }
+
+    // Check if a parameter was changed after all
+    if ( (zb_channel      != Settings.zb_channel) ||
+         (zb_pan_id       != Settings.zb_pan_id) ||
+         (zb_ext_panid    != Settings.zb_ext_panid) ||
+         (zb_precfgkey_l  != Settings.zb_precfgkey_l) ||
+         (zb_precfgkey_h  != Settings.zb_precfgkey_h) ) {
+      Settings.zb_channel      = zb_channel;
+      Settings.zb_pan_id       = zb_pan_id;
+      Settings.zb_ext_panid    = zb_ext_panid;
+      Settings.zb_precfgkey_l  = zb_precfgkey_l;
+      Settings.zb_precfgkey_h  = zb_precfgkey_h;
+      restart_flag = 2;    // save and reboot
+    }
+  }
+
+  // display the current or new configuration
+  char hex_ext_panid[20] = "0x";
+  Uint64toHex(zb_ext_panid, &hex_ext_panid[2], 64);
+  char hex_precfgkey_l[20] = "0x";
+  Uint64toHex(zb_precfgkey_l, &hex_precfgkey_l[2], 64);
+  char hex_precfgkey_h[20] = "0x";
+  Uint64toHex(zb_precfgkey_h, &hex_precfgkey_h[2], 64);
+
+  // {"ZbConfig":{"Channel":11,"PanID":"0x1A63","ExtPanID":"0xCCCCCCCCCCCCCCCC","KeyL":"0x0F0D0B0907050301L","KeyH":"0x0D0C0A0806040200L"}}
+  Response_P(PSTR("{\"" D_PRFX_ZB D_JSON_ZIGBEE_CONFIG "\":{"
+                  "\"Channel\":%d"
+                  ",\"PanID\":\"0x%04X\""
+                  ",\"ExtPanID\":\"%s\""
+                  ",\"KeyL\":\"%s\""
+                  ",\"KeyH\":\"%s\""
+                  "}}"),
+                  zb_channel, zb_pan_id,
+                  hex_ext_panid,
+                  hex_precfgkey_l, hex_precfgkey_h);
 }
 
 /*********************************************************************************************\
