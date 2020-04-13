@@ -389,6 +389,7 @@
 #define D_CMND_LED "Led"
 #define D_CMND_LEDTABLE "LedTable"
 #define D_CMND_FADE "Fade"
+#define D_CMND_PALETTE "Palette"
 #define D_CMND_PIXELS "Pixels"
 #define D_CMND_RGBWWTABLE "RGBWWTable"
 #define D_CMND_ROTATION "Rotation"
