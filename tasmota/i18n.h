@@ -308,6 +308,8 @@
   #define D_JSON_BASE "BASE"
 #define D_CMND_TEMPOFFSET "TempOffset"
 #define D_CMND_HUMOFFSET "HumOffset"
+#define D_CMND_GLOBAL_TEMP "GlobalTemp"
+#define D_CMND_GLOBAL_HUM "GlobalHum"
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTLOG "MqttLog"
