@@ -131,12 +131,20 @@ const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 const char kLightCommands[] PROGMEM = "|"  // No prefix
   D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
   D_CMND_RGBWWTABLE "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
-  D_CMND_WHITE "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR "|UNDOCA" ;
+  D_CMND_WHITE "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR
+#ifdef USE_LIGHT_PALETTE
+  "|" D_CMND_PALETTE
+#endif  // USE_LIGHT_PALETTE
+   "|UNDOCA" ;
 
 void (* const LightCommand[])(void) PROGMEM = {
   &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndDimmerRange, &CmndLedTable, &CmndFade,
   &CmndRgbwwTable, &CmndScheme, &CmndSpeed, &CmndWakeup, &CmndWakeupDuration,
-  &CmndWhite, &CmndChannel, &CmndHsbColor, &CmndUndocA };
+  &CmndWhite, &CmndChannel, &CmndHsbColor,
+#ifdef USE_LIGHT_PALETTE
+  &CmndPalette,
+#endif  // USE_LIGHT_PALETTE
+  &CmndUndocA };
 
 // Light color mode, either RGB alone, or white-CT alone, or both only available if ct_rgb_linked is false
 enum LightColorModes {
@@ -276,6 +284,10 @@ struct LIGHT {
 #ifdef USE_DEVICE_GROUPS
   bool     devgrp_no_channels_out = false; // don't share channels with device group (e.g. if scheme set by other device)
 #endif  // USE_DEVICE_GROUPS
+#ifdef USE_LIGHT_PALETTE
+  uint8_t  palette_count = 0;            // palette entry count
+  uint8_t * palette;                     // dynamically allocated palette color array
+#endif  // USE_LIGHT_PALETTE
   uint16_t fade_start_10[LST_MAX] = {0,0,0,0,0};
   uint16_t fade_cur_10[LST_MAX];
   uint16_t fade_end_10[LST_MAX];         // 10 bits resolution target channel values
@@ -1625,12 +1637,44 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
   LightState(0);
 }
 
+#ifdef USE_LIGHT_PALETTE
+void LightSetPaletteEntry(void)
+{
+  uint8_t bri = light_state.getBri();
+  uint8_t * palette_entry = &Light.palette[Light.wheel * LST_MAX];
+  for (int i = 0; i < LST_MAX; i++) {
+    Light.new_color[i] = changeUIntScale(palette_entry[i], 0, 255, 0, bri);
+  }
+  light_state.setChannelsRaw(Light.new_color);
+  if (!Light.pwm_multi_channels) {
+    light_state.setCW(Light.new_color[3], Light.new_color[4], true);
+    if (Light.new_color[0] || Light.new_color[1] || Light.new_color[2]) light_state.addRGBMode();
+  }
+}
+#endif  // USE_LIGHT_PALETTE
+
 void LightCycleColor(int8_t direction)
 {
 //  if (Light.strip_timer_counter % (Settings.light_speed * 2)) { return; }  // Speed 1: 24sec, 2: 48sec, 3: 72sec, etc
   if (Settings.light_speed > 3) {
     if (Light.strip_timer_counter % (Settings.light_speed - 2)) { return; }  // Speed 4: 24sec, 5: 36sec, 6: 48sec, etc
   }
+
+#ifdef USE_LIGHT_PALETTE
+  if (Light.palette_count) {
+    if (0 == direction) {
+      Light.wheel = random(Light.palette_count);
+    }
+    else {
+      Light.wheel += direction;
+      if (Light.wheel >= Light.palette_count) {
+        Light.wheel = (direction < 0 ? Light.palette_count - 1 : 0);
+      }
+    }
+    LightSetPaletteEntry();
+    return;
+  }
+#endif  // USE_LIGHT_PALETTE
 
   if (0 == direction) {
     if (Light.random == Light.wheel) {
@@ -2187,7 +2231,13 @@ void LightHandleDevGroupItem(void)
       break;
     case DGR_ITEM_LIGHT_FIXED_COLOR:
       if (Light.subtype >= LST_RGBW) {
+#ifdef USE_LIGHT_PALETTE
+        value = value % (Light.palette_count ? Light.palette_count : MAX_FIXED_COLOR);
+        if (Light.palette_count || value) {
+#else // USE_LIGHT_PALETTE
+        value = value % MAX_FIXED_COLOR;
         if (value) {
+#endif  // !USE_LIGHT_PALETTE
           bool save_decimal_text = Settings.flag.decimal_text;
           char str[16];
           LightColorEntry(str, sprintf_P(str, PSTR("%u"), value));
@@ -2323,19 +2373,55 @@ void CmndSupportColor(void)
 {
   bool valid_entry = false;
   bool coldim = false;
+#ifdef USE_LIGHT_PALETTE
+  uint8_t * color_ptr;
+#endif  // USE_LIGHT_PALETTE
 
   if (XdrvMailbox.data_len > 0) {
-    valid_entry = LightColorEntry(XdrvMailbox.data, XdrvMailbox.data_len);
+#ifdef USE_LIGHT_PALETTE
+    if (Light.palette_count) {
+      if (XdrvMailbox.data_len == 1 && ('+' == XdrvMailbox.data[0] || '-' == XdrvMailbox.data[0])) {
+        int8_t direction = ('+' == XdrvMailbox.data[0] ? 1 : -1);
+        Light.wheel += direction;
+        if (Light.wheel >= Light.palette_count) {
+          Light.wheel = (direction < 0 ? Light.palette_count - 1 : 0);
+        }
+      }
+      else {
+        Light.wheel = (atoi(XdrvMailbox.data) - 1);
+      }
+      color_ptr = &Light.palette[Light.wheel * LST_MAX];
+      valid_entry = true;
+    }
+    else {
+      color_ptr = Light.entry_color;
+#endif  // USE_LIGHT_PALETTE
+      valid_entry = LightColorEntry(XdrvMailbox.data, XdrvMailbox.data_len);
+#ifdef USE_LIGHT_PALETTE
+    }
+#endif  // USE_LIGHT_PALETTE
     if (valid_entry) {
       if (XdrvMailbox.index <= 2) {    // Color(1), 2
-        uint32_t old_bri = light_state.getBri();
-        // change all channels to specified values
-        light_controller.changeChannels(Light.entry_color);
-        if (2 == XdrvMailbox.index) {
-          // If Color2, set back old brightness
-          light_controller.changeBri(old_bri);
+#ifdef USE_LIGHT_PALETTE
+        if (Light.palette_count && XdrvMailbox.index == 1) {
+          LightSetPaletteEntry();
         }
-
+        else {
+#endif  // USE_LIGHT_PALETTE
+          uint32_t old_bri = light_state.getBri();
+          // change all channels to specified values
+#ifdef USE_LIGHT_PALETTE
+          light_controller.changeChannels(color_ptr);
+#else  // USE_LIGHT_PALETTE
+          light_controller.changeChannels(Light.entry_color);
+#endif  // !USE_LIGHT_PALETTE
+          if (2 == XdrvMailbox.index) {
+            // If Color2, set back old brightness
+            light_controller.changeBri(old_bri);
+          }
+#ifdef USE_LIGHT_PALETTE
+        }
+#endif  // USE_LIGHT_PALETTE
         Settings.light_scheme = 0;
 #ifdef USE_DEVICE_GROUPS
         LightUpdateScheme();
@@ -2746,6 +2832,86 @@ void CmndWakeupDuration(void)
   }
   ResponseCmndNumber(Settings.light_wakeup);
 }
+
+#ifdef USE_LIGHT_PALETTE
+void CmndPalette(void)
+{
+  uint8_t * palette_entry;
+  char * color;
+  char * p;
+
+  // Palette Color[ ...]
+  if (XdrvMailbox.data_len) {
+    Light.wheel = 0;
+    if (Light.palette) {
+      free(Light.palette);
+      Light.palette = nullptr;
+      Light.palette_count = 0;
+    }
+    if (XdrvMailbox.data_len > 1 || XdrvMailbox.data[0] != '0') {
+      for (int pass = 0;; pass++) {
+        Light.palette_count = 0;
+        color = XdrvMailbox.data;
+        for (;;) {
+          p = strchr(color, ' ');
+          if (p) *p = 0;
+          color = Trim(color);
+          if (*color && LightColorEntry(color, strlen(color))) {
+            if (pass) {
+              memcpy(palette_entry, Light.entry_color, LST_MAX);
+              if (!Light.pwm_multi_channels && LST_COLDWARM == Light.subtype) {
+                palette_entry[3] = palette_entry[0];
+                palette_entry[4] = palette_entry[1];
+              }
+              palette_entry += LST_MAX;
+            }
+            Light.palette_count++;
+          }
+          if (!p) break;
+          *p = ' ';
+          color = p + 1;
+        }
+        if (pass) break;
+        if (!(Light.palette = (uint8_t *)malloc(Light.palette_count * LST_MAX))) return;
+        palette_entry = Light.palette;
+      }
+    }
+  }
+
+  char palette_str[5 * Light.subtype * Light.palette_count + 3];
+  const char * fmt;
+  p = palette_str;
+  *p++ = '[';
+  if (Light.palette_count) {
+    palette_entry = Light.palette;
+    if (Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
+      for (int entry = 0; entry < Light.palette_count; entry++) {
+        *p++ = '"';
+        for (uint32_t i = 0; i < Light.subtype; i++) {
+          if (i > 0) *p++ = ',';
+          p += sprintf_P(p, PSTR("%d"), palette_entry[i]);
+        }
+        palette_entry += LST_MAX;
+      }
+      *p++ = '"';
+      *p++ = ',';
+    }
+    else {
+      for (int entry = 0; entry < Light.palette_count; entry++) {
+        for (uint32_t i = 0; i < Light.subtype; i++) {
+          p += sprintf_P(p, PSTR("%02X"), palette_entry[i]);
+        }
+        palette_entry += LST_MAX;
+      }
+      *p++ = ',';
+    }
+    p--;
+  }
+  *p++ = ']';
+  *p = 0;
+  ResponseCmndChar(palette_str);
+}
+#endif  // USE_LIGHT_PALETTE
 
 void CmndUndocA(void)
 {

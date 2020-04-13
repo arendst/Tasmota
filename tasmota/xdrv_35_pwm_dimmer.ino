@@ -400,18 +400,10 @@ void PWMDimmerHandleButton(void)
                 else
 #endif  // USE_PWM_DIMMER_REMOTE
                   uint8_value = Light.fixed_color_index;
-                if (is_down_button) {
-                  if (uint8_value)
-                    uint8_value--;
-                  else
-                    uint8_value = MAX_FIXED_COLOR;
-                }
-                else {
-                  if (uint8_value < MAX_FIXED_COLOR)
-                    uint8_value++;
-                  else
-                    uint8_value = 0;
-                }
+                if (is_down_button)
+                  uint8_value--;
+                else
+                  uint8_value++;
 #ifdef USE_PWM_DIMMER_REMOTE
                 if (!active_device_is_local)
                   active_remote_pwm_dimmer->fixed_color_index = uint8_value;
