@@ -37,6 +37,7 @@
 \*********************************************************************************************/
 
 #ifdef USE_FLOG
+#ifdef ESP8266
 
 class FLOG
 
@@ -429,4 +430,5 @@ void FLOG::stopRecording(void){
   _initBuffer();
   }
 
+ #endif  // ESP8266
  #endif  // USE_FLOG
