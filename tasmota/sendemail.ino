@@ -174,12 +174,17 @@ exit:
   return status;
 }
 
+#ifdef ESP8266
 void script_send_email_body(BearSSL::WiFiClientSecure_light *client);
-
-
 SendEmail::SendEmail(const String& host, const int port, const String& user, const String& passwd, const int timeout, const int auth_used) :
     host(host), port(port), user(user), passwd(passwd), timeout(timeout), ssl(ssl), auth_used(auth_used), client(new BearSSL::WiFiClientSecure_light(1024,1024)) {
 }
+#else
+void script_send_email_body(WiFiClient *client);
+SendEmail::SendEmail(const String& host, const int port, const String& user, const String& passwd, const int timeout, const int auth_used) :
+    host(host), port(port), user(user), passwd(passwd), timeout(timeout), ssl(ssl), auth_used(auth_used), client(new WiFiClientSecure()) {
+}
+#endif
 
 String SendEmail::readClient() {
   delay(0);
