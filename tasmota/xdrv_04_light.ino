@@ -293,6 +293,9 @@ struct LIGHT {
   uint16_t fade_end_10[LST_MAX];         // 10 bits resolution target channel values
   uint16_t fade_duration = 0;            // duration of fade in milliseconds
   uint32_t fade_start = 0;               // fade start time in milliseconds, compared to millis()
+
+  uint16_t pwm_min = 0;                  // minimum value for PWM, from DimmerRange, 0..1023
+  uint16_t pwm_max = 1023;               // maxumum value for PWM, from DimmerRange, 0..1023
 } Light;
 
 power_t LightPower(void)
@@ -1270,6 +1273,25 @@ bool LightModuleInit(void)
   return (light_type > LT_BASIC);
 }
 
+// compute actual PWM min/max values from DimmerRange
+// must be called when DimmerRange is changed or LedTable
+void LightCalcPWMRange(void) {
+  uint16_t pwm_min, pwm_max;
+
+  pwm_min = change8to10(LightStateClass::DimmerToBri(Settings.dimmer_hw_min));   // default 0
+  pwm_max = change8to10(LightStateClass::DimmerToBri(Settings.dimmer_hw_max));   // default 100
+  if (Settings.light_correction) {
+    pwm_min = ledGamma10_10(pwm_min);       // apply gamma correction
+    pwm_max = ledGamma10_10(pwm_max);       // 0..1023
+  }
+  pwm_min = pwm_min > 0 ? changeUIntScale(pwm_min, 1, 1023, 1, Settings.pwm_range) : 0;  // adapt range but keep zero and non-zero values
+  pwm_max = changeUIntScale(pwm_max, 1, 1023, 1, Settings.pwm_range);  // pwm_max cannot be zero
+
+  Light.pwm_min = pwm_min;
+  Light.pwm_max = pwm_max;
+  //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("LightCalcPWMRange %d %d - %d %d"), Settings.dimmer_hw_min, Settings.dimmer_hw_max, Light.pwm_min, Light.pwm_max);
+}
+
 void LightInit(void)
 {
   Light.device = devices_present;
@@ -1291,6 +1313,7 @@ void LightInit(void)
     // if RGBW or RGBCW, and SetOption37 >= 128, we manage RGB and W separately
     Light.device--;   // we take the last two devices as lights
   }
+  LightCalcPWMRange();
 #ifdef DEBUG_LIGHT
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightInit Light.pwm_multi_channels=%d Light.subtype=%d Light.device=%d devices_present=%d",
     Light.pwm_multi_channels, Light.subtype, Light.device, devices_present);
@@ -1904,13 +1927,9 @@ void LightAnimate(void)
       }
 
       // final adjusments for PMW, post-gamma correction
-      uint16_t min = 1;
-#ifdef USE_PWM_DIMMER
-      if (PWM_DIMMER == my_module_type) min = Settings.dimmer_hw_min;
-#endif  // USE_PWM_DIMMER
       for (uint32_t i = 0; i < LST_MAX; i++) {
         // scale from 0..1023 to 0..pwm_range, but keep any non-zero value to at least 1
-        cur_col_10[i] = (cur_col_10[i] > 0) ? changeUIntScale(cur_col_10[i], 1, 1023, min, Settings.pwm_range) : 0;
+        cur_col_10[i] = (cur_col_10[i] > 0) ? changeUIntScale(cur_col_10[i], 1, 1023, 1, Settings.pwm_range) : 0;
       }
 
       // apply port remapping on both 8 bits and 10 bits versions
@@ -2085,7 +2104,9 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
     for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
       if (pin[GPIO_PWM1 +i] < 99) {
         //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d"), i, cur_col_10[i]);
-        analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - cur_col_10[(i + Light.pwm_offset)] : cur_col_10[(i + Light.pwm_offset)]);
+        uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
+        cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings.pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
+        analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - cur_col : cur_col);
       }
     }
   }
@@ -2742,9 +2763,8 @@ void CmndDimmerRange(void)
       Settings.dimmer_hw_min = parm[1];
       Settings.dimmer_hw_max = parm[0];
     }
-#ifdef ESP8266
-    if (PWM_DIMMER != my_module_type) restart_flag = 2;
-#endif  // ESP8266
+    LightCalcPWMRange();
+    Light.update = true;
   }
   Response_P(PSTR("{\"" D_CMND_DIMMER_RANGE "\":{\"Min\":%d,\"Max\":%d}}"), Settings.dimmer_hw_min, Settings.dimmer_hw_max);
 }
@@ -2765,6 +2785,7 @@ void CmndLedTable(void)
       Settings.light_correction ^= 1;
       break;
     }
+    LightCalcPWMRange();
     Light.update = true;
   }
   ResponseCmndStateText(Settings.light_correction);
