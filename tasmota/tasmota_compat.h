@@ -6,7 +6,7 @@
 // Modul
 #undef MODULE
 #define MODULE WEMOS // [Module] Select default model
-#endif
+#endif  // ESP32
 
 #ifdef ESP8266
 // ESP8266
@@ -17,6 +17,9 @@
 #define ESP_reset() ESP.reset()
 #define ESP_getBootVersion() ESP.getBootVersion()
 #define ESP_getFlashChipId() ESP.getFlashChipId()
+#define ESP_getFlashChipRealSize() ESP.getFlashChipRealSize()
+#define ESP_getSketchSize() ESP.getSketchSize()
+#define ESP_getChipId() ESP.getChipId()
 //
 // we need different ESP_flashRead for ESP32
 //
@@ -28,4 +31,4 @@
 //
 // Serial minimal type to hold the config
 #define SerConfu8 uint8_t
-#endif // ESP32
+#endif  // ESP8266

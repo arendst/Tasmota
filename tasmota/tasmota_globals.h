@@ -117,8 +117,19 @@ extern "C" void resetPins();
 #define MESSZ                       (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string
 #endif
 
+#ifdef ESP8266
 #ifndef ARDUINO_ESP8266_RELEASE
-#define ARDUINO_ESP8266_RELEASE     "STAGE"
+#define ARDUINO_CORE_RELEASE        "STAGE"
+#else
+#define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE
+#endif
+#endif
+#ifdef ESP32
+#ifndef ARDUINO_ESP32_RELEASE
+#define ARDUINO_CORE_RELEASE        "STAGE"
+#else
+#define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
+#endif
 #endif
 
 #ifdef USE_PWM_DIMMER_REMOTE

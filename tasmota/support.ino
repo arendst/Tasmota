@@ -562,6 +562,7 @@ char* GetPowerDevice(char* dest, uint32_t idx, size_t size)
 
 void GetEspHardwareType(void)
 {
+#ifdef ESP8266
   // esptool.py get_efuses
   uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
   uint32_t efuse2 = *(uint32_t*)(0x3FF00054);
@@ -572,16 +573,23 @@ void GetEspHardwareType(void)
   if (is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
     is_8285 = false;  // ESP8285 can only have 1M flash
   }
+#else
+  is_8285 = false;    // ESP8285 can only have 1M flash
+#endif
 }
 
 String GetDeviceHardware(void)
 {
   char buff[10];
+#ifdef ESP8266
   if (is_8285) {
     strcpy_P(buff, PSTR("ESP8285"));
   } else {
     strcpy_P(buff, PSTR("ESP8266EX"));
   }
+#else
+  strcpy_P(buff, PSTR("ESP32"));
+#endif
   return String(buff);
 }
 

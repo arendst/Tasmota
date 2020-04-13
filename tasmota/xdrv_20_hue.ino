@@ -192,7 +192,7 @@ String GetHueUserId(void)
 {
   char userid[7];
 
-  snprintf_P(userid, sizeof(userid), PSTR("%03x"), ESP.getChipId());
+  snprintf_P(userid, sizeof(userid), PSTR("%03x"), ESP_getChipId());
   return String(userid);
 }
 
@@ -786,7 +786,7 @@ void HueGroups(String *path)
   String response = "{}";
   uint8_t maxhue = (devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : devices_present;
   //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups (%s)"), path->c_str());
-  
+
   if (path->endsWith("/0")) {
     response = FPSTR(HUE_GROUP0_STATUS_JSON);
     String lights = F("\"1\"");
@@ -795,7 +795,7 @@ void HueGroups(String *path)
       lights += EncodeLightId(i);
       lights += "\"";
     }
-    
+
 #ifdef USE_ZIGBEE
     ZigbeeHueGroups(&response);
 #endif // USE_ZIGBEE

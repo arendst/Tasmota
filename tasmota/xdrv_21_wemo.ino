@@ -42,7 +42,7 @@ String WemoSerialnumber(void)
 {
   char serial[16];
 
-  snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP.getChipId());
+  snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP_getChipId());
   return String(serial);
 }
 
