@@ -1299,6 +1299,7 @@ void LightInit(void)
   light_controller.setSubType(Light.subtype);
   light_controller.loadSettings();
   light_controller.setAlexaCTRange(Settings.flag4.alexa_ct_range);
+  light_controller.calcLevels();    // calculate the initial values (#8058)
 
   if (LST_SINGLE == Light.subtype) {
     Settings.light_color[0] = 255;      // One channel only supports Dimmer but needs max color
@@ -1465,7 +1466,9 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
 // convert channels to string, use Option 17 to foce decimal, unless force_hex
 char* LightGetColor(char* scolor, boolean force_hex = false)
 {
-  light_controller.calcLevels();
+  if ((0 == Settings.light_scheme) || (!Light.pwm_multi_channels)) {
+    light_controller.calcLevels();      // recalculate levels only if Scheme 0, otherwise we mess up levels
+  }
   scolor[0] = '\0';
   for (uint32_t i = 0; i < Light.subtype; i++) {
     if (!force_hex && Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
@@ -1698,9 +1701,14 @@ void LightCycleColor(int8_t direction)
 
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
 
+  if (!Light.pwm_multi_channels) {
   uint8_t sat;
   light_state.getHSB(nullptr, &sat, nullptr);  // Allow user control over Saturation
   light_state.setHS(hue, sat);
+  } else {
+    light_state.setHS(hue, 255);
+    light_state.setBri(255);        // If multi-channel, force bri to max, it will be later dimmed to correct value
+  }
   light_controller.calcLevels(Light.new_color);
 }
 
@@ -1808,13 +1816,20 @@ void LightAnimate(void)
         }
         break;
       case LS_CYCLEUP:
-        LightCycleColor(1);
-        break;
       case LS_CYCLEDN:
-        LightCycleColor(-1);
-        break;
       case LS_RANDOM:
-        LightCycleColor(0);
+        if (LS_CYCLEUP == Settings.light_scheme) {
+          LightCycleColor(1);
+        } else if (LS_CYCLEDN == Settings.light_scheme) {
+          LightCycleColor(-1);
+        } else {
+          LightCycleColor(0);
+        }
+        if (Light.pwm_multi_channels) {     // See #8058
+          Light.new_color[0] = changeUIntScale(Light.new_color[0], 0, 255, 0, Settings.light_color[0]);
+          Light.new_color[1] = changeUIntScale(Light.new_color[1], 0, 255, 0, Settings.light_color[1]);
+          Light.new_color[2] = changeUIntScale(Light.new_color[2], 0, 255, 0, Settings.light_color[2]);
+        }
         break;
       default:
         XlgtCall(FUNC_SET_SCHEME);
