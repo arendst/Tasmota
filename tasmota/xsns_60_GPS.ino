@@ -18,6 +18,10 @@
 */
 
 #ifdef USE_GPS
+#if defined(ESP32) && defined(USE_FLOG)
+  #undef USE_FLOG
+  #warning FLOG deactivated on ESP32
+#endif //ESP32
 /*********************************************************************************************\
   --------------------------------------------------------------------------------------------
   Version Date      Action    Description
@@ -114,6 +118,10 @@ rule3 on tele-FLOG#sec do DisplayText  [f0c1l4]SAV:%value%  endon on tele-FLOG#r
 
 #include "NTPServer.h"
 #include "NTPPacket.h"
+
+#ifdef ESP32
+#include <HardwareSerial.h>
+#endif
 
 /*********************************************************************************************\
  * constants
@@ -291,7 +299,11 @@ enum UBXMsgType {
 #ifdef USE_FLOG
 FLOG *Flog = nullptr;
 #endif //USE_FLOG
+#ifdef ESP8266
 TasmotaSerial *UBXSerial;
+#else
+HardwareSerial *UBXSerial;
+#endif
 
 NtpServer timeServer(PortUdp);
 
@@ -351,13 +363,21 @@ void UBXDetect(void)
 {
   UBX.mode.init = 0;
   if ((pin[GPIO_GPS_RX] < 99) && (pin[GPIO_GPS_TX] < 99)) {
+#ifdef ESP8266
     UBXSerial = new TasmotaSerial(pin[GPIO_GPS_RX], pin[GPIO_GPS_TX], 1, 0, UBX_SERIAL_BUFFER_SIZE); // 64 byte buffer is NOT enough
     if (UBXSerial->begin(9600)) {
+#else
+    UBXSerial = new HardwareSerial(2);
+    UBXSerial->begin(9600,SERIAL_8N1,pin[GPIO_GPS_RX], pin[GPIO_GPS_TX]);
+    {
+#endif
       DEBUG_SENSOR_LOG(PSTR("UBX: started serial"));
+#ifdef ESP8266
       if (UBXSerial->hardwareSerial()) {
         ClaimSerial();
         DEBUG_SENSOR_LOG(PSTR("UBX: claim HW"));
       }
+#endif
     }
   }
   else {
