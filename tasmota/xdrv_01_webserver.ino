@@ -261,15 +261,22 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
     "as=o.shift();"                       // Complete ADC0 list
     "g=o.shift().split(',');"             // Array separator
     "j=0;"
-    "for(i=0;i<13;i++){"                  // Supports 13 GPIOs
+//    "for(i=0;i<13;i++){"                  // Supports 13 GPIOs
+    "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Supports 13 GPIOs
+#ifdef ESP8266
       "if(6==i){j=9;}"
       "if(8==i){j=12;}"
+#endif
+#ifdef ESP32
+      "if(6==i){j=12;}"
+#endif
       "sk(g[i],j);"                       // Set GPIO
       "j++;"
     "}"
     "g=o.shift();"                        // FLAG
     "os=as;"
-    "sk(g&15,17);"                        // Set ADC0
+//    "sk(g&15,17);"                        // Set ADC0
+    "sk(g&15," STR(ADC0_PIN) ");"         // Set ADC0
     "g>>=4;"
     "for(i=0;i<" STR(GPIO_FLAG_USED) ";i++){"
       "p=(g>>i)&1;"
@@ -288,7 +295,8 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
 
   "function x2(a){"
     "os=a.responseText;"
-    "sk(17,99);"                          // 17 = WEMOS
+//    "sk(17,99);"                          // 17 = WEMOS
+    "sk(" STR(WEMOS_MODULE) ",99);"       // 17 = WEMOS
     "st(" STR(USER_MODULE) ");"
   "}"
 
@@ -313,12 +321,14 @@ const char HTTP_SCRIPT_MODULE2[] PROGMEM =
   "}"
   "function x3(a){"                       // ADC0
     "os=a.responseText;"
-    "sk(%d,17);"
+//    "sk(%d,17);"
+    "sk(%d," STR(ADC0_PIN) ");"
   "}"
   "function sl(){"
     "ld('md?m=1',x1);"                    // ?m related to WebServer->hasArg("m")
     "ld('md?g=1',x2);"                    // ?g related to WebServer->hasArg("g")
-    "if(eb('g17')){"
+//    "if(eb('g17')){"
+    "if(eb('g" STR(ADC0_PIN) "')){"
       "ld('md?a=1',x3);"                  // ?a related to WebServer->hasArg("a")
     "}"
   "}"
@@ -1467,7 +1477,8 @@ void HandleTemplateConfiguration(void)
     WSContentSend_P(PSTR("}1"));                                   // Field separator
 
     for (uint32_t i = 0; i < sizeof(cmodule); i++) {         // 17,148,29,149,7,255,255,255,138,255,139,255,255
-      if ((i < 6) || ((i > 8) && (i != 11))) {              // Ignore flash pins GPIO06, 7, 8 and 11
+//      if ((i < 6) || ((i > 8) && (i != 11))) {              // Ignore flash pins GPIO06, 7, 8 and 11
+      if (!FlashPin(i)) {
         WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", cmodule.io[i]);
       }
     }
@@ -1489,13 +1500,16 @@ void HandleTemplateConfiguration(void)
                        "</table>"
                        "<hr/>"));
   WSContentSend_P(HTTP_TABLE100);
-  for (uint32_t i = 0; i < 17; i++) {
-    if ((i < 6) || ((i > 8) && (i != 11))) {                // Ignore flash pins GPIO06, 7, 8 and 11
+  for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
+//    if ((i < 6) || ((i > 8) && (i != 11))) {                // Ignore flash pins GPIO06, 7, 8 and 11
+    if (!FlashPin(i)) {
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d'></select></td></tr>"),
         ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:200px'" : "", i);
     }
   }
+#ifdef ESP8266
   WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_ADC "0</font></b></td><td><select id='g17'></select></td></tr>"), WebColor(COL_TEXT));
+#endif
   WSContentSend_P(PSTR("</table>"));
   gpio_flag flag = ModuleFlag();
   if (flag.data > ADC0_USER) {
@@ -1510,15 +1524,20 @@ void TemplateSaveSettings(void)
 {
   char tmp[TOPSZ];                                          // WebGetArg NAME and GPIO/BASE/FLAG byte value
   char webindex[5];                                         // WebGetArg name
-  char svalue[200];                                         // Template command string
+  char svalue[300];                                         // Template command string
 
   WebGetArg("s1", tmp, sizeof(tmp));                        // NAME
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
 
   uint32_t j = 0;
   for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+#ifdef ESP8266
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
+#endif  // ESP8266
+#ifdef ESP32
+    if (6 == i) { j = 12; }
+#endif  // ESP32
     snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), j);
     WebGetArg(webindex, tmp, sizeof(tmp));                  // GPIO
     uint8_t gpio = atoi(tmp);
@@ -1526,7 +1545,8 @@ void TemplateSaveSettings(void)
     j++;
   }
 
-  WebGetArg("g17", tmp, sizeof(tmp));                       // FLAG - ADC0
+//  WebGetArg("g17", tmp, sizeof(tmp));                       // FLAG - ADC0
+  WebGetArg("g" STR(ADC0_PIN), tmp, sizeof(tmp));           // FLAG - ADC0
   uint32_t flag = atoi(tmp);
   for (uint32_t i = 0; i < GPIO_FLAG_USED; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("c%d"), i);
@@ -1656,7 +1676,8 @@ void ModuleSaveSettings(void)
     }
   }
 #ifndef USE_ADC_VCC
-  WebGetArg("g17", tmp, sizeof(tmp));
+//  WebGetArg("g17", tmp, sizeof(tmp));
+  WebGetArg("g" STR(ADC0_PIN), tmp, sizeof(tmp));
   Settings.my_adc0 = (!strlen(tmp)) ? 0 : atoi(tmp);
   gpios += F(", " D_ADC "0 "); gpios += String(Settings.my_adc0);
 #endif  // USE_ADC_VCC
