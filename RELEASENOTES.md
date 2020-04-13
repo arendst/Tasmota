@@ -69,6 +69,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add Zigbee command ``ZbConfig`` and configuration in Settings
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
 - Add commands ``NrfPage``, ``NrfIgnore``, ``NrfScan`` and ``NrfBeacon`` to NRF24 Bluetooth driver (#8075)
+- Add commands ``GlobalTemp`` and ``GlobalHum`` to init sensor data (#8152)
 - Add command ``SetOption41 <x>`` to force sending gratuitous ARP every <x> seconds
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
 - Add command ``SetOption91 1`` to enable fading at startup / power on
