@@ -731,6 +731,7 @@ void SettingsDefaultSet2(void)
   Settings.flag3.use_wifi_scan = WIFI_SCAN_AT_RESTART;
   Settings.flag3.use_wifi_rescan = WIFI_SCAN_REGULARLY;
   Settings.wifi_output_power = 170;
+  Settings.param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
   ParseIp(&Settings.ip_address[0], WIFI_IP_ADDRESS);
   ParseIp(&Settings.ip_address[1], WIFI_GATEWAY);
   ParseIp(&Settings.ip_address[2], WIFI_SUBNETMASK);
