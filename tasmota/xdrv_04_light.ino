@@ -1819,11 +1819,11 @@ void LightAnimate(void)
       case LS_CYCLEDN:
       case LS_RANDOM:
         if (LS_CYCLEUP == Settings.light_scheme) {
-        LightCycleColor(1);
+          LightCycleColor(1);
         } else if (LS_CYCLEDN == Settings.light_scheme) {
-        LightCycleColor(-1);
+          LightCycleColor(-1);
         } else {
-        LightCycleColor(0);
+          LightCycleColor(0);
         }
         if (Light.pwm_multi_channels) {     // See #8058
           Light.new_color[0] = changeUIntScale(Light.new_color[0], 0, 255, 0, Settings.light_color[0]);
