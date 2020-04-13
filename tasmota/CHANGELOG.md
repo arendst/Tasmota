@@ -31,6 +31,7 @@
 - Add support for AS3935 Lightning Sensor by device111 (#8130)
 - Fix prevent multiple pings to run concurrently
 - Fix Scheme 2-4 brightness when SetOption68 1 (#8058)
+- Add ``DimmerRange`` for PWM lights (#8120)
 
 ### 8.2.0.2 20200328
 
