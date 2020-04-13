@@ -591,7 +591,7 @@ void CmndGlobalHum(void)
 {
   if (XdrvMailbox.data_len > 0) {
     int value = (int)(CharToFloat(XdrvMailbox.data) * 10);
-    if ((value > -10) && (value < 999)) {
+    if ((value > 9) && (value < 999)) {
       ConvertHumidity(value);
     }
   }
