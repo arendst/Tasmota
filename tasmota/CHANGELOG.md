@@ -22,6 +22,7 @@
 - Add command ``DevGroupName`` to specify up to four Device Group Names (#8087)
 - Add command ``DevGroupSend`` to send an update to a Device Group (#8093)
 - Add command ``Ping`` (#7176)
+- Add command ``Palette`` to add the ability to specify a palette of colors (#8150)
 - Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
 - Add more accuracy to GPS NTP server (#8088)
 - Add support for an iAQ sensor (#8107)
