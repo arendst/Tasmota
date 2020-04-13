@@ -22,7 +22,7 @@
 
 #include "my_user_config.h"
 //#ifdef USE_MQTT_TLS
-#if defined(USE_MQTT_TLS) || defined (USE_SENDMAIL)
+#if defined ESP8266 && (defined(USE_MQTT_TLS) || defined (USE_SENDMAIL))
 
 //#define DEBUG_TLS
 

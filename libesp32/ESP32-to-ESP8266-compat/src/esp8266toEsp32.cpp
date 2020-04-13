@@ -34,9 +34,9 @@ String ESP_getResetInfo(void)
 	return String(PSTR("0"));
 }
 
-String ESP_getBootVersion(void)
+uint32_t ESP_getBootVersion(void)
 {
-	return String(PSTR("Unknown"));
+	return 1;
 }
 
 bool ESP_rtcUserMemoryWrite(uint32_t offset, uint32_t *data, size_t size)
@@ -59,15 +59,32 @@ uint32_t ESP_getFlashChipId()
 	return 0;
 }
 
+uint32_t ESP_getChipId()
+{
+  uint32_t id = 0;
+  for (uint32_t i = 0; i < 17; i = i +8) {
+    id |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+  }
+  return id;
+}
+
 String String_ESP_getChipId()
 {
 	uint64_t mac = ESP.getEfuseMac();
 	return String(uint32_t(mac >> 32)) + String(uint32_t(mac));
 }
 
-/*
-uint64_t ESP_getChipId() 
+uint32_t ESP_getFlashChipRealSize()
 {
-	return ESP.getEfuseMac();
+	return ESP.getFlashChipSize();
 }
-*/
+
+uint32_t ESP_getSketchSize(void)
+{
+  static uint32_t sketchsize = 0;
+
+  if (!sketchsize) {
+    sketchsize = ESP.getSketchSize();  // This takes almost 2 seconds on an ESP32
+  }
+  return sketchsize;
+}

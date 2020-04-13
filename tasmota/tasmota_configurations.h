@@ -70,6 +70,7 @@
 #define USE_SM2135                               // Add support for SM2135 RGBCW led control as used in Action LSC (+0k6 code)
 #define USE_SONOFF_L1                            // Add support for Sonoff L1 led control
 #define USE_ELECTRIQ_MOODL                       // Add support for ElectriQ iQ-wifiMOODL RGBW LED controller
+#define USE_LIGHT_PALETTE                        // Add support for color palette (+0k9 code)
 
 #define USE_COUNTER                              // Enable counters
 #undef USE_ADC_VCC                               // Add Analog input on selected devices
@@ -332,7 +333,8 @@
 #undef USE_SM16716                               // Disable support for SM16716 RGB LED controller (+0k7 code)
 #undef USE_SM2135                                // Disable support for SM2135 RGBCW led control as used in Action LSC (+0k6 code)
 #undef USE_SONOFF_L1                             // Disable support for Sonoff L1 led control
-#undef USE_ELECTRIQ_MOODL                        // Add support for ElectriQ iQ-wifiMOODL RGBW LED controller
+#undef USE_ELECTRIQ_MOODL                        // Disable support for ElectriQ iQ-wifiMOODL RGBW LED controller
+#undef USE_LIGHT_PALETTE                         // Disable support for color palette (+0k9 code)
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors (-14k code)
   #undef USE_PZEM004T                            // Disable PZEM004T energy sensor
@@ -444,7 +446,8 @@
 #undef USE_SM16716                               // Disable support for SM16716 RGB LED controller (+0k7 code)
 #undef USE_SM2135                                // Disable support for SM2135 RGBCW led control as used in Action LSC (+0k6 code)
 #undef USE_SONOFF_L1                             // Disable support for Sonoff L1 led control
-#undef USE_ELECTRIQ_MOODL                        // Add support for ElectriQ iQ-wifiMOODL RGBW LED controller
+#undef USE_ELECTRIQ_MOODL                        // Disable support for ElectriQ iQ-wifiMOODL RGBW LED controller
+#undef USE_LIGHT_PALETTE                         // Disable support for color palette (+0k9 code)
 
 #undef USE_COUNTER                               // Disable counters
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
@@ -563,7 +566,8 @@
 #undef USE_SM16716                               // Disable support for SM16716 RGB LED controller (+0k7 code)
 #undef USE_SM2135                                // Disable support for SM2135 RGBCW led control as used in Action LSC (+0k6 code)
 #undef USE_SONOFF_L1                             // Disable support for Sonoff L1 led control
-#undef USE_ELECTRIQ_MOODL                        // Add support for ElectriQ iQ-wifiMOODL RGBW LED controller
+#undef USE_ELECTRIQ_MOODL                        // Disable support for ElectriQ iQ-wifiMOODL RGBW LED controller
+#undef USE_LIGHT_PALETTE                         // Disable support for color palette (+0k9 code)
 
 #undef USE_COUNTER                               // Disable counters
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices

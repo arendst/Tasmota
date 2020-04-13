@@ -39,14 +39,14 @@ char* Format(char* output, const char* input, int size)
         char tmp[size];
         if (strchr(token, 'd')) {
           snprintf_P(tmp, size, PSTR("%s%c0%dd"), output, '%', digits);
-          snprintf_P(output, size, tmp, ESP.getChipId() & 0x1fff);            // %04d - short chip ID in dec, like in hostname
+          snprintf_P(output, size, tmp, ESP_getChipId() & 0x1fff);            // %04d - short chip ID in dec, like in hostname
         } else {
           snprintf_P(tmp, size, PSTR("%s%c0%dX"), output, '%', digits);
-          snprintf_P(output, size, tmp, ESP.getChipId());                   // %06X - full chip ID in hex
+          snprintf_P(output, size, tmp, ESP_getChipId());                   // %06X - full chip ID in hex
         }
       } else {
         if (strchr(token, 'd')) {
-          snprintf_P(output, size, PSTR("%s%d"), output, ESP.getChipId());  // %d - full chip ID in dec
+          snprintf_P(output, size, PSTR("%s%d"), output, ESP_getChipId());  // %d - full chip ID in dec
           digits = 8;
         }
       }
@@ -61,10 +61,10 @@ char* Format(char* output, const char* input, int size)
 char* GetOtaUrl(char *otaurl, size_t otaurl_size)
 {
   if (strstr(SettingsText(SET_OTAURL), "%04d") != nullptr) {     // OTA url contains placeholder for chip ID
-    snprintf(otaurl, otaurl_size, SettingsText(SET_OTAURL), ESP.getChipId() & 0x1fff);
+    snprintf(otaurl, otaurl_size, SettingsText(SET_OTAURL), ESP_getChipId() & 0x1fff);
   }
   else if (strstr(SettingsText(SET_OTAURL), "%d") != nullptr) {  // OTA url contains placeholder for chip ID
-    snprintf_P(otaurl, otaurl_size, SettingsText(SET_OTAURL), ESP.getChipId());
+    snprintf_P(otaurl, otaurl_size, SettingsText(SET_OTAURL), ESP_getChipId());
   }
   else {
     strlcpy(otaurl, SettingsText(SET_OTAURL), otaurl_size);
@@ -824,6 +824,13 @@ void PerformEverySecond(void)
   // Wifi keep alive to send Gratuitous ARP
   wifiKeepAlive();
 #endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+
+
+#ifdef ESP32
+  if (11 == uptime) {      // Perform one-time ESP32 houskeeping
+    ESP_getSketchSize();   // Init sketchsize as it can take up to 2 seconds
+  }
+#endif
 }
 
 /*-------------------------------------------------------------------------------------------*\

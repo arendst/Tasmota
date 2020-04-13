@@ -69,6 +69,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add Zigbee command ``ZbConfig`` and configuration in Settings
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
 - Add commands ``NrfPage``, ``NrfIgnore``, ``NrfScan`` and ``NrfBeacon`` to NRF24 Bluetooth driver (#8075)
+- Add commands ``GlobalTemp`` and ``GlobalHum`` to init sensor data (#8152)
 - Add command ``SetOption41 <x>`` to force sending gratuitous ARP every <x> seconds
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
 - Add command ``SetOption91 1`` to enable fading at startup / power on
@@ -78,6 +79,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``DevGroupName`` to specify up to four Device Group Names (#8087)
 - Add command ``DevGroupSend`` to send an update to a Device Group (#8093)
 - Add command ``Ping`` (#7176)
+- Add command ``Palette`` to add the ability to specify a palette of colors (#8150)
 - Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
 - Add support for 64x48 SSD1306 OLED (#6740)
 - Add support for Seven Segment display using HT16K33 (#8116)
