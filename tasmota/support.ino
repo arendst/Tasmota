@@ -1276,7 +1276,11 @@ bool JsonTemplate(const char* dataBuf)
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
 
-  StaticJsonBuffer<600> jb;  // 331 from https://arduinojson.org/v5/assistant/
+#ifdef ESP8266
+  StaticJsonBuffer<400> jb;  // 331 from https://arduinojson.org/v5/assistant/
+#else
+  StaticJsonBuffer<800> jb;  // 654 from https://arduinojson.org/v5/assistant/
+#endif
   JsonObject& obj = jb.parseObject(dataBuf);
   if (!obj.success()) { return false; }
 
