@@ -56,6 +56,7 @@
 
 #define APDS9960_CHIPID_1         0xAB
 #define APDS9960_CHIPID_2         0x9C
+#define APDS9960_CHIPID_3         0xA8
 
 #define APDS9930_CHIPID_1         0x12  // we will check, if someone got an incorrect sensor
 #define APDS9930_CHIPID_2         0x39  // there are case reports about "accidentially bought" 9930's
@@ -1884,7 +1885,7 @@ void APDS9960_detect(void)
   if (APDS9960type || I2cActive(APDS9960_I2C_ADDR)) { return; }
 
   APDS9960type = I2cRead8(APDS9960_I2C_ADDR, APDS9960_ID);
-  if (APDS9960type == APDS9960_CHIPID_1 || APDS9960type == APDS9960_CHIPID_2) {
+  if (APDS9960type == APDS9960_CHIPID_1 || APDS9960type == APDS9960_CHIPID_2 || APDS9960type == APDS9960_CHIPID_3) {
     if (APDS9960_init()) {
       I2cSetActiveFound(APDS9960_I2C_ADDR, APDS9960stype);
 
