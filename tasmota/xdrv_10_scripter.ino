@@ -65,6 +65,31 @@ keywords if then else endif, or, and are better readable for beginners (others m
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
 
+#ifdef ESP32
+
+#include "FS.h"
+#include "SPIFFS.h"
+void SaveFile(char *name,const uint8_t *buf,uint32_t len) {
+  File file = SPIFFS.open(name, FILE_WRITE);
+  if (!file) return;
+  file.write(buf, len);
+  file.close();
+}
+
+#define FORMAT_SPIFFS_IF_FAILED true
+
+void LoadFile(char *name,uint8_t *buf,uint32_t len) {
+
+  if(!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)){
+      return;
+  }
+  File file = SPIFFS.open(name);
+  if (!file) return;
+  file.read(buf, len);
+  file.close();
+}
+#endif
+
 // offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
 #define EPOCH_OFFSET 1546300800
 
@@ -3597,6 +3622,15 @@ void ScriptSaveSettings(void) {
     }
 #endif
 
+#ifndef ESP32_SCRIPT_SIZE
+#define ESP32_SCRIPT_SIZE 8192
+#endif
+
+#if defined(ESP32) && !defined(USE_24C256) && !defined(USE_SCRIPT_FATFS)
+    if (glob_script_mem.flags&1) {
+      SaveFile("/script.txt",(uint8_t*)glob_script_mem.script_ram,ESP32_SCRIPT_SIZE);
+    }
+#endif
   }
 
   if (glob_script_mem.script_mem) {
@@ -4820,6 +4854,7 @@ bool Xdrv10(uint8_t function)
 
   switch (function) {
     case FUNC_PRE_INIT:
+      //webcam_setup();
       // set defaults to rules memory
       glob_script_mem.script_ram=Settings.rules[0];
       glob_script_mem.script_size=MAX_SCRIPT_SIZE;
@@ -4887,6 +4922,21 @@ bool Xdrv10(uint8_t function)
       } else {
         glob_script_mem.script_sd_found=0;
       }
+#endif
+
+
+#if defined(ESP32) && !defined(USE_24C256) && !defined(USE_SCRIPT_FATFS)
+    char *script;
+    script=(char*)calloc(ESP32_SCRIPT_SIZE+4,1);
+    if (!script) break;
+    LoadFile("/script.txt",(uint8_t*)script,ESP32_SCRIPT_SIZE);
+    glob_script_mem.script_ram=script;
+    glob_script_mem.script_size=ESP32_SCRIPT_SIZE;
+    script[ESP32_SCRIPT_SIZE-1]=0;
+    // use rules storage for permanent vars
+    glob_script_mem.script_pram=(uint8_t*)Settings.rules[0];
+    glob_script_mem.script_pram_size=MAX_SCRIPT_SIZE;
+    glob_script_mem.flags=1;
 #endif
 
       // assure permanent memory is 4 byte aligned
