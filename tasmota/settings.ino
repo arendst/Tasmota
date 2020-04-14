@@ -1243,7 +1243,7 @@ void SettingsDelta(void)
       Settings.ex_serial_config = TS_SERIAL_8N1;
     }
     if (Settings.version < 0x07010204) {
-      if (Settings.flag3.ex_cors_enabled == 1) {
+      if (Settings.flag3.mqtt_buttons == 1) {
         strlcpy(Settings.ex_cors_domain, CORS_ENABLED_ALL, sizeof(Settings.ex_cors_domain));
       } else {
         Settings.ex_cors_domain[0] = 0;

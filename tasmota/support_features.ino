@@ -55,15 +55,15 @@ void GetFeatures(void)
 #ifdef USE_EMULATION_HUE
   feature_drv1 |= 0x00000200;  // xdrv_20_hue.ino
 #endif
-#if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)
+//#if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)
   feature_drv1 |= 0x00000400;  // xdrv_02_mqtt.ino
-#endif
-#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
+//#endif
+//#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
 //  feature_drv1 |= 0x00000800;  // xdrv_02_mqtt.ino
-#endif
-#if (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)      // Obsolete since 6.2.1.11
+//#endif
+//#if (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)      // Obsolete since 6.2.1.11
 //  feature_drv1 |= 0x00001000;  // xdrv_02_mqtt.ino
-#endif
+//#endif
 #ifdef MQTT_HOST_DISCOVERY
   feature_drv1 |= 0x00002000;  // xdrv_02_mqtt.ino
 #endif

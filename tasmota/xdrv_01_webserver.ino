@@ -1477,7 +1477,6 @@ void HandleTemplateConfiguration(void)
     WSContentSend_P(PSTR("}1"));                                   // Field separator
 
     for (uint32_t i = 0; i < sizeof(cmodule); i++) {         // 17,148,29,149,7,255,255,255,138,255,139,255,255
-//      if ((i < 6) || ((i > 8) && (i != 11))) {              // Ignore flash pins GPIO06, 7, 8 and 11
       if (!FlashPin(i)) {
         WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", cmodule.io[i]);
       }
@@ -1501,7 +1500,6 @@ void HandleTemplateConfiguration(void)
                        "<hr/>"));
   WSContentSend_P(HTTP_TABLE100);
   for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
-//    if ((i < 6) || ((i > 8) && (i != 11))) {                // Ignore flash pins GPIO06, 7, 8 and 11
     if (!FlashPin(i)) {
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d'></select></td></tr>"),
         ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:200px'" : "", i);
@@ -1633,17 +1631,24 @@ void HandleModuleConfiguration(void)
   for (uint32_t i = 0; i < sizeof(cmodule); i++) {
     if (ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
+#ifdef ESP8266
       char sesp8285[40];
       snprintf_P(sesp8285, sizeof(sesp8285), PSTR("<font color='#%06x'>ESP8285</font>"), WebColor(COL_TEXT_WARNING));
       WSContentSend_P(PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:176px'><select id='g%d'></select></td></tr>"),
         (WEMOS==my_module_type)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :((9==i)||(10==i))? sesp8285 :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i);
+#else  // ESP32
+      WSContentSend_P(PSTR("<tr><td style='width:140px'>%s <b>" D_GPIO "%d</b></td><td style='width:176px'><select id='g%d'></select></td></tr>"),
+        (WEMOS==my_module_type)?stemp:"", i, i);
+#endif  // ESP8266
     }
   }
+#ifdef ESP8266
 #ifndef USE_ADC_VCC
   if (ValidAdc()) {
     WSContentSend_P(PSTR("<tr><td>%s <b>" D_ADC "0</b></td><td style='width:176px'><select id='g17'></select></td></tr>"), (WEMOS==my_module_type)?"A0":"");
   }
 #endif  // USE_ADC_VCC
+#endif  // ESP8266
   WSContentSend_P(PSTR("</table>"));
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
