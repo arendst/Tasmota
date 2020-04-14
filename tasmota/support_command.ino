@@ -579,23 +579,28 @@ void CmndHumOffset(void)
 void CmndGlobalTemp(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    int value = (int)(CharToFloat(XdrvMailbox.data) * 10);
-    if ((value > -401) && (value < 801)) {
-      ConvertTemp(value);
+    float temperature = CharToFloat(XdrvMailbox.data);
+    if (!isnan(temperature) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
+      temperature = (temperature - 32) / 1.8;                             // Celsius
+    }
+    if ((temperature >= -50.0) && (temperature <= 100.0)) {
+      ConvertTemp(temperature);
+      global_update = 1;  // Keep global values just entered valid
     }
   }
-  ResponseCmndFloat((float)(global_temperature) / 10, 1);
+  ResponseCmndFloat(global_temperature, 1);
 }
 
 void CmndGlobalHum(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    int value = (int)(CharToFloat(XdrvMailbox.data) * 10);
-    if ((value > -10) && (value < 999)) {
-      ConvertHumidity(value);
+    float humidity = CharToFloat(XdrvMailbox.data);
+    if ((humidity >= 0.0) && (humidity <= 100.0)) {
+      ConvertHumidity(humidity);
+      global_update = 1;  // Keep global values just entered valid
     }
   }
-  ResponseCmndFloat((float)(global_humidity) / 10, 1);
+  ResponseCmndFloat(global_humidity, 1);
 }
 
 void CmndSleep(void)
