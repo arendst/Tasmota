@@ -476,6 +476,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
         RulesVarReplace(commands, stemp, SettingsText(SET_MEM1 +i));
       }
       RulesVarReplace(commands, F("%TIME%"), String(MinutesPastMidnight()));
+      RulesVarReplace(commands, F("%UTCTIME%"), String(UtcTime()));
       RulesVarReplace(commands, F("%UPTIME%"), String(MinutesUptime()));
       RulesVarReplace(commands, F("%TIMESTAMP%"), GetDateAndTime(DT_LOCAL));
       RulesVarReplace(commands, F("%TOPIC%"), SettingsText(SET_MQTT_TOPIC));

@@ -28,11 +28,16 @@
 - Add command ``DevGroupName`` to specify up to four Device Group Names (#8087)
 - Add command ``DevGroupSend`` to send an update to a Device Group (#8093)
 - Add command ``Ping`` (#7176)
+- Add command ``Palette`` to add the ability to specify a palette of colors (#8150)
+- Add commands ``GlobalTemp`` and ``GlobalHum`` to init sensor data (#8152)
 - Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
 - Add more accuracy to GPS NTP server (#8088)
 - Add support for an iAQ sensor (#8107)
 - Add support for Seven Segment display using HT16K33 (#8116)
 - Add support for AS3935 Lightning Sensor by device111 (#8130)
+- Fix prevent multiple pings to run concurrently
+- Fix Scheme 2-4 brightness when SetOption68 1 (#8058)
+- Add ``DimmerRange`` for PWM lights (#8120)
 
 ### 8.2.0.2 20200328
 

@@ -117,6 +117,8 @@
 | USE_AHT1x             | - | - | - | - | - | - | - |
 | USE_HDC1080           | - | - | - | - | - | - | - |
 | USE_WEMOS_MOTOR_V1    | - | - | - | - | x | - | - |
+| USE_IAQ               | - | - | - | - | x | - | - |
+| USE_AS3935            | - | - | - | - | x | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |

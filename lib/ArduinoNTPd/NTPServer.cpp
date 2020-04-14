@@ -87,7 +87,7 @@ bool NtpServer::processOneRequest(uint32_t utc, uint32_t millisecs)
       packet.swapEndian();
 
       timeServerPort_.beginPacket(timeServerPort_.remoteIP(), timeServerPort_.remotePort());
-      timeServerPort_.write(packet.packet(), NtpPacket::PACKET_SIZE);
+      timeServerPort_.write((const uint8_t *)packet.packet(), NtpPacket::PACKET_SIZE);
       timeServerPort_.endPacket();
 
       processed = true;

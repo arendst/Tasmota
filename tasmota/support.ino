@@ -562,6 +562,7 @@ char* GetPowerDevice(char* dest, uint32_t idx, size_t size)
 
 void GetEspHardwareType(void)
 {
+#ifdef ESP8266
   // esptool.py get_efuses
   uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
   uint32_t efuse2 = *(uint32_t*)(0x3FF00054);
@@ -572,16 +573,23 @@ void GetEspHardwareType(void)
   if (is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
     is_8285 = false;  // ESP8285 can only have 1M flash
   }
+#else
+  is_8285 = false;    // ESP8285 can only have 1M flash
+#endif
 }
 
 String GetDeviceHardware(void)
 {
   char buff[10];
+#ifdef ESP8266
   if (is_8285) {
     strcpy_P(buff, PSTR("ESP8285"));
   } else {
     strcpy_P(buff, PSTR("ESP8266EX"));
   }
+#else
+  strcpy_P(buff, PSTR("ESP32"));
+#endif
   return String(buff);
 }
 
@@ -1127,8 +1135,13 @@ void ModuleGpios(myio *gp)
 
   uint32_t j = 0;
   for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
+#ifdef ESP8266
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
+#endif  // ESP8266
+#ifdef ESP32
+    if (6 == i) { j = 12; }
+#endif  // ESP32
     dest[j] = src[i];
     j++;
   }
@@ -1166,7 +1179,12 @@ void SetModuleType(void)
 
 bool FlashPin(uint32_t pin)
 {
+#ifdef ESP8266
   return (((pin > 5) && (pin < 9)) || (11 == pin));
+#endif  // ESP8266
+#ifdef ESP32
+  return ((pin > 5) && (pin < 12));
+#endif  // ESP32
 }
 
 uint8_t ValidPin(uint32_t pin, uint32_t gpio)
@@ -1175,12 +1193,14 @@ uint8_t ValidPin(uint32_t pin, uint32_t gpio)
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
 
+#ifdef ESP8266
 //  if (!is_8285 && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
   if ((WEMOS == Settings.module) && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
     if ((pin == 9) || (pin == 10)) {
       return GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
     }
   }
+#endif  // ESP8266
 
   return gpio;
 }
@@ -1264,7 +1284,11 @@ bool JsonTemplate(const char* dataBuf)
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
 
+#ifdef ESP8266
   StaticJsonBuffer<400> jb;  // 331 from https://arduinojson.org/v5/assistant/
+#else
+  StaticJsonBuffer<800> jb;  // 654 from https://arduinojson.org/v5/assistant/
+#endif
   JsonObject& obj = jb.parseObject(dataBuf);
   if (!obj.success()) { return false; }
 

@@ -41,14 +41,14 @@
  * Power Type
 \*********************************************************************************************/
 
-#ifdef ESP8266
+//#ifdef ESP8266
 typedef unsigned long power_t;              // Power (Relay) type
 const uint32_t POWER_MASK = 0xffffffffUL;   // Power (Relay) full mask
-#endif  // ESP8266
-#ifdef ESP32
-typedef uint64_t power_t;                   // Power (Relay) type
-const uint64_t POWER_MASK = 0xffffffffffffffffull;  // Power (Relay) full mask
-#endif  // ESP32
+//#endif  // ESP8266
+//#ifdef ESP32
+//typedef uint64_t power_t;                   // Power (Relay) type
+//const uint64_t POWER_MASK = 0xffffffffffffffffull;  // Power (Relay) full mask
+//#endif  // ESP32
 
 /*********************************************************************************************\
  * Constants

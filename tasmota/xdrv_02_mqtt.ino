@@ -374,7 +374,7 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
   MqttPublish(stopic, retained);
 
 #ifdef USE_MQTT_AWS_IOT
-  if ((prefix > 0) && (Settings.flag4.awsiot_shadow)) {    // placeholder for SetOptionXX
+  if ((prefix > 0) && (Settings.flag4.awsiot_shadow) && (Mqtt.connected)) {    // placeholder for SetOptionXX
     // compute the target topic
     char *topic = SettingsText(SET_MQTT_TOPIC);
     char topic2[strlen(topic)+1];       // save buffer onto stack

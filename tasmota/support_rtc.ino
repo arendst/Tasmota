@@ -367,7 +367,7 @@ void RtcSecond(void)
     if ((Rtc.ntp_sync_minute > 59) && (uptime_minute > 2)) {
       Rtc.ntp_sync_minute = 1;                   // If sync prepare for a new cycle
     }
-    uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
+    uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP_getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
     if ( (((offset == RtcTime.second) && ( (RtcTime.year < 2016) ||                          // Never synced
                                            (Rtc.ntp_sync_minute == uptime_minute))) ||       // Re-sync every hour
                                             ntp_force_sync ) ) {                             // Forced sync

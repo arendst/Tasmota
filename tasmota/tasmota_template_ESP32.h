@@ -71,12 +71,12 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
       GPIO_USER,  //3       IO     RXD0         GPIO3, U0RXD, CLK_OUT2
       GPIO_USER,  //4       IO                  GPIO4, ADC2_CH0, TOUCH0, RTC_GPIO10, HSPIHD, HS2_DATA1, SD_DATA1, EMAC_TX_ER
       GPIO_USER,  //5       IO                  GPIO5, VSPICS0, HS1_DATA6, EMAC_RX_CLK
-      0,          //6
-      0,          //7
-      0,          //8
-      0,          //9
-      0,          //10
-      0,          //11
+//      0,          //6
+//      0,          //7
+//      0,          //8
+//      0,          //9
+//      0,          //10
+//      0,          //11
       GPIO_USER,  //12      (I)O                GPIO12, ADC2_CH5, TOUCH5, RTC_GPIO15, MTDI, HSPIQ, HS2_DATA2, SD_DATA2, EMAC_TXD3       (If driven High, flash voltage (VDD_SDIO) is 1.8V not default 3.3V. Has internal pull-down, so unconnected = Low = 3.3V. May prevent flashing and/or booting if 3.3V flash is connected and pulled high. See ESP32 datasheet for more details.)
       GPIO_USER,  //13      IO                  GPIO13, ADC2_CH4, TOUCH4, RTC_GPIO14, MTCK, HSPID, HS2_DATA3, SD_DATA3, EMAC_RX_ER
       GPIO_USER,  //14      IO                  GPIO14, ADC2_CH6, TOUCH6, RTC_GPIO16, MTMS, HSPICLK, HS2_CLK, SD_CLK, EMAC_TXD2
@@ -113,12 +113,12 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
       GPIO_USER,  //3       IO     RXD0         GPIO3, U0RXD, CLK_OUT2
       GPIO_USER,  //4       IO                  GPIO4, ADC2_CH0, TOUCH0, RTC_GPIO10, HSPIHD, HS2_DATA1, SD_DATA1, EMAC_TX_ER
       GPIO_USER,  //5       IO                  GPIO5, VSPICS0, HS1_DATA6, EMAC_RX_CLK
-      0,          //6
-      0,          //7
-      0,          //8
-      0,          //9
-      0,          //10
-      0,          //11
+//      0,          //6
+//      0,          //7
+//      0,          //8
+//      0,          //9
+//      0,          //10
+//      0,          //11
       GPIO_USER,  //12      (I)O                GPIO12, ADC2_CH5, TOUCH5, RTC_GPIO15, MTDI, HSPIQ, HS2_DATA2, SD_DATA2, EMAC_TXD3       (If driven High, flash voltage (VDD_SDIO) is 1.8V not default 3.3V. Has internal pull-down, so unconnected = Low = 3.3V. May prevent flashing and/or booting if 3.3V flash is connected and pulled high. See ESP32 datasheet for more details.)
       GPIO_USER,  //13      IO                  GPIO13, ADC2_CH4, TOUCH4, RTC_GPIO14, MTCK, HSPID, HS2_DATA3, SD_DATA3, EMAC_RX_ER
       GPIO_USER,  //14      IO                  GPIO14, ADC2_CH6, TOUCH6, RTC_GPIO16, MTMS, HSPICLK, HS2_CLK, SD_CLK, EMAC_TXD2

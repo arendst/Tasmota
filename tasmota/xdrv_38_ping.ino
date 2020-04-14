@@ -22,7 +22,6 @@
 #define XDRV_38                    38
 
 #include <ping.h>
-#include <vector>
 
 const char kPingCommands[] PROGMEM =  "|"    // no prefix
   D_CMND_PING
@@ -35,80 +34,77 @@ void (* const PingCommand[])(void) PROGMEM = {
 // inspired by https://github.com/dancol90/ESP8266Ping
 
 typedef struct Ping_t {
-  ping_option opt;                // extend the ping_option structure with internal values
   uint16_t    total_count;        // total count if packets sent
   uint16_t    timeout_count;      // time-outs (no responses)
   uint32_t    min_time;           // minimum time in ms for a successful response
   uint32_t    max_time;           // maximum time in ms for a successful response
   uint32_t    sum_time;           // cumulated time in ms for all successful responses (used to compute the average)
+  bool        busy;               // is ping on-going
   bool        done;               // indicates the ping campaign is finished
 } Ping_t;
 
-std::vector<Ping_t*>    pings = {};
+ping_option ping_opt;
+Ping_t ping;
 
 extern "C" {
   // callbacks for ping
 
   // called after a ping response is received or time-out
-  void ICACHE_RAM_ATTR ping_recv_cb(Ping_t *ping, struct ping_resp *p_resp) {
+  void ICACHE_RAM_ATTR ping_recv_cb(ping_option *popt, struct ping_resp *p_resp) {
     // If successful
     if (p_resp->ping_err >= 0) {
       uint32_t resp_time = p_resp->resp_time;
-      ping->sum_time += resp_time;
-      if (resp_time < ping->min_time) { ping->min_time = resp_time; }
-      if (resp_time > ping->max_time) { ping->max_time = resp_time; }
+      ping.sum_time += resp_time;
+      if (resp_time < ping.min_time) { ping.min_time = resp_time; }
+      if (resp_time > ping.max_time) { ping.max_time = resp_time; }
     }
   }
 
   // called after the ping campaign is finished
-  void ICACHE_RAM_ATTR ping_sent_cb(Ping_t *ping, struct ping_resp *p_resp) {
+  void ICACHE_RAM_ATTR ping_sent_cb(ping_option *popt, struct ping_resp *p_resp) {
     // copy counters to build the MQTT response
-    ping->total_count = p_resp->total_count;
-    ping->timeout_count = p_resp->timeout_count;
-    ping->done = true;
+    ping.total_count = p_resp->total_count;
+    ping.timeout_count = p_resp->timeout_count;
+    ping.done = true;
   }
 }
 
 // Check if any ping requests is completed, and publish the results
 void PingResponsePoll(void) {
-  for (auto it = pings.begin(); it != pings.end(); it++) {
-    Ping_t *ping = *it;
-    if (ping->done) {
-      uint32_t success = ping->total_count - ping->timeout_count;
-      uint32_t ip = ping->opt.ip;
+  if (ping.done) {
+    uint32_t success = ping.total_count - ping.timeout_count;
+    uint32_t ip = ping_opt.ip;
 
-      // Serial.printf(
-      //         "DEBUG ping_sent_cb: ping reply\n"
-      //         "\tsuccess_count = %d \n"
-      //         "\ttimeout_count = %d \n"
-      //         "\tmin_time = %d \n"
-      //         "\tmax_time = %d \n"
-      //         "\tavg_time = %d \n",
-      //         success, ping->timeout_count,
-      //         ping->min_time, ping->max_time,
-      //         success ? ping->sum_time / success : 0
-      // );
+    // Serial.printf(
+    //         "DEBUG ping_sent_cb: ping reply\n"
+    //         "\tsuccess_count = %d \n"
+    //         "\ttimeout_count = %d \n"
+    //         "\tmin_time = %d \n"
+    //         "\tmax_time = %d \n"
+    //         "\tavg_time = %d \n",
+    //         success, ping.timeout_count,
+    //         ping.min_time, ping.max_time,
+    //         success ? ping.sum_time / success : 0
+    // );
 
-      Response_P(PSTR("{\"" D_JSON_PING "\":{\"%d.%d.%d.%d\":{"
-                      "\"Reachable\":%s"
-                      ",\"Success\":%d"
-                      ",\"Timeout\":%d"
-                      ",\"MinTime\":%d"
-                      ",\"MaxTime\":%d"
-                      ",\"AvgTime\":%d"
-                      "}}}"),
-                      ip & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, ip >> 24,
-                      success ? "true" : "false",
-                      success, ping->timeout_count,
-                      ping->min_time, ping->max_time,
-                      success ? ping->sum_time / success : 0
-                      );
-      MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_PING));
-      XdrvRulesProcess();
-      
-      pings.erase(it--);    // remove from list
-      delete ping;          // free memory allocated
-    }
+    Response_P(PSTR("{\"" D_JSON_PING "\":{\"%d.%d.%d.%d\":{"
+                    "\"Reachable\":%s"
+                    ",\"Success\":%d"
+                    ",\"Timeout\":%d"
+                    ",\"MinTime\":%d"
+                    ",\"MaxTime\":%d"
+                    ",\"AvgTime\":%d"
+                    "}}}"),
+                    ip & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, ip >> 24,
+                    success ? "true" : "false",
+                    success, ping.timeout_count,
+                    ping.min_time, ping.max_time,
+                    success ? ping.sum_time / success : 0
+                    );
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_PING));
+    XdrvRulesProcess();
+    ping.done = false;
+    ping.busy = false;
   }
 }
 
@@ -117,28 +113,32 @@ void CmndPing(void) {
   IPAddress ip;
 
   RemoveSpace(XdrvMailbox.data);
-  if (count > 60) { count = 60; }
+  if (count > 8) { count = 8; }
+
+  if (ping.busy) {
+    ResponseCmndChar_P(PSTR("Ping busy"));
+    return;
+  }
 
   if (WiFi.hostByName(XdrvMailbox.data, ip)) {
-    Ping_t *ping = new Ping_t();
-    memset(ping, 0, sizeof(Ping_t ));
-    ping->min_time = UINT32_MAX;
+    memset(&ping_opt, 0, sizeof(ping_opt));
+    memset(&ping, 0, sizeof(ping));
+    ping.min_time = UINT32_MAX;
 
-    ping_option &opt = ping->opt;
-    opt.count = count;
-    opt.coarse_time = 1;    // wait 1 second between messages
-    opt.ip = ip;
+    ping_opt.count = count;
+    ping_opt.coarse_time = 1;    // wait 1 second between messages
+    ping_opt.ip = ip;
 
     // callbacks
-    opt.recv_function = (ping_recv_function) ping_recv_cb;    // at each response or time-out
-    opt.sent_function = (ping_sent_function) ping_sent_cb;    // when all packets have been sent and reveived
+    ping_opt.recv_function = (ping_recv_function) ping_recv_cb;    // at each response or time-out
+    ping_opt.sent_function = (ping_sent_function) ping_sent_cb;    // when all packets have been sent and reveived
 
-    if (ping_start(&opt)) {
-      pings.push_back(ping);
+    ping.busy = true;
+    if (ping_start(&ping_opt)) {
       ResponseCmndDone();
     } else {
       ResponseCmndChar_P(PSTR("Unable to send Ping"));
-      delete ping;
+      ping.busy = false;
     }
   } else {
     ResponseCmndChar_P(PSTR("Unable to resolve IP address"));

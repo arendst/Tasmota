@@ -308,6 +308,8 @@
   #define D_JSON_BASE "BASE"
 #define D_CMND_TEMPOFFSET "TempOffset"
 #define D_CMND_HUMOFFSET "HumOffset"
+#define D_CMND_GLOBAL_TEMP "GlobalTemp"
+#define D_CMND_GLOBAL_HUM "GlobalHum"
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTLOG "MqttLog"
@@ -389,6 +391,7 @@
 #define D_CMND_LED "Led"
 #define D_CMND_LEDTABLE "LedTable"
 #define D_CMND_FADE "Fade"
+#define D_CMND_PALETTE "Palette"
 #define D_CMND_PIXELS "Pixels"
 #define D_CMND_RGBWWTABLE "RGBWWTable"
 #define D_CMND_ROTATION "Rotation"
