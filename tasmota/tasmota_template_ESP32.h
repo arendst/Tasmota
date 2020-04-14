@@ -22,9 +22,6 @@
 
 #ifdef ESP32
 
-// mqtt
-#undef MQTT_LIBRARY_TYPE
-#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT
 // Hardware has no ESP32
 #undef USE_TUYA_DIMMER
 #undef USE_PWM_DIMMER
@@ -36,9 +33,10 @@
 #undef USE_SONOFF_L1
 #undef USE_SONOFF_D1
 #undef USE_RF_FLASH
-// not ported
+
+// Not ported (yet)
 #undef USE_DISCOVERY
-#undef USE_ADC_VCC // Needs to be ported
+#undef USE_ADC_VCC    // Needs to be ported
 #undef USE_DEEPSLEEP
 #undef USE_MY92X1
 #undef USE_TUYA_MCU
