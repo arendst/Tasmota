@@ -240,6 +240,7 @@ enum ExecuteCommandPowerOptions { POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK
                                   POWER_SHOW_STATE = 16 };
 enum SendKeyPowerOptions { POWER_HOLD = 3, POWER_INCREMENT = 4, POWER_INV = 5, POWER_CLEAR = 6, CLEAR_RETAIN = 9 };
 enum SendKeyOptions { KEY_BUTTON, KEY_SWITCH };
+enum SendKeyMultiClick { SINGLE = 10, DOUBLE = 11, TRIPLE = 12, QUAD = 13, PENTA = 14};
 
 enum PowerOnStateOptions { POWER_ALL_OFF, POWER_ALL_ON, POWER_ALL_SAVED_TOGGLE, POWER_ALL_SAVED, POWER_ALL_ALWAYS_ON, POWER_ALL_OFF_PULSETIME_ON };
 
