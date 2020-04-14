@@ -1694,7 +1694,8 @@ void LightCycleColor(int8_t direction)
     else {
       Light.wheel += direction;
       if (Light.wheel >= Light.palette_count) {
-        Light.wheel = (direction < 0 ? Light.palette_count - 1 : 0);
+        Light.wheel = 0;
+         if (direction < 0) Light.wheel = Light.palette_count - 1;
       }
     }
     LightSetPaletteEntry();
@@ -2267,13 +2268,16 @@ void LightHandleDevGroupItem(void)
       break;
     case DGR_ITEM_LIGHT_FIXED_COLOR:
       if (Light.subtype >= LST_RGBW) {
+        send_state = true;
 #ifdef USE_LIGHT_PALETTE
-        value = value % (Light.palette_count ? Light.palette_count : MAX_FIXED_COLOR);
-        if (Light.palette_count || value) {
-#else // USE_LIGHT_PALETTE
+        if (Light.palette_count) {
+          Light.wheel = value % Light.palette_count;
+          LightSetPaletteEntry();
+          break;
+        }
+#endif  // !USE_LIGHT_PALETTE
         value = value % MAX_FIXED_COLOR;
         if (value) {
-#endif  // !USE_LIGHT_PALETTE
           bool save_decimal_text = Settings.flag.decimal_text;
           char str[16];
           LightColorEntry(str, sprintf_P(str, PSTR("%u"), value));
@@ -2292,7 +2296,6 @@ void LightHandleDevGroupItem(void)
           Light.power = 0xff;
           restore_power = true;
         }
-        send_state = true;
       }
       break;
     case DGR_ITEM_LIGHT_FADE:
@@ -2338,6 +2341,9 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
   char *str;
   uint32_t entry_type = 0;                          // Invalid
   uint8_t value = Light.fixed_color_index;
+#ifdef USE_LIGHT_PALETTE
+  if (Light.palette_count) value = Light.wheel;
+#endif  // USE_LIGHT_PALETTE
 
   if (buffer[0] == '#') {                           // Optional hexadecimal entry
     buffer++;
@@ -2346,14 +2352,32 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
 
   if (Light.subtype >= LST_RGB) {
     char option = (1 == buffer_length) ? buffer[0] : '\0';
-    if (('+' == option) && (Light.fixed_color_index < MAX_FIXED_COLOR)) {
-      value++;
+    if ('+' == option) {
+#ifdef USE_LIGHT_PALETTE
+      if (Light.palette_count || Light.fixed_color_index < MAX_FIXED_COLOR) {
+#else // USE_LIGHT_PALETTE
+      if (Light.fixed_color_index < MAX_FIXED_COLOR) {
+#endif  // !USE_LIGHT_PALETTE
+        value++;
+      }
     }
-    else if (('-' == option) && (Light.fixed_color_index > 1)) {
-      value--;
+    else if ('-' == option) {
+#ifdef USE_LIGHT_PALETTE
+      if (Light.palette_count || Light.fixed_color_index > 1) {
+#else // USE_LIGHT_PALETTE
+      if (Light.fixed_color_index > 1) {
+#endif  // !USE_LIGHT_PALETTE
+        value--;
+      }
     } else {
       value = atoi(buffer);
+#ifdef USE_LIGHT_PALETTE
+      value--;
+#endif  // USE_LIGHT_PALETTE
     }
+#ifdef USE_LIGHT_PALETTE
+    if (Light.palette_count) value = value % Light.palette_count;
+#endif  // USE_LIGHT_PALETTE
   }
 
   memset(&Light.entry_color, 0x00, sizeof(Light.entry_color));
@@ -2378,6 +2402,13 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
     }
     entry_type = 1;                                 // Hexadecimal
   }
+#ifdef USE_LIGHT_PALETTE
+  else if (Light.palette_count) {
+    Light.wheel = value;
+    memcpy_P(&Light.entry_color, &Light.palette[value * LST_MAX], LST_MAX);
+    entry_type = 1;                                 // Hexadecimal
+  }
+#endif  // USE_LIGHT_PALETTE
   else if ((Light.subtype >= LST_RGB) && (value > 0) && (value <= MAX_FIXED_COLOR)) {
     Light.fixed_color_index = value;
     memcpy_P(&Light.entry_color, &kFixedColor[value -1], 3);
@@ -2409,48 +2440,20 @@ void CmndSupportColor(void)
 {
   bool valid_entry = false;
   bool coldim = false;
-#ifdef USE_LIGHT_PALETTE
-  uint8_t * color_ptr;
-#endif  // USE_LIGHT_PALETTE
 
   if (XdrvMailbox.data_len > 0) {
-#ifdef USE_LIGHT_PALETTE
-    if (Light.palette_count) {
-      if (XdrvMailbox.data_len == 1 && ('+' == XdrvMailbox.data[0] || '-' == XdrvMailbox.data[0])) {
-        int8_t direction = ('+' == XdrvMailbox.data[0] ? 1 : -1);
-        Light.wheel += direction;
-        if (Light.wheel >= Light.palette_count) {
-          Light.wheel = (direction < 0 ? Light.palette_count - 1 : 0);
-        }
-      }
-      else {
-        Light.wheel = (atoi(XdrvMailbox.data) - 1);
-      }
-      color_ptr = &Light.palette[Light.wheel * LST_MAX];
-      valid_entry = true;
-    }
-    else {
-      color_ptr = Light.entry_color;
-#endif  // USE_LIGHT_PALETTE
-      valid_entry = LightColorEntry(XdrvMailbox.data, XdrvMailbox.data_len);
-#ifdef USE_LIGHT_PALETTE
-    }
-#endif  // USE_LIGHT_PALETTE
+    valid_entry = LightColorEntry(XdrvMailbox.data, XdrvMailbox.data_len);
     if (valid_entry) {
       if (XdrvMailbox.index <= 2) {    // Color(1), 2
 #ifdef USE_LIGHT_PALETTE
-        if (Light.palette_count && XdrvMailbox.index == 1) {
+        if (Light.palette_count && XdrvMailbox.index == 2) {
           LightSetPaletteEntry();
         }
         else {
 #endif  // USE_LIGHT_PALETTE
           uint32_t old_bri = light_state.getBri();
           // change all channels to specified values
-#ifdef USE_LIGHT_PALETTE
-          light_controller.changeChannels(color_ptr);
-#else  // USE_LIGHT_PALETTE
           light_controller.changeChannels(Light.entry_color);
-#endif  // !USE_LIGHT_PALETTE
           if (2 == XdrvMailbox.index) {
             // If Color2, set back old brightness
             light_controller.changeBri(old_bri);
@@ -2626,6 +2629,9 @@ void CmndScheme(void)
       uint32_t parm[2];
       if (ParseParameters(2, parm) > 1) {
         Light.wheel = parm[1];
+#ifdef USE_LIGHT_PALETTE
+        Light.wheel--;
+#endif  // USE_LIGHT_PALETTE
       }
       Settings.light_scheme = XdrvMailbox.payload;
 #ifdef USE_DEVICE_GROUPS
@@ -2873,71 +2879,52 @@ void CmndWakeupDuration(void)
 void CmndPalette(void)
 {
   uint8_t * palette_entry;
-  char * color;
   char * p;
 
   // Palette Color[ ...]
   if (XdrvMailbox.data_len) {
     Light.wheel = 0;
+    Light.palette_count = 0;
     if (Light.palette) {
       free(Light.palette);
       Light.palette = nullptr;
-      Light.palette_count = 0;
     }
     if (XdrvMailbox.data_len > 1 || XdrvMailbox.data[0] != '0') {
-      for (int pass = 0;; pass++) {
-        Light.palette_count = 0;
-        color = XdrvMailbox.data;
-        for (;;) {
-          p = strchr(color, ' ');
-          if (p) *p = 0;
-          color = Trim(color);
-          if (*color && LightColorEntry(color, strlen(color))) {
-            if (pass) {
-              memcpy(palette_entry, Light.entry_color, LST_MAX);
-              if (!Light.pwm_multi_channels && LST_COLDWARM == Light.subtype) {
-                palette_entry[3] = palette_entry[0];
-                palette_entry[4] = palette_entry[1];
-              }
-              palette_entry += LST_MAX;
-            }
-            Light.palette_count++;
-          }
-          if (!p) break;
-          *p = ' ';
-          color = p + 1;
+      uint8_t palette_count = 0;
+      char * color = XdrvMailbox.data;
+      if (!(Light.palette = (uint8_t *)malloc(255 * Light.subtype))) return;
+      palette_entry = Light.palette;
+      for (;;) {
+        p = strchr(color, ' ');
+        if (p) *p = 0;
+        color = Trim(color);
+        if (*color && LightColorEntry(color, strlen(color))) {
+          memcpy(palette_entry, Light.entry_color, Light.subtype);
+          palette_entry += Light.subtype;
+          palette_count++;
         }
-        if (pass) break;
-        if (!(Light.palette = (uint8_t *)malloc(Light.palette_count * LST_MAX))) return;
-        palette_entry = Light.palette;
+        if (!p) break;
+        color = p + 1;
       }
+      if (!(Light.palette = (uint8_t *)realloc(Light.palette, palette_count * Light.subtype))) return;
+      Light.palette_count = palette_count;
     }
   }
 
   char palette_str[5 * Light.subtype * Light.palette_count + 3];
-  const char * fmt;
   p = palette_str;
   *p++ = '[';
   if (Light.palette_count) {
     palette_entry = Light.palette;
-    if (Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
-      for (int entry = 0; entry < Light.palette_count; entry++) {
+    for (int entry = 0; entry < Light.palette_count; entry++) {
+      if (Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
         *p++ = '"';
-        for (uint32_t i = 0; i < Light.subtype; i++) {
-          if (i > 0) *p++ = ',';
-          p += sprintf_P(p, PSTR("%d"), palette_entry[i]);
-        }
-        palette_entry += LST_MAX;
       }
-      *p++ = '"';
-      *p++ = ',';
-    }
-    else {
-      for (int entry = 0; entry < Light.palette_count; entry++) {
-        for (uint32_t i = 0; i < Light.subtype; i++) {
-          p += sprintf_P(p, PSTR("%02X"), palette_entry[i]);
-        }
-        palette_entry += LST_MAX;
+      memcpy(Light.current_color, palette_entry, Light.subtype);
+      LightGetColor(p);
+      p += strlen(p);
+      if (Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
+        *p++ = '"';
       }
       *p++ = ',';
     }
