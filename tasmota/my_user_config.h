@@ -391,7 +391,7 @@
     #define SUNRISE_DAWN_ANGLE DAWN_NORMAL       // Select desired Dawn Angle from (DAWN_NORMAL, DAWN_CIVIL, DAWN_NAUTIC, DAWN_ASTRONOMIC)
 
 // -- Ping ----------------------------------------
-//  #define USE_PING                                 // Enable Ping command (+3k code)
+//  #define USE_PING                                 // Enable Ping command (+2k code)
 
 // -- Rules or Script  ----------------------------
 // Select none or only one of the below defines
