@@ -3341,8 +3341,8 @@ void Script_FileUploadConfiguration(void)
 
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  if (WebServer->hasArg("download")) {
-    String stmp = WebServer->arg("download");
+  if (Webserver->hasArg("download")) {
+    String stmp = Webserver->arg("download");
     char *cp=(char*)stmp.c_str();
     if (DownloadFile(cp)) {
       // is directory
@@ -3386,7 +3386,7 @@ void script_upload(void) {
 
   //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: file upload"));
 
-  HTTPUpload& upload = WebServer->upload();
+  HTTPUpload& upload = Webserver->upload();
   if (upload.status == UPLOAD_FILE_START) {
     char npath[48];
     sprintf(npath,"%s/%s",path,upload.filename.c_str());
@@ -3402,7 +3402,7 @@ void script_upload(void) {
     }
   } else {
     Web.upload_error=1;
-    WebServer->send(500, "text/plain", "500: couldn't create file");
+    Webserver->send(500, "text/plain", "500: couldn't create file");
   }
 }
 
@@ -3428,8 +3428,8 @@ uint8_t DownloadFile(char *file) {
 
     uint32_t flen=download_file.size();
 
-    download_Client = WebServer->client();
-    WebServer->setContentLength(flen);
+    download_Client = Webserver->client();
+    Webserver->setContentLength(flen);
 
     char attachment[100];
     char *cp;
@@ -3440,7 +3440,7 @@ uint8_t DownloadFile(char *file) {
       }
     }
     snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"),cp);
-    WebServer->sendHeader(F("Content-Disposition"), attachment);
+    Webserver->sendHeader(F("Content-Disposition"), attachment);
     WSSend(200, CT_STREAM, "");
 
     uint8_t buff[512];
@@ -3472,7 +3472,7 @@ uint8_t DownloadFile(char *file) {
 void HandleScriptTextareaConfiguration(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  if (WebServer->hasArg("save")) {
+  if (Webserver->hasArg("save")) {
     ScriptSaveSettings();
     HandleConfiguration();
     return;
@@ -3486,13 +3486,13 @@ void HandleScriptConfiguration(void) {
     AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_SCRIPT);
 
 #ifdef USE_SCRIPT_FATFS
-    if (WebServer->hasArg("d1")) {
+    if (Webserver->hasArg("d1")) {
       DownloadFile(glob_script_mem.flink[0]);
     }
-    if (WebServer->hasArg("d2")) {
+    if (Webserver->hasArg("d2")) {
       DownloadFile(glob_script_mem.flink[1]);
     }
-    if (WebServer->hasArg("upl")) {
+    if (Webserver->hasArg("upl")) {
       Script_FileUploadConfiguration();
     }
 #endif
@@ -3532,14 +3532,14 @@ void HandleScriptConfiguration(void) {
 
 void ScriptSaveSettings(void) {
 
-  if (WebServer->hasArg("c1")) {
+  if (Webserver->hasArg("c1")) {
     bitWrite(Settings.rule_enabled,0,1);
   } else {
     bitWrite(Settings.rule_enabled,0,0);
   }
 
 
-  String str = WebServer->arg("t1");
+  String str = Webserver->arg("t1");
 
   if (*str.c_str()) {
 
@@ -3990,11 +3990,11 @@ void Script_Handle_Hue(String *path) {
   uint8_t device = DecodeLightId(atoi(path->c_str()));
   uint8_t index = device-devices_present-1;
 
-  if (WebServer->args()) {
+  if (Webserver->args()) {
     response = "[";
 
     StaticJsonBuffer<400> jsonBuffer;
-    JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg((WebServer->args())-1));
+    JsonObject &hue_json = jsonBuffer.parseObject(Webserver->arg((Webserver->args())-1));
     if (hue_json.containsKey("on")) {
 
       response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
@@ -4436,8 +4436,8 @@ void Script_Check_HTML_Setvars(void) {
 
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  if (WebServer->hasArg("sv")) {
-    String stmp = WebServer->arg("sv");
+  if (Webserver->hasArg("sv")) {
+    String stmp = Webserver->arg("sv");
     char cmdbuf[64];
     memset(cmdbuf,0,sizeof(cmdbuf));
     char *cp=cmdbuf;
@@ -4932,13 +4932,13 @@ bool Xdrv10(uint8_t function)
       WSContentSend_P(HTTP_BTN_MENU_RULES);
       break;
     case FUNC_WEB_ADD_HANDLER:
-      WebServer->on("/" WEB_HANDLE_SCRIPT, HandleScriptConfiguration);
-      WebServer->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);
+      Webserver->on("/" WEB_HANDLE_SCRIPT, HandleScriptConfiguration);
+      Webserver->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);
 
 #ifdef USE_SCRIPT_FATFS
-      WebServer->on("/u3", HTTP_POST,[]() { WebServer->sendHeader("Location","/u3");WebServer->send(303);},script_upload);
-      WebServer->on("/u3", HTTP_GET,ScriptFileUploadSuccess);
-      WebServer->on("/upl", HTTP_GET,Script_FileUploadConfiguration);
+      Webserver->on("/u3", HTTP_POST,[]() { Webserver->sendHeader("Location","/u3");Webserver->send(303);},script_upload);
+      Webserver->on("/u3", HTTP_GET,ScriptFileUploadSuccess);
+      Webserver->on("/upl", HTTP_GET,Script_FileUploadConfiguration);
 #endif
       break;
 #endif // USE_WEBSERVER

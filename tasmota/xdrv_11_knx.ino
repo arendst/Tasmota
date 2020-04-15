@@ -809,22 +809,22 @@ void HandleKNXConfiguration(void)
   char tmp[100];
   String stmp;
 
-  if ( WebServer->hasArg("save") ) {
+  if ( Webserver->hasArg("save") ) {
     KNX_Save_Settings();
     HandleConfiguration();
   }
   else
   {
-    if ( WebServer->hasArg("btn_add") ) {
-      if ( WebServer->arg("btn_add") == "1" ) {
+    if ( Webserver->hasArg("btn_add") ) {
+      if ( Webserver->arg("btn_add") == "1" ) {
 
-        stmp = WebServer->arg("GAop"); //option selected
+        stmp = Webserver->arg("GAop"); //option selected
         uint8_t GAop = stmp.toInt();
-        stmp = WebServer->arg("GA_FNUM");
+        stmp = Webserver->arg("GA_FNUM");
         uint8_t GA_FNUM = stmp.toInt();
-        stmp = WebServer->arg("GA_AREA");
+        stmp = Webserver->arg("GA_AREA");
         uint8_t GA_AREA = stmp.toInt();
-        stmp = WebServer->arg("GA_FDEF");
+        stmp = Webserver->arg("GA_FDEF");
         uint8_t GA_FDEF = stmp.toInt();
 
         if (GAop) {
@@ -834,13 +834,13 @@ void HandleKNXConfiguration(void)
       else
       {
 
-        stmp = WebServer->arg("CBop"); //option selected
+        stmp = Webserver->arg("CBop"); //option selected
         uint8_t CBop = stmp.toInt();
-        stmp = WebServer->arg("CB_FNUM");
+        stmp = Webserver->arg("CB_FNUM");
         uint8_t CB_FNUM = stmp.toInt();
-        stmp = WebServer->arg("CB_AREA");
+        stmp = Webserver->arg("CB_AREA");
         uint8_t CB_AREA = stmp.toInt();
-        stmp = WebServer->arg("CB_FDEF");
+        stmp = Webserver->arg("CB_FDEF");
         uint8_t CB_FDEF = stmp.toInt();
 
         if (CBop) {
@@ -848,19 +848,19 @@ void HandleKNXConfiguration(void)
         }
       }
     }
-    else if ( WebServer->hasArg("btn_del_ga") )
+    else if ( Webserver->hasArg("btn_del_ga") )
     {
 
-      stmp = WebServer->arg("btn_del_ga");
+      stmp = Webserver->arg("btn_del_ga");
       uint8_t GA_NUM = stmp.toInt();
 
       KNX_DEL_GA(GA_NUM);
 
     }
-    else if ( WebServer->hasArg("btn_del_cb") )
+    else if ( Webserver->hasArg("btn_del_cb") )
     {
 
-      stmp = WebServer->arg("btn_del_cb");
+      stmp = Webserver->arg("btn_del_cb");
       uint8_t CB_NUM = stmp.toInt();
 
       KNX_DEL_CB(CB_NUM);
@@ -954,16 +954,16 @@ void KNX_Save_Settings(void)
   String stmp;
   address_t KNX_addr;
 
-  Settings.flag.knx_enabled = WebServer->hasArg("b1");
-  Settings.flag.knx_enable_enhancement = WebServer->hasArg("b2");
+  Settings.flag.knx_enabled = Webserver->hasArg("b1");
+  Settings.flag.knx_enable_enhancement = Webserver->hasArg("b2");
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_ENABLED ": %d, " D_KNX_ENHANCEMENT ": %d"),
    Settings.flag.knx_enabled, Settings.flag.knx_enable_enhancement );
 
-  stmp = WebServer->arg("area");
+  stmp = Webserver->arg("area");
   KNX_addr.pa.area = stmp.toInt();
-  stmp = WebServer->arg("line");
+  stmp = Webserver->arg("line");
   KNX_addr.pa.line = stmp.toInt();
-  stmp = WebServer->arg("member");
+  stmp = Webserver->arg("member");
   KNX_addr.pa.member = stmp.toInt();
   Settings.knx_physsical_addr = KNX_addr.value;
   knx.physical_address_set( KNX_addr ); // Set Physical KNX Address of the device
@@ -1224,7 +1224,7 @@ bool Xdrv11(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_KNX);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        WebServer->on("/kn", HandleKNXConfiguration);
+        Webserver->on("/kn", HandleKNXConfiguration);
         break;
 #endif // USE_KNX_WEB_MENU
 #endif  // USE_WEBSERVER
