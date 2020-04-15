@@ -559,7 +559,7 @@ void HandleDomoticzConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_DOMOTICZ);
 
-  if (WebServer->hasArg("save")) {
+  if (Webserver->hasArg("save")) {
     DomoticzSaveSettings();
     WebRestart(1);
     return;
@@ -651,7 +651,7 @@ bool Xdrv07(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_DOMOTICZ);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        WebServer->on("/" WEB_HANDLE_DOMOTICZ, HandleDomoticzConfiguration);
+        Webserver->on("/" WEB_HANDLE_DOMOTICZ, HandleDomoticzConfiguration);
         break;
 #endif  // USE_WEBSERVER
       case FUNC_MQTT_SUBSCRIBE:

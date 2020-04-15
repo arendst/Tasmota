@@ -190,11 +190,11 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
   const size_t buf_size = 100;
   char * buf = (char*) malloc(buf_size);
 
-  if (WebServer->args()) {
+  if (Webserver->args()) {
     response = "[";
 
     StaticJsonBuffer<300> jsonBuffer;
-    JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg((WebServer->args())-1));
+    JsonObject &hue_json = jsonBuffer.parseObject(Webserver->arg((Webserver->args())-1));
     if (hue_json.containsKey("on")) {
       on = hue_json["on"];
       snprintf_P(buf, buf_size,
