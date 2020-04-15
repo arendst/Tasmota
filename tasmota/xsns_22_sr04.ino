@@ -47,7 +47,7 @@ uint8_t Sr04TModeDetect(void)
   if (pin[GPIO_SR04_ECHO]>=99) return sr04_type;
 
   sr04_echo_pin = pin[GPIO_SR04_ECHO];
-  sr04_trig_pin = (pin[GPIO_SR04_TRIG] < 99) ? pin[GPIO_SR04_TRIG] : -1;
+  sr04_trig_pin = (pin[GPIO_SR04_TRIG] < 99) ? pin[GPIO_SR04_TRIG] : pin[GPIO_SR04_ECHO];   // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
   sonar_serial = new TasmotaSerial(sr04_echo_pin, sr04_trig_pin, 1);
 
   if (sonar_serial->begin(9600,1)) {
