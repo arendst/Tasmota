@@ -90,7 +90,7 @@ bool Xsns91(uint8_t function)
 
   switch (function) {
     case FUNC_WEB_ADD_HANDLER:
-      WebServer->on("/metrics", HandleMetrics);
+      Webserver->on("/metrics", HandleMetrics);
       break;
   }
   return result;

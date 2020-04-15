@@ -494,7 +494,7 @@ void HandleHxAction(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_HX711);
 
-  if (WebServer->hasArg("save")) {
+  if (Webserver->hasArg("save")) {
     HxSaveSettings();
     HandleConfiguration();
     return;
@@ -502,7 +502,7 @@ void HandleHxAction(void)
 
   char stemp1[20];
 
-  if (WebServer->hasArg("reset")) {
+  if (Webserver->hasArg("reset")) {
     snprintf_P(stemp1, sizeof(stemp1), PSTR("Sensor34 1"));  // Reset
     ExecuteWebCommand(stemp1, SRC_WEBGUI);
 
@@ -510,7 +510,7 @@ void HandleHxAction(void)
     return;
   }
 
-  if (WebServer->hasArg("calibrate")) {
+  if (Webserver->hasArg("calibrate")) {
     WebGetArg("p1", stemp1, sizeof(stemp1));
     Settings.weight_reference = (!strlen(stemp1)) ? 0 : (unsigned long)(CharToFloat(stemp1) * 1000);
 
@@ -593,7 +593,7 @@ bool Xsns34(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_HX711);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        WebServer->on("/" WEB_HANDLE_HX711, HandleHxAction);
+        Webserver->on("/" WEB_HANDLE_HX711, HandleHxAction);
         break;
 #endif  // USE_HX711_GUI
 #endif  // USE_WEBSERVER
