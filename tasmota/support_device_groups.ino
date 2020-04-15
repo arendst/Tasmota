@@ -34,6 +34,7 @@ struct device_group_member {
   IPAddress ip_address;
   uint16_t received_sequence;
   uint16_t acked_sequence;
+  uint32_t unicast_count;
 };
 
 struct device_group {
@@ -48,7 +49,6 @@ struct device_group {
   bool local;
   char group_name[TOPSZ];
   char message[128];
-  uint8_t group_member_count;
   struct device_group_member * device_group_members;
 #ifdef USE_DEVICE_GROUPS_SEND
   uint8_t values_8bit[DGR_ITEM_LAST_8BIT];
@@ -77,7 +77,7 @@ void DeviceGroupsInit(void)
   // Initialize the device information for each device group.
   device_groups = (struct device_group *)calloc(device_group_count, sizeof(struct device_group));
   if (device_groups == nullptr) {
-    AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: error allocating %u-element device group array"), device_group_count);
+    AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: Error allocating %u-element device group array"), device_group_count);
     device_groups_initialization_failed = true;
     return;
   }
@@ -169,7 +169,7 @@ void SendDeviceGroupPacket(IPAddress ip, char * packet, int len, const char * la
     }
     delay(10);
   }
-  AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: error sending %s packet"), label);
+  AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: Error sending %s packet"), label);
 }
 
 void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType message_type, ...)
@@ -184,7 +184,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
   if (processing_remote_device_message && message_type != DGR_MSGTYPE_UPDATE_COMMAND) return;
 
   // Get a pointer to the device information for this device.
-  device_group * device_group = &device_groups[device_group_index];
+  struct device_group * device_group = &device_groups[device_group_index];
 
   // If we're still sending initial status requests, ignore this request.
   if (device_group->initial_status_requests_remaining) return;
@@ -551,7 +551,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
 
   // Multicast the packet.
 #ifdef DEVICE_GROUPS_DEBUG
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: sending %u-byte device group %s packet via multicast, sequence=%u"), device_group->message_length, device_group->group_name, device_group->message[device_group->message_header_length] | device_group->message[device_group->message_header_length + 1] << 8);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Sending %u-byte device group %s packet via multicast, sequence=%u"), device_group->message_length, device_group->group_name, device_group->message[device_group->message_header_length] | device_group->message[device_group->message_header_length + 1] << 8);
 #endif  // DEVICE_GROUPS_DEBUG
   SendDeviceGroupPacket(IPAddress(0,0,0,0), device_group->message, device_group->message_length, PSTR("Multicast"));
 
@@ -598,12 +598,10 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
     if (!device_group_member) {
       device_group_member = (struct device_group_member *)calloc(1, sizeof(struct device_group_member));
       if (device_group_member == nullptr) {
-        AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: error allocating device group member block"));
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: Error allocating device group member block"));
         return;
       }
-#ifdef DEVICE_GROUPS_DEBUG
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: adding member %s (%p)"), IPAddressToString(remote_ip), device_group_member);
-#endif  // DEVICE_GROUPS_DEBUG
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Adding member %s"), IPAddressToString(remote_ip));
       device_group_member->ip_address = remote_ip;
       *flink = device_group_member;
       break;
@@ -720,7 +718,7 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
       case DGR_ITEM_LIGHT_CHANNELS:
         break;
       default:
-        AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: ********** invalid item=%u received from device group %s member %s"), item, device_group->group_name, IPAddressToString(remote_ip));
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: ********** Invalid item=%u received from device group %s member %s"), item, device_group->group_name, IPAddressToString(remote_ip));
     }
 #endif  // DEVICE_GROUPS_DEBUG
 
@@ -802,11 +800,26 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
   return;
 
 badmsg:
-  AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: malformed message received from %s"), IPAddressToString(remote_ip));
+  AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: Malformed message received from %s"), IPAddressToString(remote_ip));
 #ifdef DEVICE_GROUPS_DEBUG
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("packet_length=%u, offset=%u"), packet_length, message_ptr - packet);
 #endif  // DEVICE_GROUPS_DEBUG
   processing_remote_device_message = false;
+}
+
+void DeviceGroupStatus(uint8_t device_group_index)
+{
+  if (Settings.flag4.device_groups_enabled && device_group_index < device_group_count) {
+    char buffer[1024];
+    int member_count = 0;
+    struct device_group * device_group = &device_groups[device_group_index];
+    buffer[0] = buffer[1] = 0;
+    for (struct device_group_member * device_group_member = device_group->device_group_members; device_group_member; device_group_member = device_group_member->flink) {
+      snprintf(buffer, sizeof(buffer), PSTR("%s,{\"IPAddress\":\"%s\",\"ResendCount\":%u,\"LastRcvdSeq\":%u,\"LastAckedSeq\":%u}"), buffer, IPAddressToString(device_group_member->ip_address), device_group_member->unicast_count, device_group_member->received_sequence, device_group_member->acked_sequence);
+      member_count++;
+    }
+    Response_P(PSTR("{\"" D_CMND_DEVGROUPSTATUS "\":{\"Index\":%u,\"GroupName\":\"%s\",\"MessageSeq\":%u,\"MemberCount\":%d,\"Members\":[%s]}"), device_group_index, device_group->group_name, outgoing_sequence, member_count, &buffer[1]);
+  }
 }
 
 void DeviceGroupsLoop(void)
@@ -822,16 +835,16 @@ void DeviceGroupsLoop(void)
       if (!device_groups_initialized) DeviceGroupsInit();
       if (device_groups_initialization_failed) return;
 
-      // Load the status request message for all device groups. This message will be multicast 5
-      // times.
+      // Load the status request message for all device groups. This message will be multicast 10
+      // times at 200ms intervals.
       next_check_time = now + 3000;
       for (uint32_t device_group_index = 0; device_group_index < device_group_count; device_group_index++) {
         device_group * device_group = &device_groups[device_group_index];
         device_group->message_length = BeginDeviceGroupMessage(device_group, DGR_FLAG_RESET | DGR_FLAG_STATUS_REQUEST) - device_group->message;
-        device_group->initial_status_requests_remaining = 5;
+        device_group->initial_status_requests_remaining = 10;
         device_group->next_ack_check_time = next_check_time;
       }
-
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: (Re)discovering device groups"));
     }
 
     if (device_groups_initialization_failed) return;
@@ -856,15 +869,15 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
             if (device_group->initial_status_requests_remaining) {
               if (--device_group->initial_status_requests_remaining) {
 #ifdef DEVICE_GROUPS_DEBUG
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: sending initial status request for group %s"), device_group->group_name);
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Sending initial status request for group %s"), device_group->group_name);
 #endif  // DEVICE_GROUPS_DEBUG
                 SendDeviceGroupPacket(IPAddress(0,0,0,0), device_group->message, device_group->message_length, PSTR("Initial"));
                 device_group->message[device_group->message_header_length + 2] = DGR_FLAG_STATUS_REQUEST; // The reset flag is on only for the first packet - turn it off now
                 device_group->next_ack_check_time = now + 200;
               }
 
-              // If we've sent the initial status request message 5 times, send our status to all
-              // the members.
+              // If we've sent the initial status request message the set number of times, send our
+              // status to all the members.
               else {
                 device_group->next_ack_check_time = 0;
                 _SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_FULL_STATUS);
@@ -874,7 +887,7 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
             // If we're done initializing, iterate through the group memebers, ...
             else {
 #ifdef DEVICE_GROUPS_DEBUG
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: checking for ack's"));
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Checking for ack's"));
 #endif  // DEVICE_GROUPS_DEBUG
               bool acked = true;
               struct device_group_member ** flink = &device_group->device_group_members;
@@ -887,9 +900,7 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
                   // If we haven't receive an ack from this member in DGR_MEMBER_TIMEOUT ms, assume
                   // they're offline and remove them from the group.
                   if (device_group->member_timeout_time < now) {
-#ifdef DEVICE_GROUPS_DEBUG
-                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: removing member %s (%p)"), IPAddressToString(device_group_member->ip_address), device_group_member);
-#endif  // DEVICE_GROUPS_DEBUG
+                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Removing member %s"), IPAddressToString(device_group_member->ip_address));
                     *flink = device_group_member->flink;
                     free(device_group_member);
                   }
@@ -897,9 +908,10 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
                   // Otherwise, unicast the last message directly to this member.
                   else {
 #ifdef DEVICE_GROUPS_DEBUG
-                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: sending %u-byte device group %s packet via unicast to %s, sequence %u, last message acked=%u"), device_group->message_length, device_group->group_name, IPAddressToString(device_group_member->ip_address), outgoing_sequence, device_group_member->acked_sequence);
+                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Sending %u-byte device group %s packet via unicast to %s, sequence %u, last message acked=%u"), device_group->message_length, device_group->group_name, IPAddressToString(device_group_member->ip_address), outgoing_sequence, device_group_member->acked_sequence);
 #endif  // DEVICE_GROUPS_DEBUG
                     SendDeviceGroupPacket(device_group_member->ip_address, device_group->message, device_group->message_length, PSTR("Unicast"));
+                    device_group_member->unicast_count++;
                     acked = false;
                     flink = &device_group_member->flink;
                   }
@@ -940,7 +952,7 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
 #endif  // DEVICE_GROUPS_DEBUG
         if (device_group->next_announcement_time <= now) {
 #ifdef DEVICE_GROUPS_DEBUG
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: sending device group %s announcement"), device_group->group_name);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Sending device group %s announcement"), device_group->group_name);
 #endif  // DEVICE_GROUPS_DEBUG
           SendDeviceGroupPacket(IPAddress(0,0,0,0), device_group->message, BeginDeviceGroupMessage(device_group, DGR_FLAG_ANNOUNCEMENT, true) - device_group->message, PSTR("Announcement"));
           device_group->next_announcement_time = now + DGR_ANNOUNCEMENT_INTERVAL + random(10000);

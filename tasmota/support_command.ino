@@ -36,7 +36,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SEND "|"
 #endif  // USE_DEVICE_GROUPS_SEND
-  D_CMND_DEVGROUP_SHARE "|"
+  D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|"
 #endif  // USE_DEVICE_GROUPS
   D_CMND_SENSOR "|" D_CMND_DRIVER;
 
@@ -59,7 +59,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #ifdef USE_DEVICE_GROUPS_SEND
   &CmndDevGroupSend,
 #endif  // USE_DEVICE_GROUPS_SEND
-  &CmndDevGroupShare,
+  &CmndDevGroupShare, &CmndDevGroupStatus,
 #endif  // USE_DEVICE_GROUPS
   &CmndSensor, &CmndDriver };
 
@@ -1792,6 +1792,11 @@ void CmndDevGroupShare(void)
   Settings.device_group_share_in = parm[0];
   Settings.device_group_share_out = parm[1];
   Response_P(PSTR("{\"" D_CMND_DEVGROUP_SHARE "\":{\"In\":\"%X\",\"Out\":\"%X\"}}"), Settings.device_group_share_in, Settings.device_group_share_out);
+}
+
+void CmndDevGroupStatus(void)
+{
+  DeviceGroupStatus((XdrvMailbox.usridx ? XdrvMailbox.index - 1 : 0));
 }
 #endif  // USE_DEVICE_GROUPS
 
