@@ -47,17 +47,19 @@
 enum SupportedModules {
   WEMOS,
   ESP32_CAM,
+  ESP32_CAM_AITHINKER,
   MAXMODULE
 };
 
 const char kModuleNames[] PROGMEM =
-  "WeMos D1 ESP32|ESP32 CAM|"
+  "WeMos D1 ESP32|ESP32 CAM|ESP32 AI_THINKER CAM|"
   ;
 
 // Default module settings
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WEMOS,
-  ESP32_CAM
+  ESP32_CAM,
+  ESP32_CAM_AITHINKER
 };
 
 const mytmplt kModules[MAXMODULE] PROGMEM = {
@@ -144,8 +146,71 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
       0,          //37          NO PULLUP
       0,          //38          NO PULLUP
       GPIO_USER   //39      I   NO PULLUP       GPIO39, SENSOR_VN, ADC1_CH3, ADC_H, RTC_GPIO3
+  },
+  {   //"AI THINKER ESP32 CAM",
+      0,          //0       XCLK                 GPIO0, ADC2_CH1, TOUCH1, RTC_GPIO11, CLK_OUT1, EMAC_TX_CLK
+      GPIO_USER,  //1       IO     TXD0         GPIO1, U0TXD, CLK_OUT3, EMAC_RXD2
+      GPIO_USER,  //2       IO                  GPIO2, ADC2_CH2, TOUCH2, RTC_GPIO12, HSPIWP, HS2_DATA0, SD_DATA0
+      GPIO_USER,  //3       IO     RXD0         GPIO3, U0RXD, CLK_OUT2
+      GPIO_USER,  //4       IO                  GPIO4, ADC2_CH0, TOUCH0, RTC_GPIO10, HSPIHD, HS2_DATA1, SD_DATA1, EMAC_TX_ER
+      0,          //5       Y2                  GPIO5, VSPICS0, HS1_DATA6, EMAC_RX_CLK
+//      0,          //6
+//      0,          //7
+//      0,          //8
+//      0,          //9
+//      0,          //10
+//      0,          //11
+      GPIO_USER,  //12      (I)O                GPIO12, ADC2_CH5, TOUCH5, RTC_GPIO15, MTDI, HSPIQ, HS2_DATA2, SD_DATA2, EMAC_TXD3       (If driven High, flash voltage (VDD_SDIO) is 1.8V not default 3.3V. Has internal pull-down, so unconnected = Low = 3.3V. May prevent flashing and/or booting if 3.3V flash is connected and pulled high. See ESP32 datasheet for more details.)
+      GPIO_USER,  //13      IO                  GPIO13, ADC2_CH4, TOUCH4, RTC_GPIO14, MTCK, HSPID, HS2_DATA3, SD_DATA3, EMAC_RX_ER
+      GPIO_USER,  //14      IO                  GPIO14, ADC2_CH6, TOUCH6, RTC_GPIO16, MTMS, HSPICLK, HS2_CLK, SD_CLK, EMAC_TXD2
+      GPIO_USER,  //15      (I)O                GPIO15, ADC2_CH3, TOUCH3, MTDO, HSPICS0, RTC_GPIO13, HS2_CMD, SD_CMD, EMAC_RXD3         (If driven Low, silences boot messages from normal boot. Has internal pull-up, so unconnected = High = normal output.)
+      GPIO_USER,  //16      IO                  GPIO16, HS1_DATA4, U2RXD, EMAC_CLK_OUT
+      GPIO_USER,  //17      IO                  GPIO17, HS1_DATA5, U2TXD, EMAC_CLK_OUT_180
+      0,          //18      Y3                  GPIO18, VSPICLK, HS1_DATA7
+      0,          //19      Y4                  GPIO19, VSPIQ, U0CTS, EMAC_TXD0
+      0,          //20
+      0,          //21      Y5                  GPIO21, VSPIHD, EMAC_TX_EN
+      0,          //22      PCLK                GPIO22, VSPIWP, U0RTS, EMAC_TXD1
+      0,          //23      HREF                GPIO23, VSPID, HS1_STROBE
+      0,          //24
+      0,          //25      VSYNC               GPIO25, DAC_1, ADC2_CH8, RTC_GPIO6, EMAC_RXD0
+      0,          //26      SIOD                GPIO26, DAC_2, ADC2_CH9, RTC_GPIO7, EMAC_RXD1
+      0,          //27      SIOC                GPIO27, ADC2_CH7, TOUCH7, RTC_GPIO17, EMAC_RX_DV
+      0,          //28
+      0,          //29
+      0,          //30
+      0,          //31
+      0,          //32      PWR DWN              GPIO32, XTAL_32K_P (32.768 kHz crystal oscillator input), ADC1_CH4, TOUCH9, RTC_GPIO9
+      GPIO_USER,  //33      IO                  GPIO33, XTAL_32K_N (32.768 kHz crystal oscillator output), ADC1_CH5, TOUCH8, RTC_GPIO8
+      0,          //34      Y8                  GPIO34, ADC1_CH6, RTC_GPIO4
+      0,          //35      Y9                  GPIO35, ADC1_CH7, RTC_GPIO5
+      0,          //36      Y6                  GPIO36, SENSOR_VP, ADC_H, ADC1_CH0, RTC_GPIO0
+      0,          //37          NO PULLUP
+      0,          //38          NO PULLUP
+      0           //39      Y7                  GPIO39, SENSOR_VN, ADC1_CH3, ADC_H, RTC_GPIO3
   }
 };
+
+/* ai THINKER pins
+#define PWDN_GPIO_NUM     32
+#define RESET_GPIO_NUM    -1
+#define XCLK_GPIO_NUM      0
+#define SIOD_GPIO_NUM     26
+#define SIOC_GPIO_NUM     27
+
+#define Y9_GPIO_NUM       35
+#define Y8_GPIO_NUM       34
+#define Y7_GPIO_NUM       39
+#define Y6_GPIO_NUM       36
+#define Y5_GPIO_NUM       21
+#define Y4_GPIO_NUM       19
+#define Y3_GPIO_NUM       18
+#define Y2_GPIO_NUM        5
+#define VSYNC_GPIO_NUM    25
+#define HREF_GPIO_NUM     23
+#define PCLK_GPIO_NUM     22
+*/
+
 
 #endif  // ESP32
 
