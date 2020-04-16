@@ -1987,10 +1987,12 @@ bool isChannelGammaCorrected(uint32_t channel) {
 
 // is the channel a regular PWM or ColorTemp control
 bool isChannelCT(uint32_t channel) {
+#ifdef ESP8266
   if (PHILIPS == my_module_type) {
     if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return true; }   // PMW reserved for CT
     if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return true; }   // PMW reserved for CT
   }
+#endif  // ESP8266
   return false;
 }
 
