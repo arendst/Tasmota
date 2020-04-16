@@ -17,7 +17,6 @@
 #define ESP_reset() ESP.reset()
 #define ESP_getBootVersion() ESP.getBootVersion()
 #define ESP_getFlashChipId() ESP.getFlashChipId()
-#define ESP_getFlashChipRealSize() ESP.getFlashChipRealSize()
 #define ESP_getSketchSize() ESP.getSketchSize()
 #define ESP_getChipId() ESP.getChipId()
 //

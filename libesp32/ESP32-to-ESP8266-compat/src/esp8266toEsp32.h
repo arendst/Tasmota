@@ -34,15 +34,14 @@
 #define ESP_flashReadHeader(offset, data, size) ESP32_flashRead(offset, data, size)
 #define ESP_flashRead(offset, data, size) ESP32_flashRead(offset, data, size)
 String ESP_getResetReason(void);
+uint32_t ESP_ResetInfoReason(void);
 uint32_t ESP_getBootVersion(void);
 bool ESP_rtcUserMemoryWrite(uint32_t offset, uint32_t *data, size_t size);
 bool ESP_rtcUserMemoryRead(uint32_t offset, uint32_t *data, size_t size);
 void ESP_reset();
-String ESP_getResetInfo(void);
 uint32_t ESP_getFlashChipId();
 uint32_t ESP_getChipId();
 String String_ESP_getChipId();
-uint32_t ESP_getFlashChipRealSize();
 uint32_t ESP_getSketchSize();
 
 // Analog
@@ -67,7 +66,6 @@ typedef double real64_t;
 #define ETS_UART_INTR_DISABLE()
 #define ETS_UART_INTR_ENABLE()
 
-#define getChipId() getEfuseMac()
 #define ESPhttpUpdate httpUpdate
 #define getFlashChipRealSize() getFlashChipSize()
 
@@ -92,14 +90,13 @@ typedef int SerialConfig;
 
 #undef LWIP_IPV6
 
-struct rst_info
-{
-    int reason;
-};
-
-#define REASON_DEFAULT_RST 1
-#define REASON_EXT_SYS_RST 2
-#define REASON_DEEP_SLEEP_AWAKE 3
+#define REASON_DEFAULT_RST      0  // "Power on"                normal startup by power on
+#define REASON_WDT_RST          1  // "Hardware Watchdog"       hardware watch dog reset
+#define REASON_EXCEPTION_RST    2  // "Exception"               exception reset, GPIO status won’t change
+#define REASON_SOFT_WDT_RST     3  // "Software Watchdog"       software watch dog reset, GPIO status won’t change
+#define REASON_SOFT_RESTART     4  // "Software/System restart" software restart ,system_restart , GPIO status won’t change
+#define REASON_DEEP_SLEEP_AWAKE 5  // "Deep-Sleep Wake"         wake up from deep-sleep
+#define REASON_EXT_SYS_RST      6  // "External System"         external system reset
 
 // memmove ...
 #define memcpy_P memcpy
