@@ -1675,17 +1675,28 @@ void ModuleSaveSettings(void)
       if (ValidGPIO(i, cmodule.io[i])) {
         snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), i);
         WebGetArg(webindex, tmp, sizeof(tmp));
-        Settings.my_gp.io[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
-        gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
+        uint8_t value = (!strlen(tmp)) ? 0 : atoi(tmp);
+#ifdef ESP8266
+        Settings.my_gp.io[i] = value;
+#else  // ESP32
+        if (i == ADC0_PIN) {
+          Settings.my_adc0 = value;
+        } else {
+          Settings.my_gp.io[i] = value;
+        }
+#endif  // ESP8266 - ESP32
+        gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(value);
       }
     }
   }
+#ifdef ESP8266
 #ifndef USE_ADC_VCC
 //  WebGetArg("g17", tmp, sizeof(tmp));
   WebGetArg("g" STR(ADC0_PIN), tmp, sizeof(tmp));
   Settings.my_adc0 = (!strlen(tmp)) ? 0 : atoi(tmp);
   gpios += F(", " D_ADC "0 "); gpios += String(Settings.my_adc0);
 #endif  // USE_ADC_VCC
+#endif  // ESP8266
 
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MODULE "%s " D_CMND_MODULE "%s"), ModuleName().c_str(), gpios.c_str());
 }
@@ -2202,7 +2213,7 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d"), ESP_getChipId());
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP_getFlashChipId());
-  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%dkB"), ESP_getFlashChipRealSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%dkB"), ESP.getFlashChipRealSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%dkB"), ESP.getFlashChipSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%dkB"), ESP_getSketchSize() / 1024);
   WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%dkB"), ESP.getFreeSketchSpace() / 1024);
