@@ -229,7 +229,9 @@ void DebugFreeMem(void)
 
 void DebugFreeMem(void)
 {
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d"), ESP.getFreeHeap());
+  register uint8_t *sp asm("a1");
+
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), sp - pxTaskGetStackStart(NULL), XdrvMailbox.data);
 }
 
 #endif  // ESP8266 - ESP32
