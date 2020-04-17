@@ -534,7 +534,9 @@ void Z_AqaraOccupancy(uint16_t shortaddr, uint16_t cluster, uint8_t endpoint, co
     uint32_t occupancy = strToUInt(val_endpoint);
 
     if (occupancy) {
-      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, OCCUPANCY_TIMEOUT, cluster, endpoint, Z_CAT_VIRTUAL_ATTR, 0, &Z_OccupancyCallback);
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, OCCUPANCY_TIMEOUT, cluster, endpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
+    } else {
+      zigbee_devices.resetTimersForDevice(shortaddr, 0 /* groupaddr */, Z_CAT_VIRTUAL_OCCUPANCY);
     }
   }
 }
