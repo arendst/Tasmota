@@ -526,11 +526,38 @@ struct SYSCFG {
   uint16_t      pms_wake_interval;         // F34
   uint8_t       config_version;            // F36
 
-  uint8_t       free_f37[129];             // F37 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f37[69];              // F37 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
+  uint8_t       time_output_delay;         // F7C
+  uint8_t       temp_rampup_pi_acc_error;  // F7D
+  uint8_t       temp_rampup_delta_out;     // F7E
+  uint8_t       temp_rampup_delta_in;      // F7F
+  uint32_t      time_rampup_max;           // F80
+  uint32_t      time_rampup_cycle;         // F84
+  uint32_t      time_allow_rampup;         // F88
+  uint32_t      time_sens_lost;            // F8C
+  uint8_t       temp_sens_number;          // F90
+  bool          state_emergency;           // F91
+  uint8_t       output_relay_number;       // F92
+  uint8_t       input_switch_number;       // F93
+  uint32_t      time_manual_to_auto;       // F94
+  uint32_t      time_on_limit;             // F98
+  uint32_t      time_reset;                // F9C
+  uint32_t      time_pi_cycle;             // FA0
+  uint32_t      time_max_action;           // FA4
+  uint32_t      time_min_action;           // FA8
+  uint32_t      time_min_turnoff_action;   // FAC
+  uint8_t       val_prop_band;             // FB0
+  uint8_t       temp_reset_anti_windup;    // FB1
+  int8_t        temp_hysteresis;           // FB2
+  uint8_t       temp_frost_protect;        // FB3
+  uint16_t      power_max;                 // FB4
+  uint16_t      energy_heating_output_max; // FB6
+
   uint16_t      pulse_counter_debounce_low;  // FB8
   uint16_t      pulse_counter_debounce_high; // FBA
+
   uint32_t      keeloq_master_msb;         // FBC
   uint32_t      keeloq_master_lsb;         // FC0
   uint32_t      keeloq_serial;             // FC4

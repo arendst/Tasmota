@@ -656,6 +656,38 @@
   #define USE_TASMOTA_SLAVE_FLASH_SPEED 57600      // Usually 57600 for 3.3V variants and 115200 for 5V variants
   #define USE_TASMOTA_SLAVE_SERIAL_SPEED 57600     // Depends on the sketch that is running on the Uno/Pro Mini
 
+/*********************************************************************************************\
+ * HEATING CONTROLLER
+\*********************************************************************************************/
+
+#define USE_HEATING
+
+#define HEATING_RELAY_NUMBER            1        // Default output relay number
+#define HEATING_SWITCH_NUMBER           1        // Default input switch number
+#define HEATING_TIME_ALLOW_RAMPUP       18000    // Default time in seconds after last target update to allow ramp-up controller phase
+#define HEATING_TIME_RAMPUP_MAX         57600    // Default time maximum ramp-up controller duration
+#define HEATING_TIME_RAMPUP_CYCLE       1800     // Default time ramp-up cycle 
+#define HEAT_TIME_SENS_LOST             1800     // Default target temperature in seconds
+#define HEAT_TEMP_SENS_NUMBER           1        // Default temperature sensor number
+#define HEAT_STATE_EMERGENCY            false    // Default state for heating emergency
+#define HEAT_POWER_MAX                  60       // Default maximum output power in Watt
+#define HEAT_TIME_MANUAL_TO_AUTO        3600     // Default time without input switch active to change from manual to automatic in seconds
+#define HEAT_TIME_ON_LIMIT              7200     // Default maximum time with output active in seconds
+#define HEAT_TIME_RESET                 12000    // Default reset time of the PI controller in seconds
+#define HEAT_TIME_PI_CYCLE              1800     // Default cycle time for the heating controller in seconds
+#define HEAT_TIME_MAX_ACTION            1200     // Default maximum heating time per cycle in seconds
+#define HEAT_TIME_MIN_ACTION            240      // Default minimum heating time per cycle in seconds
+#define HEAT_TIME_MIN_TURNOFF_ACTION    180      // Default minimum turnoff time in seconds, below it the heating will be held on
+#define HEAT_PROP_BAND                  4        // Default proportional band of the PI controller in degrees celsius
+#define HEAT_TEMP_RESET_ANTI_WINDUP     8        // Default range where reset antiwindup is disabled, in tenths of degrees celsius
+#define HEAT_TEMP_HYSTERESIS            1        // Default range hysteresis for temperature PI controller, in tenths of degrees celsius
+#define HEAT_TEMP_FROST_PROTECT         40       // Default minimum temperature for frost protection, in tenths of degrees celsius
+#define HEATING_TEMP_RAMPUP_DELTA_IN    4        // Default minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
+#define HEATING_TEMP_RAMPUP_DELTA_OUT   2        // Default minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
+#define HEATING_TEMP_PI_RAMPUP_ACC_E    20       // Default accumulated error when switching from ramp-up controller to PI
+#define HEATING_ENERGY_OUTPUT_MAX       10       // Default maximum allowed energy output for heating valve in Watts
+#define HEATING_TIME_OUTPUT_DELAY       180      // Default output delay between state change and real actuation event (f.i. valve open/closed)
+
 // -- End of general directives -------------------
 
 /*********************************************************************************************\
