@@ -687,6 +687,7 @@
 #define HEATING_TEMP_PI_RAMPUP_ACC_E    20       // Default accumulated error when switching from ramp-up controller to PI
 #define HEATING_ENERGY_OUTPUT_MAX       10       // Default maximum allowed energy output for heating valve in Watts
 #define HEATING_TIME_OUTPUT_DELAY       180      // Default output delay between state change and real actuation event (f.i. valve open/closed)
+#define HEATING_TEMP_INIT               180      // Default init target temperature for the heating controller
 
 // -- End of general directives -------------------
 

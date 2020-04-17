@@ -577,7 +577,7 @@
 #define D_CMND_PING "Ping"
 #define D_JSON_PING "Ping"
 
-// Commands xdrv_90_heating.ino
+// Commands xdrv_39_heating.ino
 #define D_CMND_HEATINGMODESET "HeatingModeSet"
 #define D_CMND_TEMPFROSTPROTECTSET "TempFrostProtectSet"
 #define D_CMND_CONTROLLERMODESET "ControllerModeSet"

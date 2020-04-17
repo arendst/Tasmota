@@ -21,6 +21,8 @@ enum HeatingModes { HEAT_OFF, HEAT_AUTOMATIC_OP, HEAT_MANUAL_OP, HEAT_TIME_PLAN 
 enum ControllerModes { CTR_HYBRID, CTR_PI, CTR_RAMP_UP };
 enum ControllerHybridPhases { CTR_HYBRID_RAMP_UP, CTR_HYBRID_PI };
 enum InterfaceStates { IFACE_OFF, IFACE_ON };
+enum CtrCycleStates { CYCLE_OFF, CYCLE_ON };
+enum EmergencyStates { EMERGENCY_OFF, EMERGENCY_ON };
 enum HeatingSupportedInputSwitches {
   HEATING_INPUT_NONE,
   HEATING_INPUT_SWT1 = 1,           // Buttons
@@ -39,6 +41,26 @@ enum HeatingSupportedOutputRelays {
   HEATING_OUTPUT_REL7,
   HEATING_OUTPUT_REL8
 };
+
+typedef union {
+  uint16_t data;
+  struct {
+    uint16_t heating_mode : 2;        // Operation mode of the heating system
+    uint16_t controller_mode : 2;     // Operation mode of the heating controller
+    uint16_t sensor_alive : 1;        // Flag stating if temperature sensor is alive (0 = inactive, 1 = active)
+    uint16_t command_output : 1;      // Flag stating state to save the command to the output (0 = inactive, 1 = active)
+    uint16_t phase_hybrid_ctr : 1;    // Phase of the hybrid controller (Ramp-up or PI)
+    uint16_t status_output : 1;       // Status of the output switch
+    uint16_t status_cycle_active : 1; // Status showing if cycle is active (Output ON) or not (Output OFF)
+    uint16_t state_emergency : 1;     // State for heating emergency
+    uint16_t spare0 : 1;
+    uint16_t spare1 : 1;
+    uint16_t spare2 : 1;
+    uint16_t spare3 : 1;
+    uint16_t spare4 : 1;
+    uint16_t spare5 : 1;
+  };
+} HeatingBitfield;
 
 const char kHeatingCommands[] PROGMEM = "|" D_CMND_HEATINGMODESET "|" D_CMND_TEMPFROSTPROTECTSET "|" 
   D_CMND_CONTROLLERMODESET "|" D_CMND_INPUTSWITCHSET "|" D_CMND_OUTPUTRELAYSET "|" D_CMND_TIMEALLOWRAMPUPSET "|" 
@@ -60,81 +82,71 @@ void (* const HeatingCommand[])(void) PROGMEM = {
   &CmndTimeRampupMaxSet, &CmndTimeRampupCycleSet, &CmndTempRampupPiAccErrSet, &CmndTimePiProportRead, 
   &CmndTimePiIntegrRead };
 
-const char DOMOTICZ_MES[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\"}";
-
 struct HEATING {
-  uint32_t counter_seconds = 0;                          // Counter incremented every second
-  uint8_t heating_mode = HEAT_OFF;                       // Operation mode of the heating system
-  uint8_t controller_mode = CTR_HYBRID;                  // Operation mode of the heating controller
-  bool sensor_alive = false;                             // Bool stating if temperature sensor is alive
-  bool command_output = false;                           // Bool stating state to save the command to the output (true = active, false = inactive)
-  uint8_t phase_hybrid_ctr = CTR_HYBRID_PI;              // Phase of the hybrid controller (Ramp-up or PI)
-  uint8_t status_output = IFACE_OFF;                     // Status of the output switch
-  uint16_t temp_target_level = 180;                      // Target level of the heating in tenths of degrees
-  uint16_t temp_target_level_ctr = 180;                  // Target level set for the controller
-  int16_t temp_measured = 0;                             // Temperature measurement received from sensor in tenths of degrees
-  uint32_t timestamp_temp_target_update = 0;             // Timestamp of latest target value update
-  uint32_t timestamp_temp_measured_update = 0;           // Timestamp of latest measurement value update
-  uint32_t timestamp_temp_meas_change_update = 0;        // Timestamp of latest measurement value change (> or < to previous)
-  uint32_t timestamp_output_on = 0;                      // Timestamp of latest heating output On state
-  uint32_t timestamp_output_off = 0;                     // Timestamp of latest heating output Off state
-  uint32_t timestamp_input_on = 0;                       // Timestamp of latest input On state
-  uint32_t time_heating_total = 0;                       // Time heating on within a specific timeframe
-  uint32_t time_pi_checkpoint = 0;                       // Time to finalize the pi control cycle
-  uint32_t time_pi_changepoint = 0;                      // Time until switching off output within a pi control cycle
-  uint32_t time_rampup_checkpoint = 0;                   // Time to switch from ramp-up controller mode to PI
-  uint32_t time_rampup_output_off = 0;                   // Time to switch off relay output within the ramp-up controller
-  uint32_t timestamp_rampup_start = 0;                   // Timestamp where the ramp-up controller mode has been started
-  uint32_t time_rampup_deadtime = 0;                     // Time constant of the heating system (step response time)
-  uint32_t time_rampup_nextcycle = 0;                    // Time where the ramp-up controller shall start the next cycle
-  uint32_t counter_rampup_cycles = 0;                    // Counter of ramp-up cycles
-  int32_t temp_measured_gradient = 0;                    // Temperature measured gradient from sensor in thousandths of degrees per hour
-  int32_t temp_rampup_meas_gradient = 0;                 // Temperature measured gradient from sensor in thousandths of degrees per hour calculated during ramp-up
-  int16_t temp_rampup_output_off = 0;                    // Temperature to swith off relay output within the ramp-up controller in tenths of degrees
-  int16_t temp_rampup_start = 0;                         // Temperature at start of ramp-up controller in tenths of degrees celsius
-  int16_t temp_rampup_cycle = 0;                         // Temperature set at the beginning of each ramp-up cycle in tenths of degrees
-  int16_t temp_pi_accum_error = 0;                       // Temperature accumulated error for the PI controller in tenths of degrees
-  int16_t temp_pi_error = 0;                             // Temperature error for the PI controller in tenths of degrees
-  int32_t time_proportional_pi;                          // Time proportional part of the PI controller
-  int32_t time_integral_pi;                              // Time integral part of the PI controller
-  int32_t time_total_pi;                                 // Time total (proportional + integral) of the PI controller
-  uint16_t kP_pi = 0;                                    // kP value for the PI controller
-  uint16_t kI_pi = 0;                                    // kP value for the PI controller multiplied by 100
-  uint16_t heating_plan[7][6] = {                        // Heating plan for the week (3 times/temperatures per day in tenths of degrees)
-           {0,0,0,0,0,0},                                // Monday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                                // Tuesday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                                // Wednesday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                                // Thursday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                                // Friday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                                // Saturday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0}                                 // Sunday, format {time/temp, time/temp, time/temp}
+  uint32_t timestamp_temp_target_update = 0;                        // Timestamp of latest target value update
+  uint32_t timestamp_temp_measured_update = 0;                      // Timestamp of latest measurement value update
+  uint32_t timestamp_temp_meas_change_update = 0;                   // Timestamp of latest measurement value change (> or < to previous)
+  uint32_t timestamp_output_off = 0;                                // Timestamp of latest heating output Off state
+  uint32_t timestamp_input_on = 0;                                  // Timestamp of latest input On state
+  uint32_t time_heating_total = 0;                                  // Time heating on within a specific timeframe
+  uint32_t time_pi_checkpoint = 0;                                  // Time to finalize the pi control cycle
+  uint32_t time_pi_changepoint = 0;                                 // Time until switching off output within a pi control cycle
+  int32_t temp_measured_gradient = 0;                               // Temperature measured gradient from sensor in thousandths of degrees per hour
+  uint16_t temp_target_level = HEATING_TEMP_INIT;                   // Target level of the heating in tenths of degrees
+  uint16_t temp_target_level_ctr = HEATING_TEMP_INIT;               // Target level set for the controller
+  int16_t temp_pi_accum_error = 0;                                  // Temperature accumulated error for the PI controller in tenths of degrees
+  int16_t temp_pi_error = 0;                                        // Temperature error for the PI controller in tenths of degrees
+  int32_t time_proportional_pi;                                     // Time proportional part of the PI controller
+  int32_t time_integral_pi;                                         // Time integral part of the PI controller
+  int32_t time_total_pi;                                            // Time total (proportional + integral) of the PI controller
+  uint16_t kP_pi = 0;                                               // kP value for the PI controller
+  uint16_t kI_pi = 0;                                               // kP value for the PI controller multiplied by 100
+  uint16_t heating_plan[7][6] = {                                   // Heating plan for the week (3 times/temperatures per day in tenths of degrees)
+           {0,0,0,0,0,0},                                           // Monday, format {time/temp, time/temp, time/temp}
+           {0,0,0,0,0,0},                                           // Tuesday, format {time/temp, time/temp, time/temp}
+           {0,0,0,0,0,0},                                           // Wednesday, format {time/temp, time/temp, time/temp}
+           {0,0,0,0,0,0},                                           // Thursday, format {time/temp, time/temp, time/temp}
+           {0,0,0,0,0,0},                                           // Friday, format {time/temp, time/temp, time/temp}
+           {0,0,0,0,0,0},                                           // Saturday, format {time/temp, time/temp, time/temp}
+           {0,0,0,0,0,0}                                            // Sunday, format {time/temp, time/temp, time/temp}
            };
-  bool status_cycle_active = false;                      // Status showing if cycle is active (Output ON) or not (Output OFF)
-  uint8_t time_output_delay = HEATING_TIME_OUTPUT_DELAY; // Output delay between state change and real actuation event (f.i. valve open/closed)
-  uint8_t temp_rampup_pi_acc_error = HEATING_TEMP_PI_RAMPUP_ACC_E; // Accumulated error when switching from ramp-up controller to PI
-  uint8_t temp_rampup_delta_out = HEATING_TEMP_RAMPUP_DELTA_OUT; // Minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
-  uint8_t temp_rampup_delta_in = HEATING_TEMP_RAMPUP_DELTA_IN; // Minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
-  uint32_t time_rampup_max = HEATING_TIME_RAMPUP_MAX; // Time maximum ramp-up controller duration
-  uint32_t time_rampup_cycle = HEATING_TIME_RAMPUP_CYCLE; // Time ramp-up cycle
-  uint32_t time_allow_rampup = HEATING_TIME_ALLOW_RAMPUP; // Time in seconds after last target update to allow ramp-up controller phase
-  uint32_t time_sens_lost = HEAT_TIME_SENS_LOST; // Maximum time w/o sensor update to set it as lost
-  uint8_t temp_sens_number = HEAT_TEMP_SENS_NUMBER; // Temperature sensor number
-  bool state_emergency = HEAT_STATE_EMERGENCY; // State for heating emergency
-  uint8_t output_relay_number = HEATING_RELAY_NUMBER; // Output relay number
-  uint8_t input_switch_number = HEATING_SWITCH_NUMBER; // Input switch number
-  uint32_t time_manual_to_auto = HEAT_TIME_MANUAL_TO_AUTO; // Time without input switch active to change from manual to automatic in seconds
-  uint32_t time_on_limit = HEAT_TIME_ON_LIMIT; // Maximum time with output active in seconds
-  uint32_t time_reset = HEAT_TIME_RESET; // Reset time of the PI controller in seconds
-  uint32_t time_pi_cycle = HEAT_TIME_PI_CYCLE; // Cycle time for the heating controller in seconds
-  uint32_t time_max_action = HEAT_TIME_MAX_ACTION; // Maximum heating time per cycle in seconds
-  uint32_t time_min_action = HEAT_TIME_MIN_ACTION; // Minimum heating time per cycle in seconds
-  uint32_t time_min_turnoff_action = HEAT_TIME_MIN_TURNOFF_ACTION; // Minimum turnoff time in seconds, below it the heating will be held on
-  uint8_t val_prop_band = HEAT_PROP_BAND; // Proportional band of the PI controller in degrees celsius
-  uint8_t temp_reset_anti_windup = HEAT_TEMP_RESET_ANTI_WINDUP; // Range where reset antiwindup is disabled, in tenths of degrees celsius
-  int8_t temp_hysteresis = HEAT_TEMP_HYSTERESIS; // Range hysteresis for temperature PI controller, in tenths of degrees celsius
-  uint8_t temp_frost_protect = HEAT_TEMP_FROST_PROTECT; // Minimum temperature for frost protection, in tenths of degrees celsius
-  uint16_t power_max = HEAT_POWER_MAX; // Maximum output power in Watt
-  uint16_t energy_heating_output_max = HEATING_ENERGY_OUTPUT_MAX; // Maximum allowed energy output for heating valve in Watts
+  int16_t temp_measured = 0;                                        // Temperature measurement received from sensor in tenths of degrees
+  uint8_t time_output_delay = HEATING_TIME_OUTPUT_DELAY;            // Output delay between state change and real actuation event (f.i. valve open/closed)
+  uint8_t  counter_rampup_cycles = 0;                               // Counter of ramp-up cycles
+  int32_t temp_rampup_meas_gradient = 0;                            // Temperature measured gradient from sensor in thousandths of degrees per hour calculated during ramp-up
+  uint32_t time_rampup_checkpoint = 0;                              // Time to switch from ramp-up controller mode to PI
+  uint32_t time_rampup_output_off = 0;                              // Time to switch off relay output within the ramp-up controller
+  uint32_t timestamp_rampup_start = 0;                              // Timestamp where the ramp-up controller mode has been started
+  uint32_t time_rampup_deadtime = 0;                                // Time constant of the heating system (step response time)
+  uint32_t time_rampup_nextcycle = 0;                               // Time where the ramp-up controller shall start the next cycle
+  uint8_t output_relay_number = HEATING_RELAY_NUMBER;               // Output relay number
+  uint8_t input_switch_number = HEATING_SWITCH_NUMBER;              // Input switch number
+  uint8_t temp_sens_number = HEAT_TEMP_SENS_NUMBER;                 // Temperature sensor number
+  uint8_t temp_rampup_pi_acc_error = HEATING_TEMP_PI_RAMPUP_ACC_E;  // Accumulated error when switching from ramp-up controller to PI
+  uint8_t temp_rampup_delta_out = HEATING_TEMP_RAMPUP_DELTA_OUT;    // Minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
+  uint8_t temp_rampup_delta_in = HEATING_TEMP_RAMPUP_DELTA_IN;      // Minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
+  int16_t temp_rampup_output_off = 0;                               // Temperature to swith off relay output within the ramp-up controller in tenths of degrees
+  int16_t temp_rampup_start = 0;                                    // Temperature at start of ramp-up controller in tenths of degrees celsius
+  int16_t temp_rampup_cycle = 0;                                    // Temperature set at the beginning of each ramp-up cycle in tenths of degrees
+  uint32_t time_rampup_max = HEATING_TIME_RAMPUP_MAX;               // Time maximum ramp-up controller duration
+  uint32_t time_rampup_cycle = HEATING_TIME_RAMPUP_CYCLE;           // Time ramp-up cycle
+  uint32_t time_allow_rampup = HEATING_TIME_ALLOW_RAMPUP;           // Time in seconds after last target update to allow ramp-up controller phase
+  uint32_t time_sens_lost = HEAT_TIME_SENS_LOST;                    // Maximum time w/o sensor update to set it as lost
+  uint32_t time_manual_to_auto = HEAT_TIME_MANUAL_TO_AUTO;          // Time without input switch active to change from manual to automatic in seconds
+  uint32_t time_on_limit = HEAT_TIME_ON_LIMIT;                      // Maximum time with output active in seconds
+  uint32_t time_reset = HEAT_TIME_RESET;                            // Reset time of the PI controller in seconds
+  uint32_t time_pi_cycle = HEAT_TIME_PI_CYCLE;                      // Cycle time for the heating controller in seconds
+  uint32_t time_max_action = HEAT_TIME_MAX_ACTION;                  // Maximum heating time per cycle in seconds
+  uint32_t time_min_action = HEAT_TIME_MIN_ACTION;                  // Minimum heating time per cycle in seconds
+  uint32_t time_min_turnoff_action = HEAT_TIME_MIN_TURNOFF_ACTION;  // Minimum turnoff time in seconds, below it the heating will be held on
+  uint8_t val_prop_band = HEAT_PROP_BAND;                           // Proportional band of the PI controller in degrees celsius
+  uint8_t temp_reset_anti_windup = HEAT_TEMP_RESET_ANTI_WINDUP;     // Range where reset antiwindup is disabled, in tenths of degrees celsius
+  int8_t temp_hysteresis = HEAT_TEMP_HYSTERESIS;                    // Range hysteresis for temperature PI controller, in tenths of degrees celsius
+  uint8_t temp_frost_protect = HEAT_TEMP_FROST_PROTECT;             // Minimum temperature for frost protection, in tenths of degrees celsius
+  uint16_t power_max = HEAT_POWER_MAX;                              // Maximum output power in Watt
+  uint16_t energy_heating_output_max = HEATING_ENERGY_OUTPUT_MAX;   // Maximum allowed energy output for heating valve in Watts
+  uint8_t counter_seconds = 0;                                      // Counter incremented every second
+  HeatingBitfield status;                                           // Bittfield including states as well as several flags
 } Heating;
 
 /*********************************************************************************************/
@@ -142,6 +154,15 @@ struct HEATING {
 void HeatingInit()
 {
   ExecuteCommandPower(Heating.output_relay_number, POWER_OFF, SRC_HEATING); // Make sure the Output is OFF
+  // Init Heating.status bittfield:
+  Heating.status.heating_mode = HEAT_OFF;
+  Heating.status.controller_mode = CTR_HYBRID;
+  Heating.status.sensor_alive = IFACE_OFF;
+  Heating.status.command_output = IFACE_OFF;
+  Heating.status.phase_hybrid_ctr = CTR_HYBRID_PI;
+  Heating.status.status_output = IFACE_OFF;
+  Heating.status.status_cycle_active = CYCLE_OFF;
+  Heating.status.state_emergency = EMERGENCY_OFF;
 }
 
 bool HeatingMinuteCounter() 
@@ -150,7 +171,8 @@ bool HeatingMinuteCounter()
   Heating.counter_seconds++;    // increment time
   
   if ((Heating.counter_seconds % 60) == 0) {
-    result = true;    
+    result = true; 
+    Heating.counter_seconds = 0;   
   }
   return(result);
 }
@@ -177,7 +199,7 @@ uint8_t HeatingSwitchStatus(uint8_t input_switch)
 void HeatingSignalProcessingSlow()
 {
   if ((uptime - Heating.timestamp_temp_measured_update) > Heating.time_sens_lost) { // Check if sensor alive
-    Heating.sensor_alive = false;
+    Heating.status.sensor_alive = IFACE_OFF;
     Heating.temp_measured_gradient = 0;
     Heating.temp_measured = 0;
   }
@@ -192,7 +214,7 @@ void HeatingSignalProcessingFast()
 
 void HeatingCtrState()
 {
-  switch (Heating.controller_mode) {
+  switch (Heating.status.controller_mode) {
     case CTR_HYBRID:                    // Ramp-up phase with gradient control
         HeatingHybridCtrPhase();
       break;
@@ -205,8 +227,8 @@ void HeatingCtrState()
 
 void HeatingHybridCtrPhase()
 {
-  if (Heating.controller_mode == CTR_HYBRID) {
-    switch (Heating.phase_hybrid_ctr) {
+  if (Heating.status.controller_mode == CTR_HYBRID) {
+    switch (Heating.status.phase_hybrid_ctr) {
       case CTR_HYBRID_RAMP_UP:                    // Ramp-up phase with gradient control
           // If ramp-up offtime counter has been initalized    
           // AND ramp-up offtime counter value reached
@@ -215,7 +237,7 @@ void HeatingHybridCtrPhase()
             // Reset pause period
             Heating.time_rampup_checkpoint = 0;
             // Set PI controller
-            Heating.phase_hybrid_ctr = CTR_HYBRID_PI;
+            Heating.status.phase_hybrid_ctr = CTR_HYBRID_PI;
           }
         break;
       case CTR_HYBRID_PI:                         // PI controller phase
@@ -226,7 +248,7 @@ void HeatingHybridCtrPhase()
           if (((uptime - Heating.timestamp_output_off) > Heating.time_allow_rampup)
             && (Heating.temp_target_level != Heating.temp_target_level_ctr)
             &&((Heating.temp_target_level - Heating.temp_measured) > Heating.temp_rampup_delta_in)) {
-              Heating.phase_hybrid_ctr = CTR_HYBRID_RAMP_UP;
+              Heating.status.phase_hybrid_ctr = CTR_HYBRID_RAMP_UP;
               Heating.timestamp_rampup_start = uptime;
               Heating.temp_rampup_start = Heating.temp_measured;
               Heating.temp_rampup_meas_gradient = 0;
@@ -247,7 +269,7 @@ bool HeatStateAutoOrPlanToManual()
   // OR temperature sensor is not alive
   // then go to manual
   if ((HeatingSwitchStatus(Heating.input_switch_number) == 1)
-    || (Heating.sensor_alive == false)) {
+    || (Heating.status.sensor_alive == IFACE_OFF)) {
     change_state = true;
   }
   return change_state;
@@ -272,41 +294,41 @@ bool HeatStateAllToOff()
   bool change_state;
 
   // If emergency mode then switch OFF the output inmediately
-  if (Heating.state_emergency) {
-    Heating.heating_mode = HEAT_OFF;  // Emergency switch to HEAT_OFF
+  if (Heating.status.state_emergency == EMERGENCY_ON) {
+    Heating.status.heating_mode = HEAT_OFF;  // Emergency switch to HEAT_OFF
   }
   return change_state;
 }
 
 void HeatingState()
 {
-  switch (Heating.heating_mode) {
+  switch (Heating.status.heating_mode) {
     case HEAT_OFF:                              // State if Off or Emergency
       // No change of state possible without external command
       break;
     case HEAT_AUTOMATIC_OP:                     // State automatic heating active following to command target temp.
       if (HeatStateAllToOff()) {
-        Heating.heating_mode = HEAT_OFF;        // Emergency switch to HEAT_OFF
+        Heating.status.heating_mode = HEAT_OFF;        // Emergency switch to HEAT_OFF
       }
       if (HeatStateAutoOrPlanToManual()) {
-        Heating.heating_mode = HEAT_MANUAL_OP;  // If sensor not alive change to HEAT_MANUAL_OP
+        Heating.status.heating_mode = HEAT_MANUAL_OP;  // If sensor not alive change to HEAT_MANUAL_OP
       }
       HeatingCtrState();
       break;
     case HEAT_MANUAL_OP:                        // State manual operation following input switch
       if (HeatStateAllToOff()) {
-        Heating.heating_mode = HEAT_OFF;        // Emergency switch to HEAT_OFF
+        Heating.status.heating_mode = HEAT_OFF;        // Emergency switch to HEAT_OFF
       }
       if (HeatStateManualToAuto()) {
-        Heating.heating_mode = HEAT_AUTOMATIC_OP;  // Input switch inactive and timeout reached change to HEAT_AUTOMATIC_OP
+        Heating.status.heating_mode = HEAT_AUTOMATIC_OP;  // Input switch inactive and timeout reached change to HEAT_AUTOMATIC_OP
       }
       break;
     case HEAT_TIME_PLAN:                        // State automatic heating active following set heating plan
       if (HeatStateAllToOff()) {
-        Heating.heating_mode = HEAT_OFF;        // Emergency switch to HEAT_OFF
+        Heating.status.heating_mode = HEAT_OFF;        // Emergency switch to HEAT_OFF
       }
       if (HeatStateAutoOrPlanToManual()) {
-        Heating.heating_mode = HEAT_MANUAL_OP;  // If sensor not alive change to HEAT_MANUAL_OP
+        Heating.status.heating_mode = HEAT_MANUAL_OP;  // If sensor not alive change to HEAT_MANUAL_OP
       }
       HeatingCtrState();
       break;
@@ -320,18 +342,17 @@ void HeatingOutputRelay(bool active)
   // AND current output status is OFF
   // then switch output to ON
   if ((active == true) 
-    && (Heating.status_output == IFACE_OFF)) {
+    && (Heating.status.status_output == IFACE_OFF)) {
     ExecuteCommandPower(Heating.output_relay_number, POWER_ON, SRC_HEATING);
-    Heating.timestamp_output_on = uptime;
-    Heating.status_output = IFACE_ON;
+    Heating.status.status_output = IFACE_ON;
   }
   // If command received to disable output
   // AND current output status is ON
   // then switch output to OFF
-  else if ((active == false) && (Heating.status_output == IFACE_ON)) {
+  else if ((active == false) && (Heating.status.status_output == IFACE_ON)) {
     ExecuteCommandPower(Heating.output_relay_number, POWER_OFF, SRC_HEATING);
     Heating.timestamp_output_off = uptime;
-    Heating.status_output = IFACE_OFF;
+    Heating.status.status_output = IFACE_OFF;
   }
 }
 
@@ -482,18 +503,18 @@ void HeatingWorkAutomaticPI()
     || (Heating.temp_target_level != Heating.temp_target_level_ctr)
     || ((Heating.temp_measured < Heating.temp_target_level)
         && (Heating.temp_measured_gradient < 0)
-        && (Heating.status_cycle_active == false))) {
+        && (Heating.status.status_cycle_active == CYCLE_OFF))) {
     Heating.temp_target_level_ctr = Heating.temp_target_level;
     HeatingCalculatePI();
     // Reset cycle active
-    Heating.status_cycle_active = false;
+    Heating.status.status_cycle_active = CYCLE_OFF;
   }
   if (uptime < Heating.time_pi_changepoint) {
-    Heating.status_cycle_active = true;
-    Heating.command_output = true;
+    Heating.status.status_cycle_active = CYCLE_ON;
+    Heating.status.command_output = IFACE_ON;
   }
   else {
-    Heating.command_output = false;
+    Heating.status.command_output = IFACE_OFF;
   }
 }
 
@@ -511,7 +532,7 @@ void HeatingWorkAutomaticRampUp()
   time_in_rampup = uptime - Heating.timestamp_rampup_start;
   temp_delta_rampup = Heating.temp_measured - Heating.temp_rampup_start;
   // Init command output status to true
-  Heating.command_output = true;
+  Heating.status.command_output = IFACE_ON;
   // Update temperature target level for controller
   Heating.temp_target_level_ctr = Heating.temp_target_level;
 
@@ -591,10 +612,10 @@ void HeatingWorkAutomaticRampUp()
       || (uptime < Heating.time_rampup_output_off)
       || (Heating.temp_measured < Heating.temp_rampup_output_off)
       || (Heating.temp_rampup_meas_gradient <= 0)) {
-      Heating.command_output = true;
+      Heating.status.command_output = IFACE_ON;
     }
     else {
-      Heating.command_output = false;
+      Heating.status.command_output = IFACE_OFF;
     }
   }
   else {
@@ -605,15 +626,15 @@ void HeatingWorkAutomaticRampUp()
     // Set to now time to get out of calibration
     Heating.time_rampup_checkpoint = uptime;
     // Switch Off output
-    Heating.command_output = false;
+    Heating.status.command_output = IFACE_OFF;
   }
 }
 
 void HeatingCtrWork()
 {
-  switch (Heating.controller_mode) {
+  switch (Heating.status.controller_mode) {
     case CTR_HYBRID:                    // Ramp-up phase with gradient control
-      switch (Heating.phase_hybrid_ctr) {
+      switch (Heating.status.phase_hybrid_ctr) {
         case CTR_HYBRID_RAMP_UP:
           HeatingWorkAutomaticRampUp();
           break;
@@ -660,9 +681,9 @@ void HeatingPlanTempTarget()
 
 void HeatingWork()
 {
-  switch (Heating.heating_mode) {
+  switch (Heating.status.heating_mode) {
     case HEAT_OFF:                              // State if Off or Emergency
-      Heating.command_output = false;
+      Heating.status.command_output = IFACE_OFF;
       break;
     case HEAT_AUTOMATIC_OP:                     // State automatic heating active following to command target temp.
       HeatingCtrWork();
@@ -676,7 +697,14 @@ void HeatingWork()
       HeatingCtrWork();
       break;
   }
-  HeatingOutputRelay(Heating.command_output);
+  bool output_command;
+  if (Heating.status.command_output == IFACE_OFF) {
+    output_command = false;
+  }
+  else {
+    output_command = true;
+  }
+  HeatingOutputRelay(output_command);
 }
 
 void HeatingDiagnostics()
@@ -702,11 +730,11 @@ void CmndHeatingModeSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(CharToFloat(XdrvMailbox.data));
     if ((value >= HEAT_OFF) && (value <= HEAT_TIME_PLAN)) {
-      Heating.heating_mode = value;
+      Heating.status.heating_mode = value;
       Heating.timestamp_input_on = 0;     // Reset last manual switch timer if command set externally
     }
   }
-  ResponseCmndNumber((int)Heating.heating_mode);
+  ResponseCmndNumber((int)Heating.status.heating_mode);
 }
 
 void CmndTempFrostProtectSet(void)
@@ -725,10 +753,10 @@ void CmndControllerModeSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= CTR_RAMP_UP)) {
-      Heating.controller_mode = value;
+      Heating.status.controller_mode = value;
     }
   }
-  ResponseCmndNumber((int)Heating.controller_mode);
+  ResponseCmndNumber((int)Heating.status.controller_mode);
 }
 
 void CmndInputSwitchSet(void)
@@ -780,7 +808,7 @@ void CmndTempMeasuredSet(void)
         Heating.timestamp_temp_meas_change_update = timestamp;
       }
       Heating.timestamp_temp_measured_update = timestamp;
-      Heating.sensor_alive = true;
+      Heating.status.sensor_alive = IFACE_ON;
     }
   }
   ResponseCmndFloat(((float)Heating.temp_measured) / 10, 1);
@@ -924,10 +952,10 @@ void CmndStateEmergencySet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 1)) {
-      Heating.state_emergency = (bool)value;
+      Heating.status.state_emergency = (uint16_t)value;
     }
   }
-  ResponseCmndNumber((int)Heating.state_emergency);
+  ResponseCmndNumber((int)Heating.status.state_emergency);
 }
 
 void CmndPowerMaxSet(void)
