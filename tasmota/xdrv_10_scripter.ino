@@ -1166,8 +1166,8 @@ chknext:
           goto exit;
         }
         break;
-#ifdef USE_SCRIPT_FATFS
       case 'f':
+#ifdef USE_SCRIPT_FATFS
         if (!strncmp(vname,"fo(",3)) {
           lp+=3;
           char str[SCRIPT_MAXSSIZE];
@@ -1370,7 +1370,7 @@ chknext:
           len=0;
           goto exit;
         }
-#endif
+#endif // USE_SCRIPT_FATFS_EXT
         if (!strncmp(vname,"fl1(",4) || !strncmp(vname,"fl2(",4) )  {
           uint8_t lknum=*(lp+2)&3;
           lp+=4;
@@ -1388,9 +1388,16 @@ chknext:
           //card_init();
           goto exit;
         }
-        break;
-
 #endif //USE_SCRIPT_FATFS
+        if (!strncmp(vname,"freq",4)) {
+#ifdef ESP32
+          fvar=getCpuFrequencyMhz();
+#else
+          fvar=ESP.getCpuFreqMHz();
+#endif
+          goto exit;
+        }
+        break;
       case 'g':
         if (!strncmp(vname,"gtmp",4)) {
           fvar=global_temperature;
@@ -1892,6 +1899,42 @@ chknext:
         break;
 
       case 'w':
+#if defined(ESP32) && defined(USE_WEBCAM)
+        if (!strncmp(vname,"wc(",3)) {
+          lp+=3;
+          float fvar1;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
+          SCRIPT_SKIP_SPACES
+          switch ((uint32)fvar1) {
+            case 0:
+              fvar=webcam_setup();
+              break;
+            case 1:
+              { float fvar2;
+                lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+                fvar=wc_get_frame(fvar2);
+              }
+              break;
+            case 2:
+              { float fvar2;
+                lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+                fvar=wc_set_framesize(fvar2);
+              }
+              break;
+            case 3:
+              fvar=wc_get_width();
+              break;
+            case 4:
+              fvar=wc_get_height();
+              break;
+            default:
+              fvar=0;
+          }
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif
         if (!strncmp(vname,"wday",4)) {
           fvar=RtcTime.day_of_week;
           goto exit;
@@ -2714,7 +2757,11 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
               SCRIPT_SKIP_SPACES
               lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
               int8_t mode=fvar;
-              pinMode(pinnr,mode&3);
+              uint8_t pm=0;
+              if (mode==0) pm=INPUT;
+              if (mode==1) pm=OUTPUT;
+              if (mode==2) pm=INPUT_PULLUP;
+              pinMode(pinnr,pm);
               goto next_line;
             } else if (!strncmp(lp,"spin(",5)) {
               lp+=5;
@@ -3507,6 +3554,31 @@ void HandleScriptTextareaConfiguration(void) {
     return;
   }
 }
+
+#if defined(ESP32) && defined(USE_WEBCAM)
+void HandleImage(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  uint32_t bnum = Webserver->arg(F("p")).toInt();
+  if (bnum<1 || bnum>MAX_PICSTORE) bnum=1;
+  bnum--;
+  WiFiClient client = Webserver->client();
+  String response = "HTTP/1.1 200 OK\r\n";
+  response += "Content-disposition: inline; filename=capture.jpg\r\n";
+  response += "Content-type: image/jpeg\r\n\r\n";
+  Webserver->sendContent(response);
+
+  if (!picstore[bnum].len) {
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("no image #: %d"), bnum);
+    return;
+  }
+
+  client.write((char *)picstore[bnum].buff, picstore[bnum].len);
+
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("sending image #: %d"), bnum+1);
+
+}
+#endif
 
 void HandleScriptConfiguration(void) {
 
@@ -4854,14 +4926,8 @@ bool Xdrv10(uint8_t function)
 
   switch (function) {
     case FUNC_PRE_INIT:
-    /*
-#ifdef USE_WEBCAM
-      if (Settings.module==ESP32_CAM_AITHINKER) {
-        webcam_setup();
-      }
-#endif
-*/
       // set defaults to rules memory
+      //bitWrite(Settings.rule_enabled,0,0);
       glob_script_mem.script_ram=Settings.rules[0];
       glob_script_mem.script_size=MAX_SCRIPT_SIZE;
       glob_script_mem.flags=0;
@@ -4990,6 +5056,9 @@ bool Xdrv10(uint8_t function)
     case FUNC_WEB_ADD_HANDLER:
       Webserver->on("/" WEB_HANDLE_SCRIPT, HandleScriptConfiguration);
       Webserver->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);
+#if defined(ESP32) && defined(USE_WEBCAM)
+      Webserver->on("/wc.jpg", HandleImage);
+#endif
 
 #ifdef USE_SCRIPT_FATFS
       Webserver->on("/u3", HTTP_POST,[]() { Webserver->sendHeader("Location","/u3");Webserver->send(303);},script_upload);
