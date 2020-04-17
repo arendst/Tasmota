@@ -1001,6 +1001,34 @@ void SettingsDefaultSet2(void)
   Settings.flag3.shutter_mode = SHUTTER_SUPPORT;
   Settings.flag3.pcf8574_ports_inverted = PCF8574_INVERT_PORTS;
   Settings.flag4.zigbee_use_names = ZIGBEE_FRIENDLY_NAMES;
+
+  // Heating
+  Settings.energy_heating_output_max = HEATING_ENERGY_OUTPUT_MAX;
+  Settings.time_output_delay = HEATING_TIME_OUTPUT_DELAY;
+  Settings.temp_rampup_pi_acc_error = HEATING_TEMP_PI_RAMPUP_ACC_E;
+  Settings.temp_rampup_delta_out = HEATING_TEMP_RAMPUP_DELTA_OUT;
+  Settings.temp_rampup_delta_in = HEATING_TEMP_RAMPUP_DELTA_IN;
+  Settings.output_relay_number = HEATING_RELAY_NUMBER;
+  Settings.input_switch_number = HEATING_SWITCH_NUMBER;
+  Settings.time_allow_rampup = HEATING_TIME_ALLOW_RAMPUP;
+  Settings.time_rampup_max = HEATING_TIME_RAMPUP_MAX;
+  Settings.time_rampup_cycle = HEATING_TIME_RAMPUP_CYCLE;
+  Settings.time_sens_lost = HEAT_TIME_SENS_LOST;
+  Settings.temp_sens_number = HEAT_TEMP_SENS_NUMBER;
+  Settings.state_emergency = HEAT_STATE_EMERGENCY;
+  Settings.power_max = HEAT_POWER_MAX;
+  Settings.time_manual_to_auto = HEAT_TIME_MANUAL_TO_AUTO;
+  Settings.time_on_limit = HEAT_TIME_ON_LIMIT;
+  Settings.time_reset = HEAT_TIME_RESET;
+  Settings.time_pi_cycle = HEAT_TIME_PI_CYCLE;
+  Settings.time_max_action = HEAT_TIME_MAX_ACTION;
+  Settings.time_min_action = HEAT_TIME_MIN_ACTION;
+  Settings.time_min_turnoff_action = HEAT_TIME_MIN_TURNOFF_ACTION;
+  Settings.val_prop_band = HEAT_PROP_BAND;
+  Settings.temp_reset_anti_windup = HEAT_TEMP_RESET_ANTI_WINDUP;
+  Settings.temp_hysteresis = HEAT_TEMP_HYSTERESIS;
+  Settings.temp_frost_protect = HEAT_TEMP_FROST_PROTECT;
+
 }
 
 /********************************************************************************************/
