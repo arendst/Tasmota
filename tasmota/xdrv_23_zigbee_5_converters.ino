@@ -771,7 +771,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zmap8,    Cx000C, 0x006F,  Z(AnalogInStatusFlags),  &Z_Copy },
   { Zenum16,  Cx000C, 0x0075,  Z(AnalogInEngineeringUnits),&Z_Copy },
   { Zuint32,  Cx000C, 0x0100,  Z(AnalogInApplicationType),&Z_Copy },
-  { Zunk,     Cx000C, 0xFF05,  Z(Aqara_FF05),           &Z_Copy },
+  { Zuint16,  Cx000C, 0xFF05,  Z(Aqara_FF05),           &Z_Copy },
 
   // Analog Output cluster
   { Zstring,  Cx000D, 0x001C,  Z(AnalogOutDescription), &Z_Copy },
@@ -850,7 +850,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint32,  Cx0012, 0x0100,  Z(MultiInApplicationType),&Z_Copy },
 
   // Multistate output
-  { Zunk,     Cx0013, 0x000E,  Z(MultiOutStateText),    &Z_Copy },
+  // { Zunk,     Cx0013, 0x000E,  Z(MultiOutStateText),    &Z_Copy },
   { Zstring,  Cx0013, 0x001C,  Z(MultiOutDescription),  &Z_Copy },
   { Zuint16,  Cx0013, 0x004A,  Z(MultiOutNumberOfStates),&Z_Copy },
   { Zbool,    Cx0013, 0x0051,  Z(MultiOutOutOfService), &Z_Copy },
