@@ -2509,6 +2509,16 @@ void HandleUploadLoop(void)
       } else {
         valid_settings = (settings_buffer[0] == CONFIG_FILE_SIGN);
       }
+
+      if (valid_settings) {
+#ifdef ESP8266
+        valid_settings = (0 == settings_buffer[0xF36]);  // Settings.config_version
+#endif  // ESP8266
+#ifdef ESP32
+        valid_settings = (1 == settings_buffer[0xF36]);  // Settings.config_version
+#endif  // ESP32
+      }
+
       if (valid_settings) {
         SettingsDefaultSet2();
         memcpy((char*)&Settings +16, settings_buffer +16, sizeof(Settings) -16);
