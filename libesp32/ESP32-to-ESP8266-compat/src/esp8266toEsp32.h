@@ -43,6 +43,7 @@ uint32_t ESP_getFlashChipId();
 uint32_t ESP_getChipId();
 String String_ESP_getChipId();
 uint32_t ESP_getSketchSize();
+void DisableBrownout(void);
 
 // Analog
 inline void analogWrite(uint8_t pin, int val)
