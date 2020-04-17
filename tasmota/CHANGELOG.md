@@ -3,6 +3,7 @@
 ### 8.2.0.4 20200417
 
 - Add config version tag
+- Fix Zigbee DimmerUp/DimmerDown malformed
 
 ### 8.2.0.3 20200329
 
