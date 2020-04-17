@@ -257,7 +257,7 @@
 #define D_RESET_CONFIGURATION "Reset Configuration"
 #define D_BACKUP_CONFIGURATION "Backup Configuration"
 #define D_RESTORE_CONFIGURATION "Restore Configuration"
-#define D_MAIN_MENU "Main Menu"
+#define D_MAIN_MENU "Back to Main Menu"
 
 #define D_MODULE_PARAMETERS "Module parameters"
 #define D_MODULE_TYPE "Module type"
