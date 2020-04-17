@@ -524,8 +524,9 @@ struct SYSCFG {
   uint8_t       zb_channel;                // F32
   uint8_t       zb_free_byte;              // F33
   uint16_t      pms_wake_interval;         // F34
+  uint8_t       config_version;            // F36
 
-  uint8_t       free_f36[130];             // F36 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f37[129];             // F37 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   uint16_t      pulse_counter_debounce_low;  // FB8
