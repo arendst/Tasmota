@@ -192,6 +192,12 @@ void setup(void)
 {
   global_state.data = 3;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 
+#ifdef ESP32
+#ifdef DISABLE_BROWNOUT
+  DisableBrownout();
+#endif
+#endif
+
   RtcRebootLoad();
   if (!RtcRebootValid()) {
     RtcReboot.fast_reboot_count = 0;
