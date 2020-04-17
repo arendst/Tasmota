@@ -779,7 +779,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zsingle,  Cx000D, 0x0045,  Z(AnalogOutMinValue),    &Z_Copy },
   { Zbool,    Cx000D, 0x0051,  Z(AnalogOutOutOfService),&Z_Copy },
   { Zsingle,  Cx000D, 0x0055,  Z(AnalogOutValue),       &Z_Copy },
-  { Zunk,     Cx000D, 0x0057,  Z(AnalogOutPriorityArray),&Z_Copy },
+  // { Zunk,     Cx000D, 0x0057,  Z(AnalogOutPriorityArray),&Z_Copy },
   { Zenum8,   Cx000D, 0x0067,  Z(AnalogOutReliability), &Z_Copy },
   { Zsingle,  Cx000D, 0x0068,  Z(AnalogOutRelinquishDefault),&Z_Copy },
   { Zsingle,  Cx000D, 0x006A,  Z(AnalogOutResolution),  &Z_Copy },
@@ -819,7 +819,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zbool,    Cx0010, 0x0051,  Z(BinaryOutOutOfService),&Z_Copy },
   { Zenum8,   Cx0010, 0x0054,  Z(BinaryOutPolarity),    &Z_Copy },
   { Zbool,    Cx0010, 0x0055,  Z(BinaryOutValue),       &Z_Copy },
-  { Zunk,     Cx0010, 0x0057,  Z(BinaryOutPriorityArray),&Z_Copy },
+  // { Zunk,     Cx0010, 0x0057,  Z(BinaryOutPriorityArray),&Z_Copy },
   { Zenum8,   Cx0010, 0x0067,  Z(BinaryOutReliability), &Z_Copy },
   { Zbool,    Cx0010, 0x0068,  Z(BinaryOutRelinquishDefault),&Z_Copy },
   { Zmap8,    Cx0010, 0x006F,  Z(BinaryOutStatusFlags), &Z_Copy },
@@ -833,14 +833,14 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint32,  Cx0011, 0x0043,  Z(BinaryMinimumOnTime),  &Z_Copy },
   { Zbool,    Cx0011, 0x0051,  Z(BinaryOutOfService),   &Z_Copy },
   { Zbool,    Cx0011, 0x0055,  Z(BinaryValue),          &Z_Copy },
-  { Zunk,     Cx0011, 0x0057,  Z(BinaryPriorityArray),  &Z_Copy },
+  // { Zunk,     Cx0011, 0x0057,  Z(BinaryPriorityArray),  &Z_Copy },
   { Zenum8,   Cx0011, 0x0067,  Z(BinaryReliability),    &Z_Copy },
   { Zbool,    Cx0011, 0x0068,  Z(BinaryRelinquishDefault),&Z_Copy },
   { Zmap8,    Cx0011, 0x006F,  Z(BinaryStatusFlags),    &Z_Copy },
   { Zuint32,  Cx0011, 0x0100,  Z(BinaryApplicationType),&Z_Copy },
 
   // Multistate Input cluster
-  { Zunk,     Cx0012, 0x000E,  Z(MultiInStateText),     &Z_Copy },
+  // { Zunk,     Cx0012, 0x000E,  Z(MultiInStateText),     &Z_Copy },
   { Zstring,  Cx0012, 0x001C,  Z(MultiInDescription),   &Z_Copy },
   { Zuint16,  Cx0012, 0x004A,  Z(MultiInNumberOfStates),&Z_Copy },
   { Zbool,    Cx0012, 0x0051,  Z(MultiInOutOfService),  &Z_Copy },
@@ -862,7 +862,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint32,  Cx0013, 0x0100,  Z(MultiOutApplicationType),&Z_Copy },
 
   // Multistate Value cluster
-  { Zunk,     Cx0014, 0x000E,  Z(MultiStateText),       &Z_Copy },
+  // { Zunk,     Cx0014, 0x000E,  Z(MultiStateText),       &Z_Copy },
   { Zstring,  Cx0014, 0x001C,  Z(MultiDescription),     &Z_Copy },
   { Zuint16,  Cx0014, 0x004A,  Z(MultiNumberOfStates),  &Z_Copy },
   { Zbool,    Cx0014, 0x0051,  Z(MultiOutOfService),    &Z_Copy },
