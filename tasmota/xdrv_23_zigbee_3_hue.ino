@@ -201,12 +201,10 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
                  PSTR("{\"success\":{\"/lights/%d/state/on\":%s}}"),
                  device_id, on ? "true" : "false");
 
-      switch(on)
-      {
-        case false : ZigbeeHuePower(shortaddr, 0x00);
-                    break;
-        case true  : ZigbeeHuePower(shortaddr, 0x01);
-                    break;
+      if (on) {
+        ZigbeeHuePower(shortaddr, 0x01);
+      } else {
+        ZigbeeHuePower(shortaddr, 0x00);
       }
       response += buf;
       resp = true;
