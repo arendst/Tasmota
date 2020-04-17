@@ -1117,10 +1117,9 @@ void CmndTemplate(void)
 #ifdef ESP8266
         if (6 == i) { j = 9; }
         if (8 == i) { j = 12; }
-#endif  // ESP8266
-#ifdef ESP32
+#else  // ESP32
         if (6 == i) { j = 12; }
-#endif  // ESP32
+#endif  // ESP8266 - ESP32
         if (my_module.io[j] > GPIO_NONE) {
           Settings.user_template.gp.io[i] = my_module.io[j];
         }
