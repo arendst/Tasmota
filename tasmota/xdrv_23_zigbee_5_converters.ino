@@ -905,10 +905,10 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint16,  Cx0101, 0x0006,  Z(OpenPeriod),           &Z_Copy },
 
   // Aqara Lumi Vibration Sensor
-  { Zunk,     Cx0101, 0x0055,  Z(AqaraVibrationMode),   &Z_AqaraVibration },
-  { Zunk,     Cx0101, 0x0503,  Z(AqaraVibrationsOrAngle), &Z_Copy },
-  { Zunk,     Cx0101, 0x0505,  Z(AqaraVibration505),    &Z_Copy },
-  { Zunk,     Cx0101, 0x0508,  Z(AqaraAccelerometer),   &Z_AqaraVibration },
+  { Zuint16,  Cx0101, 0x0055,  Z(AqaraVibrationMode),   &Z_AqaraVibration },
+  { Zuint16,  Cx0101, 0x0503,  Z(AqaraVibrationsOrAngle), &Z_Copy },
+  { Zuint32,  Cx0101, 0x0505,  Z(AqaraVibration505),    &Z_Copy },
+  { Zuint48,  Cx0101, 0x0508,  Z(AqaraAccelerometer),   &Z_AqaraVibration },
   
   // Window Covering cluster
   { Zenum8,   Cx0102, 0x0000,  Z(WindowCoveringType),   &Z_Copy },
