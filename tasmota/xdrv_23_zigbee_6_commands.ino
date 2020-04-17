@@ -53,7 +53,7 @@ ZF(DimmerMove) ZF(DimmerStep)
 ZF(HueMove) ZF(HueStep) ZF(SatMove) ZF(SatStep) ZF(ColorMove) ZF(ColorStep)
 ZF(ArrowClick) ZF(ArrowHold) ZF(ArrowRelease) ZF(ZoneStatusChange)
 
-ZF(xxxx00) ZF(xxxx) ZF(01xxxx) ZF(00) ZF(01) ZF() ZF(xxxxyy) ZF(001902) ZF(011902) ZF(xxyyyy) ZF(xx)
+ZF(xxxx00) ZF(xxxx) ZF(01xxxx) ZF(00) ZF(01) ZF() ZF(xxxxyy) ZF(00190200) ZF(01190200) ZF(xxyyyy) ZF(xx)
 ZF(xx000A00) ZF(xx0A00) ZF(xxyy0A00) ZF(xxxxyyyy0A00) ZF(xxxx0A00) ZF(xx0A)
 ZF(xx190A00) ZF(xx19) ZF(xx190A) ZF(xxxxyyyy) ZF(xxxxyyzz) ZF(xxyyzzzz) ZF(xxyyyyzz)
 
@@ -82,8 +82,8 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   // Light & Shutter commands
   { Z(Power),          0x0006, 0xFF, 0x01,   Z() },             // 0=Off, 1=On, 2=Toggle
   { Z(Dimmer),         0x0008, 0x04, 0x01,   Z(xx0A00) },       // Move to Level with On/Off, xx=0..254 (255 is invalid)
-  { Z(DimmerUp),       0x0008, 0x06, 0x01,   Z(001902) },       // Step up by 10%, 0.2 secs
-  { Z(DimmerDown),     0x0008, 0x06, 0x01,   Z(011902) },       // Step down by 10%, 0.2 secs
+  { Z(DimmerUp),       0x0008, 0x06, 0x01,   Z(00190200) },       // Step up by 10%, 0.2 secs
+  { Z(DimmerDown),     0x0008, 0x06, 0x01,   Z(01190200) },       // Step down by 10%, 0.2 secs
   { Z(DimmerStop),     0x0008, 0x03, 0x01,   Z() },             // Stop any Dimmer animation
   { Z(ResetAlarm),     0x0009, 0x00, 0x01,   Z(xxyyyy) },       // Reset alarm (alarm code + cluster identifier)
   { Z(ResetAllAlarms), 0x0009, 0x01, 0x01,   Z() },             // Reset all alarms
