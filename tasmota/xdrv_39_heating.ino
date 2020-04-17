@@ -1,5 +1,5 @@
 /*
-  xdrv_90_heating.ino - Heating controller for Tasmota
+  xdrv_39_heating.ino - Heating controller for Tasmota
   Copyright (C) 2020 Javier Arigita
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -63,60 +63,85 @@ void (* const HeatingCommand[])(void) PROGMEM = {
 const char DOMOTICZ_MES[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\"}";
 
 struct HEATING {
-  uint32_t counter_seconds = 0;                  // Counter incremented every second
-  uint8_t heating_mode = HEAT_OFF;               // Operation mode of the heating system
-  uint8_t controller_mode = CTR_HYBRID;          // Operation mode of the heating controller
-  bool sensor_alive = false;                     // Bool stating if temperature sensor is alive
-  bool command_output = false;                   // Bool stating state to save the command to the output (true = active, false = inactive)
-  uint8_t phase_hybrid_ctr = CTR_HYBRID_PI;      // Phase of the hybrid controller (Ramp-up or PI)
-  uint8_t status_output = IFACE_OFF;             // Status of the output switch
-  uint16_t temp_target_level = 180;              // Target level of the heating in tenths of degrees
-  uint16_t temp_target_level_ctr = 180;          // Target level set for the controller
-  int16_t temp_measured = 0;                     // Temperature measurement received from sensor in tenths of degrees
-  uint32_t timestamp_temp_target_update = 0;     // Timestamp of latest target value update
-  uint32_t timestamp_temp_measured_update = 0;   // Timestamp of latest measurement value update
-  uint32_t timestamp_temp_meas_change_update = 0;// Timestamp of latest measurement value change (> or < to previous)
-  uint32_t timestamp_output_on = 0;              // Timestamp of latest heating output On state
-  uint32_t timestamp_output_off = 0;             // Timestamp of latest heating output Off state
-  uint32_t timestamp_input_on = 0;               // Timestamp of latest input On state
-  uint32_t time_heating_total = 0;               // Time heating on within a specific timeframe
-  uint32_t time_pi_checkpoint = 0;               // Time to finalize the pi control cycle
-  uint32_t time_pi_changepoint = 0;              // Time until switching off output within a pi control cycle
-  uint32_t time_rampup_checkpoint = 0;           // Time to switch from ramp-up controller mode to PI
-  uint32_t time_rampup_output_off = 0;           // Time to switch off relay output within the ramp-up controller
-  uint32_t timestamp_rampup_start = 0;           // Timestamp where the ramp-up controller mode has been started
-  uint32_t time_rampup_deadtime = 0;             // Time constant of the heating system (step response time)
-  uint32_t time_rampup_nextcycle = 0;            // Time where the ramp-up controller shall start the next cycle
-  uint32_t counter_rampup_cycles = 0;            // Counter of ramp-up cycles
-  int32_t temp_measured_gradient = 0;            // Temperature measured gradient from sensor in thousandths of degrees per hour
-  int32_t temp_rampup_meas_gradient = 0;         // Temperature measured gradient from sensor in thousandths of degrees per hour calculated during ramp-up
-  int16_t temp_rampup_output_off = 0;            // Temperature to swith off relay output within the ramp-up controller in tenths of degrees
-  int16_t temp_rampup_start = 0;                 // Temperature at start of ramp-up controller in tenths of degrees celsius
-  int16_t temp_rampup_cycle = 0;                 // Temperature set at the beginning of each ramp-up cycle in tenths of degrees
-  int16_t temp_pi_accum_error = 0;               // Temperature accumulated error for the PI controller in tenths of degrees
-  int16_t temp_pi_error = 0;                     // Temperature error for the PI controller in tenths of degrees
-  int32_t time_proportional_pi;                  // Time proportional part of the PI controller
-  int32_t time_integral_pi;                      // Time integral part of the PI controller
-  int32_t time_total_pi;                         // Time total (proportional + integral) of the PI controller
-  uint16_t kP_pi = 0;                            // kP value for the PI controller
-  uint16_t kI_pi = 0;                            // kP value for the PI controller multiplied by 100
-  uint16_t heating_plan[7][6] = {                // Heating plan for the week (3 times/temperatures per day in tenths of degrees)
-           {0,0,0,0,0,0},                        // Monday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                        // Tuesday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                        // Wednesday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                        // Thursday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                        // Friday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                        // Saturday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0}                         // Sunday, format {time/temp, time/temp, time/temp}
+  uint32_t counter_seconds = 0;                          // Counter incremented every second
+  uint8_t heating_mode = HEAT_OFF;                       // Operation mode of the heating system
+  uint8_t controller_mode = CTR_HYBRID;                  // Operation mode of the heating controller
+  bool sensor_alive = false;                             // Bool stating if temperature sensor is alive
+  bool command_output = false;                           // Bool stating state to save the command to the output (true = active, false = inactive)
+  uint8_t phase_hybrid_ctr = CTR_HYBRID_PI;              // Phase of the hybrid controller (Ramp-up or PI)
+  uint8_t status_output = IFACE_OFF;                     // Status of the output switch
+  uint16_t temp_target_level = 180;                      // Target level of the heating in tenths of degrees
+  uint16_t temp_target_level_ctr = 180;                  // Target level set for the controller
+  int16_t temp_measured = 0;                             // Temperature measurement received from sensor in tenths of degrees
+  uint32_t timestamp_temp_target_update = 0;             // Timestamp of latest target value update
+  uint32_t timestamp_temp_measured_update = 0;           // Timestamp of latest measurement value update
+  uint32_t timestamp_temp_meas_change_update = 0;        // Timestamp of latest measurement value change (> or < to previous)
+  uint32_t timestamp_output_on = 0;                      // Timestamp of latest heating output On state
+  uint32_t timestamp_output_off = 0;                     // Timestamp of latest heating output Off state
+  uint32_t timestamp_input_on = 0;                       // Timestamp of latest input On state
+  uint32_t time_heating_total = 0;                       // Time heating on within a specific timeframe
+  uint32_t time_pi_checkpoint = 0;                       // Time to finalize the pi control cycle
+  uint32_t time_pi_changepoint = 0;                      // Time until switching off output within a pi control cycle
+  uint32_t time_rampup_checkpoint = 0;                   // Time to switch from ramp-up controller mode to PI
+  uint32_t time_rampup_output_off = 0;                   // Time to switch off relay output within the ramp-up controller
+  uint32_t timestamp_rampup_start = 0;                   // Timestamp where the ramp-up controller mode has been started
+  uint32_t time_rampup_deadtime = 0;                     // Time constant of the heating system (step response time)
+  uint32_t time_rampup_nextcycle = 0;                    // Time where the ramp-up controller shall start the next cycle
+  uint32_t counter_rampup_cycles = 0;                    // Counter of ramp-up cycles
+  int32_t temp_measured_gradient = 0;                    // Temperature measured gradient from sensor in thousandths of degrees per hour
+  int32_t temp_rampup_meas_gradient = 0;                 // Temperature measured gradient from sensor in thousandths of degrees per hour calculated during ramp-up
+  int16_t temp_rampup_output_off = 0;                    // Temperature to swith off relay output within the ramp-up controller in tenths of degrees
+  int16_t temp_rampup_start = 0;                         // Temperature at start of ramp-up controller in tenths of degrees celsius
+  int16_t temp_rampup_cycle = 0;                         // Temperature set at the beginning of each ramp-up cycle in tenths of degrees
+  int16_t temp_pi_accum_error = 0;                       // Temperature accumulated error for the PI controller in tenths of degrees
+  int16_t temp_pi_error = 0;                             // Temperature error for the PI controller in tenths of degrees
+  int32_t time_proportional_pi;                          // Time proportional part of the PI controller
+  int32_t time_integral_pi;                              // Time integral part of the PI controller
+  int32_t time_total_pi;                                 // Time total (proportional + integral) of the PI controller
+  uint16_t kP_pi = 0;                                    // kP value for the PI controller
+  uint16_t kI_pi = 0;                                    // kP value for the PI controller multiplied by 100
+  uint16_t heating_plan[7][6] = {                        // Heating plan for the week (3 times/temperatures per day in tenths of degrees)
+           {0,0,0,0,0,0},                                // Monday, format {time/temp, time/temp, time/temp}
+           {0,0,0,0,0,0},                                // Tuesday, format {time/temp, time/temp, time/temp}
+           {0,0,0,0,0,0},                                // Wednesday, format {time/temp, time/temp, time/temp}
+           {0,0,0,0,0,0},                                // Thursday, format {time/temp, time/temp, time/temp}
+           {0,0,0,0,0,0},                                // Friday, format {time/temp, time/temp, time/temp}
+           {0,0,0,0,0,0},                                // Saturday, format {time/temp, time/temp, time/temp}
+           {0,0,0,0,0,0}                                 // Sunday, format {time/temp, time/temp, time/temp}
            };
-  bool status_cycle_active = false;              // Status showing if cycle is active (Output ON) or not (Output OFF)
+  bool status_cycle_active = false;                      // Status showing if cycle is active (Output ON) or not (Output OFF)
+  uint8_t time_output_delay = HEATING_TIME_OUTPUT_DELAY; // Output delay between state change and real actuation event (f.i. valve open/closed)
+  uint8_t temp_rampup_pi_acc_error = HEATING_TEMP_PI_RAMPUP_ACC_E; // Accumulated error when switching from ramp-up controller to PI
+  uint8_t temp_rampup_delta_out = HEATING_TEMP_RAMPUP_DELTA_OUT; // Minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
+  uint8_t temp_rampup_delta_in = HEATING_TEMP_RAMPUP_DELTA_IN; // Minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
+  uint32_t time_rampup_max = HEATING_TIME_RAMPUP_MAX; // Time maximum ramp-up controller duration
+  uint32_t time_rampup_cycle = HEATING_TIME_RAMPUP_CYCLE; // Time ramp-up cycle
+  uint32_t time_allow_rampup = HEATING_TIME_ALLOW_RAMPUP; // Time in seconds after last target update to allow ramp-up controller phase
+  uint32_t time_sens_lost = HEAT_TIME_SENS_LOST; // Maximum time w/o sensor update to set it as lost
+  uint8_t temp_sens_number = HEAT_TEMP_SENS_NUMBER; // Temperature sensor number
+  bool state_emergency = HEAT_STATE_EMERGENCY; // State for heating emergency
+  uint8_t output_relay_number = HEATING_RELAY_NUMBER; // Output relay number
+  uint8_t input_switch_number = HEATING_SWITCH_NUMBER; // Input switch number
+  uint32_t time_manual_to_auto = HEAT_TIME_MANUAL_TO_AUTO; // Time without input switch active to change from manual to automatic in seconds
+  uint32_t time_on_limit = HEAT_TIME_ON_LIMIT; // Maximum time with output active in seconds
+  uint32_t time_reset = HEAT_TIME_RESET; // Reset time of the PI controller in seconds
+  uint32_t time_pi_cycle = HEAT_TIME_PI_CYCLE; // Cycle time for the heating controller in seconds
+  uint32_t time_max_action = HEAT_TIME_MAX_ACTION; // Maximum heating time per cycle in seconds
+  uint32_t time_min_action = HEAT_TIME_MIN_ACTION; // Minimum heating time per cycle in seconds
+  uint32_t time_min_turnoff_action = HEAT_TIME_MIN_TURNOFF_ACTION; // Minimum turnoff time in seconds, below it the heating will be held on
+  uint8_t val_prop_band = HEAT_PROP_BAND; // Proportional band of the PI controller in degrees celsius
+  uint8_t temp_reset_anti_windup = HEAT_TEMP_RESET_ANTI_WINDUP; // Range where reset antiwindup is disabled, in tenths of degrees celsius
+  int8_t temp_hysteresis = HEAT_TEMP_HYSTERESIS; // Range hysteresis for temperature PI controller, in tenths of degrees celsius
+  uint8_t temp_frost_protect = HEAT_TEMP_FROST_PROTECT; // Minimum temperature for frost protection, in tenths of degrees celsius
+  uint16_t power_max = HEAT_POWER_MAX; // Maximum output power in Watt
+  uint16_t energy_heating_output_max = HEATING_ENERGY_OUTPUT_MAX; // Maximum allowed energy output for heating valve in Watts
 } Heating;
 
 /*********************************************************************************************/
 
 void HeatingInit()
 {
-  ExecuteCommandPower(Settings.output_relay_number, POWER_OFF, SRC_HEATING); // Make sure the Output is OFF
+  ExecuteCommandPower(Heating.output_relay_number, POWER_OFF, SRC_HEATING); // Make sure the Output is OFF
 }
 
 bool HeatingMinuteCounter() 
@@ -151,7 +176,7 @@ uint8_t HeatingSwitchStatus(uint8_t input_switch)
 
 void HeatingSignalProcessingSlow()
 {
-  if ((uptime - Heating.timestamp_temp_measured_update) > Settings.time_sens_lost) { // Check if sensor alive
+  if ((uptime - Heating.timestamp_temp_measured_update) > Heating.time_sens_lost) { // Check if sensor alive
     Heating.sensor_alive = false;
     Heating.temp_measured_gradient = 0;
     Heating.temp_measured = 0;
@@ -160,7 +185,7 @@ void HeatingSignalProcessingSlow()
 
 void HeatingSignalProcessingFast()
 {
-  if (HeatingSwitchStatus(Settings.input_switch_number)) { // Check if input switch active and register last update
+  if (HeatingSwitchStatus(Heating.input_switch_number)) { // Check if input switch active and register last update
     Heating.timestamp_input_on = uptime;
   }
 }
@@ -198,9 +223,9 @@ void HeatingHybridCtrPhase()
           // AND temp target has changed
           // AND temp target - target actual bigger than threshold
           // then go to ramp-up
-          if (((uptime - Heating.timestamp_output_off) > Settings.time_allow_rampup)
+          if (((uptime - Heating.timestamp_output_off) > Heating.time_allow_rampup)
             && (Heating.temp_target_level != Heating.temp_target_level_ctr)
-            &&((Heating.temp_target_level - Heating.temp_measured) > Settings.temp_rampup_delta_in)) {
+            &&((Heating.temp_target_level - Heating.temp_measured) > Heating.temp_rampup_delta_in)) {
               Heating.phase_hybrid_ctr = CTR_HYBRID_RAMP_UP;
               Heating.timestamp_rampup_start = uptime;
               Heating.temp_rampup_start = Heating.temp_measured;
@@ -221,7 +246,7 @@ bool HeatStateAutoOrPlanToManual()
   // If switch input is active
   // OR temperature sensor is not alive
   // then go to manual
-  if ((HeatingSwitchStatus(Settings.input_switch_number) == 1)
+  if ((HeatingSwitchStatus(Heating.input_switch_number) == 1)
     || (Heating.sensor_alive == false)) {
     change_state = true;
   }
@@ -235,8 +260,8 @@ bool HeatStateManualToAuto()
   // If switch input inactive
   // AND no switch input action (time in current state) bigger than a pre-defined time
   // then go to automatic
-  if ((HeatingSwitchStatus(Settings.input_switch_number) == 0) 
-    && ((uptime - Heating.timestamp_input_on) > Settings.time_manual_to_auto)) {
+  if ((HeatingSwitchStatus(Heating.input_switch_number) == 0) 
+    && ((uptime - Heating.timestamp_input_on) > Heating.time_manual_to_auto)) {
     change_state = true;
   }
   return change_state;
@@ -247,7 +272,7 @@ bool HeatStateAllToOff()
   bool change_state;
 
   // If emergency mode then switch OFF the output inmediately
-  if (Settings.state_emergency) {
+  if (Heating.state_emergency) {
     Heating.heating_mode = HEAT_OFF;  // Emergency switch to HEAT_OFF
   }
   return change_state;
@@ -290,13 +315,13 @@ void HeatingState()
 
 void HeatingOutputRelay(bool active)
 {
-  // TODO: See if the real output state can be read by f.i. bitRead(power, Settings.output_relay_number))
+  // TODO: See if the real output state can be read by f.i. bitRead(power, Heating.output_relay_number))
   // If command received to enable output
   // AND current output status is OFF
   // then switch output to ON
   if ((active == true) 
     && (Heating.status_output == IFACE_OFF)) {
-    ExecuteCommandPower(Settings.output_relay_number, POWER_ON, SRC_HEATING);
+    ExecuteCommandPower(Heating.output_relay_number, POWER_ON, SRC_HEATING);
     Heating.timestamp_output_on = uptime;
     Heating.status_output = IFACE_ON;
   }
@@ -304,7 +329,7 @@ void HeatingOutputRelay(bool active)
   // AND current output status is ON
   // then switch output to OFF
   else if ((active == false) && (Heating.status_output == IFACE_ON)) {
-    ExecuteCommandPower(Settings.output_relay_number, POWER_OFF, SRC_HEATING);
+    ExecuteCommandPower(Heating.output_relay_number, POWER_OFF, SRC_HEATING);
     Heating.timestamp_output_off = uptime;
     Heating.status_output = IFACE_OFF;
   }
@@ -315,33 +340,33 @@ void HeatingCalculatePI()
   // Calculate error
   Heating.temp_pi_error = Heating.temp_target_level_ctr - Heating.temp_measured;
   // Kp = 100/PI.propBand. PI.propBand(Xp) = Proportional range (4K in 4K/200 controller)
-  Heating.kP_pi = 100 / (uint16_t)(Settings.val_prop_band);
+  Heating.kP_pi = 100 / (uint16_t)(Heating.val_prop_band);
   // Calculate proportional
-  Heating.time_proportional_pi = ((int32_t)(Heating.temp_pi_error * (int16_t)Heating.kP_pi) * Settings.time_pi_cycle) / 1000;
+  Heating.time_proportional_pi = ((int32_t)(Heating.temp_pi_error * (int16_t)Heating.kP_pi) * Heating.time_pi_cycle) / 1000;
 
   // Minimum proportional action limiter
   // If proportional action is less than the minimum action time
   // AND proportional > 0
   // then adjust to minimum value
-  if ((Heating.time_proportional_pi < abs(Settings.time_min_action))
+  if ((Heating.time_proportional_pi < abs(Heating.time_min_action))
     && (Heating.time_proportional_pi > 0)) {
-    Heating.time_proportional_pi = Settings.time_min_action;
+    Heating.time_proportional_pi = Heating.time_min_action;
   }
   
   if (Heating.time_proportional_pi < 0) {
     Heating.time_proportional_pi = 0;
   } 
-  else if (Heating.time_proportional_pi > Settings.time_pi_cycle) {
-    Heating.time_proportional_pi = Settings.time_pi_cycle;
+  else if (Heating.time_proportional_pi > Heating.time_pi_cycle) {
+    Heating.time_proportional_pi = Heating.time_pi_cycle;
   }
 
   // Calculate integral
-  Heating.kI_pi = (uint16_t)(((float)Heating.kP_pi * ((float)Settings.time_pi_cycle / (float)Settings.time_reset)) * 100);
+  Heating.kI_pi = (uint16_t)(((float)Heating.kP_pi * ((float)Heating.time_pi_cycle / (float)Heating.time_reset)) * 100);
   
   // Reset of antiwindup
   // If error does not lay within the integrator scope range, do not use the integral
   // and accumulate error = 0
-  if (abs(Heating.temp_pi_error) > Settings.temp_reset_anti_windup) {
+  if (abs(Heating.temp_pi_error) > Heating.temp_reset_anti_windup) {
     Heating.time_integral_pi = 0;
     Heating.temp_pi_accum_error = 0;
   }
@@ -360,7 +385,7 @@ void HeatingCalculatePI()
     // AND we are within the hysteresis
     // AND we are rising
     if ((Heating.temp_pi_error >= 0)
-      && (abs(Heating.temp_pi_error) <= (int16_t)Settings.temp_hysteresis)
+      && (abs(Heating.temp_pi_error) <= (int16_t)Heating.temp_hysteresis)
       && (Heating.temp_measured_gradient > 0)) {
       Heating.temp_pi_accum_error += Heating.temp_pi_error;
       // Reduce accumulator error 20% in each cycle
@@ -384,13 +409,13 @@ void HeatingCalculatePI()
     }
 
     // Integral calculation
-    Heating.time_integral_pi = ((((int32_t)Heating.temp_pi_accum_error * (int32_t)Heating.kI_pi) / 100) * (int32_t)(Settings.time_pi_cycle)) / 1000;
+    Heating.time_integral_pi = ((((int32_t)Heating.temp_pi_accum_error * (int32_t)Heating.kI_pi) / 100) * (int32_t)(Heating.time_pi_cycle)) / 1000;
 
     // Antiwindup of the integrator
     // If integral calculation is bigger than cycle time, adjust result
     // to the cycle time and error will not be cummulated]]
-    if (Heating.time_integral_pi > Settings.time_pi_cycle) {
-      Heating.time_integral_pi = Settings.time_pi_cycle;
+    if (Heating.time_integral_pi > Heating.time_pi_cycle) {
+      Heating.time_integral_pi = Heating.time_pi_cycle;
     }
   }
 
@@ -400,9 +425,9 @@ void HeatingCalculatePI()
   // Antiwindup of the output
   // If result is bigger than cycle time, the result will be adjusted
   // to the cylce time minus safety time and error will not be cummulated]]
-  if (Heating.time_total_pi > Settings.time_pi_cycle) {
+  if (Heating.time_total_pi > Heating.time_pi_cycle) {
     // Limit to cycle time //at least switch down a minimum time
-    Heating.time_total_pi = Settings.time_pi_cycle;
+    Heating.time_total_pi = Heating.time_pi_cycle;
   }
   else if (Heating.time_total_pi < 0) {
     Heating.time_total_pi = 0;
@@ -412,7 +437,7 @@ void HeatingCalculatePI()
   // If target value has been reached or we are over it]]
   if (Heating.temp_pi_error <= 0) {
     // If we are over the hysteresis or the gradient is positive
-    if ((abs(Heating.temp_pi_error) > Settings.temp_hysteresis)
+    if ((abs(Heating.temp_pi_error) > Heating.temp_hysteresis)
       || (Heating.temp_measured_gradient >= 0)) {
       Heating.time_total_pi = 0;
     }
@@ -422,31 +447,31 @@ void HeatingCalculatePI()
   // AND gradient is positive
   // then set value to 0
   else if ((Heating.temp_pi_error > 0)
-    && (abs(Heating.temp_pi_error) <= Settings.temp_hysteresis)
+    && (abs(Heating.temp_pi_error) <= Heating.temp_hysteresis)
     && (Heating.temp_measured_gradient > 0)) {
     Heating.time_total_pi = 0;
   }
 
   // Minimum action limiter
   // If result is less than the minimum action time, adjust to minimum value]]
-  if ((Heating.time_total_pi <= abs(Settings.time_min_action))
+  if ((Heating.time_total_pi <= abs(Heating.time_min_action))
     && (Heating.time_total_pi != 0)) {
-    Heating.time_total_pi = Settings.time_min_action;
+    Heating.time_total_pi = Heating.time_min_action;
   }
   // Maximum action limiter
   // If result is more than the maximum action time, adjust to maximum value]]
-  else if (Heating.time_total_pi > abs(Settings.time_max_action)) {
-    Heating.time_total_pi = Settings.time_max_action;
+  else if (Heating.time_total_pi > abs(Heating.time_max_action)) {
+    Heating.time_total_pi = Heating.time_max_action;
   }
   // If switched off less time than safety time, do not switch off
-  else if (Heating.time_total_pi > (Settings.time_pi_cycle - Settings.time_min_turnoff_action)) {
-    Heating.time_total_pi = Settings.time_pi_cycle;
+  else if (Heating.time_total_pi > (Heating.time_pi_cycle - Heating.time_min_turnoff_action)) {
+    Heating.time_total_pi = Heating.time_pi_cycle;
   }
   
   // Adjust output switch point
   Heating.time_pi_changepoint = uptime + Heating.time_total_pi;
   // Adjust next cycle point
-  Heating.time_pi_checkpoint = uptime + Settings.time_pi_cycle;
+  Heating.time_pi_checkpoint = uptime + Heating.time_pi_cycle;
 }
 
 void HeatingWorkAutomaticPI()
@@ -492,29 +517,29 @@ void HeatingWorkAutomaticRampUp()
 
   // If time in ramp-up < max time
   // AND temperature measured < target
-  if ((time_in_rampup <= Settings.time_rampup_max)
+  if ((time_in_rampup <= Heating.time_rampup_max)
     && (Heating.temp_measured < Heating.temp_target_level)) {
     // DEADTIME point reached
     // If temperature measured minus temperature at start of ramp-up >= threshold
     // AND deadtime still 0
-    if ((temp_delta_rampup >= Settings.temp_rampup_delta_out) 
+    if ((temp_delta_rampup >= Heating.temp_rampup_delta_out) 
       && (Heating.time_rampup_deadtime == 0)) {
       // Set deadtime, assuming it is half of the time until slope, since thermal inertia of the temp. fall needs to be considered
       // minus open time of the valve (arround 3 minutes). If rise very fast limit it to delay of output valve     
       int32_t time_aux;
-      time_aux = ((time_in_rampup / 2) - Settings.time_output_delay);
-      if (time_aux >= Settings.time_output_delay) {
+      time_aux = ((time_in_rampup / 2) - Heating.time_output_delay);
+      if (time_aux >= Heating.time_output_delay) {
         Heating.time_rampup_deadtime = (uint32_t)time_aux;
       }
       else {
-        Heating.time_rampup_deadtime = Settings.time_output_delay;
+        Heating.time_rampup_deadtime = Heating.time_output_delay;
       }
       // Calculate gradient since start of ramp-up (considering deadtime) in thousandths of º/hour
       Heating.temp_rampup_meas_gradient = (int32_t)((360000 * (int32_t)temp_delta_rampup) / (int32_t)time_in_rampup);
-      Heating.time_rampup_nextcycle = uptime + Settings.time_rampup_cycle;
+      Heating.time_rampup_nextcycle = uptime + Heating.time_rampup_cycle;
       // Set auxiliary variables
       Heating.temp_rampup_cycle = Heating.temp_measured;
-      Heating.time_rampup_output_off = uptime + Settings.time_rampup_max;
+      Heating.time_rampup_output_off = uptime + Heating.time_rampup_max;
       Heating.temp_rampup_output_off =  Heating.temp_target_level_ctr;
     }
     // Gradient calculation every time_rampup_cycle
@@ -522,7 +547,7 @@ void HeatingWorkAutomaticRampUp()
       // Calculate temp. gradient in º/hour and set again time_rampup_nextcycle and temp_rampup_cycle
       // temp_rampup_meas_gradient = ((3600 * temp_delta_rampup) / (os.time() - time_rampup_nextcycle))
       temp_delta_rampup = Heating.temp_measured - Heating.temp_rampup_cycle;
-      uint32_t time_total_rampup = Settings.time_rampup_cycle * Heating.counter_rampup_cycles;
+      uint32_t time_total_rampup = Heating.time_rampup_cycle * Heating.counter_rampup_cycles;
       // Translate into gradient per hour (thousandths of ° per hour)
       Heating.temp_rampup_meas_gradient = int32_t((360000 * (int32_t)temp_delta_rampup) / (int32_t)time_total_rampup);
       if (Heating.temp_rampup_meas_gradient > 0) {
@@ -538,7 +563,7 @@ void HeatingWorkAutomaticRampUp()
         // Heating.temp_rampup_output_off = (int16_t)(((float)(temp_delta_rampup) / (float)(time_total_rampup * Heating.counter_rampup_cycles)) * (float)(Heating.time_rampup_output_off - (uptime - (time_total_rampup)))) + Heating.temp_rampup_cycle;
         Heating.temp_rampup_output_off = (int16_t)(((float)temp_delta_rampup * (float)(Heating.time_rampup_output_off - (uptime - (time_total_rampup)))) / (float)(time_total_rampup * Heating.counter_rampup_cycles)) + Heating.temp_rampup_cycle;
         // Set auxiliary variables
-        Heating.time_rampup_nextcycle = uptime + Settings.time_rampup_cycle;
+        Heating.time_rampup_nextcycle = uptime + Heating.time_rampup_cycle;
         Heating.temp_rampup_cycle = Heating.temp_measured;
         // Reset period counter
         Heating.counter_rampup_cycles = 1;
@@ -547,9 +572,9 @@ void HeatingWorkAutomaticRampUp()
         // Increase the period counter
         Heating.counter_rampup_cycles++;
         // Set another period
-        Heating.time_rampup_nextcycle = uptime + Settings.time_rampup_cycle;
+        Heating.time_rampup_nextcycle = uptime + Heating.time_rampup_cycle;
         // Reset time_rampup_output_off and temp_rampup_output_off
-        Heating.time_rampup_output_off = uptime + Settings.time_rampup_max - time_in_rampup;
+        Heating.time_rampup_output_off = uptime + Heating.time_rampup_max - time_in_rampup;
         Heating.temp_rampup_output_off =  Heating.temp_target_level_ctr;
       }
       // Set time to get out of calibration
@@ -575,7 +600,7 @@ void HeatingWorkAutomaticRampUp()
   else {
     // If we have not reached the temperature, start with an initial value for accumulated error for the PI controller
     if (Heating.temp_measured < Heating.temp_target_level_ctr) {
-      Heating.temp_pi_accum_error = Settings.temp_rampup_pi_acc_error;
+      Heating.temp_pi_accum_error = Heating.temp_rampup_pi_acc_error;
     }
     // Set to now time to get out of calibration
     Heating.time_rampup_checkpoint = uptime;
@@ -628,7 +653,7 @@ void HeatingPlanTempTarget()
 
   // Update target value if time delta to selected time is 0 or positive
   if ((tmp_minute_delta[time_selected] >= 0)
-    && (Heating.heating_plan[day_of_week - 1][(2 * time_selected) + 1] >= Settings.temp_frost_protect)) {
+    && (Heating.heating_plan[day_of_week - 1][(2 * time_selected) + 1] >= Heating.temp_frost_protect)) {
     Heating.temp_target_level = Heating.heating_plan[day_of_week - 1][(2 * time_selected) + 1];
   }
 }
@@ -689,10 +714,10 @@ void CmndTempFrostProtectSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(CharToFloat(XdrvMailbox.data) * 10);
     if ((value >= 0) && (value <= 255)) {
-      Settings.temp_frost_protect = value;
+      Heating.temp_frost_protect = value;
     }
   }
-  ResponseCmndFloat((float)(Settings.temp_frost_protect) / 10, 1);
+  ResponseCmndFloat((float)(Heating.temp_frost_protect) / 10, 1);
 }
 
 void CmndControllerModeSet(void)
@@ -711,11 +736,11 @@ void CmndInputSwitchSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(XdrvMailbox.payload);
     if (HeatingSwitchIdValid(value)) {
-      Settings.input_switch_number = value;
+      Heating.input_switch_number = value;
       Heating.timestamp_input_on = uptime;
     }
   }
-  ResponseCmndNumber((int)Settings.input_switch_number);
+  ResponseCmndNumber((int)Heating.input_switch_number);
 }
 
 void CmndOutputRelaySet(void)
@@ -723,10 +748,10 @@ void CmndOutputRelaySet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(XdrvMailbox.payload);
     if (HeatingRelayIdValid(value)) {
-      Settings.output_relay_number = value;
+      Heating.output_relay_number = value;
     }
   }
-  ResponseCmndNumber((int)Settings.output_relay_number);
+  ResponseCmndNumber((int)Heating.output_relay_number);
 }
 
 void CmndTimeAllowRampupSet(void)
@@ -734,10 +759,10 @@ void CmndTimeAllowRampupSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t value = (uint32_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value < 86400)) {
-      Settings.time_allow_rampup = value;
+      Heating.time_allow_rampup = value;
     }
   }
-  ResponseCmndNumber((int)Settings.time_allow_rampup);
+  ResponseCmndNumber((int)Heating.time_allow_rampup);
 }
 
 void CmndTempMeasuredSet(void)
@@ -767,7 +792,7 @@ void CmndTempTargetSet(void)
     uint16_t value = (uint16_t)(CharToFloat(XdrvMailbox.data) * 10);
     if ((value >= -1000) 
       && (value <= 1000)
-      && (value >= Settings.temp_frost_protect)) {
+      && (value >= Heating.temp_frost_protect)) {
       Heating.temp_target_level = value;
       Heating.timestamp_temp_target_update = uptime;
     }
@@ -888,10 +913,10 @@ void CmndTempSensNumberSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 255)) {
-      Settings.temp_sens_number = value;
+      Heating.temp_sens_number = value;
     }
   }
-  ResponseCmndNumber((int)Settings.temp_sens_number);
+  ResponseCmndNumber((int)Heating.temp_sens_number);
 }
 
 void CmndStateEmergencySet(void)
@@ -899,10 +924,10 @@ void CmndStateEmergencySet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 1)) {
-      Settings.state_emergency = (bool)value;
+      Heating.state_emergency = (bool)value;
     }
   }
-  ResponseCmndNumber((int)Settings.state_emergency);
+  ResponseCmndNumber((int)Heating.state_emergency);
 }
 
 void CmndPowerMaxSet(void)
@@ -910,10 +935,10 @@ void CmndPowerMaxSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint16_t value = (uint16_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 1300)) {
-      Settings.power_max = value;
+      Heating.power_max = value;
     }
   }
-  ResponseCmndNumber((int)Settings.power_max);
+  ResponseCmndNumber((int)Heating.power_max);
 }
 
 void CmndTimeManualToAutoSet(void)
@@ -921,10 +946,10 @@ void CmndTimeManualToAutoSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t value = (uint32_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 86400)) {
-      Settings.time_manual_to_auto = value;
+      Heating.time_manual_to_auto = value;
     }
   }
-  ResponseCmndNumber((int)Settings.time_manual_to_auto);
+  ResponseCmndNumber((int)Heating.time_manual_to_auto);
 }
 
 void CmndTimeOnLimitSet(void)
@@ -932,10 +957,10 @@ void CmndTimeOnLimitSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t value = (uint32_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 86400)) {
-      Settings.time_on_limit = value;
+      Heating.time_on_limit = value;
     }
   }
-  ResponseCmndNumber((int)Settings.time_on_limit);
+  ResponseCmndNumber((int)Heating.time_on_limit);
 }
 
 void CmndPropBandSet(void)
@@ -943,10 +968,10 @@ void CmndPropBandSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 20)) {
-      Settings.val_prop_band = value;
+      Heating.val_prop_band = value;
     }
   }
-  ResponseCmndNumber((int)Settings.val_prop_band);
+  ResponseCmndNumber((int)Heating.val_prop_band);
 }
 
 void CmndTimeResetSet(void)
@@ -954,10 +979,10 @@ void CmndTimeResetSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t value = (uint32_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 86400)) {
-      Settings.time_reset = value;
+      Heating.time_reset = value;
     }
   }
-  ResponseCmndNumber((int)Settings.time_reset);
+  ResponseCmndNumber((int)Heating.time_reset);
 }
 
 void CmndTimePiCycleSet(void)
@@ -965,10 +990,10 @@ void CmndTimePiCycleSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t value = (uint32_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 86400)) {
-      Settings.time_pi_cycle = value;
+      Heating.time_pi_cycle = value;
     }
   }
-  ResponseCmndNumber((int)Settings.time_pi_cycle);
+  ResponseCmndNumber((int)Heating.time_pi_cycle);
 }
 
 void CmndTempAntiWindupResetSet(void)
@@ -976,10 +1001,10 @@ void CmndTempAntiWindupResetSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(CharToFloat(XdrvMailbox.data) * 10);
     if ((value >= (float)(0)) && (value <= (float)(100.0))) {
-      Settings.temp_reset_anti_windup = value;
+      Heating.temp_reset_anti_windup = value;
     }
   }
-  ResponseCmndFloat((float)(Settings.temp_reset_anti_windup) / 10, 1);
+  ResponseCmndFloat((float)(Heating.temp_reset_anti_windup) / 10, 1);
 }
 
 void CmndTempHystSet(void)
@@ -987,10 +1012,10 @@ void CmndTempHystSet(void)
   if (XdrvMailbox.data_len > 0) {
     int8_t value = (int8_t)(CharToFloat(XdrvMailbox.data) * 10);
     if ((value >= -100) && (value <= 100)) {
-      Settings.temp_hysteresis = value;
+      Heating.temp_hysteresis = value;
     }
   }
-  ResponseCmndFloat((float)(Settings.temp_hysteresis) / 10, 1);
+  ResponseCmndFloat((float)(Heating.temp_hysteresis) / 10, 1);
 }
 
 void CmndTimeMaxActionSet(void)
@@ -998,10 +1023,10 @@ void CmndTimeMaxActionSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t value = (uint32_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 86400)) {
-      Settings.time_max_action = value;
+      Heating.time_max_action = value;
     }
   }
-  ResponseCmndNumber((int)Settings.time_max_action);
+  ResponseCmndNumber((int)Heating.time_max_action);
 }
 
 void CmndTimeMinActionSet(void)
@@ -1009,10 +1034,10 @@ void CmndTimeMinActionSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t value = (uint32_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 86400)) {
-      Settings.time_min_action = value;
+      Heating.time_min_action = value;
     }
   }
-  ResponseCmndNumber((int)Settings.time_min_action);
+  ResponseCmndNumber((int)Heating.time_min_action);
 }
 
 void CmndTimeMinTurnoffActionSet(void)
@@ -1020,10 +1045,10 @@ void CmndTimeMinTurnoffActionSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t value = (uint32_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 86400)) {
-      Settings.time_min_turnoff_action = value;
+      Heating.time_min_turnoff_action = value;
     }
   }
-  ResponseCmndNumber((int)Settings.time_min_turnoff_action);
+  ResponseCmndNumber((int)Heating.time_min_turnoff_action);
 }
 
 void CmndTempRupDeltInSet(void)
@@ -1031,10 +1056,10 @@ void CmndTempRupDeltInSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(CharToFloat(XdrvMailbox.data) * 10);
     if ((value >= 0) && (value <= 100)) {
-      Settings.temp_rampup_delta_in = value;
+      Heating.temp_rampup_delta_in = value;
     }
   }
-  ResponseCmndFloat((float)(Settings.temp_rampup_delta_in) / 10, 1);
+  ResponseCmndFloat((float)(Heating.temp_rampup_delta_in) / 10, 1);
 }
 
 void CmndTempRupDeltOutSet(void)
@@ -1042,10 +1067,10 @@ void CmndTempRupDeltOutSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(CharToFloat(XdrvMailbox.data) * 10);
     if ((value >= 0) && (value <= 100)) {
-      Settings.temp_rampup_delta_out = value;
+      Heating.temp_rampup_delta_out = value;
     }
   }
-  ResponseCmndFloat((float)(Settings.temp_rampup_delta_out) / 10, 1);
+  ResponseCmndFloat((float)(Heating.temp_rampup_delta_out) / 10, 1);
 }
 
 void CmndTimeRampupMaxSet(void)
@@ -1053,10 +1078,10 @@ void CmndTimeRampupMaxSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t value = (uint32_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 86400)) {
-      Settings.time_rampup_max = value;
+      Heating.time_rampup_max = value;
     }
   }
-  ResponseCmndNumber((int)Settings.time_rampup_max);
+  ResponseCmndNumber((int)Heating.time_rampup_max);
 }
 
 void CmndTimeRampupCycleSet(void)
@@ -1064,10 +1089,10 @@ void CmndTimeRampupCycleSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t value = (uint32_t)(XdrvMailbox.payload);
     if ((value >= 0) && (value <= 86400)) {
-      Settings.time_rampup_cycle = value;
+      Heating.time_rampup_cycle = value;
     }
   }
-  ResponseCmndNumber((int)Settings.time_rampup_cycle);
+  ResponseCmndNumber((int)Heating.time_rampup_cycle);
 }
 
 void CmndTempRampupPiAccErrSet(void)
@@ -1075,10 +1100,10 @@ void CmndTempRampupPiAccErrSet(void)
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(CharToFloat(XdrvMailbox.data) * 10);
     if ((value >= 0) && (value <= 250)) {
-      Settings.temp_rampup_pi_acc_error = value;
+      Heating.temp_rampup_pi_acc_error = value;
     }
   }
-  ResponseCmndFloat((float)(Settings.temp_rampup_pi_acc_error) / 10, 1);
+  ResponseCmndFloat((float)(Heating.temp_rampup_pi_acc_error) / 10, 1);
 }
 
 void CmndTimePiProportRead(void)
