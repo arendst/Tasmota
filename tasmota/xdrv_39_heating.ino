@@ -17,7 +17,7 @@
 
 #define XDRV_39              39
 
-#define DEBUG_HEATING
+//#define DEBUG_HEATING
 
 enum HeatingModes { HEAT_OFF, HEAT_AUTOMATIC_OP, HEAT_MANUAL_OP, HEAT_TIME_PLAN };
 enum ControllerModes { CTR_HYBRID, CTR_PI, CTR_RAMP_UP };
