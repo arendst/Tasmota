@@ -354,13 +354,13 @@ String buffer;
   client->println(msg);
 #endif
   client->println('.');
-#ifdef _EMAIL_PORT
+#ifdef DEBUG_EMAIL_PORT
   AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
 
   buffer = F("QUIT");
   client->println(buffer);
-#ifdef _EMAIL_PORT
+#ifdef DEBUG_EMAIL_PORT
   AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
 
