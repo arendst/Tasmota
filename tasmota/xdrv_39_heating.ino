@@ -167,7 +167,7 @@ bool HeatingMinuteCounter()
   
   if ((Heating.status.counter_seconds % 60) == 0) {
     result = true; 
-    Heating.status.counter_seconds = 1;   
+    Heating.status.counter_seconds = 0;   
   }
   return(result);
 }
