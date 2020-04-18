@@ -55,11 +55,7 @@ typedef union {
     uint16_t status_output : 1;       // Status of the output switch
     uint16_t status_cycle_active : 1; // Status showing if cycle is active (Output ON) or not (Output OFF)
     uint16_t state_emergency : 1;     // State for heating emergency
-<<<<<<< HEAD
-    uint16_t counter_seconds : 6;     // Second counter
-=======
     uint16_t counter_seconds : 6;     // Second counter used to track minutes
->>>>>>> new_branch_dev
   };
 } HeatingBitfield;
 
