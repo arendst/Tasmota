@@ -17,6 +17,8 @@
 
 #define XDRV_39              39
 
+#define DEBUG_HEATING
+
 enum HeatingModes { HEAT_OFF, HEAT_AUTOMATIC_OP, HEAT_MANUAL_OP, HEAT_TIME_PLAN };
 enum ControllerModes { CTR_HYBRID, CTR_PI, CTR_RAMP_UP };
 enum ControllerHybridPhases { CTR_HYBRID_RAMP_UP, CTR_HYBRID_PI };
@@ -53,7 +55,11 @@ typedef union {
     uint16_t status_output : 1;       // Status of the output switch
     uint16_t status_cycle_active : 1; // Status showing if cycle is active (Output ON) or not (Output OFF)
     uint16_t state_emergency : 1;     // State for heating emergency
+<<<<<<< HEAD
     uint16_t counter_seconds : 6;     // Second counter
+=======
+    uint16_t counter_seconds : 6;     // Second counter used to track minutes
+>>>>>>> new_branch_dev
   };
 } HeatingBitfield;
 
@@ -167,7 +173,7 @@ bool HeatingMinuteCounter()
   
   if ((Heating.status.counter_seconds % 60) == 0) {
     result = true; 
-    Heating.status.counter_seconds = 1;   
+    Heating.status.counter_seconds = 0;   
   }
   return(result);
 }
@@ -1156,6 +1162,9 @@ void CmndTimePiIntegrRead(void)
 
 bool Xdrv39(uint8_t function)
 {
+  #ifdef DEBUG_HEATING
+  char result_chr[FLOATSZ];
+  #endif
   bool result = false;
 
   switch (function) {
@@ -1172,6 +1181,18 @@ bool Xdrv39(uint8_t function)
       if (HeatingMinuteCounter()) {
         HeatingSignalProcessingSlow();
         HeatingController();
+        #ifdef DEBUG_HEATING
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(""));
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("------ Heating Start ------"));
+        dtostrfd(Heating.status.counter_seconds, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("Heating.status.counter_seconds: %s"), result_chr);
+        dtostrfd(Heating.status.heating_mode, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("Heating.status.heating_mode: %s"), result_chr);
+        dtostrfd(Heating.status.heating_mode, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("Heating.status.heating_mode: %s"), result_chr);        
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("------ Heating End ------"));
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(""));
+        #endif
       }
       break;
     case FUNC_COMMAND:
