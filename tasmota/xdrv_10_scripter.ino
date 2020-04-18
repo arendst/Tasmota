@@ -3569,13 +3569,13 @@ void HandleImage(void) {
   Webserver->sendContent(response);
 
   if (!picstore[bnum].len) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("no image #: %d"), bnum);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("no image #: %d"), bnum);
     return;
   }
 
   client.write((char *)picstore[bnum].buff, picstore[bnum].len);
 
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("sending image #: %d"), bnum+1);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("sending image #: %d"), bnum+1);
 
 }
 #endif
