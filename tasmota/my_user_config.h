@@ -664,20 +664,20 @@
 
 #define HEATING_RELAY_NUMBER            1        // Default output relay number
 #define HEATING_SWITCH_NUMBER           1        // Default input switch number
-#define HEATING_TIME_ALLOW_RAMPUP       18000    // Default time in seconds after last target update to allow ramp-up controller phase
-#define HEATING_TIME_RAMPUP_MAX         57600    // Default time maximum ramp-up controller duration
-#define HEATING_TIME_RAMPUP_CYCLE       1800     // Default time ramp-up cycle 
-#define HEAT_TIME_SENS_LOST             1800     // Default target temperature in seconds
+#define HEATING_TIME_ALLOW_RAMPUP       300      // Default time in seconds after last target update to allow ramp-up controller phase in minutes
+#define HEATING_TIME_RAMPUP_MAX         960      // Default time maximum ramp-up controller duration in minutes
+#define HEATING_TIME_RAMPUP_CYCLE       1800     // Default time ramp-up cycle in seconds
+#define HEAT_TIME_SENS_LOST             30       // Maximum time w/o sensor update to set it as lost in minutes
 #define HEAT_TEMP_SENS_NUMBER           1        // Default temperature sensor number
 #define HEAT_STATE_EMERGENCY            false    // Default state for heating emergency
 #define HEAT_POWER_MAX                  60       // Default maximum output power in Watt
-#define HEAT_TIME_MANUAL_TO_AUTO        3600     // Default time without input switch active to change from manual to automatic in seconds
-#define HEAT_TIME_ON_LIMIT              7200     // Default maximum time with output active in seconds
+#define HEAT_TIME_MANUAL_TO_AUTO        60       // Default time without input switch active to change from manual to automatic in minutes
+#define HEAT_TIME_ON_LIMIT              120      // Default maximum time with output active in minutes
 #define HEAT_TIME_RESET                 12000    // Default reset time of the PI controller in seconds
-#define HEAT_TIME_PI_CYCLE              1800     // Default cycle time for the heating controller in seconds
-#define HEAT_TIME_MAX_ACTION            1200     // Default maximum heating time per cycle in seconds
-#define HEAT_TIME_MIN_ACTION            240      // Default minimum heating time per cycle in seconds
-#define HEAT_TIME_MIN_TURNOFF_ACTION    180      // Default minimum turnoff time in seconds, below it the heating will be held on
+#define HEAT_TIME_PI_CYCLE              30       // Default cycle time for the heating controller in minutes
+#define HEAT_TIME_MAX_ACTION            20       // Default maximum heating time per cycle in minutes
+#define HEAT_TIME_MIN_ACTION            4        // Default minimum heating time per cycle in minutes
+#define HEAT_TIME_MIN_TURNOFF_ACTION    3        // Default minimum turnoff time in minutes, below it the heating will be held on
 #define HEAT_PROP_BAND                  4        // Default proportional band of the PI controller in degrees celsius
 #define HEAT_TEMP_RESET_ANTI_WINDUP     8        // Default range where reset antiwindup is disabled, in tenths of degrees celsius
 #define HEAT_TEMP_HYSTERESIS            1        // Default range hysteresis for temperature PI controller, in tenths of degrees celsius

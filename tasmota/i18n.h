@@ -610,6 +610,7 @@
 #define D_CMND_TEMPRAMPUPPIACCERRSET "TempRampupPiAccErrSet"
 #define D_CMND_TIMEPIPROPORTREAD "TimePiProportRead"
 #define D_CMND_TIMEPIINTEGRREAD "TimePiIntegrRead"
+#define D_CMND_TIMESENSLOSTSET "TimeSensLostSet"
 
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
