@@ -1337,6 +1337,15 @@ void SettingsDelta(void)
     }
 #endif  // ESP8266
 
+    if (Settings.version < 0x08020004) {
+#ifdef ESP8266
+      Settings.config_version = 0;  // ESP8266 (Has been 0 for long time)
+#endif  // ESP8266
+#ifdef ESP32
+      Settings.config_version = 1;  // ESP32
+#endif  // ESP32
+    }
+
     Settings.version = VERSION;
     SettingsSave(1);
   }

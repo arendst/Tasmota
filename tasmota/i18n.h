@@ -297,6 +297,7 @@
 #define D_CMND_DEVGROUP_NAME "DevGroupName"
 #define D_CMND_DEVGROUP_SEND "DevGroupSend"
 #define D_CMND_DEVGROUP_SHARE "DevGroupShare"
+#define D_CMND_DEVGROUPSTATUS "DevGroupStatus"
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"

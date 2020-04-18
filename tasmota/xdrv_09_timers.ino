@@ -702,7 +702,7 @@ void HandleTimerConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMER);
 
-  if (WebServer->hasArg("save")) {
+  if (Webserver->hasArg("save")) {
     TimerSaveSettings();
     HandleConfiguration();
     return;
@@ -740,7 +740,7 @@ void TimerSaveSettings(void)
   char message[LOGSZ];
   Timer timer;
 
-  Settings.flag3.timers_enable = WebServer->hasArg("e0");  // CMND_TIMERS
+  Settings.flag3.timers_enable = Webserver->hasArg("e0");  // CMND_TIMERS
   WebGetArg("t0", tmp, sizeof(tmp));
   char *p = tmp;
   snprintf_P(message, sizeof(message), PSTR(D_LOG_MQTT D_CMND_TIMERS " %d"), Settings.flag3.timers_enable);  // CMND_TIMERS
@@ -781,7 +781,7 @@ bool Xdrv09(uint8_t function)
 #endif  // USE_RULES
       break;
     case FUNC_WEB_ADD_HANDLER:
-      WebServer->on("/" WEB_HANDLE_TIMER, HandleTimerConfiguration);
+      Webserver->on("/" WEB_HANDLE_TIMER, HandleTimerConfiguration);
       break;
 #endif  // USE_TIMERS_WEB
 #endif  // USE_WEBSERVER

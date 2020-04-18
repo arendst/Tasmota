@@ -1,7 +1,7 @@
 /*
-  support_button.ino - button support for Tasmota
+  support_button_v2.ino - button support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2020  Federico Leoni and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -23,12 +23,8 @@
  * Button support
 \*********************************************************************************************/
 
-#define MAX_BUTTON_COMMANDS_V2  3  // Max number of button commands supported
 #define MAX_RELAY_BUTTON1       4  // Max number of relay controlled by button1
 
-const char kCommands[] PROGMEM =
-  D_CMND_WIFICONFIG " 2|" D_CMND_RESTART " 1|" D_CMND_UPGRADE " 1";
-  //D_CMND_WIFICONFIG " 2|" D_CMND_WIFICONFIG " 2|" D_CMND_WIFICONFIG " 2|" D_CMND_RESTART " 1|" D_CMND_UPGRADE " 1";
 const char kMultiPress[] PROGMEM =
   "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|";
 
@@ -107,7 +103,6 @@ uint8_t ButtonSerial(uint8_t serial_in_byte)
  * SetOption11 (0)     - If set perform single press action on double press and reverse
  * SetOption13 (0)     - If set act on single press only
  * SetOption32 (40)    - Max button hold time in Seconds
- * SetOption40 (0)     - Number of 0.1 seconds until hold is discarded if SetOption1 1 and SetOption13 0
  * SetOption73 (0)     - Decouple button from relay and send just mqtt topic
 \*********************************************************************************************/
 
@@ -177,16 +172,19 @@ void ButtonHandler(void)
           if (!Button.hold_timer[button_index]) { button_pressed = true; }  // Do not allow within 1 second
         }
         if (button_pressed) {
-          if (!SendKey(KEY_BUTTON, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
-            ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
-
-          }
+          if (!Settings.flag3.mqtt_buttons) {
+            if (!SendKey(KEY_BUTTON, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
+              ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
+            } else {
+              MqttButtonTopic(button_index +1, 1, 0); // SetOption73 (0) - Decouple button from relay and send just mqtt topic            }
+            }
+          }          
         }
       }
 #endif  // ESP8266
       else {
-
-        if ((PRESSED == button) && (NOT_PRESSED == Button.last_state[button_index])) {
+        if (((PRESSED == button) && (NOT_PRESSED == Button.last_state[button_index]) && !Button.inverted_mask) || 
+            ((NOT_PRESSED == button) && (PRESSED == Button.last_state[button_index]) && Button.inverted_mask)) {
 
           if (Settings.flag.button_single) {                   // SetOption13 (0) - Allow only single button press for immediate action, SetOption73 (0) - Decouple button from relay and send just mqtt topic
             if (!Settings.flag3.mqtt_buttons) {
@@ -203,9 +201,9 @@ void ButtonHandler(void)
             Button.window_timer[button_index] = loops_per_second / 2;  // 0.5 second multi press window
           }
           blinks = 201;
-        }
+        } 
 
-        if (NOT_PRESSED == button) {
+        if (((NOT_PRESSED == button) && !Button.inverted_mask) || ((PRESSED == button) && Button.inverted_mask)) {
           Button.hold_timer[button_index] = 0;
         } else {
           Button.hold_timer[button_index]++;
@@ -223,11 +221,11 @@ void ButtonHandler(void)
                 SendKey(KEY_BUTTON, button_index +1, POWER_HOLD);  // Execute Hold command via MQTT if ButtonTopic is set
               }              
             } else {
-              if (Button.hold_timer[button_index] == loops_per_second * hold_time_extent * Settings.param[P_HOLD_TIME] / 10) {  // SetOption32 (40) - Button held for factor times longer
+              if ((Button.hold_timer[button_index] == loops_per_second * hold_time_extent * Settings.param[P_HOLD_TIME] / 10)) {  // SetOption32 (40) - Button held for factor times longer
                 Button.press_counter[button_index] = 0;
                 snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
                 ExecuteCommand(scmnd, SRC_BUTTON);
-              }
+              } 
             }
           }
         }
@@ -236,7 +234,9 @@ void ButtonHandler(void)
           if (Button.window_timer[button_index]) {
             Button.window_timer[button_index]--;
           } else {
-            if (!restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0) && (Button.press_counter[button_index] < MAX_BUTTON_COMMANDS_V2 +6)) {
+            // if (!restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0) && (Button.press_counter[button_index] < MAX_BUTTON_COMMANDS_V2 +6)) {
+            if (!restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0) && (Button.press_counter[button_index] < 7)) {
+
               bool single_press = false;
               if (Button.press_counter[button_index] < 3) {    // Single or Double press
 #ifdef ESP8266
@@ -280,8 +280,12 @@ void ButtonHandler(void)
                         }
                       }
                     }
-                  } else {    // 6 - 8 press are used to send commands
-                      GetTextIndexed(scmnd, sizeof(scmnd), Button.press_counter[button_index] -6, kCommands);
+                  // } else {    // 6 - 8 press are used to send commands
+                  //     GetTextIndexed(scmnd, sizeof(scmnd), Button.press_counter[button_index] -6, kCommands);
+                  //     ExecuteCommand(scmnd, SRC_BUTTON);
+                  // }
+                  } else {    // 6 press start wificonfig 2
+                      snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_WIFICONFIG " 2"));
                       ExecuteCommand(scmnd, SRC_BUTTON);
                   }
                   if (Settings.flag3.mqtt_buttons) {   // SetOption73 (0) - Decouple button from relay and send just mqtt topic

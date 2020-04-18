@@ -172,11 +172,11 @@ void CpuLoadLoop(void)
     CPU_loops ++;
     if ((CPU_last_millis + (CPU_load_check *1000)) <= CPU_last_loop_time) {
 #if defined(F_CPU) && (F_CPU == 160000000L)
-      int CPU_load = 100 - ( (CPU_loops*(1 + 30*sleep)) / (CPU_load_check *800) );
+      int CPU_load = 100 - ( (CPU_loops*(1 + 30*ssleep)) / (CPU_load_check *800) );
       CPU_loops = CPU_loops / CPU_load_check;
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(160MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
 #else
-      int CPU_load = 100 - ( (CPU_loops*(1 + 30*sleep)) / (CPU_load_check *400) );
+      int CPU_load = 100 - ( (CPU_loops*(1 + 30*ssleep)) / (CPU_load_check *400) );
       CPU_loops = CPU_loops / CPU_load_check;
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(80MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
 #endif
@@ -188,6 +188,7 @@ void CpuLoadLoop(void)
 
 /*******************************************************************************************/
 
+#ifdef ESP8266
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1)
 // All version before core 2.4.2
 // https://github.com/esp8266/Arduino/issues/2557
@@ -224,10 +225,22 @@ void DebugFreeMem(void)
 
 #endif  // ARDUINO_ESP8266_RELEASE_2_x_x
 
+#else  // ESP32
+
+void DebugFreeMem(void)
+{
+  register uint8_t *sp asm("a1");
+
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), sp - pxTaskGetStackStart(NULL), XdrvMailbox.data);
+}
+
+#endif  // ESP8266 - ESP32
+
 /*******************************************************************************************/
 
 void DebugRtcDump(char* parms)
 {
+#ifdef ESP8266
   #define CFG_COLS 16
 
   uint16_t idx;
@@ -283,6 +296,7 @@ void DebugRtcDump(char* parms)
     snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
     AddLog(LOG_LEVEL_INFO);
   }
+#endif  // ESP8266
 }
 
 /*******************************************************************************************/
@@ -385,6 +399,7 @@ void DebugCfgPoke(char* parms)
 
 void SetFlashMode(uint8_t mode)
 {
+#ifdef ESP8266
   uint8_t *_buffer;
   uint32_t address;
 
@@ -400,6 +415,7 @@ void SetFlashMode(uint8_t mode)
     }
   }
   delete[] _buffer;
+#endif  // ESP8266
 }
 
 /*********************************************************************************************\
@@ -503,6 +519,7 @@ uint32_t DebugSwap32(uint32_t x) {
 
 void CmndFlashDump(void)
 {
+#ifdef ESP8266
   // FlashDump
   // FlashDump 0xFF000
   // FlashDump 0xFC000 10
@@ -533,6 +550,7 @@ void CmndFlashDump(void)
       DebugSwap32(values[4]), DebugSwap32(values[5]), DebugSwap32(values[6]), DebugSwap32(values[7]));
   }
   ResponseCmndDone();
+#endif  // ESP8266
 }
 
 #ifdef USE_I2C
@@ -600,10 +618,12 @@ void CmndI2cRead(void)
 
 void CmndI2cStretch(void)
 {
+#ifdef ESP8266
   if (i2c_flg && (XdrvMailbox.payload > 0)) {
     Wire.setClockStretchLimit(XdrvMailbox.payload);
   }
   ResponseCmndDone();
+#endif  // ESP8266
 }
 
 void CmndI2cClock(void)

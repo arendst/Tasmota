@@ -86,7 +86,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
     uint32_t dds2382_model : 1;            // bit 21 (v6.6.0.14) - SetOption71 - Select different Modbus registers for Active Energy (#6531)
     uint32_t hardware_energy_total : 1;    // bit 22 (v6.6.0.15) - SetOption72 - Enable hardware energy total counter as reference (#6561)
-    uint32_t mqtt_buttons : 1;             // bit 23 (v8.2.0.3)  - SetOption73 - Detach buttons from relays and enable MQTT action state for multipress    
+    uint32_t mqtt_buttons : 1;             // bit 23 (v8.2.0.3)  - SetOption73 - Detach buttons from relays and enable MQTT action state for multipress
     uint32_t ds18x20_internal_pullup : 1;  // bit 24 (v7.0.0.1)  - SetOption74 - Enable internal pullup for single DS18x20 sensor
     uint32_t grouptopic_mode : 1;          // bit 25 (v7.0.0.1)  - SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
     uint32_t bootcount_update : 1;         // bit 26 (v7.0.0.4)  - SetOption76 - Enable incrementing bootcount when deepsleep is enabled
@@ -245,7 +245,7 @@ typedef struct {
 } EnergyUsage;
 
 
-typedef struct PACKED {
+typedef struct {
   uint8_t fnid = 0;
   uint8_t dpid = 0;
 } TuyaFnidDpidMap;
@@ -253,7 +253,7 @@ typedef struct PACKED {
 const uint32_t settings_text_size = 699;   // Settings.text_pool[size] = Settings.display_model (2D2) - Settings.text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
-struct PACKED SYSCFG {
+struct SYSCFG {
   uint16_t      cfg_holder;                // 000 v6 header
   uint16_t      cfg_size;                  // 002
   unsigned long save_flag;                 // 004
@@ -369,7 +369,13 @@ struct PACKED SYSCFG {
   uint8_t       module;                    // 474
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
-  myio          my_gp;                     // 484
+
+#ifdef ESP8266
+  myio          my_gp;                     // 484 - 17 bytes (ESP8266)
+#else  // ESP32
+  uint8_t       free_esp32_484[17];        // 484
+#endif  // ESP8266 - ESP32
+
   uint8_t       my_adc0;                   // 495
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
@@ -397,7 +403,14 @@ struct PACKED SYSCFG {
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;           // 554
 
+#ifdef ESP8266
   char          ex_mqtt_fulltopic[100];    // 558
+#else  // ESP32
+  myio          my_gp;                     // 558 - 40 bytes (ESP32)
+  mytmplt       user_template;             // 580 - 35 bytes (ESP32)
+
+  uint8_t       free_esp32_5a3[25];        // 5A3
+#endif  // ESP8266 - ESP32
 
   SysBitfield2  flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
@@ -423,7 +436,12 @@ struct PACKED SYSCFG {
 
   char          user_template_name[15];    // 720  15 bytes - Backward compatibility since v8.2.0.3
 
-  mytmplt       user_template;             // 72F  14 bytes
+#ifdef ESP8266
+  mytmplt       user_template;             // 72F  14 bytes (ESP8266)
+#else  // ESP32
+  uint8_t       free_esp32_72f[14];        // 72F
+#endif  // ESP8266 - ESP32
+
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E
   uint16_t      display_width;             // 774
@@ -506,9 +524,11 @@ struct PACKED SYSCFG {
   uint8_t       zb_channel;                // F32
   uint8_t       zb_free_byte;              // F33
   uint16_t      pms_wake_interval;         // F34
+  uint8_t       config_version;            // F36
 
-  uint8_t       free_f36[130];             // F36
+  uint8_t       free_f37[129];             // F37 - Decrement if adding new Setting variables just above and below
 
+  // Only 32 bit boundary variables below
   uint16_t      pulse_counter_debounce_low;  // FB8
   uint16_t      pulse_counter_debounce_high; // FBA
   uint32_t      keeloq_master_msb;         // FBC

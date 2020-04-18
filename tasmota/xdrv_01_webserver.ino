@@ -109,7 +109,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
       "}"
     "};"
     "if (rfsh) {"
-      "x.open('GET','.?m=1'+a,true);"       // ?m related to WebServer->hasArg("m")
+      "x.open('GET','.?m=1'+a,true);"       // ?m related to Webserver->hasArg("m")
       "x.send();"
       "lt=setTimeout(la,%d);"               // Settings.web_refresh
     "}"
@@ -146,7 +146,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
         "eb('l1').innerHTML=s;"
       "}"
     "};"
-    "x.open('GET','.?m=1'+a,true);"       // ?m related to WebServer->hasArg("m")
+    "x.open('GET','.?m=1'+a,true);"       // ?m related to Webserver->hasArg("m")
     "x.send();"
     "lt=setTimeout(la,%d);"               // Settings.web_refresh
   "}";
@@ -205,7 +205,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
           "sn=t.scrollTop;"
         "}"
       "};"
-      "x.open('GET','cs?c2='+id+o,true);"  // Related to WebServer->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
+      "x.open('GET','cs?c2='+id+o,true);"  // Related to Webserver->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
       "x.send();"
     "}"
     "lt=setTimeout(l,%d);"
@@ -261,21 +261,18 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
     "as=o.shift();"                       // Complete ADC0 list
     "g=o.shift().split(',');"             // Array separator
     "j=0;"
-//    "for(i=0;i<13;i++){"                  // Supports 13 GPIOs
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Supports 13 GPIOs
 #ifdef ESP8266
       "if(6==i){j=9;}"
       "if(8==i){j=12;}"
-#endif
-#ifdef ESP32
+#else  // ESP32
       "if(6==i){j=12;}"
-#endif
+#endif  // ESP8266 - ESP32
       "sk(g[i],j);"                       // Set GPIO
       "j++;"
     "}"
     "g=o.shift();"                        // FLAG
     "os=as;"
-//    "sk(g&15,17);"                        // Set ADC0
     "sk(g&15," STR(ADC0_PIN) ");"         // Set ADC0
     "g>>=4;"
     "for(i=0;i<" STR(GPIO_FLAG_USED) ";i++){"
@@ -295,16 +292,15 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
 
   "function x2(a){"
     "os=a.responseText;"
-//    "sk(17,99);"                          // 17 = WEMOS
     "sk(" STR(WEMOS_MODULE) ",99);"       // 17 = WEMOS
     "st(" STR(USER_MODULE) ");"
   "}"
 
 #ifdef USE_JAVASCRIPT_ES6
-  "sl=()=>ld('tp?m=1',x2);"               // ?m related to WebServer->hasArg("m")
+  "sl=()=>ld('tp?m=1',x2);"               // ?m related to Webserver->hasArg("m")
 #else
   "function sl(){"
-    "ld('tp?m=1',x2);"                    // ?m related to WebServer->hasArg("m")
+    "ld('tp?m=1',x2);"                    // ?m related to Webserver->hasArg("m")
   "}"
 #endif
 
@@ -321,15 +317,13 @@ const char HTTP_SCRIPT_MODULE2[] PROGMEM =
   "}"
   "function x3(a){"                       // ADC0
     "os=a.responseText;"
-//    "sk(%d,17);"
     "sk(%d," STR(ADC0_PIN) ");"
   "}"
   "function sl(){"
-    "ld('md?m=1',x1);"                    // ?m related to WebServer->hasArg("m")
-    "ld('md?g=1',x2);"                    // ?g related to WebServer->hasArg("g")
-//    "if(eb('g17')){"
+    "ld('md?m=1',x1);"                    // ?m related to Webserver->hasArg("m")
+    "ld('md?g=1',x2);"                    // ?g related to Webserver->hasArg("g")
     "if(eb('g" STR(ADC0_PIN) "')){"
-      "ld('md?a=1',x3);"                  // ?a related to WebServer->hasArg("a")
+      "ld('md?a=1',x3);"                  // ?a related to Webserver->hasArg("a")
     "}"
   "}"
   "wl(sl);";
@@ -544,7 +538,7 @@ const uint16_t DNS_PORT = 53;
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
 
 DNSServer *DnsServer;
-ESP8266WebServer *WebServer;
+ESP8266WebServer *Webserver;
 
 struct WEB {
   String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
@@ -561,7 +555,7 @@ struct WEB {
 // Helper function to avoid code duplication (saves 4k Flash)
 static void WebGetArg(const char* arg, char* out, size_t max)
 {
-  String s = WebServer->arg(arg);
+  String s = Webserver->arg(arg);
   strlcpy(out, s.c_str(), max);
 //  out[max-1] = '\0';  // Ensure terminating NUL
 }
@@ -574,7 +568,7 @@ void ShowWebSource(uint32_t source)
 {
   if ((source > 0) && (source < SRC_MAX)) {
     char stemp1[20];
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SRC: %s from %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource), WebServer->client().remoteIP().toString().c_str());
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SRC: %s from %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource), Webserver->client().remoteIP().toString().c_str());
   }
 }
 
@@ -589,28 +583,28 @@ void StartWebserver(int type, IPAddress ipweb)
 {
   if (!Settings.web_refresh) { Settings.web_refresh = HTTP_REFRESH_TIME; }
   if (!Web.state) {
-    if (!WebServer) {
-      WebServer = new ESP8266WebServer((HTTP_MANAGER == type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
-      WebServer->on("/", HandleRoot);
-      WebServer->onNotFound(HandleNotFound);
-      WebServer->on("/up", HandleUpgradeFirmware);
-      WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
-      WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
-      WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
-      WebServer->on("/cs", HTTP_GET, HandleConsole);
-      WebServer->on("/cs", HTTP_OPTIONS, HandlePreflightRequest);
-      WebServer->on("/cm", HandleHttpCommand);
+    if (!Webserver) {
+      Webserver = new ESP8266WebServer((HTTP_MANAGER == type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
+      Webserver->on("/", HandleRoot);
+      Webserver->onNotFound(HandleNotFound);
+      Webserver->on("/up", HandleUpgradeFirmware);
+      Webserver->on("/u1", HandleUpgradeFirmwareStart);  // OTA
+      Webserver->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
+      Webserver->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
+      Webserver->on("/cs", HTTP_GET, HandleConsole);
+      Webserver->on("/cs", HTTP_OPTIONS, HandlePreflightRequest);
+      Webserver->on("/cm", HandleHttpCommand);
 #ifndef FIRMWARE_MINIMAL
-      WebServer->on("/cn", HandleConfiguration);
-      WebServer->on("/md", HandleModuleConfiguration);
-      WebServer->on("/wi", HandleWifiConfiguration);
-      WebServer->on("/lg", HandleLoggingConfiguration);
-      WebServer->on("/tp", HandleTemplateConfiguration);
-      WebServer->on("/co", HandleOtherConfiguration);
-      WebServer->on("/dl", HandleBackupConfiguration);
-      WebServer->on("/rs", HandleRestoreConfiguration);
-      WebServer->on("/rt", HandleResetConfiguration);
-      WebServer->on("/in", HandleInformation);
+      Webserver->on("/cn", HandleConfiguration);
+      Webserver->on("/md", HandleModuleConfiguration);
+      Webserver->on("/wi", HandleWifiConfiguration);
+      Webserver->on("/lg", HandleLoggingConfiguration);
+      Webserver->on("/tp", HandleTemplateConfiguration);
+      Webserver->on("/co", HandleOtherConfiguration);
+      Webserver->on("/dl", HandleBackupConfiguration);
+      Webserver->on("/rs", HandleRestoreConfiguration);
+      Webserver->on("/rt", HandleResetConfiguration);
+      Webserver->on("/in", HandleInformation);
       XdrvCall(FUNC_WEB_ADD_HANDLER);
       XsnsCall(FUNC_WEB_ADD_HANDLER);
 #endif  // Not FIRMWARE_MINIMAL
@@ -619,9 +613,9 @@ void StartWebserver(int type, IPAddress ipweb)
 
     // Collect User-Agent for Alexa Hue Emulation
     // This is used in xdrv_20_hue.ino in function findEchoGeneration()
-    WebServer->collectHeaders(HEADER_KEYS, sizeof(HEADER_KEYS)/sizeof(char*));
+    Webserver->collectHeaders(HEADER_KEYS, sizeof(HEADER_KEYS)/sizeof(char*));
 
-    WebServer->begin(); // Web server start
+    Webserver->begin(); // Web server start
   }
   if (Web.state != type) {
 #if LWIP_IPV6
@@ -639,7 +633,7 @@ void StartWebserver(int type, IPAddress ipweb)
 void StopWebserver(void)
 {
   if (Web.state) {
-    WebServer->close();
+    Webserver->close();
     Web.state = HTTP_OFF;
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_STOPPED));
   }
@@ -684,7 +678,7 @@ void WifiManagerBegin(bool reset_only)
 void PollDnsWebserver(void)
 {
   if (DnsServer) { DnsServer->processNextRequest(); }
-  if (WebServer) { WebServer->handleClient(); }
+  if (Webserver) { Webserver->handleClient(); }
 }
 
 /*********************************************************************************************/
@@ -692,7 +686,7 @@ void PollDnsWebserver(void)
 bool WebAuthenticate(void)
 {
   if (strlen(SettingsText(SET_WEBPWD)) && (HTTP_MANAGER_RESET_ONLY != Web.state)) {
-    return WebServer->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD));
+    return Webserver->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD));
   } else {
     return true;
   }
@@ -705,7 +699,7 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
     return false;
   }
   if (autorequestauth && !WebAuthenticate()) {
-    WebServer->requestAuthentication();
+    Webserver->requestAuthentication();
     return false;
   }
   return true;
@@ -714,15 +708,15 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
 void HttpHeaderCors(void)
 {
   if (strlen(SettingsText(SET_CORS))) {
-    WebServer->sendHeader(F("Access-Control-Allow-Origin"), SettingsText(SET_CORS));
+    Webserver->sendHeader(F("Access-Control-Allow-Origin"), SettingsText(SET_CORS));
   }
 }
 
 void WSHeaderSend(void)
 {
-  WebServer->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
-  WebServer->sendHeader(F("Pragma"), F("no-cache"));
-  WebServer->sendHeader(F("Expires"), F("-1"));
+  Webserver->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
+  Webserver->sendHeader(F("Pragma"), F("no-cache"));
+  Webserver->sendHeader(F("Expires"), F("-1"));
   HttpHeaderCors();
 }
 
@@ -733,7 +727,7 @@ void WSHeaderSend(void)
 void WSSend(int code, int ctype, const String& content)
 {
   char ct[25];  // strlen("application/octet-stream") +1 = Longest Content type string
-  WebServer->send(code, GetTextIndexed(ct, sizeof(ct), ctype, kContentTypes), content);
+  Webserver->send(code, GetTextIndexed(ct, sizeof(ct), ctype, kContentTypes), content);
 }
 
 /**********************************************************************************************
@@ -742,13 +736,13 @@ void WSSend(int code, int ctype, const String& content)
 
 void WSContentBegin(int code, int ctype)
 {
-  WebServer->client().flush();
+  Webserver->client().flush();
   WSHeaderSend();
 #ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-  WebServer->sendHeader(F("Accept-Ranges"),F("none"));
-  WebServer->sendHeader(F("Transfer-Encoding"),F("chunked"));
+  Webserver->sendHeader(F("Accept-Ranges"),F("none"));
+  Webserver->sendHeader(F("Transfer-Encoding"),F("chunked"));
 #endif
-  WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);
+  Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN);
   WSSend(code, ctype, "");                        // Signal start of chunked content
   Web.chunk_buffer = "";
 }
@@ -761,9 +755,9 @@ void _WSContentSend(const String& content)        // Low level sendContent for a
   const char * footer = "\r\n";
   char chunk_size[11];
   sprintf(chunk_size, "%x\r\n", len);
-  WebServer->sendContent(String() + chunk_size + content + footer);
+  Webserver->sendContent(String() + chunk_size + content + footer);
 #else
-  WebServer->sendContent(content);
+  Webserver->sendContent(content);
 #endif
 
 #ifdef USE_DEBUG_DRIVER
@@ -849,8 +843,8 @@ void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P ch
 
 void WSContentStart_P(const char* title, bool auth)
 {
-  if (auth && strlen(SettingsText(SET_WEBPWD)) && !WebServer->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD))) {
-    return WebServer->requestAuthentication();
+  if (auth && strlen(SettingsText(SET_WEBPWD)) && !Webserver->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD))) {
+    return Webserver->requestAuthentication();
   }
 
   WSContentBegin(200, CT_HTML);
@@ -961,7 +955,7 @@ void WSContentEnd(void)
 {
   WSContentFlush();                                // Flush chunk buffer
   _WSContentSend("");                              // Signal end of chunked content
-  WebServer->client().stop();
+  Webserver->client().stop();
 }
 
 void WSContentStop(void)
@@ -1043,17 +1037,17 @@ void HandleRoot(void)
 {
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
 
-  if (WebServer->hasArg("rst")) {
+  if (Webserver->hasArg("rst")) {
     WebRestart(0);
     return;
   }
 
   if (WifiIsInManagerMode()) {
 #ifndef FIRMWARE_MINIMAL
-    if (strlen(SettingsText(SET_WEBPWD)) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1")) && HTTP_MANAGER_RESET_ONLY != Web.state) {
+    if (strlen(SettingsText(SET_WEBPWD)) && !(Webserver->hasArg("USER1")) && !(Webserver->hasArg("PASS1")) && HTTP_MANAGER_RESET_ONLY != Web.state) {
       HandleWifiLogin();
     } else {
-      if (!strlen(SettingsText(SET_WEBPWD)) || (((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == SettingsText(SET_WEBPWD) )) || HTTP_MANAGER_RESET_ONLY == Web.state)) {
+      if (!strlen(SettingsText(SET_WEBPWD)) || (((Webserver->arg("USER1") == WEB_USERNAME ) && (Webserver->arg("PASS1") == SettingsText(SET_WEBPWD) )) || HTTP_MANAGER_RESET_ONLY == Web.state)) {
         HandleWifiConfiguration();
       } else {
         // wrong user and pass
@@ -1243,11 +1237,11 @@ void HandleRoot(void)
 bool HandleRootStatusRefresh(void)
 {
   if (!WebAuthenticate()) {
-    WebServer->requestAuthentication();
+    Webserver->requestAuthentication();
     return true;
   }
 
-  if (!WebServer->hasArg("m")) {     // Status refresh requested
+  if (!Webserver->hasArg("m")) {     // Status refresh requested
     return false;
   }
 
@@ -1429,7 +1423,7 @@ void HandleTemplateConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  if (WebServer->hasArg("save")) {
+  if (Webserver->hasArg("save")) {
     TemplateSaveSettings();
     WebRestart(1);
     return;
@@ -1437,7 +1431,7 @@ void HandleTemplateConfiguration(void)
 
   char stemp[30];                                           // Template number and Sensor name
 
-  if (WebServer->hasArg("m")) {
+  if (Webserver->hasArg("m")) {
     WSContentBegin(200, CT_PLAIN);
     for (uint32_t i = 0; i < sizeof(kModuleNiceList); i++) {  // "}2'%d'>%s (%d)}3" - "}2'0'>Sonoff Basic (1)}3"
       uint32_t midx = pgm_read_byte(kModuleNiceList + i);
@@ -1532,10 +1526,9 @@ void TemplateSaveSettings(void)
 #ifdef ESP8266
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
-#endif  // ESP8266
-#ifdef ESP32
+#else  // ESP32
     if (6 == i) { j = 12; }
-#endif  // ESP32
+#endif  // ESP8266 - ESP32
     snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), j);
     WebGetArg(webindex, tmp, sizeof(tmp));                  // GPIO
     uint8_t gpio = atoi(tmp);
@@ -1543,12 +1536,11 @@ void TemplateSaveSettings(void)
     j++;
   }
 
-//  WebGetArg("g17", tmp, sizeof(tmp));                       // FLAG - ADC0
   WebGetArg("g" STR(ADC0_PIN), tmp, sizeof(tmp));           // FLAG - ADC0
   uint32_t flag = atoi(tmp);
   for (uint32_t i = 0; i < GPIO_FLAG_USED; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("c%d"), i);
-    uint32_t state = WebServer->hasArg(webindex) << i +4;   // FLAG
+    uint32_t state = Webserver->hasArg(webindex) << i +4;   // FLAG
     flag += state;
   }
   WebGetArg("g99", tmp, sizeof(tmp));                       // BASE
@@ -1564,7 +1556,7 @@ void HandleModuleConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  if (WebServer->hasArg("save")) {
+  if (Webserver->hasArg("save")) {
     ModuleSaveSettings();
     WebRestart(1);
     return;
@@ -1575,7 +1567,7 @@ void HandleModuleConfiguration(void)
   myio cmodule;
   ModuleGpios(&cmodule);
 
-  if (WebServer->hasArg("m")) {
+  if (Webserver->hasArg("m")) {
     WSContentBegin(200, CT_PLAIN);
     uint32_t vidx = 0;
     for (uint32_t i = 0; i <= sizeof(kModuleNiceList); i++) {  // "}2'%d'>%s (%d)}3" - "}2'255'>UserTemplate (0)}3" - "}2'0'>Sonoff Basic (1)}3"
@@ -1592,7 +1584,7 @@ void HandleModuleConfiguration(void)
     return;
   }
 
-  if (WebServer->hasArg("g")) {
+  if (Webserver->hasArg("g")) {
     WSContentBegin(200, CT_PLAIN);
     for (uint32_t j = 0; j < sizeof(kGpioNiceList); j++) {
       midx = pgm_read_byte(kGpioNiceList + j);
@@ -1605,7 +1597,7 @@ void HandleModuleConfiguration(void)
   }
 
 #ifndef USE_ADC_VCC
-  if (WebServer->hasArg("a")) {
+  if (Webserver->hasArg("a")) {
     WSContentBegin(200, CT_PLAIN);
     for (uint32_t j = 0; j < ADC0_END; j++) {
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, j, GetTextIndexed(stemp, sizeof(stemp), j, kAdc0Names), j);
@@ -1675,17 +1667,28 @@ void ModuleSaveSettings(void)
       if (ValidGPIO(i, cmodule.io[i])) {
         snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), i);
         WebGetArg(webindex, tmp, sizeof(tmp));
-        Settings.my_gp.io[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
-        gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
+        uint8_t value = (!strlen(tmp)) ? 0 : atoi(tmp);
+#ifdef ESP8266
+        Settings.my_gp.io[i] = value;
+#else  // ESP32
+        if (i == ADC0_PIN) {
+          Settings.my_adc0 = value;
+        } else {
+          Settings.my_gp.io[i] = value;
+        }
+#endif  // ESP8266 - ESP32
+        gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(value);
       }
     }
   }
+#ifdef ESP8266
 #ifndef USE_ADC_VCC
 //  WebGetArg("g17", tmp, sizeof(tmp));
   WebGetArg("g" STR(ADC0_PIN), tmp, sizeof(tmp));
   Settings.my_adc0 = (!strlen(tmp)) ? 0 : atoi(tmp);
   gpios += F(", " D_ADC "0 "); gpios += String(Settings.my_adc0);
 #endif  // USE_ADC_VCC
+#endif  // ESP8266
 
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MODULE "%s " D_CMND_MODULE "%s"), ModuleName().c_str(), gpios.c_str());
 }
@@ -1720,7 +1723,7 @@ void HandleWifiConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_WIFI);
 
-  if (WebServer->hasArg("save") && HTTP_MANAGER_RESET_ONLY != Web.state) {
+  if (Webserver->hasArg("save") && HTTP_MANAGER_RESET_ONLY != Web.state) {
     WifiSaveSettings();
     WebRestart(2);
     return;
@@ -1731,7 +1734,7 @@ void HandleWifiConfiguration(void)
   WSContentSendStyle();
 
   if (HTTP_MANAGER_RESET_ONLY != Web.state) {
-    if (WebServer->hasArg("scan")) {
+    if (Webserver->hasArg("scan")) {
 #ifdef USE_EMULATION
       UdpDisconnect();
 #endif  // USE_EMULATION
@@ -1844,7 +1847,7 @@ void HandleLoggingConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_LOGGING);
 
-  if (WebServer->hasArg("save")) {
+  if (Webserver->hasArg("save")) {
     LoggingSaveSettings();
     HandleConfiguration();
     return;
@@ -1909,7 +1912,7 @@ void HandleOtherConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_OTHER);
 
-  if (WebServer->hasArg("save")) {
+  if (Webserver->hasArg("save")) {
     OtherSaveSettings();
     WebRestart(1);
     return;
@@ -1973,7 +1976,7 @@ void OtherSaveSettings(void)
 
   WebGetArg("wp", tmp, sizeof(tmp));
   SettingsUpdateText(SET_WEBPWD, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? SettingsText(SET_WEBPWD) : tmp);
-  Settings.flag.mqtt_enabled = WebServer->hasArg("b1");  // SetOption3 - Enable MQTT
+  Settings.flag.mqtt_enabled = Webserver->hasArg("b1");  // SetOption3 - Enable MQTT
 #ifdef USE_EMULATION
   UdpDisconnect();
 #if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE)
@@ -1994,7 +1997,7 @@ void OtherSaveSettings(void)
 
 /*
   // This sometimes provides intermittent watchdog
-  bool template_activate = WebServer->hasArg("t2");  // Try this to tackle intermittent watchdog after execution of Template command
+  bool template_activate = Webserver->hasArg("t2");  // Try this to tackle intermittent watchdog after execution of Template command
   WebGetArg("t1", tmp, sizeof(tmp));
   if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
     char svalue[128];
@@ -2010,7 +2013,7 @@ void OtherSaveSettings(void)
 */
   WebGetArg("t1", tmp, sizeof(tmp));
   if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
-    snprintf_P(message, sizeof(message), PSTR(D_CMND_BACKLOG " " D_CMND_TEMPLATE " %s%s"), tmp, (WebServer->hasArg("t2")) ? "; " D_CMND_MODULE " 0" : "");
+    snprintf_P(message, sizeof(message), PSTR(D_CMND_BACKLOG " " D_CMND_TEMPLATE " %s%s"), tmp, (Webserver->hasArg("t2")) ? "; " D_CMND_MODULE " 0" : "");
     ExecuteWebCommand(message, SRC_WEBGUI);
   }
 }
@@ -2025,8 +2028,8 @@ void HandleBackupConfiguration(void)
 
   if (!SettingsBufferAlloc()) { return; }
 
-  WiFiClient myClient = WebServer->client();
-  WebServer->setContentLength(sizeof(Settings));
+  WiFiClient myClient = Webserver->client();
+  Webserver->setContentLength(sizeof(Settings));
 
   char attachment[TOPSZ];
 
@@ -2036,7 +2039,7 @@ void HandleBackupConfiguration(void)
   char hostname[sizeof(my_hostname)];
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(hostname, my_hostname), my_version);
 
-  WebServer->sendHeader(F("Content-Disposition"), attachment);
+  Webserver->sendHeader(F("Content-Disposition"), attachment);
 
   WSSend(200, CT_STREAM, "");
 
@@ -2202,7 +2205,7 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d"), ESP_getChipId());
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP_getFlashChipId());
-  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%dkB"), ESP_getFlashChipRealSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%dkB"), ESP.getFlashChipRealSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%dkB"), ESP.getFlashChipSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%dkB"), ESP_getSketchSize() / 1024);
   WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%dkB"), ESP.getFreeSketchSpace() / 1024);
@@ -2336,7 +2339,7 @@ void HandleUploadLoop(void)
     return;
   }
 
-  HTTPUpload& upload = WebServer->upload();
+  HTTPUpload& upload = Webserver->upload();
 
   if (UPLOAD_FILE_START == upload.status) {
     restart_flag = 60;
@@ -2498,6 +2501,16 @@ void HandleUploadLoop(void)
       } else {
         valid_settings = (settings_buffer[0] == CONFIG_FILE_SIGN);
       }
+
+      if (valid_settings) {
+#ifdef ESP8266
+        valid_settings = (0 == settings_buffer[0xF36]);  // Settings.config_version
+#endif  // ESP8266
+#ifdef ESP32
+        valid_settings = (1 == settings_buffer[0xF36]);  // Settings.config_version
+#endif  // ESP32
+      }
+
       if (valid_settings) {
         SettingsDefaultSet2();
         memcpy((char*)&Settings +16, settings_buffer +16, sizeof(Settings) -16);
@@ -2549,8 +2562,8 @@ void HandleUploadLoop(void)
 void HandlePreflightRequest(void)
 {
   HttpHeaderCors();
-  WebServer->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST"));
-  WebServer->sendHeader(F("Access-Control-Allow-Headers"), F("authorization"));
+  Webserver->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST"));
+  Webserver->sendHeader(F("Access-Control-Allow-Headers"), F("authorization"));
   WSSend(200, CT_HTML, "");
 }
 
@@ -2562,54 +2575,54 @@ void HandleHttpCommand(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
 
-  bool valid = true;
   if (strlen(SettingsText(SET_WEBPWD))) {
     char tmp1[33];
     WebGetArg("user", tmp1, sizeof(tmp1));
     char tmp2[strlen(SettingsText(SET_WEBPWD)) +1];
     WebGetArg("password", tmp2, sizeof(tmp2));
-    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, SettingsText(SET_WEBPWD)))) { valid = false; }
+    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, SettingsText(SET_WEBPWD)))) {
+      WSContentBegin(401, CT_JSON);
+      WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_NEED_USER_AND_PASSWORD "\"}"));
+      WSContentEnd();
+      return;
+    }
   }
 
   WSContentBegin(200, CT_JSON);
-  if (valid) {
-    uint32_t curridx = web_log_index;
-    String svalue = WebServer->arg("cmnd");
-    if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
-      ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCOMMAND);
-      if (web_log_index != curridx) {
-        uint32_t counter = curridx;
-        WSContentSend_P(PSTR("{"));
-        bool cflg = false;
-        do {
-          char* tmp;
-          size_t len;
-          GetLog(counter, &tmp, &len);
-          if (len) {
-            // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
-            char* JSON = (char*)memchr(tmp, '{', len);
-            if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-              size_t JSONlen = len - (JSON - tmp);
-              if (JSONlen > sizeof(mqtt_data)) { JSONlen = sizeof(mqtt_data); }
-              char stemp[JSONlen];
-              strlcpy(stemp, JSON +1, JSONlen -2);
-              WSContentSend_P(PSTR("%s%s"), (cflg) ? "," : "", stemp);
-              cflg = true;
-            }
+  uint32_t curridx = web_log_index;
+  String svalue = Webserver->arg("cmnd");
+  if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
+    ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCOMMAND);
+    if (web_log_index != curridx) {
+      uint32_t counter = curridx;
+      WSContentSend_P(PSTR("{"));
+      bool cflg = false;
+      do {
+        char* tmp;
+        size_t len;
+        GetLog(counter, &tmp, &len);
+        if (len) {
+          // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
+          char* JSON = (char*)memchr(tmp, '{', len);
+          if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
+            size_t JSONlen = len - (JSON - tmp);
+            if (JSONlen > sizeof(mqtt_data)) { JSONlen = sizeof(mqtt_data); }
+            char stemp[JSONlen];
+            strlcpy(stemp, JSON +1, JSONlen -2);
+            WSContentSend_P(PSTR("%s%s"), (cflg) ? "," : "", stemp);
+            cflg = true;
           }
-          counter++;
-          counter &= 0xFF;
-          if (!counter) counter++;  // Skip 0 as it is not allowed
-        } while (counter != web_log_index);
-        WSContentSend_P(PSTR("}"));
-      } else {
-        WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}"));
-      }
+        }
+        counter++;
+        counter &= 0xFF;
+        if (!counter) counter++;  // Skip 0 as it is not allowed
+      } while (counter != web_log_index);
+      WSContentSend_P(PSTR("}"));
     } else {
-      WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENTER_COMMAND " cmnd=\"}"));
+      WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}"));
     }
   } else {
-    WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_NEED_USER_AND_PASSWORD "\"}"));
+    WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENTER_COMMAND " cmnd=\"}"));
   }
   WSContentEnd();
 }
@@ -2620,7 +2633,7 @@ void HandleConsole(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  if (WebServer->hasArg("c2")) {      // Console refresh requested
+  if (Webserver->hasArg("c2")) {      // Console refresh requested
     HandleConsoleRefresh();
     return;
   }
@@ -2640,7 +2653,7 @@ void HandleConsoleRefresh(void)
   bool cflg = true;
   uint32_t counter = 0;                // Initial start, should never be 0 again
 
-  String svalue = WebServer->arg("c1");
+  String svalue = Webserver->arg("c1");
   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), svalue.c_str());
     ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCONSOLE);
@@ -2685,13 +2698,13 @@ void HandleConsoleRefresh(void)
 
 void HandleNotFound(void)
 {
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Not found (%s)"), WebServer->uri().c_str());
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Not found (%s)"), Webserver->uri().c_str());
 
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the error page.
 
 #ifdef USE_EMULATION
 #ifdef USE_EMULATION_HUE
-  String path = WebServer->uri();
+  String path = Webserver->uri();
   if ((EMUL_HUE == Settings.flag2.emulation) && (path.startsWith("/api"))) {
     HandleHueApi(&path);
   } else
@@ -2699,9 +2712,9 @@ void HandleNotFound(void)
 #endif  // USE_EMULATION
   {
     WSContentBegin(404, CT_PLAIN);
-    WSContentSend_P(PSTR(D_FILE_NOT_FOUND "\n\nURI: %s\nMethod: %s\nArguments: %d\n"), WebServer->uri().c_str(), (WebServer->method() == HTTP_GET) ? "GET" : "POST", WebServer->args());
-    for (uint32_t i = 0; i < WebServer->args(); i++) {
-      WSContentSend_P(PSTR(" %s: %s\n"), WebServer->argName(i).c_str(), WebServer->arg(i).c_str());
+    WSContentSend_P(PSTR(D_FILE_NOT_FOUND "\n\nURI: %s\nMethod: %s\nArguments: %d\n"), Webserver->uri().c_str(), (Webserver->method() == HTTP_GET) ? "GET" : "POST", Webserver->args());
+    for (uint32_t i = 0; i < Webserver->args(); i++) {
+      WSContentSend_P(PSTR(" %s: %s\n"), Webserver->argName(i).c_str(), Webserver->arg(i).c_str());
     }
     WSContentEnd();
   }
@@ -2711,12 +2724,12 @@ void HandleNotFound(void)
 bool CaptivePortal(void)
 {
   // Possible hostHeader: connectivitycheck.gstatic.com or 192.168.4.1
-  if ((WifiIsInManagerMode()) && !ValidIpAddress(WebServer->hostHeader().c_str())) {
+  if ((WifiIsInManagerMode()) && !ValidIpAddress(Webserver->hostHeader().c_str())) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_REDIRECTED));
 
-    WebServer->sendHeader(F("Location"), String("http://") + WebServer->client().localIP().toString(), true);
+    Webserver->sendHeader(F("Location"), String("http://") + Webserver->client().localIP().toString(), true);
     WSSend(302, CT_PLAIN, "");  // Empty content inhibits Content-length header so we have to close the socket ourselves.
-    WebServer->client().stop();  // Stop is needed because we sent no content length
+    Webserver->client().stop();  // Stop is needed because we sent no content length
     return true;
   }
   return false;

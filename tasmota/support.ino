@@ -99,7 +99,11 @@ uint32_t ResetReason(void)
     REASON_DEEP_SLEEP_AWAKE = 5,  // "Deep-Sleep Wake"         wake up from deep-sleep
     REASON_EXT_SYS_RST      = 6   // "External System"         external system reset
   */
+#ifdef ESP8266
   return resetInfo.reason;
+#else
+  return ESP_ResetInfoReason();
+#endif
 }
 
 String GetResetReason(void)
@@ -1127,7 +1131,11 @@ void ModuleGpios(myio *gp)
   if (USER_MODULE == Settings.module) {
     memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
   } else {
+#ifdef ESP8266
     memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
+#else  // ESP32
+    memcpy_P(&src, &kModules.gp, sizeof(mycfgio));
+#endif  // ESP8266 - ESP32
   }
   // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
 
@@ -1138,10 +1146,9 @@ void ModuleGpios(myio *gp)
 #ifdef ESP8266
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
-#endif  // ESP8266
-#ifdef ESP32
+#else  // ESP32
     if (6 == i) { j = 12; }
-#endif  // ESP32
+#endif  // ESP8266 - ESP32
     dest[j] = src[i];
     j++;
   }
@@ -1154,11 +1161,24 @@ gpio_flag ModuleFlag(void)
 {
   gpio_flag flag;
 
+#ifdef ESP8266
   if (USER_MODULE == Settings.module) {
     flag = Settings.user_template.flag;
   } else {
     memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
   }
+#else  // ESP32
+  if (USER_MODULE == Settings.module) {
+/*
+    gpio_flag gpio_adc0;
+    memcpy_P(&gpio_adc0, &Settings.user_template.gp + ADC0_PIN - MIN_FLASH_PINS, sizeof(gpio_flag));
+    flag = Settings.user_template.flag.data + gpio_adc0.data;
+*/
+    memcpy_P(&flag, &Settings.user_template.gp + ADC0_PIN - MIN_FLASH_PINS, sizeof(gpio_flag));
+  } else {
+    memcpy_P(&flag, &kModules.gp + ADC0_PIN - MIN_FLASH_PINS, sizeof(gpio_flag));
+  }
+#endif  // ESP8266 - ESP32
 
   return flag;
 }
@@ -1169,7 +1189,11 @@ void ModuleDefault(uint32_t module)
   Settings.user_template_base = module;
   char name[TOPSZ];
   SettingsUpdateText(SET_TEMPLATE_NAME, GetTextIndexed(name, sizeof(name), module, kModuleNames));
+#ifdef ESP8266
   memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
+#else  // ESP32
+  memcpy_P(&Settings.user_template, &kModules, sizeof(mytmplt));
+#endif  // ESP8266 - ESP32
 }
 
 void SetModuleType(void)

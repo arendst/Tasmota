@@ -36,7 +36,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SEND "|"
 #endif  // USE_DEVICE_GROUPS_SEND
-  D_CMND_DEVGROUP_SHARE "|"
+  D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|"
 #endif  // USE_DEVICE_GROUPS
   D_CMND_SENSOR "|" D_CMND_DRIVER;
 
@@ -59,7 +59,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #ifdef USE_DEVICE_GROUPS_SEND
   &CmndDevGroupSend,
 #endif  // USE_DEVICE_GROUPS_SEND
-  &CmndDevGroupShare,
+  &CmndDevGroupShare, &CmndDevGroupStatus,
 #endif  // USE_DEVICE_GROUPS
   &CmndSensor, &CmndDriver };
 
@@ -448,7 +448,7 @@ void CmndStatus(void)
                           D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d,\"" D_JSON_FLASHCHIPID "\":\"%06X\",\"" D_JSON_FLASHMODE "\":%d,\""
                           D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
                           ESP_getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024,
-                          ESP.getFlashChipSize()/1024, ESP_getFlashChipRealSize()/1024, ESP_getFlashChipId(), ESP.getFlashChipMode(),
+                          ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP_getFlashChipId(), ESP.getFlashChipMode(),
                           LANGUAGE_LCID, feature_drv1, feature_drv2, feature_sns1, feature_sns2, feature5, feature6);
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
@@ -1117,10 +1117,9 @@ void CmndTemplate(void)
 #ifdef ESP8266
         if (6 == i) { j = 9; }
         if (8 == i) { j = 12; }
-#endif  // ESP8266
-#ifdef ESP32
+#else  // ESP32
         if (6 == i) { j = 12; }
-#endif  // ESP32
+#endif  // ESP8266 - ESP32
         if (my_module.io[j] > GPIO_NONE) {
           Settings.user_template.gp.io[i] = my_module.io[j];
         }
@@ -1792,6 +1791,11 @@ void CmndDevGroupShare(void)
   Settings.device_group_share_in = parm[0];
   Settings.device_group_share_out = parm[1];
   Response_P(PSTR("{\"" D_CMND_DEVGROUP_SHARE "\":{\"In\":\"%X\",\"Out\":\"%X\"}}"), Settings.device_group_share_in, Settings.device_group_share_out);
+}
+
+void CmndDevGroupStatus(void)
+{
+  DeviceGroupStatus((XdrvMailbox.usridx ? XdrvMailbox.index - 1 : 0));
 }
 #endif  // USE_DEVICE_GROUPS
 

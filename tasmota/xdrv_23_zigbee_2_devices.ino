@@ -65,7 +65,7 @@ typedef int32_t (*Z_DeviceTimer)(uint16_t shortaddr, uint16_t groupaddr, uint16_
 typedef enum Z_Def_Category {
   Z_CAT_NONE = 0,             // no category, it will happen anyways
   Z_CAT_READ_ATTR,            // Attribute reporting, either READ_ATTRIBUTE or REPORT_ATTRIBUTE, we coalesce all attributes reported if we can
-  Z_CAT_VIRTUAL_ATTR,         // Creation of a virtual attribute, typically after a time-out. Ex: Aqara presence sensor
+  Z_CAT_VIRTUAL_OCCUPANCY,    // Creation of a virtual attribute, typically after a time-out. Ex: Aqara presence sensor
   Z_CAT_REACHABILITY,         // timer set to measure reachability of device, i.e. if we don't get an answer after 1s, it is marked as unreachable (for Alexa)
   Z_CAT_READ_0006,            // Read 0x0006 cluster
   Z_CAT_READ_0008,            // Read 0x0008 cluster

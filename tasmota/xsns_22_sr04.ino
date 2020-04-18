@@ -32,40 +32,39 @@
 #define XSNS_22              22
 
 uint8_t sr04_type = 1;
-int sr04_echo_pin = 0;
-int sr04_trig_pin = 0;
 real64_t distance;
 
 NewPing* sonar = nullptr;
 TasmotaSerial* sonar_serial = nullptr;
 
-
-
 uint8_t Sr04TModeDetect(void)
 {
   sr04_type = 0;
-  if (pin[GPIO_SR04_ECHO]>=99) return sr04_type;
+  if (99 == pin[GPIO_SR04_ECHO]) { return sr04_type; }
 
-  sr04_echo_pin = pin[GPIO_SR04_ECHO];
-  sr04_trig_pin = (pin[GPIO_SR04_TRIG] < 99) ? pin[GPIO_SR04_TRIG] : pin[GPIO_SR04_ECHO];   // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
+  int sr04_echo_pin = pin[GPIO_SR04_ECHO];
+  int sr04_trig_pin = (pin[GPIO_SR04_TRIG] < 99) ? pin[GPIO_SR04_TRIG] : pin[GPIO_SR04_ECHO];   // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
   sonar_serial = new TasmotaSerial(sr04_echo_pin, sr04_trig_pin, 1);
 
   if (sonar_serial->begin(9600,1)) {
     DEBUG_SENSOR_LOG(PSTR("SR04: Detect mode"));
 
-    if (sr04_trig_pin!=-1) {
-        sr04_type = (Sr04TMiddleValue(Sr04TMode3Distance(),Sr04TMode3Distance(),Sr04TMode3Distance())!=NO_ECHO)?3:1;
+    if (sr04_trig_pin != -1) {
+      sr04_type = (Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance()) != NO_ECHO) ? 3 : 1;
     } else {
-        sr04_type = 2;
+      sr04_type = 2;
     }
   } else {
     sr04_type = 1;
   }
 
   if (sr04_type < 2) {
-      delete sonar_serial;
-      sonar_serial = nullptr;
-      sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, 300);
+    delete sonar_serial;
+    sonar_serial = nullptr;
+    if (-1 == sr04_trig_pin) {
+      sr04_trig_pin = pin[GPIO_SR04_ECHO];  // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
+    }
+    sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, 300);
   } else {
     if (sonar_serial->hardwareSerial()) {
       ClaimSerial();

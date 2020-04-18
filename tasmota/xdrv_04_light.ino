@@ -1985,6 +1985,17 @@ bool isChannelGammaCorrected(uint32_t channel) {
   return true;
 }
 
+// is the channel a regular PWM or ColorTemp control
+bool isChannelCT(uint32_t channel) {
+#ifdef ESP8266
+  if (PHILIPS == my_module_type) {
+    if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return true; }   // PMW reserved for CT
+    if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return true; }   // PMW reserved for CT
+  }
+#endif  // ESP8266
+  return false;
+}
+
 // Calculate the Gamma correction, if any, for fading, using the fast Gamma curve (10 bits in+out)
 uint16_t fadeGamma(uint32_t channel, uint16_t v) {
   if (isChannelGammaCorrected(channel)) {
@@ -2106,7 +2117,9 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
       if (pin[GPIO_PWM1 +i] < 99) {
         //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d"), i, cur_col_10[i]);
         uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
-        cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings.pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
+        if (!isChannelCT(i)) {   // if CT don't use pwm_min and pwm_max
+          cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings.pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
+        }
         analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - cur_col : cur_col);
       }
     }
