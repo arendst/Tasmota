@@ -53,12 +53,7 @@ typedef union {
     uint16_t status_output : 1;       // Status of the output switch
     uint16_t status_cycle_active : 1; // Status showing if cycle is active (Output ON) or not (Output OFF)
     uint16_t state_emergency : 1;     // State for heating emergency
-    uint16_t spare0 : 1;
-    uint16_t spare1 : 1;
-    uint16_t spare2 : 1;
-    uint16_t spare3 : 1;
-    uint16_t spare4 : 1;
-    uint16_t spare5 : 1;
+    uint16_t counter_seconds : 6;     // Second counter
   };
 } HeatingBitfield;
 
@@ -145,7 +140,6 @@ struct HEATING {
   uint8_t temp_frost_protect = HEAT_TEMP_FROST_PROTECT;             // Minimum temperature for frost protection, in tenths of degrees celsius
   uint16_t power_max = HEAT_POWER_MAX;                              // Maximum output power in Watt
   uint16_t energy_heating_output_max = HEATING_ENERGY_OUTPUT_MAX;   // Maximum allowed energy output for heating valve in Watts
-  uint8_t counter_seconds = 0;                                      // Counter incremented every second
   HeatingBitfield status;                                           // Bittfield including states as well as several flags
 } Heating;
 
@@ -163,16 +157,17 @@ void HeatingInit()
   Heating.status.status_output = IFACE_OFF;
   Heating.status.status_cycle_active = CYCLE_OFF;
   Heating.status.state_emergency = EMERGENCY_OFF;
+  Heating.status.counter_seconds = 0;
 }
 
 bool HeatingMinuteCounter() 
 {
   bool result = false;
-  Heating.counter_seconds++;    // increment time
+  Heating.status.counter_seconds++;    // increment time
   
-  if ((Heating.counter_seconds % 60) == 0) {
+  if ((Heating.status.counter_seconds % 60) == 0) {
     result = true; 
-    Heating.counter_seconds = 0;   
+    Heating.status.counter_seconds = 1;   
   }
   return(result);
 }
