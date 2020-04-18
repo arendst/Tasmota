@@ -1184,8 +1184,8 @@ bool Xdrv39(uint8_t function)
         AddLog_P2(LOG_LEVEL_INFO, PSTR("Heating.status.counter_seconds: %s"), result_chr);
         dtostrfd(Heating.status.heating_mode, 0, result_chr);
         AddLog_P2(LOG_LEVEL_INFO, PSTR("Heating.status.heating_mode: %s"), result_chr);
-        dtostrfd(Heating.status.heating_mode, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_INFO, PSTR("Heating.status.heating_mode: %s"), result_chr);        
+        dtostrfd(Heating.status.controller_mode, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("Heating.status.controller_mode: %s"), result_chr);        
         AddLog_P2(LOG_LEVEL_INFO, PSTR("------ Heating End ------"));
         AddLog_P2(LOG_LEVEL_INFO, PSTR(""));
         #endif
