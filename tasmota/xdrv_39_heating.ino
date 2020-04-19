@@ -1,14 +1,18 @@
 /*
   xdrv_39_heating.ino - Heating controller for Tasmota
+
   Copyright (C) 2020 Javier Arigita
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -17,7 +21,14 @@
 
 #define XDRV_39              39
 
+// Enable/disable debugging
 //#define DEBUG_HEATING
+
+#ifdef DEBUG_HEATING
+#define DOMOTICZ_IDX1        791
+#define DOMOTICZ_IDX2        792
+#define DOMOTICZ_IDX3        793
+#endif
 
 enum HeatingModes { HEAT_OFF, HEAT_AUTOMATIC_OP, HEAT_MANUAL_OP, HEAT_TIME_PLAN };
 enum ControllerModes { CTR_HYBRID, CTR_PI, CTR_RAMP_UP };
@@ -27,7 +38,7 @@ enum CtrCycleStates { CYCLE_OFF, CYCLE_ON };
 enum EmergencyStates { EMERGENCY_OFF, EMERGENCY_ON };
 enum HeatingSupportedInputSwitches {
   HEATING_INPUT_NONE,
-  HEATING_INPUT_SWT1 = 1,           // Buttons
+  HEATING_INPUT_SWT1 = 1,            // Buttons
   HEATING_INPUT_SWT2,
   HEATING_INPUT_SWT3,
   HEATING_INPUT_SWT4
@@ -59,6 +70,10 @@ typedef union {
   };
 } HeatingBitfield;
 
+#ifdef DEBUG_HEATING
+const char DOMOTICZ_MES[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\"}";
+#endif
+
 const char kHeatingCommands[] PROGMEM = "|" D_CMND_HEATINGMODESET "|" D_CMND_TEMPFROSTPROTECTSET "|" 
   D_CMND_CONTROLLERMODESET "|" D_CMND_INPUTSWITCHSET "|" D_CMND_OUTPUTRELAYSET "|" D_CMND_TIMEALLOWRAMPUPSET "|" 
   D_CMND_TEMPMEASUREDSET "|" D_CMND_TEMPTARGETSET "|" D_CMND_TIMEPLANSET "|" D_CMND_TEMPTARGETREAD "|" 
@@ -80,14 +95,13 @@ void (* const HeatingCommand[])(void) PROGMEM = {
   &CmndTimePiIntegrRead, &CmndTimeSensLostSet };
 
 struct HEATING {
-  uint32_t timestamp_temp_target_update = 0;                        // Timestamp of latest target value update
-  uint32_t timestamp_temp_measured_update = 0;                      // Timestamp of latest measurement value update
+  uint32_t timestamp_temp_measured_update = 0;                      // Timestamp of latest measurement update
   uint32_t timestamp_temp_meas_change_update = 0;                   // Timestamp of latest measurement value change (> or < to previous)
   uint32_t timestamp_output_off = 0;                                // Timestamp of latest heating output Off state
   uint32_t timestamp_input_on = 0;                                  // Timestamp of latest input On state
   uint32_t time_heating_total = 0;                                  // Time heating on within a specific timeframe
-  uint32_t time_pi_checkpoint = 0;                                  // Time to finalize the pi control cycle
-  uint32_t time_pi_changepoint = 0;                                 // Time until switching off output within a pi control cycle
+  uint32_t time_ctr_checkpoint = 0;                                 // Time to finalize the control cycle within the PI strategy or to switch to PI from Rampup
+  uint32_t time_ctr_changepoint = 0;                                // Time until switching off output within the controller
   int32_t temp_measured_gradient = 0;                               // Temperature measured gradient from sensor in thousandths of degrees per hour
   uint16_t temp_target_level = HEATING_TEMP_INIT;                   // Target level of the heating in tenths of degrees
   uint16_t temp_target_level_ctr = HEATING_TEMP_INIT;               // Target level set for the controller
@@ -111,8 +125,6 @@ struct HEATING {
   uint8_t time_output_delay = HEATING_TIME_OUTPUT_DELAY;            // Output delay between state change and real actuation event (f.i. valve open/closed)
   uint8_t  counter_rampup_cycles = 0;                               // Counter of ramp-up cycles
   int32_t temp_rampup_meas_gradient = 0;                            // Temperature measured gradient from sensor in thousandths of degrees per hour calculated during ramp-up
-  uint32_t time_rampup_checkpoint = 0;                              // Time to switch from ramp-up controller mode to PI
-  uint32_t time_rampup_output_off = 0;                              // Time to switch off relay output within the ramp-up controller
   uint32_t timestamp_rampup_start = 0;                              // Timestamp where the ramp-up controller mode has been started
   uint32_t time_rampup_deadtime = 0;                                // Time constant of the heating system (step response time)
   uint32_t time_rampup_nextcycle = 0;                               // Time where the ramp-up controller shall start the next cycle
@@ -150,7 +162,7 @@ struct HEATING {
 void HeatingInit()
 {
   ExecuteCommandPower(Heating.output_relay_number, POWER_OFF, SRC_HEATING); // Make sure the Output is OFF
-  // Init Heating.status bittfield:
+  // Init Heating.status bitfield:
   Heating.status.heating_mode = HEAT_OFF;
   Heating.status.controller_mode = CTR_HYBRID;
   Heating.status.sensor_alive = IFACE_OFF;
@@ -229,10 +241,13 @@ void HeatingHybridCtrPhase()
       case CTR_HYBRID_RAMP_UP:                    // Ramp-up phase with gradient control
           // If ramp-up offtime counter has been initalized    
           // AND ramp-up offtime counter value reached
-          if((Heating.time_rampup_checkpoint != 0) 
-            && (uptime >= Heating.time_rampup_checkpoint)) {
+          if((Heating.time_ctr_checkpoint != 0) 
+            && (uptime >= Heating.time_ctr_checkpoint)) {
             // Reset pause period
-            Heating.time_rampup_checkpoint = 0;
+            Heating.time_ctr_checkpoint = 0;
+            // Reset timers
+            Heating.time_ctr_changepoint = 0;
+            Heating.time_ctr_checkpoint = 0;
             // Set PI controller
             Heating.status.phase_hybrid_ctr = CTR_HYBRID_PI;
           }
@@ -245,17 +260,21 @@ void HeatingHybridCtrPhase()
           if (((uptime - Heating.timestamp_output_off) > (60 * (uint32_t)Heating.time_allow_rampup))
             && (Heating.temp_target_level != Heating.temp_target_level_ctr)
             &&((Heating.temp_target_level - Heating.temp_measured) > Heating.temp_rampup_delta_in)) {
-              Heating.status.phase_hybrid_ctr = CTR_HYBRID_RAMP_UP;
               Heating.timestamp_rampup_start = uptime;
               Heating.temp_rampup_start = Heating.temp_measured;
               Heating.temp_rampup_meas_gradient = 0;
-              Heating.time_rampup_checkpoint = 0;
               Heating.time_rampup_deadtime = 0;
               Heating.counter_rampup_cycles = 1;
+              Heating.time_ctr_changepoint = 0;
+              Heating.time_ctr_checkpoint = 0;
+              Heating.status.phase_hybrid_ctr = CTR_HYBRID_RAMP_UP;
           }
         break;
     }
   }
+#ifdef DEBUG_HEATING
+  HeatingVirtualSwitchCtrState();
+#endif
 }
 
 bool HeatStateAutoOrPlanToManual()
@@ -342,6 +361,9 @@ void HeatingOutputRelay(bool active)
     && (Heating.status.status_output == IFACE_OFF)) {
     ExecuteCommandPower(Heating.output_relay_number, POWER_ON, SRC_HEATING);
     Heating.status.status_output = IFACE_ON;
+#ifdef DEBUG_HEATING
+    HeatingVirtualSwitch();
+#endif
   }
   // If command received to disable output
   // AND current output status is ON
@@ -350,6 +372,9 @@ void HeatingOutputRelay(bool active)
     ExecuteCommandPower(Heating.output_relay_number, POWER_OFF, SRC_HEATING);
     Heating.timestamp_output_off = uptime;
     Heating.status.status_output = IFACE_OFF;
+#ifdef DEBUG_HEATING
+    HeatingVirtualSwitch();
+#endif
   }
 }
 
@@ -487,16 +512,16 @@ void HeatingCalculatePI()
   }
   
   // Adjust output switch point
-  Heating.time_pi_changepoint = uptime + Heating.time_total_pi;
+  Heating.time_ctr_changepoint = uptime + Heating.time_total_pi;
   // Adjust next cycle point
-  Heating.time_pi_checkpoint = uptime + ((uint32_t)Heating.time_pi_cycle * 60);
+  Heating.time_ctr_checkpoint = uptime + ((uint32_t)Heating.time_pi_cycle * 60);
 }
 
 void HeatingWorkAutomaticPI()
 {
   char result_chr[FLOATSZ]; // Remove!
 
-  if ((uptime >= Heating.time_pi_checkpoint) 
+  if ((uptime >= Heating.time_ctr_checkpoint) 
     || (Heating.temp_target_level != Heating.temp_target_level_ctr)
     || ((Heating.temp_measured < Heating.temp_target_level)
         && (Heating.temp_measured_gradient < 0)
@@ -506,7 +531,7 @@ void HeatingWorkAutomaticPI()
     // Reset cycle active
     Heating.status.status_cycle_active = CYCLE_OFF;
   }
-  if (uptime < Heating.time_pi_changepoint) {
+  if (uptime < Heating.time_ctr_changepoint) {
     Heating.status.status_cycle_active = CYCLE_ON;
     Heating.status.command_output = IFACE_ON;
   }
@@ -557,7 +582,7 @@ void HeatingWorkAutomaticRampUp()
       Heating.time_rampup_nextcycle = uptime + (uint32_t)Heating.time_rampup_cycle;
       // Set auxiliary variables
       Heating.temp_rampup_cycle = Heating.temp_measured;
-      Heating.time_rampup_output_off = uptime + (60 * (uint32_t)Heating.time_rampup_max);
+      Heating.time_ctr_changepoint = uptime + (60 * (uint32_t)Heating.time_rampup_max);
       Heating.temp_rampup_output_off =  Heating.temp_target_level_ctr;
     }
     // Gradient calculation every time_rampup_cycle
@@ -573,13 +598,13 @@ void HeatingWorkAutomaticRampUp()
         // y-y1 = m(x-x1) -> x = ((y-y1) / m) + x1 -> y1 = temp_rampup_cycle, x1 = (time_rampup_nextcycle - time_rampup_cycle), m = gradient in º/sec
         // Better Alternative -> (y-y1)/(x-x1) = ((y2-y1)/(x2-x1)) -> where y = temp (target) and x = time (to switch off, what its needed)
         // x = ((y-y1)/(y2-y1))*(x2-x1) + x1 - deadtime
-        // Heating.time_rampup_output_off = (uint32_t)(((float)(Heating.temp_target_level_ctr - Heating.temp_rampup_cycle) / (float)temp_delta_rampup) * (float)(time_total_rampup)) + (uint32_t)(Heating.time_rampup_nextcycle - (time_total_rampup)) - Heating.time_rampup_deadtime;
-        Heating.time_rampup_output_off = (uint32_t)(((float)(Heating.temp_target_level_ctr - Heating.temp_rampup_cycle) * (float)(time_total_rampup)) / (float)temp_delta_rampup) + (uint32_t)(Heating.time_rampup_nextcycle - (time_total_rampup)) - Heating.time_rampup_deadtime;      
+        // Heating.time_ctr_changepoint = (uint32_t)(((float)(Heating.temp_target_level_ctr - Heating.temp_rampup_cycle) / (float)temp_delta_rampup) * (float)(time_total_rampup)) + (uint32_t)(Heating.time_rampup_nextcycle - (time_total_rampup)) - Heating.time_rampup_deadtime;
+        Heating.time_ctr_changepoint = (uint32_t)(((float)(Heating.temp_target_level_ctr - Heating.temp_rampup_cycle) * (float)(time_total_rampup)) / (float)temp_delta_rampup) + (uint32_t)(Heating.time_rampup_nextcycle - (time_total_rampup)) - Heating.time_rampup_deadtime;      
         
         // Calculate temperature for switching off the output
         // y = (((y2-y1)/(x2-x1))*(x-x1)) + y1
-        // Heating.temp_rampup_output_off = (int16_t)(((float)(temp_delta_rampup) / (float)(time_total_rampup * Heating.counter_rampup_cycles)) * (float)(Heating.time_rampup_output_off - (uptime - (time_total_rampup)))) + Heating.temp_rampup_cycle;
-        Heating.temp_rampup_output_off = (int16_t)(((float)temp_delta_rampup * (float)(Heating.time_rampup_output_off - (uptime - (time_total_rampup)))) / (float)(time_total_rampup * Heating.counter_rampup_cycles)) + Heating.temp_rampup_cycle;
+        // Heating.temp_rampup_output_off = (int16_t)(((float)(temp_delta_rampup) / (float)(time_total_rampup * Heating.counter_rampup_cycles)) * (float)(Heating.time_ctr_changepoint - (uptime - (time_total_rampup)))) + Heating.temp_rampup_cycle;
+        Heating.temp_rampup_output_off = (int16_t)(((float)temp_delta_rampup * (float)(Heating.time_ctr_changepoint - (uptime - (time_total_rampup)))) / (float)(time_total_rampup * Heating.counter_rampup_cycles)) + Heating.temp_rampup_cycle;
         // Set auxiliary variables
         Heating.time_rampup_nextcycle = uptime + (uint32_t)Heating.time_rampup_cycle;
         Heating.temp_rampup_cycle = Heating.temp_measured;
@@ -591,12 +616,12 @@ void HeatingWorkAutomaticRampUp()
         Heating.counter_rampup_cycles++;
         // Set another period
         Heating.time_rampup_nextcycle = uptime + (uint32_t)Heating.time_rampup_cycle;
-        // Reset time_rampup_output_off and temp_rampup_output_off
-        Heating.time_rampup_output_off = uptime + (60 * (uint32_t)Heating.time_rampup_max) - time_in_rampup;
+        // Reset time_ctr_changepoint and temp_rampup_output_off
+        Heating.time_ctr_changepoint = uptime + (60 * (uint32_t)Heating.time_rampup_max) - time_in_rampup;
         Heating.temp_rampup_output_off =  Heating.temp_target_level_ctr;
       }
       // Set time to get out of calibration
-      Heating.time_rampup_checkpoint = Heating.time_rampup_output_off + Heating.time_rampup_deadtime;
+      Heating.time_ctr_checkpoint = Heating.time_ctr_changepoint + Heating.time_rampup_deadtime;
     }
 
     // Set output switch ON or OFF
@@ -605,8 +630,8 @@ void HeatingWorkAutomaticRampUp()
     // or it is not yet time and temperature to switch it off acc. to calculations
     // or gradient is <= 0
     if ((Heating.time_rampup_deadtime == 0)
-      || (Heating.time_rampup_checkpoint == 0)
-      || (uptime < Heating.time_rampup_output_off)
+      || (Heating.time_ctr_checkpoint == 0)
+      || (uptime < Heating.time_ctr_changepoint)
       || (Heating.temp_measured < Heating.temp_rampup_output_off)
       || (Heating.temp_rampup_meas_gradient <= 0)) {
       Heating.status.command_output = IFACE_ON;
@@ -621,7 +646,7 @@ void HeatingWorkAutomaticRampUp()
       Heating.temp_pi_accum_error = Heating.temp_rampup_pi_acc_error;
     }
     // Set to now time to get out of calibration
-    Heating.time_rampup_checkpoint = uptime;
+    Heating.time_ctr_checkpoint = uptime;
     // Switch Off output
     Heating.status.command_output = IFACE_OFF;
   }
@@ -686,7 +711,7 @@ void HeatingWork()
       HeatingCtrWork();
       break;
     case HEAT_MANUAL_OP:                        // State manual operation following input switch
-      Heating.time_rampup_checkpoint = 0;
+      Heating.time_ctr_checkpoint = 0;
       break;
     case HEAT_TIME_PLAN:                        // State automatic heating active following set heating plan
       // Set target temperature based on plan
@@ -717,6 +742,25 @@ void HeatingController()
   HeatingState();
   HeatingWork();
 }
+
+#ifdef DEBUG_HEATING
+void HeatingVirtualSwitch()
+{
+  char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
+  Response_P(DOMOTICZ_MES, DOMOTICZ_IDX1, (0 == Heating.status.status_output) ? 0 : 1, "");
+  MqttPublish(domoticz_in_topic);
+}
+
+void HeatingVirtualSwitchCtrState()
+{
+  char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
+  Response_P(DOMOTICZ_MES, DOMOTICZ_IDX2, (0 == Heating.status.phase_hybrid_ctr) ? 0 : 1, "");
+  MqttPublish(domoticz_in_topic);
+
+  Response_P(DOMOTICZ_MES, DOMOTICZ_IDX3, (0 == Heating.time_ctr_changepoint) ? 0 : 1, "");
+  MqttPublish(domoticz_in_topic);
+}
+#endif
 
 /*********************************************************************************************\
  * Commands
@@ -819,7 +863,6 @@ void CmndTempTargetSet(void)
       && (value <= 1000)
       && (value >= Heating.temp_frost_protect)) {
       Heating.temp_target_level = value;
-      Heating.timestamp_temp_target_update = uptime;
     }
   }
   ResponseCmndFloat(((float)Heating.temp_target_level) / 10, 1);
@@ -1158,9 +1201,9 @@ void CmndTimePiIntegrRead(void)
 
 bool Xdrv39(uint8_t function)
 {
-  #ifdef DEBUG_HEATING
+#ifdef DEBUG_HEATING
   char result_chr[FLOATSZ];
-  #endif
+#endif
   bool result = false;
 
   switch (function) {
@@ -1177,18 +1220,26 @@ bool Xdrv39(uint8_t function)
       if (HeatingMinuteCounter()) {
         HeatingSignalProcessingSlow();
         HeatingController();
-        #ifdef DEBUG_HEATING
-        AddLog_P2(LOG_LEVEL_INFO, PSTR(""));
-        AddLog_P2(LOG_LEVEL_INFO, PSTR("------ Heating Start ------"));
+#ifdef DEBUG_HEATING
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Heating Start ------"));
         dtostrfd(Heating.status.counter_seconds, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_INFO, PSTR("Heating.status.counter_seconds: %s"), result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Heating.status.counter_seconds: %s"), result_chr);
         dtostrfd(Heating.status.heating_mode, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_INFO, PSTR("Heating.status.heating_mode: %s"), result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Heating.status.heating_mode: %s"), result_chr);
         dtostrfd(Heating.status.controller_mode, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_INFO, PSTR("Heating.status.controller_mode: %s"), result_chr);        
-        AddLog_P2(LOG_LEVEL_INFO, PSTR("------ Heating End ------"));
-        AddLog_P2(LOG_LEVEL_INFO, PSTR(""));
-        #endif
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Heating.status.controller_mode: %s"), result_chr);
+        dtostrfd(Heating.status.phase_hybrid_ctr, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Heating.status.phase_hybrid_ctr: %s"), result_chr);
+        dtostrfd(Heating.status.sensor_alive, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Heating.status.sensor_alive: %s"), result_chr);
+        dtostrfd(Heating.status.status_output, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Heating.status.status_output: %s"), result_chr);
+        dtostrfd(Heating.status.status_cycle_active, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Heating.status.status_cycle_active: %s"), result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Heating End ------"));
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));
+#endif
       }
       break;
     case FUNC_COMMAND:
