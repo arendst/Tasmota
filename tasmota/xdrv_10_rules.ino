@@ -1797,6 +1797,9 @@ void CmndEvent(void)
 {
   if (XdrvMailbox.data_len > 0) {
     strlcpy(Rules.event_data, XdrvMailbox.data, sizeof(Rules.event_data));
+#ifdef USE_DEVICE_GROUPS
+    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_EVENT, XdrvMailbox.data);
+#endif  // USE_DEVICE_GROUPS
   }
   if (XdrvMailbox.command) ResponseCmndDone();
 }
