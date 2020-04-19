@@ -87,12 +87,15 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
   m_stop_bits = 1;
   m_nwmode = nwmode;
   serial_buffer_size = buffer_size;
+#ifdef ESP8266
   if (!((isValidGPIOpin(receive_pin)) && (isValidGPIOpin(transmit_pin) || transmit_pin == 16))) {
     return;
   }
+#endif
   m_rx_pin = receive_pin;
   m_tx_pin = transmit_pin;
   m_in_pos = m_out_pos = 0;
+#ifdef ESP8266
   if (hardware_fallback && (((3 == m_rx_pin) && (1 == m_tx_pin)) || ((3 == m_rx_pin) && (-1 == m_tx_pin)) || ((-1 == m_rx_pin) && (1 == m_tx_pin)))) {
     m_hardserial = true;
   }
@@ -120,6 +123,9 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
       digitalWrite(m_tx_pin, HIGH);
     }
   }
+#else
+  m_hardserial = true;
+#endif
   m_valid = true;
 }
 
@@ -144,17 +150,24 @@ bool TasmotaSerial::isValidGPIOpin(int pin)
 bool TasmotaSerial::begin(long speed, int stop_bits) {
   m_stop_bits = ((stop_bits -1) &1) +1;
   if (m_hardserial) {
+#ifdef ESP8266
     Serial.flush();
     if (2 == m_stop_bits) {
       Serial.begin(speed, SERIAL_8N2);
     } else {
       Serial.begin(speed, SERIAL_8N1);
     }
-#ifdef ESP8266
     if (m_hardswap) {
       Serial.swap();
     }
-#endif  // ESP8266
+#else  // ESP32
+    Serial2.flush();
+    if (2 == m_stop_bits) {
+      Serial2.begin(speed, SERIAL_8N2, m_rx_pin, m_tx_pin);
+    } else {
+      Serial2.begin(speed, SERIAL_8N1, m_rx_pin, m_tx_pin);
+    }
+#endif  // ESP8266 - ESP32
   } else {
     // Use getCycleCount() loop to get as exact timing as possible
     m_bit_time = ESP.getCpuFreqMHz() * 1000000 / speed;
@@ -170,12 +183,20 @@ bool TasmotaSerial::begin() {
 }
 
 bool TasmotaSerial::hardwareSerial() {
+#ifdef ESP8266
   return m_hardserial;
+#else
+  return false;  // On ESP32 do not mess with Serial0 buffers
+#endif
 }
 
 void TasmotaSerial::flush() {
   if (m_hardserial) {
+#ifdef ESP8266
     Serial.flush();
+#else
+    Serial2.flush();
+#endif
   } else {
     m_in_pos = m_out_pos = 0;
   }
@@ -183,7 +204,11 @@ void TasmotaSerial::flush() {
 
 int TasmotaSerial::peek() {
   if (m_hardserial) {
+#ifdef ESP8266
     return Serial.peek();
+#else
+    return Serial2.peek();
+#endif
   } else {
     if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) return -1;
     return m_buffer[m_out_pos];
@@ -193,7 +218,11 @@ int TasmotaSerial::peek() {
 int TasmotaSerial::read()
 {
   if (m_hardserial) {
+#ifdef ESP8266
     return Serial.read();
+#else
+    return Serial2.read();
+#endif
   } else {
     if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) return -1;
     uint32_t ch = m_buffer[m_out_pos];
@@ -205,7 +234,11 @@ int TasmotaSerial::read()
 int TasmotaSerial::available()
 {
   if (m_hardserial) {
+#ifdef ESP8266
     return Serial.available();
+#else
+    return Serial2.available();
+#endif
   } else {
     int avail = m_in_pos - m_out_pos;
     if (avail < 0) avail += serial_buffer_size;
@@ -250,7 +283,11 @@ void TasmotaSerial::_fast_write(uint8_t b) {
 size_t TasmotaSerial::write(uint8_t b)
 {
   if (m_hardserial) {
+#ifdef ESP8266
     return Serial.write(b);
+#else
+    return Serial2.write(b);
+#endif
   } else {
     if (-1 == m_tx_pin) return 0;
     if (m_high_speed) {
