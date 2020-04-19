@@ -28,18 +28,6 @@
 
 #include <Esp.h>
 
-//
-// ESP32
-//
-String ESP_getResetReason(void);
-uint32_t ESP_ResetInfoReason(void);
-uint32_t ESP_getBootVersion(void);
-void ESP_reset();
-uint32_t ESP_getFlashChipId();
-uint32_t ESP_getChipId();
-String String_ESP_getChipId();
-uint32_t ESP_getSketchSize();
-
 // Analog
 inline void analogWrite(uint8_t pin, int val)
 {

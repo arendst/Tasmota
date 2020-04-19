@@ -99,11 +99,7 @@ uint32_t ResetReason(void)
     REASON_DEEP_SLEEP_AWAKE = 5,  // "Deep-Sleep Wake"         wake up from deep-sleep
     REASON_EXT_SYS_RST      = 6   // "External System"         external system reset
   */
-#ifdef ESP8266
-  return resetInfo.reason;
-#else
   return ESP_ResetInfoReason();
-#endif
 }
 
 String GetResetReason(void)

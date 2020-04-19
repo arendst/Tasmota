@@ -2,7 +2,6 @@
 
 #ifdef ESP32
 #include <esp8266toEsp32.h>
-#define PACKED __attribute((__packed__))
 // Modul
 #undef MODULE
 #define MODULE WEMOS // [Module] Select default model
@@ -10,13 +9,6 @@
 
 #ifdef ESP8266
 // ESP8266
-#define PACKED
-#define ESP_getResetReason() ESP.getResetReason()
-#define ESP_reset() ESP.reset()
-#define ESP_getBootVersion() ESP.getBootVersion()
-#define ESP_getFlashChipId() ESP.getFlashChipId()
-#define ESP_getSketchSize() ESP.getSketchSize()
-#define ESP_getChipId() ESP.getChipId()
 //
 // UDP
 #define PortUdp_write(p,n) PortUdp.write(p, n)
