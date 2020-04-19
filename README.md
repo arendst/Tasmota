@@ -1,9 +1,13 @@
-TODO´s Heating:
-- Extend to N possible independently controlled outputs
-- Reduce types by coding of temperatures for heating plan (f.i. for temperatures use 6 bit for whole part and 2 for decimal allowing steps of .0, .025, 0.5 and .75 degrees
-- Support internal temperature sensors as well, not just MQTT
-- Check between heating controllers auxiliary variables that can be integrated
+New driver created for heating control (xdrv_39_heating.ino), acts as a thermostat (temperature currently to be sent via MQTT). Tested with heating floor systems (Fußbodenheizung). I have created initially this as a LUA script running in Domoticz on a Raspberry Pi to control floor heating valves using Qubino relays. I have ported this to a Tasmota driver embedding the functionality in the relays. This driver has been successfully tested with a shelly 1PM. The controller offers 3 controlling strategies (Hybrid, Rampup and PI) as well as time planning (3 diff. temp. each weekday).
 
+TODO´s Heating:
+- Implement diagnostics (max. power, timing, etc...)
+- Extend to N possible independently controlled outputs, test with Sonoff 4CH Pro
+- Reduce types by coding of temperatures for heating plan (f.i. for temperatures use 6 bit for whole part and 2 for decimal allowing steps of .0, .025, 0.5 and .75 degrees
+- Support internal temperature sensors as well (DS18B20), not just MQTT
+- Check between heating controllers auxiliary variables that can be integrated
+- Evaluate use of tasmota rules instead of internal heating plan scheduler
+- Evaluate integration of simple 2 point controller with hysteresis
 
 ![Tasmota logo](/tools/logo/TASMOTA_FullLogo_Vector.svg)
 
