@@ -11,8 +11,6 @@
 #ifdef ESP8266
 // ESP8266
 #define PACKED
-#define ESP_rtcUserMemoryWrite(offset, data, size) ESP.rtcUserMemoryWrite(offset, data, size)
-#define ESP_rtcUserMemoryRead(offset, data, size) ESP.rtcUserMemoryRead(offset, data, size)
 #define ESP_getResetReason() ESP.getResetReason()
 #define ESP_reset() ESP.reset()
 #define ESP_getBootVersion() ESP.getBootVersion()

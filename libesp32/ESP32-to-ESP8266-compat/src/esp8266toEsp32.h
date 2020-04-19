@@ -36,8 +36,6 @@
 String ESP_getResetReason(void);
 uint32_t ESP_ResetInfoReason(void);
 uint32_t ESP_getBootVersion(void);
-bool ESP_rtcUserMemoryWrite(uint32_t offset, uint32_t *data, size_t size);
-bool ESP_rtcUserMemoryRead(uint32_t offset, uint32_t *data, size_t size);
 void ESP_reset();
 uint32_t ESP_getFlashChipId();
 uint32_t ESP_getChipId();

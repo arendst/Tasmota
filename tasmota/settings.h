@@ -551,6 +551,9 @@ typedef struct {
   uint8_t       free_003[1];               // 283
 } TRtcReboot;
 TRtcReboot RtcReboot;
+#ifdef ESP32
+RTC_NOINIT_ATTR TRtcReboot RtcDataReboot;
+#endif
 
 typedef struct {
   uint16_t      valid;                     // 290 (RTC memory offset 100)
@@ -570,6 +573,9 @@ typedef struct {
                                            // 2EC - 2FF free locations
 } TRtcSettings;
 TRtcSettings RtcSettings;
+#ifdef ESP32
+RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
+#endif
 
 struct TIME_T {
   uint8_t       second;
