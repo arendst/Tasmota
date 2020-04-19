@@ -50,7 +50,7 @@
 #define USE_DEEPSLEEP                            // Add support for deepsleep (+1k code)
 #undef USE_EXS_DIMMER                           // Disable support for EX-Store WiFi Dimmer
 //#define USE_HOTPLUG                              // Add support for sensor HotPlug
-#undef USE_DEVICE_GROUPS                        // Disable support for device groups (+5k6 code)
+//#undef USE_DEVICE_GROUPS                        // Disable support for device groups (+5k6 code)
 #undef USE_PWM_DIMMER                           // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
 #undef USE_KEELOQ                               // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
 #undef USE_SONOFF_D1                            // DIsable support for Sonoff D1 Dimmer (+0k7 code)

@@ -1798,7 +1798,7 @@ void CmndEvent(void)
   if (XdrvMailbox.data_len > 0) {
     strlcpy(Rules.event_data, XdrvMailbox.data, sizeof(Rules.event_data));
   }
-  ResponseCmndDone();
+  if (XdrvMailbox.command) ResponseCmndDone();
 }
 
 void CmndVariable(void)

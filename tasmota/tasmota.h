@@ -315,12 +315,13 @@ enum DevGroupItem { DGR_ITEM_EOL, DGR_ITEM_STATUS,
                     DGR_ITEM_POWER, DGR_ITEM_DIMMER_RANGE,
                     // Add new 32-bit items before this line
                     DGR_ITEM_LAST_32BIT, DGR_ITEM_MAX_32BIT = 191,
+                    DGR_ITEM_EVENT,
                     // Add new string items before this line
                     DGR_ITEM_LAST_STRING, DGR_ITEM_MAX_STRING = 223,
                     DGR_ITEM_LIGHT_CHANNELS };
 
 enum DevGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE_LIGHT_FADE = 4, DGR_SHARE_LIGHT_SCHEME = 8,
-                         DGR_SHARE_LIGHT_COLOR = 16, DGR_SHARE_DIMMER_SETTINGS = 32 };
+                         DGR_SHARE_LIGHT_COLOR = 16, DGR_SHARE_DIMMER_SETTINGS = 32, DGR_SHARE_EVENT = 64 };
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
                      SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_SHUTTER,
