@@ -1,3 +1,10 @@
+TODO´s Heating:
+- Extend to N possible independently controlled outputs
+- Reduce types by coding of temperatures for heating plan (f.i. for temperatures use 6 bit for whole part and 2 for decimal allowing steps of .0, .025, 0.5 and .75 degrees
+- Support internal temperature sensors as well, not just MQTT
+- Check between heating controllers auxiliary variables that can be integrated
+
+
 ![Tasmota logo](/tools/logo/TASMOTA_FullLogo_Vector.svg)
 
 Alternative firmware for [ESP8266](https://en.wikipedia.org/wiki/ESP8266) based devices with **easy configuration using webUI, OTA updates, automation using timers or rules, expandability and entirely local control over MQTT, HTTP, Serial or KNX**.
