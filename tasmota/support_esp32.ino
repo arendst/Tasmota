@@ -22,6 +22,39 @@
 #include <nvs.h>
 #include <rom/rtc.h>
 
+void NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen)
+{
+  nvs_handle handle;
+  noInterrupts();
+  nvs_open(sNvsName, NVS_READONLY, &handle);
+  size_t size = nSettingsLen;
+  nvs_get_blob(handle, sName, pSettings, &size);
+  nvs_close(handle);
+  interrupts();
+}
+
+void NvmSave(const char *sNvsName, const char *sName, const void *pSettings, unsigned nSettingsLen)
+{
+  nvs_handle handle;
+  noInterrupts();
+  nvs_open(sNvsName, NVS_READWRITE, &handle);
+  nvs_set_blob(handle, sName, pSettings, nSettingsLen);
+  nvs_commit(handle);
+  nvs_close(handle);
+  interrupts();
+}
+
+void NvmErase(const char *sNvsName)
+{
+  nvs_handle handle;
+  noInterrupts();
+  nvs_open(sNvsName, NVS_READWRITE, &handle);
+  nvs_erase_all(handle);
+  nvs_commit(handle);
+  nvs_close(handle);
+  interrupts();
+}
+
 void SettingsErase(uint8_t type)
 {
   if (1 == type) // SDK parameter area
@@ -34,75 +67,39 @@ void SettingsErase(uint8_t type)
   {
   }
 
-  noInterrupts();
-  nvs_handle handle;
-  nvs_open("main", NVS_READWRITE, &handle);
-  nvs_erase_all(handle);
-  nvs_commit(handle);
-  nvs_close(handle);
-  interrupts();
+  NvmErase("main");
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " t=%d"), type);
 }
 
-void SettingsLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen)
+void SettingsRead(void *data, size_t size)
 {
-  noInterrupts();
-  nvs_handle handle;
-  size_t size;
-  nvs_open(sNvsName, NVS_READONLY, &handle);
-  size = nSettingsLen;
-  nvs_get_blob(handle, sName, pSettings, &size);
-  nvs_close(handle);
-  interrupts();
+  NvmLoad("main", "Settings", data, size);
 }
 
-void SettingsSave(const char *sNvsName, const char *sName, const void *pSettings, unsigned nSettingsLen)
+void SettingsWrite(const void *pSettings, unsigned nSettingsLen)
 {
-  nvs_handle handle;
-  noInterrupts();
-  nvs_open(sNvsName, NVS_READWRITE, &handle);
-  nvs_set_blob(handle, sName, pSettings, nSettingsLen);
-  nvs_commit(handle);
-  nvs_close(handle);
-  interrupts();
+  NvmSave("main", "Settings", pSettings, nSettingsLen);
 }
-
-void ESP32_flashRead(uint32_t offset, uint32_t *data, size_t size)
-{
-  SettingsLoad("main", "Settings", data, size);
-}
-
-void ESP32_flashReadHeader(uint32_t offset, uint32_t *data, size_t size)
-{
-  SettingsLoad("main", "SettingsH", data, size);
-}
-
-void SettingsSaveMain(const void *pSettings, unsigned nSettingsLen)
-{
-  SettingsSave("main", "Settings", pSettings, nSettingsLen);
-}
-
-/*
-void SettingsLoadMain(void *pSettings, unsigned nSettingsLen)
-{
-    SettingsLoad("main", "Settings", pSettings, nSettingsLen);
-}
-
-void SettingsLoadMainH(void *pSettingsH, unsigned nSettingsLenH)
-{
-    SettingsLoad("main", "SettingsH", pSettingsH, nSettingsLenH);
-}
-*/
 
 void SettingsLoadUpg(void *pSettings, unsigned nSettingsLen)
 {
-  SettingsLoad("upg", "Settings", pSettings, nSettingsLen);
+  NvmLoad("upg", "Settings", pSettings, nSettingsLen);
 }
 
 void SettingsLoadUpgH(void *pSettings, unsigned nSettingsLen)
 {
-  SettingsLoad("upg", "SettingsH", pSettings, nSettingsLen);
+  NvmLoad("upg", "SettingsH", pSettings, nSettingsLen);
+}
+
+void QPCRead(void *pSettings, unsigned nSettingsLen)
+{
+  NvmLoad("qpc", "pcreg", pSettings, nSettingsLen);
+}
+
+void QPCWrite(const void *pSettings, unsigned nSettingsLen)
+{
+  NvmSave("qpc", "pcreg", pSettings, nSettingsLen);
 }
 
 //
@@ -172,6 +169,19 @@ void CmndBlockedLoop(void)
     delay(1000);
   }
 */
+}
+
+//
+// ESP32 specific
+//
+
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
+
+void DisableBrownout(void)
+{
+  // https://github.com/espressif/arduino-esp32/issues/863#issuecomment-347179737
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);  // Disable brownout detector
 }
 
 #endif  // ESP32

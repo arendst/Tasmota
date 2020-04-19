@@ -305,7 +305,7 @@ uint16_t GetCfgCrc16(uint8_t *bytes, uint32_t size)
 uint16_t GetSettingsCrc(void)
 {
   // Fix miscalculation if previous Settings was 3584 and current Settings is 4096 between 0x06060007 and 0x0606000A
-  uint32_t size = ((Settings.version < 0x06060007) || (Settings.version > 0x0606000A)) ? 3584 : sizeof(SYSCFG);
+  uint32_t size = ((Settings.version < 0x06060007) || (Settings.version > 0x0606000A)) ? 3584 : sizeof(Settings);
   return GetCfgCrc16((uint8_t*)&Settings, size);
 }
 
@@ -325,7 +325,7 @@ uint32_t GetCfgCrc32(uint8_t *bytes, uint32_t size)
 
 uint32_t GetSettingsCrc32(void)
 {
-  return GetCfgCrc32((uint8_t*)&Settings, sizeof(SYSCFG) -4);  // Skip crc32
+  return GetCfgCrc32((uint8_t*)&Settings, sizeof(Settings) -4);  // Skip crc32
 }
 
 void SettingsSaveAll(void)
@@ -351,7 +351,11 @@ void UpdateQuickPowerCycle(bool update)
   uint32_t pc_register;
   uint32_t pc_location = SETTINGS_LOCATION - CFG_ROTATES;
 
+#ifdef ESP8266
   ESP.flashRead(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
+#else
+  QPCRead(&pc_register, sizeof(pc_register));
+#endif
   if (update && ((pc_register & 0xFFFFFFF0) == 0xFFA55AB0)) {
     uint32_t counter = ((pc_register & 0xF) << 1) & 0xF;
     if (0 == counter) {  // 4 power cycles in a row
@@ -359,16 +363,24 @@ void UpdateQuickPowerCycle(bool update)
       EspRestart();      // And restart
     } else {
       pc_register = 0xFFA55AB0 | counter;
+#ifdef ESP8266
       ESP.flashWrite(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
+#else
+      QPCWrite(&pc_register, sizeof(pc_register));
+#endif
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Flag %02X"), counter);
     }
   }
   else if (pc_register != 0xFFA55ABF) {
     pc_register = 0xFFA55ABF;
+#ifdef ESP8266
     // Assume flash is default all ones and setting a bit to zero does not need an erase
     if (ESP.flashEraseSector(pc_location)) {
       ESP.flashWrite(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
     }
+#else
+    QPCWrite(&pc_register, sizeof(pc_register));
+#endif
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Reset"));
   }
 }
@@ -501,13 +513,13 @@ void SettingsSave(uint8_t rotate)
     } else {
       Settings.cfg_timestamp++;
     }
-    Settings.cfg_size = sizeof(SYSCFG);
+    Settings.cfg_size = sizeof(Settings);
     Settings.cfg_crc = GetSettingsCrc();  // Keep for backward compatibility in case of fall-back just after upgrade
     Settings.cfg_crc32 = GetSettingsCrc32();
 
 #ifdef ESP8266
     if (ESP.flashEraseSector(settings_location)) {
-      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     }
 
     if (!stop_flash_rotate && rotate) {
@@ -516,11 +528,11 @@ void SettingsSave(uint8_t rotate)
         delay(1);
       }
     }
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(Settings));
 #else  // ESP32
-    SettingsSaveMain(&Settings, sizeof(SYSCFG));
+    SettingsWrite(&Settings, sizeof(Settings));
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "Saved, " D_COUNT " %d, " D_BYTES " %d"), Settings.save_flag, sizeof(Settings));
 #endif  // ESP8266
-
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(SYSCFG));
 
     settings_crc32 = Settings.cfg_crc32;
   }
@@ -530,8 +542,9 @@ void SettingsSave(uint8_t rotate)
 
 void SettingsLoad(void)
 {
+#ifdef ESP8266
   // Load configuration from eeprom or one of 7 slots below if first valid load does not stop_flash_rotate
-  struct SYSCFGH {
+  struct {
     uint16_t cfg_holder;                     // 000
     uint16_t cfg_size;                       // 002
     unsigned long save_flag;                 // 004
@@ -543,7 +556,7 @@ void SettingsLoad(void)
   uint16_t cfg_holder = 0;
   for (uint32_t i = 0; i < CFG_ROTATES; i++) {
     flash_location--;
-    ESP_flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     bool valid = false;
     if (Settings.version > 0x06000000) {
       bool almost_valid = (Settings.cfg_crc32 == GetSettingsCrc32());
@@ -554,7 +567,7 @@ void SettingsLoad(void)
       if (almost_valid && (0 == cfg_holder)) { cfg_holder = Settings.cfg_holder; }  // At FB always active cfg_holder
       valid = (cfg_holder == Settings.cfg_holder);
     } else {
-      ESP_flashReadHeader((flash_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
+      ESP.flashRead((flash_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(_SettingsH));
       valid = (Settings.cfg_holder == _SettingsH.cfg_holder);
     }
     if (valid) {
@@ -566,13 +579,16 @@ void SettingsLoad(void)
         }
       }
     }
-
     delay(1);
   }
   if (settings_location > 0) {
-    ESP_flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
   }
+#else  // ESP32
+  SettingsRead(&Settings, sizeof(Settings));
+  AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded, " D_COUNT " %lu"), Settings.save_flag);
+#endif  // ESP8266 - ESP32
 
 #ifndef FIRMWARE_MINIMAL
   if (!settings_location || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
@@ -683,10 +699,10 @@ void SettingsDefault(void)
 
 void SettingsDefaultSet1(void)
 {
-  memset(&Settings, 0x00, sizeof(SYSCFG));
+  memset(&Settings, 0x00, sizeof(Settings));
 
   Settings.cfg_holder = (uint16_t)CFG_HOLDER;
-  Settings.cfg_size = sizeof(SYSCFG);
+  Settings.cfg_size = sizeof(Settings);
 //  Settings.save_flag = 0;
   Settings.version = VERSION;
 //  Settings.bootcount = 0;
@@ -695,7 +711,7 @@ void SettingsDefaultSet1(void)
 
 void SettingsDefaultSet2(void)
 {
-  memset((char*)&Settings +16, 0x00, sizeof(SYSCFG) -16);
+  memset((char*)&Settings +16, 0x00, sizeof(Settings) -16);
 
   Settings.flag.stop_flash_rotate = APP_FLASH_CYCLE;
   Settings.flag.global_state = APP_ENABLE_LEDLINK;
@@ -1064,7 +1080,7 @@ void SettingsDelta(void)
 
 #ifdef ESP8266
     if (Settings.version < 0x06000000) {
-      Settings.cfg_size = sizeof(SYSCFG);
+      Settings.cfg_size = sizeof(Settings);
       Settings.cfg_crc = GetSettingsCrc();
     }
     if (Settings.version < 0x06000002) {
@@ -1148,7 +1164,7 @@ void SettingsDelta(void)
       Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
     }
     if (Settings.version < 0x06060007) {
-      memset((char*)&Settings +0xE00, 0x00, sizeof(SYSCFG) -0xE00);
+      memset((char*)&Settings +0xE00, 0x00, sizeof(Settings) -0xE00);
     }
     if (Settings.version < 0x06060008) {
       // Move current tuya dimmer range to the new param.

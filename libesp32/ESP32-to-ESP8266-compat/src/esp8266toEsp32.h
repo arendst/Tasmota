@@ -31,8 +31,6 @@
 //
 // ESP32
 //
-#define ESP_flashReadHeader(offset, data, size) ESP32_flashRead(offset, data, size)
-#define ESP_flashRead(offset, data, size) ESP32_flashRead(offset, data, size)
 String ESP_getResetReason(void);
 uint32_t ESP_ResetInfoReason(void);
 uint32_t ESP_getBootVersion(void);
@@ -41,7 +39,6 @@ uint32_t ESP_getFlashChipId();
 uint32_t ESP_getChipId();
 String String_ESP_getChipId();
 uint32_t ESP_getSketchSize();
-void DisableBrownout(void);
 
 // Analog
 inline void analogWrite(uint8_t pin, int val)

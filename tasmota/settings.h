@@ -253,7 +253,7 @@ typedef struct {
 const uint32_t settings_text_size = 699;   // Settings.text_pool[size] = Settings.display_model (2D2) - Settings.text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
-struct SYSCFG {
+struct {
   uint16_t      cfg_holder;                // 000 v6 header
   uint16_t      cfg_size;                  // 002
   unsigned long save_flag;                 // 004
