@@ -1114,12 +1114,8 @@ void CmndTemplate(void)
       SettingsUpdateText(SET_TEMPLATE_NAME, "Merged");
       uint32_t j = 0;
       for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
-#ifdef ESP8266
         if (6 == i) { j = 9; }
         if (8 == i) { j = 12; }
-#else  // ESP32
-        if (6 == i) { j = 12; }
-#endif  // ESP8266 - ESP32
         if (my_module.io[j] > GPIO_NONE) {
           Settings.user_template.gp.io[i] = my_module.io[j];
         }

@@ -68,8 +68,8 @@ const mytmplt kModules PROGMEM =
               //6       IO                  GPIO6, Flash CLK
               //7       IO                  GPIO7, Flash D0
               //8       IO                  GPIO8, Flash D1
-              //9       IO                  GPIO9, Flash D2
-              //10      IO                  GPIO10, Flash D3
+  GPIO_USER,  //9       IO                  GPIO9, Flash D2, U1RXD
+  GPIO_USER,  //10      IO                  GPIO10, Flash D3, U1TXD
               //11      IO                  GPIO11, Flash CMD
   GPIO_USER,  //12      (I)O                GPIO12, ADC2_CH5, TOUCH5, RTC_GPIO15, MTDI, HSPIQ, HS2_DATA2, SD_DATA2, EMAC_TXD3       (If driven High, flash voltage (VDD_SDIO) is 1.8V not default 3.3V. Has internal pull-down, so unconnected = Low = 3.3V. May prevent flashing and/or booting if 3.3V flash is connected and pulled high. See ESP32 datasheet for more details.)
   GPIO_USER,  //13      IO                  GPIO13, ADC2_CH4, TOUCH4, RTC_GPIO14, MTCK, HSPID, HS2_DATA3, SD_DATA3, EMAC_RX_ER

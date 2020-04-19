@@ -262,12 +262,8 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
     "g=o.shift().split(',');"             // Array separator
     "j=0;"
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Supports 13 GPIOs
-#ifdef ESP8266
       "if(6==i){j=9;}"
       "if(8==i){j=12;}"
-#else  // ESP32
-      "if(6==i){j=12;}"
-#endif  // ESP8266 - ESP32
       "sk(g[i],j);"                       // Set GPIO
       "j++;"
     "}"
@@ -1523,12 +1519,8 @@ void TemplateSaveSettings(void)
 
   uint32_t j = 0;
   for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
-#ifdef ESP8266
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
-#else  // ESP32
-    if (6 == i) { j = 12; }
-#endif  // ESP8266 - ESP32
     snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), j);
     WebGetArg(webindex, tmp, sizeof(tmp));                  // GPIO
     uint8_t gpio = atoi(tmp);
@@ -1622,13 +1614,14 @@ void HandleModuleConfiguration(void)
   WSContentSend_P(HTTP_FORM_MODULE, AnyModuleName(MODULE).c_str());
   for (uint32_t i = 0; i < sizeof(cmodule); i++) {
     if (ValidGPIO(i, cmodule.io[i])) {
-      snprintf_P(stemp, 3, PINS_WEMOS +i*2);
 #ifdef ESP8266
+      snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       char sesp8285[40];
       snprintf_P(sesp8285, sizeof(sesp8285), PSTR("<font color='#%06x'>ESP8285</font>"), WebColor(COL_TEXT_WARNING));
       WSContentSend_P(PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:176px'><select id='g%d'></select></td></tr>"),
         (WEMOS==my_module_type)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :((9==i)||(10==i))? sesp8285 :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i);
 #else  // ESP32
+      snprintf_P(stemp, 4, PINS_WEMOS +i*3);
       WSContentSend_P(PSTR("<tr><td style='width:140px'>%s <b>" D_GPIO "%d</b></td><td style='width:176px'><select id='g%d'></select></td></tr>"),
         (WEMOS==my_module_type)?stemp:"", i, i);
 #endif  // ESP8266

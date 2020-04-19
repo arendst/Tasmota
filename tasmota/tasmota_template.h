@@ -713,11 +713,12 @@ const char PINS_WEMOS[] PROGMEM = "D3TXD4RXD2D1flashcFLFLolD6D7D5D8D0A0";
 // esp32 has more pins
 #define USER_MODULE        255
 #define MAX_GPIO_PIN       40   // Number of supported GPIO
-#define MIN_FLASH_PINS     6    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8, 9, 10 and 11)
-#define ADC0_PIN           36   // Pin number of ADC0
+#define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
+#define ADC0_PIN           33   // Pin number of ADC0
 #define WEMOS_MODULE       0    // Wemos module
 
-const char PINS_WEMOS[] PROGMEM = "00TX02RX04050607080910111213141516171819202122232425262728293031A4A5A6A7A03738A3";
+//const char PINS_WEMOS[] PROGMEM = "00TX02RX0405060708R1T11112131415R2T21819202122232425262728293031A4A5A6A7A03738A3";
+const char PINS_WEMOS[] PROGMEM = "I00TX0I02RX0I04I05I06I07I08RX1TX1I11I12I13I14I15RX2TX2I18I19I20I21I22I23I24I25I26I27I28I29I30I31AD4AD5AD6AD7AD0I37I38AD3";
 
 #endif  // ESP8266
 

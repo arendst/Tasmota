@@ -407,9 +407,9 @@ struct SYSCFG {
   char          ex_mqtt_fulltopic[100];    // 558
 #else  // ESP32
   myio          my_gp;                     // 558 - 40 bytes (ESP32)
-  mytmplt       user_template;             // 580 - 35 bytes (ESP32)
+  mytmplt       user_template;             // 580 - 37 bytes (ESP32)
 
-  uint8_t       free_esp32_5a3[25];        // 5A3
+  uint8_t       free_esp32_5a5[23];        // 5A5
 #endif  // ESP8266 - ESP32
 
   SysBitfield2  flag2;                     // 5BC
