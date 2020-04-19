@@ -2384,9 +2384,6 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
       }
     } else {
       value = atoi(buffer);
-#ifdef USE_LIGHT_PALETTE
-      value--;
-#endif  // USE_LIGHT_PALETTE
     }
 #ifdef USE_LIGHT_PALETTE
     if (Light.palette_count) value = value % Light.palette_count;
@@ -2417,6 +2414,7 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
   }
 #ifdef USE_LIGHT_PALETTE
   else if (Light.palette_count) {
+    value--;
     Light.wheel = value;
     memcpy_P(&Light.entry_color, &Light.palette[value * LST_MAX], LST_MAX);
     entry_type = 1;                                 // Hexadecimal
