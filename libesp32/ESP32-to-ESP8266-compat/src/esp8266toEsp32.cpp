@@ -65,14 +65,40 @@ uint32_t ESP_getBootVersion(void)
 	return 1;
 }
 
+// ESP32 RTC memory is kept ONLY on deep_sleep wake. Any other restart will erase RTC memory
+// Current solution is using NVS hopig it survives many writes ;-)
 bool ESP_rtcUserMemoryWrite(uint32_t offset, uint32_t *data, size_t size)
 {
-	return false;
+  char sName[16];
+  snprintf_P(sName, sizeof(sName), PSTR("rtc%d"), offset);
+
+  nvs_handle handle;
+  noInterrupts();
+  nvs_open("tasrtc", NVS_READWRITE, &handle);
+  nvs_set_blob(handle, sName, data, size);
+  nvs_commit(handle);
+  nvs_close(handle);
+  interrupts();
+
+  return true;
 }
 
+// ESP32 RTC memory is kept ONLY on deep_sleep wake. Any other restart will erase RTC memory
+// Current solution is using NVS hopig it survives many writes ;-)
 bool ESP_rtcUserMemoryRead(uint32_t offset, uint32_t *data, size_t size)
 {
-	return false;
+  char sName[16];
+  snprintf_P(sName, sizeof(sName), PSTR("rtc%d"), offset);
+
+  nvs_handle handle;
+  noInterrupts();
+  nvs_open("tasrtc", NVS_READONLY, &handle);
+  size_t tsize = size;
+  nvs_get_blob(handle, sName, data, &tsize);
+  nvs_close(handle);
+  interrupts();
+
+  return true;
 }
 
 void ESP_reset()

@@ -545,13 +545,14 @@ struct SYSCFG {
   uint32_t      cfg_crc32;                 // FFC
 } Settings;
 
-struct RTCRBT {
+typedef struct {
   uint16_t      valid;                     // 280 (RTC memory offset 100 - sizeof(RTCRBT))
   uint8_t       fast_reboot_count;         // 282
   uint8_t       free_003[1];               // 283
-} RtcReboot;
+} TRtcReboot;
+TRtcReboot RtcReboot;
 
-struct RTCMEM {
+typedef struct {
   uint16_t      valid;                     // 290 (RTC memory offset 100)
   uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
@@ -567,7 +568,8 @@ struct RTCMEM {
 
   uint8_t       free_022[22];              // 2D6
                                            // 2EC - 2FF free locations
-} RtcSettings;
+} TRtcSettings;
+TRtcSettings RtcSettings;
 
 struct TIME_T {
   uint8_t       second;

@@ -30,7 +30,7 @@ uint32_t GetRtcSettingsCrc(void)
   uint32_t crc = 0;
   uint8_t *bytes = (uint8_t*)&RtcSettings;
 
-  for (uint32_t i = 0; i < sizeof(RTCMEM); i++) {
+  for (uint32_t i = 0; i < sizeof(RtcSettings); i++) {
     crc += bytes[i]*(i+1);
   }
   return crc;
@@ -40,16 +40,16 @@ void RtcSettingsSave(void)
 {
   if (GetRtcSettingsCrc() != rtc_settings_crc) {
     RtcSettings.valid = RTC_MEM_VALID;
-    ESP_rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
+    ESP_rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));
     rtc_settings_crc = GetRtcSettingsCrc();
   }
 }
 
 void RtcSettingsLoad(void)
 {
-  ESP_rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));  // 0x290
+  ESP_rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));  // 0x290
   if (RtcSettings.valid != RTC_MEM_VALID) {
-    memset(&RtcSettings, 0, sizeof(RTCMEM));
+    memset(&RtcSettings, 0, sizeof(RtcSettings));
     RtcSettings.valid = RTC_MEM_VALID;
     RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
     RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
@@ -77,7 +77,7 @@ uint32_t GetRtcRebootCrc(void)
   uint32_t crc = 0;
   uint8_t *bytes = (uint8_t*)&RtcReboot;
 
-  for (uint32_t i = 0; i < sizeof(RTCRBT); i++) {
+  for (uint32_t i = 0; i < sizeof(RtcReboot); i++) {
     crc += bytes[i]*(i+1);
   }
   return crc;
@@ -87,7 +87,7 @@ void RtcRebootSave(void)
 {
   if (GetRtcRebootCrc() != rtc_reboot_crc) {
     RtcReboot.valid = RTC_MEM_VALID;
-    ESP_rtcUserMemoryWrite(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));
+    ESP_rtcUserMemoryWrite(100 - sizeof(RtcReboot), (uint32_t*)&RtcReboot, sizeof(RtcReboot));
     rtc_reboot_crc = GetRtcRebootCrc();
   }
 }
@@ -100,9 +100,9 @@ void RtcRebootReset(void)
 
 void RtcRebootLoad(void)
 {
-  ESP_rtcUserMemoryRead(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));  // 0x280
+  ESP_rtcUserMemoryRead(100 - sizeof(RtcReboot), (uint32_t*)&RtcReboot, sizeof(RtcReboot));  // 0x280
   if (RtcReboot.valid != RTC_MEM_VALID) {
-    memset(&RtcReboot, 0, sizeof(RTCRBT));
+    memset(&RtcReboot, 0, sizeof(RtcReboot));
     RtcReboot.valid = RTC_MEM_VALID;
 //    RtcReboot.fast_reboot_count = 0;  // Explicit by memset
     RtcRebootSave();
