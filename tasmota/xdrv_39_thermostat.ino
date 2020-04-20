@@ -22,11 +22,7 @@
 #define XDRV_39              39
 
 // Enable/disable debugging
-<<<<<<< HEAD
-// #define DEBUG_THERMOSTAT
-=======
 //#define DEBUG_THERMOSTAT
->>>>>>> new_branch_dev
 
 #ifdef DEBUG_THERMOSTAT
 #define DOMOTICZ_IDX1        791
@@ -133,44 +129,6 @@ void (* const ThermostatCommand[])(void) PROGMEM = {
   &CmndTimePiIntegrRead, &CmndTimeSensLostSet };
 
 struct THERMOSTAT {
-<<<<<<< HEAD
-  uint32_t timestamp_temp_measured_update = 0;                          // Timestamp of latest measurement update
-  uint32_t timestamp_temp_meas_change_update = 0;                       // Timestamp of latest measurement value change (> or < to previous)
-  uint32_t timestamp_output_off = 0;                                    // Timestamp of latest thermostat output Off state
-  uint32_t timestamp_input_on = 0;                                      // Timestamp of latest input On state
-  uint32_t time_thermostat_total = 0;                                   // Time thermostat on within a specific timeframe
-  uint32_t time_ctr_checkpoint = 0;                                     // Time to finalize the control cycle within the PI strategy or to switch to PI from Rampup
-  uint32_t time_ctr_changepoint = 0;                                    // Time until switching off output within the controller
-  int32_t temp_measured_gradient = 0;                                   // Temperature measured gradient from sensor in thousandths of degrees per hour
-  uint16_t temp_target_level = THERMOSTAT_TEMP_INIT;                    // Target level of the thermostat in tenths of degrees
-  uint16_t temp_target_level_ctr = THERMOSTAT_TEMP_INIT;                // Target level set for the controller
-  int16_t temp_pi_accum_error = 0;                                      // Temperature accumulated error for the PI controller in tenths of degrees
-  int16_t temp_pi_error = 0;                                            // Temperature error for the PI controller in tenths of degrees
-  int32_t time_proportional_pi;                                         // Time proportional part of the PI controller
-  int32_t time_integral_pi;                                             // Time integral part of the PI controller
-  int32_t time_total_pi;                                                // Time total (proportional + integral) of the PI controller
-  uint16_t kP_pi = 0;                                                   // kP value for the PI controller
-  uint16_t kI_pi = 0;                                                   // kP value for the PI controller multiplied by 100
-  int16_t temp_measured = 0;                                            // Temperature measurement received from sensor in tenths of degrees
-  uint8_t time_output_delay = THERMOSTAT_TIME_OUTPUT_DELAY;             // Output delay between state change and real actuation event (f.i. valve open/closed)
-  uint8_t  counter_rampup_cycles = 0;                                   // Counter of ramp-up cycles
-  int32_t temp_rampup_meas_gradient = 0;                                // Temperature measured gradient from sensor in thousandths of degrees per hour calculated during ramp-up
-  uint32_t timestamp_rampup_start = 0;                                  // Timestamp where the ramp-up controller mode has been started
-  uint32_t time_rampup_deadtime = 0;                                    // Time constant of the thermostat system (step response time)
-  uint32_t time_rampup_nextcycle = 0;                                   // Time where the ramp-up controller shall start the next cycle
-  uint8_t output_relay_number = THERMOSTAT_RELAY_NUMBER;                // Output relay number
-  uint8_t input_switch_number = THERMOSTAT_SWITCH_NUMBER;               // Input switch number
-  uint8_t temp_sens_number = THERMOSTAT_TEMP_SENS_NUMBER;                     // Temperature sensor number
-  uint8_t temp_rampup_pi_acc_error = THERMOSTAT_TEMP_PI_RAMPUP_ACC_E;   // Accumulated error when switching from ramp-up controller to PI
-  uint8_t temp_rampup_delta_out = THERMOSTAT_TEMP_RAMPUP_DELTA_OUT;     // Minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
-  uint8_t temp_rampup_delta_in = THERMOSTAT_TEMP_RAMPUP_DELTA_IN;       // Minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
-  int16_t temp_rampup_output_off = 0;                                   // Temperature to swith off relay output within the ramp-up controller in tenths of degrees
-  int16_t temp_rampup_start = 0;                                        // Temperature at start of ramp-up controller in tenths of degrees celsius
-  int16_t temp_rampup_cycle = 0;                                        // Temperature set at the beginning of each ramp-up cycle in tenths of degrees
-  uint16_t time_rampup_max = THERMOSTAT_TIME_RAMPUP_MAX;                // Time maximum ramp-up controller duration in minutes
-  uint16_t time_rampup_cycle = THERMOSTAT_TIME_RAMPUP_CYCLE;            // Time ramp-up cycle in seconds
-  uint16_t time_allow_rampup = THERMOSTAT_TIME_ALLOW_RAMPUP;            // Time in minutes after last target update to allow ramp-up controller phase
-=======
   uint32_t timestamp_temp_measured_update = 0;                                // Timestamp of latest measurement update
   uint32_t timestamp_temp_meas_change_update = 0;                             // Timestamp of latest measurement value change (> or < to previous)
   uint32_t timestamp_output_off = 0;                                          // Timestamp of latest thermostat output Off state
@@ -207,7 +165,6 @@ struct THERMOSTAT {
   uint16_t time_rampup_max = THERMOSTAT_TIME_RAMPUP_MAX;                      // Time maximum ramp-up controller duration in minutes
   uint16_t time_rampup_cycle = THERMOSTAT_TIME_RAMPUP_CYCLE;                  // Time ramp-up cycle in seconds
   uint16_t time_allow_rampup = THERMOSTAT_TIME_ALLOW_RAMPUP;                  // Time in minutes after last target update to allow ramp-up controller phase
->>>>>>> new_branch_dev
   uint16_t time_sens_lost = THERMOSTAT_TIME_SENS_LOST;                        // Maximum time w/o sensor update to set it as lost
   uint16_t time_manual_to_auto = THERMOSTAT_TIME_MANUAL_TO_AUTO;              // Time without input switch active to change from manual to automatic in minutes
   uint16_t time_on_limit = THERMOSTAT_TIME_ON_LIMIT;                          // Maximum time with output active in minutes
@@ -221,13 +178,8 @@ struct THERMOSTAT {
   int8_t temp_hysteresis = THERMOSTAT_TEMP_HYSTERESIS;                        // Range hysteresis for temperature PI controller, in tenths of degrees celsius
   uint8_t temp_frost_protect = THERMOSTAT_TEMP_FROST_PROTECT;                 // Minimum temperature for frost protection, in tenths of degrees celsius
   uint16_t power_max = THERMOSTAT_POWER_MAX;                                  // Maximum output power in Watt
-<<<<<<< HEAD
-  uint16_t energy_thermostat_output_max = THERMOSTAT_ENERGY_OUTPUT_MAX; // Maximum allowed energy output for thermostat valve in Watts
-  ThermostatBitfield status;                                            // Bittfield including states as well as several flags
-=======
   uint16_t energy_thermostat_output_max = THERMOSTAT_ENERGY_OUTPUT_MAX;       // Maximum allowed energy output for thermostat valve in Watts
   ThermostatBitfield status;                                                  // Bittfield including states as well as several flags
->>>>>>> new_branch_dev
 } Thermostat;
 
 /*********************************************************************************************/
