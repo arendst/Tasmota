@@ -22,7 +22,7 @@
 #define XDRV_39              39
 
 // Enable/disable debugging
-//#define DEBUG_HEATING
+// #define DEBUG_HEATING
 
 #ifdef DEBUG_HEATING
 #define DOMOTICZ_IDX1        791
