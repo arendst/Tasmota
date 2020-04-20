@@ -36,7 +36,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SEND "|"
 #endif  // USE_DEVICE_GROUPS_SEND
-  D_CMND_DEVGROUP_SHARE "|"
+  D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|"
 #endif  // USE_DEVICE_GROUPS
   D_CMND_SENSOR "|" D_CMND_DRIVER;
 
@@ -59,7 +59,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #ifdef USE_DEVICE_GROUPS_SEND
   &CmndDevGroupSend,
 #endif  // USE_DEVICE_GROUPS_SEND
-  &CmndDevGroupShare,
+  &CmndDevGroupShare, &CmndDevGroupStatus,
 #endif  // USE_DEVICE_GROUPS
   &CmndSensor, &CmndDriver };
 
@@ -413,20 +413,34 @@ void CmndStatus(void)
   if ((0 == payload) || (1 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS1_PARAMETER "\":{\"" D_JSON_BAUDRATE "\":%d,\"" D_CMND_SERIALCONFIG "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\",\"" D_CMND_OTAURL "\":\"%s\",\""
                           D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_JSON_STARTUPUTC "\":\"%s\",\"" D_CMND_SLEEP "\":%d,\""
-                          D_JSON_CONFIG_HOLDER "\":%d,\"" D_JSON_BOOTCOUNT "\":%d,\"BCResetTime\":\"%s\",\"" D_JSON_SAVECOUNT "\":%d,\"" D_JSON_SAVEADDRESS "\":\"%X\"}}"),
+                          D_JSON_CONFIG_HOLDER "\":%d,\"" D_JSON_BOOTCOUNT "\":%d,\"BCResetTime\":\"%s\",\"" D_JSON_SAVECOUNT "\":%d"
+#ifdef ESP8266
+                          ",\"" D_JSON_SAVEADDRESS "\":\"%X\""
+#endif
+                          "}}"),
                           Settings.baudrate * 300, GetSerialConfig().c_str(), SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
                           GetResetReason().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
-                          Settings.cfg_holder, Settings.bootcount, GetDateAndTime(DT_BOOTCOUNT).c_str(), Settings.save_flag, GetSettingsAddress());
+                          Settings.cfg_holder, Settings.bootcount, GetDateAndTime(DT_BOOTCOUNT).c_str(), Settings.save_flag
+#ifdef ESP8266
+                          , GetSettingsAddress()
+#endif
+                          );
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "1"));
   }
 
   if ((0 == payload) || (2 == payload)) {
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\""
-                          D_JSON_BOOTVERSION "\":%d,\"" D_JSON_COREVERSION "\":\"" ARDUINO_CORE_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\""
+#ifdef ESP8266
+                          ",\"" D_JSON_BOOTVERSION "\":%d"
+#endif
+                          ",\"" D_JSON_COREVERSION "\":\"" ARDUINO_CORE_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
                           "\"Hardware\":\"%s\""
                           "%s}}"),
-                          my_version, my_image, GetBuildDateAndTime().c_str(),
-                          ESP_getBootVersion(), ESP.getSdkVersion(),
+                          my_version, my_image, GetBuildDateAndTime().c_str()
+#ifdef ESP8266
+                          , ESP.getBootVersion()
+#endif
+                          , ESP.getSdkVersion(),
                           GetDeviceHardware().c_str(),
                           GetStatistics().c_str());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
@@ -445,10 +459,18 @@ void CmndStatus(void)
 
   if ((0 == payload) || (4 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\""
-                          D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d,\"" D_JSON_FLASHCHIPID "\":\"%06X\",\"" D_JSON_FLASHMODE "\":%d,\""
+                          D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"
+#ifdef ESP8266
+                          ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
+#endif
+                          ",\"" D_JSON_FLASHMODE "\":%d,\""
                           D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
                           ESP_getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024,
-                          ESP.getFlashChipSize()/1024, ESP_getFlashChipRealSize()/1024, ESP_getFlashChipId(), ESP.getFlashChipMode(),
+                          ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024
+#ifdef ESP8266
+                          , ESP.getFlashChipId()
+#endif
+                          , ESP.getFlashChipMode(),
                           LANGUAGE_LCID, feature_drv1, feature_drv2, feature_sns1, feature_sns2, feature5, feature6);
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
@@ -1114,13 +1136,8 @@ void CmndTemplate(void)
       SettingsUpdateText(SET_TEMPLATE_NAME, "Merged");
       uint32_t j = 0;
       for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
-#ifdef ESP8266
         if (6 == i) { j = 9; }
         if (8 == i) { j = 12; }
-#endif  // ESP8266
-#ifdef ESP32
-        if (6 == i) { j = 12; }
-#endif  // ESP32
         if (my_module.io[j] > GPIO_NONE) {
           Settings.user_template.gp.io[i] = my_module.io[j];
         }
@@ -1792,6 +1809,11 @@ void CmndDevGroupShare(void)
   Settings.device_group_share_in = parm[0];
   Settings.device_group_share_out = parm[1];
   Response_P(PSTR("{\"" D_CMND_DEVGROUP_SHARE "\":{\"In\":\"%X\",\"Out\":\"%X\"}}"), Settings.device_group_share_in, Settings.device_group_share_out);
+}
+
+void CmndDevGroupStatus(void)
+{
+  DeviceGroupStatus((XdrvMailbox.usridx ? XdrvMailbox.index - 1 : 0));
 }
 #endif  // USE_DEVICE_GROUPS
 

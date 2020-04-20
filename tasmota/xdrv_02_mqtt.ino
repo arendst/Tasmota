@@ -1028,6 +1028,9 @@ void CmndPowerRetain(void)
       }
     }
     Settings.flag.mqtt_power_retain = XdrvMailbox.payload;     // CMND_POWERRETAIN
+    if (Settings.flag.mqtt_power_retain) {
+      Settings.flag4.only_json_message = 0;                    // SetOption90 - Disable non-json MQTT response
+    }
   }
   ResponseCmndStateText(Settings.flag.mqtt_power_retain);      // CMND_POWERRETAIN
 }
@@ -1252,7 +1255,7 @@ void HandleMqttConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_MQTT);
 
-  if (WebServer->hasArg("save")) {
+  if (Webserver->hasArg("save")) {
     MqttSaveSettings();
     WebRestart(1);
     return;
@@ -1334,7 +1337,7 @@ bool Xdrv02(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_MQTT);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        WebServer->on("/" WEB_HANDLE_MQTT, HandleMqttConfiguration);
+        Webserver->on("/" WEB_HANDLE_MQTT, HandleMqttConfiguration);
         break;
 #endif  // USE_WEBSERVER
       case FUNC_COMMAND:

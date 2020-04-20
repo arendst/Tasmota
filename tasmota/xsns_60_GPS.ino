@@ -98,7 +98,7 @@ The serial pins are GPS_RX and GPS_TX, no further installation steps needed. To 
   set latitude and longitude in settings
 
 + sensor60 14
-  open virtual serial port over TCP, usable for u-center 
+  open virtual serial port over TCP, usable for u-center
 
 + sensor60 15
   pause virtual serial port over TCP
@@ -119,10 +119,6 @@ rule3 on tele-FLOG#sec do DisplayText  [f0c1l4]SAV:%value%  endon on tele-FLOG#r
 #include "NTPServer.h"
 #include "NTPPacket.h"
 
-#ifdef ESP32
-#include <HardwareSerial.h>
-#endif
-
 /*********************************************************************************************\
  * constants
 \*********************************************************************************************/
@@ -137,7 +133,7 @@ const char kUBXTypes[] PROGMEM = "UBX";
 
 #define UBX_SERIAL_BUFFER_SIZE 256
 #define UBX_TCP_PORT           1234
-#define NTP_MILLIS_OFFSET      50              // estimated latency in milliseconds 
+#define NTP_MILLIS_OFFSET      50              // estimated latency in milliseconds
 
 /********************************************************************************************\
 | *globals
@@ -299,11 +295,7 @@ enum UBXMsgType {
 #ifdef USE_FLOG
 FLOG *Flog = nullptr;
 #endif //USE_FLOG
-#ifdef ESP8266
 TasmotaSerial *UBXSerial;
-#else
-HardwareSerial *UBXSerial;
-#endif
 
 NtpServer timeServer(PortUdp);
 
@@ -363,21 +355,13 @@ void UBXDetect(void)
 {
   UBX.mode.init = 0;
   if ((pin[GPIO_GPS_RX] < 99) && (pin[GPIO_GPS_TX] < 99)) {
-#ifdef ESP8266
     UBXSerial = new TasmotaSerial(pin[GPIO_GPS_RX], pin[GPIO_GPS_TX], 1, 0, UBX_SERIAL_BUFFER_SIZE); // 64 byte buffer is NOT enough
     if (UBXSerial->begin(9600)) {
-#else
-    UBXSerial = new HardwareSerial(2);
-    UBXSerial->begin(9600,SERIAL_8N1,pin[GPIO_GPS_RX], pin[GPIO_GPS_TX]);
-    {
-#endif
       DEBUG_SENSOR_LOG(PSTR("UBX: started serial"));
-#ifdef ESP8266
       if (UBXSerial->hardwareSerial()) {
         ClaimSerial();
         DEBUG_SENSOR_LOG(PSTR("UBX: claim HW"));
       }
-#endif
     }
   }
   else {
@@ -504,8 +488,8 @@ uint32_t UBXprocessGPS()
 #ifdef USE_FLOG
 void UBXsendHeader(void)
 {
-  WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);
-  WebServer->sendHeader(F("Content-Disposition"), F("attachment; filename=TASMOTA.gpx"));
+  Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN);
+  Webserver->sendHeader(F("Content-Disposition"), F("attachment; filename=TASMOTA.gpx"));
   WSSend(200, CT_STREAM, F(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\r\n"
     "<GPX version=\"1.1\" creator=\"TASMOTA\" xmlns=\"http://www.topografix.com/GPX/1/1\" \r\n"
@@ -526,13 +510,13 @@ void UBXsendRecord(uint8_t *buf)
 	dtostrfd((double)entry->lon/10000000.0f,7,lon);
 	snprintf_P(record, sizeof(record),PSTR("<trkpt\n\t lat=\"%s\" lon=\"%s\">\n\t<time>%s</time>\n</trkpt>\n"),lat ,lon, stime);
 	// DEBUG_SENSOR_LOG(PSTR("FLOG: DL %u %u"), Flog->sector.dword_buffer[k+j],Flog->sector.dword_buffer[k+j+1]);
-	WebServer->sendContent_P(record);
+	Webserver->sendContent_P(record);
 }
 
 void UBXsendFooter(void)
 {
-  WebServer->sendContent(F("</trkseg>\n</trk>\n</gpx>"));
-  WebServer->sendContent("");
+  Webserver->sendContent(F("</trkseg>\n</trk>\n</gpx>"));
+  Webserver->sendContent("");
   Rtc.user_time_entry = false; // we have blocked the main loop and want a new valid time
 }
 
@@ -707,7 +691,7 @@ void UBXHandleTIME()
       if (UBX.mode.forceUTCupdate || Rtc.user_time_entry == false){
         AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: UTC-Time is valid, set system time"));
         Rtc.utc_time = UBX.rec_buffer.values.time;
-      } 
+      }
       Rtc.user_time_entry = true;
     }
   }
@@ -928,7 +912,7 @@ bool Xsns60(uint8_t function)
         break;
 #ifdef USE_FLOG
       case FUNC_WEB_ADD_HANDLER:
-        WebServer->on("/UBX", UBXsendFile);
+        Webserver->on("/UBX", UBXsendFile);
         break;
 #endif //USE_FLOG
       case FUNC_JSON_APPEND:

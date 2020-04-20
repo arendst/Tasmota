@@ -17,10 +17,85 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*********************************************************************************************\
+ * ESP8266 Support
+\*********************************************************************************************/
+
+#ifdef ESP8266
+
+extern "C" {
+extern struct rst_info resetInfo;
+}
+
+uint32_t ESP_ResetInfoReason(void)
+{
+  return resetInfo.reason;
+}
+
+String ESP_getResetReason(void)
+{
+  return ESP.getResetReason();
+}
+
+uint32_t ESP_getChipId(void)
+{
+  return ESP.getChipId();
+}
+
+uint32_t ESP_getSketchSize(void)
+{
+  return ESP.getSketchSize();
+}
+
+void ESP_Restart(void)
+{
+//  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
+  ESP.reset();
+}
+
+#endif
+
+/*********************************************************************************************\
+ * ESP32 Support
+\*********************************************************************************************/
+
 #ifdef ESP32
 
 #include <nvs.h>
 #include <rom/rtc.h>
+
+void NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen)
+{
+  nvs_handle handle;
+  noInterrupts();
+  nvs_open(sNvsName, NVS_READONLY, &handle);
+  size_t size = nSettingsLen;
+  nvs_get_blob(handle, sName, pSettings, &size);
+  nvs_close(handle);
+  interrupts();
+}
+
+void NvmSave(const char *sNvsName, const char *sName, const void *pSettings, unsigned nSettingsLen)
+{
+  nvs_handle handle;
+  noInterrupts();
+  nvs_open(sNvsName, NVS_READWRITE, &handle);
+  nvs_set_blob(handle, sName, pSettings, nSettingsLen);
+  nvs_commit(handle);
+  nvs_close(handle);
+  interrupts();
+}
+
+void NvmErase(const char *sNvsName)
+{
+  nvs_handle handle;
+  noInterrupts();
+  nvs_open(sNvsName, NVS_READWRITE, &handle);
+  nvs_erase_all(handle);
+  nvs_commit(handle);
+  nvs_close(handle);
+  interrupts();
+}
 
 void SettingsErase(uint8_t type)
 {
@@ -34,75 +109,29 @@ void SettingsErase(uint8_t type)
   {
   }
 
-  noInterrupts();
-  nvs_handle handle;
-  nvs_open("main", NVS_READWRITE, &handle);
-  nvs_erase_all(handle);
-  nvs_commit(handle);
-  nvs_close(handle);
-  interrupts();
+  NvmErase("main");
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " t=%d"), type);
 }
 
-void SettingsLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen)
+void SettingsRead(void *data, size_t size)
 {
-  noInterrupts();
-  nvs_handle handle;
-  size_t size;
-  nvs_open(sNvsName, NVS_READONLY, &handle);
-  size = nSettingsLen;
-  nvs_get_blob(handle, sName, pSettings, &size);
-  nvs_close(handle);
-  interrupts();
+  NvmLoad("main", "Settings", data, size);
 }
 
-void SettingsSave(const char *sNvsName, const char *sName, const void *pSettings, unsigned nSettingsLen)
+void SettingsWrite(const void *pSettings, unsigned nSettingsLen)
 {
-  nvs_handle handle;
-  noInterrupts();
-  nvs_open(sNvsName, NVS_READWRITE, &handle);
-  nvs_set_blob(handle, sName, pSettings, nSettingsLen);
-  nvs_commit(handle);
-  nvs_close(handle);
-  interrupts();
+  NvmSave("main", "Settings", pSettings, nSettingsLen);
 }
 
-void ESP32_flashRead(uint32_t offset, uint32_t *data, size_t size)
+void QPCRead(void *pSettings, unsigned nSettingsLen)
 {
-  SettingsLoad("main", "Settings", data, size);
+  NvmLoad("qpc", "pcreg", pSettings, nSettingsLen);
 }
 
-void ESP32_flashReadHeader(uint32_t offset, uint32_t *data, size_t size)
+void QPCWrite(const void *pSettings, unsigned nSettingsLen)
 {
-  SettingsLoad("main", "SettingsH", data, size);
-}
-
-void SettingsSaveMain(const void *pSettings, unsigned nSettingsLen)
-{
-  SettingsSave("main", "Settings", pSettings, nSettingsLen);
-}
-
-/*
-void SettingsLoadMain(void *pSettings, unsigned nSettingsLen)
-{
-    SettingsLoad("main", "Settings", pSettings, nSettingsLen);
-}
-
-void SettingsLoadMainH(void *pSettingsH, unsigned nSettingsLenH)
-{
-    SettingsLoad("main", "SettingsH", pSettingsH, nSettingsLenH);
-}
-*/
-
-void SettingsLoadUpg(void *pSettings, unsigned nSettingsLen)
-{
-  SettingsLoad("upg", "Settings", pSettings, nSettingsLen);
-}
-
-void SettingsLoadUpgH(void *pSettings, unsigned nSettingsLen)
-{
-  SettingsLoad("upg", "SettingsH", pSettings, nSettingsLen);
+  NvmSave("qpc", "pcreg", pSettings, nSettingsLen);
 }
 
 //
@@ -172,6 +201,84 @@ void CmndBlockedLoop(void)
     delay(1000);
   }
 */
+}
+
+//
+// ESP32 specific
+//
+
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
+
+void DisableBrownout(void)
+{
+  // https://github.com/espressif/arduino-esp32/issues/863#issuecomment-347179737
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);  // Disable brownout detector
+}
+
+//
+// ESP32 Alternatives
+//
+
+String ESP32GetResetReason(uint32_t cpu_no)
+{
+	// tools\sdk\include\esp32\rom\rtc.h
+  switch (rtc_get_reset_reason( (RESET_REASON) cpu_no)) {
+    case POWERON_RESET          : return F("Vbat power on reset");                              // 1
+    case SW_RESET               : return F("Software reset digital core");                      // 3
+    case OWDT_RESET             : return F("Legacy watch dog reset digital core");              // 4
+    case DEEPSLEEP_RESET        : return F("Deep Sleep reset digital core");                    // 5
+    case SDIO_RESET             : return F("Reset by SLC module, reset digital core");          // 6
+    case TG0WDT_SYS_RESET       : return F("Timer Group0 Watch dog reset digital core");        // 7
+    case TG1WDT_SYS_RESET       : return F("Timer Group1 Watch dog reset digital core");        // 8
+    case RTCWDT_SYS_RESET       : return F("RTC Watch dog Reset digital core");                 // 9
+    case INTRUSION_RESET        : return F("Instrusion tested to reset CPU");                   // 10
+    case TGWDT_CPU_RESET        : return F("Time Group reset CPU");                             // 11
+    case SW_CPU_RESET           : return F("Software reset CPU");                               // 12
+    case RTCWDT_CPU_RESET       : return F("RTC Watch dog Reset CPU");                          // 13
+    case EXT_CPU_RESET          : return F("or APP CPU, reseted by PRO CPU");                   // 14
+    case RTCWDT_BROWN_OUT_RESET : return F("Reset when the vdd voltage is not stable");         // 15
+    case RTCWDT_RTC_RESET       : return F("RTC Watch dog reset digital core and rtc module");  // 16
+    default                     : return F("NO_MEAN");                                          // 0
+  }
+}
+
+String ESP_getResetReason(void)
+{
+  return ESP32GetResetReason(0);  // CPU 0
+}
+
+uint32_t ESP_ResetInfoReason(void)
+{
+  RESET_REASON reason = rtc_get_reset_reason(0);
+  if (POWERON_RESET == reason) { return REASON_DEFAULT_RST; }
+  if (SW_CPU_RESET == reason) { return REASON_SOFT_RESTART; }
+  if (DEEPSLEEP_RESET == reason)  { return REASON_DEEP_SLEEP_AWAKE; }
+  if (SW_RESET == reason) { return REASON_EXT_SYS_RST; }
+}
+
+uint32_t ESP_getChipId(void)
+{
+  uint32_t id = 0;
+  for (uint32_t i = 0; i < 17; i = i +8) {
+    id |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+  }
+  return id;
+}
+
+uint32_t ESP_getSketchSize(void)
+{
+  static uint32_t sketchsize = 0;
+
+  if (!sketchsize) {
+    sketchsize = ESP.getSketchSize();  // This takes almost 2 seconds on an ESP32
+  }
+  return sketchsize;
+}
+
+void ESP_Restart(void)
+{
+  ESP.restart();
 }
 
 #endif  // ESP32

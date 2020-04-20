@@ -34,6 +34,7 @@ struct device_group_member {
   IPAddress ip_address;
   uint16_t received_sequence;
   uint16_t acked_sequence;
+  uint32_t unicast_count;
 };
 
 struct device_group {
@@ -48,7 +49,6 @@ struct device_group {
   bool local;
   char group_name[TOPSZ];
   char message[128];
-  uint8_t group_member_count;
   struct device_group_member * device_group_members;
 #ifdef USE_DEVICE_GROUPS_SEND
   uint8_t values_8bit[DGR_ITEM_LAST_8BIT];
@@ -77,7 +77,7 @@ void DeviceGroupsInit(void)
   // Initialize the device information for each device group.
   device_groups = (struct device_group *)calloc(device_group_count, sizeof(struct device_group));
   if (device_groups == nullptr) {
-    AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: error allocating %u-element device group array"), device_group_count);
+    AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: Error allocating %u-element device group array"), device_group_count);
     device_groups_initialization_failed = true;
     return;
   }
@@ -155,6 +155,9 @@ bool DeviceGroupItemShared(bool incoming, uint8_t item)
     case DGR_ITEM_BRI_PRESET_HIGH:
       mask = DGR_SHARE_DIMMER_SETTINGS;
       break;
+    case DGR_ITEM_EVENT:
+      mask = DGR_SHARE_EVENT;
+      break;
   }
   return (!mask || ((incoming ? Settings.device_group_share_in : Settings.device_group_share_out) & mask));
 }
@@ -169,7 +172,7 @@ void SendDeviceGroupPacket(IPAddress ip, char * packet, int len, const char * la
     }
     delay(10);
   }
-  AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: error sending %s packet"), label);
+  AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: Error sending %s packet"), label);
 }
 
 void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType message_type, ...)
@@ -184,7 +187,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
   if (processing_remote_device_message && message_type != DGR_MSGTYPE_UPDATE_COMMAND) return;
 
   // Get a pointer to the device information for this device.
-  device_group * device_group = &device_groups[device_group_index];
+  struct device_group * device_group = &device_groups[device_group_index];
 
   // If we're still sending initial status requests, ignore this request.
   if (device_group->initial_status_requests_remaining) return;
@@ -225,24 +228,29 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
 
   else {
 #ifdef USE_DEVICE_GROUPS_SEND
+    bool escaped;
     bool use_command;
+    char chr;
     char oper;
     uint32_t old_value;
-    char * delim_ptr;
+    char * out_ptr;
 #endif  // USE_DEVICE_GROUPS_SEND
+    struct item {
+      uint8_t item;
+      uint32_t value;
+      void * value_ptr;
+    } item_array[32];
     bool shared;
     uint8_t item;
     uint32_t value;
     char * value_ptr;
+    struct item * item_ptr;
     va_list ap;
 
 #ifdef DEVICE_GROUPS_DEBUG
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Building device group %s packet"), device_group->group_name);
 #endif  // DEVICE_GROUPS_DEBUG
 
-#ifdef USE_DEVICE_GROUPS_SEND
-    use_command = (message_type == DGR_MSGTYPE_UPDATE_COMMAND);
-#endif  // USE_DEVICE_GROUPS_SEND
     value = 0;
     if (message_type == DGR_MSGTYP_UPDATE_MORE_TO_COME)
       value |= DGR_FLAG_MORE_TO_COME;
@@ -253,60 +261,83 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
 #endif  // DEVICE_GROUPS_DEBUG
     message_ptr = BeginDeviceGroupMessage(device_group, value, building_status_message || message_type == DGR_MSGTYP_PARTIAL_UPDATE);
 
+    // Build an array of all the items and values in this update.
+    memset(item_array, 0, sizeof(item_array));
+    item_ptr = item_array;
+#ifdef USE_DEVICE_GROUPS_SEND
+    use_command = (message_type == DGR_MSGTYPE_UPDATE_COMMAND);
+    if (use_command) {
+      value_ptr = XdrvMailbox.data;
+      while ((item = strtoul(value_ptr, &value_ptr, 0))) {
+        item_ptr->item = item;
+        if (*value_ptr == '=') {
+          value_ptr++;
+          if (item <= DGR_ITEM_MAX_32BIT) {
+            oper = 0;
+            if (*value_ptr == '@') {
+              oper = value_ptr[1];
+              value_ptr += 2;
+            }
+            value = strtoul(value_ptr, &value_ptr, 0);
+            if (oper) {
+              old_value = (item <= DGR_ITEM_MAX_8BIT ? device_group->values_8bit[item] : (item <= DGR_ITEM_MAX_16BIT ? device_group->values_16bit[item - DGR_ITEM_MAX_8BIT - 1] : device_group->values_32bit[item - DGR_ITEM_MAX_16BIT - 1]));
+              value = (oper == '+' ? old_value + value : (oper == '-' ? old_value - value : (oper == '^' ? old_value ^ (value ? value : 0xffffffff) : old_value)));
+            }
+            item_ptr->value = value;
+          }
+          else if (item <= DGR_ITEM_MAX_STRING) {
+            item_ptr->value_ptr = out_ptr = value_ptr;
+            escaped = false;
+            while ((chr = *value_ptr++)) {
+              if (chr == ' ' && !escaped) break;
+              if (!(escaped = (chr == '\\' && !escaped))) *out_ptr++ = chr;
+            }
+            *out_ptr = 0;
+          }
+          else {
+            switch (item) {
+              case DGR_ITEM_LIGHT_CHANNELS:
+                item_ptr->value_ptr = out_ptr = value_ptr;
+                for (int i = 0; i < 5; i++) {
+                  *out_ptr = strtoul(value_ptr, &value_ptr, 0);
+                  if (*value_ptr == ',') value_ptr++;
+                }
+                break;
+            }
+          }
+        }
+        item_ptr++;
+      }
+    }
+    else {
+#endif  // USE_DEVICE_GROUPS_SEND
+      va_start(ap, message_type);
+      while ((item = va_arg(ap, int))) {
+        item_ptr->item = item;
+        if (item <= DGR_ITEM_MAX_32BIT)
+          item_ptr->value = va_arg(ap, int);
+        else if (item <= DGR_ITEM_MAX_STRING)
+          item_ptr->value_ptr = va_arg(ap, char *);
+        else {
+          switch (item) {
+            case DGR_ITEM_LIGHT_CHANNELS:
+              item_ptr->value_ptr = va_arg(ap, uint8_t *);
+              break;
+          }
+        }
+        item_ptr++;
+      }
+      va_end(ap);
+#ifdef USE_DEVICE_GROUPS_SEND
+    }
+#endif  // USE_DEVICE_GROUPS_SEND
+
     // If we're still building this update or all group members haven't acknowledged the previous
     // update yet, update the message to include these new updates. First we need to rebuild the
     // previous update message to remove any items and their values that are included in this new
     // update.
     if (device_group->message_length) {
-      uint8_t item_array[32];
-      int item_index = 0;
       int kept_item_count = 0;
-
-      // Build an array of all the items in this new update.
-#ifdef USE_DEVICE_GROUPS_SEND
-      if (use_command)
-        value_ptr = XdrvMailbox.data;
-      else
-#endif  // USE_DEVICE_GROUPS_SEND
-        va_start(ap, message_type);
-#ifdef USE_DEVICE_GROUPS_SEND
-      while (use_command ? (item = strtoul(value_ptr, &delim_ptr, 0)) : (item = va_arg(ap, int))) {
-#else  // USE_DEVICE_GROUPS_SEND
-      while ((item = va_arg(ap, int))) {
-#endif  // !USE_DEVICE_GROUPS_SEND
-        item_array[item_index++] = item;
-#ifdef USE_DEVICE_GROUPS_SEND
-        if (use_command) {
-          if (!*delim_ptr) break;
-          if (*delim_ptr == '=') {
-            delim_ptr = strchr(delim_ptr, ' ');
-            if (!delim_ptr) break;
-          }
-          value_ptr = delim_ptr + 1;
-        }
-        else {
-#endif  // USE_DEVICE_GROUPS_SEND
-          if (item <= DGR_ITEM_MAX_32BIT)
-            va_arg(ap, int);
-          else if (item <= DGR_ITEM_MAX_STRING)
-            va_arg(ap, char *);
-          else {
-            switch (item) {
-              case DGR_ITEM_LIGHT_CHANNELS:
-                va_arg(ap, uint8_t *);
-                break;
-            }
-          }
-#ifdef USE_DEVICE_GROUPS_SEND
-        }
-#endif  // USE_DEVICE_GROUPS_SEND
-      }
-#ifdef USE_DEVICE_GROUPS_SEND
-      if (!use_command) va_end(ap);
-#else  // USE_DEVICE_GROUPS_SEND
-      va_end(ap);
-#endif  // !USE_DEVICE_GROUPS_SEND
-      item_array[item_index] = 0;
 
       // Rebuild the previous update message, removing any items whose values are included in this
       // new update.
@@ -314,12 +345,12 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
       while (item = *previous_message_ptr++) {
 
         // Search for this item in the new update.
-        for (item_index = 0; item_array[item_index]; item_index++) {
-          if (item_array[item_index] == item) break;
+        for (item_ptr = item_array; item_ptr->item; item_ptr++) {
+          if (item_ptr->item == item) break;
         }
 
         // If this item was found in the new update skip over it and it's value.
-        if (item_array[item_index]) {
+        if (item_ptr->item) {
           if (item <= DGR_ITEM_MAX_32BIT) {
             previous_message_ptr++;
             if (item > DGR_ITEM_MAX_8BIT) {
@@ -330,8 +361,9 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
               }
             }
           }
-          else if (item <= DGR_ITEM_MAX_STRING)
-            previous_message_ptr += *previous_message_ptr++;
+          else if (item <= DGR_ITEM_MAX_STRING) {
+            previous_message_ptr += strlen(previous_message_ptr) + 1;
+          }
           else {
             switch (item) {
               case DGR_ITEM_LIGHT_CHANNELS:
@@ -355,7 +387,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
             }
           }
           else if (item <= DGR_ITEM_MAX_STRING) {
-            *message_ptr++ = value = *previous_message_ptr++;
+            value = strlen(previous_message_ptr) + 1;
             memmove(message_ptr, previous_message_ptr, value);
             previous_message_ptr += value;
             message_ptr += value;
@@ -378,58 +410,20 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
     }
 
     // Itertate through the passed items adding them and their values to the message.
-#ifdef USE_DEVICE_GROUPS_SEND
-    if (use_command)
-      value_ptr = XdrvMailbox.data;
-    else
-#endif  // USE_DEVICE_GROUPS_SEND
-      va_start(ap, message_type);
-#ifdef USE_DEVICE_GROUPS_SEND
-    while (use_command ? (item = strtoul(value_ptr, &delim_ptr, 0)) : (item = va_arg(ap, int))) {
-#else  // !USE_DEVICE_GROUPS_SEND
-    while ((item = va_arg(ap, int))) {
-#endif  // !USE_DEVICE_GROUPS_SEND
+    for (item_ptr = item_array; (item = item_ptr->item); item_ptr++) {
 
-      // Find out if this item is shared with the group and add the item code to the message if yes.
+      // If this item is shared with the group add it to the message.
       shared = true;
       if (!device_group_index) shared = DeviceGroupItemShared(false, item);
-      if (shared) *message_ptr++ = item;
+      if (shared) {
+        *message_ptr++ = item;
 
-#ifdef USE_DEVICE_GROUPS_SEND
-      // If we're processing a command, get a pointer to the value if one was specified.
-      if (use_command) value_ptr = (*delim_ptr == '=' ? delim_ptr + 1 : nullptr);
-#endif  // USE_DEVICE_GROUPS_SEND
-
-      // For numeric items, get the specified value.
-      if (item <= DGR_ITEM_MAX_32BIT) {
-
-#ifdef USE_DEVICE_GROUPS_SEND
-        // If we're processing a command, get the final value after processing any specified
-        // operators.
-        if (use_command) {
-          value = 0;
-          if (value_ptr) {
-            oper = 0;
-            if (*value_ptr == '@') {
-              oper = value_ptr[1];
-              value_ptr += 2;
-            }
-            value = strtoul(value_ptr, nullptr, 0);
-            if (oper) {
-              old_value = (item <= DGR_ITEM_MAX_8BIT ? device_group->values_8bit[item] : (item <= DGR_ITEM_MAX_16BIT ? device_group->values_16bit[item - DGR_ITEM_MAX_8BIT - 1] : device_group->values_32bit[item - DGR_ITEM_MAX_16BIT - 1]));
-              value = (oper == '+' ? old_value + value : (oper == '-' ? old_value - value : (oper == '^' ? old_value ^ (value ? value : 0xffffffff) : old_value)));
-            }
-          }
-        }
-        else
-#endif  // USE_DEVICE_GROUPS_SEND
-          value = va_arg(ap, int);
-
-        // If the item is shared, add it to the message.
-        if (shared) {
-#ifdef DEVICE_GROUPS_DEBUG
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(">item=%u, value=%u"), item, value);
-#endif  // DEVICE_GROUPS_DEBUG
+        // For integer items, add the value to the message.
+        if (item <= DGR_ITEM_MAX_32BIT) {
+          value = item_ptr->value;
+//#ifdef DEVICE_GROUPS_DEBUG
+          AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(">%u=%u"), item, value);
+//#endif  // DEVICE_GROUPS_DEBUG
           *message_ptr++ = value & 0xff;
           if (item > DGR_ITEM_MAX_8BIT) {
 #ifdef USE_DEVICE_GROUPS_SEND
@@ -469,77 +463,36 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
           }
 #endif  // USE_DEVICE_GROUPS_SEND
         }
-      }
 
-      // For string items, add the string to the message prefixed by the length.
-      else if (item <= DGR_ITEM_MAX_STRING) {
-#ifdef USE_DEVICE_GROUPS_SEND
-        if (!use_command)
-#endif  // USE_DEVICE_GROUPS_SEND
-          value_ptr = va_arg(ap, char *);
-        if (shared) {
-          value = (value_ptr ? strlen((const char *)value_ptr) : 0);
-#ifdef DEVICE_GROUPS_DEBUG
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(">item=%u, value=%s"), item, value_ptr);
-#endif  // DEVICE_GROUPS_DEBUG
-          *message_ptr++ = value;
-          memcpy(message_ptr, value_ptr, value);
-          message_ptr += value;
+        // For string items, add the null-terminated string to the message.
+        else if (item <= DGR_ITEM_MAX_STRING) {
+          if (item_ptr->value_ptr) {
+            value = strlen((const char *)item_ptr->value_ptr);
+            memcpy(message_ptr, item_ptr->value_ptr, value);
+            message_ptr += value;
+          }
+          *message_ptr++ = 0;
+//#ifdef DEVICE_GROUPS_DEBUG
+          AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(">%u='%s'"), item, item_ptr->value_ptr);
+//#endif  // DEVICE_GROUPS_DEBUG
         }
-      }
 
-      // For special items, handle them individually.
-      else {
-        switch (item) {
-          case DGR_ITEM_LIGHT_CHANNELS:
-#ifdef USE_DEVICE_GROUPS_SEND
-            if (use_command) {
-              if (shared) {
-                for (int i = 0; i < 5; i++) {
-                  value = 0;
-                  if (value_ptr) {
-                    value = strtoul(value_ptr, &value_ptr, 0);
-                    value_ptr = (*value_ptr == ',' ? value_ptr + 1 : nullptr);
-                  }
-                  *message_ptr++ = value;
-                }
+        // For special items, handle them individually.
+        else {
+          switch (item) {
+            case DGR_ITEM_LIGHT_CHANNELS:
+              value_ptr = (char *)item_ptr->value_ptr;
+              for (int i = 0; i < 5; i++) {
+                *message_ptr++ = (value_ptr ? *value_ptr++ : 0);
               }
-            }
-            else {
-#endif  // USE_DEVICE_GROUPS_SEND
-              value_ptr = va_arg(ap, char *);
-              if (shared) {
-                memmove(message_ptr, value_ptr, 5);
-                message_ptr += 5;
-              }
-#ifdef USE_DEVICE_GROUPS_SEND
-            }
-#endif  // USE_DEVICE_GROUPS_SEND
-#ifdef DEVICE_GROUPS_DEBUG
-            if (shared) AddLog_P2(LOG_LEVEL_DEBUG, PSTR(">item=%u, value=%u,%u,%u,%u,%u"), item, *(message_ptr - 5), *(message_ptr - 4), *(message_ptr - 3), *(message_ptr - 2), *(message_ptr - 1));
-#endif  // DEVICE_GROUPS_DEBUG
-            break;
+//#ifdef DEVICE_GROUPS_DEBUG
+              AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(">%u=%u,%u,%u,%u,%u"), item, *(message_ptr - 5), *(message_ptr - 4), *(message_ptr - 3), *(message_ptr - 2), *(message_ptr - 1));
+//#endif  // DEVICE_GROUPS_DEBUG
+              break;
+          }
         }
       }
-
-#ifdef USE_DEVICE_GROUPS_SEND
-      // If we're processing a command, advance to the next item. If there are no more, break out of
-      // the loop.
-      if (use_command) {
-        if (!*delim_ptr) break;
-        if (*delim_ptr == '=') {
-          delim_ptr = strchr(delim_ptr, ' ');
-          if (!delim_ptr) break;
-        }
-        value_ptr = delim_ptr + 1;
-      }
-#endif  // USE_DEVICE_GROUPS_SEND
     }
-#ifdef USE_DEVICE_GROUPS_SEND
-    if (!use_command) va_end(ap);
-#else  // USE_DEVICE_GROUPS_SEND
-    va_end(ap);
-#endif  // !USE_DEVICE_GROUPS_SEND
 
     // Add the EOL item code and calculate the message length.
     *message_ptr++ = 0;
@@ -551,7 +504,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
 
   // Multicast the packet.
 #ifdef DEVICE_GROUPS_DEBUG
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: sending %u-byte device group %s packet via multicast, sequence=%u"), device_group->message_length, device_group->group_name, device_group->message[device_group->message_header_length] | device_group->message[device_group->message_header_length + 1] << 8);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Sending %u-byte device group %s packet via multicast, sequence=%u"), device_group->message_length, device_group->group_name, device_group->message[device_group->message_header_length] | device_group->message[device_group->message_header_length + 1] << 8);
 #endif  // DEVICE_GROUPS_DEBUG
   SendDeviceGroupPacket(IPAddress(0,0,0,0), device_group->message, device_group->message_length, PSTR("Multicast"));
 
@@ -598,12 +551,10 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
     if (!device_group_member) {
       device_group_member = (struct device_group_member *)calloc(1, sizeof(struct device_group_member));
       if (device_group_member == nullptr) {
-        AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: error allocating device group member block"));
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: Error allocating device group member block"));
         return;
       }
-#ifdef DEVICE_GROUPS_DEBUG
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: adding member %s (%p)"), IPAddressToString(remote_ip), device_group_member);
-#endif  // DEVICE_GROUPS_DEBUG
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Adding member %s"), IPAddressToString(remote_ip));
       device_group_member->ip_address = remote_ip;
       *flink = device_group_member;
       break;
@@ -717,10 +668,11 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
       case DGR_ITEM_BRI_PRESET_HIGH:
       case DGR_ITEM_BRI_POWER_ON:
       case DGR_ITEM_POWER:
+      case DGR_ITEM_EVENT:
       case DGR_ITEM_LIGHT_CHANNELS:
         break;
       default:
-        AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: ********** invalid item=%u received from device group %s member %s"), item, device_group->group_name, IPAddressToString(remote_ip));
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: ********** Invalid item=%u received from device group %s member %s"), item, device_group->group_name, IPAddressToString(remote_ip));
     }
 #endif  // DEVICE_GROUPS_DEBUG
 
@@ -748,27 +700,27 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
       }
 #endif  // USE_DEVICE_GROUPS_SEND
 
-#ifdef DEVICE_GROUPS_DEBUG
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("<item=%u, value=%u"), item, value);
-#endif  // DEVICE_GROUPS_DEBUG
+//#ifdef DEVICE_GROUPS_DEBUG
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("<%u=%u"), item, value);
+//#endif  // DEVICE_GROUPS_DEBUG
       XdrvMailbox.payload = value;
     }
     else if (item <= DGR_ITEM_MAX_STRING) {
-      value = *message_ptr++;
+      value = strlen(message_ptr);
       if (value >= packet_length - (message_ptr - packet)) goto badmsg;  // Malformed message
-#ifdef DEVICE_GROUPS_DEBUG
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("<item=%u, value=%.*s"), item, value, message_ptr);
-#endif  // DEVICE_GROUPS_DEBUG
+//#ifdef DEVICE_GROUPS_DEBUG
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("<%u='%s'"), item, message_ptr);
+//#endif  // DEVICE_GROUPS_DEBUG
       XdrvMailbox.data_len = value;
       XdrvMailbox.data = message_ptr;
-      message_ptr += value;
+      message_ptr += value + 1;
     }
     else {
       switch (item) {
         case DGR_ITEM_LIGHT_CHANNELS:
-#ifdef DEVICE_GROUPS_DEBUG
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("<item=%u, value=%u,%u,%u,%u,%u"), item, *message_ptr, *(message_ptr + 1), *(message_ptr + 2), *(message_ptr + 3), *(message_ptr + 4));
-#endif  // DEVICE_GROUPS_DEBUG
+//#ifdef DEVICE_GROUPS_DEBUG
+          AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("<%u=%u,%u,%u,%u,%u"), item, *message_ptr, *(message_ptr + 1), *(message_ptr + 2), *(message_ptr + 3), *(message_ptr + 4));
+//#endif  // DEVICE_GROUPS_DEBUG
           XdrvMailbox.data = message_ptr;
           message_ptr += 5;
           break;
@@ -787,6 +739,9 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
           }
         }
       }
+      else if (item == DGR_ITEM_EVENT) {
+        CmndEvent();
+      }
       XdrvCall(FUNC_DEVICE_GROUP_ITEM);
     }
   }
@@ -802,11 +757,26 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
   return;
 
 badmsg:
-  AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: malformed message received from %s"), IPAddressToString(remote_ip));
+  AddLog_P2(LOG_LEVEL_ERROR, PSTR("DGR: Malformed message received from %s"), IPAddressToString(remote_ip));
 #ifdef DEVICE_GROUPS_DEBUG
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("packet_length=%u, offset=%u"), packet_length, message_ptr - packet);
 #endif  // DEVICE_GROUPS_DEBUG
   processing_remote_device_message = false;
+}
+
+void DeviceGroupStatus(uint8_t device_group_index)
+{
+  if (Settings.flag4.device_groups_enabled && device_group_index < device_group_count) {
+    char buffer[1024];
+    int member_count = 0;
+    struct device_group * device_group = &device_groups[device_group_index];
+    buffer[0] = buffer[1] = 0;
+    for (struct device_group_member * device_group_member = device_group->device_group_members; device_group_member; device_group_member = device_group_member->flink) {
+      snprintf(buffer, sizeof(buffer), PSTR("%s,{\"IPAddress\":\"%s\",\"ResendCount\":%u,\"LastRcvdSeq\":%u,\"LastAckedSeq\":%u}"), buffer, IPAddressToString(device_group_member->ip_address), device_group_member->unicast_count, device_group_member->received_sequence, device_group_member->acked_sequence);
+      member_count++;
+    }
+    Response_P(PSTR("{\"" D_CMND_DEVGROUPSTATUS "\":{\"Index\":%u,\"GroupName\":\"%s\",\"MessageSeq\":%u,\"MemberCount\":%d,\"Members\":[%s]}"), device_group_index, device_group->group_name, outgoing_sequence, member_count, &buffer[1]);
+  }
 }
 
 void DeviceGroupsLoop(void)
@@ -822,16 +792,16 @@ void DeviceGroupsLoop(void)
       if (!device_groups_initialized) DeviceGroupsInit();
       if (device_groups_initialization_failed) return;
 
-      // Load the status request message for all device groups. This message will be multicast 5
-      // times.
+      // Load the status request message for all device groups. This message will be multicast 10
+      // times at 200ms intervals.
       next_check_time = now + 3000;
       for (uint32_t device_group_index = 0; device_group_index < device_group_count; device_group_index++) {
         device_group * device_group = &device_groups[device_group_index];
         device_group->message_length = BeginDeviceGroupMessage(device_group, DGR_FLAG_RESET | DGR_FLAG_STATUS_REQUEST) - device_group->message;
-        device_group->initial_status_requests_remaining = 5;
+        device_group->initial_status_requests_remaining = 10;
         device_group->next_ack_check_time = next_check_time;
       }
-
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: (Re)discovering device groups"));
     }
 
     if (device_groups_initialization_failed) return;
@@ -856,15 +826,15 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
             if (device_group->initial_status_requests_remaining) {
               if (--device_group->initial_status_requests_remaining) {
 #ifdef DEVICE_GROUPS_DEBUG
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: sending initial status request for group %s"), device_group->group_name);
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Sending initial status request for group %s"), device_group->group_name);
 #endif  // DEVICE_GROUPS_DEBUG
                 SendDeviceGroupPacket(IPAddress(0,0,0,0), device_group->message, device_group->message_length, PSTR("Initial"));
                 device_group->message[device_group->message_header_length + 2] = DGR_FLAG_STATUS_REQUEST; // The reset flag is on only for the first packet - turn it off now
                 device_group->next_ack_check_time = now + 200;
               }
 
-              // If we've sent the initial status request message 5 times, send our status to all
-              // the members.
+              // If we've sent the initial status request message the set number of times, send our
+              // status to all the members.
               else {
                 device_group->next_ack_check_time = 0;
                 _SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_FULL_STATUS);
@@ -874,7 +844,7 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
             // If we're done initializing, iterate through the group memebers, ...
             else {
 #ifdef DEVICE_GROUPS_DEBUG
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: checking for ack's"));
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Checking for ack's"));
 #endif  // DEVICE_GROUPS_DEBUG
               bool acked = true;
               struct device_group_member ** flink = &device_group->device_group_members;
@@ -887,9 +857,7 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
                   // If we haven't receive an ack from this member in DGR_MEMBER_TIMEOUT ms, assume
                   // they're offline and remove them from the group.
                   if (device_group->member_timeout_time < now) {
-#ifdef DEVICE_GROUPS_DEBUG
-                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: removing member %s (%p)"), IPAddressToString(device_group_member->ip_address), device_group_member);
-#endif  // DEVICE_GROUPS_DEBUG
+                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Removing member %s"), IPAddressToString(device_group_member->ip_address));
                     *flink = device_group_member->flink;
                     free(device_group_member);
                   }
@@ -897,9 +865,10 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
                   // Otherwise, unicast the last message directly to this member.
                   else {
 #ifdef DEVICE_GROUPS_DEBUG
-                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: sending %u-byte device group %s packet via unicast to %s, sequence %u, last message acked=%u"), device_group->message_length, device_group->group_name, IPAddressToString(device_group_member->ip_address), outgoing_sequence, device_group_member->acked_sequence);
+                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Sending %u-byte device group %s packet via unicast to %s, sequence %u, last message acked=%u"), device_group->message_length, device_group->group_name, IPAddressToString(device_group_member->ip_address), outgoing_sequence, device_group_member->acked_sequence);
 #endif  // DEVICE_GROUPS_DEBUG
                     SendDeviceGroupPacket(device_group_member->ip_address, device_group->message, device_group->message_length, PSTR("Unicast"));
+                    device_group_member->unicast_count++;
                     acked = false;
                     flink = &device_group_member->flink;
                   }
@@ -940,7 +909,7 @@ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Ckecking next_check_time=%u, now=%u"), nex
 #endif  // DEVICE_GROUPS_DEBUG
         if (device_group->next_announcement_time <= now) {
 #ifdef DEVICE_GROUPS_DEBUG
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: sending device group %s announcement"), device_group->group_name);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Sending device group %s announcement"), device_group->group_name);
 #endif  // DEVICE_GROUPS_DEBUG
           SendDeviceGroupPacket(IPAddress(0,0,0,0), device_group->message, BeginDeviceGroupMessage(device_group, DGR_FLAG_ANNOUNCEMENT, true) - device_group->message, PSTR("Announcement"));
           device_group->next_announcement_time = now + DGR_ANNOUNCEMENT_INTERVAL + random(10000);

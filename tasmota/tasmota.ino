@@ -190,6 +190,12 @@ char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
 
 void setup(void)
 {
+#ifdef ESP32
+#ifdef DISABLE_ESP32_BROWNOUT
+  DisableBrownout();      // Workaround possible weak LDO resulting in brownout detection during Wifi connection
+#endif
+#endif
+
   global_state.data = 3;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 
   RtcRebootLoad();

@@ -371,13 +371,13 @@ void FLOG::stopRecording(void){
  *
  * @param size:         size of the data entry/record in bytes, i.e. sizeof(myStruct)
  * @param sendHeader:   should implement at least something like:
- * @example             WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN); // This is very likely unknown!!
- *                      WebServer->sendHeader(F("Content-Disposition"), F("attachment; filename=myfile.txt"));
+ * @example             Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN); // This is very likely unknown!!
+ *                      Webserver->sendHeader(F("Content-Disposition"), F("attachment; filename=myfile.txt"));
  * @param sendRecord:   will receive the memory address as "uint8_t* addr" and should consume the current entry/record
  * @example             myStruct_t *entry = (myStruct_t*)addr;
- *                      Then make useful Strings and send it, i.e.: WebServer->sendContent_P(myString);
+ *                      Then make useful Strings and send it, i.e.: Webserver->sendContent_P(myString);
  * @param sendFooter:   finish the download, should implement at least:
- * @example             WebServer->sendContent("");
+ * @example             Webserver->sendContent("");
  */
   void FLOG::startDownload(size_t size, CallbackNoArgs sendHeader, CallbackWithArgs sendRecord, CallbackNoArgs sendFooter){
 

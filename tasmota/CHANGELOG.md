@@ -6,6 +6,12 @@
 
 - Release Fred
 
+### 8.2.0.4 20200417
+
+- Fix Zigbee DimmerUp/DimmerDown malformed
+- Add config version tag
+- Add command ``SetOption73 1`` for button decoupling and send multi-press and hold MQTT messages by Federico Leoni (#8235)
+
 ### 8.2.0.3 20200329
 
 - Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
