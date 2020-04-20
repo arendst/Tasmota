@@ -554,7 +554,7 @@ void GetFeatures(void)
 #ifdef USE_PING
   feature6 |= 0x00000080;  // xdrv_38_ping.ino
 #endif
-#ifdef USE_HEATING
+#ifdef USE_THERMOSTAT
    feature6 |= 0x00000100; // xdrv_39_heating.ino
 #endif
 //  feature6 |= 0x00000200;

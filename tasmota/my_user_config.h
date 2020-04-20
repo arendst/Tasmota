@@ -657,36 +657,36 @@
   #define USE_TASMOTA_SLAVE_SERIAL_SPEED 57600     // Depends on the sketch that is running on the Uno/Pro Mini
 
 /*********************************************************************************************\
- * HEATING CONTROLLER
+ * THERMOSTAT CONTROLLER
 \*********************************************************************************************/
 
-#define USE_HEATING
+#define USE_THERMOSTAT
 
-#define HEATING_RELAY_NUMBER            1        // Default output relay number
-#define HEATING_SWITCH_NUMBER           1        // Default input switch number
-#define HEATING_TIME_ALLOW_RAMPUP       300      // Default time in seconds after last target update to allow ramp-up controller phase in minutes
-#define HEATING_TIME_RAMPUP_MAX         960      // Default time maximum ramp-up controller duration in minutes
-#define HEATING_TIME_RAMPUP_CYCLE       1800     // Default time ramp-up cycle in seconds
-#define HEAT_TIME_SENS_LOST             30       // Maximum time w/o sensor update to set it as lost in minutes
-#define HEAT_TEMP_SENS_NUMBER           1        // Default temperature sensor number
-#define HEAT_POWER_MAX                  60       // Default maximum output power in Watt
-#define HEAT_TIME_MANUAL_TO_AUTO        60       // Default time without input switch active to change from manual to automatic in minutes
-#define HEAT_TIME_ON_LIMIT              120      // Default maximum time with output active in minutes
-#define HEAT_TIME_RESET                 12000    // Default reset time of the PI controller in seconds
-#define HEAT_TIME_PI_CYCLE              30       // Default cycle time for the heating controller in minutes
-#define HEAT_TIME_MAX_ACTION            20       // Default maximum heating time per cycle in minutes
-#define HEAT_TIME_MIN_ACTION            4        // Default minimum heating time per cycle in minutes
-#define HEAT_TIME_MIN_TURNOFF_ACTION    3        // Default minimum turnoff time in minutes, below it the heating will be held on
-#define HEAT_PROP_BAND                  4        // Default proportional band of the PI controller in degrees celsius
-#define HEAT_TEMP_RESET_ANTI_WINDUP     8        // Default range where reset antiwindup is disabled, in tenths of degrees celsius
-#define HEAT_TEMP_HYSTERESIS            1        // Default range hysteresis for temperature PI controller, in tenths of degrees celsius
-#define HEAT_TEMP_FROST_PROTECT         40       // Default minimum temperature for frost protection, in tenths of degrees celsius
-#define HEATING_TEMP_RAMPUP_DELTA_IN    4        // Default minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
-#define HEATING_TEMP_RAMPUP_DELTA_OUT   2        // Default minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
-#define HEATING_TEMP_PI_RAMPUP_ACC_E    20       // Default accumulated error when switching from ramp-up controller to PI
-#define HEATING_ENERGY_OUTPUT_MAX       10       // Default maximum allowed energy output for heating valve in Watts
-#define HEATING_TIME_OUTPUT_DELAY       180      // Default output delay between state change and real actuation event (f.i. valve open/closed)
-#define HEATING_TEMP_INIT               180      // Default init target temperature for the heating controller
+#define THERMOSTAT_RELAY_NUMBER            1        // Default output relay number
+#define THERMOSTAT_SWITCH_NUMBER           1        // Default input switch number
+#define THERMOSTAT_TIME_ALLOW_RAMPUP       300      // Default time in seconds after last target update to allow ramp-up controller phase in minutes
+#define THERMOSTAT_TIME_RAMPUP_MAX         960      // Default time maximum ramp-up controller duration in minutes
+#define THERMOSTAT_TIME_RAMPUP_CYCLE       1800     // Default time ramp-up cycle in seconds
+#define THERMOSTAT_TIME_SENS_LOST             30       // Maximum time w/o sensor update to set it as lost in minutes
+#define THERMOSTAT_TEMP_SENS_NUMBER           1        // Default temperature sensor number
+#define THERMOSTAT_POWER_MAX                  60       // Default maximum output power in Watt
+#define THERMOSTAT_TIME_MANUAL_TO_AUTO        60       // Default time without input switch active to change from manual to automatic in minutes
+#define THERMOSTAT_TIME_ON_LIMIT              120      // Default maximum time with output active in minutes
+#define THERMOSTAT_TIME_RESET                 12000    // Default reset time of the PI controller in seconds
+#define THERMOSTAT_TIME_PI_CYCLE              30       // Default cycle time for the thermostat controller in minutes
+#define THERMOSTAT_TIME_MAX_ACTION            20       // Default maximum thermostat time per cycle in minutes
+#define THERMOSTAT_TIME_MIN_ACTION            4        // Default minimum thermostat time per cycle in minutes
+#define THERMOSTAT_TIME_MIN_TURNOFF_ACTION    3        // Default minimum turnoff time in minutes, below it the thermostat will be held on
+#define THERMOSTAT_PROP_BAND                  4        // Default proportional band of the PI controller in degrees celsius
+#define THERMOSTAT_TEMP_RESET_ANTI_WINDUP     8        // Default range where reset antiwindup is disabled, in tenths of degrees celsius
+#define THERMOSTAT_TEMP_HYSTERESIS            1        // Default range hysteresis for temperature PI controller, in tenths of degrees celsius
+#define THERMOSTAT_TEMP_FROST_PROTECT         40       // Default minimum temperature for frost protection, in tenths of degrees celsius
+#define THERMOSTAT_TEMP_RAMPUP_DELTA_IN    4        // Default minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
+#define THERMOSTAT_TEMP_RAMPUP_DELTA_OUT   2        // Default minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
+#define THERMOSTAT_TEMP_PI_RAMPUP_ACC_E    20       // Default accumulated error when switching from ramp-up controller to PI
+#define THERMOSTAT_ENERGY_OUTPUT_MAX       10       // Default maximum allowed energy output for thermostat valve in Watts
+#define THERMOSTAT_TIME_OUTPUT_DELAY       180      // Default output delay between state change and real actuation event (f.i. valve open/closed)
+#define THERMOSTAT_TEMP_INIT               180      // Default init target temperature for the thermostat controller
 
 // -- End of general directives -------------------
 
