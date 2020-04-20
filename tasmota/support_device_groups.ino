@@ -740,7 +740,9 @@ void ProcessDeviceGroupMessage(char * packet, int packet_length)
         }
       }
       else if (item == DGR_ITEM_EVENT) {
+#ifdef USE_RULES
         CmndEvent();
+#endif
       }
       XdrvCall(FUNC_DEVICE_GROUP_ITEM);
     }
