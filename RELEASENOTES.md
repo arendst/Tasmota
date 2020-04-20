@@ -71,6 +71,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add commands ``NrfPage``, ``NrfIgnore``, ``NrfScan`` and ``NrfBeacon`` to NRF24 Bluetooth driver (#8075)
 - Add commands ``GlobalTemp`` and ``GlobalHum`` to init sensor data (#8152)
 - Add command ``SetOption41 <x>`` to force sending gratuitous ARP every <x> seconds
+- Add command ``SetOption73 1`` for button decoupling and send multi-press and hold MQTT messages by Federico Leoni (#8235)
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
 - Add command ``SetOption91 1`` to enable fading at startup / power on
 - Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
