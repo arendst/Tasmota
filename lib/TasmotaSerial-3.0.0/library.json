@@ -11,5 +11,7 @@
         "url": "https://github.com/arendst/Tasmota/lib/TasmotaSerial"
     },
     "frameworks": "arduino",
-    "platforms": "espressif8266","espressif32"
+    "platforms": [
+      "espressif8266", "espressif32"
+    ]
 }
