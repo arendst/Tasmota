@@ -253,7 +253,7 @@ typedef struct {
 const uint32_t settings_text_size = 699;   // Settings.text_pool[size] = Settings.display_model (2D2) - Settings.text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
-struct SYSCFG {
+struct {
   uint16_t      cfg_holder;                // 000 v6 header
   uint16_t      cfg_size;                  // 002
   unsigned long save_flag;                 // 004
@@ -407,9 +407,9 @@ struct SYSCFG {
   char          ex_mqtt_fulltopic[100];    // 558
 #else  // ESP32
   myio          my_gp;                     // 558 - 40 bytes (ESP32)
-  mytmplt       user_template;             // 580 - 35 bytes (ESP32)
+  mytmplt       user_template;             // 580 - 37 bytes (ESP32)
 
-  uint8_t       free_esp32_5a3[25];        // 5A3
+  uint8_t       free_esp32_5a5[23];        // 5A5
 #endif  // ESP8266 - ESP32
 
   SysBitfield2  flag2;                     // 5BC
@@ -545,13 +545,17 @@ struct SYSCFG {
   uint32_t      cfg_crc32;                 // FFC
 } Settings;
 
-struct RTCRBT {
+typedef struct {
   uint16_t      valid;                     // 280 (RTC memory offset 100 - sizeof(RTCRBT))
   uint8_t       fast_reboot_count;         // 282
   uint8_t       free_003[1];               // 283
-} RtcReboot;
+} TRtcReboot;
+TRtcReboot RtcReboot;
+#ifdef ESP32
+RTC_NOINIT_ATTR TRtcReboot RtcDataReboot;
+#endif
 
-struct RTCMEM {
+typedef struct {
   uint16_t      valid;                     // 290 (RTC memory offset 100)
   uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
@@ -567,7 +571,11 @@ struct RTCMEM {
 
   uint8_t       free_022[22];              // 2D6
                                            // 2EC - 2FF free locations
-} RtcSettings;
+} TRtcSettings;
+TRtcSettings RtcSettings;
+#ifdef ESP32
+RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
+#endif
 
 struct TIME_T {
   uint8_t       second;

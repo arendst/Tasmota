@@ -1,5 +1,5 @@
 /*
-  TasmotaSerial.h - Minimal implementation of software serial for Tasmota
+  TasmotaSerial.h - Implementation of software serial with hardware serial fallback for Tasmota
 
   Copyright (C) 2020  Theo Arends
 
@@ -36,6 +36,10 @@
 #include <inttypes.h>
 #include <Stream.h>
 
+#ifdef ESP32
+#include <HardwareSerial.h>
+#endif
+
 class TasmotaSerial : public Stream {
   public:
     TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback = 0, int nwmode = 0, int buffer_size = TM_SERIAL_BUFFER_SIZE);
@@ -54,6 +58,10 @@ class TasmotaSerial : public Stream {
     void rxRead();
 
     uint32_t getLoopReadMetric(void) const { return m_bit_follow_metric; }
+
+#ifdef ESP32
+    uint32_t getUart(void) const { return m_uart; }
+#endif
 
     using Print::write;
 
@@ -83,6 +91,12 @@ class TasmotaSerial : public Stream {
     uint8_t *m_buffer;
 
     void _fast_write(uint8_t b);      // IRAM minimized version
+
+#ifdef ESP32
+    HardwareSerial *TSerial;
+    int m_uart = 0;
+#endif
+
 };
 
 #endif  // TasmotaSerial_h

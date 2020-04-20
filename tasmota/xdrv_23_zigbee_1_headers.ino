@@ -25,15 +25,15 @@ void ZigbeeZCLSend_Raw(uint16_t dtsAddr, uint16_t groupaddr, uint16_t clusterId,
 
 
 // Get an JSON attribute, with case insensitive key search
-JsonVariant &getCaseInsensitive(const JsonObject &json, const char *needle) {
+const JsonVariant &getCaseInsensitive(const JsonObject &json, const char *needle) {
   // key can be in PROGMEM
   if ((nullptr == &json) || (nullptr == needle) || (0 == pgm_read_byte(needle))) {
     return *(JsonVariant*)nullptr;
   }
 
-  for (auto kv : json) {
-    const char *key = kv.key;
-    JsonVariant &value = kv.value;
+  for (JsonObject::const_iterator it=json.begin(); it!=json.end(); ++it) {
+    const char *key = it->key;
+    const JsonVariant &value = it->value;
 
     if (0 == strcasecmp_P(key, needle)) {
       return value;

@@ -261,21 +261,14 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
     "as=o.shift();"                       // Complete ADC0 list
     "g=o.shift().split(',');"             // Array separator
     "j=0;"
-//    "for(i=0;i<13;i++){"                  // Supports 13 GPIOs
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Supports 13 GPIOs
-#ifdef ESP8266
       "if(6==i){j=9;}"
       "if(8==i){j=12;}"
-#endif
-#ifdef ESP32
-      "if(6==i){j=12;}"
-#endif
       "sk(g[i],j);"                       // Set GPIO
       "j++;"
     "}"
     "g=o.shift();"                        // FLAG
     "os=as;"
-//    "sk(g&15,17);"                        // Set ADC0
     "sk(g&15," STR(ADC0_PIN) ");"         // Set ADC0
     "g>>=4;"
     "for(i=0;i<" STR(GPIO_FLAG_USED) ";i++){"
@@ -295,7 +288,6 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
 
   "function x2(a){"
     "os=a.responseText;"
-//    "sk(17,99);"                          // 17 = WEMOS
     "sk(" STR(WEMOS_MODULE) ",99);"       // 17 = WEMOS
     "st(" STR(USER_MODULE) ");"
   "}"
@@ -321,13 +313,11 @@ const char HTTP_SCRIPT_MODULE2[] PROGMEM =
   "}"
   "function x3(a){"                       // ADC0
     "os=a.responseText;"
-//    "sk(%d,17);"
     "sk(%d," STR(ADC0_PIN) ");"
   "}"
   "function sl(){"
     "ld('md?m=1',x1);"                    // ?m related to Webserver->hasArg("m")
     "ld('md?g=1',x2);"                    // ?g related to Webserver->hasArg("g")
-//    "if(eb('g17')){"
     "if(eb('g" STR(ADC0_PIN) "')){"
       "ld('md?a=1',x3);"                  // ?a related to Webserver->hasArg("a")
     "}"
@@ -1529,13 +1519,8 @@ void TemplateSaveSettings(void)
 
   uint32_t j = 0;
   for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
-#ifdef ESP8266
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
-#endif  // ESP8266
-#ifdef ESP32
-    if (6 == i) { j = 12; }
-#endif  // ESP32
     snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), j);
     WebGetArg(webindex, tmp, sizeof(tmp));                  // GPIO
     uint8_t gpio = atoi(tmp);
@@ -1543,7 +1528,6 @@ void TemplateSaveSettings(void)
     j++;
   }
 
-//  WebGetArg("g17", tmp, sizeof(tmp));                       // FLAG - ADC0
   WebGetArg("g" STR(ADC0_PIN), tmp, sizeof(tmp));           // FLAG - ADC0
   uint32_t flag = atoi(tmp);
   for (uint32_t i = 0; i < GPIO_FLAG_USED; i++) {
@@ -2138,7 +2122,11 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1" D_BUILD_DATE_AND_TIME "}2%s"), GetBuildDateAndTime().c_str());
   WSContentSend_P(PSTR("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_CORE_RELEASE "/%s"), ESP.getSdkVersion());
   WSContentSend_P(PSTR("}1" D_UPTIME "}2%s"), GetUptime().c_str());
+#ifdef ESP8266
   WSContentSend_P(PSTR("}1" D_FLASH_WRITE_COUNT "}2%d at 0x%X"), Settings.save_flag, GetSettingsAddress());
+#else
+  WSContentSend_P(PSTR("}1" D_FLASH_WRITE_COUNT "}2%d"), Settings.save_flag);
+#endif
   WSContentSend_P(PSTR("}1" D_BOOT_COUNT "}2%d"), Settings.bootcount);
   WSContentSend_P(PSTR("}1" D_RESTART_REASON "}2%s"), GetResetReason().c_str());
   uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
@@ -2212,7 +2200,9 @@ void HandleInformation(void)
 
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d"), ESP_getChipId());
-  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP_getFlashChipId());
+#ifdef ESP8266
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP.getFlashChipId());
+#endif
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%dkB"), ESP.getFlashChipRealSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%dkB"), ESP.getFlashChipSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%dkB"), ESP_getSketchSize() / 1024);

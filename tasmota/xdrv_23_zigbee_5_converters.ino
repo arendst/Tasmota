@@ -109,7 +109,7 @@ public:
     uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
     uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
     uint32_t timestamp):
-    _cmd_id(cmd_id), _manuf_code(manuf_code), _transact_seq(transact_seq),
+    _manuf_code(manuf_code), _transact_seq(transact_seq), _cmd_id(cmd_id),
     _payload(buf_len ? buf_len : 250),      // allocate the data frame from source or preallocate big enough
     _cluster_id(clusterid), _groupaddr(groupaddr),
     _srcaddr(srcaddr), _srcendpoint(srcendpoint), _dstendpoint(dstendpoint), _wasbroadcast(wasbroadcast),
@@ -215,9 +215,9 @@ private:
   uint16_t                _manuf_code = 0;      // optional
   uint8_t                 _transact_seq = 0;    // transaction sequence number
   uint8_t                 _cmd_id = 0;
+  SBuffer                 _payload;
   uint16_t                _cluster_id = 0;
   uint16_t                _groupaddr = 0;
-  SBuffer                 _payload;
   // information from decoded ZCL frame
   uint16_t                _srcaddr;
   uint8_t                 _srcendpoint;
