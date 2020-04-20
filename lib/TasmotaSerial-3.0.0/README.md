@@ -1,6 +1,7 @@
 # TasmotaSerial
 
 Implementation of software serial with hardware serial fallback library for the ESP8266
+Implementation of dual UART hardware serial for the ESP32
 
 Allows for several instances to be active at the same time.
 

@@ -55,6 +55,10 @@ class TasmotaSerial : public Stream {
 
     uint32_t getLoopReadMetric(void) const { return m_bit_follow_metric; }
 
+#ifdef ESP32
+    uint32_t getUart(void) const { return m_uart; }
+#endif
+
     using Print::write;
 
   private:
@@ -81,6 +85,10 @@ class TasmotaSerial : public Stream {
     bool m_high_speed = false;
     bool m_very_high_speed = false;   // above 100000 bauds
     uint8_t *m_buffer;
+
+#ifdef ESP32
+    uint8_t m_uart = 0;
+#endif
 
     void _fast_write(uint8_t b);      // IRAM minimized version
 };

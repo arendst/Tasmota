@@ -79,6 +79,10 @@ static void (*ISRList[16])() = {
       tms_isr_15
 };
 
+#ifdef ESP32
+static uint8_t tasmota_serial_index = 3;
+#endif
+
 TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback, int nwmode, int buffer_size)
 {
   m_valid = false;
@@ -161,12 +165,29 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
       Serial.swap();
     }
 #else  // ESP32
-    Serial2.flush();
-    if (2 == m_stop_bits) {
-      Serial2.begin(speed, SERIAL_8N2, m_rx_pin, m_tx_pin);
-    } else {
-      Serial2.begin(speed, SERIAL_8N1, m_rx_pin, m_tx_pin);
+    tasmota_serial_index--;
+    if (2 == tasmota_serial_index) {
+      m_uart = 2;
+      Serial2.flush();
+      if (2 == m_stop_bits) {
+        Serial2.begin(speed, SERIAL_8N2, m_rx_pin, m_tx_pin);
+      } else {
+        Serial2.begin(speed, SERIAL_8N1, m_rx_pin, m_tx_pin);
+      }
     }
+    else if (1 == tasmota_serial_index) {
+      m_uart = 1;
+      Serial1.flush();
+      if (2 == m_stop_bits) {
+        Serial1.begin(speed, SERIAL_8N2, m_rx_pin, m_tx_pin);
+      } else {
+        Serial1.begin(speed, SERIAL_8N1, m_rx_pin, m_tx_pin);
+      }
+    }
+    else {
+      m_valid = false;
+    }
+    Serial.printf("TSR: Using UART%d\n", m_uart);
 #endif  // ESP8266 - ESP32
   } else {
     // Use getCycleCount() loop to get as exact timing as possible
@@ -195,7 +216,11 @@ void TasmotaSerial::flush() {
 #ifdef ESP8266
     Serial.flush();
 #else
-    Serial2.flush();
+    if (2 == m_uart) {
+      Serial2.flush();
+    } else {
+      Serial1.flush();
+    }
 #endif
   } else {
     m_in_pos = m_out_pos = 0;
@@ -207,7 +232,11 @@ int TasmotaSerial::peek() {
 #ifdef ESP8266
     return Serial.peek();
 #else
-    return Serial2.peek();
+    if (2 == m_uart) {
+      return Serial2.peek();
+    } else{
+      return Serial1.peek();
+    }
 #endif
   } else {
     if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) return -1;
@@ -221,7 +250,11 @@ int TasmotaSerial::read()
 #ifdef ESP8266
     return Serial.read();
 #else
-    return Serial2.read();
+    if (2 == m_uart) {
+      return Serial2.read();
+    } else {
+      return Serial1.read();
+    }
 #endif
   } else {
     if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) return -1;
@@ -237,7 +270,11 @@ int TasmotaSerial::available()
 #ifdef ESP8266
     return Serial.available();
 #else
-    return Serial2.available();
+    if (2 == m_uart) {
+      return Serial2.available();
+    } else {
+      return Serial1.available();
+    }
 #endif
   } else {
     int avail = m_in_pos - m_out_pos;
@@ -286,7 +323,11 @@ size_t TasmotaSerial::write(uint8_t b)
 #ifdef ESP8266
     return Serial.write(b);
 #else
-    return Serial2.write(b);
+    if (2 == m_uart) {
+      return Serial2.write(b);
+    } else {
+      return Serial1.write(b);
+    }
 #endif
   } else {
     if (-1 == m_tx_pin) return 0;

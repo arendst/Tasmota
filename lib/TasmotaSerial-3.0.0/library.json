@@ -1,10 +1,10 @@
 {
     "name": "TasmotaSerial",
-    "version": "2.4.1",
+    "version": "3.0.0",
     "keywords": [
       "serial", "io", "TasmotaSerial"
     ],
-    "description": "Implementation of software serial with hardware serial fallback for ESP8266.",
+    "description": "Implementation of software serial with hardware serial fallback for ESP8266 and ESP32.",
     "repository":
     {
         "type": "git",
