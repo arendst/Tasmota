@@ -586,7 +586,6 @@
 #define D_CMND_TIMEALLOWRAMPUPSET "TimeAllowRampupSet"
 #define D_CMND_TEMPMEASUREDSET "TempMeasuredSet"
 #define D_CMND_TEMPTARGETSET "TempTargetSet"
-#define D_CMND_TIMEPLANSET "TimePlanSet"
 #define D_CMND_TEMPTARGETREAD "TempTargetRead"
 #define D_CMND_TEMPMEASUREDREAD "TempMeasuredRead"
 #define D_CMND_TEMPMEASUREDGRDREAD "TempMeasuredGrdRead"

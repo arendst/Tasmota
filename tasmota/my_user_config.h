@@ -669,7 +669,6 @@
 #define HEATING_TIME_RAMPUP_CYCLE       1800     // Default time ramp-up cycle in seconds
 #define HEAT_TIME_SENS_LOST             30       // Maximum time w/o sensor update to set it as lost in minutes
 #define HEAT_TEMP_SENS_NUMBER           1        // Default temperature sensor number
-#define HEAT_STATE_EMERGENCY            false    // Default state for heating emergency
 #define HEAT_POWER_MAX                  60       // Default maximum output power in Watt
 #define HEAT_TIME_MANUAL_TO_AUTO        60       // Default time without input switch active to change from manual to automatic in minutes
 #define HEAT_TIME_ON_LIMIT              120      // Default maximum time with output active in minutes

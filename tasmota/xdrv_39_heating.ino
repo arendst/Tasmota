@@ -30,7 +30,7 @@
 #define DOMOTICZ_IDX3        793
 #endif
 
-enum HeatingModes { HEAT_OFF, HEAT_AUTOMATIC_OP, HEAT_MANUAL_OP, HEAT_TIME_PLAN };
+enum HeatingModes { HEAT_OFF, HEAT_AUTOMATIC_OP, HEAT_MANUAL_OP };
 enum ControllerModes { CTR_HYBRID, CTR_PI, CTR_RAMP_UP };
 enum ControllerHybridPhases { CTR_HYBRID_RAMP_UP, CTR_HYBRID_PI };
 enum InterfaceStates { IFACE_OFF, IFACE_ON };
@@ -76,7 +76,7 @@ const char DOMOTICZ_MES[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\"
 
 const char kHeatingCommands[] PROGMEM = "|" D_CMND_HEATINGMODESET "|" D_CMND_TEMPFROSTPROTECTSET "|" 
   D_CMND_CONTROLLERMODESET "|" D_CMND_INPUTSWITCHSET "|" D_CMND_OUTPUTRELAYSET "|" D_CMND_TIMEALLOWRAMPUPSET "|" 
-  D_CMND_TEMPMEASUREDSET "|" D_CMND_TEMPTARGETSET "|" D_CMND_TIMEPLANSET "|" D_CMND_TEMPTARGETREAD "|" 
+  D_CMND_TEMPMEASUREDSET "|" D_CMND_TEMPTARGETSET "|" D_CMND_TEMPTARGETREAD "|" 
   D_CMND_TEMPMEASUREDREAD "|" D_CMND_TEMPMEASUREDGRDREAD "|" D_CMND_TEMPSENSNUMBERSET "|" 
   D_CMND_STATEEMERGENCYSET "|" D_CMND_POWERMAXSET "|" D_CMND_TIMEMANUALTOAUTOSET "|" D_CMND_TIMEONLIMITSET "|" 
   D_CMND_PROPBANDSET "|" D_CMND_TIMERESETSET "|" D_CMND_TIMEPICYCLESET "|" D_CMND_TEMPANTIWINDUPRESETSET "|" 
@@ -86,7 +86,7 @@ const char kHeatingCommands[] PROGMEM = "|" D_CMND_HEATINGMODESET "|" D_CMND_TEM
 
 void (* const HeatingCommand[])(void) PROGMEM = {
   &CmndHeatingModeSet, &CmndTempFrostProtectSet, &CmndControllerModeSet, &CmndInputSwitchSet, &CmndOutputRelaySet, 
-  &CmndTimeAllowRampupSet, &CmndTempMeasuredSet, &CmndTempTargetSet, &CmndTimePlanSet, &CmndTempTargetRead, 
+  &CmndTimeAllowRampupSet, &CmndTempMeasuredSet, &CmndTempTargetSet, &CmndTempTargetRead, 
   &CmndTempMeasuredRead, &CmndTempMeasuredGrdRead, &CmndTempSensNumberSet, &CmndStateEmergencySet, 
   &CmndPowerMaxSet, &CmndTimeManualToAutoSet, &CmndTimeOnLimitSet, &CmndPropBandSet, &CmndTimeResetSet, 
   &CmndTimePiCycleSet, &CmndTempAntiWindupResetSet, &CmndTempHystSet, &CmndTimeMaxActionSet, 
@@ -112,15 +112,6 @@ struct HEATING {
   int32_t time_total_pi;                                            // Time total (proportional + integral) of the PI controller
   uint16_t kP_pi = 0;                                               // kP value for the PI controller
   uint16_t kI_pi = 0;                                               // kP value for the PI controller multiplied by 100
-  uint16_t heating_plan[7][6] = {                                   // Heating plan for the week (3 times/temperatures per day in tenths of degrees)
-           {0,0,0,0,0,0},                                           // Monday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                                           // Tuesday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                                           // Wednesday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                                           // Thursday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                                           // Friday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0},                                           // Saturday, format {time/temp, time/temp, time/temp}
-           {0,0,0,0,0,0}                                            // Sunday, format {time/temp, time/temp, time/temp}
-           };
   int16_t temp_measured = 0;                                        // Temperature measurement received from sensor in tenths of degrees
   uint8_t time_output_delay = HEATING_TIME_OUTPUT_DELAY;            // Output delay between state change and real actuation event (f.i. valve open/closed)
   uint8_t  counter_rampup_cycles = 0;                               // Counter of ramp-up cycles
@@ -247,7 +238,6 @@ void HeatingHybridCtrPhase()
             Heating.time_ctr_checkpoint = 0;
             // Reset timers
             Heating.time_ctr_changepoint = 0;
-            Heating.time_ctr_checkpoint = 0;
             // Set PI controller
             Heating.status.phase_hybrid_ctr = CTR_HYBRID_PI;
           }
@@ -277,7 +267,7 @@ void HeatingHybridCtrPhase()
 #endif
 }
 
-bool HeatStateAutoOrPlanToManual()
+bool HeatStateAutoToManual()
 {
   bool change_state = false;
 
@@ -324,29 +314,20 @@ void HeatingState()
       break;
     case HEAT_AUTOMATIC_OP:                     // State automatic heating active following to command target temp.
       if (HeatStateAllToOff()) {
-        Heating.status.heating_mode = HEAT_OFF;        // Emergency switch to HEAT_OFF
+        Heating.status.heating_mode = HEAT_OFF;           // Emergency switch to HEAT_OFF
       }
-      if (HeatStateAutoOrPlanToManual()) {
-        Heating.status.heating_mode = HEAT_MANUAL_OP;  // If sensor not alive change to HEAT_MANUAL_OP
+      if (HeatStateAutoToManual()) {
+        Heating.status.heating_mode = HEAT_MANUAL_OP;     // If sensor not alive change to HEAT_MANUAL_OP
       }
       HeatingCtrState();
       break;
     case HEAT_MANUAL_OP:                        // State manual operation following input switch
       if (HeatStateAllToOff()) {
-        Heating.status.heating_mode = HEAT_OFF;        // Emergency switch to HEAT_OFF
+        Heating.status.heating_mode = HEAT_OFF;           // Emergency switch to HEAT_OFF
       }
       if (HeatStateManualToAuto()) {
         Heating.status.heating_mode = HEAT_AUTOMATIC_OP;  // Input switch inactive and timeout reached change to HEAT_AUTOMATIC_OP
       }
-      break;
-    case HEAT_TIME_PLAN:                        // State automatic heating active following set heating plan
-      if (HeatStateAllToOff()) {
-        Heating.status.heating_mode = HEAT_OFF;        // Emergency switch to HEAT_OFF
-      }
-      if (HeatStateAutoOrPlanToManual()) {
-        Heating.status.heating_mode = HEAT_MANUAL_OP;  // If sensor not alive change to HEAT_MANUAL_OP
-      }
-      HeatingCtrState();
       break;
   }
 }
@@ -385,22 +366,22 @@ void HeatingCalculatePI()
   // Kp = 100/PI.propBand. PI.propBand(Xp) = Proportional range (4K in 4K/200 controller)
   Heating.kP_pi = 100 / (uint16_t)(Heating.val_prop_band);
   // Calculate proportional
-  Heating.time_proportional_pi = ((int32_t)(Heating.temp_pi_error * (int16_t)Heating.kP_pi) * ((uint32_t)Heating.time_pi_cycle * 60)) / 1000;
+  Heating.time_proportional_pi = ((int32_t)(Heating.temp_pi_error * (int16_t)Heating.kP_pi) * ((int32_t)Heating.time_pi_cycle * 60)) / 1000;
 
   // Minimum proportional action limiter
   // If proportional action is less than the minimum action time
   // AND proportional > 0
   // then adjust to minimum value
-  if ((Heating.time_proportional_pi < abs(((uint32_t)Heating.time_min_action * 60)))
+  if ((Heating.time_proportional_pi < abs(((int32_t)Heating.time_min_action * 60)))
     && (Heating.time_proportional_pi > 0)) {
-    Heating.time_proportional_pi = ((uint32_t)Heating.time_min_action * 60);
+    Heating.time_proportional_pi = ((int32_t)Heating.time_min_action * 60);
   }
   
   if (Heating.time_proportional_pi < 0) {
     Heating.time_proportional_pi = 0;
   } 
-  else if (Heating.time_proportional_pi > ((uint32_t)Heating.time_pi_cycle * 60)) {
-    Heating.time_proportional_pi = ((uint32_t)Heating.time_pi_cycle * 60);
+  else if (Heating.time_proportional_pi > ((int32_t)Heating.time_pi_cycle * 60)) {
+    Heating.time_proportional_pi = ((int32_t)Heating.time_pi_cycle * 60);
   }
 
   // Calculate integral
@@ -452,7 +433,7 @@ void HeatingCalculatePI()
     }
 
     // Integral calculation
-    Heating.time_integral_pi = ((((int32_t)Heating.temp_pi_accum_error * (int32_t)Heating.kI_pi) / 100) * (int32_t)((uint32_t)Heating.time_pi_cycle * 60)) / 1000;
+    Heating.time_integral_pi = (((int32_t)Heating.temp_pi_accum_error * (int32_t)Heating.kI_pi) * (int32_t)((uint32_t)Heating.time_pi_cycle * 60)) / 100000;
 
     // Antiwindup of the integrator
     // If integral calculation is bigger than cycle time, adjust result
@@ -468,9 +449,9 @@ void HeatingCalculatePI()
   // Antiwindup of the output
   // If result is bigger than cycle time, the result will be adjusted
   // to the cylce time minus safety time and error will not be cummulated]]
-  if (Heating.time_total_pi > ((uint32_t)Heating.time_pi_cycle * 60)) {
+  if (Heating.time_total_pi >= ((int32_t)Heating.time_pi_cycle * 60)) {
     // Limit to cycle time //at least switch down a minimum time
-    Heating.time_total_pi = ((uint32_t)Heating.time_pi_cycle * 60);
+    Heating.time_total_pi = ((int32_t)Heating.time_pi_cycle * 60);
   }
   else if (Heating.time_total_pi < 0) {
     Heating.time_total_pi = 0;
@@ -499,20 +480,20 @@ void HeatingCalculatePI()
   // If result is less than the minimum action time, adjust to minimum value]]
   if ((Heating.time_total_pi <= abs(((uint32_t)Heating.time_min_action * 60)))
     && (Heating.time_total_pi != 0)) {
-    Heating.time_total_pi = ((uint32_t)Heating.time_min_action * 60);
+    Heating.time_total_pi = ((int32_t)Heating.time_min_action * 60);
   }
   // Maximum action limiter
   // If result is more than the maximum action time, adjust to maximum value]]
-  else if (Heating.time_total_pi > abs(((uint32_t)Heating.time_max_action * 60))) {
-    Heating.time_total_pi = ((uint32_t)Heating.time_max_action * 60);
+  else if (Heating.time_total_pi > abs(((int32_t)Heating.time_max_action * 60))) {
+    Heating.time_total_pi = ((int32_t)Heating.time_max_action * 60);
   }
   // If switched off less time than safety time, do not switch off
-  else if (Heating.time_total_pi > (((uint32_t)Heating.time_pi_cycle * 60) - ((uint32_t)Heating.time_min_turnoff_action * 60))) {
-    Heating.time_total_pi = ((uint32_t)Heating.time_pi_cycle * 60);
+  else if (Heating.time_total_pi > (((int32_t)Heating.time_pi_cycle * 60) - ((int32_t)Heating.time_min_turnoff_action * 60))) {
+    Heating.time_total_pi = ((int32_t)Heating.time_pi_cycle * 60);
   }
   
   // Adjust output switch point
-  Heating.time_ctr_changepoint = uptime + Heating.time_total_pi;
+  Heating.time_ctr_changepoint = uptime + (uint32_t)Heating.time_total_pi;
   // Adjust next cycle point
   Heating.time_ctr_checkpoint = uptime + ((uint32_t)Heating.time_pi_cycle * 60);
 }
@@ -674,33 +655,6 @@ void HeatingCtrWork()
   }
 }
 
-void HeatingPlanTempTarget()
-{
-  int16_t tmp_minute_delta[3]; // Array of deltas in minute for 3 different time minutes of a day to the current utc time minute of the day
-  uint8_t time_selected = 0; // Index of time selected
-  int16_t time_lowest_delta = 1440; // lowest time delta in minutes from the array values to UTC, initiated to 1 day (1440 minutes)
-  uint8_t day_of_week = RtcTime.day_of_week; // Current day of week (1 = Sun)
-
-  // For each of the three times within the current day of week
-  for (uint8_t i=0; i<3; i++) {
-
-    // Store time difference between current minute of the day and the minute of the day of each planned time wihtin array
-    tmp_minute_delta[i] = ((((int16_t)RtcTime.hour * 60) + (int16_t)RtcTime.minute) - (int16_t)Heating.heating_plan[day_of_week - 1][(i * 2)]);
-    
-    if ((tmp_minute_delta[i] >= 0) &&
-      (tmp_minute_delta[i] < time_lowest_delta)) {
-      time_lowest_delta = tmp_minute_delta[i];
-      time_selected = i;
-    }
-  }
-
-  // Update target value if time delta to selected time is 0 or positive
-  if ((tmp_minute_delta[time_selected] >= 0)
-    && (Heating.heating_plan[day_of_week - 1][(2 * time_selected) + 1] >= Heating.temp_frost_protect)) {
-    Heating.temp_target_level = Heating.heating_plan[day_of_week - 1][(2 * time_selected) + 1];
-  }
-}
-
 void HeatingWork()
 {
   switch (Heating.status.heating_mode) {
@@ -712,11 +666,6 @@ void HeatingWork()
       break;
     case HEAT_MANUAL_OP:                        // State manual operation following input switch
       Heating.time_ctr_checkpoint = 0;
-      break;
-    case HEAT_TIME_PLAN:                        // State automatic heating active following set heating plan
-      // Set target temperature based on plan
-      HeatingPlanTempTarget();
-      HeatingCtrWork();
       break;
   }
   bool output_command;
@@ -757,8 +706,8 @@ void HeatingVirtualSwitchCtrState()
   Response_P(DOMOTICZ_MES, DOMOTICZ_IDX2, (0 == Heating.status.phase_hybrid_ctr) ? 0 : 1, "");
   MqttPublish(domoticz_in_topic);
 
-  Response_P(DOMOTICZ_MES, DOMOTICZ_IDX3, (0 == Heating.time_ctr_changepoint) ? 0 : 1, "");
-  MqttPublish(domoticz_in_topic);
+  //Response_P(DOMOTICZ_MES, DOMOTICZ_IDX3, (0 == Heating.time_ctr_changepoint) ? 0 : 1, "");
+  //MqttPublish(domoticz_in_topic);
 }
 #endif
 
@@ -770,7 +719,7 @@ void CmndHeatingModeSet(void)
 {
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(CharToFloat(XdrvMailbox.data));
-    if ((value >= HEAT_OFF) && (value <= HEAT_TIME_PLAN)) {
+    if ((value >= HEAT_OFF) && (value <= HEAT_MANUAL_OP)) {
       Heating.status.heating_mode = value;
       Heating.timestamp_input_on = 0;     // Reset last manual switch timer if command set externally
     }
@@ -866,99 +815,6 @@ void CmndTempTargetSet(void)
     }
   }
   ResponseCmndFloat(((float)Heating.temp_target_level) / 10, 1);
-}
-
-void CmndTimePlanSet(void)
-{
-  // TimePlanSet1 05:00/21.0, 15:30/22.5, 23:00/18.0 - TimePlanSet1 3 sets of hour and related target temperature for Monday´s
-  // TimePlanSet2 05:00/21.0, 15:30/22.5, 23:00/18.0 - TimePlanSet2 3 sets of hour and related target temperature for Tuesday´s
-  // TimePlanSet3 05:00/21.0, 15:30/22.5, 23:00/18.0 - TimePlanSet3 3 sets of hour and related target temperature for Wednesday´s
-  // TimePlanSet4 05:00/21.0, 15:30/22.5, 23:00/18.0 - TimePlanSet4 3 sets of hour and related target temperature for Thursday´s
-  // TimePlanSet5 05:00/21.0, 15:30/22.5, 23:00/18.0 - TimePlanSet5 3 sets of hour and related target temperature for Friday´s
-  // TimePlanSet6 05:00/21.0, 15:30/22.5, 23:00/18.0 - TimePlanSet6 3 sets of hour and related target temperature for Saturday´s
-  // TimePlanSet7 05:00/21.0, 15:30/22.5, 23:00/18.0 - TimePlanSet7 3 sets of hour and related target temperature for Sunday´s
-
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 7)) {
-    if (XdrvMailbox.data_len > 0) {
-      uint8_t aux_index = 0;
-      char *p;
-      char *str = strtok_r(XdrvMailbox.data, ", ", &p);  // Extract first pair time/temp -> 05:00/21.0
-
-      while ((str != nullptr) && (aux_index < 6)) {
-        char *q;
-        char *minutes;
-        char *temp;
-        char *temp_decimal;
-        float temp_f;
-        uint8_t str_len =strlen(str);
-        
-        // Check basic structure of the data, length matching, position of ":" and "/" matching
-        if((str_len > 0) && (str_len < 11) && (str[2] == ':') && (str[5] == '/')) {
-          // Extract the time
-          uint16_t value = strtol(str, &q, 10);            // extract 5
-
-          char value_c[33];
-          dtostrfd((double)value, 0, value_c);
-
-          if ((value >= 0) && (value < 24)) {                                // Below 24 is hours
-            uint8_t day_of_week = XdrvMailbox.index -1;
-            minutes = strtok_r(nullptr, ":/.", &q);
-            Heating.heating_plan[day_of_week][aux_index] = (value * 60);// Multiply hours by 60 minutes
-            if (minutes) {
-              value = strtol(minutes, nullptr, 10);         // extract 00
-              if (value <= 59) {
-                Heating.heating_plan[day_of_week][aux_index] += value;
-              }
-            }
-            aux_index++;
-
-            // Extract the whole-number part of the temperature
-            temp = strtok_r(nullptr, ":/.", &q);
-
-            if (temp) {
-              value = strtol(temp, nullptr, 10);         // extract 00             
-              temp_f = CharToFloat((char*)temp);
-              temp_decimal = strtok_r(nullptr, ":/.", &q);
-              if (temp_decimal) {
-                value = strtol(temp_decimal, nullptr, 10);         // extract decimal part              
-                if (value <= 9) {              
-                  temp_f += (CharToFloat((char*)temp_decimal) / 10);
-                }
-              }
-              if ((temp_f > -100) && (temp_f < 100)) {
-                Heating.heating_plan[day_of_week][aux_index] = (uint16_t)(temp_f * 10); // Multiply degrees by 10 to convert to decidegrees
-              }
-            }
-            aux_index++;
-          }
-          else {
-            aux_index += 2;
-          }
-        }
-        else {
-          aux_index += 2;
-        }
-        str = strtok_r(nullptr, ", ", &p);
-      }
-    }
-    uint8_t index_d = XdrvMailbox.index;
-    char day[7][4] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-    char *day_p = &day[index_d - 1][0];
-    char index_s[strlen(day_p)+1];
-    strcpy(index_s, day_p);
-    char temp1[5];
-    char temp2[5];
-    char temp3[5];
-    dtostrfd((double)((float)Heating.heating_plan[index_d - 1][1] / 10), 1, temp1);
-    dtostrfd((double)((float)Heating.heating_plan[index_d - 1][3] / 10), 1, temp2);
-    dtostrfd((double)((float)Heating.heating_plan[index_d - 1][5] / 10), 1, temp3);
-
-    Response_P(PSTR("{\"%s\":{\"1stTime\":{\"Time\":\"%s\",\"Temperature\":\"%s\"},\"2ndTime\":{\"Time\":\"%s\",\"Temperature\":\"%s\"},\"3rdTime\":{\"Time\":\"%s\",\"Temperature\":\"%s\"}}"),
-      index_s,
-      GetMinuteTime(Heating.heating_plan[index_d - 1][0]).c_str(),temp1,
-      GetMinuteTime(Heating.heating_plan[index_d - 1][2]).c_str(),temp2,
-      GetMinuteTime(Heating.heating_plan[index_d - 1][4]).c_str(),temp3);
-  }
 }
 
 void CmndTempTargetRead(void)
@@ -1237,6 +1093,12 @@ bool Xdrv39(uint8_t function)
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Heating.status.status_output: %s"), result_chr);
         dtostrfd(Heating.status.status_cycle_active, 0, result_chr);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Heating.status.status_cycle_active: %s"), result_chr);
+        dtostrfd(Heating.time_proportional_pi, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Heating.time_proportional_pi: %s"), result_chr);
+        dtostrfd(Heating.time_integral_pi, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Heating.time_integral_pi: %s"), result_chr);
+        dtostrfd(Heating.time_total_pi, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Heating.time_total_pi: %s"), result_chr);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Heating End ------"));
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));
 #endif
