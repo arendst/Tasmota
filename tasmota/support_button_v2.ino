@@ -306,13 +306,15 @@ void MqttButtonTopic(uint8_t button_id, uint8_t action, uint8_t hold)
   char stopic[TOPSZ];
   char mqttstate[7];
 
-  GetTextIndexed(mqttstate, sizeof(mqttstate), action, kMultiPress);
-
   SendKey(KEY_BUTTON, button_id, (hold) ? 3 : action +9);
-  snprintf_P(scommand, sizeof(scommand), PSTR("BUTTON%d"), button_id);
-  GetTopic_P(stopic, STAT, mqtt_topic, scommand);
-  Response_P(S_JSON_COMMAND_SVALUE, "ACTION", (hold) ? SettingsText(SET_STATE_TXT4) : mqttstate);
-  MqttPublish(stopic);
+
+  if (!Settings.flag.hass_discovery) {
+    GetTextIndexed(mqttstate, sizeof(mqttstate), action, kMultiPress);
+    snprintf_P(scommand, sizeof(scommand), PSTR("BUTTON%d"), button_id);
+    GetTopic_P(stopic, STAT, mqtt_topic, scommand);
+    Response_P(S_JSON_COMMAND_SVALUE, "ACTION", (hold) ? SettingsText(SET_STATE_TXT4) : mqttstate);
+    MqttPublish(stopic);
+  }
 }
 
 void ButtonLoop(void)
