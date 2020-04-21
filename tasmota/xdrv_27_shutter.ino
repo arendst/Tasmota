@@ -296,16 +296,16 @@ void ShutterUpdatePosition(void)
   for (uint32_t i = 0; i < shutters_present; i++) {
     if (Shutter.direction[i] != 0) {
       int32_t stop_position_delta = 20;
-      if (Shutter.mode == SHT_OFF_ON__OPEN_CLOSE_STEPPER) {
-        // Calculate position with counter. Much more accurate and no need for motordelay workaround
-        //                        adding some steps to stop early
-        Shutter.real_position[i] =  ShutterCounterBasedPosition(i);
-        if (!Shutter.start_reported) {
-          ShutterReportPosition(true);
-          XdrvRulesProcess();
-          Shutter.start_reported = 1;
-        }
+      // Calculate position with counter. Much more accurate and no need for motordelay workaround
+      //                        adding some steps to stop early
+      Shutter.real_position[i] =  ShutterCounterBasedPosition(i);
+      if (!Shutter.start_reported) {
+        ShutterReportPosition(true);
+        XdrvRulesProcess();
+        Shutter.start_reported = 1;
+      }
 
+      if (Shutter.mode == SHT_OFF_ON__OPEN_CLOSE_STEPPER) {
         int32_t  max_frequency = Shutter.direction[i] == 1 ? Shutter.max_pwm_frequency : Shutter.max_close_pwm_frequency[i];
         int32_t  max_freq_change_per_sec =  Shutter.max_pwm_frequency*steps_per_second / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
         int32_t  min_runtime_ms = Shutter.pwm_frequency[i]*1000 / max_freq_change_per_sec;
