@@ -70,6 +70,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
 - Add commands ``NrfPage``, ``NrfIgnore``, ``NrfScan`` and ``NrfBeacon`` to NRF24 Bluetooth driver (#8075)
 - Add commands ``GlobalTemp`` and ``GlobalHum`` to init sensor data (#8152)
+- Add command ``SO`` as shortcut for command ``SetOption``
 - Add command ``SetOption41 <x>`` to force sending gratuitous ARP every <x> seconds
 - Add command ``SetOption73 1`` for button decoupling and send multi-press and hold MQTT messages by Federico Leoni (#8235)
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)

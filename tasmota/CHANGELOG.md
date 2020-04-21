@@ -5,6 +5,7 @@
 - Fix Zigbee DimmerUp/DimmerDown malformed
 - Add config version tag
 - Add command ``SetOption73 1`` for button decoupling and send multi-press and hold MQTT messages by Federico Leoni (#8235)
+- Add command ``SO`` as shortcut for command ``SetOption``
 
 ### 8.2.0.3 20200329
 
