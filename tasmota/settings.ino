@@ -713,6 +713,13 @@ void SettingsDefaultSet2(void)
 {
   memset((char*)&Settings +16, 0x00, sizeof(Settings) -16);
 
+#ifdef ESP8266
+//  Settings.config_version = 0;  // ESP8266 (Has been 0 for long time)
+#endif  // ESP8266
+#ifdef ESP32
+  Settings.config_version = 1;  // ESP32
+#endif  // ESP32
+
   Settings.flag.stop_flash_rotate = APP_FLASH_CYCLE;
   Settings.flag.global_state = APP_ENABLE_LEDLINK;
   Settings.flag3.sleep_normal = APP_NORMAL_SLEEP;
