@@ -53,9 +53,6 @@ void (* const ShutterCommand[])(void) PROGMEM = {
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d}";
   const char JSON_SHUTTER_BUTTON[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Button%d\":%d}";
 
-const char kCommands[] PROGMEM =
-  D_CMND_WIFICONFIG " 2|" D_CMND_WIFICONFIG " 2|" D_CMND_WIFICONFIG " 2|" D_CMND_RESTART " 1|" D_CMND_UPGRADE " 1";
-
 #include <Ticker.h>
 
 Ticker TickerShutter;
@@ -648,7 +645,7 @@ void ShutterButtonHandler(void)
         // 5x..7x && no SetOption1 (0) checked above
         // simultaneous or stand alone button press 5x, 6x, 7x detected
         char scmnd[20];
-        GetTextIndexed(scmnd, sizeof(scmnd), press_index -3, kCommands);
+        snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_WIFICONFIG " 2"));
         ExecuteCommand(scmnd, SRC_BUTTON);
         return;
       } else if ((buttonState == SHT_PRESSED_EXT_HOLD_SIMULTANEOUS) || ((shutter_index_num_buttons==1) && (buttonState == SHT_PRESSED_EXT_HOLD))){
