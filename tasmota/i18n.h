@@ -557,6 +557,7 @@
 #define D_CMND_SHUTTER_RELAY "Relay"
 #define D_CMND_SHUTTER_SETHALFWAY "SetHalfway"
 #define D_CMND_SHUTTER_SETCLOSE "SetClose"
+#define D_CMND_SHUTTER_SETOPEN "SetOpen"
 #define D_CMND_SHUTTER_INVERT "Invert"
 #define D_CMND_SHUTTER_CLIBRATION "Calibration"
 #define D_CMND_SHUTTER_MOTORDELAY "MotorDelay"
