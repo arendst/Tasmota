@@ -24,6 +24,8 @@
                     forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
 
 */
+#ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
+
 #ifdef USE_MI_ESP32
 
 #define XSNS_62                    62
@@ -217,7 +219,7 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
     } else if(params->supervision_timeout > 100) { /** 10ms units */
       return false;
     }
-    return true;  
+    return true;
   }
 };
 
@@ -304,7 +306,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
     }
   }
   if(!_success) return 0xff;
- 
+
   DEBUG_SENSOR_LOG(PSTR("%s: vector size %u"),D_CMND_MI32, MIBLEsensors.size());
   for(uint32_t i=0; i<MIBLEsensors.size(); i++){
     if(memcmp(_serial,MIBLEsensors[i].serial,sizeof(_serial))==0){
@@ -400,7 +402,7 @@ void MI32ConnectActiveSensor(){ // only use inside a task !!
             MI32.mode.willConnect = 0;
             vTaskDelete( NULL );
         }
-      } 
+      }
       else {
         MI32Client = NimBLEDevice::getDisconnectedClient();
       }
@@ -438,7 +440,7 @@ void MI32StartScanTask(){
 }
 
 void MI32ScanTask(void *pvParameters){
-  NimBLEScan* pScan = NimBLEDevice::getScan(); 
+  NimBLEScan* pScan = NimBLEDevice::getScan();
   pScan->setAdvertisedDeviceCallbacks(&MI32ScanCallbacks);
   pScan->setActiveScan(false);
   pScan->start(5, MI32scanEndedCB); // hard coded duration
@@ -502,10 +504,10 @@ void MI32connectLYWSD03(){
   NimBLERemoteCharacteristic* pChr = nullptr;
   static BLEUUID serviceUUID("ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6");
   static BLEUUID charUUID("ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6");
-  pSvc = MI32Client->getService(serviceUUID);     
+  pSvc = MI32Client->getService(serviceUUID);
   if(pSvc) {
       pChr = pSvc->getCharacteristic(charUUID);
-  } 
+  }
   if(pChr->canNotify()) {
     if(!pChr->registerForNotify(MI32notifyCB)) {
       MI32.mode.willConnect = 0;
@@ -549,10 +551,10 @@ void MI32TimeTask(void *pvParameters){
   NimBLERemoteCharacteristic* pChr = nullptr;
   static BLEUUID serviceUUID("EBE0CCB0-7A0A-4B0C-8A1A-6FF2997DA3A6");
   static BLEUUID charUUID("EBE0CCB7-7A0A-4B0C-8A1A-6FF2997DA3A6");
-  pSvc = MI32Client->getService(serviceUUID);     
+  pSvc = MI32Client->getService(serviceUUID);
   if(pSvc) {
       pChr = pSvc->getCharacteristic(charUUID);
-  } 
+  }
   if(pChr->canWrite()) {
     union {
       uint8_t buf[5];
@@ -617,7 +619,7 @@ void MI32BatteryTask(void *pvParameters){
       case FLORA:
         MI32batteryFLORA();
         break;
-      case LYWSD02: 
+      case LYWSD02:
         MI32batteryLYWSD02();
         break;
       case CGD1:
@@ -647,7 +649,7 @@ void MI32batteryFLORA(){
   static BLEUUID FLserviceUUID("00001204-0000-1000-8000-00805f9b34fb");
   static BLEUUID FLcharUUID("00001a02-0000-1000-8000-00805f9b34fb");
 
-  pSvc = MI32Client->getService(FLserviceUUID);     
+  pSvc = MI32Client->getService(FLserviceUUID);
   if(pSvc) {     /** make sure it's not null */
       pChr = pSvc->getCharacteristic(FLcharUUID);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: got Flora char %s"),D_CMND_MI32, pChr->getUUID().toString().c_str());
@@ -677,7 +679,7 @@ void MI32batteryLYWSD02(){
   static BLEUUID LY2serviceUUID("EBE0CCB0-7A0A-4B0C-8A1A-6FF2997DA3A6");
   static BLEUUID LY2charUUID("EBE0CCC4-7A0A-4B0C-8A1A-6FF2997DA3A6");
 
-  pSvc = MI32Client->getService(LY2serviceUUID);     
+  pSvc = MI32Client->getService(LY2serviceUUID);
   if(pSvc) {
       pChr = pSvc->getCharacteristic(LY2charUUID);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: got LYWSD02 char %s"),D_CMND_MI32, pChr->getUUID().toString().c_str());
@@ -707,7 +709,7 @@ void MI32batteryCGD1(){
   static BLEUUID CGD1serviceUUID("180F");
   static BLEUUID CGD1charUUID("2A19");
 
-  pSvc = MI32Client->getService(CGD1serviceUUID);     
+  pSvc = MI32Client->getService(CGD1serviceUUID);
   if(pSvc) {
       pChr = pSvc->getCharacteristic(CGD1charUUID);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: got CGD1 char %s"),D_CMND_MI32, pChr->getUUID().toString().c_str());
@@ -766,7 +768,7 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot){
     case 0x07:
     MIBLEsensors[_slot].lux=_beacon.lux & 0x00ffffff;
     DEBUG_SENSOR_LOG(PSTR("Mode 7: U24: %u Lux"), _beacon.lux & 0x00ffffff);
-    break;    
+    break;
     case 0x08:
     _tempFloat =(float)_beacon.moist;
     if(_tempFloat<100){
@@ -898,7 +900,7 @@ bool MI32readBat(char *_buf){
 
 /**
  * @brief Main loop of the driver, "high level"-loop
- * 
+ *
  */
 
 void MI32EverySecond(bool restart){
@@ -918,7 +920,7 @@ void MI32EverySecond(bool restart){
     if (MI32.mode.willSetTime == 0){
       MI32.mode.willSetTime = 1;
       MI32StartTask(MI32_TASK_TIME);
-    } 
+    }
   }
 
   if (MI32.mode.willReadBatt) return;
@@ -952,7 +954,7 @@ void MI32EverySecond(bool restart){
     else{
       MI32StartTask(MI32_TASK_CONN);
     }
-    
+
     }
     if (MI32.state.sensor==MIBLEsensors.size()-1) {
       _nextSensorSlot= 0;
@@ -1079,7 +1081,7 @@ void MI32Show(bool json)
             ResponseAppend_P(PSTR(",\"Fertility\":%d"), MIBLEsensors[i].fertility);
           }
         }
-        if (MIBLEsensors[i].type>FLORA){ 
+        if (MIBLEsensors[i].type>FLORA){
           if(!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)){
             ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
           }
@@ -1090,7 +1092,7 @@ void MI32Show(bool json)
           dtostrfd((MIBLEsensors[i].volt)/100.0f, Settings.flag2.temperature_resolution, slave); // reuse slave, borrow temperature resolution
           ResponseAppend_P(PSTR(",\"" D_VOLTAGE "\":%s"), slave);
         }
-        }      
+        }
         ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_WEBSERVER
@@ -1111,7 +1113,7 @@ void MI32Show(bool json)
       WSContentSend_PD(HTTP_MI32, i+1,stemp,MIBLEsensors.size());
       for (i; i<j; i++) {
         WSContentSend_PD(HTTP_MI32_HL);
-        WSContentSend_PD(HTTP_MI32_SERIAL, kMI32SlaveType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].serial[0], MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]); 
+        WSContentSend_PD(HTTP_MI32_SERIAL, kMI32SlaveType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].serial[0], MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
         if (MIBLEsensors[i].type==FLORA){
           if(!isnan(MIBLEsensors[i].temp)){
             char temperature[FLOATSZ];
@@ -1132,7 +1134,7 @@ void MI32Show(bool json)
           if(!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)){
             WSContentSend_THD(kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp, MIBLEsensors[i].hum);
           }
-        } 
+        }
         if(MIBLEsensors[i].bat!=0x00){
           if (MIBLEsensors[i].type != LYWSD03MMC) WSContentSend_PD(HTTP_BATTERY, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].bat);
           else {
@@ -1164,7 +1166,7 @@ bool Xsns62(uint8_t function)
     MI32Init();
   }
 
-  if (MI32.mode.init) { 
+  if (MI32.mode.init) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         MI32EverySecond(false);
@@ -1184,4 +1186,5 @@ bool Xsns62(uint8_t function)
   }
   return result;
 }
-#endif //USE_MI_ESP32
+#endif  // USE_MI_ESP32
+#endif  // ESP32

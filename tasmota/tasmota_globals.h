@@ -117,21 +117,6 @@ extern "C" void resetPins();
 #define MESSZ                       (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string
 #endif
 
-#ifdef ESP8266
-#ifndef ARDUINO_ESP8266_RELEASE
-#define ARDUINO_CORE_RELEASE        "STAGE"
-#else
-#define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE
-#endif
-#endif
-#ifdef ESP32
-#ifndef ARDUINO_ESP32_RELEASE
-#define ARDUINO_CORE_RELEASE        "STAGE"
-#else
-#define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
-#endif
-#endif
-
 #ifdef USE_PWM_DIMMER_REMOTE
 #ifdef USE_PWM_DIMMER
 #ifndef USE_DEVICE_GROUPS
@@ -294,6 +279,32 @@ const char kWebColors[] PROGMEM =
   COLOR_TEXT_WARNING "|" COLOR_TEXT_SUCCESS "|"
   COLOR_BUTTON_TEXT "|" COLOR_BUTTON "|" COLOR_BUTTON_HOVER "|" COLOR_BUTTON_RESET "|" COLOR_BUTTON_RESET_HOVER "|" COLOR_BUTTON_SAVE "|" COLOR_BUTTON_SAVE_HOVER "|"
   COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND "|" COLOR_TITLE_TEXT;
+
+/*********************************************************************************************\
+ * ESP8266 vs ESP32 related parameters
+\*********************************************************************************************/
+
+#ifdef ESP8266
+
+#ifndef ARDUINO_ESP8266_RELEASE
+#define ARDUINO_CORE_RELEASE        "STAGE"
+#else
+#define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE
+#endif  // ARDUINO_ESP8266_RELEASE
+
+#endif  // ESP8266
+
+#ifdef ESP32
+
+#ifndef ARDUINO_ESP32_RELEASE
+#define ARDUINO_CORE_RELEASE        "STAGE"
+#else
+#define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
+#endif  // ARDUINO_ESP32_RELEASE
+
+#undef USE_HM10                     // Disable support for HM-10 as a BLE-bridge (+9k3 code) on ESP32
+
+#endif  // ESP32
 
 /*********************************************************************************************\
  * Macros
