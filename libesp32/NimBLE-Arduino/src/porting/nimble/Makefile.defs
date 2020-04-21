@@ -1,0 +1,68 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#  *  http://www.apache.org/licenses/LICENSE-2.0
+#  * Unless required by applicable law or agreed to in writing,
+#  software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+ifeq (,$(NIMBLE_ROOT))
+$(error NIMBLE_ROOT shall be defined)
+endif
+
+NIMBLE_CFLAGS :=
+
+NIMBLE_INCLUDE := \
+	$(NIMBLE_ROOT)/nimble/include \
+	$(NIMBLE_ROOT)/nimble/host/include \
+	$(NIMBLE_ROOT)/nimble/host/services/ans/include \
+	$(NIMBLE_ROOT)/nimble/host/services/bas/include \
+	$(NIMBLE_ROOT)/nimble/host/services/bleuart/include \
+	$(NIMBLE_ROOT)/nimble/host/services/gap/include \
+	$(NIMBLE_ROOT)/nimble/host/services/gatt/include \
+	$(NIMBLE_ROOT)/nimble/host/services/ias/include \
+	$(NIMBLE_ROOT)/nimble/host/services/lls/include \
+	$(NIMBLE_ROOT)/nimble/host/services/tps/include \
+	$(NIMBLE_ROOT)/nimble/host/store/ram/include \
+	$(NIMBLE_ROOT)/nimble/host/util/include \
+	$(NIMBLE_ROOT)/porting/nimble/include \
+	$(NULL)
+
+NIMBLE_SRC := \
+	$(filter-out $(NIMBLE_IGNORE), $(wildcard $(NIMBLE_ROOT)/porting/nimble/src/*.c)) \
+	$(filter-out $(NIMBLE_IGNORE), $(wildcard $(NIMBLE_ROOT)/nimble/src/*.c)) \
+	$(filter-out $(NIMBLE_IGNORE), $(wildcard $(NIMBLE_ROOT)/nimble/host/src/*.c)) \
+	$(filter-out $(NIMBLE_IGNORE), $(wildcard $(NIMBLE_ROOT)/nimble/host/util/src/*.c)) \
+	$(filter-out $(NIMBLE_IGNORE), $(wildcard $(NIMBLE_ROOT)/nimble/host/services/ans/src/*.c)) \
+	$(filter-out $(NIMBLE_IGNORE), $(wildcard $(NIMBLE_ROOT)/nimble/host/services/bas/src/*.c)) \
+	$(filter-out $(NIMBLE_IGNORE), $(wildcard $(NIMBLE_ROOT)/nimble/host/services/gap/src/*.c)) \
+	$(filter-out $(NIMBLE_IGNORE), $(wildcard $(NIMBLE_ROOT)/nimble/host/services/gatt/src/*.c)) \
+	$(filter-out $(NIMBLE_IGNORE), $(wildcard $(NIMBLE_ROOT)/nimble/host/services/ias/src/*.c)) \
+	$(filter-out $(NIMBLE_IGNORE), $(wildcard $(NIMBLE_ROOT)/nimble/host/services/lls/src/*.c)) \
+	$(filter-out $(NIMBLE_IGNORE), $(wildcard $(NIMBLE_ROOT)/nimble/host/services/tps/src/*.c)) \
+	$(filter-out $(NIMBLE_IGNORE), $(wildcard $(NIMBLE_ROOT)/nimble/host/store/ram/src/*.c)) \
+	$(NULL)
+
+ifneq (,$(NIMBLE_CFG_CONTROLLER))
+include $(NIMBLE_ROOT)/porting/nimble/Makefile.controller
+endif
+
+# TinyCrypt (for SM)
+ifneq (,$(NIMBLE_CFG_TINYCRYPT))
+include $(NIMBLE_ROOT)/porting/nimble/Makefile.tinycrypt
+endif
+
+ifneq (,$(NIMBLE_CFG_MESH))
+include $(NIMBLE_ROOT)/porting/nimble/Makefile.mesh
+endif
+
+NIMBLE_OBJ := $(NIMBLE_SRC:.c=.o)
