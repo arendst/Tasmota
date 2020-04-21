@@ -1058,42 +1058,50 @@ void MI32Show(bool json)
 {
   if (json) {
     for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
+/*
       char slave[33];
-      sprintf_P(slave,"%s-%02x%02x%02x",kMI32SlaveType[MIBLEsensors[i].type-1],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
-      ResponseAppend_P(PSTR(",\"%s\":{"),slave);
-        if (MIBLEsensors[i].type==FLORA){
-          if(!isnan(MIBLEsensors[i].temp)){ // this is the error code -> no temperature
-              char temperature[FLOATSZ]; // all sensors have temperature
-              dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-              ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"), temperature);
-            }
-          else {
-            ResponseAppend_P(PSTR("}"));
-            continue;
-          }
-          if(MIBLEsensors[i].lux!=0x0ffffff){ // this is the error code -> no lux
-            ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
-          }
-          if(!isnan(MIBLEsensors[i].moisture)){
-            ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%d"), MIBLEsensors[i].moisture);
-          }
-          if(!isnan(MIBLEsensors[i].fertility)){
-            ResponseAppend_P(PSTR(",\"Fertility\":%d"), MIBLEsensors[i].fertility);
-          }
+      snprintf_P(slave, sizeof(slave), PSTR("%s-%02x%02x%02x"),
+        kMI32SlaveType[MIBLEsensors[i].type-1],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
+      ResponseAppend_P(PSTR(",\"%s\":{"), slave);
+*/
+      ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),
+        kMI32SlaveType[MIBLEsensors[i].type-1],
+        MIBLEsensors[i].serial[3], MIBLEsensors[i].serial[4], MIBLEsensors[i].serial[5]);
+
+      if (MIBLEsensors[i].type == FLORA) {
+        if (!isnan(MIBLEsensors[i].temp)) { // this is the error code -> no temperature
+          char temperature[FLOATSZ]; // all sensors have temperature
+          dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
+          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"), temperature);
+        } else {
+          ResponseAppend_P(PSTR("}"));
+          continue;
         }
-        if (MIBLEsensors[i].type>FLORA){
-          if(!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)){
-            ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
-          }
+        if (MIBLEsensors[i].lux!=0x0ffffff) { // this is the error code -> no lux
+          ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
         }
-        if(MIBLEsensors[i].bat!=0x00){ // this is the error code -> no battery
-        if (MIBLEsensors[i].type != LYWSD03MMC) ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
-        else {
-          dtostrfd((MIBLEsensors[i].volt)/100.0f, Settings.flag2.temperature_resolution, slave); // reuse slave, borrow temperature resolution
-          ResponseAppend_P(PSTR(",\"" D_VOLTAGE "\":%s"), slave);
+        if (!isnan(MIBLEsensors[i].moisture)) {
+          ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%d"), MIBLEsensors[i].moisture);
         }
+        if (!isnan(MIBLEsensors[i].fertility)) {
+          ResponseAppend_P(PSTR(",\"Fertility\":%d"), MIBLEsensors[i].fertility);
         }
-        ResponseAppend_P(PSTR("}"));
+      }
+      if (MIBLEsensors[i].type > FLORA){
+        if (!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)) {
+          ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
+        }
+      }
+      if (MIBLEsensors[i].bat != 0x00) { // this is the error code -> no battery
+        if (MIBLEsensors[i].type != LYWSD03MMC) {
+          ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
+        } else {
+          char voltage[FLOATSZ];
+          dtostrfd((MIBLEsensors[i].volt)/1000.0f, Settings.flag2.voltage_resolution, voltage);
+          ResponseAppend_P(PSTR(",\"" D_VOLTAGE "\":%s"), voltage);
+        }
+      }
+      ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_WEBSERVER
     } else {
@@ -1114,32 +1122,33 @@ void MI32Show(bool json)
       for (i; i<j; i++) {
         WSContentSend_PD(HTTP_MI32_HL);
         WSContentSend_PD(HTTP_MI32_SERIAL, kMI32SlaveType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].serial[0], MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
-        if (MIBLEsensors[i].type==FLORA){
-          if(!isnan(MIBLEsensors[i].temp)){
+        if (MIBLEsensors[i].type==FLORA) {
+          if (!isnan(MIBLEsensors[i].temp)) {
             char temperature[FLOATSZ];
             dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
             WSContentSend_PD(HTTP_SNS_TEMP, kMI32SlaveType[MIBLEsensors[i].type-1], temperature, TempUnit());
           }
-          if(MIBLEsensors[i].lux!=0x00ffffff){ // this is the error code -> no valid value
+          if (MIBLEsensors[i].lux!=0x00ffffff) { // this is the error code -> no valid value
             WSContentSend_PD(HTTP_SNS_ILLUMINANCE, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].lux);
           }
-          if(!isnan(MIBLEsensors[i].moisture)){
+          if (!isnan(MIBLEsensors[i].moisture)) {
             WSContentSend_PD(HTTP_SNS_MOISTURE, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].moisture);
           }
-          if(!isnan(MIBLEsensors[i].fertility)){
+          if (!isnan(MIBLEsensors[i].fertility)) {
             WSContentSend_PD(HTTP_MI32_FLORA_DATA, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].fertility);
           }
         }
-        if (MIBLEsensors[i].type>FLORA){ // everything "above" Flora
-          if(!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)){
+        if (MIBLEsensors[i].type>FLORA) { // everything "above" Flora
+          if (!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)) {
             WSContentSend_THD(kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp, MIBLEsensors[i].hum);
           }
         }
         if(MIBLEsensors[i].bat!=0x00){
-          if (MIBLEsensors[i].type != LYWSD03MMC) WSContentSend_PD(HTTP_BATTERY, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].bat);
-          else {
+          if (MIBLEsensors[i].type != LYWSD03MMC) {
+            WSContentSend_PD(HTTP_BATTERY, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].bat);
+          } else {
             char voltage[FLOATSZ];
-            dtostrfd((MIBLEsensors[i].volt)/1000.0f, 2, voltage); // borrow temperature resolution
+            dtostrfd((MIBLEsensors[i].volt)/1000.0f, Settings.flag2.voltage_resolution, voltage);
             WSContentSend_PD(HTTP_VOLTAGE, kMI32SlaveType[MIBLEsensors[i].type-1], voltage);
           }
         }
@@ -1149,8 +1158,8 @@ void MI32Show(bool json)
         _page++;
         _counter=0;
       }
-      if(MIBLEsensors.size()%MI32.perPage==0 && _page==MIBLEsensors.size()/MI32.perPage) _page=0;
-      if(_page>MIBLEsensors.size()/MI32.perPage) _page=0;
+      if (MIBLEsensors.size()%MI32.perPage==0 && _page==MIBLEsensors.size()/MI32.perPage) { _page = 0; }
+      if (_page>MIBLEsensors.size()/MI32.perPage) { _page = 0; }
 #endif  // USE_WEBSERVER
     }
 }
