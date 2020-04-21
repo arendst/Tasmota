@@ -776,6 +776,8 @@ void CmndSavedata(void)
 
 void CmndSetoption(void)
 {
+  snprintf_P(XdrvMailbox.command, CMDSZ, PSTR(D_CMND_SETOPTION));  // Rename result shortcut command SO to SetOption
+
   if (XdrvMailbox.index < 114) {
     uint32_t ptype;
     uint32_t pindex;
