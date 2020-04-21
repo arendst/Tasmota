@@ -255,18 +255,24 @@ void ShutterInit(void)
   }
 }
 
-void ShutterReportPosition(bool always)
+void ShutterReportPosition(bool always, uint32_t index)
 {
   Response_P(PSTR("{"));
   rules_flag.shutter_moving = 0;
-  for (uint32_t i = 0; i < shutters_present; i++) {
+  uint32_t i = 0;
+  uint32_t n = shutters_present;
+  if( index != MAX_SHUTTERS) {
+    i = index;
+    n = index+1;
+  }
+  for (i; i < n; i++) {
     //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d: Real Pos: %d"), i+1,Shutter.real_position[i]);
     uint32_t position = ShutterRealToPercentPosition(Shutter.real_position[i], i);
     if (Shutter.direction[i] != 0) {
       rules_flag.shutter_moving = 1;
       ShutterLogPos(i);
     }
-    if (i) { ResponseAppend_P(PSTR(",")); }
+    if (i && index == MAX_SHUTTERS) { ResponseAppend_P(PSTR(",")); }
     uint32_t target = ShutterRealToPercentPosition(Shutter.target_position[i], i);
     ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings.shutter_options[i] & 1) ? 100-position : position, Shutter.direction[i],(Settings.shutter_options[i] & 1) ? 100-target : target );
   }
@@ -300,7 +306,7 @@ void ShutterUpdatePosition(void)
       //                        adding some steps to stop early
       Shutter.real_position[i] =  ShutterCounterBasedPosition(i);
       if (!Shutter.start_reported) {
-        ShutterReportPosition(true);
+        ShutterReportPosition(true, i);
         XdrvRulesProcess();
         Shutter.start_reported = 1;
       }
@@ -395,7 +401,7 @@ void ShutterUpdatePosition(void)
         MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
 
         Shutter.direction[i] = 0;
-        ShutterReportPosition(true);
+        ShutterReportPosition(true, i);
         rules_flag.shutter_moved = 1;
         XdrvRulesProcess();
       }
@@ -910,13 +916,13 @@ void CmndShutterPosition(void)
         }
       } else {
         target_pos_percent = ShutterRealToPercentPosition(Shutter.real_position[index], index);
-        ShutterReportPosition(true);
+        ShutterReportPosition(true, index);
       }
       XdrvMailbox.index = index +1;  // Fix random index for ShutterClose
       if (XdrvMailbox.command)
         ResponseCmndIdxNumber((Settings.shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent);
     } else {
-      ShutterReportPosition(true);
+      ShutterReportPosition(true, MAX_SHUTTERS);
       if (XdrvMailbox.command)
         ResponseCmndIdxChar("Locked");
     }
@@ -1261,7 +1267,7 @@ bool Xdrv27(uint8_t function)
         break;
       case FUNC_EVERY_SECOND:
       //case FUNC_EVERY_250_MSECOND:
-        ShutterReportPosition(false);
+        ShutterReportPosition(false, MAX_SHUTTERS);
         break;
 
       case FUNC_COMMAND:
