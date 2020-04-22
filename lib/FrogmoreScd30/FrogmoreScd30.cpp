@@ -24,8 +24,6 @@ SOFTWARE.
 #include <twi.h>
 #include <FrogmoreScd30.h>
 
-#ifdef ESP8266
-
 #define COMMAND_SCD30_CONTINUOUS_MEASUREMENT      0x0010
 #define COMMAND_SCD30_MEASUREMENT_INTERVAL        0x4600
 #define COMMAND_SCD30_GET_DATA_READY              0x0202
@@ -60,7 +58,9 @@ void FrogmoreScd30::begin(TwoWire *pWire, uint8_t i2cAddress)
     }
 
     co2NewDataLocation = -1; // indicates there is no data, so the 1st data point needs to fill up the median filter
+#ifdef ESP8266
     this->pWire->setClockStretchLimit(200000);
+#endif
     this->ambientPressure = 0;
 }
 
@@ -108,7 +108,11 @@ int FrogmoreScd30::clearI2CBus(void)
     snprintf_P(scd30log_data, sizeof(scd30log_data), "clearI2CBus");
     AddLog(LOG_LEVEL_DEBUG_MORE);
 #endif
+#ifdef ESP8266
     return (twi_status());
+#else
+    return 0;
+#endif
 }
 
 #ifdef SCD30_DEBUG
@@ -652,5 +656,3 @@ int FrogmoreScd30::stopMeasuring(void)
 {
     return (sendCommand(COMMAND_SCD30_STOP_MEASUREMENT));
 }
-
-#endif  // ESP8266
