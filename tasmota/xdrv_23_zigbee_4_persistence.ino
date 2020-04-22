@@ -45,7 +45,7 @@
 // str    - Manuf   (null terminated C string, 32 chars max)
 // str    - FriendlyName   (null terminated C string, 32 chars max)
 // reserved for extensions
-//  -- V2 -- 
+//  -- V2 --
 // int8_t - bulbtype
 
 // Memory footprint
@@ -61,7 +61,7 @@ public:
   uint32_t name;    // simple 4 letters name. Currently 'skey', 'crt ', 'crt1', 'crt2'
   uint16_t len;     // len of object
   uint16_t reserved; // align on 4 bytes boundary
-}; 
+};
 
 const static uint32_t ZIGB_NAME = 0x3167697A; // 'zig1' little endian
 const static size_t   Z_MAX_FLASH = z_block_len - sizeof(z_flashdata_t);  // 2040
@@ -202,8 +202,8 @@ void hydrateDevices(const SBuffer &buf) {
   for (uint32_t i = 0; (i < num_devices) && (k < buf_len); i++) {
     uint32_t dev_record_len = buf.get8(k);
 
-// AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device %d Before Memory = %d // DIFF %d // record_len %d"), i, ESP.getFreeHeap(), before - ESP.getFreeHeap(), dev_record_len);
-// before = ESP.getFreeHeap();
+// AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device %d Before Memory = %d // DIFF %d // record_len %d"), i, ESP_getFreeHeap(), before - ESP_getFreeHeap(), dev_record_len);
+// before = ESP_getFreeHeap();
 
     SBuffer buf_d = buf.subBuffer(k, dev_record_len);
 
@@ -238,7 +238,7 @@ void hydrateDevices(const SBuffer &buf) {
         // ignore
       }
     }
-//AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device 0x%04X Memory3.shrink = %d"), shortaddr, ESP.getFreeHeap());
+//AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device 0x%04X Memory3.shrink = %d"), shortaddr, ESP_getFreeHeap());
 
     // parse 3 strings
     char empty[] = "";
@@ -269,14 +269,14 @@ void hydrateDevices(const SBuffer &buf) {
 
     // next iteration
     k += dev_record_len;
-//AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device %d After  Memory = %d"), i, ESP.getFreeHeap());
+//AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device %d After  Memory = %d"), i, ESP_getFreeHeap());
   }
 }
 
 void loadZigbeeDevices(void) {
   z_flashdata_t flashdata;
   memcpy_P(&flashdata, z_dev_start, sizeof(z_flashdata_t));
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP.getFreeHeap());
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP_getFreeHeap());
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Zigbee signature in Flash: %08X - %d"), flashdata.name, flashdata.len);
 
   // Check the signature
@@ -291,7 +291,7 @@ void loadZigbeeDevices(void) {
   } else {
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No zigbee devices data in Flash"));
   }
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP.getFreeHeap());
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP_getFreeHeap());
 }
 
 void saveZigbeeDevices(void) {
@@ -341,7 +341,7 @@ void eraseZigbeeDevices(void) {
 
   // Fill the Zigbee area with 0xFF
   memset(spi_buffer + z_block_offset, 0xFF, z_block_len);
- 
+
   // buffer is now ready, write it back
   if (ESP.flashEraseSector(z_spi_start_sector)) {
     ESP.flashWrite(z_spi_start_sector * SPI_FLASH_SEC_SIZE, (uint32_t*) spi_buffer, SPI_FLASH_SEC_SIZE);
