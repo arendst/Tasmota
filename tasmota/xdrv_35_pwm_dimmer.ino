@@ -609,10 +609,16 @@ void PWMDimmerHandleButton(void)
         active_remote_pwm_dimmer->bri_power_on = active_remote_pwm_dimmer->bri = new_bri;
       else {
 #endif  // USE_PWM_DIMMER_REMOTE
-        skip_light_fade = ignore_dgr_sends = true;
+        skip_light_fade = true;
+#ifdef USE_DEVICE_GROUPS
+        ignore_dgr_sends = true;
+#endif  // USE_DEVICE_GROUPS
         light_state.setBri(new_bri);
         LightAnimate();
-        skip_light_fade = ignore_dgr_sends = false;
+        skip_light_fade = false;
+#ifdef USE_DEVICE_GROUPS
+        ignore_dgr_sends = false;
+#endif  // USE_DEVICE_GROUPS
         Settings.bri_power_on = new_bri;
 #ifdef USE_PWM_DIMMER_REMOTE
       }

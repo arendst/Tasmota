@@ -177,10 +177,8 @@ void SendReceiveDeviceGroupPacket(struct device_group * device_group, struct dev
 {
   char log_buffer[LOGSZ];
   bool item_processed = false;
-  uint8_t item;
   uint16_t message_sequence;
   uint16_t flags;
-  int32_t value;
   int device_group_index = device_group - device_groups;
 
   log_ptr = log_buffer;
@@ -270,6 +268,8 @@ void SendReceiveDeviceGroupPacket(struct device_group * device_group, struct dev
     ignore_dgr_sends = true;
   }
 
+  uint8_t item;
+  int32_t value;
   for (;;) {
     if (message_ptr >= message_end_ptr) goto badmsg;  // Malformed message
     item = *message_ptr++;
@@ -295,6 +295,7 @@ void SendReceiveDeviceGroupPacket(struct device_group * device_group, struct dev
 #endif  // DEVICE_GROUPS_DEBUG
 
     AddDeviceGroupLog(PSTR(", %u="), item);
+    if (received) XdrvMailbox.data = message_ptr;
     if (item <= DGR_ITEM_LAST_32BIT) {
       value = *message_ptr++;
       if (item > DGR_ITEM_MAX_8BIT) {
@@ -317,25 +318,18 @@ void SendReceiveDeviceGroupPacket(struct device_group * device_group, struct dev
         device_group->values_8bit[item] = value;
       }
 #endif  // USE_DEVICE_GROUPS_SEND
-
       AddDeviceGroupLog(PSTR("%u"), value);
-      if (received) XdrvMailbox.payload = value;
     }
     else if (item <= DGR_ITEM_MAX_STRING) {
       value = strlen(message_ptr);
       if (message_ptr + value >= message_end_ptr) goto badmsg;  // Malformed message
       AddDeviceGroupLog(PSTR("'%s'"), message_ptr);
-      if (received) {
-        XdrvMailbox.data_len = value;
-        XdrvMailbox.data = message_ptr;
-      }
       message_ptr += value + 1;
     }
     else {
       switch (item) {
         case DGR_ITEM_LIGHT_CHANNELS:
           AddDeviceGroupLog(PSTR("%08X%02X"), *(uint32_t *)message_ptr, *(message_ptr + 4));
-          if (received) XdrvMailbox.data = message_ptr;
           message_ptr += 5;
           break;
       }
@@ -344,6 +338,8 @@ void SendReceiveDeviceGroupPacket(struct device_group * device_group, struct dev
     if (received && DeviceGroupItemShared(true, item)) {
       item_processed = true;
       XdrvMailbox.command_code = item;
+      XdrvMailbox.payload = value;
+      XdrvMailbox.data_len = value;
       AddDeviceGroupLog(PSTR("*"));
       switch (item) {
         case DGR_ITEM_POWER:
@@ -436,14 +432,13 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DGR: Building %s %spacket"), device_group->group_name, (message_type == DGR_MSGTYP_FULL_STATUS ? PSTR("full status ") : PSTR("")));
 #endif  // DEVICE_GROUPS_DEBUG
 #ifdef USE_DEVICE_GROUPS_SEND
-  bool use_command = (message_type == DGR_MSGTYPE_UPDATE_COMMAND);
 #endif  // USE_DEVICE_GROUPS_SEND
   uint16_t original_sequence = device_group->outgoing_sequence;
   uint16_t flags = 0;
   if (message_type == DGR_MSGTYP_UPDATE_MORE_TO_COME)
-    flags |= DGR_FLAG_MORE_TO_COME;
+    flags = DGR_FLAG_MORE_TO_COME;
   else if (message_type == DGR_MSGTYP_UPDATE_DIRECT)
-    flags |= DGR_FLAG_DIRECT;
+    flags = DGR_FLAG_DIRECT;
   char * message_ptr = BeginDeviceGroupMessage(device_group, flags, building_status_message || message_type == DGR_MSGTYP_PARTIAL_UPDATE);
 
   // A full status request is a request from a remote device for the status of every item we
@@ -500,7 +495,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
     memset(item_array, 0, sizeof(item_array));
     item_ptr = item_array;
 #ifdef USE_DEVICE_GROUPS_SEND
-    if (use_command) {
+    if (message_type == DGR_MSGTYPE_UPDATE_COMMAND) {
       value_ptr = XdrvMailbox.data;
       while ((item = strtoul(value_ptr, &value_ptr, 0))) {
         item_ptr->item = item;
@@ -719,7 +714,7 @@ void _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
 
 #ifdef USE_DEVICE_GROUPS_SEND
   // If the device group is local, handle the message locally.
-  if (use_command && device_group->local) {
+  if (message_type == DGR_MSGTYPE_UPDATE_COMMAND && device_group->local) {
     struct XDRVMAILBOX save_XdrvMailbox = XdrvMailbox;
     SendReceiveDeviceGroupPacket(device_group, nullptr, device_group->message, device_group->message_length, true);
     XdrvMailbox = save_XdrvMailbox;
