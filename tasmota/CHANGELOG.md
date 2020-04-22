@@ -2,12 +2,12 @@
 
 ### 8.2.0.4 20200417
 
+- Change PWM implementation to Arduino #7231 removing support for Core versions before 2.6.3
+- Change default PWM Frequency to 223 Hz instead of 880 Hz for less interrupt pressure
 - Fix Zigbee DimmerUp/DimmerDown malformed
 - Add config version tag
 - Add command ``SetOption73 1`` for button decoupling and send multi-press and hold MQTT messages by Federico Leoni (#8235)
 - Add command ``SO`` as shortcut for command ``SetOption``
-- Change PWM implementation to Arduino #7231
-- Change default PWM Frequency to 223 Hz instead of 880 Hz for less interrupt pressure
 
 ### 8.2.0.3 20200329
 
