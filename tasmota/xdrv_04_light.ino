@@ -626,6 +626,7 @@ class LightStateClass {
     void setCW(uint8_t c, uint8_t w, bool free_range = false) {
       uint16_t max = (w > c) ? w : c;   // 0..255
       uint16_t sum = c + w;
+      if (sum <= 257) { free_range = false; }    // if we don't allow free range or if sum is below 255 (with tolerance of 2)
 
       if (0 == max) {
         _briCT = 0;       // brightness set to null
@@ -721,6 +722,8 @@ class LightStateClass {
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels (%d %d %d %d %d)",
       channels[0], channels[1], channels[2], channels[3], channels[4]);
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels CT (%d) briRGB (%d) briCT (%d)", _ct, _briRGB, _briCT);
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels Actuals (%d %d %d %d %d)",
+      _r, _g, _b, _wc, _ww);
 #endif
   }
 
@@ -975,6 +978,9 @@ public:
           (DEFAULT_LIGHT_COMPONENT == Settings.light_color[3]) &&
           (DEFAULT_LIGHT_COMPONENT == Settings.light_color[4]) &&
           (DEFAULT_LIGHT_DIMMER    == Settings.light_dimmer) ) {
+        if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) {
+          _state->setCW(255, 0);       // avoid having both white channels at 100%, zero second channel (#see 8120)
+        }
         _state->setBriCT(bri);
         _state->setBriRGB(bri);
         _state->setColorMode(LCM_RGB);
