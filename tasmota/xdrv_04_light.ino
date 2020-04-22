@@ -282,6 +282,7 @@ struct LIGHT {
   bool     fade_initialized = false;      // dont't fade at startup
   bool     fade_running = false;
 #ifdef USE_DEVICE_GROUPS
+  uint8_t  last_scheme = 0;
   bool     devgrp_no_channels_out = false; // don't share channels with device group (e.g. if scheme set by other device)
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_LIGHT_PALETTE
@@ -1477,9 +1478,6 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
 //    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Light signal %d"), signal);
     light_controller.changeRGB(signal, 255 - signal, 0, true);  // keep bri
     Settings.light_scheme = 0;
-#ifdef USE_DEVICE_GROUPS
-    LightUpdateScheme();
-#endif  // USE_DEVICE_GROUPS
     if (0 == light_state.getBri()) {
       light_controller.changeBri(50);
     }
@@ -1833,9 +1831,6 @@ void LightAnimate(void)
 
             Light.wakeup_active = 0;
             Settings.light_scheme = LS_POWER;
-#ifdef USE_DEVICE_GROUPS
-            LightUpdateScheme();
-#endif  // USE_DEVICE_GROUPS
           }
         }
         break;
@@ -1858,6 +1853,14 @@ void LightAnimate(void)
       default:
         XlgtCall(FUNC_SET_SCHEME);
     }
+
+#ifdef USE_DEVICE_GROUPS
+    if (Settings.light_scheme != Light.last_scheme) {
+      Light.last_scheme = Settings.light_scheme;
+      SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
+      Light.devgrp_no_channels_out = false;
+    }
+#endif  // USE_DEVICE_GROUPS
   }
 
   if ((Settings.light_scheme < LS_MAX) || power_off) {  // exclude WS281X Neopixel schemes
@@ -2270,7 +2273,7 @@ void LightHandleDevGroupItem(void)
       break;
     case DGR_ITEM_LIGHT_SCHEME:
       if (Settings.light_scheme != value) {
-        Settings.light_scheme = value;
+        Light.last_scheme = Settings.light_scheme = value;
         Light.devgrp_no_channels_out = (value != 0);
         send_state = true;
       }
@@ -2329,17 +2332,6 @@ void LightHandleDevGroupItem(void)
       LightSendDeviceGroupStatus(true);
       break;
   }
-}
-
-void LightUpdateScheme(void)
-{
-  static uint8_t last_scheme;
-
-  if (Settings.light_scheme != last_scheme) {
-    last_scheme = Settings.light_scheme;
-    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
-  }
-  Light.devgrp_no_channels_out = false;
 }
 #endif  // USE_DEVICE_GROUPS
 
@@ -2473,9 +2465,6 @@ void CmndSupportColor(void)
         }
 #endif  // USE_LIGHT_PALETTE
         Settings.light_scheme = 0;
-#ifdef USE_DEVICE_GROUPS
-        LightUpdateScheme();
-#endif  // USE_DEVICE_GROUPS
         coldim = true;
       } else {             // Color3, 4, 5 and 6
         for (uint32_t i = 0; i < LST_RGB; i++) {
@@ -2645,9 +2634,6 @@ void CmndScheme(void)
 #endif  // USE_LIGHT_PALETTE
       }
       Settings.light_scheme = XdrvMailbox.payload;
-#ifdef USE_DEVICE_GROUPS
-      LightUpdateScheme();
-#endif  // USE_DEVICE_GROUPS
       if (LS_WAKEUP == Settings.light_scheme) {
         Light.wakeup_active = 3;
       }
@@ -2671,9 +2657,6 @@ void CmndWakeup(void)
   }
   Light.wakeup_active = 3;
   Settings.light_scheme = LS_WAKEUP;
-#ifdef USE_DEVICE_GROUPS
-  LightUpdateScheme();
-#endif  // USE_DEVICE_GROUPS
   LightPowerOn();
   ResponseCmndChar(D_JSON_STARTED);
 }
@@ -2753,8 +2736,11 @@ void CmndDimmer(void)
       }
     }
 #if defined(USE_PWM_DIMMER) && defined(USE_DEVICE_GROUPS)
-    Settings.bri_power_on = light_state.getBri();;
-    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
+    uint8_t bri = light_state.getBri();
+    if (bri != Settings.bri_power_on) {
+      Settings.bri_power_on = bri;
+      SendLocalDeviceGroupMessage(DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
+    }
 #endif  // USE_PWM_DIMMER && USE_DEVICE_GROUPS
     Light.update = true;
     if (skip_light_fade) LightAnimate();
