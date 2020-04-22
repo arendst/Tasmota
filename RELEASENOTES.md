@@ -54,6 +54,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ### Version 8.2.0.4
 
+- Change PWM implementation to Arduino #7231 removing support for Core versions before 2.6.3
+- Change default PWM Frequency to 223 Hz instead of 880 Hz for less interrupt pressure
 - Change HM-10 sensor type detection and add features (#7962)
 - Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
 - Change remove floating point libs from IRAM

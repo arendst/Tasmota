@@ -47,7 +47,7 @@ uint16_t SendMail(char *buffer) {
 
 
 // return if not enough memory
-  uint16_t mem=ESP.getFreeHeap();
+  uint16_t mem=ESP_getFreeHeap();
   if (mem<SEND_MAIL_MINRAM) {
     return 4;
   }

@@ -2110,7 +2110,7 @@ void HandleInformation(void)
 
   char stopic[TOPSZ];
 
-  int freeMem = ESP.getFreeHeap();
+  int freeMem = ESP_getFreeHeap();
 
   WSContentStart_P(S_INFORMATION);
   // Save 1k of code space replacing table html with javascript replace codes

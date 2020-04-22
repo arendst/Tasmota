@@ -21,24 +21,27 @@
 
 #ifdef ESP8266
 
-// Use PWM from core 2.4.0 as all versions below 2.5.0-beta3 produce LED flickering when settings are saved to flash
-#include <core_version.h>
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
-#warning **** Tasmota is using v2.4.0 wiring_digital.c as planned ****
-
 #define ARDUINO_MAIN
 #include "wiring_private.h"
 #include "pins_arduino.h"
 #include "c_types.h"
 #include "eagle_soc.h"
 #include "ets_sys.h"
+#include "user_interface.h"
+#include "core_esp8266_waveform.h"
+#include "interrupts.h"
 
-extern void pwm_stop_pin(uint8_t pin);
+extern "C" {
 
-uint8_t esp8266_gpioToFn[16] = {0x34, 0x18, 0x38, 0x14, 0x3C, 0x40, 0x1C, 0x20, 0x24, 0x28, 0x2C, 0x30, 0x04, 0x08, 0x0C, 0x10};
+// Internal-only calls, not for applications
+extern void _setPWMPeriodCC(uint32_t cc);
+extern bool _stopPWM(int pin);
+extern bool _setPWM(int pin, uint32_t cc);
+extern void resetPins();
+
+volatile uint32_t* const esp8266_gpioToFn[16] PROGMEM = { &GPF0, &GPF1, &GPF2, &GPF3, &GPF4, &GPF5, &GPF6, &GPF7, &GPF8, &GPF9, &GPF10, &GPF11, &GPF12, &GPF13, &GPF14, &GPF15 };
 
 extern void __pinMode(uint8_t pin, uint8_t mode) {
-  pwm_stop_pin(pin);
   if(pin < 16){
     if(mode == SPECIAL){
       GPC(pin) = (GPC(pin) & (0xF << GPCI)); //SOURCE(GPIO) | DRIVER(NORMAL) | INT_TYPE(UNCHANGED) | WAKEUP_ENABLE(DISABLED)
@@ -88,7 +91,8 @@ extern void __pinMode(uint8_t pin, uint8_t mode) {
 }
 
 extern void ICACHE_RAM_ATTR __digitalWrite(uint8_t pin, uint8_t val) {
-  pwm_stop_pin(pin);
+  stopWaveform(pin); // Disable any tone
+  _stopPWM(pin);     // ...and any analogWrite
   if(pin < 16){
     if(val) GPOS = (1 << pin);
     else GPOC = (1 << pin);
@@ -99,7 +103,6 @@ extern void ICACHE_RAM_ATTR __digitalWrite(uint8_t pin, uint8_t val) {
 }
 
 extern int ICACHE_RAM_ATTR __digitalRead(uint8_t pin) {
-  pwm_stop_pin(pin);
   if(pin < 16){
     return GPIP(pin);
   } else if(pin == 16){
@@ -117,16 +120,28 @@ typedef void (*voidFuncPtrArg)(void*);
 
 typedef struct {
   uint8_t mode;
-  void (*fn)(void);
+  voidFuncPtr fn;
   void * arg;
+  bool functional;
 } interrupt_handler_t;
 
+//duplicate from functionalInterrupt.h keep in sync
+typedef struct InterruptInfo {
+	uint8_t pin;
+	uint8_t value;
+	uint32_t micro;
+} InterruptInfo;
 
-static interrupt_handler_t interrupt_handlers[16];
+typedef struct {
+	InterruptInfo* interruptInfo;
+	void* functionInfo;
+} ArgStructure;
+
+static interrupt_handler_t interrupt_handlers[16] = { {0, 0, 0, 0}, };
 static uint32_t interrupt_reg = 0;
 
-void ICACHE_RAM_ATTR interrupt_handler(void *arg) {
-  (void) arg;
+void ICACHE_RAM_ATTR interrupt_handler(void*)
+{
   uint32_t status = GPIE;
   GPIEC = status;//clear them interrupts
   uint32_t levels = GPI;
@@ -138,86 +153,122 @@ void ICACHE_RAM_ATTR interrupt_handler(void *arg) {
     while(!(changedbits & (1 << i))) i++;
     changedbits &= ~(1 << i);
     interrupt_handler_t *handler = &interrupt_handlers[i];
-    if (handler->fn &&
-        (handler->mode == CHANGE ||
+    if (handler->fn && 
+        (handler->mode == CHANGE || 
          (handler->mode & 1) == !!(levels & (1 << i)))) {
-      // to make ISR compatible to Arduino AVR model where interrupts are disabled
-      // we disable them before we call the client ISR
-      uint32_t savedPS = xt_rsil(15); // stop other interrupts
-      if (handler->arg)
-      {
-    	  ((voidFuncPtrArg)handler->fn)(handler->arg);
+          // to make ISR compatible to Arduino AVR model where interrupts are disabled
+          // we disable them before we call the client ISR
+          esp8266::InterruptLock irqLock; // stop other interrupts
+          if (handler->functional)
+          {
+              ArgStructure* localArg = (ArgStructure*)handler->arg;
+              if (localArg && localArg->interruptInfo)
+              {
+                  localArg->interruptInfo->pin = i;
+                  localArg->interruptInfo->value = __digitalRead(i);
+                  localArg->interruptInfo->micro = micros();
+              }
+          }
+          if (handler->arg)
+          {
+              ((voidFuncPtrArg)handler->fn)(handler->arg);
+          }
+          else
+          {
+              handler->fn();
+          }
       }
-      else
-      {
-    	  handler->fn();
-      }
-       xt_wsr_ps(savedPS);
-    }
   }
   ETS_GPIO_INTR_ENABLE();
 }
 
-extern void ICACHE_RAM_ATTR __attachInterruptArg(uint8_t pin, voidFuncPtr userFunc, void *arg, int mode) {
+extern void cleanupFunctional(void* arg);
+
+static void set_interrupt_handlers(uint8_t pin, voidFuncPtr userFunc, void* arg, uint8_t mode, bool functional)
+{
+  interrupt_handler_t* handler = &interrupt_handlers[pin];
+  handler->mode = mode;
+  handler->fn = userFunc;
+  if (handler->functional && handler->arg)  // Clean when new attach without detach
+  {
+    cleanupFunctional(handler->arg);
+  }
+  handler->arg = arg;
+  handler->functional = functional;
+}
+
+extern void __attachInterruptFunctionalArg(uint8_t pin, voidFuncPtrArg userFunc, void* arg, int mode, bool functional)
+{
+  // #5780
+  // https://github.com/esp8266/esp8266-wiki/wiki/Memory-Map
+  if ((uint32_t)userFunc >= 0x40200000)
+  {
+    // ISR not in IRAM
+    ::printf((PGM_P)F("ISR not in IRAM!\r\n"));
+    abort();
+  }
+
   if(pin < 16) {
     ETS_GPIO_INTR_DISABLE();
-    interrupt_handler_t *handler = &interrupt_handlers[pin];
-    handler->mode = mode;
-    handler->fn = userFunc;
-    handler->arg = arg;
+    set_interrupt_handlers(pin, (voidFuncPtr)userFunc, arg, mode, functional);
     interrupt_reg |= (1 << pin);
     GPC(pin) &= ~(0xF << GPCI);//INT mode disabled
     GPIEC = (1 << pin); //Clear Interrupt for this pin
     GPC(pin) |= ((mode & 0xF) << GPCI);//INT mode "mode"
+    ETS_GPIO_INTR_ATTACH(interrupt_handler, &interrupt_reg);
     ETS_GPIO_INTR_ENABLE();
   }
 }
 
-extern void ICACHE_RAM_ATTR __attachInterrupt(uint8_t pin, voidFuncPtr userFunc, int mode )
+extern void __attachInterruptArg(uint8_t pin, voidFuncPtrArg userFunc, void* arg, int mode)
 {
-	__attachInterruptArg (pin, userFunc, 0, mode);
+    __attachInterruptFunctionalArg(pin, userFunc, arg, mode, false);
 }
 
 extern void ICACHE_RAM_ATTR __detachInterrupt(uint8_t pin) {
-  if(pin < 16) {
-    ETS_GPIO_INTR_DISABLE();
-    GPC(pin) &= ~(0xF << GPCI);//INT mode disabled
-    GPIEC = (1 << pin); //Clear Interrupt for this pin
-    interrupt_reg &= ~(1 << pin);
-    interrupt_handler_t *handler = &interrupt_handlers[pin];
-    handler->mode = 0;
-    handler->fn = 0;
-    handler->arg = 0;
-    ETS_GPIO_INTR_ENABLE();
+    if (pin < 16)
+    {
+        ETS_GPIO_INTR_DISABLE();
+        GPC(pin) &= ~(0xF << GPCI);//INT mode disabled
+        GPIEC = (1 << pin); //Clear Interrupt for this pin
+        interrupt_reg &= ~(1 << pin);
+		set_interrupt_handlers(pin, nullptr, nullptr, 0, false);
+        if (interrupt_reg)
+        {
+            ETS_GPIO_INTR_ENABLE();
+        }
+    }
+}
+
+extern void __attachInterrupt(uint8_t pin, voidFuncPtr userFunc, int mode)
+{
+    __attachInterruptFunctionalArg(pin, (voidFuncPtrArg)userFunc, 0, mode, false);
+}
+
+extern void __resetPins() {
+  for (int i = 0; i <= 16; ++i) {
+    if (!isFlashInterfacePin(i))
+        pinMode(i, INPUT);
   }
 }
 
-void initPins(void) {
+extern void initPins() {
   //Disable UART interrupts
   system_set_os_print(0);
   U0IE = 0;
   U1IE = 0;
 
-/*
-  for (int i = 0; i <= 5; ++i) {
-    pinMode(i, INPUT);
-  }
-  // pins 6-11 are used for the SPI flash interface
-  for (int i = 12; i <= 16; ++i) {
-    pinMode(i, INPUT);
-  }
-*/
-
-  ETS_GPIO_INTR_ATTACH(interrupt_handler, &interrupt_reg);
-  ETS_GPIO_INTR_ENABLE();
+  resetPins();
 }
 
+extern void resetPins() __attribute__ ((weak, alias("__resetPins")));
 extern void pinMode(uint8_t pin, uint8_t mode) __attribute__ ((weak, alias("__pinMode")));
 extern void digitalWrite(uint8_t pin, uint8_t val) __attribute__ ((weak, alias("__digitalWrite")));
-extern int digitalRead(uint8_t pin) __attribute__ ((weak, alias("__digitalRead")));
+extern int digitalRead(uint8_t pin) __attribute__ ((weak, alias("__digitalRead"), nothrow));
 extern void attachInterrupt(uint8_t pin, voidFuncPtr handler, int mode) __attribute__ ((weak, alias("__attachInterrupt")));
+extern void attachInterruptArg(uint8_t pin, voidFuncPtrArg handler, void* arg, int mode) __attribute__((weak, alias("__attachInterruptArg")));
 extern void detachInterrupt(uint8_t pin) __attribute__ ((weak, alias("__detachInterrupt")));
 
-#endif  // ARDUINO_ESP8266_RELEASE
+};
 
 #endif  // ESP8266
