@@ -302,7 +302,10 @@ const char kWebColors[] PROGMEM =
 #define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
 #endif  // ARDUINO_ESP32_RELEASE
 
-#undef USE_HM10                     // Disable support for HM-10 as a BLE-bridge (+9k3 code) on ESP32
+#undef USE_HM10                     // Disable support for HM-10 as a BLE-bridge as an alternative is using the internal ESP32 BLE
+#undef USE_KEELOQ                   // Disable support for Jarolift rollers by Keeloq algorithm ss it's library cc1101 is not compatible with ESP32
+#undef USE_DISPLAY_ILI9488          // Disable as it's library JaretBurkett_ILI9488-gemu-1.0 is not compatible with ESP32
+#undef USE_DISPLAY_SSD1351          // Disable as it's library Adafruit_SSD1351_gemu-1.0 is not compatible with ESP32
 
 #endif  // ESP32
 
