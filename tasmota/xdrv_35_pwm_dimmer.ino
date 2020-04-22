@@ -344,8 +344,8 @@ void PWMDimmerHandleButton(void)
         // If this is about the power button, ...
         if (is_power_button) {
 
-          // If no other buttons are pressed and the up or down button was tapped while holding the
-          // power button before this, ...
+          // If no other buttons are pressed and the up or down button was not tapped while holding
+          // the power button before this, ...
           if (buttons_pressed == 1 && !tap_count) {
 
             // If the power is on, adjust the brightness. Set the direction based on the current
@@ -602,7 +602,7 @@ void PWMDimmerHandleButton(void)
     }
     if (new_bri != bri) {
 #ifdef USE_DEVICE_GROUPS
-      SendDeviceGroupMessage(power_button_index, (dgr_item ? DGR_MSGTYP_UPDATE : DGR_MSGTYP_UPDATE_MORE_TO_COME), DGR_ITEM_LIGHT_BRI, new_bri);
+      SendDeviceGroupMessage(power_button_index, (dgr_item ? DGR_MSGTYP_PARTIAL_UPDATE : DGR_MSGTYP_UPDATE_MORE_TO_COME), DGR_ITEM_LIGHT_BRI, new_bri);
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_PWM_DIMMER_REMOTE
       if (!active_device_is_local)
@@ -610,9 +610,15 @@ void PWMDimmerHandleButton(void)
       else {
 #endif  // USE_PWM_DIMMER_REMOTE
         skip_light_fade = true;
+#ifdef USE_DEVICE_GROUPS
+        ignore_dgr_sends = true;
+#endif  // USE_DEVICE_GROUPS
         light_state.setBri(new_bri);
         LightAnimate();
         skip_light_fade = false;
+#ifdef USE_DEVICE_GROUPS
+        ignore_dgr_sends = false;
+#endif  // USE_DEVICE_GROUPS
         Settings.bri_power_on = new_bri;
 #ifdef USE_PWM_DIMMER_REMOTE
       }

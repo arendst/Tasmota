@@ -315,7 +315,7 @@ enum DevGroupItem { DGR_ITEM_EOL, DGR_ITEM_STATUS,
                     DGR_ITEM_POWER, DGR_ITEM_DIMMER_RANGE,
                     // Add new 32-bit items before this line
                     DGR_ITEM_LAST_32BIT, DGR_ITEM_MAX_32BIT = 191,
-                    DGR_ITEM_EVENT,
+                    DGR_ITEM_EVENT, DGR_ITEM_COMMAND,
                     // Add new string items before this line
                     DGR_ITEM_LAST_STRING, DGR_ITEM_MAX_STRING = 223,
                     DGR_ITEM_LIGHT_CHANNELS };
