@@ -947,6 +947,7 @@ void SettingsDefaultSet2(void)
   Settings.flag3.pwm_multi_channels = LIGHT_CHANNEL_MODE;
   Settings.flag3.slider_dimmer_stay_on = LIGHT_SLIDER_POWER;
   Settings.flag4.alexa_ct_range = LIGHT_ALEXA_CT_RANGE;
+  Settings.flag4.pwm_ct_mode = LIGHT_PWM_CT_MODE;
 
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
