@@ -50,6 +50,7 @@ extern "C" {
 extern void _setPWMPeriodCC(uint32_t cc);
 extern bool _stopPWM(int pin);
 extern bool _setPWM(int pin, uint32_t cc);
+extern int startWaveformClockCycles(uint8_t pin, uint32_t timeHighCycles, uint32_t timeLowCycles, uint32_t runTimeCycles);
 
 // Maximum delay between IRQs
 #define MAXIRQUS (10000)

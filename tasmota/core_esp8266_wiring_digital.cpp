@@ -37,6 +37,7 @@ extern "C" {
 extern void _setPWMPeriodCC(uint32_t cc);
 extern bool _stopPWM(int pin);
 extern bool _setPWM(int pin, uint32_t cc);
+extern void resetPins();
 
 volatile uint32_t* const esp8266_gpioToFn[16] PROGMEM = { &GPF0, &GPF1, &GPF2, &GPF3, &GPF4, &GPF5, &GPF6, &GPF7, &GPF8, &GPF9, &GPF10, &GPF11, &GPF12, &GPF13, &GPF14, &GPF15 };
 
