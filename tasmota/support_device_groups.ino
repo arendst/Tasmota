@@ -353,9 +353,11 @@ void SendReceiveDeviceGroupPacket(struct device_group * device_group, struct dev
             }
           }
           break;
+#ifdef USE_RULES
         case DGR_ITEM_EVENT:
           CmndEvent();
           break;
+#endif
         case DGR_ITEM_COMMAND:
           ExecuteCommand(XdrvMailbox.data, SRC_REMOTE);
           break;
