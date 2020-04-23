@@ -706,7 +706,7 @@ void ThermostatWork()
       }
       else {
         Thermostat.status.command_output = IFACE_OFF;
-      }
+      } 
       break;
   }
   bool output_command;
