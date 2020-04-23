@@ -502,7 +502,7 @@ void ThermostatCalculatePI()
     }
   } 
   // If target value has not been reached
-  // AND we are within the histeresis
+  // AND we are withinvr the histeresis
   // AND gradient is positive
   // then set value to 0
   else if ((Thermostat.temp_pi_error > 0)
