@@ -502,7 +502,11 @@ void ThermostatCalculatePI()
     }
   } 
   // If target value has not been reached
+<<<<<<< HEAD
   // AND we are within the histeresis
+=======
+  // AND we are withinvr the histeresis
+>>>>>>> new_branch_dev
   // AND gradient is positive
   // then set value to 0
   else if ((Thermostat.temp_pi_error > 0)
@@ -706,7 +710,7 @@ void ThermostatWork()
       }
       else {
         Thermostat.status.command_output = IFACE_OFF;
-      } 
+      }
       break;
   }
   bool output_command;
