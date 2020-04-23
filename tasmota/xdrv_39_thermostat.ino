@@ -178,16 +178,6 @@ struct THERMOSTAT {
   int8_t temp_hysteresis = THERMOSTAT_TEMP_HYSTERESIS;                        // Range hysteresis for temperature PI controller, in tenths of degrees celsius
   uint8_t temp_frost_protect = THERMOSTAT_TEMP_FROST_PROTECT;                 // Minimum temperature for frost protection, in tenths of degrees celsius
   uint16_t power_max = THERMOSTAT_POWER_MAX;                                  // Maximum output power in Watt
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-  uint16_t energy_thermostat_output_max = THERMOSTAT_ENERGY_OUTPUT_MAX;       // Maximum allowed energy output for thermostat valve in Watts
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
   ThermostatBitfield status;                                                  // Bittfield including states as well as several flags
 } Thermostat;
 
@@ -332,10 +322,13 @@ bool HeatStateManualToAuto()
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   // AND no switch input action (time in current state) bigger than a pre-defined time
   // then go to automatic
   if ((ThermostatSwitchStatus(Thermostat.input_switch_number) == 0) 
 =======
+=======
+>>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
 =======
@@ -347,6 +340,9 @@ bool HeatStateManualToAuto()
     &&(Thermostat.status.sensor_alive ==  IFACE_ON)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> new_branch_dev
+=======
 >>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
@@ -456,7 +452,11 @@ void ThermostatCalculatePI()
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   if (abs(Thermostat.temp_pi_error) > Thermostat.temp_reset_anti_windup) {
+=======
+  if (abs(Thermostat.temp_pi_error) > (int16_t)Thermostat.temp_reset_anti_windup) {
+>>>>>>> new_branch_dev
 =======
   if (abs(Thermostat.temp_pi_error) > (int16_t)Thermostat.temp_reset_anti_windup) {
 >>>>>>> new_branch_dev
@@ -545,7 +545,11 @@ void ThermostatCalculatePI()
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   // AND we are withing the histeresis
+=======
+  // AND we are withinvr the histeresis
+>>>>>>> new_branch_dev
 =======
   // AND we are withinvr the histeresis
 >>>>>>> new_branch_dev
@@ -756,7 +760,10 @@ void ThermostatWork()
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
 =======
@@ -769,6 +776,9 @@ void ThermostatWork()
       }      
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> new_branch_dev
+=======
 >>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
@@ -902,9 +912,15 @@ void CmndTempMeasuredSet(void)
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         int16_t temp_delta = (value - Thermostat.temp_measured); // in tenths of degrees
         uint32_t time_delta = (timestamp - Thermostat.timestamp_temp_meas_change_update); // in seconds
         Thermostat.temp_measured_gradient = (int32_t)((360000 * (int32_t)temp_delta) / (int32_t)time_delta); // hundreths of degrees per hour
+=======
+        int32_t temp_delta = (value - Thermostat.temp_measured); // in tenths of degrees
+        uint32_t time_delta = (timestamp - Thermostat.timestamp_temp_meas_change_update); // in seconds
+        Thermostat.temp_measured_gradient = (int32_t)((360000 * temp_delta) / ((int32_t)time_delta)); // hundreths of degrees per hour
+>>>>>>> new_branch_dev
 =======
         int32_t temp_delta = (value - Thermostat.temp_measured); // in tenths of degrees
         uint32_t time_delta = (timestamp - Thermostat.timestamp_temp_meas_change_update); // in seconds
@@ -1228,7 +1244,10 @@ bool Xdrv39(uint8_t function)
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
 =======
@@ -1245,6 +1264,9 @@ bool Xdrv39(uint8_t function)
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_rampup_output_off: %s"), result_chr);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> new_branch_dev
+=======
 >>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
