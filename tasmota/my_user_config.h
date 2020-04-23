@@ -684,7 +684,6 @@
 #define THERMOSTAT_TEMP_RAMPUP_DELTA_IN       4        // Default minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
 #define THERMOSTAT_TEMP_RAMPUP_DELTA_OUT      2        // Default minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
 #define THERMOSTAT_TEMP_PI_RAMPUP_ACC_E       20       // Default accumulated error when switching from ramp-up controller to PI
-#define THERMOSTAT_ENERGY_OUTPUT_MAX          10       // Default maximum allowed energy output for thermostat valve in Watts
 #define THERMOSTAT_TIME_OUTPUT_DELAY          180      // Default output delay between state change and real actuation event (f.i. valve open/closed)
 #define THERMOSTAT_TEMP_INIT                  180      // Default init target temperature for the thermostat controller
 
