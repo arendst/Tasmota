@@ -503,7 +503,11 @@ void ThermostatCalculatePI()
   } 
   // If target value has not been reached
 <<<<<<< HEAD
+<<<<<<< HEAD
   // AND we are within the histeresis
+=======
+  // AND we are withinvr the histeresis
+>>>>>>> new_branch_dev
 =======
   // AND we are withinvr the histeresis
 >>>>>>> new_branch_dev
@@ -710,7 +714,7 @@ void ThermostatWork()
       }
       else {
         Thermostat.status.command_output = IFACE_OFF;
-      }
+      }      
       break;
   }
   bool output_command;
