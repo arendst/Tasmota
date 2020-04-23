@@ -319,35 +319,11 @@ bool HeatStateManualToAuto()
   bool change_state;
 
   // If switch input inactive
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-  // AND no switch input action (time in current state) bigger than a pre-defined time
-  // then go to automatic
-  if ((ThermostatSwitchStatus(Thermostat.input_switch_number) == 0) 
-=======
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
   // AND sensor alive
   // AND no switch input action (time in current state) bigger than a pre-defined time
   // then go to automatic
   if ((ThermostatSwitchStatus(Thermostat.input_switch_number) == 0) 
     &&(Thermostat.status.sensor_alive ==  IFACE_ON)
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
     && ((uptime - Thermostat.timestamp_input_on) > ((uint32_t)Thermostat.time_manual_to_auto * 60))) {
     change_state = true;
   }
@@ -449,23 +425,7 @@ void ThermostatCalculatePI()
   // Reset of antiwindup
   // If error does not lay within the integrator scope range, do not use the integral
   // and accumulate error = 0
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-  if (abs(Thermostat.temp_pi_error) > Thermostat.temp_reset_anti_windup) {
-=======
   if (abs(Thermostat.temp_pi_error) > (int16_t)Thermostat.temp_reset_anti_windup) {
->>>>>>> new_branch_dev
-=======
-  if (abs(Thermostat.temp_pi_error) > (int16_t)Thermostat.temp_reset_anti_windup) {
->>>>>>> new_branch_dev
-=======
-  if (abs(Thermostat.temp_pi_error) > (int16_t)Thermostat.temp_reset_anti_windup) {
->>>>>>> new_branch_dev
-=======
-  if (abs(Thermostat.temp_pi_error) > (int16_t)Thermostat.temp_reset_anti_windup) {
->>>>>>> new_branch_dev
     Thermostat.time_integral_pi = 0;
     Thermostat.temp_pi_accum_error = 0;
   }
@@ -542,23 +502,7 @@ void ThermostatCalculatePI()
     }
   } 
   // If target value has not been reached
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-  // AND we are withing the histeresis
-=======
-  // AND we are withinvr the histeresis
->>>>>>> new_branch_dev
-=======
-  // AND we are withinvr the histeresis
->>>>>>> new_branch_dev
-=======
-  // AND we are withinvr the histeresis
->>>>>>> new_branch_dev
-=======
-  // AND we are withinvr the histeresis
->>>>>>> new_branch_dev
+  // AND we are within the histeresis
   // AND gradient is positive
   // then set value to 0
   else if ((Thermostat.temp_pi_error > 0)
@@ -757,33 +701,12 @@ void ThermostatWork()
       break;
     case THERMOSTAT_MANUAL_OP:                        // State manual operation following input switch
       Thermostat.time_ctr_checkpoint = 0;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
       if (ThermostatSwitchStatus(Thermostat.input_switch_number) == 1) {
         Thermostat.status.command_output = IFACE_ON;
       }
       else {
         Thermostat.status.command_output = IFACE_OFF;
-      }      
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
+      }
       break;
   }
   bool output_command;
@@ -909,33 +832,9 @@ void CmndTempMeasuredSet(void)
       uint32_t timestamp = uptime;
       // Calculate temperature gradient if temperature value has changed
       if (value != Thermostat.temp_measured) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        int16_t temp_delta = (value - Thermostat.temp_measured); // in tenths of degrees
-        uint32_t time_delta = (timestamp - Thermostat.timestamp_temp_meas_change_update); // in seconds
-        Thermostat.temp_measured_gradient = (int32_t)((360000 * (int32_t)temp_delta) / (int32_t)time_delta); // hundreths of degrees per hour
-=======
         int32_t temp_delta = (value - Thermostat.temp_measured); // in tenths of degrees
         uint32_t time_delta = (timestamp - Thermostat.timestamp_temp_meas_change_update); // in seconds
         Thermostat.temp_measured_gradient = (int32_t)((360000 * temp_delta) / ((int32_t)time_delta)); // hundreths of degrees per hour
->>>>>>> new_branch_dev
-=======
-        int32_t temp_delta = (value - Thermostat.temp_measured); // in tenths of degrees
-        uint32_t time_delta = (timestamp - Thermostat.timestamp_temp_meas_change_update); // in seconds
-        Thermostat.temp_measured_gradient = (int32_t)((360000 * temp_delta) / ((int32_t)time_delta)); // hundreths of degrees per hour
->>>>>>> new_branch_dev
-=======
-        int32_t temp_delta = (value - Thermostat.temp_measured); // in tenths of degrees
-        uint32_t time_delta = (timestamp - Thermostat.timestamp_temp_meas_change_update); // in seconds
-        Thermostat.temp_measured_gradient = (int32_t)((360000 * temp_delta) / ((int32_t)time_delta)); // hundreths of degrees per hour
->>>>>>> new_branch_dev
-=======
-        int32_t temp_delta = (value - Thermostat.temp_measured); // in tenths of degrees
-        uint32_t time_delta = (timestamp - Thermostat.timestamp_temp_meas_change_update); // in seconds
-        Thermostat.temp_measured_gradient = (int32_t)((360000 * temp_delta) / ((int32_t)time_delta)); // hundreths of degrees per hour
->>>>>>> new_branch_dev
         Thermostat.temp_measured = value;
         Thermostat.timestamp_temp_meas_change_update = timestamp;
       }
@@ -1241,17 +1140,6 @@ bool Xdrv39(uint8_t function)
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_integral_pi: %s"), result_chr);
         dtostrfd(Thermostat.time_total_pi, 0, result_chr);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_total_pi: %s"), result_chr);
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
         dtostrfd(Thermostat.temp_measured_gradient, 0, result_chr);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_measured_gradient: %s"), result_chr);
         dtostrfd(Thermostat.time_rampup_deadtime, 0, result_chr);
@@ -1262,16 +1150,6 @@ bool Xdrv39(uint8_t function)
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_ctr_changepoint: %s"), result_chr);
         dtostrfd(Thermostat.temp_rampup_output_off, 0, result_chr);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_rampup_output_off: %s"), result_chr);
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Thermostat End ------"));
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));
 #endif
