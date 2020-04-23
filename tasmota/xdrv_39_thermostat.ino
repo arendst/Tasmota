@@ -146,31 +146,13 @@ struct THERMOSTAT {
   int32_t time_total_pi;                                                      // Time total (proportional + integral) of the PI controller
   uint16_t kP_pi = 0;                                                         // kP value for the PI controller
   uint16_t kI_pi = 0;                                                         // kP value for the PI controller multiplied by 100
-<<<<<<< HEAD
-<<<<<<< HEAD
-  int16_t temp_measured = 0;                                                  // Temperature measurement received from sensor in tenths of degrees
-  uint8_t time_output_delay = THERMOSTAT_TIME_OUTPUT_DELAY;                   // Output delay between state change and real actuation event (f.i. valve open/closed)
-  uint8_t  counter_rampup_cycles = 0;                                         // Counter of ramp-up cycles
-=======
->>>>>>> new_branch_dev
-=======
->>>>>>> new_branch_dev
   int32_t temp_rampup_meas_gradient = 0;                                      // Temperature measured gradient from sensor in thousandths of degrees per hour calculated during ramp-up
   uint32_t timestamp_rampup_start = 0;                                        // Timestamp where the ramp-up controller mode has been started
   uint32_t time_rampup_deadtime = 0;                                          // Time constant of the thermostat system (step response time)
   uint32_t time_rampup_nextcycle = 0;                                         // Time where the ramp-up controller shall start the next cycle
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
   int16_t temp_measured = 0;                                                  // Temperature measurement received from sensor in tenths of degrees
   uint8_t time_output_delay = THERMOSTAT_TIME_OUTPUT_DELAY;                   // Output delay between state change and real actuation event (f.i. valve open/closed)
   uint8_t  counter_rampup_cycles = 0;                                         // Counter of ramp-up cycles
->>>>>>> new_branch_dev
-=======
-  int16_t temp_measured = 0;                                                  // Temperature measurement received from sensor in tenths of degrees
-  uint8_t time_output_delay = THERMOSTAT_TIME_OUTPUT_DELAY;                   // Output delay between state change and real actuation event (f.i. valve open/closed)
-  uint8_t  counter_rampup_cycles = 0;                                         // Counter of ramp-up cycles
->>>>>>> new_branch_dev
   uint8_t output_relay_number = THERMOSTAT_RELAY_NUMBER;                      // Output relay number
   uint8_t input_switch_number = THERMOSTAT_SWITCH_NUMBER;                     // Input switch number
   uint8_t temp_sens_number = THERMOSTAT_TEMP_SENS_NUMBER;                     // Temperature sensor number
@@ -198,7 +180,10 @@ struct THERMOSTAT {
   uint16_t power_max = THERMOSTAT_POWER_MAX;                                  // Maximum output power in Watt
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   uint16_t energy_thermostat_output_max = THERMOSTAT_ENERGY_OUTPUT_MAX;       // Maximum allowed energy output for thermostat valve in Watts
+=======
+>>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
 =======
@@ -346,10 +331,13 @@ bool HeatStateManualToAuto()
   // If switch input inactive
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   // AND no switch input action (time in current state) bigger than a pre-defined time
   // then go to automatic
   if ((ThermostatSwitchStatus(Thermostat.input_switch_number) == 0) 
 =======
+=======
+>>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
   // AND sensor alive
@@ -358,6 +346,9 @@ bool HeatStateManualToAuto()
   if ((ThermostatSwitchStatus(Thermostat.input_switch_number) == 0) 
     &&(Thermostat.status.sensor_alive ==  IFACE_ON)
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> new_branch_dev
+=======
 >>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
@@ -464,7 +455,11 @@ void ThermostatCalculatePI()
   // and accumulate error = 0
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   if (abs(Thermostat.temp_pi_error) > Thermostat.temp_reset_anti_windup) {
+=======
+  if (abs(Thermostat.temp_pi_error) > (int16_t)Thermostat.temp_reset_anti_windup) {
+>>>>>>> new_branch_dev
 =======
   if (abs(Thermostat.temp_pi_error) > (int16_t)Thermostat.temp_reset_anti_windup) {
 >>>>>>> new_branch_dev
@@ -549,7 +544,11 @@ void ThermostatCalculatePI()
   // If target value has not been reached
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   // AND we are withing the histeresis
+=======
+  // AND we are withinvr the histeresis
+>>>>>>> new_branch_dev
 =======
   // AND we are withinvr the histeresis
 >>>>>>> new_branch_dev
@@ -756,7 +755,10 @@ void ThermostatWork()
       Thermostat.time_ctr_checkpoint = 0;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
       if (ThermostatSwitchStatus(Thermostat.input_switch_number) == 1) {
@@ -766,6 +768,9 @@ void ThermostatWork()
         Thermostat.status.command_output = IFACE_OFF;
       }      
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> new_branch_dev
+=======
 >>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
@@ -896,9 +901,15 @@ void CmndTempMeasuredSet(void)
       if (value != Thermostat.temp_measured) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         int16_t temp_delta = (value - Thermostat.temp_measured); // in tenths of degrees
         uint32_t time_delta = (timestamp - Thermostat.timestamp_temp_meas_change_update); // in seconds
         Thermostat.temp_measured_gradient = (int32_t)((360000 * (int32_t)temp_delta) / (int32_t)time_delta); // hundreths of degrees per hour
+=======
+        int32_t temp_delta = (value - Thermostat.temp_measured); // in tenths of degrees
+        uint32_t time_delta = (timestamp - Thermostat.timestamp_temp_meas_change_update); // in seconds
+        Thermostat.temp_measured_gradient = (int32_t)((360000 * temp_delta) / ((int32_t)time_delta)); // hundreths of degrees per hour
+>>>>>>> new_branch_dev
 =======
         int32_t temp_delta = (value - Thermostat.temp_measured); // in tenths of degrees
         uint32_t time_delta = (timestamp - Thermostat.timestamp_temp_meas_change_update); // in seconds
@@ -1216,7 +1227,10 @@ bool Xdrv39(uint8_t function)
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_total_pi: %s"), result_chr);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
         dtostrfd(Thermostat.temp_measured_gradient, 0, result_chr);
@@ -1230,6 +1244,9 @@ bool Xdrv39(uint8_t function)
         dtostrfd(Thermostat.temp_rampup_output_off, 0, result_chr);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_rampup_output_off: %s"), result_chr);
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> new_branch_dev
+=======
 >>>>>>> new_branch_dev
 =======
 >>>>>>> new_branch_dev
