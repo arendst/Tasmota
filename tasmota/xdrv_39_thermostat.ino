@@ -739,7 +739,7 @@ bool ThermostatTimerArm(int16_t tempVal)
   // TempVal unit is tenths of degrees celsius
   if ((tempVal >= -1000) 
     && (tempVal <= 1000)
-    && (tempVal >= Thermostat.temp_frost_protect)) {
+    && (tempVal >= (int16_t)Thermostat.temp_frost_protect)) {
       Thermostat.temp_target_level = tempVal;
       Thermostat.status.thermostat_mode = THERMOSTAT_AUTOMATIC_OP;
       result = true;
@@ -872,7 +872,7 @@ void CmndTempTargetSet(void)
     uint16_t value = (uint16_t)(CharToFloat(XdrvMailbox.data) * 10);
     if ((value >= -1000) 
       && (value <= 1000)
-      && (value >= Thermostat.temp_frost_protect)) {
+      && (value >= (int16_t)Thermostat.temp_frost_protect)) {
       Thermostat.temp_target_level = value;
     }
   }
@@ -1156,7 +1156,7 @@ bool Xdrv39(uint8_t function)
         dtostrfd(Thermostat.status.status_cycle_active, 0, result_chr);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.status_cycle_active: %s"), result_chr);   
         dtostrfd(Thermostat.temp_pi_error, 0, result_chr);
-        ddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_pi_error: %s"), result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_pi_error: %s"), result_chr);
         dtostrfd(Thermostat.temp_pi_accum_error, 0, result_chr);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_pi_accum_error: %s"), result_chr);
         dtostrfd(Thermostat.time_proportional_pi, 0, result_chr);
