@@ -1120,10 +1120,15 @@ String ModuleName(void)
 
 void ModuleGpios(myio *gp)
 {
+//#ifdef ESP8266
   uint8_t *dest = (uint8_t *)gp;
-  memset(dest, GPIO_NONE, sizeof(myio));
+  uint8_t src[sizeof(Settings.user_template.gp.io)/sizeof(Settings.user_template.gp.io[0])];
+//#else
+//  uint16_t *dest = (uint16_t *)gp;
+//  uint16_t src[sizeof(Settings.user_template.gp.io)/sizeof(Settings.user_template.gp.io[0])];
+//#endif
 
-  uint8_t src[sizeof(mycfgio)];
+  memset(dest, GPIO_NONE, sizeof(myio));
   if (USER_MODULE == Settings.module) {
     memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
   } else {
@@ -1138,7 +1143,7 @@ void ModuleGpios(myio *gp)
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
 
   uint32_t j = 0;
-  for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
+  for (uint32_t i = 0; i < sizeof(Settings.user_template.gp.io)/sizeof(Settings.user_template.gp.io[0]); i++) {
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
     dest[j] = src[i];
@@ -1226,7 +1231,11 @@ bool ValidAdc(void)
   return (ADC0_USER == template_adc0);
 }
 
+//#ifdef ESP8266
 bool GetUsedInModule(uint32_t val, uint8_t *arr)
+//#else
+//bool GetUsedInModule(uint32_t val, uint16_t *arr)
+//#endif
 {
   int offset = 0;
 
@@ -1307,7 +1316,7 @@ bool JsonTemplate(const char* dataBuf)
     SettingsUpdateText(SET_TEMPLATE_NAME, name);
   }
   if (obj[D_JSON_GPIO].success()) {
-    for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
+    for (uint32_t i = 0; i < sizeof(Settings.user_template.gp.io)/sizeof(Settings.user_template.gp.io[0]); i++) {
       Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
     }
   }
@@ -1326,7 +1335,7 @@ bool JsonTemplate(const char* dataBuf)
 void TemplateJson(void)
 {
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
-  for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+  for (uint32_t i = 0; i < sizeof(Settings.user_template.gp.io)/sizeof(Settings.user_template.gp.io[0]); i++) {
     ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings.user_template.gp.io[i]);
   }
   ResponseAppend_P(PSTR("],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), Settings.user_template.flag, Settings.user_template_base +1);
