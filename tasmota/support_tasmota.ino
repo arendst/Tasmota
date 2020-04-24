@@ -339,7 +339,7 @@ void SetPowerOnState(void)
 void SetLedPowerIdx(uint32_t led, uint32_t state)
 {
   if ((99 == pin[GPIO_LEDLNK]) && (0 == led)) {  // Legacy - LED1 is link led only if LED2 is present
-    if (pin[GPIO_LED2] < 99) {
+    if (pin[GPIO_LED1 +1] < 99) {
       led = 1;
     }
   }
