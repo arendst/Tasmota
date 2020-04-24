@@ -591,9 +591,9 @@ void WifiCheck(uint8_t param)
 #ifdef USE_EMULATION
         UdpDisconnect();
 #endif  // USE_EMULATION
-#ifdef USE_DEVICE_GROUPS_SSDP
+#ifdef USE_DEVICE_GROUPS
         DeviceGroupsStop();
-#endif  // USE_DEVICE_GROUPS_SSDP
+#endif  // USE_DEVICE_GROUPS
         Wifi.mdns_begun = 0;
 #ifdef USE_KNX
         knx_started = false;
