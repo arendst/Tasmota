@@ -213,7 +213,7 @@ const char HTTP_APDS_9960_SNS[] PROGMEM =
 #define GWTIME_39_2MS           7
 
 /* Default values */
-#define DEFAULT_ATIME           0xdb              // 103ms = 0xdb
+#define DEFAULT_ATIME           0xdb              // 103ms = 0xdb = 219
 #define DEFAULT_WTIME           246               // 27ms
 #define DEFAULT_PROX_PPULSE     0x87              // 16us, 8 pulses
 #define DEFAULT_GESTURE_PPULSE  0x89              // 16us, 10 pulses  ---89
@@ -250,12 +250,16 @@ enum {
   DIR_RIGHT,
   DIR_UP,
   DIR_DOWN,
+  DIR_NEAR,
+  DIR_FAR,
   DIR_ALL
 };
 
 /* State definitions*/
 enum {
   APDS9960_NA_STATE,
+  APDS9960_NEAR_STATE,
+  APDS9960_FAR_STATE,
   APDS9960_ALL_STATE
 };
 
@@ -282,9 +286,9 @@ int16_t gesture_motion_ = DIR_NONE;
 
 typedef struct color_data_type {
   uint16_t a;     // measured ambient
-  uint16_t r;
-  uint16_t g;
-  uint16_t b;
+  uint16_t r;     // Red
+  uint16_t g;     // Green
+  uint16_t b;     // Blue
   uint8_t p;      // proximity
   uint16_t cct;   // calculated color temperature
   uint16_t lux;   // calculated illuminance - atm only from rgb
@@ -391,6 +395,7 @@ uint8_t getProxIntLowThresh(void) {
 
   /* Read value from PILT register */
   val = I2cRead8(APDS9960_I2C_ADDR, APDS9960_PILT);
+
   return val;
 }
 
@@ -413,6 +418,7 @@ uint8_t getProxIntHighThresh(void) {
 
   /* Read value from PIHT register */
   val = I2cRead8(APDS9960_I2C_ADDR, APDS9960_PIHT);
+
   return val;
 }
 
@@ -441,6 +447,7 @@ uint8_t getLEDDrive(void) {
 
   /* Read value from CONTROL register */
   val = I2cRead8(APDS9960_I2C_ADDR, APDS9960_CONTROL);
+
   /* Shift and mask out LED drive bits */
   val = (val >> 6) & 0b00000011;
 
@@ -490,6 +497,7 @@ uint8_t getProximityGain(void) {
 
   /* Read value from CONTROL register */
   val = I2cRead8(APDS9960_I2C_ADDR, APDS9960_CONTROL);
+
   /* Shift and mask out PDRIVE bits */
   val = (val >> 2) & 0b00000011;
 
@@ -534,6 +542,17 @@ void setProximityGain(uint8_t drive) {
  *
  * @return the value of the ALS gain. 0xFF on failure.
  */
+uint8_t getAmbientLightGain() {
+  uint8_t val;
+
+  /* Read value from CONTROL register */
+  val = I2cRead8(APDS9960_I2C_ADDR, APDS9960_CONTROL);
+
+  /* Shift and mask out ADRIVE bits */
+  val &= 0b00000011;
+
+  return val;
+}
 
 /**
  * @brief Sets the receiver gain for the ambient light sensor (ALS)
@@ -600,6 +619,7 @@ void setLEDBoost(uint8_t boost) {
 
   /* Read value from CONFIG2 register */
   val = I2cRead8(APDS9960_I2C_ADDR, APDS9960_CONFIG2);
+
   /* Set bits in register to given value */
   boost &= 0b00000011;
   boost = boost << 4;
@@ -1193,6 +1213,8 @@ void setGestureMode(uint8_t mode) {
 
 
 bool APDS9960_init(void) {
+  setMode(ALL, OFF);
+
   /* Set default values for ambient light and proximity registers */
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_ATIME, DEFAULT_ATIME);
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_WTIME, DEFAULT_WTIME);
@@ -1296,9 +1318,9 @@ void setMode(uint8_t mode, uint8_t enable) {
 void enableLightSensor(void) {
   /* Set default gain, interrupts, enable power, and enable sensor */
   setAmbientLightGain(DEFAULT_AGAIN);
-  setAmbientLightIntEnable(0);
+  setAmbientLightIntEnable(OFF);
   enablePower();
-  setMode(AMBIENT_LIGHT, 1);
+  setMode(AMBIENT_LIGHT, ON);
 }
 
 /**
@@ -1306,8 +1328,8 @@ void enableLightSensor(void) {
  *
  */
 void disableLightSensor(void) {
-  setAmbientLightIntEnable(0);
-  setMode(AMBIENT_LIGHT, 0);
+  setAmbientLightIntEnable(OFF);
+  setMode(AMBIENT_LIGHT, OFF);
 }
 
 /**
@@ -1319,9 +1341,9 @@ void enableProximitySensor(void) {
   /* Set default gain, LED, interrupts, enable power, and enable sensor */
   setProximityGain(DEFAULT_PGAIN);
   setLEDDrive(DEFAULT_LDRIVE);
-  setProximityIntEnable(0);
+  setProximityIntEnable(OFF);
   enablePower();
-  setMode(PROXIMITY, 1);
+  setMode(PROXIMITY, ON);
 }
 
 /**
@@ -1329,8 +1351,8 @@ void enableProximitySensor(void) {
  *
  */
 void disableProximitySensor(void) {
-  setProximityIntEnable(0);
-  setMode(PROXIMITY, 0);
+  setProximityIntEnable(OFF);
+  setMode(PROXIMITY, OFF);
 }
 
 /**
@@ -1350,12 +1372,12 @@ void enableGestureSensor(void) {
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_WTIME, 0xFF);
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_PPULSE, DEFAULT_GESTURE_PPULSE);
   setLEDBoost(LED_BOOST_100);  // tip from jonn26 - 100 for 300 ---- 200 from Adafruit
-  setGestureIntEnable(0);
-  setGestureMode(1);
+  setGestureIntEnable(OFF);
+  setGestureMode(ON);
   enablePower();
-  setMode(WAIT, 1);
-  setMode(PROXIMITY, 1);
-  setMode(GESTURE, 1);
+  setMode(WAIT, ON);
+  setMode(PROXIMITY, ON);
+  setMode(GESTURE, ON);
 }
 
 /**
@@ -1364,9 +1386,9 @@ void enableGestureSensor(void) {
  */
 void disableGestureSensor(void) {
   resetGestureParameters();
-  setGestureIntEnable(0);
-  setGestureMode(0);
-  setMode(GESTURE, 0);
+  setGestureIntEnable(OFF);
+  setGestureMode(OFF);
+  setMode(GESTURE, OFF);
 }
 
 /**
@@ -1414,6 +1436,7 @@ int16_t readGesture(void) {
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("Sensor overload"));
     }
     gesture_loop_counter += 1;
+
     /* Wait some time to collect next batch of FIFO data */
     delay(FIFO_PAUSE_TIME);
 
@@ -1449,14 +1472,10 @@ int16_t readGesture(void) {
         /* If at least 1 set of data, sort the data into U/D/L/R */
         if (bytes_read >= 4) {
           for (i = 0; i < bytes_read; i += 4) {
-            gesture_data_.u_data[gesture_data_.index] = \
-                                                fifo_data[i + 0];
-            gesture_data_.d_data[gesture_data_.index] = \
-                                                fifo_data[i + 1];
-            gesture_data_.l_data[gesture_data_.index] = \
-                                                fifo_data[i + 2];
-            gesture_data_.r_data[gesture_data_.index] = \
-                                                fifo_data[i + 3];
+            gesture_data_.u_data[gesture_data_.index] = fifo_data[i + 0];
+            gesture_data_.d_data[gesture_data_.index] = fifo_data[i + 1];
+            gesture_data_.l_data[gesture_data_.index] = fifo_data[i + 2];
+            gesture_data_.r_data[gesture_data_.index] = fifo_data[i + 3];
             gesture_data_.index++;
             gesture_data_.total_gestures++;
           }
@@ -1488,7 +1507,7 @@ int16_t readGesture(void) {
  *
  */
 void enablePower(void) {
-  setMode(POWER, 1);
+  setMode(POWER, ON);
 }
 
 /**
@@ -1496,7 +1515,7 @@ void enablePower(void) {
  *
  */
 void disablePower(void) {
-  setMode(POWER, 0);
+  setMode(POWER, OFF);
 }
 
 
