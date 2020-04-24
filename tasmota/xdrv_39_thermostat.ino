@@ -137,8 +137,8 @@ struct THERMOSTAT {
   uint32_t time_ctr_checkpoint = 0;                                           // Time to finalize the control cycle within the PI strategy or to switch to PI from Rampup
   uint32_t time_ctr_changepoint = 0;                                          // Time until switching off output within the controller
   int32_t temp_measured_gradient = 0;                                         // Temperature measured gradient from sensor in thousandths of degrees per hour
-  uint16_t temp_target_level = THERMOSTAT_TEMP_INIT;                          // Target level of the thermostat in tenths of degrees
-  uint16_t temp_target_level_ctr = THERMOSTAT_TEMP_INIT;                      // Target level set for the controller
+  int16_t temp_target_level = THERMOSTAT_TEMP_INIT;                          // Target level of the thermostat in tenths of degrees
+  int16_t temp_target_level_ctr = THERMOSTAT_TEMP_INIT;                      // Target level set for the controller
   int16_t temp_pi_accum_error = 0;                                            // Temperature accumulated error for the PI controller in tenths of degrees
   int16_t temp_pi_error = 0;                                                  // Temperature error for the PI controller in tenths of degrees
   int32_t time_proportional_pi;                                               // Time proportional part of the PI controller
@@ -207,7 +207,7 @@ bool ThermostatMinuteCounter()
     result = true; 
     Thermostat.status.counter_seconds = 0;   
   }
-  return(result);
+  return result;
 }
 
 inline bool ThermostatSwitchIdValid(uint8_t switchId) 
@@ -733,6 +733,27 @@ void ThermostatController()
   ThermostatWork();
 }
 
+bool ThermostatTimerArm(int16_t tempVal)
+{
+  bool result = false;
+  // TempVal unit is tenths of degrees celsius
+  if ((tempVal >= -1000) 
+    && (tempVal <= 1000)
+    && (tempVal >= Thermostat.temp_frost_protect)) {
+      Thermostat.temp_target_level = tempVal;
+      Thermostat.status.thermostat_mode = THERMOSTAT_AUTOMATIC_OP;
+      result = true;
+  }
+  // Returns true if setpoint plausible and thermostat armed, false on the contrary
+  return result;
+}
+
+void ThermostatTimerDisarm()
+{
+  Thermostat.temp_target_level = THERMOSTAT_TEMP_INIT;
+  Thermostat.status.thermostat_mode = THERMOSTAT_OFF;
+}
+
 #ifdef DEBUG_THERMOSTAT
 void ThermostatVirtualSwitch()
 {
@@ -1133,7 +1154,11 @@ bool Xdrv39(uint8_t function)
         dtostrfd(Thermostat.status.status_output, 0, result_chr);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.status_output: %s"), result_chr);
         dtostrfd(Thermostat.status.status_cycle_active, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.status_cycle_active: %s"), result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.status_cycle_active: %s"), result_chr);   
+        dtostrfd(Thermostat.temp_pi_error, 0, result_chr);
+        ddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_pi_error: %s"), result_chr);
+        dtostrfd(Thermostat.temp_pi_accum_error, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_pi_accum_error: %s"), result_chr);
         dtostrfd(Thermostat.time_proportional_pi, 0, result_chr);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_proportional_pi: %s"), result_chr);
         dtostrfd(Thermostat.time_integral_pi, 0, result_chr);
