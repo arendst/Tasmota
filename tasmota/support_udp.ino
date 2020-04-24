@@ -49,7 +49,11 @@ bool UdpDisconnect(void)
 {
   if (udp_connected) {
     PortUdp.flush();
+#ifdef USE_DEVICE_GROUPS
+    PortUdp.stop();
+#else // USE_DEVICE_GROUPS
     WiFiUDP::stopAll();
+#endif  // !USE_DEVICE_GROUPS
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_MULTICAST_DISABLED));
     udp_connected = false;
   }
@@ -135,12 +139,6 @@ void PollUdp(void)
           continue;
         }
       }
-
-#ifdef USE_DEVICE_GROUPS
-      if (Settings.flag4.device_groups_enabled && !strncmp_P(packet_buffer, kDeviceGroupMessage, sizeof(DEVICE_GROUP_MESSAGE) - 1)) {
-        ProcessDeviceGroupMessage(packet_buffer, len);
-      }
-#endif  // USE_DEVICE_GROUPS
     }
     optimistic_yield(100);
   }
