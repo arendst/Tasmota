@@ -1425,12 +1425,26 @@ int16_t readGesture(void) {
       /* Read the current FIFO level */
       fifo_level = I2cRead8(APDS9960_I2C_ADDR, APDS9960_GFLVL);
 
+#ifdef USE_DEBUG_DRIVER
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DRV: FIFO Level :  %d"), fifo_level);
+#endif  // USE_DEBUG_DRIVER
+
       /* If there's stuff in the FIFO, read it into our data block */
       if (fifo_level > 0) {
         bytes_read = wireReadDataBlock(APDS9960_GFIFO_U, (uint8_t*)fifo_data, (fifo_level * 4));
         if (bytes_read == -1) {
           return APDS9960_ERROR;
         }
+
+#ifdef USE_DEBUG_DRIVER
+      char output[(bytes_read * 2) + 1];
+      char *ptr = &output[0];
+
+      for ( i = 0; i < bytes_read; i++ ) {
+          ptr += sprintf(ptr, "%02X", fifo_data[i]);
+      }
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DRV: FIFO Dump : %s"), output);
+#endif  // USE_DEBUG_DRIVER
 
         /* If at least 1 set of data, sort the data into U/D/L/R */
         if (bytes_read >= 4) {
@@ -1763,6 +1777,12 @@ void APDS9960_detect(void) {
   if (APDS9960type || I2cActive(APDS9960_I2C_ADDR)) { return; }
 
   APDS9960type = I2cRead8(APDS9960_I2C_ADDR, APDS9960_ID);
+
+#ifdef USE_DEBUG_DRIVER
+  // Debug new chip
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DRV: %s Chip %X"), APDS9960stype, APDS9960type);
+#endif  // USE_DEBUG_DRIVER
+
   if (APDS9960type == APDS9960_CHIPID_1 || APDS9960type == APDS9960_CHIPID_2 || APDS9960type == APDS9960_CHIPID_3) {
     if (APDS9960_init()) {
       I2cSetActiveFound(APDS9960_I2C_ADDR, APDS9960stype);
