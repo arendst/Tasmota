@@ -204,14 +204,19 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
   if (type != nullptr) {
     type++;
     uint32_t i;
-    for (i = 0; i < strlen(type); i++) {
-      type[i] = toupper(type[i]);
+    int nLen; // strlen(type)
+    char *s = type;
+    for (nLen = 0; *s; s++, nLen++) {
+      *s=toupper(*s);
     }
-    while (isdigit(type[i-1])) {
-      i--;
+    i = nLen;
+    if (i > 0) { // may be 0
+      while (isdigit(type[i-1])) {
+        i--;
+      }
     }
-    if (i < strlen(type)) {
-      index = atoi(type +i);
+    if (i < nLen) {
+      index = atoi(type + i);
       user_index = true;
     }
     type[i] = '\0';
