@@ -1466,7 +1466,7 @@ void HandleTemplateConfiguration(void)
     }
     WSContentSend_P(PSTR("}1"));                                   // Field separator
 
-    for (uint32_t i = 0; i < sizeof(cmodule); i++) {         // 17,148,29,149,7,255,255,255,138,255,139,255,255
+    for (uint32_t i = 0; i < sizeof(cmodule.io)/sizeof(cmodule.io[0]); i++) {         // 17,148,29,149,7,255,255,255,138,255,139,255,255
       if (!FlashPin(i)) {
         WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", cmodule.io[i]);
       }
@@ -1518,7 +1518,7 @@ void TemplateSaveSettings(void)
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
 
   uint32_t j = 0;
-  for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+  for (uint32_t i = 0; i < sizeof(Settings.user_template.gp.io)/sizeof(Settings.user_template.gp.io[0]); i++) {
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
     snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), j);
@@ -1604,7 +1604,7 @@ void HandleModuleConfiguration(void)
   WSContentStart_P(S_CONFIGURE_MODULE);
   WSContentSend_P(HTTP_SCRIPT_MODULE_TEMPLATE);
   WSContentSend_P(HTTP_SCRIPT_MODULE1, Settings.module);
-  for (uint32_t i = 0; i < sizeof(cmodule); i++) {
+  for (uint32_t i = 0; i < sizeof(cmodule.io)/sizeof(cmodule.io[0]); i++) {
     if (ValidGPIO(i, cmodule.io[i])) {
       WSContentSend_P(PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g16
     }
@@ -1612,7 +1612,7 @@ void HandleModuleConfiguration(void)
   WSContentSend_P(HTTP_SCRIPT_MODULE2, Settings.my_adc0);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_MODULE, AnyModuleName(MODULE).c_str());
-  for (uint32_t i = 0; i < sizeof(cmodule); i++) {
+  for (uint32_t i = 0; i < sizeof(cmodule.io)/sizeof(cmodule.io[0]); i++) {
     if (ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
 #ifdef ESP8266
@@ -1652,7 +1652,7 @@ void ModuleSaveSettings(void)
   myio cmodule;
   ModuleGpios(&cmodule);
   String gpios = "";
-  for (uint32_t i = 0; i < sizeof(cmodule); i++) {
+  for (uint32_t i = 0; i < sizeof(cmodule.io)/sizeof(cmodule.io[0]); i++) {
     if (Settings.last_module != new_module) {
       Settings.my_gp.io[i] = GPIO_NONE;
     } else {
