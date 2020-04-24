@@ -440,9 +440,9 @@ cleanup:
 bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType message_type, ...)
 {
   // If device groups is not up, ignore this request.
-  // If we're currently processing a remote device message, ignore this request.
   if (!device_groups_up) return 1;
 
+  // If we're currently processing a remote device message, ignore this request.
   if (ignore_dgr_sends && message_type != DGR_MSGTYPE_UPDATE_COMMAND) return 0;
 
   // Get a pointer to the device information for this device.
@@ -632,7 +632,7 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
 
       // If this item is shared with the group add it to the message.
       shared = true;
-      if (!device_group_index) shared = DeviceGroupItemShared(false, item);
+      if (!device_group_index && message_type != DGR_MSGTYPE_UPDATE_COMMAND) shared = DeviceGroupItemShared(false, item);
       if (shared) {
         *message_ptr++ = item;
 
@@ -698,8 +698,8 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
   SendReceiveDeviceGroupMessage(device_group, nullptr, device_group->message, device_group->message_length, false);
 
 #ifdef USE_DEVICE_GROUPS_SEND
-  // If the device group is local, handle the message locally.
-  if (message_type == DGR_MSGTYPE_UPDATE_COMMAND && device_group->local) {
+  // If this is the DevGroupSend command, also handle the update locally.
+  if (message_type == DGR_MSGTYPE_UPDATE_COMMAND) {
     struct XDRVMAILBOX save_XdrvMailbox = XdrvMailbox;
     SendReceiveDeviceGroupMessage(device_group, nullptr, device_group->message, device_group->message_length, true);
     XdrvMailbox = save_XdrvMailbox;
