@@ -276,7 +276,7 @@ void PWMDimmerHandleButton(void)
   }
 
   bool state_updated = false;
-  int8_t bri_offset = 0;
+  int32_t bri_offset = 0;
   uint8_t power_on_bri = 0;
   uint8_t dgr_item = 0;
   uint8_t dgr_value;
@@ -550,7 +550,7 @@ void PWMDimmerHandleButton(void)
             // If the button was not held, adjust the brightness. Set the direction based on which
             // button is pressed. The new brightness will be calculated below.
             if (button_hold_time[button_index] >= now) {
-              bri_offset = (is_down_button ? -10 : 10);
+              bri_offset = (is_down_button ? -1 : 1);
               dgr_item = 255;
             }
 
@@ -591,9 +591,8 @@ void PWMDimmerHandleButton(void)
     else
 #endif  // USE_PWM_DIMMER_REMOTE
       bri = light_state.getBri();
-    int32_t new_bri;
-    bri_offset *= (Settings.light_correction ? 4 : bri / 16 + 1);
-    new_bri = bri + bri_offset;
+    int32_t new_bri = bri + bri_offset * ((dgr_item ? 16 : Settings.light_correction ? 4 : bri / 16 + 1));
+
     if (bri_offset > 0) {
       if (new_bri > 255) new_bri = 255;
     }
@@ -602,7 +601,7 @@ void PWMDimmerHandleButton(void)
     }
     if (new_bri != bri) {
 #ifdef USE_DEVICE_GROUPS
-      SendDeviceGroupMessage(power_button_index, (dgr_item ? DGR_MSGTYP_PARTIAL_UPDATE : DGR_MSGTYP_UPDATE_MORE_TO_COME), DGR_ITEM_LIGHT_BRI, new_bri);
+      SendDeviceGroupMessage(power_button_index, (dgr_item ? DGR_MSGTYP_UPDATE : DGR_MSGTYP_UPDATE_MORE_TO_COME), DGR_ITEM_LIGHT_BRI, new_bri);
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_PWM_DIMMER_REMOTE
       if (!active_device_is_local)

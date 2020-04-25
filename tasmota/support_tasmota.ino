@@ -1354,7 +1354,7 @@ void GpioInit(void)
     Settings.serial_config = TS_SERIAL_8N1;
   }
 
-  for (uint32_t i = 0; i < sizeof(Settings.user_template.gp.io)/sizeof(Settings.user_template.gp.io[0]); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
     if ((Settings.user_template.gp.io[i] >= GPIO_SENSOR_END) && (Settings.user_template.gp.io[i] < GPIO_USER)) {
       Settings.user_template.gp.io[i] = GPIO_USER;  // Fix not supported sensor ids in template
     }
@@ -1362,7 +1362,7 @@ void GpioInit(void)
 
   myio def_gp;
   ModuleGpios(&def_gp);
-  for (uint32_t i = 0; i < sizeof(Settings.my_gp.io)/sizeof(Settings.my_gp.io[0]); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
     if ((Settings.my_gp.io[i] >= GPIO_SENSOR_END) && (Settings.my_gp.io[i] < GPIO_USER)) {
       Settings.my_gp.io[i] = GPIO_NONE;             // Fix not supported sensor ids in module
     }
@@ -1388,7 +1388,7 @@ void GpioInit(void)
   for (uint32_t i = 0; i < GPIO_MAX; i++) {
     pin[i] = 99;
   }
-  for (uint32_t i = 0; i < sizeof(my_module.io)/sizeof(my_module.io[0]); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(my_module.io); i++) {
     mpin = ValidPin(i, my_module.io[i]);
 
     DEBUG_CORE_LOG(PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
@@ -1465,7 +1465,7 @@ void GpioInit(void)
 
   // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
   // Doing it here solves relay toggles at restart.
-  for (uint32_t i = 0; i < sizeof(my_module.io)/sizeof(my_module.io[0]); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(my_module.io); i++) {
     mpin = ValidPin(i, my_module.io[i]);
 //    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
     if (((i < 6) || (i > 11)) && (0 == mpin)) {  // Skip SPI flash interface

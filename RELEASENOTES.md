@@ -52,8 +52,9 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.2.0.4
+### Version 8.2.0.5
 
+- Breaking Change Device Groups multicast address and port  (#8270)
 - Change PWM implementation to Arduino #7231 removing support for Core versions before 2.6.3
 - Change default PWM Frequency to 223 Hz instead of 880 Hz for less interrupt pressure
 - Change HM-10 sensor type detection and add features (#7962)
