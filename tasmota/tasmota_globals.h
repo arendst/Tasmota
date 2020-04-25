@@ -63,9 +63,6 @@ extern "C" void resetPins();
 #ifdef USE_EMULATION_WEMO
 #define USE_EMULATION
 #endif
-#ifdef USE_DEVICE_GROUPS
-#define USE_EMULATION
-#endif
                                                // See https://github.com/esp8266/Arduino/pull/4889
 #undef NO_EXTRA_4K_HEAP                        // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
 
@@ -329,8 +326,6 @@ const char kWebColors[] PROGMEM =
 #ifdef USE_DEVICE_GROUPS
 #define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)
 #define SendLocalDeviceGroupMessage(REQUEST_TYPE, ...) _SendDeviceGroupMessage(0, REQUEST_TYPE, __VA_ARGS__, 0)
-#define DEVICE_GROUP_MESSAGE "M-TASMOTA_DGR/"
-const char kDeviceGroupMessage[] PROGMEM = DEVICE_GROUP_MESSAGE;
 uint8_t device_group_count = 1;
 #endif  // USE_DEVICE_GROUPS
 

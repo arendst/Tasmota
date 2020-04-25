@@ -304,7 +304,7 @@ enum DevGroupMessageType { DGR_MSGTYP_FULL_STATUS, DGR_MSGTYP_PARTIAL_UPDATE, DG
 
 enum DevGroupMessageFlag { DGR_FLAG_RESET = 1, DGR_FLAG_STATUS_REQUEST = 2, DGR_FLAG_FULL_STATUS = 4, DGR_FLAG_ACK = 8, DGR_FLAG_MORE_TO_COME = 16, DGR_FLAG_DIRECT = 32, DGR_FLAG_ANNOUNCEMENT = 64 };
 
-enum DevGroupItem { DGR_ITEM_EOL, DGR_ITEM_STATUS,
+enum DevGroupItem { DGR_ITEM_EOL, DGR_ITEM_STATUS, DGR_ITEM_FLAGS,
                     DGR_ITEM_LIGHT_FADE, DGR_ITEM_LIGHT_SPEED, DGR_ITEM_LIGHT_BRI, DGR_ITEM_LIGHT_SCHEME, DGR_ITEM_LIGHT_FIXED_COLOR,
                     DGR_ITEM_BRI_PRESET_LOW, DGR_ITEM_BRI_PRESET_HIGH, DGR_ITEM_BRI_POWER_ON,
                     // Add new 8-bit items before this line
@@ -312,7 +312,7 @@ enum DevGroupItem { DGR_ITEM_EOL, DGR_ITEM_STATUS,
                     //DGR_ITEM_ANALOG1, DGR_ITEM_ANALOG2, DGR_ITEM_ANALOG3, DGR_ITEM_ANALOG4, DGR_ITEM_ANALOG5,
                     // Add new 16-bit items before this line
                     DGR_ITEM_LAST_16BIT, DGR_ITEM_MAX_16BIT = 127,
-                    DGR_ITEM_POWER, DGR_ITEM_DIMMER_RANGE,
+                    DGR_ITEM_POWER,
                     // Add new 32-bit items before this line
                     DGR_ITEM_LAST_32BIT, DGR_ITEM_MAX_32BIT = 191,
                     DGR_ITEM_EVENT, DGR_ITEM_COMMAND,

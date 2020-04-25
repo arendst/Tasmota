@@ -876,6 +876,7 @@ void CmndSetoption(void)
           else if (4 == ptype) {           // SetOption82 .. 113
             bitWrite(Settings.flag4.data, pindex, XdrvMailbox.payload);
             switch (pindex) {
+              case 3:                      // SetOption85 - Enable Device Groups
               case 6:                      // SetOption88 - PWM Dimmer Buttons control remote devices
                 restart_flag = 2;
                 break;
@@ -1798,8 +1799,9 @@ void CmndDevGroupSend(void)
 {
   uint8_t device_group_index = (XdrvMailbox.usridx ? XdrvMailbox.index - 1 : 0);
   if (device_group_index < device_group_count) {
-    _SendDeviceGroupMessage(device_group_index, DGR_MSGTYPE_UPDATE_COMMAND);
-    ResponseCmndChar(XdrvMailbox.data);
+    if (!_SendDeviceGroupMessage(device_group_index, DGR_MSGTYPE_UPDATE_COMMAND)) {
+      ResponseCmndChar(XdrvMailbox.data);
+    }
   }
 }
 #endif  // USE_DEVICE_GROUPS_SEND
