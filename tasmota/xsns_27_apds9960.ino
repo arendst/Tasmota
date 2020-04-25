@@ -61,6 +61,8 @@
 #define APDS9930_CHIPID_1         0x12  // we will check, if someone got an incorrect sensor
 #define APDS9930_CHIPID_2         0x39  // there are case reports about "accidentially bought" 9930's
 
+#define APDS9960_GESTURE                // Enable Gesture feature(2k on flash)
+
 /* Gesture parameters */
 #define GESTURE_THRESHOLD_OUT     10
 #define GESTURE_SENSITIVITY_1     50
