@@ -86,7 +86,7 @@ const uint16_t Z_ClusterNumber[] PROGMEM = {
 
 // convert a 1 byte cluster code to the actual cluster number
 uint16_t fromClusterCode(uint8_t c) {
-  if (c >= sizeof(Z_ClusterNumber)/sizeof(Z_ClusterNumber[0])) {
+  if (c >= ARRAY_SIZE(Z_ClusterNumber)) {
     return 0xFFFF;      // invalid
   }
   return pgm_read_word(&Z_ClusterNumber[c]);
@@ -94,7 +94,7 @@ uint16_t fromClusterCode(uint8_t c) {
 
 // convert a cluster number to 1 byte, or 0xFF if not in table
 uint8_t toClusterCode(uint16_t c) {
-  for (uint32_t i = 0; i < sizeof(Z_ClusterNumber)/sizeof(Z_ClusterNumber[0]); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(Z_ClusterNumber); i++) {
     if (c == pgm_read_word(&Z_ClusterNumber[i])) {
       return i;
     }

@@ -1006,7 +1006,7 @@ void CmndModule(void)
       Settings.module = XdrvMailbox.payload;
       SetModuleType();
       if (Settings.last_module != XdrvMailbox.payload) {
-        for (uint32_t i = 0; i < sizeof(Settings.my_gp.io)/sizeof(Settings.my_gp.io[0]); i++) {
+        for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
           Settings.my_gp.io[i] = GPIO_NONE;
         }
       }
@@ -1042,7 +1042,7 @@ void CmndModules(void)
 
 void CmndGpio(void)
 {
-  if (XdrvMailbox.index < sizeof(Settings.my_gp.io)/sizeof(Settings.my_gp.io[0])) {
+  if (XdrvMailbox.index < ARRAY_SIZE(Settings.my_gp.io)) {
     myio cmodule;
     ModuleGpios(&cmodule);
     if (ValidGPIO(XdrvMailbox.index, cmodule.io[XdrvMailbox.index]) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < GPIO_SENSOR_END)) {
@@ -1052,7 +1052,7 @@ void CmndGpio(void)
         if (midx == XdrvMailbox.payload) { present = true; }
       }
       if (present) {
-        for (uint32_t i = 0; i < sizeof(Settings.my_gp.io)/sizeof(Settings.my_gp.io[0]); i++) {
+        for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
           if (ValidGPIO(i, cmodule.io[i]) && (Settings.my_gp.io[i] == XdrvMailbox.payload)) {
             Settings.my_gp.io[i] = GPIO_NONE;
           }
@@ -1063,7 +1063,7 @@ void CmndGpio(void)
     }
     Response_P(PSTR("{"));
     bool jsflg = false;
-    for (uint32_t i = 0; i < sizeof(Settings.my_gp.io)/sizeof(Settings.my_gp.io[0]); i++) {
+    for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
       if (ValidGPIO(i, cmodule.io[i]) || ((GPIO_USER == XdrvMailbox.payload) && !FlashPin(i))) {
         if (jsflg) { ResponseAppend_P(PSTR(",")); }
         jsflg = true;
@@ -1143,7 +1143,7 @@ void CmndTemplate(void)
       }
       SettingsUpdateText(SET_TEMPLATE_NAME, "Merged");
       uint32_t j = 0;
-      for (uint32_t i = 0; i < sizeof(Settings.user_template.gp.io)/sizeof(Settings.user_template.gp.io[0]); i++) {
+      for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
         if (6 == i) { j = 9; }
         if (8 == i) { j = 12; }
         if (my_module.io[j] > GPIO_NONE) {
