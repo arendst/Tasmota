@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.2.0.5 20200425
+
+- Breaking Change Device Groups multicast address and port  (#8270)
+
 ### 8.2.0.4 20200417
 
 - Change PWM implementation to Arduino #7231 removing support for Core versions before 2.6.3
