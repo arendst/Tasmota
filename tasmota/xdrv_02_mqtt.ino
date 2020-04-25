@@ -487,7 +487,7 @@ void MqttDisconnected(int state)
 
   MqttClient.disconnect();
 
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), SettingsText(SET_MQTT_HOST), Settings.mqtt_port, state, Mqtt.retry_counter);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, %s " D_RETRY_IN " %d " D_UNIT_SECOND), SettingsText(SET_MQTT_HOST), Settings.mqtt_port, S_LOG_MQTT_STATE[state+4], Mqtt.retry_counter);
   rules_flag.mqtt_disconnected = 1;
 }
 

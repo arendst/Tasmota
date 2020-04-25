@@ -610,7 +610,17 @@
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
 #define D_LOG_ZIGBEE "ZIG: "       // Zigbee
-
+// MQTT  State                                                   STATE
+#define D_LOG_MQTT_CONNECTION_TIMEOUT "Connection Timeout, "      //-4
+#define D_LOG_MQTT_CONNECTION_LOST "Connection Lost, "            //-3
+#define D_LOG_MQTT_CONNECT_FAILED "Connection Failed, "           //-2
+#define D_LOG_MQTT_DISCONNECTED "Disconnected, "                  //-1
+#define D_LOG_MQTT_CONNECTED  "Connected, "                       // 0
+#define D_LOG_MQTT_CONNECT_BAD_PROTOCOL "Bad Protokoll, "         // 1
+#define D_LOG_MQTT_CONNECT_BAD_CLIENT_ID  "Bad Client ID, "       // 2
+#define D_LOG_MQTT_CONNECT_UNAVAILABLE  "Not available, "         // 3
+#define D_LOG_MQTT_CONNECT_BAD_CREDENTIALS "Bad User/Password, "  // 4
+#define D_LOG_MQTT_CONNECT_UNAUTHORIZED "No Authorisation, "      // 5
 /********************************************************************************************/
 
 #define D_ASTERISK_PWD "****"
@@ -666,6 +676,7 @@ const char S_LOG_I2C_FOUND_AT[] PROGMEM = D_LOG_I2C "%s " D_FOUND_AT " 0x%x";
 const char S_LOG_HTTP[] PROGMEM = D_LOG_HTTP;
 const char S_LOG_WIFI[] PROGMEM = D_LOG_WIFI;
 const char S_LOG_MQTT[] PROGMEM = D_LOG_MQTT;
+const char* const S_LOG_MQTT_STATE[] PROGMEM = { D_LOG_MQTT_CONNECTION_TIMEOUT, D_LOG_MQTT_CONNECTION_LOST,D_LOG_MQTT_CONNECT_FAILED, D_LOG_MQTT_DISCONNECTED, D_LOG_MQTT_CONNECTED, D_LOG_MQTT_CONNECT_BAD_PROTOCOL, D_LOG_MQTT_CONNECT_BAD_CLIENT_ID, D_LOG_MQTT_CONNECT_UNAVAILABLE, D_LOG_MQTT_CONNECT_BAD_CREDENTIALS, D_LOG_MQTT_CONNECT_UNAUTHORIZED };
 const char S_RSLT_POWER[] PROGMEM = D_RSLT_POWER;
 const char S_RSLT_RESULT[] PROGMEM = D_RSLT_RESULT;
 const char S_RSLT_WARNING[] PROGMEM = D_RSLT_WARNING;
