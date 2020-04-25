@@ -61,8 +61,6 @@
 #define APDS9930_CHIPID_1         0x12  // we will check, if someone got an incorrect sensor
 #define APDS9930_CHIPID_2         0x39  // there are case reports about "accidentially bought" 9930's
 
-#define APDS9960_GESTURE
-
 /* Gesture parameters */
 #define GESTURE_THRESHOLD_OUT     10
 #define GESTURE_SENSITIVITY_1     50
@@ -85,8 +83,8 @@ const char HTTP_SNS_GESTURE[]     PROGMEM = "{s}%s " D_GESTURE "{m}%s{e}";
 #define D_COLOR_RED   "Red"
 #define D_COLOR_GREEN "Green"
 #define D_COLOR_BLUE  "Blue"
-#define D_PROXIMITY   "Proximity"
 #define D_CCT         "CCT"
+#define D_PROXIMITY   "Proximity"
 
 const char HTTP_SNS_COLOR_RED[]   PROGMEM = "{s}%s " D_COLOR_RED "{m}%u{e}";
 const char HTTP_SNS_COLOR_GREEN[] PROGMEM = "{s}%s " D_COLOR_GREEN "{m}%u{e}";
@@ -315,8 +313,11 @@ typedef struct color_data_type {
 } color_data_t;
 
 /*Members*/
+#ifdef APDS9960_GESTURE
 gesture_data_t gesture_data;
 gesture_t gesture;
+#endif  // APDS9960_GESTURE
+
 color_data_t color_data;
 
 volatile uint8_t recovery_loop_counter = 0;  // count number of stateloops to switch the sensor off, if needed
@@ -747,6 +748,8 @@ void setProxPhotoMask(uint8_t mask) {
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_CONFIG3, val);
 }
 
+#ifdef APDS9960_GESTURE
+
 /**
  * @brief Gets the entry proximity threshold for gesture sensing
  *
@@ -949,6 +952,8 @@ void setGestureWaitTime(uint8_t time) {
   /* Write register value back into GCONF2 register */
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_GCONF2, val);
 }
+
+#endif  // APDS9960_GESTURE
 
 /**
  * @brief Gets the low threshold for ambient light interrupts
@@ -1264,6 +1269,8 @@ bool APDS9960_init(void) {
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_CONFIG3, DEFAULT_CONFIG3);
 
   /* Set default values for gesture sense registers */
+#ifdef APDS9960_GESTURE
+
   setGestureEnterThresh(DEFAULT_GPENTH);
   setGestureExitThresh(DEFAULT_GEXTH);
 
@@ -1281,6 +1288,8 @@ bool APDS9960_init(void) {
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_GCONF3, DEFAULT_GCONF3);
 
   setGestureIntEnable(DEFAULT_GIEN);
+  
+#endif  // APDS9960_GESTURE
 
   disablePower();  // go to sleep
 
@@ -1383,6 +1392,7 @@ void disableProximitySensor(void) {
   setMode(PROXIMITY, OFF);
 }
 
+#ifdef APDS9960_GESTURE
 /**
  * @brief Starts the gesture recognition engine on the APDS-9960
  *
@@ -1530,6 +1540,8 @@ int16_t readGesture(void) {
   }
 }
 
+#endif  // APDS9960_GESTURE
+
 /**
  * Turn the APDS-9960 on
  *
@@ -1565,6 +1577,8 @@ void readAllColorAndProximityData(void) {
 /******************************************************************************\
  * High-level gesture controls
 \******************************************************************************/
+
+#ifdef APDS9960_GESTURE
 
 /**
  * @brief Resets all the parameters in the gesture data member
@@ -1760,6 +1774,8 @@ void handleGesture(void) {
   }
 }
 
+#endif  // APDS9960_GESTURE
+
 void APDS9960_adjustATime(void) {  // not really used atm
   // readAllColorAndProximityData();
   I2cValidRead16LE(&color_data.a, APDS9960_I2C_ADDR, APDS9960_CDATAL);
@@ -1792,6 +1808,8 @@ void APDS9960_adjustATime(void) {  // not really used atm
   delay(20);
 }
 
+#ifdef APDS9960_GESTURE
+
 void APDS9960_loop(void) {
   if (recovery_loop_counter > 0) {
     recovery_loop_counter -= 1;
@@ -1820,6 +1838,8 @@ void APDS9960_loop(void) {
   }
 }
 
+#endif  // APDS9960_GESTURE
+
 void APDS9960_detect(void) {
   if (APDS9960type || I2cActive(APDS9960_I2C_ADDR)) { return; }
 
@@ -1835,7 +1855,9 @@ void APDS9960_detect(void) {
       I2cSetActiveFound(APDS9960_I2C_ADDR, APDS9960_TAG);
 
       enableProximitySensor();
+#ifdef APDS9960_GESTURE
       enableGestureSensor();
+#endif  // APDS9960_GESTURE
     } else {
       APDS9960type = 0;
     }
@@ -1865,7 +1887,7 @@ void APDS9960_show(bool json) {
 
     calculateColorTemperature();  // and calculate Lux
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"Red\":%u,\"Green\":%u,\"Blue\":%u,\"Ambient\":%u,\"CCT\":%s,\"Proximity\":%u}"),
+      ResponseAppend_P(PSTR(",\"%s\":{\"Red\":%u,\"Green\":%u,\"Blue\":%u,\"Ambient\":%u,\"CCT\":%u,\"Proximity\":%u}"),
         APDS9960_TAG,
         color_data.r,
         color_data.g,
@@ -1878,11 +1900,12 @@ void APDS9960_show(bool json) {
       WSContentSend_PD(HTTP_SNS_COLOR_RED,   APDS9960_TAG, color_data.r);
       WSContentSend_PD(HTTP_SNS_COLOR_GREEN, APDS9960_TAG, color_data.g);
       WSContentSend_PD(HTTP_SNS_COLOR_BLUE,  APDS9960_TAG, color_data.b);
-//      WSContentSend_PD(HTTP_SNS_ILLUMINANCE, APDS9960_TAG, ambient);
+      WSContentSend_PD(HTTP_SNS_ILLUMINANCE, APDS9960_TAG, ambient);
       WSContentSend_PD(HTTP_SNS_CCT,         APDS9960_TAG, color_data.cct);
       WSContentSend_PD(HTTP_SNS_PROXIMITY,   APDS9960_TAG, color_data.p);
 #endif  // USE_WEBSERVER
     }
+#ifdef APDS9960_GESTURE
   } else {
     if (currentGesture[0] != '\0') {
       if (json) {
@@ -1894,6 +1917,7 @@ void APDS9960_show(bool json) {
         currentGesture[0] = '\0';
       }
     }
+#endif  // APDS9960_GESTURE
   }
 }
 
@@ -1913,11 +1937,14 @@ bool APDS9960CommandSensor(void) {
 
   switch (XdrvMailbox.payload) {
     case 0:  // Off
+#ifdef APDS9960_GESTURE
       disableGestureSensor();
+#endif  // APDS9960_GESTURE
       gesture_mode = 0;
       enableLightSensor();
       APDS9960_overload = false;  // prevent unwanted re-enabling
       break;
+#ifdef APDS9960_GESTURE
     case 1:  // On with default gain of 4x
       if (APDS9960type) {
         setGestureGain(DEFAULT_GGAIN);
@@ -1936,6 +1963,7 @@ bool APDS9960CommandSensor(void) {
         gesture_mode = 1;
       }
       break;
+#endif  // APDS9960_GESTURE
     default:
       int temp_aTime = (uint8_t)XdrvMailbox.payload;
       if (temp_aTime > 2 && temp_aTime < 256) {
@@ -1964,9 +1992,11 @@ bool Xsns27(uint8_t function) {
     APDS9960_detect();
   } else if (APDS9960type) {
     switch (function) {
+#ifdef APDS9960_GESTURE
       case FUNC_EVERY_50_MSECOND:
         APDS9960_loop();
         break;
+#endif  // APDS9960_GESTURE
       case FUNC_COMMAND_SENSOR:
         if (XSNS_27 == XdrvMailbox.index) {
           result = APDS9960CommandSensor();
