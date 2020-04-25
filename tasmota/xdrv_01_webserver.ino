@@ -302,28 +302,6 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
 
   "wl(sl);";
 
-const char HTTP_SCRIPT_MODULE1[] PROGMEM =
-  "function x1(a){"                       // Module Type
-    "os=a.responseText;"
-    "sk(%d,99);"
-  "}"
-  "function x2(b){"                       // GPIOs
-    "os=b.responseText;";
-const char HTTP_SCRIPT_MODULE2[] PROGMEM =
-  "}"
-  "function x3(a){"                       // ADC0
-    "os=a.responseText;"
-    "sk(%d," STR(ADC0_PIN) ");"
-  "}"
-  "function sl(){"
-    "ld('md?m=1',x1);"                    // ?m related to Webserver->hasArg("m")
-    "ld('md?g=1',x2);"                    // ?g related to Webserver->hasArg("g")
-    "if(eb('g" STR(ADC0_PIN) "')){"
-      "ld('md?a=1',x3);"                  // ?a related to Webserver->hasArg("a")
-    "}"
-  "}"
-  "wl(sl);";
-
 const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
   "function i(){"
     "var s,o=\"";
@@ -1449,6 +1427,8 @@ void HandleTemplateConfiguration(void)
 
     WSContentBegin(200, CT_PLAIN);
     WSContentSend_P(PSTR("%s}1"), AnyModuleName(module).c_str());  // NAME: Generic
+
+
     for (uint32_t i = 0; i < sizeof(kGpioNiceList); i++) {   // GPIO: }2'0'>None (0)}3}2'17'>Button1 (17)}3...
       if (1 == i) {
         WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, 255, D_SENSOR_USER, 255);  // }2'255'>User (255)}3
@@ -1457,6 +1437,7 @@ void HandleTemplateConfiguration(void)
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
     }
     WSContentSend_P(PSTR("}1"));                                   // Field separator
+
 
     for (uint32_t i = 0; i < ADC0_END; i++) {                // FLAG: }2'0'>None (0)}3}2'17'>Analog (17)}3...
       if (1 == i) {
@@ -1554,62 +1535,50 @@ void HandleModuleConfiguration(void)
     return;
   }
 
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_MODULE);
+
   char stemp[30];  // Sensor name
   uint32_t midx;
   myio cmodule;
   ModuleGpios(&cmodule);
 
-  if (Webserver->hasArg("m")) {
-    WSContentBegin(200, CT_PLAIN);
-    uint32_t vidx = 0;
-    for (uint32_t i = 0; i <= sizeof(kModuleNiceList); i++) {  // "}2'%d'>%s (%d)}3" - "}2'255'>UserTemplate (0)}3" - "}2'0'>Sonoff Basic (1)}3"
-      if (0 == i) {
-        midx = USER_MODULE;
-        vidx = 0;
-      } else {
-        midx = pgm_read_byte(kModuleNiceList + i -1);
-        vidx = midx +1;
-      }
-      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), vidx);
-    }
-    WSContentEnd();
-    return;
-  }
-
-  if (Webserver->hasArg("g")) {
-    WSContentBegin(200, CT_PLAIN);
-    for (uint32_t j = 0; j < sizeof(kGpioNiceList); j++) {
-      midx = pgm_read_byte(kGpioNiceList + j);
-      if (!GetUsedInModule(midx, cmodule.io)) {
-        WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
-      }
-    }
-    WSContentEnd();
-    return;
-  }
-
-#ifndef USE_ADC_VCC
-  if (Webserver->hasArg("a")) {
-    WSContentBegin(200, CT_PLAIN);
-    for (uint32_t j = 0; j < ADC0_END; j++) {
-      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, j, GetTextIndexed(stemp, sizeof(stemp), j, kAdc0Names), j);
-    }
-    WSContentEnd();
-    return;
-  }
-#endif  // USE_ADC_VCC
-
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_MODULE);
-
   WSContentStart_P(S_CONFIGURE_MODULE);
   WSContentSend_P(HTTP_SCRIPT_MODULE_TEMPLATE);
-  WSContentSend_P(HTTP_SCRIPT_MODULE1, Settings.module);
+
+  WSContentSend_P(PSTR("function sl(){os=\""));
+  uint32_t vidx = 0;
+  for (uint32_t i = 0; i <= sizeof(kModuleNiceList); i++) {  // "}2'%d'>%s (%d)}3" - "}2'255'>UserTemplate (0)}3" - "}2'0'>Sonoff Basic (1)}3"
+    if (0 == i) {
+      midx = USER_MODULE;
+      vidx = 0;
+    } else {
+      midx = pgm_read_byte(kModuleNiceList + i -1);
+      vidx = midx +1;
+    }
+    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), vidx);
+  }
+  WSContentSend_P(PSTR("\";sk(%d,99);os=\""), Settings.module);
+  for (uint32_t i = 0; i < sizeof(kGpioNiceList); i++) {
+    midx = pgm_read_byte(kGpioNiceList + i);
+    if (!GetUsedInModule(midx, cmodule.io)) {
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
+    }
+  }
+  WSContentSend_P(PSTR("\";"));
   for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {
     if (ValidGPIO(i, cmodule.io[i])) {
       WSContentSend_P(PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g16
     }
   }
-  WSContentSend_P(HTTP_SCRIPT_MODULE2, Settings.my_adc0);
+#ifndef USE_ADC_VCC
+  WSContentSend_P(PSTR("os=\""));
+  for (uint32_t j = 0; j < ADC0_END; j++) {
+    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, j, GetTextIndexed(stemp, sizeof(stemp), j, kAdc0Names), j);
+  }
+  WSContentSend_P(PSTR("\";sk(%d," STR(ADC0_PIN) ");"), Settings.my_adc0);
+#endif  // USE_ADC_VCC
+  WSContentSend_P(PSTR("}wl(sl);"));
+
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_MODULE, AnyModuleName(MODULE).c_str());
   for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {
