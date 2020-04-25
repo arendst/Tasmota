@@ -323,6 +323,10 @@ const char kWebColors[] PROGMEM =
 #define STR(x) STR_HELPER(x)
 #endif
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
+
 #ifdef USE_DEVICE_GROUPS
 #define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)
 #define SendLocalDeviceGroupMessage(REQUEST_TYPE, ...) _SendDeviceGroupMessage(0, REQUEST_TYPE, __VA_ARGS__, 0)
