@@ -62,24 +62,17 @@
 #define APDS9930_CHIPID_2         0x39  // there are case reports about "accidentially bought" 9930's
 
 /* Gesture parameters */
-#define GESTURE_THRESHOLD_OUT   10
-#define GESTURE_SENSITIVITY_1   50
-#define GESTURE_SENSITIVITY_2   20
+#define GESTURE_THRESHOLD_OUT     10
+#define GESTURE_SENSITIVITY_1     50
+#define GESTURE_SENSITIVITY_2     20
 
-uint8_t APDS9960addr;
-uint8_t APDS9960type = 0;
-char APDS9960stype[] = "APDS9960";
-char currentGesture[6];
-uint8_t gesture_mode = 1;
-
-
-volatile uint8_t recovery_loop_counter = 0;  // count number of stateloops to switch the sensor off, if needed
 #define APDS9960_LONG_RECOVERY           50  // long pause after sensor overload in loops
 #define APDS9960_MAX_GESTURE_CYCLES      50  // how many FIFO-reads are allowed to prevent crash
-bool APDS9960_overload = false;
+
+const char APDS9960_TAG[] = "APDS9960";
 
 #ifdef USE_WEBSERVER
-const char HTTP_APDS_9960_SNS[] PROGMEM =
+const char HTTP_APDS9960_SNS[] PROGMEM =
   "{s}" "Red" "{m}%s{e}"
   "{s}" "Green" "{m}%s{e}"
   "{s}" "Blue" "{m}%s{e}"
@@ -153,7 +146,7 @@ const char HTTP_APDS_9960_SNS[] PROGMEM =
 #define APDS9960_AEN            0b00000010
 #define APDS9960_PEN            0b00000100
 #define APDS9960_WEN            0b00001000
-#define APSD9960_AIEN           0b00010000
+#define APDS9960_AIEN           0b00010000
 #define APDS9960_PIEN           0b00100000
 #define APDS9960_GEN            0b01000000
 #define APDS9960_GVALID         0b00000001
@@ -273,16 +266,17 @@ typedef struct gesture_data_type {
   uint8_t total_gestures;
   uint8_t in_threshold;
   uint8_t out_threshold;
-} gesture_data_type;
+} gesture_data_t;
 
-/*Members*/
-gesture_data_type gesture_data_;
-int16_t gesture_ud_delta_ = 0;
-int16_t gesture_lr_delta_ = 0;
-int16_t gesture_ud_count_ = 0;
-int16_t gesture_lr_count_ = 0;
-int16_t gesture_state_ = 0;
-int16_t gesture_motion_ = DIR_NONE;
+typedef struct gesture_type
+{
+  int16_t ud_delta_ = 0;
+  int16_t lr_delta_ = 0;
+  int16_t ud_count_ = 0;
+  int16_t lr_count_ = 0;
+  int16_t state_ = 0;
+  int16_t motion_ = DIR_NONE;
+} gesture_t;
 
 typedef struct color_data_type {
   uint16_t a;     // measured ambient
@@ -292,11 +286,19 @@ typedef struct color_data_type {
   uint8_t p;      // proximity
   uint16_t cct;   // calculated color temperature
   uint16_t lux;   // calculated illuminance - atm only from rgb
-} color_data_type;
+} color_data_t;
 
-color_data_type color_data;
+/*Members*/
+gesture_data_t gesture_data;
+gesture_t gesture;
+color_data_t color_data;
+
+volatile uint8_t recovery_loop_counter = 0;  // count number of stateloops to switch the sensor off, if needed
+bool APDS9960_overload = false;
+char currentGesture[6];
 uint8_t APDS9960_aTime = DEFAULT_ATIME;
-
+uint8_t APDS9960type = 0;
+uint8_t gesture_mode = 1;
 
 /******************************************************************************\
  * Helper functions
@@ -1292,7 +1294,7 @@ void setMode(uint8_t mode, uint8_t enable) {
 
   /* Change bit(s) in ENABLE register */
   enable = enable & 0x01;
-  if (mode >= 0 && mode <= 6) {
+  if (mode <= 6) {
     if (enable) {
       reg_val |= (1 << mode);
     } else {
@@ -1416,12 +1418,12 @@ bool isGestureAvailable(void) {
  */
 int16_t readGesture(void) {
   uint8_t fifo_level = 0;
-  uint8_t bytes_read = 0;
   uint8_t fifo_data[128];
   uint8_t gstatus;
-  uint16_t motion;
+  int16_t motion;
   uint16_t i;
   uint8_t gesture_loop_counter = 0;  // don't loop forever later
+  int8_t bytes_read = 0;
 
   /* Make sure that power and gesture is on and data is valid */
   if (!isGestureAvailable() || !(getMode() & 0b01000001)) {
@@ -1472,12 +1474,12 @@ int16_t readGesture(void) {
         /* If at least 1 set of data, sort the data into U/D/L/R */
         if (bytes_read >= 4) {
           for (i = 0; i < bytes_read; i += 4) {
-            gesture_data_.u_data[gesture_data_.index] = fifo_data[i + 0];
-            gesture_data_.d_data[gesture_data_.index] = fifo_data[i + 1];
-            gesture_data_.l_data[gesture_data_.index] = fifo_data[i + 2];
-            gesture_data_.r_data[gesture_data_.index] = fifo_data[i + 3];
-            gesture_data_.index++;
-            gesture_data_.total_gestures++;
+            gesture_data.u_data[gesture_data.index] = fifo_data[i + 0];
+            gesture_data.d_data[gesture_data.index] = fifo_data[i + 1];
+            gesture_data.l_data[gesture_data.index] = fifo_data[i + 2];
+            gesture_data.r_data[gesture_data.index] = fifo_data[i + 3];
+            gesture_data.index++;
+            gesture_data.total_gestures++;
           }
 
           /* Filter and process gesture data. Decode near/far state */
@@ -1487,15 +1489,15 @@ int16_t readGesture(void) {
               }
           }
           /* Reset data */
-          gesture_data_.index = 0;
-          gesture_data_.total_gestures = 0;
+          gesture_data.index = 0;
+          gesture_data.total_gestures = 0;
         }
       }
     } else {
       /* Determine best guessed gesture and clean up */
       delay(FIFO_PAUSE_TIME);
       decodeGesture();
-      motion = gesture_motion_;
+      motion = gesture.motion_;
       resetGestureParameters();
       return motion;
     }
@@ -1542,17 +1544,17 @@ void readAllColorAndProximityData(void) {
  * @brief Resets all the parameters in the gesture data member
  */
 void resetGestureParameters(void) {
-  gesture_data_.index = 0;
-  gesture_data_.total_gestures = 0;
+  gesture_data.index = 0;
+  gesture_data.total_gestures = 0;
 
-  gesture_ud_delta_ = 0;
-  gesture_lr_delta_ = 0;
+  gesture.ud_delta_ = 0;
+  gesture.lr_delta_ = 0;
 
-  gesture_ud_count_ = 0;
-  gesture_lr_count_ = 0;
+  gesture.ud_count_ = 0;
+  gesture.lr_count_ = 0;
 
-  gesture_state_ = 0;
-  gesture_motion_ = DIR_NONE;
+  gesture.state_ = 0;
+  gesture.motion_ = DIR_NONE;
 }
 
 /**
@@ -1578,23 +1580,23 @@ bool processGestureData(void) {
   uint16_t i;
 
   /* If we have less than 4 total gestures, that's not enough */
-  if (gesture_data_.total_gestures <= 4) {
+  if (gesture_data.total_gestures <= 4) {
     return false;
   }
 
   /* Check to make sure our data isn't out of bounds */
-  if ((gesture_data_.total_gestures <= 32) && \
-    (gesture_data_.total_gestures > 0)) {
+  if ((gesture_data.total_gestures <= 32) && \
+    (gesture_data.total_gestures > 0)) {
     /* Find the first value in U/D/L/R above the threshold */
-    for (i = 0; i < gesture_data_.total_gestures; i++) {
-      if ((gesture_data_.u_data[i] > GESTURE_THRESHOLD_OUT) &&
-        (gesture_data_.d_data[i] > GESTURE_THRESHOLD_OUT) &&
-        (gesture_data_.l_data[i] > GESTURE_THRESHOLD_OUT) &&
-        (gesture_data_.r_data[i] > GESTURE_THRESHOLD_OUT) ) {
-        u_first = gesture_data_.u_data[i];
-        d_first = gesture_data_.d_data[i];
-        l_first = gesture_data_.l_data[i];
-        r_first = gesture_data_.r_data[i];
+    for (i = 0; i < gesture_data.total_gestures; i++) {
+      if ((gesture_data.u_data[i] > GESTURE_THRESHOLD_OUT) &&
+        (gesture_data.d_data[i] > GESTURE_THRESHOLD_OUT) &&
+        (gesture_data.l_data[i] > GESTURE_THRESHOLD_OUT) &&
+        (gesture_data.r_data[i] > GESTURE_THRESHOLD_OUT) ) {
+        u_first = gesture_data.u_data[i];
+        d_first = gesture_data.d_data[i];
+        l_first = gesture_data.l_data[i];
+        r_first = gesture_data.r_data[i];
         break;
       }
     }
@@ -1605,15 +1607,15 @@ bool processGestureData(void) {
     }
 
     /* Find the last value in U/D/L/R above the threshold */
-    for (i = gesture_data_.total_gestures - 1; i >= 0; i--) {
-      if ((gesture_data_.u_data[i] > GESTURE_THRESHOLD_OUT) &&
-        (gesture_data_.d_data[i] > GESTURE_THRESHOLD_OUT) &&
-        (gesture_data_.l_data[i] > GESTURE_THRESHOLD_OUT) &&
-        (gesture_data_.r_data[i] > GESTURE_THRESHOLD_OUT)) {
-        u_last = gesture_data_.u_data[i];
-        d_last = gesture_data_.d_data[i];
-        l_last = gesture_data_.l_data[i];
-        r_last = gesture_data_.r_data[i];
+    for (i = gesture_data.total_gestures - 1; i >= 0; i--) {
+      if ((gesture_data.u_data[i] > GESTURE_THRESHOLD_OUT) &&
+        (gesture_data.d_data[i] > GESTURE_THRESHOLD_OUT) &&
+        (gesture_data.l_data[i] > GESTURE_THRESHOLD_OUT) &&
+        (gesture_data.r_data[i] > GESTURE_THRESHOLD_OUT)) {
+        u_last = gesture_data.u_data[i];
+        d_last = gesture_data.d_data[i];
+        l_last = gesture_data.l_data[i];
+        r_last = gesture_data.r_data[i];
         break;
       }
     }
@@ -1630,25 +1632,25 @@ bool processGestureData(void) {
   lr_delta = lr_ratio_last - lr_ratio_first;
 
   /* Accumulate the UD and LR delta values */
-  gesture_ud_delta_ += ud_delta;
-  gesture_lr_delta_ += lr_delta;
+  gesture.ud_delta_ += ud_delta;
+  gesture.lr_delta_ += lr_delta;
 
   /* Determine U/D gesture */
-  if (gesture_ud_delta_ >= GESTURE_SENSITIVITY_1) {
-    gesture_ud_count_ = 1;
-  } else if (gesture_ud_delta_ <= -GESTURE_SENSITIVITY_1) {
-    gesture_ud_count_ = -1;
+  if (gesture.ud_delta_ >= GESTURE_SENSITIVITY_1) {
+    gesture.ud_count_ = 1;
+  } else if (gesture.ud_delta_ <= -GESTURE_SENSITIVITY_1) {
+    gesture.ud_count_ = -1;
   } else {
-    gesture_ud_count_ = 0;
+    gesture.ud_count_ = 0;
   }
 
   /* Determine L/R gesture */
-  if (gesture_lr_delta_ >= GESTURE_SENSITIVITY_1) {
-    gesture_lr_count_ = 1;
-  } else if (gesture_lr_delta_ <= -GESTURE_SENSITIVITY_1) {
-    gesture_lr_count_ = -1;
+  if (gesture.lr_delta_ >= GESTURE_SENSITIVITY_1) {
+    gesture.lr_count_ = 1;
+  } else if (gesture.lr_delta_ <= -GESTURE_SENSITIVITY_1) {
+    gesture.lr_count_ = -1;
   } else {
-    gesture_lr_count_ = 0;
+    gesture.lr_count_ = 0;
   }
   return false;
 }
@@ -1660,37 +1662,37 @@ bool processGestureData(void) {
  */
 bool decodeGesture(void) {
   /* Determine swipe direction */
-  if ((gesture_ud_count_ == -1) && (gesture_lr_count_ == 0)) {
-    gesture_motion_ = DIR_UP;
-  } else if ((gesture_ud_count_ == 1) && (gesture_lr_count_ == 0)) {
-    gesture_motion_ = DIR_DOWN;
-  } else if ((gesture_ud_count_ == 0) && (gesture_lr_count_ == 1)) {
-     gesture_motion_ = DIR_RIGHT;
-  } else if ((gesture_ud_count_ == 0) && (gesture_lr_count_ == -1)) {
-     gesture_motion_ = DIR_LEFT;
-  } else if ((gesture_ud_count_ == -1) && (gesture_lr_count_ == 1)) {
-    if (abs(gesture_ud_delta_) > abs(gesture_lr_delta_)) {
-      gesture_motion_ = DIR_UP;
+  if ((gesture.ud_count_ == -1) && (gesture.lr_count_ == 0)) {
+    gesture.motion_ = DIR_UP;
+  } else if ((gesture.ud_count_ == 1) && (gesture.lr_count_ == 0)) {
+    gesture.motion_ = DIR_DOWN;
+  } else if ((gesture.ud_count_ == 0) && (gesture.lr_count_ == 1)) {
+     gesture.motion_ = DIR_RIGHT;
+  } else if ((gesture.ud_count_ == 0) && (gesture.lr_count_ == -1)) {
+     gesture.motion_ = DIR_LEFT;
+  } else if ((gesture.ud_count_ == -1) && (gesture.lr_count_ == 1)) {
+    if (abs(gesture.ud_delta_) > abs(gesture.lr_delta_)) {
+      gesture.motion_ = DIR_UP;
     } else {
-      gesture_motion_ = DIR_RIGHT;
+      gesture.motion_ = DIR_RIGHT;
     }
-  } else if ((gesture_ud_count_ == 1) && (gesture_lr_count_ == -1)) {
-    if (abs(gesture_ud_delta_) > abs(gesture_lr_delta_)) {
-      gesture_motion_ = DIR_DOWN;
+  } else if ((gesture.ud_count_ == 1) && (gesture.lr_count_ == -1)) {
+    if (abs(gesture.ud_delta_) > abs(gesture.lr_delta_)) {
+      gesture.motion_ = DIR_DOWN;
     } else {
-      gesture_motion_ = DIR_LEFT;
+      gesture.motion_ = DIR_LEFT;
     }
-  } else if ((gesture_ud_count_ == -1) && (gesture_lr_count_ == -1)) {
-    if (abs(gesture_ud_delta_) > abs(gesture_lr_delta_)) {
-      gesture_motion_ = DIR_UP;
+  } else if ((gesture.ud_count_ == -1) && (gesture.lr_count_ == -1)) {
+    if (abs(gesture.ud_delta_) > abs(gesture.lr_delta_)) {
+      gesture.motion_ = DIR_UP;
     } else {
-        gesture_motion_ = DIR_LEFT;
+        gesture.motion_ = DIR_LEFT;
     }
-  } else if ((gesture_ud_count_ == 1) && (gesture_lr_count_ == 1)) {
-    if (abs(gesture_ud_delta_) > abs(gesture_lr_delta_)) {
-      gesture_motion_ = DIR_DOWN;
+  } else if ((gesture.ud_count_ == 1) && (gesture.lr_count_ == 1)) {
+    if (abs(gesture.ud_delta_) > abs(gesture.lr_delta_)) {
+      gesture.motion_ = DIR_DOWN;
     } else {
-      gesture_motion_ = DIR_RIGHT;
+      gesture.motion_ = DIR_RIGHT;
     }
   } else {
     return false;
@@ -1799,12 +1801,12 @@ void APDS9960_detect(void) {
 
 #ifdef USE_DEBUG_DRIVER
   // Debug new chip
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DRV: %s Chip %X"), APDS9960stype, APDS9960type);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DRV: %s Chip %X"), APDS9960_TAG, APDS9960type);
 #endif  // USE_DEBUG_DRIVER
 
   if (APDS9960type == APDS9960_CHIPID_1 || APDS9960type == APDS9960_CHIPID_2 || APDS9960type == APDS9960_CHIPID_3) {
     if (APDS9960_init()) {
-      I2cSetActiveFound(APDS9960_I2C_ADDR, APDS9960stype);
+      I2cSetActiveFound(APDS9960_I2C_ADDR, APDS9960_TAG);
 
       enableProximitySensor();
       enableGestureSensor();
@@ -1850,15 +1852,15 @@ void APDS9960_show(bool json) {
 
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"Red\":%s,\"Green\":%s,\"Blue\":%s,\"Ambient\":%s,\"CCT\":%s,\"Proximity\":%s}"),
-        APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
+        APDS9960_TAG, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_APDS_9960_SNS, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
+      WSContentSend_PD(HTTP_APDS9960_SNS, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
 #endif  // USE_WEBSERVER
     }
   } else {
     if (json && (currentGesture[0] != '\0' )) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"%s\":1}"), APDS9960stype, currentGesture);
+      ResponseAppend_P(PSTR(",\"%s\":{\"%s\":1}"), APDS9960_TAG, currentGesture);
       currentGesture[0] = '\0';
     }
   }
