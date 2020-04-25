@@ -39,7 +39,7 @@ static const char* LOG_TAG = "NimBLEDevice";
 /**
  * Singletons for the NimBLEDevice.
  */
-bool            initialized = false;
+bool            NimBLEDevice_initialized = false;
 NimBLEScan*     NimBLEDevice::m_pScan = nullptr;
 NimBLEServer*   NimBLEDevice::m_pServer = nullptr;
 uint32_t        NimBLEDevice::m_passkey = 123456;
@@ -409,8 +409,8 @@ void NimBLEDevice::stopAdvertising() {
  * @param deviceName The device name of the device.
  */
 /* STATIC */ void NimBLEDevice::init(std::string deviceName) {
-    if(!initialized){
-        initialized = true; // Set the initialization flag to ensure we are only initialized once.
+    if(!NimBLEDevice_initialized){
+        NimBLEDevice_initialized = true; // Set the initialization flag to ensure we are only initialized once.
         
         int rc=0;
         esp_err_t errRc = ESP_OK;
@@ -476,7 +476,7 @@ void NimBLEDevice::stopAdvertising() {
             NIMBLE_LOGE(LOG_TAG, "esp_nimble_hci_and_controller_deinit() failed with error: %d", ret);
         }
         
-        initialized = false;
+        NimBLEDevice_initialized = false;
     }
 } // deinit
 
@@ -485,7 +485,7 @@ void NimBLEDevice::stopAdvertising() {
  * @brief Check if the initialization is complete.
  */
 bool NimBLEDevice::getInitialized() {
-    return initialized;
+    return NimBLEDevice_initialized;
 } // getInitialized
 
 
