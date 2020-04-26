@@ -629,6 +629,7 @@ xorBytes	KEYWORD2
 # Constants (LITERAL1)
 #######################################
 
+*kAllProtocolNamesStr	LITERAL1
 //	LITERAL1
 AIRWELL	LITERAL1
 AIWA_RC_T501	LITERAL1

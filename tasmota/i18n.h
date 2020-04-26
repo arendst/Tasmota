@@ -398,6 +398,7 @@
 #define D_CMND_RGBWWTABLE "RGBWWTable"
 #define D_CMND_ROTATION "Rotation"
 #define D_CMND_SCHEME "Scheme"
+#define D_CMND_SEQUENCE_OFFSET "SequenceOffset"
 #define D_CMND_SPEED "Speed"
 #define D_CMND_WAKEUP "Wakeup"
 #define D_CMND_WAKEUPDURATION "WakeUpDuration"

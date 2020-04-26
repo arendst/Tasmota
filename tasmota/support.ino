@@ -1073,10 +1073,37 @@ int ResponseJsonEndEnd(void)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
+uint32_t Pin(uint32_t gpio, uint32_t index = 0);
+uint32_t Pin(uint32_t gpio, uint32_t index) {
+//#ifdef ESP8266
+  return pin[gpio + index];  // Pin number configured for gpio or 99 if not used
+/*
+#else
+  uint16_t real_gpio = (gpio << 5) + index;
+  for (uint32_t i = 0; i < ARRAY_SIZE(pin); i++) {
+    if (pin[i] == real_gpio) {
+      return i;              // Pin number configured for gpio
+    }
+  }
+  return 99;                 // No pin used for gpio
+#endif
+*/
+}
+
+void SetPin(uint32_t lpin, uint32_t gpio) {
+//#ifdef ESP8266
+  pin[gpio] = lpin;
+/*
+#else
+  pin[lpin] = gpio;
+#endif
+*/
+}
+
 void DigitalWrite(uint32_t gpio_pin, uint32_t state)
 {
-  if (pin[gpio_pin] < 99) {
-    digitalWrite(pin[gpio_pin], state &1);
+  if (Pin(gpio_pin) < 99) {
+    digitalWrite(Pin(gpio_pin), state &1);
   }
 }
 

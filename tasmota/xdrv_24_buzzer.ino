@@ -111,8 +111,8 @@ bool BuzzerPinState(void)
 
 void BuzzerInit(void)
 {
-  if (pin[GPIO_BUZZER] < 99) {
-    pinMode(pin[GPIO_BUZZER], OUTPUT);
+  if (Pin(GPIO_BUZZER) < 99) {
+    pinMode(Pin(GPIO_BUZZER), OUTPUT);
     BuzzerOff();
   } else {
     Buzzer.active = false;

@@ -580,9 +580,9 @@ void RulesEvery50ms(void)
         // Boot time SWITCHES Status
         for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
-          if ((pin[GPIO_SWT1 +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
+          if ((Pin(GPIO_SWT1, i) < 99) || ((Pin(GPIO_TM16CLK) < 99) && (Pin(GPIO_TM16DIO) < 99) && (Pin(GPIO_TM16STB) < 99))) {
 #else
-          if (pin[GPIO_SWT1 +i] < 99) {
+          if (Pin(GPIO_SWT1, i) < 99) {
 #endif  // USE_TM1638
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (SwitchState(i)));
             RulesProcessEvent(json_event);
