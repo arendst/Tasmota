@@ -22,7 +22,7 @@
 #define XDRV_39              39
 
 // Enable/disable debugging
-#define DEBUG_THERMOSTAT
+//#define DEBUG_THERMOSTAT
 
 #ifdef DEBUG_THERMOSTAT
 #define DOMOTICZ_IDX1        791
