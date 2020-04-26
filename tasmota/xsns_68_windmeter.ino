@@ -70,13 +70,6 @@ struct WINDMETER {
 #endif  // USE_WINDMETER_NOSTATISTICS
 } WindMeter;
 
-struct WINDMETER_SETTINGS {
-  uint16_t windmeter_radius;
-  uint8_t windmeter_pulses_x_rot;
-  uint16_t windmeter_pulse_debounce;
-  int16_t windmeter_speed_factor;
-} WindMeterSettings;
-
 #ifndef ARDUINO_ESP8266_RELEASE_2_3_0  // Fix core 2.5.x ISR not in IRAM Exception
 void WindMeterUpdateSpeed(void) ICACHE_RAM_ATTR;
 #endif  // ARDUINO_ESP8266_RELEASE_2_3_0
@@ -85,7 +78,7 @@ void WindMeterUpdateSpeed(void)
 {
   uint32_t time = micros();
   uint32_t time_diff = time - WindMeter.counter_time;
-  if (time_diff > WindMeterSettings.windmeter_pulse_debounce * 1000) {
+  if (time_diff > Settings.windmeter_pulse_debounce * 1000) {
     WindMeter.counter_time = time;
     WindMeter.counter++;
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
@@ -99,17 +92,17 @@ void WindMeterInit(void)
   if (!Settings.flag2.speed_conversion) {
     Settings.flag2.speed_conversion = 2;  // 0 = none, 1 = m/s, 2 = km/h, 3 = kn, 4 = mph, 5 = ft/s, 6 = yd/s
   }
-  if (!WindMeterSettings.windmeter_radius) {
-    WindMeterSettings.windmeter_radius = WINDMETER_DEF_RADIUS;
+  if (!Settings.windmeter_radius) {
+    Settings.windmeter_radius = WINDMETER_DEF_RADIUS;
   }
-  if (!WindMeterSettings.windmeter_pulses_x_rot) {
-    WindMeterSettings.windmeter_pulses_x_rot = WINDMETER_DEF_PULSES_X_ROT;
+  if (!Settings.windmeter_pulses_x_rot) {
+    Settings.windmeter_pulses_x_rot = WINDMETER_DEF_PULSES_X_ROT;
   }
-  if (!WindMeterSettings.windmeter_pulse_debounce) {
-    WindMeterSettings.windmeter_pulse_debounce = WINDMETER_DEF_PULSE_DEBOUNCE;
+  if (!Settings.windmeter_pulse_debounce) {
+    Settings.windmeter_pulse_debounce = WINDMETER_DEF_PULSE_DEBOUNCE;
   }
-  if (!WindMeterSettings.windmeter_speed_factor) {
-    WindMeterSettings.windmeter_speed_factor = (int16_t)(WINDMETER_DEF_COMP_FACTOR * 1000);
+  if (!Settings.windmeter_speed_factor) {
+    Settings.windmeter_speed_factor = (int16_t)(WINDMETER_DEF_COMP_FACTOR * 1000);
   }
 
 #ifndef USE_WINDMETER_NOSTATISTICS
@@ -128,8 +121,8 @@ void WindMeterEverySecond(void)
   //AddLog_P2(LOG_LEVEL_INFO, PSTR("delta_time: %d"), delta_time);
 
   // speed = ( (pulses / pulses_per_rotation) * (2 * pi * radius) ) / delta_time
-  WindMeter.speed = ((WindMeter.counter / WindMeterSettings.windmeter_pulses_x_rot) * (windmeter_2pi * ((float)WindMeterSettings.windmeter_radius / 1000))) * ((float)WindMeterSettings.windmeter_speed_factor / 1000);
-  //WindMeter.speed = (((WindMeter.counter / WindMeterSettings.windmeter_pulses_x_rot) * (windmeter_2pi * ((float)WindMeterSettings.windmeter_radius / 1000))) / ((float)delta_time / 1000000)) * ((float)WindMeterSettings.windmeter_speed_factor / 1000);
+  WindMeter.speed = ((WindMeter.counter / Settings.windmeter_pulses_x_rot) * (windmeter_2pi * ((float)Settings.windmeter_radius / 1000))) * ((float)Settings.windmeter_speed_factor / 1000);
+  //WindMeter.speed = (((WindMeter.counter / Settings.windmeter_pulses_x_rot) * (windmeter_2pi * ((float)Settings.windmeter_radius / 1000))) / ((float)delta_time / 1000000)) * ((float)Settings.windmeter_speed_factor / 1000);
   WindMeter.counter = 0;
   //WindMeter.speed_time = time;
 
@@ -271,31 +264,31 @@ bool Xsns68Cmnd(void)
   switch (XdrvMailbox.payload) {
     case 1:
       if (strstr(XdrvMailbox.data, ",") != nullptr) {
-        WindMeterSettings.windmeter_radius = (uint16_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
+        Settings.windmeter_radius = (uint16_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       break;
     case 2:
       if (strstr(XdrvMailbox.data, ",") != nullptr) {
-        WindMeterSettings.windmeter_pulses_x_rot = (uint8_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
+        Settings.windmeter_pulses_x_rot = (uint8_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       break;
     case 3:
       if (strstr(XdrvMailbox.data, ",") != nullptr) {
-        WindMeterSettings.windmeter_pulse_debounce = (uint16_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
+        Settings.windmeter_pulse_debounce = (uint16_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       break;
     case 4:
       if (strstr(XdrvMailbox.data, ",") != nullptr) {
-        WindMeterSettings.windmeter_speed_factor = (int16_t)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 1000);
+        Settings.windmeter_speed_factor = (int16_t)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 1000);
       }
       break;
   }
 
   if (show_parms) {
     char speed_factor_string[FLOATSZ];
-    dtostrfd((float)WindMeterSettings.windmeter_speed_factor / 1000, 3, speed_factor_string);
+    dtostrfd((float)Settings.windmeter_speed_factor / 1000, 3, speed_factor_string);
     Response_P(PSTR("{\"" D_WINDMETER_NAME "\":{\"Radius\":%d,\"PulsesPerRot\":%d,\"PulseDebounce\":%d,\"SpeedFactor\":%s}}"),
-	       WindMeterSettings.windmeter_radius, WindMeterSettings.windmeter_pulses_x_rot, WindMeterSettings.windmeter_pulse_debounce, speed_factor_string);
+	       Settings.windmeter_radius, Settings.windmeter_pulses_x_rot, Settings.windmeter_pulse_debounce, speed_factor_string);
   }
   return serviced;
 }
