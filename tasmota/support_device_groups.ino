@@ -350,7 +350,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
       else {
         switch (item) {
           case DGR_ITEM_LIGHT_CHANNELS:
-            log_length = snprintf(log_ptr, log_remaining, PSTR("%u,%u,%u,%u,%u"), *message_ptr, *(message_ptr + 1), *(message_ptr + 2), *(message_ptr + 3), *(message_ptr + 4));
+            log_length = snprintf(log_ptr, log_remaining, PSTR("%u,%u,%u,%u,%u,%u"), *message_ptr, *(message_ptr + 1), *(message_ptr + 2), *(message_ptr + 3), *(message_ptr + 4), *(message_ptr + 5));
             break;
         }
       }
@@ -549,7 +549,7 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
           else {
             switch (item) {
               case DGR_ITEM_LIGHT_CHANNELS:
-                for (int i = 0; i < 5; i++) {
+                for (int i = 0; i < 6; i++) {
                   *out_ptr++ = strtoul((char *)value_ptr, (char **)&value_ptr, 0);
                   if (*value_ptr == ',') value_ptr++;
                 }
@@ -665,7 +665,7 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
           else {
             switch (item) {
               case DGR_ITEM_LIGHT_CHANNELS:
-                value = 5;
+                value = 6;
                 break;
             }
           }
