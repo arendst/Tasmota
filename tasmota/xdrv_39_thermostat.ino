@@ -22,7 +22,7 @@
 #define XDRV_39              39
 
 // Enable/disable debugging
-#define DEBUG_THERMOSTAT
+//#define DEBUG_THERMOSTAT
 
 #ifdef DEBUG_THERMOSTAT
 #define DOMOTICZ_IDX1        791
@@ -341,7 +341,7 @@ bool HeatStateAllToOff(void)
   return change_state;
 }
 
-void ThermostatState(void)
+void ThermostatState()
 {
   switch (Thermostat.status.thermostat_mode) {
     case THERMOSTAT_OFF:                              // State if Off or Emergency
@@ -394,28 +394,14 @@ void ThermostatOutputRelay(bool active)
   }
 }
 
-void ThermostatCalculatePI(void)
+void ThermostatCalculatePI()
 {
-  int32_t aux_time_error;
-  
   // Calculate error
-  aux_time_error = (int32_t)(Thermostat.temp_target_level_ctr - Thermostat.temp_measured) * 10;
-  
-  // Protect overflow
-  if (aux_time_error <= (int32_t)(INT16_MIN)) {
-    Thermostat.temp_pi_error = (int16_t)(INT16_MIN);
-  }
-  else if (aux_time_error >= (int32_t)INT16_MAX) {
-    Thermostat.temp_pi_error = (int16_t)INT16_MAX;
-  }
-  else {
-    Thermostat.temp_pi_error = (int16_t)aux_time_error;
-  }
-  
+  Thermostat.temp_pi_error = Thermostat.temp_target_level_ctr - Thermostat.temp_measured;
   // Kp = 100/PI.propBand. PI.propBand(Xp) = Proportional range (4K in 4K/200 controller)
   Thermostat.kP_pi = 100 / (uint16_t)(Thermostat.val_prop_band);
   // Calculate proportional
-  Thermostat.time_proportional_pi = ((int32_t)(Thermostat.temp_pi_error * (int16_t)Thermostat.kP_pi) * ((int32_t)Thermostat.time_pi_cycle * 60)) / 10000;
+  Thermostat.time_proportional_pi = ((int32_t)(Thermostat.temp_pi_error * (int16_t)Thermostat.kP_pi) * ((int32_t)Thermostat.time_pi_cycle * 60)) / 1000;
 
   // Minimum proportional action limiter
   // If proportional action is less than the minimum action time
@@ -433,14 +419,13 @@ void ThermostatCalculatePI(void)
     Thermostat.time_proportional_pi = ((int32_t)Thermostat.time_pi_cycle * 60);
   }
 
-  // Calculate integral (resolution increased to avoid use of floats in consequent operations)
-  //Thermostat.kI_pi = (uint16_t)(((float)Thermostat.kP_pi * ((float)((uint32_t)Thermostat.time_pi_cycle * 60) / (float)Thermostat.time_reset)) * 100);
-  Thermostat.kI_pi = (uint16_t)((((uint32_t)Thermostat.kP_pi * (uint32_t)Thermostat.time_pi_cycle * 6000)) / (uint32_t)Thermostat.time_reset);
+  // Calculate integral
+  Thermostat.kI_pi = (uint16_t)(((float)Thermostat.kP_pi * ((float)((uint32_t)Thermostat.time_pi_cycle * 60) / (float)Thermostat.time_reset)) * 100);
   
   // Reset of antiwindup
   // If error does not lay within the integrator scope range, do not use the integral
   // and accumulate error = 0
-  if (abs((Thermostat.temp_pi_error) / 10) > Thermostat.temp_reset_anti_windup) {
+  if (abs(Thermostat.temp_pi_error) > (int16_t)Thermostat.temp_reset_anti_windup) {
     Thermostat.time_integral_pi = 0;
     Thermostat.temp_pi_accum_error = 0;
   }
@@ -455,26 +440,13 @@ void ThermostatCalculatePI(void)
     // very high cummulated error when beingin hysteresis. This triggers high
     // integral actions
 
-    // Update accumulated error
-    aux_time_error = (int32_t)Thermostat.temp_pi_accum_error + (int32_t)Thermostat.temp_pi_error;
-
-    // Protect overflow
-    if (aux_time_error <= (int32_t)INT16_MIN) {
-      Thermostat.temp_pi_accum_error = INT16_MIN;
-    }
-    else if (aux_time_error >= (int32_t)INT16_MAX) {
-      Thermostat.temp_pi_accum_error = INT16_MAX;
-    }
-    else {
-      Thermostat.temp_pi_accum_error = (int16_t)aux_time_error;
-    }
-
     // If we are under setpoint
     // AND we are within the hysteresis
     // AND we are rising
     if ((Thermostat.temp_pi_error >= 0)
-      && (abs((Thermostat.temp_pi_error) / 10) <= (int16_t)Thermostat.temp_hysteresis)
+      && (abs(Thermostat.temp_pi_error) <= (int16_t)Thermostat.temp_hysteresis)
       && (Thermostat.temp_measured_gradient > 0)) {
+      Thermostat.temp_pi_accum_error += Thermostat.temp_pi_error;
       // Reduce accumulator error 20% in each cycle
       Thermostat.temp_pi_accum_error *= 0.8;
     }
@@ -482,8 +454,12 @@ void ThermostatCalculatePI(void)
     // AND temperature is rising
     else if ((Thermostat.temp_pi_error < 0)
       && (Thermostat.temp_measured_gradient > 0)) {
+      Thermostat.temp_pi_accum_error += Thermostat.temp_pi_error;
       // Reduce accumulator error 20% in each cycle
       Thermostat.temp_pi_accum_error *= 0.8;
+    }
+    else {
+      Thermostat.temp_pi_accum_error += Thermostat.temp_pi_error;
     }
 
     // Limit lower limit of acumErr to 0
@@ -492,7 +468,7 @@ void ThermostatCalculatePI(void)
     }
 
     // Integral calculation
-    Thermostat.time_integral_pi = (((int32_t)Thermostat.temp_pi_accum_error * (int32_t)Thermostat.kI_pi) * (int32_t)((uint32_t)Thermostat.time_pi_cycle * 60)) / 1000000;
+    Thermostat.time_integral_pi = (((int32_t)Thermostat.temp_pi_accum_error * (int32_t)Thermostat.kI_pi) * (int32_t)((uint32_t)Thermostat.time_pi_cycle * 60)) / 100000;
 
     // Antiwindup of the integrator
     // If integral calculation is bigger than cycle time, adjust result
@@ -520,7 +496,7 @@ void ThermostatCalculatePI(void)
   // If target value has been reached or we are over it]]
   if (Thermostat.temp_pi_error <= 0) {
     // If we are over the hysteresis or the gradient is positive
-    if ((abs((Thermostat.temp_pi_error) / 10) > Thermostat.temp_hysteresis)
+    if ((abs(Thermostat.temp_pi_error) > Thermostat.temp_hysteresis)
       || (Thermostat.temp_measured_gradient >= 0)) {
       Thermostat.time_total_pi = 0;
     }
@@ -530,7 +506,7 @@ void ThermostatCalculatePI(void)
   // AND gradient is positive
   // then set value to 0
   else if ((Thermostat.temp_pi_error > 0)
-    && (abs((Thermostat.temp_pi_error) / 10) <= Thermostat.temp_hysteresis)
+    && (abs(Thermostat.temp_pi_error) <= Thermostat.temp_hysteresis)
     && (Thermostat.temp_measured_gradient > 0)) {
     Thermostat.time_total_pi = 0;
   }
@@ -557,7 +533,7 @@ void ThermostatCalculatePI(void)
   Thermostat.time_ctr_checkpoint = uptime + ((uint32_t)Thermostat.time_pi_cycle * 60);
 }
 
-void ThermostatWorkAutomaticPI(void)
+void ThermostatWorkAutomaticPI()
 {
   char result_chr[FLOATSZ]; // Remove!
 
@@ -580,9 +556,8 @@ void ThermostatWorkAutomaticPI(void)
   }
 }
 
-void ThermostatWorkAutomaticRampUp(void)
+void ThermostatWorkAutomaticRampUp()
 {
-  int32_t aux_temp_delta;
   uint32_t time_in_rampup;
   int16_t temp_delta_rampup;
 

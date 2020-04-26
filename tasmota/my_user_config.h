@@ -410,6 +410,7 @@
 #define USE_SONOFF_SC                            // Add support for Sonoff Sc (+1k1 code)
 #define USE_TUYA_MCU                             // Add support for Tuya Serial MCU
   #define TUYA_DIMMER_ID       0                 // Default dimmer Id
+//  #define USE_TUYA_TIME                          // Add support for Set Time in Tuya MCU
 #define USE_ARMTRONIX_DIMMERS                    // Add support for Armtronix Dimmers (+1k4 code)
 #define USE_PS_16_DZ                             // Add support for PS-16-DZ Dimmer (+2k code)
 #define USE_SONOFF_IFAN                          // Add support for Sonoff iFan02 and iFan03 (+2k code)
@@ -420,8 +421,8 @@
 #define USE_EXS_DIMMER                           // Add support for ES-Store WiFi Dimmer (+1k5 code)
 //  #define EXS_MCU_CMNDS                          // Add command to send MCU commands (+0k8 code)
 //#define USE_HOTPLUG                              // Add support for sensor HotPlug
-#define USE_DEVICE_GROUPS                        // Add support for device groups (+5k code)
-  #define USE_DEVICE_GROUPS_SEND                 // Add support for the DevGroupSend command (+0k6 code)
+#define USE_DEVICE_GROUPS                        // Add support for device groups (+5k6 code)
+  #define USE_DEVICE_GROUPS_SEND                 // Add support for the DevGroupSend command (+0k5 code)
 #define USE_PWM_DIMMER                           // Add support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+2k5 code)
   #define USE_PWM_DIMMER_REMOTE                  // Add support for remote switches to PWM Dimmer, also adds device groups support (+1k code plus device groups size)
 //#define USE_KEELOQ                               // Add support for Jarolift rollers by Keeloq algorithm (+4k5 code)
@@ -566,7 +567,8 @@
 //#define USE_IBEACON                              // Add support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 //#define USE_GPS                                  // Add support for GPS and NTP Server for becoming Stratus 1 Time Source (+3k1 code, +132 bytes RAM)
 //  #define USE_FLOG                               // Add support for GPS logging in OTA's Flash (Experimental) (+2k9 code, +8 bytes RAM)
-//#define USE_HM10                                 // Add support for HM-10 as a BLE-bridge for the LYWSD03 (+5k1 code)
+//#define USE_HM10                                 // (ESP8266 only) Add support for HM-10 as a BLE-bridge (+9k3 code)
+//#define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 //#define USE_HRXL                                 // Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
 
 // -- Power monitoring sensors --------------------
@@ -657,35 +659,37 @@
   #define USE_TASMOTA_SLAVE_SERIAL_SPEED 57600     // Depends on the sketch that is running on the Uno/Pro Mini
 
 /*********************************************************************************************\
- * THERMOSTAT CONTROLLER
+ * HEATING CONTROLLER
 \*********************************************************************************************/
 
-#define USE_THERMOSTAT
+#define USE_HEATING
 
-#define THERMOSTAT_RELAY_NUMBER               1        // Default output relay number
-#define THERMOSTAT_SWITCH_NUMBER              1        // Default input switch number
-#define THERMOSTAT_TIME_ALLOW_RAMPUP          300      // Default time in seconds after last target update to allow ramp-up controller phase in minutes
-#define THERMOSTAT_TIME_RAMPUP_MAX            960      // Default time maximum ramp-up controller duration in minutes
-#define THERMOSTAT_TIME_RAMPUP_CYCLE          1800     // Default time ramp-up cycle in seconds
-#define THERMOSTAT_TIME_SENS_LOST             30       // Maximum time w/o sensor update to set it as lost in minutes
-#define THERMOSTAT_TEMP_SENS_NUMBER           1        // Default temperature sensor number
-#define THERMOSTAT_POWER_MAX                  60       // Default maximum output power in Watt
-#define THERMOSTAT_TIME_MANUAL_TO_AUTO        60       // Default time without input switch active to change from manual to automatic in minutes
-#define THERMOSTAT_TIME_ON_LIMIT              120      // Default maximum time with output active in minutes
-#define THERMOSTAT_TIME_RESET                 12000    // Default reset time of the PI controller in seconds
-#define THERMOSTAT_TIME_PI_CYCLE              30       // Default cycle time for the thermostat controller in minutes
-#define THERMOSTAT_TIME_MAX_ACTION            20       // Default maximum thermostat time per cycle in minutes
-#define THERMOSTAT_TIME_MIN_ACTION            4        // Default minimum thermostat time per cycle in minutes
-#define THERMOSTAT_TIME_MIN_TURNOFF_ACTION    3        // Default minimum turnoff time in minutes, below it the thermostat will be held on
-#define THERMOSTAT_PROP_BAND                  4        // Default proportional band of the PI controller in degrees celsius
-#define THERMOSTAT_TEMP_RESET_ANTI_WINDUP     8        // Default range where reset antiwindup is disabled, in tenths of degrees celsius
-#define THERMOSTAT_TEMP_HYSTERESIS            1        // Default range hysteresis for temperature PI controller, in tenths of degrees celsius
-#define THERMOSTAT_TEMP_FROST_PROTECT         40       // Default minimum temperature for frost protection, in tenths of degrees celsius
-#define THERMOSTAT_TEMP_RAMPUP_DELTA_IN       4        // Default minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
-#define THERMOSTAT_TEMP_RAMPUP_DELTA_OUT      2        // Default minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
-#define THERMOSTAT_TEMP_PI_RAMPUP_ACC_E       200      // Default accumulated error when switching from ramp-up controller to PI in hundreths of degrees celsius
-#define THERMOSTAT_TIME_OUTPUT_DELAY          180      // Default output delay between state change and real actuation event (f.i. valve open/closed)
-#define THERMOSTAT_TEMP_INIT                  180      // Default init target temperature for the thermostat controller
+#define HEATING_RELAY_NUMBER            1        // Default output relay number
+#define HEATING_SWITCH_NUMBER           1        // Default input switch number
+#define HEATING_TIME_ALLOW_RAMPUP       300      // Default time in seconds after last target update to allow ramp-up controller phase in minutes
+#define HEATING_TIME_RAMPUP_MAX         960      // Default time maximum ramp-up controller duration in minutes
+#define HEATING_TIME_RAMPUP_CYCLE       1800     // Default time ramp-up cycle in seconds
+#define HEAT_TIME_SENS_LOST             30       // Maximum time w/o sensor update to set it as lost in minutes
+#define HEAT_TEMP_SENS_NUMBER           1        // Default temperature sensor number
+#define HEAT_STATE_EMERGENCY            false    // Default state for heating emergency
+#define HEAT_POWER_MAX                  60       // Default maximum output power in Watt
+#define HEAT_TIME_MANUAL_TO_AUTO        60       // Default time without input switch active to change from manual to automatic in minutes
+#define HEAT_TIME_ON_LIMIT              120      // Default maximum time with output active in minutes
+#define HEAT_TIME_RESET                 12000    // Default reset time of the PI controller in seconds
+#define HEAT_TIME_PI_CYCLE              30       // Default cycle time for the heating controller in minutes
+#define HEAT_TIME_MAX_ACTION            20       // Default maximum heating time per cycle in minutes
+#define HEAT_TIME_MIN_ACTION            4        // Default minimum heating time per cycle in minutes
+#define HEAT_TIME_MIN_TURNOFF_ACTION    3        // Default minimum turnoff time in minutes, below it the heating will be held on
+#define HEAT_PROP_BAND                  4        // Default proportional band of the PI controller in degrees celsius
+#define HEAT_TEMP_RESET_ANTI_WINDUP     8        // Default range where reset antiwindup is disabled, in tenths of degrees celsius
+#define HEAT_TEMP_HYSTERESIS            1        // Default range hysteresis for temperature PI controller, in tenths of degrees celsius
+#define HEAT_TEMP_FROST_PROTECT         40       // Default minimum temperature for frost protection, in tenths of degrees celsius
+#define HEATING_TEMP_RAMPUP_DELTA_IN    4        // Default minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
+#define HEATING_TEMP_RAMPUP_DELTA_OUT   2        // Default minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
+#define HEATING_TEMP_PI_RAMPUP_ACC_E    20       // Default accumulated error when switching from ramp-up controller to PI
+#define HEATING_ENERGY_OUTPUT_MAX       10       // Default maximum allowed energy output for heating valve in Watts
+#define HEATING_TIME_OUTPUT_DELAY       180      // Default output delay between state change and real actuation event (f.i. valve open/closed)
+#define HEATING_TEMP_INIT               180      // Default init target temperature for the heating controller
 
 // -- End of general directives -------------------
 
