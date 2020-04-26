@@ -412,7 +412,7 @@ uint8_t getProxIntLowThresh(void) {
  *
  * @param[in] threshold the lower proximity threshold
  */
-void setProxIntLowThresh(uint8_t threshold) {
+inline void setProxIntLowThresh(uint8_t threshold) {
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_PILT, threshold);
 }
 
@@ -435,7 +435,7 @@ uint8_t getProxIntHighThresh(void) {
  *
  * @param[in] threshold the high proximity threshold
  */
-void setProxIntHighThresh(uint8_t threshold) {
+inline void setProxIntHighThresh(uint8_t threshold) {
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_PIHT, threshold);
 }
 
@@ -748,7 +748,7 @@ uint8_t getGestureEnterThresh(void) {
  *
  * @param[in] threshold proximity value needed to start gesture mode
  */
-void setGestureEnterThresh(uint8_t threshold) {
+inline void setGestureEnterThresh(uint8_t threshold) {
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_GPENTH, threshold);
 }
 
@@ -771,7 +771,7 @@ uint8_t getGestureExitThresh(void) {
  *
  * @param[in] threshold proximity value needed to end gesture mode
  */
-void setGestureExitThresh(uint8_t threshold) {
+inline void setGestureExitThresh(uint8_t threshold) {
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_GEXTH, threshold);
 }
 
@@ -1285,7 +1285,7 @@ bool APDS9960_init(void) {
  *
  * @return Contents of the ENABLE register. 0xFF if error.
  */
-uint8_t getMode(void) {
+inline uint8_t getMode(void) {
   uint8_t enable_value;
 
   /* Read current ENABLE register */
@@ -1526,7 +1526,7 @@ int16_t readGesture(void) {
  * Turn the APDS-9960 on
  *
  */
-void enablePower(void) {
+inline void enablePower(void) {
   setMode(POWER, ON);
 }
 
@@ -1534,7 +1534,7 @@ void enablePower(void) {
  * Turn the APDS-9960 off
  *
  */
-void disablePower(void) {
+inline void disablePower(void) {
   setMode(POWER, OFF);
 }
 
@@ -1546,7 +1546,7 @@ void disablePower(void) {
 /**
  * @brief Reads the ARGB-Data and fills color_data
  */
-void readAllColorAndProximityData(void) {
+inline void readAllColorAndProximityData(void) {
   if (I2cReadBuffer(APDS9960_I2C_ADDR, APDS9960_CDATAL, (uint8_t *) &color_data, (uint16_t)9)) {
     // not absolutely shure, if this is a correct way to do this, but it is very short
     // we fill the struct byte by byte
