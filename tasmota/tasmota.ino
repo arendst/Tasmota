@@ -118,6 +118,9 @@ uint16_t tele_period = 9999;                // Tele period timer
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
 uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
+//#ifdef ESP32
+//uint16_t pin[MAX_GPIO_PIN];                 // Possible pin configurations
+//#endif
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
 RulesBitfield rules_flag;                   // Rule state flags (16 bits)
 uint8_t mqtt_cmnd_blocked = 0;              // Ignore flag for publish command
@@ -126,7 +129,9 @@ uint8_t state_250mS = 0;                    // State 250msecond per second flag
 uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
 uint8_t ssleep;                             // Current copy of Settings.sleep
 uint8_t blinkspeed = 1;                     // LED blink rate
+//#ifdef ESP8266
 uint8_t pin[GPIO_MAX];                      // Possible pin configurations
+//#endif
 uint8_t active_device = 1;                  // Active device in ExecuteCommandPower
 uint8_t leds_present = 0;                   // Max number of LED supported
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))

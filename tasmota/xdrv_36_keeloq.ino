@@ -242,8 +242,8 @@ void CreateKeeloqPacket()
 
 void KeeloqInit()
 {
-  jaroliftDevice.port_tx = pin[GPIO_CC1101_GDO2];              // Output port for transmission
-  jaroliftDevice.port_rx = pin[GPIO_CC1101_GDO0];              // Input port for reception
+  jaroliftDevice.port_tx = Pin(GPIO_CC1101_GDO2);              // Output port for transmission
+  jaroliftDevice.port_rx = Pin(GPIO_CC1101_GDO0);              // Input port for reception
 
   DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("cc1101.init()"));
   delay(100);
@@ -266,7 +266,7 @@ void KeeloqInit()
 \*********************************************************************************************/
 bool Xdrv36(uint8_t function)
 {
-  if ((99 == pin[GPIO_CC1101_GDO0]) || (99 == pin[GPIO_CC1101_GDO2])) { return false; }
+  if ((99 == Pin(GPIO_CC1101_GDO0)) || (99 == Pin(GPIO_CC1101_GDO2))) { return false; }
 
   bool result = false;
 
@@ -284,4 +284,4 @@ bool Xdrv36(uint8_t function)
   return result;
 }
 
-#endif // USE_KEELOQ
+#endif  // USE_KEELOQ

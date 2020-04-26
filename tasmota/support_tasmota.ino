@@ -325,8 +325,8 @@ void SetPowerOnState(void)
   // Issue #526 and #909
   for (uint32_t i = 0; i < devices_present; i++) {
     if (!Settings.flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
-      if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
-        bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
+      if ((i < MAX_RELAYS) && (Pin(GPIO_REL1, i) < 99)) {
+        bitWrite(power, i, digitalRead(Pin(GPIO_REL1, i)) ^ bitRead(rel_inverted, i));
       }
     }
     if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate))) {
@@ -338,12 +338,12 @@ void SetPowerOnState(void)
 
 void SetLedPowerIdx(uint32_t led, uint32_t state)
 {
-  if ((99 == pin[GPIO_LEDLNK]) && (0 == led)) {  // Legacy - LED1 is link led only if LED2 is present
-    if (pin[GPIO_LED1 +1] < 99) {
+  if ((99 == Pin(GPIO_LEDLNK)) && (0 == led)) {  // Legacy - LED1 is link led only if LED2 is present
+    if (Pin(GPIO_LED1, 1) < 99) {
       led = 1;
     }
   }
-  if (pin[GPIO_LED1 + led] < 99) {
+  if (Pin(GPIO_LED1, led) < 99) {
     uint32_t mask = 1 << led;
     if (state) {
       state = 1;
@@ -351,7 +351,7 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
     } else {
       led_power &= (0xFF ^ mask);
     }
-    DigitalWrite(GPIO_LED1 + led, bitRead(led_inverted, led) ? !state : state);
+    DigitalWrite(Pin(GPIO_LED1, led), bitRead(led_inverted, led) ? !state : state);
   }
 #ifdef USE_BUZZER
   if (led == 0) {
@@ -362,7 +362,7 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
 
 void SetLedPower(uint32_t state)
 {
-  if (99 == pin[GPIO_LEDLNK]) {           // Legacy - Only use LED1 and/or LED2
+  if (99 == Pin(GPIO_LEDLNK)) {           // Legacy - Only use LED1 and/or LED2
     SetLedPowerIdx(0, state);
   } else {
     power_t mask = 1;
@@ -383,10 +383,10 @@ void SetLedPowerAll(uint32_t state)
 
 void SetLedLink(uint32_t state)
 {
-  uint32_t led_pin = pin[GPIO_LEDLNK];
+  uint32_t led_pin = Pin(GPIO_LEDLNK);
   uint32_t led_inv = ledlnk_inverted;
   if (99 == led_pin) {                    // Legacy - LED1 is status
-    led_pin = pin[GPIO_LED1];
+    led_pin = Pin(GPIO_LED1);
     led_inv = bitRead(led_inverted, 0);
   }
   if (led_pin < 99) {
@@ -608,7 +608,7 @@ void MqttShowPWMState(void)
   ResponseAppend_P(PSTR("\"" D_CMND_PWM "\":{"));
   bool first = true;
   for (uint32_t i = 0; i < MAX_PWMS; i++) {
-    if (pin[GPIO_PWM1 + i] < 99) {
+    if (Pin(GPIO_PWM1, i) < 99) {
       ResponseAppend_P(PSTR("%s\"" D_CMND_PWM "%d\":%d"), first ? "" : ",", i+1, Settings.pwm_value[i]);
       first = false;
     }
@@ -703,9 +703,9 @@ bool MqttShowSensor(void)
   int json_data_start = strlen(mqtt_data);
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
-    if ((pin[GPIO_SWT1 +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
+    if ((Pin(GPIO_SWT1, i) < 99) || ((Pin(GPIO_TM16CLK) < 99) && (Pin(GPIO_TM16DIO) < 99) && (Pin(GPIO_TM16STB) < 99))) {
 #else
-    if (pin[GPIO_SWT1 +i] < 99) {
+    if (Pin(GPIO_SWT1, i) < 99) {
 #endif  // USE_TM1638
       ResponseAppend_P(PSTR(",\"" D_JSON_SWITCH "%d\":\"%s\""), i +1, GetStateText(SwitchState(i)));
     }
@@ -913,7 +913,7 @@ void Every250mSeconds(void)
       if (200 == blinks) blinks = 0;                      // Disable blink
     }
   }
-  if (Settings.ledstate &1 && (pin[GPIO_LEDLNK] < 99 || !(blinks || restart_flag || ota_state_flag)) ) {
+  if (Settings.ledstate &1 && (Pin(GPIO_LEDLNK) < 99 || !(blinks || restart_flag || ota_state_flag)) ) {
     bool tstate = power & Settings.ledmask;
 #ifdef ESP8266
     if ((SONOFF_TOUCH == my_module_type) || (SONOFF_T11 == my_module_type) || (SONOFF_T12 == my_module_type) || (SONOFF_T13 == my_module_type)) {
@@ -1320,9 +1320,9 @@ void SerialInput(void)
 void ResetPwm(void)
 {
   for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
-    if (pin[GPIO_PWM1 +i] < 99) {
-      analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range : 0);
-//      analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
+    if (Pin(GPIO_PWM1, i) < 99) {
+      analogWrite(Pin(GPIO_PWM1, i), bitRead(pwm_inverted, i) ? Settings.pwm_range : 0);
+//      analogWrite(Pin(GPIO_PWM1, i), bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
     }
   }
 }
@@ -1331,8 +1331,6 @@ void ResetPwm(void)
 
 void GpioInit(void)
 {
-  uint32_t mpin;
-
   if (!ValidModule(Settings.module)) {
     uint32_t module = MODULE;
     if (!ValidModule(MODULE)) {
@@ -1386,10 +1384,10 @@ void GpioInit(void)
   }
 
   for (uint32_t i = 0; i < GPIO_MAX; i++) {
-    pin[i] = 99;
+    SetPin(99, i);
   }
   for (uint32_t i = 0; i < ARRAY_SIZE(my_module.io); i++) {
-    mpin = ValidPin(i, my_module.io[i]);
+    uint32_t mpin = ValidPin(i, my_module.io[i]);
 
     DEBUG_CORE_LOG(PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
 
@@ -1437,36 +1435,36 @@ void GpioInit(void)
         mpin = XdrvMailbox.index;
       };
     }
-    if (mpin) pin[mpin] = i;
+    if (mpin) { SetPin(i, mpin); }
   }
 
 #ifdef ESP8266
-  if ((2 == pin[GPIO_TXD]) || (H801 == my_module_type)) { Serial.set_tx(2); }
+  if ((2 == Pin(GPIO_TXD)) || (H801 == my_module_type)) { Serial.set_tx(2); }
 #endif  // ESP8266
 
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
 
 #ifdef USE_SPI
-  spi_flg = ((((pin[GPIO_SPI_CS] < 99) && (pin[GPIO_SPI_CS] > 14)) || (pin[GPIO_SPI_CS] < 12)) || (((pin[GPIO_SPI_DC] < 99) && (pin[GPIO_SPI_DC] > 14)) || (pin[GPIO_SPI_DC] < 12)));
+  spi_flg = ((((Pin(GPIO_SPI_CS) < 99) && (Pin(GPIO_SPI_CS) > 14)) || (Pin(GPIO_SPI_CS) < 12)) || (((Pin(GPIO_SPI_DC) < 99) && (Pin(GPIO_SPI_DC) > 14)) || (Pin(GPIO_SPI_DC) < 12)));
   if (spi_flg) {
     for (uint32_t i = 0; i < GPIO_MAX; i++) {
-      if ((pin[i] >= 12) && (pin[i] <=14)) pin[i] = 99;
+      if ((Pin(i) >= 12) && (Pin(i) <=14)) { SetPin(99, i); }
     }
     my_module.io[12] = GPIO_SPI_MISO;
-    pin[GPIO_SPI_MISO] = 12;
+    SetPin(12, GPIO_SPI_MISO);
     my_module.io[13] = GPIO_SPI_MOSI;
-    pin[GPIO_SPI_MOSI] = 13;
+    SetPin(13, GPIO_SPI_MOSI);
     my_module.io[14] = GPIO_SPI_CLK;
-    pin[GPIO_SPI_CLK] = 14;
+    SetPin(14, GPIO_SPI_CLK);
   }
-  soft_spi_flg = ((pin[GPIO_SSPI_CS] < 99) && (pin[GPIO_SSPI_SCLK] < 99) && ((pin[GPIO_SSPI_MOSI] < 99) || (pin[GPIO_SSPI_MOSI] < 99)));
+  soft_spi_flg = ((Pin(GPIO_SSPI_CS) < 99) && (Pin(GPIO_SSPI_SCLK) < 99) && ((Pin(GPIO_SSPI_MOSI) < 99) || (Pin(GPIO_SSPI_MOSI) < 99)));
 #endif  // USE_SPI
 
   // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
   // Doing it here solves relay toggles at restart.
   for (uint32_t i = 0; i < ARRAY_SIZE(my_module.io); i++) {
-    mpin = ValidPin(i, my_module.io[i]);
+    uint32_t mpin = ValidPin(i, my_module.io[i]);
 //    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
     if (((i < 6) || (i > 11)) && (0 == mpin)) {  // Skip SPI flash interface
       if (!((1 == i) || (3 == i))) {             // Skip serial
@@ -1476,9 +1474,9 @@ void GpioInit(void)
   }
 
 #ifdef USE_I2C
-  i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));
+  i2c_flg = ((Pin(GPIO_I2C_SCL) < 99) && (Pin(GPIO_I2C_SDA) < 99));
   if (i2c_flg) {
-    Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]);
+    Wire.begin(Pin(GPIO_I2C_SDA), Pin(GPIO_I2C_SCL));
   }
 #endif  // USE_I2C
 
@@ -1508,25 +1506,25 @@ void GpioInit(void)
 #endif  // ESP8266
 
   for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
-    if (pin[GPIO_PWM1 +i] < 99) {
-      pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+    if (Pin(GPIO_PWM1, i) < 99) {
+      pinMode(Pin(GPIO_PWM1, i), OUTPUT);
       if (light_type) {
         // force PWM GPIOs to low or high mode, see #7165
-        analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range : 0);
+        analogWrite(Pin(GPIO_PWM1, i), bitRead(pwm_inverted, i) ? Settings.pwm_range : 0);
       } else {
         pwm_present = true;
-        analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
+        analogWrite(Pin(GPIO_PWM1, i), bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
       }
     }
   }
 
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
-    if (pin[GPIO_REL1 +i] < 99) {
-      pinMode(pin[GPIO_REL1 +i], OUTPUT);
+    if (Pin(GPIO_REL1, i) < 99) {
+      pinMode(Pin(GPIO_REL1, i), OUTPUT);
       devices_present++;
 #ifdef ESP8266
       if (EXS_RELAY == my_module_type) {
-        digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? 1 : 0);
+        digitalWrite(Pin(GPIO_REL1, i), bitRead(rel_inverted, i) ? 1 : 0);
         if (i &1) { devices_present--; }
       }
 #endif  // ESP8266
@@ -1534,28 +1532,28 @@ void GpioInit(void)
   }
 
   for (uint32_t i = 0; i < MAX_LEDS; i++) {
-    if (pin[GPIO_LED1 +i] < 99) {
+    if (Pin(GPIO_LED1, i) < 99) {
 #ifdef USE_ARILUX_RF
-      if ((3 == i) && (leds_present < 2) && (99 == pin[GPIO_ARIRFSEL])) {
-        pin[GPIO_ARIRFSEL] = pin[GPIO_LED4];  // Legacy support where LED4 was Arilux RF enable
-        pin[GPIO_LED4] = 99;
+      if ((3 == i) && (leds_present < 2) && (99 == Pin(GPIO_ARIRFSEL))) {
+        SetPin(Pin(GPIO_LED4), GPIO_ARIRFSEL);  // Legacy support where LED4 was Arilux RF enable
+        SetPin(99, GPIO_LED4);
       } else {
 #endif
-        pinMode(pin[GPIO_LED1 +i], OUTPUT);
+        pinMode(Pin(GPIO_LED1, i), OUTPUT);
         leds_present++;
-        digitalWrite(pin[GPIO_LED1 +i], bitRead(led_inverted, i));
+        digitalWrite(Pin(GPIO_LED1, i), bitRead(led_inverted, i));
 #ifdef USE_ARILUX_RF
       }
 #endif
     }
   }
-  if (pin[GPIO_LEDLNK] < 99) {
-    pinMode(pin[GPIO_LEDLNK], OUTPUT);
-    digitalWrite(pin[GPIO_LEDLNK], ledlnk_inverted);
+  if (Pin(GPIO_LEDLNK) < 99) {
+    pinMode(Pin(GPIO_LEDLNK), OUTPUT);
+    digitalWrite(Pin(GPIO_LEDLNK), ledlnk_inverted);
   }
 
 #ifdef USE_PWM_DIMMER
-  if (PWM_DIMMER == my_module_type && pin[GPIO_REL1] < 99) devices_present--;
+  if (PWM_DIMMER == my_module_type && Pin(GPIO_REL1) < 99) { devices_present--; }
 #endif  // USE_PWM_DIMMER
 
   ButtonInit();

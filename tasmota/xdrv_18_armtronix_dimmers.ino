@@ -97,7 +97,7 @@ void ArmtronixInit(void)
   Armtronix.dim_state[1] = -1;
   Armtronix.knob_state[0] = -1;
   Armtronix.knob_state[1] = -1;
-  ArmtronixSerial = new TasmotaSerial(pin[GPIO_RXD], pin[GPIO_TXD], 2);
+  ArmtronixSerial = new TasmotaSerial(Pin(GPIO_RXD), Pin(GPIO_TXD), 2);
   if (ArmtronixSerial->begin(115200)) {
     if (ArmtronixSerial->hardwareSerial()) { ClaimSerial(); }
     ArmtronixSerial->println("Status");
