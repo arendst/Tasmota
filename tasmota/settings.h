@@ -525,7 +525,12 @@ struct {
   uint8_t       zb_free_byte;              // F33
   uint16_t      pms_wake_interval;         // F34
   uint8_t       config_version;            // F36
+//  uint16_t      windmeter_radius;          // F37
+//  uint8_t       windmeter_pulses_x_rot;    // F39
+//  uint16_t      windmeter_pulse_debounce;  // F3A
+//  int16_t       windmeter_speed_factor;    // F3C
 
+//  uint8_t       free_f37[122];             // F3E - Decrement if adding new Setting variables just above and below
   uint8_t       free_f37[129];             // F37 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below

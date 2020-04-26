@@ -666,6 +666,7 @@
 #define D_SENSOR_HRXL_RX       "HRXL Rx"
 #define D_SENSOR_ELECTRIQ_MOODL "MOODL Tx"
 #define D_SENSOR_AS3935         "AS3935"
+#define D_SENSOR_WINDMETER_SPEED "WindMeter Speed"
 
 // Units
 #define D_UNIT_AMPERE "A"
