@@ -402,10 +402,10 @@ void ThermostatCalculatePI(void)
   aux_time_error = (int32_t)(Thermostat.temp_target_level_ctr - Thermostat.temp_measured) * 10;
   
   // Protect overflow
-  if (aux_time_error >= (int32_t)(INT16_MIN)) {
+  if (aux_time_error <= (int32_t)(INT16_MIN)) {
     Thermostat.temp_pi_error = (int16_t)(INT16_MIN);
   }
-  else if (aux_time_error <= (int32_t)INT16_MAX) {
+  else if (aux_time_error >= (int32_t)INT16_MAX) {
     Thermostat.temp_pi_error = (int16_t)INT16_MAX;
   }
   else {
@@ -459,10 +459,10 @@ void ThermostatCalculatePI(void)
     aux_time_error = (int32_t)Thermostat.temp_pi_accum_error + (int32_t)Thermostat.temp_pi_error;
 
     // Protect overflow
-    if (aux_time_error >= (int32_t)INT16_MIN) {
+    if (aux_time_error <= (int32_t)INT16_MIN) {
       Thermostat.temp_pi_accum_error = INT16_MIN;
     }
-    else if (aux_time_error <= (int32_t)INT16_MAX) {
+    else if (aux_time_error >= (int32_t)INT16_MAX) {
       Thermostat.temp_pi_accum_error = INT16_MAX;
     }
     else {
