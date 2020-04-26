@@ -49,8 +49,8 @@ void update_rotary(void)
       */
 
       uint8_t s = Rotary.state & 3;
-      if (digitalRead(pin[GPIO_ROT1A])) { s |= 4; }
-      if (digitalRead(pin[GPIO_ROT1B])) { s |= 8; }
+      if (digitalRead(Pin(GPIO_ROT1A))) { s |= 4; }
+      if (digitalRead(Pin(GPIO_ROT1B))) { s |= 8; }
       switch (s) {
         case 0: case 5: case 10: case 15:
           break;
@@ -80,20 +80,20 @@ bool RotaryButtonPressed(void)
 void RotaryInit(void)
 {
   Rotary.present = 0;
-  if ((pin[GPIO_ROT1A] < 99) && (pin[GPIO_ROT1B] < 99)) {
+  if ((Pin(GPIO_ROT1A) < 99) && (Pin(GPIO_ROT1B) < 99)) {
     Rotary.present++;
-    pinMode(pin[GPIO_ROT1A], INPUT_PULLUP);
-    pinMode(pin[GPIO_ROT1B], INPUT_PULLUP);
+    pinMode(Pin(GPIO_ROT1A), INPUT_PULLUP);
+    pinMode(Pin(GPIO_ROT1B), INPUT_PULLUP);
 
     // GPIO6-GPIO11 are typically used to interface with the flash memory IC on
     // most esp8266 modules, so we should avoid adding interrupts to these pins.
 
-    if ((pin[GPIO_ROT1A] < 6) || (pin[GPIO_ROT1A] > 11)) {
-      attachInterrupt(digitalPinToInterrupt(pin[GPIO_ROT1A]), update_rotary, CHANGE);
+    if ((Pin(GPIO_ROT1A) < 6) || (Pin(GPIO_ROT1A) > 11)) {
+      attachInterrupt(digitalPinToInterrupt(Pin(GPIO_ROT1A)), update_rotary, CHANGE);
       Rotary.interrupts_in_use_count++;
     }
-    if ((pin[GPIO_ROT1B] < 6) || (pin[GPIO_ROT1B] > 11)) {
-      attachInterrupt(digitalPinToInterrupt(pin[GPIO_ROT1B]), update_rotary, CHANGE);
+    if ((Pin(GPIO_ROT1B) < 6) || (Pin(GPIO_ROT1B) > 11)) {
+      attachInterrupt(digitalPinToInterrupt(Pin(GPIO_ROT1B)), update_rotary, CHANGE);
       Rotary.interrupts_in_use_count++;
     }
   }

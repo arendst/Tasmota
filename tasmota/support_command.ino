@@ -1167,9 +1167,9 @@ void CmndTemplate(void)
 void CmndPwm(void)
 {
   if (pwm_present && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PWMS)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= Settings.pwm_range) && (pin[GPIO_PWM1 + XdrvMailbox.index -1] < 99)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= Settings.pwm_range) && (Pin(GPIO_PWM1, XdrvMailbox.index -1) < 99)) {
       Settings.pwm_value[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      analogWrite(pin[GPIO_PWM1 + XdrvMailbox.index -1], bitRead(pwm_inverted, XdrvMailbox.index -1) ? Settings.pwm_range - XdrvMailbox.payload : XdrvMailbox.payload);
+      analogWrite(Pin(GPIO_PWM1, XdrvMailbox.index -1), bitRead(pwm_inverted, XdrvMailbox.index -1) ? Settings.pwm_range - XdrvMailbox.payload : XdrvMailbox.payload);
     }
     Response_P(PSTR("{"));
     MqttShowPWMState();  // Render the PWM status to MQTT
@@ -1694,7 +1694,7 @@ void CmndAltitude(void)
 void CmndLedPower(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_LEDS)) {
-    if (99 == pin[GPIO_LEDLNK]) { XdrvMailbox.index = 1; }
+    if (99 == Pin(GPIO_LEDLNK)) { XdrvMailbox.index = 1; }
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
       Settings.ledstate &= 8;                // Disable power control
       uint32_t mask = 1 << (XdrvMailbox.index -1);        // Led to control
@@ -1713,14 +1713,14 @@ void CmndLedPower(void)
         break;
       }
       blinks = 0;
-      if (99 == pin[GPIO_LEDLNK]) {
+      if (99 == Pin(GPIO_LEDLNK)) {
         SetLedPower(Settings.ledstate &8);
       } else {
         SetLedPowerIdx(XdrvMailbox.index -1, (led_power & mask));
       }
     }
     bool state = bitRead(led_power, XdrvMailbox.index -1);
-    if (99 == pin[GPIO_LEDLNK]) {
+    if (99 == Pin(GPIO_LEDLNK)) {
       state = bitRead(Settings.ledstate, 3);
     }
     ResponseCmndIdxChar(GetStateText(state));

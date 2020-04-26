@@ -17,6 +17,7 @@ extern const char* k3DStr;
 extern const char* k6thSenseStr;
 extern const char* k8CHeatStr;
 extern const char* kAirFlowStr;
+extern const char *kAllProtocolNamesStr;
 extern const char* kAutomaticStr;
 extern const char* kAutoStr;
 extern const char* kBeepStr;

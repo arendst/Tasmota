@@ -283,6 +283,7 @@
 #define LIGHT_CHANNEL_MODE     false             // [SetOption68] Enable multi-channels PWM instead of Color PWM
 #define LIGHT_SLIDER_POWER     false             // [SetOption77] Do not power off if slider moved to far left
 #define LIGHT_ALEXA_CT_RANGE   false             // [SetOption82] Reduced CT range for Alexa
+#define LIGHT_PWM_CT_MODE      false             // [SetOption92] Set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...) a.k.a. module 48 mode
 
 // -- Energy --------------------------------------
 #define ENERGY_VOLTAGE_ALWAYS  false             // [SetOption21] Enable show voltage even if powered off

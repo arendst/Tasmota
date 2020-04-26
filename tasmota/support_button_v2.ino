@@ -60,9 +60,9 @@ void ButtonInit(void)
 {
   Button.present = 0;
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
-    if (pin[GPIO_KEY1 +i] < 99) {
+    if (Pin(GPIO_KEY1, i) < 99) {
       Button.present++;
-      pinMode(pin[GPIO_KEY1 +i], bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
+      pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
     }
 #ifndef USE_ADC_VCC
     else if ((99 == Button.adc) && ((ADC0_BUTTON == my_adc0) || (ADC0_BUTTON_INV == my_adc0))) {
@@ -132,9 +132,9 @@ void ButtonHandler(void)
     }
     else
 #endif  // ESP8266
-    if (pin[GPIO_KEY1 +button_index] < 99) {
+    if (Pin(GPIO_KEY1, button_index) < 99) {
       button_present = 1;
-      button = (digitalRead(pin[GPIO_KEY1 +button_index]) != bitRead(Button.inverted_mask, button_index));
+      button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
     }
 #ifndef USE_ADC_VCC
     if (Button.adc == button_index) {
@@ -266,9 +266,9 @@ void ButtonHandler(void)
                       } else {
                         SendKey(KEY_BUTTON, button_index +1, Button.press_counter[button_index] +9);    // 2,3,4 and 5 press send just the key value (11,12,13 and 14) for rules
                         if (0 == button_index) {    // BUTTON1 can toggle up to 5 relays if present. If a relay is not present will send out the key value (2,11,12,13 and 14) for rules
-                          if ((Button.press_counter[button_index] > 1 && pin[GPIO_REL1 + Button.press_counter[button_index]-1] < 99) && Button.press_counter[button_index] <= MAX_RELAY_BUTTON1) {
+                          if ((Button.press_counter[button_index] > 1 && Pin(GPIO_REL1, Button.press_counter[button_index]-1) < 99) && Button.press_counter[button_index] <= MAX_RELAY_BUTTON1) {
                             ExecuteCommandPower(button_index + Button.press_counter[button_index], POWER_TOGGLE, SRC_BUTTON);   // Execute Toggle command internally
-                            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Relay%d found on GPIO%d"), Button.press_counter[button_index], pin[GPIO_REL1 + Button.press_counter[button_index]-1]);
+                            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Relay%d found on GPIO%d"), Button.press_counter[button_index], Pin(GPIO_REL1, Button.press_counter[button_index]-1));
                           }
                         }
                       }

@@ -219,11 +219,11 @@ uint8_t TasmotaSlave_UpdateInit(void)
 void TasmotaSlave_Reset(void)
 {
   if (TSlave.SerialEnabled) {
-    digitalWrite(pin[GPIO_TASMOTASLAVE_RST], !TSlave.inverted);
+    digitalWrite(Pin(GPIO_TASMOTASLAVE_RST), !TSlave.inverted);
     delay(1);
-    digitalWrite(pin[GPIO_TASMOTASLAVE_RST], TSlave.inverted);
+    digitalWrite(Pin(GPIO_TASMOTASLAVE_RST), TSlave.inverted);
     delay(1);
-    digitalWrite(pin[GPIO_TASMOTASLAVE_RST], !TSlave.inverted);
+    digitalWrite(Pin(GPIO_TASMOTASLAVE_RST), !TSlave.inverted);
     delay(5);
   }
 }
@@ -437,20 +437,20 @@ void TasmotaSlave_Init(void)
     return;
   }
   if (!TSlave.SerialEnabled) {
-    if ((pin[GPIO_TASMOTASLAVE_RXD] < 99) && (pin[GPIO_TASMOTASLAVE_TXD] < 99) &&
-        ((pin[GPIO_TASMOTASLAVE_RST] < 99) || (pin[GPIO_TASMOTASLAVE_RST_INV] < 99))) {
-      TasmotaSlave_Serial = new TasmotaSerial(pin[GPIO_TASMOTASLAVE_RXD], pin[GPIO_TASMOTASLAVE_TXD], 1, 0, 200);
+    if ((Pin(GPIO_TASMOTASLAVE_RXD) < 99) && (Pin(GPIO_TASMOTASLAVE_TXD) < 99) &&
+        ((Pin(GPIO_TASMOTASLAVE_RST) < 99) || (Pin(GPIO_TASMOTASLAVE_RST_INV) < 99))) {
+      TasmotaSlave_Serial = new TasmotaSerial(Pin(GPIO_TASMOTASLAVE_RXD), Pin(GPIO_TASMOTASLAVE_TXD), 1, 0, 200);
       if (TasmotaSlave_Serial->begin(USE_TASMOTA_SLAVE_SERIAL_SPEED)) {
         if (TasmotaSlave_Serial->hardwareSerial()) {
           ClaimSerial();
         }
         TasmotaSlave_Serial->setTimeout(50);
-        if (pin[GPIO_TASMOTASLAVE_RST_INV] < 99) {
-          pin[GPIO_TASMOTASLAVE_RST] = pin[GPIO_TASMOTASLAVE_RST_INV];
-          pin[GPIO_TASMOTASLAVE_RST_INV] = 99;
+        if (Pin(GPIO_TASMOTASLAVE_RST_INV) < 99) {
+          SetPin(Pin(GPIO_TASMOTASLAVE_RST_INV), GPIO_TASMOTASLAVE_RST);
+          SetPin(99, GPIO_TASMOTASLAVE_RST_INV);
           TSlave.inverted = HIGH;
         }
-        pinMode(pin[GPIO_TASMOTASLAVE_RST], OUTPUT);
+        pinMode(Pin(GPIO_TASMOTASLAVE_RST), OUTPUT);
         TSlave.SerialEnabled = true;
         TasmotaSlave_Reset();
         AddLog_P2(LOG_LEVEL_INFO, PSTR("Tasmota Slave Enabled"));

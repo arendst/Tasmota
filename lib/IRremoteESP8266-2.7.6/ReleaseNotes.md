@@ -1,5 +1,17 @@
 # Release Notes
 
+## _v2.7.6 (20200425)_
+
+**[Features]**
+- IRMQTTServer: Use more i18n text. (#1086)
+- Convert Protocol names to shared text. Saves ~3k of flash. (#1078)
+- Add Chinese translation (zh-CN) & add utf-8 support. (#1080, #1085)
+
+**[Misc]**
+- IRMQTTServer: Ensure MQTT_MAX_PACKET_SIZE is correctly set. (#1084)
+- Add Italian locale to IRrecvDumpV2 platformio file.
+
+
 ## _v2.7.5 (20200409)_
 
 **[Features]**
