@@ -61,6 +61,8 @@
 #define APDS9930_CHIPID_1         0x12  // we will check, if someone got an incorrect sensor
 #define APDS9930_CHIPID_2         0x39  // there are case reports about "accidentially bought" 9930's
 
+#define APDS9960_GESTURE                // Enable Gesture feature(2k on flash)
+
 /* Gesture parameters */
 #define GESTURE_THRESHOLD_OUT     10
 #define GESTURE_SENSITIVITY_1     50
@@ -72,13 +74,26 @@
 const char APDS9960_TAG[] = "APDS9960";
 
 #ifdef USE_WEBSERVER
-const char HTTP_APDS9960_SNS[] PROGMEM =
-  "{s}" "Red" "{m}%s{e}"
-  "{s}" "Green" "{m}%s{e}"
-  "{s}" "Blue" "{m}%s{e}"
-  "{s}" "Ambient" "{m}%s " D_UNIT_LUX "{e}"
-  "{s}" "CCT" "{m}%s " "K"  "{e}"     // calculated color temperature in Kelvin
-  "{s}" "Proximity"  "{m}%s{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#ifdef APDS9960_GESTURE
+
+#define D_GESTURE     "Gesture"
+
+const char HTTP_SNS_GESTURE[]     PROGMEM = "{s}%s " D_GESTURE "{m}%s{e}";
+
+#endif  // APDS9960_GESTURE
+
+#define D_COLOR_RED   "Red"
+#define D_COLOR_GREEN "Green"
+#define D_COLOR_BLUE  "Blue"
+#define D_CCT         "CCT"
+#define D_PROXIMITY   "Proximity"
+
+const char HTTP_SNS_COLOR_RED[]   PROGMEM = "{s}%s " D_COLOR_RED "{m}%u{e}";
+const char HTTP_SNS_COLOR_GREEN[] PROGMEM = "{s}%s " D_COLOR_GREEN "{m}%u{e}";
+const char HTTP_SNS_COLOR_BLUE[]  PROGMEM = "{s}%s " D_COLOR_BLUE "{m}%u{e}";
+const char HTTP_SNS_CCT[]         PROGMEM = "{s}%s " D_CCT "{m}%u " "K"  "{e}";
+const char HTTP_SNS_PROXIMITY[]   PROGMEM = "{s}%s " D_PROXIMITY  "{m}%u{e}";
+
 #endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
@@ -236,7 +251,15 @@ const char HTTP_APDS9960_SNS[] PROGMEM =
 
 #define APDS9960_ERROR          0xFF
 
+#ifdef APDS9960_GESTURE
 /* Direction definitions */
+const char GESTURE_UP[]    PROGMEM = "Up";
+const char GESTURE_DOWN[]  PROGMEM = "Down";
+const char GESTURE_LEFT[]  PROGMEM = "Left";
+const char GESTURE_RIGHT[] PROGMEM = "Right";
+const char GESTURE_LONG[]  PROGMEM = "Long";
+const char GESTURE_NONE[]  PROGMEM = "None";
+
 enum {
   DIR_NONE,
   DIR_LEFT,
@@ -249,12 +272,14 @@ enum {
 };
 
 /* State definitions*/
+/*
 enum {
   APDS9960_NA_STATE,
   APDS9960_NEAR_STATE,
   APDS9960_FAR_STATE,
   APDS9960_ALL_STATE
 };
+*/
 
 /* Container for gesture data */
 typedef struct gesture_data_type {
@@ -268,8 +293,7 @@ typedef struct gesture_data_type {
   uint8_t out_threshold;
 } gesture_data_t;
 
-typedef struct gesture_type
-{
+typedef struct gesture_type {
   int16_t ud_delta_ = 0;
   int16_t lr_delta_ = 0;
   int16_t ud_count_ = 0;
@@ -277,6 +301,8 @@ typedef struct gesture_type
   int16_t state_ = 0;
   int16_t motion_ = DIR_NONE;
 } gesture_t;
+
+#endif  // APDS9960_GESTURE
 
 typedef struct color_data_type {
   uint16_t a;     // measured ambient
@@ -289,8 +315,11 @@ typedef struct color_data_type {
 } color_data_t;
 
 /*Members*/
+#ifdef APDS9960_GESTURE
 gesture_data_t gesture_data;
 gesture_t gesture;
+#endif  // APDS9960_GESTURE
+
 color_data_t color_data;
 
 volatile uint8_t recovery_loop_counter = 0;  // count number of stateloops to switch the sensor off, if needed
@@ -721,6 +750,8 @@ void setProxPhotoMask(uint8_t mask) {
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_CONFIG3, val);
 }
 
+#ifdef APDS9960_GESTURE
+
 /**
  * @brief Gets the entry proximity threshold for gesture sensing
  *
@@ -923,6 +954,8 @@ void setGestureWaitTime(uint8_t time) {
   /* Write register value back into GCONF2 register */
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_GCONF2, val);
 }
+
+#endif  // APDS9960_GESTURE
 
 /**
  * @brief Gets the low threshold for ambient light interrupts
@@ -1238,6 +1271,8 @@ bool APDS9960_init(void) {
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_CONFIG3, DEFAULT_CONFIG3);
 
   /* Set default values for gesture sense registers */
+#ifdef APDS9960_GESTURE
+
   setGestureEnterThresh(DEFAULT_GPENTH);
   setGestureExitThresh(DEFAULT_GEXTH);
 
@@ -1255,6 +1290,8 @@ bool APDS9960_init(void) {
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_GCONF3, DEFAULT_GCONF3);
 
   setGestureIntEnable(DEFAULT_GIEN);
+  
+#endif  // APDS9960_GESTURE
 
   disablePower();  // go to sleep
 
@@ -1357,6 +1394,7 @@ void disableProximitySensor(void) {
   setMode(PROXIMITY, OFF);
 }
 
+#ifdef APDS9960_GESTURE
 /**
  * @brief Starts the gesture recognition engine on the APDS-9960
  *
@@ -1451,7 +1489,7 @@ int16_t readGesture(void) {
       fifo_level = I2cRead8(APDS9960_I2C_ADDR, APDS9960_GFLVL);
 
 #ifdef USE_DEBUG_DRIVER
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DRV: FIFO Level :  %d"), fifo_level);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DRV: FIFO Level : %d"), fifo_level);
 #endif  // USE_DEBUG_DRIVER
 
       /* If there's stuff in the FIFO, read it into our data block */
@@ -1504,6 +1542,8 @@ int16_t readGesture(void) {
   }
 }
 
+#endif  // APDS9960_GESTURE
+
 /**
  * Turn the APDS-9960 on
  *
@@ -1539,6 +1579,8 @@ void readAllColorAndProximityData(void) {
 /******************************************************************************\
  * High-level gesture controls
 \******************************************************************************/
+
+#ifdef APDS9960_GESTURE
 
 /**
  * @brief Resets all the parameters in the gesture data member
@@ -1705,34 +1747,36 @@ void handleGesture(void) {
   if (isGestureAvailable()) {
     switch (readGesture()) {
       case DIR_UP:
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("UP"));
-        snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Up"));
+        AddLog_P(LOG_LEVEL_DEBUG, GESTURE_UP);
+        snprintf_P(currentGesture, sizeof(currentGesture), GESTURE_UP);
         break;
       case DIR_DOWN:
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("DOWN"));
-        snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Down"));
+        AddLog_P(LOG_LEVEL_DEBUG, GESTURE_DOWN);
+        snprintf_P(currentGesture, sizeof(currentGesture), GESTURE_DOWN);
         break;
       case DIR_LEFT:
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("LEFT"));
-        snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Left"));
+        AddLog_P(LOG_LEVEL_DEBUG, GESTURE_LEFT);
+        snprintf_P(currentGesture, sizeof(currentGesture), GESTURE_LEFT);
         break;
       case DIR_RIGHT:
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("RIGHT"));
-        snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Right"));
+        AddLog_P(LOG_LEVEL_DEBUG, GESTURE_RIGHT);
+        snprintf_P(currentGesture, sizeof(currentGesture), GESTURE_RIGHT);
         break;
       default:
         if (APDS9960_overload) {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("LONG"));
-          snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Long"));
+          AddLog_P(LOG_LEVEL_DEBUG, GESTURE_LONG);
+          snprintf_P(currentGesture, sizeof(currentGesture), GESTURE_LONG);
         } else {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("NONE"));
-          snprintf_P(currentGesture, sizeof(currentGesture), PSTR("None"));
+          AddLog_P(LOG_LEVEL_DEBUG, GESTURE_NONE);
+          snprintf_P(currentGesture, sizeof(currentGesture), GESTURE_NONE);
         }
         break;
     }
     MqttPublishSensor();
   }
 }
+
+#endif  // APDS9960_GESTURE
 
 void APDS9960_adjustATime(void) {  // not really used atm
   // readAllColorAndProximityData();
@@ -1766,6 +1810,8 @@ void APDS9960_adjustATime(void) {  // not really used atm
   delay(20);
 }
 
+#ifdef APDS9960_GESTURE
+
 void APDS9960_loop(void) {
   if (recovery_loop_counter > 0) {
     recovery_loop_counter -= 1;
@@ -1794,6 +1840,8 @@ void APDS9960_loop(void) {
   }
 }
 
+#endif  // APDS9960_GESTURE
+
 void APDS9960_detect(void) {
   if (APDS9960type || I2cActive(APDS9960_I2C_ADDR)) { return; }
 
@@ -1809,7 +1857,9 @@ void APDS9960_detect(void) {
       I2cSetActiveFound(APDS9960_I2C_ADDR, APDS9960_TAG);
 
       enableProximitySensor();
+#ifdef APDS9960_GESTURE
       enableGestureSensor();
+#endif  // APDS9960_GESTURE
     } else {
       APDS9960type = 0;
     }
@@ -1828,41 +1878,48 @@ void APDS9960_show(bool json) {
   if (!APDS9960type) { return; }
 
   if (!gesture_mode && !APDS9960_overload) {
-    char red_chr[10];
-    char green_chr[10];
-    char blue_chr[10];
-    char ambient_chr[10];
-    char cct_chr[10];
-    char prox_chr[10];
+    uint16_t ambient;
 
     readAllColorAndProximityData();
-
-    sprintf(ambient_chr, "%u", color_data.a/4);
-    sprintf(red_chr, "%u", color_data.r);
-    sprintf(green_chr, "%u", color_data.g);
-    sprintf(blue_chr, "%u", color_data.b);
-    sprintf(prox_chr, "%u", color_data.p);
+    ambient = color_data.a/4;
 
     /*  disableLightSensor();
     I2cWrite8(APDS9960_I2C_ADDR, APDS9960_ATIME, DEFAULT_ATIME); // reset to default
     enableLightSensor();*/
 
     calculateColorTemperature();  // and calculate Lux
-    sprintf(cct_chr, "%u", color_data.cct);
-
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"Red\":%s,\"Green\":%s,\"Blue\":%s,\"Ambient\":%s,\"CCT\":%s,\"Proximity\":%s}"),
-        APDS9960_TAG, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
+      ResponseAppend_P(PSTR(",\"%s\":{\"Red\":%u,\"Green\":%u,\"Blue\":%u,\"Ambient\":%u,\"CCT\":%u,\"Proximity\":%u}"),
+        APDS9960_TAG,
+        color_data.r,
+        color_data.g,
+        color_data.b,
+        ambient,
+        color_data.cct,
+        color_data.p);
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_APDS9960_SNS, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
+      WSContentSend_PD(HTTP_SNS_COLOR_RED,   APDS9960_TAG, color_data.r);
+      WSContentSend_PD(HTTP_SNS_COLOR_GREEN, APDS9960_TAG, color_data.g);
+      WSContentSend_PD(HTTP_SNS_COLOR_BLUE,  APDS9960_TAG, color_data.b);
+      WSContentSend_PD(HTTP_SNS_ILLUMINANCE, APDS9960_TAG, ambient);
+      WSContentSend_PD(HTTP_SNS_CCT,         APDS9960_TAG, color_data.cct);
+      WSContentSend_PD(HTTP_SNS_PROXIMITY,   APDS9960_TAG, color_data.p);
 #endif  // USE_WEBSERVER
     }
+#ifdef APDS9960_GESTURE
   } else {
-    if (json && (currentGesture[0] != '\0' )) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"%s\":1}"), APDS9960_TAG, currentGesture);
-      currentGesture[0] = '\0';
+    if (currentGesture[0] != '\0') {
+      if (json) {
+        ResponseAppend_P(PSTR(",\"%s\":{\"%s\":1}"), APDS9960_TAG, currentGesture);
+#ifdef USE_WEBSERVER
+      } else {
+        WSContentSend_PD(HTTP_SNS_GESTURE, APDS9960_TAG, currentGesture);
+#endif  // USE_WEBSERVER
+        currentGesture[0] = '\0';
+      }
     }
+#endif  // APDS9960_GESTURE
   }
 }
 
@@ -1882,11 +1939,14 @@ bool APDS9960CommandSensor(void) {
 
   switch (XdrvMailbox.payload) {
     case 0:  // Off
+#ifdef APDS9960_GESTURE
       disableGestureSensor();
+#endif  // APDS9960_GESTURE
       gesture_mode = 0;
       enableLightSensor();
       APDS9960_overload = false;  // prevent unwanted re-enabling
       break;
+#ifdef APDS9960_GESTURE
     case 1:  // On with default gain of 4x
       if (APDS9960type) {
         setGestureGain(DEFAULT_GGAIN);
@@ -1905,6 +1965,7 @@ bool APDS9960CommandSensor(void) {
         gesture_mode = 1;
       }
       break;
+#endif  // APDS9960_GESTURE
     default:
       int temp_aTime = (uint8_t)XdrvMailbox.payload;
       if (temp_aTime > 2 && temp_aTime < 256) {
@@ -1933,9 +1994,11 @@ bool Xsns27(uint8_t function) {
     APDS9960_detect();
   } else if (APDS9960type) {
     switch (function) {
+#ifdef APDS9960_GESTURE
       case FUNC_EVERY_50_MSECOND:
         APDS9960_loop();
         break;
+#endif  // APDS9960_GESTURE
       case FUNC_COMMAND_SENSOR:
         if (XSNS_27 == XdrvMailbox.index) {
           result = APDS9960CommandSensor();
