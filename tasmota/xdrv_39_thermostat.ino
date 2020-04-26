@@ -22,7 +22,7 @@
 #define XDRV_39              39
 
 // Enable/disable debugging
-//#define DEBUG_THERMOSTAT
+#define DEBUG_THERMOSTAT
 
 #ifdef DEBUG_THERMOSTAT
 #define DOMOTICZ_IDX1        791
@@ -135,12 +135,12 @@ struct THERMOSTAT {
   uint32_t timestamp_input_on = 0;                                            // Timestamp of latest input On state
   uint32_t time_thermostat_total = 0;                                         // Time thermostat on within a specific timeframe
   uint32_t time_ctr_checkpoint = 0;                                           // Time to finalize the control cycle within the PI strategy or to switch to PI from Rampup
-  uint32_t time_ctr_changepoint = 0;                                          // Time until switching off output within the controller
+  uint32_t time_ctr_changepoint = 0;                                          // Time until switching off output within the controller in seconds
   int32_t temp_measured_gradient = 0;                                         // Temperature measured gradient from sensor in thousandths of degrees per hour
   int16_t temp_target_level = THERMOSTAT_TEMP_INIT;                          // Target level of the thermostat in tenths of degrees
   int16_t temp_target_level_ctr = THERMOSTAT_TEMP_INIT;                      // Target level set for the controller
-  int16_t temp_pi_accum_error = 0;                                            // Temperature accumulated error for the PI controller in tenths of degrees
-  int16_t temp_pi_error = 0;                                                  // Temperature error for the PI controller in tenths of degrees
+  int16_t temp_pi_accum_error = 0;                                            // Temperature accumulated error for the PI controller in hundredths of degrees
+  int16_t temp_pi_error = 0;                                                  // Temperature error for the PI controller in hundredths of degrees
   int32_t time_proportional_pi;                                               // Time proportional part of the PI controller
   int32_t time_integral_pi;                                                   // Time integral part of the PI controller
   int32_t time_total_pi;                                                      // Time total (proportional + integral) of the PI controller
@@ -183,7 +183,7 @@ struct THERMOSTAT {
 
 /*********************************************************************************************/
 
-void ThermostatInit()
+void ThermostatInit(void)
 {
   ExecuteCommandPower(Thermostat.output_relay_number, POWER_OFF, SRC_THERMOSTAT); // Make sure the Output is OFF
   // Init Thermostat.status bitfield:
@@ -198,7 +198,7 @@ void ThermostatInit()
   Thermostat.status.counter_seconds = 0;
 }
 
-bool ThermostatMinuteCounter() 
+bool ThermostatMinuteCounter(void) 
 {
   bool result = false;
   Thermostat.status.counter_seconds++;    // increment time
@@ -229,7 +229,7 @@ uint8_t ThermostatSwitchStatus(uint8_t input_switch)
   else return 255;
 }
 
-void ThermostatSignalProcessingSlow()
+void ThermostatSignalProcessingSlow(void)
 {
   if ((uptime - Thermostat.timestamp_temp_measured_update) > ((uint32_t)Thermostat.time_sens_lost * 60)) { // Check if sensor alive
     Thermostat.status.sensor_alive = IFACE_OFF;
@@ -238,14 +238,14 @@ void ThermostatSignalProcessingSlow()
   }
 }
 
-void ThermostatSignalProcessingFast()
+void ThermostatSignalProcessingFast(void)
 {
   if (ThermostatSwitchStatus(Thermostat.input_switch_number)) { // Check if input switch active and register last update
     Thermostat.timestamp_input_on = uptime;
   }
 }
 
-void ThermostatCtrState()
+void ThermostatCtrState(void)
 {
   switch (Thermostat.status.controller_mode) {
     case CTR_HYBRID:                    // Hybrid controller (Ramp-up + PI)
@@ -258,7 +258,7 @@ void ThermostatCtrState()
   }
 }
 
-void ThermostatHybridCtrPhase()
+void ThermostatHybridCtrPhase(void)
 {
   if (Thermostat.status.controller_mode == CTR_HYBRID) {
     switch (Thermostat.status.phase_hybrid_ctr) {
@@ -300,7 +300,7 @@ void ThermostatHybridCtrPhase()
 #endif
 }
 
-bool HeatStateAutoToManual()
+bool HeatStateAutoToManual(void)
 {
   bool change_state = false;
 
@@ -314,7 +314,7 @@ bool HeatStateAutoToManual()
   return change_state;
 }
 
-bool HeatStateManualToAuto()
+bool HeatStateManualToAuto(void)
 {
   bool change_state;
 
@@ -330,7 +330,7 @@ bool HeatStateManualToAuto()
   return change_state;
 }
 
-bool HeatStateAllToOff()
+bool HeatStateAllToOff(void)
 {
   bool change_state;
 
@@ -341,7 +341,7 @@ bool HeatStateAllToOff()
   return change_state;
 }
 
-void ThermostatState()
+void ThermostatState(void)
 {
   switch (Thermostat.status.thermostat_mode) {
     case THERMOSTAT_OFF:                              // State if Off or Emergency
@@ -394,14 +394,28 @@ void ThermostatOutputRelay(bool active)
   }
 }
 
-void ThermostatCalculatePI()
+void ThermostatCalculatePI(void)
 {
+  int32_t aux_time_error;
+  
   // Calculate error
-  Thermostat.temp_pi_error = Thermostat.temp_target_level_ctr - Thermostat.temp_measured;
+  aux_time_error = (int32_t)(Thermostat.temp_target_level_ctr - Thermostat.temp_measured) * 10;
+  
+  // Protect overflow
+  if (aux_time_error >= (int32_t)(INT16_MIN)) {
+    Thermostat.temp_pi_error = (int16_t)(INT16_MIN);
+  }
+  else if (aux_time_error <= (int32_t)INT16_MAX) {
+    Thermostat.temp_pi_error = (int16_t)INT16_MAX;
+  }
+  else {
+    Thermostat.temp_pi_error = (int16_t)aux_time_error;
+  }
+  
   // Kp = 100/PI.propBand. PI.propBand(Xp) = Proportional range (4K in 4K/200 controller)
   Thermostat.kP_pi = 100 / (uint16_t)(Thermostat.val_prop_band);
   // Calculate proportional
-  Thermostat.time_proportional_pi = ((int32_t)(Thermostat.temp_pi_error * (int16_t)Thermostat.kP_pi) * ((int32_t)Thermostat.time_pi_cycle * 60)) / 1000;
+  Thermostat.time_proportional_pi = ((int32_t)(Thermostat.temp_pi_error * (int16_t)Thermostat.kP_pi) * ((int32_t)Thermostat.time_pi_cycle * 60)) / 10000;
 
   // Minimum proportional action limiter
   // If proportional action is less than the minimum action time
@@ -419,13 +433,14 @@ void ThermostatCalculatePI()
     Thermostat.time_proportional_pi = ((int32_t)Thermostat.time_pi_cycle * 60);
   }
 
-  // Calculate integral
-  Thermostat.kI_pi = (uint16_t)(((float)Thermostat.kP_pi * ((float)((uint32_t)Thermostat.time_pi_cycle * 60) / (float)Thermostat.time_reset)) * 100);
+  // Calculate integral (resolution increased to avoid use of floats in consequent operations)
+  //Thermostat.kI_pi = (uint16_t)(((float)Thermostat.kP_pi * ((float)((uint32_t)Thermostat.time_pi_cycle * 60) / (float)Thermostat.time_reset)) * 100);
+  Thermostat.kI_pi = (uint16_t)((((uint32_t)Thermostat.kP_pi * (uint32_t)Thermostat.time_pi_cycle * 6000)) / (uint32_t)Thermostat.time_reset);
   
   // Reset of antiwindup
   // If error does not lay within the integrator scope range, do not use the integral
   // and accumulate error = 0
-  if (abs(Thermostat.temp_pi_error) > (int16_t)Thermostat.temp_reset_anti_windup) {
+  if (abs((Thermostat.temp_pi_error) / 10) > Thermostat.temp_reset_anti_windup) {
     Thermostat.time_integral_pi = 0;
     Thermostat.temp_pi_accum_error = 0;
   }
@@ -440,13 +455,26 @@ void ThermostatCalculatePI()
     // very high cummulated error when beingin hysteresis. This triggers high
     // integral actions
 
+    // Update accumulated error
+    aux_time_error = (int32_t)Thermostat.temp_pi_accum_error + (int32_t)Thermostat.temp_pi_error;
+
+    // Protect overflow
+    if (aux_time_error >= (int32_t)INT16_MIN) {
+      Thermostat.temp_pi_accum_error = INT16_MIN;
+    }
+    else if (aux_time_error <= (int32_t)INT16_MAX) {
+      Thermostat.temp_pi_accum_error = INT16_MAX;
+    }
+    else {
+      Thermostat.temp_pi_accum_error = (int16_t)aux_time_error;
+    }
+
     // If we are under setpoint
     // AND we are within the hysteresis
     // AND we are rising
     if ((Thermostat.temp_pi_error >= 0)
-      && (abs(Thermostat.temp_pi_error) <= (int16_t)Thermostat.temp_hysteresis)
+      && (abs((Thermostat.temp_pi_error) / 10) <= (int16_t)Thermostat.temp_hysteresis)
       && (Thermostat.temp_measured_gradient > 0)) {
-      Thermostat.temp_pi_accum_error += Thermostat.temp_pi_error;
       // Reduce accumulator error 20% in each cycle
       Thermostat.temp_pi_accum_error *= 0.8;
     }
@@ -454,12 +482,8 @@ void ThermostatCalculatePI()
     // AND temperature is rising
     else if ((Thermostat.temp_pi_error < 0)
       && (Thermostat.temp_measured_gradient > 0)) {
-      Thermostat.temp_pi_accum_error += Thermostat.temp_pi_error;
       // Reduce accumulator error 20% in each cycle
       Thermostat.temp_pi_accum_error *= 0.8;
-    }
-    else {
-      Thermostat.temp_pi_accum_error += Thermostat.temp_pi_error;
     }
 
     // Limit lower limit of acumErr to 0
@@ -468,7 +492,7 @@ void ThermostatCalculatePI()
     }
 
     // Integral calculation
-    Thermostat.time_integral_pi = (((int32_t)Thermostat.temp_pi_accum_error * (int32_t)Thermostat.kI_pi) * (int32_t)((uint32_t)Thermostat.time_pi_cycle * 60)) / 100000;
+    Thermostat.time_integral_pi = (((int32_t)Thermostat.temp_pi_accum_error * (int32_t)Thermostat.kI_pi) * (int32_t)((uint32_t)Thermostat.time_pi_cycle * 60)) / 1000000;
 
     // Antiwindup of the integrator
     // If integral calculation is bigger than cycle time, adjust result
@@ -496,7 +520,7 @@ void ThermostatCalculatePI()
   // If target value has been reached or we are over it]]
   if (Thermostat.temp_pi_error <= 0) {
     // If we are over the hysteresis or the gradient is positive
-    if ((abs(Thermostat.temp_pi_error) > Thermostat.temp_hysteresis)
+    if ((abs((Thermostat.temp_pi_error) / 10) > Thermostat.temp_hysteresis)
       || (Thermostat.temp_measured_gradient >= 0)) {
       Thermostat.time_total_pi = 0;
     }
@@ -506,7 +530,7 @@ void ThermostatCalculatePI()
   // AND gradient is positive
   // then set value to 0
   else if ((Thermostat.temp_pi_error > 0)
-    && (abs(Thermostat.temp_pi_error) <= Thermostat.temp_hysteresis)
+    && (abs((Thermostat.temp_pi_error) / 10) <= Thermostat.temp_hysteresis)
     && (Thermostat.temp_measured_gradient > 0)) {
     Thermostat.time_total_pi = 0;
   }
@@ -533,7 +557,7 @@ void ThermostatCalculatePI()
   Thermostat.time_ctr_checkpoint = uptime + ((uint32_t)Thermostat.time_pi_cycle * 60);
 }
 
-void ThermostatWorkAutomaticPI()
+void ThermostatWorkAutomaticPI(void)
 {
   char result_chr[FLOATSZ]; // Remove!
 
@@ -556,8 +580,9 @@ void ThermostatWorkAutomaticPI()
   }
 }
 
-void ThermostatWorkAutomaticRampUp()
+void ThermostatWorkAutomaticRampUp(void)
 {
+  int32_t aux_temp_delta;
   uint32_t time_in_rampup;
   int16_t temp_delta_rampup;
 
@@ -615,8 +640,19 @@ void ThermostatWorkAutomaticRampUp()
         // Better Alternative -> (y-y1)/(x-x1) = ((y2-y1)/(x2-x1)) -> where y = temp (target) and x = time (to switch off, what its needed)
         // x = ((y-y1)/(y2-y1))*(x2-x1) + x1 - deadtime
         // Thermostat.time_ctr_changepoint = (uint32_t)(((float)(Thermostat.temp_target_level_ctr - Thermostat.temp_rampup_cycle) / (float)temp_delta_rampup) * (float)(time_total_rampup)) + (uint32_t)(Thermostat.time_rampup_nextcycle - (time_total_rampup)) - Thermostat.time_rampup_deadtime;
-        Thermostat.time_ctr_changepoint = (uint32_t)(((float)(Thermostat.temp_target_level_ctr - Thermostat.temp_rampup_cycle) * (float)(time_total_rampup)) / (float)temp_delta_rampup) + (uint32_t)(Thermostat.time_rampup_nextcycle - (time_total_rampup)) - Thermostat.time_rampup_deadtime;      
+        //Thermostat.time_ctr_changepoint = (uint32_t)(((float)(Thermostat.temp_target_level_ctr - Thermostat.temp_rampup_cycle) * (float)(time_total_rampup)) / (float)temp_delta_rampup) + (uint32_t)(Thermostat.time_rampup_nextcycle - (time_total_rampup)) - Thermostat.time_rampup_deadtime;      
         
+        aux_temp_delta = (int32_t)(Thermostat.temp_target_level_ctr - Thermostat.temp_rampup_cycle);
+        
+        // Protect overflow, if temperature goes down set max
+        if ((aux_temp_delta < 0)
+          ||(temp_delta_rampup <= 0)) {
+          Thermostat.time_ctr_changepoint = uptime + (uint32_t)(60 * Thermostat.time_rampup_max);
+        }
+        else {
+          Thermostat.time_ctr_changepoint = (uint32_t)(uint32_t)(((uint32_t)(aux_temp_delta) * (uint32_t)(time_total_rampup)) / (uint32_t)temp_delta_rampup) + (uint32_t)Thermostat.time_rampup_nextcycle - (uint32_t)time_total_rampup - (uint32_t)Thermostat.time_rampup_deadtime;
+        }
+
         // Calculate temperature for switching off the output
         // y = (((y2-y1)/(x2-x1))*(x-x1)) + y1
         // Thermostat.temp_rampup_output_off = (int16_t)(((float)(temp_delta_rampup) / (float)(time_total_rampup * Thermostat.counter_rampup_cycles)) * (float)(Thermostat.time_ctr_changepoint - (uptime - (time_total_rampup)))) + Thermostat.temp_rampup_cycle;
@@ -668,7 +704,7 @@ void ThermostatWorkAutomaticRampUp()
   }
 }
 
-void ThermostatCtrWork()
+void ThermostatCtrWork(void)
 {
   switch (Thermostat.status.controller_mode) {
     case CTR_HYBRID:            // Hybrid controller (Ramp-up + PI)
@@ -690,7 +726,7 @@ void ThermostatCtrWork()
   }
 }
 
-void ThermostatWork()
+void ThermostatWork(void)
 {
   switch (Thermostat.status.thermostat_mode) {
     case THERMOSTAT_OFF:                              // State if Off or Emergency
@@ -719,7 +755,7 @@ void ThermostatWork()
   ThermostatOutputRelay(output_command);
 }
 
-void ThermostatDiagnostics()
+void ThermostatDiagnostics(void)
 {
   // TODOs: 
   // 1. Check time max for output switch on not exceeded
@@ -727,7 +763,7 @@ void ThermostatDiagnostics()
   // 3. Check maximum power at output switch not exceeded
 }
 
-void ThermostatController()
+void ThermostatController(void)
 {
   ThermostatState();
   ThermostatWork();
@@ -748,21 +784,21 @@ bool ThermostatTimerArm(int16_t tempVal)
   return result;
 }
 
-void ThermostatTimerDisarm()
+void ThermostatTimerDisarm(void)
 {
   Thermostat.temp_target_level = THERMOSTAT_TEMP_INIT;
   Thermostat.status.thermostat_mode = THERMOSTAT_OFF;
 }
 
 #ifdef DEBUG_THERMOSTAT
-void ThermostatVirtualSwitch()
+void ThermostatVirtualSwitch(void)
 {
   char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
   Response_P(DOMOTICZ_MES, DOMOTICZ_IDX1, (0 == Thermostat.status.status_output) ? 0 : 1, "");
   MqttPublish(domoticz_in_topic);
 }
 
-void ThermostatVirtualSwitchCtrState()
+void ThermostatVirtualSwitchCtrState(void)
 {
   char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
   Response_P(DOMOTICZ_MES, DOMOTICZ_IDX2, (0 == Thermostat.status.phase_hybrid_ctr) ? 0 : 1, "");
@@ -1095,12 +1131,12 @@ void CmndTimeRampupCycleSet(void)
 void CmndTempRampupPiAccErrSet(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    uint8_t value = (uint8_t)(CharToFloat(XdrvMailbox.data) * 10);
-    if ((value >= 0) && (value <= 250)) {
+    uint16_t value = (uint8_t)(CharToFloat(XdrvMailbox.data) * 100);
+    if ((value >= 0) && (value <= 2500)) {
       Thermostat.temp_rampup_pi_acc_error = value;
     }
   }
-  ResponseCmndFloat((float)(Thermostat.temp_rampup_pi_acc_error) / 10, 1);
+  ResponseCmndFloat((float)(Thermostat.temp_rampup_pi_acc_error) / 100, 1);
 }
 
 void CmndTimePiProportRead(void)
