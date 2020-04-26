@@ -3,6 +3,7 @@
 ### 8.2.0.5 20200425
 
 - Breaking Change Device Groups multicast address and port  (#8270)
+- Change IRremoteESP8266 library updated to v2.7.6
 
 ### 8.2.0.4 20200417
 
