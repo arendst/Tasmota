@@ -334,53 +334,6 @@ uint8_t gesture_mode = 1;
 \******************************************************************************/
 
 /**
- * @brief Writes a single byte to the I2C device (no register)
- *
- * @param[in] val the 1-byte value to write to the I2C device
- * @return True if successful write operation. False otherwise.
- */
-bool wireWriteByte(uint8_t val) {
-  Wire.beginTransmission(APDS9960_I2C_ADDR);
-  Wire.write(val);
-  if ( Wire.endTransmission() != 0 ) {
-      return false;
-  }
-
-  return true;
-}
-
-/**
- * @brief Reads a block (array) of bytes from the I2C device and register
- *
- * @param[in] reg the register to read from
- * @param[out] val pointer to the beginning of the data
- * @param[in] len number of bytes to read
- * @return Number of bytes read. -1 on read error.
- */
-int8_t wireReadDataBlock(uint8_t reg,
-                         uint8_t *val,
-                         uint16_t len) {
-  unsigned char i = 0;
-
-  /* Indicate which register we want to read from */
-  if (!wireWriteByte(reg)) {
-    return -1;
-  }
-
-  /* Read block data */
-  Wire.requestFrom(APDS9960_I2C_ADDR, len);
-  while (Wire.available()) {
-    if (i >= len) {
-      return -1;
-    }
-    val[i] = Wire.read();
-    i++;
-  }
-
-  return i;
-}
-
-/**
  *   Taken from the Adafruit-library
  *   @brief  Converts the raw R/G/B values to color temperature in degrees
  *            Kelvin
@@ -1494,8 +1447,9 @@ int16_t readGesture(void) {
 
       /* If there's stuff in the FIFO, read it into our data block */
       if (fifo_level > 0) {
-        bytes_read = wireReadDataBlock(APDS9960_GFIFO_U, (uint8_t*)fifo_data, (fifo_level * 4));
-        if (bytes_read == -1) {
+        bytes_read = (fifo_level * 4);
+
+        if (I2cReadBuffer(APDS9960_I2C_ADDR, APDS9960_GFIFO_U, (uint8_t*)fifo_data, bytes_read)) {
           return APDS9960_ERROR;
         }
 
