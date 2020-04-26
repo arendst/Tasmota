@@ -114,15 +114,10 @@ extern "C" void resetPins();
 #define MESSZ                       (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string
 #endif
 
-#ifdef USE_PWM_DIMMER_REMOTE
-#ifdef USE_PWM_DIMMER
 #ifndef USE_DEVICE_GROUPS
-#define USE_DEVICE_GROUPS
-#endif  // USE_DEVICE_GROUPS
-#else   // USE_PWM_DIMMER
 #undef USE_PWM_DIMMER_REMOTE
-#endif  // USE_PWM_DIMMER
-#endif  // USE_PWM_DIMMER_REMOTE
+#undef USE_DGR_LIGHT_SEQUENCE
+#endif  // USE_DEVICE_GROUPS
 
 #ifndef DOMOTICZ_UPDATE_TIMER
 #define DOMOTICZ_UPDATE_TIMER       0          // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)

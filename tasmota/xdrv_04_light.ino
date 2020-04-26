@@ -135,6 +135,9 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_LIGHT_PALETTE
   "|" D_CMND_PALETTE
 #endif  // USE_LIGHT_PALETTE
+#ifdef USE_DGR_LIGHT_SEQUENCE
+  "|" D_CMND_SEQUENCE_OFFSET
+#endif  // USE_DGR_LIGHT_SEQUENCE
    "|UNDOCA" ;
 
 void (* const LightCommand[])(void) PROGMEM = {
@@ -144,6 +147,9 @@ void (* const LightCommand[])(void) PROGMEM = {
 #ifdef USE_LIGHT_PALETTE
   &CmndPalette,
 #endif  // USE_LIGHT_PALETTE
+#ifdef USE_DGR_LIGHT_SEQUENCE
+  &CmndSequenceOffset,
+#endif  // USE_DGR_LIGHT_SEQUENCE
   &CmndUndocA };
 
 // Light color mode, either RGB alone, or white-CT alone, or both only available if ct_rgb_linked is false
@@ -284,6 +290,10 @@ struct LIGHT {
 #ifdef USE_DEVICE_GROUPS
   uint8_t  last_scheme = 0;
   bool     devgrp_no_channels_out = false; // don't share channels with device group (e.g. if scheme set by other device)
+#ifdef USE_DGR_LIGHT_SEQUENCE
+  uint8_t  sequence_offset = 0;            // number of channel changes this light is behind the master
+  uint8_t * channels_fifo;
+#endif  // USE_DGR_LIGHT_SEQUENCE
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_LIGHT_PALETTE
   uint8_t  palette_count = 0;            // palette entry count
@@ -2225,16 +2235,22 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
 void LightSendDeviceGroupStatus(bool force)
 {
   static uint8_t last_channels[LST_MAX];
+  static uint8_t channels_sequence = 0;
   static uint8_t last_bri;
 
   uint8_t bri = light_state.getBri();
   bool send_bri_update = (force || bri != last_bri);
 
   if (Light.subtype > LST_SINGLE && !Light.devgrp_no_channels_out) {
-    uint8_t channels[LST_MAX];
+    uint8_t channels[LST_MAX + 1];
     light_state.getChannels(channels);
-    if (force || memcmp(last_channels, channels, LST_MAX)) {
+    if (force || memcmp(last_channels, channels, LST_MAX)
+#ifdef USE_LIGHT_PALETTE
+      || (Settings.light_scheme && Light.palette_count)
+#endif  // USE_LIGHT_PALETTE
+      ) {
       memcpy(last_channels, channels, LST_MAX);
+      channels[LST_MAX] = ++channels_sequence;
       SendLocalDeviceGroupMessage((send_bri_update ? DGR_MSGTYP_PARTIAL_UPDATE : DGR_MSGTYP_UPDATE), DGR_ITEM_LIGHT_CHANNELS, channels);
     }
   }
@@ -2285,7 +2301,30 @@ void LightHandleDevGroupItem(void)
       }
       break;
     case DGR_ITEM_LIGHT_CHANNELS:
-      light_controller.changeChannels((uint8_t *)XdrvMailbox.data);
+#ifdef USE_DGR_LIGHT_SEQUENCE
+      {
+        static uint8_t last_sequence = 0;
+
+        // If a sequence offset is set, set the channels to the ones we received <SequenceOffset>
+        // changes ago.
+        if (Light.sequence_offset) {
+          light_controller.changeChannels(Light.channels_fifo);
+
+          // Shift the fifo down and load the newly received channels at the end for this update and
+          // any updates we missed.
+          int last_entry = (Light.sequence_offset - 1) * LST_MAX;
+          for (uint8_t sequence = (uint8_t)XdrvMailbox.data[LST_MAX]; (uint8_t)(sequence - last_sequence) > 0; last_sequence++) {
+            memmove(Light.channels_fifo, &Light.channels_fifo[LST_MAX], last_entry);
+            memcpy(&Light.channels_fifo[last_entry], XdrvMailbox.data, LST_MAX);
+          }
+        }
+        else {
+#endif  // USE_DGR_LIGHT_SEQUENCE
+          light_controller.changeChannels((uint8_t *)XdrvMailbox.data);
+#ifdef USE_DGR_LIGHT_SEQUENCE
+        }
+      }
+#endif  // USE_DGR_LIGHT_SEQUENCE
       send_state = true;
       break;
     case DGR_ITEM_LIGHT_FIXED_COLOR:
@@ -2922,12 +2961,15 @@ void CmndPalette(void)
     for (int entry = 0; entry < Light.palette_count; entry++) {
       if (Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
         *p++ = '"';
+        for (uint32_t i = 0; i < Light.subtype; i++) {
+          p += sprintf_P(p, PSTR("%d,"), *palette_entry++);
+        }
+        *(p - 1) = '"';
       }
-      memcpy(Light.current_color, palette_entry, Light.subtype);
-      LightGetColor(p);
-      p += strlen(p);
-      if (Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
-        *p++ = '"';
+      else {
+        for (uint32_t i = 0; i < Light.subtype; i++) {
+          p += sprintf_P(p, PSTR("%02X"), *palette_entry++);
+        }
       }
       *p++ = ',';
     }
@@ -2938,6 +2980,20 @@ void CmndPalette(void)
   ResponseCmndChar(palette_str);
 }
 #endif  // USE_LIGHT_PALETTE
+
+#ifdef USE_DGR_LIGHT_SEQUENCE
+void CmndSequenceOffset(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
+    if (XdrvMailbox.payload != Light.sequence_offset) {
+      if (Light.sequence_offset) free(Light.channels_fifo);
+      Light.sequence_offset = XdrvMailbox.payload;
+      if (Light.sequence_offset) Light.channels_fifo = (uint8_t *)calloc(Light.sequence_offset, LST_MAX);
+    }
+  }
+  ResponseCmndNumber(Light.sequence_offset);
+}
+#endif  // USE_DGR_LIGHT_SEQUENCE
 
 void CmndUndocA(void)
 {
