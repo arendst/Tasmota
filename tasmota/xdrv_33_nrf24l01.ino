@@ -73,7 +73,7 @@ bool NRF24initRadio()
 
 bool NRF24Detect(void)
 {
-  if  ((Pin(GPIO_SPI_CS)<99) && (Pin(GPIO_SPI_DC)<99)){
+  if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_DC)) {
     SPI.pins(SCK,MOSI,MISO,-1);
     if(NRF24initRadio()){
       NRF24.chipType = 32; // SPACE

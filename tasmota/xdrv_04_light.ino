@@ -1244,7 +1244,7 @@ bool LightModuleInit(void)
 
   if (Settings.flag.pwm_control) {          // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
     for (uint32_t i = 0; i < MAX_PWMS; i++) {
-      if (Pin(GPIO_PWM1, i) < 99) { light_type++; }  // Use Dimmer/Color control for all PWM as SetOption15 = 1
+      if (PinUsed(GPIO_PWM1, i)) { light_type++; }  // Use Dimmer/Color control for all PWM as SetOption15 = 1
     }
   }
 
@@ -1347,12 +1347,12 @@ void LightInit(void)
   if (light_type < LT_PWM6) {           // PWM
     for (uint32_t i = 0; i < light_type; i++) {
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
-      if (Pin(GPIO_PWM1, i) < 99) {
+      if (PinUsed(GPIO_PWM1, i)) {
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
       }
     }
-    if (Pin(GPIO_ARIRFRCV) < 99) {
-      if (Pin(GPIO_ARIRFSEL) < 99) {
+    if (PinUsed(GPIO_ARIRFRCV)) {
+      if (PinUsed(GPIO_ARIRFSEL)) {
         pinMode(Pin(GPIO_ARIRFSEL), OUTPUT);
         digitalWrite(Pin(GPIO_ARIRFSEL), 1);  // Turn off RF
       }
@@ -2133,7 +2133,7 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
   // now apply the actual PWM values, adjusted and remapped 10-bits range
   if (light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
     for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
-      if (Pin(GPIO_PWM1, i) < 99) {
+      if (PinUsed(GPIO_PWM1, i)) {
         //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d"), i, cur_col_10[i]);
         uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
         if (!isChannelCT(i)) {   // if CT don't use pwm_min and pwm_max

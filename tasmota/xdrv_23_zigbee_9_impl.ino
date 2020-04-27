@@ -162,7 +162,7 @@ void ZigbeeInit(void)
 
 // AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem1 = %d"), ESP_getFreeHeap());
   zigbee.active = false;
-  if ((Pin(GPIO_ZIGBEE_RX) < 99) && (Pin(GPIO_ZIGBEE_TX) < 99)) {
+  if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX)) {
 		AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "GPIOs Rx:%d Tx:%d"), Pin(GPIO_ZIGBEE_RX), Pin(GPIO_ZIGBEE_TX));
     // if seriallog_level is 0, we allow GPIO 13/15 to switch to Hardware Serial
     ZigbeeSerial = new TasmotaSerial(Pin(GPIO_ZIGBEE_RX), Pin(GPIO_ZIGBEE_TX), seriallog_level ? 1 : 2, 0, 256);   // set a receive buffer of 256 bytes

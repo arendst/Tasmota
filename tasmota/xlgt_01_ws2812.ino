@@ -449,10 +449,10 @@ void Ws2812ShowScheme(void)
 
 void Ws2812ModuleSelected(void)
 {
-  if (pin[GPIO_WS2812] < 99) {  // RGB led
+  if (PinUsed(GPIO_WS2812)) {  // RGB led
 
     // For DMA, the Pin is ignored as it uses GPIO3 due to DMA hardware use.
-    strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
+    strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS, Pin(GPIO_WS2812));
     strip->Begin();
 
     Ws2812Clear();

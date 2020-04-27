@@ -1073,6 +1073,10 @@ int ResponseJsonEndEnd(void)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0  // Fix core 2.5.x ISR not in IRAM Exception
+uint32_t Pin(uint32_t gpio, uint32_t index) ICACHE_RAM_ATTR;
+#endif
+
 uint32_t Pin(uint32_t gpio, uint32_t index = 0);
 uint32_t Pin(uint32_t gpio, uint32_t index) {
 //#ifdef ESP8266
@@ -1090,6 +1094,11 @@ uint32_t Pin(uint32_t gpio, uint32_t index) {
 */
 }
 
+boolean PinUsed(uint32_t gpio, uint32_t index = 0);
+boolean PinUsed(uint32_t gpio, uint32_t index) {
+  return (Pin(gpio, index) < 99);
+}
+
 void SetPin(uint32_t lpin, uint32_t gpio) {
 //#ifdef ESP8266
   pin[gpio] = lpin;
@@ -1100,10 +1109,16 @@ void SetPin(uint32_t lpin, uint32_t gpio) {
 */
 }
 
-void DigitalWrite(uint32_t gpio_pin, uint32_t state)
+void InitAllPins(void) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(pin); i++) {
+    SetPin(99, i);
+  }
+}
+
+void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state)
 {
-  if (Pin(gpio_pin) < 99) {
-    digitalWrite(Pin(gpio_pin), state &1);
+  if (PinUsed(gpio_pin, index)) {
+    digitalWrite(Pin(gpio_pin, index), state &1);
   }
 }
 

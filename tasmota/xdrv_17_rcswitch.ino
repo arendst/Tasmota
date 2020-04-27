@@ -81,10 +81,10 @@ void RfReceiveCheck(void)
 
 void RfInit(void)
 {
-  if (Pin(GPIO_RFSEND) < 99) {
+  if (PinUsed(GPIO_RFSEND)) {
     mySwitch.enableTransmit(Pin(GPIO_RFSEND));
   }
-  if (Pin(GPIO_RFRECV) < 99) {
+  if (PinUsed(GPIO_RFRECV)) {
     pinMode( Pin(GPIO_RFRECV), INPUT);
     mySwitch.enableReceive(Pin(GPIO_RFRECV));
   }
@@ -170,15 +170,15 @@ bool Xdrv17(uint8_t function)
 {
   bool result = false;
 
-  if ((Pin(GPIO_RFSEND) < 99) || (Pin(GPIO_RFRECV) < 99)) {
+  if (PinUsed(GPIO_RFSEND) || PinUsed(GPIO_RFRECV)) {
     switch (function) {
       case FUNC_EVERY_50_MSECOND:
-        if (Pin(GPIO_RFRECV) < 99) {
+        if (PinUsed(GPIO_RFRECV)) {
           RfReceiveCheck();
         }
         break;
       case FUNC_COMMAND:
-        if (Pin(GPIO_RFSEND) < 99) {
+        if (PinUsed(GPIO_RFSEND)) {
           result = DecodeCommand(kRfSendCommands, RfSendCommand);
         }
         break;

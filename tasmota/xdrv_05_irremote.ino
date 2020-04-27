@@ -279,28 +279,28 @@ bool Xdrv05(uint8_t function)
 {
   bool result = false;
 
-  if ((Pin(GPIO_IRSEND) < 99) || (Pin(GPIO_IRRECV) < 99)) {
+  if (PinUsed(GPIO_IRSEND) || PinUsed(GPIO_IRRECV)) {
     switch (function) {
       case FUNC_PRE_INIT:
-        if (Pin(GPIO_IRSEND) < 99) {
+        if (PinUsed(GPIO_IRSEND)) {
           IrSendInit();
         }
 #ifdef USE_IR_RECEIVE
-        if (Pin(GPIO_IRRECV) < 99) {
+        if (PinUsed(GPIO_IRRECV)) {
           IrReceiveInit();
         }
 #endif  // USE_IR_RECEIVE
         break;
       case FUNC_EVERY_50_MSECOND:
 #ifdef USE_IR_RECEIVE
-        if (Pin(GPIO_IRRECV) < 99) {
+        if (PinUsed(GPIO_IRRECV)) {
           IrReceiveCheck();  // check if there's anything on IR side
         }
 #endif  // USE_IR_RECEIVE
         irsend_active = false;  // re-enable IR reception
         break;
       case FUNC_COMMAND:
-        if (Pin(GPIO_IRSEND) < 99) {
+        if (PinUsed(GPIO_IRSEND)) {
           result = DecodeCommand(kIrRemoteCommands, IrRemoteCommand);
         }
         break;

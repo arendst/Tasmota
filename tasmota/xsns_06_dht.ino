@@ -204,8 +204,8 @@ bool DhtPinState()
 void DhtInit(void)
 {
   if (dht_sensors) {
-    if (pin[GPIO_DHT11_OUT] < 99) {
-      dht_pin_out = pin[GPIO_DHT11_OUT];
+    if (PinUsed(GPIO_DHT11_OUT)) {
+      dht_pin_out = Pin(GPIO_DHT11_OUT);
       dht_dual_mode = true;    // Dual pins mode as used by Shelly
       dht_sensors = 1;         // We only support one sensor in pseudo mode
       pinMode(dht_pin_out, OUTPUT);

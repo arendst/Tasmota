@@ -304,10 +304,10 @@ void Ds18x20Init(void)
 {
   uint64_t ids[DS18X20_MAX_SENSORS];
 
-  ds18x20_pin = pin[GPIO_DSB];
+  ds18x20_pin = Pin(GPIO_DSB);
 
-  if (pin[GPIO_DSB_OUT] < 99) {
-    ds18x20_pin_out = pin[GPIO_DSB_OUT];
+  if (PinUsed(GPIO_DSB_OUT)) {
+    ds18x20_pin_out = Pin(GPIO_DSB_OUT);
     ds18x20_dual_mode = true;    // Dual pins mode as used by Shelly
     pinMode(ds18x20_pin_out, OUTPUT);
     pinMode(ds18x20_pin, Settings.flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT);  // SetOption74 - Enable internal pullup for single DS18x20 sensor
@@ -518,7 +518,7 @@ bool Xsns05(uint8_t function)
 {
   bool result = false;
 
-  if (pin[GPIO_DSB] < 99) {
+  if (PinUsed(GPIO_DSB)) {
     switch (function) {
       case FUNC_INIT:
         Ds18x20Init();
