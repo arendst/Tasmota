@@ -1383,9 +1383,7 @@ void GpioInit(void)
     my_adc0 = template_adc0;                        // Force Template override
   }
 
-  for (uint32_t i = 0; i < GPIO_MAX; i++) {
-    SetPin(99, i);
-  }
+  InitAllPins();
   for (uint32_t i = 0; i < ARRAY_SIZE(my_module.io); i++) {
     uint32_t mpin = ValidPin(i, my_module.io[i]);
 
