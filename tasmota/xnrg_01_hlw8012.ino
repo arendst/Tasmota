@@ -254,7 +254,7 @@ void HlwDrvInit(void)
     Hlw.model_type = 1;                    // HJL-01/BL0937
   }
 
-  if (PinUsed(GPIO_HLW_CF)) {             // HLW8012 or HJL-01 based device Power monitor
+  if (PinUsed(GPIO_HLW_CF)) {              // HLW8012 or HJL-01 based device Power monitor
 
     Hlw.ui_flag = true;                    // Voltage on high
     if (PinUsed(GPIO_NRG_SEL_INV)) {
@@ -263,8 +263,8 @@ void HlwDrvInit(void)
       Hlw.ui_flag = false;                 // Voltage on low
     }
 
-    if (PinUsed(GPIO_NRG_CF1)) {          // Voltage and/or Current monitor
-      if (99 == Pin(GPIO_NRG_SEL)) {       // Voltage and/or Current selector
+    if (PinUsed(GPIO_NRG_CF1)) {           // Voltage and/or Current monitor
+      if (!PinUsed(GPIO_NRG_SEL)) {        // Voltage and/or Current selector
         Energy.current_available = false;  // Assume Voltage
       }
     } else {

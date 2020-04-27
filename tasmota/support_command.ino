@@ -1694,7 +1694,7 @@ void CmndAltitude(void)
 void CmndLedPower(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_LEDS)) {
-    if (99 == Pin(GPIO_LEDLNK)) { XdrvMailbox.index = 1; }
+    if (!PinUsed(GPIO_LEDLNK)) { XdrvMailbox.index = 1; }
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
       Settings.ledstate &= 8;                // Disable power control
       uint32_t mask = 1 << (XdrvMailbox.index -1);        // Led to control
@@ -1713,14 +1713,14 @@ void CmndLedPower(void)
         break;
       }
       blinks = 0;
-      if (99 == Pin(GPIO_LEDLNK)) {
+      if (!PinUsed(GPIO_LEDLNK)) {
         SetLedPower(Settings.ledstate &8);
       } else {
         SetLedPowerIdx(XdrvMailbox.index -1, (led_power & mask));
       }
     }
     bool state = bitRead(led_power, XdrvMailbox.index -1);
-    if (99 == Pin(GPIO_LEDLNK)) {
+    if (!PinUsed(GPIO_LEDLNK)) {
       state = bitRead(Settings.ledstate, 3);
     }
     ResponseCmndIdxChar(GetStateText(state));

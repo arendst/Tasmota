@@ -338,7 +338,7 @@ void SetPowerOnState(void)
 
 void SetLedPowerIdx(uint32_t led, uint32_t state)
 {
-  if ((99 == Pin(GPIO_LEDLNK)) && (0 == led)) {  // Legacy - LED1 is link led only if LED2 is present
+  if (!PinUsed(GPIO_LEDLNK) && (0 == led)) {  // Legacy - LED1 is link led only if LED2 is present
     if (PinUsed(GPIO_LED1, 1)) {
       led = 1;
     }
@@ -362,7 +362,7 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
 
 void SetLedPower(uint32_t state)
 {
-  if (99 == Pin(GPIO_LEDLNK)) {           // Legacy - Only use LED1 and/or LED2
+  if (!PinUsed(GPIO_LEDLNK)) {           // Legacy - Only use LED1 and/or LED2
     SetLedPowerIdx(0, state);
   } else {
     power_t mask = 1;
@@ -1534,7 +1534,7 @@ void GpioInit(void)
   for (uint32_t i = 0; i < MAX_LEDS; i++) {
     if (PinUsed(GPIO_LED1, i)) {
 #ifdef USE_ARILUX_RF
-      if ((3 == i) && (leds_present < 2) && (99 == Pin(GPIO_ARIRFSEL))) {
+      if ((3 == i) && (leds_present < 2) && !PinUsed(GPIO_ARIRFSEL)) {
         SetPin(Pin(GPIO_LED4), GPIO_ARIRFSEL);  // Legacy support where LED4 was Arilux RF enable
         SetPin(99, GPIO_LED4);
       } else {

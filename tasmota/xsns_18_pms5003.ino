@@ -244,7 +244,7 @@ void PmsInit(void)
     if (PmsSerial->begin(9600)) {
       if (PmsSerial->hardwareSerial()) { ClaimSerial(); }
 
-      if (99 == Pin(GPIO_PMS5003_TX)) {  // setting interval not supported if TX pin not connected
+      if (!PinUsed(GPIO_PMS5003_TX)) {  // setting interval not supported if TX pin not connected
         Settings.pms_wake_interval = 0;
         Pms.ready = 1;
       }
