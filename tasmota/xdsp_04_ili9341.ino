@@ -90,7 +90,7 @@ void Ili9341InitDriver(void)
     if (Settings.display_height != ILI9341_TFTHEIGHT) {
       Settings.display_height = ILI9341_TFTHEIGHT;
     }
-    tft = new Adafruit_ILI9341(pin[GPIO_SPI_CS], pin[GPIO_SPI_DC]);
+    tft = new Adafruit_ILI9341(Pin(GPIO_SPI_CS), Pin(GPIO_SPI_DC));
     tft->begin();
 
 #ifdef USE_DISPLAY_MODES1TO5
@@ -128,9 +128,9 @@ void Ili9341DisplayOnOff(uint8_t on)
 {
 //  tft->showDisplay(on);
 //  tft->invertDisplay(on);
-  if (pin[GPIO_BACKLIGHT] < 99) {
-    pinMode(pin[GPIO_BACKLIGHT], OUTPUT);
-    digitalWrite(pin[GPIO_BACKLIGHT], on);
+  if (Pin(GPIO_BACKLIGHT) < 99) {
+    pinMode(Pin(GPIO_BACKLIGHT), OUTPUT);
+    digitalWrite(Pin(GPIO_BACKLIGHT), on);
   }
 }
 

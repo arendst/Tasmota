@@ -65,15 +65,15 @@ void EpdInitDriver42()
     epd42  = new Epd42(EPD_WIDTH42,EPD_HEIGHT42);
 
     #ifdef USE_SPI
-        if ((pin[GPIO_SSPI_CS]<99) && (pin[GPIO_SSPI_MOSI]<99) && (pin[GPIO_SSPI_SCLK]<99)) {
-          epd42->Begin(pin[GPIO_SSPI_CS],pin[GPIO_SSPI_MOSI],pin[GPIO_SSPI_SCLK]);
+        if ((Pin(GPIO_SSPI_CS)<99) && (Pin(GPIO_SSPI_MOSI)<99) && (Pin(GPIO_SSPI_SCLK)<99)) {
+          epd42->Begin(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_SCLK));
         } else {
           free(buffer);
           return;
         }
     #else
-        if ((pin[GPIO_SPI_CS]<99) && (pin[GPIO_SPI_MOSI]<99) && (pin[GPIO_SPI_CLK]<99)) {
-          epd42->Begin(pin[GPIO_SPI_CS],pin[GPIO_SPI_MOSI],pin[GPIO_SPI_CLK]);
+        if ((Pin(GPIO_SPI_CS)<99) && (Pin(GPIO_SPI_MOSI)<99) && (Pin(GPIO_SPI_CLK)<99)) {
+          epd42->Begin(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_MOSI),Pin(GPIO_SPI_CLK));
         } else {
           free(buffer);
           return;

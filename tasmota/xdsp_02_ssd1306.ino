@@ -71,8 +71,8 @@ void SSD1306InitDriver(void)
     }
 
     uint8_t reset_pin = -1;
-    if (pin[GPIO_OLED_RESET] < 99) {
-      reset_pin = pin[GPIO_OLED_RESET];
+    if (Pin(GPIO_OLED_RESET) < 99) {
+      reset_pin = Pin(GPIO_OLED_RESET);
     }
 
     // allocate screen buffer

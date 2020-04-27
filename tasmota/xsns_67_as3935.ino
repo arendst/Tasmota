@@ -51,31 +51,7 @@
 #define INDOORS       0x24
 #define OUTDOORS      0x1C
 
-// Translation
-// http
-#define D_AS3935_GAIN "gain:"
-#define D_AS3935_ENERGY "energy:"
-#define D_AS3935_DISTANCE "distance:"
-#define D_AS3935_DISTURBER "disturber:"
-#define D_AS3935_VRMS "µVrms:"
-// http Message
-#define D_AS3935_APRX "aprx.:"
-#define D_AS3935_AWAY "away"
-#define D_AS3935_LIGHT "lightning"
-#define D_AS3935_OUT "lightning out of range"
-#define D_AS3935_NOT "distance not determined"
-#define D_AS3935_ABOVE "lightning overhead"
-#define D_AS3935_NOISE "noise detected"
-#define D_AS3935_DISTDET "disturber detected"
-#define D_AS3935_INTNOEV "Interrupt with no Event!"
-#define D_AS3935_NOMESS "listening..."
-// CMD Status
-#define D_AS3935_ON "On"
-#define D_AS3935_OFF "Off"
-#define D_AS3935_INDOORS "Indoors"
-#define D_AS3935_OUTDOORS "Outdoors"
-#define D_AS3935_CAL_FAIL "calibration failed"
-#define D_AS3935_CAL_OK "calibration set to:"
+
 
 // Global
 const char HTTP_SNS_UNIT_KILOMETER[] PROGMEM = D_UNIT_KILOMETER;

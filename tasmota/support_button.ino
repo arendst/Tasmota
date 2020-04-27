@@ -60,9 +60,9 @@ void ButtonInit(void)
 {
   Button.present = 0;
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
-    if (pin[GPIO_KEY1 +i] < 99) {
+    if (Pin(GPIO_KEY1, i) < 99) {
       Button.present++;
-      pinMode(pin[GPIO_KEY1 +i], bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
+      pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
     }
 #ifndef USE_ADC_VCC
     else if ((99 == Button.adc) && ((ADC0_BUTTON == my_adc0) || (ADC0_BUTTON_INV == my_adc0))) {
@@ -135,9 +135,9 @@ void ButtonHandler(void)
     }
     else
 #endif  // ESP8266
-    if (pin[GPIO_KEY1 +button_index] < 99) {
+    if (Pin(GPIO_KEY1, button_index) < 99) {
       button_present = 1;
-      button = (digitalRead(pin[GPIO_KEY1 +button_index]) != bitRead(Button.inverted_mask, button_index));
+      button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
     }
 #ifndef USE_ADC_VCC
     if (Button.adc == button_index) {
