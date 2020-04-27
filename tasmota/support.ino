@@ -1100,10 +1100,10 @@ void SetPin(uint32_t lpin, uint32_t gpio) {
 */
 }
 
-void DigitalWrite(uint32_t gpio_pin, uint32_t state)
+void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state)
 {
-  if (Pin(gpio_pin) < 99) {
-    digitalWrite(Pin(gpio_pin), state &1);
+  if (Pin(gpio_pin, index) < 99) {
+    digitalWrite(Pin(gpio_pin, index), state &1);
   }
 }
 

@@ -166,7 +166,7 @@ void SetLatchingRelay(power_t lpower, uint32_t state)
 
   for (uint32_t i = 0; i < devices_present; i++) {
     uint32_t port = (i << 1) + ((latching_power >> i) &1);
-    DigitalWrite(GPIO_REL1 +port, bitRead(rel_inverted, port) ? !state : state);
+    DigitalWrite(GPIO_REL1, port, bitRead(rel_inverted, port) ? !state : state);
   }
 }
 
@@ -228,7 +228,7 @@ void SetDevicePower(power_t rpower, uint32_t source)
     for (uint32_t i = 0; i < devices_present; i++) {
       power_t state = rpower &1;
       if (i < MAX_RELAYS) {
-        DigitalWrite(GPIO_REL1 +i, bitRead(rel_inverted, i) ? !state : state);
+        DigitalWrite(GPIO_REL1, i, bitRead(rel_inverted, i) ? !state : state);
       }
       rpower >>= 1;
     }
@@ -351,7 +351,7 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
     } else {
       led_power &= (0xFF ^ mask);
     }
-    DigitalWrite(Pin(GPIO_LED1, led), bitRead(led_inverted, led) ? !state : state);
+    DigitalWrite(GPIO_LED1, led, bitRead(led_inverted, led) ? !state : state);
   }
 #ifdef USE_BUZZER
   if (led == 0) {

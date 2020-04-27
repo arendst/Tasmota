@@ -165,7 +165,7 @@ void PWMDimmerSetPoweredOffLed(void)
 
 void PWMDimmerSetPower(void)
 {
-  DigitalWrite(GPIO_REL1, bitRead(rel_inverted, 0) ? !power : power);
+  DigitalWrite(GPIO_REL1, 0, bitRead(rel_inverted, 0) ? !power : power);
   PWMDimmerSetBrightnessLeds(0);
   PWMDimmerSetPoweredOffLed();
 }

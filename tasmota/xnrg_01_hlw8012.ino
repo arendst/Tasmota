@@ -143,7 +143,7 @@ void HlwEvery200ms(void)
     if (Hlw.cf1_timer >= 8) {
       Hlw.cf1_timer = 0;
       Hlw.select_ui_flag = (Hlw.select_ui_flag) ? false : true;
-      DigitalWrite(GPIO_NRG_SEL, Hlw.select_ui_flag);
+      DigitalWrite(GPIO_NRG_SEL, 0, Hlw.select_ui_flag);
 
       if (Hlw.cf1_pulse_counter) {
         cf1_pulse_length = Hlw.cf1_summed_pulse_length / Hlw.cf1_pulse_counter;
