@@ -199,7 +199,7 @@ void Ade7953EnergyEverySecond(void)
 
 void Ade7953DrvInit(void)
 {
-  if (Pin(GPIO_ADE7953_IRQ) < 99) {               // Irq on GPIO16 is not supported...
+  if (PinUsed(GPIO_ADE7953_IRQ)) {               // Irq on GPIO16 is not supported...
     delay(100);                                   // Need 100mS to init ADE7953
     if (I2cSetDevice(ADE7953_ADDR)) {
       if (HLW_PREF_PULSE == Settings.energy_power_calibration) {

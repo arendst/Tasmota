@@ -93,7 +93,7 @@ void CmndDoTurn(void) {
 }
 
 void CmndSetMIS(void) {
-  if ((Pin(GPIO_A4988_MS1) < 99) && (Pin(GPIO_A4988_MS2) < 99) && (Pin(GPIO_A4988_MS3) < 99) && (XdrvMailbox.data_len > 0)) {
+  if (PinUsed(GPIO_A4988_MS1) && PinUsed(GPIO_A4988_MS2) && PinUsed(GPIO_A4988_MS3) && (XdrvMailbox.data_len > 0)) {
     short newMIS = strtoul(XdrvMailbox.data,nullptr,10);
     myA4988->setMIS(newMIS);
     ResponseCmndDone();
@@ -122,7 +122,7 @@ void CmndSetRPM(void) {
 bool Xdrv25(uint8_t function)
 {
   bool result = false;
-  if ((Pin(GPIO_A4988_DIR) < 99) && (Pin(GPIO_A4988_STP) < 99)) {
+  if (PinUsed(GPIO_A4988_DIR) && PinUsed(GPIO_A4988_STP)) {
     switch (function) {
       case FUNC_INIT:
         A4988Init();

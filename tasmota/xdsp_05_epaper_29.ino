@@ -67,11 +67,11 @@ void EpdInitDriver29()
     epd  = new Epd(EPD_WIDTH,EPD_HEIGHT);
 
     // whiten display with full update, takes 3 seconds
-    if ((Pin(GPIO_SPI_CS) < 99) && (Pin(GPIO_SPI_CLK) < 99) && (Pin(GPIO_SPI_MOSI) < 99)) {
+    if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI)) {
       epd->Begin(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_MOSI),Pin(GPIO_SPI_CLK));
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EPD: HardSPI CS %d, CLK %d, MOSI %d"),Pin(GPIO_SPI_CS), Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MOSI));
     }
-    else if ((Pin(GPIO_SSPI_CS) < 99) && (Pin(GPIO_SSPI_SCLK) < 99) && (Pin(GPIO_SSPI_MOSI) < 99)) {
+    else if (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_MOSI)) {
       epd->Begin(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_SCLK));
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EPD: SoftSPI CS %d, CLK %d, MOSI %d"),Pin(GPIO_SSPI_CS), Pin(GPIO_SSPI_SCLK), Pin(GPIO_SSPI_MOSI));
     } else {

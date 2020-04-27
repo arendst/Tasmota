@@ -224,7 +224,7 @@ void FifLESnsInit(void)
 
 void FifLEDrvInit(void)
 {
-  if ((Pin(GPIO_LE01MR_RX) < 99) && (Pin(GPIO_LE01MR_TX) < 99)) {
+  if (PinUsed(GPIO_LE01MR_RX) && PinUsed(GPIO_LE01MR_TX)) {
     energy_flg = XNRG_13;
   }
 }

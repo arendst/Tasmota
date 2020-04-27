@@ -138,7 +138,7 @@ void HlwEvery200ms(void)
     }
   }
 
-  if (Pin(GPIO_NRG_CF1) < 99) {
+  if (PinUsed(GPIO_NRG_CF1)) {
     Hlw.cf1_timer++;
     if (Hlw.cf1_timer >= 8) {
       Hlw.cf1_timer = 0;
@@ -233,11 +233,11 @@ void HlwSnsInit(void)
     Hlw.current_ratio = HLW_IREF;
   }
 
-  if (Pin(GPIO_NRG_SEL) < 99) {
+  if (PinUsed(GPIO_NRG_SEL)) {
     pinMode(Pin(GPIO_NRG_SEL), OUTPUT);
     digitalWrite(Pin(GPIO_NRG_SEL), Hlw.select_ui_flag);
   }
-  if (Pin(GPIO_NRG_CF1) < 99) {
+  if (PinUsed(GPIO_NRG_CF1)) {
     pinMode(Pin(GPIO_NRG_CF1), INPUT_PULLUP);
     attachInterrupt(Pin(GPIO_NRG_CF1), HlwCf1Interrupt, FALLING);
   }
@@ -248,7 +248,7 @@ void HlwSnsInit(void)
 void HlwDrvInit(void)
 {
   Hlw.model_type = 0;                      // HLW8012
-  if (Pin(GPIO_HJL_CF) < 99) {
+  if (PinUsed(GPIO_HJL_CF)) {
 //    pin[GPIO_HLW_CF] = pin[GPIO_HJL_CF];
 //    pin[GPIO_HJL_CF] = 99;
     SetPin(Pin(GPIO_HJL_CF), GPIO_HLW_CF);
@@ -256,10 +256,10 @@ void HlwDrvInit(void)
     Hlw.model_type = 1;                    // HJL-01/BL0937
   }
 
-  if (Pin(GPIO_HLW_CF) < 99) {             // HLW8012 or HJL-01 based device Power monitor
+  if (PinUsed(GPIO_HLW_CF)) {             // HLW8012 or HJL-01 based device Power monitor
 
     Hlw.ui_flag = true;                    // Voltage on high
-    if (Pin(GPIO_NRG_SEL_INV) < 99) {
+    if (PinUsed(GPIO_NRG_SEL_INV)) {
 //      pin[GPIO_NRG_SEL] = pin[GPIO_NRG_SEL_INV];
 //      pin[GPIO_NRG_SEL_INV] = 99;
       SetPin(Pin(GPIO_NRG_SEL_INV), GPIO_NRG_SEL);
@@ -267,7 +267,7 @@ void HlwDrvInit(void)
       Hlw.ui_flag = false;                 // Voltage on low
     }
 
-    if (Pin(GPIO_NRG_CF1) < 99) {          // Voltage and/or Current monitor
+    if (PinUsed(GPIO_NRG_CF1)) {          // Voltage and/or Current monitor
       if (99 == Pin(GPIO_NRG_SEL)) {       // Voltage and/or Current selector
         Energy.current_available = false;  // Assume Voltage
       }

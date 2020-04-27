@@ -256,7 +256,7 @@ void PzemSnsInit(void)
 
 void PzemDrvInit(void)
 {
-  if ((Pin(GPIO_PZEM004_RX) < 99) && (Pin(GPIO_PZEM0XX_TX) < 99)) {  // Any device with a Pzem004T
+  if (PinUsed(GPIO_PZEM004_RX) && PinUsed(GPIO_PZEM0XX_TX)) {  // Any device with a Pzem004T
     energy_flg = XNRG_03;
   }
 }

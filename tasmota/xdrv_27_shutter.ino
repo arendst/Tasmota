@@ -201,7 +201,7 @@ void ShutterInit(void)
         }
       } else {
         Shutter.mode = SHT_OFF_ON__OPEN_CLOSE;
-        if ((Pin(GPIO_PWM1, i) < 99) && (Pin(GPIO_CNTR1, i) < 99)) {
+        if (PinUsed(GPIO_PWM1, i) && PinUsed(GPIO_CNTR1, i)) {
           Shutter.mode = SHT_OFF_ON__OPEN_CLOSE_STEPPER;
           Shutter.pwm_frequency[i] = 0;
           Shutter.accelerator[i] = 0;

@@ -102,7 +102,7 @@ void Dds2382SnsInit(void)
 
 void Dds2382DrvInit(void)
 {
-  if ((Pin(GPIO_DDS2382_RX) < 99) && (Pin(GPIO_DDS2382_TX) < 99)) {
+  if (PinUsed(GPIO_DDS2382_RX) && PinUsed(GPIO_DDS2382_TX)) {
     energy_flg = XNRG_09;
   }
 }

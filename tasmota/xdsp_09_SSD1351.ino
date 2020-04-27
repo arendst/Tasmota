@@ -60,10 +60,10 @@ void SSD1351_InitDriver() {
     bg_color = SSD1351_BLACK;
 
     // init renderer
-    if  ((Pin(GPIO_SSPI_CS)<99) && (Pin(GPIO_SSPI_MOSI)<99) && (Pin(GPIO_SSPI_SCLK)<99)){
+    if  (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK)){
       ssd1351  = new SSD1351(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_SCLK));
     } else {
-      if ((Pin(GPIO_SPI_CS)<99) && (Pin(GPIO_SPI_MOSI)<99) && (Pin(GPIO_SPI_CLK)<99)) {
+      if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_CLK)) {
         ssd1351  = new SSD1351(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_MOSI),Pin(GPIO_SPI_CLK));
       } else {
         return;

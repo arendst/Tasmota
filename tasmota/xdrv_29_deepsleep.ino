@@ -54,7 +54,7 @@ bool DeepSleepEnabled(void)
     return false;               // Disabled
   }
 
-  if (Pin(GPIO_DEEPSLEEP) < 99) {
+  if (PinUsed(GPIO_DEEPSLEEP)) {
     pinMode(Pin(GPIO_DEEPSLEEP), INPUT_PULLUP);
     return (digitalRead(Pin(GPIO_DEEPSLEEP)));  // Disable DeepSleep if user holds pin GPIO_DEEPSLEEP low
   }

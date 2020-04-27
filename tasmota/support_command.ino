@@ -1167,7 +1167,7 @@ void CmndTemplate(void)
 void CmndPwm(void)
 {
   if (pwm_present && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PWMS)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= Settings.pwm_range) && (Pin(GPIO_PWM1, XdrvMailbox.index -1) < 99)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= Settings.pwm_range) && PinUsed(GPIO_PWM1, XdrvMailbox.index -1)) {
       Settings.pwm_value[XdrvMailbox.index -1] = XdrvMailbox.payload;
       analogWrite(Pin(GPIO_PWM1, XdrvMailbox.index -1), bitRead(pwm_inverted, XdrvMailbox.index -1) ? Settings.pwm_range - XdrvMailbox.payload : XdrvMailbox.payload);
     }

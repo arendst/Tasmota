@@ -134,7 +134,7 @@ bool Sm2135SetChannels(void)
 
 void Sm2135ModuleSelected(void)
 {
-  if ((Pin(GPIO_SM2135_CLK) < 99) && (Pin(GPIO_SM2135_DAT) < 99)) {
+  if (PinUsed(GPIO_SM2135_CLK) && PinUsed(GPIO_SM2135_DAT)) {
     Sm2135.clk = Pin(GPIO_SM2135_CLK);
     Sm2135.data = Pin(GPIO_SM2135_DAT);
 

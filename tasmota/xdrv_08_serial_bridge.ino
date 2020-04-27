@@ -87,7 +87,7 @@ void SerialBridgeInput(void)
 void SerialBridgeInit(void)
 {
   serial_bridge_active = false;
-  if ((Pin(GPIO_SBR_RX) < 99) && (Pin(GPIO_SBR_TX) < 99)) {
+  if (PinUsed(GPIO_SBR_RX) && PinUsed(GPIO_SBR_TX)) {
     SerialBridgeSerial = new TasmotaSerial(Pin(GPIO_SBR_RX), Pin(GPIO_SBR_TX));
     if (SerialBridgeSerial->begin(Settings.sbaudrate * 300)) {  // Baud rate is stored div 300 so it fits into 16 bits
       if (SerialBridgeSerial->hardwareSerial()) {

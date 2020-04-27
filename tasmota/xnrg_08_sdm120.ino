@@ -187,7 +187,7 @@ void Sdm120SnsInit(void)
 
 void Sdm120DrvInit(void)
 {
-  if ((Pin(GPIO_SDM120_RX) < 99) && (Pin(GPIO_SDM120_TX) < 99)) {
+  if (PinUsed(GPIO_SDM120_RX) && PinUsed(GPIO_SDM120_TX)) {
     energy_flg = XNRG_08;
   }
 }

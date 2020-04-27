@@ -186,7 +186,7 @@ void Sdm630SnsInit(void)
 
 void Sdm630DrvInit(void)
 {
-  if ((Pin(GPIO_SDM630_RX) < 99) && (Pin(GPIO_SDM630_TX) < 99)) {
+  if (PinUsed(GPIO_SDM630_RX) && PinUsed(GPIO_SDM630_TX)) {
     energy_flg = XNRG_10;
   }
 }

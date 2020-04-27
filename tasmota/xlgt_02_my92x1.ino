@@ -115,7 +115,7 @@ bool My92x1SetChannels(void)
 
 void My92x1ModuleSelected(void)
 {
-  if ((Pin(GPIO_DCKI) < 99) && (Pin(GPIO_DI) < 99)) {
+  if (PinUsed(GPIO_DCKI) && PinUsed(GPIO_DI)) {
     My92x1.pdi_pin = Pin(GPIO_DI);
     My92x1.pdcki_pin = Pin(GPIO_DCKI);
 
