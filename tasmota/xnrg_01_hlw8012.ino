@@ -249,8 +249,6 @@ void HlwDrvInit(void)
 {
   Hlw.model_type = 0;                      // HLW8012
   if (PinUsed(GPIO_HJL_CF)) {
-//    pin[GPIO_HLW_CF] = pin[GPIO_HJL_CF];
-//    pin[GPIO_HJL_CF] = 99;
     SetPin(Pin(GPIO_HJL_CF), GPIO_HLW_CF);
     SetPin(99, GPIO_HJL_CF);
     Hlw.model_type = 1;                    // HJL-01/BL0937
@@ -260,8 +258,6 @@ void HlwDrvInit(void)
 
     Hlw.ui_flag = true;                    // Voltage on high
     if (PinUsed(GPIO_NRG_SEL_INV)) {
-//      pin[GPIO_NRG_SEL] = pin[GPIO_NRG_SEL_INV];
-//      pin[GPIO_NRG_SEL_INV] = 99;
       SetPin(Pin(GPIO_NRG_SEL_INV), GPIO_NRG_SEL);
       SetPin(99, GPIO_NRG_SEL_INV);
       Hlw.ui_flag = false;                 // Voltage on low

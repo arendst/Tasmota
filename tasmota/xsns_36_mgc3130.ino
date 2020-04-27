@@ -39,13 +39,10 @@
 
 #define MGC3130_I2C_ADDR        0x42
 
-#define MGC3130_xfer            pin[GPIO_MGC3130_XFER]
-#define MGC3130_reset           pin[GPIO_MGC3130_RESET]
-
-
+uint8_t MGC3130_xfer = 0;
+uint8_t MGC3130_reset = 0;
 bool MGC3130_type = false;
 char MGC3130stype[] = "MGC3130";
-
 
 #define MGC3130_SYSTEM_STATUS 0x15
 #define MGC3130_REQUEST_MSG   0x06
@@ -478,6 +475,9 @@ void MGC3130_detect(void)
 {
   if (MGC3130_type || I2cActive(MGC3130_I2C_ADDR)) { return; }
 
+  MGC3130_xfer = Pin(GPIO_MGC3130_XFER);
+  MGC3130_reset = Pin(GPIO_MGC3130_RESET);
+
   pinMode(MGC3130_xfer, INPUT_PULLUP);
   pinMode(MGC3130_reset,  OUTPUT);
   digitalWrite(MGC3130_reset, LOW);
@@ -588,7 +588,7 @@ bool Xsns36(uint8_t function)
 
   bool result = false;
 
-  if ((FUNC_INIT == function) && (pin[GPIO_MGC3130_XFER] < 99) && (pin[GPIO_MGC3130_RESET] < 99)) {
+  if ((FUNC_INIT == function) && PinUsed(GPIO_MGC3130_XFER) && PinUsed(GPIO_MGC3130_RESET)) {
     MGC3130_detect();
   }
   else if (MGC3130_type) {
