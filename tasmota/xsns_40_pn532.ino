@@ -66,7 +66,7 @@ uint8_t pn532_newdata_len = 0;
 
 void PN532_Init(void)
 {
-  if (PinUsed(GPIO_PN532_RXD9) && PinUsed(GPIO_PN532_TXD)) {
+  if (PinUsed(GPIO_PN532_RXD) && PinUsed(GPIO_PN532_TXD)) {
     PN532_Serial = new TasmotaSerial(Pin(GPIO_PN532_RXD), Pin(GPIO_PN532_TXD), 1);
     if (PN532_Serial->begin(115200)) {
       if (PN532_Serial->hardwareSerial()) { ClaimSerial(); }
