@@ -562,7 +562,7 @@ void McpEverySecond(void)
 void McpSnsInit(void)
 {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
-  McpSerial = new TasmotaSerial(pin[GPIO_MCP39F5_RX], pin[GPIO_MCP39F5_TX], 1);
+  McpSerial = new TasmotaSerial(Pin(GPIO_MCP39F5_RX), Pin(GPIO_MCP39F5_TX), 1);
   if (McpSerial->begin(MCP_BAUDRATE)) {
     if (McpSerial->hardwareSerial()) {
       ClaimSerial();
@@ -578,10 +578,10 @@ void McpSnsInit(void)
 
 void McpDrvInit(void)
 {
-  if ((pin[GPIO_MCP39F5_RX] < 99) && (pin[GPIO_MCP39F5_TX] < 99)) {
-    if (pin[GPIO_MCP39F5_RST] < 99) {
-      pinMode(pin[GPIO_MCP39F5_RST], OUTPUT);
-      digitalWrite(pin[GPIO_MCP39F5_RST], 0);  // MCP disable - Reset Delta Sigma ADC's
+  if ((Pin(GPIO_MCP39F5_RX) < 99) && (Pin(GPIO_MCP39F5_TX) < 99)) {
+    if (Pin(GPIO_MCP39F5_RST) < 99) {
+      pinMode(Pin(GPIO_MCP39F5_RST), OUTPUT);
+      digitalWrite(Pin(GPIO_MCP39F5_RST), 0);  // MCP disable - Reset Delta Sigma ADC's
     }
     mcp_calibrate = 0;
     mcp_timeout = 2;               // Initial wait

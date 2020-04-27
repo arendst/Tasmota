@@ -138,7 +138,7 @@ void HlwEvery200ms(void)
     }
   }
 
-  if (pin[GPIO_NRG_CF1] < 99) {
+  if (Pin(GPIO_NRG_CF1) < 99) {
     Hlw.cf1_timer++;
     if (Hlw.cf1_timer >= 8) {
       Hlw.cf1_timer = 0;
@@ -233,38 +233,42 @@ void HlwSnsInit(void)
     Hlw.current_ratio = HLW_IREF;
   }
 
-  if (pin[GPIO_NRG_SEL] < 99) {
-    pinMode(pin[GPIO_NRG_SEL], OUTPUT);
-    digitalWrite(pin[GPIO_NRG_SEL], Hlw.select_ui_flag);
+  if (Pin(GPIO_NRG_SEL) < 99) {
+    pinMode(Pin(GPIO_NRG_SEL), OUTPUT);
+    digitalWrite(Pin(GPIO_NRG_SEL), Hlw.select_ui_flag);
   }
-  if (pin[GPIO_NRG_CF1] < 99) {
-    pinMode(pin[GPIO_NRG_CF1], INPUT_PULLUP);
-    attachInterrupt(pin[GPIO_NRG_CF1], HlwCf1Interrupt, FALLING);
+  if (Pin(GPIO_NRG_CF1) < 99) {
+    pinMode(Pin(GPIO_NRG_CF1), INPUT_PULLUP);
+    attachInterrupt(Pin(GPIO_NRG_CF1), HlwCf1Interrupt, FALLING);
   }
-  pinMode(pin[GPIO_HLW_CF], INPUT_PULLUP);
-  attachInterrupt(pin[GPIO_HLW_CF], HlwCfInterrupt, FALLING);
+  pinMode(Pin(GPIO_HLW_CF), INPUT_PULLUP);
+  attachInterrupt(Pin(GPIO_HLW_CF), HlwCfInterrupt, FALLING);
 }
 
 void HlwDrvInit(void)
 {
   Hlw.model_type = 0;                      // HLW8012
-  if (pin[GPIO_HJL_CF] < 99) {
-    pin[GPIO_HLW_CF] = pin[GPIO_HJL_CF];
-    pin[GPIO_HJL_CF] = 99;
+  if (Pin(GPIO_HJL_CF) < 99) {
+//    pin[GPIO_HLW_CF] = pin[GPIO_HJL_CF];
+//    pin[GPIO_HJL_CF] = 99;
+    SetPin(Pin(GPIO_HJL_CF), GPIO_HLW_CF);
+    SetPin(99, GPIO_HJL_CF);
     Hlw.model_type = 1;                    // HJL-01/BL0937
   }
 
-  if (pin[GPIO_HLW_CF] < 99) {             // HLW8012 or HJL-01 based device Power monitor
+  if (Pin(GPIO_HLW_CF) < 99) {             // HLW8012 or HJL-01 based device Power monitor
 
     Hlw.ui_flag = true;                    // Voltage on high
-    if (pin[GPIO_NRG_SEL_INV] < 99) {
-      pin[GPIO_NRG_SEL] = pin[GPIO_NRG_SEL_INV];
-      pin[GPIO_NRG_SEL_INV] = 99;
+    if (Pin(GPIO_NRG_SEL_INV) < 99) {
+//      pin[GPIO_NRG_SEL] = pin[GPIO_NRG_SEL_INV];
+//      pin[GPIO_NRG_SEL_INV] = 99;
+      SetPin(Pin(GPIO_NRG_SEL_INV), GPIO_NRG_SEL);
+      SetPin(99, GPIO_NRG_SEL_INV);
       Hlw.ui_flag = false;                 // Voltage on low
     }
 
-    if (pin[GPIO_NRG_CF1] < 99) {          // Voltage and/or Current monitor
-      if (99 == pin[GPIO_NRG_SEL]) {       // Voltage and/or Current selector
+    if (Pin(GPIO_NRG_CF1) < 99) {          // Voltage and/or Current monitor
+      if (99 == Pin(GPIO_NRG_SEL)) {       // Voltage and/or Current selector
         Energy.current_available = false;  // Assume Voltage
       }
     } else {

@@ -221,7 +221,7 @@ bool SnfL1SetChannels(void)
 void SnfL1ModuleSelected(void)
 {
   if (SONOFF_L1 == my_module_type) {
-    if ((pin[GPIO_RXD] < 99) && (pin[GPIO_TXD] < 99)) {
+    if ((Pin(GPIO_RXD) < 99) && (Pin(GPIO_TXD) < 99)) {
       SetSerial(19200, TS_SERIAL_8N1);
 
       light_type = LT_RGB;

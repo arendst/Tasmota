@@ -100,9 +100,9 @@ void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
 /*
 bool SM16716_ModuleSelected(void)
 {
-  Sm16716.pin_clk = pin[GPIO_SM16716_CLK];
-  Sm16716.pin_dat = pin[GPIO_SM16716_DAT];
-  Sm16716.pin_sel = pin[GPIO_SM16716_SEL];
+  Sm16716.pin_clk = Pin(GPIO_SM16716_CLK);
+  Sm16716.pin_dat = Pin(GPIO_SM16716_DAT);
+  Sm16716.pin_sel = Pin(GPIO_SM16716_SEL);
   DEBUG_DRIVER_LOG(PSTR(D_LOG_SM16716 "ModuleSelected; clk_pin=%d, dat_pin=%d)"), Sm16716.pin_clk, Sm16716.pin_dat);
   return (Sm16716.pin_clk < 99) && (Sm16716.pin_dat < 99);
 }
@@ -122,9 +122,9 @@ bool Sm16716SetChannels(void)
 /*
   // handle any PWM pins, skipping the first 3 values for sm16716
   for (uint32_t i = 3; i < Light.subtype; i++) {
-    if (pin[GPIO_PWM1 +i-3] < 99) {
+    if (Pin(GPIO_PWM1, i-3) < 99) {
       //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
-      analogWrite(pin[GPIO_PWM1 +i-3], bitRead(pwm_inverted, i-3) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
+      analogWrite(Pin(GPIO_PWM1, i-3), bitRead(pwm_inverted, i-3) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
     }
   }
 */
@@ -138,17 +138,17 @@ bool Sm16716SetChannels(void)
 
 void Sm16716ModuleSelected(void)
 {
-  if ((pin[GPIO_SM16716_CLK] < 99) && (pin[GPIO_SM16716_DAT] < 99)) {
-    Sm16716.pin_clk = pin[GPIO_SM16716_CLK];
-    Sm16716.pin_dat = pin[GPIO_SM16716_DAT];
-    Sm16716.pin_sel = pin[GPIO_SM16716_SEL];
+  if ((Pin(GPIO_SM16716_CLK) < 99) && (Pin(GPIO_SM16716_DAT) < 99)) {
+    Sm16716.pin_clk = Pin(GPIO_SM16716_CLK);
+    Sm16716.pin_dat = Pin(GPIO_SM16716_DAT);
+    Sm16716.pin_sel = Pin(GPIO_SM16716_SEL);
 
 /*
     // init PWM
     for (uint32_t i = 0; i < Light.subtype; i++) {
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
-      if (pin[GPIO_PWM1 +i] < 99) {
-        pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+      if (Pin(GPIO_PWM1, i) < 99) {
+        pinMode(Pin(GPIO_PWM1, i), OUTPUT);
       }
     }
 */

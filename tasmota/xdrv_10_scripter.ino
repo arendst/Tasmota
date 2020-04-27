@@ -1573,7 +1573,8 @@ chknext:
         }
         if (!strncmp(vname,"pn[",3)) {
           GetNumericResult(vname+3,OPER_EQU,&fvar,0);
-          fvar=pin[(uint8_t)fvar];
+//          fvar=pin[(uint8_t)fvar];
+          fvar=Pin(fvar);
           // skip ] bracket
           len++;
           goto exit;
@@ -1582,7 +1583,8 @@ chknext:
           GetNumericResult(vname+3,OPER_EQU,&fvar,0);
           uint8_t gpiopin=fvar;
           for (uint8_t i=0;i<GPIO_SENSOR_END;i++) {
-            if (pin[i]==gpiopin) {
+//            if (pin[i]==gpiopin) {
+            if (Pin(i)==gpiopin) {
               fvar=i;
               // skip ] bracket
               len++;

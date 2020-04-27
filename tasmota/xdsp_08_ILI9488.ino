@@ -80,16 +80,16 @@ void ILI9488_InitDriver()
     bg_color = ILI9488_BLACK;
 
     uint8_t bppin=BACKPLANE_PIN;
-    if  (pin[GPIO_BACKLIGHT]<99) {
-      bppin=pin[GPIO_BACKLIGHT];
+    if  (Pin(GPIO_BACKLIGHT)<99) {
+      bppin=Pin(GPIO_BACKLIGHT);
     }
 
     // init renderer
-    if  ((pin[GPIO_SSPI_CS]<99) && (pin[GPIO_SSPI_MOSI]<99) && (pin[GPIO_SSPI_SCLK]<99)){
-      ili9488  = new ILI9488(pin[GPIO_SSPI_CS],pin[GPIO_SSPI_MOSI],pin[GPIO_SSPI_SCLK],bppin);
+    if  ((Pin(GPIO_SSPI_CS)<99) && (Pin(GPIO_SSPI_MOSI)<99) && (Pin(GPIO_SSPI_SCLK)<99)){
+      ili9488  = new ILI9488(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_SCLK),bppin);
     } else {
-      if ((pin[GPIO_SPI_CS]<99) && (pin[GPIO_SPI_MOSI]<99) && (pin[GPIO_SPI_CLK]<99)) {
-        ili9488  = new ILI9488(pin[GPIO_SPI_CS],pin[GPIO_SPI_MOSI],pin[GPIO_SPI_CLK],bppin);
+      if ((Pin(GPIO_SPI_CS)<99) && (Pin(GPIO_SPI_MOSI)<99) && (Pin(GPIO_SPI_CLK)<99)) {
+        ili9488  = new ILI9488(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_MOSI),Pin(GPIO_SPI_CLK),bppin);
       } else {
         return;
       }

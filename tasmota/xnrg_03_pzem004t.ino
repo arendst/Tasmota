@@ -241,7 +241,7 @@ void PzemEvery250ms(void)
 void PzemSnsInit(void)
 {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
-  PzemSerial = new TasmotaSerial(pin[GPIO_PZEM004_RX], pin[GPIO_PZEM0XX_TX], 1);
+  PzemSerial = new TasmotaSerial(Pin(GPIO_PZEM004_RX), Pin(GPIO_PZEM0XX_TX), 1);
   if (PzemSerial->begin(9600)) {
     if (PzemSerial->hardwareSerial()) {
       ClaimSerial();
@@ -256,7 +256,7 @@ void PzemSnsInit(void)
 
 void PzemDrvInit(void)
 {
-  if ((pin[GPIO_PZEM004_RX] < 99) && (pin[GPIO_PZEM0XX_TX] < 99)) {  // Any device with a Pzem004T
+  if ((Pin(GPIO_PZEM004_RX) < 99) && (Pin(GPIO_PZEM0XX_TX) < 99)) {  // Any device with a Pzem004T
     energy_flg = XNRG_03;
   }
 }
