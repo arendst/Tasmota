@@ -266,7 +266,7 @@ void KeeloqInit()
 \*********************************************************************************************/
 bool Xdrv36(uint8_t function)
 {
-  if ((99 == Pin(GPIO_CC1101_GDO0)) || (99 == Pin(GPIO_CC1101_GDO2))) { return false; }
+  if (!PinUsed(GPIO_CC1101_GDO0) || !PinUsed(GPIO_CC1101_GDO2)) { return false; }
 
   bool result = false;
 

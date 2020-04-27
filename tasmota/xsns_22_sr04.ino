@@ -40,7 +40,7 @@ TasmotaSerial* sonar_serial = nullptr;
 uint8_t Sr04TModeDetect(void)
 {
   sr04_type = 0;
-  if (99 == Pin(GPIO_SR04_ECHO)) { return sr04_type; }
+  if (!PinUsed(GPIO_SR04_ECHO)) { return sr04_type; }
 
   int sr04_echo_pin = Pin(GPIO_SR04_ECHO);
   int sr04_trig_pin = (PinUsed(GPIO_SR04_TRIG)) ? Pin(GPIO_SR04_TRIG) : Pin(GPIO_SR04_ECHO);   // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only

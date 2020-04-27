@@ -1109,6 +1109,12 @@ void SetPin(uint32_t lpin, uint32_t gpio) {
 */
 }
 
+void InitAllPins(void) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(pin); i++) {
+    SetPin(99, i);
+  }
+}
+
 void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state)
 {
   if (PinUsed(gpio_pin, index)) {

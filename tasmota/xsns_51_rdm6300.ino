@@ -36,8 +36,8 @@ uint8_t rdm_blcnt;
 TasmotaSerial *RDM6300_Serial = nullptr;
 
 void RDM6300_Init() {
-  if (pin[GPIO_RDM6300_RX] < 99) {
-    RDM6300_Serial = new TasmotaSerial(pin[GPIO_RDM6300_RX],-1,1);
+  if (PinUsed(GPIO_RDM6300_RX)) {
+    RDM6300_Serial = new TasmotaSerial(Pin(GPIO_RDM6300_RX),-1,1);
     if (RDM6300_Serial->begin(RDM6300_BAUDRATE)) {
       if (RDM6300_Serial->hardwareSerial()) {
         ClaimSerial();

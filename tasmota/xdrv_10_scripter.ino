@@ -1582,7 +1582,7 @@ chknext:
         if (!strncmp(vname,"pd[",3)) {
           GetNumericResult(vname+3,OPER_EQU,&fvar,0);
           uint8_t gpiopin=fvar;
-          for (uint8_t i=0;i<GPIO_SENSOR_END;i++) {
+          for (uint8_t i=0;i<GPIO_SENSOR_END;i++) {  // Theo/Gemu: This needs to change when pin[] becomes real pin array
 //            if (pin[i]==gpiopin) {
             if (Pin(i)==gpiopin) {
               fvar=i;
