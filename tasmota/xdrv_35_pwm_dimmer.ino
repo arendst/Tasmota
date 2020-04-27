@@ -94,7 +94,7 @@ void PWMModulePreInit(void)
   PWMDimmerSetPoweredOffLed();
 
   // The relay initializes to on. If the power is supposed to be off, turn the relay off.
-  if (!power && Pin(GPIO_REL1) < 99) digitalWrite(Pin(GPIO_REL1), bitRead(rel_inverted, 0) ? 1 : 0);
+  if (!power && PinUsed(GPIO_REL1)) digitalWrite(Pin(GPIO_REL1), bitRead(rel_inverted, 0) ? 1 : 0);
 
 #ifdef USE_PWM_DIMMER_REMOTE
   // If remote device mode is enabled, set the device group count to the number of buttons
@@ -104,7 +104,7 @@ void PWMModulePreInit(void)
 
     device_group_count = 0;
     for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
-      if (Pin(GPIO_KEY1, button_index) < 99) device_group_count++;
+      if (PinUsed(GPIO_KEY1, button_index)) device_group_count++;
     }
 
     remote_pwm_dimmer_count = device_group_count - 1;
@@ -156,7 +156,7 @@ void PWMDimmerSetBrightnessLeds(int32_t operation)
 void PWMDimmerSetPoweredOffLed(void)
 {
   // Set the powered-off LED state.
-  if (Pin(GPIO_LEDLNK) < 99) {
+  if (PinUsed(GPIO_LEDLNK)) {
     bool power_off_led_on = !power && Settings.flag4.powered_off_led;
     if (ledlnk_inverted) power_off_led_on ^= 1;
     digitalWrite(Pin(GPIO_LEDLNK), power_off_led_on);

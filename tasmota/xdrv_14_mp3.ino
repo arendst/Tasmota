@@ -232,7 +232,7 @@ bool Xdrv14(uint8_t function)
 {
   bool result = false;
 
-  if (Pin(GPIO_MP3_DFR562) < 99) {
+  if (PinUsed(GPIO_MP3_DFR562)) {
     switch (function) {
       case FUNC_PRE_INIT:
         MP3PlayerInit();                              // init and start communication

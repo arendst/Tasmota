@@ -70,7 +70,7 @@ bool ElectriqMoodLSetChannels(void)
 
 void ElectriqMoodLModuleSelected(void)
 {
-  if (Pin(GPIO_ELECTRIQ_MOODL_TX) < 99) {
+  if (PinUsed(GPIO_ELECTRIQ_MOODL_TX)) {
     SetSerial(9600, TS_SERIAL_8N1);
     light_type = LT_RGBW;
     light_flg = XLGT_06;

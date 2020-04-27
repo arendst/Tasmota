@@ -80,7 +80,7 @@ bool RotaryButtonPressed(void)
 void RotaryInit(void)
 {
   Rotary.present = 0;
-  if ((Pin(GPIO_ROT1A) < 99) && (Pin(GPIO_ROT1B) < 99)) {
+  if (PinUsed(GPIO_ROT1A) && PinUsed(GPIO_ROT1B)) {
     Rotary.present++;
     pinMode(Pin(GPIO_ROT1A), INPUT_PULLUP);
     pinMode(Pin(GPIO_ROT1B), INPUT_PULLUP);

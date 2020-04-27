@@ -127,7 +127,7 @@ void CounterInit(void)
   function counter_callbacks[] = { CounterUpdate1, CounterUpdate2, CounterUpdate3, CounterUpdate4 };
 
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
-    if (Pin(GPIO_CNTR1, i) < 99) {
+    if (PinUsed(GPIO_CNTR1, i)) {
       Counter.any_counter = true;
       pinMode(Pin(GPIO_CNTR1, i), bitRead(Counter.no_pullup, i) ? INPUT : INPUT_PULLUP);
       if ((0 == Settings.pulse_counter_debounce_low) && (0 == Settings.pulse_counter_debounce_high)) {
@@ -144,7 +144,7 @@ void CounterInit(void)
 void CounterEverySecond(void)
 {
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
-    if (Pin(GPIO_CNTR1, i) < 99) {
+    if (PinUsed(GPIO_CNTR1, i)) {
       if (bitRead(Settings.pulse_counter_type, i)) {
         uint32_t time = micros() - Counter.timer[i];
         if (time > 4200000000) {  // 70 minutes
@@ -158,7 +158,7 @@ void CounterEverySecond(void)
 void CounterSaveState(void)
 {
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
-    if (Pin(GPIO_CNTR1, i) < 99) {
+    if (PinUsed(GPIO_CNTR1, i)) {
       Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
     }
   }
@@ -169,7 +169,7 @@ void CounterShow(bool json)
   bool header = false;
   uint8_t dsxflg = 0;
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
-    if (Pin(GPIO_CNTR1, i) < 99) {
+    if (PinUsed(GPIO_CNTR1, i)) {
       char counter[33];
       if (bitRead(Settings.pulse_counter_type, i)) {
         dtostrfd((double)RtcSettings.pulse_counter[i] / 1000000, 6, counter);
@@ -213,7 +213,7 @@ void CounterShow(bool json)
 void CmndCounter(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_COUNTERS)) {
-    if ((XdrvMailbox.data_len > 0) && (Pin(GPIO_CNTR1, XdrvMailbox.index -1) < 99)) {
+    if ((XdrvMailbox.data_len > 0) && PinUsed(GPIO_CNTR1, XdrvMailbox.index -1)) {
       if ((XdrvMailbox.data[0] == '-') || (XdrvMailbox.data[0] == '+')) {
         RtcSettings.pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload;
         Settings.pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload;
@@ -229,7 +229,7 @@ void CmndCounter(void)
 void CmndCounterType(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_COUNTERS)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1) && (Pin(GPIO_CNTR1, XdrvMailbox.index -1) < 99)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1) && PinUsed(GPIO_CNTR1, XdrvMailbox.index -1)) {
       bitWrite(Settings.pulse_counter_type, XdrvMailbox.index -1, XdrvMailbox.payload &1);
       RtcSettings.pulse_counter[XdrvMailbox.index -1] = 0;
       Settings.pulse_counter[XdrvMailbox.index -1] = 0;

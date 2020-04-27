@@ -576,7 +576,7 @@ void HandleDomoticzConfiguration(void)
         i +1, i, Settings.domoticz_relay_idx[i],
         i +1, i, Settings.domoticz_key_idx[i]);
     }
-    if (Pin(GPIO_SWT1, i) < 99) {
+    if (PinUsed(GPIO_SWT1, i)) {
       WSContentSend_P(HTTP_FORM_DOMOTICZ_SWITCH,
         i +1, i, Settings.domoticz_switch_idx[i]);
     }

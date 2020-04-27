@@ -128,7 +128,7 @@ void Ili9341DisplayOnOff(uint8_t on)
 {
 //  tft->showDisplay(on);
 //  tft->invertDisplay(on);
-  if (Pin(GPIO_BACKLIGHT) < 99) {
+  if (PinUsed(GPIO_BACKLIGHT)) {
     pinMode(Pin(GPIO_BACKLIGHT), OUTPUT);
     digitalWrite(Pin(GPIO_BACKLIGHT), on);
   }

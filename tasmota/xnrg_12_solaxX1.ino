@@ -419,7 +419,7 @@ void solaxX1SnsInit(void)
 
 void solaxX1DrvInit(void)
 {
-  if ((Pin(GPIO_SOLAXX1_RX) < 99) && (Pin(GPIO_SOLAXX1_TX) < 99)) {
+  if (PinUsed(GPIO_SOLAXX1_RX) && PinUsed(GPIO_SOLAXX1_TX)) {
     energy_flg = XNRG_12;
   }
 }

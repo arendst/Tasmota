@@ -71,7 +71,7 @@ void SSD1306InitDriver(void)
     }
 
     uint8_t reset_pin = -1;
-    if (Pin(GPIO_OLED_RESET) < 99) {
+    if (PinUsed(GPIO_OLED_RESET)) {
       reset_pin = Pin(GPIO_OLED_RESET);
     }
 

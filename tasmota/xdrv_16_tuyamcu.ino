@@ -596,7 +596,7 @@ void TuyaNormalPowerModePacketProcess(void)
 
 bool TuyaModuleSelected(void)
 {
-  if (!(Pin(GPIO_TUYA_RX) < 99) || !(Pin(GPIO_TUYA_TX) < 99)) {  // fallback to hardware-serial if not explicitly selected
+  if (!PinUsed(GPIO_TUYA_RX) || !PinUsed(GPIO_TUYA_TX)) {  // fallback to hardware-serial if not explicitly selected
     SetPin(1, GPIO_TUYA_TX);
     SetPin(3, GPIO_TUYA_RX);
     Settings.my_gp.io[1] = GPIO_TUYA_TX;

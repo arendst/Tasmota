@@ -80,15 +80,15 @@ void ILI9488_InitDriver()
     bg_color = ILI9488_BLACK;
 
     uint8_t bppin=BACKPLANE_PIN;
-    if  (Pin(GPIO_BACKLIGHT)<99) {
+    if  (PinUsed(GPIO_BACKLIGHT)) {
       bppin=Pin(GPIO_BACKLIGHT);
     }
 
     // init renderer
-    if  ((Pin(GPIO_SSPI_CS)<99) && (Pin(GPIO_SSPI_MOSI)<99) && (Pin(GPIO_SSPI_SCLK)<99)){
+    if (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK)) {
       ili9488  = new ILI9488(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_SCLK),bppin);
     } else {
-      if ((Pin(GPIO_SPI_CS)<99) && (Pin(GPIO_SPI_MOSI)<99) && (Pin(GPIO_SPI_CLK)<99)) {
+      if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_CLK)) {
         ili9488  = new ILI9488(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_MOSI),Pin(GPIO_SPI_CLK),bppin);
       } else {
         return;

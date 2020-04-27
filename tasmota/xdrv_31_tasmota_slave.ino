@@ -437,15 +437,15 @@ void TasmotaSlave_Init(void)
     return;
   }
   if (!TSlave.SerialEnabled) {
-    if ((Pin(GPIO_TASMOTASLAVE_RXD) < 99) && (Pin(GPIO_TASMOTASLAVE_TXD) < 99) &&
-        ((Pin(GPIO_TASMOTASLAVE_RST) < 99) || (Pin(GPIO_TASMOTASLAVE_RST_INV) < 99))) {
+    if (PinUsed(GPIO_TASMOTASLAVE_RXD) && PinUsed(GPIO_TASMOTASLAVE_TXD) &&
+        (PinUsed(GPIO_TASMOTASLAVE_RST) || PinUsed(GPIO_TASMOTASLAVE_RST_INV))) {
       TasmotaSlave_Serial = new TasmotaSerial(Pin(GPIO_TASMOTASLAVE_RXD), Pin(GPIO_TASMOTASLAVE_TXD), 1, 0, 200);
       if (TasmotaSlave_Serial->begin(USE_TASMOTA_SLAVE_SERIAL_SPEED)) {
         if (TasmotaSlave_Serial->hardwareSerial()) {
           ClaimSerial();
         }
         TasmotaSlave_Serial->setTimeout(50);
-        if (Pin(GPIO_TASMOTASLAVE_RST_INV) < 99) {
+        if (PinUsed(GPIO_TASMOTASLAVE_RST_INV)) {
           SetPin(Pin(GPIO_TASMOTASLAVE_RST_INV), GPIO_TASMOTASLAVE_RST);
           SetPin(99, GPIO_TASMOTASLAVE_RST_INV);
           TSlave.inverted = HIGH;

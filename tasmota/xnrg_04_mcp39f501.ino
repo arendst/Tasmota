@@ -578,8 +578,8 @@ void McpSnsInit(void)
 
 void McpDrvInit(void)
 {
-  if ((Pin(GPIO_MCP39F5_RX) < 99) && (Pin(GPIO_MCP39F5_TX) < 99)) {
-    if (Pin(GPIO_MCP39F5_RST) < 99) {
+  if (PinUsed(GPIO_MCP39F5_RX) && PinUsed(GPIO_MCP39F5_TX)) {
+    if (PinUsed(GPIO_MCP39F5_RST)) {
       pinMode(Pin(GPIO_MCP39F5_RST), OUTPUT);
       digitalWrite(Pin(GPIO_MCP39F5_RST), 0);  // MCP disable - Reset Delta Sigma ADC's
     }

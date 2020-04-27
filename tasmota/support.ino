@@ -1094,6 +1094,11 @@ uint32_t Pin(uint32_t gpio, uint32_t index) {
 */
 }
 
+boolean PinUsed(uint32_t gpio, uint32_t index = 0);
+boolean PinUsed(uint32_t gpio, uint32_t index) {
+  return (Pin(gpio, index) < 99);
+}
+
 void SetPin(uint32_t lpin, uint32_t gpio) {
 //#ifdef ESP8266
   pin[gpio] = lpin;
@@ -1106,7 +1111,7 @@ void SetPin(uint32_t lpin, uint32_t gpio) {
 
 void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state)
 {
-  if (Pin(gpio_pin, index) < 99) {
+  if (PinUsed(gpio_pin, index)) {
     digitalWrite(Pin(gpio_pin, index), state &1);
   }
 }

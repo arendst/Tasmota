@@ -122,7 +122,7 @@ bool Sm16716SetChannels(void)
 /*
   // handle any PWM pins, skipping the first 3 values for sm16716
   for (uint32_t i = 3; i < Light.subtype; i++) {
-    if (Pin(GPIO_PWM1, i-3) < 99) {
+    if (PinUsed(GPIO_PWM1, i-3)) {
       //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
       analogWrite(Pin(GPIO_PWM1, i-3), bitRead(pwm_inverted, i-3) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
     }
@@ -138,7 +138,7 @@ bool Sm16716SetChannels(void)
 
 void Sm16716ModuleSelected(void)
 {
-  if ((Pin(GPIO_SM16716_CLK) < 99) && (Pin(GPIO_SM16716_DAT) < 99)) {
+  if (PinUsed(GPIO_SM16716_CLK) && PinUsed(GPIO_SM16716_DAT)) {
     Sm16716.pin_clk = Pin(GPIO_SM16716_CLK);
     Sm16716.pin_dat = Pin(GPIO_SM16716_DAT);
     Sm16716.pin_sel = Pin(GPIO_SM16716_SEL);
@@ -147,7 +147,7 @@ void Sm16716ModuleSelected(void)
     // init PWM
     for (uint32_t i = 0; i < Light.subtype; i++) {
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
-      if (Pin(GPIO_PWM1, i) < 99) {
+      if (PinUsed(GPIO_PWM1, i)) {
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
       }
     }

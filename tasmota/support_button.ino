@@ -60,7 +60,7 @@ void ButtonInit(void)
 {
   Button.present = 0;
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
-    if (Pin(GPIO_KEY1, i) < 99) {
+    if (PinUsed(GPIO_KEY1, i)) {
       Button.present++;
       pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
     }
@@ -135,7 +135,7 @@ void ButtonHandler(void)
     }
     else
 #endif  // ESP8266
-    if (Pin(GPIO_KEY1, button_index) < 99) {
+    if (PinUsed(GPIO_KEY1, button_index)) {
       button_present = 1;
       button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
     }

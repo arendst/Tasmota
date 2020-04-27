@@ -144,7 +144,7 @@ void Ddsu666SnsInit(void)
 
 void Ddsu666DrvInit(void)
 {
-  if ((Pin(GPIO_DDSU666_RX) < 99) && (Pin(GPIO_DDSU666_TX) < 99)) {
+  if (PinUsed(GPIO_DDSU666_RX) && PinUsed(GPIO_DDSU666_TX)) {
     energy_flg = XNRG_11;
   }
 }

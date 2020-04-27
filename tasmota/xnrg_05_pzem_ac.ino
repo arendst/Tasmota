@@ -130,7 +130,7 @@ void PzemAcSnsInit(void)
 
 void PzemAcDrvInit(void)
 {
-  if ((Pin(GPIO_PZEM016_RX) < 99) && (Pin(GPIO_PZEM0XX_TX) < 99)) {
+  if (PinUsed(GPIO_PZEM016_RX) && PinUsed(GPIO_PZEM0XX_TX)) {
     energy_flg = XNRG_05;
   }
 }
