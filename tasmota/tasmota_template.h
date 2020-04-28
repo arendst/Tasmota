@@ -20,6 +20,8 @@
 #ifndef _TASMOTA_TEMPLATE_H_
 #define _TASMOTA_TEMPLATE_H_
 
+#ifdef ESP8266
+
 // User selectable GPIO functionality
 // ATTENTION: Only add at the end of this list just before GPIO_SENSOR_END
 //            Then add the same name(s) in a nice location in array kGpioNiceList
@@ -699,30 +701,13 @@ const char kAdc0Names[] PROGMEM =
 
 /********************************************************************************************/
 
-#ifdef ESP8266
-
 #define MAX_GPIO_PIN       17   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
+#define MAX_USER_PINS      13   // MAX_GPIO_PIN - MIN_FLASH_PINS
 #define ADC0_PIN           17   // Pin number of ADC0
 #define WEMOS_MODULE       17   // Wemos module
 
 const char PINS_WEMOS[] PROGMEM = "D3TXD4RXD2D1flashcFLFLolD6D7D5D8D0A0";
-
-#else  // ESP32
-
-// esp32 has more pins
-#define USER_MODULE        255
-#define MAX_GPIO_PIN       40   // Number of supported GPIO
-#define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
-#define ADC0_PIN           33   // Pin number of ADC0
-#define WEMOS_MODULE       0    // Wemos module
-
-//                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839
-const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOflashcFLFLolIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOA6A7A0IoIoA3";
-
-#endif  // ESP8266
-
-#define MAX_USER_PINS      MAX_GPIO_PIN-MIN_FLASH_PINS
 
 /********************************************************************************************/
 
@@ -758,10 +743,8 @@ typedef struct MYTMPLT {
 } mytmplt;
 
 /********************************************************************************************/
-
-#ifdef ESP8266
-
 // Supported hardware modules
+
 enum SupportedModules {
   SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, SONOFF_S2X, SLAMPHER, SONOFF_TOUCH,
   SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, EXS_RELAY, WION, WEMOS, SONOFF_DEV, H801,
