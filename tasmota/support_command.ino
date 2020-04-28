@@ -20,7 +20,7 @@
 const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_STATE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|"
   D_CMND_SERIALLOG "|" D_CMND_RESTART "|" D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|" D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SAVEDATA "|"
-  D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|" D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|"
+  D_CMND_SO "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|" D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|"
   D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_FREQUENCY_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_WEIGHT_RESOLUTION "|"
   D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_TEMPLATE "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|"
   D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SYSLOG "|" D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALCONFIG "|"
@@ -43,7 +43,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBacklog, &CmndDelay, &CmndPower, &CmndStatus, &CmndState, &CmndSleep, &CmndUpgrade, &CmndUpgrade, &CmndOtaUrl,
   &CmndSeriallog, &CmndRestart, &CmndPowerOnState, &CmndPulsetime, &CmndBlinktime, &CmndBlinkcount, &CmndSavedata,
-  &CmndSetoption, &CmndTemperatureResolution, &CmndHumidityResolution, &CmndPressureResolution, &CmndPowerResolution,
+  &CmndSetoption, &CmndSetoption, &CmndTemperatureResolution, &CmndHumidityResolution, &CmndPressureResolution, &CmndPowerResolution,
   &CmndVoltageResolution, &CmndFrequencyResolution, &CmndCurrentResolution, &CmndEnergyResolution, &CmndWeightResolution,
   &CmndModule, &CmndModules, &CmndGpio, &CmndGpios, &CmndTemplate, &CmndPwm, &CmndPwmfrequency, &CmndPwmrange,
   &CmndButtonDebounce, &CmndSwitchDebounce, &CmndSyslog, &CmndLoghost, &CmndLogport, &CmndSerialSend, &CmndBaudrate, &CmndSerialConfig,
@@ -204,14 +204,19 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
   if (type != nullptr) {
     type++;
     uint32_t i;
-    for (i = 0; i < strlen(type); i++) {
-      type[i] = toupper(type[i]);
+    int nLen; // strlen(type)
+    char *s = type;
+    for (nLen = 0; *s; s++, nLen++) {
+      *s=toupper(*s);
     }
-    while (isdigit(type[i-1])) {
-      i--;
+    i = nLen;
+    if (i > 0) { // may be 0
+      while (isdigit(type[i-1])) {
+        i--;
+      }
     }
-    if (i < strlen(type)) {
-      index = atoi(type +i);
+    if (i < nLen) {
+      index = atoi(type + i);
       user_index = true;
     }
     type[i] = '\0';
@@ -465,7 +470,7 @@ void CmndStatus(void)
 #endif
                           ",\"" D_JSON_FLASHMODE "\":%d,\""
                           D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
-                          ESP_getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024,
+                          ESP_getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP_getFreeHeap()/1024,
                           ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024
 #ifdef ESP8266
                           , ESP.getFlashChipId()
@@ -776,6 +781,8 @@ void CmndSavedata(void)
 
 void CmndSetoption(void)
 {
+  snprintf_P(XdrvMailbox.command, CMDSZ, PSTR(D_CMND_SETOPTION));  // Rename result shortcut command SO to SetOption
+
   if (XdrvMailbox.index < 114) {
     uint32_t ptype;
     uint32_t pindex;
@@ -874,6 +881,7 @@ void CmndSetoption(void)
           else if (4 == ptype) {           // SetOption82 .. 113
             bitWrite(Settings.flag4.data, pindex, XdrvMailbox.payload);
             switch (pindex) {
+              case 3:                      // SetOption85 - Enable Device Groups
               case 6:                      // SetOption88 - PWM Dimmer Buttons control remote devices
                 restart_flag = 2;
                 break;
@@ -998,7 +1006,7 @@ void CmndModule(void)
       Settings.module = XdrvMailbox.payload;
       SetModuleType();
       if (Settings.last_module != XdrvMailbox.payload) {
-        for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) {
+        for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
           Settings.my_gp.io[i] = GPIO_NONE;
         }
       }
@@ -1034,7 +1042,7 @@ void CmndModules(void)
 
 void CmndGpio(void)
 {
-  if (XdrvMailbox.index < sizeof(Settings.my_gp)) {
+  if (XdrvMailbox.index < ARRAY_SIZE(Settings.my_gp.io)) {
     myio cmodule;
     ModuleGpios(&cmodule);
     if (ValidGPIO(XdrvMailbox.index, cmodule.io[XdrvMailbox.index]) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < GPIO_SENSOR_END)) {
@@ -1044,7 +1052,7 @@ void CmndGpio(void)
         if (midx == XdrvMailbox.payload) { present = true; }
       }
       if (present) {
-        for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) {
+        for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
           if (ValidGPIO(i, cmodule.io[i]) && (Settings.my_gp.io[i] == XdrvMailbox.payload)) {
             Settings.my_gp.io[i] = GPIO_NONE;
           }
@@ -1055,7 +1063,7 @@ void CmndGpio(void)
     }
     Response_P(PSTR("{"));
     bool jsflg = false;
-    for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) {
+    for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
       if (ValidGPIO(i, cmodule.io[i]) || ((GPIO_USER == XdrvMailbox.payload) && !FlashPin(i))) {
         if (jsflg) { ResponseAppend_P(PSTR(",")); }
         jsflg = true;
@@ -1135,7 +1143,7 @@ void CmndTemplate(void)
       }
       SettingsUpdateText(SET_TEMPLATE_NAME, "Merged");
       uint32_t j = 0;
-      for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
+      for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
         if (6 == i) { j = 9; }
         if (8 == i) { j = 12; }
         if (my_module.io[j] > GPIO_NONE) {
@@ -1159,9 +1167,9 @@ void CmndTemplate(void)
 void CmndPwm(void)
 {
   if (pwm_present && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PWMS)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= Settings.pwm_range) && (pin[GPIO_PWM1 + XdrvMailbox.index -1] < 99)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= Settings.pwm_range) && PinUsed(GPIO_PWM1, XdrvMailbox.index -1)) {
       Settings.pwm_value[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      analogWrite(pin[GPIO_PWM1 + XdrvMailbox.index -1], bitRead(pwm_inverted, XdrvMailbox.index -1) ? Settings.pwm_range - XdrvMailbox.payload : XdrvMailbox.payload);
+      analogWrite(Pin(GPIO_PWM1, XdrvMailbox.index -1), bitRead(pwm_inverted, XdrvMailbox.index -1) ? Settings.pwm_range - XdrvMailbox.payload : XdrvMailbox.payload);
     }
     Response_P(PSTR("{"));
     MqttShowPWMState();  // Render the PWM status to MQTT
@@ -1686,7 +1694,7 @@ void CmndAltitude(void)
 void CmndLedPower(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_LEDS)) {
-    if (99 == pin[GPIO_LEDLNK]) { XdrvMailbox.index = 1; }
+    if (!PinUsed(GPIO_LEDLNK)) { XdrvMailbox.index = 1; }
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
       Settings.ledstate &= 8;                // Disable power control
       uint32_t mask = 1 << (XdrvMailbox.index -1);        // Led to control
@@ -1705,14 +1713,14 @@ void CmndLedPower(void)
         break;
       }
       blinks = 0;
-      if (99 == pin[GPIO_LEDLNK]) {
+      if (!PinUsed(GPIO_LEDLNK)) {
         SetLedPower(Settings.ledstate &8);
       } else {
         SetLedPowerIdx(XdrvMailbox.index -1, (led_power & mask));
       }
     }
     bool state = bitRead(led_power, XdrvMailbox.index -1);
-    if (99 == pin[GPIO_LEDLNK]) {
+    if (!PinUsed(GPIO_LEDLNK)) {
       state = bitRead(Settings.ledstate, 3);
     }
     ResponseCmndIdxChar(GetStateText(state));
@@ -1796,8 +1804,9 @@ void CmndDevGroupSend(void)
 {
   uint8_t device_group_index = (XdrvMailbox.usridx ? XdrvMailbox.index - 1 : 0);
   if (device_group_index < device_group_count) {
-    _SendDeviceGroupMessage(device_group_index, DGR_MSGTYPE_UPDATE_COMMAND);
-    ResponseCmndChar(XdrvMailbox.data);
+    if (!_SendDeviceGroupMessage(device_group_index, DGR_MSGTYPE_UPDATE_COMMAND)) {
+      ResponseCmndChar(XdrvMailbox.data);
+    }
   }
 }
 #endif  // USE_DEVICE_GROUPS_SEND

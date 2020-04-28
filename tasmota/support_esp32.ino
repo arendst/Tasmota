@@ -27,28 +27,27 @@ extern "C" {
 extern struct rst_info resetInfo;
 }
 
-uint32_t ESP_ResetInfoReason(void)
-{
+uint32_t ESP_ResetInfoReason(void) {
   return resetInfo.reason;
 }
 
-String ESP_getResetReason(void)
-{
+String ESP_getResetReason(void) {
   return ESP.getResetReason();
 }
 
-uint32_t ESP_getChipId(void)
-{
+uint32_t ESP_getChipId(void) {
   return ESP.getChipId();
 }
 
-uint32_t ESP_getSketchSize(void)
-{
+uint32_t ESP_getSketchSize(void) {
   return ESP.getSketchSize();
 }
 
-void ESP_Restart(void)
-{
+uint32_t ESP_getFreeHeap(void) {
+  return ESP.getFreeHeap();
+}
+
+void ESP_Restart(void) {
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
 }
@@ -64,8 +63,7 @@ void ESP_Restart(void)
 #include <nvs.h>
 #include <rom/rtc.h>
 
-void NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen)
-{
+void NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen) {
   nvs_handle handle;
   noInterrupts();
   nvs_open(sNvsName, NVS_READONLY, &handle);
@@ -75,8 +73,7 @@ void NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned 
   interrupts();
 }
 
-void NvmSave(const char *sNvsName, const char *sName, const void *pSettings, unsigned nSettingsLen)
-{
+void NvmSave(const char *sNvsName, const char *sName, const void *pSettings, unsigned nSettingsLen) {
   nvs_handle handle;
   noInterrupts();
   nvs_open(sNvsName, NVS_READWRITE, &handle);
@@ -86,8 +83,7 @@ void NvmSave(const char *sNvsName, const char *sName, const void *pSettings, uns
   interrupts();
 }
 
-void NvmErase(const char *sNvsName)
-{
+void NvmErase(const char *sNvsName) {
   nvs_handle handle;
   noInterrupts();
   nvs_open(sNvsName, NVS_READWRITE, &handle);
@@ -97,16 +93,10 @@ void NvmErase(const char *sNvsName)
   interrupts();
 }
 
-void SettingsErase(uint8_t type)
-{
-  if (1 == type) // SDK parameter area
-  {
-  }
-  else if (2 == type) // Tasmota parameter area (0x0F3xxx - 0x0FBFFF)
-  {
-  }
-  else if (3 == type) // Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
-  {
+void SettingsErase(uint8_t type) {
+  if (1 == type) {         // SDK parameter area
+  } else if (2 == type) {  // Tasmota parameter area (0x0F3xxx - 0x0FBFFF)
+  } else if (3 == type) {  // Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
   }
 
   NvmErase("main");
@@ -114,23 +104,19 @@ void SettingsErase(uint8_t type)
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " t=%d"), type);
 }
 
-void SettingsRead(void *data, size_t size)
-{
+void SettingsRead(void *data, size_t size) {
   NvmLoad("main", "Settings", data, size);
 }
 
-void SettingsWrite(const void *pSettings, unsigned nSettingsLen)
-{
+void SettingsWrite(const void *pSettings, unsigned nSettingsLen) {
   NvmSave("main", "Settings", pSettings, nSettingsLen);
 }
 
-void QPCRead(void *pSettings, unsigned nSettingsLen)
-{
+void QPCRead(void *pSettings, unsigned nSettingsLen) {
   NvmLoad("qpc", "pcreg", pSettings, nSettingsLen);
 }
 
-void QPCWrite(const void *pSettings, unsigned nSettingsLen)
-{
+void QPCWrite(const void *pSettings, unsigned nSettingsLen) {
   NvmSave("qpc", "pcreg", pSettings, nSettingsLen);
 }
 
@@ -139,13 +125,11 @@ void QPCWrite(const void *pSettings, unsigned nSettingsLen)
 //
 static bool bNetIsTimeSync = false;
 //
-void SntpInit()
-{
+void SntpInit() {
   bNetIsTimeSync = true;
 }
 
-uint32_t SntpGetCurrentTimestamp(void)
-{
+uint32_t SntpGetCurrentTimestamp(void) {
   time_t now = 0;
   if (bNetIsTimeSync || ntp_force_sync)
   {
@@ -163,20 +147,17 @@ uint32_t SntpGetCurrentTimestamp(void)
 // Crash stuff
 //
 
-void CrashDump(void)
-{
+void CrashDump(void) {
 }
 
-bool CrashFlag(void)
-{
+bool CrashFlag(void) {
   return false;
 }
 
-void CrashDumpClear(void)
-{
+void CrashDumpClear(void) {
 }
-void CmndCrash(void)
-{
+
+void CmndCrash(void) {
   /*
   volatile uint32_t dummy;
   dummy = *((uint32_t*) 0x00000000);
@@ -184,8 +165,7 @@ void CmndCrash(void)
 }
 
 // Do an infinite loop to trigger WDT watchdog
-void CmndWDT(void)
-{
+void CmndWDT(void) {
   /*
   volatile uint32_t dummy = 0;
   while (1) {
@@ -194,8 +174,7 @@ void CmndWDT(void)
 */
 }
 // This will trigger the os watch after OSWATCH_RESET_TIME (=120) seconds
-void CmndBlockedLoop(void)
-{
+void CmndBlockedLoop(void) {
   /*
   while (1) {
     delay(1000);
@@ -210,8 +189,7 @@ void CmndBlockedLoop(void)
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
-void DisableBrownout(void)
-{
+void DisableBrownout(void) {
   // https://github.com/espressif/arduino-esp32/issues/863#issuecomment-347179737
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);  // Disable brownout detector
 }
@@ -220,8 +198,7 @@ void DisableBrownout(void)
 // ESP32 Alternatives
 //
 
-String ESP32GetResetReason(uint32_t cpu_no)
-{
+String ESP32GetResetReason(uint32_t cpu_no) {
 	// tools\sdk\include\esp32\rom\rtc.h
   switch (rtc_get_reset_reason( (RESET_REASON) cpu_no)) {
     case POWERON_RESET          : return F("Vbat power on reset");                              // 1
@@ -243,13 +220,11 @@ String ESP32GetResetReason(uint32_t cpu_no)
   }
 }
 
-String ESP_getResetReason(void)
-{
+String ESP_getResetReason(void) {
   return ESP32GetResetReason(0);  // CPU 0
 }
 
-uint32_t ESP_ResetInfoReason(void)
-{
+uint32_t ESP_ResetInfoReason(void) {
   RESET_REASON reason = rtc_get_reset_reason(0);
   if (POWERON_RESET == reason) { return REASON_DEFAULT_RST; }
   if (SW_CPU_RESET == reason) { return REASON_SOFT_RESTART; }
@@ -257,8 +232,7 @@ uint32_t ESP_ResetInfoReason(void)
   if (SW_RESET == reason) { return REASON_EXT_SYS_RST; }
 }
 
-uint32_t ESP_getChipId(void)
-{
+uint32_t ESP_getChipId(void) {
   uint32_t id = 0;
   for (uint32_t i = 0; i < 17; i = i +8) {
     id |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
@@ -266,8 +240,7 @@ uint32_t ESP_getChipId(void)
   return id;
 }
 
-uint32_t ESP_getSketchSize(void)
-{
+uint32_t ESP_getSketchSize(void) {
   static uint32_t sketchsize = 0;
 
   if (!sketchsize) {
@@ -276,8 +249,12 @@ uint32_t ESP_getSketchSize(void)
   return sketchsize;
 }
 
-void ESP_Restart(void)
-{
+uint32_t ESP_getFreeHeap(void) {
+//  return ESP.getFreeHeap();
+  return ESP.getMaxAllocHeap();
+}
+
+void ESP_Restart(void) {
   ESP.restart();
 }
 

@@ -187,7 +187,7 @@ void PS16DZInit(void)
 {
   Ps16dz.rx_buffer = (char*)(malloc(PS16DZ_BUFFER_SIZE));
   if (Ps16dz.rx_buffer != nullptr) {
-    PS16DZSerial = new TasmotaSerial(pin[GPIO_RXD], pin[GPIO_TXD], 2);
+    PS16DZSerial = new TasmotaSerial(Pin(GPIO_RXD), Pin(GPIO_TXD), 2);
     if (PS16DZSerial->begin(19200)) {
       if (PS16DZSerial->hardwareSerial()) { ClaimSerial(); }
     }

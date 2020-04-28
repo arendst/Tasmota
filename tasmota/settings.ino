@@ -713,6 +713,13 @@ void SettingsDefaultSet2(void)
 {
   memset((char*)&Settings +16, 0x00, sizeof(Settings) -16);
 
+#ifdef ESP8266
+//  Settings.config_version = 0;  // ESP8266 (Has been 0 for long time)
+#endif  // ESP8266
+#ifdef ESP32
+  Settings.config_version = 1;  // ESP32
+#endif  // ESP32
+
   Settings.flag.stop_flash_rotate = APP_FLASH_CYCLE;
   Settings.flag.global_state = APP_ENABLE_LEDLINK;
   Settings.flag3.sleep_normal = APP_NORMAL_SLEEP;
@@ -734,7 +741,7 @@ void SettingsDefaultSet2(void)
   Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
   Settings.module = MODULE;
   ModuleDefault(WEMOS);
-//  for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
+//  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
   SettingsUpdateText(SET_FRIENDLYNAME1, FRIENDLY_NAME);
   SettingsUpdateText(SET_FRIENDLYNAME2, FRIENDLY_NAME"2");
   SettingsUpdateText(SET_FRIENDLYNAME3, FRIENDLY_NAME"3");
@@ -940,6 +947,7 @@ void SettingsDefaultSet2(void)
   Settings.flag3.pwm_multi_channels = LIGHT_CHANNEL_MODE;
   Settings.flag3.slider_dimmer_stay_on = LIGHT_SLIDER_POWER;
   Settings.flag4.alexa_ct_range = LIGHT_ALEXA_CT_RANGE;
+  Settings.flag4.pwm_ct_mode = LIGHT_PWM_CT_MODE;
 
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
@@ -1091,7 +1099,7 @@ void SettingsDelta(void)
           Settings.switchmode[i] = SWITCH_MODE;
         }
       }
-      for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) {
+      for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
         if (Settings.my_gp.io[i] >= GPIO_SWT5) {  // Move up from GPIO_SWT5 to GPIO_KEY1
           Settings.my_gp.io[i] += 4;
         }

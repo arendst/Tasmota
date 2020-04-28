@@ -48,7 +48,7 @@ bool irsend_active = false;
 
 void IrSendInit(void)
 {
-  irsend = new IRsend(pin[GPIO_IRSEND]); // an IR led is at GPIO_IRSEND
+  irsend = new IRsend(Pin(GPIO_IRSEND)); // an IR led is at GPIO_IRSEND
   irsend->begin();
 }
 
@@ -105,7 +105,7 @@ void IrReceiveUpdateThreshold(void)
 void IrReceiveInit(void)
 {
   // an IR led is at GPIO_IRRECV
-  irrecv = new IRrecv(pin[GPIO_IRRECV], IR_FULL_BUFFER_SIZE, IR__FULL_RCV_TIMEOUT, IR_FULL_RCV_SAVE_BUFFER);
+  irrecv = new IRrecv(Pin(GPIO_IRRECV), IR_FULL_BUFFER_SIZE, IR__FULL_RCV_TIMEOUT, IR_FULL_RCV_SAVE_BUFFER);
   irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
   irrecv->enableIRIn();                  // Start the receiver
 }
@@ -365,7 +365,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   if (json[parm_uc]) { state.sleep = json[parm_uc]; }
   //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
 
-  IRac ac(pin[GPIO_IRSEND]);
+  IRac ac(Pin(GPIO_IRSEND));
   bool success = ac.sendAc(state, &prev);
   if (!success) { return IE_SYNTAX_IRHVAC; }
 
@@ -635,24 +635,24 @@ bool Xdrv05(uint8_t function)
 {
   bool result = false;
 
-  if ((pin[GPIO_IRSEND] < 99) || (pin[GPIO_IRRECV] < 99)) {
+  if (PinUsed(GPIO_IRSEND) || PinUsed(GPIO_IRRECV)) {
     switch (function) {
       case FUNC_PRE_INIT:
-        if (pin[GPIO_IRSEND] < 99) {
+        if (PinUsed(GPIO_IRSEND)) {
           IrSendInit();
         }
-        if (pin[GPIO_IRRECV] < 99) {
+        if (PinUsed(GPIO_IRRECV)) {
           IrReceiveInit();
         }
         break;
       case FUNC_EVERY_50_MSECOND:
-        if (pin[GPIO_IRRECV] < 99) {
+        if (PinUsed(GPIO_IRRECV)) {
           IrReceiveCheck();  // check if there's anything on IR side
         }
         irsend_active = false;  // re-enable IR reception
         break;
       case FUNC_COMMAND:
-        if (pin[GPIO_IRSEND] < 99) {
+        if (PinUsed(GPIO_IRSEND)) {
           result = DecodeCommand(kIrRemoteCommands, IrRemoteCommand);
         }
         break;

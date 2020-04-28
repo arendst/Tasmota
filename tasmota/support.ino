@@ -52,7 +52,7 @@ void OsWatchTicker(void)
 
 #ifdef DEBUG_THEO
   int32_t rssi = WiFi.RSSI();
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(rssi), rssi, last_run);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP_getFreeHeap(), WifiGetRssiAsQuality(rssi), rssi, last_run);
 #endif  // DEBUG_THEO
   if (last_run >= (OSWATCH_RESET_TIME * 1000)) {
 //    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));  // Save iram space
@@ -1073,10 +1073,54 @@ int ResponseJsonEndEnd(void)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
-void DigitalWrite(uint32_t gpio_pin, uint32_t state)
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0  // Fix core 2.5.x ISR not in IRAM Exception
+uint32_t Pin(uint32_t gpio, uint32_t index) ICACHE_RAM_ATTR;
+#endif
+
+uint32_t Pin(uint32_t gpio, uint32_t index = 0);
+uint32_t Pin(uint32_t gpio, uint32_t index) {
+#ifdef LEGACY_GPIO_ARRAY
+  return pin[gpio + index];  // Pin number configured for gpio or 99 if not used
+#else
+//#ifdef ESP8266
+  uint16_t real_gpio = gpio + index;
+//#else
+//  uint16_t real_gpio = (gpio << 5) + index;
+//endif
+  for (uint32_t i = 0; i < ARRAY_SIZE(pin); i++) {
+    if (pin[i] == real_gpio) {
+      return i;              // Pin number configured for gpio
+    }
+  }
+  return 99;                 // No pin used for gpio
+#endif
+}
+
+boolean PinUsed(uint32_t gpio, uint32_t index = 0);
+boolean PinUsed(uint32_t gpio, uint32_t index) {
+  return (Pin(gpio, index) < 99);
+}
+
+void SetPin(uint32_t lpin, uint32_t gpio) {
+#ifdef LEGACY_GPIO_ARRAY
+  pin[gpio] = lpin;
+#else
+  pin[lpin] = gpio;
+#endif
+}
+
+#ifdef LEGACY_GPIO_ARRAY
+void InitAllPins(void) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(pin); i++) {
+    SetPin(99, i);
+  }
+}
+#endif
+
+void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state)
 {
-  if (pin[gpio_pin] < 99) {
-    digitalWrite(pin[gpio_pin], state &1);
+  if (PinUsed(gpio_pin, index)) {
+    digitalWrite(Pin(gpio_pin, index), state &1);
   }
 }
 
@@ -1120,10 +1164,15 @@ String ModuleName(void)
 
 void ModuleGpios(myio *gp)
 {
+//#ifdef ESP8266
   uint8_t *dest = (uint8_t *)gp;
-  memset(dest, GPIO_NONE, sizeof(myio));
+  uint8_t src[ARRAY_SIZE(Settings.user_template.gp.io)];
+//#else
+//  uint16_t *dest = (uint16_t *)gp;
+//  uint16_t src[ARRAY_SIZE(Settings.user_template.gp.io)];
+//#endif
 
-  uint8_t src[sizeof(mycfgio)];
+  memset(dest, GPIO_NONE, sizeof(myio));
   if (USER_MODULE == Settings.module) {
     memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
   } else {
@@ -1138,7 +1187,7 @@ void ModuleGpios(myio *gp)
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
 
   uint32_t j = 0;
-  for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
     dest[j] = src[i];
@@ -1226,7 +1275,11 @@ bool ValidAdc(void)
   return (ADC0_USER == template_adc0);
 }
 
+//#ifdef ESP8266
 bool GetUsedInModule(uint32_t val, uint8_t *arr)
+//#else
+//bool GetUsedInModule(uint32_t val, uint16_t *arr)
+//#endif
 {
   int offset = 0;
 
@@ -1307,7 +1360,7 @@ bool JsonTemplate(const char* dataBuf)
     SettingsUpdateText(SET_TEMPLATE_NAME, name);
   }
   if (obj[D_JSON_GPIO].success()) {
-    for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
+    for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
       Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
     }
   }
@@ -1326,7 +1379,7 @@ bool JsonTemplate(const char* dataBuf)
 void TemplateJson(void)
 {
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
-  for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
     ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings.user_template.gp.io[i]);
   }
   ResponseAppend_P(PSTR("],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), Settings.user_template.flag, Settings.user_template_base +1);

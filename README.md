@@ -145,6 +145,7 @@ People helping to keep the show on the road:
 - Jacek Ziółkowski for his [TDM](https://github.com/jziolkowski/tdm) management tool and [Tasmotizer](https://github.com/tasmota/tasmotizer) flashing tool
 - Christian Staars for NRF24L01 and HM-10 Bluetooth sensor support
 - Pail Diem for UDP Group communication support
+- Jörg Schüler-Maroldt for his initial ESP32 port
 - Many more providing Tips, Wips, Pocs, PRs and Donations
 
 ## License

@@ -49,7 +49,7 @@ bool irsend_active = false;
 
 void IrSendInit(void)
 {
-  irsend = new IRsend(pin[GPIO_IRSEND]); // an IR led is at GPIO_IRSEND
+  irsend = new IRsend(Pin(GPIO_IRSEND)); // an IR led is at GPIO_IRSEND
   irsend->begin();
 }
 
@@ -78,7 +78,7 @@ void IrReceiveUpdateThreshold(void)
 void IrReceiveInit(void)
 {
   // an IR led is at GPIO_IRRECV
-  irrecv = new IRrecv(pin[GPIO_IRRECV], IR_RCV_BUFFER_SIZE, IR_RCV_TIMEOUT, IR_RCV_SAVE_BUFFER);
+  irrecv = new IRrecv(Pin(GPIO_IRRECV), IR_RCV_BUFFER_SIZE, IR_RCV_TIMEOUT, IR_RCV_SAVE_BUFFER);
   irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
   irrecv->enableIRIn();                  // Start the receiver
 
@@ -279,28 +279,28 @@ bool Xdrv05(uint8_t function)
 {
   bool result = false;
 
-  if ((pin[GPIO_IRSEND] < 99) || (pin[GPIO_IRRECV] < 99)) {
+  if (PinUsed(GPIO_IRSEND) || PinUsed(GPIO_IRRECV)) {
     switch (function) {
       case FUNC_PRE_INIT:
-        if (pin[GPIO_IRSEND] < 99) {
+        if (PinUsed(GPIO_IRSEND)) {
           IrSendInit();
         }
 #ifdef USE_IR_RECEIVE
-        if (pin[GPIO_IRRECV] < 99) {
+        if (PinUsed(GPIO_IRRECV)) {
           IrReceiveInit();
         }
 #endif  // USE_IR_RECEIVE
         break;
       case FUNC_EVERY_50_MSECOND:
 #ifdef USE_IR_RECEIVE
-        if (pin[GPIO_IRRECV] < 99) {
+        if (PinUsed(GPIO_IRRECV)) {
           IrReceiveCheck();  // check if there's anything on IR side
         }
 #endif  // USE_IR_RECEIVE
         irsend_active = false;  // re-enable IR reception
         break;
       case FUNC_COMMAND:
-        if (pin[GPIO_IRSEND] < 99) {
+        if (PinUsed(GPIO_IRSEND)) {
           result = DecodeCommand(kIrRemoteCommands, IrRemoteCommand);
         }
         break;

@@ -573,14 +573,12 @@ void WifiCheck(uint8_t param)
           StopWebserver();
         }
 #ifdef USE_EMULATION
-#ifdef USE_DEVICE_GROUPS
-        if (Settings.flag2.emulation || Settings.flag4.device_groups_enabled) { UdpConnect(); }
-#else // USE_DEVICE_GROUPS
       if (Settings.flag2.emulation) { UdpConnect(); }
-#endif // USE_DEVICE_GROUPS
 #endif  // USE_EMULATION
 #endif  // USE_WEBSERVER
-
+#ifdef USE_DEVICE_GROUPS
+        DeviceGroupsStart();
+#endif  // USE_DEVICE_GROUPS
 #ifdef USE_KNX
         if (!knx_started && Settings.flag.knx_enabled) {  // CMND_KNX_ENABLED
           KNXStart();
@@ -593,6 +591,9 @@ void WifiCheck(uint8_t param)
 #ifdef USE_EMULATION
         UdpDisconnect();
 #endif  // USE_EMULATION
+#ifdef USE_DEVICE_GROUPS
+        DeviceGroupsStop();
+#endif  // USE_DEVICE_GROUPS
         Wifi.mdns_begun = 0;
 #ifdef USE_KNX
         knx_started = false;

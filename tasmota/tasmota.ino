@@ -118,6 +118,9 @@ uint16_t tele_period = 9999;                // Tele period timer
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
 uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
+//#ifdef ESP32
+//uint16_t pin[MAX_GPIO_PIN] = { 0 };       // Possible pin configurations
+//#endif
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
 RulesBitfield rules_flag;                   // Rule state flags (16 bits)
 uint8_t mqtt_cmnd_blocked = 0;              // Ignore flag for publish command
@@ -126,7 +129,13 @@ uint8_t state_250mS = 0;                    // State 250msecond per second flag
 uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
 uint8_t ssleep;                             // Current copy of Settings.sleep
 uint8_t blinkspeed = 1;                     // LED blink rate
+//#ifdef ESP8266
+#ifdef LEGACY_GPIO_ARRAY
 uint8_t pin[GPIO_MAX];                      // Possible pin configurations
+#else
+uint8_t pin[MAX_GPIO_PIN] = { 0 };          // Possible pin configurations
+#endif
+//#endif
 uint8_t active_device = 1;                  // Active device in ExecuteCommandPower
 uint8_t leds_present = 0;                   // Max number of LED supported
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
@@ -260,7 +269,7 @@ void setup(void)
         Settings.rule_enabled = 0;                  // Disable all rules
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +3) {  // Restarted 5 times
-        for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) {
+        for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
           Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
         }
         Settings.my_adc0 = ADC0_NONE;               // Reset user defined ADC0 disabling sensors

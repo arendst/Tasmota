@@ -354,8 +354,8 @@ void UBXTriggerTele(void)
 void UBXDetect(void)
 {
   UBX.mode.init = 0;
-  if ((pin[GPIO_GPS_RX] < 99) && (pin[GPIO_GPS_TX] < 99)) {
-    UBXSerial = new TasmotaSerial(pin[GPIO_GPS_RX], pin[GPIO_GPS_TX], 1, 0, UBX_SERIAL_BUFFER_SIZE); // 64 byte buffer is NOT enough
+  if (PinUsed(GPIO_GPS_RX) && PinUsed(GPIO_GPS_TX)) {
+    UBXSerial = new TasmotaSerial(Pin(GPIO_GPS_RX), Pin(GPIO_GPS_TX), 1, 0, UBX_SERIAL_BUFFER_SIZE); // 64 byte buffer is NOT enough
     if (UBXSerial->begin(9600)) {
       DEBUG_SENSOR_LOG(PSTR("UBX: started serial"));
       if (UBXSerial->hardwareSerial()) {

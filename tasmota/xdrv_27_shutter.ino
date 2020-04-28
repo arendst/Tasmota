@@ -97,7 +97,7 @@ void ShutterRtc50mS(void)
       Shutter.pwm_frequency[i] += Shutter.accelerator[i];
       Shutter.pwm_frequency[i] = tmax(0,tmin(Shutter.direction[i]==1 ? Shutter.max_pwm_frequency : Shutter.max_close_pwm_frequency[i],Shutter.pwm_frequency[i]));
       analogWriteFreq(Shutter.pwm_frequency[i]);
-      analogWrite(pin[GPIO_PWM1+i], 50);
+      analogWrite(Pin(GPIO_PWM1, i), 50);
     }
   }
 }
@@ -201,12 +201,12 @@ void ShutterInit(void)
         }
       } else {
         Shutter.mode = SHT_OFF_ON__OPEN_CLOSE;
-        if ((pin[GPIO_PWM1+i] < 99) && (pin[GPIO_CNTR1+i] < 99)) {
+        if (PinUsed(GPIO_PWM1, i) && PinUsed(GPIO_CNTR1, i)) {
           Shutter.mode = SHT_OFF_ON__OPEN_CLOSE_STEPPER;
           Shutter.pwm_frequency[i] = 0;
           Shutter.accelerator[i] = 0;
           analogWriteFreq(Shutter.pwm_frequency[i]);
-          analogWrite(pin[GPIO_PWM1+i], 50);
+          analogWrite(Pin(GPIO_PWM1, i), 50);
         }
       }
 
@@ -352,13 +352,13 @@ void ShutterUpdatePosition(void)
             Shutter.accelerator[i] = 0;
             Shutter.pwm_frequency[i] = Shutter.pwm_frequency[i] > 250 ? 250 : Shutter.pwm_frequency[i];
             analogWriteFreq(Shutter.pwm_frequency[i]);
-            analogWrite(pin[GPIO_PWM1+i], 50);
+            analogWrite(Pin(GPIO_PWM1, i), 50);
             Shutter.pwm_frequency[i] = 0;
             analogWriteFreq(Shutter.pwm_frequency[i]);
             while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter.target_position[i]-Shutter.start_position[i])*Shutter.direction[i]*Shutter.max_pwm_frequency/2000) {
               delay(1);
             }
-            analogWrite(pin[GPIO_PWM1+i], 0);
+            analogWrite(Pin(GPIO_PWM1, i), 0);
             Shutter.real_position[i] = ShutterCounterBasedPosition(i);
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Real %d, pulsecount %d, start %d"), Shutter.real_position[i],RtcSettings.pulse_counter[i], Shutter.start_position[i]);
 
@@ -421,7 +421,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     if (Shutter.mode == SHT_OFF_ON__OPEN_CLOSE_STEPPER) {
       Shutter.pwm_frequency[i] = 0;
       analogWriteFreq(Shutter.pwm_frequency[i]);
-      analogWrite(pin[GPIO_PWM1+i], 0);
+      analogWrite(Pin(GPIO_PWM1, i), 0);
       RtcSettings.pulse_counter[i] = 0;
       Shutter.accelerator[i] = Shutter.max_pwm_frequency / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Ramp up: %d"), Shutter.accelerator[i]);
@@ -450,10 +450,10 @@ void ShutterWaitForMotorStop(uint32_t i)
         Shutter.pwm_frequency[i] = tmax(Shutter.pwm_frequency[i]-((Shutter.direction[i] == 1 ? Shutter.max_pwm_frequency : Shutter.max_close_pwm_frequency[i])/(Shutter.motordelay[i]+1)) , 0);
         //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Frequency: %ld"),  Shutter.pwm_frequency[i]);
         analogWriteFreq(Shutter.pwm_frequency[i]);
-        analogWrite(pin[GPIO_PWM1+i], 50);
+        analogWrite(Pin(GPIO_PWM1, i), 50);
         delay(50);
       }
-      analogWrite(pin[GPIO_PWM1+i], 0);
+      analogWrite(Pin(GPIO_PWM1, i), 0);
       Shutter.real_position[i] = ShutterCounterBasedPosition(i);
     } else {
       ExecuteCommandPower(Settings.shutter_startrelay[i], 0, SRC_SHUTTER);
@@ -645,7 +645,7 @@ void ShutterButtonHandler(void)
         // 5x..7x && no SetOption1 (0) checked above
         // simultaneous or stand alone button press 5x, 6x, 7x detected
         char scmnd[20];
-        GetTextIndexed(scmnd, sizeof(scmnd), press_index -3, kCommands);
+        snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_WIFICONFIG " 2"));
         ExecuteCommand(scmnd, SRC_BUTTON);
         return;
       } else if ((buttonState == SHT_PRESSED_EXT_HOLD_SIMULTANEOUS) || ((shutter_index_num_buttons==1) && (buttonState == SHT_PRESSED_EXT_HOLD))){
