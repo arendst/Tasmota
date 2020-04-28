@@ -1702,17 +1702,19 @@ void LightCycleColor(int8_t direction)
 
 #ifdef USE_LIGHT_PALETTE
   if (Light.palette_count) {
-    if (0 == direction) {
-      Light.wheel = random(Light.palette_count);
-    }
-    else {
-      Light.wheel += direction;
-      if (Light.wheel >= Light.palette_count) {
-        Light.wheel = 0;
-         if (direction < 0) Light.wheel = Light.palette_count - 1;
+    if (!Light.fade_running) {
+      if (0 == direction) {
+        Light.wheel = random(Light.palette_count);
       }
+      else {
+        Light.wheel += direction;
+        if (Light.wheel >= Light.palette_count) {
+          Light.wheel = 0;
+          if (direction < 0) Light.wheel = Light.palette_count - 1;
+        }
+      }
+      LightSetPaletteEntry();
     }
-    LightSetPaletteEntry();
     return;
   }
 #endif  // USE_LIGHT_PALETTE
@@ -2232,27 +2234,21 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
 }
 
 #ifdef USE_DEVICE_GROUPS
-void LightSendDeviceGroupStatus(bool force)
+void LightSendDeviceGroupStatus(bool status)
 {
-  static uint8_t last_channels[LST_MAX];
-  static uint8_t channels_sequence = 0;
   static uint8_t last_bri;
-
   uint8_t bri = light_state.getBri();
-  bool send_bri_update = (force || bri != last_bri);
-
+  bool send_bri_update = (status || bri != last_bri);
   if (Light.subtype > LST_SINGLE && !Light.devgrp_no_channels_out) {
-    uint8_t channels[LST_MAX + 1];
-    light_state.getChannels(channels);
-    if (force || memcmp(last_channels, channels, LST_MAX)
-#ifdef USE_LIGHT_PALETTE
-      || (Settings.light_scheme && Light.palette_count)
-#endif  // USE_LIGHT_PALETTE
-      ) {
-      memcpy(last_channels, channels, LST_MAX);
-      channels[LST_MAX] = ++channels_sequence;
-      SendLocalDeviceGroupMessage((send_bri_update ? DGR_MSGTYP_PARTIAL_UPDATE : DGR_MSGTYP_UPDATE), DGR_ITEM_LIGHT_CHANNELS, channels);
+    static uint8_t channels[LST_MAX + 1] = { 0, 0, 0, 0, 0, 0 };
+    if (status) {
+      light_state.getChannels(channels);
     }
+    else {
+      memcpy(channels, Light.new_color, LST_MAX);
+      channels[LST_MAX]++;
+    }
+    SendLocalDeviceGroupMessage((send_bri_update ? DGR_MSGTYP_PARTIAL_UPDATE : DGR_MSGTYP_UPDATE), DGR_ITEM_LIGHT_CHANNELS, channels);
   }
   if (send_bri_update) {
     last_bri = bri;
