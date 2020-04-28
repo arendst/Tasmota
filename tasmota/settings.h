@@ -529,7 +529,7 @@ struct {
   uint16_t      windmeter_radius;          // F38
   uint16_t      windmeter_pulse_debounce;  // F3A
   int16_t       windmeter_speed_factor;    // F3C
-  uint8_t       windmeter_tele_on_change;  // F3E
+  uint8_t       windmeter_tele_pchange;    // F3E
 
   uint8_t       free_f3f[121];             // F3F - Decrement if adding new Setting variables just above and below
 

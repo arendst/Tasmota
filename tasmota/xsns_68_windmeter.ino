@@ -31,6 +31,7 @@
 #define WINDMETER_DEF_PULSES_X_ROT    1     // Number of pulses for a complete rotation
 #define WINDMETER_DEF_PULSE_DEBOUNCE  10    // Pulse counter debounce time (milliseconds)
 #define WINDMETER_DEF_COMP_FACTOR     1.18  // Compensation factor
+#define WINDMETER_DEF_TELE_PCHANGE    255   // Minimum percentage change between current and last reported speed in order to trigger a new tele message (0...100, 255 means off)
 #define WINDMETER_WEIGHT_AVG_SAMPLE   150   // No of samples to take
 
 #ifdef USE_WEBSERVER
@@ -61,6 +62,7 @@ struct WINDMETER {
   unsigned long counter = 0;
   //uint32_t speed_time;
   float speed = 0;
+  float last_tele_speed = 0;
 #ifndef USE_WINDMETER_NOSTATISTICS
   float speed_min = 0;
   float speed_max = 0;
@@ -103,6 +105,9 @@ void WindMeterInit(void)
   }
   if (!Settings.windmeter_speed_factor) {
     Settings.windmeter_speed_factor = (int16_t)(WINDMETER_DEF_COMP_FACTOR * 1000);
+  }
+  if (!Settings.windmeter_tele_pchange) {
+    Settings.windmeter_tele_pchange = WINDMETER_DEF_TELE_PCHANGE;
   }
 
 #ifndef USE_WINDMETER_NOSTATISTICS
@@ -154,6 +159,22 @@ void WindMeterEverySecond(void)
     WindMeterResetStatData();
   }
 #endif  // USE_WINDMETER_NOSTATISTICS
+
+  if (WindMeterShouldTriggerTele()) {
+      WindMeterTriggerTele();
+  }
+}
+
+bool WindMeterShouldTriggerTele()
+{
+  if (Settings.windmeter_tele_pchange > 100) {
+    return false;
+  } else if (WindMeter.last_tele_speed == 0) {
+    return WindMeter.speed > 0;
+  } else {
+    float perc_change = (WindMeter.speed / WindMeter.last_tele_speed) -1;
+    return (perc_change * ((perc_change < 0) ? -100 : 100)) >= Settings.windmeter_tele_pchange;
+  }
 }
 
 void WindMeterResetStatData(void)
@@ -204,6 +225,7 @@ void WindMeterShow(bool json)
 #endif  // USE_WINDMETER_NOSTATISTICS
 
   if (json) {
+    WindMeter.last_tele_speed = WindMeter.speed;
 #ifndef USE_WINDMETER_NOSTATISTICS
     ResponseAppend_P(PSTR(",\"" D_WINDMETER_NAME "\":{\"" D_JSON_SPEED "\":{\"Act\":%s,\"Avg\":%s,\"Min\":%s,\"Max\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s,\"Avg\":%s,\"AvgCard\":\"%s\",\"Min\":%s,\"Max\":%s,\"Range\":%s}}"),
       speed_string,
@@ -252,6 +274,17 @@ void WindMeterShow(bool json)
   }
 }
 
+void WindMeterTriggerTele(void)
+{
+  mqtt_data[0] = '\0';
+  if (MqttShowSensor()) {
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+#ifdef USE_RULES
+    RulesTeleperiod();  // Allow rule based HA messages
+#endif  // USE_RULES
+  }
+}
+
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -282,13 +315,22 @@ bool Xsns68Cmnd(void)
         Settings.windmeter_speed_factor = (int16_t)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 1000);
       }
       break;
+    case 5:
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+        Settings.windmeter_tele_pchange = (uint8_t)strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
+      }
+      break;
   }
 
   if (show_parms) {
     char speed_factor_string[FLOATSZ];
     dtostrfd((float)Settings.windmeter_speed_factor / 1000, 3, speed_factor_string);
-    Response_P(PSTR("{\"" D_WINDMETER_NAME "\":{\"Radius\":%d,\"PulsesPerRot\":%d,\"PulseDebounce\":%d,\"SpeedFactor\":%s}}"),
-	       Settings.windmeter_radius, Settings.windmeter_pulses_x_rot, Settings.windmeter_pulse_debounce, speed_factor_string);
+    char tele_pchange_string[4] = "off";
+    if (Settings.windmeter_tele_pchange <= 100) {
+      itoa(Settings.windmeter_tele_pchange, tele_pchange_string, 10);
+    }
+    Response_P(PSTR("{\"" D_WINDMETER_NAME "\":{\"Radius\":%d,\"PulsesPerRot\":%d,\"PulseDebounce\":%d,\"SpeedFactor\":%s,\"TeleTriggerMin%Change\":%s}}"),
+	       Settings.windmeter_radius, Settings.windmeter_pulses_x_rot, Settings.windmeter_pulse_debounce, speed_factor_string, tele_pchange_string);
   }
   return serviced;
 }
