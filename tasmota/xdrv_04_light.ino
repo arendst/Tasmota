@@ -1702,17 +1702,19 @@ void LightCycleColor(int8_t direction)
 
 #ifdef USE_LIGHT_PALETTE
   if (Light.palette_count) {
-    if (0 == direction) {
-      Light.wheel = random(Light.palette_count);
-    }
-    else {
-      Light.wheel += direction;
-      if (Light.wheel >= Light.palette_count) {
-        Light.wheel = 0;
-         if (direction < 0) Light.wheel = Light.palette_count - 1;
+    if (!Light.fade_running) {
+      if (0 == direction) {
+        Light.wheel = random(Light.palette_count);
       }
+      else {
+        Light.wheel += direction;
+        if (Light.wheel >= Light.palette_count) {
+          Light.wheel = 0;
+          if (direction < 0) Light.wheel = Light.palette_count - 1;
+        }
+      }
+      LightSetPaletteEntry();
     }
-    LightSetPaletteEntry();
     return;
   }
 #endif  // USE_LIGHT_PALETTE
