@@ -61,7 +61,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
 - Change remove floating point libs from IRAM
 - Change remove MQTT Info messages on restart for DeepSleep Wake (#8044)
-- Change IRremoteESP8266 library updated to v2.7.5
+- Change IRremoteESP8266 library updated to v2.7.6
 - Fix possible Relay toggle on (OTA) restart
 - Fix PWM flickering during wifi connection (#8046)
 - Fix Zigbee sending wrong Sat value with Hue emulation
@@ -78,6 +78,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``SetOption73 1`` for button decoupling and send multi-press and hold MQTT messages by Federico Leoni (#8235)
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
 - Add command ``SetOption91 1`` to enable fading at startup / power on
+- Add command ``SetOption92 1`` to set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...)
 - Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
 - Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
 - Add command ``Sensor18 0..32000`` to control PMS5003 sensor interval to extend lifetime by Gene Ruebsamen (#8128)

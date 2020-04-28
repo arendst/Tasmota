@@ -167,26 +167,25 @@ void AdcGetCurrentPower(uint8_t factor)
   uint16_t analog_min = 1023;
   uint16_t analog_max = 0;
 
-  if(Settings.adc_param1==0){
-  for (uint32_t i = 0; i < samples; i++) {
-    analog = analogRead(A0);
-    if (analog < analog_min) {
-      analog_min = analog;
+  if (0 == Settings.adc_param1) {
+    for (uint32_t i = 0; i < samples; i++) {
+      analog = analogRead(A0);
+      if (analog < analog_min) {
+        analog_min = analog;
+      }
+      if (analog > analog_max) {
+        analog_max = analog;
+      }
+      delay(1);
     }
-    if (analog > analog_max) {
-      analog_max = analog;
-    }
-    delay(1);
+    Adc.current = (float)(analog_max-analog_min) * ((float)(Settings.adc_param2) / 100000);
   }
-  Adc.current = (float)(analog_max-analog_min) * ((float)(Settings.adc_param2) / 100000);
-  } 
-  else{
-
+  else {
     analog = AdcRead(5);
-    if(analog>Settings.adc_param1){
+    if (analog > Settings.adc_param1) {
      Adc.current = ((float)(analog) - (float)Settings.adc_param1) * ((float)(Settings.adc_param2) / 100000);
     }
-    else{
+    else {
       Adc.current = 0;
     }
   }
@@ -370,7 +369,7 @@ void CmndAdcParam(void)
           Settings.adc_param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)) * 10000);
         }
         if (ADC0_CT_POWER == XdrvMailbox.payload) {
-          if ((Settings.adc_param1 == 1 & CT_FLAG_ENERGY_RESET) > 0) {
+          if (((1 == Settings.adc_param1) & CT_FLAG_ENERGY_RESET) > 0) {
             Adc.energy = 0;
             Settings.adc_param1 ^= CT_FLAG_ENERGY_RESET;  // Cancel energy reset flag
           }
