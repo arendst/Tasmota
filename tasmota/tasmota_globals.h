@@ -53,6 +53,8 @@ extern "C" void resetPins();
  * Mandatory defines satisfying disabled defines
 \*********************************************************************************************/
 
+//#define LEGACY_GPIO_ARRAY
+
 #ifndef MODULE
 #define MODULE                      SONOFF_BASIC   // [Module] Select default model
 #endif

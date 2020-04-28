@@ -1582,6 +1582,7 @@ chknext:
         if (!strncmp(vname,"pd[",3)) {
           GetNumericResult(vname+3,OPER_EQU,&fvar,0);
           uint8_t gpiopin=fvar;
+#ifdef LEGACY_GPIO_ARRAY
           for (uint8_t i=0;i<GPIO_SENSOR_END;i++) {  // Theo/Gemu: This needs to change when pin[] becomes real pin array
 //            if (pin[i]==gpiopin) {
             if (Pin(i)==gpiopin) {
@@ -1591,6 +1592,14 @@ chknext:
               goto exit;
             }
           }
+#else
+          if ((gpiopin < ARRAY_SIZE(pin)) && (pin[gpiopin] > 0)) {
+            fvar = pin[gpiopin];
+            // skip ] bracket
+            len++;
+            goto exit;
+          }
+#endif
           fvar=999;
           goto exit;
         }

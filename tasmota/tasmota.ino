@@ -119,7 +119,7 @@ uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
 uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
 //#ifdef ESP32
-//uint16_t pin[MAX_GPIO_PIN];                 // Possible pin configurations
+//uint16_t pin[MAX_GPIO_PIN] = { 0 };       // Possible pin configurations
 //#endif
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
 RulesBitfield rules_flag;                   // Rule state flags (16 bits)
@@ -130,7 +130,11 @@ uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
 uint8_t ssleep;                             // Current copy of Settings.sleep
 uint8_t blinkspeed = 1;                     // LED blink rate
 //#ifdef ESP8266
+#ifdef LEGACY_GPIO_ARRAY
 uint8_t pin[GPIO_MAX];                      // Possible pin configurations
+#else
+uint8_t pin[MAX_GPIO_PIN] = { 0 };          // Possible pin configurations
+#endif
 //#endif
 uint8_t active_device = 1;                  // Active device in ExecuteCommandPower
 uint8_t leds_present = 0;                   // Max number of LED supported

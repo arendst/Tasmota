@@ -447,7 +447,9 @@ void TasmotaSlave_Init(void)
         TasmotaSlave_Serial->setTimeout(50);
         if (PinUsed(GPIO_TASMOTASLAVE_RST_INV)) {
           SetPin(Pin(GPIO_TASMOTASLAVE_RST_INV), GPIO_TASMOTASLAVE_RST);
+#ifdef LEGACY_GPIO_ARRAY
           SetPin(99, GPIO_TASMOTASLAVE_RST_INV);
+#endif
           TSlave.inverted = HIGH;
         }
         pinMode(Pin(GPIO_TASMOTASLAVE_RST), OUTPUT);

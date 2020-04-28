@@ -1383,13 +1383,15 @@ void GpioInit(void)
     my_adc0 = template_adc0;                        // Force Template override
   }
 
+#ifdef LEGACY_GPIO_ARRAY
   InitAllPins();
+#endif
   for (uint32_t i = 0; i < ARRAY_SIZE(my_module.io); i++) {
     uint32_t mpin = ValidPin(i, my_module.io[i]);
 
     DEBUG_CORE_LOG(PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
 
-    if (mpin) {
+    if (mpin) {                                     // Above GPIO_NONE
       XdrvMailbox.index = mpin;
       XdrvMailbox.payload = i;
 
@@ -1398,16 +1400,16 @@ void GpioInit(void)
         mpin -= (GPIO_SWT1_NP - GPIO_SWT1);
       }
       else if ((mpin >= GPIO_KEY1_NP) && (mpin < (GPIO_KEY1_NP + MAX_KEYS))) {
-        ButtonPullupFlag(mpin - GPIO_KEY1_NP);       //  0 .. 3
+        ButtonPullupFlag(mpin - GPIO_KEY1_NP);      //  0 .. 3
         mpin -= (GPIO_KEY1_NP - GPIO_KEY1);
       }
       else if ((mpin >= GPIO_KEY1_INV) && (mpin < (GPIO_KEY1_INV + MAX_KEYS))) {
-        ButtonInvertFlag(mpin - GPIO_KEY1_INV);      //  0 .. 3
+        ButtonInvertFlag(mpin - GPIO_KEY1_INV);     //  0 .. 3
         mpin -= (GPIO_KEY1_INV - GPIO_KEY1);
       }
       else if ((mpin >= GPIO_KEY1_INV_NP) && (mpin < (GPIO_KEY1_INV_NP + MAX_KEYS))) {
-        ButtonPullupFlag(mpin - GPIO_KEY1_INV_NP);   //  0 .. 3
-        ButtonInvertFlag(mpin - GPIO_KEY1_INV_NP);   //  0 .. 3
+        ButtonPullupFlag(mpin - GPIO_KEY1_INV_NP);  //  0 .. 3
+        ButtonInvertFlag(mpin - GPIO_KEY1_INV_NP);  //  0 .. 3
         mpin -= (GPIO_KEY1_INV_NP - GPIO_KEY1);
       }
       else if ((mpin >= GPIO_REL1_INV) && (mpin < (GPIO_REL1_INV + MAX_RELAYS))) {
@@ -1433,8 +1435,12 @@ void GpioInit(void)
         mpin = XdrvMailbox.index;
       };
     }
-    if (mpin) { SetPin(i, mpin); }
+    if (mpin) { SetPin(i, mpin); }                  // Anything above GPIO_NONE and below GPIO_SENSOR_END
   }
+
+#ifndef LEGACY_GPIO_ARRAY
+  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)pin, ARRAY_SIZE(pin));
+#endif
 
 #ifdef ESP8266
   if ((2 == Pin(GPIO_TXD)) || (H801 == my_module_type)) { Serial.set_tx(2); }
@@ -1446,9 +1452,11 @@ void GpioInit(void)
 #ifdef USE_SPI
   spi_flg = (((PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_CS) > 14)) || (Pin(GPIO_SPI_CS) < 12)) || ((PinUsed(GPIO_SPI_DC) && (Pin(GPIO_SPI_DC) > 14)) || (Pin(GPIO_SPI_DC) < 12)));
   if (spi_flg) {
+#ifdef LEGACY_GPIO_ARRAY
     for (uint32_t i = 0; i < GPIO_MAX; i++) {
       if ((Pin(i) >= 12) && (Pin(i) <=14)) { SetPin(99, i); }
     }
+#endif
     my_module.io[12] = GPIO_SPI_MISO;
     SetPin(12, GPIO_SPI_MISO);
     my_module.io[13] = GPIO_SPI_MOSI;
@@ -1456,7 +1464,7 @@ void GpioInit(void)
     my_module.io[14] = GPIO_SPI_CLK;
     SetPin(14, GPIO_SPI_CLK);
   }
-  soft_spi_flg = (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MOSI)));
+  soft_spi_flg = (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
 #endif  // USE_SPI
 
   // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
@@ -1534,7 +1542,9 @@ void GpioInit(void)
 #ifdef USE_ARILUX_RF
       if ((3 == i) && (leds_present < 2) && !PinUsed(GPIO_ARIRFSEL)) {
         SetPin(Pin(GPIO_LED4), GPIO_ARIRFSEL);  // Legacy support where LED4 was Arilux RF enable
+#ifdef LEGACY_GPIO_ARRAY
         SetPin(99, GPIO_LED4);
+#endif
       } else {
 #endif
         pinMode(Pin(GPIO_LED1, i), OUTPUT);
