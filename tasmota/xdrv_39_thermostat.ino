@@ -316,7 +316,7 @@ bool HeatStateAutoToManual(void)
 
 bool HeatStateManualToAuto(void)
 {
-  bool change_state;
+  bool change_state = false;
 
   // If switch input inactive
   // AND sensor alive
@@ -332,11 +332,12 @@ bool HeatStateManualToAuto(void)
 
 bool HeatStateAllToOff(void)
 {
-  bool change_state;
+  bool change_state = false;
 
   // If emergency mode then switch OFF the output inmediately
   if (Thermostat.status.state_emergency == EMERGENCY_ON) {
     Thermostat.status.thermostat_mode = THERMOSTAT_OFF;  // Emergency switch to THERMOSTAT_OFF
+    change_state = true;
   }
   return change_state;
 }
@@ -375,7 +376,9 @@ void ThermostatOutputRelay(bool active)
   // then switch output to ON
   if ((active == true) 
     && (Thermostat.status.status_output == IFACE_OFF)) {
+#ifndef DEBUG_THERMOSTAT
     ExecuteCommandPower(Thermostat.output_relay_number, POWER_ON, SRC_THERMOSTAT);
+#endif
     Thermostat.status.status_output = IFACE_ON;
 #ifdef DEBUG_THERMOSTAT
     ThermostatVirtualSwitch();
@@ -385,7 +388,9 @@ void ThermostatOutputRelay(bool active)
   // AND current output status is ON
   // then switch output to OFF
   else if ((active == false) && (Thermostat.status.status_output == IFACE_ON)) {
+#ifndef DEBUG_THERMOSTAT
     ExecuteCommandPower(Thermostat.output_relay_number, POWER_OFF, SRC_THERMOSTAT);
+#endif
     Thermostat.timestamp_output_off = uptime;
     Thermostat.status.status_output = IFACE_OFF;
 #ifdef DEBUG_THERMOSTAT
@@ -638,10 +643,7 @@ void ThermostatWorkAutomaticRampUp(void)
         // Calculate time to switch Off and come out of ramp-up
         // y-y1 = m(x-x1) -> x = ((y-y1) / m) + x1 -> y1 = temp_rampup_cycle, x1 = (time_rampup_nextcycle - time_rampup_cycle), m = gradient in º/sec
         // Better Alternative -> (y-y1)/(x-x1) = ((y2-y1)/(x2-x1)) -> where y = temp (target) and x = time (to switch off, what its needed)
-        // x = ((y-y1)/(y2-y1))*(x2-x1) + x1 - deadtime
-        // Thermostat.time_ctr_changepoint = (uint32_t)(((float)(Thermostat.temp_target_level_ctr - Thermostat.temp_rampup_cycle) / (float)temp_delta_rampup) * (float)(time_total_rampup)) + (uint32_t)(Thermostat.time_rampup_nextcycle - (time_total_rampup)) - Thermostat.time_rampup_deadtime;
-        //Thermostat.time_ctr_changepoint = (uint32_t)(((float)(Thermostat.temp_target_level_ctr - Thermostat.temp_rampup_cycle) * (float)(time_total_rampup)) / (float)temp_delta_rampup) + (uint32_t)(Thermostat.time_rampup_nextcycle - (time_total_rampup)) - Thermostat.time_rampup_deadtime;      
-        
+        // x = ((y-y1)/(y2-y1))*(x2-x1) + x1 - deadtime        
         aux_temp_delta = (int32_t)(Thermostat.temp_target_level_ctr - Thermostat.temp_rampup_cycle);
         
         // Protect overflow, if temperature goes down set max
@@ -656,7 +658,8 @@ void ThermostatWorkAutomaticRampUp(void)
         // Calculate temperature for switching off the output
         // y = (((y2-y1)/(x2-x1))*(x-x1)) + y1
         // Thermostat.temp_rampup_output_off = (int16_t)(((float)(temp_delta_rampup) / (float)(time_total_rampup * Thermostat.counter_rampup_cycles)) * (float)(Thermostat.time_ctr_changepoint - (uptime - (time_total_rampup)))) + Thermostat.temp_rampup_cycle;
-        Thermostat.temp_rampup_output_off = (int16_t)(((float)temp_delta_rampup * (float)(Thermostat.time_ctr_changepoint - (uptime - (time_total_rampup)))) / (float)(time_total_rampup * Thermostat.counter_rampup_cycles)) + Thermostat.temp_rampup_cycle;
+        //Thermostat.temp_rampup_output_off = (int16_t)(((float)temp_delta_rampup * (float)(Thermostat.time_ctr_changepoint - (uptime - (time_total_rampup)))) / (float)(time_total_rampup * Thermostat.counter_rampup_cycles)) + Thermostat.temp_rampup_cycle;
+        Thermostat.temp_rampup_output_off = (int16_t)(((int32_t)temp_delta_rampup * (int32_t)(Thermostat.time_ctr_changepoint - (uptime - (time_total_rampup)))) / (int32_t)(time_total_rampup * Thermostat.counter_rampup_cycles)) + Thermostat.temp_rampup_cycle;
         // Set auxiliary variables
         Thermostat.time_rampup_nextcycle = uptime + (uint32_t)Thermostat.time_rampup_cycle;
         Thermostat.temp_rampup_cycle = Thermostat.temp_measured;
@@ -1211,6 +1214,25 @@ bool Xdrv39(uint8_t function)
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_ctr_changepoint: %s"), result_chr);
         dtostrfd(Thermostat.temp_rampup_output_off, 0, result_chr);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_rampup_output_off: %s"), result_chr);
+        dtostrfd(uptime, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("uptime: %s"), result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Special debug section for time_ctr_changepoint ------"));
+        dtostrfd(Thermostat.temp_target_level_ctr, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_target_level_ctr: %s"), result_chr);
+        dtostrfd(Thermostat.temp_rampup_cycle, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_rampup_cycle: %s"), result_chr);
+        dtostrfd(Thermostat.time_rampup_cycle, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_rampup_cycle: %s"), result_chr);
+        dtostrfd(Thermostat.counter_rampup_cycles, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.counter_rampup_cycles: %s"), result_chr);
+        dtostrfd(Thermostat.temp_measured, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_measured: %s"), result_chr);
+        dtostrfd(Thermostat.temp_rampup_start, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_rampup_start: %s"), result_chr);
+        dtostrfd(Thermostat.time_rampup_nextcycle, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_rampup_nextcycle: %s"), result_chr);
+        dtostrfd(Thermostat.time_rampup_deadtime, 0, result_chr);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_rampup_deadtime: %s"), result_chr);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Thermostat End ------"));
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));
 #endif
