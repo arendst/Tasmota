@@ -644,13 +644,13 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
     char *state_topic = stemp1;
     char *availability_topic = stemp2;
 
-    snprintf_P(name, sizeof(name), PSTR("%s status"), ModuleName().c_str());
+    snprintf_P(name, sizeof(name), PSTR("%s status"), SettingsText(SET_FRIENDLYNAME1));
     GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_HASS_STATE));
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
 
     Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
     TryResponseAppend_P(HASS_DISCOVER_SENSOR_HASS_STATUS, state_topic);
-    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP_getChipId(), ModuleName().c_str(),
+    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP_getChipId(), SettingsText(SET_FRIENDLYNAME1),
                         ModuleName().c_str(), my_version, my_image);
     TryResponseAppend_P(PSTR("}"));
   }
