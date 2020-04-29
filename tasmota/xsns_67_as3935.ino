@@ -548,14 +548,14 @@ void AS3935EverySecond() {
     as3935_sensor.mqtt_irq = 0;
     // start http times
     as3935_sensor.http_count_start = 1;
+    as3935_sensor.http_count = 0;
     as3935_sensor.icount++; // Int counter
     as3935_sensor.detected = false;
   }
 
   if (as3935_sensor.http_count_start) as3935_sensor.http_count++;
   // clear Http
-  if (as3935_sensor.http_count == as3935_sensor.http_timer) {
-    as3935_sensor.http_count = 0;
+  if (as3935_sensor.http_count > as3935_sensor.http_timer) {
     as3935_sensor.http_count_start = 0;
     as3935_sensor.http_intensity = 0;
     as3935_sensor.http_distance = 0;
