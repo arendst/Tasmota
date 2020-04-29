@@ -121,7 +121,7 @@ uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
 
 #ifdef ESP32
 #ifdef FINAL_ESP32
-uint16_t pin[MAX_GPIO_PIN] = { 0 };         // Possible pin configurations
+uint16_t gpio_pin[MAX_GPIO_PIN] = { 0 };    // GPIO functions indexed by pin number
 #endif  // FINAL_ESP32
 #endif  // ESP32
 
@@ -136,16 +136,16 @@ uint8_t blinkspeed = 1;                     // LED blink rate
 
 #ifdef ESP8266
 #ifdef LEGACY_GPIO_ARRAY
-uint8_t pin[GPIO_MAX];                      // Possible pin configurations
+uint8_t pin_gpio[GPIO_MAX];                 // Pin numbers indexed by GPIO function
 #else  // No LEGACY_GPIO_ARRAY
-uint8_t pin[MAX_GPIO_PIN] = { 0 };          // Possible pin configurations
+uint8_t gpio_pin[MAX_GPIO_PIN] = { 0 };     // GPIO functions indexed by pin number
 #endif  // LEGACY_GPIO_ARRAY
 #else  // ESP32
 #ifndef FINAL_ESP32
 #ifdef LEGACY_GPIO_ARRAY
-uint8_t pin[GPIO_MAX];                      // Possible pin configurations
+uint8_t pin_gpio[GPIO_MAX];                 // Pin numbers indexed by GPIO function
 #else  // No LEGACY_GPIO_ARRAY
-uint8_t pin[MAX_GPIO_PIN] = { 0 };          // Possible pin configurations
+uint8_t gpio_pin[MAX_GPIO_PIN] = { 0 };     // GPIO functions indexed by pin number
 #endif  // LEGACY_GPIO_ARRAY
 #endif  // No FINAL_ESP32
 #endif  // ESP8266 - ESP32

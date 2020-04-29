@@ -1833,13 +1833,13 @@ uint8_t *script_meter;
 bool Gpio_used(uint8_t gpiopin) {
 #ifdef LEGACY_GPIO_ARRAY
   for (uint16_t i=0;i<GPIO_SENSOR_END;i++) {  // Theo/Gemu: This needs to change when pin[] has becomes real pin array
-//    if (pin[i]==gpiopin) {
+//    if (pin_gpio[i]==gpiopin) {
     if (Pin(i)==gpiopin) {
       return true;
     }
   }
 #else
-  if ((gpiopin < ARRAY_SIZE(pin)) && (pin[gpiopin] > 0)) {
+  if ((gpiopin < ARRAY_SIZE(gpio_pin)) && (gpio_pin[gpiopin] > 0)) {
     return true;
   }
 #endif

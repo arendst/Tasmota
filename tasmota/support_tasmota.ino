@@ -1439,7 +1439,7 @@ void GpioInit(void)
   }
 
 #ifndef LEGACY_GPIO_ARRAY
-  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)pin, ARRAY_SIZE(pin));
+  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)gpio_pin, ARRAY_SIZE(gpio_pin));
 #endif
 
 #ifdef ESP8266

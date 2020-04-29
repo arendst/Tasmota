@@ -1080,7 +1080,7 @@ uint32_t Pin(uint32_t gpio, uint32_t index) ICACHE_RAM_ATTR;
 uint32_t Pin(uint32_t gpio, uint32_t index = 0);
 uint32_t Pin(uint32_t gpio, uint32_t index) {
 #ifdef LEGACY_GPIO_ARRAY
-  return pin[gpio + index];  // Pin number configured for gpio or 99 if not used
+  return pin_gpio[gpio + index];  // Pin number configured for gpio or 99 if not used
 #else  // No LEGACY_GPIO_ARRAY
 #ifdef ESP8266
   uint16_t real_gpio = gpio + index;
@@ -1091,8 +1091,8 @@ uint32_t Pin(uint32_t gpio, uint32_t index) {
   uint16_t real_gpio = (gpio << 5) + index;
 #endif  // FINAL_ESP32
 #endif  // ESP8266 - ESP32
-  for (uint32_t i = 0; i < ARRAY_SIZE(pin); i++) {
-    if (pin[i] == real_gpio) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(gpio_pin); i++) {
+    if (gpio_pin[i] == real_gpio) {
       return i;              // Pin number configured for gpio
     }
   }
@@ -1107,15 +1107,15 @@ boolean PinUsed(uint32_t gpio, uint32_t index) {
 
 void SetPin(uint32_t lpin, uint32_t gpio) {
 #ifdef LEGACY_GPIO_ARRAY
-  pin[gpio] = lpin;
+  pin_gpio[gpio] = lpin;
 #else
-  pin[lpin] = gpio;
+  gpio_pin[lpin] = gpio;
 #endif
 }
 
 #ifdef LEGACY_GPIO_ARRAY
 void InitAllPins(void) {
-  for (uint32_t i = 0; i < ARRAY_SIZE(pin); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(pin_gpio); i++) {
     SetPin(99, i);
   }
 }
