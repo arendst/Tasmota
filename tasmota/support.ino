@@ -1256,7 +1256,7 @@ bool FlashPin(uint32_t pin)
   return (((pin > 5) && (pin < 9)) || (11 == pin));
 }
 
-uint8_t ValidPin(uint32_t pin, uint32_t gpio)
+uint32_t ValidPin(uint32_t pin, uint32_t gpio)
 {
   if (FlashPin(pin)) {
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
@@ -1274,7 +1274,15 @@ uint8_t ValidPin(uint32_t pin, uint32_t gpio)
 
 bool ValidGPIO(uint32_t pin, uint32_t gpio)
 {
+#ifdef ESP8266
   return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
+#else  // ESP32
+#ifndef FINAL_ESP32
+  return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
+#else  // FINAL_ESP32
+  return (GPIO_USER == ValidPin(pin, gpio >> 5));  // Only allow GPIO_USER pins
+#endif  // FINAL_ESP32
+#endif  // ESP8266 - ESP32
 }
 
 bool ValidAdc(void)
@@ -1362,7 +1370,7 @@ bool JsonTemplate(const char* dataBuf)
 #ifdef ESP8266
   StaticJsonBuffer<400> jb;  // 331 from https://arduinojson.org/v5/assistant/
 #else
-  StaticJsonBuffer<800> jb;  // 654 from https://arduinojson.org/v5/assistant/
+  StaticJsonBuffer<999> jb;  // 654 from https://arduinojson.org/v5/assistant/
 #endif
   JsonObject& obj = jb.parseObject(dataBuf);
   if (!obj.success()) { return false; }
@@ -1880,4 +1888,17 @@ void AddLogSerial(uint32_t loglevel)
 void AddLogMissed(const char *sensor, uint32_t misses)
 {
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
+}
+
+void AddLogBufferSize(uint32_t loglevel, uint8_t *buffer, uint32_t count, uint32_t size) {
+  snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
+  for (uint32_t i = 0; i < count; i++) {
+    if (1 ==  size) {  // uint8_t
+      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer));
+    } else {           // uint16_t
+      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X%02X"), log_data, *(buffer +1), *(buffer));
+    }
+    buffer += size;
+  }
+  AddLog(loglevel);
 }

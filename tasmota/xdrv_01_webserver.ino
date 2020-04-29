@@ -1429,12 +1429,23 @@ void HandleTemplateConfiguration(void)
   WSContentSend_P(HTTP_SCRIPT_MODULE_TEMPLATE);
 
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE);
-  for (uint32_t i = 0; i < sizeof(kGpioNiceList); i++) {   // GPIO: }2'0'>None (0)}3}2'17'>Button1 (17)}3...
+  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {   // GPIO: }2'0'>None (0)}3}2'17'>Button1 (17)}3...
     if (1 == i) {
-      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, GPIO_USER, D_SENSOR_USER, GPIO_USER);  // }2'255'>User (255)}3
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, AGPIO(GPIO_USER), D_SENSOR_USER, AGPIO(GPIO_USER));  // }2'255'>User (255)}3
     }
+#ifdef ESP8266
     uint32_t midx = pgm_read_byte(kGpioNiceList + i);
-    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
+    uint32_t ridx = midx;
+#else  // ESP32
+#ifndef FINAL_ESP32
+    uint32_t midx = pgm_read_byte(kGpioNiceList + i);
+    uint32_t ridx = midx;
+#else  // FINAL_ESP32
+    uint32_t midx = pgm_read_word(kGpioNiceList + i);
+    uint32_t ridx = midx << 5;
+#endif  // FINAL_ESP32
+#endif  // ESP8266 - ESP32
+    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), ridx);
   }
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE2);
   for (uint32_t i = 0; i < ADC0_END; i++) {                // FLAG: }2'0'>None (0)}3}2'17'>Analog (17)}3...
@@ -1492,7 +1503,7 @@ void TemplateSaveSettings(void)
     if (8 == i) { j = 12; }
     snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), j);
     WebGetArg(webindex, tmp, sizeof(tmp));                  // GPIO
-    uint8_t gpio = atoi(tmp);
+    uint32_t gpio = atoi(tmp);
     snprintf_P(svalue, sizeof(svalue), PSTR("%s%s%d"), svalue, (i>0)?",":"", gpio);
     j++;
   }
@@ -1546,10 +1557,21 @@ void HandleModuleConfiguration(void)
     WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), vidx);
   }
   WSContentSend_P(PSTR("\";sk(%d,99);os=\""), Settings.module);
-  for (uint32_t i = 0; i < sizeof(kGpioNiceList); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
+#ifdef ESP8266
     midx = pgm_read_byte(kGpioNiceList + i);
+    uint32_t ridx = midx;
+#else  // ESP32
+#ifndef FINAL_ESP32
+    midx = pgm_read_byte(kGpioNiceList + i);
+    uint32_t ridx = midx;
+#else  // FINAL_ESP32
+    midx = pgm_read_word(kGpioNiceList + i);
+    uint32_t ridx = midx << 5;
+#endif  // FINAL_ESP32
+#endif  // ESP8266 - ESP32
     if (!GetUsedInModule(midx, cmodule.io)) {
-      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), ridx);
     }
   }
   WSContentSend_P(PSTR("\";"));
@@ -1616,7 +1638,7 @@ void ModuleSaveSettings(void)
       if (ValidGPIO(i, cmodule.io[i])) {
         snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), i);
         WebGetArg(webindex, tmp, sizeof(tmp));
-        uint8_t value = (!strlen(tmp)) ? 0 : atoi(tmp);
+        uint32_t value = (!strlen(tmp)) ? 0 : atoi(tmp);
 #ifdef ESP8266
         Settings.my_gp.io[i] = value;
 #else  // ESP32
