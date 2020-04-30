@@ -1062,8 +1062,8 @@ void CmndGpio(void)
           break;
         }
 #else  // FINAL_ESP32
-        uint32_t midx = pgm_read_word(kGpioNiceList + i) << 5;
-        if (midx == (XdrvMailbox.payload & 0xFFE0)) {
+        uint32_t midx = pgm_read_word(kGpioNiceList + i);
+        if ((XdrvMailbox.payload >= (midx & 0xFFE0)) && (XdrvMailbox.payload < midx)) {
           present = true;
           break;
         }
@@ -1083,16 +1083,17 @@ void CmndGpio(void)
     Response_P(PSTR("{"));
     bool jsflg = false;
     for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
-      if (ValidGPIO(i, cmodule.io[i]) || ((GPIO_USER == XdrvMailbox.payload) && !FlashPin(i))) {
+      if (ValidGPIO(i, cmodule.io[i]) || ((AGPIO(GPIO_USER) == XdrvMailbox.payload) && !FlashPin(i))) {
         if (jsflg) { ResponseAppend_P(PSTR(",")); }
         jsflg = true;
         uint32_t sensor_type = Settings.my_gp.io[i];
         if (!ValidGPIO(i, cmodule.io[i])) {
           sensor_type = cmodule.io[i];
-          if (GPIO_USER == sensor_type) {  // A user GPIO equals a not connected (=GPIO_NONE) GPIO here
+          if (AGPIO(GPIO_USER) == sensor_type) {  // A user GPIO equals a not connected (=GPIO_NONE) GPIO here
             sensor_type = GPIO_NONE;
           }
         }
+        char sindex[4] = { 0 };
 #ifdef ESP8266
         uint32_t sensor_name_idx = sensor_type;
 #else  // ESP32
@@ -1100,6 +1101,14 @@ void CmndGpio(void)
         uint32_t sensor_name_idx = sensor_type;
 #else  // FINAL_ESP32
         uint32_t sensor_name_idx = sensor_type >> 5;
+        uint32_t nice_list_search = sensor_type & 0xFFE0;
+        for (uint32_t j = 0; j < ARRAY_SIZE(kGpioNiceList); j++) {
+          uint32_t nls_idx = pgm_read_word(kGpioNiceList + j);
+          if (((nls_idx & 0xFFE0) == nice_list_search) && ((nls_idx & 0x001F) > 0)) {
+            snprintf_P(sindex, sizeof(sindex), PSTR("%d"), (sensor_type & 0x001F) +1);
+            break;
+          }
+        }
 #endif  // FINAL_ESP32
 #endif  // ESP8266 - ESP32
         const char *sensor_names = kSensorNames;
@@ -1108,8 +1117,8 @@ void CmndGpio(void)
           sensor_names = kSensorNamesFixed;
         }
         char stemp1[TOPSZ];
-        ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s\"}"),
-          i, sensor_type, GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names));
+        ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s%s\"}"),
+          i, sensor_type, GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names), sindex);
       }
     }
     if (jsflg) {
@@ -1135,8 +1144,8 @@ void CmndGpios(void)
     uint32_t midx = pgm_read_byte(kGpioNiceList + i);
     uint32_t ridx = midx;
 #else  // FINAL_ESP32
-    uint32_t midx = pgm_read_word(kGpioNiceList + i);
-    uint32_t ridx = midx << 5;
+    uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
+    uint32_t midx = ridx >> 5;
 #endif  // FINAL_ESP32
 #endif  // ESP8266 - ESP32
     if ((XdrvMailbox.payload != 255) && GetUsedInModule(midx, cmodule.io)) { continue; }
