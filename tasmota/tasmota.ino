@@ -165,7 +165,7 @@ uint8_t devices_present = 0;                // Max number of devices supported
 uint8_t seriallog_level;                    // Current copy of Settings.seriallog_level
 uint8_t syslog_level;                       // Current copy of Settings.syslog_level
 uint8_t my_module_type;                     // Current copy of Settings.module or user template type
-uint8_t my_adc0;                            // Active copy of Module ADC0
+uint8_t my_adc0 = 0;                        // Active copy of Module ADC0
 uint8_t last_source = 0;                    // Last command source
 uint8_t shutters_present = 0;               // Number of actual define shutters
 uint8_t prepped_loglevel = 0;               // Delayed log level message
@@ -286,16 +286,17 @@ void setup(void)
         for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
           Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
         }
+#ifdef ESP8266
         Settings.my_adc0 = ADC0_NONE;               // Reset user defined ADC0 disabling sensors
+#endif
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +4) {  // Restarted 6 times
 #ifdef ESP8266
         Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
   //      Settings.last_module = SONOFF_BASIC;
-#endif  // ESP8266
-#ifdef ESP32
+#else  // ESP32
         Settings.module = WEMOS;                    // Reset module to Wemos
-#endif  // ESP32
+#endif  // ESP8266 - ESP32
       }
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     }

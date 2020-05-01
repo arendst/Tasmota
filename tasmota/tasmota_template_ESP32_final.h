@@ -190,7 +190,6 @@ enum UserSelectablePins {
   GPIO_HRXL_RX,        // Data from MaxBotix HRXL sonar range sensor
   GPIO_ELECTRIQ_MOODL_TX, // ElectriQ iQ-wifiMOODL Serial TX
   GPIO_AS3935,
-/*
   ADC0_INPUT,          // Analog input
   ADC0_TEMP,           // Thermistor
   ADC0_LIGHT,          // Light sensor
@@ -198,7 +197,6 @@ enum UserSelectablePins {
   ADC0_BUTTON_INV,
   ADC0_RANGE,          // Range
   ADC0_CT_POWER,       // Current
-*/
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -284,13 +282,11 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HRXL_RX "|"
   D_SENSOR_ELECTRIQ_MOODL "|"
   D_SENSOR_AS3935 "|"
-/*
   D_ANALOG_INPUT "|"
   D_TEMPERATURE "|" D_LIGHT "|"
   D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "i|"
   D_RANGE "|"
   D_CT_POWER "|"
-*/
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -583,54 +579,23 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_AS3935),
 #endif
 /*
-  ADC0_INPUT,          // Analog input
-  ADC0_TEMP,           // Thermistor
-  ADC0_LIGHT,          // Light sensor
-  ADC0_BUTTON,         // Button
-  ADC0_BUTTON_INV,
-  ADC0_RANGE,          // Range
-  ADC0_CT_POWER,       // Current
+#ifndef USE_ADC_VCC
+  AGPIO(ADC0_INPUT),          // Analog input
+  AGPIO(ADC0_TEMP),           // Thermistor
+  AGPIO(ADC0_LIGHT),          // Light sensor
+  AGPIO(ADC0_BUTTON),         // Button
+  AGPIO(ADC0_BUTTON_INV),
+  AGPIO(ADC0_RANGE),          // Range
+  AGPIO(ADC0_CT_POWER),       // Current
+#endif
 */
 };
-
-//********************************************************************************************
-
-// User selectable ADC0 functionality
-enum UserSelectableAdc0 {
-  ADC0_NONE,           // Not used
-  ADC0_INPUT,          // Analog input
-  ADC0_TEMP,           // Thermistor
-  ADC0_LIGHT,          // Light sensor
-  ADC0_BUTTON,         // Button
-  ADC0_BUTTON_INV,
-  ADC0_RANGE,          // Range
-  ADC0_CT_POWER,       // Current
-//  ADC0_SWITCH,         // Switch
-//  ADC0_SWITCH_INV,
-  ADC0_END };
-
-// Programmer selectable ADC0 functionality
-enum ProgramSelectableAdc0 {
-  ADC0_FIX_START = 14,
-  ADC0_USER,           // User configurable needs to be 15
-  ADC0_MAX };
-
-// Text in webpage Module Parameters and commands ADC
-const char kAdc0Names[] PROGMEM =
-  D_SENSOR_NONE "|" D_ANALOG_INPUT "|"
-  D_TEMPERATURE "|" D_LIGHT "|"
-  D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "i|"
-  D_RANGE "|"
-  D_CT_POWER "|"
-//  D_SENSOR_SWITCH "|" D_SENSOR_SWITCH "i|"
-  ;
 
 //********************************************************************************************
 
 #define MAX_GPIO_PIN       40   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
 #define MAX_USER_PINS      36   // MAX_GPIO_PIN - MIN_FLASH_PINS
-#define ADC0_PIN           33   // Pin number of ADC0
 #define WEMOS_MODULE       0    // Wemos module
 
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839

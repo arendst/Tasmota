@@ -317,11 +317,18 @@ void AdcShow(bool json)
 \*********************************************************************************************/
 
 const char kAdcCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_ADC "|" D_CMND_ADCS "|" D_CMND_ADCPARAM;
+#ifdef ESP8266
+  D_CMND_ADC "|" D_CMND_ADCS "|"
+#endif  // ESP8266
+  D_CMND_ADCPARAM;
 
 void (* const AdcCommand[])(void) PROGMEM = {
-  &CmndAdc, &CmndAdcs, &CmndAdcParam };
+#ifdef ESP8266
+  &CmndAdc, &CmndAdcs,
+#endif  // ESP8266
+  &CmndAdcParam };
 
+#ifdef ESP8266
 void CmndAdc(void)
 {
   if (ValidAdc() && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < ADC0_END)) {
@@ -346,6 +353,7 @@ void CmndAdcs(void)
   }
   ResponseJsonEndEnd();
 }
+#endif  // ESP8266
 
 void CmndAdcParam(void)
 {

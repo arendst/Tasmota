@@ -1211,24 +1211,15 @@ gpio_flag ModuleFlag(void)
 {
   gpio_flag flag;
 
-#ifdef ESP8266
   if (USER_MODULE == Settings.module) {
     flag = Settings.user_template.flag;
   } else {
+#ifdef ESP8266
     memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
-  }
 #else  // ESP32
-  if (USER_MODULE == Settings.module) {
-/*
-    gpio_flag gpio_adc0;
-    memcpy_P(&gpio_adc0, &Settings.user_template.gp + ADC0_PIN - MIN_FLASH_PINS, sizeof(gpio_flag));
-    flag = Settings.user_template.flag.data + gpio_adc0.data;
-*/
-    memcpy_P(&flag, &Settings.user_template.gp + ADC0_PIN - MIN_FLASH_PINS, sizeof(gpio_flag));
-  } else {
-    memcpy_P(&flag, &kModules.gp + ADC0_PIN - MIN_FLASH_PINS, sizeof(gpio_flag));
-  }
+    memcpy_P(&flag, &kModules.flag, sizeof(gpio_flag));
 #endif  // ESP8266 - ESP32
+  }
 
   return flag;
 }
@@ -1285,12 +1276,14 @@ bool ValidGPIO(uint32_t pin, uint32_t gpio)
 #endif  // ESP8266 - ESP32
 }
 
+#ifdef ESP8266
 bool ValidAdc(void)
 {
   gpio_flag flag = ModuleFlag();
   uint32_t template_adc0 = flag.data &15;
   return (ADC0_USER == template_adc0);
 }
+#endif  // ESP8266
 
 #ifdef ESP8266
 bool GetUsedInModule(uint32_t val, uint8_t *arr)

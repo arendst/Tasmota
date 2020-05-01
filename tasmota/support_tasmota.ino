@@ -1371,6 +1371,7 @@ void GpioInit(void)
       my_module.io[i] = def_gp.io[i];               // Force Template override
     }
   }
+#ifdef ESP8266
   if ((Settings.my_adc0 >= ADC0_END) && (Settings.my_adc0 < ADC0_USER)) {
     Settings.my_adc0 = ADC0_NONE;                   // Fix not supported sensor ids in module
   }
@@ -1382,6 +1383,7 @@ void GpioInit(void)
   if ((template_adc0 > ADC0_NONE) && (template_adc0 < ADC0_USER)) {
     my_adc0 = template_adc0;                        // Force Template override
   }
+#endif
 
 #ifdef LEGACY_GPIO_ARRAY
   InitAllPins();
