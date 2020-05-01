@@ -22,7 +22,7 @@ In addition to the [release webpage](https://github.com/arendst/Tasmota/releases
 
 [![Dev Version](https://img.shields.io/badge/development%20version-v8.2.x.x-blue.svg)](https://github.com/arendst/Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
-![Tasmota CI](https://github.com/arendst/Tasmota/workflows/Tasmota20CI/badge.svg)
+![Tasmota CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20CI/badge.svg)
 
 See [tasmota/CHANGELOG.md](tasmota/CHANGELOG.md) for detailed change information.
 
