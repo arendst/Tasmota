@@ -1448,8 +1448,12 @@ void GpioInit(void)
   if ((2 == Pin(GPIO_TXD)) || (H801 == my_module_type)) { Serial.set_tx(2); }
 #endif  // ESP8266
 
+#ifdef ESP8266
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
+#else
+  analogWriteFreqRange(0,Settings.pwm_frequency,Settings.pwm_range);
+#endif
 
 #ifdef USE_SPI
   spi_flg = (((PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_CS) > 14)) || (Pin(GPIO_SPI_CS) < 12)) || ((PinUsed(GPIO_SPI_DC) && (Pin(GPIO_SPI_DC) > 14)) || (Pin(GPIO_SPI_DC) < 12)));
@@ -1516,6 +1520,11 @@ void GpioInit(void)
   for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
     if (PinUsed(GPIO_PWM1, i)) {
       pinMode(Pin(GPIO_PWM1, i), OUTPUT);
+#ifdef ESP32
+      analogAttach(Pin(GPIO_PWM1, i),i);
+      analogWriteFreqRange(i,Settings.pwm_frequency,Settings.pwm_range);
+#endif
+
       if (light_type) {
         // force PWM GPIOs to low or high mode, see #7165
         analogWrite(Pin(GPIO_PWM1, i), bitRead(pwm_inverted, i) ? Settings.pwm_range : 0);

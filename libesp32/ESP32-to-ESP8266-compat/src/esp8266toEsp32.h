@@ -29,8 +29,23 @@
 #include <Esp.h>
 
 // Analog
+
+uint8_t pwm_channel[8]={99,99,99,99,99,99,99,99};
+
+inline uint32_t pin2chan(uint32_t pin) {
+  for (uint32_t cnt=0;cnt<8;cnt++) {
+    if ((pwm_channel[cnt]<99) && (pwm_channel[cnt]==pin)) {
+      return cnt;
+    }
+  }
+  return 0;
+}
+
 inline void analogWrite(uint8_t pin, int val)
 {
+  uint32_t channel=pin2chan(pin);
+  ledcWrite(channel,val);
+  Serial.printf("write %d - %d\n",channel,val);
 }
 
 inline void analogWriteFreq(uint32_t freq)
@@ -38,6 +53,31 @@ inline void analogWriteFreq(uint32_t freq)
 }
 inline void analogWriteRange(uint32_t range)
 {
+}
+
+inline void analogAttach(uint32_t pin, uint32_t channel) {
+  pwm_channel[channel&7]=pin;
+  ledcAttachPin(pin,channel);
+  Serial.printf("attach %d - %d\n",channel,pin);
+}
+
+inline uint32_t pow2(uint32_t x) {
+uint32_t power = 1,bits=0;
+  while (power < x) {
+    power*=2;
+    bits++;
+  }
+  return bits-1;
+}
+// input range is in full range, ledc needs bits
+inline void analogWriteFreqRange(uint32_t channel,uint32_t freq, uint32_t irange) {
+  uint32_t range=pow2(irange);
+  for (uint32_t cnt=0;cnt<8;cnt++) {
+    if (pwm_channel[cnt]<99) {
+      ledcSetup(cnt,freq,range);
+    }
+  }
+  Serial.printf("freq - range %d - %d\n",freq,range);
 }
 
 #define INPUT_PULLDOWN_16 INPUT_PULLUP
@@ -57,7 +97,7 @@ typedef double real64_t;
 // Serial minimal type to hold the config
 typedef int SerConfu8;
 typedef int SerialConfig;
-#define analogWrite(a, b)
+//#define analogWrite(a, b)
 
 //
 // WS2812

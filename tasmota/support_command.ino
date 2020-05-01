@@ -1228,7 +1228,11 @@ void CmndPwmfrequency(void)
 {
   if ((1 == XdrvMailbox.payload) || ((XdrvMailbox.payload >= PWM_MIN) && (XdrvMailbox.payload <= PWM_MAX))) {
     Settings.pwm_frequency = (1 == XdrvMailbox.payload) ? PWM_FREQ : XdrvMailbox.payload;
+#ifdef ESP8266
     analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
+#else
+    analogWriteFreqRange(0,Settings.pwm_frequency,Settings.pwm_range);
+#endif
   }
   ResponseCmndNumber(Settings.pwm_frequency);
 }
@@ -1242,7 +1246,11 @@ void CmndPwmrange(void)
         Settings.pwm_value[i] = Settings.pwm_range;
       }
     }
+#ifdef ESP8266
     analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
+#else
+    analogWriteFreqRange(0,Settings.pwm_frequency,Settings.pwm_range);
+#endif
   }
   ResponseCmndNumber(Settings.pwm_range);
 }
