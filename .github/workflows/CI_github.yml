@@ -1,4 +1,4 @@
-name: PlatformIO CI
+name: Tasmota CI
 
 on: [push, pull_request]
 
