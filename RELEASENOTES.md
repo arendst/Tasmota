@@ -96,3 +96,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add console command history (#7483, #8015)
 - Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
 - Add more accuracy to GPS NTP server (#8088)
+- Add experimental basic support for Tasmota on ESP32 based on work by Jörg Schüler-Maroldt

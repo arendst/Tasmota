@@ -120,9 +120,7 @@ uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
 uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
 
 #ifdef ESP32
-#ifdef FINAL_ESP32
 uint16_t gpio_pin[MAX_GPIO_PIN] = { 0 };    // GPIO functions indexed by pin number
-#endif  // FINAL_ESP32
 #endif  // ESP32
 
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
@@ -140,14 +138,6 @@ uint8_t pin_gpio[GPIO_MAX];                 // Pin numbers indexed by GPIO funct
 #else  // No LEGACY_GPIO_ARRAY
 uint8_t gpio_pin[MAX_GPIO_PIN] = { 0 };     // GPIO functions indexed by pin number
 #endif  // LEGACY_GPIO_ARRAY
-#else  // ESP32
-#ifndef FINAL_ESP32
-#ifdef LEGACY_GPIO_ARRAY
-uint8_t pin_gpio[GPIO_MAX];                 // Pin numbers indexed by GPIO function
-#else  // No LEGACY_GPIO_ARRAY
-uint8_t gpio_pin[MAX_GPIO_PIN] = { 0 };     // GPIO functions indexed by pin number
-#endif  // LEGACY_GPIO_ARRAY
-#endif  // No FINAL_ESP32
 #endif  // ESP8266 - ESP32
 
 uint8_t active_device = 1;                  // Active device in ExecuteCommandPower

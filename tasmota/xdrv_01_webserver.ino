@@ -239,14 +239,6 @@ const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
     "eb('g'+g).value=s;"
   "}";
 #else  // ESP32
-#ifndef FINAL_ESP32
-  "var os;"
-  "function sk(s,g){"                     // s = value, g = id and name
-    "var o=os.replace(/}2/g,\"<option value='\").replace(/}3/g,\")</option>\");"
-    "eb('g'+g).innerHTML=o;"
-    "eb('g'+g).value=s;"
-  "}";
-#else  // FINAL_ESP32
   "var os,hs;"
   "function ce(i,q){"                     // Create index select
     "var o=document.createElement('option');"
@@ -268,7 +260,6 @@ const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
     "eb('g'+g).value=(g<99)?s&0xffe0:s;"
     "if(g<99){ot(g,s);}"
   "}";
-#endif  // FINAL_ESP32
 #endif  // ESP8266 - ESP32
 
 const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
@@ -1468,20 +1459,14 @@ void HandleTemplateConfiguration(void)
     uint32_t midx = pgm_read_byte(kGpioNiceList + i);
     uint32_t ridx = midx;
 #else  // ESP32
-#ifndef FINAL_ESP32
-    uint32_t midx = pgm_read_byte(kGpioNiceList + i);
-    uint32_t ridx = midx;
-#else  // FINAL_ESP32
     uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
     uint32_t midx = ridx >> 5;
-#endif  // FINAL_ESP32
 #endif  // ESP8266 - ESP32
     WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), ridx);
   }
   WSContentSend_P(PSTR("\";"));
 
 #ifdef ESP32
-#ifdef FINAL_ESP32
   WSContentSend_P(PSTR("hs=["));
   bool first_done = false;
   for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
@@ -1491,7 +1476,6 @@ void HandleTemplateConfiguration(void)
     first_done = true;
   }
   WSContentSend_P(PSTR("];"));
-#endif  // FINAL_ESP32
 #endif  // ESP32
 
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE2);
@@ -1528,14 +1512,9 @@ void HandleTemplateConfiguration(void)
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d'></select></td></tr>"),
         ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:200px'" : "", i);
 #else  // ESP32
-#ifndef FINAL_ESP32
-      WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d'></select></td></tr>"),
-        ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:200px'" : "", i);
-#else  // FINAL_ESP32
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
         ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:150px'" : "", i, i);
       WSContentSend_P(PSTR("<td style='width:50px'><select id='h%d'></select></td></tr>"), i);
-#endif  // FINAL_ESP32
 #endif  // ESP8266
     }
   }
@@ -1575,14 +1554,12 @@ void TemplateSaveSettings(void)
     WebGetArg(webindex, tmp, sizeof(tmp));                  // GPIO
     uint32_t gpio = atoi(tmp);
 #ifdef ESP32
-#ifdef FINAL_ESP32
     char tmp2[8];         // WebGetArg numbers only
     char webindex2[5];    // WebGetArg name
     snprintf_P(webindex2, sizeof(webindex2), PSTR("h%d"), j);
     WebGetArg(webindex2, tmp2, sizeof(tmp2));
     uint32_t value2 = (!strlen(tmp2)) ? 0 : atoi(tmp2) -1;
     gpio += value2;
-#endif  // FINAL_ESP32
 #endif  // ESP32
     snprintf_P(svalue, sizeof(svalue), PSTR("%s%s%d"), svalue, (i>0)?",":"", gpio);
     j++;
@@ -1646,13 +1623,8 @@ void HandleModuleConfiguration(void)
     midx = pgm_read_byte(kGpioNiceList + i);
     uint32_t ridx = midx;
 #else  // ESP32
-#ifndef FINAL_ESP32
-    midx = pgm_read_byte(kGpioNiceList + i);
-    uint32_t ridx = midx;
-#else  // FINAL_ESP32
     uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
     midx = ridx >> 5;
-#endif  // FINAL_ESP32
 #endif  // ESP8266 - ESP32
     if (!GetUsedInModule(midx, cmodule.io)) {
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), ridx);
@@ -1661,7 +1633,6 @@ void HandleModuleConfiguration(void)
   WSContentSend_P(PSTR("\";"));
 
 #ifdef ESP32
-#ifdef FINAL_ESP32
   WSContentSend_P(PSTR("hs=["));
   bool first_done = false;
   for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
@@ -1671,7 +1642,6 @@ void HandleModuleConfiguration(void)
     first_done = true;
   }
   WSContentSend_P(PSTR("];"));
-#endif  // FINAL_ESP32
 #endif  // ESP32
 
   for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {
@@ -1703,14 +1673,9 @@ void HandleModuleConfiguration(void)
       WSContentSend_P(PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:176px'><select id='g%d'></select></td></tr>"),
         (WEMOS==my_module_type)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :((9==i)||(10==i))? sesp8285 :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i);
 #else  // ESP32
-#ifndef FINAL_ESP32
-      WSContentSend_P(PSTR("<tr><td style='width:140px'>%s <b>" D_GPIO "%d</b></td><td style='width:176px'><select id='g%d'></select></td></tr>"),
-        (WEMOS==my_module_type)?stemp:"", i, i);
-#else  // FINAL_ESP32
       WSContentSend_P(PSTR("<tr><td style='width:116px'>%s <b>" D_GPIO "%d</b></td><td style='width:150px'><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
         (WEMOS==my_module_type)?stemp:"", i, i, i);
       WSContentSend_P(PSTR("<td style='width:50px'><select id='h%d'></select></td></tr>"), i);
-#endif  // FINAL_ESP32
 #endif  // ESP8266
     }
   }
@@ -1749,14 +1714,12 @@ void ModuleSaveSettings(void)
         WebGetArg(webindex, tmp, sizeof(tmp));
         uint32_t value = (!strlen(tmp)) ? 0 : atoi(tmp);
 #ifdef ESP32
-#ifdef FINAL_ESP32
         char tmp2[8];         // WebGetArg numbers only
         char webindex2[5];    // WebGetArg name
         snprintf_P(webindex2, sizeof(webindex2), PSTR("h%d"), i);
         WebGetArg(webindex2, tmp2, sizeof(tmp2));
         uint32_t value2 = (!strlen(tmp2)) ? 0 : atoi(tmp2) -1;
         value += value2;
-#endif  // FINAL_ESP32
 #endif  // ESP8266 - ESP32
         Settings.my_gp.io[i] = value;
         gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(value);

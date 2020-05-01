@@ -55,11 +55,6 @@ extern "C" void resetPins();
 
 //#define LEGACY_GPIO_ARRAY                      // Uncomment to use legacy GPIO array instead of new PIN array
 
-//#define FINAL_ESP32                            // Uncomment for ESP32 16-bits PIN array
-#ifdef FINAL_ESP32
-#undef LEGACY_GPIO_ARRAY
-#endif
-
 /*********************************************************************************************\
  * Mandatory defines satisfying disabled defines
 \*********************************************************************************************/
@@ -336,11 +331,7 @@ const char kWebColors[] PROGMEM =
 #ifdef ESP8266
 #define AGPIO(x) (x)
 #else  // ESP32
-#ifndef FINAL_ESP32
-#define AGPIO(x) (x)
-#else  // FINAL_ESP32
 #define AGPIO(x) (x<<5)
-#endif  // FINAL_ESP32
 #endif  // ESP8266 - ESP32
 
 #ifdef USE_DEVICE_GROUPS

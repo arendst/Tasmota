@@ -1386,6 +1386,13 @@ void SettingsDelta(void)
 #endif  // ESP32
     }
 
+    if (Settings.version < 0x08020006) {
+#ifdef ESP32
+      Settings.module = WEMOS;
+      ModuleDefault(WEMOS);
+#endif  // ESP32
+    }
+
     Settings.version = VERSION;
     SettingsSave(1);
   }

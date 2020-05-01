@@ -362,15 +362,10 @@ struct {
   char          ex_friendlyname[4][33];    // 3AC
   char          ex_switch_topic[33];       // 430
 #else  // ESP32
-#ifndef FINAL_ESP32
-  char          ex_friendlyname[4][33];    // 3AC
-  char          ex_switch_topic[33];       // 430
-#else  // FINAL_ESP32
   myio          my_gp;                     // 3AC - 2 x 40 bytes (ESP32)
   mytmplt       user_template;             // 3FC - 2 x 37 bytes (ESP32)
 
   uint8_t       free_esp32_446[11];        // 446
-#endif  // FINAL_ESP32
 #endif  // ESP8266 - ESP32
 
   char          serial_delimiter;          // 451
@@ -415,18 +410,7 @@ struct {
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;           // 554
 
-#ifdef ESP8266
   char          ex_mqtt_fulltopic[100];    // 558
-#else  // ESP32
-#ifndef FINAL_ESP32
-  myio          my_gp;                     // 558 - 40 bytes (ESP32)
-  mytmplt       user_template;             // 580 - 37 bytes (ESP32)
-
-  uint8_t       free_esp32_5a5[23];        // 5A5
-#else  // FINAL_ESP32
-  char          ex_mqtt_fulltopic[100];    // 558
-#endif  // FINAL_ESP32
-#endif  // ESP8266 - ESP32
 
   SysBitfield2  flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
