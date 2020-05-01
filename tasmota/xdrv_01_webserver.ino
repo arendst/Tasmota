@@ -228,13 +228,15 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "wl(h);";                               // Add console command key eventlistener after name has been synced with id (= wl(jd))
 
 const char HTTP_MODULE_TEMPLATE_REPLACE[] PROGMEM =
-  "}2%d'>%s (%d}3";                       // }2 and }3 are used in below os.replace
+  "}2%d'>%s (%d)}3";                      // }2 and }3 are used in below os.replace
+const char HTTP_MODULE_TEMPLATE_NO_INDEX_REPLACE[] PROGMEM =
+  "}2%d'>%s}3";                           // }2 and }3 are used in below os.replace
 
 const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
 #ifdef ESP8266
   "var os;"
   "function sk(s,g){"                     // s = value, g = id and name
-    "var o=os.replace(/}2/g,\"<option value='\").replace(/}3/g,\")</option>\");"
+    "var o=os.replace(/}2/g,\"<option value='\").replace(/}3/g,\"</option>\");"
     "eb('g'+g).innerHTML=o;"
     "eb('g'+g).value=s;"
   "}"
@@ -242,7 +244,7 @@ const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
 #ifndef FINAL_ESP32
   "var os;"
   "function sk(s,g){"                     // s = value, g = id and name
-    "var o=os.replace(/}2/g,\"<option value='\").replace(/}3/g,\")</option>\");"
+    "var o=os.replace(/}2/g,\"<option value='\").replace(/}3/g,\"</option>\");"
     "eb('g'+g).innerHTML=o;"
     "eb('g'+g).value=s;"
   "}"
@@ -1595,19 +1597,24 @@ void HandleModuleConfiguration(void)
 #ifdef ESP8266
     midx = pgm_read_byte(kGpioNiceList + i);
     uint32_t ridx = midx;
+    if (!GetUsedInModule(midx, cmodule.io)) {
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), ridx);
+    }
 #else  // ESP32
 #ifndef FINAL_ESP32
     midx = pgm_read_byte(kGpioNiceList + i);
     uint32_t ridx = midx;
+    if (!GetUsedInModule(midx, cmodule.io)) {
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), ridx);
+    }
 #else  // FINAL_ESP32
     uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
     midx = ridx >> 5;
+    if (!GetUsedInModule(midx, cmodule.io)) {
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_NO_INDEX_REPLACE, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
+    }
 #endif  // FINAL_ESP32
 #endif  // ESP8266 - ESP32
-    if (!GetUsedInModule(midx, cmodule.io)) {
-//      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), ridx);
-      WSContentSend_P(PSTR("}2%d'>%s}3"), ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
-    }
   }
   WSContentSend_P(PSTR("\";"));
 
@@ -1630,6 +1637,8 @@ void HandleModuleConfiguration(void)
       WSContentSend_P(PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g16
     }
   }
+
+#ifdef ESP8266
 #ifndef USE_ADC_VCC
   WSContentSend_P(PSTR("os=\""));
   for (uint32_t j = 0; j < ADC0_END; j++) {
@@ -1637,6 +1646,18 @@ void HandleModuleConfiguration(void)
   }
   WSContentSend_P(PSTR("\";sk(%d," STR(ADC0_PIN) ");"), Settings.my_adc0);
 #endif  // USE_ADC_VCC
+#else  // ESP32
+#ifndef FINAL_ESP32
+#ifndef USE_ADC_VCC
+  WSContentSend_P(PSTR("os=\""));
+  for (uint32_t j = 0; j < ADC0_END; j++) {
+    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, j, GetTextIndexed(stemp, sizeof(stemp), j, kAdc0Names), j);
+  }
+  WSContentSend_P(PSTR("\";sk(%d," STR(ADC0_PIN) ");"), Settings.my_adc0);
+#endif  // USE_ADC_VCC
+#endif  // No FINAL_ESP32
+#endif  // ESP8266 - ESP32
+
   WSContentSend_P(PSTR("}wl(sl);"));
 
   WSContentSendStyle();
