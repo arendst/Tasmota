@@ -1346,11 +1346,11 @@ bool JsonTemplate(const char* dataBuf)
     }
   }
   if (obj[D_JSON_FLAG].success()) {
-    uint8_t flag = obj[D_JSON_FLAG] | 0;
+    uint32_t flag = obj[D_JSON_FLAG] | 0;
     memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
   }
   if (obj[D_JSON_BASE].success()) {
-    uint8_t base = obj[D_JSON_BASE];
+    uint32_t base = obj[D_JSON_BASE];
     if ((0 == base) || !ValidTemplateModule(base -1)) { base = 18; }
     Settings.user_template_base = base -1;  // Default WEMOS
   }
