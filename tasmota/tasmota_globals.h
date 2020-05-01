@@ -50,18 +50,8 @@ extern "C" void resetPins();
 #include "tasmota_configurations.h"            // Preconfigured configurations
 
 /*********************************************************************************************\
- * Theo transition defines - DO NOT TOUCH
-\*********************************************************************************************/
-
-//#define LEGACY_GPIO_ARRAY                      // Uncomment to use legacy GPIO array instead of new PIN array
-
-/*********************************************************************************************\
  * Mandatory defines satisfying disabled defines
 \*********************************************************************************************/
-
-#ifndef MODULE
-#define MODULE                      SONOFF_BASIC   // [Module] Select default model
-#endif
 
 #ifdef USE_EMULATION_HUE
 #define USE_EMULATION
@@ -284,6 +274,10 @@ const char kWebColors[] PROGMEM =
 
 #ifdef ESP8266
 
+#ifndef MODULE
+#define MODULE                      SONOFF_BASIC   // [Module] Select default model
+#endif
+
 #ifndef ARDUINO_ESP8266_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
 #else
@@ -294,6 +288,10 @@ const char kWebColors[] PROGMEM =
 
 #ifdef ESP32
 
+#ifndef MODULE
+#define MODULE                      WEMOS          // [Module] Select default model
+#endif
+
 #ifndef ARDUINO_ESP32_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
 #else
@@ -301,7 +299,7 @@ const char kWebColors[] PROGMEM =
 #endif  // ARDUINO_ESP32_RELEASE
 
 #undef USE_HM10                     // Disable support for HM-10 as a BLE-bridge as an alternative is using the internal ESP32 BLE
-#undef USE_KEELOQ                   // Disable support for Jarolift rollers by Keeloq algorithm ss it's library cc1101 is not compatible with ESP32
+#undef USE_KEELOQ                   // Disable support for Jarolift rollers by Keeloq algorithm as it's library cc1101 is not compatible with ESP32
 #undef USE_DISPLAY_ILI9488          // Disable as it's library JaretBurkett_ILI9488-gemu-1.0 is not compatible with ESP32
 #undef USE_DISPLAY_SSD1351          // Disable as it's library Adafruit_SSD1351_gemu-1.0 is not compatible with ESP32
 

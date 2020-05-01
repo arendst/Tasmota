@@ -133,11 +133,7 @@ uint8_t ssleep;                             // Current copy of Settings.sleep
 uint8_t blinkspeed = 1;                     // LED blink rate
 
 #ifdef ESP8266
-#ifdef LEGACY_GPIO_ARRAY
-uint8_t pin_gpio[GPIO_MAX];                 // Pin numbers indexed by GPIO function
-#else  // No LEGACY_GPIO_ARRAY
 uint8_t gpio_pin[MAX_GPIO_PIN] = { 0 };     // GPIO functions indexed by pin number
-#endif  // LEGACY_GPIO_ARRAY
 #endif  // ESP8266 - ESP32
 
 uint8_t active_device = 1;                  // Active device in ExecuteCommandPower
