@@ -1469,12 +1469,28 @@ void HandleTemplateConfiguration(void)
 #ifdef ESP32
   WSContentSend_P(PSTR("hs=["));
   bool first_done = false;
+/*
   for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
     uint32_t midx = pgm_read_word(kGpioNiceList + i) & 0x001F;
     if (first_done) { WSContentSend_P(PSTR(",")); }
     WSContentSend_P(PSTR("%d"), midx);
     first_done = true;
   }
+*/
+  uint32_t j = 0;
+  for (uint32_t i = 0; i < GPIO_SENSOR_END; i++) {
+    uint32_t midx = pgm_read_word(kGpioNiceList + j);
+    if ((midx >> 5) != i) {
+      midx = 0;
+    } else {
+      midx &= 0x001F;
+      j++;
+    }
+    if (first_done) { WSContentSend_P(PSTR(",")); }
+    WSContentSend_P(PSTR("%d"), midx);
+    first_done = true;
+  }
+
   WSContentSend_P(PSTR("];"));
 #endif  // ESP32
 
@@ -1635,12 +1651,28 @@ void HandleModuleConfiguration(void)
 #ifdef ESP32
   WSContentSend_P(PSTR("hs=["));
   bool first_done = false;
+/*
   for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
     midx = pgm_read_word(kGpioNiceList + i) & 0x001F;
     if (first_done) { WSContentSend_P(PSTR(",")); }
     WSContentSend_P(PSTR("%d"), midx);
     first_done = true;
   }
+*/
+  uint32_t j = 0;
+  for (uint32_t i = 0; i < GPIO_SENSOR_END; i++) {
+    midx = pgm_read_word(kGpioNiceList + j);
+    if ((midx >> 5) != i) {
+      midx = 0;
+    } else {
+      midx &= 0x001F;
+      j++;
+    }
+    if (first_done) { WSContentSend_P(PSTR(",")); }
+    WSContentSend_P(PSTR("%d"), midx);
+    first_done = true;
+  }
+
   WSContentSend_P(PSTR("];"));
 #endif  // ESP32
 
