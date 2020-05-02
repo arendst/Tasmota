@@ -115,8 +115,8 @@ void WindMeterInit(void)
   WindMeterCheckSampleCount();
 #endif  // USE_WINDMETER_NOSTATISTICS
 
-  pinMode(pin[GPIO_WINDMETER_SPEED], INPUT_PULLUP);
-  attachInterrupt(pin[GPIO_WINDMETER_SPEED], WindMeterUpdateSpeed, FALLING);
+  pinMode(Pin(GPIO_WINDMETER_SPEED), INPUT_PULLUP);
+  attachInterrupt(Pin(GPIO_WINDMETER_SPEED), WindMeterUpdateSpeed, FALLING);
 }
 
 void WindMeterEverySecond(void)
@@ -342,7 +342,7 @@ bool Xsns68Cmnd(void)
 bool Xsns68(uint8_t function)
 {
   bool result = false;
-  if (pin[GPIO_WINDMETER_SPEED] < 99) {
+  if (PinUsed(GPIO_WINDMETER_SPEED)) {
     switch (function) {
       case FUNC_INIT:
         WindMeterInit();
