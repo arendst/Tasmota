@@ -22,11 +22,7 @@
 #define XDRV_39              39
 
 // Enable/disable debugging
-#define DEBUG_THERMOSTAT
-
-// Use attached temperature sensor
-#define THERMOSTAT_USE_LOCAL_SENSOR
-#define THERMOSTAT_SENSOR_NAME "DS18B20"
+//#define DEBUG_THERMOSTAT
 
 #ifdef DEBUG_THERMOSTAT
 #define DOMOTICZ_IDX1        791
@@ -44,13 +40,10 @@
 #define D_CMND_TEMPFORMATSET "TempFormatSet"
 #define D_CMND_TEMPMEASUREDSET "TempMeasuredSet"
 #define D_CMND_TEMPTARGETSET "TempTargetSet"
-#define D_CMND_TEMPTARGETREAD "TempTargetRead"
-#define D_CMND_TEMPMEASUREDREAD "TempMeasuredRead"
 #define D_CMND_TEMPMEASUREDGRDREAD "TempMeasuredGrdRead"
 #define D_CMND_TEMPSENSNUMBERSET "TempSensNumberSet"
 #define D_CMND_SENSORINPUTSET "SensorInputSet"
 #define D_CMND_STATEEMERGENCYSET "StateEmergencySet"
-#define D_CMND_POWERMAXSET "PowerMaxSet"
 #define D_CMND_TIMEMANUALTOAUTOSET "TimeManualToAutoSet"
 #define D_CMND_TIMEONLIMITSET "TimeOnLimitSet"
 #define D_CMND_PROPBANDSET "PropBandSet"
@@ -69,6 +62,7 @@
 #define D_CMND_TIMEPIPROPORTREAD "TimePiProportRead"
 #define D_CMND_TIMEPIINTEGRREAD "TimePiIntegrRead"
 #define D_CMND_TIMESENSLOSTSET "TimeSensLostSet"
+#define D_CMND_DIAGNOSTICMODESET "DiagnosticModeSet"
 
 enum ThermostatModes { THERMOSTAT_OFF, THERMOSTAT_AUTOMATIC_OP, THERMOSTAT_MANUAL_OP, THERMOSTAT_MODES_MAX };
 enum ControllerModes { CTR_HYBRID, CTR_PI, CTR_RAMP_UP, CTR_MODES_MAX };
@@ -79,6 +73,7 @@ enum EmergencyStates { EMERGENCY_OFF, EMERGENCY_ON };
 enum SensorType { SENSOR_MQTT, SENSOR_LOCAL, SENSOR_MAX };
 enum TempFormat { TEMP_CELSIUS, TEMP_FAHRENHEIT };
 enum TempConvType { TEMP_CONV_ABSOLUTE, TEMP_CONV_RELATIVE };
+enum DiagnosticModes { DIAGNOSTIC_OFF, DIAGNOSTIC_ON };
 enum ThermostatSupportedInputSwitches {
   THERMOSTAT_INPUT_NONE,
   THERMOSTAT_INPUT_SWT1 = 1,            // Buttons
@@ -106,15 +101,18 @@ typedef union {
     uint32_t sensor_alive : 1;          // Flag stating if temperature sensor is alive (0 = inactive, 1 = active)
     uint32_t sensor_type : 1;           // Sensor type: MQTT/local
     uint32_t temp_format : 1;           // Temperature format: Celsius/Fahrenheit
-    uint32_t command_output : 1;        // Flag stating state to save the command to the output (0 = inactive, 1 = active)
+    uint32_t command_output : 1;        // Flag stating the desired command to the output (0 = inactive, 1 = active)
+    uint32_t status_output : 1;         // Flag stating state of the output (0 = inactive, 1 = active)
+    uint32_t status_input : 1;          // Flag stating state of the input (0 = inactive, 1 = active)
     uint32_t phase_hybrid_ctr : 1;      // Phase of the hybrid controller (Ramp-up or PI)
-    uint32_t status_output : 1;         // Status of the output switch
     uint32_t status_cycle_active : 1;   // Status showing if cycle is active (Output ON) or not (Output OFF)
     uint32_t state_emergency : 1;       // State for thermostat emergency
     uint32_t counter_seconds : 6;       // Second counter used to track minutes
     uint32_t output_relay_number : 4;   // Output relay number
     uint32_t input_switch_number : 3;   // Input switch number
-    uint32_t free : 7;                  // Free bits in Bitfield
+    uint32_t output_inconsist_ctr : 2;  // Counter of the minutes where there are inconsistent in the output state
+    uint32_t diagnostic_mode : 1;       // Diagnostic mode selected
+    uint32_t free : 3;                  // Free bits in Bitfield
   };
 } ThermostatBitfield;
 
@@ -124,23 +122,22 @@ const char DOMOTICZ_MES[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\"
 
 const char kThermostatCommands[] PROGMEM = "|" D_CMND_THERMOSTATMODESET "|" D_CMND_TEMPFROSTPROTECTSET "|" 
   D_CMND_CONTROLLERMODESET "|" D_CMND_INPUTSWITCHSET "|" D_CMND_OUTPUTRELAYSET "|" D_CMND_TIMEALLOWRAMPUPSET "|" 
-  D_CMND_TEMPFORMATSET "|" D_CMND_TEMPMEASUREDSET "|" D_CMND_TEMPTARGETSET "|" D_CMND_TEMPTARGETREAD "|" 
-  D_CMND_TEMPMEASUREDREAD "|" D_CMND_TEMPMEASUREDGRDREAD "|" D_CMND_SENSORINPUTSET "|" 
-  D_CMND_STATEEMERGENCYSET "|" D_CMND_POWERMAXSET "|" D_CMND_TIMEMANUALTOAUTOSET "|" D_CMND_TIMEONLIMITSET "|" 
-  D_CMND_PROPBANDSET "|" D_CMND_TIMERESETSET "|" D_CMND_TIMEPICYCLESET "|" D_CMND_TEMPANTIWINDUPRESETSET "|" 
-  D_CMND_TEMPHYSTSET "|" D_CMND_TIMEMAXACTIONSET "|" D_CMND_TIMEMINACTIONSET "|" D_CMND_TIMEMINTURNOFFACTIONSET "|"
-  D_CMND_TEMPRUPDELTINSET "|" D_CMND_TEMPRUPDELTOUTSET "|" D_CMND_TIMERAMPUPMAXSET "|" D_CMND_TIMERAMPUPCYCLESET  "|" 
-  D_CMND_TEMPRAMPUPPIACCERRSET "|" D_CMND_TIMEPIPROPORTREAD "|" D_CMND_TIMEPIINTEGRREAD "|" D_CMND_TIMESENSLOSTSET;
+  D_CMND_TEMPFORMATSET "|" D_CMND_TEMPMEASUREDSET "|" D_CMND_TEMPTARGETSET "|" D_CMND_TEMPMEASUREDGRDREAD "|" 
+  D_CMND_SENSORINPUTSET "|" D_CMND_STATEEMERGENCYSET "|" D_CMND_TIMEMANUALTOAUTOSET "|" 
+  D_CMND_TIMEONLIMITSET "|" D_CMND_PROPBANDSET "|" D_CMND_TIMERESETSET "|" D_CMND_TIMEPICYCLESET "|" 
+  D_CMND_TEMPANTIWINDUPRESETSET "|" D_CMND_TEMPHYSTSET "|" D_CMND_TIMEMAXACTIONSET "|" D_CMND_TIMEMINACTIONSET "|" 
+  D_CMND_TIMEMINTURNOFFACTIONSET "|" D_CMND_TEMPRUPDELTINSET "|" D_CMND_TEMPRUPDELTOUTSET "|" D_CMND_TIMERAMPUPMAXSET "|" 
+  D_CMND_TIMERAMPUPCYCLESET "|" D_CMND_TEMPRAMPUPPIACCERRSET "|" D_CMND_TIMEPIPROPORTREAD "|" D_CMND_TIMEPIINTEGRREAD "|" 
+  D_CMND_TIMESENSLOSTSET "|" D_CMND_DIAGNOSTICMODESET;
 
 void (* const ThermostatCommand[])(void) PROGMEM = {
   &CmndThermostatModeSet, &CmndTempFrostProtectSet, &CmndControllerModeSet, &CmndInputSwitchSet, &CmndOutputRelaySet, 
-  &CmndTimeAllowRampupSet, &CmndTempFormatSet, &CmndTempMeasuredSet, &CmndTempTargetSet, &CmndTempTargetRead, 
-  &CmndTempMeasuredRead, &CmndTempMeasuredGrdRead, &CmndSensorInputSet, &CmndStateEmergencySet, 
-  &CmndPowerMaxSet, &CmndTimeManualToAutoSet, &CmndTimeOnLimitSet, &CmndPropBandSet, &CmndTimeResetSet, 
-  &CmndTimePiCycleSet, &CmndTempAntiWindupResetSet, &CmndTempHystSet, &CmndTimeMaxActionSet, 
-  &CmndTimeMinActionSet, &CmndTimeMinTurnoffActionSet, &CmndTempRupDeltInSet, &CmndTempRupDeltOutSet,
-  &CmndTimeRampupMaxSet, &CmndTimeRampupCycleSet, &CmndTempRampupPiAccErrSet, &CmndTimePiProportRead, 
-  &CmndTimePiIntegrRead, &CmndTimeSensLostSet };
+  &CmndTimeAllowRampupSet, &CmndTempFormatSet, &CmndTempMeasuredSet, &CmndTempTargetSet, &CmndTempMeasuredGrdRead, 
+  &CmndSensorInputSet, &CmndStateEmergencySet, &CmndTimeManualToAutoSet, &CmndTimeOnLimitSet, 
+  &CmndPropBandSet, &CmndTimeResetSet, &CmndTimePiCycleSet, &CmndTempAntiWindupResetSet, &CmndTempHystSet, 
+  &CmndTimeMaxActionSet, &CmndTimeMinActionSet, &CmndTimeMinTurnoffActionSet, &CmndTempRupDeltInSet, 
+  &CmndTempRupDeltOutSet, &CmndTimeRampupMaxSet, &CmndTimeRampupCycleSet, &CmndTempRampupPiAccErrSet, 
+  &CmndTimePiProportRead, &CmndTimePiIntegrRead, &CmndTimeSensLostSet, &CmndDiagnosticModeSet };
 
 struct THERMOSTAT {
   ThermostatBitfield status;                                                  // Bittfield including states as well as several flags
@@ -188,7 +185,6 @@ struct THERMOSTAT {
   uint16_t time_min_turnoff_action = THERMOSTAT_TIME_MIN_TURNOFF_ACTION;      // Minimum turnoff time in minutes, below it the thermostat will be held on
   uint8_t temp_reset_anti_windup = THERMOSTAT_TEMP_RESET_ANTI_WINDUP;         // Range where reset antiwindup is disabled, in tenths of degrees celsius
   int8_t temp_hysteresis = THERMOSTAT_TEMP_HYSTERESIS;                        // Range hysteresis for temperature PI controller, in tenths of degrees celsius
-  uint16_t power_max = THERMOSTAT_POWER_MAX;                                  // Maximum output power in Watt
   uint8_t temp_frost_protect = THERMOSTAT_TEMP_FROST_PROTECT;                 // Minimum temperature for frost protection, in tenths of degrees celsius
 } Thermostat;
 
@@ -203,13 +199,15 @@ void ThermostatInit(void)
   Thermostat.status.sensor_type = SENSOR_MQTT;
   Thermostat.status.temp_format = TEMP_CELSIUS;
   Thermostat.status.command_output = IFACE_OFF;
-  Thermostat.status.phase_hybrid_ctr = CTR_HYBRID_PI;
   Thermostat.status.status_output = IFACE_OFF;
+  Thermostat.status.phase_hybrid_ctr = CTR_HYBRID_PI;
   Thermostat.status.status_cycle_active = CYCLE_OFF;
   Thermostat.status.state_emergency = EMERGENCY_OFF;
   Thermostat.status.counter_seconds = 0;
   Thermostat.status.output_relay_number = THERMOSTAT_RELAY_NUMBER;
   Thermostat.status.input_switch_number = THERMOSTAT_SWITCH_NUMBER;
+  Thermostat.status.output_inconsist_ctr = 0;
+  Thermostat.status.diagnostic_mode = DIAGNOSTIC_ON;
   // Make sure the Output is OFF
   ExecuteCommandPower(Thermostat.status.output_relay_number, POWER_OFF, SRC_THERMOSTAT);
 }
@@ -221,7 +219,7 @@ bool ThermostatMinuteCounter(void)
   
   if ((Thermostat.status.counter_seconds % 60) == 0) {
     result = true; 
-    Thermostat.status.counter_seconds = 0;   
+    Thermostat.status.counter_seconds = 0;
   }
   return result;
 }
@@ -236,13 +234,19 @@ inline bool ThermostatRelayIdValid(uint8_t relayId)
   return (relayId >= THERMOSTAT_OUTPUT_REL1 && relayId <= THERMOSTAT_OUTPUT_REL8);
 }
 
-uint8_t ThermostatSwitchStatus(uint8_t input_switch)
+uint8_t ThermostatInputStatus(uint8_t input_switch)
 {
   bool ifId = ThermostatSwitchIdValid(input_switch);
+  uint8_t value = 0;
   if(ifId) {
-    return(SwitchGetVirtual(ifId - THERMOSTAT_INPUT_SWT1));
+    value = SwitchGetVirtual(ifId - THERMOSTAT_INPUT_SWT1);
   }
-  else return 255;
+  return value;
+}
+
+uint8_t ThermostatOutputStatus(uint8_t output_switch)
+{
+  return (uint8_t)bitRead(power, (output_switch - 1));
 }
 
 int16_t ThermostatCelsiusToFahrenheit(const int32_t deg, uint8_t conv_type) { 
@@ -283,31 +287,51 @@ int16_t ThermostatFahrenheitToCelsius(const int32_t deg, uint8_t conv_type) {
   return (int16_t)value;
 }
 
-void ThermostatSignalProcessingSlow(void)
+void ThermostatSignalPreProcessingSlow(void)
 {
-  if ((uptime - Thermostat.timestamp_temp_measured_update) > ((uint32_t)Thermostat.time_sens_lost * 60)) { // Check if sensor alive
+  // Update input sensor status
+  if ((uptime - Thermostat.timestamp_temp_measured_update) > ((uint32_t)Thermostat.time_sens_lost * 60)) {
     Thermostat.status.sensor_alive = IFACE_OFF;
     Thermostat.temp_measured_gradient = 0;
     Thermostat.temp_measured = 0;
   }
 }
 
+void ThermostatSignalPostProcessingSlow(void)
+{
+  // Increate counter when inconsistent output state exists
+  if (Thermostat.status.status_output != Thermostat.status.command_output) {
+    Thermostat.status.output_inconsist_ctr++;
+  }
+  else {
+    Thermostat.status.output_inconsist_ctr = 0;
+  }
+}
+
 void ThermostatSignalProcessingFast(void)
 {
-  if (ThermostatSwitchStatus(Thermostat.status.input_switch_number)) { // Check if input switch active and register last update
+  // Update real status of the input
+  Thermostat.status.status_input = (uint32_t)ThermostatInputStatus(Thermostat.status.input_switch_number);
+  // Update timestamp of last input
+  if (Thermostat.status.status_input == IFACE_ON) {
     Thermostat.timestamp_input_on = uptime;
   }
+  // Update real status of the output
+  Thermostat.status.status_output = (uint32_t)ThermostatOutputStatus(Thermostat.status.output_relay_number);
 }
 
 void ThermostatCtrState(void)
 {
   switch (Thermostat.status.controller_mode) {
-    case CTR_HYBRID:                    // Hybrid controller (Ramp-up + PI)
+    // Hybrid controller (Ramp-up + PI)
+    case CTR_HYBRID:
         ThermostatHybridCtrPhase();
       break;
-    case CTR_PI:                        // PI controller
+    // PI controller
+    case CTR_PI:
       break;
-    case CTR_RAMP_UP:                   // Ramp-up controller (predictive)
+    // Ramp-up controller (predictive)
+    case CTR_RAMP_UP:
       break;
   }
 }
@@ -316,7 +340,8 @@ void ThermostatHybridCtrPhase(void)
 {
   if (Thermostat.status.controller_mode == CTR_HYBRID) {
     switch (Thermostat.status.phase_hybrid_ctr) {
-      case CTR_HYBRID_RAMP_UP:                    // Ramp-up phase with gradient control
+      // Ramp-up phase with gradient control
+      case CTR_HYBRID_RAMP_UP:
           // If ramp-up offtime counter has been initalized    
           // AND ramp-up offtime counter value reached
           if((Thermostat.time_ctr_checkpoint != 0) 
@@ -329,7 +354,8 @@ void ThermostatHybridCtrPhase(void)
             Thermostat.status.phase_hybrid_ctr = CTR_HYBRID_PI;
           }
         break;
-      case CTR_HYBRID_PI:                         // PI controller phase
+      // PI controller phase
+      case CTR_HYBRID_PI:
           // If no output action for a pre-defined time
           // AND temp target has changed
           // AND temp target - target actual bigger than threshold
@@ -361,7 +387,7 @@ bool ThermostatStateAutoToManual(void)
   // If switch input is active
   // OR temperature sensor is not alive
   // then go to manual
-  if ((ThermostatSwitchStatus(Thermostat.status.input_switch_number) == 1)
+  if ((Thermostat.status.status_input == IFACE_ON)
     || (Thermostat.status.sensor_alive == IFACE_OFF)) {
     change_state = true;
   }
@@ -376,7 +402,7 @@ bool ThermostatStateManualToAuto(void)
   // AND sensor alive
   // AND no switch input action (time in current state) bigger than a pre-defined time
   // then go to automatic
-  if ((ThermostatSwitchStatus(Thermostat.status.input_switch_number) == 0) 
+  if ((Thermostat.status.status_input == IFACE_OFF) 
     &&(Thermostat.status.sensor_alive ==  IFACE_ON)
     && ((uptime - Thermostat.timestamp_input_on) > ((uint32_t)Thermostat.time_manual_to_auto * 60))) {
     change_state = true;
@@ -384,55 +410,50 @@ bool ThermostatStateManualToAuto(void)
   return change_state;
 }
 
-bool ThermostatStateAllToOff(void)
+void ThermostatEmergencyShutdown(void)
 {
-  bool change_state = false;
-
-  // If emergency mode then switch OFF the output inmediately
-  if (Thermostat.status.state_emergency == EMERGENCY_ON) {
-    Thermostat.status.thermostat_mode = THERMOSTAT_OFF;  // Emergency switch to THERMOSTAT_OFF
-    change_state = true;
-  }
-  return change_state;
+  // Emergency switch to THERMOSTAT_OFF
+  Thermostat.status.thermostat_mode = THERMOSTAT_OFF;
+  Thermostat.status.command_output = IFACE_OFF;
+  ThermostatOutputRelay(Thermostat.status.command_output);
 }
 
 void ThermostatState(void)
 {
   switch (Thermostat.status.thermostat_mode) {
-    case THERMOSTAT_OFF:                              // State if Off or Emergency
+    // State if Off or Emergency
+    case THERMOSTAT_OFF:
       // No change of state possible without external command
       break;
-    case THERMOSTAT_AUTOMATIC_OP:                     // State automatic thermostat active following to command target temp.
-      if (ThermostatStateAllToOff()) {
-        Thermostat.status.thermostat_mode = THERMOSTAT_OFF;           // Emergency switch to THERMOSTAT_OFF
-      }
+    // State automatic thermostat active following to command target temp.
+    case THERMOSTAT_AUTOMATIC_OP:
       if (ThermostatStateAutoToManual()) {
-        Thermostat.status.thermostat_mode = THERMOSTAT_MANUAL_OP;     // If sensor not alive change to THERMOSTAT_MANUAL_OP
+        // If sensor not alive change to THERMOSTAT_MANUAL_OP
+        Thermostat.status.thermostat_mode = THERMOSTAT_MANUAL_OP;
       }
       ThermostatCtrState();
       break;
-    case THERMOSTAT_MANUAL_OP:                        // State manual operation following input switch
-      if (ThermostatStateAllToOff()) {
-        Thermostat.status.thermostat_mode = THERMOSTAT_OFF;           // Emergency switch to THERMOSTAT_OFF
-      }
+    // State manual operation following input switch
+    case THERMOSTAT_MANUAL_OP:
       if (ThermostatStateManualToAuto()) {
-        Thermostat.status.thermostat_mode = THERMOSTAT_AUTOMATIC_OP;  // Input switch inactive and timeout reached change to THERMOSTAT_AUTOMATIC_OP
+        // Input switch inactive and timeout reached change to THERMOSTAT_AUTOMATIC_OP
+        Thermostat.status.thermostat_mode = THERMOSTAT_AUTOMATIC_OP;
       }
       break;
   }
 }
 
-void ThermostatOutputRelay(bool active)
+void ThermostatOutputRelay(uint32_t command)
 {
   // TODO: See if the real output state can be read by f.i. bitRead(power, Thermostat.status.output_relay_number))
   // If command received to enable output
   // AND current output status is OFF
   // then switch output to ON
-  if ((active == true) 
+  if ((command == IFACE_ON) 
     && (Thermostat.status.status_output == IFACE_OFF)) {
-#ifndef DEBUG_THERMOSTAT
+//#ifndef DEBUG_THERMOSTAT
     ExecuteCommandPower(Thermostat.status.output_relay_number, POWER_ON, SRC_THERMOSTAT);
-#endif // DEBUG_THERMOSTAT
+//#endif // DEBUG_THERMOSTAT
     Thermostat.status.status_output = IFACE_ON;
 #ifdef DEBUG_THERMOSTAT
     ThermostatVirtualSwitch();
@@ -441,10 +462,10 @@ void ThermostatOutputRelay(bool active)
   // If command received to disable output
   // AND current output status is ON
   // then switch output to OFF
-  else if ((active == false) && (Thermostat.status.status_output == IFACE_ON)) {
-#ifndef DEBUG_THERMOSTAT
+  else if ((command == IFACE_OFF) && (Thermostat.status.status_output == IFACE_ON)) {
+//#ifndef DEBUG_THERMOSTAT
     ExecuteCommandPower(Thermostat.status.output_relay_number, POWER_OFF, SRC_THERMOSTAT);
-#endif // DEBUG_THERMOSTAT
+//#endif // DEBUG_THERMOSTAT
     Thermostat.timestamp_output_off = uptime;
     Thermostat.status.status_output = IFACE_OFF;
 #ifdef DEBUG_THERMOSTAT
@@ -764,7 +785,8 @@ void ThermostatWorkAutomaticRampUp(void)
 void ThermostatCtrWork(void)
 {
   switch (Thermostat.status.controller_mode) {
-    case CTR_HYBRID:            // Hybrid controller (Ramp-up + PI)
+    // Hybrid controller (Ramp-up + PI)
+    case CTR_HYBRID:
       switch (Thermostat.status.phase_hybrid_ctr) {
         case CTR_HYBRID_RAMP_UP:
           ThermostatWorkAutomaticRampUp();
@@ -774,10 +796,12 @@ void ThermostatCtrWork(void)
           break;
       }
       break;
-    case CTR_PI:                // PI controller
+    // PI controller
+    case CTR_PI:
       ThermostatWorkAutomaticPI();
       break;
-    case CTR_RAMP_UP:           // Ramp-up controller (predictive)
+    // Ramp-up controller (predictive)
+    case CTR_RAMP_UP:
       ThermostatWorkAutomaticRampUp();
       break;
   }
@@ -786,38 +810,40 @@ void ThermostatCtrWork(void)
 void ThermostatWork(void)
 {
   switch (Thermostat.status.thermostat_mode) {
-    case THERMOSTAT_OFF:                              // State if Off or Emergency
+    // State if thermostat Off or Emergency
+    case THERMOSTAT_OFF:
       Thermostat.status.command_output = IFACE_OFF;
       break;
-    case THERMOSTAT_AUTOMATIC_OP:                     // State automatic thermostat active following to command target temp.
+    // State automatic thermostat active following to command target temp.
+    case THERMOSTAT_AUTOMATIC_OP:
       ThermostatCtrWork();
+      
       break;
-    case THERMOSTAT_MANUAL_OP:                        // State manual operation following input switch
+    // State manual operation following input switch
+    case THERMOSTAT_MANUAL_OP:
       Thermostat.time_ctr_checkpoint = 0;
-      if (ThermostatSwitchStatus(Thermostat.status.input_switch_number) == 1) {
-        Thermostat.status.command_output = IFACE_ON;
-      }
-      else {
-        Thermostat.status.command_output = IFACE_OFF;
-      }      
+      Thermostat.status.command_output = Thermostat.status.status_input;   
       break;
   }
-  bool output_command;
-  if (Thermostat.status.command_output == IFACE_OFF) {
-    output_command = false;
-  }
-  else {
-    output_command = true;
-  }
-  ThermostatOutputRelay(output_command);
+  ThermostatOutputRelay(Thermostat.status.command_output);
 }
 
 void ThermostatDiagnostics(void)
-{
-  // TODOs: 
-  // 1. Check time max for output switch on not exceeded
-  // 2. Check state of output corresponds to command
-  // 3. Check maximum power at output switch not exceeded
+{ 
+  // Diagnostic related to the plausibility of the output state
+  if ((Thermostat.status.diagnostic_mode == DIAGNOSTIC_ON)
+    &&(Thermostat.status.output_inconsist_ctr >= THERMOSTAT_TIME_MAX_OUTPUT_INCONSIST)) {
+    Thermostat.status.thermostat_mode = THERMOSTAT_OFF;
+    Thermostat.status.state_emergency = EMERGENCY_ON;  
+  }
+
+  // Diagnostic related to the plausibility of the output power implemented 
+  // already into the energy driver
+
+  // If diagnostics activated fail, emergency active and thermostat shutdown triggered
+  if (Thermostat.status.state_emergency == EMERGENCY_ON) {
+    ThermostatEmergencyShutdown();
+  }
 }
 
 void ThermostatController(void)
@@ -851,7 +877,7 @@ void ThermostatTimerDisarm(void)
 void ThermostatVirtualSwitch(void)
 {
   char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
-  Response_P(DOMOTICZ_MES, DOMOTICZ_IDX1, (0 == Thermostat.status.status_output) ? 0 : 1, "");
+  Response_P(DOMOTICZ_MES, DOMOTICZ_IDX1, (0 == Thermostat.status.command_output) ? 0 : 1, "");
   MqttPublish(domoticz_in_topic);
 }
 
@@ -864,9 +890,65 @@ void ThermostatVirtualSwitchCtrState(void)
   //Response_P(DOMOTICZ_MES, DOMOTICZ_IDX3, (0 == Thermostat.time_ctr_changepoint) ? 0 : 1, "");
   //MqttPublish(domoticz_in_topic);
 }
+
+void ThermostatDebug(void)
+{
+  char result_chr[FLOATSZ];
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Thermostat Start ------"));
+  dtostrfd(Thermostat.status.counter_seconds, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.counter_seconds: %s"), result_chr);
+  dtostrfd(Thermostat.status.thermostat_mode, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.thermostat_mode: %s"), result_chr);
+  dtostrfd(Thermostat.status.state_emergency, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.state_emergency: %s"), result_chr);
+  dtostrfd(Thermostat.status.output_inconsist_ctr, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.output_inconsist_ctr: %s"), result_chr);
+  dtostrfd(Thermostat.status.controller_mode, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.controller_mode: %s"), result_chr);
+  dtostrfd(Thermostat.status.command_output, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.command_output: %s"), result_chr);
+  dtostrfd(Thermostat.status.status_output, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.status_output: %s"), result_chr);
+  dtostrfd(Thermostat.status.status_input, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.status_input: %s"), result_chr);
+  dtostrfd(Thermostat.status.phase_hybrid_ctr, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.phase_hybrid_ctr: %s"), result_chr);
+  dtostrfd(Thermostat.status.sensor_alive, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.sensor_alive: %s"), result_chr);
+  dtostrfd(Thermostat.status.status_cycle_active, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.status_cycle_active: %s"), result_chr);   
+  dtostrfd(Thermostat.temp_pi_error, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_pi_error: %s"), result_chr);
+  dtostrfd(Thermostat.temp_pi_accum_error, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_pi_accum_error: %s"), result_chr);
+  dtostrfd(Thermostat.time_proportional_pi, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_proportional_pi: %s"), result_chr);
+  dtostrfd(Thermostat.time_integral_pi, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_integral_pi: %s"), result_chr);
+  dtostrfd(Thermostat.time_total_pi, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_total_pi: %s"), result_chr);
+  dtostrfd(Thermostat.temp_measured_gradient, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_measured_gradient: %s"), result_chr);
+  dtostrfd(Thermostat.time_rampup_deadtime, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_rampup_deadtime: %s"), result_chr);
+  dtostrfd(Thermostat.temp_rampup_meas_gradient, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_rampup_meas_gradient: %s"), result_chr);
+  dtostrfd(Thermostat.time_ctr_changepoint, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_ctr_changepoint: %s"), result_chr);
+  dtostrfd(Thermostat.temp_rampup_output_off, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_rampup_output_off: %s"), result_chr);
+  dtostrfd(Thermostat.time_ctr_checkpoint, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_ctr_checkpoint: %s"), result_chr);
+  dtostrfd(uptime, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("uptime: %s"), result_chr);
+  dtostrfd(power, 0, result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("power: %s"), result_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Thermostat End ------"));
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));
+}
 #endif // DEBUG_THERMOSTAT
 
-#ifdef THERMOSTAT_USE_LOCAL_SENSOR
 void ThermostatGetLocalSensor(void) {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& root = jsonBuffer.parseObject((const char*)mqtt_data);
@@ -892,7 +974,6 @@ void ThermostatGetLocalSensor(void) {
     }
   }
 }
-#endif // THERMOSTAT_USE_LOCAL_SENSOR
 
 /*********************************************************************************************\
  * Commands
@@ -938,7 +1019,7 @@ void CmndControllerModeSet(void)
 {
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(XdrvMailbox.payload);
-    if ((value >= 0) && (value < CTR_MODES_MAX)) {
+    if ((value >= CTR_HYBRID) && (value < CTR_MODES_MAX)) {
       Thermostat.status.controller_mode = value;
     }
   }
@@ -961,7 +1042,7 @@ void CmndSensorInputSet(void)
 {
   if (XdrvMailbox.data_len > 0) {
     uint8_t value = (uint8_t)(XdrvMailbox.payload);
-    if ((value >= 0) && (value < SENSOR_MAX)) {
+    if ((value >= SENSOR_MQTT) && (value < SENSOR_MAX)) {
       Thermostat.status.sensor_type = value;
     }
   }
@@ -1061,30 +1142,6 @@ void CmndTempTargetSet(void)
   ResponseCmndFloat((float)value / 10, 1);
 }
 
-void CmndTempTargetRead(void)
-{
-  int16_t value;
-  if (Thermostat.status.temp_format == TEMP_FAHRENHEIT) {
-    value = ThermostatCelsiusToFahrenheit((int32_t)Thermostat.temp_target_level, TEMP_CONV_ABSOLUTE);
-  }
-  else {
-    value = Thermostat.temp_target_level;
-  }
-  ResponseCmndFloat((float)value / 10, 1);
-}
-
-void CmndTempMeasuredRead(void)
-{
-  int16_t value;
-  if (Thermostat.status.temp_format == TEMP_FAHRENHEIT) {
-    value = ThermostatCelsiusToFahrenheit((int32_t)Thermostat.temp_measured, TEMP_CONV_ABSOLUTE);
-  }
-  else {
-    value = Thermostat.temp_measured;
-  }
-  ResponseCmndFloat((float)value / 10, 1);
-}
-
 void CmndTempMeasuredGrdRead(void)
 {
   int16_t value;
@@ -1106,17 +1163,6 @@ void CmndStateEmergencySet(void)
     }
   }
   ResponseCmndNumber((int)Thermostat.status.state_emergency);
-}
-
-void CmndPowerMaxSet(void)
-{
-  if (XdrvMailbox.data_len > 0) {
-    uint16_t value = (uint16_t)(XdrvMailbox.payload);
-    if ((value >= 0) && (value <= 1300)) {
-      Thermostat.power_max = value;
-    }
-  }
-  ResponseCmndNumber((int)Thermostat.power_max);
 }
 
 void CmndTimeManualToAutoSet(void)
@@ -1370,15 +1416,23 @@ void CmndTimePiIntegrRead(void)
   ResponseCmndNumber((int)Thermostat.time_integral_pi);
 }
 
+void CmndDiagnosticModeSet(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    uint8_t value = (uint8_t)(CharToFloat(XdrvMailbox.data));
+    if ((value >= DIAGNOSTIC_OFF) && (value <= DIAGNOSTIC_ON)) {
+      Thermostat.status.diagnostic_mode = value;
+    }
+  }
+  ResponseCmndNumber((int)Thermostat.status.diagnostic_mode);
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
 bool Xdrv39(uint8_t function)
 {
-#ifdef DEBUG_THERMOSTAT
-  char result_chr[FLOATSZ];
-#endif // DEBUG_THERMOSTAT
   bool result = false;
 
   switch (function) {
@@ -1386,65 +1440,28 @@ bool Xdrv39(uint8_t function)
       ThermostatInit();
       break;
     case FUNC_LOOP:
-      ThermostatSignalProcessingFast();
-      ThermostatDiagnostics();
+      if (Thermostat.status.thermostat_mode != THERMOSTAT_OFF) {
+        ThermostatSignalProcessingFast();
+        ThermostatDiagnostics();
+      }
       break;
     case FUNC_SERIAL:
       break;
     case FUNC_EVERY_SECOND:
-      if (ThermostatMinuteCounter()) {
-        ThermostatSignalProcessingSlow();
+      if (ThermostatMinuteCounter()
+        &&(Thermostat.status.thermostat_mode != THERMOSTAT_OFF)) {
+        ThermostatSignalPreProcessingSlow();
         ThermostatController();
+        ThermostatSignalPostProcessingSlow();
 #ifdef DEBUG_THERMOSTAT
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Thermostat Start ------"));
-        dtostrfd(Thermostat.status.counter_seconds, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.counter_seconds: %s"), result_chr);
-        dtostrfd(Thermostat.status.thermostat_mode, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.thermostat_mode: %s"), result_chr);
-        dtostrfd(Thermostat.status.controller_mode, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.controller_mode: %s"), result_chr);
-        dtostrfd(Thermostat.status.phase_hybrid_ctr, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.phase_hybrid_ctr: %s"), result_chr);
-        dtostrfd(Thermostat.status.sensor_alive, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.sensor_alive: %s"), result_chr);
-        dtostrfd(Thermostat.status.status_output, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.status_output: %s"), result_chr);
-        dtostrfd(Thermostat.status.status_cycle_active, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.status.status_cycle_active: %s"), result_chr);   
-        dtostrfd(Thermostat.temp_pi_error, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_pi_error: %s"), result_chr);
-        dtostrfd(Thermostat.temp_pi_accum_error, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_pi_accum_error: %s"), result_chr);
-        dtostrfd(Thermostat.time_proportional_pi, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_proportional_pi: %s"), result_chr);
-        dtostrfd(Thermostat.time_integral_pi, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_integral_pi: %s"), result_chr);
-        dtostrfd(Thermostat.time_total_pi, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_total_pi: %s"), result_chr);
-        dtostrfd(Thermostat.temp_measured_gradient, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_measured_gradient: %s"), result_chr);
-        dtostrfd(Thermostat.time_rampup_deadtime, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_rampup_deadtime: %s"), result_chr);
-        dtostrfd(Thermostat.temp_rampup_meas_gradient, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_rampup_meas_gradient: %s"), result_chr);
-        dtostrfd(Thermostat.time_ctr_changepoint, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_ctr_changepoint: %s"), result_chr);
-        dtostrfd(Thermostat.temp_rampup_output_off, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.temp_rampup_output_off: %s"), result_chr);
-        dtostrfd(Thermostat.time_ctr_checkpoint, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat.time_ctr_checkpoint: %s"), result_chr);
-        dtostrfd(uptime, 0, result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("uptime: %s"), result_chr);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Thermostat End ------"));
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));
+        ThermostatDebug();
 #endif // DEBUG_THERMOSTAT
       }
       break;
     case FUNC_SHOW_SENSOR:
-#ifdef THERMOSTAT_USE_LOCAL_SENSOR
-      ThermostatGetLocalSensor();
-#endif // THERMOSTAT_USE_LOCAL_SENSOR
+      if (Thermostat.status.thermostat_mode != THERMOSTAT_OFF) {
+        ThermostatGetLocalSensor();
+      }
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kThermostatCommands, ThermostatCommand);
