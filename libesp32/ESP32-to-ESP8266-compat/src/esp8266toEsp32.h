@@ -28,6 +28,9 @@
 
 #include <Esp.h>
 
+
+// webcam uses channel 0, so we offset standard PWM
+#define PWM_CHANNEL_OFFSET 2
 // Analog
 
 uint8_t pwm_channel[8]={99,99,99,99,99,99,99,99};
@@ -44,8 +47,8 @@ inline uint32_t pin2chan(uint32_t pin) {
 inline void analogWrite(uint8_t pin, int val)
 {
   uint32_t channel=pin2chan(pin);
-  ledcWrite(channel,val);
-  Serial.printf("write %d - %d\n",channel,val);
+  ledcWrite(channel+PWM_CHANNEL_OFFSET,val);
+  //Serial.printf("write %d - %d\n",channel,val);
 }
 
 inline void analogWriteFreq(uint32_t freq)
@@ -57,8 +60,8 @@ inline void analogWriteRange(uint32_t range)
 
 inline void analogAttach(uint32_t pin, uint32_t channel) {
   pwm_channel[channel&7]=pin;
-  ledcAttachPin(pin,channel);
-  Serial.printf("attach %d - %d\n",channel,pin);
+  ledcAttachPin(pin,channel+PWM_CHANNEL_OFFSET);
+  //Serial.printf("attach %d - %d\n",channel,pin);
 }
 
 inline uint32_t pow2(uint32_t x) {
@@ -74,7 +77,7 @@ inline void analogWriteFreqRange(uint32_t channel,uint32_t freq, uint32_t irange
   uint32_t range=pow2(irange);
   for (uint32_t cnt=0;cnt<8;cnt++) {
     if (pwm_channel[cnt]<99) {
-      ledcSetup(cnt,freq,range);
+      ledcSetup(cnt+PWM_CHANNEL_OFFSET,freq,range);
     }
   }
   Serial.printf("freq - range %d - %d\n",freq,range);
