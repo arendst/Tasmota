@@ -662,6 +662,7 @@
 
 #define USE_THERMOSTAT
 
+#define THERMOSTAT_CONTROLLER_OUTPUTS         1         // Number of outputs to be controlled independently
 #define THERMOSTAT_SENSOR_NAME                "DS18B20" // Name of the local sensor to be used
 #define THERMOSTAT_RELAY_NUMBER               1         // Default output relay number
 #define THERMOSTAT_SWITCH_NUMBER              1         // Default input switch number
