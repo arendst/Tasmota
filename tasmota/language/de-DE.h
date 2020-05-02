@@ -666,7 +666,6 @@
 #define D_SENSOR_HRXL_RX       "HRXL Rx"
 #define D_SENSOR_ELECTRIQ_MOODL "MOODL Tx"
 #define D_SENSOR_AS3935         "AS3935"
-
 #define D_GPIO_WEBCAM_PWDN_GPIO_NUM "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET_GPIO_NUM "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK_GPIO_NUM "CAM_XCLK"
@@ -772,5 +771,27 @@
 #define D_SCRIPT_UPLOAD        "Upload"
 #define D_SCRIPT_UPLOAD_FILES  "Upload Dateien"
 
+//xsns_67_as3935.ino
+#define D_AS3935_GAIN "Rauschpegel:"
+#define D_AS3935_ENERGY "Energie:"
+#define D_AS3935_DISTANCE "Entfernung:"
+#define D_AS3935_DISTURBER "Störsingal:"
+#define D_AS3935_VRMS "µVrms:"
+#define D_AS3935_APRX "ca.:"
+#define D_AS3935_AWAY "entfernt"
+#define D_AS3935_LIGHT "Blitz"
+#define D_AS3935_OUT "ausserhalb der Reichweite"
+#define D_AS3935_NOT "Entfernung nicht ermittelbar"
+#define D_AS3935_ABOVE "Blitz überhalb"
+#define D_AS3935_NOISE "Rauschen entdeckt"
+#define D_AS3935_DISTDET "Störer entdeckt"
+#define D_AS3935_INTNOEV "Interrupt ohne Grund!"
+#define D_AS3935_NOMESS "lausche..."
+#define D_AS3935_ON "On"
+#define D_AS3935_OFF "Off"
+#define D_AS3935_INDOORS "Indoors"
+#define D_AS3935_OUTDOORS "Outdoors"
+#define D_AS3935_CAL_FAIL "Kalibrierung fehlerhaft"
+#define D_AS3935_CAL_OK "Cap gesetzt auf:"
 
 #endif  // _LANGUAGE_DE_DE_H_

@@ -666,7 +666,6 @@
 #define D_SENSOR_HRXL_RX       "HRXL Rx"
 #define D_SENSOR_ELECTRIQ_MOODL "MOODL Tx"
 #define D_SENSOR_AS3935         "AS3935"
-
 #define D_GPIO_WEBCAM_PWDN_GPIO_NUM "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET_GPIO_NUM "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK_GPIO_NUM "CAM_XCLK"
@@ -771,5 +770,28 @@
 #define D_SCRIPT_ENABLE        "script enable"
 #define D_SCRIPT_UPLOAD        "Upload"
 #define D_SCRIPT_UPLOAD_FILES  "Upload files"
+
+//xsns_67_as3935.ino
+#define D_AS3935_GAIN "gain:"
+#define D_AS3935_ENERGY "energy:"
+#define D_AS3935_DISTANCE "distance:"
+#define D_AS3935_DISTURBER "disturber:"
+#define D_AS3935_VRMS "µVrms:"
+#define D_AS3935_APRX "aprx.:"
+#define D_AS3935_AWAY "away"
+#define D_AS3935_LIGHT "lightning"
+#define D_AS3935_OUT "lightning out of range"
+#define D_AS3935_NOT "distance not determined"
+#define D_AS3935_ABOVE "lightning overhead"
+#define D_AS3935_NOISE "noise detected"
+#define D_AS3935_DISTDET "disturber detected"
+#define D_AS3935_INTNOEV "Interrupt with no Event!"
+#define D_AS3935_NOMESS "listening..."
+#define D_AS3935_ON "On"
+#define D_AS3935_OFF "Off"
+#define D_AS3935_INDOORS "Indoors"
+#define D_AS3935_OUTDOORS "Outdoors"
+#define D_AS3935_CAL_FAIL "calibration failed"
+#define D_AS3935_CAL_OK "calibration set to:"
 
 #endif  // _LANGUAGE_FR_FR_H_
