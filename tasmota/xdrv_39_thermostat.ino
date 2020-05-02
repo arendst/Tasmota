@@ -1,5 +1,5 @@
 /*
-  xdrv_39_Thermostat[ctr_output].ino - Thermostat controller for Tasmota
+  xdrv_39_thermostat.ino - Thermostat controller for Tasmota
 
   Copyright (C) 2020 Javier Arigita
 
