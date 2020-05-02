@@ -1562,6 +1562,10 @@ chknext:
         }
         break;
       case 'l':
+        if (!strncmp(vname,"lip",3)) {
+          if (sp) strlcpy(sp,(const char*)WiFi.localIP().toString().c_str(),glob_script_mem.max_ssize);
+          goto strexit;
+        }
         if (!strncmp(vname,"loglvl",6)) {
           fvar=glob_script_mem.script_loglevel;
           tind->index=SCRIPT_LOGLEVEL;

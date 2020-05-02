@@ -561,6 +561,13 @@ uint8_t *out_buf=0;
   }
 }
 
+void wc_show_stream(void) {
+#ifndef USE_SCRIPT
+  if (CamServer) WSContentSend_P("<br><img src=\"http://%s:81/stream\"><br><center>webcam stream",WiFi.localIP().toString().c_str());
+#endif
+}
+
+
 uint32_t wc_set_streamserver(uint32_t flag) {
 
   if (global_state.wifi_down) return 0;
@@ -583,7 +590,6 @@ uint32_t wc_set_streamserver(uint32_t flag) {
       delete CamServer;
       CamServer=NULL;
       AddLog_P(WC_LOGLEVEL, "cam stream exit");
-
     }
   }
   return 0;
@@ -630,6 +636,26 @@ red led = gpio 33
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
+#define D_CMND_WC "webcam"
+
+const char kWCCommands[] PROGMEM =  "|"    // no prefix
+  D_CMND_WC
+  ;
+
+void (* const WCCommand[])(void) PROGMEM = {
+  &CmndWC,
+  };
+
+void CmndWC(void) {
+  uint8_t flag=0;
+  if (XdrvMailbox.data_len > 0) {
+    wc_set_streamserver(XdrvMailbox.payload);
+    wc_setup(flag);
+  }
+  if (CamServer) flag=1;
+  Response_P(PSTR("{\"" D_CMND_WC "\":{\"streaming\":%d}"),flag);
+}
+
 
 bool Xdrv39(uint8_t function) {
   bool result = false;
@@ -640,6 +666,12 @@ bool Xdrv39(uint8_t function) {
       break;
     case FUNC_WEB_ADD_HANDLER:
       wc_pic_setup();
+      break;
+    case FUNC_WEB_ADD_MAIN_BUTTON:
+      wc_show_stream();
+      break;
+    case FUNC_COMMAND:
+      result = DecodeCommand(kWCCommands, WCCommand);
       break;
   }
   return result;
