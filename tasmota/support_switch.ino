@@ -86,7 +86,7 @@ void SwitchProbe(void)
   uint8_t force_low = (Settings.switch_debounce % 50) &2;                    // 52, 102, 152 etc
 
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-    if (Pin(GPIO_SWT1, i) < 99) {
+    if (PinUsed(GPIO_SWT1, i)) {
       // Olimex user_switch2.c code to fix 50Hz induced pulses
       if (1 == digitalRead(Pin(GPIO_SWT1, i))) {
 
@@ -127,7 +127,7 @@ void SwitchInit(void)
   Switch.present = 0;
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     Switch.last_state[i] = 1;  // Init global to virtual switch state;
-    if (Pin(GPIO_SWT1, i) < 99) {
+    if (PinUsed(GPIO_SWT1, i)) {
       Switch.present++;
       pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_SWT1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
       Switch.last_state[i] = digitalRead(Pin(GPIO_SWT1, i));  // Set global now so doesn't change the saved power state on first switch check
@@ -148,7 +148,7 @@ void SwitchHandler(uint8_t mode)
   uint16_t loops_per_second = 1000 / Settings.switch_debounce;
 
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-    if ((Pin(GPIO_SWT1, i) < 99) || (mode)) {
+    if (PinUsed(GPIO_SWT1, i) || (mode)) {
       uint8_t button = Switch.virtual_state[i];
       uint8_t switchflag = POWER_TOGGLE +1;
 

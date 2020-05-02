@@ -166,18 +166,30 @@ void AdcGetCurrentPower(uint8_t factor)
   uint16_t analog = 0;
   uint16_t analog_min = 1023;
   uint16_t analog_max = 0;
-  for (uint32_t i = 0; i < samples; i++) {
-    analog = analogRead(A0);
-    if (analog < analog_min) {
-      analog_min = analog;
+
+  if (0 == Settings.adc_param1) {
+    for (uint32_t i = 0; i < samples; i++) {
+      analog = analogRead(A0);
+      if (analog < analog_min) {
+        analog_min = analog;
+      }
+      if (analog > analog_max) {
+        analog_max = analog;
+      }
+      delay(1);
     }
-    if (analog > analog_max) {
-      analog_max = analog;
+    Adc.current = (float)(analog_max-analog_min) * ((float)(Settings.adc_param2) / 100000);
+  }
+  else {
+    analog = AdcRead(5);
+    if (analog > Settings.adc_param1) {
+     Adc.current = ((float)(analog) - (float)Settings.adc_param1) * ((float)(Settings.adc_param2) / 100000);
     }
-    delay(1);
+    else {
+      Adc.current = 0;
+    }
   }
 
-  Adc.current = (float)(analog_max-analog_min) * ((float)(Settings.adc_param2) / 100000);
   float power = Adc.current * (float)(Settings.adc_param3) / 10;
   uint32_t current_millis = millis();
   Adc.energy = Adc.energy + ((power * (current_millis - Adc.previous_millis)) / 3600000000);
@@ -305,11 +317,18 @@ void AdcShow(bool json)
 \*********************************************************************************************/
 
 const char kAdcCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_ADC "|" D_CMND_ADCS "|" D_CMND_ADCPARAM;
+#ifdef ESP8266
+  D_CMND_ADC "|" D_CMND_ADCS "|"
+#endif  // ESP8266
+  D_CMND_ADCPARAM;
 
 void (* const AdcCommand[])(void) PROGMEM = {
-  &CmndAdc, &CmndAdcs, &CmndAdcParam };
+#ifdef ESP8266
+  &CmndAdc, &CmndAdcs,
+#endif  // ESP8266
+  &CmndAdcParam };
 
+#ifdef ESP8266
 void CmndAdc(void)
 {
   if (ValidAdc() && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < ADC0_END)) {
@@ -334,6 +353,7 @@ void CmndAdcs(void)
   }
   ResponseJsonEndEnd();
 }
+#endif  // ESP8266
 
 void CmndAdcParam(void)
 {
@@ -357,7 +377,7 @@ void CmndAdcParam(void)
           Settings.adc_param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)) * 10000);
         }
         if (ADC0_CT_POWER == XdrvMailbox.payload) {
-          if ((Settings.adc_param1 & CT_FLAG_ENERGY_RESET) > 0) {
+          if (((1 == Settings.adc_param1) & CT_FLAG_ENERGY_RESET) > 0) {
             Adc.energy = 0;
             Settings.adc_param1 ^= CT_FLAG_ENERGY_RESET;  // Cancel energy reset flag
           }

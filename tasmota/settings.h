@@ -111,7 +111,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t zigbee_distinct_topics : 1;   // bit 7 (v8.1.0.10)  - SetOption89 - Distinct MQTT topics per device for Zigbee (#7835)
     uint32_t only_json_message : 1;        // bit 8 (v8.2.0.3)   - SetOption90 - Disable non-json MQTT response
     uint32_t fade_at_startup : 1;          // bit 9 (v8.2.0.3)   - SetOption91 - Enable light fading at start/power on
-    uint32_t pwm_ct_mode : 1;              // bit 10 ()          - SetOption92 - Set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...)
+    uint32_t pwm_ct_mode : 1;              // bit 10 (v8.2.0.4)  - SetOption92 - Set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...)
     uint32_t spare11 : 1;
     uint32_t spare12 : 1;
     uint32_t spare13 : 1;
@@ -358,8 +358,15 @@ struct {
   SysBitfield3  flag3;                     // 3A0
   uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
 
+#ifdef ESP8266
   char          ex_friendlyname[4][33];    // 3AC
   char          ex_switch_topic[33];       // 430
+#else  // ESP32
+  myio          my_gp;                     // 3AC - 2 x 40 bytes (ESP32)
+  mytmplt       user_template;             // 3FC - 2 x 37 bytes (ESP32)
+
+  uint8_t       free_esp32_446[11];        // 446
+#endif  // ESP8266 - ESP32
 
   char          serial_delimiter;          // 451
   uint8_t       seriallog_level;           // 452
@@ -403,14 +410,7 @@ struct {
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;           // 554
 
-#ifdef ESP8266
   char          ex_mqtt_fulltopic[100];    // 558
-#else  // ESP32
-  myio          my_gp;                     // 558 - 40 bytes (ESP32)
-  mytmplt       user_template;             // 580 - 37 bytes (ESP32)
-
-  uint8_t       free_esp32_5a5[23];        // 5A5
-#endif  // ESP8266 - ESP32
 
   SysBitfield2  flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0

@@ -159,8 +159,8 @@ bool ShtRead(void)
 
 void ShtDetect(void)
 {
-  sht_sda_pin = pin[GPIO_I2C_SDA];
-  sht_scl_pin = pin[GPIO_I2C_SCL];
+  sht_sda_pin = Pin(GPIO_I2C_SDA);
+  sht_scl_pin = Pin(GPIO_I2C_SCL);
   if (ShtRead()) {
     sht_type = 1;
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_I2C D_SHT1X_FOUND));

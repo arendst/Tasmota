@@ -60,7 +60,7 @@ void ButtonInit(void)
 {
   Button.present = 0;
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
-    if (Pin(GPIO_KEY1, i) < 99) {
+    if (PinUsed(GPIO_KEY1, i)) {
       Button.present++;
       pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
     }
@@ -132,7 +132,7 @@ void ButtonHandler(void)
     }
     else
 #endif  // ESP8266
-    if (Pin(GPIO_KEY1, button_index) < 99) {
+    if (PinUsed(GPIO_KEY1, button_index)) {
       button_present = 1;
       button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
     }
@@ -266,7 +266,7 @@ void ButtonHandler(void)
                       } else {
                         SendKey(KEY_BUTTON, button_index +1, Button.press_counter[button_index] +9);    // 2,3,4 and 5 press send just the key value (11,12,13 and 14) for rules
                         if (0 == button_index) {    // BUTTON1 can toggle up to 5 relays if present. If a relay is not present will send out the key value (2,11,12,13 and 14) for rules
-                          if ((Button.press_counter[button_index] > 1 && Pin(GPIO_REL1, Button.press_counter[button_index]-1) < 99) && Button.press_counter[button_index] <= MAX_RELAY_BUTTON1) {
+                          if ((Button.press_counter[button_index] > 1 && PinUsed(GPIO_REL1, Button.press_counter[button_index]-1)) && Button.press_counter[button_index] <= MAX_RELAY_BUTTON1) {
                             ExecuteCommandPower(button_index + Button.press_counter[button_index], POWER_TOGGLE, SRC_BUTTON);   // Execute Toggle command internally
                             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Relay%d found on GPIO%d"), Button.press_counter[button_index], Pin(GPIO_REL1, Button.press_counter[button_index]-1));
                           }

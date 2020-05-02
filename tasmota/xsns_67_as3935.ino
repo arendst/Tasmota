@@ -401,9 +401,9 @@ void AS3935SetWdth(uint8_t wdth) {
 }
 
 bool AS3935AutoTune(){
-  detachInterrupt(pin[GPIO_AS3935]);
-  bool result = AS3935AutoTuneCaps(pin[GPIO_AS3935]);
-  attachInterrupt(digitalPinToInterrupt(pin[GPIO_AS3935]), AS3935Isr, RISING);
+  detachInterrupt(Pin(GPIO_AS3935));
+  bool result = AS3935AutoTuneCaps(Pin(GPIO_AS3935));
+  attachInterrupt(digitalPinToInterrupt(Pin(GPIO_AS3935)), AS3935Isr, RISING);
   return result;
 }
 
@@ -497,8 +497,8 @@ void AS3935Detect(void) {
   if (AS3935init())
   {
     I2cSetActiveFound(AS3935_ADDR, D_NAME_AS3935);
-    pinMode(pin[GPIO_AS3935], INPUT);
-    attachInterrupt(digitalPinToInterrupt(pin[GPIO_AS3935]), AS3935Isr, RISING);
+    pinMode(Pin(GPIO_AS3935), INPUT);
+    attachInterrupt(digitalPinToInterrupt(Pin(GPIO_AS3935)), AS3935Isr, RISING);
     AS3935Setup();
     as3935_active = 1;
   }
@@ -548,14 +548,14 @@ void AS3935EverySecond() {
     as3935_sensor.mqtt_irq = 0;
     // start http times
     as3935_sensor.http_count_start = 1;
+    as3935_sensor.http_count = 0;
     as3935_sensor.icount++; // Int counter
     as3935_sensor.detected = false;
   }
 
   if (as3935_sensor.http_count_start) as3935_sensor.http_count++;
   // clear Http
-  if (as3935_sensor.http_count == as3935_sensor.http_timer) {
-    as3935_sensor.http_count = 0;
+  if (as3935_sensor.http_count > as3935_sensor.http_timer) {
     as3935_sensor.http_count_start = 0;
     as3935_sensor.http_intensity = 0;
     as3935_sensor.http_distance = 0;

@@ -370,7 +370,7 @@ void HAssAnnounceSwitches(void)
     uint8_t hold = 0;
     uint8_t pir = 0;
 
-    if (Pin(GPIO_SWT1, switch_index) < 99) { switch_present = 1; }
+    if (PinUsed(GPIO_SWT1, switch_index)) { switch_present = 1; }
 
     if (KeyTopicActive(1) && strcmp(SettingsText(SET_MQTT_SWITCH_TOPIC), mqtt_topic))   // Enable Discovery for Switches only if Switchtopic is set to a custom name
     {
@@ -451,7 +451,7 @@ void HAssAnnounceButtons(void)
     } else
 #endif
     {
-      if (Pin(GPIO_KEY1, button_index) < 99) {
+      if (PinUsed(GPIO_KEY1, button_index)) {
         button_present = 1;
       }
     }

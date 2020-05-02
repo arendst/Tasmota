@@ -147,7 +147,7 @@ void AriluxRfHandler(void)
 
 void AriluxRfInit(void)
 {
-  if ((Pin(GPIO_ARIRFRCV) < 99) && (Pin(GPIO_ARIRFSEL) < 99)) {
+  if (PinUsed(GPIO_ARIRFRCV) && PinUsed(GPIO_ARIRFSEL)) {
     if (Settings.last_module != Settings.module) {
       Settings.rf_code[1][6] = 0;
       Settings.rf_code[1][7] = 0;
@@ -162,7 +162,7 @@ void AriluxRfInit(void)
 
 void AriluxRfDisable(void)
 {
-  if ((Pin(GPIO_ARIRFRCV) < 99) && (Pin(GPIO_ARIRFSEL) < 99)) {
+  if (PinUsed(GPIO_ARIRFRCV) && PinUsed(GPIO_ARIRFSEL)) {
     detachInterrupt(Pin(GPIO_ARIRFRCV));
     digitalWrite(Pin(GPIO_ARIRFSEL), 1);  // Turn off RF
   }
@@ -178,7 +178,7 @@ bool Xdrv26(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_50_MSECOND:
-      if (Pin(GPIO_ARIRFRCV) < 99) { AriluxRfHandler(); }
+      if (PinUsed(GPIO_ARIRFRCV)) { AriluxRfHandler(); }
       break;
     case FUNC_EVERY_SECOND:
       if (10 == uptime) { AriluxRfInit(); }  // Needs rest before enabling RF interrupts
