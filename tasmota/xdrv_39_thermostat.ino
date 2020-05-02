@@ -586,8 +586,10 @@ void ThermostatCalculatePI(uint8_t ctr_output)
 
   // Calculate output
   Thermostat[ctr_output].time_total_pi = Thermostat[ctr_output].time_proportional_pi + Thermostat[ctr_output].time_integral_pi;
+  
+  // Antiwindup of the output
+  // If result is bigger than cycle time, the result will be adjusted
   // to the cylce time minus safety time and error will not be cummulated]]
-
   if (Thermostat[ctr_output].time_total_pi >= ((int32_t)Thermostat[ctr_output].time_pi_cycle * 60)) {
     // Limit to cycle time //at least switch down a minimum time
     Thermostat[ctr_output].time_total_pi = ((int32_t)Thermostat[ctr_output].time_pi_cycle * 60);
