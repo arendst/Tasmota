@@ -346,6 +346,7 @@ void SettingsSaveAll(void)
 
 void UpdateQuickPowerCycle(bool update)
 {
+#ifndef FIRMWARE_MINIMAL
   if (Settings.flag3.fast_power_cycle_disable) { return; }  // SetOption65 - Disable fast power cycle detection for device reset
 
   uint32_t pc_register;
@@ -353,9 +354,9 @@ void UpdateQuickPowerCycle(bool update)
 
 #ifdef ESP8266
   ESP.flashRead(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
-#else
+#else  // ESP32
   QPCRead(&pc_register, sizeof(pc_register));
-#endif
+#endif  // ESP8266 - ESP32
   if (update && ((pc_register & 0xFFFFFFF0) == 0xFFA55AB0)) {
     uint32_t counter = ((pc_register & 0xF) << 1) & 0xF;
     if (0 == counter) {  // 4 power cycles in a row
@@ -365,9 +366,9 @@ void UpdateQuickPowerCycle(bool update)
       pc_register = 0xFFA55AB0 | counter;
 #ifdef ESP8266
       ESP.flashWrite(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
-#else
+#else  // ESP32
       QPCWrite(&pc_register, sizeof(pc_register));
-#endif
+#endif  // ESP8266 - ESP32
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Flag %02X"), counter);
     }
   }
@@ -378,11 +379,12 @@ void UpdateQuickPowerCycle(bool update)
     if (ESP.flashEraseSector(pc_location)) {
       ESP.flashWrite(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
     }
-#else
+#else  // ESP32
     QPCWrite(&pc_register, sizeof(pc_register));
-#endif
+#endif  // ESP8266 - ESP32
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Reset"));
   }
+#endif  // FIRMWARE_MINIMAL
 }
 
 /*********************************************************************************************\
