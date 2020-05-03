@@ -22,12 +22,15 @@
 #define XDRV_39              39
 
 // Enable/disable debugging
-#define DEBUG_THERMOSTAT
+//#define DEBUG_THERMOSTAT
 
 #ifdef DEBUG_THERMOSTAT
+#define DOMOTICZ_MAX_IDX     4
 #define DOMOTICZ_IDX1        791
 #define DOMOTICZ_IDX2        792
-#define DOMOTICZ_IDX3        793
+#define DOMOTICZ_IDX3        799
+#define DOMOTICZ_IDX4        800
+#define DOMOTICZ_IDX5        801
 #endif // DEBUG_THERMOSTAT
 
 // Commands
@@ -35,6 +38,7 @@
 #define D_CMND_TEMPFROSTPROTECTSET "TempFrostProtectSet"
 #define D_CMND_CONTROLLERMODESET "ControllerModeSet"
 #define D_CMND_INPUTSWITCHSET "InputSwitchSet"
+#define D_CMND_INPUTSWITCHUSE "InputSwitchUse"
 #define D_CMND_OUTPUTRELAYSET "OutputRelaySet"
 #define D_CMND_TIMEALLOWRAMPUPSET "TimeAllowRampupSet"
 #define D_CMND_TEMPFORMATSET "TempFormatSet"
@@ -68,6 +72,7 @@ enum ThermostatModes { THERMOSTAT_OFF, THERMOSTAT_AUTOMATIC_OP, THERMOSTAT_MANUA
 enum ControllerModes { CTR_HYBRID, CTR_PI, CTR_RAMP_UP, CTR_MODES_MAX };
 enum ControllerHybridPhases { CTR_HYBRID_RAMP_UP, CTR_HYBRID_PI };
 enum InterfaceStates { IFACE_OFF, IFACE_ON };
+enum InputUsage { INPUT_NOT_USED, INPUT_USED };
 enum CtrCycleStates { CYCLE_OFF, CYCLE_ON };
 enum EmergencyStates { EMERGENCY_OFF, EMERGENCY_ON };
 enum SensorType { SENSOR_MQTT, SENSOR_LOCAL, SENSOR_MAX };
@@ -104,6 +109,7 @@ typedef union {
     uint32_t command_output : 1;        // Flag stating the desired command to the output (0 = inactive, 1 = active)
     uint32_t status_output : 1;         // Flag stating state of the output (0 = inactive, 1 = active)
     uint32_t status_input : 1;          // Flag stating state of the input (0 = inactive, 1 = active)
+    uint32_t use_input : 1;             // Flag stating if the input switch shall be used to switch to manual mode
     uint32_t phase_hybrid_ctr : 1;      // Phase of the hybrid controller (Ramp-up or PI)
     uint32_t status_cycle_active : 1;   // Status showing if cycle is active (Output ON) or not (Output OFF)
     uint32_t state_emergency : 1;       // State for thermostat emergency
@@ -112,18 +118,19 @@ typedef union {
     uint32_t input_switch_number : 3;   // Input switch number
     uint32_t output_inconsist_ctr : 2;  // Counter of the minutes where there are inconsistent in the output state
     uint32_t diagnostic_mode : 1;       // Diagnostic mode selected
-    uint32_t free : 3;                  // Free bits in Bitfield
+    uint32_t free : 2;                  // Free bits in Bitfield
   };
 } ThermostatBitfield;
 
 #ifdef DEBUG_THERMOSTAT
 const char DOMOTICZ_MES[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\"}";
+uint16_t Domoticz_Virtual_Switches[DOMOTICZ_MAX_IDX] = { DOMOTICZ_IDX1, DOMOTICZ_IDX3, DOMOTICZ_IDX4, DOMOTICZ_IDX5 };
 #endif // DEBUG_THERMOSTAT
 
 const char kThermostatCommands[] PROGMEM = "|" D_CMND_THERMOSTATMODESET "|" D_CMND_TEMPFROSTPROTECTSET "|" 
-  D_CMND_CONTROLLERMODESET "|" D_CMND_INPUTSWITCHSET "|" D_CMND_OUTPUTRELAYSET "|" D_CMND_TIMEALLOWRAMPUPSET "|" 
-  D_CMND_TEMPFORMATSET "|" D_CMND_TEMPMEASUREDSET "|" D_CMND_TEMPTARGETSET "|" D_CMND_TEMPMEASUREDGRDREAD "|" 
-  D_CMND_SENSORINPUTSET "|" D_CMND_STATEEMERGENCYSET "|" D_CMND_TIMEMANUALTOAUTOSET "|" 
+  D_CMND_CONTROLLERMODESET "|" D_CMND_INPUTSWITCHSET "|" D_CMND_INPUTSWITCHUSE "|" D_CMND_OUTPUTRELAYSET "|" 
+  D_CMND_TIMEALLOWRAMPUPSET "|" D_CMND_TEMPFORMATSET "|" D_CMND_TEMPMEASUREDSET "|" D_CMND_TEMPTARGETSET "|" 
+  D_CMND_TEMPMEASUREDGRDREAD "|" D_CMND_SENSORINPUTSET "|" D_CMND_STATEEMERGENCYSET "|" D_CMND_TIMEMANUALTOAUTOSET "|" 
   D_CMND_TIMEONLIMITSET "|" D_CMND_PROPBANDSET "|" D_CMND_TIMERESETSET "|" D_CMND_TIMEPICYCLESET "|" 
   D_CMND_TEMPANTIWINDUPRESETSET "|" D_CMND_TEMPHYSTSET "|" D_CMND_TIMEMAXACTIONSET "|" D_CMND_TIMEMINACTIONSET "|" 
   D_CMND_TIMEMINTURNOFFACTIONSET "|" D_CMND_TEMPRUPDELTINSET "|" D_CMND_TEMPRUPDELTOUTSET "|" D_CMND_TIMERAMPUPMAXSET "|" 
@@ -131,9 +138,9 @@ const char kThermostatCommands[] PROGMEM = "|" D_CMND_THERMOSTATMODESET "|" D_CM
   D_CMND_TIMESENSLOSTSET "|" D_CMND_DIAGNOSTICMODESET;
 
 void (* const ThermostatCommand[])(void) PROGMEM = {
-  &CmndThermostatModeSet, &CmndTempFrostProtectSet, &CmndControllerModeSet, &CmndInputSwitchSet, &CmndOutputRelaySet, 
-  &CmndTimeAllowRampupSet, &CmndTempFormatSet, &CmndTempMeasuredSet, &CmndTempTargetSet, &CmndTempMeasuredGrdRead, 
-  &CmndSensorInputSet, &CmndStateEmergencySet, &CmndTimeManualToAutoSet, &CmndTimeOnLimitSet, 
+  &CmndThermostatModeSet, &CmndTempFrostProtectSet, &CmndControllerModeSet, &CmndInputSwitchSet, &CmndInputSwitchUse, 
+  &CmndOutputRelaySet, &CmndTimeAllowRampupSet, &CmndTempFormatSet, &CmndTempMeasuredSet, &CmndTempTargetSet, 
+  &CmndTempMeasuredGrdRead, &CmndSensorInputSet, &CmndStateEmergencySet, &CmndTimeManualToAutoSet, &CmndTimeOnLimitSet, 
   &CmndPropBandSet, &CmndTimeResetSet, &CmndTimePiCycleSet, &CmndTempAntiWindupResetSet, &CmndTempHystSet, 
   &CmndTimeMaxActionSet, &CmndTimeMinActionSet, &CmndTimeMinTurnoffActionSet, &CmndTempRupDeltInSet, 
   &CmndTempRupDeltOutSet, &CmndTimeRampupMaxSet, &CmndTimeRampupCycleSet, &CmndTempRampupPiAccErrSet, 
@@ -206,6 +213,7 @@ void ThermostatInit(uint8_t ctr_output)
   Thermostat[ctr_output].status.counter_seconds = 0;
   Thermostat[ctr_output].status.output_relay_number = (THERMOSTAT_RELAY_NUMBER + ctr_output);
   Thermostat[ctr_output].status.input_switch_number = (THERMOSTAT_SWITCH_NUMBER + ctr_output);
+  Thermostat[ctr_output].status.use_input = INPUT_NOT_USED;
   Thermostat[ctr_output].status.output_inconsist_ctr = 0;
   Thermostat[ctr_output].status.diagnostic_mode = DIAGNOSTIC_ON;
   // Make sure the Output is OFF
@@ -383,12 +391,13 @@ void ThermostatHybridCtrPhase(uint8_t ctr_output)
 bool ThermostatStateAutoToManual(uint8_t ctr_output)
 {
   bool change_state = false;
-
-  // If switch input is active
-  // OR temperature sensor is not alive
+  // If input is used
+  // AND switch input is active
+  //  OR temperature sensor is not alive
   // then go to manual
-  if ((Thermostat[ctr_output].status.status_input == IFACE_ON)
-    || (Thermostat[ctr_output].status.sensor_alive == IFACE_OFF)) {
+  if ((Thermostat[ctr_output].status.use_input == INPUT_USED)
+    &&((Thermostat[ctr_output].status.status_input == IFACE_ON)
+      || (Thermostat[ctr_output].status.sensor_alive == IFACE_OFF))) {
     change_state = true;
   }
   return change_state;
@@ -877,18 +886,17 @@ void ThermostatTimerDisarm(uint8_t ctr_output)
 void ThermostatVirtualSwitch(uint8_t ctr_output)
 {
   char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
-  Response_P(DOMOTICZ_MES, DOMOTICZ_IDX1, (0 == Thermostat[ctr_output].status.command_output) ? 0 : 1, "");
-  MqttPublish(domoticz_in_topic);
+  if (ctr_output < DOMOTICZ_MAX_IDX) {
+    Response_P(DOMOTICZ_MES, Domoticz_Virtual_Switches[ctr_output], (0 == Thermostat[ctr_output].status.command_output) ? 0 : 1, "");
+    MqttPublish(domoticz_in_topic);
+  }
 }
 
 void ThermostatVirtualSwitchCtrState(uint8_t ctr_output)
 {
   char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
-  Response_P(DOMOTICZ_MES, DOMOTICZ_IDX2, (0 == Thermostat[ctr_output].status.phase_hybrid_ctr) ? 0 : 1, "");
+  Response_P(DOMOTICZ_MES, DOMOTICZ_IDX2, (0 == Thermostat[0].status.phase_hybrid_ctr) ? 0 : 1, "");
   MqttPublish(domoticz_in_topic);
-
-  //Response_P(DOMOTICZ_MES, DOMOTICZ_IDX3, (0 == Thermostat[ctr_output].time_ctr_changepoint) ? 0 : 1, "");
-  //MqttPublish(domoticz_in_topic);
 }
 
 void ThermostatDebug(uint8_t ctr_output)
@@ -1047,6 +1055,17 @@ void CmndInputSwitchSet(void)
       }
     }
     ResponseCmndNumber((int)Thermostat[ctr_output].status.input_switch_number);
+  }
+}
+
+void CmndInputSwitchUse(void)
+{
+  if ((XdrvMailbox.index >= INPUT_NOT_USED) && (XdrvMailbox.index <= INPUT_USED)) {
+    uint8_t ctr_output = XdrvMailbox.index - 1;
+    if (XdrvMailbox.data_len > 0) {
+      Thermostat[ctr_output].status.use_input = (uint32_t)(XdrvMailbox.payload);
+    }
+    ResponseCmndNumber((int)Thermostat[ctr_output].status.use_input);
   }
 }
 
