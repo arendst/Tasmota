@@ -1,5 +1,45 @@
+/*
+  xdrv_39_webcam.ino - ESP32 webcam support for Tasmota
 
-#if defined(ESP32) && defined(USE_WEBCAM)
+  Copyright (C) 2020  Gerhard Mutz and Theo Arends
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifdef ESP32
+#ifdef USE_WEBCAM
+/*********************************************************************************************\
+ * ESP32 webcam based on example in Arduino-ESP32 library
+ *
+ * Template as used on ESP32-CAM WiFi + bluetooth Camera Module Development Board ESP32 With Camera Module OV2640 Geekcreit for Arduino
+ * {"NAME":"AITHINKER CAM No SPI","GPIO":[4992,65504,65504,65504,5472,5312,65504,65504,5504,5536,65504,65504,5568,5440,5280,5248,0,5216,5408,5376,0,5344,5024,5056,0,0,0,0,4928,65504,5120,5088,5184,0,0,5152],"FLAG":0,"BASE":1}
+ * Template with SPI configured. This needs define USE_SPI
+ * {"NAME":"AITHINKER CAM","GPIO":[4992,65504,672,65504,5472,5312,65504,65504,5504,5536,736,704,5568,5440,5280,5248,0,5216,5408,5376,0,5344,5024,5056,0,0,0,0,4928,65504,5120,5088,5184,0,0,5152],"FLAG":0,"BASE":1}
+ *
+ * Command: Webcam <number>
+ *  0 = Stop streaming
+ *  1 = FRAMESIZE_QQVGA2 (128x160)
+ *  2 = FRAMESIZE_QCIF (176x144)
+ *  3 = FRAMESIZE_HQVGA (240x176)
+ *  4 = FRAMESIZE_QVGA (320x240)
+ *  5 = FRAMESIZE_CIF (400x296)
+ *  6 = FRAMESIZE_VGA (640x480)
+ *  7 = FRAMESIZE_SVGA (800x600)
+ *  8 = FRAMESIZE_XGA (1024x768)
+ *  9 = FRAMESIZE_SXGA (1280x1024)
+ * 10 = FRAMESIZE_UXGA (1600x1200)
+\*********************************************************************************************/
 
 #define XDRV_39                    39
 
@@ -38,13 +78,11 @@ uint16_t wc_height;
 uint8_t wc_stream_active;
 
 uint32_t wc_setup(int32_t fsiz) {
-bool psram;
+  if (fsiz > 10) { fsiz = 10; }
 
-  if (fsiz>10) fsiz=10;
+  wc_stream_active = 0;
 
-  wc_stream_active=0;
-
-  if (fsiz<0) {
+  if (fsiz < 0) {
     esp_camera_deinit();
     return 0;
   }
@@ -56,7 +94,7 @@ bool psram;
 
 //esp_log_level_set("*", ESP_LOG_VERBOSE);
 
-camera_config_t config;
+  camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
   config.xclk_freq_hz = 20000000;
@@ -65,55 +103,6 @@ camera_config_t config;
 //  config.pixel_format = PIXFORMAT_RGB565;
 
 #ifndef USE_TEMPLATE
-
-config.pin_d0 = Y2_GPIO_NUM;
-config.pin_d1 = Y3_GPIO_NUM;
-config.pin_d2 = Y4_GPIO_NUM;
-config.pin_d3 = Y5_GPIO_NUM;
-config.pin_d4 = Y6_GPIO_NUM;
-config.pin_d5 = Y7_GPIO_NUM;
-config.pin_d6 = Y8_GPIO_NUM;
-config.pin_d7 = Y9_GPIO_NUM;
-config.pin_xclk = XCLK_GPIO_NUM;
-config.pin_pclk = PCLK_GPIO_NUM;
-config.pin_vsync = VSYNC_GPIO_NUM;
-config.pin_href = HREF_GPIO_NUM;
-config.pin_sscb_sda = SIOD_GPIO_NUM;
-config.pin_sscb_scl = SIOC_GPIO_NUM;
-config.pin_pwdn = PWDN_GPIO_NUM;
-config.pin_reset = RESET_GPIO_NUM;
-
-#else
-
-if (PinUsed(GPIO_WEBCAM_Y2_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y3_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y4_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y5_GPIO_NUM)\
- && PinUsed(GPIO_WEBCAM_Y6_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y7_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y8_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y9_GPIO_NUM)\
- && PinUsed(GPIO_WEBCAM_XCLK_GPIO_NUM) && PinUsed(GPIO_WEBCAM_PCLK_GPIO_NUM) && PinUsed(GPIO_WEBCAM_VSYNC_GPIO_NUM) && PinUsed(GPIO_WEBCAM_HREF_GPIO_NUM)\
- && PinUsed(GPIO_WEBCAM_SIOD_GPIO_NUM) && PinUsed(GPIO_WEBCAM_SIOC_GPIO_NUM)) {
-
-  config.pin_d0 = Pin(GPIO_WEBCAM_Y2_GPIO_NUM);  //Y2_GPIO_NUM;
-  config.pin_d1 = Pin(GPIO_WEBCAM_Y3_GPIO_NUM);  //Y3_GPIO_NUM;
-  config.pin_d2 = Pin(GPIO_WEBCAM_Y4_GPIO_NUM);  //Y4_GPIO_NUM;
-  config.pin_d3 = Pin(GPIO_WEBCAM_Y5_GPIO_NUM);  //Y5_GPIO_NUM;
-  config.pin_d4 = Pin(GPIO_WEBCAM_Y6_GPIO_NUM);  //Y6_GPIO_NUM;
-  config.pin_d5 = Pin(GPIO_WEBCAM_Y7_GPIO_NUM);  //Y7_GPIO_NUM;
-  config.pin_d6 = Pin(GPIO_WEBCAM_Y8_GPIO_NUM);  //Y8_GPIO_NUM;
-  config.pin_d7 = Pin(GPIO_WEBCAM_Y9_GPIO_NUM);  //Y9_GPIO_NUM;
-  config.pin_xclk = Pin(GPIO_WEBCAM_XCLK_GPIO_NUM);  //XCLK_GPIO_NUM;
-  config.pin_pclk = Pin(GPIO_WEBCAM_PCLK_GPIO_NUM);  //PCLK_GPIO_NUM;
-  config.pin_vsync = Pin(GPIO_WEBCAM_VSYNC_GPIO_NUM);  //VSYNC_GPIO_NUM;
-  config.pin_href = Pin(GPIO_WEBCAM_HREF_GPIO_NUM);  //HREF_GPIO_NUM;
-  config.pin_sscb_sda = Pin(GPIO_WEBCAM_SIOD_GPIO_NUM);  //SIOD_GPIO_NUM;
-  config.pin_sscb_scl = Pin(GPIO_WEBCAM_SIOC_GPIO_NUM);  //SIOC_GPIO_NUM;
-
-  int16_t xpin;
-  xpin=Pin(GPIO_WEBCAM_PWDN_GPIO_NUM);
-  if (xpin==99) xpin=-1;
-  config.pin_pwdn = xpin; //PWDN_GPIO_NUM;
-  xpin=Pin(GPIO_WEBCAM_RESET_GPIO_NUM);
-  if (xpin==99) xpin=-1;
-  config.pin_reset = xpin; //RESET_GPIO_NUM;
-} else {
-  // defaults to AI THINKER
   config.pin_d0 = Y2_GPIO_NUM;
   config.pin_d1 = Y3_GPIO_NUM;
   config.pin_d2 = Y4_GPIO_NUM;
@@ -130,9 +119,51 @@ if (PinUsed(GPIO_WEBCAM_Y2_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y3_GPIO_NUM) && PinU
   config.pin_sscb_scl = SIOC_GPIO_NUM;
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
-}
-
-
+#else
+  if (PinUsed(GPIO_WEBCAM_Y2_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y3_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y4_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y5_GPIO_NUM)\
+   && PinUsed(GPIO_WEBCAM_Y6_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y7_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y8_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y9_GPIO_NUM)\
+   && PinUsed(GPIO_WEBCAM_XCLK_GPIO_NUM) && PinUsed(GPIO_WEBCAM_PCLK_GPIO_NUM) && PinUsed(GPIO_WEBCAM_VSYNC_GPIO_NUM) && PinUsed(GPIO_WEBCAM_HREF_GPIO_NUM)\
+   && PinUsed(GPIO_WEBCAM_SIOD_GPIO_NUM) && PinUsed(GPIO_WEBCAM_SIOC_GPIO_NUM)) {
+    config.pin_d0 = Pin(GPIO_WEBCAM_Y2_GPIO_NUM);  //Y2_GPIO_NUM;
+    config.pin_d1 = Pin(GPIO_WEBCAM_Y3_GPIO_NUM);  //Y3_GPIO_NUM;
+    config.pin_d2 = Pin(GPIO_WEBCAM_Y4_GPIO_NUM);  //Y4_GPIO_NUM;
+    config.pin_d3 = Pin(GPIO_WEBCAM_Y5_GPIO_NUM);  //Y5_GPIO_NUM;
+    config.pin_d4 = Pin(GPIO_WEBCAM_Y6_GPIO_NUM);  //Y6_GPIO_NUM;
+    config.pin_d5 = Pin(GPIO_WEBCAM_Y7_GPIO_NUM);  //Y7_GPIO_NUM;
+    config.pin_d6 = Pin(GPIO_WEBCAM_Y8_GPIO_NUM);  //Y8_GPIO_NUM;
+    config.pin_d7 = Pin(GPIO_WEBCAM_Y9_GPIO_NUM);  //Y9_GPIO_NUM;
+    config.pin_xclk = Pin(GPIO_WEBCAM_XCLK_GPIO_NUM);  //XCLK_GPIO_NUM;
+    config.pin_pclk = Pin(GPIO_WEBCAM_PCLK_GPIO_NUM);  //PCLK_GPIO_NUM;
+    config.pin_vsync = Pin(GPIO_WEBCAM_VSYNC_GPIO_NUM);  //VSYNC_GPIO_NUM;
+    config.pin_href = Pin(GPIO_WEBCAM_HREF_GPIO_NUM);  //HREF_GPIO_NUM;
+    config.pin_sscb_sda = Pin(GPIO_WEBCAM_SIOD_GPIO_NUM);  //SIOD_GPIO_NUM;
+    config.pin_sscb_scl = Pin(GPIO_WEBCAM_SIOC_GPIO_NUM);  //SIOC_GPIO_NUM;
+    int16_t xpin;
+    xpin = Pin(GPIO_WEBCAM_PWDN_GPIO_NUM);
+    if (99 == xpin) { xpin = -1; }
+    config.pin_pwdn = xpin; //PWDN_GPIO_NUM;
+    xpin = Pin(GPIO_WEBCAM_RESET_GPIO_NUM);
+    if (99 == xpin) { xpin=-1; }
+    config.pin_reset = xpin; //RESET_GPIO_NUM;
+  } else {
+    // defaults to AI THINKER
+    config.pin_d0 = Y2_GPIO_NUM;
+    config.pin_d1 = Y3_GPIO_NUM;
+    config.pin_d2 = Y4_GPIO_NUM;
+    config.pin_d3 = Y5_GPIO_NUM;
+    config.pin_d4 = Y6_GPIO_NUM;
+    config.pin_d5 = Y7_GPIO_NUM;
+    config.pin_d6 = Y8_GPIO_NUM;
+    config.pin_d7 = Y9_GPIO_NUM;
+    config.pin_xclk = XCLK_GPIO_NUM;
+    config.pin_pclk = PCLK_GPIO_NUM;
+    config.pin_vsync = VSYNC_GPIO_NUM;
+    config.pin_href = HREF_GPIO_NUM;
+    config.pin_sscb_sda = SIOD_GPIO_NUM;
+    config.pin_sscb_scl = SIOC_GPIO_NUM;
+    config.pin_pwdn = PWDN_GPIO_NUM;
+    config.pin_reset = RESET_GPIO_NUM;
+  }
 #endif
 
   //ESP.getPsramSize()
@@ -143,17 +174,17 @@ if (PinUsed(GPIO_WEBCAM_Y2_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y3_GPIO_NUM) && PinU
   // if PSRAM IC present, init with UXGA resolution and higher JPEG quality
   //                      for larger pre-allocated frame buffer.
 
-  psram=psramFound();
+  bool psram = psramFound();
   if (psram) {
     config.frame_size = FRAMESIZE_UXGA;
     config.jpeg_quality = 10;
     config.fb_count = 2;
-    AddLog_P(WC_LOGLEVEL,"PSRAM found!");
+    AddLog_P2(WC_LOGLEVEL, PSTR("CAM: PSRAM found"));
   } else {
     config.frame_size = FRAMESIZE_VGA;
     config.jpeg_quality = 12;
     config.fb_count = 1;
-    AddLog_P(WC_LOGLEVEL,"PSRAM not found!");
+    AddLog_P2(WC_LOGLEVEL, PSTR("CAM: PSRAM not found"));
   }
 
   // stupid workaround camera diver eats up static ram should prefer PSRAM
@@ -161,75 +192,70 @@ if (PinUsed(GPIO_WEBCAM_Y2_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y3_GPIO_NUM) && PinU
   //ESP.getMaxAllocHeap()
 
 //  void *x=malloc(70000);
-void *x=0;
-
+  void *x = 0;
   esp_err_t err = esp_camera_init(&config);
-
-  if (x) free(x);
+  if (x) { free(x); }
 
   if (err != ESP_OK) {
-    AddLog_P2(WC_LOGLEVEL,"Camera init failed with error 0x%x", err);
+    AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Init failed with error 0x%x"), err);
     return 0;
   }
 
   sensor_t * wc_s = esp_camera_sensor_get();
   // initial sensors are flipped vertically and colors are a bit saturated
-  if (wc_s->id.PID == OV3660_PID) {
-    wc_s->set_vflip(wc_s, 1); // flip it back
-    wc_s->set_brightness(wc_s, 1); // up the brightness just a bit
-    wc_s->set_saturation(wc_s, -2); // lower the saturation
+  if (OV3660_PID == wc_s->id.PID) {
+    wc_s->set_vflip(wc_s, 1);        // flip it back
+    wc_s->set_brightness(wc_s, 1);   // up the brightness just a bit
+    wc_s->set_saturation(wc_s, -2);  // lower the saturation
   }
   // drop down frame size for higher initial frame rate
   wc_s->set_framesize(wc_s, (framesize_t)fsiz);
 
   camera_fb_t *wc_fb = esp_camera_fb_get();
-  wc_width=wc_fb->width;
-  wc_height=wc_fb->height;
+  wc_width = wc_fb->width;
+  wc_height = wc_fb->height;
   esp_camera_fb_return(wc_fb);
 
-  AddLog_P(WC_LOGLEVEL,"Camera successfully initialized!");
+  AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Initialized"));
 
-  wc_up=1;
+  wc_up = 1;
+  if (psram) { wc_up=2; }
 
-  if (psram) {
-    wc_up=2;
-  }
   return wc_up;
 }
 
-
-int32_t wc_set_options(uint32_t sel,int32_t value) {
-  int32_t res=0;
+int32_t wc_set_options(uint32_t sel, int32_t value) {
+  int32_t res = 0;
   sensor_t *s = esp_camera_sensor_get();
-  if (!s) return -99;
+  if (!s) { return -99; }
 
   switch (sel) {
     case 0:
-      if (value>=0) s->set_framesize(s,(framesize_t)value);
+      if (value >= 0) { s->set_framesize(s, (framesize_t)value); }
       res = s->status.framesize;
       break;
     case 1:
-      if (value>=0) s->set_special_effect(s,value);
+      if (value >= 0) { s->set_special_effect(s, value); }
       res = s->status.special_effect;
       break;
     case 2:
-      if (value>=0) s->set_vflip(s,value);
+      if (value >= 0) { s->set_vflip(s, value); }
       res = s->status.vflip;
       break;
     case 3:
-      if (value>=0) s->set_hmirror(s,value);
+      if (value >= 0) { s->set_hmirror(s, value); }
       res = s->status.hmirror;
       break;
     case 4:
-      if (value>=-4) s->set_contrast(s,value);
+      if (value >= -4) { s->set_contrast(s, value); }
       res = s->status.contrast;
       break;
     case 5:
-      if (value>=-4) s->set_brightness(s,value);
+      if (value >= -4) { s->set_brightness(s, value); }
       res = s->status.brightness;
       break;
     case 6:
-      if (value>=-4) s->set_saturation(s,value);
+      if (value >= -4) { s->set_saturation(s,value); }
       res = s->status.saturation;
       break;
   }
@@ -239,16 +265,16 @@ int32_t wc_set_options(uint32_t sel,int32_t value) {
 
 uint32_t wc_get_width(void) {
   camera_fb_t *wc_fb = esp_camera_fb_get();
-  if (!wc_fb) return 0;
-  wc_width=wc_fb->width;
+  if (!wc_fb) { return 0; }
+  wc_width = wc_fb->width;
   esp_camera_fb_return(wc_fb);
   return wc_width;
 }
 
 uint32_t wc_get_height(void) {
   camera_fb_t *wc_fb = esp_camera_fb_get();
-  if (!wc_fb) return 0;
-  wc_height=wc_fb->height;
+  if (!wc_fb) { return 0; }
+  wc_height = wc_fb->height;
   esp_camera_fb_return(wc_fb);
   return wc_height;
 }
@@ -268,61 +294,60 @@ struct PICSTORE tmp_picstore;
 #endif
 
 uint32_t get_picstore(int32_t num, uint8_t **buff) {
-  if (num<0) return MAX_PICSTORE;
-  *buff=picstore[num].buff;
+  if (num<0) { return MAX_PICSTORE; }
+  *buff = picstore[num].buff;
   return picstore[num].len;
 }
 
 uint32_t wc_get_jpeg(uint8_t **buff) {
-size_t _jpg_buf_len = 0;
-uint8_t * _jpg_buf = NULL;
-camera_fb_t *wc_fb;
+  size_t _jpg_buf_len = 0;
+  uint8_t * _jpg_buf = NULL;
+  camera_fb_t *wc_fb;
   wc_fb = esp_camera_fb_get();
-  if (!wc_fb) return 0;
-  if (wc_fb->format!=PIXFORMAT_JPEG) {
+  if (!wc_fb) { return 0; }
+  if (wc_fb->format != PIXFORMAT_JPEG) {
     bool jpeg_converted = frame2jpg(wc_fb, 80, &_jpg_buf, &_jpg_buf_len);
-    if (!jpeg_converted){
-        _jpg_buf_len = wc_fb->len;
-        _jpg_buf = wc_fb->buf;
+    if (!jpeg_converted) {
+      _jpg_buf_len = wc_fb->len;
+      _jpg_buf = wc_fb->buf;
     }
   } else {
     _jpg_buf_len = wc_fb->len;
     _jpg_buf = wc_fb->buf;
   }
   esp_camera_fb_return(wc_fb);
-  *buff=_jpg_buf;
+  *buff = _jpg_buf;
   return _jpg_buf_len;
 }
-
 
 uint32_t wc_get_frame(int32_t bnum) {
   size_t _jpg_buf_len = 0;
   uint8_t * _jpg_buf = NULL;
-  camera_fb_t *wc_fb=0;
-  bool jpeg_converted=false;
+  camera_fb_t *wc_fb = 0;
+  bool jpeg_converted = false;
 
-  if (bnum<0) {
-    if (bnum<-MAX_PICSTORE) bnum=-1;
-    bnum=-bnum;
+  if (bnum < 0) {
+    if (bnum < -MAX_PICSTORE) { bnum=-1; }
+    bnum = -bnum;
     bnum--;
-    if (picstore[bnum].buff) free(picstore[bnum].buff);
-    picstore[bnum].len=0;
+    if (picstore[bnum].buff) { free(picstore[bnum].buff); }
+    picstore[bnum].len = 0;
     return 0;
   }
 
 #ifdef COPYFRAME
-  if (bnum&0x10) {
-    bnum&=0xf;
-    _jpg_buf=tmp_picstore.buff;
-    _jpg_buf_len=tmp_picstore.len;
-    if (!_jpg_buf_len) return 0;
+  if (bnum & 0x10) {
+    bnum &= 0xf;
+    _jpg_buf = tmp_picstore.buff;
+    _jpg_buf_len = tmp_picstore.len;
+    if (!_jpg_buf_len) { return 0; }
     goto pcopy;
   }
 #endif
 
   wc_fb = esp_camera_fb_get();
   if (!wc_fb) {
-    AddLog_P(WC_LOGLEVEL, "cant get frame");
+    AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Can't get frame"));
     return 0;
   }
   if (!bnum) {
@@ -332,12 +357,12 @@ uint32_t wc_get_frame(int32_t bnum) {
     return 0;
   }
 
-  if (wc_fb->format!=PIXFORMAT_JPEG) {
+  if (wc_fb->format != PIXFORMAT_JPEG) {
     jpeg_converted = frame2jpg(wc_fb, 80, &_jpg_buf, &_jpg_buf_len);
     if (!jpeg_converted){
-        //Serial.println("JPEG compression failed");
-        _jpg_buf_len = wc_fb->len;
-        _jpg_buf = wc_fb->buf;
+      //Serial.println("JPEG compression failed");
+      _jpg_buf_len = wc_fb->len;
+      _jpg_buf = wc_fb->buf;
     }
   } else {
     _jpg_buf_len = wc_fb->len;
@@ -345,20 +370,21 @@ uint32_t wc_get_frame(int32_t bnum) {
   }
 
 pcopy:
-  if (bnum<1 || bnum>MAX_PICSTORE) bnum=1;
+  if ((bnum < 1) || (bnum > MAX_PICSTORE)) { bnum = 1; }
   bnum--;
-  if (picstore[bnum].buff) free(picstore[bnum].buff);
-  picstore[bnum].buff = (uint8_t *)heap_caps_malloc(_jpg_buf_len+4,MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  if (picstore[bnum].buff) { free(picstore[bnum].buff); }
+  picstore[bnum].buff = (uint8_t *)heap_caps_malloc(_jpg_buf_len+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   if (picstore[bnum].buff) {
-    memcpy(picstore[bnum].buff,_jpg_buf,_jpg_buf_len);
-    picstore[bnum].len=_jpg_buf_len;
+    memcpy(picstore[bnum].buff, _jpg_buf, _jpg_buf_len);
+    picstore[bnum].len = _jpg_buf_len;
   } else {
-    AddLog_P(WC_LOGLEVEL, "cant allocate picstore");
-    picstore[bnum].len=0;
+    AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Can't allocate picstore"));
+    picstore[bnum].len = 0;
   }
-  if (wc_fb) esp_camera_fb_return(wc_fb);
-  if (jpeg_converted) free(_jpg_buf);
-  if (!picstore[bnum].buff) return 0;
+  if (wc_fb) { esp_camera_fb_return(wc_fb); }
+  if (jpeg_converted) { free(_jpg_buf); }
+  if (!picstore[bnum].buff) { return 0; }
+
   return  _jpg_buf_len;
 }
 
@@ -369,7 +395,7 @@ void HandleImage(void) {
   if (!HttpCheckPriviledgedAccess(true)) { return; }
 
   uint32_t bnum = Webserver->arg(F("p")).toInt();
-  if (bnum<0 || bnum>MAX_PICSTORE) bnum=1;
+  if ((bnum < 0) || (bnum > MAX_PICSTORE)) { bnum= 1; }
   WiFiClient client = Webserver->client();
   String response = "HTTP/1.1 200 OK\r\n";
   response += "Content-disposition: inline; filename=cap.jpg\r\n";
@@ -379,7 +405,7 @@ void HandleImage(void) {
   if (!bnum) {
     uint8_t *buff;
     uint32_t len;
-    len=wc_get_jpeg(&buff);
+    len = wc_get_jpeg(&buff);
     if (len) {
       client.write(buff,len);
       free(buff);
@@ -387,14 +413,13 @@ void HandleImage(void) {
   } else {
     bnum--;
     if (!picstore[bnum].len) {
-      AddLog_P2(WC_LOGLEVEL, PSTR("no image #: %d"), bnum);
+      AddLog_P2(WC_LOGLEVEL, PSTR("CAM: No image #: %d"), bnum);
       return;
     }
     client.write((char *)picstore[bnum].buff, picstore[bnum].len);
   }
 
-  AddLog_P2(WC_LOGLEVEL, PSTR("sending image #: %d"), bnum+1);
-
+  AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Sending image #: %d"), bnum+1);
 }
 
 ESP8266WebServer *CamServer;
@@ -403,16 +428,13 @@ ESP8266WebServer *CamServer;
 WiFiClient client;
 
 void handleMjpeg(void) {
-  AddLog_P(WC_LOGLEVEL, "handle camserver");
+  AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Handle camserver"));
   //if (!wc_stream_active) {
-    wc_stream_active=1;
+    wc_stream_active = 1;
     client = CamServer->client();
-    AddLog_P(WC_LOGLEVEL, "create client");
+    AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Create client"));
   //}
 }
-
-
-
 
 void handleMjpeg_task(void) {
   camera_fb_t *wc_fb;
@@ -421,35 +443,34 @@ void handleMjpeg_task(void) {
 
   //WiFiClient client = CamServer->client();
   uint32_t tlen;
-  bool jpeg_converted=false;
+  bool jpeg_converted = false;
 
   if (!client.connected()) {
-    wc_stream_active=0;
-    AddLog_P(WC_LOGLEVEL,"client fail");
+    wc_stream_active = 0;
+    AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Client fail"));
     goto exit;
   }
 
-  if (wc_stream_active==1) {
+  if (1 == wc_stream_active) {
     client.flush();
     client.setTimeout(3);
-    AddLog_P(WC_LOGLEVEL, "start stream");
+    AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Start stream"));
     client.print("HTTP/1.1 200 OK\r\n"
-  			"Content-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n"
-  				"\r\n");
-    wc_stream_active=2;
+      "Content-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n"
+      "\r\n");
+    wc_stream_active = 2;
   } else {
-
     wc_fb = esp_camera_fb_get();
     if (!wc_fb) {
-      wc_stream_active=0;
-      AddLog_P(WC_LOGLEVEL, "frame fail");
+      wc_stream_active = 0;
+      AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Frame fail"));
       goto exit;
     }
 
-    if (wc_fb->format!=PIXFORMAT_JPEG) {
+    if (wc_fb->format != PIXFORMAT_JPEG) {
       jpeg_converted = frame2jpg(wc_fb, 80, &_jpg_buf, &_jpg_buf_len);
       if (!jpeg_converted){
-        AddLog_P(WC_LOGLEVEL, "JPEG compression failed");
+        AddLog_P2(WC_LOGLEVEL, PSTR("CAM: JPEG compression failed"));
         _jpg_buf_len = wc_fb->len;
         _jpg_buf = wc_fb->buf;
       }
@@ -460,34 +481,34 @@ void handleMjpeg_task(void) {
 
     client.printf("Content-Type: image/jpeg\r\n"
       "Content-Length: %d\r\n"
-        "\r\n", static_cast<int>(_jpg_buf_len));
-    tlen=client.write(_jpg_buf, _jpg_buf_len);
+      "\r\n", static_cast<int>(_jpg_buf_len));
+    tlen = client.write(_jpg_buf, _jpg_buf_len);
     /*
     if (tlen!=_jpg_buf_len) {
       esp_camera_fb_return(wc_fb);
       wc_stream_active=0;
-      AddLog_P(WC_LOGLEVEL, "send fail");
+      AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Send fail"));
     }*/
     client.print("\r\n--" BOUNDARY "\r\n");
 
 #ifdef COPYFRAME
-    if (tmp_picstore.buff) free(tmp_picstore.buff);
-    tmp_picstore.buff = (uint8_t *)heap_caps_malloc(_jpg_buf_len+4,MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (tmp_picstore.buff) { free(tmp_picstore.buff); }
+    tmp_picstore.buff = (uint8_t *)heap_caps_malloc(_jpg_buf_len+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (tmp_picstore.buff) {
-      memcpy(tmp_picstore.buff,_jpg_buf,_jpg_buf_len);
-      tmp_picstore.len=_jpg_buf_len;
+      memcpy(tmp_picstore.buff, _jpg_buf, _jpg_buf_len);
+      tmp_picstore.len = _jpg_buf_len;
     } else {
-      tmp_picstore.len=0;
+      tmp_picstore.len = 0;
     }
 #endif
 
-    if (jpeg_converted) free(_jpg_buf);
+    if (jpeg_converted) { free(_jpg_buf); }
     esp_camera_fb_return(wc_fb);
-    //AddLog_P(WC_LOGLEVEL, "send frame");
+    //AddLog_P2(WC_LOGLEVEL, PSTR("CAM: send frame"));
 
 exit:
     if (!wc_stream_active) {
-      AddLog_P(WC_LOGLEVEL, "stream exit");
+      AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Stream exit"));
       client.flush();
       client.stop();
     }
@@ -508,8 +529,8 @@ uint32_t motion_brightness;
 uint8_t *last_motion_buffer;
 
 uint32_t wc_set_motion_detect(int32_t value) {
-  if (value>=0) motion_detect=value;
-  if (value==-1) {
+  if (value >= 0) { motion_detect=value; }
+  if (-1 == value) {
     return motion_trigger;
   } else {
     return motion_brightness;
@@ -518,41 +539,41 @@ uint32_t wc_set_motion_detect(int32_t value) {
 
 // optional motion detector
 void detect_motion(void) {
-camera_fb_t *wc_fb;
-uint8_t *out_buf=0;
+  camera_fb_t *wc_fb;
+  uint8_t *out_buf=0;
 
-  if ((millis()-motion_ltime)>motion_detect) {
-    motion_ltime=millis();
+  if ((millis()-motion_ltime) > motion_detect) {
+    motion_ltime = millis();
     wc_fb = esp_camera_fb_get();
-    if (!wc_fb) return;
+    if (!wc_fb) { return; }
 
     if (!last_motion_buffer) {
-      last_motion_buffer=(uint8_t *)heap_caps_malloc((wc_fb->width*wc_fb->height)+4,MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+      last_motion_buffer=(uint8_t *)heap_caps_malloc((wc_fb->width*wc_fb->height)+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     }
     if (last_motion_buffer) {
-      if (wc_fb->format==PIXFORMAT_JPEG) {
-        out_buf=(uint8_t *)heap_caps_malloc((wc_fb->width*wc_fb->height*3)+4,MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+      if (PIXFORMAT_JPEG == wc_fb->format) {
+        out_buf = (uint8_t *)heap_caps_malloc((wc_fb->width*wc_fb->height*3)+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
         if (out_buf) {
           fmt2rgb888(wc_fb->buf, wc_fb->len, wc_fb->format, out_buf);
-          uint32_t x,y;
-          uint8_t *pxi=out_buf;
-          uint8_t *pxr=last_motion_buffer;
+          uint32_t x, y;
+          uint8_t *pxi = out_buf;
+          uint8_t *pxr = last_motion_buffer;
           // convert to bw
-          uint64_t accu=0;
-          uint64_t bright=0;
-          for (y=0;y<wc_fb->height;y++) {
-            for (x=0;x<wc_fb->width;x++) {
-              int32_t gray=(pxi[0]+pxi[1]+pxi[2])/3;
-              int32_t lgray=pxr[0];
-              pxr[0]=gray;
-              pxi+=3;
+          uint64_t accu = 0;
+          uint64_t bright = 0;
+          for (y = 0; y < wc_fb->height; y++) {
+            for (x = 0; x < wc_fb->width; x++) {
+              int32_t gray = (pxi[0] + pxi[1] + pxi[2]) / 3;
+              int32_t lgray = pxr[0];
+              pxr[0] = gray;
+              pxi += 3;
               pxr++;
-              accu+=abs(gray-lgray);
-              bright+=gray;
+              accu += abs(gray - lgray);
+              bright += gray;
             }
           }
-          motion_trigger=accu/((wc_fb->height*wc_fb->width)/100);
-          motion_brightness=bright/((wc_fb->height*wc_fb->width)/100);
+          motion_trigger = accu / ((wc_fb->height * wc_fb->width) / 100);
+          motion_brightness = bright / ((wc_fb->height * wc_fb->width) / 100);
           free(out_buf);
         }
       }
@@ -563,16 +584,17 @@ uint8_t *out_buf=0;
 
 void wc_show_stream(void) {
 #ifndef USE_SCRIPT
-  if (CamServer) WSContentSend_P("<br><img src=\"http://%s:81/stream\"><br><center>webcam stream",WiFi.localIP().toString().c_str());
+  if (CamServer) {
+    WSContentSend_P(PSTR("<p><center><img src='http://%s:81/stream' alt='Webcam stream' style='width:99%%;'></center></p><br>"),
+      WiFi.localIP().toString().c_str());
+  }
 #endif
 }
 
-
 uint32_t wc_set_streamserver(uint32_t flag) {
+  if (global_state.wifi_down) { return 0; }
 
-  if (global_state.wifi_down) return 0;
-
-  wc_stream_active=0;
+  wc_stream_active = 0;
 
   if (flag) {
     if (!CamServer) {
@@ -581,24 +603,24 @@ uint32_t wc_set_streamserver(uint32_t flag) {
       CamServer->on("/cam.mjpeg", handleMjpeg);
       CamServer->on("/cam.jpg", handleMjpeg);
       CamServer->on("/stream", handleMjpeg);
-      AddLog_P(WC_LOGLEVEL, "cam stream init");
+      AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Stream init"));
       CamServer->begin();
     }
   } else {
     if (CamServer) {
       CamServer->stop();
       delete CamServer;
-      CamServer=NULL;
-      AddLog_P(WC_LOGLEVEL, "cam stream exit");
+      CamServer = NULL;
+      AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Stream exit"));
     }
   }
   return 0;
 }
 
 void wc_loop(void) {
-  if (CamServer) CamServer->handleClient();
-  if (wc_stream_active) handleMjpeg_task();
-  if (motion_detect) detect_motion();
+  if (CamServer) { CamServer->handleClient(); }
+  if (wc_stream_active) { handleMjpeg_task(); }
+  if (motion_detect) { detect_motion(); }
 }
 
 void wc_pic_setup(void) {
@@ -634,9 +656,10 @@ red led = gpio 33
 */
 
 /*********************************************************************************************\
- * Interface
+ * Commands
 \*********************************************************************************************/
-#define D_CMND_WC "webcam"
+
+#define D_CMND_WC "Webcam"
 
 const char kWCCommands[] PROGMEM =  "|"    // no prefix
   D_CMND_WC
@@ -647,15 +670,18 @@ void (* const WCCommand[])(void) PROGMEM = {
   };
 
 void CmndWC(void) {
-  uint8_t flag=0;
-  if (XdrvMailbox.data_len > 0) {
+  uint32_t flag = 0;
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 10)) {
     wc_set_streamserver(XdrvMailbox.payload);
     wc_setup(flag);
   }
-  if (CamServer) flag=1;
-  Response_P(PSTR("{\"" D_CMND_WC "\":{\"streaming\":%d}"),flag);
+  if (CamServer) { flag = 1; }
+  Response_P(PSTR("{\"" D_CMND_WC "\":{\"Streaming\":\"%s\"}"),GetStateText(flag));
 }
 
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
 
 bool Xdrv39(uint8_t function) {
   bool result = false;
@@ -677,4 +703,5 @@ bool Xdrv39(uint8_t function) {
   return result;
 }
 
-#endif
+#endif  // USE_WEBCAM
+#endif  // ESP32

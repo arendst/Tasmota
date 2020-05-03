@@ -197,8 +197,7 @@ enum UserSelectablePins {
   ADC0_BUTTON_INV,
   ADC0_RANGE,          // Range
   ADC0_CT_POWER,       // Current
-  // webcam interface
-  GPIO_WEBCAM_PWDN_GPIO_NUM,
+  GPIO_WEBCAM_PWDN_GPIO_NUM,   // Webcam interface
   GPIO_WEBCAM_RESET_GPIO_NUM,
   GPIO_WEBCAM_XCLK_GPIO_NUM,
   GPIO_WEBCAM_SIOD_GPIO_NUM,
