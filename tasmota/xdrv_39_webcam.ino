@@ -524,7 +524,8 @@ void CamHandleRoot(void) {
   //CamServer->redirect("http://" + String(ip) + ":81/cam.mjpeg");
   CamServer->sendHeader("Location", WiFi.localIP().toString() + ":81/cam.mjpeg");
   CamServer->send(302, "", "");
-  Serial.printf("WC root called");
+  //Serial.printf("WC root called");
+  AddLog_P2(WC_LOGLEVEL, PSTR("CAM: root called"));
 }
 
 uint16_t motion_detect;
