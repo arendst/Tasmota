@@ -659,7 +659,7 @@ void CmndUpgrade(void)
 void CmndOtaUrl(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    SettingsUpdateText(SET_OTAURL, (SC_DEFAULT == Shortcut()) ? OTA_URL : XdrvMailbox.data);
+    SettingsUpdateText(SET_OTAURL, (SC_DEFAULT == Shortcut()) ? PSTR(OTA_URL) : XdrvMailbox.data);
   }
   ResponseCmndChar(SettingsText(SET_OTAURL));
 }
@@ -1394,7 +1394,7 @@ void CmndNtpServer(void)
       uint32_t ntp_server = SET_NTPSERVER1 + XdrvMailbox.index -1;
       if (XdrvMailbox.data_len > 0) {
         SettingsUpdateText(ntp_server,
-          (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? NTP_SERVER1 : (2 == XdrvMailbox.index) ? NTP_SERVER2 : NTP_SERVER3 : XdrvMailbox.data);
+          (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? PSTR(NTP_SERVER1) : (2 == XdrvMailbox.index) ? PSTR(NTP_SERVER2) : PSTR(NTP_SERVER3) : XdrvMailbox.data);
         SettingsUpdateText(ntp_server, ReplaceCommaWithDot(SettingsText(ntp_server)));
   //        restart_flag = 2;  // Issue #3890
         ntp_force_sync = true;
@@ -1602,7 +1602,7 @@ void CmndReset(void)
   switch (XdrvMailbox.payload) {
   case 1:
     restart_flag = 211;
-    ResponseCmndChar(D_JSON_RESET_AND_RESTARTING);
+    ResponseCmndChar(PSTR(D_JSON_RESET_AND_RESTARTING));
     break;
   case 2 ... 6:
     restart_flag = 210 + XdrvMailbox.payload;
@@ -1614,7 +1614,7 @@ void CmndReset(void)
     ResponseCmndDone();
     break;
   default:
-    ResponseCmndChar(D_JSON_ONE_TO_RESET);
+    ResponseCmndChar(PSTR(D_JSON_ONE_TO_RESET));
   }
 }
 

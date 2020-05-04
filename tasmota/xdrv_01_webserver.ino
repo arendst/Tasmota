@@ -1087,7 +1087,7 @@ void HandleRoot(void)
 
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Hue
             "b",             // b - Unique HTML id
-            "#800", "#f00 5%,#ff0 20%,#0f0 35%,#0ff 50%,#00f 65%,#f0f 80%,#f00 95%,#800",  // Hue colors
+            "#800", PSTR("#f00 5%,#ff0 20%,#0f0 35%,#0ff 50%,#00f 65%,#f0f 80%,#f00 95%,#800"),  // Hue colors
             2,               // sl2 - Unique range HTML id - Used as source for Saturation end color
             1, 359,          // Range valid Hue
             hue,
