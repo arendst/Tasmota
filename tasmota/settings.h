@@ -365,7 +365,9 @@ struct {
   myio          my_gp;                     // 3AC - 2 x 40 bytes (ESP32)
   mytmplt       user_template;             // 3FC - 2 x 37 bytes (ESP32)
 
-  uint8_t       free_esp32_446[11];        // 446
+  uint8_t       free_esp32_446[10];        // 446
+
+  uint8_t       esp32_webcam_resolution;   // 450 - not used yet
 #endif  // ESP8266 - ESP32
 
   char          serial_delimiter;          // 451

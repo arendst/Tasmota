@@ -39,11 +39,11 @@
  *  8 = FRAMESIZE_XGA (1024x768)
  *  9 = FRAMESIZE_SXGA (1280x1024)
  * 10 = FRAMESIZE_UXGA (1600x1200)
-
-* only boards with PSRAM should be used, to enable PSRAM  board should be se set to esp32cam in common32 of platform_override.ini
-* board                   = esp32cam
-* to speed up cam processing cpu frequency should be better set to 240Mhz in common32 of platform_override.ini
-* board_build.f_cpu       = 240000000L
+ *
+ * Only boards with PSRAM should be used. To enable PSRAM board should be se set to esp32cam in common32 of platform_override.ini
+ * board                   = esp32cam
+ * To speed up cam processing cpu frequency should be better set to 240Mhz in common32 of platform_override.ini
+ * board_build.f_cpu       = 240000000L
 \*********************************************************************************************/
 
 #define XDRV_39                    39
@@ -125,29 +125,29 @@ uint32_t wc_setup(int32_t fsiz) {
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
 #else
-  if (PinUsed(GPIO_WEBCAM_Y2_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y3_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y4_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y5_GPIO_NUM)\
-   && PinUsed(GPIO_WEBCAM_Y6_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y7_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y8_GPIO_NUM) && PinUsed(GPIO_WEBCAM_Y9_GPIO_NUM)\
-   && PinUsed(GPIO_WEBCAM_XCLK_GPIO_NUM) && PinUsed(GPIO_WEBCAM_PCLK_GPIO_NUM) && PinUsed(GPIO_WEBCAM_VSYNC_GPIO_NUM) && PinUsed(GPIO_WEBCAM_HREF_GPIO_NUM)\
-   && PinUsed(GPIO_WEBCAM_SIOD_GPIO_NUM) && PinUsed(GPIO_WEBCAM_SIOC_GPIO_NUM)) {
-    config.pin_d0 = Pin(GPIO_WEBCAM_Y2_GPIO_NUM);  //Y2_GPIO_NUM;
-    config.pin_d1 = Pin(GPIO_WEBCAM_Y3_GPIO_NUM);  //Y3_GPIO_NUM;
-    config.pin_d2 = Pin(GPIO_WEBCAM_Y4_GPIO_NUM);  //Y4_GPIO_NUM;
-    config.pin_d3 = Pin(GPIO_WEBCAM_Y5_GPIO_NUM);  //Y5_GPIO_NUM;
-    config.pin_d4 = Pin(GPIO_WEBCAM_Y6_GPIO_NUM);  //Y6_GPIO_NUM;
-    config.pin_d5 = Pin(GPIO_WEBCAM_Y7_GPIO_NUM);  //Y7_GPIO_NUM;
-    config.pin_d6 = Pin(GPIO_WEBCAM_Y8_GPIO_NUM);  //Y8_GPIO_NUM;
-    config.pin_d7 = Pin(GPIO_WEBCAM_Y9_GPIO_NUM);  //Y9_GPIO_NUM;
-    config.pin_xclk = Pin(GPIO_WEBCAM_XCLK_GPIO_NUM);  //XCLK_GPIO_NUM;
-    config.pin_pclk = Pin(GPIO_WEBCAM_PCLK_GPIO_NUM);  //PCLK_GPIO_NUM;
-    config.pin_vsync = Pin(GPIO_WEBCAM_VSYNC_GPIO_NUM);  //VSYNC_GPIO_NUM;
-    config.pin_href = Pin(GPIO_WEBCAM_HREF_GPIO_NUM);  //HREF_GPIO_NUM;
-    config.pin_sscb_sda = Pin(GPIO_WEBCAM_SIOD_GPIO_NUM);  //SIOD_GPIO_NUM;
-    config.pin_sscb_scl = Pin(GPIO_WEBCAM_SIOC_GPIO_NUM);  //SIOC_GPIO_NUM;
+  if (PinUsed(GPIO_WEBCAM_Y2) && PinUsed(GPIO_WEBCAM_Y3) && PinUsed(GPIO_WEBCAM_Y4) && PinUsed(GPIO_WEBCAM_Y5)\
+   && PinUsed(GPIO_WEBCAM_Y6) && PinUsed(GPIO_WEBCAM_Y7) && PinUsed(GPIO_WEBCAM_Y8) && PinUsed(GPIO_WEBCAM_Y9)\
+   && PinUsed(GPIO_WEBCAM_XCLK) && PinUsed(GPIO_WEBCAM_PCLK) && PinUsed(GPIO_WEBCAM_VSYNC) && PinUsed(GPIO_WEBCAM_HREF)\
+   && PinUsed(GPIO_WEBCAM_SIOD) && PinUsed(GPIO_WEBCAM_SIOC)) {
+    config.pin_d0 = Pin(GPIO_WEBCAM_Y2);  //Y2_GPIO_NUM;
+    config.pin_d1 = Pin(GPIO_WEBCAM_Y3);  //Y3_GPIO_NUM;
+    config.pin_d2 = Pin(GPIO_WEBCAM_Y4);  //Y4_GPIO_NUM;
+    config.pin_d3 = Pin(GPIO_WEBCAM_Y5);  //Y5_GPIO_NUM;
+    config.pin_d4 = Pin(GPIO_WEBCAM_Y6);  //Y6_GPIO_NUM;
+    config.pin_d5 = Pin(GPIO_WEBCAM_Y7);  //Y7_GPIO_NUM;
+    config.pin_d6 = Pin(GPIO_WEBCAM_Y8);  //Y8_GPIO_NUM;
+    config.pin_d7 = Pin(GPIO_WEBCAM_Y9);  //Y9_GPIO_NUM;
+    config.pin_xclk = Pin(GPIO_WEBCAM_XCLK);  //XCLK_GPIO_NUM;
+    config.pin_pclk = Pin(GPIO_WEBCAM_PCLK);  //PCLK_GPIO_NUM;
+    config.pin_vsync = Pin(GPIO_WEBCAM_VSYNC);  //VSYNC_GPIO_NUM;
+    config.pin_href = Pin(GPIO_WEBCAM_HREF);  //HREF_GPIO_NUM;
+    config.pin_sscb_sda = Pin(GPIO_WEBCAM_SIOD);  //SIOD_GPIO_NUM;
+    config.pin_sscb_scl = Pin(GPIO_WEBCAM_SIOC);  //SIOC_GPIO_NUM;
     int16_t xpin;
-    xpin = Pin(GPIO_WEBCAM_PWDN_GPIO_NUM);
+    xpin = Pin(GPIO_WEBCAM_PWDN);
     if (99 == xpin) { xpin = -1; }
     config.pin_pwdn = xpin; //PWDN_GPIO_NUM;
-    xpin = Pin(GPIO_WEBCAM_RESET_GPIO_NUM);
+    xpin = Pin(GPIO_WEBCAM_RESET);
     if (99 == xpin) { xpin=-1; }
     config.pin_reset = xpin; //RESET_GPIO_NUM;
   } else {
