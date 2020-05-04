@@ -591,7 +591,7 @@ void detect_motion(void) {
 void wc_show_stream(void) {
 #ifndef USE_SCRIPT
   if (CamServer) {
-    WSContentSend_P(PSTR("<p><center><img src='http://%s:81/stream' alt='Webcam stream' style='width:99%%;'></center></p><br>"),
+    WSContentSend_P(PSTR("<p></p><center><img src='http://%s:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),
       WiFi.localIP().toString().c_str());
   }
 #endif
@@ -621,6 +621,11 @@ uint32_t wc_set_streamserver(uint32_t flag) {
     }
   }
   return 0;
+}
+
+void WcStreamControl(uint32_t resolution) {
+  wc_set_streamserver(resolution);
+  wc_setup(resolution);
 }
 
 void wc_loop(void) {
@@ -661,28 +666,34 @@ flash led = gpio4
 red led = gpio 33
 */
 
+void WcInit(void) {
+  if (Settings.esp32_webcam_resolution > 10) {
+    Settings.esp32_webcam_resolution = 0;
+  }
+}
+
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
-#define D_CMND_WC "Webcam"
+#define D_CMND_WEBCAM "Webcam"
 
 const char kWCCommands[] PROGMEM =  "|"    // no prefix
-  D_CMND_WC
+  D_CMND_WEBCAM
   ;
 
 void (* const WCCommand[])(void) PROGMEM = {
-  &CmndWC,
+  &CmndWebcam,
   };
 
-void CmndWC(void) {
+void CmndWebcam(void) {
   uint32_t flag = 0;
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 10)) {
-    wc_set_streamserver(XdrvMailbox.payload);
-    wc_setup(XdrvMailbox.payload);
+    Settings.esp32_webcam_resolution = XdrvMailbox.payload;
+    WcStreamControl(Settings.esp32_webcam_resolution);
   }
   if (CamServer) { flag = 1; }
-  Response_P(PSTR("{\"" D_CMND_WC "\":{\"Streaming\":\"%s\"}"),GetStateText(flag));
+  Response_P(PSTR("{\"" D_CMND_WEBCAM "\":{\"Streaming\":\"%s\"}"),GetStateText(flag));
 }
 
 /*********************************************************************************************\
@@ -700,10 +711,14 @@ bool Xdrv39(uint8_t function) {
       wc_pic_setup();
       break;
     case FUNC_WEB_ADD_MAIN_BUTTON:
+      WcStreamControl(Settings.esp32_webcam_resolution);
       wc_show_stream();
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kWCCommands, WCCommand);
+      break;
+    case FUNC_PRE_INIT:
+      WcInit();
       break;
   }
   return result;

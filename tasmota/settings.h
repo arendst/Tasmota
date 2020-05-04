@@ -367,7 +367,7 @@ struct {
 
   uint8_t       free_esp32_446[10];        // 446
 
-  uint8_t       esp32_webcam_resolution;   // 450 - not used yet
+  uint8_t       esp32_webcam_resolution;   // 450
 #endif  // ESP8266 - ESP32
 
   char          serial_delimiter;          // 451
