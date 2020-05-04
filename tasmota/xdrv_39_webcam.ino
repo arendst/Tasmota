@@ -39,6 +39,11 @@
  *  8 = FRAMESIZE_XGA (1024x768)
  *  9 = FRAMESIZE_SXGA (1280x1024)
  * 10 = FRAMESIZE_UXGA (1600x1200)
+
+* only boards with PSRAM should be used, to enable PSRAM  board should be se set to esp32cam in common32 of platform_override.ini
+* board                   = esp32cam
+* to speed up cam processing cpu frequency should be better set to 240Mhz in common32 of platform_override.ini
+* board_build.f_cpu       = 240000000L
 \*********************************************************************************************/
 
 #define XDRV_39                    39
@@ -673,7 +678,7 @@ void CmndWC(void) {
   uint32_t flag = 0;
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 10)) {
     wc_set_streamserver(XdrvMailbox.payload);
-    wc_setup(flag);
+    wc_setup(XdrvMailbox.payload);
   }
   if (CamServer) { flag = 1; }
   Response_P(PSTR("{\"" D_CMND_WC "\":{\"Streaming\":\"%s\"}"),GetStateText(flag));

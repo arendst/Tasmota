@@ -80,7 +80,7 @@ inline void analogWriteFreqRange(uint32_t channel,uint32_t freq, uint32_t irange
       ledcSetup(cnt+PWM_CHANNEL_OFFSET,freq,range);
     }
   }
-  Serial.printf("freq - range %d - %d\n",freq,range);
+  //Serial.printf("freq - range %d - %d\n",freq,range);
 }
 
 #define INPUT_PULLDOWN_16 INPUT_PULLUP
