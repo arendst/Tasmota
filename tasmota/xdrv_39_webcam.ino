@@ -867,6 +867,7 @@ bool Xdrv39(uint8_t function) {
      //if (Settings.esp32_webcam_resolution) {
 #ifndef USE_SCRIPT
        WcStreamControl(Settings.esp32_webcam_resolution);
+       delay(50);   // Give the webcam webserver some time to prepare the stream
        wc_show_stream();
 #endif
      //}
