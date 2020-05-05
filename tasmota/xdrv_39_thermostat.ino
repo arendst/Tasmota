@@ -350,6 +350,7 @@ void ThermostatCtrState(uint8_t ctr_output)
 
 void ThermostatHybridCtrPhase(uint8_t ctr_output)
 {
+  bool flag_heating = (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING);
   if (Thermostat[ctr_output].status.controller_mode == CTR_HYBRID) {
     switch (Thermostat[ctr_output].status.phase_hybrid_ctr) {
       // Ramp-up phase with gradient control
@@ -375,9 +376,9 @@ void ThermostatHybridCtrPhase(uint8_t ctr_output)
           if (((uptime - Thermostat[ctr_output].timestamp_output_off) > (60 * (uint32_t)Thermostat[ctr_output].time_allow_rampup))
             && (Thermostat[ctr_output].temp_target_level != Thermostat[ctr_output].temp_target_level_ctr)
             && ( ( (Thermostat[ctr_output].temp_target_level - Thermostat[ctr_output].temp_measured > Thermostat[ctr_output].temp_rampup_delta_in)
-                && (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING))
+                && (flag_heating))
               || ( (Thermostat[ctr_output].temp_measured - Thermostat[ctr_output].temp_target_level > Thermostat[ctr_output].temp_rampup_delta_in)
-                && (Thermostat[ctr_output].status.climate_mode == CLIMATE_COOLING)))) {
+                && (!flag_heating)))) {
               Thermostat[ctr_output].timestamp_rampup_start = uptime;
               Thermostat[ctr_output].temp_rampup_start = Thermostat[ctr_output].temp_measured;
               Thermostat[ctr_output].temp_rampup_meas_gradient = 0;
@@ -492,7 +493,8 @@ void ThermostatOutputRelay(uint8_t ctr_output, uint32_t command)
 void ThermostatCalculatePI(uint8_t ctr_output)
 {
   // General comment: Some variables have been increased in resolution to avoid loosing accuracy in division operations
-
+  
+  bool flag_heating = (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING);
   int32_t aux_temp_error;
   
   // Calculate error
@@ -576,9 +578,9 @@ void ThermostatCalculatePI(uint8_t ctr_output)
     if ( (Thermostat[ctr_output].temp_pi_error >= 0)
       && (abs((Thermostat[ctr_output].temp_pi_error) / 10) <= (int16_t)Thermostat[ctr_output].temp_hysteresis)
       && (  ((Thermostat[ctr_output].temp_measured_gradient > 0)
-          && (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING))
+          && (flag_heating))
         || ( (Thermostat[ctr_output].temp_measured_gradient < 0)
-          && (Thermostat[ctr_output].status.climate_mode == CLIMATE_COOLING)))) {
+          && (!flag_heating)))) {
       // Reduce accumulator error 20% in each cycle
       Thermostat[ctr_output].temp_pi_accum_error *= 0.8;
     }
@@ -586,9 +588,9 @@ void ThermostatCalculatePI(uint8_t ctr_output)
     // AND temperature is rising for heating or sinking for cooling
     else if ((Thermostat[ctr_output].temp_pi_error < 0)
       && (  ((Thermostat[ctr_output].temp_measured_gradient > 0)
-          && (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING))
+          && (flag_heating))
         || ( (Thermostat[ctr_output].temp_measured_gradient < 0)
-          && (Thermostat[ctr_output].status.climate_mode == CLIMATE_COOLING)))) {
+          && (!flag_heating)))) {
       // Reduce accumulator error 20% in each cycle
       Thermostat[ctr_output].temp_pi_accum_error *= 0.8;
     }
@@ -629,9 +631,9 @@ void ThermostatCalculatePI(uint8_t ctr_output)
     // If we are over the hysteresis or the gradient is positive for heating or negative for cooling
     if ((abs((Thermostat[ctr_output].temp_pi_error) / 10) > Thermostat[ctr_output].temp_hysteresis)
       || (  ((Thermostat[ctr_output].temp_measured_gradient >= 0)
-          && (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING))
+          && (flag_heating))
         || ( (Thermostat[ctr_output].temp_measured_gradient <= 0)
-          && (Thermostat[ctr_output].status.climate_mode == CLIMATE_COOLING)))){
+          && (!flag_heating)))){
       Thermostat[ctr_output].time_total_pi = 0;
     }
   } 
@@ -642,9 +644,9 @@ void ThermostatCalculatePI(uint8_t ctr_output)
   else if ((Thermostat[ctr_output].temp_pi_error > 0)
     && (abs((Thermostat[ctr_output].temp_pi_error) / 10) <= Thermostat[ctr_output].temp_hysteresis)
     && (((Thermostat[ctr_output].temp_measured_gradient > 0)
-        && (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING))
+        && (flag_heating))
       || ( (Thermostat[ctr_output].temp_measured_gradient < 0)
-        && (Thermostat[ctr_output].status.climate_mode == CLIMATE_COOLING)))) {
+        && (!flag_heating)))) {
     Thermostat[ctr_output].time_total_pi = 0;
   }
 
@@ -672,14 +674,15 @@ void ThermostatCalculatePI(uint8_t ctr_output)
 
 void ThermostatWorkAutomaticPI(uint8_t ctr_output)
 {
+  bool flag_heating = (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING);
   if ( (uptime >= Thermostat[ctr_output].time_ctr_checkpoint) 
     || (Thermostat[ctr_output].temp_target_level != Thermostat[ctr_output].temp_target_level_ctr)
     || (  (( (Thermostat[ctr_output].temp_measured < Thermostat[ctr_output].temp_target_level)
           && (Thermostat[ctr_output].temp_measured_gradient < 0)
-          && (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING))
+          && (flag_heating))
         || ((Thermostat[ctr_output].temp_measured > Thermostat[ctr_output].temp_target_level)
           && (Thermostat[ctr_output].temp_measured_gradient > 0)
-          && (Thermostat[ctr_output].status.climate_mode == CLIMATE_COOLING)))
+          && (!flag_heating)))
         && (Thermostat[ctr_output].status.status_cycle_active == CYCLE_OFF))) {
     Thermostat[ctr_output].temp_target_level_ctr = Thermostat[ctr_output].temp_target_level;
     ThermostatCalculatePI(ctr_output);
@@ -697,16 +700,17 @@ void ThermostatWorkAutomaticPI(uint8_t ctr_output)
 
 void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
 {
-  int16_t aux_temp_delta;
   uint32_t time_in_rampup;
+  int16_t aux_temp_delta;
   int16_t temp_delta_rampup;
+  bool flag_heating = (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING);
 
   // Update timestamp for temperature at start of ramp-up if temperature still 
   // dropping for heating or rising for cooling
   if (    ((Thermostat[ctr_output].temp_measured < Thermostat[ctr_output].temp_rampup_start)
-        && (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING))
+        && (flag_heating))
       ||  ((Thermostat[ctr_output].temp_measured > Thermostat[ctr_output].temp_rampup_start)
-        && (Thermostat[ctr_output].status.climate_mode == CLIMATE_COOLING)))
+        && (!flag_heating)))
      {
     Thermostat[ctr_output].temp_rampup_start = Thermostat[ctr_output].temp_measured;
   }
@@ -723,9 +727,9 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
   // AND temperature measured < target for heating or > for cooling
   if ((time_in_rampup <= (60 * (uint32_t)Thermostat[ctr_output].time_rampup_max))
     && (  ((Thermostat[ctr_output].temp_measured < Thermostat[ctr_output].temp_target_level)
-        && (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING))
+        && (flag_heating))
       ||  ((Thermostat[ctr_output].temp_measured > Thermostat[ctr_output].temp_target_level)
-        && (Thermostat[ctr_output].status.climate_mode == CLIMATE_COOLING)))){
+        && (!flag_heating)))){
     // DEADTIME point reached
     // If temperature measured minus temperature at start of ramp-up >= threshold
     // AND deadtime still 0
@@ -758,9 +762,9 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
       // Translate into gradient per hour (thousandths of ° per hour)
       Thermostat[ctr_output].temp_rampup_meas_gradient = int32_t((360000 * (int32_t)temp_delta_rampup) / (int32_t)time_total_rampup);
       if (   ((Thermostat[ctr_output].temp_rampup_meas_gradient > 0)
-          && ((Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING)))
+          && ((flag_heating)))
         ||   ((Thermostat[ctr_output].temp_rampup_meas_gradient < 0)
-          && ((Thermostat[ctr_output].status.climate_mode == CLIMATE_COOLING)))) {
+          && ((!flag_heating)))) {
         // Calculate time to switch Off and come out of ramp-up
         // y-y1 = m(x-x1) -> x = ((y-y1) / m) + x1 -> y1 = temp_rampup_cycle, x1 = (time_rampup_nextcycle - time_rampup_cycle), m = gradient in º/sec
         // Better Alternative -> (y-y1)/(x-x1) = ((y2-y1)/(x2-x1)) -> where y = temp (target) and x = time (to switch off, what its needed)
@@ -799,13 +803,13 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
       || (Thermostat[ctr_output].time_ctr_checkpoint == 0)
       || (uptime < Thermostat[ctr_output].time_ctr_changepoint)
       || (  ((Thermostat[ctr_output].temp_measured < Thermostat[ctr_output].temp_rampup_output_off)
-          && (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING))
+          && (flag_heating))
         ||  ((Thermostat[ctr_output].temp_measured > Thermostat[ctr_output].temp_rampup_output_off)
-          && (Thermostat[ctr_output].status.climate_mode == CLIMATE_COOLING)))
+          && (!flag_heating)))
       || (  ((Thermostat[ctr_output].temp_rampup_meas_gradient <= 0)
-          && (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING))
+          && (flag_heating))
         ||  ((Thermostat[ctr_output].temp_rampup_meas_gradient >= 0)
-          && (Thermostat[ctr_output].status.climate_mode == CLIMATE_COOLING)))) {
+          && (!flag_heating)))) {
       Thermostat[ctr_output].status.command_output = IFACE_ON;
     }
     else {
@@ -815,9 +819,9 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
   else {
     // If we have not reached the temperature, start with an initial value for accumulated error for the PI controller
     if (  ((Thermostat[ctr_output].temp_measured < Thermostat[ctr_output].temp_target_level_ctr)
-        && (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING))
+        && (flag_heating))
       ||  ((Thermostat[ctr_output].temp_measured > Thermostat[ctr_output].temp_target_level_ctr)
-        && (Thermostat[ctr_output].status.climate_mode == CLIMATE_COOLING))) {
+        && (!flag_heating))) {
       Thermostat[ctr_output].temp_pi_accum_error = Thermostat[ctr_output].temp_rampup_pi_acc_error;
     }
     // Set to now time to get out of ramp-up
