@@ -664,8 +664,8 @@
 
 #define THERMOSTAT_CONTROLLER_OUTPUTS         1         // Number of outputs to be controlled independently
 #define THERMOSTAT_SENSOR_NAME                "DS18B20" // Name of the local sensor to be used
-#define THERMOSTAT_RELAY_NUMBER               1         // Default output relay number
-#define THERMOSTAT_SWITCH_NUMBER              1         // Default input switch number
+#define THERMOSTAT_RELAY_NUMBER               1         // Default output relay number for the first controller (+i for following ones)
+#define THERMOSTAT_SWITCH_NUMBER              1         // Default input switch number for the first controller (+i for following ones)
 #define THERMOSTAT_TIME_ALLOW_RAMPUP          300       // Default time in seconds after last target update to allow ramp-up controller phase in minutes
 #define THERMOSTAT_TIME_RAMPUP_MAX            960       // Default time maximum ramp-up controller duration in minutes
 #define THERMOSTAT_TIME_RAMPUP_CYCLE          1800      // Default time ramp-up cycle in seconds
