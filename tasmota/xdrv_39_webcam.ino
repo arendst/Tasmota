@@ -23,9 +23,7 @@
  * ESP32 webcam based on example in Arduino-ESP32 library
  *
  * Template as used on ESP32-CAM WiFi + bluetooth Camera Module Development Board ESP32 With Camera Module OV2640 Geekcreit for Arduino
- * {"NAME":"AITHINKER CAM No SPI","GPIO":[4992,65504,65504,65504,5472,5312,65504,65504,5504,5536,65504,65504,5568,5440,5280,5248,0,5216,5408,5376,0,5344,5024,5056,0,0,0,0,4928,65504,5120,5088,5184,0,0,5152],"FLAG":0,"BASE":1}
- * Template with SPI configured. This needs define USE_SPI
- * {"NAME":"AITHINKER CAM","GPIO":[4992,65504,672,65504,5472,5312,65504,65504,5504,5536,736,704,5568,5440,5280,5248,0,5216,5408,5376,0,5344,5024,5056,0,0,0,0,4928,65504,5120,5088,5184,0,0,5152],"FLAG":0,"BASE":1}
+ * {"NAME":"AITHINKER CAM No SPI","GPIO":[4992,65504,65504,65504,65504,5088,65504,65504,65504,65504,65504,65504,65504,65504,5089,5090,0,5091,5184,5152,0,5120,5024,5056,0,0,0,0,4928,65504,5094,5095,5092,0,0,5093],"FLAG":0,"BASE":1}
  *
  * Command: Webcam <number>
  *  0 = Stop streaming
@@ -50,9 +48,10 @@
 
 #define CAMERA_MODEL_AI_THINKER
 
-//#define USE_TEMPLATE
+#define USE_TEMPLATE
 
 #define WC_LOGLEVEL LOG_LEVEL_INFO
+
 #include "fb_gfx.h"
 #include "fd_forward.h"
 #include "fr_forward.h"
@@ -87,6 +86,26 @@ uint8_t wc_stream_active;
 uint8_t faces;
 uint16_t face_detect_time;
 #endif
+
+bool WcPinUsed(void) {
+  bool pin_used = true;
+  for (uint32_t i = 0; i < MAX_WEBCAM_DATA; i++) {
+    if (!PinUsed(GPIO_WEBCAM_DATA, i)) {
+      pin_used = false;
+    }
+//    if (i < MAX_WEBCAM_HSD) {
+//      if (!PinUsed(GPIO_WEBCAM_HSD, i)) {
+//        pin_used = false;
+//      }
+//    }
+  }
+  if (!PinUsed(GPIO_WEBCAM_XCLK) || !PinUsed(GPIO_WEBCAM_PCLK) ||
+      !PinUsed(GPIO_WEBCAM_VSYNC) || !PinUsed(GPIO_WEBCAM_HREF) ||
+      !PinUsed(GPIO_WEBCAM_SIOD) || !PinUsed(GPIO_WEBCAM_SIOC)) {
+    pin_used = false;
+  }
+  return pin_used;
+}
 
 uint32_t wc_setup(int32_t fsiz) {
   if (fsiz > 10) { fsiz = 10; }
@@ -133,31 +152,25 @@ uint32_t wc_setup(int32_t fsiz) {
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
 #else
-  if (PinUsed(GPIO_WEBCAM_Y2) && PinUsed(GPIO_WEBCAM_Y3) && PinUsed(GPIO_WEBCAM_Y4) && PinUsed(GPIO_WEBCAM_Y5)\
-   && PinUsed(GPIO_WEBCAM_Y6) && PinUsed(GPIO_WEBCAM_Y7) && PinUsed(GPIO_WEBCAM_Y8) && PinUsed(GPIO_WEBCAM_Y9)\
-   && PinUsed(GPIO_WEBCAM_XCLK) && PinUsed(GPIO_WEBCAM_PCLK) && PinUsed(GPIO_WEBCAM_VSYNC) && PinUsed(GPIO_WEBCAM_HREF)\
-   && PinUsed(GPIO_WEBCAM_SIOD) && PinUsed(GPIO_WEBCAM_SIOC)) {
-    config.pin_d0 = Pin(GPIO_WEBCAM_Y2);  //Y2_GPIO_NUM;
-    config.pin_d1 = Pin(GPIO_WEBCAM_Y3);  //Y3_GPIO_NUM;
-    config.pin_d2 = Pin(GPIO_WEBCAM_Y4);  //Y4_GPIO_NUM;
-    config.pin_d3 = Pin(GPIO_WEBCAM_Y5);  //Y5_GPIO_NUM;
-    config.pin_d4 = Pin(GPIO_WEBCAM_Y6);  //Y6_GPIO_NUM;
-    config.pin_d5 = Pin(GPIO_WEBCAM_Y7);  //Y7_GPIO_NUM;
-    config.pin_d6 = Pin(GPIO_WEBCAM_Y8);  //Y8_GPIO_NUM;
-    config.pin_d7 = Pin(GPIO_WEBCAM_Y9);  //Y9_GPIO_NUM;
-    config.pin_xclk = Pin(GPIO_WEBCAM_XCLK);  //XCLK_GPIO_NUM;
-    config.pin_pclk = Pin(GPIO_WEBCAM_PCLK);  //PCLK_GPIO_NUM;
-    config.pin_vsync = Pin(GPIO_WEBCAM_VSYNC);  //VSYNC_GPIO_NUM;
-    config.pin_href = Pin(GPIO_WEBCAM_HREF);  //HREF_GPIO_NUM;
-    config.pin_sscb_sda = Pin(GPIO_WEBCAM_SIOD);  //SIOD_GPIO_NUM;
-    config.pin_sscb_scl = Pin(GPIO_WEBCAM_SIOC);  //SIOC_GPIO_NUM;
-    int16_t xpin;
-    xpin = Pin(GPIO_WEBCAM_PWDN);
-    if (99 == xpin) { xpin = -1; }
-    config.pin_pwdn = xpin; //PWDN_GPIO_NUM;
-    xpin = Pin(GPIO_WEBCAM_RESET);
-    if (99 == xpin) { xpin=-1; }
-    config.pin_reset = xpin; //RESET_GPIO_NUM;
+  if (WcPinUsed()) {
+    config.pin_d0 = Pin(GPIO_WEBCAM_DATA);        // Y2_GPIO_NUM;
+    config.pin_d1 = Pin(GPIO_WEBCAM_DATA, 1);     // Y3_GPIO_NUM;
+    config.pin_d2 = Pin(GPIO_WEBCAM_DATA, 2);     // Y4_GPIO_NUM;
+    config.pin_d3 = Pin(GPIO_WEBCAM_DATA, 3);     // Y5_GPIO_NUM;
+    config.pin_d4 = Pin(GPIO_WEBCAM_DATA, 4);     // Y6_GPIO_NUM;
+    config.pin_d5 = Pin(GPIO_WEBCAM_DATA, 5);     // Y7_GPIO_NUM;
+    config.pin_d6 = Pin(GPIO_WEBCAM_DATA, 6);     // Y8_GPIO_NUM;
+    config.pin_d7 = Pin(GPIO_WEBCAM_DATA, 7);     // Y9_GPIO_NUM;
+    config.pin_xclk = Pin(GPIO_WEBCAM_XCLK);      // XCLK_GPIO_NUM;
+    config.pin_pclk = Pin(GPIO_WEBCAM_PCLK);      // PCLK_GPIO_NUM;
+    config.pin_vsync = Pin(GPIO_WEBCAM_VSYNC);    // VSYNC_GPIO_NUM;
+    config.pin_href = Pin(GPIO_WEBCAM_HREF);      // HREF_GPIO_NUM;
+    config.pin_sscb_sda = Pin(GPIO_WEBCAM_SIOD);  // SIOD_GPIO_NUM;
+    config.pin_sscb_scl = Pin(GPIO_WEBCAM_SIOC);  // SIOC_GPIO_NUM;
+    config.pin_pwdn = (PinUsed(GPIO_WEBCAM_PWDN)) ? Pin(GPIO_WEBCAM_PWDN) : -1;     // PWDN_GPIO_NUM;
+    config.pin_reset = (PinUsed(GPIO_WEBCAM_RESET)) ? Pin(GPIO_WEBCAM_RESET) : -1;  // RESET_GPIO_NUM;
+
+    AddLog_P2(WC_LOGLEVEL, PSTR("CAM: User template"));
   } else {
     // defaults to AI THINKER
     config.pin_d0 = Y2_GPIO_NUM;
@@ -176,6 +189,7 @@ uint32_t wc_setup(int32_t fsiz) {
     config.pin_sscb_scl = SIOC_GPIO_NUM;
     config.pin_pwdn = PWDN_GPIO_NUM;
     config.pin_reset = RESET_GPIO_NUM;
+    AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Default template"));
   }
 #endif
 
