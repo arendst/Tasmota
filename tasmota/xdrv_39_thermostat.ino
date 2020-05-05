@@ -105,10 +105,10 @@ typedef union {
   struct {
     uint32_t thermostat_mode : 2;       // Operation mode of the thermostat system
     uint32_t controller_mode : 2;       // Operation mode of the thermostat controller
-    uint32_t climate_mode : 1;          // Climate mode of the thermostat (heating / cooling)
+    uint32_t climate_mode : 1;          // Climate mode of the thermostat (0 = heating / 1 = cooling)
     uint32_t sensor_alive : 1;          // Flag stating if temperature sensor is alive (0 = inactive, 1 = active)
     uint32_t sensor_type : 1;           // Sensor type: MQTT/local
-    uint32_t temp_format : 1;           // Temperature format: Celsius/Fahrenheit
+    uint32_t temp_format : 1;           // Temperature format (0 = Celsius, 1 = Fahrenheit)
     uint32_t command_output : 1;        // Flag stating the desired command to the output (0 = inactive, 1 = active)
     uint32_t status_output : 1;         // Flag stating state of the output (0 = inactive, 1 = active)
     uint32_t status_input : 1;          // Flag stating state of the input (0 = inactive, 1 = active)
@@ -119,7 +119,7 @@ typedef union {
     uint32_t counter_seconds : 6;       // Second counter used to track minutes
     uint32_t output_relay_number : 4;   // Output relay number
     uint32_t input_switch_number : 3;   // Input switch number
-    uint32_t output_inconsist_ctr : 2;  // Counter of the minutes where there are inconsistent in the output state
+    uint32_t output_inconsist_ctr : 2;  // Counter of the minutes where the output state is inconsistent with the command
     uint32_t diagnostic_mode : 1;       // Diagnostic mode selected
     uint32_t free : 1;                  // Free bits in Bitfield
   };
