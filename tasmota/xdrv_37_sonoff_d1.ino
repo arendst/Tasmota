@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_LIGHT
 #ifdef USE_SONOFF_D1
 /*********************************************************************************************\
  * Sonoff D1 dimmer 433
@@ -196,3 +197,4 @@ bool Xdrv37(uint8_t function)
 }
 
 #endif  // USE_SONOFF_D1
+#endif  // USE_LIGHT

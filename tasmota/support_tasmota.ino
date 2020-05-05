@@ -1441,14 +1441,9 @@ void GpioInit(void)
 
 #ifdef ESP8266
   if ((2 == Pin(GPIO_TXD)) || (H801 == my_module_type)) { Serial.set_tx(2); }
-#endif  // ESP8266
 
-#ifdef ESP8266
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
-#else
-  analogWriteFreqRange(0,Settings.pwm_frequency,Settings.pwm_range);
-#endif
 
 #ifdef USE_SPI
   spi_flg = (((PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_CS) > 14)) || (Pin(GPIO_SPI_CS) < 12)) || ((PinUsed(GPIO_SPI_DC) && (Pin(GPIO_SPI_DC) > 14)) || (Pin(GPIO_SPI_DC) < 12)));
@@ -1462,6 +1457,14 @@ void GpioInit(void)
   }
   soft_spi_flg = (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
 #endif  // USE_SPI
+#else // ESP32
+  analogWriteFreqRange(0, Settings.pwm_frequency, Settings.pwm_range);
+
+#ifdef USE_SPI
+  spi_flg = (PinUsed(GPIO_SPI_CLK) && (PinUsed(GPIO_SPI_MOSI) || PinUsed(GPIO_SPI_MISO)));
+  soft_spi_flg = (PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
+#endif  // USE_SPI
+#endif  // ESP8266 - ESP32
 
   // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
   // Doing it here solves relay toggles at restart.
@@ -1542,7 +1545,7 @@ void GpioInit(void)
     if (PinUsed(GPIO_LED1, i)) {
 #ifdef USE_ARILUX_RF
       if ((3 == i) && (leds_present < 2) && !PinUsed(GPIO_ARIRFSEL)) {
-        SetPin(Pin(GPIO_LED4), GPIO_ARIRFSEL);  // Legacy support where LED4 was Arilux RF enable
+        SetPin(Pin(GPIO_LED1, i), GPIO_ARIRFSEL);  // Legacy support where LED4 was Arilux RF enable
       } else {
 #endif
         pinMode(Pin(GPIO_LED1, i), OUTPUT);

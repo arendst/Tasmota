@@ -444,7 +444,7 @@ void TasmotaSlave_Init(void)
         if (TasmotaSlave_Serial->hardwareSerial()) {
           ClaimSerial();
         }
-        TasmotaSlave_Serial->setTimeout(50);
+        TasmotaSlave_Serial->setTimeout(100);  // Theo 20200502 - increase from 50
         if (PinUsed(GPIO_TASMOTASLAVE_RST_INV)) {
           SetPin(Pin(GPIO_TASMOTASLAVE_RST_INV), GPIO_TASMOTASLAVE_RST);
           TSlave.inverted = HIGH;
@@ -456,11 +456,14 @@ void TasmotaSlave_Init(void)
       }
     }
   }
-  if (TSlave.SerialEnabled) { // All go for hardware now we need to detect features if there are any
+  if (TSlave.SerialEnabled) {  // All go for hardware now we need to detect features if there are any
     TasmotaSlave_sendCmnd(CMND_FEATURES, 0);
-    char buffer[32];
+    char buffer[32] = { 0 };
     TasmotaSlave_Serial->readBytesUntil(char(PARAM_DATA_START), buffer, sizeof(buffer));
     uint8_t len = TasmotaSlave_Serial->readBytesUntil(char(PARAM_DATA_END), buffer, sizeof(buffer));
+
+    if (len) { AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)buffer, len); }  // Theo 20200502 - DMP: 99 17 34 01 02 00 00 00
+
     memcpy(&TSlaveSettings, &buffer, sizeof(TSlaveSettings));
     if (20191129 == TSlaveSettings.features_version) {
       TSlave.type = true;
@@ -494,6 +497,9 @@ void TasmotaSlave_sendCmnd(uint8_t cmnd, uint8_t param)
   buffer[0] = CMND_START;
   memcpy(&buffer[1], &TSlaveCommand, sizeof(TSlaveCommand));
   buffer[sizeof(TSlaveCommand)+1] = CMND_END;
+
+  TasmotaSlave_Serial->flush();  // Theo 20200502
+
   for (uint8_t ca = 0; ca < sizeof(buffer); ca++) {
     TasmotaSlave_Serial->write(buffer[ca]);
   }

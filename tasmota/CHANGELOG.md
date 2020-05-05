@@ -3,6 +3,7 @@
 ### 8.2.0.6 20200501
 
 - Add experimental basic support for Tasmota on ESP32 based on work by Jörg Schüler-Maroldt
+- Change PWM updated to latest Arduino Core #7213
 
 ### 8.2.0.5 20200425
 
