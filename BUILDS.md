@@ -2,7 +2,7 @@
 
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 |-----------------------|---------|-------|--------|-----|---------|----|---------|--------
-| MY_LANGUAGE en-GB     | x | x | x | x | x | x | x |
+| MY_LANGUAGE en_GB     | x | x | x | x | x | x | x |
 | USE_ARDUINO_OTA       | - | - | - | - | - | - | - |
 | USE_DOMOTICZ          | - | - | x | x | x | x | - |
 | USE_HOME_ASSISTANT    | - | - | x | x | x | x | - |
