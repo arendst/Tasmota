@@ -73,7 +73,7 @@ uint32_t DecodeLightId(uint32_t hue_id);
 
 
 void SaveFile(const char *name,const uint8_t *buf,uint32_t len) {
-  File file = SPIFFS.open(name,FILE_WRITE);
+  File file = SPIFFS.open(name, FILE_WRITE);
   if (!file) return;
   file.write(buf, len);
   file.close();
@@ -5237,7 +5237,7 @@ bool Xdrv10(uint8_t function)
     case FUNC_WEB_ADD_MAIN_BUTTON:
       ScriptWebShow('&');
       break;
-#endif
+#endif // USE_SCRIPT_WEB_DISPLAY
     case FUNC_WEB_ADD_HANDLER:
       Webserver->on("/" WEB_HANDLE_SCRIPT, HandleScriptConfiguration);
       Webserver->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);

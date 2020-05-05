@@ -525,7 +525,7 @@ void draw_face_boxes(dl_matrix3du_t *image_matrix, box_array_t *boxes, int face_
 #define DL_SPIRAM_SUPPORT
 
 uint32_t wc_set_face_detect(int32_t value) {
-  if (value >= 0) { face_detect_time=value; }
+  if (value >= 0) { face_detect_time = value; }
   return faces;
 }
 
@@ -542,7 +542,7 @@ bool detected = false;
 int face_id = 0;
 camera_fb_t *fb;
 
-  if ((millis()-face_ltime) > face_detect_time) {
+  if ((millis() - face_ltime) > face_detect_time) {
     face_ltime = millis();
     fb = esp_camera_fb_get();
     if (!fb) { return ESP_FAIL; }
@@ -570,7 +570,7 @@ camera_fb_t *fb;
     box_array_t *net_boxes = face_detect(image_matrix, &mtmn_config);
     if (net_boxes){
       detected = true;
-      faces=net_boxes->len;
+      faces = net_boxes->len;
       //if(recognition_enabled){
       //    face_id = run_face_recognition(image_matrix, net_boxes);
       //}
@@ -580,7 +580,7 @@ camera_fb_t *fb;
       free(net_boxes->landmark);
       free(net_boxes);
     } else {
-      faces=0;
+      faces = 0;
     }
     dl_matrix3du_free(image_matrix);
     //Serial.printf("face detected: %d",faces);
@@ -683,7 +683,7 @@ uint32_t motion_brightness;
 uint8_t *last_motion_buffer;
 
 uint32_t wc_set_motion_detect(int32_t value) {
-  if (value >= 0) { motion_detect=value; }
+  if (value >= 0) { motion_detect = value; }
   if (-1 == value) {
     return motion_trigger;
   } else  {
@@ -694,7 +694,7 @@ uint32_t wc_set_motion_detect(int32_t value) {
 // optional motion detector
 void detect_motion(void) {
   camera_fb_t *wc_fb;
-  uint8_t *out_buf=0;
+  uint8_t *out_buf = 0;
 
   if ((millis()-motion_ltime) > motion_detect) {
     motion_ltime = millis();
