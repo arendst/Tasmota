@@ -454,9 +454,10 @@ void handleMjpeg(void) {
   //}
 }
 
+#ifdef USE_FACE_DETECT
+
 static mtmn_config_t mtmn_config = {0};
 
-#ifdef USE_FACE_DETECT
 void fd_init(void) {
   mtmn_config.type = FAST;
   mtmn_config.min_face = 80;
