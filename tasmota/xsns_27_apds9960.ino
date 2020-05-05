@@ -64,8 +64,8 @@
 
 // TODO() : Move to my_user_config.h file
 #define USE_APDS9960_GESTURE                // Enable Gesture feature (+2k code)
-#define USE_APDS9960_PROXIMITY              // Enable Proximity feature (Not use)
-#define USE_APDS9960_COLOR                  // Enable Color feature (Not use)
+#define USE_APDS9960_PROXIMITY              // Enable Proximity feature (>50 code)
+#define USE_APDS9960_COLOR                  // Enable Color feature (+0.8k code)
 
 
 /* Gesture parameters */
@@ -96,16 +96,19 @@ const char APDS9960_TAG[]         PROGMEM = "APDS9960";  // Only one actualy
 #ifdef USE_WEBSERVER
 
 #ifdef USE_APDS9960_GESTURE
-
 const char HTTP_SNS_GESTURE[]     PROGMEM = "{s}%s " D_GESTURE "{m}%s{e}";
-
 #endif  // USE_APDS9960_GESTURE
 
+#ifdef USE_APDS9960_COLOR
 const char HTTP_SNS_COLOR_RED[]   PROGMEM = "{s}%s " D_COLOR_RED "{m}%u{e}";
 const char HTTP_SNS_COLOR_GREEN[] PROGMEM = "{s}%s " D_COLOR_GREEN "{m}%u{e}";
 const char HTTP_SNS_COLOR_BLUE[]  PROGMEM = "{s}%s " D_COLOR_BLUE "{m}%u{e}";
 const char HTTP_SNS_CCT[]         PROGMEM = "{s}%s " D_CCT "{m}%u " D_UNIT_KELVIN  "{e}";
+#endif  // USE_APDS9960_COLOR
+
+#ifdef USE_APDS9960_PROXIMITY
 const char HTTP_SNS_PROXIMITY[]   PROGMEM = "{s}%s " D_PROXIMITY  "{m}%u{e}";
+#endif  // USE_APDS9960_PROXIMITY
 
 #endif  // USE_WEBSERVER
 
@@ -321,6 +324,7 @@ typedef struct gesture_type {
 
 #endif  // USE_APDS9960_GESTURE
 
+#if defined(USE_APDS9960_COLOR) || defined(USE_APDS9960_PROXIMITY)
 typedef struct color_data_type {
   uint16_t a;     // measured ambient
   uint16_t r;     // Red
@@ -331,21 +335,21 @@ typedef struct color_data_type {
   uint16_t cct;   // calculated color temperature
   uint16_t lux;   // calculated illuminance - atm only from rgb
 } color_data_t;
+#endif  // USE_APDS9960_COLOR || USE_APDS9960_PROXIMITY
 
 /******************************************************************************\
  * Globals
 \******************************************************************************/
 
 #ifdef USE_APDS9960_GESTURE
-
 gesture_data_t gesture_data;
 gesture_t gesture;
-
-#endif  // USE_APDS9960_GESTURE
 char currentGesture[6];
+#endif  // USE_APDS9960_GESTURE
 
-
+#if defined(USE_APDS9960_COLOR) || defined(USE_APDS9960_PROXIMITY)
 color_data_t color_data;
+#endif  // USE_APDS9960_COLOR || USE_APDS9960_PROXIMITY
 
 volatile uint8_t recovery_loop_counter = 0;  // count number of stateloops to switch the sensor off, if needed
 bool APDS9960_overload = false;
@@ -357,6 +361,7 @@ uint8_t gesture_mode = 1;
  * Helper functions
 \******************************************************************************/
 
+#ifdef USE_APDS9960_COLOR
 /**
  *   Taken from the Adafruit-library
  *   @brief  Converts the raw R/G/B values to color temperature in degrees
@@ -388,6 +393,7 @@ void calculateColorTemperature(void) {
 
   return;
 }
+#endif  // USE_APDS9960_COLOR 
 
 /******************************************************************************\
  * Getters and setters for register values
@@ -1249,7 +1255,6 @@ bool APDS9960_init(void) {
 
   /* Set default values for gesture sense registers */
 #ifdef USE_APDS9960_GESTURE
-
   setGestureEnterThresh(DEFAULT_GPENTH);
   setGestureExitThresh(DEFAULT_GEXTH);
 
@@ -1267,7 +1272,6 @@ bool APDS9960_init(void) {
   I2cWrite8(APDS9960_I2C_ADDR, APDS9960_GCONF3, DEFAULT_GCONF3);
 
   setGestureIntEnable(DEFAULT_GIEN);
-
 #endif  // USE_APDS9960_GESTURE
 
   disablePower();  // go to sleep
@@ -1543,6 +1547,7 @@ inline void disablePower(void) {
  * Ambient light and color sensor controls
 \******************************************************************************/
 
+#if defined(USE_APDS9960_COLOR) || defined(USE_APDS9960_PROXIMITY)
 /**
  * @brief Reads the ARGB-Data and fills color_data
  */
@@ -1553,6 +1558,38 @@ inline void readAllColorAndProximityData(void) {
   }
 }
 
+void APDS9960_adjustATime(void) {  // not really used atm
+  // readAllColorAndProximityData();
+  I2cValidRead16LE(&color_data.a, APDS9960_I2C_ADDR, APDS9960_CDATAL);
+  // disablePower();
+
+  if (color_data.a < (uint16_t)20) {
+    APDS9960_aTime = 0x40;
+  } else if (color_data.a < (uint16_t)40) {
+    APDS9960_aTime = 0x80;
+  } else if (color_data.a < (uint16_t)50) {
+    APDS9960_aTime = DEFAULT_ATIME;
+  } else if (color_data.a < (uint16_t)70) {
+    APDS9960_aTime = 0xc0;
+  }
+
+  if (color_data.a < 200) {
+    APDS9960_aTime = 0xe9;
+  }
+  /* if (color_data.a < 10000){
+    APDS9960_aTime = 0xF0;
+  }*/
+  else {
+    APDS9960_aTime = 0xff;
+  }
+
+  // disableLightSensor();
+  I2cWrite8(APDS9960_I2C_ADDR, APDS9960_ATIME, APDS9960_aTime);
+  enablePower();
+  enableLightSensor();
+  delay(20);
+}
+#endif  // USE_APDS9960_COLOR || USE_APDS9960_PROXIMITY
 
 /******************************************************************************\
  * High-level gesture controls
@@ -1754,42 +1791,6 @@ void handleGesture(void) {
   }
 }
 
-#endif  // USE_APDS9960_GESTURE
-
-void APDS9960_adjustATime(void) {  // not really used atm
-  // readAllColorAndProximityData();
-  I2cValidRead16LE(&color_data.a, APDS9960_I2C_ADDR, APDS9960_CDATAL);
-  // disablePower();
-
-  if (color_data.a < (uint16_t)20) {
-    APDS9960_aTime = 0x40;
-  } else if (color_data.a < (uint16_t)40) {
-    APDS9960_aTime = 0x80;
-  } else if (color_data.a < (uint16_t)50) {
-    APDS9960_aTime = DEFAULT_ATIME;
-  } else if (color_data.a < (uint16_t)70) {
-    APDS9960_aTime = 0xc0;
-  }
-
-  if (color_data.a < 200) {
-    APDS9960_aTime = 0xe9;
-  }
-  /* if (color_data.a < 10000){
-    APDS9960_aTime = 0xF0;
-  }*/
-  else {
-    APDS9960_aTime = 0xff;
-  }
-
-  // disableLightSensor();
-  I2cWrite8(APDS9960_I2C_ADDR, APDS9960_ATIME, APDS9960_aTime);
-  enablePower();
-  enableLightSensor();
-  delay(20);
-}
-
-#ifdef USE_APDS9960_GESTURE
-
 void APDS9960_loop(void) {
   if (recovery_loop_counter > 0) {
     recovery_loop_counter -= 1;
@@ -1845,7 +1846,9 @@ void APDS9960_detect(void) {
     APDS9960_type = 0;
   }
 
+#ifdef USE_APDS9960_GESTURE
   currentGesture[0] = '\0';
+#endif  // USE_APDS9960_GESTURE
 }
 
 /*********************************************************************************************\
@@ -1856,6 +1859,8 @@ void APDS9960_show(bool json) {
   if (!APDS9960_type) { return; }
 
   if (!gesture_mode && !APDS9960_overload) {
+
+#if defined(USE_APDS9960_COLOR) || defined(USE_APDS9960_PROXIMITY)
     uint16_t ambient;
 
     readAllColorAndProximityData();
@@ -1865,8 +1870,11 @@ void APDS9960_show(bool json) {
     I2cWrite8(APDS9960_I2C_ADDR, APDS9960_ATIME, DEFAULT_ATIME); // reset to default
     enableLightSensor();*/
 
+#ifdef USE_APDS9960_COLOR
     calculateColorTemperature();  // and calculate Lux
+#endif  // USE_APDS9960_COLOR
     if (json) {
+#if defined(USE_APDS9960_COLOR) && defined(USE_APDS9960_PROXIMITY)
       ResponseAppend_P(PSTR(",\"%s\":{\"Red\":%u,\"Green\":%u,\"Blue\":%u,\"" D_JSON_ILLUMINANCE "\":%u,\"CCT\":%u,\"Proximity\":%u}"),
         APDS9960_TAG,
         color_data.r,
@@ -1875,16 +1883,44 @@ void APDS9960_show(bool json) {
         ambient,
         color_data.cct,
         color_data.p);
+#else
+
+#ifdef USE_APDS9960_COLOR
+      ResponseAppend_P(PSTR(",\"%s\":{\"Red\":%u,\"Green\":%u,\"Blue\":%u,\"" D_JSON_ILLUMINANCE "\":%u,\"CCT\":%u}"),
+        APDS9960_TAG,
+        color_data.r,
+        color_data.g,
+        color_data.b,
+        ambient,
+        color_data.cct);
+#endif  // USE_APDS9960_COLOR
+
+#ifdef USE_APDS9960_PROXIMITY
+      ResponseAppend_P(PSTR(",\"%s\":{\"Proximity\":%u}"),
+        APDS9960_TAG,
+        color_data.p);
+#endif  // USE_APDS9960_PROXIMITY
+
+#endif  // USE_APDS9960_COLOR && USE_APDS9960_PROXIMITY
 #ifdef USE_WEBSERVER
     } else {
+
+#ifdef USE_APDS9960_COLOR
       WSContentSend_PD(HTTP_SNS_COLOR_RED,   APDS9960_TAG, color_data.r);
       WSContentSend_PD(HTTP_SNS_COLOR_GREEN, APDS9960_TAG, color_data.g);
       WSContentSend_PD(HTTP_SNS_COLOR_BLUE,  APDS9960_TAG, color_data.b);
       WSContentSend_PD(HTTP_SNS_ILLUMINANCE, APDS9960_TAG, ambient);
       WSContentSend_PD(HTTP_SNS_CCT,         APDS9960_TAG, color_data.cct);
+#endif  // USE_APDS9960_COLOR
+
+#ifdef USE_APDS9960_PROXIMITY
       WSContentSend_PD(HTTP_SNS_PROXIMITY,   APDS9960_TAG, color_data.p);
+#endif  // USE_APDS9960_PROXIMITY
+
 #endif  // USE_WEBSERVER
     }
+#endif  // USE_APDS9960_COLOR || USE_APDS9960_PROXIMITY
+
 #ifdef USE_APDS9960_GESTURE
   } else {
     if (currentGesture[0] != '\0') {
@@ -1898,6 +1934,7 @@ void APDS9960_show(bool json) {
       }
     }
 #endif  // USE_APDS9960_GESTURE
+
   }
 }
 
