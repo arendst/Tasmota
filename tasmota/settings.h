@@ -358,8 +358,17 @@ struct {
   SysBitfield3  flag3;                     // 3A0
   uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
 
+#ifdef ESP8266
   char          ex_friendlyname[4][33];    // 3AC
   char          ex_switch_topic[33];       // 430
+#else  // ESP32
+  myio          my_gp;                     // 3AC - 2 x 40 bytes (ESP32)
+  mytmplt       user_template;             // 3FC - 2 x 37 bytes (ESP32)
+
+  uint8_t       free_esp32_446[10];        // 446
+
+  uint8_t       esp32_webcam_resolution;   // 450
+#endif  // ESP8266 - ESP32
 
   char          serial_delimiter;          // 451
   uint8_t       seriallog_level;           // 452
@@ -403,14 +412,7 @@ struct {
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;           // 554
 
-#ifdef ESP8266
   char          ex_mqtt_fulltopic[100];    // 558
-#else  // ESP32
-  myio          my_gp;                     // 558 - 40 bytes (ESP32)
-  mytmplt       user_template;             // 580 - 37 bytes (ESP32)
-
-  uint8_t       free_esp32_5a5[23];        // 5A5
-#endif  // ESP8266 - ESP32
 
   SysBitfield2  flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0

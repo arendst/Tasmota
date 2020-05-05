@@ -41,6 +41,7 @@ class SendEmail
   public:
    SendEmail(const String& host, const int port, const String& user, const String& passwd, const int timeout, const int auth_used);
    bool send(const String& from, const String& to, const String& subject, const char *msg);
+   void send_message_txt(char *msg);
    ~SendEmail() {client->stop(); delete client;}
 };
 

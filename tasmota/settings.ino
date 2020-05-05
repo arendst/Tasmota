@@ -346,6 +346,7 @@ void SettingsSaveAll(void)
 
 void UpdateQuickPowerCycle(bool update)
 {
+#ifndef FIRMWARE_MINIMAL
   if (Settings.flag3.fast_power_cycle_disable) { return; }  // SetOption65 - Disable fast power cycle detection for device reset
 
   uint32_t pc_register;
@@ -353,9 +354,9 @@ void UpdateQuickPowerCycle(bool update)
 
 #ifdef ESP8266
   ESP.flashRead(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
-#else
+#else  // ESP32
   QPCRead(&pc_register, sizeof(pc_register));
-#endif
+#endif  // ESP8266 - ESP32
   if (update && ((pc_register & 0xFFFFFFF0) == 0xFFA55AB0)) {
     uint32_t counter = ((pc_register & 0xF) << 1) & 0xF;
     if (0 == counter) {  // 4 power cycles in a row
@@ -365,9 +366,9 @@ void UpdateQuickPowerCycle(bool update)
       pc_register = 0xFFA55AB0 | counter;
 #ifdef ESP8266
       ESP.flashWrite(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
-#else
+#else  // ESP32
       QPCWrite(&pc_register, sizeof(pc_register));
-#endif
+#endif  // ESP8266 - ESP32
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Flag %02X"), counter);
     }
   }
@@ -378,11 +379,12 @@ void UpdateQuickPowerCycle(bool update)
     if (ESP.flashEraseSector(pc_location)) {
       ESP.flashWrite(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
     }
-#else
+#else  // ESP32
     QPCWrite(&pc_register, sizeof(pc_register));
-#endif
+#endif  // ESP8266 - ESP32
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Reset"));
   }
+#endif  // FIRMWARE_MINIMAL
 }
 
 /*********************************************************************************************\
@@ -405,9 +407,9 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me)
   }
 
   // Make a copy first in case we use source from Settings.text
-  uint32_t replace_len = strlen(replace_me);
+  uint32_t replace_len = strlen_P(replace_me);
   char replace[replace_len +1];
-  memcpy(replace, replace_me, sizeof(replace));
+  memcpy_P(replace, replace_me, sizeof(replace));
 
   uint32_t start_pos = 0;
   uint32_t end_pos = 0;
@@ -742,11 +744,11 @@ void SettingsDefaultSet2(void)
   Settings.module = MODULE;
   ModuleDefault(WEMOS);
 //  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
-  SettingsUpdateText(SET_FRIENDLYNAME1, FRIENDLY_NAME);
-  SettingsUpdateText(SET_FRIENDLYNAME2, FRIENDLY_NAME"2");
-  SettingsUpdateText(SET_FRIENDLYNAME3, FRIENDLY_NAME"3");
-  SettingsUpdateText(SET_FRIENDLYNAME4, FRIENDLY_NAME"4");
-  SettingsUpdateText(SET_OTAURL, OTA_URL);
+  SettingsUpdateText(SET_FRIENDLYNAME1, PSTR(FRIENDLY_NAME));
+  SettingsUpdateText(SET_FRIENDLYNAME2, PSTR(FRIENDLY_NAME"2"));
+  SettingsUpdateText(SET_FRIENDLYNAME3, PSTR(FRIENDLY_NAME"3"));
+  SettingsUpdateText(SET_FRIENDLYNAME4, PSTR(FRIENDLY_NAME"4"));
+  SettingsUpdateText(SET_OTAURL, PSTR(OTA_URL));
 
   // Power
   Settings.flag.save_state = SAVE_STATE;
@@ -777,14 +779,14 @@ void SettingsDefaultSet2(void)
   ParseIp(&Settings.ip_address[3], WIFI_DNS);
   Settings.sta_config = WIFI_CONFIG_TOOL;
 //  Settings.sta_active = 0;
-  SettingsUpdateText(SET_STASSID1, STA_SSID1);
-  SettingsUpdateText(SET_STASSID2, STA_SSID2);
-  SettingsUpdateText(SET_STAPWD1, STA_PASS1);
-  SettingsUpdateText(SET_STAPWD2, STA_PASS2);
+  SettingsUpdateText(SET_STASSID1, PSTR(STA_SSID1));
+  SettingsUpdateText(SET_STASSID2, PSTR(STA_SSID2));
+  SettingsUpdateText(SET_STAPWD1, PSTR(STA_PASS1));
+  SettingsUpdateText(SET_STAPWD2, PSTR(STA_PASS2));
   SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
 
   // Syslog
-  SettingsUpdateText(SET_SYSLOG_HOST, SYS_LOG_HOST);
+  SettingsUpdateText(SET_SYSLOG_HOST, PSTR(SYS_LOG_HOST));
   Settings.syslog_port = SYS_LOG_PORT;
   Settings.syslog_level = SYS_LOG_LEVEL;
 
@@ -794,8 +796,8 @@ void SettingsDefaultSet2(void)
   Settings.flag3.mdns_enabled = MDNS_ENABLED;
   Settings.webserver = WEB_SERVER;
   Settings.weblog_level = WEB_LOG_LEVEL;
-  SettingsUpdateText(SET_WEBPWD, WEB_PASSWORD);
-  SettingsUpdateText(SET_CORS, CORS_DOMAIN);
+  SettingsUpdateText(SET_WEBPWD, PSTR(WEB_PASSWORD));
+  SettingsUpdateText(SET_CORS, PSTR(CORS_DOMAIN));
 
   // Button
   Settings.flag.button_restrict = KEY_DISABLE_MULTIPRESS;
@@ -839,13 +841,13 @@ void SettingsDefaultSet2(void)
   SettingsUpdateText(SET_STATE_TXT2, MQTT_STATUS_ON);
   SettingsUpdateText(SET_STATE_TXT3, MQTT_CMND_TOGGLE);
   SettingsUpdateText(SET_STATE_TXT4, MQTT_CMND_HOLD);
-  char fingerprint[60];
-  strlcpy(fingerprint, MQTT_FINGERPRINT1, sizeof(fingerprint));
+  char fingerprint[64];
+  strncpy_P(fingerprint, PSTR(MQTT_FINGERPRINT1), sizeof(fingerprint));
   char *p = fingerprint;
   for (uint32_t i = 0; i < 20; i++) {
     Settings.mqtt_fingerprint[0][i] = strtol(p, &p, 16);
   }
-  strlcpy(fingerprint, MQTT_FINGERPRINT2, sizeof(fingerprint));
+  strncpy_P(fingerprint, PSTR(MQTT_FINGERPRINT2), sizeof(fingerprint));
   p = fingerprint;
   for (uint32_t i = 0; i < 20; i++) {
     Settings.mqtt_fingerprint[1][i] = strtol(p, &p, 16);
@@ -1008,9 +1010,9 @@ void SettingsDefaultSet2(void)
     Settings.timezone = APP_TIMEZONE / 60;
     Settings.timezone_minutes = abs(APP_TIMEZONE % 60);
   }
-  SettingsUpdateText(SET_NTPSERVER1, NTP_SERVER1);
-  SettingsUpdateText(SET_NTPSERVER2, NTP_SERVER2);
-  SettingsUpdateText(SET_NTPSERVER3, NTP_SERVER3);
+  SettingsUpdateText(SET_NTPSERVER1, PSTR(NTP_SERVER1));
+  SettingsUpdateText(SET_NTPSERVER2, PSTR(NTP_SERVER2));
+  SettingsUpdateText(SET_NTPSERVER3, PSTR(NTP_SERVER3));
   for (uint32_t i = 0; i < MAX_NTP_SERVERS; i++) {
     SettingsUpdateText(SET_NTPSERVER1 +i, ReplaceCommaWithDot(SettingsText(SET_NTPSERVER1 +i)));
   }
@@ -1383,6 +1385,13 @@ void SettingsDelta(void)
 #endif  // ESP8266
 #ifdef ESP32
       Settings.config_version = 1;  // ESP32
+#endif  // ESP32
+    }
+
+    if (Settings.version < 0x08020006) {
+#ifdef ESP32
+      Settings.module = WEMOS;
+      ModuleDefault(WEMOS);
 #endif  // ESP32
     }
 

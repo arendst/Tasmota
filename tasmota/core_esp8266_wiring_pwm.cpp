@@ -47,8 +47,8 @@ extern void __analogWriteRange(uint32_t range) {
 extern void __analogWriteFreq(uint32_t freq) {
   if (freq < 100) {
     analogFreq = 100;
-  } else if (freq > 40000) {
-    analogFreq = 40000;
+  } else if (freq > 60000) {
+    analogFreq = 60000;
   } else {
     analogFreq = freq;
   }

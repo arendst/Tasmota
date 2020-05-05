@@ -1353,24 +1353,25 @@ void GpioInit(void)
   }
 
   for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
-    if ((Settings.user_template.gp.io[i] >= GPIO_SENSOR_END) && (Settings.user_template.gp.io[i] < GPIO_USER)) {
-      Settings.user_template.gp.io[i] = GPIO_USER;  // Fix not supported sensor ids in template
+    if ((Settings.user_template.gp.io[i] >= AGPIO(GPIO_SENSOR_END)) && (Settings.user_template.gp.io[i] < AGPIO(GPIO_USER))) {
+      Settings.user_template.gp.io[i] = AGPIO(GPIO_USER);  // Fix not supported sensor ids in template
     }
   }
 
   myio def_gp;
   ModuleGpios(&def_gp);
   for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
-    if ((Settings.my_gp.io[i] >= GPIO_SENSOR_END) && (Settings.my_gp.io[i] < GPIO_USER)) {
+    if ((Settings.my_gp.io[i] >= AGPIO(GPIO_SENSOR_END)) && (Settings.my_gp.io[i] < AGPIO(GPIO_USER))) {
       Settings.my_gp.io[i] = GPIO_NONE;             // Fix not supported sensor ids in module
     }
     else if (Settings.my_gp.io[i] > GPIO_NONE) {
       my_module.io[i] = Settings.my_gp.io[i];       // Set User selected Module sensors
     }
-    if ((def_gp.io[i] > GPIO_NONE) && (def_gp.io[i] < GPIO_USER)) {
+    if ((def_gp.io[i] > GPIO_NONE) && (def_gp.io[i] < AGPIO(GPIO_USER))) {
       my_module.io[i] = def_gp.io[i];               // Force Template override
     }
   }
+#ifdef ESP8266
   if ((Settings.my_adc0 >= ADC0_END) && (Settings.my_adc0 < ADC0_USER)) {
     Settings.my_adc0 = ADC0_NONE;                   // Fix not supported sensor ids in module
   }
@@ -1382,10 +1383,8 @@ void GpioInit(void)
   if ((template_adc0 > ADC0_NONE) && (template_adc0 < ADC0_USER)) {
     my_adc0 = template_adc0;                        // Force Template override
   }
-
-#ifdef LEGACY_GPIO_ARRAY
-  InitAllPins();
 #endif
+
   for (uint32_t i = 0; i < ARRAY_SIZE(my_module.io); i++) {
     uint32_t mpin = ValidPin(i, my_module.io[i]);
 
@@ -1395,38 +1394,38 @@ void GpioInit(void)
       XdrvMailbox.index = mpin;
       XdrvMailbox.payload = i;
 
-      if ((mpin >= GPIO_SWT1_NP) && (mpin < (GPIO_SWT1_NP + MAX_SWITCHES))) {
-        SwitchPullupFlag(mpin - GPIO_SWT1_NP);
-        mpin -= (GPIO_SWT1_NP - GPIO_SWT1);
+      if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES))) {
+        SwitchPullupFlag(mpin - AGPIO(GPIO_SWT1_NP));
+        mpin -= (AGPIO(GPIO_SWT1_NP) - AGPIO(GPIO_SWT1));
       }
-      else if ((mpin >= GPIO_KEY1_NP) && (mpin < (GPIO_KEY1_NP + MAX_KEYS))) {
-        ButtonPullupFlag(mpin - GPIO_KEY1_NP);      //  0 .. 3
-        mpin -= (GPIO_KEY1_NP - GPIO_KEY1);
+      else if ((mpin >= AGPIO(GPIO_KEY1_NP)) && (mpin < (AGPIO(GPIO_KEY1_NP) + MAX_KEYS))) {
+        ButtonPullupFlag(mpin - AGPIO(GPIO_KEY1_NP));      //  0 .. 3
+        mpin -= (AGPIO(GPIO_KEY1_NP) - AGPIO(GPIO_KEY1));
       }
-      else if ((mpin >= GPIO_KEY1_INV) && (mpin < (GPIO_KEY1_INV + MAX_KEYS))) {
-        ButtonInvertFlag(mpin - GPIO_KEY1_INV);     //  0 .. 3
-        mpin -= (GPIO_KEY1_INV - GPIO_KEY1);
+      else if ((mpin >= AGPIO(GPIO_KEY1_INV)) && (mpin < (AGPIO(GPIO_KEY1_INV) + MAX_KEYS))) {
+        ButtonInvertFlag(mpin - AGPIO(GPIO_KEY1_INV));     //  0 .. 3
+        mpin -= (AGPIO(GPIO_KEY1_INV) - AGPIO(GPIO_KEY1));
       }
-      else if ((mpin >= GPIO_KEY1_INV_NP) && (mpin < (GPIO_KEY1_INV_NP + MAX_KEYS))) {
-        ButtonPullupFlag(mpin - GPIO_KEY1_INV_NP);  //  0 .. 3
-        ButtonInvertFlag(mpin - GPIO_KEY1_INV_NP);  //  0 .. 3
-        mpin -= (GPIO_KEY1_INV_NP - GPIO_KEY1);
+      else if ((mpin >= AGPIO(GPIO_KEY1_INV_NP)) && (mpin < (AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS))) {
+        ButtonPullupFlag(mpin - AGPIO(GPIO_KEY1_INV_NP));  //  0 .. 3
+        ButtonInvertFlag(mpin - AGPIO(GPIO_KEY1_INV_NP));  //  0 .. 3
+        mpin -= (AGPIO(GPIO_KEY1_INV_NP) - AGPIO(GPIO_KEY1));
       }
-      else if ((mpin >= GPIO_REL1_INV) && (mpin < (GPIO_REL1_INV + MAX_RELAYS))) {
-        bitSet(rel_inverted, mpin - GPIO_REL1_INV);
-        mpin -= (GPIO_REL1_INV - GPIO_REL1);
+      else if ((mpin >= AGPIO(GPIO_REL1_INV)) && (mpin < (AGPIO(GPIO_REL1_INV) + MAX_RELAYS))) {
+        bitSet(rel_inverted, mpin - AGPIO(GPIO_REL1_INV));
+        mpin -= (AGPIO(GPIO_REL1_INV) - AGPIO(GPIO_REL1));
       }
-      else if ((mpin >= GPIO_LED1_INV) && (mpin < (GPIO_LED1_INV + MAX_LEDS))) {
-        bitSet(led_inverted, mpin - GPIO_LED1_INV);
-        mpin -= (GPIO_LED1_INV - GPIO_LED1);
+      else if ((mpin >= AGPIO(GPIO_LED1_INV)) && (mpin < (AGPIO(GPIO_LED1_INV) + MAX_LEDS))) {
+        bitSet(led_inverted, mpin - AGPIO(GPIO_LED1_INV));
+        mpin -= (AGPIO(GPIO_LED1_INV) - AGPIO(GPIO_LED1));
       }
-      else if (mpin == GPIO_LEDLNK_INV) {
+      else if (mpin == AGPIO(GPIO_LEDLNK_INV)) {
         ledlnk_inverted = 1;
-        mpin -= (GPIO_LEDLNK_INV - GPIO_LEDLNK);
+        mpin -= (AGPIO(GPIO_LEDLNK_INV) - AGPIO(GPIO_LEDLNK));
       }
-      else if ((mpin >= GPIO_PWM1_INV) && (mpin < (GPIO_PWM1_INV + MAX_PWMS))) {
-        bitSet(pwm_inverted, mpin - GPIO_PWM1_INV);
-        mpin -= (GPIO_PWM1_INV - GPIO_PWM1);
+      else if ((mpin >= AGPIO(GPIO_PWM1_INV)) && (mpin < (AGPIO(GPIO_PWM1_INV) + MAX_PWMS))) {
+        bitSet(pwm_inverted, mpin - AGPIO(GPIO_PWM1_INV));
+        mpin -= (AGPIO(GPIO_PWM1_INV) - AGPIO(GPIO_PWM1));
       }
       else if (XdrvCall(FUNC_PIN_STATE)) {
         mpin = XdrvMailbox.index;
@@ -1438,13 +1437,10 @@ void GpioInit(void)
     if (mpin) { SetPin(i, mpin); }                  // Anything above GPIO_NONE and below GPIO_SENSOR_END
   }
 
-#ifndef LEGACY_GPIO_ARRAY
-  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)pin, ARRAY_SIZE(pin));
-#endif
+//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)gpio_pin, ARRAY_SIZE(gpio_pin), sizeof(gpio_pin[0]));
 
 #ifdef ESP8266
   if ((2 == Pin(GPIO_TXD)) || (H801 == my_module_type)) { Serial.set_tx(2); }
-#endif  // ESP8266
 
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
@@ -1452,11 +1448,6 @@ void GpioInit(void)
 #ifdef USE_SPI
   spi_flg = (((PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_CS) > 14)) || (Pin(GPIO_SPI_CS) < 12)) || ((PinUsed(GPIO_SPI_DC) && (Pin(GPIO_SPI_DC) > 14)) || (Pin(GPIO_SPI_DC) < 12)));
   if (spi_flg) {
-#ifdef LEGACY_GPIO_ARRAY
-    for (uint32_t i = 0; i < GPIO_MAX; i++) {
-      if ((Pin(i) >= 12) && (Pin(i) <=14)) { SetPin(99, i); }
-    }
-#endif
     my_module.io[12] = GPIO_SPI_MISO;
     SetPin(12, GPIO_SPI_MISO);
     my_module.io[13] = GPIO_SPI_MOSI;
@@ -1466,6 +1457,14 @@ void GpioInit(void)
   }
   soft_spi_flg = (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
 #endif  // USE_SPI
+#else // ESP32
+  analogWriteFreqRange(0, Settings.pwm_frequency, Settings.pwm_range);
+
+#ifdef USE_SPI
+  spi_flg = (PinUsed(GPIO_SPI_CLK) && (PinUsed(GPIO_SPI_MOSI) || PinUsed(GPIO_SPI_MISO)));
+  soft_spi_flg = (PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
+#endif  // USE_SPI
+#endif  // ESP8266 - ESP32
 
   // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
   // Doing it here solves relay toggles at restart.
@@ -1514,6 +1513,11 @@ void GpioInit(void)
   for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
     if (PinUsed(GPIO_PWM1, i)) {
       pinMode(Pin(GPIO_PWM1, i), OUTPUT);
+#ifdef ESP32
+      analogAttach(Pin(GPIO_PWM1, i),i);
+      analogWriteFreqRange(i,Settings.pwm_frequency,Settings.pwm_range);
+#endif
+
       if (light_type) {
         // force PWM GPIOs to low or high mode, see #7165
         analogWrite(Pin(GPIO_PWM1, i), bitRead(pwm_inverted, i) ? Settings.pwm_range : 0);
@@ -1541,10 +1545,7 @@ void GpioInit(void)
     if (PinUsed(GPIO_LED1, i)) {
 #ifdef USE_ARILUX_RF
       if ((3 == i) && (leds_present < 2) && !PinUsed(GPIO_ARIRFSEL)) {
-        SetPin(Pin(GPIO_LED4), GPIO_ARIRFSEL);  // Legacy support where LED4 was Arilux RF enable
-#ifdef LEGACY_GPIO_ARRAY
-        SetPin(99, GPIO_LED4);
-#endif
+        SetPin(Pin(GPIO_LED1, i), GPIO_ARIRFSEL);  // Legacy support where LED4 was Arilux RF enable
       } else {
 #endif
         pinMode(Pin(GPIO_LED1, i), OUTPUT);
