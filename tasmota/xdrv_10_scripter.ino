@@ -70,8 +70,10 @@ uint32_t DecodeLightId(uint32_t hue_id);
 
 #include "FS.h"
 #include "SPIFFS.h"
+
+
 void SaveFile(const char *name,const uint8_t *buf,uint32_t len) {
-  File file = SPIFFS.open(name, FILE_WRITE);
+  File file = SPIFFS.open(name,FILE_WRITE);
   if (!file) return;
   file.write(buf, len);
   file.close();
@@ -2048,7 +2050,14 @@ chknext:
                 fvar=wc_set_motion_detect(fvar2);
               }
               break;
-
+#ifdef USE_FACE_DETECT
+            case 7:
+              { float fvar2;
+                lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+                fvar=wc_set_face_detect(fvar2);
+              }
+              break;
+#endif
             default:
               fvar=0;
           }
@@ -5224,10 +5233,11 @@ bool Xdrv10(uint8_t function)
     case FUNC_WEB_ADD_BUTTON:
       WSContentSend_P(HTTP_BTN_MENU_RULES);
       break;
+#ifdef USE_SCRIPT_WEB_DISPLAY
     case FUNC_WEB_ADD_MAIN_BUTTON:
       ScriptWebShow('&');
       break;
-
+#endif
     case FUNC_WEB_ADD_HANDLER:
       Webserver->on("/" WEB_HANDLE_SCRIPT, HandleScriptConfiguration);
       Webserver->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);
