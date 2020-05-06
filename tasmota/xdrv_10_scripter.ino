@@ -1181,6 +1181,12 @@ chknext:
             }
           }
         }
+#ifdef ESP32
+        if (!strncmp(vname,"core",4)) {
+          fvar=xPortGetCoreID();
+          goto exit;
+        }
+#endif
         break;
       case 'd':
         if (!strncmp(vname,"day",3)) {
@@ -1705,6 +1711,12 @@ chknext:
           fvar=999;
           goto exit;
         }
+#ifdef ESP32
+        if (!strncmp(vname,"pheap",5)) {
+          fvar=ESP.getFreePsram();
+          goto exit;
+        }
+#endif
         if (!strncmp(vname,"prefix1",7)) {
           if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX1),glob_script_mem.max_ssize);
           goto strexit;
@@ -5235,7 +5247,9 @@ bool Xdrv10(uint8_t function)
       break;
 #ifdef USE_SCRIPT_WEB_DISPLAY
     case FUNC_WEB_ADD_MAIN_BUTTON:
-      ScriptWebShow('&');
+      if (bitRead(Settings.rule_enabled, 0)) {
+        ScriptWebShow('&');
+      }
       break;
 #endif // USE_SCRIPT_WEB_DISPLAY
     case FUNC_WEB_ADD_HANDLER:
