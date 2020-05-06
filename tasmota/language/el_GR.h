@@ -482,6 +482,14 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Particals"
 
+// xsns_27_apds9960.ino
+#define D_GESTURE "Χειρονομία"
+#define D_COLOR_RED "Κόκκινο"
+#define D_COLOR_GREEN "Πράσινο"
+#define D_COLOR_BLUE "Μπλε"
+#define D_CCT "CCT"
+#define D_PROXIMITY "Εγγύτητα"
+
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Accel. X-Axis"
 #define D_AY_AXIS "Accel. Y-Axis"

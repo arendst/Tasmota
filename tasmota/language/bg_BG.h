@@ -482,6 +482,14 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Частици"
 
+// xsns_27_apds9960.ino
+#define D_GESTURE "Жест"
+#define D_COLOR_RED "Red"
+#define D_COLOR_GREEN "Грийн"
+#define D_COLOR_BLUE "син"
+#define D_CCT "CCT"
+#define D_PROXIMITY "близост"
+
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Ускорение - ос X"
 #define D_AY_AXIS "Ускорение - ос Y"
