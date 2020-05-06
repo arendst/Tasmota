@@ -313,29 +313,29 @@
 
 // -- Localization --------------------------------
   // If non selected the default en-GB will be used
-//#define MY_LANGUAGE            bg-BG           // Bulgarian in Bulgaria
-//#define MY_LANGUAGE            cs-CZ           // Czech in Czech
-//#define MY_LANGUAGE            de-DE           // German in Germany
-//#define MY_LANGUAGE            el-GR           // Greek in Greece
-//#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
-//#define MY_LANGUAGE            es-ES           // Spanish in Spain
-//#define MY_LANGUAGE            fr-FR           // French in France
-//#define MY_LANGUAGE            he-HE           // Hebrew in Israel
-//#define MY_LANGUAGE            hu-HU           // Hungarian in Hungary
-//#define MY_LANGUAGE            it-IT           // Italian in Italy
-//#define MY_LANGUAGE            ko-KO           // Korean in Korea
-//#define MY_LANGUAGE            nl-NL           // Dutch in the Netherlands
-//#define MY_LANGUAGE            pl-PL           // Polish in Poland
-//#define MY_LANGUAGE            pt-BR           // Portuguese in Brazil
-//#define MY_LANGUAGE            pt-PT           // Portuguese in Portugal
-//#define MY_LANGUAGE            ro-RO           // Romanian in Romania
-//#define MY_LANGUAGE            ru-RU           // Russian in Russia
-//#define MY_LANGUAGE            sk-SK           // Slovak in Slovakia
-//#define MY_LANGUAGE            sv-SE           // Swedish in Sweden
-//#define MY_LANGUAGE            tr-TR           // Turkish in Turkey
-//#define MY_LANGUAGE            uk-UA           // Ukrainian in Ukraine
-//#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
-//#define MY_LANGUAGE            zh-TW           // Chinese (Traditional) in Taiwan
+//#define MY_LANGUAGE            bg_BG           // Bulgarian in Bulgaria
+//#define MY_LANGUAGE            cs_CZ           // Czech in Czech
+//#define MY_LANGUAGE            de_DE           // German in Germany
+//#define MY_LANGUAGE            el_GR           // Greek in Greece
+//#define MY_LANGUAGE            en_GB           // English in Great Britain. Enabled by Default
+//#define MY_LANGUAGE            es_ES           // Spanish in Spain
+//#define MY_LANGUAGE            fr_FR           // French in France
+//#define MY_LANGUAGE            he_HE           // Hebrew in Israel
+//#define MY_LANGUAGE            hu_HU           // Hungarian in Hungary
+//#define MY_LANGUAGE            it_IT           // Italian in Italy
+//#define MY_LANGUAGE            ko_KO           // Korean in Korea
+//#define MY_LANGUAGE            nl_NL           // Dutch in the Netherlands
+//#define MY_LANGUAGE            pl_PL           // Polish in Poland
+//#define MY_LANGUAGE            pt_BR           // Portuguese in Brazil
+//#define MY_LANGUAGE            pt_PT           // Portuguese in Portugal
+//#define MY_LANGUAGE            ro_RO           // Romanian in Romania
+//#define MY_LANGUAGE            ru_RU           // Russian in Russia
+//#define MY_LANGUAGE            sk_SK           // Slovak in Slovakia
+//#define MY_LANGUAGE            sv_SE           // Swedish in Sweden
+//#define MY_LANGUAGE            tr_TR           // Turkish in Turkey
+//#define MY_LANGUAGE            uk_UA           // Ukrainian in Ukraine
+//#define MY_LANGUAGE            zh_CN           // Chinese (Simplified) in China
+//#define MY_LANGUAGE            zh_TW           // Chinese (Traditional) in Taiwan
 
 // -- Wifi Config tools ---------------------------
 #define WIFI_SOFT_AP_CHANNEL   1                 // Soft Access Point Channel number between 1 and 13 as used by Wifi Manager web GUI

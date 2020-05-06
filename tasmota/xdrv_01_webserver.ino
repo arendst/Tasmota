@@ -246,13 +246,15 @@ const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
     "q.appendChild(o);"
   "}"
   "function ot(g,s){"                     // g = id and name, s = value
-    "var p,l,t=qs('#h'+g),u=s&0x001f;"
+    "var a=s&0xffe0,b=0,c,p,l,t=qs('#h'+g),u=s&0x001f;"
     "l=t.options.length;"                 // Remove current options
     "for(i=l;i;i--){p=t.options[i-1].parentNode;p.removeChild(t.options[i-1]);}"
+    "l=hs.length;"                        // Find max indexes for s
+    "for(i=0;i<l;i++){c=hs[i]&0xffe0;if(a==c){b=hs[i]&0x001f;break;}}"
     "s>>=5;"                              // Add options
-    "for(i=1;i<=hs[s];i++){ce((i<10)?(' '+i):i,t);}"
+    "for(i=1;i<=b;i++){ce((i<10)?(' '+i):i,t);}"
     "eb('h'+g).value=u+1;"                // Set selected value
-    "t.style.visibility=(hs[s]>0)?'':'hidden';"
+    "t.style.visibility=(b>0)?'':'hidden';"
   "}"
   "function sk(s,g){"                     // s = value, g = id and name
     "var o=os.replace(/}2/g,\"<option value='\").replace(/}3/g,\")</option>\");"
@@ -842,9 +844,7 @@ void WSContentStart_P(const char* title, bool auth)
   WSContentBegin(200, CT_HTML);
 
   if (title != nullptr) {
-    char ctitle[strlen_P(title) +1];
-    strcpy_P(ctitle, title);                       // Get title from flash to RAM
-    WSContentSend_P(HTTP_HEADER1, SettingsText(SET_FRIENDLYNAME1), ctitle);
+    WSContentSend_P(HTTP_HEADER1, SettingsText(SET_FRIENDLYNAME1), title);
   }
 }
 
@@ -1469,28 +1469,14 @@ void HandleTemplateConfiguration(void)
 #ifdef ESP32
   WSContentSend_P(PSTR("hs=["));
   bool first_done = false;
-/*
-  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
-    uint32_t midx = pgm_read_word(kGpioNiceList + i) & 0x001F;
-    if (first_done) { WSContentSend_P(PSTR(",")); }
-    WSContentSend_P(PSTR("%d"), midx);
-    first_done = true;
-  }
-*/
-  uint32_t j = 0;
-  for (uint32_t i = 0; i < GPIO_SENSOR_END; i++) {
-    uint32_t midx = pgm_read_word(kGpioNiceList + j);
-    if ((midx >> 5) != i) {
-      midx = 0;
-    } else {
-      midx &= 0x001F;
-      j++;
+  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {  // hs=[36,68,100,132,168,200,232,264,292,324,356,388,421,453];
+    uint32_t midx = pgm_read_word(kGpioNiceList + i);
+    if (midx & 0x001F) {
+      if (first_done) { WSContentSend_P(PSTR(",")); }
+      WSContentSend_P(PSTR("%d"), midx);
+      first_done = true;
     }
-    if (first_done) { WSContentSend_P(PSTR(",")); }
-    WSContentSend_P(PSTR("%d"), midx);
-    first_done = true;
   }
-
   WSContentSend_P(PSTR("];"));
 #endif  // ESP32
 
@@ -1651,28 +1637,14 @@ void HandleModuleConfiguration(void)
 #ifdef ESP32
   WSContentSend_P(PSTR("hs=["));
   bool first_done = false;
-/*
-  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
-    midx = pgm_read_word(kGpioNiceList + i) & 0x001F;
-    if (first_done) { WSContentSend_P(PSTR(",")); }
-    WSContentSend_P(PSTR("%d"), midx);
-    first_done = true;
-  }
-*/
-  uint32_t j = 0;
-  for (uint32_t i = 0; i < GPIO_SENSOR_END; i++) {
-    midx = pgm_read_word(kGpioNiceList + j);
-    if ((midx >> 5) != i) {
-      midx = 0;
-    } else {
-      midx &= 0x001F;
-      j++;
+  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {  // hs=[36,68,100,132,168,200,232,264,292,324,356,388,421,453];
+    midx = pgm_read_word(kGpioNiceList + i);
+    if (midx & 0x001F) {
+      if (first_done) { WSContentSend_P(PSTR(",")); }
+      WSContentSend_P(PSTR("%d"), midx);
+      first_done = true;
     }
-    if (first_done) { WSContentSend_P(PSTR(",")); }
-    WSContentSend_P(PSTR("%d"), midx);
-    first_done = true;
   }
-
   WSContentSend_P(PSTR("];"));
 #endif  // ESP32
 
