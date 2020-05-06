@@ -844,9 +844,7 @@ void WSContentStart_P(const char* title, bool auth)
   WSContentBegin(200, CT_HTML);
 
   if (title != nullptr) {
-    char ctitle[strlen_P(title) +1];
-    strcpy_P(ctitle, title);                       // Get title from flash to RAM
-    WSContentSend_P(HTTP_HEADER1, SettingsText(SET_FRIENDLYNAME1), ctitle);
+    WSContentSend_P(HTTP_HEADER1, SettingsText(SET_FRIENDLYNAME1), title);
   }
 }
 
