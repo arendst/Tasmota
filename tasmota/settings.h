@@ -481,6 +481,9 @@ struct {
   uint8_t       shutter_position[MAX_SHUTTERS];      // E80
   uint8_t       shutter_startrelay[MAX_SHUTTERS];    // E84
   uint8_t       pcf8574_config[MAX_PCF8574];         // E88
+
+  uint8_t       free_e8c[4];               // E8C
+
   uint16_t      dimmer_hw_min;             // E90
   uint16_t      dimmer_hw_max;             // E92
   uint32_t      deepsleep;                 // E94
