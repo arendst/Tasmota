@@ -617,7 +617,7 @@
 #define D_ASTERISK_PWD "****"
 
 #ifndef MY_LANGUAGE
-  #include "language/en-GB.h"
+  #include "language/en_GB.h"
 #else
   #define QUOTEME(x) QUOTEME_1(x)
   #define QUOTEME_1(x) #x
@@ -625,7 +625,7 @@
   #include INCLUDE_FILE(MY_LANGUAGE)
 #endif
 #ifndef LANGUAGE_LCID
-  #define LANGUAGE_LCID 2057  // en-GB
+  #define LANGUAGE_LCID 2057  // en_GB
 #endif
 
 // Common

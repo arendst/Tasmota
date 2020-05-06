@@ -67,6 +67,10 @@
 #define USE_APDS9960_PROXIMITY              // Enable Proximity feature (>50 code)
 #define USE_APDS9960_COLOR                  // Enable Color feature (+0.8k code)
 
+#define APDS9960_MODE_GESTURE     0
+#define APDS9960_MODE_COLOR       1
+
+#define USE_APDS9960_STARTMODE    APDS9960_MODE_GESTURE
 
 /* Gesture parameters */
 #define GESTURE_THRESHOLD_OUT     10
@@ -351,11 +355,11 @@ char currentGesture[6];
 color_data_t color_data;
 #endif  // USE_APDS9960_COLOR || USE_APDS9960_PROXIMITY
 
-volatile uint8_t recovery_loop_counter = 0;  // count number of stateloops to switch the sensor off, if needed
+volatile uint8_t recovery_loop_counter = 0;   // count number of stateloops to switch the sensor off, if needed
 bool APDS9960_overload = false;
 uint8_t APDS9960_aTime = DEFAULT_ATIME;
 uint8_t APDS9960_type = 0;
-uint8_t gesture_mode = 1;
+uint8_t gesture_mode = 1;                     // 1 : Gesture | 2 : Color
 
 /******************************************************************************\
  * Helper functions
@@ -1836,8 +1840,16 @@ void APDS9960_detect(void) {
       I2cSetActiveFound(APDS9960_I2C_ADDR, APDS9960_TAG);
 
       enableProximitySensor();
-#ifdef USE_APDS9960_GESTURE
+
+#if defined(USE_APDS9960_GESTURE) && USE_APDS9960_STARTMODE == APDS9960_MODE_GESTURE
+      gesture_mode = 1;
       enableGestureSensor();
+#endif  // USE_APDS9960_GESTURE
+
+#if ( defined(USE_APDS9960_COLOR) || defined(USE_APDS9960_PROXIMITY) ) && USE_APDS9960_STARTMODE == APDS9960_MODE_COLOR
+      gesture_mode = 0;
+      enableLightSensor();
+      APDS9960_overload = false;
 #endif  // USE_APDS9960_GESTURE
     } else {
       APDS9960_type = 0;

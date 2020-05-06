@@ -626,10 +626,8 @@ void ZigbeeStateMachine_Run(void) {
       case ZGB_INSTR_MQTT_STATE:
         {
         const char *f_msg = (const char*) cur_ptr1;
-        char buf[strlen_P(f_msg) + 1];
-        strcpy_P(buf, f_msg);
         Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":%d,\"Message\":\"%s\"}}"),
-                          cur_d8, buf);
+                          cur_d8, f_msg);
       	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
       	XdrvRulesProcess();
         }
