@@ -87,10 +87,7 @@ void ResponseCmndIdxNumber(int value)
 
 void ResponseCmndChar_P(const char* value)
 {
-  size_t buf_size = strlen_P(value);
-  char buf[buf_size + 1];
-  strcpy_P(buf, value);
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, buf);
+  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, value);
 }
 
 void ResponseCmndChar(const char* value)
