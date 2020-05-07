@@ -555,10 +555,12 @@ void GetFeatures(void)
   feature6 |= 0x00000080;  // xdrv_38_ping.ino
 #endif
 #ifdef USE_THERMOSTAT
-   feature6 |= 0x00000200; // xsns_68_opentherm.ino
+  feature6 |= 0x00000100;  // xsns_68_opentherm.ino
 #endif
-//  feature6 |= 0x00000100;
-//  feature6 |= 0x00000200;
+#ifdef USE_WINDMETER
+  feature6 |= 0x00000200;  // xsns_69_windmeter.ino
+#endif
+
 //  feature6 |= 0x00000400;
 //  feature6 |= 0x00000800;
 

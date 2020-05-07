@@ -232,6 +232,7 @@ enum UserSelectablePins {
   GPIO_PMS5003_TX,     // Plantower PMS5003 Serial interface
   GPIO_BOILER_OT_RX,   // OpenTherm Boiler RX pin
   GPIO_BOILER_OT_TX,   // OpenTherm Boiler TX pin
+  GPIO_WINDMETER_SPEED,  // WindMeter speed counter pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -320,7 +321,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HRXL_RX "|"
   D_SENSOR_ELECTRIQ_MOODL "|"
   D_SENSOR_AS3935 "|" D_SENSOR_PMS5003_TX "|"
-  D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX
+  D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
+  D_SENSOR_WINDMETER_SPEED
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -593,6 +595,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
   GPIO_TX2X_TXD_BLACK, // TX20/TX23 Transmission Pin
+#endif
+#ifdef USE_WINDMETER
+  GPIO_WINDMETER_SPEED,
 #endif
 #ifdef USE_MP3_PLAYER
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface

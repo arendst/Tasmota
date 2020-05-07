@@ -666,7 +666,10 @@
   #define USE_TASMOTA_SLAVE_FLASH_SPEED 57600      // Usually 57600 for 3.3V variants and 115200 for 5V variants
   #define USE_TASMOTA_SLAVE_SERIAL_SPEED 57600     // Depends on the sketch that is running on the Uno/Pro Mini
 
+//#define USE_WINDMETER                              // Add support for analog anemometer
+
 //#define USE_OPENTHERM                              // Use OpenTherm implementation
+
 // -- End of general directives -------------------
 
 /*********************************************************************************************\
