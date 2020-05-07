@@ -207,7 +207,7 @@ a_features = [[
     "","","","",
     "","","","",
     "","","","",
-    "","","",""
+    "","","","USE_WEBCAM"
     ]]
 
 usage = "usage: decode-status {-d | -f} arg"
