@@ -693,6 +693,7 @@
 #define D_UNIT_CELSIUS "C"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_DEGREE "°"
+#define D_UNIT_FAHRENHEIT "F"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "hod"
 #define D_UNIT_GALLONS "gal"
