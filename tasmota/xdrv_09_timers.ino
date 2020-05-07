@@ -68,61 +68,61 @@ const float pi2 = TWO_PI;
 const float pi = PI;
 const float RAD = DEG_TO_RAD;
 
-float JulianischesDatum(void)
-{
-  // Gregorianischer Kalender
-  int Gregor;
-  int Jahr = RtcTime.year;
-  int Monat = RtcTime.month;
-  int Tag = RtcTime.day_of_month;
+// Compute the Julian date from the Calendar date, using only unsigned ints for code compactness
+// Warning this formula works only from 2000 to 2099, after 2100 we get 1 day off per century. If ever Tasmota survives until then.
+uint32_t JulianDate(const struct TIME_T &now) {
+  // https://en.wikipedia.org/wiki/Julian_day
 
-  if (Monat <= 2) {
-    Monat += 12;
-    Jahr -= 1;
+  uint32_t Year = now.year;             // Year ex:2020
+  uint32_t Month = now.month;            // 1..12
+  uint32_t Day = now.day_of_month;     // 1..31
+  uint32_t Julian;                          // Julian day number
+
+  if (Month <= 2) {
+    Month += 12;
+    Year -= 1;
   }
-  Gregor = (Jahr / 400) - (Jahr / 100) + (Jahr / 4);  // Gregorianischer Kalender
-  return 2400000.5f + 365.0f*Jahr - 679004.0f + Gregor + (int)(30.6001f * (Monat +1)) + Tag + 0.5f;
+  // Warning, this formula works only for the 20th century, afterwards be are off by 1 day - which does not impact Sunrise much
+  // Julian = (1461 * Year + 6884472) / 4 + (153 * Month - 457) / 5 + Day -1 -13;
+  Julian = (1461 * Year + 6884416) / 4 + (153 * Month - 457) / 5 + Day;   // -1 -13 included in 6884472 - 14*4 = 6884416
+  return Julian;
 }
 
+// Force value in the 0..pi2 range
 float InPi(float x)
 {
-  int n = (int)(x / pi2);
-  x = x - n*pi2;
-  if (x < 0) x += pi2;
-  return x;
+  return ModulusRangef(x, 0.0f, pi2);
 }
 
-float eps(float T)
-{
-  // Neigung der Erdachse
-  return RAD * (23.43929111f + (-46.8150f*T - 0.00059f*T*T + 0.001813f*T*T*T)/3600.0f);
-}
+// Time formula
+// Tdays is the number of days since Jan 1 2000, and replaces T as the Tropical Century. T = Tdays / 36525.0
+float TimeFormula(float *DK, uint32_t Tdays) {
+  float RA_Mean = 18.71506921f + (2400.0513369f / 36525.0f) * Tdays;    // we keep only first order value as T is between 0.20 and 0.30
+  float M = InPi( (pi2 * 0.993133f) + (pi2 * 99.997361f / 36525.0f) * Tdays);
+  float L = InPi( (pi2 * 0.7859453f) + M + (6893.0f * sinf(M) + 72.0f * sinf(M+M) + (6191.2f / 36525.0f) * Tdays) * (pi2 / 1296.0e3f));
 
-float BerechneZeitgleichung(float *DK,float T)
-{
-  float RA_Mittel = 18.71506921f + 2400.0513369f*T +(2.5862e-5f - 1.72e-9f*T)*T*T;
-  float M = InPi(pi2 * (0.993133f + 99.997361f*T));
-  float L = InPi(pi2 * (0.7859453f + M/pi2 + (6893.0f*sinf(M)+72.0f*sinf(2.0f*M)+6191.2f*T) / 1296.0e3f));
-  float e = eps(T);
-  float RA = atanf(tanf(L)*cosf(e));
-  if (RA < 0.0) RA += pi;
+  float eps = 0.40904f;         // we take this angle as constant over the next decade
+  float cos_eps = 0.91750f;     // precompute cos(eps)
+  float sin_eps = 0.39773f;     // precompute sin(eps)
+
+  float RA = atanf(tanf(L) * cos_eps);
+  if (RA < 0.0f) RA += pi;
   if (L > pi) RA += pi;
-  RA = 24.0*RA/pi2;
-  *DK = asinf(sinf(e)*sinf(L));
-  // Damit 0<=RA_Mittel<24
-  RA_Mittel = 24.0f * InPi(pi2*RA_Mittel/24.0f)/pi2;
-  float dRA = RA_Mittel - RA;
-  if (dRA < -12.0f) dRA += 24.0f;
-  if (dRA > 12.0f) dRA -= 24.0f;
+  RA = RA * (24.0f/pi2);
+  *DK = asinf(sin_eps * sinf(L));
+  RA_Mean = ModulusRangef(RA_Mean, 0.0f, 24.0f);
+  float dRA = ModulusRangef(RA_Mean - RA, -12.0f, 12.0f);
   dRA = dRA * 1.0027379f;
   return dRA;
 }
 
 void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8_t *minute_down)
 {
-  float JD2000 = 2451545.0f;
-  float JD = JulianischesDatum();
-  float T = (JD - JD2000) / 36525.0f;
+  const uint32_t JD2000 = 2451545;
+  uint32_t JD = JulianDate(RtcTime);
+  uint32_t Tdays = JD - JD2000;           // number of days since Jan 1 2000
+
+  // ex 2458977 (2020 May 7) - 2451545 -> 7432 -> 0,2034
   float DK;
   /*
   h (D) = -0.8333 normaler SA & SU-Gang
@@ -130,56 +130,33 @@ void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8
   h (D) = -12.0 nautische Dämmerung
   h (D) = -18.0 astronomische Dämmerung
   */
-//  double h = -50/60.0*RAD;
-  float h = SUNRISE_DAWN_ANGLE *RAD;
-  float B = (((float)Settings.latitude)/1000000) * RAD; // geographische Breite
+  const float h = SUNRISE_DAWN_ANGLE * RAD;
+  const float sin_h = sinf(h);    // let GCC pre-compute the sin() at compile time
+
+  float B = Settings.latitude / (1000000.0f / RAD); // geographische Breite
+  //float B = (((float)Settings.latitude)/1000000) * RAD; // geographische Breite
   float GeographischeLaenge = ((float)Settings.longitude)/1000000;
 //  double Zeitzone = 0; //Weltzeit
 //  double Zeitzone = 1; //Winterzeit
 //  double Zeitzone = 2.0;   //Sommerzeit
   float Zeitzone = ((float)Rtc.time_timezone) / 60;
-  float Zeitgleichung = BerechneZeitgleichung(&DK, T);
-  float Zeitdifferenz = 12.0f*acosf((sinf(h) - sinf(B)*sinf(DK)) / (cosf(B)*cosf(DK)))/pi;
+  float Zeitgleichung = TimeFormula(&DK, Tdays);
+  float Zeitdifferenz = acosf((sin_h - sinf(B)*sinf(DK)) / (cosf(B)*cosf(DK))) * (12.0f / pi);
   float AufgangOrtszeit = 12.0f - Zeitdifferenz - Zeitgleichung;
   float UntergangOrtszeit = 12.0f + Zeitdifferenz - Zeitgleichung;
   float AufgangWeltzeit = AufgangOrtszeit - GeographischeLaenge / 15.0f;
   float UntergangWeltzeit = UntergangOrtszeit - GeographischeLaenge / 15.0f;
-  float Aufgang = AufgangWeltzeit + Zeitzone;         // In Stunden
-  if (Aufgang < 0.0f) {
-    Aufgang += 24.0f;
-  } else {
-    if (Aufgang >= 24.0f) Aufgang -= 24.0f;
-  }
-  float Untergang = UntergangWeltzeit + Zeitzone;
-  if (Untergang < 0.0f) {
-    Untergang += 24.0f;
-  } else {
-    if (Untergang >= 24.0f) Untergang -= 24.0f;
-  }
-  int AufgangMinuten = (int)(60.0f*(Aufgang - (int)Aufgang)+0.5f);
+  float Aufgang = AufgangWeltzeit + Zeitzone + (1/120.0f);         // In Stunden, with rounding to nearest minute (1/60 * .5)
+
+  Aufgang = ModulusRangef(Aufgang, 0.0f, 24.0f);        // force 0 <= x < 24.0
   int AufgangStunden = (int)Aufgang;
-  if (AufgangMinuten >= 60.0f) {
-    AufgangMinuten -= 60.0f;
-    AufgangStunden++;
-  } else {
-    if (AufgangMinuten < 0.0f) {
-      AufgangMinuten += 60.0f;
-      AufgangStunden--;
-      if (AufgangStunden < 0.0f) AufgangStunden += 24.0f;
-    }
-  }
-  int UntergangMinuten = (int)(60.0f*(Untergang - (int)Untergang)+0.5f);
+  int AufgangMinuten = (int)(60.0f * fmodf(Aufgang, 1.0f));
+  float Untergang = UntergangWeltzeit + Zeitzone;
+
+  Untergang = ModulusRangef(Untergang, 0.0f, 24.0f);
   int UntergangStunden = (int)Untergang;
-  if (UntergangMinuten >= 60.0f) {
-    UntergangMinuten -= 60.0f;
-    UntergangStunden++;
-  } else {
-    if (UntergangMinuten<0) {
-      UntergangMinuten += 60.0f;
-      UntergangStunden--;
-      if (UntergangStunden < 0.0f) UntergangStunden += 24.0f;
-    }
-  }
+  int UntergangMinuten = (int)(60.0f * fmodf(Untergang, 1.0f));
+
   *hour_up = AufgangStunden;
   *minute_up = AufgangMinuten;
   *hour_down = UntergangStunden;
