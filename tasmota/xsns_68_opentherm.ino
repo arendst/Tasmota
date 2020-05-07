@@ -198,9 +198,9 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
 
 bool sns_opentherm_Init()
 {
-    if (pin[GPIO_BOILER_OT_RX] < 99 && pin[GPIO_BOILER_OT_TX] < 99)
+    if (PinUsed(GPIO_BOILER_OT_RX) && PinUsed(GPIO_BOILER_OT_TX))
     {
-        sns_ot_master = new OpenTherm(pin[GPIO_BOILER_OT_RX], pin[GPIO_BOILER_OT_TX]);
+        sns_ot_master = new OpenTherm(Pin(GPIO_BOILER_OT_RX), Pin(GPIO_BOILER_OT_TX));
         sns_ot_master->begin(sns_opentherm_handleInterrupt, sns_opentherm_processResponseCallback);
         sns_ot_connection_status = OpenThermConnectionStatus::OTC_CONNECTING;
 
