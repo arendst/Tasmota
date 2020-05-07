@@ -482,6 +482,14 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "častíc"
 
+// xsns_27_apds9960.ino
+#define D_GESTURE "Gesture"
+#define D_COLOR_RED "Red"
+#define D_COLOR_GREEN "Green"
+#define D_COLOR_BLUE "Blue"
+#define D_CCT "CCT"
+#define D_PROXIMITY "Proximity"
+
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Accel. os-X"
 #define D_AY_AXIS "Accel. os-Y"

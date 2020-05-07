@@ -482,6 +482,14 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Részecskék"
 
+// xsns_27_apds9960.ino
+#define D_GESTURE "Gesztus"
+#define D_COLOR_RED "Red"
+#define D_COLOR_GREEN "Green"
+#define D_COLOR_BLUE "Blue"
+#define D_CCT "CCT"
+#define D_PROXIMITY "közelség"
+
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Gyorsulásm. X-tengely"
 #define D_AY_AXIS "Gyorsulásm. Y-tengely"

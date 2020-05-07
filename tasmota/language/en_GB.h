@@ -482,6 +482,14 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Particles"
 
+// xsns_27_apds9960.ino
+#define D_GESTURE "Gesture"
+#define D_COLOR_RED "Red"
+#define D_COLOR_GREEN "Green"
+#define D_COLOR_BLUE "Blue"
+#define D_CCT "CCT"
+#define D_PROXIMITY "Proximity"
+
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Accel. X-Axis"
 #define D_AY_AXIS "Accel. Y-Axis"
@@ -687,6 +695,7 @@
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KELVIN "&deg;K"
 #define D_UNIT_KILOMETER "km"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
