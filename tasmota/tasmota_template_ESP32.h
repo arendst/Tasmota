@@ -125,6 +125,8 @@ enum UserSelectablePins {
   GPIO_WEBCAM_PSCLK,
   GPIO_WEBCAM_HSD,
   GPIO_WEBCAM_PSRCS,
+  GPIO_BOILER_OT_RX,   // OpenTherm Boiler RX pin
+  GPIO_BOILER_OT_TX,   // OpenTherm Boiler TX pin
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -211,7 +213,8 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_WEBCAM_VSYNC "|" D_GPIO_WEBCAM_HREF "|" D_GPIO_WEBCAM_PCLK "|"
   D_GPIO_WEBCAM_PSCLK "|"
   D_GPIO_WEBCAM_HSD "|"
-  D_GPIO_WEBCAM_PSRCS
+  D_GPIO_WEBCAM_PSRCS "|"
+  D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -547,6 +550,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_WEBCAM_HSD) + MAX_WEBCAM_HSD,
 
   AGPIO(GPIO_WEBCAM_PSRCS),
+#endif
+#ifdef USE_OPENTHERM
+  AGPIO(GPIO_BOILER_OT_RX),
+  AGPIO(GPIO_BOILER_OT_TX),
 #endif
 };
 
