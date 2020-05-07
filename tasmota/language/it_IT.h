@@ -62,7 +62,7 @@
 #define D_BRIGHTLIGHT "Luminoso"
 #define D_BSSID "BSSId"
 #define D_BUTTON "Pulsante"
-#define D_BY "da"                    // Written by me
+#define D_BY "di"                    // Written by me
 #define D_BYTES "Byte"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Canale"
@@ -482,6 +482,14 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Particelle"
 
+// xsns_27_apds9960.ino
+#define D_GESTURE "Gesto"
+#define D_COLOR_RED "Rosso"
+#define D_COLOR_GREEN "Verde"
+#define D_COLOR_BLUE "Blu"
+#define D_CCT "CCT"
+#define D_PROXIMITY "Vicinanza"
+
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Accelerazione asse X"
 #define D_AY_AXIS "Accelerazione asse Y"
@@ -666,6 +674,7 @@
 #define D_SENSOR_HRXL_RX       "HRXL - RX"
 #define D_SENSOR_ELECTRIQ_MOODL "MOODL - TX"
 #define D_SENSOR_AS3935        "AS3935"
+#define D_SENSOR_WINDMETER_SPEED "WindMeter Spd"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -763,26 +772,30 @@
 #define D_SCRIPT_UPLOAD_FILES  "Upload file"
 
 //xsns_67_as3935.ino
-#define D_AS3935_GAIN "gain:"
-#define D_AS3935_ENERGY "energy:"
-#define D_AS3935_DISTANCE "distance:"
-#define D_AS3935_DISTURBER "disturber:"
+#define D_AS3935_GAIN "guadagno:"
+#define D_AS3935_ENERGY "energia:"
+#define D_AS3935_DISTANCE "distanza:"
+#define D_AS3935_DISTURBER "disturbatore:"
 #define D_AS3935_VRMS "µVrms:"
-#define D_AS3935_APRX "aprx.:"
-#define D_AS3935_AWAY "away"
-#define D_AS3935_LIGHT "lightning"
-#define D_AS3935_OUT "lightning out of range"
-#define D_AS3935_NOT "distance not determined"
-#define D_AS3935_ABOVE "lightning overhead"
-#define D_AS3935_NOISE "noise detected"
-#define D_AS3935_DISTDET "disturber detected"
-#define D_AS3935_INTNOEV "Interrupt with no Event!"
-#define D_AS3935_NOMESS "listening..."
-#define D_AS3935_ON "On"
-#define D_AS3935_OFF "Off"
-#define D_AS3935_INDOORS "Indoors"
-#define D_AS3935_OUTDOORS "Outdoors"
-#define D_AS3935_CAL_FAIL "calibration failed"
-#define D_AS3935_CAL_OK "calibration set to:"
+#define D_AS3935_APRX "apross.:"
+#define D_AS3935_AWAY "lontano"
+#define D_AS3935_LIGHT "illuminazione"
+#define D_AS3935_OUT "illuminazione fuori intervallo"
+#define D_AS3935_NOT "distanza non determinata"
+#define D_AS3935_ABOVE "illuminazione ambientale"
+#define D_AS3935_NOISE "rilevato rumore"
+#define D_AS3935_DISTDET "rilevato disturbatore"
+#define D_AS3935_INTNOEV "Interrupt senza evento!"
+#define D_AS3935_NOMESS "in ascolto..."
+#define D_AS3935_ON "ON"
+#define D_AS3935_OFF "OFF"
+#define D_AS3935_INDOORS "Interno"
+#define D_AS3935_OUTDOORS "Esterno"
+#define D_AS3935_CAL_FAIL "calibrazione fallita"
+#define D_AS3935_CAL_OK "calibrazione impostata a:"
+
+//xsns_68_opentherm.ino
+#define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
+#define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
 
 #endif  // _LANGUAGE_IT_IT_H_

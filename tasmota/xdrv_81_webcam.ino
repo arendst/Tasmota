@@ -1,5 +1,5 @@
 /*
-  xdrv_39_webcam.ino - ESP32 webcam support for Tasmota
+  xdrv_81_webcam.ino - ESP32 webcam support for Tasmota
 
   Copyright (C) 2020  Gerhard Mutz and Theo Arends
 
@@ -44,7 +44,7 @@
  * board_build.f_cpu       = 240000000L
 \*********************************************************************************************/
 
-#define XDRV_39                    39
+#define XDRV_81           81
 
 #define CAMERA_MODEL_AI_THINKER
 
@@ -867,7 +867,7 @@ void CmndWebcam(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv39(uint8_t function) {
+bool Xdrv81(uint8_t function) {
   bool result = false;
 
   switch (function) {
@@ -878,13 +878,13 @@ bool Xdrv39(uint8_t function) {
       wc_pic_setup();
       break;
     case FUNC_WEB_ADD_MAIN_BUTTON:
-     //if (Settings.esp32_webcam_resolution) {
-#ifndef USE_SCRIPT
+     if (Settings.esp32_webcam_resolution) {
+//#ifndef USE_SCRIPT
        WcStreamControl(Settings.esp32_webcam_resolution);
        delay(50);   // Give the webcam webserver some time to prepare the stream
        wc_show_stream();
-#endif
-     //}
+//#endif
+     }
      break;
     case FUNC_COMMAND:
       result = DecodeCommand(kWCCommands, WCCommand);

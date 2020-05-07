@@ -482,6 +482,14 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Cząstki"
 
+// xsns_27_apds9960.ino
+#define D_GESTURE "Gesture"
+#define D_COLOR_RED "Red"
+#define D_COLOR_GREEN "Green"
+#define D_COLOR_BLUE "Blue"
+#define D_CCT "CCT"
+#define D_PROXIMITY "Proximity"
+
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Accel. X-Axis"
 #define D_AY_AXIS "Accel. Y-Axis"
@@ -666,6 +674,7 @@
 #define D_SENSOR_HRXL_RX       "HRXL Rx"
 #define D_SENSOR_ELECTRIQ_MOODL "MOODL Tx"
 #define D_SENSOR_AS3935        "AS3935"
+#define D_SENSOR_WINDMETER_SPEED "WindMeter Spd"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -784,5 +793,9 @@
 #define D_AS3935_OUTDOORS "Outdoors"
 #define D_AS3935_CAL_FAIL "calibration failed"
 #define D_AS3935_CAL_OK "calibration set to:"
+
+//xsns_68_opentherm.ino
+#define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
+#define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
 
 #endif  // _LANGUAGE_PL_PL_D_H_

@@ -554,10 +554,16 @@ void GetFeatures(void)
 #ifdef USE_PING
   feature6 |= 0x00000080;  // xdrv_38_ping.ino
 #endif
+#ifdef USE_WINDMETER
+  feature6 |= 0x00000100;  // xsns_68_windmeter.ino
+#endif
+#ifdef USE_OPENTHERM
+  feature6 |= 0x00000200;  // xsns_69_opentherm.ino
+#endif
+#ifdef USE_THERMOSTAT
+  feature6 |= 0x00000400;  // xdrv_39_heating.ino
+#endif
 
-//  feature6 |= 0x00000100;
-//  feature6 |= 0x00000200;
-//  feature6 |= 0x00000400;
 //  feature6 |= 0x00000800;
 
 //  feature6 |= 0x00001000;
@@ -583,6 +589,7 @@ void GetFeatures(void)
 //  feature6 |= 0x10000000;
 //  feature6 |= 0x20000000;
 //  feature6 |= 0x40000000;
-//  feature6 |= 0x80000000;
-
+#ifdef USE_WEBCAM
+  feature6 |= 0x80000000;
+#endif
 }

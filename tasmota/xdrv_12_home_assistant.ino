@@ -28,12 +28,14 @@ const char kHAssJsonSensorTypes[] PROGMEM =
   D_JSON_MOISTURE "|PB0.3|PB0.5|PB1|PB2.5|PB5|PB10|PM1|PM2.5|PM10|" D_JSON_POWERFACTOR "|" D_JSON_POWERUSAGE "|"
   D_JSON_REACTIVE_POWERUSAGE "|" D_JSON_TODAY "|" D_JSON_TOTAL "|" D_JSON_VOLTAGE "|" D_JSON_WEIGHT "|" D_JSON_YESTERDAY "|"
   D_JSON_CO2 "|" D_JSON_ECO2 "|" D_JSON_TVOC "|";
+
 const char kHAssJsonSensorUnits[] PROGMEM =
   "||||"
   "VA|%|A|Cm|Hz|%|LX|"
   "%|ppd|ppd|ppd|ppd|ppd|ppd|µg/m³|µg/m³|µg/m³|Cos φ|W|"
   "VAr|kWh|kWh|V|Kg|kWh|"
   "ppm|ppm|ppb|";
+
 const char kHAssJsonSensorDevCla[] PROGMEM =
   "dev_cla\":\"temperature|ic\":\"mdi:weather-rainy|dev_cla\":\"pressure|dev_cla\":\"pressure|"
   "dev_cla\":\"power|dev_cla\":\"battery|ic\":\"mdi:alpha-a-circle-outline|ic\":\"mdi:leak|ic\":\"mdi:current-ac|dev_cla\":\"humidity|dev_cla\":\"illuminance|"
@@ -74,12 +76,12 @@ const char HASS_DISCOVER_BIN_PIR[] PROGMEM =
   "\"pl_on\":\"%s\","                          // ON
   "\"off_dly\":1";                             // Switchmode13 and Switchmode14 doesn't transmit an OFF state.
 
-const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
+const char HASS_DISCOVER_BASE_LIGHT[] PROGMEM =
   ",\"bri_cmd_t\":\"%s\","                     // cmnd/led2/Dimmer
   "\"bri_stat_t\":\"%s\","                     // stat/led2/RESULT
   "\"bri_scl\":100,"                           // 100%
   "\"on_cmd_type\":\"%s\","                    // power on (first), power on (last), no power on (brightness)
-  "\"bri_val_tpl\":\"{{value_json." D_CMND_DIMMER "}}\"";
+  "\"bri_val_tpl\":\"{{value_json.%s}}\"";
 
 const char HASS_DISCOVER_LIGHT_COLOR[] PROGMEM =
   ",\"rgb_cmd_t\":\"%s2\","                    // cmnd/led2/Color2
@@ -138,6 +140,16 @@ const char kHAssTriggerTypeButtons[] PROGMEM =
 const char kHAssTriggerStringButtons[] PROGMEM =
   "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|HOLD|";
 
+const char kHAssError1[] PROGMEM =
+  "HASS: MQTT discovery failed due to too long topic or friendly name."
+  "Please shorten topic and friendly name. Failed to format";
+
+const char kHAssError2[] PROGMEM =
+  "HASS: The configuration of the Relays is wrong, there is a Light that is using an index lower than the number of the selected relay.\n               "
+  "The Relays have priority over the Lights, an incorrect order could lead to an erroneous Light control.\n               "
+  "Please update your configuration to avoid inconsistent results.\n               "
+  "Entities for Relays and Lights will not be available in Home Assistant until the configuration will be updated.";
+
 uint8_t hass_init_step = 0;
 uint8_t hass_mode = 0;
 int hass_tele_period = 0;
@@ -153,9 +165,7 @@ void TryResponseAppend_P(const char *format, ...)
   int slen = sizeof(mqtt_data) - 1 - mlen;
   if (dlen >= slen)
   {
-    AddLog_P2(LOG_LEVEL_ERROR, PSTR("HASS: MQTT discovery failed due to too long topic or friendly name. "
-                                    "Please shorten topic and friendly name. Failed to format(%u/%u):"),
-              dlen, slen);
+    AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s (%u/%u):"), kHAssError1, dlen, slen);
     va_start(args, format);
     vsnprintf_P(log_data, sizeof(log_data), format, args);
     AddLog(LOG_LEVEL_ERROR);
@@ -175,13 +185,33 @@ void HAssAnnounceRelayLight(void)
   char stemp2[TOPSZ];
   char stemp3[TOPSZ];
   char unique_id[30];
-  bool is_light = false;
-  bool is_topic_light = false;
+
+  bool LightControl = light_controller.isCTRGBLinked(); // SetOption37 - Color remapping for led channels, also provides an option for allowing independent handling of RGB and white channels
+  bool PwmMulti = Settings.flag3.pwm_multi_channels;    // SetOption68 - Multi-channel PWM instead of a single light
+  bool is_topic_light = false;                          // Switch HAss domain between Lights and Relays
+  bool ind_light = false;                               // Controls Separated Lights when SetOption37 is >= 128
+  bool ct_light = false;                                // Controls a CT Light when SetOption37 is >= 128
+  bool wt_light = false;                                // Controls a White Light when SetOption37 is >= 128
+  bool err_flag = false;                                // When true it blocks the creation of entities if the order of the Relays is not correct to avoid issue with Lights
+
+  uint8_t dimmer = 1;
+  uint8_t max_lights = 1;
+
+  // If there is a special Light to be enabled and managed with SetOption68 or SetOption37 >= 128, Discovery calculates the maximum number of entities to be generated in advance
+
+  if (PwmMulti) { max_lights = Light.subtype; }
+
+  if (!LightControl) {
+    ind_light = 1;
+    if (!PwmMulti) { max_lights = 2;}
+  }
+
+  // Lights types:  0 = LST_NONE / 1 = LST_SINGLE / 2 = LST_COLDWARM / 3 = LST_RGB / 4 = LST_RGBW / 5 = LST_RGBCW
 
   for (uint32_t i = 1; i <= MAX_RELAYS; i++)
   {
-    is_light = ((i == devices_present) && (light_type));
-    is_topic_light = Settings.flag.hass_light || is_light; // SetOption30 - Enforce HAss autodiscovery as light
+    bool RelayX = PinUsed(GPIO_REL1 +i-1);
+    is_topic_light = Settings.flag.hass_light && RelayX || light_type && !RelayX; // SetOption30 - Enforce HAss autodiscovery as light
 
     mqtt_data[0] = '\0'; // Clear retained message
 
@@ -195,70 +225,95 @@ void HAssAnnounceRelayLight(void)
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s/config"),
                (is_topic_light) ? "light" : "switch", unique_id);
 
-    if (Settings.flag.hass_discovery && (i <= devices_present))
-    {                    // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
-      char name[33 + 2]; // friendlyname(33) + " " + index
-      char value_template[33];
-      char prefix[TOPSZ];
-      char *command_topic = stemp1;
-      char *state_topic = stemp2;
-      char *availability_topic = stemp3;
+    if ((i < Light.device) && !RelayX) {
+      err_flag = true;
+      AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s"), kHAssError2);
+    } else {
+      if (Settings.flag.hass_discovery && (RelayX || (Light.device > 0) && (max_lights > 0)) && !err_flag )
+      {                    // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
+          char name[33 + 2]; // friendlyname(33) + " " + index
+          char value_template[33];
+          char prefix[TOPSZ];
+          char *command_topic = stemp1;
+          char *state_topic = stemp2;
+          char *availability_topic = stemp3;
 
-      if (i > MAX_FRIENDLYNAMES) {
-        snprintf_P(name, sizeof(name), PSTR("%s %d"), SettingsText(SET_FRIENDLYNAME1), i);
-      } else {
-        snprintf_P(name, sizeof(name), SettingsText(SET_FRIENDLYNAME1 + i - 1));
+          if (i > MAX_FRIENDLYNAMES) {
+            snprintf_P(name, sizeof(name), PSTR("%s %d"), SettingsText(SET_FRIENDLYNAME1), i-1);
+          } else {
+            snprintf_P(name, sizeof(name), SettingsText(SET_FRIENDLYNAME1 + i-1));
+          }
+
+          GetPowerDevice(value_template, i, sizeof(value_template), Settings.flag.device_index_enable); // SetOption26 - Switch between POWER or POWER1
+          GetTopic_P(command_topic, CMND, mqtt_topic, value_template);
+          GetTopic_P(state_topic, TELE, mqtt_topic, D_RSLT_STATE);
+          GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
+          Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
+          TryResponseAppend_P(HASS_DISCOVER_RELAY, command_topic, value_template, SettingsText(SET_STATE_TXT1), SettingsText(SET_STATE_TXT2));
+          TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP_getChipId());
+
+  #ifdef USE_LIGHT
+        if ((i >= Light.device)
+  #ifdef ESP8266
+          || PWM_DIMMER == my_module_type
+  #endif
+        )
+        {
+          if (!RelayX) {
+            char *brightness_command_topic = stemp1;
+            strncpy_P(stemp3, Settings.flag.not_power_linked ? PSTR("last") : PSTR("brightness"), sizeof(stemp3)); // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
+            char channel_num[9];
+            if (PwmMulti) { // SetOption68 - Multi-channel PWM instead of a single light
+              snprintf_P(channel_num, sizeof(channel_num), PSTR("Channel%d"), i);
+            } else {
+              if (!LightControl) { // SetOption37 >= 128 - Color remapping for led channels, also provides an option for allowing independent handling of RGB and white channels
+                snprintf_P(channel_num, sizeof(channel_num), PSTR("" D_CMND_DIMMER "%d"), dimmer);
+                dimmer ++;
+              } else {
+                snprintf_P(channel_num, sizeof(channel_num), PSTR("" D_CMND_DIMMER ""));
+              }
+            }
+            GetTopic_P(brightness_command_topic, CMND, mqtt_topic, channel_num);
+            TryResponseAppend_P(HASS_DISCOVER_BASE_LIGHT, brightness_command_topic, state_topic, stemp3, channel_num);
+          }
+          if ((ind_light && !PwmMulti) || LightControl) {
+
+            if (Light.subtype >= LST_RGB) {
+              char *rgb_command_topic = stemp1;
+
+              GetTopic_P(rgb_command_topic, CMND, mqtt_topic, D_CMND_COLOR);
+              TryResponseAppend_P(HASS_DISCOVER_LIGHT_COLOR, rgb_command_topic, state_topic);
+
+              char *effect_command_topic = stemp1;
+              GetTopic_P(effect_command_topic, CMND, mqtt_topic, D_CMND_SCHEME);
+              TryResponseAppend_P(HASS_DISCOVER_LIGHT_SCHEME, effect_command_topic, state_topic);
+            }
+            if (LST_RGBW == Light.subtype) { wt_light = true; }
+            if (LST_RGBCW == Light.subtype) { ct_light = true; }
+          }
+
+          if ((!ind_light && ct_light) || (LST_COLDWARM == Light.subtype &&
+              !PwmMulti && LightControl)) {
+              char *color_temp_command_topic = stemp1;
+
+              GetTopic_P(color_temp_command_topic, CMND, mqtt_topic, D_CMND_COLORTEMPERATURE);
+              TryResponseAppend_P(HASS_DISCOVER_LIGHT_CT, color_temp_command_topic, state_topic);
+              ct_light = false;
+          }
+          if ((!ind_light && wt_light) || (LST_RGBW == Light.subtype &&
+              !PwmMulti && LightControl)) {
+              char *white_temp_command_topic = stemp1;
+
+              GetTopic_P(white_temp_command_topic, CMND, mqtt_topic, D_CMND_WHITE);
+              TryResponseAppend_P(HASS_DISCOVER_LIGHT_WHITE, white_temp_command_topic, state_topic);
+              wt_light = false;
+          }
+          ind_light = false;
+          max_lights--;
+        }
+  #endif  // USE_LIGHT
+        TryResponseAppend_P(PSTR("}"));
       }
-      GetPowerDevice(value_template, i, sizeof(value_template), Settings.flag.device_index_enable); // SetOption26 - Switch between POWER or POWER1
-      GetTopic_P(command_topic, CMND, mqtt_topic, value_template);
-      GetTopic_P(state_topic, TELE, mqtt_topic, D_RSLT_STATE);
-      GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
-
-      Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
-      TryResponseAppend_P(HASS_DISCOVER_RELAY, command_topic, value_template, SettingsText(SET_STATE_TXT1), SettingsText(SET_STATE_TXT2));
-      TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP_getChipId());
-
-#ifdef USE_LIGHT
-      if (is_light
-#ifdef ESP8266
-      || PWM_DIMMER == my_module_type
-#endif
-      )
-      {
-        char *brightness_command_topic = stemp1;
-
-        GetTopic_P(brightness_command_topic, CMND, mqtt_topic, D_CMND_DIMMER);
-        strncpy_P(stemp3, Settings.flag.not_power_linked ? PSTR("last") : PSTR("brightness"), sizeof(stemp3)); // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
-        TryResponseAppend_P(HASS_DISCOVER_LIGHT_DIMMER, brightness_command_topic, state_topic, stemp3);
-
-        if (Light.subtype >= LST_RGB)
-        {
-          char *rgb_command_topic = stemp1;
-
-          GetTopic_P(rgb_command_topic, CMND, mqtt_topic, D_CMND_COLOR);
-          TryResponseAppend_P(HASS_DISCOVER_LIGHT_COLOR, rgb_command_topic, state_topic);
-
-          char *effect_command_topic = stemp1;
-          GetTopic_P(effect_command_topic, CMND, mqtt_topic, D_CMND_SCHEME);
-          TryResponseAppend_P(HASS_DISCOVER_LIGHT_SCHEME, effect_command_topic, state_topic);
-        }
-        if (LST_RGBW == Light.subtype)
-        {
-          char *white_temp_command_topic = stemp1;
-
-          GetTopic_P(white_temp_command_topic, CMND, mqtt_topic, D_CMND_WHITE);
-          TryResponseAppend_P(HASS_DISCOVER_LIGHT_WHITE, white_temp_command_topic, state_topic);
-        }
-        if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype))
-        {
-          char *color_temp_command_topic = stemp1;
-
-          GetTopic_P(color_temp_command_topic, CMND, mqtt_topic, D_CMND_COLORTEMPERATURE);
-          TryResponseAppend_P(HASS_DISCOVER_LIGHT_CT, color_temp_command_topic, state_topic);
-        }
-      }
-#endif  // USE_LIGHT
-      TryResponseAppend_P(PSTR("}"));
     }
     MqttPublish(stopic, true);
   }
@@ -346,7 +401,7 @@ void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint
       GetTopic_P(state_topic, STAT, mqtt_topic, jsoname);
       GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
 
-      snprintf_P(name, sizeof(name), PSTR("%s Switch%d"), SettingsText(SET_FRIENDLYNAME1), device + 1);
+      snprintf_P(name, sizeof(name), PSTR("%s Switch%d"), ModuleName().c_str(), device + 1);
       Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
       if (!pir) {
         TryResponseAppend_P(HASS_DISCOVER_BIN_SWITCH, PSTR(D_RSLT_STATE), SettingsText(SET_STATE_TXT2), SettingsText(SET_STATE_TXT1));
@@ -372,7 +427,7 @@ void HAssAnnounceSwitches(void)
 
     if (PinUsed(GPIO_SWT1, switch_index)) { switch_present = 1; }
 
-    if (KeyTopicActive(1) && strcmp(SettingsText(SET_MQTT_SWITCH_TOPIC), mqtt_topic))   // Enable Discovery for Switches only if Switchtopic is set to a custom name
+    if (KeyTopicActive(1) && strcmp(SettingsText(SET_MQTT_SWITCH_TOPIC), mqtt_topic))   // Enable Discovery for Switches only if SwitchTopic is set to a custom name
     {
 
     // switch matrix for triggers and binary sensor generation when switchtopic is set as custom (default index is 0,0 - TOGGLE, TOGGLE):
@@ -436,7 +491,6 @@ void HAssAnnounceSwitches(void)
   }
 }
 
-
 void HAssAnnounceButtons(void)
 {
   for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++)
@@ -469,7 +523,7 @@ void HAssAnnounceButtons(void)
 
     // Trigger types:  10 = button_short_press | 11 = button_double_press | 12 = button_triple_press | 13 = button_quadruple_press | 14 = button_quintuple_press | 3 = button_long_press
 
-    if (!Settings.flag3.mqtt_buttons) {        // Enable buttons discovery [SetOption73] - Decouple button from relay and send just mqtt topic
+    if (!Settings.flag3.mqtt_buttons) {        // Enable Buttons for discovery [SetOption73] - Decouple button from relay and send just mqtt topic
       button_present = 0;
     } else {
       if (Settings.flag.button_single) {       // [SetOption13] Immediate action on button press, just SINGLE trigger
@@ -504,7 +558,7 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
     char *availability_topic = stemp2;
 
     GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_SENSOR));
-    snprintf_P(name, sizeof(name), PSTR("%s %s %s"), SettingsText(SET_FRIENDLYNAME1), sensorname, MultiSubName);
+    snprintf_P(name, sizeof(name), PSTR("%s %s %s"), ModuleName().c_str(), sensorname, MultiSubName);
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
 
     Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
@@ -575,7 +629,6 @@ void HAssAnnounceSensors(void)
       snprintf_P(sensordata, sizeof(sensordata), PSTR("%s}"), sensordata); // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
       // USE THE FOLLOWING LINE TO TEST JSON
       //snprintf_P(sensordata, sizeof(sensordata), PSTR("{\"HX711\":{\"Weight\":[22,34,1023.4]}}"));
-      //snprintf_P(sensordata, sizeof(sensordata), PSTR("{\"TX23\":{\"Speed\":{\"Act\":8.6,\"Avg\":8.2,\"Min\":0,\"Max\":15.8},\"Dir\":{\"Card\":\"SSO\",\"Deg\":157.5,\"Avg\":145.5,\"AvgCard\":\"SO\",\"Min\":112.5,\"Max\":292.5,\"Range\":180}}}"));
 
       StaticJsonBuffer<500> jsonBuffer;
       JsonObject &root = jsonBuffer.parseObject(sensordata);
@@ -659,16 +712,13 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
 
 void HAssPublishStatus(void)
 {
-  Response_P(PSTR("{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\","
-                  "\"" D_JSON_COREVERSION "\":\"" ARDUINO_CORE_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
-                  "\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\","
-                  "\"WiFi " D_JSON_LINK_COUNT "\":%d,\"WiFi " D_JSON_DOWNTIME "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,"
-                  "\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_CMND_IPADDRESS "\":\"%s\","
-                  "\"" D_JSON_RSSI "\":\"%d\",\"LoadAvg\":%lu}"),
-             my_version, my_image, GetBuildDateAndTime().c_str(), ESP.getSdkVersion(), ModuleName().c_str(),
-             GetResetReason().c_str(), GetUptime().c_str(), WifiLinkCount(), WifiDowntime().c_str(), MqttConnectCount(),
-             Settings.bootcount, Settings.save_flag, WiFi.localIP().toString().c_str(),
-             WifiGetRssiAsQuality(WiFi.RSSI()), loop_load_avg);
+  Response_P(PSTR("{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\"" D_CMND_MODULE " or " D_CMND_TEMPLATE"\":\"%s\","
+                  "\"" D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\","
+                  "\"" D_CMND_IPADDRESS "\":\"%s\",\"" D_JSON_RSSI "\":\"%d\",\"" D_JSON_SIGNAL " (dBm)""\":\"%d\","
+                  "\"WiFi " D_JSON_LINK_COUNT "\":%d,\"WiFi " D_JSON_DOWNTIME "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"LoadAvg\":%lu}"),
+             my_version, my_image, GetBuildDateAndTime().c_str(), ModuleName().c_str(), GetResetReason().c_str(),
+             GetUptime().c_str(), my_hostname, WiFi.localIP().toString().c_str(), WifiGetRssiAsQuality(WiFi.RSSI()),
+             WiFi.RSSI(), WifiLinkCount(), WifiDowntime().c_str(), MqttConnectCount(), loop_load_avg);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_HASS_STATE));
 }
 
@@ -687,8 +737,6 @@ void HAssDiscovery(void)
 
   if (Settings.flag.hass_discovery || (1 == hass_mode))
   { // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
-    // Send info about relays and lights
-    HAssAnnounceRelayLight();
 
     // Send info about buttons
     HAssAnnounceButtons();
@@ -698,6 +746,9 @@ void HAssDiscovery(void)
 
     // Send info about sensors
     HAssAnnounceSensors();
+
+    // Send info about relays and lights
+    HAssAnnounceRelayLight();
 
     // Send info about status sensor
     HAssAnnounceDeviceInfoAndStatusSensor();
@@ -740,7 +791,9 @@ void HAssAnyKey(void)
 
   char stopic[TOPSZ];
 
-  if (state == 3) {
+  if (state == 2) {
+    snprintf_P(trg_state, sizeof(trg_state), PSTR("SINGLE"));
+  } else if (state == 3) {
     snprintf_P(trg_state, sizeof(trg_state), GetStateText(3));
   } else {
     GetTextIndexed(trg_state, sizeof(trg_state), state -9, kHAssTriggerStringButtons);

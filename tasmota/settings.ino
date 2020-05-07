@@ -715,6 +715,12 @@ void SettingsDefaultSet2(void)
 {
   memset((char*)&Settings +16, 0x00, sizeof(Settings) -16);
 
+  // this little trick allows GCC to optimize the assignment by grouping values and doing only ORs
+  SysBitfield   flag = { 0 };
+  SysBitfield2  flag2 = { 0 };
+  SysBitfield3  flag3 = { 0 };
+  SysBitfield4  flag4 = { 0 };
+
 #ifdef ESP8266
 //  Settings.config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
@@ -722,13 +728,13 @@ void SettingsDefaultSet2(void)
   Settings.config_version = 1;  // ESP32
 #endif  // ESP32
 
-  Settings.flag.stop_flash_rotate = APP_FLASH_CYCLE;
-  Settings.flag.global_state = APP_ENABLE_LEDLINK;
-  Settings.flag3.sleep_normal = APP_NORMAL_SLEEP;
-  Settings.flag3.no_power_feedback = APP_NO_RELAY_SCAN;
-  Settings.flag3.fast_power_cycle_disable = APP_DISABLE_POWERCYCLE;
-  Settings.flag3.bootcount_update = DEEPSLEEP_BOOTCOUNT;
-  Settings.flag3.compatibility_check = OTA_COMPATIBILITY;
+  flag.stop_flash_rotate |= APP_FLASH_CYCLE;
+  flag.global_state |= APP_ENABLE_LEDLINK;
+  flag3.sleep_normal |= APP_NORMAL_SLEEP;
+  flag3.no_power_feedback |= APP_NO_RELAY_SCAN;
+  flag3.fast_power_cycle_disable |= APP_DISABLE_POWERCYCLE;
+  flag3.bootcount_update |= DEEPSLEEP_BOOTCOUNT;
+  flag3.compatibility_check |= OTA_COMPATIBILITY;
   Settings.save_data = SAVE_DATA;
   Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
   Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
@@ -739,7 +745,7 @@ void SettingsDefaultSet2(void)
   }
 
   // Module
-//  Settings.flag.interlock = 0;
+//  flag.interlock |= 0;
   Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
   Settings.module = MODULE;
   ModuleDefault(WEMOS);
@@ -751,7 +757,7 @@ void SettingsDefaultSet2(void)
   SettingsUpdateText(SET_OTAURL, PSTR(OTA_URL));
 
   // Power
-  Settings.flag.save_state = SAVE_STATE;
+  flag.save_state |= SAVE_STATE;
   Settings.power = APP_POWER;
   Settings.poweronstate = APP_POWERON_STATE;
   Settings.blinktime = APP_BLINKTIME;
@@ -769,8 +775,8 @@ void SettingsDefaultSet2(void)
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 
   // Wifi
-  Settings.flag3.use_wifi_scan = WIFI_SCAN_AT_RESTART;
-  Settings.flag3.use_wifi_rescan = WIFI_SCAN_REGULARLY;
+  flag3.use_wifi_scan |= WIFI_SCAN_AT_RESTART;
+  flag3.use_wifi_rescan |= WIFI_SCAN_REGULARLY;
   Settings.wifi_output_power = 170;
   Settings.param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
   ParseIp(&Settings.ip_address[0], WIFI_IP_ADDRESS);
@@ -791,38 +797,38 @@ void SettingsDefaultSet2(void)
   Settings.syslog_level = SYS_LOG_LEVEL;
 
   // Webserver
-  Settings.flag2.emulation = EMULATION;
-  Settings.flag3.gui_hostname_ip = GUI_SHOW_HOSTNAME;
-  Settings.flag3.mdns_enabled = MDNS_ENABLED;
+  flag2.emulation |= EMULATION;
+  flag3.gui_hostname_ip |= GUI_SHOW_HOSTNAME;
+  flag3.mdns_enabled |= MDNS_ENABLED;
   Settings.webserver = WEB_SERVER;
   Settings.weblog_level = WEB_LOG_LEVEL;
   SettingsUpdateText(SET_WEBPWD, PSTR(WEB_PASSWORD));
   SettingsUpdateText(SET_CORS, PSTR(CORS_DOMAIN));
 
   // Button
-  Settings.flag.button_restrict = KEY_DISABLE_MULTIPRESS;
-  Settings.flag.button_swap = KEY_SWAP_DOUBLE_PRESS;
-  Settings.flag.button_single = KEY_ONLY_SINGLE_PRESS;
+  flag.button_restrict |= KEY_DISABLE_MULTIPRESS;
+  flag.button_swap |= KEY_SWAP_DOUBLE_PRESS;
+  flag.button_single |= KEY_ONLY_SINGLE_PRESS;
   Settings.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
 
   // Switch
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) { Settings.switchmode[i] = SWITCH_MODE; }
 
   // MQTT
-  Settings.flag.mqtt_enabled = MQTT_USE;
-  Settings.flag.mqtt_response = MQTT_RESULT_COMMAND;
-  Settings.flag.mqtt_offline = MQTT_LWT_MESSAGE;
-  Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
-  Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
-  Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-  Settings.flag.mqtt_sensor_retain = MQTT_SENSOR_RETAIN;
-//  Settings.flag.mqtt_serial = 0;
-  Settings.flag.device_index_enable = MQTT_POWER_FORMAT;
-  Settings.flag3.time_append_timezone = MQTT_APPEND_TIMEZONE;
-  Settings.flag3.button_switch_force_local = MQTT_BUTTON_SWITCH_FORCE_LOCAL;
-  Settings.flag3.no_hold_retain = MQTT_NO_HOLD_RETAIN;
-  Settings.flag3.use_underscore = MQTT_INDEX_SEPARATOR;
-  Settings.flag3.grouptopic_mode = MQTT_GROUPTOPIC_FORMAT;
+  flag.mqtt_enabled |= MQTT_USE;
+  flag.mqtt_response |= MQTT_RESULT_COMMAND;
+  flag.mqtt_offline |= MQTT_LWT_MESSAGE;
+  flag.mqtt_power_retain |= MQTT_POWER_RETAIN;
+  flag.mqtt_button_retain |= MQTT_BUTTON_RETAIN;
+  flag.mqtt_switch_retain |= MQTT_SWITCH_RETAIN;
+  flag.mqtt_sensor_retain |= MQTT_SENSOR_RETAIN;
+//  flag.mqtt_serial |= 0;
+  flag.device_index_enable |= MQTT_POWER_FORMAT;
+  flag3.time_append_timezone |= MQTT_APPEND_TIMEZONE;
+  flag3.button_switch_force_local |= MQTT_BUTTON_SWITCH_FORCE_LOCAL;
+  flag3.no_hold_retain |= MQTT_NO_HOLD_RETAIN;
+  flag3.use_underscore |= MQTT_INDEX_SEPARATOR;
+  flag3.grouptopic_mode |= MQTT_GROUPTOPIC_FORMAT;
   SettingsUpdateText(SET_MQTT_HOST, MQTT_HOST);
   Settings.mqtt_port = MQTT_PORT;
   SettingsUpdateText(SET_MQTT_CLIENT, MQTT_CLIENT_ID);
@@ -856,13 +862,13 @@ void SettingsDefaultSet2(void)
   Settings.mqttlog_level = MQTT_LOG_LEVEL;
 
   // Energy
-  Settings.flag.no_power_on_check = ENERGY_VOLTAGE_ALWAYS;
-  Settings.flag2.current_resolution = 3;
-//  Settings.flag2.voltage_resolution = 0;
-//  Settings.flag2.wattage_resolution = 0;
-  Settings.flag2.energy_resolution = ENERGY_RESOLUTION;
-  Settings.flag3.dds2382_model = ENERGY_DDS2382_MODE;
-  Settings.flag3.hardware_energy_total = ENERGY_HARDWARE_TOTALS;
+  flag.no_power_on_check |= ENERGY_VOLTAGE_ALWAYS;
+  flag2.current_resolution |= 3;
+//  flag2.voltage_resolution |= 0;
+//  flag2.wattage_resolution |= 0;
+  flag2.energy_resolution |= ENERGY_RESOLUTION;
+  flag3.dds2382_model |= ENERGY_DDS2382_MODE;
+  flag3.hardware_energy_total |= ENERGY_HARDWARE_TOTALS;
   Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
 //  Settings.energy_power_delta = 0;
   Settings.energy_power_calibration = HLW_PREF_PULSE;
@@ -892,12 +898,12 @@ void SettingsDefaultSet2(void)
   Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
 
   // IRRemote
-  Settings.flag.ir_receive_decimal = IR_DATA_RADIX;
-  Settings.flag3.receive_raw = IR_ADD_RAW_DATA;
+  flag.ir_receive_decimal |= IR_DATA_RADIX;
+  flag3.receive_raw |= IR_ADD_RAW_DATA;
   Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
 
   // RF Bridge
-  Settings.flag.rf_receive_decimal = RF_DATA_RADIX;
+  flag.rf_receive_decimal |= RF_DATA_RADIX;
 //  for (uint32_t i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
   memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
 
@@ -913,43 +919,43 @@ void SettingsDefaultSet2(void)
 //  }
 
   // Sensor
-  Settings.flag.temperature_conversion = TEMP_CONVERSION;
-  Settings.flag.pressure_conversion = PRESSURE_CONVERSION;
-  Settings.flag2.pressure_resolution = PRESSURE_RESOLUTION;
-  Settings.flag2.humidity_resolution = HUMIDITY_RESOLUTION;
-  Settings.flag2.temperature_resolution = TEMP_RESOLUTION;
-  Settings.flag3.ds18x20_internal_pullup = DS18X20_PULL_UP;
-  Settings.flag3.counter_reset_on_tele = COUNTER_RESET;
+  flag.temperature_conversion |= TEMP_CONVERSION;
+  flag.pressure_conversion |= PRESSURE_CONVERSION;
+  flag2.pressure_resolution |= PRESSURE_RESOLUTION;
+  flag2.humidity_resolution |= HUMIDITY_RESOLUTION;
+  flag2.temperature_resolution |= TEMP_RESOLUTION;
+  flag3.ds18x20_internal_pullup |= DS18X20_PULL_UP;
+  flag3.counter_reset_on_tele |= COUNTER_RESET;
 //  Settings.altitude = 0;
 
   // Rules
 //  Settings.rule_enabled = 0;
 //  Settings.rule_once = 0;
 //  for (uint32_t i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
-  Settings.flag2.calc_resolution = CALC_RESOLUTION;
+  flag2.calc_resolution |= CALC_RESOLUTION;
 
   // Timer
-  Settings.flag3.timers_enable = TIMERS_ENABLED;
+  flag3.timers_enable |= TIMERS_ENABLED;
 
   // Home Assistant
-  Settings.flag.hass_light = HASS_AS_LIGHT;
-  Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
-  Settings.flag3.hass_tele_on_power = TELE_ON_POWER;
+  flag.hass_light |= HASS_AS_LIGHT;
+  flag.hass_discovery |= HOME_ASSISTANT_DISCOVERY_ENABLE;
+  flag3.hass_tele_on_power |= TELE_ON_POWER;
 
   // Knx
-  Settings.flag.knx_enabled = KNX_ENABLED;
-  Settings.flag.knx_enable_enhancement = KNX_ENHANCED;
+  flag.knx_enabled |= KNX_ENABLED;
+  flag.knx_enable_enhancement |= KNX_ENHANCED;
 
   // Light
-  Settings.flag.pwm_control = LIGHT_MODE;
-  Settings.flag.ws_clock_reverse = LIGHT_CLOCK_DIRECTION;
-  Settings.flag.light_signal = LIGHT_PAIRS_CO2;
-  Settings.flag.not_power_linked = LIGHT_POWER_CONTROL;
-  Settings.flag.decimal_text = LIGHT_COLOR_RADIX;
-  Settings.flag3.pwm_multi_channels = LIGHT_CHANNEL_MODE;
-  Settings.flag3.slider_dimmer_stay_on = LIGHT_SLIDER_POWER;
-  Settings.flag4.alexa_ct_range = LIGHT_ALEXA_CT_RANGE;
-  Settings.flag4.pwm_ct_mode = LIGHT_PWM_CT_MODE;
+  flag.pwm_control |= LIGHT_MODE;
+  flag.ws_clock_reverse |= LIGHT_CLOCK_DIRECTION;
+  flag.light_signal |= LIGHT_PAIRS_CO2;
+  flag.not_power_linked |= LIGHT_POWER_CONTROL;
+  flag.decimal_text |= LIGHT_COLOR_RADIX;
+  flag3.pwm_multi_channels |= LIGHT_CHANNEL_MODE;
+  flag3.slider_dimmer_stay_on |= LIGHT_SLIDER_POWER;
+  flag4.alexa_ct_range |= LIGHT_ALEXA_CT_RANGE;
+  flag4.pwm_ct_mode |= LIGHT_PWM_CT_MODE;
 
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
@@ -1036,13 +1042,18 @@ void SettingsDefaultSet2(void)
   SettingsEnableAllI2cDrivers();
 
   // Tuya
-  Settings.flag3.tuya_apply_o20 = TUYA_SETOPTION_20;
-  Settings.flag3.tuya_serial_mqtt_publish = MQTT_TUYA_RECEIVED;
+  flag3.tuya_apply_o20 |= TUYA_SETOPTION_20;
+  flag3.tuya_serial_mqtt_publish |= MQTT_TUYA_RECEIVED;
 
-  Settings.flag3.buzzer_enable = BUZZER_ENABLE;
-  Settings.flag3.shutter_mode = SHUTTER_SUPPORT;
-  Settings.flag3.pcf8574_ports_inverted = PCF8574_INVERT_PORTS;
-  Settings.flag4.zigbee_use_names = ZIGBEE_FRIENDLY_NAMES;
+  flag3.buzzer_enable |= BUZZER_ENABLE;
+  flag3.shutter_mode |= SHUTTER_SUPPORT;
+  flag3.pcf8574_ports_inverted |= PCF8574_INVERT_PORTS;
+  flag4.zigbee_use_names |= ZIGBEE_FRIENDLY_NAMES;
+
+  Settings.flag = flag;
+  Settings.flag2 = flag2;
+  Settings.flag3 = flag3;
+  Settings.flag4 = flag4;
 }
 
 /********************************************************************************************/

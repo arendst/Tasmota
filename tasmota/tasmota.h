@@ -68,7 +68,7 @@ const uint8_t MAX_XDRV_DRIVERS = 96;        // Max number of allowed driver driv
 const uint8_t MAX_XSNS_DRIVERS = 96;        // Max number of allowed sensor drivers
 const uint8_t MAX_I2C_DRIVERS = 96;         // Max number of allowed i2c drivers
 const uint8_t MAX_SHUTTERS = 4;             // Max number of shutters
-const uint8_t MAX_PCF8574 = 8;              // Max number of PCF8574 devices
+const uint8_t MAX_PCF8574 = 4;              // Max number of PCF8574 devices
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
 
@@ -319,9 +319,9 @@ enum DevGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
                      SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_SHUTTER,
-                     SRC_MAX };
+                     SRC_THERMOSTAT, SRC_MAX };
 const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Serial|WebGui|WebCommand|WebConsole|PulseTimer|"
-                                      "Timer|Rule|MaxPower|MaxEnergy|Overtemp|Light|Knx|Display|Wemo|Hue|Retry|Remote|Shutter";
+                                      "Timer|Rule|MaxPower|MaxEnergy|Overtemp|Light|Knx|Display|Wemo|Hue|Retry|Remote|Shutter|Thermostat";
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 

@@ -48,6 +48,7 @@
 //   #undef USE_TSL2561     // possible address conflict on the I2C-bus
 //   #endif
 // #endif
+
 #define XSNS_27                   27
 #define XI2C_21                   21              // See I2CDEVICES.md
 
@@ -61,16 +62,8 @@
 #define APDS9930_CHIPID_1         0x12  // we will check, if someone got an incorrect sensor
 #define APDS9930_CHIPID_2         0x39  // there are case reports about "accidentially bought" 9930's
 
-
-// TODO() : Move to my_user_config.h file
-#define USE_APDS9960_GESTURE                // Enable Gesture feature (+2k code)
-#define USE_APDS9960_PROXIMITY              // Enable Proximity feature (>50 code)
-#define USE_APDS9960_COLOR                  // Enable Color feature (+0.8k code)
-
 #define APDS9960_MODE_GESTURE     0
 #define APDS9960_MODE_COLOR       1
-
-#define USE_APDS9960_STARTMODE    APDS9960_MODE_GESTURE
 
 /* Gesture parameters */
 #define GESTURE_THRESHOLD_OUT     10
@@ -80,19 +73,8 @@
 #define APDS9960_LONG_RECOVERY           50  // long pause after sensor overload in loops
 #define APDS9960_MAX_GESTURE_CYCLES      50  // how many FIFO-reads are allowed to prevent crash
 
-
-// TODO() : Move to Translate file
-#define D_GESTURE     "Gesture"
-#define D_COLOR_RED   "Red"
-#define D_COLOR_GREEN "Green"
-#define D_COLOR_BLUE  "Blue"
-#define D_CCT         "CCT"
-#define D_PROXIMITY   "Proximity"
-
-#define D_UNIT_KELVIN "&deg;K"
-
 /******************************************************************************\
- * constants
+ * Constants
 \******************************************************************************/
 
 const char APDS9960_TAG[]         PROGMEM = "APDS9960";  // Only one actualy

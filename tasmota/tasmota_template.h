@@ -230,6 +230,9 @@ enum UserSelectablePins {
   GPIO_ELECTRIQ_MOODL_TX, // ElectriQ iQ-wifiMOODL Serial TX
   GPIO_AS3935,
   GPIO_PMS5003_TX,     // Plantower PMS5003 Serial interface
+  GPIO_BOILER_OT_RX,   // OpenTherm Boiler RX pin
+  GPIO_BOILER_OT_TX,   // OpenTherm Boiler TX pin
+  GPIO_WINDMETER_SPEED,  // WindMeter speed counter pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -317,7 +320,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_CC1101_GDO0 "|" D_SENSOR_CC1101_GDO2 "|"
   D_SENSOR_HRXL_RX "|"
   D_SENSOR_ELECTRIQ_MOODL "|"
-  D_SENSOR_AS3935 "|" D_SENSOR_PMS5003_TX
+  D_SENSOR_AS3935 "|" D_SENSOR_PMS5003_TX "|"
+  D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
+  D_SENSOR_WINDMETER_SPEED
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -591,6 +596,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
   GPIO_TX2X_TXD_BLACK, // TX20/TX23 Transmission Pin
 #endif
+#ifdef USE_WINDMETER
+  GPIO_WINDMETER_SPEED,
+#endif
 #ifdef USE_MP3_PLAYER
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
 #endif
@@ -612,16 +620,20 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_RDM6300_RX,
 #endif
 #ifdef USE_IBEACON
-  GPIO_IBEACON_RX,
   GPIO_IBEACON_TX,
+  GPIO_IBEACON_RX,
 #endif
 #ifdef USE_GPS
-  GPIO_GPS_RX,         // GPS serial interface
   GPIO_GPS_TX,         // GPS serial interface
+  GPIO_GPS_RX,         // GPS serial interface
 #endif
 #ifdef USE_HM10
-  GPIO_HM10_RX,         // GPS serial interface
   GPIO_HM10_TX,         // GPS serial interface
+  GPIO_HM10_RX,         // GPS serial interface
+#endif
+#ifdef USE_OPENTHERM
+  GPIO_BOILER_OT_TX,
+  GPIO_BOILER_OT_RX,
 #endif
 
 #ifdef USE_MGC3130

@@ -478,6 +478,10 @@
 //  #define USE_SI1145                             // [I2cDriver19] Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
 //  #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
 //  #define USE_APDS9960                           // [I2cDriver21] Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
+    #define USE_APDS9960_GESTURE                   // Enable APDS9960 Gesture feature (+2k code)
+    #define USE_APDS9960_PROXIMITY                 // Enable APDS9960 Proximity feature (>50 code)
+    #define USE_APDS9960_COLOR                     // Enable APDS9960 Color feature (+0.8k code)
+    #define USE_APDS9960_STARTMODE  0              // Default to enable Gesture mode
 //  #define USE_MCP230xx                           // [I2cDriver22] Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
 //    #define USE_MCP230xx_ADDR 0x20               // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x26 - set according to your wired setup)
 //    #define USE_MCP230xx_OUTPUT                  // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+1k5 code)
@@ -574,6 +578,10 @@
 //#define USE_HM10                                 // (ESP8266 only) Add support for HM-10 as a BLE-bridge (+9k3 code)
 //#define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 //#define USE_HRXL                                 // Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
+//#define USE_TASMOTA_SLAVE                        // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k6 code, 64 mem)
+  #define USE_TASMOTA_SLAVE_FLASH_SPEED 57600      // Usually 57600 for 3.3V variants and 115200 for 5V variants
+  #define USE_TASMOTA_SLAVE_SERIAL_SPEED 57600     // Depends on the sketch that is running on the Uno/Pro Mini
+//#define USE_OPENTHERM                            // Add support for OpenTherm (+15k code)
 
 // -- Power monitoring sensors --------------------
 #define USE_ENERGY_MARGIN_DETECTION              // Add support for Energy Margin detection (+1k6 code)
@@ -649,6 +657,8 @@
 //#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k6/0k8 code)
 //#define USE_TX23_WIND_SENSOR                     // Add support for La Crosse TX23 anemometer (+2k7/1k code)
 
+//#define USE_WINDMETER                            // Add support for analog anemometer (+2k2 code)
+
 //#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
 
 //#define USE_RF_SENSOR                            // Add support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
@@ -658,9 +668,34 @@
 //#define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
 
-//#define USE_TASMOTA_SLAVE                        // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k6 code, 64 mem)
-  #define USE_TASMOTA_SLAVE_FLASH_SPEED 57600      // Usually 57600 for 3.3V variants and 115200 for 5V variants
-  #define USE_TASMOTA_SLAVE_SERIAL_SPEED 57600     // Depends on the sketch that is running on the Uno/Pro Mini
+// -- Thermostat control ----------------------------
+//#define USE_THERMOSTAT                             // Add support for Thermostat
+  #define THERMOSTAT_CONTROLLER_OUTPUTS         1         // Number of outputs to be controlled independently
+  #define THERMOSTAT_SENSOR_NAME                "DS18B20" // Name of the local sensor to be used
+  #define THERMOSTAT_RELAY_NUMBER               1         // Default output relay number for the first controller (+i for following ones)
+  #define THERMOSTAT_SWITCH_NUMBER              1         // Default input switch number for the first controller (+i for following ones)
+  #define THERMOSTAT_TIME_ALLOW_RAMPUP          300       // Default time in seconds after last target update to allow ramp-up controller phase in minutes
+  #define THERMOSTAT_TIME_RAMPUP_MAX            960       // Default time maximum ramp-up controller duration in minutes
+  #define THERMOSTAT_TIME_RAMPUP_CYCLE          1800      // Default time ramp-up cycle in seconds
+  #define THERMOSTAT_TIME_SENS_LOST             30        // Maximum time w/o sensor update to set it as lost in minutes
+  #define THERMOSTAT_TEMP_SENS_NUMBER           1         // Default temperature sensor number
+  #define THERMOSTAT_TIME_MANUAL_TO_AUTO        60        // Default time without input switch active to change from manual to automatic in minutes
+  #define THERMOSTAT_TIME_ON_LIMIT              120       // Default maximum time with output active in minutes
+  #define THERMOSTAT_TIME_RESET                 12000     // Default reset time of the PI controller in seconds
+  #define THERMOSTAT_TIME_PI_CYCLE              30        // Default cycle time for the thermostat controller in minutes
+  #define THERMOSTAT_TIME_MAX_ACTION            20        // Default maximum thermostat time per cycle in minutes
+  #define THERMOSTAT_TIME_MIN_ACTION            4         // Default minimum thermostat time per cycle in minutes
+  #define THERMOSTAT_TIME_MIN_TURNOFF_ACTION    3         // Default minimum turnoff time in minutes, below it the thermostat will be held on
+  #define THERMOSTAT_PROP_BAND                  4         // Default proportional band of the PI controller in degrees celsius
+  #define THERMOSTAT_TEMP_RESET_ANTI_WINDUP     8         // Default range where reset antiwindup is disabled, in tenths of degrees celsius
+  #define THERMOSTAT_TEMP_HYSTERESIS            1         // Default range hysteresis for temperature PI controller, in tenths of degrees celsius
+  #define THERMOSTAT_TEMP_FROST_PROTECT         40        // Default minimum temperature for frost protection, in tenths of degrees celsius
+  #define THERMOSTAT_TEMP_RAMPUP_DELTA_IN       4         // Default minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
+  #define THERMOSTAT_TEMP_RAMPUP_DELTA_OUT      2         // Default minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
+  #define THERMOSTAT_TEMP_PI_RAMPUP_ACC_E       200       // Default accumulated error when switching from ramp-up controller to PI in hundreths of degrees celsius
+  #define THERMOSTAT_TIME_OUTPUT_DELAY          180       // Default output delay between state change and real actuation event (f.i. valve open/closed)
+  #define THERMOSTAT_TEMP_INIT                  180       // Default init target temperature for the thermostat controller
+  #define THERMOSTAT_TIME_MAX_OUTPUT_INCONSIST  3         // Default maximum time where the input and the outpus shall differ (for diagnostic) in minutes
 
 // -- End of general directives -------------------
 

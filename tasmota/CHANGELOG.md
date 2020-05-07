@@ -9,7 +9,10 @@
 ### 8.2.0.6 20200501
 
 - Add experimental basic support for Tasmota on ESP32 based on work by Jörg Schüler-Maroldt
-- Change PWM updated to latest Arduino Core #7213
+- Add support for analog anemometer by Matteo Albinola (#8283)
+- Add support for OpenTherm by Yuriy Sannikov (#8373)
+- Change flash access removing support for any Core before 2.6.3
+- Change HAss discovery by Federico Leoni (#8370)
 
 ### 8.2.0.5 20200425
 

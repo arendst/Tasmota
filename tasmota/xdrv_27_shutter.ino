@@ -39,14 +39,14 @@ enum ShutterButtonStates { SHT_NOT_PRESSED, SHT_PRESSED_MULTI, SHT_PRESSED_HOLD,
 const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_OPEN "|" D_CMND_SHUTTER_CLOSE "|" D_CMND_SHUTTER_TOGGLE "|" D_CMND_SHUTTER_STOP "|" D_CMND_SHUTTER_POSITION "|"
   D_CMND_SHUTTER_OPENTIME "|" D_CMND_SHUTTER_CLOSETIME "|" D_CMND_SHUTTER_RELAY "|"
-  D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
+  D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_SETOPEN "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
   D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
   D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPPOSITION;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterStop, &CmndShutterPosition,
   &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay,
-  &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
+  &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
   &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
   &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopPosition};
 
@@ -255,18 +255,24 @@ void ShutterInit(void)
   }
 }
 
-void ShutterReportPosition(bool always)
+void ShutterReportPosition(bool always, uint32_t index)
 {
   Response_P(PSTR("{"));
   rules_flag.shutter_moving = 0;
-  for (uint32_t i = 0; i < shutters_present; i++) {
+  uint32_t i = 0;
+  uint32_t n = shutters_present;
+  if( index != MAX_SHUTTERS) {
+    i = index;
+    n = index+1;
+  }
+  for (i; i < n; i++) {
     //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d: Real Pos: %d"), i+1,Shutter.real_position[i]);
     uint32_t position = ShutterRealToPercentPosition(Shutter.real_position[i], i);
     if (Shutter.direction[i] != 0) {
       rules_flag.shutter_moving = 1;
       ShutterLogPos(i);
     }
-    if (i) { ResponseAppend_P(PSTR(",")); }
+    if (i && index == MAX_SHUTTERS) { ResponseAppend_P(PSTR(",")); }
     uint32_t target = ShutterRealToPercentPosition(Shutter.target_position[i], i);
     ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings.shutter_options[i] & 1) ? 100-position : position, Shutter.direction[i],(Settings.shutter_options[i] & 1) ? 100-target : target );
   }
@@ -296,16 +302,16 @@ void ShutterUpdatePosition(void)
   for (uint32_t i = 0; i < shutters_present; i++) {
     if (Shutter.direction[i] != 0) {
       int32_t stop_position_delta = 20;
-      if (Shutter.mode == SHT_OFF_ON__OPEN_CLOSE_STEPPER) {
-        // Calculate position with counter. Much more accurate and no need for motordelay workaround
-        //                        adding some steps to stop early
-        Shutter.real_position[i] =  ShutterCounterBasedPosition(i);
-        if (!Shutter.start_reported) {
-          ShutterReportPosition(true);
-          XdrvRulesProcess();
-          Shutter.start_reported = 1;
-        }
+      // Calculate position with counter. Much more accurate and no need for motordelay workaround
+      //                        adding some steps to stop early
+      Shutter.real_position[i] =  ShutterCounterBasedPosition(i);
+      if (!Shutter.start_reported) {
+        ShutterReportPosition(true, i);
+        XdrvRulesProcess();
+        Shutter.start_reported = 1;
+      }
 
+      if (Shutter.mode == SHT_OFF_ON__OPEN_CLOSE_STEPPER) {
         int32_t  max_frequency = Shutter.direction[i] == 1 ? Shutter.max_pwm_frequency : Shutter.max_close_pwm_frequency[i];
         int32_t  max_freq_change_per_sec =  Shutter.max_pwm_frequency*steps_per_second / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
         int32_t  min_runtime_ms = Shutter.pwm_frequency[i]*1000 / max_freq_change_per_sec;
@@ -395,7 +401,7 @@ void ShutterUpdatePosition(void)
         MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
 
         Shutter.direction[i] = 0;
-        ShutterReportPosition(true);
+        ShutterReportPosition(true, i);
         rules_flag.shutter_moved = 1;
         XdrvRulesProcess();
       }
@@ -910,13 +916,13 @@ void CmndShutterPosition(void)
         }
       } else {
         target_pos_percent = ShutterRealToPercentPosition(Shutter.real_position[index], index);
-        ShutterReportPosition(true);
+        ShutterReportPosition(true, index);
       }
       XdrvMailbox.index = index +1;  // Fix random index for ShutterClose
       if (XdrvMailbox.command)
         ResponseCmndIdxNumber((Settings.shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent);
     } else {
-      ShutterReportPosition(true);
+      ShutterReportPosition(true, MAX_SHUTTERS);
       if (XdrvMailbox.command)
         ResponseCmndIdxChar("Locked");
     }
@@ -1164,6 +1170,16 @@ void CmndShutterSetClose(void)
   }
 }
 
+void CmndShutterSetOpen(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    Shutter.real_position[XdrvMailbox.index -1] = Shutter.open_max[XdrvMailbox.index -1];
+    ShutterStartInit(XdrvMailbox.index -1, 0, Shutter.open_max[XdrvMailbox.index -1]);
+    Settings.shutter_position[XdrvMailbox.index -1] = 100;
+    ResponseCmndIdxChar(D_CONFIGURATION_RESET);
+  }
+}
+
 void CmndShutterInvert(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
@@ -1261,7 +1277,7 @@ bool Xdrv27(uint8_t function)
         break;
       case FUNC_EVERY_SECOND:
       //case FUNC_EVERY_250_MSECOND:
-        ShutterReportPosition(false);
+        ShutterReportPosition(false, MAX_SHUTTERS);
         break;
 
       case FUNC_COMMAND:
