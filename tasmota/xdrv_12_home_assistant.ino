@@ -791,7 +791,9 @@ void HAssAnyKey(void)
 
   char stopic[TOPSZ];
 
-  if (state == 3) {
+  if (state == 2) {
+    snprintf_P(trg_state, sizeof(trg_state), PSTR("SINGLE"));
+  } else if (state == 3) {
     snprintf_P(trg_state, sizeof(trg_state), GetStateText(3));
   } else {
     GetTextIndexed(trg_state, sizeof(trg_state), state -9, kHAssTriggerStringButtons);

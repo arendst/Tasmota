@@ -230,6 +230,11 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
 const char HTTP_MODULE_TEMPLATE_REPLACE[] PROGMEM =
   "}2%d'>%s (%d}3";                       // }2 and }3 are used in below os.replace
 
+const char HTTP_MODULE_TEMPLATE_REPLACE_INDEX[] PROGMEM =
+  "}2%d'>%s (%d)}3";                       // }2 and }3 are used in below os.replace
+const char HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX[] PROGMEM =
+  "}2%d'>%s}3";                           // }2 and }3 are used in below os.replace
+
 const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
 #ifdef ESP8266
   "var os;"
@@ -257,7 +262,7 @@ const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
     "t.style.visibility=(b>0)?'':'hidden';"
   "}"
   "function sk(s,g){"                     // s = value, g = id and name
-    "var o=os.replace(/}2/g,\"<option value='\").replace(/}3/g,\")</option>\");"
+    "var o=os.replace(/}2/g,\"<option value='\").replace(/}3/g,\"</option>\");"
     "eb('g'+g).innerHTML=o;"
     "eb('g'+g).value=(g<99)?s&0xffe0:s;"
     "if(g<99){ot(g,s);}"
@@ -1452,17 +1457,21 @@ void HandleTemplateConfiguration(void)
 
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE);
   for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {   // GPIO: }2'0'>None (0)}3}2'17'>Button1 (17)}3...
+#ifdef ESP8266
     if (1 == i) {
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, AGPIO(GPIO_USER), D_SENSOR_USER, AGPIO(GPIO_USER));  // }2'255'>User (255)}3
     }
-#ifdef ESP8266
     uint32_t midx = pgm_read_byte(kGpioNiceList + i);
     uint32_t ridx = midx;
+    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), ridx);
 #else  // ESP32
+    if (1 == i) {
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), D_SENSOR_USER);  // }2'255'>User}3
+    }
     uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
     uint32_t midx = ridx >> 5;
+    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
 #endif  // ESP8266 - ESP32
-    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), ridx);
   }
   WSContentSend_P(PSTR("\";"));
 
@@ -1491,12 +1500,16 @@ void HandleTemplateConfiguration(void)
     WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, i, GetTextIndexed(stemp, sizeof(stemp), i, kAdc0Names), i);
   }
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE3);
-#endif
+#endif  // ESP8266
 
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE4);
   for (uint32_t i = 0; i < sizeof(kModuleNiceList); i++) {  // "}2'%d'>%s (%d)}3" - "}2'0'>Sonoff Basic (1)}3"
     uint32_t midx = pgm_read_byte(kModuleNiceList + i);
+#ifdef ESP8266
     WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), midx +1);
+#else  // ESP32
+    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_INDEX, midx, AnyModuleName(midx).c_str(), midx +1);
+#endif  // ESP8266 - ESP32
   }
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE5);
 
@@ -1617,20 +1630,27 @@ void HandleModuleConfiguration(void)
       midx = pgm_read_byte(kModuleNiceList + i -1);
       vidx = midx +1;
     }
+#ifdef ESP8266
     WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), vidx);
+#else  // ESP32
+    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_INDEX, midx, AnyModuleName(midx).c_str(), vidx);
+#endif  // ESP8266 - ESP32
   }
   WSContentSend_P(PSTR("\";sk(%d,99);os=\""), Settings.module);
   for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
 #ifdef ESP8266
     midx = pgm_read_byte(kGpioNiceList + i);
     uint32_t ridx = midx;
-#else  // ESP32
-    uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
-    midx = ridx >> 5;
-#endif  // ESP8266 - ESP32
     if (!GetUsedInModule(midx, cmodule.io)) {
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), ridx);
     }
+#else  // ESP32
+    uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
+    midx = ridx >> 5;
+    if (!GetUsedInModule(midx, cmodule.io)) {
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
+    }
+#endif  // ESP8266 - ESP32
   }
   WSContentSend_P(PSTR("\";"));
 
