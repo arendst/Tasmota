@@ -230,6 +230,8 @@ enum UserSelectablePins {
   GPIO_ELECTRIQ_MOODL_TX, // ElectriQ iQ-wifiMOODL Serial TX
   GPIO_AS3935,
   GPIO_PMS5003_TX,     // Plantower PMS5003 Serial interface
+  GPIO_BOILER_OT_RX,   // OpenTherm Boiler RX pin
+  GPIO_BOILER_OT_TX,   // OpenTherm Boiler TX pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -317,7 +319,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_CC1101_GDO0 "|" D_SENSOR_CC1101_GDO2 "|"
   D_SENSOR_HRXL_RX "|"
   D_SENSOR_ELECTRIQ_MOODL "|"
-  D_SENSOR_AS3935 "|" D_SENSOR_PMS5003_TX
+  D_SENSOR_AS3935 "|" D_SENSOR_PMS5003_TX "|"
+  D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -664,6 +667,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_AS3935
   GPIO_AS3935,
+#endif
+#ifdef USE_OPENTHERM
+  GPIO_BOILER_OT_RX,
+  GPIO_BOILER_OT_TX,
 #endif
 };
 
