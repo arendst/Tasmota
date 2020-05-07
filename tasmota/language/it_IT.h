@@ -793,4 +793,8 @@
 #define D_AS3935_CAL_FAIL "calibrazione fallita"
 #define D_AS3935_CAL_OK "calibrazione impostata a:"
 
+//xsns_68_opentherm.ino
+#define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
+#define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
+
 #endif  // _LANGUAGE_IT_IT_H_
