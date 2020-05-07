@@ -690,12 +690,15 @@
 
 // Units
 #define D_UNIT_AMPERE "安"
+#define D_UNIT_CELSIUS "C"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_DEGREE "°"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "時"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KELVIN "K"
 #define D_UNIT_KILOMETER "km"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
@@ -713,6 +716,7 @@
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "每分升"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
+#define D_UNIT_PERCENT "%%"
 #define D_UNIT_PRESSURE "百帕"
 #define D_UNIT_SECOND "秒"
 #define D_UNIT_SECTORS "扇區"
