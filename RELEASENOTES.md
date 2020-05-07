@@ -52,16 +52,18 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.2.0.5
+### Version 8.2.0.6
 
 - Breaking Change Device Groups multicast address and port  (#8270)
 - Change PWM implementation to Arduino #7231 removing support for Core versions before 2.6.3
 - Change default PWM Frequency to 223 Hz instead of 880 Hz for less interrupt pressure
+- Change flash access removing support for any Core before 2.6.3
 - Change HM-10 sensor type detection and add features (#7962)
 - Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
 - Change remove floating point libs from IRAM
 - Change remove MQTT Info messages on restart for DeepSleep Wake (#8044)
 - Change IRremoteESP8266 library updated to v2.7.6
+- Change HAss discovery by Federico Leoni (#8370)
 - Fix possible Relay toggle on (OTA) restart
 - Fix PWM flickering during wifi connection (#8046)
 - Fix Zigbee sending wrong Sat value with Hue emulation
@@ -96,4 +98,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add console command history (#7483, #8015)
 - Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
 - Add more accuracy to GPS NTP server (#8088)
+- Add support for analog anemometer by Matteo Albinola (#8283)
+- Add support for OpenTherm by Yuriy Sannikov (#8373)
 - Add experimental basic support for Tasmota on ESP32 based on work by Jörg Schüler-Maroldt

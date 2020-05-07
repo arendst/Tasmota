@@ -125,8 +125,8 @@ enum UserSelectablePins {
   GPIO_WEBCAM_PSCLK,
   GPIO_WEBCAM_HSD,
   GPIO_WEBCAM_PSRCS,
-  GPIO_BOILER_OT_RX,   // OpenTherm Boiler RX pin
-  GPIO_BOILER_OT_TX,   // OpenTherm Boiler TX pin
+  GPIO_BOILER_OT_RX, GPIO_BOILER_OT_TX,  // OpenTherm Boiler TX pin
+  GPIO_WINDMETER_SPEED,                // WindMeter speed counter pin
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -214,7 +214,8 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_WEBCAM_PSCLK "|"
   D_GPIO_WEBCAM_HSD "|"
   D_GPIO_WEBCAM_PSRCS "|"
-  D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX
+  D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
+  D_SENSOR_WINDMETER_SPEED
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -398,8 +399,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SOLAXX1_RX),     // Solax Inverter rx pin
 #endif // USE_SOLAX_X1
 #ifdef USE_LE01MR
-  AGPIO(GPIO_LE01MR_RX),     // F7F LE-01MR energy meter rx pin
   AGPIO(GPIO_LE01MR_TX),     // F7F LE-01MR energy meter tx pin
+  AGPIO(GPIO_LE01MR_RX),     // F7F LE-01MR energy meter rx pin
 #endif // IFDEF:USE_LE01MR
 #endif  // USE_ENERGY_SENSOR
 
@@ -435,6 +436,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
   AGPIO(GPIO_TX2X_TXD_BLACK), // TX20/TX23 Transmission Pin
 #endif
+#ifdef USE_WINDMETER
+  GPIO_WINDMETER_SPEED,
+#endif
 #ifdef USE_MP3_PLAYER
   AGPIO(GPIO_MP3_DFR562),     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
 #endif
@@ -456,16 +460,20 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_RDM6300_RX),
 #endif
 #ifdef USE_IBEACON
-  AGPIO(GPIO_IBEACON_RX),
   AGPIO(GPIO_IBEACON_TX),
+  AGPIO(GPIO_IBEACON_RX),
 #endif
 #ifdef USE_GPS
-  AGPIO(GPIO_GPS_RX),         // GPS serial interface
   AGPIO(GPIO_GPS_TX),         // GPS serial interface
+  AGPIO(GPIO_GPS_RX),         // GPS serial interface
 #endif
 #ifdef USE_HM10
-  AGPIO(GPIO_HM10_RX),         // GPS serial interface
   AGPIO(GPIO_HM10_TX),         // GPS serial interface
+  AGPIO(GPIO_HM10_RX),         // GPS serial interface
+#endif
+#ifdef USE_OPENTHERM
+  GPIO_BOILER_OT_TX,
+  GPIO_BOILER_OT_RX,
 #endif
 
 #ifdef USE_MGC3130
@@ -526,34 +534,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_WEBCAM_XCLK),
   AGPIO(GPIO_WEBCAM_SIOD),
   AGPIO(GPIO_WEBCAM_SIOC),
-
-//  AGPIO(GPIO_WEBCAM_Y9),
-//  AGPIO(GPIO_WEBCAM_Y8),
-//  AGPIO(GPIO_WEBCAM_Y7),
-//  AGPIO(GPIO_WEBCAM_Y6),
-//  AGPIO(GPIO_WEBCAM_Y5),
-//  AGPIO(GPIO_WEBCAM_Y4),
-//  AGPIO(GPIO_WEBCAM_Y3),
-//  AGPIO(GPIO_WEBCAM_Y2),
-
   AGPIO(GPIO_WEBCAM_DATA) + MAX_WEBCAM_DATA,
-
   AGPIO(GPIO_WEBCAM_VSYNC),
   AGPIO(GPIO_WEBCAM_HREF),
   AGPIO(GPIO_WEBCAM_PCLK),
   AGPIO(GPIO_WEBCAM_PSCLK),
-
-//  AGPIO(GPIO_WEBCAM_HSD1),
-//  AGPIO(GPIO_WEBCAM_HSD2),
-//  AGPIO(GPIO_WEBCAM_HSD3),
-
   AGPIO(GPIO_WEBCAM_HSD) + MAX_WEBCAM_HSD,
-
   AGPIO(GPIO_WEBCAM_PSRCS),
-#endif
-#ifdef USE_OPENTHERM
-  AGPIO(GPIO_BOILER_OT_RX),
-  AGPIO(GPIO_BOILER_OT_TX),
 #endif
 };
 

@@ -1,5 +1,5 @@
 /*
-  xsns_68_opentherm.ino - OpenTherm protocol support for Tasmota
+  xsns_69_opentherm.ino - OpenTherm protocol support for Tasmota
 
   Copyright (C) 2020 Yuriy Sannikov
 
@@ -17,11 +17,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <OpenTherm.h>
-
 #ifdef USE_OPENTHERM
 
-#define XSNS_68 68
+#define XSNS_69 69
+
+#include <OpenTherm.h>
 
 // Hot water and boiler parameter ranges
 #define OT_HOT_WATER_MIN 23
@@ -529,7 +529,7 @@ void sns_opentherm_set_central_heating_cmd(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns68(uint8_t function)
+bool Xsns69(uint8_t function)
 {
     bool result = false;
     if (FUNC_INIT == function)

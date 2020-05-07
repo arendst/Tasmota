@@ -620,16 +620,20 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_RDM6300_RX,
 #endif
 #ifdef USE_IBEACON
-  GPIO_IBEACON_RX,
   GPIO_IBEACON_TX,
+  GPIO_IBEACON_RX,
 #endif
 #ifdef USE_GPS
-  GPIO_GPS_RX,         // GPS serial interface
   GPIO_GPS_TX,         // GPS serial interface
+  GPIO_GPS_RX,         // GPS serial interface
 #endif
 #ifdef USE_HM10
-  GPIO_HM10_RX,         // GPS serial interface
   GPIO_HM10_TX,         // GPS serial interface
+  GPIO_HM10_RX,         // GPS serial interface
+#endif
+#ifdef USE_OPENTHERM
+  GPIO_BOILER_OT_TX,
+  GPIO_BOILER_OT_RX,
 #endif
 
 #ifdef USE_MGC3130
@@ -672,10 +676,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_AS3935
   GPIO_AS3935,
-#endif
-#ifdef USE_OPENTHERM
-  GPIO_BOILER_OT_RX,
-  GPIO_BOILER_OT_TX,
 #endif
 };
 

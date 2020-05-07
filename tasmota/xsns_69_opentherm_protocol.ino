@@ -1,5 +1,5 @@
 /*
-  xsns_68_opentherm_protocol.ino - OpenTherm protocol support for Tasmota
+  xsns_69_opentherm_protocol.ino - OpenTherm protocol support for Tasmota
 
   Copyright (C) 2020 Yuriy Sannikov
 
@@ -16,9 +16,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OpenTherm.h"
 
 #ifdef USE_OPENTHERM
+
+#include "OpenTherm.h"
 
 // Temperature tolerance. If temperature setpoint difference is less than the value,
 // OT (1)(Control setpoint) command will be skipped

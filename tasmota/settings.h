@@ -481,10 +481,10 @@ struct {
   uint8_t       shutter_position[MAX_SHUTTERS];      // E80
   uint8_t       shutter_startrelay[MAX_SHUTTERS];    // E84
   uint8_t       pcf8574_config[MAX_PCF8574];         // E88
-
   uint8_t       ot_hot_water_setpoint;     // E8C
   uint8_t       ot_boiler_setpoint;        // E8D
   uint8_t       ot_flags;                  // E8E
+
   uint8_t       free_e8f[1];               // E8F
 
   uint16_t      dimmer_hw_min;             // E90

@@ -136,6 +136,8 @@
 | USE_GPS               | - | - | - | - | - | - | - |
 | USE_HM10              | - | - | - | - | x | - | - |
 | USE_HRXL              | - | - | - | - | x | - | - |
+| USE_TASMOTA_SLAVE     | - | - | - | - | - | - | - |
+| USE_OPENTHERM         | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | USE_NRF24             | - | - | - | - | - | - | - |
 | USE_MIBLE             | - | - | - | - | - | - | - |
@@ -149,11 +151,11 @@
 | USE_TM1638            | - | - | - | - | x | - | - |
 | USE_HX711             | - | - | - | - | x | - | - |
 | USE_TX2x_WIND_SENSOR  | - | - | - | - | - | - | - |
+| USE_WINDMETER         | - | - | - | - | - | - | - |
 | USE_RC_SWITCH         | - | - | - | - | x | - | - |
 | USE_RF_SENSOR         | - | - | - | - | x | - | - | AlectoV2 only
 | USE_HRE               | - | - | - | - | x | - | - |
 | USE_A4988_STEPPER     | - | - | - | - | - | - | - |
-| USE_TASMOTA_SLAVE     | - | - | - | - | - | - | - | Experimental
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_DISPLAY           | - | - | - | - | - | - | x |
