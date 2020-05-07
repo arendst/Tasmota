@@ -169,3 +169,5 @@
 | USE_DISPLAY_ILI9488   | - | - | - | - | - | - | - |
 | USE_DISPLAY_SSD1351   | - | - | - | - | - | - | - |
 | USE_DISPLAY_RA8876    | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |
+| USE_WEBCAM            | - | - | - | - | - | - | - | ESP32 only
