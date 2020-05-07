@@ -560,8 +560,10 @@ void GetFeatures(void)
 #ifdef USE_OPENTHERM
   feature6 |= 0x00000200;  // xsns_69_opentherm.ino
 #endif
+#ifdef USE_THERMOSTAT
+  feature6 |= 0x00000400;  // xdrv_39_heating.ino
+#endif
 
-//  feature6 |= 0x00000400;
 //  feature6 |= 0x00000800;
 
 //  feature6 |= 0x00001000;
