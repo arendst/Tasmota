@@ -230,6 +230,7 @@
 #define D_CMND_DRIVER "Driver"
 #define D_CMND_SAVEDATA "SaveData"
 #define D_CMND_SETOPTION "SetOption"
+#define D_CMND_SO "SO"
 #define D_CMND_TEMPERATURE_RESOLUTION "TempRes"
 #define D_CMND_HUMIDITY_RESOLUTION "HumRes"
 #define D_CMND_PRESSURE_RESOLUTION "PressRes"
@@ -397,6 +398,7 @@
 #define D_CMND_RGBWWTABLE "RGBWWTable"
 #define D_CMND_ROTATION "Rotation"
 #define D_CMND_SCHEME "Scheme"
+#define D_CMND_SEQUENCE_OFFSET "SequenceOffset"
 #define D_CMND_SPEED "Speed"
 #define D_CMND_WAKEUP "Wakeup"
 #define D_CMND_WAKEUPDURATION "WakeUpDuration"
@@ -556,6 +558,7 @@
 #define D_CMND_SHUTTER_RELAY "Relay"
 #define D_CMND_SHUTTER_SETHALFWAY "SetHalfway"
 #define D_CMND_SHUTTER_SETCLOSE "SetClose"
+#define D_CMND_SHUTTER_SETOPEN "SetOpen"
 #define D_CMND_SHUTTER_INVERT "Invert"
 #define D_CMND_SHUTTER_CLIBRATION "Calibration"
 #define D_CMND_SHUTTER_MOTORDELAY "MotorDelay"
@@ -615,7 +618,7 @@
 #define D_ASTERISK_PWD "****"
 
 #ifndef MY_LANGUAGE
-  #include "language/en-GB.h"
+  #include "language/en_GB.h"
 #else
   #define QUOTEME(x) QUOTEME_1(x)
   #define QUOTEME_1(x) #x
@@ -623,7 +626,7 @@
   #include INCLUDE_FILE(MY_LANGUAGE)
 #endif
 #ifndef LANGUAGE_LCID
-  #define LANGUAGE_LCID 2057  // en-GB
+  #define LANGUAGE_LCID 2057  // en_GB
 #endif
 
 // Common

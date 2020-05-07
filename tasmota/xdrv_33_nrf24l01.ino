@@ -60,7 +60,7 @@ RF24 NRF24radio;
 
 bool NRF24initRadio()
 {
-  NRF24radio.begin(pin[GPIO_SPI_CS],pin[GPIO_SPI_DC]);
+  NRF24radio.begin(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_DC));
   NRF24radio.powerUp();
 
   if(NRF24radio.isChipConnected()){
@@ -73,7 +73,7 @@ bool NRF24initRadio()
 
 bool NRF24Detect(void)
 {
-  if  ((pin[GPIO_SPI_CS]<99) && (pin[GPIO_SPI_DC]<99)){
+  if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_DC)) {
     SPI.pins(SCK,MOSI,MISO,-1);
     if(NRF24initRadio()){
       NRF24.chipType = 32; // SPACE

@@ -95,8 +95,8 @@ void IBEACON_Init() {
   hm17_found=0;
 
 // actually doesnt work reliably with software serial
-  if ((pin[GPIO_IBEACON_RX] < 99) && (pin[GPIO_IBEACON_TX] < 99)) {
-    IBEACON_Serial = new TasmotaSerial(pin[GPIO_IBEACON_RX], pin[GPIO_IBEACON_TX],1);
+  if (PinUsed(GPIO_IBEACON_RX) && PinUsed(GPIO_IBEACON_TX)) {
+    IBEACON_Serial = new TasmotaSerial(Pin(GPIO_IBEACON_RX), Pin(GPIO_IBEACON_TX),1);
     if (IBEACON_Serial->begin(HM17_BAUDRATE)) {
       if (IBEACON_Serial->hardwareSerial()) {
         ClaimSerial();

@@ -52,7 +52,7 @@ void OsWatchTicker(void)
 
 #ifdef DEBUG_THEO
   int32_t rssi = WiFi.RSSI();
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(rssi), rssi, last_run);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP_getFreeHeap(), WifiGetRssiAsQuality(rssi), rssi, last_run);
 #endif  // DEBUG_THEO
   if (last_run >= (OSWATCH_RESET_TIME * 1000)) {
 //    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));  // Save iram space
@@ -99,11 +99,7 @@ uint32_t ResetReason(void)
     REASON_DEEP_SLEEP_AWAKE = 5,  // "Deep-Sleep Wake"         wake up from deep-sleep
     REASON_EXT_SYS_RST      = 6   // "External System"         external system reset
   */
-#ifdef ESP8266
-  return resetInfo.reason;
-#else
   return ESP_ResetInfoReason();
-#endif
 }
 
 String GetResetReason(void)
@@ -1077,10 +1073,38 @@ int ResponseJsonEndEnd(void)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
-void DigitalWrite(uint32_t gpio_pin, uint32_t state)
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0  // Fix core 2.5.x ISR not in IRAM Exception
+uint32_t Pin(uint32_t gpio, uint32_t index) ICACHE_RAM_ATTR;
+#endif
+
+uint32_t Pin(uint32_t gpio, uint32_t index = 0);
+uint32_t Pin(uint32_t gpio, uint32_t index) {
+#ifdef ESP8266
+  uint16_t real_gpio = gpio + index;
+#else  // ESP32
+  uint16_t real_gpio = (gpio << 5) + index;
+#endif  // ESP8266 - ESP32
+  for (uint32_t i = 0; i < ARRAY_SIZE(gpio_pin); i++) {
+    if (gpio_pin[i] == real_gpio) {
+      return i;              // Pin number configured for gpio
+    }
+  }
+  return 99;                 // No pin used for gpio
+}
+
+boolean PinUsed(uint32_t gpio, uint32_t index = 0);
+boolean PinUsed(uint32_t gpio, uint32_t index) {
+  return (Pin(gpio, index) < 99);
+}
+
+void SetPin(uint32_t lpin, uint32_t gpio) {
+  gpio_pin[lpin] = gpio;
+}
+
+void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state)
 {
-  if (pin[gpio_pin] < 99) {
-    digitalWrite(pin[gpio_pin], state &1);
+  if (PinUsed(gpio_pin, index)) {
+    digitalWrite(Pin(gpio_pin, index), state &1);
   }
 }
 
@@ -1124,10 +1148,15 @@ String ModuleName(void)
 
 void ModuleGpios(myio *gp)
 {
+#ifdef ESP8266
   uint8_t *dest = (uint8_t *)gp;
-  memset(dest, GPIO_NONE, sizeof(myio));
+  uint8_t src[ARRAY_SIZE(Settings.user_template.gp.io)];
+#else  // ESP32
+  uint16_t *dest = (uint16_t *)gp;
+  uint16_t src[ARRAY_SIZE(Settings.user_template.gp.io)];
+#endif  // ESP8266 - ESP32
 
-  uint8_t src[sizeof(mycfgio)];
+  memset(dest, GPIO_NONE, sizeof(myio));
   if (USER_MODULE == Settings.module) {
     memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
   } else {
@@ -1142,13 +1171,9 @@ void ModuleGpios(myio *gp)
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
 
   uint32_t j = 0;
-  for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
-#ifdef ESP8266
+  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
-#else  // ESP32
-    if (6 == i) { j = 12; }
-#endif  // ESP8266 - ESP32
     dest[j] = src[i];
     j++;
   }
@@ -1161,24 +1186,15 @@ gpio_flag ModuleFlag(void)
 {
   gpio_flag flag;
 
-#ifdef ESP8266
   if (USER_MODULE == Settings.module) {
     flag = Settings.user_template.flag;
   } else {
+#ifdef ESP8266
     memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
-  }
 #else  // ESP32
-  if (USER_MODULE == Settings.module) {
-/*
-    gpio_flag gpio_adc0;
-    memcpy_P(&gpio_adc0, &Settings.user_template.gp + ADC0_PIN - MIN_FLASH_PINS, sizeof(gpio_flag));
-    flag = Settings.user_template.flag.data + gpio_adc0.data;
-*/
-    memcpy_P(&flag, &Settings.user_template.gp + ADC0_PIN - MIN_FLASH_PINS, sizeof(gpio_flag));
-  } else {
-    memcpy_P(&flag, &kModules.gp + ADC0_PIN - MIN_FLASH_PINS, sizeof(gpio_flag));
-  }
+    memcpy_P(&flag, &kModules.flag, sizeof(gpio_flag));
 #endif  // ESP8266 - ESP32
+  }
 
   return flag;
 }
@@ -1203,45 +1219,48 @@ void SetModuleType(void)
 
 bool FlashPin(uint32_t pin)
 {
-#ifdef ESP8266
   return (((pin > 5) && (pin < 9)) || (11 == pin));
-#endif  // ESP8266
-#ifdef ESP32
-  return ((pin > 5) && (pin < 12));
-#endif  // ESP32
 }
 
-uint8_t ValidPin(uint32_t pin, uint32_t gpio)
+uint32_t ValidPin(uint32_t pin, uint32_t gpio)
 {
   if (FlashPin(pin)) {
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
 
-#ifdef ESP8266
 //  if (!is_8285 && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
   if ((WEMOS == Settings.module) && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
     if ((pin == 9) || (pin == 10)) {
       return GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
     }
   }
-#endif  // ESP8266
 
   return gpio;
 }
 
 bool ValidGPIO(uint32_t pin, uint32_t gpio)
 {
+#ifdef ESP8266
   return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
+#else  // ESP32
+  return (GPIO_USER == ValidPin(pin, gpio >> 5));  // Only allow GPIO_USER pins
+#endif  // ESP8266 - ESP32
 }
 
+#ifdef ESP8266
 bool ValidAdc(void)
 {
   gpio_flag flag = ModuleFlag();
   uint32_t template_adc0 = flag.data &15;
   return (ADC0_USER == template_adc0);
 }
+#endif  // ESP8266
 
+#ifdef ESP8266
 bool GetUsedInModule(uint32_t val, uint8_t *arr)
+#else  // ESP32
+bool GetUsedInModule(uint32_t val, uint16_t *arr)
+#endif  // ESP8266 - ESP32
 {
   int offset = 0;
 
@@ -1311,7 +1330,7 @@ bool JsonTemplate(const char* dataBuf)
 #ifdef ESP8266
   StaticJsonBuffer<400> jb;  // 331 from https://arduinojson.org/v5/assistant/
 #else
-  StaticJsonBuffer<800> jb;  // 654 from https://arduinojson.org/v5/assistant/
+  StaticJsonBuffer<999> jb;  // 654 from https://arduinojson.org/v5/assistant/
 #endif
   JsonObject& obj = jb.parseObject(dataBuf);
   if (!obj.success()) { return false; }
@@ -1322,16 +1341,16 @@ bool JsonTemplate(const char* dataBuf)
     SettingsUpdateText(SET_TEMPLATE_NAME, name);
   }
   if (obj[D_JSON_GPIO].success()) {
-    for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
+    for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
       Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
     }
   }
   if (obj[D_JSON_FLAG].success()) {
-    uint8_t flag = obj[D_JSON_FLAG] | 0;
+    uint32_t flag = obj[D_JSON_FLAG] | 0;
     memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
   }
   if (obj[D_JSON_BASE].success()) {
-    uint8_t base = obj[D_JSON_BASE];
+    uint32_t base = obj[D_JSON_BASE];
     if ((0 == base) || !ValidTemplateModule(base -1)) { base = 18; }
     Settings.user_template_base = base -1;  // Default WEMOS
   }
@@ -1341,7 +1360,7 @@ bool JsonTemplate(const char* dataBuf)
 void TemplateJson(void)
 {
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
-  for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
     ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings.user_template.gp.io[i]);
   }
   ResponseAppend_P(PSTR("],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), Settings.user_template.flag, Settings.user_template_base +1);
@@ -1829,4 +1848,17 @@ void AddLogSerial(uint32_t loglevel)
 void AddLogMissed(const char *sensor, uint32_t misses)
 {
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
+}
+
+void AddLogBufferSize(uint32_t loglevel, uint8_t *buffer, uint32_t count, uint32_t size) {
+  snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
+  for (uint32_t i = 0; i < count; i++) {
+    if (1 ==  size) {  // uint8_t
+      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer));
+    } else {           // uint16_t
+      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X%02X"), log_data, *(buffer +1), *(buffer));
+    }
+    buffer += size;
+  }
+  AddLog(loglevel);
 }

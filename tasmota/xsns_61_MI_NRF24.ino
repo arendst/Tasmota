@@ -27,10 +27,10 @@
   0.9.4.0 20200304  integrate - sensor types can be ignored (default for LYWSD03),
                                 add CGD1 (Alarm clock), correct PDU-types for LYWSD02
   ---
-  0.9.3.0 20200222  integrate - use now the correct id-word instead of MAC-OUI, 
+  0.9.3.0 20200222  integrate - use now the correct id-word instead of MAC-OUI,
                                 add CGG1
   ---
-  0.9.2.0 20200212  integrate - "backports" from MI-HM10, change reading pattern, 
+  0.9.2.0 20200212  integrate - "backports" from MI-HM10, change reading pattern,
                                 add missing PDU-types, renaming driver
   ---
   0.9.1.0 20200117  integrate - Added support for the LYWSD02
@@ -176,7 +176,7 @@ struct {
   uint8_t packetMode; // 0 - normal BLE-advertisements, 1 - 6 "special" sensor packets
   uint8_t perPage = 4;
   uint8_t firstUsedPacketMode = 1;
-  
+
   FIFO_t buffer;
 
   struct {
@@ -232,16 +232,16 @@ static union{
 /********************************************************************************************/
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param _mode Packet mode 0-6
  * @return true  If no error occured
- * @return false  If NRF24L01 is not connected 
+ * @return false  If NRF24L01 is not connected
  */
 bool MINRFinitBLE(uint8_t _mode)
 {
   if (MINRF.timer%1000 == 0){ // only re-init every 20 seconds
-    NRF24radio.begin(pin[GPIO_SPI_CS],pin[GPIO_SPI_DC]);
+    NRF24radio.begin(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_DC));
     NRF24radio.setAutoAck(false);
     NRF24radio.setDataRate(RF24_1MBPS);
     NRF24radio.disableCRC();
@@ -264,7 +264,7 @@ bool MINRFinitBLE(uint8_t _mode)
 
 /**
  * @brief cycle through the channels 37-39, skip ignored channel
- * 
+ *
  */
 void MINRFhopChannel()
 {
@@ -405,19 +405,19 @@ bool MINRFhandleBeacon(scan_entry_t * entry, uint32_t offset);
 
 /**
  * @brief handle a generic BLE-packet in the scan process
- * 
+ *
  */
 void MINRFhandleScan(void){
   if(MINRFscanResult.size()>20 || MINRF.stopScan) {
      MINRF.activeScan=false;
      MINRFcomputefirstUsedPacketMode();
     uint32_t i = 0; // pass counter as reference to lambda
-    MINRFscanResult.erase(std::remove_if(MINRFscanResult.begin(), 
+    MINRFscanResult.erase(std::remove_if(MINRFscanResult.begin(),
                           MINRFscanResult.end(),
                           [&i](scan_entry_t e) {
                             if(e.showedUp>2) AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: Beacon %02u: %02X%02X%02X%02X%02X%02X Cid: %04X Svc: %04X UUID: %04X"),i,e.mac[0],e.mac[1],e.mac[2],e.mac[3],e.mac[4],e.mac[5],e.cid,e.svc,e.uuid);
                             i++;
-                            return ((e.showedUp < 3)); 
+                            return ((e.showedUp < 3));
                             }),
                           MINRFscanResult.end());
     MINRF.stopScan=false;
@@ -447,7 +447,7 @@ void MINRFhandleScan(void){
 
 /**
  * @brief start beacon mode, can co-exist with Mijia-sniffing
- * 
+ *
  * @param entry number of entry in scan list
  */
 void MINRFstartBeacon(uint16_t entry){
@@ -459,7 +459,7 @@ void MINRFstartBeacon(uint16_t entry){
 
 /**
  * @brief semi-generic BLE-ADV-parser
- * 
+ *
  * @param entry Entry of scan list
  * @param offset Depends on the reading mode: 0->regular BLE-ADV, 6->"cutted" BLE-ADV with MAC as PDU
  * @return true - when name, cid, uuid or svc is found with any value
@@ -536,7 +536,7 @@ bool MINRFhandleBeacon(scan_entry_t * entry, uint32_t offset){
 
 /**
  * @brief increase beacon timer every second and process the result
- * 
+ *
  */
 void MINRFbeaconCounter(void){
   if(MINRF.beacon.active) {
@@ -550,7 +550,7 @@ void MINRFbeaconCounter(void){
 
 /**
  * @brief compute "PDU" from MAC for each possible channel and store it globally
- * 
+ *
  */
 void MINRFcomputeBeaconPDU(void){
   for (uint32_t i = 0; i<3; i++){
@@ -570,7 +570,7 @@ void MINRFcomputeBeaconPDU(void){
 
 /**
  * @brief reverse 6-byte-array, hard-coded size of 6
- * 
+ *
  * @param _mac pass an uint_t[6]
  */
 void MINRFreverseMAC(uint8_t _mac[]){
@@ -582,8 +582,8 @@ void MINRFreverseMAC(uint8_t _mac[]){
 }
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param _string input string in format: AABBCCDDEEFF (upper case!)
  * @param _mac  target byte array with fixed size of 6
  */
@@ -594,7 +594,7 @@ void MINRFMACStringToBytes(char* _string, uint8_t _mac[]) { //uppercase
         uint8_t value = 0;
         if(c >= '0' && c <= '9')
           value = (c - '0');
-        else if (c >= 'A' && c <= 'F') 
+        else if (c >= 'A' && c <= 'F')
           value = (10 + (c - 'A'));
         _mac[(index/2)] += value << (((index + 1) % 2) * 4);
         index++;
@@ -604,7 +604,7 @@ void MINRFMACStringToBytes(char* _string, uint8_t _mac[]) { //uppercase
 
 /**
  * @brief helper function, to avoid to start with an ignored sensor type
- * 
+ *
  */
 void MINRFcomputefirstUsedPacketMode(void){
   for (uint32_t i = 0; i<CGD1; i++){
@@ -675,7 +675,7 @@ uint32_t MINRFgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
     }
   }
   if(!_success) return 0xff;
- 
+
   DEBUG_SENSOR_LOG(PSTR("MINRF: vector size %u"), MIBLEsensors.size());
   for(uint32_t i=0; i<MIBLEsensors.size(); i++){
     if(memcmp(_serial,MIBLEsensors[i].serial,sizeof(_serial))==0){
@@ -724,7 +724,7 @@ uint32_t MINRFgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
 void MINRFpurgeFakeSensors(void){
   for(uint32_t i=0; i<MIBLEsensors.size(); i++){
     DEBUG_SENSOR_LOG(PSTR("MINRF: remove FAKE %s at slot: %u"),kMINRFSlaveType[MIBLEsensors[i].type-1], i);
-    MIBLEsensors.erase(std::remove_if(MIBLEsensors.begin(), 
+    MIBLEsensors.erase(std::remove_if(MIBLEsensors.begin(),
                       MIBLEsensors.end(),
                       [](mi_sensor_t i) { return ((i.showedUp < 3 || bitRead(MINRF.ignore,i.type))); }),
                       MIBLEsensors.end());
@@ -747,7 +747,7 @@ void MINRFconfirmSensors(void){
 
 /**
  * @brief generic MiBeacon parser
- * 
+ *
  */
 void MINRFhandleMiBeaconPacket(void){
   MINRFreverseMAC(MINRF.buffer.miBeacon.Mac);
@@ -784,7 +784,7 @@ void MINRFhandleMiBeaconPacket(void){
     case 0x07:
     _sensorVec->lux=MINRF.buffer.miBeacon.lux & 0x00ffffff;
     DEBUG_SENSOR_LOG(PSTR("Mode 7: U24: %u Lux"), MINRF.buffer.miBeacon.lux & 0x00ffffff);
-    break;    
+    break;
     case 0x08:
     _tempFloat =(float)MINRF.buffer.miBeacon.moist;
     if(_tempFloat<100){
@@ -881,7 +881,7 @@ void MINRFhandleCGD1Packet(void){ // no MiBeacon
 \*********************************************************************************************/
 
 void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
-  
+
   if(MINRF.timer>6000){ // happens every 6000/20 = 300 seconds
     DEBUG_SENSOR_LOG(PSTR("MINRF: check for FAKE sensors"));
     MINRFpurgeFakeSensors();
@@ -890,7 +890,7 @@ void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
   MINRF.timer++;
 
   if (!MINRFreceivePacket()){
-    // DEBUG_SENSOR_LOG(PSTR("MINRF: nothing received"));  
+    // DEBUG_SENSOR_LOG(PSTR("MINRF: nothing received"));
   }
 
   else {
@@ -1057,7 +1057,7 @@ void MINRFShow(bool json)
         }
       ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),kMINRFSlaveType[MIBLEsensors[i].type-1],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
       if (MIBLEsensors[i].type==FLORA && !isnan(MIBLEsensors[i].temp)){
-        char stemp[FLOATSZ]; 
+        char stemp[FLOATSZ];
         dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, stemp);
         ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"), stemp);
 
@@ -1074,7 +1074,7 @@ void MINRFShow(bool json)
         }
         ResponseJsonEnd();
       }
-      if (MIBLEsensors[i].type>FLORA){ 
+      if (MIBLEsensors[i].type>FLORA){
         if(!isnan(MIBLEsensors[i].temp) && !isnan(MIBLEsensors[i].hum)){
             ResponseAppendTHD(MIBLEsensors[i].temp,MIBLEsensors[i].hum);
         }
@@ -1112,7 +1112,7 @@ void MINRFShow(bool json)
           continue;
           }
         WSContentSend_PD(HTTP_MINRF_HL);
-        WSContentSend_PD(HTTP_MINRF_MAC, kMINRFSlaveType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].serial[0], MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]); 
+        WSContentSend_PD(HTTP_MINRF_MAC, kMINRFSlaveType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].serial[0], MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
         if (MIBLEsensors[i].type==FLORA){
           if(!isnan(MIBLEsensors[i].temp)){
             char temperature[FLOATSZ];
@@ -1139,7 +1139,7 @@ void MINRFShow(bool json)
       if(MINRF.beacon.active){
         WSContentSend_PD(HTTP_MINRF_HL);
         WSContentSend_PD(HTTP_MINRF_HL);
-        WSContentSend_PD(HTTP_MINRF_MAC, F("Beacon"), D_MAC_ADDRESS, MINRF.beacon.mac[0], MINRF.beacon.mac[1],MINRF.beacon.mac[2],MINRF.beacon.mac[3],MINRF.beacon.mac[4],MINRF.beacon.mac[5]); 
+        WSContentSend_PD(HTTP_MINRF_MAC, F("Beacon"), D_MAC_ADDRESS, MINRF.beacon.mac[0], MINRF.beacon.mac[1],MINRF.beacon.mac[2],MINRF.beacon.mac[3],MINRF.beacon.mac[4],MINRF.beacon.mac[5]);
         WSContentSend_PD(PSTR("{s}Beacon Time{m}%u seconds{e}"),MINRF.beacon.time);
       }
       if(counter>3) {

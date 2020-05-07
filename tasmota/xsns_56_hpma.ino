@@ -64,8 +64,8 @@ void HpmaSecond(void)                 // Every second
 void HpmaInit(void)
 {
   hpma_type = 0;
-  if (pin[GPIO_HPMA_RX] < 99 && pin[GPIO_HPMA_TX] < 99) {
-    HpmaSerial = new TasmotaSerial(pin[GPIO_HPMA_RX], pin[GPIO_HPMA_TX], 1);
+  if (PinUsed(GPIO_HPMA_RX) && PinUsed(GPIO_HPMA_TX)) {
+    HpmaSerial = new TasmotaSerial(Pin(GPIO_HPMA_RX), Pin(GPIO_HPMA_TX), 1);
     hpma115S0 = new HPMA115S0(*HpmaSerial);
 
     if (HpmaSerial->begin(9600)) {

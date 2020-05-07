@@ -206,7 +206,7 @@ void TX2xStartRead(void)
       delayMicroseconds(TX2X_BIT_TIME / 2);
 
       for (int32_t bitcount = 41; bitcount > 0; bitcount--) {
-        uint32_t dpin = (digitalRead(pin[GPIO_TX2X_TXD_BLACK]));
+        uint32_t dpin = (digitalRead(Pin(GPIO_TX2X_TXD_BLACK)));
 #ifdef USE_TX23_WIND_SENSOR
         dpin ^= 1;
 #endif  // USE_TX23_WIND_SENSOR
@@ -263,7 +263,7 @@ void TX2xStartRead(void)
 
   // Must clear this bit in the interrupt register,
   // it gets set even when interrupts are disabled
-  GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << pin[GPIO_TX2X_TXD_BLACK]);
+  GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << Pin(GPIO_TX2X_TXD_BLACK));
 }
 
 bool Tx2xAvailable(void)
@@ -338,13 +338,13 @@ void Tx2xRead(void)
     // TX23 start transmission by pulling down TxD line for at minimum 500ms
     // so we pull TxD signal to low every 3 seconds
     tx23_stage = 0;
-    pinMode(pin[GPIO_TX2X_TXD_BLACK], OUTPUT);
-    digitalWrite(pin[GPIO_TX2X_TXD_BLACK], LOW);
+    pinMode(Pin(GPIO_TX2X_TXD_BLACK), OUTPUT);
+    digitalWrite(Pin(GPIO_TX2X_TXD_BLACK), LOW);
   } else if ((uptime % TX23_READ_INTERVAL)==1) {
     // after pulling down TxD: pull-up TxD every x+1 seconds
     // to trigger TX23 start transmission
     tx23_stage = 1; // first rising signal is invalid
-    pinMode(pin[GPIO_TX2X_TXD_BLACK], INPUT_PULLUP);
+    pinMode(Pin(GPIO_TX2X_TXD_BLACK), INPUT_PULLUP);
   }
 #endif  // USE_TX23_WIND_SENSOR
   if (Tx2xAvailable()) {
@@ -465,12 +465,12 @@ void Tx2xInit(void)
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS
 #ifdef USE_TX23_WIND_SENSOR
   tx23_stage = 0;
-  pinMode(pin[GPIO_TX2X_TXD_BLACK], OUTPUT);
-  digitalWrite(pin[GPIO_TX2X_TXD_BLACK], LOW);
+  pinMode(Pin(GPIO_TX2X_TXD_BLACK), OUTPUT);
+  digitalWrite(Pin(GPIO_TX2X_TXD_BLACK), LOW);
 #else  // USE_TX23_WIND_SENSOR
-  pinMode(pin[GPIO_TX2X_TXD_BLACK], INPUT);
+  pinMode(Pin(GPIO_TX2X_TXD_BLACK), INPUT);
 #endif // USE_TX23_WIND_SENSOR
-  attachInterrupt(pin[GPIO_TX2X_TXD_BLACK], TX2xStartRead, RISING);
+  attachInterrupt(Pin(GPIO_TX2X_TXD_BLACK), TX2xStartRead, RISING);
 }
 
 int32_t Tx2xNormalize(int32_t value)
@@ -582,7 +582,7 @@ bool Xsns35(uint8_t function)
 {
   bool result = false;
 
-  if (pin[GPIO_TX2X_TXD_BLACK] < 99) {
+  if (PinUsed(GPIO_TX2X_TXD_BLACK)) {
     switch (function) {
       case FUNC_INIT:
         Tx2xInit();

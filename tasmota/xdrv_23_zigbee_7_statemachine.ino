@@ -420,7 +420,7 @@ ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_SEND(ZBS_PERMITJOINREQ_CLOSE)              // Closing the Permit Join
     ZI_WAIT_RECV(1000, ZBR_PERMITJOINREQ)
     ZI_WAIT_UNTIL(1000, ZBR_PERMITJOIN_AREQ_RSP)
-  
+
   ZI_LABEL(ZIGBEE_LABEL_READY)
     ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
     ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
@@ -491,7 +491,7 @@ void ZigbeeGotoLabel(uint8_t label) {
   uint8_t  cur_d8 = 0;
   uint8_t  cur_instr_len = 1;       // size of current instruction in words
 
-  for (uint32_t i = 0; i < sizeof(zb_prog)/sizeof(zb_prog[0]); i += cur_instr_len) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(zb_prog); i += cur_instr_len) {
     const Zigbee_Instruction *cur_instr_line = &zb_prog[i];
     cur_instr = pgm_read_byte(&cur_instr_line->i.i);
     cur_d8    = pgm_read_byte(&cur_instr_line->i.d8);
@@ -550,7 +550,7 @@ void ZigbeeStateMachine_Run(void) {
     zigbee.recv_until  = false;
     zigbee.state_no_timeout = false;   // reset the no_timeout for next instruction
 
-    if (zigbee.pc > (sizeof(zb_prog)/sizeof(zb_prog[0]))) {
+    if (zigbee.pc > ARRAY_SIZE(zb_prog)) {
       AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Invalid pc: %d, aborting"), zigbee.pc);
       zigbee.pc = -1;
     }
@@ -626,10 +626,8 @@ void ZigbeeStateMachine_Run(void) {
       case ZGB_INSTR_MQTT_STATE:
         {
         const char *f_msg = (const char*) cur_ptr1;
-        char buf[strlen_P(f_msg) + 1];
-        strcpy_P(buf, f_msg);
         Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":%d,\"Message\":\"%s\"}}"),
-                          cur_d8, buf);
+                          cur_d8, f_msg);
       	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
       	XdrvRulesProcess();
         }

@@ -325,8 +325,8 @@ bool MhzCommandSensor(void)
 void MhzInit(void)
 {
   mhz_type = 0;
-  if ((pin[GPIO_MHZ_RXD] < 99) && (pin[GPIO_MHZ_TXD] < 99)) {
-    MhzSerial = new TasmotaSerial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD], 1);
+  if (PinUsed(GPIO_MHZ_RXD) && PinUsed(GPIO_MHZ_TXD)) {
+    MhzSerial = new TasmotaSerial(Pin(GPIO_MHZ_RXD), Pin(GPIO_MHZ_TXD), 1);
     if (MhzSerial->begin(9600)) {
       if (MhzSerial->hardwareSerial()) { ClaimSerial(); }
       mhz_type = 1;

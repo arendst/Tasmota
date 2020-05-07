@@ -34,13 +34,13 @@ void MAX31855_Init(void){
         return;
 
     // Set GPIO modes for SW-SPI
-    pinMode(pin[GPIO_MAX31855CS], OUTPUT);
-    pinMode(pin[GPIO_MAX31855CLK], OUTPUT);
-    pinMode(pin[GPIO_MAX31855DO], INPUT);
+    pinMode(Pin(GPIO_MAX31855CS), OUTPUT);
+    pinMode(Pin(GPIO_MAX31855CLK), OUTPUT);
+    pinMode(Pin(GPIO_MAX31855DO), INPUT);
 
     // Chip not selected / Clock low
-    digitalWrite(pin[GPIO_MAX31855CS], HIGH);
-    digitalWrite(pin[GPIO_MAX31855CLK], LOW);
+    digitalWrite(Pin(GPIO_MAX31855CS), HIGH);
+    digitalWrite(Pin(GPIO_MAX31855CLK), LOW);
 
     initialized = true;
 }
@@ -99,22 +99,22 @@ float MAX31855_GetReferenceTemperature(int32_t RawData){
 int32_t MAX31855_ShiftIn(uint8_t Length){
     int32_t dataIn = 0;
 
-    digitalWrite(pin[GPIO_MAX31855CS], LOW);            // CS = LOW -> Start SPI communication
+    digitalWrite(Pin(GPIO_MAX31855CS), LOW);            // CS = LOW -> Start SPI communication
     delayMicroseconds(1);                               // CS fall to output enable = max. 100ns
 
     for (uint32_t i = 0; i < Length; i++)
     {
-        digitalWrite(pin[GPIO_MAX31855CLK], LOW);
+        digitalWrite(Pin(GPIO_MAX31855CLK), LOW);
         delayMicroseconds(1);                           // CLK pulse width low = min. 100ns / CLK fall to output valid = max. 40ns
         dataIn <<= 1;
-        if(digitalRead(pin[GPIO_MAX31855DO]))
+        if(digitalRead(Pin(GPIO_MAX31855DO)))
             dataIn |= 1;
-        digitalWrite(pin[GPIO_MAX31855CLK], HIGH);
+        digitalWrite(Pin(GPIO_MAX31855CLK), HIGH);
         delayMicroseconds(1);                           // CLK pulse width high = min. 100ns
     }
 
-    digitalWrite(pin[GPIO_MAX31855CS], HIGH);           // CS = HIGH -> End SPI communication
-    digitalWrite(pin[GPIO_MAX31855CLK], LOW);
+    digitalWrite(Pin(GPIO_MAX31855CS), HIGH);           // CS = HIGH -> End SPI communication
+    digitalWrite(Pin(GPIO_MAX31855CLK), LOW);
     return dataIn;
 }
 
@@ -151,7 +151,7 @@ void MAX31855_Show(bool Json){
 bool Xsns39(uint8_t function)
 {
   bool result = false;
-  if((pin[GPIO_MAX31855CS] < 99) && (pin[GPIO_MAX31855CLK] < 99) && (pin[GPIO_MAX31855DO] < 99)){
+  if(PinUsed(GPIO_MAX31855CS) && PinUsed(GPIO_MAX31855CLK) && PinUsed(GPIO_MAX31855DO)){
 
     switch (function) {
       case FUNC_INIT:

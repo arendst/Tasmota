@@ -219,11 +219,11 @@ uint8_t TasmotaSlave_UpdateInit(void)
 void TasmotaSlave_Reset(void)
 {
   if (TSlave.SerialEnabled) {
-    digitalWrite(pin[GPIO_TASMOTASLAVE_RST], !TSlave.inverted);
+    digitalWrite(Pin(GPIO_TASMOTASLAVE_RST), !TSlave.inverted);
     delay(1);
-    digitalWrite(pin[GPIO_TASMOTASLAVE_RST], TSlave.inverted);
+    digitalWrite(Pin(GPIO_TASMOTASLAVE_RST), TSlave.inverted);
     delay(1);
-    digitalWrite(pin[GPIO_TASMOTASLAVE_RST], !TSlave.inverted);
+    digitalWrite(Pin(GPIO_TASMOTASLAVE_RST), !TSlave.inverted);
     delay(5);
   }
 }
@@ -437,31 +437,33 @@ void TasmotaSlave_Init(void)
     return;
   }
   if (!TSlave.SerialEnabled) {
-    if ((pin[GPIO_TASMOTASLAVE_RXD] < 99) && (pin[GPIO_TASMOTASLAVE_TXD] < 99) &&
-        ((pin[GPIO_TASMOTASLAVE_RST] < 99) || (pin[GPIO_TASMOTASLAVE_RST_INV] < 99))) {
-      TasmotaSlave_Serial = new TasmotaSerial(pin[GPIO_TASMOTASLAVE_RXD], pin[GPIO_TASMOTASLAVE_TXD], 1, 0, 200);
+    if (PinUsed(GPIO_TASMOTASLAVE_RXD) && PinUsed(GPIO_TASMOTASLAVE_TXD) &&
+        (PinUsed(GPIO_TASMOTASLAVE_RST) || PinUsed(GPIO_TASMOTASLAVE_RST_INV))) {
+      TasmotaSlave_Serial = new TasmotaSerial(Pin(GPIO_TASMOTASLAVE_RXD), Pin(GPIO_TASMOTASLAVE_TXD), 1, 0, 200);
       if (TasmotaSlave_Serial->begin(USE_TASMOTA_SLAVE_SERIAL_SPEED)) {
         if (TasmotaSlave_Serial->hardwareSerial()) {
           ClaimSerial();
         }
-        TasmotaSlave_Serial->setTimeout(50);
-        if (pin[GPIO_TASMOTASLAVE_RST_INV] < 99) {
-          pin[GPIO_TASMOTASLAVE_RST] = pin[GPIO_TASMOTASLAVE_RST_INV];
-          pin[GPIO_TASMOTASLAVE_RST_INV] = 99;
+        TasmotaSlave_Serial->setTimeout(100);  // Theo 20200502 - increase from 50
+        if (PinUsed(GPIO_TASMOTASLAVE_RST_INV)) {
+          SetPin(Pin(GPIO_TASMOTASLAVE_RST_INV), GPIO_TASMOTASLAVE_RST);
           TSlave.inverted = HIGH;
         }
-        pinMode(pin[GPIO_TASMOTASLAVE_RST], OUTPUT);
+        pinMode(Pin(GPIO_TASMOTASLAVE_RST), OUTPUT);
         TSlave.SerialEnabled = true;
         TasmotaSlave_Reset();
         AddLog_P2(LOG_LEVEL_INFO, PSTR("Tasmota Slave Enabled"));
       }
     }
   }
-  if (TSlave.SerialEnabled) { // All go for hardware now we need to detect features if there are any
+  if (TSlave.SerialEnabled) {  // All go for hardware now we need to detect features if there are any
     TasmotaSlave_sendCmnd(CMND_FEATURES, 0);
-    char buffer[32];
+    char buffer[32] = { 0 };
     TasmotaSlave_Serial->readBytesUntil(char(PARAM_DATA_START), buffer, sizeof(buffer));
     uint8_t len = TasmotaSlave_Serial->readBytesUntil(char(PARAM_DATA_END), buffer, sizeof(buffer));
+
+    if (len) { AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)buffer, len); }  // Theo 20200502 - DMP: 99 17 34 01 02 00 00 00
+
     memcpy(&TSlaveSettings, &buffer, sizeof(TSlaveSettings));
     if (20191129 == TSlaveSettings.features_version) {
       TSlave.type = true;
@@ -495,6 +497,9 @@ void TasmotaSlave_sendCmnd(uint8_t cmnd, uint8_t param)
   buffer[0] = CMND_START;
   memcpy(&buffer[1], &TSlaveCommand, sizeof(TSlaveCommand));
   buffer[sizeof(TSlaveCommand)+1] = CMND_END;
+
+  TasmotaSlave_Serial->flush();  // Theo 20200502
+
   for (uint8_t ca = 0; ca < sizeof(buffer); ca++) {
     TasmotaSlave_Serial->write(buffer[ca]);
   }

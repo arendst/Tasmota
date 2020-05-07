@@ -473,19 +473,19 @@ void KNX_INIT(void)
   {
     device_param[i].show = true;
   }
-  for (uint32_t i = GPIO_SWT1; i < GPIO_SWT4 + 1; ++i)
+  for (uint32_t i = GPIO_SWT1; i < GPIO_SWT1 + 4; ++i)
   {
     if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_SWT1 + 8].show = true; }
   }
-  for (uint32_t i = GPIO_KEY1; i < GPIO_KEY4 + 1; ++i)
+  for (uint32_t i = GPIO_KEY1; i < GPIO_KEY1 + 4; ++i)
   {
     if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_KEY1 + 8].show = true; }
   }
-  for (uint32_t i = GPIO_SWT1_NP; i < GPIO_SWT4_NP + 1; ++i)
+  for (uint32_t i = GPIO_SWT1_NP; i < GPIO_SWT1_NP + 4; ++i)
   {
     if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_SWT1_NP + 8].show = true; }
   }
-  for (uint32_t i = GPIO_KEY1_NP; i < GPIO_KEY4_NP + 1; ++i)
+  for (uint32_t i = GPIO_KEY1_NP; i < GPIO_KEY1_NP + 4; ++i)
   {
     if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_KEY1_NP + 8].show = true; }
   }

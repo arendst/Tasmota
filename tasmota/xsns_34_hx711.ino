@@ -282,9 +282,9 @@ long HxWeight(void)
 void HxInit(void)
 {
   Hx.type = 0;
-  if ((pin[GPIO_HX711_DAT] < 99) && (pin[GPIO_HX711_SCK] < 99)) {
-    Hx.pin_sck = pin[GPIO_HX711_SCK];
-    Hx.pin_dout = pin[GPIO_HX711_DAT];
+  if (PinUsed(GPIO_HX711_DAT) && PinUsed(GPIO_HX711_SCK)) {
+    Hx.pin_sck = Pin(GPIO_HX711_SCK);
+    Hx.pin_dout = Pin(GPIO_HX711_DAT);
 
     pinMode(Hx.pin_sck, OUTPUT);
     pinMode(Hx.pin_dout, INPUT);

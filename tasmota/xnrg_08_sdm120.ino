@@ -176,7 +176,7 @@ void SDM120Every250ms(void)
 
 void Sdm120SnsInit(void)
 {
-  Sdm120Modbus = new TasmotaModbus(pin[GPIO_SDM120_RX], pin[GPIO_SDM120_TX]);
+  Sdm120Modbus = new TasmotaModbus(Pin(GPIO_SDM120_RX), Pin(GPIO_SDM120_TX));
   uint8_t result = Sdm120Modbus->Begin(SDM120_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
@@ -187,7 +187,7 @@ void Sdm120SnsInit(void)
 
 void Sdm120DrvInit(void)
 {
-  if ((pin[GPIO_SDM120_RX] < 99) && (pin[GPIO_SDM120_TX] < 99)) {
+  if (PinUsed(GPIO_SDM120_RX) && PinUsed(GPIO_SDM120_TX)) {
     energy_flg = XNRG_08;
   }
 }

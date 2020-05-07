@@ -1,9 +1,27 @@
 ## Unreleased (development)
 
+### 8.2.0.6 20200501
+
+- Add experimental basic support for Tasmota on ESP32 based on work by Jörg Schüler-Maroldt
+- Add support for analog anemometer by Matteo Albinola (#8283)
+- Add support for OpenTherm by Yuriy Sannikov (#8373)
+- Change flash access removing support for any Core before 2.6.3
+- Change HAss discovery by Federico Leoni (#8370)
+
+### 8.2.0.5 20200425
+
+- Breaking Change Device Groups multicast address and port  (#8270)
+- Change IRremoteESP8266 library updated to v2.7.6
+
 ### 8.2.0.4 20200417
 
-- Add config version tag
+- Change PWM implementation to Arduino #7231 removing support for Core versions before 2.6.3
+- Change default PWM Frequency to 223 Hz instead of 880 Hz for less interrupt pressure
 - Fix Zigbee DimmerUp/DimmerDown malformed
+- Add config version tag
+- Add command ``SetOption73 1`` for button decoupling and send multi-press and hold MQTT messages by Federico Leoni (#8235)
+- Add command ``SetOption92 1`` to set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...)
+- Add command ``SO`` as shortcut for command ``SetOption``
 
 ### 8.2.0.3 20200329
 

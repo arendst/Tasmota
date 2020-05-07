@@ -160,28 +160,28 @@ void ZigbeeInit(void)
   // update commands with the current settings
   Z_UpdateConfig(Settings.zb_channel, Settings.zb_pan_id, Settings.zb_ext_panid, Settings.zb_precfgkey_l, Settings.zb_precfgkey_h);
 
-// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem1 = %d"), ESP.getFreeHeap());
+// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem1 = %d"), ESP_getFreeHeap());
   zigbee.active = false;
-  if ((pin[GPIO_ZIGBEE_RX] < 99) && (pin[GPIO_ZIGBEE_TX] < 99)) {
-		AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "GPIOs Rx:%d Tx:%d"), pin[GPIO_ZIGBEE_RX], pin[GPIO_ZIGBEE_TX]);
+  if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX)) {
+		AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "GPIOs Rx:%d Tx:%d"), Pin(GPIO_ZIGBEE_RX), Pin(GPIO_ZIGBEE_TX));
     // if seriallog_level is 0, we allow GPIO 13/15 to switch to Hardware Serial
-    ZigbeeSerial = new TasmotaSerial(pin[GPIO_ZIGBEE_RX], pin[GPIO_ZIGBEE_TX], seriallog_level ? 1 : 2, 0, 256);   // set a receive buffer of 256 bytes
+    ZigbeeSerial = new TasmotaSerial(Pin(GPIO_ZIGBEE_RX), Pin(GPIO_ZIGBEE_TX), seriallog_level ? 1 : 2, 0, 256);   // set a receive buffer of 256 bytes
     ZigbeeSerial->begin(115200);
     if (ZigbeeSerial->hardwareSerial()) {
       ClaimSerial();
       uint32_t aligned_buffer = ((uint32_t)serial_in_buffer + 3) & ~3;
 			zigbee_buffer = new PreAllocatedSBuffer(sizeof(serial_in_buffer) - 3, (char*) aligned_buffer);
 		} else {
-// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem2 = %d"), ESP.getFreeHeap());
+// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem2 = %d"), ESP_getFreeHeap());
 			zigbee_buffer = new SBuffer(ZIGBEE_BUFFER_SIZE);
-// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem3 = %d"), ESP.getFreeHeap());
+// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem3 = %d"), ESP_getFreeHeap());
 		}
     zigbee.active = true;
 		zigbee.init_phase = true;			// start the state machine
     zigbee.state_machine = true;      // start the state machine
     ZigbeeSerial->flush();
   }
-// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem9 = %d"), ESP.getFreeHeap());
+// AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem9 = %d"), ESP_getFreeHeap());
 }
 
 /*********************************************************************************************\
@@ -310,7 +310,7 @@ void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
 // Returns: None
 //
 void ZigbeeZCLSend_Raw(uint16_t shortaddr, uint16_t groupaddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, uint16_t manuf, const uint8_t *msg, size_t len, bool needResponse, uint8_t transacId) {
-  
+
   SBuffer buf(32+len);
   buf.add8(Z_SREQ | Z_AF);          // 24
   buf.add8(AF_DATA_REQUEST_EXT);    // 02
@@ -345,7 +345,7 @@ void ZigbeeZCLSend_Raw(uint16_t shortaddr, uint16_t groupaddr, uint16_t clusterI
 }
 
 /********************************************************************************************/
-// 
+//
 // High-level function
 // Send a command specified as an HEX string for the workload.
 // The target endpoint is computed if zero, i.e. sent to the first known endpoint of the device.
@@ -1016,7 +1016,7 @@ void CmndZbStatus(void) {
     if (XdrvMailbox.payload > 0) {
       if (0x0000 == shortaddr) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
     }
-    
+
     String dump = zigbee_devices.dump(XdrvMailbox.index, shortaddr);
     Response_P(PSTR("{\"%s%d\":%s}"), XdrvMailbox.command, XdrvMailbox.index, dump.c_str());
   }

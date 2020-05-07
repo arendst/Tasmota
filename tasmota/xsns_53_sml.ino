@@ -1831,10 +1831,16 @@ uint8_t *script_meter;
 #endif
 
 bool Gpio_used(uint8_t gpiopin) {
+/*
   for (uint16_t i=0;i<GPIO_SENSOR_END;i++) {
-    if (pin[i]==gpiopin) {
+//    if (pin_gpio[i]==gpiopin) {
+    if (Pin(i)==gpiopin) {
       return true;
     }
+  }
+*/
+  if ((gpiopin < ARRAY_SIZE(gpio_pin)) && (gpio_pin[gpiopin] > 0)) {
+    return true;
   }
   return false;
 }
@@ -2206,7 +2212,10 @@ void SML_Check_Send(void) {
   char *cp;
   for (uint32_t cnt=sml_desc_cnt; cnt<meters_used; cnt++) {
     if (script_meter_desc[cnt].trxpin>=0 && script_meter_desc[cnt].txmem) {
-      if ((sml_100ms_cnt%script_meter_desc[cnt].tsecs)==0) {
+      //AddLog_P2(LOG_LEVEL_INFO, PSTR("100 ms>> %d - %s - %d"),sml_desc_cnt,script_meter_desc[cnt].txmem,script_meter_desc[cnt].tsecs);
+      if ((sml_100ms_cnt>=script_meter_desc[cnt].tsecs)) {
+        sml_100ms_cnt=0;
+        //AddLog_P2(LOG_LEVEL_INFO, PSTR("100 ms>> 2"),cp);
         if (script_meter_desc[cnt].max_index>1) {
           script_meter_desc[cnt].index++;
           if (script_meter_desc[cnt].index>=script_meter_desc[cnt].max_index) {

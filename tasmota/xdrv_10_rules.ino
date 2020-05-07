@@ -580,9 +580,9 @@ void RulesEvery50ms(void)
         // Boot time SWITCHES Status
         for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
-          if ((pin[GPIO_SWT1 +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
+          if (PinUsed(GPIO_SWT1, i) || (PinUsed(GPIO_TM16CLK) && PinUsed(GPIO_TM16DIO) && PinUsed(GPIO_TM16STB))) {
 #else
-          if (pin[GPIO_SWT1 +i] < 99) {
+          if (PinUsed(GPIO_SWT1, i)) {
 #endif  // USE_TM1638
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (SwitchState(i)));
             RulesProcessEvent(json_event);
@@ -1797,8 +1797,11 @@ void CmndEvent(void)
 {
   if (XdrvMailbox.data_len > 0) {
     strlcpy(Rules.event_data, XdrvMailbox.data, sizeof(Rules.event_data));
+#ifdef USE_DEVICE_GROUPS
+    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_EVENT, XdrvMailbox.data);
+#endif  // USE_DEVICE_GROUPS
   }
-  ResponseCmndDone();
+  if (XdrvMailbox.command) ResponseCmndDone();
 }
 
 void CmndVariable(void)

@@ -135,6 +135,9 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_LIGHT_PALETTE
   "|" D_CMND_PALETTE
 #endif  // USE_LIGHT_PALETTE
+#ifdef USE_DGR_LIGHT_SEQUENCE
+  "|" D_CMND_SEQUENCE_OFFSET
+#endif  // USE_DGR_LIGHT_SEQUENCE
    "|UNDOCA" ;
 
 void (* const LightCommand[])(void) PROGMEM = {
@@ -144,6 +147,9 @@ void (* const LightCommand[])(void) PROGMEM = {
 #ifdef USE_LIGHT_PALETTE
   &CmndPalette,
 #endif  // USE_LIGHT_PALETTE
+#ifdef USE_DGR_LIGHT_SEQUENCE
+  &CmndSequenceOffset,
+#endif  // USE_DGR_LIGHT_SEQUENCE
   &CmndUndocA };
 
 // Light color mode, either RGB alone, or white-CT alone, or both only available if ct_rgb_linked is false
@@ -282,7 +288,12 @@ struct LIGHT {
   bool     fade_initialized = false;      // dont't fade at startup
   bool     fade_running = false;
 #ifdef USE_DEVICE_GROUPS
+  uint8_t  last_scheme = 0;
   bool     devgrp_no_channels_out = false; // don't share channels with device group (e.g. if scheme set by other device)
+#ifdef USE_DGR_LIGHT_SEQUENCE
+  uint8_t  sequence_offset = 0;            // number of channel changes this light is behind the master
+  uint8_t * channels_fifo;
+#endif  // USE_DGR_LIGHT_SEQUENCE
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_LIGHT_PALETTE
   uint8_t  palette_count = 0;            // palette entry count
@@ -625,6 +636,7 @@ class LightStateClass {
     void setCW(uint8_t c, uint8_t w, bool free_range = false) {
       uint16_t max = (w > c) ? w : c;   // 0..255
       uint16_t sum = c + w;
+      if (sum <= 257) { free_range = false; }    // if we don't allow free range or if sum is below 255 (with tolerance of 2)
 
       if (0 == max) {
         _briCT = 0;       // brightness set to null
@@ -720,6 +732,8 @@ class LightStateClass {
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels (%d %d %d %d %d)",
       channels[0], channels[1], channels[2], channels[3], channels[4]);
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels CT (%d) briRGB (%d) briCT (%d)", _ct, _briRGB, _briCT);
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels Actuals (%d %d %d %d %d)",
+      _r, _g, _b, _wc, _ww);
 #endif
   }
 
@@ -974,6 +988,9 @@ public:
           (DEFAULT_LIGHT_COMPONENT == Settings.light_color[3]) &&
           (DEFAULT_LIGHT_COMPONENT == Settings.light_color[4]) &&
           (DEFAULT_LIGHT_DIMMER    == Settings.light_dimmer) ) {
+        if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) {
+          _state->setCW(255, 0);       // avoid having both white channels at 100%, zero second channel (#see 8120)
+        }
         _state->setBriCT(bri);
         _state->setBriRGB(bri);
         _state->setColorMode(LCM_RGB);
@@ -1227,7 +1244,7 @@ bool LightModuleInit(void)
 
   if (Settings.flag.pwm_control) {          // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
     for (uint32_t i = 0; i < MAX_PWMS; i++) {
-      if (pin[GPIO_PWM1 +i] < 99) { light_type++; }  // Use Dimmer/Color control for all PWM as SetOption15 = 1
+      if (PinUsed(GPIO_PWM1, i)) { light_type++; }  // Use Dimmer/Color control for all PWM as SetOption15 = 1
     }
   }
 
@@ -1330,14 +1347,14 @@ void LightInit(void)
   if (light_type < LT_PWM6) {           // PWM
     for (uint32_t i = 0; i < light_type; i++) {
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
-      if (pin[GPIO_PWM1 +i] < 99) {
-        pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+      if (PinUsed(GPIO_PWM1, i)) {
+        pinMode(Pin(GPIO_PWM1, i), OUTPUT);
       }
     }
-    if (pin[GPIO_ARIRFRCV] < 99) {
-      if (pin[GPIO_ARIRFSEL] < 99) {
-        pinMode(pin[GPIO_ARIRFSEL], OUTPUT);
-        digitalWrite(pin[GPIO_ARIRFSEL], 1);  // Turn off RF
+    if (PinUsed(GPIO_ARIRFRCV)) {
+      if (PinUsed(GPIO_ARIRFSEL)) {
+        pinMode(Pin(GPIO_ARIRFSEL), OUTPUT);
+        digitalWrite(Pin(GPIO_ARIRFSEL), 1);  // Turn off RF
       }
     }
   }
@@ -1477,9 +1494,6 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
 //    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Light signal %d"), signal);
     light_controller.changeRGB(signal, 255 - signal, 0, true);  // keep bri
     Settings.light_scheme = 0;
-#ifdef USE_DEVICE_GROUPS
-    LightUpdateScheme();
-#endif  // USE_DEVICE_GROUPS
     if (0 == light_state.getBri()) {
       light_controller.changeBri(50);
     }
@@ -1688,17 +1702,19 @@ void LightCycleColor(int8_t direction)
 
 #ifdef USE_LIGHT_PALETTE
   if (Light.palette_count) {
-    if (0 == direction) {
-      Light.wheel = random(Light.palette_count);
-    }
-    else {
-      Light.wheel += direction;
-      if (Light.wheel >= Light.palette_count) {
-        Light.wheel = 0;
-         if (direction < 0) Light.wheel = Light.palette_count - 1;
+    if (!Light.fade_running) {
+      if (0 == direction) {
+        Light.wheel = random(Light.palette_count);
       }
+      else {
+        Light.wheel += direction;
+        if (Light.wheel >= Light.palette_count) {
+          Light.wheel = 0;
+          if (direction < 0) Light.wheel = Light.palette_count - 1;
+        }
+      }
+      LightSetPaletteEntry();
     }
-    LightSetPaletteEntry();
     return;
   }
 #endif  // USE_LIGHT_PALETTE
@@ -1833,9 +1849,6 @@ void LightAnimate(void)
 
             Light.wakeup_active = 0;
             Settings.light_scheme = LS_POWER;
-#ifdef USE_DEVICE_GROUPS
-            LightUpdateScheme();
-#endif  // USE_DEVICE_GROUPS
           }
         }
         break;
@@ -1858,6 +1871,14 @@ void LightAnimate(void)
       default:
         XlgtCall(FUNC_SET_SCHEME);
     }
+
+#ifdef USE_DEVICE_GROUPS
+    if (Settings.light_scheme != Light.last_scheme) {
+      Light.last_scheme = Settings.light_scheme;
+      SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
+      Light.devgrp_no_channels_out = false;
+    }
+#endif  // USE_DEVICE_GROUPS
   }
 
   if ((Settings.light_scheme < LS_MAX) || power_off) {  // exclude WS281X Neopixel schemes
@@ -1977,7 +1998,7 @@ bool isChannelGammaCorrected(uint32_t channel) {
   if (!Settings.light_correction) { return false; }   // Gamma correction not activated
   if (channel >= Light.subtype) { return false; }     // Out of range
 #ifdef ESP8266
-  if (PHILIPS == my_module_type) {
+  if ((PHILIPS == my_module_type) || (Settings.flag4.pwm_ct_mode)) {
     if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return false; }   // PMW reserved for CT
     if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return false; }   // PMW reserved for CT
   }
@@ -1988,7 +2009,7 @@ bool isChannelGammaCorrected(uint32_t channel) {
 // is the channel a regular PWM or ColorTemp control
 bool isChannelCT(uint32_t channel) {
 #ifdef ESP8266
-  if (PHILIPS == my_module_type) {
+  if ((PHILIPS == my_module_type) || (Settings.flag4.pwm_ct_mode)) {
     if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return true; }   // PMW reserved for CT
     if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return true; }   // PMW reserved for CT
   }
@@ -2114,13 +2135,13 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
   // now apply the actual PWM values, adjusted and remapped 10-bits range
   if (light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
     for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
-      if (pin[GPIO_PWM1 +i] < 99) {
+      if (PinUsed(GPIO_PWM1, i)) {
         //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d"), i, cur_col_10[i]);
         uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
         if (!isChannelCT(i)) {   // if CT don't use pwm_min and pwm_max
           cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings.pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
         }
-        analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - cur_col : cur_col);
+        analogWrite(Pin(GPIO_PWM1, i), bitRead(pwm_inverted, i) ? Settings.pwm_range - cur_col : cur_col);
       }
     }
   }
@@ -2172,7 +2193,7 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
     uint16_t white_bri10_1023 = (white_bri10 > 1023) ? 1023 : white_bri10;    // max 1023
 
 #ifdef ESP8266
-    if (PHILIPS == my_module_type) {   // channel 1 is the color tone, mapped to cold channel (0..255)
+    if ((PHILIPS == my_module_type) || (Settings.flag4.pwm_ct_mode)) {   // channel 1 is the color tone, mapped to cold channel (0..255)
       // Xiaomi Philips bulbs follow a different scheme:
       cur_col_10[cw1] = light_state.getCT10bits();
       // channel 0=intensity, channel1=temperature
@@ -2213,21 +2234,21 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
 }
 
 #ifdef USE_DEVICE_GROUPS
-void LightSendDeviceGroupStatus(bool force)
+void LightSendDeviceGroupStatus(bool status)
 {
-  static uint8_t last_channels[LST_MAX];
   static uint8_t last_bri;
-
   uint8_t bri = light_state.getBri();
-  bool send_bri_update = (force || bri != last_bri);
-
+  bool send_bri_update = (status || bri != last_bri);
   if (Light.subtype > LST_SINGLE && !Light.devgrp_no_channels_out) {
-    uint8_t channels[LST_MAX];
-    light_state.getChannels(channels);
-    if (force || memcmp(last_channels, channels, LST_MAX)) {
-      memcpy(last_channels, channels, LST_MAX);
-      SendLocalDeviceGroupMessage((send_bri_update ? DGR_MSGTYP_PARTIAL_UPDATE : DGR_MSGTYP_UPDATE), DGR_ITEM_LIGHT_CHANNELS, channels);
+    static uint8_t channels[LST_MAX + 1] = { 0, 0, 0, 0, 0, 0 };
+    if (status) {
+      light_state.getChannels(channels);
     }
+    else {
+      memcpy(channels, Light.new_color, LST_MAX);
+      channels[LST_MAX]++;
+    }
+    SendLocalDeviceGroupMessage((send_bri_update ? DGR_MSGTYP_PARTIAL_UPDATE : DGR_MSGTYP_UPDATE), DGR_ITEM_LIGHT_CHANNELS, channels);
   }
   if (send_bri_update) {
     last_bri = bri;
@@ -2270,13 +2291,36 @@ void LightHandleDevGroupItem(void)
       break;
     case DGR_ITEM_LIGHT_SCHEME:
       if (Settings.light_scheme != value) {
-        Settings.light_scheme = value;
+        Light.last_scheme = Settings.light_scheme = value;
         Light.devgrp_no_channels_out = (value != 0);
         send_state = true;
       }
       break;
     case DGR_ITEM_LIGHT_CHANNELS:
-      light_controller.changeChannels((uint8_t *)XdrvMailbox.data);
+#ifdef USE_DGR_LIGHT_SEQUENCE
+      {
+        static uint8_t last_sequence = 0;
+
+        // If a sequence offset is set, set the channels to the ones we received <SequenceOffset>
+        // changes ago.
+        if (Light.sequence_offset) {
+          light_controller.changeChannels(Light.channels_fifo);
+
+          // Shift the fifo down and load the newly received channels at the end for this update and
+          // any updates we missed.
+          int last_entry = (Light.sequence_offset - 1) * LST_MAX;
+          for (uint8_t sequence = (uint8_t)XdrvMailbox.data[LST_MAX]; (uint8_t)(sequence - last_sequence) > 0; last_sequence++) {
+            memmove(Light.channels_fifo, &Light.channels_fifo[LST_MAX], last_entry);
+            memcpy(&Light.channels_fifo[last_entry], XdrvMailbox.data, LST_MAX);
+          }
+        }
+        else {
+#endif  // USE_DGR_LIGHT_SEQUENCE
+          light_controller.changeChannels((uint8_t *)XdrvMailbox.data);
+#ifdef USE_DGR_LIGHT_SEQUENCE
+        }
+      }
+#endif  // USE_DGR_LIGHT_SEQUENCE
       send_state = true;
       break;
     case DGR_ITEM_LIGHT_FIXED_COLOR:
@@ -2330,17 +2374,6 @@ void LightHandleDevGroupItem(void)
       break;
   }
 }
-
-void LightUpdateScheme(void)
-{
-  static uint8_t last_scheme;
-
-  if (Settings.light_scheme != last_scheme) {
-    last_scheme = Settings.light_scheme;
-    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
-  }
-  Light.devgrp_no_channels_out = false;
-}
 #endif  // USE_DEVICE_GROUPS
 
 /*********************************************************************************************\
@@ -2384,9 +2417,6 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
       }
     } else {
       value = atoi(buffer);
-#ifdef USE_LIGHT_PALETTE
-      value--;
-#endif  // USE_LIGHT_PALETTE
     }
 #ifdef USE_LIGHT_PALETTE
     if (Light.palette_count) value = value % Light.palette_count;
@@ -2417,6 +2447,7 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
   }
 #ifdef USE_LIGHT_PALETTE
   else if (Light.palette_count) {
+    value--;
     Light.wheel = value;
     memcpy_P(&Light.entry_color, &Light.palette[value * LST_MAX], LST_MAX);
     entry_type = 1;                                 // Hexadecimal
@@ -2475,9 +2506,6 @@ void CmndSupportColor(void)
         }
 #endif  // USE_LIGHT_PALETTE
         Settings.light_scheme = 0;
-#ifdef USE_DEVICE_GROUPS
-        LightUpdateScheme();
-#endif  // USE_DEVICE_GROUPS
         coldim = true;
       } else {             // Color3, 4, 5 and 6
         for (uint32_t i = 0; i < LST_RGB; i++) {
@@ -2647,9 +2675,6 @@ void CmndScheme(void)
 #endif  // USE_LIGHT_PALETTE
       }
       Settings.light_scheme = XdrvMailbox.payload;
-#ifdef USE_DEVICE_GROUPS
-      LightUpdateScheme();
-#endif  // USE_DEVICE_GROUPS
       if (LS_WAKEUP == Settings.light_scheme) {
         Light.wakeup_active = 3;
       }
@@ -2673,9 +2698,6 @@ void CmndWakeup(void)
   }
   Light.wakeup_active = 3;
   Settings.light_scheme = LS_WAKEUP;
-#ifdef USE_DEVICE_GROUPS
-  LightUpdateScheme();
-#endif  // USE_DEVICE_GROUPS
   LightPowerOn();
   ResponseCmndChar(D_JSON_STARTED);
 }
@@ -2755,8 +2777,11 @@ void CmndDimmer(void)
       }
     }
 #if defined(USE_PWM_DIMMER) && defined(USE_DEVICE_GROUPS)
-    Settings.bri_power_on = light_state.getBri();;
-    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
+    uint8_t bri = light_state.getBri();
+    if (bri != Settings.bri_power_on) {
+      Settings.bri_power_on = bri;
+      SendLocalDeviceGroupMessage(DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
+    }
 #endif  // USE_PWM_DIMMER && USE_DEVICE_GROUPS
     Light.update = true;
     if (skip_light_fade) LightAnimate();
@@ -2932,12 +2957,15 @@ void CmndPalette(void)
     for (int entry = 0; entry < Light.palette_count; entry++) {
       if (Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
         *p++ = '"';
+        for (uint32_t i = 0; i < Light.subtype; i++) {
+          p += sprintf_P(p, PSTR("%d,"), *palette_entry++);
+        }
+        *(p - 1) = '"';
       }
-      memcpy(Light.current_color, palette_entry, Light.subtype);
-      LightGetColor(p);
-      p += strlen(p);
-      if (Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
-        *p++ = '"';
+      else {
+        for (uint32_t i = 0; i < Light.subtype; i++) {
+          p += sprintf_P(p, PSTR("%02X"), *palette_entry++);
+        }
       }
       *p++ = ',';
     }
@@ -2948,6 +2976,20 @@ void CmndPalette(void)
   ResponseCmndChar(palette_str);
 }
 #endif  // USE_LIGHT_PALETTE
+
+#ifdef USE_DGR_LIGHT_SEQUENCE
+void CmndSequenceOffset(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
+    if (XdrvMailbox.payload != Light.sequence_offset) {
+      if (Light.sequence_offset) free(Light.channels_fifo);
+      Light.sequence_offset = XdrvMailbox.payload;
+      if (Light.sequence_offset) Light.channels_fifo = (uint8_t *)calloc(Light.sequence_offset, LST_MAX);
+    }
+  }
+  ResponseCmndNumber(Light.sequence_offset);
+}
+#endif  // USE_DGR_LIGHT_SEQUENCE
 
 void CmndUndocA(void)
 {

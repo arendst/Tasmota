@@ -53,17 +53,10 @@ extern "C" void resetPins();
  * Mandatory defines satisfying disabled defines
 \*********************************************************************************************/
 
-#ifndef MODULE
-#define MODULE                      SONOFF_BASIC   // [Module] Select default model
-#endif
-
 #ifdef USE_EMULATION_HUE
 #define USE_EMULATION
 #endif
 #ifdef USE_EMULATION_WEMO
-#define USE_EMULATION
-#endif
-#ifdef USE_DEVICE_GROUPS
 #define USE_EMULATION
 #endif
                                                // See https://github.com/esp8266/Arduino/pull/4889
@@ -117,30 +110,10 @@ extern "C" void resetPins();
 #define MESSZ                       (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string
 #endif
 
-#ifdef ESP8266
-#ifndef ARDUINO_ESP8266_RELEASE
-#define ARDUINO_CORE_RELEASE        "STAGE"
-#else
-#define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE
-#endif
-#endif
-#ifdef ESP32
-#ifndef ARDUINO_ESP32_RELEASE
-#define ARDUINO_CORE_RELEASE        "STAGE"
-#else
-#define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
-#endif
-#endif
-
-#ifdef USE_PWM_DIMMER_REMOTE
-#ifdef USE_PWM_DIMMER
 #ifndef USE_DEVICE_GROUPS
-#define USE_DEVICE_GROUPS
-#endif  // USE_DEVICE_GROUPS
-#else   // USE_PWM_DIMMER
 #undef USE_PWM_DIMMER_REMOTE
-#endif  // USE_PWM_DIMMER
-#endif  // USE_PWM_DIMMER_REMOTE
+#undef USE_DGR_LIGHT_SEQUENCE
+#endif  // USE_DEVICE_GROUPS
 
 #ifndef DOMOTICZ_UPDATE_TIMER
 #define DOMOTICZ_UPDATE_TIMER       0          // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
@@ -296,6 +269,43 @@ const char kWebColors[] PROGMEM =
   COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND "|" COLOR_TITLE_TEXT;
 
 /*********************************************************************************************\
+ * ESP8266 vs ESP32 related parameters
+\*********************************************************************************************/
+
+#ifdef ESP8266
+
+#ifndef MODULE
+#define MODULE                      SONOFF_BASIC   // [Module] Select default model
+#endif
+
+#ifndef ARDUINO_ESP8266_RELEASE
+#define ARDUINO_CORE_RELEASE        "STAGE"
+#else
+#define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE
+#endif  // ARDUINO_ESP8266_RELEASE
+
+#endif  // ESP8266
+
+#ifdef ESP32
+
+#ifndef MODULE
+#define MODULE                      WEMOS          // [Module] Select default model
+#endif
+
+#ifndef ARDUINO_ESP32_RELEASE
+#define ARDUINO_CORE_RELEASE        "STAGE"
+#else
+#define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
+#endif  // ARDUINO_ESP32_RELEASE
+
+#undef USE_HM10                     // Disable support for HM-10 as a BLE-bridge as an alternative is using the internal ESP32 BLE
+#undef USE_KEELOQ                   // Disable support for Jarolift rollers by Keeloq algorithm as it's library cc1101 is not compatible with ESP32
+#undef USE_DISPLAY_ILI9488          // Disable as it's library JaretBurkett_ILI9488-gemu-1.0 is not compatible with ESP32
+#undef USE_DISPLAY_SSD1351          // Disable as it's library Adafruit_SSD1351_gemu-1.0 is not compatible with ESP32
+
+#endif  // ESP32
+
+/*********************************************************************************************\
  * Macros
 \*********************************************************************************************/
 
@@ -312,11 +322,19 @@ const char kWebColors[] PROGMEM =
 #define STR(x) STR_HELPER(x)
 #endif
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
+
+#ifdef ESP8266
+#define AGPIO(x) (x)
+#else  // ESP32
+#define AGPIO(x) (x<<5)
+#endif  // ESP8266 - ESP32
+
 #ifdef USE_DEVICE_GROUPS
 #define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)
 #define SendLocalDeviceGroupMessage(REQUEST_TYPE, ...) _SendDeviceGroupMessage(0, REQUEST_TYPE, __VA_ARGS__, 0)
-#define DEVICE_GROUP_MESSAGE "M-TASMOTA_DGR/"
-const char kDeviceGroupMessage[] PROGMEM = DEVICE_GROUP_MESSAGE;
 uint8_t device_group_count = 1;
 #endif  // USE_DEVICE_GROUPS
 

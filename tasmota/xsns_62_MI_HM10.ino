@@ -34,6 +34,8 @@
                     forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
 
 */
+#ifdef ESP8266                     // ESP8266 only. Use define USE_MI_ESP32 for ESP32 support
+
 #ifdef USE_HM10
 
 #define XSNS_62                    62
@@ -250,7 +252,7 @@ void HM10_Launchtask(uint8_t task, uint8_t slot, uint8_t delay){
 
 void HM10_TaskReplaceInSlot(uint8_t task, uint8_t slot){
                           HM10.last_command         = HM10_TASK_LIST[slot][0];    // save command
-                          HM10_TASK_LIST[slot][0]   = task;  
+                          HM10_TASK_LIST[slot][0]   = task;
 }
 
 void HM10_ReverseMAC(uint8_t _mac[]){
@@ -355,7 +357,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
     }
   }
   if(!_success) return 0xff;
- 
+
   DEBUG_SENSOR_LOG(PSTR("%s: vector size %u"),D_CMND_HM10, MIBLEsensors.size());
   for(uint32_t i=0; i<MIBLEsensors.size(); i++){
     if(memcmp(_serial,MIBLEsensors[i].serial,sizeof(_serial))==0){
@@ -401,7 +403,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
 void HM10SerialInit(void) {
   HM10.mode.init = false;
   HM10.serialSpeed = HM10_BAUDRATE;
-  HM10Serial = new TasmotaSerial(pin[GPIO_HM10_RX], pin[GPIO_HM10_TX], 1, 0, HM10_MAX_RX_BUF);
+  HM10Serial = new TasmotaSerial(Pin(GPIO_HM10_RX), Pin(GPIO_HM10_TX), 1, 0, HM10_MAX_RX_BUF);
   if (HM10Serial->begin(HM10.serialSpeed)) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s start serial communication fixed to 115200 baud"),D_CMND_HM10);
     if (HM10Serial->hardwareSerial()) {
@@ -470,7 +472,7 @@ void HM10parseMiBeacon(char * _buf, uint32_t _slot){
     case 0x07:
     MIBLEsensors[_slot].lux=_beacon.lux & 0x00ffffff;
     DEBUG_SENSOR_LOG(PSTR("Mode 7: U24: %u Lux"), _beacon.lux & 0x00ffffff);
-    break;    
+    break;
     case 0x08:
     _tempFloat =(float)_beacon.moist;
     if(_tempFloat<100){
@@ -610,7 +612,7 @@ void HM10readHT_MJ_HT_V1(char *_buf){
   // T=22.7 H=42.2 (response as ASCII)
   // 0123456789012
   uint32_t _temp = (atoi(_buf+2) * 10) + atoi(_buf+5);
-  uint32_t _hum = (atoi(_buf+9) * 10) + atoi(_buf+12); 
+  uint32_t _hum = (atoi(_buf+9) * 10) + atoi(_buf+12);
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: T * 10: %u, H * 10: %u"),D_CMND_HM10,_temp,_hum);
   uint32_t _slot = HM10.state.sensor;
 
@@ -682,7 +684,7 @@ bool HM10SerialHandleFeedback(){                  // every 50 milliseconds
   bool success    = false;
   uint32_t i       = 0;
   static char ret[HM10_MAX_RX_BUF] = {0};
-  
+
   while(HM10Serial->available()) {
     // delay(0);
     if(i<HM10_MAX_RX_BUF){
@@ -719,7 +721,7 @@ bool HM10SerialHandleFeedback(){                  // every 50 milliseconds
     break;
     case tempHumMJ:
       if (HM10.mode.connected) HM10readHT_MJ_HT_V1(ret);
-      break;    
+      break;
     case none:
       if(success) {
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: response: %s"),D_CMND_HM10, (char *)ret);
@@ -782,7 +784,7 @@ void HM10_TaskEvery100ms(){
           break;
         case TASK_HM10_CONN:
           char _con[20];
-          sprintf_P(_con,"AT+CON%02x%02x%02x%02x%02x%02x",MIBLEsensors[HM10.state.sensor].serial[0],MIBLEsensors[HM10.state.sensor].serial[1],MIBLEsensors[HM10.state.sensor].serial[2],MIBLEsensors[HM10.state.sensor].serial[3],MIBLEsensors[HM10.state.sensor].serial[4],MIBLEsensors[HM10.state.sensor].serial[5]); 
+          sprintf_P(_con,"AT+CON%02x%02x%02x%02x%02x%02x",MIBLEsensors[HM10.state.sensor].serial[0],MIBLEsensors[HM10.state.sensor].serial[1],MIBLEsensors[HM10.state.sensor].serial[2],MIBLEsensors[HM10.state.sensor].serial[3],MIBLEsensors[HM10.state.sensor].serial[4],MIBLEsensors[HM10.state.sensor].serial[5]);
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: connect %s"),D_CMND_HM10, _con);
           HM10.current_task_delay = 2;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
@@ -964,10 +966,10 @@ void HM10_TaskEvery100ms(){
             }
             runningTaskLoop = false;                                  // return to main loop
             HM10.mode.pending_task = 0;                               // back to main loop control
-            break; 
+            break;
           }
       }
-      i++; 
+      i++;
     }
   }
   else {
@@ -984,7 +986,7 @@ void HM10StatusInfo(){
 
 /**
  * @brief Main loop of the driver, "high level"-loop
- * 
+ *
  */
 
 void HM10EverySecond(bool restart){
@@ -1182,14 +1184,14 @@ void HM10Show(bool json)
             ResponseAppend_P(PSTR(",\"Fertility\":%d"), MIBLEsensors[i].fertility);
           }
         }
-        if (MIBLEsensors[i].type>FLORA){ 
+        if (MIBLEsensors[i].type>FLORA){
           if(!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)){
             ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
           }
         }
         if(MIBLEsensors[i].bat!=0x00){ // this is the error code -> no battery
           ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
-        }      
+        }
         ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_WEBSERVER
@@ -1210,7 +1212,7 @@ void HM10Show(bool json)
       WSContentSend_PD(HTTP_HM10, HM10.firmware, i+1,stemp,MIBLEsensors.size());
       for (i; i<j; i++) {
         WSContentSend_PD(HTTP_HM10_HL);
-        WSContentSend_PD(HTTP_HM10_SERIAL, kHM10SlaveType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].serial[0], MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]); 
+        WSContentSend_PD(HTTP_HM10_SERIAL, kHM10SlaveType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].serial[0], MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
         if (MIBLEsensors[i].type==FLORA){
           if(!isnan(MIBLEsensors[i].temp)){
             char temperature[FLOATSZ];
@@ -1231,7 +1233,7 @@ void HM10Show(bool json)
           if(!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)){
             WSContentSend_THD(kHM10SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp, MIBLEsensors[i].hum);
           }
-        } 
+        }
         if(MIBLEsensors[i].bat!=0x00){
           WSContentSend_PD(HTTP_BATTERY, kHM10SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].bat);
         }
@@ -1255,7 +1257,7 @@ bool Xsns62(uint8_t function)
 {
   bool result = false;
 
-  if ((pin[GPIO_HM10_RX] < 99) && (pin[GPIO_HM10_TX] < 99)) { 
+  if (PinUsed(GPIO_HM10_RX) && PinUsed(GPIO_HM10_TX)) {
     switch (function) {
       case FUNC_INIT:
         HM10SerialInit();                                  // init and start communication
@@ -1286,4 +1288,5 @@ bool Xsns62(uint8_t function)
   }
   return result;
 }
-#endif //USE_HM10
+#endif  // USE_HM10
+#endif  // ESP8266

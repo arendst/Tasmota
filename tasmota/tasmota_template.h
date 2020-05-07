@@ -20,6 +20,8 @@
 #ifndef _TASMOTA_TEMPLATE_H_
 #define _TASMOTA_TEMPLATE_H_
 
+#ifdef ESP8266
+
 // User selectable GPIO functionality
 // ATTENTION: Only add at the end of this list just before GPIO_SENSOR_END
 //            Then add the same name(s) in a nice location in array kGpioNiceList
@@ -228,6 +230,9 @@ enum UserSelectablePins {
   GPIO_ELECTRIQ_MOODL_TX, // ElectriQ iQ-wifiMOODL Serial TX
   GPIO_AS3935,
   GPIO_PMS5003_TX,     // Plantower PMS5003 Serial interface
+  GPIO_BOILER_OT_RX,   // OpenTherm Boiler RX pin
+  GPIO_BOILER_OT_TX,   // OpenTherm Boiler TX pin
+  GPIO_WINDMETER_SPEED,  // WindMeter speed counter pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -315,7 +320,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_CC1101_GDO0 "|" D_SENSOR_CC1101_GDO2 "|"
   D_SENSOR_HRXL_RX "|"
   D_SENSOR_ELECTRIQ_MOODL "|"
-  D_SENSOR_AS3935 "|" D_SENSOR_PMS5003_TX
+  D_SENSOR_AS3935 "|" D_SENSOR_PMS5003_TX "|"
+  D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
+  D_SENSOR_WINDMETER_SPEED
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -589,6 +596,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
   GPIO_TX2X_TXD_BLACK, // TX20/TX23 Transmission Pin
 #endif
+#ifdef USE_WINDMETER
+  GPIO_WINDMETER_SPEED,
+#endif
 #ifdef USE_MP3_PLAYER
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
 #endif
@@ -610,16 +620,20 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_RDM6300_RX,
 #endif
 #ifdef USE_IBEACON
-  GPIO_IBEACON_RX,
   GPIO_IBEACON_TX,
+  GPIO_IBEACON_RX,
 #endif
 #ifdef USE_GPS
-  GPIO_GPS_RX,         // GPS serial interface
   GPIO_GPS_TX,         // GPS serial interface
+  GPIO_GPS_RX,         // GPS serial interface
 #endif
 #ifdef USE_HM10
-  GPIO_HM10_RX,         // GPS serial interface
   GPIO_HM10_TX,         // GPS serial interface
+  GPIO_HM10_RX,         // GPS serial interface
+#endif
+#ifdef USE_OPENTHERM
+  GPIO_BOILER_OT_TX,
+  GPIO_BOILER_OT_RX,
 #endif
 
 #ifdef USE_MGC3130
@@ -699,29 +713,13 @@ const char kAdc0Names[] PROGMEM =
 
 /********************************************************************************************/
 
-#ifdef ESP8266
-
 #define MAX_GPIO_PIN       17   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
+#define MAX_USER_PINS      13   // MAX_GPIO_PIN - MIN_FLASH_PINS
 #define ADC0_PIN           17   // Pin number of ADC0
 #define WEMOS_MODULE       17   // Wemos module
 
 const char PINS_WEMOS[] PROGMEM = "D3TXD4RXD2D1flashcFLFLolD6D7D5D8D0A0";
-
-#else  // ESP32
-
-// esp32 has more pins
-#define USER_MODULE        255
-#define MAX_GPIO_PIN       40   // Number of supported GPIO
-#define MIN_FLASH_PINS     6    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8, 9, 10 and 11)
-#define ADC0_PIN           36   // Pin number of ADC0
-#define WEMOS_MODULE       0    // Wemos module
-
-const char PINS_WEMOS[] PROGMEM = "00TX02RX04050607080910111213141516171819202122232425262728293031A4A5A6A7A03738A3";
-
-#endif  // ESP8266
-
-#define MAX_USER_PINS      MAX_GPIO_PIN-MIN_FLASH_PINS
 
 /********************************************************************************************/
 
@@ -757,10 +755,8 @@ typedef struct MYTMPLT {
 } mytmplt;
 
 /********************************************************************************************/
-
-#ifdef ESP8266
-
 // Supported hardware modules
+
 enum SupportedModules {
   SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, SONOFF_S2X, SLAMPHER, SONOFF_TOUCH,
   SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, EXS_RELAY, WION, WEMOS, SONOFF_DEV, H801,

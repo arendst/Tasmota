@@ -312,7 +312,7 @@ void DebugCfgDump(char* parms)
   char *p;
 
   uint8_t *buffer = (uint8_t *) &Settings;
-  maxrow = ((sizeof(SYSCFG)+CFG_COLS)/CFG_COLS);
+  maxrow = ((sizeof(Settings)+CFG_COLS)/CFG_COLS);
 
   uint16_t srow = strtol(parms, &p, 16) / CFG_COLS;
   uint16_t mrow = strtol(p, &p, 10);
@@ -356,7 +356,7 @@ void DebugCfgPeek(char* parms)
   char *p;
 
   uint16_t address = strtol(parms, &p, 16);
-  if (address > sizeof(SYSCFG)) address = sizeof(SYSCFG) -4;
+  if (address > sizeof(Settings)) address = sizeof(Settings) -4;
   address = (address >> 2) << 2;
 
   uint8_t *buffer = (uint8_t *) &Settings;
@@ -381,7 +381,7 @@ void DebugCfgPoke(char* parms)
   char *p;
 
   uint16_t address = strtol(parms, &p, 16);
-  if (address > sizeof(SYSCFG)) address = sizeof(SYSCFG) -4;
+  if (address > sizeof(Settings)) address = sizeof(Settings) -4;
   address = (address >> 2) << 2;
 
   uint32_t data = strtol(p, &p, 16);

@@ -607,9 +607,9 @@ void RfSnsInit(void)
     RfSnsInitAlectoV2();
 #endif
     if (rfsns_any_sensor) {
-      rfsns_rf_bit = digitalPinToBitMask(pin[GPIO_RF_SENSOR]);
-      rfsns_rf_port = digitalPinToPort(pin[GPIO_RF_SENSOR]);
-      pinMode(pin[GPIO_RF_SENSOR], INPUT);
+      rfsns_rf_bit = digitalPinToBitMask(Pin(GPIO_RF_SENSOR));
+      rfsns_rf_port = digitalPinToPort(Pin(GPIO_RF_SENSOR));
+      pinMode(Pin(GPIO_RF_SENSOR), INPUT);
     } else {
       free(rfsns_raw_signal);
       rfsns_raw_signal = nullptr;
@@ -654,14 +654,14 @@ bool Xsns37(uint8_t function)
 {
   bool result = false;
 
-  if ((pin[GPIO_RF_SENSOR] < 99) && (FUNC_INIT == function)) {
+  if (PinUsed(GPIO_RF_SENSOR) && (FUNC_INIT == function)) {
     RfSnsInit();
   }
   else if (rfsns_raw_signal) {
     switch (function) {
       case FUNC_LOOP:
         if ((*portInputRegister(rfsns_rf_port) &rfsns_rf_bit) == rfsns_rf_bit) {
-          if (RfSnsFetchSignal(pin[GPIO_RF_SENSOR], HIGH)) {
+          if (RfSnsFetchSignal(Pin(GPIO_RF_SENSOR), HIGH)) {
             RfSnsAnalyzeRawSignal();
           }
         }

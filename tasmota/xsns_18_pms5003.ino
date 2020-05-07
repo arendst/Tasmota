@@ -171,7 +171,7 @@ bool PmsReadData(void)
 
 bool PmsCommandSensor(void)
 {
-  if ((pin[GPIO_PMS5003_TX] < 99) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
+  if (PinUsed(GPIO_PMS5003_TX) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
     if (XdrvMailbox.payload < MIN_INTERVAL_PERIOD) {
       // Set Active Mode if interval is less than 60 seconds
       Settings.pms_wake_interval = 0;
@@ -239,12 +239,12 @@ void PmsSecond(void)                 // Every second
 void PmsInit(void)
 {
   Pms.type = 0;
-  if (pin[GPIO_PMS5003_RX] < 99) {
-    PmsSerial = new TasmotaSerial(pin[GPIO_PMS5003_RX], (pin[GPIO_PMS5003_TX] < 99) ? pin[GPIO_PMS5003_TX] : -1, 1);
+  if (PinUsed(GPIO_PMS5003_RX)) {
+    PmsSerial = new TasmotaSerial(Pin(GPIO_PMS5003_RX), (PinUsed(GPIO_PMS5003_TX)) ? Pin(GPIO_PMS5003_TX) : -1, 1);
     if (PmsSerial->begin(9600)) {
       if (PmsSerial->hardwareSerial()) { ClaimSerial(); }
 
-      if (99 == pin[GPIO_PMS5003_TX]) {  // setting interval not supported if TX pin not connected
+      if (!PinUsed(GPIO_PMS5003_TX)) {  // setting interval not supported if TX pin not connected
         Settings.pms_wake_interval = 0;
         Pms.ready = 1;
       }

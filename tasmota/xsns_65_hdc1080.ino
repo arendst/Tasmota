@@ -62,7 +62,7 @@
 
 #define HDC1080_CONV_TIME   15      // Assume 6.50 + 6.35 ms + x of conversion delay for this device
 #define HDC1080_TEMP_MULT   0.0025177
-#define HDC1080_RH_MULT     0.0025177
+#define HDC1080_RH_MULT     0.0015258
 #define HDC1080_TEMP_OFFSET 40.0
 
 const char* hdc_type_name = "HDC1080";

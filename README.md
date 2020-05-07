@@ -22,7 +22,8 @@ In addition to the [release webpage](https://github.com/arendst/Tasmota/releases
 
 [![Dev Version](https://img.shields.io/badge/development%20version-v8.2.x.x-blue.svg)](https://github.com/arendst/Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
-[![Build Status](https://img.shields.io/travis/arendst/Tasmota.svg)](https://travis-ci.org/arendst/Tasmota)
+[![Tasmota CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+CI%22)
+[![Tasmota ESP32 CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20ESP32%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+ESP32+CI%22)
 
 See [tasmota/CHANGELOG.md](tasmota/CHANGELOG.md) for detailed change information.
 
@@ -144,7 +145,8 @@ People helping to keep the show on the road:
 - Stefan Bode for his Shutter and Deep sleep drivers
 - Jacek Ziółkowski for his [TDM](https://github.com/jziolkowski/tdm) management tool and [Tasmotizer](https://github.com/tasmota/tasmotizer) flashing tool
 - Christian Staars for NRF24L01 and HM-10 Bluetooth sensor support
-- Pail Diem for UDP Group communication support
+- Paul Diem for UDP Group communication support
+- Jörg Schüler-Maroldt for his initial ESP32 port
 - Many more providing Tips, Wips, Pocs, PRs and Donations
 
 ## License

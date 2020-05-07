@@ -118,6 +118,11 @@ uint16_t tele_period = 9999;                // Tele period timer
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
 uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
+
+#ifdef ESP32
+uint16_t gpio_pin[MAX_GPIO_PIN] = { 0 };    // GPIO functions indexed by pin number
+#endif  // ESP32
+
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
 RulesBitfield rules_flag;                   // Rule state flags (16 bits)
 uint8_t mqtt_cmnd_blocked = 0;              // Ignore flag for publish command
@@ -126,7 +131,11 @@ uint8_t state_250mS = 0;                    // State 250msecond per second flag
 uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
 uint8_t ssleep;                             // Current copy of Settings.sleep
 uint8_t blinkspeed = 1;                     // LED blink rate
-uint8_t pin[GPIO_MAX];                      // Possible pin configurations
+
+#ifdef ESP8266
+uint8_t gpio_pin[MAX_GPIO_PIN] = { 0 };     // GPIO functions indexed by pin number
+#endif  // ESP8266 - ESP32
+
 uint8_t active_device = 1;                  // Active device in ExecuteCommandPower
 uint8_t leds_present = 0;                   // Max number of LED supported
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
@@ -142,7 +151,7 @@ uint8_t devices_present = 0;                // Max number of devices supported
 uint8_t seriallog_level;                    // Current copy of Settings.seriallog_level
 uint8_t syslog_level;                       // Current copy of Settings.syslog_level
 uint8_t my_module_type;                     // Current copy of Settings.module or user template type
-uint8_t my_adc0;                            // Active copy of Module ADC0
+uint8_t my_adc0 = 0;                        // Active copy of Module ADC0
 uint8_t last_source = 0;                    // Last command source
 uint8_t shutters_present = 0;               // Number of actual define shutters
 uint8_t prepped_loglevel = 0;               // Delayed log level message
@@ -190,13 +199,13 @@ char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
 
 void setup(void)
 {
-  global_state.data = 3;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
-
 #ifdef ESP32
-#ifdef DISABLE_BROWNOUT
-  DisableBrownout();
+#ifdef DISABLE_ESP32_BROWNOUT
+  DisableBrownout();      // Workaround possible weak LDO resulting in brownout detection during Wifi connection
 #endif
 #endif
+
+  global_state.data = 3;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 
   RtcRebootLoad();
   if (!RtcRebootValid()) {
@@ -260,19 +269,20 @@ void setup(void)
         Settings.rule_enabled = 0;                  // Disable all rules
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +3) {  // Restarted 5 times
-        for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) {
+        for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
           Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
         }
+#ifdef ESP8266
         Settings.my_adc0 = ADC0_NONE;               // Reset user defined ADC0 disabling sensors
+#endif
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +4) {  // Restarted 6 times
 #ifdef ESP8266
         Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
   //      Settings.last_module = SONOFF_BASIC;
-#endif  // ESP8266
-#ifdef ESP32
+#else  // ESP32
         Settings.module = WEMOS;                    // Reset module to Wemos
-#endif  // ESP32
+#endif  // ESP8266 - ESP32
       }
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     }

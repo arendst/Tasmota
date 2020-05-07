@@ -1028,6 +1028,9 @@ void CmndPowerRetain(void)
       }
     }
     Settings.flag.mqtt_power_retain = XdrvMailbox.payload;     // CMND_POWERRETAIN
+    if (Settings.flag.mqtt_power_retain) {
+      Settings.flag4.only_json_message = 0;                    // SetOption90 - Disable non-json MQTT response
+    }
   }
   ResponseCmndStateText(Settings.flag.mqtt_power_retain);      // CMND_POWERRETAIN
 }

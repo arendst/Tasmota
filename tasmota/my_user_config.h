@@ -283,6 +283,7 @@
 #define LIGHT_CHANNEL_MODE     false             // [SetOption68] Enable multi-channels PWM instead of Color PWM
 #define LIGHT_SLIDER_POWER     false             // [SetOption77] Do not power off if slider moved to far left
 #define LIGHT_ALEXA_CT_RANGE   false             // [SetOption82] Reduced CT range for Alexa
+#define LIGHT_PWM_CT_MODE      false             // [SetOption92] Set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...) a.k.a. module 48 mode
 
 // -- Energy --------------------------------------
 #define ENERGY_VOLTAGE_ALWAYS  false             // [SetOption21] Enable show voltage even if powered off
@@ -312,29 +313,29 @@
 
 // -- Localization --------------------------------
   // If non selected the default en-GB will be used
-//#define MY_LANGUAGE            bg-BG           // Bulgarian in Bulgaria
-//#define MY_LANGUAGE            cs-CZ           // Czech in Czech
-//#define MY_LANGUAGE            de-DE           // German in Germany
-//#define MY_LANGUAGE            el-GR           // Greek in Greece
-//#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
-//#define MY_LANGUAGE            es-ES           // Spanish in Spain
-//#define MY_LANGUAGE            fr-FR           // French in France
-//#define MY_LANGUAGE            he-HE           // Hebrew in Israel
-//#define MY_LANGUAGE            hu-HU           // Hungarian in Hungary
-//#define MY_LANGUAGE            it-IT           // Italian in Italy
-//#define MY_LANGUAGE            ko-KO           // Korean in Korea
-//#define MY_LANGUAGE            nl-NL           // Dutch in the Netherlands
-//#define MY_LANGUAGE            pl-PL           // Polish in Poland
-//#define MY_LANGUAGE            pt-BR           // Portuguese in Brazil
-//#define MY_LANGUAGE            pt-PT           // Portuguese in Portugal
-//#define MY_LANGUAGE            ro-RO           // Romanian in Romania
-//#define MY_LANGUAGE            ru-RU           // Russian in Russia
-//#define MY_LANGUAGE            sk-SK           // Slovak in Slovakia
-//#define MY_LANGUAGE            sv-SE           // Swedish in Sweden
-//#define MY_LANGUAGE            tr-TR           // Turkish in Turkey
-//#define MY_LANGUAGE            uk-UA           // Ukrainian in Ukraine
-//#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
-//#define MY_LANGUAGE            zh-TW           // Chinese (Traditional) in Taiwan
+//#define MY_LANGUAGE            bg_BG           // Bulgarian in Bulgaria
+//#define MY_LANGUAGE            cs_CZ           // Czech in Czech
+//#define MY_LANGUAGE            de_DE           // German in Germany
+//#define MY_LANGUAGE            el_GR           // Greek in Greece
+//#define MY_LANGUAGE            en_GB           // English in Great Britain. Enabled by Default
+//#define MY_LANGUAGE            es_ES           // Spanish in Spain
+//#define MY_LANGUAGE            fr_FR           // French in France
+//#define MY_LANGUAGE            he_HE           // Hebrew in Israel
+//#define MY_LANGUAGE            hu_HU           // Hungarian in Hungary
+//#define MY_LANGUAGE            it_IT           // Italian in Italy
+//#define MY_LANGUAGE            ko_KO           // Korean in Korea
+//#define MY_LANGUAGE            nl_NL           // Dutch in the Netherlands
+//#define MY_LANGUAGE            pl_PL           // Polish in Poland
+//#define MY_LANGUAGE            pt_BR           // Portuguese in Brazil
+//#define MY_LANGUAGE            pt_PT           // Portuguese in Portugal
+//#define MY_LANGUAGE            ro_RO           // Romanian in Romania
+//#define MY_LANGUAGE            ru_RU           // Russian in Russia
+//#define MY_LANGUAGE            sk_SK           // Slovak in Slovakia
+//#define MY_LANGUAGE            sv_SE           // Swedish in Sweden
+//#define MY_LANGUAGE            tr_TR           // Turkish in Turkey
+//#define MY_LANGUAGE            uk_UA           // Ukrainian in Ukraine
+//#define MY_LANGUAGE            zh_CN           // Chinese (Simplified) in China
+//#define MY_LANGUAGE            zh_TW           // Chinese (Traditional) in Taiwan
 
 // -- Wifi Config tools ---------------------------
 #define WIFI_SOFT_AP_CHANNEL   1                 // Soft Access Point Channel number between 1 and 13 as used by Wifi Manager web GUI
@@ -410,6 +411,7 @@
 #define USE_SONOFF_SC                            // Add support for Sonoff Sc (+1k1 code)
 #define USE_TUYA_MCU                             // Add support for Tuya Serial MCU
   #define TUYA_DIMMER_ID       0                 // Default dimmer Id
+//  #define USE_TUYA_TIME                          // Add support for Set Time in Tuya MCU
 #define USE_ARMTRONIX_DIMMERS                    // Add support for Armtronix Dimmers (+1k4 code)
 #define USE_PS_16_DZ                             // Add support for PS-16-DZ Dimmer (+2k code)
 #define USE_SONOFF_IFAN                          // Add support for Sonoff iFan02 and iFan03 (+2k code)
@@ -420,10 +422,12 @@
 #define USE_EXS_DIMMER                           // Add support for ES-Store WiFi Dimmer (+1k5 code)
 //  #define EXS_MCU_CMNDS                          // Add command to send MCU commands (+0k8 code)
 //#define USE_HOTPLUG                              // Add support for sensor HotPlug
-#define USE_DEVICE_GROUPS                        // Add support for device groups (+5k code)
+#define USE_DEVICE_GROUPS                        // Add support for device groups (+5k5 code)
+  #define DEVICE_GROUPS_ADDRESS 239,255,250,250  // Device groups multicast address
+  #define DEVICE_GROUPS_PORT 4447                // Device groups multicast port
   #define USE_DEVICE_GROUPS_SEND                 // Add support for the DevGroupSend command (+0k6 code)
-#define USE_PWM_DIMMER                           // Add support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+2k5 code)
-  #define USE_PWM_DIMMER_REMOTE                  // Add support for remote switches to PWM Dimmer, also adds device groups support (+1k code plus device groups size)
+#define USE_PWM_DIMMER                           // Add support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+2k2 code, DGR=0k4)
+  #define USE_PWM_DIMMER_REMOTE                  // Add support for remote switches to PWM Dimmer (requires USE_DEVICE_GROUPS) (+0k9 code)
 //#define USE_KEELOQ                               // Add support for Jarolift rollers by Keeloq algorithm (+4k5 code)
 #define USE_SONOFF_D1                            // Add support for Sonoff D1 Dimmer (+0k7 code)
 
@@ -438,6 +442,7 @@
 #define USE_SONOFF_L1                            // Add support for Sonoff L1 led control
 #define USE_ELECTRIQ_MOODL                       // Add support for ElectriQ iQ-wifiMOODL RGBW LED controller (+0k3 code)
 #define USE_LIGHT_PALETTE                        // Add support for color palette (+0k7 code)
+#define USE_DGR_LIGHT_SEQUENCE                   // Add support for device group light sequencing (requires USE_DEVICE_GROUPS) (+0k2 code)
 
 // -- Counter input -------------------------------
 #define USE_COUNTER                              // Enable inputs as counter (+0k8 code)
@@ -473,6 +478,10 @@
 //  #define USE_SI1145                             // [I2cDriver19] Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
 //  #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
 //  #define USE_APDS9960                           // [I2cDriver21] Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
+    #define USE_APDS9960_GESTURE                   // Enable APDS9960 Gesture feature (+2k code)
+    #define USE_APDS9960_PROXIMITY                 // Enable APDS9960 Proximity feature (>50 code)
+    #define USE_APDS9960_COLOR                     // Enable APDS9960 Color feature (+0.8k code)
+    #define USE_APDS9960_STARTMODE  0              // Default to enable Gesture mode
 //  #define USE_MCP230xx                           // [I2cDriver22] Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
 //    #define USE_MCP230xx_ADDR 0x20               // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x26 - set according to your wired setup)
 //    #define USE_MCP230xx_OUTPUT                  // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+1k5 code)
@@ -566,8 +575,13 @@
 //#define USE_IBEACON                              // Add support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 //#define USE_GPS                                  // Add support for GPS and NTP Server for becoming Stratus 1 Time Source (+3k1 code, +132 bytes RAM)
 //  #define USE_FLOG                               // Add support for GPS logging in OTA's Flash (Experimental) (+2k9 code, +8 bytes RAM)
-//#define USE_HM10                                 // Add support for HM-10 as a BLE-bridge for the LYWSD03 (+5k1 code)
+//#define USE_HM10                                 // (ESP8266 only) Add support for HM-10 as a BLE-bridge (+9k3 code)
+//#define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 //#define USE_HRXL                                 // Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
+//#define USE_TASMOTA_SLAVE                        // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k6 code, 64 mem)
+  #define USE_TASMOTA_SLAVE_FLASH_SPEED 57600      // Usually 57600 for 3.3V variants and 115200 for 5V variants
+  #define USE_TASMOTA_SLAVE_SERIAL_SPEED 57600     // Depends on the sketch that is running on the Uno/Pro Mini
+//#define USE_OPENTHERM                            // Add support for OpenTherm (+15k code)
 
 // -- Power monitoring sensors --------------------
 #define USE_ENERGY_MARGIN_DETECTION              // Add support for Energy Margin detection (+1k6 code)
@@ -643,6 +657,8 @@
 //#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k6/0k8 code)
 //#define USE_TX23_WIND_SENSOR                     // Add support for La Crosse TX23 anemometer (+2k7/1k code)
 
+//#define USE_WINDMETER                            // Add support for analog anemometer (+2k2 code)
+
 //#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
 
 //#define USE_RF_SENSOR                            // Add support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
@@ -652,42 +668,34 @@
 //#define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
 
-//#define USE_TASMOTA_SLAVE                        // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k6 code, 64 mem)
-  #define USE_TASMOTA_SLAVE_FLASH_SPEED 57600      // Usually 57600 for 3.3V variants and 115200 for 5V variants
-  #define USE_TASMOTA_SLAVE_SERIAL_SPEED 57600     // Depends on the sketch that is running on the Uno/Pro Mini
-
-/*********************************************************************************************\
- * THERMOSTAT CONTROLLER
-\*********************************************************************************************/
-
-#define USE_THERMOSTAT
-
-#define THERMOSTAT_CONTROLLER_OUTPUTS         1         // Number of outputs to be controlled independently
-#define THERMOSTAT_SENSOR_NAME                "DS18B20" // Name of the local sensor to be used
-#define THERMOSTAT_RELAY_NUMBER               1         // Default output relay number for the first controller (+i for following ones)
-#define THERMOSTAT_SWITCH_NUMBER              1         // Default input switch number for the first controller (+i for following ones)
-#define THERMOSTAT_TIME_ALLOW_RAMPUP          300       // Default time in seconds after last target update to allow ramp-up controller phase in minutes
-#define THERMOSTAT_TIME_RAMPUP_MAX            960       // Default time maximum ramp-up controller duration in minutes
-#define THERMOSTAT_TIME_RAMPUP_CYCLE          1800      // Default time ramp-up cycle in seconds
-#define THERMOSTAT_TIME_SENS_LOST             30        // Maximum time w/o sensor update to set it as lost in minutes
-#define THERMOSTAT_TEMP_SENS_NUMBER           1         // Default temperature sensor number
-#define THERMOSTAT_TIME_MANUAL_TO_AUTO        60        // Default time without input switch active to change from manual to automatic in minutes
-#define THERMOSTAT_TIME_ON_LIMIT              120       // Default maximum time with output active in minutes
-#define THERMOSTAT_TIME_RESET                 12000     // Default reset time of the PI controller in seconds
-#define THERMOSTAT_TIME_PI_CYCLE              30        // Default cycle time for the thermostat controller in minutes
-#define THERMOSTAT_TIME_MAX_ACTION            20        // Default maximum thermostat time per cycle in minutes
-#define THERMOSTAT_TIME_MIN_ACTION            4         // Default minimum thermostat time per cycle in minutes
-#define THERMOSTAT_TIME_MIN_TURNOFF_ACTION    3         // Default minimum turnoff time in minutes, below it the thermostat will be held on
-#define THERMOSTAT_PROP_BAND                  4         // Default proportional band of the PI controller in degrees celsius
-#define THERMOSTAT_TEMP_RESET_ANTI_WINDUP     8         // Default range where reset antiwindup is disabled, in tenths of degrees celsius
-#define THERMOSTAT_TEMP_HYSTERESIS            1         // Default range hysteresis for temperature PI controller, in tenths of degrees celsius
-#define THERMOSTAT_TEMP_FROST_PROTECT         40        // Default minimum temperature for frost protection, in tenths of degrees celsius
-#define THERMOSTAT_TEMP_RAMPUP_DELTA_IN       4         // Default minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
-#define THERMOSTAT_TEMP_RAMPUP_DELTA_OUT      2         // Default minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
-#define THERMOSTAT_TEMP_PI_RAMPUP_ACC_E       200       // Default accumulated error when switching from ramp-up controller to PI in hundreths of degrees celsius
-#define THERMOSTAT_TIME_OUTPUT_DELAY          180       // Default output delay between state change and real actuation event (f.i. valve open/closed)
-#define THERMOSTAT_TEMP_INIT                  180       // Default init target temperature for the thermostat controller
-#define THERMOSTAT_TIME_MAX_OUTPUT_INCONSIST  3         // Default maximum time where the input and the outpus shall differ (for diagnostic) in minutes
+// -- Thermostat control ----------------------------
+//#define USE_THERMOSTAT                             // Add support for Thermostat
+  #define THERMOSTAT_CONTROLLER_OUTPUTS         1         // Number of outputs to be controlled independently
+  #define THERMOSTAT_SENSOR_NAME                "DS18B20" // Name of the local sensor to be used
+  #define THERMOSTAT_RELAY_NUMBER               1         // Default output relay number for the first controller (+i for following ones)
+  #define THERMOSTAT_SWITCH_NUMBER              1         // Default input switch number for the first controller (+i for following ones)
+  #define THERMOSTAT_TIME_ALLOW_RAMPUP          300       // Default time in seconds after last target update to allow ramp-up controller phase in minutes
+  #define THERMOSTAT_TIME_RAMPUP_MAX            960       // Default time maximum ramp-up controller duration in minutes
+  #define THERMOSTAT_TIME_RAMPUP_CYCLE          1800      // Default time ramp-up cycle in seconds
+  #define THERMOSTAT_TIME_SENS_LOST             30        // Maximum time w/o sensor update to set it as lost in minutes
+  #define THERMOSTAT_TEMP_SENS_NUMBER           1         // Default temperature sensor number
+  #define THERMOSTAT_TIME_MANUAL_TO_AUTO        60        // Default time without input switch active to change from manual to automatic in minutes
+  #define THERMOSTAT_TIME_ON_LIMIT              120       // Default maximum time with output active in minutes
+  #define THERMOSTAT_TIME_RESET                 12000     // Default reset time of the PI controller in seconds
+  #define THERMOSTAT_TIME_PI_CYCLE              30        // Default cycle time for the thermostat controller in minutes
+  #define THERMOSTAT_TIME_MAX_ACTION            20        // Default maximum thermostat time per cycle in minutes
+  #define THERMOSTAT_TIME_MIN_ACTION            4         // Default minimum thermostat time per cycle in minutes
+  #define THERMOSTAT_TIME_MIN_TURNOFF_ACTION    3         // Default minimum turnoff time in minutes, below it the thermostat will be held on
+  #define THERMOSTAT_PROP_BAND                  4         // Default proportional band of the PI controller in degrees celsius
+  #define THERMOSTAT_TEMP_RESET_ANTI_WINDUP     8         // Default range where reset antiwindup is disabled, in tenths of degrees celsius
+  #define THERMOSTAT_TEMP_HYSTERESIS            1         // Default range hysteresis for temperature PI controller, in tenths of degrees celsius
+  #define THERMOSTAT_TEMP_FROST_PROTECT         40        // Default minimum temperature for frost protection, in tenths of degrees celsius
+  #define THERMOSTAT_TEMP_RAMPUP_DELTA_IN       4         // Default minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
+  #define THERMOSTAT_TEMP_RAMPUP_DELTA_OUT      2         // Default minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
+  #define THERMOSTAT_TEMP_PI_RAMPUP_ACC_E       200       // Default accumulated error when switching from ramp-up controller to PI in hundreths of degrees celsius
+  #define THERMOSTAT_TIME_OUTPUT_DELAY          180       // Default output delay between state change and real actuation event (f.i. valve open/closed)
+  #define THERMOSTAT_TEMP_INIT                  180       // Default init target temperature for the thermostat controller
+  #define THERMOSTAT_TIME_MAX_OUTPUT_INCONSIST  3         // Default maximum time where the input and the outpus shall differ (for diagnostic) in minutes
 
 // -- End of general directives -------------------
 
