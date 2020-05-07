@@ -482,6 +482,14 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Particules"
 
+// xsns_27_apds9960.ino
+#define D_GESTURE "Geste"
+#define D_COLOR_RED "Rouge"
+#define D_COLOR_GREEN "Vert"
+#define D_COLOR_BLUE "Bleu"
+#define D_CCT "CCT"
+#define D_PROXIMITY "Proximité"
+
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Accél. Axe-X"
 #define D_AY_AXIS "Accél. Axe-Y"
@@ -503,7 +511,7 @@
 #define D_CALIBRATE "Étalonner"
 #define D_CALIBRATION "Étalonnage"
 
-//xsns_35_TX20.ino
+// xsns_35_TX20.ino
 #define D_TX20_WIND_DIRECTION "Direction du vent"
 #define D_TX20_WIND_SPEED "Vitesse du vent"
 #define D_TX20_WIND_SPEED_MIN "Vitesse Min"
@@ -785,5 +793,9 @@
 #define D_AS3935_OUTDOORS "Outdoors"
 #define D_AS3935_CAL_FAIL "calibration failed"
 #define D_AS3935_CAL_OK "calibration set to:"
+
+//xsns_68_opentherm.ino
+#define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
+#define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
 
 #endif  // _LANGUAGE_FR_FR_H_

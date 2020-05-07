@@ -482,6 +482,14 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Частици"
 
+// xsns_27_apds9960.ino
+#define D_GESTURE "Жест"
+#define D_COLOR_RED "Red"
+#define D_COLOR_GREEN "Грийн"
+#define D_COLOR_BLUE "син"
+#define D_CCT "CCT"
+#define D_PROXIMITY "близост"
+
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Ускорение - ос X"
 #define D_AY_AXIS "Ускорение - ос Y"
@@ -785,5 +793,9 @@
 #define D_AS3935_OUTDOORS "Outdoors"
 #define D_AS3935_CAL_FAIL "calibration failed"
 #define D_AS3935_CAL_OK "calibration set to:"
+
+//xsns_68_opentherm.ino
+#define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
+#define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
 
 #endif  // _LANGUAGE_BG_BG_H_

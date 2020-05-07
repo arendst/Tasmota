@@ -878,13 +878,13 @@ bool Xdrv39(uint8_t function) {
       wc_pic_setup();
       break;
     case FUNC_WEB_ADD_MAIN_BUTTON:
-     //if (Settings.esp32_webcam_resolution) {
-#ifndef USE_SCRIPT
+     if (Settings.esp32_webcam_resolution) {
+//#ifndef USE_SCRIPT
        WcStreamControl(Settings.esp32_webcam_resolution);
        delay(50);   // Give the webcam webserver some time to prepare the stream
        wc_show_stream();
-#endif
-     //}
+//#endif
+     }
      break;
     case FUNC_COMMAND:
       result = DecodeCommand(kWCCommands, WCCommand);

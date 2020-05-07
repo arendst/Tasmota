@@ -482,6 +482,14 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Particles"
 
+// xsns_27_apds9960.ino
+#define D_GESTURE "Gesture"
+#define D_COLOR_RED "Red"
+#define D_COLOR_GREEN "Green"
+#define D_COLOR_BLUE "Blue"
+#define D_CCT "CCT"
+#define D_PROXIMITY "Proximity"
+
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Accel. X-Axis"
 #define D_AY_AXIS "Accel. Y-Axis"
@@ -688,6 +696,7 @@
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KELVIN "&deg;K"
 #define D_UNIT_KILOMETER "km"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
@@ -785,5 +794,9 @@
 #define D_AS3935_OUTDOORS "Outdoors"
 #define D_AS3935_CAL_FAIL "calibration failed"
 #define D_AS3935_CAL_OK "calibration set to:"
+
+//xsns_68_opentherm.ino
+#define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
+#define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
 
 #endif  // _LANGUAGE_EN_GB_H_
