@@ -51,11 +51,8 @@
 #include <ctype.h>
 #include <stdint.h>
 
+#include <pgmspace.h>
 #include "unishox.h"
-
-#ifndef PROGMEM  // quick fix for ESP32 compilation
-#define PROGMEM
-#endif
 
 typedef unsigned char byte;
 // we squeeze both c_95[] and l_95[] in a sinle array.
