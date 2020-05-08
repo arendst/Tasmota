@@ -53,6 +53,10 @@
 
 #include "unishox.h"
 
+#ifndef PROGMEM  // quick fix for ESP32 compilation
+#define PROGMEM
+#endif
+
 typedef unsigned char byte;
 // we squeeze both c_95[] and l_95[] in a sinle array.
 // c_95[] uses only the 3 upper nibbles (or 12 most signifcant bits), while the last nibble encodes length (3..13)
