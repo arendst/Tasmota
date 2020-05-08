@@ -397,6 +397,7 @@
 // -- Rules or Script  ----------------------------
 // Select none or only one of the below defines
 #define USE_RULES                                // Add support for rules (+8k code)
+  // #define USE_RULES_COMPRESSION                  // Compresses rules in Flash at about ~50% (+3.8k code)
 //#define USE_SCRIPT                               // Add support for script (+17k code)
   //#define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support
 

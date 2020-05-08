@@ -66,6 +66,8 @@
 
 #define XDRV_10             10
 
+#include <unishox.h>
+
 #define D_CMND_RULE "Rule"
 #define D_CMND_RULETIMER "RuleTimer"
 #define D_CMND_EVENT "Event"
@@ -177,6 +179,222 @@ char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
 #if (MAX_RULE_MEMS>16)
 #error MAX_RULE_MEMS is bigger than 16
 #endif
+
+
+/*******************************************************************************************/
+/*
+ * Add Unishox compression to Rules
+ *
+ * New compression for Rules, depends on SetOption93
+ * 
+ * To avoid memory corruption when downgrading, the format is as follows:
+ * - If `SetOption93 0`
+ *   Rule[x][] = 511 char max NULL terminated string (512 with trailing NULL)
+ *   Rule[x][0] = 0 if the Rule<x> is empty
+ *   New: in case the string is empty we also enforce:
+ *   Rule[x][1] = 0   (i.e. we have two conseutive NULLs)
+ * 
+ * - If `SetOption93 1`
+ *   If the rule is smaller than 511, it is stored uncompressed. Rule[x][0] is not null.
+ *   If the rule is empty, Rule[x][0] = 0 and Rule[x][1] = 0;
+ *   If the rule is bigger than 511, it is stored compressed
+ *      The first byte of each Rule is always NULL.
+ *      Rule[x][0] = 0,  if firmware is downgraded, the rule will be considered as empty
+ * 
+ *      The second byte contains the size of uncompressed rule in 8-bytes blocks (i.e. (len+7)/8 )
+ *      Maximum rule size si 2KB (2048 bytes per rule), although there is little chances compression ratio will go down to 75%
+ *      Rule[x][1] = size uncompressed in dwords. If zero, the rule is empty.
+ * 
+ *      The remaining bytes contain the compressed rule, NULL terminated
+ */
+/*******************************************************************************************/
+
+#ifdef USE_RULES_COMPRESSION
+// Statically allocate one String per rule
+String k_rules[MAX_RULE_SETS] = { String(), String(), String() };   // Strings are created empty
+#endif // USE_RULES_COMPRESSION
+
+// Returns whether the rule is uncompressed, which means the first byte is not NULL
+inline bool IsRuleUncompressed(uint32_t idx) {
+#ifdef USE_RULES_COMPRESSION
+  return Settings.rules[idx][0] ? true : false;      // first byte not NULL, the rule is not empty and not compressed
+#else
+  return true;
+#endif
+}
+
+// Returns whether the rule is empty, which requires two consecutive NULL
+inline bool IsRuleEmpty(uint32_t idx) {
+#ifdef USE_RULES_COMPRESSION
+  return (Settings.rules[idx][0] == 0) && (Settings.rules[idx][1] == 0) ? true : false;
+#else
+  return (Settings.rules[idx][0] == 0) ? true : false;
+#endif
+}
+
+// Returns the approximate (+3-0) length of the rule, not counting the trailing NULL
+size_t GetRuleLen(uint32_t idx) {
+  // no need to use #ifdef USE_RULES_COMPRESSION, the compiler will optimize since first test is always true
+  if (IsRuleUncompressed(idx)) {
+    return strlen(Settings.rules[idx]);
+  } else {                        // either empty or compressed
+    return Settings.rules[idx][1] * 8;   // cheap calculation, but not byte accurate (may overshoot by 7)
+  }
+}
+
+// Returns the actual Flash storage for the Rule, including trailing NULL
+size_t GetRuleLenStorage(uint32_t idx) {
+  // no need to use #ifdef USE_RULES_COMPRESSION, the compiler will optimize since first test is always true
+  if (IsRuleUncompressed(idx)) {
+    return 1 + strlen(Settings.rules[idx]);
+  } else {
+    return 2 + strlen(&Settings.rules[idx][2]); // skip first byte and get len of the compressed rule
+  }
+}
+
+// internal function, do the actual decompression
+void GetRule_decompress(String &rule, const char *rule_head) {
+  size_t buf_len = 1 + *rule_head * 8;       // the first byte contains size of buffer for uncompressed rule / 8, buf_len may overshoot by 7
+  rule_head++;                               // advance to the actual compressed buffer
+
+  // We use a nasty trick here. To avoid allocating twice the buffer,
+  // we first extend the buffer of the String object to the target size (maybe overshooting by 7 bytes)
+  // then we decompress in this buffer,
+  // and finally assign the raw string to the String, which happens to work: String uses memmove(), so overlapping works
+  rule.reserve(buf_len);
+  char* buf = rule.begin();
+
+  int32_t len_decompressed = unishox_decompress(rule_head, strlen(rule_head), buf, buf_len);
+  buf[len_decompressed] = 0;    // add NULL terminator
+
+  // AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: Rawdecompressed: %d"), len_decompressed);
+  rule = buf;       // assign the raw string to the String object (in reality re-writing the same data in the same place)
+}
+
+//
+// Read rule in memory, uncompress if needed
+//
+// Returns: String() object containing a copy of the rule (rule processing is destructive and will change the String)
+String GetRule(uint32_t idx) {
+  if (IsRuleUncompressed(idx)) {
+    return String(Settings.rules[idx]);
+  } else {
+#ifdef USE_RULES_COMPRESSION    // we still do #ifdef to make sure we don't link unnecessary code
+
+    String rule("");
+    if (Settings.rules[idx][2] == 0) { return rule; }     // the rule is empty
+
+    // If the cache is empty, we need to decompress from Settings
+    if (0 == k_rules[idx].length() ) {
+      GetRule_decompress(rule, &Settings.rules[idx][1]);
+      if (!Settings.flag4.compress_rules_cpu) {
+        k_rules[idx] = rule;        // keep a copy for next time
+      }
+    } else {
+      // we have a valid copy
+      rule = k_rules[idx];
+    }
+    return rule;
+#endif
+  }
+}
+
+#ifdef USE_RULES_COMPRESSION
+// internal function, comrpess rule and store a cached version uncompressed (except if SetOption94 1)
+// If out == nullptr, we are in dry-run mode, so don't keep rule in cache
+int32_t SetRule_compress(uint32_t idx, const char *in, size_t in_len, char *out, size_t out_len) {
+  int32_t len_compressed;
+  len_compressed = unishox_compress(in, in_len, out, out_len);
+
+  if (len_compressed >= 0) {                // negative means compression failed because of buffer too small, we leave the rule untouched
+    // check if we need to store in cache
+    k_rules[idx] = (const char*) nullptr;   // Assign the String to nullptr, clears previous string and disallocate internal buffers of String object
+    if ((!Settings.flag4.compress_rules_cpu) && out) {      // if out == nullptr, don't store cache
+      // keep copy in cache
+      k_rules[idx] = in;
+    }
+  }
+  return len_compressed;
+}
+#endif // USE_RULES_COMPRESSION
+
+// Returns:
+//   >= 0 : the actual stored size
+//   <0 : not enough space
+int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
+  if (nullptr == content) { content = ""; }   // if nullptr, use empty string
+  size_t len_in = strlen(content);
+  bool needsCompress = false;
+  size_t offset = 0;
+
+  if (len_in >= MAX_RULE_SIZE) {              // if input is more than 512, it will not fit uncompressed
+    needsCompress = true;
+  }
+  if (append) {
+    if (IsRuleUncompressed(idx) || IsRuleEmpty(idx)) {  // if already uncompressed (so below 512) and append mode, check if it still fits uncompressed
+      offset = strlen(Settings.rules[idx]);
+      if (len_in + offset >= MAX_RULE_SIZE) {
+        needsCompress = true;
+      }
+    } else {
+      needsCompress = true;                 // we append to a non-empty compressed rule, so it won't fit uncompressed
+    }
+  }
+
+  if (!needsCompress) {                       // the rule fits uncompressed, so just copy it
+    strlcpy(Settings.rules[idx] + offset, content, sizeof(Settings.rules[idx]));
+
+#ifdef USE_RULES_COMPRESSION
+    // do a dry-run compression to display how much it would be compressed
+    int32_t len_compressed, len_uncompressed;
+
+    len_uncompressed = strlen(Settings.rules[idx]);
+    len_compressed = unishox_compress(Settings.rules[idx], len_uncompressed, nullptr /* dry-run */, MAX_RULE_SIZE + 8);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: Stored uncompressed, would compress from %d to %d (-%d%%)"), len_uncompressed, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_uncompressed, 0, 100));
+
+#endif // USE_RULES_COMPRESSION
+
+    return len_in + offset;
+  } else {
+#ifdef USE_RULES_COMPRESSION
+    int32_t len_compressed;
+    // allocate temp buffer so we don't nuke the rule if it's too big to fit
+    char *buf_out = (char*) malloc(MAX_RULE_SIZE + 8);    // take some margin
+    if (!buf_out) { return -1; }      // fail if couldn't allocate
+
+    // compress
+    if (append) {
+      String content_append = GetRule(idx);   // get original Rule and decompress it if needed
+      content_append += content;             // concat new content
+      len_in = content_append.length();       // adjust length
+      len_compressed = SetRule_compress(idx, content_append.c_str(), len_in, buf_out, MAX_RULE_SIZE + 8);
+    } else {
+      len_compressed = SetRule_compress(idx, content, len_in, buf_out, MAX_RULE_SIZE + 8);
+    }
+
+    if ((len_compressed >= 0) && (len_compressed < MAX_RULE_SIZE - 2)) {
+      // size is ok, copy to Settings
+      Settings.rules[idx][0] = 0;     // clear first byte to mark as compressed
+      Settings.rules[idx][1] = (len_in + 7) / 8;    // store original length in first bytes (4 bytes chuks)
+      memcpy(&Settings.rules[idx][2], buf_out, len_compressed);
+      Settings.rules[idx][len_compressed + 2] = 0;  // add NULL termination
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: Compressed from %d to %d (-%d%%)"), len_in, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_in, 0, 100));
+      // AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: First bytes: %02X%02X%02X%02X"), Settings.rules[idx][0], Settings.rules[idx][1], Settings.rules[idx][2], Settings.rules[idx][3]);
+      // AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: GetRuleLenStorage = %d"), GetRuleLenStorage(idx));
+    } else {
+      len_compressed = -1;    // failed
+      // clear rule cache, so it will be reloaded from Settings
+      k_rules[idx] = (const char *) nullptr;
+    }
+    free(buf_out);
+    return len_compressed;
+
+#else  // USE_RULES_COMPRESSION
+    return -1;                                // the rule does not fit and we can't compress
+#endif // USE_RULES_COMPRESSION
+  }
+
+}
 
 /*******************************************************************************************/
 
@@ -419,7 +637,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
 
-  String rules = Settings.rules[rule_set];
+  String rules = GetRule(rule_set);
 
   Rules.trigger_count[rule_set] = 0;
   int plen = 0;
@@ -531,7 +749,7 @@ bool RulesProcessEvent(char *json_event)
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event %s"), event_saved.c_str());
 
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
-    if (strlen(Settings.rules[i]) && bitRead(Settings.rule_enabled, i)) {
+    if (GetRuleLen(i) && bitRead(Settings.rule_enabled, i)) {
       if (RuleSetProcess(i, event_saved)) { serviced = true; }
     }
   }
@@ -547,7 +765,7 @@ void RulesInit(void)
 {
   rules_flag.data = 0;
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
-    if (Settings.rules[i][0] == '\0') {
+    if (0 == GetRuleLen(i)) {
       bitWrite(Settings.rule_enabled, i, 0);
       bitWrite(Settings.rule_once, i, 0);
     }
@@ -1727,7 +1945,8 @@ void CmndRule(void)
 {
   uint8_t index = XdrvMailbox.index;
   if ((index > 0) && (index <= MAX_RULE_SETS)) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules[index -1]))) {
+    // if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules[index -1]))) {    // TODO postpone size calculation
+    if (XdrvMailbox.data_len > 0) {    // TODO postpone size calculation
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 10)) {
         switch (XdrvMailbox.payload) {
         case 0: // Off
@@ -1753,24 +1972,24 @@ void CmndRule(void)
           break;
         }
       } else {
-        int offset = 0;
+        bool append = false;
         if ('+' == XdrvMailbox.data[0]) {
-          offset = strlen(Settings.rules[index -1]);
-          if (XdrvMailbox.data_len < (sizeof(Settings.rules[index -1]) - offset -1)) {  // Check free space
-            XdrvMailbox.data[0] = ' ';  // Remove + and make sure at least one space is inserted
-          } else {
-            offset = -1;                // Not enough space so skip it
-          }
+          XdrvMailbox.data[0] = ' ';  // Remove + and make sure at least one space is inserted
+          append = true;
         }
-        if (offset != -1) {
-          strlcpy(Settings.rules[index -1] + offset, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.rules[index -1]));
+        int32_t res = SetRule(index - 1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, append);
+        if (res < 0) {
+          AddLog_P2(LOG_LEVEL_ERROR, PSTR("RUL: not enough space"));
         }
       }
       Rules.triggers[index -1] = 0;  // Reset once flag
     }
+    // snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}"),
+    //   XdrvMailbox.command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
+    //   GetStateText(bitRead(Settings.rule_stop, index -1)), sizeof(Settings.rules[index -1]) - strlen(Settings.rules[index -1]) -1, Settings.rules[index -1]);
     snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}"),
       XdrvMailbox.command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
-      GetStateText(bitRead(Settings.rule_stop, index -1)), sizeof(Settings.rules[index -1]) - strlen(Settings.rules[index -1]) -1, Settings.rules[index -1]);
+      GetStateText(bitRead(Settings.rule_stop, index -1)), sizeof(Settings.rules[0]) - GetRuleLenStorage(index - 1), GetRule(index - 1).c_str());
   }
 }
 

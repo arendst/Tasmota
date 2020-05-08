@@ -11,6 +11,7 @@
 - Change default PWM Frequency to 977 Hz from 223 Hz
 - Change minimum PWM Frequency from 100 Hz to 40 Hz
 - Change PWM updated to the latest version of Arduino PR #7231
+- Add automatic compression of Rules to achieve ~60% compression, added ``SetOption93 1`` to control caching of rules
 
 ### 8.2.0.5 20200425
 
