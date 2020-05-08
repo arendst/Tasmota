@@ -690,40 +690,39 @@ const float kSpeedConversionFactor[] = {1,            // none
 // xdrv_02_webserver.ino
 #ifdef USE_WEBSERVER
 // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_TEMP[] PROGMEM = "{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";
-const char HTTP_SNS_HUM[] PROGMEM = "{s}%s " D_HUMIDITY "{m}%s%%{e}";
-const char HTTP_SNS_DEW[] PROGMEM = "{s}%s " D_DEWPOINT "{m}%s&deg;%c{e}";
-const char HTTP_SNS_PRESSURE[] PROGMEM = "{s}%s " D_PRESSURE "{m}%s %s{e}";
-const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "{s}%s " D_PRESSUREATSEALEVEL "{m}%s %s{e}";
-const char HTTP_SNS_ANALOG[] PROGMEM = "{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";
-const char HTTP_SNS_ILLUMINANCE[] PROGMEM = "{s}%s " D_ILLUMINANCE "{m}%d " D_UNIT_LUX "{e}";
-const char HTTP_SNS_CO2[] PROGMEM = "{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";
-const char HTTP_SNS_CO2EAVG[] PROGMEM = "{s}%s " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";
-const char HTTP_SNS_GALLONS[] PROGMEM = "{s}%s " D_TOTAL_USAGE "{m}%s " D_UNIT_GALLONS " {e}";
-const char HTTP_SNS_GPM[] PROGMEM = "{s}%s " D_FLOW_RATE "{m}%s " D_UNIT_GALLONS_PER_MIN" {e}";
-const char HTTP_SNS_MOISTURE[] PROGMEM = "{s}%s " D_MOISTURE "{m}%d %%{e}";
-const char HTTP_SNS_RANGE[] PROGMEM = "{s}%s " D_RANGE "{m}%d{e}";
+const char HTTP_SNS_TEMP[]          PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%s " D_UNIT_DEGREE            "%c{e}";
+const char HTTP_SNS_HUM[]           PROGMEM = "{s}%s "  D_HUMIDITY            "{m}%s " D_UNIT_PERCENT             "{e}";
+const char HTTP_SNS_DEW[]           PROGMEM = "{s}%s "  D_DEWPOINT            "{m}%s " D_UNIT_DEGREE            "%c{e}";
+const char HTTP_SNS_PRESSURE[]      PROGMEM = "{s}%s "  D_PRESSURE            "{m}%s "                          "%s{e}";
+const char HTTP_SNS_SEAPRESSURE[]   PROGMEM = "{s}%s "  D_PRESSUREATSEALEVEL  "{m}%s "                          "%s{e}";
+const char HTTP_SNS_ANALOG[]        PROGMEM = "{s}%s "  D_ANALOG_INPUT      "%d{m}%d"                             "{e}";
+const char HTTP_SNS_ILLUMINANCE[]   PROGMEM = "{s}%s "  D_ILLUMINANCE         "{m}%d " D_UNIT_LUX                 "{e}";
+const char HTTP_SNS_CO2[]           PROGMEM = "{s}%s "  D_CO2                 "{m}%d " D_UNIT_PARTS_PER_MILLION   "{e}";
+const char HTTP_SNS_CO2EAVG[]       PROGMEM = "{s}%s "  D_ECO2                "{m}%d " D_UNIT_PARTS_PER_MILLION   "{e}";
+const char HTTP_SNS_GALLONS[]       PROGMEM = "{s}%s "  D_TOTAL_USAGE         "{m}%s " D_UNIT_GALLONS             "{e}";
+const char HTTP_SNS_GPM[]           PROGMEM = "{s}%s "  D_FLOW_RATE           "{m}%s " D_UNIT_GALLONS_PER_MIN     "{e}";
+const char HTTP_SNS_MOISTURE[]      PROGMEM = "{s}%s "  D_MOISTURE            "{m}%d " D_UNIT_PERCENT             "{e}";
+const char HTTP_SNS_RANGE[]         PROGMEM = "{s}%s "  D_RANGE               "{m}%d"                             "{e}";
+const char HTTP_SNS_VOLTAGE[]       PROGMEM = "{s}"     D_VOLTAGE             "{m}%s " D_UNIT_VOLT                "{e}";
+const char HTTP_SNS_CURRENT[]       PROGMEM = "{s}"     D_CURRENT             "{m}%s " D_UNIT_AMPERE              "{e}";
+const char HTTP_SNS_POWER[]         PROGMEM = "{s}"     D_POWERUSAGE          "{m}%s " D_UNIT_WATT                "{e}";
+const char HTTP_SNS_ENERGY_TOTAL[]  PROGMEM = "{s}"     D_ENERGY_TOTAL        "{m}%s " D_UNIT_KILOWATTHOUR        "{e}";
 
-const char HTTP_SNS_VOLTAGE[] PROGMEM = "{s}" D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}";
-const char HTTP_SNS_CURRENT[] PROGMEM = "{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}";
-const char HTTP_SNS_POWER[] PROGMEM = "{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
-const char HTTP_SNS_ENERGY_TOTAL[] PROGMEM = "{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
-
-const char S_MAIN_MENU[] PROGMEM = D_MAIN_MENU;
-const char S_CONFIGURATION[] PROGMEM = D_CONFIGURATION;
-const char S_CONFIGURE_TEMPLATE[] PROGMEM = D_CONFIGURE_TEMPLATE;
-const char S_CONFIGURE_MODULE[] PROGMEM = D_CONFIGURE_MODULE;
-const char S_CONFIGURE_WIFI[] PROGMEM = D_CONFIGURE_WIFI;
-const char S_NO_NETWORKS_FOUND[] PROGMEM = D_NO_NETWORKS_FOUND;
-const char S_CONFIGURE_LOGGING[] PROGMEM = D_CONFIGURE_LOGGING;
-const char S_CONFIGURE_OTHER[] PROGMEM = D_CONFIGURE_OTHER;
-const char S_SAVE_CONFIGURATION[] PROGMEM = D_SAVE_CONFIGURATION;
-const char S_RESET_CONFIGURATION[] PROGMEM = D_RESET_CONFIGURATION;
-const char S_RESTORE_CONFIGURATION[] PROGMEM = D_RESTORE_CONFIGURATION;
-const char S_FIRMWARE_UPGRADE[] PROGMEM = D_FIRMWARE_UPGRADE;
-const char S_CONSOLE[] PROGMEM = D_CONSOLE;
-const char S_INFORMATION[] PROGMEM = D_INFORMATION;
-const char S_RESTART[] PROGMEM = D_RESTART;
+const char S_MAIN_MENU[]              PROGMEM = D_MAIN_MENU;
+const char S_CONFIGURATION[]          PROGMEM = D_CONFIGURATION;
+const char S_CONFIGURE_TEMPLATE[]     PROGMEM = D_CONFIGURE_TEMPLATE;
+const char S_CONFIGURE_MODULE[]       PROGMEM = D_CONFIGURE_MODULE;
+const char S_CONFIGURE_WIFI[]         PROGMEM = D_CONFIGURE_WIFI;
+const char S_NO_NETWORKS_FOUND[]      PROGMEM = D_NO_NETWORKS_FOUND;
+const char S_CONFIGURE_LOGGING[]      PROGMEM = D_CONFIGURE_LOGGING;
+const char S_CONFIGURE_OTHER[]        PROGMEM = D_CONFIGURE_OTHER;
+const char S_SAVE_CONFIGURATION[]     PROGMEM = D_SAVE_CONFIGURATION;
+const char S_RESET_CONFIGURATION[]    PROGMEM = D_RESET_CONFIGURATION;
+const char S_RESTORE_CONFIGURATION[]  PROGMEM = D_RESTORE_CONFIGURATION;
+const char S_FIRMWARE_UPGRADE[]       PROGMEM = D_FIRMWARE_UPGRADE;
+const char S_CONSOLE[]                PROGMEM = D_CONSOLE;
+const char S_INFORMATION[]            PROGMEM = D_INFORMATION;
+const char S_RESTART[]                PROGMEM = D_RESTART;
 #endif  // USE_WEBSERVER
 
 const uint32_t MARKER_START = 0x5AA55AA5;
