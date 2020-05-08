@@ -621,7 +621,7 @@ float ConvertTempToCelsius(float c)
 char TempUnit(void)
 {
   // SetOption8  - Switch between Celsius or Fahrenheit
-  return (Settings.flag.temperature_conversion) ? D_UNIT_FAHRENHEIT : D_UNIT_CELSIUS;
+  return (Settings.flag.temperature_conversion) ? D_UNIT_FAHRENHEIT[0] : D_UNIT_CELSIUS[0];
 }
 
 float ConvertHumidity(float h)
