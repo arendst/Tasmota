@@ -45,8 +45,8 @@ extern void __analogWriteRange(uint32_t range) {
 
 
 extern void __analogWriteFreq(uint32_t freq) {
-  if (freq < 100) {
-    analogFreq = 100;
+  if (freq < 40) {              // Arduino sets a minimum of 100Hz, waiting for them to change this one.
+    analogFreq = 40;
   } else if (freq > 60000) {
     analogFreq = 60000;
   } else {
