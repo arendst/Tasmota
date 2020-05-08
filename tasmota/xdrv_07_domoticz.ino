@@ -110,7 +110,8 @@ void DomoticzUpdateFanState(void)
 void MqttPublishDomoticzPowerState(uint8_t device)
 {
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if ((device < 1) || (device > devices_present) || (device > MAX_DOMOTICZ_IDX)) { device = 1; }
+    if (device < 1) { device = 1; }
+    if ((device > devices_present) || (device > MAX_DOMOTICZ_IDX)) { return; }
     if (Settings.domoticz_relay_idx[device -1]) {
 #ifdef USE_SHUTTER
       if (domoticz_is_shutter) {
