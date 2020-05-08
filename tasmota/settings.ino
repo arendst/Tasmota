@@ -1404,6 +1404,10 @@ void SettingsDelta(void)
       Settings.module = WEMOS;
       ModuleDefault(WEMOS);
 #endif  // ESP32
+      // make sure the empty rules have two consecutive NULLs, to be compatible with compressed rules
+      if (Settings.rules[0][0] == 0) { Settings.rules[0][1] = 0; }
+      if (Settings.rules[1][0] == 0) { Settings.rules[1][1] = 0; }
+      if (Settings.rules[2][0] == 0) { Settings.rules[2][1] = 0; }
     }
 
     Settings.version = VERSION;
