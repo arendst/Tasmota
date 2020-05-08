@@ -182,6 +182,35 @@ typedef union {
   };
 } Timer;
 
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
+  uint32_t data;
+  struct {
+    uint32_t stream : 1;
+    uint32_t mirror : 1;
+    uint32_t flip : 1;
+    uint32_t spare3 : 1;
+    uint32_t spare4 : 1;
+    uint32_t spare5 : 1;
+    uint32_t spare6 : 1;
+    uint32_t spare7 : 1;
+    uint32_t spare8 : 1;
+    uint32_t spare9 : 1;
+    uint32_t spare10 : 1;
+    uint32_t spare11 : 1;
+    uint32_t spare12 : 1;
+    uint32_t spare13 : 1;
+    uint32_t spare14 : 1;
+    uint32_t spare15 : 1;
+    uint32_t spare16 : 1;
+    uint32_t spare17 : 1;
+    uint32_t spare18 : 1;
+    uint32_t contrast : 3;
+    uint32_t brightness : 3;
+    uint32_t saturation : 3;
+    uint32_t resolution : 4;
+  };
+} WebCamCfg;
+
 typedef union {
   uint16_t data;
   struct {
@@ -365,9 +394,11 @@ struct {
   myio          my_gp;                     // 3AC - 2 x 40 bytes (ESP32)
   mytmplt       user_template;             // 3FC - 2 x 37 bytes (ESP32)
 
-  uint8_t       free_esp32_446[10];        // 446
+  uint8_t       free_esp32_446[6];         // 446
 
-  uint8_t       esp32_webcam_resolution;   // 450
+  WebCamCfg     webcam_config;             // 44C
+
+  uint8_t       free_esp32_450[1];         // 450
 #endif  // ESP8266 - ESP32
 
   char          serial_delimiter;          // 451
