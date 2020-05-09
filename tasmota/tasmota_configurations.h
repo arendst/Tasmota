@@ -505,7 +505,7 @@
 #undef USE_ARDUINO_SLAVE                         // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
-#endif  // FIRMWARE_BASIC
+#endif  // FIRMWARE_LITE
 
 /*********************************************************************************************\
  * [tasmota-minimal.bin]
