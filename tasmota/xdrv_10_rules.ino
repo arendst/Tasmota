@@ -244,12 +244,15 @@ size_t GetRuleLen(uint32_t idx) {
 
 // Returns the actual Flash storage for the Rule, including trailing NULL
 size_t GetRuleLenStorage(uint32_t idx) {
-  // no need to use #ifdef USE_RULES_COMPRESSION, the compiler will optimize since first test is always true
-  if (IsRuleUncompressed(idx)) {
-    return 1 + strlen(Settings.rules[idx]);
+#ifdef USE_RULES_COMPRESSION
+  if (Settings.rules[idx][0] || !Settings.rules[idx][1]) {    // if first byte is non-NULL it is uncompressed, if second byte is NULL, then it's either uncompressed or empty
+    return 1 + strlen(Settings.rules[idx]);   // uncompressed or empty
   } else {
-    return 2 + strlen(&Settings.rules[idx][2]); // skip first byte and get len of the compressed rule
+    return 2 + strlen(&Settings.rules[idx][1]); // skip first byte and get len of the compressed rule
   }
+#else
+  return 1 + strlen(Settings.rules[idx]);
+#endif
 }
 
 // internal function, do the actual decompression
@@ -282,7 +285,7 @@ String GetRule(uint32_t idx) {
 #ifdef USE_RULES_COMPRESSION    // we still do #ifdef to make sure we don't link unnecessary code
 
     String rule("");
-    if (Settings.rules[idx][2] == 0) { return rule; }     // the rule is empty
+    if (Settings.rules[idx][1] == 0) { return rule; }     // the rule is empty
 
     // If the cache is empty, we need to decompress from Settings
     if (0 == k_rules[idx].length() ) {
@@ -343,14 +346,19 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
 
   if (!needsCompress) {                       // the rule fits uncompressed, so just copy it
     strlcpy(Settings.rules[idx] + offset, content, sizeof(Settings.rules[idx]));
+    if (0 == Settings.rules[idx][0]) {
+      Settings.rules[idx][1] = 0;
+    }
 
 #ifdef USE_RULES_COMPRESSION
-    // do a dry-run compression to display how much it would be compressed
-    int32_t len_compressed, len_uncompressed;
+    if (0 != len_in + offset) {
+      // do a dry-run compression to display how much it would be compressed
+      int32_t len_compressed, len_uncompressed;
 
-    len_uncompressed = strlen(Settings.rules[idx]);
-    len_compressed = unishox_compress(Settings.rules[idx], len_uncompressed, nullptr /* dry-run */, MAX_RULE_SIZE + 8);
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: Stored uncompressed, would compress from %d to %d (-%d%%)"), len_uncompressed, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_uncompressed, 0, 100));
+      len_uncompressed = strlen(Settings.rules[idx]);
+      len_compressed = unishox_compress(Settings.rules[idx], len_uncompressed, nullptr /* dry-run */, MAX_RULE_SIZE + 8);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: Stored uncompressed, would compress from %d to %d (-%d%%)"), len_uncompressed, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_uncompressed, 0, 100));
+    }
 
 #endif // USE_RULES_COMPRESSION
 
