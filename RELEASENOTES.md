@@ -103,3 +103,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for OpenTherm by Yuriy Sannikov (#8373)
 - Add support for Thermostat control by arijav (#8212)
 - Add experimental basic support for Tasmota on ESP32 based on work by Jörg Schüler-Maroldt
+- Add automatic compression of Rules to achieve ~60% compression, added ``SetOption93 1`` to control caching of rules
+- Add rule trigger ``root#`` to trigger on any root value like ``on root#loadavg<50 do power 2 endon`` after ``state`` command

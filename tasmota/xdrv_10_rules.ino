@@ -47,6 +47,7 @@
  *   on button1#state do publish cmnd/ring2/power %value% endon on button2#state do publish cmnd/strip1/power %value% endon
  *   on switch1#state do power2 %value% endon
  *   on analog#a0div10 do publish cmnd/ring2/dimmer %value% endon
+ *   on root#loadavg<50 do power 2 endon
  *
  * Notes:
  *   Spaces after <on>, around <do> and before <endon> are mandatory
@@ -186,25 +187,25 @@ char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
  * Add Unishox compression to Rules
  *
  * New compression for Rules, depends on SetOption93
- * 
+ *
  * To avoid memory corruption when downgrading, the format is as follows:
  * - If `SetOption93 0`
  *   Rule[x][] = 511 char max NULL terminated string (512 with trailing NULL)
  *   Rule[x][0] = 0 if the Rule<x> is empty
  *   New: in case the string is empty we also enforce:
  *   Rule[x][1] = 0   (i.e. we have two conseutive NULLs)
- * 
+ *
  * - If `SetOption93 1`
  *   If the rule is smaller than 511, it is stored uncompressed. Rule[x][0] is not null.
  *   If the rule is empty, Rule[x][0] = 0 and Rule[x][1] = 0;
  *   If the rule is bigger than 511, it is stored compressed
  *      The first byte of each Rule is always NULL.
  *      Rule[x][0] = 0,  if firmware is downgraded, the rule will be considered as empty
- * 
+ *
  *      The second byte contains the size of uncompressed rule in 8-bytes blocks (i.e. (len+7)/8 )
  *      Maximum rule size si 2KB (2048 bytes per rule), although there is little chances compression ratio will go down to 75%
  *      Rule[x][1] = size uncompressed in dwords. If zero, the rule is empty.
- * 
+ *
  *      The remaining bytes contain the compressed rule, NULL terminated
  */
 /*******************************************************************************************/
@@ -490,13 +491,21 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     rule_name = rule_name.substring(0, pos);           // "SUBTYPE1#CURRENT"
   }
 
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Find Task %s, Name %s"), rule_task.c_str(), rule_name.c_str());
+
   StaticJsonBuffer<1024> jsonBuf;
   JsonObject &root = jsonBuf.parseObject(event);
   if (!root.success()) { return false; }               // No valid JSON data
-  if (!root[rule_task].success()) { return false; }    // No rule_task in JSON data
 
-  JsonObject &obj1 = root[rule_task];
-  JsonObject *obj = &obj1;
+  JsonObject *obj;
+  if (rule_task.startsWith("ROOT")) {                  // Support root level
+    obj = &root;
+  } else {
+    if (!root[rule_task].success()) { return false; }  // No rule_task in JSON data
+    JsonObject &obj1 = root[rule_task];
+    obj = &obj1;
+  }
+
   String subtype;
   uint32_t i = 0;
   while ((pos = rule_name.indexOf("#")) > 0) {         // "SUBTYPE1#SUBTYPE2#CURRENT"
