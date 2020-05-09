@@ -491,7 +491,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     rule_name = rule_name.substring(0, pos);           // "SUBTYPE1#CURRENT"
   }
 
-AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Find Task %s, Name %s"), rule_task.c_str(), rule_name.c_str());
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Find Task %s, Name %s"), rule_task.c_str(), rule_name.c_str());
 
   StaticJsonBuffer<1024> jsonBuf;
   JsonObject &root = jsonBuf.parseObject(event);
