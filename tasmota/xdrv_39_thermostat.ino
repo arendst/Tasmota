@@ -134,18 +134,18 @@ const char kThermostatCommands[] PROGMEM = "|" D_CMND_THERMOSTATMODESET "|" D_CM
   D_CMND_TEMPFROSTPROTECTSET "|" D_CMND_CONTROLLERMODESET "|" D_CMND_INPUTSWITCHSET "|" D_CMND_INPUTSWITCHUSE "|" 
   D_CMND_OUTPUTRELAYSET "|" D_CMND_TIMEALLOWRAMPUPSET "|" D_CMND_TEMPFORMATSET "|" D_CMND_TEMPMEASUREDSET "|" 
   D_CMND_TEMPTARGETSET "|" D_CMND_TEMPMEASUREDGRDREAD "|" D_CMND_SENSORINPUTSET "|" D_CMND_STATEEMERGENCYSET "|" 
-  D_CMND_TIMEMANUALTOAUTOSET "|" D_CMND_TIMEONLIMITSET "|" D_CMND_PROPBANDSET "|" D_CMND_TIMERESETSET "|" 
-  D_CMND_TIMEPICYCLESET "|" D_CMND_TEMPANTIWINDUPRESETSET "|" D_CMND_TEMPHYSTSET "|" D_CMND_TIMEMAXACTIONSET "|" 
-  D_CMND_TIMEMINACTIONSET "|" D_CMND_TIMEMINTURNOFFACTIONSET "|" D_CMND_TEMPRUPDELTINSET "|" D_CMND_TEMPRUPDELTOUTSET "|" 
-  D_CMND_TIMERAMPUPMAXSET "|" D_CMND_TIMERAMPUPCYCLESET "|" D_CMND_TEMPRAMPUPPIACCERRSET "|" D_CMND_TIMEPIPROPORTREAD "|" 
-  D_CMND_TIMEPIINTEGRREAD "|" D_CMND_TIMESENSLOSTSET "|" D_CMND_DIAGNOSTICMODESET;
+  D_CMND_TIMEMANUALTOAUTOSET "|" D_CMND_PROPBANDSET "|" D_CMND_TIMERESETSET "|" D_CMND_TIMEPICYCLESET "|" 
+  D_CMND_TEMPANTIWINDUPRESETSET "|" D_CMND_TEMPHYSTSET "|" D_CMND_TIMEMAXACTIONSET "|" D_CMND_TIMEMINACTIONSET "|" 
+  D_CMND_TIMEMINTURNOFFACTIONSET "|" D_CMND_TEMPRUPDELTINSET "|" D_CMND_TEMPRUPDELTOUTSET "|" D_CMND_TIMERAMPUPMAXSET "|" 
+  D_CMND_TIMERAMPUPCYCLESET "|" D_CMND_TEMPRAMPUPPIACCERRSET "|" D_CMND_TIMEPIPROPORTREAD "|" D_CMND_TIMEPIINTEGRREAD "|" 
+  D_CMND_TIMESENSLOSTSET "|" D_CMND_DIAGNOSTICMODESET;
 
 void (* const ThermostatCommand[])(void) PROGMEM = {
   &CmndThermostatModeSet, &CmndClimateModeSet, &CmndTempFrostProtectSet, &CmndControllerModeSet, &CmndInputSwitchSet, 
   &CmndInputSwitchUse, &CmndOutputRelaySet, &CmndTimeAllowRampupSet, &CmndTempFormatSet, &CmndTempMeasuredSet, 
   &CmndTempTargetSet, &CmndTempMeasuredGrdRead, &CmndSensorInputSet, &CmndStateEmergencySet, &CmndTimeManualToAutoSet, 
-  &CmndTimeOnLimitSet, &CmndPropBandSet, &CmndTimeResetSet, &CmndTimePiCycleSet, &CmndTempAntiWindupResetSet, 
-  &CmndTempHystSet, &CmndTimeMaxActionSet, &CmndTimeMinActionSet, &CmndTimeMinTurnoffActionSet, &CmndTempRupDeltInSet, 
+  &CmndPropBandSet, &CmndTimeResetSet, &CmndTimePiCycleSet, &CmndTempAntiWindupResetSet, &CmndTempHystSet, 
+  &CmndTimeMaxActionSet, &CmndTimeMinActionSet, &CmndTimeMinTurnoffActionSet, &CmndTempRupDeltInSet, 
   &CmndTempRupDeltOutSet, &CmndTimeRampupMaxSet, &CmndTimeRampupCycleSet, &CmndTempRampupPiAccErrSet, 
   &CmndTimePiProportRead, &CmndTimePiIntegrRead, &CmndTimeSensLostSet, &CmndDiagnosticModeSet };
 
@@ -183,16 +183,15 @@ struct THERMOSTAT {
   int16_t temp_rampup_start = 0;                                              // Temperature at start of ramp-up controller in tenths of degrees celsius
   int16_t temp_rampup_cycle = 0;                                              // Temperature set at the beginning of each ramp-up cycle in tenths of degrees
   uint16_t time_rampup_max = THERMOSTAT_TIME_RAMPUP_MAX;                      // Time maximum ramp-up controller duration in minutes
-  uint16_t time_rampup_cycle = THERMOSTAT_TIME_RAMPUP_CYCLE;                  // Time ramp-up cycle in seconds
+  uint16_t time_rampup_cycle = THERMOSTAT_TIME_RAMPUP_CYCLE;                  // Time ramp-up cycle in minutes
   uint16_t time_allow_rampup = THERMOSTAT_TIME_ALLOW_RAMPUP;                  // Time in minutes after last target update to allow ramp-up controller phase
-  uint16_t time_sens_lost = THERMOSTAT_TIME_SENS_LOST;                        // Maximum time w/o sensor update to set it as lost
+  uint16_t time_sens_lost = THERMOSTAT_TIME_SENS_LOST;                        // Maximum time w/o sensor update to set it as lost in minutes
   uint16_t time_manual_to_auto = THERMOSTAT_TIME_MANUAL_TO_AUTO;              // Time without input switch active to change from manual to automatic in minutes
-  uint16_t time_on_limit = THERMOSTAT_TIME_ON_LIMIT;                          // Maximum time with output active in minutes
-  uint16_t time_pi_cycle = THERMOSTAT_TIME_PI_CYCLE;                          // Cycle time for the thermostat controller in seconds
   uint32_t time_reset = THERMOSTAT_TIME_RESET;                                // Reset time of the PI controller in seconds
+  uint16_t time_pi_cycle = THERMOSTAT_TIME_PI_CYCLE;                          // Cycle time for the thermostat controller in minutes
   uint16_t time_max_action = THERMOSTAT_TIME_MAX_ACTION;                      // Maximum thermostat time per cycle in minutes
   uint16_t time_min_action = THERMOSTAT_TIME_MIN_ACTION;                      // Minimum thermostat time per cycle in minutes
-  uint16_t time_min_turnoff_action = THERMOSTAT_TIME_MIN_TURNOFF_ACTION;      // Minimum turnoff time in minutes, below it the thermostat will be held on
+  uint16_t time_min_turnoff_action = THERMOSTAT_TIME_MIN_TURNOFF_ACTION;      // Minimum turnoff time in minutes, below it the thermostat will stay on
   uint8_t temp_reset_anti_windup = THERMOSTAT_TEMP_RESET_ANTI_WINDUP;         // Range where reset antiwindup is disabled, in tenths of degrees celsius
   int8_t temp_hysteresis = THERMOSTAT_TEMP_HYSTERESIS;                        // Range hysteresis for temperature PI controller, in tenths of degrees celsius
   uint8_t temp_frost_protect = THERMOSTAT_TEMP_FROST_PROTECT;                 // Minimum temperature for frost protection, in tenths of degrees celsius
@@ -605,7 +604,7 @@ void ThermostatCalculatePI(uint8_t ctr_output)
 
     // Antiwindup of the integrator
     // If integral calculation is bigger than cycle time, adjust result
-    // to the cycle time and error will not be cummulated]]
+    // to the cycle time and error will not be cummulated
     if (Thermostat[ctr_output].time_integral_pi > ((uint32_t)Thermostat[ctr_output].time_pi_cycle * 60)) {
       Thermostat[ctr_output].time_integral_pi = ((uint32_t)Thermostat[ctr_output].time_pi_cycle * 60);
     }
@@ -616,7 +615,7 @@ void ThermostatCalculatePI(uint8_t ctr_output)
   
   // Antiwindup of the output
   // If result is bigger than cycle time, the result will be adjusted
-  // to the cylce time minus safety time and error will not be cummulated]]
+  // to the cylce time minus safety time and error will not be cummulated
   if (Thermostat[ctr_output].time_total_pi >= ((int32_t)Thermostat[ctr_output].time_pi_cycle * 60)) {
     // Limit to cycle time //at least switch down a minimum time
     Thermostat[ctr_output].time_total_pi = ((int32_t)Thermostat[ctr_output].time_pi_cycle * 60);
@@ -651,13 +650,13 @@ void ThermostatCalculatePI(uint8_t ctr_output)
   }
 
   // Minimum action limiter
-  // If result is less than the minimum action time, adjust to minimum value]]
+  // If result is less than the minimum action time, adjust to minimum value
   if ((Thermostat[ctr_output].time_total_pi <= abs(((uint32_t)Thermostat[ctr_output].time_min_action * 60)))
     && (Thermostat[ctr_output].time_total_pi != 0)) {
     Thermostat[ctr_output].time_total_pi = ((int32_t)Thermostat[ctr_output].time_min_action * 60);
   }
   // Maximum action limiter
-  // If result is more than the maximum action time, adjust to maximum value]]
+  // If result is more than the maximum action time, adjust to maximum value
   else if (Thermostat[ctr_output].time_total_pi > abs(((int32_t)Thermostat[ctr_output].time_max_action * 60))) {
     Thermostat[ctr_output].time_total_pi = ((int32_t)Thermostat[ctr_output].time_max_action * 60);
   }
@@ -747,7 +746,7 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
       }
       // Calculate absolute gradient since start of ramp-up (considering deadtime) in thousandths of º/hour
       Thermostat[ctr_output].temp_rampup_meas_gradient = (int32_t)((360000 * (int32_t)temp_delta_rampup) / (int32_t)time_in_rampup);
-      Thermostat[ctr_output].time_rampup_nextcycle = uptime + (uint32_t)Thermostat[ctr_output].time_rampup_cycle;
+      Thermostat[ctr_output].time_rampup_nextcycle = uptime + ((uint32_t)Thermostat[ctr_output].time_rampup_cycle * 60);
       // Set auxiliary variables
       Thermostat[ctr_output].temp_rampup_cycle = Thermostat[ctr_output].temp_measured;
       Thermostat[ctr_output].time_ctr_changepoint = uptime + (60 * (uint32_t)Thermostat[ctr_output].time_rampup_max);
@@ -758,7 +757,7 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
       // Calculate temp. gradient in º/hour and set again time_rampup_nextcycle and temp_rampup_cycle
       // temp_rampup_meas_gradient = ((3600 * temp_delta_rampup) / (os.time() - time_rampup_nextcycle))
       temp_delta_rampup = Thermostat[ctr_output].temp_measured - Thermostat[ctr_output].temp_rampup_cycle;
-      uint32_t time_total_rampup = (uint32_t)Thermostat[ctr_output].time_rampup_cycle * Thermostat[ctr_output].counter_rampup_cycles;
+      uint32_t time_total_rampup = (uint32_t)Thermostat[ctr_output].time_rampup_cycle * 60 * Thermostat[ctr_output].counter_rampup_cycles;
       // Translate into gradient per hour (thousandths of ° per hour)
       Thermostat[ctr_output].temp_rampup_meas_gradient = int32_t((360000 * (int32_t)temp_delta_rampup) / (int32_t)time_total_rampup);
       if (   ((Thermostat[ctr_output].temp_rampup_meas_gradient > 0)
@@ -776,7 +775,7 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
         // y = (((y2-y1)/(x2-x1))*(x-x1)) + y1
         Thermostat[ctr_output].temp_rampup_output_off = (int16_t)(((int32_t)temp_delta_rampup * (int32_t)(Thermostat[ctr_output].time_ctr_changepoint - (uptime - (time_total_rampup)))) / (int32_t)(time_total_rampup * Thermostat[ctr_output].counter_rampup_cycles)) + Thermostat[ctr_output].temp_rampup_cycle;
         // Set auxiliary variables
-        Thermostat[ctr_output].time_rampup_nextcycle = uptime + (uint32_t)Thermostat[ctr_output].time_rampup_cycle;
+        Thermostat[ctr_output].time_rampup_nextcycle = uptime + ((uint32_t)Thermostat[ctr_output].time_rampup_cycle * 60);
         Thermostat[ctr_output].temp_rampup_cycle = Thermostat[ctr_output].temp_measured;
         // Reset period counter
         Thermostat[ctr_output].counter_rampup_cycles = 1;
@@ -785,7 +784,7 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
         // Increase the period counter
         Thermostat[ctr_output].counter_rampup_cycles++;
         // Set another period
-        Thermostat[ctr_output].time_rampup_nextcycle = uptime + (uint32_t)Thermostat[ctr_output].time_rampup_cycle;
+        Thermostat[ctr_output].time_rampup_nextcycle = uptime + ((uint32_t)Thermostat[ctr_output].time_rampup_cycle * 60);
         // Reset time_ctr_changepoint and temp_rampup_output_off
         Thermostat[ctr_output].time_ctr_changepoint = uptime + (60 * (uint32_t)Thermostat[ctr_output].time_rampup_max) - time_in_rampup;
         Thermostat[ctr_output].temp_rampup_output_off =  Thermostat[ctr_output].temp_target_level_ctr;
@@ -1256,7 +1255,7 @@ void CmndTempMeasuredGrdRead(void)
     else {
       value = Thermostat[ctr_output].temp_measured_gradient;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndFloat(((float)value) / 1000, 1);
   }
 }
 
@@ -1280,25 +1279,11 @@ void CmndTimeManualToAutoSet(void)
     uint8_t ctr_output = XdrvMailbox.index - 1;
     if (XdrvMailbox.data_len > 0) {
       uint32_t value = (uint32_t)(XdrvMailbox.payload);
-      if ((value >= 0) && (value <= 86400)) {
-        Thermostat[ctr_output].time_manual_to_auto = (uint16_t)(value / 60);
+      if ((value >= 0) && (value <= 1440)) {
+        Thermostat[ctr_output].time_manual_to_auto = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_manual_to_auto * 60));
-  }
-}
-
-void CmndTimeOnLimitSet(void)
-{
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
-    uint8_t ctr_output = XdrvMailbox.index - 1;
-    if (XdrvMailbox.data_len > 0) {
-      uint32_t value = (uint32_t)(XdrvMailbox.payload);
-      if ((value >= 0) && (value <= 86400)) {
-        Thermostat[ctr_output].time_on_limit = (uint16_t)(value / 60);
-      }
-    }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_on_limit * 60));
+    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_manual_to_auto));
   }
 }
 
@@ -1330,17 +1315,33 @@ void CmndTimeResetSet(void)
   }
 }
 
+void CmndTimePiProportRead(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
+    uint8_t ctr_output = XdrvMailbox.index - 1;
+    ResponseCmndNumber((int)Thermostat[ctr_output].time_proportional_pi);
+  }
+}
+
+void CmndTimePiIntegrRead(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
+    uint8_t ctr_output = XdrvMailbox.index - 1;
+    ResponseCmndNumber((int)Thermostat[ctr_output].time_integral_pi);
+  }
+}
+
 void CmndTimePiCycleSet(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
     uint8_t ctr_output = XdrvMailbox.index - 1;
     if (XdrvMailbox.data_len > 0) {
       uint32_t value = (uint32_t)(XdrvMailbox.payload);
-      if ((value >= 0) && (value <= 86400)) {
-        Thermostat[ctr_output].time_pi_cycle = (uint16_t)(value / 60);
+      if ((value >= 0) && (value <= 1440)) {
+        Thermostat[ctr_output].time_pi_cycle = (uint16_t)(value);
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_pi_cycle * 60));
+    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_pi_cycle));
   }
 }
 
@@ -1404,11 +1405,11 @@ void CmndTimeMaxActionSet(void)
     uint8_t ctr_output = XdrvMailbox.index - 1;
     if (XdrvMailbox.data_len > 0) {
       uint32_t value = (uint32_t)(XdrvMailbox.payload);
-      if ((value >= 0) && (value <= 86400)) {
-        Thermostat[ctr_output].time_max_action = (uint16_t)(value / 60);
+      if ((value >= 0) && (value <= 1440)) {
+        Thermostat[ctr_output].time_max_action = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_max_action * 60));
+    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_max_action));
   }
 }
 
@@ -1418,11 +1419,11 @@ void CmndTimeMinActionSet(void)
     uint8_t ctr_output = XdrvMailbox.index - 1;
     if (XdrvMailbox.data_len > 0) {
       uint32_t value = (uint32_t)(XdrvMailbox.payload);
-      if ((value >= 0) && (value <= 86400)) {
-        Thermostat[ctr_output].time_min_action = (uint16_t)(value / 60);
+      if ((value >= 0) && (value <= 1440)) {
+        Thermostat[ctr_output].time_min_action = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_min_action * 60));
+    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_min_action));
   }
 }
 
@@ -1432,11 +1433,11 @@ void CmndTimeSensLostSet(void)
     uint8_t ctr_output = XdrvMailbox.index - 1;
     if (XdrvMailbox.data_len > 0) {
       uint32_t value = (uint32_t)(XdrvMailbox.payload);
-      if ((value >= 0) && (value <= 86400)) {
-        Thermostat[ctr_output].time_sens_lost = (uint16_t)(value / 60);
+      if ((value >= 0) && (value <= 1440)) {
+        Thermostat[ctr_output].time_sens_lost = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_sens_lost * 60));
+    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_sens_lost));
   }
 }
 
@@ -1446,11 +1447,11 @@ void CmndTimeMinTurnoffActionSet(void)
     uint8_t ctr_output = XdrvMailbox.index - 1;
     if (XdrvMailbox.data_len > 0) {
       uint32_t value = (uint32_t)(XdrvMailbox.payload);
-      if ((value >= 0) && (value <= 86400)) {
-        Thermostat[ctr_output].time_min_turnoff_action = (uint16_t)(value / 60);
+      if ((value >= 0) && (value <= 1440)) {
+        Thermostat[ctr_output].time_min_turnoff_action = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_min_turnoff_action * 60));
+    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_min_turnoff_action));
   }
 }
 
@@ -1514,11 +1515,11 @@ void CmndTimeRampupMaxSet(void)
     uint8_t ctr_output = XdrvMailbox.index - 1;
     if (XdrvMailbox.data_len > 0) {
       uint32_t value = (uint32_t)(XdrvMailbox.payload);
-      if ((value >= 0) && (value <= 86400)) {
-        Thermostat[ctr_output].time_rampup_max = (uint16_t)(value / 60);
+      if ((value >= 0) && (value <= 1440)) {
+        Thermostat[ctr_output].time_rampup_max = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)(((uint32_t)Thermostat[ctr_output].time_rampup_max) * 60));
+    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_rampup_max));
   }
 }
 
@@ -1528,7 +1529,7 @@ void CmndTimeRampupCycleSet(void)
     uint8_t ctr_output = XdrvMailbox.index - 1;
     if (XdrvMailbox.data_len > 0) {
       uint32_t value = (uint32_t)(XdrvMailbox.payload);
-      if ((value >= 0) && (value <= 54000)) {
+      if ((value >= 0) && (value <= 1440)) {
         Thermostat[ctr_output].time_rampup_cycle = (uint16_t)value;
       }
     }
@@ -1560,22 +1561,6 @@ void CmndTempRampupPiAccErrSet(void)
       value = Thermostat[ctr_output].temp_rampup_pi_acc_error;
     }
     ResponseCmndFloat((float)value / 100, 1);
-  }
-}
-
-void CmndTimePiProportRead(void)
-{
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
-    uint8_t ctr_output = XdrvMailbox.index - 1;
-    ResponseCmndNumber((int)Thermostat[ctr_output].time_proportional_pi);
-  }
-}
-
-void CmndTimePiIntegrRead(void)
-{
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
-    uint8_t ctr_output = XdrvMailbox.index - 1;
-    ResponseCmndNumber((int)Thermostat[ctr_output].time_integral_pi);
   }
 }
 

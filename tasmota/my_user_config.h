@@ -675,13 +675,12 @@
   #define THERMOSTAT_SENSOR_NAME                "DS18B20" // Name of the local sensor to be used
   #define THERMOSTAT_RELAY_NUMBER               1         // Default output relay number for the first controller (+i for following ones)
   #define THERMOSTAT_SWITCH_NUMBER              1         // Default input switch number for the first controller (+i for following ones)
-  #define THERMOSTAT_TIME_ALLOW_RAMPUP          300       // Default time in seconds after last target update to allow ramp-up controller phase in minutes
+  #define THERMOSTAT_TIME_ALLOW_RAMPUP          300       // Default time after last target update to allow ramp-up controller phase in minutes
   #define THERMOSTAT_TIME_RAMPUP_MAX            960       // Default time maximum ramp-up controller duration in minutes
-  #define THERMOSTAT_TIME_RAMPUP_CYCLE          1800      // Default time ramp-up cycle in seconds
+  #define THERMOSTAT_TIME_RAMPUP_CYCLE          30        // Default time ramp-up cycle in minutes
   #define THERMOSTAT_TIME_SENS_LOST             30        // Maximum time w/o sensor update to set it as lost in minutes
   #define THERMOSTAT_TEMP_SENS_NUMBER           1         // Default temperature sensor number
   #define THERMOSTAT_TIME_MANUAL_TO_AUTO        60        // Default time without input switch active to change from manual to automatic in minutes
-  #define THERMOSTAT_TIME_ON_LIMIT              120       // Default maximum time with output active in minutes
   #define THERMOSTAT_TIME_RESET                 12000     // Default reset time of the PI controller in seconds
   #define THERMOSTAT_TIME_PI_CYCLE              30        // Default cycle time for the thermostat controller in minutes
   #define THERMOSTAT_TIME_MAX_ACTION            20        // Default maximum thermostat time per cycle in minutes
