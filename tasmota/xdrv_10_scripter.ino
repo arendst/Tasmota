@@ -1879,6 +1879,19 @@ chknext:
           len=0;
           goto strexit;
         }
+#ifdef ESP32
+        if (!strncmp(vname,"sf(",3)) {
+          lp+=2;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+          if (fvar<80) fvar=80;
+          if (fvar>240) fvar=240;
+          setCpuFrequencyMhz(fvar);
+          fvar=getCpuFrequencyMhz();
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
         if (!strncmp(vname,"sunrise",7)) {
           fvar=SunMinutes(0);
@@ -2093,7 +2106,7 @@ chknext:
           len=0;
           goto exit;
         }
-#endif
+#endif //ESP32, USE_WEBCAM
         if (!strncmp(vname,"wday",4)) {
           fvar=RtcTime.day_of_week;
           goto exit;
@@ -2692,11 +2705,13 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
       return -99;
     }
 
-    DynamicJsonBuffer jsonBuffer; // on heap
-    JsonObject &jobj=jsonBuffer.parseObject(js);
-    JsonObject  *jo;
-    if (js) jo=&jobj;
-    else jo=0;
+    JsonObject  *jo=0;
+
+    if (js) {
+      DynamicJsonBuffer jsonBuffer; // on heap
+      JsonObject &jobj=jsonBuffer.parseObject(js);
+      jo=&jobj;
+    }
 
     char *lp=glob_script_mem.scriptptr;
 
@@ -5119,6 +5134,8 @@ bool RulesProcessEvent(char *json_event) {
 #ifdef USE_SCRIPT_TASK
 uint16_t task_timer1;
 uint16_t task_timer2;
+TaskHandle_t task_t1;
+TaskHandle_t task_t2;
 
 void script_task1(void *arg) {
   while (1) {
@@ -5143,14 +5160,16 @@ void script_task2(void *arg) {
 
 uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core) {
   //return 0;
-  BaseType_t res=0;
-  if (core>1) {core = 1;}
+  BaseType_t res = 0;
+  if (core > 1) { core = 1; }
   if (num == 1) {
-    res = xTaskCreatePinnedToCore(script_task1, "T 1", STASK_STACK, NULL, STASK_PRIO, NULL, core);
-    task_timer1=time;
+    if (task_t1) { vTaskDelete(task_t1); }
+    res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, STASK_PRIO, &task_t1, core);
+    task_timer1 = time;
   } else {
-    res = xTaskCreatePinnedToCore(script_task2, "T 2", STASK_STACK, NULL, STASK_PRIO, NULL, core);
-    task_timer2=time;
+    if (task_t2) { vTaskDelete(task_t2); }
+    res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, STASK_PRIO, &task_t2, core);
+    task_timer2 = time;
   }
   return res;
 }
