@@ -47,7 +47,7 @@
  *   on button1#state do publish cmnd/ring2/power %value% endon on button2#state do publish cmnd/strip1/power %value% endon
  *   on switch1#state do power2 %value% endon
  *   on analog#a0div10 do publish cmnd/ring2/dimmer %value% endon
- *   on root#loadavg<50 do power 2 endon
+ *   on loadavg<50 do power 2 endon
  *
  * Notes:
  *   Spaces after <on>, around <do> and before <endon> are mandatory
@@ -203,7 +203,7 @@ char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
  *      Rule[x][0] = 0,  if firmware is downgraded, the rule will be considered as empty
  *
  *      The second byte contains the size of uncompressed rule in 8-bytes blocks (i.e. (len+7)/8 )
- *      Maximum rule size si 2KB (2048 bytes per rule), although there is little chances compression ratio will go down to 75%
+ *      Maximum rule size is 2KB (2048 bytes per rule), although there is little chances compression ratio will go down to 75%
  *      Rule[x][1] = size uncompressed in dwords. If zero, the rule is empty.
  *
  *      The remaining bytes contain the compressed rule, NULL terminated
@@ -1987,7 +1987,7 @@ void CmndRule(void)
         }
         int32_t res = SetRule(index - 1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, append);
         if (res < 0) {
-          AddLog_P2(LOG_LEVEL_ERROR, PSTR("RUL: not enough space"));
+          AddLog_P2(LOG_LEVEL_ERROR, PSTR("RUL: Not enough space"));
         }
       }
       Rules.triggers[index -1] = 0;  // Reset once flag

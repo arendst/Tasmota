@@ -395,9 +395,9 @@
 //  #define USE_PING                                 // Enable Ping command (+2k code)
 
 // -- Rules or Script  ----------------------------
-// Select none or only one of the below defines
+// Select none or only one of the below defines USE_RULES or USE_SCRIPT
 #define USE_RULES                                // Add support for rules (+8k code)
-  // #define USE_RULES_COMPRESSION                  // Compresses rules in Flash at about ~50% (+3.8k code)
+  #define USE_RULES_COMPRESSION                  // Compresses rules in Flash at about ~50% (+3.8k code)
 //#define USE_SCRIPT                               // Add support for script (+17k code)
   //#define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support
 
@@ -670,7 +670,7 @@
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
 
 // -- Thermostat control ----------------------------
-//#define USE_THERMOSTAT                             // Add support for Thermostat
+//#define USE_THERMOSTAT                           // Add support for Thermostat
   #define THERMOSTAT_CONTROLLER_OUTPUTS         1         // Number of outputs to be controlled independently
   #define THERMOSTAT_SENSOR_NAME                "DS18B20" // Name of the local sensor to be used
   #define THERMOSTAT_RELAY_NUMBER               1         // Default output relay number for the first controller (+i for following ones)

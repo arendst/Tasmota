@@ -96,6 +96,7 @@ struct ENERGY {
 
   uint8_t phase_count = 1;                      // Number of phases active
   bool voltage_common = false;                  // Use single voltage and frequency
+  bool kWhtoday_offset_init = false;
 
   bool voltage_available = true;                // Enable if voltage is measured
   bool current_available = true;                // Enable if current is measured
@@ -223,6 +224,12 @@ void Energy200ms(void)
     XnrgCall(FUNC_ENERGY_EVERY_SECOND);
 
     if (RtcTime.valid) {
+
+      if (!Energy.kWhtoday_offset_init && (RtcTime.day_of_year == Settings.energy_kWhdoy)) {
+        Energy.kWhtoday_offset = Settings.energy_kWhtoday;
+        Energy.kWhtoday_offset_init = true;
+      }
+
       if (LocalTime() == Midnight()) {
         Settings.energy_kWhyesterday = RtcSettings.energy_kWhtoday;
 
@@ -827,14 +834,11 @@ void EnergySnsInit(void)
   XnrgCall(FUNC_INIT);
 
   if (energy_flg) {
-    if (RtcSettingsValid()) {
+    Energy.kWhtoday_offset = 0;
+    // Do not use at Power On as Rtc was invalid (but has been restored from Settings already)
+    if ((ResetReason() != REASON_DEFAULT_RST) && RtcSettingsValid()) {
       Energy.kWhtoday_offset = RtcSettings.energy_kWhtoday;
-    }
-    else if (RtcTime.day_of_year == Settings.energy_kWhdoy) {
-      Energy.kWhtoday_offset = Settings.energy_kWhtoday;
-    }
-    else {
-      Energy.kWhtoday_offset = 0;
+      Energy.kWhtoday_offset_init = true;
     }
     Energy.kWhtoday = 0;
     Energy.kWhtoday_delta = 0;
