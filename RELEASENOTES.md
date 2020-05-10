@@ -56,7 +56,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 - Breaking Change Device Groups multicast address and port  (#8270)
 - Change PWM implementation to Arduino #7231 removing support for Core versions before 2.6.3
-- Change default PWM Frequency to 223 Hz instead of 880 Hz for less interrupt pressure
+- Change default PWM Frequency to 977 Hz from 880 Hz
+- Change minimum PWM Frequency from 100 Hz to 40 Hz
 - Change flash access removing support for any Core before 2.6.3
 - Change HM-10 sensor type detection and add features (#7962)
 - Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
@@ -100,4 +101,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add more accuracy to GPS NTP server (#8088)
 - Add support for analog anemometer by Matteo Albinola (#8283)
 - Add support for OpenTherm by Yuriy Sannikov (#8373)
+- Add support for Thermostat control by arijav (#8212)
 - Add experimental basic support for Tasmota on ESP32 based on work by Jörg Schüler-Maroldt
+- Add automatic compression of Rules to achieve ~60% compression, added ``SetOption93 1`` to control caching of rules
+- Add rule trigger at root level like ``on loadavg<50 do power 2 endon`` after ``state`` command

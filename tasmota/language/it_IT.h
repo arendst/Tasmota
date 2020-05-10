@@ -674,7 +674,7 @@
 #define D_SENSOR_HRXL_RX       "HRXL - RX"
 #define D_SENSOR_ELECTRIQ_MOODL "MOODL - TX"
 #define D_SENSOR_AS3935        "AS3935"
-#define D_SENSOR_WINDMETER_SPEED "WindMeter Spd"
+#define D_SENSOR_WINDMETER_SPEED "Velocità vento"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -690,12 +690,16 @@
 
 // Units
 #define D_UNIT_AMPERE "A"
+#define D_UNIT_CELSIUS "C"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_DEGREE "°"
+#define D_UNIT_FAHRENHEIT "F"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "o"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KELVIN "K"
 #define D_UNIT_KILOMETER "km"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
@@ -713,6 +717,7 @@
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
+#define D_UNIT_PERCENT "%%"
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "settori"
@@ -795,7 +800,7 @@
 #define D_AS3935_CAL_OK "calibrazione impostata a:"
 
 //xsns_68_opentherm.ino
-#define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
-#define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
+#define D_SENSOR_BOILER_OT_RX   "OpenTherm - RX"
+#define D_SENSOR_BOILER_OT_TX   "OpenTherm - TX"
 
 #endif  // _LANGUAGE_IT_IT_H_

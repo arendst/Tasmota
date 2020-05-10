@@ -11,8 +11,14 @@
 - Add experimental basic support for Tasmota on ESP32 based on work by Jörg Schüler-Maroldt
 - Add support for analog anemometer by Matteo Albinola (#8283)
 - Add support for OpenTherm by Yuriy Sannikov (#8373)
+- Add support for Thermostat control by arijav (#8212)
+- Add automatic compression of Rules to achieve ~60% compression, added ``SetOption93 1`` to control caching of rules
+- Add rule trigger at root level like ``on loadavg<50 do power 2 endon`` after ``state`` command
 - Change flash access removing support for any Core before 2.6.3
 - Change HAss discovery by Federico Leoni (#8370)
+- Change default PWM Frequency to 977 Hz from 223 Hz
+- Change minimum PWM Frequency from 100 Hz to 40 Hz
+- Change PWM updated to the latest version of Arduino PR #7231
 
 ### 8.2.0.5 20200425
 

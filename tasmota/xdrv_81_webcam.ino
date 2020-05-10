@@ -230,11 +230,19 @@ uint32_t wc_setup(int32_t fsiz) {
 
   sensor_t * wc_s = esp_camera_sensor_get();
   // initial sensors are flipped vertically and colors are a bit saturated
+/*
   if (OV3660_PID == wc_s->id.PID) {
     wc_s->set_vflip(wc_s, 1);        // flip it back
     wc_s->set_brightness(wc_s, 1);   // up the brightness just a bit
     wc_s->set_saturation(wc_s, -2);  // lower the saturation
   }
+*/
+  wc_s->set_vflip(wc_s, Settings.webcam_config.flip);
+  wc_s->set_hmirror(wc_s, Settings.webcam_config.mirror);
+  wc_s->set_brightness(wc_s, Settings.webcam_config.brightness -2);  // up the brightness just a bit
+  wc_s->set_saturation(wc_s, Settings.webcam_config.saturation -2);  // lower the saturation
+  wc_s->set_contrast(wc_s, Settings.webcam_config.contrast -2);      // keep contrast
+
   // drop down frame size for higher initial frame rate
   wc_s->set_framesize(wc_s, (framesize_t)fsiz);
 
@@ -242,7 +250,6 @@ uint32_t wc_setup(int32_t fsiz) {
   wc_width = wc_fb->width;
   wc_height = wc_fb->height;
   esp_camera_fb_return(wc_fb);
-
 
 #ifdef USE_FACE_DETECT
   fd_init();
@@ -461,11 +468,11 @@ WiFiClient client;
 
 void handleMjpeg(void) {
   AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Handle camserver"));
-  //if (!wc_stream_active) {
+  if (!wc_stream_active) {
     wc_stream_active = 1;
     client = CamServer->client();
     AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Create client"));
-  //}
+  }
 }
 
 #ifdef USE_FACE_DETECT
@@ -613,11 +620,9 @@ void handleMjpeg_task(void) {
   bool jpeg_converted = false;
 
   if (!client.connected()) {
-    wc_stream_active = 0;
     AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Client fail"));
-    goto exit;
+    wc_stream_active = 0;
   }
-
   if (1 == wc_stream_active) {
     client.flush();
     client.setTimeout(3);
@@ -626,15 +631,15 @@ void handleMjpeg_task(void) {
       "Content-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n"
       "\r\n");
     wc_stream_active = 2;
-  } else {
+  }
+  if (2 == wc_stream_active) {
     wc_fb = esp_camera_fb_get();
     if (!wc_fb) {
-      wc_stream_active = 0;
       AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Frame fail"));
-      goto exit;
+      wc_stream_active = 0;
     }
-
-
+  }
+  if (2 == wc_stream_active) {
     if (wc_fb->format != PIXFORMAT_JPEG) {
       jpeg_converted = frame2jpg(wc_fb, 80, &_jpg_buf, &_jpg_buf_len);
       if (!jpeg_converted){
@@ -673,13 +678,11 @@ void handleMjpeg_task(void) {
     if (jpeg_converted) { free(_jpg_buf); }
     esp_camera_fb_return(wc_fb);
     //AddLog_P2(WC_LOGLEVEL, PSTR("CAM: send frame"));
-
-exit:
-    if (!wc_stream_active) {
-      AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Stream exit"));
-      client.flush();
-      client.stop();
-    }
+  }
+  if (0 == wc_stream_active) {
+    AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Stream exit"));
+    client.flush();
+    client.stop();
   }
 }
 
@@ -750,13 +753,6 @@ void detect_motion(void) {
   }
 }
 
-void wc_show_stream(void) {
-  if (CamServer) {
-    WSContentSend_P(PSTR("<p></p><center><img src='http://%s:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),
-         WiFi.localIP().toString().c_str());
-  }
-}
-
 uint32_t wc_set_streamserver(uint32_t flag) {
   if (global_state.wifi_down) { return 0; }
 
@@ -783,17 +779,30 @@ uint32_t wc_set_streamserver(uint32_t flag) {
   return 0;
 }
 
-void WcStreamControl(uint32_t resolution) {
-  wc_set_streamserver(resolution);
-  /*if (0 == resolution) {
-    resolution=-1;
-  }*/
+void WcStreamControl() {
+  wc_set_streamserver(Settings.webcam_config.stream);
+  int resolution = (!Settings.webcam_config.stream) ? -1 : Settings.webcam_config.resolution;
   wc_setup(resolution);
 }
 
+void WcShowStream(void) {
+  if (Settings.webcam_config.stream) {
+    if (!CamServer) {
+      WcStreamControl();
+      delay(50);   // Give the webcam webserver some time to prepare the stream
+    }
+    if (CamServer) {
+      WSContentSend_P(PSTR("<p></p><center><img src='http://%s:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),
+        WiFi.localIP().toString().c_str());
+    }
+  }
+}
+
 void wc_loop(void) {
-  if (CamServer) { CamServer->handleClient(); }
-  if (wc_stream_active) { handleMjpeg_task(); }
+  if (CamServer) {
+    CamServer->handleClient();
+    if (wc_stream_active) { handleMjpeg_task(); }
+  }
   if (motion_detect) { detect_motion(); }
 #ifdef USE_FACE_DETECT
   if (face_detect_time) { detect_face(); }
@@ -833,34 +842,103 @@ red led = gpio 33
 */
 
 void WcInit(void) {
-  if (Settings.esp32_webcam_resolution > 10) {
-    Settings.esp32_webcam_resolution = 0;
+  if (!Settings.webcam_config.data) {
+    Settings.webcam_config.stream = 1;
+    Settings.webcam_config.resolution = 5;
+    Settings.webcam_config.flip = 0;
+    Settings.webcam_config.mirror = 0;
+    Settings.webcam_config.saturation = 0;  // -2
+    Settings.webcam_config.brightness = 3;  // 1
+    Settings.webcam_config.contrast = 2;    // 0
   }
 }
-
 
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
-#define D_CMND_WEBCAM "Webcam"
+#define D_PRFX_WEBCAM "WC"
+#define D_CMND_WC_STREAM "Stream"
+#define D_CMND_WC_RESOLUTION "Resolution"
+#define D_CMND_WC_MIRROR "Mirror"
+#define D_CMND_WC_FLIP "Flip"
+#define D_CMND_WC_SATURATION "Saturation"
+#define D_CMND_WC_BRIGHTNESS "Brightness"
+#define D_CMND_WC_CONTRAST "Contrast"
 
-const char kWCCommands[] PROGMEM =  "|"    // no prefix
-  D_CMND_WEBCAM
+const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
+  "|" D_CMND_WC_STREAM "|" D_CMND_WC_RESOLUTION "|" D_CMND_WC_MIRROR "|" D_CMND_WC_FLIP "|"
+  D_CMND_WC_SATURATION "|" D_CMND_WC_BRIGHTNESS "|" D_CMND_WC_CONTRAST
   ;
 
 void (* const WCCommand[])(void) PROGMEM = {
-  &CmndWebcam,
+  &CmndWebcam, &CmndWebcamStream, &CmndWebcamResolution, &CmndWebcamMirror, &CmndWebcamFlip,
+  &CmndWebcamSaturation, &CmndWebcamBrightness, &CmndWebcamContrast
   };
 
 void CmndWebcam(void) {
-  uint32_t flag = 0;
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 10)) {
-    Settings.esp32_webcam_resolution=XdrvMailbox.payload;
-    WcStreamControl(Settings.esp32_webcam_resolution);
+  Response_P(PSTR("{\"" D_PRFX_WEBCAM "\":{\"" D_CMND_WC_STREAM "\":%d,\"" D_CMND_WC_RESOLUTION "\":%d,\"" D_CMND_WC_MIRROR "\":%d,\""
+    D_CMND_WC_FLIP "\":%d,\""
+    D_CMND_WC_SATURATION "\":%d,\"" D_CMND_WC_BRIGHTNESS "\":%d,\"" D_CMND_WC_CONTRAST "\":%d}}"),
+    Settings.webcam_config.stream, Settings.webcam_config.resolution, Settings.webcam_config.mirror,
+    Settings.webcam_config.flip,
+    Settings.webcam_config.saturation -2, Settings.webcam_config.brightness -2, Settings.webcam_config.contrast -2);
+}
+
+void CmndWebcamStream(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    Settings.webcam_config.stream = XdrvMailbox.payload;
+    if (!Settings.webcam_config.stream) { WcStreamControl(); }  // Stop stream
   }
-  if (CamServer) { flag = 1; }
-  Response_P(PSTR("{\"" D_CMND_WEBCAM "\":{\"Streaming\":\"%s\"}"),GetStateText(flag));
+  ResponseCmndStateText(Settings.webcam_config.stream);
+}
+
+void CmndWebcamResolution(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 10)) {
+    Settings.webcam_config.resolution = XdrvMailbox.payload;
+    wc_set_options(0, Settings.webcam_config.resolution);
+  }
+  ResponseCmndNumber(Settings.webcam_config.resolution);
+}
+
+void CmndWebcamMirror(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    Settings.webcam_config.mirror = XdrvMailbox.payload;
+    wc_set_options(3, Settings.webcam_config.mirror);
+  }
+  ResponseCmndStateText(Settings.webcam_config.mirror);
+}
+
+void CmndWebcamFlip(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    Settings.webcam_config.flip = XdrvMailbox.payload;
+    wc_set_options(2, Settings.webcam_config.flip);
+  }
+  ResponseCmndStateText(Settings.webcam_config.flip);
+}
+
+void CmndWebcamSaturation(void) {
+  if ((XdrvMailbox.payload >= -2) && (XdrvMailbox.payload <= 2)) {
+    Settings.webcam_config.saturation = XdrvMailbox.payload +2;
+    wc_set_options(6, Settings.webcam_config.saturation -2);
+  }
+  ResponseCmndNumber(Settings.webcam_config.saturation -2);
+}
+
+void CmndWebcamBrightness(void) {
+  if ((XdrvMailbox.payload >= -2) && (XdrvMailbox.payload <= 2)) {
+    Settings.webcam_config.brightness = XdrvMailbox.payload +2;
+    wc_set_options(5, Settings.webcam_config.brightness -2);
+  }
+  ResponseCmndNumber(Settings.webcam_config.brightness -2);
+}
+
+void CmndWebcamContrast(void) {
+  if ((XdrvMailbox.payload >= -2) && (XdrvMailbox.payload <= 2)) {
+    Settings.webcam_config.contrast = XdrvMailbox.payload +2;
+    wc_set_options(4, Settings.webcam_config.contrast -2);
+  }
+  ResponseCmndNumber(Settings.webcam_config.contrast -2);
 }
 
 /*********************************************************************************************\
@@ -878,13 +956,7 @@ bool Xdrv81(uint8_t function) {
       wc_pic_setup();
       break;
     case FUNC_WEB_ADD_MAIN_BUTTON:
-     if (Settings.esp32_webcam_resolution) {
-//#ifndef USE_SCRIPT
-       WcStreamControl(Settings.esp32_webcam_resolution);
-       delay(50);   // Give the webcam webserver some time to prepare the stream
-       wc_show_stream();
-//#endif
-     }
+      WcShowStream();
      break;
     case FUNC_COMMAND:
       result = DecodeCommand(kWCCommands, WCCommand);
