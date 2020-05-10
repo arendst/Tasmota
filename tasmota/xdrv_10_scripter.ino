@@ -891,16 +891,6 @@ if (hsv.S == 0) {
 #endif
 //#endif
 
-
-#ifdef ESP32
-#include "esp_pm.h"
-#include "esp_clk.h"
-uint32_t switch_freq(uint32_t mhz) {
-  setCpuFrequencyMhz(mhz); //Set CPU clock to 80MHz fo example
-  return getCpuFrequencyMhz(); //Get CPU clock
-}
-#endif // ESP32
-
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
 char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,JsonObject *jo) {
