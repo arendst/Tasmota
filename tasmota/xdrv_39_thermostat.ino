@@ -1338,7 +1338,7 @@ void CmndTimePiCycleSet(void)
     if (XdrvMailbox.data_len > 0) {
       uint32_t value = (uint32_t)(XdrvMailbox.payload);
       if ((value >= 0) && (value <= 1440)) {
-        Thermostat[ctr_output].time_pi_cycle = (uint16_t)(value);
+        Thermostat[ctr_output].time_pi_cycle = (uint16_t)value;
       }
     }
     ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_pi_cycle));
