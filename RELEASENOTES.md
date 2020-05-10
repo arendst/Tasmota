@@ -82,6 +82,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
 - Add command ``SetOption91 1`` to enable fading at startup / power on
 - Add command ``SetOption92 1`` to set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...)
+- Add command ``SetOption93 1`` to control caching of compressed rules
 - Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
 - Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
 - Add command ``Sensor18 0..32000`` to control PMS5003 sensor interval to extend lifetime by Gene Ruebsamen (#8128)
@@ -103,5 +104,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for OpenTherm by Yuriy Sannikov (#8373)
 - Add support for Thermostat control by arijav (#8212)
 - Add experimental basic support for Tasmota on ESP32 based on work by Jörg Schüler-Maroldt
-- Add automatic compression of Rules to achieve ~60% compression, added ``SetOption93 1`` to control caching of rules
+- Add automatic compression of Rules to achieve ~60% compression by Stefan Hadinger
 - Add rule trigger at root level like ``on loadavg<50 do power 2 endon`` after ``state`` command
