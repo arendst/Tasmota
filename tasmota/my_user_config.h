@@ -670,7 +670,7 @@
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
 
 // -- Thermostat control ----------------------------
-//#define USE_THERMOSTAT                             // Add support for Thermostat
+//#define USE_THERMOSTAT                           // Add support for Thermostat
   #define THERMOSTAT_CONTROLLER_OUTPUTS         1         // Number of outputs to be controlled independently
   #define THERMOSTAT_SENSOR_NAME                "DS18B20" // Name of the local sensor to be used
   #define THERMOSTAT_RELAY_NUMBER               1         // Default output relay number for the first controller (+i for following ones)
