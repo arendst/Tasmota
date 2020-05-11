@@ -1232,7 +1232,7 @@ void SerialInput(void)
     }
     else if ((serial_in_byte_counter == INPUT_BUFFER_SIZE)
 #ifdef ESP8266
-//             || Serial.hasOverrun()  // Default ESP8266 Serial buffer size is 256. Tasmota increases to INPUT_BUFFER_SIZE
+             || Serial.hasOverrun()  // Default ESP8266 Serial buffer size is 256. Tasmota increases to INPUT_BUFFER_SIZE
 #endif
                                                              ) {
       serial_buffer_overrun = true;

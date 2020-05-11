@@ -198,8 +198,7 @@ char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
  * Main
 \*********************************************************************************************/
 
-void setup(void)
-{
+void setup(void) {
 #ifdef ESP32
 #ifdef DISABLE_ESP32_BROWNOUT
   DisableBrownout();      // Workaround possible weak LDO resulting in brownout detection during Wifi connection
@@ -216,7 +215,7 @@ void setup(void)
   RtcRebootSave();
 
   Serial.begin(APP_BAUDRATE);
-  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
+//  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
   snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
@@ -325,8 +324,7 @@ void setup(void)
   XsnsCall(FUNC_INIT);
 }
 
-void BacklogLoop(void)
-{
+void BacklogLoop(void) {
   if (TimeReached(backlog_delay)) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {
 #ifdef SUPPORT_IF_STATEMENT
@@ -345,8 +343,18 @@ void BacklogLoop(void)
   }
 }
 
-void loop(void)
-{
+void SleepDelay(uint32_t mseconds) {
+  if (mseconds) {
+    for (uint32_t wait = 0; wait < mseconds; wait++) {
+      delay(1);
+      if (Serial.available()) { break; }  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
+    }
+  } else {
+    delay(0);
+  }
+}
+
+void loop(void) {
   uint32_t my_sleep = millis();
 
   XdrvCall(FUNC_LOOP);
@@ -396,23 +404,23 @@ void loop(void)
 
   uint32_t my_activity = millis() - my_sleep;
 
-  if (Settings.flag3.sleep_normal) {              // SetOption60 - Enable normal sleep instead of dynamic sleep
-    //  yield();                                  // yield == delay(0), delay contains yield, auto yield in loop
-    delay(ssleep);                                // https://github.com/esp8266/Arduino/issues/2021
+  if (Settings.flag3.sleep_normal) {               // SetOption60 - Enable normal sleep instead of dynamic sleep
+    //  yield();                                   // yield == delay(0), delay contains yield, auto yield in loop
+    SleepDelay(ssleep);                            // https://github.com/esp8266/Arduino/issues/2021
   } else {
     if (my_activity < (uint32_t)ssleep) {
-      delay((uint32_t)ssleep - my_activity);      // Provide time for background tasks like wifi
+      SleepDelay((uint32_t)ssleep - my_activity);  // Provide time for background tasks like wifi
     } else {
       if (global_state.wifi_down) {
-        delay(my_activity /2);                    // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
+        SleepDelay(my_activity /2);                // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
       }
     }
   }
 
-  if (!my_activity) { my_activity++; }            // We cannot divide by 0
+  if (!my_activity) { my_activity++; }             // We cannot divide by 0
   uint32_t loop_delay = ssleep;
-  if (!loop_delay) { loop_delay++; }              // We cannot divide by 0
-  uint32_t loops_per_second = 1000 / loop_delay;  // We need to keep track of this many loops per second
+  if (!loop_delay) { loop_delay++; }               // We cannot divide by 0
+  uint32_t loops_per_second = 1000 / loop_delay;   // We need to keep track of this many loops per second
   uint32_t this_cycle_ratio = 100 * my_activity / loop_delay;
   loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + (this_cycle_ratio / loops_per_second); // Take away one loop average away and add the new one
 }
