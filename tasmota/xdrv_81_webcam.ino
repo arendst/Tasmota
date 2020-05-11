@@ -354,8 +354,8 @@ uint32_t wc_get_jpeg(uint8_t **buff) {
     _jpg_buf_len = wc_fb->len;
     _jpg_buf = wc_fb->buf;
   }
-  esp_camera_fb_return(wc_fb);
-  *buff = _jpg_buf;
+  esp_camera_fb_return(wc_fb);  // This frees the buffer
+  *buff = _jpg_buf;             // Buffer has been freed so this will cause exceptions
   return _jpg_buf_len;
 }
 
@@ -447,7 +447,7 @@ void HandleImage(void) {
     len = wc_get_jpeg(&buff);
     if (len) {
       client.write(buff,len);
-      free(buff);
+      free(buff);  // Buffer has been freed already in wc_get_jpeg so this will cause exceptions
     }
   } else {
     bnum--;
@@ -473,6 +473,50 @@ void handleMjpeg(void) {
     client = CamServer->client();
     AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Create client"));
   }
+}
+
+void HandleImageTheo(void) {
+  if (!HttpCheckPriviledgedAccess(true)) { return; }
+
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Capture image"));
+
+  if (Settings.webcam_config.stream) {
+    if (!CamServer) {
+      WcStreamControl();
+    }
+  }
+
+  camera_fb_t *wc_fb;
+  wc_fb = esp_camera_fb_get();  // Acquire frame
+  if (!wc_fb) {
+    AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Frame buffer could not be acquired"));
+    return;
+  }
+
+  size_t _jpg_buf_len = 0;
+  uint8_t * _jpg_buf = NULL;
+  if (wc_fb->format != PIXFORMAT_JPEG) {
+    bool jpeg_converted = frame2jpg(wc_fb, 80, &_jpg_buf, &_jpg_buf_len);
+    if (!jpeg_converted) {
+      _jpg_buf_len = wc_fb->len;
+      _jpg_buf = wc_fb->buf;
+    }
+  } else {
+    _jpg_buf_len = wc_fb->len;
+    _jpg_buf = wc_fb->buf;
+  }
+
+  if (_jpg_buf_len) {
+    Webserver->client().flush();
+    WSHeaderSend();
+    Webserver->sendHeader(F("Content-disposition"), F("inline; filename=cap.jpg"));
+    Webserver->send_P(200, "image/jpeg", (char *)_jpg_buf, _jpg_buf_len);
+    Webserver->client().stop();
+  }
+
+  esp_camera_fb_return(wc_fb);  // Free frame buffer
+
+  AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Image sent"));
 }
 
 #ifdef USE_FACE_DETECT
@@ -812,6 +856,8 @@ void wc_loop(void) {
 void wc_pic_setup(void) {
   Webserver->on("/wc.jpg", HandleImage);
   Webserver->on("/wc.mjpeg", HandleImage);
+
+  Webserver->on("/snapshot.jpg", HandleImageTheo);
 }
 
 /*

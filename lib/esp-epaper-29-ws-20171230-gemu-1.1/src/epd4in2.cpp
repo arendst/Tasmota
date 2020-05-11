@@ -130,14 +130,14 @@ int Epd42::Init(void) {
     SendCommand(PANEL_SETTING);
    // SendData(0xbf);    // KW-BF   KWR-AF  BWROTP 0f
   //  SendData(0x0b);
-//	SendData(0x0F);  //300x400 Red mode, LUT from OTP
-//	SendData(0x1F);  //300x400 B/W mode, LUT from OTP
-	SendData(0x3F); //300x400 B/W mode, LUT set by register
-//	SendData(0x2F); //300x400 Red mode, LUT set by register
+//  SendData(0x0F);  //300x400 Red mode, LUT from OTP
+//  SendData(0x1F);  //300x400 B/W mode, LUT from OTP
+  SendData(0x3F); //300x400 B/W mode, LUT set by register
+//  SendData(0x2F); //300x400 Red mode, LUT set by register
 
     SendCommand(PLL_CONTROL);
     SendData(0x3C);        // 3A 100Hz   29 150Hz   39 200Hz    31 171Hz       3C 50Hz (default)    0B 10Hz
-	//SendData(0x0B);   //0B is 10Hz
+  //SendData(0x0B);   //0B is 10Hz
     /* EPD hardware init end */
     return 0;
 }
@@ -502,12 +502,15 @@ const unsigned char lut_wb_quick[] PROGMEM =
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-
-
 #define PIN_OUT_SET 0x60000304
 #define PIN_OUT_CLEAR 0x60000308
 
+#ifdef ESP32
+#define SSPI_USEANYPIN 1
+#define PWRITE digitalWrite
+#else
 #define PWRITE ydigitalWrite
+#endif
 
 #ifndef SSPI_USEANYPIN
 // uses about 2.75 usecs, 365 kb /sec
@@ -530,6 +533,7 @@ void ICACHE_RAM_ATTR Epd42::fastSPIwrite(uint8_t d,uint8_t dc) {
 }
 #else
 
+#ifndef ESP32
 extern void ICACHE_RAM_ATTR ydigitalWrite(uint8_t pin, uint8_t val) {
   //stopWaveform(pin);
   if(pin < 16){
@@ -540,6 +544,7 @@ extern void ICACHE_RAM_ATTR ydigitalWrite(uint8_t pin, uint8_t val) {
     else GP16O &= ~1;
   }
 }
+#endif
 // about 13 us => 76 kb / sec
 // can use any pin
 void Epd42::fastSPIwrite(uint8_t d,uint8_t dc) {
