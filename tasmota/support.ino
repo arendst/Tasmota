@@ -638,7 +638,7 @@ float ConvertHumidity(float h)
 
 float CalcTempHumToDew(float t, float h)
 {
-  if (isnan(h) || isnan(t)) { return 0.0; }
+  if (isnan(h) || isnan(t)) { return NAN; }
 
   if (Settings.flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
     t = (t - 32) / 1.8;                                       // Celsius
