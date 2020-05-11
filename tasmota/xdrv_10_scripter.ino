@@ -2674,6 +2674,40 @@ exit10:
   return lp;
 }
 
+#ifdef ESP32
+
+TimerHandle_t beep_th;
+void StopBeep( TimerHandle_t xTimer );
+
+void StopBeep( TimerHandle_t xTimer ) {
+  ledcWriteTone(7,0);
+  xTimerStop(xTimer, 0);
+}
+
+void esp32_beep(int32_t freq ,uint32_t len) {
+  if (freq<0) {
+    ledcSetup(7,500,10);
+    ledcAttachPin(-freq,7);
+    ledcWriteTone(7,0);
+    if (!beep_th) {
+      beep_th = xTimerCreate("beep",100,pdFALSE,( void * ) 0,StopBeep);
+    }
+  } else {
+    if (!beep_th) return;
+    if (!freq) {
+      ledcWriteTone(7,0);
+      xTimerStop(beep_th, 10);
+      return;
+    }
+    if (len < 10) return;
+    if (xTimerIsTimerActive(beep_th)) return;
+    ledcWriteTone(7,freq);
+    uint32_t ticks = pdMS_TO_TICKS(len);
+    xTimerChangePeriod( beep_th, ticks, 10);
+  }
+}
+#endif // ESP32
+
 //#define IFTHEN_DEBUG
 
 #define IF_NEST 8
@@ -2706,11 +2740,12 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
     }
 
     JsonObject  *jo=0;
-
+    DynamicJsonBuffer jsonBuffer; // on heap
+    JsonObject &jobj=jsonBuffer.parseObject(js);
     if (js) {
-      DynamicJsonBuffer jsonBuffer; // on heap
-      JsonObject &jobj=jsonBuffer.parseObject(js);
       jo=&jobj;
+    } else {
+      jo=0;
     }
 
     char *lp=glob_script_mem.scriptptr;
@@ -2995,13 +3030,10 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
             else if (!strncmp(lp,"beep(",5)) {
               lp+=5;
               lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
-              if (fvar<0) {
-                ledcSetup(7,500,10);
-                ledcAttachPin(-fvar,7);
-                ledcWriteTone(7,0);
-              } else {
-                ledcWriteTone(7,fvar);
-              }
+              SCRIPT_SKIP_SPACES
+              float fvar1;
+              lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
+              esp32_beep(fvar,fvar1);
               lp++;
               goto next_line;
             }
