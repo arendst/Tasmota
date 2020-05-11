@@ -484,7 +484,7 @@
 
 // Commands xdrv_23_zigbee.ino
 #define D_PRFX_ZB "Zb"
-#define D_ZIGBEE_NOT_STARTED "Zigbee not started (yet)"
+#define D_ZIGBEE_NOT_STARTED "Zigbee not started"
 #define D_CMND_ZIGBEE_PERMITJOIN "PermitJoin"
 #define D_CMND_ZIGBEE_STATUS "Status"
 #define D_CMND_ZIGBEE_RESET "Reset"

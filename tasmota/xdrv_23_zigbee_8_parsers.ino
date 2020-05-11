@@ -147,6 +147,18 @@ int32_t Z_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
   }
 }
 
+// checks the device type (coordinator, router, end-device)
+// If coordinator continue
+// If router goto ZIGBEE_LABEL_START_ROUTER
+// If device goto ZIGBEE_LABEL_START_DEVICE
+int32_t Z_SwitchDeviceType(int32_t res, class SBuffer &buf) {
+  switch (Settings.zb_pan_id) {
+    case 0xFFFF:    return ZIGBEE_LABEL_INIT_ROUTER;
+    case 0xFFFE:    return ZIGBEE_LABEL_INIT_DEVICE;
+    default:        return 0;   // continue
+  }
+}
+
 //
 // Helper function, checks if the incoming buffer matches the 2-bytes prefix, i.e. message type in PMEM
 //
@@ -304,6 +316,25 @@ int32_t Z_DataConfirm(int32_t res, const class SBuffer &buf) {
   }
 
   return -1;
+}
+
+//
+// Handle State Change Indication incoming message
+//
+int32_t Z_ReceiveStateChange(int32_t res, const class SBuffer &buf) {
+  uint8_t           state = buf.get8(2);
+
+  if (ZDO_DEV_NWK_DISC == state) {
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
+                    "\"Status\":%d,\"Message\":\"%s\"}}"),
+                    ZIGBEE_STATUS_SCANNING, PSTR("Scanning Zigbee network")
+                    );
+
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+    XdrvRulesProcess();
+  }
+
+  return res;
 }
 
 //
@@ -641,6 +672,7 @@ typedef struct Z_Dispatcher {
 // Ffilters based on ZNP frames
 ZBM(AREQ_AF_DATA_CONFIRM, Z_AREQ | Z_AF, AF_DATA_CONFIRM)                   // 4480
 ZBM(AREQ_AF_INCOMING_MESSAGE, Z_AREQ | Z_AF, AF_INCOMING_MSG)               // 4481
+// ZBM(AREQ_STATE_CHANGE_IND, Z_AREQ | Z_ZDO, ZDO_STATE_CHANGE_IND)            // 45C0
 ZBM(AREQ_END_DEVICE_ANNCE_IND, Z_AREQ | Z_ZDO, ZDO_END_DEVICE_ANNCE_IND)    // 45C1
 ZBM(AREQ_END_DEVICE_TC_DEV_IND, Z_AREQ | Z_ZDO, ZDO_TC_DEV_IND)             // 45CA
 ZBM(AREQ_PERMITJOIN_OPEN_XX, Z_AREQ | Z_ZDO, ZDO_PERMIT_JOIN_IND )          // 45CB
@@ -655,6 +687,7 @@ ZBM(AREQ_ZDO_MGMT_BIND_RSP, Z_AREQ | Z_ZDO, ZDO_MGMT_BIND_RSP)              // 4
 const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
   { AREQ_AF_DATA_CONFIRM,         &Z_DataConfirm },
   { AREQ_AF_INCOMING_MESSAGE,     &Z_ReceiveAfIncomingMessage },
+  // { AREQ_STATE_CHANGE_IND,        &Z_ReceiveStateChange },
   { AREQ_END_DEVICE_ANNCE_IND,    &Z_ReceiveEndDeviceAnnonce },
   { AREQ_END_DEVICE_TC_DEV_IND,   &Z_ReceiveTCDevInd },
   { AREQ_PERMITJOIN_OPEN_XX,      &Z_ReceivePermitJoinStatus },
