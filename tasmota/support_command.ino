@@ -561,6 +561,11 @@ void CmndStatus(void)
 #ifdef USE_SCRIPT_STATUS
   if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">U",2,mqtt_data);
 #endif
+
+  if (payload) {
+    XdrvRulesProcess();  // Allow rule processing on single Status command only
+  }
+
   mqtt_data[0] = '\0';
 }
 

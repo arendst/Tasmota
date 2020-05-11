@@ -1,0 +1,8 @@
+name=Unishox Compressor Decompressor highly customized and optimized for ESP8266 and Tasmota
+version=1.0
+author=Arundale Ramanathan, Stephan Hadinger
+maintainer=Arun <arun@siara.cc>, Stephan <stephan.hadinger@gmail.com>
+sentence=Unishox compression for Tasmota Rules
+paragraph=It is based on Unishox hybrid encoding technique. This version has specific Unicode code removed for size.
+url=https://github.com/siara-cc/Unishox
+architectures=esp8266

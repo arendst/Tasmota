@@ -104,9 +104,9 @@ const uint16_t WS2812_MAX_LEDS = 512;       // Max number of LEDs
 const uint32_t PWM_RANGE = 1023;            // 255..1023 needs to be devisible by 256
 //const uint16_t PWM_FREQ = 1000;             // 100..1000 Hz led refresh
 //const uint16_t PWM_FREQ = 910;              // 100..1000 Hz led refresh (iTead value)
-const uint16_t PWM_FREQ = 223;              // 100..4000 Hz led refresh
+const uint16_t PWM_FREQ = 977;              // 100..4000 Hz led refresh
 const uint16_t PWM_MAX = 4000;              // [PWM_MAX] Maximum frequency - Default: 4000
-const uint16_t PWM_MIN = 100;               // [PWM_MIN] Minimum frequency - Default: 100
+const uint16_t PWM_MIN = 40;                // [PWM_MIN] Minimum frequency - Default: 40
                                             //    For Dimmers use double of your mains AC frequecy (100 for 50Hz and 120 for 60Hz)
                                             //    For Controlling Servos use 50 and also set PWM_FREQ as 50 (DO NOT USE THESE VALUES FOR DIMMERS)
 
@@ -124,7 +124,7 @@ const uint16_t SYSLOG_TIMER = 600;          // Seconds to restore syslog_level
 const uint16_t SERIALLOG_TIMER = 600;       // Seconds to disable SerialLog
 const uint8_t OTA_ATTEMPTS = 5;             // Number of times to try fetching the new firmware
 
-const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in (serial and http) command buffer
+const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in serial command buffer
 const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
 const uint16_t CMDSZ = 24;                  // Max number of characters in command
 const uint16_t TOPSZ = 151;                 // Max number of characters in topic string

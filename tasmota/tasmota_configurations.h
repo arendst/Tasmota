@@ -143,12 +143,15 @@
   #define MP3_VOLUME           10                // Set the startup volume on init, the range can be 0..30(max)
 //#define USE_AZ7798                               // Add support for AZ-Instrument 7798 CO2 datalogger
 #define USE_PN532_HSU                            // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
+//#define USE_ZIGBEE                               // Enable serial communication with Zigbee CC2530 flashed with ZNP
 #define USE_RDM6300                              // Add support for RDM6300 125kHz RFID Reader (+0k8)
 #define USE_IBEACON                              // Add support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 //#define USE_GPS                                  // Add support for GPS and NTP Server for becoming Stratus 1 Time Source (+ 3.1kb flash, +132 bytes RAM)
 #define USE_HM10                                 // (ESP8266 only) Add support for HM-10 as a BLE-bridge for the LYWSD03 (+5k1 code)
 //#define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #define USE_HRXL                                 // Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
+//#define USE_TASMOTA_SLAVE                        // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
+//#define USE_OPENTHERM                            // Add support for OpenTherm (+15k code)
 
 #define USE_ENERGY_SENSOR                        // Add energy sensors (-14k code)
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
@@ -168,22 +171,20 @@
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
   #define USE_IR_RECEIVE                         // Support for IR receiver (+5k5 code, 264 iram)
 
-//#define USE_ZIGBEE                               // Enable serial communication with Zigbee CC2530 flashed with ZNP
-
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 #define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
 #define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
 //#define USE_HX711_GUI                            // Add optional web GUI to HX711 as scale (+1k8 code)
 //#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k6/0k8 code)
 //#define USE_TX23_WIND_SENSOR                     // Add support for La Crosse TX23 anemometer (+2k7/1k code)
+//#define USE_WINDMETER                            // Add support for analog anemometer (+2k2 code)
 #define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
 #define USE_RF_SENSOR                            // Add support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 //  #define USE_THEO_V2                            // Add support for decoding Theo V2 sensors as documented on https://sidweb.nl using 434MHz RF sensor receiver (+1k4 code)
   #define USE_ALECTO_V2                          // Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 using 868MHz RF sensor receiver (+1k7 code)
 #define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
-//#define USE_ARDUINO_SLAVE                        // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
-//#define USE_WINDMETER                            // Add support for analog anemometer
+//#define USE_THERMOSTAT                           // Add support for Thermostat
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_SENSORS
@@ -366,12 +367,15 @@
 #undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                             // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
+#undef USE_ZIGBEE                                // Disable serial communication with Zigbee CC2530 flashed with ZNP
 #undef USE_RDM6300                               // Disable support for RDM6300 125kHz RFID Reader (+0k8)
 #undef USE_IBEACON                               // Disable support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 #undef USE_GPS                                   // Disable support for GPS and NTP Server for becoming Stratus 1 Time Source (+ 3.1kb flash, +132 bytes RAM)
 #undef USE_HM10                                  // (ESP8266 only) Disable support for HM-10 as a BLE-bridge for the LYWSD03 (+5k1 code)
 #undef USE_MI_ESP32                              // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #undef USE_HRXL                                  // Disable support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
+#undef USE_TASMOTA_SLAVE                         // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
+#undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
 
 //#define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -381,11 +385,12 @@
 #undef USE_HX711                                 // Disable support for HX711 load cell
 #undef USE_TX20_WIND_SENSOR                      // Disable support for La Crosse TX20 anemometer
 #undef USE_TX23_WIND_SENSOR                      // Disable support for La Crosse TX23 anemometer
+#undef USE_WINDMETER                             // Disable support for analog anemometer (+2k2 code)
 #undef USE_RC_SWITCH                             // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                             // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef USE_HRE                                   // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef USE_A4988_STEPPER                         // Disable support for A4988_Stepper
-#undef USE_ARDUINO_SLAVE                         // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
+#undef USE_THERMOSTAT                            // Disable support for Thermostat
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_IR
@@ -467,12 +472,15 @@
 #undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                             // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
+#undef USE_ZIGBEE                                // Disable serial communication with Zigbee CC2530 flashed with ZNP
 #undef USE_RDM6300                               // Disable support for RDM6300 125kHz RFID Reader (+0k8)
 #undef USE_IBEACON                               // Disable support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 #undef USE_GPS                                   // Disable support for GPS and NTP Server for becoming Stratus 1 Time Source (+ 3.1kb flash, +132 bytes RAM)
 #undef USE_HM10                                  // (ESP8266 only) Disable support for HM-10 as a BLE-bridge for the LYWSD03 (+5k1 code)
 #undef USE_MI_ESP32                              // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #undef USE_HRXL                                  // Disable support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
+#undef USE_TASMOTA_SLAVE                         // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
+#undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
 
 //#undef USE_ENERGY_SENSOR                         // Disable energy sensors
 #undef USE_PZEM004T                              // Disable PZEM004T energy sensor
@@ -491,21 +499,20 @@
 #undef USE_MAX31865                              // Disable support for MAX31865 RTD sensors using softSPI
 #undef USE_IR_REMOTE                             // Disable IR driver
 
-#undef USE_ZIGBEE                                // Disable serial communication with Zigbee CC2530 flashed with ZNP
-
 #undef USE_SR04                                  // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                                // Disable support for TM1638 switches copying Switch1 .. Switch8
 #undef USE_HX711                                 // Disable support for HX711 load cell
 #undef USE_TX20_WIND_SENSOR                      // Disable support for La Crosse TX20 anemometer
 #undef USE_TX23_WIND_SENSOR                      // Disable support for La Crosse TX23 anemometer
+#undef USE_WINDMETER                             // Disable support for analog anemometer (+2k2 code)
 #undef USE_RC_SWITCH                             // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                             // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef USE_HRE                                   // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef USE_A4988_STEPPER                         // Disable support for A4988_Stepper
-#undef USE_ARDUINO_SLAVE                         // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
+#undef USE_THERMOSTAT                            // Disable support for Thermostat
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
-#endif  // FIRMWARE_BASIC
+#endif  // FIRMWARE_LITE
 
 /*********************************************************************************************\
  * [tasmota-minimal.bin]
@@ -590,12 +597,15 @@
 #undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                             // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
+#undef USE_ZIGBEE                                // Disable serial communication with Zigbee CC2530 flashed with ZNP
 #undef USE_RDM6300                               // Disable support for RDM6300 125kHz RFID Reader (+0k8)
 #undef USE_IBEACON                               // Disable support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 #undef USE_GPS                                   // Disable support for GPS and NTP Server for becoming Stratus 1 Time Source (+ 3.1kb flash, +132 bytes RAM)
 #undef USE_HM10                                  // (ESP8266 only) Disable support for HM-10 as a BLE-bridge for the LYWSD03 (+5k1 code)
 #undef USE_MI_ESP32                              // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #undef USE_HRXL                                  // Disable support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
+#undef USE_TASMOTA_SLAVE                         // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
+#undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
 #undef USE_PZEM004T                              // Disable PZEM004T energy sensor
@@ -618,11 +628,12 @@
 #undef USE_HX711                                 // Disable support for HX711 load cell
 #undef USE_TX20_WIND_SENSOR                      // Disable support for La Crosse TX20 anemometer
 #undef USE_TX23_WIND_SENSOR                      // Disable support for La Crosse TX23 anemometer
+#undef USE_WINDMETER                             // Disable support for analog anemometer (+2k2 code)
 #undef USE_RC_SWITCH                             // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                             // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef USE_HRE                                   // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef USE_A4988_STEPPER                         // Disable support for A4988_Stepper
-#undef USE_ARDUINO_SLAVE                         // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
+#undef USE_THERMOSTAT                            // Disable support for Thermostat
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_MINIMAL

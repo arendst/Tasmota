@@ -127,6 +127,7 @@ public:
   void setFriendlyName(uint16_t shortaddr, const char * str);
   const char * getFriendlyName(uint16_t shortaddr) const;
   const char * getModelId(uint16_t shortaddr) const;
+  const char * getManufacturerId(uint16_t shortaddr) const;
   void setReachable(uint16_t shortaddr, bool reachable);
 
   // get next sequence number for (increment at each all)
@@ -585,6 +586,15 @@ const char * Z_Devices::getModelId(uint16_t shortaddr) const {
   if (found >= 0) {
     const Z_Device & device = devicesAt(found);
     return device.modelId;
+  }
+  return nullptr;
+}
+
+const char * Z_Devices::getManufacturerId(uint16_t shortaddr) const {
+  int32_t found = findShortAddr(shortaddr);
+  if (found >= 0) {
+    const Z_Device & device = devicesAt(found);
+    return device.manufacturerId;
   }
   return nullptr;
 }

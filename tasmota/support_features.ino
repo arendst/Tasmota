@@ -477,7 +477,7 @@ void GetFeatures(void)
 #ifdef USE_EXS_DIMMER
   feature5 |= 0x00008000;  // xdrv_30_exs_dimmer.ino
 #endif
-#ifdef USE_ARDUINO_SLAVE
+#ifdef USE_TASMOTA_SLAVE
   feature5 |= 0x00010000;  // xdrv_31_arduino_slave.ino
 #endif
 #ifdef USE_HIH6

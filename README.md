@@ -147,6 +147,7 @@ People helping to keep the show on the road:
 - Christian Staars for NRF24L01 and HM-10 Bluetooth sensor support
 - Paul Diem for UDP Group communication support
 - Jörg Schüler-Maroldt for his initial ESP32 port
+- Javier Arigita for his thermostat driver
 - Many more providing Tips, Wips, Pocs, PRs and Donations
 
 ## License
