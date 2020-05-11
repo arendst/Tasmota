@@ -1227,6 +1227,17 @@ void SerialInput(void)
     delay(0);
     serial_in_byte = Serial.read();
 
+    if (0 == serial_in_byte_counter) {
+      serial_buffer_overrun = false;
+    }
+    else if ((serial_in_byte_counter == INPUT_BUFFER_SIZE)
+#ifdef ESP8266
+//             || Serial.hasOverrun()  // Default ESP8266 Serial buffer size is 256. Tasmota increases to INPUT_BUFFER_SIZE
+#endif
+                                                             ) {
+      serial_buffer_overrun = true;
+    }
+
 #ifdef ESP8266
 /*-------------------------------------------------------------------------------------------*\
  * Sonoff dual and ch4 19200 baud serial interface
@@ -1255,7 +1266,7 @@ void SerialInput(void)
         if (serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {                     // Add char to string if it still fits
           serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
         } else {
-          serial_in_byte_counter = 0;
+          serial_buffer_overrun = true;                                          // Signal overrun but continue reading input to flush until '\n' (EOL)
         }
       }
     } else {
@@ -1292,8 +1303,12 @@ void SerialInput(void)
     if (!Settings.flag.mqtt_serial && (serial_in_byte == '\n')) {                // CMND_SERIALSEND and CMND_SERIALLOG
       serial_in_buffer[serial_in_byte_counter] = 0;                              // Serial data completed
       seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings.seriallog_level;
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), serial_in_buffer);
-      ExecuteCommand(serial_in_buffer, SRC_SERIAL);
+      if (serial_buffer_overrun) {
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Serial buffer overrun"));
+      } else {
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), serial_in_buffer);
+        ExecuteCommand(serial_in_buffer, SRC_SERIAL);
+      }
       serial_in_byte_counter = 0;
       serial_polling_window = 0;
       Serial.flush();

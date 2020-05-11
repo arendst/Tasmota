@@ -59,13 +59,14 @@
 #define D_CMND_I2CREAD   "I2CRead"
 #define D_CMND_I2CSTRETCH "I2CStretch"
 #define D_CMND_I2CCLOCK  "I2CClock"
+#define D_CMND_SERBUFF   "SerBufSize"
 
 const char kDebugCommands[] PROGMEM = "|"  // No prefix
   D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|"
 #ifdef USE_WEBSERVER
   D_CMND_CFGXOR "|"
 #endif
-  D_CMND_CPUCHECK "|"
+  D_CMND_CPUCHECK "|" D_CMND_SERBUFF "|"
 #ifdef DEBUG_THEO
   D_CMND_EXCEPTION "|"
 #endif
@@ -80,7 +81,7 @@ void (* const DebugCommand[])(void) PROGMEM = {
 #ifdef USE_WEBSERVER
   &CmndCfgXor,
 #endif
-  &CmndCpuCheck,
+  &CmndCpuCheck, &CmndSerBufSize,
 #ifdef DEBUG_THEO
   &CmndException,
 #endif
@@ -477,6 +478,18 @@ void CmndCpuCheck(void)
     CPU_last_millis = CPU_last_loop_time;
   }
   ResponseCmndNumber(CPU_load_check);
+}
+
+void CmndSerBufSize(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    Serial.setRxBufferSize(XdrvMailbox.payload);
+  }
+#ifdef ESP8266
+  ResponseCmndNumber(Serial.getRxBufferSize());
+#else
+  ResponseCmndDone();
+#endif
 }
 
 void CmndFreemem(void)

@@ -156,7 +156,8 @@ uint8_t last_source = 0;                    // Last command source
 uint8_t shutters_present = 0;               // Number of actual define shutters
 uint8_t prepped_loglevel = 0;               // Delayed log level message
 //uint8_t mdns_delayed_start = 0;             // mDNS delayed start
-bool serial_local = false;                  // Handle serial locally;
+bool serial_local = false;                  // Handle serial locally
+bool serial_buffer_overrun = false;         // Serial buffer overrun
 bool fallback_topic_flag = false;           // Use Topic or FallbackTopic
 bool backlog_mutex = false;                 // Command backlog pending
 bool interlock_mutex = false;               // Interlock power command pending
@@ -215,6 +216,7 @@ void setup(void)
   RtcRebootSave();
 
   Serial.begin(APP_BAUDRATE);
+  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
   snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
