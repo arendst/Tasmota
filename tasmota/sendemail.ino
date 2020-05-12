@@ -630,10 +630,10 @@ void send_message_txt(char *txt) {
     uint32_t cnt;
     uint8_t *buff;
     uint32_t len,picmax;
-    picmax=get_picstore(-1,0);
+    picmax=WcGetPicstore(-1,0);
     cnt=*txt&7;
     if (cnt<1 || cnt>picmax) cnt=1;
-    len=get_picstore(cnt-1,&buff);
+    len=WcGetPicstore(cnt-1,&buff);
     if (len) {
       char str[12];
       sprintf(str,"img_%1d.jpg",cnt+1);

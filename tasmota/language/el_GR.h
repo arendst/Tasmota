@@ -98,6 +98,8 @@
 #define D_FILE "Αρχείο"
 #define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Ελεύθερη μνήμη"
+#define D_PSR_MAX_MEMORY "PS-RAM Memory"
+#define D_PSR_FREE_MEMORY "PS-RAM free Memory"
 #define D_FREQUENCY "Συχνότητα"
 #define D_GAS "Αέριο"
 #define D_GATEWAY "Πύλη"

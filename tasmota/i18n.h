@@ -123,6 +123,8 @@
 #define D_JSON_PROBETEMPERATURE "ProbeTemperature"
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_JSON_PROGRAMSIZE "ProgramSize"
+#define D_JSON_PSRMAXMEMORY "PsrMax"
+#define D_JSON_PSRFREEMEMORY "PsrFree"
 #define D_JSON_REFERENCETEMPERATURE "ReferenceTemperature"
 #define D_JSON_REMAINING "Remaining"
 #define D_JSON_RESET "Reset"
@@ -484,7 +486,7 @@
 
 // Commands xdrv_23_zigbee.ino
 #define D_PRFX_ZB "Zb"
-#define D_ZIGBEE_NOT_STARTED "Zigbee not started (yet)"
+#define D_ZIGBEE_NOT_STARTED "Zigbee not started"
 #define D_CMND_ZIGBEE_PERMITJOIN "PermitJoin"
 #define D_CMND_ZIGBEE_STATUS "Status"
 #define D_CMND_ZIGBEE_RESET "Reset"

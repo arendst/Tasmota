@@ -21,6 +21,7 @@
 - Change minimum PWM Frequency from 100 Hz to 40 Hz
 - Change PWM updated to the latest version of Arduino PR #7231
 - Change Philips Hue emulation now exposes modelId and manufacturerId
+- Add Zigbee support for router and end-device mode
 
 ### 8.2.0.5 20200425
 
