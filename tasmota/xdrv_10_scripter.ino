@@ -1407,9 +1407,9 @@ chknext:
           if (ind>=SFS_MAX) ind=SFS_MAX-1;
           if (glob_script_mem.file_flags[ind].is_open) {
             uint8_t *buff;
-            float maxps=get_picstore(-1,0);
+            float maxps=WcGetPicstore(-1,0);
             if (fvar<1 || fvar>maxps) fvar=1;
-            uint32_t len=get_picstore(fvar-1, &buff);
+            uint32_t len=WcGetPicstore(fvar-1, &buff);
             if (len) {
               //glob_script_mem.files[ind].seek(0,SeekEnd);
               fvar=glob_script_mem.files[ind].write(buff,len);
@@ -2056,13 +2056,13 @@ chknext:
             case 0:
               { float fvar2;
                 lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
-                fvar=wc_setup(fvar2);
+                fvar=WcSetup(fvar2);
               }
               break;
             case 1:
               { float fvar2;
                 lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
-                fvar=wc_get_frame(fvar2);
+                fvar=WcGetFrame(fvar2);
               }
               break;
             case 2:
@@ -2070,32 +2070,32 @@ chknext:
                 lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
                 SCRIPT_SKIP_SPACES
                 lp=GetNumericResult(lp,OPER_EQU,&fvar3,0);
-                fvar=wc_set_options(fvar2,fvar3);
+                fvar=WcSetOptions(fvar2,fvar3);
               }
               break;
             case 3:
-              fvar=wc_get_width();
+              fvar=WcGetWidth();
               break;
             case 4:
-              fvar=wc_get_height();
+              fvar=WcGetHeight();
               break;
             case 5:
               { float fvar2;
                 lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
-                fvar=wc_set_streamserver(fvar2);
+                fvar=WcSetStreamserver(fvar2);
               }
               break;
             case 6:
               { float fvar2;
                 lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
-                fvar=wc_set_motion_detect(fvar2);
+                fvar=WcSetMotionDetect(fvar2);
               }
               break;
 #ifdef USE_FACE_DETECT
             case 7:
               { float fvar2;
                 lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
-                fvar=wc_set_face_detect(fvar2);
+                fvar=WcSetFaceDetect(fvar2);
               }
               break;
 #endif
