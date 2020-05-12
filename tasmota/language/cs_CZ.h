@@ -98,6 +98,8 @@
 #define D_FILE "Soubor"
 #define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Volná paměť"
+#define D_PSR_MAX_MEMORY "PS-RAM Memory"
+#define D_PSR_FREE_MEMORY "PS-RAM free Memory"
 #define D_FREQUENCY "Kmitočet"
 #define D_GAS "Plyn"
 #define D_GATEWAY "Výchozí brána"

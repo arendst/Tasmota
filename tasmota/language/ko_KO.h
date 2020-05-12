@@ -98,6 +98,8 @@
 #define D_FILE "파일"
 #define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "남은 메모리"
+#define D_PSR_MAX_MEMORY "PS-RAM Memory"
+#define D_PSR_FREE_MEMORY "PS-RAM free Memory"
 #define D_FREQUENCY "Frequency"
 #define D_GAS "가스"
 #define D_GATEWAY "게이트웨이"

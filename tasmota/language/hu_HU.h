@@ -98,6 +98,8 @@
 #define D_FILE "Fájl"
 #define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Szabad memória"
+#define D_PSR_MAX_MEMORY "PS-RAM Memory"
+#define D_PSR_FREE_MEMORY "PS-RAM free Memory"
 #define D_FREQUENCY "Frekvencia"
 #define D_GAS "Gáz"
 #define D_GATEWAY "Átjáró"

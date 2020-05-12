@@ -98,6 +98,8 @@
 #define D_FILE "Fil"
 #define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Ledigt minne"
+#define D_PSR_MAX_MEMORY "PS-RAM Memory"
+#define D_PSR_FREE_MEMORY "PS-RAM free Memory"
 #define D_FREQUENCY "Frekvens"
 #define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
