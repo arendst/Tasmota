@@ -98,6 +98,8 @@
 #define D_FILE "Fișier"
 #define D_FLOW_RATE "Debit"
 #define D_FREE_MEMORY "Memorie Liberă"
+#define D_PSR_MAX_MEMORY "PS-RAM Memory"
+#define D_PSR_FREE_MEMORY "PS-RAM free Memory"
 #define D_FREQUENCY "Frecvență"
 #define D_GAS "Gaz"
 #define D_GATEWAY "Gateway"

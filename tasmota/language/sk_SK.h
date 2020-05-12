@@ -98,6 +98,8 @@
 #define D_FALSE "Nepravda"
 #define D_FILE "Súbor"
 #define D_FREE_MEMORY "Voľná pamäť"
+#define D_PSR_MAX_MEMORY "PS-RAM Memory"
+#define D_PSR_FREE_MEMORY "PS-RAM free Memory"
 #define D_FREQUENCY "Frekvencia"
 #define D_GAS "Plyn"
 #define D_GATEWAY "Predvolená brána"

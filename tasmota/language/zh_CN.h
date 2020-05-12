@@ -98,6 +98,8 @@
 #define D_FILE "文件:"
 #define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "空闲内存"
+#define D_PSR_MAX_MEMORY "PS-RAM Memory"
+#define D_PSR_FREE_MEMORY "PS-RAM free Memory"
 #define D_FREQUENCY "频率"
 #define D_GAS "气体"
 #define D_GATEWAY "网关"
