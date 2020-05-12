@@ -98,6 +98,8 @@
 #define D_FILE "Файл"
 #define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Свободная память"
+#define D_PSR_MAX_MEMORY "PS-RAM Memory"
+#define D_PSR_FREE_MEMORY "PS-RAM free Memory"
 #define D_FREQUENCY "Frequency"
 #define D_GAS "Газ"
 #define D_GATEWAY "Шлюз"

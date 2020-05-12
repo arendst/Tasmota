@@ -98,6 +98,8 @@
 #define D_FILE "Archivo"
 #define D_FLOW_RATE "Caudal"
 #define D_FREE_MEMORY "Memoria Libre"
+#define D_PSR_MAX_MEMORY "PS-RAM Memory"
+#define D_PSR_FREE_MEMORY "PS-RAM free Memory"
 #define D_FREQUENCY "Frecuencia"
 #define D_GAS "Gas"
 #define D_GATEWAY "Gateway"

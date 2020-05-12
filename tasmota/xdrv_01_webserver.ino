@@ -2284,6 +2284,12 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%dkB"), ESP_getSketchSize() / 1024);
   WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%dkB"), ESP.getFreeSketchSpace() / 1024);
   WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%dkB"), freeMem / 1024);
+#ifdef ESP32
+  if (psramFound()) {
+    WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%dkB"), ESP.getPsramSize() / 1024);
+    WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%dkB"), ESP.getFreePsram() / 1024);
+  }
+#endif
   WSContentSend_P(PSTR("</td></tr></table>"));
 
   WSContentSend_P(HTTP_SCRIPT_INFO_END);
