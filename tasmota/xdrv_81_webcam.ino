@@ -642,13 +642,13 @@ void HandleImage(void) {
   }
   client.stop();
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Sending image #: %d"), bnum+1);
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("CAM: Sending image #: %d"), bnum+1);
 }
 
 void HandleImageBasic(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Capture image"));
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP "Capture image"));
 
   if (Settings.webcam_config.stream) {
     if (!CamServer) {
@@ -686,7 +686,7 @@ void HandleImageBasic(void) {
 
   esp_camera_fb_return(wc_fb);  // Free frame buffer
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Image sent"));
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("CAM: Image sent"));
 }
 
 void HandleWebcamMjpeg(void) {
