@@ -25,14 +25,14 @@
 const char kHAssJsonSensorTypes[] PROGMEM =
   D_JSON_TEMPERATURE "|" D_JSON_DEWPOINT "|" D_JSON_PRESSURE "|" D_JSON_PRESSUREATSEALEVEL "|"
   D_JSON_APPARENT_POWERUSAGE "|Battery|" D_JSON_CURRENT "|" D_JSON_DISTANCE "|" D_JSON_FREQUENCY "|" D_JSON_HUMIDITY "|" D_JSON_ILLUMINANCE "|"
-  D_JSON_MOISTURE "|PB0.3|PB0.5|PB1|PB2.5|PB5|PB10|PM1|PM2.5|PM10|" D_JSON_POWERFACTOR "|" D_JSON_POWERUSAGE "|"
+  D_JSON_MOISTURE "|PB0.3|PB0.5|PB1|PB2.5|PB5|PB10|PM1|PM2.5|PM10|" D_JSON_POWERFACTOR "|" D_JSON_POWERUSAGE "|" D_JSON_TOTAL_START_TIME "|"
   D_JSON_REACTIVE_POWERUSAGE "|" D_JSON_TODAY "|" D_JSON_TOTAL "|" D_JSON_VOLTAGE "|" D_JSON_WEIGHT "|" D_JSON_YESTERDAY "|"
   D_JSON_CO2 "|" D_JSON_ECO2 "|" D_JSON_TVOC "|";
 
 const char kHAssJsonSensorUnits[] PROGMEM =
   "||||"
   "VA|%|A|Cm|Hz|%|LX|"
-  "%|ppd|ppd|ppd|ppd|ppd|ppd|µg/m³|µg/m³|µg/m³|Cos φ|W|"
+  "%|ppd|ppd|ppd|ppd|ppd|ppd|µg/m³|µg/m³|µg/m³|Cos φ|W| |"
   "VAr|kWh|kWh|V|Kg|kWh|"
   "ppm|ppm|ppb|";
 
@@ -40,7 +40,7 @@ const char kHAssJsonSensorDevCla[] PROGMEM =
   "dev_cla\":\"temperature|ic\":\"mdi:weather-rainy|dev_cla\":\"pressure|dev_cla\":\"pressure|"
   "dev_cla\":\"power|dev_cla\":\"battery|ic\":\"mdi:alpha-a-circle-outline|ic\":\"mdi:leak|ic\":\"mdi:current-ac|dev_cla\":\"humidity|dev_cla\":\"illuminance|"
   "ic\":\"mdi:cup-water|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|"
-  "ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:alpha-f-circle-outline|dev_cla\":\"power|"
+  "ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:alpha-f-circle-outline|dev_cla\":\"power|ic\":\"mdi:progress-clock|"
   "dev_cla\":\"power|dev_cla\":\"power|dev_cla\":\"power|ic\":\"mdi:alpha-v-circle-outline|ic\":\"mdi:scale|dev_cla\":\"power|"
   "ic\":\"mdi:periodic-table-co2|ic\":\"mdi:air-filter|ic\":\"mdi:periodic-table-co2|";
    //"ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|"
@@ -141,14 +141,16 @@ const char kHAssTriggerStringButtons[] PROGMEM =
   "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|HOLD|";
 
 const char kHAssError1[] PROGMEM =
-  "HASS: MQTT discovery failed due to too long topic or friendly name."
-  "Please shorten topic and friendly name. Failed to format";
+  "HASS: MQTT discovery failed due to too long topic or friendly name. Please shorten topic and/or friendly name. Failed to format";
 
 const char kHAssError2[] PROGMEM =
-  "HASS: The configuration of the Relays is wrong, there is a Light that is using an index lower than the number of the selected relay.\n               "
+  "HASS: The configuration of the Relays is wrong, there is a Light that is using an index higher than the number of the validated relay.\n               "
   "The Relays have priority over the Lights, an incorrect order could lead to an erroneous Light control.\n               "
   "Please update your configuration to avoid inconsistent results.\n               "
   "Entities for Relays and Lights will not be available in Home Assistant until the configuration will be updated.";
+
+const char kHAssError3[] PROGMEM =
+  "HASS: Unable to create one or more entities from Json data, please check your configuration. Failed to parse";
 
 uint8_t hass_init_step = 0;
 uint8_t hass_mode = 0;
@@ -266,7 +268,7 @@ void HAssAnnounceRelayLight(void)
             if (PwmMulti) { // SetOption68 - Multi-channel PWM instead of a single light
               snprintf_P(channel_num, sizeof(channel_num), PSTR("Channel%d"), i);
             } else {
-              if (!LightControl) { // SetOption37 >= 128 - Color remapping for led channels, also provides an option for allowing independent handling of RGB and white channels
+               if (!LightControl) { // SetOption37 >= 128 - Color remapping for led channels, also provides an option for allowing independent handling of RGB and white channels
                 snprintf_P(channel_num, sizeof(channel_num), PSTR("" D_CMND_DIMMER "%d"), dimmer);
                 dimmer ++;
               } else {
@@ -530,7 +532,6 @@ void HAssAnnounceButtons(void)
         single = 1;
         }
     }
-
     HAssAnnouncerTriggers(button_index, button_present, 0, 0, 0, single, 1, 6);
   }
 }
@@ -630,11 +631,12 @@ void HAssAnnounceSensors(void)
       // USE THE FOLLOWING LINE TO TEST JSON
       //snprintf_P(sensordata, sizeof(sensordata), PSTR("{\"HX711\":{\"Weight\":[22,34,1023.4]}}"));
 
+
       StaticJsonBuffer<500> jsonBuffer;
       JsonObject &root = jsonBuffer.parseObject(sensordata);
       if (!root.success())
       {
-        AddLog_P2(LOG_LEVEL_ERROR, PSTR("HASS: jsonBuffer failed to parse '%s'"), sensordata);
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s '%s'"), kHAssError3, sensordata);
         continue;
       }
       for (auto sensor : root)
@@ -643,7 +645,7 @@ void HAssAnnounceSensors(void)
         JsonObject &sensors = sensor.value.as<JsonObject>();
         if (!sensors.success())
         {
-          AddLog_P2(LOG_LEVEL_ERROR, PSTR("HASS: JsonObject failed to parse '%s'"), sensordata);
+          AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s '%s'"), kHAssError3, sensordata);
           continue;
         }
 
@@ -791,11 +793,10 @@ void HAssAnyKey(void)
 
   char stopic[TOPSZ];
 
-  if (state == 2) {
-    snprintf_P(trg_state, sizeof(trg_state), PSTR("SINGLE"));
-  } else if (state == 3) {
+  if (state == 3) {
     snprintf_P(trg_state, sizeof(trg_state), GetStateText(3));
   } else {
+    if (state == 2) { state = 10; }
     GetTextIndexed(trg_state, sizeof(trg_state), state -9, kHAssTriggerStringButtons);
   }
 
