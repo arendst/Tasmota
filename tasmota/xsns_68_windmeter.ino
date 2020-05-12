@@ -227,24 +227,26 @@ void WindMeterShow(bool json)
   if (json) {
     WindMeter.last_tele_speed = WindMeter.speed;
 #ifndef USE_WINDMETER_NOSTATISTICS
-    ResponseAppend_P(PSTR(",\"" D_WINDMETER_NAME "\":{\"" D_JSON_SPEED "\":{\"Act\":%s,\"Avg\":%s,\"Min\":%s,\"Max\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s,\"Avg\":%s,\"AvgCard\":\"%s\",\"Min\":%s,\"Max\":%s,\"Range\":%s}}"),
+    //ResponseAppend_P(PSTR(",\"" D_WINDMETER_NAME "\":{\"" D_JSON_SPEED "\":{\"Act\":%s,\"Avg\":%s,\"Min\":%s,\"Max\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s,\"Avg\":%s,\"AvgCard\":\"%s\",\"Min\":%s,\"Max\":%s,\"Range\":%s}}"),
+    ResponseAppend_P(PSTR(",\"" D_WINDMETER_NAME "\":{\"" D_JSON_SPEED "\":{\"Act\":%s,\"Avg\":%s,\"Min\":%s,\"Max\":%s}}"),
       speed_string,
       speed_avg_string,
       speed_min_string,
-      speed_max_string,
-      "n/a", //direction_cardinal_string,
-      "n/a", //direction_string,
-      "n/a", //direction_avg_string,
-      "n/a", //direction_avg_cardinal_string,
-      "n/a", //direction_min_string,
-      "n/a", //direction_max_string,
-      "n/a" //direction_range_string
+      speed_max_string
+      //direction_cardinal_string,
+      //direction_string,
+      //direction_avg_string,
+      //direction_avg_cardinal_string,
+      //direction_min_string,
+      //direction_max_string,
+      //direction_range_string
     );
 #else  // USE_WINDMETER_NOSTATISTICS
-  ResponseAppend_P(PSTR(",\"" D_WINDMETER_NAME "\":{\"" D_JSON_SPEED "\":{\"Act\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s}}"),
-    speed_string,
-    "n/a", //wind_direction_cardinal_string,
-    "n/a" //wind_direction_string
+  //ResponseAppend_P(PSTR(",\"" D_WINDMETER_NAME "\":{\"" D_JSON_SPEED "\":{\"Act\":%s},\"Dir\":{\"Card\":\"%s\",\"Deg\":%s}}"),
+  ResponseAppend_P(PSTR(",\"" D_WINDMETER_NAME "\":{\"" D_JSON_SPEED "\":{\"Act\":%s}}"),
+    speed_string
+    //wind_direction_cardinal_string,
+    //wind_direction_string
   );
 #endif  // USE_WINDMETER_NOSTATISTICS
 #ifdef USE_WEBSERVER
