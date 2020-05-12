@@ -324,7 +324,7 @@ LC Tech relay and PZEM-004T  {"NAME":"HW-655 PZEM","GPIO":[0,63,0,62,0,0,0,0,0,0
 Luani HVIO               {"NAME":"Luani HVIO","GPIO":[0,255,255,255,21,22,0,0,9,10,255,52,0],"FLAG":1,"BASE":35}
 Splatura USB Device Power Switch  {"NAME":"Splatura USB","GPIO":[0,0,52,0,0,0,0,0,0,21,0,122,0],"FLAG":0,"BASE":18}
 SUPLA inCan by Espablo   {"NAME":"Supla Espablo","GPIO":[0,255,4,255,17,21,0,0,255,22,255,0,52],"FLAG":1,"BASE":31}
-Witty Cloud              {"NAME":"Witty Cloud","GPIO":[255,255,56,255,17,255,0,0,38,39,255,37,255],"FLAG":1,"BASE":32}
+Witty Cloud              {"NAME":"Witty Cloud","GPIO":[255,255,56,255,17,255,0,0,38,39,255,37,255],"FLAG":3,"BASE":32}
 ```
 
 ## Dimmer
