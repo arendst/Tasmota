@@ -1448,7 +1448,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     GPIO_USER,        // GPIO14 D5 optional sensor
     GPIO_PWM1,        // GPIO15 D8 RGB LED Red
     GPIO_USER,        // GPIO16 D0 optional sensor
-    ADC0_USER         // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
+    ADC0_LIGHT        // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
   },
   {                   // YUNSHAN - Yunshan Wifi Relay (ESP8266)
                       // https://www.ebay.com/p/Esp8266-220v-10a-Network-Relay-WiFi-Module/1369583381
