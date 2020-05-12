@@ -25,8 +25,10 @@
  * Template as used on ESP32-CAM WiFi + bluetooth Camera Module Development Board ESP32 With Camera Module OV2640 Geekcreit for Arduino
  * {"NAME":"AITHINKER CAM No SPI","GPIO":[4992,65504,65504,65504,65504,5088,65504,65504,65504,65504,65504,65504,65504,65504,5089,5090,0,5091,5184,5152,0,5120,5024,5056,0,0,0,0,4928,65504,5094,5095,5092,0,0,5093],"FLAG":0,"BASE":1}
  *
- * Command: Webcam <number>
- *  0 = Stop streaming
+ * Command: prefix = WC
+ * Stream =  1,0  => start, stop streaming
+ * Resolution = 0 .. 10 => set resolution
+ *  0 = FRAMESIZE_96x96,  (96x96)
  *  1 = FRAMESIZE_QQVGA2 (128x160)
  *  2 = FRAMESIZE_QCIF (176x144)
  *  3 = FRAMESIZE_HQVGA (240x176)
@@ -37,18 +39,27 @@
  *  8 = FRAMESIZE_XGA (1024x768)
  *  9 = FRAMESIZE_SXGA (1280x1024)
  * 10 = FRAMESIZE_UXGA (1600x1200)
+ * Mirror = 1,0 => mirror picture on,off
+ * Flip = 1,0 => Flip picture on,off
+ * Saturation = -2 ... +2 => set picture Saturation
+ * Brightness = -2 ... +2 => set picture Brightness
+ * Contrast = -2 ... +2 => set picture Contrast
  *
  * Only boards with PSRAM should be used. To enable PSRAM board should be se set to esp32cam in common32 of platform_override.ini
  * board                   = esp32cam
  * To speed up cam processing cpu frequency should be better set to 240Mhz in common32 of platform_override.ini
  * board_build.f_cpu       = 240000000L
-\*********************************************************************************************/
+ * remarks for AI-THINKER
+ * GPIO0 zero must be disconnected from any wire after programming because this pin drives the cam clock and does
+ * not tolerate any capictive load
+ * flash led = gpio 4
+ * red led = gpio 33
+ */
+
+/*********************************************************************************************/
 
 #define XDRV_81           81
 
-#define CAMERA_MODEL_AI_THINKER
-
-#define USE_TEMPLATE
 
 #define WC_LOGLEVEL LOG_LEVEL_INFO
 
@@ -56,6 +67,8 @@
 #include "fd_forward.h"
 #include "fr_forward.h"
 
+
+// CAMERA_MODEL_AI_THINKER default template pins
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
 #define XCLK_GPIO_NUM      0
@@ -134,24 +147,6 @@ uint32_t wc_setup(int32_t fsiz) {
 //  config.pixel_format = PIXFORMAT_GRAYSCALE;
 //  config.pixel_format = PIXFORMAT_RGB565;
 
-#ifndef USE_TEMPLATE
-  config.pin_d0 = Y2_GPIO_NUM;
-  config.pin_d1 = Y3_GPIO_NUM;
-  config.pin_d2 = Y4_GPIO_NUM;
-  config.pin_d3 = Y5_GPIO_NUM;
-  config.pin_d4 = Y6_GPIO_NUM;
-  config.pin_d5 = Y7_GPIO_NUM;
-  config.pin_d6 = Y8_GPIO_NUM;
-  config.pin_d7 = Y9_GPIO_NUM;
-  config.pin_xclk = XCLK_GPIO_NUM;
-  config.pin_pclk = PCLK_GPIO_NUM;
-  config.pin_vsync = VSYNC_GPIO_NUM;
-  config.pin_href = HREF_GPIO_NUM;
-  config.pin_sscb_sda = SIOD_GPIO_NUM;
-  config.pin_sscb_scl = SIOC_GPIO_NUM;
-  config.pin_pwdn = PWDN_GPIO_NUM;
-  config.pin_reset = RESET_GPIO_NUM;
-#else
   if (WcPinUsed()) {
     config.pin_d0 = Pin(GPIO_WEBCAM_DATA);        // Y2_GPIO_NUM;
     config.pin_d1 = Pin(GPIO_WEBCAM_DATA, 1);     // Y3_GPIO_NUM;
@@ -191,7 +186,6 @@ uint32_t wc_setup(int32_t fsiz) {
     config.pin_reset = RESET_GPIO_NUM;
     AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Default template"));
   }
-#endif
 
   //ESP.getPsramSize()
 
@@ -229,14 +223,7 @@ uint32_t wc_setup(int32_t fsiz) {
   }
 
   sensor_t * wc_s = esp_camera_sensor_get();
-  // initial sensors are flipped vertically and colors are a bit saturated
-/*
-  if (OV3660_PID == wc_s->id.PID) {
-    wc_s->set_vflip(wc_s, 1);        // flip it back
-    wc_s->set_brightness(wc_s, 1);   // up the brightness just a bit
-    wc_s->set_saturation(wc_s, -2);  // lower the saturation
-  }
-*/
+
   wc_s->set_vflip(wc_s, Settings.webcam_config.flip);
   wc_s->set_hmirror(wc_s, Settings.webcam_config.mirror);
   wc_s->set_brightness(wc_s, Settings.webcam_config.brightness -2);  // up the brightness just a bit
@@ -338,27 +325,6 @@ uint32_t get_picstore(int32_t num, uint8_t **buff) {
   return picstore[num].len;
 }
 
-uint32_t wc_get_jpeg(uint8_t **buff) {
-  size_t _jpg_buf_len = 0;
-  uint8_t * _jpg_buf = NULL;
-  camera_fb_t *wc_fb;
-  wc_fb = esp_camera_fb_get();
-  if (!wc_fb) { return 0; }
-  if (wc_fb->format != PIXFORMAT_JPEG) {
-    bool jpeg_converted = frame2jpg(wc_fb, 80, &_jpg_buf, &_jpg_buf_len);
-    if (!jpeg_converted) {
-      _jpg_buf_len = wc_fb->len;
-      _jpg_buf = wc_fb->buf;
-    }
-  } else {
-    _jpg_buf_len = wc_fb->len;
-    _jpg_buf = wc_fb->buf;
-  }
-  esp_camera_fb_return(wc_fb);  // This frees the buffer
-  *buff = _jpg_buf;             // Buffer has been freed so this will cause exceptions
-  return _jpg_buf_len;
-}
-
 uint32_t wc_get_frame(int32_t bnum) {
   size_t _jpg_buf_len = 0;
   uint8_t * _jpg_buf = NULL;
@@ -442,13 +408,25 @@ void HandleImage(void) {
   Webserver->sendContent(response);
 
   if (!bnum) {
-    uint8_t *buff;
-    uint32_t len;
-    len = wc_get_jpeg(&buff);
-    if (len) {
-      client.write(buff,len);
-      free(buff);  // Buffer has been freed already in wc_get_jpeg so this will cause exceptions
+    size_t _jpg_buf_len = 0;
+    uint8_t * _jpg_buf = NULL;
+    camera_fb_t *wc_fb = 0;
+    wc_fb = esp_camera_fb_get();
+    if (!wc_fb) { return; }
+    if (wc_fb->format != PIXFORMAT_JPEG) {
+      bool jpeg_converted = frame2jpg(wc_fb, 80, &_jpg_buf, &_jpg_buf_len);
+      if (!jpeg_converted) {
+        _jpg_buf_len = wc_fb->len;
+        _jpg_buf = wc_fb->buf;
+      }
+    } else {
+      _jpg_buf_len = wc_fb->len;
+      _jpg_buf = wc_fb->buf;
     }
+    if (_jpg_buf_len) {
+      client.write((char *)_jpg_buf, _jpg_buf_len);
+    }
+    if (wc_fb) { esp_camera_fb_return(wc_fb); }
   } else {
     bnum--;
     if (!picstore[bnum].len) {
@@ -457,6 +435,7 @@ void HandleImage(void) {
     }
     client.write((char *)picstore[bnum].buff, picstore[bnum].len);
   }
+  client.stop();
 
   AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Sending image #: %d"), bnum+1);
 }
@@ -468,11 +447,12 @@ WiFiClient client;
 
 void handleMjpeg(void) {
   AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Handle camserver"));
-  if (!wc_stream_active) {
+//  if (!wc_stream_active) {
+// always restart stream
     wc_stream_active = 1;
     client = CamServer->client();
     AddLog_P2(WC_LOGLEVEL, PSTR("CAM: Create client"));
-  }
+//  }
 }
 
 void HandleImageTheo(void) {
@@ -860,32 +840,7 @@ void wc_pic_setup(void) {
   Webserver->on("/snapshot.jpg", HandleImageTheo);
 }
 
-/*
-typedef enum {
-    // FRAMESIZE_96x96,    // 96x96
-    FRAMESIZE_QQVGA,    // 160x120 0
-    FRAMESIZE_QQVGA2,   // 128x160 1
-    FRAMESIZE_QCIF,     // 176x144 2
-    FRAMESIZE_HQVGA,    // 240x176 3
 
-  //  FRAMESIZE_240x240,  // 240x240 3
-
-    FRAMESIZE_QVGA,     // 320x240 4
-    FRAMESIZE_CIF,      // 400x296 5
-    FRAMESIZE_VGA,      // 640x480 6
-    FRAMESIZE_SVGA,     // 800x600 7
-    FRAMESIZE_XGA,      // 1024x768 8
-    FRAMESIZE_SXGA,     // 1280x1024 9
-    FRAMESIZE_UXGA,     // 1600x1200 10
-
-
-    FRAMESIZE_QXGA,     // 2048*1536
-    FRAMESIZE_INVALID
-} framesize_t;
-
-flash led = gpio4
-red led = gpio 33
-*/
 
 void WcInit(void) {
   if (!Settings.webcam_config.data) {
