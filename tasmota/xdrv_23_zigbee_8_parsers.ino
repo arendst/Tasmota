@@ -321,20 +321,62 @@ int32_t Z_DataConfirm(int32_t res, const class SBuffer &buf) {
 //
 // Handle State Change Indication incoming message
 //
+// Reference:
+// 0x00: Initialized - not started automatically
+// 0x01: Initialized - not connected to anything
+// 0x02: Discovering PAN's to join
+// 0x03: Joining a PAN
+// 0x04: Rejoining a PAN, only for end devices
+// 0x05: Joined but not yet authenticated by trust center
+// 0x06: Started as device after authentication
+// 0x07: Device joined, authenticated and is a router
+// 0x08: Starting as ZigBee Coordinator
+// 0x09: Started as ZigBee Coordinator
+// 0x0A: Device has lost information about its parent
 int32_t Z_ReceiveStateChange(int32_t res, const class SBuffer &buf) {
   uint8_t           state = buf.get8(2);
+  const char *      msg = nullptr;
 
-  if (ZDO_DEV_NWK_DISC == state) {
+  switch (state) {
+    case ZDO_DEV_NWK_DISC:                        // 0x02
+      msg = PSTR("Scanning Zigbee network");
+      break;
+    case ZDO_DEV_NWK_JOINING:                     // 0x03
+    case ZDO_DEV_NWK_REJOIN:                      // 0x04
+      msg = PSTR("Joining a PAN");
+      break;
+    case ZDO_DEV_END_DEVICE_UNAUTH:               // 0x05
+      msg = PSTR("Joined, not yet authenticated");
+      break;
+    case ZDO_DEV_END_DEVICE:                      // 0x06
+      msg = PSTR("Started as device");
+      break;
+    case ZDO_DEV_ROUTER:                          // 0x07
+      msg = PSTR("Started as router");
+      break;
+    case ZDO_DEV_ZB_COORD:                        // 0x09
+      msg = PSTR("Started as coordinator");
+      break;
+    case ZDO_DEV_NWK_ORPHAN:                      // 0x0A
+      msg = PSTR("Device has lost its parent");
+      break;
+  };
+
+  if (msg) {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                    "\"Status\":%d,\"Message\":\"%s\"}}"),
-                    ZIGBEE_STATUS_SCANNING, PSTR("Scanning Zigbee network")
+                    "\"Status\":%d,\"NewState\":%d,\"Message\":\"%s\"}}"),
+                    ZIGBEE_STATUS_SCANNING, state, msg
                     );
 
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
     XdrvRulesProcess();
   }
 
-  return res;
+  if ((ZDO_DEV_END_DEVICE == state) || (ZDO_DEV_ROUTER == state) || (ZDO_DEV_ZB_COORD == state)) {
+    return 0;         // device sucessfully started
+  } else {
+    return -1;        // ignore
+  }
 }
 
 //
