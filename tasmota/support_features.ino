@@ -563,10 +563,13 @@ void GetFeatures(void)
 #ifdef USE_THERMOSTAT
   feature6 |= 0x00000400;  // xdrv_39_heating.ino
 #endif
+#ifdef USE_VEML6075
+  feature6 |= 0x00000800;  // xsns_70_veml6075.ino
+#endif
+#ifdef USE_VEML7700
+  feature6 |= 0x00001000;  // xsns_71_veml7700.ino
+#endif
 
-//  feature6 |= 0x00000800;
-
-//  feature6 |= 0x00001000;
 //  feature6 |= 0x00002000;
 //  feature6 |= 0x00004000;
 //  feature6 |= 0x00008000;
