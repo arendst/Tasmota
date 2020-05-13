@@ -172,7 +172,7 @@
 
 ## Additional Features and Sensors on ESP32
 
-| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
-|-----------------------|---------|-------|--------|-----|---------|----|---------|--------
-| USE_MI_ESP32          | - | - | - | - | - | - | - |
-| USE_WEBCAM            | - | - | - | - | - | - | - |
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | webcam | Remarks
+|-----------------------|---------|-------|--------|-----|---------|----|---------|--------|--------
+| USE_MI_ESP32          | - | - | - | - | - | - | - | - |
+| USE_WEBCAM            | - | - | - | - | - | - | - | x |
