@@ -169,10 +169,5 @@
 | USE_DISPLAY_ILI9488   | - | - | - | - | - | - | - |
 | USE_DISPLAY_SSD1351   | - | - | - | - | - | - | - |
 | USE_DISPLAY_RA8876    | - | - | - | - | - | - | - |
-
-## Additional Features and Sensors on ESP32
-
-| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
-|-----------------------|---------|-------|--------|-----|---------|----|---------|--------
-| USE_MI_ESP32          | - | - | - | - | - | - | - |
-| USE_WEBCAM            | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |
+| USE_WEBCAM            | - | - | - | - | - | - | - | ESP32 only
