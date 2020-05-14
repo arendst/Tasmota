@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.3.0.1 20200514
+
+- Fix default state of ``SetOption73 0`` for button decoupling and send multi-press and hold MQTT messages
+
 ## Released
 
 ### 8.3.0 20200514

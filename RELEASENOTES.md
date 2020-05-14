@@ -52,57 +52,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.3.0 Fred
+### Version 8.3.0.1
 
-- Breaking Change Device Groups multicast address and port  (#8270)
-- Change PWM implementation to Arduino #7231 removing support for Core versions before 2.6.3
-- Change default PWM Frequency to 977 Hz from 880 Hz
-- Change minimum PWM Frequency from 100 Hz to 40 Hz
-- Change flash access removing support for any Core before 2.6.3
-- Change HM-10 sensor type detection and add features (#7962)
-- Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
-- Change remove floating point libs from IRAM
-- Change remove MQTT Info messages on restart for DeepSleep Wake (#8044)
-- Change IRremoteESP8266 library updated to v2.7.6
-- Change HAss discovery by Federico Leoni (#8370)
-- Fix possible Relay toggle on (OTA) restart
-- Fix PWM flickering during wifi connection (#8046)
-- Fix Zigbee sending wrong Sat value with Hue emulation
-- Fix Zigbee crash with Occupancy sensor (#8089)
-- Add Zigbee command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
-- Add Zigbee command ``ZbUnbind``
-- Add Zigbee command ``ZbBindState`` and ``manuf``attribute
-- Add Zigbee command ``ZbConfig`` and configuration in Settings
-- Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
-- Add commands ``NrfPage``, ``NrfIgnore``, ``NrfScan`` and ``NrfBeacon`` to NRF24 Bluetooth driver (#8075)
-- Add commands ``GlobalTemp`` and ``GlobalHum`` to init sensor data (#8152)
-- Add command ``SO`` as shortcut for command ``SetOption``
-- Add command ``SetOption41 <x>`` to force sending gratuitous ARP every <x> seconds
-- Add command ``SetOption73 1`` for button decoupling and send multi-press and hold MQTT messages by Federico Leoni (#8235)
-- Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
-- Add command ``SetOption91 1`` to enable fading at startup / power on
-- Add command ``SetOption92 1`` to set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...)
-- Add command ``SetOption93 1`` to control caching of compressed rules
-- Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
-- Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
-- Add command ``Sensor18 0..32000`` to control PMS5003 sensor interval to extend lifetime by Gene Ruebsamen (#8128)
-- Add command ``DevGroupName`` to specify up to four Device Group Names (#8087)
-- Add command ``DevGroupSend`` to send an update to a Device Group (#8093)
-- Add command ``Ping`` (#7176)
-- Add command ``Palette`` to add the ability to specify a palette of colors (#8150)
-- Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
-- Add support for 64x48 SSD1306 OLED (#6740)
-- Add support for Seven Segment display using HT16K33 (#8116)
-- Add support for up to four MQTT GroupTopics (#8014)
-- Add support for longer template names
-- Add support for an iAQ sensor (#8107)
-- Add support for AS3935 Lightning Sensor by device111 (#8130)
-- Add console command history (#7483, #8015)
-- Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
-- Add more accuracy to GPS NTP server (#8088)
-- Add support for analog anemometer by Matteo Albinola (#8283)
-- Add support for OpenTherm by Yuriy Sannikov (#8373)
-- Add support for Thermostat control by arijav (#8212)
-- Add experimental basic support for Tasmota on ESP32 based on work by JÃ¶rg SchÃ¼ler-Maroldt
-- Add automatic compression of Rules to achieve ~60% compression by Stefan Hadinger
-- Add rule trigger at root level like ``on loadavg<50 do power 2 endon`` after ``state`` command
+- Fix default state of ``SetOption73 0`` for button decoupling and send multi-press and hold MQTT messages
