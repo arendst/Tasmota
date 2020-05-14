@@ -104,6 +104,12 @@ struct ENERGY {
   bool type_dc = false;
   bool power_on = true;
 
+#ifdef USE_SDM630
+  float imp_active[3] = { NAN, NAN, NAN };      // kWh import active energy
+  float exp_active[3] = { NAN, NAN, NAN };      // kWh export active energy
+  float tot_active[3] = { NAN, NAN, NAN };      // kWh total active energy
+#endif
+
 #ifdef USE_ENERGY_MARGIN_DETECTION
   uint16_t power_history[3] = { 0 };
   uint8_t power_steady_counter = 8;  // Allow for power on stabilization
@@ -973,6 +979,15 @@ void EnergyShow(bool json)
     energy_total_fields = 3;
   }
 
+  char imp_active_chr[Energy.phase_count][FLOATSZ];
+  char exp_active_chr[Energy.phase_count][FLOATSZ];
+  char tot_active_chr[Energy.phase_count][FLOATSZ];
+  for (uint32_t i = 0; i < Energy.phase_count; i++) {
+    dtostrfd(Energy.imp_active[i], 2, imp_active_chr[i]);
+    dtostrfd(Energy.exp_active[i], 2, exp_active_chr[i]);
+    dtostrfd(Energy.tot_active[i], 2, tot_active_chr[i]);
+  }
+  
   char value_chr[FLOATSZ *3];   // Used by EnergyFormatIndex
   char value2_chr[FLOATSZ *3];
   char value3_chr[FLOATSZ *3];
@@ -1022,6 +1037,18 @@ void EnergyShow(bool json)
     if (Energy.current_available) {
       ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT "\":%s"),
         EnergyFormat(value_chr, current_chr[0], json));
+    }
+    if (!isnan(Energy.imp_active[0])) {
+      ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_ACTIVE "\":%s"),
+        EnergyFormat(value_chr, imp_active_chr[0], json, Energy.voltage_common));
+    }
+    if (!isnan(Energy.exp_active[0])) {
+      ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE "\":%s"),
+        EnergyFormat(value_chr, exp_active_chr[0], json, Energy.voltage_common));
+    }
+    if (!isnan(Energy.tot_active[0])) {
+      ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_ACTIVE "\":%s"),
+        EnergyFormat(value_chr, tot_active_chr[0], json, Energy.voltage_common));
     }
     XnrgCall(FUNC_JSON_APPEND);
     ResponseJsonEnd();
