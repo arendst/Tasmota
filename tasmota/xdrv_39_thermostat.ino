@@ -1030,6 +1030,7 @@ void ThermostatPeakDetector(uint8_t ctr_output)
   else {
     // Peak detection done, proceed to evaluate results
     ThermostatAutotuneParamCalc(ctr_output);
+    Thermostat[ctr_output].status.autotune_flag = AUTOTUNE_OFF;
   }
   
   // If peak detection not finalized but bigger than 3 and we have just found a peak, check if results can be extracted
@@ -1052,6 +1053,7 @@ void ThermostatPeakDetector(uint8_t ctr_output)
       if (10 * abs(Thermostat[ctr_output].temp_peaks_atune[peak_num - 1] - Thermostat[ctr_output].temp_peaks_atune[peak_num - 2]) < (Thermostat[ctr_output].temp_abs_max_atune - peak_avg)) {
         // Peak detection done, proceed to evaluate results
         ThermostatAutotuneParamCalc(ctr_output);
+        Thermostat[ctr_output].status.autotune_flag = AUTOTUNE_OFF;
       }
     }
   }
@@ -1095,7 +1097,9 @@ void ThermostatWorkAutomaticPIAutotune(uint8_t ctr_output)
 {
   bool flag_heating = (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING);
   // If no timeout of the PI Autotune function
-  if (uptime < Thermostat[ctr_output].time_ctr_checkpoint) {
+  // AND no change in setpoint
+  if ((uptime < Thermostat[ctr_output].time_ctr_checkpoint)
+    &&(Thermostat[ctr_output].temp_target_level_ctr == Thermostat[ctr_output].temp_target_level)) {
     if (uptime >= Thermostat[ctr_output].time_ctr_checkpoint) {
       Thermostat[ctr_output].temp_target_level_ctr = Thermostat[ctr_output].temp_target_level;    
       // Calculate time_ctr_changepoint
@@ -1123,14 +1127,6 @@ void ThermostatWorkAutomaticPIAutotune(uint8_t ctr_output)
     // Set output Off
     Thermostat[ctr_output].status.command_output = IFACE_OFF;
   }
-  
-  // Evaluate if kU, pU can be calculated
-
-  // Output conditions:
-  // If Thermostat[ctr_output].temp_target_level_ctr != Thermostat[ctr_output].temp_target_level -> Disable Autotune Flag
-  // If timeout (check which existing variable to use) -> Disable Autotune flag
-  // If calculation of Kp_autotune & Ki_autotune done -> Disable Autotune flag
-  // Before starting call ThermostatPeakDetectorInit()
 }
 #endif //USE_PI_AUTOTUNING
 
