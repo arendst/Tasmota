@@ -1,5 +1,11 @@
 ## Unreleased (development)
 
+## Released
+
+### 8.3.0 20200514
+
+- Release Fred
+
 ### 8.2.0.6 20200501
 
 - Add experimental basic support for Tasmota on ESP32 based on work by Jörg Schüler-Maroldt

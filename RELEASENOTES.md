@@ -21,7 +21,7 @@ While fallback or downgrading is common practice it was never supported due to S
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.6.3 + e64cb61** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.0** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 Although it might still compile on previous Core versions all support will be removed in the near future.
 
@@ -35,7 +35,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Provided Binary Downloads
 
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.6.3 + e64cb61**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.0**.
 
 - **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
@@ -52,7 +52,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.2.0.6
+### Version 8.3.0 Fred
 
 - Breaking Change Device Groups multicast address and port  (#8270)
 - Change PWM implementation to Arduino #7231 removing support for Core versions before 2.6.3
@@ -103,6 +103,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for analog anemometer by Matteo Albinola (#8283)
 - Add support for OpenTherm by Yuriy Sannikov (#8373)
 - Add support for Thermostat control by arijav (#8212)
-- Add experimental basic support for Tasmota on ESP32 based on work by Jörg Schüler-Maroldt
+- Add experimental basic support for Tasmota on ESP32 based on work by JÃ¶rg SchÃ¼ler-Maroldt
 - Add automatic compression of Rules to achieve ~60% compression by Stefan Hadinger
 - Add rule trigger at root level like ``on loadavg<50 do power 2 endon`` after ``state`` command
