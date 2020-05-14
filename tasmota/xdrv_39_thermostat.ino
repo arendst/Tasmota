@@ -24,7 +24,8 @@
 // Enable/disable debugging
 //#define DEBUG_THERMOSTAT
 
-// Enable/disable experimental PI auto-tuning
+// Enable/disable experimental PI auto-tuning inspired by the Arduino Autotune Library by
+// Brett Beauregard <br3ttb@gmail.com> brettbeauregard.com
 //#define USE_PI_AUTOTUNING // (Ziegler-Nichols closed loop method)
 
 #ifdef DEBUG_THERMOSTAT
