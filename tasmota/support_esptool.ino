@@ -17,7 +17,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef ESP8266
 #define USE_ESPTOOL
+#endif  // ESP8266
+
 #ifdef USE_ESPTOOL
 /*********************************************************************************************\
  * EspTool Erase function based on Version 2.8

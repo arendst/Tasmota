@@ -25,15 +25,15 @@ void ZigbeeZCLSend_Raw(uint16_t dtsAddr, uint16_t groupaddr, uint16_t clusterId,
 
 
 // Get an JSON attribute, with case insensitive key search
-JsonVariant &getCaseInsensitive(const JsonObject &json, const char *needle) {
+const JsonVariant &getCaseInsensitive(const JsonObject &json, const char *needle) {
   // key can be in PROGMEM
   if ((nullptr == &json) || (nullptr == needle) || (0 == pgm_read_byte(needle))) {
     return *(JsonVariant*)nullptr;
   }
 
-  for (auto kv : json) {
-    const char *key = kv.key;
-    JsonVariant &value = kv.value;
+  for (JsonObject::const_iterator it=json.begin(); it!=json.end(); ++it) {
+    const char *key = it->key;
+    const JsonVariant &value = it->value;
 
     if (0 == strcasecmp_P(key, needle)) {
       return value;
@@ -42,6 +42,42 @@ JsonVariant &getCaseInsensitive(const JsonObject &json, const char *needle) {
   // if not found
   return *(JsonVariant*)nullptr;
 }
+
+// get the result as a string (const char*) and nullptr if there is no field or the string is empty
+const char * getCaseInsensitiveConstCharNull(const JsonObject &json, const char *needle) {
+  const JsonVariant &val = getCaseInsensitive(json, needle);
+  if (&val) {
+    const char *val_cs = val.as<const char*>();
+    if (strlen(val_cs)) {
+      return val_cs;
+    }
+  }
+  return nullptr;
+}
+
+// Get an JSON attribute, with case insensitive key search starting with *needle
+JsonVariant &startsWithCaseInsensitive(const JsonObject &json, const char *needle) {
+  // key can be in PROGMEM
+  if ((nullptr == &json) || (nullptr == needle) || (0 == pgm_read_byte(needle))) {
+    return *(JsonVariant*)nullptr;
+  }
+
+  String needle_s(needle);
+  needle_s.toLowerCase();
+
+  for (auto kv : json) {
+    String key_s(kv.key);
+    key_s.toLowerCase();
+    JsonVariant &value = kv.value;
+
+    if (key_s.startsWith(needle_s)) {
+      return value;
+    }
+  }
+  // if not found
+  return *(JsonVariant*)nullptr;
+}
+
 
 uint32_t parseHex(const char **data, size_t max_len = 8) {
   uint32_t ret = 0;

@@ -91,7 +91,7 @@ void Dds2382EverySecond(void)
 
 void Dds2382SnsInit(void)
 {
-  Dds2382Modbus = new TasmotaModbus(pin[GPIO_DDS2382_RX], pin[GPIO_DDS2382_TX]);
+  Dds2382Modbus = new TasmotaModbus(Pin(GPIO_DDS2382_RX), Pin(GPIO_DDS2382_TX));
   uint8_t result = Dds2382Modbus->Begin(DDS2382_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
@@ -102,7 +102,7 @@ void Dds2382SnsInit(void)
 
 void Dds2382DrvInit(void)
 {
-  if ((pin[GPIO_DDS2382_RX] < 99) && (pin[GPIO_DDS2382_TX] < 99)) {
+  if (PinUsed(GPIO_DDS2382_RX) && PinUsed(GPIO_DDS2382_TX)) {
     energy_flg = XNRG_09;
   }
 }

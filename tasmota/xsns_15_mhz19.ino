@@ -230,7 +230,9 @@ void MhzEverySecond(void)
       mhz_type = (s) ? 1 : 2;
       if (MhzCheckAndApplyFilter(ppm, s)) {
         mhz_retry = MHZ19_RETRY_COUNT;
+#ifdef USE_LIGHT
         LightSetSignal(CO2_LOW, CO2_HIGH, mhz_last_ppm);
+#endif  // USE_LIGHT
 
         if (0 == s || 64 == s) {  // Reading is stable.
           if (mhz_abc_must_apply) {
@@ -323,8 +325,8 @@ bool MhzCommandSensor(void)
 void MhzInit(void)
 {
   mhz_type = 0;
-  if ((pin[GPIO_MHZ_RXD] < 99) && (pin[GPIO_MHZ_TXD] < 99)) {
-    MhzSerial = new TasmotaSerial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD], 1);
+  if (PinUsed(GPIO_MHZ_RXD) && PinUsed(GPIO_MHZ_TXD)) {
+    MhzSerial = new TasmotaSerial(Pin(GPIO_MHZ_RXD), Pin(GPIO_MHZ_TXD), 1);
     if (MhzSerial->begin(9600)) {
       if (MhzSerial->hardwareSerial()) { ClaimSerial(); }
       mhz_type = 1;

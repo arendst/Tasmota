@@ -17,13 +17,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define BUTTON_V1
+//#define BUTTON_V1
 #ifdef BUTTON_V1
 /*********************************************************************************************\
  * Button support
 \*********************************************************************************************/
 
 #define MAX_BUTTON_COMMANDS  5  // Max number of button commands supported
+
 const char kCommands[] PROGMEM =
   D_CMND_WIFICONFIG " 2|" D_CMND_WIFICONFIG " 2|" D_CMND_WIFICONFIG " 2|" D_CMND_RESTART " 1|" D_CMND_UPGRADE " 1";
 
@@ -59,9 +60,9 @@ void ButtonInit(void)
 {
   Button.present = 0;
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
-    if (pin[GPIO_KEY1 +i] < 99) {
+    if (PinUsed(GPIO_KEY1, i)) {
       Button.present++;
-      pinMode(pin[GPIO_KEY1 +i], bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
+      pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
     }
 #ifndef USE_ADC_VCC
     else if ((99 == Button.adc) && ((ADC0_BUTTON == my_adc0) || (ADC0_BUTTON_INV == my_adc0))) {
@@ -119,6 +120,7 @@ void ButtonHandler(void)
     uint8_t button = NOT_PRESSED;
     uint8_t button_present = 0;
 
+#ifdef ESP8266
     if (!button_index && ((SONOFF_DUAL == my_module_type) || (CH4 == my_module_type))) {
       button_present = 1;
       if (Button.dual_code) {
@@ -131,9 +133,11 @@ void ButtonHandler(void)
         Button.dual_code = 0;
       }
     }
-    else if (pin[GPIO_KEY1 +button_index] < 99) {
+    else
+#endif  // ESP8266
+    if (PinUsed(GPIO_KEY1, button_index)) {
       button_present = 1;
-      button = (digitalRead(pin[GPIO_KEY1 +button_index]) != bitRead(Button.inverted_mask, button_index));
+      button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
     }
 #ifndef USE_ADC_VCC
     if (Button.adc == button_index) {
@@ -153,6 +157,7 @@ void ButtonHandler(void)
       if (XdrvCall(FUNC_BUTTON_PRESSED)) {
         // Serviced
       }
+#ifdef ESP8266
       else if (SONOFF_4CHPRO == my_module_type) {
         if (Button.hold_timer[button_index]) { Button.hold_timer[button_index]--; }
 
@@ -172,6 +177,7 @@ void ButtonHandler(void)
           }
         }
       }
+#endif  // ESP8266
       else {
         if ((PRESSED == button) && (NOT_PRESSED == Button.last_state[button_index])) {
           if (Settings.flag.button_single) {                   // SetOption13 (0) - Allow only single button press for immediate action
@@ -227,9 +233,12 @@ void ButtonHandler(void)
             if (!restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0) && (Button.press_counter[button_index] < MAX_BUTTON_COMMANDS +3)) {
               bool single_press = false;
               if (Button.press_counter[button_index] < 3) {    // Single or Double press
+#ifdef ESP8266
                 if ((SONOFF_DUAL_R2 == my_module_type) || (SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)) {
                   single_press = true;
-                } else {
+                } else
+#endif  // ESP8266
+                {
                   single_press = (Settings.flag.button_swap +1 == Button.press_counter[button_index]);  // SetOption11 (0)
                   if ((1 == Button.present) && (2 == devices_present)) {  // Single Button with two devices only
                     if (Settings.flag.button_swap) {           // SetOption11 (0)

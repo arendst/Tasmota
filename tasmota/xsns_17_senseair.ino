@@ -84,7 +84,9 @@ void Senseair250ms(void)              // Every 250 mSec
             break;
           case 2:                // 0x03 (3) READ_CO2 - fe 04 02 06 2c af 59
             senseair_co2 = value;
+#ifdef USE_LIGHT
             LightSetSignal(CO2_LOW, CO2_HIGH, senseair_co2);
+#endif  // USE_LIGHT
             break;
           case 3:                // 0x04 (4) READ_TEMPERATURE - S8: fe 84 02 f2 f1 - Illegal Data Address
             senseair_temperature = ConvertTemp((float)value / 100);
@@ -130,8 +132,8 @@ void Senseair250ms(void)              // Every 250 mSec
 void SenseairInit(void)
 {
   senseair_type = 0;
-  if ((pin[GPIO_SAIR_RX] < 99) && (pin[GPIO_SAIR_TX] < 99)) {
-    SenseairModbus = new TasmotaModbus(pin[GPIO_SAIR_RX], pin[GPIO_SAIR_TX]);
+  if (PinUsed(GPIO_SAIR_RX) && PinUsed(GPIO_SAIR_TX)) {
+    SenseairModbus = new TasmotaModbus(Pin(GPIO_SAIR_RX), Pin(GPIO_SAIR_TX));
     uint8_t result = SenseairModbus->Begin(SENSEAIR_MODBUS_SPEED);
     if (result) {
       if (2 == result) { ClaimSerial(); }

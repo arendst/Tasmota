@@ -110,7 +110,8 @@ void DomoticzUpdateFanState(void)
 void MqttPublishDomoticzPowerState(uint8_t device)
 {
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if ((device < 1) || (device > devices_present)) { device = 1; }
+    if (device < 1) { device = 1; }
+    if ((device > devices_present) || (device > MAX_DOMOTICZ_IDX)) { return; }
     if (Settings.domoticz_relay_idx[device -1]) {
 #ifdef USE_SHUTTER
       if (domoticz_is_shutter) {
@@ -559,7 +560,7 @@ void HandleDomoticzConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_DOMOTICZ);
 
-  if (WebServer->hasArg("save")) {
+  if (Webserver->hasArg("save")) {
     DomoticzSaveSettings();
     WebRestart(1);
     return;
@@ -576,7 +577,7 @@ void HandleDomoticzConfiguration(void)
         i +1, i, Settings.domoticz_relay_idx[i],
         i +1, i, Settings.domoticz_key_idx[i]);
     }
-    if (pin[GPIO_SWT1 +i] < 99) {
+    if (PinUsed(GPIO_SWT1, i)) {
       WSContentSend_P(HTTP_FORM_DOMOTICZ_SWITCH,
         i +1, i, Settings.domoticz_switch_idx[i]);
     }
@@ -651,7 +652,7 @@ bool Xdrv07(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_DOMOTICZ);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        WebServer->on("/" WEB_HANDLE_DOMOTICZ, HandleDomoticzConfiguration);
+        Webserver->on("/" WEB_HANDLE_DOMOTICZ, HandleDomoticzConfiguration);
         break;
 #endif  // USE_WEBSERVER
       case FUNC_MQTT_SUBSCRIBE:

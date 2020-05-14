@@ -144,9 +144,9 @@ const char HUE_LIGHTS_STATUS_JSON1_SUFFIX[] PROGMEM =
 const char HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
   ",\"type\":\"Extended color light\","
   "\"name\":\"%s\","
-  "\"modelid\":\"LCT007\","
-  "\"uniqueid\":\"%s\","
-  "\"swversion\":\"5.50.1.19085\"}";
+  "\"modelid\":\"%s\","
+  "\"manufacturername\":\"%s\","
+  "\"uniqueid\":\"%s\"}";
 const char HUE_GROUP0_STATUS_JSON[] PROGMEM =
   "{\"name\":\"Group 0\","
    "\"lights\":[{l1],"
@@ -192,7 +192,7 @@ String GetHueUserId(void)
 {
   char userid[7];
 
-  snprintf_P(userid, sizeof(userid), PSTR("%03x"), ESP.getChipId());
+  snprintf_P(userid, sizeof(userid), PSTR("%03x"), ESP_getChipId());
   return String(userid);
 }
 
@@ -298,7 +298,7 @@ void HueLightStatus1(uint8_t device, String *response)
       prev_x_str[0] = prev_y_str[0] = 0;
     }
 
-    hue = changeUIntScale(hue, 0, 359, 0, 65535);
+    hue = changeUIntScale(hue, 0, 360, 0, 65535);
     if ((hue > prev_hue ? hue - prev_hue : prev_hue - hue) < 400) {
       hue = prev_hue;
     } else {  // if hue was changed outside of Alexa, reset xy
@@ -358,7 +358,7 @@ bool HueActive(uint8_t device) {
 
 void HueLightStatus2(uint8_t device, String *response)
 {
-  const size_t buf_size = 192;
+  const size_t buf_size = 300;
   char * buf = (char*) malloc(buf_size);
   const size_t max_name_len = 32;
   char fname[max_name_len + 1];
@@ -376,7 +376,11 @@ void HueLightStatus2(uint8_t device, String *response)
     }
     fname[fname_len] = 0x00;
   }
-  snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON2, fname, GetHueDeviceId(device).c_str());
+  snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON2,
+            escapeJSONString(fname).c_str(),
+            escapeJSONString(Settings.user_template_name).c_str(),
+            PSTR("Tasmota"),
+            GetHueDeviceId(device).c_str());
   *response += buf;
   free(buf);
 }
@@ -448,7 +452,7 @@ static const char * FIRST_GEN_UA[] = {  // list of User-Agents signature
 // Check if the Echo device is of 1st generation, which triggers different results
 uint32_t findEchoGeneration(void) {
   // result is 1 for 1st gen, 2 for 2nd gen and further
-  String user_agent = WebServer->header("User-Agent");
+  String user_agent = Webserver->header("User-Agent");
   uint32_t gen = 2;
 
   for (uint32_t i = 0; i < sizeof(FIRST_GEN_UA)/sizeof(char*); i++) {
@@ -521,11 +525,11 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
   const size_t buf_size = 100;
   char * buf = (char*) malloc(buf_size);
 
-  if (WebServer->args()) {
+  if (Webserver->args()) {
     response = "[";
 
     StaticJsonBuffer<300> jsonBuffer;
-    JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg((WebServer->args())-1));
+    JsonObject &hue_json = jsonBuffer.parseObject(Webserver->arg((Webserver->args())-1));
     if (hue_json.containsKey("on")) {
       on = hue_json["on"];
       snprintf_P(buf, buf_size,
@@ -542,6 +546,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
         }
       } else {
 #endif
+/*
         switch(on)
         {
           case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
@@ -549,6 +554,8 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
           case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
                       break;
         }
+*/
+        ExecuteCommandPower(device, (on) ? POWER_ON : POWER_OFF, SRC_HUE);
         response += buf;
         resp = true;
 #ifdef USE_SHUTTER
@@ -598,7 +605,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       uint8_t rr,gg,bb;
       LightStateClass::XyToRgb(x, y, &rr, &gg, &bb);
       LightStateClass::RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
-      prev_hue = changeUIntScale(hue, 0, 359, 0, 65535);  // calculate back prev_hue
+      prev_hue = changeUIntScale(hue, 0, 360, 0, 65535);  // calculate back prev_hue
       prev_sat = (sat > 254 ? 254 : sat);
       //AddLog_P2(LOG_LEVEL_DEBUG_MORE, "XY RGB (%d %d %d) HS (%d %d)", rr,gg,bb,hue,sat);
       if (resp) { response += ","; }
@@ -619,8 +626,8 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
                  device_id, "hue", hue);
       response += buf;
       if (LST_RGB <= Light.subtype) {
-        // change range from 0..65535 to 0..359
-        hue = changeUIntScale(hue, 0, 65535, 0, 359);
+        // change range from 0..65535 to 0..360
+        hue = changeUIntScale(hue, 0, 65535, 0, 360);
         g_gotct = false;
         change = true;
       }
@@ -786,7 +793,7 @@ void HueGroups(String *path)
   String response = "{}";
   uint8_t maxhue = (devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : devices_present;
   //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups (%s)"), path->c_str());
-  
+
   if (path->endsWith("/0")) {
     response = FPSTR(HUE_GROUP0_STATUS_JSON);
     String lights = F("\"1\"");
@@ -795,7 +802,7 @@ void HueGroups(String *path)
       lights += EncodeLightId(i);
       lights += "\"";
     }
-    
+
 #ifdef USE_ZIGBEE
     ZigbeeHueGroups(&response);
 #endif // USE_ZIGBEE
@@ -827,8 +834,8 @@ void HandleHueApi(String *path)
   path->remove(0, 4);                                // remove /api
   uint16_t apilen = path->length();
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_API " (%s)"), path->c_str());         // HTP: Hue API (//lights/1/state
-  for (args = 0; args < WebServer->args(); args++) {
-    String json = WebServer->arg(args);
+  for (args = 0; args < Webserver->args(); args++) {
+    String json = Webserver->arg(args);
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_POST_ARGS " (%s)"), json.c_str());  // HTP: Hue POST args ({"on":false})
   }
 
@@ -861,7 +868,7 @@ bool Xdrv20(uint8_t function)
 #endif
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:
-        WebServer->on(F("/description.xml"), HandleUpnpSetupHue);
+        Webserver->on(F("/description.xml"), HandleUpnpSetupHue);
         break;
     }
   }

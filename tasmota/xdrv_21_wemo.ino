@@ -42,7 +42,7 @@ String WemoSerialnumber(void)
 {
   char serial[16];
 
-  snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP.getChipId());
+  snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP_getChipId());
   return String(serial);
 }
 
@@ -198,7 +198,7 @@ void HandleUpnpEvent(void)
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
 
   char event[500];
-  strlcpy(event, WebServer->arg(0).c_str(), sizeof(event));
+  strlcpy(event, Webserver->arg(0).c_str(), sizeof(event));
 
 //  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), event);
 
@@ -259,10 +259,10 @@ bool Xdrv21(uint8_t function)
   if (devices_present && (EMUL_WEMO == Settings.flag2.emulation)) {
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:
-        WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
-        WebServer->on("/eventservice.xml", HandleUpnpService);
-        WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
-        WebServer->on("/setup.xml", HandleUpnpSetupWemo);
+        Webserver->on(F("/upnp/control/basicevent1"), HTTP_POST, HandleUpnpEvent);
+        Webserver->on(F("/eventservice.xml"), HandleUpnpService);
+        Webserver->on(F("/metainfoservice.xml"), HandleUpnpMetaService);
+        Webserver->on(F("/setup.xml"), HandleUpnpSetupWemo);
         break;
     }
   }

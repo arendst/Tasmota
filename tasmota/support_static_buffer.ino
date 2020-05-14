@@ -112,7 +112,7 @@ public:
   }
 
   size_t addBuffer(const uint8_t *buf2, size_t len2) {
-    if (len() + len2 <= size()) {
+    if ((buf2) && (len() + len2 <= size())) {
       for (uint32_t i = 0; i < len2; i++) {
         _buf->buf[_buf->len++] = pgm_read_byte(&buf2[i]);
       }
@@ -121,7 +121,7 @@ public:
   }
 
   size_t addBuffer(const char *buf2, size_t len2) {
-    if (len() + len2 <= size()) {
+    if ((buf2) && (len() + len2 <= size())) {
       for (uint32_t i = 0; i < len2; i++) {
         _buf->buf[_buf->len++] = pgm_read_byte(&buf2[i]);
       }

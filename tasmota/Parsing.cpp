@@ -19,6 +19,8 @@
   Modified 8 May 2015 by Hristo Gochkov (proper post and file upload handling)
 */
 
+#ifdef ESP8266
+
 // Use patched Parsing.cpp to fix ALEXA parsing issue in v2.4.2
 #include <core_version.h>
 #if defined(ARDUINO_ESP8266_RELEASE_2_4_2)
@@ -621,3 +623,5 @@ bool ESP8266WebServer::_parseFormUploadAborted(){
 }
 
 #endif  // ARDUINO_ESP8266_RELEASE
+
+#endif  // ESP8266

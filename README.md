@@ -20,9 +20,10 @@ In addition to the [release webpage](https://github.com/arendst/Tasmota/releases
 
 ## Development
 
-[![Dev Version](https://img.shields.io/badge/development%20version-v8.2.x.x-blue.svg)](https://github.com/arendst/Tasmota)
+[![Dev Version](https://img.shields.io/badge/development%20version-v8.3.x.x-blue.svg)](https://github.com/arendst/Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
-[![Build Status](https://img.shields.io/travis/arendst/Tasmota.svg)](https://travis-ci.org/arendst/Tasmota)
+[![Tasmota CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+CI%22)
+[![Tasmota ESP32 CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20ESP32%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+ESP32+CI%22)
 
 See [tasmota/CHANGELOG.md](tasmota/CHANGELOG.md) for detailed change information.
 
@@ -42,10 +43,10 @@ We don't take any responsibility nor liability for using this software nor for t
 
 ## Note
 
-Please do not ask to add new devices unless it requires additional code for new features. If the device is not listed as a module, try using [Templates](https://tasmota.github.io/docs/#/Templates) first. If it is not listed in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates) create your own [Template](https://tasmota.github.io/docs/#/Templates?id=creating-your-template).
+Please do not ask to add new devices unless it requires additional code for new features. If the device is not listed as a module, try using [Templates](https://tasmota.github.io/docs/Templates) first. If it is not listed in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates) create your own [Template](https://tasmota.github.io/docs/Templates#creating-your-template).
 
 ## Quick Install
-Download one of the released binaries from https://github.com/arendst/Tasmota/releases and flash it to your hardware [using our installation guide](https://tasmota.github.io/docs/#/installation/).
+Download one of the released binaries from https://github.com/arendst/Tasmota/releases and flash it to your hardware [using our installation guide](https://tasmota.github.io/docs/Getting-Started).
 
 ## Important User Compilation Information
 If you want to compile Tasmota yourself keep in mind the following:
@@ -60,7 +61,7 @@ Please refer to the installation and configuration articles in our [documentatio
 
 ## Migration Information
 
-See [wiki migration path](https://tasmota.github.io/docs/#/Upgrading?id=migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
+See [wiki migration path](https://tasmota.github.io/docs/Upgrading#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
 
 1. Migrate to **Sonoff-Tasmota 3.9.x**
 2. Migrate to **Sonoff-Tasmota 4.x**
@@ -77,15 +78,15 @@ See [wiki migration path](https://tasmota.github.io/docs/#/Upgrading?id=migratio
 
 <img src="https://user-images.githubusercontent.com/5904370/68332933-e6e5a600-00d7-11ea-885d-50395f7239a1.png" width=150 align="right" />
 
-For a database of supported devices see [Tasmota Device Templates Repository](https://blakadder.github.io/templates)
+For a database of supported devices see [Tasmota Device Templates Repository](https://templates.blakadder.com)
 
 If you're looking for support on **Tasmota** there are some options available:
 
 ### Documentation
 
 * [Documentation Site](https://tasmota.github.io/docs): For information on how to flash Tasmota, configure, use and expand it
-* [FAQ and Troubleshooting](https://tasmota.github.io/docs/#/help/): For information on common problems and solutions.
-* [Commands Information](https://tasmota.github.io/docs/#/Commands): For information on all the commands supported by Tasmota.
+* [FAQ and Troubleshooting](https://tasmota.github.io/docs/FAQ/): For information on common problems and solutions.
+* [Commands Information](https://tasmota.github.io/docs/Commands): For information on all the commands supported by Tasmota.
 
 ### Support's Community
 
@@ -144,7 +145,9 @@ People helping to keep the show on the road:
 - Stefan Bode for his Shutter and Deep sleep drivers
 - Jacek Ziółkowski for his [TDM](https://github.com/jziolkowski/tdm) management tool and [Tasmotizer](https://github.com/tasmota/tasmotizer) flashing tool
 - Christian Staars for NRF24L01 and HM-10 Bluetooth sensor support
-- Pail Diem for UDP Group communication support
+- Paul Diem for UDP Group communication support
+- Jörg Schüler-Maroldt for his initial ESP32 port
+- Javier Arigita for his thermostat driver
 - Many more providing Tips, Wips, Pocs, PRs and Donations
 
 ## License

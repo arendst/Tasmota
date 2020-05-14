@@ -86,7 +86,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
     uint32_t dds2382_model : 1;            // bit 21 (v6.6.0.14) - SetOption71 - Select different Modbus registers for Active Energy (#6531)
     uint32_t hardware_energy_total : 1;    // bit 22 (v6.6.0.15) - SetOption72 - Enable hardware energy total counter as reference (#6561)
-    uint32_t ex_cors_enabled : 1;          // bit 23 (v7.0.0.1)  - SetOption73 - Enable HTTP CORS
+    uint32_t mqtt_buttons : 1;             // bit 23 (v8.2.0.3)  - SetOption73 - Detach buttons from relays and enable MQTT action state for multipress
     uint32_t ds18x20_internal_pullup : 1;  // bit 24 (v7.0.0.1)  - SetOption74 - Enable internal pullup for single DS18x20 sensor
     uint32_t grouptopic_mode : 1;          // bit 25 (v7.0.0.1)  - SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
     uint32_t bootcount_update : 1;         // bit 26 (v7.0.0.4)  - SetOption76 - Enable incrementing bootcount when deepsleep is enabled
@@ -109,10 +109,10 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t powered_off_led : 1;          // bit 5 (v8.1.0.9)   - SetOption87 - PWM Dimmer Turn red LED on when powered off
     uint32_t remote_device_mode : 1;       // bit 6 (v8.1.0.9)   - SetOption88 - PWM Dimmer Buttons control remote devices
     uint32_t zigbee_distinct_topics : 1;   // bit 7 (v8.1.0.10)  - SetOption89 - Distinct MQTT topics per device for Zigbee (#7835)
-    uint32_t spare08 : 1;
-    uint32_t spare09 : 1;
-    uint32_t spare10 : 1;
-    uint32_t spare11 : 1;
+    uint32_t only_json_message : 1;        // bit 8 (v8.2.0.3)   - SetOption90 - Disable non-json MQTT response
+    uint32_t fade_at_startup : 1;          // bit 9 (v8.2.0.3)   - SetOption91 - Enable light fading at start/power on
+    uint32_t pwm_ct_mode : 1;              // bit 10 (v8.2.0.4)  - SetOption92 - Set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...)
+    uint32_t compress_rules_cpu : 1;       // bit 11 (v8.2.0.6)  - SetOption93 - Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick
     uint32_t spare12 : 1;
     uint32_t spare13 : 1;
     uint32_t spare14 : 1;
@@ -182,6 +182,35 @@ typedef union {
   };
 } Timer;
 
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
+  uint32_t data;
+  struct {
+    uint32_t stream : 1;
+    uint32_t mirror : 1;
+    uint32_t flip : 1;
+    uint32_t spare3 : 1;
+    uint32_t spare4 : 1;
+    uint32_t spare5 : 1;
+    uint32_t spare6 : 1;
+    uint32_t spare7 : 1;
+    uint32_t spare8 : 1;
+    uint32_t spare9 : 1;
+    uint32_t spare10 : 1;
+    uint32_t spare11 : 1;
+    uint32_t spare12 : 1;
+    uint32_t spare13 : 1;
+    uint32_t spare14 : 1;
+    uint32_t spare15 : 1;
+    uint32_t spare16 : 1;
+    uint32_t spare17 : 1;
+    uint32_t spare18 : 1;
+    uint32_t contrast : 3;
+    uint32_t brightness : 3;
+    uint32_t saturation : 3;
+    uint32_t resolution : 4;
+  };
+} WebCamCfg;
+
 typedef union {
   uint16_t data;
   struct {
@@ -205,12 +234,35 @@ typedef union {
     uint8_t spare1 : 1;
     uint8_t spare2 : 1;
     uint8_t spare3 : 1;
-    uint8_t spare4 : 1;
-    uint8_t spare5 : 1;
+    uint8_t bh1750_resolution : 2;         // Sensor10 1,2,3
     uint8_t hx711_json_weight_change : 1;  // Sensor34 8,x - Enable JSON message on weight change
     uint8_t mhz19b_abc_disable : 1;        // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
   };
 } SensorCfg1;
+
+typedef union {
+  uint8_t data;
+  struct {
+  uint8_t nf_autotune : 1;            // Autotune the NF Noise Level
+  uint8_t dist_autotune : 1;          // Autotune Disturber on/off
+  uint8_t nf_autotune_both : 1;        // Autotune over both Areas: INDOORS/OUDOORS
+  uint8_t mqtt_only_Light_Event : 1;  // mqtt only if lightning Irq
+  uint8_t spare4 : 1;
+  uint8_t spare5 : 1;
+  uint8_t spare6 : 1;
+  uint8_t spare7 : 1;
+  };
+} As3935IntCfg;
+
+typedef union {
+  uint16_t data;
+  struct {
+  uint16_t nf_autotune_time : 4;            // NF Noise Autotune Time
+  uint16_t dist_autotune_time : 4;          // Disturber Autotune Time
+  uint16_t nf_autotune_min : 4;             // Min Stages
+  uint16_t spare3 : 4;
+  };
+} As3935Param;
 
 typedef struct {
   uint32_t usage1_kWhtotal;
@@ -230,7 +282,7 @@ typedef struct {
 const uint32_t settings_text_size = 699;   // Settings.text_pool[size] = Settings.display_model (2D2) - Settings.text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
-struct SYSCFG {
+struct {
   uint16_t      cfg_holder;                // 000 v6 header
   uint16_t      cfg_size;                  // 002
   unsigned long save_flag;                 // 004
@@ -241,7 +293,7 @@ struct SYSCFG {
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
 
-  // Start of char array storing all parameter strings
+  // Start of char array storing all parameter strings ********
 
   char          text_pool[101];            // 017 - was ota_url[101] - size is settings_text_size
 
@@ -277,7 +329,7 @@ struct SYSCFG {
   char          ex_button_topic[33];       // 290
   char          ex_mqtt_grptopic[33];      // 2B1
 
-  // End of single char array of 698 chars max
+  // End of single char array of 698 chars max ****************
 
   uint8_t       display_model;             // 2D2
   uint8_t       display_mode;              // 2D3
@@ -335,8 +387,19 @@ struct SYSCFG {
   SysBitfield3  flag3;                     // 3A0
   uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
 
+#ifdef ESP8266
   char          ex_friendlyname[4][33];    // 3AC
   char          ex_switch_topic[33];       // 430
+#else  // ESP32
+  myio          my_gp;                     // 3AC - 2 x 40 bytes (ESP32)
+  mytmplt       user_template;             // 3FC - 2 x 37 bytes (ESP32)
+
+  uint8_t       free_esp32_446[6];         // 446
+
+  WebCamCfg     webcam_config;             // 44C
+
+  uint8_t       free_esp32_450[1];         // 450
+#endif  // ESP8266 - ESP32
 
   char          serial_delimiter;          // 451
   uint8_t       seriallog_level;           // 452
@@ -346,7 +409,13 @@ struct SYSCFG {
   uint8_t       module;                    // 474
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
-  myio          my_gp;                     // 484
+
+#ifdef ESP8266
+  myio          my_gp;                     // 484 - 17 bytes (ESP8266)
+#else  // ESP32
+  uint8_t       free_esp32_484[17];        // 484
+#endif  // ESP8266 - ESP32
+
   uint8_t       my_adc0;                   // 495
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
@@ -397,7 +466,15 @@ struct SYSCFG {
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
   uint8_t       user_template_base;        // 71F
-  mytmplt       user_template;             // 720  29 bytes
+
+  char          user_template_name[15];    // 720  15 bytes - Backward compatibility since v8.2.0.3
+
+#ifdef ESP8266
+  mytmplt       user_template;             // 72F  14 bytes (ESP8266)
+#else  // ESP32
+  uint8_t       free_esp32_72f[14];        // 72F
+#endif  // ESP8266 - ESP32
+
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E
   uint16_t      display_width;             // 774
@@ -435,6 +512,12 @@ struct SYSCFG {
   uint8_t       shutter_position[MAX_SHUTTERS];      // E80
   uint8_t       shutter_startrelay[MAX_SHUTTERS];    // E84
   uint8_t       pcf8574_config[MAX_PCF8574];         // E88
+  uint8_t       ot_hot_water_setpoint;     // E8C
+  uint8_t       ot_boiler_setpoint;        // E8D
+  uint8_t       ot_flags;                  // E8E
+
+  uint8_t       free_e8f[1];               // E8F
+
   uint16_t      dimmer_hw_min;             // E90
   uint16_t      dimmer_hw_max;             // E92
   uint32_t      deepsleep;                 // E94
@@ -468,9 +551,30 @@ struct SYSCFG {
   uint8_t       bri_preset_low;            // F06
   uint8_t       bri_preset_high;           // F07
   int8_t        hum_comp;                  // F08
+  uint8_t       wifi_channel;              // F09
+  uint8_t       wifi_bssid[6];             // F0A
+  uint8_t       as3935_sensor_cfg[5];      // F10
+  As3935IntCfg  as3935_functions;          // F15
+  As3935Param   as3935_parameter;          // F16
+  uint64_t      zb_ext_panid;              // F18
+  uint64_t      zb_precfgkey_l;            // F20
+  uint64_t      zb_precfgkey_h;            // F28
+  uint16_t      zb_pan_id;                 // F30
+  uint8_t       zb_channel;                // F32
+  uint8_t       zb_free_byte;              // F33
+  uint16_t      pms_wake_interval;         // F34
+  uint8_t       config_version;            // F36
+  uint8_t       windmeter_pulses_x_rot;    // F37
+  uint16_t      windmeter_radius;          // F38
+  uint16_t      windmeter_pulse_debounce;  // F3A
+  int16_t       windmeter_speed_factor;    // F3C
+  uint8_t       windmeter_tele_pchange;    // F3E
 
-  uint8_t       free_f09[179];             // F09
+  uint8_t       free_f3f[121];             // F3F - Decrement if adding new Setting variables just above and below
 
+  // Only 32 bit boundary variables below
+  uint16_t      pulse_counter_debounce_low;  // FB8
+  uint16_t      pulse_counter_debounce_high; // FBA
   uint32_t      keeloq_master_msb;         // FBC
   uint32_t      keeloq_master_lsb;         // FC0
   uint32_t      keeloq_serial;             // FC4
@@ -485,13 +589,17 @@ struct SYSCFG {
   uint32_t      cfg_crc32;                 // FFC
 } Settings;
 
-struct RTCRBT {
+typedef struct {
   uint16_t      valid;                     // 280 (RTC memory offset 100 - sizeof(RTCRBT))
   uint8_t       fast_reboot_count;         // 282
   uint8_t       free_003[1];               // 283
-} RtcReboot;
+} TRtcReboot;
+TRtcReboot RtcReboot;
+#ifdef ESP32
+RTC_NOINIT_ATTR TRtcReboot RtcDataReboot;
+#endif
 
-struct RTCMEM {
+typedef struct {
   uint16_t      valid;                     // 290 (RTC memory offset 100)
   uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
@@ -507,7 +615,11 @@ struct RTCMEM {
 
   uint8_t       free_022[22];              // 2D6
                                            // 2EC - 2FF free locations
-} RtcSettings;
+} TRtcSettings;
+TRtcSettings RtcSettings;
+#ifdef ESP32
+RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
+#endif
 
 struct TIME_T {
   uint8_t       second;

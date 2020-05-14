@@ -72,11 +72,11 @@ void RA8876_InitDriver()
     bg_color = RA8876_BLACK;
 
     // init renderer, must use hardware spi
-    if ((pin[GPIO_SSPI_CS]<99) && (pin[GPIO_SSPI_MOSI]==13) && (pin[GPIO_SSPI_MISO]==12) && (pin[GPIO_SSPI_SCLK]==14)) {
-      ra8876  = new RA8876(pin[GPIO_SSPI_CS],pin[GPIO_SSPI_MOSI],pin[GPIO_SSPI_MISO],pin[GPIO_SSPI_SCLK],pin[GPIO_BACKLIGHT]);
+    if (PinUsed(GPIO_SSPI_CS) && (Pin(GPIO_SSPI_MOSI)==13) && (Pin(GPIO_SSPI_MISO)==12) && (Pin(GPIO_SSPI_SCLK)==14)) {
+      ra8876  = new RA8876(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_MISO),Pin(GPIO_SSPI_SCLK),Pin(GPIO_BACKLIGHT));
     } else {
-      if ((pin[GPIO_SPI_CS]<99) && (pin[GPIO_SPI_MOSI]==13) && (pin[GPIO_SPI_MISO]==12) && (pin[GPIO_SPI_CLK]==14)) {
-        ra8876  = new RA8876(pin[GPIO_SPI_CS],pin[GPIO_SPI_MOSI],pin[GPIO_SPI_MISO],pin[GPIO_SPI_CLK],pin[GPIO_BACKLIGHT]);
+      if (PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_MOSI)==13) && (Pin(GPIO_SPI_MISO)==12) && (Pin(GPIO_SPI_CLK)==14)) {
+        ra8876  = new RA8876(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_MOSI),Pin(GPIO_SPI_MISO),Pin(GPIO_SPI_CLK),Pin(GPIO_BACKLIGHT));
       } else {
         return;
       }

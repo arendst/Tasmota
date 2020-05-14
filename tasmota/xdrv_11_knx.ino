@@ -473,19 +473,19 @@ void KNX_INIT(void)
   {
     device_param[i].show = true;
   }
-  for (uint32_t i = GPIO_SWT1; i < GPIO_SWT4 + 1; ++i)
+  for (uint32_t i = GPIO_SWT1; i < GPIO_SWT1 + 4; ++i)
   {
     if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_SWT1 + 8].show = true; }
   }
-  for (uint32_t i = GPIO_KEY1; i < GPIO_KEY4 + 1; ++i)
+  for (uint32_t i = GPIO_KEY1; i < GPIO_KEY1 + 4; ++i)
   {
     if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_KEY1 + 8].show = true; }
   }
-  for (uint32_t i = GPIO_SWT1_NP; i < GPIO_SWT4_NP + 1; ++i)
+  for (uint32_t i = GPIO_SWT1_NP; i < GPIO_SWT1_NP + 4; ++i)
   {
     if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_SWT1_NP + 8].show = true; }
   }
-  for (uint32_t i = GPIO_KEY1_NP; i < GPIO_KEY4_NP + 1; ++i)
+  for (uint32_t i = GPIO_KEY1_NP; i < GPIO_KEY1_NP + 4; ++i)
   {
     if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_KEY1_NP + 8].show = true; }
   }
@@ -556,8 +556,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
 
   if (msg.data_len == 1) {
     // COMMAND
-    tempchar[0] = msg.data[0];
-    tempchar[1] = '\0';
+    sprintf(tempchar,"%d",msg.data[0]);
   }  else  {
     // VALUE
     float tempvar = knx.data_to_2byte_float(msg.data);
@@ -760,13 +759,13 @@ const char HTTP_FORM_KNX[] PROGMEM =
   "<input style='width:12%%;' type='number' name='line' min='0' max='15' value='%d'> . "
   "<input style='width:12%%;' type='number' name='member' min='0' max='255' value='%d'>"
   "<br><br>" D_KNX_PHYSICAL_ADDRESS_NOTE "<br><br>"
-  "<input id='b1' type='checkbox'";
+  "<label><input id='b1' type='checkbox'";
 
 const char HTTP_FORM_KNX1[] PROGMEM =
-  "><b>" D_KNX_ENABLE "</b>&emsp;<input id='b2' type='checkbox'";
+  "><b>" D_KNX_ENABLE "</b></label>&emsp;<label><input id='b2' type='checkbox'";
 
 const char HTTP_FORM_KNX2[] PROGMEM =
-  "><b>" D_KNX_ENHANCEMENT "</b><br></center><br>"
+  "><b>" D_KNX_ENHANCEMENT "</b></label><br></center><br>"
 
   "<fieldset><center>"
   "<b>" D_KNX_GROUP_ADDRESS_TO_WRITE "</b><hr>"
@@ -810,22 +809,22 @@ void HandleKNXConfiguration(void)
   char tmp[100];
   String stmp;
 
-  if ( WebServer->hasArg("save") ) {
+  if ( Webserver->hasArg("save") ) {
     KNX_Save_Settings();
     HandleConfiguration();
   }
   else
   {
-    if ( WebServer->hasArg("btn_add") ) {
-      if ( WebServer->arg("btn_add") == "1" ) {
+    if ( Webserver->hasArg("btn_add") ) {
+      if ( Webserver->arg("btn_add") == "1" ) {
 
-        stmp = WebServer->arg("GAop"); //option selected
+        stmp = Webserver->arg("GAop"); //option selected
         uint8_t GAop = stmp.toInt();
-        stmp = WebServer->arg("GA_FNUM");
+        stmp = Webserver->arg("GA_FNUM");
         uint8_t GA_FNUM = stmp.toInt();
-        stmp = WebServer->arg("GA_AREA");
+        stmp = Webserver->arg("GA_AREA");
         uint8_t GA_AREA = stmp.toInt();
-        stmp = WebServer->arg("GA_FDEF");
+        stmp = Webserver->arg("GA_FDEF");
         uint8_t GA_FDEF = stmp.toInt();
 
         if (GAop) {
@@ -835,13 +834,13 @@ void HandleKNXConfiguration(void)
       else
       {
 
-        stmp = WebServer->arg("CBop"); //option selected
+        stmp = Webserver->arg("CBop"); //option selected
         uint8_t CBop = stmp.toInt();
-        stmp = WebServer->arg("CB_FNUM");
+        stmp = Webserver->arg("CB_FNUM");
         uint8_t CB_FNUM = stmp.toInt();
-        stmp = WebServer->arg("CB_AREA");
+        stmp = Webserver->arg("CB_AREA");
         uint8_t CB_AREA = stmp.toInt();
-        stmp = WebServer->arg("CB_FDEF");
+        stmp = Webserver->arg("CB_FDEF");
         uint8_t CB_FDEF = stmp.toInt();
 
         if (CBop) {
@@ -849,19 +848,19 @@ void HandleKNXConfiguration(void)
         }
       }
     }
-    else if ( WebServer->hasArg("btn_del_ga") )
+    else if ( Webserver->hasArg("btn_del_ga") )
     {
 
-      stmp = WebServer->arg("btn_del_ga");
+      stmp = Webserver->arg("btn_del_ga");
       uint8_t GA_NUM = stmp.toInt();
 
       KNX_DEL_GA(GA_NUM);
 
     }
-    else if ( WebServer->hasArg("btn_del_cb") )
+    else if ( Webserver->hasArg("btn_del_cb") )
     {
 
-      stmp = WebServer->arg("btn_del_cb");
+      stmp = Webserver->arg("btn_del_cb");
       uint8_t CB_NUM = stmp.toInt();
 
       KNX_DEL_CB(CB_NUM);
@@ -955,16 +954,16 @@ void KNX_Save_Settings(void)
   String stmp;
   address_t KNX_addr;
 
-  Settings.flag.knx_enabled = WebServer->hasArg("b1");
-  Settings.flag.knx_enable_enhancement = WebServer->hasArg("b2");
+  Settings.flag.knx_enabled = Webserver->hasArg("b1");
+  Settings.flag.knx_enable_enhancement = Webserver->hasArg("b2");
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_ENABLED ": %d, " D_KNX_ENHANCEMENT ": %d"),
    Settings.flag.knx_enabled, Settings.flag.knx_enable_enhancement );
 
-  stmp = WebServer->arg("area");
+  stmp = Webserver->arg("area");
   KNX_addr.pa.area = stmp.toInt();
-  stmp = WebServer->arg("line");
+  stmp = Webserver->arg("line");
   KNX_addr.pa.line = stmp.toInt();
-  stmp = WebServer->arg("member");
+  stmp = Webserver->arg("member");
   KNX_addr.pa.member = stmp.toInt();
   Settings.knx_physsical_addr = KNX_addr.value;
   knx.physical_address_set( KNX_addr ); // Set Physical KNX Address of the device
@@ -1225,7 +1224,7 @@ bool Xdrv11(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_KNX);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        WebServer->on("/kn", HandleKNXConfiguration);
+        Webserver->on("/kn", HandleKNXConfiguration);
         break;
 #endif // USE_KNX_WEB_MENU
 #endif  // USE_WEBSERVER

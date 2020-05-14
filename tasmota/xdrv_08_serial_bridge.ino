@@ -73,9 +73,9 @@ void SerialBridgeInput(void)
     char hex_char[(serial_bridge_in_byte_counter * 2) + 2];
     bool assume_json = (!serial_bridge_raw && (serial_bridge_buffer[0] == '{'));
     Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":%s%s%s}"),
-      (assume_json) ? "" : """",
+      (assume_json) ? "" : "\"",
       (serial_bridge_raw) ? ToHex_P((unsigned char*)serial_bridge_buffer, serial_bridge_in_byte_counter, hex_char, sizeof(hex_char)) : serial_bridge_buffer,
-      (assume_json) ? "" : """");
+      (assume_json) ? "" : "\"");
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
     XdrvRulesProcess();
     serial_bridge_in_byte_counter = 0;
@@ -87,8 +87,8 @@ void SerialBridgeInput(void)
 void SerialBridgeInit(void)
 {
   serial_bridge_active = false;
-  if ((pin[GPIO_SBR_RX] < 99) && (pin[GPIO_SBR_TX] < 99)) {
-    SerialBridgeSerial = new TasmotaSerial(pin[GPIO_SBR_RX], pin[GPIO_SBR_TX]);
+  if (PinUsed(GPIO_SBR_RX) && PinUsed(GPIO_SBR_TX)) {
+    SerialBridgeSerial = new TasmotaSerial(Pin(GPIO_SBR_RX), Pin(GPIO_SBR_TX));
     if (SerialBridgeSerial->begin(Settings.sbaudrate * 300)) {  // Baud rate is stored div 300 so it fits into 16 bits
       if (SerialBridgeSerial->hardwareSerial()) {
         ClaimSerial();

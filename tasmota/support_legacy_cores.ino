@@ -155,3 +155,24 @@ void* memmove_P(void *dest, const void *src, size_t n)
 }
 
 #endif  // ARDUINO_ESP8266_RELEASE < 2_6_0
+
+
+
+/*********************************************************************************************\
+ * Core overrides
+\*********************************************************************************************/
+
+// Add below line to tasmota_globals.h
+// extern "C" void resetPins();
+void resetPins()
+{
+/*
+  for (int i = 0; i <= 5; ++i) {
+    pinMode(i, INPUT);
+  }
+  // pins 6-11 are used for the SPI flash interface
+  for (int i = 12; i <= 16; ++i) {
+    pinMode(i, INPUT);
+  }
+*/
+}

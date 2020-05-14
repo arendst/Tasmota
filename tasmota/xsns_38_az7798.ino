@@ -215,7 +215,9 @@ void AzEverySecond(void)
     }
     response_substr[j] = 0;                 // add null terminator
     az_co2 = atoi((char*)response_substr);
+#ifdef USE_LIGHT
     LightSetSignal(CO2_LOW, CO2_HIGH, az_co2);
+#endif  // USE_LIGHT
     i += 3;                                 // advance to second delimiter
     if(az_response[i] != ':') {
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 error second delimiter"));
@@ -265,8 +267,8 @@ void AzEverySecond(void)
 void AzInit(void)
 {
   az_type = 0;
-  if ((pin[GPIO_AZ_RXD] < 99) && (pin[GPIO_AZ_TXD] < 99)) {
-    AzSerial = new TasmotaSerial(pin[GPIO_AZ_RXD], pin[GPIO_AZ_TXD], 1);
+  if (PinUsed(GPIO_AZ_RXD) && PinUsed(GPIO_AZ_TXD)) {
+    AzSerial = new TasmotaSerial(Pin(GPIO_AZ_RXD), Pin(GPIO_AZ_TXD), 1);
     if (AzSerial->begin(9600)) {
       if (AzSerial->hardwareSerial()) { ClaimSerial(); }
       az_type = 1;

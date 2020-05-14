@@ -13,7 +13,7 @@ Please DO NOT OPEN AN ISSUE:
   - If your issue is a flashing issue, please address it to the [Tasmota Support Chat](https://discord.gg/Ks2Kzd4)
   - If your issue is compilation problem, please address it to the [Tasmota Support Chat](https://discord.gg/Ks2Kzd4)
   - If your issue has been addressed before (i.e., duplicated issue), please ask in the original issue
-  - If your issue is a Wi-Fi problem or MQTT problem, please try the steps provided in the [FAQ](https://tasmota.github.io/docs/#/help/FAQ) and [Troubleshooting](https://tasmota.github.io/docs/#/help/Troubleshooting)
+  - If your issue is a Wi-Fi problem or MQTT problem, please try the steps provided in the [FAQ](https://tasmota.github.io/docs/FAQ) and [Troubleshooting](https://tasmota.github.io/docs/Troubleshooting)
 
  Please take a few minutes to complete the requested information below. Our ability to provide assistance is greatly hampered without it. The details requested potentially affect which options to pursue. The small amount of time you spend completing the template will also help the volunteers providing the assistance to you to reduce the time required to help you.
 
@@ -29,7 +29,7 @@ _Make sure your have performed every step and checked the applicable boxes befor
 
 - [ ] Read the [Contributing Guide and Policy](https://github.com/arendst/Tasmota/blob/development/CONTRIBUTING.md) and [the Code of Conduct](https://github.com/arendst/Tasmota/blob/development/CODE_OF_CONDUCT.md)
 - [ ] Searched the problem in [issues](https://github.com/arendst/Tasmota/issues)
-- [ ] Searched the problem in the [docs](https://tasmota.github.io/docs/#/help/FAQ)
+- [ ] Searched the problem in the [docs](https://tasmota.github.io/docs/FAQ)
 - [ ] Searched the problem in the [forum](https://groups.google.com/d/forum/sonoffusers)
 - [ ] Searched the problem in the [chat](https://discord.gg/Ks2Kzd4)
 - [ ] Device used (e.g., Sonoff Basic): _____

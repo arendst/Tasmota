@@ -19,6 +19,10 @@
 
 #ifdef USE_ZIGBEE
 
+/*********************************************************************************************\
+ * ZCL Command Structures
+\*********************************************************************************************/
+
 typedef struct Z_CommandConverter {
   const char * tasmota_cmd;
   uint16_t     cluster;
@@ -45,13 +49,14 @@ ZF(ResetAlarm) ZF(ResetAllAlarms)
 ZF(HueSat) ZF(Color)
 ZF(ShutterOpen) ZF(ShutterClose) ZF(ShutterStop) ZF(ShutterLift) ZF(ShutterTilt) ZF(Shutter)
 //ZF(Occupancy)
-ZF(DimmerMove) ZF(DimmerStep)
-ZF(HueMove) ZF(HueStep) ZF(SatMove) ZF(SatStep) ZF(ColorMove) ZF(ColorStep)
+ZF(DimmerMove) ZF(DimmerStep) ZF(DimmerStepUp) ZF(DimmerStepDown)
+ZF(HueMove) ZF(HueStep) ZF(HueStepUp) ZF(HueStepDown) ZF(SatMove) ZF(SatStep) ZF(ColorMove) ZF(ColorStep) ZF(ColorTempStep) ZF(ColorTempStepUp) ZF(ColorTempStepDown) 
 ZF(ArrowClick) ZF(ArrowHold) ZF(ArrowRelease) ZF(ZoneStatusChange)
 
-ZF(xxxx00) ZF(xxxx) ZF(01xxxx) ZF(00) ZF(01) ZF() ZF(xxxxyy) ZF(001902) ZF(011902) ZF(xxyyyy) ZF(xx)
+ZF(xxxx00) ZF(xxxx) ZF(01xxxx) ZF(03xxxx) ZF(00) ZF(01) ZF() ZF(xxxxyy) ZF(00190200) ZF(01190200) ZF(xxyyyy) ZF(xx)
 ZF(xx000A00) ZF(xx0A00) ZF(xxyy0A00) ZF(xxxxyyyy0A00) ZF(xxxx0A00) ZF(xx0A)
 ZF(xx190A00) ZF(xx19) ZF(xx190A) ZF(xxxxyyyy) ZF(xxxxyyzz) ZF(xxyyzzzz) ZF(xxyyyyzz)
+ZF(00xx0A00) ZF(01xx0A00) ZF(03xx0A00) ZF(01xxxx0A0000000000) ZF(03xxxx0A0000000000) ZF(xxyyyy0A0000000000)
 
 // Cluster specific commands
 // Note: the table is both for sending commands, but also displaying received commands
@@ -78,8 +83,8 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   // Light & Shutter commands
   { Z(Power),          0x0006, 0xFF, 0x01,   Z() },             // 0=Off, 1=On, 2=Toggle
   { Z(Dimmer),         0x0008, 0x04, 0x01,   Z(xx0A00) },       // Move to Level with On/Off, xx=0..254 (255 is invalid)
-  { Z(DimmerUp),       0x0008, 0x06, 0x01,   Z(001902) },       // Step up by 10%, 0.2 secs
-  { Z(DimmerDown),     0x0008, 0x06, 0x01,   Z(011902) },       // Step down by 10%, 0.2 secs
+  { Z(DimmerUp),       0x0008, 0x06, 0x01,   Z(00190200) },       // Step up by 10%, 0.2 secs
+  { Z(DimmerDown),     0x0008, 0x06, 0x01,   Z(01190200) },       // Step down by 10%, 0.2 secs
   { Z(DimmerStop),     0x0008, 0x03, 0x01,   Z() },             // Stop any Dimmer animation
   { Z(ResetAlarm),     0x0009, 0x00, 0x01,   Z(xxyyyy) },       // Reset alarm (alarm code + cluster identifier)
   { Z(ResetAllAlarms), 0x0009, 0x01, 0x01,   Z() },             // Reset all alarms
@@ -99,17 +104,24 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   // Decoders only - normally not used to send, and names may be masked by previous definitions
   { Z(Dimmer),         0x0008, 0x00, 0x01,   Z(xx) },
   { Z(DimmerMove),     0x0008, 0x01, 0x01,   Z(xx0A) },
+  { Z(DimmerStepUp),   0x0008, 0x02, 0x01,   Z(00xx0A00) },
+  { Z(DimmerStepDown), 0x0008, 0x02, 0x01,   Z(01xx0A00) },
   { Z(DimmerStep),     0x0008, 0x02, 0x01,   Z(xx190A00) },
   { Z(DimmerMove),     0x0008, 0x05, 0x01,   Z(xx0A) },
   { Z(DimmerUp),       0x0008, 0x06, 0x01,   Z(00) },
   { Z(DimmerDown),     0x0008, 0x06, 0x01,   Z(01) },
   { Z(DimmerStop),     0x0008, 0x07, 0x01,   Z() },
   { Z(HueMove),        0x0300, 0x01, 0x01,   Z(xx19) },
+  { Z(HueStepUp),      0x0300, 0x02, 0x01,   Z(01xx0A00) },
+  { Z(HueStepDown),    0x0300, 0x02, 0x01,   Z(03xx0A00) },
   { Z(HueStep),        0x0300, 0x02, 0x01,   Z(xx190A00) },
   { Z(SatMove),        0x0300, 0x04, 0x01,   Z(xx19) },
   { Z(SatStep),        0x0300, 0x05, 0x01,   Z(xx190A) },
   { Z(ColorMove),      0x0300, 0x08, 0x01,   Z(xxxxyyyy) },
   { Z(ColorStep),      0x0300, 0x09, 0x01,   Z(xxxxyyyy0A00) },
+  { Z(ColorTempStepUp),  0x0300, 0x4C, 0x01,   Z(01xxxx0A0000000000) },     //xxxx = step
+  { Z(ColorTempStepDown),0x0300, 0x4C, 0x01,   Z(03xxxx0A0000000000) },     //xxxx = step
+  { Z(ColorTempStep),  0x0300, 0x4C, 0x01,   Z(xxyyyy0A0000000000) },     //xx = 0x01 up, 0x03 down, yyyy = step
   // Tradfri
   { Z(ArrowClick),     0x0005, 0x07, 0x01,   Z(xx) },         // xx == 0x01 = left, 0x00 = right
   { Z(ArrowHold),      0x0005, 0x08, 0x01,   Z(xx) },         // xx == 0x01 = left, 0x00 = right
@@ -130,6 +142,9 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z(GetSceneMembership),0x0005, 0x06, 0x82,Z(xxyyzzzz) },     // specific
 };
 
+/*********************************************************************************************\
+ * ZCL Read Light status based on cluster number
+\*********************************************************************************************/
 #define ZLE(x) ((x) & 0xFF), ((x) >> 8)     // Little Endian
 
 // Below are the attributes we wand to read from each cluster
@@ -162,7 +177,15 @@ int32_t Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t clus
       break;
   }
   if (attrs) {
-    ZigbeeZCLSend_Raw(shortaddr, groupaddr, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, true /* we do want a response */, zigbee_devices.getNextSeqNumber(shortaddr));
+    ZigbeeZCLSend_Raw(shortaddr, groupaddr, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, 0, attrs, attrs_len, true /* we do want a response */, zigbee_devices.getNextSeqNumber(shortaddr));
+  }
+}
+
+
+// This callback is registered after a an attribute read command was made to a light, and fires if we don't get any response after 1000 ms
+int32_t Z_Unreachable(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+  if (shortaddr) {
+    zigbee_devices.setReachable(shortaddr, false);     // mark device as reachable
   }
 }
 
@@ -185,6 +208,9 @@ void zigbeeSetCommandTimer(uint16_t shortaddr, uint16_t groupaddr, uint16_t clus
   }
   if (wait_ms) {
     zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms, cluster, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
+    if (shortaddr) {      // reachability test is not possible for group addresses, since we don't know the list of devices in the group
+      zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, cluster, endpoint, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
+    }
   }
 }
 
@@ -288,11 +314,15 @@ void sendHueUpdate(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uin
   }
   if (z_cat >= 0) {
     uint8_t endpoint = 0;
-    if (!groupaddr) {
+    if (shortaddr) {
       endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
     }
-    if ((endpoint) || (groupaddr)) {   // send only if we know the endpoint
+    if ((!shortaddr) || (endpoint)) {   // send if group address or endpoint is known
       zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms, cluster, endpoint, z_cat, 0 /* value */, &Z_ReadAttrCallback);
+      if (shortaddr) {      // reachability test is not possible for group addresses, since we don't know the list of devices in the group
+        zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, cluster, endpoint, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
+      }
+
     }
   }
 }

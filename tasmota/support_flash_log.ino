@@ -37,6 +37,7 @@
 \*********************************************************************************************/
 
 #ifdef USE_FLOG
+#ifdef ESP8266
 
 class FLOG
 
@@ -370,13 +371,13 @@ void FLOG::stopRecording(void){
  *
  * @param size:         size of the data entry/record in bytes, i.e. sizeof(myStruct)
  * @param sendHeader:   should implement at least something like:
- * @example             WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN); // This is very likely unknown!!
- *                      WebServer->sendHeader(F("Content-Disposition"), F("attachment; filename=myfile.txt"));
+ * @example             Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN); // This is very likely unknown!!
+ *                      Webserver->sendHeader(F("Content-Disposition"), F("attachment; filename=myfile.txt"));
  * @param sendRecord:   will receive the memory address as "uint8_t* addr" and should consume the current entry/record
  * @example             myStruct_t *entry = (myStruct_t*)addr;
- *                      Then make useful Strings and send it, i.e.: WebServer->sendContent_P(myString);
+ *                      Then make useful Strings and send it, i.e.: Webserver->sendContent_P(myString);
  * @param sendFooter:   finish the download, should implement at least:
- * @example             WebServer->sendContent("");
+ * @example             Webserver->sendContent("");
  */
   void FLOG::startDownload(size_t size, CallbackNoArgs sendHeader, CallbackWithArgs sendRecord, CallbackNoArgs sendFooter){
 
@@ -400,7 +401,7 @@ void FLOG::stopRecording(void){
       if(k%128 == 0){  // give control to the system every x iteration, TODO: This will fail, when record/entry-size is not 8
         // DEBUG_SENSOR_LOG(PSTR("FLOG: now loop(), %u bytes left"), Flog->bytes_left);
         OsWatchLoop();
-        delay(sleep);
+        delay(ssleep);
         }
       k+=size;
       if(bytes_left>7){
@@ -419,7 +420,7 @@ void FLOG::stopRecording(void){
     _readSector(next_sector);
     bytes_left = sector.header.buf_pointer - sizeof(sector.header);
     OsWatchLoop();
-    delay(sleep);
+    delay(ssleep);
   }
   running_download = false;
   // Callback 3: create a footer or simply finish the download with an empty payload
@@ -429,4 +430,5 @@ void FLOG::stopRecording(void){
   _initBuffer();
   }
 
+ #endif  // ESP8266
  #endif  // USE_FLOG

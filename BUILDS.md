@@ -2,7 +2,7 @@
 
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 |-----------------------|---------|-------|--------|-----|---------|----|---------|--------
-| MY_LANGUAGE en-GB     | x | x | x | x | x | x | x |
+| MY_LANGUAGE en_GB     | x | x | x | x | x | x | x |
 | USE_ARDUINO_OTA       | - | - | - | - | - | - | - |
 | USE_DOMOTICZ          | - | - | x | x | x | x | - |
 | USE_HOME_ASSISTANT    | - | - | x | x | x | x | - |
@@ -71,7 +71,7 @@
 |                       |   |   |   |   |   |   |   |
 | USE_ADC_VCC           | x | x | - | - | - | - | - |
 | USE_COUNTER           | - | - | x | x | x | x | x |
-| USE_DS18x20           | - | - | x | x | x | - | x |
+| USE_DS18x20           | - | - | x | x | x | x | x |
 | USE_DHT               | - | - | x | x | x | x | x |
 | USE_MAX31855          | - | - | - | - | x | - | - |
 | USE_MAX31865          | - | - | - | - | - | - | - |
@@ -117,6 +117,8 @@
 | USE_AHT1x             | - | - | - | - | - | - | - |
 | USE_HDC1080           | - | - | - | - | - | - | - |
 | USE_WEMOS_MOTOR_V1    | - | - | - | - | x | - | - |
+| USE_IAQ               | - | - | - | - | x | - | - |
+| USE_AS3935            | - | - | - | - | x | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
@@ -134,6 +136,8 @@
 | USE_GPS               | - | - | - | - | - | - | - |
 | USE_HM10              | - | - | - | - | x | - | - |
 | USE_HRXL              | - | - | - | - | x | - | - |
+| USE_TASMOTA_SLAVE     | - | - | - | - | - | - | - |
+| USE_OPENTHERM         | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | USE_NRF24             | - | - | - | - | - | - | - |
 | USE_MIBLE             | - | - | - | - | - | - | - |
@@ -147,11 +151,11 @@
 | USE_TM1638            | - | - | - | - | x | - | - |
 | USE_HX711             | - | - | - | - | x | - | - |
 | USE_TX2x_WIND_SENSOR  | - | - | - | - | - | - | - |
+| USE_WINDMETER         | - | - | - | - | - | - | - |
 | USE_RC_SWITCH         | - | - | - | - | x | - | - |
 | USE_RF_SENSOR         | - | - | - | - | x | - | - | AlectoV2 only
 | USE_HRE               | - | - | - | - | x | - | - |
 | USE_A4988_STEPPER     | - | - | - | - | - | - | - |
-| USE_TASMOTA_SLAVE     | - | - | - | - | - | - | - | Experimental
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_DISPLAY           | - | - | - | - | - | - | x |
@@ -165,3 +169,10 @@
 | USE_DISPLAY_ILI9488   | - | - | - | - | - | - | - |
 | USE_DISPLAY_SSD1351   | - | - | - | - | - | - | - |
 | USE_DISPLAY_RA8876    | - | - | - | - | - | - | - |
+
+## Additional Features and Sensors on ESP32
+
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | webcam | Remarks
+|-----------------------|---------|-------|--------|-----|---------|----|---------|--------|--------
+| USE_MI_ESP32          | - | - | - | - | - | - | - | - |
+| USE_WEBCAM            | - | - | - | - | - | - | - | x |
