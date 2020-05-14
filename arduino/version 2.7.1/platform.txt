@@ -5,8 +5,8 @@
 # For more info:
 # https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5-3rd-party-Hardware-specification
 
-name=ESP8266 Boards (2.6.3)
-version=2.6.3
+name=ESP8266 Boards (2.7.1)
+version=2.7.1
 
 # These will be removed by the packager script when doing a JSON release
 
@@ -37,7 +37,7 @@ build.exception_flags=-fno-exceptions
 build.stdcpp_lib=-lstdc++
 build.stdcpp_level=-std=gnu++11
 
-#build.float=-u _printf_float -u _scanf_float
+# build.float=-u _printf_float -u _scanf_float
 build.float=
 build.led=
 
