@@ -104,11 +104,9 @@ struct ENERGY {
   bool type_dc = false;
   bool power_on = true;
 
-#ifdef USE_SDM630
   float imp_active[3] = { NAN, NAN, NAN };      // kWh import active energy
   float exp_active[3] = { NAN, NAN, NAN };      // kWh export active energy
   float tot_active[3] = { NAN, NAN, NAN };      // kWh total active energy
-#endif
 
 #ifdef USE_ENERGY_MARGIN_DETECTION
   uint16_t power_history[3] = { 0 };
