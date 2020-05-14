@@ -182,14 +182,14 @@ void ButtonHandler(void)
       else {
         if ((PRESSED == button) && (NOT_PRESSED == Button.last_state[button_index])) {
 
-          if (Settings.flag.button_single) {                   // SetOption13 (0) - Allow only single button press for immediate action, SetOption73 (0) - Decouple button from relay and send just mqtt topic
-            if (!Settings.flag3.mqtt_buttons) {
+          if (Settings.flag.button_single) {           // SetOption13 (0) - Allow only single button press for immediate action,
+            if (!Settings.flag3.mqtt_buttons) {        // SetOption73 (0) - Decouple button from relay and send just mqtt topic
               AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
               if (!SendKey(KEY_BUTTON, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
                 ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
               }
             } else {
-              MqttButtonTopic(button_index +1, 1, 0); // SetOption73 (0) - Decouple button from relay and send just mqtt topic
+              MqttButtonTopic(button_index +1, 1, 0);  // SetOption73 1 - Decouple button from relay and send just mqtt topic
             }
           } else {
             Button.press_counter[button_index] = (Button.window_timer[button_index]) ? Button.press_counter[button_index] +1 : 1;
