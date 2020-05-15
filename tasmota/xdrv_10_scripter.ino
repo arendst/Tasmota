@@ -641,13 +641,14 @@ char *script;
 
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
-void ws2812_set_array(float *array ,uint8_t len) {
+void ws2812_set_array(float *array ,uint32_t len, uint32_t offset) {
 
   Ws2812ForceSuspend();
-  for (uint8_t cnt=0;cnt<len;cnt++) {
-    if (cnt>Settings.light_pixels) break;
+  for (uint32_t cnt=0;cnt<len;cnt++) {
+    uint32_t index=cnt+offset;
+    if (index>Settings.light_pixels) break;
     uint32_t col=array[cnt];
-    Ws2812SetColor(cnt+1,col>>16,col>>8,col,0);
+    Ws2812SetColor(index+1,col>>16,col>>8,col,0);
   }
   Ws2812ForceUpdate();
 }
@@ -2444,7 +2445,7 @@ char *ForceStringVar(char *lp,char *dstr) {
 }
 
 // replace vars in cmd %var%
-void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
+void Replace_Cmd_Vars(char *srcbuf,uint32_t srcsize, char *dstbuf,uint32_t dstsize) {
     char *cp;
     uint16_t count;
     uint8_t vtype;
@@ -2455,6 +2456,7 @@ void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
     char string[SCRIPT_MAXSSIZE];
     dstsize-=2;
     for (count=0;count<dstsize;count++) {
+        if (srcsize && (*cp==SCRIPT_EOL)) break;
         if (*cp=='%') {
             cp++;
             if (*cp=='%') {
@@ -2869,7 +2871,11 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   lp=GetNumericResult(lp,OPER_EQU,&cv_inc,0);
                   //SCRIPT_SKIP_EOL
                   cv_ptr=lp;
-                  floop=1;
+                  if (*cv_count<cv_max) {
+                    floop=1;
+                  } else {
+                    floop=2;
+                  }
               } else {
                       // error
                   toLogEOL("for error",lp);
@@ -2877,11 +2883,20 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
             } else if (!strncmp(lp,"next",4) && floop>0) {
               // for next loop
               *cv_count+=cv_inc;
-              if (*cv_count<=cv_max) {
-                lp=cv_ptr;
+              if (floop==1) {
+                if (*cv_count<=cv_max) {
+                  lp=cv_ptr;
+                } else {
+                  lp+=4;
+                  floop=0;
+                }
               } else {
-                lp+=4;
-                floop=0;
+                if (*cv_count>=cv_max) {
+                  lp=cv_ptr;
+                } else {
+                  lp+=4;
+                  floop=0;
+                }
               }
             }
 
@@ -3010,6 +3025,12 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
               lp+=7;
               lp=isvar(lp,&vtype,&ind,0,0,0);
               if (vtype!=VAR_NV) {
+                SCRIPT_SKIP_SPACES
+                if (*lp!=')') {
+                  lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+                } else {
+                  fvar=0;
+                }
                 // found variable as result
                 uint8_t index=glob_script_mem.type[ind.index].index;
                 if ((vtype&STYPE)==0) {
@@ -3018,7 +3039,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                     uint8_t len=0;
                     float *fa=Get_MFAddr(index,&len);
                     //Serial.printf(">> 2 %d\n",(uint32_t)*fa);
-                    if (fa && len) ws2812_set_array(fa,len);
+                    if (fa && len) ws2812_set_array(fa,len,fvar);
                   }
                 }
               }
@@ -3069,7 +3090,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   //AddLog_P(LOG_LEVEL_INFO, tmp);
                   // replace vars in cmd
                   char *tmp=cmdmem+SCRIPT_CMDMEM/2;
-                  Replace_Cmd_Vars(cmd,tmp,SCRIPT_CMDMEM/2);
+                  Replace_Cmd_Vars(cmd,0,tmp,SCRIPT_CMDMEM/2);
                   //toSLog(tmp);
 
                   if (!strncmp(tmp,"print",5) || pflg) {
@@ -4198,7 +4219,7 @@ void Script_Check_Hue(String *response) {
         }
         cp++;
       }
-      Replace_Cmd_Vars(line,tmp,sizeof(tmp));
+      Replace_Cmd_Vars(line,0,tmp,sizeof(tmp));
       // check for hue defintions
       // NAME, TYPE , vars
       cp=tmp;
@@ -5043,7 +5064,7 @@ void ScriptWebShow(char mc) {
           WSContentSend_PD(SCRIPT_MSG_NUMINP,label,minstr,maxstr,stepstr,vstr,vname);
 
         } else {
-          Replace_Cmd_Vars(lin,tmp,sizeof(tmp));
+          Replace_Cmd_Vars(lin,0,tmp,sizeof(tmp));
           if (optflg) {
             WSContentSend_PD(PSTR("<div>%s</div>"),tmp);
           } else {
@@ -5052,7 +5073,7 @@ void ScriptWebShow(char mc) {
         }
         } else {
           if (*lin==mc) {
-            Replace_Cmd_Vars(lin+1,tmp,sizeof(tmp));
+            Replace_Cmd_Vars(lin+1,0,tmp,sizeof(tmp));
             WSContentSend_PD(PSTR("%s"),tmp);
           }
         }
@@ -5097,7 +5118,7 @@ uint8_t msect=Run_Scripter(">m",-2,0);
           }
           cp++;
         }
-        Replace_Cmd_Vars(line,tmp,sizeof(tmp));
+        Replace_Cmd_Vars(line,0,tmp,sizeof(tmp));
         //client->println(tmp);
         func(tmp);
       }
@@ -5142,7 +5163,7 @@ void ScriptJsonAppend(void) {
           }
           cp++;
         }
-        Replace_Cmd_Vars(line,tmp,sizeof(tmp));
+        Replace_Cmd_Vars(line,0,tmp,sizeof(tmp));
         ResponseAppend_P(PSTR("%s"),tmp);
       }
       if (*lp==SCRIPT_EOL) {
