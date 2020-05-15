@@ -154,6 +154,12 @@ void SwitchHandler(uint8_t mode)
 
       if (Switch.hold_timer[i]) {
         Switch.hold_timer[i]--;
+        if(Switch.hold_timer[i] == loops_per_second * Settings.param[P_HOLD_TIME] / 25) {
+          if((Settings.switchmode[i]==PUSHHOLDMULTI)&(NOT_PRESSED == Switch.last_state[i]))
+            SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);  // Execute command via MQTT
+          if((Settings.switchmode[i]==PUSHHOLDMULTI_INV)&(PRESSED == Switch.last_state[i]))
+            SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);  // Execute command via MQTT
+        }
         if (0 == Switch.hold_timer[i]) {
 
           switch (Settings.switchmode[i]) {
@@ -270,6 +276,9 @@ void SwitchHandler(uint8_t mode)
             if (Switch.hold_timer[i] > loops_per_second * Settings.param[P_HOLD_TIME] / 25) {
               switchflag = POWER_TOGGLE;   // Toggle with pushbutton
             }
+            else {
+                SendKey(KEY_SWITCH, i +1, POWER_RELEASE);  // Execute command via MQTT  
+            } 
             Switch.hold_timer[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;
           }
           break;
@@ -285,7 +294,10 @@ void SwitchHandler(uint8_t mode)
           if (NOT_PRESSED == button) {
             if (Switch.hold_timer[i] > loops_per_second * Settings.param[P_HOLD_TIME] / 25) {
               switchflag = POWER_TOGGLE;   // Toggle with pushbutton
-            }
+            }            
+            else {
+                SendKey(KEY_SWITCH, i +1, POWER_RELEASE);  // Execute command via MQTT  
+            } 
             Switch.hold_timer[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;
           }
           break;
