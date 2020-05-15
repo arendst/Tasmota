@@ -1391,6 +1391,7 @@ void SettingsDelta(void)
 #endif  // ESP8266
 
     if (Settings.version < 0x08020004) {
+      Settings.flag3.mqtt_buttons = 0;  // SetOption73 (0) - Decouple button from relay and send just mqtt topic
 #ifdef ESP8266
       Settings.config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
