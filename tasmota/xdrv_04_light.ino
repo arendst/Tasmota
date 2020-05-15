@@ -836,28 +836,44 @@ void LightStateClass::HsToRgb(uint16_t hue, uint8_t sat, uint8_t *r_r, uint8_t *
 
 #define POW FastPrecisePowf
 
+//
+// Matrix 3x3 multiplied to a 3 vector, result in a 3 vector
+//
+void mat3x3(const float *mat33, const float *vec3, float *res3) {
+  for (uint32_t i = 0; i < 3; i++) {
+    const float * v = vec3;
+    *res3 = 0.0f;
+    for (uint32_t j = 0; j < 3; j++) {
+      *res3 += *mat33++ * *v++;
+    }
+    res3++;
+  }
+}
+
 void LightStateClass::RgbToXy(uint8_t i_r, uint8_t i_g, uint8_t i_b, float *r_x, float *r_y) {
   float x = 0.31271f;   // default medium white
   float y = 0.32902f;
 
   if (i_r + i_b + i_g > 0) {
-    float r = (float)i_r / 255.0f;
-    float g = (float)i_g / 255.0f;
-    float b = (float)i_b / 255.0f;
+    float rgb[3] = { (float)i_r, (float)i_g, (float)i_b };
     // https://gist.github.com/popcorn245/30afa0f98eea1c2fd34d
     // Gamma correction
-    r = (r > 0.04045f) ? POW((r + 0.055f) / (1.0f + 0.055f), 2.4f) : (r / 12.92f);
-    g = (g > 0.04045f) ? POW((g + 0.055f) / (1.0f + 0.055f), 2.4f) : (g / 12.92f);
-    b = (b > 0.04045f) ? POW((b + 0.055f) / (1.0f + 0.055f), 2.4f) : (b / 12.92f);
+    for (uint32_t i = 0; i < 3; i++) {
+      rgb[i] = rgb[i] / 255.0f;
+      rgb[i] = (rgb[i] > 0.04045f) ? POW((rgb[i] + 0.055f) / (1.0f + 0.055f), 2.4f) : (rgb[i] / 12.92f);
+    }
 
     // conversion to X, Y, Z
     // Y is also the Luminance
-    float X = r * 0.649926f + g * 0.103455f + b * 0.197109f;
-    float Y = r * 0.234327f + g * 0.743075f + b * 0.022598f;
-    float Z = r * 0.000000f + g * 0.053077f + b * 1.035763f;
+    float XYZ[3];
+    static const float XYZ_factors[] = {  0.649926f, 0.103455f, 0.197109f,
+                                          0.234327f, 0.743075f, 0.022598f,
+                                          0.000000f, 0.053077f, 1.035763f };
+    mat3x3(XYZ_factors, rgb, XYZ);
 
-    x = X / (X + Y + Z);
-    y = Y / (X + Y + Z);
+    float XYZ_sum = XYZ[0] + XYZ[1] + XYZ[2];
+    x = XYZ[0] / XYZ_sum;
+    y = XYZ[1] / XYZ_sum;
     // we keep the raw gamut, one nice thing could be to convert to a narrower gamut
   }
   if (r_x)  *r_x = x;
@@ -866,36 +882,33 @@ void LightStateClass::RgbToXy(uint8_t i_r, uint8_t i_g, uint8_t i_b, float *r_x,
 
 void LightStateClass::XyToRgb(float x, float y, uint8_t *rr, uint8_t *rg, uint8_t *rb)
 {
+  float XYZ[3], rgb[3];
   x = (x > 0.99f ? 0.99f : (x < 0.01f ? 0.01f : x));
   y = (y > 0.99f ? 0.99f : (y < 0.01f ? 0.01f : y));
   float z = 1.0f - x - y;
-  //float Y = 1.0f;
-  float X = x / y;
-  float Z = z / y;
-  // float r =  X * 1.4628067f - 0.1840623f - Z * 0.2743606f;
-  // float g = -X * 0.5217933f + 1.4472381f + Z * 0.0677227f;
-  // float b =  X * 0.0349342f - 0.0968930f + Z * 1.2884099f;
-  float r =  X * 3.2406f - 1.5372f - Z * 0.4986f;
-  float g = -X * 0.9689f + 1.8758f + Z * 0.0415f;
-  float b =  X * 0.0557f - 0.2040f + Z * 1.0570f;
-  float max = (r > g && r > b) ? r : (g > b) ? g : b;
-  r = r / max;    // normalize to max == 1.0
-  g = g / max;
-  b = b / max;
-  r = (r <= 0.0031308f) ? 12.92f * r : 1.055f * POW(r, (1.0f / 2.4f)) - 0.055f;
-  g = (g <= 0.0031308f) ? 12.92f * g : 1.055f * POW(g, (1.0f / 2.4f)) - 0.055f;
-  b = (b <= 0.0031308f) ? 12.92f * b : 1.055f * POW(b, (1.0f / 2.4f)) - 0.055f;
-  //
-  // AddLog_P2(LOG_LEVEL_DEBUG_MORE, "XyToRgb XZ (%s %s) rgb (%s %s %s)",
-  //   String(X,5).c_str(), String(Z,5).c_str(),
-  //   String(r,5).c_str(), String(g,5).c_str(),String(b,5).c_str());
+  XYZ[0] = x / y;
+  XYZ[1] = 1.0f;
+  XYZ[2] = z / y;
 
-  int32_t ir = r * 255.0f + 0.5f;
-  int32_t ig = g * 255.0f + 0.5f;
-  int32_t ib = b * 255.0f + 0.5f;
-  if (rr) { *rr = (ir > 255 ? 255: (ir < 0 ? 0 : ir)); }
-  if (rg) { *rg = (ig > 255 ? 255: (ig < 0 ? 0 : ig)); }
-  if (rb) { *rb = (ib > 255 ? 255: (ib < 0 ? 0 : ib)); }
+  static const float rgb_factors[] = {  3.2406f, -1.5372f, -0.4986f,
+                                       -0.9689f,  1.8758f,  0.0415f,
+                                        0.0557f, -0.2040f,  1.0570f };
+  mat3x3(rgb_factors, XYZ, rgb);
+  float max = (rgb[0] > rgb[1] && rgb[0] > rgb[2]) ? rgb[0] : (rgb[1] > rgb[2]) ? rgb[1] : rgb[2];
+ 
+  for (uint32_t i = 0; i < 3; i++) {
+    rgb[i] = rgb[i] / max; // normalize to max == 1.0
+    rgb[i] = (rgb[i] <= 0.0031308f) ? 12.92f * rgb[i] : 1.055f * POW(rgb[i], (1.0f / 2.4f)) - 0.055f; // gamma
+  }
+
+  int32_t irgb[3];
+  for (uint32_t i = 0; i < 3; i++) {
+    irgb[i] = rgb[i] * 255.0f + 0.5f;
+  }
+
+  if (rr) { *rr = (irgb[0] > 255 ? 255: (irgb[0] < 0 ? 0 : irgb[0])); }
+  if (rg) { *rg = (irgb[1] > 255 ? 255: (irgb[1] < 0 ? 0 : irgb[1])); }
+  if (rb) { *rb = (irgb[2] > 255 ? 255: (irgb[2] < 0 ? 0 : irgb[2])); }
 }
 
 class LightControllerClass {
