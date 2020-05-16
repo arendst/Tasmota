@@ -54,4 +54,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ### Version 8.3.0.1
 
+- Change KNX pow function to approximative pow saving 5k of code space
+- Change Mutichannel Gas sensor pow function to approximative pow saving 5k of code space
+- Change Quick Power Cycle detection from 4 to 7 power interrupts (#4066)
 - Fix default state of ``SetOption73 0`` for button decoupling and send multi-press and hold MQTT messages
