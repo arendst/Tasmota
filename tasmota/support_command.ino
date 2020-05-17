@@ -1491,7 +1491,7 @@ void CmndWifiConfig(void)
 void CmndDevicename(void)
 {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
-    SettingsUpdateText(SET_DEVICENAME, (SC_DEFAULT == Shortcut()) ? SettingsText(SET_FRIENDLYNAME1) : XdrvMailbox.data);
+    SettingsUpdateText(SET_DEVICENAME, ('"' == XdrvMailbox.data[0]) ? "" : (SC_DEFAULT == Shortcut()) ? SettingsText(SET_FRIENDLYNAME1) : XdrvMailbox.data);
   }
   ResponseCmndChar(SettingsText(SET_DEVICENAME));
 }
