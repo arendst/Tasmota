@@ -66,41 +66,6 @@ public:
 const static uint32_t ZIGB_NAME = 0x3167697A; // 'zig1' little endian
 const static size_t   Z_MAX_FLASH = z_block_len - sizeof(z_flashdata_t);  // 2040
 
-// encoding for the most commonly 32 clusters, used for binary encoding
-const uint16_t Z_ClusterNumber[] PROGMEM = {
-  0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
-  0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
-  0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
-  0x0018, 0x0019, 0x001A, 0x001B, 0x001C, 0x001D, 0x001E, 0x001F,
-  0x0020, 0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
-  0x0100, 0x0101, 0x0102,
-  0x0201, 0x0202, 0x0203, 0x0204,
-  0x0300, 0x0301,
-  0x0400, 0x0401, 0x0402, 0x0403, 0x0404, 0x0405, 0x0406,
-  0x0500, 0x0501, 0x0502,
-  0x0700, 0x0701, 0x0702,
-  0x0B00, 0x0B01, 0x0B02, 0x0B03, 0x0B04, 0x0B05,
-  0x1000,
-  0xFC0F,
-};
-
-// convert a 1 byte cluster code to the actual cluster number
-uint16_t fromClusterCode(uint8_t c) {
-  if (c >= ARRAY_SIZE(Z_ClusterNumber)) {
-    return 0xFFFF;      // invalid
-  }
-  return pgm_read_word(&Z_ClusterNumber[c]);
-}
-
-// convert a cluster number to 1 byte, or 0xFF if not in table
-uint8_t toClusterCode(uint16_t c) {
-  for (uint32_t i = 0; i < ARRAY_SIZE(Z_ClusterNumber); i++) {
-    if (c == pgm_read_word(&Z_ClusterNumber[i])) {
-      return i;
-    }
-  }
-  return 0xFF;        // not found
-}
 
 class SBuffer hibernateDevice(const struct Z_Device &device) {
   SBuffer buf(128);
@@ -202,17 +167,7 @@ void hydrateDevices(const SBuffer &buf) {
   for (uint32_t i = 0; (i < num_devices) && (k < buf_len); i++) {
     uint32_t dev_record_len = buf.get8(k);
 
-// AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device %d Before Memory = %d // DIFF %d // record_len %d"), i, ESP_getFreeHeap(), before - ESP_getFreeHeap(), dev_record_len);
-// before = ESP_getFreeHeap();
-
     SBuffer buf_d = buf.subBuffer(k, dev_record_len);
-
-// char *hex_char = (char*) malloc((dev_record_len * 2) + 2);
-// if (hex_char) {
-//   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "/// SUB %s"),
-//                                   ToHex_P(buf_d.getBuffer(), dev_record_len, hex_char, (dev_record_len * 2) + 2));
-//   free(hex_char);
-// }
 
     uint32_t d = 1;   // index in device buffer
     uint16_t shortaddr = buf_d.get16(d);  d += 2;

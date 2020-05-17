@@ -24,6 +24,8 @@
 typedef uint64_t Z_IEEEAddress;
 typedef uint16_t Z_ShortAddress;
 
+const uint16_t BAD_SHORTADDR = 0xFFFE;
+
 enum ZnpCommandType {
   Z_POLL = 0x00,
   Z_SREQ = 0x20,
