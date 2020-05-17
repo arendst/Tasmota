@@ -754,6 +754,7 @@ void SettingsDefaultSet2(void)
   SettingsUpdateText(SET_FRIENDLYNAME2, PSTR(FRIENDLY_NAME"2"));
   SettingsUpdateText(SET_FRIENDLYNAME3, PSTR(FRIENDLY_NAME"3"));
   SettingsUpdateText(SET_FRIENDLYNAME4, PSTR(FRIENDLY_NAME"4"));
+  SettingsUpdateText(SET_DEVICENAME, SettingsText(SET_FRIENDLYNAME1));
   SettingsUpdateText(SET_OTAURL, PSTR(OTA_URL));
 
   // Power
@@ -1409,6 +1410,10 @@ void SettingsDelta(void)
       if (Settings.rules[0][0] == 0) { Settings.rules[0][1] = 0; }
       if (Settings.rules[1][0] == 0) { Settings.rules[1][1] = 0; }
       if (Settings.rules[2][0] == 0) { Settings.rules[2][1] = 0; }
+    }
+
+    if (Settings.version < 0x08030002) {
+      SettingsUpdateText(SET_DEVICENAME, SettingsText(SET_FRIENDLYNAME1));
     }
 
     Settings.version = VERSION;

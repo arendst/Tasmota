@@ -302,6 +302,7 @@
 #define D_OTHER_PARAMETERS "Параметри Інше"
 #define D_TEMPLATE "Шаблони"
 #define D_ACTIVATE "Активований"
+#define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "Гасло адміністратора Web"
 #define D_MQTT_ENABLE "MQTT активний"
 #define D_FRIENDLY_NAME "Дружня назва"
