@@ -306,6 +306,9 @@ void MCP230xx_CheckForInterrupt(void) {
                     ResponseTime_P(PSTR(",\"MCP230XX_INT\":{\"D%i\":%i,\"MS\":%lu}}"),
                       intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01),millis_since_last_int);
                     MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("MCP230XX_INT"));
+                    if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/SENSOR in addition to stat/%topic%/RESULT
+                        MqttPublishSensor();
+                    }
                   }
                   if (int_event) {
                     char command[19]; // Theoretical max = 'event MCPINT_D16=1' so 18 + 1 (for the \n)
