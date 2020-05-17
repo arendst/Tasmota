@@ -79,16 +79,6 @@ uint8_t Z_getDatatypeLen(uint8_t t) {
   }
 }
 
-// typedef struct Z_DataTypeMapping {
-//   uint8_t     datatype;
-//   uint8_t     len;        // len in bytes and add 0x80 if DISCRETE
-// }
-
-// const Z_DataTypeMapping Z_types[] PROGMEM = {
-//   { Znodata,          0 },
-//   { Zdata8,          0 },
-// };
-
 typedef union ZCLHeaderFrameControl_t {
   struct {
     uint8_t frame_type : 2;           // 00 = across entire profile, 01 = cluster specific
@@ -572,6 +562,9 @@ typedef struct Z_AttributeConverter {
   Z_AttrConverter func;
 } Z_AttributeConverter;
 
+// Cluster numbers are store in 8 bits format to save space,
+// the following tables allows the conversion from 8 bits index Cx...
+// to the 16 bits actual cluster number
 enum Cx_cluster_short {
   Cx0000, Cx0001, Cx0002, Cx0003, Cx0004, Cx0005, Cx0006, Cx0007,
   Cx0008, Cx0009, Cx000A, Cx000B, Cx000C, Cx000D, Cx000E, Cx000F,
