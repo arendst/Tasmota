@@ -357,9 +357,9 @@ void UpdateQuickPowerCycle(bool update)
 #else  // ESP32
   QPCRead(&pc_register, sizeof(pc_register));
 #endif  // ESP8266 - ESP32
-  if (update && ((pc_register & 0xFFFFFFF0) == 0xFFA55AB0)) {
-    uint32_t counter = ((pc_register & 0xF) << 1) & 0xF;
-    if (0 == counter) {  // 4 power cycles in a row
+  if (update && ((pc_register & 0xFFFFFF80) == 0xFFA55A80)) {
+    uint32_t counter = ((pc_register & 0x7F) << 1) & 0x7F;
+    if (0 == counter) {  // 7 power cycles in a row
       SettingsErase(3);  // Quickly reset all settings including QuickPowerCycle flag
       EspRestart();      // And restart
     } else {
@@ -372,8 +372,8 @@ void UpdateQuickPowerCycle(bool update)
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Flag %02X"), counter);
     }
   }
-  else if (pc_register != 0xFFA55ABF) {
-    pc_register = 0xFFA55ABF;
+  else if (pc_register != 0xFFA55AFF) {
+    pc_register = 0xFFA55AFF;
 #ifdef ESP8266
     // Assume flash is default all ones and setting a bit to zero does not need an erase
     if (ESP.flashEraseSector(pc_location)) {
@@ -754,6 +754,7 @@ void SettingsDefaultSet2(void)
   SettingsUpdateText(SET_FRIENDLYNAME2, PSTR(FRIENDLY_NAME"2"));
   SettingsUpdateText(SET_FRIENDLYNAME3, PSTR(FRIENDLY_NAME"3"));
   SettingsUpdateText(SET_FRIENDLYNAME4, PSTR(FRIENDLY_NAME"4"));
+  SettingsUpdateText(SET_DEVICENAME, SettingsText(SET_FRIENDLYNAME1));
   SettingsUpdateText(SET_OTAURL, PSTR(OTA_URL));
 
   // Power
@@ -1409,6 +1410,10 @@ void SettingsDelta(void)
       if (Settings.rules[0][0] == 0) { Settings.rules[0][1] = 0; }
       if (Settings.rules[1][0] == 0) { Settings.rules[1][1] = 0; }
       if (Settings.rules[2][0] == 0) { Settings.rules[2][1] = 0; }
+    }
+
+    if (Settings.version < 0x08030002) {
+      SettingsUpdateText(SET_DEVICENAME, SettingsText(SET_FRIENDLYNAME1));
     }
 
     Settings.version = VERSION;

@@ -302,6 +302,7 @@
 #define D_OTHER_PARAMETERS "Další nastavení"
 #define D_TEMPLATE "Šablona"
 #define D_ACTIVATE "Aktivovat"
+#define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "Heslo Web administrátora"
 #define D_MQTT_ENABLE "MQTT aktivní"
 #define D_FRIENDLY_NAME "Friendly Name"

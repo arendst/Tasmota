@@ -302,6 +302,7 @@
 #define D_OTHER_PARAMETERS "其他設置"
 #define D_TEMPLATE "Template"
 #define D_ACTIVATE "Activate"
+#define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "WEB管理密碼"
 #define D_MQTT_ENABLE "啟用MQTT"
 #define D_FRIENDLY_NAME "昵稱"

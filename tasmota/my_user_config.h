@@ -397,7 +397,7 @@
 // -- Rules or Script  ----------------------------
 // Select none or only one of the below defines USE_RULES or USE_SCRIPT
 #define USE_RULES                                // Add support for rules (+8k code)
-  #define USE_RULES_COMPRESSION                  // Compresses rules in Flash at about ~50% (+3.8k code)
+  #define USE_RULES_COMPRESSION                  // Compresses rules in Flash at about ~50% (+3.3k code)
 //#define USE_SCRIPT                               // Add support for script (+17k code)
   //#define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support
 
@@ -699,6 +699,11 @@
   #define THERMOSTAT_TIME_OUTPUT_DELAY          180       // Default output delay between state change and real actuation event (f.i. valve open/closed)
   #define THERMOSTAT_TEMP_INIT                  180       // Default init target temperature for the thermostat controller
   #define THERMOSTAT_TIME_MAX_OUTPUT_INCONSIST  3         // Default maximum time where the input and the outpus shall differ (for diagnostic) in minutes
+  #define THERMOSTAT_TIME_MAX_AUTOTUNE          21600     // Maximum time for the PI autotune function to complete in seconds
+  #define THERMOSTAT_DUTYCYCLE_AUTOTUNE         35        // Default duty cycle (in % over PI cycle time) for the step response of the autotune PI function
+  #define THERMOSTAT_PEAKNUMBER_AUTOTUNE        8         // Default number of peak temperatures (max or min) to be used for the autotune PI function
+  #define THERMOSTAT_TEMP_BAND_NO_PEAK_DET      1         // Default temperature band in thenths of degrees celsius within no peak will be detected
+  #define THERMOSTAT_TIME_STD_DEV_PEAK_DET_OK   10        // Default standard deviation in minutes of the oscillation periods within the peak detection is successful
 
 // -- End of general directives -------------------
 

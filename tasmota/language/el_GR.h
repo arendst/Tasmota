@@ -302,6 +302,7 @@
 #define D_OTHER_PARAMETERS "Άλλες παράμετροι"
 #define D_TEMPLATE "Πρότυπο"
 #define D_ACTIVATE "Ενεργοποίηση"
+#define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "Κωδικός διαχειριστή"
 #define D_MQTT_ENABLE "Ενεργοποίηση MQTT"
 #define D_FRIENDLY_NAME "Φιλική ονομασία"

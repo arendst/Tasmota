@@ -302,6 +302,7 @@
 #define D_OTHER_PARAMETERS "Outros parametros"
 #define D_TEMPLATE "Modelo"
 #define D_ACTIVATE "Ativar"
+#define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "Palavra Chave do Admin WEB"
 #define D_MQTT_ENABLE "MQTT habilitado"
 #define D_FRIENDLY_NAME "Nome amigável"
