@@ -1575,7 +1575,7 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
           uint16_t ysize;
           if (mem[0]==0xff && mem[1]==0xd8) {
             get_jpeg_size(mem, size, &xsize, &ysize);
-            Serial.printf(" x,y %d - %d\n",xsize, ysize );
+            //Serial.printf(" x,y %d - %d\n",xsize, ysize );
             if (xsize && ysize) {
               uint8_t *out_buf = (uint8_t *)heap_caps_malloc((xsize*ysize*3)+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
               if (out_buf) {
