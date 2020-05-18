@@ -66,13 +66,14 @@ RA8876::RA8876(int8_t cs,int8_t mosi,int8_t miso,int8_t sclk,int8_t bp) : Render
 //#define RA8876_CS_LOW digitalWrite(m_csPin, LOW)
 //#define RA8876_CS_HIGH digitalWrite(m_csPin, HIGH)
 
-#ifdef ESP8266
+#ifndef ESP32
 #define RA8876_CS_LOW GPOC=(1<<m_csPin);
 #define RA8876_CS_HIGH GPOS=(1<<m_csPin);
 #else
-#define RA8876_CS_LOW digitalWrite(1<<m_csPin,0);
-#define RA8876_CS_HIGH digitalWrite(1<<m_csPin,1);
+#define RA8876_CS_LOW digitalWrite(m_csPin,0);
+#define RA8876_CS_HIGH digitalWrite(m_csPin,1);
 #endif
+
 /*
 extern void ICACHE_RAM_ATTR RA8876_digitalWrite(uint8_t pin, uint8_t val) {
   //stopWaveform(pin);
@@ -173,10 +174,8 @@ void RA8876::DisplayOnff(int8_t on) {
   uint8_t dpcr;
   SPI.beginTransaction(m_spiSettings);
   dpcr = readReg(RA8876_REG_DPCR);
-
   if (on) {
     dpcr |= 0x40;  // Display on
-    dim(dimmer);
   } else {
     dpcr &= 0x40^0xff;  // Display off
     // backlight off
@@ -185,12 +184,14 @@ void RA8876::DisplayOnff(int8_t on) {
   }
   writeReg(RA8876_REG_DPCR, dpcr);
   SPI.endTransaction();
+  if (on) {
+    dim(dimmer);
+  }
 }
 
 // 0-15
 void RA8876::dim(uint8_t contrast) {
   SPI.beginTransaction(m_spiSettings);
-
   dimmer=contrast;
   // pwm0 duty
   uint32_t duty=(contrast*1024)/15;
@@ -671,9 +672,17 @@ bool RA8876::begin(void) {
     return false;
   }
 
+#ifndef ESP32
   SPI.begin();
+#else
+  SPI.begin(_sclk,_miso,_mosi , -1);
+#endif
 
   m_spiSettings = SPISettings(RA8876_SPI_SPEED, MSBFIRST, SPI_MODE3);
+
+#ifdef RA8876_DEBUG
+  Serial.printf("RA8876 init\n");
+#endif
 
   softReset();
 
@@ -682,23 +691,43 @@ bool RA8876::begin(void) {
     return false;
   }
 
+#ifdef RA8876_DEBUG
+  Serial.printf("RA8876 init pll OK\n");
+#endif
+
   if (!initMemory(m_sdramInfo)) {
     //Serial.println("initMemory failed");
     return false;
   }
+
+#ifdef RA8876_DEBUG
+  Serial.printf("RA8876 init sdram OK\n");
+#endif
 
   if (!initDisplay()) {
     //Serial.println("initDisplay failed");
     return false;
   }
 
+#ifdef RA8876_DEBUG
+  Serial.printf("RA8876 init display OK\n");
+#endif
+
   // Set default font
   selectInternalFont(RA8876_FONT_SIZE_16);
   setTextScale(1);
 
+#ifdef RA8876_DEBUG
+  Serial.printf("RA8876 set scale OK\n");
+#endif
+
   setRotation(0);
 
   clearScreen(0);
+
+#ifdef RA8876_DEBUG
+  Serial.printf("RA8876 init complete\n");
+#endif
 
   return true;
 }
@@ -899,7 +928,8 @@ void RA8876::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
 
   writeCmd(RA8876_REG_MRWDP); //04h();
 
-  if (flag) SPI.endTransaction();
+  //if (flag) SPI.endTransaction();
+  SPI.endTransaction();
 }
 
 void RA8876::pushColors(uint16_t *data, uint8_t len, boolean first) {
@@ -980,7 +1010,9 @@ void RA8876::waitWriteFifo(void) {
       // timeout, soft reset
       softReset();
       SPI.beginTransaction(m_spiSettings);
+#ifdef RA8876_DEBUG
       Serial.printf("iter timeout fifo\n");
+#endif
       return;
     }
   }
@@ -1001,7 +1033,9 @@ void RA8876::wait_ready(void) {
       // timeout, soft reset
       softReset();
       SPI.beginTransaction(m_spiSettings);
+#ifdef RA8876_DEBUG
       Serial.printf("iter timeout cmd\n");
+#endif
       return;
     }
   }
@@ -1188,11 +1222,13 @@ void RA8876::setTextMode(void) {
   uint8_t icr = readReg(RA8876_REG_ICR);
   writeReg(RA8876_REG_ICR, icr | 0x04);
 
+  SPI.endTransaction();
   if (textcolor==textbgcolor) {
     setDrawMode_reg(1);
   } else {
     setDrawMode_reg(0);
   }
+  SPI.beginTransaction(m_spiSettings);
 
 }
 
@@ -1368,7 +1404,9 @@ size_t RA8876::xwrite(const uint8_t *buffer, size_t size) {
       ;  // Ignored
     else if (c == '\n')
     {
+      SPI.endTransaction();
       setCursor(0, getCursorY() + getTextSizeY());
+      SPI.beginTransaction(m_spiSettings);
       writeCmd(RA8876_REG_MRWDP);  // Reset current register for writing to memory
     }
     else if ((m_fontFlags & RA8876_FONT_FLAG_XLAT_FULLWIDTH) && ((c >= 0x21) || (c <= 0x7F)))
