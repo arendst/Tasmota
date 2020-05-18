@@ -243,10 +243,10 @@ void CseSnsInit(void)
 
 void CseDrvInit(void)
 {
-  Cse.rx_buffer = (uint8_t*)(malloc(CSE_BUFFER_SIZE));
-  if (Cse.rx_buffer != nullptr) {
-//    if (PinUsed(GPIO_CSE7766_RX) && PinUsed(GPIO_CSE7766_TX)) {
-    if (PinUsed(GPIO_CSE7766_RX)) {
+//  if (PinUsed(GPIO_CSE7766_RX) && PinUsed(GPIO_CSE7766_TX)) {
+  if (PinUsed(GPIO_CSE7766_RX)) {
+    Cse.rx_buffer = (uint8_t*)(malloc(CSE_BUFFER_SIZE));
+    if (Cse.rx_buffer != nullptr) {
       energy_flg = XNRG_02;
     }
   }

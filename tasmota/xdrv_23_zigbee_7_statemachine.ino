@@ -584,18 +584,6 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT_RECV(1000, ZBS_LOGTYPE_DEVICE)        // it should be coordinator
 
     ZI_GOTO(ZIGBEE_LABEL_START_ROUTER)
-  // Device and Router code is common from now
-  // ZI_LABEL(ZIGBEE_LABEL_START_DEVICE)              // Init as a router
-  //   ZI_MQTT_STATE(ZIGBEE_STATUS_STARTING, kConfiguredDevice)
-  //   ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
-  //   ZI_SEND(ZBS_AF_REGISTER_ALL)                  // Z_AF register for endpoint 01, profile 0x0104 Home Automation
-  //   ZI_WAIT_RECV(1000, ZBR_AF_REGISTER)
-  //   ZI_SEND(ZBS_STARTUPFROMAPP)                   // start router
-  //   ZI_WAIT_RECV(2000, ZBR_STARTUPFROMAPP)        // wait for sync ack of command
-  //   ZI_WAIT_UNTIL_FUNC(0xFFFF, AREQ_STARTUPFROMAPP, &Z_ReceiveStateChange)       // wait forever for async message that coordinator started
-  //   ZI_SEND(ZBS_GETDEVICEINFO)                    // GetDeviceInfo
-  //   ZI_WAIT_RECV_FUNC(2000, ZBR_GETDEVICEINFO, &Z_ReceiveDeviceInfo)
-  //   ZI_GOTO(ZIGBEE_LABEL_READY)
 
   ZI_LABEL(ZIGBEE_LABEL_FACT_RESET_DEVICE)        // Factory reset for router
     ZI_MQTT_STATE(ZIGBEE_STATUS_RESET_CONF, kResetting)
@@ -608,25 +596,12 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT_RECV(1000, ZBR_W_OK)
     ZI_GOTO(ZIGBEE_LABEL_FACT_RESET_ROUTER_DEVICE_POST)
 
-    // ZI_SEND(ZBS_W_ALL_PAN)                        // write universal PAN ID = 0xFFFF
-    // ZI_WAIT_RECV(1000, ZBR_W_OK)
-    // ZI_SEND(ZBS_W_ALL_CHANN)                      // write Allows all CHANNELS = 0x07FFF800, 11-26
-    // ZI_WAIT_RECV(1000, ZBR_W_OK)
-
-    // // Now mark the device as ready, writing 0x55 in memory slot 0x0F00
-    // ZI_SEND(ZBS_WNV_INITZNPHC)                    // Init NV ZNP Has Configured
-    // ZI_WAIT_RECV_FUNC(1000, ZBR_WNV_INIT_OK, &Z_CheckNVWrite)
-    // ZI_SEND(ZBS_WNV_ZNPHC)                        // Write NV ZNP Has Configured
-    // ZI_WAIT_RECV(1000, ZBR_WNV_OK)
-
-    // ZI_GOTO(ZIGBEE_LABEL_START_ROUTER)
-    // ZI_GOTO(ZIGBEE_LABEL_START_DEVICE)
-
-
+  // Error: version of Z-Stack is not supported
   ZI_LABEL(ZIGBEE_LABEL_UNSUPPORTED_VERSION)
     ZI_MQTT_STATE(ZIGBEE_STATUS_UNSUPPORTED_VERSION, kZNP12)
     ZI_GOTO(ZIGBEE_LABEL_ABORT)
 
+  // Abort state machine, general error
   ZI_LABEL(ZIGBEE_LABEL_ABORT)                    // Label 99: abort
     ZI_MQTT_STATE(ZIGBEE_STATUS_ABORT, kAbort)
     ZI_LOG(LOG_LEVEL_ERROR, kZigbeeAbort)

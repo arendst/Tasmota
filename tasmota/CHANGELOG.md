@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.3.0.2 20200517
+
+- Add command ``DeviceName`` defaults to FriendlyName1 and replaces FriendlyName1 in GUI
+
 ### 8.3.0.1 20200514
 
 - Change KNX pow function to approximative pow saving 5k of code space

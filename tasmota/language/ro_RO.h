@@ -302,6 +302,7 @@
 #define D_OTHER_PARAMETERS "Alți paramatri"
 #define D_TEMPLATE "Template"
 #define D_ACTIVATE "Activare"
+#define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "Parolă Web Admin"
 #define D_MQTT_ENABLE "Activare MQTT"
 #define D_FRIENDLY_NAME "Friendly Name"
