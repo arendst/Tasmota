@@ -1500,47 +1500,109 @@ void CmndDisplayRows(void)
 /*********************************************************************************************\
  * optional drivers
 \*********************************************************************************************/
+#ifdef ESP32
+#ifdef JPEG_PICTS
+#include "img_converters.h"
+#include "esp_jpg_decode.h"
+bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t scale);
+char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *width, unsigned short *height);
+void rgb888_to_565(uint8_t *in, uint16_t *out, uint32_t len);
+#endif
+#endif
+
 
 #if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#define XBUFF_LEN 128
 void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
   if (!renderer) return;
-
-  //if (!strstr(file,".RGB")) return;
   File fp;
-  fp=SD.open(file,FILE_READ);
-  if (!fp) return;
-  uint16_t xsize;
-  fp.read((uint8_t*)&xsize,2);
-  uint16_t ysize;
-  fp.read((uint8_t*)&ysize,2);
+  char *ending = strrchr(file,'.');
+  if (!ending) return;
+  ending++;
+  char estr[8];
+  memset(estr,0,sizeof(estr));
+  for (uint32_t cnt=0; cnt<strlen(ending); cnt++) {
+    estr[cnt]=tolower(ending[cnt]);
+  }
 
+  if (!strcmp(estr,"rgb")) {
+    // special rgb format
+    fp=SD.open(file,FILE_READ);
+    if (!fp) return;
+    uint16_t xsize;
+    fp.read((uint8_t*)&xsize,2);
+    uint16_t ysize;
+    fp.read((uint8_t*)&ysize,2);
 #if 1
-#define XBUFF 128
-  uint16_t xdiv=xsize/XBUFF;
-  renderer->setAddrWindow(xp,yp,xp+xsize,yp+ysize);
-  for(int16_t j=0; j<ysize; j++) {
-    for(int16_t i=0; i<xsize; i+=XBUFF) {
-      uint16_t rgb[XBUFF];
-      uint16_t len=fp.read((uint8_t*)rgb,XBUFF*2);
-      if (len>=2) renderer->pushColors(rgb,len/2,true);
+    uint16_t xdiv=xsize/XBUFF_LEN;
+    renderer->setAddrWindow(xp,yp,xp+xsize,yp+ysize);
+    for(int16_t j=0; j<ysize; j++) {
+      for(int16_t i=0; i<xsize; i+=XBUFF_LEN) {
+        uint16_t rgb[XBUFF_LEN];
+        uint16_t len=fp.read((uint8_t*)rgb,XBUFF_LEN*2);
+        if (len>=2) renderer->pushColors(rgb,len/2,true);
+      }
+      OsWatchLoop();
     }
-    OsWatchLoop();
-  }
-  renderer->setAddrWindow(0,0,0,0);
+    renderer->setAddrWindow(0,0,0,0);
 #else
-  for(int16_t j=0; j<ysize; j++) {
-    for(int16_t i=0; i<xsize; i++ ) {
-      uint16_t rgb;
-      uint8_t res=fp.read((uint8_t*)&rgb,2);
-      if (!res) break;
-      renderer->writePixel(xp+i,yp,rgb);
+    for(int16_t j=0; j<ysize; j++) {
+      for(int16_t i=0; i<xsize; i++ ) {
+        uint16_t rgb;
+        uint8_t res=fp.read((uint8_t*)&rgb,2);
+        if (!res) break;
+        renderer->writePixel(xp+i,yp,rgb);
+      }
+      delay(0);
+      OsWatchLoop();
+      yp++;
     }
-    delay(0);
-    OsWatchLoop();
-    yp++;
-  }
 #endif
-  fp.close();
+    fp.close();
+  } else if (!strcmp(estr,"jpg")) {
+    // jpeg files on ESP32 with more memory
+#ifdef ESP32
+#ifdef JPEG_PICTS
+    if (psramFound()) {
+      fp=SD.open(file,FILE_READ);
+      if (!fp) return;
+      uint32_t size = fp.size();
+      uint8_t *mem = (uint8_t *)heap_caps_malloc(size+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+      if (mem) {
+        uint8_t res=fp.read(mem, size);
+        if (res) {
+          uint16_t xsize;
+          uint16_t ysize;
+          if (mem[0]==0xff && mem[1]==0xd8) {
+            get_jpeg_size(mem, size, &xsize, &ysize);
+            Serial.printf(" x,y %d - %d\n",xsize, ysize );
+            if (xsize && ysize) {
+              uint8_t *out_buf = (uint8_t *)heap_caps_malloc((xsize*ysize*3)+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+              if (out_buf) {
+                uint8_t *ob=out_buf;
+                jpg2rgb888(mem, size, out_buf, (jpg_scale_t)JPG_SCALE_NONE);
+                uint16_t pixels=xsize*ysize/XBUFF_LEN;
+                renderer->setAddrWindow(xp,yp,xp+xsize,yp+ysize);
+                for(int32_t j=0; j<pixels; j++) {
+                  uint16_t rbuff[XBUFF_LEN*2];
+                  rgb888_to_565(ob, rbuff, XBUFF_LEN);
+                  ob+=XBUFF_LEN*3;
+                  renderer->pushColors(rbuff,XBUFF_LEN,true);
+                  OsWatchLoop();
+                }
+                renderer->setAddrWindow(0,0,0,0);
+                free(out_buf);
+              }
+            }
+          }
+        }
+        free(mem);
+      }
+      fp.close();
+    }
+#endif // JPEG_PICTS
+#endif // ESP32
+  }
 }
 #endif
 
