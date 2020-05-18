@@ -1739,7 +1739,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                       // GPIO11 (SD_CMD   Flash)
-    GPIO_PWM2,        // GPIO12 cold/warm light
+    GPIO_PWM2_INV,    // GPIO12i cold/warm light
     0, 0,
     GPIO_PWM1,        // GPIO15 light intensity
     0, 0
