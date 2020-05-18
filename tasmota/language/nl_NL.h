@@ -302,6 +302,7 @@
 #define D_OTHER_PARAMETERS "Overige parameters"
 #define D_TEMPLATE "Sjabloon"
 #define D_ACTIVATE "Activeer"
+#define D_DEVICE_NAME "Apparaatnaam"
 #define D_WEB_ADMIN_PASSWORD "Web Admin Wachtwoord"
 #define D_MQTT_ENABLE "MQTT ingeschakeld"
 #define D_FRIENDLY_NAME "Beschrijvende naam"

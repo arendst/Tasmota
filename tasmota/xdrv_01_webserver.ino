@@ -455,6 +455,8 @@ const char HTTP_FORM_OTHER[] PROGMEM =
   "<label><b>" D_WEB_ADMIN_PASSWORD "</b><input type='checkbox' onclick='sp(\"wp\")'></label><br><input id='wp' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERISK_PWD "'><br>"
   "<br>"
   "<label><input id='b1' type='checkbox'%s><b>" D_MQTT_ENABLE "</b></label><br>"
+  "<br>"
+  "<label><b>" D_DEVICE_NAME "</b> (%s)</label><br><input id='dn' placeholder='' value='%s'><br>"
   "<br>";
 
 const char HTTP_FORM_END[] PROGMEM =
@@ -849,7 +851,7 @@ void WSContentStart_P(const char* title, bool auth)
   WSContentBegin(200, CT_HTML);
 
   if (title != nullptr) {
-    WSContentSend_P(HTTP_HEADER1, SettingsText(SET_FRIENDLYNAME1), title);
+    WSContentSend_P(HTTP_HEADER1, SettingsText(SET_DEVICENAME), title);
   }
 }
 
@@ -893,7 +895,7 @@ void WSContentSendStyle_P(const char* formatP, ...)
     WebColor(COL_TEXT_WARNING),
 #endif
     WebColor(COL_TITLE),
-    ModuleName().c_str(), SettingsText(SET_FRIENDLYNAME1));
+    ModuleName().c_str(), SettingsText(SET_DEVICENAME));
   if (Settings.flag3.gui_hostname_ip) {                // SetOption53 - Show hostanme and IP address in GUI main menu
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
@@ -1992,7 +1994,9 @@ void HandleOtherConfiguration(void)
   TemplateJson();
   char stemp[strlen(mqtt_data) +1];
   strlcpy(stemp, mqtt_data, sizeof(stemp));  // Get JSON template
-  WSContentSend_P(HTTP_FORM_OTHER, stemp, (USER_MODULE == Settings.module) ? " checked disabled" : "", (Settings.flag.mqtt_enabled) ? " checked" : "");  // SetOption3 - Enable MQTT
+  WSContentSend_P(HTTP_FORM_OTHER, stemp, (USER_MODULE == Settings.module) ? " checked disabled" : "",
+    (Settings.flag.mqtt_enabled) ? " checked" : "",   // SetOption3 - Enable MQTT
+    SettingsText(SET_FRIENDLYNAME1), SettingsText(SET_DEVICENAME));
 
   uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
 #ifdef USE_SONOFF_IFAN
@@ -2042,6 +2046,8 @@ void OtherSaveSettings(void)
   char friendlyname[TOPSZ];
   char message[LOGSZ];
 
+  WebGetArg("dn", tmp, sizeof(tmp));
+  SettingsUpdateText(SET_DEVICENAME, (!strlen(tmp)) ? "" : (!strcmp(tmp,"1")) ? SettingsText(SET_FRIENDLYNAME1) : tmp);
   WebGetArg("wp", tmp, sizeof(tmp));
   SettingsUpdateText(SET_WEBPWD, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? SettingsText(SET_WEBPWD) : tmp);
   Settings.flag.mqtt_enabled = Webserver->hasArg("b1");  // SetOption3 - Enable MQTT
@@ -2053,7 +2059,8 @@ void OtherSaveSettings(void)
 #endif  // USE_EMULATION_WEMO || USE_EMULATION_HUE
 #endif  // USE_EMULATION
 
-  snprintf_P(message, sizeof(message), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
+  snprintf_P(message, sizeof(message), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_DEVICENAME " %s, " D_CMND_FRIENDLYNAME),
+    GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation, SettingsText(SET_DEVICENAME));
   for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("a%d"), i);
     WebGetArg(webindex, tmp, sizeof(tmp));

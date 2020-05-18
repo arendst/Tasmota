@@ -302,6 +302,7 @@
 #define D_OTHER_PARAMETERS "기타 설정"
 #define D_TEMPLATE "템플릿"
 #define D_ACTIVATE "활성화"
+#define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "Web Admin 비밀번호"
 #define D_MQTT_ENABLE "MQTT 사용"
 #define D_FRIENDLY_NAME "Friendly Name"

@@ -233,7 +233,7 @@ void HAssAnnounceRelayLight(void)
     } else {
       if (Settings.flag.hass_discovery && (RelayX || (Light.device > 0) && (max_lights > 0)) && !err_flag )
       {                    // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
-          char name[33 + 2]; // friendlyname(33) + " " + index
+          char name[TOPSZ]; // friendlyname(33) + " " + index
           char value_template[33];
           char prefix[TOPSZ];
           char *command_topic = stemp1;
@@ -241,9 +241,9 @@ void HAssAnnounceRelayLight(void)
           char *availability_topic = stemp3;
 
           if (i > MAX_FRIENDLYNAMES) {
-            snprintf_P(name, sizeof(name), PSTR("%s %d"), SettingsText(SET_FRIENDLYNAME1), i-1);
+            snprintf_P(name, sizeof(name), PSTR("%s %s %d"), SettingsText(SET_DEVICENAME), SettingsText(SET_FRIENDLYNAME1), i-1);
           } else {
-            snprintf_P(name, sizeof(name), SettingsText(SET_FRIENDLYNAME1 + i-1));
+            snprintf_P(name, sizeof(name), PSTR ("%s %s"), SettingsText(SET_DEVICENAME), SettingsText(SET_FRIENDLYNAME1 + i-1));
           }
 
           GetPowerDevice(value_template, i, sizeof(value_template), Settings.flag.device_index_enable); // SetOption26 - Switch between POWER or POWER1
@@ -339,7 +339,7 @@ void HAssAnnouncerTriggers(uint8_t device, uint8_t present, uint8_t key, uint8_t
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/device_automation/%s/config"), unique_id);
 
     if (Settings.flag.hass_discovery && present) {                // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
-      char name[33 + 6];        // friendlyname(33) + " " + "BTN" + " " + index
+      char name[TOPSZ];        // friendlyname(33) + " " + "BTN" + " " + index
       char value_template[33];
       char prefix[TOPSZ];
       char *state_topic = stemp1;
@@ -391,7 +391,7 @@ void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint
 
   if (Settings.flag.hass_discovery && present ) {    // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
     if (!toggle || dual) {
-      char name[33 + 6];        // friendlyname(33) + " " + "BTN" + " " + index
+      char name[TOPSZ];        // friendlyname(33) + " " + "BTN" + " " + index
       char value_template[33];
       char prefix[TOPSZ];
       char *state_topic = stemp1;
@@ -403,7 +403,7 @@ void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint
       GetTopic_P(state_topic, STAT, mqtt_topic, jsoname);
       GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
 
-      snprintf_P(name, sizeof(name), PSTR("%s Switch%d"), ModuleName().c_str(), device + 1);
+      snprintf_P(name, sizeof(name), PSTR("%s Switch%d"), SettingsText(SET_DEVICENAME), device + 1);
       Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
       if (!pir) {
         TryResponseAppend_P(HASS_DISCOVER_BIN_SWITCH, PSTR(D_RSLT_STATE), SettingsText(SET_STATE_TXT2), SettingsText(SET_STATE_TXT1));
@@ -553,13 +553,13 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
 
   if (Settings.flag.hass_discovery)
   {                     // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
-    char name[33 + 42]; // friendlyname(33) + " " + sensorname(20?) + " " + sensortype(20?)
+    char name[TOPSZ]; // friendlyname(33) + " " + sensorname(20?) + " " + sensortype(20?)
     char prefix[TOPSZ];
     char *state_topic = stemp1;
     char *availability_topic = stemp2;
 
     GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_SENSOR));
-    snprintf_P(name, sizeof(name), PSTR("%s %s %s"), ModuleName().c_str(), sensorname, MultiSubName);
+    snprintf_P(name, sizeof(name), PSTR("%s %s %s"), SettingsText(SET_DEVICENAME), sensorname, MultiSubName);
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
 
     Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
@@ -694,18 +694,18 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
 
   if (Settings.flag.hass_discovery)
   {                    // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
-    char name[33 + 7]; // friendlyname(33) + " " + "status"
+    char name[TOPSZ]; // friendlyname(33) + " " + "status"
     char prefix[TOPSZ];
     char *state_topic = stemp1;
     char *availability_topic = stemp2;
 
-    snprintf_P(name, sizeof(name), PSTR("%s status"), ModuleName().c_str());
+    snprintf_P(name, sizeof(name), PSTR("%s status"), SettingsText(SET_DEVICENAME));
     GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_HASS_STATE));
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
 
     Response_P(HASS_DISCOVER_BASE, name, state_topic, availability_topic);
     TryResponseAppend_P(HASS_DISCOVER_SENSOR_HASS_STATUS, state_topic);
-    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP_getChipId(), ModuleName().c_str(),
+    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP_getChipId(), SettingsText(SET_DEVICENAME),
                         ModuleName().c_str(), my_version, my_image);
     TryResponseAppend_P(PSTR("}"));
   }

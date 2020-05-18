@@ -153,52 +153,47 @@ const uint16_t BIN_CODE_TASMOTA_LEN = 3;
 // uint16_t mask[] PROGMEM = {0x8000, 0xC000, 0xE000, 0xF000, 0xF800, 0xFC00, 0xFE00, 0xFF00};
 uint8_t mask[] PROGMEM = {0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF};
 
-int append_bits(char *out, size_t ol, unsigned int code, int clen, byte state) {
 
-   byte cur_bit;
-   byte blen;
-   unsigned char a_byte;
 
-   if (state == SHX_STATE_2) {
-      // remove change state prefix
-      if ((code >> 9) == 0x1C) {
-         code <<= 7;
-         clen -= 7;
+void Unishox::append_bits(unsigned int code, int clen) {
+
+  byte cur_bit;
+  byte blen;
+  unsigned char a_byte;
+
+  if (state == SHX_STATE_2) {
+    // remove change state prefix
+    if ((code >> 9) == 0x1C) {
+        code <<= 7;
+        clen -= 7;
+    }
+  }
+  while (clen > 0) {
+    cur_bit = ol % 8;
+    blen = (clen > 8 ? 8 : clen);
+    a_byte = (code >> 8) & pgm_read_word(&mask[blen - 1]);
+    a_byte >>= cur_bit;
+    if (blen + cur_bit > 8)
+      blen = (8 - cur_bit);
+    if (out) {                // if out == nullptr, then we are in dry-run mode
+      if (cur_bit == 0)
+        out[ol >> 3] = a_byte;
+      else
+        out[ol >> 3] |= a_byte;
+    }
+    code <<= blen;
+    ol += blen;
+    if ((out) && (0 == ol % 8)) {           // if out == nullptr, dry-run mode. We miss the escaping of characters in the length
+      // we completed a full byte
+      char last_c = out[(ol / 8) - 1];
+      if ((0 == last_c) || (ESCAPE_MARKER == last_c)) {
+        out[ol >> 3] = 1 + last_c;           // increment to 0x01 or 0x2B
+        out[(ol >>3) -1] = ESCAPE_MARKER;   // replace old value with marker
+        ol += 8;   // add one full byte
       }
-      //if (code == 14272 && clen == 10) {
-      //   code = 9084;
-      //   clen = 14;
-      //}
-   }
-   while (clen > 0) {
-      cur_bit = ol % 8;
-      blen = (clen > 8 ? 8 : clen);
-    //  a_byte = (code & pgm_read_word(&mask[blen - 1])) >> 8;
-    //  a_byte = (code & (pgm_read_word(&mask[blen - 1]) << 8)) >> 8;
-      a_byte = (code >> 8) & pgm_read_word(&mask[blen - 1]);
-      a_byte >>= cur_bit;
-      if (blen + cur_bit > 8)
-        blen = (8 - cur_bit);
-      if (out) {                // if out == nullptr, then we are in dry-run mode
-        if (cur_bit == 0)
-          out[ol / 8] = a_byte;
-        else
-          out[ol / 8] |= a_byte;
-      }
-      code <<= blen;
-      ol += blen;
-      if ((out) && (0 == ol % 8)) {           // if out == nullptr, dry-run mode. We miss the escaping of characters in the length
-        // we completed a full byte
-        char last_c = out[(ol / 8) - 1];
-        if ((0 == last_c) || (ESCAPE_MARKER == last_c)) {
-          out[ol / 8] = 1 + last_c;           // increment to 0x01 or 0x2B
-          out[(ol / 8) -1] = ESCAPE_MARKER;   // replace old value with marker
-          ol += 8;   // add one full byte
-        }
-      }
-      clen -= blen;
-   }
-   return ol;
+    }
+    clen -= blen;
+  }
 }
 
 // First five bits are code and Last three bits of codes represent length
@@ -210,40 +205,36 @@ byte codes[] PROGMEM     = { 0x82, 0xC3, 0xE5, 0xED, 0xF5 };
 byte bit_len[] PROGMEM   = {    5,    7,    9,   12,   16 };
 // uint16_t adder[7] PROGMEM = {    0,   32,  160,  672, 4768 };  // no more used
 
-int encodeCount(char *out, int ol, int count) {
+void Unishox::encodeCount(int32_t count) {
   int till = 0;
   int base = 0;
-  for (int i = 0; i < sizeof(bit_len); i++) {
+  for (uint32_t i = 0; i < sizeof(bit_len); i++) {
     uint32_t bit_len_i = pgm_read_byte(&bit_len[i]);
     till += (1 << bit_len_i);
     if (count < till) {
       byte codes_i = pgm_read_byte(&codes[i]);
-      ol = append_bits(out, ol, (codes_i & 0xF8) << 8, codes_i & 0x07, 1);
+      append_bits((codes_i & 0xF8) << 8, codes_i & 0x07);
       // ol = append_bits(out, ol, (count - pgm_read_word(&adder[i])) << (16 - bit_len_i), bit_len_i, 1);
-      ol = append_bits(out, ol, (count - base) << (16 - bit_len_i), bit_len_i, 1);
-      return ol;
+      append_bits((count - base) << (16 - bit_len_i), bit_len_i);
+      return;
     }
     base = till;
   }
-  return ol;
+  return;
 }
 
-int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *state, byte *is_all_upper) {
-  int j, k;
-  int longest_dist = 0;
-  int longest_len = 0;
+bool Unishox::matchOccurance(void) {
+  int32_t j, k;
+  uint32_t longest_dist = 0;
+  uint32_t longest_len = 0;
   for (j = l - NICE_LEN; j >= 0; j--) {
     for (k = l; k < len && j + k - l < l; k++) {
       if (in[k] != in[j + k - l])
         break;
     }
-    // while ((((unsigned char) in[k]) >> 6) == 2)
-    //   k--; // Skip partial UTF-8 matches
-    //if ((in[k - 1] >> 3) == 0x1E || (in[k - 1] >> 4) == 0x0E || (in[k - 1] >> 5) == 0x06)
-    //  k--;
     if (k - l > NICE_LEN - 1) {
-      int match_len = k - l - NICE_LEN;
-      int match_dist = l - j - NICE_LEN + 1;
+      uint32_t match_len = k - l - NICE_LEN;
+      uint32_t match_dist = l - j - NICE_LEN + 1;
       if (match_len > longest_len) {
         longest_len = match_len;
         longest_dist = match_dist;
@@ -251,19 +242,18 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
     }
   }
   if (longest_len) {
-    if (*state == SHX_STATE_2 || *is_all_upper) {
-      *is_all_upper = 0;
-      *state = SHX_STATE_1;
-      *ol = append_bits(out, *ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, *state);
+    if (state == SHX_STATE_2 || is_all_upper) {
+      is_all_upper = 0;
+      state = SHX_STATE_1;
+      append_bits(BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN);
     }
-    *ol = append_bits(out, *ol, DICT_CODE, DICT_CODE_LEN, 1);
-    *ol = encodeCount(out, *ol, longest_len);
-    *ol = encodeCount(out, *ol, longest_dist);
-    l += (longest_len + NICE_LEN);
-    l--;
-    return l;
+    append_bits(DICT_CODE, DICT_CODE_LEN);
+    encodeCount(longest_len);
+    encodeCount(longest_dist);
+    l += longest_len + NICE_LEN - 1;
+    return true;
   }
-  return -l;
+  return false;
 }
 
 // Compress a buffer.
@@ -275,15 +265,18 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
 // Output:
 //   - if >= 0: size of the compressed buffer. The output buffer does not contain NULL bytes, and it is not NULL terminated
 //   - if < 0: an error occured, most certainly the output buffer was not large enough
-int32_t unishox_compress(const char *in, size_t len, char *out, size_t len_out) {
+int32_t Unishox::unishox_compress(const char *p_in, size_t p_len, char *p_out, size_t p_len_out) {
+  in = p_in;
+  len = p_len;
+  out = p_out;
+  len_out = p_len_out;
 
   char *ptr;
   byte bits;
-  byte state;
 
-  int l, ll, ol;
+  int ll;
   char c_in, c_next;
-  byte is_upper, is_all_upper;
+  byte is_upper;
 
   ol = 0;
   state = SHX_STATE_1;
@@ -302,23 +295,20 @@ int32_t unishox_compress(const char *in, size_t len, char *out, size_t len_out) 
         if (state == SHX_STATE_2 || is_all_upper) {
           is_all_upper = 0;
           state = SHX_STATE_1;
-          ol = append_bits(out, ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, state);   // back to lower case and Set1
+          append_bits(BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN);   // back to lower case and Set1
         }
         // ol = append_bits(out, ol, RPT_CODE, RPT_CODE_LEN, 1);
-        ol = append_bits(out, ol, RPT_CODE_TASMOTA, RPT_CODE_TASMOTA_LEN, 1);     // reusing CRLF for RPT
-        ol = encodeCount(out, ol, rpt_count - 4);
-        l += rpt_count;
-        l--;
+        append_bits(RPT_CODE_TASMOTA, RPT_CODE_TASMOTA_LEN);     // reusing CRLF for RPT
+        encodeCount(rpt_count - 4);
+        l += rpt_count - 1;
         continue;
       }
     }
 
     if (l < (len - NICE_LEN + 1)) {
-          l = matchOccurance(in, len, l, out, &ol, &state, &is_all_upper);
-          if (l > 0) {
-            continue;
-          }
-          l = -l;
+      if (matchOccurance()) {
+        continue;
+      }
     }
     if (state == SHX_STATE_2) {     // if Set2
       if ((c_in >= ' ' && c_in <= '@') ||
@@ -326,7 +316,7 @@ int32_t unishox_compress(const char *in, size_t len, char *out, size_t len_out) 
           (c_in >= '{' && c_in <= '~')) {
       } else {
         state = SHX_STATE_1;        // back to Set1 and lower case
-        ol = append_bits(out, ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, state);
+        append_bits(BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN);
       }
     }
 
@@ -336,7 +326,7 @@ int32_t unishox_compress(const char *in, size_t len, char *out, size_t len_out) 
     else {
       if (is_all_upper) {
         is_all_upper = 0;
-        ol = append_bits(out, ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, state);
+        append_bits(BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN);
       }
     }
 
@@ -351,37 +341,30 @@ int32_t unishox_compress(const char *in, size_t len, char *out, size_t len_out) 
             break;
         }
         if (ll == l-1) {
-          ol = append_bits(out, ol, ALL_UPPER_CODE, ALL_UPPER_CODE_LEN, state);   // CapsLock
+          append_bits(ALL_UPPER_CODE, ALL_UPPER_CODE_LEN);   // CapsLock
           is_all_upper = 1;
         }
       }
       if (state == SHX_STATE_1 && c_in >= '0' && c_in <= '9') {
-        ol = append_bits(out, ol, SW2_STATE2_CODE, SW2_STATE2_CODE_LEN, state);   // Switch to sticky Set2
+        append_bits(SW2_STATE2_CODE, SW2_STATE2_CODE_LEN);   // Switch to sticky Set2
         state = SHX_STATE_2;
       }
       c_in -= 32;
       if (is_all_upper && is_upper)
         c_in += 32;
       if (c_in == 0 && state == SHX_STATE_2)
-        ol = append_bits(out, ol, ST2_SPC_CODE, ST2_SPC_CODE_LEN, state);       // space from Set2 ionstead of Set1
+        append_bits(ST2_SPC_CODE, ST2_SPC_CODE_LEN);       // space from Set2 ionstead of Set1
       else {
-        // ol = append_bits(out, ol, pgm_read_word(&c_95[c_in]), pgm_read_byte(&l_95[c_in]), state);  // original version with c/l in split arrays
         uint16_t cl = pgm_read_word(&cl_95[c_in]);
-        ol = append_bits(out, ol, cl & 0xFFF0, cl & 0x000F, state);
+        append_bits(cl & 0xFFF0, cl & 0x000F);
       }
-    } else
-    // if (c_in == 13 && c_next == 10) {      // CRLF disabled
-    //   ol = append_bits(out, ol, CRLF_CODE, CRLF_CODE_LEN, state);     // CRLF
-    //   l++;
-    // } else
-    if (c_in == 10) {
-      ol = append_bits(out, ol, LF_CODE, LF_CODE_LEN, state);         // LF
-    } else
-    if (c_in == '\t') {
-      ol = append_bits(out, ol, TAB_CODE, TAB_CODE_LEN, state);       // TAB
+    } else if (c_in == 10) {
+      append_bits(LF_CODE, LF_CODE_LEN);         // LF
+    } else if (c_in == '\t') {
+      append_bits(TAB_CODE, TAB_CODE_LEN);       // TAB
     } else {
-      ol = append_bits(out, ol, BIN_CODE_TASMOTA, BIN_CODE_TASMOTA_LEN, state);       // Binary, we reuse the Unicode marker which 3 bits instead of 9
-      ol = encodeCount(out, ol, (unsigned char) 255 - c_in);
+      append_bits(BIN_CODE_TASMOTA, BIN_CODE_TASMOTA_LEN);       // Binary, we reuse the Unicode marker which 3 bits instead of 9
+      encodeCount((unsigned char) 255 - c_in);
     }
 
     // check that we have some headroom in the output buffer
@@ -392,50 +375,46 @@ int32_t unishox_compress(const char *in, size_t len, char *out, size_t len_out) 
 
   bits = ol % 8;
   if (bits) {
-    ol = append_bits(out, ol, TERM_CODE, 8 - bits, 1);   // 0011 0111 1100 0000 TERM = 0011 0111 11
+    state = SHX_STATE_1;
+    append_bits(TERM_CODE, 8 - bits);   // 0011 0111 1100 0000 TERM = 0011 0111 11
   }
   return ol/8+(ol%8?1:0);
 }
 
-int getBitVal(const char *in, int bit_no, int count) {
-  char c_in = in[bit_no >> 3];
-  if ((bit_no >> 3) && (ESCAPE_MARKER == in[(bit_no >> 3) - 1])) {     // if previous byte is a marker, decrement
-    c_in--;
+uint32_t Unishox::getNextBit(void) {
+  if (8 == bit_no) {
+    byte_in = in[byte_no++];
+    if (ESCAPE_MARKER == byte_in) {
+      byte_in = in[byte_no++] - 1;
+    }
+    bit_no = 0;
   }
-  return (c_in & (0x80 >> (bit_no % 8)) ? 1 << count : 0);
+  return byte_in & (0x80 >> bit_no++) ? 1 : 0;
 }
 
 // Returns:
 // 0..11
 // or -1 if end of stream
-int getCodeIdx(char *code_type, const char *in, int len, int *bit_no_p) {
-  int code = 0;
-  int count = 0;
+int32_t Unishox::getCodeIdx(const char *code_type) {
+  int32_t code = 0;
+  int32_t count = 0;
   do {
-    // detect marker
-    if (ESCAPE_MARKER == in[*bit_no_p >> 3]) {
-      *bit_no_p += 8;      // skip marker
-    }
-    if (*bit_no_p >= len)
+    if (bit_no >= len)
       return -1;           // invalid state
-    code += getBitVal(in, *bit_no_p, count);
-    (*bit_no_p)++;
+    code += getNextBit() << count;
     count++;
     uint8_t code_type_code = pgm_read_byte(&code_type[code]);
     if (code_type_code && (code_type_code & 0x07) == count) {
       return code_type_code >> 3;
     }
   } while (count < 5);
-  return 1; // skip if code not found
+  return -1; // skip if code not found
 }
 
-int getNumFromBits(const char *in, int bit_no, int count) {
+int32_t Unishox::getNumFromBits(uint32_t count) {
   int ret = 0;
   while (count--) {
-    if (ESCAPE_MARKER == in[bit_no >> 3]) {
-      bit_no += 8;      // skip marker
-    }
-    ret += getBitVal(in, bit_no++, count);
+    ret += getNextBit() << count;
   }
   return ret;
 }
@@ -452,8 +431,8 @@ int getNumFromBits(const char *in, int bit_no, int count) {
 // uint16_t adder_read[] PROGMEM = {0, 32, 160, 672, 4768 };
 
 // Code size optimized, recalculate adder[] like in encodeCount
-int readCount(const char *in, int *bit_no_p, int len) {
-  int idx = getCodeIdx(us_hcode, in, len, bit_no_p);
+uint32_t Unishox::readCount(void) {
+  int32_t idx = getCodeIdx(us_hcode);
   if (idx >= 1) idx--;    // we skip v = 1 (code '0') since we no more accept 2 bits encoding
   if ((idx >= sizeof(bit_len)) || (idx < 0)) return 0;  // unsupported or end of stream
 
@@ -465,44 +444,41 @@ int readCount(const char *in, int *bit_no_p, int len) {
     bit_len_idx = pgm_read_byte(&bit_len[i]);
     till += (1 << bit_len_idx);
   }
-  int count = getNumFromBits(in, *bit_no_p, bit_len_idx) + base;
+  int count = getNumFromBits(bit_len_idx) + base;
 
-  (*bit_no_p) += bit_len_idx;
   return count;
 }
 
-int decodeRepeat(const char *in, int len, char *out, int ol, int *bit_no) {
-  int dict_len = readCount(in, bit_no, len) + NICE_LEN;
-  int dist = readCount(in, bit_no, len) + NICE_LEN - 1;
+void Unishox::decodeRepeat(void) {
+  uint32_t dict_len = readCount() + NICE_LEN;
+  uint32_t dist = readCount() + NICE_LEN - 1;
   memcpy(out + ol, out + ol - dist, dict_len);
   ol += dict_len;
-
-  return ol;
 }
 
-int32_t unishox_decompress(const char *in, size_t len, char *out, size_t len_out) {
+int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out, size_t p_len_out) {
+  in = p_in;
+  len = p_len;
+  out = p_out;
+  len_out = p_len_out;
 
-  int dstate;
-  int bit_no;
-  byte is_all_upper;
-
-  int ol = 0;
-  bit_no = 0;
+  ol = 0;
+  bit_no = 8;   // force load of first byte, pretending we expired the last one
+  byte_no = 0;
   dstate = SHX_SET1;
   is_all_upper = 0;
 
   len <<= 3;    // *8, len in bits
   out[ol] = 0;
   while (bit_no < len) {
-    int h, v;
+    int32_t h, v;
     char c = 0;
     byte is_upper = is_all_upper;
-    int orig_bit_no = bit_no;
-    v = getCodeIdx(us_vcode, in, len, &bit_no);    // read vCode
+    v = getCodeIdx(us_vcode);    // read vCode
     if (v < 0) break;     // end of stream
     h = dstate;     // Set1 or Set2
     if (v == 0) {   // Switch which is common to Set1 and Set2, first entry
-      h = getCodeIdx(us_hcode, in, len, &bit_no);    // read hCode
+      h = getCodeIdx(us_hcode);    // read hCode
       if (h < 0) break;     // end of stream
       if (h == SHX_SET1) {          // target is Set1
          if (dstate == SHX_SET1) {  // Switch from Set1 to Set1 us UpperCase
@@ -510,10 +486,10 @@ int32_t unishox_decompress(const char *in, size_t len, char *out, size_t len_out
               is_upper = is_all_upper = 0;
               continue;
             }
-            v = getCodeIdx(us_vcode, in, len, &bit_no);   // read again vCode
+            v = getCodeIdx(us_vcode);   // read again vCode
             if (v < 0) break;     // end of stream
             if (v == 0) {
-              h = getCodeIdx(us_hcode, in, len, &bit_no);  // read second hCode
+              h = getCodeIdx(us_hcode);  // read second hCode
               if (h < 0) break;     // end of stream
               if (h == SHX_SET1) {  // If double Switch Set1, the CapsLock
                 is_all_upper = 1;
@@ -532,23 +508,23 @@ int32_t unishox_decompress(const char *in, size_t len, char *out, size_t len_out
          continue;
       }
       if (h != SHX_SET1) {    // all other Sets (why not else)
-        v = getCodeIdx(us_vcode, in, len, &bit_no);    // we changed set, now read vCode for char
+        v = getCodeIdx(us_vcode);    // we changed set, now read vCode for char
         if (v < 0) break;     // end of stream
       }
     }
 
     if (v == 0 && h == SHX_SET1A) {
       if (is_upper) {
-        out[ol++] = 255 - readCount(in, &bit_no, len);    // binary
+        out[ol++] = 255 - readCount();    // binary
       } else {
-        ol = decodeRepeat(in, len, out, ol, &bit_no);   // dist
+        decodeRepeat();   // dist
       }
       continue;
     }
 
     if (h == SHX_SET1 && v == 3) {
       // was Unicode, will do Binary instead
-      out[ol++] = 255 - readCount(in, &bit_no, len);    // binary
+      out[ol++] = 255 - readCount();    // binary
       continue;
     }
     if (h < 7 && v < 11)     // TODO: are these the actual limits? Not 11x7 ?
@@ -561,22 +537,11 @@ int32_t unishox_decompress(const char *in, size_t len, char *out, size_t len_out
         c = '\t';     // If UpperCase Space, change to TAB
       if (h == SHX_SET1B) {
         if (8 == v) {   // was LF or RPT, now only LF
-          // if (is_upper) { // rpt
-          //   int count = readCount(in, &bit_no, len);
-          //   count += 4;
-          //   char rpt_c = out[ol - 1];
-          //   while (count--)
-          //     out[ol++] = rpt_c;
-          // } else {
           out[ol++] = '\n';
-          // }
           continue;
         }
         if (9 == v) {           // was CRLF, now RPT
-        //  out[ol++] = '\r';   // CRLF removed
-        //  out[ol++] = '\n';
-          int count = readCount(in, &bit_no, len);
-          count += 4;
+          uint32_t count = readCount() + 4;
           if (ol + count >= len_out) {
             return -1;        // overflow
           }
@@ -598,5 +563,4 @@ int32_t unishox_decompress(const char *in, size_t len, char *out, size_t len_out
   }
 
   return ol;
-
 }

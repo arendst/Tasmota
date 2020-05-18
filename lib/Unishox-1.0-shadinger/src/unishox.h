@@ -20,7 +20,45 @@
 #define unishox
 
 extern int32_t unishox_compress(const char *in, size_t len, char *out, size_t len_out);
-extern int32_t unishox_decompress(const char *in, size_t len, char *out, size_t len_out);
+//extern int32_t unishox_decompress(const char *in, size_t len, char *out, size_t len_out);
+
+class Unishox {
+
+public:
+  Unishox() {};
+
+  int32_t unishox_decompress(const char *in, size_t len, char *out, size_t len_out);
+  int32_t unishox_compress(const char *in, size_t len, char *out, size_t len_out);
+
+private:
+
+  void append_bits(unsigned int code, int clen);
+  void encodeCount(int32_t count);
+  bool matchOccurance(void);
+
+  uint32_t getNextBit(void);
+  int32_t getCodeIdx(const char *code_type);
+  uint32_t readCount(void);
+  void decodeRepeat(void);
+  int32_t getNumFromBits(uint32_t count);
+
+  inline void writeOut(char c) { out[ol++] = c; }
+
+  int32_t l;
+  uint32_t ol;
+  int32_t bit_no;
+  uint32_t byte_no;
+  const char *  in;
+  char *        out;
+  size_t        len;
+  size_t        len_out;
+
+  uint8_t dstate;
+  unsigned char byte_in;
+  uint8_t state;
+  uint8_t is_all_upper;
+
+};
 
 #endif
 

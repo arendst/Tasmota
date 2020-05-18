@@ -35,12 +35,36 @@ uint16_t ESPKNXIP::data_to_2byte_uint(uint8_t *data)
 	return (uint16_t)((data[1] << 8) | data[2]);
 }
 
+float esp_knx_pow(float a, float b)
+{
+  // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
+  // calculate approximation with fraction of the exponent
+  int e = abs((int)b);
+  union {
+    double d;
+    int x[2];
+  } u = { a };
+  u.x[1] = (int)((b - e) * (u.x[1] - 1072632447) + 1072632447);
+  u.x[0] = 0;
+  // exponentiation by squaring with the exponent's integer part
+  // double r = u.d makes everything much slower, not sure why
+  double r = 1.0;
+  while (e) {
+    if (e & 1) {
+      r *= a;
+    }
+    a *= a;
+    e >>= 1;
+  }
+  return r * u.d;
+}
+
 float ESPKNXIP::data_to_2byte_float(uint8_t *data)
 {
 	//uint8_t  sign = (data[1] & 0b10000000) >> 7;
 	uint8_t  expo = (data[1] & 0b01111000) >> 3;
 	int16_t mant = ((data[1] & 0b10000111) << 8) | data[2];
-	return 0.01f * mant * pow(2, expo);
+	return 0.01f * mant * esp_knx_pow(2, expo);
 }
 
 time_of_day_t ESPKNXIP::data_to_3byte_time(uint8_t *data)
