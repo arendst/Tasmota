@@ -66,8 +66,9 @@ keywords if then else endif, or, and are better readable for beginners (others m
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
 
-#if defined(ESP32) && defined(ESP32_SCRIPT_SIZE) && !defined(USE_24C256) && !defined(USE_SCRIPT_FATFS)
+#include <unishox.h>
 
+#if defined(ESP32) && defined(ESP32_SCRIPT_SIZE) && !defined(USE_24C256) && !defined(USE_SCRIPT_FATFS)
 #include "FS.h"
 #include "SPIFFS.h"
 
@@ -3035,7 +3036,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                 uint8_t index=glob_script_mem.type[ind.index].index;
                 if ((vtype&STYPE)==0) {
                     // numeric result
-                  if (glob_script_mem.type[index].bits.is_filter) {
+                  if (glob_script_mem.type[ind.index].bits.is_filter) {
                     uint8_t len=0;
                     float *fa=Get_MFAddr(index,&len);
                     //Serial.printf(">> 2 %d\n",(uint32_t)*fa);
@@ -3965,6 +3966,25 @@ void ScriptSaveSettings(void) {
     glob_script_mem.script_mem_size=0;
   }
 
+
+#ifndef UNISHOXRSIZE
+#define UNISHOXRSIZE 2560
+#endif
+#ifdef USE_RULES_COMPRESSION
+#ifndef USE_24C256
+#ifndef USE_SCRIPT_FATFS
+#ifndef ESP32_SCRIPT_SIZE
+  uint32_t len_compressed = unishox_compress(glob_script_mem.script_ram, strlen(glob_script_mem.script_ram), Settings.rules[0], UNISHOXRSIZE);
+  if (len_compressed > 0) {
+    AddLog_P2(LOG_LEVEL_INFO,PSTR("compressed to %d"),len_compressed * 100 / strlen(glob_script_mem.script_ram));
+  } else {
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("script compress error: %d"), len_compressed);
+  }
+#endif
+#endif
+#endif
+#endif // USE_RULES_COMPRESSION
+
   if (bitRead(Settings.rule_enabled, 0)) {
     int16_t res=Init_Scripter();
     if (res) {
@@ -4871,14 +4891,31 @@ const char SCRIPT_MSG_NUMINP[] PROGMEM =
 const char SCRIPT_MSG_GTABLE[] PROGMEM =
   "<script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>"
   "<script type='text/javascript'>google.charts.load('current',{packages:['corechart']});</script>"
-  "<script language='JavaScript'>function drawChart(){var data=google.visualization.arrayToDataTable([";
+  "<script type='text/javascript'>google.charts.load('current',{packages:['table']});</script>"
+  "<script type='text/javascript'>google.charts.load('current',{packages:['gauge']});</script>"
+  "<style>.hRow{font-weight:bold;color:black;background-color:lightblue;}.hCol{font-weight:bold;color:black;background-color:lightblue;}.tCell{color:black}</style>";
+
+
+const char SCRIPT_MSG_GTABLEa[] PROGMEM =
+  "<script language='JavaScript'>function drawChart(){"
+  "var cssc={'headerRow':'hRow','rowNumberCell':'hCol','tableCell':'tCell'};"
+  "var data=google.visualization.arrayToDataTable([";
+
 
 const char SCRIPT_MSG_GTABLEb[] PROGMEM =
- "]);var options={title:'%s',isStacked:false};var chart=new google.visualization.%s(document.getElementById('chart%1d'));chart.draw(data,options);}"
+ "]);"
+ "var options={%s};"
+ "var chart=new google.visualization.%s(document.getElementById('chart%1d'));"
+ "chart.draw(data,options);}"
  "google.charts.setOnLoadCallback(drawChart);</script>";
 
-const char SCRIPT_MSG_GTE1[] PROGMEM = "'%s'";
+const char SCRIPT_MSG_GOPT1[] PROGMEM =
+"title:'%s',isStacked:false";
 
+const char SCRIPT_MSG_GOPT2[] PROGMEM =
+"showRowNumber:true,sort:'disable',allowHtml:true,width:'100%%',height:'100%%',cssClassNames:cssc";
+
+const char SCRIPT_MSG_GTE1[] PROGMEM = "'%s'";
 
 void ScriptGetVarname(char *nbuf,char *sp, uint32_t blen) {
 uint32_t cnt;
@@ -4897,8 +4934,9 @@ void ScriptWebShow(char mc) {
     char line[128];
     char tmp[128];
     uint8_t optflg=0;
-    char *lp=glob_script_mem.section_ptr+2;
     uint8_t chartindex=1;
+    uint8_t google_libs=0;
+    char *lp=glob_script_mem.section_ptr+2;
     while (lp) {
       while (*lp==SCRIPT_EOL) {
        lp++;
@@ -4927,7 +4965,6 @@ void ScriptWebShow(char mc) {
         } else {
           optflg=0;
         }
-
 
         // check for input elements
         if (!strncmp(lin,"sl(",3)) {
@@ -5108,8 +5145,8 @@ void ScriptWebShow(char mc) {
                   uint8_t index=glob_script_mem.type[ind.index].index;
                   if ((vtype&STYPE)==0) {
                     // numeric result
-                    //Serial.printf("numeric\n");
-                    if (glob_script_mem.type[index].bits.is_filter) {
+                    //Serial.printf("numeric %d - %d \n",ind.index,index);
+                    if (glob_script_mem.type[ind.index].bits.is_filter) {
                       //Serial.printf("numeric array\n");
                       uint8_t len=0;
                       float *fa=Get_MFAddr(index,&len);
@@ -5130,7 +5167,13 @@ void ScriptWebShow(char mc) {
               //Serial.printf("arrays %d\n",anum);
               //Serial.printf("entries %d\n",entries);
 
-              WSContentSend_PD(SCRIPT_MSG_GTABLE);
+              if (!google_libs) {
+                WSContentSend_PD(SCRIPT_MSG_GTABLE);
+                google_libs=1;
+              }
+
+              WSContentSend_PD(SCRIPT_MSG_GTABLEa);
+
               // we know how many arrays and the number of entries
               // we need to fetch the labels now
               WSContentSend_PD("[");
@@ -5180,27 +5223,40 @@ void ScriptWebShow(char mc) {
               lp=GetStringResult(lp,OPER_EQU,header,0);
               SCRIPT_SKIP_SPACES
 
+              char options[128];
+              snprintf_P(options,sizeof(options),SCRIPT_MSG_GOPT1,header);
+
               const char *type;
               if (*lp!=')') {
                 switch (*lp) {
                   case 'l':
-                    type="LineChart";
+                    type=PSTR("LineChart");
                     break;
                   case 'b':
-                    type="BarChart";
+                    type=PSTR("BarChart");
                     break;
                   case 'p':
-                    type="PieChart";
+                    type=PSTR("PieChart");
                     break;
+                  case 'g':
+                    type=PSTR("Gauge");
+                    break;
+                  case 't':
+                    type=PSTR("Table");
+                    snprintf_P(options,sizeof(options),SCRIPT_MSG_GOPT2);
+                    break;
+                  case 'h':
+                   type=PSTR("Histogram");
+                   break;
                   default:
-                    type="ColumnChart";
+                    type=PSTR("ColumnChart");
                     break;
                 }
               } else {
-                type="ColumnChart";
+                type=PSTR("ColumnChart");
               }
 
-              WSContentSend_PD(SCRIPT_MSG_GTABLEb,header,type,chartindex);
+              WSContentSend_PD(SCRIPT_MSG_GTABLEb,options,type,chartindex);
               chartindex++;
             } else {
               Replace_Cmd_Vars(lin,0,tmp,sizeof(tmp));
@@ -5363,6 +5419,7 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core) {
  * Interface
 \*********************************************************************************************/
 
+
 bool Xdrv10(uint8_t function)
 {
   bool result = false;
@@ -5376,6 +5433,19 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.flags=0;
       glob_script_mem.script_pram=(uint8_t*)Settings.script_pram[0];
       glob_script_mem.script_pram_size=PMEM_SIZE;
+
+#ifdef USE_RULES_COMPRESSION
+#ifndef USE_24C256
+#ifndef USE_SCRIPT_FATFS
+#ifndef ESP32_SCRIPT_SIZE
+      glob_script_mem.script_ram=(char*)calloc(UNISHOXRSIZE+8,1);
+      if (!glob_script_mem.script_ram) { break; }
+      unishox_decompress(Settings.rules[0], strlen(Settings.rules[0]), glob_script_mem.script_ram, UNISHOXRSIZE);
+      glob_script_mem.script_size=UNISHOXRSIZE;
+#endif
+#endif
+#endif
+#endif // USE_RULES_COMPRESSION
 
 #ifdef USE_BUTTON_EVENT
       for (uint32_t cnt=0;cnt<MAX_KEYS;cnt++) {
@@ -5454,6 +5524,7 @@ bool Xdrv10(uint8_t function)
     script=(char*)calloc(ESP32_SCRIPT_SIZE+4,1);
     if (!script) break;
     LoadFile("/script.txt",(uint8_t*)script,ESP32_SCRIPT_SIZE);
+
     glob_script_mem.script_ram=script;
     glob_script_mem.script_size=ESP32_SCRIPT_SIZE;
     script[ESP32_SCRIPT_SIZE-1]=0;
