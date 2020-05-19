@@ -2,6 +2,8 @@
 
 ### 8.3.1.1 20200518
 
+- Add command ``Rule0`` to change global rule parameters
+
 ## Released
 
 ### 8.3.1 20200518

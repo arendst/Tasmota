@@ -53,3 +53,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 ## Changelog
 
 ### Version 8.3.1.1
+
+- Add command ``Rule0`` to change global rule parameters
