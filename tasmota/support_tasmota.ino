@@ -357,7 +357,7 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
 	} else {
 	  led_pwm_set = state ? Settings.ledpwm_on : Settings.ledpwm_off;
 	}
-	analogWrite(led, led_pwm_set)
+	analogWrite(led, led_pwm_set);
   }
 #ifdef USE_BUZZER
   if (led == 0) {

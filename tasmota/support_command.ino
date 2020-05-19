@@ -1893,7 +1893,7 @@ void CmndDriver(void)
 
 void CmndSetLedPwmOff(void)
 {
-  if ((XdrvMailbox.payload < 0) {
+  if (XdrvMailbox.payload < 0) {
 	  Settings.ledpwm_off = 0;
   } else if (XdrvMailbox.payload > Settings.pwm_range) {
 	  Settings.ledpwm_off = Settings.pwm_range;
@@ -1905,7 +1905,7 @@ void CmndSetLedPwmOff(void)
 
 void CmndSetLedPwmOn(void)
 {
-  if ((XdrvMailbox.payload < 0) {
+  if (XdrvMailbox.payload < 0) {
 	  Settings.ledpwm_on = 0;
   } else if (XdrvMailbox.payload > Settings.pwm_range) {
 	  Settings.ledpwm_on = Settings.pwm_range;
