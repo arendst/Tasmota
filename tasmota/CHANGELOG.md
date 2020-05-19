@@ -3,6 +3,7 @@
 ### 8.3.1.1 20200518
 
 - Add command ``Rule0`` to change global rule parameters
+- Add more functionality to ``Switchmode`` 11 and 12 (#8450)
 
 ## Released
 

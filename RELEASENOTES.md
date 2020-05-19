@@ -55,3 +55,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 ### Version 8.3.1.1
 
 - Add command ``Rule0`` to change global rule parameters
+- Add more functionality to ``Switchmode`` 11 and 12 (#8450)
