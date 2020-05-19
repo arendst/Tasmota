@@ -1901,6 +1901,7 @@ void CmndSetLedPwmOff(void)
     } else {
       Settings.ledpwm_off = XdrvMailbox.payload;
     }
+  }
   ResponseCmndNumber(Settings.ledpwm_off);
 }
 
