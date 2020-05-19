@@ -586,6 +586,10 @@
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
 
+// Commands led pwm settings
+#define D_CMND_SETLEDPWMOFF "SetLedPwmOff"
+#define D_CMND_SETLEDPWMON "SetLedPwmOn"
+
 /********************************************************************************************/
 
 // Log message prefix

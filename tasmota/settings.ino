@@ -1055,6 +1055,10 @@ void SettingsDefaultSet2(void)
   Settings.flag2 = flag2;
   Settings.flag3 = flag3;
   Settings.flag4 = flag4;
+  
+  // Led PWM
+  Settings.ledpwm_off = 0;
+  Settings.ledpwm_on = 1023;
 }
 
 /********************************************************************************************/
@@ -1418,5 +1422,10 @@ void SettingsDelta(void)
 
     Settings.version = VERSION;
     SettingsSave(1);
+  }
+  // ledpwm
+  if (Settings.version < 0x080300002) {
+	  Settings.ledpwm_off = 0;
+	  Settings.ledpwm_on = 1023;
   }
 }

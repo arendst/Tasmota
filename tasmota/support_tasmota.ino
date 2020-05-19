@@ -351,7 +351,13 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
     } else {
       led_power &= (0xFF ^ mask);
     }
-    DigitalWrite(GPIO_LED1, led, bitRead(led_inverted, led) ? !state : state);
+	uint16_t led_pwm_set = 0;
+	if (bitRead(led_inverted, led)) {
+      led_pwm_set = state ? Settings.pwm_range - Settings.ledpwm_on : Settings.pwm_range - Settings.ledpwm_off;
+	} else {
+	  led_pwm_set = state ? Settings.ledpwm_on : Settings.ledpwm_off;
+	}
+	analogWrite(led, led_pwm_set)
   }
 #ifdef USE_BUZZER
   if (led == 0) {
