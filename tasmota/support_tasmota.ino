@@ -423,6 +423,10 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
 // state 1 = POWER_ON = on
 // state 2 = POWER_TOGGLE = toggle
 // state 3 = POWER_HOLD = hold
+// state 4 = POWER_INCREMENT = button still pressed
+// state 5 = POWER_INV = button released
+// state 6 = POWER_CLEAR = button released
+// state 7 = POWER_RELEASE = button released
 // state 9 = CLEAR_RETAIN = clear retain flag
 
   char stopic[TOPSZ];
@@ -1232,7 +1236,7 @@ void SerialInput(void)
     }
     else if ((serial_in_byte_counter == INPUT_BUFFER_SIZE)
 #ifdef ESP8266
-             || Serial.hasOverrun()  // Default ESP8266 Serial buffer size is 256. Tasmota increases to INPUT_BUFFER_SIZE
+             || Serial.hasOverrun()
 #endif
                                                              ) {
       serial_buffer_overrun = true;

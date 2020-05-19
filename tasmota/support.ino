@@ -1132,6 +1132,16 @@ bool ValidModule(uint32_t index)
   return ValidTemplateModule(index);
 }
 
+bool ValidTemplate(const char *search) {
+  char template_name[strlen(SettingsText(SET_TEMPLATE_NAME)) +1];
+  char search_name[strlen(search) +1];
+
+  LowerCase(template_name, SettingsText(SET_TEMPLATE_NAME));
+  LowerCase(search_name, search);
+
+  return (strstr(template_name, search_name) != nullptr);
+}
+
 String AnyModuleName(uint32_t index)
 {
   if (USER_MODULE == index) {

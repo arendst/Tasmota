@@ -1954,6 +1954,26 @@ void RulesPreprocessCommand(char *pCommands)
 
 void CmndRule(void)
 {
+  if (0 == XdrvMailbox.index) {
+    char data = '\0';
+    if (XdrvMailbox.data_len > 0) {  // Allow show all if 0
+      if (!((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 10))) {
+        if ('"' == XdrvMailbox.data[0]) {
+          data = '"';                // Save data as XdrvMailbox.data is destroyed
+        } else {
+          XdrvMailbox.data_len = 0;  // Discard any additional text
+        }
+      }
+    }
+    for (uint32_t i = 1; i <= MAX_RULE_SETS; i++) {
+      XdrvMailbox.index = i;
+      XdrvMailbox.data[0] = data;    // Only 0 or "
+      CmndRule();
+      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+    }
+    mqtt_data[0] = '\0';             // Disable further processing
+    return;
+  }
   uint8_t index = XdrvMailbox.index;
   if ((index > 0) && (index <= MAX_RULE_SETS)) {
     // if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules[index -1]))) {    // TODO postpone size calculation
