@@ -1901,6 +1901,7 @@ void CmndSetLedPwmOff(void)
     } else {
       Settings.ledpwm_off = XdrvMailbox.payload;
     }
+	UpdateLedPowerAll();
   }
   ResponseCmndNumber(Settings.ledpwm_off);
 }
@@ -1915,6 +1916,7 @@ void CmndSetLedPwmOn(void)
     } else {
 	  Settings.ledpwm_on = XdrvMailbox.payload;
     }
+	UpdateLedPowerAll();
   }
   ResponseCmndNumber(Settings.ledpwm_on);
 }

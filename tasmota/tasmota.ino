@@ -1,4 +1,4 @@
-/*
+ /*
   tasmota.ino - Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
 
   Copyright (C) 2020  Theo Arends
