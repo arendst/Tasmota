@@ -1969,7 +1969,7 @@ void CmndEnableOutputSet(void)
         Thermostat[ctr_output].status.enable_output = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].diag.diagnostic_mode);
+    ResponseCmndNumber((int)Thermostat[ctr_output].status.enable_output);
   }
 }
 
