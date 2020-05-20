@@ -433,8 +433,8 @@ int32_t Unishox::getNumFromBits(uint32_t count) {
 // Code size optimized, recalculate adder[] like in encodeCount
 uint32_t Unishox::readCount(void) {
   int32_t idx = getCodeIdx(us_hcode);
+  if ((1 == idx) || (idx >= sizeof(bit_len)) || (idx < 0)) return 0;  // unsupported or end of stream
   if (idx >= 1) idx--;    // we skip v = 1 (code '0') since we no more accept 2 bits encoding
-  if ((idx >= sizeof(bit_len)) || (idx < 0)) return 0;  // unsupported or end of stream
 
   int base;
   int till = 0;
@@ -470,7 +470,7 @@ int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out,
 
   len <<= 3;    // *8, len in bits
   out[ol] = 0;
-  while (bit_no < len) {
+  while ((byte_no << 3) + bit_no - 8 < len) {
     int32_t h, v;
     char c = 0;
     byte is_upper = is_all_upper;
