@@ -1059,6 +1059,7 @@ void SettingsDefaultSet2(void)
   // Led PWM
   Settings.ledpwm_off = 0;
   Settings.ledpwm_on = 1023;
+  Settings.ledpwm_mask = 0;
 }
 
 /********************************************************************************************/
@@ -1427,5 +1428,6 @@ void SettingsDelta(void)
   if (Settings.version < 0x080300002) {
 	  Settings.ledpwm_off = 0;
 	  Settings.ledpwm_on = 1023;
+	  Settings.ledpwm_mask = 0;
   }
 }

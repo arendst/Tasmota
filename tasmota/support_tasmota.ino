@@ -359,20 +359,24 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
       led_power &= (0xFF ^ mask);
     }
 	uint16_t led_pwm_set = 0;
-	if (bitRead(led_inverted, led)) {
-	  if (state) {
-		led_pwm_set = Settings.pwm_range - Settings.ledpwm_on;
-	  } else {
-	    led_pwm_set = Settings.pwm_range - Settings.ledpwm_off;
-	  }
+	if (bitRead(Settings.ledpwm_mask, led)) {
+		if (bitRead(led_inverted, led)) {
+		  if (state) {
+			led_pwm_set = Settings.pwm_range - Settings.ledpwm_on;
+		  } else {
+			led_pwm_set = Settings.pwm_range - Settings.ledpwm_off;
+		  }
+		} else {
+		  if (state) {
+			led_pwm_set = Settings.ledpwm_on;
+		  } else {
+			led_pwm_set = Settings.ledpwm_off;
+		  }
+		}
+		analogWrite(Pin(GPIO_LED1, led), led_pwm_set);
 	} else {
-	  if (state) {
-	    led_pwm_set = Settings.ledpwm_on;
-	  } else {
-		led_pwm_set = Settings.ledpwm_off;
-	  }
+		DigitalWrite(GPIO_LED1, led, bitRead(led_inverted, led) ? !state : state);
 	}
-	analogWrite(Pin(GPIO_LED1, led), led_pwm_set);
   }
 #ifdef USE_BUZZER
   if (led == 0) {

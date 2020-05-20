@@ -589,6 +589,7 @@
 // Commands led pwm settings
 #define D_CMND_SETLEDPWMOFF "SetLedPwmOff"
 #define D_CMND_SETLEDPWMON "SetLedPwmOn"
+#define D_CMND_SETLEDPWMMODE "SetLedPwmMode"
 
 /********************************************************************************************/
 
