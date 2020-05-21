@@ -2017,7 +2017,25 @@ void CmndRule(void)
     }
     String rule = GetRule(index - 1);
     size_t rule_len = rule.length();
-    if (rule_len >= MAX_RULE_SIZE) {
+    if (rule_len > MAX_RULE_SIZE - 3) {
+
+      size_t start_index = 0;                                       // start from 0
+      while (start_index < rule_len) {                              // until we reached end of rule
+        size_t last_index = start_index + MAX_RULE_SIZE - 3;        // set max length to what would fit uncompressed, i.e. MAX_RULE_SIZE - 3 (first NULL + length + last NULL)
+        if (last_index < rule_len) {                                // if we didn't reach the end, try to shorten to last space character
+          int32_t next_index = rule.lastIndexOf(" ", last_index);
+          if (next_index > 0) {                                     // if space was found and is not at the first position (i.e. we are progressing)
+            last_index = next_index;                                // shrink to the last space
+          }                                                         // otherwise it means there are no spaces, we need to cut somewhere even if the result cannot be entered back
+        } else {
+          last_index = rule_len;                                    // until the end of the rule
+        }
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: Rule%d %s%s"),
+                                        index, 0 == start_index ? PSTR("") : PSTR("+"),
+                                        rule.substring(start_index, last_index).c_str());
+        start_index = last_index + 1;
+      }
+
       // we need to split the rule in chunks
       rule = rule.substring(0, MAX_RULE_SIZE);
       rule += F("...");
