@@ -68,7 +68,7 @@ keywords if then else endif, or, and are better readable for beginners (others m
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
 
-#ifdef USE_RULES_COMPRESSION
+#ifdef USE_SCRIPT_COMPRESSION
 #include <unishox.h>
 
 Unishox compressor;   // singleton
@@ -77,7 +77,7 @@ Unishox compressor;   // singleton
 #ifndef UNISHOXRSIZE
 #define UNISHOXRSIZE 2560
 #endif
-#endif
+#endif // USE_SCRIPT_COMPRESSION
 
 #if defined(ESP32) && defined(ESP32_SCRIPT_SIZE) && !defined(USE_24C256) && !defined(USE_SCRIPT_FATFS)
 #include "FS.h"
@@ -1768,7 +1768,7 @@ chknext:
           lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
           lp++;
           //fvar=pow(fvar1,fvar2);
-          fvar=FastPrecisePow(fvar1,fvar2);
+          fvar=FastPrecisePowf(fvar1,fvar2);
           len=0;
           goto exit;
         }
@@ -3977,7 +3977,7 @@ void ScriptSaveSettings(void) {
     glob_script_mem.script_mem_size=0;
   }
 
-#ifdef USE_RULES_COMPRESSION
+#ifdef USE_SCRIPT_COMPRESSION
 #ifndef USE_24C256
 #ifndef USE_SCRIPT_FATFS
 #ifndef ESP32_SCRIPT_SIZE
@@ -3994,7 +3994,7 @@ void ScriptSaveSettings(void) {
 #endif
 #endif
 #endif
-#endif // USE_RULES_COMPRESSION
+#endif // USE_SCRIPT_COMPRESSION
 
   if (bitRead(Settings.rule_enabled, 0)) {
     int16_t res=Init_Scripter();
@@ -5464,7 +5464,7 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_pram=(uint8_t*)Settings.script_pram[0];
       glob_script_mem.script_pram_size=PMEM_SIZE;
 
-#ifdef USE_RULES_COMPRESSION
+#ifdef USE_SCRIPT_COMPRESSION
 #ifndef USE_24C256
 #ifndef USE_SCRIPT_FATFS
 #ifndef ESP32_SCRIPT_SIZE
@@ -5479,7 +5479,7 @@ bool Xdrv10(uint8_t function)
 #endif
 #endif
 #endif
-#endif // USE_RULES_COMPRESSION
+#endif // USE_SCRIPT_COMPRESSION
 
 #ifdef USE_BUTTON_EVENT
       for (uint32_t cnt=0;cnt<MAX_KEYS;cnt++) {
