@@ -420,6 +420,7 @@ int32_t Unishox::getNumFromBits(uint32_t count) {
   while (count--) {
     ret += getNextBit() << count;
   }
+  if (in_eof) return 0;
   return ret;
 }
 
