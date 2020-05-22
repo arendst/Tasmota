@@ -586,6 +586,16 @@
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
 
+// xsns_70_veml6075.ino
+#define D_JSON_UVA_INTENSITY "UvaIntensity"
+#define D_JSON_UVB_INTENSITY  "UvbItensity"
+#define D_CMND_VEML6075_POWER "power"
+#define D_CMND_VEML6075_DYNAMIC "dynamic"
+#define D_CMND_VEML6075_INTTIME "inttime"
+
+// xsns_71_veml7700.ino
+#define D_JSON_WHITE_CONTENT "WhiteContent"
+
 /********************************************************************************************/
 
 // Log message prefix

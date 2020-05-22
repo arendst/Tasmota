@@ -48,6 +48,7 @@ private:
   uint32_t ol;
   int32_t bit_no;
   uint32_t byte_no;
+  bool          in_eof;   // have we reached end of file for compressed input
   const char *  in;
   char *        out;
   size_t        len;

@@ -1240,14 +1240,14 @@ const char HTTP_BTN_MENU_MQTT[] PROGMEM =
 const char HTTP_FORM_MQTT1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='" WEB_HANDLE_MQTT "'>"
-  "<p><b>" D_HOST "</b> (" MQTT_HOST ")<br><input id='mh' placeholder='" MQTT_HOST" ' value='%s'></p>"
+  "<p><b>" D_HOST "</b> (" MQTT_HOST ")<br><input id='mh' placeholder=\"" MQTT_HOST "\" value=\"%s\"></p>"
   "<p><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br><input id='ml' placeholder='" STR(MQTT_PORT) "' value='%d'></p>"
-  "<p><b>" D_CLIENT "</b> (%s)<br><input id='mc' placeholder='%s' value='%s'></p>";
+  "<p><b>" D_CLIENT "</b> (%s)<br><input id='mc' placeholder=\"%s\" value=\"%s\"></p>";
 const char HTTP_FORM_MQTT2[] PROGMEM =
-  "<p><b>" D_USER "</b> (" MQTT_USER ")<br><input id='mu' placeholder='" MQTT_USER "' value='%s'></p>"
-  "<p><label><b>" D_PASSWORD "</b><input type='checkbox' onclick='sp(\"mp\")'></label><br><input id='mp' type='password' placeholder='" D_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
-  "<p><b>" D_TOPIC "</b> = %%topic%% (%s)<br><input id='mt' placeholder='%s' value='%s'></p>"
-  "<p><b>" D_FULL_TOPIC "</b> (%s)<br><input id='mf' placeholder='%s' value='%s'></p>";
+  "<p><b>" D_USER "</b> (" MQTT_USER ")<br><input id='mu' placeholder=\"" MQTT_USER "\" value=\"%s\"></p>"
+  "<p><label><b>" D_PASSWORD "</b><input type='checkbox' onclick='sp(\"mp\")'></label><br><input id='mp' type='password' placeholder=\"" D_PASSWORD "\" value=\"" D_ASTERISK_PWD "\"></p>"
+  "<p><b>" D_TOPIC "</b> = %%topic%% (%s)<br><input id='mt' placeholder=\"%s\" value=\"%s\"></p>"
+  "<p><b>" D_FULL_TOPIC "</b> (%s)<br><input id='mf' placeholder=\"%s\" value=\"%s\"></p>";
 
 void HandleMqttConfiguration(void)
 {

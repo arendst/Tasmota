@@ -2,8 +2,12 @@
 
 ### 8.3.1.1 20200518
 
+- Change IRremoteESP8266 library updated to v2.7.7
 - Add command ``Rule0`` to change global rule parameters
 - Add more functionality to ``Switchmode`` 11 and 12 (#8450)
+- Add dump of compressed rules over 512 chars and unishox decompress fix
+- Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)
+- Add support for VEML7700 Ambient light intensity Sensor by device111 (#8432)
 
 ## Released
 
