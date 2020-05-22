@@ -65,6 +65,7 @@
 #define D_JSON_ERROR "Error"
 #define D_JSON_EVENT "Event"
 #define D_JSON_EVERY "Every"
+#define D_JSON_EXPORT "Export"
 #define D_JSON_EXPORT_ACTIVE "ExportActive"
 #define D_JSON_EXPORT_REACTIVE "ExportReactive"
 #define D_JSON_FAILED "Failed"

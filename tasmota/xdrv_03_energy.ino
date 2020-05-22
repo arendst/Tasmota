@@ -1010,7 +1010,7 @@ void EnergyShow(bool json)
       ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE "\":%s"),
         EnergyFormat(value_chr, export_active_chr[0], json));
       if (energy_tariff) {
-        ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE  D_CMND_TARIFF "\":%s"),
+        ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT D_CMND_TARIFF "\":%s"),
           EnergyFormatIndex(value_chr, energy_return_chr[0], json, 2));
       }
     }

@@ -56,7 +56,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 - Change IRremoteESP8266 library updated to v2.7.7
 - Change Energy JSON Total field from ``"Total":[33.736,11.717,16.978]`` to ``"Total":33.736,"TotalTariff":[11.717,16.978]``
-- Change Energy JSON ExportActive field from ``"ExportActive":[33.736,11.717,16.978]`` to ``"ExportActive":33.736,"ExportActiveTariff":[11.717,16.978]``
+- Change Energy JSON ExportActive field from ``"ExportActive":[33.736,11.717,16.978]`` to ``"ExportActive":33.736,"ExportTariff":[11.717,16.978]``
 - Add command ``Rule0`` to change global rule parameters
 - Add more functionality to ``Switchmode`` 11 and 12 (#8450)
 - Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)
