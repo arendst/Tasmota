@@ -1939,7 +1939,7 @@ String escapeJSONString(const char *str) {
 
 #if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
 
-#include <Unishox.h>
+#include <unishox.h>
 
 Unishox compressor;
 
