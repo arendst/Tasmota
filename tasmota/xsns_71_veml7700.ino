@@ -1,5 +1,5 @@
 /*
-  xsns_71_VEML7700.ino - VEML7700 Franklin Lightning Sensor support for Tasmota
+  xsns_71_VEML7700.ino - VEML7700 Ambient light intensity Sensor support for Tasmota
 
   Copyright (C) 2020  Martin Wagner
 
@@ -34,14 +34,13 @@ Adafruit_VEML7700 veml7700 = Adafruit_VEML7700(); //create object copy
 #define D_NAME_VEML7700 "VEML7700"
 #define D_WHITE_CONTENT "White content"
 
-const char HTTP_SNS_LUX[] PROGMEM = "{s}%s " D_ILLUMINANCE "{m}%d " D_UNIT_LUX " {e}";
 const char HTTP_SNS_WHITE[] PROGMEM = "{s}%s " D_WHITE_CONTENT "{m}%d {e}";
 const char JSON_SNS_VEML7700[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_WHITE_CONTENT "\":%d}";
 
 struct VEML7700STRUCT
 {
   char types[9]   = D_NAME_VEML7700;
-  uint8_t address = VEML7700_I2CADDR_DEFAULT;  
+  uint8_t address = VEML7700_I2CADDR_DEFAULT;
   uint16_t lux = 0;
   uint16_t white = 0;
 } veml7700_sensor;
@@ -67,13 +66,13 @@ void VEML7700Show(bool json)
 {
   if (json) {
     ResponseAppend_P(JSON_SNS_VEML7700, D_NAME_VEML7700, veml7700_sensor.lux, veml7700_sensor.white);
-    
+
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, veml7700_sensor.lux);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-  } else {   
-    WSContentSend_PD(HTTP_SNS_LUX, D_NAME_VEML7700, veml7700_sensor.lux);
+  } else {
+    WSContentSend_PD(HTTP_SNS_ILLUMINANCE, D_NAME_VEML7700, veml7700_sensor.lux);
     WSContentSend_PD(HTTP_SNS_WHITE, D_NAME_VEML7700, veml7700_sensor.white);
 #endif // USE_WEBSERVER
   }

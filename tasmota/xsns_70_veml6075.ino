@@ -1,5 +1,5 @@
 /*
-  xsns_70_veml6075.ino - VEML6075 Franklin Lightning Sensor support for Tasmota
+  xsns_70_veml6075.ino - VEML6075 UVA/UVB/UVINDEX Sensor support for Tasmota
 
   Copyright (C) 2020  Martin Wagner
 
@@ -85,13 +85,13 @@ enum VEML6075_Commands {         // commands for Console
   CMND_VEML6075_SET_HD,
   CMND_VEML6075_SET_UVIT,
   };
-  
+
 // global variables
 struct VEML6075STRUCT
 {
   char types[9]   = D_NAME_VEML6075;
   uint8_t address = VEML6075_ADDR;
-  uint8_t inttime = 0; 
+  uint8_t inttime = 0;
   uint16_t uva = 0;
   uint16_t uvb = 0;
   uint16_t uva_raw = 0;
@@ -113,9 +113,9 @@ typedef union {
     uint8_t hd:1;             // High dynamic
     uint8_t inttime:3;        // Integration Time
     uint8_t spare7:1;         // spare
-  };                      
+  };
   uint16_t config;
-} veml6075configRegister; 
+} veml6075configRegister;
 
 veml6075configRegister veml6075Config;
 
@@ -179,7 +179,7 @@ uint8_t VEML6075GetPwr(void){
   return veml6075Config.pwr;
 }
 
-void VEML6075ReadData(void) 
+void VEML6075ReadData(void)
 {
   veml6075_sensor.uva_raw = VEML6075read16 (VEML6075_REG_UVA);
   veml6075_sensor.uvb_raw = VEML6075read16 (VEML6075_REG_UVB);
@@ -201,7 +201,7 @@ bool VEML6075init(void)
 
 void VEML6075Detect(void) {
   if (I2cActive(veml6075_sensor.address)) return;
-  
+
   if (VEML6075init()) {
     I2cSetActiveFound(veml6075_sensor.address, veml6075_sensor.types);
     VEML6075write16 (VEML6075_REG_CONF, 0x10); // set default
@@ -252,7 +252,7 @@ bool VEML6075Cmd(void) {
   }
 }
 
-void VEML6075Show(bool json) 
+void VEML6075Show(bool json)
 {
   char s_uvindex[FLOATSZ];
   dtostrfd(veml6075_sensor.uvi,1, s_uvindex);
@@ -260,10 +260,10 @@ void VEML6075Show(bool json)
   if (json) {
     ResponseAppend_P(JSON_SNS_VEML6075, D_NAME_VEML6075, veml6075_sensor.uva, veml6075_sensor.uvb, s_uvindex);
 #ifdef USE_WEBSERVER
-  } else {   
+  } else {
     WSContentSend_PD(HTTP_SNS_UVA, D_NAME_VEML6075, veml6075_sensor.uva);
     WSContentSend_PD(HTTP_SNS_UVB, D_NAME_VEML6075, veml6075_sensor.uvb);
-    WSContentSend_PD(HTTP_SNS_UVINDEX, D_NAME_VEML6075 ,s_uvindex);     
+    WSContentSend_PD(HTTP_SNS_UVINDEX, D_NAME_VEML6075 ,s_uvindex);
 #endif // USE_WEBSERVER
   }
 }

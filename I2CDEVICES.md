@@ -70,5 +70,5 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   46  | USE_IAQ             | xsns_66 | IAQ      | 0x5a        | Air quality sensor
   47  | USE_DISPLAY_SEVENSEG| xdsp_11 | HT16K33  | 0x70 - 0x77 | Seven segment LED
   48  | USE_AS3935          | xsns_67 | AS3935   | 0x03        | Franklin Lightning Sensor
-  49  | USE_VEML6075        | xsns_68 | VEML6075 | 0x10        | UVA/UVB/UVINDEX Sensor
-  50  | USE_VEML7700        | xsns_69 | VEML7700 | 0x10        | Ambient light intensity sensor
+  49  | USE_VEML6075        | xsns_70 | VEML6075 | 0x10        | UVA/UVB/UVINDEX Sensor
+  50  | USE_VEML7700        | xsns_71 | VEML7700 | 0x10        | Ambient light intensity sensor
