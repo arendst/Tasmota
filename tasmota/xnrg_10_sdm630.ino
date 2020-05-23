@@ -40,22 +40,30 @@
 TasmotaModbus *Sdm630Modbus;
 
 const uint16_t sdm630_start_addresses[] {
-  0x0000,  // L1 - SDM630_VOLTAGE [V]
-  0x0002,  // L2 - SDM630_VOLTAGE [V]
-  0x0004,  // L3 - SDM630_VOLTAGE [V]
-  0x0006,  // L1 - SDM630_CURRENT [A]
-  0x0008,  // L2 - SDM630_CURRENT [A]
-  0x000A,  // L3 - SDM630_CURRENT [A]
-  0x000C,  // L1 - SDM630_POWER [W]
-  0x000E,  // L2 - SDM630_POWER [W]
-  0x0010,  // L3 - SDM630_POWER [W]
-  0x0018,  // L1 - SDM630_REACTIVE_POWER [VAR]
-  0x001A,  // L2 - SDM630_REACTIVE_POWER [VAR]
-  0x001C,  // L3 - SDM630_REACTIVE_POWER [VAR]
-  0x001E,  // L1 - SDM630_POWER_FACTOR
-  0x0020,  // L2 - SDM630_POWER_FACTOR
-  0x0022,  // L3 - SDM630_POWER_FACTOR
-  0x0156   // Total - SDM630_TOTAL_ACTIVE_ENERGY [Wh]
+           // 3P4 3P3 1P2 Unit Description
+  0x0000,  //  +   -   +   V    Phase 1 line to neutral volts
+  0x0002,  //  +   -   -   V    Phase 2 line to neutral volts
+  0x0004,  //  +   -   -   V    Phase 3 line to neutral volts
+  0x0006,  //  +   +   +   A    Phase 1 current
+  0x0008,  //  +   +   -   A    Phase 2 current
+  0x000A,  //  +   +   -   A    Phase 3 current
+  0x000C,  //  +   -   +   W    Phase 1 power
+  0x000E,  //  +   -   +   W    Phase 2 power
+  0x0010,  //  +   -   -   W    Phase 3 power
+  0x0018,  //  +   -   +   VAr  Phase 1 volt amps reactive
+  0x001A,  //  +   -   -   VAr  Phase 2 volt amps reactive
+  0x001C,  //  +   -   -   VAr  Phase 3 volt amps reactive
+  0x001E,  //  +   -   +        Phase 1 power factor
+  0x0020,  //  +   -   -        Phase 2 power factor
+  0x0022,  //  +   -   -        Phase 3 power factor
+  0x0046,  //  +   +   +   Hz   Frequency of supply voltages
+  0x0160,  //  +   +   +   kWh  Phase 1 export active energy
+  0x0162,  //  +   +   +   kWh  Phase 2 export active energy
+  0x0164,  //  +   +   +   kWh  Phase 3 export active energy
+//  0x015A,  //  +   +   +   kWh  Phase 1 import active energy
+//  0x015C,  //  +   +   +   kWh  Phase 2 import active energy
+//  0x015E,  //  +   +   +   kWh  Phase 3 import active energy
+  0x0156   //  +   +   +   kWh  Total active energy
 };
 
 struct SDM630 {
@@ -153,6 +161,22 @@ void SDM630Every250ms(void)
           break;
 
         case 15:
+          Energy.frequency[0] = value;
+          break;
+
+        case 16:
+          Energy.export_active[0] = value;
+          break;
+
+        case 17:
+          Energy.export_active[1] = value;
+          break;
+
+        case 18:
+          Energy.export_active[2] = value;
+          break;
+
+        case 19:
           EnergyUpdateTotal(value, true);
           break;
       }
@@ -179,6 +203,7 @@ void Sdm630SnsInit(void)
   if (result) {
     if (2 == result) { ClaimSerial(); }
     Energy.phase_count = 3;
+    Energy.frequency_common = true;             // Use common frequency
   } else {
     energy_flg = ENERGY_NONE;
   }

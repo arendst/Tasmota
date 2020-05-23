@@ -195,9 +195,14 @@ void HAssAnnounceRelayLight(void)
   bool ct_light = false;                                // Controls a CT Light when SetOption37 is >= 128
   bool wt_light = false;                                // Controls a White Light when SetOption37 is >= 128
   bool err_flag = false;                                // When true it blocks the creation of entities if the order of the Relays is not correct to avoid issue with Lights
+  bool PwmMod = false;                                  // Controls PWM_DIMMER module
 
   uint8_t dimmer = 1;
   uint8_t max_lights = 1;
+
+  #ifdef ESP8266
+        if (PWM_DIMMER == my_module_type) { PwmMod = true; } 
+  #endif //ESP8266
 
   // If there is a special Light to be enabled and managed with SetOption68 or SetOption37 >= 128, Discovery calculates the maximum number of entities to be generated in advance
 
@@ -213,7 +218,7 @@ void HAssAnnounceRelayLight(void)
   for (uint32_t i = 1; i <= MAX_RELAYS; i++)
   {
     bool RelayX = PinUsed(GPIO_REL1 +i-1);
-    is_topic_light = Settings.flag.hass_light && RelayX || light_type && !RelayX; // SetOption30 - Enforce HAss autodiscovery as light
+    is_topic_light = Settings.flag.hass_light && RelayX || light_type && !RelayX || PwmMod; // SetOption30 - Enforce HAss autodiscovery as light
 
     mqtt_data[0] = '\0'; // Clear retained message
 
@@ -232,7 +237,7 @@ void HAssAnnounceRelayLight(void)
       AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s"), kHAssError2);
     } else {
       if (Settings.flag.hass_discovery && (RelayX || (Light.device > 0) && (max_lights > 0)) && !err_flag )
-      {                    // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
+      {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
           char name[TOPSZ]; // friendlyname(33) + " " + index
           char value_template[33];
           char prefix[TOPSZ];
@@ -255,13 +260,8 @@ void HAssAnnounceRelayLight(void)
           TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP_getChipId());
 
   #ifdef USE_LIGHT
-        if ((i >= Light.device)
-  #ifdef ESP8266
-          || PWM_DIMMER == my_module_type
-  #endif
-        )
-        {
-          if (!RelayX) {
+        if (i >= Light.device) {
+          if (!RelayX || PwmMod) {
             char *brightness_command_topic = stemp1;
             strncpy_P(stemp3, Settings.flag.not_power_linked ? PSTR("last") : PSTR("brightness"), sizeof(stemp3)); // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
             char channel_num[9];

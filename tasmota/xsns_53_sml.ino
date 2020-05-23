@@ -2151,6 +2151,7 @@ init10:
 #else
 #ifdef ESP32
         meter_ss[meters] = new HardwareSerial(uart_index);
+        if (uart_index==0) { ClaimSerial(); }
         uart_index--;
         if (uart_index<0) uart_index=0;
 #else
@@ -2216,7 +2217,13 @@ uint32_t SML_Write(uint32_t meter,char *hstr) {
   SML_Send_Seq(meter,hstr);
   return 1;
 }
-#endif
+
+float SML_GetVal(uint32_t index) {
+  if (index<1 && index>SML_MAX_VARS) { index = 1;}
+  return meter_vars[index-1];
+}
+
+#endif // USE_SML_SCRIPT_CMD
 
 
 void SetDBGLed(uint8_t srcpin, uint8_t ledpin) {

@@ -552,6 +552,7 @@ void PWMDimmerHandleButton(void)
             if (button_hold_time[button_index] >= now) {
               bri_offset = (is_down_button ? -1 : 1);
               dgr_item = 255;
+              state_updated = true;
             }
 
             // If the button was held and the hold was not processed by a rule, we changed the
@@ -601,7 +602,7 @@ void PWMDimmerHandleButton(void)
     }
     if (new_bri != bri) {
 #ifdef USE_DEVICE_GROUPS
-      SendDeviceGroupMessage(power_button_index, (dgr_item ? DGR_MSGTYP_UPDATE : DGR_MSGTYP_UPDATE_MORE_TO_COME), DGR_ITEM_LIGHT_BRI, new_bri);
+      SendDeviceGroupMessage(power_button_index, DGR_MSGTYP_UPDATE_MORE_TO_COME, DGR_ITEM_LIGHT_BRI, new_bri);
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_PWM_DIMMER_REMOTE
       if (!active_device_is_local)
@@ -663,7 +664,7 @@ void PWMDimmerHandleButton(void)
 
   // If we're not changing the brightness or toggling the power and we made changes, send a group
   // update.
-  else if (dgr_item) {
+  if (dgr_item) {
 #ifdef USE_DEVICE_GROUPS
     if (dgr_item == 255) dgr_item = 0;
     SendDeviceGroupMessage(power_button_index, (dgr_more_to_come ? DGR_MSGTYP_UPDATE_MORE_TO_COME : DGR_MSGTYP_UPDATE_DIRECT), dgr_item, dgr_value);

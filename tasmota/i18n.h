@@ -65,6 +65,7 @@
 #define D_JSON_ERROR "Error"
 #define D_JSON_EVENT "Event"
 #define D_JSON_EVERY "Every"
+#define D_JSON_EXPORT "Export"
 #define D_JSON_EXPORT_ACTIVE "ExportActive"
 #define D_JSON_EXPORT_REACTIVE "ExportReactive"
 #define D_JSON_FAILED "Failed"
@@ -587,9 +588,19 @@
 #define D_CMND_ADCPARAM "AdcParam"
 
 // Commands led pwm settings
-#define D_CMND_SETLEDPWMOFF "SetLedPwmOff"
-#define D_CMND_SETLEDPWMON "SetLedPwmOn"
-#define D_CMND_SETLEDPWMMODE "SetLedPwmMode"
+#define D_CMND_SETLEDPWMOFF "LedPwmOff"
+#define D_CMND_SETLEDPWMON "LedPwmOn"
+#define D_CMND_SETLEDPWMMODE "LedPwmMode"
+
+// xsns_70_veml6075.ino
+#define D_JSON_UVA_INTENSITY "UvaIntensity"
+#define D_JSON_UVB_INTENSITY  "UvbItensity"
+#define D_CMND_VEML6075_POWER "power"
+#define D_CMND_VEML6075_DYNAMIC "dynamic"
+#define D_CMND_VEML6075_INTTIME "inttime"
+
+// xsns_71_veml7700.ino
+#define D_JSON_WHITE_CONTENT "WhiteContent"
 
 /********************************************************************************************/
 
