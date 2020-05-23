@@ -149,6 +149,8 @@ enum UserSelectablePins {
   GPIO_MIEL_HVAC_TX, GPIO_MIEL_HVAC_RX,  // Mitsubishi Electric HVAC
   GPIO_WE517_TX, GPIO_WE517_RX,        // ORNO WE517 Serial interface
   GPIO_AS608_TX, GPIO_AS608_RX,        // Serial interface AS608 / R503
+  GPIO_SHELLY_DIMMER_BOOT0,
+  GPIO_SHELLY_DIMMER_RST_INV,
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -382,6 +384,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_ELECTRIQ_MOODL
   AGPIO(GPIO_ELECTRIQ_MOODL_TX),
+#endif
+#ifdef USE_SHELLY_DIMMER
+  AGPIO(GPIO_SHELLY_DIMMER_BOOT0),
+  AGPIO(GPIO_SHELLY_DIMMER_RST_INV),
 #endif
 #endif  // USE_LIGHT
 
@@ -1254,7 +1260,7 @@ enum SupportedModules {
   SONOFF_S31, ZENGGE_ZF_WF017, SONOFF_POW_R2, SONOFF_IFAN02, BLITZWOLF_BWSHP, SHELLY1, SHELLY2, PHILIPS, NEO_COOLCAM, ESP_SWITCH,
   OBI, TECKIN, APLIC_WDP303075, TUYA_DIMMER, GOSUND, ARMTRONIX_DIMMERS, SK03_TUYA, PS_16_DZ, TECKIN_US, MANZOKU_EU_4,
   OBI2, YTF_IR_BRIDGE, DIGOO, KA10, ZX2820, MI_DESK_LAMP, SP10, WAGA, SYF05, SONOFF_L1,
-  SONOFF_IFAN03, EXS_DIMMER, PWM_DIMMER, SONOFF_D1, SONOFF_ZB_BRIDGE,
+  SONOFF_IFAN03, EXS_DIMMER, PWM_DIMMER, SONOFF_D1, SONOFF_ZB_BRIDGE, SHELLY_DIMMER,
   MAXMODULE };
 
 #define USER_MODULE        255
@@ -1267,7 +1273,7 @@ const char kModuleNames[] PROGMEM =
   "Sonoff S31|Zengge WF017|Sonoff Pow R2|Sonoff iFan02|BlitzWolf SHP|Shelly 1|Shelly 2|Xiaomi Philips|Neo Coolcam|ESP Switch|"
   "OBI Socket|Teckin|AplicWDP303075|Tuya MCU|Gosund SP1 v23|ARMTR Dimmer|SK03 Outdoor|PS-16-DZ|Teckin US|Manzoku strip|"
   "OBI Socket 2|YTF IR Bridge|Digoo DG-SP202|KA10|Luminea ZX2820|Mi Desk Lamp|SP10|WAGA CHCZ02MB|SYF05|Sonoff L1|"
-  "Sonoff iFan03|EXS Dimmer|PWM Dimmer|Sonoff D1|Sonoff ZbBridge"
+  "Sonoff iFan03|EXS Dimmer|PWM Dimmer|Sonoff D1|Sonoff ZbBridge|Shelly Dimmer"
   ;
 
 const uint8_t kModuleNiceList[] PROGMEM = {
@@ -1369,7 +1375,10 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   SYF05,
   YTF_IR_BRIDGE,
   WITTY,               // Development Devices
-  WEMOS
+  WEMOS,
+#ifdef USE_SHELLY_DIMMER
+  SHELLY_DIMMER
+#endif
 };
 
 enum SupportedTemplates8285 {
@@ -2645,6 +2654,26 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
     GPI8_LED1_INV,      // GPIO13 WIFI_CHK Blue Led on PCA (0 = On, 1 = Off) - Link and Power status
     GPI8_REL2,          // GPIO14 WIFI_O1 Relay 2 (0 = Off, 1 = On) controlling the fan
     GPI8_REL4,          // GPIO15 WIFI_O3 Relay 4 (0 = Off, 1 = On) controlling the fan
+    0, 0
+  },
+  {                   // SHELLY_DIMMER Shelly WiFi Dimmer v1 (ESP8266 w/ separate MCU dimmer)
+                      // https://shelly.cloud/wifi-smart-home-automation-shelly-dimmer/
+    0,                // GPIO00
+    GPIO_TXD,         // GPIO01 Co-processor serial TX
+    0,                // GPIO02 LED Link
+    GPIO_RXD,         // GPIO03 Co-processor serial RX
+    GPIO_SHELLY_DIMMER_BOOT0,  // GPIO04 Co-processor Boot0 pin
+    GPIO_SHELLY_DIMMER_RST_INV,  // GPIO05 Co-processor reset inverted
+                      // GPIO06 (SD_CLK   Flash)
+                      // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                      // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+    0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+    0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                      // GPIO11 (SD_CMD   Flash)
+    GPIO_SWT1_NP,     // GPIO12 SW 1 pin
+    0,                // GPIO13
+    GPIO_SWT2_NP,     // GPIO14 SW 2 pin
+    GPIO_LEDLNK,      // GPIO15
     0, 0
   }
 };

@@ -48,6 +48,7 @@
 | USE_PWM_DIMMER        | - | - | x | x | - | - | - |
 | USE_KEELOQ            | - | - | - | - | - | - | - |
 | USE_SONOFF_D1         | - | - | x | x | - | - | - |
+| USE_SHELLY_DIMMER     | - | - | x | x | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_LIGHT             | - | x | x | x | x | x | x |

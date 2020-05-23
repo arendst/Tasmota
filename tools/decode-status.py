@@ -238,7 +238,7 @@ a_features = [[
     "USE_EZOORP","USE_EZORTD","USE_EZOHUM","USE_EZOEC",
     "USE_EZOCO2","USE_EZOO2","USE_EZOPRS","USE_EZOFLO",
     "USE_EZODO","USE_EZORGB","USE_EZOPMP","USE_AS608",
-    "","","","",
+    "USE_SHELLY_DIMMER","","","",
     "","","","",
     "","","","",
     "","","","",
