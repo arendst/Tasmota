@@ -27,7 +27,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SERIALDELIMITER "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|"
   D_CMND_DEVICENAME "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|"
-  D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM "|"
+  D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM "|" D_CMND_LEDPWMON "|" D_CMND_LEDPWMOFF "|" D_CMND_LEDPWMMODE "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -50,7 +50,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndSerialDelimiter, &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig,
   &CmndDevicename, &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndWifiPower, &CmndTempOffset, &CmndHumOffset,
-  &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum,
+  &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
 #ifdef USE_I2C
   &CmndI2cScan, CmndI2cDriver,
 #endif
@@ -1889,4 +1889,60 @@ void CmndSensor(void)
 void CmndDriver(void)
 {
   XdrvCall(FUNC_COMMAND_DRIVER);
+}
+
+void CmndLedPwmOff(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    if (XdrvMailbox.payload < 0) {
+      Settings.ledpwm_off = 0;
+    }
+    else if (XdrvMailbox.payload > 255) {
+      Settings.ledpwm_off = 255;
+    } else {
+      Settings.ledpwm_off = XdrvMailbox.payload;
+    }
+    UpdateLedPowerAll();
+  }
+  ResponseCmndNumber(Settings.ledpwm_off);
+}
+
+void CmndLedPwmOn(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    if (XdrvMailbox.payload < 0) {
+      Settings.ledpwm_on = 0;
+    }
+    else if (XdrvMailbox.payload > 255) {
+      Settings.ledpwm_on = 255;
+    } else {
+      Settings.ledpwm_on = XdrvMailbox.payload;
+    }
+    UpdateLedPowerAll();
+  }
+  ResponseCmndNumber(Settings.ledpwm_on);
+}
+
+void CmndLedPwmMode(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_LEDS)) {
+    if (!PinUsed(GPIO_LEDLNK)) { XdrvMailbox.index = 1; }
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
+      uint32_t mask = 1 << (XdrvMailbox.index -1);        // Led to configure
+      switch (XdrvMailbox.payload) {
+      case 0: // digital
+        Settings.ledpwm_mask &= (0xFF ^ mask);
+        break;
+      case 1: // pwm
+        Settings.ledpwm_mask |= mask;
+        break;
+      case 2: // toggle
+        Settings.ledpwm_mask ^= mask;
+        break;
+      }
+      UpdateLedPowerAll();
+    }
+    bool state = bitRead(Settings.ledpwm_mask, XdrvMailbox.index -1);
+    ResponseCmndIdxChar(GetStateText(state));
+  }
 }

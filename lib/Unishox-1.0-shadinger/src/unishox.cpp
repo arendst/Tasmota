@@ -388,9 +388,9 @@ uint32_t Unishox::getNextBit(void) {
       in_eof = true;
       return 1;             // return only 1s, which appends 'r' in worst case
     }
-    byte_in = in[byte_no++];
+    byte_in = pgm_read_byte(&in[byte_no++]);
     if (ESCAPE_MARKER == byte_in) {
-      byte_in = in[byte_no++] - 1;      // we shouldn't need to test if byte_no >= len, because it should not be possible to end with ESCAPE_MARKER
+      byte_in = pgm_read_byte(&in[byte_no++]) - 1;      // we shouldn't need to test if byte_no >= len, because it should not be possible to end with ESCAPE_MARKER
     }
     bit_no = 0;
   }
@@ -479,6 +479,9 @@ int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out,
   out[ol] = 0;
   // while ((byte_no << 3) + bit_no - 8 < len) {
   while (!in_eof) {
+    if (ol >= len_out) {
+      break;
+    }
     int32_t h, v;
     char c = 0;
     byte is_upper = is_all_upper;
@@ -564,11 +567,11 @@ int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out,
       }
     }
     out[ol++] = c;
-
-    if (ol >= len_out) {
-      return -1;        // overflow
-    }
   }
 
-  return ol;
+  if (ol > len_out) {
+    return -1;    // overflow
+  } else {
+    return ol;
+  }
 }

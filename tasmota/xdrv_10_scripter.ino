@@ -71,7 +71,7 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #ifdef USE_SCRIPT_COMPRESSION
 #include <unishox.h>
 
-Unishox compressor;   // singleton
+//Unishox compressor;   // singleton
 #define SCRIPT_COMPRESS compressor.unishox_compress
 #define SCRIPT_DECOMPRESS compressor.unishox_decompress
 #ifndef UNISHOXRSIZE
@@ -1228,6 +1228,52 @@ chknext:
           fvar=UtcTime()-(uint32_t)EPOCH_OFFSET;
           goto exit;
         }
+#ifdef USE_ENERGY_SENSOR
+        if (!strncmp(vname,"enrg[",5)) {
+          lp+=5;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+          while (*lp==' ') lp++;
+          switch ((uint32_t)fvar) {
+            case 0:
+              fvar=Energy.total;
+              break;
+            case 1:
+              fvar=Energy.voltage[0];
+              break;
+            case 2:
+              fvar=Energy.voltage[1];
+              break;
+            case 3:
+              fvar=Energy.voltage[2];
+              break;
+            case 4:
+              fvar=Energy.current[0];
+              break;
+            case 5:
+              fvar=Energy.current[1];
+              break;
+            case 6:
+              fvar=Energy.current[2];
+              break;
+            case 7:
+              fvar=Energy.active_power[0];
+              break;
+            case 8:
+              fvar=Energy.active_power[1];
+              break;
+            case 9:
+              fvar=Energy.active_power[2];
+              break;
+
+            default:
+              fvar=99999;
+              break;
+          }
+          len=0;
+          lp++;
+          goto exit;
+        }
+#endif //USE_ENERGY_SENSOR
         break;
       case 'f':
 #ifdef USE_SCRIPT_FATFS
@@ -1948,6 +1994,15 @@ chknext:
         }
 #endif
 #if defined(USE_SML_M) && defined (USE_SML_SCRIPT_CMD)
+        if (!strncmp(vname,"sml[",4)) {
+          lp+=4;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+          SCRIPT_SKIP_SPACES
+          fvar=SML_GetVal[fvar];
+          lp++;
+          len=0;
+          goto exit;
+        }
         if (!strncmp(vname,"sml(",4)) {
           lp+=4;
           float fvar1;
@@ -3948,6 +4003,12 @@ void ScriptSaveSettings(void) {
 
     strlcpy(glob_script_mem.script_ram,str.c_str(), glob_script_mem.script_size);
 
+    if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("script error: must start with >D"));
+      bitWrite(Settings.rule_enabled, 0, 0);
+    }
+
+
 #if defined(USE_24C256) && !defined(USE_SCRIPT_FATFS)
     if (glob_script_mem.flags&1) {
       EEP_WRITE(0,EEP_SCRIPT_SIZE,glob_script_mem.script_ram);
@@ -3983,9 +4044,9 @@ void ScriptSaveSettings(void) {
 #ifndef ESP32_SCRIPT_SIZE
 
   //AddLog_P2(LOG_LEVEL_INFO,PSTR("in string: %s len = %d"),glob_script_mem.script_ram,strlen(glob_script_mem.script_ram));
-  uint32_t len_compressed = SCRIPT_COMPRESS(glob_script_mem.script_ram, strlen(glob_script_mem.script_ram)+1, Settings.rules[0], MAX_SCRIPT_SIZE-1);
-  Settings.rules[0][len_compressed] = 0;
+  uint32_t len_compressed = SCRIPT_COMPRESS(glob_script_mem.script_ram, strlen(glob_script_mem.script_ram), Settings.rules[0], MAX_SCRIPT_SIZE-1);
   if (len_compressed > 0) {
+    Settings.rules[0][len_compressed] = 0;
     AddLog_P2(LOG_LEVEL_INFO,PSTR("script compressed to %d %%"),len_compressed * 100 / strlen(glob_script_mem.script_ram));
   } else {
     AddLog_P2(LOG_LEVEL_INFO, PSTR("script compress error: %d"), len_compressed);
@@ -4899,12 +4960,20 @@ const char SCRIPT_MSG_TEXTINP[] PROGMEM =
 const char SCRIPT_MSG_NUMINP[] PROGMEM =
   "<div><center><label><b>%s</b><input  min='%s' max='%s' step='%s' value='%s' type='number' style='width:200px' onfocusin='pr(0)' onfocusout='pr(1)' onchange='siva(value,\"%s\")'></label></div>";
 
+
+#ifdef USE_GOOGLE_CHARTS
 const char SCRIPT_MSG_GTABLE[] PROGMEM =
   "<script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>"
   "<script type='text/javascript'>google.charts.load('current',{packages:['corechart']});</script>"
-  "<script type='text/javascript'>google.charts.load('current',{packages:['table']});</script>"
-  "<script type='text/javascript'>google.charts.load('current',{packages:['gauge']});</script>"
-  "<style>.hRow{font-weight:bold;color:black;background-color:lightblue;}.hCol{font-weight:bold;color:black;background-color:lightblue;}.tCell{color:black}</style>";
+  "<style>.hRow{font-weight:bold;color:black;background-color:lightblue;}.hCol{font-weight:bold;color:black;background-color:lightblue;}.tCell{color:black}</style>"
+  "<style>#chart1{display: inline-block;margin: 0 auto;#timeline text{fill:magenta;}}</style>";
+
+const char SCRIPT_MSG_TABLE[] PROGMEM =
+  "<script type='text/javascript'>google.charts.load('current',{packages:['table']});</script>";
+const char SCRIPT_MSG_GAUGE[] PROGMEM =
+  "<script type='text/javascript'>google.charts.load('current',{packages:['gauge']});</script>";
+const char SCRIPT_MSG_TIMELINE[] PROGMEM =
+  "<script type='text/javascript'>google.charts.load('current',{packages:['timeline']});</script>";
 
 
 const char SCRIPT_MSG_GTABLEa[] PROGMEM =
@@ -4913,9 +4982,15 @@ const char SCRIPT_MSG_GTABLEa[] PROGMEM =
   "var data=google.visualization.arrayToDataTable([";
 
 
+const char SCRIPT_MSG_GTABLEd[] PROGMEM =
+"['Timeline','start','end'],";
+
+//#define CHART_EXTRA_OPTIONS ",width:'640px',height:'480px'"
+#define CHART_EXTRA_OPTIONS
+
 const char SCRIPT_MSG_GTABLEb[] PROGMEM =
  "]);"
- "var options={%s};"
+ "var options={%s" CHART_EXTRA_OPTIONS "};"
  "var chart=new google.visualization.%s(document.getElementById('chart%1d'));"
  "chart.draw(data,options);}"
  "google.charts.setOnLoadCallback(drawChart);</script>";
@@ -4923,14 +4998,82 @@ const char SCRIPT_MSG_GTABLEb[] PROGMEM =
 const char SCRIPT_MSG_GOPT1[] PROGMEM =
 "title:'%s',isStacked:false";
 
-const char SCRIPT_MSG_GOPT3[] PROGMEM =
-"title:'%s',vAxes:{0:{maxValue:%d},1:{maxValue:%d}},series:{0:{targetAxisIndex:0},1:{targetAxisIndex:1}}";
-
-
 const char SCRIPT_MSG_GOPT2[] PROGMEM =
 "showRowNumber:true,sort:'disable',allowHtml:true,width:'100%%',height:'100%%',cssClassNames:cssc";
 
+const char SCRIPT_MSG_GOPT3[] PROGMEM =
+"title:'%s',isStacked:false,vAxes:{0:{maxValue:%d},1:{maxValue:%d}},series:{0:{targetAxisIndex:0},1:{targetAxisIndex:1}}%s";
+
+const char SCRIPT_MSG_GOPT4[] PROGMEM =
+//"hAxis:{minValue:new Date(0,1,1,0,0),maxValue:new Date(0,1,2,0,0),format:'HH:mm'}";
+"hAxis:{minValue:new Date(0,1,1,0,0),maxValue:new Date(0,1,2,0,0),format:'HH:mm'},theme: 'maximized'";
+
+const char SCRIPT_MSG_GOPT5[] PROGMEM =
+"new Date(0,1,1,%d,%d)";
+
 const char SCRIPT_MSG_GTE1[] PROGMEM = "'%s'";
+
+#define GLIBS_MAIN 1<<0
+#define GLIBS_TABLE 1<<1
+#define GLIBS_GAUGE 1<<2
+#define GLIBS_TIMELINE 1<<3
+
+#define MAX_GARRAY 4
+
+char *gc_get_arrays(char *lp, float **arrays, uint8_t *ranum, uint8_t *rentries) {
+struct T_INDEX ind;
+uint8_t vtype;
+uint8 entries=0;
+
+  uint8_t anum=0;
+  while (anum<MAX_GARRAY) {
+    if (*lp==')' || *lp==0) break;
+    char *lp1=lp;
+    lp=isvar(lp,&vtype,&ind,0,0,0);
+    if (vtype!=VAR_NV) {
+      SCRIPT_SKIP_SPACES
+      uint8_t index=glob_script_mem.type[ind.index].index;
+      if ((vtype&STYPE)==0) {
+        // numeric result
+        //Serial.printf("numeric %d - %d \n",ind.index,index);
+        if (glob_script_mem.type[ind.index].bits.is_filter) {
+          //Serial.printf("numeric array\n");
+          uint8_t len=0;
+          float *fa=Get_MFAddr(index,&len);
+          //Serial.printf(">> 2 %d\n",(uint32_t)*fa);
+          if (fa && len>=entries) {
+            if (!entries) {entries = len;}
+            // add array to list
+            arrays[anum]=fa;
+            anum++;
+          }
+        }
+      } else {
+        lp=lp1;
+        break;
+      }
+    }
+  }
+  *ranum=anum;
+  *rentries=entries;
+  return lp;
+}
+
+char *gc_send_labels(char *lp,uint32_t anum) {
+  WSContentSend_PD("[");
+  for (uint32_t cnt=0; cnt<anum+1; cnt++) {
+    char label[SCRIPT_MAXSSIZE];
+    lp=GetStringResult(lp,OPER_EQU,label,0);
+    SCRIPT_SKIP_SPACES
+    WSContentSend_PD(SCRIPT_MSG_GTE1,label);
+    //Serial.printf("labels %s\n",label);
+    if (cnt<anum) { WSContentSend_PD(","); }
+  }
+  WSContentSend_PD("],");
+  return lp;
+}
+
+#endif // USE_GOOGLE_CHARTS
 
 void ScriptGetVarname(char *nbuf,char *sp, uint32_t blen) {
 uint32_t cnt;
@@ -5141,124 +5284,27 @@ void ScriptWebShow(char mc) {
         }
         } else {
           if (*lin==mc) {
+#ifdef USE_GOOGLE_CHARTS
             lin++;
-            if (!strncmp(lin,"tb(",3)) {
-              // get google table
-              struct T_INDEX ind;
-              uint8_t vtype;
-              char *lp=lin+3;
-              uint8 entries=0;
-              #define MAX_GARRAY 4
-              float *arrays[MAX_GARRAY];
-              uint8_t anum=0;
-              while (anum<MAX_GARRAY) {
-                if (*lp==')' || *lp==0) break;
-                char *lp1=lp;
-                lp=isvar(lp,&vtype,&ind,0,0,0);
-                if (vtype!=VAR_NV) {
-                  SCRIPT_SKIP_SPACES
-                  uint8_t index=glob_script_mem.type[ind.index].index;
-                  if ((vtype&STYPE)==0) {
-                    // numeric result
-                    //Serial.printf("numeric %d - %d \n",ind.index,index);
-                    if (glob_script_mem.type[ind.index].bits.is_filter) {
-                      //Serial.printf("numeric array\n");
-                      uint8_t len=0;
-                      float *fa=Get_MFAddr(index,&len);
-                      //Serial.printf(">> 2 %d\n",(uint32_t)*fa);
-                      if (fa && len>=entries) {
-                        if (!entries) {entries = len;}
-                        // add array to list
-                        arrays[anum]=fa;
-                        anum++;
-                      }
-                    }
-                  } else {
-                    lp=lp1;
-                    break;
-                  }
-                }
-              }
-              //Serial.printf("arrays %d\n",anum);
-              //Serial.printf("entries %d\n",entries);
-
-              if (!google_libs) {
-                WSContentSend_PD(SCRIPT_MSG_GTABLE);
-                google_libs=1;
-              }
-
-              WSContentSend_PD(SCRIPT_MSG_GTABLEa);
-
-              // we know how many arrays and the number of entries
-              // we need to fetch the labels now
-              WSContentSend_PD("[");
-              for (uint32_t cnt=0; cnt<anum+1; cnt++) {
-                char label[SCRIPT_MAXSSIZE];
-                lp=GetStringResult(lp,OPER_EQU,label,0);
-                SCRIPT_SKIP_SPACES
-                WSContentSend_PD(SCRIPT_MSG_GTE1,label);
-                //Serial.printf("labels %s\n",label);
-                if (cnt<anum) { WSContentSend_PD(","); }
-              }
-              WSContentSend_PD("],");
-
-              // now we have to export the values
-              // fetch label part only once in combo string
-              char label[SCRIPT_MAXSSIZE];
-              lp=GetStringResult(lp,OPER_EQU,label,0);
+            if (!strncmp(lin,"gc(",3)) {
+                // get google table
+              lp=lin+3;
               SCRIPT_SKIP_SPACES
-              char *lblp=label;
-
-              for (uint32_t cnt=0; cnt<entries; cnt++) {
-                WSContentSend_PD("['");
-                char lbl[16];
-                strncpy(lbl,lblp,sizeof(lbl));
-                for (uint32_t i=0; i<strlen(lblp); i++) {
-                  if (lblp[i]=='|') {
-                    lbl[i]=0;
-                    lblp+=i+1;
-                    break;
-                  }
-                  lbl[i]=lblp[i];
-                }
-                WSContentSend_PD(lbl);
-                WSContentSend_PD("',");
-                for (uint32_t ind=0; ind<anum; ind++) {
-                  char acbuff[32];
-                  float *fp=arrays[ind];
-                  dtostrfd(fp[cnt],glob_script_mem.script_dprec,acbuff);
-                  WSContentSend_PD("%s",acbuff);
-                  if (ind<anum-1) { WSContentSend_PD(","); }
-                }
-                WSContentSend_PD("]");
-                if (cnt<entries-1) { WSContentSend_PD(","); }
-              }
-
-              char header[SCRIPT_MAXSSIZE];
-              lp=GetStringResult(lp,OPER_EQU,header,0);
-              SCRIPT_SKIP_SPACES
-
-              char options[256];
-              snprintf_P(options,sizeof(options),SCRIPT_MSG_GOPT1,header);
-              //uint32_t slen=sizeof(SCRIPT_MSG_GOPT1)+strlen(header);
-
               const char *type;
-              if (*lp!=')') {
-                switch (*lp) {
+              const char *func;
+              char options[256];
+              uint8_t nanum=MAX_GARRAY;
+              uint8_t y2f=0;
+              char ctype;
+              ctype=*lp;
+              lp++;
+              if (!(google_libs&GLIBS_MAIN)) {
+                google_libs|=GLIBS_MAIN;
+                WSContentSend_PD(SCRIPT_MSG_GTABLE);
+              }
+              switch (ctype) {
                   case 'l':
                     type=PSTR("LineChart");
-                    if (*(lp+1)=='2') {
-                      // 2 y axes variant
-                      lp+=2;
-                      SCRIPT_SKIP_SPACES
-                      float max1;
-                      lp=GetNumericResult(lp,OPER_EQU,&max1,0);
-                      SCRIPT_SKIP_SPACES
-                      float max2;
-                      lp=GetNumericResult(lp,OPER_EQU,&max2,0);
-                      SCRIPT_SKIP_SPACES
-                      snprintf_P(options,sizeof(options),SCRIPT_MSG_GOPT3,header,(uint32_t)max1,(uint32_t)max2);
-                    }
                     break;
                   case 'b':
                     type=PSTR("BarChart");
@@ -5268,32 +5314,174 @@ void ScriptWebShow(char mc) {
                     break;
                   case 'g':
                     type=PSTR("Gauge");
+                    if (!(google_libs&GLIBS_GAUGE)) {
+                      google_libs|=GLIBS_GAUGE;
+                      WSContentSend_PD(SCRIPT_MSG_GAUGE);
+                    }
                     break;
                   case 't':
                     type=PSTR("Table");
-                    snprintf_P(options,sizeof(options),SCRIPT_MSG_GOPT2);
+                    if (!(google_libs&GLIBS_TABLE)) {
+                      google_libs|=GLIBS_TABLE;
+                      WSContentSend_PD(SCRIPT_MSG_TABLE);
+                    }
+                    break;
+                  case 'T':
+                    type=PSTR("Timeline");
+                    if (!(google_libs&GLIBS_TIMELINE)) {
+                      google_libs|=GLIBS_TIMELINE;
+                      WSContentSend_PD(SCRIPT_MSG_TIMELINE);
+                    }
                     break;
                   case 'h':
-                   type=PSTR("Histogram");
-                   break;
-                  default:
+                    type=PSTR("Histogram");
+                    break;
+                  case 'c':
                     type=PSTR("ColumnChart");
                     break;
+                  default:
+                    // error
+                    goto nextwebline;
+                    break;
+              }
+              if (ctype=='l' && *lp=='f') {
+                lp++;
+                func=PSTR(",curveType:'function'");
+              } else {
+                func="";
+              }
+              if (*lp=='2') {
+                lp++;
+                nanum=2;
+                y2f=1;
+              }
+              SCRIPT_SKIP_SPACES
+
+              //Serial.printf("type %d\n",ctype);
+
+              float *arrays[MAX_GARRAY];
+              uint8_t anum=0;
+              uint8 entries=0;
+              lp=gc_get_arrays(lp, &arrays[0], &anum, &entries);
+
+              if (anum>nanum) {
+                goto nextwebline;
+              }
+              // we know how many arrays and the number of entries
+              //Serial.printf("arrays %d\n",anum);
+              //Serial.printf("entries %d\n",entries);
+              if (ctype=='T') {
+                if (anum && !(entries&1)) {
+                  WSContentSend_PD(SCRIPT_MSG_GTABLEa);
+                  WSContentSend_PD(SCRIPT_MSG_GTABLEd);
+                  char label[SCRIPT_MAXSSIZE];
+                  lp=GetStringResult(lp,OPER_EQU,label,0);
+                  SCRIPT_SKIP_SPACES
+                  char *lblp=label;
+                  for (uint32_t ind=0; ind<anum; ind++) {
+                    char lbl[16];
+                    strncpy(lbl,lblp,sizeof(lbl));
+                    for (uint32_t i=0; i<strlen(lblp); i++) {
+                      if (lblp[i]=='|') {
+                        lbl[i]=0;
+                        lblp+=i+1;
+                        break;
+                      }
+                      lbl[i]=lblp[i];
+                    }
+                    for (uint32_t cnt=0; cnt<entries; cnt+=2) {
+                      WSContentSend_PD("['%s',",lbl);
+                      float *fp=arrays[ind];
+                      uint32_t time=fp[cnt];
+                      WSContentSend_PD(SCRIPT_MSG_GOPT5,time/60,time%60);
+                      WSContentSend_PD(",");
+                      time=fp[cnt+1];
+                      WSContentSend_PD(SCRIPT_MSG_GOPT5,time/60,time%60);
+                      WSContentSend_PD("]");
+                      if (cnt<entries-2) { WSContentSend_PD(","); }
+                    }
+                    if (ind<anum-1) { WSContentSend_PD(","); }
+                  }
+                  snprintf_P(options,sizeof(options),SCRIPT_MSG_GOPT4);
                 }
               } else {
-                type=PSTR("ColumnChart");
-              }
-              lp++;
+                // we need to fetch the labels now
+                WSContentSend_PD(SCRIPT_MSG_GTABLEa);
+                lp=gc_send_labels(lp,anum);
 
+                // now we have to export the values
+                // fetch label part only once in combo string
+                char label[SCRIPT_MAXSSIZE];
+                lp=GetStringResult(lp,OPER_EQU,label,0);
+                SCRIPT_SKIP_SPACES
+                char *lblp=label;
+
+                for (uint32_t cnt=0; cnt<entries; cnt++) {
+                  WSContentSend_PD("['");
+                  char lbl[16];
+                  strncpy(lbl,lblp,sizeof(lbl));
+                  for (uint32_t i=0; i<strlen(lblp); i++) {
+                    if (lblp[i]=='|') {
+                      lbl[i]=0;
+                      lblp+=i+1;
+                      break;
+                    }
+                    lbl[i]=lblp[i];
+                  }
+                  WSContentSend_PD(lbl);
+                  WSContentSend_PD("',");
+                  for (uint32_t ind=0; ind<anum; ind++) {
+                    char acbuff[32];
+                    float *fp=arrays[ind];
+                    dtostrfd(fp[cnt],glob_script_mem.script_dprec,acbuff);
+                    WSContentSend_PD("%s",acbuff);
+                    if (ind<anum-1) { WSContentSend_PD(","); }
+                  }
+                  WSContentSend_PD("]");
+                  if (cnt<entries-1) { WSContentSend_PD(","); }
+                }
+
+                // get header
+                char header[SCRIPT_MAXSSIZE];
+                lp=GetStringResult(lp,OPER_EQU,header,0);
+                SCRIPT_SKIP_SPACES
+
+                switch (ctype) {
+                  case 't':
+                    snprintf_P(options,sizeof(options),SCRIPT_MSG_GOPT2);
+                    break;
+                  default:
+                    snprintf_P(options,sizeof(options),SCRIPT_MSG_GOPT1,header);
+                    break;
+                }
+                // check for 2 axis option
+                if (y2f) {
+                  // 2 y axes variant
+                  SCRIPT_SKIP_SPACES
+                  float max1;
+                  lp=GetNumericResult(lp,OPER_EQU,&max1,0);
+                  SCRIPT_SKIP_SPACES
+                  float max2;
+                  lp=GetNumericResult(lp,OPER_EQU,&max2,0);
+                  SCRIPT_SKIP_SPACES
+                  snprintf_P(options,sizeof(options),SCRIPT_MSG_GOPT3,header,(uint32_t)max1,(uint32_t)max2,func);
+                }
+              }
               WSContentSend_PD(SCRIPT_MSG_GTABLEb,options,type,chartindex);
               chartindex++;
             } else {
               Replace_Cmd_Vars(lin,0,tmp,sizeof(tmp));
               WSContentSend_PD(PSTR("%s"),tmp);
             }
+#else
+          } else {
+            Replace_Cmd_Vars(lin,0,tmp,sizeof(tmp));
+            WSContentSend_PD(PSTR("%s"),tmp);
+#endif //USE_GOOGLE_CHARTS
           }
         }
       }
+nextwebline:
       if (*lp==SCRIPT_EOL) {
         lp++;
       } else {
@@ -5474,7 +5662,7 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_ram=sprt;
       glob_script_mem.script_size=UNISHOXRSIZE;
       len_decompressed = SCRIPT_DECOMPRESS(Settings.rules[0], strlen(Settings.rules[0]), glob_script_mem.script_ram, glob_script_mem.script_size);
-      glob_script_mem.script_ram[len_decompressed]=0;
+      if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed]=0;
       //AddLog_P2(LOG_LEVEL_INFO, PSTR("decompressed script len %d"),len_decompressed);
 #endif
 #endif
@@ -5567,6 +5755,14 @@ bool Xdrv10(uint8_t function)
     glob_script_mem.script_pram_size=MAX_SCRIPT_SIZE;
     glob_script_mem.flags=1;
 #endif
+
+    // a valid script MUST start with >D
+    if (glob_script_mem.script_ram[0]!='>' && glob_script_mem.script_ram[1]!='D') {
+      // clr all
+      memset(glob_script_mem.script_ram,0,glob_script_mem.script_size);
+      strcpy_P(glob_script_mem.script_ram, PSTR(">D\nscript error must start with >D"));
+      bitWrite(Settings.rule_enabled, 0, 0);
+    }
 
       // assure permanent memory is 4 byte aligned
       { uint32_t ptr=(uint32_t)glob_script_mem.script_pram;

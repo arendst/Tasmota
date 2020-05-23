@@ -213,7 +213,7 @@ char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
 #ifdef USE_RULES_COMPRESSION
 // Statically allocate one String per rule
 String k_rules[MAX_RULE_SETS] = { String(), String(), String() };   // Strings are created empty
-Unishox compressor;   // singleton
+// Unishox compressor;   // singleton
 #endif // USE_RULES_COMPRESSION
 
 // Returns whether the rule is uncompressed, which means the first byte is not NULL
@@ -263,18 +263,7 @@ void GetRule_decompress(String &rule, const char *rule_head) {
   size_t buf_len = 1 + *rule_head * 8;       // the first byte contains size of buffer for uncompressed rule / 8, buf_len may overshoot by 7
   rule_head++;                               // advance to the actual compressed buffer
 
-  // We use a nasty trick here. To avoid allocating twice the buffer,
-  // we first extend the buffer of the String object to the target size (maybe overshooting by 7 bytes)
-  // then we decompress in this buffer,
-  // and finally assign the raw string to the String, which happens to work: String uses memmove(), so overlapping works
-  rule.reserve(buf_len);
-  char* buf = rule.begin();
-
-  int32_t len_decompressed = compressor.unishox_decompress(rule_head, strlen(rule_head), buf, buf_len);
-  buf[len_decompressed] = 0;    // add NULL terminator
-
-  // AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: Rawdecompressed: %d"), len_decompressed);
-  rule = buf;       // assign the raw string to the String object (in reality re-writing the same data in the same place)
+  rule = Decompress(rule_head, buf_len);
 }
 #endif // USE_RULES_COMPRESSION
 

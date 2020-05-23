@@ -515,9 +515,7 @@ struct {
   uint8_t       ot_hot_water_setpoint;     // E8C
   uint8_t       ot_boiler_setpoint;        // E8D
   uint8_t       ot_flags;                  // E8E
-
-  uint8_t       free_e8f[1];               // E8F
-
+  uint8_t	      ledpwm_mask;               // F8F
   uint16_t      dimmer_hw_min;             // E90
   uint16_t      dimmer_hw_max;             // E92
   uint32_t      deepsleep;                 // E94
@@ -569,8 +567,10 @@ struct {
   uint16_t      windmeter_pulse_debounce;  // F3A
   int16_t       windmeter_speed_factor;    // F3C
   uint8_t       windmeter_tele_pchange;    // F3E
+  uint8_t	      ledpwm_on;                 // F3F
+  uint8_t	      ledpwm_off;                // F40
 
-  uint8_t       free_f3f[121];             // F3F - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f42[119];             // F41 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   uint16_t      pulse_counter_debounce_low;  // FB8
