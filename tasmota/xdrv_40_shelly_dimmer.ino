@@ -60,10 +60,7 @@ struct SHD
 {
     uint8_t *buffer = nullptr; // Serial receive buffer
     int byte_counter = 0;      // Index in serial receive buffer
-    int cmd_status = 0;
-    uint8_t power = 0;
-    uint8_t dimm[2] = {0, 0};
-    uint32_t fade_rate = 0;
+    uint8_t req_brightness = 0;
     SHD_DIMMER dimmer;
     uint32_t start_time = 0;
     uint8_t counter = 1;        // Packet counter
@@ -161,6 +158,16 @@ void ShdSendCmd(uint8_t cmd, uint8_t *payload, uint8_t len)
     data[pos++] = chksm & 0xff;
     data[pos++] = SHD_END_BYTE;
 
+#ifdef SHELLY_DIMMER_DEBUG
+    snprintf_P(log_data, sizeof(log_data), PSTR("SHD: ShdSendCmd: \""));
+    for (uint32_t i = 0; i < pos; i++)
+    {
+        snprintf_P(log_data, sizeof(log_data), PSTR("%s %02x"), log_data, data[i]);
+    }
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
+    AddLog(LOG_LEVEL_DEBUG_MORE);
+#endif
+
     Serial.write(data, pos);
 }
 
@@ -194,30 +201,35 @@ void ShdSendSetState(uint16_t brightness, uint16_t func, uint16_t fade_rate)
 
     // as specified in STM32 assembly
     if (fade_rate > 100)
-    fade_rate = 100;
+        fade_rate = 100;
 
     payload[4] = fade_rate & 0xff;
     payload[5] = fade_rate >> 8;
 
-    // ShdSendCmd(SHD_SET_STATE_CMD, payload, sizeof(payload));
+    ShdSendCmd(SHD_SET_STATE_CMD, payload, sizeof(payload));
 }
 
 bool ShdSyncState()
 {
 #ifdef SHELLY_DIMMER_DEBUG
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Serial %p, Cmd %d"), ShdSerial, Shd.cmd_status);
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set Brightness Want %d, Is %d"), Shd.dimm[0], Shd.dimmer.brightness);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Serial %p"), ShdSerial);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set Brightness Want %d, Is %d"), Shd.req_brightness, Shd.dimmer.brightness);
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set Fade Want %d, Is %d"), Settings.light_speed, Shd.dimmer.fade_rate);
 #endif
 
-    if (!ShdSerial || Shd.cmd_status != 0)
+    if (!ShdSerial)
         return false;
 
-    if (Shd.dimm[0] != Shd.dimmer.brightness)
-        ShdSetBri(Shd.dimm[0]);
+    if (Shd.req_brightness != Shd.dimmer.brightness)
+    {
+        ShdSetBri(Shd.req_brightness);
+        // delay(50);
+        // ShdSendFadeRate(Settings.light_speed);
+    }
 
-    if (Settings.light_speed != Shd.dimmer.fade_rate)
-        ShdSendSetState(Shd.dimm[0], 2, Settings.light_speed);
+    // if (Settings.light_speed != Shd.dimmer.fade_rate)
+    //     ShdSendFadeRate(Settings.light_speed);
+    //     ShdSendSetState(Shd.req_brightness, 2, Settings.light_speed);
 }
 
 void ShdDebugState()
@@ -326,17 +338,8 @@ bool ShdSetChannels(void)
     AddLog(LOG_LEVEL_DEBUG_MORE);
 #endif
 
-    Shd.dimm[0] = ((uint32_t *)XdrvMailbox.data)[0];
+    Shd.req_brightness = ((uint32_t *)XdrvMailbox.data)[0];
 
-    return ShdSyncState();
-}
-
-bool ShdSetPower(void)
-{
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Set Power, Device %d, Power 0x%02x"),
-                        active_device, XdrvMailbox.index);
-
-    Shd.power = XdrvMailbox.index;
     return ShdSyncState();
 }
 
@@ -442,13 +445,14 @@ bool ShdSerialInput(void)
         {
             // finished
 #ifdef SHELLY_DIMMER_DEBUG
-                snprintf_P(log_data, sizeof(log_data), PSTR("SHD: RX Packet: \""));
-                for (uint32_t i = 0; i < Shd.byte_counter; i++)
-                {
-                    snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, Shd.buffer[i]);
-                }
-                snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
-                AddLog(LOG_LEVEL_DEBUG_MORE);
+            Shd.byte_counter++;
+            snprintf_P(log_data, sizeof(log_data), PSTR("SHD: RX Packet: \""));
+            for (uint32_t i = 0; i < Shd.byte_counter; i++)
+            {
+                snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, Shd.buffer[i]);
+            }
+            snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
+            AddLog(LOG_LEVEL_DEBUG_MORE);
 #endif
             Shd.byte_counter = 0;
             return true;
@@ -530,9 +534,6 @@ bool Xdrv32(uint8_t function)
             break;
         case FUNC_INIT:
             ShdInit();
-            break;
-        case FUNC_SET_DEVICE_POWER:     //TODO(james): merge these two?
-            result = ShdSetPower();
             break;
         case FUNC_SET_CHANNELS:
             result = ShdSetChannels();
