@@ -765,6 +765,9 @@ void SettingsDefaultSet2(void)
   Settings.blinkcount = APP_BLINKCOUNT;
   Settings.ledstate = APP_LEDSTATE;
   Settings.ledmask = APP_LEDMASK;
+//  Settings.ledpwm_off = 0;
+  Settings.ledpwm_on = 255;
+//  Settings.ledpwm_mask = 0;
   Settings.pulse_timer[0] = APP_PULSETIME;
 //  for (uint32_t i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
 
@@ -1055,11 +1058,6 @@ void SettingsDefaultSet2(void)
   Settings.flag2 = flag2;
   Settings.flag3 = flag3;
   Settings.flag4 = flag4;
-  
-  // Led PWM
-  Settings.ledpwm_off = 0;
-  Settings.ledpwm_on = 255;
-  Settings.ledpwm_mask = 0;
 }
 
 /********************************************************************************************/
@@ -1405,7 +1403,6 @@ void SettingsDelta(void)
       Settings.config_version = 1;  // ESP32
 #endif  // ESP32
     }
-
     if (Settings.version < 0x08020006) {
 #ifdef ESP32
       Settings.module = WEMOS;
@@ -1416,16 +1413,11 @@ void SettingsDelta(void)
       if (Settings.rules[1][0] == 0) { Settings.rules[1][1] = 0; }
       if (Settings.rules[2][0] == 0) { Settings.rules[2][1] = 0; }
     }
-	
-	// ledpwm
-    if (Settings.version < 0x08030001) {
+    if (Settings.version < 0x08030002) {
+      SettingsUpdateText(SET_DEVICENAME, SettingsText(SET_FRIENDLYNAME1));
       Settings.ledpwm_off = 0;
       Settings.ledpwm_on = 255;
       Settings.ledpwm_mask = 0;
-    }
-
-    if (Settings.version < 0x08030002) {
-      SettingsUpdateText(SET_DEVICENAME, SettingsText(SET_FRIENDLYNAME1));
     }
 
     Settings.version = VERSION;

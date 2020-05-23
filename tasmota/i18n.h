@@ -295,6 +295,9 @@
 #define D_CMND_LEDPOWER "LedPower"
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_LEDMASK "LedMask"
+#define D_CMND_LEDPWMOFF "LedPwmOff"
+#define D_CMND_LEDPWMON "LedPwmOn"
+#define D_CMND_LEDPWMMODE "LedPwmMode"
 #define D_CMND_WIFIPOWER "WifiPower"
 #define D_CMND_SPEEDUNIT "SpeedUnit"
 #define D_CMND_I2CSCAN "I2CScan"
@@ -586,11 +589,6 @@
 
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
-
-// Commands led pwm settings
-#define D_CMND_SETLEDPWMOFF "LedPwmOff"
-#define D_CMND_SETLEDPWMON "LedPwmOn"
-#define D_CMND_SETLEDPWMMODE "LedPwmMode"
 
 // xsns_70_veml6075.ino
 #define D_JSON_UVA_INTENSITY "UvaIntensity"
