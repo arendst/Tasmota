@@ -1896,8 +1896,8 @@ void CmndSetLedPwmOff(void)
   if (XdrvMailbox.data_len > 0) {
 	if (XdrvMailbox.payload < 0) {
 	  Settings.ledpwm_off = 0;
-	} else if (XdrvMailbox.payload > Settings.pwm_range) {
-	  Settings.ledpwm_off = Settings.pwm_range;
+	} else if (XdrvMailbox.payload > 255) {
+	  Settings.ledpwm_off = 255;
     } else {
       Settings.ledpwm_off = XdrvMailbox.payload;
     }
@@ -1911,8 +1911,8 @@ void CmndSetLedPwmOn(void)
   if (XdrvMailbox.data_len > 0) {
     if (XdrvMailbox.payload < 0) {
 	  Settings.ledpwm_on = 0;
-    } else if (XdrvMailbox.payload > Settings.pwm_range) {
-	  Settings.ledpwm_on = Settings.pwm_range;
+    } else if (XdrvMailbox.payload > 255) {
+	  Settings.ledpwm_on = 255;
     } else {
 	  Settings.ledpwm_on = XdrvMailbox.payload;
     }
