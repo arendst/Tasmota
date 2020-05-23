@@ -62,11 +62,15 @@ void SerialBridgeInput(void)
       if ((serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFFER_SIZE -1) &&    // Add char to string if it still fits and ...
           !in_byte_is_delimiter) {                                             // Char is not a delimiter
         serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
-        serial_bridge_polling_window = millis();                               // Wait for more data
-      } else {
+      }
+      
+      if ((serial_bridge_in_byte_counter >= SERIAL_BRIDGE_BUFFER_SIZE -1) ||   // Send message when buffer is full or ...
+          in_byte_is_delimiter) {                                              // Char is delimiter
         serial_bridge_polling_window = 0;                                      // Publish now
         break;
       }
+
+      serial_bridge_polling_window = millis();                                 // Wait for more data
     }
   }
 

@@ -1299,11 +1299,15 @@ void SerialInput(void)
         if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&                   // Add char to string if it still fits and ...
             !in_byte_is_delimiter) {                                             // Char is not a delimiter
           serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-          serial_polling_window = millis();
-        } else {
+        }
+        
+        if ((serial_in_byte_counter >= INPUT_BUFFER_SIZE -1) ||                  // Send message when buffer is full or ...
+            in_byte_is_delimiter) {                                              // Char is delimiter
           serial_polling_window = 0;                                             // Reception done - send mqtt
           break;
         }
+
+        serial_polling_window = millis();                                        // Wait for next char
       }
     }
 
