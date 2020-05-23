@@ -203,6 +203,7 @@ void Sdm630SnsInit(void)
   if (result) {
     if (2 == result) { ClaimSerial(); }
     Energy.phase_count = 3;
+    Energy.frequency_common = true;             // Use common frequency
   } else {
     energy_flg = ENERGY_NONE;
   }
