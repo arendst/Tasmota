@@ -1291,10 +1291,13 @@ void SerialInput(void)
       }
     } else {
       if (serial_in_byte || Settings.flag.mqtt_serial_raw) {                     // Any char between 1 and 127 or any char (0 - 255) - CMND_SERIALSEND3
+        bool in_byte_is_delimiter =                                              // Char is delimiter when...
+          (((Settings.serial_delimiter < 128) && (serial_in_byte == Settings.serial_delimiter)) || // Any char between 1 and 127 and being delimiter
+          ((Settings.serial_delimiter == 128) && !isprint(serial_in_byte))) &&   // Any char not between 32 and 127
+          !Settings.flag.mqtt_serial_raw;                                        // In raw mode (CMND_SERIALSEND3) there is never a delimiter
+
         if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&                   // Add char to string if it still fits and ...
-            ((isprint(serial_in_byte) && (128 == Settings.serial_delimiter)) ||  // Any char between 32 and 127
-            ((serial_in_byte != Settings.serial_delimiter) && (128 != Settings.serial_delimiter)) ||  // Any char between 1 and 127 and not being delimiter
-              Settings.flag.mqtt_serial_raw)) {                                  // Any char between 0 and 255 - CMND_SERIALSEND3
+            !in_byte_is_delimiter) {                                             // Char is not a delimiter
           serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
           serial_polling_window = millis();
         } else {
