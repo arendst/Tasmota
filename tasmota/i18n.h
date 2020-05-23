@@ -587,6 +587,11 @@
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
 
+// Commands led pwm settings
+#define D_CMND_SETLEDPWMOFF "LedPwmOff"
+#define D_CMND_SETLEDPWMON "LedPwmOn"
+#define D_CMND_SETLEDPWMMODE "LedPwmMode"
+
 // xsns_70_veml6075.ino
 #define D_JSON_UVA_INTENSITY "UvaIntensity"
 #define D_JSON_UVB_INTENSITY  "UvbItensity"

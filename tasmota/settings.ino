@@ -1055,6 +1055,11 @@ void SettingsDefaultSet2(void)
   Settings.flag2 = flag2;
   Settings.flag3 = flag3;
   Settings.flag4 = flag4;
+  
+  // Led PWM
+  Settings.ledpwm_off = 0;
+  Settings.ledpwm_on = 255;
+  Settings.ledpwm_mask = 0;
 }
 
 /********************************************************************************************/
@@ -1411,6 +1416,13 @@ void SettingsDelta(void)
       if (Settings.rules[1][0] == 0) { Settings.rules[1][1] = 0; }
       if (Settings.rules[2][0] == 0) { Settings.rules[2][1] = 0; }
     }
+	
+	// ledpwm
+    if (Settings.version < 0x08030001) {
+      Settings.ledpwm_off = 0;
+      Settings.ledpwm_on = 255;
+      Settings.ledpwm_mask = 0;
+    }
 
     if (Settings.version < 0x08030002) {
       SettingsUpdateText(SET_DEVICENAME, SettingsText(SET_FRIENDLYNAME1));
@@ -1419,4 +1431,5 @@ void SettingsDelta(void)
     Settings.version = VERSION;
     SettingsSave(1);
   }
+
 }

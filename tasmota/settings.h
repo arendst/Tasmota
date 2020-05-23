@@ -569,8 +569,11 @@ struct {
   uint16_t      windmeter_pulse_debounce;  // F3A
   int16_t       windmeter_speed_factor;    // F3C
   uint8_t       windmeter_tele_pchange;    // F3E
-
-  uint8_t       free_f3f[121];             // F3F - Decrement if adding new Setting variables just above and below
+  uint8_t		ledpwm_mask;			   // F3F
+  uint8_t		ledpwm_on;				   // F40
+  uint8_t		ledpwm_off;				   // F41
+  
+  uint8_t       free_f42[118];             // F42 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   uint16_t      pulse_counter_debounce_low;  // FB8
