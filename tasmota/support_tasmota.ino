@@ -1349,7 +1349,11 @@ void SerialInput(void)
     bool assume_json = (!Settings.flag.mqtt_serial_raw && (serial_in_buffer[0] == '{'));
     Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":%s%s%s}"),
       (assume_json) ? "" : "\"",
-      (Settings.flag.mqtt_serial_raw) ? ToHex_P((unsigned char*)serial_in_buffer, serial_in_byte_counter, hex_char, sizeof(hex_char)) : serial_in_buffer,
+      (Settings.flag.mqtt_serial_raw) 
+        ? ToHex_P((unsigned char*)serial_in_buffer, serial_in_byte_counter, hex_char, sizeof(hex_char)) 
+        : (assume_json) 
+            ? serial_in_buffer 
+            : EscapeJSONString(serial_in_buffer).c_str(),
       (assume_json) ? "" : "\"");
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
     XdrvRulesProcess();
