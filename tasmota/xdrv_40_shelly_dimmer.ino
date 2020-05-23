@@ -48,18 +48,12 @@ TasmotaSerial *ShdSerial = nullptr;
 
 typedef struct
 {
-    uint8_t on = 0;
-    uint32_t bright_tbl = 0;
-    uint32_t dimm = 0;
-    uint8_t impuls_start = 0;
-    uint32_t fade_rate = 0;
-} SHD_CHANNEL;
-
-typedef struct
-{
     uint8_t version_major = 0;
     uint8_t version_minor = 0;
-    SHD_CHANNEL channel[2];
+
+    uint32_t brightness = 0;
+    uint32_t power = 0;
+    uint32_t fade_rate = 0;
 } SHD_DIMMER;
 
 struct SHD
@@ -72,7 +66,7 @@ struct SHD
     uint32_t fade_rate = 0;
     SHD_DIMMER dimmer;
     uint32_t start_time = 0;
-    uint8_t counter = 1;
+    uint8_t counter = 1;        // Packet counter
 #ifdef USE_ENERGY_SENSOR
     uint32_t last_power_check = 0;       // Time when last power was checked
 #endif // USE_ENERGY_SENSOR
@@ -80,9 +74,9 @@ struct SHD
 
 static const uint8_t fade_rate_tab[] = {0x05, 0x05, 0x0a, 0x0f, 0x14, 0x19, 0x19, 0x19};
 
-/*
- * Internal Functions
- */
+/*********************************************************************************************\
+ * Helper Functions
+\*********************************************************************************************/
 
 uint16_t checksum(uint8_t *buf, int len)
 {
@@ -138,48 +132,9 @@ int check_byte()
     return 0;
 }
 
-void ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0) // TODO(james): Get rid of this?
-{
-    int retries = 3;
-    char rc;
-
-#ifdef SHELLY_DIMMER_DEBUG
-    snprintf_P(log_data, sizeof(log_data), PSTR("SHD: Tx Packet: \""));
-    for (uint32_t i = 0; i < len; i++)
-    {
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, data[i]);
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
-    AddLog(LOG_LEVEL_DEBUG_MORE);
-#endif
-
-    while (retries)
-    {
-        retries--;
-
-        ShdSerial->write(data, len);
-        ShdSerial->flush();
-
-        // wait for any response
-        uint32_t snd_time = millis();
-        while ((TimePassedSince(snd_time) < SHD_ACK_TIMEOUT) &&
-                     (!ShdSerial->available()))
-            ;
-
-        if (!ShdSerial->available())
-        {
-            // timeout
-#ifdef SHELLY_DIMMER_DEBUG
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: serial send timeout"));
-#endif
-            continue;
-        }
-
-        rc = ShdSerial->read();
-        if (rc == 0xFF)
-            break;
-    }
-}
+/*********************************************************************************************\
+ * Internal Functions
+\*********************************************************************************************/
 
 void ShdSendCmd(uint8_t cmd, uint8_t *payload, uint8_t len)
 {
@@ -194,7 +149,8 @@ void ShdSendCmd(uint8_t cmd, uint8_t *payload, uint8_t len)
 
     pos += 4;
 
-    if (payload) {
+    if (payload)
+    {
         memcpy(data + 4, payload, len);
         pos += len;
     }
@@ -206,15 +162,7 @@ void ShdSendCmd(uint8_t cmd, uint8_t *payload, uint8_t len)
     data[pos++] = SHD_END_BYTE;
 
     Serial.write(data, pos);
-
-    // ShdSerialSend(buffer, len);
 }
-
-// uint8_t ShdSetPower(uint8_t device, uint8_t power) // TODO(james): Get rid of this?
-// {
-//   Shd.dimmer.channel[device].dimm = power;
-//   ShdSendCmd(SHD_DIMM_1_ON + 0x10 * device + power ^ 1, 0);
-// }
 
 void ShdSetBri(uint16 brightness)
 {
@@ -223,10 +171,10 @@ void ShdSetBri(uint16 brightness)
     payload[0] = brightness & 0xff;
     payload[1] = brightness >> 8;
 
-    // Shd.dimmer.channel[device].bright_tbl = bri;
     ShdSendCmd(SHD_SWITCH_CMD, payload, sizeof(payload));
 }
 
+// TODO(james): Check what's going on here.
 void ShdSendFadeRate(uint8_t fade_rate)
 {
   ShdSendSetState(0, 2, fade_rate_tab[fade_rate & 0x07]);
@@ -251,61 +199,36 @@ void ShdSendSetState(uint16_t brightness, uint16_t func, uint16_t fade_rate)
     payload[4] = fade_rate & 0xff;
     payload[5] = fade_rate >> 8;
 
-    ShdSendCmd(SHD_SET_STATE_CMD, payload, sizeof(payload));
-}
-
-uint8_t ShdSyncState(uint8_t device)
-{
-#ifdef SHELLY_DIMMER_DEBUG
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Channel %d Power Want %d, Is %d"),
-                        device, bitRead(Shd.power, device), Shd.dimmer.channel[device].dimm);
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set Channel %d Brightness Want %d, Is %d"),
-                        device, Shd.dimm[device], Shd.dimmer.channel[device].bright_tbl);
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set Channel %d Fade Want %d, Is %d"),
-                        device, Shd.fade_rate, Shd.dimmer.channel[device].fade_rate);
-#endif
-
-    if (bitRead(Shd.power, device) &&
-            Shd.dimm[device] != Shd.dimmer.channel[device].bright_tbl)
-    {
-        ShdSetBri(Shd.dimm[device]);
-    }
-
-    if (Shd.fade_rate != Shd.dimmer.channel[device].fade_rate)
-    {
-        Shd.fade_rate = Settings.light_speed;
-        ShdSendSetState(Shd.dimm[device], 2, Shd.fade_rate);
-    }
-
-    // if (!Shd.dimm[device]) {
-    //   Shd.dimmer.channel[device].dimm = 0;
-    // } else if (Shd.dimmer.channel[device].dimm != bitRead(Shd.power, device)) {
-    //   ShdSetPower(device, bitRead(Shd.power, device));
-    // }
+    // ShdSendCmd(SHD_SET_STATE_CMD, payload, sizeof(payload));
 }
 
 bool ShdSyncState()
 {
 #ifdef SHELLY_DIMMER_DEBUG
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Serial %p, Cmd %d"), ShdSerial, Shd.cmd_status);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set Brightness Want %d, Is %d"), Shd.dimm[0], Shd.dimmer.brightness);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set Fade Want %d, Is %d"), Settings.light_speed, Shd.dimmer.fade_rate);
 #endif
 
     if (!ShdSerial || Shd.cmd_status != 0)
         return false;
 
-    ShdSyncState(0);
-    // ShdSyncState(1);
+    if (Shd.dimm[0] != Shd.dimmer.brightness)
+        ShdSetBri(Shd.dimm[0]);
+
+    if (Settings.light_speed != Shd.dimmer.fade_rate)
+        ShdSendSetState(Shd.dimm[0], 2, Settings.light_speed);
 }
 
 void ShdDebugState()
 {
 #ifdef SHELLY_DIMMER_DEBUG
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: MCU v%d.%d, c0: On:%d,Dim:%d,Tbl:%d(%d%%),Fade:%d"),
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: MCU v%d.%d, Brightness:%d(%d%%), Power:%d, Fade:%d"),
                             Shd.dimmer.version_major, Shd.dimmer.version_minor,
-                            Shd.dimmer.channel[0].on, Shd.dimmer.channel[0].dimm,
-                            Shd.dimmer.channel[0].bright_tbl,
-                            changeUIntScale(Shd.dimmer.channel[0].bright_tbl, 0, 255, 0, 100),
-                            Shd.dimmer.channel[0].fade_rate);
+                            Shd.dimmer.brightness,
+                            changeUIntScale(Shd.dimmer.brightness, 0, 255, 0, 100),
+                            Shd.dimmer.power,
+                            Shd.dimmer.fade_rate);
 #endif
 }
 
@@ -336,30 +259,32 @@ bool ShdPacketProcess(uint8_t expected_cmd)
                 uint16_t unknown_0 = Shd.buffer[pos + 1] << 8 | Shd.buffer[pos + 0];
                 
                 uint16_t brightness = Shd.buffer[pos + 3] << 8 | Shd.buffer[pos + 2];
-                uint32_t wattage = Shd.buffer[pos + 7] << 24 | 
+                uint32_t wattage_raw = Shd.buffer[pos + 7] << 24 | 
                         Shd.buffer[pos + 6] << 16 | 
                         Shd.buffer[pos + 5] << 8 | 
                         Shd.buffer[pos + 4];
-                // if (wattage > 0)
-                //     wattage = 1000000/wattage;
+                float wattage = 0;
+                if (wattage_raw > 0)
+                    wattage = 1000000 / wattage_raw;
                 uint32_t fade_rate = Shd.buffer[pos + 8] << 24 | 
                         Shd.buffer[pos + 9] << 16 | 
                         Shd.buffer[pos + 10] << 8 | 
                         Shd.buffer[pos + 11];
 
 #ifdef USE_ENERGY_SENSOR
-                Energy.active_power[0] = (wattage > 0) ? (float)(1000000/wattage) : 0;
+                Energy.active_power[0] = wattage;
                 
-                if (Shd.last_power_check != 0 && Energy.active_power[0] > 0) {
-                Energy.kWhtoday += (float)Energy.active_power[0] * (Rtc.utc_time - Shd.last_power_check) / 36;
-                EnergyUpdateToday();
+                if (Shd.last_power_check != 0 && Energy.active_power[0] > 0)
+                {
+                    Energy.kWhtoday += (float)Energy.active_power[0] * (Rtc.utc_time - Shd.last_power_check) / 36;
+                    EnergyUpdateToday();
                 }
                 Shd.last_power_check = Rtc.utc_time;
 #endif // USE_ENERGY_SENSOR
 
-                Shd.dimmer.channel[0].bright_tbl = brightness;
-                Shd.dimmer.channel[0].dimm = wattage;
-                Shd.dimmer.channel[0].fade_rate = fade_rate;
+                Shd.dimmer.brightness = brightness;
+                Shd.dimmer.power = wattage_raw;
+                Shd.dimmer.fade_rate = fade_rate;
             }
             break;  
         case SHD_VERSION_CMD:
@@ -401,8 +326,8 @@ bool ShdSetChannels(void)
     AddLog(LOG_LEVEL_DEBUG_MORE);
 #endif
 
-    Shd.dimm[0] = ((uint8_t *)XdrvMailbox.data)[0];
-    // Shd.dimm[1] = ((uint8_t *)XdrvMailbox.data)[1];
+    Shd.dimm[0] = ((uint32_t *)XdrvMailbox.data)[0];
+
     return ShdSyncState();
 }
 
