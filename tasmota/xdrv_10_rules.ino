@@ -263,7 +263,7 @@ void GetRule_decompress(String &rule, const char *rule_head) {
   size_t buf_len = 1 + *rule_head * 8;       // the first byte contains size of buffer for uncompressed rule / 8, buf_len may overshoot by 7
   rule_head++;                               // advance to the actual compressed buffer
 
-  rule = decompress(rule_head, buf_len);
+  rule = Decompress(rule_head, buf_len);
 }
 #endif // USE_RULES_COMPRESSION
 

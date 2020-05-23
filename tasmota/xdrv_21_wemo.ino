@@ -89,7 +89,7 @@ void WemoRespondToMSearch(int echo_type)
 
 //<scpd xmlns="urn:Belkin:service-1-0"><actionList><action><name>SetBinaryState</name><argumentList><argument><retval/><name>BinaryState</name><relatedStateVariable>BinaryState</relatedStateVariable><direction>in</direction></argument></argumentList></action><action><name>GetBinaryState</name><argumentList><argument><retval/><name>BinaryState</name><relatedStateVariable>BinaryState</relatedStateVariable><direction>out</direction></argument></argumentList></action></actionList><serviceStateTable><stateVariable sendEvents="yes"><name>BinaryState</name><dataType>bool</dataType><defaultValue>0</defaultValue></stateVariable><stateVariable sendEvents="yes"><name>level</name><dataType>string</dataType><defaultValue>0</defaultValue></stateVariable></serviceStateTable></scpd>\r\n\r\n
 //Successfully compressed from 779 to 249 bytes (-68%)
-const size_t WEMO_EVENTSERVICE_XML_size = 779;
+const size_t WEMO_EVENTSERVICE_XML_SIZE = 779;
 const char WEMO_EVENTSERVICE_XML[] PROGMEM = "\x3D\x3C\x18\xC1\x11\xB0\x68\x5D\xE3\xE1\xEC\x17\xFE\x3C\xC8\x73\x08\xD3\x78\xF3"
                              "\xF3\xF9\x9E\x86\xCE\xB3\x90\xEB\x67\xB0\xFC\x3D\x0A\xC3\xAD\xCE\x20\xB7\xD4\x08"
                              "\x72\x0F\xC3\xD3\xAC\x6B\x3F\x0B\xCE\x88\x76\xF5\xFC\xC8\xBD\x57\x4C\xF4\x3B\x3A"
@@ -106,7 +106,7 @@ const char WEMO_EVENTSERVICE_XML[] PROGMEM = "\x3D\x3C\x18\xC1\x11\xB0\x68\x5D\x
 
 //<scpd xmlns="urn:Belkin:service-1-0"><specVersion><major>1</major><minor>0</minor></specVersion><actionList><action><name>GetMetaInfo</name><argumentList><retval /><name>GetMetaInfo</name><relatedStateVariable>MetaInfo</relatedStateVariable><direction>in</direction></argumentList></action></actionList><serviceStateTable><stateVariable sendEvents="yes"><name>MetaInfo</name><dataType>string</dataType><defaultValue>0</defaultValue></stateVariable></serviceStateTable></scpd>\r\n\r\n
 //Successfully compressed from 479 to 253 bytes (-47.2%)
-const size_t WEMO_METASERVICE_XML_size = 479;
+const size_t WEMO_METASERVICE_XML_SIZE = 479;
 const char WEMO_METASERVICE_XML[] PROGMEM = "\x3D\x3C\x18\xC1\x11\xB0\x68\x5D\xE3\xE1\xEC\x17\xFE\x3C\xC8\x73\x08\xD3\x78\xF3"
                              "\xF3\xF9\x9E\x86\xCE\xB3\x90\xEB\x67\xB0\xFC\x3D\x0B\xC3\x18\x64\x66\xFF\xED\xCE"
                              "\x3F\x0F\x41\xB6\x6B\xCF\x9F\x87\x21\xE8\x76\x10\x20\xC5\x3D\x06\xEF\x67\xCF\xC3"
@@ -123,7 +123,7 @@ const char WEMO_METASERVICE_XML[] PROGMEM = "\x3D\x3C\x18\xC1\x11\xB0\x68\x5D\xE
 
 //<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body><u:%cetBinaryStateResponse xmlns:u="urn:Belkin:service:basicevent:1"><BinaryState>%d</BinaryState></u:%cetBinaryStateResponse></s:Body></s:Envelope>\r\n
 //Successfully compressed from 282 to 161 bytes (-42.9%)
-const size_t WEMO_RESPONSE_STATE_SOAP_size = 282;
+const size_t WEMO_RESPONSE_STATE_SOAP_SIZE = 282;
 const char WEMO_RESPONSE_STATE_SOAP[] PROGMEM = "\x3D\x3C\x79\x93\xE3\x36\x16\x0C\x68\xD8\x34\x2E\xF1\xE7\xE3\xE1\xEC\x15\x54\x30"
                              "\xF3\x3B\x0E\xCF\x06\x29\x8D\xBF\x1D\x0D\x83\x42\xF6\x58\xC3\xA6\x7C\x78\xEC\xF6"
                              "\x58\xC3\xB1\x82\x16\x1C\x76\x1E\xC5\xE3\xCD\xF0\x78\x26\xF0\xF1\x7A\x8C\x82\x60"
@@ -136,7 +136,7 @@ const char WEMO_RESPONSE_STATE_SOAP[] PROGMEM = "\x3D\x3C\x79\x93\xE3\x36\x16\x0
 
 //<?xml version="1.0"?><root xmlns="urn:Belkin:device-1-0"><device><deviceType>urn:Belkin:device:controllee:1</deviceType><friendlyName>{x1</friendlyName><manufacturer>Belkin International Inc.</manufacturer><modelName>Socket</modelName><modelNumber>3.1415</modelNumber><UDN>uuid:{x2</UDN><serialNumber>{x3</serialNumber><binaryState>0</binaryState><serviceList><service><serviceType>urn:Belkin:service:basicevent:1</serviceType><serviceId>urn:Belkin:serviceId:basicevent1</serviceId><controlURL>/upnp/control/basicevent1</controlURL><eventSubURL>/upnp/event/basicevent1</eventSubURL><SCPDURL>/eventservice.xml</SCPDURL></service><service><serviceType>urn:Belkin:service:metainfo:1</serviceType><serviceId>urn:Belkin:serviceId:metainfo1</serviceId><controlURL>/upnp/control/metainfo1</controlURL><eventSubURL>/upnp/event/metainfo1</eventSubURL><SCPDURL>/metainfoservice.xml</SCPDURL></service></serviceList></device></root>\r\n
 //Successfully compressed from 923 to 392 bytes (-57.5%)
-const size_t WEMO_SETUP_XML_size = 923;
+const size_t WEMO_SETUP_XML_SIZE = 923;
 const char WEMO_SETUP_XML[] PROGMEM = "\x3D\x0E\xD1\xB0\x68\x48\xCD\xFF\xDB\x9C\x7C\x3D\x87\x21\xD1\x9E\xC3\xB4\x7E\x1E"
                              "\x85\xFC\xCA\x46\xC1\xA1\x77\x8F\x87\xB0\x5F\xF8\xF3\x21\xCC\x23\x4D\xE3\xCC\x46"
                              "\x67\xA1\xB3\xAC\xE4\x3A\xD9\xEC\x3F\x0F\x42\x04\x19\x20\x87\x10\xA8\xC8\x63\x3F"
@@ -293,7 +293,11 @@ void HandleUpnpEvent(void)
     }
   }
 
-  snprintf_P(event, sizeof(event), decompress(WEMO_RESPONSE_STATE_SOAP, WEMO_RESPONSE_STATE_SOAP_size).c_str(), state, bitRead(power, devices_present -1), state);
+#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+  snprintf_P(event, sizeof(event), Decompress(WEMO_RESPONSE_STATE_SOAP, WEMO_RESPONSE_STATE_SOAP_SIZE).c_str(), state, bitRead(power, devices_present -1), state);
+#else
+  snprintf_P(event, sizeof(event), WEMO_RESPONSE_STATE_SOAP, state, bitRead(power, devices_present -1), state);
+#endif
   WSSend(200, CT_XML, event);
 }
 
@@ -301,21 +305,33 @@ void HandleUpnpService(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_EVENT_SERVICE));
 
-  WSSend(200, CT_PLAIN, decompress(WEMO_EVENTSERVICE_XML, WEMO_EVENTSERVICE_XML_size));
+#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+  WSSend(200, CT_PLAIN, Decompress(WEMO_EVENTSERVICE_XML, WEMO_EVENTSERVICE_XML_SIZE));
+#else
+  WSSend(200, CT_PLAIN, FPSTR(WEMO_EVENTSERVICE_XML));
+#endif
 }
 
 void HandleUpnpMetaService(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_META_SERVICE));
 
-  WSSend(200, CT_PLAIN, decompress(WEMO_METASERVICE_XML, WEMO_METASERVICE_XML_size));
+#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+  WSSend(200, CT_PLAIN, Decompress(WEMO_METASERVICE_XML, WEMO_METASERVICE_XML_SIZE));
+#else
+  WSSend(200, CT_PLAIN, FPSTR(WEMO_METASERVICE_XML));
+#endif
 }
 
 void HandleUpnpSetupWemo(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_SETUP));
 
-  String setup_xml = decompress(WEMO_SETUP_XML, WEMO_SETUP_XML_size);
+#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+  String setup_xml = Decompress(WEMO_SETUP_XML, WEMO_SETUP_XML_SIZE);
+#else
+  String setup_xml = FPSTR(WEMO_SETUP_XML);
+#endif
   setup_xml.replace("{x1", SettingsText(SET_FRIENDLYNAME1));
   setup_xml.replace("{x2", WemoUuid());
   setup_xml.replace("{x3", WemoSerialnumber());

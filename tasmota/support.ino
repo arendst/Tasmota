@@ -1943,7 +1943,7 @@ String escapeJSONString(const char *str) {
 
 Unishox compressor;
 
-String decompress(const char * compressed, size_t uncompressed_size) {
+String Decompress(const char * compressed, size_t uncompressed_size) {
   String content("");
 
   uncompressed_size += 2;    // take a security margin
