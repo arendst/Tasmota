@@ -1,5 +1,5 @@
 /*
-    xdrv_32_shelly_dimmer.ino - shelly dimmer support for Tasmota
+    xdrv_40_shelly_dimmer.ino - shelly dimmer support for Tasmota
 
     Copyright (C) 2020  James Turton
 
@@ -20,7 +20,7 @@
 #ifdef USE_LIGHT
 #ifdef USE_SHELLY_DIMMER
 /*********************************************************************************************\
- * Shelly WiFi Dimmer v1 (ESP8266 w/ separate MCU dimmer)
+ * Shelly WiFi Dimmer v1 (ESP8266 w/ separate co-processor dimmer)
  * https://shelly.cloud/wifi-smart-home-automation-shelly-dimmer/
 \*********************************************************************************************/
 #define SHELLY_DIMMER_DEBUG
@@ -183,6 +183,8 @@ void ShdSendCmd(uint8_t cmd, uint8_t *payload, uint8_t len)
 
 void ShdSetBrightness(uint16 brightness)
 {
+    brightness = changeUIntScale(brightness, 0, 255, 0, 1000);
+
     uint8_t payload[2];
 
     payload[0] = brightness & 0xff;
@@ -238,6 +240,8 @@ bool ShdSyncState()
 #endif
     if (Shd.req_brightness != Shd.dimmer.brightness)
         ShdSetBrightness(Shd.req_brightness);
+
+    ShdDebugState();
 }
 
 void ShdDebugState()
@@ -270,6 +274,7 @@ bool ShdPacketProcess(void)
         case 0x03:
             {
                 uint16_t brightness = Shd.buffer[pos + 1] << 8 | Shd.buffer[pos + 0];
+                brightness = changeUIntScale(brightness, 0, 1000, 0, 255);
             }
             break;
         case SHD_GET_STATE_CMD:
@@ -278,6 +283,8 @@ bool ShdPacketProcess(void)
                 uint16_t unknown_0 = Shd.buffer[pos + 1] << 8 | Shd.buffer[pos + 0];
                 
                 uint16_t brightness = Shd.buffer[pos + 3] << 8 | Shd.buffer[pos + 2];
+                brightness = changeUIntScale(brightness, 0, 1000, 0, 255);
+
                 uint32_t wattage_raw = Shd.buffer[pos + 7] << 24 | 
                         Shd.buffer[pos + 6] << 16 | 
                         Shd.buffer[pos + 5] << 8 | 
@@ -338,7 +345,11 @@ bool ShdSetChannels(void)
     AddLog(LOG_LEVEL_DEBUG_MORE);
 #endif
 
-    Shd.req_brightness = ((uint32_t *)XdrvMailbox.data)[0];
+    // upscale and then downscale to account for rounding errors
+    uint16_t brightness = ((uint32_t *)XdrvMailbox.data)[0];
+    brightness = changeUIntScale(brightness, 0, 255, 0, 1000);
+    brightness = changeUIntScale(brightness, 0, 1000, 0, 255);
+    Shd.req_brightness = brightness;
 
     ShdDebugState();
 
