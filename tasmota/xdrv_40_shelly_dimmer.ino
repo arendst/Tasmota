@@ -133,6 +133,41 @@ int check_byte()
  * Internal Functions
 \*********************************************************************************************/
 
+void ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
+{
+    int retries = 3;
+
+#ifdef SHELLY_DIMMER_DEBUG
+    snprintf_P(log_data, sizeof(log_data), PSTR("SHD: Tx Packet:"));
+    for (uint32_t i = 0; i < len; i++)
+        snprintf_P(log_data, sizeof(log_data), PSTR("%s %02x"), log_data, data[i]);
+    AddLog(LOG_LEVEL_DEBUG_MORE);
+#endif
+
+    while (retries--)
+    {
+        ShdSerial->write(data, len);
+        ShdSerial->flush();
+
+
+        // wait for any response
+        uint32_t snd_time = millis();
+        while (TimePassedSince(snd_time) < SHD_ACK_TIMEOUT)
+        {
+            // ShdSerialInput();
+            if (ShdSerialInput())
+                return;
+            // return;
+            delay(1);
+        }
+
+#ifdef SHELLY_DIMMER_DEBUG
+        // timeout
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHD: serial send timeout"));
+#endif
+    }
+}
+
 void ShdSendCmd(uint8_t cmd, uint8_t *payload, uint8_t len)
 {
     uint8_t data[4 + 72 + 3]; // maximum payload for 0x30 packet is 72
@@ -158,17 +193,7 @@ void ShdSendCmd(uint8_t cmd, uint8_t *payload, uint8_t len)
     data[pos++] = chksm & 0xff;
     data[pos++] = SHD_END_BYTE;
 
-#ifdef SHELLY_DIMMER_DEBUG
-    snprintf_P(log_data, sizeof(log_data), PSTR("SHD: ShdSendCmd: \""));
-    for (uint32_t i = 0; i < pos; i++)
-    {
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s %02x"), log_data, data[i]);
-    }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
-    AddLog(LOG_LEVEL_DEBUG_MORE);
-#endif
-
-    Serial.write(data, pos);
+    ShdSerialSend(data, pos);
 }
 
 void ShdSetBri(uint16 brightness)
@@ -220,16 +245,10 @@ bool ShdSyncState()
     if (!ShdSerial)
         return false;
 
-    if (Shd.req_brightness != Shd.dimmer.brightness)
-    {
+    if (Settings.light_speed != Shd.dimmer.fade_rate)
+        ShdSendSetState(Shd.req_brightness, 2, fade_rate_tab[Settings.light_speed & 0x07]);
+    else if (Shd.req_brightness != Shd.dimmer.brightness)
         ShdSetBri(Shd.req_brightness);
-        // delay(50);
-        // ShdSendFadeRate(Settings.light_speed);
-    }
-
-    // if (Settings.light_speed != Shd.dimmer.fade_rate)
-    //     ShdSendFadeRate(Settings.light_speed);
-    //     ShdSendSetState(Shd.req_brightness, 2, Settings.light_speed);
 }
 
 void ShdDebugState()
@@ -244,7 +263,7 @@ void ShdDebugState()
 #endif
 }
 
-bool ShdPacketProcess(uint8_t expected_cmd)
+bool ShdPacketProcess(void)
 {
     uint8_t pos = 0;
     uint8_t id, cmd, len;
@@ -253,9 +272,9 @@ bool ShdPacketProcess(uint8_t expected_cmd)
     if (Shd.buffer[pos++] != SHD_START_BYTE)
         return false;
         
-    id = Shd.buffer[pos++];  
-    cmd = Shd.buffer[pos++]; 
-    len = Shd.buffer[pos++]; 
+    id = Shd.buffer[pos++];
+    cmd = Shd.buffer[pos++];
+    len = Shd.buffer[pos++];
     
     switch (cmd)
     {
@@ -319,11 +338,7 @@ bool ShdPacketProcess(uint8_t expected_cmd)
             break;
     }
 
-    ShdDebugState();
-    ShdSyncState();
-    ShdDebugState();
-
-    return ret && (expected_cmd == 0 || expected_cmd == cmd);
+    return ret;
 }
 
 bool ShdSetChannels(void)
@@ -339,6 +354,8 @@ bool ShdSetChannels(void)
 #endif
 
     Shd.req_brightness = ((uint32_t *)XdrvMailbox.data)[0];
+
+    ShdDebugState();
 
     return ShdSyncState();
 }
@@ -402,16 +419,6 @@ void ShdInit(void)
             ShdMcuStart();
 
             ShdSendVersion();
-            delay(50);
-
-            if (ShdSerialInputTimeout(100))
-            {
-                if (!ShdPacketProcess(SHD_VERSION_CMD))
-                {
-                    // upgrade firmware
-                
-                }
-            }
         }
     }
 }
@@ -423,11 +430,6 @@ void ShdLoop(void)
     {
         Shd.start_time = millis();
         ShdPoll();
-    }
-
-    if (ShdSerialInput())
-    {
-        ShdPacketProcess(0);
     }
 }
 
@@ -446,15 +448,15 @@ bool ShdSerialInput(void)
             // finished
 #ifdef SHELLY_DIMMER_DEBUG
             Shd.byte_counter++;
-            snprintf_P(log_data, sizeof(log_data), PSTR("SHD: RX Packet: \""));
+            snprintf_P(log_data, sizeof(log_data), PSTR("SHD: RX Packet:"));
             for (uint32_t i = 0; i < Shd.byte_counter; i++)
-            {
-                snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, Shd.buffer[i]);
-            }
-            snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
+                snprintf_P(log_data, sizeof(log_data), PSTR("%s %02x"), log_data, Shd.buffer[i]);
             AddLog(LOG_LEVEL_DEBUG_MORE);
 #endif
             Shd.byte_counter = 0;
+
+            ShdPacketProcess();
+
             return true;
         }
         else if (check == 0)
@@ -468,16 +470,6 @@ bool ShdSerialInput(void)
             Shd.byte_counter++;
         }
         
-    }
-    return false;
-}
-
-bool ShdSerialInputTimeout(int timeout)
-{
-    int start = millis();
-    while (start + timeout > millis())
-    {
-        return ShdSerialInput();
     }
     return false;
 }
