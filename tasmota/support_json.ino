@@ -1,5 +1,5 @@
 /*
-  support_json.ino - Static binary buffer for Zigbee on Tasmota
+  support_json.ino - JSON support functions
 
   Copyright (C) 2020  Theo Arends and Stephan Hadinger
 
