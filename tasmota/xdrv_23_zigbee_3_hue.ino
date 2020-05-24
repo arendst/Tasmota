@@ -85,9 +85,9 @@ void HueLightStatus2Zigbee(uint16_t shortaddr, String *response)
   snprintf_P(shortaddrname, sizeof(shortaddrname), PSTR("0x%04X"), shortaddr);
 
   snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON2,
-              (friendlyName) ? escapeJSONString(friendlyName).c_str() : shortaddrname,
-              (modelId) ? escapeJSONString(modelId).c_str() : PSTR("Unknown"),
-              (manufacturerId) ? escapeJSONString(manufacturerId).c_str() : PSTR("Tasmota"),
+              (friendlyName) ? EscapeJSONString(friendlyName).c_str() : shortaddrname,
+              (modelId) ? EscapeJSONString(modelId).c_str() : PSTR("Unknown"),
+              (manufacturerId) ? EscapeJSONString(manufacturerId).c_str() : PSTR("Tasmota"),
               GetHueDeviceId(shortaddr).c_str());
               
   *response += buf;

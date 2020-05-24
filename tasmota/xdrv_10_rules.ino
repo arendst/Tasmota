@@ -441,25 +441,20 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
         break;
       }
     }
-    snprintf_P(stemp, sizeof(stemp), PSTR("%%TIME%%"));
-    if (rule_param.startsWith(stemp)) {
+    if (rule_param.startsWith(F("%TIME%"))) {
       rule_param = String(MinutesPastMidnight());
     }
-    snprintf_P(stemp, sizeof(stemp), PSTR("%%UPTIME%%"));
-    if (rule_param.startsWith(stemp)) {
+    if (rule_param.startsWith(F("%UPTIME%"))) {
       rule_param = String(MinutesUptime());
     }
-    snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMESTAMP%%"));
-    if (rule_param.startsWith(stemp)) {
+    if (rule_param.startsWith(F("%TIMESTAMP%"))) {
       rule_param = GetDateAndTime(DT_LOCAL).c_str();
     }
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
-    snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNRISE%%"));
-    if (rule_param.startsWith(stemp)) {
+    if (rule_param.startsWith(F("%SUNRISE%"))) {
       rule_param = String(SunMinutes(0));
     }
-    snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNSET%%"));
-    if (rule_param.startsWith(stemp)) {
+    if (rule_param.startsWith(F("%SUNSET%"))) {
       rule_param = String(SunMinutes(1));
     }
 #endif  // USE_TIMERS and USE_SUNRISE
@@ -493,13 +488,17 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   uint32_t i = 0;
   while ((pos = rule_name.indexOf("#")) > 0) {         // "SUBTYPE1#SUBTYPE2#CURRENT"
     subtype = rule_name.substring(0, pos);
-    if (!(*obj)[subtype].success()) { return false; }  // No subtype in JSON data
-    JsonObject &obj2 = (*obj)[subtype];
-    obj = &obj2;
+    const JsonVariant & val = GetCaseInsensitive(*obj, subtype.c_str());
+    if (nullptr == &val) { return false; }            // not found
+    obj = &(val.as<JsonObject>());
+    if (!obj->success()) { return false; }            // not a JsonObject
+
     rule_name = rule_name.substring(pos +1);
     if (i++ > 10) { return false; }                    // Abandon possible loop
   }
-  if (!(*obj)[rule_name].success()) { return false; }  // No name in JSON data
+
+  const JsonVariant & val = GetCaseInsensitive(*obj, rule_name.c_str());
+  if (nullptr == &val) { return false; }              // last level not found
   const char* str_value;
   if (rule_name_idx) {
     str_value = (*obj)[rule_name][rule_name_idx -1];   // "CURRENT[1]"
@@ -2036,7 +2035,7 @@ void CmndRule(void)
       XdrvMailbox.command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
       GetStateText(bitRead(Settings.rule_stop, index -1)),
       rule_len, MAX_RULE_SIZE - GetRuleLenStorage(index - 1),
-      escapeJSONString(rule.c_str()).c_str());
+      EscapeJSONString(rule.c_str()).c_str());
   }
 }
 
