@@ -55,11 +55,13 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 ### Version 8.3.1.2
 
 - Change IRremoteESP8266 library updated to v2.7.7
+- Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)
 - Change Energy JSON Total field from ``"Total":[33.736,11.717,16.978]`` to ``"Total":33.736,"TotalTariff":[11.717,16.978]``
 - Change Energy JSON ExportActive field from ``"ExportActive":[33.736,11.717,16.978]`` to ``"ExportActive":33.736,"ExportTariff":[11.717,16.978]``
 - Add command ``Rule0`` to change global rule parameters
 - Add commands ``LedPwmOn 0..255``, ``LedPwmOff 0..255`` and ``LedPwmMode1 0/1`` to control led brightness by George (#8491)
 - Add more functionality to ``Switchmode`` 11 and 12 (#8450)
+- Add wildcard pattern ``?`` for JSON matching in rules
 - Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)
 - Add support for VEML7700 Ambient light intensity Sensor by device111 (#8432)
 - Add Three Phase Export Active Energy to SDM630 driver

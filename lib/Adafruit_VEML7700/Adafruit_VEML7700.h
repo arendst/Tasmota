@@ -14,6 +14,11 @@
  *	BSD license (see license.txt)
  */
 
+/* 
+ * change from device111 for Tasmota
+ * Add alternativ Pow function for readLuxNormalized() and readWhiteNormalized()
+ */
+
 #ifndef _ADAFRUIT_VEML7700_H
 #define _ADAFRUIT_VEML7700_H
 
@@ -105,6 +110,7 @@ private:
     *PowerSave_Enable, *PowerSave_Mode;
 
   float normalize_resolution(float value);
+  float alternate_pow(float a, float b);
 
   Adafruit_I2CDevice *i2c_dev;
 
