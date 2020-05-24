@@ -24,6 +24,7 @@
  * https://shelly.cloud/wifi-smart-home-automation-shelly-dimmer/
 \*********************************************************************************************/
 #define SHELLY_DIMMER_DEBUG
+// #define SHELLY_HW_DIMMING
 
 #define XDRV_32                     40
 #define XNRG_17                     17
@@ -69,8 +70,6 @@ struct SHD
 #endif // USE_ENERGY_SENSOR
 } Shd;
 
-static const uint8_t fade_rate_tab[] = {0x05, 0x05, 0x0a, 0x0f, 0x14, 0x19, 0x19, 0x19};
-
 /*********************************************************************************************\
  * Helper Functions
 \*********************************************************************************************/
@@ -79,9 +78,7 @@ uint16_t checksum(uint8_t *buf, int len)
 {
     uint16_t chksm = 0;
     for (uint8_t i = 0; i < len; i++)
-    {
         chksm += buf[i];
-    }
     return chksm;
 }
 
@@ -91,40 +88,29 @@ int check_byte()
     uint8_t byte = Shd.buffer[index];
 
     if (index == 0)
-    {
         return byte == SHD_START_BYTE;
-    }
 
     if (index < 4)
-    {
         return 1;
-    }
 
     uint8_t data_length = Shd.buffer[3];
     if ((4 + data_length + 3) > SHD_BUFFER_SIZE)
-    {
         return 0;
-    }
 
     if (index < 4 + data_length + 1)
-    {
         return 1;
-    }
 
     if (index == 4 + data_length + 1)
     {
         uint16_t chksm = (Shd.buffer[index - 1] << 8 | Shd.buffer[index]);
         if (chksm != checksum(&Shd.buffer[1], 3 + data_length))
-        {
             return 0;
-        }
+
         return 1;
     }
 
     if (index == 4 + data_length + 2 && byte == SHD_END_BYTE)
-    {
         return index;
-    }
     
     return 0;
 }
@@ -154,10 +140,9 @@ void ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
         uint32_t snd_time = millis();
         while (TimePassedSince(snd_time) < SHD_ACK_TIMEOUT)
         {
-            // ShdSerialInput();
             if (ShdSerialInput())
                 return;
-            // return;
+
             delay(1);
         }
 
@@ -196,7 +181,7 @@ void ShdSendCmd(uint8_t cmd, uint8_t *payload, uint8_t len)
     ShdSerialSend(data, pos);
 }
 
-void ShdSetBri(uint16 brightness)
+void ShdSetBrightness(uint16 brightness)
 {
     uint8_t payload[2];
 
@@ -206,10 +191,9 @@ void ShdSetBri(uint16 brightness)
     ShdSendCmd(SHD_SWITCH_CMD, payload, sizeof(payload));
 }
 
-// TODO(james): Check what's going on here.
-void ShdSendFadeRate(uint8_t fade_rate)
+void ShdSendFadeRate(uint16_t brightness, uint8_t fade_rate)
 {
-  ShdSendSetState(0, 2, fade_rate_tab[fade_rate & 0x07]);
+    ShdSendSetState(brightness, 2, fade_rate);
 }
 
 void ShdSendSetState(uint16_t brightness, uint16_t func, uint16_t fade_rate)
@@ -245,10 +229,15 @@ bool ShdSyncState()
     if (!ShdSerial)
         return false;
 
+#ifdef SHELLY_HW_DIMMING
+    // TODO(jamesturton): HW dimming seems to conflict with SW dimming. See how
+    // we can disbale SW dimming when using HW dimming.
     if (Settings.light_speed != Shd.dimmer.fade_rate)
-        ShdSendSetState(Shd.req_brightness, 2, fade_rate_tab[Settings.light_speed & 0x07]);
-    else if (Shd.req_brightness != Shd.dimmer.brightness)
-        ShdSetBri(Shd.req_brightness);
+        ShdSendFadeRate(Shd.req_brightness, Settings.light_speed);
+    else
+#endif
+    if (Shd.req_brightness != Shd.dimmer.brightness)
+        ShdSetBrightness(Shd.req_brightness);
 }
 
 void ShdDebugState()
@@ -281,7 +270,6 @@ bool ShdPacketProcess(void)
         case 0x03:
             {
                 uint16_t brightness = Shd.buffer[pos + 1] << 8 | Shd.buffer[pos + 0];
-
             }
             break;
         case SHD_GET_STATE_CMD:
@@ -297,10 +285,7 @@ bool ShdPacketProcess(void)
                 float wattage = 0;
                 if (wattage_raw > 0)
                     wattage = 1000000 / wattage_raw;
-                uint32_t fade_rate = Shd.buffer[pos + 8] << 24 | 
-                        Shd.buffer[pos + 9] << 16 | 
-                        Shd.buffer[pos + 10] << 8 | 
-                        Shd.buffer[pos + 11];
+                uint32_t fade_rate = Shd.buffer[pos + 8];
 
 #ifdef USE_ENERGY_SENSOR
                 Energy.active_power[0] = wattage;
@@ -334,7 +319,9 @@ bool ShdPacketProcess(void)
         case SHD_SET_STATE_CMD:
         case 0x30:
         case 0x31:
-            ret = (Shd.buffer[pos] == 0x01);
+            {
+                ret = (Shd.buffer[pos] == 0x01);
+            }
             break;
     }
 
@@ -346,9 +333,7 @@ bool ShdSetChannels(void)
 #ifdef SHELLY_DIMMER_DEBUG
     snprintf_P(log_data, sizeof(log_data), PSTR("SHD: SetChannels: \""));
     for (int i = 0; i < XdrvMailbox.data_len; i++)
-    {
         snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, ((uint8_t *)XdrvMailbox.data)[i]);
-    }
     snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
     AddLog(LOG_LEVEL_DEBUG_MORE);
 #endif
@@ -374,11 +359,11 @@ void ShdMcuStart(void)
     pinMode(Pin(GPIO_SHELLY_DIMMER_RST_INV), OUTPUT);
     digitalWrite(Pin(GPIO_SHELLY_DIMMER_RST_INV), LOW);
     delay(50);
+    
+    // clear in the receive buffer
     while (ShdSerial->available())
-    {
-        // clear in the receive buffer
         ShdSerial->read();
-    }
+    
     digitalWrite(Pin(GPIO_SHELLY_DIMMER_RST_INV), HIGH); // pull out of reset
     delay(50); // wait 50ms fot the co-processor to come online
 }
@@ -388,6 +373,10 @@ void ShdPoll(void)
 #ifdef SHELLY_DIMMER_DEBUG
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Poll"));
 #endif
+
+    if (!ShdSerial)
+        return;
+
     ShdSendCmd(SHD_GET_STATE_CMD, 0, 0);
 }
 
@@ -412,24 +401,13 @@ void ShdInit(void)
         if (ShdSerial->begin(115200))
         {
             if (ShdSerial->hardwareSerial())
-            {
                 ClaimSerial();
-            }
+
             ShdSerial->flush();
             ShdMcuStart();
 
             ShdSendVersion();
         }
-    }
-}
-
-void ShdLoop(void)
-{
-    // poll every two seconds for new data
-    if (Shd.start_time == 0 || millis() - Shd.start_time > 1000  * 2)
-    {
-        Shd.start_time = millis();
-        ShdPoll();
     }
 }
 
@@ -506,7 +484,7 @@ bool Xnrg17(uint8_t function)
 #endif  // USE_ENERGY_SENSOR
 
 /*********************************************************************************************\
- * Interface
+ * Driver Interface
 \*********************************************************************************************/
 
 bool Xdrv32(uint8_t function)
@@ -517,9 +495,8 @@ bool Xdrv32(uint8_t function)
     {
         switch (function)
         {
-        case FUNC_LOOP:
-            if (ShdSerial)
-                ShdLoop();
+        case FUNC_EVERY_SECOND:
+            ShdPoll();
             break;
         case FUNC_MODULE_INIT:
             result = ShdModuleSelected();
