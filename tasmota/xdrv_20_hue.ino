@@ -437,8 +437,8 @@ void HueLightStatus2(uint8_t device, String *response)
     fname[fname_len] = 0x00;
   }
   snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON2,
-            escapeJSONString(fname).c_str(),
-            escapeJSONString(Settings.user_template_name).c_str(),
+            EscapeJSONString(fname).c_str(),
+            EscapeJSONString(Settings.user_template_name).c_str(),
             PSTR("Tasmota"),
             GetHueDeviceId(device).c_str());
   *response += buf;
