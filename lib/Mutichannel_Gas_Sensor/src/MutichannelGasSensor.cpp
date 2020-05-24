@@ -327,30 +327,6 @@ int16_t MutichannelGasSensor::readR(void)
 ** Returns:
                             float value - concentration of the gas
 *********************************************************************************************************/
-float MutichannelGasSensor_pow(float a, float b)
-{
-  // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
-  // calculate approximation with fraction of the exponent
-  int e = abs((int)b);
-  union {
-    double d;
-    int x[2];
-  } u = { a };
-  u.x[1] = (int)((b - e) * (u.x[1] - 1072632447) + 1072632447);
-  u.x[0] = 0;
-  // exponentiation by squaring with the exponent's integer part
-  // double r = u.d makes everything much slower, not sure why
-  double r = 1.0;
-  while (e) {
-    if (e & 1) {
-      r *= a;
-    }
-    a *= a;
-    e >>= 1;
-  }
-  return r * u.d;
-}
-
 float MutichannelGasSensor::calcGas(int gas)
 {
 
@@ -382,9 +358,9 @@ float MutichannelGasSensor::calcGas(int gas)
         int An_1 = get_addr_dta(CH_VALUE_CO);
         int An_2 = get_addr_dta(CH_VALUE_NO2);
 
-        ratio0 = (float)An_0/(float)A0_0*(1023.0-A0_0)/(1023.0-An_0);
-        ratio1 = (float)An_1/(float)A0_1*(1023.0-A0_1)/(1023.0-An_1);
-        ratio2 = (float)An_2/(float)A0_2*(1023.0-A0_2)/(1023.0-An_2);
+        ratio0 = (float)An_0/(float)A0_0*(1023.0f-A0_0)/(1023.0f-An_0);
+        ratio1 = (float)An_1/(float)A0_1*(1023.0f-A0_1)/(1023.0f-An_1);
+        ratio2 = (float)An_2/(float)A0_2*(1023.0f-A0_2)/(1023.0f-An_2);
 
     }
 
@@ -394,42 +370,42 @@ float MutichannelGasSensor::calcGas(int gas)
     {
         case CO:
         {
-            c = MutichannelGasSensor_pow(ratio1, -1.179)*4.385;  //mod by jack
+            c = pow(ratio1, -1.179f)*4.385f;  //mod by jack
             break;
         }
         case NO2:
         {
-            c = MutichannelGasSensor_pow(ratio2, 1.007)/6.855;  //mod by jack
+            c = pow(ratio2, 1.007f)/6.855f;  //mod by jack
             break;
         }
         case NH3:
         {
-            c = MutichannelGasSensor_pow(ratio0, -1.67)/1.47;  //modi by jack
+            c = pow(ratio0, -1.67f)/1.47f;  //modi by jack
             break;
         }
         case C3H8:  //add by jack
         {
-            c = MutichannelGasSensor_pow(ratio0, -2.518)*570.164;
+            c = pow(ratio0, -2.518f)*570.164f;
             break;
         }
         case C4H10:  //add by jack
         {
-            c = MutichannelGasSensor_pow(ratio0, -2.138)*398.107;
+            c = pow(ratio0, -2.138f)*398.107f;
             break;
         }
         case GAS_CH4:  //add by jack
         {
-            c = MutichannelGasSensor_pow(ratio1, -4.363)*630.957;
+            c = pow(ratio1, -4.363f)*630.957f;
             break;
         }
         case H2:  //add by jack
         {
-            c = MutichannelGasSensor_pow(ratio1, -1.8)*0.73;
+            c = pow(ratio1, -1.8f)*0.73f;
             break;
         }
         case C2H5OH:  //add by jack
         {
-            c = MutichannelGasSensor_pow(ratio1, -1.552)*1.622;
+            c = pow(ratio1, -1.552f)*1.622f;
             break;
         }
         default:
@@ -630,7 +606,7 @@ float MutichannelGasSensor::getR0(unsigned char ch)         // 0:CH3, 1:CO, 2:NO
         default:;
     }
 
-    float r = 56.0*(float)a/(1023.0-(float)a);
+    float r = 56.0f*(float)a/(1023.0f-(float)a);
     return r;
 }
 
@@ -661,7 +637,7 @@ float MutichannelGasSensor::getRs(unsigned char ch)         // 0:CH3, 1:CO, 2:NO
         default:;
     }
 
-    float r = 56.0*(float)a/(1023.0-(float)a);
+    float r = 56.0f*(float)a/(1023.0f-(float)a);
     return r;
 }
 
