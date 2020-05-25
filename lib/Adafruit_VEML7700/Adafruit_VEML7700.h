@@ -62,6 +62,7 @@
 #define VEML7700_POWERSAVE_MODE3    0x02  ///< Power saving mode 3
 #define VEML7700_POWERSAVE_MODE4    0x03  ///< Power saving mode 4
 
+// FastPrecisePowf from tasmota/support_float.ino
 extern float FastPrecisePowf(const float x, const float y);
 
 /*!
@@ -111,7 +112,7 @@ private:
     *PowerSave_Enable, *PowerSave_Mode;
 
   float normalize_resolution(float value);
-  static inline float alternate_pow(float a, float b) { return FastPrecisePowf(a, b); }
+  static inline float pow(float a, float b) { return FastPrecisePowf(a, b); }
 
   Adafruit_I2CDevice *i2c_dev;
 

@@ -47,6 +47,7 @@ struct RTC {
   uint32_t ntp_time = 0;
   uint32_t midnight = 0;
   uint32_t restart_time = 0;
+  uint32_t millis = 0;
   int32_t time_timezone = 0;
   uint8_t ntp_sync_minute = 0;
   bool midnight_now = false;
@@ -239,6 +240,10 @@ uint32_t MinutesPastMidnight(void)
   return minutes;
 }
 
+uint32_t RtcMillis(void) {
+  return (millis() - Rtc.millis) % 1000;
+}
+
 void BreakTime(uint32_t time_input, TIME_T &tm)
 {
 // break the given time_input into time components
@@ -361,6 +366,8 @@ uint32_t RuleToTime(TimeRule r, int yr)
 void RtcSecond(void)
 {
   TIME_T tmpTime;
+
+  Rtc.millis = millis();
 
   if (!Rtc.user_time_entry && !global_state.wifi_down) {
     uint8_t uptime_minute = (uptime / 60) % 60;  // 0 .. 59

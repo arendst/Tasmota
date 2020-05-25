@@ -515,7 +515,7 @@ struct {
   uint8_t       ot_hot_water_setpoint;     // E8C
   uint8_t       ot_boiler_setpoint;        // E8D
   uint8_t       ot_flags;                  // E8E
-  uint8_t	      ledpwm_mask;               // F8F
+  uint8_t       ledpwm_mask;               // E8F
   uint16_t      dimmer_hw_min;             // E90
   uint16_t      dimmer_hw_max;             // E92
   uint32_t      deepsleep;                 // E94
