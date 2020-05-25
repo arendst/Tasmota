@@ -143,6 +143,7 @@ uint32_t WcSetup(int32_t fsiz) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Deinit"));
     //return Wc.up;
   }
+  Wc.up = 0;
 
 //esp_log_level_set("*", ESP_LOG_VERBOSE);
 
@@ -225,7 +226,7 @@ uint32_t WcSetup(int32_t fsiz) {
   if (x) { free(x); }
 
   if (err != ESP_OK) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Init failed with error 0x%x"), err);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("CAM: Init failed with error 0x%x"), err);
     return 0;
   }
 
@@ -242,7 +243,7 @@ uint32_t WcSetup(int32_t fsiz) {
 
   camera_fb_t *wc_fb = esp_camera_fb_get();
   if (!wc_fb) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Failed to get the frame on time"));
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("CAM: Init failed to get the frame on time"));
     return 0;
   }
   Wc.width = wc_fb->width;
@@ -253,10 +254,10 @@ uint32_t WcSetup(int32_t fsiz) {
   fd_init();
 #endif
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Initialized"));
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("CAM: Initialized"));
 
   Wc.up = 1;
-  if (psram) { Wc.up=2; }
+  if (psram) { Wc.up = 2; }
 
   return Wc.up;
 }
@@ -843,6 +844,7 @@ void WcPicSetup(void) {
 
 void WcShowStream(void) {
   if (Settings.webcam_config.stream) {
+//    if (!CamServer || !Wc.up) {
     if (!CamServer) {
       WcStreamControl();
       delay(50);   // Give the webcam webserver some time to prepare the stream
