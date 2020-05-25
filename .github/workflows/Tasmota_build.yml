@@ -2,8 +2,6 @@ name: Build_firmware
 
 on:
   push:
-  pull_request:
-
 
 jobs:
   tasmota_pull:
