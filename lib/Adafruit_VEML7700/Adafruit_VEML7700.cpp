@@ -109,7 +109,7 @@ float Adafruit_VEML7700::normalize_resolution(float value) {
  *    @returns Floating point Lux data (ALS multiplied by 0.0576)
  */
 float Adafruit_VEML7700::readLux() {
-  return ( normalize_resolution(ALS_Data->read()) * 0.0576);  // see app note lux table on page 5
+  return ( normalize_resolution(ALS_Data->read()) * 0.0576f);  // see app note lux table on page 5
 }
 
 /*!
@@ -122,7 +122,7 @@ float Adafruit_VEML7700::readLuxNormalized() {
   // user-provided correction for non-linearities at high lux/white values:
   // https://forums.adafruit.com/viewtopic.php?f=19&t=152997&p=758582#p759346
   if ((getGain() == VEML7700_GAIN_1_8) && (getIntegrationTime() == VEML7700_IT_25MS)){
-    lux = 6.0135e-13*alternate_pow(lux,4) -  9.3924e-9*alternate_pow(lux,3) + 8.1488e-5*alternate_pow(lux,2) + 1.0023*lux;
+    lux = 6.0135e-13f * pow(lux,4) -  9.3924e-9f * pow(lux,3) + 8.1488e-5f * pow(lux,2) + 1.0023f * lux;
   }
  
   return lux;  
@@ -142,7 +142,7 @@ uint16_t Adafruit_VEML7700::readALS() {
  */
 float Adafruit_VEML7700::readWhite() {
   // white_corrected= 2E-15*pow(VEML_white,4) + 4E-12*pow(VEML_white,3) + 9E-06*pow(VEML_white,)2 + 1.0179*VEML_white - 11.052;
-  return normalize_resolution(White_Data->read()) * 0.0576; // Unclear if this is the right multiplier
+  return normalize_resolution(White_Data->read()) * 0.0576f; // Unclear if this is the right multiplier
 }
 
 /*!
@@ -155,7 +155,7 @@ float Adafruit_VEML7700::readWhiteNormalized() {
   // user-provided correction for non-linearities at high lux values:
   // https://forums.adafruit.com/viewtopic.php?f=19&t=152997&p=758582#p759346
   if ((getGain() == VEML7700_GAIN_1_8) && (getIntegrationTime() == VEML7700_IT_25MS)){
-    white = 2E-15*alternate_pow(white,4) + 4E-12*alternate_pow(white,3) + 9E-06*alternate_pow(white,2) + 1.0179*white - 11.052;
+    white = 2E-15f * pow(white,4) + 4E-12f * pow(white,3) + 9E-06f * pow(white,2) + 1.0179f * white - 11.052f;
   }
 
   return white;
