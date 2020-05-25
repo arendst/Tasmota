@@ -297,9 +297,11 @@ bool ShdPacketProcess(void)
 #ifdef USE_ENERGY_SENSOR
                 Energy.active_power[0] = wattage;
                 
-                if (Shd.last_power_check != 0 && Energy.active_power[0] > 0)
+                if (Shd.last_power_check > 10 && Energy.active_power[0] > 0)
                 {
-                    Energy.kWhtoday += (float)Energy.active_power[0] * (Rtc.utc_time - Shd.last_power_check) / 36;
+                    float kWhused = (float)Energy.active_power[0] * (Rtc.utc_time - Shd.last_power_check) / 36;
+                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Adding %09.6f kWh to todays usage from %lu to %lu"), kWhused, Shd.last_power_check, Rtc.utc_time);
+                    Energy.kWhtoday += kWhused;
                     EnergyUpdateToday();
                 }
                 Shd.last_power_check = Rtc.utc_time;
@@ -415,9 +417,11 @@ void ShdInit(void)
                 ClaimSerial();
 
             ShdSerial->flush();
-            ShdMcuStart();
 
+            ShdMcuStart();
             ShdSendVersion();
+            delay(100);
+            ShdSyncState();
         }
     }
 }
