@@ -94,14 +94,16 @@ WiFiClient client;
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
-uint8_t wc_up;
-uint16_t wc_width;
-uint16_t wc_height;
-uint8_t wc_stream_active;
+struct {
+  uint8_t  up;
+  uint16_t width;
+  uint16_t height;
+  uint8_t  stream_active;
 #ifdef USE_FACE_DETECT
-uint8_t faces;
-uint16_t face_detect_time;
+  uint8_t  faces;
+  uint16_t face_detect_time;
 #endif
+} Wc;
 
 /*********************************************************************************************/
 
@@ -128,18 +130,18 @@ bool WcPinUsed(void) {
 uint32_t WcSetup(int32_t fsiz) {
   if (fsiz > 10) { fsiz = 10; }
 
-  wc_stream_active = 0;
+  Wc.stream_active = 0;
 
   if (fsiz < 0) {
     esp_camera_deinit();
-    wc_up = 0;
+    Wc.up = 0;
     return 0;
   }
 
-  if (wc_up) {
+  if (Wc.up) {
     esp_camera_deinit();
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Deinit"));
-    //return wc_up;
+    //return Wc.up;
   }
 
 //esp_log_level_set("*", ESP_LOG_VERBOSE);
@@ -239,8 +241,12 @@ uint32_t WcSetup(int32_t fsiz) {
   wc_s->set_framesize(wc_s, (framesize_t)fsiz);
 
   camera_fb_t *wc_fb = esp_camera_fb_get();
-  wc_width = wc_fb->width;
-  wc_height = wc_fb->height;
+  if (!wc_fb) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Failed to get the frame on time"));
+    return 0;
+  }
+  Wc.width = wc_fb->width;
+  Wc.height = wc_fb->height;
   esp_camera_fb_return(wc_fb);
 
 #ifdef USE_FACE_DETECT
@@ -249,10 +255,10 @@ uint32_t WcSetup(int32_t fsiz) {
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Initialized"));
 
-  wc_up = 1;
-  if (psram) { wc_up=2; }
+  Wc.up = 1;
+  if (psram) { Wc.up=2; }
 
-  return wc_up;
+  return Wc.up;
 }
 
 /*********************************************************************************************/
@@ -299,17 +305,17 @@ int32_t WcSetOptions(uint32_t sel, int32_t value) {
 uint32_t WcGetWidth(void) {
   camera_fb_t *wc_fb = esp_camera_fb_get();
   if (!wc_fb) { return 0; }
-  wc_width = wc_fb->width;
+  Wc.width = wc_fb->width;
   esp_camera_fb_return(wc_fb);
-  return wc_width;
+  return Wc.width;
 }
 
 uint32_t WcGetHeight(void) {
   camera_fb_t *wc_fb = esp_camera_fb_get();
   if (!wc_fb) { return 0; }
-  wc_height = wc_fb->height;
+  Wc.height = wc_fb->height;
   esp_camera_fb_return(wc_fb);
-  return wc_height;
+  return Wc.height;
 }
 
 /*********************************************************************************************/
@@ -447,8 +453,8 @@ void draw_face_boxes(dl_matrix3du_t *image_matrix, box_array_t *boxes, int face_
 #define DL_SPIRAM_SUPPORT
 
 uint32_t WcSetFaceDetect(int32_t value) {
-  if (value >= 0) { face_detect_time = value; }
-  return faces;
+  if (value >= 0) { Wc.face_detect_time = value; }
+  return Wc.faces;
 }
 
 uint32_t face_ltime;
@@ -464,7 +470,7 @@ uint32_t WcDetectFace(void) {
   int face_id = 0;
   camera_fb_t *fb;
 
-  if ((millis() - face_ltime) > face_detect_time) {
+  if ((millis() - face_ltime) > Wc.face_detect_time) {
     face_ltime = millis();
     fb = esp_camera_fb_get();
     if (!fb) { return ESP_FAIL; }
@@ -492,7 +498,7 @@ uint32_t WcDetectFace(void) {
     box_array_t *net_boxes = face_detect(image_matrix, &mtmn_config);
     if (net_boxes){
       detected = true;
-      faces = net_boxes->len;
+      Wc.faces = net_boxes->len;
       //if(recognition_enabled){
       //    face_id = run_face_recognition(image_matrix, net_boxes);
       //}
@@ -502,10 +508,10 @@ uint32_t WcDetectFace(void) {
       free(net_boxes->landmark);
       free(net_boxes);
     } else {
-      faces = 0;
+      Wc.faces = 0;
     }
     dl_matrix3du_free(image_matrix);
-    //Serial.printf("face detected: %d",faces);
+    //Serial.printf("face detected: %d",Wc.faces);
 
   }
 }
@@ -564,8 +570,8 @@ uint32_t WcGetFrame(int32_t bnum) {
     return 0;
   }
   if (!bnum) {
-    wc_width = wc_fb->width;
-    wc_height = wc_fb->height;
+    Wc.width = wc_fb->width;
+    Wc.height = wc_fb->height;
     esp_camera_fb_return(wc_fb);
     return 0;
   }
@@ -691,9 +697,9 @@ void HandleImageBasic(void) {
 
 void HandleWebcamMjpeg(void) {
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Handle camserver"));
-//  if (!wc_stream_active) {
+//  if (!Wc.stream_active) {
 // always restart stream
-    wc_stream_active = 1;
+    Wc.stream_active = 1;
     client = CamServer->client();
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Create client"));
 //  }
@@ -710,25 +716,25 @@ void HandleWebcamMjpegTask(void) {
 
   if (!client.connected()) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Client fail"));
-    wc_stream_active = 0;
+    Wc.stream_active = 0;
   }
-  if (1 == wc_stream_active) {
+  if (1 == Wc.stream_active) {
     client.flush();
     client.setTimeout(3);
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Start stream"));
     client.print("HTTP/1.1 200 OK\r\n"
       "Content-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n"
       "\r\n");
-    wc_stream_active = 2;
+    Wc.stream_active = 2;
   }
-  if (2 == wc_stream_active) {
+  if (2 == Wc.stream_active) {
     wc_fb = esp_camera_fb_get();
     if (!wc_fb) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Frame fail"));
-      wc_stream_active = 0;
+      Wc.stream_active = 0;
     }
   }
-  if (2 == wc_stream_active) {
+  if (2 == Wc.stream_active) {
     if (wc_fb->format != PIXFORMAT_JPEG) {
       jpeg_converted = frame2jpg(wc_fb, 80, &_jpg_buf, &_jpg_buf_len);
       if (!jpeg_converted){
@@ -748,7 +754,7 @@ void HandleWebcamMjpegTask(void) {
     /*
     if (tlen!=_jpg_buf_len) {
       esp_camera_fb_return(wc_fb);
-      wc_stream_active=0;
+      Wc.stream_active=0;
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Send fail"));
     }*/
     client.print("\r\n--" BOUNDARY "\r\n");
@@ -768,7 +774,7 @@ void HandleWebcamMjpegTask(void) {
     esp_camera_fb_return(wc_fb);
     //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: send frame"));
   }
-  if (0 == wc_stream_active) {
+  if (0 == Wc.stream_active) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Stream exit"));
     client.flush();
     client.stop();
@@ -787,7 +793,7 @@ void HandleWebcamRoot(void) {
 uint32_t WcSetStreamserver(uint32_t flag) {
   if (global_state.wifi_down) { return 0; }
 
-  wc_stream_active = 0;
+  Wc.stream_active = 0;
 
   if (flag) {
     if (!CamServer) {
@@ -821,11 +827,11 @@ void WcStreamControl() {
 void WcLoop(void) {
   if (CamServer) {
     CamServer->handleClient();
-    if (wc_stream_active) { HandleWebcamMjpegTask(); }
+    if (Wc.stream_active) { HandleWebcamMjpegTask(); }
   }
   if (motion_detect) { WcDetectMotion(); }
 #ifdef USE_FACE_DETECT
-  if (face_detect_time) { WcDetectFace(); }
+  if (Wc.face_detect_time) { WcDetectFace(); }
 #endif
 }
 
@@ -841,7 +847,7 @@ void WcShowStream(void) {
       WcStreamControl();
       delay(50);   // Give the webcam webserver some time to prepare the stream
     }
-    if (CamServer) {
+    if (CamServer && Wc.up) {
       WSContentSend_P(PSTR("<p></p><center><img src='http://%s:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),
         WiFi.localIP().toString().c_str());
     }
