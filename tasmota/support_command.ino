@@ -1641,12 +1641,12 @@ void CmndTime(void)
 // payload 1 = Time format {"Time":"2019-09-04T14:31:29"}
 // payload 2 = Time format {"Time":"2019-09-04T14:31:29","Epoch":1567600289}
 // payload 3 = Time format {"Time":1567600289}
-// payload 4 = reserved
+// payload 4 = Time format {"Time":"2019-09-04T14:31:29.123"}
 // payload 1451602800 - disable NTP and set time to epoch
 
   uint32_t format = Settings.flag2.time_format;
   if (XdrvMailbox.data_len > 0) {
-    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 4)) {
+    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 5)) {
       Settings.flag2.time_format = XdrvMailbox.payload -1;
       format = Settings.flag2.time_format;
     } else {
