@@ -333,18 +333,10 @@ ble_hs_hci_evt_le_conn_complete(uint8_t subevent, uint8_t *data, int len)
                 uint8_t *local_id_rpa = ble_hs_get_rpa_local();
                 memcpy(evt.local_rpa, local_id_rpa, 6);
             }
-            
+
             struct ble_hs_resolv_entry *rl = NULL;
             ble_rpa_replace_peer_params_with_rl(evt.peer_addr,
                                                 &evt.peer_addr_type, &rl);
-            if (rl == NULL) {
-                if (ble_rpa_resolv_add_peer_rec(evt.peer_addr) != 0) {
-                    BLE_HS_LOG(DEBUG, "Memory unavailable for new peer record\n");
-                }
-            }
-            /* Set the correct RPA for logging */
-            memcpy(evt.peer_rpa, data + 6, BLE_DEV_ADDR_LEN);
-            
 #endif
         } else {
             memset(evt.local_rpa, 0, BLE_DEV_ADDR_LEN);
@@ -441,14 +433,6 @@ ble_hs_hci_evt_le_adv_rpt(uint8_t subevent, uint8_t *data, int len)
         memcpy(desc.addr.val, data + off, 6);
         off += 6;
 
-#if MYNEWT_VAL(BLE_HOST_BASED_PRIVACY)
-        if (ble_host_rpa_enabled()) {
-            /* Now RPA to be resolved here, since controller is unaware of the
-             * address is RPA  */
-            ble_rpa_replace_peer_params_with_rl(desc.addr.val,
-                                                &desc.addr.type, NULL);
-        }
-#endif
         desc.length_data = data[off];
         ++off;
 

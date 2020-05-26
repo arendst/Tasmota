@@ -40,9 +40,9 @@ public:
         bool        take(std::string owner = "<Unknown>");
         bool        take(uint32_t timeoutMs, std::string owner = "<Unknown>");
         std::string toString();
-        bool		timedWait(std::string owner = "<Unknown>", uint32_t timeoutMs = portMAX_DELAY);
+        bool        timedWait(std::string owner = "<Unknown>", uint32_t timeoutMs = portMAX_DELAY);
         uint32_t    wait(std::string owner = "<Unknown>");
-        uint32_t	value(){ return m_value; };
+        uint32_t    value(){ return m_value; };
 
     private:
         SemaphoreHandle_t m_semaphore;

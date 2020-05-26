@@ -30,18 +30,23 @@
  */
 class NimBLEUUID {
 public:
-    NimBLEUUID(std::string uuid);
+    NimBLEUUID(const std::string &uuid);
     NimBLEUUID(uint16_t uuid);
     NimBLEUUID(uint32_t uuid);
-    NimBLEUUID(ble_uuid128_t* uuid);
-    NimBLEUUID(uint8_t* pData, size_t size, bool msbFirst);
+    NimBLEUUID(const ble_uuid128_t* uuid);
+    NimBLEUUID(const uint8_t* pData, size_t size, bool msbFirst);
+    NimBLEUUID(uint32_t first, uint16_t second, uint16_t third, uint64_t fourth);
     NimBLEUUID();
-    uint8_t        bitSize();   // Get the number of bits in this uuid.
-    bool           equals(NimBLEUUID uuid);
-    ble_uuid_any_t* getNative();
-    NimBLEUUID        to128();
-    std::string    toString();
-    static NimBLEUUID fromString(std::string uuid);  // Create a NimBLEUUID from a string
+    uint8_t        bitSize() const;   // Get the number of bits in this uuid.
+    bool           equals(const NimBLEUUID &uuid) const;
+    const ble_uuid_any_t* getNative() const;
+    const NimBLEUUID &     to128();
+    std::string    toString() const;
+    static NimBLEUUID fromString(const std::string &uuid);  // Create a NimBLEUUID from a string
+
+    bool operator ==(const NimBLEUUID & rhs) const;
+    bool operator !=(const NimBLEUUID & rhs) const;
+    operator std::string() const;
 
 private:
     ble_uuid_any_t m_uuid;              // The underlying UUID structure that this class wraps.

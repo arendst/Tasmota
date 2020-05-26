@@ -19,8 +19,6 @@
  * under the License.
  */
 
- /* Modifications copyright (C) 2020 Ryan Powell */
- 
 #include "esp_attr.h"
 #include "esp_heap_caps.h"
 #include "nimconfig.h"
@@ -32,6 +30,8 @@ IRAM_ATTR void *nimble_platform_mem_malloc(size_t size)
     return heap_caps_malloc(size, MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
 #elif CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL
     return heap_caps_malloc(size, MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
+#elif CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_IRAM_8BIT
+    return heap_caps_malloc_prefer(size, 2, MALLOC_CAP_INTERNAL|MALLOC_CAP_IRAM_8BIT, MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
 #else
     return malloc(size);
 #endif
@@ -43,6 +43,8 @@ IRAM_ATTR void *nimble_platform_mem_calloc(size_t n, size_t size)
     return heap_caps_calloc(n, size, MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
 #elif CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL
     return heap_caps_calloc(n, size, MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
+#elif CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_IRAM_8BIT
+    return heap_caps_calloc_prefer(n, size, 2, MALLOC_CAP_INTERNAL|MALLOC_CAP_IRAM_8BIT, MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
 #else
     return calloc(n, size);
 #endif

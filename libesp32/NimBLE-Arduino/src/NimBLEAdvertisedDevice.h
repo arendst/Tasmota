@@ -3,7 +3,7 @@
  *
  *  Created: on Jan 24 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  *
  * BLEAdvertisedDevice.h
@@ -17,6 +17,9 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
+#include "nimconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
+
 #include "NimBLEAddress.h"
 #include "NimBLEScan.h"
 #include "NimBLEUUID.h"
@@ -24,7 +27,7 @@
 #include "host/ble_hs_adv.h"
 
 #include <map>
-#include <vector> 
+#include <vector>
 
 
 class NimBLEScan;
@@ -54,7 +57,7 @@ public:
     void setAddressType(uint8_t type);
 
 
-    bool        isAdvertisingService(NimBLEUUID uuid);
+    bool        isAdvertisingService(const NimBLEUUID &uuid);
     bool        haveAppearance();
     bool        haveManufacturerData();
     bool        haveName();
@@ -92,7 +95,7 @@ private:
     bool m_haveTXPower;
 
 
-    NimBLEAddress  m_address = NimBLEAddress("\0\0\0\0\0\0");
+    NimBLEAddress  m_address = NimBLEAddress("");
     uint8_t         m_advType;
     uint16_t        m_appearance;
     int             m_deviceType;
@@ -129,5 +132,6 @@ public:
     virtual void onResult(NimBLEAdvertisedDevice* advertisedDevice) = 0;
 };
 
+#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 #endif /* CONFIG_BT_ENABLED */
 #endif /* COMPONENTS_NIMBLEADVERTISEDDEVICE_H_ */

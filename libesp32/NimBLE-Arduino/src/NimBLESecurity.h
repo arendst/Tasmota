@@ -3,7 +3,7 @@
  *
  *  Created: on Feb 22 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  *
  * BLESecurity.h
@@ -12,8 +12,8 @@
  *      Author: chegewara
  */
 
-/** This class exists for backward compatibility - Should not be used in new code 
- * See the security functions in NimBLEDevice and callbacks in NimBLEServer / NimBLEClient 
+/** This class exists for backward compatibility - Should not be used in new code
+ * See the security functions in NimBLEDevice and callbacks in NimBLEServer / NimBLEClient
  */
 
 #ifndef COMPONENTS_NIMBLESECURITY_H_

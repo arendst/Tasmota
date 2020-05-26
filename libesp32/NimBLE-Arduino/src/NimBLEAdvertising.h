@@ -3,7 +3,7 @@
  *
  *  Created: on March 3, 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  *
  * BLEAdvertising.h
@@ -16,6 +16,9 @@
 #define MAIN_BLEADVERTISING_H_
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
+
+#include "nimconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
 
 #include "host/ble_gap.h"
 /****  FIX COMPILATION ****/
@@ -42,24 +45,24 @@
  * @brief Advertisement data set by the programmer to be published by the %BLE server.
  */
 class NimBLEAdvertisementData {
-	// Only a subset of the possible BLE architected advertisement fields are currently exposed.  Others will
-	// be exposed on demand/request or as time permits.
-	//
+    // Only a subset of the possible BLE architected advertisement fields are currently exposed.  Others will
+    // be exposed on demand/request or as time permits.
+    //
 public:
-	void setAppearance(uint16_t appearance);
-	void setCompleteServices(NimBLEUUID uuid);
-	void setFlags(uint8_t);
-	void setManufacturerData(std::string data);
-	void setName(std::string name);
-	void setPartialServices(NimBLEUUID uuid);
-	void setServiceData(NimBLEUUID uuid, std::string data);
-	void setShortName(std::string name);
-	void addData(std::string data);  // Add data to the payload.
-	std::string getPayload();               // Retrieve the current advert payload.
+    void setAppearance(uint16_t appearance);
+    void setCompleteServices(const NimBLEUUID &uuid);
+    void setFlags(uint8_t);
+    void setManufacturerData(const std::string &data);
+    void setName(const std::string &name);
+    void setPartialServices(const NimBLEUUID &uuid);
+    void setServiceData(const NimBLEUUID &uuid, const std::string &data);
+    void setShortName(const std::string &name);
+    void addData(const std::string &data);  // Add data to the payload.
+    std::string getPayload();               // Retrieve the current advert payload.
 
 private:
-	friend class NimBLEAdvertising;
-	std::string m_payload;   // The payload of the advertisement.
+    friend class NimBLEAdvertising;
+    std::string m_payload;   // The payload of the advertisement.
 };   // NimBLEAdvertisementData
 
 
@@ -70,36 +73,40 @@ private:
  */
 class NimBLEAdvertising {
 public:
-	NimBLEAdvertising();
-	void addServiceUUID(NimBLEUUID serviceUUID);
-	void addServiceUUID(const char* serviceUUID);
-	void start();
-	void stop();
-	void setAppearance(uint16_t appearance);
+    NimBLEAdvertising();
+    void addServiceUUID(const NimBLEUUID &serviceUUID);
+    void addServiceUUID(const char* serviceUUID);
+    void start();
+    void stop();
+    void setAppearance(uint16_t appearance);
     void setAdvertisementType(uint8_t adv_type);
-	void setMaxInterval(uint16_t maxinterval);
-	void setMinInterval(uint16_t mininterval);
-	void setAdvertisementData(NimBLEAdvertisementData& advertisementData);
-	void setScanFilter(bool scanRequertWhitelistOnly, bool connectWhitelistOnly);
-	void setScanResponseData(NimBLEAdvertisementData& advertisementData);
-	void setPrivateAddress(uint8_t type = BLE_ADDR_RANDOM);
+    void setMaxInterval(uint16_t maxinterval);
+    void setMinInterval(uint16_t mininterval);
+    void setAdvertisementData(NimBLEAdvertisementData& advertisementData);
+    void setScanFilter(bool scanRequertWhitelistOnly, bool connectWhitelistOnly);
+    void setScanResponseData(NimBLEAdvertisementData& advertisementData);
+    void setPrivateAddress(uint8_t type = BLE_ADDR_RANDOM);
 
-	void setMinPreferred(uint16_t);
-	void setMaxPreferred(uint16_t);
-	void setScanResponse(bool);
+    void setMinPreferred(uint16_t);
+    void setMaxPreferred(uint16_t);
+    void setScanResponse(bool);
 
 private:
     friend class NimBLEDevice;
+
     void                 onHostReset();
-	ble_hs_adv_fields    m_advData;
-	ble_hs_adv_fields    m_scanData;
-	ble_gap_adv_params   m_advParams;
-	std::vector<NimBLEUUID> m_serviceUUIDs;
-	bool                 m_customAdvData = false;  // Are we using custom advertising data?
-	bool                 m_customScanResponseData = false;  // Are we using custom scan response data?
-	bool				 m_scanResp = true;
+
+    ble_hs_adv_fields    m_advData;
+    ble_hs_adv_fields    m_scanData;
+    ble_gap_adv_params   m_advParams;
+    std::vector<NimBLEUUID> m_serviceUUIDs;
+    bool                 m_customAdvData = false;  // Are we using custom advertising data?
+    bool                 m_customScanResponseData = false;  // Are we using custom scan response data?
+    bool                 m_scanResp = true;
     bool                 m_advSvcsSet = false;
 
 };
+
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 #endif /* CONFIG_BT_ENABLED */
 #endif /* MAIN_BLEADVERTISING_H_ */

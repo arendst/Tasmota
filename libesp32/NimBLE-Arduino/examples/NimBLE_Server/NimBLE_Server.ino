@@ -61,8 +61,7 @@ class ServerCallbacks: public NimBLEServerCallbacks {
     void onAuthenticationComplete(ble_gap_conn_desc* desc){
         /** Check that encryption was successful, if not we disconnect the client */  
         if(!desc->sec_state.encrypted) {
-            /** NOTE: createServer returns the current server reference unless one is not already created */
-            NimBLEDevice::createServer()->disconnect(desc->conn_handle);
+            NimBLEDevice::getServer()->disconnect(desc->conn_handle);
             Serial.println("Encrypt connection failed - disconnecting client");
             return;
         }

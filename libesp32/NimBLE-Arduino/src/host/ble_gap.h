@@ -98,8 +98,8 @@ struct hci_conn_update;
 
 #define BLE_GAP_INITIAL_CONN_LATENCY        0
 #define BLE_GAP_INITIAL_SUPERVISION_TIMEOUT 0x0100
-#define BLE_GAP_INITIAL_CONN_MIN_CE_LEN     0x0010
-#define BLE_GAP_INITIAL_CONN_MAX_CE_LEN     0x0300
+#define BLE_GAP_INITIAL_CONN_MIN_CE_LEN     0x0000
+#define BLE_GAP_INITIAL_CONN_MAX_CE_LEN     0x0000
 
 #define BLE_GAP_ROLE_MASTER                 0
 #define BLE_GAP_ROLE_SLAVE                  1
@@ -1783,6 +1783,20 @@ int ble_gap_unpair(const ble_addr_t *peer_addr);
  */
 int ble_gap_unpair_oldest_peer(void);
 
+/**
+ * Similar to `ble_gap_unpair_oldest_peer()`, except it makes sure that the
+ * peer received in input parameters is not deleted.
+ *
+ * @param peer_addr             Address of the peer (not to be deleted)
+ *
+ * @return                      0 on success;
+ *                              A BLE host HCI return code if the controller
+ *                                  rejected the request;
+ *                              A BLE host core return code on unexpected
+ *                                  error.
+ */
+int ble_gap_unpair_oldest_except(const ble_addr_t *peer_addr);
+
 #define BLE_GAP_PRIVATE_MODE_NETWORK        0
 #define BLE_GAP_PRIVATE_MODE_DEVICE         1
 
@@ -1885,20 +1899,6 @@ struct ble_gap_event_listener {
     void *arg;
     SLIST_ENTRY(ble_gap_event_listener) link;
 };
-
-/**
- * Similar to `ble_gap_unpair_oldest_peer()`, except it makes sure that current
- * peer is not deleted.
- *
- * @param peer_addr             Address of the current peer (not to be deleted)
- *
- * @return                      0 on success;
- *                              A BLE host HCI return code if the controller
- *                                  rejected the request;
- *                              A BLE host core return code on unexpected
- *                                  error.
- */
-int ble_gap_unpair_oldest_except_curr(const ble_addr_t *curr_peer);
 
 /**
  * Registers listener for GAP events

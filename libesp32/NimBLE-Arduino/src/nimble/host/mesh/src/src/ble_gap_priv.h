@@ -119,6 +119,7 @@ void ble_gap_preempt(void);
 void ble_gap_preempt_done(void);
 
 void ble_gap_conn_broken(uint16_t conn_handle, int reason);
+void ble_gap_reset_state(int reason);
 int32_t ble_gap_timer(void);
 
 int ble_gap_init(void);
