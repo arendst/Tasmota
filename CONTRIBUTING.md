@@ -53,7 +53,7 @@ The process is straight-forward.
 2. Only relevant files should be touched (Also beware if your editor has auto-formatting feature enabled).
 3. Only one feature/fix should be added per PR.
 4. If adding a new functionality (new hardware, new library support) not related to an existing component move it to it's own modules (.ino file).
-5. PRs that don't compile (break Travis) or cause coding errors will not be merged. Please fix the issue. Same goes for PRs that are raised against older commit in dev - you might need to rebase and resolve conflicts.
+5. PRs that don't compile (fail in CI Tests) or cause coding errors will not be merged. Please fix the issue. Same goes for PRs that are raised against older commit in dev - you might need to rebase and resolve conflicts.
 6. All pull requests should undergo peer review by at least one contributor other than the creator, excepts for the owner.
 7. All pull requests should consider updates to the documentation.
 8. Pull requests that address an outstanding issue, particularly an issue deemed to be severe, should be given priority.
