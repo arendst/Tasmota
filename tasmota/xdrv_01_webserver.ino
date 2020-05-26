@@ -448,7 +448,7 @@ const char HTTP_FORM_OTHER[] PROGMEM =
   "<form method='get' action='co'>"
   "<p></p>"
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE "&nbsp;</b></legend>"
-  "<p><input id='t1' placeholder=\"" D_TEMPLATE "\" value='%s'></p>"
+  "<p><input id='t1' placeholder=\"" D_TEMPLATE "\" value='%s'></p>"  // We need ' apostrophe here as the template contains " quotation mark
   "<p><label><input id='t2' type='checkbox'%s><b>" D_ACTIVATE "</b></label></p>"
   "</fieldset>"
   "<br>"
@@ -2041,7 +2041,7 @@ void HandleOtherConfiguration(void)
 
 void OtherSaveSettings(void)
 {
-  char tmp[TOPSZ];
+  char tmp[300];   // Needs to hold complete ESP32 template of minimal 230 chars
   char webindex[5];
   char friendlyname[TOPSZ];
   char message[LOGSZ];
