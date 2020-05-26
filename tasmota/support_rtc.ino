@@ -408,7 +408,7 @@ void RtcSecond(void)
         }
       }
     }
-    if ((Rtc.utc_time > (1 * 60 * 60)) && (Rtc.last_sync < Rtc.utc_time - (1 * 60 * 60))) {  // Every hour a warning
+    if ((Rtc.utc_time > (2 * 60 * 60)) && (Rtc.last_sync < Rtc.utc_time - (2 * 60 * 60))) {  // Every two hours a warning
       // Do not use AddLog_P2 here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
       PrepLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: Not synced"));
       Rtc.last_sync = Rtc.utc_time;
