@@ -222,8 +222,8 @@ void SetDevicePower(power_t rpower, uint32_t source)
   else if (EXS_RELAY == my_module_type) {
     SetLatchingRelay(rpower, 1);
   }
-  else
 #endif  // ESP8266
+  else
   {
     for (uint32_t i = 0; i < devices_present; i++) {
       power_t state = rpower &1;
