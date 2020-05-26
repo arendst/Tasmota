@@ -1,9 +1,10 @@
-name: Tasmota ESP32 CI
+name: Tasmota CI
 
-on: [push, pull_request]
+on: 
+  pull_request:
 
 jobs:
-  tasmota32:
+  tasmota:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -15,13 +16,10 @@ jobs:
         pip install -U platformio
         platformio upgrade --dev
         platformio update
-    - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32
-   
+    - name: Run PlatformIO       
+      run: platformio run -e tasmota
 
-  tasmota32-webcam:
+  tasmota-minimal:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -34,11 +32,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-webcam
+      run: platformio run -e tasmota-minimal
 
-  tasmota32-minimal:
+  tasmota-lite:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -51,11 +47,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-minimal
+      run: platformio run -e tasmota-lite
 
-  tasmota32-lite:
+  tasmota-knx:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -68,28 +62,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-lite
-
-  tasmota32-knx:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python
-      uses: actions/setup-python@v1
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U platformio
-        platformio upgrade --dev
-        platformio update
-    - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-knx
+      run: platformio run -e tasmota-knx
        
-  tasmota32-sensors:
+  tasmota-sensors:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -102,28 +77,10 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-sensors
+      run: platformio run -e tasmota-sensors
 
-  tasmota32-display:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python
-      uses: actions/setup-python@v1
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U platformio
-        platformio upgrade --dev
-        platformio update
-    - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-display
 
-  tasmota32-ir:
+  tasmota-display:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -136,11 +93,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-ir
+      run: platformio run -e tasmota-display
 
-  tasmota32-BG:
+  tasmota-ir:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -153,11 +108,24 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-BG
+      run: platformio run -e tasmota-ir
+
+  tasmota-BG:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -U platformio
+        platformio upgrade --dev
+        platformio update
+    - name: Run PlatformIO
+      run: platformio run -e tasmota-BG
   
-  tasmota32-BR:
+  tasmota-BR:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -170,11 +138,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-BR
+      run: platformio run -e tasmota-BR
 
-  tasmota32-CN:
+  tasmota-CN:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -187,11 +153,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-CN
+      run: platformio run -e tasmota-CN
 
-  tasmota32-CZ:
+  tasmota-CZ:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -204,11 +168,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-CZ
+      run: platformio run -e tasmota-CZ
 
-  tasmota32-DE:
+  tasmota-DE:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -221,11 +183,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-DE
+      run: platformio run -e tasmota-DE
        
-  tasmota32-ES:
+  tasmota-ES:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -238,12 +198,10 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-ES
+      run: platformio run -e tasmota-ES
 
 
-  tasmota32-FR:
+  tasmota-FR:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -256,11 +214,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-FR
+      run: platformio run -e tasmota-FR
 
-  tasmota32-GR:
+  tasmota-GR:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -273,11 +229,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-GR
+      run: platformio run -e tasmota-GR
 
-  tasmota32-HE:
+  tasmota-HE:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -290,11 +244,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-HE
+      run: platformio run -e tasmota-HE
         
-  tasmota32-HU:
+  tasmota-HU:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -307,11 +259,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-HU
+      run: platformio run -e tasmota-HU
 
-  tasmota32-IT:
+  tasmota-IT:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -324,11 +274,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-IT
+      run: platformio run -e tasmota-IT
 
-  tasmota32-KO:
+  tasmota-KO:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -341,11 +289,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-KO
+      run: platformio run -e tasmota-KO
 
-  tasmota32-NL:
+  tasmota-NL:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -358,11 +304,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-NL
+      run: platformio run -e tasmota-NL
        
-  tasmota32-PL:
+  tasmota-PL:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -375,11 +319,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-PL
+      run: platformio run -e tasmota-PL
 
-  tasmota32-PT:
+  tasmota-PT:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -392,11 +334,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-PT
+      run: platformio run -e tasmota-PT
 
-  tasmota32-RO:
+  tasmota-RO:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -409,11 +349,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-RO
+      run: platformio run -e tasmota-RO
 
-  tasmota32-RU:
+  tasmota-RU:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -426,11 +364,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-RU
+      run: platformio run -e tasmota-RU
   
-  tasmota32-SE:
+  tasmota-SE:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -443,11 +379,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-SE
+      run: platformio run -e tasmota-SE
 
-  tasmota32-SK:
+  tasmota-SK:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -460,11 +394,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-SK
+      run: platformio run -e tasmota-SK
 
-  tasmota32-TR:
+  tasmota-TR:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -477,11 +409,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-TR
+      run: platformio run -e tasmota-TR
 
-  tasmota32-TW:
+  tasmota-TW:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -494,11 +424,9 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-TW
+      run: platformio run -e tasmota-TW
        
-  tasmota32-UK:
+  tasmota-UK:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -511,6 +439,4 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        cp platformio_override_sample.ini platformio_override.ini
-        platformio run -e tasmota32-UK
+      run: platformio run -e tasmota-UK

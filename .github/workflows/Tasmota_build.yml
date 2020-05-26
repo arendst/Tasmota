@@ -2,8 +2,6 @@ name: Build_firmware
 
 on:
   push:
-  pull_request:
-
 
 jobs:
   tasmota_pull:
@@ -1477,24 +1475,25 @@ jobs:
         mkdir -p ./firmware/tasmota/languages
         mkdir -p ./firmware/tasmota32/languages
         mkdir -p ./firmware/tasmota32/ESP32_needed_files/
-        mv ./mv_firmware/tasmota.* ./firmware/tasmota/
-        mv ./mv_firmware/tasmota-sensors.* ./firmware/tasmota/
-        mv ./mv_firmware/tasmota-minimal.* ./firmware/tasmota/
-        mv ./mv_firmware/tasmota-lite.* ./firmware/tasmota/
-        mv ./mv_firmware/tasmota-ir*.* ./firmware/tasmota/
-        mv ./mv_firmware/tasmota-display.* ./firmware/tasmota/
-        mv ./mv_firmware/tasmota-knx.* ./firmware/tasmota/
-        mv ./mv_firmware/tasmota32.* ./firmware/tasmota32/
-        mv ./mv_firmware/tasmota32-sensors.* ./firmware/tasmota32/
-        mv ./mv_firmware/tasmota32-minimal.* ./firmware/tasmota32/
-        mv ./mv_firmware/tasmota32-lite.* ./firmware/tasmota32/
-        mv ./mv_firmware/tasmota32-ir*.* ./firmware/tasmota32/
-        mv ./mv_firmware/tasmota32-display.* ./firmware/tasmota32/
-        mv ./mv_firmware/tasmota32-web*.* ./firmware/tasmota32/
-        mv ./mv_firmware/tasmota32-knx.* ./firmware/tasmota32/
-        mv ./mv_firmware/tasmota32* ./firmware/tasmota32/languages/
-        mv ./mv_firmware/* ./firmware/tasmota/languages/
-        mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/        
+        [ ! -f ./mv_firmware/tasmota.* ] || mv ./mv_firmware/tasmota.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/tasmota-sensors.* ] || mv ./mv_firmware/tasmota-sensors.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/tasmota-minimal.* ] || mv ./mv_firmware/tasmota-minimal.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/tasmota-lite.* ] || mv ./mv_firmware/tasmota-lite.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/tasmota-ir*.* ] || mv ./mv_firmware/tasmota-ir*.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/tasmota-display.* ] || mv ./mv_firmware/tasmota-display.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/tasmota-knx.* ] || mv ./mv_firmware/tasmota-knx.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/tasmota32.* ] || mv ./mv_firmware/tasmota32.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/tasmota32-sensors.* ] || mv ./mv_firmware/tasmota32-sensors.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/tasmota32-minimal.* ] || mv ./mv_firmware/tasmota32-minimal.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/tasmota32-lite.* ] || mv ./mv_firmware/tasmota32-lite.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/tasmota32-ir*.* ] || mv ./mv_firmware/tasmota32-ir*.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/tasmota32-display.* ] || mv ./mv_firmware/tasmota32-display.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/tasmota32-web*.* ] || mv ./mv_firmware/tasmota32-web*.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/tasmota32-knx.* ] || mv ./mv_firmware/tasmota32-knx.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/tasmota32* ] || mv ./mv_firmware/tasmota32* ./firmware/tasmota32/languages/
+        [ ! -f ./mv_firmware/* ] || mv ./mv_firmware/* ./firmware/tasmota/languages/
+        [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/
+        [ ! -f ./FIRMWARE.md ] || mv -f ./FIRMWARE.md ./README.md        
     - name: Commit files  # transfer the new binaries back into the repository
       run: |
         git config --local user.name "Platformio BUILD"
