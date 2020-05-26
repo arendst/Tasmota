@@ -62,6 +62,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``Rule0`` to change global rule parameters
 - Add command ``Time 4`` to display timestamp using milliseconds (#8537)
 - Add commands ``LedPwmOn 0..255``, ``LedPwmOff 0..255`` and ``LedPwmMode1 0/1`` to control led brightness by George (#8491)
+- Add support for unique MQTTClient (and inherited fallback topic) by full Mac address using ``mqttclient DVES_%12X`` (#8300)
 - Add more functionality to ``Switchmode`` 11 and 12 (#8450)
 - Add wildcard pattern ``?`` for JSON matching in rules
 - Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)

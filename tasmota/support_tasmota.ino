@@ -41,12 +41,15 @@ char* Format(char* output, const char* input, int size)
           snprintf_P(tmp, size, PSTR("%s%c0%dd"), output, '%', digits);
           snprintf_P(output, size, tmp, ESP_getChipId() & 0x1fff);            // %04d - short chip ID in dec, like in hostname
         } else {
-          snprintf_P(tmp, size, PSTR("%s%c0%dX"), output, '%', digits);
-          snprintf_P(output, size, tmp, ESP_getChipId());                   // %06X - full chip ID in hex
+          String mac_address = WiFi.macAddress();
+          mac_address.replace(":", "");
+          if (digits > 12) { digits = 12; }
+          String mac_part = mac_address.substring(12 - digits);
+          snprintf_P(output, size, PSTR("%s%s"), output, mac_part.c_str());  // %01X .. %12X - mac address in hex
         }
       } else {
         if (strchr(token, 'd')) {
-          snprintf_P(output, size, PSTR("%s%d"), output, ESP_getChipId());  // %d - full chip ID in dec
+          snprintf_P(output, size, PSTR("%s%d"), output, ESP_getChipId());   // %d - full chip ID in dec
           digits = 8;
         }
       }
