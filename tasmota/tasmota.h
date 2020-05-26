@@ -129,7 +129,7 @@ const uint16_t FLOATSZ = 16;                // Max number of characters in float
 const uint16_t CMDSZ = 24;                  // Max number of characters in command
 const uint16_t TOPSZ = 151;                 // Max number of characters in topic string
 const uint16_t LOGSZ = 700;                 // Max number of characters in log
-const uint16_t MIN_MESSZ = 1040;            // Min number of characters in MQTT message (1000 - TOPSZ - 9 header bytes)
+const uint16_t MIN_MESSZ = 1040;            // Min number of characters in MQTT message (1200 - TOPSZ - 9 header bytes)
 
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
 
