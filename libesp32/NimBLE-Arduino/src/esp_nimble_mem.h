@@ -1,4 +1,3 @@
-  
 /*
  * Copyright 2020 Espressif Systems (Shanghai) PTE LTD
  *

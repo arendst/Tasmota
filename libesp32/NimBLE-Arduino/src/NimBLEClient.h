@@ -3,7 +3,7 @@
  *
  *  Created: on Jan 26 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  * BLEClient.h
  *
@@ -14,15 +14,23 @@
 #ifndef MAIN_NIMBLECLIENT_H_
 #define MAIN_NIMBLECLIENT_H_
 
-#if defined(CONFIG_BT_ENABLED)
 #include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
+
+#include "nimconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLEAddress.h"
 #include "NimBLEAdvertisedDevice.h"
 #include "NimBLERemoteService.h"
 
-#include <map>
+#include <vector>
 #include <string>
+
+typedef struct {
+    const NimBLEUUID *uuid;
+    const void *attribute;
+} disc_filter_t;
 
 class NimBLERemoteService;
 class NimBLEClientCallbacks;
@@ -33,64 +41,68 @@ class NimBLEAdvertisedDevice;
  */
 class NimBLEClient {
 public:
-    bool                                       connect(NimBLEAdvertisedDevice* device, bool refreshServices = true);
-    bool                                       connect(NimBLEAddress address, uint8_t type = BLE_ADDR_TYPE_PUBLIC, bool refreshServices = true);   // Connect to the remote BLE Server
-    int                                        disconnect(uint8_t reason = BLE_ERR_REM_USER_CONN_TERM);                  // Disconnect from the remote BLE Server
-    NimBLEAddress                              getPeerAddress();              // Get the address of the remote BLE Server
-    int                                        getRssi();                     // Get the RSSI of the remote BLE Server
-    std::map<std::string, NimBLERemoteService*>*  getServices();                 // Get a map of the services offered by the remote BLE Server
-    NimBLERemoteService*                          getService(const char* uuid);  // Get a reference to a specified service offered by the remote BLE server.
-    NimBLERemoteService*                          getService(NimBLEUUID uuid);   // Get a reference to a specified service offered by the remote BLE server.
-    std::string                                getValue(NimBLEUUID serviceUUID, NimBLEUUID characteristicUUID);   // Get the value of a given characteristic at a given service.
-    bool                                       setValue(NimBLEUUID serviceUUID, NimBLEUUID characteristicUUID, std::string value);   // Set the value of a given characteristic at a given service.
-    bool                                       isConnected();                 // Return true if we are connected.
-    void                                       setClientCallbacks(NimBLEClientCallbacks *pClientCallbacks, bool deleteCallbacks = true);
-    std::string                                toString();                    // Return a string representation of this client.
-    uint16_t                                   getConnId();
-    uint16_t                                   getMTU();
-    bool                                       secureConnection();
-    void                                       setConnectTimeout(uint8_t timeout);
-	void 									   setConnectionParams(uint16_t minInterval, uint16_t maxInterval,
-															uint16_t latency, uint16_t timeout,
-                                                            uint16_t scanInterval=16, uint16_t scanWindow=16); // NimBLE default scan settings
-	void 									   updateConnParams(uint16_t minInterval, uint16_t maxInterval, 
-															uint16_t latency, uint16_t timeout);
- 
-                                              
+    bool                                        connect(NimBLEAdvertisedDevice* device, bool refreshServices = true);
+    bool                                        connect(const NimBLEAddress &address, uint8_t type = BLE_ADDR_PUBLIC,
+                                                        bool refreshServices = true);
+    int                                         disconnect(uint8_t reason = BLE_ERR_REM_USER_CONN_TERM);
+    NimBLEAddress                               getPeerAddress();
+    int                                         getRssi();
+    std::vector<NimBLERemoteService*>*          getServices(bool refresh = false);
+    std::vector<NimBLERemoteService*>::iterator begin();
+    std::vector<NimBLERemoteService*>::iterator end();
+    NimBLERemoteService*                        getService(const char* uuid);
+    NimBLERemoteService*                        getService(const NimBLEUUID &uuid);
+    std::string                                 getValue(const NimBLEUUID &serviceUUID, const NimBLEUUID &characteristicUUID);
+    bool                                        setValue(const NimBLEUUID &serviceUUID, const NimBLEUUID &characteristicUUID,
+                                                         const std::string &value);
+    bool                                        isConnected();
+    void                                        setClientCallbacks(NimBLEClientCallbacks *pClientCallbacks,
+                                                                   bool deleteCallbacks = true);
+    std::string                                 toString();
+    uint16_t                                    getConnId();
+    uint16_t                                    getMTU();
+    bool                                        secureConnection();
+    void                                        setConnectTimeout(uint8_t timeout);
+    void                                        setConnectionParams(uint16_t minInterval, uint16_t maxInterval,
+                                                                    uint16_t latency, uint16_t timeout,
+                                                                    uint16_t scanInterval=16, uint16_t scanWindow=16);
+    void                                        updateConnParams(uint16_t minInterval, uint16_t maxInterval,
+                                                                 uint16_t latency, uint16_t timeout);
+    void                                        discoverAttributes();
+
 private:
     NimBLEClient();
     ~NimBLEClient();
-    friend class NimBLEDevice;
-    friend class NimBLERemoteService;
 
-    static int          handleGapEvent(struct ble_gap_event *event, void *arg);
-    static int          serviceDiscoveredCB(uint16_t conn_handle, const struct ble_gatt_error *error, const struct ble_gatt_svc *service, void *arg);
-    void                clearServices();   // Clear any existing services.
-    bool                retrieveServices();  //Retrieve services from the server
-//    void                onHostReset();
+    friend class            NimBLEDevice;
+    friend class            NimBLERemoteService;
 
-    NimBLEAddress    m_peerAddress = NimBLEAddress("\0\0\0\0\0\0");   // The BD address of the remote server.
-    uint16_t         m_conn_id;
-    bool             m_haveServices = false;    // Have we previously obtain the set of services from the remote server.
-    bool             m_isConnected = false;     // Are we currently connected.
-    bool             m_waitingToConnect =false;
-    bool             m_deleteCallbacks = true;
-	int32_t			 m_connectTimeout;
-    //uint16_t         m_mtu = 23;
+    static int              handleGapEvent(struct ble_gap_event *event, void *arg);
+    static int              serviceDiscoveredCB(uint16_t conn_handle,
+                                                const struct ble_gatt_error *error,
+                                                const struct ble_gatt_svc *service,
+                                                void *arg);
+    void                    clearServices();
+    bool                    retrieveServices(const NimBLEUUID *uuid_filter = nullptr);
 
+    NimBLEAddress           m_peerAddress = NimBLEAddress("");
+    uint16_t                m_conn_id;
+    bool                    m_isConnected = false;
+    bool                    m_waitingToConnect =false;
+    bool                    m_deleteCallbacks = true;
+    int32_t                 m_connectTimeout;
     NimBLEClientCallbacks*  m_pClientCallbacks = nullptr;
-
     FreeRTOS::Semaphore     m_semaphoreOpenEvt       = FreeRTOS::Semaphore("OpenEvt");
     FreeRTOS::Semaphore     m_semaphoreSearchCmplEvt = FreeRTOS::Semaphore("SearchCmplEvt");
     FreeRTOS::Semaphore     m_semeaphoreSecEvt       = FreeRTOS::Semaphore("Security");
 
-    std::map<std::string, NimBLERemoteService*> m_servicesMap;
-    
+    std::vector<NimBLERemoteService*> m_servicesVector;
+
 private:
     friend class NimBLEClientCallbacks;
     ble_gap_conn_params m_pConnParams;
 
-}; // class NimBLEClient 
+}; // class NimBLEClient
 
 
 /**
@@ -109,5 +121,6 @@ public:
     virtual bool onConfirmPIN(uint32_t pin);
 };
 
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 #endif // CONFIG_BT_ENABLED
 #endif /* MAIN_NIMBLECLIENT_H_ */

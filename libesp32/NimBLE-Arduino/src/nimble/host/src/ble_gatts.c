@@ -1689,30 +1689,29 @@ ble_gatts_bonding_established(uint16_t conn_handle)
 
     conn = ble_hs_conn_find(conn_handle);
     BLE_HS_DBG_ASSERT(conn != NULL);
+    BLE_HS_DBG_ASSERT(conn->bhc_sec_state.bonded);
 
-    if (conn->bhc_sec_state.bonded) {
-        cccd_value.peer_addr = conn->bhc_peer_addr;
-        gatt_srv = &conn->bhc_gatt_svr;
+    cccd_value.peer_addr = conn->bhc_peer_addr;
+    gatt_srv = &conn->bhc_gatt_svr;
 
-        for (i = 0; i < gatt_srv->num_clt_cfgs; ++i) {
-            clt_cfg = (gatt_srv->clt_cfgs + i);
-            if (clt_cfg == NULL) {
-                continue;
-            }
+    for (i = 0; i < gatt_srv->num_clt_cfgs; ++i) {
+        clt_cfg = (gatt_srv->clt_cfgs + i);
+        if (clt_cfg == NULL) {
+            continue;
+        }
 
-            if (clt_cfg->flags != 0) {
-                cccd_value.chr_val_handle = clt_cfg->chr_val_handle;
-                cccd_value.flags = clt_cfg->flags;
-                cccd_value.value_changed = 0;
+        if (clt_cfg->flags != 0) {
+            cccd_value.chr_val_handle = clt_cfg->chr_val_handle;
+            cccd_value.flags = clt_cfg->flags;
+            cccd_value.value_changed = 0;
 
-                /* Store write use ble_hs_lock */
-                ble_hs_unlock();
-                ble_store_write_cccd(&cccd_value);
-                ble_hs_lock();
+            /* Store write use ble_hs_lock */
+            ble_hs_unlock();
+            ble_store_write_cccd(&cccd_value);
+            ble_hs_lock();
 
-                conn = ble_hs_conn_find(conn_handle);
-                BLE_HS_DBG_ASSERT(conn != NULL);
-            }
+            conn = ble_hs_conn_find(conn_handle);
+            BLE_HS_DBG_ASSERT(conn != NULL);
         }
     }
 

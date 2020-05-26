@@ -538,6 +538,11 @@ ble_sm_persist_keys(struct ble_sm_proc *proc)
             case BLE_ADDR_PUBLIC:
             case BLE_ADDR_PUBLIC_ID:
                 conn->bhc_peer_addr.type = BLE_ADDR_PUBLIC_ID;
+#if MYNEWT_VAL(BLE_HOST_BASED_PRIVACY)
+                /* In case of Host based privacy, we should not be changing
+                 * peer address type to BLE_ADDR_PUBLIC_ID */
+                conn->bhc_peer_addr.type = BLE_ADDR_PUBLIC;
+#endif
                 break;
 
             case BLE_ADDR_RANDOM:
@@ -944,7 +949,7 @@ ble_sm_process_result(uint16_t conn_handle, struct ble_sm_result *res)
 
         if (res->enc_cb) {
             BLE_HS_DBG_ASSERT(proc == NULL || rm);
-            ble_gap_enc_event(conn_handle, res->app_status, res->restore);
+            ble_gap_enc_event(conn_handle, res->app_status, res->restore, res->bonded);
         }
 
         if (res->app_status == 0 &&
@@ -1198,6 +1203,7 @@ ble_sm_enc_event_rx(uint16_t conn_handle, uint8_t evt_status, int encrypted)
 
     ble_hs_unlock();
 
+    res.bonded = bonded;
     ble_sm_process_result(conn_handle, &res);
 }
 
@@ -1793,8 +1799,21 @@ ble_sm_pair_req_rx(uint16_t conn_handle, struct os_mbuf **om,
      */
     proc = ble_sm_proc_find(conn_handle, BLE_SM_PROC_STATE_NONE, -1, &prev);
     if (proc != NULL) {
-        /* Pairing already in progress; abort old procedure and start new. */
-        /* XXX: Check the spec on this. */
+        /* Fail if procedure is in progress unless we sent a slave security
+         * request to peer.
+         */
+        if (proc->state != BLE_SM_PROC_STATE_SEC_REQ) {
+            res->sm_err = BLE_SM_ERR_UNSPECIFIED;
+            res->app_status = BLE_HS_SM_US_ERR(BLE_SM_ERR_UNSPECIFIED);
+            ble_hs_unlock();
+            return;
+        }
+
+        /* Remove the procedure because it was allocated when
+         * sending the Slave Security Request and it will be allocated
+         * again later in this method. We should probably refactor this
+         * in the future.
+         */
         ble_sm_proc_remove(proc, prev);
         ble_sm_proc_free(proc);
     }
@@ -2459,7 +2478,7 @@ ble_sm_timer(void)
      * procedures without reconnect.
      */
     while ((proc = STAILQ_FIRST(&exp_list)) != NULL) {
-        ble_gap_enc_event(proc->conn_handle, BLE_HS_ETIMEOUT, 0);
+        ble_gap_enc_event(proc->conn_handle, BLE_HS_ETIMEOUT, 0, 0);
 
         STAILQ_REMOVE_HEAD(&exp_list, next);
         ble_sm_proc_free(proc);

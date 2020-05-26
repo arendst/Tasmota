@@ -3,7 +3,7 @@
  *
  *  Created: on March 15 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  *
  * BLEEddystoneTLM.cpp
@@ -26,41 +26,41 @@ static const char LOG_TAG[] = "NimBLEEddystoneTLM";
 
 
 NimBLEEddystoneTLM::NimBLEEddystoneTLM() {
-	beaconUUID = 0xFEAA;
-	m_eddystoneData.frameType = EDDYSTONE_TLM_FRAME_TYPE;
-	m_eddystoneData.version = 0;
-	m_eddystoneData.volt = 3300; // 3300mV = 3.3V
-	m_eddystoneData.temp = (uint16_t) ((float) 23.00 * 256); // 8.8 fixed format
-	m_eddystoneData.advCount = 0;
-	m_eddystoneData.tmil = 0;
+    beaconUUID = 0xFEAA;
+    m_eddystoneData.frameType = EDDYSTONE_TLM_FRAME_TYPE;
+    m_eddystoneData.version = 0;
+    m_eddystoneData.volt = 3300; // 3300mV = 3.3V
+    m_eddystoneData.temp = (uint16_t) ((float) 23.00 * 256); // 8.8 fixed format
+    m_eddystoneData.advCount = 0;
+    m_eddystoneData.tmil = 0;
 } // NimBLEEddystoneTLM
 
 std::string NimBLEEddystoneTLM::getData() {
-	return std::string((char*) &m_eddystoneData, sizeof(m_eddystoneData));
+    return std::string((char*) &m_eddystoneData, sizeof(m_eddystoneData));
 } // getData
 
 NimBLEUUID NimBLEEddystoneTLM::getUUID() {
-	return NimBLEUUID(beaconUUID);
+    return NimBLEUUID(beaconUUID);
 } // getUUID
 
 uint8_t NimBLEEddystoneTLM::getVersion() {
-	return m_eddystoneData.version;
+    return m_eddystoneData.version;
 } // getVersion
 
 uint16_t NimBLEEddystoneTLM::getVolt() {
-	return ENDIAN_CHANGE_U16(m_eddystoneData.volt);
+    return ENDIAN_CHANGE_U16(m_eddystoneData.volt);
 } // getVolt
 
 float NimBLEEddystoneTLM::getTemp() {
-	return ENDIAN_CHANGE_U16(m_eddystoneData.temp) / 256.0f;
+    return ENDIAN_CHANGE_U16(m_eddystoneData.temp) / 256.0f;
 } // getTemp
 
 uint32_t NimBLEEddystoneTLM::getCount() {
-	return ENDIAN_CHANGE_U32(m_eddystoneData.advCount);
+    return ENDIAN_CHANGE_U32(m_eddystoneData.advCount);
 } // getCount
 
 uint32_t NimBLEEddystoneTLM::getTime() {
-	return (ENDIAN_CHANGE_U32(m_eddystoneData.tmil)) / 10;
+    return (ENDIAN_CHANGE_U32(m_eddystoneData.tmil)) / 10;
 } // getTime
 
 std::string NimBLEEddystoneTLM::toString() {
@@ -116,37 +116,37 @@ std::string NimBLEEddystoneTLM::toString() {
 /**
  * Set the raw data for the beacon record.
  */
-void NimBLEEddystoneTLM::setData(std::string data) {
-	if (data.length() != sizeof(m_eddystoneData)) {
-		NIMBLE_LOGE(LOG_TAG, "Unable to set the data ... length passed in was %d and expected %d", 
+void NimBLEEddystoneTLM::setData(const std::string &data) {
+    if (data.length() != sizeof(m_eddystoneData)) {
+        NIMBLE_LOGE(LOG_TAG, "Unable to set the data ... length passed in was %d and expected %d",
                                                 data.length(), sizeof(m_eddystoneData));
-		return;
-	}
+        return;
+    }
   memcpy(&m_eddystoneData, data.data(), data.length());
 } // setData
 
-void NimBLEEddystoneTLM::setUUID(NimBLEUUID l_uuid) {
-	beaconUUID = l_uuid.getNative()->u16.value;
+void NimBLEEddystoneTLM::setUUID(const NimBLEUUID &l_uuid) {
+    beaconUUID = l_uuid.getNative()->u16.value;
 } // setUUID
 
 void NimBLEEddystoneTLM::setVersion(uint8_t version) {
-	m_eddystoneData.version = version;
+    m_eddystoneData.version = version;
 } // setVersion
 
 void NimBLEEddystoneTLM::setVolt(uint16_t volt) {
-	m_eddystoneData.volt = volt;
+    m_eddystoneData.volt = volt;
 } // setVolt
 
 void NimBLEEddystoneTLM::setTemp(float temp) {
-	m_eddystoneData.temp = (uint16_t)temp;
+    m_eddystoneData.temp = (uint16_t)temp;
 } // setTemp
 
 void NimBLEEddystoneTLM::setCount(uint32_t advCount) {
-	m_eddystoneData.advCount = advCount;
+    m_eddystoneData.advCount = advCount;
 } // setCount
 
 void NimBLEEddystoneTLM::setTime(uint32_t tmil) {
-	m_eddystoneData.tmil = tmil;
+    m_eddystoneData.tmil = tmil;
 } // setTime
 
 #endif

@@ -3,7 +3,7 @@
  *
  *  Created: on March 10, 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  *
  * BLE2902.h
@@ -16,6 +16,9 @@
 #define MAIN_NIMBLE2902_H_
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
+
+#include "nimconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
 #include "NimBLEDescriptor.h"
 
@@ -35,16 +38,17 @@
  */
 class NimBLE2902: public NimBLEDescriptor {
 public:
-	bool getNotifications();
-	bool getIndications();
-	void setNotifications(bool flag);
-	void setIndications(bool flag);
+    bool getNotifications();
+    bool getIndications();
+    void setNotifications(bool flag);
+    void setIndications(bool flag);
 private:
-	NimBLE2902(NimBLECharacteristic* pCharacterisitic);
+    NimBLE2902(NimBLECharacteristic* pCharacterisitic);
     friend class NimBLECharacteristic;
     std::map<uint16_t, uint16_t> m_subscribedMap;
 
 }; // NimBLE2902
 
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 #endif /* CONFIG_BT_ENABLED */
 #endif /* MAIN_NIMBLE2902_H_ */

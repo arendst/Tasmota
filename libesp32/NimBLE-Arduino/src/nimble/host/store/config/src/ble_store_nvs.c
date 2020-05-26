@@ -210,11 +210,11 @@ get_nvs_db_attribute(int obj_type, bool empty, void *value, int num_value)
                     err = get_nvs_matching_index(&p_dev_rec, value, num_value,
                                                  sizeof(struct ble_hs_dev_records));
                 } else {
-                    if (obj_type == BLE_STORE_OBJ_TYPE_CCCD) {
+                    if (obj_type != BLE_STORE_OBJ_TYPE_CCCD) {
                         err = get_nvs_matching_index(&cur.sec, value, num_value,
                                                      sizeof(struct ble_store_value_sec));
                     } else {
-                        err = get_nvs_matching_index(&cur.sec, value, num_value,
+                        err = get_nvs_matching_index(&cur.cccd, value, num_value,
                                                      sizeof(struct ble_store_value_cccd));
                     }
                 }

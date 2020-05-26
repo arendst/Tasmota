@@ -473,8 +473,13 @@ ble_l2cap_sig_update(uint16_t conn_handle,
     STATS_INC(ble_l2cap_stats, update_init);
 
     ble_hs_lock();
-    ble_hs_misc_conn_chan_find_reqd(conn_handle, BLE_L2CAP_CID_SIG,
-                                    &conn, &chan);
+    rc = ble_hs_misc_conn_chan_find_reqd(conn_handle, BLE_L2CAP_CID_SIG,
+                                         &conn, &chan);
+    if (rc != 0) {
+        ble_hs_unlock();
+        goto done;
+    }
+
     master = conn->bhc_flags & BLE_HS_CONN_F_MASTER;
     ble_hs_unlock();
 
