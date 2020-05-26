@@ -58,6 +58,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)
 - Change Energy JSON Total field from ``"Total":[33.736,11.717,16.978]`` to ``"Total":33.736,"TotalTariff":[11.717,16.978]``
 - Change Energy JSON ExportActive field from ``"ExportActive":[33.736,11.717,16.978]`` to ``"ExportActive":33.736,"ExportTariff":[11.717,16.978]``
+- Fix escape of non-JSON received serial data (#8329)
 - Add command ``Rule0`` to change global rule parameters
 - Add command ``Time 4`` to display timestamp using milliseconds (#8537)
 - Add commands ``LedPwmOn 0..255``, ``LedPwmOff 0..255`` and ``LedPwmMode1 0/1`` to control led brightness by George (#8491)

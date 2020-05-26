@@ -63,7 +63,7 @@ void SerialBridgeInput(void)
           !in_byte_is_delimiter) {                                             // Char is not a delimiter
         serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
       }
-      
+
       if ((serial_bridge_in_byte_counter >= SERIAL_BRIDGE_BUFFER_SIZE -1) ||   // Send message when buffer is full or ...
           in_byte_is_delimiter) {                                              // Char is delimiter
         serial_bridge_polling_window = 0;                                      // Publish now
@@ -91,7 +91,7 @@ void SerialBridgeInput(void)
       }
       ResponseAppend_P(PSTR("\""));
     }
-    ResponseAppend_P(PSTR("}"));
+    ResponseJsonEnd();
 
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
     XdrvRulesProcess();
