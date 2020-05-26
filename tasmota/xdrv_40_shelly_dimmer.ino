@@ -29,6 +29,9 @@
 #define XDRV_32                     40
 #define XNRG_17                     17
 
+#define SHD_DRIVER_MAJOR_VERSION    0x00
+#define SHD_DRIVER_MINOR_VERSION    0x04
+
 #define SHD_FIRMWARE_MAJOR_VERSION  0x02
 #define SHD_FIRMWARE_MINOR_VERSION  0x16
 
@@ -235,13 +238,17 @@ bool ShdSyncState()
     // TODO(jamesturton): HW dimming seems to conflict with SW dimming. See how
     // we can disbale SW dimming when using HW dimming.
     if (Settings.light_speed != Shd.dimmer.fade_rate)
+    {
         ShdSendFadeRate(Shd.req_brightness, Settings.light_speed);
+        ShdDebugState();
+    }
     else
 #endif
     if (Shd.req_brightness != Shd.dimmer.brightness)
+    {
         ShdSetBrightness(Shd.req_brightness);
-
-    ShdDebugState();
+        ShdDebugState();
+    }
 }
 
 void ShdDebugState()
@@ -300,13 +307,14 @@ bool ShdPacketProcess(void)
                 if (Shd.last_power_check > 10 && Energy.active_power[0] > 0)
                 {
                     float kWhused = (float)Energy.active_power[0] * (Rtc.utc_time - Shd.last_power_check) / 36;
-                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Adding %09.6f kWh to todays usage from %lu to %lu"), kWhused, Shd.last_power_check, Rtc.utc_time);
+                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Adding %i mWh to todays usage from %lu to %lu"), (int)(kWhused * 10), Shd.last_power_check, Rtc.utc_time);
                     Energy.kWhtoday += kWhused;
                     EnergyUpdateToday();
                 }
                 Shd.last_power_check = Rtc.utc_time;
 #endif // USE_ENERGY_SENSOR
 
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: ShdPacketProcess: Brightness:%d Power:%d Fade:%d"), brightness, wattage_raw, fade_rate);
                 Shd.dimmer.brightness = brightness;
                 Shd.dimmer.power = wattage_raw;
                 Shd.dimmer.fade_rate = fade_rate;
@@ -391,6 +399,7 @@ void ShdPoll(void)
         return;
 
     ShdSendCmd(SHD_GET_STATE_CMD, 0, 0);
+    ShdSyncState();
 }
 
 void ShdSendVersion(void)
@@ -403,6 +412,7 @@ void ShdSendVersion(void)
 
 void ShdInit(void)
 {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Shelly Dimmer Driver v%d.%d"), SHD_DRIVER_MAJOR_VERSION, SHD_DRIVER_MINOR_VERSION);
 #ifdef SHELLY_DIMMER_DEBUG
     AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Starting Tx %d Rx %d"), Pin(GPIO_TXD), Pin(GPIO_RXD));
 #endif
