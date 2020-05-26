@@ -466,7 +466,6 @@ void RtcSetTime(uint32_t epoch)
     Rtc.user_time_entry = true;
     Rtc.utc_time = epoch -1;    // Will be corrected by RtcSecond
   }
-  RtcSecond();
 }
 
 void RtcInit(void)
