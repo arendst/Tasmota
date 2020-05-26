@@ -16,8 +16,6 @@ If you like **Tasmota**, give it a star, or fork it and contribute!
 
 See [CHANGELOG.md](https://github.com/arendst/Tasmota/blob/development/tasmota/CHANGELOG.md) for changes since last release.
 
-In addition to the [release webpage](https://github.com/arendst/Tasmota/releases/latest) the binaries can also be downloaded from http://thehackbox.org/tasmota/release/
-
 ## Development
 
 [![Dev Version](https://img.shields.io/badge/development%20version-v8.3.x.x-blue.svg)](https://github.com/arendst/Tasmota)
