@@ -225,18 +225,26 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
 
 class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
   void onResult(NimBLEAdvertisedDevice* advertisedDevice) {
-    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Advertised Device: %s Buffer: %u"),advertisedDevice.getAddress().toString().c_str(),advertisedDevice.getServiceData().length());
-    if (advertisedDevice->getServiceData().length() == 0) return;
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Advertised Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData().length());
+    if (advertisedDevice->getServiceData().length() == 0) {
+      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("No Xiaomi Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData().length());
+      MI32Scan->erase(advertisedDevice->getAddress());
+      return;
+    }
     uint16_t uuid = advertisedDevice->getServiceDataUUID().getNative()->u16.value;
-    AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%x"),uuid);
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("UUID: %x"),uuid);
     uint8_t addr[6];
     memcpy(addr,advertisedDevice->getAddress().getNative(),6);
     MI32_ReverseMAC(addr);
     if(uuid==0xfe95) {
-      MI32ParseResponse((char*)advertisedDevice->getServiceData().c_str(),advertisedDevice->getServiceData().length(), addr);
+      MI32ParseResponse((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr);
     }
     else if(uuid==0xfdcd) {
-      MI32parseCGD1Packet((char*)advertisedDevice->getServiceData().c_str(),advertisedDevice->getServiceData().length(), addr);
+      MI32parseCGD1Packet((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr);
+    }
+    else {
+      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("No Xiaomi Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData().length());
+      MI32Scan->erase(advertisedDevice->getAddress());
     }
   };
 };
@@ -391,47 +399,57 @@ void MI32StartTask(uint32_t task){
   }
 }
 
-void MI32ConnectActiveSensor(){ // only use inside a task !!
+bool MI32ConnectActiveSensor(){ // only use inside a task !!
+    MI32.mode.connected = 0;
     MI32Client = nullptr;
-    esp_bd_addr_t address;
-    memcpy(address,MIBLEsensors[MI32.state.sensor].serial,sizeof(address));
+    Wifi.counter = Wifi.counter + 20; // hopefully less interference
+    NimBLEAddress _address = NimBLEAddress(MIBLEsensors[MI32.state.sensor].serial);
     if(NimBLEDevice::getClientListSize()) {
-      MI32Client = NimBLEDevice::getClientByPeerAddress(NimBLEAddress(address));
+      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: found any clients in the cList"),D_CMND_MI32);
+      MI32Client = NimBLEDevice::getClientByPeerAddress(_address);
       if(MI32Client){
-        if(!MI32Client->connect(NimBLEAddress(address), 0,false)) {
-            MI32.mode.willConnect = 0;
-            vTaskDelete( NULL );
-        }
+        // Should be impossible
+        // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: got connected client"),D_CMND_MI32);
       }
       else {
+        // Should be the norm after the first iteration
         MI32Client = NimBLEDevice::getDisconnectedClient();
+        DEBUG_SENSOR_LOG(PSTR("%s: got disconnected client"),D_CMND_MI32);
       }
+    }
+
+    if(NimBLEDevice::getClientListSize() >= NIMBLE_MAX_CONNECTIONS) {
+        MI32.mode.willConnect = 0;
+        DEBUG_SENSOR_LOG(PSTR("%s: max connection already reached"),D_CMND_MI32);
+        return false;
     }
     if(!MI32Client) {
-      if(NimBLEDevice::getClientListSize() >= NIMBLE_MAX_CONNECTIONS) {
-          MI32.mode.willConnect = 0;
-          vTaskDelete( NULL );
-      }
+      AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: will create client"),D_CMND_MI32);
       MI32Client = NimBLEDevice::createClient();
       MI32Client->setClientCallbacks(&MI32SensorCB , false);
-      MI32Client->setConnectionParams(12,12,0,51);
-      MI32Client->setConnectTimeout(10);
-      if (!MI32Client->connect(NimBLEAddress(address),0,false)) {
-          MI32.mode.willConnect = 0;
-          NimBLEDevice::deleteClient(MI32Client);
-          vTaskDelete( NULL );
-      }
+      MI32Client->setConnectionParams(12,12,0,48);
+      MI32Client->setConnectTimeout(30);
     }
+    if (!MI32Client->connect(_address,false)) {
+        MI32.mode.willConnect = 0;
+        NimBLEDevice::deleteClient(MI32Client);
+        DEBUG_SENSOR_LOG(PSTR("%s: did not connect client"),D_CMND_MI32);
+        return false;
+    }
+    DEBUG_SENSOR_LOG(PSTR("%s: did create new client"),D_CMND_MI32);
+    return true;
+  // }
 }
 
 
 void MI32StartScanTask(){
     if (MI32.mode.connected) return;
     MI32.mode.runningScan = 1;
+    // Wifi.counter = Wifi.counter + 3;
     xTaskCreatePinnedToCore(
     MI32ScanTask,    /* Function to implement the task */
     "MI32ScanTask",  /* Name of the task */
-    4096,             /* Stack size in words */
+    8192,             /* Stack size in words */
     NULL,             /* Task input parameter */
     0,                /* Priority of the task */
     NULL,             /* Task handle. */
@@ -440,17 +458,18 @@ void MI32StartScanTask(){
 }
 
 void MI32ScanTask(void *pvParameters){
-  NimBLEScan* pScan = NimBLEDevice::getScan();
-  pScan->setAdvertisedDeviceCallbacks(&MI32ScanCallbacks);
-  pScan->setActiveScan(false);
-  pScan->start(5, MI32scanEndedCB); // hard coded duration
+  if (MI32Scan == nullptr) MI32Scan = NimBLEDevice::getScan();
+  DEBUG_SENSOR_LOG(PSTR("%s: Scan Cache Length: %u"),D_CMND_MI32, MI32Scan->getResults().getCount());
+  MI32Scan->setAdvertisedDeviceCallbacks(&MI32ScanCallbacks);
+  MI32Scan->setActiveScan(false);
+  MI32Scan->start(5, MI32scanEndedCB, true); // hard coded duration
   uint32_t timer = 0;
   while (MI32.mode.runningScan){
     if (timer>15){
       vTaskDelete( NULL );
     }
     timer++;
-    vTaskDelay(1000);
+    vTaskDelay(1000/ portTICK_PERIOD_MS);
   }
   vTaskDelete( NULL );
 }
@@ -474,47 +493,62 @@ void MI32SensorTask(void *pvParameters){
       MI32.mode.willConnect = 0;
       vTaskDelete( NULL );
     }
-    MI32ConnectActiveSensor();
-    MI32.mode.readingDone = 1;
-    switch(MIBLEsensors[MI32.state.sensor].type){
-      case LYWSD03MMC:
-        MI32.mode.readingDone = 0;
-        MI32connectLYWSD03();
-        break;
-      default:
-      break;
-    }
-    uint32_t timer = 0;
-    while (!MI32.mode.readingDone){
-      if (timer>150){
+    if (MI32ConnectActiveSensor()){
+      uint32_t timer = 0;
+      while (MI32.mode.connected == 0){
+        if (timer>1000){
+          MI32Client->disconnect();
+          NimBLEDevice::deleteClient(MI32Client);
+          MI32.mode.willConnect = 0;
+          vTaskDelay(100/ portTICK_PERIOD_MS);
+          vTaskDelete( NULL );
+        }
+        timer++;
+        vTaskDelay(10/ portTICK_PERIOD_MS);
+      }
+
+      timer = 150;
+      switch(MIBLEsensors[MI32.state.sensor].type){
+        case LYWSD03MMC:
+          MI32.mode.readingDone = 0;
+          if(MI32connectLYWSD03forNotification()) timer=0;
+          break;
+        default:
         break;
       }
-      timer++;
-      vTaskDelay(100);
+      
+      while (!MI32.mode.readingDone){
+        if (timer>150){
+          break;
+        }
+        timer++;
+        vTaskDelay(100/ portTICK_PERIOD_MS);
+      }
+      MI32Client->disconnect();
+      DEBUG_SENSOR_LOG(PSTR("%s: requested disconnect"),D_CMND_MI32);
     }
-    MI32Client->disconnect();
-    NimBLEDevice::deleteClient(MI32Client);
-    vTaskDelay(500);
+    vTaskDelay(500/ portTICK_PERIOD_MS);
     MI32.mode.connected = 0;
     vTaskDelete( NULL );
 }
 
-void MI32connectLYWSD03(){
+bool MI32connectLYWSD03forNotification(){
   NimBLERemoteService* pSvc = nullptr;
   NimBLERemoteCharacteristic* pChr = nullptr;
-  static BLEUUID serviceUUID("ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6");
-  static BLEUUID charUUID("ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6");
+  static BLEUUID serviceUUID(0xebe0ccb0,0x7a0a,0x4b0c,0x8a1a6ff2997da3a6);
+  static BLEUUID charUUID(0xebe0ccc1,0x7a0a,0x4b0c,0x8a1a6ff2997da3a6);
   pSvc = MI32Client->getService(serviceUUID);
   if(pSvc) {
       pChr = pSvc->getCharacteristic(charUUID);
   }
-  if(pChr->canNotify()) {
-    if(!pChr->registerForNotify(MI32notifyCB)) {
-      MI32.mode.willConnect = 0;
-      MI32Client->disconnect();
-      return;
+  if (pChr){
+    if(pChr->canNotify()) {
+      if(pChr->registerForNotify(MI32notifyCB)) {
+        return true;
+      }
     }
   }
+  return false;
 }
 
 void MI32StartTimeTask(){
@@ -536,45 +570,48 @@ void MI32TimeTask(void *pvParameters){
       MI32.mode.shallSetTime = 0;
       vTaskDelete( NULL );
     }
-  MI32ConnectActiveSensor();
 
-  uint32_t timer = 0;
-  while (MI32.mode.connected == 0){
-      if (timer>1000){
-        break;
+  if(MI32ConnectActiveSensor()){  
+    uint32_t timer = 0;
+    while (MI32.mode.connected == 0){
+        if (timer>1000){
+          break;
+        }
+        timer++;
+        vTaskDelay(10/ portTICK_PERIOD_MS);
       }
-      timer++;
-      vTaskDelay(10);
-    }
 
-  NimBLERemoteService* pSvc = nullptr;
-  NimBLERemoteCharacteristic* pChr = nullptr;
-  static BLEUUID serviceUUID("EBE0CCB0-7A0A-4B0C-8A1A-6FF2997DA3A6");
-  static BLEUUID charUUID("EBE0CCB7-7A0A-4B0C-8A1A-6FF2997DA3A6");
-  pSvc = MI32Client->getService(serviceUUID);
-  if(pSvc) {
-      pChr = pSvc->getCharacteristic(charUUID);
-  }
-  if(pChr->canWrite()) {
-    union {
-      uint8_t buf[5];
-      uint32_t time;
-    } _utc;
-    _utc.time = Rtc.utc_time;
-    _utc.buf[4] = Rtc.time_timezone / 60;
+    NimBLERemoteService* pSvc = nullptr;
+    NimBLERemoteCharacteristic* pChr = nullptr;
+    static BLEUUID serviceUUID(0xEBE0CCB0,0x7A0A,0x4B0C,0x8A1A6FF2997DA3A6);
+    static BLEUUID charUUID(0xEBE0CCB7,0x7A0A,0x4B0C,0x8A1A6FF2997DA3A6);
+    pSvc = MI32Client->getService(serviceUUID);
+    if(pSvc) {
+        pChr = pSvc->getCharacteristic(charUUID);
 
-    if(!pChr->writeValue(_utc.buf,sizeof(_utc.buf),true)) { // true is important !
-      MI32.mode.willConnect = 0;
-      MI32Client->disconnect();
     }
-    else {
-      MI32.mode.shallSetTime = 0;
-      MI32.mode.willSetTime = 0;
+    if (pChr){    
+      if(pChr->canWrite()) {
+        union {
+          uint8_t buf[5];
+          uint32_t time;
+        } _utc;
+        _utc.time = Rtc.utc_time;
+        _utc.buf[4] = Rtc.time_timezone / 60;
+
+        if(!pChr->writeValue(_utc.buf,sizeof(_utc.buf),true)) { // true is important !
+          MI32.mode.willConnect = 0;
+          MI32Client->disconnect();
+        }
+        else {
+          MI32.mode.shallSetTime = 0;
+          MI32.mode.willSetTime = 0;
+        }
+      }
     }
+    MI32Client->disconnect();
   }
-  MI32Client->disconnect();
-  NimBLEDevice::deleteClient(MI32Client);
-  vTaskDelay(500);
+  vTaskDelay(500/ portTICK_PERIOD_MS);
   MI32.mode.connected = 0;
   vTaskDelete( NULL );
 }
@@ -582,6 +619,8 @@ void MI32TimeTask(void *pvParameters){
 void MI32StartBatteryTask(){
     if (MI32.mode.connected) return;
     MI32.mode.willReadBatt = 1;
+    MI32.mode.willConnect = 1;
+    MI32.mode.canScan = 0;
     xTaskCreatePinnedToCore(
     MI32BatteryTask, /* Function to implement the task */
     "MI32BatteryTask",  /* Name of the task */
@@ -605,31 +644,32 @@ void MI32BatteryTask(void *pvParameters){
       }
 
     MI32.mode.connected = 0;
-    MI32ConnectActiveSensor();
-    uint32_t timer = 0;
-      while (MI32.mode.connected == 0){
-      if (timer>1000){
+    if(MI32ConnectActiveSensor()){
+        uint32_t timer = 0;
+        while (MI32.mode.connected == 0){
+        if (timer>1000){
+          break;
+        }
+        timer++;
+        vTaskDelay(30/ portTICK_PERIOD_MS);
+      }
+
+      switch(MIBLEsensors[MI32.state.sensor].type){
+        case FLORA:
+          MI32batteryFLORA();
+          break;
+        case LYWSD02:
+          MI32batteryLYWSD02();
+          break;
+        case CGD1:
+          MI32batteryCGD1();
         break;
       }
-      timer++;
-      vTaskDelay(10);
-    }
-
-    switch(MIBLEsensors[MI32.state.sensor].type){
-      case FLORA:
-        MI32batteryFLORA();
-        break;
-      case LYWSD02:
-        MI32batteryLYWSD02();
-        break;
-      case CGD1:
-        MI32batteryCGD1();
-       break;
-    }
-    MI32Client->disconnect();
+      MI32Client->disconnect();
+      }
     MI32.mode.willReadBatt = 0;
-    NimBLEDevice::deleteClient(MI32Client);
-    vTaskDelay(500);
+    // Wifi.counter = 0; // Now check it  
+    vTaskDelay(500/ portTICK_PERIOD_MS);
     MI32.mode.connected = 0;
     vTaskDelete( NULL );
 }
@@ -641,27 +681,26 @@ void MI32batteryFLORA(){
         break;
       }
       timer++;
-      vTaskDelay(10);
+      vTaskDelay(10/ portTICK_PERIOD_MS);
     }
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s connected for battery"),kMI32SlaveType[MIBLEsensors[MI32.state.sensor].type-1] );
+  DEBUG_SENSOR_LOG(PSTR("%s connected for battery"),kMI32SlaveType[MIBLEsensors[MI32.state.sensor].type-1] );
   NimBLERemoteService* pSvc = nullptr;
   NimBLERemoteCharacteristic* pChr = nullptr;
-  static BLEUUID FLserviceUUID("00001204-0000-1000-8000-00805f9b34fb");
-  static BLEUUID FLcharUUID("00001a02-0000-1000-8000-00805f9b34fb");
+  static BLEUUID FLserviceUUID(0x00001204,0x0000,0x1000,0x800000805f9b34fb);
+  static BLEUUID FLcharUUID(0x00001a02,0x0000,0x1000,0x800000805f9b34fb);
 
   pSvc = MI32Client->getService(FLserviceUUID);
-  if(pSvc) {     /** make sure it's not null */
+  if(pSvc) {
       pChr = pSvc->getCharacteristic(FLcharUUID);
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: got Flora char %s"),D_CMND_MI32, pChr->getUUID().toString().c_str());
   }
-  else {
-    MI32.mode.readingDone = 1;
-    return;
+  if (pChr){
+    DEBUG_SENSOR_LOG(PSTR("%s: got Flora char %s"),D_CMND_MI32, pChr->getUUID().toString().c_str());
+    if(pChr->canRead()) {
+      const char *buf = pChr->readValue().c_str();
+      MI32readBat((char*)buf);
+    }
   }
-  if(pChr->canRead()) {
-    const char *buf = pChr->readValue().c_str();
-    MI32readBat((char*)buf);
-  }
+  MI32.mode.readingDone = 1;
 }
 
 void MI32batteryLYWSD02(){
@@ -671,27 +710,27 @@ void MI32batteryLYWSD02(){
         break;
       }
       timer++;
-      vTaskDelay(10);
+      vTaskDelay(10/ portTICK_PERIOD_MS);
     }
 
   NimBLERemoteService* pSvc = nullptr;
   NimBLERemoteCharacteristic* pChr = nullptr;
-  static BLEUUID LY2serviceUUID("EBE0CCB0-7A0A-4B0C-8A1A-6FF2997DA3A6");
-  static BLEUUID LY2charUUID("EBE0CCC4-7A0A-4B0C-8A1A-6FF2997DA3A6");
+  static BLEUUID LY2serviceUUID(0xEBE0CCB0,0x7A0A,0x4B0C,0x8A1A6FF2997DA3A6);
+  static BLEUUID LY2charUUID(0xEBE0CCC4,0x7A0A,0x4B0C,0x8A1A6FF2997DA3A6);
 
   pSvc = MI32Client->getService(LY2serviceUUID);
   if(pSvc) {
       pChr = pSvc->getCharacteristic(LY2charUUID);
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: got LYWSD02 char %s"),D_CMND_MI32, pChr->getUUID().toString().c_str());
   }
-  else {
-    return;
+  if (pChr){
+    DEBUG_SENSOR_LOG( PSTR("%s: got LYWSD02 char %s"),D_CMND_MI32, pChr->getUUID().toString().c_str());
+    if(pChr->canRead()) {
+      DEBUG_SENSOR_LOG(PSTR("LYWSD02 char"));
+      const char *buf = pChr->readValue().c_str();
+      MI32readBat((char*)buf);
+    }
   }
-  if(pChr->canRead()) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LYWSD02 char"));
-    const char *buf = pChr->readValue().c_str();
-    MI32readBat((char*)buf);
-  }
+  MI32.mode.readingDone = 1;
 }
 
 void MI32batteryCGD1(){
@@ -701,26 +740,26 @@ void MI32batteryCGD1(){
         break;
       }
       timer++;
-      vTaskDelay(10);
+      vTaskDelay(10/ portTICK_PERIOD_MS);
     }
 
   NimBLERemoteService* pSvc = nullptr;
   NimBLERemoteCharacteristic* pChr = nullptr;
-  static BLEUUID CGD1serviceUUID("180F");
-  static BLEUUID CGD1charUUID("2A19");
+  static BLEUUID CGD1serviceUUID((uint16_t)0x180F);
+  static BLEUUID CGD1charUUID((uint16_t)0x2A19);
 
   pSvc = MI32Client->getService(CGD1serviceUUID);
   if(pSvc) {
       pChr = pSvc->getCharacteristic(CGD1charUUID);
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: got CGD1 char %s"),D_CMND_MI32, pChr->getUUID().toString().c_str());
   }
-  else {
-    return;
+  if (pChr){
+    DEBUG_SENSOR_LOG(PSTR("%s: got CGD1 char %s"),D_CMND_MI32, pChr->getUUID().toString().c_str());
+    if(pChr->canRead()) {
+      const char *buf = pChr->readValue().c_str();
+      MI32readBat((char*)buf);
+    }
   }
-  if(pChr->canRead()) {
-    const char *buf = pChr->readValue().c_str();
-    MI32readBat((char*)buf);
-  }
+  MI32.mode.readingDone = 1;
 }
 
 
@@ -740,14 +779,14 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot){
   }
   MI32_ReverseMAC(_beacon.Mac);
 
-  DEBUG_SENSOR_LOG(PSTR("MiBeacon type:%02x: %02x %02x %02x %02x %02x %02x %02x %02x"),_beacon.type, (uint8_t)_buf[0],(uint8_t)_buf[1],(uint8_t)_buf[2],(uint8_t)_buf[3],(uint8_t)_buf[4],(uint8_t)_buf[5],(uint8_t)_buf[6],(uint8_t)_buf[7]);
-  DEBUG_SENSOR_LOG(PSTR("         type:%02x: %02x %02x %02x %02x %02x %02x %02x %02x"),_beacon.type, (uint8_t)_buf[8],(uint8_t)_buf[9],(uint8_t)_buf[10],(uint8_t)_buf[11],(uint8_t)_buf[12],(uint8_t)_buf[13],(uint8_t)_buf[14],(uint8_t)_buf[15]);
+  // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MiBeacon type:%02x: %02x %02x %02x %02x %02x %02x %02x %02x"),_beacon.type, (uint8_t)_buf[0],(uint8_t)_buf[1],(uint8_t)_buf[2],(uint8_t)_buf[3],(uint8_t)_buf[4],(uint8_t)_buf[5],(uint8_t)_buf[6],(uint8_t)_buf[7]);
+  // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("         type:%02x: %02x %02x %02x %02x %02x %02x %02x %02x"),_beacon.type, (uint8_t)_buf[8],(uint8_t)_buf[9],(uint8_t)_buf[10],(uint8_t)_buf[11],(uint8_t)_buf[12],(uint8_t)_buf[13],(uint8_t)_buf[14],(uint8_t)_buf[15]);
 
   if(MIBLEsensors[_slot].type==4 || MIBLEsensors[_slot].type==6){
     DEBUG_SENSOR_LOG(PSTR("LYWSD03 and CGD1 no support for MiBeacon, type %u"),MIBLEsensors[_slot].type);
     return;
   }
-  DEBUG_SENSOR_LOG(PSTR("%s at slot %u"), kMI32SlaveType[MIBLEsensors[_slot].type-1],_slot);
+  AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s at slot %u"), kMI32SlaveType[MIBLEsensors[_slot].type-1],_slot);
   switch(_beacon.type){
     case 0x04:
     _tempFloat=(float)(_beacon.temp)/10.0f;
@@ -755,7 +794,7 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot){
         MIBLEsensors[_slot].temp=_tempFloat;
         DEBUG_SENSOR_LOG(PSTR("Mode 4: temp updated"));
     }
-    DEBUG_SENSOR_LOG(PSTR("Mode 4: U16:  %u Temp"), _beacon.temp );
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 4: U16:  %u Temp"), _beacon.temp );
     break;
     case 0x06:
     _tempFloat=(float)(_beacon.hum)/10.0f;
@@ -763,11 +802,11 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot){
         MIBLEsensors[_slot].hum=_tempFloat;
         DEBUG_SENSOR_LOG(PSTR("Mode 6: hum updated"));
     }
-    DEBUG_SENSOR_LOG(PSTR("Mode 6: U16:  %u Hum"), _beacon.hum);
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 6: U16:  %u Hum"), _beacon.hum);
     break;
     case 0x07:
     MIBLEsensors[_slot].lux=_beacon.lux & 0x00ffffff;
-    DEBUG_SENSOR_LOG(PSTR("Mode 7: U24: %u Lux"), _beacon.lux & 0x00ffffff);
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 7: U24: %u Lux"), _beacon.lux & 0x00ffffff);
     break;
     case 0x08:
     _tempFloat =(float)_beacon.moist;
@@ -775,7 +814,7 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot){
         MIBLEsensors[_slot].moisture=_tempFloat;
         DEBUG_SENSOR_LOG(PSTR("Mode 8: moisture updated"));
     }
-    DEBUG_SENSOR_LOG(PSTR("Mode 8: U8: %u Moisture"), _beacon.moist);
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 8: U8: %u Moisture"), _beacon.moist);
     break;
     case 0x09:
     _tempFloat=(float)(_beacon.fert);
@@ -783,14 +822,14 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot){
         MIBLEsensors[_slot].fertility=_tempFloat;
         DEBUG_SENSOR_LOG(PSTR("Mode 9: fertility updated"));
     }
-    DEBUG_SENSOR_LOG(PSTR("Mode 9: U16: %u Fertility"), _beacon.fert);
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 9: U16: %u Fertility"), _beacon.fert);
     break;
     case 0x0a:
     if(_beacon.bat<101){
       MIBLEsensors[_slot].bat = _beacon.bat;
       DEBUG_SENSOR_LOG(PSTR("Mode a: bat updated"));
       }
-    DEBUG_SENSOR_LOG(PSTR("Mode a: U8: %u %%"), _beacon.bat);
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode a: U8: %u %%"), _beacon.bat);
     break;
     case 0x0d:
     _tempFloat=(float)(_beacon.HT.temp)/10.0f;
@@ -803,7 +842,7 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot){
         MIBLEsensors[_slot].hum = _tempFloat;
         DEBUG_SENSOR_LOG(PSTR("Mode d: hum updated"));
     }
-    DEBUG_SENSOR_LOG(PSTR("Mode d: U16:  %x Temp U16: %x Hum"), _beacon.HT.temp,  _beacon.HT.hum);
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode d: U16:  %x Temp U16: %x Hum"), _beacon.HT.temp,  _beacon.HT.hum);
     break;
   }
 }
@@ -911,6 +950,8 @@ void MI32EverySecond(bool restart){
     _counter = 0;
     MI32.mode.canScan = 0;
     MI32.mode.canConnect = 1;
+    MI32.mode.willReadBatt = 0;
+    MI32.mode.willConnect = 0;
     return;
   }
 
@@ -940,9 +981,9 @@ void MI32EverySecond(bool restart){
 
   if(_counter==0) {
     MI32.state.sensor = _nextSensorSlot;
-    AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: active sensor now: %u"),D_CMND_MI32, MI32.state.sensor);
+    AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: active sensor now: %u of %u"),D_CMND_MI32, MI32.state.sensor, MIBLEsensors.size()-1);
     MI32.mode.canScan = 0;
-    if (MI32.mode.runningScan == 1 || MI32.mode.connected == 1) return;
+    if (MI32.mode.runningScan|| MI32.mode.connected || MI32.mode.willConnect) return;
     _nextSensorSlot++;
     MI32.mode.canConnect = 1;
     if(MI32.mode.connected == 0) {
@@ -956,7 +997,7 @@ void MI32EverySecond(bool restart){
     }
 
     }
-    if (MI32.state.sensor==MIBLEsensors.size()-1) {
+    if (_nextSensorSlot>(MIBLEsensors.size()-1)) {
       _nextSensorSlot= 0;
       _counter++;
       if (MI32.mode.shallReadBatt){
@@ -1056,6 +1097,7 @@ const char HTTP_MI32_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 
 void MI32Show(bool json)
 {
+
   if (json) {
     for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
 /*
@@ -1069,7 +1111,7 @@ void MI32Show(bool json)
         MIBLEsensors[i].serial[3], MIBLEsensors[i].serial[4], MIBLEsensors[i].serial[5]);
 
       if (MIBLEsensors[i].type == FLORA) {
-        if (!isnan(MIBLEsensors[i].temp)) { // this is the error code -> no temperature
+        if (!isnan(MIBLEsensors[i].temp)) {
           char temperature[FLOATSZ]; // all sensors have temperature
           dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
           ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"), temperature);
