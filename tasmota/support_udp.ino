@@ -22,13 +22,9 @@
 #ifndef UDP_BUFFER_SIZE
 #define UDP_BUFFER_SIZE         120      // Max UDP buffer size needed for M-SEARCH message
 #endif
-#ifndef UDP_MAX_PACKETS
-#define UDP_MAX_PACKETS   3             // we support x more packets than the current one
-#endif
 #define UDP_MSEARCH_SEND_DELAY  1500     // Delay in ms before M-Search response is send
 
 #include <Ticker.h>
-#include "UdpListener.h"
 Ticker TickerMSearch;
 
 IPAddress udp_remote_ip;                 // M-Search remote IP address
@@ -37,7 +33,14 @@ uint16_t udp_remote_port;                // M-Search remote port
 bool udp_connected = false;
 bool udp_response_mutex = false;         // M-Search response mutex to control re-entry
 
+#ifdef ESP8266
+#ifndef UDP_MAX_PACKETS
+#define UDP_MAX_PACKETS   3             // we support x more packets than the current one
+#endif
+
+#include "UdpListener.h"
 UdpListener<UDP_BUFFER_SIZE> UdpCtx(UDP_MAX_PACKETS);
+#endif
 
 /*********************************************************************************************\
  * UPNP/SSDP search targets
@@ -58,7 +61,9 @@ bool UdpDisconnect(void)
   if (udp_connected) {
     // flush any outgoing packet
     PortUdp.flush();
+#ifdef ESP8266
     UdpCtx.disconnect();
+#endif
 #ifdef USE_DEVICE_GROUPS
     // stop
     PortUdp.stop();
@@ -76,7 +81,7 @@ bool UdpConnect(void)
 {
   if (!udp_connected && !restart_flag) {
     // Simple Service Discovery Protocol (SSDP)
-
+#ifdef ESP8266
     UdpCtx.reset();
     if (igmp_joingroup(WiFi.localIP(), IPAddress(239,255,255,250)) == ERR_OK) { // addr 239.255.255.250
       ip_addr_t addr = IPADDR4_INIT(INADDR_ANY);
@@ -86,6 +91,12 @@ bool UdpConnect(void)
         udp_response_mutex = false;
         udp_connected = true;
       }
+#else // ESP32
+    if (PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), 1900)) {
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
+      udp_response_mutex = false;
+      udp_connected = true;
+#endif
     }
     if (!udp_connected) {     // if connection failed
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_JOIN_FAILED));
@@ -97,19 +108,24 @@ bool UdpConnect(void)
 void PollUdp(void)
 {
   if (udp_connected) {
-    // parsePacket
+#ifdef ESP8266
     while (UdpCtx.next()) {
-    // while (PortUdp.parsePacket()) {
       UdpPacket<UDP_BUFFER_SIZE> *packet;
-
       packet = UdpCtx.read();
       if (packet->len >= UDP_BUFFER_SIZE) {
         packet->len--;    // leave space for NULL terminator
       }
       packet->buf[packet->len] = 0;   // add NULL at the end of the packer
       char * packet_buffer = (char*) &packet->buf;
+      int32_t len = packet->len;
+#else // ESP32
+    while (PortUdp.parsePacket()) {
+      char packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP/SSDP packet
 
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), packet->len);
+      int32_t len = PortUdp.read(packet_buffer, UDP_BUFFER_SIZE -1);
+      packet_buffer[len] = 0;
+#endif
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
       // AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
 
       // Simple Service Discovery Protocol (SSDP)
@@ -121,8 +137,13 @@ void PollUdp(void)
 #endif
           udp_response_mutex = true;
 
+#ifdef ESP8266
           udp_remote_ip = packet->srcaddr;
           udp_remote_port = packet->srcport;
+#else
+          udp_remote_ip = PortUdp.remoteIP();
+          udp_remote_port = PortUdp.remotePort();
+#endif
 
           // AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %s:%d\n%s"),
           //   udp_remote_ip.toString().c_str(), udp_remote_port, packet_buffer);

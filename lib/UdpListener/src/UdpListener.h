@@ -55,6 +55,7 @@
 #ifndef UDPMULTICASTLISTENER_H
 #define UDPMULTICASTLISTENER_H
 
+#ifdef ESP8266
 // #include <Arduino.h>
 
 extern "C" {
@@ -204,4 +205,5 @@ private:
     int8_t  _udp_index;                 // current index in the ring buffer
 };
 
+#endif // ESP8266
 #endif //UDPMULTICASTLISTENER_H
