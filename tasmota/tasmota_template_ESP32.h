@@ -44,7 +44,7 @@
 
 enum UserSelectablePins {
   GPIO_NONE,                           // Not used
-  GPIO_KEY1, GPIO_KEY1_NP, GPIO_KEY1_INV, GPIO_KEY1_INV_NP, GPIO_KEY1_TC, // 4 x Button + Touch
+  GPIO_KEY1, GPIO_KEY1_NP, GPIO_KEY1_INV, GPIO_KEY1_INV_NP, // 4 x Button
   GPIO_SWT1, GPIO_SWT1_NP,             // 8 x User connected external switches
   GPIO_REL1, GPIO_REL1_INV,            // 8 x Relays
   GPIO_LED1, GPIO_LED1_INV,            // 4 x Leds
@@ -127,6 +127,7 @@ enum UserSelectablePins {
   GPIO_WEBCAM_PSRCS,
   GPIO_BOILER_OT_RX, GPIO_BOILER_OT_TX,  // OpenTherm Boiler TX pin
   GPIO_WINDMETER_SPEED,                // WindMeter speed counter pin
+  GPIO_KEY1_TC,                       // Touch pin as button
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -138,7 +139,7 @@ enum ProgramSelectablePins {
 // Text in webpage Module Parameters and commands GPIOS and GPIO
 const char kSensorNames[] PROGMEM =
   D_SENSOR_NONE "|"
-  D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "_n|" D_SENSOR_BUTTON "_i|" D_SENSOR_BUTTON "_in|" D_SENSOR_BUTTON "_tc|"
+  D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "_n|" D_SENSOR_BUTTON "_i|" D_SENSOR_BUTTON "_in|"
   D_SENSOR_SWITCH "|" D_SENSOR_SWITCH "_n|"
   D_SENSOR_RELAY "|" D_SENSOR_RELAY "_i|"
   D_SENSOR_LED "|" D_SENSOR_LED "_i|"
@@ -215,7 +216,7 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_WEBCAM_HSD "|"
   D_GPIO_WEBCAM_PSRCS "|"
   D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
-  D_SENSOR_WINDMETER_SPEED
+  D_SENSOR_WINDMETER_SPEED "|" D_SENSOR_BUTTON "_tc"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -230,7 +231,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_KEY1_NP) + MAX_KEYS,
   AGPIO(GPIO_KEY1_INV) + MAX_KEYS,
   AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS,
-  AGPIO(GPIO_KEY1_TC) + MAX_KEYS,
   AGPIO(GPIO_SWT1) + MAX_SWITCHES,      // User connected external switches
   AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES,
   AGPIO(GPIO_REL1) + MAX_RELAYS,        // Relays
@@ -543,6 +543,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_WEBCAM_HSD) + MAX_WEBCAM_HSD,
   AGPIO(GPIO_WEBCAM_PSRCS),
 #endif
+  AGPIO(GPIO_KEY1_TC) + MAX_KEYS
 };
 
 //********************************************************************************************
@@ -550,7 +551,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #define MAX_GPIO_PIN       40   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
 #define MAX_USER_PINS      36   // MAX_GPIO_PIN - MIN_FLASH_PINS
-// #define MAX_TOUCH_PINS     10   // Number of supported TOUCH PINS
 #define WEMOS_MODULE       0    // Wemos module
 
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839
