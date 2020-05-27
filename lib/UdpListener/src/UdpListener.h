@@ -204,4 +204,4 @@ private:
     int8_t  _udp_index;                 // current index in the ring buffer
 };
 
-#endif //UDPCONTEXTLIGHT_H
+#endif //UDPMULTICASTLISTENER_H

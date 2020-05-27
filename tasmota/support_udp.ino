@@ -58,9 +58,9 @@ bool UdpDisconnect(void)
   if (udp_connected) {
     // flush any outgoing packet
     PortUdp.flush();
+    UdpCtx.disconnect();
 #ifdef USE_DEVICE_GROUPS
     // stop
-    UdpCtx.stop();
     PortUdp.stop();
 #else // USE_DEVICE_GROUPS
     // stop all
