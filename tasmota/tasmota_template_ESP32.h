@@ -44,7 +44,7 @@
 
 enum UserSelectablePins {
   GPIO_NONE,                           // Not used
-  GPIO_KEY1, GPIO_KEY1_NP, GPIO_KEY1_INV, GPIO_KEY1_INV_NP,  // 4 x Button
+  GPIO_KEY1, GPIO_KEY1_NP, GPIO_KEY1_INV, GPIO_KEY1_INV_NP, // 4 x Button
   GPIO_SWT1, GPIO_SWT1_NP,             // 8 x User connected external switches
   GPIO_REL1, GPIO_REL1_INV,            // 8 x Relays
   GPIO_LED1, GPIO_LED1_INV,            // 4 x Leds
@@ -127,6 +127,7 @@ enum UserSelectablePins {
   GPIO_WEBCAM_PSRCS,
   GPIO_BOILER_OT_RX, GPIO_BOILER_OT_TX,  // OpenTherm Boiler TX pin
   GPIO_WINDMETER_SPEED,                // WindMeter speed counter pin
+  GPIO_KEY1_TC,                       // Touch pin as button
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -215,7 +216,7 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_WEBCAM_HSD "|"
   D_GPIO_WEBCAM_PSRCS "|"
   D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
-  D_SENSOR_WINDMETER_SPEED
+  D_SENSOR_WINDMETER_SPEED "|" D_SENSOR_BUTTON "_tc"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -542,6 +543,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_WEBCAM_HSD) + MAX_WEBCAM_HSD,
   AGPIO(GPIO_WEBCAM_PSRCS),
 #endif
+  AGPIO(GPIO_KEY1_TC) + MAX_KEYS
 };
 
 //********************************************************************************************

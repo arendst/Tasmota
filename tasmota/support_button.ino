@@ -24,6 +24,10 @@
 \*********************************************************************************************/
 
 #define MAX_RELAY_BUTTON1       5  // Max number of relay controlled by BUTTON1
+#ifdef ESP32
+#define TOUCH_PIN_THRESHOLD     12 // Smaller value will treated as button press
+#define TOUCH_HIT_THRESHOLD     3  // successful hits to filter out noise
+#endif // ESP32
 
 const char kMultiPress[] PROGMEM =
   "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|";
@@ -40,6 +44,10 @@ struct BUTTON {
   uint8_t dual_receive_count = 0;            // Sonoff dual input flag
   uint8_t no_pullup_mask = 0;                // key no pullup flag (1 = no pullup)
   uint8_t inverted_mask = 0;                 // Key inverted flag (1 = inverted)
+#ifdef ESP32  
+  uint8_t touch_mask = 0;                    // Touch flag (1 = inverted)
+  uint8_t touch_hits[MAX_KEYS] = { 0 };      // Hits in a row to filter out noise
+#endif // ESP32
   uint8_t present = 0;                       // Number of buttons found flag
   uint8_t adc = 99;                          // ADC0 button number
 } Button;
@@ -55,7 +63,12 @@ void ButtonInvertFlag(uint8 button_bit)
 {
   bitSet(Button.inverted_mask, button_bit);
 }
-
+#ifdef ESP32
+void ButtonTouchFlag(uint8 button_bit)
+{
+  bitSet(Button.touch_mask, button_bit);
+}
+#endif // ESP32
 void ButtonInit(void)
 {
   Button.present = 0;
@@ -131,11 +144,32 @@ void ButtonHandler(void)
       }
     }
     else
-#endif  // ESP8266
     if (PinUsed(GPIO_KEY1, button_index)) {
       button_present = 1;
       button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
     }
+#else
+    if (PinUsed(GPIO_KEY1, button_index)) {
+      button_present = 1;
+      if (bitRead(Button.touch_mask, button_index)){ // Touch
+        uint32_t _value = touchRead(Pin(GPIO_KEY1, button_index));
+        button = NOT_PRESSED;
+        if (_value != 0){ // probably read-error
+          if(_value < TOUCH_PIN_THRESHOLD){
+            if(++Button.touch_hits[button_index]>TOUCH_HIT_THRESHOLD){
+              button = PRESSED;
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Touch value: %u hits: %u"), _value, Button.touch_hits[button_index]);
+            }
+          }
+          else Button.touch_hits[button_index] = 0;
+        }
+        else Button.touch_hits[button_index] = 0;
+      }
+      else{                                          // Normal button
+        button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
+      }
+    }
+#endif  // ESP8266
 #ifndef USE_ADC_VCC
     if (Button.adc == button_index) {
       button_present = 1;
@@ -147,7 +181,6 @@ void ButtonHandler(void)
       }
     }
 #endif  // USE_ADC_VCC
-
     if (button_present) {
       XdrvMailbox.index = button_index;
       XdrvMailbox.payload = button;
