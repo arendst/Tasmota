@@ -1,4 +1,4 @@
-This files are needed for flashing Tasmota with esptool.py to a ESP32
+These files are needed for flashing Tasmota32 with esptool.py to an ESP32.
 
 Command syntax for flashing Tasmota32 firmware on ESP32 via Esptool (replace COM Port Number!):
 
