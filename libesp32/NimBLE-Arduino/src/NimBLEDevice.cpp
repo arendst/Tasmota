@@ -40,7 +40,7 @@ static const char* LOG_TAG = "NimBLEDevice";
 /**
  * Singletons for the NimBLEDevice.
  */
-bool            initialized = false;
+static bool            initialized = false;
 #if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
 NimBLEScan*     NimBLEDevice::m_pScan = nullptr;
 #endif
