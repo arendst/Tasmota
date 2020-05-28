@@ -44,7 +44,7 @@
 #define SHD_ACK_TIMEOUT             200 // 200 ms ACK timeout
 
 #include <stm32flash.h>
-#include <fw/shelly/dimmer/stm_v1.6.0.h>
+#include <fw/shelly/dimmer/stm_v1.3.h>
 
 #include <TasmotaSerial.h>
 

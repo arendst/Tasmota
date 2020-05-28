@@ -2670,9 +2670,9 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                       // GPIO11 (SD_CMD   Flash)
-    GPIO_SWT1_NP,     // GPIO12 SW 1 pin
+    GPIO_USER,        // GPIO12 SW 1 pin
     0,                // GPIO13
-    GPIO_SWT2_NP,     // GPIO14 SW 2 pin
+    GPIO_USER,        // GPIO14 SW 2 pin
     GPIO_LEDLNK,      // GPIO15
     0, 0
   }
