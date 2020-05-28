@@ -18,8 +18,8 @@
 */
 
 
-#ifndef _STM32_FLASH_H
-#define _STM32_FLASH_H
+#ifndef STM32_FLASH_H
+#define STM32_FLASH_H
 
 #include <stdint.h>
 #include <Stream.h>

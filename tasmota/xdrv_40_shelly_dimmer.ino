@@ -29,11 +29,8 @@
 #define XDRV_32                     40
 #define XNRG_17                     17
 
-#define SHD_DRIVER_MAJOR_VERSION    0x00
-#define SHD_DRIVER_MINOR_VERSION    0x04
-
-#define SHD_FIRMWARE_MAJOR_VERSION  0x02
-#define SHD_FIRMWARE_MINOR_VERSION  0x16
+#define SHD_DRIVER_MAJOR_VERSION    0
+#define SHD_DRIVER_MINOR_VERSION    5
 
 #define SHD_SWITCH_CMD              0x01
 #define SHD_GET_STATE_CMD           0x10
@@ -45,6 +42,9 @@
 
 #define SHD_BUFFER_SIZE             256
 #define SHD_ACK_TIMEOUT             200 // 200 ms ACK timeout
+
+#include <stm32flash.h>
+#include <fw/shelly/dimmer/stm_v1.6.0.h>
 
 #include <TasmotaSerial.h>
 
@@ -122,7 +122,7 @@ int check_byte()
  * Internal Functions
 \*********************************************************************************************/
 
-void ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
+bool ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
 {
     int retries = 3;
 
@@ -144,7 +144,7 @@ void ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
         while (TimePassedSince(snd_time) < SHD_ACK_TIMEOUT)
         {
             if (ShdSerialInput())
-                return;
+                return true;
 
             delay(1);
         }
@@ -154,9 +154,10 @@ void ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHD: serial send timeout"));
 #endif
     }
+    return false;
 }
 
-void ShdSendCmd(uint8_t cmd, uint8_t *payload, uint8_t len)
+bool ShdSendCmd(uint8_t cmd, uint8_t *payload, uint8_t len)
 {
     uint8_t data[4 + 72 + 3]; // maximum payload for 0x30 packet is 72
     uint16_t chksm;
@@ -181,7 +182,7 @@ void ShdSendCmd(uint8_t cmd, uint8_t *payload, uint8_t len)
     data[pos++] = chksm & 0xff;
     data[pos++] = SHD_END_BYTE;
 
-    ShdSerialSend(data, pos);
+    return ShdSerialSend(data, pos);
 }
 
 void ShdSetBrightness(uint16 brightness)
@@ -326,6 +327,7 @@ bool ShdPacketProcess(void)
                 ret = Shd.buffer[pos] == SHD_FIRMWARE_MINOR_VERSION && 
                     Shd.buffer[pos + 1] == SHD_FIRMWARE_MAJOR_VERSION;
 
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: ShdPacketProcess: Version: %u.%u"), Shd.buffer[pos + 1], Shd.buffer[pos]);
                 Shd.dimmer.version_minor = Shd.buffer[pos];
                 Shd.dimmer.version_major = Shd.buffer[pos + 1];
             }
@@ -366,27 +368,90 @@ bool ShdSetChannels(void)
     return ShdSyncState();
 }
 
-void ShdMcuStart(void)
+void ShdResetToAppMode()
 {
-    int retries = 3;
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Request co-processor reset in app mode"));
 
-#ifdef SHELLY_DIMMER_DEBUG
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Request co-processor reset configuration, PIN %d to High"), Pin(GPIO_SHELLY_DIMMER_RST_INV));
-#endif
+    pinMode(Pin(GPIO_SHELLY_DIMMER_RST_INV), OUTPUT);
+    digitalWrite(Pin(GPIO_SHELLY_DIMMER_RST_INV), LOW);
 
     pinMode(Pin(GPIO_SHELLY_DIMMER_BOOT0), OUTPUT);
     digitalWrite(Pin(GPIO_SHELLY_DIMMER_BOOT0), LOW);
 
-    pinMode(Pin(GPIO_SHELLY_DIMMER_RST_INV), OUTPUT);
-    digitalWrite(Pin(GPIO_SHELLY_DIMMER_RST_INV), LOW);
     delay(50);
     
     // clear in the receive buffer
-    while (ShdSerial->available())
-        ShdSerial->read();
+    while (Serial.available())
+        Serial.read();
     
     digitalWrite(Pin(GPIO_SHELLY_DIMMER_RST_INV), HIGH); // pull out of reset
     delay(50); // wait 50ms fot the co-processor to come online
+}
+
+void ShdResetToDFUMode()
+{
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Request co-processor reset in dfu mode"));
+
+    pinMode(Pin(GPIO_SHELLY_DIMMER_RST_INV), OUTPUT);
+    digitalWrite(Pin(GPIO_SHELLY_DIMMER_RST_INV), LOW);
+
+    pinMode(Pin(GPIO_SHELLY_DIMMER_BOOT0), OUTPUT);
+    digitalWrite(Pin(GPIO_SHELLY_DIMMER_BOOT0), HIGH);
+
+    delay(50);
+    
+    // clear in the receive buffer
+    while (Serial.available())
+        Serial.read();
+    
+    digitalWrite(Pin(GPIO_SHELLY_DIMMER_RST_INV), HIGH); // pull out of reset
+    delay(50); // wait 50ms fot the co-processor to come online
+}
+
+bool ShdUpdateFirmware(const uint8_t data[], unsigned int size)
+{
+    bool ret = true;
+    stm32_t *stm = stm32_init(&Serial, STREAM_SERIAL, 1); 
+    if (stm)
+    {
+      off_t   offset = 0;
+      uint8_t   buffer[256];
+      unsigned int  len;
+      const uint8_t *p_st = data;
+      uint32_t  addr, start, end;
+      stm32_err_t s_err;
+
+      stm32_erase_memory(stm, 0, STM32_MASS_ERASE);
+
+      addr = stm->dev->fl_start;
+      end = addr + size;
+      while(addr < end && offset < size) 
+      {
+          uint32_t left = end - addr;
+          len   = sizeof(buffer) > left ? left : sizeof(buffer);
+          len   = len > size - offset ? size - offset : len;
+
+          if (len == 0) 
+          {
+              break;
+          }
+        
+          memcpy(buffer, p_st, len);
+          p_st += len;
+      
+          s_err = stm32_write_memory(stm, addr, buffer, len);
+          if (s_err != STM32_ERR_OK) 
+          {
+              ret = false;
+              break;
+          }
+
+          addr  += len;
+          offset  += len;
+      }
+      stm32_close(stm);
+    }
+    return ret;
 }
 
 void ShdPoll(void)
@@ -402,17 +467,17 @@ void ShdPoll(void)
     ShdSyncState();
 }
 
-void ShdSendVersion(void)
+bool ShdSendVersion(void)
 {
 #ifdef SHELLY_DIMMER_DEBUG
     AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Sending version command"));
 #endif
-    ShdSendCmd(SHD_VERSION_CMD, 0, 0);
+    return ShdSendCmd(SHD_VERSION_CMD, 0, 0);
 }
 
 void ShdInit(void)
 {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Shelly Dimmer Driver v%d.%d"), SHD_DRIVER_MAJOR_VERSION, SHD_DRIVER_MINOR_VERSION);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Shelly Dimmer Driver v%u.%u"), SHD_DRIVER_MAJOR_VERSION, SHD_DRIVER_MINOR_VERSION);
 #ifdef SHELLY_DIMMER_DEBUG
     AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Starting Tx %d Rx %d"), Pin(GPIO_TXD), Pin(GPIO_RXD));
 #endif
@@ -428,8 +493,25 @@ void ShdInit(void)
 
             ShdSerial->flush();
 
-            ShdMcuStart();
-            ShdSendVersion();
+            ShdResetToAppMode();
+            bool got_version = ShdSendVersion();
+            if (!got_version || (got_version && 
+                    (Shd.dimmer.version_minor != SHD_FIRMWARE_MINOR_VERSION || 
+                     Shd.dimmer.version_major != SHD_FIRMWARE_MAJOR_VERSION))) 
+            {
+                AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Updating firmware from v%u.%u to v%u.%u"), Shd.dimmer.version_major, Shd.dimmer.version_minor, SHD_FIRMWARE_MAJOR_VERSION, SHD_FIRMWARE_MINOR_VERSION);
+                
+                Serial.end();
+                Serial.begin(115200, SERIAL_8E1);
+                ShdResetToDFUMode();
+                ShdUpdateFirmware(stm_firmware, sizeof(stm_firmware));
+                Serial.end();
+
+                ShdResetToAppMode();
+                Serial.begin(115200, SERIAL_8N1);
+                
+                ShdSendVersion();
+            }
             delay(100);
             ShdSyncState();
         }
