@@ -387,7 +387,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
         case DGR_ITEM_POWER:
           if (Settings.flag4.remote_device_mode) {  // SetOption88 - Enable relays in separate device groups
             bool on = (value & 1);
-            if (on != (power & 1)) ExecuteCommandPower(device_group_index + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
+            if (on != (power & (1 << device_group_index))) ExecuteCommandPower(device_group_index + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
           }
           else if (device_group->local) {
             uint8_t mask_devices = value >> 24;
@@ -396,7 +396,6 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
               uint32_t mask = 1 << i;
               bool on = (value & mask);
               if (on != (power & mask)) ExecuteCommandPower(i + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
-              if (Settings.flag4.remote_device_mode) break; // SetOption88 - Enable relays in separate device groups
             }
           }
           break;
