@@ -106,10 +106,11 @@ enum Zigbee_StateMachine_Instruction_Set {
 // Labels used in the State Machine -- internal only
 const uint8_t  ZIGBEE_LABEL_INIT_COORD = 10;     // Start ZNP as coordinator
 const uint8_t  ZIGBEE_LABEL_START_COORD = 11;     // Start ZNP as coordinator
-const uint8_t  ZIGBEE_LABEL_INIT_ROUTER = 12;    // Start ZNP as router
+const uint8_t  ZIGBEE_LABEL_INIT_ROUTER = 12;    // Init ZNP as router
 const uint8_t  ZIGBEE_LABEL_START_ROUTER = 13;    // Start ZNP as router
-const uint8_t  ZIGBEE_LABEL_INIT_DEVICE = 14;    // Start ZNP as end-device
-// const uint8_t  ZIGBEE_LABEL_START_DEVICE = 15;    // Start ZNP as end-device - same as ZIGBEE_LABEL_START_ROUTER
+const uint8_t  ZIGBEE_LABEL_INIT_DEVICE = 14;    // Init ZNP as end-device
+const uint8_t  ZIGBEE_LABEL_START_DEVICE = 15;    // Start ZNP as end-device
+const uint8_t  ZIGBEE_LABEL_START_ROUTER_DEVICE = 16;    // Start common to router and device
 const uint8_t  ZIGBEE_LABEL_FACT_RESET_ROUTER_DEVICE_POST = 19;   // common post configuration for router and device
 const uint8_t  ZIGBEE_LABEL_READY = 20;   // goto label 20 for main loop
 const uint8_t  ZIGBEE_LABEL_MAIN_LOOP = 21;   // main loop
@@ -400,7 +401,7 @@ void Z_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_pani
 const char kCheckingDeviceConfiguration[] PROGMEM = D_LOG_ZIGBEE "checking device configuration";
 const char kConfiguredCoord[] PROGMEM = "Configured, starting coordinator";
 const char kConfiguredRouter[] PROGMEM = "Configured, starting router";
-const char kConfiguredDevice[] PROGMEM = "Configured, starting end-device";
+const char kConfiguredDevice[] PROGMEM = "Configured, starting device";
 const char kStarted[] PROGMEM = "Started";
 const char kZigbeeStarted[] PROGMEM = D_LOG_ZIGBEE "Zigbee started";
 const char kResetting[] PROGMEM = "Resetting configuration";
@@ -426,7 +427,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT_RECV_FUNC(2000, ZBR_VERSION, &Z_ReceiveCheckVersion)  // Check if version is valid
 
     // Dispatching whether coordinator, router or end-device
-    ZI_CALL(&Z_SwitchDeviceType, 0)           // goto ZIGBEE_LABEL_START_ROUTER, ZIGBEE_LABEL_START_DEVICE or continue if coordinator
+    ZI_CALL(&Z_SwitchDeviceType, 0)           // goto ZIGBEE_LABEL_INIT_ROUTER, ZIGBEE_LABEL_INIT_DEVICE or continue if coordinator
 
     // ======================================================================
     // Start as Zigbee Coordinator
@@ -537,8 +538,9 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_LOGTYPE)                          // check the logical type
     ZI_WAIT_RECV(1000, ZBS_LOGTYPE_ROUTER)        // it should be coordinator
 
-  ZI_LABEL(ZIGBEE_LABEL_START_ROUTER)              // Init as a router
+  // ZI_LABEL(ZIGBEE_LABEL_START_ROUTER)              // Init as a router
     ZI_MQTT_STATE(ZIGBEE_STATUS_STARTING, kConfiguredRouter)
+  ZI_LABEL(ZIGBEE_LABEL_START_ROUTER_DEVICE)
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_SEND(ZBS_AF_REGISTER_ALL)                  // Z_AF register for endpoint 01, profile 0x0104 Home Automation
     ZI_WAIT_RECV(1000, ZBR_AF_REGISTER)
@@ -570,7 +572,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_WNV_ZNPHC)                        // Write NV ZNP Has Configured
     ZI_WAIT_RECV(1000, ZBR_WNV_OK)
 
-    ZI_GOTO(ZIGBEE_LABEL_START_ROUTER)
+    ZI_GOTO(ZIGBEE_LABEL_START_ROUTER_DEVICE)
 
     // ======================================================================
     // Start as Zigbee Device
@@ -583,7 +585,8 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_LOGTYPE)                          // check the logical type
     ZI_WAIT_RECV(1000, ZBS_LOGTYPE_DEVICE)        // it should be coordinator
 
-    ZI_GOTO(ZIGBEE_LABEL_START_ROUTER)
+    ZI_MQTT_STATE(ZIGBEE_STATUS_STARTING, kConfiguredDevice)
+    ZI_GOTO(ZIGBEE_LABEL_START_ROUTER_DEVICE)
 
   ZI_LABEL(ZIGBEE_LABEL_FACT_RESET_DEVICE)        // Factory reset for router
     ZI_MQTT_STATE(ZIGBEE_STATUS_RESET_CONF, kResetting)

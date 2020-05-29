@@ -653,13 +653,16 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   JsonObject& json = jsonBuffer.createObject();
   
   if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_DEFAULT_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseResponse();
+      zcl_received.parseResponse();   // Zigbee general "Degault Response", publish ZbResponse message
   } else {  
     // Build the ZbReceive json
     if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
-      zcl_received.parseRawAttributes(json);
+      zcl_received.parseRawAttributes(json);    // Zigbee report attributes from sensors
       if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
+      zcl_received.parseReadAttributesResponse(json);
+      if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
+    } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES == zcl_received.getCmdId())) {
       zcl_received.parseReadAttributes(json);
       if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
     } else if (zcl_received.isClusterSpecificCommand()) {
