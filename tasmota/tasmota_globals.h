@@ -300,7 +300,7 @@ const char kWebColors[] PROGMEM =
 
 #undef USE_HM10                     // Disable support for HM-10 as a BLE-bridge as an alternative is using the internal ESP32 BLE
 #undef USE_KEELOQ                   // Disable support for Jarolift rollers by Keeloq algorithm as it's library cc1101 is not compatible with ESP32
-#undef USE_DISPLAY_ILI9488          // Disable as it's library JaretBurkett_ILI9488-gemu-1.0 is not compatible with ESP32
+//#undef USE_DISPLAY_ILI9488          // Disable as it's library JaretBurkett_ILI9488-gemu-1.0 is not compatible with ESP32
 //#undef USE_DISPLAY_SSD1351          // Disable as it's library Adafruit_SSD1351_gemu-1.0 is not compatible with ESP32
 
 #endif  // ESP32
@@ -335,7 +335,7 @@ const char kWebColors[] PROGMEM =
 #ifdef USE_DEVICE_GROUPS
 #define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)
 #define SendLocalDeviceGroupMessage(REQUEST_TYPE, ...) _SendDeviceGroupMessage(0, REQUEST_TYPE, __VA_ARGS__, 0)
-uint8_t device_group_count = 0;
+uint8_t device_group_count = 1;
 #endif  // USE_DEVICE_GROUPS
 
 #ifdef DEBUG_TASMOTA_CORE
