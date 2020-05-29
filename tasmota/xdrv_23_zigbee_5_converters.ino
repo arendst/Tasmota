@@ -79,476 +79,6 @@ uint8_t Z_getDatatypeLen(uint8_t t) {
   }
 }
 
-typedef union ZCLHeaderFrameControl_t {
-  struct {
-    uint8_t frame_type : 2;           // 00 = across entire profile, 01 = cluster specific
-    uint8_t manuf_specific : 1;       // Manufacturer Specific Sub-field
-    uint8_t direction : 1;            // 0 = tasmota to zigbee, 1 = zigbee to tasmota
-    uint8_t disable_def_resp : 1;     // don't send back default response
-    uint8_t reserved : 3;
-  } b;
-  uint32_t d8;                         // raw 8 bits field
-} ZCLHeaderFrameControl_t;
-
-
-class ZCLFrame {
-public:
-
-  ZCLFrame(uint8_t frame_control, uint16_t manuf_code, uint8_t transact_seq, uint8_t cmd_id,
-    const char *buf, size_t buf_len, uint16_t clusterid, uint16_t groupaddr,
-    uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
-    uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
-    uint32_t timestamp):
-    _manuf_code(manuf_code), _transact_seq(transact_seq), _cmd_id(cmd_id),
-    _payload(buf_len ? buf_len : 250),      // allocate the data frame from source or preallocate big enough
-    _cluster_id(clusterid), _groupaddr(groupaddr),
-    _srcaddr(srcaddr), _srcendpoint(srcendpoint), _dstendpoint(dstendpoint), _wasbroadcast(wasbroadcast),
-    _linkquality(linkquality), _securityuse(securityuse), _seqnumber(seqnumber),
-    _timestamp(timestamp)
-    {
-      _frame_control.d8 = frame_control;
-      _payload.addBuffer(buf, buf_len);
-    };
-
-
-  void log(void) {
-    char hex_char[_payload.len()*2+2];
-		ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
-    Response_P(PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
-                    "\"groupid\":%d," "\"clusterid\":%d," "\"srcaddr\":\"0x%04X\","
-                    "\"srcendpoint\":%d," "\"dstendpoint\":%d," "\"wasbroadcast\":%d,"
-                    "\"" D_CMND_ZIGBEE_LINKQUALITY "\":%d," "\"securityuse\":%d," "\"seqnumber\":%d,"
-                    "\"timestamp\":%d,"
-                    "\"fc\":\"0x%02X\",\"manuf\":\"0x%04X\",\"transact\":%d,"
-                    "\"cmdid\":\"0x%02X\",\"payload\":\"%s\"}}"),
-                    _groupaddr, _cluster_id, _srcaddr,
-                    _srcendpoint, _dstendpoint, _wasbroadcast,
-                    _linkquality, _securityuse, _seqnumber,
-                    _timestamp,
-                    _frame_control, _manuf_code, _transact_seq, _cmd_id,
-                    hex_char);
-    if (Settings.flag3.tuya_serial_mqtt_publish) {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-      XdrvRulesProcess();
-    } else {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);
-    }
-  }
-
-  static ZCLFrame parseRawFrame(const SBuffer &buf, uint8_t offset, uint8_t len, uint16_t clusterid, uint16_t groupid,
-                                uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
-                                uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
-                                uint32_t timestamp) { // parse a raw frame and build the ZCL frame object
-    uint32_t i = offset;
-    ZCLHeaderFrameControl_t frame_control;
-    uint16_t manuf_code = 0;
-    uint8_t transact_seq;
-    uint8_t cmd_id;
-
-    frame_control.d8 = buf.get8(i++);
-    if (frame_control.b.manuf_specific) {
-      manuf_code = buf.get16(i);
-      i += 2;
-    }
-    transact_seq = buf.get8(i++);
-    cmd_id = buf.get8(i++);
-    ZCLFrame zcl_frame(frame_control.d8, manuf_code, transact_seq, cmd_id,
-                       (const char *)(buf.buf() + i), len + offset - i,
-                       clusterid, groupid,
-                       srcaddr, srcendpoint, dstendpoint, wasbroadcast,
-                       linkquality, securityuse, seqnumber,
-                       timestamp);
-    return zcl_frame;
-  }
-
-  bool isClusterSpecificCommand(void) {
-    return _frame_control.b.frame_type & 1;
-  }
-
-  static void generateAttributeName(const JsonObject& json, uint16_t cluster, uint16_t attr, char *key, size_t key_len);
-  void parseRawAttributes(JsonObject& json, uint8_t offset = 0);
-  void parseReadAttributes(JsonObject& json, uint8_t offset = 0);
-  void parseResponse(void);
-  void parseClusterSpecificCommand(JsonObject& json, uint8_t offset = 0);
-  void postProcessAttributes(uint16_t shortaddr, JsonObject& json);
-
-  inline void setGroupId(uint16_t groupid) {
-    _groupaddr = groupid;
-  }
-
-  inline void setClusterId(uint16_t clusterid) {
-    _cluster_id = clusterid;
-  }
-
-  inline uint8_t getCmdId(void) const {
-    return _cmd_id;
-  }
-
-  inline uint16_t getClusterId(void) const {
-    return _cluster_id;
-  }
-
-  inline uint16_t getSrcEndpoint(void) const {
-    return _srcendpoint;
-  }
-
-  const SBuffer &getPayload(void) const {
-    return _payload;
-  }
-
-  uint16_t getManufCode(void) const {
-    return _manuf_code;
-  }
-
-private:
-  ZCLHeaderFrameControl_t _frame_control = { .d8 = 0 };
-  uint16_t                _manuf_code = 0;      // optional
-  uint8_t                 _transact_seq = 0;    // transaction sequence number
-  uint8_t                 _cmd_id = 0;
-  SBuffer                 _payload;
-  uint16_t                _cluster_id = 0;
-  uint16_t                _groupaddr = 0;
-  // information from decoded ZCL frame
-  uint16_t                _srcaddr;
-  uint8_t                 _srcendpoint;
-  uint8_t                 _dstendpoint;
-  uint8_t                 _wasbroadcast;
-  uint8_t                 _linkquality;
-  uint8_t                 _securityuse;
-  uint8_t                 _seqnumber;
-  uint32_t                _timestamp;
-};
-
-// Zigbee ZCL converters
-
-// from https://github.com/Koenkk/zigbee-shepherd-converters/blob/638d29f0cace6343052b9a4e7fd60980fa785479/converters/fromZigbee.js#L55
-// Input voltage in mV, i.e. 3000 = 3.000V
-// Output percentage from 0 to 100 as int
-uint8_t toPercentageCR2032(uint32_t voltage) {
-  uint32_t percentage;
-  if (voltage < 2100) {
-      percentage = 0;
-  } else if (voltage < 2440) {
-      percentage = 6 - ((2440 - voltage) * 6) / 340;
-  } else if (voltage < 2740) {
-      percentage = 18 - ((2740 - voltage) * 12) / 300;
-  } else if (voltage < 2900) {
-      percentage = 42 - ((2900 - voltage) * 24) / 160;
-  } else if (voltage < 3000) {
-      percentage = 100 - ((3000 - voltage) * 58) / 100;
-  } else if (voltage >= 3000) {
-      percentage = 100;
-  }
-  return percentage;
-}
-
-
-uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer &buf,
-                              uint32_t offset, uint32_t buflen) {
-
-  uint32_t i = offset;
-  uint32_t attrtype = buf.get8(i++);
-
-  // fallback - enter a null value
-  json[attrid_str] = (char*) nullptr;
-
-  uint32_t len = Z_getDatatypeLen(attrtype);    // pre-compute lenght, overloaded for variable length attributes
-
-  // now parse accordingly to attr type
-  switch (attrtype) {
-    // case Znodata:      // nodata
-    // case Zunk:      // unk
-    //   break;
-    case Zbool:      // bool
-    case Zuint8:      // uint8
-    case Zenum8:      // enum8
-      {
-        uint8_t uint8_val = buf.get8(i);
-        // i += 1;
-        if (0xFF != uint8_val) {
-          json[attrid_str] = uint8_val;
-        }
-      }
-      break;
-    case Zuint16:      // uint16
-    case Zenum16:      // enum16
-      {
-        uint16_t uint16_val = buf.get16(i);
-        // i += 2;
-        if (0xFFFF != uint16_val) {
-          json[attrid_str] = uint16_val;
-        }
-      }
-      break;
-    case Zuint32:      // uint32
-      {
-        uint32_t uint32_val = buf.get32(i);
-        // i += 4;
-        if (0xFFFFFFFF != uint32_val) {
-          json[attrid_str] = uint32_val;
-        }
-      }
-      break;
-    // Note: uint40, uint48, uint56, uint64 are displayed as Hex
-    // Note: int40, int48, int56, int64 are displayed as Hex
-    case Zuint40:    // uint40
-    case Zuint48:    // uint48
-    case Zuint56:    // uint56
-    case Zuint64:    // uint64
-    case Zint40:    // int40
-    case Zint48:    // int48
-    case Zint56:    // int56
-    case Zint64:    // int64
-      {
-        // uint8_t len = attrtype - 0x27;   // 5 - 8
-        // print as HEX
-        char hex[2*len+1];
-        ToHex_P(buf.buf(i), len, hex, sizeof(hex));
-        json[attrid_str] = hex;
-        // i += len;
-      }
-      break;
-    case Zint8:      // int8
-      {
-        int8_t int8_val = buf.get8(i);
-        // i += 1;
-        if (0x80 != int8_val) {
-          json[attrid_str] = int8_val;
-        }
-      }
-      break;
-    case Zint16:      // int16
-      {
-        int16_t int16_val = buf.get16(i);
-        // i += 2;
-        if (0x8000 != int16_val) {
-          json[attrid_str] = int16_val;
-        }
-      }
-      break;
-    case Zint32:      // int32
-      {
-        int32_t int32_val = buf.get32(i);
-        // i += 4;
-        if (0x80000000 != int32_val) {
-          json[attrid_str] = int32_val;
-        }
-      }
-      break;
-
-    case Zoctstr:      // octet string, 1 byte len
-    case Zstring:      // char string, 1 byte len
-    case Zoctstr16:      // octet string, 2 bytes len
-    case Zstring16:      // char string, 2 bytes len
-      // For strings, default is to try to do a real string, but reverts to octet stream if null char is present or on some exceptions
-      {
-        bool parse_as_string = true;
-        len = (attrtype <= 0x42) ? buf.get8(i) : buf.get16(i);    // len is 8 or 16 bits
-        i += (attrtype <= 0x42) ? 1 : 2;                                   // increment pointer
-        if (i + len > buf.len()) {        // make sure we don't get past the buffer
-          len = buf.len() - i;
-        }
-
-        // check if we can safely use a string
-        if ((0x41 == attrtype) || (0x43 == attrtype)) { parse_as_string = false; }
-
-        if (parse_as_string) {
-          char str[len+1];
-          strncpy(str, buf.charptr(i), len);
-          str[len] = 0x00;
-          json[attrid_str] = str;
-        } else {
-          // print as HEX
-          char hex[2*len+1];
-          ToHex_P(buf.buf(i), len, hex, sizeof(hex));
-          json[attrid_str] = hex;
-        }
-
-        // i += len;
-        // break;
-      }
-      // i += buf.get8(i) + 1;
-      break;
-
-    case Zdata8:      // data8
-    case Zmap8:      // map8
-      {
-        uint8_t uint8_val = buf.get8(i);
-        // i += 1;
-        json[attrid_str] = uint8_val;
-      }
-      break;
-    case Zdata16:      // data16
-    case Zmap16:      // map16
-      {
-        uint16_t uint16_val = buf.get16(i);
-        // i += 2;
-        json[attrid_str] = uint16_val;
-      }
-      break;
-    case Zdata32:      // data32
-    case Zmap32:      // map32
-      {
-        uint32_t uint32_val = buf.get32(i);
-        // i += 4;
-        json[attrid_str] = uint32_val;
-      }
-      break;
-
-    case Zsingle:      // float
-      {
-        uint32_t uint32_val = buf.get32(i);
-        float  * float_val = (float*) &uint32_val;
-        // i += 4;
-        json[attrid_str] = *float_val;
-      }
-      break;
-
-    // TODO
-    case ZToD:      // ToD
-    case Zdate:      // date
-    case ZUTC:      // UTC
-    case ZclusterId:      // clusterId
-    case ZattribId:      // attribId
-    case ZbacOID:      // bacOID
-    case ZEUI64:      // EUI64
-    case Zkey128:      // key128
-    case Zsemi:      // semi (float on 2 bytes)
-      break;
-
-    // Other un-implemented data types
-    case Zdata24:      // data24
-    case Zdata40:      // data40
-    case Zdata48:      // data48
-    case Zdata56:      // data56
-    case Zdata64:      // data64
-      break;
-    // map<x>
-    case Zmap24:      // map24
-    case Zmap40:      // map40
-    case Zmap48:      // map48
-    case Zmap56:      // map56
-    case Zmap64:      // map64
-      break;
-    case Zdouble:      // double precision
-      {
-        uint64_t uint64_val = buf.get64(i);
-        double  * double_val = (double*) &uint64_val;
-        // i += 8;
-        json[attrid_str] = *double_val;
-      }
-      break;
-  }
-  i += len;
-
-  // String pp;    // pretty print
-  // json[attrid_str].prettyPrintTo(pp);
-  // // now store the attribute
-  // AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZCL attribute decoded, id %s, type 0x%02X, val=%s"),
-  //                                attrid_str, attrtype, pp.c_str());
-  return i - offset;    // how much have we increased the index
-}
-
-// Generate an attribute name based on cluster number, attribute, and suffix if duplicates
-void ZCLFrame::generateAttributeName(const JsonObject& json, uint16_t cluster, uint16_t attr, char *key, size_t key_len) {
-  uint32_t suffix = 1;
-
-  snprintf_P(key, key_len, PSTR("%04X/%04X"), cluster, attr);
-  while (json.containsKey(key)) {
-    suffix++;
-    snprintf_P(key, key_len, PSTR("%04X/%04X+%d"), cluster, attr, suffix);    // add "0008/0001+2" suffix if duplicate
-  }
-}
-
-// First pass, parse all attributes in their native format
-void ZCLFrame::parseRawAttributes(JsonObject& json, uint8_t offset) {
-  uint32_t i = offset;
-  uint32_t len = _payload.len();
-
-  while (len >= i + 3) {
-    uint16_t attrid = _payload.get16(i);
-    i += 2;
-
-    char key[16];
-    generateAttributeName(json, _cluster_id, attrid, key, sizeof(key));
-
-    // exception for Xiaomi lumi.weather - specific field to be treated as octet and not char
-    if ((0x0000 == _cluster_id) && (0xFF01 == attrid)) {
-      if (0x42 == _payload.get8(i)) {
-        _payload.set8(i, 0x41);   // change type from 0x42 to 0x41
-      }
-    }
-    i += parseSingleAttribute(json, key, _payload, i, len);
-  }
-}
-
-// ZCL_READ_ATTRIBUTES_RESPONSE
-void ZCLFrame::parseReadAttributes(JsonObject& json, uint8_t offset) {
-  uint32_t i = offset;
-  uint32_t len = _payload.len();
-
-  while (len - i >= 4) {
-    uint16_t attrid = _payload.get16(i);
-    i += 2;
-    uint8_t status = _payload.get8(i++);
-
-    if (0 == status) {
-      char key[16];
-      generateAttributeName(json, _cluster_id, attrid, key, sizeof(key));
-
-      i += parseSingleAttribute(json, key, _payload, i, len);
-    }
-  }
-}
-
-// ZCL_DEFAULT_RESPONSE
-void ZCLFrame::parseResponse(void) {
-  if (_payload.len() < 2) { return; }   // wrong format
-  uint8_t cmd = _payload.get8(0);
-  uint8_t status = _payload.get8(1);
-
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject& json = jsonBuffer.createObject();
-
-  // "Device"
-  char s[12];
-  snprintf_P(s, sizeof(s), PSTR("0x%04X"), _srcaddr);
-  json[F(D_JSON_ZIGBEE_DEVICE)] = s;
-  // "Name"
-  const char * friendlyName = zigbee_devices.getFriendlyName(_srcaddr);
-  if (friendlyName) {
-    json[F(D_JSON_ZIGBEE_NAME)] = (char*) friendlyName;
-  }
-  // "Command"
-  snprintf_P(s, sizeof(s), PSTR("%04X!%02X"), _cluster_id, cmd);
-  json[F(D_JSON_ZIGBEE_CMD)] = s;
-  // "Status"
-  json[F(D_JSON_ZIGBEE_STATUS)] = status;
-  // "StatusMessage"
-  json[F(D_JSON_ZIGBEE_STATUS_MSG)] = getZigbeeStatusMessage(status);
-  // Add Endpoint
-  json[F(D_CMND_ZIGBEE_ENDPOINT)] = _srcendpoint;
-  // Add Group if non-zero
-  if (_groupaddr) {
-    json[F(D_CMND_ZIGBEE_GROUP)] = _groupaddr;
-  }
-  // Add linkquality
-  json[F(D_CMND_ZIGBEE_LINKQUALITY)] = _linkquality;
-
-  String msg("");
-  msg.reserve(100);
-  json.printTo(msg);
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_RESPONSE "\":%s}"), msg.c_str());
-  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
-  XdrvRulesProcess();
-}
-
-
-// Parse non-normalized attributes
-void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
-  convertClusterSpecific(json, _cluster_id, _cmd_id, _frame_control.b.direction, _payload);
-  sendHueUpdate(_srcaddr, _groupaddr, _cluster_id, _cmd_id, _frame_control.b.direction);
-}
 
 // return value:
 // 0 = keep initial value
@@ -684,13 +214,13 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0000, 0x0002,  Z(StackVersion),         &Z_Copy },
   { Zuint8,   Cx0000, 0x0003,  Z(HWVersion),            &Z_Copy },
   { Zstring,  Cx0000, 0x0004,  Z(Manufacturer),         &Z_ManufKeep },    // record Manufacturer
-  { Zstring,  Cx0000, 0x0005,  Z(ModelId), &Z_ModelKeep },    // record Model
+  { Zstring,  Cx0000, 0x0005,  Z(ModelId),              &Z_ModelKeep },    // record Model
   { Zstring,  Cx0000, 0x0006,  Z(DateCode),             &Z_Copy },
   { Zenum8,   Cx0000, 0x0007,  Z(PowerSource),          &Z_Copy },
   { Zstring,  Cx0000, 0x4000,  Z(SWBuildID),            &Z_Copy },
-  { Zunk,     Cx0000, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
+  { Zunk,     Cx0000, 0xFFFF,  nullptr,                 &Z_Remove },    // Remove all other values
   // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
-  { Zmap8,    Cx0000, 0xFF01,  nullptr,                &Z_AqaraSensor },    // Occupancy (map8)
+  { Zmap8,    Cx0000, 0xFF01,  nullptr,                 &Z_AqaraSensor },    // Occupancy (map8)
 
   // Power Configuration cluster
   { Zuint16,  Cx0001, 0x0000,  Z(MainsVoltage),         &Z_Copy },
@@ -712,8 +242,8 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   //{ Zmap8,    Cx0005, 0x0004,  Z(NameSupport),           &Z_Copy },
 
   // On/off cluster
-  { Zbool,    Cx0006,    0x0000,  Z(Power),                &Z_Copy },
-  { Zbool,    Cx0006,    0x8000,  Z(Power),                &Z_Copy },   // See 7280
+  { Zbool,    Cx0006,    0x0000,  Z(Power),             &Z_Copy },
+  { Zbool,    Cx0006,    0x8000,  Z(Power),             &Z_Copy },   // See 7280
 
   // On/Off Switch Configuration cluster
   { Zenum8,   Cx0007, 0x0000,  Z(SwitchType),           &Z_Copy },
@@ -735,7 +265,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zmap8,    Cx000A, 0x0001,  Z(TimeStatus),           &Z_Copy },
   { Zint32,   Cx000A, 0x0002,  Z(TimeZone),             &Z_Copy },
   { Zuint32,  Cx000A, 0x0003,  Z(DstStart),             &Z_Copy },
-  { Zuint32,  Cx000A, 0x0004,  Z(DstEnd),             &Z_Copy },
+  { Zuint32,  Cx000A, 0x0004,  Z(DstEnd),               &Z_Copy },
   { Zint32,   Cx000A, 0x0005,  Z(DstShift),             &Z_Copy },
   { Zuint32,  Cx000A, 0x0006,  Z(StandardTime),         &Z_Copy },
   { Zuint32,  Cx000A, 0x0007,  Z(LocalTime),            &Z_Copy },
@@ -1031,6 +561,590 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0B05, 0x011D,  Z(LastMessageRSSI),      &Z_Copy },
 
 };
+
+
+typedef union ZCLHeaderFrameControl_t {
+  struct {
+    uint8_t frame_type : 2;           // 00 = across entire profile, 01 = cluster specific
+    uint8_t manuf_specific : 1;       // Manufacturer Specific Sub-field
+    uint8_t direction : 1;            // 0 = tasmota to zigbee, 1 = zigbee to tasmota
+    uint8_t disable_def_resp : 1;     // don't send back default response
+    uint8_t reserved : 3;
+  } b;
+  uint32_t d8;                         // raw 8 bits field
+} ZCLHeaderFrameControl_t;
+
+
+class ZCLFrame {
+public:
+
+  ZCLFrame(uint8_t frame_control, uint16_t manuf_code, uint8_t transact_seq, uint8_t cmd_id,
+    const char *buf, size_t buf_len, uint16_t clusterid, uint16_t groupaddr,
+    uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
+    uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
+    uint32_t timestamp):
+    _manuf_code(manuf_code), _transact_seq(transact_seq), _cmd_id(cmd_id),
+    _payload(buf_len ? buf_len : 250),      // allocate the data frame from source or preallocate big enough
+    _cluster_id(clusterid), _groupaddr(groupaddr),
+    _srcaddr(srcaddr), _srcendpoint(srcendpoint), _dstendpoint(dstendpoint), _wasbroadcast(wasbroadcast),
+    _linkquality(linkquality), _securityuse(securityuse), _seqnumber(seqnumber),
+    _timestamp(timestamp)
+    {
+      _frame_control.d8 = frame_control;
+      _payload.addBuffer(buf, buf_len);
+    };
+
+
+  void log(void) {
+    char hex_char[_payload.len()*2+2];
+		ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
+    Response_P(PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
+                    "\"groupid\":%d," "\"clusterid\":%d," "\"srcaddr\":\"0x%04X\","
+                    "\"srcendpoint\":%d," "\"dstendpoint\":%d," "\"wasbroadcast\":%d,"
+                    "\"" D_CMND_ZIGBEE_LINKQUALITY "\":%d," "\"securityuse\":%d," "\"seqnumber\":%d,"
+                    "\"timestamp\":%d,"
+                    "\"fc\":\"0x%02X\",\"manuf\":\"0x%04X\",\"transact\":%d,"
+                    "\"cmdid\":\"0x%02X\",\"payload\":\"%s\"}}"),
+                    _groupaddr, _cluster_id, _srcaddr,
+                    _srcendpoint, _dstendpoint, _wasbroadcast,
+                    _linkquality, _securityuse, _seqnumber,
+                    _timestamp,
+                    _frame_control, _manuf_code, _transact_seq, _cmd_id,
+                    hex_char);
+    if (Settings.flag3.tuya_serial_mqtt_publish) {
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
+      XdrvRulesProcess();
+    } else {
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);
+    }
+  }
+
+  static ZCLFrame parseRawFrame(const SBuffer &buf, uint8_t offset, uint8_t len, uint16_t clusterid, uint16_t groupid,
+                                uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
+                                uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
+                                uint32_t timestamp) { // parse a raw frame and build the ZCL frame object
+    uint32_t i = offset;
+    ZCLHeaderFrameControl_t frame_control;
+    uint16_t manuf_code = 0;
+    uint8_t transact_seq;
+    uint8_t cmd_id;
+
+    frame_control.d8 = buf.get8(i++);
+    if (frame_control.b.manuf_specific) {
+      manuf_code = buf.get16(i);
+      i += 2;
+    }
+    transact_seq = buf.get8(i++);
+    cmd_id = buf.get8(i++);
+    ZCLFrame zcl_frame(frame_control.d8, manuf_code, transact_seq, cmd_id,
+                       (const char *)(buf.buf() + i), len + offset - i,
+                       clusterid, groupid,
+                       srcaddr, srcendpoint, dstendpoint, wasbroadcast,
+                       linkquality, securityuse, seqnumber,
+                       timestamp);
+    return zcl_frame;
+  }
+
+  bool isClusterSpecificCommand(void) {
+    return _frame_control.b.frame_type & 1;
+  }
+
+  static void generateAttributeName(const JsonObject& json, uint16_t cluster, uint16_t attr, char *key, size_t key_len);
+  void parseRawAttributes(JsonObject& json, uint8_t offset = 0);
+  void parseReadAttributes(JsonObject& json, uint8_t offset = 0);
+  void parseReadAttributesResponse(JsonObject& json, uint8_t offset = 0);
+  void parseResponse(void);
+  void parseClusterSpecificCommand(JsonObject& json, uint8_t offset = 0);
+  void postProcessAttributes(uint16_t shortaddr, JsonObject& json);
+
+  inline void setGroupId(uint16_t groupid) {
+    _groupaddr = groupid;
+  }
+
+  inline void setClusterId(uint16_t clusterid) {
+    _cluster_id = clusterid;
+  }
+
+  inline uint8_t getCmdId(void) const {
+    return _cmd_id;
+  }
+
+  inline uint16_t getClusterId(void) const {
+    return _cluster_id;
+  }
+
+  inline uint16_t getSrcEndpoint(void) const {
+    return _srcendpoint;
+  }
+
+  const SBuffer &getPayload(void) const {
+    return _payload;
+  }
+
+  uint16_t getManufCode(void) const {
+    return _manuf_code;
+  }
+
+private:
+  ZCLHeaderFrameControl_t _frame_control = { .d8 = 0 };
+  uint16_t                _manuf_code = 0;      // optional
+  uint8_t                 _transact_seq = 0;    // transaction sequence number
+  uint8_t                 _cmd_id = 0;
+  SBuffer                 _payload;
+  uint16_t                _cluster_id = 0;
+  uint16_t                _groupaddr = 0;
+  // information from decoded ZCL frame
+  uint16_t                _srcaddr;
+  uint8_t                 _srcendpoint;
+  uint8_t                 _dstendpoint;
+  uint8_t                 _wasbroadcast;
+  uint8_t                 _linkquality;
+  uint8_t                 _securityuse;
+  uint8_t                 _seqnumber;
+  uint32_t                _timestamp;
+};
+
+// Zigbee ZCL converters
+
+// from https://github.com/Koenkk/zigbee-shepherd-converters/blob/638d29f0cace6343052b9a4e7fd60980fa785479/converters/fromZigbee.js#L55
+// Input voltage in mV, i.e. 3000 = 3.000V
+// Output percentage from 0 to 100 as int
+uint8_t toPercentageCR2032(uint32_t voltage) {
+  uint32_t percentage;
+  if (voltage < 2100) {
+      percentage = 0;
+  } else if (voltage < 2440) {
+      percentage = 6 - ((2440 - voltage) * 6) / 340;
+  } else if (voltage < 2740) {
+      percentage = 18 - ((2740 - voltage) * 12) / 300;
+  } else if (voltage < 2900) {
+      percentage = 42 - ((2900 - voltage) * 24) / 160;
+  } else if (voltage < 3000) {
+      percentage = 100 - ((3000 - voltage) * 58) / 100;
+  } else if (voltage >= 3000) {
+      percentage = 100;
+  }
+  return percentage;
+}
+
+//
+// Appends the attribute value to Write or to Report
+// Adds to buf:
+// - 2 bytes: attribute identigier
+// - 1 byte: attribute type
+// - n bytes: value (typically between 1 and 4 bytes, or bigger for strings)
+// returns number of bytes of attribute, or <0 if error
+int32_t encodeSingleAttribute(class SBuffer &buf, const JsonVariant &val, uint16_t attr, uint8_t attrtype) {
+  uint32_t len = Z_getDatatypeLen(attrtype);    // pre-compute lenght, overloaded for variable length attributes
+
+  uint32_t u32 = val.as<uint32_t>();
+  int32_t  i32 = val.as<int32_t>();
+  float    f32 = val.as<float>();
+
+  buf.add16(attr);        // prepend with attribute identifier
+  buf.add8(attrtype);     // prepend with attribute type
+
+  switch (attrtype) {
+    // unsigned 8
+    case Zbool:      // bool
+    case Zuint8:      // uint8
+    case Zenum8:      // enum8
+    case Zdata8:      // data8
+    case Zmap8:      // map8
+      buf.add8(u32);
+      break;
+    // unsigned 16
+    case Zuint16:      // uint16
+    case Zenum16:      // enum16
+    case Zdata16:      // data16
+    case Zmap16:      // map16
+      buf.add16(u32);
+      break;
+    // unisgned 32
+    case Zuint32:      // uint32
+    case Zdata32:      // data32
+    case Zmap32:      // map32
+      buf.add32(u32);
+      break;
+
+    // signed 8
+    case Zint8:      // int8
+      buf.add8(i32);
+      break;
+    case Zint16:      // int16
+      buf.add16(i32);
+      break;
+    case Zint32:      // int32
+      buf.add32(i32);
+      break;
+
+    case Zsingle:      // float
+      uint32_t *f_ptr;
+      buf.add32( *((uint32_t*)&f32) );    // cast float as uint32_t
+      break;
+
+    case Zstring:
+    case Zstring16:
+      {
+        const char * val_str = val.as<const char*>();
+        if (nullptr == val_str) { return -2; }
+        size_t val_len = strlen(val_str);
+        if (val_len > 32) { val_len = 32; }
+        len = val_len + 1;
+        buf.add8(val_len);
+        if (Zstring16 == attrtype) {
+          buf.add8(0);    // len is on 2 bytes
+          len++;
+        }
+        for (uint32_t i = 0; i < val_len; i++) {
+          buf.add8(val_str[i]);
+        }
+      }
+      break;
+
+    default:
+      // remove the attribute type we just added
+      buf.setLen(buf.len() - 3);
+      return -1;
+  }
+  return len + 3;
+}
+
+uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer &buf,
+                              uint32_t offset, uint32_t buflen) {
+
+  uint32_t i = offset;
+  uint32_t attrtype = buf.get8(i++);
+
+  // fallback - enter a null value
+  json[attrid_str] = (char*) nullptr;
+
+  uint32_t len = Z_getDatatypeLen(attrtype);    // pre-compute lenght, overloaded for variable length attributes
+
+  // now parse accordingly to attr type
+  switch (attrtype) {
+    // case Znodata:      // nodata
+    // case Zunk:      // unk
+    //   break;
+    case Zbool:      // bool
+    case Zuint8:      // uint8
+    case Zenum8:      // enum8
+      {
+        uint8_t uint8_val = buf.get8(i);
+        // i += 1;
+        if (0xFF != uint8_val) {
+          json[attrid_str] = uint8_val;
+        }
+      }
+      break;
+    case Zuint16:      // uint16
+    case Zenum16:      // enum16
+      {
+        uint16_t uint16_val = buf.get16(i);
+        // i += 2;
+        if (0xFFFF != uint16_val) {
+          json[attrid_str] = uint16_val;
+        }
+      }
+      break;
+    case Zuint32:      // uint32
+      {
+        uint32_t uint32_val = buf.get32(i);
+        // i += 4;
+        if (0xFFFFFFFF != uint32_val) {
+          json[attrid_str] = uint32_val;
+        }
+      }
+      break;
+    // Note: uint40, uint48, uint56, uint64 are displayed as Hex
+    // Note: int40, int48, int56, int64 are displayed as Hex
+    case Zuint40:    // uint40
+    case Zuint48:    // uint48
+    case Zuint56:    // uint56
+    case Zuint64:    // uint64
+    case Zint40:    // int40
+    case Zint48:    // int48
+    case Zint56:    // int56
+    case Zint64:    // int64
+      {
+        // uint8_t len = attrtype - 0x27;   // 5 - 8
+        // print as HEX
+        char hex[2*len+1];
+        ToHex_P(buf.buf(i), len, hex, sizeof(hex));
+        json[attrid_str] = hex;
+        // i += len;
+      }
+      break;
+    case Zint8:      // int8
+      {
+        int8_t int8_val = buf.get8(i);
+        // i += 1;
+        if (0x80 != int8_val) {
+          json[attrid_str] = int8_val;
+        }
+      }
+      break;
+    case Zint16:      // int16
+      {
+        int16_t int16_val = buf.get16(i);
+        // i += 2;
+        if (0x8000 != int16_val) {
+          json[attrid_str] = int16_val;
+        }
+      }
+      break;
+    case Zint32:      // int32
+      {
+        int32_t int32_val = buf.get32(i);
+        // i += 4;
+        if (0x80000000 != int32_val) {
+          json[attrid_str] = int32_val;
+        }
+      }
+      break;
+
+    case Zoctstr:      // octet string, 1 byte len
+    case Zstring:      // char string, 1 byte len
+    case Zoctstr16:      // octet string, 2 bytes len
+    case Zstring16:      // char string, 2 bytes len
+      // For strings, default is to try to do a real string, but reverts to octet stream if null char is present or on some exceptions
+      {
+        bool parse_as_string = true;
+        len = (attrtype <= 0x42) ? buf.get8(i) : buf.get16(i);    // len is 8 or 16 bits
+        i += (attrtype <= 0x42) ? 1 : 2;                                   // increment pointer
+        if (i + len > buf.len()) {        // make sure we don't get past the buffer
+          len = buf.len() - i;
+        }
+
+        // check if we can safely use a string
+        if ((0x41 == attrtype) || (0x43 == attrtype)) { parse_as_string = false; }
+
+        if (parse_as_string) {
+          char str[len+1];
+          strncpy(str, buf.charptr(i), len);
+          str[len] = 0x00;
+          json[attrid_str] = str;
+        } else {
+          // print as HEX
+          char hex[2*len+1];
+          ToHex_P(buf.buf(i), len, hex, sizeof(hex));
+          json[attrid_str] = hex;
+        }
+
+        // i += len;
+        // break;
+      }
+      // i += buf.get8(i) + 1;
+      break;
+
+    case Zdata8:      // data8
+    case Zmap8:      // map8
+      {
+        uint8_t uint8_val = buf.get8(i);
+        // i += 1;
+        json[attrid_str] = uint8_val;
+      }
+      break;
+    case Zdata16:      // data16
+    case Zmap16:      // map16
+      {
+        uint16_t uint16_val = buf.get16(i);
+        // i += 2;
+        json[attrid_str] = uint16_val;
+      }
+      break;
+    case Zdata32:      // data32
+    case Zmap32:      // map32
+      {
+        uint32_t uint32_val = buf.get32(i);
+        // i += 4;
+        json[attrid_str] = uint32_val;
+      }
+      break;
+
+    case Zsingle:      // float
+      {
+        uint32_t uint32_val = buf.get32(i);
+        float  * float_val = (float*) &uint32_val;
+        // i += 4;
+        json[attrid_str] = *float_val;
+      }
+      break;
+
+    // TODO
+    case ZToD:      // ToD
+    case Zdate:      // date
+    case ZUTC:      // UTC
+    case ZclusterId:      // clusterId
+    case ZattribId:      // attribId
+    case ZbacOID:      // bacOID
+    case ZEUI64:      // EUI64
+    case Zkey128:      // key128
+    case Zsemi:      // semi (float on 2 bytes)
+      break;
+
+    // Other un-implemented data types
+    case Zdata24:      // data24
+    case Zdata40:      // data40
+    case Zdata48:      // data48
+    case Zdata56:      // data56
+    case Zdata64:      // data64
+      break;
+    // map<x>
+    case Zmap24:      // map24
+    case Zmap40:      // map40
+    case Zmap48:      // map48
+    case Zmap56:      // map56
+    case Zmap64:      // map64
+      break;
+    case Zdouble:      // double precision
+      {
+        uint64_t uint64_val = buf.get64(i);
+        double  * double_val = (double*) &uint64_val;
+        // i += 8;
+        json[attrid_str] = *double_val;
+      }
+      break;
+  }
+  i += len;
+
+  // String pp;    // pretty print
+  // json[attrid_str].prettyPrintTo(pp);
+  // // now store the attribute
+  // AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZCL attribute decoded, id %s, type 0x%02X, val=%s"),
+  //                                attrid_str, attrtype, pp.c_str());
+  return i - offset;    // how much have we increased the index
+}
+
+// Generate an attribute name based on cluster number, attribute, and suffix if duplicates
+void ZCLFrame::generateAttributeName(const JsonObject& json, uint16_t cluster, uint16_t attr, char *key, size_t key_len) {
+  uint32_t suffix = 1;
+
+  snprintf_P(key, key_len, PSTR("%04X/%04X"), cluster, attr);
+  while (json.containsKey(key)) {
+    suffix++;
+    snprintf_P(key, key_len, PSTR("%04X/%04X+%d"), cluster, attr, suffix);    // add "0008/0001+2" suffix if duplicate
+  }
+}
+
+// First pass, parse all attributes in their native format
+void ZCLFrame::parseRawAttributes(JsonObject& json, uint8_t offset) {
+  uint32_t i = offset;
+  uint32_t len = _payload.len();
+
+  while (len >= i + 3) {
+    uint16_t attrid = _payload.get16(i);
+    i += 2;
+
+    char key[16];
+    generateAttributeName(json, _cluster_id, attrid, key, sizeof(key));
+
+    // exception for Xiaomi lumi.weather - specific field to be treated as octet and not char
+    if ((0x0000 == _cluster_id) && (0xFF01 == attrid)) {
+      if (0x42 == _payload.get8(i)) {
+        _payload.set8(i, 0x41);   // change type from 0x42 to 0x41
+      }
+    }
+    i += parseSingleAttribute(json, key, _payload, i, len);
+  }
+}
+
+// ZCL_READ_ATTRIBUTES
+// TODO
+void ZCLFrame::parseReadAttributes(JsonObject& json, uint8_t offset) {
+  uint32_t i = offset;
+  uint32_t len = _payload.len();
+
+  json[F(D_CMND_ZIGBEE_CLUSTER)] = _cluster_id;
+
+  JsonArray &attr_list = json.createNestedArray(F("Read"));
+  JsonObject &attr_names = json.createNestedObject(F("ReadNames"));
+  while (len - i >= 2) {
+    uint16_t attrid = _payload.get16(i);
+    attr_list.add(attrid);
+
+    // find the attribute name
+    for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+      const Z_AttributeConverter *converter = &Z_PostProcess[i];
+      uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
+      uint16_t conv_attribute = pgm_read_word(&converter->attribute);
+
+      if ((conv_cluster == _cluster_id) && (conv_attribute == attrid)) {
+        attr_names[(const __FlashStringHelper*) converter->name] = true;
+        break;
+      }
+    }
+    i += 2;
+  }
+}
+
+// ZCL_READ_ATTRIBUTES_RESPONSE
+void ZCLFrame::parseReadAttributesResponse(JsonObject& json, uint8_t offset) {
+  uint32_t i = offset;
+  uint32_t len = _payload.len();
+
+  while (len >= 4 + i) {
+    uint16_t attrid = _payload.get16(i);
+    i += 2;
+    uint8_t status = _payload.get8(i++);
+
+    if (0 == status) {
+      char key[16];
+      generateAttributeName(json, _cluster_id, attrid, key, sizeof(key));
+
+      i += parseSingleAttribute(json, key, _payload, i, len);
+    }
+  }
+}
+
+// ZCL_DEFAULT_RESPONSE
+void ZCLFrame::parseResponse(void) {
+  if (_payload.len() < 2) { return; }   // wrong format
+  uint8_t cmd = _payload.get8(0);
+  uint8_t status = _payload.get8(1);
+
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& json = jsonBuffer.createObject();
+
+  // "Device"
+  char s[12];
+  snprintf_P(s, sizeof(s), PSTR("0x%04X"), _srcaddr);
+  json[F(D_JSON_ZIGBEE_DEVICE)] = s;
+  // "Name"
+  const char * friendlyName = zigbee_devices.getFriendlyName(_srcaddr);
+  if (friendlyName) {
+    json[F(D_JSON_ZIGBEE_NAME)] = (char*) friendlyName;
+  }
+  // "Command"
+  snprintf_P(s, sizeof(s), PSTR("%04X!%02X"), _cluster_id, cmd);
+  json[F(D_JSON_ZIGBEE_CMD)] = s;
+  // "Status"
+  json[F(D_JSON_ZIGBEE_STATUS)] = status;
+  // "StatusMessage"
+  json[F(D_JSON_ZIGBEE_STATUS_MSG)] = getZigbeeStatusMessage(status);
+  // Add Endpoint
+  json[F(D_CMND_ZIGBEE_ENDPOINT)] = _srcendpoint;
+  // Add Group if non-zero
+  if (_groupaddr) {
+    json[F(D_CMND_ZIGBEE_GROUP)] = _groupaddr;
+  }
+  // Add linkquality
+  json[F(D_CMND_ZIGBEE_LINKQUALITY)] = _linkquality;
+
+  String msg("");
+  msg.reserve(100);
+  json.printTo(msg);
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_RESPONSE "\":%s}"), msg.c_str());
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+  XdrvRulesProcess();
+}
+
+
+// Parse non-normalized attributes
+void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
+  convertClusterSpecific(json, _cluster_id, _cmd_id, _frame_control.b.direction, _payload);
+  sendHueUpdate(_srcaddr, _groupaddr, _cluster_id, _cmd_id, _frame_control.b.direction);
+}
 
 // ======================================================================
 // Record Manuf
