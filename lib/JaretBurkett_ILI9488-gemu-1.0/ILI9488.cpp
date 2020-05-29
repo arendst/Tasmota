@@ -74,6 +74,9 @@ uint8_t ili9488_start;
 // ESP8266
 #include "spi_register.h"
 #define SWSPI_OPTMODE
+// this enables the 27 bit packed mode
+#define RGB_PACK_MODE
+
 uint32_t ili9488_clock;
 uint32_t ili9488_usr;
 uint32_t ili9488_usr1;
@@ -258,6 +261,8 @@ void ILI9488::writecommand(uint8_t c) {
 #include "esp32-hal-spi.h"
 #include "esp32-hal.h"
 #include "soc/spi_struct.h"
+
+#define RGB_PACK_MODE
 
 // since ardunio transferBits ia completely disfunctional
 // we use our own hardware driver for 9 bit spi
@@ -831,8 +836,7 @@ void ILI9488::fillScreen(uint16_t color) {
 
 //#define WRITE_SPI_REG
 
-// this enables the 27 bit packed mode
-#define RGB_PACK_MODE
+
 
 // extremely strange => if this code is merged into pack_rgb() the software crashes
 // swap bytes
@@ -1023,16 +1027,38 @@ void ILI9488::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t colo
     g = (g * 255) / 63;
     b = (b * 255) / 31;
 
+#ifdef RGB_PACK_MODE
+    // init 27 bit mode
+    uint32_t data=pack_rgb(r,g,b);
+    REG_SET_BIT(SPI_USER_REG(3), SPI_USR_MOSI);
+    REG_WRITE(SPI_MOSI_DLEN_REG(3), 27 - 1);
+    uint32_t *dp=(uint32_t*)SPI_W0_REG(3);
+    digitalWrite( _cs, LOW);
+#endif
+
     for(y=h; y>0; y--) {
       for(x=w; x>0; x--) {
+  #ifndef RGB_PACK_MODE
         writedata(r);
         writedata(g);
         writedata(b);
+  #else
+        while (REG_GET_FIELD(SPI_CMD_REG(3), SPI_USR));
+        *dp=data;
+        REG_SET_BIT(SPI_CMD_REG(3), SPI_USR);
+  #endif
       }
     }
+
+#ifdef RGB_PACK_MODE
+    while (REG_GET_FIELD(SPI_CMD_REG(3), SPI_USR));
+    digitalWrite( _cs, HIGH);
+#endif
+
     ILI9488_STOP
 }
 #endif
+
 
 // Pass 8-bit (each) R,G,B, get back 16-bit packed color
 uint16_t ILI9488::color565(uint8_t r, uint8_t g, uint8_t b) {
