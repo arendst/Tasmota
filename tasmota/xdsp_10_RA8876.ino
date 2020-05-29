@@ -72,8 +72,11 @@ void RA8876_InitDriver()
     bg_color = RA8876_BLACK;
 
 #ifdef ESP32
+#undef HW_SPI_MOSI
 #define HW_SPI_MOSI 23
+#undef HW_SPI_MISO
 #define HW_SPI_MISO 19
+#undef HW_SPI_CLK
 #define HW_SPI_CLK 18
 #else
 #undef HW_SPI_MOSI
