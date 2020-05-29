@@ -465,8 +465,18 @@ bool AS3935SetDefault() {
 
 void AS3935InitSettings() {
   if(Settings.as3935_functions.nf_autotune){
-    AS3935SetGain(INDOORS);
-    AS3935SetNoiseFloor(0);
+    if(Settings.as3935_parameter.nf_autotune_min) {
+      if (Settings.as3935_parameter.nf_autotune_min > 7) {
+        AS3935SetGain(OUTDOORS);
+        AS3935SetNoiseFloor(Settings.as3935_parameter.nf_autotune_min - 8);
+      } else {
+        AS3935SetGain(INDOORS);
+        AS3935SetNoiseFloor(Settings.as3935_parameter.nf_autotune_min);
+      }
+    } else {
+      AS3935SetGain(INDOORS);
+      AS3935SetNoiseFloor(0);  
+    }
   }
   I2cWrite8(AS3935_ADDR, 0x00, Settings.as3935_sensor_cfg[0]);
   I2cWrite8(AS3935_ADDR, 0x01, Settings.as3935_sensor_cfg[1]);
