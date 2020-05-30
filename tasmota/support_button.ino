@@ -52,6 +52,14 @@ struct BUTTON {
   uint8_t adc = 99;                          // ADC0 button number
 } Button;
 
+#ifdef ESP32
+struct TOUCH_BUTTON {
+  uint8_t pin_threshold = TOUCH_PIN_THRESHOLD;
+  uint8_t hit_threshold = TOUCH_HIT_THRESHOLD;
+  uint8_t calibration = 0; // Bitfield
+} TOUCH_BUTTON;
+#endif // ESP32
+
 /********************************************************************************************/
 
 void ButtonPullupFlag(uint8 button_bit)
@@ -155,15 +163,15 @@ void ButtonHandler(void)
         uint32_t _value = touchRead(Pin(GPIO_KEY1, button_index));
         button = NOT_PRESSED;
         if (_value != 0){ // probably read-error
-          if(_value < TOUCH_PIN_THRESHOLD){
-            if(++Button.touch_hits[button_index]>TOUCH_HIT_THRESHOLD){
-              button = PRESSED;
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Touch value: %u hits: %u"), _value, Button.touch_hits[button_index]);
+          if(_value < TOUCH_BUTTON.pin_threshold){
+            if(++Button.touch_hits[button_index]>TOUCH_BUTTON.hit_threshold){
+              if (!bitRead(TOUCH_BUTTON.calibration, button_index+1)) button = PRESSED;
             }
           }
           else Button.touch_hits[button_index] = 0;
         }
         else Button.touch_hits[button_index] = 0;
+        if (bitRead(TOUCH_BUTTON.calibration, button_index+1)) AddLog_P2(LOG_LEVEL_INFO, PSTR("PLOT: %u, %u, %u,"),button_index+1, _value, Button.touch_hits[button_index]); // button number (1..4) , value, continuous hits under threshold
       }
       else{                                          // Normal button
         button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
