@@ -1276,6 +1276,7 @@ chknext:
 #endif //USE_ENERGY_SENSOR
         break;
       case 'f':
+//#define DEBUG_FS
 #ifdef USE_SCRIPT_FATFS
         if (!strncmp(vname,"fo(",3)) {
           lp+=3;
@@ -1304,6 +1305,9 @@ chknext:
           for (uint8_t cnt=0;cnt<SFS_MAX;cnt++) {
             if (!glob_script_mem.file_flags[cnt].is_open) {
               if (mode==0) {
+#ifdef DEBUG_FS
+                AddLog_P2(LOG_LEVEL_INFO,PSTR("open file for read %d"),cnt);
+#endif
                 glob_script_mem.files[cnt]=FS_USED.open(str,FILE_READ);
                 if (glob_script_mem.files[cnt].isDirectory()) {
                   glob_script_mem.files[cnt].rewindDirectory();
@@ -1315,8 +1319,14 @@ chknext:
               else {
                 if (mode==1) {
                   glob_script_mem.files[cnt]=FS_USED.open(str,FILE_WRITE);
+#ifdef DEBUG_FS
+                  AddLog_P2(LOG_LEVEL_INFO,PSTR("open file for write %d"),cnt);
+#endif
                 } else {
                   glob_script_mem.files[cnt]=FS_USED.open(str,FILE_APPEND);
+#ifdef DEBUG_FS
+                  AddLog_P2(LOG_LEVEL_INFO,PSTR("open file for append %d"),cnt);
+#endif
                 }
               }
               if (glob_script_mem.files[cnt]) {
@@ -1335,10 +1345,15 @@ chknext:
         if (!strncmp(vname,"fc(",3)) {
           lp+=3;
           lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
-          uint8_t ind=fvar;
-          if (ind>=SFS_MAX) ind=SFS_MAX-1;
-          glob_script_mem.files[ind].close();
-          glob_script_mem.file_flags[ind].is_open=0;
+          if (fvar>=0) {
+            uint8_t ind=fvar;
+            if (ind>=SFS_MAX) ind=SFS_MAX-1;
+#ifdef DEBUG_FS
+            AddLog_P2(LOG_LEVEL_INFO,PSTR("closing file %d"),ind);
+#endif
+            glob_script_mem.files[ind].close();
+            glob_script_mem.file_flags[ind].is_open=0;
+          }
           fvar=0;
           lp++;
           len=0;
@@ -2951,7 +2966,6 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   toLogEOL("for error",lp);
               }
             } else if (!strncmp(lp,"next",4)) {
-              lp+=4;
               lp_next=lp;
               if (floop>0) {
                 // for next loop
@@ -4300,8 +4314,7 @@ void Script_Check_Hue(String *response) {
   uint8_t hue_script_found=Run_Scripter(">H",-2,0);
   if (hue_script_found!=99) return;
 
-  char line[128];
-  char tmp[128];
+  char tmp[256];
   uint8_t hue_devs=0;
   uint8_t vindex=0;
   char *cp;
@@ -4316,17 +4329,7 @@ void Script_Check_Hue(String *response) {
     }
     if (*lp!=';') {
       // check this line
-      memcpy(line,lp,sizeof(line));
-      line[sizeof(line)-1]=0;
-      cp=line;
-      for (uint32_t i=0; i<sizeof(line); i++) {
-        if (!*cp || *cp=='\n' || *cp=='\r') {
-          *cp=0;
-          break;
-        }
-        cp++;
-      }
-      Replace_Cmd_Vars(line,0,tmp,sizeof(tmp));
+      Replace_Cmd_Vars(lp,1,tmp,sizeof(tmp));
       // check for hue defintions
       // NAME, TYPE , vars
       cp=tmp;
@@ -5518,8 +5521,7 @@ nextwebline:
 void script_send_email_body(void(*func)(char *)) {
 uint8_t msect=Run_Scripter(">m",-2,0);
   if (msect==99) {
-    char line[128];
-    char tmp[128];
+    char tmp[256];
     char *lp=glob_script_mem.section_ptr+2;
     while (lp) {
       while (*lp==SCRIPT_EOL) {
@@ -5530,17 +5532,7 @@ uint8_t msect=Run_Scripter(">m",-2,0);
       }
       if (*lp!=';') {
         // send this line to smtp
-        memcpy(line,lp,sizeof(line));
-        line[sizeof(line)-1]=0;
-        char *cp=line;
-        for (uint32_t i=0; i<sizeof(line); i++) {
-          if (!*cp || *cp=='\n' || *cp=='\r') {
-            *cp=0;
-            break;
-          }
-          cp++;
-        }
-        Replace_Cmd_Vars(line,0,tmp,sizeof(tmp));
+        Replace_Cmd_Vars(lp,1,tmp,sizeof(tmp));
         //client->println(tmp);
         func(tmp);
       }
@@ -5563,8 +5555,7 @@ uint8_t msect=Run_Scripter(">m",-2,0);
 void ScriptJsonAppend(void) {
   uint8_t web_script=Run_Scripter(">J",-2,0);
   if (web_script==99) {
-    char line[128];
-    char tmp[128];
+    char tmp[256];
     char *lp=glob_script_mem.section_ptr+2;
     while (lp) {
       while (*lp==SCRIPT_EOL) {
@@ -5575,17 +5566,7 @@ void ScriptJsonAppend(void) {
       }
       if (*lp!=';') {
         // send this line to mqtt
-        memcpy(line,lp,sizeof(line));
-        line[sizeof(line)-1]=0;
-        char *cp=line;
-        for (uint32_t i=0; i<sizeof(line); i++) {
-          if (!*cp || *cp=='\n' || *cp=='\r') {
-            *cp=0;
-            break;
-          }
-          cp++;
-        }
-        Replace_Cmd_Vars(line,0,tmp,sizeof(tmp));
+        Replace_Cmd_Vars(lp,1,tmp,sizeof(tmp));
         ResponseAppend_P(PSTR("%s"),tmp);
       }
       if (*lp==SCRIPT_EOL) {
@@ -5607,6 +5588,67 @@ bool RulesProcessEvent(char *json_event) {
 
 #ifdef ESP32
 #ifdef USE_SCRIPT_TASK
+
+#ifndef STASK_STACK
+#define STASK_STACK 8192
+#endif
+
+#ifndef STASK_PRIO
+#define STASK_PRIO 1
+#endif
+
+#if 1
+
+struct ESP32_Task {
+  uint16_t task_timer;
+  TaskHandle_t task_t;
+} esp32_tasks[2];
+
+
+void script_task1(void *arg) {
+  //uint32_t lastms=millis();
+  //uint32_t time;
+  while (1) {
+    //time=millis()-lastms;
+    //lastms=millis();
+    //time=esp32_tasks[0].task_timer-time;
+    //if (time<esp32_tasks[1].task_timer) {delay(time); }
+    //if (time<=esp32_tasks[0].task_timer) {vTaskDelay( pdMS_TO_TICKS( time ) ); }
+    delay(esp32_tasks[0].task_timer);
+    Run_Scripter(">t1",3,0);
+  }
+}
+
+void script_task2(void *arg) {
+  //uint32_t lastms=millis();
+  //uint32_t time;
+  while (1) {
+    //time=millis()-lastms;
+    //lastms=millis();
+    //time=esp32_tasks[1].task_timer-time;
+    //if (time<esp32_tasks[1].task_timer) {delay(time); }
+    //if (time<=esp32_tasks[1].task_timer) {vTaskDelay( pdMS_TO_TICKS( time ) ); }
+    delay(esp32_tasks[1].task_timer);
+    Run_Scripter(">t2",3,0);
+  }
+}
+uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core) {
+  //return 0;
+  BaseType_t res = 0;
+  if (core > 1) { core = 1; }
+  if (num == 1) {
+    if (esp32_tasks[0].task_t) { vTaskDelete(esp32_tasks[0].task_t); }
+    res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, STASK_PRIO, &esp32_tasks[0].task_t, core);
+    esp32_tasks[0].task_timer = time;
+  } else {
+    if (esp32_tasks[1].task_t) { vTaskDelete(esp32_tasks[1].task_t); }
+    res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, STASK_PRIO, &esp32_tasks[1].task_t, core);
+    esp32_tasks[1].task_timer = time;
+  }
+  return res;
+}
+#else
+
 uint16_t task_timer1;
 uint16_t task_timer2;
 TaskHandle_t task_t1;
@@ -5625,13 +5667,6 @@ void script_task2(void *arg) {
     Run_Scripter(">t2",3,0);
   }
 }
-#ifndef STASK_STACK
-#define STASK_STACK 4096
-#endif
-
-#ifndef STASK_PRIO
-#define STASK_PRIO 5
-#endif
 
 uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core) {
   //return 0;
@@ -5648,6 +5683,8 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core) {
   }
   return res;
 }
+#endif
+
 #endif // USE_SCRIPT_TASK
 #endif // ESP32
 /*********************************************************************************************\
