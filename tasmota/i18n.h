@@ -319,6 +319,11 @@
 #define D_CMND_HUMOFFSET "HumOffset"
 #define D_CMND_GLOBAL_TEMP "GlobalTemp"
 #define D_CMND_GLOBAL_HUM "GlobalHum"
+#ifdef ESP32
+#define D_CMND_TOUCH_CAL "TouchCal"
+#define D_CMND_TOUCH_THRES "TouchThres"
+#define D_CMND_TOUCH_NUM "TouchNum"
+#endif //ESP32
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTLOG "MqttLog"
