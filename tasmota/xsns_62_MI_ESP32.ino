@@ -53,6 +53,8 @@ struct {
     uint32_t willSetTime:1;
     uint32_t shallReadBatt:1;
     uint32_t willReadBatt:1;
+    uint32_t shallSetUnit:1;
+    uint32_t willSetUnit:1;
   } mode;
   struct {
     uint8_t sensor;           // points to to the number 0...255
@@ -152,7 +154,7 @@ BLEScanResults MI32foundDevices;
 
 const char S_JSON_MI32_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_MI32 "%s\":%d}";
 const char S_JSON_MI32_COMMAND[] PROGMEM        = "{\"" D_CMND_MI32 "%s%s\"}";
-const char kMI32_Commands[] PROGMEM             = "Period|Time|Page|Battery";
+const char kMI32_Commands[] PROGMEM             = "Period|Time|Page|Battery|Unit";
 
 #define FLORA       1
 #define MJ_HT_V1    2
@@ -185,7 +187,8 @@ enum MI32_Commands {          // commands useable in console or rules
   CMND_MI32_PERIOD,           // set period like TELE-period in seconds between read-cycles
   CMND_MI32_TIME,             // set LYWSD02-Time from ESP8266-time
   CMND_MI32_PAGE,             // sensor entries per web page, which will be shown alternated
-  CMND_MI32_BATTERY           // read all battery levels
+  CMND_MI32_BATTERY,          // read all battery levels
+  CMND_MI32_UNIT              // toggles the displayed unit between C/F (LYWSD02)
   };
 
 enum MI32_TASK {
@@ -193,6 +196,7 @@ enum MI32_TASK {
        MI32_TASK_CONN = 1,
        MI32_TASK_TIME = 2,
        MI32_TASK_BATT = 3,
+       MI32_TASK_UNIT = 4,
 };
 
 /*********************************************************************************************\
@@ -393,6 +397,10 @@ void MI32StartTask(uint32_t task){
     case MI32_TASK_BATT:
       if (MI32.mode.willReadBatt == 1) return;
       MI32StartBatteryTask();
+      break;
+    case MI32_TASK_UNIT:
+      if (MI32.mode.shallSetUnit == 0) return;
+      MI32StartUnitTask();
       break;
     default:
       break;
@@ -606,6 +614,72 @@ void MI32TimeTask(void *pvParameters){
         else {
           MI32.mode.shallSetTime = 0;
           MI32.mode.willSetTime = 0;
+        }
+      }
+    }
+    MI32Client->disconnect();
+  }
+  vTaskDelay(500/ portTICK_PERIOD_MS);
+  MI32.mode.connected = 0;
+  vTaskDelete( NULL );
+}
+
+void MI32StartUnitTask(){
+    MI32.mode.willConnect = 1;
+    xTaskCreatePinnedToCore(
+      MI32UnitTask,    /* Function to implement the task */
+      "MI32UnitTask",  /* Name of the task */
+      8912,             /* Stack size in words */
+      NULL,             /* Task input parameter */
+      15,                /* Priority of the task */
+      NULL,             /* Task handle. */
+      0);               /* Core where the task should run */
+      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: Start unit set"),D_CMND_MI32);
+      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: with sensor: %u"),D_CMND_MI32, MI32.state.sensor);
+}
+
+void MI32UnitTask(void *pvParameters){
+  if (MIBLEsensors[MI32.state.sensor].type != LYWSD02) {
+      MI32.mode.shallSetUnit = 0;
+      vTaskDelete( NULL );
+    }
+
+  if(MI32ConnectActiveSensor()){  
+    uint32_t timer = 0;
+    while (MI32.mode.connected == 0){
+        if (timer>1000){
+          break;
+        }
+        timer++;
+        vTaskDelay(10/ portTICK_PERIOD_MS);
+      }
+
+    NimBLERemoteService* pSvc = nullptr;
+    NimBLERemoteCharacteristic* pChr = nullptr;
+    static BLEUUID serviceUUID("EBE0CCB0-7A0A-4B0C-8A1A-6FF2997DA3A6");
+    static BLEUUID charUUID("EBE0CCBE-7A0A-4B0C-8A1A-6FF2997DA3A6");
+    pSvc = MI32Client->getService(serviceUUID);
+    if(pSvc) {
+        pChr = pSvc->getCharacteristic(charUUID);
+    }
+
+    if(pChr->canRead()){
+      uint8_t curUnit;
+      const char *buf = pChr->readValue().c_str();
+      if( buf[0] != 0 && buf[0]<101 ){
+          curUnit = buf[0];
+      }
+
+      if(pChr->canWrite()) {
+        curUnit = curUnit == 0x01?0xFF:0x01;  // C/F
+
+        if(!pChr->writeValue(&curUnit,sizeof(curUnit),true)) { // true is important !
+          MI32.mode.willConnect = 0;
+          MI32Client->disconnect();
+        }
+        else {
+          MI32.mode.shallSetUnit = 0;
+          MI32.mode.willSetUnit = 0;
         }
       }
     }
@@ -964,6 +1038,15 @@ void MI32EverySecond(bool restart){
     }
   }
 
+  if (MI32.mode.shallSetUnit) {
+    MI32.mode.canScan = 0;
+    MI32.mode.canConnect = 0;
+    if (MI32.mode.willSetUnit == 0){
+      MI32.mode.willSetUnit = 1;
+      MI32StartTask(MI32_TASK_UNIT);
+    }
+  }
+
   if (MI32.mode.willReadBatt) return;
 
   if (_counter>MI32.period) {
@@ -1052,6 +1135,21 @@ bool MI32Cmd(void) {
               MI32.mode.canConnect = 0;
               MI32.mode.shallSetTime = 1;
               MI32.mode.willSetTime = 0;
+              }
+            }
+          }
+        Response_P(S_JSON_MI32_COMMAND_NVALUE, command, XdrvMailbox.payload);
+        break;
+      case CMND_MI32_UNIT:
+        if (XdrvMailbox.data_len > 0) {
+          if(MIBLEsensors.size()>XdrvMailbox.payload){
+            if(MIBLEsensors[XdrvMailbox.payload].type == LYWSD02){
+              AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: will set Unit"),D_CMND_MI32);
+              MI32.state.sensor = XdrvMailbox.payload;
+              MI32.mode.canScan = 0;
+              MI32.mode.canConnect = 0;
+              MI32.mode.shallSetUnit = 1;
+              MI32.mode.willSetUnit = 0;
               }
             }
           }
