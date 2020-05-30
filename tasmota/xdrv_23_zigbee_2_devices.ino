@@ -27,6 +27,24 @@
 const uint16_t kZigbeeSaveDelaySeconds = ZIGBEE_SAVE_DELAY_SECONDS;    // wait for x seconds
 
 /*********************************************************************************************\
+ * Structures for Rules variables related to the last received message
+\*********************************************************************************************/
+
+typedef struct Z_LastMessageVars {
+  uint16_t    device;               // device short address
+  uint16_t    groupaddr;            // group address
+  uint16_t    cluster;              // cluster id
+  uint8_t     endpoint;             // source endpoint
+} Z_LastMessageVars;
+
+Z_LastMessageVars gZbLastMessage;
+
+uint16_t Z_GetLastDevice(void) { return gZbLastMessage.device; }
+uint16_t Z_GetLastGroup(void) { return gZbLastMessage.groupaddr; }
+uint16_t Z_GetLastCluster(void) { return gZbLastMessage.cluster; }
+uint8_t  Z_GetLastEndpoint(void) { return gZbLastMessage.endpoint; }
+
+/*********************************************************************************************\
  * Structures for device configuration
 \*********************************************************************************************/
 
@@ -256,7 +274,7 @@ int32_t Z_Devices::findEndpointInVector(const std::vector<T>  & vecOfElements, u
 // entry with same shortaddr or longaddr exists.
 //
 Z_Device & Z_Devices::createDeviceEntry(uint16_t shortaddr, uint64_t longaddr) {
-  if (!shortaddr && !longaddr) { return *(Z_Device*) nullptr; }      // it is not legal to create an enrty with both short/long addr null
+  if ((BAD_SHORTADDR == shortaddr) && !longaddr) { return *(Z_Device*) nullptr; }      // it is not legal to create this entry
   //Z_Device* device_alloc = (Z_Device*) malloc(sizeof(Z_Device));
   Z_Device* device_alloc = new Z_Device{
                       longaddr,
@@ -340,7 +358,7 @@ int32_t Z_Devices::findFriendlyName(const char * name) const {
   if (name_len) {
     for (auto &elem : _devices) {
       if (elem->friendlyName) {
-        if (strcmp(elem->friendlyName, name) == 0) { return found; }
+        if (strcasecmp(elem->friendlyName, name) == 0) { return found; }
       }
       found++;
     }
@@ -860,21 +878,21 @@ const JsonObject *Z_Devices::jsonGet(uint16_t shortaddr) {
 void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
-  JsonObject * json = device.json;
-  if (json == nullptr) { return; }                    // abort if nothing in buffer
+  JsonObject & json = *device.json;
+  if (&json == nullptr) { return; }                    // abort if nothing in buffer
 
   const char * fname = zigbee_devices.getFriendlyName(shortaddr);
   bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
 
-  // Remove redundant "Name" or "Device"
-  if (use_fname) {
-    json->remove(F(D_JSON_ZIGBEE_NAME));
-  } else {
-    json->remove(F(D_JSON_ZIGBEE_DEVICE));
-  }
+  // save parameters is global variables to be used by Rules
+  gZbLastMessage.device = shortaddr;                // %zbdevice%
+  gZbLastMessage.groupaddr = json[F(D_CMND_ZIGBEE_GROUP)];      // %zbgroup%
+  gZbLastMessage.cluster = json[F(D_CMND_ZIGBEE_CLUSTER)];      // %zbcluster%
+  gZbLastMessage.endpoint = json[F(D_CMND_ZIGBEE_ENDPOINT)];    // %zbendpoint%
 
+  // dump json in string
   String msg = "";
-  json->printTo(msg);
+  json.printTo(msg);
   zigbee_devices.jsonClear(shortaddr);
 
   if (use_fname) {
@@ -889,7 +907,7 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
   } else {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   }
-  XdrvRulesProcess();
+  XdrvRulesProcess();     // apply rules
 }
 
 void Z_Devices::jsonPublishNow(uint16_t shortaddr, JsonObject & values) {
@@ -923,7 +941,7 @@ uint16_t Z_Devices::parseDeviceParam(const char * param, bool short_must_be_know
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 99)) {
       shortaddr = zigbee_devices.isKnownIndex(XdrvMailbox.payload - 1);
     }
-  } else if ((dataBuf[0] == '0') && (dataBuf[1] == 'x')) {
+  } else if ((dataBuf[0] == '0') && ((dataBuf[1] == 'x') || (dataBuf[1] == 'X'))) {
     // starts with 0x
     if (strlen(dataBuf) < 18) {
       // expect a short address

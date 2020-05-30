@@ -458,6 +458,21 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
       rule_param = String(SunMinutes(1));
     }
 #endif  // USE_TIMERS and USE_SUNRISE
+// #ifdef USE_ZIGBEE
+//     if (rule_param.startsWith(F("%ZBDEVICE%"))) {
+//       snprintf_P(stemp, sizeof(stemp), PSTR("0x%04X"), Z_GetLastDevice());
+//       rule_param = String(stemp);
+//     }
+//     if (rule_param.startsWith(F("%ZBGROUP%"))) {
+//       rule_param = String(Z_GetLastGroup());
+//     }
+//     if (rule_param.startsWith(F("%ZBCLUSTER%"))) {
+//       rule_param = String(Z_GetLastCluster());
+//     }
+//     if (rule_param.startsWith(F("%ZBENDPOINT%"))) {
+//       rule_param = String(Z_GetLastEndpoint());
+//     }
+// #endif
     rule_param.toUpperCase();
     strlcpy(rule_svalue, rule_param.c_str(), sizeof(rule_svalue));
 
@@ -701,6 +716,13 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));
 #endif  // USE_TIMERS and USE_SUNRISE
+#ifdef USE_ZIGBEE
+      snprintf_P(stemp, sizeof(stemp), PSTR("0x%04X"), Z_GetLastDevice());
+      RulesVarReplace(commands, F("%ZBDEVICE%"), String(stemp));
+      RulesVarReplace(commands, F("%ZBGROUP%"), String(Z_GetLastGroup()));
+      RulesVarReplace(commands, F("%ZBCLUSTER%"), String(Z_GetLastCluster()));
+      RulesVarReplace(commands, F("%ZBENDPOINT%"), String(Z_GetLastEndpoint()));
+#endif
 
       char command[commands.length() +1];
       strlcpy(command, commands.c_str(), sizeof(command));
@@ -1261,6 +1283,16 @@ bool findNextVariableValue(char * &pVarname, float &value)
   } else if (sVarName.equals(F("SUNSET"))) {
     value = SunMinutes(1);
 #endif
+// #ifdef USE_ZIGBEE
+//   // } else if (sVarName.equals(F("ZBDEVICE"))) {
+//   //   value = Z_GetLastDevice();
+//   } else if (sVarName.equals(F("ZBGROUP"))) {
+//     value = Z_GetLastGroup();
+//   } else if (sVarName.equals(F("ZBCLUSTER"))) {
+//     value = Z_GetLastCluster();
+//   } else if (sVarName.equals(F("ZBENDPOINT"))) {
+//     value = Z_GetLastEndpoint();
+// #endif
   } else {
     succeed = false;
   }
