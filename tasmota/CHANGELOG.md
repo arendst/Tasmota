@@ -12,6 +12,8 @@
 - Add wildcard pattern ``?`` for JSON matching in rules
 - Add support for unique MQTTClient (and inherited fallback topic) by full Mac address using ``mqttclient DVES_%12X`` (#8300)
 - Add Zigbee options to ``ZbSend`` to write and report attributes
+- Add ``CpuFrequency`` to ``status 2``
+- Add ``FlashFrequency`` to ``status 4``
 
 ### 8.3.1.1 20200518
 

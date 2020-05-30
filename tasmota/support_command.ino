@@ -41,7 +41,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SENSOR "|" D_CMND_DRIVER
 #ifdef ESP32
    "|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM
-#endif //ESP32  
+#endif //ESP32
   ;
 
 void (* const TasmotaCommand[])(void) PROGMEM = {
@@ -65,10 +65,10 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS_SEND
   &CmndDevGroupShare, &CmndDevGroupStatus,
 #endif  // USE_DEVICE_GROUPS
-  &CmndSensor, &CmndDriver 
+  &CmndSensor, &CmndDriver
 #ifdef ESP32
   ,&CmndTouchCal, &CmndTouchThres, &CmndTouchNum
-#endif //ESP32   
+#endif //ESP32
   };
 
 const char kWifiConfig[] PROGMEM =
@@ -444,14 +444,14 @@ void CmndStatus(void)
                           ",\"" D_JSON_BOOTVERSION "\":%d"
 #endif
                           ",\"" D_JSON_COREVERSION "\":\"" ARDUINO_CORE_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
-                          "\"Hardware\":\"%s\""
+                          "\"CpuFrequency\":%d,\"Hardware\":\"%s\""
                           "%s}}"),
                           my_version, my_image, GetBuildDateAndTime().c_str()
 #ifdef ESP8266
                           , ESP.getBootVersion()
 #endif
                           , ESP.getSdkVersion(),
-                          GetDeviceHardware().c_str(),
+                          ESP.getCpuFreqMHz(), GetDeviceHardware().c_str(),
                           GetStatistics().c_str());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
   }
@@ -476,7 +476,7 @@ void CmndStatus(void)
 #ifdef ESP8266
                           ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
 #endif
-                          ",\"" D_JSON_FLASHMODE "\":%d,\""
+                          ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":%d,\""
                           D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
                           ESP_getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP_getFreeHeap()/1024,
 #ifdef ESP32
@@ -486,7 +486,7 @@ void CmndStatus(void)
 #ifdef ESP8266
                           , ESP.getFlashChipId()
 #endif
-                          , ESP.getFlashChipMode(),
+                          , ESP.getFlashChipSpeed()/1000000, ESP.getFlashChipMode(),
                           LANGUAGE_LCID, feature_drv1, feature_drv2, feature_sns1, feature_sns2, feature5, feature6);
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
@@ -1980,7 +1980,7 @@ void CmndTouchThres(void)
 }
 
 void CmndTouchNum(void)
-{  
+{
   if (XdrvMailbox.payload >= 0) {
     if (XdrvMailbox.payload<32){
       TOUCH_BUTTON.hit_threshold = XdrvMailbox.payload;
