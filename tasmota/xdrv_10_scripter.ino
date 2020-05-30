@@ -64,7 +64,6 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
 
-
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
 
@@ -79,30 +78,40 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #endif
 #endif // USE_SCRIPT_COMPRESSION
 
-#if defined(ESP32) && defined(ESP32_SCRIPT_SIZE) && !defined(USE_24C256) && !defined(USE_SCRIPT_FATFS)
+#if (defined(LITTLEFS_SCRIPT_SIZE) && !defined(USE_24C256) && !defined(USE_SCRIPT_FATFS)) || (USE_SCRIPT_FATFS==-1)
+
+#ifdef ESP32
 #include "FS.h"
 #include "SPIFFS.h"
+#else
+#include <LittleFS.h>
+#endif
 
+FS *fsp;
 
 void SaveFile(const char *name,const uint8_t *buf,uint32_t len) {
-  File file = SPIFFS.open(name, FILE_WRITE);
+  File file = fsp->open(name, "w");
   if (!file) return;
   file.write(buf, len);
   file.close();
 }
 
 #define FORMAT_SPIFFS_IF_FAILED true
-uint8_t spiffs_mounted=0;
+uint8_t fs_mounted=0;
 
 void LoadFile(const char *name,uint8_t *buf,uint32_t len) {
-  if (!spiffs_mounted) {
+  if (!fs_mounted) {
+#ifdef ESP32
     if(!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)){
+#else
+    if(!fsp->begin()){
+#endif
           //Serial.println("SPIFFS Mount Failed");
       return;
     }
-    spiffs_mounted=1;
+    fs_mounted=1;
   }
-  File file = SPIFFS.open(name);
+  File file = fsp->open(name, "r");
   if (!file) return;
   file.read(buf, len);
   file.close();
@@ -116,29 +125,43 @@ enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPE
 enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD};
 
 #ifdef USE_SCRIPT_FATFS
+
+#if USE_SCRIPT_FATFS>=0
 #include <SPI.h>
-
-//#define USE_MMC
-
-#ifdef USE_MMC
-#include <SD_MMC.h>
-#undef FS_USED
-#define FS_USED SD_MMC
-#else
 #include <SD.h>
-#undef FS_USED
-#define FS_USED SD
+#ifdef ESP32
+FS *fsp;
+#else
+SDClass *fsp;
+#endif
 #endif
 
 #ifndef ESP32
+// esp8266
+
+#if USE_SCRIPT_FATFS>=0
+// old fs
 #undef FILE_WRITE
 #define FILE_WRITE (sdfat::O_READ | sdfat::O_WRITE | sdfat::O_CREAT)
 #define FILE_APPEND (sdfat::O_READ | sdfat::O_WRITE | sdfat::O_CREAT | sdfat::O_APPEND)
+
+#else
+// new fs
+#undef FILE_WRITE
+#define FILE_WRITE "w"
+#undef FILE_READ
+#define FILE_READ "r"
+#undef FILE_APPEND
+#define FILE_APPEND "a"
 #endif
+
+#endif // USE_SCRIPT_FATFS>=0
+
 
 #ifndef FAT_SCRIPT_SIZE
 #define FAT_SCRIPT_SIZE 4096
 #endif
+
 #ifdef ESP32
 #undef FAT_SCRIPT_NAME
 #define FAT_SCRIPT_NAME "/script.txt"
@@ -150,7 +173,8 @@ enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD};
 #if USE_STANDARD_SPI_LIBRARY==0
 #warning ("FATFS standard spi should be used");
 #endif
-#endif
+
+#endif // USE_SCRIPT_FATFS
 
 #ifdef SUPPORT_MQTT_EVENT
   #include <LinkedList.h>                 // Import LinkedList library
@@ -624,10 +648,18 @@ char *script;
 
 #ifdef USE_SCRIPT_FATFS
     if (!glob_script_mem.script_sd_found) {
+
+#if USE_SCRIPT_FATFS>=0
+      fsp=&SD;
+
 #ifdef USE_MMC
-      if (FS_USED.begin()) {
+      if (fsp->begin()) {
 #else
-      if (FS_USED.begin(USE_SCRIPT_FATFS)) {
+      if (SD.begin(USE_SCRIPT_FATFS)) {
+#endif
+
+#else
+      if (fsp->begin()) {
 #endif
         glob_script_mem.script_sd_found=1;
       } else {
@@ -1308,7 +1340,7 @@ chknext:
 #ifdef DEBUG_FS
                 AddLog_P2(LOG_LEVEL_INFO,PSTR("open file for read %d"),cnt);
 #endif
-                glob_script_mem.files[cnt]=FS_USED.open(str,FILE_READ);
+                glob_script_mem.files[cnt]=fsp->open(str,FILE_READ);
                 if (glob_script_mem.files[cnt].isDirectory()) {
                   glob_script_mem.files[cnt].rewindDirectory();
                   glob_script_mem.file_flags[cnt].is_dir=1;
@@ -1318,12 +1350,12 @@ chknext:
               }
               else {
                 if (mode==1) {
-                  glob_script_mem.files[cnt]=FS_USED.open(str,FILE_WRITE);
+                  glob_script_mem.files[cnt]=fsp->open(str,FILE_WRITE);
 #ifdef DEBUG_FS
                   AddLog_P2(LOG_LEVEL_INFO,PSTR("open file for write %d"),cnt);
 #endif
                 } else {
-                  glob_script_mem.files[cnt]=FS_USED.open(str,FILE_APPEND);
+                  glob_script_mem.files[cnt]=fsp->open(str,FILE_APPEND);
 #ifdef DEBUG_FS
                   AddLog_P2(LOG_LEVEL_INFO,PSTR("open file for append %d"),cnt);
 #endif
@@ -1465,7 +1497,7 @@ chknext:
           lp+=3;
           char str[glob_script_mem.max_ssize+1];
           lp=GetStringResult(lp,OPER_EQU,str,0);
-          FS_USED.remove(str);
+          fsp->remove(str);
           lp++;
           len=0;
           goto exit;
@@ -1505,7 +1537,7 @@ chknext:
           char str[glob_script_mem.max_ssize+1];
           lp=GetStringResult(lp,OPER_EQU,str,0);
           // execute script
-          File ef=FS_USED.open(str);
+          File ef=fsp->open(str,FILE_READ);
           if (ef) {
             uint16_t fsiz=ef.size();
             if (fsiz<2048) {
@@ -1527,7 +1559,7 @@ chknext:
           lp+=4;
           char str[glob_script_mem.max_ssize+1];
           lp=GetStringResult(lp,OPER_EQU,str,0);
-          fvar=FS_USED.mkdir(str);
+          fvar=fsp->mkdir(str);
           lp++;
           len=0;
           goto exit;
@@ -1536,7 +1568,7 @@ chknext:
           lp+=4;
           char str[glob_script_mem.max_ssize+1];
           lp=GetStringResult(lp,OPER_EQU,str,0);
-          fvar=FS_USED.rmdir(str);
+          fvar=fsp->rmdir(str);
           lp++;
           len=0;
           goto exit;
@@ -1545,7 +1577,7 @@ chknext:
           lp+=3;
           char str[glob_script_mem.max_ssize+1];
           lp=GetStringResult(lp,OPER_EQU,str,0);
-          if (FS_USED.exists(str)) fvar=1;
+          if (fsp->exists(str)) fvar=1;
           else fvar=0;
           lp++;
           len=0;
@@ -3714,7 +3746,7 @@ void ListDir(char *path, uint8_t depth) {
   char format[12];
   sprintf(format,"%%-%ds",24-depth);
 
-  File dir=FS_USED.open(path);
+  File dir=fsp->open(path, FILE_READ);
   if (dir) {
     dir.rewindDirectory();
     if (strlen(path)>1) {
@@ -3836,8 +3868,8 @@ void script_upload(void) {
   if (upload.status == UPLOAD_FILE_START) {
     char npath[48];
     sprintf(npath,"%s/%s",path,upload.filename.c_str());
-    FS_USED.remove(npath);
-    upload_file=FS_USED.open(npath,FILE_WRITE);
+    fsp->remove(npath);
+    upload_file=fsp->open(npath,FILE_WRITE);
     if (!upload_file) Web.upload_error=1;
   } else if(upload.status == UPLOAD_FILE_WRITE) {
     if (upload_file) upload_file.write(upload.buf,upload.currentSize);
@@ -3856,12 +3888,12 @@ uint8_t DownloadFile(char *file) {
   File download_file;
   WiFiClient download_Client;
 
-    if (!FS_USED.exists(file)) {
+    if (!fsp->exists(file)) {
       AddLog_P(LOG_LEVEL_INFO,PSTR("file not found"));
       return 0;
     }
 
-    download_file=FS_USED.open(file,FILE_READ);
+    download_file=fsp->open(file,FILE_READ);
     if (!download_file) {
       AddLog_P(LOG_LEVEL_INFO,PSTR("could not open file"));
       return 0;
@@ -4041,16 +4073,16 @@ void ScriptSaveSettings(void) {
 
 #if !defined(USE_24C256) && defined(USE_SCRIPT_FATFS)
     if (glob_script_mem.flags&1) {
-      FS_USED.remove(FAT_SCRIPT_NAME);
-      File file=FS_USED.open(FAT_SCRIPT_NAME,FILE_WRITE);
+      fsp->remove(FAT_SCRIPT_NAME);
+      File file=fsp->open(FAT_SCRIPT_NAME,FILE_WRITE);
       file.write((const uint8_t*)glob_script_mem.script_ram,FAT_SCRIPT_SIZE);
       file.close();
     }
 #endif
 
-#if defined(ESP32) && defined(ESP32_SCRIPT_SIZE) && !defined(USE_24C256) && !defined(USE_SCRIPT_FATFS)
+#if defined(LITTLEFS_SCRIPT_SIZE) && !defined(USE_24C256) && !defined(USE_SCRIPT_FATFS)
     if (glob_script_mem.flags&1) {
-      SaveFile("/script.txt",(uint8_t*)glob_script_mem.script_ram,ESP32_SCRIPT_SIZE);
+      SaveFile("/script.txt",(uint8_t*)glob_script_mem.script_ram,LITTLEFS_SCRIPT_SIZE);
     }
 #endif
   }
@@ -4065,7 +4097,7 @@ void ScriptSaveSettings(void) {
 #ifdef USE_SCRIPT_COMPRESSION
 #ifndef USE_24C256
 #ifndef USE_SCRIPT_FATFS
-#ifndef ESP32_SCRIPT_SIZE
+#ifndef LITTLEFS_SCRIPT_SIZE
 
   //AddLog_P2(LOG_LEVEL_INFO,PSTR("in string: %s len = %d"),glob_script_mem.script_ram,strlen(glob_script_mem.script_ram));
   uint32_t len_compressed = SCRIPT_COMPRESS(glob_script_mem.script_ram, strlen(glob_script_mem.script_ram), Settings.rules[0], MAX_SCRIPT_SIZE-1);
@@ -5710,7 +5742,7 @@ bool Xdrv10(uint8_t function)
 #ifdef USE_SCRIPT_COMPRESSION
 #ifndef USE_24C256
 #ifndef USE_SCRIPT_FATFS
-#ifndef ESP32_SCRIPT_SIZE
+#ifndef LITTLEFS_SCRIPT_SIZE
       int32_t len_decompressed;
       sprt=(char*)calloc(UNISHOXRSIZE+8,1);
       if (!sprt) { break; }
@@ -5756,10 +5788,14 @@ bool Xdrv10(uint8_t function)
 #endif
 #endif
 
+
 #ifdef USE_SCRIPT_FATFS
 
+#if USE_SCRIPT_FATFS>=0
+      fsp = &SD;
+
 #ifdef USE_MMC
-      if (FS_USED.begin()) {
+      if (fsp->begin()) {
 #else
 
 #ifdef ESP32
@@ -5767,10 +5803,15 @@ bool Xdrv10(uint8_t function)
         SPI.begin(Pin(GPIO_SPI_CLK),Pin(GPIO_SPI_MISO),Pin(GPIO_SPI_MOSI), -1);
       }
 #endif
-      if (FS_USED.begin(USE_SCRIPT_FATFS)) {
+      if (SD.begin(USE_SCRIPT_FATFS)) {
 #endif
 
-        //FS_USED.dateTimeCallback(dateTime);
+#else
+        fsp = &LittleFS;
+        if (fsp->begin()) {
+#endif
+
+        //fsp->dateTimeCallback(dateTime);
 
         glob_script_mem.script_sd_found=1;
         char *script;
@@ -5778,8 +5819,8 @@ bool Xdrv10(uint8_t function)
         if (!script) break;
         glob_script_mem.script_ram=script;
         glob_script_mem.script_size=FAT_SCRIPT_SIZE;
-        if (FS_USED.exists(FAT_SCRIPT_NAME)) {
-          File file=FS_USED.open(FAT_SCRIPT_NAME,FILE_READ);
+        if (fsp->exists(FAT_SCRIPT_NAME)) {
+          File file=fsp->open(FAT_SCRIPT_NAME,FILE_READ);
           file.read((uint8_t*)script,FAT_SCRIPT_SIZE);
           file.close();
         }
@@ -5796,15 +5837,21 @@ bool Xdrv10(uint8_t function)
 #endif
 
 
-#if defined(ESP32) && defined(ESP32_SCRIPT_SIZE) && !defined(USE_24C256) && !defined(USE_SCRIPT_FATFS)
+#if defined(LITTLEFS_SCRIPT_SIZE) && !defined(USE_24C256) && !defined(USE_SCRIPT_FATFS)
+
+#ifdef ESP32
+    fsp = &SPIFFS;
+#else
+    fsp = &LittleFS;
+#endif
     char *script;
-    script=(char*)calloc(ESP32_SCRIPT_SIZE+4,1);
+    script=(char*)calloc(LITTLEFS_SCRIPT_SIZE+4,1);
     if (!script) break;
-    LoadFile("/script.txt",(uint8_t*)script,ESP32_SCRIPT_SIZE);
+    LoadFile("/script.txt",(uint8_t*)script,LITTLEFS_SCRIPT_SIZE);
 
     glob_script_mem.script_ram=script;
-    glob_script_mem.script_size=ESP32_SCRIPT_SIZE;
-    script[ESP32_SCRIPT_SIZE-1]=0;
+    glob_script_mem.script_size=LITTLEFS_SCRIPT_SIZE;
+    script[LITTLEFS_SCRIPT_SIZE-1]=0;
     // use rules storage for permanent vars
     glob_script_mem.script_pram=(uint8_t*)Settings.rules[0];
     glob_script_mem.script_pram_size=MAX_SCRIPT_SIZE;
