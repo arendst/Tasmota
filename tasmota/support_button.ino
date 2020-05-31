@@ -44,7 +44,7 @@ struct BUTTON {
   uint8_t dual_receive_count = 0;            // Sonoff dual input flag
   uint8_t no_pullup_mask = 0;                // key no pullup flag (1 = no pullup)
   uint8_t inverted_mask = 0;                 // Key inverted flag (1 = inverted)
-#ifdef ESP32  
+#ifdef ESP32
   uint8_t touch_mask = 0;                    // Touch flag (1 = inverted)
   uint8_t touch_hits[MAX_KEYS] = { 0 };      // Hits in a row to filter out noise
 #endif // ESP32
@@ -80,6 +80,11 @@ void ButtonTouchFlag(uint8 button_bit)
 void ButtonInit(void)
 {
   Button.present = 0;
+#ifdef ESP8266
+  if ((SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)) {
+    Button.present++;
+  }
+#endif  // ESP8266
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
     if (PinUsed(GPIO_KEY1, i)) {
       Button.present++;
@@ -151,29 +156,35 @@ void ButtonHandler(void)
         Button.dual_code = 0;
       }
     }
-    else
-    if (PinUsed(GPIO_KEY1, button_index)) {
-      button_present = 1;
-      button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
+    else {
+      if (PinUsed(GPIO_KEY1, button_index)) {
+        button_present = 1;
+        button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
+      }
     }
 #else
     if (PinUsed(GPIO_KEY1, button_index)) {
       button_present = 1;
-      if (bitRead(Button.touch_mask, button_index)){ // Touch
+      if (bitRead(Button.touch_mask, button_index)) {          // Touch
         uint32_t _value = touchRead(Pin(GPIO_KEY1, button_index));
         button = NOT_PRESSED;
-        if (_value != 0){ // probably read-error
-          if(_value < TOUCH_BUTTON.pin_threshold){
-            if(++Button.touch_hits[button_index]>TOUCH_BUTTON.hit_threshold){
-              if (!bitRead(TOUCH_BUTTON.calibration, button_index+1)) button = PRESSED;
+        if (_value != 0) {                                     // Probably read-error
+          if (_value < TOUCH_BUTTON.pin_threshold) {
+            if (++Button.touch_hits[button_index] > TOUCH_BUTTON.hit_threshold) {
+              if (!bitRead(TOUCH_BUTTON.calibration, button_index+1)) {
+                button = PRESSED;
+              }
             }
+          } else {
+            Button.touch_hits[button_index] = 0;
           }
-          else Button.touch_hits[button_index] = 0;
+        } else {
+          Button.touch_hits[button_index] = 0;
         }
-        else Button.touch_hits[button_index] = 0;
-        if (bitRead(TOUCH_BUTTON.calibration, button_index+1)) AddLog_P2(LOG_LEVEL_INFO, PSTR("PLOT: %u, %u, %u,"),button_index+1, _value, Button.touch_hits[button_index]); // button number (1..4) , value, continuous hits under threshold
-      }
-      else{                                          // Normal button
+        if (bitRead(TOUCH_BUTTON.calibration, button_index+1)) {
+          AddLog_P2(LOG_LEVEL_INFO, PSTR("PLOT: %u, %u, %u,"), button_index+1, _value, Button.touch_hits[button_index]);  // Button number (1..4), value, continuous hits under threshold
+        }
+      } else {                                                 // Normal button
         button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
       }
     }
@@ -210,12 +221,12 @@ void ButtonHandler(void)
           if (!Button.hold_timer[button_index]) { button_pressed = true; }  // Do not allow within 1 second
         }
         if (button_pressed) {
-          if (!Settings.flag3.mqtt_buttons) {
+          if (!Settings.flag3.mqtt_buttons) {          // SetOption73 (0) - Decouple button from relay and send just mqtt topic
             if (!SendKey(KEY_BUTTON, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
               ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
             }
           } else {
-            MqttButtonTopic(button_index +1, 1, 0); // SetOption73 (0) - Decouple button from relay and send just mqtt topic
+            MqttButtonTopic(button_index +1, 1, 0);    // SetOption73 (0) - Decouple button from relay and send just mqtt topic
           }
         }
       }
@@ -244,7 +255,7 @@ void ButtonHandler(void)
           Button.hold_timer[button_index] = 0;
         } else {
           Button.hold_timer[button_index]++;
-          if (Settings.flag.button_single) {          // SetOption13 (0) - Allow only single button press for immediate action
+          if (Settings.flag.button_single) {           // SetOption13 (0) - Allow only single button press for immediate action
             if (Button.hold_timer[button_index] == loops_per_second * hold_time_extent * Settings.param[P_HOLD_TIME] / 10) {  // SetOption32 (40) - Button held for factor times longer
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_SETOPTION "13 0"));  // Disable single press only
               ExecuteCommand(scmnd, SRC_BUTTON);
@@ -252,13 +263,13 @@ void ButtonHandler(void)
           } else {
             if (Button.hold_timer[button_index] == loops_per_second * Settings.param[P_HOLD_TIME] / 10) {  // SetOption32 (40) - Button hold
               Button.press_counter[button_index] = 0;
-              if (Settings.flag3.mqtt_buttons) {     // SetOption73 (0) - Decouple button from relay and send just mqtt topic
+              if (Settings.flag3.mqtt_buttons) {       // SetOption73 (0) - Decouple button from relay and send just mqtt topic
                 MqttButtonTopic(button_index +1, 3, 1);
               } else {
                 SendKey(KEY_BUTTON, button_index +1, POWER_HOLD);  // Execute Hold command via MQTT if ButtonTopic is set
               }
             } else {
-              if (!Settings.flag.button_restrict) {
+              if (!Settings.flag.button_restrict) {    // SetOption1  - Control button multipress
                 if ((Button.hold_timer[button_index] == loops_per_second * hold_time_extent * Settings.param[P_HOLD_TIME] / 10)) {  // SetOption32 (40) - Button held for factor times longer
                   Button.press_counter[button_index] = 0;
                   snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
@@ -269,14 +280,14 @@ void ButtonHandler(void)
           }
         }
 
-        if (!Settings.flag.button_single) {     // SetOption13 (0) - Allow multi-press
+        if (!Settings.flag.button_single) {            // SetOption13 (0) - Allow multi-press
           if (Button.window_timer[button_index]) {
             Button.window_timer[button_index]--;
           } else {
             if (!restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0) && (Button.press_counter[button_index] < 7)) {
 
               bool single_press = false;
-              if (Button.press_counter[button_index] < 3) {    // Single or Double press
+              if (Button.press_counter[button_index] < 3) {  // Single or Double press
 #ifdef ESP8266
                 if ((SONOFF_DUAL_R2 == my_module_type) || (SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)) {
                   single_press = true;
@@ -301,15 +312,21 @@ void ButtonHandler(void)
                     if (WifiState() > WIFI_RESTART) {           // Wifimanager active
                       restart_flag = 1;
                     }
-                    if (!Settings.flag3.mqtt_buttons) {
-                      if (Button.press_counter[button_index] == 1) {    // By default first press always send a TOGGLE (2)
+                    if (!Settings.flag3.mqtt_buttons) {         // SetOption73 - Detach buttons from relays and enable MQTT action state for multipress
+                      if (Button.press_counter[button_index] == 1) {  // By default first press always send a TOGGLE (2)
                         ExecuteCommandPower(button_index + Button.press_counter[button_index], POWER_TOGGLE, SRC_BUTTON);
                       } else {
                         SendKey(KEY_BUTTON, button_index +1, Button.press_counter[button_index] +9);    // 2,3,4 and 5 press send just the key value (11,12,13 and 14) for rules
-                        if (0 == button_index) {    // BUTTON1 can toggle up to 5 relays if present. If a relay is not present will send out the key value (2,11,12,13 and 14) for rules
-                          if ((Button.press_counter[button_index] > 1 && PinUsed(GPIO_REL1, Button.press_counter[button_index]-1)) && Button.press_counter[button_index] <= MAX_RELAY_BUTTON1) {
+                        if (0 == button_index) {               // BUTTON1 can toggle up to 5 relays if present. If a relay is not present will send out the key value (2,11,12,13 and 14) for rules
+                          bool valid_relay = PinUsed(GPIO_REL1, Button.press_counter[button_index]-1);
+#ifdef ESP8266
+                          if ((SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)) {
+                            valid_relay = (Button.press_counter[button_index] <= devices_present);
+                          }
+#endif  // ESP8266
+                          if ((Button.press_counter[button_index] > 1) && valid_relay && (Button.press_counter[button_index] <= MAX_RELAY_BUTTON1)) {
                             ExecuteCommandPower(button_index + Button.press_counter[button_index], POWER_TOGGLE, SRC_BUTTON);   // Execute Toggle command internally
-                            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Relay%d found on GPIO%d"), Button.press_counter[button_index], Pin(GPIO_REL1, Button.press_counter[button_index]-1));
+//                            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Relay%d found on GPIO%d"), Button.press_counter[button_index], Pin(GPIO_REL1, Button.press_counter[button_index]-1));
                           }
                         }
                       }
