@@ -82,8 +82,8 @@ void SwitchProbe(void)
   if (uptime < 4) { return; }                           // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
   uint8_t state_filter = Settings.switch_debounce / SWITCH_PROBE_INTERVAL;   // 5, 10, 15
-  uint8_t force_high = (Settings.switch_debounce % 50) &1;                   // 51, 101, 151 etc
-  uint8_t force_low = (Settings.switch_debounce % 50) &2;                    // 52, 102, 152 etc
+  uint8_t force_high = (Settings.switch_debounce % 10) &1;                   // 51, 101, 151 etc
+  uint8_t force_low = (Settings.switch_debounce % 10) &2;                    // 52, 102, 152 etc
 
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     if (PinUsed(GPIO_SWT1, i)) {
