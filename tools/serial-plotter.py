@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
   serial-plotter.py - for Tasmota
@@ -20,7 +20,8 @@
 
 Requirements:
    - Python
-   - pip3 matplotlib
+   - pip3 install matplotlib pyserial
+   - for Windows: Full python install including tkinter
    - a Tasmotadriver that plots
 
 Instructions:
@@ -32,8 +33,7 @@ Instructions:
   AddLog_P2(LOG_LEVEL_INFO, PSTR("PLOT: %u, %u, %u,"),button_index+1, _value, Button.touch_hits[button_index]);
 
 Usage:
-    set serial config in code
-    ./serial-plotter.py
+    ./serial-plotter.py --port /dev/PORT --baud BAUD (or change defaults in the script)
     set output in tasmota, e.g.; TouchCal 1..4 (via Textbox)
 
 """
@@ -44,6 +44,10 @@ from matplotlib.widgets import TextBox
 import time
 import serial
 import argparse
+import sys
+
+print("Python version")
+print (sys.version)
 
 #default values
 port = '/dev/cu.SLAB_USBtoUART'
@@ -164,25 +168,25 @@ def handle_close(evt):
     ser.close()
     print('Closed serial plotter')
 
+def submit(text):
+    print (text)
+    ser.write(text.encode() + "\n".encode())
+
+
 ani = animation.FuncAnimation(fig, update, None, fargs=[line1, line2],
                   interval=10, blit=True, init_func=init)
 
 ax.set_xlabel('Last 200 Samples')
 ax.set_ylabel('Values')
+plt.subplots_adjust(bottom=0.25)
+ax.legend(loc='lower right', ncol=2)
 
 fig.canvas.mpl_connect('close_event', handle_close)
 
-def submit(text):
-    print (text)
-    ser.write(text.encode() + "\n".encode())
-
-plt.subplots_adjust(bottom=0.25)
 axbox = plt.axes([0.15, 0.05, 0.7, 0.075])
 text_box = TextBox(axbox, 'Send:', initial='')
 text_box.on_submit(submit)
 
-ax.legend(loc='lower right', ncol=2)
-
 if ser.is_open==True:
   plt.show()
-
+  
