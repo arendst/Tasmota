@@ -49,6 +49,8 @@
 #define SPECIAL_SS
 #endif
 
+#define TMSBSIZ 256
+
 // addresses a bug in meter DWS74
 //#define DWS74_BUG
 
@@ -2144,9 +2146,9 @@ init10:
       // serial input, init
 #ifdef SPECIAL_SS
         if (meter_desc_p[meters].type=='m' || meter_desc_p[meters].type=='M' || meter_desc_p[meters].type=='p') {
-          meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1);
+          meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,0,TMSBSIZ);
         } else {
-          meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,1);
+          meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,1,TMSBSIZ);
         }
 #else
 #ifdef ESP32
@@ -2154,8 +2156,9 @@ init10:
         if (uart_index==0) { ClaimSerial(); }
         uart_index--;
         if (uart_index<0) uart_index=0;
+        meter_ss[meters]->setRxBufferSize(TMSBSIZ);
 #else
-        meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1);
+        meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,0,TMSBSIZ);
 #endif
 #endif
 
@@ -2188,6 +2191,15 @@ uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
   if (meter<1 || meter>meters_used) return 0;
   meter--;
   if (!meter_ss[meter]) return 0;
+
+#ifdef ESP32
+  meter_ss[meter]->flush();
+  if (meter_desc_p[meter].type=='M') {
+    meter_ss[meter]->begin(br,SERIAL_8E1,meter_desc_p[meter].srcpin,meter_desc_p[meter].trxpin);
+  } else {
+    meter_ss[meter]->begin(br,SERIAL_8N1,meter_desc_p[meter].srcpin,meter_desc_p[meter].trxpin);
+  }
+#else
   if (meter_ss[meter]->begin(br)) {
     meter_ss[meter]->flush();
   }
@@ -2196,6 +2208,7 @@ uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
       Serial.begin(br, SERIAL_8E1);
     }
   }
+#endif
   return 1;
 }
 

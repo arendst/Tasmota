@@ -25,6 +25,8 @@
 
 #include <TasmotaSerial.h>
 
+#define TMSBSIZ 256
+
 #define HM17_BAUDRATE 9600
 
 #define IBEACON_DEBUG
@@ -96,7 +98,7 @@ void IBEACON_Init() {
 
 // actually doesnt work reliably with software serial
   if (PinUsed(GPIO_IBEACON_RX) && PinUsed(GPIO_IBEACON_TX)) {
-    IBEACON_Serial = new TasmotaSerial(Pin(GPIO_IBEACON_RX), Pin(GPIO_IBEACON_TX),1);
+    IBEACON_Serial = new TasmotaSerial(Pin(GPIO_IBEACON_RX), Pin(GPIO_IBEACON_TX),1,0,TMSBSIZ);
     if (IBEACON_Serial->begin(HM17_BAUDRATE)) {
       if (IBEACON_Serial->hardwareSerial()) {
         ClaimSerial();
@@ -144,7 +146,7 @@ void hm17_every_second(void) {
 void hm17_sbclr(void) {
   memset(hm17_sbuffer,0,HM17_BSIZ);
   hm17_sindex=0;
-  IBEACON_Serial->flush();
+  //IBEACON_Serial->flush();
 }
 
 void hm17_sendcmd(uint8_t cmd) {
@@ -405,7 +407,7 @@ hm17_v110:
           }
         } else {
 #ifdef IBEACON_DEBUG
-          if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR(">>%s"),&hm17_sbuffer[8]);
+          if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR(">->%s"),&hm17_sbuffer[8]);
 #endif
         }
         break;
@@ -517,7 +519,7 @@ bool xsns52_cmd(void) {
 #ifdef IBEACON_DEBUG
       else if (*cp=='d') {
         cp++;
-        if (*cp) hm17_debug=atoi(cp);
+        hm17_debug=atoi(cp);
         Response_P(S_JSON_IBEACON, XSNS_52,"debug",hm17_debug);
       }
 #endif
