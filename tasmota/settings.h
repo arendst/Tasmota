@@ -232,9 +232,8 @@ typedef union {
   struct {
     uint8_t spare0 : 1;
     uint8_t spare1 : 1;
-    uint8_t spare2 : 1;
-    uint8_t spare3 : 1;
-    uint8_t bh1750_resolution : 2;         // Sensor10 1,2,3
+    uint8_t bh1750_2_resolution : 2;
+    uint8_t bh1750_1_resolution : 2;       // Sensor10 1,2,3
     uint8_t hx711_json_weight_change : 1;  // Sensor34 8,x - Enable JSON message on weight change
     uint8_t mhz19b_abc_disable : 1;        // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
   };

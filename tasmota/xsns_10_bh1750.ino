@@ -22,6 +22,11 @@
 /*********************************************************************************************\
  * BH1750 - Ambient Light Intensity
  *
+ * Bh1750Resolution1   0..2    - Set BH1750 1 resolution mode
+ * Bh1750Resolution2   0..2    - Set BH1750 2 resolution mode
+ * Bh1750MTime1       30..255  - Set BH1750 1 MT register
+ * Bh1750MTime2       30..255  - Set BH1750 2 MT register
+ *
  * I2C Address: 0x23 or 0x5C
 \*********************************************************************************************/
 
@@ -38,119 +43,148 @@
 #define BH1750_MEASUREMENT_TIME_HIGH     0x40  // Measurement Time register high 3 bits
 #define BH1750_MEASUREMENT_TIME_LOW      0x60  // Measurement Time register low 5 bits
 
-struct BH1750DATA {
-  uint8_t address;
+#define D_PRFX_BH1750 "Bh1750"
+#define D_CMND_RESOLUTION "Resolution"
+#define D_CMND_MTREG "MTime"
+
+const char kBh1750Commands[] PROGMEM = D_PRFX_BH1750 "|"  // Prefix
+  D_CMND_RESOLUTION "|" D_CMND_MTREG ;
+
+void (* const Bh1750Command[])(void) PROGMEM = {
+  &CmndBh1750Resolution, &CmndBh1750MTime };
+
+struct {
   uint8_t addresses[2] = { BH1750_ADDR1, BH1750_ADDR2 };
   uint8_t resolution[3] = { BH1750_CONTINUOUS_HIGH_RES_MODE, BH1750_CONTINUOUS_HIGH_RES_MODE2, BH1750_CONTINUOUS_LOW_RES_MODE };
-  uint8_t type = 0;
-  uint8_t valid = 0;
-  uint8_t mtreg = 69;                          // Default Measurement Time
-  uint16_t illuminance = 0;
+  uint8_t count = 0;
   char types[7] = "BH1750";
 } Bh1750;
 
+struct {
+  uint8_t address;
+  uint8_t valid = 0;
+  uint8_t mtreg = 69;                          // Default Measurement Time
+  uint16_t illuminance = 0;
+} Bh1750_sensors[2];
+
 /*********************************************************************************************/
 
-bool Bh1750SetResolution(void)
-{
-  Wire.beginTransmission(Bh1750.address);
-  Wire.write(Bh1750.resolution[Settings.SensorBits1.bh1750_resolution]);
+uint8_t Bh1750Resolution(uint32_t sensor_index) {
+  uint8_t settings_resolution = Settings.SensorBits1.bh1750_1_resolution;
+  if (1 == sensor_index) {
+    settings_resolution = Settings.SensorBits1.bh1750_2_resolution;
+  }
+  return settings_resolution;
+}
+
+bool Bh1750SetResolution(uint32_t sensor_index) {
+  Wire.beginTransmission(Bh1750_sensors[sensor_index].address);
+  Wire.write(Bh1750.resolution[Bh1750Resolution(sensor_index)]);
   return (!Wire.endTransmission());
 }
 
-bool Bh1750SetMTreg(void)
-{
-  Wire.beginTransmission(Bh1750.address);
-  uint8_t data = BH1750_MEASUREMENT_TIME_HIGH | ((Bh1750.mtreg >> 5) & 0x07);
+bool Bh1750SetMTreg(uint32_t sensor_index) {
+  Wire.beginTransmission(Bh1750_sensors[sensor_index].address);
+  uint8_t data = BH1750_MEASUREMENT_TIME_HIGH | ((Bh1750_sensors[sensor_index].mtreg >> 5) & 0x07);
   Wire.write(data);
   if (Wire.endTransmission()) { return false; }
-  Wire.beginTransmission(Bh1750.address);
-  data = BH1750_MEASUREMENT_TIME_LOW | (Bh1750.mtreg & 0x1F);
+  Wire.beginTransmission(Bh1750_sensors[sensor_index].address);
+  data = BH1750_MEASUREMENT_TIME_LOW | (Bh1750_sensors[sensor_index].mtreg & 0x1F);
   Wire.write(data);
   if (Wire.endTransmission()) { return false; }
-  return Bh1750SetResolution();
+  return Bh1750SetResolution(sensor_index);
 }
 
-bool Bh1750Read(void)
-{
-  if (Bh1750.valid) { Bh1750.valid--; }
+bool Bh1750Read(uint32_t sensor_index) {
+  if (Bh1750_sensors[sensor_index].valid) { Bh1750_sensors[sensor_index].valid--; }
 
-  if (2 != Wire.requestFrom(Bh1750.address, (uint8_t)2)) { return false; }
+  if (2 != Wire.requestFrom(Bh1750_sensors[sensor_index].address, (uint8_t)2)) { return false; }
+
   float illuminance = (Wire.read() << 8) | Wire.read();
-  illuminance /= (1.2 * (69 / (float)Bh1750.mtreg));
-  if (1 == Settings.SensorBits1.bh1750_resolution) {
+  illuminance /= (1.2 * (69 / (float)Bh1750_sensors[sensor_index].mtreg));
+  if (1 == Bh1750Resolution(sensor_index)) {
     illuminance /= 2;
   }
-  Bh1750.illuminance = illuminance;
+  Bh1750_sensors[sensor_index].illuminance = illuminance;
 
-  Bh1750.valid = SENSOR_MAX_MISS;
+  Bh1750_sensors[sensor_index].valid = SENSOR_MAX_MISS;
   return true;
 }
 
 /********************************************************************************************/
 
-void Bh1750Detect(void)
-{
+void Bh1750Detect(void) {
   for (uint32_t i = 0; i < sizeof(Bh1750.addresses); i++) {
-    Bh1750.address = Bh1750.addresses[i];
-    if (I2cActive(Bh1750.address)) { continue; }
+    if (I2cActive(Bh1750.addresses[i])) { continue; }
 
-    if (Bh1750SetMTreg()) {
-      I2cSetActiveFound(Bh1750.address, Bh1750.types);
-      Bh1750.type = 1;
-      break;
+    Bh1750_sensors[Bh1750.count].address = Bh1750.addresses[i];
+    if (Bh1750SetMTreg(Bh1750.count)) {
+      I2cSetActiveFound(Bh1750_sensors[Bh1750.count].address, Bh1750.types);
+      Bh1750.count++;
     }
   }
 }
 
-void Bh1750EverySecond(void)
-{
-  // 1mS
-  if (!Bh1750Read()) {
-    AddLogMissed(Bh1750.types, Bh1750.valid);
+void Bh1750EverySecond(void) {
+  for (uint32_t i = 0; i < Bh1750.count; i++) {
+    // 1mS
+    if (!Bh1750Read(i)) {
+//      AddLogMissed(Bh1750.types, Bh1750.valid);
+    }
   }
 }
 
 /*********************************************************************************************\
- * Command Sensor10
- *
- * 0       - High resolution mode (default)
- * 1       - High resolution mode 2
- * 2       - Low resolution mode
- * 31..254 - Measurement Time value (not persistent, default is 69)
+ * Commands
 \*********************************************************************************************/
 
-bool Bh1750CommandSensor(void)
-{
-  if (XdrvMailbox.data_len) {
+void CmndBh1750Resolution(void) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Bh1750.count)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
-      Settings.SensorBits1.bh1750_resolution = XdrvMailbox.payload;
-      Bh1750SetResolution();
+      if (1 == XdrvMailbox.index) {
+        Settings.SensorBits1.bh1750_1_resolution = XdrvMailbox.payload;
+      } else {
+        Settings.SensorBits1.bh1750_2_resolution = XdrvMailbox.payload;
+      }
+      Bh1750SetResolution(XdrvMailbox.index -1);
     }
-    else if ((XdrvMailbox.payload > 30) && (XdrvMailbox.payload < 255)) {
-      Bh1750.mtreg = XdrvMailbox.payload;
-      Bh1750SetMTreg();
-    }
+    ResponseCmndIdxNumber(Bh1750Resolution(XdrvMailbox.index -1));
   }
-  Response_P(PSTR("{\"" D_CMND_SENSOR "10\":{\"Resolution\":%d,\"MTime\":%d}}"), Settings.SensorBits1.bh1750_resolution, Bh1750.mtreg);
-
-  return true;
 }
 
-void Bh1750Show(bool json)
-{
-  if (Bh1750.valid) {
-    if (json) {
-      ResponseAppend_P(JSON_SNS_ILLUMINANCE, Bh1750.types, Bh1750.illuminance);
-#ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
-        DomoticzSensor(DZ_ILLUMINANCE, Bh1750.illuminance);
+void CmndBh1750MTime(void) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Bh1750.count)) {
+    if ((XdrvMailbox.payload > 30) && (XdrvMailbox.payload < 255)) {
+      Bh1750_sensors[XdrvMailbox.index -1].mtreg = XdrvMailbox.payload;
+      Bh1750SetMTreg(XdrvMailbox.index -1);
+    }
+    ResponseCmndIdxNumber(Bh1750_sensors[XdrvMailbox.index -1].mtreg);
+  }
+}
+
+/********************************************************************************************/
+
+void Bh1750Show(bool json) {
+  for (uint32_t sensor_index = 0; sensor_index < Bh1750.count; sensor_index++) {
+    if (Bh1750_sensors[sensor_index].valid) {
+      char sensor_name[10];
+      strlcpy(sensor_name, Bh1750.types, sizeof(sensor_name));
+      if (Bh1750.count > 1) {
+        snprintf_P(sensor_name, sizeof(sensor_name), PSTR("%s%c%d"), sensor_name, IndexSeparator(), sensor_index +1);  // BH1750-1
       }
+
+      if (json) {
+        ResponseAppend_P(JSON_SNS_ILLUMINANCE, sensor_name, Bh1750_sensors[sensor_index].illuminance);
+#ifdef USE_DOMOTICZ
+        if ((0 == tele_period) && (0 == sensor_index)) {
+          DomoticzSensor(DZ_ILLUMINANCE, Bh1750_sensors[sensor_index].illuminance);
+        }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_ILLUMINANCE, Bh1750.types, Bh1750.illuminance);
+      } else {
+        WSContentSend_PD(HTTP_SNS_ILLUMINANCE, sensor_name, Bh1750_sensors[sensor_index].illuminance);
 #endif  // USE_WEBSERVER
+      }
     }
   }
 }
@@ -159,8 +193,7 @@ void Bh1750Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns10(uint8_t function)
-{
+bool Xsns10(uint8_t function) {
   if (!I2cEnabled(XI2C_11)) { return false; }
 
   bool result = false;
@@ -168,15 +201,13 @@ bool Xsns10(uint8_t function)
   if (FUNC_INIT == function) {
     Bh1750Detect();
   }
-  else if (Bh1750.type) {
+  else if (Bh1750.count) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         Bh1750EverySecond();
         break;
-      case FUNC_COMMAND_SENSOR:
-        if (XSNS_10 == XdrvMailbox.index) {
-          result = Bh1750CommandSensor();
-        }
+      case FUNC_COMMAND:
+        result = DecodeCommand(kBh1750Commands, Bh1750Command);
         break;
       case FUNC_JSON_APPEND:
         Bh1750Show(1);
