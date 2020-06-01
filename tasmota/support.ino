@@ -1459,6 +1459,7 @@ bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
     }
     retry--;
   }
+  if (!retry) Wire.endTransmission();
   return status;
 }
 
