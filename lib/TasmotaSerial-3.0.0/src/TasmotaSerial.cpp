@@ -174,6 +174,9 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
       m_uart = tasmota_serial_index;
       tasmota_serial_index--;
       TSerial = new HardwareSerial(m_uart);
+      if (serial_buffer_size > 256) {
+        TSerial->setRxBufferSize(serial_buffer_size);
+      }
       if (2 == m_stop_bits) {
         TSerial->begin(speed, SERIAL_8N2, m_rx_pin, m_tx_pin);
       } else {
