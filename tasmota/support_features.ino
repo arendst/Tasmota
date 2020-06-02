@@ -569,8 +569,10 @@ void GetFeatures(void)
 #ifdef USE_VEML7700
   feature6 |= 0x00001000;  // xsns_71_veml7700.ino
 #endif
+#ifdef USE_MCP9808
+  feature6 |= 0x00002000;  // xsns_72_mcp9808.ino
+#endif
 
-//  feature6 |= 0x00002000;
 //  feature6 |= 0x00004000;
 //  feature6 |= 0x00008000;
 
