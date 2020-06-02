@@ -55,9 +55,9 @@ float MCP9808Read(uint8_t addr) {
 
 void MCP9808Detect(void) {
   for (uint8_t i = 0; i < MCP9808_MAX_SENSORS; i++) {
-    if (!I2cSetDevice(MCP9808_START_ADDRESS + i)) { continue; }    
+    if (!I2cSetDevice(MCP9808_START_ADDRESS + i)) { continue; }
 
-    if (mcp9808.begin(MCP9808_START_ADDRESS + i)) {    
+    if (mcp9808.begin(MCP9808_START_ADDRESS + i)) {
       mcp9808_sensors[mcp9808_cfg.count].address = MCP9808_START_ADDRESS + i;
       I2cSetActiveFound(mcp9808_sensors[mcp9808_cfg.count].address, mcp9808_cfg.types);
       mcp9808.setResolution (mcp9808_sensors[mcp9808_cfg.count].address, 2); // Set Resolution to 0.125°C
@@ -77,7 +77,7 @@ void MCP9808Show(bool json) {
   for (uint32_t i = 0; i < mcp9808_cfg.count; i++) {
     char temperature[33];
     dtostrfd(mcp9808_sensors[i].temperature, Settings.flag2.temperature_resolution, temperature);
-    
+
     char sensor_name[10];
     strlcpy(sensor_name, mcp9808_cfg.types, sizeof(sensor_name));
     if (mcp9808_cfg.count > 1) {
@@ -85,7 +85,7 @@ void MCP9808Show(bool json) {
     }
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), sensor_name, temperature);
+      ResponseAppend_P(JSON_SNS_TEMP, sensor_name, temperature);
       if ((0 == tele_period) && (0 == i)) {
 #ifdef USE_DOMOTICZ
         DomoticzSensor(DZ_TEMP, temperature);
