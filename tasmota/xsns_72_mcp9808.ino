@@ -86,7 +86,7 @@ void MCP9808Show(bool json) {
 
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), sensor_name, temperature);
-      if (0 == tele_period) {
+      if ((0 == tele_period) && (0 == i)) {
 #ifdef USE_DOMOTICZ
         DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
