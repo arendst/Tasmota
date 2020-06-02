@@ -25,17 +25,28 @@
 \*********************************************************************************************/
 #define SHELLY_DIMMER_DEBUG
 // #define SHELLY_HW_DIMMING
+#define SHD_CMDS
 
 #define XDRV_32                     40
 #define XNRG_17                     17
 
 #define SHD_DRIVER_MAJOR_VERSION    0
-#define SHD_DRIVER_MINOR_VERSION    5
+#define SHD_DRIVER_MINOR_VERSION    7
 
 #define SHD_SWITCH_CMD              0x01
-#define SHD_GET_STATE_CMD           0x10
+#define SHD_SWITCH_FADE_CMD         0x02
+#define SHD_POLL_CMD                0x10
 #define SHD_VERSION_CMD             0x11
-#define SHD_SET_STATE_CMD           0x20
+#define SHD_SETTINGS_CMD            0x20
+#define SHD_WARMUP_CMD              0x21
+#define SHD_CALIBRATION1_CMD        0x30
+#define SHD_CALIBRATION2_CMD        0x31
+
+#define SHD_SWITCH_SIZE             2
+#define SHD_SWITCH_FADE_SIZE        6
+#define SHD_SETTINGS_SIZE           10
+#define SHD_WARMUP_SIZE             4
+#define SHD_CALIBRATION_SIZE        200
 
 #define SHD_START_BYTE              0x01
 #define SHD_END_BYTE                0x04
@@ -44,7 +55,7 @@
 #define SHD_ACK_TIMEOUT             200 // 200 ms ACK timeout
 
 #include <stm32flash.h>
-#include <fw/shelly/dimmer/stm_v1.3.h>
+#include <fw/shelly/dimmer/stm_v1.7.0.h>
 
 #include <TasmotaSerial.h>
 
@@ -62,14 +73,19 @@ typedef struct
 
 struct SHD
 {
-    uint8_t *buffer = nullptr; // Serial receive buffer
-    int byte_counter = 0;      // Index in serial receive buffer
-    uint8_t req_brightness = 0;
+    uint8_t *buffer = nullptr;          // Serial receive buffer
+    int byte_counter = 0;               // Index in serial receive buffer
+    uint16_t req_brightness = 0;
+    bool req_on = false;
     SHD_DIMMER dimmer;
     uint32_t start_time = 0;
-    uint8_t counter = 1;        // Packet counter
+    uint8_t counter = 1;                // Packet counter
+    uint16_t req_fade_rate = 0;
+    uint16_t leading_edge = 2;          // Leading edge = 2 Trailing edge = 1
+    uint16_t warmup_brightness = 100;   // 10%
+    uint16_t warmup_time = 20;          // 20ms
 #ifdef USE_ENERGY_SENSOR
-    uint32_t last_power_check = 0;       // Time when last power was checked
+    uint32_t last_power_check = 0;      // Time when last power was checked
 #endif // USE_ENERGY_SENSOR
 } Shd;
 
@@ -185,43 +201,107 @@ bool ShdSendCmd(uint8_t cmd, uint8_t *payload, uint8_t len)
     return ShdSerialSend(data, pos);
 }
 
-void ShdSetBrightness(uint16 brightness)
+void ShdSetBrightness()
 {
-    brightness = changeUIntScale(brightness, 0, 255, 0, 1000);
+    // Payload format:
+    // [0-1] Brightness (%) * 10
 
-    uint8_t payload[2];
+    uint8_t payload[SHD_SWITCH_SIZE];
 
-    payload[0] = brightness & 0xff;
-    payload[1] = brightness >> 8;
+    payload[0] = Shd.req_brightness & 0xff;
+    payload[1] = Shd.req_brightness >> 8;
 
-    ShdSendCmd(SHD_SWITCH_CMD, payload, sizeof(payload));
+    ShdSendCmd(SHD_SWITCH_CMD, payload, SHD_SWITCH_SIZE);
 }
 
-void ShdSendFadeRate(uint16_t brightness, uint8_t fade_rate)
+void ShdSetBrightnessFade()
 {
-    ShdSendSetState(brightness, 2, fade_rate);
+    // Payload format:
+    // [0-1] Brightness (%) * 10
+    // [2-3] Delta brightness (%) * 8
+    // [4-5] 0?? ToDo(jamesturton): Find out what this word is!
+
+    uint16_t delta = 0;
+    if (Shd.req_brightness > Shd.dimmer.brightness)
+        delta = (Shd.req_brightness - Shd.dimmer.brightness) * 0.8;
+    else
+        delta = (Shd.dimmer.brightness - Shd.req_brightness) * 0.8;
+
+    uint8_t payload[SHD_SWITCH_FADE_SIZE];
+
+    payload[0] = Shd.req_brightness & 0xff;
+    payload[1] = Shd.req_brightness >> 8;
+
+    payload[2] = delta & 0xff;
+    payload[3] = delta >> 8;
+
+    payload[4] = 0;
+    payload[5] = 0;
+
+    ShdSendCmd(SHD_SWITCH_FADE_CMD, payload, SHD_SWITCH_FADE_SIZE);
 }
 
-void ShdSendSetState(uint16_t brightness, uint16_t func, uint16_t fade_rate)
+void ShdSendSettings()
 {
-    uint8_t payload[6];
-
-    payload[0] = brightness & 0xff;
-    payload[1] = brightness >> 8;
-
-    // func = 0x00 == set current?
-    // 1, 2 (used in combination with fade rate) or ...
-    payload[2] = func & 0xff;
-    payload[3] = func >> 8;
-
     // as specified in STM32 assembly
+    uint16_t fade_rate = Shd.req_fade_rate;
     if (fade_rate > 100)
         fade_rate = 100;
+
+    // Payload format:
+    // [0-1] Brightness (%) * 10
+    // [2-3] Leading / trailing edge (1=leading, 2=trailing) ToDo(jamesturton): Are there any other values this can take?
+    // [4-5] Fade rate (units unknown) ToDo(jamesturton): Find fade rate units
+    // [6-7] Warm up brightness (%) * 10
+    // [8-9] Warm up duration (ms)
+
+    uint8_t payload[SHD_SETTINGS_SIZE];
+
+    payload[0] = Shd.req_brightness & 0xff;
+    payload[1] = Shd.req_brightness >> 8;
+
+    payload[2] = Shd.leading_edge & 0xff;
+    payload[3] = Shd.leading_edge >> 8;
 
     payload[4] = fade_rate & 0xff;
     payload[5] = fade_rate >> 8;
 
-    ShdSendCmd(SHD_SET_STATE_CMD, payload, sizeof(payload));
+    payload[6] = Shd.warmup_brightness & 0xff;
+    payload[7] = Shd.warmup_brightness >> 8;
+
+    payload[8] = Shd.warmup_time & 0xff;
+    payload[9] = Shd.warmup_time >> 8;
+
+    ShdSendCmd(SHD_SETTINGS_CMD, payload, SHD_SETTINGS_SIZE);
+}
+
+void ShdSendWarmup()
+{
+    // Payload format:
+    // [0-1] Warm up brightness (%) * 10
+    // [2-3] Warm up duration (ms)
+
+    uint8_t payload[SHD_WARMUP_SIZE];
+
+    payload[0] = Shd.warmup_brightness & 0xff;
+    payload[1] = Shd.warmup_brightness >> 8;
+
+    payload[2] = Shd.warmup_time & 0xff;
+    payload[3] = Shd.warmup_time >> 8;
+
+    ShdSendCmd(SHD_WARMUP_CMD, payload, SHD_WARMUP_SIZE);
+}
+
+void ShdSendCalibration(uint16_t brightness, uint16_t func, uint16_t fade_rate)
+{
+    // Payload format:
+    // ??? ToDo(jamesturton): Find calibration payload format!
+    uint8_t payload[SHD_CALIBRATION_SIZE];
+
+    memset(payload, 0, sizeof(payload));
+    
+    ShdSendCmd(SHD_CALIBRATION1_CMD, payload, SHD_CALIBRATION_SIZE);
+    ShdSendCmd(SHD_CALIBRATION2_CMD, payload, SHD_CALIBRATION_SIZE);
 }
 
 bool ShdSyncState()
@@ -240,14 +320,14 @@ bool ShdSyncState()
     // we can disbale SW dimming when using HW dimming.
     if (Settings.light_speed != Shd.dimmer.fade_rate)
     {
-        ShdSendFadeRate(Shd.req_brightness, Settings.light_speed);
+        ShdSetBrightnessFade();
         ShdDebugState();
     }
     else
 #endif
     if (Shd.req_brightness != Shd.dimmer.brightness)
     {
-        ShdSetBrightness(Shd.req_brightness);
+        ShdSetBrightness();
         ShdDebugState();
     }
 }
@@ -258,7 +338,7 @@ void ShdDebugState()
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: MCU v%d.%d, Brightness:%d(%d%%), Power:%d, Fade:%d"),
                             Shd.dimmer.version_major, Shd.dimmer.version_minor,
                             Shd.dimmer.brightness,
-                            changeUIntScale(Shd.dimmer.brightness, 0, 255, 0, 100),
+                            changeUIntScale(Shd.dimmer.brightness, 0, 1000, 0, 100),
                             Shd.dimmer.power,
                             Shd.dimmer.fade_rate);
 #endif
@@ -279,19 +359,12 @@ bool ShdPacketProcess(void)
     
     switch (cmd)
     {
-        case 0x03:
-            {
-                uint16_t brightness = Shd.buffer[pos + 1] << 8 | Shd.buffer[pos + 0];
-                brightness = changeUIntScale(brightness, 0, 1000, 0, 255);
-            }
-            break;
-        case SHD_GET_STATE_CMD:
+        case SHD_POLL_CMD:
             {
                 // 1 when returning fade_rate, 0 when returning wattage, brightness?
                 uint16_t unknown_0 = Shd.buffer[pos + 1] << 8 | Shd.buffer[pos + 0];
                 
                 uint16_t brightness = Shd.buffer[pos + 3] << 8 | Shd.buffer[pos + 2];
-                brightness = changeUIntScale(brightness, 0, 1000, 0, 255);
 
                 uint32_t wattage_raw = Shd.buffer[pos + 7] << 24 | 
                         Shd.buffer[pos + 6] << 16 | 
@@ -333,11 +406,11 @@ bool ShdPacketProcess(void)
             }
             break;
         case SHD_SWITCH_CMD:
-        case 0x02:
-        case 0x04:
-        case SHD_SET_STATE_CMD:
-        case 0x30:
-        case 0x31:
+        case SHD_SWITCH_FADE_CMD:
+        case SHD_SETTINGS_CMD:
+        case SHD_WARMUP_CMD:
+        case SHD_CALIBRATION1_CMD:
+        case SHD_CALIBRATION2_CMD:
             {
                 ret = (Shd.buffer[pos] == 0x01);
             }
@@ -345,27 +418,6 @@ bool ShdPacketProcess(void)
     }
 
     return ret;
-}
-
-bool ShdSetChannels(void)
-{
-#ifdef SHELLY_DIMMER_DEBUG
-    snprintf_P(log_data, sizeof(log_data), PSTR("SHD: SetChannels: \""));
-    for (int i = 0; i < XdrvMailbox.data_len; i++)
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, ((uint8_t *)XdrvMailbox.data)[i]);
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
-    AddLog(LOG_LEVEL_DEBUG_MORE);
-#endif
-
-    // upscale and then downscale to account for rounding errors
-    uint16_t brightness = ((uint32_t *)XdrvMailbox.data)[0];
-    brightness = changeUIntScale(brightness, 0, 255, 0, 1000);
-    brightness = changeUIntScale(brightness, 0, 1000, 0, 255);
-    Shd.req_brightness = brightness;
-
-    ShdDebugState();
-
-    return ShdSyncState();
 }
 
 void ShdResetToAppMode()
@@ -463,7 +515,7 @@ void ShdPoll(void)
     if (!ShdSerial)
         return;
 
-    ShdSendCmd(SHD_GET_STATE_CMD, 0, 0);
+    ShdSendCmd(SHD_POLL_CMD, 0, 0);
     ShdSyncState();
 }
 
@@ -511,6 +563,7 @@ void ShdInit(void)
                 Serial.begin(115200, SERIAL_8N1);
                 
                 ShdSendVersion();
+                ShdSendSettings();
             }
             delay(100);
             ShdSyncState();
@@ -571,6 +624,91 @@ bool ShdModuleSelected(void)
     return true;
 }
 
+bool ShdSetChannels(void)
+{
+#ifdef SHELLY_DIMMER_DEBUG
+    snprintf_P(log_data, sizeof(log_data), PSTR("SHD: SetChannels: \""));
+    for (int i = 0; i < XdrvMailbox.data_len; i++)
+        snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, ((uint8_t *)XdrvMailbox.data)[i]);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
+    AddLog(LOG_LEVEL_DEBUG_MORE);
+#endif
+
+    uint16_t brightness = ((uint32_t *)XdrvMailbox.data)[0];
+    brightness = changeUIntScale(brightness, 0, 255, 0, 1000);
+    Shd.req_brightness = brightness;
+
+    ShdDebugState();
+
+    return ShdSyncState();
+}
+
+bool ShdSetPower(void)
+{
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("EXS: Set Power, Power 0x%02x"), XdrvMailbox.index);
+
+    Shd.req_on = (bool)XdrvMailbox.index;
+    return ShdSyncState();
+}
+
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+#ifdef SHD_CMDS
+
+#define D_PRFX_SHD              "Shd"
+#define D_CMND_LEADINGEDGE      "LeadingEdge"
+#define D_CMND_WARMUPBRIGHTNESS "WarmupBrightness"
+#define D_CMND_WARMUPTIME       "WarmupTime"
+
+const char kShdCommands[] PROGMEM = D_PRFX_SHD "|"  // No prefix
+  D_CMND_LEADINGEDGE "|"  D_CMND_WARMUPBRIGHTNESS "|" D_CMND_WARMUPTIME;
+
+void (* const ShdCommand[])(void) PROGMEM = {
+  &CmndShdLeadingEdge, &CmndShdWarmupBrightness, &CmndShdWarmupTime };
+
+void CmndShdLeadingEdge(void)
+{
+    if (XdrvMailbox.payload == 0 || XdrvMailbox.payload == 1)
+    {
+        Shd.leading_edge = 2 - XdrvMailbox.payload;
+        Settings.shd_leading_edge = XdrvMailbox.payload;
+        if (Shd.leading_edge == 1)
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set to trailing edge"));
+        else
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set to leading edge"));
+        ShdSendSettings();
+    }
+    ResponseCmndNumber(Settings.shd_leading_edge);
+}
+
+void CmndShdWarmupBrightness(void)
+{
+    if ((10 <= XdrvMailbox.payload) && (XdrvMailbox.payload <= 100))
+    {
+        Shd.warmup_brightness = XdrvMailbox.payload * 10;
+        Settings.shd_warmup_brightness = XdrvMailbox.payload;
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set warmup brightness to %d%%"), XdrvMailbox.payload);
+        ShdSendSettings();
+    }
+    ResponseCmndNumber(Settings.shd_warmup_brightness);
+}
+
+void CmndShdWarmupTime(void)
+{
+    if ((20 <= XdrvMailbox.payload) && (XdrvMailbox.payload <= 200))
+    {
+        Shd.warmup_time = XdrvMailbox.payload;
+        Settings.shd_warmup_time = XdrvMailbox.payload;
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set warmup time to %dms"), XdrvMailbox.payload);
+        ShdSendSettings();
+    }
+    ResponseCmndNumber(Settings.shd_warmup_time);
+}
+
+#endif
+
 /*********************************************************************************************\
  * Energy Interface
 \*********************************************************************************************/
@@ -611,9 +749,17 @@ bool Xdrv32(uint8_t function)
         case FUNC_INIT:
             ShdInit();
             break;
+        case FUNC_SET_DEVICE_POWER:
+            result = ShdSetPower();
+            break;
         case FUNC_SET_CHANNELS:
             result = ShdSetChannels();
             break;
+#ifdef SHD_CMDS
+        case FUNC_COMMAND:
+            result = DecodeCommand(kShdCommands, ShdCommand);
+            break;
+#endif
         }
     }
     return result;
