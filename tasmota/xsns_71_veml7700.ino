@@ -54,8 +54,8 @@ struct VEML7700STRUCT
 {
   char types[9]   = D_NAME_VEML7700;
   uint8_t address = VEML7700_I2CADDR_DEFAULT;
-  uint16_t lux = 0;
-  uint16_t white = 0;
+  //uint16_t lux = 0;
+  //uint16_t white = 0;
   uint16_t lux_normalized = 0;
   uint16_t white_normalized = 0;
 } veml7700_sensor;
@@ -65,7 +65,7 @@ uint8_t veml7700_active = 0;
 /********************************************************************************************/
 
 void VEML7700Detect(void) {
-  if (I2cActive(veml7700_sensor.address)) return;
+  if (!I2cSetDevice(veml7700_sensor.address)) return;
   if (veml7700.begin()) {
     I2cSetActiveFound(veml7700_sensor.address, veml7700_sensor.types);
     veml7700_active = 1;
@@ -106,7 +106,7 @@ void VEML7700EverySecond(void) {
 void VEML7700Show(bool json)
 {
   if (json) {
-    ResponseAppend_P(JSON_SNS_VEML7700, D_NAME_VEML7700, veml7700_sensor.lux_normalized, veml7700_sensor.white);
+    ResponseAppend_P(JSON_SNS_VEML7700, D_NAME_VEML7700, veml7700_sensor.lux_normalized, veml7700_sensor.white_normalized);
 
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, veml7700_sensor.lux_normalized);
