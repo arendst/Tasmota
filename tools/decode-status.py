@@ -204,7 +204,7 @@ a_features = [[
     "USE_KEELOQ","USE_HRXL","USE_SONOFF_D1","USE_HDC1080",
     "USE_IAQ","USE_DISPLAY_SEVENSEG","USE_AS3935","USE_PING",
     "USE_WINDMETER","USE_OPENTHERM","USE_THERMOSTAT","USE_VEML6075",
-    "USE_VEML7700","","","",
+    "USE_VEML7700","USE_MCP9808","","",
     "","","","",
     "","","","",
     "","","","",
