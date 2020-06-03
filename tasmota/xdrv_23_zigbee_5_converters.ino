@@ -89,7 +89,9 @@ typedef struct Z_AttributeConverter {
   uint8_t  cluster_short;
   uint16_t attribute;
   const char * name;
-  Z_AttrConverter func;
+  int16_t  multiplier;     // multiplier for numerical value, (if > 0 multiply by x, if <0 device by x)
+  uint8_t  cb;            // callback func from Z_ConvOperators
+  // Z_AttrConverter func;
 } Z_AttributeConverter;
 
 // Cluster numbers are store in 8 bits format to save space,
@@ -117,6 +119,16 @@ uint16_t CxToCluster(uint8_t cx) {
   }
   return 0xFFFF;
 }
+
+enum Z_ConvOperators {
+  Z_Nop,                // copy value
+  Z_AddPressureUnit,    // add pressure unit attribute (non numerical)
+  Z_ManufKeep,          // copy and record Manufacturer attribute
+  Z_ModelKeep,          // copy and record ModelId attribute
+  Z_AqaraSensor,        // decode prioprietary Aqara Sensor message
+  Z_AqaraVibration,     // decode Aqara vibration modes
+  Z_AqaraCube,          // decode Aqara cube
+};
 
 ZF(ZCLVersion) ZF(AppVersion) ZF(StackVersion) ZF(HWVersion) ZF(Manufacturer) ZF(ModelId)
 ZF(DateCode) ZF(PowerSource) ZF(SWBuildID) ZF(Power) ZF(SwitchType) ZF(Dimmer)
@@ -209,356 +221,356 @@ ZF(SoftwareRevision) ZF(POD) ZF(AvailablePower) ZF(PowerThreshold) ZF(ProductRev
 ZF(NumberOfResets) ZF(PersistentMemoryWrites) ZF(LastMessageLQI) ZF(LastMessageRSSI)
 // list of post-processing directives
 const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
-  { Zuint8,   Cx0000, 0x0000,  Z(ZCLVersion),           &Z_Copy },
-  { Zuint8,   Cx0000, 0x0001,  Z(AppVersion),           &Z_Copy },
-  { Zuint8,   Cx0000, 0x0002,  Z(StackVersion),         &Z_Copy },
-  { Zuint8,   Cx0000, 0x0003,  Z(HWVersion),            &Z_Copy },
-  { Zstring,  Cx0000, 0x0004,  Z(Manufacturer),         &Z_ManufKeep },    // record Manufacturer
-  { Zstring,  Cx0000, 0x0005,  Z(ModelId),              &Z_ModelKeep },    // record Model
-  { Zstring,  Cx0000, 0x0006,  Z(DateCode),             &Z_Copy },
-  { Zenum8,   Cx0000, 0x0007,  Z(PowerSource),          &Z_Copy },
-  { Zstring,  Cx0000, 0x4000,  Z(SWBuildID),            &Z_Copy },
-  { Zunk,     Cx0000, 0xFFFF,  nullptr,                 &Z_Remove },    // Remove all other values
+  { Zuint8,   Cx0000, 0x0000,  Z(ZCLVersion),           1,  Z_Nop },
+  { Zuint8,   Cx0000, 0x0001,  Z(AppVersion),           1,  Z_Nop },
+  { Zuint8,   Cx0000, 0x0002,  Z(StackVersion),         1,  Z_Nop },
+  { Zuint8,   Cx0000, 0x0003,  Z(HWVersion),            1,  Z_Nop },
+  { Zstring,  Cx0000, 0x0004,  Z(Manufacturer),         1,  Z_ManufKeep },    // record Manufacturer
+  { Zstring,  Cx0000, 0x0005,  Z(ModelId),              1,  Z_ModelKeep },    // record Model
+  { Zstring,  Cx0000, 0x0006,  Z(DateCode),             1,  Z_Nop },
+  { Zenum8,   Cx0000, 0x0007,  Z(PowerSource),          1,  Z_Nop },
+  { Zstring,  Cx0000, 0x4000,  Z(SWBuildID),            1,  Z_Nop },
+  { Zunk,     Cx0000, 0xFFFF,  nullptr,                 0,  Z_Nop },    // Remove all other values
   // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
-  { Zmap8,    Cx0000, 0xFF01,  nullptr,                 &Z_AqaraSensor },    // Occupancy (map8)
+  { Zmap8,    Cx0000, 0xFF01,  nullptr,                 0,  Z_AqaraSensor },    // Occupancy (map8)
 
   // Power Configuration cluster
-  { Zuint16,  Cx0001, 0x0000,  Z(MainsVoltage),         &Z_Copy },
-  { Zuint8,   Cx0001, 0x0001,  Z(MainsFrequency),       &Z_Copy },
-  { Zuint8,   Cx0001, 0x0020,  Z(BatteryVoltage),       &Z_FloatDiv10 },
-  { Zuint8,   Cx0001, 0x0021,  Z(BatteryPercentage),    &Z_FloatDiv2 },
+  { Zuint16,  Cx0001, 0x0000,  Z(MainsVoltage),         1,  Z_Nop },
+  { Zuint8,   Cx0001, 0x0001,  Z(MainsFrequency),       1,  Z_Nop },
+  { Zuint8,   Cx0001, 0x0020,  Z(BatteryVoltage),       -10,Z_Nop },   // divide by 10
+  { Zuint8,   Cx0001, 0x0021,  Z(BatteryPercentage),    -2, Z_Nop },   // divide by 2
 
   // Device Temperature Configuration cluster
-  { Zint16,   Cx0002, 0x0000,  Z(CurrentTemperature),   &Z_Copy },
-  { Zint16,   Cx0002, 0x0001,  Z(MinTempExperienced),   &Z_Copy },
-  { Zint16,   Cx0002, 0x0002,  Z(MaxTempExperienced),   &Z_Copy },
-  { Zuint16,  Cx0002, 0x0003,  Z(OverTempTotalDwell),   &Z_Copy },
+  { Zint16,   Cx0002, 0x0000,  Z(CurrentTemperature),   1,  Z_Nop },
+  { Zint16,   Cx0002, 0x0001,  Z(MinTempExperienced),   1,  Z_Nop },
+  { Zint16,   Cx0002, 0x0002,  Z(MaxTempExperienced),   1,  Z_Nop },
+  { Zuint16,  Cx0002, 0x0003,  Z(OverTempTotalDwell),   1,  Z_Nop },
 
   // Scenes cluster
-  { Zuint8,   Cx0005, 0x0000,  Z(SceneCount),           &Z_Copy },
-  { Zuint8,   Cx0005, 0x0001,  Z(CurrentScene),         &Z_Copy },
-  { Zuint16,  Cx0005, 0x0002,  Z(CurrentGroup),         &Z_Copy },
-  { Zbool,    Cx0005, 0x0003,  Z(SceneValid),           &Z_Copy },
-  //{ Zmap8,    Cx0005, 0x0004,  Z(NameSupport),           &Z_Copy },
+  { Zuint8,   Cx0005, 0x0000,  Z(SceneCount),           1,  Z_Nop },
+  { Zuint8,   Cx0005, 0x0001,  Z(CurrentScene),         1,  Z_Nop },
+  { Zuint16,  Cx0005, 0x0002,  Z(CurrentGroup),         1,  Z_Nop },
+  { Zbool,    Cx0005, 0x0003,  Z(SceneValid),           1,  Z_Nop },
+  //{ Zmap8,    Cx0005, 0x0004,  Z(NameSupport),           1,  Z_Nop },
 
   // On/off cluster
-  { Zbool,    Cx0006,    0x0000,  Z(Power),             &Z_Copy },
-  { Zbool,    Cx0006,    0x8000,  Z(Power),             &Z_Copy },   // See 7280
+  { Zbool,    Cx0006,    0x0000,  Z(Power),             1,  Z_Nop },
+  { Zbool,    Cx0006,    0x8000,  Z(Power),             1,  Z_Nop },   // See 7280
 
   // On/Off Switch Configuration cluster
-  { Zenum8,   Cx0007, 0x0000,  Z(SwitchType),           &Z_Copy },
+  { Zenum8,   Cx0007, 0x0000,  Z(SwitchType),           1,  Z_Nop },
 
   // Level Control cluster
-  { Zuint8,   Cx0008, 0x0000,  Z(Dimmer),               &Z_Copy },
-  // { Zuint16, Cx0008, 0x0001,  Z(RemainingTime",        &Z_Copy },
-  // { Zuint16, Cx0008, 0x0010,  Z(OnOffTransitionTime",  &Z_Copy },
-  // { Zuint8, Cx0008, 0x0011,  Z(OnLevel",              &Z_Copy },
-  // { Zuint16, Cx0008, 0x0012,  Z(OnTransitionTime",     &Z_Copy },
-  // { Zuint16, Cx0008, 0x0013,  Z(OffTransitionTime",    &Z_Copy },
-  // { Zuint16, Cx0008, 0x0014,  Z(DefaultMoveRate",      &Z_Copy },
+  { Zuint8,   Cx0008, 0x0000,  Z(Dimmer),               1,  Z_Nop },
+  // { Zuint16, Cx0008, 0x0001,  Z(RemainingTime",        1,  Z_Nop },
+  // { Zuint16, Cx0008, 0x0010,  Z(OnOffTransitionTime",  1,  Z_Nop },
+  // { Zuint8, Cx0008, 0x0011,  Z(OnLevel",              1,  Z_Nop },
+  // { Zuint16, Cx0008, 0x0012,  Z(OnTransitionTime",     1,  Z_Nop },
+  // { Zuint16, Cx0008, 0x0013,  Z(OffTransitionTime",    1,  Z_Nop },
+  // { Zuint16, Cx0008, 0x0014,  Z(DefaultMoveRate",      1,  Z_Nop },
 
   // Alarms cluster
-  { Zuint16,  Cx0009, 0x0000,  Z(AlarmCount),           &Z_Copy },
+  { Zuint16,  Cx0009, 0x0000,  Z(AlarmCount),           1,  Z_Nop },
 
   // Time cluster
-  { ZUTC,     Cx000A, 0x0000,  Z(Time),                 &Z_Copy },
-  { Zmap8,    Cx000A, 0x0001,  Z(TimeStatus),           &Z_Copy },
-  { Zint32,   Cx000A, 0x0002,  Z(TimeZone),             &Z_Copy },
-  { Zuint32,  Cx000A, 0x0003,  Z(DstStart),             &Z_Copy },
-  { Zuint32,  Cx000A, 0x0004,  Z(DstEnd),               &Z_Copy },
-  { Zint32,   Cx000A, 0x0005,  Z(DstShift),             &Z_Copy },
-  { Zuint32,  Cx000A, 0x0006,  Z(StandardTime),         &Z_Copy },
-  { Zuint32,  Cx000A, 0x0007,  Z(LocalTime),            &Z_Copy },
-  { ZUTC,     Cx000A, 0x0008,  Z(LastSetTime),          &Z_Copy },
-  { ZUTC,     Cx000A, 0x0009,  Z(ValidUntilTime),       &Z_Copy },
+  { ZUTC,     Cx000A, 0x0000,  Z(Time),                 1,  Z_Nop },
+  { Zmap8,    Cx000A, 0x0001,  Z(TimeStatus),           1,  Z_Nop },
+  { Zint32,   Cx000A, 0x0002,  Z(TimeZone),             1,  Z_Nop },
+  { Zuint32,  Cx000A, 0x0003,  Z(DstStart),             1,  Z_Nop },
+  { Zuint32,  Cx000A, 0x0004,  Z(DstEnd),               1,  Z_Nop },
+  { Zint32,   Cx000A, 0x0005,  Z(DstShift),             1,  Z_Nop },
+  { Zuint32,  Cx000A, 0x0006,  Z(StandardTime),         1,  Z_Nop },
+  { Zuint32,  Cx000A, 0x0007,  Z(LocalTime),            1,  Z_Nop },
+  { ZUTC,     Cx000A, 0x0008,  Z(LastSetTime),          1,  Z_Nop },
+  { ZUTC,     Cx000A, 0x0009,  Z(ValidUntilTime),       1,  Z_Nop },
 
   // RSSI Location cluster
-  { Zdata8,   Cx000B, 0x0000,  Z(LocationType),         &Z_Copy },
-  { Zenum8,   Cx000B, 0x0001,  Z(LocationMethod),       &Z_Copy },
-  { Zuint16,  Cx000B, 0x0002,  Z(LocationAge),          &Z_Copy },
-  { Zuint8,   Cx000B, 0x0003,  Z(QualityMeasure),       &Z_Copy },
-  { Zuint8,   Cx000B, 0x0004,  Z(NumberOfDevices),      &Z_Copy },
+  { Zdata8,   Cx000B, 0x0000,  Z(LocationType),         1,  Z_Nop },
+  { Zenum8,   Cx000B, 0x0001,  Z(LocationMethod),       1,  Z_Nop },
+  { Zuint16,  Cx000B, 0x0002,  Z(LocationAge),          1,  Z_Nop },
+  { Zuint8,   Cx000B, 0x0003,  Z(QualityMeasure),       1,  Z_Nop },
+  { Zuint8,   Cx000B, 0x0004,  Z(NumberOfDevices),      1,  Z_Nop },
 
   // Analog Input cluster
-  // { 0xFF, Cx000C, 0x0004,  Z(AnalogInActiveText),   &Z_Copy },
-  { Zstring,  Cx000C, 0x001C,  Z(AnalogInDescription),  &Z_Copy },
-  // { 0xFF, Cx000C, 0x002E,  Z(AnalogInInactiveText), &Z_Copy },
-  { Zsingle,  Cx000C, 0x0041,  Z(AnalogInMaxValue),     &Z_Copy },
-  { Zsingle,  Cx000C, 0x0045,  Z(AnalogInMinValue),     &Z_Copy },
-  { Zbool,    Cx000C, 0x0051,  Z(AnalogInOutOfService), &Z_Copy },
-  { Zsingle,  Cx000C, 0x0055,  Z(AqaraRotate),          &Z_Copy },
-  // { 0xFF, Cx000C, 0x0057,  Z(AnalogInPriorityArray),&Z_Copy },
-  { Zenum8,   Cx000C, 0x0067,  Z(AnalogInReliability),  &Z_Copy },
-  // { 0xFF, Cx000C, 0x0068,  Z(AnalogInRelinquishDefault),&Z_Copy },
-  { Zsingle,  Cx000C, 0x006A,  Z(AnalogInResolution),   &Z_Copy },
-  { Zmap8,    Cx000C, 0x006F,  Z(AnalogInStatusFlags),  &Z_Copy },
-  { Zenum16,  Cx000C, 0x0075,  Z(AnalogInEngineeringUnits),&Z_Copy },
-  { Zuint32,  Cx000C, 0x0100,  Z(AnalogInApplicationType),&Z_Copy },
-  { Zuint16,  Cx000C, 0xFF05,  Z(Aqara_FF05),           &Z_Copy },
+  // { 0xFF, Cx000C, 0x0004,  Z(AnalogInActiveText),   1,  Z_Nop },
+  { Zstring,  Cx000C, 0x001C,  Z(AnalogInDescription),  1,  Z_Nop },
+  // { 0xFF, Cx000C, 0x002E,  Z(AnalogInInactiveText), 1,  Z_Nop },
+  { Zsingle,  Cx000C, 0x0041,  Z(AnalogInMaxValue),     1,  Z_Nop },
+  { Zsingle,  Cx000C, 0x0045,  Z(AnalogInMinValue),     1,  Z_Nop },
+  { Zbool,    Cx000C, 0x0051,  Z(AnalogInOutOfService), 1,  Z_Nop },
+  { Zsingle,  Cx000C, 0x0055,  Z(AqaraRotate),          1,  Z_Nop },
+  // { 0xFF, Cx000C, 0x0057,  Z(AnalogInPriorityArray),1,  Z_Nop },
+  { Zenum8,   Cx000C, 0x0067,  Z(AnalogInReliability),  1,  Z_Nop },
+  // { 0xFF, Cx000C, 0x0068,  Z(AnalogInRelinquishDefault),1,  Z_Nop },
+  { Zsingle,  Cx000C, 0x006A,  Z(AnalogInResolution),   1,  Z_Nop },
+  { Zmap8,    Cx000C, 0x006F,  Z(AnalogInStatusFlags),  1,  Z_Nop },
+  { Zenum16,  Cx000C, 0x0075,  Z(AnalogInEngineeringUnits),1,  Z_Nop },
+  { Zuint32,  Cx000C, 0x0100,  Z(AnalogInApplicationType),1,  Z_Nop },
+  { Zuint16,  Cx000C, 0xFF05,  Z(Aqara_FF05),           1,  Z_Nop },
 
   // Analog Output cluster
-  { Zstring,  Cx000D, 0x001C,  Z(AnalogOutDescription), &Z_Copy },
-  { Zsingle,  Cx000D, 0x0041,  Z(AnalogOutMaxValue),    &Z_Copy },
-  { Zsingle,  Cx000D, 0x0045,  Z(AnalogOutMinValue),    &Z_Copy },
-  { Zbool,    Cx000D, 0x0051,  Z(AnalogOutOutOfService),&Z_Copy },
-  { Zsingle,  Cx000D, 0x0055,  Z(AnalogOutValue),       &Z_Copy },
-  // { Zunk,     Cx000D, 0x0057,  Z(AnalogOutPriorityArray),&Z_Copy },
-  { Zenum8,   Cx000D, 0x0067,  Z(AnalogOutReliability), &Z_Copy },
-  { Zsingle,  Cx000D, 0x0068,  Z(AnalogOutRelinquishDefault),&Z_Copy },
-  { Zsingle,  Cx000D, 0x006A,  Z(AnalogOutResolution),  &Z_Copy },
-  { Zmap8,    Cx000D, 0x006F,  Z(AnalogOutStatusFlags), &Z_Copy },
-  { Zenum16,  Cx000D, 0x0075,  Z(AnalogOutEngineeringUnits),&Z_Copy },
-  { Zuint32,  Cx000D, 0x0100,  Z(AnalogOutApplicationType),&Z_Copy },
+  { Zstring,  Cx000D, 0x001C,  Z(AnalogOutDescription), 1,  Z_Nop },
+  { Zsingle,  Cx000D, 0x0041,  Z(AnalogOutMaxValue),    1,  Z_Nop },
+  { Zsingle,  Cx000D, 0x0045,  Z(AnalogOutMinValue),    1,  Z_Nop },
+  { Zbool,    Cx000D, 0x0051,  Z(AnalogOutOutOfService),1,  Z_Nop },
+  { Zsingle,  Cx000D, 0x0055,  Z(AnalogOutValue),       1,  Z_Nop },
+  // { Zunk,     Cx000D, 0x0057,  Z(AnalogOutPriorityArray),1,  Z_Nop },
+  { Zenum8,   Cx000D, 0x0067,  Z(AnalogOutReliability), 1,  Z_Nop },
+  { Zsingle,  Cx000D, 0x0068,  Z(AnalogOutRelinquishDefault),1,  Z_Nop },
+  { Zsingle,  Cx000D, 0x006A,  Z(AnalogOutResolution),  1,  Z_Nop },
+  { Zmap8,    Cx000D, 0x006F,  Z(AnalogOutStatusFlags), 1,  Z_Nop },
+  { Zenum16,  Cx000D, 0x0075,  Z(AnalogOutEngineeringUnits),1,  Z_Nop },
+  { Zuint32,  Cx000D, 0x0100,  Z(AnalogOutApplicationType),1,  Z_Nop },
 
   // Analog Value cluster
-  { Zstring,  Cx000E, 0x001C,  Z(AnalogDescription),    &Z_Copy },
-  { Zbool,    Cx000E, 0x0051,  Z(AnalogOutOfService),   &Z_Copy },
-  { Zsingle,  Cx000E, 0x0055,  Z(AnalogValue),          &Z_Copy },
-  { Zunk,     Cx000E, 0x0057,  Z(AnalogPriorityArray),  &Z_Copy },
-  { Zenum8,   Cx000E, 0x0067,  Z(AnalogReliability),    &Z_Copy },
-  { Zsingle,  Cx000E, 0x0068,  Z(AnalogRelinquishDefault),&Z_Copy },
-  { Zmap8,    Cx000E, 0x006F,  Z(AnalogStatusFlags),    &Z_Copy },
-  { Zenum16,  Cx000E, 0x0075,  Z(AnalogEngineeringUnits),&Z_Copy },
-  { Zuint32,  Cx000E, 0x0100,  Z(AnalogApplicationType),&Z_Copy },
+  { Zstring,  Cx000E, 0x001C,  Z(AnalogDescription),    1,  Z_Nop },
+  { Zbool,    Cx000E, 0x0051,  Z(AnalogOutOfService),   1,  Z_Nop },
+  { Zsingle,  Cx000E, 0x0055,  Z(AnalogValue),          1,  Z_Nop },
+  { Zunk,     Cx000E, 0x0057,  Z(AnalogPriorityArray),  1,  Z_Nop },
+  { Zenum8,   Cx000E, 0x0067,  Z(AnalogReliability),    1,  Z_Nop },
+  { Zsingle,  Cx000E, 0x0068,  Z(AnalogRelinquishDefault),1,  Z_Nop },
+  { Zmap8,    Cx000E, 0x006F,  Z(AnalogStatusFlags),    1,  Z_Nop },
+  { Zenum16,  Cx000E, 0x0075,  Z(AnalogEngineeringUnits),1,  Z_Nop },
+  { Zuint32,  Cx000E, 0x0100,  Z(AnalogApplicationType),1,  Z_Nop },
 
   // Binary Input cluster
-  { Zstring,  Cx000F, 0x0004,  Z(BinaryInActiveText),  &Z_Copy },
-  { Zstring,  Cx000F, 0x001C,  Z(BinaryInDescription), &Z_Copy },
-  { Zstring,  Cx000F, 0x002E,  Z(BinaryInInactiveText),&Z_Copy },
-  { Zbool,    Cx000F, 0x0051,  Z(BinaryInOutOfService),&Z_Copy },
-  { Zenum8,   Cx000F, 0x0054,  Z(BinaryInPolarity),    &Z_Copy },
-  { Zstring,  Cx000F, 0x0055,  Z(BinaryInValue),       &Z_Copy },
-  // { 0xFF, Cx000F, 0x0057,  Z(BinaryInPriorityArray),&Z_Copy },
-  { Zenum8,   Cx000F, 0x0067,  Z(BinaryInReliability), &Z_Copy },
-  { Zmap8,    Cx000F, 0x006F,  Z(BinaryInStatusFlags), &Z_Copy },
-  { Zuint32,  Cx000F, 0x0100,  Z(BinaryInApplicationType),&Z_Copy },
+  { Zstring,  Cx000F, 0x0004,  Z(BinaryInActiveText),  1,  Z_Nop },
+  { Zstring,  Cx000F, 0x001C,  Z(BinaryInDescription), 1,  Z_Nop },
+  { Zstring,  Cx000F, 0x002E,  Z(BinaryInInactiveText),1,  Z_Nop },
+  { Zbool,    Cx000F, 0x0051,  Z(BinaryInOutOfService),1,  Z_Nop },
+  { Zenum8,   Cx000F, 0x0054,  Z(BinaryInPolarity),    1,  Z_Nop },
+  { Zstring,  Cx000F, 0x0055,  Z(BinaryInValue),       1,  Z_Nop },
+  // { 0xFF, Cx000F, 0x0057,  Z(BinaryInPriorityArray),1,  Z_Nop },
+  { Zenum8,   Cx000F, 0x0067,  Z(BinaryInReliability), 1,  Z_Nop },
+  { Zmap8,    Cx000F, 0x006F,  Z(BinaryInStatusFlags), 1,  Z_Nop },
+  { Zuint32,  Cx000F, 0x0100,  Z(BinaryInApplicationType),1,  Z_Nop },
 
   // Binary Output cluster
-  { Zstring,  Cx0010, 0x0004,  Z(BinaryOutActiveText),  &Z_Copy },
-  { Zstring,  Cx0010, 0x001C,  Z(BinaryOutDescription), &Z_Copy },
-  { Zstring,  Cx0010, 0x002E,  Z(BinaryOutInactiveText),&Z_Copy },
-  { Zuint32,  Cx0010, 0x0042,  Z(BinaryOutMinimumOffTime),&Z_Copy },
-  { Zuint32,  Cx0010, 0x0043,  Z(BinaryOutMinimumOnTime),&Z_Copy },
-  { Zbool,    Cx0010, 0x0051,  Z(BinaryOutOutOfService),&Z_Copy },
-  { Zenum8,   Cx0010, 0x0054,  Z(BinaryOutPolarity),    &Z_Copy },
-  { Zbool,    Cx0010, 0x0055,  Z(BinaryOutValue),       &Z_Copy },
-  // { Zunk,     Cx0010, 0x0057,  Z(BinaryOutPriorityArray),&Z_Copy },
-  { Zenum8,   Cx0010, 0x0067,  Z(BinaryOutReliability), &Z_Copy },
-  { Zbool,    Cx0010, 0x0068,  Z(BinaryOutRelinquishDefault),&Z_Copy },
-  { Zmap8,    Cx0010, 0x006F,  Z(BinaryOutStatusFlags), &Z_Copy },
-  { Zuint32,  Cx0010, 0x0100,  Z(BinaryOutApplicationType),&Z_Copy },
+  { Zstring,  Cx0010, 0x0004,  Z(BinaryOutActiveText),  1,  Z_Nop },
+  { Zstring,  Cx0010, 0x001C,  Z(BinaryOutDescription), 1,  Z_Nop },
+  { Zstring,  Cx0010, 0x002E,  Z(BinaryOutInactiveText),1,  Z_Nop },
+  { Zuint32,  Cx0010, 0x0042,  Z(BinaryOutMinimumOffTime),1,  Z_Nop },
+  { Zuint32,  Cx0010, 0x0043,  Z(BinaryOutMinimumOnTime),1,  Z_Nop },
+  { Zbool,    Cx0010, 0x0051,  Z(BinaryOutOutOfService),1,  Z_Nop },
+  { Zenum8,   Cx0010, 0x0054,  Z(BinaryOutPolarity),    1,  Z_Nop },
+  { Zbool,    Cx0010, 0x0055,  Z(BinaryOutValue),       1,  Z_Nop },
+  // { Zunk,     Cx0010, 0x0057,  Z(BinaryOutPriorityArray),1,  Z_Nop },
+  { Zenum8,   Cx0010, 0x0067,  Z(BinaryOutReliability), 1,  Z_Nop },
+  { Zbool,    Cx0010, 0x0068,  Z(BinaryOutRelinquishDefault),1,  Z_Nop },
+  { Zmap8,    Cx0010, 0x006F,  Z(BinaryOutStatusFlags), 1,  Z_Nop },
+  { Zuint32,  Cx0010, 0x0100,  Z(BinaryOutApplicationType),1,  Z_Nop },
 
   // Binary Value cluster
-  { Zstring,  Cx0011, 0x0004,  Z(BinaryActiveText),     &Z_Copy },
-  { Zstring,  Cx0011, 0x001C,  Z(BinaryDescription),    &Z_Copy },
-  { Zstring,  Cx0011, 0x002E,  Z(BinaryInactiveText),   &Z_Copy },
-  { Zuint32,  Cx0011, 0x0042,  Z(BinaryMinimumOffTime), &Z_Copy },
-  { Zuint32,  Cx0011, 0x0043,  Z(BinaryMinimumOnTime),  &Z_Copy },
-  { Zbool,    Cx0011, 0x0051,  Z(BinaryOutOfService),   &Z_Copy },
-  { Zbool,    Cx0011, 0x0055,  Z(BinaryValue),          &Z_Copy },
-  // { Zunk,     Cx0011, 0x0057,  Z(BinaryPriorityArray),  &Z_Copy },
-  { Zenum8,   Cx0011, 0x0067,  Z(BinaryReliability),    &Z_Copy },
-  { Zbool,    Cx0011, 0x0068,  Z(BinaryRelinquishDefault),&Z_Copy },
-  { Zmap8,    Cx0011, 0x006F,  Z(BinaryStatusFlags),    &Z_Copy },
-  { Zuint32,  Cx0011, 0x0100,  Z(BinaryApplicationType),&Z_Copy },
+  { Zstring,  Cx0011, 0x0004,  Z(BinaryActiveText),     1,  Z_Nop },
+  { Zstring,  Cx0011, 0x001C,  Z(BinaryDescription),    1,  Z_Nop },
+  { Zstring,  Cx0011, 0x002E,  Z(BinaryInactiveText),   1,  Z_Nop },
+  { Zuint32,  Cx0011, 0x0042,  Z(BinaryMinimumOffTime), 1,  Z_Nop },
+  { Zuint32,  Cx0011, 0x0043,  Z(BinaryMinimumOnTime),  1,  Z_Nop },
+  { Zbool,    Cx0011, 0x0051,  Z(BinaryOutOfService),   1,  Z_Nop },
+  { Zbool,    Cx0011, 0x0055,  Z(BinaryValue),          1,  Z_Nop },
+  // { Zunk,     Cx0011, 0x0057,  Z(BinaryPriorityArray),  1,  Z_Nop },
+  { Zenum8,   Cx0011, 0x0067,  Z(BinaryReliability),    1,  Z_Nop },
+  { Zbool,    Cx0011, 0x0068,  Z(BinaryRelinquishDefault),1,  Z_Nop },
+  { Zmap8,    Cx0011, 0x006F,  Z(BinaryStatusFlags),    1,  Z_Nop },
+  { Zuint32,  Cx0011, 0x0100,  Z(BinaryApplicationType),1,  Z_Nop },
 
   // Multistate Input cluster
-  // { Zunk,     Cx0012, 0x000E,  Z(MultiInStateText),     &Z_Copy },
-  { Zstring,  Cx0012, 0x001C,  Z(MultiInDescription),   &Z_Copy },
-  { Zuint16,  Cx0012, 0x004A,  Z(MultiInNumberOfStates),&Z_Copy },
-  { Zbool,    Cx0012, 0x0051,  Z(MultiInOutOfService),  &Z_Copy },
-  { Zuint16,  Cx0012, 0x0055,  Z(MultiInValue),         &Z_AqaraCube },
-  { Zenum8,   Cx0012, 0x0067,  Z(MultiInReliability),   &Z_Copy },
-  { Zmap8,    Cx0012, 0x006F,  Z(MultiInStatusFlags),   &Z_Copy },
-  { Zuint32,  Cx0012, 0x0100,  Z(MultiInApplicationType),&Z_Copy },
+  // { Zunk,     Cx0012, 0x000E,  Z(MultiInStateText),     1,  Z_Nop },
+  { Zstring,  Cx0012, 0x001C,  Z(MultiInDescription),   1,  Z_Nop },
+  { Zuint16,  Cx0012, 0x004A,  Z(MultiInNumberOfStates),1,  Z_Nop },
+  { Zbool,    Cx0012, 0x0051,  Z(MultiInOutOfService),  1,  Z_Nop },
+  { Zuint16,  Cx0012, 0x0055,  Z(MultiInValue),         0,  Z_AqaraCube },
+  { Zenum8,   Cx0012, 0x0067,  Z(MultiInReliability),   1,  Z_Nop },
+  { Zmap8,    Cx0012, 0x006F,  Z(MultiInStatusFlags),   1,  Z_Nop },
+  { Zuint32,  Cx0012, 0x0100,  Z(MultiInApplicationType),1,  Z_Nop },
 
   // Multistate output
-  // { Zunk,     Cx0013, 0x000E,  Z(MultiOutStateText),    &Z_Copy },
-  { Zstring,  Cx0013, 0x001C,  Z(MultiOutDescription),  &Z_Copy },
-  { Zuint16,  Cx0013, 0x004A,  Z(MultiOutNumberOfStates),&Z_Copy },
-  { Zbool,    Cx0013, 0x0051,  Z(MultiOutOutOfService), &Z_Copy },
-  { Zuint16,  Cx0013, 0x0055,  Z(MultiOutValue),        &Z_Copy },
-  // { Zunk,     Cx0013, 0x0057,  Z(MultiOutPriorityArray),&Z_Copy },
-  { Zenum8,   Cx0013, 0x0067,  Z(MultiOutReliability),  &Z_Copy },
-  { Zuint16,  Cx0013, 0x0068,  Z(MultiOutRelinquishDefault),&Z_Copy },
-  { Zmap8,    Cx0013, 0x006F,  Z(MultiOutStatusFlags),  &Z_Copy },
-  { Zuint32,  Cx0013, 0x0100,  Z(MultiOutApplicationType),&Z_Copy },
+  // { Zunk,     Cx0013, 0x000E,  Z(MultiOutStateText),    1,  Z_Nop },
+  { Zstring,  Cx0013, 0x001C,  Z(MultiOutDescription),  1,  Z_Nop },
+  { Zuint16,  Cx0013, 0x004A,  Z(MultiOutNumberOfStates),1,  Z_Nop },
+  { Zbool,    Cx0013, 0x0051,  Z(MultiOutOutOfService), 1,  Z_Nop },
+  { Zuint16,  Cx0013, 0x0055,  Z(MultiOutValue),        1,  Z_Nop },
+  // { Zunk,     Cx0013, 0x0057,  Z(MultiOutPriorityArray),1,  Z_Nop },
+  { Zenum8,   Cx0013, 0x0067,  Z(MultiOutReliability),  1,  Z_Nop },
+  { Zuint16,  Cx0013, 0x0068,  Z(MultiOutRelinquishDefault),1,  Z_Nop },
+  { Zmap8,    Cx0013, 0x006F,  Z(MultiOutStatusFlags),  1,  Z_Nop },
+  { Zuint32,  Cx0013, 0x0100,  Z(MultiOutApplicationType),1,  Z_Nop },
 
   // Multistate Value cluster
-  // { Zunk,     Cx0014, 0x000E,  Z(MultiStateText),       &Z_Copy },
-  { Zstring,  Cx0014, 0x001C,  Z(MultiDescription),     &Z_Copy },
-  { Zuint16,  Cx0014, 0x004A,  Z(MultiNumberOfStates),  &Z_Copy },
-  { Zbool,    Cx0014, 0x0051,  Z(MultiOutOfService),    &Z_Copy },
-  { Zuint16,  Cx0014, 0x0055,  Z(MultiValue),           &Z_Copy },
-  { Zenum8,   Cx0014, 0x0067,  Z(MultiReliability),     &Z_Copy },
-  { Zuint16,  Cx0014, 0x0068,  Z(MultiRelinquishDefault),&Z_Copy },
-  { Zmap8,    Cx0014, 0x006F,  Z(MultiStatusFlags),     &Z_Copy },
-  { Zuint32,  Cx0014, 0x0100,  Z(MultiApplicationType), &Z_Copy },
+  // { Zunk,     Cx0014, 0x000E,  Z(MultiStateText),       1,  Z_Nop },
+  { Zstring,  Cx0014, 0x001C,  Z(MultiDescription),     1,  Z_Nop },
+  { Zuint16,  Cx0014, 0x004A,  Z(MultiNumberOfStates),  1,  Z_Nop },
+  { Zbool,    Cx0014, 0x0051,  Z(MultiOutOfService),    1,  Z_Nop },
+  { Zuint16,  Cx0014, 0x0055,  Z(MultiValue),           1,  Z_Nop },
+  { Zenum8,   Cx0014, 0x0067,  Z(MultiReliability),     1,  Z_Nop },
+  { Zuint16,  Cx0014, 0x0068,  Z(MultiRelinquishDefault),1,  Z_Nop },
+  { Zmap8,    Cx0014, 0x006F,  Z(MultiStatusFlags),     1,  Z_Nop },
+  { Zuint32,  Cx0014, 0x0100,  Z(MultiApplicationType), 1,  Z_Nop },
 
   // Power Profile cluster
-  { Zuint8,   Cx001A, 0x0000,  Z(TotalProfileNum),      &Z_Copy },
-  { Zbool,    Cx001A, 0x0001,  Z(MultipleScheduling),   &Z_Copy },
-  { Zmap8,    Cx001A, 0x0002,  Z(EnergyFormatting),     &Z_Copy },
-  { Zbool,    Cx001A, 0x0003,  Z(EnergyRemote),         &Z_Copy },
-  { Zmap8,    Cx001A, 0x0004,  Z(ScheduleMode),         &Z_Copy },
+  { Zuint8,   Cx001A, 0x0000,  Z(TotalProfileNum),      1,  Z_Nop },
+  { Zbool,    Cx001A, 0x0001,  Z(MultipleScheduling),   1,  Z_Nop },
+  { Zmap8,    Cx001A, 0x0002,  Z(EnergyFormatting),     1,  Z_Nop },
+  { Zbool,    Cx001A, 0x0003,  Z(EnergyRemote),         1,  Z_Nop },
+  { Zmap8,    Cx001A, 0x0004,  Z(ScheduleMode),         1,  Z_Nop },
 
   // Poll Control cluster
-  { Zuint32,  Cx0020, 0x0000,  Z(CheckinInterval),      &Z_Copy },
-  { Zuint32,  Cx0020, 0x0001,  Z(LongPollInterval),     &Z_Copy },
-  { Zuint16,  Cx0020, 0x0002,  Z(ShortPollInterval),    &Z_Copy },
-  { Zuint16,  Cx0020, 0x0003,  Z(FastPollTimeout),      &Z_Copy },
-  { Zuint32,  Cx0020, 0x0004,  Z(CheckinIntervalMin),   &Z_Copy },
-  { Zuint32,  Cx0020, 0x0005,  Z(LongPollIntervalMin),  &Z_Copy },
-  { Zuint16,  Cx0020, 0x0006,  Z(FastPollTimeoutMax),   &Z_Copy },
+  { Zuint32,  Cx0020, 0x0000,  Z(CheckinInterval),      1,  Z_Nop },
+  { Zuint32,  Cx0020, 0x0001,  Z(LongPollInterval),     1,  Z_Nop },
+  { Zuint16,  Cx0020, 0x0002,  Z(ShortPollInterval),    1,  Z_Nop },
+  { Zuint16,  Cx0020, 0x0003,  Z(FastPollTimeout),      1,  Z_Nop },
+  { Zuint32,  Cx0020, 0x0004,  Z(CheckinIntervalMin),   1,  Z_Nop },
+  { Zuint32,  Cx0020, 0x0005,  Z(LongPollIntervalMin),  1,  Z_Nop },
+  { Zuint16,  Cx0020, 0x0006,  Z(FastPollTimeoutMax),   1,  Z_Nop },
 
   // Shade Configuration cluster
-  { Zuint16,  Cx0100, 0x0000,  Z(PhysicalClosedLimit),  &Z_Copy },
-  { Zuint8,   Cx0100, 0x0001,  Z(MotorStepSize),        &Z_Copy },
-  { Zmap8,    Cx0100, 0x0002,  Z(Status),               &Z_Copy },
-  { Zuint16,  Cx0100, 0x0010,  Z(ClosedLimit),          &Z_Copy },
-  { Zenum8,   Cx0100, 0x0011,  Z(Mode),                 &Z_Copy },
+  { Zuint16,  Cx0100, 0x0000,  Z(PhysicalClosedLimit),  1,  Z_Nop },
+  { Zuint8,   Cx0100, 0x0001,  Z(MotorStepSize),        1,  Z_Nop },
+  { Zmap8,    Cx0100, 0x0002,  Z(Status),               1,  Z_Nop },
+  { Zuint16,  Cx0100, 0x0010,  Z(ClosedLimit),          1,  Z_Nop },
+  { Zenum8,   Cx0100, 0x0011,  Z(Mode),                 1,  Z_Nop },
 
   // Door Lock cluster
-  { Zenum8,   Cx0101, 0x0000,  Z(LockState),            &Z_Copy },
-  { Zenum8,   Cx0101, 0x0001,  Z(LockType),             &Z_Copy },
-  { Zbool,    Cx0101, 0x0002,  Z(ActuatorEnabled),      &Z_Copy },
-  { Zenum8,   Cx0101, 0x0003,  Z(DoorState),            &Z_Copy },
-  { Zuint32,  Cx0101, 0x0004,  Z(DoorOpenEvents),       &Z_Copy },
-  { Zuint32,  Cx0101, 0x0005,  Z(DoorClosedEvents),     &Z_Copy },
-  { Zuint16,  Cx0101, 0x0006,  Z(OpenPeriod),           &Z_Copy },
+  { Zenum8,   Cx0101, 0x0000,  Z(LockState),            1,  Z_Nop },
+  { Zenum8,   Cx0101, 0x0001,  Z(LockType),             1,  Z_Nop },
+  { Zbool,    Cx0101, 0x0002,  Z(ActuatorEnabled),      1,  Z_Nop },
+  { Zenum8,   Cx0101, 0x0003,  Z(DoorState),            1,  Z_Nop },
+  { Zuint32,  Cx0101, 0x0004,  Z(DoorOpenEvents),       1,  Z_Nop },
+  { Zuint32,  Cx0101, 0x0005,  Z(DoorClosedEvents),     1,  Z_Nop },
+  { Zuint16,  Cx0101, 0x0006,  Z(OpenPeriod),           1,  Z_Nop },
 
   // Aqara Lumi Vibration Sensor
-  { Zuint16,  Cx0101, 0x0055,  Z(AqaraVibrationMode),   &Z_AqaraVibration },
-  { Zuint16,  Cx0101, 0x0503,  Z(AqaraVibrationsOrAngle), &Z_Copy },
-  { Zuint32,  Cx0101, 0x0505,  Z(AqaraVibration505),    &Z_Copy },
-  { Zuint48,  Cx0101, 0x0508,  Z(AqaraAccelerometer),   &Z_AqaraVibration },
+  { Zuint16,  Cx0101, 0x0055,  Z(AqaraVibrationMode),   0,  Z_AqaraVibration },
+  { Zuint16,  Cx0101, 0x0503,  Z(AqaraVibrationsOrAngle), 1,  Z_Nop },
+  { Zuint32,  Cx0101, 0x0505,  Z(AqaraVibration505),    1,  Z_Nop },
+  { Zuint48,  Cx0101, 0x0508,  Z(AqaraAccelerometer),   0,  Z_AqaraVibration },
 
   // Window Covering cluster
-  { Zenum8,   Cx0102, 0x0000,  Z(WindowCoveringType),   &Z_Copy },
-  { Zuint16,  Cx0102, 0x0001,  Z(PhysicalClosedLimitLift),&Z_Copy },
-  { Zuint16,  Cx0102, 0x0002,  Z(PhysicalClosedLimitTilt),&Z_Copy },
-  { Zuint16,  Cx0102, 0x0003,  Z(CurrentPositionLift),  &Z_Copy },
-  { Zuint16,  Cx0102, 0x0004,  Z(CurrentPositionTilt),  &Z_Copy },
-  { Zuint16,  Cx0102, 0x0005,  Z(NumberofActuationsLift),&Z_Copy },
-  { Zuint16,  Cx0102, 0x0006,  Z(NumberofActuationsTilt),&Z_Copy },
-  { Zmap8,    Cx0102, 0x0007,  Z(ConfigStatus),         &Z_Copy },
-  { Zuint8,   Cx0102, 0x0008,  Z(CurrentPositionLiftPercentage),&Z_Copy },
-  { Zuint8,   Cx0102, 0x0009,  Z(CurrentPositionTiltPercentage),&Z_Copy },
-  { Zuint16,  Cx0102, 0x0010,  Z(InstalledOpenLimitLift),&Z_Copy },
-  { Zuint16,  Cx0102, 0x0011,  Z(InstalledClosedLimitLift),&Z_Copy },
-  { Zuint16,  Cx0102, 0x0012,  Z(InstalledOpenLimitTilt),&Z_Copy },
-  { Zuint16,  Cx0102, 0x0013,  Z(InstalledClosedLimitTilt),&Z_Copy },
-  { Zuint16,  Cx0102, 0x0014,  Z(VelocityLift),         &Z_Copy },
-  { Zuint16,  Cx0102, 0x0015,  Z(AccelerationTimeLift),&Z_Copy },
-  { Zuint16,  Cx0102, 0x0016,  Z(DecelerationTimeLift), &Z_Copy },
-  { Zmap8,    Cx0102, 0x0017,  Z(Mode),                 &Z_Copy },
-  { Zoctstr,  Cx0102, 0x0018,  Z(IntermediateSetpointsLift),&Z_Copy },
-  { Zoctstr,  Cx0102, 0x0019,  Z(IntermediateSetpointsTilt),&Z_Copy },
+  { Zenum8,   Cx0102, 0x0000,  Z(WindowCoveringType),   1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0001,  Z(PhysicalClosedLimitLift),1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0002,  Z(PhysicalClosedLimitTilt),1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0003,  Z(CurrentPositionLift),  1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0004,  Z(CurrentPositionTilt),  1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0005,  Z(NumberofActuationsLift),1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0006,  Z(NumberofActuationsTilt),1,  Z_Nop },
+  { Zmap8,    Cx0102, 0x0007,  Z(ConfigStatus),         1,  Z_Nop },
+  { Zuint8,   Cx0102, 0x0008,  Z(CurrentPositionLiftPercentage),1,  Z_Nop },
+  { Zuint8,   Cx0102, 0x0009,  Z(CurrentPositionTiltPercentage),1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0010,  Z(InstalledOpenLimitLift),1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0011,  Z(InstalledClosedLimitLift),1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0012,  Z(InstalledOpenLimitTilt),1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0013,  Z(InstalledClosedLimitTilt),1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0014,  Z(VelocityLift),         1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0015,  Z(AccelerationTimeLift),1,  Z_Nop },
+  { Zuint16,  Cx0102, 0x0016,  Z(DecelerationTimeLift), 1,  Z_Nop },
+  { Zmap8,    Cx0102, 0x0017,  Z(Mode),                 1,  Z_Nop },
+  { Zoctstr,  Cx0102, 0x0018,  Z(IntermediateSetpointsLift),1,  Z_Nop },
+  { Zoctstr,  Cx0102, 0x0019,  Z(IntermediateSetpointsTilt),1,  Z_Nop },
 
   // Color Control cluster
-  { Zuint8,   Cx0300, 0x0000,  Z(Hue),                  &Z_Copy },
-  { Zuint8,   Cx0300, 0x0001,  Z(Sat),                  &Z_Copy },
-  { Zuint16,  Cx0300, 0x0002,  Z(RemainingTime),        &Z_Copy },
-  { Zuint16,  Cx0300, 0x0003,  Z(X),                    &Z_Copy },
-  { Zuint16,  Cx0300, 0x0004,  Z(Y),                    &Z_Copy },
-  { Zenum8,   Cx0300, 0x0005,  Z(DriftCompensation),    &Z_Copy },
-  { Zstring,  Cx0300, 0x0006,  Z(CompensationText),     &Z_Copy },
-  { Zuint16,  Cx0300, 0x0007,  Z(CT),                   &Z_Copy },
-  { Zenum8,   Cx0300, 0x0008,  Z(ColorMode),            &Z_Copy },
-  { Zuint8,   Cx0300, 0x0010,  Z(NumberOfPrimaries),    &Z_Copy },
-  { Zuint16,  Cx0300, 0x0011,  Z(Primary1X),            &Z_Copy },
-  { Zuint16,  Cx0300, 0x0012,  Z(Primary1Y),            &Z_Copy },
-  { Zuint8,   Cx0300, 0x0013,  Z(Primary1Intensity),    &Z_Copy },
-  { Zuint16,  Cx0300, 0x0015,  Z(Primary2X),            &Z_Copy },
-  { Zuint16,  Cx0300, 0x0016,  Z(Primary2Y),            &Z_Copy },
-  { Zuint8,   Cx0300, 0x0017,  Z(Primary2Intensity),    &Z_Copy },
-  { Zuint16,  Cx0300, 0x0019,  Z(Primary3X),            &Z_Copy },
-  { Zuint16,  Cx0300, 0x001A,  Z(Primary3Y),            &Z_Copy },
-  { Zuint8,   Cx0300, 0x001B,  Z(Primary3Intensity),    &Z_Copy },
-  { Zuint16,  Cx0300, 0x0030,  Z(WhitePointX),          &Z_Copy },
-  { Zuint16,  Cx0300, 0x0031,  Z(WhitePointY),          &Z_Copy },
-  { Zuint16,  Cx0300, 0x0032,  Z(ColorPointRX),         &Z_Copy },
-  { Zuint16,  Cx0300, 0x0033,  Z(ColorPointRY),         &Z_Copy },
-  { Zuint8,   Cx0300, 0x0034,  Z(ColorPointRIntensity), &Z_Copy },
-  { Zuint16,  Cx0300, 0x0036,  Z(ColorPointGX),         &Z_Copy },
-  { Zuint16,  Cx0300, 0x0037,  Z(ColorPointGY),         &Z_Copy },
-  { Zuint8,   Cx0300, 0x0038,  Z(ColorPointGIntensity), &Z_Copy },
-  { Zuint16,  Cx0300, 0x003A,  Z(ColorPointBX),         &Z_Copy },
-  { Zuint16,  Cx0300, 0x003B,  Z(ColorPointBY),         &Z_Copy },
-  { Zuint8,   Cx0300, 0x003C,  Z(ColorPointBIntensity), &Z_Copy },
+  { Zuint8,   Cx0300, 0x0000,  Z(Hue),                  1,  Z_Nop },
+  { Zuint8,   Cx0300, 0x0001,  Z(Sat),                  1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0002,  Z(RemainingTime),        1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0003,  Z(X),                    1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0004,  Z(Y),                    1,  Z_Nop },
+  { Zenum8,   Cx0300, 0x0005,  Z(DriftCompensation),    1,  Z_Nop },
+  { Zstring,  Cx0300, 0x0006,  Z(CompensationText),     1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0007,  Z(CT),                   1,  Z_Nop },
+  { Zenum8,   Cx0300, 0x0008,  Z(ColorMode),            1,  Z_Nop },
+  { Zuint8,   Cx0300, 0x0010,  Z(NumberOfPrimaries),    1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0011,  Z(Primary1X),            1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0012,  Z(Primary1Y),            1,  Z_Nop },
+  { Zuint8,   Cx0300, 0x0013,  Z(Primary1Intensity),    1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0015,  Z(Primary2X),            1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0016,  Z(Primary2Y),            1,  Z_Nop },
+  { Zuint8,   Cx0300, 0x0017,  Z(Primary2Intensity),    1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0019,  Z(Primary3X),            1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x001A,  Z(Primary3Y),            1,  Z_Nop },
+  { Zuint8,   Cx0300, 0x001B,  Z(Primary3Intensity),    1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0030,  Z(WhitePointX),          1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0031,  Z(WhitePointY),          1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0032,  Z(ColorPointRX),         1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0033,  Z(ColorPointRY),         1,  Z_Nop },
+  { Zuint8,   Cx0300, 0x0034,  Z(ColorPointRIntensity), 1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0036,  Z(ColorPointGX),         1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x0037,  Z(ColorPointGY),         1,  Z_Nop },
+  { Zuint8,   Cx0300, 0x0038,  Z(ColorPointGIntensity), 1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x003A,  Z(ColorPointBX),         1,  Z_Nop },
+  { Zuint16,  Cx0300, 0x003B,  Z(ColorPointBY),         1,  Z_Nop },
+  { Zuint8,   Cx0300, 0x003C,  Z(ColorPointBIntensity), 1,  Z_Nop },
 
   // Illuminance Measurement cluster
-  { Zuint16,  Cx0400, 0x0000,  Z(Illuminance),           &Z_Copy },    // Illuminance (in Lux)
-  { Zuint16,  Cx0400, 0x0001,  Z(IlluminanceMinMeasuredValue),     &Z_Copy },    //
-  { Zuint16,  Cx0400, 0x0002,  Z(IlluminanceMaxMeasuredValue),     &Z_Copy },    //
-  { Zuint16,  Cx0400, 0x0003,  Z(IlluminanceTolerance),            &Z_Copy },    //
-  { Zenum8,   Cx0400, 0x0004,  Z(IlluminanceLightSensorType),      &Z_Copy },    //
-  { Zunk,     Cx0400, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
+  { Zuint16,  Cx0400, 0x0000,  Z(Illuminance),          1,  Z_Nop },    // Illuminance (in Lux)
+  { Zuint16,  Cx0400, 0x0001,  Z(IlluminanceMinMeasuredValue),     1,  Z_Nop },    //
+  { Zuint16,  Cx0400, 0x0002,  Z(IlluminanceMaxMeasuredValue),     1,  Z_Nop },    //
+  { Zuint16,  Cx0400, 0x0003,  Z(IlluminanceTolerance),            1,  Z_Nop },    //
+  { Zenum8,   Cx0400, 0x0004,  Z(IlluminanceLightSensorType),      1,  Z_Nop },    //
+  { Zunk,     Cx0400, 0xFFFF,  nullptr,                 0,  Z_Nop },    // Remove all other values
 
   // Illuminance Level Sensing cluster
-  { Zenum8,   Cx0401, 0x0000,  Z(IlluminanceLevelStatus),          &Z_Copy },    // Illuminance (in Lux)
-  { Zenum8,   Cx0401, 0x0001,  Z(IlluminanceLightSensorType),      &Z_Copy },    // LightSensorType
-  { Zuint16,  Cx0401, 0x0010,  Z(IlluminanceTargetLevel),          &Z_Copy },    //
-  { Zunk,     Cx0401, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
+  { Zenum8,   Cx0401, 0x0000,  Z(IlluminanceLevelStatus),          1,  Z_Nop },    // Illuminance (in Lux)
+  { Zenum8,   Cx0401, 0x0001,  Z(IlluminanceLightSensorType),      1,  Z_Nop },    // LightSensorType
+  { Zuint16,  Cx0401, 0x0010,  Z(IlluminanceTargetLevel),          1,  Z_Nop },    //
+  { Zunk,     Cx0401, 0xFFFF,  nullptr,                0, Z_Nop },    // Remove all other values
 
   // Temperature Measurement cluster
-  { Zint16,   Cx0402, 0x0000,  Z(Temperature),          &Z_FloatDiv100 },   // Temperature
-  { Zint16,   Cx0402, 0x0001,  Z(TemperatureMinMeasuredValue),     &Z_FloatDiv100 },    //
-  { Zint16,   Cx0402, 0x0002,  Z(TemperatureMaxMeasuredValue),     &Z_FloatDiv100 },    //
-  { Zuint16,  Cx0402, 0x0003,  Z(TemperatureTolerance),            &Z_FloatDiv100 },    //
-  { Zunk,     Cx0402, 0xFFFF,  nullptr,                &Z_Remove },     // Remove all other values
+  { Zint16,   Cx0402, 0x0000,  Z(Temperature),          -100, Z_Nop },   // divide by 100
+  { Zint16,   Cx0402, 0x0001,  Z(TemperatureMinMeasuredValue),     -100, Z_Nop },    //
+  { Zint16,   Cx0402, 0x0002,  Z(TemperatureMaxMeasuredValue),     -100, Z_Nop },    //
+  { Zuint16,  Cx0402, 0x0003,  Z(TemperatureTolerance),            -100, Z_Nop },    //
+  { Zunk,     Cx0402, 0xFFFF,  nullptr,                0, Z_Nop },     // Remove all other values
 
   // Pressure Measurement cluster
-  { Zunk,     Cx0403, 0x0000,  Z(PressureUnit),                 &Z_AddPressureUnit },     // Pressure Unit
-  { Zint16,   Cx0403, 0x0000,  Z(Pressure),                     &Z_Copy },     // Pressure
-  { Zint16,   Cx0403, 0x0001,  Z(PressureMinMeasuredValue),     &Z_Copy },    //
-  { Zint16,   Cx0403, 0x0002,  Z(PressureMaxMeasuredValue),     &Z_Copy },    //
-  { Zuint16,  Cx0403, 0x0003,  Z(PressureTolerance),            &Z_Copy },    //
-  { Zint16,   Cx0403, 0x0010,  Z(PressureScaledValue),          &Z_Copy },    //
-  { Zint16,   Cx0403, 0x0011,  Z(PressureMinScaledValue),       &Z_Copy },    //
-  { Zint16,   Cx0403, 0x0012,  Z(PressureMaxScaledValue),       &Z_Copy },    //
-  { Zuint16,  Cx0403, 0x0013,  Z(PressureScaledTolerance),      &Z_Copy },    //
-  { Zint8,    Cx0403, 0x0014,  Z(PressureScale),                &Z_Copy },    //
-  { Zunk,     Cx0403, 0xFFFF,  nullptr,                &Z_Remove },     // Remove all other Pressure values
+  { Zunk,     Cx0403, 0x0000,  Z(PressureUnit),                 0, Z_AddPressureUnit },     // Pressure Unit
+  { Zint16,   Cx0403, 0x0000,  Z(Pressure),                     1,  Z_Nop },     // Pressure
+  { Zint16,   Cx0403, 0x0001,  Z(PressureMinMeasuredValue),     1,  Z_Nop },    //
+  { Zint16,   Cx0403, 0x0002,  Z(PressureMaxMeasuredValue),     1,  Z_Nop },    //
+  { Zuint16,  Cx0403, 0x0003,  Z(PressureTolerance),            1,  Z_Nop },    //
+  { Zint16,   Cx0403, 0x0010,  Z(PressureScaledValue),          1,  Z_Nop },    //
+  { Zint16,   Cx0403, 0x0011,  Z(PressureMinScaledValue),       1,  Z_Nop },    //
+  { Zint16,   Cx0403, 0x0012,  Z(PressureMaxScaledValue),       1,  Z_Nop },    //
+  { Zuint16,  Cx0403, 0x0013,  Z(PressureScaledTolerance),      1,  Z_Nop },    //
+  { Zint8,    Cx0403, 0x0014,  Z(PressureScale),                1,  Z_Nop },    //
+  { Zunk,     Cx0403, 0xFFFF,  nullptr,                0, Z_Nop },     // Remove all other Pressure values
 
   // Flow Measurement cluster
-  { Zuint16,  Cx0404, 0x0000,  Z(FlowRate),             &Z_FloatDiv10 },    // Flow (in m3/h)
-  { Zuint16,  Cx0404, 0x0001,  Z(FlowMinMeasuredValue), &Z_Copy },    //
-  { Zuint16,  Cx0404, 0x0002,  Z(FlowMaxMeasuredValue), &Z_Copy },    //
-  { Zuint16,  Cx0404, 0x0003,  Z(FlowTolerance),        &Z_Copy },    //
-  { Zunk,     Cx0404, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
+  { Zuint16,  Cx0404, 0x0000,  Z(FlowRate),             -10, Z_Nop },    // Flow (in m3/h)
+  { Zuint16,  Cx0404, 0x0001,  Z(FlowMinMeasuredValue), 1,  Z_Nop },    //
+  { Zuint16,  Cx0404, 0x0002,  Z(FlowMaxMeasuredValue), 1,  Z_Nop },    //
+  { Zuint16,  Cx0404, 0x0003,  Z(FlowTolerance),        1,  Z_Nop },    //
+  { Zunk,     Cx0404, 0xFFFF,  nullptr,                 0,  Z_Nop },    // Remove all other values
 
   // Relative Humidity Measurement cluster
-  { Zuint16,  Cx0405, 0x0000,  Z(Humidity),             &Z_FloatDiv100 },   // Humidity
-  { Zuint16,  Cx0405, 0x0001,  Z(HumidityMinMeasuredValue),     &Z_Copy },    //
-  { Zuint16,  Cx0405, 0x0002,  Z(HumidityMaxMeasuredValue),     &Z_Copy },    //
-  { Zuint16,  Cx0405, 0x0003,  Z(HumidityTolerance),            &Z_Copy },    //
-  { Zunk,     Cx0405, 0xFFFF,  nullptr,                &Z_Remove },     // Remove all other values
+  { Zuint16,  Cx0405, 0x0000,  Z(Humidity),                     -100, Z_Nop },   // Humidity
+  { Zuint16,  Cx0405, 0x0001,  Z(HumidityMinMeasuredValue),     1,  Z_Nop },    //
+  { Zuint16,  Cx0405, 0x0002,  Z(HumidityMaxMeasuredValue),     1,  Z_Nop },    //
+  { Zuint16,  Cx0405, 0x0003,  Z(HumidityTolerance),            1,  Z_Nop },    //
+  { Zunk,     Cx0405, 0xFFFF,  nullptr,                0, Z_Nop },     // Remove all other values
 
   // Occupancy Sensing cluster
-  { Zmap8,    Cx0406, 0x0000,  Z(Occupancy),            &Z_Copy },    // Occupancy (map8)
-  { Zenum8,   Cx0406, 0x0001,  Z(OccupancySensorType),  &Z_Copy },    // OccupancySensorType
-  { Zunk,     Cx0406, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
+  { Zmap8,    Cx0406, 0x0000,  Z(Occupancy),            1,  Z_Nop },    // Occupancy (map8)
+  { Zenum8,   Cx0406, 0x0001,  Z(OccupancySensorType),  1,  Z_Nop },    // OccupancySensorType
+  { Zunk,     Cx0406, 0xFFFF,  nullptr,                0, Z_Nop },    // Remove all other values
 
   // Meter Identification cluster
-  { Zstring,  Cx0B01, 0x0000,  Z(CompanyName),          &Z_Copy },
-  { Zuint16,  Cx0B01, 0x0001,  Z(MeterTypeID),          &Z_Copy },
-  { Zuint16,  Cx0B01, 0x0004,  Z(DataQualityID),        &Z_Copy },
-  { Zstring,  Cx0B01, 0x0005,  Z(CustomerName),         &Z_Copy },
-  { Zoctstr,  Cx0B01, 0x0006,  Z(Model),                &Z_Copy },
-  { Zoctstr,  Cx0B01, 0x0007,  Z(PartNumber),           &Z_Copy },
-  { Zoctstr,  Cx0B01, 0x0008,  Z(ProductRevision),      &Z_Copy },
-  { Zoctstr,  Cx0B01, 0x000A,  Z(SoftwareRevision),     &Z_Copy },
-  { Zstring,  Cx0B01, 0x000B,  Z(UtilityName),          &Z_Copy },
-  { Zstring,  Cx0B01, 0x000C,  Z(POD),                  &Z_Copy },
-  { Zint24,   Cx0B01, 0x000D,  Z(AvailablePower),       &Z_Copy },
-  { Zint24,   Cx0B01, 0x000E,  Z(PowerThreshold),       &Z_Copy },
+  { Zstring,  Cx0B01, 0x0000,  Z(CompanyName),          1,  Z_Nop },
+  { Zuint16,  Cx0B01, 0x0001,  Z(MeterTypeID),          1,  Z_Nop },
+  { Zuint16,  Cx0B01, 0x0004,  Z(DataQualityID),        1,  Z_Nop },
+  { Zstring,  Cx0B01, 0x0005,  Z(CustomerName),         1,  Z_Nop },
+  { Zoctstr,  Cx0B01, 0x0006,  Z(Model),                1,  Z_Nop },
+  { Zoctstr,  Cx0B01, 0x0007,  Z(PartNumber),           1,  Z_Nop },
+  { Zoctstr,  Cx0B01, 0x0008,  Z(ProductRevision),      1,  Z_Nop },
+  { Zoctstr,  Cx0B01, 0x000A,  Z(SoftwareRevision),     1,  Z_Nop },
+  { Zstring,  Cx0B01, 0x000B,  Z(UtilityName),          1,  Z_Nop },
+  { Zstring,  Cx0B01, 0x000C,  Z(POD),                  1,  Z_Nop },
+  { Zint24,   Cx0B01, 0x000D,  Z(AvailablePower),       1,  Z_Nop },
+  { Zint24,   Cx0B01, 0x000E,  Z(PowerThreshold),       1,  Z_Nop },
 
   // Diagnostics cluster
-  { Zuint16,  Cx0B05, 0x0000,  Z(NumberOfResets),       &Z_Copy },
-  { Zuint16,  Cx0B05, 0x0001,  Z(PersistentMemoryWrites),&Z_Copy },
-  { Zuint8,   Cx0B05, 0x011C,  Z(LastMessageLQI),       &Z_Copy },
-  { Zuint8,   Cx0B05, 0x011D,  Z(LastMessageRSSI),      &Z_Copy },
+  { Zuint16,  Cx0B05, 0x0000,  Z(NumberOfResets),       1,  Z_Nop },
+  { Zuint16,  Cx0B05, 0x0001,  Z(PersistentMemoryWrites),1,  Z_Nop },
+  { Zuint8,   Cx0B05, 0x011C,  Z(LastMessageLQI),       1,  Z_Nop },
+  { Zuint8,   Cx0B05, 0x011D,  Z(LastMessageRSSI),      1,  Z_Nop },
 
 };
 
@@ -650,7 +662,7 @@ public:
   }
 
   static void generateAttributeName(const JsonObject& json, uint16_t cluster, uint16_t attr, char *key, size_t key_len);
-  void parseRawAttributes(JsonObject& json, uint8_t offset = 0);
+  void parseReportAttributes(JsonObject& json, uint8_t offset = 0);
   void parseReadAttributes(JsonObject& json, uint8_t offset = 0);
   void parseReadAttributesResponse(JsonObject& json, uint8_t offset = 0);
   void parseResponse(void);
@@ -734,36 +746,50 @@ uint8_t toPercentageCR2032(uint32_t voltage) {
 // - 1 byte: attribute type
 // - n bytes: value (typically between 1 and 4 bytes, or bigger for strings)
 // returns number of bytes of attribute, or <0 if error
-int32_t encodeSingleAttribute(class SBuffer &buf, const JsonVariant &val, uint16_t attr, uint8_t attrtype) {
+// status: shall we insert a status OK (0x00) as required by ReadResponse
+int32_t encodeSingleAttribute(class SBuffer &buf, const JsonVariant &val, float val_f, uint16_t attr, uint8_t attrtype, bool status = false) {
   uint32_t len = Z_getDatatypeLen(attrtype);    // pre-compute lenght, overloaded for variable length attributes
+  uint32_t u32;
+  int32_t  i32;
+  float    f32;
 
-  uint32_t u32 = val.as<uint32_t>();
-  int32_t  i32 = val.as<int32_t>();
-  float    f32 = val.as<float>();
+  if (&val) {
+    u32 = val.as<uint32_t>();
+    i32 = val.as<int32_t>();
+    f32 = val.as<float>();
+  } else {
+    u32 = val_f;
+    i32 = val_f;
+    f32 = val_f;
+  }
 
   buf.add16(attr);        // prepend with attribute identifier
+  if (status) {
+    buf.add8(Z_SUCCESS);  // status OK = 0x00
+  }
   buf.add8(attrtype);     // prepend with attribute type
 
   switch (attrtype) {
     // unsigned 8
-    case Zbool:      // bool
+    case Zbool:       // bool
     case Zuint8:      // uint8
     case Zenum8:      // enum8
     case Zdata8:      // data8
-    case Zmap8:      // map8
+    case Zmap8:       // map8
       buf.add8(u32);
       break;
     // unsigned 16
-    case Zuint16:      // uint16
-    case Zenum16:      // enum16
-    case Zdata16:      // data16
+    case Zuint16:     // uint16
+    case Zenum16:     // enum16
+    case Zdata16:     // data16
     case Zmap16:      // map16
       buf.add16(u32);
       break;
     // unisgned 32
-    case Zuint32:      // uint32
-    case Zdata32:      // data32
+    case Zuint32:     // uint32
+    case Zdata32:     // data32
     case Zmap32:      // map32
+    case ZUTC:        // UTC - epoch 32 bits, seconds since 1-Jan-2000
       buf.add32(u32);
       break;
 
@@ -786,7 +812,7 @@ int32_t encodeSingleAttribute(class SBuffer &buf, const JsonVariant &val, uint16
     case Zstring:
     case Zstring16:
       {
-        const char * val_str = val.as<const char*>();
+        const char * val_str = (&val) ? val.as<const char*>() : "";   // avoid crash if &val is null
         if (nullptr == val_str) { return -2; }
         size_t val_len = strlen(val_str);
         if (val_len > 32) { val_len = 32; }
@@ -804,10 +830,10 @@ int32_t encodeSingleAttribute(class SBuffer &buf, const JsonVariant &val, uint16
 
     default:
       // remove the attribute type we just added
-      buf.setLen(buf.len() - 3);
+      buf.setLen(buf.len() - (status ? 4 : 3));
       return -1;
   }
-  return len + 3;
+  return len + (status ? 4 : 3);
 }
 
 uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer &buf,
@@ -848,6 +874,7 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
       }
       break;
     case Zuint32:      // uint32
+    case ZUTC:      // UTC
       {
         uint32_t uint32_val = buf.get32(i);
         // i += 4;
@@ -974,7 +1001,6 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
     // TODO
     case ZToD:      // ToD
     case Zdate:      // date
-    case ZUTC:      // UTC
     case ZclusterId:      // clusterId
     case ZattribId:      // attribId
     case ZbacOID:      // bacOID
@@ -1028,7 +1054,7 @@ void ZCLFrame::generateAttributeName(const JsonObject& json, uint16_t cluster, u
 }
 
 // First pass, parse all attributes in their native format
-void ZCLFrame::parseRawAttributes(JsonObject& json, uint8_t offset) {
+void ZCLFrame::parseReportAttributes(JsonObject& json, uint8_t offset) {
   uint32_t i = offset;
   uint32_t len = _payload.len();
 
@@ -1083,7 +1109,7 @@ void ZCLFrame::parseReadAttributesResponse(JsonObject& json, uint8_t offset) {
   uint32_t i = offset;
   uint32_t len = _payload.len();
 
-  while (len >= 4 + i) {
+  while (len >= i + 4) {
     uint16_t attrid = _payload.get16(i);
     i += 2;
     uint8_t status = _payload.get8(i++);
@@ -1148,48 +1174,36 @@ void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
 
 // ======================================================================
 // Record Manuf
-int32_t Z_ManufKeep(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
+int32_t Z_ManufKeepFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = value;
   zigbee_devices.setManufId(shortaddr, value.as<const char*>());
   return 1;
 }
 //
-int32_t Z_ModelKeep(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
+int32_t Z_ModelKeepFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = value;
   zigbee_devices.setModelId(shortaddr, value.as<const char*>());
   return 1;
 }
 
-// ======================================================================
-// Remove attribute
-int32_t Z_Remove(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
-  return 1;   // remove original key
-}
-
-// Copy value as-is
-int32_t Z_Copy(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
-  json[new_name] = value;
-  return 1;   // remove original key
-}
-
 // Add pressure unit
-int32_t Z_AddPressureUnit(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
+int32_t Z_AddPressureUnitFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = F(D_UNIT_PRESSURE);
   return 0;   // keep original key
 }
 
 // Convert int to float and divide by 100
-int32_t Z_FloatDiv100(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
+int32_t Z_FloatDiv100Func(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = ((float)value) / 100.0f;
   return 1;   // remove original key
 }
 // Convert int to float and divide by 10
-int32_t Z_FloatDiv10(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
+int32_t Z_FloatDiv10Func(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = ((float)value) / 10.0f;
   return 1;   // remove original key
 }
 // Convert int to float and divide by 10
-int32_t Z_FloatDiv2(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
+int32_t Z_FloatDiv2Func(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = ((float)value) / 2.0f;
   return 1;   // remove original key
 }
@@ -1203,7 +1217,7 @@ int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t clu
 }
 
 // Aqara Cube
-int32_t Z_AqaraCube(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
+int32_t Z_AqaraCubeFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = value;   // copy the original value
   int32_t val = value;
   const __FlashStringHelper *aqara_cube = F("AqaraCube");
@@ -1262,7 +1276,7 @@ int32_t Z_AqaraCube(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& j
 }
 
 // Aqara Vibration Sensor - special proprietary attributes
-int32_t Z_AqaraVibration(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
+int32_t Z_AqaraVibrationFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
   //json[new_name] = value;
   switch (attr) {
     case 0x0055:
@@ -1313,7 +1327,7 @@ int32_t Z_AqaraVibration(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObje
   return 1;   // remove original key
 }
 
-int32_t Z_AqaraSensor(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
+int32_t Z_AqaraSensorFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
   String hex = value;
   SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
   uint32_t i = 0;
@@ -1372,6 +1386,50 @@ int32_t Z_AqaraSensor(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject&
   return 1;   // remove original key
 }
 // ======================================================================
+
+// apply the transformation from the converter
+int32_t Z_ApplyConverter(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name,
+                        uint16_t cluster, uint16_t attr, int16_t multiplier, uint16_t cb) {
+  // apply multiplier if needed
+  if (1 == multiplier) {          // copy unchanged
+      json[new_name] = value;
+  } else if (0 != multiplier) {
+      if (multiplier > 0) {
+        json[new_name] = ((float)value) * multiplier;
+      } else {
+        json[new_name] = ((float)value) / multiplier;
+      }
+  }
+
+  // apply callback if needed
+  Z_AttrConverter func = nullptr;
+  switch (cb) {
+    case Z_Nop:
+      return 1;             // drop original key
+    case Z_AddPressureUnit:
+      func = &Z_AddPressureUnitFunc;
+      break;
+    case Z_ManufKeep:
+      func = &Z_ManufKeepFunc;
+      break;
+    case Z_ModelKeep:
+      func = &Z_ModelKeepFunc;
+      break;
+    case Z_AqaraSensor:
+      func = &Z_AqaraSensorFunc;
+      break;
+    case Z_AqaraVibration:
+      func = &Z_AqaraVibrationFunc;
+      break;
+    case Z_AqaraCube:
+      func = &Z_AqaraCubeFunc;
+      break;
+  };
+
+  if (func) {
+    return (*func)(zcl, shortaddr, json, name, value, new_name, cluster, attr);
+  }
+}
 
 void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
   // iterate on json elements
@@ -1434,12 +1492,15 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
         const Z_AttributeConverter *converter = &Z_PostProcess[i];
         uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
         uint16_t conv_attribute = pgm_read_word(&converter->attribute);
+        int16_t  conv_multiplier = pgm_read_word(&converter->multiplier);
+        uint16_t conv_cb = pgm_read_word(&converter->cb);                   // callback id
 
         if ((conv_cluster == cluster) &&
             ((conv_attribute == attribute) || (conv_attribute == 0xFFFF)) ) {
           String new_name_str = (const __FlashStringHelper*) converter->name;
           if (suffix > 1) { new_name_str += suffix; }   // append suffix number
-          int32_t drop = (*converter->func)(this, shortaddr, json, key, value, new_name_str, conv_cluster, conv_attribute);
+          // apply the transformation
+          int32_t drop = Z_ApplyConverter(this, shortaddr, json, key, value, new_name_str, conv_cluster, conv_attribute, conv_multiplier, conv_cb);
           if (drop) {
             json.remove(key);
           }

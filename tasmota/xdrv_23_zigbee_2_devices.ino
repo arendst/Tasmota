@@ -526,6 +526,8 @@ void Z_Devices::addEndpoint(uint16_t shortaddr, uint8_t endpoint) {
 
 // Find the first endpoint of the device
 uint8_t Z_Devices::findFirstEndpoint(uint16_t shortaddr) const {
+  // When in router of end-device mode, the coordinator was not probed, in this case always talk to endpoint 1
+  if (0x0000 == shortaddr) { return 1; }
   int32_t found = findShortAddr(shortaddr);
   if (found < 0)  return 0;     // avoid creating an entry if the device was never seen
   const Z_Device &device = devicesAt(found);

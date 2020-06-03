@@ -384,7 +384,6 @@ enum ZCL_Global_Commands {
   ZCL_DEFAULT_RESPONSE = 0x0b,
   ZCL_DISCOVER_ATTRIBUTES = 0x0c,
   ZCL_DISCOVER_ATTRIBUTES_RESPONSE = 0x0d
-
 };
 
 #define ZF(s) static const char ZS_ ## s[] PROGMEM = #s;
