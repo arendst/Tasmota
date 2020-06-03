@@ -385,6 +385,9 @@ void GetFeatures(void)
 #ifdef USE_AZ7798
   feature_sns2 |= 0x00040000;  // xsns_38_az7798.ino
 #endif
+#ifdef USE_MAX6675
+  feature_sns2 |= 0x00080000;  // xsns_39_max31855.ino
+#endif
 #ifdef USE_MAX31855
   feature_sns2 |= 0x00080000;  // xsns_39_max31855.ino
 #endif

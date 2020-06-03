@@ -145,6 +145,9 @@ enum UserSelectablePins {
   GPIO_RF_SENSOR,      // Rf receiver with sensor decoding
   GPIO_AZ_TXD,         // AZ-Instrument 7798 Serial interface
   GPIO_AZ_RXD,         // AZ-Instrument 7798 Serial interface
+  GPIO_MAX6675CS,      // MAX6675 Serial interface
+  GPIO_MAX6675CLK,     // MAX6675 Serial interface
+  GPIO_MAX6675DO,      // MAX6675 Serial interface
   GPIO_MAX31855CS,     // MAX31855 Serial interface
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
@@ -285,6 +288,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SSPI_MISO "|" D_SENSOR_SSPI_MOSI "|" D_SENSOR_SSPI_SCLK "|" D_SENSOR_SSPI_CS "|" D_SENSOR_SSPI_DC "|"
   D_SENSOR_RF_SENSOR "|"
   D_SENSOR_AZ_TX "|" D_SENSOR_AZ_RX "|"
+  D_SENSOR_MAX6675_CS "|" D_SENSOR_MAX6675_CLK "|" D_SENSOR_MAX6675_DO "|"
   D_SENSOR_MAX31855_CS "|" D_SENSOR_MAX31855_CLK "|" D_SENSOR_MAX31855_DO "|"
   D_SENSOR_BUTTON "1i|" D_SENSOR_BUTTON "2i|" D_SENSOR_BUTTON "3i|" D_SENSOR_BUTTON "4i|"
   D_SENSOR_BUTTON "1in|" D_SENSOR_BUTTON "2in|" D_SENSOR_BUTTON "3in|" D_SENSOR_BUTTON "4in|"
@@ -639,6 +643,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MGC3130
   GPIO_MGC3130_XFER,
   GPIO_MGC3130_RESET,
+#endif
+#ifdef USE_MAX6675
+  GPIO_MAX6675CS,      // MAX6675 Serial interface
+  GPIO_MAX6675CLK,     // MAX6675 Serial interface
+  GPIO_MAX6675DO,      // MAX6675 Serial interface
 #endif
 #ifdef USE_MAX31855
   GPIO_MAX31855CS,     // MAX31855 Serial interface
