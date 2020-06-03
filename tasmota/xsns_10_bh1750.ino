@@ -170,7 +170,7 @@ void Bh1750Show(bool json) {
       char sensor_name[10];
       strlcpy(sensor_name, Bh1750.types, sizeof(sensor_name));
       if (Bh1750.count > 1) {
-        snprintf_P(sensor_name, sizeof(sensor_name), PSTR("%s%c%d"), sensor_name, IndexSeparator(), sensor_index +1);  // BH1750-1
+        snprintf_P(sensor_name, sizeof(sensor_name), PSTR("%s%c%02X"), sensor_name, IndexSeparator(), Bh1750_sensors[sensor_index].address);  // BH1750-23
       }
 
       if (json) {
