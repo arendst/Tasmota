@@ -117,7 +117,7 @@ void RotaryHandler(void)
         Rotary.changed = 1;
         // button1 is pressed: set color temperature
         int16_t t = LightGetColorTemp();
-        t = t + (Rotary.position - Rotary.last_position);
+        t = t + ((Rotary.position - Rotary.last_position) * 4);
         if (t < 153) {
           t = 153;
         }
