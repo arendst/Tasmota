@@ -7,6 +7,7 @@
 - Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)
 - Fix escape of non-JSON received serial data (#8329)
 - Add command ``Time 4`` to display timestamp using milliseconds (#8537)
+- Add command ``SetOption94 0/1`` to select MAX31855 or MAX6675 thermocouple support (#8616)
 - Add commands ``LedPwmOn 0..255``, ``LedPwmOff 0..255`` and ``LedPwmMode1 0/1`` to control led brightness by George (#8491)
 - Add Three Phase Export Active Energy to SDM630 driver
 - Add wildcard pattern ``?`` for JSON matching in rules
