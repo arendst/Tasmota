@@ -83,7 +83,7 @@ void WindMeterUpdateSpeed(void)
   if (time_diff > Settings.windmeter_pulse_debounce * 1000) {
     WindMeter.counter_time = time;
     WindMeter.counter++;
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
   }
 }
 
