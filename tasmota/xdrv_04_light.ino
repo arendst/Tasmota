@@ -1429,6 +1429,10 @@ void LightGetHSB(uint16_t *hue, uint8_t *sat, uint8_t *bri) {
   light_state.getHSB(hue, sat, bri);
 }
 
+void LightGetXY(float *X, float *Y) {
+  light_state.getXY(X, Y);
+}
+
 void LightHsToRgb(uint16_t hue, uint8_t sat, uint8_t *r_r, uint8_t *r_g, uint8_t *r_b) {
   light_state.HsToRgb(hue, sat, r_r, r_g, r_b);
 }

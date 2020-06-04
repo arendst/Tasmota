@@ -89,7 +89,7 @@ const JsonVariant &GetCaseInsensitive(const JsonObject &json, const char *needle
   // key can be in PROGMEM
   // if needle == "?" then we return the first valid key
   bool wildcard = strcmp_P("?", needle) == 0;
-  if ((nullptr == &json) || (nullptr == needle) || (0 == pgm_read_byte(needle))) {
+  if ((nullptr == &json) || (nullptr == needle) || (0 == pgm_read_byte(needle)) || (!json.success())) {
     return *(JsonVariant*)nullptr;
   }
 
@@ -103,4 +103,10 @@ const JsonVariant &GetCaseInsensitive(const JsonObject &json, const char *needle
   }
   // if not found
   return *(JsonVariant*)nullptr;
+}
+
+// This function returns true if the JsonObject contains the specified key
+// It's just a wrapper to the previous function but it can be tricky to test nullptr on an object ref
+bool HasKeyCaseInsensitive(const JsonObject &json, const char *needle) {
+  return &GetCaseInsensitive(json, needle) != nullptr;
 }

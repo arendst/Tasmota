@@ -528,6 +528,7 @@
 #define D_CMND_ZIGBEE_SEND "Send"
 #define D_CMND_ZIGBEE_WRITE "Write"
 #define D_CMND_ZIGBEE_REPORT "Report"
+#define D_CMND_ZIGBEE_RESPONSE "Response"
   #define D_JSON_ZIGBEE_ZCL_SENT "ZbZCLSent"
 #define D_JSON_ZIGBEE_RECEIVED "ZbReceived"
 #define D_CMND_ZIGBEE_BIND "Bind"
