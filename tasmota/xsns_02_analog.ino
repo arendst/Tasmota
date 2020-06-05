@@ -201,7 +201,7 @@ void AdcEverySecond(void)
   if (ADC0_TEMP == my_adc0) {
     int adc = AdcRead(2);
     // Steinhart-Hart equation for thermistor as temperature sensor
-    double Rt = (adc * Settings.adc_param1) / (1024.0 * ANALOG_V33 - (double)adc);
+    double Rt = (adc * Settings.adc_param1) / (1024.0 - (double)adc);
     double BC = (double)Settings.adc_param3 / 10000;
     double T = BC / (BC / ANALOG_T0 + TaylorLog(Rt / (double)Settings.adc_param2));
     Adc.temperature = ConvertTemp(TO_CELSIUS(T));
