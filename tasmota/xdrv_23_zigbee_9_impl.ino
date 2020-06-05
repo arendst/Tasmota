@@ -483,7 +483,7 @@ void ZbSendReportWrite(const JsonObject &val_pubwrite, uint16_t device, uint16_t
       if (multiplier > 0) {         // inverse of decoding
         val_f = val_f / multiplier;
       } else {
-        val_f = val_f * multiplier;
+        val_f = val_f * (-multiplier);
       }
       use_val = false;
     }
