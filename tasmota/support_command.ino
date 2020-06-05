@@ -38,7 +38,11 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|"
 #endif  // USE_DEVICE_GROUPS
-  D_CMND_SENSOR "|" D_CMND_DRIVER;
+  D_CMND_SENSOR "|" D_CMND_DRIVER
+#ifdef ESP32
+   "|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM
+#endif //ESP32
+  ;
 
 void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBacklog, &CmndDelay, &CmndPower, &CmndStatus, &CmndState, &CmndSleep, &CmndUpgrade, &CmndUpgrade, &CmndOtaUrl,
@@ -61,7 +65,11 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS_SEND
   &CmndDevGroupShare, &CmndDevGroupStatus,
 #endif  // USE_DEVICE_GROUPS
-  &CmndSensor, &CmndDriver };
+  &CmndSensor, &CmndDriver
+#ifdef ESP32
+  ,&CmndTouchCal, &CmndTouchThres, &CmndTouchNum
+#endif //ESP32
+  };
 
 const char kWifiConfig[] PROGMEM =
   D_WCFG_0_RESTART "||" D_WCFG_2_WIFIMANAGER "||" D_WCFG_4_RETRY "|" D_WCFG_5_WAIT "|" D_WCFG_6_SERIAL "|" D_WCFG_7_WIFIMANAGER_RESET_ONLY;
@@ -436,14 +444,14 @@ void CmndStatus(void)
                           ",\"" D_JSON_BOOTVERSION "\":%d"
 #endif
                           ",\"" D_JSON_COREVERSION "\":\"" ARDUINO_CORE_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
-                          "\"Hardware\":\"%s\""
+                          "\"CpuFrequency\":%d,\"Hardware\":\"%s\""
                           "%s}}"),
                           my_version, my_image, GetBuildDateAndTime().c_str()
 #ifdef ESP8266
                           , ESP.getBootVersion()
 #endif
                           , ESP.getSdkVersion(),
-                          GetDeviceHardware().c_str(),
+                          ESP.getCpuFreqMHz(), GetDeviceHardware().c_str(),
                           GetStatistics().c_str());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
   }
@@ -468,7 +476,7 @@ void CmndStatus(void)
 #ifdef ESP8266
                           ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
 #endif
-                          ",\"" D_JSON_FLASHMODE "\":%d,\""
+                          ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":%d,\""
                           D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
                           ESP_getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP_getFreeHeap()/1024,
 #ifdef ESP32
@@ -478,7 +486,7 @@ void CmndStatus(void)
 #ifdef ESP8266
                           , ESP.getFlashChipId()
 #endif
-                          , ESP.getFlashChipMode(),
+                          , ESP.getFlashChipSpeed()/1000000, ESP.getFlashChipMode(),
                           LANGUAGE_LCID, feature_drv1, feature_drv2, feature_sns1, feature_sns2, feature5, feature6);
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
@@ -1946,3 +1954,41 @@ void CmndDriver(void)
 {
   XdrvCall(FUNC_COMMAND_DRIVER);
 }
+
+#ifdef ESP32
+void CmndTouchCal(void)
+{
+  if (XdrvMailbox.payload >= 0) {
+    if (XdrvMailbox.payload < MAX_KEYS + 1) TOUCH_BUTTON.calibration = bitSet(TOUCH_BUTTON.calibration, XdrvMailbox.payload);
+    if (XdrvMailbox.payload == 0) TOUCH_BUTTON.calibration = 0;
+    if (XdrvMailbox.payload == 255) TOUCH_BUTTON.calibration = 255; // all pinss
+  }
+  Response_P(PSTR("{\"" D_CMND_TOUCH_CAL "\": %u"), TOUCH_BUTTON.calibration);
+  ResponseJsonEnd();
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("Button Touchvalue Hits,"));
+}
+
+void CmndTouchThres(void)
+{
+  if (XdrvMailbox.payload >= 0) {
+    if (XdrvMailbox.payload<256){
+      TOUCH_BUTTON.pin_threshold = XdrvMailbox.payload;
+    }
+  }
+  Response_P(PSTR("{\"" D_CMND_TOUCH_THRES "\": %u"), TOUCH_BUTTON.pin_threshold);
+  ResponseJsonEnd();
+}
+
+void CmndTouchNum(void)
+{
+  if (XdrvMailbox.payload >= 0) {
+    if (XdrvMailbox.payload<32){
+      TOUCH_BUTTON.hit_threshold = XdrvMailbox.payload;
+    }
+  }
+  Response_P(PSTR("{\"" D_CMND_TOUCH_NUM "\": %u"), TOUCH_BUTTON.hit_threshold);
+  ResponseJsonEnd();
+
+}
+
+#endif //ESP32

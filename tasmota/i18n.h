@@ -147,6 +147,7 @@
 #define D_JSON_SPEED "Speed"
 #define D_JSON_SPEED_UNIT "SpeedUnit"
 #define D_JSON_SSID "SSId"
+#define D_JSON_STAGE "Stage"
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
 #define D_JSON_STARTUPUTC "StartupUTC"
@@ -319,6 +320,11 @@
 #define D_CMND_HUMOFFSET "HumOffset"
 #define D_CMND_GLOBAL_TEMP "GlobalTemp"
 #define D_CMND_GLOBAL_HUM "GlobalHum"
+#ifdef ESP32
+#define D_CMND_TOUCH_CAL "TouchCal"
+#define D_CMND_TOUCH_THRES "TouchThres"
+#define D_CMND_TOUCH_NUM "TouchNum"
+#endif //ESP32
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTLOG "MqttLog"
@@ -513,10 +519,16 @@
 #define D_CMND_ZIGBEE_FORGET "Forget"
 #define D_CMND_ZIGBEE_SAVE "Save"
   #define D_CMND_ZIGBEE_LINKQUALITY "LinkQuality"
+  #define D_CMND_ZIGBEE_CLUSTER "Cluster"
   #define D_CMND_ZIGBEE_ENDPOINT "Endpoint"
   #define D_CMND_ZIGBEE_GROUP "Group"
+  #define D_CMND_ZIGBEE_MANUF "Manuf"
+  #define D_CMND_ZIGBEE_DEVICE "Device"
 #define D_CMND_ZIGBEE_READ "Read"
 #define D_CMND_ZIGBEE_SEND "Send"
+#define D_CMND_ZIGBEE_WRITE "Write"
+#define D_CMND_ZIGBEE_REPORT "Report"
+#define D_CMND_ZIGBEE_RESPONSE "Response"
   #define D_JSON_ZIGBEE_ZCL_SENT "ZbZCLSent"
 #define D_JSON_ZIGBEE_RECEIVED "ZbReceived"
 #define D_CMND_ZIGBEE_BIND "Bind"

@@ -154,6 +154,7 @@
 #define USE_HRXL                                 // Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
 //#define USE_TASMOTA_SLAVE                        // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 //#define USE_OPENTHERM                            // Add support for OpenTherm (+15k code)
+//#define USE_MCP9808                            // Add support for MCP9808 temperature sensor (+0k9 code)
 
 #define USE_ENERGY_SENSOR                        // Add energy sensors (-14k code)
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)

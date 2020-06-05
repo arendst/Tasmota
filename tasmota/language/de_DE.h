@@ -107,7 +107,7 @@
 #define D_HOST "Host"
 #define D_HOSTNAME "Hostname"
 #define D_HUMIDITY "Feuchtigkeit"
-#define D_ILLUMINANCE "Beleuchtungsintensität"
+#define D_ILLUMINANCE "Beleuchtungsstärke"
 #define D_IMMEDIATE "direkt"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"

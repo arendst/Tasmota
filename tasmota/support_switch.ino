@@ -26,6 +26,8 @@
 \*********************************************************************************************/
 
 const uint8_t SWITCH_PROBE_INTERVAL = 10;   // Time in milliseconds between switch input probe
+const uint8_t SWITCH_FAST_PROBE_INTERVAL =2;// Time in milliseconds between switch input probe for AC detection
+const uint8_t AC_PERIOD = (20 + SWITCH_FAST_PROBE_INTERVAL - 1) / SWITCH_FAST_PROBE_INTERVAL;   // Duration of an AC wave in probe intervals
 
 #include <Ticker.h>
 
@@ -38,6 +40,7 @@ struct SWITCH {
   uint8_t last_state[MAX_SWITCHES];          // Last wall switch states
   uint8_t hold_timer[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
   uint8_t virtual_state[MAX_SWITCHES];       // Virtual switch states
+  uint8_t first_change = 0;
   uint8_t present = 0;
 } Switch;
 
@@ -81,60 +84,136 @@ void SwitchProbe(void)
 {
   if (uptime < 4) { return; }                           // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
-  uint8_t state_filter = Settings.switch_debounce / SWITCH_PROBE_INTERVAL;   // 5, 10, 15
-  uint8_t force_high = (Settings.switch_debounce % 50) &1;                   // 51, 101, 151 etc
-  uint8_t force_low = (Settings.switch_debounce % 50) &2;                    // 52, 102, 152 etc
+  uint8_t state_filter;
+  uint8_t debounce_flags = Settings.switch_debounce % 10;
+  uint8_t force_high = debounce_flags &1;                   // 51, 101, 151 etc
+  uint8_t force_low = debounce_flags &2;                    // 52, 102, 152 etc
+  uint8_t ac_detect = debounce_flags == 9;
+  uint8_t switch_probe_interval;
+  uint8_t first_change = Switch.first_change;
+
+  if (ac_detect) {
+    switch_probe_interval = SWITCH_FAST_PROBE_INTERVAL;
+    if (Settings.switch_debounce < 2 * AC_PERIOD * SWITCH_FAST_PROBE_INTERVAL + 9) {
+      state_filter = 2 * AC_PERIOD;
+    } else if (Settings.switch_debounce > (0x7f - 2 * AC_PERIOD) * SWITCH_FAST_PROBE_INTERVAL) {
+      state_filter = 0x7f;
+    } else {
+      state_filter = (Settings.switch_debounce - 9) / SWITCH_FAST_PROBE_INTERVAL;
+    }
+  } else {
+    switch_probe_interval = SWITCH_PROBE_INTERVAL;
+    state_filter = Settings.switch_debounce / SWITCH_PROBE_INTERVAL;	// 5, 10, 15
+  }
 
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     if (PinUsed(GPIO_SWT1, i)) {
       // Olimex user_switch2.c code to fix 50Hz induced pulses
       if (1 == digitalRead(Pin(GPIO_SWT1, i))) {
 
-        if (force_high) {                               // Enabled with SwitchDebounce x1
-          if (1 == Switch.virtual_state[i]) {
-            Switch.state[i] = state_filter;         // With noisy input keep current state 1 unless constant 0
+        if (ac_detect) {                                // Enabled with SwitchDebounce x9
+          Switch.state[i] |= 0x80;
+          if (Switch.state[i] > 0x80) {
+            Switch.state[i]--;
+            if (0x80 == Switch.state[i]) {
+              Switch.virtual_state[i] = 0;
+              Switch.first_change = false;
+            }
           }
-        }
+        } else {
 
-        if (Switch.state[i] < state_filter) {
-          Switch.state[i]++;
-          if (state_filter == Switch.state[i]) {
-            Switch.virtual_state[i] = 1;
+          if (force_high) {                             // Enabled with SwitchDebounce x1
+            if (1 == Switch.virtual_state[i]) {
+              Switch.state[i] = state_filter;       // With noisy input keep current state 1 unless constant 0
+            }
+          }
+
+          if (Switch.state[i] < state_filter) {
+            Switch.state[i]++;
+            if (state_filter == Switch.state[i]) {
+              Switch.virtual_state[i] = 1;
+            }
           }
         }
       } else {
 
-        if (force_low) {                                // Enabled with SwitchDebounce x2
-          if (0 == Switch.virtual_state[i]) {
-            Switch.state[i] = 0;                    // With noisy input keep current state 0 unless constant 1
+        if (ac_detect) {                                // Enabled with SwitchDebounce x9
+          /*
+           * Moes MS-104B and similar devices using an AC detection circuitry
+           * on their switch inputs generating an ~4 ms long low pulse every
+           * AC wave. We start the time measurement on the falling edge.
+           *
+           * state: bit7: previous state, bit6..0: counter
+           */
+          if (Switch.state[i] & 0x80) {
+            Switch.state[i] &= 0x7f;
+            if (Switch.state[i] < state_filter - 2 * AC_PERIOD) {
+              Switch.state[i] += 2 * AC_PERIOD;
+            } else {
+              Switch.state[i] = state_filter;
+              Switch.virtual_state[i] = 1;
+              if (first_change) {
+                Switch.last_state[i] = 1;
+                Switch.first_change = false;
+              }
+            }
+          } else {
+            if (Switch.state[i] > 0x00) {
+              Switch.state[i]--;
+              if (0x00 == Switch.state[i]) {
+                Switch.virtual_state[i] = 0;
+                Switch.first_change = false;
+              }
+            }
           }
-        }
+        } else {
 
-        if (Switch.state[i] > 0) {
-          Switch.state[i]--;
-          if (0 == Switch.state[i]) {
-            Switch.virtual_state[i] = 0;
+          if (force_low) {                              // Enabled with SwitchDebounce x2
+            if (0 == Switch.virtual_state[i]) {
+              Switch.state[i] = 0;                  // With noisy input keep current state 0 unless constant 1
+            }
+          }
+
+          if (Switch.state[i] > 0) {
+            Switch.state[i]--;
+            if (0 == Switch.state[i]) {
+              Switch.virtual_state[i] = 0;
+            }
           }
         }
       }
     }
   }
-  TickerSwitch.attach_ms(SWITCH_PROBE_INTERVAL, SwitchProbe);  // Re-arm as core 2.3.0 does only support ONCE mode
+  TickerSwitch.attach_ms(switch_probe_interval, SwitchProbe);  // Re-arm as core 2.3.0 does only support ONCE mode
 }
 
 void SwitchInit(void)
 {
+  uint8_t ac_detect = Settings.switch_debounce % 10 == 9;
+
   Switch.present = 0;
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     Switch.last_state[i] = 1;  // Init global to virtual switch state;
     if (PinUsed(GPIO_SWT1, i)) {
       Switch.present++;
       pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_SWT1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
-      Switch.last_state[i] = digitalRead(Pin(GPIO_SWT1, i));  // Set global now so doesn't change the saved power state on first switch check
+      if (ac_detect) {
+        Switch.state[i] = 0x80 + 2 * AC_PERIOD;
+        Switch.last_state[i] = 0;				// Will set later in the debouncing code
+      } else {
+        Switch.last_state[i] = digitalRead(Pin(GPIO_SWT1, i));  // Set global now so doesn't change the saved power state on first switch check
+      }
     }
     Switch.virtual_state[i] = Switch.last_state[i];
   }
-  if (Switch.present) { TickerSwitch.attach_ms(SWITCH_PROBE_INTERVAL, SwitchProbe); }
+  if (Switch.present) {
+    if (ac_detect) {
+      TickerSwitch.attach_ms(SWITCH_FAST_PROBE_INTERVAL, SwitchProbe);
+      Switch.first_change = true;
+    } else {
+      TickerSwitch.attach_ms(SWITCH_PROBE_INTERVAL, SwitchProbe);
+    }
+  }
 }
 
 /*********************************************************************************************\

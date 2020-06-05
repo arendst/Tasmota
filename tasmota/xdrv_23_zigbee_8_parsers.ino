@@ -653,22 +653,28 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   JsonObject& json = jsonBuffer.createObject();
   
   if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_DEFAULT_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseResponse();
+      zcl_received.parseResponse();   // Zigbee general "Degault Response", publish ZbResponse message
   } else {  
     // Build the ZbReceive json
     if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
-      zcl_received.parseRawAttributes(json);
+      zcl_received.parseReportAttributes(json);    // Zigbee report attributes from sensors
       if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseReadAttributes(json);
+      zcl_received.parseReadAttributesResponse(json);
       if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
+    } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES == zcl_received.getCmdId())) {
+      zcl_received.parseReadAttributes(json);
+      // never defer read_attributes, so the auto-responder can send response back on a per cluster basis
     } else if (zcl_received.isClusterSpecificCommand()) {
       zcl_received.parseClusterSpecificCommand(json);
     }
-    String msg("");
-    msg.reserve(100);
-    json.printTo(msg);
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":%s}"), srcaddr, msg.c_str());
+
+    {   // fence to force early de-allocation of msg
+      String msg("");
+      msg.reserve(100);
+      json.printTo(msg);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":%s}"), srcaddr, msg.c_str());
+    }
 
     zcl_received.postProcessAttributes(srcaddr, json);
     // Add Endpoint
@@ -698,6 +704,9 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
     } else {
       // Publish immediately
       zigbee_devices.jsonPublishNow(srcaddr, json);
+
+      // Add auto-responder here
+      Z_AutoResponder(srcaddr, clusterid, srcendpoint, json[F("ReadNames")]);
     }
   }
   return -1;
@@ -812,6 +821,76 @@ int32_t Z_Query_Bulbs(uint8_t value) {
 int32_t Z_State_Ready(uint8_t value) {
   zigbee.init_phase = false;             // initialization phase complete
   return 0;                              // continue
+}
+
+//
+// Auto-responder for Read request from extenal devices.
+//
+// Mostly used for routers/end-devices
+// json: holds the attributes in JSON format
+void Z_AutoResponder(uint16_t srcaddr, uint16_t cluster, uint8_t endpoint, const JsonObject &json) {
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& json_out = jsonBuffer.createObject();
+
+  // responder
+  switch (cluster) {
+    case 0x0000:
+      if (HasKeyCaseInsensitive(json, PSTR("ModelId")))           { json_out[F("ModelId")] = F("Tasmota Z2T"); }
+      if (HasKeyCaseInsensitive(json, PSTR("Manufacturer")))      { json_out[F("Manufacturer")] = F("Tasmota"); }
+      break;
+#ifdef USE_LIGHT
+    case 0x0006:
+      if (HasKeyCaseInsensitive(json, PSTR("Power")))             { json_out[F("Power")] = Light.power ? 1 : 0; }
+      break;
+    case 0x0008:
+      if (HasKeyCaseInsensitive(json, PSTR("Dimmer")))            { json_out[F("Dimmer")] = LightGetDimmer(0); }
+      break;
+    case 0x0300:
+      {
+      uint16_t hue;
+      uint8_t  sat;
+      float XY[2];
+      LightGetHSB(&hue, &sat, nullptr);
+      LightGetXY(&XY[0], &XY[1]);
+      uint16_t uxy[2];
+      for (uint32_t i = 0; i < ARRAY_SIZE(XY); i++) {
+        uxy[i] = XY[i] * 65536.0f;
+        uxy[i] = (uxy[i] > 0xFEFF) ? uxy[i] : 0xFEFF;
+      }
+      if (HasKeyCaseInsensitive(json, PSTR("Hue")))               { json_out[F("Hue")] = changeUIntScale(hue, 0, 360, 0, 254); }
+      if (HasKeyCaseInsensitive(json, PSTR("Sat")))               { json_out[F("Sat")] = changeUIntScale(sat, 0, 255, 0, 254); }
+      if (HasKeyCaseInsensitive(json, PSTR("CT")))                { json_out[F("CT")] = LightGetColorTemp(); }
+      if (HasKeyCaseInsensitive(json, PSTR("X")))                 { json_out[F("X")] = uxy[0]; }
+      if (HasKeyCaseInsensitive(json, PSTR("Y")))                 { json_out[F("Y")] = uxy[1]; }
+      }
+      break;
+#endif
+    case 0x000A:    // Time
+      if (HasKeyCaseInsensitive(json, PSTR("Time")))              { json_out[F("Time")] = Rtc.utc_time; }
+      if (HasKeyCaseInsensitive(json, PSTR("TimeStatus")))        { json_out[F("TimeStatus")] = (Rtc.utc_time > (60 * 60 * 24 * 365 * 10)) ? 0x02 : 0x00; }  // if time is beyond 2010 then we are synchronized
+      if (HasKeyCaseInsensitive(json, PSTR("TimeZone")))          { json_out[F("TimeZone")] = Settings.toffset[0] * 60; }   // seconds
+      break;
+  }
+
+  if (json_out.size() > 0) {
+    // we have a non-empty output
+
+    // log first
+    String msg("");
+    msg.reserve(100);
+    json_out.printTo(msg);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("ZIG: Auto-responder: ZbSend {\"Device\":\"0x%04X\""
+                                          ",\"Cluster\":\"0x%04X\""
+                                          ",\"Endpoint\":%d"
+                                          ",\"Response\":%s}"
+                                          ),
+                                          srcaddr, cluster, endpoint,
+                                          msg.c_str());
+
+    // send
+    const JsonVariant &json_out_v = json_out;
+    ZbSendReportWrite(json_out_v, srcaddr, 0 /* group */,cluster, endpoint, 0 /* manuf */, ZCL_READ_ATTRIBUTES_RESPONSE);
+  }
 }
 
 #endif // USE_ZIGBEE

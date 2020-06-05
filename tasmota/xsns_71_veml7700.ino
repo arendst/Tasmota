@@ -37,12 +37,27 @@ Adafruit_VEML7700 veml7700 = Adafruit_VEML7700(); //create object copy
 const char HTTP_SNS_WHITE[] PROGMEM = "{s}%s " D_WHITE_CONTENT "{m}%d {e}";
 const char JSON_SNS_VEML7700[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_WHITE_CONTENT "\":%d}";
 
+#define D_CMND_VEML7700_PWR "power"
+#define D_CMND_VEML7700_GAIN "gain"
+#define D_CMND_VEML7700_INTTIME "inttime"
+
+const char S_JSON_VEML7700_COMMAND_NVALUE[] PROGMEM = "{\"" D_NAME_VEML7700 "\":{\"%s\":%d}}";
+const char kVEML7700_Commands[] PROGMEM  = D_CMND_VEML7700_PWR "|" D_CMND_VEML7700_GAIN "|" D_CMND_VEML7700_INTTIME;
+
+enum VEML7700_Commands {         // commands for Console
+  CMND_VEML7700_PWR,
+  CMND_VEML7700_GAIN,
+  CMND_VEML7700_SET_IT,
+  };
+
 struct VEML7700STRUCT
 {
   char types[9]   = D_NAME_VEML7700;
   uint8_t address = VEML7700_I2CADDR_DEFAULT;
-  uint16_t lux = 0;
-  uint16_t white = 0;
+  //uint16_t lux = 0;
+  //uint16_t white = 0;
+  uint16_t lux_normalized = 0;
+  uint16_t white_normalized = 0;
 } veml7700_sensor;
 
 uint8_t veml7700_active = 0;
@@ -50,34 +65,102 @@ uint8_t veml7700_active = 0;
 /********************************************************************************************/
 
 void VEML7700Detect(void) {
-  if (I2cActive(veml7700_sensor.address)) return;
+  if (!I2cSetDevice(veml7700_sensor.address)) return;
   if (veml7700.begin()) {
     I2cSetActiveFound(veml7700_sensor.address, veml7700_sensor.types);
     veml7700_active = 1;
   }
 }
 
+uint16_t VEML7700TranslateItMs (uint8_t ittime){
+  switch (ittime) {
+    case 0:  return 100;
+    case 1:  return 200;
+    case 2:  return 400;
+    case 3:  return 800;
+    case 8:  return 50;
+    case 12: return 25;
+    default: return 0xFFFF;
+  }
+}
+
+uint8_t VEML7700TranslateItInt (uint16_t ittimems){
+  switch (ittimems) {
+    case 100: return 0;
+    case 200: return 1;
+    case 400: return 2;
+    case 800: return 3;
+    case 50:  return 8;
+    case 25:  return 12;
+    default:  return 0xFF;
+  }
+}
+
 void VEML7700EverySecond(void) {
-    veml7700_sensor.lux = (uint16_t) veml7700.readLux();
-    veml7700_sensor.white = (uint16_t) veml7700.readWhite();
+    veml7700_sensor.lux_normalized = (uint16_t) veml7700.readLuxNormalized();
+    veml7700_sensor.white_normalized = (uint16_t) veml7700.readWhiteNormalized();
+    //veml7700_sensor.lux = (uint16_t) veml7700.readLux();
+    //veml7700_sensor.white = (uint16_t) veml7700.readWhite();
 }
 
 void VEML7700Show(bool json)
 {
   if (json) {
-    ResponseAppend_P(JSON_SNS_VEML7700, D_NAME_VEML7700, veml7700_sensor.lux, veml7700_sensor.white);
+    ResponseAppend_P(JSON_SNS_VEML7700, D_NAME_VEML7700, veml7700_sensor.lux_normalized, veml7700_sensor.white_normalized);
 
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, veml7700_sensor.lux);
+      if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, veml7700_sensor.lux_normalized);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_ILLUMINANCE, D_NAME_VEML7700, veml7700_sensor.lux);
-    WSContentSend_PD(HTTP_SNS_WHITE, D_NAME_VEML7700, veml7700_sensor.white);
+    WSContentSend_PD(HTTP_SNS_ILLUMINANCE, D_NAME_VEML7700, veml7700_sensor.lux_normalized);
+    WSContentSend_PD(HTTP_SNS_WHITE, D_NAME_VEML7700, veml7700_sensor.white_normalized);
 #endif // USE_WEBSERVER
   }
 }
 
+bool VEML7700Cmd(void) {
+  char command[CMDSZ];
+  uint8_t name_len = strlen(D_NAME_VEML7700);
+  if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_NAME_VEML7700), name_len)) {
+    uint32_t command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + name_len, kVEML7700_Commands);
+    switch (command_code) {
+      case CMND_VEML7700_PWR:
+        if (XdrvMailbox.data_len) {
+          if (2 >= XdrvMailbox.payload) {
+            veml7700.enable(XdrvMailbox.payload);
+          }
+        }
+        Response_P(S_JSON_VEML7700_COMMAND_NVALUE, command, veml7700.enabled());
+       break;
+      case CMND_VEML7700_GAIN:
+        if (XdrvMailbox.data_len) {
+          if (4 >= XdrvMailbox.payload) {
+            veml7700.setGain(XdrvMailbox.payload);
+          }
+        }
+        Response_P(S_JSON_VEML7700_COMMAND_NVALUE, command, veml7700.getGain());
+        break;
+      case CMND_VEML7700_SET_IT: {
+        if (XdrvMailbox.data_len) {
+          uint8_t data = VEML7700TranslateItInt(XdrvMailbox.payload);
+          if (0xFF != data) {
+            veml7700.setIntegrationTime(data);
+          }
+        }
+        uint16_t dataret = VEML7700TranslateItMs(veml7700.getIntegrationTime());
+        Response_P(S_JSON_VEML7700_COMMAND_NVALUE, command, dataret);
+      }
+      break;
+    default:
+      return false;
+    }
+    return true;
+  }
+  else {
+    return false;
+  }
+}
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -97,7 +180,7 @@ bool Xsns71(uint8_t function)
         VEML7700EverySecond();
         break;
       case FUNC_COMMAND:
-        //result = VEML7700Cmd();
+        result = VEML7700Cmd();
         break;
       case FUNC_JSON_APPEND:
         VEML7700Show(1);

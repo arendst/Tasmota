@@ -61,6 +61,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix escape of non-JSON received serial data (#8329)
 - Add command ``Rule0`` to change global rule parameters
 - Add command ``Time 4`` to display timestamp using milliseconds (#8537)
+- Add command ``SetOption94 0/1`` to select MAX31855 or MAX6675 thermocouple support (#8616)
 - Add commands ``LedPwmOn 0..255``, ``LedPwmOff 0..255`` and ``LedPwmMode1 0/1`` to control led brightness by George (#8491)
 - Add support for unique MQTTClient (and inherited fallback topic) by full Mac address using ``mqttclient DVES_%12X`` (#8300)
 - Add more functionality to ``Switchmode`` 11 and 12 (#8450)
@@ -68,3 +69,9 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)
 - Add support for VEML7700 Ambient light intensity Sensor by device111 (#8432)
 - Add Three Phase Export Active Energy to SDM630 driver
+- Add Zigbee options to ``ZbSend`` to write and report attributes
+- Add Zigbee auto-responder for common attributes
+- Add ``CpuFrequency`` to ``status 2``
+- Add ``FlashFrequency`` to ``status 4``
+- Add support for up to two BH1750 sensors controlled by commands ``BH1750Resolution`` and ``BH1750MTime`` (#8139)
+- Add support for up to eight MCP9808 temperature sensors by device111 (#8594)

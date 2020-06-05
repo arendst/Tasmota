@@ -113,7 +113,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t fade_at_startup : 1;          // bit 9 (v8.2.0.3)   - SetOption91 - Enable light fading at start/power on
     uint32_t pwm_ct_mode : 1;              // bit 10 (v8.2.0.4)  - SetOption92 - Set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...)
     uint32_t compress_rules_cpu : 1;       // bit 11 (v8.2.0.6)  - SetOption93 - Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick
-    uint32_t spare12 : 1;
+    uint32_t max6675 : 1;                  // bit 12 (v8.3.1.2)  - SetOption94 - Implement simpler MAX6675 protocol instead of MAX31855
     uint32_t spare13 : 1;
     uint32_t spare14 : 1;
     uint32_t spare15 : 1;
@@ -232,9 +232,8 @@ typedef union {
   struct {
     uint8_t spare0 : 1;
     uint8_t spare1 : 1;
-    uint8_t spare2 : 1;
-    uint8_t spare3 : 1;
-    uint8_t bh1750_resolution : 2;         // Sensor10 1,2,3
+    uint8_t bh1750_2_resolution : 2;
+    uint8_t bh1750_1_resolution : 2;       // Sensor10 1,2,3
     uint8_t hx711_json_weight_change : 1;  // Sensor34 8,x - Enable JSON message on weight change
     uint8_t mhz19b_abc_disable : 1;        // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
   };

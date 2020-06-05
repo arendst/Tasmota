@@ -72,3 +72,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   48  | USE_AS3935          | xsns_67 | AS3935   | 0x03        | Franklin Lightning Sensor
   49  | USE_VEML6075        | xsns_70 | VEML6075 | 0x10        | UVA/UVB/UVINDEX Sensor
   50  | USE_VEML7700        | xsns_71 | VEML7700 | 0x10        | Ambient light intensity sensor
+  51  | USE_MCP9808         | xsns_72 | MCP9808  | 0x18 - 0x1F | Temperature sensor
