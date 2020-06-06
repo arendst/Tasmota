@@ -58,8 +58,8 @@ float const windmeter_pi = 3.1415926535897932384626433;  // Pi
 float const windmeter_2pi = windmeter_pi * 2;
 
 struct WINDMETER {
-  uint32_t counter_time;
-  unsigned long counter = 0;
+  volatile uint32_t counter_time;
+  volatile unsigned long counter = 0;
   //uint32_t speed_time;
   float speed = 0;
   float last_tele_speed = 0;
