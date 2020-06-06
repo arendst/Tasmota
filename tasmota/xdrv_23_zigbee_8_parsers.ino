@@ -866,7 +866,8 @@ void Z_AutoResponder(uint16_t srcaddr, uint16_t cluster, uint8_t endpoint, const
       break;
 #endif
     case 0x000A:    // Time
-      if (HasKeyCaseInsensitive(json, PSTR("Time")))              { json_out[F("Time")] = Rtc.utc_time; }
+      if (HasKeyCaseInsensitive(json, PSTR("Time")))              { json_out[F("Time")] = (Rtc.utc_time > (60 * 60 * 24 * 365 * 10)) ? Rtc.utc_time - 946684800 : Rtc.utc_time; }
+      if (HasKeyCaseInsensitive(json, PSTR("TimeEpoch")))         { json_out[F("TimeEpoch")] = Rtc.utc_time; }
       if (HasKeyCaseInsensitive(json, PSTR("TimeStatus")))        { json_out[F("TimeStatus")] = (Rtc.utc_time > (60 * 60 * 24 * 365 * 10)) ? 0x02 : 0x00; }  // if time is beyond 2010 then we are synchronized
       if (HasKeyCaseInsensitive(json, PSTR("TimeZone")))          { json_out[F("TimeZone")] = Settings.toffset[0] * 60; }   // seconds
       break;
