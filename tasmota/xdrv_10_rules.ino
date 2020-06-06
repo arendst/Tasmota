@@ -210,15 +210,15 @@ char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
  */
 /*******************************************************************************************/
 
-#ifdef USE_RULES_COMPRESSION
+#ifdef USE_UNISHOX_COMPRESSION
 // Statically allocate one String per rule
 String k_rules[MAX_RULE_SETS] = { String(), String(), String() };   // Strings are created empty
 // Unishox compressor;   // singleton
-#endif // USE_RULES_COMPRESSION
+#endif // USE_UNISHOX_COMPRESSION
 
 // Returns whether the rule is uncompressed, which means the first byte is not NULL
 inline bool IsRuleUncompressed(uint32_t idx) {
-#ifdef USE_RULES_COMPRESSION
+#ifdef USE_UNISHOX_COMPRESSION
   return Settings.rules[idx][0] ? true : false;      // first byte not NULL, the rule is not empty and not compressed
 #else
   return true;
@@ -227,7 +227,7 @@ inline bool IsRuleUncompressed(uint32_t idx) {
 
 // Returns whether the rule is empty, which requires two consecutive NULL
 inline bool IsRuleEmpty(uint32_t idx) {
-#ifdef USE_RULES_COMPRESSION
+#ifdef USE_UNISHOX_COMPRESSION
   return (Settings.rules[idx][0] == 0) && (Settings.rules[idx][1] == 0) ? true : false;
 #else
   return (Settings.rules[idx][0] == 0) ? true : false;
@@ -236,7 +236,7 @@ inline bool IsRuleEmpty(uint32_t idx) {
 
 // Returns the approximate (+3-0) length of the rule, not counting the trailing NULL
 size_t GetRuleLen(uint32_t idx) {
-  // no need to use #ifdef USE_RULES_COMPRESSION, the compiler will optimize since first test is always true
+  // no need to use #ifdef USE_UNISHOX_COMPRESSION, the compiler will optimize since first test is always true
   if (IsRuleUncompressed(idx)) {
     return strlen(Settings.rules[idx]);
   } else {                        // either empty or compressed
@@ -246,7 +246,7 @@ size_t GetRuleLen(uint32_t idx) {
 
 // Returns the actual Flash storage for the Rule, including trailing NULL
 size_t GetRuleLenStorage(uint32_t idx) {
-#ifdef USE_RULES_COMPRESSION
+#ifdef USE_UNISHOX_COMPRESSION
   if (Settings.rules[idx][0] || !Settings.rules[idx][1]) {    // if first byte is non-NULL it is uncompressed, if second byte is NULL, then it's either uncompressed or empty
     return 1 + strlen(Settings.rules[idx]);   // uncompressed or empty
   } else {
@@ -257,7 +257,7 @@ size_t GetRuleLenStorage(uint32_t idx) {
 #endif
 }
 
-#ifdef USE_RULES_COMPRESSION
+#ifdef USE_UNISHOX_COMPRESSION
 // internal function, do the actual decompression
 void GetRule_decompress(String &rule, const char *rule_head) {
   size_t buf_len = 1 + *rule_head * 8;       // the first byte contains size of buffer for uncompressed rule / 8, buf_len may overshoot by 7
@@ -265,7 +265,7 @@ void GetRule_decompress(String &rule, const char *rule_head) {
 
   rule = Decompress(rule_head, buf_len);
 }
-#endif // USE_RULES_COMPRESSION
+#endif // USE_UNISHOX_COMPRESSION
 
 //
 // Read rule in memory, uncompress if needed
@@ -275,7 +275,7 @@ String GetRule(uint32_t idx) {
   if (IsRuleUncompressed(idx)) {
     return String(Settings.rules[idx]);
   } else {
-#ifdef USE_RULES_COMPRESSION    // we still do #ifdef to make sure we don't link unnecessary code
+#ifdef USE_UNISHOX_COMPRESSION    // we still do #ifdef to make sure we don't link unnecessary code
 
     String rule("");
     if (Settings.rules[idx][1] == 0) { return rule; }     // the rule is empty
@@ -295,7 +295,7 @@ String GetRule(uint32_t idx) {
   }
 }
 
-#ifdef USE_RULES_COMPRESSION
+#ifdef USE_UNISHOX_COMPRESSION
 // internal function, comrpess rule and store a cached version uncompressed (except if SetOption94 1)
 // If out == nullptr, we are in dry-run mode, so don't keep rule in cache
 int32_t SetRule_compress(uint32_t idx, const char *in, size_t in_len, char *out, size_t out_len) {
@@ -312,7 +312,7 @@ int32_t SetRule_compress(uint32_t idx, const char *in, size_t in_len, char *out,
   }
   return len_compressed;
 }
-#endif // USE_RULES_COMPRESSION
+#endif // USE_UNISHOX_COMPRESSION
 
 // Returns:
 //   >= 0 : the actual stored size
@@ -343,7 +343,7 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
       Settings.rules[idx][1] = 0;
     }
 
-#ifdef USE_RULES_COMPRESSION
+#ifdef USE_UNISHOX_COMPRESSION
     if (0 != len_in + offset) {
       // do a dry-run compression to display how much it would be compressed
       int32_t len_compressed, len_uncompressed;
@@ -353,11 +353,11 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
       AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: Stored uncompressed, would compress from %d to %d (-%d%%)"), len_uncompressed, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_uncompressed, 0, 100));
     }
 
-#endif // USE_RULES_COMPRESSION
+#endif // USE_UNISHOX_COMPRESSION
 
     return len_in + offset;
   } else {
-#ifdef USE_RULES_COMPRESSION
+#ifdef USE_UNISHOX_COMPRESSION
     int32_t len_compressed;
     // allocate temp buffer so we don't nuke the rule if it's too big to fit
     char *buf_out = (char*) malloc(MAX_RULE_SIZE + 8);    // take some margin
@@ -390,9 +390,9 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
     free(buf_out);
     return len_compressed;
 
-#else  // USE_RULES_COMPRESSION
+#else  // USE_UNISHOX_COMPRESSION
     return -1;                                // the rule does not fit and we can't compress
-#endif // USE_RULES_COMPRESSION
+#endif // USE_UNISHOX_COMPRESSION
   }
 
 }

@@ -85,7 +85,7 @@ void WemoRespondToMSearch(int echo_type)
  * Wemo web server additions
 \*********************************************************************************************/
 
-#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+#ifdef USE_UNISHOX_COMPRESSION
 
 //<scpd xmlns="urn:Belkin:service-1-0"><actionList><action><name>SetBinaryState</name><argumentList><argument><retval/><name>BinaryState</name><relatedStateVariable>BinaryState</relatedStateVariable><direction>in</direction></argument></argumentList></action><action><name>GetBinaryState</name><argumentList><argument><retval/><name>BinaryState</name><relatedStateVariable>BinaryState</relatedStateVariable><direction>out</direction></argument></argumentList></action></actionList><serviceStateTable><stateVariable sendEvents="yes"><name>BinaryState</name><dataType>bool</dataType><defaultValue>0</defaultValue></stateVariable><stateVariable sendEvents="yes"><name>level</name><dataType>string</dataType><defaultValue>0</defaultValue></stateVariable></serviceStateTable></scpd>\r\n\r\n
 //Successfully compressed from 779 to 249 bytes (-68%)
@@ -293,7 +293,7 @@ void HandleUpnpEvent(void)
     }
   }
 
-#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+#ifdef USE_UNISHOX_COMPRESSION
   snprintf_P(event, sizeof(event), Decompress(WEMO_RESPONSE_STATE_SOAP, WEMO_RESPONSE_STATE_SOAP_SIZE).c_str(), state, bitRead(power, devices_present -1), state);
 #else
   snprintf_P(event, sizeof(event), WEMO_RESPONSE_STATE_SOAP, state, bitRead(power, devices_present -1), state);
@@ -305,7 +305,7 @@ void HandleUpnpService(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_EVENT_SERVICE));
 
-#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+#ifdef USE_UNISHOX_COMPRESSION
   WSSend(200, CT_PLAIN, Decompress(WEMO_EVENTSERVICE_XML, WEMO_EVENTSERVICE_XML_SIZE));
 #else
   WSSend(200, CT_PLAIN, FPSTR(WEMO_EVENTSERVICE_XML));
@@ -316,7 +316,7 @@ void HandleUpnpMetaService(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_META_SERVICE));
 
-#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+#ifdef USE_UNISHOX_COMPRESSION
   WSSend(200, CT_PLAIN, Decompress(WEMO_METASERVICE_XML, WEMO_METASERVICE_XML_SIZE));
 #else
   WSSend(200, CT_PLAIN, FPSTR(WEMO_METASERVICE_XML));
@@ -327,7 +327,7 @@ void HandleUpnpSetupWemo(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_SETUP));
 
-#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+#ifdef USE_UNISHOX_COMPRESSION
   String setup_xml = Decompress(WEMO_SETUP_XML, WEMO_SETUP_XML_SIZE);
 #else
   String setup_xml = FPSTR(WEMO_SETUP_XML);
