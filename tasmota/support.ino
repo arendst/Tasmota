@@ -1882,7 +1882,7 @@ void AddLogBufferSize(uint32_t loglevel, uint8_t *buffer, uint32_t count, uint32
  * Uncompress static PROGMEM strings
 \*********************************************************************************************/
 
-#if defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+#ifdef USE_UNISHOX_COMPRESSION
 
 #include <unishox.h>
 
@@ -1908,4 +1908,4 @@ String Decompress(const char * compressed, size_t uncompressed_size) {
   return content;
 }
 
-#endif // defined(USE_RULES_COMPRESSION) || defined(USE_SCRIPT_COMPRESSION)
+#endif // USE_UNISHOX_COMPRESSION

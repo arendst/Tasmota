@@ -73,7 +73,7 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #ifdef USE_SCRIPT_FATFS
 #undef LITTLEFS_SCRIPT_SIZE
 #undef EEP_SCRIPT_SIZE
-#undef USE_SCRIPT_COMPRESSION
+#undef USE_UNISHOX_COMPRESSION
 #if USE_SCRIPT_FATFS==-1
 #ifdef ESP32
 #error "script fat file option -1 currently not supported for ESP32"
@@ -88,13 +88,13 @@ uint32_t DecodeLightId(uint32_t hue_id);
 // lfs on esp8266 spiffs on esp32
 #ifdef LITTLEFS_SCRIPT_SIZE
 #undef EEP_SCRIPT_SIZE
-#undef USE_SCRIPT_COMPRESSION
+#undef USE_UNISHOX_COMPRESSION
 #pragma message "script little file system option used"
 #endif // LITTLEFS_SCRIPT_SIZE
 
 // eeprom script
 #ifdef EEP_SCRIPT_SIZE
-#undef USE_SCRIPT_COMPRESSION
+#undef USE_UNISHOX_COMPRESSION
 #ifdef USE_24C256
 #pragma message "script 24c256 file option used"
 #else
@@ -104,12 +104,12 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #endif // EEP_SCRIPT_SIZE
 
 // compression last option before default
-#ifdef USE_SCRIPT_COMPRESSION
+#ifdef USE_UNISHOX_COMPRESSION
 #pragma message "script compression option used"
-#endif // USE_SCRIPT_COMPRESSION
+#endif // USE_UNISHOX_COMPRESSION
 
 
-#ifdef USE_SCRIPT_COMPRESSION
+#ifdef USE_UNISHOX_COMPRESSION
 #include <unishox.h>
 
 #define SCRIPT_COMPRESS compressor.unishox_compress
@@ -117,7 +117,7 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #ifndef UNISHOXRSIZE
 #define UNISHOXRSIZE 2560
 #endif
-#endif // USE_SCRIPT_COMPRESSION
+#endif // USE_UNISHOX_COMPRESSION
 
 
 #if defined(LITTLEFS_SCRIPT_SIZE) || (USE_SCRIPT_FATFS==-1)
@@ -4178,7 +4178,7 @@ void ScriptSaveSettings(void) {
     glob_script_mem.script_mem_size=0;
   }
 
-#ifdef USE_SCRIPT_COMPRESSION
+#ifdef USE_UNISHOX_COMPRESSION
   //AddLog_P2(LOG_LEVEL_INFO,PSTR("in string: %s len = %d"),glob_script_mem.script_ram,strlen(glob_script_mem.script_ram));
   uint32_t len_compressed = SCRIPT_COMPRESS(glob_script_mem.script_ram, strlen(glob_script_mem.script_ram), Settings.rules[0], MAX_SCRIPT_SIZE-1);
   if (len_compressed > 0) {
@@ -4187,7 +4187,7 @@ void ScriptSaveSettings(void) {
   } else {
     AddLog_P2(LOG_LEVEL_INFO, PSTR("script compress error: %d"), len_compressed);
   }
-#endif // USE_SCRIPT_COMPRESSION
+#endif // USE_UNISHOX_COMPRESSION
 
   if (bitRead(Settings.rule_enabled, 0)) {
     int16_t res=Init_Scripter();
@@ -5830,7 +5830,7 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_pram=(uint8_t*)Settings.script_pram[0];
       glob_script_mem.script_pram_size=PMEM_SIZE;
 
-#ifdef USE_SCRIPT_COMPRESSION
+#ifdef USE_UNISHOX_COMPRESSION
       int32_t len_decompressed;
       sprt=(char*)calloc(UNISHOXRSIZE+8,1);
       if (!sprt) { break; }
@@ -5839,7 +5839,7 @@ bool Xdrv10(uint8_t function)
       len_decompressed = SCRIPT_DECOMPRESS(Settings.rules[0], strlen(Settings.rules[0]), glob_script_mem.script_ram, glob_script_mem.script_size);
       if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed]=0;
       //AddLog_P2(LOG_LEVEL_INFO, PSTR("decompressed script len %d"),len_decompressed);
-#endif // USE_SCRIPT_COMPRESSION
+#endif // USE_UNISHOX_COMPRESSION
 
 #ifdef USE_BUTTON_EVENT
       for (uint32_t cnt=0;cnt<MAX_KEYS;cnt++) {
