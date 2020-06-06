@@ -1397,7 +1397,7 @@ int32_t Z_ApplyConverter(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObje
       if (multiplier > 0) {
         json[new_name] = ((float)value) * multiplier;
       } else {
-        json[new_name] = ((float)value) / multiplier;
+        json[new_name] = ((float)value) / (-multiplier);
       }
   }
 
