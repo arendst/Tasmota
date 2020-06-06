@@ -36,36 +36,35 @@
 // HP303B Opject
 LOLIN_HP303B HP303BSensor = LOLIN_HP303B();
 
-struct HP303BDATA
-{
-  uint8_t address;
-  uint8_t addresses[2] = {HP303B_ADDR1, HP303B_ADDR2};
-  uint8_t type = 0;
-  uint8_t valid = 0;
-  int32_t temperature;
-  int32_t pressure;
-  int16_t oversampling = 7;
-  char types[7] = "HP303B";
-} HP303B;
+uint8_t address;
+uint8_t addresses[2] = {HP303B_ADDR1, HP303B_ADDR2};
+uint8_t type = 0;
+uint8_t valid = 0;
+float temperature;
+float pressure;
+int16_t oversampling = 7;
+char types[7] = "HP303B";
 
 /*********************************************************************************************/
 
-bool HP303B_Read(int32_t &t, int32_t &p, uint8_t hp303b_address)
+bool HP303B_Read(float &temperature, float &pressure, uint8_t hp303b_address)
 {
   HP303BSensor.begin(hp303b_address);
 
+  int32_t t;
+  int32_t p;
   int16_t ret;
 
-  ret = HP303BSensor.measureTempOnce(t, HP303B.oversampling);
+  ret = HP303BSensor.measureTempOnce(t, oversampling);
   if (ret != 0)
     return false;
 
-  ret = HP303BSensor.measurePressureOnce(p, HP303B.oversampling);
+  ret = HP303BSensor.measurePressureOnce(p, oversampling);
   if (ret != 0)
     return false;
 
-  HP303B.temperature = ConvertTemp(t);
-  HP303B.pressure = ConvertPressure(p);
+  temperature = (float)ConvertTemp(t);
+  pressure = (float)ConvertPressure(p) / 100; //conversion to hPa
 
   return true;
 }
@@ -74,20 +73,20 @@ bool HP303B_Read(int32_t &t, int32_t &p, uint8_t hp303b_address)
 
 void HP303B_Detect(void)
 {
-  for (uint32_t i = 0; i < sizeof(HP303B.addresses); i++)
+  for (uint32_t i = 0; i < sizeof(addresses); i++)
   {
-    if (!I2cSetDevice(HP303B.addresses[i]))
+    if (!I2cSetDevice(addresses[i]))
     {
       continue;
     }
 
-    int32_t t;
-    int32_t p;
-    if (HP303B_Read(t, p, HP303B.addresses[i]))
+    float t;
+    float p;
+    if (HP303B_Read(t, p, addresses[i]))
     {
-      I2cSetActiveFound(HP303B.addresses[i], HP303B.types);
-      HP303B.address = HP303B.addresses[i];
-      HP303B.type = 1;
+      I2cSetActiveFound(addresses[i], types);
+      address = addresses[i];
+      type = 1;
     }
   }
 }
@@ -95,26 +94,25 @@ void HP303B_Detect(void)
 void HP303B_Show(bool json)
 {
 
-  if (HP303B_Read(HP303B.temperature, HP303B.pressure, HP303B.address))
+  if (HP303B_Read(temperature, pressure, address))
   {
     if (json)
     {
-      ResponseAppend_P(PSTR(",\"HP303B\":{\"" D_JSON_TEMPERATURE "\":%d,\"" D_JSON_PRESSURE "\":%d"), HP303B.temperature, HP303B.pressure);
+      ResponseAppend_P(PSTR(",\"HP303B\":{\"" D_JSON_TEMPERATURE "\":%d,\"" D_JSON_PRESSURE "\":%d"), temperature, pressure);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period)
       {
-        DomoticzSensor(DZ_TEMP, HP303B.temperature);
+        DomoticzSensor(DZ_TEMP, temperature);
       }
 #endif // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     }
     else
     {
-      char str_temperature[12];
-      char str_pressure[12];
-
-      itoa(HP303B.temperature, str_temperature, 10);
-      itoa(HP303B.pressure, str_pressure, 10);
+      char str_temperature[33];
+      dtostrfd(temperature, Settings.flag2.temperature_resolution, str_temperature);
+      char str_pressure[33];
+      dtostrfd(pressure, Settings.flag2.pressure_resolution, str_pressure);
 
       WSContentSend_PD(HTTP_SNS_TEMP, "HP303B", str_temperature, TempUnit());
       WSContentSend_PD(HTTP_SNS_PRESSURE, "HP303B", str_pressure, PressureUnit().c_str());
@@ -140,7 +138,7 @@ bool Xsns73(uint8_t function)
   {
     HP303B_Detect();
   }
-  else if (HP303B.type)
+  else if (type)
   {
     switch (function)
     {
