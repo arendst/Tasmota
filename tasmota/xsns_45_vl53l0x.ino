@@ -29,6 +29,7 @@ VL53L0X sensor;
 
 uint8_t vl53l0x_ready = 0;
 uint16_t vl53l0x_distance;
+uint16_t vl53l0x_distance_prev;
 uint16_t Vl53l0_buffer[5];
 uint8_t Vl53l0_index;
 
@@ -101,7 +102,10 @@ void Vl53l0Every_250MSecond(void)
 void Vl53l0Every_Second(void)
 {
 #ifdef USE_DOMOTICZ
-  DomoticzSensor(DZ_ILLUMINANCE, vl53l0x_distance);
+  if(abs(vl53l0x_distance - vl53l0x_distance_prev) > 5) {
+    vl53l0x_distance_prev = vl53l0x_distance;
+    DomoticzSensor(DZ_ILLUMINANCE, vl53l0x_distance);
+  }
 #endif  // USE_DOMOTICZ
 }
 
