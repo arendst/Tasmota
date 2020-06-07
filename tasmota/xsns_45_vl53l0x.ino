@@ -103,7 +103,7 @@ void Vl53l0Show(boolean json)
   if (json) {
     ResponseAppend_P(PSTR(",\"VL53L0X\":{\"" D_JSON_DISTANCE "\":%d}"), vl53l0x_distance);
 #ifdef USE_DOMOTICZ
-        if ((0 == tele_period) && (0 == sensor_index)) {
+        if (0 == tele_period) {
           DomoticzSensor(DZ_ILLUMINANCE, vl53l0x_distance);
         }
 #endif  // USE_DOMOTICZ
