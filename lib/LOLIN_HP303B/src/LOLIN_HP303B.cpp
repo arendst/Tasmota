@@ -181,7 +181,7 @@ int16_t LOLIN_HP303B::standby(void)
  * 				-2 if the object initialization failed
  * 				-1 on other fail
  */
-int16_t LOLIN_HP303B::measureTempOnce(int32_t &result)
+int16_t LOLIN_HP303B::measureTempOnce(float &result)
 {
 	return measureTempOnce(result, m_tempOsr);
 }
@@ -202,7 +202,7 @@ int16_t LOLIN_HP303B::measureTempOnce(int32_t &result)
  * 						-2 if the object initialization failed
  * 						-1 on other fail
  */
-int16_t LOLIN_HP303B::measureTempOnce(int32_t &result, uint8_t oversamplingRate)
+int16_t LOLIN_HP303B::measureTempOnce(float &result, uint8_t oversamplingRate)
 {
 	//Start measurement
 	int16_t ret = startMeasureTempOnce(oversamplingRate);
@@ -286,7 +286,7 @@ int16_t LOLIN_HP303B::startMeasureTempOnce(uint8_t oversamplingRate)
  * 				-2 if the object initialization failed
  * 				-1 on other fail
  */
-int16_t LOLIN_HP303B::measurePressureOnce(int32_t &result)
+int16_t LOLIN_HP303B::measurePressureOnce(float &result)
 {
 	return measurePressureOnce(result, m_prsOsr);
 }
@@ -307,7 +307,7 @@ int16_t LOLIN_HP303B::measurePressureOnce(int32_t &result)
  * 						-2 if the object initialization failed
  * 						-1 on other fail
  */
-int16_t LOLIN_HP303B::measurePressureOnce(int32_t &result, uint8_t oversamplingRate)
+int16_t LOLIN_HP303B::measurePressureOnce(float &result, uint8_t oversamplingRate)
 {
 	//start the measurement
 	int16_t ret = startMeasurePressureOnce(oversamplingRate);
@@ -388,7 +388,7 @@ int16_t LOLIN_HP303B::startMeasurePressureOnce(uint8_t oversamplingRate)
  * 				-2 if the object initialization failed
  * 				-1 on other fail
  */
-int16_t LOLIN_HP303B::getSingleResult(int32_t &result)
+int16_t LOLIN_HP303B::getSingleResult(float &result)
 {
 	//abort if initialization failed
 	if(m_initFail)
@@ -636,9 +636,9 @@ int16_t LOLIN_HP303B::startMeasureBothCont(uint8_t tempMr,
  * 					-2 if the object initialization failed
  * 					-1 on other fail
  */
-int16_t LOLIN_HP303B::getContResults(int32_t *tempBuffer,
+int16_t LOLIN_HP303B::getContResults(float *tempBuffer,
 								   uint8_t &tempCount,
-								   int32_t *prsBuffer,
+								   float *prsBuffer,
 								   uint8_t &prsCount)
 {
 	if(m_initFail)
@@ -660,7 +660,7 @@ int16_t LOLIN_HP303B::getContResults(int32_t *tempBuffer,
 	//while FIFO is not empty
 	while(readByteBitfield(HP303B__REG_INFO_FIFO_EMPTY) == 0)
 	{
-		int32_t result;
+		float result;
 		//read next result from FIFO
 		int16_t type = getFIFOvalue(&result);
 		switch(type)
@@ -820,13 +820,13 @@ int16_t LOLIN_HP303B::correctTemp(void)
 	writeByte(0x62, 0x02);
 	writeByte(0x0E, 0x00);
 	writeByte(0x0F, 0x00);
-	
+
 	//perform a first temperature measurement (again)
 	//the most recent temperature will be saved internally
 	//and used for compensation when calculating pressure
-	int32_t trash;
+	float trash;
 	measureTempOnce(trash);
-	
+
 	return HP303B__SUCCEEDED;
 }
 
@@ -892,13 +892,13 @@ void LOLIN_HP303B::init(void)
 	//perform a first temperature measurement
 	//the most recent temperature will be saved internally
 	//and used for compensation when calculating pressure
-	int32_t trash;
+	float trash;
 	measureTempOnce(trash);
 
 	//make sure the HP303B is in standby after initialization
-	standby();	
+	standby();
 
-	// Fix IC with a fuse bit problem, which lead to a wrong temperature 
+	// Fix IC with a fuse bit problem, which lead to a wrong temperature
 	// Should not affect ICs without this problem
 	correctTemp();
 }
@@ -1192,9 +1192,9 @@ uint16_t LOLIN_HP303B::calcBusyTime(uint16_t mr, uint16_t osr)
  * returns:	0 on success
  * 			-1 on fail;
  */
-int16_t LOLIN_HP303B::getTemp(int32_t *result)
+int16_t LOLIN_HP303B::getTemp(float *result)
 {
-	uint8_t buffer[3] = {0};
+	unsigned char buffer[3] = {0};
 	//read raw pressure data to buffer
 
 	int16_t i = readBlock(HP303B__REG_ADR_TEMP,
@@ -1207,14 +1207,14 @@ int16_t LOLIN_HP303B::getTemp(int32_t *result)
 	}
 
 	//compose raw temperature value from buffer
-	int32_t temp =    (uint32_t)buffer[0] << 16
-					| (uint32_t)buffer[1] << 8
-					| (uint32_t)buffer[2];
+	float temp = buffer[0] << 16
+					| buffer[1] << 8
+					| buffer[2];
 	//recognize non-32-bit negative numbers
 	//and convert them to 32-bit negative numbers using 2's complement
-	if(temp & ((uint32_t)1 << 23))
+	if(temp > 0x7FFFFF)
 	{
-		temp -= (uint32_t)1 << 24;
+		temp = temp - 0x1000000;
 	}
 
 	//return temperature
@@ -1229,9 +1229,9 @@ int16_t LOLIN_HP303B::getTemp(int32_t *result)
  * returns: 0 on success
  * 			-1 on fail;
  */
-int16_t LOLIN_HP303B::getPressure(int32_t *result)
+int16_t LOLIN_HP303B::getPressure(float *result)
 {
-	uint8_t buffer[3] = {0};
+	unsigned char buffer[3] = {0};
 	//read raw pressure data to buffer
 	int16_t i = readBlock(HP303B__REG_ADR_PRS,
 							HP303B__REG_LEN_PRS,
@@ -1244,14 +1244,12 @@ int16_t LOLIN_HP303B::getPressure(int32_t *result)
 	}
 
 	//compose raw pressure value from buffer
-	int32_t prs =   (uint32_t)buffer[0] << 16
-					| (uint32_t)buffer[1] << 8
-					| (uint32_t)buffer[2];
+	float prs = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
 	//recognize non-32-bit negative numbers
 	//and convert them to 32-bit negative numbers using 2's complement
-	if(prs & ((uint32_t)1 << 23))
+	if(prs > 0x7FFFFF)
 	{
-		prs -= (uint32_t)1 << 24;
+		prs = prs - 0x1000000;
 	}
 
 	*result = calcPressure(prs);
@@ -1266,7 +1264,7 @@ int16_t LOLIN_HP303B::getPressure(int32_t *result)
  * 			0 if result is a temperature raw value
  * 			1 if result is a pressure raw value
  */
-int16_t LOLIN_HP303B::getFIFOvalue(int32_t* value)
+int16_t LOLIN_HP303B::getFIFOvalue(float *value)
 {
 	//abort on invalid argument
 	if(value == NULL)
@@ -1274,7 +1272,7 @@ int16_t LOLIN_HP303B::getFIFOvalue(int32_t* value)
 		return HP303B__FAIL_UNKNOWN;
 	}
 
-	uint8_t buffer[HP303B__REG_LEN_PRS] = {0};
+	unsigned char buffer[HP303B__REG_LEN_PRS] = {0};
 	//always read from pressure raw value register
 	int16_t i = readBlock(HP303B__REG_ADR_PRS,
 							HP303B__REG_LEN_PRS,
@@ -1286,14 +1284,14 @@ int16_t LOLIN_HP303B::getFIFOvalue(int32_t* value)
 		return HP303B__FAIL_UNKNOWN;
 	}
 	//compose raw pressure value from buffer
-	*value =  (uint32_t)buffer[0] << 16
-			| (uint32_t)buffer[1] << 8
-			| (uint32_t)buffer[2];
+	*value =  buffer[0] << 16
+			| buffer[1] << 8
+			| buffer[2];
 	//recognize non-32-bit negative numbers
 	//and convert them to 32-bit negative numbers using 2's complement
-	if(*value & ((uint32_t)1 << 23))
+	if(*value > 0x7FFFFF)
 	{
-		*value -= (uint32_t)1 << 24;
+		*value = *value - 0x1000000;
 	}
 
 	//least significant bit shows measurement type
@@ -1305,10 +1303,10 @@ int16_t LOLIN_HP303B::getFIFOvalue(int32_t* value)
  * raw: 	raw temperature value read from HP303B
  * returns: temperature value in °C
  */
-int32_t LOLIN_HP303B::calcTemp(int32_t raw)
+float LOLIN_HP303B::calcTemp(float raw)
 {
 	double temp = raw;
-	
+
 	//scale temperature according to scaling table and oversampling
 	temp /= scaling_facts[m_tempOsr];
 
@@ -1320,7 +1318,7 @@ int32_t LOLIN_HP303B::calcTemp(int32_t raw)
 	temp = m_c0Half + m_c1 * temp;
 
 	//return temperature
-	return (int32_t)temp;
+	return (float)temp;
 }
 
 /**
@@ -1328,7 +1326,7 @@ int32_t LOLIN_HP303B::calcTemp(int32_t raw)
  * raw: 	raw pressure value read from HP303B
  * returns: pressure value in Pa
  */
-int32_t LOLIN_HP303B::calcPressure(int32_t raw)
+float LOLIN_HP303B::calcPressure(float raw)
 {
 	double prs = raw;
 
@@ -1341,7 +1339,7 @@ int32_t LOLIN_HP303B::calcPressure(int32_t raw)
 			+ m_lastTempScal * (m_c01 + prs * (m_c11 + prs * m_c21));
 
 	//return pressure
-	return (int32_t)prs;
+	return (float)prs;
 }
 
 /**
@@ -1357,7 +1355,7 @@ int16_t LOLIN_HP303B::readByte(uint8_t regAddress)
 	{
 		return readByteSPI(regAddress);
 	}
-	
+
 	m_i2cbus->beginTransmission(m_slaveAddress);
 	m_i2cbus->write(regAddress);
     m_i2cbus->endTransmission(0);
@@ -1429,7 +1427,7 @@ int16_t LOLIN_HP303B::readBlock(uint8_t regAddress, uint8_t length, uint8_t *buf
 	{
 		return 0;	//0 bytes read successfully
 	}
-	
+
 	m_i2cbus->beginTransmission(m_slaveAddress);
 	m_i2cbus->write(regAddress);
     m_i2cbus->endTransmission(0);

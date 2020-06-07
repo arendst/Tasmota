@@ -51,8 +51,8 @@ bool HP303B_Read(float &temperature, float &pressure, uint8_t hp303b_address)
 {
   HP303BSensor.begin(hp303b_address);
 
-  int32_t t;
-  int32_t p;
+  float t;
+  float p;
   int16_t ret;
 
   ret = HP303BSensor.measureTempOnce(t, oversampling);
@@ -96,9 +96,15 @@ void HP303B_Show(bool json)
 
   if (HP303B_Read(temperature, pressure, address))
   {
+    char str_temperature[33];
+    dtostrfd(temperature, Settings.flag2.temperature_resolution, str_temperature);
+    char str_pressure[33];
+    dtostrfd(pressure, Settings.flag2.pressure_resolution, str_pressure);
+
     if (json)
     {
-      ResponseAppend_P(PSTR(",\"HP303B\":{\"" D_JSON_TEMPERATURE "\":%d,\"" D_JSON_PRESSURE "\":%d"), temperature, pressure);
+      ResponseAppend_P(PSTR(",\"HP303B\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_PRESSURE "\":%s"), str_temperature,  str_pressure);
+      ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
       if (0 == tele_period)
       {
@@ -109,11 +115,6 @@ void HP303B_Show(bool json)
     }
     else
     {
-      char str_temperature[33];
-      dtostrfd(temperature, Settings.flag2.temperature_resolution, str_temperature);
-      char str_pressure[33];
-      dtostrfd(pressure, Settings.flag2.pressure_resolution, str_pressure);
-
       WSContentSend_PD(HTTP_SNS_TEMP, "HP303B", str_temperature, TempUnit());
       WSContentSend_PD(HTTP_SNS_PRESSURE, "HP303B", str_pressure, PressureUnit().c_str());
 #endif // USE_WEBSERVER
