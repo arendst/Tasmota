@@ -152,31 +152,9 @@ void Bl0940EverySecond(void) {
     Bl0940.current = 0;
     Bl0940.power = 0;
   } else {
-    long cf_frequency = 0;
-
-    if (BL0940_PULSES_NOT_INITIALIZED == Bl0940.cf_pulses_last_time) {
-      Bl0940.cf_pulses_last_time = Bl0940.cf_pulses;  // Init after restart
-    } else {
-      if (Bl0940.cf_pulses < Bl0940.cf_pulses_last_time) {  // Rolled over after 16777215 pulses
-        cf_frequency = (0x1000000 - Bl0940.cf_pulses_last_time) + Bl0940.cf_pulses;
-      } else {
-        cf_frequency = Bl0940.cf_pulses - Bl0940.cf_pulses_last_time;
-      }
-      if (cf_frequency && Energy.active_power[0])  {
-        unsigned long delta = (cf_frequency * Settings.energy_power_calibration) / 36;
-        // prevent invalid load delta steps even checksum is valid (issue #5789):
-//        if (delta <= (3680*100/36) * 10 ) {  // max load for S31/Pow R2: 3.68kW
-        // prevent invalid load delta steps even checksum is valid but allow up to 4kW (issue #7155):
-        if (delta <= (4000*100/36) * 10 ) {  // max load for S31/Pow R2: 4.00kW
-          Bl0940.cf_pulses_last_time = Bl0940.cf_pulses;
-          Energy.kWhtoday_delta += delta;
-        }
-        else {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: Load overflow"));
-          Bl0940.cf_pulses_last_time = BL0940_PULSES_NOT_INITIALIZED;
-        }
-        EnergyUpdateToday();
-      }
+    if (Energy.active_power[0]) {
+      Energy.kWhtoday_delta += (Energy.active_power[0] * 1000) / 36;
+      EnergyUpdateToday();
     }
   }
 
