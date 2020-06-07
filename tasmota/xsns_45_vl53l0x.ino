@@ -102,7 +102,7 @@ void Vl53l0Every_250MSecond(void)
 void Vl53l0Every_Second(void)
 {
 #ifdef USE_DOMOTICZ
-  if(abs(vl53l0x_distance - vl53l0x_distance_prev) > 5) {
+  if(abs(vl53l0x_distance - vl53l0x_distance_prev) > 8) {
     vl53l0x_distance_prev = vl53l0x_distance;
     DomoticzSensor(DZ_ILLUMINANCE, vl53l0x_distance);
   }
@@ -114,9 +114,7 @@ void Vl53l0Show(boolean json)
   if (json) {
     ResponseAppend_P(PSTR(",\"VL53L0X\":{\"" D_JSON_DISTANCE "\":%d}"), vl53l0x_distance);
 #ifdef USE_DOMOTICZ
-    if (0 == tele_period) {
-      DomoticzSensor(DZ_ILLUMINANCE, vl53l0x_distance);
-    }
+    DomoticzSensor(DZ_ILLUMINANCE, vl53l0x_distance);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
