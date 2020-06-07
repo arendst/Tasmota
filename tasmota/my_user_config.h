@@ -394,18 +394,18 @@
 // -- Ping ----------------------------------------
 //  #define USE_PING                                 // Enable Ping command (+2k code)
 
-#define USE_UNISHOX_COMPRESSION                  // add support for string compression for RULES or SCRIPT
+// -- Compression ---------------------------------
+#define USE_UNISHOX_COMPRESSION                  // Add support for string compression in Rules or Scripts
 
 // -- Rules or Script  ----------------------------
 // Select none or only one of the below defines USE_RULES or USE_SCRIPT
 #define USE_RULES                                // Add support for rules (+8k code)
-  // with USE_UNISHOX_COMPRESSION                // Compresses rules in Flash at about ~50% (+3.3k code)
-//#define USE_SCRIPT                               // Add support for script (+17k code)
-                                                 // supports USE_UNISHOX_COMPRESSION
-  //#define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support
-
 //  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
 //    #define SUPPORT_IF_STATEMENT                 // Add support for IF statement in rules (+4k2 code, -332 bytes mem)
+
+//#define USE_SCRIPT                               // Add support for script (+17k code)
+  //#define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support
+
 //  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 
 // -- Optional modules ----------------------------
@@ -611,6 +611,7 @@
 //#define USE_LE01MR                               // Add support for F&F LE-01MR Modbus energy monitor (+1k code)
   #define LE01MR_SPEED         9600              // LE-01MR modbus baudrate (default: 9600)
   #define LE01MR_ADDR          1                 // LE-01MR modbus address (default: 0x01)
+#define USE_BL0940                               // Add support for BL0940 Energy monitor as used in Blitzwolf SHP-10 (+1k6 code)
 
 // -- Low level interface devices -----------------
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor (1k6 code)

@@ -572,8 +572,9 @@ void GetFeatures(void)
 #ifdef USE_MCP9808
   feature6 |= 0x00002000;  // xsns_72_mcp9808.ino
 #endif
-
-//  feature6 |= 0x00004000;
+#ifdef USE_BL0940
+  feature6 |= 0x00004000;  // xnrg_14_bl0940.ino
+#endif
 //  feature6 |= 0x00008000;
 
 //  feature6 |= 0x00010000;
