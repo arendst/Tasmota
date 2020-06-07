@@ -136,7 +136,7 @@ ZF(MainsVoltage) ZF(MainsFrequency) ZF(BatteryVoltage) ZF(BatteryPercentage)
 ZF(CurrentTemperature) ZF(MinTempExperienced) ZF(MaxTempExperienced) ZF(OverTempTotalDwell)
 ZF(SceneCount) ZF(CurrentScene) ZF(CurrentGroup) ZF(SceneValid)
 ZF(AlarmCount) ZF(Time) ZF(TimeStatus) ZF(TimeZone) ZF(DstStart) ZF(DstEnd)
-ZF(DstShift) ZF(StandardTime) ZF(LocalTime) ZF(LastSetTime) ZF(ValidUntilTime)
+ZF(DstShift) ZF(StandardTime) ZF(LocalTime) ZF(LastSetTime) ZF(ValidUntilTime) ZF(TimeEpoch)
 
 ZF(LocationType) ZF(LocationMethod) ZF(LocationAge) ZF(QualityMeasure) ZF(NumberOfDevices)
 
@@ -283,6 +283,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint32,  Cx000A, 0x0007,  Z(LocalTime),            1,  Z_Nop },
   { ZUTC,     Cx000A, 0x0008,  Z(LastSetTime),          1,  Z_Nop },
   { ZUTC,     Cx000A, 0x0009,  Z(ValidUntilTime),       1,  Z_Nop },
+  { ZUTC,     Cx000A, 0xFF00,  Z(TimeEpoch),            1,  Z_Nop },    // Tasmota specific, epoch
 
   // RSSI Location cluster
   { Zdata8,   Cx000B, 0x0000,  Z(LocationType),         1,  Z_Nop },
@@ -1397,7 +1398,7 @@ int32_t Z_ApplyConverter(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObje
       if (multiplier > 0) {
         json[new_name] = ((float)value) * multiplier;
       } else {
-        json[new_name] = ((float)value) / multiplier;
+        json[new_name] = ((float)value) / (-multiplier);
       }
   }
 

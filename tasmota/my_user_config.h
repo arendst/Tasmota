@@ -394,11 +394,14 @@
 // -- Ping ----------------------------------------
 //  #define USE_PING                                 // Enable Ping command (+2k code)
 
+#define USE_UNISHOX_COMPRESSION                  // add support for string compression for RULES or SCRIPT
+
 // -- Rules or Script  ----------------------------
 // Select none or only one of the below defines USE_RULES or USE_SCRIPT
 #define USE_RULES                                // Add support for rules (+8k code)
-  #define USE_RULES_COMPRESSION                  // Compresses rules in Flash at about ~50% (+3.3k code)
+  // with USE_UNISHOX_COMPRESSION                // Compresses rules in Flash at about ~50% (+3.3k code)
 //#define USE_SCRIPT                               // Add support for script (+17k code)
+                                                 // supports USE_UNISHOX_COMPRESSION
   //#define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support
 
 //  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
