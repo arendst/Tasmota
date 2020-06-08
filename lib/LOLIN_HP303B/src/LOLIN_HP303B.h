@@ -19,10 +19,10 @@ public:
   //destructor
   ~LOLIN_HP303B(void);
   //begin
-  void begin(TwoWire &bus, uint8_t slaveAddress);
-  void begin(uint8_t slaveAddress=HP303B__STD_SLAVE_ADDRESS);
-  void begin(SPIClass &bus, int32_t chipSelect);
-  void begin(SPIClass &bus, int32_t chipSelect, uint8_t threeWire);
+  uint8_t begin(TwoWire &bus, uint8_t slaveAddress);
+  uint8_t begin(uint8_t slaveAddress=HP303B__STD_SLAVE_ADDRESS);
+  uint8_t begin(SPIClass &bus, int32_t chipSelect);
+  uint8_t begin(SPIClass &bus, int32_t chipSelect, uint8_t threeWire);
   //end
   void end(void);
 
@@ -115,7 +115,7 @@ private:
   uint8_t m_threeWire;
 
   //measurement
-  void init(void);
+  uint8_t init(void);
   int16_t readcoeffs(void);
   int16_t setOpMode(uint8_t background, uint8_t temperature, uint8_t pressure);
   int16_t setOpMode(uint8_t opMode);

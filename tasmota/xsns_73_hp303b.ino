@@ -29,45 +29,47 @@
 #define XSNS_73 73
 #define XI2C_52 52 // See I2CDEVICES.md
 
-#define HP303B_ADDR1 0x77
-#define HP303B_ADDR2 0x76
-
 #include <LOLIN_HP303B.h>
-// HP303B Opject
+// HP303B Object
 LOLIN_HP303B HP303BSensor = LOLIN_HP303B();
-uint8_t bhp303b_addresses[2] = {HP303B_ADDR1, HP303B_ADDR2};
+
+#define HP303B_MAX_SENSORS    2
+#define HP303B_START_ADDRESS  0x76
+
+struct {
+char types[7] = "HP303B";
+uint8_t count  = 0;
+int16_t oversampling = 7;
+} hp303b_cfg;
 
 struct BHP303B {
   uint8_t address;
-  uint8_t type = 0;
   uint8_t valid = 0;
-  float temperature;
-  float pressure;
-  int16_t oversampling = 7;
-  char name[7] = "HP303B";
-} bhp303b_sensor;
+  float temperature = NAN;
+  float pressure = NAN;
+} hp303b_sensor[HP303B_MAX_SENSORS];
 /*********************************************************************************************/
 
-bool HP303B_Read()
+bool HP303B_Read(uint8_t hp303b_idx)
 {
-  if (bhp303b_sensor.valid) { bhp303b_sensor.valid--; }
+  if (hp303b_sensor[hp303b_idx].valid) { hp303b_sensor[hp303b_idx].valid--; }
 
   float t;
   float p;
   int16_t ret;
 
-  ret = HP303BSensor.measureTempOnce(t, bhp303b_sensor.oversampling);
+  ret = HP303BSensor.measureTempOnce(t, hp303b_cfg.oversampling);
   if (ret != 0)
     return false;
 
-  ret = HP303BSensor.measurePressureOnce(p, bhp303b_sensor.oversampling);
+  ret = HP303BSensor.measurePressureOnce(p, hp303b_cfg.oversampling);
   if (ret != 0)
     return false;
 
-  bhp303b_sensor.temperature = (float)ConvertTemp(t);
-  bhp303b_sensor.pressure = (float)ConvertPressure(p) / 100; //conversion to hPa
+  hp303b_sensor[hp303b_idx].temperature = (float)ConvertTemp(t);
+  hp303b_sensor[hp303b_idx].pressure = (float)ConvertPressure(p) / 100; //conversion to hPa
 
-  bhp303b_sensor.valid = SENSOR_MAX_MISS;
+  hp303b_sensor[hp303b_idx].valid = SENSOR_MAX_MISS;
   return true;
 }
 
@@ -75,18 +77,15 @@ bool HP303B_Read()
 
 void HP303B_Detect(void)
 {
-  for (uint32_t i = 0; i < sizeof(bhp303b_addresses); i++)
+  for (uint32_t i = 0; i < HP303B_MAX_SENSORS; i++)
   {
-    if (I2cActive(bhp303b_addresses[i])) { return; }
+    if (I2cActive(HP303B_START_ADDRESS + i)) { return; }
 
-    bhp303b_sensor.address = bhp303b_addresses[i];
-
-    HP303BSensor.begin( bhp303b_sensor.address);
-
-    if (HP303B_Read())
+    if (HP303BSensor.begin(HP303B_START_ADDRESS + i))
     {
-      I2cSetActiveFound(bhp303b_sensor.address, bhp303b_sensor.name);
-      bhp303b_sensor.type = 1;
+      hp303b_sensor[hp303b_cfg.count].address = HP303B_START_ADDRESS + i;
+      I2cSetActiveFound(hp303b_sensor[hp303b_cfg.count].address, hp303b_cfg.types);
+      hp303b_cfg.count++;
       break;
     }
   }
@@ -94,39 +93,49 @@ void HP303B_Detect(void)
 
 void HP303B_EverySecond(void)
 {
-  if (uptime &1) {
-    if (!HP303B_Read()) {
-      AddLogMissed(bhp303b_sensor.name, bhp303b_sensor.valid);
+  for (uint32_t i = 0; i < hp303b_cfg.count; i++) {
+    if (uptime &1) {
+    if (!HP303B_Read(i)) {
+      AddLogMissed(hp303b_cfg.types, hp303b_sensor[i].valid);
     }
+  }
   }
 }
 
 void HP303B_Show(bool json)
 {
-  if (bhp303b_sensor.valid)
-  {
-    char str_temperature[33];
-    dtostrfd(bhp303b_sensor.temperature, Settings.flag2.temperature_resolution, str_temperature);
-    char str_pressure[33];
-    dtostrfd(bhp303b_sensor.pressure, Settings.flag2.pressure_resolution, str_pressure);
-
-    if (json)
-    {
-      ResponseAppend_P(PSTR(",\"HP303B\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_PRESSURE "\":%s"), str_temperature,  str_pressure);
-      ResponseJsonEnd();
-#ifdef USE_DOMOTICZ
-      if (0 == tele_period)
-      {
-        DomoticzSensor(DZ_TEMP, bhp303b_sensor.temperature);
-      }
-#endif // USE_DOMOTICZ
-#ifdef USE_WEBSERVER
+  for (uint32_t i = 0; i < hp303b_cfg.count; i++) {
+    char sensor_name[12];
+    strlcpy(sensor_name, hp303b_cfg.types, sizeof(sensor_name));
+    if (hp303b_cfg.count > 1) {
+      snprintf_P(sensor_name, sizeof(sensor_name), PSTR("%s%c0x%02X"), sensor_name, IndexSeparator(), hp303b_sensor[i].address); // MCP9808-18, MCP9808-1A  etc.
     }
-    else
+
+    if (hp303b_sensor[i].valid)
     {
-      WSContentSend_PD(HTTP_SNS_TEMP, "HP303B", str_temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_PRESSURE, "HP303B", str_pressure, PressureUnit().c_str());
-#endif // USE_WEBSERVER
+      char str_temperature[33];
+      dtostrfd(hp303b_sensor[i].temperature, Settings.flag2.temperature_resolution, str_temperature);
+      char str_pressure[33];
+      dtostrfd(hp303b_sensor[i].pressure, Settings.flag2.pressure_resolution, str_pressure);
+
+      if (json)
+      {
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_PRESSURE "\":%s"), sensor_name, str_temperature,  str_pressure);
+        ResponseJsonEnd();
+  #ifdef USE_DOMOTICZ
+        if (0 == tele_period)
+        {
+          DomoticzSensor(DZ_TEMP, hp303b_sensor[i].temperature);
+        }
+  #endif // USE_DOMOTICZ
+  #ifdef USE_WEBSERVER
+      }
+      else
+      {
+        WSContentSend_PD(HTTP_SNS_TEMP, sensor_name, str_temperature, TempUnit());
+        WSContentSend_PD(HTTP_SNS_PRESSURE, sensor_name, str_pressure, PressureUnit().c_str());
+  #endif // USE_WEBSERVER
+      }
     }
   }
 }
@@ -144,7 +153,7 @@ bool Xsns73(uint8_t function)
   if (FUNC_INIT == function) {
     HP303B_Detect();
   }
-  else if (bhp303b_sensor.type)
+  else if (hp303b_cfg.count)
   {
     switch (function)
     {

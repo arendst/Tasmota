@@ -35,7 +35,7 @@ LOLIN_HP303B::~LOLIN_HP303B(void)
  * &bus: 			I2CBus which connects MC to HP303B
  * slaveAddress: 	Address of the HP303B (0x77 or 0x76)
  */
-void LOLIN_HP303B::begin(TwoWire &bus, uint8_t slaveAddress)
+uint8_t LOLIN_HP303B::begin(TwoWire &bus, uint8_t slaveAddress)
 {
 	//this flag will show if the initialization was successful
 	m_initFail = 0U;
@@ -50,20 +50,20 @@ void LOLIN_HP303B::begin(TwoWire &bus, uint8_t slaveAddress)
 
 	delay(50);		//startup time of HP303B
 
-	init();
+	return init();
 }
 
-void LOLIN_HP303B::begin(uint8_t slaveAddress)
+uint8_t LOLIN_HP303B::begin(uint8_t slaveAddress)
 {
-	begin(Wire,slaveAddress);
+	return begin(Wire,slaveAddress);
 }
 
 /**
  * SPI begin function for HP303B with 4-wire SPI
  */
-void LOLIN_HP303B::begin(SPIClass &bus, int32_t chipSelect)
+uint8_t LOLIN_HP303B::begin(SPIClass &bus, int32_t chipSelect)
 {
-	begin(bus, chipSelect, 0U);
+	return begin(bus, chipSelect, 0U);
 }
 
 /**
@@ -74,7 +74,7 @@ void LOLIN_HP303B::begin(SPIClass &bus, int32_t chipSelect)
  * threeWire: 		1 if HP303B is connected with 3-wire SPI
  * 					0 if HP303B is connected with 4-wire SPI (standard)
  */
-void LOLIN_HP303B::begin(SPIClass &bus, int32_t chipSelect, uint8_t threeWire)
+uint8_t LOLIN_HP303B::begin(SPIClass &bus, int32_t chipSelect, uint8_t threeWire)
 {
 	//this flag will show if the initialization was successful
 	m_initFail = 0U;
@@ -102,11 +102,11 @@ void LOLIN_HP303B::begin(SPIClass &bus, int32_t chipSelect, uint8_t threeWire)
 		if(writeByte(HP303B__REG_ADR_SPI3W, HP303B__REG_CONTENT_SPI3W))
 		{
 			m_initFail = 1U;
-			return;
+			return 0U;
 		}
 	}
 
-	init();
+	return init();
 }
 
 /**
@@ -840,14 +840,14 @@ int16_t LOLIN_HP303B::correctTemp(void)
  * This function has to be called from begin()
  * and requires a valid bus initialization.
  */
-void LOLIN_HP303B::init(void)
+uint8_t LOLIN_HP303B::init(void)
 {
 	int16_t prodId = readByteBitfield(HP303B__REG_INFO_PROD_ID);
 	if(prodId != HP303B__PROD_ID)
 	{
 		//Connected device is not a HP303B
 		m_initFail = 1U;
-		return;
+		return 0U;
 	}
 	m_productID = prodId;
 
@@ -855,7 +855,7 @@ void LOLIN_HP303B::init(void)
 	if(revId < 0)
 	{
 		m_initFail = 1U;
-		return;
+		return 0U;
 	}
 	m_revisionID = revId;
 
@@ -864,7 +864,7 @@ void LOLIN_HP303B::init(void)
 	if(sensor < 0)
 	{
 		m_initFail = 1U;
-		return;
+		return 0U;
 	}
 
 	//...and use this sensor for temperature measurement
@@ -872,14 +872,14 @@ void LOLIN_HP303B::init(void)
 	if(writeByteBitfield((uint8_t)sensor, HP303B__REG_INFO_TEMP_SENSOR) < 0)
 	{
 		m_initFail = 1U;
-		return;
+		return 0U;
 	}
 
 	//read coefficients
 	if(readcoeffs() < 0)
 	{
 		m_initFail = 1U;
-		return;
+		return 0U;
 	}
 
 	//set to standby for further configuration
@@ -901,6 +901,8 @@ void LOLIN_HP303B::init(void)
 	// Fix IC with a fuse bit problem, which lead to a wrong temperature
 	// Should not affect ICs without this problem
 	correctTemp();
+
+	return 1U;
 }
 
 
