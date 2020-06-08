@@ -131,12 +131,13 @@ bool Bl0940SerialInput(void) {
           Bl0940.received = false;
           return true;
         } else {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
+//          AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
           do {  // Sync buffer with data (issue #1907 and #3425)
             memmove(Bl0940.rx_buffer, Bl0940.rx_buffer +1, BL0940_BUFFER_SIZE -1);
             Bl0940.byte_counter--;
           } while ((Bl0940.byte_counter > 1) && (BL0940_PACKET_HEADER != Bl0940.rx_buffer[0]));
           if (BL0940_PACKET_HEADER != Bl0940.rx_buffer[0]) {
+            AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
             Bl0940.received = false;
             Bl0940.byte_counter = 0;
           }
