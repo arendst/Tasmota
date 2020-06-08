@@ -127,7 +127,8 @@ enum UserSelectablePins {
   GPIO_WEBCAM_PSRCS,
   GPIO_BOILER_OT_RX, GPIO_BOILER_OT_TX,  // OpenTherm Boiler TX pin
   GPIO_WINDMETER_SPEED,                // WindMeter speed counter pin
-  GPIO_KEY1_TC,                       // Touch pin as button
+  GPIO_KEY1_TC,                        // Touch pin as button
+  GPIO_BL0940_RX,                      // BL0940 serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -216,7 +217,8 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_WEBCAM_HSD "|"
   D_GPIO_WEBCAM_PSRCS "|"
   D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
-  D_SENSOR_WINDMETER_SPEED "|" D_SENSOR_BUTTON "_tc"
+  D_SENSOR_WINDMETER_SPEED "|" D_SENSOR_BUTTON "_tc|"
+  D_SENSOR_BL0940_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -403,6 +405,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_LE01MR_TX),     // F7F LE-01MR energy meter tx pin
   AGPIO(GPIO_LE01MR_RX),     // F7F LE-01MR energy meter rx pin
 #endif // IFDEF:USE_LE01MR
+#ifdef USE_BL0940
+  AGPIO(GPIO_BL0940_RX),     // BL0940 Serial interface
+#endif
 #endif  // USE_ENERGY_SENSOR
 
 // Serial
