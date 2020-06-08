@@ -29,7 +29,9 @@
 
 #define XNRG_14                     14
 
-#define BL0940_PULSES_NOT_INITIALIZED  -1
+#define BL0940_PREF                 1430
+#define BL0940_UREF                 33000
+#define BL0940_IREF                 2750
 
 #define BL0940_BUFFER_SIZE          36
 
@@ -42,6 +44,7 @@
 
 #define BL0940_READ_COMMAND         0x50  // 0x58 according to documentation
 #define BL0940_FULL_PACKET          0xAA
+
 #define BL0940_PACKET_HEADER        0x55  // 0x58 according to documentation
 
 #include <TasmotaSerial.h>
@@ -52,14 +55,12 @@ struct BL0940 {
   long voltage = 0;
   long current = 0;
   long power = 0;
-  long power_cycle_first = 0;
-  long cf_pulses = 0;
-  long cf_pulses_last_time = BL0940_PULSES_NOT_INITIALIZED;
+//  long power_cycle_first = 0;
+//  long cf_pulses = 0;
   float temperature;
 
   int byte_counter = 0;
   uint8_t *rx_buffer = nullptr;
-  uint8_t power_invalid = 0;
   bool received = false;
 } Bl0940;
 
@@ -85,9 +86,10 @@ void Bl0940Received(void) {
   Bl0940.voltage = Bl0940.rx_buffer[12] << 16 | Bl0940.rx_buffer[11] << 8 | Bl0940.rx_buffer[10];
   Bl0940.current = Bl0940.rx_buffer[6] << 16 | Bl0940.rx_buffer[5] << 8 | Bl0940.rx_buffer[4];
   Bl0940.power = Bl0940.rx_buffer[18] << 16 | Bl0940.rx_buffer[17] << 8 | Bl0940.rx_buffer[16];
-  Bl0940.cf_pulses = Bl0940.rx_buffer[24] << 16 | Bl0940.rx_buffer[23] << 8 | Bl0940.rx_buffer[22];
+//  Bl0940.cf_pulses = Bl0940.rx_buffer[24] << 16 | Bl0940.rx_buffer[23] << 8 | Bl0940.rx_buffer[22];
   uint16_t tps1 = Bl0940.rx_buffer[29] << 8 | Bl0940.rx_buffer[28];
-  Bl0940.temperature = ((170.0f/448.0f)*(((float)tps1/2.0f)-32.0f))-45.0f;
+  float t = ((170.0f/448.0f)*(((float)tps1/2.0f)-32.0f))-45.0f;
+  Bl0940.temperature = ConvertTemp(t);
 
   if (Energy.power_on) {  // Powered on
     Energy.voltage[0] = (float)Bl0940.voltage / Settings.energy_voltage_calibration;
@@ -99,7 +101,7 @@ void Bl0940Received(void) {
       Energy.current[0] = 0;
     }
   } else {  // Powered off
-    Bl0940.power_cycle_first = 0;
+//    Bl0940.power_cycle_first = 0;
     Energy.voltage[0] = 0;
     Energy.active_power[0] = 0;
     Energy.current[0] = 0;
@@ -110,7 +112,7 @@ bool Bl0940SerialInput(void) {
   while (Bl0940Serial->available()) {
     yield();
     uint8_t serial_in_byte = Bl0940Serial->read();
-    if (!Bl0940.received && (BL0940_PACKET_HEADER == serial_in_byte)) {  // Packet header
+    if (!Bl0940.received && (BL0940_PACKET_HEADER == serial_in_byte)) {
       Bl0940.received = true;
       Bl0940.byte_counter = 0;
     }
@@ -129,12 +131,13 @@ bool Bl0940SerialInput(void) {
           Bl0940.received = false;
           return true;
         } else {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
+//          AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
           do {  // Sync buffer with data (issue #1907 and #3425)
             memmove(Bl0940.rx_buffer, Bl0940.rx_buffer +1, BL0940_BUFFER_SIZE -1);
             Bl0940.byte_counter--;
           } while ((Bl0940.byte_counter > 1) && (BL0940_PACKET_HEADER != Bl0940.rx_buffer[0]));
           if (BL0940_PACKET_HEADER != Bl0940.rx_buffer[0]) {
+            AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
             Bl0940.received = false;
             Bl0940.byte_counter = 0;
           }
@@ -171,9 +174,9 @@ void Bl0940SnsInit(void) {
       ClaimSerial();
     }
     if (HLW_UREF_PULSE == Settings.energy_voltage_calibration) {
-      Settings.energy_voltage_calibration = 33003;
-      Settings.energy_current_calibration = 2243;
-      Settings.energy_power_calibration = 1414;
+      Settings.energy_voltage_calibration = BL0940_UREF;
+      Settings.energy_current_calibration = BL0940_IREF;
+      Settings.energy_power_calibration = BL0940_PREF;
     }
 
     for (uint32_t i = 0; i < 5; i++) {
