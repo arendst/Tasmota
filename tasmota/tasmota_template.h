@@ -233,6 +233,7 @@ enum UserSelectablePins {
   GPIO_BOILER_OT_RX,   // OpenTherm Boiler RX pin
   GPIO_BOILER_OT_TX,   // OpenTherm Boiler TX pin
   GPIO_WINDMETER_SPEED,  // WindMeter speed counter pin
+  GPIO_BL0940_RX,      // BL0940 serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -322,7 +323,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ELECTRIQ_MOODL "|"
   D_SENSOR_AS3935 "|" D_SENSOR_PMS5003_TX "|"
   D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
-  D_SENSOR_WINDMETER_SPEED
+  D_SENSOR_WINDMETER_SPEED "|"
+  D_SENSOR_BL0940_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -553,15 +555,18 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DDSU666
   GPIO_DDSU666_TX,     // DDSU666 Serial interface
   GPIO_DDSU666_RX,     // DDSU666 Serial interface
-#endif  // USE_DDSU666
+#endif
 #ifdef USE_SOLAX_X1
   GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
-#endif // USE_SOLAX_X1
+#endif
 #ifdef USE_LE01MR
   GPIO_LE01MR_RX,     // F7F LE-01MR energy meter rx pin
   GPIO_LE01MR_TX,     // F7F LE-01MR energy meter tx pin
-#endif // IFDEF:USE_LE01MR
+#endif
+#ifdef USE_BL0940
+  GPIO_BL0940_RX,     // BL0940 Serial interface
+#endif
 #endif  // USE_ENERGY_SENSOR
 
 // Serial

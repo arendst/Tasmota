@@ -75,3 +75,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add ``FlashFrequency`` to ``status 4``
 - Add support for up to two BH1750 sensors controlled by commands ``BH1750Resolution`` and ``BH1750MTime`` (#8139)
 - Add support for up to eight MCP9808 temperature sensors by device111 (#8594)
+- Add support for BL0940 energy monitor as used in Blitzwolf BW-SHP10 (#8175)

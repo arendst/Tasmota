@@ -17,6 +17,7 @@
 - Add ``FlashFrequency`` to ``status 4``
 - Add support for up to two BH1750 sensors controlled by commands ``BH1750Resolution`` and ``BH1750MTime`` (#8139)
 - Add Zigbee auto-responder for common attributes
+- Add support for BL0940 energy monitor as used in Blitzwolf BW-SHP10 (#8175)
 
 ### 8.3.1.1 20200518
 
