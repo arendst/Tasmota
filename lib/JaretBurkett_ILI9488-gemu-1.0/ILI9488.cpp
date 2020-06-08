@@ -249,10 +249,12 @@ void ICACHE_RAM_ATTR ILI9488::fastSPIwrite(uint8_t d,uint8_t dc) {
 #else
 // ESP32 section
 void ILI9488::writedata(uint8_t d) {
+  ILI9488_START
   fastSPIwrite(d,1);
 }
 
 void ILI9488::writecommand(uint8_t c) {
+  ILI9488_START
   fastSPIwrite(c,0);
 }
 
