@@ -55,7 +55,7 @@ struct BL0940 {
   long voltage = 0;
   long current = 0;
   long power = 0;
-  long power_cycle_first = 0;
+//  long power_cycle_first = 0;
 //  long cf_pulses = 0;
   float temperature;
 
@@ -88,7 +88,8 @@ void Bl0940Received(void) {
   Bl0940.power = Bl0940.rx_buffer[18] << 16 | Bl0940.rx_buffer[17] << 8 | Bl0940.rx_buffer[16];
 //  Bl0940.cf_pulses = Bl0940.rx_buffer[24] << 16 | Bl0940.rx_buffer[23] << 8 | Bl0940.rx_buffer[22];
   uint16_t tps1 = Bl0940.rx_buffer[29] << 8 | Bl0940.rx_buffer[28];
-  Bl0940.temperature = ((170.0f/448.0f)*(((float)tps1/2.0f)-32.0f))-45.0f;
+  float t = ((170.0f/448.0f)*(((float)tps1/2.0f)-32.0f))-45.0f;
+  Bl0940.temperature = ConvertTemp(t);
 
   if (Energy.power_on) {  // Powered on
     Energy.voltage[0] = (float)Bl0940.voltage / Settings.energy_voltage_calibration;
@@ -100,7 +101,7 @@ void Bl0940Received(void) {
       Energy.current[0] = 0;
     }
   } else {  // Powered off
-    Bl0940.power_cycle_first = 0;
+//    Bl0940.power_cycle_first = 0;
     Energy.voltage[0] = 0;
     Energy.active_power[0] = 0;
     Energy.current[0] = 0;
@@ -111,7 +112,7 @@ bool Bl0940SerialInput(void) {
   while (Bl0940Serial->available()) {
     yield();
     uint8_t serial_in_byte = Bl0940Serial->read();
-    if (!Bl0940.received && (BL0940_PACKET_HEADER == serial_in_byte)) {  // Packet header
+    if (!Bl0940.received && (BL0940_PACKET_HEADER == serial_in_byte)) {
       Bl0940.received = true;
       Bl0940.byte_counter = 0;
     }
