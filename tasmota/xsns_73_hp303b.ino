@@ -49,8 +49,6 @@ char types[7] = "HP303B";
 
 bool HP303B_Read(float &temperature, float &pressure, uint8_t hp303b_address)
 {
-  HP303BSensor.begin(hp303b_address);
-
   float t;
   float p;
   int16_t ret;
@@ -80,6 +78,8 @@ void HP303B_Detect(void)
       continue;
     }
 
+    HP303BSensor.begin(addresses[i]);
+
     float t;
     float p;
     if (HP303B_Read(t, p, addresses[i]))
@@ -87,6 +87,7 @@ void HP303B_Detect(void)
       I2cSetActiveFound(addresses[i], types);
       address = addresses[i];
       type = 1;
+      break;
     }
   }
 }
