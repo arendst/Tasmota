@@ -35,16 +35,17 @@
 #include <LOLIN_HP303B.h>
 // HP303B Opject
 LOLIN_HP303B HP303BSensor = LOLIN_HP303B();
+uint8_t bhp303b_addresses[2] = {HP303B_ADDR1, HP303B_ADDR2};
 
-uint8_t address;
-uint8_t addresses[2] = {HP303B_ADDR1, HP303B_ADDR2};
-uint8_t type = 0;
-uint8_t valid = 0;
-float temperature;
-float pressure;
-int16_t oversampling = 7;
-char types[7] = "HP303B";
-
+struct BHP303B {
+  uint8_t address;
+  uint8_t type = 0;
+  uint8_t valid = 0;
+  float temperature;
+  float pressure;
+  int16_t oversampling = 7;
+  char types[7] = "HP303B";
+} bhp303b_sensor;
 /*********************************************************************************************/
 
 bool HP303B_Read(float &temperature, float &pressure, uint8_t hp303b_address)
@@ -53,11 +54,11 @@ bool HP303B_Read(float &temperature, float &pressure, uint8_t hp303b_address)
   float p;
   int16_t ret;
 
-  ret = HP303BSensor.measureTempOnce(t, oversampling);
+  ret = HP303BSensor.measureTempOnce(t, bhp303b_sensor.oversampling);
   if (ret != 0)
     return false;
 
-  ret = HP303BSensor.measurePressureOnce(p, oversampling);
+  ret = HP303BSensor.measurePressureOnce(p, bhp303b_sensor.oversampling);
   if (ret != 0)
     return false;
 
@@ -71,22 +72,22 @@ bool HP303B_Read(float &temperature, float &pressure, uint8_t hp303b_address)
 
 void HP303B_Detect(void)
 {
-  for (uint32_t i = 0; i < sizeof(addresses); i++)
+  for (uint32_t i = 0; i < sizeof(bhp303b_addresses); i++)
   {
-    if (!I2cSetDevice(addresses[i]))
+    if (!I2cSetDevice(bhp303b_addresses[i]))
     {
       continue;
     }
 
-    HP303BSensor.begin(addresses[i]);
+    HP303BSensor.begin(bhp303b_addresses[i]);
 
     float t;
     float p;
-    if (HP303B_Read(t, p, addresses[i]))
+    if (HP303B_Read(t, p, bhp303b_addresses[i]))
     {
-      I2cSetActiveFound(addresses[i], types);
-      address = addresses[i];
-      type = 1;
+      I2cSetActiveFound(bhp303b_addresses[i], bhp303b_sensor.types);
+      bhp303b_sensor.address = bhp303b_addresses[i];
+      bhp303b_sensor.type = 1;
       break;
     }
   }
@@ -95,12 +96,12 @@ void HP303B_Detect(void)
 void HP303B_Show(bool json)
 {
 
-  if (HP303B_Read(temperature, pressure, address))
+  if (HP303B_Read(bhp303b_sensor.temperature, bhp303b_sensor.pressure, bhp303b_sensor.address))
   {
     char str_temperature[33];
-    dtostrfd(temperature, Settings.flag2.temperature_resolution, str_temperature);
+    dtostrfd(bhp303b_sensor.temperature, Settings.flag2.temperature_resolution, str_temperature);
     char str_pressure[33];
-    dtostrfd(pressure, Settings.flag2.pressure_resolution, str_pressure);
+    dtostrfd(bhp303b_sensor.pressure, Settings.flag2.pressure_resolution, str_pressure);
 
     if (json)
     {
@@ -109,7 +110,7 @@ void HP303B_Show(bool json)
 #ifdef USE_DOMOTICZ
       if (0 == tele_period)
       {
-        DomoticzSensor(DZ_TEMP, temperature);
+        DomoticzSensor(DZ_TEMP, bhp303b_sensor.temperature);
       }
 #endif // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
@@ -140,7 +141,7 @@ bool Xsns73(uint8_t function)
   {
     HP303B_Detect();
   }
-  else if (type)
+  else if (bhp303b_sensor.type)
   {
     switch (function)
     {
