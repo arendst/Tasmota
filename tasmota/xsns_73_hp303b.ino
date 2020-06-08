@@ -44,12 +44,14 @@ struct BHP303B {
   float temperature;
   float pressure;
   int16_t oversampling = 7;
-  char types[7] = "HP303B";
+  char name[7] = "HP303B";
 } bhp303b_sensor;
 /*********************************************************************************************/
 
-bool HP303B_Read(float &temperature, float &pressure, uint8_t hp303b_address)
+bool HP303B_Read()
 {
+  if (bhp303b_sensor.valid) { bhp303b_sensor.valid--; }
+
   float t;
   float p;
   int16_t ret;
@@ -62,9 +64,10 @@ bool HP303B_Read(float &temperature, float &pressure, uint8_t hp303b_address)
   if (ret != 0)
     return false;
 
-  temperature = (float)ConvertTemp(t);
-  pressure = (float)ConvertPressure(p) / 100; //conversion to hPa
+  bhp303b_sensor.temperature = (float)ConvertTemp(t);
+  bhp303b_sensor.pressure = (float)ConvertPressure(p) / 100; //conversion to hPa
 
+  bhp303b_sensor.valid = SENSOR_MAX_MISS;
   return true;
 }
 
@@ -74,29 +77,33 @@ void HP303B_Detect(void)
 {
   for (uint32_t i = 0; i < sizeof(bhp303b_addresses); i++)
   {
-    if (!I2cSetDevice(bhp303b_addresses[i]))
-    {
-      continue;
-    }
+    if (I2cActive(bhp303b_addresses[i])) { return; }
 
-    HP303BSensor.begin(bhp303b_addresses[i]);
+    bhp303b_sensor.address = bhp303b_addresses[i];
 
-    float t;
-    float p;
-    if (HP303B_Read(t, p, bhp303b_addresses[i]))
+    HP303BSensor.begin( bhp303b_sensor.address);
+
+    if (HP303B_Read())
     {
-      I2cSetActiveFound(bhp303b_addresses[i], bhp303b_sensor.types);
-      bhp303b_sensor.address = bhp303b_addresses[i];
+      I2cSetActiveFound(bhp303b_sensor.address, bhp303b_sensor.name);
       bhp303b_sensor.type = 1;
       break;
     }
   }
 }
 
+void HP303B_EverySecond(void)
+{
+  if (uptime &1) {
+    if (!HP303B_Read()) {
+      AddLogMissed(bhp303b_sensor.name, bhp303b_sensor.valid);
+    }
+  }
+}
+
 void HP303B_Show(bool json)
 {
-
-  if (HP303B_Read(bhp303b_sensor.temperature, bhp303b_sensor.pressure, bhp303b_sensor.address))
+  if (bhp303b_sensor.valid)
   {
     char str_temperature[33];
     dtostrfd(bhp303b_sensor.temperature, Settings.flag2.temperature_resolution, str_temperature);
@@ -130,21 +137,20 @@ void HP303B_Show(bool json)
 
 bool Xsns73(uint8_t function)
 {
-  if (!I2cEnabled(XI2C_52))
-  {
-    return false;
-  }
+  if (!I2cEnabled(XI2C_52)) { return false; }
 
   bool result = false;
 
-  if (FUNC_INIT == function)
-  {
+  if (FUNC_INIT == function) {
     HP303B_Detect();
   }
   else if (bhp303b_sensor.type)
   {
     switch (function)
     {
+      case FUNC_EVERY_SECOND:
+      HP303B_EverySecond();
+      break;
     case FUNC_JSON_APPEND:
       HP303B_Show(1);
       break;
