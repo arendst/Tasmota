@@ -1975,6 +1975,19 @@ chknext:
           fvar=glob_script_mem.script_mem_size+(glob_script_mem.script_size)+(PMEM_SIZE);
           goto exit;
         }
+        if (!strncmp(vname,"rnd(",4)) {
+          // tasmota switch state
+          GetNumericResult(vname+4,OPER_EQU,&fvar,0);
+          if (fvar<0) {
+            randomSeed(-fvar);
+            fvar=0;
+          } else {
+            fvar=random(fvar);
+          }
+          // skip ] bracket
+          len++;
+          goto exit;
+        }
         break;
       case 's':
         if (!strncmp(vname,"secs",4)) {
@@ -3786,6 +3799,76 @@ const char HTTP_FORM_SDC_HREF[] PROGMEM =
 #endif
 
 
+uint8_t *script_ex_ptr;
+uint16_t uplsize;
+uint8_t sc_state;
+
+// upload script and start immediately
+void script_upload_start(void) {
+
+  //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: file upload execute"));
+
+  HTTPUpload& upload = Webserver->upload();
+  if (upload.status == UPLOAD_FILE_START) {
+    //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload start"));
+    script_ex_ptr=(uint8_t*)glob_script_mem.script_ram;
+    //AddLog_P2(LOG_LEVEL_INFO, PSTR("HTP: upload file %s, %d"),upload.filename.c_str(),upload.totalSize);
+
+    if (strcmp(upload.filename.c_str(),"execute_script")) {
+      Web.upload_error=1;
+      WSSend(500, CT_PLAIN, F("500: wrong filename"));
+      return;
+    }
+    if (upload.totalSize>=glob_script_mem.script_size) {
+      Web.upload_error=1;
+      WSSend(500, CT_PLAIN, F("500: file to large"));
+      return;
+    }
+    uplsize=0;
+
+    sc_state = bitRead(Settings.rule_enabled, 0);
+    bitWrite(Settings.rule_enabled,0,0);
+
+  } else if(upload.status == UPLOAD_FILE_WRITE) {
+    //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload write"));
+    uint32_t csiz=upload.currentSize;
+    uint32_t tsiz=glob_script_mem.script_size-1;
+    if (uplsize<tsiz) {
+      if (uplsize+csiz<tsiz) {
+        memcpy(script_ex_ptr,upload.buf,csiz);
+        script_ex_ptr+=csiz;
+        uplsize+=csiz;
+      } else {
+        csiz=tsiz-uplsize;
+        memcpy(script_ex_ptr,upload.buf,csiz);
+        script_ex_ptr+=csiz;
+        uplsize+=csiz;
+      }
+      //AddLog_P2(LOG_LEVEL_INFO, PSTR("HTP: write %d - %d"),csiz,uplsize);
+    }
+
+    //if (upload_file) upload_file.write(upload.buf,upload.currentSize);
+  } else if(upload.status == UPLOAD_FILE_END) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload close"));
+    //if (upload_file) upload_file.close();
+    if (Web.upload_error) {
+      AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
+    } else {
+      *script_ex_ptr=0;
+      bitWrite(Settings.rule_enabled,0,sc_state);
+      SaveScript();
+      SaveScriptEnd();
+    }
+  } else {
+    Web.upload_error=1;
+    WSSend(500, CT_PLAIN, F("500: couldn't create file"));
+  }
+}
+
+void ScriptExecuteUploadSuccess(void) {
+  WSSend(200, CT_PLAIN, F("transfer OK"));
+}
+
 
 #ifdef USE_SCRIPT_FATFS
 
@@ -3912,6 +3995,17 @@ void Script_FileUploadConfiguration(void)
     }
   }
 
+  void ScriptFileUploadSuccess(void) {
+    WSContentStart_P(S_INFORMATION);
+    WSContentSendStyle();
+    WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
+    WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
+    WSContentSend_P(PSTR("</div><br/>"));
+    WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),"/upl",D_UPL_DONE);
+    //WSContentSpaceButton(BUTTON_MAIN);
+    WSContentStop();
+  }
+
   WSContentStart_P(S_SCRIPT_FILE_UPLOAD);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_FILE_UPLOAD,D_SDCARD_DIR);
@@ -3930,18 +4024,6 @@ void Script_FileUploadConfiguration(void)
 }
 
 File upload_file;
-
-void ScriptFileUploadSuccess(void) {
-  WSContentStart_P(S_INFORMATION);
-  WSContentSendStyle();
-  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
-  WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
-  WSContentSend_P(PSTR("</div><br/>"));
-  WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),"/upl",D_UPL_DONE);
-  //WSContentSpaceButton(BUTTON_MAIN);
-  WSContentStop();
-}
-
 
 
 void script_upload(void) {
@@ -4090,8 +4172,31 @@ void HandleScriptConfiguration(void) {
     WSContentSend_P(HTTP_SCRIPT_FORM_END);
     WSContentSpaceButton(BUTTON_CONFIGURATION);
     WSContentStop();
-  }
+}
 
+void SaveScript(void) {
+
+#ifdef EEP_SCRIPT_SIZE
+  if (glob_script_mem.flags&1) {
+    EEP_WRITE(0,EEP_SCRIPT_SIZE,glob_script_mem.script_ram);
+  }
+#endif // EEP_SCRIPT_SIZE
+
+#ifdef USE_SCRIPT_FATFS
+  if (glob_script_mem.flags&1) {
+    fsp->remove(FAT_SCRIPT_NAME);
+    File file=fsp->open(FAT_SCRIPT_NAME,FILE_WRITE);
+    file.write((const uint8_t*)glob_script_mem.script_ram,FAT_SCRIPT_SIZE);
+    file.close();
+  }
+#endif // USE_SCRIPT_FATFS
+
+#ifdef LITTLEFS_SCRIPT_SIZE
+  if (glob_script_mem.flags&1) {
+    SaveFile("/script.txt",(uint8_t*)glob_script_mem.script_ram,LITTLEFS_SCRIPT_SIZE);
+  }
+#endif // LITTLEFS_SCRIPT_SIZE
+}
 
 void ScriptSaveSettings(void) {
 
@@ -4148,29 +4253,14 @@ void ScriptSaveSettings(void) {
       bitWrite(Settings.rule_enabled, 0, 0);
     }
 
+    SaveScript();
 
-#ifdef EEP_SCRIPT_SIZE
-    if (glob_script_mem.flags&1) {
-      EEP_WRITE(0,EEP_SCRIPT_SIZE,glob_script_mem.script_ram);
-    }
-#endif // EEP_SCRIPT_SIZE
-
-#ifdef USE_SCRIPT_FATFS
-    if (glob_script_mem.flags&1) {
-      fsp->remove(FAT_SCRIPT_NAME);
-      File file=fsp->open(FAT_SCRIPT_NAME,FILE_WRITE);
-      file.write((const uint8_t*)glob_script_mem.script_ram,FAT_SCRIPT_SIZE);
-      file.close();
-    }
-#endif // USE_SCRIPT_FATFS
-
-#ifdef LITTLEFS_SCRIPT_SIZE
-    if (glob_script_mem.flags&1) {
-      SaveFile("/script.txt",(uint8_t*)glob_script_mem.script_ram,LITTLEFS_SCRIPT_SIZE);
-    }
-#endif // LITTLEFS_SCRIPT_SIZE
   }
 
+  SaveScriptEnd();
+}
+
+void SaveScriptEnd(void) {
   if (glob_script_mem.script_mem) {
     Scripter_save_pvars();
     free(glob_script_mem.script_mem);
@@ -4183,7 +4273,7 @@ void ScriptSaveSettings(void) {
   uint32_t len_compressed = SCRIPT_COMPRESS(glob_script_mem.script_ram, strlen(glob_script_mem.script_ram), Settings.rules[0], MAX_SCRIPT_SIZE-1);
   if (len_compressed > 0) {
     Settings.rules[0][len_compressed] = 0;
-    AddLog_P2(LOG_LEVEL_INFO,PSTR("script compressed to %d %%"),len_compressed * 100 / strlen(glob_script_mem.script_ram));
+    AddLog_P2(LOG_LEVEL_INFO,PSTR("script compressed to %d bytes = %d %%"),len_compressed,len_compressed * 100 / strlen(glob_script_mem.script_ram));
   } else {
     AddLog_P2(LOG_LEVEL_INFO, PSTR("script compress error: %d"), len_compressed);
   }
@@ -4204,8 +4294,6 @@ void ScriptSaveSettings(void) {
 
 
 #if defined(USE_SCRIPT_HUE) && defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
-
-
 #define HUE_DEV_MVNUM 5
 #define HUE_DEV_NSIZE 16
 struct HUE_SCRIPT {
@@ -5738,7 +5826,9 @@ void script_task1(void *arg) {
     //if (time<esp32_tasks[1].task_timer) {delay(time); }
     //if (time<=esp32_tasks[0].task_timer) {vTaskDelay( pdMS_TO_TICKS( time ) ); }
     delay(esp32_tasks[0].task_timer);
-    Run_Scripter(">t1",3,0);
+    if (bitRead(Settings.rule_enabled, 0)) {
+      Run_Scripter(">t1",3,0);
+    }
   }
 }
 
@@ -5752,7 +5842,9 @@ void script_task2(void *arg) {
     //if (time<esp32_tasks[1].task_timer) {delay(time); }
     //if (time<=esp32_tasks[1].task_timer) {vTaskDelay( pdMS_TO_TICKS( time ) ); }
     delay(esp32_tasks[1].task_timer);
-    Run_Scripter(">t2",3,0);
+    if (bitRead(Settings.rule_enabled, 0)) {
+      Run_Scripter(">t2",3,0);
+    }
   }
 }
 uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core) {
@@ -5997,6 +6089,8 @@ bool Xdrv10(uint8_t function)
     case FUNC_WEB_ADD_HANDLER:
       Webserver->on("/" WEB_HANDLE_SCRIPT, HandleScriptConfiguration);
       Webserver->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);
+      Webserver->on("/exs", HTTP_POST,[]() { Webserver->sendHeader("Location","/exs");Webserver->send(303);},script_upload_start);
+      Webserver->on("/exs", HTTP_GET,ScriptExecuteUploadSuccess);
 
 #ifdef USE_SCRIPT_FATFS
       Webserver->on("/u3", HTTP_POST,[]() { Webserver->sendHeader("Location","/u3");Webserver->send(303);},script_upload);
