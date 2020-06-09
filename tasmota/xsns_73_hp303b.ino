@@ -79,14 +79,13 @@ void HP303B_Detect(void)
 {
   for (uint32_t i = 0; i < HP303B_MAX_SENSORS; i++)
   {
-    if (I2cActive(HP303B_START_ADDRESS + i)) { return; }
+    if (!I2cSetDevice(HP303B_START_ADDRESS + i )) { continue; }
 
     if (HP303BSensor.begin(HP303B_START_ADDRESS + i))
     {
       hp303b_sensor[hp303b_cfg.count].address = HP303B_START_ADDRESS + i;
       I2cSetActiveFound(hp303b_sensor[hp303b_cfg.count].address, hp303b_cfg.types);
       hp303b_cfg.count++;
-      break;
     }
   }
 }
@@ -108,7 +107,7 @@ void HP303B_Show(bool json)
     char sensor_name[12];
     strlcpy(sensor_name, hp303b_cfg.types, sizeof(sensor_name));
     if (hp303b_cfg.count > 1) {
-      snprintf_P(sensor_name, sizeof(sensor_name), PSTR("%s%c0x%02X"), sensor_name, IndexSeparator(), hp303b_sensor[i].address); // MCP9808-18, MCP9808-1A  etc.
+      snprintf_P(sensor_name, sizeof(sensor_name), PSTR("%s%c0x%02X"), sensor_name, IndexSeparator(), hp303b_sensor[i].address); // HP303B-0x76, HP303B-0x77
     }
 
     if (hp303b_sensor[i].valid)
@@ -123,8 +122,8 @@ void HP303B_Show(bool json)
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_PRESSURE "\":%s"), sensor_name, str_temperature,  str_pressure);
         ResponseJsonEnd();
   #ifdef USE_DOMOTICZ
-        if (0 == tele_period)
-        {
+        // Domoticz and knx only support one temp sensor
+        if ((0 == tele_period) && (0 == i)) {
           DomoticzSensor(DZ_TEMP, hp303b_sensor[i].temperature);
         }
   #endif // USE_DOMOTICZ
