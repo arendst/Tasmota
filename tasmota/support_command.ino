@@ -1431,6 +1431,7 @@ void CmndAp(void)
     case 2:  // AP2
       Settings.sta_active = XdrvMailbox.payload -1;
     }
+    Settings.wifi_channel = 0;  // Disable stored AP
     restart_flag = 2;
   }
   Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active));
