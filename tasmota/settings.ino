@@ -391,8 +391,7 @@ void UpdateQuickPowerCycle(bool update)
  * Config Settings.text char array support
 \*********************************************************************************************/
 
-uint32_t GetSettingsTextLen(void)
-{
+uint32_t GetSettingsTextLen(void) {
   char* position = Settings.text_pool;
   for (uint32_t size = 0; size < SET_MAX; size++) {
     while (*position++ != '\0') { }
@@ -400,8 +399,20 @@ uint32_t GetSettingsTextLen(void)
   return position - Settings.text_pool;
 }
 
-bool SettingsUpdateText(uint32_t index, const char* replace_me)
-{
+bool settings_text_mutex = false;
+uint32_t settings_text_busy_count = 0;
+
+bool SettingsUpdateFinished(void) {
+  uint32_t wait_loop = 10;
+  while (settings_text_mutex && wait_loop) {  // Wait for any update to finish
+    yield();
+    delayMicroseconds(1);
+    wait_loop--;
+  }
+  return (wait_loop > 0);  // true if finished
+}
+
+bool SettingsUpdateText(uint32_t index, const char* replace_me) {
   if (index >= SET_MAX) {
     return false;  // Setting not supported - internal error
   }
@@ -438,16 +449,24 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me)
     return false;  // Replace text too long
   }
 
-  if (diff != 0) {
-    // Shift Settings.text up or down
-    memmove_P(Settings.text_pool + start_pos + replace_len, Settings.text_pool + end_pos, char_len - end_pos);
-  }
-  // Replace text
-  memmove_P(Settings.text_pool + start_pos, replace, replace_len);
-  // Fill for future use
-  memset(Settings.text_pool + char_len + diff, 0x00, settings_text_size - char_len - diff);
+  if (settings_text_mutex && !SettingsUpdateFinished()) {
+    settings_text_busy_count++;
+  } else {
+    settings_text_mutex = true;
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d"), GetSettingsTextLen(), settings_text_size);
+    if (diff != 0) {
+      // Shift Settings.text up or down
+      memmove_P(Settings.text_pool + start_pos + replace_len, Settings.text_pool + end_pos, char_len - end_pos);
+    }
+    // Replace text
+    memmove_P(Settings.text_pool + start_pos, replace, replace_len);
+    // Fill for future use
+    memset(Settings.text_pool + char_len + diff, 0x00, settings_text_size - char_len - diff);
+
+    settings_text_mutex = false;
+  }
+
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count);
 
   return true;
 }
@@ -459,6 +478,7 @@ char* SettingsText(uint32_t index)
   if (index >= SET_MAX) {
     position += settings_text_size -1;  // Setting not supported - internal error - return empty string
   } else {
+    SettingsUpdateFinished();
     for (;index > 0; index--) {
       while (*position++ != '\0') { }
     }
