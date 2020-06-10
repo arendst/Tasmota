@@ -147,11 +147,6 @@ uint8_t LOLIN_HP303B::getRevisionId(void)
  */
 int16_t LOLIN_HP303B::standby(void)
 {
-	//abort if initialization failed
-	if(m_initFail)
-	{
-		return HP303B__FAIL_INIT_FAILED;
-	}
 	//set device to idling mode
 	int16_t ret = setOpMode(IDLE);
 	if(ret != HP303B__SUCCEEDED)
@@ -270,11 +265,6 @@ int16_t LOLIN_HP303B::startMeasureTempOnce(void)
  */
 int16_t LOLIN_HP303B::startMeasureTempOnce(uint8_t oversamplingRate)
 {
-	//abort if initialization failed
-	if(m_initFail)
-	{
-		return HP303B__FAIL_INIT_FAILED;
-	}
 	//abort if device is not in idling mode
 	if(m_opMode!=IDLE)
 	{
@@ -394,11 +384,6 @@ int16_t LOLIN_HP303B::startMeasurePressureOnce(void)
  */
 int16_t LOLIN_HP303B::startMeasurePressureOnce(uint8_t oversamplingRate)
 {
-	//abort if initialization failed
-	if(m_initFail)
-	{
-		return HP303B__FAIL_INIT_FAILED;
-	}
 	//abort if device is not in idling mode
 	if(m_opMode != IDLE)
 	{
@@ -428,12 +413,6 @@ int16_t LOLIN_HP303B::startMeasurePressureOnce(uint8_t oversamplingRate)
  */
 int16_t LOLIN_HP303B::getSingleResult(float &result)
 {
-	//abort if initialization failed
-	if(m_initFail)
-	{
-		return HP303B__FAIL_INIT_FAILED;
-	}
-
 	//read finished bit for current opMode
 	int16_t rdy;
 	switch(m_opMode)
