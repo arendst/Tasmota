@@ -35,11 +35,13 @@ public:
 
   //Command Mode
   int16_t measureTempOnce(float &result);
-  int16_t measureTempOnce(float &result, uint8_t oversamplingRate);
+  int16_t measureTempOnce(float &result, uint8_t slaveAddress);
+  int16_t measureTempOnce(float &result, uint8_t slaveAddress, uint8_t oversamplingRate);
   int16_t startMeasureTempOnce(void);
   int16_t startMeasureTempOnce(uint8_t oversamplingRate);
   int16_t measurePressureOnce(float &result);
-  int16_t measurePressureOnce(float &result, uint8_t oversamplingRate);
+  int16_t measurePressureOnce(float &result, uint8_t slaveAddress);
+  int16_t measurePressureOnce(float &result, uint8_t slaveAddress, uint8_t oversamplingRate);
   int16_t startMeasurePressureOnce(void);
   int16_t startMeasurePressureOnce(uint8_t oversamplingRate);
   int16_t getSingleResult(float &result);

@@ -58,11 +58,11 @@ bool HP303B_Read(uint8_t hp303b_idx)
   float p;
   int16_t ret;
 
-  ret = HP303BSensor.measureTempOnce(t, hp303b_cfg.oversampling);
+  ret = HP303BSensor.measureTempOnce(t, hp303b_sensor[hp303b_idx].address, hp303b_cfg.oversampling);
   if (ret != 0)
     return false;
 
-  ret = HP303BSensor.measurePressureOnce(p, hp303b_cfg.oversampling);
+  ret = HP303BSensor.measurePressureOnce(p, hp303b_sensor[hp303b_idx].address, hp303b_cfg.oversampling);
   if (ret != 0)
     return false;
 

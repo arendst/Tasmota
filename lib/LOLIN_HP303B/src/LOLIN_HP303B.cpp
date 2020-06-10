@@ -183,7 +183,23 @@ int16_t LOLIN_HP303B::standby(void)
  */
 int16_t LOLIN_HP303B::measureTempOnce(float &result)
 {
-	return measureTempOnce(result, m_tempOsr);
+	return measureTempOnce(result, m_slaveAddress, m_tempOsr);
+}
+
+/**
+ * performs one temperature measurement and writes result to the given address
+ *
+ * &result:		reference to a 32-Bit signed Integer value where the result will be written
+ * 				It will not be written if result==NULL
+ * returns: 	0 on success
+ * 				-4 if the HP303B is could not finish its measurement in time
+ * 				-3 if the HP303B is already busy
+ * 				-2 if the object initialization failed
+ * 				-1 on other fail
+ */
+int16_t LOLIN_HP303B::measureTempOnce(float &result, uint8_t slaveAddress)
+{
+	return measureTempOnce(result, slaveAddress, m_tempOsr);
 }
 
 /**
@@ -202,8 +218,11 @@ int16_t LOLIN_HP303B::measureTempOnce(float &result)
  * 						-2 if the object initialization failed
  * 						-1 on other fail
  */
-int16_t LOLIN_HP303B::measureTempOnce(float &result, uint8_t oversamplingRate)
+int16_t LOLIN_HP303B::measureTempOnce(float &result, uint8_t slaveAddress, uint8_t oversamplingRate)
 {
+	//Set I2C bus connection
+	m_slaveAddress = slaveAddress;
+
 	//Start measurement
 	int16_t ret = startMeasureTempOnce(oversamplingRate);
 	if(ret!=HP303B__SUCCEEDED)
@@ -288,7 +307,23 @@ int16_t LOLIN_HP303B::startMeasureTempOnce(uint8_t oversamplingRate)
  */
 int16_t LOLIN_HP303B::measurePressureOnce(float &result)
 {
-	return measurePressureOnce(result, m_prsOsr);
+	return measurePressureOnce(result, m_slaveAddress, m_prsOsr);
+}
+
+/**
+ * performs one pressure measurement and writes result to the given address
+ *
+ * &result:		reference to a 32-Bit signed Integer value where the result will be written
+ * 				It will not be written if result==NULL
+ * returns: 	0 on success
+ * 				-4 if the HP303B is could not finish its measurement in time
+ * 				-3 if the HP303B is already busy
+ * 				-2 if the object initialization failed
+ * 				-1 on other fail
+ */
+int16_t LOLIN_HP303B::measurePressureOnce(float &result, uint8_t slaveAddress)
+{
+	return measurePressureOnce(result, slaveAddress, m_prsOsr);
 }
 
 /**
@@ -307,8 +342,11 @@ int16_t LOLIN_HP303B::measurePressureOnce(float &result)
  * 						-2 if the object initialization failed
  * 						-1 on other fail
  */
-int16_t LOLIN_HP303B::measurePressureOnce(float &result, uint8_t oversamplingRate)
+int16_t LOLIN_HP303B::measurePressureOnce(float &result, uint8_t slaveAddress, uint8_t oversamplingRate)
 {
+	//Set I2C bus connection
+	m_slaveAddress = slaveAddress;
+
 	//start the measurement
 	int16_t ret = startMeasurePressureOnce(oversamplingRate);
 	if(ret != HP303B__SUCCEEDED)
