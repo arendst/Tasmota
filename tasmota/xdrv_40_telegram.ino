@@ -84,7 +84,7 @@ bool TelegramInit(void) {
 	    Telegram.message[1][0]="";
       Telegram.message[0][1]="0";   // Code of last read Message
 
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Started"));
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("TGM: Started"));
     }
 
     init_done = true;
@@ -92,12 +92,8 @@ bool TelegramInit(void) {
   return init_done;
 }
 
-/**************************************************************************************************
- * function to achieve connection to api.telegram.org and send command to telegram                *
- * (Argument to pass: URL to address to Telegram)                                                 *
- **************************************************************************************************/
 String TelegramConnectToTelegram(String command) {
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Cmnd %s"), command.c_str());
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Cmnd %s"), command.c_str());
 
   if (!TelegramInit()) { return ""; }
 
@@ -105,8 +101,7 @@ String TelegramConnectToTelegram(String command) {
   uint32_t tls_connect_time = millis();
 
   if (telegramClient->connect("api.telegram.org", 443)) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"),
-      millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
 
     telegramClient->println("GET /"+command);
 
@@ -135,12 +130,8 @@ String TelegramConnectToTelegram(String command) {
   return response;
 }
 
-/***************************************************************
- * GetUpdates - function to receive all messages from telegram *
- * (Argument to pass: the last+1 message to read)             *
- ***************************************************************/
 void TelegramGetUpdates(String offset) {
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: getUpdates"));
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getUpdates"));
 
   if (!TelegramInit()) { return; }
 
@@ -181,13 +172,13 @@ void TelegramGetUpdates(String offset) {
   //  }
   // ]}
 
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+//  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 
   // parsing of reply from Telegram into separate received messages
   int i = 0;                //messages received counter
   if (response != "") {
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Sent Update request messages up to %s"), offset.c_str());
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Sent Update request messages up to %s"), offset.c_str());
 
     String a = "";
     int ch_count = 0;
@@ -213,16 +204,16 @@ void TelegramGetUpdates(String offset) {
   }
   //check result of parsing process
   if (response == "") {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Failed to update"));
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Failed to update"));
     return;
   }
   if (0 == i) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
     Telegram.message[0][0] = "0";
   } else {
     Telegram.message[0][0] = String(i);   //returns how many messages are in the array
     for (int b = 1; b < i+1; b++) {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Msg %d %s"), b, Telegram.message[b][0].c_str());
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Msg %d %s"), b, Telegram.message[b][0].c_str());
     }
 
     TelegramAnalizeMessage();
@@ -248,13 +239,13 @@ void TelegramAnalizeMessage(void) {
     Telegram.message[0][1] = id;  // Write id of last read message
 
     for (int j = 0; j < 6; j++)	{
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed%d \"%s\""), j, Telegram.message[i][j].c_str());
+//      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed%d \"%s\""), j, Telegram.message[i][j].c_str());
     }
   }
 }
 
 bool TelegramSendMessage(String chat_id, String text) {
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: sendMessage"));
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: sendMessage"));
 
   if (!TelegramInit()) { return false; }
 
@@ -264,10 +255,10 @@ bool TelegramSendMessage(String chat_id, String text) {
     String command = "bot" + _token + "/sendMessage?chat_id=" + chat_id + "&text=" + text;
     String response = TelegramConnectToTelegram(command);
 
-    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+//    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 
     if (response.startsWith("{\"ok\":true")) {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Message sent"));
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Message sent"));
       sent = true;
     }
 
@@ -278,7 +269,7 @@ bool TelegramSendMessage(String chat_id, String text) {
 
 /*
 void TelegramSendGetMe(void) {
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: getMe"));
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getMe"));
 
   if (!TelegramInit()) { return; }
 
@@ -288,7 +279,7 @@ void TelegramSendGetMe(void) {
 
   // {"ok":true,"result":{"id":1179906608,"is_bot":true,"first_name":"Tasmota","username":"tasmota_bot","can_join_groups":true,"can_read_all_group_messages":false,"supports_inline_queries":false}}
 
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+//  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 }
 */
 
