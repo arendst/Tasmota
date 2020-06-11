@@ -52,7 +52,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.3.1.2
+### Version 8.3.1.3
 
 - Change IRremoteESP8266 library updated to v2.7.7
 - Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)
@@ -76,3 +76,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for up to two BH1750 sensors controlled by commands ``BH1750Resolution`` and ``BH1750MTime`` (#8139)
 - Add support for up to eight MCP9808 temperature sensors by device111 (#8594)
 - Add support for BL0940 energy monitor as used in Blitzwolf BW-SHP10 (#8175)
+- Add initial support for Telegram bot (#8619)

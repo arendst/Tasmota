@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.3.1.3 20200611
+
+- Add initial support for Telegram bot (#8619)
+
 ### 8.3.1.2 20200522
 
 - Change Energy JSON Total field from ``"Total":[33.736,11.717,16.978]`` to ``"Total":33.736,"TotalTariff":[11.717,16.978]``
