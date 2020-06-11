@@ -88,7 +88,7 @@ extern "C" void resetPins();
   const uint16_t WEB_LOG_SIZE = 4000;          // Max number of characters in weblog
 #endif
 
-#if defined(USE_MQTT_TLS) && defined(ARDUINO_ESP8266_RELEASE_2_3_0)
+#if defined(USE_TLS) && defined(ARDUINO_ESP8266_RELEASE_2_3_0)
   #error "TLS is no more supported on Core 2.3.0, use 2.4.2 or higher."
 #endif
 

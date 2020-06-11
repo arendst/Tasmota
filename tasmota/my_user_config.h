@@ -753,4 +753,16 @@
   #error "Select either USE_RULES or USE_SCRIPT. They can't both be used at the same time"
 #endif
 
+/*********************************************************************************************\
+ * Post-process compile options for TLS
+\*********************************************************************************************/
+
+#if defined(USE_MQTT_TLS) || defined(USE_SENDMAIL) || defined(USE_TELEGRAM)
+  #define USE_TLS                                  // flag indicates we need to include TLS code
+
+  #if defined(USE_MQTT_AWS_IOT) || defined(USE_TELEGRAM)
+    #define USE_MQTT_TLS_FORCE_EC_CIPHER           // AWS IoT and TELEGRAM require EC Cipher
+  #endif
+#endif
+
 #endif  // _MY_USER_CONFIG_H_
