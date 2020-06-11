@@ -997,7 +997,7 @@ char* ResponseGetTime(uint32_t format, char* time_str)
     snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":%u"), UtcTime());
     break;
   case 3:
-    snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s.%03d\""), GetDateAndTime(DT_LOCAL).c_str(), RtcMillis());
+    snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL_MILLIS).c_str());
     break;
   default:
     snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
