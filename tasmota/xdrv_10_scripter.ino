@@ -3979,8 +3979,7 @@ void ListDir(char *path, uint8_t depth) {
 
 char path[48];
 
-void Script_FileUploadConfiguration(void)
-{
+void Script_FileUploadConfiguration(void) {
   uint8_t depth=0;
   strcpy(path,"/");
 
@@ -3993,17 +3992,6 @@ void Script_FileUploadConfiguration(void)
       // is directory
       strcpy(path,cp);
     }
-  }
-
-  void ScriptFileUploadSuccess(void) {
-    WSContentStart_P(S_INFORMATION);
-    WSContentSendStyle();
-    WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
-    WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
-    WSContentSend_P(PSTR("</div><br/>"));
-    WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),"/upl",D_UPL_DONE);
-    //WSContentSpaceButton(BUTTON_MAIN);
-    WSContentStop();
   }
 
   WSContentStart_P(S_SCRIPT_FILE_UPLOAD);
@@ -4023,13 +4011,22 @@ void Script_FileUploadConfiguration(void)
   Web.upload_error = 0;
 }
 
+void ScriptFileUploadSuccess(void) {
+  WSContentStart_P(S_INFORMATION);
+  WSContentSendStyle();
+  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
+  WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
+  WSContentSend_P(PSTR("</div><br/>"));
+  WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),"/upl",D_UPL_DONE);
+  //WSContentSpaceButton(BUTTON_MAIN);
+  WSContentStop();
+}
+
+
 File upload_file;
 
-
 void script_upload(void) {
-
   //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: file upload"));
-
   HTTPUpload& upload = Webserver->upload();
   if (upload.status == UPLOAD_FILE_START) {
     char npath[48];
