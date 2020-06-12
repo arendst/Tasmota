@@ -575,7 +575,9 @@ void GetFeatures(void)
 #ifdef USE_BL0940
   feature6 |= 0x00004000;  // xnrg_14_bl0940.ino
 #endif
-//  feature6 |= 0x00008000;
+#ifdef USE_TELEINFO
+  feature6 |= 0x00008000;  // xnrg_15_teleinfo.ino
+#endif
 
 //  feature6 |= 0x00010000;
 //  feature6 |= 0x00020000;
