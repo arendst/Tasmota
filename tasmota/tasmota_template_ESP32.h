@@ -610,18 +610,19 @@ typedef struct MYTMPLT {
 /********************************************************************************************/
 // Supported hardware modules
 enum SupportedModules {
-  WEMOS, ESP32_CAM_AITHINKER,
+  WEMOS, ESP32_CAM_AITHINKER, ESP32_DENKY,
   MAXMODULE};
 
 #define USER_MODULE        255
 
 const char kModuleNames[] PROGMEM =
-  "ESP32-DevKit|ESP32 Cam AiThinker";
+  "ESP32-DevKit|ESP32 Cam AiThinker|Denky (Teleinfo)";
 
 // Default module settings
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WEMOS,
-  ESP32_CAM_AITHINKER
+  ESP32_CAM_AITHINKER,
+  ESP32_DENKY
 };
 
 const mytmplt kModules PROGMEM =

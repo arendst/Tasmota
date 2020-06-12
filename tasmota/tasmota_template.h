@@ -777,8 +777,8 @@ enum SupportedModules {
   SUPLA1, WITTY, YUNSHAN, MAGICHOME, LUANIHVIO, KMC_70011, ARILUX_LC01, ARILUX_LC11, SONOFF_DUAL_R2, ARILUX_LC06,
   SONOFF_S31, ZENGGE_ZF_WF017, SONOFF_POW_R2, SONOFF_IFAN02, BLITZWOLF_BWSHP, SHELLY1, SHELLY2, PHILIPS, NEO_COOLCAM, ESP_SWITCH,
   OBI, TECKIN, APLIC_WDP303075, TUYA_DIMMER, GOSUND, ARMTRONIX_DIMMERS, SK03_TUYA, PS_16_DZ, TECKIN_US, MANZOKU_EU_4,
-  OBI2, YTF_IR_BRIDGE, DIGOO, KA10, ZX2820, MI_DESK_LAMP, SP10, WAGA, SYF05, SONOFF_L1,
-  SONOFF_IFAN03, EXS_DIMMER, PWM_DIMMER, SONOFF_D1,
+  OBI2, YTF_IR_BRIDGE, DIGOO, KA10, ZX2820, MI_DESK_LAMP, SP10, WAGA, SYF05, SONOFF_L1, 
+  SONOFF_IFAN03, EXS_DIMMER, PWM_DIMMER, SONOFF_D1, DENKY,
   MAXMODULE};
 
 #define USER_MODULE        255
@@ -791,7 +791,7 @@ const char kModuleNames[] PROGMEM =
   "Sonoff S31|Zengge WF017|Sonoff Pow R2|Sonoff iFan02|BlitzWolf SHP|Shelly 1|Shelly 2|Xiaomi Philips|Neo Coolcam|ESP Switch|"
   "OBI Socket|Teckin|AplicWDP303075|Tuya MCU|Gosund SP1 v23|ARMTR Dimmer|SK03 Outdoor|PS-16-DZ|Teckin US|Manzoku strip|"
   "OBI Socket 2|YTF IR Bridge|Digoo DG-SP202|KA10|Luminea ZX2820|Mi Desk Lamp|SP10|WAGA CHCZ02MB|SYF05|Sonoff L1|"
-  "Sonoff iFan03|EXS Dimmer|PWM Dimmer|Sonoff D1"
+  "Sonoff iFan03|EXS Dimmer|PWM Dimmer|Sonoff D1|Denky (Teleinfo)"
   ;
 
 const uint8_t kModuleNiceList[] PROGMEM = {
@@ -2174,6 +2174,26 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     GPIO_LED1_INV,    // GPIO13 WiFi Blue Led - Link and Power status
     0, 0, 0, 0
   },
+  {                   // Denky (Teleinfo) Any ESP8266 device
+    GPIO_WS2812,      // GPIO00 WS2812 RGB LED
+    GPIO_USER,        // GPIO01 TX Serial RXD
+    GPIO_USER,        // GPIO02 D4 Wemos DHT Shield
+    GPIO_TELEINFO_RX, // GPIO03 Smart Meter RX Serial
+    GPIO_I2C_SDA,     // GPIO04 D2 Wemos I2C SDA
+    GPIO_I2C_SCL,     // GPIO05 D1 Wemos I2C SCL 
+                      // GPIO06 (SD_CLK   Flash)
+                      // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                      // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+    GPIO_USER,        // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+    GPIO_USER,        // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                      // GPIO11 (SD_CMD   Flash)
+    GPIO_USER,        // GPIO12 D6
+    GPIO_USER,        // GPIO13 D7
+    GPIO_USER,        // GPIO14 D5
+    GPIO_USER,        // GPIO15 D8
+    GPIO_USER,        // GPIO16 D0 Wemos Wake
+    ADC0_USER         // ADC0 A0 Analog input
+  },
   {                   // SONOFF_IFAN03 - Sonoff iFan03 (ESP8285)
     GPIO_KEY1,        // GPIO00 WIFI_KEY0 Button 1
     GPIO_TXD,         // GPIO01 ESP_TXD Serial RXD connection to P0.5 of RF microcontroller
@@ -2258,7 +2278,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     GPIO_LED1_INV,    // GPIO13 WiFi Blue Led - Link and Power status
     0, 0, 0, 0
   }
+
 };
+
 
 #endif  // ESP8266
 
