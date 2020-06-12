@@ -589,6 +589,8 @@
   #define USE_TASMOTA_SLAVE_FLASH_SPEED 57600      // Usually 57600 for 3.3V variants and 115200 for 5V variants
   #define USE_TASMOTA_SLAVE_SERIAL_SPEED 57600     // Depends on the sketch that is running on the Uno/Pro Mini
 //#define USE_OPENTHERM                            // Add support for OpenTherm (+15k code)
+#define USE_TELEINFO                               // Add support for Teleinfo via serial RX interface 
+  //#define USE_TELEINFO_STANDARD                    // Use standard mode (9600 bps) else it's historical mode (1200 bps)
 
 // -- Power monitoring sensors --------------------
 #define USE_ENERGY_MARGIN_DETECTION              // Add support for Energy Margin detection (+1k6 code)
