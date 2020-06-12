@@ -129,6 +129,8 @@ enum UserSelectablePins {
   GPIO_WINDMETER_SPEED,                // WindMeter speed counter pin
   GPIO_KEY1_TC,                        // Touch pin as button
   GPIO_BL0940_RX,                      // BL0940 serial interface
+  GPIO_TELEINFO_RX,                    // Teleinfo telemetry data receive pin
+  GPIO_TELEINFO_ENABLE,                // Teleinfo Enable Receive Pin
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -218,7 +220,8 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_WEBCAM_PSRCS "|"
   D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
   D_SENSOR_WINDMETER_SPEED "|" D_SENSOR_BUTTON "_tc|"
-  D_SENSOR_BL0940_RX
+  D_SENSOR_BL0940_RX "|"
+  D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -522,6 +525,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_AS3935
   AGPIO(GPIO_AS3935),
+#endif
+#ifdef USE_TELEINFO
+  AGPIO(GPIO_TELEINFO_RX),
+  AGPIO(GPIO_TELEINFO_ENABLE),
 #endif
 /*
 #ifndef USE_ADC_VCC
