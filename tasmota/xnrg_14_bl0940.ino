@@ -60,6 +60,7 @@ struct BL0940 {
   float temperature;
 
   int byte_counter = 0;
+  uint16_t tps1 = 0;
   uint8_t *rx_buffer = nullptr;
   bool received = false;
 } Bl0940;
@@ -78,21 +79,25 @@ void Bl0940Received(void) {
   // 55 B9 33 00 DE 45 00 94 02 00 CF E4 70 63 02 00 6C 4C 00 13 01 00 09 00 00 00 00 00 E4 01 00 FE 03 00 72
   // Hd IFRms--- Current- Reserved Voltage- Reserved Power--- Reserved CF------ Reserved TPS1---- TPS2---- Ck
 
-  if (Bl0940.rx_buffer[0] != BL0940_PACKET_HEADER) {
+  uint16_t tps1 = Bl0940.rx_buffer[29] << 8 | Bl0940.rx_buffer[28];                                     // TPS1 unsigned
+  if ((Bl0940.rx_buffer[0] != BL0940_PACKET_HEADER) ||                                                  // Bad header
+      (Bl0940.tps1 && ((tps1 < (Bl0940.tps1 -10)) || (tps1 > (Bl0940.tps1 +10))))                       // Invalid temperature change
+     ) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: Invalid data"));
     return;
   }
+
+  Bl0940.tps1 = tps1;
+  float t = ((170.0f/448.0f)*(((float)Bl0940.tps1/2.0f)-32.0f))-45.0f;
+  Bl0940.temperature = ConvertTemp(t);
 
   Bl0940.voltage = Bl0940.rx_buffer[12] << 16 | Bl0940.rx_buffer[11] << 8 | Bl0940.rx_buffer[10];       // V_RMS unsigned
   Bl0940.current = Bl0940.rx_buffer[6] << 16 | Bl0940.rx_buffer[5] << 8 | Bl0940.rx_buffer[4];          // I_RMS unsigned
   int32_t power = Bl0940.rx_buffer[18] << 24 | Bl0940.rx_buffer[17] << 16 | Bl0940.rx_buffer[16] << 8;  // WATT signed
   Bl0940.power = abs(power) >> 8;                                                                       // WATT unsigned
 //  Bl0940.cf_pulses = Bl0940.rx_buffer[24] << 16 | Bl0940.rx_buffer[23] << 8 | Bl0940.rx_buffer[22];   // CF_CNT unsigned
-  uint16_t tps1 = Bl0940.rx_buffer[29] << 8 | Bl0940.rx_buffer[28];                                     // TPS1 unsigned
-  float t = ((170.0f/448.0f)*(((float)tps1/2.0f)-32.0f))-45.0f;
-  Bl0940.temperature = ConvertTemp(t);
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BL9: U %d, I %d, P %d, T %d"), Bl0940.voltage, Bl0940.current, Bl0940.power, tps1);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BL9: U %d, I %d, P %d, T %d"), Bl0940.voltage, Bl0940.current, Bl0940.power, Bl0940.tps1);
 
   if (Energy.power_on) {  // Powered on
     Energy.voltage[0] = (float)Bl0940.voltage / Settings.energy_voltage_calibration;
