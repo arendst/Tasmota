@@ -54,6 +54,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ### Version 8.3.1.2
 
+- Created Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
+- Added Library to be used for decoding Teleinfo (French Metering Smart Meter)
 - Change IRremoteESP8266 library updated to v2.7.7
 - Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)
 - Change Energy JSON Total field from ``"Total":[33.736,11.717,16.978]`` to ``"Total":33.736,"TotalTariff":[11.717,16.978]``
