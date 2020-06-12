@@ -626,7 +626,7 @@ void CmndGlobalTemp(void)
     if (!isnan(temperature) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
       temperature = (temperature - 32) / 1.8;                             // Celsius
     }
-    if ((temperature >= -50.0) && (temperature <= 100.0)) {
+    if ((temperature >= -50.0f) && (temperature <= 100.0f)) {
       ConvertTemp(temperature);
       global_update = 1;  // Keep global values just entered valid
     }

@@ -83,17 +83,20 @@ void Bl0940Received(void) {
     return;
   }
 
-  Bl0940.voltage = Bl0940.rx_buffer[12] << 16 | Bl0940.rx_buffer[11] << 8 | Bl0940.rx_buffer[10];
-  Bl0940.current = Bl0940.rx_buffer[6] << 16 | Bl0940.rx_buffer[5] << 8 | Bl0940.rx_buffer[4];
-  Bl0940.power = Bl0940.rx_buffer[18] << 16 | Bl0940.rx_buffer[17] << 8 | Bl0940.rx_buffer[16];
-//  Bl0940.cf_pulses = Bl0940.rx_buffer[24] << 16 | Bl0940.rx_buffer[23] << 8 | Bl0940.rx_buffer[22];
-  uint16_t tps1 = Bl0940.rx_buffer[29] << 8 | Bl0940.rx_buffer[28];
+  Bl0940.voltage = Bl0940.rx_buffer[12] << 16 | Bl0940.rx_buffer[11] << 8 | Bl0940.rx_buffer[10];       // V_RMS unsigned
+  Bl0940.current = Bl0940.rx_buffer[6] << 16 | Bl0940.rx_buffer[5] << 8 | Bl0940.rx_buffer[4];          // I_RMS unsigned
+  int32_t power = Bl0940.rx_buffer[18] << 24 | Bl0940.rx_buffer[17] << 16 | Bl0940.rx_buffer[16] << 8;  // WATT signed
+  Bl0940.power = abs(power) >> 8;                                                                       // WATT unsigned
+//  Bl0940.cf_pulses = Bl0940.rx_buffer[24] << 16 | Bl0940.rx_buffer[23] << 8 | Bl0940.rx_buffer[22];   // CF_CNT unsigned
+  uint16_t tps1 = Bl0940.rx_buffer[29] << 8 | Bl0940.rx_buffer[28];                                     // TPS1 unsigned
   float t = ((170.0f/448.0f)*(((float)tps1/2.0f)-32.0f))-45.0f;
   Bl0940.temperature = ConvertTemp(t);
 
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BL9: U %d, I %d, P %d, T %d"), Bl0940.voltage, Bl0940.current, Bl0940.power, tps1);
+
   if (Energy.power_on) {  // Powered on
     Energy.voltage[0] = (float)Bl0940.voltage / Settings.energy_voltage_calibration;
-    if (power != 0) {
+    if (power && (Bl0940.power > Settings.energy_power_calibration)) {                                  // We need at least 1W
       Energy.active_power[0] = (float)Bl0940.power / Settings.energy_power_calibration;
       Energy.current[0] = (float)Bl0940.current / (Settings.energy_current_calibration * 100);
     } else {
