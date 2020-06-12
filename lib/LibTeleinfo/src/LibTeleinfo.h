@@ -25,6 +25,8 @@
 #ifndef LibTeleinfo_h
 #define LibTeleinfo_h
 
+#include "Arduino.h"
+
 // Define this if you want library to be verbose
 //#define TI_DEBUG
 
@@ -44,10 +46,10 @@
     #define TI_Debugflush  Serial.flush
   #endif
 #else
-  #define TI_Debug(x)    
-  #define TI_Debugln(x)  
-  #define TI_Debugf(...) 
-  #define TI_Debugflush  
+  #define TI_Debug(x)    {}
+  #define TI_Debugln(x)  {}
+  #define TI_Debugf(...) {}
+  #define TI_Debugflush  {}
 #endif
 
 // For 4 bytes Aligment boundaries
@@ -61,13 +63,14 @@ typedef struct _ValueList ValueList;
 struct _ValueList 
 {
   ValueList *next; // next element
-  char  * name;    // LABEL of value name
-  char  * value;   // value 
   uint8_t checksum;// checksum
   uint8_t flags;   // specific flags
+  char  * name;    // LABEL of value name
+  char  * value;   // value 
 };
 
 #pragma pack(pop)
+
 
 // Library state machine
 enum _State_e {
@@ -94,6 +97,11 @@ enum _State_e {
 #define TINFO_ETX 0x03 
 #define TINFO_SGR '\n' // start of group  
 #define TINFO_EGR '\r' // End of group    
+
+typedef void (*_fn_ADPS) (uint8_t);
+typedef void (*_fn_data) (ValueList *, uint8_t);
+typedef void (*_fn_new_frame) (ValueList *);
+typedef void (*_fn_updated_frame) (ValueList *);
 
 class TInfo
 {
