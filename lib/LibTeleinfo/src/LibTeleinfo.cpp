@@ -212,9 +212,9 @@ ValueList * TInfo::valueAdd(char * name, char * value, uint8_t checksum, uint8_t
         me = me->next;
 
         // Check if we already have this LABEL (same name AND same size)
-        if (lgname==strlen(me->name) && strncmp(me->name, name, lgname)==0) {
+        if (lgname==strlen(me->name) && strcmp(me->name, name)==0) {
           // Already got also this value  return US
-          if (lgvalue==strlen(me->value) && strncmp(me->value, value, lgvalue) == 0) {
+          if (lgvalue==strlen(me->value) && strcmp(me->value, value) == 0) {
             *flags |= TINFO_FLAGS_EXIST;
             me->flags = *flags;
             return ( me );
@@ -225,7 +225,7 @@ ValueList * TInfo::valueAdd(char * name, char * value, uint8_t checksum, uint8_t
             // Do we have enought space to hold new value ?
             if (strlen(me->value) >= lgvalue ) {
               // Copy it
-              strlcpy(me->value, value , lgvalue );
+              strlcpy(me->value, value , lgvalue + 1 );
               me->checksum = checksum ;
 
               // That's all
