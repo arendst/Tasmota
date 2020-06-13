@@ -40,27 +40,27 @@ const char JSON_SNS_VEML7700[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d
 #define D_CMND_VEML7700_PWR "power"
 #define D_CMND_VEML7700_GAIN "gain"
 #define D_CMND_VEML7700_INTTIME "inttime"
+#define D_CMND_VEML7700_PERSIST "persist"
 
 const char S_JSON_VEML7700_COMMAND_NVALUE[] PROGMEM = "{\"" D_NAME_VEML7700 "\":{\"%s\":%d}}";
-const char kVEML7700_Commands[] PROGMEM  = D_CMND_VEML7700_PWR "|" D_CMND_VEML7700_GAIN "|" D_CMND_VEML7700_INTTIME;
+const char kVEML7700_Commands[] PROGMEM  = D_CMND_VEML7700_PWR "|" D_CMND_VEML7700_GAIN "|" D_CMND_VEML7700_INTTIME "|" D_CMND_VEML7700_PERSIST;
 
 enum VEML7700_Commands {         // commands for Console
   CMND_VEML7700_PWR,
   CMND_VEML7700_GAIN,
   CMND_VEML7700_SET_IT,
-  };
+  CMND_VEML7700_PERSIST,
+};
 
 struct VEML7700STRUCT
 {
+  bool active = 0;
   char types[9]   = D_NAME_VEML7700;
   uint8_t address = VEML7700_I2CADDR_DEFAULT;
-  //uint16_t lux = 0;
-  //uint16_t white = 0;
-  uint16_t lux_normalized = 0;
-  uint16_t white_normalized = 0;
+  uint32_t lux_normalized = 0;
+  uint32_t white_normalized = 0;
 } veml7700_sensor;
 
-uint8_t veml7700_active = 0;
 
 /********************************************************************************************/
 
@@ -68,7 +68,7 @@ void VEML7700Detect(void) {
   if (!I2cSetDevice(veml7700_sensor.address)) return;
   if (veml7700.begin()) {
     I2cSetActiveFound(veml7700_sensor.address, veml7700_sensor.types);
-    veml7700_active = 1;
+    veml7700_sensor.active = 1;
   }
 }
 
@@ -97,10 +97,8 @@ uint8_t VEML7700TranslateItInt (uint16_t ittimems){
 }
 
 void VEML7700EverySecond(void) {
-    veml7700_sensor.lux_normalized = (uint16_t) veml7700.readLuxNormalized();
-    veml7700_sensor.white_normalized = (uint16_t) veml7700.readWhiteNormalized();
-    //veml7700_sensor.lux = (uint16_t) veml7700.readLux();
-    //veml7700_sensor.white = (uint16_t) veml7700.readWhite();
+  veml7700_sensor.lux_normalized = (uint32_t) veml7700.readLuxNormalized();
+  veml7700_sensor.white_normalized = (uint32_t) veml7700.readWhiteNormalized();
 }
 
 void VEML7700Show(bool json)
@@ -152,6 +150,14 @@ bool VEML7700Cmd(void) {
         Response_P(S_JSON_VEML7700_COMMAND_NVALUE, command, dataret);
       }
       break;
+    case CMND_VEML7700_PERSIST:
+       if (XdrvMailbox.data_len) {
+         if (4 >= XdrvMailbox.payload) {
+           veml7700.setPersistence(XdrvMailbox.payload);
+         }
+       }
+       Response_P(S_JSON_VEML7700_COMMAND_NVALUE, command, veml7700.getPersistence());
+       break;    
     default:
       return false;
     }
@@ -174,7 +180,7 @@ bool Xsns71(uint8_t function)
   if (FUNC_INIT == function) {
     VEML7700Detect();
   }
-  else if (veml7700_active) {
+  else if (veml7700_sensor.active) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         VEML7700EverySecond();
