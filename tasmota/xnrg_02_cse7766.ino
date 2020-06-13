@@ -59,8 +59,7 @@ struct CSE {
   bool received = false;
 } Cse;
 
-void CseReceived(void)
-{
+void CseReceived(void) {
   //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
   // F2 5A 02 F7 60 00 03 61 00 40 10 05 72 40 51 A6 58 63 10 1B E1 7F 4D 4E - F2 = Power cycle exceeds range - takes too long - No load
   // 55 5A 02 F7 60 00 03 5A 00 40 10 04 8B 9F 51 A6 58 18 72 75 61 AC A1 30 - 55 = Ok, 61 = Power not valid (load below 5W)
@@ -69,7 +68,7 @@ void CseReceived(void)
 
   uint8_t header = Cse.rx_buffer[0];
   if ((header & 0xFC) == 0xFC) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Abnormal hardware"));
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CSE: Abnormal hardware"));
     return;
   }
 
@@ -142,8 +141,7 @@ void CseReceived(void)
   }
 }
 
-bool CseSerialInput(void)
-{
+bool CseSerialInput(void) {
   while (CseSerial->available()) {
     yield();
     uint8_t serial_in_byte = CseSerial->read();
@@ -162,12 +160,12 @@ bool CseSerialInput(void)
           Cse.received = false;
           return true;
         } else {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: " D_CHECKSUM_FAILURE));
           do {  // Sync buffer with data (issue #1907 and #3425)
             memmove(Cse.rx_buffer, Cse.rx_buffer +1, 24);
             Cse.byte_counter--;
           } while ((Cse.byte_counter > 2) && (0x5A != Cse.rx_buffer[1]));
           if (0x5A != Cse.rx_buffer[1]) {
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CSE: " D_CHECKSUM_FAILURE));
             Cse.received = false;
             Cse.byte_counter = 0;
           }
@@ -186,34 +184,31 @@ bool CseSerialInput(void)
 
 /********************************************************************************************/
 
-void CseEverySecond(void)
-{
+void CseEverySecond(void) {
   if (Energy.data_valid[0] > ENERGY_WATCHDOG) {
     Cse.voltage_cycle = 0;
     Cse.current_cycle = 0;
     Cse.power_cycle = 0;
   } else {
-    long cf_frequency = 0;
-
     if (CSE_PULSES_NOT_INITIALIZED == Cse.cf_pulses_last_time) {
       Cse.cf_pulses_last_time = Cse.cf_pulses;  // Init after restart
     } else {
-      if (Cse.cf_pulses < Cse.cf_pulses_last_time) {  // Rolled over after 65535 pulses
-        cf_frequency = (65536 - Cse.cf_pulses_last_time) + Cse.cf_pulses;
+      uint32_t cf_pulses = 0;
+      if (Cse.cf_pulses < Cse.cf_pulses_last_time) {  // Rolled over after 0xFFFF (65535) pulses
+        cf_pulses = (0x10000 - Cse.cf_pulses_last_time) + Cse.cf_pulses;
       } else {
-        cf_frequency = Cse.cf_pulses - Cse.cf_pulses_last_time;
+        cf_pulses = Cse.cf_pulses - Cse.cf_pulses_last_time;
       }
-      if (cf_frequency && Energy.active_power[0])  {
-        unsigned long delta = (cf_frequency * Settings.energy_power_calibration) / 36;
+      if (cf_pulses && Energy.active_power[0])  {
+        uint32_t delta = (cf_pulses * Settings.energy_power_calibration) / 36;
         // prevent invalid load delta steps even checksum is valid (issue #5789):
-//        if (delta <= (3680*100/36) * 10 ) {  // max load for S31/Pow R2: 3.68kW
         // prevent invalid load delta steps even checksum is valid but allow up to 4kW (issue #7155):
-        if (delta <= (4000*100/36) * 10 ) {  // max load for S31/Pow R2: 4.00kW
+        if (delta <= (4000 * 1000 / 36)) {  // max load for S31/Pow R2: 4.00kW
           Cse.cf_pulses_last_time = Cse.cf_pulses;
           Energy.kWhtoday_delta += delta;
         }
         else {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Load overflow"));
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CSE: Overload"));
           Cse.cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
         }
         EnergyUpdateToday();
@@ -222,8 +217,7 @@ void CseEverySecond(void)
   }
 }
 
-void CseSnsInit(void)
-{
+void CseSnsInit(void) {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
 //  CseSerial = new TasmotaSerial(Pin(GPIO_CSE7766_RX), Pin(GPIO_CSE7766_TX), 1);
   CseSerial = new TasmotaSerial(Pin(GPIO_CSE7766_RX), -1, 1);
@@ -241,8 +235,7 @@ void CseSnsInit(void)
   }
 }
 
-void CseDrvInit(void)
-{
+void CseDrvInit(void) {
 //  if (PinUsed(GPIO_CSE7766_RX) && PinUsed(GPIO_CSE7766_TX)) {
   if (PinUsed(GPIO_CSE7766_RX)) {
     Cse.rx_buffer = (uint8_t*)(malloc(CSE_BUFFER_SIZE));
@@ -252,8 +245,7 @@ void CseDrvInit(void)
   }
 }
 
-bool CseCommand(void)
-{
+bool CseCommand(void) {
   bool serviced = true;
 
   if (CMND_POWERSET == Energy.command_code) {
@@ -280,15 +272,14 @@ bool CseCommand(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg02(uint8_t function)
-{
+bool Xnrg02(uint8_t function) {
   bool result = false;
 
   switch (function) {
     case FUNC_LOOP:
       if (CseSerial) { CseSerialInput(); }
       break;
-    case FUNC_ENERGY_EVERY_SECOND:
+    case FUNC_EVERY_SECOND:
       CseEverySecond();
       break;
     case FUNC_COMMAND:

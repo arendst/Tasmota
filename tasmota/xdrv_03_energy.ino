@@ -1142,6 +1142,9 @@ bool Xdrv03(uint8_t function)
       case FUNC_EVERY_250_MSECOND:
         XnrgCall(FUNC_EVERY_250_MSECOND);
         break;
+      case FUNC_EVERY_SECOND:
+        XnrgCall(FUNC_EVERY_SECOND);
+        break;
       case FUNC_SERIAL:
         result = XnrgCall(FUNC_SERIAL);
         break;

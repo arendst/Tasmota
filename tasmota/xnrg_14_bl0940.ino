@@ -57,11 +57,9 @@ struct BL0940 {
   long voltage = 0;
   long current = 0;
   long power = 0;
-
   long power_cycle_first = 0;
   long cf_pulses = 0;
   long cf_pulses_last_time = BL0940_PULSES_NOT_INITIALIZED;
-
   float temperature;
 
   int byte_counter = 0;
@@ -88,7 +86,7 @@ void Bl0940Received(void) {
   if ((Bl0940.rx_buffer[0] != BL0940_PACKET_HEADER) ||                                                   // Bad header
       (Bl0940.tps1 && ((tps1 < (Bl0940.tps1 -10)) || (tps1 > (Bl0940.tps1 +10))))                        // Invalid temperature change
      ) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: Invalid data"));
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BL9: Invalid data"));
     return;
   }
 
@@ -146,13 +144,12 @@ bool Bl0940SerialInput(void) {
           Bl0940.received = false;
           return true;
         } else {
-//          AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
           do {  // Sync buffer with data (issue #1907 and #3425)
             memmove(Bl0940.rx_buffer, Bl0940.rx_buffer +1, BL0940_BUFFER_SIZE -1);
             Bl0940.byte_counter--;
           } while ((Bl0940.byte_counter > 1) && (BL0940_PACKET_HEADER != Bl0940.rx_buffer[0]));
           if (BL0940_PACKET_HEADER != Bl0940.rx_buffer[0]) {
-            AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
             Bl0940.received = false;
             Bl0940.byte_counter = 0;
           }
@@ -188,13 +185,13 @@ void Bl0940EverySecond(void) {
         cf_pulses = Bl0940.cf_pulses - Bl0940.cf_pulses_last_time;
       }
       if (cf_pulses && Energy.active_power[0])  {
-        if (cf_pulses < 16) {  // max load for SHP10: 4.00kW (3.68kW)
-          uint32_t watt256 = (1638400 * 256) / Settings.energy_power_calibration;
-          uint32_t delta = (cf_pulses * watt256) / 36;
+        uint32_t watt256 = (1638400 * 256) / Settings.energy_power_calibration;
+        uint32_t delta = (cf_pulses * watt256) / 36;
+        if (delta <= (4000 * 1000 / 36)) {  // max load for SHP10: 4.00kW (3.68kW)
           Bl0940.cf_pulses_last_time = Bl0940.cf_pulses;
           Energy.kWhtoday_delta += delta;
         } else {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR("BL9: Overload"));
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BL9: Overload"));
           Bl0940.cf_pulses_last_time = BL0940_PULSES_NOT_INITIALIZED;
         }
         EnergyUpdateToday();
@@ -202,6 +199,8 @@ void Bl0940EverySecond(void) {
     }
 
   }
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BL9: Poll"));
 
   Bl0940Serial->flush();
   Bl0940Serial->write(BL0940_READ_COMMAND);
@@ -211,7 +210,7 @@ void Bl0940EverySecond(void) {
 void Bl0940SnsInit(void) {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
   Bl0940Serial = new TasmotaSerial(Pin(GPIO_BL0940_RX), Pin(GPIO_TXD), 1);
-  if (Bl0940Serial->begin(4800, 2)) {
+  if (Bl0940Serial->begin(4800, 1)) {
     if (Bl0940Serial->hardwareSerial()) {
       ClaimSerial();
     }
@@ -268,8 +267,7 @@ bool Bl0940Command(void) {
   return serviced;
 }
 
-void Bl0940Show(bool json)
-{
+void Bl0940Show(bool json) {
   char temperature[33];
   dtostrfd(Bl0940.temperature, Settings.flag2.temperature_resolution, temperature);
 
@@ -294,15 +292,14 @@ void Bl0940Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg14(uint8_t function)
-{
+bool Xnrg14(uint8_t function) {
   bool result = false;
 
   switch (function) {
     case FUNC_LOOP:
       if (Bl0940Serial) { Bl0940SerialInput(); }
       break;
-    case FUNC_ENERGY_EVERY_SECOND:
+    case FUNC_EVERY_SECOND:
       Bl0940EverySecond();
       break;
     case FUNC_JSON_APPEND:
