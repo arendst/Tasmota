@@ -31,14 +31,59 @@
 #include "LibTeleinfo.h"
 #include <TasmotaSerial.h>
 
-#define TINFO_READ_TIMEOUT        400 // us; enough for 6 bytes@9600bps
+#define TINFO_READ_TIMEOUT 400 
+
+enum TInfoContrat{
+  CONTRAT_BAS = 1,  // BASE => Option Base. 
+  CONTRAT_HC,       // HC.. => Option Heures Creuses. 
+  CONTRAT_EJP,      // EJP. => Option EJP. 
+  CONTRAT_BBR       // BBRx => Option Tempo
+};
+
+enum TInfoTarif{
+  TARIF_TH = 1,   // Toutes les Heures. 
+  TARIF_HC,       // Heures Creuses. 
+  TARIF_HP,       // Heures Pleines. 
+  TARIF_HN        // BBRx => Option Tempo
+};
+
+//const char kTARIF_TH[] PROGMEM = "";
+//const char kTARIF_HC[] PROGMEM = "Heures Creuses";
+//const char kTARIF_HP[] PROGMEM = "Heures Pleines";
+//const char kTARIF_HN[] PROGMEM = "Heures Normales";
+
+//const char kTtarifNames[] PROGMEM = { kTARIF_TH, kTARIF_HC, kTARIF_HP, kTARIF_HN };
+
+/*
+    strcpy_P(buffer, (char*)pgm_read_dword(&(kTtarifNames[i])));
+
+    if ( label == "PTEC") {
+      // La période tarifaire en cours (Groupe "PTEC"), est codée sur 4 caractères 
+      // J'ai pris un nombre arbitraire codé dans l'ordre ci-dessous
+      if      (value=="TH..") value= 1; 
+      else if (value=="HC..") value= 2; 
+      else if (value=="HP..") value= 3; /
+      else if (value=="HN..") value= 4; 
+      else if (value=="PM..") value= 5; // Heures de Pointe Mobile. 
+      else if (value=="HCJB") value= 6; // Heures Creuses Jours Bleus. 
+      else if (value=="HCJW") value= 7; // Heures Creuses Jours Blancs (White). 
+      else if (value=="HCJR") value= 8; // Heures Creuses Jours Rouges. 
+      else if (value=="HPJB") value= 9; // Heures Pleines Jours Bleus. 
+      else if (value=="HPJW") value= 10;// Heures Pleines Jours Blancs (White). 
+      else if (value=="HPJR") value= 11;// Heures Pleines Jours Rouges. 
+      else value = 0;
+      
+*/
+
 
 TInfo tinfo; // Teleinfo object
 TasmotaSerial *TInfoSerial = nullptr;
 bool tinfo_found = false;
+uint8_t contrat;
+uint8_t tarif;
 
 /*********************************************************************************************/
- 
+
 /* ======================================================================
 Function: ADPSCallback 
 Purpose : called by library when we detected a ADPS on any phased
@@ -70,12 +115,39 @@ Comments: -
 ====================================================================== */
 void DataCallback(struct _ValueList * me, uint8_t  flags)
 {
-   char c = ' ';
-  
-  if (flags & TINFO_FLAGS_ADDED)   { c = '#';  }
-  if (flags & TINFO_FLAGS_UPDATED) { c = '*';  }
+    char c = ' ';
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: %c %s=%s"),c , me->name, me->value);
+    // Does this value is new or changed?
+    if (flags & (TINFO_FLAGS_ADDED | TINFO_FLAGS_UPDATED) ) 
+    {
+        if (flags & TINFO_FLAGS_ADDED)   { c = '#';  }
+        if (flags & TINFO_FLAGS_UPDATED) { c = '*';  }
+
+        // Current tarif
+        if (!strcmp("PTEC", me->name))
+        {
+            if (!strcmp("TH..", me->name)) { tarif = TARIF_TH; }
+            if (!strcmp("HC..", me->name)) { tarif = TARIF_HC; }
+            if (!strcmp("HP..", me->name)) { tarif = TARIF_HP; }
+            if (!strcmp("HN..", me->name)) { tarif = TARIF_HN; }
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif changed, now '%s' (%d)"), me->value, tarif);
+        } 
+        // Current I
+        else if (!strcmp("IINST", me->name))
+        {
+             int i = atoi(me->value);
+             Energy.current[0]  = (float) i;
+             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Current changed %s, now %d"), me->value, i);
+        }
+        // Current P
+        else if (!strcmp("PAPP", me->name))
+        {
+             int papp = atoi(me->value);
+             Energy.active_power[0]  = (float) papp;
+             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Power changed %s, now %d"), me->value, papp);
+        }
+    }
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: %c %s=%s"),c , me->name, me->value);
 }
 
 void TInfoDrvInit(void) {
@@ -94,7 +166,6 @@ void TInfoInit(void)
 
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: inferface speed %d bps"),TINFO_SPEED);
     
-    tinfo_found = false;
     if (PinUsed(GPIO_TELEINFO_RX))
     {
          AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: enable receive on GPIO%d"), GPIO_TELEINFO_RX);
@@ -111,12 +182,16 @@ void TInfoInit(void)
         }
 
         TInfoSerial = new TasmotaSerial(Pin(GPIO_TELEINFO_RX), -1, 1);
+
         // pinMode(GPIO_TELEINFO_RX, INPUT_PULLUP);
 
         if (TInfoSerial->begin(TINFO_SPEED, SERIAL_7E1))
         {
-            if (TInfoSerial->hardwareSerial())
+            if (TInfoSerial->hardwareSerial()) {
+                Serial.end();
+                Serial.begin(TINFO_SPEED, SERIAL_7E1);
                 ClaimSerial();
+            }
             TInfoSerial->setTimeout(TINFO_READ_TIMEOUT);
 
             // Init teleinfo
@@ -125,29 +200,36 @@ void TInfoInit(void)
             // Attach needed callbacks
             tinfo.attachADPS(ADPSCallback);
             tinfo.attachData(DataCallback); 
-            
+
             tinfo_found = true;
             AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: Ready"));
         }
     }
 }
 
-void TInfoEvery250ms(void)
+void TInfoLoop(void)
 {
   char c;
   if (!tinfo_found)
     return;
 
-   AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: received %d chars"), TInfoSerial->available());
+   if (TInfoSerial->available()) {
+      //AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: received %d chars"), TInfoSerial->available());
 
-  // We received some data?
-  while (TInfoSerial->available()>8)
-  {
-      // get char
-      c = TInfoSerial->read();
-      // data processing
-      tinfo.process(c);
-  }
+      // We received some data?
+      while (TInfoSerial->available()>8)
+      {
+            // get char
+            c = TInfoSerial->read();
+
+            // data processing
+            tinfo.process(c);
+      }
+   }
+}
+
+void TInfoEvery250ms(void)
+{
 }
 
 void TInfoShow(bool json)
@@ -155,6 +237,8 @@ void TInfoShow(bool json)
    // TBD
    if (json)
    {
+      ResponseAppend_P(PSTR(",\"Contrat\":%d,\"Tarif\":%d"),contrat, tarif);
+
 #ifdef USE_WEBSERVER
    }
    else
@@ -172,6 +256,9 @@ bool Xnrg15(uint8_t function)
 
    switch (function)
    {
+      case FUNC_LOOP:
+         if (TInfoSerial) { TInfoLoop(); }
+         break;
       case FUNC_EVERY_250_MSECOND:
          if (uptime > 4) { TInfoEvery250ms(); }
          break;
