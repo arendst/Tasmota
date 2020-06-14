@@ -426,7 +426,7 @@ char * TInfo::valueGet(char * name, char * value)
         if (me->value) {
           // copy to dest buffer
           uint8_t lgvalue = strlen(me->value);
-          strlcpy(value, me->value , lgvalue );
+          strlcpy(value, me->value , lgvalue + 1 );
           return ( value );
         }
       }
@@ -661,7 +661,7 @@ ValueList * TInfo::checkLine(char * pline)
     return NULL;
 
   // Get our own working copy
-  strlcpy( buff, _recv_buff, len+1);
+  strlcpy( buff, pline, len+1);
 
   p = &buff[0];
   ptok = p;       // for sure we start with token name
