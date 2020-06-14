@@ -78,3 +78,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for BL0940 energy monitor as used in Blitzwolf BW-SHP10 (#8175)
 - Add initial support for Telegram bot (#8619)
 - Add support for HP303B Temperature and Pressure sensor by Robert Jaakke (#8638)
+- Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet

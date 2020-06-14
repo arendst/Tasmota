@@ -322,6 +322,8 @@ void setup(void) {
 
   XdrvCall(FUNC_INIT);
   XsnsCall(FUNC_INIT);
+
+  rules_flag.system_init = 1;
 }
 
 void BacklogLoop(void) {

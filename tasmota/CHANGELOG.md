@@ -4,6 +4,7 @@
 
 - Add initial support for Telegram bot (#8619)
 - Add support for HP303B Temperature and Pressure sensor by Robert Jaakke (#8638)
+- Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet
 
 ### 8.3.1.2 20200522
 
