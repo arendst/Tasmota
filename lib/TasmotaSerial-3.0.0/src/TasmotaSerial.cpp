@@ -156,16 +156,23 @@ bool TasmotaSerial::isValidGPIOpin(int pin)
   return (pin >= -1 && pin <= 5) || (pin >= 12 && pin <= 15);
 }
 
-bool TasmotaSerial::begin(long speed, int stop_bits) {
+bool TasmotaSerial::begin(long speed, int stop_bits, int serial_config) {
   m_stop_bits = ((stop_bits -1) &1) +1;
   if (m_hardserial) {
 #ifdef ESP8266
     Serial.flush();
-    if (2 == m_stop_bits) {
-      Serial.begin(speed, SERIAL_8N2);
+    if (serial_config >=0) {
+      Serial.begin(speed, (SerialConfig) serial_config);
+
+    // Keep old call begin compatibility
     } else {
-      Serial.begin(speed, SERIAL_8N1);
+      if (2 == m_stop_bits) {
+        Serial.begin(speed, SERIAL_8N2);
+      } else {
+        Serial.begin(speed, SERIAL_8N1);
+      } 
     }
+      
     if (m_hardswap) {
       Serial.swap();
     }
@@ -177,15 +184,21 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
       if (serial_buffer_size > 256) {
         TSerial->setRxBufferSize(serial_buffer_size);
       }
-      if (2 == m_stop_bits) {
-        TSerial->begin(speed, SERIAL_8N2, m_rx_pin, m_tx_pin);
+      if (serial_config >=0) {
+        TSerial->begin(speed, serial_config, m_rx_pin, m_tx_pin);
+
+      // Keep old call begin compatibility
       } else {
-        TSerial->begin(speed, SERIAL_8N1, m_rx_pin, m_tx_pin);
-      }
+        if (2 == m_stop_bits) {
+          TSerial->begin(speed, SERIAL_8N2, m_rx_pin, m_tx_pin);
+        } else {
+          TSerial->begin(speed, SERIAL_8N1, m_rx_pin, m_tx_pin);
+        }
+      } 
     } else {
       m_valid = false;
     }
-//    Serial.printf("TSR: Using UART%d\n", m_uart);
+    //Serial.printf("TSR: Using UART%d\n", m_uart);
 #endif  // ESP8266 - ESP32
   } else {
     // Use getCycleCount() loop to get as exact timing as possible
