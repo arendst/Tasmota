@@ -575,11 +575,16 @@ void GetFeatures(void)
 #ifdef USE_BL0940
   feature6 |= 0x00004000;  // xnrg_14_bl0940.ino
 #endif
+#ifdef USE_TELEGRAM
+  feature6 |= 0x00008000;  // xdrv_40_telegram.ino
+#endif
+#ifdef USE_HP303B
+  feature6 |= 0x00010000; // xsns_73_hp303b.ino
+#endif
 #ifdef USE_TELEINFO
-  feature6 |= 0x00008000;  // xnrg_15_teleinfo.ino
+  feature6 |= 0x00020000;  // xnrg_15_teleinfo.ino
 #endif
 
-//  feature6 |= 0x00010000;
 //  feature6 |= 0x00020000;
 //  feature6 |= 0x00040000;
 //  feature6 |= 0x00080000;

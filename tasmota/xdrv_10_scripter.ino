@@ -26,7 +26,6 @@ uses about 17 k of flash
 
 to do
 optimize code for space
-g:var gloabal vars (via udp broadcast)
 
 remarks
 
@@ -237,7 +236,11 @@ extern VButton *buttons[MAXBUTTONS];
 #endif
 
 typedef union {
+#ifdef USE_SCRIPT_GLOBVARS
+  uint16_t data;
+#else
   uint8_t data;
+#endif
   struct {
     uint8_t is_string : 1;  // string or number
     uint8_t is_permanent : 1;
@@ -247,6 +250,9 @@ typedef union {
     uint8_t settable : 1;
     uint8_t is_filter : 1;
     uint8_t constant : 1;
+#ifdef USE_SCRIPT_GLOBVARS
+    uint8_t global : 1;
+#endif
   };
 } SCRIPT_TYPE;
 
@@ -275,6 +281,32 @@ typedef union {
       uint8_t is_open : 1;
   };
 } FILE_FLAGS;
+
+typedef union {
+  uint8_t data;
+  struct {
+      uint8_t nutu8 : 1;
+      uint8_t nutu7 : 1;
+      uint8_t nutu6 : 1;
+      uint8_t nutu5 : 1;
+      uint8_t nutu4 : 1;
+      uint8_t nutu3 : 1;
+      uint8_t udp_connected : 1;
+      uint8_t udp_used : 1;
+  };
+} UDP_FLAGS;
+
+
+#define NUM_RES 0xfe
+#define STR_RES 0xfd
+#define VAR_NV 0xff
+
+#define NTYPE 0
+#define STYPE 0x80
+
+#ifndef FLT_MAX
+#define FLT_MAX 99999999
+#endif
 
 #define SFS_MAX 4
 // global memory
@@ -308,12 +340,19 @@ struct SCRIPT_MEM {
     uint8_t script_sd_found;
     char flink[2][14];
 #endif
+#ifdef USE_SCRIPT_GLOBVARS
+    UDP_FLAGS udp_flags;
+#endif
 } glob_script_mem;
 
+#ifdef USE_SCRIPT_GLOBVARS
+IPAddress last_udp_ip;
+#endif
 
 int16_t last_findex;
 uint8_t tasm_cmd_activ=0;
 uint8_t fast_script=0;
+uint8_t glob_script=0;
 uint32_t script_lastmillis;
 
 
@@ -436,6 +475,16 @@ char *script;
                 } else {
                     vtypes[vars].bits.is_autoinc=0;
                 }
+
+#ifdef USE_SCRIPT_GLOBVARS
+                if (*lp=='g' && *(lp+1)==':') {
+                    lp+=2;
+                    vtypes[vars].bits.global=1;
+                    glob_script_mem.udp_flags.udp_used = 1;
+                  } else {
+                    vtypes[vars].bits.global=0;
+                  }
+#endif
                 if ((*lp=='m' || *lp=='M') && *(lp+1)==':') {
                     uint8_t flg=*lp;
                     lp+=2;
@@ -703,9 +752,111 @@ char *script;
     // store start of actual program here
     glob_script_mem.scriptptr=lp-1;
     glob_script_mem.scriptptr_bu=glob_script_mem.scriptptr;
+
+#ifdef USE_SCRIPT_GLOBVARS
+    if (glob_script_mem.udp_flags.udp_used) {
+      Script_Init_UDP();
+      glob_script=Run_Scripter(">G",-2,0);
+    }
+#endif
+
     return 0;
 
 }
+
+#ifdef USE_SCRIPT_GLOBVARS
+#define SCRIPT_UDP_BUFFER_SIZE 128
+#define SCRIPT_UDP_PORT 1999
+IPAddress script_udp_remote_ip;
+
+void Script_Init_UDP() {
+  if (global_state.wifi_down) return;
+  if (glob_script_mem.udp_flags.udp_connected) return;
+
+  if (PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP started"));
+    glob_script_mem.udp_flags.udp_connected = 1;
+  } else {
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP failed"));
+    glob_script_mem.udp_flags.udp_connected  = 0;
+  }
+}
+void Script_PollUdp(void) {
+  if (!glob_script_mem.udp_flags.udp_used) return;
+  if (glob_script_mem.udp_flags.udp_connected ) {
+    while (PortUdp.parsePacket()) {
+      char packet_buffer[SCRIPT_UDP_BUFFER_SIZE];
+      int32_t len = PortUdp.read(packet_buffer, SCRIPT_UDP_BUFFER_SIZE -1);
+      packet_buffer[len] = 0;
+      script_udp_remote_ip = PortUdp.remoteIP();
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("UDP: Packet %s - %d - %s"), packet_buffer, len, script_udp_remote_ip.toString().c_str());
+      char *lp=packet_buffer;
+      if (!strncmp(lp,"=>",2)) {
+        lp+=2;
+        char *cp=strchr(lp,'=');
+        if (cp) {
+          char vnam[32];
+          for (uint32_t count=0; count<len; count++) {
+            if (lp[count]=='=') {
+              vnam[count]=0;
+              break;
+            }
+            vnam[count]=lp[count];
+          }
+          float *fp;
+          char *sp;
+          uint32_t index;
+          uint32_t res=match_vars(vnam, &fp, &sp, &index);
+          if (res==NUM_RES) {
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("num var found - %s - %d"),vnam,res);
+            *fp=CharToFloat(cp+1);
+          } else if (res==STR_RES) {
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("string var found - %s - %d"),vnam,res);
+            strlcpy(sp,cp+1,SCRIPT_MAXSSIZE);
+          } else {
+            // error var not found
+          }
+          if (res) {
+            // mark changed
+            last_udp_ip=PortUdp.remoteIP();
+            glob_script_mem.type[index].bits.changed=1;
+            if (glob_script==99) {
+              Run_Scripter(">G",2,0);
+            }
+          }
+        }
+      }
+      optimistic_yield(100);
+    }
+  } else {
+    Script_Init_UDP();
+  }
+}
+
+void script_udp_sendvar(char *vname,float *fp,char *sp) {
+  if (!glob_script_mem.udp_flags.udp_used) return;
+  if (!glob_script_mem.udp_flags.udp_connected) return;
+
+  char sbuf[SCRIPT_MAXSSIZE+4];
+  strcpy(sbuf,"=>");
+  strcat(sbuf,vname);
+  strcat(sbuf,"=");
+  if (fp) {
+    char flstr[16];
+    dtostrfd(*fp,8,flstr);
+    strcat(sbuf,flstr);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("num var updated - %s"),sbuf);
+  } else {
+    strcat(sbuf,sp);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("string var updated - %s"),sbuf);
+  }
+  PortUdp.beginPacket(IPAddress(239,255,255,250), SCRIPT_UDP_PORT);
+  //  Udp.print(String("RET UC: ") + String(recv_Packet));
+  PortUdp.write((const uint8_t*)sbuf,strlen(sbuf));
+  PortUdp.endPacket();
+}
+
+#endif
 
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
@@ -723,16 +874,7 @@ void ws2812_set_array(float *array ,uint32_t len, uint32_t offset) {
 #endif
 #endif
 
-#define NUM_RES 0xfe
-#define STR_RES 0xfd
-#define VAR_NV 0xff
 
-#define NTYPE 0
-#define STYPE 0x80
-
-#ifndef FLT_MAX
-#define FLT_MAX 99999999
-#endif
 
 float median_array(float *array,uint8_t len) {
     uint8_t ind[len];
@@ -1010,6 +1152,37 @@ uint32_t MeasurePulseTime(int32_t in) {
   return ptime;
 }
 #endif // USE_ANGLE_FUNC
+
+#ifdef USE_SCRIPT_GLOBVARS
+uint32_t match_vars(char *dvnam, float **fp, char **sp, uint32_t *ind) {
+  uint16_t olen=strlen(dvnam);
+  struct T_INDEX *vtp=glob_script_mem.type;
+  for (uint32_t count=0; count<glob_script_mem.numvars; count++) {
+    char *cp=glob_script_mem.glob_vnp+glob_script_mem.vnp_offset[count];
+    uint8_t slen=strlen(cp);
+    if (slen==olen && *cp==dvnam[0]) {
+      if (!strncmp(cp,dvnam,olen)) {
+        uint8_t index=vtp[count].index;
+        if (vtp[count].bits.is_string==0) {
+          if (vtp[count].bits.is_filter) {
+            // error
+            return 0;
+          } else {
+            *fp=&glob_script_mem.fvars[index];
+            *ind=index;
+            return NUM_RES;
+          }
+        } else {
+          *sp=glob_script_mem.glob_snp+(index*glob_script_mem.max_ssize);
+          *ind=index;
+          return STR_RES;
+        }
+      }
+    }
+  }
+  return 0;
+}
+#endif
 
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
@@ -1765,12 +1938,40 @@ chknext:
           len=0;
           goto exit;
         }
+        if (!strncmp(vname,"is(",3)) {
+          lp=GetNumericResult(lp+3,OPER_EQU,&fvar,0);
+          SCRIPT_SKIP_SPACES
+          if (*lp!='"') {
+            break;
+          }
+          lp++;
+          char *sstr=lp;
+          for (uint32_t cnt=0; cnt<256; cnt++) {
+              if (lp[cnt]='\n' || lp[cnt]=='"') {
+                lp+=cnt+1;
+                break;
+              }
+          }
+          char str[SCRIPT_MAXSSIZE];
+          GetTextIndexed(str, sizeof(str), fvar, sstr);
+          lp++;
+          if (sp) strlcpy(sp,str,glob_script_mem.max_ssize);
+          fvar=0;
+          len=0;
+          goto exit;
+        }
         break;
       case 'l':
         if (!strncmp(vname,"lip",3)) {
           if (sp) strlcpy(sp,(const char*)WiFi.localIP().toString().c_str(),glob_script_mem.max_ssize);
           goto strexit;
         }
+#ifdef USE_SCRIPT_GLOBVARS
+        if (!strncmp(vname,"luip",4)) {
+          if (sp) strlcpy(sp,IPAddressToString(last_udp_ip),glob_script_mem.max_ssize);
+          goto strexit;
+        }
+#endif
         if (!strncmp(vname,"loglvl",6)) {
           fvar=glob_script_mem.script_loglevel;
           tind->index=SCRIPT_LOGLEVEL;
@@ -3167,7 +3368,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
             if (!if_exe[ifstck] && if_state[ifstck]!=1) goto next_line;
 
 #ifdef IFTHEN_DEBUG
-            sprintf(tbuff,"stack=%d,exe=%d,state=%d,cmpres=%d execute line: ",ifstck,if_exe[ifstck],if_state[ifstck],if_result[ifstck]);
+            sdtoff(tbuff,"stack=%d,exe=%d,state=%d,cmpres=%d execute line: ",ifstck,if_exe[ifstck],if_state[ifstck],if_result[ifstck]);
             toLogEOL(tbuff,lp);
 #endif
 
@@ -3382,8 +3583,16 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
               }
               goto next_line;
             } else {
+              char *vnp=lp;
               lp=isvar(lp,&vtype,&ind,&sysvar,0,0);
               if (vtype!=VAR_NV) {
+#ifdef USE_SCRIPT_GLOBVARS
+                  char varname[16];
+                  uint32_t vnl=(uint32_t)lp-(uint32)vnp;
+                  strncpy(varname,vnp,vnl);
+                  varname[vnl]=0;
+#endif
+
                   // found variable as result
                   globvindex=ind.index; // save destination var index here
                   globaindex=last_findex;
@@ -3451,6 +3660,11 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                       }
                       // var was changed
                       glob_script_mem.type[globvindex].bits.changed=1;
+#ifdef USE_SCRIPT_GLOBVARS
+                      if (glob_script_mem.type[globvindex].bits.global) {
+                        script_udp_sendvar(varname,dfvar,0);
+                      }
+#endif
                       if (glob_script_mem.type[globvindex].bits.is_filter) {
                         if (globaindex>=0) {
                           Set_MFVal(glob_script_mem.type[globvindex].index,globaindex,*dfvar);
@@ -3492,6 +3706,11 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                     if (!glob_script_mem.var_not_found) {
                       // var was changed
                       glob_script_mem.type[globvindex].bits.changed=1;
+#ifdef USE_SCRIPT_GLOBVARS
+                      if (glob_script_mem.type[globvindex].bits.global) {
+                        script_udp_sendvar(varname,0,str);
+                      }
+#endif
                       if (lastop==OPER_EQU) {
                         strlcpy(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
                       } else if (lastop==OPER_PLSEQU) {
@@ -3979,8 +4198,7 @@ void ListDir(char *path, uint8_t depth) {
 
 char path[48];
 
-void Script_FileUploadConfiguration(void)
-{
+void Script_FileUploadConfiguration(void) {
   uint8_t depth=0;
   strcpy(path,"/");
 
@@ -3993,17 +4211,6 @@ void Script_FileUploadConfiguration(void)
       // is directory
       strcpy(path,cp);
     }
-  }
-
-  void ScriptFileUploadSuccess(void) {
-    WSContentStart_P(S_INFORMATION);
-    WSContentSendStyle();
-    WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
-    WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
-    WSContentSend_P(PSTR("</div><br/>"));
-    WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),"/upl",D_UPL_DONE);
-    //WSContentSpaceButton(BUTTON_MAIN);
-    WSContentStop();
   }
 
   WSContentStart_P(S_SCRIPT_FILE_UPLOAD);
@@ -4023,13 +4230,22 @@ void Script_FileUploadConfiguration(void)
   Web.upload_error = 0;
 }
 
+void ScriptFileUploadSuccess(void) {
+  WSContentStart_P(S_INFORMATION);
+  WSContentSendStyle();
+  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
+  WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
+  WSContentSend_P(PSTR("</div><br/>"));
+  WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),"/upl",D_UPL_DONE);
+  //WSContentSpaceButton(BUTTON_MAIN);
+  WSContentStop();
+}
+
+
 File upload_file;
 
-
 void script_upload(void) {
-
   //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: file upload"));
-
   HTTPUpload& upload = Webserver->upload();
   if (upload.status == UPLOAD_FILE_START) {
     char npath[48];
@@ -6136,6 +6352,12 @@ bool Xdrv10(uint8_t function)
           Run_Scripter(">b",2,0);
         }
       }
+      break;
+#endif
+
+#ifdef USE_SCRIPT_GLOBVARS
+    case FUNC_LOOP:
+      Script_PollUdp();
       break;
 #endif
 

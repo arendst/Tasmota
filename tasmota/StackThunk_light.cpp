@@ -40,7 +40,7 @@ uint32_t *stack_thunk_light_save = NULL;  /* Saved A1 while in BearSSL */
 uint32_t stack_thunk_light_refcnt = 0;
 
 //#define _stackSize (5600/4)
-#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_TLS_FORCE_EC_CIPHER)
+#ifdef USE_MQTT_TLS_FORCE_EC_CIPHER
   #define _stackSize (5300/4)   // using a light version of bearssl we can save 300 bytes
 #else
   #define _stackSize (3600/4)   // using a light version of bearssl we can save 2k

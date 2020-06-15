@@ -2405,12 +2405,13 @@ void SML_Send_Seq(uint32_t meter,char *seq) {
     if (!rflg) {
       *ucp++=0;
       *ucp++=2;
+      slen+=2;
     }
     // append crc
-    uint16_t crc = MBUS_calculateCRC(sbuff,6);
+    uint16_t crc = MBUS_calculateCRC(sbuff,slen);
     *ucp++=lowByte(crc);
     *ucp++=highByte(crc);
-    slen+=4;
+    slen+=2;
   }
   if (script_meter_desc[meter].type=='o') {
     for (uint32_t cnt=0;cnt<slen;cnt++) {
