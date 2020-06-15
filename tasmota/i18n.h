@@ -271,6 +271,8 @@
 #define D_CMND_SSID "SSId"
 #define D_CMND_PASSWORD "Password"
 #define D_CMND_HOSTNAME "Hostname"
+#define D_CMND_WIFI "Wifi"
+#define D_CMND_ETHERNET "Ethernet"
 #define D_CMND_WIFICONFIG "WifiConfig"
   #define D_WCFG_0_RESTART "Restart"
   #define D_WCFG_2_WIFIMANAGER "WifiManager"
@@ -641,6 +643,7 @@
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
 #define D_LOG_ZIGBEE "ZIG: "       // Zigbee
+#define D_LOG_TCP "TCP: "          // TCP bridge
 
 /********************************************************************************************/
 

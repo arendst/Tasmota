@@ -114,8 +114,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t pwm_ct_mode : 1;              // bit 10 (v8.2.0.4)  - SetOption92 - Set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...)
     uint32_t compress_rules_cpu : 1;       // bit 11 (v8.2.0.6)  - SetOption93 - Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick
     uint32_t max6675 : 1;                  // bit 12 (v8.3.1.2)  - SetOption94 - Implement simpler MAX6675 protocol instead of MAX31855
-    uint32_t spare13 : 1;
-    uint32_t spare14 : 1;
+    uint32_t network_wifi : 1;             // bit 13 (v8.3.1.3)  - CMND_WIFI
+    uint32_t network_ethernet : 1;         // bit 14 (v8.3.1.3)  = CMND_ETHERNET
     uint32_t spare15 : 1;
     uint32_t spare16 : 1;
     uint32_t spare17 : 1;
@@ -568,8 +568,9 @@ struct {
   uint8_t       windmeter_tele_pchange;    // F3E
   uint8_t	      ledpwm_on;                 // F3F
   uint8_t	      ledpwm_off;                // F40
+  uint8_t       tcp_baudrate;              // F41
 
-  uint8_t       free_f42[119];             // F41 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f42[118];             // F42 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   uint16_t      pulse_counter_debounce_low;  // FB8
@@ -676,10 +677,10 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {
   uint8_t data;
   struct {
-    uint8_t wifi_down : 1;
+    uint8_t network_down : 1;
     uint8_t mqtt_down : 1;
-    uint8_t spare02 : 1;
-    uint8_t spare03 : 1;
+    uint8_t wifi_down : 1;
+    uint8_t eth_down : 1;
     uint8_t spare04 : 1;
     uint8_t spare05 : 1;
     uint8_t spare06 : 1;

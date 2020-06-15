@@ -43,6 +43,16 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack, uint32_t stack_end);
 extern "C" void resetPins();
 
+#ifdef ESP32
+
+#ifdef USE_ETHERNET
+IPAddress EthernetLocalIP(void);
+char* EthernetHostname(void);
+String EthernetMacAddress(void);
+#endif
+
+#endif  // ESP32
+
 /*********************************************************************************************\
  * Preconfigured configurations
 \*********************************************************************************************/

@@ -209,7 +209,7 @@ a_features = [[
     "USE_HP303B","","","",
     "","","","",
     "","","","",
-    "","","","USE_WEBCAM"
+    "","","USE_ETHERNET","USE_WEBCAM"
     ]]
 
 usage = "usage: decode-status {-d | -f} arg"

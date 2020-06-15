@@ -67,6 +67,8 @@ keywords if then else endif, or, and are better readable for beginners (others m
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
 
+
+
 // solve conficting defines
 // highest priority
 #ifdef USE_SCRIPT_FATFS
@@ -117,6 +119,33 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #define UNISHOXRSIZE 2560
 #endif
 #endif // USE_UNISHOX_COMPRESSION
+
+#define USE_SCRIPT_TIMER
+
+#ifdef USE_SCRIPT_TIMER
+#include <Ticker.h>
+Ticker Script_ticker1;
+Ticker Script_ticker2;
+Ticker Script_ticker3;
+Ticker Script_ticker4;
+
+void Script_ticker1_end(void) {
+  Script_ticker1.detach();
+  Run_Scripter(">ti1", 4,0);
+}
+void Script_ticker2_end(void) {
+  Script_ticker2.detach();
+  Run_Scripter(">ti2", 4,0);
+}
+void Script_ticker3_end(void) {
+  Script_ticker3.detach();
+  Run_Scripter(">ti3", 4,0);
+}
+void Script_ticker4_end(void) {
+  Script_ticker4.detach();
+  Run_Scripter(">ti4", 4,0);
+}
+#endif
 
 
 #if defined(LITTLEFS_SCRIPT_SIZE) || (USE_SCRIPT_FATFS==-1)
@@ -770,7 +799,7 @@ char *script;
 IPAddress script_udp_remote_ip;
 
 void Script_Init_UDP() {
-  if (global_state.wifi_down) return;
+  if (global_state.network_down) return;
   if (glob_script_mem.udp_flags.udp_connected) return;
 
   if (PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
@@ -1876,6 +1905,20 @@ chknext:
           if (sp) strlcpy(sp,SettingsText(SET_MQTT_GRP_TOPIC),glob_script_mem.max_ssize);
           goto strexit;
         }
+
+#ifdef SCRIPT_GET_HTTPS_JP
+        if (!strncmp(vname,"gjp(",4)) {
+          char host[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp+4,OPER_EQU,host,0);
+          SCRIPT_SKIP_SPACES
+          char path[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,path,0);
+          fvar=call2https(host,path);
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif
         break;
       case 'h':
         if (!strncmp(vname,"hours",5)) {
@@ -2410,6 +2453,41 @@ chknext:
           if (sp) strlcpy(sp,SettingsText(SET_MQTT_TOPIC),glob_script_mem.max_ssize);
           goto strexit;
         }
+#ifdef USE_SCRIPT_TIMER
+        if (!strncmp(vname,"ts1(",4)) {
+          lp=GetNumericResult(lp+4,OPER_EQU,&fvar,0);
+          if (fvar<10) fvar=10;
+          Script_ticker1.attach_ms(fvar, Script_ticker1_end);
+          lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"ts2(",4)) {
+          lp=GetNumericResult(lp+4,OPER_EQU,&fvar,0);
+          if (fvar<10) fvar=10;
+          Script_ticker2.attach_ms(fvar, Script_ticker2_end);
+          lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"ts3(",4)) {
+          lp=GetNumericResult(lp+4,OPER_EQU,&fvar,0);
+          if (fvar<10) fvar=10;
+          Script_ticker3.attach_ms(fvar, Script_ticker3_end);
+          lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"ts4(",4)) {
+          lp=GetNumericResult(lp+4,OPER_EQU,&fvar,0);
+          if (fvar<10) fvar=10;
+          Script_ticker4.attach_ms(fvar, Script_ticker4_end);
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif // USE_SCRIPT_TIMER
+
 #ifdef USE_DISPLAY
 #ifdef USE_TOUCH_BUTTONS
         if (!strncmp(vname,"tbut[",5)) {
@@ -4817,9 +4895,11 @@ void Script_Check_Hue(String *response) {
         }
         else {
           if (hue_devs>0) *response+=",\"";
+          else *response+="\"";
         }
         *response+=String(EncodeLightId(hue_devs+devices_present+1))+"\":";
         Script_HueStatus(response,hue_devs);
+        //AddLog_P2(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),response->c_str(), hue_devs);
       }
 
       hue_devs++;
@@ -6118,6 +6198,62 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core) {
 
 #endif // USE_SCRIPT_TASK
 #endif // ESP32
+
+#ifdef SCRIPT_GET_HTTPS_JP
+#ifdef ESP8266
+#include "WiFiClientSecureLightBearSSL.h"
+#else
+#include <WiFiClientSecure.h>
+#endif
+
+// get tesla powerwall info page json string
+uint32_t call2https(const char *host, const char *path) {
+  if (global_state.wifi_down) return 1;
+  uint32_t status=0;
+#ifdef ESP32
+  WiFiClientSecure *httpsClient;
+  httpsClient = new WiFiClientSecure;
+#else
+  BearSSL::WiFiClientSecure_light *httpsClient;
+  httpsClient = new BearSSL::WiFiClientSecure_light(1024, 1024);
+#endif
+
+  httpsClient->setTimeout(1500);
+
+  int retry = 0;
+  String result;
+  while ((!httpsClient->connect(host, 443)) && (retry < 5)) {
+    delay(100);
+    retry++;
+  }
+  if (retry == 5) {
+    return 2;
+  }
+  String request = String("GET ") + path +
+                    " HTTP/1.1\r\n" +
+                    "Host: " + host +
+                    "\r\n" + "Connection: close\r\n\r\n";
+  httpsClient->print(request);
+
+  while (httpsClient->connected()) {
+    String line = httpsClient->readStringUntil('\n');
+    if (line == "\r") {
+      break;
+    }
+  }
+  while (httpsClient->available()) {
+    String line = httpsClient->readStringUntil('\n');
+    if (line!="") {
+      result += line;
+    }
+  }
+  httpsClient->stop();
+  Run_Scripter(">jp",3,(char*)result.c_str());
+  return 0;
+}
+
+#endif // SCRIPT_GET_HTTPS_JP
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/

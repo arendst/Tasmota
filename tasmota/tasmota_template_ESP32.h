@@ -131,6 +131,7 @@ enum UserSelectablePins {
   GPIO_BL0940_RX,                      // BL0940 serial interface
   GPIO_TELEINFO_RX,                    // Teleinfo telemetry data receive pin
   GPIO_TELEINFO_ENABLE,                // Teleinfo Enable Receive Pin
+  GPIO_TCP_TX, GPIO_TCP_RX,            // TCP to serial bridge
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -221,7 +222,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
   D_SENSOR_WINDMETER_SPEED "|" D_SENSOR_BUTTON "_tc|"
   D_SENSOR_BL0940_RX "|"
-  D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE
+  D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
+  D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -554,6 +556,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_WEBCAM_PSCLK),
   AGPIO(GPIO_WEBCAM_HSD) + MAX_WEBCAM_HSD,
   AGPIO(GPIO_WEBCAM_PSRCS),
+#endif
+#ifdef USE_TCP_BRIDGE
+  AGPIO(GPIO_TCP_TX),      // TCP Serial bridge
+  AGPIO(GPIO_TCP_RX),      // TCP Serial bridge
 #endif
   AGPIO(GPIO_KEY1_TC) + MAX_KEYS
 };
