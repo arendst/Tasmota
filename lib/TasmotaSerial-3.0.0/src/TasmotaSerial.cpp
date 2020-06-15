@@ -163,7 +163,6 @@ bool TasmotaSerial::begin(long speed, int stop_bits, int serial_config) {
     Serial.flush();
     if (serial_config >=0) {
       Serial.begin(speed, (SerialConfig) serial_config);
-
     // Keep old call begin compatibility
     } else {
       if (2 == m_stop_bits) {
@@ -186,7 +185,6 @@ bool TasmotaSerial::begin(long speed, int stop_bits, int serial_config) {
       }
       if (serial_config >=0) {
         TSerial->begin(speed, serial_config, m_rx_pin, m_tx_pin);
-
       // Keep old call begin compatibility
       } else {
         if (2 == m_stop_bits) {
