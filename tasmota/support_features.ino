@@ -598,7 +598,9 @@ void GetFeatures(void)
 
 //  feature6 |= 0x10000000;
 //  feature6 |= 0x20000000;
-//  feature6 |= 0x40000000;
+#ifdef USE_ETHERNET
+  feature6 |= 0x40000000;
+#endif
 #ifdef USE_WEBCAM
   feature6 |= 0x80000000;
 #endif
