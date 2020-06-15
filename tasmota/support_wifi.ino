@@ -52,7 +52,6 @@ struct WIFI {
   uint8_t status;
   uint8_t config_type = 0;
   uint8_t config_counter = 0;
-  uint8_t mdns_begun = 0;                  // mDNS active
   uint8_t scan_state;
   uint8_t bssid[6];
   int8_t best_network_db;
@@ -376,39 +375,6 @@ String WifiGetIPv6(void)
   return "";
 }
 
-#ifdef USE_DISCOVERY
-void StartMdns(void) {
-  if (Settings.flag3.mdns_enabled) {  // SetOption55 - Control mDNS service
-    if (!Wifi.mdns_begun) {
-//            if (mdns_delayed_start) {
-//              AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_ATTEMPTING_CONNECTION));
-//              mdns_delayed_start--;
-//            } else {
-//              mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
-        Wifi.mdns_begun = (uint8_t)MDNS.begin(my_hostname);
-        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s"), (Wifi.mdns_begun) ? D_INITIALIZED : D_FAILED);
-//            }
-    }
-  }
-}
-
-#ifdef WEBSERVER_ADVERTISE
-void MdnsAddServiceHttp(void) {
-  if (1 == Wifi.mdns_begun) {
-    Wifi.mdns_begun = 2;
-    MDNS.addService("http", "tcp", WEB_PORT);
-  }
-}
-
-void MdnsUpdate(void) {
-  if (2 == Wifi.mdns_begun) {
-    MDNS.update();
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, D_LOG_MDNS, "MDNS.update");
-  }
-}
-#endif  // WEBSERVER_ADVERTISE
-#endif  // USE_DISCOVERY
-
 bool WifiCheckIPAddrStatus(void)	// Return false for 169.254.x.x or fe80::/64
 {
   bool ip_global=false;
@@ -569,7 +535,7 @@ void WifiCheck(uint8_t param)
         }
       } else {
         WifiSetState(0);
-        Wifi.mdns_begun = 0;
+        Mdns.begun = 0;
       }
     }
   }
@@ -735,43 +701,3 @@ void wifiKeepAlive(void) {
   }
 }
 #endif  // ARDUINO_ESP8266_RELEASE_2_3_0
-
-
-char* NetworkHostname(void) {
-  if (global_state.eth_down) {
-    return my_hostname;
-  }
-#ifdef ESP32
-#ifdef USE_ETHERNET
-  else {
-    return EthernetHostname();
-  }
-#endif
-#endif
-}
-
-IPAddress NetworkAddress(void) {
-  if (global_state.eth_down) {
-    return WiFi.localIP();
-  }
-#ifdef ESP32
-#ifdef USE_ETHERNET
-  else {
-    return EthernetLocalIP();
-  }
-#endif
-#endif
-}
-
-String NetworkMacAddress(void) {
-  if (global_state.eth_down) {
-    return WiFi.macAddress();
-  }
-#ifdef ESP32
-#ifdef USE_ETHERNET
-  else {
-    return EthernetMacAddress();
-  }
-#endif
-#endif
-}
