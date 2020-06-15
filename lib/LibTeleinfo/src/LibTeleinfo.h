@@ -117,6 +117,7 @@ class TInfo
     ValueList *   getList(void);
     uint8_t       valuesDump(void);
     char *        valueGet(char * name, char * value);
+    char *        valueGet_P(const char * name, char * value);
     boolean       listDelete();
     unsigned char calcChecksum(char *etiquette, char *valeur) ;
 
