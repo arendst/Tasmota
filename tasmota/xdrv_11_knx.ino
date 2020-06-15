@@ -1208,7 +1208,7 @@ bool Xdrv11(uint8_t function)
   bool result = false;
     switch (function) {
       case FUNC_LOOP:
-        if (!global_state.wifi_down) { knx.loop(); }  // Process knx events
+        if (!global_state.network_down) { knx.loop(); }  // Process knx events
         break;
       case FUNC_EVERY_50_MSECOND:
         if (toggle_inhibit) {

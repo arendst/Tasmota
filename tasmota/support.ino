@@ -156,7 +156,7 @@ float CharToFloat(const char *str)
 
   signed char sign = 1;
   if (*pt == '-') { sign = -1; }
-  if (*pt == '-' || *pt=='+') { pt++; }            // Skip any sign
+  if (*pt == '-' || *pt == '+') { pt++; }          // Skip any sign
 
   float left = 0;
   if (*pt != '.') {
@@ -167,8 +167,9 @@ float CharToFloat(const char *str)
   float right = 0;
   if (*pt == '.') {
     pt++;
-    // limit decimals to float max
-    pt[7]=0;
+    uint32_t max_decimals = 0;
+    while ((max_decimals < 8) && isdigit(pt[max_decimals])) { max_decimals++; }
+    pt[max_decimals] = '\0';                       // Limit decimals to float max of 8
     right = atoi(pt);                              // Decimal part
     while (isdigit(*pt)) {
       pt++;
@@ -1740,7 +1741,7 @@ void Syslog(void)
   }
   if (PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
     char syslog_preamble[64];  // Hostname + Id
-    snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), my_hostname);
+    snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), NetworkHostname());
     memmove(log_data + strlen(syslog_preamble), log_data, sizeof(log_data) - strlen(syslog_preamble));
     log_data[sizeof(log_data) -1] = '\0';
     memcpy(log_data, syslog_preamble, strlen(syslog_preamble));
@@ -1787,7 +1788,7 @@ void AddLog(uint32_t loglevel)
       !global_state.mqtt_down &&
       (loglevel <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
 
-  if (!global_state.wifi_down &&
+  if (!global_state.network_down &&
       (loglevel <= syslog_level)) { Syslog(); }
 
   prepped_loglevel = 0;

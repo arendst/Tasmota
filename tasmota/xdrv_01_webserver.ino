@@ -868,10 +868,16 @@ void StartWebserver(int type, IPAddress ipweb)
   if (Web.state != type) {
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
-    if(ipv6_addr!="") AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s and IPv6 global address %s "), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str(),ipv6_addr.c_str());
-    else AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+    if (ipv6_addr!="") {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s and IPv6 global address %s "),
+        NetworkHostname(), (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str(), ipv6_addr.c_str());
+    } else {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
+        NetworkHostname(), (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+    }
 #else
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
+      NetworkHostname(), (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
 #endif // LWIP_IPV6 = 1
     rules_flag.http_init = 1;
   }
@@ -1151,7 +1157,7 @@ void WSContentSendStyle_P(const char* formatP, ...)
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
     WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // tasmota.local (192.168.2.12, 192.168.4.1)
-      my_hostname,
+      NetworkHostname(),
       (Wifi.mdns_begun) ? ".local" : "",
       (lip) ? WiFi.localIP().toString().c_str() : "",
       (lip && sip) ? ", " : "",
@@ -2471,26 +2477,39 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, SettingsText(SET_FRIENDLYNAME1 +i));
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
-  int32_t rssi = WiFi.RSSI();
-  WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WifiGetRssiAsQuality(rssi), rssi);
-  WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "");
+#ifdef ESP32
+#ifdef USE_ETHERNET
+  if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Wifi.mdns_begun) ? ".local" : "");
+    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), EthernetMacAddress().c_str());
+    WSContentSend_P(PSTR("}1" D_IP_ADDRESS "}2%s"), EthernetLocalIP().toString().c_str());
+  }
+#endif
+#endif
+  if (Settings.flag4.network_wifi) {
+    int32_t rssi = WiFi.RSSI();
+    WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WifiGetRssiAsQuality(rssi), rssi);
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "");
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
-    if(ipv6_addr != ""){
+    if (ipv6_addr != "") {
       WSContentSend_P(PSTR("}1 IPv6 Address }2%s"), ipv6_addr.c_str());
     }
 #endif
-  if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
-    WSContentSend_P(PSTR("}1" D_IP_ADDRESS "}2%s"), WiFi.localIP().toString().c_str());
+    if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+      WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.macAddress().c_str());
+      WSContentSend_P(PSTR("}1" D_IP_ADDRESS "}2%s"), WiFi.localIP().toString().c_str());
+    }
+  }
+  if (!global_state.network_down) {
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), IPAddress(Settings.ip_address[1]).toString().c_str());
     WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%s"), IPAddress(Settings.ip_address[2]).toString().c_str());
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "}2%s"), IPAddress(Settings.ip_address[3]).toString().c_str());
-    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.macAddress().c_str());
   }
   if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {
+    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.softAPmacAddress().c_str());
     WSContentSend_P(PSTR("}1" D_IP_ADDRESS "}2%s"), WiFi.softAPIP().toString().c_str());
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), WiFi.softAPIP().toString().c_str());
-    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.softAPmacAddress().c_str());
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
@@ -3288,7 +3307,7 @@ void CmndWebServer(void)
   }
   if (Settings.webserver) {
     Response_P(PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
-      (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
+      (2 == Settings.webserver) ? D_ADMIN : D_USER, NetworkHostname(), NetworkAddress().toString().c_str());
   } else {
     ResponseCmndStateText(0);
   }

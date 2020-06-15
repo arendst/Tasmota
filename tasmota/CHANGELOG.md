@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.3.1.4 20200615
+
+- Add basic support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON
+
 ### 8.3.1.3 20200611
 
 - Add initial support for Telegram bot (#8619)

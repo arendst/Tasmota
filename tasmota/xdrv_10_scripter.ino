@@ -799,7 +799,7 @@ char *script;
 IPAddress script_udp_remote_ip;
 
 void Script_Init_UDP() {
-  if (global_state.wifi_down) return;
+  if (global_state.network_down) return;
   if (glob_script_mem.udp_flags.udp_connected) return;
 
   if (PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {

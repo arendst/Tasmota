@@ -201,7 +201,7 @@ void HAssAnnounceRelayLight(void)
   uint8_t max_lights = 1;
 
   #ifdef ESP8266
-        if (PWM_DIMMER == my_module_type) { PwmMod = true; } 
+        if (PWM_DIMMER == my_module_type) { PwmMod = true; }
   #endif //ESP8266
 
   // If there is a special Light to be enabled and managed with SetOption68 or SetOption37 >= 128, Discovery calculates the maximum number of entities to be generated in advance
@@ -719,7 +719,7 @@ void HAssPublishStatus(void)
                   "\"" D_CMND_IPADDRESS "\":\"%s\",\"" D_JSON_RSSI "\":\"%d\",\"" D_JSON_SIGNAL " (dBm)""\":\"%d\","
                   "\"WiFi " D_JSON_LINK_COUNT "\":%d,\"WiFi " D_JSON_DOWNTIME "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"LoadAvg\":%lu}"),
              my_version, my_image, GetBuildDateAndTime().c_str(), ModuleName().c_str(), GetResetReason().c_str(),
-             GetUptime().c_str(), my_hostname, WiFi.localIP().toString().c_str(), WifiGetRssiAsQuality(WiFi.RSSI()),
+             GetUptime().c_str(), NetworkHostname(), WiFi.localIP().toString().c_str(), WifiGetRssiAsQuality(WiFi.RSSI()),
              WiFi.RSSI(), WifiLinkCount(), WifiDowntime().c_str(), MqttConnectCount(), loop_load_avg);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_HASS_STATE));
 }

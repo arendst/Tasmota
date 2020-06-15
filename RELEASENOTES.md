@@ -52,7 +52,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.3.1.3
+### Version 8.3.1.4
 
 - Change IRremoteESP8266 library updated to v2.7.7
 - Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)
@@ -79,3 +79,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add initial support for Telegram bot (#8619)
 - Add support for HP303B Temperature and Pressure sensor by Robert Jaakke (#8638)
 - Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet
+- Add basic support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON

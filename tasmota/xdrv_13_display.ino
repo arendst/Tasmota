@@ -1013,14 +1013,14 @@ void DisplayLogBufferInit(void)
     snprintf_P(buffer, sizeof(buffer), PSTR("Display mode %d"), Settings.display_mode);
     DisplayLogBufferAdd(buffer);
 
-    snprintf_P(buffer, sizeof(buffer), PSTR(D_CMND_HOSTNAME " %s"), my_hostname);
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_CMND_HOSTNAME " %s"), NetworkHostname());
     DisplayLogBufferAdd(buffer);
-    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), SettingsText(SET_STASSID1 + Settings.sta_active));
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_MAC " %s"), NetworkMacAddress().c_str());
     DisplayLogBufferAdd(buffer);
-    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_MAC " %s"), WiFi.macAddress().c_str());
+    snprintf_P(buffer, sizeof(buffer), PSTR("IP %s"), NetworkAddress().toString().c_str());
     DisplayLogBufferAdd(buffer);
     if (!global_state.wifi_down) {
-      snprintf_P(buffer, sizeof(buffer), PSTR("IP %s"), WiFi.localIP().toString().c_str());
+      snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), SettingsText(SET_STASSID1 + Settings.sta_active));
       DisplayLogBufferAdd(buffer);
       snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_RSSI " %d%%"), WifiGetRssiAsQuality(WiFi.RSSI()));
       DisplayLogBufferAdd(buffer);
