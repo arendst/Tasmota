@@ -262,14 +262,16 @@ void TInfoInit(void)
 
         // pinMode(GPIO_TELEINFO_RX, INPUT_PULLUP);
 
-        if (TInfoSerial->begin(TINFO_SPEED, SERIAL_7E1))
+        // Trick here even using SERIAL_7E1 or TS_SERIAL_7E1
+        // this is not working, need to call SetSerialConfig after  
+        if (TInfoSerial->begin(TINFO_SPEED, TS_SERIAL_7E1))
         {
+            // This is a dirty hack, looks like begin does not take into account
+            // the TS_SERIAL_7E1 configuration so on ESP8266 this is 
+            // working only on Serial RX pin (Hardware Serial) for now
+            SetSerialConfig(TS_SERIAL_7E1);
+
             if (TInfoSerial->hardwareSerial()) {
-                // This is a dirty hack to bypass HW serial init when for Teleinfo
-                // This protocol needs 7E1 configuration so on ESP8266 this is 
-                // working only on Serial RX pin (Hardware Serial) for now
-                Serial.end();
-                Serial.begin(TINFO_SPEED, SERIAL_7E1);
                 ClaimSerial();
             }
             TInfoSerial->setTimeout(TINFO_READ_TIMEOUT);
