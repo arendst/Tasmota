@@ -87,6 +87,9 @@ struct IBEACON {
 struct IBEACON_UID {
   char MAC[12];
   char RSSI[4];
+  char UID[32];
+  char MAJOR[4];
+  char MINOR[4];
   uint8_t FLAGS;
   uint8_t TIME;
 } ibeacons[MAX_IBEACONS];
@@ -132,7 +135,7 @@ void hm17_every_second(void) {
         ibeacons[cnt].TIME++;
         if (ibeacons[cnt].TIME>IB_TIMEOUT_TIME) {
           ibeacons[cnt].FLAGS=0;
-          ibeacon_mqtt(ibeacons[cnt].MAC,"0000");
+          ibeacon_mqtt(ibeacons[cnt].MAC,"0000",ibeacons[cnt].UID,ibeacons[cnt].MAJOR,ibeacons[cnt].MINOR);
         }
       }
     }
@@ -210,6 +213,9 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
       if (!ibeacons[cnt].FLAGS) {
         memcpy(ibeacons[cnt].MAC,ib->MAC,12);
         memcpy(ibeacons[cnt].RSSI,ib->RSSI,4);
+        memcpy(ibeacons[cnt].UID,ib->UID,32);
+        memcpy(ibeacons[cnt].MAJOR,ib->MAJOR,4);
+        memcpy(ibeacons[cnt].MINOR,ib->MINOR,4);
         ibeacons[cnt].FLAGS=1;
         ibeacons[cnt].TIME=0;
         return 1;
@@ -400,7 +406,7 @@ hm17_v110:
             memcpy(ib.RSSI,&hm17_sbuffer[8+8+1+32+1+4+4+2+1+12+1],4);
 
             if (ibeacon_add(&ib)) {
-              ibeacon_mqtt(ib.MAC,ib.RSSI);
+              ibeacon_mqtt(ib.MAC,ib.RSSI,ib.UID,ib.MAJOR,ib.MINOR);
             }
             hm17_sbclr();
             hm17_result=1;
@@ -560,15 +566,30 @@ void ib_sendbeep(void) {
   hm17_sendcmd(HM17_CON);
 }
 
-void ibeacon_mqtt(const char *mac,const char *rssi) {
+void ibeacon_mqtt(const char *mac,const char *rssi,const char *uid,const char *major,const char *minor) {
   char s_mac[14];
+  char s_uid[34];
+  char s_major[6];
+  char s_minor[6];
   char s_rssi[6];
   memcpy(s_mac,mac,12);
   s_mac[12]=0;
+  memcpy(s_uid,uid,32);
+  s_uid[32]=0;
+  memcpy(s_major,major,4);
+  s_major[4]=0;
+  memcpy(s_minor,minor,4);
+  s_minor[4]=0;
   memcpy(s_rssi,rssi,4);
   s_rssi[4]=0;
   int16_t n_rssi=atoi(s_rssi);
-  ResponseTime_P(PSTR(",\"" D_CMND_IBEACON "_%s\":{\"RSSI\":%d}}"),s_mac,n_rssi);
+  // if uid == all zeros, take mac
+  if (!strncmp_P(s_uid,PSTR("00000000000000000000000000000000"),32)) {
+    ResponseTime_P(PSTR(",\"" D_CMND_IBEACON "_%s\":{\"UID\":\"%s\",\"MAJOR\":\"%s\",\"MINOR\":\"%s\",\"RSSI\":%d}}"),s_mac,s_uid,s_major,s_minor,n_rssi);
+  } else {
+    ResponseTime_P(PSTR(",\"" D_CMND_IBEACON "_%s\":{\"MAJOR\":\"%s\",\"MINOR\":\"%s\",\"RSSI\":%d}}"),s_uid,s_major,s_minor,n_rssi);
+  }
+
   MqttPublishTeleSensor();
 }
 
