@@ -167,6 +167,8 @@ float CharToFloat(const char *str)
   float right = 0;
   if (*pt == '.') {
     pt++;
+    // limit decimals to float max
+    pt[7]=0;
     right = atoi(pt);                              // Decimal part
     while (isdigit(*pt)) {
       pt++;
