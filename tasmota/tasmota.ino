@@ -36,9 +36,9 @@
 #include "tasmota_version.h"                // Tasmota version information
 #include "tasmota.h"                        // Enumeration used in my_user_config.h
 #include "my_user_config.h"                 // Fixed user configurable options
-#ifdef USE_MQTT_TLS
+#ifdef USE_TLS
   #include <t_bearssl.h>                    // We need to include before "tasmota_globals.h" to take precedence over the BearSSL version in Arduino
-#endif  // USE_MQTT_TLS
+#endif  // USE_TLS
 #include "tasmota_globals.h"                // Function prototypes and global configuration
 #include "i18n.h"                           // Language support configured by my_user_config.h
 #include "tasmota_template.h"               // Hardware configuration
@@ -111,9 +111,9 @@ uint32_t uptime = 0;                        // Counting every second until 42949
 uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
 uint32_t web_log_index = 1;                 // Index in Web log buffer (should never be 0)
-float global_temperature = 9999;            // Provide a global temperature to be used by some sensors
-float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
-float global_pressure = 0;                  // Provide a global pressure to be used by some sensors
+float global_temperature = NAN;             // Provide a global temperature to be used by some sensors
+float global_humidity = 0.0f;               // Provide a global humidity to be used by some sensors
+float global_pressure = 0.0f;               // Provide a global pressure to be used by some sensors
 uint16_t tele_period = 9999;                // Tele period timer
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
@@ -322,6 +322,8 @@ void setup(void) {
 
   XdrvCall(FUNC_INIT);
   XsnsCall(FUNC_INIT);
+
+  rules_flag.system_init = 1;
 }
 
 void BacklogLoop(void) {

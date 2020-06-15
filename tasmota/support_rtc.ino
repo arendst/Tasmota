@@ -206,6 +206,14 @@ String GetDateAndTime(uint8_t time_type)
       break;
   }
   String dt = GetDT(time);  // 2017-03-07T11:08:02
+
+  if (DT_LOCAL_MILLIS == time_type) {
+    char ms[10];
+    snprintf_P(ms, sizeof(ms), PSTR(".%03d"), RtcMillis());
+    dt += ms;
+    time_type = DT_LOCAL;
+  }
+
   if (Settings.flag3.time_append_timezone && (DT_LOCAL == time_type)) {  // SetOption52 - Append timezone to JSON time
     dt += GetTimeZone();    // 2017-03-07T11:08:02-07:00
   }

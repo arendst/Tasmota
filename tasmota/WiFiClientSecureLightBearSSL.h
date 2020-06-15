@@ -24,7 +24,7 @@
 
 #ifndef wificlientlightbearssl_h
 #define wificlientlightbearssl_h
-#if defined(USE_MQTT_TLS) || defined (USE_SENDMAIL)
+#ifdef USE_TLS
 #include <vector>
 #include "WiFiClient.h"
 #include <t_bearssl.h>
@@ -148,7 +148,7 @@ class WiFiClientSecure_light : public WiFiClient {
 #define ERR_OOM             -1000
 #define ERR_CANT_RESOLVE_IP -1001
 #define ERR_TCP_CONNECT     -1002
-#define ERR_MISSING_EC_KEY  -1003
+// #define ERR_MISSING_EC_KEY  -1003   // deprecated, AWS IoT is not called if the private key is not present
 #define ERR_MISSING_CA      -1004
 
 // For reference, BearSSL error codes:
@@ -217,5 +217,5 @@ class WiFiClientSecure_light : public WiFiClient {
 
 };
 
-#endif  // USE_MQTT_TLS
+#endif  // USE_TLS
 #endif  // wificlientlightbearssl_h

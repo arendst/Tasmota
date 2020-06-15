@@ -1331,7 +1331,7 @@ void ThermostatGetLocalSensor(uint8_t ctr_output) {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& root = jsonBuffer.parseObject((const char*)mqtt_data);
   if (root.success()) {
-    const char* value_c = root["THERMOSTAT_SENSOR_NAME"]["Temperature"];
+    const char* value_c = root[THERMOSTAT_SENSOR_NAME]["Temperature"];
     if (value_c != NULL && strlen(value_c) > 0 && (isdigit(value_c[0]) || (value_c[0] == '-' && isdigit(value_c[1])) ) ) {
       int16_t value = (int16_t)(CharToFloat(value_c) * 10);
       if ( (value >= -1000) 

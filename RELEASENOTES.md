@@ -52,7 +52,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.3.1.2
+### Version 8.3.1.3
 
 - Created Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
 - Added Library to be used for decoding Teleinfo (French Metering Smart Meter)
@@ -78,3 +78,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for up to two BH1750 sensors controlled by commands ``BH1750Resolution`` and ``BH1750MTime`` (#8139)
 - Add support for up to eight MCP9808 temperature sensors by device111 (#8594)
 - Add support for BL0940 energy monitor as used in Blitzwolf BW-SHP10 (#8175)
+- Add initial support for Telegram bot (#8619)
+- Add support for HP303B Temperature and Pressure sensor by Robert Jaakke (#8638)
+- Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet

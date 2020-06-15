@@ -167,6 +167,8 @@ float CharToFloat(const char *str)
   float right = 0;
   if (*pt == '.') {
     pt++;
+    // limit decimals to float max
+    pt[7]=0;
     right = atoi(pt);                              // Decimal part
     while (isdigit(*pt)) {
       pt++;
@@ -687,9 +689,9 @@ void ResetGlobalValues(void)
 {
   if ((uptime - global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
     global_update = 0;
-    global_temperature = 9999;
-    global_humidity = 0;
-    global_pressure = 0;
+    global_temperature = NAN;
+    global_humidity = 0.0f;
+    global_pressure = 0.0f;
   }
 }
 
@@ -997,7 +999,7 @@ char* ResponseGetTime(uint32_t format, char* time_str)
     snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":%u"), UtcTime());
     break;
   case 3:
-    snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s.%03d\""), GetDateAndTime(DT_LOCAL).c_str(), RtcMillis());
+    snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL_MILLIS).c_str());
     break;
   default:
     snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());

@@ -647,13 +647,14 @@ struct XDRVMAILBOX {
 } XdrvMailbox;
 
 #ifdef USE_SHUTTER
-const uint8_t MAX_RULES_FLAG = 10;         // Number of bits used in RulesBitfield (tricky I know...)
+const uint8_t MAX_RULES_FLAG = 11;         // Number of bits used in RulesBitfield (tricky I know...)
 #else
-const uint8_t MAX_RULES_FLAG = 8;          // Number of bits used in RulesBitfield (tricky I know...)
+const uint8_t MAX_RULES_FLAG = 9;          // Number of bits used in RulesBitfield (tricky I know...)
 #endif  // USE_SHUTTER
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
+    uint16_t system_init : 1;              // Changing layout here needs adjustments in xdrv_10_rules.ino too
     uint16_t system_boot : 1;
     uint16_t time_init : 1;
     uint16_t time_set : 1;
@@ -664,7 +665,6 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t http_init : 1;
     uint16_t shutter_moved : 1;
     uint16_t shutter_moving : 1;
-    uint16_t spare10 : 1;
     uint16_t spare11 : 1;
     uint16_t spare12 : 1;
     uint16_t spare13 : 1;

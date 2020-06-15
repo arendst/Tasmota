@@ -459,7 +459,12 @@ void EnergyEverySecond(void)
 {
   // Overtemp check
   if (global_update) {
-    if (power && (global_temperature != 9999) && (global_temperature > Settings.param[P_OVER_TEMP])) {  // Device overtemp, turn off relays
+    if (power && !isnan(global_temperature) && (global_temperature > (float)Settings.param[P_OVER_TEMP])) {  // Device overtemp, turn off relays
+
+      char temperature[33];
+      dtostrfd(global_temperature, 1, temperature);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: GlobTemp %s"), temperature);
+
       SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
     }
   }
@@ -1136,6 +1141,9 @@ bool Xdrv03(uint8_t function)
         break;
       case FUNC_EVERY_250_MSECOND:
         XnrgCall(FUNC_EVERY_250_MSECOND);
+        break;
+      case FUNC_EVERY_SECOND:
+        XnrgCall(FUNC_EVERY_SECOND);
         break;
       case FUNC_SERIAL:
         result = XnrgCall(FUNC_SERIAL);

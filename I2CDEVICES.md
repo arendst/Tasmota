@@ -73,3 +73,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   49  | USE_VEML6075        | xsns_70 | VEML6075 | 0x10        | UVA/UVB/UVINDEX Sensor
   50  | USE_VEML7700        | xsns_71 | VEML7700 | 0x10        | Ambient light intensity sensor
   51  | USE_MCP9808         | xsns_72 | MCP9808  | 0x18 - 0x1F | Temperature sensor
+  52  | USE_HP303B          | xsns_73 | HP303B   | 0x76 - 0x77 | Pressure and temperature sensor
