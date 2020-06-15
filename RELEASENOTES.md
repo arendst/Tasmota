@@ -54,8 +54,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ### Version 8.3.1.3
 
-- Created Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
-- Added Library to be used for decoding Teleinfo (French Metering Smart Meter)
 - Change IRremoteESP8266 library updated to v2.7.7
 - Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)
 - Change Energy JSON Total field from ``"Total":[33.736,11.717,16.978]`` to ``"Total":33.736,"TotalTariff":[11.717,16.978]``
@@ -81,3 +79,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add initial support for Telegram bot (#8619)
 - Add support for HP303B Temperature and Pressure sensor by Robert Jaakke (#8638)
 - Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet
+- Created Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
+- Added Library to be used for decoding Teleinfo (French Metering Smart Meter)
