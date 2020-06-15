@@ -93,7 +93,7 @@ void Ili9341InitDriver(void)
 #ifdef ESP8266
     tft = new Adafruit_ILI9341(Pin(GPIO_SPI_CS), Pin(GPIO_SPI_DC));
 #else  // ESP32
-    tft = new Adafruit_ILI9341(Pin (GPIO_TFT_CS), Pin (GPIO_TFT_DC), Pin (GPIO_TFT_MOSI), Pin (GPIO_TFT_CLK), Pin (GPIO_TFT_RST), Pin(GPIO_TFT_MISO));
+    tft = new Adafruit_ILI9341(Pin(GPIO_SPI_CS), Pin(GPIO_SPI_DC), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK), -1, Pin(GPIO_SPI_MISO));
 #endif
     tft->begin();
 
