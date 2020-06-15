@@ -835,8 +835,8 @@ void Z_AutoResponder(uint16_t srcaddr, uint16_t cluster, uint8_t endpoint, const
   // responder
   switch (cluster) {
     case 0x0000:
-      if (HasKeyCaseInsensitive(json, PSTR("ModelId")))           { json_out[F("ModelId")] = F("Tasmota Z2T"); }
-      if (HasKeyCaseInsensitive(json, PSTR("Manufacturer")))      { json_out[F("Manufacturer")] = F("Tasmota"); }
+      if (HasKeyCaseInsensitive(json, PSTR("ModelId")))           { json_out[F("ModelId")] = F(USE_ZIGBEE_MODELID); }
+      if (HasKeyCaseInsensitive(json, PSTR("Manufacturer")))      { json_out[F("Manufacturer")] = F(USE_ZIGBEE_MANUFACTURER); }
       break;
 #ifdef USE_LIGHT
     case 0x0006:
