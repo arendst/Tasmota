@@ -552,6 +552,7 @@ int32_t Z_MgmtBindRsp(int32_t res, const class SBuffer &buf) {
   return -1;
 }
 
+#ifdef USE_ZIGBEE_ZNP
 /*********************************************************************************************\
  * Send specific ZNP messages
 \*********************************************************************************************/
@@ -589,6 +590,32 @@ void Z_SendAFInfoRequest(uint16_t shortaddr) {
   ZigbeeZNPSend(AFInfoReq, sizeof(AFInfoReq));
 }
 
+#endif // USE_ZIGBEE_ZNP
+
+#ifdef USE_ZIGBEE_EZSP
+/*********************************************************************************************\
+ * Send specific EZS¨ messages
+\*********************************************************************************************/
+
+//
+// Send ZDO_IEEE_ADDR_REQ request to get IEEE long address
+//
+void Z_SendIEEEAddrReq(uint16_t shortaddr) {
+}
+
+//
+// Send ACTIVE_EP_REQ to collect active endpoints for this address
+//
+void Z_SendActiveEpReq(uint16_t shortaddr) {
+}
+
+//
+// Send AF Info Request
+//
+void Z_SendAFInfoRequest(uint16_t shortaddr) {
+}
+
+#endif // USE_ZIGBEE_EZSP
 
 /*********************************************************************************************\
  * Callbacks
@@ -718,6 +745,8 @@ typedef struct Z_Dispatcher {
   ZB_RecvMsgFunc  func;
 } Z_Dispatcher;
 
+#ifdef USE_ZIGBEE_ZNP
+
 // Ffilters based on ZNP frames
 ZBM(AREQ_AF_DATA_CONFIRM, Z_AREQ | Z_AF, AF_DATA_CONFIRM)                   // 4480
 ZBM(AREQ_AF_INCOMING_MESSAGE, Z_AREQ | Z_AF, AF_INCOMING_MSG)               // 4481
@@ -766,6 +795,8 @@ int32_t Z_Recv_Default(int32_t res, const class SBuffer &buf) {
     return -1;
   }
 }
+
+#endif // USE_ZIGBEE_ZNP
 
 /*********************************************************************************************\
  * Functions called by State Machine
