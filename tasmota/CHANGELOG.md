@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.3.1.5 20200616
+
+- Add ESP32 ethernet commands ``EthType 0/1``, ``EthAddress 0..31`` and ``EthClockMode 0..3``
+
 ### 8.3.1.4 20200615
 
 - Add basic support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON

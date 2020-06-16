@@ -21,13 +21,53 @@
 #ifdef USE_ETHERNET
 /*********************************************************************************************\
  * Ethernet support for ESP32
+ *
+ * Dedicated fixed Phy pins
+ * GPIO17 - EMAC_CLK_OUT_180
+ * GPIO19 - EMAC_TXD0(RMII)
+ * GPIO21 - EMAC_TX_EN(RMII)
+ * GPIO22 - EMAC_TXD1(RMII)
+ * GPIO25 - EMAC_RXD0(RMII)
+ * GPIO26 - EMAC_RXD1(RMII)
+ * GPIO27 - EMAC_RX_CRS_DV
+ *
+ * {"NAME":"Olimex ESP32-PoE","GPIO":[65504,65504,65504,65504,65504,65504,0,0,5536,65504,65504,65504,65504,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,65504,65504,65504,65504,65504,0,0,65504],"FLAG":0,"BASE":1}
+ *
 \*********************************************************************************************/
 
 #define XDRV_82           82
 
+/*
 // Olimex ESP32-PoE
-#define ETH_CLK_MODE      ETH_CLOCK_GPIO17_OUT
-#define ETH_PHY_POWER     12
+#define ETH_CLKMODE       ETH_CLOCK_GPIO17_OUT
+#define ETH_POWER_PIN     12
+
+//********************************************************************************************
+
+#ifndef ETH_ADDR
+#define ETH_ADDR          0                      // esp_eth.h eth_phy_base_t:   0 = PHY0 .. 31 = PHY31
+#endif
+
+#ifndef ETH_TYPE
+#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:       0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110
+#endif
+
+#ifndef ETH_CLKMODE
+#define ETH_CLKMODE       ETH_CLOCK_GPIO0_IN     // esp_eth.h eth_clock_mode_t: 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
+#endif
+*/
+
+#ifndef ETH_POWER_PIN
+#define ETH_POWER_PIN     -1
+#endif
+
+#ifndef ETH_MDC_PIN
+#define ETH_MDC_PIN       23
+#endif
+
+#ifndef ETH_MDIO_PIN
+#define ETH_MDIO_PIN      18
+#endif
 
 #include <ETH.h>
 
@@ -75,7 +115,13 @@ void EthernetInit(void) {
 
   snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s_eth"), my_hostname);
   WiFi.onEvent(EthernetEvent);
-  ETH.begin();
+
+  int eth_power = (PinUsed(GPIO_ETH_PHY_POWER)) ? Pin(GPIO_ETH_PHY_POWER) : ETH_POWER_PIN;
+  int eth_mdc = (PinUsed(GPIO_ETH_PHY_MDC)) ? Pin(GPIO_ETH_PHY_MDC) : ETH_MDC_PIN;
+  int eth_mdio = (PinUsed(GPIO_ETH_PHY_MDIO)) ? Pin(GPIO_ETH_PHY_MDIO) : ETH_MDIO_PIN;
+  if (!ETH.begin(Settings.eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings.eth_type, (eth_clock_mode_t)Settings.eth_clk_mode)) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ETH: Bad PHY type or init error"));
+  };
 }
 
 IPAddress EthernetLocalIP(void) {
@@ -94,11 +140,15 @@ String EthernetMacAddress(void) {
  * Commands
 \*********************************************************************************************/
 
+#define D_CMND_ETHADDRESS "EthAddress"
+#define D_CMND_ETHTYPE "EthType"
+#define D_CMND_ETHCLOCKMODE "EthClockMode"
+
 const char kEthernetCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_ETHERNET;
+  D_CMND_ETHERNET "|" D_CMND_ETHADDRESS "|" D_CMND_ETHTYPE "|" D_CMND_ETHCLOCKMODE;
 
 void (* const EthernetCommand[])(void) PROGMEM = {
-  &CmndEthernet };
+  &CmndEthernet, &CmndEthAddress, &CmndEthType, &CmndEthClockMode };
 
 void CmndEthernet(void)
 {
@@ -107,6 +157,33 @@ void CmndEthernet(void)
     restart_flag = 2;
   }
   ResponseCmndStateText(Settings.flag4.network_ethernet);
+}
+
+void CmndEthAddress(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 31)) {
+    Settings.eth_address = XdrvMailbox.payload;
+    restart_flag = 2;
+  }
+  ResponseCmndNumber(Settings.eth_address);
+}
+
+void CmndEthType(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    Settings.eth_type = XdrvMailbox.payload;
+    restart_flag = 2;
+  }
+  ResponseCmndNumber(Settings.eth_type);
+}
+
+void CmndEthClockMode(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
+    Settings.eth_clk_mode = XdrvMailbox.payload;
+    restart_flag = 2;
+  }
+  ResponseCmndNumber(Settings.eth_clk_mode);
 }
 
 /*********************************************************************************************\

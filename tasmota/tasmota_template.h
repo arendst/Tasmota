@@ -577,6 +577,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
 #endif
+#ifdef USE_TCP_BRIDGE
+  GPIO_TCP_TX,         // TCP Serial bridge
+  GPIO_TCP_RX,         // TCP Serial bridge
+#endif
 #ifdef USE_ZIGBEE
   GPIO_ZIGBEE_TX,      // Zigbee Serial interface
   GPIO_ZIGBEE_RX,      // Zigbee Serial interface
@@ -684,10 +688,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_AS3935
   GPIO_AS3935,
-#endif
-#ifdef USE_TCP_BRIDGE
-  AGPIO(GPIO_TCP_TX),      // TCP Serial bridge
-  AGPIO(GPIO_TCP_RX),      // TCP Serial bridge
 #endif
 };
 

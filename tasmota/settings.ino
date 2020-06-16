@@ -800,6 +800,11 @@ void SettingsDefaultSet2(void)
 
   // Ethernet
   flag4.network_ethernet |= 1;
+#ifdef ESP32
+  Settings.eth_type = ETH_TYPE;
+  Settings.eth_clk_mode = ETH_CLKMODE;
+  Settings.eth_address = ETH_ADDR;
+#endif
 
   // Wifi
   flag4.network_wifi |= 1;
@@ -1446,6 +1451,13 @@ void SettingsDelta(void)
     if (Settings.version < 0x08030104) {
       Settings.flag4.network_wifi = 1;
       Settings.flag4.network_ethernet = 1;
+    }
+    if (Settings.version < 0x08030105) {
+#ifdef ESP32
+      Settings.eth_type = ETH_TYPE;
+      Settings.eth_clk_mode = ETH_CLKMODE;
+      Settings.eth_address = ETH_ADDR;
+#endif
     }
 
     Settings.version = VERSION;

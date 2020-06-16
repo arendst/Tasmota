@@ -392,12 +392,13 @@ struct {
 #else  // ESP32
   myio          my_gp;                     // 3AC - 2 x 40 bytes (ESP32)
   mytmplt       user_template;             // 3FC - 2 x 37 bytes (ESP32)
+  uint8_t       eth_type;                  // 446
+  uint8_t       eth_clk_mode;              // 447
 
-  uint8_t       free_esp32_446[6];         // 446
+  uint8_t       free_esp32_448[4];         // 448
 
   WebCamCfg     webcam_config;             // 44C
-
-  uint8_t       free_esp32_450[1];         // 450
+  uint8_t       eth_address;               // 450
 #endif  // ESP8266 - ESP32
 
   char          serial_delimiter;          // 451
