@@ -120,8 +120,6 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #endif
 #endif // USE_UNISHOX_COMPRESSION
 
-#define USE_SCRIPT_TIMER
-
 #ifdef USE_SCRIPT_TIMER
 #include <Ticker.h>
 Ticker Script_ticker1;

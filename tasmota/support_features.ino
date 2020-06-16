@@ -579,14 +579,15 @@ void GetFeatures(void)
   feature6 |= 0x00008000;  // xdrv_40_telegram.ino
 #endif
 #ifdef USE_HP303B
-  feature6 |= 0x00010000; // xsns_73_hp303b.ino
+  feature6 |= 0x00010000;  // xsns_73_hp303b.ino
+#endif
+#ifdef USE_TCP_BRIDGE
+  feature6 |= 0x00020000;  // xdrv_41_tcp_bridge.ino
 #endif
 #ifdef USE_TELEINFO
-  feature6 |= 0x00020000;  // xnrg_15_teleinfo.ino
+  feature6 |= 0x00040000;  // xnrg_15_teleinfo.ino
 #endif
 
-//  feature6 |= 0x00020000;
-//  feature6 |= 0x00040000;
 //  feature6 |= 0x00080000;
 
 //  feature6 |= 0x00100000;
@@ -602,9 +603,9 @@ void GetFeatures(void)
 //  feature6 |= 0x10000000;
 //  feature6 |= 0x20000000;
 #ifdef USE_ETHERNET
-  feature6 |= 0x40000000;
+  feature6 |= 0x40000000;  // xdrv_82_ethernet.ino
 #endif
 #ifdef USE_WEBCAM
-  feature6 |= 0x80000000;
+  feature6 |= 0x80000000;  // xdrv_81_webcam.ino
 #endif
 }
