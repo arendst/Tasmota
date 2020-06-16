@@ -206,14 +206,9 @@ void ZigbeeInputLoop(void) {
     }
 
     if (zigbee_buffer->len() < ZIGBEE_BUFFER_SIZE) {
-      // check if escape
-      if (ZIGBEE_EZSP_ESCAPE == zigbee_in_byte) {
-        escape = true;
-        continue;
-      }
       if (escape) {
         // invert bit 5
-        zigbee_in_byte ^= 0x10; 
+        zigbee_in_byte ^= 0x20; 
         escape = false;
       }
 
@@ -461,7 +456,7 @@ void ZigbeeEZSPSend_Out(uint8_t out_byte) {
     case 0x1A:      // Cancel byte
     case 0x7D:      // Escape byte
       ZigbeeSerial->write(ZIGBEE_EZSP_ESCAPE);      // send Escape byte 0x7D
-      ZigbeeSerial->write(out_byte ^ 0x10);           // send with bit 5 inverted
+      ZigbeeSerial->write(out_byte ^ 0x20);           // send with bit 5 inverted
       break;
     default:
       ZigbeeSerial->write(out_byte);                  // send unchanged
