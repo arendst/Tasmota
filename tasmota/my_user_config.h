@@ -652,6 +652,9 @@
 
 // -- Zigbee interface ----------------------------
 //#define USE_ZIGBEE                                // Enable serial communication with Zigbee CC2530 flashed with ZNP (+49k code, +3k mem)
+  #define USE_ZIGBEE_ZNP                          // Enable ZNP protocol, needed for CC2530 based devices
+  // #define USE_ZIGBEE_EZSP                         // [EXPERIMENTAL - DO NOT USE] Enable EZSP protocol, needed for EFR32 EmberZNet based devices, like Sonoff Zigbee bridge
+                                                  // Note: USE_ZIGBEE_ZNP and USE_ZIGBEE_EZSP are mutually incompatible, you must select exactly one
   #define USE_ZIGBEE_PANID  0x1A63                // arbitrary PAN ID for Zigbee network, must be unique in the home
                                                   // if PANID == 0xFFFF, then the device will act as a Zigbee router, the parameters below are ignored
                                                   // if PANID == 0xFFFE, then the device will act as a Zigbee end-device (non-router), the parameters below are ignored

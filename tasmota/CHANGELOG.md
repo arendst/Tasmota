@@ -3,6 +3,7 @@
 ### 8.3.1.5 20200616
 
 - Add ESP32 ethernet commands ``EthType 0/1``, ``EthAddress 0..31`` and ``EthClockMode 0..3``
+- Add Zigbee initial support for EmberZNet protocol (raw send/receive only)
 
 ### 8.3.1.4 20200615
 
