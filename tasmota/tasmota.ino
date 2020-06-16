@@ -322,6 +322,9 @@ void setup(void) {
 
   XdrvCall(FUNC_INIT);
   XsnsCall(FUNC_INIT);
+#ifdef USE_SCRIPT
+  Run_Scripter(">BS",3,0);
+#endif
 
   rules_flag.system_init = 1;
 }
