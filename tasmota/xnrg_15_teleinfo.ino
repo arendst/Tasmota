@@ -296,6 +296,8 @@ void TInfoInit(void)
 
             #elif defined (ESP32)
                 AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: using ESP32 hardware serial"));
+                // Waiting TasmotaSerial PR merged to change that 
+                //TInfoSerial->reconf(TINFO_SPEED, SERIAL_7E1);
             #endif
 
 
