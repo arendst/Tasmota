@@ -278,12 +278,8 @@ void setup(void) {
 #endif
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +4) {  // Restarted 6 times
-#ifdef ESP8266
-        Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
-  //      Settings.last_module = SONOFF_BASIC;
-#else  // ESP32
-        Settings.module = WEMOS;                    // Reset module to Wemos
-#endif  // ESP8266 - ESP32
+        Settings.module = Settings.fallback_module;  // Reset module to fallback module
+//        Settings.last_module = Settings.fallback_module;
       }
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     }

@@ -1018,18 +1018,29 @@ void CmndModule(void)
       present = ValidTemplateModule(XdrvMailbox.payload);
     }
     if (present) {
-      Settings.last_module = Settings.module;
-      Settings.module = XdrvMailbox.payload;
-      SetModuleType();
-      if (Settings.last_module != XdrvMailbox.payload) {
-        for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
-          Settings.my_gp.io[i] = GPIO_NONE;
+      if (XdrvMailbox.index == 2) {
+        Settings.fallback_module = XdrvMailbox.payload;
+      } else {
+        Settings.last_module = Settings.module;
+        Settings.module = XdrvMailbox.payload;
+        SetModuleType();
+        if (Settings.last_module != XdrvMailbox.payload) {
+          for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
+            Settings.my_gp.io[i] = GPIO_NONE;
+          }
         }
+        restart_flag = 2;
       }
-      restart_flag = 2;
     }
   }
-  Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, ModuleNr(), ModuleName().c_str());
+  uint8_t module_real = Settings.module;
+  uint8_t module_number = ModuleNr();
+  if (XdrvMailbox.index == 2) {
+    module_real = Settings.fallback_module;
+    module_number = (USER_MODULE == Settings.fallback_module) ? 0 : Settings.fallback_module +1;
+    strcat(XdrvMailbox.command, "2");
+  }
+  Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, module_number, AnyModuleName(module_real).c_str());
 }
 
 void CmndModules(void)

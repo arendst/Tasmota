@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.3.1.6 20200617
+
+- Add command ``Module2`` to configure fallback module on fast reboot (#8464)
+
 ### 8.3.1.5 20200616
 
 - Add ESP32 ethernet commands ``EthType 0/1``, ``EthAddress 0..31`` and ``EthClockMode 0..3``
