@@ -236,6 +236,8 @@ enum UserSelectablePins {
   GPIO_BL0940_RX,      // BL0940 serial interface
   GPIO_TCP_TX,         // TCP Serial bridge
   GPIO_TCP_RX,         // TCP Serial bridge
+  GPIO_TELEINFO_RX,    // TELEINFO serial interface
+  GPIO_TELEINFO_ENABLE,// TELEINFO Enable PIN
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -326,8 +328,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_AS3935 "|" D_SENSOR_PMS5003_TX "|"
   D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
   D_SENSOR_WINDMETER_SPEED "|"
-  D_SENSOR_BL0940_RX "|"
-  D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD
+  D_SENSOR_BL0940_RX  "|"
+  D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD "|"
+  D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE 
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -689,6 +692,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_AS3935
   GPIO_AS3935,
 #endif
+#ifdef USE_TELEINFO
+  GPIO_TELEINFO_RX,
+  GPIO_TELEINFO_ENABLE,
+#endif
 };
 
 /********************************************************************************************/
@@ -776,7 +783,7 @@ enum SupportedModules {
   SUPLA1, WITTY, YUNSHAN, MAGICHOME, LUANIHVIO, KMC_70011, ARILUX_LC01, ARILUX_LC11, SONOFF_DUAL_R2, ARILUX_LC06,
   SONOFF_S31, ZENGGE_ZF_WF017, SONOFF_POW_R2, SONOFF_IFAN02, BLITZWOLF_BWSHP, SHELLY1, SHELLY2, PHILIPS, NEO_COOLCAM, ESP_SWITCH,
   OBI, TECKIN, APLIC_WDP303075, TUYA_DIMMER, GOSUND, ARMTRONIX_DIMMERS, SK03_TUYA, PS_16_DZ, TECKIN_US, MANZOKU_EU_4,
-  OBI2, YTF_IR_BRIDGE, DIGOO, KA10, ZX2820, MI_DESK_LAMP, SP10, WAGA, SYF05, SONOFF_L1,
+  OBI2, YTF_IR_BRIDGE, DIGOO, KA10, ZX2820, MI_DESK_LAMP, SP10, WAGA, SYF05, SONOFF_L1, 
   SONOFF_IFAN03, EXS_DIMMER, PWM_DIMMER, SONOFF_D1,
   MAXMODULE};
 
@@ -2257,7 +2264,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     GPIO_LED1_INV,    // GPIO13 WiFi Blue Led - Link and Power status
     0, 0, 0, 0
   }
+
 };
+
 
 #endif  // ESP8266
 

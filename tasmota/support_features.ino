@@ -584,7 +584,10 @@ void GetFeatures(void)
 #ifdef USE_TCP_BRIDGE
   feature6 |= 0x00020000;  // xdrv_41_tcp_bridge.ino
 #endif
-//  feature6 |= 0x00040000;
+#ifdef USE_TELEINFO
+  feature6 |= 0x00040000;  // xnrg_15_teleinfo.ino
+#endif
+
 //  feature6 |= 0x00080000;
 
 //  feature6 |= 0x00100000;

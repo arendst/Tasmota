@@ -68,6 +68,7 @@
 | USE_DDSU666           | - | - | - | - | x | - | - |
 | USE_SOLAX_X1          | - | - | - | - | - | - | - |
 | USE_LE01MR            | - | - | - | - | - | - | - |
+| USE_TELEINFO          | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | USE_ADC_VCC           | x | x | - | - | - | - | - |
 | USE_COUNTER           | - | - | x | x | x | x | x |

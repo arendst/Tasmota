@@ -81,4 +81,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add initial support for Telegram bot (#8619)
 - Add support for HP303B Temperature and Pressure sensor by Robert Jaakke (#8638)
 - Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet
+- Created Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
+- Added Library to be used for decoding Teleinfo (French Metering Smart Meter)
 - Add basic support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON
