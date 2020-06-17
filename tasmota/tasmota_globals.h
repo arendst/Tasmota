@@ -287,6 +287,9 @@ const char kWebColors[] PROGMEM =
 #ifndef MODULE
 #define MODULE                      SONOFF_BASIC   // [Module] Select default model
 #endif
+#ifndef FALLBACK_MODULE
+#define FALLBACK_MODULE             SONOFF_BASIC   // [Module2] Select default module on fast reboot where USER_MODULE is user template
+#endif
 
 #ifndef ARDUINO_ESP8266_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
@@ -300,6 +303,9 @@ const char kWebColors[] PROGMEM =
 
 #ifndef MODULE
 #define MODULE                      WEMOS          // [Module] Select default model
+#endif
+#ifndef FALLBACK_MODULE
+#define FALLBACK_MODULE             WEMOS          // [Module2] Select default module on fast reboot where USER_MODULE is user template
 #endif
 
 #ifndef ARDUINO_ESP32_RELEASE

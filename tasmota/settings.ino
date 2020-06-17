@@ -768,12 +768,7 @@ void SettingsDefaultSet2(void)
 //  flag.interlock |= 0;
   Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
   Settings.module = MODULE;
-#ifdef ESP8266
-  Settings.fallback_module = SONOFF_BASIC;
-#else  // ESP32
-  Settings.fallback_module = WEMOS;
-#endif  // ESP8266 - ESP32
-  Settings.fallback_module = MODULE;
+  Settings.fallback_module = FALLBACK_MODULE;
   ModuleDefault(WEMOS);
 //  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
   SettingsUpdateText(SET_FRIENDLYNAME1, PSTR(FRIENDLY_NAME));
@@ -1466,11 +1461,7 @@ void SettingsDelta(void)
     }
 #endif
     if (Settings.version < 0x08030106) {
-#ifdef ESP8266
-      Settings.fallback_module = SONOFF_BASIC;
-#else  // ESP32
-      Settings.fallback_module = WEMOS;
-#endif  // ESP8266 - ESP32
+      Settings.fallback_module = FALLBACK_MODULE;
     }
 
     Settings.version = VERSION;
