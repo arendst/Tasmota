@@ -238,6 +238,7 @@ enum UserSelectablePins {
   GPIO_TCP_RX,         // TCP Serial bridge
   GPIO_TELEINFO_RX,    // TELEINFO serial interface
   GPIO_TELEINFO_ENABLE,// TELEINFO Enable PIN
+  GPIO_LMT01,          // LMT01 input counting pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -330,7 +331,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_WINDMETER_SPEED "|"
   D_SENSOR_BL0940_RX "|"
   D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD "|"
-  D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE
+  D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
+  D_SENSOR_LMT01_PULSE
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -695,6 +697,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_TELEINFO
   GPIO_TELEINFO_RX,
   GPIO_TELEINFO_ENABLE,
+#endif
+#ifdef USE_LMT01       // LMT01, count pulses on GPIO
+  GPIO_LMT01,
 #endif
 };
 

@@ -681,6 +681,7 @@
 #define D_SENSOR_WINDMETER_SPEED "Velocità vento"
 #define D_SENSOR_TELEINFO_RX   "TInfo Rx"
 #define D_SENSOR_TELEINFO_ENABLE "TInfo EN"
+#define D_SENSOR_LMT01_PULSE   "LMT01 Pulse"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"

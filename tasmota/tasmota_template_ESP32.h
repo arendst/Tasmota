@@ -133,6 +133,7 @@ enum UserSelectablePins {
   GPIO_ETH_PHY_POWER, GPIO_ETH_PHY_MDC, GPIO_ETH_PHY_MDIO,  // Ethernet
   GPIO_TELEINFO_RX,                    // Teleinfo telemetry data receive pin
   GPIO_TELEINFO_ENABLE,                // Teleinfo Enable Receive Pin
+  GPIO_LMT01,			       // LMT01 input counting pin
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
