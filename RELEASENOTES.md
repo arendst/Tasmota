@@ -84,3 +84,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
 - Add Library to be used for decoding Teleinfo (French Metering Smart Meter)
 - Add basic support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON
+- Add support for single wire LMT01 temperature Sensor by justifiably (#8713)

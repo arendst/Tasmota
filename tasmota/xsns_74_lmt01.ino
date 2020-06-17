@@ -1,5 +1,5 @@
 /*
-  xns_74_lmt01.ino
+  xns_74_lmt01.ino - Support for single wire LMT01 Temperature Sensor
 
   Copyright (C) 2020  Theo Arends, Justifiably
 
@@ -20,13 +20,12 @@
 #ifdef USE_LMT01
 /*********************************************************************************************\
  * LMT01 - 0.5°C Accurate 2-Pin Digital Output Temperature Sensor With Pulse Count Interface
- * 
+ *
  * Uses fragments of public domain code LMT01_Example.ino released by Texas Instruments, July 10th 2017.
  * See https://training.ti.com/how-interface-lmt01-temperature-sensor-arduino
- * 
 \*********************************************************************************************/
 
-#define XSNS_74		74
+#define XSNS_74		      74
 
 #define LMT01_TIMEOUT   200   // ms timeout for a reading cycle
 
@@ -88,14 +87,12 @@ int LMT01_getPulses(void) {
   return -1;
 }
 
-
 void LMT01_Show(bool Json) {
   char temp[33];
   dtostrfd(lmt01_temperature, Settings.flag2.temperature_resolution, temp);
 
   if (Json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), \
-		     "LMT01", temp);
+    ResponseAppend_P(JSON_SNS_TEMP, "LMT01", temp);
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) {
       DomoticzSensor(DZ_TEMP, temp);
@@ -112,7 +109,6 @@ void LMT01_Show(bool Json) {
 #endif  // USE_WEBSERVER
   }
 }
-
 
 /*********************************************************************************************\
  * Interface

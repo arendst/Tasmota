@@ -452,6 +452,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
   GPIO_DSB_OUT,        // Pseudo Single wire DS18B20 or DS18S20
 #endif
+#ifdef USE_LMT01       // LMT01, count pulses on GPIO
+  GPIO_LMT01,
+#endif
 
 // Light
 #ifdef USE_LIGHT
@@ -697,9 +700,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_TELEINFO
   GPIO_TELEINFO_RX,
   GPIO_TELEINFO_ENABLE,
-#endif
-#ifdef USE_LMT01       // LMT01, count pulses on GPIO
-  GPIO_LMT01,
 #endif
 };
 

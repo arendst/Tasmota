@@ -587,8 +587,9 @@ void GetFeatures(void)
 #ifdef USE_TELEINFO
   feature6 |= 0x00040000;  // xnrg_15_teleinfo.ino
 #endif
-
-//  feature6 |= 0x00080000;
+#ifdef USE_LMT01
+  feature6 |= 0x00080000;  // xsns_74_lmt01.ino
+#endif
 
 //  feature6 |= 0x00100000;
 //  feature6 |= 0x00200000;
