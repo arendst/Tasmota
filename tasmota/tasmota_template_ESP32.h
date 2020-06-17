@@ -634,8 +634,7 @@ const char kModuleNames[] PROGMEM =
 // Default module settings
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WEMOS,
-  ESP32_CAM_AITHINKER,
-  ESP32_DENKY
+  ESP32_CAM_AITHINKER
 };
 
 const mytmplt kModules PROGMEM =
