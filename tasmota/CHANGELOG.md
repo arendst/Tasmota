@@ -3,6 +3,9 @@
 ### 8.3.1.6 20200617
 
 - Add command ``Module2`` to configure fallback module on fast reboot (#8464)
+- Add support for Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
+- Add Library to be used for decoding Teleinfo (French Metering Smart Meter)
+
 
 ### 8.3.1.5 20200616
 
