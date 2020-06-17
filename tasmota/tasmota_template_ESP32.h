@@ -225,7 +225,6 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BL0940_RX "|"
   D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD "|"
   D_SENSOR_ETH_PHY_POWER "|" D_SENSOR_ETH_PHY_MDC "|" D_SENSOR_ETH_PHY_MDIO "|"
-  D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD "|"
   D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE 
   ;
 
@@ -624,13 +623,13 @@ typedef struct MYTMPLT {
 /********************************************************************************************/
 // Supported hardware modules
 enum SupportedModules {
-  WEMOS, ESP32_CAM_AITHINKER, ESP32_DENKY,
+  WEMOS, ESP32_CAM_AITHINKER, 
   MAXMODULE};
 
 #define USER_MODULE        255
 
 const char kModuleNames[] PROGMEM =
-  "ESP32-DevKit|ESP32 Cam AiThinker|Denky (Teleinfo)";
+  "ESP32-DevKit|ESP32 Cam AiThinker";
 
 // Default module settings
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {

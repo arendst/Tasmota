@@ -692,10 +692,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_AS3935
   GPIO_AS3935,
 #endif
-#ifdef USE_TCP_BRIDGE
-  AGPIO(GPIO_TCP_TX),      // TCP Serial bridge
-  AGPIO(GPIO_TCP_RX),      // TCP Serial bridge
-#endif
 #ifdef USE_TELEINFO
   GPIO_TELEINFO_RX,
   GPIO_TELEINFO_ENABLE,
