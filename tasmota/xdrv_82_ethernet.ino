@@ -50,7 +50,7 @@
 #endif
 
 #ifndef ETH_TYPE
-#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:       0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110
+#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:       0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110, 2 = ETH_PHY_IP101
 #endif
 
 #ifndef ETH_CLKMODE
@@ -174,7 +174,7 @@ void CmndEthAddress(void)
 
 void CmndEthType(void)
 {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
     Settings.eth_type = XdrvMailbox.payload;
     restart_flag = 2;
   }
