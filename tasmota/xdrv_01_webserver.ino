@@ -2327,22 +2327,6 @@ void OtherSaveSettings(void)
   }
   AddLog_P(LOG_LEVEL_INFO, message);
 
-/*
-  // This sometimes provides intermittent watchdog
-  bool template_activate = Webserver->hasArg("t2");  // Try this to tackle intermittent watchdog after execution of Template command
-  WebGetArg("t1", tmp, sizeof(tmp));
-  if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
-    char svalue[128];
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
-
-    if (template_activate) {
-      snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_MODULE " 0"));
-      ExecuteWebCommand(svalue, SRC_WEBGUI);
-    }
-  }
-  // Try async execution of commands
-*/
   WebGetArg("t1", tmp, sizeof(tmp));
   if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
     snprintf_P(message, sizeof(message), PSTR(D_CMND_BACKLOG " " D_CMND_TEMPLATE " %s%s"), tmp, (Webserver->hasArg("t2")) ? "; " D_CMND_MODULE " 0" : "");

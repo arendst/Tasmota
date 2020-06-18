@@ -6,6 +6,7 @@
 - Add support for Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
 - Add library to be used for decoding Teleinfo (French Metering Smart Meter)
 - Add support for single wire LMT01 temperature Sensor by justifiably (#8713)
+- Change ESP32 USER GPIO template representation decreasing template message size
 
 ### 8.3.1.5 20200616
 
