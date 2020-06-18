@@ -140,6 +140,8 @@
 // -- MQTT - Home Assistant Discovery -------------
 #define HOME_ASSISTANT_DISCOVERY_ENABLE   false  // [SetOption19] Home Assistant Discovery (false = Disable, true = Enable)
 #define HASS_AS_LIGHT          false             // [SetOption30] Enforce HAss autodiscovery as light
+//#define DEEPSLEEP_LWT_HA_DISCOVERY             // Enable LWT topic and its payloads for read-only sensors (Status sensor not included) and binary_sensors on HAss Discovery (Commented out: all read-only sensors and binary_sensors
+                                                 // won't be shown as OFFLINE on Home Assistant when the device is DeepSleeping - NOTE: This is only for read-only sensors and binary_sensors, relays will be shown as OFFLINE)
 
 // -- MQTT - Options ------------------------------
 #define MQTT_RESULT_COMMAND    false             // [SetOption4]  Switch between MQTT RESULT or COMMAND
