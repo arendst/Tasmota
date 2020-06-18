@@ -60,22 +60,20 @@
 
 #include <ETH.h>
 
-struct {
-  char hostname[33];
-} Eth;
+char eth_hostname[sizeof(my_hostname)];
 
 void EthernetEvent(WiFiEvent_t event) {
   switch (event) {
     case SYSTEM_EVENT_ETH_START:
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ETH: " D_ATTEMPTING_CONNECTION));
-      ETH.setHostname(Eth.hostname);
+      ETH.setHostname(eth_hostname);
       break;
     case SYSTEM_EVENT_ETH_CONNECTED:
       AddLog_P2(LOG_LEVEL_INFO, PSTR("ETH: " D_CONNECTED));
       break;
     case SYSTEM_EVENT_ETH_GOT_IP:
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %s, Hostname %s"),
-        ETH.macAddress().c_str(), ETH.localIP().toString().c_str(), Eth.hostname);
+        ETH.macAddress().c_str(), ETH.localIP().toString().c_str(), eth_hostname);
 /*
       if (ETH.fullDuplex()) {
         Serial.print(", FULL_DUPLEX");
@@ -109,7 +107,10 @@ void EthernetInit(void) {
     return;
   }
 
-  snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s_eth"), my_hostname);
+//  snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s_eth"), my_hostname);
+  strlcpy(eth_hostname, my_hostname, sizeof(eth_hostname) -5);  // Make sure there is room for "_eth"
+  strcat(eth_hostname, "_eth");
+
   WiFi.onEvent(EthernetEvent);
 
   int eth_power = (PinUsed(GPIO_ETH_PHY_POWER)) ? Pin(GPIO_ETH_PHY_POWER) : -1;
@@ -125,7 +126,7 @@ IPAddress EthernetLocalIP(void) {
 }
 
 char* EthernetHostname(void) {
-  return Eth.hostname;
+  return eth_hostname;
 }
 
 String EthernetMacAddress(void) {
