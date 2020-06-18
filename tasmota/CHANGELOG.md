@@ -7,6 +7,8 @@
 - Add library to be used for decoding Teleinfo (French Metering Smart Meter)
 - Add support for single wire LMT01 temperature Sensor by justifiably (#8713)
 - Change ESP32 USER GPIO template representation decreasing template message size
+- Change define USE_TASMOTA_SLAVE into USE_TASMOTA_CLIENT
+- Change commands ``SlaveSend`` and ``SlaveReset`` into ``ClientSend`` and ``ClientReset``
 
 ### 8.3.1.5 20200616
 

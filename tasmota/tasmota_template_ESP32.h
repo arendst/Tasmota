@@ -102,8 +102,8 @@ enum UserSelectablePins {
   GPIO_SM2135_CLK, GPIO_SM2135_DAT,    // SM2135 PWM controller
   GPIO_DEEPSLEEP,                      // Kill switch for deepsleep
   GPIO_EXS_ENABLE,                     // EXS MCU Enable
-  GPIO_TASMOTASLAVE_TXD, GPIO_TASMOTASLAVE_RXD,      // Slave Serial interface
-  GPIO_TASMOTASLAVE_RST, GPIO_TASMOTASLAVE_RST_INV,  // Slave Reset
+  GPIO_TASMOTACLIENT_TXD, GPIO_TASMOTACLIENT_RXD,      // Client Serial interface
+  GPIO_TASMOTACLIENT_RST, GPIO_TASMOTACLIENT_RST_INV,  // Client Reset
   GPIO_HPMA_RX, GPIO_HPMA_TX,          // Honeywell HPMA115S0 Serial interface
   GPIO_GPS_RX, GPIO_GPS_TX,            // GPS Serial interface
   GPIO_HM10_RX, GPIO_HM10_TX,          // HM10-BLE-Mijia-bridge Serial interface
@@ -200,7 +200,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DDSU666_TX "|" D_SENSOR_DDSU666_RX "|"
   D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
-  D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "_i|"
+  D_SENSOR_CLIENT_TX "|" D_SENSOR_CLIENT_RX "|" D_SENSOR_CLIENT_RESET "|" D_SENSOR_CLIENT_RESET "_i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
   D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX "|"
   D_SENSOR_HM10_RX "|" D_SENSOR_HM10_TX "|"
@@ -271,8 +271,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SPI_CLK),        // SPI Clk
   AGPIO(GPIO_SPI_CS),         // SPI Chip Select
   AGPIO(GPIO_SPI_DC),         // SPI Data Direction
-  AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Slave Output
-  AGPIO(GPIO_SSPI_MOSI),      // Software SPI Master Output Slave Input
+  AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output
+  AGPIO(GPIO_SSPI_MOSI),      // Software SPI Master Output Client Input
   AGPIO(GPIO_SSPI_SCLK),      // Software SPI Serial Clock
   AGPIO(GPIO_SSPI_CS),        // Software SPI Chip Select
   AGPIO(GPIO_SSPI_DC),        // Software SPI Data or Command
@@ -473,11 +473,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_PN532_TXD),      // PN532 HSU Tx
   AGPIO(GPIO_PN532_RXD),      // PN532 HSU Rx
 #endif
-#ifdef USE_TASMOTA_SLAVE
-  AGPIO(GPIO_TASMOTASLAVE_TXD),     // Tasmota Slave TX
-  AGPIO(GPIO_TASMOTASLAVE_RXD),     // Tasmota Slave RX
-  AGPIO(GPIO_TASMOTASLAVE_RST),     // Tasmota Slave Reset
-  AGPIO(GPIO_TASMOTASLAVE_RST_INV), // Tasmota Slave Reset Inverted
+#ifdef USE_TASMOTA_CLIENT
+  AGPIO(GPIO_TASMOTACLIENT_TXD),     // Tasmota Client TX
+  AGPIO(GPIO_TASMOTACLIENT_RXD),     // Tasmota Client RX
+  AGPIO(GPIO_TASMOTACLIENT_RST),     // Tasmota Client Reset
+  AGPIO(GPIO_TASMOTACLIENT_RST_INV), // Tasmota Client Reset Inverted
 #endif
 #ifdef USE_RDM6300
   AGPIO(GPIO_RDM6300_RX),
