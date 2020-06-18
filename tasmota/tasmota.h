@@ -203,7 +203,8 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define KNX_SLOT3              28
 #define KNX_SLOT4              29
 #define KNX_SLOT5              30
-#define KNX_MAX_device_param   30
+#define KNX_SCENE              31
+#define KNX_MAX_device_param   31
 #define MAX_KNXTX_CMNDS        5
 
 /*********************************************************************************************\

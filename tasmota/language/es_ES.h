@@ -445,6 +445,8 @@
 #define D_KNX_ENHANCEMENT "Mejora de Comunicación"
 #define D_KNX_TX_SLOT "KNX TX"
 #define D_KNX_RX_SLOT "KNX RX"
+#define D_KNX_TX_SCENE "KNX ESCENA TX"
+#define D_KNX_RX_SCENE "KNX ESCENA RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energía Hoy"

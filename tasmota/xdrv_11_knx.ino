@@ -114,6 +114,7 @@ device_parameters_t device_param[] = {
   { KNX_SLOT3 , false, false, KNX_Empty },
   { KNX_SLOT4 , false, false, KNX_Empty },
   { KNX_SLOT5 , false, false, KNX_Empty },
+  { KNX_SCENE , false, false, KNX_Empty },
   { KNX_Empty, false, false, KNX_Empty}
 };
 
@@ -149,6 +150,7 @@ const char * device_param_ga[] = {
   D_KNX_TX_SLOT   " 3",
   D_KNX_TX_SLOT   " 4",
   D_KNX_TX_SLOT   " 5",
+  D_KNX_TX_SCENE      ,
   nullptr
 };
 
@@ -184,6 +186,7 @@ const char *device_param_cb[] = {
   D_KNX_RX_SLOT   " 3",
   D_KNX_RX_SLOT   " 4",
   D_KNX_RX_SLOT   " 5",
+  D_KNX_RX_SCENE      ,
   nullptr
 };
 
@@ -196,12 +199,14 @@ const char *device_param_cb[] = {
 #define D_CMND_KNX_PA "_PA"
 #define D_CMND_KNX_GA "_GA"
 #define D_CMND_KNX_CB "_CB"
+#define D_CMND_KNXTXSCENE "Tx_Scene"
+
 
 const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
-  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB ;
+  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB "|" D_CMND_KNXTXSCENE ;
 
 void (* const KnxCommand[])(void) PROGMEM = {
-  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb };
+  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene };
 
 uint8_t KNX_GA_Search( uint8_t param, uint8_t start = 0 )
 {
@@ -518,6 +523,7 @@ void KNX_INIT(void)
   device_param[KNX_SLOT3-1].show = true;
   device_param[KNX_SLOT4-1].show = true;
   device_param[KNX_SLOT5-1].show = true;
+  device_param[KNX_SCENE-1].show = true;
 #endif
 
   // Delete from KNX settings all configuration is not anymore related to this device
@@ -557,7 +563,11 @@ void KNX_CB_Action(message_t const &msg, void *arg)
   if (msg.data_len == 1) {
     // COMMAND
     sprintf(tempchar,"%d",msg.data[0]);
-  }  else  {
+  } else if (chan->type == KNX_SCENE) {
+    // VALUE
+    uint8_t tempvar = knx.data_to_1byte_uint(msg.data);    
+    dtostrfd(tempvar,2,tempchar);
+  } else {
     // VALUE
     float tempvar = knx.data_to_2byte_float(msg.data);
     dtostrfd(tempvar,2,tempchar);
@@ -602,6 +612,18 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           }
         }
       }
+      else if (chan->type == KNX_SCENE)  // KNX RX SCENE SLOT (write command)
+      {
+        if (!toggle_inhibit) {
+          char command[25];
+          // Value received
+          snprintf_P(command, sizeof(command), PSTR("event KNX_SCENE=%s"), tempchar);
+          ExecuteCommand(command, SRC_KNX);
+          if (Settings.flag.knx_enable_enhancement) {
+            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+          }
+        }
+      }      
 #endif
       break;
 
@@ -1051,6 +1073,31 @@ void CmndKnxTxVal(void)
       i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
     }
     ResponseCmndIdxChar (XdrvMailbox.data );
+  }
+}
+
+void CmndKnxTxScene(void)
+{
+  if ( (XdrvMailbox.data_len > 0) && Settings.flag.knx_enabled ) {
+    // XdrvMailbox.payload <- scene number to send
+    uint8_t i = KNX_GA_Search(KNX_SCENE);
+    if ( i != KNX_Empty ) {
+      KNX_addr.value = Settings.knx_GA_addr[i];
+
+      uint8_t tempvar = TextToInt(XdrvMailbox.data);
+      dtostrfd(tempvar,0,XdrvMailbox.data);
+
+      knx.write_1byte_uint(KNX_addr, tempvar);
+      if (Settings.flag.knx_enable_enhancement) {
+        knx.write_1byte_uint(KNX_addr, tempvar);
+        knx.write_1byte_uint(KNX_addr, tempvar);
+      }
+
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d.%d.%d"),
+       device_param_ga[KNX_SCENE-1], XdrvMailbox.data,
+       KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
+      ResponseCmndIdxChar (XdrvMailbox.data);
+    }    
   }
 }
 
