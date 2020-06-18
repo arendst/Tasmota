@@ -445,6 +445,8 @@
 #define D_KNX_ENHANCEMENT "Rozszerzenia"
 #define D_KNX_TX_SLOT "Gniazdo TX"
 #define D_KNX_RX_SLOT "Gniazdo RX"
+#define D_KNX_TX_SCENE "KNX SCENE TX"
+#define D_KNX_RX_SCENE "KNX SCENE RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energia dzisiaj"

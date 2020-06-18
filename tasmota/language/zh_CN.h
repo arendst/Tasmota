@@ -445,6 +445,8 @@
 #define D_KNX_ENHANCEMENT "通讯增强"
 #define D_KNX_TX_SLOT "KNX TX"
 #define D_KNX_RX_SLOT "KNX RX"
+#define D_KNX_TX_SCENE "KNX SCENE TX"
+#define D_KNX_RX_SCENE "KNX SCENE RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用电量"
