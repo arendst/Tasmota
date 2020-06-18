@@ -21,6 +21,8 @@
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
 
+  0.9.6.0 20200618  integrate - add decryption for LYWSD03
+  ---
   0.9.5.0 20200328  integrate - add dew point, multi-page-web ui, refactoring, command interface,
                                 simple beacon
   ---
@@ -62,6 +64,7 @@
 #define XSNS_61             61
 
 #include <vector>
+#include <mbedtls/ccm.h>
 
 #define FLORA       1
 #define MJ_HT_V1    2
@@ -74,14 +77,15 @@
 
 const char S_JSON_NRF_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_NRF "%s\":%d}";
 const char S_JSON_NRF_COMMAND[] PROGMEM        = "{\"" D_CMND_NRF "%s\":\"%s\"}";
-const char kNRF_Commands[] PROGMEM             = "Ignore|Page|Scan|Beacon|Chan";
+const char kNRF_Commands[] PROGMEM             = "Ignore|Page|Scan|Beacon|Chan|Key";
 
 enum NRF_Commands {          // commands useable in console or rules
   CMND_NRF_IGNORE,           // ignore specific sensor type (1-6)
   CMND_NRF_PAGE,             // sensor entries per web page, which will be shown alternated
   CMND_NRF_SCAN,             // simplified passive BLE adv scan
   CMND_NRF_BEACON,           // even more simplified Beacon, reports time since last sighting
-  CMND_NRF_CHAN              // ignore channel 0-2 (translates to 37-39)
+  CMND_NRF_CHAN,             // ignore channel 0-2 (translates to 37-39)
+  CMND_NRF_KEY               // add bind_key to a MAC for payload decryption
   };
 
 const uint16_t kMINRFSlaveID[6]={ 0x0098, // Flora
@@ -104,8 +108,8 @@ const char * kMINRFSlaveType[] PROGMEM = {kMINRFSlaveType1,kMINRFSlaveType2,kMIN
 const uint32_t kMINRFFloPDU[3] = {0x3eaa857d,0xef3b8730,0x71da7b46};
 const uint32_t kMINRFMJPDU[3]  = {0x4760cd66,0xdbcc0cd3,0x33048df5};
 const uint32_t kMINRFL2PDU[3]  = {0x3eaa057d,0xef3b0730,0x71dafb46};
-// const uint32_t kMINRFL3PDU[3]  = {0x4760dd78,0xdbcc1ccd,0xffffffff}; //encrypted - 58 58
-const uint32_t kMINRFL3PDU[3]  = {0x4760cb78,0xdbcc0acd,0x33048beb}; //unencrypted  - 30 58
+const uint32_t kMINRFL3PDU[3]  = {0x4760dd78,0xdbcc1ccd,0x33049deb}; //encrypted - 58 58
+// const uint32_t kMINRFL3PDU[3]  = {0x4760cb78,0xdbcc0acd,0x33048beb}; //unencrypted  - 30 58
 const uint32_t kMINRFCGGPDU[3]  = {0x4760cd6e,0xdbcc0cdb,0x33048dfd};
 const uint32_t kMINRFCGDPDU[3]  = {0x5da0d752,0xc10c16e7,0x29c497c1};
 
@@ -153,6 +157,28 @@ struct bleAdvPacket_t { // for nRF24L01 max 32 bytes = 2+6+24
   uint8_t pduType;
   uint8_t payloadSize;
   uint8_t mac[6];
+};
+
+struct encPayload_t {
+  uint8_t cipher[5];
+  uint8_t ExtCnt[3];
+  uint8_t tag[4];
+};
+
+struct encPacket_t{
+  // the packet is longer, but this part is enough to decrypt
+  uint16_t PID;
+  uint8_t frameCnt;
+  uint8_t MAC[6];
+  encPayload_t payload;
+};
+
+union mi_bindKey_t{
+  struct{
+    uint8_t key[16];
+    uint8_t MAC[6];
+    };
+  uint8_t buf[22];
 };
 
 union FIFO_t{
@@ -223,6 +249,7 @@ struct scan_entry_t {
 
 std::vector<mi_sensor_t> MIBLEsensors;
 std::vector<scan_entry_t> MINRFscanResult;
+std::vector<mi_bindKey_t> MIBLEbindKeys;
 
 static union{
   scan_entry_t MINRFdummyEntry;
@@ -564,6 +591,61 @@ void MINRFcomputeBeaconPDU(void){
   }
 }
 
+int MINRFdecryptPacket(char *_buf){
+  encPacket_t *packet = (encPacket_t*)_buf;
+  // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("to decrypt: %02x %02x %02x %02x %02x %02x %02x %02x"),(uint8_t)_buf[0],(uint8_t)_buf[1],(uint8_t)_buf[2],(uint8_t)_buf[3],(uint8_t)_buf[4],(uint8_t)_buf[5],(uint8_t)_buf[6],(uint8_t)_buf[7]);
+
+  int ret = 0;
+  unsigned char output[10] = {0};
+  uint8_t nonce[12];
+  const unsigned char authData[1] = {0x11};
+
+  // nonce: device MAC, device type, frame cnt, ext. cnt
+  for (uint32_t i = 0; i<6; i++){
+    nonce[i] = packet->MAC[5-i];
+  }
+  memcpy((uint8_t*)&nonce+6,(uint8_t*)&packet->PID,2);
+  nonce[8] = packet->frameCnt;
+  memcpy((uint8_t*)&nonce+9,(uint8_t*)&packet->payload.ExtCnt,3);
+
+  uint8_t _bindkey[16] = {0x0};
+  for(uint32_t i=0; i<MIBLEbindKeys.size(); i++){
+    if(memcmp(packet->MAC,MIBLEbindKeys[i].MAC,sizeof(packet->MAC))==0){
+      AddLog_P2(LOG_LEVEL_DEBUG,PSTR("have key"));
+      memcpy(_bindkey,MIBLEbindKeys[i].key,sizeof(_bindkey));
+      break;
+    }
+    // else{
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mac in packet: %02x  %02x  %02x  %02x  %02x  %02x"), packet->MAC[0], packet->MAC[1], packet->MAC[2], packet->MAC[3], packet->MAC[4], packet->MAC[5]);
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mac in vector: %02x  %02x  %02x  %02x  %02x  %02x"), MIBLEbindKeys[i].MAC[0], MIBLEbindKeys[i].MAC[1], MIBLEbindKeys[i].MAC[2], MIBLEbindKeys[i].MAC[3], MIBLEbindKeys[i].MAC[4], MIBLEbindKeys[i].MAC[5]);
+    // }
+  }
+  // init
+  mbedtls_ccm_context ctx;
+  mbedtls_ccm_init(&ctx);
+
+ // set bind key
+  ret = mbedtls_ccm_setkey(&ctx,
+    MBEDTLS_CIPHER_ID_AES,
+    _bindkey,
+    16 * 8 //bits
+  );
+
+  ret = mbedtls_ccm_auth_decrypt(&ctx,5,
+    (const unsigned char*)&nonce, sizeof(nonce),
+    authData, sizeof(authData),
+    packet->payload.cipher, output,
+    packet->payload.tag,sizeof(packet->payload.tag));
+
+  AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Err:%i, Decrypted : %02x  %02x  %02x  %02x  %02x "), ret, output[0],output[1],output[2],output[3],output[4]);
+  // put decrypted data in place
+  memcpy((uint8_t*)(packet->payload.cipher)+1,output,sizeof(packet->payload.cipher));
+  // clean up
+  mbedtls_ccm_free(&ctx);
+  return ret;
+}
+
+
 /*********************************************************************************************\
  * helper functions
 \*********************************************************************************************/
@@ -579,6 +661,46 @@ void MINRFreverseMAC(uint8_t _mac[]){
     _reversedMAC[5-i] = _mac[i];
   }
   memcpy(_mac,_reversedMAC, sizeof(_reversedMAC));
+}
+
+void MINRFAddKey(char* payload){
+  mi_bindKey_t keyMAC;
+  memset(keyMAC.buf,0,sizeof(keyMAC));
+  MINRFKeyMACStringToBytes(payload,keyMAC.buf);
+  bool unknownKey = true;
+  for(uint32_t i=0; i<MIBLEbindKeys.size(); i++){
+    if(memcmp(keyMAC.MAC,MIBLEbindKeys[i].MAC,sizeof(keyMAC.MAC))==0){
+      DEBUG_SENSOR_LOG(PSTR("Known MAC for key"));
+      unknownKey=false;
+    }
+  }
+  if(unknownKey){
+    DEBUG_SENSOR_LOG(PSTR("Key for new MAC"));
+    MIBLEbindKeys.push_back(keyMAC);
+  }
+}
+
+/**
+ * @brief Convert combined key-MAC-string to 
+ *
+ * @param _string input string in format: AABBCCDDEEFF... (upper case!), must be 44 chars!!
+ * @param _mac  target byte array with fixed size of 16 + 6 
+ */
+void MINRFKeyMACStringToBytes(char* _string,uint8_t _keyMac[]) { //uppercase
+    uint32_t index = 0;
+    while (index < 44) {
+        char c = _string[index];
+        uint8_t value = 0;
+        if(c >= '0' && c <= '9')
+          value = (c - '0');
+        else if (c >= 'A' && c <= 'F')
+          value = (10 + (c - 'A'));
+        _keyMac[(index/2)] += value << (((index + 1) % 2) * 4);
+        index++;
+    }
+    DEBUG_SENSOR_LOG(PSTR("MINRF:  %s to:"),_string);
+    DEBUG_SENSOR_LOG(PSTR("MINRF:  key-array: %02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"),_keyMac[0],_keyMac[1],_keyMac[2],_keyMac[3],_keyMac[4],_keyMac[5],_keyMac[6],_keyMac[7],_keyMac[8],_keyMac[9],_keyMac[10],_keyMac[11],_keyMac[12],_keyMac[13],_keyMac[14],_keyMac[15]);
+    DEBUG_SENSOR_LOG(PSTR("MINRF: MAC-array: %02X%02X%02X%02X%02X%02X"),_keyMac[16],_keyMac[17],_keyMac[18],_keyMac[19],_keyMac[20],_keyMac[21]);
 }
 
 /**
@@ -754,13 +876,18 @@ void MINRFhandleMiBeaconPacket(void){
   uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.miBeacon.Mac, MINRF.buffer.miBeacon.productID);
   if(_slot==0xff) return;
   DEBUG_SENSOR_LOG(PSTR("MINRF: slot %u, size vector: %u %u"),_slot,MIBLEsensors.size());
-
   mi_sensor_t *_sensorVec = &MIBLEsensors.at(_slot);
+  DEBUG_SENSOR_LOG(PSTR("MINRF: %u %u %u"),_slot,_sensorVec->type,MINRF.buffer.miBeacon.type);
   float _tempFloat;
 
   if (_sensorVec->type==MJ_HT_V1 || _sensorVec->type==CGG1){
     memcpy(MINRFtempBuf,(uint8_t*)&MINRF.buffer.miBeacon.spare, 32-9); // shift by one byte for the MJ_HT_V1 and CGG1
     memcpy((uint8_t*)&MINRF.buffer.miBeacon.type,MINRFtempBuf, 32-9);  // shift by one byte for the MJ_HT_V1 and CGG1
+  }
+  if(_sensorVec->type==LYWSD03){
+    int decryptRet = -1;
+    decryptRet = MINRFdecryptPacket((char*)&MINRF.buffer); //start with PID
+    if(decryptRet==0) _sensorVec->showedUp=255; // if decryption worked, this must be a valid sensor
   }
 
   DEBUG_SENSOR_LOG(PSTR("%s at slot %u"), kNRFSlaveType[_sensorVec->type-1],_slot);
@@ -822,21 +949,6 @@ void MINRFhandleMiBeaconPacket(void){
     DEBUG_SENSOR_LOG(PSTR("Mode d: U16:  %x Temp U16: %x Hum"), MINRF.buffer.miBeacon.HT.temp,  MINRF.buffer.miBeacon.HT.hum);
     break;
   }
-}
-/**
- * @brief more or less a placeholder, at least it is technically possible to really decrypt data, but
- *        the bind_key must be retrieved with 3rd-party-tools -> TODO
- */
-void MINRFhandleLYWSD03Packet(void){
-  // not much to do ATM, just show the sensor without data
-  MINRFreverseMAC(MINRF.buffer.miBeacon.Mac);
-  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.miBeacon.Mac, MINRF.buffer.miBeacon.productID);
-  DEBUG_SENSOR_LOG(PSTR("MINRF: Sensor slot: %u"), _slot);
-    if(_slot==0xff) return;
-
-  MINRF_LOG_BUFFER(MINRF.streamBuffer);
-  MINRF_LOG_BUFFER(MINRF.lsfrBuffer);
-  MINRF_LOG_BUFFER(MINRF.buffer.raw);
 }
 
 /**
@@ -901,11 +1013,8 @@ void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
         }
         else MINRFhandleScan();
         break;
-      case FLORA: case MJ_HT_V1: case LYWSD02: case CGG1:
+      case FLORA: case MJ_HT_V1: case LYWSD02: case CGG1: case LYWSD03:
         MINRFhandleMiBeaconPacket();
-        break;
-      case LYWSD03:
-        MINRFhandleLYWSD03Packet();
         break;
       case CGD1:
         MINRFhandleCGD1Packet();
@@ -1025,6 +1134,12 @@ bool NRFCmd(void) {
               }
           }
           Response_P(S_JSON_NRF_COMMAND_NVALUE, command, MINRF.channelIgnore);
+        break;
+      case CMND_NRF_KEY:
+        if (XdrvMailbox.data_len==44){  // a KEY-MAC-string
+          MINRFAddKey(XdrvMailbox.data);
+          Response_P(S_JSON_NRF_COMMAND, command, XdrvMailbox.data);
+        }
         break;
       default:
         // else for Unknown command
@@ -1191,5 +1306,3 @@ bool Xsns61(uint8_t function)
 #endif  // USE_MIBLE
 #endif  // USE_NRF24
 #endif  // USE_SPI
-
-
