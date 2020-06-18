@@ -792,7 +792,7 @@ void HandleWebcamRoot(void) {
 /*********************************************************************************************/
 
 uint32_t WcSetStreamserver(uint32_t flag) {
-  if (global_state.wifi_down) { return 0; }
+  if (global_state.network_down) { return 0; }
 
   Wc.stream_active = 0;
 
