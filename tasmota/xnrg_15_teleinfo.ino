@@ -423,6 +423,11 @@ void TInfoShow(bool json)
             GetTextIndexed(name, sizeof(name), LABEL_HCHP, kLabel);
             ResponseAppend_P(PSTR(",\"%s\":\"%u\""),name , atoi(value));
         }
+
+        if (isousc) {
+            ResponseAppend_P(PSTR(",\"Load\":\"%d\""),(int) ((Energy.current[0]*100.0f) / isousc));
+        }
+
 #ifdef USE_WEBSERVER
     }
     else
