@@ -247,6 +247,13 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s' (%d)"), me->value, contrat);
         } 
 
+        // Contract subscribed (Power)
+        else if (ilabel == LABEL_ISOUSC)
+        {
+            isousc = atoi( me->value);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
+        } 
+
     }
 
     if (flags & TINFO_FLAGS_ADDED)   { c = '#';  }
@@ -388,6 +395,7 @@ const char HTTP_ENERGY_PAPP_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE "{m}%d " D_
 const char HTTP_ENERGY_IINST_TELEINFO[] PROGMEM =  "{s}" D_CURRENT "{m}%d " D_UNIT_AMPERE "{e}" ;
 const char HTTP_ENERGY_TARIF_TELEINFO[] PROGMEM =  "{s}Tarif en cours{m}Heures %s{e}" ;
 const char HTTP_ENERGY_CONTRAT_TELEINFO[] PROGMEM =  "{s}Contrat{m}%s %d" D_UNIT_AMPERE "{e}" ;
+const char HTTP_ENERGY_LOAD_TELEINFO[] PROGMEM =  "{s}Charge actuelle{m}%d" D_UNIT_PERCENT "{e}" ;
 #endif  // USE_WEBSERVER
 
 void TInfoShow(bool json)
@@ -403,10 +411,10 @@ void TInfoShow(bool json)
         if ( getValueFromLabelIndex(LABEL_PTEC, value) ) { 
             ResponseAppend_P(PSTR(",\"" "TARIF" "\":\"%s\""), value);
         }
-        if ( getValueFromLabelIndex(LABEL_ISOUSC, value) ) { 
-            GetTextIndexed(name, sizeof(name), LABEL_ISOUSC, kLabel);
-            ResponseAppend_P(PSTR(",\"%s\":%d"), name, atoi(value));
-        }
+
+        GetTextIndexed(name, sizeof(name), LABEL_ISOUSC, kLabel);
+        ResponseAppend_P(PSTR(",\"%s\":%d"), name, isousc);
+
         if ( getValueFromLabelIndex(LABEL_HCHC, value) ) { 
             GetTextIndexed(name, sizeof(name), LABEL_HCHC, kLabel);
             ResponseAppend_P(PSTR(",\"%s\":\"%u\""), name, atoi(value));
@@ -433,8 +441,10 @@ void TInfoShow(bool json)
         }
         if (contrat) {
             GetTextIndexed(name, sizeof(name), contrat, kContratName);
-            if (getValueFromLabelIndex(LABEL_ISOUSC, value) ) {
-                WSContentSend_PD(HTTP_ENERGY_CONTRAT_TELEINFO, name, atoi(value));
+            WSContentSend_PD(HTTP_ENERGY_CONTRAT_TELEINFO, name, isousc);
+            if (isousc) {
+                int percent = (int) ((Energy.current[0]*100.0f) / isousc) ;
+                WSContentSend_PD(HTTP_ENERGY_LOAD_TELEINFO,  percent);
             }
         }
 #endif  // USE_WEBSERVER
