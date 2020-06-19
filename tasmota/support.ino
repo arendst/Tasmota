@@ -1359,7 +1359,15 @@ bool JsonTemplate(const char* dataBuf)
   }
   if (obj[D_JSON_GPIO].success()) {
     for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
+#ifdef ESP8266
       Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
+#else  // ESP32
+      uint16_t gpio = obj[D_JSON_GPIO][i] | 0;
+      if (gpio == (AGPIO(GPIO_NONE) +1)) {
+        gpio = AGPIO(GPIO_USER);
+      }
+      Settings.user_template.gp.io[i] = gpio;
+#endif
     }
   }
   if (obj[D_JSON_FLAG].success()) {
@@ -1378,7 +1386,15 @@ void TemplateJson(void)
 {
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
   for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
+#ifdef ESP8266
     ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings.user_template.gp.io[i]);
+#else  // ESP32
+    uint16_t gpio = Settings.user_template.gp.io[i];
+    if (gpio == AGPIO(GPIO_USER)) {
+      gpio = AGPIO(GPIO_NONE) +1;
+    }
+    ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", gpio);
+#endif
   }
   ResponseAppend_P(PSTR("],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), Settings.user_template.flag, Settings.user_template_base +1);
 }
@@ -1604,8 +1620,8 @@ void I2cScan(char *devs, unsigned int devs_len)
   // Return error codes defined in twi.h and core_esp8266_si2c.c
   // I2C_OK                      0
   // I2C_SCL_HELD_LOW            1 = SCL held low by another device, no procedure available to recover
-  // I2C_SCL_HELD_LOW_AFTER_READ 2 = I2C bus error. SCL held low beyond slave clock stretch time
-  // I2C_SDA_HELD_LOW            3 = I2C bus error. SDA line held low by slave/another_master after n bits
+  // I2C_SCL_HELD_LOW_AFTER_READ 2 = I2C bus error. SCL held low beyond client clock stretch time
+  // I2C_SDA_HELD_LOW            3 = I2C bus error. SDA line held low by client/another_master after n bits
   // I2C_SDA_HELD_LOW_AFTER_INIT 4 = line busy. SDA again held low by another device. 2nd master?
 
   uint8_t error = 0;

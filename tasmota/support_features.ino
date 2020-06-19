@@ -477,8 +477,8 @@ void GetFeatures(void)
 #ifdef USE_EXS_DIMMER
   feature5 |= 0x00008000;  // xdrv_30_exs_dimmer.ino
 #endif
-#ifdef USE_TASMOTA_SLAVE
-  feature5 |= 0x00010000;  // xdrv_31_arduino_slave.ino
+#ifdef USE_TASMOTA_CLIENT
+  feature5 |= 0x00010000;  // xdrv_31_tasmota_client.ino
 #endif
 #ifdef USE_HIH6
   feature5 |= 0x00020000;  // xsns_55_hih_series.ino
@@ -587,8 +587,9 @@ void GetFeatures(void)
 #ifdef USE_TELEINFO
   feature6 |= 0x00040000;  // xnrg_15_teleinfo.ino
 #endif
-
-//  feature6 |= 0x00080000;
+#ifdef USE_LMT01
+  feature6 |= 0x00080000;  // xsns_74_lmt01.ino
+#endif
 
 //  feature6 |= 0x00100000;
 //  feature6 |= 0x00200000;

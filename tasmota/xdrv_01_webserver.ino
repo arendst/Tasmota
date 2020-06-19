@@ -44,7 +44,7 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 28000;  // milliseconds - Allow
 uint8_t *efm8bb1_update = nullptr;
 #endif  // USE_RF_FLASH
 
-enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTASLAVE };
+enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT };
 
 static const char * HEADER_KEYS[] = { "User-Agent", };
 
@@ -2022,8 +2022,8 @@ void ModuleSaveSettings(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-const char kUnescapeCode[] = "&><\"\'";
-const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;";
+const char kUnescapeCode[] = "&><\"\'\\";
+const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;|&#92;";
 
 String HtmlEscape(const String unescaped) {
   char escaped[10];
@@ -2327,22 +2327,6 @@ void OtherSaveSettings(void)
   }
   AddLog_P(LOG_LEVEL_INFO, message);
 
-/*
-  // This sometimes provides intermittent watchdog
-  bool template_activate = Webserver->hasArg("t2");  // Try this to tackle intermittent watchdog after execution of Template command
-  WebGetArg("t1", tmp, sizeof(tmp));
-  if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
-    char svalue[128];
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
-
-    if (template_activate) {
-      snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_MODULE " 0"));
-      ExecuteWebCommand(svalue, SRC_WEBGUI);
-    }
-  }
-  // Try async execution of commands
-*/
   WebGetArg("t1", tmp, sizeof(tmp));
   if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
     snprintf_P(message, sizeof(message), PSTR(D_CMND_BACKLOG " " D_CMND_TEMPLATE " %s%s"), tmp, (Webserver->hasArg("t2")) ? "; " D_CMND_MODULE " 0" : "");
@@ -2489,7 +2473,7 @@ void HandleInformation(void)
 #endif
   if (Settings.flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
-    WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WifiGetRssiAsQuality(rssi), rssi);
+    WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings.sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi);
     WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Mdns.begun) ? ".local" : "");
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
@@ -2508,7 +2492,7 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%s"), IPAddress(Settings.ip_address[2]).toString().c_str());
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "}2%s"), IPAddress(Settings.ip_address[3]).toString().c_str());
   }
-  if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {
+  if ((WiFi.getMode() >= WIFI_AP) && (static_cast<uint32_t>(WiFi.softAPIP()) != 0)) {
     WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
     WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.softAPmacAddress().c_str());
     WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (AP)}2%s"), WiFi.softAPIP().toString().c_str());
@@ -2667,8 +2651,8 @@ void HandleUploadDone(void)
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     WSContentSend_P(HTTP_MSG_RSTRT);
     ShowWebSource(SRC_WEBGUI);
-#ifdef USE_TASMOTA_SLAVE
-    if (TasmotaSlave_GetFlagFlashing()) {
+#ifdef USE_TASMOTA_CLIENT
+    if (TasmotaClient_GetFlagFlashing()) {
       restart_flag = 0;
     } else { // It was a normal firmware file, or we are ready to restart device
       restart_flag = 2;
@@ -2681,9 +2665,9 @@ void HandleUploadDone(void)
   WSContentSend_P(PSTR("</div><br>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
-#ifdef USE_TASMOTA_SLAVE
-  if (TasmotaSlave_GetFlagFlashing()) {
-    TasmotaSlave_Flash();
+#ifdef USE_TASMOTA_CLIENT
+  if (TasmotaClient_GetFlagFlashing()) {
+    TasmotaClient_Flash();
   }
 #endif
 }
@@ -2753,11 +2737,11 @@ void HandleUploadLoop(void)
           if (Web.upload_error != 0) { return; }
         } else
 #endif  // USE_RF_FLASH
-#ifdef USE_TASMOTA_SLAVE
-        if ((WEMOS == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO SLAVE hex file
+#ifdef USE_TASMOTA_CLIENT
+        if ((WEMOS == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO CLIENT hex file
           Update.end();              // End esp8266 update session
-          Web.upload_file_type = UPL_TASMOTASLAVE;
-          Web.upload_error = TasmotaSlave_UpdateInit();  // 0
+          Web.upload_file_type = UPL_TASMOTACLIENT;
+          Web.upload_error = TasmotaClient_UpdateInit();  // 0
           if (Web.upload_error != 0) { return; }
         } else
 #endif
@@ -2821,9 +2805,9 @@ void HandleUploadLoop(void)
       }
     }
 #endif  // USE_RF_FLASH
-#ifdef USE_TASMOTA_SLAVE
-    else if (UPL_TASMOTASLAVE == Web.upload_file_type) {
-      TasmotaSlave_WriteBuffer(upload.buf, upload.currentSize);
+#ifdef USE_TASMOTA_CLIENT
+    else if (UPL_TASMOTACLIENT == Web.upload_file_type) {
+      TasmotaClient_WriteBuffer(upload.buf, upload.currentSize);
     }
 #endif
     else {  // firmware
@@ -2887,10 +2871,10 @@ void HandleUploadLoop(void)
       Web.upload_file_type = UPL_TASMOTA;
     }
 #endif  // USE_RF_FLASH
-#ifdef USE_TASMOTA_SLAVE
-    else if (UPL_TASMOTASLAVE == Web.upload_file_type) {
+#ifdef USE_TASMOTA_CLIENT
+    else if (UPL_TASMOTACLIENT == Web.upload_file_type) {
       // Done writing the hex to SPI flash
-      TasmotaSlave_SetFlagFlashing(true); // So we know on upload success page if it needs to flash hex or do a normal restart
+      TasmotaClient_SetFlagFlashing(true); // So we know on upload success page if it needs to flash hex or do a normal restart
       Web.upload_file_type = UPL_TASMOTA;
     }
 #endif

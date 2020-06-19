@@ -50,7 +50,12 @@
 #define PROJECT                "tasmota"         // PROJECT is used as the default topic delimiter
 
 // If not selected the default will be SONOFF_BASIC
-//#define MODULE                 SONOFF_BASIC      // [Module] Select default model from tasmota_template.h
+//#define MODULE                 SONOFF_BASIC      // [Module] Select default module from tasmota_template.h
+#ifdef ESP8266
+#define FALLBACK_MODULE        SONOFF_BASIC      // [Module2] Select default module on fast reboot where USER_MODULE is user template
+#else // ESP32
+#define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
+#endif
 
 #define SAVE_DATA              1                 // [SaveData] Save changed parameters to Flash (0 = disable, 1 - 3600 seconds)
 #define SAVE_STATE             true              // [SetOption0] Save changed power state to Flash (false = disable, true = enable)
@@ -135,6 +140,8 @@
 // -- MQTT - Home Assistant Discovery -------------
 #define HOME_ASSISTANT_DISCOVERY_ENABLE   false  // [SetOption19] Home Assistant Discovery (false = Disable, true = Enable)
 #define HASS_AS_LIGHT          false             // [SetOption30] Enforce HAss autodiscovery as light
+//#define DEEPSLEEP_LWT_HA_DISCOVERY             // Enable LWT topic and its payloads for read-only sensors (Status sensor not included) and binary_sensors on HAss Discovery (Commented out: all read-only sensors and binary_sensors
+                                                 // won't be shown as OFFLINE on Home Assistant when the device is DeepSleeping - NOTE: This is only for read-only sensors and binary_sensors, relays will be shown as OFFLINE)
 
 // -- MQTT - Options ------------------------------
 #define MQTT_RESULT_COMMAND    false             // [SetOption4]  Switch between MQTT RESULT or COMMAND
@@ -591,12 +598,10 @@
 //  #define USE_FLOG                               // Add support for GPS logging in OTA's Flash (Experimental) (+2k9 code, +8 bytes RAM)
 //#define USE_HM10                                 // (ESP8266 only) Add support for HM-10 as a BLE-bridge (+9k3 code)
 //#define USE_HRXL                                 // Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
-//#define USE_TASMOTA_SLAVE                        // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k6 code, 64 mem)
-  #define USE_TASMOTA_SLAVE_FLASH_SPEED 57600      // Usually 57600 for 3.3V variants and 115200 for 5V variants
-  #define USE_TASMOTA_SLAVE_SERIAL_SPEED 57600     // Depends on the sketch that is running on the Uno/Pro Mini
+//#define USE_TASMOTA_CLIENT                       // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k6 code, 64 mem)
+  #define USE_TASMOTA_CLIENT_FLASH_SPEED 57600   // Usually 57600 for 3.3V variants and 115200 for 5V variants
+  #define USE_TASMOTA_CLIENT_SERIAL_SPEED 57600  // Depends on the sketch that is running on the Uno/Pro Mini
 //#define USE_OPENTHERM                            // Add support for OpenTherm (+15k code)
-#define USE_TELEINFO                               // Add support for Teleinfo via serial RX interface 
-  //#define USE_TELEINFO_STANDARD                    // Use standard mode (9600 bps) else it's historical mode (1200 bps)
 
 // -- Power monitoring sensors --------------------
 #define USE_ENERGY_MARGIN_DETECTION              // Add support for Energy Margin detection (+1k6 code)
@@ -620,6 +625,8 @@
   #define LE01MR_SPEED         9600              // LE-01MR modbus baudrate (default: 9600)
   #define LE01MR_ADDR          1                 // LE-01MR modbus address (default: 0x01)
 #define USE_BL0940                               // Add support for BL0940 Energy monitor as used in Blitzwolf SHP-10 (+1k6 code)
+//#define USE_TELEINFO                             // Add support for Teleinfo via serial RX interface (+5k2 code, +168 RAM + SmartMeter LinkedList Values RAM)
+//  #define USE_TELEINFO_STANDARD                  // Use standard mode (9600 bps) else it's historical mode (1200 bps)
 
 // -- Low level interface devices -----------------
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor (1k6 code)
@@ -630,6 +637,7 @@
   #define MAX31865_PTD_RES    100                // Nominal PTD resistance at 0°C (100Ω for a PT100, 1000Ω for a PT1000, YMMV!)
   #define MAX31865_REF_RES    430                // Reference resistor (Usually 430Ω for a PT100, 4300Ω for a PT1000)
   #define MAX31865_PTD_BIAS   0                  // To calibrate your not-so-good PTD
+//#define USE_LMT01                                // Add support for TI LMT01 temperature sensor, count pulses on single GPIO (+0k5 code)
 
 // -- IR Remote features - all protocols from IRremoteESP8266 --------------------------
 // IR Full Protocols mode is activated through platform.io only.
@@ -654,6 +662,9 @@
 
 // -- Zigbee interface ----------------------------
 //#define USE_ZIGBEE                                // Enable serial communication with Zigbee CC2530 flashed with ZNP (+49k code, +3k mem)
+  #define USE_ZIGBEE_ZNP                          // Enable ZNP protocol, needed for CC2530 based devices
+  // #define USE_ZIGBEE_EZSP                         // [EXPERIMENTAL - DO NOT USE] Enable EZSP protocol, needed for EFR32 EmberZNet based devices, like Sonoff Zigbee bridge
+                                                  // Note: USE_ZIGBEE_ZNP and USE_ZIGBEE_EZSP are mutually incompatible, you must select exactly one
   #define USE_ZIGBEE_PANID  0x1A63                // arbitrary PAN ID for Zigbee network, must be unique in the home
                                                   // if PANID == 0xFFFF, then the device will act as a Zigbee router, the parameters below are ignored
                                                   // if PANID == 0xFFFE, then the device will act as a Zigbee end-device (non-router), the parameters below are ignored
@@ -732,9 +743,13 @@
 
 //#define USE_ETHERNET                             // Add support for ethernet (Currently fixed for Olimex ESP32-PoE)
   // Olimex ESP32-PoE
-  #define ETH_TYPE          0                    // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110
+  #define ETH_TYPE          0                    // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110, 2 = ETH_PHY_IP101
   #define ETH_ADDR          0                    // [EthAddress] 0 = PHY0 .. 31 = PHY31
   #define ETH_CLKMODE       3                    // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
+  // wESP32-PoE
+//  #define ETH_TYPE          0                    // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110, 2 = ETH_PHY_IP101
+//  #define ETH_ADDR          0                    // [EthAddress] 0 = PHY0 .. 31 = PHY31
+//  #define ETH_CLKMODE       0                    // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
 
 //#define USE_SPI                                  // Add support for hardware SPI
 //#define USE_MI_ESP32                             // Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)

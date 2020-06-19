@@ -768,6 +768,7 @@ void SettingsDefaultSet2(void)
 //  flag.interlock |= 0;
   Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
   Settings.module = MODULE;
+  Settings.fallback_module = FALLBACK_MODULE;
   ModuleDefault(WEMOS);
 //  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
   SettingsUpdateText(SET_FRIENDLYNAME1, PSTR(FRIENDLY_NAME));
@@ -1452,12 +1453,15 @@ void SettingsDelta(void)
       Settings.flag4.network_wifi = 1;
       Settings.flag4.network_ethernet = 1;
     }
-    if (Settings.version < 0x08030105) {
 #ifdef ESP32
+    if (Settings.version < 0x08030105) {
       Settings.eth_type = ETH_TYPE;
       Settings.eth_clk_mode = ETH_CLKMODE;
       Settings.eth_address = ETH_ADDR;
+    }
 #endif
+    if (Settings.version < 0x08030106) {
+      Settings.fallback_module = FALLBACK_MODULE;
     }
 
     Settings.version = VERSION;

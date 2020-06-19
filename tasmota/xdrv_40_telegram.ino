@@ -322,7 +322,7 @@ String TelegramExecuteCommand(const char *svalue) {
 }
 
 void TelegramLoop(void) {
-  if (!global_state.wifi_down && (Telegram.recv_enable || Telegram.echo_enable)) {
+  if (!global_state.network_down && (Telegram.recv_enable || Telegram.echo_enable)) {
     switch (Telegram.state) {
       case 0:
         TelegramInit();

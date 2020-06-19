@@ -69,6 +69,18 @@ String EthernetMacAddress(void);
 #ifdef USE_EMULATION_WEMO
 #define USE_EMULATION
 #endif
+
+// Convert legacy slave to client
+#ifdef USE_TASMOTA_SLAVE
+#define USE_TASMOTA_CLIENT
+#endif
+#ifdef USE_TASMOTA_SLAVE_FLASH_SPEED
+#define USE_TASMOTA_CLIENT_FLASH_SPEED USE_TASMOTA_SLAVE_FLASH_SPEED
+#endif
+#ifdef USE_TASMOTA_SLAVE_SERIAL_SPEED
+#define USE_TASMOTA_CLIENT_SERIAL_SPEED USE_TASMOTA_SLAVE_SERIAL_SPEED
+#endif
+
                                                // See https://github.com/esp8266/Arduino/pull/4889
 #undef NO_EXTRA_4K_HEAP                        // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
 
@@ -287,6 +299,9 @@ const char kWebColors[] PROGMEM =
 #ifndef MODULE
 #define MODULE                      SONOFF_BASIC   // [Module] Select default model
 #endif
+#ifndef FALLBACK_MODULE
+#define FALLBACK_MODULE             SONOFF_BASIC   // [Module2] Select default module on fast reboot where USER_MODULE is user template
+#endif
 
 #ifndef ARDUINO_ESP8266_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
@@ -300,6 +315,9 @@ const char kWebColors[] PROGMEM =
 
 #ifndef MODULE
 #define MODULE                      WEMOS          // [Module] Select default model
+#endif
+#ifndef FALLBACK_MODULE
+#define FALLBACK_MODULE             WEMOS          // [Module2] Select default module on fast reboot where USER_MODULE is user template
 #endif
 
 #ifndef ARDUINO_ESP32_RELEASE

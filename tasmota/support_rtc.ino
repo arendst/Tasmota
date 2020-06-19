@@ -379,7 +379,7 @@ void RtcSecond(void)
   Rtc.millis = millis();
 
   if (!Rtc.user_time_entry) {
-    if (!global_state.wifi_down) {
+    if (!global_state.network_down) {
       uint8_t uptime_minute = (uptime / 60) % 60;  // 0 .. 59
       if ((Rtc.ntp_sync_minute > 59) && (uptime_minute > 2)) {
         Rtc.ntp_sync_minute = 1;                   // If sync prepare for a new cycle

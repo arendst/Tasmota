@@ -31,7 +31,8 @@
  * GPIO26 - EMAC_RXD1(RMII)
  * GPIO27 - EMAC_RX_CRS_DV
  *
- * {"NAME":"Olimex ESP32-PoE","GPIO":[65504,65504,65504,65504,65504,65504,0,0,5536,65504,65504,65504,65504,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,65504,65504,65504,65504,65504,0,0,65504],"FLAG":0,"BASE":1}
+ * {"NAME":"Olimex ESP32-PoE","GPIO":[1,1,1,1,1,1,0,0,5536,1,1,1,1,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+ * {"NAME":"wESP32","GPIO":[1,1,1,1,1,1,0,0,0,1,1,1,5568,5600,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
  *
 \*********************************************************************************************/
 
@@ -49,7 +50,7 @@
 #endif
 
 #ifndef ETH_TYPE
-#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:       0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110
+#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:       0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110, 2 = ETH_PHY_IP101
 #endif
 
 #ifndef ETH_CLKMODE
@@ -57,36 +58,22 @@
 #endif
 */
 
-#ifndef ETH_POWER_PIN
-#define ETH_POWER_PIN     -1
-#endif
-
-#ifndef ETH_MDC_PIN
-#define ETH_MDC_PIN       23
-#endif
-
-#ifndef ETH_MDIO_PIN
-#define ETH_MDIO_PIN      18
-#endif
-
 #include <ETH.h>
 
-struct {
-  char hostname[33];
-} Eth;
+char eth_hostname[sizeof(my_hostname)];
 
 void EthernetEvent(WiFiEvent_t event) {
   switch (event) {
     case SYSTEM_EVENT_ETH_START:
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ETH: " D_ATTEMPTING_CONNECTION));
-      ETH.setHostname(Eth.hostname);
+      ETH.setHostname(eth_hostname);
       break;
     case SYSTEM_EVENT_ETH_CONNECTED:
       AddLog_P2(LOG_LEVEL_INFO, PSTR("ETH: " D_CONNECTED));
       break;
     case SYSTEM_EVENT_ETH_GOT_IP:
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %s, Hostname %s"),
-        ETH.macAddress().c_str(), ETH.localIP().toString().c_str(), Eth.hostname);
+        ETH.macAddress().c_str(), ETH.localIP().toString().c_str(), eth_hostname);
 /*
       if (ETH.fullDuplex()) {
         Serial.print(", FULL_DUPLEX");
@@ -95,6 +82,9 @@ void EthernetEvent(WiFiEvent_t event) {
       Serial.print(ETH.linkSpeed());
       Serial.println("Mbps");
 */
+      Settings.ip_address[1] = (uint32_t)ETH.gatewayIP();
+      Settings.ip_address[2] = (uint32_t)ETH.subnetMask();
+      Settings.ip_address[3] = (uint32_t)ETH.dnsIP();
       global_state.eth_down = 0;
       break;
     case SYSTEM_EVENT_ETH_DISCONNECTED:
@@ -112,13 +102,20 @@ void EthernetEvent(WiFiEvent_t event) {
 
 void EthernetInit(void) {
   if (!Settings.flag4.network_ethernet) { return; }
+  if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ETH: No ETH MDC and/or ETH MDIO GPIO defined"));
+    return;
+  }
 
-  snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s_eth"), my_hostname);
+//  snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s_eth"), my_hostname);
+  strlcpy(eth_hostname, my_hostname, sizeof(eth_hostname) -5);  // Make sure there is room for "_eth"
+  strcat(eth_hostname, "_eth");
+
   WiFi.onEvent(EthernetEvent);
 
-  int eth_power = (PinUsed(GPIO_ETH_PHY_POWER)) ? Pin(GPIO_ETH_PHY_POWER) : ETH_POWER_PIN;
-  int eth_mdc = (PinUsed(GPIO_ETH_PHY_MDC)) ? Pin(GPIO_ETH_PHY_MDC) : ETH_MDC_PIN;
-  int eth_mdio = (PinUsed(GPIO_ETH_PHY_MDIO)) ? Pin(GPIO_ETH_PHY_MDIO) : ETH_MDIO_PIN;
+  int eth_power = (PinUsed(GPIO_ETH_PHY_POWER)) ? Pin(GPIO_ETH_PHY_POWER) : -1;
+  int eth_mdc = Pin(GPIO_ETH_PHY_MDC);
+  int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);
   if (!ETH.begin(Settings.eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings.eth_type, (eth_clock_mode_t)Settings.eth_clk_mode)) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ETH: Bad PHY type or init error"));
   };
@@ -129,7 +126,7 @@ IPAddress EthernetLocalIP(void) {
 }
 
 char* EthernetHostname(void) {
-  return Eth.hostname;
+  return eth_hostname;
 }
 
 String EthernetMacAddress(void) {
@@ -170,7 +167,7 @@ void CmndEthAddress(void)
 
 void CmndEthType(void)
 {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
     Settings.eth_type = XdrvMailbox.payload;
     restart_flag = 2;
   }

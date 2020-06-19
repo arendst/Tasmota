@@ -397,7 +397,7 @@ void ScriptEverySecond(void) {
 
   if (bitRead(Settings.rule_enabled, 0)) {
     struct T_INDEX *vtp=glob_script_mem.type;
-    float delta=(millis()-script_lastmillis)/1000;
+    float delta=(millis()-script_lastmillis)/1000.0;
     script_lastmillis=millis();
     for (uint8_t count=0; count<glob_script_mem.numvars; count++) {
       if (vtp[count].bits.is_timer) {

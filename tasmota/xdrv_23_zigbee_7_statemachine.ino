@@ -168,6 +168,8 @@ SBuffer *zigbee_buffer = nullptr;
 
 #define USE_ZIGBEE_CHANNEL_MASK (1 << (USE_ZIGBEE_CHANNEL))
 
+#ifdef USE_ZIGBEE_ZNP
+
 // ZBS_* Zigbee Send
 // ZBR_* Zigbee Recv
 ZBM(ZBS_RESET, Z_AREQ | Z_SYS, SYS_RESET, 0x00 )        	  // 410001 SYS_RESET_REQ Hardware reset
@@ -611,6 +613,30 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_STOP(ZIGBEE_LABEL_ABORT)
 };
 
+#endif // USE_ZIGBEE_ZNP
+
+#ifdef USE_ZIGBEE_EZSP
+
+// Update the relevant commands with Settings
+void Z_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_panid, uint64_t zb_precfgkey_l, uint64_t zb_precfgkey_h) {
+}
+
+
+static const Zigbee_Instruction zb_prog[] PROGMEM = {
+  ZI_LABEL(0)
+    ZI_NOOP()
+    ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
+    ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
+    // ZI_ON_RECV_UNEXPECTED(&Z_Recv_Default)
+    // ZI_WAIT(10500)                             // wait for 10 seconds for Tasmota to stabilize
+
+  ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
+    ZI_WAIT_FOREVER()
+    ZI_GOTO(ZIGBEE_LABEL_READY)
+};
+
+#endif // USE_ZIGBEE_EZSP
+
 uint8_t ZigbeeGetInstructionSize(uint8_t instr) {   // in Zigbee_Instruction lines (words)
   if (instr >= ZGB_INSTR_12_BYTES) {
     return 3;
@@ -770,7 +796,9 @@ void ZigbeeStateMachine_Run(void) {
         }
         break;
       case ZGB_INSTR_SEND:
+#ifdef USE_ZIGBEE_ZNP
         ZigbeeZNPSend((uint8_t*) cur_ptr1, cur_d8 /* len */);
+#endif // USE_ZIGBEE_ZNP
         break;
       case ZGB_INSTR_WAIT_UNTIL:
         zigbee.recv_until = true;   // and reuse ZGB_INSTR_WAIT_RECV

@@ -505,10 +505,14 @@
 #define D_CMND_ZIGBEE_RESET "Reset"
   #define D_JSON_ZIGBEE_CC2530 "CC2530"
 #define D_CMND_ZIGBEEZNPRECEIVE "ZNPReceive"      // only for debug
+#define D_CMND_ZIGBEE_EZSP_RECEIVE "EZSPReceive"      // only for debug
 #define D_CMND_ZIGBEEZNPSEND "ZNPSend"
+#define D_CMND_ZIGBEE_EZSP_SEND "EZSPSend"
   #define D_JSON_ZIGBEE_STATE "ZbState"
   #define D_JSON_ZIGBEEZNPRECEIVED "ZbZNPReceived"
+  #define D_JSON_ZIGBEE_EZSP_RECEIVED "ZbEZSPReceived"
   #define D_JSON_ZIGBEEZNPSENT "ZbZNPSent"
+  #define D_JSON_ZIGBEE_EZSP_SENT "ZbEZSPSent"
   #define D_JSON_ZIGBEEZCL_RECEIVED "ZbZCLReceived"
   #define D_JSON_ZIGBEEZCL_RAW_RECEIVED "ZbZCLRawReceived"
   #define D_JSON_ZIGBEE_DEVICE "Device"

@@ -19,6 +19,13 @@
 
 #ifdef USE_ZIGBEE
 
+#if defined(USE_ZIGBEE_ZNP) && defined(USE_ZIGBEE_EZSP)
+  #error "#define USE_ZIGBEE_ZNP and #define USE_ZIGBEE_EZSP are mutually incompatible"
+#endif
+#if !defined(USE_ZIGBEE_ZNP) && !defined(USE_ZIGBEE_EZSP)
+  #error "You must select one of: #define USE_ZIGBEE_ZNP or #define USE_ZIGBEE_EZSP"
+#endif
+
 #define OCCUPANCY "Occupancy"             // global define for Aqara
 
 typedef uint64_t Z_IEEEAddress;
@@ -26,6 +33,7 @@ typedef uint16_t Z_ShortAddress;
 
 const uint16_t BAD_SHORTADDR = 0xFFFE;
 
+#ifdef USE_ZIGBEE_ZNP
 enum ZnpCommandType {
   Z_POLL = 0x00,
   Z_SREQ = 0x20,
@@ -45,6 +53,7 @@ enum ZnpSubsystem {
   Z_DEBUG = 0x08,
   Z_APP = 0x09
 };
+#endif // USE_ZIGBEE_ZNP
 
 // Commands in the SYS subsystem
 enum SysCommand {
