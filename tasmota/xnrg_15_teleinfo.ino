@@ -24,8 +24,8 @@
  * Source: http://hallard.me/category/tinfo/
  *
  * Denky ESP32 Teleinfo Template
- * {"NAME":"Denky (Teleinfo)","GPIO":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
- *
+ * {"NAME":"Denky (Teleinfo)","GPIO":[1,1,1,1,5664,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1376,1,1,0,0,0,0,1,5632,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+ * 
  * Denky (aka WifInfo) ESP8266 Teleinfo Template
  * {"NAME":"WifInfo","GPIO":[7,255,255,208,6,5,255,255,255,255,255,255,255],"FLAG":15,"BASE":18}
  * 
