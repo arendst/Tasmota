@@ -197,6 +197,10 @@ void Ili9341PrintLog(void)
 void Ili9341Refresh(void)  // Every second
 {
   if (Settings.display_mode) {  // Mode 0 is User text
+    if (Settings.display_cols[0] < 19) {
+      Settings.display_cols[0] = 19;
+    }
+
     char tftdt[Settings.display_cols[0] +1];
     char date4[11];  // 24-04-2017
     char space[Settings.display_cols[0] - 17];
