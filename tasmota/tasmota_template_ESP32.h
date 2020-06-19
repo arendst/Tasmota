@@ -129,6 +129,8 @@ enum UserSelectablePins {
   GPIO_WINDMETER_SPEED,                // WindMeter speed counter pin
   GPIO_KEY1_TC,                        // Touch pin as button
   GPIO_BL0940_RX,                      // BL0940 serial interface
+  GPIO_TCP_TX, GPIO_TCP_RX,            // TCP to serial bridge
+  GPIO_ETH_PHY_POWER, GPIO_ETH_PHY_MDC, GPIO_ETH_PHY_MDIO,  // Ethernet
   GPIO_TELEINFO_RX,                    // Teleinfo telemetry data receive pin
   GPIO_TELEINFO_ENABLE,                // Teleinfo Enable Receive Pin
   GPIO_SENSOR_END };
@@ -221,7 +223,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
   D_SENSOR_WINDMETER_SPEED "|" D_SENSOR_BUTTON "_tc|"
   D_SENSOR_BL0940_RX "|"
-  D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE
+  D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD "|"
+  D_SENSOR_ETH_PHY_POWER "|" D_SENSOR_ETH_PHY_MDC "|" D_SENSOR_ETH_PHY_MDIO "|"
+  D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE 
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -236,6 +240,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_KEY1_NP) + MAX_KEYS,
   AGPIO(GPIO_KEY1_INV) + MAX_KEYS,
   AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS,
+  AGPIO(GPIO_KEY1_TC) + MAX_KEYS,       // Touch button
   AGPIO(GPIO_SWT1) + MAX_SWITCHES,      // User connected external switches
   AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES,
   AGPIO(GPIO_REL1) + MAX_RELAYS,        // Relays
@@ -418,6 +423,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SBR_TX),         // Serial Bridge Serial interface
   AGPIO(GPIO_SBR_RX),         // Serial Bridge Serial interface
 #endif
+#ifdef USE_TCP_BRIDGE
+  AGPIO(GPIO_TCP_TX),         // TCP Serial bridge
+  AGPIO(GPIO_TCP_RX),         // TCP Serial bridge
+#endif
 #ifdef USE_ZIGBEE
   AGPIO(GPIO_ZIGBEE_TX),      // Zigbee Serial interface
   AGPIO(GPIO_ZIGBEE_RX),      // Zigbee Serial interface
@@ -555,7 +564,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_WEBCAM_HSD) + MAX_WEBCAM_HSD,
   AGPIO(GPIO_WEBCAM_PSRCS),
 #endif
-  AGPIO(GPIO_KEY1_TC) + MAX_KEYS
+#ifdef USE_ETHERNET
+  AGPIO(GPIO_ETH_PHY_POWER),
+  AGPIO(GPIO_ETH_PHY_MDC),
+  AGPIO(GPIO_ETH_PHY_MDIO),  // Ethernet
+#endif
 };
 
 //********************************************************************************************
@@ -610,19 +623,18 @@ typedef struct MYTMPLT {
 /********************************************************************************************/
 // Supported hardware modules
 enum SupportedModules {
-  WEMOS, ESP32_CAM_AITHINKER, ESP32_DENKY,
+  WEMOS, ESP32_CAM_AITHINKER, 
   MAXMODULE};
 
 #define USER_MODULE        255
 
 const char kModuleNames[] PROGMEM =
-  "ESP32-DevKit|ESP32 Cam AiThinker|Denky (Teleinfo)";
+  "ESP32-DevKit|ESP32 Cam AiThinker";
 
 // Default module settings
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WEMOS,
-  ESP32_CAM_AITHINKER,
-  ESP32_DENKY
+  ESP32_CAM_AITHINKER
 };
 
 const mytmplt kModules PROGMEM =
@@ -669,6 +681,15 @@ const mytmplt kModules PROGMEM =
   AGPIO(GPIO_USER),            // 39      I   NO PULLUP       GPIO39, SENSOR_VN, ADC1_CH3, ADC_H, RTC_GPIO3
   0                            // Flag
 };
+
+/*********************************************************************************************\
+ Known templates
+
+{"NAME":"AITHINKER CAM","GPIO":[4992,65504,65504,65504,65504,5088,65504,65504,65504,65504,65504,65504,65504,65504,5089,5090,0,5091,5184,5152,0,5120,5024,5056,0,0,0,0,4928,65504,5094,5095,5092,0,0,5093],"FLAG":0,"BASE":1}
+{"NAME":"Olimex ESP32-PoE","GPIO":[65504,65504,65504,65504,65504,65504,0,0,5536,65504,65504,65504,65504,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,65504,65504,65504,65504,65504,0,0,65504],"FLAG":0,"BASE":1}
+
+\*********************************************************************************************/
+
 
 #endif  // ESP32
 
