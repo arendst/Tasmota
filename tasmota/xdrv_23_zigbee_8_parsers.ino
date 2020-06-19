@@ -19,6 +19,81 @@
 
 #ifdef USE_ZIGBEE
 
+#ifdef USE_ZIGBEE_EZSP
+/*********************************************************************************************\
+ * Parsers for incoming EZSP messages
+\*********************************************************************************************/
+
+// EZSP: received ASH RSTACK frame, indicating that the MCU finished boot
+int32_t Z_EZSP_RSTACK(uint8_t reset_code) {
+  const char *reason_str;
+
+  switch (reset_code) {
+    case 0x01: reason_str = PSTR("External"); break;
+    case 0x02: reason_str = PSTR("Power-on"); break;
+    case 0x03: reason_str = PSTR("Watchdog"); break;
+    case 0x06: reason_str = PSTR("Assert"); break;
+    case 0x09: reason_str = PSTR("Bootloader"); break;
+    case 0x0B: reason_str = PSTR("Software"); break;
+    case 0x00:
+    default: reason_str = PSTR("Unknown"); break;
+  }
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
+                  "\"Status\":%d,\"Message\":\"EFR32 booted\",\"RestartReason\":\"%s\""
+                  ",\"Code\":%d}}"),
+                  ZIGBEE_STATUS_BOOT, reason_str, reset_code);
+
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+  XdrvRulesProcess();
+}
+
+// EZSP: received ASH ERROR frame, indicating that the MCU finished boot
+int32_t Z_EZSP_ERROR(uint8_t error_code) {
+  const char *reason_str;
+
+  switch (error_code) {
+    case 0x51: reason_str = PSTR("ACK timeout"); break;
+    default: reason_str = PSTR("Unknown"); break;
+  }
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
+                  "\"Status\":%d,\"Message\":\"Failed state\",\"Error\":\"%s\""
+                  ",\"Code\":%d}}"),
+                  ZIGBEE_STATUS_ABORT, reason_str, error_code);
+
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+  XdrvRulesProcess();
+}
+
+/*********************************************************************************************\
+ * Default resolver
+\*********************************************************************************************/
+
+int32_t Z_Recv_Default(int32_t res, const class SBuffer &buf) {
+  // Default message handler for new messages
+  if (zigbee.init_phase) {
+    // if still during initialization phase, ignore any unexpected message
+  	return -1;	// ignore message
+  } else {
+    // TODO
+    // for (uint32_t i = 0; i < sizeof(Z_DispatchTable)/sizeof(Z_Dispatcher); i++) {
+    //   if (Z_ReceiveMatchPrefix(buf, Z_DispatchTable[i].match)) {
+    //     (*Z_DispatchTable[i].func)(res, buf);
+    //   }
+    // }
+    return -1;
+  }
+}
+
+int32_t Z_ReadAPSUnicastMessage(int32_t res, class SBuffer &buf) {
+  // Called when receiving a response from getConfigurationValue
+  // Value is in bytes 2+3
+  uint16_t value = buf.get16(2);
+  return res;
+}
+
+
+#endif // USE_ZIGBEE_EZSP
+
 /*********************************************************************************************\
  * Parsers for incoming ZNP messages
 \*********************************************************************************************/
@@ -596,6 +671,15 @@ void Z_SendAFInfoRequest(uint16_t shortaddr) {
 /*********************************************************************************************\
  * Send specific EZS¨ messages
 \*********************************************************************************************/
+
+//
+// Callback for loading Zigbee configuration from Flash, called by the state machine
+//
+int32_t Z_Reset_Device(uint8_t value) {
+  // TODO - GPIO is hardwired to GPIO4
+  digitalWrite(4, value ? HIGH : LOW);
+  return 0;                              // continue
+}
 
 //
 // Send ZDO_IEEE_ADDR_REQ request to get IEEE long address
