@@ -21,10 +21,10 @@
 */
 
 #include "my_user_config.h"
-//#ifdef USE_MQTT_TLS
-#if defined ESP8266 && (defined(USE_MQTT_TLS) || defined (USE_SENDMAIL))
+#if defined(ESP8266) && defined(USE_TLS)
 
-//#define DEBUG_TLS
+// #define DEBUG_TLS
+// #define DEBUG_ESP_SSL
 
 #define LWIP_INTERNAL
 
@@ -163,8 +163,8 @@ unsigned char *min_br_ssl_engine_sendrec_buf(const br_ssl_engine_context *cc, si
 
 //#define DEBUG_ESP_SSL
 #ifdef DEBUG_ESP_SSL
-#define DEBUG_BSSL(fmt, ...)  DEBUG_ESP_PORT.printf_P((PGM_P)PSTR( "BSSL:" fmt), ## __VA_ARGS__)
-//#define DEBUG_BSSL(fmt, ...)  Serial.printf(fmt, ## __VA_ARGS__)
+//#define DEBUG_BSSL(fmt, ...)  DEBUG_ESP_PORT.printf_P((PGM_P)PSTR( "BSSL:" fmt), ## __VA_ARGS__)
+#define DEBUG_BSSL(fmt, ...)  Serial.printf(fmt, ## __VA_ARGS__)
 #else
 #define DEBUG_BSSL(...)
 #endif
@@ -276,6 +276,7 @@ bool WiFiClientSecure_light::flush(unsigned int maxWaitMs) {
 }
 
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
+  DEBUG_BSSL("connect(%s,%d)", ip.toString().c_str(), port);
 	clearLastError();
   if (!WiFiClient::connect(ip, port)) {
 		setLastError(ERR_TCP_CONNECT);
@@ -285,6 +286,7 @@ int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
 }
 
 int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
+  DEBUG_BSSL("connect(%s,%d)\n", name, port);
   IPAddress remote_addr;
 	clearLastError();
   if (!WiFi.hostByName(name, remote_addr)) {
@@ -292,6 +294,7 @@ int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
 		setLastError(ERR_CANT_RESOLVE_IP);
     return 0;
   }
+  DEBUG_BSSL("connect(%s,%d)\n", remote_addr.toString().c_str(), port);
   if (!WiFiClient::connect(remote_addr, port)) {
     DEBUG_BSSL("connect: Unable to connect TCP socket\n");
 		_last_error = ERR_TCP_CONNECT;
@@ -709,10 +712,10 @@ extern "C" {
     br_sha1_out(&sha1_context, xc->pubkey_recv_fingerprint); // copy to fingerprint
 
 		if (!xc->fingerprint_all) {
-			if (0 == memcmp(xc->fingerprint1, xc->pubkey_recv_fingerprint, 20)) {
+			if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint1, 20)) {
 				return 0;
 			}
-			if (0 == memcmp(xc->fingerprint2, xc->pubkey_recv_fingerprint, 20)) {
+			if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint2, 20)) {
 				return 0;
 			}
 			return 1;		// no match, error
@@ -759,7 +762,7 @@ extern "C" {
 	// We limit to a single cipher to reduce footprint
   // we reference it, don't put in PROGMEM
   static const uint16_t suites[] = {
-#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_TLS_FORCE_EC_CIPHER)
+#ifdef USE_MQTT_TLS_FORCE_EC_CIPHER
 		BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 #else
 		BR_TLS_RSA_WITH_AES_128_GCM_SHA256
@@ -786,7 +789,7 @@ extern "C" {
 		br_ssl_engine_set_aes_ctr(&cc->eng, &br_aes_small_ctr_vtable);
 		br_ssl_engine_set_ghash(&cc->eng, &br_ghash_ctmul32);
 
-#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_TLS_FORCE_EC_CIPHER)
+#ifdef USE_MQTT_TLS_FORCE_EC_CIPHER
 		// we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
 		br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);
 #endif
@@ -796,12 +799,12 @@ extern "C" {
 // Called by connect() to do the actual SSL setup and handshake.
 // Returns if the SSL handshake succeeded.
 bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
-#ifdef USE_MQTT_AWS_IOT
-	if ((!_chain_P) || (!_sk_ec_P)) {
-		setLastError(ERR_MISSING_EC_KEY);
-		return false;
-	}
-#endif
+// #ifdef USE_MQTT_AWS_IOT
+// 	if ((!_chain_P) || (!_sk_ec_P)) {
+// 		setLastError(ERR_MISSING_EC_KEY);
+// 		return false;
+// 	}
+// #endif
 
 	// Validation context, either full CA validation or checking only fingerprints
 #ifdef USE_MQTT_TLS_CA_CERT
@@ -909,4 +912,4 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 
 #include "t_bearssl_tasmota_config.h"
 
-#endif  // USE_MQTT_TLS
+#endif  // USE_TLS

@@ -684,10 +684,14 @@ void MqttShowState(void)
     MqttShowPWMState();
   }
 
-  int32_t rssi = WiFi.RSSI();
-  ResponseAppend_P(PSTR(",\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_RSSI "\":%d,\"" D_JSON_SIGNAL "\":%d,\"" D_JSON_LINK_COUNT "\":%d,\"" D_JSON_DOWNTIME "\":\"%s\"}}"),
-    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WiFi.BSSIDstr().c_str(), WiFi.channel(),
-    WifiGetRssiAsQuality(rssi), rssi, WifiLinkCount(), WifiDowntime().c_str());
+  if (!global_state.wifi_down) {
+    int32_t rssi = WiFi.RSSI();
+    ResponseAppend_P(PSTR(",\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_RSSI "\":%d,\"" D_JSON_SIGNAL "\":%d,\"" D_JSON_LINK_COUNT "\":%d,\"" D_JSON_DOWNTIME "\":\"%s\"}"),
+      Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WiFi.BSSIDstr().c_str(), WiFi.channel(),
+      WifiGetRssiAsQuality(rssi), rssi, WifiLinkCount(), WifiDowntime().c_str());
+  }
+
+  ResponseJsonEnd();
 }
 
 void MqttPublishTeleState(void)
@@ -824,7 +828,7 @@ void PerformEverySecond(void)
 
   if (Settings.tele_period) {
     if (tele_period >= 9999) {
-      if (!global_state.wifi_down) {
+      if (!global_state.network_down) {
         tele_period = 0;  // Allow teleperiod once wifi is connected
       }
     } else {
@@ -916,10 +920,12 @@ void Every250mSeconds(void)
   state_250mS++;
   state_250mS &= 0x3;
 
-  if (!Settings.flag.global_state) {                      // Problem blinkyblinky enabled - SetOption31 - Control link led blinking
-    if (global_state.data) {                              // Any problem
+  global_state.network_down = (global_state.wifi_down && global_state.eth_down);
+
+  if (!Settings.flag.global_state && !global_state.network_down) {  // SetOption31 - Control link led blinking
+    if (global_state.data &0x03) {                        // Any problem
       if (global_state.mqtt_down) { blinkinterval = 7; }  // MQTT problem so blink every 2 seconds (slowest)
-      if (global_state.wifi_down) { blinkinterval = 3; }  // Wifi problem so blink every second (slow)
+      if (global_state.network_down) { blinkinterval = 3; }  // Network problem so blink every second (slow)
       blinks = 201;                                       // Allow only a single blink in case the problem is solved
     }
   }
@@ -1151,11 +1157,75 @@ void Every250mSeconds(void)
     }
     break;
   case 2:                                                 // Every x.5 second
-    WifiCheck(wifi_state_flag);
-    wifi_state_flag = WIFI_RESTART;
+    if (Settings.flag4.network_wifi) {
+      WifiCheck(wifi_state_flag);
+      wifi_state_flag = WIFI_RESTART;
+    }
     break;
   case 3:                                                 // Every x.75 second
-    if (!global_state.wifi_down) { MqttCheck(); }
+    if (!global_state.network_down) {
+#ifdef FIRMWARE_MINIMAL
+      if (1 == RtcSettings.ota_loader) {
+        RtcSettings.ota_loader = 0;
+        ota_state_flag = 3;
+      }
+#endif  // FIRMWARE_MINIMAL
+
+#ifdef USE_DISCOVERY
+      StartMdns();
+#endif  // USE_DISCOVERY
+
+#ifdef USE_WEBSERVER
+      if (Settings.webserver) {
+
+#ifdef ESP8266
+        StartWebserver(Settings.webserver, WiFi.localIP());
+#else  // ESP32
+#ifdef USE_ETHERNET
+        StartWebserver(Settings.webserver, (EthernetLocalIP()) ? EthernetLocalIP() : WiFi.localIP());
+#else
+        StartWebserver(Settings.webserver, WiFi.localIP());
+#endif
+#endif
+
+#ifdef USE_DISCOVERY
+#ifdef WEBSERVER_ADVERTISE
+        MdnsAddServiceHttp();
+#endif  // WEBSERVER_ADVERTISE
+#endif  // USE_DISCOVERY
+      } else {
+        StopWebserver();
+      }
+#ifdef USE_EMULATION
+    if (Settings.flag2.emulation) { UdpConnect(); }
+#endif  // USE_EMULATION
+#endif  // USE_WEBSERVER
+
+#ifdef USE_DEVICE_GROUPS
+      DeviceGroupsStart();
+#endif  // USE_DEVICE_GROUPS
+
+#ifdef USE_KNX
+      if (!knx_started && Settings.flag.knx_enabled) {  // CMND_KNX_ENABLED
+        KNXStart();
+        knx_started = true;
+      }
+#endif  // USE_KNX
+
+      MqttCheck();
+    } else {
+#ifdef USE_EMULATION
+      UdpDisconnect();
+#endif  // USE_EMULATION
+
+#ifdef USE_DEVICE_GROUPS
+      DeviceGroupsStop();
+#endif  // USE_DEVICE_GROUPS
+
+#ifdef USE_KNX
+      knx_started = false;
+#endif  // USE_KNX
+    }
     break;
   }
 }
@@ -1174,7 +1244,7 @@ uint16_t arduino_ota_progress_dot_count = 0;
 void ArduinoOTAInit(void)
 {
   ArduinoOTA.setPort(8266);
-  ArduinoOTA.setHostname(my_hostname);
+  ArduinoOTA.setHostname(NetworkHostname());
   if (strlen(SettingsText(SET_WEBPWD))) {
     ArduinoOTA.setPassword(SettingsText(SET_WEBPWD));
   }

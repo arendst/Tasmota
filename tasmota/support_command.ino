@@ -27,7 +27,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SERIALDELIMITER "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|"
   D_CMND_DEVICENAME "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_LEDPWM_ON "|" D_CMND_LEDPWM_OFF "|" D_CMND_LEDPWM_MODE "|"
-  D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM "|"
+  D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM "|" D_CMND_WIFI "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -54,7 +54,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndSerialDelimiter, &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig,
   &CmndDevicename, &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
-  &CmndWifiPower, &CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum,
+  &CmndWifiPower, &CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndWifi,
 #ifdef USE_I2C
   &CmndI2cScan, CmndI2cDriver,
 #endif
@@ -499,8 +499,8 @@ void CmndStatus(void)
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"" D_JSON_GATEWAY "\":\"%s\",\""
                           D_JSON_SUBNETMASK "\":\"%s\",\"" D_JSON_DNSSERVER "\":\"%s\",\"" D_JSON_MAC "\":\"%s\",\""
                           D_CMND_WEBSERVER "\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
-                          my_hostname, WiFi.localIP().toString().c_str(), IPAddress(Settings.ip_address[1]).toString().c_str(),
-                          IPAddress(Settings.ip_address[2]).toString().c_str(), IPAddress(Settings.ip_address[3]).toString().c_str(), WiFi.macAddress().c_str(),
+                          NetworkHostname(), NetworkAddress().toString().c_str(), IPAddress(Settings.ip_address[1]).toString().c_str(),
+                          IPAddress(Settings.ip_address[2]).toString().c_str(), IPAddress(Settings.ip_address[3]).toString().c_str(), NetworkMacAddress().c_str(),
                           Settings.webserver, Settings.sta_config, WifiGetOutputPower().c_str());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "5"));
   }
@@ -626,7 +626,7 @@ void CmndGlobalTemp(void)
     if (!isnan(temperature) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
       temperature = (temperature - 32) / 1.8;                             // Celsius
     }
-    if ((temperature >= -50.0) && (temperature <= 100.0)) {
+    if ((temperature >= -50.0f) && (temperature <= 100.0f)) {
       ConvertTemp(temperature);
       global_update = 1;  // Keep global values just entered valid
     }
@@ -1018,18 +1018,29 @@ void CmndModule(void)
       present = ValidTemplateModule(XdrvMailbox.payload);
     }
     if (present) {
-      Settings.last_module = Settings.module;
-      Settings.module = XdrvMailbox.payload;
-      SetModuleType();
-      if (Settings.last_module != XdrvMailbox.payload) {
-        for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
-          Settings.my_gp.io[i] = GPIO_NONE;
+      if (XdrvMailbox.index == 2) {
+        Settings.fallback_module = XdrvMailbox.payload;
+      } else {
+        Settings.last_module = Settings.module;
+        Settings.module = XdrvMailbox.payload;
+        SetModuleType();
+        if (Settings.last_module != XdrvMailbox.payload) {
+          for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
+            Settings.my_gp.io[i] = GPIO_NONE;
+          }
         }
+        restart_flag = 2;
       }
-      restart_flag = 2;
     }
   }
-  Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, ModuleNr(), ModuleName().c_str());
+  uint8_t module_real = Settings.module;
+  uint8_t module_number = ModuleNr();
+  if (XdrvMailbox.index == 2) {
+    module_real = Settings.fallback_module;
+    module_number = (USER_MODULE == Settings.fallback_module) ? 0 : Settings.fallback_module +1;
+    strcat(XdrvMailbox.command, "2");
+  }
+  Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, module_number, AnyModuleName(module_real).c_str());
 }
 
 void CmndModules(void)
@@ -1495,6 +1506,15 @@ void CmndWifiConfig(void)
   }
   char stemp1[TOPSZ];
   Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, Settings.sta_config, GetTextIndexed(stemp1, sizeof(stemp1), Settings.sta_config, kWifiConfig));
+}
+
+void CmndWifi(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    Settings.flag4.network_wifi = XdrvMailbox.payload;
+    restart_flag = 2;
+  }
+  ResponseCmndStateText(Settings.flag4.network_wifi);
 }
 
 void CmndDevicename(void)

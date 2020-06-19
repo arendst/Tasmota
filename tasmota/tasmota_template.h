@@ -137,8 +137,8 @@ enum UserSelectablePins {
   GPIO_TUYA_RX,        // Tuya Serial interface
   GPIO_MGC3130_XFER,   // MGC3130 Transfer
   GPIO_MGC3130_RESET,  // MGC3130 Reset
-  GPIO_SSPI_MISO,      // Software SPI Master Input Slave Output
-  GPIO_SSPI_MOSI,      // Software SPI Master Output Slave Input
+  GPIO_SSPI_MISO,      // Software SPI Master Input Client Output
+  GPIO_SSPI_MOSI,      // Software SPI Master Output Client Input
   GPIO_SSPI_SCLK,      // Software SPI Serial Clock
   GPIO_SSPI_CS,        // Software SPI Chip Select
   GPIO_SSPI_DC,        // Software SPI Data or Command
@@ -210,10 +210,10 @@ enum UserSelectablePins {
   GPIO_SM2135_DAT,     // SM2135 Dat
   GPIO_DEEPSLEEP,      // Kill switch for deepsleep
   GPIO_EXS_ENABLE,     // EXS MCU Enable
-  GPIO_TASMOTASLAVE_TXD,     // Slave TX
-  GPIO_TASMOTASLAVE_RXD,     // Slave RX
-  GPIO_TASMOTASLAVE_RST,     // Slave Reset Pin
-  GPIO_TASMOTASLAVE_RST_INV, // Slave Reset Inverted
+  GPIO_TASMOTACLIENT_TXD,     // Client TX
+  GPIO_TASMOTACLIENT_RXD,     // Client RX
+  GPIO_TASMOTACLIENT_RST,     // Client Reset Pin
+  GPIO_TASMOTACLIENT_RST_INV, // Client Reset Inverted
   GPIO_HPMA_RX,        // Honeywell HPMA115S0 Serial interface
   GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
   GPIO_GPS_RX,         // GPS serial interface
@@ -234,8 +234,11 @@ enum UserSelectablePins {
   GPIO_BOILER_OT_TX,   // OpenTherm Boiler TX pin
   GPIO_WINDMETER_SPEED,  // WindMeter speed counter pin
   GPIO_BL0940_RX,      // BL0940 serial interface
-  GPIO_TELEINFO_RX,      // BL0940 serial interface
-  GPIO_TELEINFO_ENABLE, // BL0940 serial interface
+  GPIO_TCP_TX,         // TCP Serial bridge
+  GPIO_TCP_RX,         // TCP Serial bridge
+  GPIO_TELEINFO_RX,    // TELEINFO serial interface
+  GPIO_TELEINFO_ENABLE,// TELEINFO Enable PIN
+  GPIO_LMT01,          // LMT01 input counting pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -314,7 +317,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DDSU666_TX "|" D_SENSOR_DDSU666_RX "|"
   D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
-  D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
+  D_SENSOR_CLIENT_TX "|" D_SENSOR_CLIENT_RX "|" D_SENSOR_CLIENT_RESET "|" D_SENSOR_CLIENT_RESET "i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
   D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX "|"
   D_SENSOR_DS18X20 "o|" D_SENSOR_DHT11 "o|"
@@ -326,8 +329,10 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_AS3935 "|" D_SENSOR_PMS5003_TX "|"
   D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
   D_SENSOR_WINDMETER_SPEED "|"
-  D_SENSOR_BL0940_RX  "|"
-  D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE
+  D_SENSOR_BL0940_RX "|"
+  D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD "|"
+  D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
+  D_SENSOR_LMT01_PULSE
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -427,8 +432,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SPI
   GPIO_SPI_CS,         // SPI Chip Select
   GPIO_SPI_DC,         // SPI Data Direction
-  GPIO_SSPI_MISO,      // Software SPI Master Input Slave Output
-  GPIO_SSPI_MOSI,      // Software SPI Master Output Slave Input
+  GPIO_SSPI_MISO,      // Software SPI Master Input Client Output
+  GPIO_SSPI_MOSI,      // Software SPI Master Output Client Input
   GPIO_SSPI_SCLK,      // Software SPI Serial Clock
   GPIO_SSPI_CS,        // Software SPI Chip Select
   GPIO_SSPI_DC,        // Software SPI Data or Command
@@ -446,6 +451,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DS18x20
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
   GPIO_DSB_OUT,        // Pseudo Single wire DS18B20 or DS18S20
+#endif
+#ifdef USE_LMT01       // LMT01, count pulses on GPIO
+  GPIO_LMT01,
 #endif
 
 // Light
@@ -577,6 +585,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
 #endif
+#ifdef USE_TCP_BRIDGE
+  GPIO_TCP_TX,         // TCP Serial bridge
+  GPIO_TCP_RX,         // TCP Serial bridge
+#endif
 #ifdef USE_ZIGBEE
   GPIO_ZIGBEE_TX,      // Zigbee Serial interface
   GPIO_ZIGBEE_RX,      // Zigbee Serial interface
@@ -618,11 +630,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_PN532_TXD,      // PN532 HSU Tx
   GPIO_PN532_RXD,      // PN532 HSU Rx
 #endif
-#ifdef USE_TASMOTA_SLAVE
-  GPIO_TASMOTASLAVE_TXD,     // Tasmota Slave TX
-  GPIO_TASMOTASLAVE_RXD,     // Tasmota Slave RX
-  GPIO_TASMOTASLAVE_RST,     // Tasmota Slave Reset
-  GPIO_TASMOTASLAVE_RST_INV, // Tasmota Slave Reset Inverted
+#ifdef USE_TASMOTA_CLIENT
+  GPIO_TASMOTACLIENT_TXD,     // Tasmota Client TX
+  GPIO_TASMOTACLIENT_RXD,     // Tasmota Client RX
+  GPIO_TASMOTACLIENT_RST,     // Tasmota Client Reset
+  GPIO_TASMOTACLIENT_RST_INV, // Tasmota Client Reset Inverted
 #endif
 #ifdef USE_RDM6300
   GPIO_RDM6300_RX,
@@ -689,7 +701,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_TELEINFO_RX,
   GPIO_TELEINFO_ENABLE,
 #endif
-
 };
 
 /********************************************************************************************/
@@ -777,8 +788,8 @@ enum SupportedModules {
   SUPLA1, WITTY, YUNSHAN, MAGICHOME, LUANIHVIO, KMC_70011, ARILUX_LC01, ARILUX_LC11, SONOFF_DUAL_R2, ARILUX_LC06,
   SONOFF_S31, ZENGGE_ZF_WF017, SONOFF_POW_R2, SONOFF_IFAN02, BLITZWOLF_BWSHP, SHELLY1, SHELLY2, PHILIPS, NEO_COOLCAM, ESP_SWITCH,
   OBI, TECKIN, APLIC_WDP303075, TUYA_DIMMER, GOSUND, ARMTRONIX_DIMMERS, SK03_TUYA, PS_16_DZ, TECKIN_US, MANZOKU_EU_4,
-  OBI2, YTF_IR_BRIDGE, DIGOO, KA10, ZX2820, MI_DESK_LAMP, SP10, WAGA, SYF05, SONOFF_L1, 
-  SONOFF_IFAN03, EXS_DIMMER, PWM_DIMMER, SONOFF_D1, DENKY,
+  OBI2, YTF_IR_BRIDGE, DIGOO, KA10, ZX2820, MI_DESK_LAMP, SP10, WAGA, SYF05, SONOFF_L1,
+  SONOFF_IFAN03, EXS_DIMMER, PWM_DIMMER, SONOFF_D1,
   MAXMODULE};
 
 #define USER_MODULE        255
@@ -791,7 +802,7 @@ const char kModuleNames[] PROGMEM =
   "Sonoff S31|Zengge WF017|Sonoff Pow R2|Sonoff iFan02|BlitzWolf SHP|Shelly 1|Shelly 2|Xiaomi Philips|Neo Coolcam|ESP Switch|"
   "OBI Socket|Teckin|AplicWDP303075|Tuya MCU|Gosund SP1 v23|ARMTR Dimmer|SK03 Outdoor|PS-16-DZ|Teckin US|Manzoku strip|"
   "OBI Socket 2|YTF IR Bridge|Digoo DG-SP202|KA10|Luminea ZX2820|Mi Desk Lamp|SP10|WAGA CHCZ02MB|SYF05|Sonoff L1|"
-  "Sonoff iFan03|EXS Dimmer|PWM Dimmer|Sonoff D1|Denky (Teleinfo)"
+  "Sonoff iFan03|EXS Dimmer|PWM Dimmer|Sonoff D1"
   ;
 
 const uint8_t kModuleNiceList[] PROGMEM = {
@@ -2174,26 +2185,6 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     GPIO_LED1_INV,    // GPIO13 WiFi Blue Led - Link and Power status
     0, 0, 0, 0
   },
-  {                   // Denky (Teleinfo) Any ESP8266 device
-    GPIO_WS2812,      // GPIO00 WS2812 RGB LED
-    GPIO_USER,        // GPIO01 TX Serial RXD
-    GPIO_USER,        // GPIO02 D4 Wemos DHT Shield
-    GPIO_TELEINFO_RX, // GPIO03 Smart Meter RX Serial
-    GPIO_I2C_SDA,     // GPIO04 D2 Wemos I2C SDA
-    GPIO_I2C_SCL,     // GPIO05 D1 Wemos I2C SCL 
-                      // GPIO06 (SD_CLK   Flash)
-                      // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
-                      // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
-    GPIO_USER,        // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
-    GPIO_USER,        // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
-                      // GPIO11 (SD_CMD   Flash)
-    GPIO_USER,        // GPIO12 D6
-    GPIO_USER,        // GPIO13 D7
-    GPIO_USER,        // GPIO14 D5
-    GPIO_USER,        // GPIO15 D8
-    GPIO_USER,        // GPIO16 D0 Wemos Wake
-    ADC0_USER         // ADC0 A0 Analog input
-  },
   {                   // SONOFF_IFAN03 - Sonoff iFan03 (ESP8285)
     GPIO_KEY1,        // GPIO00 WIFI_KEY0 Button 1
     GPIO_TXD,         // GPIO01 ESP_TXD Serial RXD connection to P0.5 of RF microcontroller
@@ -2278,9 +2269,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     GPIO_LED1_INV,    // GPIO13 WiFi Blue Led - Link and Power status
     0, 0, 0, 0
   }
-
 };
-
 
 #endif  // ESP8266
 

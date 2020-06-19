@@ -206,6 +206,14 @@ String GetDateAndTime(uint8_t time_type)
       break;
   }
   String dt = GetDT(time);  // 2017-03-07T11:08:02
+
+  if (DT_LOCAL_MILLIS == time_type) {
+    char ms[10];
+    snprintf_P(ms, sizeof(ms), PSTR(".%03d"), RtcMillis());
+    dt += ms;
+    time_type = DT_LOCAL;
+  }
+
   if (Settings.flag3.time_append_timezone && (DT_LOCAL == time_type)) {  // SetOption52 - Append timezone to JSON time
     dt += GetTimeZone();    // 2017-03-07T11:08:02-07:00
   }
@@ -371,7 +379,7 @@ void RtcSecond(void)
   Rtc.millis = millis();
 
   if (!Rtc.user_time_entry) {
-    if (!global_state.wifi_down) {
+    if (!global_state.network_down) {
       uint8_t uptime_minute = (uptime / 60) % 60;  // 0 .. 59
       if ((Rtc.ntp_sync_minute > 59) && (uptime_minute > 2)) {
         Rtc.ntp_sync_minute = 1;                   // If sync prepare for a new cycle

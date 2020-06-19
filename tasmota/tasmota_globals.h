@@ -43,6 +43,16 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack, uint32_t stack_end);
 extern "C" void resetPins();
 
+#ifdef ESP32
+
+#ifdef USE_ETHERNET
+IPAddress EthernetLocalIP(void);
+char* EthernetHostname(void);
+String EthernetMacAddress(void);
+#endif
+
+#endif  // ESP32
+
 /*********************************************************************************************\
  * Preconfigured configurations
 \*********************************************************************************************/
@@ -59,6 +69,18 @@ extern "C" void resetPins();
 #ifdef USE_EMULATION_WEMO
 #define USE_EMULATION
 #endif
+
+// Convert legacy slave to client
+#ifdef USE_TASMOTA_SLAVE
+#define USE_TASMOTA_CLIENT
+#endif
+#ifdef USE_TASMOTA_SLAVE_FLASH_SPEED
+#define USE_TASMOTA_CLIENT_FLASH_SPEED USE_TASMOTA_SLAVE_FLASH_SPEED
+#endif
+#ifdef USE_TASMOTA_SLAVE_SERIAL_SPEED
+#define USE_TASMOTA_CLIENT_SERIAL_SPEED USE_TASMOTA_SLAVE_SERIAL_SPEED
+#endif
+
                                                // See https://github.com/esp8266/Arduino/pull/4889
 #undef NO_EXTRA_4K_HEAP                        // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
 
@@ -88,7 +110,7 @@ extern "C" void resetPins();
   const uint16_t WEB_LOG_SIZE = 4000;          // Max number of characters in weblog
 #endif
 
-#if defined(USE_MQTT_TLS) && defined(ARDUINO_ESP8266_RELEASE_2_3_0)
+#if defined(USE_TLS) && defined(ARDUINO_ESP8266_RELEASE_2_3_0)
   #error "TLS is no more supported on Core 2.3.0, use 2.4.2 or higher."
 #endif
 
@@ -277,6 +299,9 @@ const char kWebColors[] PROGMEM =
 #ifndef MODULE
 #define MODULE                      SONOFF_BASIC   // [Module] Select default model
 #endif
+#ifndef FALLBACK_MODULE
+#define FALLBACK_MODULE             SONOFF_BASIC   // [Module2] Select default module on fast reboot where USER_MODULE is user template
+#endif
 
 #ifndef ARDUINO_ESP8266_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
@@ -290,6 +315,9 @@ const char kWebColors[] PROGMEM =
 
 #ifndef MODULE
 #define MODULE                      WEMOS          // [Module] Select default model
+#endif
+#ifndef FALLBACK_MODULE
+#define FALLBACK_MODULE             WEMOS          // [Module2] Select default module on fast reboot where USER_MODULE is user template
 #endif
 
 #ifndef ARDUINO_ESP32_RELEASE

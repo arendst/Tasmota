@@ -477,8 +477,8 @@ void GetFeatures(void)
 #ifdef USE_EXS_DIMMER
   feature5 |= 0x00008000;  // xdrv_30_exs_dimmer.ino
 #endif
-#ifdef USE_TASMOTA_SLAVE
-  feature5 |= 0x00010000;  // xdrv_31_arduino_slave.ino
+#ifdef USE_TASMOTA_CLIENT
+  feature5 |= 0x00010000;  // xdrv_31_tasmota_client.ino
 #endif
 #ifdef USE_HIH6
   feature5 |= 0x00020000;  // xsns_55_hih_series.ino
@@ -575,14 +575,21 @@ void GetFeatures(void)
 #ifdef USE_BL0940
   feature6 |= 0x00004000;  // xnrg_14_bl0940.ino
 #endif
-#ifdef USE_TELEINFO
-  feature6 |= 0x00008000;  // xnrg_15_teleinfo.ino
+#ifdef USE_TELEGRAM
+  feature6 |= 0x00008000;  // xdrv_40_telegram.ino
 #endif
-
-//  feature6 |= 0x00010000;
-//  feature6 |= 0x00020000;
-//  feature6 |= 0x00040000;
-//  feature6 |= 0x00080000;
+#ifdef USE_HP303B
+  feature6 |= 0x00010000;  // xsns_73_hp303b.ino
+#endif
+#ifdef USE_TCP_BRIDGE
+  feature6 |= 0x00020000;  // xdrv_41_tcp_bridge.ino
+#endif
+#ifdef USE_TELEINFO
+  feature6 |= 0x00040000;  // xnrg_15_teleinfo.ino
+#endif
+#ifdef USE_LMT01
+  feature6 |= 0x00080000;  // xsns_74_lmt01.ino
+#endif
 
 //  feature6 |= 0x00100000;
 //  feature6 |= 0x00200000;
@@ -596,8 +603,10 @@ void GetFeatures(void)
 
 //  feature6 |= 0x10000000;
 //  feature6 |= 0x20000000;
-//  feature6 |= 0x40000000;
+#ifdef USE_ETHERNET
+  feature6 |= 0x40000000;  // xdrv_82_ethernet.ino
+#endif
 #ifdef USE_WEBCAM
-  feature6 |= 0x80000000;
+  feature6 |= 0x80000000;  // xdrv_81_webcam.ino
 #endif
 }

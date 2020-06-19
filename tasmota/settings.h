@@ -114,8 +114,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t pwm_ct_mode : 1;              // bit 10 (v8.2.0.4)  - SetOption92 - Set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...)
     uint32_t compress_rules_cpu : 1;       // bit 11 (v8.2.0.6)  - SetOption93 - Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick
     uint32_t max6675 : 1;                  // bit 12 (v8.3.1.2)  - SetOption94 - Implement simpler MAX6675 protocol instead of MAX31855
-    uint32_t spare13 : 1;
-    uint32_t spare14 : 1;
+    uint32_t network_wifi : 1;             // bit 13 (v8.3.1.3)  - CMND_WIFI
+    uint32_t network_ethernet : 1;         // bit 14 (v8.3.1.3)  = CMND_ETHERNET
     uint32_t spare15 : 1;
     uint32_t spare16 : 1;
     uint32_t spare17 : 1;
@@ -392,12 +392,13 @@ struct {
 #else  // ESP32
   myio          my_gp;                     // 3AC - 2 x 40 bytes (ESP32)
   mytmplt       user_template;             // 3FC - 2 x 37 bytes (ESP32)
+  uint8_t       eth_type;                  // 446
+  uint8_t       eth_clk_mode;              // 447
 
-  uint8_t       free_esp32_446[6];         // 446
+  uint8_t       free_esp32_448[4];         // 448
 
   WebCamCfg     webcam_config;             // 44C
-
-  uint8_t       free_esp32_450[1];         // 450
+  uint8_t       eth_address;               // 450
 #endif  // ESP8266 - ESP32
 
   char          serial_delimiter;          // 451
@@ -566,10 +567,12 @@ struct {
   uint16_t      windmeter_pulse_debounce;  // F3A
   int16_t       windmeter_speed_factor;    // F3C
   uint8_t       windmeter_tele_pchange;    // F3E
-  uint8_t	      ledpwm_on;                 // F3F
-  uint8_t	      ledpwm_off;                // F40
+  uint8_t       ledpwm_on;                 // F3F
+  uint8_t       ledpwm_off;                // F40
+  uint8_t       tcp_baudrate;              // F41
+  uint8_t       fallback_module;           // F42
 
-  uint8_t       free_f42[119];             // F41 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f43[117];             // F43 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   uint16_t      pulse_counter_debounce_low;  // FB8
@@ -647,13 +650,14 @@ struct XDRVMAILBOX {
 } XdrvMailbox;
 
 #ifdef USE_SHUTTER
-const uint8_t MAX_RULES_FLAG = 10;         // Number of bits used in RulesBitfield (tricky I know...)
+const uint8_t MAX_RULES_FLAG = 11;         // Number of bits used in RulesBitfield (tricky I know...)
 #else
-const uint8_t MAX_RULES_FLAG = 8;          // Number of bits used in RulesBitfield (tricky I know...)
+const uint8_t MAX_RULES_FLAG = 9;          // Number of bits used in RulesBitfield (tricky I know...)
 #endif  // USE_SHUTTER
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
+    uint16_t system_init : 1;              // Changing layout here needs adjustments in xdrv_10_rules.ino too
     uint16_t system_boot : 1;
     uint16_t time_init : 1;
     uint16_t time_set : 1;
@@ -664,7 +668,6 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t http_init : 1;
     uint16_t shutter_moved : 1;
     uint16_t shutter_moving : 1;
-    uint16_t spare10 : 1;
     uint16_t spare11 : 1;
     uint16_t spare12 : 1;
     uint16_t spare13 : 1;
@@ -676,10 +679,10 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {
   uint8_t data;
   struct {
-    uint8_t wifi_down : 1;
+    uint8_t network_down : 1;
     uint8_t mqtt_down : 1;
-    uint8_t spare02 : 1;
-    uint8_t spare03 : 1;
+    uint8_t wifi_down : 1;
+    uint8_t eth_down : 1;
     uint8_t spare04 : 1;
     uint8_t spare05 : 1;
     uint8_t spare06 : 1;

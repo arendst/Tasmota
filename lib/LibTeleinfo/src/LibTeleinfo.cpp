@@ -426,7 +426,45 @@ char * TInfo::valueGet(char * name, char * value)
         if (me->value) {
           // copy to dest buffer
           uint8_t lgvalue = strlen(me->value);
-          strlcpy(value, me->value , lgvalue );
+          strlcpy(value, me->value , lgvalue + 1 );
+          return ( value );
+        }
+      }
+    }
+  }
+  // not found
+  return ( NULL);
+}
+
+/* ======================================================================
+Function: valueGet_P
+Purpose : get value of one element
+Input   : Pointer to the label name
+          pointer to the value where we fill data 
+Output  : pointer to the value where we filled data NULL is not found
+====================================================================== */
+char * TInfo::valueGet_P(const char * name, char * value)
+{
+  // Get our linked list 
+  ValueList * me = &_valueslist;
+  uint8_t lgname = strlen_P(name);
+
+  // Got one and all seems good ?
+  if (me && lgname) {
+
+    // Loop thru the node
+    while (me->next) {
+
+      // go to next node
+      me = me->next;
+
+      // Check if we match this LABEL
+      if (lgname==strlen(me->name) && strncmp_P(me->name, name, lgname)==0) {
+        // this one has a value ?
+        if (me->value) {
+          // copy to dest buffer
+          uint8_t lgvalue = strlen(me->value);
+          strlcpy(value, me->value , lgvalue + 1 );
           return ( value );
         }
       }
@@ -661,7 +699,7 @@ ValueList * TInfo::checkLine(char * pline)
     return NULL;
 
   // Get our own working copy
-  strlcpy( buff, _recv_buff, len+1);
+  strlcpy( buff, pline, len+1);
 
   p = &buff[0];
   ptok = p;       // for sure we start with token name

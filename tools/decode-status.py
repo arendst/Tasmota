@@ -205,11 +205,11 @@ a_features = [[
     "USE_KEELOQ","USE_HRXL","USE_SONOFF_D1","USE_HDC1080",
     "USE_IAQ","USE_DISPLAY_SEVENSEG","USE_AS3935","USE_PING",
     "USE_WINDMETER","USE_OPENTHERM","USE_THERMOSTAT","USE_VEML6075",
-    "USE_VEML7700","USE_MCP9808","USE_BL0940","",
+    "USE_VEML7700","USE_MCP9808","USE_BL0940","USE_TELEGRAM",
+    "USE_HP303B","USE_TCP_BRIDGE","USE_TELEINFO","USE_LMT01",
     "","","","",
     "","","","",
-    "","","","",
-    "","","","USE_WEBCAM"
+    "","","USE_ETHERNET","USE_WEBCAM"
     ]]
 
 usage = "usage: decode-status {-d | -f} arg"
@@ -243,7 +243,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20200607 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20200617 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

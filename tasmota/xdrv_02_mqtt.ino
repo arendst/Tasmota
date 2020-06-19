@@ -123,34 +123,6 @@ void MakeValidMqtt(uint32_t option, char* str)
   }
 }
 
-#ifdef USE_DISCOVERY
-#ifdef MQTT_HOST_DISCOVERY
-void MqttDiscoverServer(void)
-{
-  if (!Wifi.mdns_begun) { return; }
-
-  int n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
-
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
-
-  if (n > 0) {
-    uint32_t i = 0;            // If the hostname isn't set, use the first record found.
-#ifdef MDNS_HOSTNAME
-    for (i = n; i > 0; i--) {  // Search from last to first and use first if not found
-      if (!strcmp(MDNS.hostname(i).c_str(), MDNS_HOSTNAME)) {
-        break;                 // Stop at matching record
-      }
-    }
-#endif  // MDNS_HOSTNAME
-    SettingsUpdateText(SET_MQTT_HOST, MDNS.IP(i).toString().c_str());
-    Settings.mqtt_port = MDNS.port(i);
-
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"), MDNS.hostname(i).c_str(), SettingsText(SET_MQTT_HOST), Settings.mqtt_port);
-  }
-}
-#endif  // MQTT_HOST_DISCOVERY
-#endif  // USE_DISCOVERY
-
 /*********************************************************************************************\
  * MQTT driver specific code need to provide the following functions:
  *
@@ -539,10 +511,10 @@ void MqttConnected(void)
       if (Settings.webserver) {
 #if LWIP_IPV6
         Response_P(PSTR("{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"IPv6Address\":\"%s\"}"),
-          (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str(),WifiGetIPv6().c_str());
+          (2 == Settings.webserver) ? D_ADMIN : D_USER, NetworkHostname(), NetworkAddress().toString().c_str(), WifiGetIPv6().c_str());
 #else
         Response_P(PSTR("{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\"}"),
-          (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
+          (2 == Settings.webserver) ? D_ADMIN : D_USER, NetworkHostname(), NetworkAddress().toString().c_str());
 #endif // LWIP_IPV6 = 1
         MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "2"));
       }

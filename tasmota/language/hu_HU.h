@@ -445,6 +445,8 @@
 #define D_KNX_ENHANCEMENT "Communication Enhancement"
 #define D_KNX_TX_SLOT "KNX TX"
 #define D_KNX_RX_SLOT "KNX RX"
+#define D_KNX_TX_SCENE "KNX SCENE TX"
+#define D_KNX_RX_SCENE "KNX SCENE RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Mai energia"
@@ -663,9 +665,9 @@
 #define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 #define D_SENSOR_DEEPSLEEP     "DeepSleep"
 #define D_SENSOR_EXS_ENABLE    "EXS Enable"
-#define D_SENSOR_SLAVE_TX    "Slave TX"
-#define D_SENSOR_SLAVE_RX    "Slave RX"
-#define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_CLIENT_TX    "Client TX"
+#define D_SENSOR_CLIENT_RX    "Client RX"
+#define D_SENSOR_CLIENT_RESET "Client RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
 #define D_SENSOR_HM10_RX       "HM10 RX"
@@ -681,6 +683,7 @@
 #define D_SENSOR_WINDMETER_SPEED "WindMeter Spd"
 #define D_SENSOR_TELEINFO_RX   "TInfo Rx"
 #define D_SENSOR_TELEINFO_ENABLE "TInfo EN"
+#define D_SENSOR_LMT01_PULSE   "LMT01 Pulse"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -693,6 +696,11 @@
 #define D_GPIO_WEBCAM_PSCLK    "CAM_PSCLK"
 #define D_GPIO_WEBCAM_HSD      "CAM_HSD"
 #define D_GPIO_WEBCAM_PSRCS    "CAM_PSRCS"
+#define D_SENSOR_ETH_PHY_POWER "ETH POWER"
+#define D_SENSOR_ETH_PHY_MDC   "ETH MDC"
+#define D_SENSOR_ETH_PHY_MDIO  "ETH MDIO"
+#define D_SENSOR_TCP_TXD       "TCP Tx"
+#define D_SENSOR_TCP_RXD       "TCP Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"

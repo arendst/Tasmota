@@ -768,6 +768,7 @@ void SettingsDefaultSet2(void)
 //  flag.interlock |= 0;
   Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
   Settings.module = MODULE;
+  Settings.fallback_module = FALLBACK_MODULE;
   ModuleDefault(WEMOS);
 //  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
   SettingsUpdateText(SET_FRIENDLYNAME1, PSTR(FRIENDLY_NAME));
@@ -798,7 +799,16 @@ void SettingsDefaultSet2(void)
   Settings.serial_delimiter = 0xff;
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 
+  // Ethernet
+  flag4.network_ethernet |= 1;
+#ifdef ESP32
+  Settings.eth_type = ETH_TYPE;
+  Settings.eth_clk_mode = ETH_CLKMODE;
+  Settings.eth_address = ETH_ADDR;
+#endif
+
   // Wifi
+  flag4.network_wifi |= 1;
   flag3.use_wifi_scan |= WIFI_SCAN_AT_RESTART;
   flag3.use_wifi_rescan |= WIFI_SCAN_REGULARLY;
   Settings.wifi_output_power = 170;
@@ -1438,6 +1448,20 @@ void SettingsDelta(void)
       Settings.ledpwm_off = 0;
       Settings.ledpwm_on = 255;
       Settings.ledpwm_mask = 0;
+    }
+    if (Settings.version < 0x08030104) {
+      Settings.flag4.network_wifi = 1;
+      Settings.flag4.network_ethernet = 1;
+    }
+#ifdef ESP32
+    if (Settings.version < 0x08030105) {
+      Settings.eth_type = ETH_TYPE;
+      Settings.eth_clk_mode = ETH_CLKMODE;
+      Settings.eth_address = ETH_ADDR;
+    }
+#endif
+    if (Settings.version < 0x08030106) {
+      Settings.fallback_module = FALLBACK_MODULE;
     }
 
     Settings.version = VERSION;

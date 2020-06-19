@@ -44,7 +44,7 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 28000;  // milliseconds - Allow
 uint8_t *efm8bb1_update = nullptr;
 #endif  // USE_RF_FLASH
 
-enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTASLAVE };
+enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT };
 
 static const char * HEADER_KEYS[] = { "User-Agent", };
 
@@ -868,10 +868,16 @@ void StartWebserver(int type, IPAddress ipweb)
   if (Web.state != type) {
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
-    if(ipv6_addr!="") AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s and IPv6 global address %s "), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str(),ipv6_addr.c_str());
-    else AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+    if (ipv6_addr!="") {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s and IPv6 global address %s "),
+        NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str(), ipv6_addr.c_str());
+    } else {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
+        NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str());
+    }
 #else
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
+      NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str());
 #endif // LWIP_IPV6 = 1
     rules_flag.http_init = 1;
   }
@@ -1151,8 +1157,8 @@ void WSContentSendStyle_P(const char* formatP, ...)
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
     WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // tasmota.local (192.168.2.12, 192.168.4.1)
-      my_hostname,
-      (Wifi.mdns_begun) ? ".local" : "",
+      NetworkHostname(),
+      (Mdns.begun) ? ".local" : "",
       (lip) ? WiFi.localIP().toString().c_str() : "",
       (lip && sip) ? ", " : "",
       (sip) ? WiFi.softAPIP().toString().c_str() : "");
@@ -2016,8 +2022,8 @@ void ModuleSaveSettings(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-const char kUnescapeCode[] = "&><\"\'";
-const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;";
+const char kUnescapeCode[] = "&><\"\'\\";
+const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;|&#92;";
 
 String HtmlEscape(const String unescaped) {
   char escaped[10];
@@ -2321,22 +2327,6 @@ void OtherSaveSettings(void)
   }
   AddLog_P(LOG_LEVEL_INFO, message);
 
-/*
-  // This sometimes provides intermittent watchdog
-  bool template_activate = Webserver->hasArg("t2");  // Try this to tackle intermittent watchdog after execution of Template command
-  WebGetArg("t1", tmp, sizeof(tmp));
-  if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
-    char svalue[128];
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
-
-    if (template_activate) {
-      snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_MODULE " 0"));
-      ExecuteWebCommand(svalue, SRC_WEBGUI);
-    }
-  }
-  // Try async execution of commands
-*/
   WebGetArg("t1", tmp, sizeof(tmp));
   if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
     snprintf_P(message, sizeof(message), PSTR(D_CMND_BACKLOG " " D_CMND_TEMPLATE " %s%s"), tmp, (Webserver->hasArg("t2")) ? "; " D_CMND_MODULE " 0" : "");
@@ -2471,26 +2461,42 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, SettingsText(SET_FRIENDLYNAME1 +i));
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
-  int32_t rssi = WiFi.RSSI();
-  WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WifiGetRssiAsQuality(rssi), rssi);
-  WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "");
+#ifdef ESP32
+#ifdef USE_ETHERNET
+  if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? ".local" : "");
+    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), EthernetMacAddress().c_str());
+    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (eth)}2%s"), EthernetLocalIP().toString().c_str());
+    WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
+  }
+#endif
+#endif
+  if (Settings.flag4.network_wifi) {
+    int32_t rssi = WiFi.RSSI();
+    WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings.sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi);
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Mdns.begun) ? ".local" : "");
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
-    if(ipv6_addr != ""){
+    if (ipv6_addr != "") {
       WSContentSend_P(PSTR("}1 IPv6 Address }2%s"), ipv6_addr.c_str());
     }
 #endif
-  if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
-    WSContentSend_P(PSTR("}1" D_IP_ADDRESS "}2%s"), WiFi.localIP().toString().c_str());
+    if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+      WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.macAddress().c_str());
+      WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (wifi)}2%s"), WiFi.localIP().toString().c_str());
+      WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
+    }
+  }
+  if (!global_state.network_down) {
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), IPAddress(Settings.ip_address[1]).toString().c_str());
     WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%s"), IPAddress(Settings.ip_address[2]).toString().c_str());
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "}2%s"), IPAddress(Settings.ip_address[3]).toString().c_str());
-    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.macAddress().c_str());
   }
-  if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {
-    WSContentSend_P(PSTR("}1" D_IP_ADDRESS "}2%s"), WiFi.softAPIP().toString().c_str());
-    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), WiFi.softAPIP().toString().c_str());
+  if ((WiFi.getMode() >= WIFI_AP) && (static_cast<uint32_t>(WiFi.softAPIP()) != 0)) {
+    WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
     WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.softAPmacAddress().c_str());
+    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (AP)}2%s"), WiFi.softAPIP().toString().c_str());
+    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), WiFi.softAPIP().toString().c_str());
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
@@ -2645,8 +2651,8 @@ void HandleUploadDone(void)
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     WSContentSend_P(HTTP_MSG_RSTRT);
     ShowWebSource(SRC_WEBGUI);
-#ifdef USE_TASMOTA_SLAVE
-    if (TasmotaSlave_GetFlagFlashing()) {
+#ifdef USE_TASMOTA_CLIENT
+    if (TasmotaClient_GetFlagFlashing()) {
       restart_flag = 0;
     } else { // It was a normal firmware file, or we are ready to restart device
       restart_flag = 2;
@@ -2659,9 +2665,9 @@ void HandleUploadDone(void)
   WSContentSend_P(PSTR("</div><br>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
-#ifdef USE_TASMOTA_SLAVE
-  if (TasmotaSlave_GetFlagFlashing()) {
-    TasmotaSlave_Flash();
+#ifdef USE_TASMOTA_CLIENT
+  if (TasmotaClient_GetFlagFlashing()) {
+    TasmotaClient_Flash();
   }
 #endif
 }
@@ -2731,11 +2737,11 @@ void HandleUploadLoop(void)
           if (Web.upload_error != 0) { return; }
         } else
 #endif  // USE_RF_FLASH
-#ifdef USE_TASMOTA_SLAVE
-        if ((WEMOS == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO SLAVE hex file
+#ifdef USE_TASMOTA_CLIENT
+        if ((WEMOS == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO CLIENT hex file
           Update.end();              // End esp8266 update session
-          Web.upload_file_type = UPL_TASMOTASLAVE;
-          Web.upload_error = TasmotaSlave_UpdateInit();  // 0
+          Web.upload_file_type = UPL_TASMOTACLIENT;
+          Web.upload_error = TasmotaClient_UpdateInit();  // 0
           if (Web.upload_error != 0) { return; }
         } else
 #endif
@@ -2799,9 +2805,9 @@ void HandleUploadLoop(void)
       }
     }
 #endif  // USE_RF_FLASH
-#ifdef USE_TASMOTA_SLAVE
-    else if (UPL_TASMOTASLAVE == Web.upload_file_type) {
-      TasmotaSlave_WriteBuffer(upload.buf, upload.currentSize);
+#ifdef USE_TASMOTA_CLIENT
+    else if (UPL_TASMOTACLIENT == Web.upload_file_type) {
+      TasmotaClient_WriteBuffer(upload.buf, upload.currentSize);
     }
 #endif
     else {  // firmware
@@ -2865,10 +2871,10 @@ void HandleUploadLoop(void)
       Web.upload_file_type = UPL_TASMOTA;
     }
 #endif  // USE_RF_FLASH
-#ifdef USE_TASMOTA_SLAVE
-    else if (UPL_TASMOTASLAVE == Web.upload_file_type) {
+#ifdef USE_TASMOTA_CLIENT
+    else if (UPL_TASMOTACLIENT == Web.upload_file_type) {
       // Done writing the hex to SPI flash
-      TasmotaSlave_SetFlagFlashing(true); // So we know on upload success page if it needs to flash hex or do a normal restart
+      TasmotaClient_SetFlagFlashing(true); // So we know on upload success page if it needs to flash hex or do a normal restart
       Web.upload_file_type = UPL_TASMOTA;
     }
 #endif
@@ -3288,7 +3294,7 @@ void CmndWebServer(void)
   }
   if (Settings.webserver) {
     Response_P(PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
-      (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
+      (2 == Settings.webserver) ? D_ADMIN : D_USER, NetworkHostname(), NetworkAddress().toString().c_str());
   } else {
     ResponseCmndStateText(0);
   }

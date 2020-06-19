@@ -36,9 +36,9 @@
 #include "tasmota_version.h"                // Tasmota version information
 #include "tasmota.h"                        // Enumeration used in my_user_config.h
 #include "my_user_config.h"                 // Fixed user configurable options
-#ifdef USE_MQTT_TLS
+#ifdef USE_TLS
   #include <t_bearssl.h>                    // We need to include before "tasmota_globals.h" to take precedence over the BearSSL version in Arduino
-#endif  // USE_MQTT_TLS
+#endif  // USE_TLS
 #include "tasmota_globals.h"                // Function prototypes and global configuration
 #include "i18n.h"                           // Language support configured by my_user_config.h
 #include "tasmota_template.h"               // Hardware configuration
@@ -111,9 +111,9 @@ uint32_t uptime = 0;                        // Counting every second until 42949
 uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
 uint32_t web_log_index = 1;                 // Index in Web log buffer (should never be 0)
-float global_temperature = 9999;            // Provide a global temperature to be used by some sensors
-float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
-float global_pressure = 0;                  // Provide a global pressure to be used by some sensors
+float global_temperature = NAN;             // Provide a global temperature to be used by some sensors
+float global_humidity = 0.0f;               // Provide a global humidity to be used by some sensors
+float global_pressure = 0.0f;               // Provide a global pressure to be used by some sensors
 uint16_t tele_period = 9999;                // Tele period timer
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
@@ -205,7 +205,7 @@ void setup(void) {
 #endif
 #endif
 
-  global_state.data = 3;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
+  global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 
   RtcRebootLoad();
   if (!RtcRebootValid()) {
@@ -278,12 +278,8 @@ void setup(void) {
 #endif
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +4) {  // Restarted 6 times
-#ifdef ESP8266
-        Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
-  //      Settings.last_module = SONOFF_BASIC;
-#else  // ESP32
-        Settings.module = WEMOS;                    // Reset module to Wemos
-#endif  // ESP8266 - ESP32
+        Settings.module = Settings.fallback_module;  // Reset module to fallback module
+//        Settings.last_module = Settings.fallback_module;
       }
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     }
@@ -322,6 +318,11 @@ void setup(void) {
 
   XdrvCall(FUNC_INIT);
   XsnsCall(FUNC_INIT);
+#ifdef USE_SCRIPT
+  Run_Scripter(">BS",3,0);
+#endif
+
+  rules_flag.system_init = 1;
 }
 
 void BacklogLoop(void) {
@@ -411,7 +412,7 @@ void loop(void) {
     if (my_activity < (uint32_t)ssleep) {
       SleepDelay((uint32_t)ssleep - my_activity);  // Provide time for background tasks like wifi
     } else {
-      if (global_state.wifi_down) {
+      if (global_state.network_down) {
         SleepDelay(my_activity /2);                // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
       }
     }

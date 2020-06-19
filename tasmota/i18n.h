@@ -271,6 +271,8 @@
 #define D_CMND_SSID "SSId"
 #define D_CMND_PASSWORD "Password"
 #define D_CMND_HOSTNAME "Hostname"
+#define D_CMND_WIFI "Wifi"
+#define D_CMND_ETHERNET "Ethernet"
 #define D_CMND_WIFICONFIG "WifiConfig"
   #define D_WCFG_0_RESTART "Restart"
   #define D_WCFG_2_WIFIMANAGER "WifiManager"
@@ -503,10 +505,14 @@
 #define D_CMND_ZIGBEE_RESET "Reset"
   #define D_JSON_ZIGBEE_CC2530 "CC2530"
 #define D_CMND_ZIGBEEZNPRECEIVE "ZNPReceive"      // only for debug
+#define D_CMND_ZIGBEE_EZSP_RECEIVE "EZSPReceive"      // only for debug
 #define D_CMND_ZIGBEEZNPSEND "ZNPSend"
+#define D_CMND_ZIGBEE_EZSP_SEND "EZSPSend"
   #define D_JSON_ZIGBEE_STATE "ZbState"
   #define D_JSON_ZIGBEEZNPRECEIVED "ZbZNPReceived"
+  #define D_JSON_ZIGBEE_EZSP_RECEIVED "ZbEZSPReceived"
   #define D_JSON_ZIGBEEZNPSENT "ZbZNPSent"
+  #define D_JSON_ZIGBEE_EZSP_SENT "ZbEZSPSent"
   #define D_JSON_ZIGBEEZCL_RECEIVED "ZbZCLReceived"
   #define D_JSON_ZIGBEEZCL_RAW_RECEIVED "ZbZCLRawReceived"
   #define D_JSON_ZIGBEE_DEVICE "Device"
@@ -641,6 +647,7 @@
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
 #define D_LOG_ZIGBEE "ZIG: "       // Zigbee
+#define D_LOG_TCP "TCP: "          // TCP bridge
 
 /********************************************************************************************/
 
