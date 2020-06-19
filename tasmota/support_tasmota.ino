@@ -687,7 +687,7 @@ void MqttShowState(void)
   if (!global_state.wifi_down) {
     int32_t rssi = WiFi.RSSI();
     ResponseAppend_P(PSTR(",\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_RSSI "\":%d,\"" D_JSON_SIGNAL "\":%d,\"" D_JSON_LINK_COUNT "\":%d,\"" D_JSON_DOWNTIME "\":\"%s\"}"),
-      Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WiFi.BSSIDstr().c_str(), WiFi.channel(),
+      Settings.sta_active +1, EscapeJSONString(SettingsText(SET_STASSID1 + Settings.sta_active)).c_str(), WiFi.BSSIDstr().c_str(), WiFi.channel(),
       WifiGetRssiAsQuality(rssi), rssi, WifiLinkCount(), WifiDowntime().c_str());
   }
 

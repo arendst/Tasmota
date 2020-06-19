@@ -100,7 +100,7 @@ void ResponseCmndChar_P(const char* value)
 
 void ResponseCmndChar(const char* value)
 {
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, value);
+  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, EscapeJSONString(value).c_str());
 }
 
 void ResponseCmndStateText(uint32_t value)
@@ -115,7 +115,7 @@ void ResponseCmndDone(void)
 
 void ResponseCmndIdxChar(const char* value)
 {
-  Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, value);
+  Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, EscapeJSONString(value).c_str());
 }
 
 void ResponseCmndAll(uint32_t text_index, uint32_t count)
@@ -124,7 +124,7 @@ void ResponseCmndAll(uint32_t text_index, uint32_t count)
   mqtt_data[0] = '\0';
   for (uint32_t i = 0; i < count; i++) {
     if ((SET_MQTT_GRP_TOPIC == text_index) && (1 == i)) { real_index = SET_MQTT_GRP_TOPIC2 -1; }
-    ResponseAppend_P(PSTR("%c\"%s%d\":\"%s\""), (i) ? ',' : '{', XdrvMailbox.command, i +1, SettingsText(real_index +i));
+    ResponseAppend_P(PSTR("%c\"%s%d\":\"%s\""), (i) ? ',' : '{', XdrvMailbox.command, i +1, EscapeJSONString(SettingsText(real_index +i)).c_str());
   }
   ResponseJsonEnd();
 }
@@ -397,7 +397,7 @@ void CmndStatus(void)
 #endif  // USE_SONOFF_IFAN
     stemp[0] = '\0';
     for (uint32_t i = 0; i < maxfn; i++) {
-      snprintf_P(stemp, sizeof(stemp), PSTR("%s%s\"%s\"" ), stemp, (i > 0 ? "," : ""), SettingsText(SET_FRIENDLYNAME1 +i));
+      snprintf_P(stemp, sizeof(stemp), PSTR("%s%s\"%s\"" ), stemp, (i > 0 ? "," : ""), EscapeJSONString(SettingsText(SET_FRIENDLYNAME1 +i)).c_str());
     }
     stemp2[0] = '\0';
     for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
@@ -407,7 +407,7 @@ void CmndStatus(void)
                           D_CMND_BUTTONTOPIC "\":\"%s\",\"" D_CMND_POWER "\":%d,\"" D_CMND_POWERONSTATE "\":%d,\"" D_CMND_LEDSTATE "\":%d,\""
                           D_CMND_LEDMASK "\":\"%04X\",\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\""
                           D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d}}"),
-                          ModuleNr(), SettingsText(SET_DEVICENAME), stemp, mqtt_topic,
+                          ModuleNr(), EscapeJSONString(SettingsText(SET_DEVICENAME)).c_str(), stemp, mqtt_topic,
                           SettingsText(SET_MQTT_BUTTON_TOPIC), power, Settings.poweronstate, Settings.ledstate,
                           Settings.ledmask, Settings.save_data,
                           Settings.flag.save_state,           // SetOption0 - Save power state and use after restart
@@ -461,7 +461,7 @@ void CmndStatus(void)
                           D_CMND_LOGHOST "\":\"%s\",\"" D_CMND_LOGPORT "\":%d,\"" D_CMND_SSID "\":[\"%s\",\"%s\"],\"" D_CMND_TELEPERIOD "\":%d,\""
                           D_JSON_RESOLUTION "\":\"%08X\",\"" D_CMND_SETOPTION "\":[\"%08X\",\"%s\",\"%08X\",\"%08X\"]}}"),
                           Settings.seriallog_level, Settings.weblog_level, Settings.mqttlog_level, Settings.syslog_level,
-                          SettingsText(SET_SYSLOG_HOST), Settings.syslog_port, SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), Settings.tele_period,
+                          SettingsText(SET_SYSLOG_HOST), Settings.syslog_port, EscapeJSONString(SettingsText(SET_STASSID1)).c_str(), EscapeJSONString(SettingsText(SET_STASSID2)).c_str(), Settings.tele_period,
                           Settings.flag2.data, Settings.flag.data, ToHex_P((unsigned char*)Settings.param, PARAM8_SIZE, stemp2, sizeof(stemp2)),
                           Settings.flag3.data, Settings.flag4.data);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "3"));
@@ -508,8 +508,8 @@ void CmndStatus(void)
   if (((0 == payload) || (6 == payload)) && Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS6_MQTT "\":{\"" D_CMND_MQTTHOST "\":\"%s\",\"" D_CMND_MQTTPORT "\":%d,\"" D_CMND_MQTTCLIENT D_JSON_MASK "\":\"%s\",\""
                           D_CMND_MQTTCLIENT "\":\"%s\",\"" D_CMND_MQTTUSER "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d}}"),
-                          SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT),
-                          mqtt_client, SettingsText(SET_MQTT_USER), MqttConnectCount(), MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
+                          SettingsText(SET_MQTT_HOST), Settings.mqtt_port, EscapeJSONString(SettingsText(SET_MQTT_CLIENT)).c_str(),
+                          mqtt_client, EscapeJSONString(SettingsText(SET_MQTT_USER)).c_str(), MqttConnectCount(), MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "6"));
   }
 
@@ -1445,7 +1445,7 @@ void CmndAp(void)
     Settings.wifi_channel = 0;  // Disable stored AP
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active));
+  Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, Settings.sta_active +1, EscapeJSONString(SettingsText(SET_STASSID1 + Settings.sta_active)).c_str());
 }
 
 void CmndSsid(void)
