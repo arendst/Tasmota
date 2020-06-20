@@ -427,7 +427,7 @@ void TasmotaClient_Init(void) {
         }
         TasmotaClient_Serial->setTimeout(100);  // Theo 20200502 - increase from 50
         if (PinUsed(GPIO_TASMOTACLIENT_RST_INV)) {
-          SetPin(Pin(GPIO_TASMOTACLIENT_RST_INV), GPIO_TASMOTACLIENT_RST);
+          SetPin(Pin(GPIO_TASMOTACLIENT_RST_INV), AGPIO(GPIO_TASMOTACLIENT_RST));
           TClient.inverted = HIGH;
         }
         pinMode(Pin(GPIO_TASMOTACLIENT_RST), OUTPUT);

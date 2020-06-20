@@ -1591,6 +1591,7 @@ void GpioInit(void)
     SetPin(13, GPIO_SPI_MOSI);
     my_module.io[14] = GPIO_SPI_CLK;
     SetPin(14, GPIO_SPI_CLK);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK)"));
   }
   soft_spi_flg = (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
 #endif  // USE_SPI
@@ -1598,7 +1599,55 @@ void GpioInit(void)
   analogWriteFreqRange(0, Settings.pwm_frequency, Settings.pwm_range);
 
 #ifdef USE_SPI
-  spi_flg = (PinUsed(GPIO_SPI_CLK) && (PinUsed(GPIO_SPI_MOSI) || PinUsed(GPIO_SPI_MISO)));
+  if (PinUsed(GPIO_SPI_CS) || PinUsed(GPIO_SPI_DC)) {
+    if ((15 == Pin(GPIO_SPI_CS)) && (!GetPin(12) && !GetPin(13) && !GetPin(14))) {  // HSPI
+      my_module.io[12] = AGPIO(GPIO_SPI_MISO);
+      SetPin(12, AGPIO(GPIO_SPI_MISO));
+      my_module.io[13] = AGPIO(GPIO_SPI_MOSI);
+      SetPin(13, AGPIO(GPIO_SPI_MOSI));
+      my_module.io[14] = AGPIO(GPIO_SPI_CLK);
+      SetPin(14, AGPIO(GPIO_SPI_CLK));
+    }
+    else if ((5 == Pin(GPIO_SPI_CS)) && (!GetPin(19) && !GetPin(23) && !GetPin(18))) {  // VSPI
+      my_module.io[19] = AGPIO(GPIO_SPI_MISO);
+      SetPin(19, AGPIO(GPIO_SPI_MISO));
+      my_module.io[23] = AGPIO(GPIO_SPI_MOSI);
+      SetPin(23, AGPIO(GPIO_SPI_MOSI));
+      my_module.io[18] = AGPIO(GPIO_SPI_CLK);
+      SetPin(18, AGPIO(GPIO_SPI_CLK));
+    }
+    else if ((12 == Pin(GPIO_SPI_MISO)) || (13 == Pin(GPIO_SPI_MOSI)) || (14 == Pin(GPIO_SPI_CLK))) {  // HSPI
+      my_module.io[12] = AGPIO(GPIO_SPI_MISO);
+      SetPin(12, AGPIO(GPIO_SPI_MISO));
+      my_module.io[13] = AGPIO(GPIO_SPI_MOSI);
+      SetPin(13, AGPIO(GPIO_SPI_MOSI));
+      my_module.io[14] = AGPIO(GPIO_SPI_CLK);
+      SetPin(14, AGPIO(GPIO_SPI_CLK));
+    }
+    else if ((19 == Pin(GPIO_SPI_MISO)) || (23 == Pin(GPIO_SPI_MOSI)) || (18 == Pin(GPIO_SPI_CLK))) {  // VSPI
+      my_module.io[19] = AGPIO(GPIO_SPI_MISO);
+      SetPin(19, AGPIO(GPIO_SPI_MISO));
+      my_module.io[23] = AGPIO(GPIO_SPI_MOSI);
+      SetPin(23, AGPIO(GPIO_SPI_MOSI));
+      my_module.io[18] = AGPIO(GPIO_SPI_CLK);
+      SetPin(18, AGPIO(GPIO_SPI_CLK));
+    }
+    spi_flg = (PinUsed(GPIO_SPI_CLK) && (PinUsed(GPIO_SPI_MOSI) || PinUsed(GPIO_SPI_MISO)));
+    if (spi_flg) {
+      if (PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_MISO)) {
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MISO), GPIO%02d(MOSI) and GPIO%02d(CLK)"),
+          Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
+      }
+      else if (PinUsed(GPIO_SPI_MOSI)) {
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MOSI) and GPIO%02d(CLK)"),
+          Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
+      }
+      else if (PinUsed(GPIO_SPI_MISO)) {
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MISO) and GPIO%02d(CLK)"),
+          Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK));
+      }
+    }
+  }
   soft_spi_flg = (PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
 #endif  // USE_SPI
 #endif  // ESP8266 - ESP32
@@ -1682,7 +1731,7 @@ void GpioInit(void)
     if (PinUsed(GPIO_LED1, i)) {
 #ifdef USE_ARILUX_RF
       if ((3 == i) && (leds_present < 2) && !PinUsed(GPIO_ARIRFSEL)) {
-        SetPin(Pin(GPIO_LED1, i), GPIO_ARIRFSEL);  // Legacy support where LED4 was Arilux RF enable
+        SetPin(Pin(GPIO_LED1, i), AGPIO(GPIO_ARIRFSEL));  // Legacy support where LED4 was Arilux RF enable
       } else {
 #endif
         pinMode(Pin(GPIO_LED1, i), OUTPUT);

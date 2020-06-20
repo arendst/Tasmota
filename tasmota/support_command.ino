@@ -40,7 +40,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS
   D_CMND_SENSOR "|" D_CMND_DRIVER
 #ifdef ESP32
-   "|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM
+   "|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY
 #endif //ESP32
   ;
 
@@ -67,7 +67,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS
   &CmndSensor, &CmndDriver
 #ifdef ESP32
-  ,&CmndTouchCal, &CmndTouchThres, &CmndTouchNum
+  ,&CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency
 #endif //ESP32
   };
 
@@ -1977,6 +1977,14 @@ void CmndDriver(void)
 }
 
 #ifdef ESP32
+
+void CmndCpuFrequency(void) {
+  if ((80 == XdrvMailbox.payload) || (160 == XdrvMailbox.payload) || (240 == XdrvMailbox.payload)) {
+    setCpuFrequencyMhz(XdrvMailbox.payload);
+  }
+  ResponseCmndNumber(getCpuFrequencyMhz());
+}
+
 void CmndTouchCal(void)
 {
   if (XdrvMailbox.payload >= 0) {

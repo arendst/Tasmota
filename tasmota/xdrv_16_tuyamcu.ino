@@ -570,15 +570,15 @@ void TuyaNormalPowerModePacketProcess(void)
         bool key1_set = false;
         bool led1_set = false;
         for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
-          if (Settings.my_gp.io[i] == GPIO_LED1) led1_set = true;
-          else if (Settings.my_gp.io[i] == GPIO_KEY1) key1_set = true;
+          if (Settings.my_gp.io[i] == AGPIO(GPIO_LED1)) led1_set = true;
+          else if (Settings.my_gp.io[i] == AGPIO(GPIO_KEY1)) key1_set = true;
         }
         if (!Settings.my_gp.io[led1_gpio] && !led1_set) {
-          Settings.my_gp.io[led1_gpio] = GPIO_LED1;
+          Settings.my_gp.io[led1_gpio] = AGPIO(GPIO_LED1);
           restart_flag = 2;
         }
         if (!Settings.my_gp.io[key1_gpio] && !key1_set) {
-          Settings.my_gp.io[key1_gpio] = GPIO_KEY1;
+          Settings.my_gp.io[key1_gpio] = AGPIO(GPIO_KEY1);
           restart_flag = 2;
         }
       }
@@ -597,10 +597,10 @@ void TuyaNormalPowerModePacketProcess(void)
 bool TuyaModuleSelected(void)
 {
   if (!PinUsed(GPIO_TUYA_RX) || !PinUsed(GPIO_TUYA_TX)) {  // fallback to hardware-serial if not explicitly selected
-    SetPin(1, GPIO_TUYA_TX);
-    SetPin(3, GPIO_TUYA_RX);
-    Settings.my_gp.io[1] = GPIO_TUYA_TX;
-    Settings.my_gp.io[3] = GPIO_TUYA_RX;
+    SetPin(1, AGPIO(GPIO_TUYA_TX));
+    SetPin(3, AGPIO(GPIO_TUYA_RX));
+    Settings.my_gp.io[1] = AGPIO(GPIO_TUYA_TX);
+    Settings.my_gp.io[3] = AGPIO(GPIO_TUYA_RX);
     restart_flag = 2;
   }
 
