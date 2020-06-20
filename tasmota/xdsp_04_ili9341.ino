@@ -90,11 +90,8 @@ void Ili9341InitDriver(void)
     if (Settings.display_height != ILI9341_TFTHEIGHT) {
       Settings.display_height = ILI9341_TFTHEIGHT;
     }
-#ifdef ESP8266
+
     tft = new Adafruit_ILI9341(Pin(GPIO_SPI_CS), Pin(GPIO_SPI_DC));
-#else  // ESP32
-    tft = new Adafruit_ILI9341(Pin(GPIO_SPI_CS), Pin(GPIO_SPI_DC), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK), -1, Pin(GPIO_SPI_MISO));
-#endif
     tft->begin();
 
 #ifdef USE_DISPLAY_MODES1TO5
