@@ -374,6 +374,7 @@ struct SCRIPT_MEM {
 
 #ifdef USE_SCRIPT_GLOBVARS
 IPAddress last_udp_ip;
+WiFiUDP Script_PortUdp;
 #endif
 
 int16_t last_findex;
@@ -796,11 +797,17 @@ char *script;
 #define SCRIPT_UDP_PORT 1999
 IPAddress script_udp_remote_ip;
 
+void Script_Stop_UDP(void) {
+  Script_PortUdp.flush();
+  Script_PortUdp.stop();
+  glob_script_mem.udp_flags.udp_connected  = 0;
+}
+
 void Script_Init_UDP() {
   if (global_state.network_down) return;
   if (glob_script_mem.udp_flags.udp_connected) return;
 
-  if (PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
+  if (Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP started"));
     glob_script_mem.udp_flags.udp_connected = 1;
   } else {
@@ -809,13 +816,14 @@ void Script_Init_UDP() {
   }
 }
 void Script_PollUdp(void) {
+  if (global_state.network_down) return;
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected ) {
-    while (PortUdp.parsePacket()) {
+    while (Script_PortUdp.parsePacket()) {
       char packet_buffer[SCRIPT_UDP_BUFFER_SIZE];
-      int32_t len = PortUdp.read(packet_buffer, SCRIPT_UDP_BUFFER_SIZE -1);
+      int32_t len = Script_PortUdp.read(packet_buffer, SCRIPT_UDP_BUFFER_SIZE -1);
       packet_buffer[len] = 0;
-      script_udp_remote_ip = PortUdp.remoteIP();
+      script_udp_remote_ip = Script_PortUdp.remoteIP();
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("UDP: Packet %s - %d - %s"), packet_buffer, len, script_udp_remote_ip.toString().c_str());
       char *lp=packet_buffer;
       if (!strncmp(lp,"=>",2)) {
@@ -835,17 +843,17 @@ void Script_PollUdp(void) {
           uint32_t index;
           uint32_t res=match_vars(vnam, &fp, &sp, &index);
           if (res==NUM_RES) {
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("num var found - %s - %d"),vnam,res);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("num var found - %s - %d - %d"),vnam,res,index);
             *fp=CharToFloat(cp+1);
           } else if (res==STR_RES) {
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("string var found - %s - %d"),vnam,res);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("string var found - %s - %d - %d"),vnam,res,index);
             strlcpy(sp,cp+1,SCRIPT_MAXSSIZE);
           } else {
             // error var not found
           }
           if (res) {
             // mark changed
-            last_udp_ip=PortUdp.remoteIP();
+            last_udp_ip=Script_PortUdp.remoteIP();
             glob_script_mem.type[index].bits.changed=1;
             if (glob_script==99) {
               Run_Scripter(">G",2,0);
@@ -877,10 +885,10 @@ void script_udp_sendvar(char *vname,float *fp,char *sp) {
     strcat(sbuf,sp);
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("string var updated - %s"),sbuf);
   }
-  PortUdp.beginPacket(IPAddress(239,255,255,250), SCRIPT_UDP_PORT);
+  Script_PortUdp.beginPacket(IPAddress(239,255,255,250), SCRIPT_UDP_PORT);
   //  Udp.print(String("RET UC: ") + String(recv_Packet));
-  PortUdp.write((const uint8_t*)sbuf,strlen(sbuf));
-  PortUdp.endPacket();
+  Script_PortUdp.write((const uint8_t*)sbuf,strlen(sbuf));
+  Script_PortUdp.endPacket();
 }
 
 #endif
@@ -1196,12 +1204,12 @@ uint32_t match_vars(char *dvnam, float **fp, char **sp, uint32_t *ind) {
             return 0;
           } else {
             *fp=&glob_script_mem.fvars[index];
-            *ind=index;
+            *ind=count;
             return NUM_RES;
           }
         } else {
           *sp=glob_script_mem.glob_snp+(index*glob_script_mem.max_ssize);
-          *ind=index;
+          *ind=count;
           return STR_RES;
         }
       }
@@ -4956,14 +4964,12 @@ void Script_Handle_Hue(String *path) {
       response.replace("{cm", "on");
 
       bool on = hue_json["on"];
-      switch(on)
-      {
-        case false : glob_script_mem.fvars[hue_script[index].index[0]-1]=0;
-                     response.replace("{re", "false");
-                     break;
-        case true  : glob_script_mem.fvars[hue_script[index].index[0]-1]=1;
-                     response.replace("{re", "true");
-                     break;
+      if (on==false) {
+        glob_script_mem.fvars[hue_script[index].index[0]-1]=0;
+        response.replace("{re", "false");
+      } else {
+        glob_script_mem.fvars[hue_script[index].index[0]-1]=1;
+          response.replace("{re", "true");
       }
       glob_script_mem.type[hue_script[index].vindex[0]].bits.changed=1;
       resp = true;
@@ -6454,6 +6460,9 @@ bool Xdrv10(uint8_t function)
         Run_Scripter(">R",2,0);
         Scripter_save_pvars();
       }
+#ifdef USE_SCRIPT_GLOBVARS
+      Script_Stop_UDP();
+#endif
       break;
 #ifdef SUPPORT_MQTT_EVENT
     case FUNC_MQTT_DATA:
