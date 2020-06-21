@@ -1275,7 +1275,7 @@ void CmndButtonDebounce(void)
 
 void CmndSwitchDebounce(void)
 {
-  if ((XdrvMailbox.payload > 39) && (XdrvMailbox.payload < 1001)) {
+  if ((XdrvMailbox.payload > 39) && (XdrvMailbox.payload < 1010)) {
     Settings.switch_debounce = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings.switch_debounce);
