@@ -21,6 +21,8 @@
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
 
+  0.9.6.1 20200622  integrate - use BEARSSL-lib for decryption as default, make decryption optional
+  ---
   0.9.6.0 20200618  integrate - add decryption for LYWSD03
   ---
   0.9.5.0 20200328  integrate - add dew point, multi-page-web ui, refactoring, command interface,
@@ -53,7 +55,8 @@
   #define MINRF_LOG_BUFFER(x)
 #endif
 
-
+#define USE_MI_DECRYPTION
+// #define USE_MBEDTLS
 /*********************************************************************************************\
 * MINRF
 * BLE-Sniffer/Bridge for MIJIA/XIAOMI Temperatur/Humidity-Sensor, Mi Flora, LYWSD02, GCx
@@ -64,7 +67,14 @@
 #define XSNS_61             61
 
 #include <vector>
+#ifdef USE_MI_DECRYPTION
+#ifdef USE_MBEDTLS
 #include <mbedtls/ccm.h>
+#else
+#include <bearssl/bearssl_block.h>
+#include <bearssl/bearssl_hmac.h>
+#endif // USE_MBEDTLS
+#endif //USE_MI_DECRYPTION
 
 #define FLORA       1
 #define MJ_HT_V1    2
@@ -77,15 +87,21 @@
 
 const char S_JSON_NRF_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_NRF "%s\":%d}";
 const char S_JSON_NRF_COMMAND[] PROGMEM        = "{\"" D_CMND_NRF "%s\":\"%s\"}";
-const char kNRF_Commands[] PROGMEM             = "Ignore|Page|Scan|Beacon|Chan|Key";
+const char kNRF_Commands[] PROGMEM             = "Ignore|Page|Scan|Beacon|Chan"
+#ifdef USE_MI_DECRYPTION
+                                                  "|Key"
+#endif //USE_MI_DECRYPTION
+                                                  ;
 
 enum NRF_Commands {          // commands useable in console or rules
   CMND_NRF_IGNORE,           // ignore specific sensor type (1-6)
   CMND_NRF_PAGE,             // sensor entries per web page, which will be shown alternated
   CMND_NRF_SCAN,             // simplified passive BLE adv scan
   CMND_NRF_BEACON,           // even more simplified Beacon, reports time since last sighting
-  CMND_NRF_CHAN,             // ignore channel 0-2 (translates to 37-39)
-  CMND_NRF_KEY               // add bind_key to a MAC for payload decryption
+  CMND_NRF_CHAN              // ignore channel 0-2 (translates to 37-39)
+#ifdef USE_MI_DECRYPTION
+  ,  CMND_NRF_KEY            // add bind_key to a MAC for payload decryption
+#endif //USE_MI_DECRYPTION
   };
 
 const uint16_t kMINRFSlaveID[6]={ 0x0098, // Flora
@@ -159,6 +175,7 @@ struct bleAdvPacket_t { // for nRF24L01 max 32 bytes = 2+6+24
   uint8_t mac[6];
 };
 
+#ifdef USE_MI_DECRYPTION
 struct encPayload_t {
   uint8_t cipher[5];
   uint8_t ExtCnt[3];
@@ -180,7 +197,7 @@ union mi_bindKey_t{
     };
   uint8_t buf[22];
 };
-
+#endif //USE_MI_DECRYPTION
 union FIFO_t{
   bleAdvPacket_t bleAdv;
   mi_beacon_t miBeacon;
@@ -249,7 +266,9 @@ struct scan_entry_t {
 
 std::vector<mi_sensor_t> MIBLEsensors;
 std::vector<scan_entry_t> MINRFscanResult;
+#ifdef USE_MI_DECRYPTION
 std::vector<mi_bindKey_t> MIBLEbindKeys;
+#endif //USE_MI_DECRYPTION
 
 static union{
   scan_entry_t MINRFdummyEntry;
@@ -590,7 +609,7 @@ void MINRFcomputeBeaconPDU(void){
     MINRF.beacon.PDU[i] = pdu;
   }
 }
-
+#ifdef USE_MI_DECRYPTION
 int MINRFdecryptPacket(char *_buf){
   encPacket_t *packet = (encPacket_t*)_buf;
   // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("to decrypt: %02x %02x %02x %02x %02x %02x %02x %02x"),(uint8_t)_buf[0],(uint8_t)_buf[1],(uint8_t)_buf[2],(uint8_t)_buf[3],(uint8_t)_buf[4],(uint8_t)_buf[5],(uint8_t)_buf[6],(uint8_t)_buf[7]);
@@ -620,6 +639,8 @@ int MINRFdecryptPacket(char *_buf){
     // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mac in vector: %02x  %02x  %02x  %02x  %02x  %02x"), MIBLEbindKeys[i].MAC[0], MIBLEbindKeys[i].MAC[1], MIBLEbindKeys[i].MAC[2], MIBLEbindKeys[i].MAC[3], MIBLEbindKeys[i].MAC[4], MIBLEbindKeys[i].MAC[5]);
     // }
   }
+
+  #ifdef USE_MBEDTLS
   // init
   mbedtls_ccm_context ctx;
   mbedtls_ccm_init(&ctx);
@@ -637,14 +658,35 @@ int MINRFdecryptPacket(char *_buf){
     packet->payload.cipher, output,
     packet->payload.tag,sizeof(packet->payload.tag));
 
-  AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Err:%i, Decrypted : %02x  %02x  %02x  %02x  %02x "), ret, output[0],output[1],output[2],output[3],output[4]);
+  AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MBEDTLS: Err:%i, Decrypted : %02x  %02x  %02x  %02x  %02x "), ret, output[0],output[1],output[2],output[3],output[4]);
   // put decrypted data in place
   memcpy((uint8_t*)(packet->payload.cipher)+1,output,sizeof(packet->payload.cipher));
   // clean up
   mbedtls_ccm_free(&ctx);
   return ret;
-}
 
+  #else // BearSSL
+
+  memcpy(output,packet->payload.cipher, sizeof(packet->payload.cipher));
+
+  br_aes_small_ctrcbc_keys keyCtx;
+  br_aes_small_ctrcbc_init(&keyCtx, _bindkey, sizeof(_bindkey));
+
+  br_ccm_context ctx;
+  br_ccm_init(&ctx, &keyCtx.vtable);
+  br_ccm_reset(&ctx, nonce, sizeof(nonce), sizeof(packet->payload.cipher), sizeof(authData), sizeof(packet->payload.tag));
+	br_ccm_aad_inject(&ctx, authData, sizeof(authData));
+	br_ccm_flip(&ctx);
+	br_ccm_run(&ctx, 0, output, sizeof(packet->payload.cipher));
+
+  ret = br_ccm_check_tag(&ctx, packet->payload.tag);
+  AddLog_P2(LOG_LEVEL_DEBUG,PSTR("BEARSSL: Err:%i, Decrypted : %02x  %02x  %02x  %02x  %02x "), ret, output[0],output[1],output[2],output[3],output[4]);
+  memcpy((uint8_t*)(packet->payload.cipher)+1,output,sizeof(packet->payload.cipher));
+  return ret;
+  #endif //USE_MBEDTLS
+
+}
+#endif //USE_MI_DECRYPTION
 
 /*********************************************************************************************\
  * helper functions
@@ -662,7 +704,7 @@ void MINRFreverseMAC(uint8_t _mac[]){
   }
   memcpy(_mac,_reversedMAC, sizeof(_reversedMAC));
 }
-
+#ifdef USE_MI_DECRYPTION
 void MINRFAddKey(char* payload){
   mi_bindKey_t keyMAC;
   memset(keyMAC.buf,0,sizeof(keyMAC));
@@ -702,7 +744,7 @@ void MINRFKeyMACStringToBytes(char* _string,uint8_t _keyMac[]) { //uppercase
     DEBUG_SENSOR_LOG(PSTR("MINRF:  key-array: %02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"),_keyMac[0],_keyMac[1],_keyMac[2],_keyMac[3],_keyMac[4],_keyMac[5],_keyMac[6],_keyMac[7],_keyMac[8],_keyMac[9],_keyMac[10],_keyMac[11],_keyMac[12],_keyMac[13],_keyMac[14],_keyMac[15]);
     DEBUG_SENSOR_LOG(PSTR("MINRF: MAC-array: %02X%02X%02X%02X%02X%02X"),_keyMac[16],_keyMac[17],_keyMac[18],_keyMac[19],_keyMac[20],_keyMac[21]);
 }
-
+#endif //USE_MI_DECRYPTION
 /**
  * @brief
  *
@@ -884,12 +926,13 @@ void MINRFhandleMiBeaconPacket(void){
     memcpy(MINRFtempBuf,(uint8_t*)&MINRF.buffer.miBeacon.spare, 32-9); // shift by one byte for the MJ_HT_V1 and CGG1
     memcpy((uint8_t*)&MINRF.buffer.miBeacon.type,MINRFtempBuf, 32-9);  // shift by one byte for the MJ_HT_V1 and CGG1
   }
+#ifdef USE_MI_DECRYPTION
   if(_sensorVec->type==LYWSD03){
     int decryptRet = -1;
     decryptRet = MINRFdecryptPacket((char*)&MINRF.buffer); //start with PID
     if(decryptRet==0) _sensorVec->showedUp=255; // if decryption worked, this must be a valid sensor
   }
-
+#endif //USE_MI_DECRYPTION
   DEBUG_SENSOR_LOG(PSTR("%s at slot %u"), kNRFSlaveType[_sensorVec->type-1],_slot);
   switch(MINRF.buffer.miBeacon.type){
     case 0x04:
@@ -1135,12 +1178,14 @@ bool NRFCmd(void) {
           }
           Response_P(S_JSON_NRF_COMMAND_NVALUE, command, MINRF.channelIgnore);
         break;
+#ifdef USE_MI_DECRYPTION
       case CMND_NRF_KEY:
         if (XdrvMailbox.data_len==44){  // a KEY-MAC-string
           MINRFAddKey(XdrvMailbox.data);
           Response_P(S_JSON_NRF_COMMAND, command, XdrvMailbox.data);
         }
         break;
+#endif //USE_MI_DECRYPTION
       default:
         // else for Unknown command
         serviced = false;
