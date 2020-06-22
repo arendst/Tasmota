@@ -977,11 +977,15 @@ void HM10_TaskEvery100ms(){
   }
 }
 
-void HM10StatusInfo(){
+void HM10StatusInfo() {
+/*
   char stemp[20];
   snprintf_P(stemp, sizeof(stemp),PSTR("{%s:{\"found\": %u}}"),D_CMND_HM10, MIBLEsensors.size());
   AddLog_P2(LOG_LEVEL_INFO, stemp);
   RulesProcessEvent(stemp);
+*/
+  Response_P(PSTR("{%s:{\"found\":%u}}"), D_CMND_HM10, MIBLEsensors.size());
+  XdrvRulesProcess();
 }
 
 /**

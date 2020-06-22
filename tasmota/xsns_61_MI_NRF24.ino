@@ -584,13 +584,17 @@ bool MINRFhandleBeacon(scan_entry_t * entry, uint32_t offset){
  * @brief increase beacon timer every second and process the result
  *
  */
-void MINRFbeaconCounter(void){
-  if(MINRF.beacon.active) {
+void MINRFbeaconCounter(void) {
+  if (MINRF.beacon.active) {
     MINRF.beacon.time++;
+/*
     char stemp[20];
     snprintf_P(stemp, sizeof(stemp),PSTR("{%s:{\"Beacon\": %u}}"),D_CMND_NRF, MINRF.beacon.time);
     AddLog_P2(LOG_LEVEL_DEBUG, stemp);
     RulesProcessEvent(stemp);
+*/
+    Response_P(PSTR("{%s:{\"Beacon\":%u}}"), D_CMND_NRF, MINRF.beacon.time);
+    XdrvRulesProcess();
   }
 }
 
@@ -723,10 +727,10 @@ void MINRFAddKey(char* payload){
 }
 
 /**
- * @brief Convert combined key-MAC-string to 
+ * @brief Convert combined key-MAC-string to
  *
  * @param _string input string in format: AABBCCDDEEFF... (upper case!), must be 44 chars!!
- * @param _mac  target byte array with fixed size of 16 + 6 
+ * @param _mac  target byte array with fixed size of 16 + 6
  */
 void MINRFKeyMACStringToBytes(char* _string,uint8_t _keyMac[]) { //uppercase
     uint32_t index = 0;
