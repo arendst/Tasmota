@@ -62,6 +62,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Change define USE_TASMOTA_SLAVE into USE_TASMOTA_CLIENT
 - Change commands ``SlaveSend`` and ``SlaveReset`` into ``ClientSend`` and ``ClientReset``
 - Fix escape of non-JSON received serial data (#8329)
+- Fix exception or watchdog on rule re-entry (#8757)
 - Add command ``Rule0`` to change global rule parameters
 - Add command ``Time 4`` to display timestamp using milliseconds (#8537)
 - Add command ``SetOption94 0/1`` to select MAX31855 or MAX6675 thermocouple support (#8616)
@@ -88,3 +89,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add Library to be used for decoding Teleinfo (French Metering Smart Meter)
 - Add basic support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON
 - Add support for single wire LMT01 temperature Sensor by justifiably (#8713)
+- Add compile time interlock parameters (#8759)

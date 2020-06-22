@@ -1627,7 +1627,8 @@ void CmndInterlock(void)
     }
     ResponseAppend_P(PSTR("\"}"));
   } else {
-    Settings.flag.interlock = 0;                                // CMND_INTERLOCK - Enable/disable interlock
+    // never ever reset interlock mode inadvertently if we forced it upon compilation
+    Settings.flag.interlock = APP_INTERLOCK_MODE;               // CMND_INTERLOCK - Enable/disable interlock
     ResponseCmndStateText(Settings.flag.interlock);
   }
 }
