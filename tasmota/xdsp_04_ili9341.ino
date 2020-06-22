@@ -34,11 +34,28 @@
 
 Adafruit_ILI9341 *tft;
 
-uint16_t tft_scroll = TFT_TOP;
 uint16_t tft_top = TFT_TOP;
 uint16_t tft_bottom = TFT_BOTTOM;
+uint16_t tft_scroll = TFT_TOP;
+uint16_t tft_cols = 0;
 
 /*********************************************************************************************/
+
+bool Ili9341Header(void) {
+  if (Settings.display_cols[0] != tft_cols) {
+    tft_cols = Settings.display_cols[0];
+    if (tft_cols > 17) {
+      tft_top = TFT_TOP;
+      tft_bottom = TFT_BOTTOM;
+    } else {
+      tft_top = 0;
+      tft_bottom = 0;
+    }
+    tft_scroll = tft_top;
+    tft->setScrollMargins(tft_top, tft_bottom);
+  }
+  return (tft_cols > 17);
+}
 
 void Ili9341InitMode(void)
 {
@@ -52,15 +69,12 @@ void Ili9341InitMode(void)
     tft->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
     tft->setTextSize(1);
   } else {
-    tft_top = TFT_TOP;
-    tft_bottom = TFT_BOTTOM;
-    tft->setScrollMargins(tft_top, tft_bottom);
+    Ili9341Header();
     tft->setCursor(0, 0);
     tft->setTextColor(ILI9341_YELLOW, ILI9341_BLACK);
     tft->setTextSize(2);
 //    tft->println("HEADER");
 
-    tft_scroll = tft_top;
   }
 }
 
@@ -105,6 +119,8 @@ void Ili9341InitDriver(void)
 #endif  // USE_DISPLAY_MODES1TO5
 
     Ili9341InitMode();
+
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("DSP: ILI9341"));
   }
 }
 
@@ -168,7 +184,7 @@ void Ili9341PrintLog(void)
         tft->setCursor(0, tft_scroll);
         tft->fillRect(0, tft_scroll, tft->width(), theight, ILI9341_BLACK);  // Erase line
         tft->print(txt);
-        if (tft_top) { tft_scroll += theight; }
+        tft_scroll += theight;
         if (tft_scroll >= (tft->height() - tft_bottom)) {
           tft_scroll = tft_top;
         }
@@ -201,17 +217,13 @@ void Ili9341Refresh(void)  // Every second
     // 24-04-2017 13:45:43 = 19 + 1 ('\0') = 20
     // 24-04-2017 13:45 = 16 + 1 ('\0') = 17
 
-    if (Settings.display_cols[0] > 17) {
+    if (Ili9341Header()) {
       char tftdt[Settings.display_cols[0] +1];
       char date4[11];  // 24-04-2017
       uint8_t time_size = (Settings.display_cols[0] >= 20) ? 9 : 6;  // 13:45:43 or 13:45
       char spaces[Settings.display_cols[0] - (8 + time_size)];
       char time[time_size];    // 13:45:43
 
-      tft_top = TFT_TOP;
-      tft_bottom = TFT_BOTTOM;
-      tft_scroll = tft_top;
-      tft->setScrollMargins(tft_top, tft_bottom);
       tft->setTextSize(Settings.display_size);
       tft->setTextColor(ILI9341_YELLOW, ILI9341_RED);   // Add background color to solve flicker
       tft->setCursor(0, 0);
@@ -224,10 +236,6 @@ void Ili9341Refresh(void)  // Every second
 
       tft->print(tftdt);
     } else {
-      tft_top = 0;
-      tft_bottom = 0;
-      tft_scroll = tft_top;
-      tft->setScrollMargins(tft_top, tft_bottom);
       tft->setCursor(0, 0);
     }
 
