@@ -25,7 +25,7 @@
 
 #include <TasmotaSerial.h>
 
-#define TMSBSIZ 512
+#define TMSBSIZ52 512
 
 #define HM17_BAUDRATE 9600
 
@@ -101,7 +101,7 @@ void IBEACON_Init() {
 
 // actually doesnt work reliably with software serial
   if (PinUsed(GPIO_IBEACON_RX) && PinUsed(GPIO_IBEACON_TX)) {
-    IBEACON_Serial = new TasmotaSerial(Pin(GPIO_IBEACON_RX), Pin(GPIO_IBEACON_TX),1,0,TMSBSIZ);
+    IBEACON_Serial = new TasmotaSerial(Pin(GPIO_IBEACON_RX), Pin(GPIO_IBEACON_TX),1,0,TMSBSIZ52);
     if (IBEACON_Serial->begin(HM17_BAUDRATE)) {
       if (IBEACON_Serial->hardwareSerial()) {
         ClaimSerial();
