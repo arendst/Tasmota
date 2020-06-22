@@ -358,13 +358,13 @@ void ShutterUpdatePosition(void)
             Shutter.accelerator[i] = 0;
             Shutter.pwm_frequency[i] = Shutter.pwm_frequency[i] > 250 ? 250 : Shutter.pwm_frequency[i];
             analogWriteFreq(Shutter.pwm_frequency[i]);
-            analogWrite(Pin(GPIO_PWM1, i), 1);
+            analogWrite(Pin(GPIO_PWM1, i), 50);
             Shutter.pwm_frequency[i] = 0;
             analogWriteFreq(Shutter.pwm_frequency[i]);
             while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter.target_position[i]-Shutter.start_position[i])*Shutter.direction[i]*Shutter.max_pwm_frequency/2000) {
               delay(1);
             }
-            //analogWrite(Pin(GPIO_PWM1, i), 0); // removed with 8. because of reset
+            //analogWrite(Pin(GPIO_PWM1, i), 0); // removed with 8.3 because of reset caused by watchog
             ExecuteCommandPower(Settings.shutter_startrelay[i]+2, 0, SRC_SHUTTER);
             Shutter.real_position[i] = ShutterCounterBasedPosition(i);
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Real %d, pulsecount %d, start %d"), Shutter.real_position[i],RtcSettings.pulse_counter[i], Shutter.start_position[i]);
@@ -429,7 +429,6 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
       Shutter.pwm_frequency[i] = 0;
       analogWriteFreq(Shutter.pwm_frequency[i]);
       analogWrite(Pin(GPIO_PWM1, i), 0);
-      //ExecuteCommandPower(Settings.shutter_startrelay[i]+2, 1, SRC_SHUTTER);
       RtcSettings.pulse_counter[i] = 0;
       Shutter.accelerator[i] = Shutter.max_pwm_frequency / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Ramp up: %d"), Shutter.accelerator[i]);
