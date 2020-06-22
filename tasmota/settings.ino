@@ -765,8 +765,20 @@ void SettingsDefaultSet2(void)
   }
 
   // Module
-//  flag.interlock |= 0;
-  Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
+  flag.interlock |= APP_INTERLOCK_MODE;
+  for (uint32_t i = 0; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }
+#ifdef APP_INTERLOCK_GROUP_1
+  Settings.interlock[0] = APP_INTERLOCK_GROUP_1;         // Legacy support using all relays in one interlock group
+#endif
+#ifdef APP_INTERLOCK_GROUP_2
+  Settings.interlock[1] = APP_INTERLOCK_GROUP_2;
+#endif
+#ifdef APP_INTERLOCK_GROUP_3
+  Settings.interlock[2] = APP_INTERLOCK_GROUP_3;
+#endif
+#ifdef APP_INTERLOCK_GROUP_4
+  Settings.interlock[3] = APP_INTERLOCK_GROUP_4;
+#endif
   Settings.module = MODULE;
   Settings.fallback_module = FALLBACK_MODULE;
   ModuleDefault(WEMOS);
@@ -1188,8 +1200,19 @@ void SettingsDelta(void)
       Settings.param[P_MDNS_DELAYED_START] = 0;
     }
     if (Settings.version < 0x0604010B) {
-      Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
-      for (uint32_t i = 1; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }
+      for (uint32_t i = 0; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }
+#ifdef APP_INTERLOCK_GROUP_1
+      Settings.interlock[0] = APP_INTERLOCK_GROUP_1;         // Legacy support using all relays in one interlock group
+#endif
+#ifdef APP_INTERLOCK_GROUP_2
+      Settings.interlock[1] = APP_INTERLOCK_GROUP_2;
+#endif
+#ifdef APP_INTERLOCK_GROUP_3
+      Settings.interlock[2] = APP_INTERLOCK_GROUP_3;
+#endif
+#ifdef APP_INTERLOCK_GROUP_4
+      Settings.interlock[3] = APP_INTERLOCK_GROUP_4;
+#endif
     }
     if (Settings.version < 0x0604010D) {
       Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
