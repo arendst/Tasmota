@@ -77,8 +77,7 @@ bool DhtRead(uint32_t sensor)
       delay(19);  // minimum 18ms
       break;
     case GPIO_DHT22:                                    // DHT21, DHT22, AM2301, AM2302, AM2321
-//      delay(2);   // minimum 1ms
-      delayMicroseconds(2000);                          // See https://github.com/arendst/Tasmota/pull/7468#issuecomment-647067015
+      delay(2);   // minimum 1ms
       break;
     case GPIO_SI7021:                                   // iTead SI7021
       delayMicroseconds(500);
