@@ -133,9 +133,9 @@ constexpr int maxPWMs = 8;
 
 // PWM machine state
 typedef struct PWMState {
-  uint32_t mask; // Bitmask of active pins
-  uint32_t cnt;  // How many entries
-  uint32_t idx;  // Where the state machine is along the list
+  uint32_t mask = 0; // Bitmask of active pins
+  uint32_t cnt = 0;  // How many entries
+  uint32_t idx = 0;  // Where the state machine is along the list
   uint8_t  pin[maxPWMs + 1];
   uint32_t delta[maxPWMs + 1];
   uint32_t nextServiceCycle;  // Clock cycle for next step
@@ -528,7 +528,7 @@ static ICACHE_RAM_ATTR void timer1Interrupt() {
               // Done, remove!
               if (i == 16) {
                 GP16O = 0;
-              } 
+              }
               GPOC = mask;
               wvfState.waveformEnabled &= ~mask;
               continue;

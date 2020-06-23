@@ -153,8 +153,8 @@ void ICACHE_RAM_ATTR interrupt_handler(void*)
     while(!(changedbits & (1 << i))) i++;
     changedbits &= ~(1 << i);
     interrupt_handler_t *handler = &interrupt_handlers[i];
-    if (handler->fn && 
-        (handler->mode == CHANGE || 
+    if (handler->fn &&
+        (handler->mode == CHANGE ||
          (handler->mode & 1) == !!(levels & (1 << i)))) {
           // to make ISR compatible to Arduino AVR model where interrupts are disabled
           // we disable them before we call the client ISR
