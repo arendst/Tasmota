@@ -39,6 +39,8 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
+#ifdef ESP8266
+
 #include <Arduino.h>
 
 #ifndef __ESP8266_WAVEFORM_H
@@ -87,3 +89,5 @@ void setTimer1Callback(uint32_t (*fn)());
 #endif
 
 #endif
+
+#endif  // ESP8266
