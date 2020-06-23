@@ -470,6 +470,29 @@ uint32_t IrRemoteCmndIrSendRaw(void)
       return IE_INVALID_RAWDATA;
     }   // Parameters must be at least 3
 
+
+#ifdef IR_GC
+//ir_gc
+
+  if (strcmp(str, "gc") == 0) {  //if first parameter is gc then we process global cache data else it is raw
+       
+	uint16_t GC[count+1];
+	for (uint32_t i = 0; i <= count; i++) {
+	  GC[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);
+      if (!GC[i]) {
+         return IE_INVALID_RAWDATA;                
+      }
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: GC value %d"), GC[i]);
+    }
+    irsend->sendGC(GC, count+1);
+		AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: GC sent count %d"), count);
+    return IE_NO_ERROR;
+  }
+//end ir_gc
+#endif
+
+
+
     uint16_t parm[count];
     for (uint32_t i = 0; i < count; i++) {
       parm[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);
