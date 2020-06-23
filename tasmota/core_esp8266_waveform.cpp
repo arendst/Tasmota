@@ -39,6 +39,8 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
+#ifdef ESP8266
+
 #include "core_esp8266_waveform.h"
 #include <Arduino.h>
 #include "ets_sys.h"
@@ -434,3 +436,5 @@ static ICACHE_RAM_ATTR void timer1Interrupt() {
   // Register access is fast and edge IRQ was configured before.
   T1L = nextEventCcys;
 }
+
+#endif  // ESP8266 
