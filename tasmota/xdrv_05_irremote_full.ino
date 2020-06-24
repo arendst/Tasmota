@@ -470,8 +470,7 @@ uint32_t IrRemoteCmndIrSendRaw(void)
       return IE_INVALID_RAWDATA;
     }   // Parameters must be at least 3
 
-#ifdef IR_GC
-   if (strcmp(str, "gc") == 0 || strcmp(str, "GC") == 0) {  //if first parameter is gc then we process global cache data else it is raw
+   if (strcasecmp(str, "gc") == 0) {  //if first parameter is gc then we process global cache data else it is raw
 	uint16_t GC[count+1];
 	for (uint32_t i = 0; i <= count; i++) {
 	  GC[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);
@@ -485,7 +484,6 @@ uint32_t IrRemoteCmndIrSendRaw(void)
     }
 	return IE_NO_ERROR;
   }
-#endif
 
     uint16_t parm[count];
     for (uint32_t i = 0; i < count; i++) {
