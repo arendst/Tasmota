@@ -90,3 +90,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add basic support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON
 - Add support for single wire LMT01 temperature Sensor by justifiably (#8713)
 - Add compile time interlock parameters (#8759)
+- Add compile time user template (#8766)

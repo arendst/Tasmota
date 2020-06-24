@@ -7,6 +7,7 @@
 - Add library to be used for decoding Teleinfo (French Metering Smart Meter)
 - Add support for single wire LMT01 temperature Sensor by justifiably (#8713)
 - Add compile time interlock parameters (#8759)
+- Add compile time user template (#8766)
 - Fix exception or watchdog on rule re-entry (#8757)
 - Change ESP32 USER GPIO template representation decreasing template message size
 - Change define USE_TASMOTA_SLAVE into USE_TASMOTA_CLIENT
