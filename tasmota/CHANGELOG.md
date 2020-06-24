@@ -12,6 +12,7 @@
 - Change ESP32 USER GPIO template representation decreasing template message size
 - Change define USE_TASMOTA_SLAVE into USE_TASMOTA_CLIENT
 - Change commands ``SlaveSend`` and ``SlaveReset`` into ``ClientSend`` and ``ClientReset``
+- Change IRremoteESP8266 library updated to v2.7.8
 
 ### 8.3.1.5 20200616
 
