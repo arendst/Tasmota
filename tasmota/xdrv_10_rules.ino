@@ -168,6 +168,7 @@ struct RULES {
   uint16_t vars_event = 0;
   uint8_t mems_event = 0;
   bool teleperiod = false;
+  bool busy = false;
 
   char event_data[100];
 } Rules;
@@ -564,7 +565,6 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match 1 %d"), match);
 
-
   if (bitRead(Settings.rule_once, rule_set)) {
     if (match) {                                       // Only allow match state changes
       if (!bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set])) {
@@ -751,28 +751,34 @@ bool RulesProcessEvent(char *json_event)
 {
   bool serviced = false;
 
+  if (!Rules.busy) {
+    Rules.busy = true;
+
 #ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("RulesProcessEvent"));
+    ShowFreeMem(PSTR("RulesProcessEvent"));
 #endif
 
-  String event_saved = json_event;
-  // json_event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
-  // json_event = {"System":{"Boot":1}}
-  // json_event = {"SerialReceived":"on"} - invalid but will be expanded to {"SerialReceived":{"Data":"on"}}
-  char *p = strchr(json_event, ':');
-  if ((p != NULL) && !(strchr(++p, ':'))) {  // Find second colon
-    event_saved.replace(F(":"), F(":{\"Data\":"));
-    event_saved += F("}");
-    // event_saved = {"SerialReceived":{"Data":"on"}}
-  }
-  event_saved.toUpperCase();
+    String event_saved = json_event;
+    // json_event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
+    // json_event = {"System":{"Boot":1}}
+    // json_event = {"SerialReceived":"on"} - invalid but will be expanded to {"SerialReceived":{"Data":"on"}}
+    char *p = strchr(json_event, ':');
+    if ((p != NULL) && !(strchr(++p, ':'))) {  // Find second colon
+      event_saved.replace(F(":"), F(":{\"Data\":"));
+      event_saved += F("}");
+      // event_saved = {"SerialReceived":{"Data":"on"}}
+    }
+    event_saved.toUpperCase();
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event %s"), event_saved.c_str());
 
-  for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
-    if (GetRuleLen(i) && bitRead(Settings.rule_enabled, i)) {
-      if (RuleSetProcess(i, event_saved)) { serviced = true; }
+    for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
+      if (GetRuleLen(i) && bitRead(Settings.rule_enabled, i)) {
+        if (RuleSetProcess(i, event_saved)) { serviced = true; }
+      }
     }
+
+    Rules.busy = false;
   }
   return serviced;
 }
@@ -796,7 +802,7 @@ void RulesInit(void)
 
 void RulesEvery50ms(void)
 {
-  if (Settings.rule_enabled) {  // Any rule enabled
+  if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
     char json_event[120];
 
     if (-1 == Rules.new_power) { Rules.new_power = power; }
@@ -916,7 +922,7 @@ uint8_t rules_xsns_index = 0;
 
 void RulesEvery100ms(void)
 {
-  if (Settings.rule_enabled && (uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
+  if (Settings.rule_enabled && !Rules.busy && (uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
     mqtt_data[0] = '\0';
     int tele_period_save = tele_period;
     tele_period = 2;                                   // Do not allow HA updates during next function call
@@ -925,14 +931,14 @@ void RulesEvery100ms(void)
     if (strlen(mqtt_data)) {
       mqtt_data[0] = '{';                              // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
       ResponseJsonEnd();
-      RulesProcess();
+      RulesProcessEvent(mqtt_data);
     }
   }
 }
 
 void RulesEverySecond(void)
 {
-  if (Settings.rule_enabled) {  // Any rule enabled
+  if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
     char json_event[120];
 
     if (RtcTime.valid) {
@@ -956,7 +962,7 @@ void RulesEverySecond(void)
 
 void RulesSaveBeforeRestart(void)
 {
-  if (Settings.rule_enabled) {  // Any rule enabled
+  if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
     char json_event[32];
 
     strncpy_P(json_event, PSTR("{\"System\":{\"Save\":1}}"), sizeof(json_event));

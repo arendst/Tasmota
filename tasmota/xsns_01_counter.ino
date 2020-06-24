@@ -113,9 +113,9 @@ void CounterUpdate4(void)
 
 bool CounterPinState(void)
 {
-  if ((XdrvMailbox.index >= GPIO_CNTR1_NP) && (XdrvMailbox.index < (GPIO_CNTR1_NP + MAX_COUNTERS))) {
-    bitSet(Counter.no_pullup, XdrvMailbox.index - GPIO_CNTR1_NP);
-    XdrvMailbox.index -= (GPIO_CNTR1_NP - GPIO_CNTR1);
+  if ((XdrvMailbox.index >= AGPIO(GPIO_CNTR1_NP)) && (XdrvMailbox.index < (AGPIO(GPIO_CNTR1_NP) + MAX_COUNTERS))) {
+    bitSet(Counter.no_pullup, XdrvMailbox.index - AGPIO(GPIO_CNTR1_NP));
+    XdrvMailbox.index -= (AGPIO(GPIO_CNTR1_NP) - AGPIO(GPIO_CNTR1));
     return true;
   }
   return false;

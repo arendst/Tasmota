@@ -88,6 +88,22 @@ String EthernetMacAddress(void);
 #undef USE_RF_FLASH                            // Disable RF firmware flash when Sonoff Rf is disabled
 #endif
 
+#ifndef APP_INTERLOCK_MODE
+#define APP_INTERLOCK_MODE     false           // [Interlock] Relay interlock mode
+#endif
+#ifndef APP_INTERLOCK_GROUP_1
+#define APP_INTERLOCK_GROUP_1  0xFF            // [Interlock] Relay bitmask for interlock group 1 - Legacy support using all relays in one interlock group
+#endif
+#ifndef APP_INTERLOCK_GROUP_2
+#define APP_INTERLOCK_GROUP_2  0x00            // [Interlock] Relay bitmask for interlock group 2
+#endif
+#ifndef APP_INTERLOCK_GROUP_3
+#define APP_INTERLOCK_GROUP_3  0x00            // [Interlock] Relay bitmask for interlock group 3
+#endif
+#ifndef APP_INTERLOCK_GROUP_4
+#define APP_INTERLOCK_GROUP_4  0x00            // [Interlock] Relay bitmask for interlock group 4
+#endif
+
 #ifndef SWITCH_MODE
 #define SWITCH_MODE                 TOGGLE     // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
 #endif
@@ -356,8 +372,10 @@ const char kWebColors[] PROGMEM =
 
 #ifdef ESP8266
 #define AGPIO(x) (x)
+#define BGPIO(x) (x)
 #else  // ESP32
 #define AGPIO(x) (x<<5)
+#define BGPIO(x) (x>>5)
 #endif  // ESP8266 - ESP32
 
 #ifdef USE_DEVICE_GROUPS
