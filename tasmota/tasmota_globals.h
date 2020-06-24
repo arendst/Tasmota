@@ -372,8 +372,10 @@ const char kWebColors[] PROGMEM =
 
 #ifdef ESP8266
 #define AGPIO(x) (x)
+#define BGPIO(x) (x)
 #else  // ESP32
 #define AGPIO(x) (x<<5)
+#define BGPIO(x) (x>>5)
 #endif  // ESP8266 - ESP32
 
 #ifdef USE_DEVICE_GROUPS

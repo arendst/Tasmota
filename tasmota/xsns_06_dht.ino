@@ -188,12 +188,12 @@ bool DhtRead(uint32_t sensor)
 
 bool DhtPinState()
 {
-  if ((XdrvMailbox.index >= GPIO_DHT11) && (XdrvMailbox.index <= GPIO_SI7021)) {
+  if ((XdrvMailbox.index >= AGPIO(GPIO_DHT11)) && (XdrvMailbox.index <= AGPIO(GPIO_SI7021))) {
     if (dht_sensors < DHT_MAX_SENSORS) {
       Dht[dht_sensors].pin = XdrvMailbox.payload;
-      Dht[dht_sensors].type = XdrvMailbox.index;
+      Dht[dht_sensors].type = BGPIO(XdrvMailbox.index);
       dht_sensors++;
-      XdrvMailbox.index = GPIO_DHT11;
+      XdrvMailbox.index = AGPIO(GPIO_DHT11);
     } else {
       XdrvMailbox.index = 0;
     }
