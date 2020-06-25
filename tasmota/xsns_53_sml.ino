@@ -49,6 +49,7 @@
 #define SPECIAL_SS
 #endif
 
+#undef TMSBSIZ
 #define TMSBSIZ 256
 
 // addresses a bug in meter DWS74
@@ -1785,6 +1786,7 @@ struct SML_COUNTER {
   uint32_t sml_cnt_last_ts;
   uint32_t sml_counter_ltime;
   uint16_t sml_debounce;
+  uint8_t sml_cnt_updated;
 
 #ifdef ANALOG_OPTO_SENSOR
   int16_t ana_curr;
@@ -1813,7 +1815,8 @@ void SML_CounterUpd(uint8_t index) {
     sml_counters[index].sml_counter_ltime=millis();
     if (ltime>sml_counters[index].sml_debounce) {
       RtcSettings.pulse_counter[index]++;
-      InjektCounterValue(sml_counters[index].sml_cnt_old_state,RtcSettings.pulse_counter[index]);
+      sml_counters[index].sml_cnt_updated=1;
+      //InjektCounterValue(sml_counters[index].sml_cnt_old_state,RtcSettings.pulse_counter[index]);
     }
   } else {
     // rising edge
@@ -2310,6 +2313,13 @@ uint32_t ctime=millis();
           if (cindex==1) SetDBGLed(meter_desc_p[meters].srcpin,DEBUG_CNT_LED2);
 #endif
         }
+
+        if (sml_counters[cindex].sml_cnt_updated) {
+          InjektCounterValue(sml_counters[cindex].sml_cnt_old_state,RtcSettings.pulse_counter[cindex]);
+          sml_counters[cindex].sml_cnt_updated=0;
+        }
+
+
       }
       cindex++;
     }
