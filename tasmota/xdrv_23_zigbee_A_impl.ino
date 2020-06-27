@@ -1083,7 +1083,7 @@ Z_DevRecord_t Z_DevRecord[MAX_ZBRECORDS];
 uint8_t Z_DevIndex = 0;
 
 void ZdSetLinkQuality(uint16_t shortaddr, uint8_t linkquality) {
-  if (Z_DevIndex < MAX_ZBRECORDS) {
+  if (Z_DevIndex < MAX_ZBRECORDS -1) {
     uint32_t i;
     for (i = 0; i < Z_DevIndex; i++) {
       if (shortaddr == Z_DevRecord[i].shortaddr) {
@@ -1133,7 +1133,7 @@ void ZigbeeShow(bool json)
         snprintf_P(spart2, sizeof(spart2), PSTR("%d"), lq);
       }
 
-      WSContentSend_PD(PSTR("{s}%s{m}LQ %s{e}"), name, spart2);
+      WSContentSend_PD(PSTR("{s}%s{m}LQI %s{e}"), name, spart2);
     }
 #endif
   }
