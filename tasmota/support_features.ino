@@ -590,8 +590,9 @@ void GetFeatures(void)
 #ifdef USE_LMT01
   feature6 |= 0x00080000;  // xsns_74_lmt01.ino
 #endif
-
-//  feature6 |= 0x00100000;
+#ifdef USE_PROMETHEUS
+  feature6 |= 0x00100000;  // xsns_75_prometheus.ino
+#endif
 //  feature6 |= 0x00200000;
 //  feature6 |= 0x00400000;
 //  feature6 |= 0x00800000;

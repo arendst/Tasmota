@@ -1,5 +1,5 @@
 /*
-  xsns_91_prometheus.ino - Web based information for Tasmota
+  xsns_75_prometheus.ino - Web based information for Tasmota
 
   Copyright (C) 2020  Theo Arends
 
@@ -22,7 +22,7 @@
  * Prometheus support
 \*********************************************************************************************/
 
-#define XSNS_91                    91
+#define XSNS_75                    75
 
 void HandleMetrics(void)
 {
@@ -85,7 +85,7 @@ void HandleMetrics(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns91(uint8_t function)
+bool Xsns75(uint8_t function)
 {
   bool result = false;
 
