@@ -111,6 +111,8 @@ const uint8_t  ZIGBEE_LABEL_START_ROUTER = 13;    // Start ZNP as router
 const uint8_t  ZIGBEE_LABEL_INIT_DEVICE = 14;    // Init ZNP as end-device
 const uint8_t  ZIGBEE_LABEL_START_DEVICE = 15;    // Start ZNP as end-device
 const uint8_t  ZIGBEE_LABEL_START_ROUTER_DEVICE = 16;    // Start common to router and device
+const uint8_t  ZIGBEE_LABEL_BOOT_OK = 17;    // MCU has rebooted
+const uint8_t  ZIGBEE_LABEL_BOOT_TIME_OUT = 18;    // MCU has not rebooted
 const uint8_t  ZIGBEE_LABEL_FACT_RESET_ROUTER_DEVICE_POST = 19;   // common post configuration for router and device
 const uint8_t  ZIGBEE_LABEL_READY = 20;   // goto label 20 for main loop
 const uint8_t  ZIGBEE_LABEL_MAIN_LOOP = 21;   // main loop
@@ -421,8 +423,17 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
 
     //ZI_MQTT_STATE(ZIGBEE_STATUS_BOOT, "Booting")
     //ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "rebooting device")
+    ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_BOOT_TIME_OUT)    // give a second chance
     ZI_SEND(ZBS_RESET)                        // reboot cc2530 just in case we rebooted ESP8266 but not cc2530
     ZI_WAIT_RECV_FUNC(5000, ZBR_RESET, &Z_Reboot)             // timeout 5s
+    ZI_GOTO(ZIGBEE_LABEL_BOOT_OK)
+
+  ZI_LABEL(ZIGBEE_LABEL_BOOT_TIME_OUT)
+    ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
+    ZI_SEND(ZBS_RESET)                        // reboot cc2530 just in case we rebooted ESP8266 but not cc2530
+    ZI_WAIT_RECV_FUNC(5000, ZBR_RESET, &Z_Reboot)             // timeout 5s
+
+  ZI_LABEL(ZIGBEE_LABEL_BOOT_OK)
     ZI_WAIT(100)
     ZI_LOG(LOG_LEVEL_DEBUG, kCheckingDeviceConfiguration)     // Log Debug: checking device configuration
     ZI_SEND(ZBS_VERSION)                      // check ZNP software version
