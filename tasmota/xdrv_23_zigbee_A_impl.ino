@@ -1069,6 +1069,77 @@ void CmndZbConfig(void) {
 }
 
 /*********************************************************************************************\
+ * Database of linkqualities - there must be a better way to implement this ...
+\*********************************************************************************************/
+
+const uint8_t MAX_ZBRECORDS = 16;
+
+typedef struct Z_DevRecord_t {
+  uint16_t shortaddr;
+  uint8_t  linkquality;
+} Z_DevRecord_t;
+
+Z_DevRecord_t Z_DevRecord[MAX_ZBRECORDS];
+uint8_t Z_DevIndex = 0;
+
+void ZdSetLinkQuality(uint16_t shortaddr, uint8_t linkquality) {
+  if (Z_DevIndex < MAX_ZBRECORDS) {
+    uint32_t i;
+    for (i = 0; i < Z_DevIndex; i++) {
+      if (shortaddr == Z_DevRecord[i].shortaddr) {
+        Z_DevRecord[i].linkquality = linkquality;
+        return;
+      }
+    }
+    Z_DevRecord[i].shortaddr = shortaddr;
+    Z_DevRecord[i].linkquality = linkquality;
+    Z_DevIndex++;
+  }
+}
+
+uint8_t ZdGetLinkQuality(uint16_t shortaddr) {
+  for (uint32_t i = 0; i < Z_DevIndex; i++) {
+    if (shortaddr == Z_DevRecord[i].shortaddr) {
+      return Z_DevRecord[i].linkquality;
+    }
+  }
+  return 0;
+}
+
+/*********************************************************************************************\
+ * Presentation
+\*********************************************************************************************/
+
+void ZigbeeShow(bool json)
+{
+  if (json) {
+    return;
+#ifdef USE_WEBSERVER
+  } else {
+    char spart1[33];
+    char spart2[8];
+
+    uint32_t zigbee_num = zigbee_devices.devicesSize();
+    for (uint32_t i = 0; i < zigbee_num; i++) {
+      uint16_t shortaddr = zigbee_devices.devicesAt(i).shortaddr;
+      char *name = (char*)zigbee_devices.getFriendlyName(shortaddr);
+      if (nullptr == name) {
+        snprintf_P(spart1, sizeof(spart1), PSTR(D_DEVICE " 0x%04X"), shortaddr);
+        name = spart1;
+      }
+      snprintf_P(spart2, sizeof(spart2), PSTR("-"));
+      uint8_t lq = ZdGetLinkQuality(shortaddr);
+      if (lq) {
+        snprintf_P(spart2, sizeof(spart2), PSTR("%d"), lq);
+      }
+
+      WSContentSend_PD(PSTR("{s}%s{m}LQ %s{e}"), name, spart2);
+    }
+#endif
+  }
+}
+
+/*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
@@ -1089,6 +1160,11 @@ bool Xdrv23(uint8_t function)
           ZigbeeStateMachine_Run();
 				}
         break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        ZigbeeShow(false);
+        break;
+#endif  // USE_WEBSERVER
       case FUNC_PRE_INIT:
         ZigbeeInit();
         break;

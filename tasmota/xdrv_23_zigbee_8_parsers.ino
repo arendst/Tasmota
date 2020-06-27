@@ -757,15 +757,18 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
                               linkquality, securityuse, seqnumber,
                               timestamp);
   zcl_received.log();
+
+  ZdSetLinkQuality(srcaddr, linkquality);
+
   char shortaddr[8];
   snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
 
   DynamicJsonBuffer jsonBuffer;
   JsonObject& json = jsonBuffer.createObject();
-  
+
   if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_DEFAULT_RESPONSE == zcl_received.getCmdId())) {
       zcl_received.parseResponse();   // Zigbee general "Degault Response", publish ZbResponse message
-  } else {  
+  } else {
     // Build the ZbReceive json
     if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
       zcl_received.parseReportAttributes(json);    // Zigbee report attributes from sensors

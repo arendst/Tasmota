@@ -1223,7 +1223,7 @@ int32_t Z_AqaraCubeFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObjec
 
   const char * modelId_c = zigbee_devices.getModelId(shortaddr);  // null if unknown
   String modelId((char*) modelId_c);
-  
+
   if (modelId.startsWith(F("lumi.sensor_cube."))) {   // only for Aqara cube
     int32_t val = value;
     const __FlashStringHelper *aqara_cube = F("AqaraCube");
