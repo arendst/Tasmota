@@ -38,6 +38,7 @@ void HandleMetrics(void)
   char parameter[FLOATSZ];
 
   WSContentSend_P(PSTR("# TYPE tasmota_uptime_seconds gauge\ntasmota_uptime_seconds %d\n"), uptime);
+  WSContentSend_P(PSTR("# TYPE tasmota_boot_count counter\ntasmota_boot_count %d\n"), Settings.bootcount);
 
   if (!isnan(global_temperature)) {
     dtostrfd(global_temperature, Settings.flag2.temperature_resolution, parameter);
