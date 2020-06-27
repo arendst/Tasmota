@@ -17,8 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#define USE_PROMETHEUS                         // Enable retrieval of metrics
-
 #ifdef USE_PROMETHEUS
 /*********************************************************************************************\
  * Prometheus support
