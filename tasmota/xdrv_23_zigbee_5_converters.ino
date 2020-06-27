@@ -230,7 +230,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zstring,  Cx0000, 0x0006,  Z(DateCode),             1,  Z_Nop },
   { Zenum8,   Cx0000, 0x0007,  Z(PowerSource),          1,  Z_Nop },
   { Zstring,  Cx0000, 0x4000,  Z(SWBuildID),            1,  Z_Nop },
-  { Zunk,     Cx0000, 0xFFFF,  nullptr,                 0,  Z_Nop },    // Remove all other values
+  // { Zunk,     Cx0000, 0xFFFF,  nullptr,                 0,  Z_Nop },    // Remove all other values
   // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
   { Zmap8,    Cx0000, 0xFF01,  nullptr,                 0,  Z_AqaraSensor },    // Occupancy (map8)
 
@@ -1220,38 +1220,44 @@ int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t clu
 // Aqara Cube
 int32_t Z_AqaraCubeFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = value;   // copy the original value
-  int32_t val = value;
-  const __FlashStringHelper *aqara_cube = F("AqaraCube");
-  const __FlashStringHelper *aqara_cube_side = F("AqaraCubeSide");
-  const __FlashStringHelper *aqara_cube_from_side = F("AqaraCubeFromSide");
 
-  switch (val) {
-    case 0:
-      json[aqara_cube] = F("shake");
-      break;
-    case 2:
-      json[aqara_cube] = F("wakeup");
-      break;
-    case 3:
-      json[aqara_cube] = F("fall");
-      break;
-    case 64 ... 127:
-      json[aqara_cube] = F("flip90");
-      json[aqara_cube_side] = val % 8;
-      json[aqara_cube_from_side] = (val - 64) / 8;
-      break;
-    case 128 ... 132:
-      json[aqara_cube] = F("flip180");
-      json[aqara_cube_side] = val - 128;
-      break;
-    case 256 ... 261:
-      json[aqara_cube] = F("slide");
-      json[aqara_cube_side] = val - 256;
-      break;
-    case 512 ... 517:
-      json[aqara_cube] = F("tap");
-      json[aqara_cube_side] = val - 512;
-      break;
+  const char * modelId_c = zigbee_devices.getModelId(shortaddr);  // null if unknown
+  String modelId((char*) modelId_c);
+  
+  if (modelId.startsWith(F("lumi.sensor_cube."))) {   // only for Aqara cube
+    int32_t val = value;
+    const __FlashStringHelper *aqara_cube = F("AqaraCube");
+    const __FlashStringHelper *aqara_cube_side = F("AqaraCubeSide");
+    const __FlashStringHelper *aqara_cube_from_side = F("AqaraCubeFromSide");
+
+    switch (val) {
+      case 0:
+        json[aqara_cube] = F("shake");
+        break;
+      case 2:
+        json[aqara_cube] = F("wakeup");
+        break;
+      case 3:
+        json[aqara_cube] = F("fall");
+        break;
+      case 64 ... 127:
+        json[aqara_cube] = F("flip90");
+        json[aqara_cube_side] = val % 8;
+        json[aqara_cube_from_side] = (val - 64) / 8;
+        break;
+      case 128 ... 132:
+        json[aqara_cube] = F("flip180");
+        json[aqara_cube_side] = val - 128;
+        break;
+      case 256 ... 261:
+        json[aqara_cube] = F("slide");
+        json[aqara_cube_side] = val - 256;
+        break;
+      case 512 ... 517:
+        json[aqara_cube] = F("tap");
+        json[aqara_cube_side] = val - 512;
+        break;
+    }
   }
 
   //     Source: https://github.com/kirovilya/ioBroker.zigbee
