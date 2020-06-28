@@ -71,6 +71,8 @@ typedef struct Z_Device {
   uint16_t              ct;             // last CT: 153-500
   uint16_t              hue;            // last Hue: 0..359
   uint16_t              x, y;           // last color [x,y]
+  uint8_t               linkquality;    // lqi from last message, 0xFF means unknown
+  uint8_t               batterypercent; // battery percentage (0..100), 0xFF means unknwon
 } Z_Device;
 
 /*********************************************************************************************\
@@ -147,6 +149,10 @@ public:
   const char * getModelId(uint16_t shortaddr) const;
   const char * getManufacturerId(uint16_t shortaddr) const;
   void setReachable(uint16_t shortaddr, bool reachable);
+  void setLQI(uint16_t shortaddr, uint8_t lqi);
+  uint8_t getLQI(uint16_t shortaddr) const;
+  void setBatteryPercent(uint16_t shortaddr, uint8_t bp);
+  uint8_t getBatteryPercent(uint16_t shortaddr) const;
 
   // get next sequence number for (increment at each all)
   uint8_t getNextSeqNumber(uint16_t shortaddr);
@@ -294,6 +300,8 @@ Z_Device & Z_Devices::createDeviceEntry(uint16_t shortaddr, uint64_t longaddr) {
                       200,        // ct
                       0,          // hue
                       0, 0,       // x, y
+                      0xFF,       // lqi, 0xFF = unknown
+                      0xFF        // battery percentage x 2, 0xFF means unknown
                     };
 
   device_alloc->json_buffer = new DynamicJsonBuffer(16);
@@ -617,6 +625,36 @@ void Z_Devices::setReachable(uint16_t shortaddr, bool reachable) {
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
   bitWrite(device.power, 7, reachable);
+}
+
+void Z_Devices::setLQI(uint16_t shortaddr, uint8_t lqi) {
+  Z_Device & device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return; }                 // don't crash if not found
+  device.linkquality = lqi;
+}
+
+uint8_t Z_Devices::getLQI(uint16_t shortaddr) const {
+  int32_t found = findShortAddr(shortaddr);
+  if (found >= 0) {
+    const Z_Device & device = devicesAt(found);
+    return device.linkquality;
+  }
+  return 0xFF;
+}
+
+void Z_Devices::setBatteryPercent(uint16_t shortaddr, uint8_t bp) {
+  Z_Device & device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return; }                 // don't crash if not found
+  device.batterypercent = bp;
+}
+
+uint8_t Z_Devices::getBatteryPercent(uint16_t shortaddr) const {
+  int32_t found = findShortAddr(shortaddr);
+  if (found >= 0) {
+    const Z_Device & device = devicesAt(found);
+    return device.batterypercent;
+  }
+  return 0xFF;
 }
 
 // get the next sequance number for the device, or use the global seq number if device is unknown

@@ -128,6 +128,7 @@ enum Z_ConvOperators {
   Z_AqaraSensor,        // decode prioprietary Aqara Sensor message
   Z_AqaraVibration,     // decode Aqara vibration modes
   Z_AqaraCube,          // decode Aqara cube
+  Z_BatteryPercentage,  // memorize Battery Percentage in RAM
 };
 
 ZF(ZCLVersion) ZF(AppVersion) ZF(StackVersion) ZF(HWVersion) ZF(Manufacturer) ZF(ModelId)
@@ -238,7 +239,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint16,  Cx0001, 0x0000,  Z(MainsVoltage),         1,  Z_Nop },
   { Zuint8,   Cx0001, 0x0001,  Z(MainsFrequency),       1,  Z_Nop },
   { Zuint8,   Cx0001, 0x0020,  Z(BatteryVoltage),       -10,Z_Nop },   // divide by 10
-  { Zuint8,   Cx0001, 0x0021,  Z(BatteryPercentage),    -2, Z_Nop },   // divide by 2
+  { Zuint8,   Cx0001, 0x0021,  Z(BatteryPercentage),    -2, Z_BatteryPercentage },   // divide by 2
 
   // Device Temperature Configuration cluster
   { Zint16,   Cx0002, 0x0000,  Z(CurrentTemperature),   1,  Z_Nop },
@@ -1176,14 +1177,17 @@ void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
 // ======================================================================
 // Record Manuf
 int32_t Z_ManufKeepFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
-  json[new_name] = value;
   zigbee_devices.setManufId(shortaddr, value.as<const char*>());
   return 1;
 }
-//
+// Record ModelId
 int32_t Z_ModelKeepFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
-  json[new_name] = value;
   zigbee_devices.setModelId(shortaddr, value.as<const char*>());
+  return 1;
+}
+// Record BatteryPercentage
+int32_t Z_BatteryPercentageKeepFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
+  zigbee_devices.setBatteryPercent(shortaddr, json[new_name]);
   return 1;
 }
 
@@ -1191,22 +1195,6 @@ int32_t Z_ModelKeepFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObjec
 int32_t Z_AddPressureUnitFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = F(D_UNIT_PRESSURE);
   return 0;   // keep original key
-}
-
-// Convert int to float and divide by 100
-int32_t Z_FloatDiv100Func(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
-  json[new_name] = ((float)value) / 100.0f;
-  return 1;   // remove original key
-}
-// Convert int to float and divide by 10
-int32_t Z_FloatDiv10Func(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
-  json[new_name] = ((float)value) / 10.0f;
-  return 1;   // remove original key
-}
-// Convert int to float and divide by 10
-int32_t Z_FloatDiv2Func(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
-  json[new_name] = ((float)value) / 2.0f;
-  return 1;   // remove original key
 }
 
 // Publish a message for `"Occupancy":0` when the timer expired
@@ -1219,12 +1207,10 @@ int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t clu
 
 // Aqara Cube
 int32_t Z_AqaraCubeFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
-  json[new_name] = value;   // copy the original value
-
   const char * modelId_c = zigbee_devices.getModelId(shortaddr);  // null if unknown
   String modelId((char*) modelId_c);
 
-  if (modelId.startsWith(F("lumi.sensor_cube."))) {   // only for Aqara cube
+  if (modelId.startsWith(F("lumi.sensor_cube"))) {   // only for Aqara cube
     int32_t val = value;
     const __FlashStringHelper *aqara_cube = F("AqaraCube");
     const __FlashStringHelper *aqara_cube_side = F("AqaraCubeSide");
@@ -1353,7 +1339,13 @@ int32_t Z_AqaraSensorFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObj
     json.remove(tmp);
     bool translated = false;    // were we able to translate to a known format?
     if (0x01 == attrid) {
-      json[F(D_JSON_VOLTAGE)] = val / 1000.0f;
+      float batteryvoltage = val / 1000.0f;
+      json[F("BatteryVoltage")] = batteryvoltage;
+      uint8_t batterypercentage = toPercentageCR2032(val);
+      json[F("BatteryPercentage")] = batterypercentage;
+      zigbee_devices.setBatteryPercent(shortaddr, batterypercentage);
+      // deprecated
+      json[F(D_JSON_VOLTAGE)] = batteryvoltage;
       json[F("Battery")] = toPercentageCR2032(val);
     } else if ((nullptr != modelId) && (0 == zcl->getManufCode())) {
       translated = true;
@@ -1430,6 +1422,9 @@ int32_t Z_ApplyConverter(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObje
       break;
     case Z_AqaraCube:
       func = &Z_AqaraCubeFunc;
+      break;
+    case Z_BatteryPercentage:
+      func = &Z_BatteryPercentageKeepFunc;
       break;
   };
 
