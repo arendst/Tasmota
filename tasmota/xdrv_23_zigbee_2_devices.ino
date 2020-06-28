@@ -72,7 +72,7 @@ typedef struct Z_Device {
   uint16_t              hue;            // last Hue: 0..359
   uint16_t              x, y;           // last color [x,y]
   uint8_t               linkquality;    // lqi from last message, 0xFF means unknown
-  uint8_t               batterypercentx2;// battery percentage x 2 (0..200), 0xFF means unknwon
+  uint8_t               batterypercent; // battery percentage (0..100), 0xFF means unknwon
 } Z_Device;
 
 /*********************************************************************************************\
@@ -151,8 +151,8 @@ public:
   void setReachable(uint16_t shortaddr, bool reachable);
   void setLQI(uint16_t shortaddr, uint8_t lqi);
   uint8_t getLQI(uint16_t shortaddr) const;
-  void setBatteryPercentx2(uint16_t shortaddr, uint8_t bpx2);
-  uint8_t getBatteryPercentx2(uint16_t shortaddr) const;
+  void setBatteryPercent(uint16_t shortaddr, uint8_t bp);
+  uint8_t getBatteryPercent(uint16_t shortaddr) const;
 
   // get next sequence number for (increment at each all)
   uint8_t getNextSeqNumber(uint16_t shortaddr);
@@ -642,17 +642,17 @@ uint8_t Z_Devices::getLQI(uint16_t shortaddr) const {
   return 0xFF;
 }
 
-void Z_Devices::setBatteryPercentx2(uint16_t shortaddr, uint8_t bpx2) {
+void Z_Devices::setBatteryPercent(uint16_t shortaddr, uint8_t bp) {
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
-  device.batterypercentx2 = bpx2;
+  device.batterypercent = bp;
 }
 
-uint8_t Z_Devices::getBatteryPercentx2(uint16_t shortaddr) const {
+uint8_t Z_Devices::getBatteryPercent(uint16_t shortaddr) const {
   int32_t found = findShortAddr(shortaddr);
   if (found >= 0) {
     const Z_Device & device = devicesAt(found);
-    return device.batterypercentx2;
+    return device.batterypercent;
   }
   return 0xFF;
 }

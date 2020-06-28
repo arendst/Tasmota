@@ -1187,7 +1187,7 @@ int32_t Z_ModelKeepFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObjec
 }
 // Record BatteryPercentage
 int32_t Z_BatteryPercentageKeepFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
-  zigbee_devices.setBatteryPercentx2(shortaddr, value.as<uint8_t>());
+  zigbee_devices.setBatteryPercent(shortaddr, json[new_name]);
   return 1;
 }
 
@@ -1343,7 +1343,7 @@ int32_t Z_AqaraSensorFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObj
       json[F("BatteryVoltage")] = batteryvoltage;
       uint8_t batterypercentage = toPercentageCR2032(val);
       json[F("BatteryPercentage")] = batterypercentage;
-      zigbee_devices.setBatteryPercentx2(shortaddr, batterypercentage * 2);
+      zigbee_devices.setBatteryPercent(shortaddr, batterypercentage);
       // deprecated
       json[F(D_JSON_VOLTAGE)] = batteryvoltage;
       json[F("Battery")] = toPercentageCR2032(val);

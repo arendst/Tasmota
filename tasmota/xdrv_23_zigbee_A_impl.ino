@@ -1094,6 +1094,11 @@ void ZigbeeShow(bool json)
       if (0xFF != lqi) {
         snprintf_P(spart2, sizeof(spart2), PSTR("%d"), lqi);
       }
+      // uint8_t bp = zigbee_devices.getBatteryPercentx2(shortaddr);
+      // Be aware that bp
+      // if (0xFF != bp) {
+      //   snprintf_P(spart2, sizeof(spart2), PSTR("%d"), bp);
+      // }
 
       WSContentSend_PD(PSTR("{s}%s{m}LQI %s{e}"), name, spart2);
     }
