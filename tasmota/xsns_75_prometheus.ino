@@ -41,6 +41,13 @@ void HandleMetrics(void)
   WSContentSend_P(PSTR("# TYPE tasmota_uptime_seconds gauge\ntasmota_uptime_seconds %d\n"), uptime);
   WSContentSend_P(PSTR("# TYPE tasmota_boot_count counter\ntasmota_boot_count %d\n"), Settings.bootcount);
 
+
+  // Pseudo-metric providing metadata about the WiFi station.
+  WSContentSend_P(PSTR("# TYPE tasmota_wifi_station_info gauge\ntasmota_wifi_station_info{bssid=\"%s\",ssid=\"%s\"} 1\n"), WiFi.BSSIDstr().c_str(), WiFi.SSID().c_str());
+
+  // Wi-Fi Signal strength
+  WSContentSend_P(PSTR("# TYPE tasmota_wifi_station_signal_dbm gauge\ntasmota_wifi_station_signal_dbm{mac_address=\"%s\"} %d\n"), WiFi.BSSIDstr().c_str(), WiFi.RSSI());
+
   if (!isnan(global_temperature)) {
     dtostrfd(global_temperature, Settings.flag2.temperature_resolution, parameter);
     WSContentSend_P(PSTR("# TYPE global_temperature gauge\nglobal_temperature %s\n"), parameter);
