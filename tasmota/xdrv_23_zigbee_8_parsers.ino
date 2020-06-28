@@ -758,7 +758,7 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
                               timestamp);
   zcl_received.log();
 
-  ZdSetLinkQuality(srcaddr, linkquality);
+  zigbee_devices.setLQI(srcaddr, linkquality);
 
   char shortaddr[8];
   snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);

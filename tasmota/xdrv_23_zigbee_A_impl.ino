@@ -1069,44 +1069,6 @@ void CmndZbConfig(void) {
 }
 
 /*********************************************************************************************\
- * Database of linkqualities - there must be a better way to implement this ...
-\*********************************************************************************************/
-
-const uint8_t MAX_ZBRECORDS = 16;
-
-typedef struct Z_DevRecord_t {
-  uint16_t shortaddr;
-  uint8_t  linkquality;
-} Z_DevRecord_t;
-
-Z_DevRecord_t Z_DevRecord[MAX_ZBRECORDS];
-uint8_t Z_DevIndex = 0;
-
-void ZdSetLinkQuality(uint16_t shortaddr, uint8_t linkquality) {
-  if (Z_DevIndex < MAX_ZBRECORDS -1) {
-    uint32_t i;
-    for (i = 0; i < Z_DevIndex; i++) {
-      if (shortaddr == Z_DevRecord[i].shortaddr) {
-        Z_DevRecord[i].linkquality = linkquality;
-        return;
-      }
-    }
-    Z_DevRecord[i].shortaddr = shortaddr;
-    Z_DevRecord[i].linkquality = linkquality;
-    Z_DevIndex++;
-  }
-}
-
-uint8_t ZdGetLinkQuality(uint16_t shortaddr) {
-  for (uint32_t i = 0; i < Z_DevIndex; i++) {
-    if (shortaddr == Z_DevRecord[i].shortaddr) {
-      return Z_DevRecord[i].linkquality;
-    }
-  }
-  return 0;
-}
-
-/*********************************************************************************************\
  * Presentation
 \*********************************************************************************************/
 
@@ -1128,9 +1090,9 @@ void ZigbeeShow(bool json)
         name = spart1;
       }
       snprintf_P(spart2, sizeof(spart2), PSTR("-"));
-      uint8_t lq = ZdGetLinkQuality(shortaddr);
-      if (lq) {
-        snprintf_P(spart2, sizeof(spart2), PSTR("%d"), lq);
+      uint8_t lqi = zigbee_devices.getLQI(shortaddr);
+      if (0xFF != lqi) {
+        snprintf_P(spart2, sizeof(spart2), PSTR("%d"), lqi);
       }
 
       WSContentSend_PD(PSTR("{s}%s{m}LQI %s{e}"), name, spart2);
