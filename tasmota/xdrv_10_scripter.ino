@@ -1898,7 +1898,7 @@ chknext:
         break;
       case 'g':
         if (!strncmp(vname,"gtmp",4)) {
-          fvar=global_temperature;
+          fvar=global_temperature_celsius;
           goto exit;
         }
         if (!strncmp(vname,"ghum",4)) {
@@ -1906,7 +1906,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname,"gprs",4)) {
-          fvar=global_pressure;
+          fvar=global_pressure_hpa;
           goto exit;
         }
         if (!strncmp(vname,"gtopic",6)) {

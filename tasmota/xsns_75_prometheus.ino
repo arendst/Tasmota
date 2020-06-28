@@ -48,17 +48,17 @@ void HandleMetrics(void)
   // Wi-Fi Signal strength
   WSContentSend_P(PSTR("# TYPE tasmota_wifi_station_signal_dbm gauge\ntasmota_wifi_station_signal_dbm{mac_address=\"%s\"} %d\n"), WiFi.BSSIDstr().c_str(), WiFi.RSSI());
 
-  if (!isnan(global_temperature)) {
-    dtostrfd(global_temperature, Settings.flag2.temperature_resolution, parameter);
-    WSContentSend_P(PSTR("# TYPE global_temperature gauge\nglobal_temperature %s\n"), parameter);
+  if (!isnan(global_temperature_celsius)) {
+    dtostrfd(global_temperature_celsius, Settings.flag2.temperature_resolution, parameter);
+    WSContentSend_P(PSTR("# TYPE global_temperature_celsius gauge\nglobal_temperature_celsius %s\n"), parameter);
   }
   if (global_humidity != 0) {
     dtostrfd(global_humidity, Settings.flag2.humidity_resolution, parameter);
     WSContentSend_P(PSTR("# TYPE global_humidity gauge\nglobal_humidity %s\n"), parameter);
   }
-  if (global_pressure != 0) {
-    dtostrfd(global_pressure, Settings.flag2.pressure_resolution, parameter);
-    WSContentSend_P(PSTR("# TYPE global_pressure gauge\nglobal_pressure %s\n"), parameter);
+  if (global_pressure_hpa != 0) {
+    dtostrfd(global_pressure_hpa, Settings.flag2.pressure_resolution, parameter);
+    WSContentSend_P(PSTR("# TYPE global_pressure_hpa gauge\nglobal_pressure_hpa %s\n"), parameter);
   }
 
 #ifdef USE_ENERGY_SENSOR

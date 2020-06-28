@@ -631,7 +631,7 @@ void CmndGlobalTemp(void)
       global_update = 1;  // Keep global values just entered valid
     }
   }
-  ResponseCmndFloat(global_temperature, 1);
+  ResponseCmndFloat(global_temperature_celsius, 1);
 }
 
 void CmndGlobalHum(void)

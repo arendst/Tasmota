@@ -601,7 +601,7 @@ float ConvertTemp(float c)
   float result = c;
 
   global_update = uptime;
-  global_temperature = c;
+  global_temperature_celsius = c;
 
   if (!isnan(c) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
     result = c * 1.8 + 32;                                    // Fahrenheit
@@ -661,7 +661,7 @@ float ConvertPressure(float p)
   float result = p;
 
   global_update = uptime;
-  global_pressure = p;
+  global_pressure_hpa = p;
 
   if (!isnan(p) && Settings.flag.pressure_conversion) {  // SetOption24 - Switch between hPa or mmHg pressure unit
     result = p * 0.75006375541921;                       // mmHg
@@ -690,9 +690,9 @@ void ResetGlobalValues(void)
 {
   if ((uptime - global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
     global_update = 0;
-    global_temperature = NAN;
+    global_temperature_celsius = NAN;
     global_humidity = 0.0f;
-    global_pressure = 0.0f;
+    global_pressure_hpa = 0.0f;
   }
 }
 
