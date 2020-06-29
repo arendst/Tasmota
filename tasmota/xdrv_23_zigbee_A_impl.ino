@@ -1078,30 +1078,47 @@ void ZigbeeShow(bool json)
     return;
 #ifdef USE_WEBSERVER
   } else {
-    char spart1[33];
-    char spart2[8];
-
     uint32_t zigbee_num = zigbee_devices.devicesSize();
+    if (!zigbee_num) { return; }
+
+    // Calculate fixed column width for best visual result (Theos opinion)
+    uint8_t px_batt = (strlen(D_BATT) + 5 + 1) * 10;  // Batt 100% = 100px
+    uint8_t px_lqi = (strlen(D_LQI) + 4) * 10;        // LQI 254   = 70px
+
+    WSContentSend_P(PSTR("</table>{t}"));  // Terminate current two column table and open new table
+//    WSContentSend_PD(PSTR("{s}Device 0x1234</th><td style='width:30%%'>" D_BATT " 100%%</td><td style='width:20%%'>" D_LQI " 254{e}"));
+//    WSContentSend_PD(PSTR("{s}Device 0x1234</th><td style='width:100px'>" D_BATT " 100%%</td><td style='width:70px'>" D_LQI " 254{e}"));
+//    WSContentSend_PD(PSTR("{s}Device 0x1234</th><td style='width:%dpx'>" D_BATT " 100%%</td><td style='width:%dpx'>" D_LQI " 254{e}"), px_batt, px_lqi);
+
+    char sdevice[33];
+    char sbatt[20];
+    char slqi[20];
+
     for (uint32_t i = 0; i < zigbee_num; i++) {
       uint16_t shortaddr = zigbee_devices.devicesAt(i).shortaddr;
       char *name = (char*)zigbee_devices.getFriendlyName(shortaddr);
       if (nullptr == name) {
-        snprintf_P(spart1, sizeof(spart1), PSTR(D_DEVICE " 0x%04X"), shortaddr);
-        name = spart1;
+        snprintf_P(sdevice, sizeof(sdevice), PSTR(D_DEVICE " 0x%04X"), shortaddr);
+        name = sdevice;
       }
-      snprintf_P(spart2, sizeof(spart2), PSTR("-"));
+
+      snprintf_P(slqi, sizeof(slqi), PSTR("-"));
       uint8_t lqi = zigbee_devices.getLQI(shortaddr);
       if (0xFF != lqi) {
-        snprintf_P(spart2, sizeof(spart2), PSTR("%d"), lqi);
+        snprintf_P(slqi, sizeof(slqi), PSTR("%d"), lqi);
       }
-      // uint8_t bp = zigbee_devices.getBatteryPercentx2(shortaddr);
-      // Be aware that bp
-      // if (0xFF != bp) {
-      //   snprintf_P(spart2, sizeof(spart2), PSTR("%d"), bp);
-      // }
 
-      WSContentSend_PD(PSTR("{s}%s{m}LQI %s{e}"), name, spart2);
+      snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
+      uint8_t bp = zigbee_devices.getBatteryPercent(shortaddr);
+      if (0xFF != bp) {
+        snprintf_P(sbatt, sizeof(sbatt), PSTR(D_BATT " %d%%"), bp);
+      }
+
+      WSContentSend_PD(PSTR("{s}%s</th><td style='width:%dpx'>%s</td><td style='width:%dpx'>" D_LQI " %s{e}"),
+        name, px_batt, sbatt, px_lqi, slqi);
     }
+
+    WSContentSend_P(PSTR("</table>{t}"));  // Terminate current multi column table and open new table
 #endif
   }
 }

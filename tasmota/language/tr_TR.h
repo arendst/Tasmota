@@ -56,6 +56,7 @@
 #define D_AP "AP"                    // Access Point
 #define D_AS "as"
 #define D_AUTO "OTOMATIK"
+#define D_BATT "Batt"                // Short for Battery
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Yeniden başlama sayısı"
@@ -116,6 +117,7 @@
 #define D_IP_ADDRESS "IP Adresi"
 #define D_LIGHT "Işık"
 #define D_LWT "LWT"
+#define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_MODULE "Modül"
 #define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"

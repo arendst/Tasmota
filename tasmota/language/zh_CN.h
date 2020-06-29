@@ -56,6 +56,7 @@
 #define D_AP "AP"                    // Access Point
 #define D_AS "名称:"
 #define D_AUTO "自动"
+#define D_BATT "Batt"                // Short for Battery
 #define D_BLINK "闪烁"
 #define D_BLINKOFF "闪烁关"
 #define D_BOOT_COUNT "启动次数"
@@ -116,6 +117,7 @@
 #define D_IP_ADDRESS "IP地址"
 #define D_LIGHT "灯"
 #define D_LWT "LWT"
+#define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_MODULE "模块"
 #define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"

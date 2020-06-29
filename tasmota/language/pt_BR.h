@@ -56,6 +56,7 @@
 #define D_AP "Ponto de acesso"     	// Ponto de Acesso
 #define D_AS "como"
 #define D_AUTO "Auto"
+#define D_BATT "Batt"                // Short for Battery
 #define D_BLINK "Pulsar"
 #define D_BLINKOFF "Pulsar desligado"
 #define D_BOOT_COUNT "Contagem de inicialização"
@@ -116,6 +117,7 @@
 #define D_IP_ADDRESS "Endereço IP"
 #define D_LIGHT "Luz"
 #define D_LWT "LWT"
+#define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_MODULE "Módulo"
 #define D_MOISTURE "Umidade"
 #define D_MQTT "MQTT"

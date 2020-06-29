@@ -56,6 +56,7 @@
 #define D_AP "Точка за достъп"                    // Access Point
 #define D_AS "като"
 #define D_AUTO "АВТОМАТИЧНО"
+#define D_BATT "Batt"                // Short for Battery
 #define D_BLINK "Мигане вкл."
 #define D_BLINKOFF "Мигане изкл."
 #define D_BOOT_COUNT "Брой на стартиранията"
@@ -116,6 +117,7 @@
 #define D_IP_ADDRESS "IP адрес"
 #define D_LIGHT "Светлина"
 #define D_LWT "LWT"
+#define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_MODULE "Модул"
 #define D_MOISTURE "Влага"
 #define D_MQTT "MQTT"

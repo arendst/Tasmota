@@ -56,6 +56,7 @@
 #define D_AP "Точка доступу"        // Access Point
 #define D_AS "як"
 #define D_AUTO "АВТО"
+#define D_BATT "Batt"                // Short for Battery
 #define D_BLINK "Блимати"
 #define D_BLINKOFF "Не блимати"
 #define D_BOOT_COUNT "К-сть завант."
@@ -116,6 +117,7 @@
 #define D_IP_ADDRESS "IP адреса"
 #define D_LIGHT "Світло"
 #define D_LWT "LWT"
+#define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_MODULE "Модуль"
 #define D_MOISTURE "Волога"
 #define D_MQTT "MQTT"

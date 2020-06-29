@@ -56,6 +56,7 @@
 #define D_AP "AP"                    // Access Point
 #define D_AS "ως"
 #define D_AUTO "ΑΥΤΟΜΑΤΟ"
+#define D_BATT "Batt"                // Short for Battery
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Καταμέτρηση εκκινήσεων"
@@ -116,6 +117,7 @@
 #define D_IP_ADDRESS "Διεύθυνση IP"
 #define D_LIGHT "Φως"
 #define D_LWT "LWT"
+#define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_MODULE "Μονάδα"
 #define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"

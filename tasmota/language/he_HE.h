@@ -56,6 +56,7 @@
 #define D_AP "AP"                    // Access Point
 #define D_AS "-כ"
 #define D_AUTO "אוטומטי"
+#define D_BATT "Batt"                // Short for Battery
 #define D_BLINK "מהבהב"
 #define D_BLINKOFF "כיבוי היבהוב"
 #define D_BOOT_COUNT "מונה הפעלה מחדש"
@@ -116,6 +117,7 @@
 #define D_IP_ADDRESS "IP כתובת"
 #define D_LIGHT "אור"
 #define D_LWT "LWT"
+#define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_MODULE "מודול"
 #define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"

@@ -56,6 +56,7 @@
 #define D_AP "AP"                    // Access Point
 #define D_AS "jako"
 #define D_AUTO "AUTO"
+#define D_BATT "Batt"                // Short for Battery
 #define D_BLINK "Blikání"
 #define D_BLINKOFF "BlikáníVyp"
 #define D_BOOT_COUNT "Počítadlo spuštění"
@@ -116,6 +117,7 @@
 #define D_IP_ADDRESS "Adresa IP"
 #define D_LIGHT "Světlo"
 #define D_LWT "LWT"
+#define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_MODULE "Modul"
 #define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"

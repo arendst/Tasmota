@@ -56,6 +56,7 @@
 #define D_AP "AP"                    // Access Point
 #define D_AS "as"
 #define D_AUTO "자동"
+#define D_BATT "Batt"                // Short for Battery
 #define D_BLINK "깜박임"
 #define D_BLINKOFF "깜박임 끄기"
 #define D_BOOT_COUNT "부팅 횟수"
@@ -116,6 +117,7 @@
 #define D_IP_ADDRESS "IP 주소"
 #define D_LIGHT "밝게"
 #define D_LWT "LWT"
+#define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_MODULE "모듈"
 #define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
