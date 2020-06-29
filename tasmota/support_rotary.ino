@@ -127,9 +127,7 @@ void RotaryHandler(void)
         DEBUG_CORE_LOG(PSTR("ROT: " D_CMND_COLORTEMPERATURE " %d"), Rotary.position - Rotary.last_position);
         LightSetColorTemp((uint16_t)t);
       } else {
-//        int8_t d = Settings.light_dimmer;
-        int8_t d = LightGetDimmer(0);
-
+        int8_t d = Settings.light_dimmer;
         d = d + (Rotary.position - Rotary.last_position);
         if (d < 1) {
           d = 1;
@@ -138,10 +136,11 @@ void RotaryHandler(void)
           d = 100;
         }
 //        DEBUG_CORE_LOG(PSTR("ROT: " D_CMND_DIMMER " %d"), Rotary.position - Rotary.last_position);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: " D_CMND_DIMMER " %d"), d);
+//        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: " D_CMND_DIMMER " %d"), d);
 
-        LightSetDimmer((uint8_t)d);
-//        Settings.light_dimmer = d;
+        char scmnd[20];
+        snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER "0 %d"), d);
+        ExecuteCommand(scmnd, SRC_SWITCH);
       }
     }
     Rotary.last_position = 128;
