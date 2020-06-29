@@ -641,13 +641,16 @@ bool TuyaModuleSelected(void)
 
 void TuyaInit(void)
 {
+  int baudrate = 9600;
+  if (Settings.flag4.tuyamcu_baudrate) { baudrate = 115200; }  // SetOption97 - Set Baud rate for TuyaMCU serial communication (0 = 9600 or 1 = 115200)
+
   Tuya.buffer = (char*)(malloc(TUYA_BUFFER_SIZE));
   if (Tuya.buffer != nullptr) {
     TuyaSerial = new TasmotaSerial(Pin(GPIO_TUYA_RX), Pin(GPIO_TUYA_TX), 2);
-    if (TuyaSerial->begin(9600)) {
+    if (TuyaSerial->begin(baudrate)) {
       if (TuyaSerial->hardwareSerial()) { ClaimSerial(); }
       // Get MCU Configuration
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Request MCU configuration"));
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Request MCU configuration at %d baud rate"));
 
       TuyaSendCmd(TUYA_CMD_QUERY_PRODUCT);
     }
