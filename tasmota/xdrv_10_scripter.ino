@@ -5496,7 +5496,6 @@ void ScriptGetSDCard(void) {
   }
   HandleNotFound();
 }
-#endif // USE_SCRIPT_FATFS
 
 void SendFile(char *fname) {
 char buff[512];
@@ -5530,6 +5529,7 @@ char buff[512];
 
   Webserver->client().stop();
 }
+#endif // USE_SCRIPT_FATFS
 
 void ScriptFullWebpage(void) {
   uint32_t fullpage_refresh=10000;
