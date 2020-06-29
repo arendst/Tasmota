@@ -363,6 +363,10 @@ struct SCRIPT_MEM {
     uint8_t max_ssize;
     uint8_t script_loglevel;
     uint8_t flags;
+    uint8_t si_num;
+    uint8_t siro_num;
+    char *last_index_string;
+
 #ifdef USE_SCRIPT_FATFS
     File files[SFS_MAX];
     FILE_FLAGS file_flags[SFS_MAX];
@@ -374,12 +378,15 @@ struct SCRIPT_MEM {
 #endif
 } glob_script_mem;
 
+
+
 #ifdef USE_SCRIPT_GLOBVARS
 IPAddress last_udp_ip;
 WiFiUDP Script_PortUdp;
 #endif
 
 int16_t last_findex;
+int16_t last_sindex;
 uint8_t tasm_cmd_activ=0;
 uint8_t fast_script=0;
 uint8_t glob_script=0;
@@ -1312,6 +1319,7 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
     strcpy (dvnam,vname);
     uint8_t olen=len;
     last_findex=-1;
+    last_sindex=-1;
     char *ja=strchr(dvnam,'[');
     if (ja) {
       *ja=0;
@@ -1981,6 +1989,7 @@ chknext:
 //#endif
 #endif
         break;
+#define MAX_SARRAY_NUM 32
       case 'i':
         if (!strncmp(vname,"int(",4)) {
           lp=GetNumericResult(lp+4,OPER_EQU,&fvar,0);
@@ -1996,20 +2005,73 @@ chknext:
             break;
           }
           lp++;
-          char *sstr=lp;
+
+          if (glob_script_mem.si_num>0 && glob_script_mem.last_index_string) {
+            free(glob_script_mem.last_index_string);
+          }
+          char *sstart=lp;
+          uint8_t slen=0;
           for (uint32_t cnt=0; cnt<256; cnt++) {
-              if (lp[cnt]='\n' || lp[cnt]=='"') {
-                lp+=cnt+1;
+              if (*lp=='\n' || *lp=='"' || *lp==0) {
+                lp++;
+                if (cnt>0 && !slen) {
+                  slen++;
+                }
+                glob_script_mem.siro_num=slen;
                 break;
               }
+              if (*lp=='|') {
+                slen++;
+              }
+              lp++;
           }
-          char str[SCRIPT_MAXSSIZE];
-          GetTextIndexed(str, sizeof(str), fvar, sstr);
+
+          glob_script_mem.si_num = fvar;
+          if (glob_script_mem.si_num>0) {
+            if (glob_script_mem.si_num>MAX_SARRAY_NUM) {
+              glob_script_mem.si_num=MAX_SARRAY_NUM;
+            }
+
+            glob_script_mem.last_index_string=(char*)calloc(glob_script_mem.max_ssize*glob_script_mem.si_num,1);
+            for (uint32_t cnt=0; cnt<glob_script_mem.siro_num; cnt++) {
+              char str[SCRIPT_MAXSSIZE];
+              GetTextIndexed(str, sizeof(str), cnt, sstart);
+              strlcpy(glob_script_mem.last_index_string+(cnt*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
+            }
+          } else {
+              glob_script_mem.last_index_string=sstart;
+          }
+
           lp++;
-          if (sp) strlcpy(sp,str,glob_script_mem.max_ssize);
           fvar=0;
           len=0;
           goto exit;
+        }
+        if (!strncmp(vname,"is[",3)) {
+          lp=GetNumericResult(lp+3,OPER_EQU,&fvar,0);
+          SCRIPT_SKIP_SPACES
+          char str[SCRIPT_MAXSSIZE];
+          str[0]=0;
+          uint8_t index=fvar;
+          if (index<1) index=1;
+          index--;
+          last_sindex = index;
+          if (glob_script_mem.last_index_string) {
+            if (!glob_script_mem.si_num) {
+              if (index<=glob_script_mem.siro_num) {
+                GetTextIndexed(str, sizeof(str), index , glob_script_mem.last_index_string);
+              }
+            } else {
+              if (index>glob_script_mem.si_num) {
+                fvar=glob_script_mem.si_num;
+              }
+              strlcpy(str,glob_script_mem.last_index_string+(index*glob_script_mem.max_ssize),glob_script_mem.max_ssize);
+            }
+          }
+          lp++;
+          if (sp) strlcpy(sp,str,glob_script_mem.max_ssize);
+          len=0;
+          goto strexit;
         }
         break;
       case 'l':
@@ -3219,7 +3281,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
 
     uint8_t vtype=0,sindex,xflg,floop=0,globvindex,fromscriptcmd=0;
     char *lp_next;
-    int8_t globaindex;
+    int8_t globaindex,saindex;
     struct T_INDEX ind;
     uint8_t operand,lastop,numeric=1,if_state[IF_NEST],if_exe[IF_NEST],if_result[IF_NEST],and_or,ifstck=0;
     if_state[ifstck]=0;
@@ -3778,6 +3840,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                     // string result
                     numeric=0;
                     sindex=index;
+                    saindex=last_sindex;
                     // string result
                     char str[SCRIPT_MAXSSIZE];
                     lp=getop(lp,&lastop);
@@ -3799,10 +3862,19 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                         script_udp_sendvar(varname,0,str);
                       }
 #endif
-                      if (lastop==OPER_EQU) {
-                        strlcpy(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
-                      } else if (lastop==OPER_PLSEQU) {
-                        strncat(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
+                      if (saindex>=0) {
+                        if (lastop==OPER_EQU) {
+                          strlcpy(glob_script_mem.last_index_string+(saindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
+                        } else if (lastop==OPER_PLSEQU) {
+                          strncat(glob_script_mem.last_index_string+(saindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
+                        }
+                        last_sindex=-1;
+                      } else {
+                        if (lastop==OPER_EQU) {
+                          strlcpy(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
+                        } else if (lastop==OPER_PLSEQU) {
+                          strncat(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
+                        }
                       }
                     }
                   }
@@ -5494,7 +5566,6 @@ void ScriptGetSDCard(void) {
   }
   HandleNotFound();
 }
-#endif // USE_SCRIPT_FATFS
 
 void SendFile(char *fname) {
 char buff[512];
@@ -5528,6 +5599,7 @@ char buff[512];
 
   Webserver->client().stop();
 }
+#endif // USE_SCRIPT_FATFS
 
 void ScriptFullWebpage(void) {
   uint32_t fullpage_refresh=10000;
