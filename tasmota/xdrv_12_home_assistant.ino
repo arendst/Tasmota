@@ -208,6 +208,7 @@ void HAssAnnounceRelayLight(void)
   uint8_t TuyaRel = 0;
   uint8_t TuyaRelInv = 0;
   uint8_t TuyaDim = 0;
+  uint8_t shutter_mask = 0;
 
   #ifdef ESP8266
         if (PWM_DIMMER == my_module_type ) { PwmMod = true; } //
@@ -224,6 +225,17 @@ void HAssAnnounceRelayLight(void)
     ind_light = true;
     if (!PwmMulti) { max_lights = 2;}
   }
+
+#ifdef USE_SHUTTER
+  if (Settings.flag3.shutter_mode) {
+    for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
+      if (Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_RELAYS) {
+        bitSet(shutter_mask, Settings.shutter_startrelay[i] -1);
+        bitSet(shutter_mask, Settings.shutter_startrelay[i]);
+      }
+    }
+  }
+#endif
 
   for (uint32_t i = 1; i <= MAX_RELAYS; i++)
   {
@@ -248,7 +260,9 @@ void HAssAnnounceRelayLight(void)
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s/config"),
                (is_topic_light) ? "light" : "switch", unique_id);
 
-    if ((i < Light.device) && !RelayX) {
+    if (bitRead(shutter_mask, i-1)) {
+      // suppress shutter relays
+    } else if ((i < Light.device) && !RelayX) {
       err_flag = true;
       AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s"), kHAssError2);
     } else {
