@@ -595,14 +595,12 @@ public:
   ZCLFrame(uint8_t frame_control, uint16_t manuf_code, uint8_t transact_seq, uint8_t cmd_id,
     const char *buf, size_t buf_len, uint16_t clusterid, uint16_t groupaddr,
     uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
-    uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
-    uint32_t timestamp):
+    uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber):
     _manuf_code(manuf_code), _transact_seq(transact_seq), _cmd_id(cmd_id),
     _payload(buf_len ? buf_len : 250),      // allocate the data frame from source or preallocate big enough
     _cluster_id(clusterid), _groupaddr(groupaddr),
     _srcaddr(srcaddr), _srcendpoint(srcendpoint), _dstendpoint(dstendpoint), _wasbroadcast(wasbroadcast),
-    _linkquality(linkquality), _securityuse(securityuse), _seqnumber(seqnumber),
-    _timestamp(timestamp)
+    _linkquality(linkquality), _securityuse(securityuse), _seqnumber(seqnumber)
     {
       _frame_control.d8 = frame_control;
       _payload.addBuffer(buf, buf_len);
@@ -616,13 +614,11 @@ public:
                     "\"groupid\":%d," "\"clusterid\":%d," "\"srcaddr\":\"0x%04X\","
                     "\"srcendpoint\":%d," "\"dstendpoint\":%d," "\"wasbroadcast\":%d,"
                     "\"" D_CMND_ZIGBEE_LINKQUALITY "\":%d," "\"securityuse\":%d," "\"seqnumber\":%d,"
-                    "\"timestamp\":%d,"
                     "\"fc\":\"0x%02X\",\"manuf\":\"0x%04X\",\"transact\":%d,"
                     "\"cmdid\":\"0x%02X\",\"payload\":\"%s\"}}"),
                     _groupaddr, _cluster_id, _srcaddr,
                     _srcendpoint, _dstendpoint, _wasbroadcast,
                     _linkquality, _securityuse, _seqnumber,
-                    _timestamp,
                     _frame_control, _manuf_code, _transact_seq, _cmd_id,
                     hex_char);
     if (Settings.flag3.tuya_serial_mqtt_publish) {
@@ -635,8 +631,7 @@ public:
 
   static ZCLFrame parseRawFrame(const SBuffer &buf, uint8_t offset, uint8_t len, uint16_t clusterid, uint16_t groupid,
                                 uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
-                                uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
-                                uint32_t timestamp) { // parse a raw frame and build the ZCL frame object
+                                uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber) { // parse a raw frame and build the ZCL frame object
     uint32_t i = offset;
     ZCLHeaderFrameControl_t frame_control;
     uint16_t manuf_code = 0;
@@ -654,8 +649,7 @@ public:
                        (const char *)(buf.buf() + i), len + offset - i,
                        clusterid, groupid,
                        srcaddr, srcendpoint, dstendpoint, wasbroadcast,
-                       linkquality, securityuse, seqnumber,
-                       timestamp);
+                       linkquality, securityuse, seqnumber);
     return zcl_frame;
   }
 
@@ -679,17 +673,12 @@ public:
     _cluster_id = clusterid;
   }
 
-  inline uint8_t getCmdId(void) const {
-    return _cmd_id;
-  }
-
-  inline uint16_t getClusterId(void) const {
-    return _cluster_id;
-  }
-
-  inline uint16_t getSrcEndpoint(void) const {
-    return _srcendpoint;
-  }
+  inline uint16_t getSrcAddr(void) const { return _srcaddr; }
+  inline uint16_t getGroupAddr(void) const { return _groupaddr; }
+  inline uint16_t getClusterId(void) const { return _cluster_id; }
+  inline uint8_t  getLinkQuality(void) const { return _linkquality; }
+  inline uint8_t getCmdId(void) const { return _cmd_id; }
+  inline uint16_t getSrcEndpoint(void) const { return _srcendpoint; }
 
   const SBuffer &getPayload(void) const {
     return _payload;
@@ -698,6 +687,7 @@ public:
   uint16_t getManufCode(void) const {
     return _manuf_code;
   }
+
 
 private:
   ZCLHeaderFrameControl_t _frame_control = { .d8 = 0 };
@@ -715,7 +705,6 @@ private:
   uint8_t                 _linkquality;
   uint8_t                 _securityuse;
   uint8_t                 _seqnumber;
-  uint32_t                _timestamp;
 };
 
 // Zigbee ZCL converters
