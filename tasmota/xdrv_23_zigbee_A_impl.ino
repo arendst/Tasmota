@@ -1114,8 +1114,12 @@ void ZigbeeShow(bool json)
         snprintf_P(sbatt, sizeof(sbatt), PSTR(D_BATT " %d%%"), bp);
       }
 
-      WSContentSend_PD(PSTR("{s}%s</th><td style='width:%dpx'>%s</td><td style='width:%dpx'>" D_LQI " %s{e}"),
-        name, px_batt, sbatt, px_lqi, slqi);
+      if (!i) {
+        WSContentSend_PD(PSTR("{s}%s</th><td style='width:%dpx'>%s</td><td style='width:%dpx'>" D_LQI " %s{e}"),
+          name, px_batt, sbatt, px_lqi, slqi);
+      } else {
+        WSContentSend_PD(PSTR("{s}%s{m}%s</td><td>" D_LQI " %s{e}"), name, sbatt, slqi);
+      }
     }
 
     WSContentSend_P(PSTR("</table>{t}"));  // Terminate current multi column table and open new table
