@@ -899,6 +899,7 @@ void CmndSetoption(void)
             switch (pindex) {
               case 3:                      // SetOption85 - Enable Device Groups
               case 6:                      // SetOption88 - PWM Dimmer Buttons control remote devices
+              case 15:                     // SetOption97 - Set Baud rate for TuyaMCU serial communication (0 = 9600 or 1 = 115200)
                 restart_flag = 2;
                 break;
             }
