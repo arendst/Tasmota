@@ -1082,10 +1082,12 @@ void ZigbeeShow(bool json)
     if (!zigbee_num) { return; }
 
     // Calculate fixed column width for best visual result (Theos opinion)
-    uint8_t px_batt = (strlen(D_BATT) + 5 + 1) * 10;  // Batt 100% = 100px
-    uint8_t px_lqi = (strlen(D_LQI) + 4) * 10;        // LQI 254   = 70px
+    const uint8_t px_batt = (strlen(D_BATT) + 5 + 1) * 10;  // Batt 100% = 90px + 10px column separator
+    const uint8_t px_lqi = (strlen(D_LQI) + 4) * 10;        // LQI 254   = 70px
 
     WSContentSend_P(PSTR("</table>{t}"));  // Terminate current two column table and open new table
+//    WSContentSend_P(PSTR("<tr><td colspan='2'>{t}"));  // Insert multi column table
+
 //    WSContentSend_PD(PSTR("{s}Device 0x1234</th><td style='width:30%%'>" D_BATT " 100%%</td><td style='width:20%%'>" D_LQI " 254{e}"));
 //    WSContentSend_PD(PSTR("{s}Device 0x1234</th><td style='width:100px'>" D_BATT " 100%%</td><td style='width:70px'>" D_LQI " 254{e}"));
 //    WSContentSend_PD(PSTR("{s}Device 0x1234</th><td style='width:%dpx'>" D_BATT " 100%%</td><td style='width:%dpx'>" D_LQI " 254{e}"), px_batt, px_lqi);
@@ -1114,15 +1116,16 @@ void ZigbeeShow(bool json)
         snprintf_P(sbatt, sizeof(sbatt), PSTR(D_BATT " %d%%"), bp);
       }
 
-      if (!i) {
+      if (!i) {  // First row needs style info
         WSContentSend_PD(PSTR("{s}%s</th><td style='width:%dpx'>%s</td><td style='width:%dpx'>" D_LQI " %s{e}"),
           name, px_batt, sbatt, px_lqi, slqi);
-      } else {
+      } else {   // Following rows don't need style info so reducing ajax package
         WSContentSend_PD(PSTR("{s}%s{m}%s</td><td>" D_LQI " %s{e}"), name, sbatt, slqi);
       }
     }
 
     WSContentSend_P(PSTR("</table>{t}"));  // Terminate current multi column table and open new table
+//    WSContentSend_P(PSTR("</table>{e}"));  // Terminate multi column table
 #endif
   }
 }
