@@ -30,8 +30,8 @@ struct ROTARY {
   uint8_t state = 0;
   uint8_t position = 128;
   uint8_t last_position = 128;
-  uint8_t interrupts_in_use_count = 0;
   uint8_t changed = 0;
+  bool busy = false;
 } Rotary;
 
 /********************************************************************************************/
@@ -43,7 +43,7 @@ void update_rotary(void) ICACHE_RAM_ATTR;
 void update_rotary(void)
 {
   if (MI_DESK_LAMP == my_module_type) {
-    if (LightPowerIRAM()) {
+    if (LightPowerIRAM() && !Rotary.busy) {
       /*
       * https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
       */
@@ -83,19 +83,9 @@ void RotaryInit(void)
   if (PinUsed(GPIO_ROT1A) && PinUsed(GPIO_ROT1B)) {
     Rotary.present++;
     pinMode(Pin(GPIO_ROT1A), INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(Pin(GPIO_ROT1A)), update_rotary, CHANGE);
     pinMode(Pin(GPIO_ROT1B), INPUT_PULLUP);
-
-    // GPIO6-GPIO11 are typically used to interface with the flash memory IC on
-    // most esp8266 modules, so we should avoid adding interrupts to these pins.
-
-    if ((Pin(GPIO_ROT1A) < 6) || (Pin(GPIO_ROT1A) > 11)) {
-      attachInterrupt(digitalPinToInterrupt(Pin(GPIO_ROT1A)), update_rotary, CHANGE);
-      Rotary.interrupts_in_use_count++;
-    }
-    if ((Pin(GPIO_ROT1B) < 6) || (Pin(GPIO_ROT1B) > 11)) {
-      attachInterrupt(digitalPinToInterrupt(Pin(GPIO_ROT1B)), update_rotary, CHANGE);
-      Rotary.interrupts_in_use_count++;
-    }
+    attachInterrupt(digitalPinToInterrupt(Pin(GPIO_ROT1B)), update_rotary, CHANGE);
   }
 }
 
@@ -105,38 +95,38 @@ void RotaryInit(void)
 
 void RotaryHandler(void)
 {
-  if (Rotary.interrupts_in_use_count < 2) {
-    noInterrupts();
-    update_rotary();
-  } else {
-    noInterrupts();
-  }
   if (Rotary.last_position != Rotary.position) {
+    Rotary.busy = true;
+    int rotary_position = Rotary.position - Rotary.last_position;
+
     if (MI_DESK_LAMP == my_module_type) { // Mi Desk lamp
       if (Button.hold_timer[0]) {
         Rotary.changed = 1;
         // button1 is pressed: set color temperature
         int16_t t = LightGetColorTemp();
-        t = t + ((Rotary.position - Rotary.last_position) * 4);
+        t = t + ((rotary_position) * 4);
         if (t < 153) {
           t = 153;
         }
         if (t > 500) {
           t = 500;
         }
-        DEBUG_CORE_LOG(PSTR("ROT: " D_CMND_COLORTEMPERATURE " %d"), Rotary.position - Rotary.last_position);
+        DEBUG_CORE_LOG(PSTR("ROT: " D_CMND_COLORTEMPERATURE " %d"), rotary_position);
         LightSetColorTemp((uint16_t)t);
+
+//        char scmnd[20];
+//        snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_COLORTEMPERATURE " %d"), t);
+//        ExecuteCommand(scmnd, SRC_SWITCH);
       } else {
         int8_t d = Settings.light_dimmer;
-        d = d + (Rotary.position - Rotary.last_position);
+        d = d + rotary_position;
         if (d < 1) {
           d = 1;
         }
         if (d > 100) {
           d = 100;
         }
-//        DEBUG_CORE_LOG(PSTR("ROT: " D_CMND_DIMMER " %d"), Rotary.position - Rotary.last_position);
-//        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: " D_CMND_DIMMER " %d"), d);
+        DEBUG_CORE_LOG(PSTR("ROT: " D_CMND_DIMMER " %d"), rotary_position);
 
         char scmnd[20];
         snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER "0 %d"), d);
@@ -145,8 +135,8 @@ void RotaryHandler(void)
     }
     Rotary.last_position = 128;
     Rotary.position = 128;
+    Rotary.busy = false;
   }
-  interrupts();
 }
 
 void RotaryLoop(void)
