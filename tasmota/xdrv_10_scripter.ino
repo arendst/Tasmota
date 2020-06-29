@@ -383,6 +383,14 @@ struct SCRIPT_MEM {
 #ifdef USE_SCRIPT_GLOBVARS
 IPAddress last_udp_ip;
 WiFiUDP Script_PortUdp;
+
+#ifndef USE_DEVICE_GROUPS
+char * IPAddressToString(const IPAddress& ip_address) {
+  static char buffer[16];
+  sprintf_P(buffer, PSTR("%u.%u.%u.%u"), ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
+  return buffer;
+}
+#endif
 #endif
 
 int16_t last_findex;
