@@ -108,6 +108,21 @@ const char HASS_DISCOVER_LIGHT_SCHEME[] PROGMEM =
   "\"fx_val_tpl\":\"{{value_json." D_CMND_SCHEME "}}\","
   "\"fx_list\":[\"0\",\"1\",\"2\",\"3\",\"4\"]";  // string list with reference to scheme parameter.
 
+const char HASS_DISCOVER_SHUTTER_BASE[] PROGMEM =
+  ",\"cmd_t\":\"%s\","                            // cmnd/%topic%/Backlog
+  "\"pl_open\":\"ShutterOpen%d\","                // 1
+  "\"pl_cls\":\"ShutterClose%d\","                // 1
+  "\"pl_stop\":\"ShutterStop%d\","                // 1
+  "\"opt\":false,"
+  "\"ret\":false,"
+  "\"qos\":1";
+
+const char HASS_DISCOVER_SHUTTER_POS[] PROGMEM =
+  ",\"pos_t\":\"%s%d\","                          // stat/%topic%/SHUTTER1
+  "\"pos_clsd\":0,"
+  "\"pos_open\":100,"
+  "\"set_pos_t\":\"%s%d\"";                       // cmnd/%topic%/ShutterPosition1
+
 const char HASS_DISCOVER_SENSOR_HASS_STATUS[] PROGMEM =
   ",\"json_attr_t\":\"%s\","
   "\"unit_of_meas\":\"%%\","
@@ -726,6 +741,48 @@ void HAssAnnounceSensors(void)
   } while (hass_xsns_index != 0);
 }
 
+void HAssAnnounceShutters(void)
+{
+#ifdef USE_SHUTTER
+  char stopic[TOPSZ];
+  char stemp1[TOPSZ];
+  char stemp2[TOPSZ];
+  char unique_id[30];
+
+  for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
+    mqtt_data[0] = '\0'; // Clear retained message
+
+    snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_SHT_%d"), ESP_getChipId(), i + 1);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/cover/%s/config"), unique_id);
+
+    if (Settings.flag.hass_discovery && Settings.flag3.shutter_mode && Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_RELAYS) {
+      if (i > MAX_FRIENDLYNAMES) {
+        snprintf_P(stemp1, sizeof(stemp1), PSTR("%s Shutter %d"), SettingsText(SET_DEVICENAME), i + 1);
+      } else {
+        snprintf_P(stemp1, sizeof(stemp1), PSTR("%s"), SettingsText(SET_FRIENDLYNAME1 + i));
+      }
+      GetTopic_P(stemp2, TELE, mqtt_topic, D_RSLT_STATE);
+      Response_P(HASS_DISCOVER_BASE, stemp1, stemp2);
+
+      GetTopic_P(stemp1, TELE, mqtt_topic, S_LWT);
+      TryResponseAppend_P(HASS_DISCOVER_SENSOR_LWT, stemp1);
+
+      GetTopic_P(stemp1, CMND, mqtt_topic, PSTR("Backlog"));
+      TryResponseAppend_P(HASS_DISCOVER_SHUTTER_BASE, stemp1, i + 1, i + 1, i + 1);
+
+      GetTopic_P(stemp1, STAT, mqtt_topic, PSTR("SHUTTER"));
+      GetTopic_P(stemp2, CMND, mqtt_topic, PSTR("ShutterPosition"));
+      TryResponseAppend_P(HASS_DISCOVER_SHUTTER_POS, stemp1, i + 1, stemp2, i + 1);
+
+      TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP_getChipId());
+      TryResponseAppend_P(PSTR("}"));
+    }
+
+    MqttPublish(stopic, true);
+  }
+#endif
+}
+
 void HAssAnnounceDeviceInfoAndStatusSensor(void)
 {
   char stopic[TOPSZ];
@@ -800,6 +857,9 @@ void HAssDiscovery(void)
 
     // Send info about relays and lights
     HAssAnnounceRelayLight();
+
+    // Send info about shutters
+    HAssAnnounceShutters();
 
     // Send info about status sensor
     HAssAnnounceDeviceInfoAndStatusSensor();
