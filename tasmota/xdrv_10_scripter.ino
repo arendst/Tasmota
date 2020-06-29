@@ -2018,10 +2018,12 @@ chknext:
           goto strexit;
         }
 #ifdef USE_SCRIPT_GLOBVARS
+#ifdef USE_DEVICE_GROUPS
         if (!strncmp(vname,"luip",4)) {
           if (sp) strlcpy(sp,IPAddressToString(last_udp_ip),glob_script_mem.max_ssize);
           goto strexit;
         }
+#endif
 #endif
         if (!strncmp(vname,"loglvl",6)) {
           fvar=glob_script_mem.script_loglevel;
