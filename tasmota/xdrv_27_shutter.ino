@@ -174,7 +174,7 @@ void ShutterInit(void)
   bool relay_in_interlock = false;
 
   // if shutter 4 is unused
-  if (Settings.shutter_startrelay[MAX_SHUTTERS] == 0) {
+  if (Settings.shutter_startrelay[MAX_SHUTTERS -1] == 0) {
      Shutter.max_pwm_frequency = Settings.shuttercoeff[4][3] > 0 ? Settings.shuttercoeff[4][3] : Shutter.max_pwm_frequency;
   }
   for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
