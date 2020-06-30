@@ -166,7 +166,7 @@ struct RULES {
 
   uint16_t last_minute = 60;
   uint16_t vars_event = 0;
-  uint8_t mems_event = 0;
+  uint16_t mems_event = 0;
   bool teleperiod = false;
   bool busy = false;
 
