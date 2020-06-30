@@ -1483,8 +1483,8 @@ void LightColorOffset(int32_t offset) {
   uint8_t sat;
   light_state.getHSB(&hue, &sat, nullptr);  // Allow user control over Saturation
   hue += offset;
-  if (hue < 0) { hue = 0; }
-  if (hue > 359) { hue = 359; }
+  if (hue < 0) { hue += 359; }
+  if (hue > 359) { hue -= 359; }
   if (!Light.pwm_multi_channels) {
     light_state.setHS(hue, sat);
   } else {

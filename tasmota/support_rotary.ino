@@ -98,7 +98,7 @@ void RotaryHandler(void) {
 //      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: " D_CMND_COLORTEMPERATURE " %d"), rotary_position);
       Rotary.changed = 1;
       if (!LightColorTempOffset(rotary_position * 4)) {  // Ct from 153 - 500
-        LightColorOffset(rotary_position * 4);           // Hue from 0 - 359
+        LightColorOffset(rotary_position * 2);           // Hue from 0 - 359
       }
     } else {
 //      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: " D_CMND_DIMMER " %d"), rotary_position);
