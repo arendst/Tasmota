@@ -23,15 +23,14 @@
  * Shelly WiFi Dimmer v1 (ESP8266 w/ separate co-processor dimmer)
  * https://shelly.cloud/wifi-smart-home-automation-shelly-dimmer/
 \*********************************************************************************************/
-#define SHELLY_DIMMER_DEBUG
+// #define SHELLY_DIMMER_DEBUG
 // #define SHELLY_HW_DIMMING
-#define SHD_CMDS
 
-#define XDRV_32                     40
+#define XDRV_40                     40
 #define XNRG_17                     17
 
 #define SHD_DRIVER_MAJOR_VERSION    0
-#define SHD_DRIVER_MINOR_VERSION    7
+#define SHD_DRIVER_MINOR_VERSION    8
 
 #define SHD_SWITCH_CMD              0x01
 #define SHD_SWITCH_FADE_CMD         0x02
@@ -54,8 +53,10 @@
 #define SHD_BUFFER_SIZE             256
 #define SHD_ACK_TIMEOUT             200 // 200 ms ACK timeout
 
+#ifdef SHELLY_FW_UPGRADE
 #include <stm32flash.h>
 #include <fw/shelly/dimmer/stm_v1.7.0.h>
+#endif // SHELLY_FW_UPGRADE
 
 #include <TasmotaSerial.h>
 
@@ -147,7 +148,7 @@ bool ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
     for (uint32_t i = 0; i < len; i++)
         snprintf_P(log_data, sizeof(log_data), PSTR("%s %02x"), log_data, data[i]);
     AddLog(LOG_LEVEL_DEBUG_MORE);
-#endif
+#endif // SHELLY_DIMMER_DEBUG
 
     while (retries--)
     {
@@ -168,7 +169,7 @@ bool ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
 #ifdef SHELLY_DIMMER_DEBUG
         // timeout
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHD: serial send timeout"));
-#endif
+#endif // SHELLY_DIMMER_DEBUG
     }
     return false;
 }
@@ -216,16 +217,16 @@ void ShdSetBrightness()
 
 void ShdSetBrightnessFade()
 {
-    // Payload format:
-    // [0-1] Brightness (%) * 10
-    // [2-3] Delta brightness (%) * 8
-    // [4-5] 0?? ToDo(jamesturton): Find out what this word is!
-
     uint16_t delta = 0;
     if (Shd.req_brightness > Shd.dimmer.brightness)
         delta = (Shd.req_brightness - Shd.dimmer.brightness) * 0.8;
     else
         delta = (Shd.dimmer.brightness - Shd.req_brightness) * 0.8;
+
+    // Payload format:
+    // [0-1] Brightness (%) * 10
+    // [2-3] Delta brightness (%) * 8
+    // [4-5] 0?? ToDo(jamesturton): Find out what this word is!
 
     uint8_t payload[SHD_SWITCH_FADE_SIZE];
 
@@ -310,7 +311,7 @@ bool ShdSyncState()
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Serial %p"), ShdSerial);
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set Brightness Want %d, Is %d"), Shd.req_brightness, Shd.dimmer.brightness);
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set Fade Want %d, Is %d"), Settings.light_speed, Shd.dimmer.fade_rate);
-#endif
+#endif // SHELLY_DIMMER_DEBUG
 
     if (!ShdSerial)
         return false;
@@ -324,7 +325,7 @@ bool ShdSyncState()
         ShdDebugState();
     }
     else
-#endif
+#endif // SHELLY_HW_DIMMING
     if (Shd.req_brightness != Shd.dimmer.brightness)
     {
         ShdSetBrightness();
@@ -341,7 +342,7 @@ void ShdDebugState()
                             changeUIntScale(Shd.dimmer.brightness, 0, 1000, 0, 100),
                             Shd.dimmer.power,
                             Shd.dimmer.fade_rate);
-#endif
+#endif // SHELLY_DIMMER_DEBUG
 }
 
 bool ShdPacketProcess(void)
@@ -381,14 +382,18 @@ bool ShdPacketProcess(void)
                 if (Shd.last_power_check > 10 && Energy.active_power[0] > 0)
                 {
                     float kWhused = (float)Energy.active_power[0] * (Rtc.utc_time - Shd.last_power_check) / 36;
+#ifdef SHELLY_DIMMER_DEBUG
                     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Adding %i mWh to todays usage from %lu to %lu"), (int)(kWhused * 10), Shd.last_power_check, Rtc.utc_time);
+#endif // USE_ENERGY_SENSOR
                     Energy.kWhtoday += kWhused;
                     EnergyUpdateToday();
                 }
                 Shd.last_power_check = Rtc.utc_time;
 #endif // USE_ENERGY_SENSOR
 
+#ifdef SHELLY_DIMMER_DEBUG
                 AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: ShdPacketProcess: Brightness:%d Power:%d Fade:%d"), brightness, wattage_raw, fade_rate);
+#endif // SHELLY_DIMMER_DEBUG
                 Shd.dimmer.brightness = brightness;
                 Shd.dimmer.power = wattage_raw;
                 Shd.dimmer.fade_rate = fade_rate;
@@ -396,9 +401,10 @@ bool ShdPacketProcess(void)
             break;  
         case SHD_VERSION_CMD:
             {
-                // returns a static, is this a version number?
+#ifdef SHELLY_FW_UPGRADE
                 ret = Shd.buffer[pos] == SHD_FIRMWARE_MINOR_VERSION && 
                     Shd.buffer[pos + 1] == SHD_FIRMWARE_MAJOR_VERSION;
+#endif // SHELLY_FW_UPGRADE
 
                 AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: ShdPacketProcess: Version: %u.%u"), Shd.buffer[pos + 1], Shd.buffer[pos]);
                 Shd.dimmer.version_minor = Shd.buffer[pos];
@@ -439,6 +445,8 @@ void ShdResetToAppMode()
     digitalWrite(Pin(GPIO_SHELLY_DIMMER_RST_INV), HIGH); // pull out of reset
     delay(50); // wait 50ms fot the co-processor to come online
 }
+
+#ifdef SHELLY_FW_UPGRADE
 
 void ShdResetToDFUMode()
 {
@@ -506,11 +514,13 @@ bool ShdUpdateFirmware(const uint8_t data[], unsigned int size)
     return ret;
 }
 
+#endif // SHELLY_FW_UPGRADE
+
 void ShdPoll(void)
 {
 #ifdef SHELLY_DIMMER_DEBUG
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Poll"));
-#endif
+#endif // SHELLY_DIMMER_DEBUG
 
     if (!ShdSerial)
         return;
@@ -523,7 +533,7 @@ bool ShdSendVersion(void)
 {
 #ifdef SHELLY_DIMMER_DEBUG
     AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Sending version command"));
-#endif
+#endif // SHELLY_DIMMER_DEBUG
     return ShdSendCmd(SHD_VERSION_CMD, 0, 0);
 }
 
@@ -532,7 +542,7 @@ void ShdInit(void)
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Shelly Dimmer Driver v%u.%u"), SHD_DRIVER_MAJOR_VERSION, SHD_DRIVER_MINOR_VERSION);
 #ifdef SHELLY_DIMMER_DEBUG
     AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Starting Tx %d Rx %d"), Pin(GPIO_TXD), Pin(GPIO_RXD));
-#endif
+#endif // SHELLY_DIMMER_DEBUG
 
     Shd.buffer = (uint8_t *)malloc(SHD_BUFFER_SIZE);
     if (Shd.buffer != nullptr)
@@ -547,6 +557,7 @@ void ShdInit(void)
 
             ShdResetToAppMode();
             bool got_version = ShdSendVersion();
+#ifdef SHELLY_FW_UPGRADE
             if (!got_version || (got_version && 
                     (Shd.dimmer.version_minor != SHD_FIRMWARE_MINOR_VERSION || 
                      Shd.dimmer.version_major != SHD_FIRMWARE_MAJOR_VERSION))) 
@@ -563,9 +574,10 @@ void ShdInit(void)
                 Serial.begin(115200, SERIAL_8N1);
                 
                 ShdSendVersion();
-                ShdSendSettings();
             }
+#endif // SHELLY_FW_UPGRADE
             delay(100);
+            ShdSendSettings();
             ShdSyncState();
         }
     }
@@ -590,7 +602,7 @@ bool ShdSerialInput(void)
             for (uint32_t i = 0; i < Shd.byte_counter; i++)
                 snprintf_P(log_data, sizeof(log_data), PSTR("%s %02x"), log_data, Shd.buffer[i]);
             AddLog(LOG_LEVEL_DEBUG_MORE);
-#endif
+#endif // SHELLY_DIMMER_DEBUG
             Shd.byte_counter = 0;
 
             ShdPacketProcess();
@@ -632,7 +644,7 @@ bool ShdSetChannels(void)
         snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, ((uint8_t *)XdrvMailbox.data)[i]);
     snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
     AddLog(LOG_LEVEL_DEBUG_MORE);
-#endif
+#endif // SHELLY_DIMMER_DEBUG
 
     uint16_t brightness = ((uint32_t *)XdrvMailbox.data)[0];
     brightness = changeUIntScale(brightness, 0, 255, 0, 1000);
@@ -655,7 +667,7 @@ bool ShdSetPower(void)
  * Commands
 \*********************************************************************************************/
 
-#ifdef SHD_CMDS
+#ifdef SHELLY_CMDS
 
 #define D_PRFX_SHD              "Shd"
 #define D_CMND_LEADINGEDGE      "LeadingEdge"
@@ -707,7 +719,7 @@ void CmndShdWarmupTime(void)
     ResponseCmndNumber(Settings.shd_warmup_time);
 }
 
-#endif
+#endif // SHELLY_CMDS
 
 /*********************************************************************************************\
  * Energy Interface
@@ -732,7 +744,7 @@ bool Xnrg17(uint8_t function)
  * Driver Interface
 \*********************************************************************************************/
 
-bool Xdrv32(uint8_t function)
+bool Xdrv40(uint8_t function)
 {
     bool result = false;
 
@@ -755,11 +767,11 @@ bool Xdrv32(uint8_t function)
         case FUNC_SET_CHANNELS:
             result = ShdSetChannels();
             break;
-#ifdef SHD_CMDS
+#ifdef SHELLY_CMDS
         case FUNC_COMMAND:
             result = DecodeCommand(kShdCommands, ShdCommand);
             break;
-#endif
+#endif // SHELLY_CMDS
         }
     }
     return result;
