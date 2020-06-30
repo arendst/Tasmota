@@ -1478,14 +1478,31 @@ void LightSetBri(uint8_t device, uint8_t bri) {
   }
 }
 
-void LightColorTempOffset(int32_t offset) {
+void LightColorOffset(int32_t offset) {
+  uint16_t hue;
+  uint8_t sat;
+  light_state.getHSB(&hue, &sat, nullptr);  // Allow user control over Saturation
+  hue += offset;
+  if (hue < 0) { hue = 0; }
+  if (hue > 359) { hue = 359; }
+  if (!Light.pwm_multi_channels) {
+    light_state.setHS(hue, sat);
+  } else {
+    light_state.setHS(hue, 255);
+    light_state.setBri(255);        // If multi-channel, force bri to max, it will be later dimmed to correct value
+  }
+  light_controller.calcLevels(Light.new_color);
+}
+
+bool LightColorTempOffset(int32_t offset) {
   int32_t ct = LightGetColorTemp();
-  if (0 == ct) { return; }  // CT not supported
+  if (0 == ct) { return false; }  // CT not supported
   ct += offset;
   if (ct < CT_MIN) { ct = CT_MIN; }
   else if (ct > CT_MAX) { ct = CT_MAX; }
 
   LightSetColorTemp(ct);
+  return true;
 }
 
 void LightSetColorTemp(uint16_t ct)
@@ -1769,9 +1786,9 @@ void LightCycleColor(int8_t direction)
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
 
   if (!Light.pwm_multi_channels) {
-  uint8_t sat;
-  light_state.getHSB(nullptr, &sat, nullptr);  // Allow user control over Saturation
-  light_state.setHS(hue, sat);
+    uint8_t sat;
+    light_state.getHSB(nullptr, &sat, nullptr);  // Allow user control over Saturation
+    light_state.setHS(hue, sat);
   } else {
     light_state.setHS(hue, 255);
     light_state.setBri(255);        // If multi-channel, force bri to max, it will be later dimmed to correct value

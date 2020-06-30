@@ -88,10 +88,18 @@ void RotaryHandler(void) {
     Rotary.busy = true;
     int rotary_position = Rotary.position - Rotary.last_position;
 
+    if (Settings.save_data) {
+      if (save_data_counter < 2) {
+        save_data_counter = 2;   // Postpone flash writes while rotary is turned
+      }
+    }
+
     if (Button.hold_timer[0]) {  // Button1 is pressed: set color temperature
 //      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: " D_CMND_COLORTEMPERATURE " %d"), rotary_position);
       Rotary.changed = 1;
-      LightColorTempOffset(rotary_position * 4);
+      if (!LightColorTempOffset(rotary_position * 4)) {  // Ct from 153 - 500
+        LightColorOffset(rotary_position * 4);           // Hue from 0 - 359
+      }
     } else {
 //      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: " D_CMND_DIMMER " %d"), rotary_position);
       LightDimmerOffset(rotary_position);
