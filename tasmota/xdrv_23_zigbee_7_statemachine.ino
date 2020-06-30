@@ -36,6 +36,8 @@ const uint8_t  ZIGBEE_STATUS_DEVICE_INDICATION = 34;    // Device announces its 
 const uint8_t  ZIGBEE_STATUS_SCANNING = 40;             // State change
 const uint8_t  ZIGBEE_STATUS_CC_VERSION = 50;           // Status: CC2530 ZNP Version
 const uint8_t  ZIGBEE_STATUS_CC_INFO = 51;              // Status: CC2530 Device Configuration
+const uint8_t  ZIGBEE_STATUS_EZ_VERSION = 55;           // Status: EFR32 EZ Version
+const uint8_t  ZIGBEE_STATUS_EZ_INFO = 56;              // Status: EFR32 EZ Device Configuration
 const uint8_t  ZIGBEE_STATUS_UNSUPPORTED_VERSION = 98;  // Unsupported ZNP version
 const uint8_t  ZIGBEE_STATUS_ABORT = 99;                // Fatal error, Zigbee not working
 
@@ -169,6 +171,19 @@ SBuffer *zigbee_buffer = nullptr;
 #define ZBW(n, x...) { const uint8_t n##t[] = { x }; memcpy(n, n##t, sizeof(n)); }   // re-write content in RAM
 
 #define USE_ZIGBEE_CHANNEL_MASK (1 << (USE_ZIGBEE_CHANNEL))
+
+const char kCheckingDeviceConfiguration[] PROGMEM = D_LOG_ZIGBEE "checking device configuration";
+const char kConfiguredCoord[] PROGMEM = "Configured, starting coordinator";
+const char kConfiguredRouter[] PROGMEM = "Configured, starting router";
+const char kConfiguredDevice[] PROGMEM = "Configured, starting device";
+const char kStarted[] PROGMEM = "Started";
+const char kZigbeeStarted[] PROGMEM = D_LOG_ZIGBEE "Zigbee started";
+const char kResetting[] PROGMEM = "Resetting configuration";
+const char kResettingDevice[] PROGMEM = D_LOG_ZIGBEE "Resetting EZSP device";
+const char kZNP12[] PROGMEM = "Only ZNP 1.2 is currently supported";
+const char kEZ8[] PROGMEM = "Only EZSP protocol v8 is currently supported";
+const char kAbort[] PROGMEM = "Abort";
+const char kZigbeeAbort[] PROGMEM = D_LOG_ZIGBEE "Abort";
 
 #ifdef USE_ZIGBEE_ZNP
 
@@ -402,17 +417,6 @@ void Z_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_pani
                   )				// 2605621001030507090B0D0F00020406080A0C0D
 }
 
-const char kCheckingDeviceConfiguration[] PROGMEM = D_LOG_ZIGBEE "checking device configuration";
-const char kConfiguredCoord[] PROGMEM = "Configured, starting coordinator";
-const char kConfiguredRouter[] PROGMEM = "Configured, starting router";
-const char kConfiguredDevice[] PROGMEM = "Configured, starting device";
-const char kStarted[] PROGMEM = "Started";
-const char kZigbeeStarted[] PROGMEM = D_LOG_ZIGBEE "Zigbee started";
-const char kResetting[] PROGMEM = "Resetting configuration";
-const char kZNP12[] PROGMEM = "Only ZNP 1.2 is currently supported";
-const char kAbort[] PROGMEM = "Abort";
-const char kZigbeeAbort[] PROGMEM = D_LOG_ZIGBEE "Abort";
-
 static const Zigbee_Instruction zb_prog[] PROGMEM = {
   ZI_LABEL(0)
     ZI_NOOP()
@@ -543,7 +547,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     // ======================================================================
     // Start as Zigbee Router
     // ======================================================================
-  ZI_LABEL(ZIGBEE_LABEL_INIT_ROUTER)              // Init as a router
+  ZI_LABEL(ZIGBEE_LABEL_INIT_ROUTER)               // Init as a router
     // Check the configuration as Router
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_FACT_RESET_ROUTER)
     ZI_SEND(ZBS_ZNPHC)                            // check value of ZNP Has Configured
@@ -654,8 +658,7 @@ ZBM(ZBS_SET_TC_CACHE,     EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG
 ZBM(ZBS_SET_ROUTE_TBL,    EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_SOURCE_ROUTE_TABLE_SIZE, 0x10, 0x00)         // 53001A1000
 ZBM(ZBS_SET_KEY_TBL,      EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_KEY_TABLE_SIZE, 0x04, 0x00)                  // 53001E0400
 ZBM(ZBS_SET_PANID_CNFLCT, EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 0x02, 0x00)// 5300220200
-// TODO APP_RECEIVES_SUPPORTED_ZDO_REQUESTS
-ZBM(ZBS_SET_ZDO_REQ,      EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_APPLICATION_ZDO_FLAGS, 0x03, 0x00)           // 53002A0300
+ZBM(ZBS_SET_ZDO_REQ,      EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_APPLICATION_ZDO_FLAGS, EMBER_APP_RECEIVES_SUPPORTED_ZDO_REQUESTS | EMBER_APP_HANDLES_UNSUPPORTED_ZDO_REQUESTS, 0x00)           // 53002A0300
 ZBM(ZBS_SET_NETWORKS,     EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_SUPPORTED_NETWORKS, 0x01, 0x00)              // 53002D0100
 ZBM(ZBS_SET_PACKET_BUF,   EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_PACKET_BUFFER_COUNT, 0xFF, 0x00)             // 530001FF00
 
@@ -667,23 +670,24 @@ ZBM(ZBS_GET_APS_UNI,      EZSP_getConfigurationValue, 0x00 /*high*/, EZSP_CONFIG
 ZBM(ZBR_GET_OK,           EZSP_getConfigurationValue, 0x00 /*high*/, 0x00 /*ok*/)   // 5200 - followed by the value
 
 // Add Endpoints
-// ZBM(ZBS_ADD_ENDPOINT1,    EZSP_addEndpoint, 0x00 /*high*/, 0x01 /*ep*/, Z_B0(Z_PROF_HA), Z_B1(Z_PROF_HA),
-//                           0x05, 0x00 /* AppDeviceId */, 0x00 /* AppDevVer */,
-//                           0x0E /* inputClusterCount */,                        // actually all clusters will be received
-//                           0X00 /* outputClusterCount */,
-//                           0x00,0x00,  0x04,0x00,  0x05,0x00,  0x06,0x00,      // 0x0000, 0x0004, 0x0005, 0x0006
-//                           0x07,0x00,  0x08,0x00,  0x0A,0x00,  0x02,0x01,      // 0x0007, 0x0008, 0x000A, 0X0102
-//                           0x00,0x03,  0x00,0x04,  0x02,0x04,  0x03,0x04,      // 0x0300, 0x0400, 0x0402, 0x0403
-//                           0x05,0x04,  0x06,0x04,                              // 0x0405, 0x0406
-//                           )
 ZBM(ZBS_ADD_ENDPOINT1,    EZSP_addEndpoint, 0x00 /*high*/, 0x01 /*ep*/, Z_B0(Z_PROF_HA), Z_B1(Z_PROF_HA),
                           0x05, 0x00 /* AppDeviceId */, 0x00 /* AppDevVer */,
-                          0x00 /* inputClusterCount */,                         // actually all clusters will be received
-                          0X00 /* outputClusterCount */ )                       // 02000104010500000000
+                          0x0E /* inputClusterCount */,                         // actually all clusters will be received
+                          0X00 /* outputClusterCount */,                        // 02000104010500000000
+                          0x00,0x00,  0x04,0x00,  0x05,0x00,  0x06,0x00,      // 0x0000, 0x0004, 0x0005, 0x0006
+                          0x07,0x00,  0x08,0x00,  0x0A,0x00,  0x02,0x01,      // 0x0007, 0x0008, 0x000A, 0X0102
+                          0x00,0x03,  0x00,0x04,  0x02,0x04,  0x03,0x04,      // 0x0300, 0x0400, 0x0402, 0x0403
+                          0x05,0x04,  0x06,0x04,                              // 0x0405, 0x0406
+                          )
 ZBM(ZBS_ADD_ENDPOINTB,    EZSP_addEndpoint, 0x00 /*high*/, 0x0B /*ep*/, Z_B0(Z_PROF_HA), Z_B1(Z_PROF_HA),
                           0x05, 0x00 /* AppDeviceId */, 0x00 /* AppDevVer */,
-                          0x00 /* inputClusterCount */,                         // actually all clusters will be received
-                          0X00 /* outputClusterCount */ )                       // 02000B04010500000000
+                          0x0E /* inputClusterCount */,                         // actually all clusters will be received
+                          0X00 /* outputClusterCount */,                        // 02000B04010500000000
+                          0x00,0x00,  0x04,0x00,  0x05,0x00,  0x06,0x00,      // 0x0000, 0x0004, 0x0005, 0x0006
+                          0x07,0x00,  0x08,0x00,  0x0A,0x00,  0x02,0x01,      // 0x0007, 0x0008, 0x000A, 0X0102
+                          0x00,0x03,  0x00,0x04,  0x02,0x04,  0x03,0x04,      // 0x0300, 0x0400, 0x0402, 0x0403
+                          0x05,0x04,  0x06,0x04,                              // 0x0405, 0x0406
+                          )
 ZBM(ZBR_ADD_ENDPOINT,     EZSP_addEndpoint, 0x00 /*high*/, 0x00 /*ok*/)           // 020000
 
 // set concentrator false
@@ -691,11 +695,58 @@ ZBM(ZBS_SET_CONCENTRATOR, EZSP_setConcentrator, 0x00 /*high*/, 0x00 /*false*/, 0
                           0x58,0x02 /*minTime*/, 0x08,0x07 /*maxTime*/, 0x02 /*errThr*/, 0x05 /*failThr*/, 0x00 /*maxHops*/)  // 100000F9FF58020807020500
 ZBM(ZBR_SET_CONCENTRATOR, EZSP_setConcentrator, 0x00 /*high*/, 0x00 /*ok*/)           // 100000
 
-//False, <EmberConcentratorType.HIGH_RAM_CONCENTRATOR: 65529>, 600, 1800, 2, 5, 0)
+// setInitialSecurityState
+#define EZ_SECURITY_MODE  EMBER_TRUST_CENTER_GLOBAL_LINK_KEY | EMBER_PRECONFIGURED_NETWORK_KEY_MODE | EMBER_HAVE_NETWORK_KEY | EMBER_HAVE_PRECONFIGURED_KEY
+ZBM(ZBS_SET_SECURITY,     EZSP_setInitialSecurityState, 0x00 /*high*/,
+                          Z_B0(EZ_SECURITY_MODE), Z_B1(EZ_SECURITY_MODE),
+                          // preConfiguredKey
+                          0x5A, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6C, 0x6C, 0x69, 0x61, 0x6E, 0x63, 0x65, 0x30, 0x39,   // well known key "ZigBeeAlliance09"
+                          // networkKey
+                          Z_B0(USE_ZIGBEE_PRECFGKEY_L), Z_B1(USE_ZIGBEE_PRECFGKEY_L), Z_B2(USE_ZIGBEE_PRECFGKEY_L), Z_B3(USE_ZIGBEE_PRECFGKEY_L),
+                          Z_B4(USE_ZIGBEE_PRECFGKEY_L), Z_B5(USE_ZIGBEE_PRECFGKEY_L), Z_B6(USE_ZIGBEE_PRECFGKEY_L), Z_B7(USE_ZIGBEE_PRECFGKEY_L),
+                          Z_B0(USE_ZIGBEE_PRECFGKEY_H), Z_B1(USE_ZIGBEE_PRECFGKEY_H), Z_B2(USE_ZIGBEE_PRECFGKEY_H), Z_B3(USE_ZIGBEE_PRECFGKEY_H),
+                          Z_B4(USE_ZIGBEE_PRECFGKEY_H), Z_B5(USE_ZIGBEE_PRECFGKEY_H), Z_B6(USE_ZIGBEE_PRECFGKEY_H), Z_B7(USE_ZIGBEE_PRECFGKEY_H),
+                          0x00 /*sequence*/,
+                          0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /*trustcenter*/
+                          )
+ZBM(ZBR_SET_SECURITY,     EZSP_setInitialSecurityState, 0x00 /*high*/, 0x00 /*status*/)
 
-const char kResetingDevice[] PROGMEM = D_LOG_ZIGBEE "resetting EZSP device";
-const char kAbort[] PROGMEM = "Abort";
-const char kZigbeeAbort[] PROGMEM = D_LOG_ZIGBEE "Abort";
+// setIndividual policies
+ZBM(ZBS_SET_POLICY_00,    EZSP_setPolicy, 0x00 /*high*/, EZSP_TRUST_CENTER_POLICY,
+                          EZSP_DECISION_ALLOW_JOINS | EZSP_DECISION_ALLOW_UNSECURED_REJOINS)    // 55000003
+ZBM(ZBS_SET_POLICY_02,    EZSP_setPolicy, 0x00 /*high*/, EZSP_UNICAST_REPLIES_POLICY,
+                          EZSP_HOST_WILL_NOT_SUPPLY_REPLY)    // 550002210
+ZBM(ZBS_SET_POLICY_03,    EZSP_setPolicy, 0x00 /*high*/, EZSP_POLL_HANDLER_POLICY,
+                          EZSP_POLL_HANDLER_IGNORE)    // 55000330
+ZBM(ZBS_SET_POLICY_05,    EZSP_setPolicy, 0x00 /*high*/, EZSP_TC_KEY_REQUEST_POLICY,
+                          EZSP_ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY)    // 55000551
+ZBM(ZBS_SET_POLICY_06,    EZSP_setPolicy, 0x00 /*high*/, EZSP_APP_KEY_REQUEST_POLICY,
+                          EZSP_DENY_APP_KEY_REQUESTS)    // 55000660
+ZBM(ZBR_SET_POLICY_XX,    EZSP_setPolicy, 0x00 /*high*/, 0x00 /*status*/)
+
+// formNetwork - i.e. start zigbee network as coordinator
+ZBM(ZBS_FORM_NETWORK,     EZSP_formNetwork, 0x00 /*high*/,
+                          Z_B0(USE_ZIGBEE_EXTPANID), Z_B1(USE_ZIGBEE_EXTPANID), Z_B2(USE_ZIGBEE_EXTPANID), Z_B3(USE_ZIGBEE_EXTPANID),
+                          Z_B4(USE_ZIGBEE_EXTPANID), Z_B5(USE_ZIGBEE_EXTPANID), Z_B6(USE_ZIGBEE_EXTPANID), Z_B7(USE_ZIGBEE_EXTPANID),
+                          Z_B0(USE_ZIGBEE_PANID), Z_B1(USE_ZIGBEE_PANID),
+                          20 /*radioTxPower*/,
+                          USE_ZIGBEE_CHANNEL /*channel*/,
+                          EMBER_USE_MAC_ASSOCIATION,
+                          0xFF,0xFF, /*nwkManagerId, unused*/
+                          0x00, /*nwkUpdateId, unused*/
+                          0x00,0x00,0x00,0x00, /*NWK channel mask, unused*/
+                          )  // 1E00...
+ZBM(ZBR_FORM_NETWORK,     EZSP_formNetwork, 0x00 /*high*/, 0x00 /*status*/)   // 1E0000
+ZBM(ZBR_NETWORK_UP,       EZSP_stackStatusHandler, 0x00 /*high*/, EMBER_NETWORK_UP)   // 190090
+
+// read configuration details
+ZBM(ZBS_GET_NETW_PARM,    EZSP_getNetworkParameters, 0x00 /*high*/)   // 2800
+ZBM(ZBR_GET_NETW_PARM,    EZSP_getNetworkParameters, 0x00 /*high*/, 0x00 /*ok*/)   // 2800
+ZBM(ZBS_GET_EUI64,        EZSP_getEui64, 0x00 /*high*/)   // 2600
+ZBM(ZBR_GET_EUI64,        EZSP_getEui64, 0x00 /*high*/)   // 2600
+ZBM(ZBS_GET_NODEID,       EZSP_getNodeId, 0x00 /*high*/)   // 2700
+ZBM(ZBR_GET_NODEID,       EZSP_getNodeId, 0x00 /*high*/)   // 2700
+
 
 static const Zigbee_Instruction zb_prog[] PROGMEM = {
   ZI_LABEL(0)
@@ -706,7 +757,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT(10500)                             // wait for 10 seconds for Tasmota to stabilize
 
     // Hardware reset
-    ZI_LOG(LOG_LEVEL_INFO, kResetingDevice)     // Log Debug: resetting EZSP device
+    ZI_LOG(LOG_LEVEL_INFO, kResettingDevice)     // Log Debug: resetting EZSP device
     ZI_CALL(&Z_Reset_Device, 0)         // LOW = reset
     ZI_WAIT(100)                        // wait for .1 second
     ZI_CALL(&Z_Reset_Device, 1)         // HIGH = release reset
@@ -715,9 +766,10 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT_UNTIL(5000, ZBR_RSTACK)     // wait for RSTACK message
  
     // Init device and probe version
-    ZI_SEND(ZBS_VERSION)                ZI_WAIT_RECV(1000, ZBR_VERSION)       // check EXT PAN ID
+    ZI_SEND(ZBS_VERSION)                ZI_WAIT_RECV_FUNC(1000, ZBR_VERSION, &Z_ReceiveCheckVersion)       // check EXT PAN ID
 
     // configure EFR32
+    ZI_MQTT_STATE(ZIGBEE_STATUS_STARTING, kConfiguredCoord)
     ZI_SEND(ZBS_SET_ADDR_TABLE)         ZI_WAIT_RECV(500, ZBR_SET_OK)      // Address table size
     ZI_SEND(ZBS_SET_MCAST_TABLE)        ZI_WAIT_RECV(500, ZBR_SET_OK)
     ZI_SEND(ZBS_SET_STK_PROF)           ZI_WAIT_RECV(500, ZBR_SET_OK)
@@ -733,7 +785,8 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_SET_PACKET_BUF)         ZI_WAIT_RECV(500, ZBR_SET_OK2)
 
     // read configuration
-    ZI_SEND(ZBS_GET_APS_UNI)            ZI_WAIT_RECV_FUNC(500, ZBR_GET_OK, &Z_ReadAPSUnicastMessage)
+    // TODO - not sure it's useful
+    //ZI_SEND(ZBS_GET_APS_UNI)            ZI_WAIT_RECV_FUNC(500, ZBR_GET_OK, &Z_ReadAPSUnicastMessage)
 
     // add endpoint 0x01 and 0x0B
     ZI_SEND(ZBS_ADD_ENDPOINT1)          ZI_WAIT_RECV(500, ZBR_ADD_ENDPOINT)
@@ -742,9 +795,38 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     // set Concentrator
     ZI_SEND(ZBS_SET_CONCENTRATOR)       ZI_WAIT_RECV(500, ZBR_SET_CONCENTRATOR)
 
+    // setInitialSecurityState
+    ZI_SEND(ZBS_SET_SECURITY)           ZI_WAIT_RECV(500, ZBR_SET_SECURITY)
+    ZI_SEND(ZBS_SET_POLICY_00)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
+    ZI_SEND(ZBS_SET_POLICY_02)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
+    ZI_SEND(ZBS_SET_POLICY_03)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
+    ZI_SEND(ZBS_SET_POLICY_05)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
+    ZI_SEND(ZBS_SET_POLICY_06)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
+
+    // formNetwork
+    ZI_SEND(ZBS_FORM_NETWORK)           ZI_WAIT_RECV(500, ZBR_FORM_NETWORK)
+    ZI_WAIT_RECV(5000, ZBR_NETWORK_UP)    // wait for network to start
+
+    // Query device information
+    ZI_SEND(ZBS_GET_EUI64)              ZI_WAIT_RECV_FUNC(500, ZBR_GET_EUI64, &Z_EZSPGetEUI64)
+    ZI_SEND(ZBS_GET_NODEID)             ZI_WAIT_RECV_FUNC(500, ZBR_GET_NODEID, &Z_EZSPGetNodeId)
+    ZI_SEND(ZBS_GET_NETW_PARM)          ZI_WAIT_RECV_FUNC(500, ZBR_GET_NETW_PARM, &Z_EZSPNetworkParameters)
+
+  ZI_LABEL(ZIGBEE_LABEL_READY)
+    ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
+    ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
+    ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
+    ZI_CALL(&Z_Load_Devices, 0)
+    ZI_CALL(&Z_Query_Bulbs, 0)
+
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
     ZI_WAIT_FOREVER()
-    ZI_GOTO(ZIGBEE_LABEL_READY)
+    ZI_GOTO(ZIGBEE_LABEL_MAIN_LOOP)
+
+  // Error: version of Z-Stack is not supported
+  ZI_LABEL(ZIGBEE_LABEL_UNSUPPORTED_VERSION)
+    ZI_MQTT_STATE(ZIGBEE_STATUS_UNSUPPORTED_VERSION, kEZ8)
+    ZI_GOTO(ZIGBEE_LABEL_ABORT)
 
   // Abort state machine, general error
   ZI_LABEL(ZIGBEE_LABEL_ABORT)                    // Label 99: abort

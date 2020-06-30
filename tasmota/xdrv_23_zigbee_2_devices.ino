@@ -244,6 +244,7 @@ Z_Devices zigbee_devices = Z_Devices();
 
 // Local coordinator information
 uint64_t localIEEEAddr = 0;
+uint16_t localShortAddr = 0;
 
 /*********************************************************************************************\
  * Implementation

@@ -495,7 +495,7 @@ int32_t ZigbeeProcessInputEZSP(class SBuffer &buf) {
   bool overflow = frame_control & 0x01;
   bool callbackPending = frame_control & 0x04;
   bool security_enabled = frame_control & 0x8000;
-  if (frame_control != 0x0180) {
+  if (truncated || overflow || security_enabled) {
     AddLog_P2(LOG_LEVEL_INFO, PSTR("ZIG: specific frame_control 0x%04X"), frame_control);
   }
 

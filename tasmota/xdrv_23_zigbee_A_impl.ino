@@ -954,8 +954,8 @@ void CmndZbRestore(void) {
 //
 void CmndZbPermitJoin(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+
   uint32_t payload = XdrvMailbox.payload;
-  uint16_t dstAddr = 0xFFFC;            // default addr
   uint8_t  duration = 60;               // default 60s
 
   if (payload <= 0) {
@@ -964,7 +964,10 @@ void CmndZbPermitJoin(void) {
     duration = 0xFF;                    // unlimited time
   }
 
+// ZNP Version
 #ifdef USE_ZIGBEE_ZNP
+  uint16_t dstAddr = 0xFFFC;            // default addr
+
   SBuffer buf(34);
   buf.add8(Z_SREQ | Z_ZDO);             // 25
   buf.add8(ZDO_MGMT_PERMIT_JOIN_REQ);   // 36
@@ -974,7 +977,16 @@ void CmndZbPermitJoin(void) {
   buf.add8(0x00);                       // TCSignificance
 
   ZigbeeZNPSend(buf.getBuffer(), buf.len());
+
 #endif // USE_ZIGBEE_ZNP
+
+// EZSP VERSION
+#ifdef USE_ZIGBEE_EZSP
+  SBuffer buf(3);
+  buf.add16(EZSP_permitJoining);
+  buf.add8(duration);
+  ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len(), true);
+#endif // USE_ZIGBEE_EZSP
 
   ResponseCmndDone();
 }
