@@ -91,3 +91,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for single wire LMT01 temperature Sensor by justifiably (#8713)
 - Add compile time interlock parameters (#8759)
 - Add compile time user template (#8766)
+- Add rotary encoder support for light dimmer and optional color temperature if button1 still pressed (#8670)

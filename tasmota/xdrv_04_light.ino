@@ -895,7 +895,7 @@ void LightStateClass::XyToRgb(float x, float y, uint8_t *rr, uint8_t *rg, uint8_
                                         0.0557f, -0.2040f,  1.0570f };
   mat3x3(rgb_factors, XYZ, rgb);
   float max = (rgb[0] > rgb[1] && rgb[0] > rgb[2]) ? rgb[0] : (rgb[1] > rgb[2]) ? rgb[1] : rgb[2];
- 
+
   for (uint32_t i = 0; i < 3; i++) {
     rgb[i] = rgb[i] / max; // normalize to max == 1.0
     rgb[i] = (rgb[i] <= 0.0031308f) ? 12.92f * rgb[i] : 1.055f * POW(rgb[i], (1.0f / 2.4f)) - 0.055f; // gamma
@@ -1478,12 +1478,22 @@ void LightSetBri(uint8_t device, uint8_t bri) {
   }
 }
 
+void LightColorTempOffset(int32_t offset) {
+  int32_t ct = LightGetColorTemp();
+  if (0 == ct) { return; }  // CT not supported
+  ct += offset;
+  if (ct < CT_MIN) { ct = CT_MIN; }
+  else if (ct > CT_MAX) { ct = CT_MAX; }
+
+  LightSetColorTemp(ct);
+}
+
 void LightSetColorTemp(uint16_t ct)
 {
 /* Color Temperature (https://developers.meethue.com/documentation/core-concepts)
  *
- * ct = 153 = 6500K = Cold = CCWW = FF00
- * ct = 600 = 2000K = Warm = CCWW = 00FF
+ * ct = 153 mirek = 6500K = Cold = CCWW = FF00
+ * ct = 500 mirek = 2000K = Warm = CCWW = 00FF
  */
   // don't set CT if not supported
   if ((LST_COLDWARM != Light.subtype) && (LST_RGBCW != Light.subtype)) {
@@ -2743,6 +2753,16 @@ void CmndColorTemperature(void)
       ResponseCmndNumber(ct);
     }
   }
+}
+
+void LightDimmerOffset(int32_t offset) {
+  int32_t dimmer = light_state.getDimmer() + offset;
+  if (dimmer < 1) { dimmer = 1; }
+  if (dimmer > 100) { dimmer = 100; }
+
+  XdrvMailbox.index = 0;
+  XdrvMailbox.payload = dimmer;
+  CmndDimmer();
 }
 
 void CmndDimmer(void)
