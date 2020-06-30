@@ -165,8 +165,8 @@ struct RULES {
   long old_dimm = -1;
 
   uint16_t last_minute = 60;
-  uint16_t vars_event = 0;
-  uint16_t mems_event = 0;
+  uint16_t vars_event = 0;   // Bitmask supporting MAX_RULE_VARS bits
+  uint16_t mems_event = 0;   // Bitmask supporting MAX_RULE_MEMS bits
   bool teleperiod = false;
   bool busy = false;
 
