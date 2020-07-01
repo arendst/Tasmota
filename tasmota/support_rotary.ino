@@ -130,26 +130,25 @@ void RotaryHandler(void) {
   if (Rotary.last_position == Rotary.position) { return; }
 
   Rotary.busy = true;
+
   int rotary_position = Rotary.position - Rotary.last_position;
-  Rotary.last_position = Rotary.position;
+  Rotary.last_position = 128;
+  Rotary.position = 128;
 
   if (Settings.save_data && (save_data_counter < 2)) {
     save_data_counter = 2;     // Postpone flash writes while rotary is turned
   }
 
   if (Button.hold_timer[0]) {  // Button1 is pressed: set color temperature
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: CT/Color position %d"), rotary_position);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: CT/Color position %d"), rotary_position);
     Rotary.changed = 1;
     if (!LightColorTempOffset(rotary_position * rotary_ct_increment)) {  // Ct 153..500 = (500 - 153) / 8 = 43 steps
       LightColorOffset(rotary_position * rotary_color_increment);        // Hue 0..359 = 360 / 8 = 45 steps
     }
   } else {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: Dimmer position %d"), rotary_position);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: Dimmer position %d"), rotary_position);
     LightDimmerOffset(rotary_position * rotary_dimmer_increment);        // Dimmer 1..100 = 100 / 2 = 50 steps
   }
-
-//    Rotary.last_position = 128;
-//    Rotary.position = 128;
 
   Rotary.busy = false;
 }
