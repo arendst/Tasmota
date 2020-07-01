@@ -17,6 +17,8 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifdef ESP8266
+
 #ifndef Arduino_h
 #define Arduino_h
 
@@ -297,4 +299,6 @@ inline void configTzTime(const char* tz, const char* server1,
 // reinclude *alloc redefinition because of <cstdlib> undefining them
 // this is mandatory for allowing OOM *alloc definitions in .ino files
 #include "umm_malloc/umm_malloc_cfg.h"
+#endif
+
 #endif
