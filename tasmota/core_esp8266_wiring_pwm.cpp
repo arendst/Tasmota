@@ -31,7 +31,6 @@ extern "C" {
 static uint32_t analogMap = 0;
 static int32_t analogScale = PWMRANGE;
 static uint16_t analogFreq = 1000;
-static uint32_t analogDrift = 10000;
 
 extern void __analogWriteRange(uint32_t range) {
   if (range > 0) {
