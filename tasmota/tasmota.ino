@@ -372,9 +372,11 @@ void loop(void) {
 
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
+#ifdef USE_LIGHT
 #ifdef ROTARY_V1
     RotaryHandler();
-#endif
+#endif  // ROTARY_V1
+#endif  // USE_LIGHT
     XdrvCall(FUNC_EVERY_50_MSECOND);
     XsnsCall(FUNC_EVERY_50_MSECOND);
   }
