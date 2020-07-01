@@ -81,7 +81,8 @@ int LMT01_getPulses(void) {
     hold = lmt01_pulseCount;
     delay(1);
   }
-  if (timeout > 0) {
+  // discard spurious low counts 
+  if (timeout > 0 && hold >= 10) {
     return hold;
   }
   return -1;
