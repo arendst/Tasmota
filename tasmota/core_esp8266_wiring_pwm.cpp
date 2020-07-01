@@ -31,6 +31,7 @@ extern "C" {
 static uint32_t analogMap = 0;
 static int32_t analogScale = PWMRANGE;
 static uint16_t analogFreq = 1000;
+static uint32_t analogDrift = 10000;
 
 extern void __analogWriteRange(uint32_t range) {
   if (range > 0) {
@@ -48,11 +49,19 @@ extern void __analogWriteFreq(uint32_t freq) {
   }
 }
 
-extern void __analogWrite(uint8_t pin, int val) {
+
+extern void __analogWriteCCyPeriod(uint8_t pin, int val, uint32_t period) {
   if (pin > 16) {
     return;
   }
-  uint32_t analogPeriod = microsecondsToClockCycles(1000000UL) / analogFreq;
+  uint32_t analogPeriod;
+  if (period == 0) {
+       analogPeriod = microsecondsToClockCycles(1000000UL) / analogFreq;
+  } else {
+       analogPeriod = period;
+  }
+
+  //uint32_t analogPeriod = microsecondsToClockCycles(1000000UL) / analogFreq;
   if (val < 0) {
     val = 0;
   } else if (val > analogScale) {
@@ -72,12 +81,18 @@ extern void __analogWrite(uint8_t pin, int val) {
   if (startWaveformClockCycles(pin, high, low, 0, phaseReference, 0, true)) {
     analogMap |= (1 << pin);
   }
+  //Serial.printf("phase: %d, high %d, low %d, drift %d, apr: %u\n", phaseReference,high,low, analogDrift, analogPeriod );
 }
 
+extern void __analogWrite(uint8_t pin, int val) {
+  __analogWriteCCyPeriod( pin,  val, 0);
+}
+
+extern void analogWriteCCyPeriod(uint8_t pin, int val, uint32_t priod) __attribute__((weak, alias("__analogWriteCCyPeriod")));
 extern void analogWrite(uint8_t pin, int val) __attribute__((weak, alias("__analogWrite")));
 extern void analogWriteFreq(uint32_t freq) __attribute__((weak, alias("__analogWriteFreq")));
 extern void analogWriteRange(uint32_t range) __attribute__((weak, alias("__analogWriteRange")));
 
 };
 
-#endif  // ESP8266 
+#endif  // ESP8266
