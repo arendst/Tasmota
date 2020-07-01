@@ -365,9 +365,6 @@ void loop(void) {
 
   ButtonLoop();
   SwitchLoop();
-#ifdef ROTARY_V1
-  RotaryLoop();
-#endif
 #ifdef USE_DEVICE_GROUPS
   DeviceGroupsLoop();
 #endif  // USE_DEVICE_GROUPS
@@ -375,6 +372,9 @@ void loop(void) {
 
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
+#ifdef ROTARY_V1
+    RotaryHandler();
+#endif
     XdrvCall(FUNC_EVERY_50_MSECOND);
     XsnsCall(FUNC_EVERY_50_MSECOND);
   }

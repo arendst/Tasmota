@@ -23,12 +23,28 @@
  * Rotary support
 \*********************************************************************************************/
 
+#define ROTARY_OPTION1
+//#define ROTARY_OPTION2
+
+#ifdef ROTARY_OPTION1
+const uint8_t rotary_dimmer_increment = 1;
+const uint8_t rotary_ct_increment = 2;
+const uint8_t rotary_color_increment = 4;
+#endif
+
+#ifdef ROTARY_OPTION2
+const uint8_t rotary_dimmer_increment = 2;
+const uint8_t rotary_ct_increment = 8;
+const uint8_t rotary_color_increment = 8;
+#endif
+
 struct ROTARY {
-  unsigned long debounce = 0;          // Rotary debounce timer
   uint8_t present = 0;
   uint8_t state = 0;
-  uint8_t position = 128;
-  uint8_t last_position = 128;
+  uint8_t prevNextCode;
+  uint16_t store;
+  int8_t position = 128;
+  int8_t last_position = 128;
   uint8_t changed = 0;
   bool busy = false;
 } Rotary;
@@ -39,25 +55,52 @@ void update_rotary(void) ICACHE_RAM_ATTR;
 void update_rotary(void) {
   if (Rotary.busy || !LightPowerIRAM()) { return; }
 
-  /*
-  * https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
-  */
-  uint8_t s = Rotary.state & 3;
-  if (digitalRead(Pin(GPIO_ROT1A))) { s |= 4; }
-  if (digitalRead(Pin(GPIO_ROT1B))) { s |= 8; }
-  switch (s) {
-    case 0: case 5: case 10: case 15:
-      break;
+#ifdef ROTARY_OPTION1
+  // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
+  uint8_t p1val = digitalRead(Pin(GPIO_ROT1A));
+  uint8_t p2val = digitalRead(Pin(GPIO_ROT1B));
+  uint8_t state = Rotary.state & 3;
+  if (p1val) { state |= 4; }
+  if (p2val) { state |= 8; }
+  Rotary.state = (state >> 2);
+  switch (state) {
     case 1: case 7: case 8: case 14:
-      Rotary.position++; break;
+      Rotary.position++;
+      return;
     case 2: case 4: case 11: case 13:
-      Rotary.position--; break;
+      Rotary.position--;
+      return;
     case 3: case 12:
-      Rotary.position = Rotary.position + 2; break;
-    default:
-      Rotary.position = Rotary.position - 2; break;
+      Rotary.position += 2;
+      return;
+    case 6: case 9:
+      Rotary.position -= 2;
+      return;
   }
-  Rotary.state = (s >> 2);
+#endif
+
+#ifdef ROTARY_OPTION2
+  // https://github.com/FrankBoesing/EncoderBounce/blob/master/EncoderBounce.h
+  const uint16_t rot_enc = 0b0110100110010110;
+
+  uint8_t p1val = digitalRead(Pin(GPIO_ROT1B));
+  uint8_t p2val = digitalRead(Pin(GPIO_ROT1A));
+  uint8_t t = Rotary.prevNextCode;
+  t <<= 2;
+  if (p1val) { t |= 0x02; }
+  if (p2val) { t |= 0x01; }
+  t &= 0x0f;
+  Rotary.prevNextCode = t;
+
+  // If valid then store as 16 bit data.
+  if (rot_enc & (1 << t)) {
+    Rotary.store = (Rotary.store << 4) | Rotary.prevNextCode;
+    if (Rotary.store == 0xd42b) { Rotary.position++; }
+    else if (Rotary.store == 0xe817) { Rotary.position--; }
+    else if ((Rotary.store & 0xff) == 0x2b) { Rotary.position--; }
+    else if ((Rotary.store & 0xff) == 0x17) { Rotary.position++; }
+  }
+#endif
 }
 
 bool RotaryButtonPressed(void) {
@@ -84,40 +127,31 @@ void RotaryInit(void) {
 \*********************************************************************************************/
 
 void RotaryHandler(void) {
-  if (Rotary.last_position != Rotary.position) {
-    Rotary.busy = true;
-    int rotary_position = Rotary.position - Rotary.last_position;
+  if (Rotary.last_position == Rotary.position) { return; }
 
-    if (Settings.save_data) {
-      if (save_data_counter < 2) {
-        save_data_counter = 2;   // Postpone flash writes while rotary is turned
-      }
-    }
+  Rotary.busy = true;
+  int rotary_position = Rotary.position - Rotary.last_position;
+  Rotary.last_position = Rotary.position;
 
-    if (Button.hold_timer[0]) {  // Button1 is pressed: set color temperature
-//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: " D_CMND_COLORTEMPERATURE " %d"), rotary_position);
-      Rotary.changed = 1;
-      if (!LightColorTempOffset(rotary_position * 4)) {  // Ct from 153 - 500
-        LightColorOffset(rotary_position * 2);           // Hue from 0 - 359
-      }
-    } else {
-//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: " D_CMND_DIMMER " %d"), rotary_position);
-      LightDimmerOffset(rotary_position);
-    }
-
-    Rotary.last_position = 128;
-    Rotary.position = 128;
-    Rotary.busy = false;
+  if (Settings.save_data && (save_data_counter < 2)) {
+    save_data_counter = 2;     // Postpone flash writes while rotary is turned
   }
-}
 
-void RotaryLoop(void) {
-  if (Rotary.present) {
-    if (TimeReached(Rotary.debounce)) {
-      SetNextTimeInterval(Rotary.debounce, Settings.button_debounce);  // Using button_debounce setting for this as well
-      RotaryHandler();
+  if (Button.hold_timer[0]) {  // Button1 is pressed: set color temperature
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: CT/Color position %d"), rotary_position);
+    Rotary.changed = 1;
+    if (!LightColorTempOffset(rotary_position * rotary_ct_increment)) {  // Ct 153..500 = (500 - 153) / 8 = 43 steps
+      LightColorOffset(rotary_position * rotary_color_increment);        // Hue 0..359 = 360 / 8 = 45 steps
     }
+  } else {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: Dimmer position %d"), rotary_position);
+    LightDimmerOffset(rotary_position * rotary_dimmer_increment);        // Dimmer 1..100 = 100 / 2 = 50 steps
   }
+
+//    Rotary.last_position = 128;
+//    Rotary.position = 128;
+
+  Rotary.busy = false;
 }
 
 #endif  // ROTARY_V1
