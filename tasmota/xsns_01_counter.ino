@@ -98,7 +98,11 @@ void CounterUpdate(uint8_t index)
           // add 100.000 cpu ticks to ensure right step calculation
           uint32_t steps = (current_cycle-last_cycle+100000)/(clockCyclesPerMicrosecond() * 10000);
           cycle_time = (current_cycle-last_cycle)/steps;
-          analogWriteCCyPeriod(Pin(GPIO_PWM1, index), 5, cycle_time );
+          #ifdef ESP8266
+            analogWriteCCyPeriod(Pin(GPIO_PWM1, index), 5, cycle_time );
+          #else
+            analogWrite(Pin(GPIO_PWM1, index), 5);
+          #endif
         }
         last_cycle = current_cycle;
       }
