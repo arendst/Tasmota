@@ -64,10 +64,16 @@ void ZigbeeInit(void)
     Settings.zb_precfgkey_h = USE_ZIGBEE_PRECFGKEY_H;
     Settings.zb_pan_id = USE_ZIGBEE_PANID;
     Settings.zb_channel = USE_ZIGBEE_CHANNEL;
-    Settings.zb_free_byte = 0;
+    Settings.zb_txradio_dbm = USE_ZIGBEE_TXRADIO_DBM;
   }
+
   // update commands with the current settings
-  Z_UpdateConfig(Settings.zb_channel, Settings.zb_pan_id, Settings.zb_ext_panid, Settings.zb_precfgkey_l, Settings.zb_precfgkey_h);
+#ifdef USE_ZIGBEE_ZNP
+  ZNP_UpdateConfig(Settings.zb_channel, Settings.zb_pan_id, Settings.zb_ext_panid, Settings.zb_precfgkey_l, Settings.zb_precfgkey_h);
+#endif
+#ifdef USE_ZIGBEE_EZSP
+  EZ_UpdateConfig(Settings.zb_channel, Settings.zb_pan_id, Settings.zb_ext_panid, Settings.zb_precfgkey_l, Settings.zb_precfgkey_h, Settings.zb_txradio_dbm);
+#endif
 
   ZigbeeInitSerial();
 }
@@ -1018,6 +1024,7 @@ void CmndZbConfig(void) {
   uint64_t    zb_ext_panid   = Settings.zb_ext_panid;
   uint64_t    zb_precfgkey_l = Settings.zb_precfgkey_l;
   uint64_t    zb_precfgkey_h = Settings.zb_precfgkey_h;
+  uint8_t     zb_txradio_dbm = Settings.zb_txradio_dbm;
 
   // if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
   RemoveAllSpaces(XdrvMailbox.data);
@@ -1043,18 +1050,23 @@ void CmndZbConfig(void) {
     // KeyH
     const JsonVariant &val_key_h = GetCaseInsensitive(json, PSTR("KeyH"));
     if (nullptr != &val_key_h) { zb_precfgkey_h = strtoull(val_key_h.as<const char*>(), nullptr, 0); }
+    // TxRadio dBm
+    const JsonVariant &val_txradio = GetCaseInsensitive(json, PSTR("TxRadio"));
+    if (nullptr != &val_txradio) { zb_txradio_dbm = strToUInt(val_txradio); }
 
     // Check if a parameter was changed after all
     if ( (zb_channel      != Settings.zb_channel) ||
          (zb_pan_id       != Settings.zb_pan_id) ||
          (zb_ext_panid    != Settings.zb_ext_panid) ||
          (zb_precfgkey_l  != Settings.zb_precfgkey_l) ||
-         (zb_precfgkey_h  != Settings.zb_precfgkey_h) ) {
+         (zb_precfgkey_h  != Settings.zb_precfgkey_h) ||
+         (zb_txradio_dbm  != Settings.zb_txradio_dbm) ) {
       Settings.zb_channel      = zb_channel;
       Settings.zb_pan_id       = zb_pan_id;
       Settings.zb_ext_panid    = zb_ext_panid;
       Settings.zb_precfgkey_l  = zb_precfgkey_l;
       Settings.zb_precfgkey_h  = zb_precfgkey_h;
+      Settings.zb_txradio_dbm  = zb_txradio_dbm;
       restart_flag = 2;    // save and reboot
     }
   }
@@ -1074,10 +1086,12 @@ void CmndZbConfig(void) {
                   ",\"ExtPanID\":\"%s\""
                   ",\"KeyL\":\"%s\""
                   ",\"KeyH\":\"%s\""
+                  ",\"TxRadio\":%d"
                   "}}"),
                   zb_channel, zb_pan_id,
                   hex_ext_panid,
-                  hex_precfgkey_l, hex_precfgkey_h);
+                  hex_precfgkey_l, hex_precfgkey_h,
+                  zb_txradio_dbm);
 }
 
 /*********************************************************************************************\

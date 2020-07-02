@@ -559,7 +559,7 @@ struct {
   uint64_t      zb_precfgkey_h;            // F28
   uint16_t      zb_pan_id;                 // F30
   uint8_t       zb_channel;                // F32
-  uint8_t       zb_free_byte;              // F33
+  uint8_t       zb_txradio_dbm;            // F33
   uint16_t      pms_wake_interval;         // F34
   uint8_t       config_version;            // F36
   uint8_t       windmeter_pulses_x_rot;    // F37
