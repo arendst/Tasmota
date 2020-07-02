@@ -679,6 +679,7 @@
                                                   // if PANID == 0xFFFE, then the device will act as a Zigbee end-device (non-router), the parameters below are ignored
   #define USE_ZIGBEE_EXTPANID 0xCCCCCCCCCCCCCCCCL // arbitrary extended PAN ID
   #define USE_ZIGBEE_CHANNEL  11                  // Zigbee Channel (11-26)
+  #define USE_ZIGBEE_TXRADIO_DBM  20                  // Tx Radio power in dBm (only for EZSP, EFR32 can go up to 20 dBm)
   #define USE_ZIGBEE_PRECFGKEY_L 0x0F0D0B0907050301L  // note: changing requires to re-pair all devices
   #define USE_ZIGBEE_PRECFGKEY_H 0x0D0C0A0806040200L  // note: changing requires to re-pair all devices
 

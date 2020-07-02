@@ -542,7 +542,7 @@ int32_t ZigbeeProcessInputRaw(class SBuffer &buf) {
       
       // RSTACK
       // received just after boot, either because of Power up, hardware reset or RST
-      Z_EZSP_RSTACK(buf.get8(2));
+      EZ_RSTACK(buf.get8(2));
       EZSP_Serial.from_ack = 0;
       EZSP_Serial.to_ack = 0;
 
@@ -555,7 +555,7 @@ int32_t ZigbeeProcessInputRaw(class SBuffer &buf) {
     } else if (control_byte == 0xC2) {
       
       // ERROR
-      Z_EZSP_ERROR(buf.get8(2));
+      EZ_ERROR(buf.get8(2));
       zigbee.active = false;           // stop all zigbee activities
     } else {
 
@@ -691,6 +691,38 @@ void ZigbeeZCLSend_Raw(uint16_t shortaddr, uint16_t groupaddr, uint16_t clusterI
 
   ZigbeeZNPSend(buf.getBuffer(), buf.len());
 #endif // USE_ZIGBEE_ZNP
+
+#ifdef USE_ZIGBEE_EZSP
+  SBuffer buf(32+len);
+
+  buf.add16(EZSP_sendUnicast);          // 3400
+  buf.add8(EMBER_OUTGOING_DIRECT);    // 00
+  buf.add16(shortaddr);               // dest addr
+  // ApsFrame
+  buf.add16(Z_PROF_HA);               // Home Automation profile
+  buf.add16(clusterId);               // cluster
+  buf.add8(0x01);                     // srcEp
+  buf.add8(endpoint);                 // dstEp
+  buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
+  buf.add16(groupaddr);               // groupId
+  buf.add8(transacId);
+  // end of ApsFrame
+  buf.add8(0x01);                     // tag TODO
+
+  buf.add8(3 + len + (manuf ? 2 : 0));
+  buf.add8((needResponse ? 0x00 : 0x10) | (clusterSpecific ? 0x01 : 0x00) | (manuf ? 0x04 : 0x00));                 // Frame Control Field
+  if (manuf) {
+    buf.add16(manuf);               // add Manuf Id if not null
+  }
+  buf.add8(transacId);              // Transaction Sequance Number
+  buf.add8(cmdId);
+  if (len > 0) {
+    buf.addBuffer(msg, len);        // add the payload
+  }
+
+  ZigbeeEZSPSendCmd(buf.buf(), buf.len(), true);
+  
+#endif // USE_ZIGBEE_EZSP
 }
 
 #endif // USE_ZIGBEE
