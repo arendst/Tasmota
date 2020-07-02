@@ -115,9 +115,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t compress_rules_cpu : 1;       // bit 11 (v8.2.0.6)  - SetOption93 - Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick
     uint32_t max6675 : 1;                  // bit 12 (v8.3.1.2)  - SetOption94 - Implement simpler MAX6675 protocol instead of MAX31855
     uint32_t network_wifi : 1;             // bit 13 (v8.3.1.3)  - CMND_WIFI
-    uint32_t network_ethernet : 1;         // bit 14 (v8.3.1.3)  = CMND_ETHERNET
+    uint32_t network_ethernet : 1;         // bit 14 (v8.3.1.3)  - CMND_ETHERNET
     uint32_t tuyamcu_baudrate : 1;         // bit 15 (v8.3.1.6)  - SetOption97 - Set Baud rate for TuyaMCU serial communication (0 = 9600 or 1 = 115200)
-    uint32_t spare16 : 1;
+    uint32_t rotary_uses_rules : 1;        // bit 16 (v8.3.1.6)  - SetOption98 - Use rules instead of light control
     uint32_t spare17 : 1;
     uint32_t spare18 : 1;
     uint32_t spare19 : 1;

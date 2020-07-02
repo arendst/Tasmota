@@ -29,7 +29,7 @@
 | USE_HOTPLUG           | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
-| ROTARY_V1             | - | - | - | - | - | - | - |
+| ROTARY_V1             | - | - | x | - | x | - | - |
 | USE_SONOFF_RF         | - | - | x | x | x | - | - |
 | USE_RF_FLASH          | - | - | x | x | x | - | - |
 | USE_SONOFF_SC         | - | - | x | x | x | - | - |

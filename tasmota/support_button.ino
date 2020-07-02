@@ -302,7 +302,7 @@ void ButtonHandler(void)
                   }
                 }
               }
-#if defined(USE_LIGHT) && defined(ROTARY_V1)
+#ifdef ROTARY_V1
               if (!((0 == button_index) && RotaryButtonPressed())) {
 #endif
                 if (!Settings.flag3.mqtt_buttons && single_press && SendKey(KEY_BUTTON, button_index + Button.press_counter[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
@@ -344,7 +344,7 @@ void ButtonHandler(void)
                     }
                   }
                 }
-#if defined(USE_LIGHT) && defined(ROTARY_V1)
+#ifdef ROTARY_V1
               }
 #endif
               Button.press_counter[button_index] = 0;
