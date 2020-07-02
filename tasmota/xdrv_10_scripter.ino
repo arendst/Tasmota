@@ -101,8 +101,9 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #ifdef USE_24C256
 #pragma message "script 24c256 file option used"
 #else
-#warning "EEP_SCRIPT_SIZE also needs USE_24C256"
-#define USE_24C256
+//#warning "EEP_SCRIPT_SIZE also needs USE_24C256"
+#pragma message "internal eeprom script buffer used"
+//#define USE_24C256
 #endif
 #endif // EEP_SCRIPT_SIZE
 
@@ -491,7 +492,7 @@ char *script;
         if (*lp==';') goto next_line;
         if (init) {
             // init section
-            if (*lp=='>') {
+            if (*lp=='>' || !*lp) {
                 init=0;
                 break;
             }
@@ -1370,10 +1371,12 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
 
     if (jo) {
       // look for json input
+      char jvname[32];
+      strcpy(jvname,vname);
       const char* str_value;
       uint8_t aindex;
       String vn;
-      char *ja=strchr(vname,'[');
+      char *ja=strchr(jvname,'[');
       if (ja) {
         // json array
         *ja=0;
@@ -1386,7 +1389,7 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
         aindex--;
       }
       if (jo->success()) {
-        char *subtype=strchr(vname,'#');
+        char *subtype=strchr(jvname,'#');
         char *subtype2;
         if (subtype) {
           *subtype=0;
@@ -1397,7 +1400,7 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
             *subtype2++;
           }
         }
-        vn=vname;
+        vn=jvname;
         str_value = (*jo)[vn];
         if ((*jo)[vn].success()) {
           if (subtype) {
@@ -2191,6 +2194,22 @@ chknext:
           len=0;
           goto exit;
         }
+#ifdef USE_MORITZ
+        if (!strncmp(vname,"mo(",3)) {
+          float fvar1;
+          lp=GetNumericResult(lp+3,OPER_EQU,&fvar1,0);
+          SCRIPT_SKIP_SPACES
+          float fvar2;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+          SCRIPT_SKIP_SPACES
+          char rbuff[64];
+          fvar=mo_getvars(fvar1,fvar2,rbuff);
+          lp++;
+          if (sp) strlcpy(sp,rbuff,glob_script_mem.max_ssize);
+          len=0;
+          goto strexit;
+        }
+#endif
         break;
       case 'p':
         if (!strncmp(vname,"pin[",4)) {
@@ -3285,8 +3304,25 @@ void esp32_beep(int32_t freq ,uint32_t len) {
 // execute section of scripter
 int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
 
+    if (!glob_script_mem.scriptptr) {
+      return -99;
+    }
+
     if (tasm_cmd_activ && tlen>0) return 0;
 
+    JsonObject  *jo=0;
+    DynamicJsonBuffer jsonBuffer; // on heap
+    JsonObject &jobj=jsonBuffer.parseObject(js);
+    if (js) {
+      jo=&jobj;
+    } else {
+      jo=0;
+    }
+
+    return Run_script_sub(type, tlen, jo);
+}
+
+int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
     uint8_t vtype=0,sindex,xflg,floop=0,globvindex,fromscriptcmd=0;
     char *lp_next;
     int8_t globaindex,saindex;
@@ -3306,19 +3342,6 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
     char *cv_ptr;
     float fvar=0,fvar1,sysvar,swvar;
     uint8_t section=0,sysv_type=0,swflg=0;
-
-    if (!glob_script_mem.scriptptr) {
-      return -99;
-    }
-
-    JsonObject  *jo=0;
-    DynamicJsonBuffer jsonBuffer; // on heap
-    JsonObject &jobj=jsonBuffer.parseObject(js);
-    if (js) {
-      jo=&jobj;
-    } else {
-      jo=0;
-    }
 
     char *lp=glob_script_mem.scriptptr;
 
@@ -3442,10 +3465,15 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   lp=GetNumericResult(lp,OPER_EQU,&cv_inc,0);
                   //SCRIPT_SKIP_EOL
                   cv_ptr=lp;
-                  if (*cv_count<=cv_max) {
+                  if (*cv_count<=cv_max && cv_inc>0) {
+                    // inc loop
                     floop=1;
                   } else {
+                    // dec loop
                     floop=2;
+                    if (cv_inc>0) {
+                      floop=1;
+                    }
                   }
               } else {
                       // error
@@ -3726,7 +3754,12 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                 str[0]='>';
                 lp=GetStringResult(lp,OPER_EQU,&str[1],0);
                 lp++;
-                execute_script(str);
+                //execute_script(str);
+                char *svd_sp=glob_script_mem.scriptptr;
+                strcat(str,"\n#");
+                glob_script_mem.scriptptr=str;
+                Run_script_sub(">",1,jo);
+                glob_script_mem.scriptptr=svd_sp;
             }
 
             // check for variable result
@@ -3783,7 +3816,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                       switch (lastop) {
                           case OPER_EQU:
                               if (glob_script_mem.var_not_found) {
-                                if (!js) toLogEOL("var not found: ",lp);
+                                if (!jo) toLogEOL("var not found: ",lp);
                                 goto next_line;
                               }
                               *dfvar=fvar;
@@ -3855,7 +3888,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                     char *slp=lp;
                     glob_script_mem.glob_error=0;
                     lp=GetStringResult(lp,OPER_EQU,str,jo);
-                    if (!js && glob_script_mem.glob_error) {
+                    if (!jo && glob_script_mem.glob_error) {
                       // mismatch
                       lp=GetNumericResult(slp,OPER_EQU,&fvar,0);
                       dtostrfd(fvar,6,str);
@@ -4669,7 +4702,10 @@ void SaveScriptEnd(void) {
       AddLog_P2(LOG_LEVEL_INFO, PSTR("script init error: %d"), res);
       return;
     }
-    Run_Scripter(">B",2,0);
+
+    Run_Scripter(">B\n",3,0);
+    Run_Scripter(">BS",3,0);
+
     fast_script=Run_Scripter(">F",-2,0);
   }
 }
@@ -6694,7 +6730,7 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_INIT:
       if (bitRead(Settings.rule_enabled, 0)) {
-        Run_Scripter(">B",2,0);
+        Run_Scripter(">B\n",3,0);
         fast_script=Run_Scripter(">F",-2,0);
 #if defined(USE_SCRIPT_HUE) && defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
         Script_Check_Hue(0);
