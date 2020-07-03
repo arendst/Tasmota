@@ -42,6 +42,8 @@ void DomoticzTempHumPressureSensor(float temp, float hum, float baro = -1);
 char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0');
 extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack, uint32_t stack_end);
 extern "C" void resetPins();
+extern "C" int startWaveformClockCycles(uint8_t pin, uint32_t highCcys, uint32_t lowCcys,
+  uint32_t runTimeCcys, int8_t alignPhase, uint32_t phaseOffsetCcys, bool autoPwm);
 
 #ifdef ESP32
 

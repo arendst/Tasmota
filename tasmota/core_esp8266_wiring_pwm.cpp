@@ -48,10 +48,12 @@ extern void __analogWriteFreq(uint32_t freq) {
   }
 }
 
+
 extern void __analogWrite(uint8_t pin, int val) {
   if (pin > 16) {
     return;
   }
+
   uint32_t analogPeriod = microsecondsToClockCycles(1000000UL) / analogFreq;
   if (val < 0) {
     val = 0;
@@ -80,4 +82,4 @@ extern void analogWriteRange(uint32_t range) __attribute__((weak, alias("__analo
 
 };
 
-#endif  // ESP8266 
+#endif  // ESP8266
