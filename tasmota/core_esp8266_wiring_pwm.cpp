@@ -53,8 +53,7 @@ extern void __analogWrite(uint8_t pin, int val) {
   if (pin > 16) {
     return;
   }
-  uint32_t analogPeriod;
-{
+
   uint32_t analogPeriod = microsecondsToClockCycles(1000000UL) / analogFreq;
   if (val < 0) {
     val = 0;
