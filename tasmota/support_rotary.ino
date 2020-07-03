@@ -213,6 +213,8 @@ void update_rotary(void) {
 }
 
 bool RotaryButtonPressed(void) {
+  if (!Rotary.present) { return false; }
+
   bool powered_on = (power);
 #ifdef USE_LIGHT
   if (!Settings.flag4.rotary_uses_rules) {   // SetOption98 - Use rules instead of light control
@@ -246,6 +248,8 @@ void RotaryInit(void) {
 \*********************************************************************************************/
 
 void RotaryHandler(void) {
+  if (!Rotary.present) { return; }
+
   if (Rotary.timeout) {
     Rotary.timeout--;
     if (!Rotary.timeout) {
