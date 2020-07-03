@@ -35,19 +35,21 @@ char EscapeJSONChar(char c) {
 }
 
 String EscapeJSONString(const char *str) {
+  // As this function is used in ResponseCmndChar() and ResponseCmndIdxChar()
+  // it needs to be PROGMEM safe!
   String r("");
   if (nullptr == str) { return r; }
 
   bool needs_escape = false;
   size_t len_out = 1;
-  const char * c = str;
-
-  while (*c) {
-    if (EscapeJSONChar(*c)) {
+  const char* c = str;
+  char ch = '.';
+  while (ch != '\0') {
+    ch = pgm_read_byte(c++);
+    if (EscapeJSONChar(ch)) {
       len_out++;
       needs_escape = true;
     }
-    c++;
     len_out++;
   }
 
@@ -57,20 +59,21 @@ String EscapeJSONString(const char *str) {
     r.reserve(len_out);
     c = str;
     char *d = r.begin();
-    while (*c) {
-      char c2 = EscapeJSONChar(*c);
+    char ch = '.';
+    while (ch != '\0') {
+      ch = pgm_read_byte(c++);
+      char c2 = EscapeJSONChar(ch);
       if (c2) {
-        c++;
         *d++ = '\\';
         *d++ = c2;
       } else {
-        *d++ = *c++;
+        *d++ = ch;
       }
     }
     *d = 0;   // add NULL terminator
     r = (char*) r.begin();      // assign the buffer to the string
   } else {
-    r = str;
+    r = FPSTR(str);
   }
 
   return r;
