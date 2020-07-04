@@ -280,7 +280,7 @@ void ShutterReportPosition(bool always, uint32_t index)
   ResponseJsonEnd();
   if (always || (rules_flag.shutter_moving)) {
     MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
-    //XdrvRulesProcess();  //removed because to many exceptions and reboots.
+    XdrvRulesProcess();  //RulesProcess() now re-entry protected
   }
 
   //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
