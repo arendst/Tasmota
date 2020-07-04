@@ -1026,9 +1026,19 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
 //
 // Callback for loading Zigbee configuration from Flash, called by the state machine
 //
+// value = 0 : drive reset pin and halt MCU
+// value = 1 : release the reset pin, restart
 int32_t EZ_Reset_Device(uint8_t value) {
-  // TODO - GPIO is hardwired to GPIO4
-  digitalWrite(4, value ? HIGH : LOW);
+  // we use Led4i to drive the reset pin. Since it is reverted we need to pass 1 to start reset, and 0 to release reset
+  if (PinUsed(GPIO_LED4, ZIGBEE_EZSP_RESET_LED - 1)) {
+    SetLedPowerIdx(ZIGBEE_EZSP_RESET_LED - 1, value ? 0 : 1);
+  } else {
+    // no GPIO so we use software Reset instead
+    if (value) {  // send reset only when we are supposed to release reset
+      uint8_t ezsp_reset[1] = { 0xC0 };       // EZSP ASH Reset
+      ZigbeeEZSPSendRaw(ezsp_reset, sizeof(ezsp_reset), true);
+    }
+  }
   return 0;                              // continue
 }
 

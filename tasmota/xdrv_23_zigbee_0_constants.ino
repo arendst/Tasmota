@@ -27,6 +27,7 @@
 #endif
 
 #define OCCUPANCY "Occupancy"             // global define for Aqara
+#define ZIGBEE_EZSP_RESET_LED     4       // Led<x> number to drive the EZSP Reset pin
 
 typedef uint64_t Z_IEEEAddress;
 typedef uint16_t Z_ShortAddress;
