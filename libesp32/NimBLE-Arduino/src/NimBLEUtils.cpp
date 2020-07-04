@@ -3,7 +3,7 @@
  *
  *  Created: on Jan 25 2020
  *      Author H2zero
- * 
+ *
  */
 
 #include "sdkconfig.h"
@@ -11,38 +11,10 @@
 
 #include "NimBLEUtils.h"
 #include "NimBLELog.h"
+#include "nimconfig.h"
 
-static const char* LOG_TAG = "NimBLEUtils"; 
+static const char* LOG_TAG = "NimBLEUtils";
 
-/**
- * @brief Copy memory from source to target but in reverse order.
- *
- * When we move memory from one location it is normally:
- *
- * ```
- * [0][1][2]...[n] -> [0][1][2]...[n]
- * ```
- *
- * with this function, it is:
- *
- * ```
- * [0][1][2]...[n] -> [n][n-1][n-2]...[0]
- * ```
- *
- * @param [in] target The target of the copy
- * @param [in] source The source of the copy
- * @param [in] size The number of bytes to copy
- */
-void NimBLEUtils::memrcpy(uint8_t* target, uint8_t* source, uint32_t size) {
-    assert(size > 0);
-    target += (size - 1); // Point target to the last byte of the target data
-    while (size > 0) {
-        *target = *source;
-        target--;
-        source++;
-        size--;
-    }
-} // memrcpy
 
 int NimBLEUtils::checkConnParams(ble_gap_conn_params* params) {
     /* Check connection interval min */
@@ -78,6 +50,7 @@ int NimBLEUtils::checkConnParams(ble_gap_conn_params* params) {
 
 
 const char* NimBLEUtils::returnCodeToString(int rc) {
+#if defined(CONFIG_NIMBLE_CPP_ENABLE_RETURN_CODE_TEXT)
     switch(rc) {
         case 0:
             return "SUCCESS";
@@ -355,19 +328,22 @@ const char* NimBLEUtils::returnCodeToString(int rc) {
             return "Pairing over the LE transport failed - Pairing Request sent over the BR/EDR transport in process.";
         case  (0x0500+BLE_SM_ERR_CROSS_TRANS ):
             return "BR/EDR Link Key generated on the BR/EDR transport cannot be used to derive and distribute keys for the LE transport.";
-            
         default:
             return "Unknown";
     }
-}   
+#else // #if defined(CONFIG_NIMBLE_CPP_ENABLE_RETURN_CODE_TEXT)
+    return "";
+#endif // #if defined(CONFIG_NIMBLE_CPP_ENABLE_RETURN_CODE_TEXT)
+}
+
 
 /**
  * @brief Convert the BLE Advertising Data flags to a string.
  * @param adFlags The flags to convert
  * @return std::string A string representation of the advertising flags.
  */
- 
 const char* NimBLEUtils::advTypeToString(uint8_t advType) {
+#if defined(CONFIG_NIMBLE_CPP_ENABLE_ADVERTISMENT_TYPE_TEXT)
     switch(advType) {
         case BLE_HCI_ADV_TYPE_ADV_IND :                     //0
             return "Undirected - Connectable / Scannable";
@@ -382,7 +358,9 @@ const char* NimBLEUtils::advTypeToString(uint8_t advType) {
         default:
             return "Unknown flag";
     }
-    
+#else // #if defined(CONFIG_NIMBLE_CPP_ENABLE_ADVERTISMENT_TYPE_TEXT)
+    return "";
+#endif // #if defined(CONFIG_NIMBLE_CPP_ENABLE_ADVERTISMENT_TYPE_TEXT)
 } // adFlagsToString
 
 
@@ -394,7 +372,7 @@ const char* NimBLEUtils::advTypeToString(uint8_t advType) {
  * @param [in] length The length of the data to convert.
  * @return A pointer to the formatted buffer.
  */
-char* NimBLEUtils::buildHexData(uint8_t* target, uint8_t* source, uint8_t length) {
+char* NimBLEUtils::buildHexData(uint8_t* target, const uint8_t* source, uint8_t length) {
     // Guard against too much data.
     if (length > 100) length = 100;
 
@@ -422,10 +400,12 @@ char* NimBLEUtils::buildHexData(uint8_t* target, uint8_t* source, uint8_t length
 } // buildHexData
 
 
-
 void NimBLEUtils::dumpGapEvent(ble_gap_event *event, void *arg){
+#if defined(CONFIG_NIMBLE_CPP_ENABLE_GAP_EVENT_CODE_TEXT)
     NIMBLE_LOGD(LOG_TAG, "Received a GAP event: %s", gapEventToString(event->type));
+#endif
 }
+
 
 /**
  * @brief Convert a BT GAP event type to a string representation.
@@ -433,80 +413,84 @@ void NimBLEUtils::dumpGapEvent(ble_gap_event *event, void *arg){
  * @return A string representation of the event type.
  */
 const char* NimBLEUtils::gapEventToString(uint8_t eventType) {
+#if defined(CONFIG_NIMBLE_CPP_ENABLE_GAP_EVENT_CODE_TEXT)
     switch (eventType) {
         case BLE_GAP_EVENT_CONNECT :                    //0
             return "BLE_GAP_EVENT_CONNECT ";
-            
+
         case BLE_GAP_EVENT_DISCONNECT:                  //1
             return "BLE_GAP_EVENT_DISCONNECT";
-            
+
         case BLE_GAP_EVENT_CONN_UPDATE:                 //3
             return "BLE_GAP_EVENT_CONN_UPDATE";
-            
-        case BLE_GAP_EVENT_CONN_UPDATE_REQ:             //4   
+
+        case BLE_GAP_EVENT_CONN_UPDATE_REQ:             //4
             return "BLE_GAP_EVENT_CONN_UPDATE_REQ";
-            
-        case BLE_GAP_EVENT_L2CAP_UPDATE_REQ:            //5     
+
+        case BLE_GAP_EVENT_L2CAP_UPDATE_REQ:            //5
             return "BLE_GAP_EVENT_L2CAP_UPDATE_REQ";
-            
+
         case BLE_GAP_EVENT_TERM_FAILURE:                //6
             return "BLE_GAP_EVENT_TERM_FAILURE";
-            
+
         case BLE_GAP_EVENT_DISC:                        //7
             return "BLE_GAP_EVENT_DISC";
-            
-        case BLE_GAP_EVENT_DISC_COMPLETE:               //8                 
+
+        case BLE_GAP_EVENT_DISC_COMPLETE:               //8
             return "BLE_GAP_EVENT_DISC_COMPLETE";
-            
-        case BLE_GAP_EVENT_ADV_COMPLETE:                //9            
+
+        case BLE_GAP_EVENT_ADV_COMPLETE:                //9
             return "BLE_GAP_EVENT_ADV_COMPLETE";
-            
-        case BLE_GAP_EVENT_ENC_CHANGE:                  //10           
+
+        case BLE_GAP_EVENT_ENC_CHANGE:                  //10
             return "BLE_GAP_EVENT_ENC_CHANGE";
-            
+
         case BLE_GAP_EVENT_PASSKEY_ACTION :             //11
             return "BLE_GAP_EVENT_PASSKEY_ACTION";
-            
+
         case BLE_GAP_EVENT_NOTIFY_RX:                   //12
             return "BLE_GAP_EVENT_NOTIFY_RX";
-            
+
         case BLE_GAP_EVENT_NOTIFY_TX :                  //13
             return "BLE_GAP_EVENT_NOTIFY_TX";
-            
+
         case BLE_GAP_EVENT_SUBSCRIBE :                  //14
             return "BLE_GAP_EVENT_SUBSCRIBE";
-            
+
         case BLE_GAP_EVENT_MTU:                         //15
             return "BLE_GAP_EVENT_MTU";
-            
+
         case BLE_GAP_EVENT_IDENTITY_RESOLVED:           //16
             return "BLE_GAP_EVENT_IDENTITY_RESOLVED";
-            
+
         case BLE_GAP_EVENT_REPEAT_PAIRING:              //17
             return "BLE_GAP_EVENT_REPEAT_PAIRING";
-            
+
         case BLE_GAP_EVENT_PHY_UPDATE_COMPLETE:         //18
             return "BLE_GAP_EVENT_PHY_UPDATE_COMPLETE";
-            
+
         case BLE_GAP_EVENT_EXT_DISC:                    //19
             return "BLE_GAP_EVENT_EXT_DISC";
 #ifdef BLE_GAP_EVENT_PERIODIC_SYNC   // IDF 4.0 does not support these
         case BLE_GAP_EVENT_PERIODIC_SYNC:               //20
             return "BLE_GAP_EVENT_PERIODIC_SYNC";
-            
+
         case BLE_GAP_EVENT_PERIODIC_REPORT:             //21
             return "BLE_GAP_EVENT_PERIODIC_REPORT";
-            
+
         case BLE_GAP_EVENT_PERIODIC_SYNC_LOST:          //22
             return "BLE_GAP_EVENT_PERIODIC_SYNC_LOST";
-            
+
         case BLE_GAP_EVENT_SCAN_REQ_RCVD:               //23
             return "BLE_GAP_EVENT_SCAN_REQ_RCVD";
-#endif            
+#endif
         default:
             NIMBLE_LOGD(LOG_TAG, "gapEventToString: Unknown event type %d 0x%.2x", eventType, eventType);
             return "Unknown event type";
     }
+#else // #if defined(CONFIG_NIMBLE_CPP_ENABLE_GAP_EVENT_CODE_TEXT)
+    return "";
+#endif // #if defined(CONFIG_NIMBLE_CPP_ENABLE_GAP_EVENT_CODE_TEXT)
 } // gapEventToString
 
 

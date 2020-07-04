@@ -3,7 +3,7 @@
  *
  *  Created: on Jan 24 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  *
  * BLEScan.cpp
@@ -13,6 +13,9 @@
  */
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
+
+#include "nimconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
 
 #include "NimBLEScan.h"
 #include "NimBLEUtils.h"
@@ -40,7 +43,7 @@ static const char* LOG_TAG = "NimBLEScan";
  *      directed advertisement shall not be ignored if the InitA is a
  *      resolvable private address.
  */
- 
+
 //#define BLE_HCI_SCAN_FILT_NO_WL             (0)
 //#define BLE_HCI_SCAN_FILT_USE_WL            (1)
 //#define BLE_HCI_SCAN_FILT_NO_WL_INITA       (2)
@@ -63,7 +66,7 @@ NimBLEScan::NimBLEScan() {
     m_scan_params.itvl               = 0; // This is defined as the time interval from when the Controller started its last LE scan until it begins the subsequent LE scan. (units=0.625 msec)
     m_scan_params.window             = 0; // The duration of the LE scan. LE_Scan_Window shall be less than or equal to LE_Scan_Interval (units=0.625 msec)
     m_scan_params.limited            = 0; // If set, only discover devices in limited discoverable mode.
-    m_scan_params.filter_duplicates  = 1; // If set, the controller ignores all but the first advertisement from each device.
+    m_scan_params.filter_duplicates  = 0; // If set, the controller ignores all but the first advertisement from each device.
     m_pAdvertisedDeviceCallbacks     = nullptr;
     m_stopped                        = true;
     m_wantDuplicates                 = false;
@@ -76,33 +79,33 @@ NimBLEScan::NimBLEScan() {
  * @param [in] param Parameter data for this event.
  */
 /*STATIC*/int NimBLEScan::handleGapEvent(ble_gap_event* event, void* arg) {
-    
+
     NimBLEScan* pScan = (NimBLEScan*)arg;
     struct ble_hs_adv_fields fields;
     int rc = 0;
-    
+
     switch(event->type) {
 
         case BLE_GAP_EVENT_DISC: {
-			if(pScan->m_stopped) {
-				NIMBLE_LOGE(LOG_TAG, "Scan stop called, ignoring results.");
-				return 0;
-			}
-            
+            if(pScan->m_stopped) {
+                NIMBLE_LOGE(LOG_TAG, "Scan stop called, ignoring results.");
+                return 0;
+            }
+
             rc = ble_hs_adv_parse_fields(&fields, event->disc.data,
                                      event->disc.length_data);
             if (rc != 0) {
                 NIMBLE_LOGE(LOG_TAG, "Gap Event Parse ERROR.");
                 return 0;
             }
-            
+
             NimBLEAddress advertisedAddress(event->disc.addr);
 
             // Print advertisement data
     //        print_adv_fields(&fields);
 
             // If we are not scanning, nothing to do with the extra results.
-            if (pScan->m_stopped) { 
+            if (pScan->m_stopped) {
                 return 0;
             }
 
@@ -111,16 +114,18 @@ NimBLEScan::NimBLEScan() {
                 NIMBLE_LOGI(LOG_TAG, "Ignoring device: address: %s", advertisedAddress.toString().c_str());
                 return 0;
             }
-            
-			NimBLEAdvertisedDevice* advertisedDevice = nullptr;
-						
-            // If we've seen this device before get a pointer to it from the map
-            auto it = pScan->m_scanResults.m_advertisedDevicesMap.find(advertisedAddress.toString());
-            if(it != pScan->m_scanResults.m_advertisedDevicesMap.cend()) {
-                advertisedDevice = (*it).second;
+
+            NimBLEAdvertisedDevice* advertisedDevice = nullptr;
+
+            // If we've seen this device before get a pointer to it from the vector
+            for(auto &it: pScan->m_scanResults.m_advertisedDevicesVector) {
+                if(it->getAddress() == advertisedAddress) {
+                    advertisedDevice = it;
+                    break;
+                }
             }
 
-            // If we haven't seen this device before; create a new instance and insert it in the map.
+            // If we haven't seen this device before; create a new instance and insert it in the vector.
             // Otherwise just update the relevant parameters of the already known device.
             if(advertisedDevice == nullptr){
                 advertisedDevice = new NimBLEAdvertisedDevice();
@@ -128,20 +133,20 @@ NimBLEScan::NimBLEScan() {
                 advertisedDevice->setAddress(advertisedAddress);
                 //NIMBLE_LOGE(LOG_TAG, "advertisement type: %d, %s",event->disc.event_type, NimBLEUtils::advTypeToString(event->disc.event_type));
                 advertisedDevice->setAdvType(event->disc.event_type);
-                pScan->m_scanResults.m_advertisedDevicesMap.insert(std::pair<std::string, NimBLEAdvertisedDevice*>(advertisedAddress.toString(), advertisedDevice));
+                pScan->m_scanResults.m_advertisedDevicesVector.push_back(advertisedDevice);
                 NIMBLE_LOGI(LOG_TAG, "NEW DEVICE FOUND: %s", advertisedAddress.toString().c_str());
             }
             else{
                 NIMBLE_LOGI(LOG_TAG, "UPDATING PREVIOUSLY FOUND DEVICE: %s", advertisedAddress.toString().c_str());
             }
-            advertisedDevice->setRSSI(event->disc.rssi); 
+            advertisedDevice->setRSSI(event->disc.rssi);
             advertisedDevice->parseAdvertisement(&fields);
             advertisedDevice->setScan(pScan);
             advertisedDevice->setAdvertisementResult(event->disc.data, event->disc.length_data);
 
             if (pScan->m_pAdvertisedDeviceCallbacks) {
                 // If not active scanning report the result to the listener.
-                if(pScan->m_scan_params.passive) {
+                if(pScan->m_scan_params.passive || event->disc.event_type == BLE_HCI_ADV_TYPE_ADV_NONCONN_IND) {
                     pScan->m_pAdvertisedDeviceCallbacks->onResult(advertisedDevice);
                 // Otherwise wait for the scan response so we can report all of the data at once.
                 } else if (event->disc.event_type == BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP) {
@@ -155,13 +160,13 @@ NimBLEScan::NimBLEScan() {
         case BLE_GAP_EVENT_DISC_COMPLETE: {
             NIMBLE_LOGD(LOG_TAG, "discovery complete; reason=%d",
                     event->disc_complete.reason);
-                    
+
             if (pScan->m_scanCompleteCB != nullptr) {
                 pScan->m_scanCompleteCB(pScan->m_scanResults);
             }
-            
+
             pScan->m_stopped = true;
-            pScan->m_semaphoreScanEnd.give();   
+            pScan->m_semaphoreScanEnd.give();
             return 0;
         }
 
@@ -224,13 +229,13 @@ void NimBLEScan::setWindow(uint16_t windowMSecs) {
  */
 bool NimBLEScan::start(uint32_t duration, void (*scanCompleteCB)(NimBLEScanResults), bool is_continue) {
     NIMBLE_LOGD(LOG_TAG, ">> start(duration=%d)", duration);
-    
+
     // If Host is not synced we cannot start scanning.
     if(!NimBLEDevice::m_synced) {
         NIMBLE_LOGC(LOG_TAG, "Host reset, wait for sync.");
         return false;
     }
-    
+
     if(ble_gap_conn_active()) {
         NIMBLE_LOGE(LOG_TAG, "Connection in progress - must wait.");
         return false;
@@ -244,12 +249,12 @@ bool NimBLEScan::start(uint32_t duration, void (*scanCompleteCB)(NimBLEScanResul
 
     m_stopped = false;
     m_semaphoreScanEnd.take("start");
-        
+
     // Save the callback to be invoked when the scan completes.
-    m_scanCompleteCB = scanCompleteCB;                  
+    m_scanCompleteCB = scanCompleteCB;
     // Save the duration in the case that the host is reset so we can reuse it.
     m_duration = duration;
-    
+
     // If 0 duration specified then we assume a continuous scan is desired.
     if(duration == 0){
         duration = BLE_HS_FOREVER;
@@ -257,22 +262,22 @@ bool NimBLEScan::start(uint32_t duration, void (*scanCompleteCB)(NimBLEScanResul
     else{
         duration = duration*1000; // convert duration to milliseconds
     }
-    
+
     //  if we are connecting to devices that are advertising even after being connected, multiconnecting peripherals
-    //  then we should not clear map or we will connect the same device few times
+    //  then we should not clear vector or we will connect the same device few times
     if(!is_continue) {
         clearResults();
     }
-    
+
     int rc = 0;
-    do{    
-        rc = ble_gap_disc(m_own_addr_type, duration, &m_scan_params, 
+    do{
+        rc = ble_gap_disc(m_own_addr_type, duration, &m_scan_params,
                                     NimBLEScan::handleGapEvent, this);
         if(rc == BLE_HS_EBUSY) {
             vTaskDelay(2);
         }
     } while(rc == BLE_HS_EBUSY);
-    
+
     if (rc != 0 && rc != BLE_HS_EDONE) {
         NIMBLE_LOGE(LOG_TAG, "Error initiating GAP discovery procedure; rc=%d, %s",
                                         rc, NimBLEUtils::returnCodeToString(rc));
@@ -305,7 +310,7 @@ NimBLEScanResults NimBLEScan::start(uint32_t duration, bool is_continue) {
  */
 void NimBLEScan::stop() {
     NIMBLE_LOGD(LOG_TAG, ">> stop()");
-	
+
     int rc = ble_gap_disc_cancel();
     if (rc != 0 && rc != BLE_HS_EALREADY) {
         NIMBLE_LOGE(LOG_TAG, "Failed to cancel scan; rc=%d\n", rc);
@@ -313,23 +318,28 @@ void NimBLEScan::stop() {
     }
 
     m_stopped = true;
-    
+
     if (m_scanCompleteCB != nullptr) {
         m_scanCompleteCB(m_scanResults);
     }
-    
+
     m_semaphoreScanEnd.give();
-    
+
     NIMBLE_LOGD(LOG_TAG, "<< stop()");
 } // stop
 
 
 // delete peer device from cache after disconnecting, it is required in case we are connecting to devices with not public address
-void NimBLEScan::erase(NimBLEAddress address) {
+void NimBLEScan::erase(const NimBLEAddress &address) {
     NIMBLE_LOGI(LOG_TAG, "erase device: %s", address.toString().c_str());
-    NimBLEAdvertisedDevice *advertisedDevice = m_scanResults.m_advertisedDevicesMap.find(address.toString())->second;
-    m_scanResults.m_advertisedDevicesMap.erase(address.toString());
-    delete advertisedDevice;
+
+    for(auto it = m_scanResults.m_advertisedDevicesVector.begin(); it != m_scanResults.m_advertisedDevicesVector.end(); ++it) {
+        if((*it)->getAddress() == address) {
+            delete *it;
+            m_scanResults.m_advertisedDevicesVector.erase(it);
+            break;
+        }
+    }
 }
 
 
@@ -356,10 +366,10 @@ NimBLEScanResults NimBLEScan::getResults() {
  * @brief Clear the results of the scan.
  */
 void NimBLEScan::clearResults() {
-    for(auto _dev : m_scanResults.m_advertisedDevicesMap){
-        delete _dev.second;
+    for(auto &it: m_scanResults.m_advertisedDevicesVector) {
+        delete it;
     }
-    m_scanResults.m_advertisedDevicesMap.clear();
+    m_scanResults.m_advertisedDevicesVector.clear();
 }
 
 
@@ -379,7 +389,7 @@ void NimBLEScanResults::dump() {
  * @return The number of devices found in the last scan.
  */
 int NimBLEScanResults::getCount() {
-    return m_advertisedDevicesMap.size();
+    return m_advertisedDevicesVector.size();
 } // getCount
 
 
@@ -390,14 +400,43 @@ int NimBLEScanResults::getCount() {
  * @return The device at the specified index.
  */
 NimBLEAdvertisedDevice NimBLEScanResults::getDevice(uint32_t i) {
-    uint32_t x = 0;
-    NimBLEAdvertisedDevice dev = *m_advertisedDevicesMap.begin()->second;
-    for (auto it = m_advertisedDevicesMap.begin(); it != m_advertisedDevicesMap.end(); it++) {
-        dev = *it->second;
-        if (x==i)   break;
-        x++;
-    }
-    return dev;
+    return *m_advertisedDevicesVector[i];
 }
 
+
+/**
+ * @brief Get iterator to the beginning of the vector of advertised device pointers.
+ * @return An iterator to the beginning of the vector of advertised device pointers.
+ */
+std::vector<NimBLEAdvertisedDevice*>::iterator NimBLEScanResults::begin() {
+    return m_advertisedDevicesVector.begin();
+}
+
+
+/**
+ * @brief Get iterator to the end of the vector of advertised device pointers.
+ * @return An iterator to the end of the vector of advertised device pointers.
+ */
+std::vector<NimBLEAdvertisedDevice*>::iterator NimBLEScanResults::end() {
+    return m_advertisedDevicesVector.end();
+}
+
+
+/**
+ * @brief Return a pointer to the specified device at the given address.
+ * If the address is not found a nullptr is returned.
+ * @param [in] address The address of the device.
+ * @return A pointer to the device at the specified address.
+ */
+NimBLEAdvertisedDevice *NimBLEScanResults::getDevice(const NimBLEAddress &address) {
+    for(size_t index = 0; index < m_advertisedDevicesVector.size(); index++) {
+        if(m_advertisedDevicesVector[index]->getAddress() == address) {
+            return m_advertisedDevicesVector[index];
+        }
+    }
+
+    return nullptr;
+}
+
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
 #endif /* CONFIG_BT_ENABLED */

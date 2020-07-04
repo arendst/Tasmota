@@ -100,7 +100,7 @@ The `BLEAdvertisedDeviceCallbacks` class `onResult()` method now receives a poin
 Defined as:
 ```
 bool connect(NimBLEAdvertisedDevice* device, bool refreshServices = true);
-bool connect(NimBLEAddress address, uint8_t type = BLE_ADDR_TYPE_PUBLIC, bool refreshServices = true);
+bool connect(NimBLEAddress address, uint8_t type = BLE_ADDR_PUBLIC, bool refreshServices = true);
 ```
 If set to false the client will use the services database it retrieved from the peripheral last time it connected.    
 This allows for faster connections and power saving if the devices just dropped connection and want to reconnect.
@@ -110,6 +110,46 @@ NimBLERemoteCharacteristic::writeValue();
 NimBLERemoteCharacteristic::registerForNotify();
 ```
 Now return true or false to indicate success or failure so you can choose to disconnect or try again.
+
+```
+NimBLEClient::getServices()   
+NimBLERemoteService::getCharacteristics()
+```
+Now return a pointer to a `std::vector` of the respective object database instead of `std::map`.
+
+`NimBLERemoteService::getCharacteristicsByHandle()`
+Has been removed from the API as it is no longer maintained in the library.   
+
+The last two above changes reduce the heap usage significantly with minimal application code adjustments.   
+
+**NEW** on May 23, 2020
+> ```
+> NimBLEClient::getServices(bool refresh = false)   
+> NimBLERemoteService::getCharacteristics(bool refresh = false)   
+> NimBLERemoteCharacteristic::getDecriptors(bool refresh = false)
+>```
+> These methods now take an optional (bool) parameter.   
+If true it will clear the respective vector and retrieve all the respective attributes from the peripheral.   
+If false it will retrieve the attributes only if the vector is empty, otherwise the vector is returned   
+with the currently stored attributes.   
+
+> Removed the automatic discovery of all peripheral attributes as they consumed time and resources for data   
+the user may not be interested in.   
+   
+> Added `NimBLEClient::discoverAtrributes()` for the user to discover all the peripheral attributes   
+to replace the the former functionality.
+   
+   
+> ```
+>getService(NimBLEUUID)   
+>getCharacteristic(NimBLEUUID)   
+>getDescriptor(NimBLEUUID)
+>```
+>These methods will now check the respective vectors for the attribute object and, if not found, will retrieve (only)   
+the specified attribute from the peripheral.
+
+> These changes allow more control for the user to manage the resources used for the attributes.   
+
 
 #### Client Security:
 The client will automatically initiate security when the peripheral responds that it's required.    

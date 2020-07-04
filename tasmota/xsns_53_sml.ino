@@ -49,6 +49,9 @@
 #define SPECIAL_SS
 #endif
 
+#undef TMSBSIZ
+#define TMSBSIZ 256
+
 // addresses a bug in meter DWS74
 //#define DWS74_BUG
 
@@ -1783,6 +1786,7 @@ struct SML_COUNTER {
   uint32_t sml_cnt_last_ts;
   uint32_t sml_counter_ltime;
   uint16_t sml_debounce;
+  uint8_t sml_cnt_updated;
 
 #ifdef ANALOG_OPTO_SENSOR
   int16_t ana_curr;
@@ -1811,7 +1815,8 @@ void SML_CounterUpd(uint8_t index) {
     sml_counters[index].sml_counter_ltime=millis();
     if (ltime>sml_counters[index].sml_debounce) {
       RtcSettings.pulse_counter[index]++;
-      InjektCounterValue(sml_counters[index].sml_cnt_old_state,RtcSettings.pulse_counter[index]);
+      sml_counters[index].sml_cnt_updated=1;
+      //InjektCounterValue(sml_counters[index].sml_cnt_old_state,RtcSettings.pulse_counter[index]);
     }
   } else {
     // rising edge
@@ -2144,17 +2149,19 @@ init10:
       // serial input, init
 #ifdef SPECIAL_SS
         if (meter_desc_p[meters].type=='m' || meter_desc_p[meters].type=='M' || meter_desc_p[meters].type=='p') {
-          meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1);
+          meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,0,TMSBSIZ);
         } else {
-          meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,1);
+          meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,1,TMSBSIZ);
         }
 #else
 #ifdef ESP32
         meter_ss[meters] = new HardwareSerial(uart_index);
+        if (uart_index==0) { ClaimSerial(); }
         uart_index--;
         if (uart_index<0) uart_index=0;
+        meter_ss[meters]->setRxBufferSize(TMSBSIZ);
 #else
-        meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1);
+        meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,0,TMSBSIZ);
 #endif
 #endif
 
@@ -2187,6 +2194,15 @@ uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
   if (meter<1 || meter>meters_used) return 0;
   meter--;
   if (!meter_ss[meter]) return 0;
+
+#ifdef ESP32
+  meter_ss[meter]->flush();
+  if (meter_desc_p[meter].type=='M') {
+    meter_ss[meter]->begin(br,SERIAL_8E1,meter_desc_p[meter].srcpin,meter_desc_p[meter].trxpin);
+  } else {
+    meter_ss[meter]->begin(br,SERIAL_8N1,meter_desc_p[meter].srcpin,meter_desc_p[meter].trxpin);
+  }
+#else
   if (meter_ss[meter]->begin(br)) {
     meter_ss[meter]->flush();
   }
@@ -2195,6 +2211,7 @@ uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
       Serial.begin(br, SERIAL_8E1);
     }
   }
+#endif
   return 1;
 }
 
@@ -2216,7 +2233,13 @@ uint32_t SML_Write(uint32_t meter,char *hstr) {
   SML_Send_Seq(meter,hstr);
   return 1;
 }
-#endif
+
+float SML_GetVal(uint32_t index) {
+  if (index<1 && index>SML_MAX_VARS) { index = 1;}
+  return meter_vars[index-1];
+}
+
+#endif // USE_SML_SCRIPT_CMD
 
 
 void SetDBGLed(uint8_t srcpin, uint8_t ledpin) {
@@ -2290,6 +2313,13 @@ uint32_t ctime=millis();
           if (cindex==1) SetDBGLed(meter_desc_p[meters].srcpin,DEBUG_CNT_LED2);
 #endif
         }
+
+        if (sml_counters[cindex].sml_cnt_updated) {
+          InjektCounterValue(sml_counters[cindex].sml_cnt_old_state,RtcSettings.pulse_counter[cindex]);
+          sml_counters[cindex].sml_cnt_updated=0;
+        }
+
+
       }
       cindex++;
     }
@@ -2385,12 +2415,13 @@ void SML_Send_Seq(uint32_t meter,char *seq) {
     if (!rflg) {
       *ucp++=0;
       *ucp++=2;
+      slen+=2;
     }
     // append crc
-    uint16_t crc = MBUS_calculateCRC(sbuff,6);
+    uint16_t crc = MBUS_calculateCRC(sbuff,slen);
     *ucp++=lowByte(crc);
     *ucp++=highByte(crc);
-    slen+=4;
+    slen+=2;
   }
   if (script_meter_desc[meter].type=='o') {
     for (uint32_t cnt=0;cnt<slen;cnt++) {

@@ -51,8 +51,6 @@
 #define INDOORS       0x24
 #define OUTDOORS      0x1C
 
-
-
 // Global
 const char HTTP_SNS_UNIT_KILOMETER[] PROGMEM = D_UNIT_KILOMETER;
 // Http
@@ -78,7 +76,7 @@ const char HTTP_SNS_AS3935_INTNOEV[] PROGMEM = "{s}%s: " D_AS3935_INTNOEV "{e}";
 const char HTTP_SNS_AS3935_MSG[] PROGMEM = "{s}%s: " D_AS3935_LIGHT " " D_AS3935_APRX " %d " D_UNIT_KILOMETER " " D_AS3935_AWAY "{e}";
 const char* const HTTP_SNS_AS3935_TABLE_1[] PROGMEM = { HTTP_SNS_AS3935_EMPTY, HTTP_SNS_AS3935_MSG, HTTP_SNS_AS3935_OUT, HTTP_SNS_AS3935_NOT, HTTP_SNS_AS3935_ABOVE, HTTP_SNS_AS3935_NOISE, HTTP_SNS_AS3935_DISTURB, HTTP_SNS_AS3935_INTNOEV };
 // Json
-const char JSON_SNS_AS3935_EVENTS[] PROGMEM = ",\"%s\":{\"" D_JSON_EVENT "\":%d,\"" D_JSON_DISTANCE "\":%d,\"" D_JSON_ENERGY "\":%u}";
+const char JSON_SNS_AS3935_EVENTS[] PROGMEM = ",\"%s\":{\"" D_JSON_EVENT "\":%d,\"" D_JSON_DISTANCE "\":%d,\"" D_JSON_ENERGY "\":%u,\"" D_JSON_STAGE "\":%d}";
 // Json Command
 const char* const S_JSON_AS3935_COMMAND_ONOFF[] PROGMEM = {"\"" D_AS3935_OFF "\"","\"" D_AS3935_ON"\""};
 const char* const S_JSON_AS3935_COMMAND_GAIN[] PROGMEM = {"\"" D_AS3935_INDOORS "\"", "\"" D_AS3935_OUTDOORS "\""};
@@ -465,8 +463,15 @@ bool AS3935SetDefault() {
 
 void AS3935InitSettings() {
   if(Settings.as3935_functions.nf_autotune){
-    AS3935SetGain(INDOORS);
-    AS3935SetNoiseFloor(0);
+    if(Settings.as3935_parameter.nf_autotune_min) {
+      if (Settings.as3935_parameter.nf_autotune_min > 7) {
+        AS3935SetGain(OUTDOORS);
+        AS3935SetNoiseFloor(Settings.as3935_parameter.nf_autotune_min - 8);
+      } else {
+        AS3935SetGain(INDOORS);
+        AS3935SetNoiseFloor(Settings.as3935_parameter.nf_autotune_min);
+      }
+    }
   }
   I2cWrite8(AS3935_ADDR, 0x00, Settings.as3935_sensor_cfg[0]);
   I2cWrite8(AS3935_ADDR, 0x01, Settings.as3935_sensor_cfg[1]);
@@ -746,8 +751,10 @@ bool AS3935Cmd(void) {
 void AH3935Show(bool json)
 {
   if (json) {
-    ResponseAppend_P(JSON_SNS_AS3935_EVENTS, D_SENSOR_AS3935, as3935_sensor.mqtt_irq, as3935_sensor.distance, as3935_sensor.intensity );
-
+    uint16_t vrms;
+    uint8_t stage;
+    AS3935CalcVrmsLevel(vrms, stage);
+    ResponseAppend_P(JSON_SNS_AS3935_EVENTS, D_SENSOR_AS3935, as3935_sensor.mqtt_irq, as3935_sensor.distance, as3935_sensor.intensity, stage);
 #ifdef USE_WEBSERVER
   } else {
     uint8_t gain = AS3935GetGainInt();

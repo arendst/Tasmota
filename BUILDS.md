@@ -29,7 +29,7 @@
 | USE_HOTPLUG           | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
-| ROTARY_V1             | - | - | - | - | - | - | - |
+| ROTARY_V1             | - | - | x | - | x | - | - |
 | USE_SONOFF_RF         | - | - | x | x | x | - | - |
 | USE_RF_FLASH          | - | - | x | x | x | - | - |
 | USE_SONOFF_SC         | - | - | x | x | x | - | - |
@@ -68,14 +68,16 @@
 | USE_DDSU666           | - | - | - | - | x | - | - |
 | USE_SOLAX_X1          | - | - | - | - | - | - | - |
 | USE_LE01MR            | - | - | - | - | - | - | - |
+| USE_TELEINFO          | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
-| USE_ADC_VCC           | x | x | - | - | - | - | - |
-| USE_COUNTER           | - | - | x | x | x | x | x |
-| USE_DS18x20           | - | - | x | x | x | x | x |
-| USE_DHT               | - | - | x | x | x | x | x |
+| USE_ADC_VCC           | x | x | - | - | - | x | - |
+| USE_COUNTER           | - | - | x | x | x | - | x |
+| USE_DS18x20           | - | - | x | x | x | - | x |
+| USE_DHT               | - | - | x | x | x | - | x |
 | USE_MAX31855          | - | - | - | - | x | - | - |
 | USE_MAX31865          | - | - | - | - | - | - | - |
 | USE_THERMOSTAT        | - | - | - | - | - | - | - |
+| USE_LMT01             | - | - | - | - | x | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_I2C               | - | - | x | x | x | - | x |
@@ -120,6 +122,9 @@
 | USE_WEMOS_MOTOR_V1    | - | - | - | - | x | - | - |
 | USE_IAQ               | - | - | - | - | x | - | - |
 | USE_AS3935            | - | - | - | - | x | - | - |
+| USE_VEML6075          | - | - | - | - | - | - | - |
+| USE_VEML7700          | - | - | - | - | - | - | - |
+| USE_MCP9808           | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
@@ -177,3 +182,4 @@
 |-----------------------|---------|-------|--------|-----|---------|----|---------|--------|--------
 | USE_MI_ESP32          | - | - | - | - | - | - | - | - |
 | USE_WEBCAM            | - | - | - | - | - | - | - | x |
+| USE_ETHERNET          | - | - | - | - | - | - | - | - |

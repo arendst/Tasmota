@@ -184,7 +184,7 @@ void DS1624Show(bool json)
 
     dtostrfd(ds1624_sns[i].value, Settings.flag2.temperature_resolution, temperature);
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), ds1624_sns[i].name, temperature);
+      ResponseAppend_P(JSON_SNS_TEMP, ds1624_sns[i].name, temperature);
       if ((0 == tele_period) && once) {
 #ifdef USE_DOMOTICZ
         DomoticzSensor(DZ_TEMP, temperature);

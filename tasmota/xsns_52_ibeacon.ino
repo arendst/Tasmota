@@ -25,6 +25,8 @@
 
 #include <TasmotaSerial.h>
 
+#define TMSBSIZ52 512
+
 #define HM17_BAUDRATE 9600
 
 #define IBEACON_DEBUG
@@ -85,6 +87,9 @@ struct IBEACON {
 struct IBEACON_UID {
   char MAC[12];
   char RSSI[4];
+  char UID[32];
+  char MAJOR[4];
+  char MINOR[4];
   uint8_t FLAGS;
   uint8_t TIME;
 } ibeacons[MAX_IBEACONS];
@@ -96,7 +101,7 @@ void IBEACON_Init() {
 
 // actually doesnt work reliably with software serial
   if (PinUsed(GPIO_IBEACON_RX) && PinUsed(GPIO_IBEACON_TX)) {
-    IBEACON_Serial = new TasmotaSerial(Pin(GPIO_IBEACON_RX), Pin(GPIO_IBEACON_TX),1);
+    IBEACON_Serial = new TasmotaSerial(Pin(GPIO_IBEACON_RX), Pin(GPIO_IBEACON_TX),1,0,TMSBSIZ52);
     if (IBEACON_Serial->begin(HM17_BAUDRATE)) {
       if (IBEACON_Serial->hardwareSerial()) {
         ClaimSerial();
@@ -130,7 +135,7 @@ void hm17_every_second(void) {
         ibeacons[cnt].TIME++;
         if (ibeacons[cnt].TIME>IB_TIMEOUT_TIME) {
           ibeacons[cnt].FLAGS=0;
-          ibeacon_mqtt(ibeacons[cnt].MAC,"0000");
+          ibeacon_mqtt(ibeacons[cnt].MAC,"0000",ibeacons[cnt].UID,ibeacons[cnt].MAJOR,ibeacons[cnt].MINOR);
         }
       }
     }
@@ -144,7 +149,7 @@ void hm17_every_second(void) {
 void hm17_sbclr(void) {
   memset(hm17_sbuffer,0,HM17_BSIZ);
   hm17_sindex=0;
-  IBEACON_Serial->flush();
+  //IBEACON_Serial->flush();
 }
 
 void hm17_sendcmd(uint8_t cmd) {
@@ -192,15 +197,32 @@ void hm17_sendcmd(uint8_t cmd) {
 }
 
 uint32_t ibeacon_add(struct IBEACON *ib) {
+/*  if (!strncmp(ib->MAJOR,"4B1C",4)) {
+    return 0;
+  }
+  */
+  if (!strncmp(ib->RSSI,"0",1)) {
+    return 0;
+  }
+
   // keyfob starts with ffff, ibeacon has valid facid
   if (!strncmp(ib->MAC,"FFFF",4) || strncmp(ib->FACID,"00000000",8)) {
     for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
       if (ibeacons[cnt].FLAGS) {
-        if (!strncmp(ibeacons[cnt].MAC,ib->MAC,12)) {
-          // exists
-          memcpy(ibeacons[cnt].RSSI,ib->RSSI,4);
-          ibeacons[cnt].TIME=0;
-          return 1;
+        if (!strncmp_P(ib->UID,PSTR("00000000000000000000000000000000"),32)) {
+          if (!strncmp(ibeacons[cnt].MAC,ib->MAC,12)) {
+            // exists
+            memcpy(ibeacons[cnt].RSSI,ib->RSSI,4);
+            ibeacons[cnt].TIME=0;
+            return 1;
+          }
+        } else {
+          if (!strncmp(ibeacons[cnt].UID,ib->UID,32)) {
+            // exists
+            memcpy(ibeacons[cnt].RSSI,ib->RSSI,4);
+            ibeacons[cnt].TIME=0;
+            return 1;
+          }
         }
       }
     }
@@ -208,6 +230,9 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
       if (!ibeacons[cnt].FLAGS) {
         memcpy(ibeacons[cnt].MAC,ib->MAC,12);
         memcpy(ibeacons[cnt].RSSI,ib->RSSI,4);
+        memcpy(ibeacons[cnt].UID,ib->UID,32);
+        memcpy(ibeacons[cnt].MAJOR,ib->MAJOR,4);
+        memcpy(ibeacons[cnt].MINOR,ib->MINOR,4);
         ibeacons[cnt].FLAGS=1;
         ibeacons[cnt].TIME=0;
         return 1;
@@ -398,14 +423,14 @@ hm17_v110:
             memcpy(ib.RSSI,&hm17_sbuffer[8+8+1+32+1+4+4+2+1+12+1],4);
 
             if (ibeacon_add(&ib)) {
-              ibeacon_mqtt(ib.MAC,ib.RSSI);
+              ibeacon_mqtt(ib.MAC,ib.RSSI,ib.UID,ib.MAJOR,ib.MINOR);
             }
             hm17_sbclr();
             hm17_result=1;
           }
         } else {
 #ifdef IBEACON_DEBUG
-          if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR(">>%s"),&hm17_sbuffer[8]);
+          if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR(">->%s"),&hm17_sbuffer[8]);
 #endif
         }
         break;
@@ -442,12 +467,15 @@ uint32_t difftime=millis()-hm17_lastms;
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_IBEACON[] PROGMEM =
+const char HTTP_IBEACON_mac[] PROGMEM =
+ "{s}IBEACON-MAC : %s" " - RSSI : %s" "{m}{e}";
+const char HTTP_IBEACON_uid[] PROGMEM =
  "{s}IBEACON-UID : %s" " - RSSI : %s" "{m}{e}";
 
 void IBEACON_Show(void) {
 char mac[14];
 char rssi[6];
+char uid[34];
 
   for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
     if (ibeacons[cnt].FLAGS) {
@@ -455,7 +483,13 @@ char rssi[6];
       mac[12]=0;
       memcpy(rssi,ibeacons[cnt].RSSI,4);
       rssi[4]=0;
-      WSContentSend_PD(HTTP_IBEACON,mac,rssi);
+      memcpy(uid,ibeacons[cnt].UID,32);
+      uid[32]=0;
+      if (!strncmp_P(uid,PSTR("00000000000000000000000000000000"),32)) {
+        WSContentSend_PD(HTTP_IBEACON_mac,mac,rssi);
+      } else {
+        WSContentSend_PD(HTTP_IBEACON_uid,uid,rssi);
+      }
     }
   }
 
@@ -517,7 +551,7 @@ bool xsns52_cmd(void) {
 #ifdef IBEACON_DEBUG
       else if (*cp=='d') {
         cp++;
-        if (*cp) hm17_debug=atoi(cp);
+        hm17_debug=atoi(cp);
         Response_P(S_JSON_IBEACON, XSNS_52,"debug",hm17_debug);
       }
 #endif
@@ -558,15 +592,30 @@ void ib_sendbeep(void) {
   hm17_sendcmd(HM17_CON);
 }
 
-void ibeacon_mqtt(const char *mac,const char *rssi) {
+void ibeacon_mqtt(const char *mac,const char *rssi,const char *uid,const char *major,const char *minor) {
   char s_mac[14];
+  char s_uid[34];
+  char s_major[6];
+  char s_minor[6];
   char s_rssi[6];
   memcpy(s_mac,mac,12);
   s_mac[12]=0;
+  memcpy(s_uid,uid,32);
+  s_uid[32]=0;
+  memcpy(s_major,major,4);
+  s_major[4]=0;
+  memcpy(s_minor,minor,4);
+  s_minor[4]=0;
   memcpy(s_rssi,rssi,4);
   s_rssi[4]=0;
   int16_t n_rssi=atoi(s_rssi);
-  ResponseTime_P(PSTR(",\"" D_CMND_IBEACON "_%s\":{\"RSSI\":%d}}"),s_mac,n_rssi);
+  // if uid == all zeros, take mac
+  if (!strncmp_P(s_uid,PSTR("00000000000000000000000000000000"),32)) {
+    ResponseTime_P(PSTR(",\"" D_CMND_IBEACON  "\":{\"MAC\":\"%s\",\"UID\":\"%s\",\"MAJOR\":\"%s\",\"MINOR\":\"%s\",\"RSSI\":%d}}"),s_mac,s_uid,s_major,s_minor,n_rssi);
+  } else {
+    ResponseTime_P(PSTR(",\"" D_CMND_IBEACON "\":{\"UID\":\"%s\",\"MAJOR\":\"%s\",\"MINOR\":\"%s\",\"MAC\":\"%s\",\"RSSI\":%d}}"),s_uid,s_major,s_minor,s_mac,n_rssi);
+  }
+
   MqttPublishTeleSensor();
 }
 

@@ -107,17 +107,17 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t device_groups_enabled : 1;    // bit 3 (v8.1.0.9)   - SetOption85 - Enable Device Groups
     uint32_t led_timeout : 1;              // bit 4 (v8.1.0.9)   - SetOption86 - PWM Dimmer Turn brightness LED's off 5 seconds after last change
     uint32_t powered_off_led : 1;          // bit 5 (v8.1.0.9)   - SetOption87 - PWM Dimmer Turn red LED on when powered off
-    uint32_t remote_device_mode : 1;       // bit 6 (v8.1.0.9)   - SetOption88 - PWM Dimmer Buttons control remote devices
+    uint32_t remote_device_mode : 1;       // bit 6 (v8.1.0.9)   - SetOption88 - Enable relays in separate device groups/PWM Dimmer Buttons control remote devices
     uint32_t zigbee_distinct_topics : 1;   // bit 7 (v8.1.0.10)  - SetOption89 - Distinct MQTT topics per device for Zigbee (#7835)
     uint32_t only_json_message : 1;        // bit 8 (v8.2.0.3)   - SetOption90 - Disable non-json MQTT response
     uint32_t fade_at_startup : 1;          // bit 9 (v8.2.0.3)   - SetOption91 - Enable light fading at start/power on
     uint32_t pwm_ct_mode : 1;              // bit 10 (v8.2.0.4)  - SetOption92 - Set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...)
     uint32_t compress_rules_cpu : 1;       // bit 11 (v8.2.0.6)  - SetOption93 - Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick
-    uint32_t spare12 : 1;
-    uint32_t spare13 : 1;
-    uint32_t spare14 : 1;
-    uint32_t spare15 : 1;
-    uint32_t spare16 : 1;
+    uint32_t max6675 : 1;                  // bit 12 (v8.3.1.2)  - SetOption94 - Implement simpler MAX6675 protocol instead of MAX31855
+    uint32_t network_wifi : 1;             // bit 13 (v8.3.1.3)  - CMND_WIFI
+    uint32_t network_ethernet : 1;         // bit 14 (v8.3.1.3)  - CMND_ETHERNET
+    uint32_t tuyamcu_baudrate : 1;         // bit 15 (v8.3.1.6)  - SetOption97 - Set Baud rate for TuyaMCU serial communication (0 = 9600 or 1 = 115200)
+    uint32_t rotary_uses_rules : 1;        // bit 16 (v8.3.1.6)  - SetOption98 - Use rules instead of light control
     uint32_t spare17 : 1;
     uint32_t spare18 : 1;
     uint32_t spare19 : 1;
@@ -232,9 +232,8 @@ typedef union {
   struct {
     uint8_t spare0 : 1;
     uint8_t spare1 : 1;
-    uint8_t spare2 : 1;
-    uint8_t spare3 : 1;
-    uint8_t bh1750_resolution : 2;         // Sensor10 1,2,3
+    uint8_t bh1750_2_resolution : 2;
+    uint8_t bh1750_1_resolution : 2;       // Sensor10 1,2,3
     uint8_t hx711_json_weight_change : 1;  // Sensor34 8,x - Enable JSON message on weight change
     uint8_t mhz19b_abc_disable : 1;        // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
   };
@@ -393,12 +392,13 @@ struct {
 #else  // ESP32
   myio          my_gp;                     // 3AC - 2 x 40 bytes (ESP32)
   mytmplt       user_template;             // 3FC - 2 x 37 bytes (ESP32)
+  uint8_t       eth_type;                  // 446
+  uint8_t       eth_clk_mode;              // 447
 
-  uint8_t       free_esp32_446[6];         // 446
+  uint8_t       free_esp32_448[4];         // 448
 
   WebCamCfg     webcam_config;             // 44C
-
-  uint8_t       free_esp32_450[1];         // 450
+  uint8_t       eth_address;               // 450
 #endif  // ESP8266 - ESP32
 
   char          serial_delimiter;          // 451
@@ -515,9 +515,7 @@ struct {
   uint8_t       ot_hot_water_setpoint;     // E8C
   uint8_t       ot_boiler_setpoint;        // E8D
   uint8_t       ot_flags;                  // E8E
-
-  uint8_t       free_e8f[1];               // E8F
-
+  uint8_t       ledpwm_mask;               // E8F
   uint16_t      dimmer_hw_min;             // E90
   uint16_t      dimmer_hw_max;             // E92
   uint32_t      deepsleep;                 // E94
@@ -561,7 +559,7 @@ struct {
   uint64_t      zb_precfgkey_h;            // F28
   uint16_t      zb_pan_id;                 // F30
   uint8_t       zb_channel;                // F32
-  uint8_t       zb_free_byte;              // F33
+  uint8_t       zb_txradio_dbm;            // F33
   uint16_t      pms_wake_interval;         // F34
   uint8_t       config_version;            // F36
   uint8_t       windmeter_pulses_x_rot;    // F37
@@ -569,8 +567,12 @@ struct {
   uint16_t      windmeter_pulse_debounce;  // F3A
   int16_t       windmeter_speed_factor;    // F3C
   uint8_t       windmeter_tele_pchange;    // F3E
+  uint8_t       ledpwm_on;                 // F3F
+  uint8_t       ledpwm_off;                // F40
+  uint8_t       tcp_baudrate;              // F41
+  uint8_t       fallback_module;           // F42
 
-  uint8_t       free_f3f[121];             // F3F - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f43[117];             // F43 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   uint16_t      pulse_counter_debounce_low;  // FB8
@@ -648,13 +650,14 @@ struct XDRVMAILBOX {
 } XdrvMailbox;
 
 #ifdef USE_SHUTTER
-const uint8_t MAX_RULES_FLAG = 10;         // Number of bits used in RulesBitfield (tricky I know...)
+const uint8_t MAX_RULES_FLAG = 11;         // Number of bits used in RulesBitfield (tricky I know...)
 #else
-const uint8_t MAX_RULES_FLAG = 8;          // Number of bits used in RulesBitfield (tricky I know...)
+const uint8_t MAX_RULES_FLAG = 9;          // Number of bits used in RulesBitfield (tricky I know...)
 #endif  // USE_SHUTTER
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
+    uint16_t system_init : 1;              // Changing layout here needs adjustments in xdrv_10_rules.ino too
     uint16_t system_boot : 1;
     uint16_t time_init : 1;
     uint16_t time_set : 1;
@@ -665,7 +668,6 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t http_init : 1;
     uint16_t shutter_moved : 1;
     uint16_t shutter_moving : 1;
-    uint16_t spare10 : 1;
     uint16_t spare11 : 1;
     uint16_t spare12 : 1;
     uint16_t spare13 : 1;
@@ -677,10 +679,10 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {
   uint8_t data;
   struct {
-    uint8_t wifi_down : 1;
+    uint8_t network_down : 1;
     uint8_t mqtt_down : 1;
-    uint8_t spare02 : 1;
-    uint8_t spare03 : 1;
+    uint8_t wifi_down : 1;
+    uint8_t eth_down : 1;
     uint8_t spare04 : 1;
     uint8_t spare05 : 1;
     uint8_t spare06 : 1;

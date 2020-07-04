@@ -110,6 +110,23 @@ bool DeviceGroupItemShared(bool incoming, uint8_t item)
 
 void DeviceGroupsInit(void)
 {
+  // If no module set the device group count, ...
+  if (!device_group_count) {
+
+    // If relays in sepaate device groups is enabled, set the device group count to highest numbered
+    // relay.
+    if (Settings.flag4.remote_device_mode) {  // SetOption88 - Enable relays in separate device groups
+      for (uint32_t relay_index = 0; relay_index < MAX_RELAYS; relay_index++) {
+        if (PinUsed(GPIO_REL1, relay_index)) device_group_count = relay_index + 1;
+      }
+    }
+
+    // Otherwise, set the device group count to 1.
+    else {
+      device_group_count = 1;
+    }
+  }
+
   // If there are more device group names set than the number of device groups needed by the
   // mdoule, use the device group name count as the device group count.
   for (; device_group_count < MAX_DEV_GROUP_NAMES; device_group_count++) {
@@ -368,10 +385,14 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
       log_remaining--;
       switch (item) {
         case DGR_ITEM_POWER:
-          if (device_group->local) {
+          if (Settings.flag4.remote_device_mode) {  // SetOption88 - Enable relays in separate device groups
+            bool on = (value & 1);
+            if (on != (power & (1 << device_group_index))) ExecuteCommandPower(device_group_index + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
+          }
+          else if (device_group->local) {
             uint8_t mask_devices = value >> 24;
             if (mask_devices > devices_present) mask_devices = devices_present;
-            for (uint32_t i = 0; i < devices_present; i++) {
+            for (uint32_t i = 0; i < mask_devices; i++) {
               uint32_t mask = 1 << i;
               bool on = (value & mask);
               if (on != (power & mask)) ExecuteCommandPower(i + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
@@ -475,7 +496,9 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
     building_status_message = true;
 
     // Call the drivers to build the status update.
-    if (device_group->local) SendLocalDeviceGroupMessage(DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_POWER, power);
+    if (device_group->local || Settings.flag4.remote_device_mode) {  // SetOption88 - Enable relays in separate device groups
+      SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_POWER, power);
+    }
     XdrvMailbox.index = device_group_index << 16;
     XdrvMailbox.command_code = DGR_ITEM_STATUS;
     XdrvMailbox.topic = (char *)&device_group_index;
@@ -648,10 +671,7 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
               *message_ptr++ = value & 0xff;
               value >>= 8;
               // For the power item, the device count is overlayed onto the highest 8 bits.
-              if (item == DGR_ITEM_POWER) {
-                if (!value)
-                  value = (device_group_index == 0 ? devices_present : 1);
-              }
+              if (item == DGR_ITEM_POWER && !value) value = (device_group_index == 0 ? devices_present : 1);
               *message_ptr++ = value;
             }
           }

@@ -1,0 +1,4 @@
+<map id="IRrecv" name="IRrecv">
+<area shape="rect" id="node1" title="Class for receiving IR messages." alt="" coords="20,95,83,121"/>
+<area shape="rect" id="node2" href="$structirparams__t.html" title="Information for the interrupt handler." alt="" coords="5,5,97,32"/>
+</map>

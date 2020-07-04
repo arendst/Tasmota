@@ -57,7 +57,9 @@
 typedef unsigned char byte;
 // we squeeze both c_95[] and l_95[] in a sinle array.
 // c_95[] uses only the 3 upper nibbles (or 12 most signifcant bits), while the last nibble encodes length (3..13)
-uint16_t cl_95[95] PROGMEM = {0x4000 +  3, 0x3F80 + 11, 0x3D80 + 11, 0x3C80 + 10, 0x3BE0 + 12, 0x3E80 + 10, 0x3F40 + 11, 0x3EC0 + 10, 0x3BA0 + 11, 0x3BC0 + 11, 0x3D60 + 11, 0x3B60 + 11, 0x3A80 + 10, 0x3AC0 + 10, 0x3A00 +  9, 0x3B00 + 10, 0x38C0 + 10, 0x3900 + 10, 0x3940 + 11, 0x3960 + 11, 0x3980 + 11, 0x39A0 + 11, 0x39C0 + 11, 0x39E0 + 12, 0x39F0 + 12, 0x3880 + 10, 0x3CC0 + 10, 0x3C00 +  9, 0x3D00 + 10, 0x3E00 +  9, 0x3F00 + 10, 0x3B40 + 11, 0x3BF0 + 12, 0x2B00 +  8, 0x21C0 + 11, 0x20C0 + 10, 0x2100 + 10, 0x2600 +  7, 0x2300 + 11, 0x21E0 + 12, 0x2140 + 11, 0x2D00 +  8, 0x2358 + 13, 0x2340 + 12, 0x2080 + 10, 0x21A0 + 11, 0x2E00 +  8, 0x2C00 +  8, 0x2180 + 11, 0x2350 + 13, 0x2F80 +  9, 0x2F00 +  9, 0x2A00 +  8, 0x2160 + 11, 0x2330 + 12, 0x21F0 + 12, 0x2360 + 13, 0x2320 + 12, 0x2368 + 13, 0x3DE0 + 12, 0x3FA0 + 11, 0x3DF0 + 12, 0x3D40 + 11, 0x3F60 + 11, 0x3FF0 + 12, 0xB000 +  4, 0x1C00 +  7, 0x0C00 +  6, 0x1000 +  6, 0x6000 +  3, 0x3000 +  7, 0x1E00 +  8, 0x1400 +  7, 0xD000 +  4, 0x3580 +  9, 0x3400 +  8, 0x0800 +  6, 0x1A00 +  7, 0xE000 +  4, 0xC000 +  4, 0x1800 +  7, 0x3500 +  9, 0xF800 +  5, 0xF000 +  5, 0xA000 +  4, 0x1600 +  7, 0x3300 +  8, 0x1F00 +  8, 0x3600 +  9, 0x3200 +  8, 0x3680 +  9, 0x3DA0 + 11, 0x3FC0 + 11, 0x3DC0 + 11, 0x3FE0 + 12 };
+// static uint16_t cl_95[95] PROGMEM = {0x4000 +  3, 0x3F80 + 11, 0x3D80 + 11, 0x3C80 + 10, 0x3BE0 + 12, 0x3E80 + 10, 0x3F40 + 11, 0x3EC0 + 10, 0x3BA0 + 11, 0x3BC0 + 11, 0x3D60 + 11, 0x3B60 + 11, 0x3A80 + 10, 0x3AC0 + 10, 0x3A00 +  9, 0x3B00 + 10, 0x38C0 + 10, 0x3900 + 10, 0x3940 + 11, 0x3960 + 11, 0x3980 + 11, 0x39A0 + 11, 0x39C0 + 11, 0x39E0 + 12, 0x39F0 + 12, 0x3880 + 10, 0x3CC0 + 10, 0x3C00 +  9, 0x3D00 + 10, 0x3E00 +  9, 0x3F00 + 10, 0x3B40 + 11, 0x3BF0 + 12, 0x2B00 +  8, 0x21C0 + 11, 0x20C0 + 10, 0x2100 + 10, 0x2600 +  7, 0x2300 + 11, 0x21E0 + 12, 0x2140 + 11, 0x2D00 +  8, 0x2358 + 13, 0x2340 + 12, 0x2080 + 10, 0x21A0 + 11, 0x2E00 +  8, 0x2C00 +  8, 0x2180 + 11, 0x2350 + 13, 0x2F80 +  9, 0x2F00 +  9, 0x2A00 +  8, 0x2160 + 11, 0x2330 + 12, 0x21F0 + 12, 0x2360 + 13, 0x2320 + 12, 0x2368 + 13, 0x3DE0 + 12, 0x3FA0 + 11, 0x3DF0 + 12, 0x3D40 + 11, 0x3F60 + 11, 0x3FF0 + 12, 0xB000 +  4, 0x1C00 +  7, 0x0C00 +  6, 0x1000 +  6, 0x6000 +  3, 0x3000 +  7, 0x1E00 +  8, 0x1400 +  7, 0xD000 +  4, 0x3580 +  9, 0x3400 +  8, 0x0800 +  6, 0x1A00 +  7, 0xE000 +  4, 0xC000 +  4, 0x1800 +  7, 0x3500 +  9, 0xF800 +  5, 0xF000 +  5, 0xA000 +  4, 0x1600 +  7, 0x3300 +  8, 0x1F00 +  8, 0x3600 +  9, 0x3200 +  8, 0x3680 +  9, 0x3DA0 + 11, 0x3FC0 + 11, 0x3DC0 + 11, 0x3FE0 + 12 };
+// Patched, for len == 13, shift 1 bit right
+static uint16_t cl_95[95] PROGMEM = {0x4000 +  3, 0x3F80 + 11, 0x3D80 + 11, 0x3C80 + 10, 0x3BE0 + 12, 0x3E80 + 10, 0x3F40 + 11, 0x3EC0 + 10, 0x3BA0 + 11, 0x3BC0 + 11, 0x3D60 + 11, 0x3B60 + 11, 0x3A80 + 10, 0x3AC0 + 10, 0x3A00 +  9, 0x3B00 + 10, 0x38C0 + 10, 0x3900 + 10, 0x3940 + 11, 0x3960 + 11, 0x3980 + 11, 0x39A0 + 11, 0x39C0 + 11, 0x39E0 + 12, 0x39F0 + 12, 0x3880 + 10, 0x3CC0 + 10, 0x3C00 +  9, 0x3D00 + 10, 0x3E00 +  9, 0x3F00 + 10, 0x3B40 + 11, 0x3BF0 + 12, 0x2B00 +  8, 0x21C0 + 11, 0x20C0 + 10, 0x2100 + 10, 0x2600 +  7, 0x2300 + 11, 0x21E0 + 12, 0x2140 + 11, 0x2D00 +  8, 0x46B0 + 13, 0x2340 + 12, 0x2080 + 10, 0x21A0 + 11, 0x2E00 +  8, 0x2C00 +  8, 0x2180 + 11, 0x46A0 + 13, 0x2F80 +  9, 0x2F00 +  9, 0x2A00 +  8, 0x2160 + 11, 0x2330 + 12, 0x21F0 + 12, 0x46C0 + 13, 0x2320 + 12, 0x46D0 + 13, 0x3DE0 + 12, 0x3FA0 + 11, 0x3DF0 + 12, 0x3D40 + 11, 0x3F60 + 11, 0x3FF0 + 12, 0xB000 +  4, 0x1C00 +  7, 0x0C00 +  6, 0x1000 +  6, 0x6000 +  3, 0x3000 +  7, 0x1E00 +  8, 0x1400 +  7, 0xD000 +  4, 0x3580 +  9, 0x3400 +  8, 0x0800 +  6, 0x1A00 +  7, 0xE000 +  4, 0xC000 +  4, 0x1800 +  7, 0x3500 +  9, 0xF800 +  5, 0xF000 +  5, 0xA000 +  4, 0x1600 +  7, 0x3300 +  8, 0x1F00 +  8, 0x3600 +  9, 0x3200 +  8, 0x3680 +  9, 0x3DA0 + 11, 0x3FC0 + 11, 0x3DC0 + 11, 0x3FE0 + 12 };
 // Original version with c/l separate
 // uint16_t c_95[95] PROGMEM = {0x4000, 0x3F80, 0x3D80, 0x3C80, 0x3BE0, 0x3E80, 0x3F40, 0x3EC0, 0x3BA0, 0x3BC0, 0x3D60, 0x3B60, 0x3A80, 0x3AC0, 0x3A00, 0x3B00, 0x38C0, 0x3900, 0x3940, 0x3960, 0x3980, 0x39A0, 0x39C0, 0x39E0, 0x39F0, 0x3880, 0x3CC0, 0x3C00, 0x3D00, 0x3E00, 0x3F00, 0x3B40, 0x3BF0, 0x2B00, 0x21C0, 0x20C0, 0x2100, 0x2600, 0x2300, 0x21E0, 0x2140, 0x2D00, 0x2358, 0x2340, 0x2080, 0x21A0, 0x2E00, 0x2C00, 0x2180, 0x2350, 0x2F80, 0x2F00, 0x2A00, 0x2160, 0x2330, 0x21F0, 0x2360, 0x2320, 0x2368, 0x3DE0, 0x3FA0, 0x3DF0, 0x3D40, 0x3F60, 0x3FF0, 0xB000, 0x1C00, 0x0C00, 0x1000, 0x6000, 0x3000, 0x1E00, 0x1400, 0xD000, 0x3580, 0x3400, 0x0800, 0x1A00, 0xE000, 0xC000, 0x1800, 0x3500, 0xF800, 0xF000, 0xA000, 0x1600, 0x3300, 0x1F00, 0x3600, 0x3200, 0x3680, 0x3DA0, 0x3FC0, 0x3DC0, 0x3FE0 };
 // uint8_t  l_95[95] PROGMEM = {     3,     11,     11,     10,     12,     10,     11,     10,     11,     11,     11,     11,     10,     10,      9,     10,     10,     10,     11,     11,     11,     11,     11,     12,     12,     10,     10,      9,     10,      9,     10,     11,     12,      8,     11,     10,     10,      7,     11,     12,     11,      8,     13,     12,     10,     11,      8,      8,     11,     13,      9,      9,      8,     11,     12,     12,     13,     12,     13,     12,     11,     12,     11,     11,     12,      4,      7,      6,      6,      3,      7,      8,      7,      4,      9,      8,      6,      7,      4,      4,      7,      9,      5,      5,      4,      7,      8,      8,      9,      8,      9,     11,     11,     11,     12 };
@@ -66,7 +68,7 @@ enum {SHX_STATE_1 = 1, SHX_STATE_2};    // removed Unicode state
 
 enum {SHX_SET1 = 0, SHX_SET1A, SHX_SET1B, SHX_SET2, SHX_SET3, SHX_SET4, SHX_SET4A};
 // changed mapping in Set3, Set4, Set4A to accomodate frequencies in Rules and Javascript
-char sets[][11] PROGMEM = 
+static char sets[][11] PROGMEM = 
                   {{  0, ' ', 'e',   0, 't', 'a', 'o', 'i', 'n', 's', 'r'},
                    {  0, 'l', 'c', 'd', 'h', 'u', 'p', 'm', 'b', 'g', 'w'},
                    {'f', 'y', 'v', 'k', 'q', 'j', 'x', 'z',   0,   0,   0},
@@ -87,7 +89,7 @@ char sets[][11] PROGMEM =
 // First 2 bits 00, Next 3 bits indicate index of code from 0,
 // last 3 bits indicate code length in bits
 //                0,            1,            2,            3,            4,
-char us_vcode[32] PROGMEM = 
+static char us_vcode[32] PROGMEM = 
                  {2 + (0 << 3), 3 + (3 << 3), 3 + (1 << 3), 4 + (6 << 3), 0,
 //                5,            6,            7,            8, 9, 10
                   4 + (4 << 3), 3 + (2 << 3), 4 + (8 << 3), 0, 0,  0,
@@ -98,7 +100,7 @@ char us_vcode[32] PROGMEM =
 //                24, 25, 26, 27, 28, 29, 30, 31
                    0, 0,  0,  0,  0,  0,  0,  5 + (10 << 3)};
 //                0,            1,            2, 3,            4, 5, 6, 7,
-char us_hcode[32] PROGMEM =
+static char us_hcode[32] PROGMEM =
                  {1 + (1 << 3), 2 + (0 << 3), 0, 3 + (2 << 3), 0, 0, 0, 5 + (3 << 3),
 //                8, 9, 10, 11, 12, 13, 14, 15,
                   0, 0,  0,  0,  0,  0,  0,  5 + (5 << 3),
@@ -107,28 +109,28 @@ char us_hcode[32] PROGMEM =
 //                24, 25, 26, 27, 28, 29, 30, 31
                    0, 0,  0,  0,  0,  0,  0,  5 + (6 << 3)};
 
-const char ESCAPE_MARKER = 0x2A;   // Escape any null char
+static const char ESCAPE_MARKER = 0x2A;   // Escape any null char
 
-const uint16_t TERM_CODE = 0x37C0; // 0b0011011111000000
-const uint16_t TERM_CODE_LEN = 10;
-const uint16_t DICT_CODE = 0x0000;
-const uint16_t DICT_CODE_LEN = 5;
-const uint16_t DICT_OTHER_CODE = 0x0000; // not used
-const uint16_t DICT_OTHER_CODE_LEN = 6;
+static const uint16_t TERM_CODE = 0x37C0; // 0b0011011111000000
+static const uint16_t TERM_CODE_LEN = 10;
+static const uint16_t DICT_CODE = 0x0000;
+static const uint16_t DICT_CODE_LEN = 5;
+static const uint16_t DICT_OTHER_CODE = 0x0000; // not used
+static const uint16_t DICT_OTHER_CODE_LEN = 6;
 // const uint16_t RPT_CODE = 0x2370;
 // const uint16_t RPT_CODE_LEN = 13;
-const uint16_t RPT_CODE_TASMOTA = 0x3780;
-const uint16_t RPT_CODE_TASMOTA_LEN = 10;
-const uint16_t BACK2_STATE1_CODE = 0x2000;    // 0010 = back to lower case
-const uint16_t BACK2_STATE1_CODE_LEN = 4;
-const uint16_t BACK_FROM_UNI_CODE = 0xFE00;
-const uint16_t BACK_FROM_UNI_CODE_LEN = 8;
+static const uint16_t RPT_CODE_TASMOTA = 0x3780;
+static const uint16_t RPT_CODE_TASMOTA_LEN = 10;
+static const uint16_t BACK2_STATE1_CODE = 0x2000;    // 0010 = back to lower case
+static const uint16_t BACK2_STATE1_CODE_LEN = 4;
+static const uint16_t BACK_FROM_UNI_CODE = 0xFE00;
+static const uint16_t BACK_FROM_UNI_CODE_LEN = 8;
 // const uint16_t CRLF_CODE = 0x3780;
 // const uint16_t CRLF_CODE_LEN = 10;
-const uint16_t LF_CODE = 0x3700;
-const uint16_t LF_CODE_LEN = 9;
-const uint16_t TAB_CODE = 0x2400;
-const uint16_t TAB_CODE_LEN = 7;
+static const uint16_t LF_CODE = 0x3700;
+static const uint16_t LF_CODE_LEN = 9;
+static const uint16_t TAB_CODE = 0x2400;
+static const uint16_t TAB_CODE_LEN = 7;
 // const uint16_t UNI_CODE = 0x8000;        // Unicode disabled
 // const uint16_t UNI_CODE_LEN = 3;
 // const uint16_t UNI_STATE_SPL_CODE = 0xF800;
@@ -137,26 +139,26 @@ const uint16_t TAB_CODE_LEN = 7;
 // const uint16_t UNI_STATE_DICT_CODE_LEN = 7;
 // const uint16_t CONT_UNI_CODE = 0x2800;
 // const uint16_t CONT_UNI_CODE_LEN = 7;
-const uint16_t ALL_UPPER_CODE = 0x2200;
-const uint16_t ALL_UPPER_CODE_LEN = 8;
-const uint16_t SW2_STATE2_CODE = 0x3800;
-const uint16_t SW2_STATE2_CODE_LEN = 7;
-const uint16_t ST2_SPC_CODE = 0x3B80;
-const uint16_t ST2_SPC_CODE_LEN = 11;
-const uint16_t BIN_CODE_TASMOTA = 0x8000;
-const uint16_t BIN_CODE_TASMOTA_LEN = 3;
+static const uint16_t ALL_UPPER_CODE = 0x2200;
+static const uint16_t ALL_UPPER_CODE_LEN = 8;
+static const uint16_t SW2_STATE2_CODE = 0x3800;
+static const uint16_t SW2_STATE2_CODE_LEN = 7;
+static const uint16_t ST2_SPC_CODE = 0x3B80;
+static const uint16_t ST2_SPC_CODE_LEN = 11;
+static const uint16_t BIN_CODE_TASMOTA = 0x8000;
+static const uint16_t BIN_CODE_TASMOTA_LEN = 3;
 // const uint16_t BIN_CODE = 0x2000;
 // const uint16_t BIN_CODE_LEN = 9;
 
 #define NICE_LEN 5
 
 // uint16_t mask[] PROGMEM = {0x8000, 0xC000, 0xE000, 0xF000, 0xF800, 0xFC00, 0xFE00, 0xFF00};
-uint8_t mask[] PROGMEM = {0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF};
+static const uint8_t mask[] PROGMEM = {0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF};
 
 
 
 void Unishox::append_bits(unsigned int code, int clen) {
-
+// Serial.printf("append_bits code = 0x%08X, clen %d\n", code, clen);
   byte cur_bit;
   byte blen;
   unsigned char a_byte;
@@ -355,8 +357,14 @@ int32_t Unishox::unishox_compress(const char *p_in, size_t p_len, char *p_out, s
       if (c_in == 0 && state == SHX_STATE_2)
         append_bits(ST2_SPC_CODE, ST2_SPC_CODE_LEN);       // space from Set2 ionstead of Set1
       else {
+// Serial.printf("Encode %c %d\n", c_in + 32, c_in);
         uint16_t cl = pgm_read_word(&cl_95[c_in]);
-        append_bits(cl & 0xFFF0, cl & 0x000F);
+        uint16_t cl_code = cl & 0xFFF0;
+        uint8_t  cl_len = cl & 0x000F;
+        if (13 == cl_len) {
+          cl_code >>= 1;
+        }
+        append_bits(cl_code, cl_len);
       }
     } else if (c_in == 10) {
       append_bits(LF_CODE, LF_CODE_LEN);         // LF
@@ -378,17 +386,23 @@ int32_t Unishox::unishox_compress(const char *p_in, size_t p_len, char *p_out, s
     state = SHX_STATE_1;
     append_bits(TERM_CODE, 8 - bits);   // 0011 0111 1100 0000 TERM = 0011 0111 11
   }
-  return ol/8+(ol%8?1:0);
+  return ol / 8;    // we already arrived to a byte boundary
+  // return ol/8+(ol%8?1:0);
 }
 
 uint32_t Unishox::getNextBit(void) {
   if (8 == bit_no) {
-    byte_in = in[byte_no++];
+    if (byte_no >= len) {
+      in_eof = true;
+      return 1;             // return only 1s, which appends 'r' in worst case
+    }
+    byte_in = pgm_read_byte(&in[byte_no++]);
     if (ESCAPE_MARKER == byte_in) {
-      byte_in = in[byte_no++] - 1;
+      byte_in = pgm_read_byte(&in[byte_no++]) - 1;      // we shouldn't need to test if byte_no >= len, because it should not be possible to end with ESCAPE_MARKER
     }
     bit_no = 0;
   }
+  // Serial.printf("getNextBit %d\n", byte_in & (0x80 >> bit_no) ? 1 : 0);
   return byte_in & (0x80 >> bit_no++) ? 1 : 0;
 }
 
@@ -399,8 +413,7 @@ int32_t Unishox::getCodeIdx(const char *code_type) {
   int32_t code = 0;
   int32_t count = 0;
   do {
-    if (bit_no >= len)
-      return -1;           // invalid state
+    if (in_eof) return -1;           // invalid state
     code += getNextBit() << count;
     count++;
     uint8_t code_type_code = pgm_read_byte(&code_type[code]);
@@ -416,6 +429,7 @@ int32_t Unishox::getNumFromBits(uint32_t count) {
   while (count--) {
     ret += getNextBit() << count;
   }
+  if (in_eof) return 0;
   return ret;
 }
 
@@ -433,8 +447,8 @@ int32_t Unishox::getNumFromBits(uint32_t count) {
 // Code size optimized, recalculate adder[] like in encodeCount
 uint32_t Unishox::readCount(void) {
   int32_t idx = getCodeIdx(us_hcode);
+  if ((1 == idx) || (idx >= sizeof(bit_len)) || (idx < 0)) return 0;  // unsupported or end of stream
   if (idx >= 1) idx--;    // we skip v = 1 (code '0') since we no more accept 2 bits encoding
-  if ((idx >= sizeof(bit_len)) || (idx < 0)) return 0;  // unsupported or end of stream
 
   int base;
   int till = 0;
@@ -452,8 +466,10 @@ uint32_t Unishox::readCount(void) {
 void Unishox::decodeRepeat(void) {
   uint32_t dict_len = readCount() + NICE_LEN;
   uint32_t dist = readCount() + NICE_LEN - 1;
+  if (ol + dict_len <= len_out) {
   memcpy(out + ol, out + ol - dist, dict_len);
   ol += dict_len;
+}
 }
 
 int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out, size_t p_len_out) {
@@ -462,15 +478,19 @@ int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out,
   out = p_out;
   len_out = p_len_out;
 
+  in_eof = false;
   ol = 0;
   bit_no = 8;   // force load of first byte, pretending we expired the last one
   byte_no = 0;
   dstate = SHX_SET1;
   is_all_upper = 0;
 
-  len <<= 3;    // *8, len in bits
   out[ol] = 0;
-  while (bit_no < len) {
+  // while ((byte_no << 3) + bit_no - 8 < len) {
+  while (!in_eof) {
+    if (ol >= len_out) {
+      break;
+    }
     int32_t h, v;
     char c = 0;
     byte is_upper = is_all_upper;
@@ -555,12 +575,13 @@ int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out,
         }
       }
     }
+    // Serial.printf(">>>>>>>>>>>>>>>>>>>>>> Out = %c\n", c);
     out[ol++] = c;
-
-    if (ol >= len_out) {
-      return -1;        // overflow
-    }
   }
 
-  return ol;
+  if (ol > len_out) {
+    return -1;    // overflow
+  } else {
+    return ol;
+  }
 }

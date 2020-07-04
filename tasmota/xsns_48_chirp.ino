@@ -20,6 +20,8 @@
   Version Date      Action    Description
   --------------------------------------------------------------------------------------------
 
+  1.0.0.2 20200611  changed   - bugfix: decouple restart of the work loop from FUNC_JSON_APPEND callback
+  ---
   1.0.0.1 20190917  changed   - rework of the inner loop to enable delays in the middle of I2C-reads
                     changed   - double send address change only for fw>0x25
                     changed   - use DEBUG_SENSOR_LOG, change ILLUMINANCE to DARKNESS
@@ -300,7 +302,7 @@ void ChirpServiceAllSensors(uint8_t job){
 
 void ChirpEvery100MSecond(void)
 {
-  // DEBUG_SENSOR_LOG(PSTR("CHIRP: every second"));
+  // DEBUG_SENSOR_LOG(PSTR("CHIRP: every 100 mseconds, counter: %u, next job: %u"),chirp_timeout_count,chirp_next_job);
   if(chirp_timeout_count == 0) {    //countdown complete, now do something
       switch(chirp_next_job) {
           case 0:                   //this should only be called after driver initialization
@@ -377,10 +379,11 @@ void ChirpEvery100MSecond(void)
           break;
           case 13:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: paused, waiting for TELE"));
+          chirp_next_job++;
           break;
           case 14:
           if (Settings.tele_period > 16){
-              chirp_timeout_count = (Settings.tele_period - 17) * 10;  // sync it with the TELEPERIOD, we need about up to 17 seconds to measure
+              chirp_timeout_count = (Settings.tele_period - 16) * 10;  // sync it with the TELEPERIOD, we need about up to 16 seconds to measure
               DEBUG_SENSOR_LOG(PSTR("CHIRP: timeout 1/10 sec: %u, tele: %u"), chirp_timeout_count, Settings.tele_period);
             }
           else{
@@ -533,7 +536,6 @@ bool Xsns48(uint8_t function)
       break;
     case FUNC_JSON_APPEND:
       ChirpShow(1);
-      chirp_next_job = 14; // TELE done, now compute time for next measure cycle
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:

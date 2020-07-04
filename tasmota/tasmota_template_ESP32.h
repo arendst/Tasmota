@@ -44,7 +44,7 @@
 
 enum UserSelectablePins {
   GPIO_NONE,                           // Not used
-  GPIO_KEY1, GPIO_KEY1_NP, GPIO_KEY1_INV, GPIO_KEY1_INV_NP,  // 4 x Button
+  GPIO_KEY1, GPIO_KEY1_NP, GPIO_KEY1_INV, GPIO_KEY1_INV_NP, // 4 x Button
   GPIO_SWT1, GPIO_SWT1_NP,             // 8 x User connected external switches
   GPIO_REL1, GPIO_REL1_INV,            // 8 x Relays
   GPIO_LED1, GPIO_LED1_INV,            // 4 x Leds
@@ -102,8 +102,8 @@ enum UserSelectablePins {
   GPIO_SM2135_CLK, GPIO_SM2135_DAT,    // SM2135 PWM controller
   GPIO_DEEPSLEEP,                      // Kill switch for deepsleep
   GPIO_EXS_ENABLE,                     // EXS MCU Enable
-  GPIO_TASMOTASLAVE_TXD, GPIO_TASMOTASLAVE_RXD,      // Slave Serial interface
-  GPIO_TASMOTASLAVE_RST, GPIO_TASMOTASLAVE_RST_INV,  // Slave Reset
+  GPIO_TASMOTACLIENT_TXD, GPIO_TASMOTACLIENT_RXD,      // Client Serial interface
+  GPIO_TASMOTACLIENT_RST, GPIO_TASMOTACLIENT_RST_INV,  // Client Reset
   GPIO_HPMA_RX, GPIO_HPMA_TX,          // Honeywell HPMA115S0 Serial interface
   GPIO_GPS_RX, GPIO_GPS_TX,            // GPS Serial interface
   GPIO_HM10_RX, GPIO_HM10_TX,          // HM10-BLE-Mijia-bridge Serial interface
@@ -127,6 +127,13 @@ enum UserSelectablePins {
   GPIO_WEBCAM_PSRCS,
   GPIO_BOILER_OT_RX, GPIO_BOILER_OT_TX,  // OpenTherm Boiler TX pin
   GPIO_WINDMETER_SPEED,                // WindMeter speed counter pin
+  GPIO_KEY1_TC,                        // Touch pin as button
+  GPIO_BL0940_RX,                      // BL0940 serial interface
+  GPIO_TCP_TX, GPIO_TCP_RX,            // TCP to serial bridge
+  GPIO_ETH_PHY_POWER, GPIO_ETH_PHY_MDC, GPIO_ETH_PHY_MDIO,  // Ethernet
+  GPIO_TELEINFO_RX,                    // Teleinfo telemetry data receive pin
+  GPIO_TELEINFO_ENABLE,                // Teleinfo Enable Receive Pin
+  GPIO_LMT01,                          // LMT01 input counting pin
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -193,7 +200,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DDSU666_TX "|" D_SENSOR_DDSU666_RX "|"
   D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
-  D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "_i|"
+  D_SENSOR_CLIENT_TX "|" D_SENSOR_CLIENT_RX "|" D_SENSOR_CLIENT_RESET "|" D_SENSOR_CLIENT_RESET "_i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
   D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX "|"
   D_SENSOR_HM10_RX "|" D_SENSOR_HM10_TX "|"
@@ -215,7 +222,12 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_WEBCAM_HSD "|"
   D_GPIO_WEBCAM_PSRCS "|"
   D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
-  D_SENSOR_WINDMETER_SPEED
+  D_SENSOR_WINDMETER_SPEED "|" D_SENSOR_BUTTON "_tc|"
+  D_SENSOR_BL0940_RX "|"
+  D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD "|"
+  D_SENSOR_ETH_PHY_POWER "|" D_SENSOR_ETH_PHY_MDC "|" D_SENSOR_ETH_PHY_MDIO "|"
+  D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
+  D_SENSOR_LMT01_PULSE
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -230,6 +242,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_KEY1_NP) + MAX_KEYS,
   AGPIO(GPIO_KEY1_INV) + MAX_KEYS,
   AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS,
+  AGPIO(GPIO_KEY1_TC) + MAX_KEYS,       // Touch button
   AGPIO(GPIO_SWT1) + MAX_SWITCHES,      // User connected external switches
   AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES,
   AGPIO(GPIO_REL1) + MAX_RELAYS,        // Relays
@@ -258,8 +271,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SPI_CLK),        // SPI Clk
   AGPIO(GPIO_SPI_CS),         // SPI Chip Select
   AGPIO(GPIO_SPI_DC),         // SPI Data Direction
-  AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Slave Output
-  AGPIO(GPIO_SSPI_MOSI),      // Software SPI Master Output Slave Input
+  AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output
+  AGPIO(GPIO_SSPI_MOSI),      // Software SPI Master Output Client Input
   AGPIO(GPIO_SSPI_SCLK),      // Software SPI Serial Clock
   AGPIO(GPIO_SSPI_CS),        // Software SPI Chip Select
   AGPIO(GPIO_SSPI_DC),        // Software SPI Data or Command
@@ -281,6 +294,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DS18x20
   AGPIO(GPIO_DSB),            // Single wire DS18B20 or DS18S20
   AGPIO(GPIO_DSB_OUT),        // Pseudo Single wire DS18B20 or DS18S20
+#endif
+#ifdef USE_LMT01
+  AGPIO(GPIO_LMT01),          // LMT01, count pulses on GPIO
 #endif
 
 // Light
@@ -402,12 +418,19 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_LE01MR_TX),     // F7F LE-01MR energy meter tx pin
   AGPIO(GPIO_LE01MR_RX),     // F7F LE-01MR energy meter rx pin
 #endif // IFDEF:USE_LE01MR
+#ifdef USE_BL0940
+  AGPIO(GPIO_BL0940_RX),     // BL0940 Serial interface
+#endif
 #endif  // USE_ENERGY_SENSOR
 
 // Serial
 #ifdef USE_SERIAL_BRIDGE
   AGPIO(GPIO_SBR_TX),         // Serial Bridge Serial interface
   AGPIO(GPIO_SBR_RX),         // Serial Bridge Serial interface
+#endif
+#ifdef USE_TCP_BRIDGE
+  AGPIO(GPIO_TCP_TX),         // TCP Serial bridge
+  AGPIO(GPIO_TCP_RX),         // TCP Serial bridge
 #endif
 #ifdef USE_ZIGBEE
   AGPIO(GPIO_ZIGBEE_TX),      // Zigbee Serial interface
@@ -450,11 +473,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_PN532_TXD),      // PN532 HSU Tx
   AGPIO(GPIO_PN532_RXD),      // PN532 HSU Rx
 #endif
-#ifdef USE_TASMOTA_SLAVE
-  AGPIO(GPIO_TASMOTASLAVE_TXD),     // Tasmota Slave TX
-  AGPIO(GPIO_TASMOTASLAVE_RXD),     // Tasmota Slave RX
-  AGPIO(GPIO_TASMOTASLAVE_RST),     // Tasmota Slave Reset
-  AGPIO(GPIO_TASMOTASLAVE_RST_INV), // Tasmota Slave Reset Inverted
+#ifdef USE_TASMOTA_CLIENT
+  AGPIO(GPIO_TASMOTACLIENT_TXD),     // Tasmota Client TX
+  AGPIO(GPIO_TASMOTACLIENT_RXD),     // Tasmota Client RX
+  AGPIO(GPIO_TASMOTACLIENT_RST),     // Tasmota Client Reset
+  AGPIO(GPIO_TASMOTACLIENT_RST_INV), // Tasmota Client Reset Inverted
 #endif
 #ifdef USE_RDM6300
   AGPIO(GPIO_RDM6300_RX),
@@ -517,6 +540,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_AS3935
   AGPIO(GPIO_AS3935),
 #endif
+#ifdef USE_TELEINFO
+  AGPIO(GPIO_TELEINFO_RX),
+  AGPIO(GPIO_TELEINFO_ENABLE),
+#endif
 /*
 #ifndef USE_ADC_VCC
   AGPIO(ADC0_INPUT),          // Analog input
@@ -541,6 +568,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_WEBCAM_PSCLK),
   AGPIO(GPIO_WEBCAM_HSD) + MAX_WEBCAM_HSD,
   AGPIO(GPIO_WEBCAM_PSRCS),
+#endif
+#ifdef USE_ETHERNET
+  AGPIO(GPIO_ETH_PHY_POWER),
+  AGPIO(GPIO_ETH_PHY_MDC),
+  AGPIO(GPIO_ETH_PHY_MDIO),  // Ethernet
 #endif
 };
 
@@ -595,20 +627,14 @@ typedef struct MYTMPLT {
 
 /********************************************************************************************/
 // Supported hardware modules
-enum SupportedModules {
-  WEMOS, ESP32_CAM_AITHINKER,
-  MAXMODULE};
+enum SupportedModules { WEMOS, ESP32_CAM_AITHINKER, MAXMODULE };
 
 #define USER_MODULE        255
 
-const char kModuleNames[] PROGMEM =
-  "ESP32-DevKit|ESP32 Cam AiThinker";
+const char kModuleNames[] PROGMEM = "ESP32-DevKit|ESP32 Cam AiThinker";
 
 // Default module settings
-const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
-  WEMOS,
-  ESP32_CAM_AITHINKER
-};
+const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = { WEMOS, ESP32_CAM_AITHINKER };
 
 const mytmplt kModules PROGMEM =
 {                              // WEMOS - Espressif ESP32-DevKitC - Any ESP32 device like WeMos and NodeMCU hardware (ESP32)
@@ -654,6 +680,15 @@ const mytmplt kModules PROGMEM =
   AGPIO(GPIO_USER),            // 39      I   NO PULLUP       GPIO39, SENSOR_VN, ADC1_CH3, ADC_H, RTC_GPIO3
   0                            // Flag
 };
+
+/*********************************************************************************************\
+ Known templates
+
+{"NAME":"AITHINKER CAM","GPIO":[4992,1,1,1,1,5088,1,1,1,1,1,1,1,1,5089,5090,0,5091,5184,5152,0,5120,5024,5056,0,0,0,0,4928,1,5094,5095,5092,0,0,5093],"FLAG":0,"BASE":1}
+{"NAME":"Olimex ESP32-PoE","GPIO":[1,1,1,1,1,1,0,0,5536,1,1,1,1,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+{"NAME":"wESP32","GPIO":[0,0,1,0,1,1,0,0,1,1,1,1,5568,5600,1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+
+\*********************************************************************************************/
 
 #endif  // ESP32
 

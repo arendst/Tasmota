@@ -73,37 +73,37 @@ struct TUYA {
 } Tuya;
 
 
-enum TuyaSupportedFunctions {
-  TUYA_MCU_FUNC_NONE,
-  TUYA_MCU_FUNC_SWT1 = 1,           // Buttons
-  TUYA_MCU_FUNC_SWT2,
-  TUYA_MCU_FUNC_SWT3,
-  TUYA_MCU_FUNC_SWT4,
-  TUYA_MCU_FUNC_REL1 = 11,           // Relays
-  TUYA_MCU_FUNC_REL2,
-  TUYA_MCU_FUNC_REL3,
-  TUYA_MCU_FUNC_REL4,
-  TUYA_MCU_FUNC_REL5,
-  TUYA_MCU_FUNC_REL6,
-  TUYA_MCU_FUNC_REL7,
-  TUYA_MCU_FUNC_REL8,
-  TUYA_MCU_FUNC_DIMMER = 21,
-  TUYA_MCU_FUNC_POWER = 31,
-  TUYA_MCU_FUNC_CURRENT,
-  TUYA_MCU_FUNC_VOLTAGE,
-  TUYA_MCU_FUNC_BATTERY_STATE,
-  TUYA_MCU_FUNC_BATTERY_PERCENTAGE,
-  TUYA_MCU_FUNC_REL1_INV = 41,           // Inverted Relays
-  TUYA_MCU_FUNC_REL2_INV,
-  TUYA_MCU_FUNC_REL3_INV,
-  TUYA_MCU_FUNC_REL4_INV,
-  TUYA_MCU_FUNC_REL5_INV,
-  TUYA_MCU_FUNC_REL6_INV,
-  TUYA_MCU_FUNC_REL7_INV,
-  TUYA_MCU_FUNC_REL8_INV,
-  TUYA_MCU_FUNC_LOWPOWER_MODE = 51,
-  TUYA_MCU_FUNC_LAST = 255
-};
+// enum TuyaSupportedFunctions {
+//   TUYA_MCU_FUNC_NONE,
+//   TUYA_MCU_FUNC_SWT1 = 1,           // Buttons
+//   TUYA_MCU_FUNC_SWT2,
+//   TUYA_MCU_FUNC_SWT3,
+//   TUYA_MCU_FUNC_SWT4,
+//   TUYA_MCU_FUNC_REL1 = 11,           // Relays
+//   TUYA_MCU_FUNC_REL2,
+//   TUYA_MCU_FUNC_REL3,
+//   TUYA_MCU_FUNC_REL4,
+//   TUYA_MCU_FUNC_REL5,
+//   TUYA_MCU_FUNC_REL6,
+//   TUYA_MCU_FUNC_REL7,
+//   TUYA_MCU_FUNC_REL8,
+//   TUYA_MCU_FUNC_DIMMER = 21,
+//   TUYA_MCU_FUNC_POWER = 31,
+//   TUYA_MCU_FUNC_CURRENT,
+//   TUYA_MCU_FUNC_VOLTAGE,
+//   TUYA_MCU_FUNC_BATTERY_STATE,
+//   TUYA_MCU_FUNC_BATTERY_PERCENTAGE,
+//   TUYA_MCU_FUNC_REL1_INV = 41,           // Inverted Relays
+//   TUYA_MCU_FUNC_REL2_INV,
+//   TUYA_MCU_FUNC_REL3_INV,
+//   TUYA_MCU_FUNC_REL4_INV,
+//   TUYA_MCU_FUNC_REL5_INV,
+//   TUYA_MCU_FUNC_REL6_INV,
+//   TUYA_MCU_FUNC_REL7_INV,
+//   TUYA_MCU_FUNC_REL8_INV,
+//   TUYA_MCU_FUNC_LOWPOWER_MODE = 51,
+//   TUYA_MCU_FUNC_LAST = 255
+// };
 
 const char kTuyaCommand[] PROGMEM = "|"  // No prefix
   D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE;
@@ -570,15 +570,15 @@ void TuyaNormalPowerModePacketProcess(void)
         bool key1_set = false;
         bool led1_set = false;
         for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
-          if (Settings.my_gp.io[i] == GPIO_LED1) led1_set = true;
-          else if (Settings.my_gp.io[i] == GPIO_KEY1) key1_set = true;
+          if (Settings.my_gp.io[i] == AGPIO(GPIO_LED1)) led1_set = true;
+          else if (Settings.my_gp.io[i] == AGPIO(GPIO_KEY1)) key1_set = true;
         }
         if (!Settings.my_gp.io[led1_gpio] && !led1_set) {
-          Settings.my_gp.io[led1_gpio] = GPIO_LED1;
+          Settings.my_gp.io[led1_gpio] = AGPIO(GPIO_LED1);
           restart_flag = 2;
         }
         if (!Settings.my_gp.io[key1_gpio] && !key1_set) {
-          Settings.my_gp.io[key1_gpio] = GPIO_KEY1;
+          Settings.my_gp.io[key1_gpio] = AGPIO(GPIO_KEY1);
           restart_flag = 2;
         }
       }
@@ -597,10 +597,10 @@ void TuyaNormalPowerModePacketProcess(void)
 bool TuyaModuleSelected(void)
 {
   if (!PinUsed(GPIO_TUYA_RX) || !PinUsed(GPIO_TUYA_TX)) {  // fallback to hardware-serial if not explicitly selected
-    SetPin(1, GPIO_TUYA_TX);
-    SetPin(3, GPIO_TUYA_RX);
-    Settings.my_gp.io[1] = GPIO_TUYA_TX;
-    Settings.my_gp.io[3] = GPIO_TUYA_RX;
+    SetPin(1, AGPIO(GPIO_TUYA_TX));
+    SetPin(3, AGPIO(GPIO_TUYA_RX));
+    Settings.my_gp.io[1] = AGPIO(GPIO_TUYA_TX);
+    Settings.my_gp.io[3] = AGPIO(GPIO_TUYA_RX);
     restart_flag = 2;
   }
 
@@ -641,13 +641,16 @@ bool TuyaModuleSelected(void)
 
 void TuyaInit(void)
 {
+  int baudrate = 9600;
+  if (Settings.flag4.tuyamcu_baudrate) { baudrate = 115200; }  // SetOption97 - Set Baud rate for TuyaMCU serial communication (0 = 9600 or 1 = 115200)
+
   Tuya.buffer = (char*)(malloc(TUYA_BUFFER_SIZE));
   if (Tuya.buffer != nullptr) {
     TuyaSerial = new TasmotaSerial(Pin(GPIO_TUYA_RX), Pin(GPIO_TUYA_TX), 2);
-    if (TuyaSerial->begin(9600)) {
+    if (TuyaSerial->begin(baudrate)) {
       if (TuyaSerial->hardwareSerial()) { ClaimSerial(); }
       // Get MCU Configuration
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Request MCU configuration"));
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Request MCU configuration at %d baud rate"));
 
       TuyaSendCmd(TUYA_CMD_QUERY_PRODUCT);
     }

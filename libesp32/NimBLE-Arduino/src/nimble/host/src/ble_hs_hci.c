@@ -240,7 +240,7 @@ ble_hs_hci_process_ack(uint16_t expected_opcode,
     }
 
     if (rc == 0) {
-        if (params_buf == NULL) {
+        if (params_buf == NULL || out_ack->bha_params == NULL) {
             out_ack->bha_params_len = 0;
         } else {
             if (out_ack->bha_params_len > params_buf_len) {

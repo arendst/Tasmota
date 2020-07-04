@@ -277,10 +277,10 @@ struct ble_sm_result {
     uint8_t sm_err;
     struct ble_gap_passkey_params passkey_params;
     void *state_arg;
-    unsigned execute:1;
-    unsigned enc_cb:1;
-    unsigned persist_keys:1;
-    unsigned restore:1;
+    unsigned execute : 1;
+    unsigned enc_cb : 1;
+    unsigned bonded : 1;
+    unsigned restore : 1;
 };
 
 #if MYNEWT_VAL(BLE_HS_DEBUG)

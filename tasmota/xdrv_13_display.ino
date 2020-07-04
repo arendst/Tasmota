@@ -45,8 +45,8 @@ uint8_t color_type = COLOR_BW;
 uint8_t auto_draw=1;
 
 const uint8_t DISPLAY_MAX_DRIVERS = 16;        // Max number of display drivers/models supported by xdsp_interface.ino
-const uint8_t DISPLAY_MAX_COLS = 44;           // Max number of columns allowed with command DisplayCols
-const uint8_t DISPLAY_MAX_ROWS = 32;           // Max number of lines allowed with command DisplayRows
+const uint8_t DISPLAY_MAX_COLS = 64;           // Max number of columns allowed with command DisplayCols
+const uint8_t DISPLAY_MAX_ROWS = 64;           // Max number of lines allowed with command DisplayRows
 
 const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log buffer
 
@@ -505,7 +505,7 @@ void DisplayText(void)
             cp += var;
             linebuf[fill] = 0;
             break;
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT) && USE_SCRIPT_FATFS>=0
           case 'P':
             { char *ep=strchr(cp,':');
              if (ep) {
@@ -1013,14 +1013,14 @@ void DisplayLogBufferInit(void)
     snprintf_P(buffer, sizeof(buffer), PSTR("Display mode %d"), Settings.display_mode);
     DisplayLogBufferAdd(buffer);
 
-    snprintf_P(buffer, sizeof(buffer), PSTR(D_CMND_HOSTNAME " %s"), my_hostname);
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_CMND_HOSTNAME " %s"), NetworkHostname());
     DisplayLogBufferAdd(buffer);
-    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), SettingsText(SET_STASSID1 + Settings.sta_active));
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_MAC " %s"), NetworkMacAddress().c_str());
     DisplayLogBufferAdd(buffer);
-    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_MAC " %s"), WiFi.macAddress().c_str());
+    snprintf_P(buffer, sizeof(buffer), PSTR("IP %s"), NetworkAddress().toString().c_str());
     DisplayLogBufferAdd(buffer);
     if (!global_state.wifi_down) {
-      snprintf_P(buffer, sizeof(buffer), PSTR("IP %s"), WiFi.localIP().toString().c_str());
+      snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), SettingsText(SET_STASSID1 + Settings.sta_active));
       DisplayLogBufferAdd(buffer);
       snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_RSSI " %d%%"), WifiGetRssiAsQuality(WiFi.RSSI()));
       DisplayLogBufferAdd(buffer);
@@ -1510,8 +1510,13 @@ void rgb888_to_565(uint8_t *in, uint16_t *out, uint32_t len);
 #endif
 #endif
 
+#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT) && USE_SCRIPT_FATFS>=0
 
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#ifdef ESP32
+extern FS *fsp;
+#else
+extern SDClass *fsp;
+#endif
 #define XBUFF_LEN 128
 void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
   if (!renderer) return;
@@ -1527,7 +1532,7 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
 
   if (!strcmp(estr,"rgb")) {
     // special rgb format
-    fp=SD.open(file,FILE_READ);
+    fp=fsp->open(file,FILE_READ);
     if (!fp) return;
     uint16_t xsize;
     fp.read((uint8_t*)&xsize,2);
@@ -1564,7 +1569,7 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
 #ifdef ESP32
 #ifdef JPEG_PICTS
     if (psramFound()) {
-      fp=SD.open(file,FILE_READ);
+      fp=fsp->open(file,FILE_READ);
       if (!fp) return;
       uint32_t size = fp.size();
       uint8_t *mem = (uint8_t *)heap_caps_malloc(size+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
@@ -1850,7 +1855,9 @@ void DisplayCheckGraph() {
 
 
 #if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#ifdef ESP32
 #include <SD.h>
+#endif
 
 void Save_graph(uint8_t num, char *path) {
   if (!renderer) return;
@@ -1858,8 +1865,8 @@ void Save_graph(uint8_t num, char *path) {
   struct GRAPH *gp=graph[index];
   if (!gp) return;
   File fp;
-  SD.remove(path);
-  fp=SD.open(path,FILE_WRITE);
+  fsp->remove(path);
+  fp=fsp->open(path,FILE_WRITE);
   if (!fp) return;
   char str[32];
   sprintf_P(str,PSTR("%d\t%d\t%d\t"),gp->xcnt,gp->xs,gp->ys);
@@ -1884,7 +1891,7 @@ void Restore_graph(uint8_t num, char *path) {
   struct GRAPH *gp=graph[index];
   if (!gp) return;
   File fp;
-  fp=SD.open(path,FILE_READ);
+  fp=fsp->open(path,FILE_READ);
   if (!fp) return;
   char vbuff[32];
   char *cp=vbuff;

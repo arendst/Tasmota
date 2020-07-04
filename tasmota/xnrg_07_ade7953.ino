@@ -209,10 +209,9 @@ void Ade7953DrvInit(void)
       }
       I2cSetActiveFound(ADE7953_ADDR, "ADE7953");
       Ade7953.init_step = 2;
-
       Energy.phase_count = 2;                     // Handle two channels as two phases
-      Energy.voltage_common = true;               // Use common voltage and frequency
-
+      Energy.voltage_common = true;               // Use common voltage
+      Energy.frequency_common = true;             // Use common frequency
       energy_flg = XNRG_07;
     }
   }

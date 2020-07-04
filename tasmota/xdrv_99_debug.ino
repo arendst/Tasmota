@@ -45,7 +45,6 @@
 #define D_CMND_CFGDUMP   "CfgDump"
 #define D_CMND_CFGPEEK   "CfgPeek"
 #define D_CMND_CFGPOKE   "CfgPoke"
-#define D_CMND_CFGSHOW   "CfgShow"
 #define D_CMND_CFGXOR    "CfgXor"
 #define D_CMND_CPUCHECK  "CpuChk"
 #define D_CMND_EXCEPTION "Exception"
@@ -459,7 +458,9 @@ void CmndCfgXor(void)
   if (XdrvMailbox.data_len > 0) {
     Web.config_xor_on_set = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(Web.config_xor_on_set);
+  char temp[10];
+  snprintf_P(temp, sizeof(temp), PSTR("0x%02X"), Web.config_xor_on_set);
+  ResponseCmndChar(temp);
 }
 #endif  // USE_WEBSERVER
 

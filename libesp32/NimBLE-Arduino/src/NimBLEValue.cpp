@@ -3,7 +3,7 @@
  *
  *  Created: on March 6, 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  *
  * BLEValue.cpp
@@ -14,15 +14,18 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
+#include "nimconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+
 #include "NimBLEValue.h"
 #include "NimBLELog.h"
 
 static const char* LOG_TAG="NimBLEValue";
 
 NimBLEValue::NimBLEValue() {
-	m_accumulation = "";
-	m_value        = "";
-	m_readOffset   = 0;
+    m_accumulation = "";
+    m_value        = "";
+    m_readOffset   = 0;
 } // NimBLEValue
 
 
@@ -31,9 +34,9 @@ NimBLEValue::NimBLEValue() {
  * The accumulation is a growing set of data that is added to until a commit or cancel.
  * @param [in] part A message part being added.
  */
-void NimBLEValue::addPart(std::string part) {
-	NIMBLE_LOGD(LOG_TAG, ">> addPart: length=%d", part.length());
-	m_accumulation += part;
+void NimBLEValue::addPart(const std::string &part) {
+    NIMBLE_LOGD(LOG_TAG, ">> addPart: length=%d", part.length());
+    m_accumulation += part;
 } // addPart
 
 
@@ -43,9 +46,9 @@ void NimBLEValue::addPart(std::string part) {
  * @param [in] pData A message part being added.
  * @param [in] length The number of bytes being added.
  */
-void NimBLEValue::addPart(uint8_t* pData, size_t length) {
-	NIMBLE_LOGD(LOG_TAG, ">> addPart: length=%d", length);
-	m_accumulation += std::string((char*) pData, length);
+void NimBLEValue::addPart(const uint8_t* pData, size_t length) {
+    NIMBLE_LOGD(LOG_TAG, ">> addPart: length=%d", length);
+    m_accumulation += std::string((char*) pData, length);
 } // addPart
 
 
@@ -53,9 +56,9 @@ void NimBLEValue::addPart(uint8_t* pData, size_t length) {
  * @brief Cancel the current accumulation.
  */
 void NimBLEValue::cancel() {
-	NIMBLE_LOGD(LOG_TAG, ">> cancel");
-	m_accumulation = "";
-	m_readOffset   = 0;
+    NIMBLE_LOGD(LOG_TAG, ">> cancel");
+    m_accumulation = "";
+    m_readOffset   = 0;
 } // cancel
 
 
@@ -66,12 +69,12 @@ void NimBLEValue::cancel() {
  * we now have the complete message and commit the change as a unit.
  */
 void NimBLEValue::commit() {
-	NIMBLE_LOGD(LOG_TAG, ">> commit");
-	// If there is nothing to commit, do nothing.
-	if (m_accumulation.length() == 0) return;
-	setValue(m_accumulation);
-	m_accumulation = "";
-	m_readOffset   = 0;
+    NIMBLE_LOGD(LOG_TAG, ">> commit");
+    // If there is nothing to commit, do nothing.
+    if (m_accumulation.length() == 0) return;
+    setValue(m_accumulation);
+    m_accumulation = "";
+    m_readOffset   = 0;
 } // commit
 
 
@@ -80,7 +83,7 @@ void NimBLEValue::commit() {
  * @return A pointer to the data.
  */
 uint8_t* NimBLEValue::getData() {
-	return (uint8_t*) m_value.data();
+    return (uint8_t*) m_value.data();
 }
 
 
@@ -89,7 +92,7 @@ uint8_t* NimBLEValue::getData() {
  * @return The length of the data in bytes.
  */
 size_t NimBLEValue::getLength() {
-	return m_value.length();
+    return m_value.length();
 } // getLength
 
 
@@ -98,7 +101,7 @@ size_t NimBLEValue::getLength() {
  * @return The read offset into the read.
  */
 uint16_t NimBLEValue::getReadOffset() {
-	return m_readOffset;
+    return m_readOffset;
 } // getReadOffset
 
 
@@ -106,7 +109,7 @@ uint16_t NimBLEValue::getReadOffset() {
  * @brief Get the current value.
  */
 std::string NimBLEValue::getValue() {
-	return m_value;
+    return m_value;
 } // getValue
 
 
@@ -115,15 +118,15 @@ std::string NimBLEValue::getValue() {
  * @param [in] readOffset The offset into the read.
  */
 void NimBLEValue::setReadOffset(uint16_t readOffset) {
-	m_readOffset = readOffset;
+    m_readOffset = readOffset;
 } // setReadOffset
 
 
 /**
  * @brief Set the current value.
  */
-void NimBLEValue::setValue(std::string value) {
-	m_value = value;
+void NimBLEValue::setValue(const std::string &value) {
+    m_value = value;
 } // setValue
 
 
@@ -132,9 +135,9 @@ void NimBLEValue::setValue(std::string value) {
  * @param [in] pData The data for the current value.
  * @param [in] The length of the new current value.
  */
-void NimBLEValue::setValue(uint8_t* pData, size_t length) {
-	m_value = std::string((char*) pData, length);
+void NimBLEValue::setValue(const uint8_t* pData, size_t length) {
+    m_value = std::string((char*) pData, length);
 } // setValue
 
-
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 #endif // CONFIG_BT_ENABLED

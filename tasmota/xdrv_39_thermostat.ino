@@ -24,8 +24,8 @@
 // Enable/disable debugging
 //#define DEBUG_THERMOSTAT
 
-// Enable/disable experimental PI auto-tuning inspired by the Arduino Autotune Library by
-// Brett Beauregard <br3ttb@gmail.com> brettbeauregard.com
+// Enable/disable experimental PI auto-tuning inspired by the Arduino
+// Autotune Library by Brett Beauregard 
 //#define USE_PI_AUTOTUNING // (Ziegler-Nichols closed loop method)
 
 #ifdef DEBUG_THERMOSTAT
@@ -75,6 +75,8 @@
 #define D_CMND_TIMEPIINTEGRREAD "TimePiIntegrRead"
 #define D_CMND_TIMESENSLOSTSET "TimeSensLostSet"
 #define D_CMND_DIAGNOSTICMODESET "DiagnosticModeSet"
+#define D_CMND_CTRDUTYCYCLEREAD "CtrDutyCycleRead"
+#define D_CMND_ENABLEOUTPUTSET "EnableOutputSet"
 
 enum ThermostatModes { THERMOSTAT_OFF, THERMOSTAT_AUTOMATIC_OP, THERMOSTAT_MANUAL_OP, THERMOSTAT_MODES_MAX };
 #ifdef USE_PI_AUTOTUNING
@@ -100,7 +102,11 @@ enum ThermostatSupportedInputSwitches {
   THERMOSTAT_INPUT_SWT1 = 1,            // Buttons
   THERMOSTAT_INPUT_SWT2,
   THERMOSTAT_INPUT_SWT3,
-  THERMOSTAT_INPUT_SWT4
+  THERMOSTAT_INPUT_SWT4,
+  THERMOSTAT_INPUT_SWT5,
+  THERMOSTAT_INPUT_SWT6,
+  THERMOSTAT_INPUT_SWT7,
+  THERMOSTAT_INPUT_SWT8
 };
 enum ThermostatSupportedOutputRelays {
   THERMOSTAT_OUTPUT_NONE,
@@ -132,12 +138,12 @@ typedef union {
     uint32_t counter_seconds : 6;       // Second counter used to track minutes
     uint32_t output_relay_number : 4;   // Output relay number
     uint32_t input_switch_number : 3;   // Input switch number
+    uint32_t enable_output : 1;         // Enables / disables the physical output
 #ifdef USE_PI_AUTOTUNING
     uint32_t autotune_flag : 1;         // Enable/disable autotune
     uint32_t autotune_perf_mode : 2;    // Autotune performance mode
-    uint32_t free : 1;                  // Free bits
 #else
-    uint32_t free : 4;                  // Free bits
+    uint32_t free : 3;                  // Free bits
 #endif // USE_PI_AUTOTUNING
   };
 } ThermostatStateBitfield;
@@ -168,7 +174,8 @@ const char kThermostatCommands[] PROGMEM = "|" D_CMND_THERMOSTATMODESET "|" D_CM
 #endif // USE_PI_AUTOTUNING
   D_CMND_TIMEMINACTIONSET "|" D_CMND_TIMEMINTURNOFFACTIONSET "|" D_CMND_TEMPRUPDELTINSET "|" D_CMND_TEMPRUPDELTOUTSET "|" 
   D_CMND_TIMERAMPUPMAXSET "|" D_CMND_TIMERAMPUPCYCLESET "|" D_CMND_TEMPRAMPUPPIACCERRSET "|" D_CMND_TIMEPIPROPORTREAD "|" 
-  D_CMND_TIMEPIINTEGRREAD "|" D_CMND_TIMESENSLOSTSET "|" D_CMND_DIAGNOSTICMODESET;
+  D_CMND_TIMEPIINTEGRREAD "|" D_CMND_TIMESENSLOSTSET "|" D_CMND_DIAGNOSTICMODESET "|" D_CMND_CTRDUTYCYCLEREAD "|" 
+  D_CMND_ENABLEOUTPUTSET;
 
 void (* const ThermostatCommand[])(void) PROGMEM = {
   &CmndThermostatModeSet, &CmndClimateModeSet, &CmndTempFrostProtectSet, &CmndControllerModeSet, &CmndInputSwitchSet, 
@@ -181,7 +188,8 @@ void (* const ThermostatCommand[])(void) PROGMEM = {
   &CmndTimeMaxActionSet, &CmndTimeMinActionSet, &CmndTimeMinTurnoffActionSet, &CmndTempRupDeltInSet, 
 #endif // USE_PI_AUTOTUNING
   &CmndTempRupDeltOutSet, &CmndTimeRampupMaxSet, &CmndTimeRampupCycleSet, &CmndTempRampupPiAccErrSet, 
-  &CmndTimePiProportRead, &CmndTimePiIntegrRead, &CmndTimeSensLostSet, &CmndDiagnosticModeSet };
+  &CmndTimePiProportRead, &CmndTimePiIntegrRead, &CmndTimeSensLostSet, &CmndDiagnosticModeSet, &CmndCtrDutyCycleRead,
+  &CmndEnableOutputSet };
 
 struct THERMOSTAT {
   ThermostatStateBitfield status;                                             // Bittfield including states as well as several flags
@@ -268,6 +276,7 @@ void ThermostatInit(uint8_t ctr_output)
   Thermostat[ctr_output].status.output_relay_number = (THERMOSTAT_RELAY_NUMBER + ctr_output);
   Thermostat[ctr_output].status.input_switch_number = (THERMOSTAT_SWITCH_NUMBER + ctr_output);
   Thermostat[ctr_output].status.use_input = INPUT_NOT_USED;
+  Thermostat[ctr_output].status.enable_output = IFACE_ON;
   Thermostat[ctr_output].diag.output_inconsist_ctr = 0;
   Thermostat[ctr_output].diag.diagnostic_mode = DIAGNOSTIC_ON;
 #ifdef USE_PI_AUTOTUNING
@@ -275,7 +284,9 @@ void ThermostatInit(uint8_t ctr_output)
   Thermostat[ctr_output].status.autotune_perf_mode = AUTOTUNE_PERF_FAST;
 #endif // USE_PI_AUTOTUNING
   // Make sure the Output is OFF
-  ExecuteCommandPower(Thermostat[ctr_output].status.output_relay_number, POWER_OFF, SRC_THERMOSTAT);
+  if (Thermostat[ctr_output].status.enable_output == IFACE_ON) {
+    ExecuteCommandPower(Thermostat[ctr_output].status.output_relay_number, POWER_OFF, SRC_THERMOSTAT);
+  }
 }
 
 bool ThermostatMinuteCounter(uint8_t ctr_output) 
@@ -292,7 +303,7 @@ bool ThermostatMinuteCounter(uint8_t ctr_output)
 
 inline bool ThermostatSwitchIdValid(uint8_t switchId) 
 {
-  return (switchId >= THERMOSTAT_INPUT_SWT1 && switchId <= THERMOSTAT_INPUT_SWT4);
+  return (switchId >= THERMOSTAT_INPUT_SWT1 && switchId <= THERMOSTAT_INPUT_SWT8);
 }
 
 inline bool ThermostatRelayIdValid(uint8_t relayId) 
@@ -366,7 +377,8 @@ void ThermostatSignalPreProcessingSlow(uint8_t ctr_output)
 void ThermostatSignalPostProcessingSlow(uint8_t ctr_output)
 {
   // Increate counter when inconsistent output state exists
-  if (Thermostat[ctr_output].status.status_output != Thermostat[ctr_output].status.command_output) {
+  if ((Thermostat[ctr_output].status.status_output != Thermostat[ctr_output].status.command_output)
+    &&(Thermostat[ctr_output].status.enable_output == IFACE_ON)) {
     Thermostat[ctr_output].diag.output_inconsist_ctr++;
   }
   else {
@@ -540,7 +552,9 @@ void ThermostatEmergencyShutdown(uint8_t ctr_output)
   // Emergency switch to THERMOSTAT_OFF
   Thermostat[ctr_output].status.thermostat_mode = THERMOSTAT_OFF;
   Thermostat[ctr_output].status.command_output = IFACE_OFF;
-  ThermostatOutputRelay(ctr_output, Thermostat[ctr_output].status.command_output);
+  if (Thermostat[ctr_output].status.enable_output == IFACE_ON) {
+    ThermostatOutputRelay(ctr_output, Thermostat[ctr_output].status.command_output);
+  }
 }
 
 void ThermostatState(uint8_t ctr_output)
@@ -576,7 +590,9 @@ void ThermostatOutputRelay(uint8_t ctr_output, uint32_t command)
   if ((command == IFACE_ON) 
     && (Thermostat[ctr_output].status.status_output == IFACE_OFF)) {
 //#ifndef DEBUG_THERMOSTAT
-    ExecuteCommandPower(Thermostat[ctr_output].status.output_relay_number, POWER_ON, SRC_THERMOSTAT);
+    if (Thermostat[ctr_output].status.enable_output == IFACE_ON) {
+      ExecuteCommandPower(Thermostat[ctr_output].status.output_relay_number, POWER_ON, SRC_THERMOSTAT);
+    }
 //#endif // DEBUG_THERMOSTAT
     Thermostat[ctr_output].status.status_output = IFACE_ON;
 #ifdef DEBUG_THERMOSTAT
@@ -588,7 +604,9 @@ void ThermostatOutputRelay(uint8_t ctr_output, uint32_t command)
   // then switch output to OFF
   else if ((command == IFACE_OFF) && (Thermostat[ctr_output].status.status_output == IFACE_ON)) {
 //#ifndef DEBUG_THERMOSTAT
-    ExecuteCommandPower(Thermostat[ctr_output].status.output_relay_number, POWER_OFF, SRC_THERMOSTAT);
+    if (Thermostat[ctr_output].status.enable_output == IFACE_ON) {
+      ExecuteCommandPower(Thermostat[ctr_output].status.output_relay_number, POWER_OFF, SRC_THERMOSTAT);
+    }
 //#endif // DEBUG_THERMOSTAT
     Thermostat[ctr_output].timestamp_output_off = uptime;
     Thermostat[ctr_output].status.status_output = IFACE_OFF;
@@ -1313,7 +1331,7 @@ void ThermostatGetLocalSensor(uint8_t ctr_output) {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& root = jsonBuffer.parseObject((const char*)mqtt_data);
   if (root.success()) {
-    const char* value_c = root["THERMOSTAT_SENSOR_NAME"]["Temperature"];
+    const char* value_c = root[THERMOSTAT_SENSOR_NAME]["Temperature"];
     if (value_c != NULL && strlen(value_c) > 0 && (isdigit(value_c[0]) || (value_c[0] == '-' && isdigit(value_c[1])) ) ) {
       int16_t value = (int16_t)(CharToFloat(value_c) * 10);
       if ( (value >= -1000) 
@@ -1914,6 +1932,44 @@ void CmndDiagnosticModeSet(void)
       }
     }
     ResponseCmndNumber((int)Thermostat[ctr_output].diag.diagnostic_mode);
+  }
+}
+
+void CmndCtrDutyCycleRead(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
+    uint8_t ctr_output = XdrvMailbox.index - 1;
+    uint8_t value = 0;
+    if ( (Thermostat[ctr_output].status.controller_mode == CTR_PI)
+      || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
+        &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_PI))) {
+      value = Thermostat[ctr_output].time_total_pi / Thermostat[ctr_output].time_pi_cycle;
+    }
+    else if ( (Thermostat[ctr_output].status.controller_mode == CTR_RAMP_UP)
+          || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
+            &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_RAMP_UP))) {
+      if (Thermostat[ctr_output].status.status_output == IFACE_ON) {
+        value = 100;
+      }
+      else {
+        value = 0;
+      }
+    }
+    ResponseCmndNumber((int)value);
+  }
+}
+
+void CmndEnableOutputSet(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
+    uint8_t ctr_output = XdrvMailbox.index - 1;
+    if (XdrvMailbox.data_len > 0) {
+      uint8_t value = (uint8_t)(CharToFloat(XdrvMailbox.data));
+      if ((value >= IFACE_OFF) && (value <= IFACE_ON)) {
+        Thermostat[ctr_output].status.enable_output = value;
+      }
+    }
+    ResponseCmndNumber((int)Thermostat[ctr_output].status.enable_output);
   }
 }
 

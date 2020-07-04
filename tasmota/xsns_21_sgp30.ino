@@ -55,7 +55,7 @@ void sgp30_Init(void)
 //#define POW_FUNC pow
 #define POW_FUNC FastPrecisePow
 
-float sgp30_AbsoluteHumidity(float temperature, float humidity,char tempUnit) {
+float sgp30_AbsoluteHumidity(float temperature, float humidity) {
   //taken from https://carnotcycle.wordpress.com/2012/08/04/how-to-convert-relative-humidity-to-absolute-humidity/
   //precision is about 0.1°C in range -30 to 35°C
   //August-Roche-Magnus 	6.1094 exp(17.625 x T)/(T + 243.04)
@@ -67,10 +67,6 @@ float sgp30_AbsoluteHumidity(float temperature, float humidity,char tempUnit) {
 
   if (isnan(temperature) || isnan(humidity) ) {
     return NAN;
-  }
-
-  if (tempUnit != 'C') {
-    temperature = (temperature - 32.0) * (5.0 / 9.0); /*conversion to [°C]*/
   }
 
   temp = POW_FUNC(2.718281828, (17.67 * temperature) / (temperature + 243.5));
@@ -87,9 +83,9 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
   if (!sgp.IAQmeasure()) {
     return;  // Measurement failed
   }
-  if (global_update && (global_humidity > 0) && (global_temperature != 9999)) {
+  if (global_update && (global_humidity > 0) && !isnan(global_temperature_celsius)) {
     // abs hum in mg/m3
-    sgp30_abshum=sgp30_AbsoluteHumidity(global_temperature,global_humidity,TempUnit());
+    sgp30_abshum = sgp30_AbsoluteHumidity(global_temperature_celsius, global_humidity);
     sgp.setHumidity(sgp30_abshum*1000);
   }
   sgp30_ready = true;
@@ -119,11 +115,13 @@ void Sgp30Show(bool json)
   if (sgp30_ready) {
     char abs_hum[33];
 
-    if (json) {
-      ResponseAppend_P(PSTR(",\"SGP30\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d"), sgp.eCO2, sgp.TVOC);
-      if (global_update && global_humidity>0 && global_temperature!=9999) {
+    if (global_update && (global_humidity > 0) && !isnan(global_temperature_celsius)) {
         // has humidity + temperature
         dtostrfd(sgp30_abshum,4,abs_hum);
+    }
+    if (json) {
+      ResponseAppend_P(PSTR(",\"SGP30\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d"), sgp.eCO2, sgp.TVOC);
+      if (global_update && global_humidity>0 && !isnan(global_temperature_celsius)) {
         ResponseAppend_P(PSTR(",\"" D_JSON_AHUM "\":%s"),abs_hum);
       }
       ResponseJsonEnd();

@@ -34,8 +34,8 @@
 const uint16_t CHUNKED_BUFFER_SIZE = (MESSZ / 2) - 100;  // Chunk buffer size (should be smaller than half mqtt_data size = MESSZ)
 
 const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
-#define HTTP_RESTART_RECONNECT_TIME           9000       // milliseconds
-#define HTTP_OTA_RESTART_RECONNECT_TIME       20000      // milliseconds
+const uint16_t HTTP_RESTART_RECONNECT_TIME = 9000;       // milliseconds - Allow time for restart and wifi reconnect
+const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 28000;  // milliseconds - Allow time for uploading binary, unzip/write to final destination and wifi reconnect
 
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
@@ -44,10 +44,51 @@ const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
 uint8_t *efm8bb1_update = nullptr;
 #endif  // USE_RF_FLASH
 
-enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTASLAVE };
+enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT };
 
 static const char * HEADER_KEYS[] = { "User-Agent", };
 
+#ifdef USE_UNISHOX_COMPRESSION
+#ifdef USE_JAVASCRIPT_ES6
+// insert D_HTML_LANGUAGE later
+const size_t HTTP_HEADER1_SIZE = 377;
+const char HTTP_HEADER1_COMPRESSED[] PROGMEM = "\x3D\x0F\xE1\x10\x98\x1D\x19\x0C\x64\x85\x50\xD0\x8F\xC3\xD0\x55\x0D\x09\x05\x7C"
+                             "\x3C\x7C\x3F\xB2\xEC\xD7\xE6\x86\x7D\x78\xFE\xCB\xB3\x5F\x9A\x1A\x0C\x2B\xF7\x8F"
+                             "\x87\xB0\xF6\x1F\x87\xA0\xA7\x62\x1F\x87\xA0\xD7\x56\x83\x15\x7F\xF3\xA3\xE1\xF6"
+                             "\x2E\x8C\x1D\x67\x3E\x7D\x90\x21\x52\xEB\x1A\xCF\x87\xB0\xCF\x58\xF8\xCC\xFD\x1E"
+                             "\xC4\x1E\x75\x3E\xA3\xE1\xEC\x1F\xD1\x28\x51\xF0\x46\x67\xA1\xB3\xAC\x7F\x44\xA1"
+                             "\x47\x56\xF6\xD6\xD8\x47\x5F\x83\xB0\x99\xF0\xE4\x3A\x88\x5F\x9F\xCE\xBF\x07\x61"
+                             "\x58\xE0\x99\xF3\xB0\xF6\x1D\x87\xE1\xE9\x5B\x41\x33\xF0\xFA\xF2\x3A\xD1\xF5\xE3"
+                             "\xD0\xEC\x04\x19\x67\xA7\x83\xFE\x8C\xA3\xF0\xCE\xFE\x8D\x87\xCE\x16\x10\x47\x50"
+                             "\x54\x75\x56\x1D\x54\x30\xEA\x18\x19\xF0\xFB\x3E\xCF\x0C\x71\xF3\xC7\xC3\xF0\x4C"
+                             "\x0C\x58\xD7\xD4\x74\x1E\x74\x4C\x26\x35\xF5\x10\xE3\x22\xD1\x0E\xEF\x8E\xF1\xE0"
+                             "\xD5\xE0\x48\xBA\x6A\x16\xFE\x64\x5E\x61\x30\xEB\x3E\x77\x7C\x77\x8F\x1E\x18\x7C"
+                             "\xD3\xE1\xF8\xC7\x1D\xDD\x3B\xC7\x4A\x32\x18\xCF\x87\x74\x11\xA4\x1F\x0F\x87\xDD"
+                             "\x33\x65\x1F\x67\x68\xFB\x19\x7E\xF0\xFE\x7C\x43\xEC\xF3\x04\x19\xC7\x78\xF0\x3E"
+                             "\x11\xF0\xC1\xF0\xFC\x1F\xDE\x13\x07\xCE\x96\x20\x84\xCC\xDF\x51\x05\xBE\xA7\xCF"
+                             "\xE7\x74\xFB\x0B\x2C\x43\xEC\xEA\x30\x77\x8F\x06";
+#define  HTTP_HEADER1       Decompress(HTTP_HEADER1_COMPRESSED,HTTP_HEADER1_SIZE).c_str()
+#else
+const size_t HTTP_HEADER1_SIZE = 431;
+const char HTTP_HEADER1_COMPRESSED[] PROGMEM = "\x3D\x0F\xE1\x10\x98\x1D\x19\x0C\x64\x85\x50\xD0\x8F\xC3\xD0\x55\x0D\x09\x05\x7C"
+                             "\x3C\x7C\x3F\xB2\xEC\xD7\xE6\x86\x7D\x78\xFE\xCB\xB3\x5F\x9A\x1A\x0C\x2B\xF7\x8F"
+                             "\x87\xB0\xF6\x1F\x87\xA0\xA7\x62\x1F\x87\xA0\xD7\x56\x83\x15\x7F\xF3\xA3\xE1\xF6"
+                             "\x2E\x8C\x1D\x67\x3E\x7D\x90\x21\x52\xEB\x1A\xCF\x87\xB0\xCF\x58\xF8\xCC\xFD\x1E"
+                             "\xC4\x1E\x75\x3E\xA3\xE1\xEC\x1F\xD1\x28\x51\xF0\x46\x67\xA1\xB3\xAC\x7F\x44\xA1"
+                             "\x47\x56\xF6\xD6\xD8\x47\x5F\x83\xB0\x99\xF0\xE4\x3A\x88\x5F\x9F\xCE\xBF\x07\x61"
+                             "\x58\xE0\x99\xF3\xB0\xF6\x1D\x87\xE1\xE9\x5B\x41\x33\xF0\xFA\xF2\x3A\xD1\xF5\xE3"
+                             "\xD0\xEC\x04\x19\x67\xA7\x83\xFE\x8C\xA3\xF0\xCE\xFE\x8D\x87\xCE\x16\x10\x47\x50"
+                             "\x54\x75\x56\x1D\x54\x30\xEA\x18\x19\xF0\xFB\x3E\xCF\x06\x05\xF0\x75\xB9\xC9\x8E"
+                             "\x3B\xBE\x3B\xC7\xB7\xEE\x85\xFF\x90\x98\x18\xB1\xAF\xA8\xE8\x3C\xE8\x98\x4C\x6B"
+                             "\xEA\x21\xC6\x45\xA2\x1D\xDF\x1D\xE3\xC1\xEE\x04\x4C\x38\xD5\xE0\x4F\xC3\x8D\x42"
+                             "\xDF\xCC\x8B\xCC\x26\x1D\x67\xC1\x27\x0D\xF0\xC3\xBB\xA7\x78\xF6\xB1\xC7\x77\x4E"
+                             "\xF1\xD2\x8C\x86\x33\xE1\xDD\x04\x69\x07\xC3\xE1\xF7\x4C\xD9\x47\xD9\xDA\x3E\xC6"
+                             "\x5F\xBC\x3F\x9F\x10\xFB\x3C\xC1\x06\x70\x23\xE3\xE3\xE1\x1D\xD3\x07\x78\xF6\x8F"
+                             "\xEF\x09\x83\xE7\x4B\x10\x42\x66\x6F\xA8\x82\xDF\x53\xE7\xF3\xBA\x7D\x85\x96\x21"
+                             "\xF6\x75\x18\x3B\xC7\x83\xDC";
+#define  HTTP_HEADER1       Decompress(HTTP_HEADER1_COMPRESSED,HTTP_HEADER1_SIZE).c_str()
+#endif // USE_JAVASCRIPT_ES6
+#else
 const char HTTP_HEADER1[] PROGMEM =
   "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
   "<head>"
@@ -78,7 +119,8 @@ const char HTTP_HEADER1[] PROGMEM =
   "function wl(f){"                       // Execute multiple window.onload
     "window.addEventListener('load',f);"
   "}";
-#endif
+#endif // USE_JAVASCRIPT_ES6
+#endif //USE_UNISHOX_COMPRESSION
 
 const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "var cn=180;"                           // seconds
@@ -91,6 +133,58 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "}"
   "wl(u);";
 
+#ifdef USE_UNISHOX_COMPRESSION
+#ifdef USE_SCRIPT_WEB_DISPLAY
+const size_t HTTP_SCRIPT_ROOT_SIZE = 706;
+const char HTTP_SCRIPT_ROOT_COMPRESSED[] PROGMEM = "\x33\xBF\xAF\x98\xF0\xA3\xE1\xC8\x78\x23\x02\xF8\x3A\xDC\xE4\x15\x9D\xD1\x87\x78"
+                             "\xF6\x99\xDF\xD5\x9F\x0F\xB3\xEC\xF1\xA6\x0E\xE8\x56\x74\xBF\x8F\x0B\x1A\xFA\xBC"
+                             "\x74\x09\xF0\xF5\x0A\x3E\x1F\x0E\x43\xBC\x7B\x4A\xCF\x83\x0F\x01\x84\xEF\xE5\x5A"
+                             "\x35\xE0\xBA\x3B\xA1\x51\xDE\x3C\x1E\xED\x30\x77\x4D\x87\xF0\xF9\xC2\xC2\x08\xEF"
+                             "\x1E\xD3\x61\xD2\xC7\x67\xE8\xEE\x9D\xE3\xC1\xEE\x36\x1F\x39\x8F\xA2\x36\x10\xD2"
+                             "\x08\x85\x55\x0C\x2F\xB3\x50\xB7\xEA\x3B\xA7\x78\xF0\x6C\x3A\x67\x7D\xD8\x86\x5E"
+                             "\xAB\xA6\x18\xAB\xE1\xE6\x7C\x04\x3D\xA0\xEE\x9D\xE3\xDB\xA6\x0E\xE9\xB0\xE9\xF7"
+                             "\x62\x19\x17\xAA\xE9\x9F\x0F\x87\x30\xFD\x1F\xA2\x36\x1D\x3D\x57\x42\xFC\x7C\x3E"
+                             "\x1C\xA6\xC8\x10\x78\x07\xF1\xF0\xD8\x74\xFB\xF0\xCC\xEF\x32\xA6\x6C\xA3\xA7\xD8"
+                             "\xC0\xAC\x36\x77\x4E\xC3\xDB\x47\xB8\xEC\x1E\x3A\x8F\x61\xE9\x56\x38\x26\xBD\x46"
+                             "\x41\x33\xE1\xF6\x3F\xA2\x50\xA3\xCC\xE4\x6C\xFA\x3E\x8F\xB3\xF0\xF6\x1D\xE2\x04"
+                             "\x6C\x2B\xC0\x85\x85\x7C\xFC\x3D\x28\x50\x24\xD7\x1A\x08\x35\xCE\xCA\x14\x7E\x1E"
+                             "\x94\x20\x24\xD8\x60\x87\x60\x43\xF0\xF4\x3B\x2B\xE0\x93\x64\x33\xDC\x76\x0F\x1D"
+                             "\x47\xB0\xFA\x3E\x8F\xB3\xF0\xF4\x13\x4C\xC1\x0F\x60\xA6\x6C\xA3\xAE\xC2\xD1\xEE"
+                             "\x3C\xC3\x7D\x4F\xE7\x83\x19\xD4\x75\x8F\xBD\x1E\x15\x47\x99\xEC\x3B\xC7\x86\x38"
+                             "\xEE\x9F\x61\x1C\x87\xD9\xDE\x3A\x16\xF7\x3F\x90\xA2\xA2\x1A\x41\x1F\x3C\x78\x3D"
+                             "\xC7\xB8\xF1\xA6\x11\xDD\xF9\x8F\x0A\x3B\xC8\xF6\x9B\x0E\x98\x31\xF1\xDD\x3E\xC8"
+                             "\x78\x99\x51\xF6\x75\x1F\x67\x43\xB4\x34\xF8\x72\x1F\x67\x6C\xAC\xEA\xAF\x8B\x67"
+                             "\x78\xF0\x6C\x3A\x79\xF0\x87\x74\xEF\x1E\x02\xA3\xE7\x9D\x02\x27\x20\x36\x75\x1F"
+                             "\x42\x1D\xE3\xC1\xEE\x3D\xC0\x89\xCA\x77\x99\x9D\x9D\xD1\x97\xF3\xAB\x4C\xEF\xE7"
+                             "\x78\xF6\x85\x67\x74\xFB\x3F\x5E\x33\x3E\x1F\x67\x6F\x4C\xEF\xE7\x6C\xFB\x3F\x67"
+                             "\xD9\xDB\x19\x7F\x3B\xC7\x80\x46\xC3\x74\x12\x30\xD0\x42\xE6\x78\x14\xF1\x4F\x98"
+                             "\xF0\xA3\xE1\xC6\x40\x8D\x8D\x8C\xF9\xDD\x30\x77\x8F\x6E\x98\x47\x74\xC1\xDE\x47"
+                             "\xB4\x14\x37\xA0\x42\xCB\xCF\x72\x61\x79\xA3\xDA\x09\x9C\xE1\x02\x1E\x60\x7B\x8D";
+#define  HTTP_SCRIPT_ROOT       Decompress(HTTP_SCRIPT_ROOT_COMPRESSED,HTTP_SCRIPT_ROOT_SIZE).c_str()
+#else
+const size_t HTTP_SCRIPT_ROOT_SIZE = 486;
+const char HTTP_SCRIPT_ROOT_COMPRESSED[] PROGMEM = "\x30\x2F\x83\xAD\xCE\x41\x59\xDD\x18\x77\x8F\x69\x9D\xFD\x59\xF0\xFB\x3E\xCF\x1A"
+                             "\x60\xEE\x85\x67\x4B\xF8\xF0\xB1\xAF\xAB\xC7\x40\x9F\x0F\x50\xA3\xE1\xF0\xE4\x3B"
+                             "\xC7\xB4\xAC\xF8\x30\xF0\x18\x4E\xFE\x55\xA3\x5E\x0B\xA3\xBA\x15\x1D\xE3\xC1\xEE"
+                             "\xD3\x07\x74\xD8\x7F\x0F\x9C\x2C\x20\x8E\xF1\xED\x36\x1D\x2C\x76\x7E\x8E\xE9\xDE"
+                             "\x3C\x1E\xE3\x61\xF3\x98\xFA\x23\x61\x0D\x20\x88\x55\x50\xC2\xFB\x35\x0B\x7E\xA3"
+                             "\xBA\x77\x8F\x06\xC3\xA6\x77\xDD\x88\x65\xEA\xBA\x61\x8A\xBE\x1E\x67\xC0\x43\xDA"
+                             "\x0E\xE9\xDE\x3D\xBA\x60\xEE\x9B\x0E\x9F\x76\x21\x91\x7A\xAE\x99\xF0\xF8\x73\x0F"
+                             "\xD1\xFA\x23\x61\xD3\xD5\x74\x2F\xC7\xC3\xE1\xCA\x6C\x81\x07\x80\x7F\x1F\x0D\x87"
+                             "\x4F\xBF\x0C\xCE\xF3\x2A\x2B\x66\xCA\x3A\x7D\x8C\x0A\xC3\x67\x74\xEC\x3D\xB4\x7B"
+                             "\x8E\xC1\xE3\xA8\xF6\x1E\x95\x63\x82\x6B\xD4\x64\x13\x3E\x1F\x63\xFA\x25\x0A\x3C"
+                             "\xCE\x46\xCF\xA3\xE8\xFB\x3F\x0F\x61\xDE\x20\x46\xC2\xBC\x08\x58\x57\xCF\xC3\xD2"
+                             "\x85\x02\x4D\x71\xA0\x83\x5C\xEC\xA1\x47\xE1\xE9\x42\x02\x4D\x86\x08\x76\x04\x3F"
+                             "\x0F\x43\xB2\xBE\x09\x36\x43\x3D\xC7\x60\xF1\xD4\x7B\x0F\xA3\xE8\xFB\x3F\x0F\x41"
+                             "\x34\xCC\x10\xF6\x0A\x66\xCA\x3A\xEC\x2D\x1E\xE3\xCC\x37\xD4\xFE\x78\x31\x9D\x47"
+                             "\x58\xFB\xD1\xE1\x54\x79\x9E\xC3\xBC\x78\x63\x8E\xE9\xF6\x11\xC8\x7D\x9D\xE3\xA1"
+                             "\x6F\x73\xF9\x0A\x2A\x2B\x21\xA4\x11\xF3\xC7\x83\xDC\x7B\x8F\x06\xC3\xA6\x0C\x7C"
+                             "\x77\x4F\xB2\x1E\x26\x54\x7D\x9D\x47\xD9\xD0\xED\x0D\x3E\x1C\x87\xD9\xDB\x2B\x3A"
+                             "\xAB\xE2\xD9\xDE\x3C\x1B\x0E\x9E\x7C\x21\xDD\x3B\xC7\x80\xA8\xF9\xE7\x40\x89\xC7"
+                             "\xB5\x9D\x47\xD0\x87\x78\xF0\x7B\x8D";
+#define  HTTP_SCRIPT_ROOT       Decompress(HTTP_SCRIPT_ROOT_COMPRESSED,HTTP_SCRIPT_ROOT_SIZE).c_str()
+#endif  // USE_SCRIPT_WEB_DISPLAY
+#else
 const char HTTP_SCRIPT_ROOT[] PROGMEM =
 #ifdef USE_SCRIPT_WEB_DISPLAY
   "var rfsh=1;"
@@ -151,7 +245,22 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "lt=setTimeout(la,%d);"               // Settings.web_refresh
   "}";
 #endif  // USE_SCRIPT_WEB_DISPLAY
+#endif //USE_UNISHOX_COMPRESSION
 
+#ifdef USE_UNISHOX_COMPRESSION
+const size_t HTTP_SCRIPT_ROOT_PART2_SIZE = 222;
+const char HTTP_SCRIPT_ROOT_PART2_COMPRESSED[] PROGMEM = "\x30\x2F\x83\xAD\xCE\x41\x06\x77\x4C\xCE\xAD\x3A\x86\x1D\xE3\xDB\xA6\x0E\xEB\x1C"
+                             "\x77\x4F\xBF\x1F\x67\x78\xEF\x1E\xDD\x30\x77\x4C\xCF\x87\xC3\xEC\x51\xF6\x7F\x8F"
+                             "\xF1\x99\xF0\xF8\x7D\x88\x7D\x9D\xE3\xDA\x67\x7F\x5E\x08\xF8\xC7\x1D\xD3\xEF\xC1"
+                             "\x1C\xC3\xEC\xEF\x1D\x08\xCE\xC2\x16\xCF\x2A\x01\x85\x87\x9D\x3D\x46\x41\x33\xA0"
+                             "\xEB\x0C\xD0\x7B\xF8\x2F\x84\x3E\x1F\x61\x6F\x3B\xF9\xD6\x3D\xFB\x13\x5F\x51\xDD"
+                             "\xAC\x5F\xD1\xE1\x54\x75\x7C\x78\x71\xDD\x3E\xCE\xDF\x82\x3B\x67\xD9\xF4\x7D\x1D"
+                             "\x40\x89\x14\x10\xE2\x9D\xE3\xA8\x57\x82\x3B\xA7\xD9\xDB\x04\x1D\x14\xE5\x10\x21"
+                             "\xE8\xA7\x6C\xFB\x3A\x8E\x46\xCF\xA3\xE8\xEA\xD6\x7D\x1F\x47\x78\xEF\x1F\x67\x83"
+                             "\xDC\x7B\x88\x2B\x3B\xA7\xD9\xFA\x3E\xCE\xD9\x99\xDB\xD3\xB6\x7D\x9F\x0F\xB3\xB6"
+                             "\x30\xEF\x1E\x0F\x70\xF8\x47\x74\x2B\x3B\xC7\x83";
+#define  HTTP_SCRIPT_ROOT_PART2       Decompress(HTTP_SCRIPT_ROOT_PART2_COMPRESSED,HTTP_SCRIPT_ROOT_PART2_SIZE).c_str()
+#else
 const char HTTP_SCRIPT_ROOT_PART2[] PROGMEM =
   "function lc(v,i,p){"
     "if(eb('s')){"                        // Check if Saturation is in DOM otherwise javascript fails on la()
@@ -163,6 +272,7 @@ const char HTTP_SCRIPT_ROOT_PART2[] PROGMEM =
     "la('&'+v+i+'='+p);"
   "}"
   "wl(la);";
+#endif //USE_UNISHOX_COMPRESSION
 
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "function c(l){"
@@ -170,13 +280,45 @@ const char HTTP_SCRIPT_WIFI[] PROGMEM =
     "eb('p1').focus();"
   "}";
 
-const char HTTP_SCRIPT_RELOAD[] PROGMEM =
-  "setTimeout(function(){location.href='.';}," STR(HTTP_RESTART_RECONNECT_TIME) ");";
+const char HTTP_SCRIPT_RELOAD_TIME[] PROGMEM =
+  "setTimeout(function(){location.href='.';},%d);";
 
-// Local OTA upgrade requires more time to complete cp: before web ui should be reloaded
-const char HTTP_SCRIPT_RELOAD_OTA[] PROGMEM =
-  "setTimeout(function(){location.href='.';}," STR(HTTP_OTA_RESTART_RECONNECT_TIME) ");";
-
+#ifdef USE_UNISHOX_COMPRESSION
+const size_t HTTP_SCRIPT_CONSOL_SIZE = 853;
+const char HTTP_SCRIPT_CONSOL_COMPRESSED[] PROGMEM = "\x33\xBF\xAF\x71\xF0\xE3\x3A\x8B\x44\x3E\x1C\x67\x82\x30\x2F\x83\xAD\xCE\x41\x1D"
+                             "\xD1\x87\x78\xF6\x99\xDF\xD0\x67\x56\x1F\x0F\xB3\xEC\xEA\xA3\xC0\x61\x3B\xF9\x56"
+                             "\x8D\x78\x2E\x8E\xE8\x54\x77\x8F\x14\x7C\x63\x8E\xE9\xF7\x47\x21\xF6\x77\x8F\x05"
+                             "\xA6\x0E\xE8\xC3\xE1\xF0\xE4\x3B\xC7\xB4\x83\x3E\x31\xC7\x74\xFB\x0C\xE4\x3E\xCE"
+                             "\xF1\xE0\xB0\xF8\x7D\x9F\xA0\xCE\x43\xE1\xF6\x76\xC9\xF0\x78\x23\x21\x65\xF2\xD2"
+                             "\x0F\x06\x8C\xCE\x7D\x47\x74\x33\xA1\x9D\x84\x2D\x9D\xE3\xC0\x21\x45\x3E\x1F\x67"
+                             "\xD9\xE2\x8E\x9E\x0F\xF8\x10\x45\x58\x30\xF8\x71\x11\xBD\x2A\x01\xF1\xEE\x3E\x02"
+                             "\x35\x13\xC1\xEE\xD3\x07\x74\x11\xA6\x1F\x87\xCF\x71\xDE\x3D\xBA\x60\xEE\x9B\x0F"
+                             "\xE1\xF3\x85\x84\x11\xDE\x3D\xA6\xC3\xA5\x8E\xCF\xD1\xDD\x3B\xC7\x83\xDC\x6C\x3E"
+                             "\x73\x1F\x44\x6C\x21\xA4\x11\x0A\xAA\x18\x5F\x66\xA1\x6F\xD4\x77\x4E\xF1\xE0\xD8"
+                             "\x74\xCE\xFB\xB1\x0C\xBD\x57\x4C\x31\x57\xC3\xCC\xF8\x08\x7C\x28\x1D\xD0\x41\xCA"
+                             "\x8E\x9F\x76\x21\x91\x7A\xAE\x99\xF0\xF8\x73\x0F\xD1\xFA\x23\x61\xD3\xD5\x74\x2F"
+                             "\xC7\xC3\xE1\xCA\x6C\x81\x07\x87\x03\x69\xD4\x21\xE0\x43\xE1\xB0\xE9\xF7\xE1\x99"
+                             "\xDE\x65\x4C\xD9\x47\x4F\x0C\x0B\x68\xEE\x9D\x87\xB8\xE4\x3B\x0E\xF1\xE0\xB4\x43"
+                             "\xE0\x87\x4F\x0A\xD3\x14\x77\x4E\xF1\xE3\x4C\x1D\xD0\x44\x92\x7C\x3E\x1C\x67\x78"
+                             "\xF6\x95\x02\x2F\x0A\x27\xB8\xDA\x09\x38\x29\xB4\xE8\x13\xE1\xEA\x14\x7E\x02\x2E"
+                             "\x06\x76\xCF\x86\xD3\xC1\xEE\x05\xDE\x1E\x4F\x71\xE0\xD8\x74\xC1\x8F\x8E\xE9\xF6"
+                             "\x43\xC4\xCA\x8F\xB3\xA8\xFB\x0F\xC7\x68\x33\x94\x7C\x3E\xCE\xD9\x68\x87\x6F\x0E"
+                             "\xAA\xF8\xB6\x77\x8F\x06\xC3\xA7\x9F\x08\x77\x4E\xF1\xE0\xF7\x05\x47\xCF\x3A\x04"
+                             "\x4E\x4A\x4E\xA3\xE8\x43\xBC\x78\xFB\xA1\x7F\xE4\x62\xC2\xF3\x3C\x1E\xE1\xF0\x8E"
+                             "\xE8\x47\x78\xF0\x67\x7F\x42\x83\x3E\x1E\xF1\xEF\x9D\x41\xF0\x23\xF2\xF4\x28\xEE"
+                             "\x9D\xE3\xDA\x08\x7C\xA2\x9D\x2C\x41\x09\x99\xBE\xA2\x0B\x7D\x4F\x9F\xCE\xE9\xF6"
+                             "\x68\xCC\x84\xC1\xFE\x3E\xCE\xA0\x44\xE2\xDD\x82\x0F\x12\xA3\x81\x13\x97\xB3\xA8"
+                             "\x33\xE3\x3A\x1A\x33\x22\x0F\x04\x67\x8D\x30\x77\x4E\x5F\xCF\x87\xC2\x0C\xFF\x1F"
+                             "\xE3\x98\xCF\x87\xC2\x0C\xEF\x1E\xD1\xC7\x4B\x17\x58\x1E\x0D\x18\x13\xA6\x7C\x3E"
+                             "\xF0\xC1\x83\xEC\xF0\x7B\x8E\x5F\xCF\x87\xC2\x0C\xED\x1D\xD3\xB6\x76\xC3\xE3\xF0"
+                             "\x50\x60\x85\xC4\x31\xFA\x3F\x47\x74\x3E\x3E\x02\x24\xB3\xBC\x75\x0E\x04\x2E\x2E"
+                             "\x85\x06\x7B\xC1\xF1\xD6\x72\x1E\xF9\xFE\x3F\xC7\xD9\xF6\x77\x8F\x3C\x67\xC3\xE1"
+                             "\x06\x76\x8E\xE9\xC6\x7E\x1D\x67\x59\x07\xC0\x83\x88\x1C\x64\x0A\x78\x41\xC9\x67"
+                             "\xC3\xE1\x06\x7E\x8F\xD1\xDD\x04\x4C\xC4\xFC\x39\x11\xFA\x3F\x44\x28\x33\xA0\xCC"
+                             "\x18\x77\x4E\xF1\xD4\x28\x33\xA0\xBE\x04\x1E\x44\x01\x0B\x1C\x3B\xC7\x50\x7C\x7C"
+                             "\x38\xCE\xF1\xEE\x3B\xC7\x83\xDC\x43\xE1\x1D\xD1\x47\x78\xF0";
+#define  HTTP_SCRIPT_CONSOL       Decompress(HTTP_SCRIPT_CONSOL_COMPRESSED,HTTP_SCRIPT_CONSOL_SIZE).c_str()
+#else
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0,id=0;"                        // Scroll position, Get most of weblog initially
   "function l(p){"                        // Console log and command service
@@ -226,6 +368,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "});"
   "}"
   "wl(h);";                               // Add console command key eventlistener after name has been synced with id (= wl(jd))
+#endif //USE_UNISHOX_COMPRESSION
 
 const char HTTP_MODULE_TEMPLATE_REPLACE[] PROGMEM =
   "}2%d'>%s (%d}3";                       // }2 and }3 are used in below os.replace
@@ -235,6 +378,34 @@ const char HTTP_MODULE_TEMPLATE_REPLACE_INDEX[] PROGMEM =
 const char HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX[] PROGMEM =
   "}2%d'>%s}3";                           // }2 and }3 are used in below os.replace
 
+#if defined(USE_UNISHOX_COMPRESSION) && defined(ESP32)
+// no compression on ESP8266, we would lose 16 bytes
+const size_t HTTP_SCRIPT_MODULE_TEMPLATE_SIZE = 602;
+const char HTTP_SCRIPT_MODULE_TEMPLATE_COMPRESSED[] PROGMEM = "\x33\xBF\xAC\xF1\xD4\x2B\xC7\x83\x02\xF8\x3A\xDC\xE4\x1B\x3B\xBA\x75\x1A\x8E\xF1"
+                             "\xED\x33\xBF\xAC\x3E\x09\x81\x8B\x1A\xFA\x8E\x81\xFD\xDD\x32\x61\x31\xAF\xA8\xEE"
+                             "\x9F\x78\x32\xB7\x38\xFB\x3B\xC7\x8C\x3A\x53\x36\x51\x07\x9D\x4F\xA8\xF9\xA7\x83"
+                             "\x51\xD2\xC6\x0C\x7C\x21\x06\x2B\x42\x10\xEE\xE1\xDE\x3C\x1E\xE0\x44\xCD\xB2\x8E"
+                             "\xE8\xF1\xD5\xE0\x41\xCD\xAC\xF9\xE3\xF4\x71\x91\xB0\xC1\x86\x71\x9D\x44\x38\xF8"
+                             "\x71\x9D\x44\x19\xD4\x30\xEA\x08\xEA\xA3\xE1\xAB\xC7\x74\xFB\x3C\x85\x1F\x67\x6C"
+                             "\x78\xEF\x1D\x42\xCF\x9E\x3F\x47\x19\x1B\x0E\x37\x08\xC1\xE0\x23\xE5\x1D\x01\x07"
+                             "\x4D\xF1\xD0\x27\xC3\xD4\x28\xF0\x63\x3E\x77\x74\xF8\x11\xE3\x4F\x1A\x75\x9D\x67"
+                             "\x78\xF6\x8C\x04\x5B\xC7\xBD\xA7\x59\xC8\x7B\xE7\x42\x19\x7F\x7D\x45\xD8\x23\x3C"
+                             "\x0C\x3A\x7D\x8D\xC3\x36\x08\x3B\x70\x24\xE0\x87\x78\xF0\x7B\x82\x3E\x0A\x04\xAC"
+                             "\xC8\xE3\x3C\x16\x9E\x81\x1E\x34\xED\x9D\xB3\xBC\x7B\x43\x3E\x0A\xF1\xEF\x69\xEF"
+                             "\x82\x17\x2A\x01\xE7\x8D\x30\x77\x6C\xF8\x7C\x0C\xEF\x1E\xD1\xC0\x89\x50\xE3\x70"
+                             "\x8C\x1E\x07\x7D\xD9\xA1\xE0\xF7\x1E\xEF\x1F\x87\xE1\xF0\xE6\x90\x21\x64\x47\x21"
+                             "\xE0\xB4\xF4\x3E\x0E\x04\x2C\x8D\x9D\xD3\xBB\xA7\xA1\xC8\xCE\xF1\xDA\x3B\xA7\xD9"
+                             "\xDC\x3E\xCE\xD9\x69\xDE\x3C\xF4\xEA\xA3\xBC\x78\x3D\xCC\x71\xDD\x3E\xC5\x1F\x67"
+                             "\x6C\x78\xEF\x1D\x0C\xEC\x21\x6C\xF8\x2C\xED\x9C\x87\x82\xA3\xA7\xA8\xC8\x26\x74"
+                             "\x33\xDF\x68\xED\x0B\x68\xC8\xF8\x77\x47\x1F\x87\x19\xDE\x3B\x47\xD9\xF6\x79\x9F"
+                             "\x64\x2B\x44\x11\xF1\xF6\x08\xDC\x58\xF8\xD0\xEE\xF8\xEA\x1E\x04\x3E\x42\xF3\xC7"
+                             "\x4F\xB1\x81\x58\x6C\xEE\x9D\x87\xB8\xE5\x1D\x84\x3C\x75\x1E\xC3\xD0\x10\x78\x4B"
+                             "\x40\x83\x9E\x9F\x67\xB0\xEF\x02\x35\xD3\x96\x76\x10\xF1\xD4\x7B\x0F\x43\xB0\x10"
+                             "\x6F\x1F\x87\xB0\xEF\x1E\x18\xE3\xBA\x7D\x8F\x1F\x67\x6C\x78\xEF\x1D\x37\xB9\xFC"
+                             "\x85\x15\x10\xD2\x08\xF9\x80\x8D\x48\x10\x72\x13\xBA\x3C\x7A\x1C\x48\xEF\x1D\xA2"
+                             "\x04\x3E\x47\x4F\x3F\x1E\x34\xC0\x20\xD0\x3D\xA0\x85\xC9\xF9\xE0\xF7\x1E\xE3";
+#define  HTTP_SCRIPT_MODULE_TEMPLATE       Decompress(HTTP_SCRIPT_MODULE_TEMPLATE_COMPRESSED,HTTP_SCRIPT_MODULE_TEMPLATE_SIZE).c_str()
+#else
 const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
 #ifdef ESP8266
   "var os;"
@@ -268,7 +439,25 @@ const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
     "if(g<99){ot(g,s);}"
   "}";
 #endif  // ESP8266 - ESP32
+#endif //USE_UNISHOX_COMPRESSION
 
+#ifdef USE_UNISHOX_COMPRESSION
+const size_t HTTP_SCRIPT_TEMPLATE_SIZE = 303;
+const char HTTP_SCRIPT_TEMPLATE_COMPRESSED[] PROGMEM = "\x30\x2F\x83\xAD\xCE\x41\x08\x77\x45\x9D\x46\x0E\xF1\xED\x33\xBF\xA3\x61\xF3\x98"
+                             "\xFA\x23\x61\x0D\x20\x88\x55\x50\xC2\xFB\x35\x0B\x7E\xA3\xBA\x77\x8F\x06\xC3\xA6"
+                             "\x77\xDD\x88\x65\xEA\xBA\x61\x8A\xBE\x1E\x67\xC0\x43\xC7\x4E\xE9\xDE\x3D\xBA\x60"
+                             "\xEE\xD0\xAD\xF1\xD3\xEE\xC4\x32\x2F\x55\xD3\x3E\x1F\x0E\x61\xFA\x3F\x45\x42\xB7"
+                             "\xC7\x4F\x55\xD0\xBF\x1F\x0F\x87\x29\xB3\xBC\x7B\x48\x10\x70\x43\xBC\x78\x3D\xC7"
+                             "\xB8\xF0\x6C\x3A\x60\xC7\xC7\x74\xFB\x21\xE2\x65\x47\xD9\xD4\x2C\xEA\xAF\x8B\x67"
+                             "\x78\xF0\x6C\x3A\x79\xF0\x87\x74\xEF\x1E\x0F\x71\x9D\xFD\x06\x78\x04\x4E\x2A\x01"
+                             "\x4D\x87\x21\xDD\x21\xC0\x83\xBF\xE9\xD4\x6B\x3A\x87\x8E\xA3\x43\xAB\x0F\x18\x7C"
+                             "\x1C\x74\xFB\xF0\xCC\xEF\x32\xA6\x6C\xA3\xA7\x86\x05\xB4\x77\x4E\xC3\xDC\x72\x1D"
+                             "\x87\x78\xF0\x46\x87\xCC\x3A\x78\x56\x98\xA3\xBA\x77\x8F\x1A\x60\xEE\xB1\xC7\x74"
+                             "\xFB\xF1\xC8\x7D\x9D\xE3\xA1\x19\xD8\x42\xD9\xF0\xF8\x7D\x9F\x67\x78\xF6\x82\x55"
+                             "\x03\x43\xC1\xEE\x1E\x04\x5C\x44\x10\xB2\x93\xEC\xEA\x3E\xCE\xF1\xE3\x3C\x7C\x3D"
+                             "\x86";
+#define  HTTP_SCRIPT_TEMPLATE       Decompress(HTTP_SCRIPT_TEMPLATE_COMPRESSED,HTTP_SCRIPT_TEMPLATE_SIZE).c_str()
+#else
 const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
   "function ld(u,f){"
     "var x=new XMLHttpRequest();"
@@ -290,6 +479,8 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
     "}"
     "g=o.shift().split(',');"             // GPIO - Array separator
     "os=\"";                              // }2'0'>None (0)}3}2'17'>Button1 (17)}3...
+#endif //USE_UNISHOX_COMPRESSION
+
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "j=0;"
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Supports 13 GPIOs
@@ -337,6 +528,19 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   "}"
   "wl(i);";
 
+#ifdef USE_UNISHOX_COMPRESSION
+const size_t HTTP_HEAD_LAST_SCRIPT_SIZE = 226;
+const char HTTP_HEAD_LAST_SCRIPT_COMPRESSED[] PROGMEM = "\x30\x2F\x83\xAD\xCE\x46\xB1\x0E\xE9\xDE\x3D\xA6\x77\xF5\x47\xC3\x8C\xEA\x2D\x3E"
+                             "\x09\x81\x8B\x1A\xFA\x8E\x86\xA1\x6F\xE6\x45\xE6\x13\x0E\xB3\xE5\x61\x04\x77\x4F"
+                             "\xBD\xE1\x82\xE8\xEA\x1C\x2E\xAB\x38\xEA\xA6\x6C\xAB\xFB\xB3\xAB\xCC\x26\x1D\x1F"
+                             "\x67\x78\xF0\x3E\x2B\x42\x67\x77\x4E\x81\x3E\x1E\xA1\x47\xE1\xF2\x8E\xF1\xED\xD3"
+                             "\x07\x77\x4F\x7A\x8F\x7C\xEF\x1E\xDD\x3D\xEA\x3D\xF3\xDE\x3E\xFA\xC6\xB3\xEC\xF7"
+                             "\xCF\x87\x77\x4F\x7A\x8F\x7C\xE8\x2A\x2B\xFC\x57\x55\xFD\x1C\x2E\x99\xDD\x3E\xF4"
+                             "\x43\xEC\xEF\x1F\xA3\xF4\x77\x4F\xE0\x27\x57\xEB\x1A\xCF\xB3\xBC\x77\x8E\xF1\xDA"
+                             "\x04\x1C\x87\x44\x3E\xCF\x7C\xF3\x04\x7C\xB0\xF0\x7B\xA8\xED\x9D\xB3\xC1\xEE\x3D"
+                             "\xC3\xE1\x1D\xD3\x58\x87\x78\xF0\x7A\x1D\x9E\x0F\xFA\x32\x8F\xC3";
+#define  HTTP_HEAD_LAST_SCRIPT       Decompress(HTTP_HEAD_LAST_SCRIPT_COMPRESSED,HTTP_HEAD_LAST_SCRIPT_SIZE).c_str()
+#else
 const char HTTP_HEAD_LAST_SCRIPT[] PROGMEM =
   "function jd(){"                        // Add label name='' based on provided id=''
     "var t=0,i=document.querySelectorAll('input,button,textarea,select');"
@@ -349,7 +553,29 @@ const char HTTP_HEAD_LAST_SCRIPT[] PROGMEM =
   "}"
   "wl(jd);"                               // Add name='' to any id='' in input,button,textarea,select
   "</script>";
+#endif //USE_UNISHOX_COMPRESSION
 
+#ifdef USE_UNISHOX_COMPRESSION
+const size_t HTTP_HEAD_STYLE1_SIZE = 591;
+const char HTTP_HEAD_STYLE1_COMPRESSED[] PROGMEM = "\x3D\x3D\x46\x41\x33\xF0\x4D\x33\x3A\x8C\x6B\x08\x4F\x3A\x3A\xB7\x86\x0B\xA3\xAB"
+                             "\xCC\x26\x1D\x1E\xD1\x96\x20\x9B\xC3\xC7\x99\xCD\x21\x86\xC3\xC1\x8C\xEA\x3A\xFD"
+                             "\xA6\xD6\x79\x9C\x84\xC6\x9E\x0F\x70\x21\xE1\xA7\xB4\x75\x86\x68\x3D\xFC\x17\xC2"
+                             "\x1E\x67\x91\xF4\x71\xF1\x1B\x0F\x07\xB8\x61\xED\x1B\x7F\x1E\xDE\x3C\xCE\x33\xA6"
+                             "\x93\x1A\x8E\x33\xC1\xEE\x2D\xE1\x82\xE8\xF6\x8F\xE8\x94\x28\xF3\x39\x1B\x3E\x8F"
+                             "\xA3\xC1\x0E\xC3\x61\xD7\xED\x36\xEF\x0F\x1E\x63\xB3\xE2\x3F\x9D\x63\xB0\xD8\x78"
+                             "\x3A\xC7\xD8\xE3\x4D\xA3\xAC\x14\xAD\x0D\xC3\x68\x29\x57\x04\xCD\x84\x3C\x0B\x3E"
+                             "\x08\x7B\x6E\xF0\xC1\x74\x7B\xD4\x64\x31\x9F\x03\x14\xC3\x34\x1D\x86\xC3\xDF\x04"
+                             "\x1E\x11\x41\x06\x8F\xEC\x4D\xC3\xDF\x04\x3D\xF1\x8D\x3C\x02\x0F\x03\x87\x5F\xF4"
+                             "\x78\x55\x1E\x67\x38\x86\x1B\x0F\x06\x6F\xF5\xA1\xD8\x47\x5D\x85\xA3\xDC\x79\x9D"
+                             "\x67\x21\x0C\x04\x9C\xCF\xF7\xC3\xCC\x10\xF1\xE3\x89\x1F\x47\xD1\xE0\xF7\x10\x21"
+                             "\x71\x3E\x09\x1C\x28\x82\xC7\x2A\x01\x54\xCD\x95\x7F\x76\x7B\x7E\xFD\xA6\xD6\x79"
+                             "\x82\x1E\xA0\x78\x04\x2C\xC8\xE7\xCF\xA3\xE8\xF0\x42\x9E\x8F\x0A\xA3\xCC\xE5\xCF"
+                             "\x90\xC3\x61\xE0\x11\xF8\xFA\xC3\x37\xF3\x01\x60\xF9\xE7\x62\xEB\x01\x6B\x45\x1D"
+                             "\x82\x19\x1E\xDA\x66\xCA\x04\x2E\x0A\x83\x7D\x4F\xE0\x83\xC9\xE9\x8B\x1B\xA1\x19"
+                             "\x1E\x66\x6F\xE2\x5F\x59\xD5\xEB\xEF\x1D\x7E\x7F\xD3\x2A\x01\x9B\x98\x1E\xEA\x10"
+                             "\x11\x39\x7D\x38\xC8\x61\xB0\xF0\x7B\x8D";
+#define  HTTP_HEAD_STYLE1       Decompress(HTTP_HEAD_STYLE1_COMPRESSED,HTTP_HEAD_STYLE1_SIZE).c_str()
+#else
 const char HTTP_HEAD_STYLE1[] PROGMEM =
   "<style>"
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
@@ -362,6 +588,25 @@ const char HTTP_HEAD_STYLE1[] PROGMEM =
   "textarea{resize:vertical;width:98%%;height:318px;padding:5px;overflow:auto;background:#%06x;color:#%06x;}"  // COLOR_CONSOLE, COLOR_CONSOLE_TEXT
   "body{text-align:center;font-family:verdana,sans-serif;background:#%06x;}"  // COLOR_BACKGROUND
   "td{padding:0px;}";
+#endif //USE_UNISHOX_COMPRESSION
+
+#ifdef USE_UNISHOX_COMPRESSION
+const size_t HTTP_HEAD_STYLE2_SIZE = 478;
+const char HTTP_HEAD_STYLE2_COMPRESSED[] PROGMEM = "\x1C\x2E\xAB\x38\xF6\x8E\xCF\x88\xFE\x79\x9C\x67\x82\x04\x18\xA7\x5F\xEC\x4D\x17"
+                             "\xE3\xCC\xE3\x3A\x59\x7D\x8D\x3C\x0E\xB0\xCD\x07\xBF\x82\xF8\x43\xCC\xF2\x3E\x8E"
+                             "\x3E\x23\x61\xE0\x3C\x0B\x3E\x08\x52\x02\xDE\x67\x58\xA7\xA3\xC2\xA8\xF3\x39\x47"
+                             "\x4C\x2F\xB1\xA7\x83\x19\xD4\x75\xFB\x4D\xAC\xF3\x39\x0E\x94\x5F\x63\x4F\x03\xFA"
+                             "\x25\x0A\x3C\xCE\x46\xCF\xA3\xE8\xF0\x75\x90\xFB\x1C\x69\xB4\x75\xD7\xEF\xBD\xB5"
+                             "\xB9\xC7\x58\x82\xFF\x75\xB9\xC7\x99\xC6\x74\xC2\xF1\xE0\x15\x2A\x2B\x86\x2F\xFE"
+                             "\xCF\x9E\x63\x33\x7A\x9F\xCF\x07\xB8\x10\x78\x18\x3C\xC5\x61\x9B\xF9\xED\x04\xCE"
+                             "\x2A\x01\x0F\x71\xD0\x77\xD8\x80\xA7\x50\x15\xB1\x21\xEF\xF0\x29\xD4\x05\x4C\x4A"
+                             "\xCF\x68\x23\xF0\xDF\x4C\xD9\x47\x58\x8C\x3C\x04\x2E\x06\xBB\x39\x9E\x0F\x71\xD0"
+                             "\x61\xED\x30\x16\x5D\x1E\x61\x33\x14\x08\x38\x05\x85\xA3\xDC\x08\x33\x0F\x71\xD0"
+                             "\xD4\x08\x56\xFF\xA3\xC2\x81\x22\xE0\x20\xCD\x3D\xC7\x4F\x82\x17\x20\x60\x8D\xC7"
+                             "\xD3\x1A\x78\x19\x62\x09\xBC\x3C\x79\x9C\xA2\x18\x6C\x3C\x0D\xBF\x8F\x6F\x1E\x67"
+                             "\x38\x86\x1B\x11\xCA\x21\x86\xC3\xC1\xEE";
+#define  HTTP_HEAD_STYLE2       Decompress(HTTP_HEAD_STYLE2_COMPRESSED,HTTP_HEAD_STYLE2_SIZE).c_str()
+#else
 const char HTTP_HEAD_STYLE2[] PROGMEM =
   "button{border:0;border-radius:0.3rem;background:#%06x;color:#%06x;line-height:2.4rem;font-size:1.2rem;width:100%%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"  // COLOR_BUTTON, COLOR_BUTTON_TEXT
   "button:hover{background:#%06x;}"  // COLOR_BUTTON_HOVER
@@ -373,6 +618,8 @@ const char HTTP_HEAD_STYLE2[] PROGMEM =
   ".p{float:left;text-align:left;}"
   ".q{float:right;text-align:right;}"
   ".r{border-radius:0.3em;padding:2px;margin:6px 2px;}";
+#endif //USE_UNISHOX_COMPRESSION
+
 const char HTTP_HEAD_STYLE3[] PROGMEM =
   "</style>"
 
@@ -428,18 +675,18 @@ const char HTTP_FORM_MODULE[] PROGMEM =
 const char HTTP_FORM_WIFI[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='wi'>"
-  "<p><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br><input id='s1' placeholder='" STA_SSID1 "' value='%s'></p>"
-  "<p><label><b>" D_AP1_PASSWORD "</b><input type='checkbox' onclick='sp(\"p1\")'></label><br><input id='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
-  "<p><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br><input id='s2' placeholder='" STA_SSID2 "' value='%s'></p>"
-  "<p><label><b>" D_AP2_PASSWORD "</b><input type='checkbox' onclick='sp(\"p2\")'></label><br><input id='p2' type='password' placeholder='" D_AP2_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
-  "<p><b>" D_HOSTNAME "</b> (%s)<br><input id='h' placeholder='%s' value='%s'></p>"
-  "<p><b>" D_CORS_DOMAIN "</b><input id='c' placeholder='" CORS_DOMAIN "' value='%s'></p>";
+  "<p><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br><input id='s1' placeholder=\"" STA_SSID1 "\" value=\"%s\"></p>"  // Need \" instead of ' to be able to use ' in text (#8489)
+  "<p><label><b>" D_AP1_PASSWORD "</b><input type='checkbox' onclick='sp(\"p1\")'></label><br><input id='p1' type='password' placeholder=\"" D_AP1_PASSWORD "\" value=\"" D_ASTERISK_PWD "\"></p>"
+  "<p><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br><input id='s2' placeholder=\"" STA_SSID2 "\" value=\"%s\"></p>"
+  "<p><label><b>" D_AP2_PASSWORD "</b><input type='checkbox' onclick='sp(\"p2\")'></label><br><input id='p2' type='password' placeholder=\"" D_AP2_PASSWORD "\" value=\"" D_ASTERISK_PWD "\"></p>"
+  "<p><b>" D_HOSTNAME "</b> (%s)<br><input id='h' placeholder=\"%s\" value=\"%s\"></p>"
+  "<p><b>" D_CORS_DOMAIN "</b><input id='c' placeholder=\"" CORS_DOMAIN "\" value=\"%s\"></p>";
 
 const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b>"
   "</legend><form method='get' action='lg'>";
 const char HTTP_FORM_LOG2[] PROGMEM =
-  "<p><b>" D_SYSLOG_HOST "</b> (" SYS_LOG_HOST ")<br><input id='lh' placeholder='" SYS_LOG_HOST "' value='%s'></p>"
+  "<p><b>" D_SYSLOG_HOST "</b> (" SYS_LOG_HOST ")<br><input id='lh' placeholder=\"" SYS_LOG_HOST "\" value=\"%s\"></p>"
   "<p><b>" D_SYSLOG_PORT "</b> (" STR(SYS_LOG_PORT) ")<br><input id='lp' placeholder='" STR(SYS_LOG_PORT) "' value='%d'></p>"
   "<p><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br><input id='lt' placeholder='" STR(TELE_PERIOD) "' value='%d'></p>";
 
@@ -448,15 +695,15 @@ const char HTTP_FORM_OTHER[] PROGMEM =
   "<form method='get' action='co'>"
   "<p></p>"
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE "&nbsp;</b></legend>"
-  "<p><input id='t1' placeholder='" D_TEMPLATE "' value='%s'></p>"
+  "<p><input id='t1' placeholder=\"" D_TEMPLATE "\" value='%s'></p>"  // We need ' apostrophe here as the template contains " quotation mark
   "<p><label><input id='t2' type='checkbox'%s><b>" D_ACTIVATE "</b></label></p>"
   "</fieldset>"
   "<br>"
-  "<label><b>" D_WEB_ADMIN_PASSWORD "</b><input type='checkbox' onclick='sp(\"wp\")'></label><br><input id='wp' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERISK_PWD "'><br>"
+  "<label><b>" D_WEB_ADMIN_PASSWORD "</b><input type='checkbox' onclick='sp(\"wp\")'></label><br><input id='wp' type='password' placeholder=\"" D_WEB_ADMIN_PASSWORD "\" value=\"" D_ASTERISK_PWD "\"><br>"
   "<br>"
   "<label><input id='b1' type='checkbox'%s><b>" D_MQTT_ENABLE "</b></label><br>"
   "<br>"
-  "<label><b>" D_DEVICE_NAME "</b> (%s)</label><br><input id='dn' placeholder='' value='%s'><br>"
+  "<label><b>" D_DEVICE_NAME "</b> (%s)</label><br><input id='dn' placeholder=\"\" value=\"%s\"><br>"
   "<br>";
 
 const char HTTP_FORM_END[] PROGMEM =
@@ -471,7 +718,7 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "<div id='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_WEBSERVER "&nbsp;</b></legend>"
   "<form method='get' action='u1'>"
-  "<br><b>" D_OTA_URL "</b><br><input id='o' placeholder='OTA_URL' value='%s'><br>"
+  "<br><b>" D_OTA_URL "</b><br><input id='o' placeholder=\"OTA_URL\" value=\"%s\"><br>"
   "<br><button type='submit'>" D_START_UPGRADE "</button></form>"
   "</fieldset><br><br>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_FILE_UPLOAD "&nbsp;</b></legend>";
@@ -621,10 +868,16 @@ void StartWebserver(int type, IPAddress ipweb)
   if (Web.state != type) {
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
-    if(ipv6_addr!="") AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s and IPv6 global address %s "), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str(),ipv6_addr.c_str());
-    else AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+    if (ipv6_addr!="") {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s and IPv6 global address %s "),
+        NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str(), ipv6_addr.c_str());
+    } else {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
+        NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str());
+    }
 #else
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
+      NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str());
 #endif // LWIP_IPV6 = 1
     rules_flag.http_init = 1;
   }
@@ -851,7 +1104,11 @@ void WSContentStart_P(const char* title, bool auth)
   WSContentBegin(200, CT_HTML);
 
   if (title != nullptr) {
+#ifdef USE_UNISHOX_COMPRESSION
+    WSContentSend_P(HTTP_HEADER1, D_HTML_LANGUAGE, SettingsText(SET_DEVICENAME), title);
+#else
     WSContentSend_P(HTTP_HEADER1, SettingsText(SET_DEVICENAME), title);
+#endif //USE_UNISHOX_COMPRESSION
   }
 }
 
@@ -900,8 +1157,8 @@ void WSContentSendStyle_P(const char* formatP, ...)
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
     WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // tasmota.local (192.168.2.12, 192.168.4.1)
-      my_hostname,
-      (Wifi.mdns_begun) ? ".local" : "",
+      NetworkHostname(),
+      (Mdns.begun) ? ".local" : "",
       (lip) ? WiFi.localIP().toString().c_str() : "",
       (lip && sip) ? ", " : "",
       (sip) ? WiFi.softAPIP().toString().c_str() : "");
@@ -980,7 +1237,7 @@ void WebRestart(uint32_t type)
   bool reset_only = (HTTP_MANAGER_RESET_ONLY == Web.state);
 
   WSContentStart_P((type) ? S_SAVE_CONFIGURATION : S_RESTART, !reset_only);
-  WSContentSend_P(HTTP_SCRIPT_RELOAD);
+  WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, HTTP_RESTART_RECONNECT_TIME);
   WSContentSendStyle();
   if (type) {
     WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_CONFIGURATION_SAVED "</b><br>"));
@@ -1338,9 +1595,7 @@ bool HandleRootStatusRefresh(void)
   WSContentBegin(200, CT_HTML);
   WSContentSend_P(PSTR("{t}"));
   XsnsCall(FUNC_WEB_SENSOR);
-#ifdef USE_SCRIPT_WEB_DISPLAY
   XdrvCall(FUNC_WEB_SENSOR);
-#endif
 
   WSContentSend_P(PSTR("</table>"));
 
@@ -1471,7 +1726,7 @@ void HandleTemplateConfiguration(void)
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), D_SENSOR_USER);  // }2'255'>User}3
     }
     uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
-    uint32_t midx = ridx >> 5;
+    uint32_t midx = BGPIO(ridx);
     WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
 #endif  // ESP8266 - ESP32
   }
@@ -1648,7 +1903,7 @@ void HandleModuleConfiguration(void)
     }
 #else  // ESP32
     uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
-    midx = ridx >> 5;
+    midx = BGPIO(ridx);
     if (!GetUsedInModule(midx, cmodule.io)) {
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
     }
@@ -1765,8 +2020,8 @@ void ModuleSaveSettings(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-const char kUnescapeCode[] = "&><\"\'";
-const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;";
+const char kUnescapeCode[] = "&><\"\'\\";
+const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;|&#92;";
 
 String HtmlEscape(const String unescaped) {
   char escaped[10];
@@ -2004,7 +2259,7 @@ void HandleOtherConfiguration(void)
 #endif  // USE_SONOFF_IFAN
   for (uint32_t i = 0; i < maxfn; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i +1);
-    WSContentSend_P(PSTR("<b>" D_FRIENDLY_NAME " %d</b> (" FRIENDLY_NAME "%s)<br><input id='a%d' placeholder='" FRIENDLY_NAME "%s' value='%s'><p></p>"),
+    WSContentSend_P(PSTR("<b>" D_FRIENDLY_NAME " %d</b> (" FRIENDLY_NAME "%s)<br><input id='a%d' placeholder=\"" FRIENDLY_NAME "%s\" value=\"%s\"><p></p>"),
       i +1,
       (i) ? stemp : "",
       i,
@@ -2041,7 +2296,7 @@ void HandleOtherConfiguration(void)
 
 void OtherSaveSettings(void)
 {
-  char tmp[TOPSZ];
+  char tmp[300];   // Needs to hold complete ESP32 template of minimal 230 chars
   char webindex[5];
   char friendlyname[TOPSZ];
   char message[LOGSZ];
@@ -2070,22 +2325,6 @@ void OtherSaveSettings(void)
   }
   AddLog_P(LOG_LEVEL_INFO, message);
 
-/*
-  // This sometimes provides intermittent watchdog
-  bool template_activate = Webserver->hasArg("t2");  // Try this to tackle intermittent watchdog after execution of Template command
-  WebGetArg("t1", tmp, sizeof(tmp));
-  if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
-    char svalue[128];
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
-
-    if (template_activate) {
-      snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_MODULE " 0"));
-      ExecuteWebCommand(svalue, SRC_WEBGUI);
-    }
-  }
-  // Try async execution of commands
-*/
   WebGetArg("t1", tmp, sizeof(tmp));
   if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
     snprintf_P(message, sizeof(message), PSTR(D_CMND_BACKLOG " " D_CMND_TEMPLATE " %s%s"), tmp, (Webserver->hasArg("t2")) ? "; " D_CMND_MODULE " 0" : "");
@@ -2220,26 +2459,42 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, SettingsText(SET_FRIENDLYNAME1 +i));
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
-  int32_t rssi = WiFi.RSSI();
-  WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WifiGetRssiAsQuality(rssi), rssi);
-  WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "");
+#ifdef ESP32
+#ifdef USE_ETHERNET
+  if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? ".local" : "");
+    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), EthernetMacAddress().c_str());
+    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (eth)}2%s"), EthernetLocalIP().toString().c_str());
+    WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
+  }
+#endif
+#endif
+  if (Settings.flag4.network_wifi) {
+    int32_t rssi = WiFi.RSSI();
+    WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings.sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi);
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Mdns.begun) ? ".local" : "");
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
-    if(ipv6_addr != ""){
+    if (ipv6_addr != "") {
       WSContentSend_P(PSTR("}1 IPv6 Address }2%s"), ipv6_addr.c_str());
     }
 #endif
-  if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
-    WSContentSend_P(PSTR("}1" D_IP_ADDRESS "}2%s"), WiFi.localIP().toString().c_str());
+    if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+      WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.macAddress().c_str());
+      WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (wifi)}2%s"), WiFi.localIP().toString().c_str());
+      WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
+    }
+  }
+  if (!global_state.network_down) {
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), IPAddress(Settings.ip_address[1]).toString().c_str());
     WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%s"), IPAddress(Settings.ip_address[2]).toString().c_str());
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "}2%s"), IPAddress(Settings.ip_address[3]).toString().c_str());
-    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.macAddress().c_str());
   }
-  if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {
-    WSContentSend_P(PSTR("}1" D_IP_ADDRESS "}2%s"), WiFi.softAPIP().toString().c_str());
-    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), WiFi.softAPIP().toString().c_str());
+  if ((WiFi.getMode() >= WIFI_AP) && (static_cast<uint32_t>(WiFi.softAPIP()) != 0)) {
+    WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
     WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.softAPmacAddress().c_str());
+    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (AP)}2%s"), WiFi.softAPIP().toString().c_str());
+    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), WiFi.softAPIP().toString().c_str());
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
@@ -2346,7 +2601,7 @@ void HandleUpgradeFirmwareStart(void)
   }
 
   WSContentStart_P(S_INFORMATION);
-  WSContentSend_P(HTTP_SCRIPT_RELOAD_OTA);
+  WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, HTTP_OTA_RESTART_RECONNECT_TIME);
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>"));
   WSContentSend_P(HTTP_MSG_RSTRT);
@@ -2371,7 +2626,7 @@ void HandleUploadDone(void)
 
   WSContentStart_P(S_INFORMATION);
   if (!Web.upload_error) {
-    WSContentSend_P(HTTP_SCRIPT_RELOAD_OTA);  // Refesh main web ui after OTA upgrade
+    WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, HTTP_OTA_RESTART_RECONNECT_TIME);  // Refesh main web ui after OTA upgrade
   }
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
@@ -2394,8 +2649,8 @@ void HandleUploadDone(void)
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     WSContentSend_P(HTTP_MSG_RSTRT);
     ShowWebSource(SRC_WEBGUI);
-#ifdef USE_TASMOTA_SLAVE
-    if (TasmotaSlave_GetFlagFlashing()) {
+#ifdef USE_TASMOTA_CLIENT
+    if (TasmotaClient_GetFlagFlashing()) {
       restart_flag = 0;
     } else { // It was a normal firmware file, or we are ready to restart device
       restart_flag = 2;
@@ -2408,9 +2663,9 @@ void HandleUploadDone(void)
   WSContentSend_P(PSTR("</div><br>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
-#ifdef USE_TASMOTA_SLAVE
-  if (TasmotaSlave_GetFlagFlashing()) {
-    TasmotaSlave_Flash();
+#ifdef USE_TASMOTA_CLIENT
+  if (TasmotaClient_GetFlagFlashing()) {
+    TasmotaClient_Flash();
   }
 #endif
 }
@@ -2480,11 +2735,11 @@ void HandleUploadLoop(void)
           if (Web.upload_error != 0) { return; }
         } else
 #endif  // USE_RF_FLASH
-#ifdef USE_TASMOTA_SLAVE
-        if ((WEMOS == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO SLAVE hex file
+#ifdef USE_TASMOTA_CLIENT
+        if ((WEMOS == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO CLIENT hex file
           Update.end();              // End esp8266 update session
-          Web.upload_file_type = UPL_TASMOTASLAVE;
-          Web.upload_error = TasmotaSlave_UpdateInit();  // 0
+          Web.upload_file_type = UPL_TASMOTACLIENT;
+          Web.upload_error = TasmotaClient_UpdateInit();  // 0
           if (Web.upload_error != 0) { return; }
         } else
 #endif
@@ -2548,9 +2803,9 @@ void HandleUploadLoop(void)
       }
     }
 #endif  // USE_RF_FLASH
-#ifdef USE_TASMOTA_SLAVE
-    else if (UPL_TASMOTASLAVE == Web.upload_file_type) {
-      TasmotaSlave_WriteBuffer(upload.buf, upload.currentSize);
+#ifdef USE_TASMOTA_CLIENT
+    else if (UPL_TASMOTACLIENT == Web.upload_file_type) {
+      TasmotaClient_WriteBuffer(upload.buf, upload.currentSize);
     }
 #endif
     else {  // firmware
@@ -2614,10 +2869,10 @@ void HandleUploadLoop(void)
       Web.upload_file_type = UPL_TASMOTA;
     }
 #endif  // USE_RF_FLASH
-#ifdef USE_TASMOTA_SLAVE
-    else if (UPL_TASMOTASLAVE == Web.upload_file_type) {
+#ifdef USE_TASMOTA_CLIENT
+    else if (UPL_TASMOTACLIENT == Web.upload_file_type) {
       // Done writing the hex to SPI flash
-      TasmotaSlave_SetFlagFlashing(true); // So we know on upload success page if it needs to flash hex or do a normal restart
+      TasmotaClient_SetFlagFlashing(true); // So we know on upload success page if it needs to flash hex or do a normal restart
       Web.upload_file_type = UPL_TASMOTA;
     }
 #endif
@@ -3037,7 +3292,7 @@ void CmndWebServer(void)
   }
   if (Settings.webserver) {
     Response_P(PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
-      (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
+      (2 == Settings.webserver) ? D_ADMIN : D_USER, NetworkHostname(), NetworkAddress().toString().c_str());
   } else {
     ResponseCmndStateText(0);
   }

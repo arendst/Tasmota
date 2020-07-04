@@ -3,7 +3,7 @@
  *
  *  Created: on Feb 22 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  *
  * BLESecurity.cpp
@@ -73,7 +73,7 @@ void NimBLESecurity::setRespEncryptionKey(uint8_t resp_key) {
  *
  */
 void NimBLESecurity::setKeySize(uint8_t key_size) {
-    
+
     //m_keySize = key_size;
     //esp_ble_gap_set_security_param(ESP_BLE_SM_MAX_KEY_SIZE, &m_keySize, sizeof(uint8_t));
 } //setKeySize
@@ -132,7 +132,7 @@ char* BLESecurity::esp_key_type_to_str(esp_ble_key_type_t key_type) {
             break;
     }
     return key_str;
-    
+
 } // esp_key_type_to_str
 */
 #endif // CONFIG_BT_ENABLED

@@ -127,15 +127,15 @@ void FifLEEvery250ms(void)
     } else {
       Energy.data_valid[0] = 0;
 
-      // SA=Slave Address, FC=Function Code, BC=Byte Count, B3..B0=Data byte, Ch Cl = crc16 checksum
+      // CA=Client Address, FC=Function Code, BC=Byte Count, B3..B0=Data byte, Ch Cl = crc16 checksum
       // U32 registers:
       // 00 01 02 03 04 05 06 07 08
-      // SA FC BC B3 B2 B1 B0 Cl Ch
+      // CA FC BC B3 B2 B1 B0 Cl Ch
       // 01 03 04 00 00 00 72 7A 16  = REG[B3..B2=0x0139,B1..B0=0x013A]   114 = 0.114 A
       // 01 03 04 00 00 00 B0 FB 87  = REG[B3..B2=0xA01E,B1..B0=0xA01F]   176 = 1.76 kvarh
       // U16/S16 registers:
       // 00 01 02 03 04 05 06
-      // SA FC BC B1 B0 Cl Ch
+      // CA FC BC B1 B0 Cl Ch
       // 01 03 02 5B 02 02 B5  = REG[B1..B0=0x0131]   23298 = 232.98 V
       // 01 03 02 03 E8 B8 FA  = REG[B1..B0=0x0158]   1000  = 1.000 (power factor)
       // there are 3 data types used:

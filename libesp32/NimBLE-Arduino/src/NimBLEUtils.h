@@ -3,7 +3,7 @@
  *
  *  Created: on Jan 25 2020
  *      Author H2zero
- * 
+ *
  */
 
 #ifndef COMPONENTS_NIMBLEUTILS_H_
@@ -25,10 +25,9 @@ class NimBLEUtils {
 public:
     static void                 dumpGapEvent(ble_gap_event *event, void *arg);
     static const char*          gapEventToString(uint8_t eventType);
-    static char*                buildHexData(uint8_t* target, uint8_t* source, uint8_t length);
+    static char*                buildHexData(uint8_t* target, const uint8_t* source, uint8_t length);
     static const char*          advTypeToString(uint8_t advType);
     static const char*          returnCodeToString(int rc);
-    static void                 memrcpy(uint8_t* target, uint8_t* source, uint32_t size);
     static int                  checkConnParams(ble_gap_conn_params* params);
 };
 

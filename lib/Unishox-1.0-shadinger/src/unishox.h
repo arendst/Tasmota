@@ -19,9 +19,6 @@
 #ifndef unishox
 #define unishox
 
-extern int32_t unishox_compress(const char *in, size_t len, char *out, size_t len_out);
-//extern int32_t unishox_decompress(const char *in, size_t len, char *out, size_t len_out);
-
 class Unishox {
 
 public:
@@ -48,6 +45,7 @@ private:
   uint32_t ol;
   int32_t bit_no;
   uint32_t byte_no;
+  bool          in_eof;   // have we reached end of file for compressed input
   const char *  in;
   char *        out;
   size_t        len;

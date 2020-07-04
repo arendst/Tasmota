@@ -391,8 +391,7 @@ void UpdateQuickPowerCycle(bool update)
  * Config Settings.text char array support
 \*********************************************************************************************/
 
-uint32_t GetSettingsTextLen(void)
-{
+uint32_t GetSettingsTextLen(void) {
   char* position = Settings.text_pool;
   for (uint32_t size = 0; size < SET_MAX; size++) {
     while (*position++ != '\0') { }
@@ -400,8 +399,20 @@ uint32_t GetSettingsTextLen(void)
   return position - Settings.text_pool;
 }
 
-bool SettingsUpdateText(uint32_t index, const char* replace_me)
-{
+bool settings_text_mutex = false;
+uint32_t settings_text_busy_count = 0;
+
+bool SettingsUpdateFinished(void) {
+  uint32_t wait_loop = 10;
+  while (settings_text_mutex && wait_loop) {  // Wait for any update to finish
+    yield();
+    delayMicroseconds(1);
+    wait_loop--;
+  }
+  return (wait_loop > 0);  // true if finished
+}
+
+bool SettingsUpdateText(uint32_t index, const char* replace_me) {
   if (index >= SET_MAX) {
     return false;  // Setting not supported - internal error
   }
@@ -438,16 +449,24 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me)
     return false;  // Replace text too long
   }
 
-  if (diff != 0) {
-    // Shift Settings.text up or down
-    memmove_P(Settings.text_pool + start_pos + replace_len, Settings.text_pool + end_pos, char_len - end_pos);
-  }
-  // Replace text
-  memmove_P(Settings.text_pool + start_pos, replace, replace_len);
-  // Fill for future use
-  memset(Settings.text_pool + char_len + diff, 0x00, settings_text_size - char_len - diff);
+  if (settings_text_mutex && !SettingsUpdateFinished()) {
+    settings_text_busy_count++;
+  } else {
+    settings_text_mutex = true;
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d"), GetSettingsTextLen(), settings_text_size);
+    if (diff != 0) {
+      // Shift Settings.text up or down
+      memmove_P(Settings.text_pool + start_pos + replace_len, Settings.text_pool + end_pos, char_len - end_pos);
+    }
+    // Replace text
+    memmove_P(Settings.text_pool + start_pos, replace, replace_len);
+    // Fill for future use
+    memset(Settings.text_pool + char_len + diff, 0x00, settings_text_size - char_len - diff);
+
+    settings_text_mutex = false;
+  }
+
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count);
 
   return true;
 }
@@ -459,6 +478,7 @@ char* SettingsText(uint32_t index)
   if (index >= SET_MAX) {
     position += settings_text_size -1;  // Setting not supported - internal error - return empty string
   } else {
+    SettingsUpdateFinished();
     for (;index > 0; index--) {
       while (*position++ != '\0') { }
     }
@@ -745,9 +765,13 @@ void SettingsDefaultSet2(void)
   }
 
   // Module
-//  flag.interlock |= 0;
-  Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
+  flag.interlock |= APP_INTERLOCK_MODE;
+  Settings.interlock[0] = APP_INTERLOCK_GROUP_1;
+  Settings.interlock[1] = APP_INTERLOCK_GROUP_2;
+  Settings.interlock[2] = APP_INTERLOCK_GROUP_3;
+  Settings.interlock[3] = APP_INTERLOCK_GROUP_4;
   Settings.module = MODULE;
+  Settings.fallback_module = FALLBACK_MODULE;
   ModuleDefault(WEMOS);
 //  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
   SettingsUpdateText(SET_FRIENDLYNAME1, PSTR(FRIENDLY_NAME));
@@ -765,6 +789,9 @@ void SettingsDefaultSet2(void)
   Settings.blinkcount = APP_BLINKCOUNT;
   Settings.ledstate = APP_LEDSTATE;
   Settings.ledmask = APP_LEDMASK;
+//  Settings.ledpwm_off = 0;
+  Settings.ledpwm_on = 255;
+//  Settings.ledpwm_mask = 0;
   Settings.pulse_timer[0] = APP_PULSETIME;
 //  for (uint32_t i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
 
@@ -775,7 +802,16 @@ void SettingsDefaultSet2(void)
   Settings.serial_delimiter = 0xff;
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 
+  // Ethernet
+  flag4.network_ethernet |= 1;
+#ifdef ESP32
+  Settings.eth_type = ETH_TYPE;
+  Settings.eth_clk_mode = ETH_CLKMODE;
+  Settings.eth_address = ETH_ADDR;
+#endif
+
   // Wifi
+  flag4.network_wifi |= 1;
   flag3.use_wifi_scan |= WIFI_SCAN_AT_RESTART;
   flag3.use_wifi_rescan |= WIFI_SCAN_REGULARLY;
   Settings.wifi_output_power = 170;
@@ -1051,6 +1087,10 @@ void SettingsDefaultSet2(void)
   flag3.pcf8574_ports_inverted |= PCF8574_INVERT_PORTS;
   flag4.zigbee_use_names |= ZIGBEE_FRIENDLY_NAMES;
 
+#ifdef USER_TEMPLATE
+  JsonTemplate(USER_TEMPLATE);
+#endif
+
   Settings.flag = flag;
   Settings.flag2 = flag2;
   Settings.flag3 = flag3;
@@ -1155,8 +1195,11 @@ void SettingsDelta(void)
       Settings.param[P_MDNS_DELAYED_START] = 0;
     }
     if (Settings.version < 0x0604010B) {
-      Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
-      for (uint32_t i = 1; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }
+      Settings.flag.interlock = APP_INTERLOCK_MODE;
+      Settings.interlock[0] = APP_INTERLOCK_GROUP_1;
+      Settings.interlock[1] = APP_INTERLOCK_GROUP_2;
+      Settings.interlock[2] = APP_INTERLOCK_GROUP_3;
+      Settings.interlock[3] = APP_INTERLOCK_GROUP_4;
     }
     if (Settings.version < 0x0604010D) {
       Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
@@ -1400,7 +1443,6 @@ void SettingsDelta(void)
       Settings.config_version = 1;  // ESP32
 #endif  // ESP32
     }
-
     if (Settings.version < 0x08020006) {
 #ifdef ESP32
       Settings.module = WEMOS;
@@ -1411,12 +1453,29 @@ void SettingsDelta(void)
       if (Settings.rules[1][0] == 0) { Settings.rules[1][1] = 0; }
       if (Settings.rules[2][0] == 0) { Settings.rules[2][1] = 0; }
     }
-
     if (Settings.version < 0x08030002) {
       SettingsUpdateText(SET_DEVICENAME, SettingsText(SET_FRIENDLYNAME1));
+      Settings.ledpwm_off = 0;
+      Settings.ledpwm_on = 255;
+      Settings.ledpwm_mask = 0;
+    }
+    if (Settings.version < 0x08030104) {
+      Settings.flag4.network_wifi = 1;
+      Settings.flag4.network_ethernet = 1;
+    }
+#ifdef ESP32
+    if (Settings.version < 0x08030105) {
+      Settings.eth_type = ETH_TYPE;
+      Settings.eth_clk_mode = ETH_CLKMODE;
+      Settings.eth_address = ETH_ADDR;
+    }
+#endif
+    if (Settings.version < 0x08030106) {
+      Settings.fallback_module = FALLBACK_MODULE;
     }
 
     Settings.version = VERSION;
     SettingsSave(1);
   }
+
 }

@@ -58,8 +58,8 @@ float const windmeter_pi = 3.1415926535897932384626433;  // Pi
 float const windmeter_2pi = windmeter_pi * 2;
 
 struct WINDMETER {
-  uint32_t counter_time;
-  unsigned long counter = 0;
+  volatile uint32_t counter_time;
+  volatile unsigned long counter = 0;
   //uint32_t speed_time;
   float speed = 0;
   float last_tele_speed = 0;
@@ -83,7 +83,7 @@ void WindMeterUpdateSpeed(void)
   if (time_diff > Settings.windmeter_pulse_debounce * 1000) {
     WindMeter.counter_time = time;
     WindMeter.counter++;
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
   }
 }
 

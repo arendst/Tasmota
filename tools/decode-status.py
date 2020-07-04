@@ -147,7 +147,9 @@ a_setoption = [[
     "Disable non-json MQTT response",
     "Enable light fading at start/power on",
     "Set PWM Mode from regular PWM to ColorTemp control","",
-    "","","","",
+    "Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick",
+    "Implement simpler MAX6675 protocol instead of MAX31855",
+    "","",
     "","","","",
     "","","","",
     "","","","",
@@ -195,19 +197,19 @@ a_features = [[
     "USE_INA226","USE_A4988_STEPPER","USE_DDS2382","USE_SM2135",
     "USE_SHUTTER","USE_PCF8574","USE_DDSU666","USE_DEEPSLEEP",
     "USE_SONOFF_SC","USE_SONOFF_RF","USE_SONOFF_L1","USE_EXS_DIMMER",
-    "USE_ARDUINO_SLAVE","USE_HIH6","USE_HPMA","USE_TSL2591",
+    "USE_TASMOTA_SLAVE","USE_HIH6","USE_HPMA","USE_TSL2591",
     "USE_DHT12","USE_DS1624","USE_GPS","USE_HOTPLUG",
     "USE_NRF24","USE_MIBLE","USE_HM10","USE_LE01MR",
     "USE_AHT1x","USE_WEMOS_MOTOR_V1","USE_DEVICE_GROUPS","USE_PWM_DIMMER"
     ],[
     "USE_KEELOQ","USE_HRXL","USE_SONOFF_D1","USE_HDC1080",
     "USE_IAQ","USE_DISPLAY_SEVENSEG","USE_AS3935","USE_PING",
-    "USE_WINDMETER","USE_OPENTHERM","USE_THERMOSTAT","",
+    "USE_WINDMETER","USE_OPENTHERM","USE_THERMOSTAT","USE_VEML6075",
+    "USE_VEML7700","USE_MCP9808","USE_BL0940","USE_TELEGRAM",
+    "USE_HP303B","USE_TCP_BRIDGE","USE_TELEINFO","USE_LMT01",
+    "USE_PROMETHEUS","","","",
     "","","","",
-    "","","","",
-    "","","","",
-    "","","","",
-    "","","","USE_WEBCAM"
+    "","","USE_ETHERNET","USE_WEBCAM"
     ]]
 
 usage = "usage: decode-status {-d | -f} arg"
@@ -241,7 +243,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20200507 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20200627 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

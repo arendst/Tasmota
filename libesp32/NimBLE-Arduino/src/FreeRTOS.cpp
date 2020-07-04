@@ -89,28 +89,28 @@ uint32_t FreeRTOS::Semaphore::wait(std::string owner) {
  * @return True if we took the semaphore within timeframe.
  */
 bool FreeRTOS::Semaphore::timedWait(std::string owner, uint32_t timeoutMs) {
-	NIMBLE_LOGD(LOG_TAG, ">> wait: Semaphore waiting: %s for %s", toString().c_str(), owner.c_str());
+    NIMBLE_LOGD(LOG_TAG, ">> wait: Semaphore waiting: %s for %s", toString().c_str(), owner.c_str());
 
-	if (m_usePthreads && timeoutMs != portMAX_DELAY) {
-		assert(false);  // We apparently don't have a timed wait for pthreads.
-	}
+    if (m_usePthreads && timeoutMs != portMAX_DELAY) {
+        assert(false);  // We apparently don't have a timed wait for pthreads.
+    }
 
-	auto ret = pdTRUE;
+    auto ret = pdTRUE;
 
-	if (m_usePthreads) {
-		pthread_mutex_lock(&m_pthread_mutex);
-	} else {
-		ret = xSemaphoreTake(m_semaphore, timeoutMs);
-	}
+    if (m_usePthreads) {
+        pthread_mutex_lock(&m_pthread_mutex);
+    } else {
+        ret = xSemaphoreTake(m_semaphore, timeoutMs);
+    }
 
-	if (m_usePthreads) {
-		pthread_mutex_unlock(&m_pthread_mutex);
-	} else {
-		xSemaphoreGive(m_semaphore);
-	}
+    if (m_usePthreads) {
+        pthread_mutex_unlock(&m_pthread_mutex);
+    } else {
+        xSemaphoreGive(m_semaphore);
+    }
 
-	NIMBLE_LOGD(LOG_TAG, "<< wait: Semaphore %s released: %d", toString().c_str(), ret);
-	return ret;
+    NIMBLE_LOGD(LOG_TAG, "<< wait: Semaphore %s released: %d", toString().c_str(), ret);
+    return ret;
 } // wait
 
 

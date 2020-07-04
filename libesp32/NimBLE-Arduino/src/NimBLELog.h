@@ -14,11 +14,11 @@
 #include "modlog/modlog.h"
 
 
-// If Arduino is being used, strip out the colors and ignore log printing below ui setting. 
-// Note: because CONFIG_LOG_DEFAULT_LEVEL is set at ERROR in Arduino we must use MODLOG_DFLT(ERROR 
+// If Arduino is being used, strip out the colors and ignore log printing below ui setting.
+// Note: because CONFIG_LOG_DEFAULT_LEVEL is set at ERROR in Arduino we must use MODLOG_DFLT(ERROR
 // otherwise no messages will be printed above that level.
 #ifdef ARDUINO_ARCH_ESP32
-#ifndef CORE_DEBUG_LEVEL 
+#ifndef CORE_DEBUG_LEVEL
 #define CORE_DEBUG_LEVEL CONFIG_ARDUHAL_LOG_DEFAULT_LEVEL
 #endif
 
@@ -48,7 +48,7 @@
 
 #define NIMBLE_LOGC( tag, format, ... ) MODLOG_DFLT(CRITICAL,   "CRIT %s: "#format"\n",tag,##__VA_ARGS__)
 
-#else 
+#else
 #define NIMBLE_LOGE( tag, format, ... ) MODLOG_DFLT(ERROR,      "\033[0;31mE %s: "#format"\033[0m\n",tag,##__VA_ARGS__)
 #define NIMBLE_LOGW( tag, format, ... ) MODLOG_DFLT(WARN,       "\033[0;33mW %s: "#format"\033[0m\n",tag,##__VA_ARGS__)
 #define NIMBLE_LOGI( tag, format, ... ) MODLOG_DFLT(INFO,       "\033[0;32mI %s: "#format"\033[0m\n",tag,##__VA_ARGS__)

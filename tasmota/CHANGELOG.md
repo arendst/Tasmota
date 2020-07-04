@@ -1,6 +1,71 @@
+## Released
+
+### 8.4.0 20200716
+
+- Release George
+
 ## Unreleased (development)
 
-## Released
+### 8.3.1.6 20200617
+
+- Add command ``Module2`` to configure fallback module on fast reboot (#8464)
+- Add command ``SetOption97 0/1`` to switch between Tuya serial speeds 9600 bps (0) or 115200 bps (1)
+- Add command ``SetOption98 0/1`` to provide rotary rule triggers (1) instead of controlling light (0)
+- Add support for Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
+- Add library to be used for decoding Teleinfo (French Metering Smart Meter)
+- Add support for single wire LMT01 temperature Sensor by justifiably (#8713)
+- Add compile time interlock parameters (#8759)
+- Add compile time user template (#8766)
+- Add rotary encoder support for light dimmer and optional color temperature if button1 still pressed (#8670)
+- Fix exception or watchdog on rule re-entry (#8757)
+- Change ESP32 USER GPIO template representation decreasing template message size
+- Change define USE_TASMOTA_SLAVE into USE_TASMOTA_CLIENT
+- Change commands ``SlaveSend`` and ``SlaveReset`` into ``ClientSend`` and ``ClientReset``
+- Change IRremoteESP8266 library updated to v2.7.8
+
+### 8.3.1.5 20200616
+
+- Add ESP32 ethernet commands ``EthType 0/1``, ``EthAddress 0..31`` and ``EthClockMode 0..3``
+- Add Zigbee initial support for EmberZNet protocol (raw send/receive only)
+
+### 8.3.1.4 20200615
+
+- Add basic support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON
+
+### 8.3.1.3 20200611
+
+- Add initial support for Telegram bot (#8619)
+- Add support for HP303B Temperature and Pressure sensor by Robert Jaakke (#8638)
+- Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet
+- Add serial to TCP bridge, ``TCPStart`` and ``TCPBaudRate`` (needs #define USE_TCP_BRIDGE)
+
+### 8.3.1.2 20200522
+
+- Change Energy JSON Total field from ``"Total":[33.736,11.717,16.978]`` to ``"Total":33.736,"TotalTariff":[11.717,16.978]``
+- Change Energy JSON ExportActive field from ``"ExportActive":[33.736,11.717,16.978]`` to ``"ExportActive":33.736,"ExportTariff":[11.717,16.978]``
+- Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)
+- Fix escape of non-JSON received serial data (#8329)
+- Add command ``Time 4`` to display timestamp using milliseconds (#8537)
+- Add command ``SetOption94 0/1`` to select MAX31855 or MAX6675 thermocouple support (#8616)
+- Add commands ``LedPwmOn 0..255``, ``LedPwmOff 0..255`` and ``LedPwmMode1 0/1`` to control led brightness by George (#8491)
+- Add Three Phase Export Active Energy to SDM630 driver
+- Add wildcard pattern ``?`` for JSON matching in rules
+- Add support for unique MQTTClient (and inherited fallback topic) by full Mac address using ``mqttclient DVES_%12X`` (#8300)
+- Add Zigbee options to ``ZbSend`` to write and report attributes
+- Add ``CpuFrequency`` to ``status 2``
+- Add ``FlashFrequency`` to ``status 4``
+- Add support for up to two BH1750 sensors controlled by commands ``BH1750Resolution`` and ``BH1750MTime`` (#8139)
+- Add Zigbee auto-responder for common attributes
+- Add support for BL0940 energy monitor as used in Blitzwolf BW-SHP10 (#8175)
+
+### 8.3.1.1 20200518
+
+- Change IRremoteESP8266 library updated to v2.7.7
+- Add command ``Rule0`` to change global rule parameters
+- Add more functionality to ``Switchmode`` 11 and 12 (#8450)
+- Add dump of compressed rules over 512 chars and unishox decompress fix
+- Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)
+- Add support for VEML7700 Ambient light intensity Sensor by device111 (#8432)
 
 ### 8.3.1 20200518
 
@@ -17,8 +82,6 @@
 - Change Mutichannel Gas sensor pow function to approximative pow saving 5k of code space
 - Change Quick Power Cycle detection from 4 to 7 power interrupts (#4066)
 - Fix default state of ``SetOption73 0`` for button decoupling and send multi-press and hold MQTT messages
-
-## Released
 
 ### 8.3.0 20200514
 

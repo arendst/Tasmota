@@ -23,29 +23,9 @@
 
 void ZigbeeZCLSend_Raw(uint16_t dtsAddr, uint16_t groupaddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool needResponse, uint8_t transacId);
 
-
-// Get an JSON attribute, with case insensitive key search
-const JsonVariant &getCaseInsensitive(const JsonObject &json, const char *needle) {
-  // key can be in PROGMEM
-  if ((nullptr == &json) || (nullptr == needle) || (0 == pgm_read_byte(needle))) {
-    return *(JsonVariant*)nullptr;
-  }
-
-  for (JsonObject::const_iterator it=json.begin(); it!=json.end(); ++it) {
-    const char *key = it->key;
-    const JsonVariant &value = it->value;
-
-    if (0 == strcasecmp_P(key, needle)) {
-      return value;
-    }
-  }
-  // if not found
-  return *(JsonVariant*)nullptr;
-}
-
 // get the result as a string (const char*) and nullptr if there is no field or the string is empty
 const char * getCaseInsensitiveConstCharNull(const JsonObject &json, const char *needle) {
-  const JsonVariant &val = getCaseInsensitive(json, needle);
+  const JsonVariant &val = GetCaseInsensitive(json, needle);
   if (&val) {
     const char *val_cs = val.as<const char*>();
     if (strlen(val_cs)) {
