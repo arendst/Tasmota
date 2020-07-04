@@ -819,4 +819,8 @@
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
 #define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
 
+//xsns_83_xye_ccm.ino
+#define D_SENSOR_XYE_RX   "XYE RX"
+#define D_SENSOR_XYE_TX   "XYE TX"
+
 #endif  // _LANGUAGE_ZH_CN_H_

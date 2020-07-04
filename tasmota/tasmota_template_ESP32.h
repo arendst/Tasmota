@@ -134,6 +134,8 @@ enum UserSelectablePins {
   GPIO_TELEINFO_RX,                    // Teleinfo telemetry data receive pin
   GPIO_TELEINFO_ENABLE,                // Teleinfo Enable Receive Pin
   GPIO_LMT01,                          // LMT01 input counting pin
+  GPIO_XYE_RX,                         // XYE RX pin
+  GPIO_XYE_TX,                         // XYE TX pin
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -227,7 +229,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD "|"
   D_SENSOR_ETH_PHY_POWER "|" D_SENSOR_ETH_PHY_MDC "|" D_SENSOR_ETH_PHY_MDIO "|"
   D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
-  D_SENSOR_LMT01_PULSE
+  D_SENSOR_LMT01_PULSE "|"
+  D_SENSOR_XYE_RX "|"D_SENSOR_XYE_TX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -543,6 +546,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_TELEINFO
   AGPIO(GPIO_TELEINFO_RX),
   AGPIO(GPIO_TELEINFO_ENABLE),
+#endif
+#ifdef USE_XYE_CCM
+  GPIO_XYE_RX,
+  GPIO_XYE_TX,
 #endif
 /*
 #ifndef USE_ADC_VCC

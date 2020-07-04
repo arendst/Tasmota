@@ -239,6 +239,8 @@ enum UserSelectablePins {
   GPIO_TELEINFO_RX,    // TELEINFO serial interface
   GPIO_TELEINFO_ENABLE,// TELEINFO Enable PIN
   GPIO_LMT01,          // LMT01 input counting pin
+  GPIO_XYE_RX,         // XYE RX pin
+  GPIO_XYE_TX,         // XYE TX pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -332,7 +334,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BL0940_RX "|"
   D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD "|"
   D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
-  D_SENSOR_LMT01_PULSE
+  D_SENSOR_LMT01_PULSE "|"
+  D_SENSOR_XYE_RX "|" D_SENSOR_XYE_TX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -700,6 +703,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_TELEINFO
   GPIO_TELEINFO_RX,
   GPIO_TELEINFO_ENABLE,
+#endif
+#ifdef USE_XYE_CCM
+  GPIO_XYE_RX,
+  GPIO_XYE_TX,
 #endif
 };
 

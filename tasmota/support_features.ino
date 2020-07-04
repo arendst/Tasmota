@@ -593,7 +593,9 @@ void GetFeatures(void)
 #ifdef USE_PROMETHEUS
   feature6 |= 0x00100000;  // xsns_75_prometheus.ino
 #endif
-//  feature6 |= 0x00200000;
+#ifdef USE_EXS_DIMMER
+  feature6 |= 0x00200000;  // xsns_76_xye_ccm.ino
+#endif
 //  feature6 |= 0x00400000;
 //  feature6 |= 0x00800000;
 
