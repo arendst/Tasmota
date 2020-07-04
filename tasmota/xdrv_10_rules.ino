@@ -749,37 +749,37 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
 bool RulesProcessEvent(char *json_event)
 {
+  if (Rules.busy) { return false; }
+
+  Rules.busy = true;
   bool serviced = false;
 
-  if (!Rules.busy) {
-    Rules.busy = true;
-
 #ifdef USE_DEBUG_DRIVER
-    ShowFreeMem(PSTR("RulesProcessEvent"));
+  ShowFreeMem(PSTR("RulesProcessEvent"));
 #endif
 
-    String event_saved = json_event;
-    // json_event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
-    // json_event = {"System":{"Boot":1}}
-    // json_event = {"SerialReceived":"on"} - invalid but will be expanded to {"SerialReceived":{"Data":"on"}}
-    char *p = strchr(json_event, ':');
-    if ((p != NULL) && !(strchr(++p, ':'))) {  // Find second colon
-      event_saved.replace(F(":"), F(":{\"Data\":"));
-      event_saved += F("}");
-      // event_saved = {"SerialReceived":{"Data":"on"}}
-    }
-    event_saved.toUpperCase();
+  String event_saved = json_event;
+  // json_event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
+  // json_event = {"System":{"Boot":1}}
+  // json_event = {"SerialReceived":"on"} - invalid but will be expanded to {"SerialReceived":{"Data":"on"}}
+  char *p = strchr(json_event, ':');
+  if ((p != NULL) && !(strchr(++p, ':'))) {  // Find second colon
+    event_saved.replace(F(":"), F(":{\"Data\":"));
+    event_saved += F("}");
+    // event_saved = {"SerialReceived":{"Data":"on"}}
+  }
+  event_saved.toUpperCase();
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event %s"), event_saved.c_str());
 
-    for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
-      if (GetRuleLen(i) && bitRead(Settings.rule_enabled, i)) {
-        if (RuleSetProcess(i, event_saved)) { serviced = true; }
-      }
+  for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
+    if (GetRuleLen(i) && bitRead(Settings.rule_enabled, i)) {
+      if (RuleSetProcess(i, event_saved)) { serviced = true; }
     }
-
-    Rules.busy = false;
   }
+
+  Rules.busy = false;
+
   return serviced;
 }
 
