@@ -161,7 +161,7 @@ uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
         break;
       }
     }
-    return realpercent;
+    return (int16_t)realpercent < 0 ? 0 : realpercent;
   }
 }
 
