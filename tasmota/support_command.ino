@@ -1775,8 +1775,9 @@ void CmndAltitude(void)
   ResponseCmndNumber(Settings.altitude);
 }
 
-void CmndLedPower(void)
-{
+void CmndLedPower(void) {
+  // If GPIO_LEDLINK (used for network status) then allow up to 4 GPIO_LEDx control using led_power
+  // If no GPIO_LEDLINK then allow legacy single led GPIO_LED1 control using Settings.ledstate
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_LEDS)) {
     if (!PinUsed(GPIO_LEDLNK)) { XdrvMailbox.index = 1; }
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
@@ -1811,8 +1812,7 @@ void CmndLedPower(void)
   }
 }
 
-void CmndLedState(void)
-{
+void CmndLedState(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_LED_OPTION)) {
     Settings.ledstate = XdrvMailbox.payload;
     if (!Settings.ledstate) {
@@ -1823,8 +1823,7 @@ void CmndLedState(void)
   ResponseCmndNumber(Settings.ledstate);
 }
 
-void CmndLedMask(void)
-{
+void CmndLedMask(void) {
   if (XdrvMailbox.data_len > 0) {
     Settings.ledmask = XdrvMailbox.payload;
   }
@@ -1833,8 +1832,7 @@ void CmndLedMask(void)
   ResponseCmndChar(stemp1);
 }
 
-void CmndLedPwmOff(void)
-{
+void CmndLedPwmOff(void) {
   if (XdrvMailbox.data_len > 0) {
     if (XdrvMailbox.payload < 0) {
       Settings.ledpwm_off = 0;
@@ -1849,8 +1847,7 @@ void CmndLedPwmOff(void)
   ResponseCmndNumber(Settings.ledpwm_off);
 }
 
-void CmndLedPwmOn(void)
-{
+void CmndLedPwmOn(void) {
   if (XdrvMailbox.data_len > 0) {
     if (XdrvMailbox.payload < 0) {
       Settings.ledpwm_on = 0;
@@ -1865,8 +1862,7 @@ void CmndLedPwmOn(void)
   ResponseCmndNumber(Settings.ledpwm_on);
 }
 
-void CmndLedPwmMode(void)
-{
+void CmndLedPwmMode(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_LEDS)) {
     if (!PinUsed(GPIO_LEDLNK)) { XdrvMailbox.index = 1; }
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
