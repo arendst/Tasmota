@@ -713,6 +713,25 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
   ZigbeeZNPSend(buf.getBuffer(), buf.len());
 #endif // USE_ZIGBEE_ZNP
 
+#ifdef USE_ZIGBEE_EZSP
+  SBuffer buf(24);
+  
+  // ZDO message payload (see Zigbee spec 2.4.3.2.2)
+  buf.add64(srcLongAddr);
+  buf.add8(endpoint);
+  buf.add16(cluster);
+  if (dstLongAddr) {
+    buf.add8(Z_Addr_IEEEAddress);         // DstAddrMode - 0x03 = ADDRESS_64_BIT
+    buf.add64(dstLongAddr);
+    buf.add8(toendpoint);
+  } else {
+    buf.add8(Z_Addr_Group);               // DstAddrMode - 0x01 = GROUP_ADDRESS
+    buf.add16(toGroup);
+  }
+
+  EZ_SendZDO(srcDevice, unbind ? ZDO_UNBIND_REQ : ZDO_BIND_REQ, buf.buf(), buf.len());
+#endif // USE_ZIGBEE_EZSP
+
   ResponseCmndDone();
 }
 
@@ -747,6 +766,14 @@ void CmndZbBindState(void) {
 
   ZigbeeZNPSend(buf.getBuffer(), buf.len());
 #endif // USE_ZIGBEE_ZNP
+
+
+#ifdef USE_ZIGBEE_EZSP
+  // ZDO message payload (see Zigbee spec 2.4.3.3.4)
+  uint8_t buf[] = { 0x00 };           // index = 0
+
+  EZ_SendZDO(shortaddr, ZDO_Mgmt_Bind_req, buf, sizeof(buf));
+#endif // USE_ZIGBEE_EZSP
 
   ResponseCmndDone();
 }

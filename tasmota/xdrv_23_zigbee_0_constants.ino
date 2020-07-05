@@ -461,6 +461,7 @@ enum EZSP_ZDO {
   // Network Management Server Services Requests
   ZDO_Mgmt_Lqi_req = 0x0031,
   ZDO_Mgmt_Rtg_req = 0x0032,
+  ZDO_Mgmt_Bind_req = 0x0033,
   ZDO_Mgmt_Leave_req = 0x0034,
   ZDO_Mgmt_Permit_Joining_req = 0x0036,
   ZDO_Mgmt_NWK_Update_req = 0x0038,
@@ -496,6 +497,7 @@ enum EZSP_ZDO {
   // Network Management Server Services Responses
   ZDO_Mgmt_Lqi_rsp = 0x8031,
   ZDO_Mgmt_Rtg_rsp = 0x8032,
+  ZDO_Mgmt_Bind_rsp = 0x8033,
   ZDO_Mgmt_Leave_rsp = 0x8034,
   ZDO_Mgmt_Permit_Joining_rsp = 0x8036,
   ZDO_Mgmt_NWK_Update_rsp = 0x8038,
@@ -1105,6 +1107,34 @@ typedef struct Z_StatusLine {
   uint32_t     status;          // no need to use uint8_t since it uses 32 bits anyways
   const char * status_msg;
 } Z_StatusLine;
+
+
+// ZDP Enumeration, see Zigbee spec 2.4.5
+String getZDPStatusMessage(uint8_t status) {
+  static const char    StatusMsg[] PROGMEM = "SUCCESS|INV_REQUESTTYPE|DEVICE_NOT_FOUND|INVALID_EP|NOT_ACTIVE|NOT_SUPPORTED"
+                                             "|TIMEOUT|NO_MATCH|NO_ENTRY|NO_DESCRIPTOR|INSUFFICIENT_SPACE|NOT_PERMITTED"
+                                             "|TABLE_FULL|NOT_AUTHORIZED|DEVICE_BINDING_TABLE_FULL"
+                                             ;
+  static const uint8_t StatusIdx[] PROGMEM = { 0x00, 0x80, 0x81, 0x82, 0x83, 0x84,
+                                               0x85, 0x86, 0x88, 0x89, 0x8A, 0x8B,
+                                               0x8C, 0x8D, 0x8E };
+
+  char msg[32];
+  int32_t idx = -1;
+  for (uint32_t i = 0; i < sizeof(StatusIdx); i++) {
+    if (status == pgm_read_byte(&StatusIdx[i])) {
+      idx = i;
+      break;
+    }
+  }
+  if (idx >= 0) {
+    GetTextIndexed(msg, sizeof(msg), idx, StatusMsg);
+  } else {
+    *msg = 0x00;    // empty string
+  }
+  return String(msg);
+}
+
 
 // Undocumented Zigbee ZCL code here: https://github.com/dresden-elektronik/deconz-rest-plugin/wiki/Zigbee-Error-Codes-in-the-Log
 String getZigbeeStatusMessage(uint8_t status) {
