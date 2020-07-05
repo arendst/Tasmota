@@ -309,7 +309,7 @@ int32_t EZ_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"Version\":\"%d.%d.%d.%d\",\"Protocol\":%d"
                   ",\"Stack\":%d}}"),
-                  ZIGBEE_STATUS_EZ_VERSION, 
+                  ZIGBEE_STATUS_EZ_VERSION,
                   (stack_version & 0xF000) >> 12,
                   (stack_version & 0x0F00) >> 8,
                   (stack_version & 0x00F0) >> 4,
@@ -878,7 +878,7 @@ void Z_IncomingMessage(ZCLFrame &zcl_received) {
 
   char shortaddr[8];
   snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
-  
+
   DynamicJsonBuffer jsonBuffer;
   JsonObject& json = jsonBuffer.createObject();
 
@@ -1030,7 +1030,7 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
 // value = 1 : release the reset pin, restart
 int32_t EZ_Reset_Device(uint8_t value) {
   // we use Led4i to drive the reset pin. Since it is reverted we need to pass 1 to start reset, and 0 to release reset
-  if (PinUsed(GPIO_LED4, ZIGBEE_EZSP_RESET_LED - 1)) {
+  if (PinUsed(GPIO_LED1, ZIGBEE_EZSP_RESET_LED - 1)) {
     SetLedPowerIdx(ZIGBEE_EZSP_RESET_LED - 1, value ? 0 : 1);
   } else {
     // no GPIO so we use software Reset instead
