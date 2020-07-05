@@ -64,7 +64,7 @@ void GetFeatures(void)
 //#if (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)      // Obsolete since 6.2.1.11
 //  feature_drv1 |= 0x00001000;  // xdrv_02_mqtt.ino
 //#endif
-#ifdef MQTT_HOST_DISCOVERY
+#if defined(USE_DISCOVERY) && defined(MQTT_HOST_DISCOVERY)
   feature_drv1 |= 0x00002000;  // xdrv_02_mqtt.ino
 #endif
 #if defined(USE_LIGHT) && defined(USE_ARILUX_RF)
@@ -147,28 +147,28 @@ void GetFeatures(void)
 #if defined(USE_DISPLAY) && defined(USE_DISPLAY_GRAPH)
   feature_drv2 |= 0x00000040;  // xdrv_13_display.ino
 #endif
-#if defined(USE_DISPLAY) && defined(USE_DISPLAY_LCD)
+#if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_LCD)
   feature_drv2 |= 0x00000080;  // xdsp_01_lcd.ino
 #endif
-#if defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1306)
+#if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1306)
   feature_drv2 |= 0x00000100;  // xdsp_02_ssd1306.ino
 #endif
-#if defined(USE_DISPLAY) && defined(USE_DISPLAY_MATRIX)
+#if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_MATRIX)
   feature_drv2 |= 0x00000200;  // xdsp_03_matrix.ino
 #endif
-#if defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9341)
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9341)
   feature_drv2 |= 0x00000400;  // xdsp_04_ili9341.ino
 #endif
-#if defined(USE_DISPLAY) && defined(USE_DISPLAY_EPAPER_29)
+#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_EPAPER_29)
   feature_drv2 |= 0x00000800;  // xdsp_05_epaper.ino
 #endif
-#if defined(USE_DISPLAY) && defined(USE_DISPLAY_SH1106)
+#if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SH1106)
   feature_drv2 |= 0x00001000;  // xdsp_06_sh1106.ino
 #endif
 #ifdef USE_MP3_PLAYER
   feature_drv2 |= 0x00002000;  // xdrv_14_mp3.ino
 #endif
-#ifdef USE_PCA9685
+#if defined(USE_I2C) && defined(USE_PCA9685)
   feature_drv2 |= 0x00004000;  // xdrv_15_pca9685.ino
 #endif
 #if defined(USE_LIGHT) && defined(USE_TUYA_MCU)
@@ -186,7 +186,7 @@ void GetFeatures(void)
 #ifdef USE_SCRIPT
   feature_drv2 |= 0x00080000;  // xdrv_10_scripter.ino
 #endif
-#ifdef USE_EMULATION_WEMO
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION_WEMO)
   feature_drv2 |= 0x00100000;  // xdrv_21_wemo.ino
 #endif
 #ifdef USE_SONOFF_IFAN
@@ -450,7 +450,7 @@ void GetFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_DDS2382)
   feature5 |= 0x00000040;  // xnrg_09_dds2382.ino
 #endif
-#ifdef USE_SM2135
+#if defined(USE_LIGHT) && defined(USE_SM2135)
   feature5 |= 0x00000080;  // xdrv_026_sm2135.ino
 #endif
 #ifdef USE_SHUTTER
@@ -474,7 +474,7 @@ void GetFeatures(void)
 #if defined(USE_LIGHT) && defined(USE_SONOFF_L1)
   feature5 |= 0x00004000;  // xlgt_05_sonoff_l1.ino
 #endif
-#ifdef USE_EXS_DIMMER
+#if defined(USE_LIGHT) && defined(USE_EXS_DIMMER)
   feature5 |= 0x00008000;  // xdrv_30_exs_dimmer.ino
 #endif
 #ifdef USE_TASMOTA_CLIENT
@@ -498,7 +498,7 @@ void GetFeatures(void)
 #ifdef USE_GPS
   feature5 |= 0x00400000;  // xsns_60_GPS.ino
 #endif
-#ifdef USE_HOTPLUG
+#if defined(USE_I2C) && defined(USE_HOTPLUG)
   feature5 |= 0x00800000;  // xdrv_32_hotplug.ino
 #endif
 #ifdef USE_NRF24
