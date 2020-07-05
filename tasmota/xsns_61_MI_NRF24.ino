@@ -21,7 +21,9 @@
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
 
-  0.9.7.0 20200624  integrate - use BEARSSL-lib for decryption as default, make decryption optional
+  0.9.8.0 20200705  integrate - add YEE-RC, NLIGHT and MJYD2S, add NRFUSE
+  ---
+  0.9.7.0 20200624  integrate - fix BEARSSL-decryption, remove MBEDTLS, prepare night light sensors
   ---
   0.9.6.1 20200622  integrate - use BEARSSL-lib for decryption as default, make decryption optional
   ---
@@ -60,7 +62,7 @@
 #define USE_MI_DECRYPTION
 /*********************************************************************************************\
 * MINRF
-* BLE-Sniffer/Bridge for MIJIA/XIAOMI Temperatur/Humidity-Sensor, Mi Flora, LYWSD02, GCx
+* BLE-Sniffer/Bridge for MIJIA/XIAOMI Temperatur/Humidity-Sensor, Mi Flora, LYWSD02, GCx, ...
 *
 * Usage: Configure NRF24
 \*********************************************************************************************/
@@ -80,50 +82,56 @@
 #define CGD1        6
 #define NLIGHT      7
 #define MJYD2S      8
+#define YEERC       9
 
-#define MI_TYPES    8 //count this manually
+#define MI_TYPES    9 //count this manually
 
 #define D_CMND_NRF "NRF"
 
 const char S_JSON_NRF_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_NRF "%s\":%d}";
 const char S_JSON_NRF_COMMAND[] PROGMEM        = "{\"" D_CMND_NRF "%s\":\"%s\"}";
-const char kNRF_Commands[] PROGMEM             = "Ignore|Page|Scan|Beacon|Chan|Nlight"
+const char kNRF_Commands[] PROGMEM             = "Ignore|Use|Page|Scan|Beacon|Chan|Nlight"
 #ifdef USE_MI_DECRYPTION
+                                                  "|Mjyd2s"
                                                   "|Key"
 #endif //USE_MI_DECRYPTION
                                                   ;
 
 enum NRF_Commands {          // commands useable in console or rules
-  CMND_NRF_IGNORE,           // ignore specific sensor type (1-6)
+  CMND_NRF_IGNORE,           // ignore specific sensor type (1-9) --- DEPRECATED!!!!
+  CMND_NRF_USE,              // use specific sensor type (1-9)
   CMND_NRF_PAGE,             // sensor entries per web page, which will be shown alternated
   CMND_NRF_SCAN,             // simplified passive BLE adv scan
   CMND_NRF_BEACON,           // even more simplified Beacon, reports time since last sighting
   CMND_NRF_CHAN,             // ignore channel 0-2 (translates to 37-39)
-  CMND_NRF_NLIGHT             // add Philips night light via MAC
+  CMND_NRF_NLIGHT            // add Philips night light via MAC
 #ifdef USE_MI_DECRYPTION
+  ,  CMND_NRF_MJYD2S         // add MJYD2S night light via bind_key to a MAC for payload decryption
   ,  CMND_NRF_KEY            // add bind_key to a MAC for payload decryption
 #endif //USE_MI_DECRYPTION
   };
 
-const uint16_t kMINRFSlaveID[8]={ 0x0098, // Flora
-                                  0x01aa, // MJ_HT_V1
-                                  0x045b, // LYWSD02
-                                  0x055b, // LYWSD03
-                                  0x0347, // CGG1
-                                  0x0576, // CGD1
-                                  0x03dd, // NLIGHT
-                                  0x07f6  // MJYD2S
-                                  };
+const uint16_t kMINRFDeviceID[MI_TYPES]={ 0x0098, // Flora
+                                          0x01aa, // MJ_HT_V1
+                                          0x045b, // LYWSD02
+                                          0x055b, // LYWSD03
+                                          0x0347, // CGG1
+                                          0x0576, // CGD1
+                                          0x03dd, // NLIGHT
+                                          0x07f6, // MJYD2S
+                                          0x0153  // yee-rc
+                                          };
 
-const char kMINRFSlaveType1[] PROGMEM = "Flora";
-const char kMINRFSlaveType2[] PROGMEM = "MJ_HT_V1";
-const char kMINRFSlaveType3[] PROGMEM = "LYWSD02";
-const char kMINRFSlaveType4[] PROGMEM = "LYWSD03";
-const char kMINRFSlaveType5[] PROGMEM = "CGG1";
-const char kMINRFSlaveType6[] PROGMEM = "CGD1";
-const char kMINRFSlaveType7[] PROGMEM = "NLIGHT";
-const char kMINRFSlaveType8[] PROGMEM = "MJYD2S";
-const char * kMINRFSlaveType[] PROGMEM = {kMINRFSlaveType1,kMINRFSlaveType2,kMINRFSlaveType3,kMINRFSlaveType4,kMINRFSlaveType5,kMINRFSlaveType6,kMINRFSlaveType7,kMINRFSlaveType8};
+const char kMINRFDeviceType1[] PROGMEM = "Flora";
+const char kMINRFDeviceType2[] PROGMEM = "MJ_HT_V1";
+const char kMINRFDeviceType3[] PROGMEM = "LYWSD02";
+const char kMINRFDeviceType4[] PROGMEM = "LYWSD03";
+const char kMINRFDeviceType5[] PROGMEM = "CGG1";
+const char kMINRFDeviceType6[] PROGMEM = "CGD1";
+const char kMINRFDeviceType7[] PROGMEM = "NLIGHT";
+const char kMINRFDeviceType8[] PROGMEM = "MJYD2S";
+const char kMINRFDeviceType9[] PROGMEM = "YEERC";
+const char * kMINRFDeviceType[] PROGMEM = {kMINRFDeviceType1,kMINRFDeviceType2,kMINRFDeviceType3,kMINRFDeviceType4,kMINRFDeviceType5,kMINRFDeviceType6,kMINRFDeviceType7,kMINRFDeviceType8,kMINRFDeviceType9};
 
 // PDU's or different channels 37-39
 const uint32_t kMINRFFloPDU[3] = {0x3eaa857d,0xef3b8730,0x71da7b46};
@@ -134,17 +142,19 @@ const uint32_t kMINRFL3PDU[3]  = {0x4760dd78,0xdbcc1ccd,0x33049deb}; //encrypted
 const uint32_t kMINRFCGGPDU[3]  = {0x4760cd6e,0xdbcc0cdb,0x33048dfd};
 const uint32_t kMINRFCGDPDU[3]  = {0x5da0d752,0xc10c16e7,0x29c497c1};
 // const uint32_t kMINRFNLIPDU[3]  = {0x4760C56E,0xDBCC04DB,0x0330485FD}; //NLIGHT
+const uint32_t kMINRFYRCPDU[3]  = {0x216D63E2,0x5C3DD47E,0x0A5D0E96};  //yee-rc - 50 30
 
 // start-LSFR for different channels 37-39
 const uint8_t kMINRFlsfrList_A[3] = {0x4b,0x17,0x23};  // Flora, LYWSD02
 const uint8_t kMINRFlsfrList_B[3] = {0x21,0x72,0x43};  // MJ_HT_V1, LYWSD03, CGx
+const uint8_t kMINRFlsfrList_C[3] = {0x38,0x25,0x2e};  // yee-rc
 
 
 #pragma pack(1)  // important!!
 struct mi_beacon_t{
-  uint16_t productID;
+  uint16_t PID;
   uint8_t counter;
-  uint8_t Mac[6];
+  uint8_t MAC[6];
   uint8_t spare; // not on MJ_HT_V1 and CGG1
   uint8_t type;
   uint8_t ten;
@@ -160,11 +170,15 @@ struct mi_beacon_t{
     uint32_t lux:24; //07
     uint8_t moist; //08
     uint16_t fert; //09
+    struct{ //01
+      uint16_t num;
+      uint8_t longPress; 
+    }Btn; 
   };
 };
 
 struct CGDPacket_t {    // related to the whole 32-byte-packet/buffer
-  uint8_t serial[6];
+  uint8_t MAC[6];
   uint16_t mode;
   union {
     struct {
@@ -178,7 +192,7 @@ struct CGDPacket_t {    // related to the whole 32-byte-packet/buffer
 struct bleAdvPacket_t { // for nRF24L01 max 32 bytes = 2+6+24
   uint8_t pduType;
   uint8_t payloadSize;
-  uint8_t mac[6];
+  uint8_t MAC[6];
 };
 
 #ifdef USE_MI_DECRYPTION
@@ -194,6 +208,17 @@ struct encPacket_t{
   uint8_t frameCnt;
   uint8_t MAC[6];
   encPayload_t payload;
+};
+
+struct mjysd02_Packet_t{
+  uint8_t padding[11];
+  uint8_t payloadSize;
+  uint8_t padding3;
+  uint16_t UUID;
+  uint16_t frameCtrl;
+  uint16_t PID;
+  uint8_t frameCnt;
+  uint8_t data[18];
 };
 
 union mi_bindKey_t{
@@ -222,21 +247,22 @@ struct {
   uint8_t currentChan=0;
   uint8_t channelIgnore = 0; //bitfield: 2^channel (0=37,1=38,2=39)
   uint8_t confirmedSensors = 0;
-  uint8_t packetMode; // 0 - normal BLE-advertisements, 1 - 6 "special" sensor packets
+  uint8_t packetMode; // 0 - normal BLE-advertisements, 1 - 9 "special" sensor packets
   uint8_t perPage = 4;
   uint8_t firstUsedPacketMode = 1;
-  uint8_t activeNlight = 0;
+  uint8_t activeLight = 0;
 
   FIFO_t buffer;
 
   struct {
-    uint8_t mac[6];
+    uint8_t MAC[6];
     uint32_t time;
     uint32_t PDU[3];
     bool active = false;
   } beacon;
   bool activeScan = false;
   bool stopScan = false;
+  bool triggeredTELE = false;
 
 #ifdef DEBUG_TASMOTA_SENSOR
   uint8_t streamBuffer[sizeof(buffer)]; //  raw data stream bytes
@@ -246,8 +272,8 @@ struct {
 } MINRF;
 
 struct mi_sensor_t{
-  uint8_t type; //Flora = 1; MJ_HT_V1=2; LYWSD02=3; LYWSD03=4; CGG1=5; CGD1=6
-  uint8_t serial[6];
+  uint8_t type; //Flora = 1; MJ_HT_V1=2; LYWSD02=3; LYWSD03=4; CGG1=5; CGD1=6; YEERC=9
+  uint8_t MAC[6];
   uint8_t showedUp;
   float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
   union {
@@ -260,22 +286,33 @@ struct mi_sensor_t{
       float hum;
       uint8_t bat;
     }; // MJ_HT_V1, LYWSD0x, CGx
+    struct {
+      uint8_t btn;
+      uint8_t shallSendMQTT;
+      uint8_t lastCnt;
+    }; // yee-rc
   };
 };
 
-struct mi_nlight_t{
+struct mi_light_t{
   uint8_t MAC[6];
   uint32_t PDU[3];
-  uint8_t type; // NLIGHT=7
+  uint8_t type; // NLIGHT=7, MJYD2S=8
+  uint8_t bat;
   struct {
     uint16_t events; //"alarms" since boot
     uint8_t lastCnt; //device generated counter of the packet
+    uint8_t shallSendMQTT;
   };
+  uint32_t NMT; // no motion time in seconds for the MJYD2S
+  uint32_t lastTime;
+  uint8_t lux; //1 or 64 for the MJYD2S
+  uint8_t eventType; //internal type of actual event for the MJYD2S
+
 };
 
-
 struct scan_entry_t {
-  uint8_t mac[6];
+  uint8_t MAC[6];
   uint16_t cid;
   uint16_t svc;
   uint16_t uuid;
@@ -287,7 +324,7 @@ std::vector<scan_entry_t> MINRFscanResult;
 #ifdef USE_MI_DECRYPTION
 std::vector<mi_bindKey_t> MIBLEbindKeys;
 #endif //USE_MI_DECRYPTION
-std::vector<mi_nlight_t> MIBLEnlights;
+std::vector<mi_light_t> MIBLElights;
 
 static union{
   scan_entry_t MINRFdummyEntry;
@@ -299,7 +336,7 @@ static union{
 /**
  * @brief
  *
- * @param _mode Packet mode 0-6
+ * @param _mode Packet mode 0-9
  * @return true  If no error occured
  * @return false  If NRF24L01 is not connected
  */
@@ -368,29 +405,17 @@ bool MINRFreceivePacket(void)
 
     // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: _lsfrlist: %x, chan: %u, mode: %u"),_lsfrlist[MINRF.currentChan],MINRF.currentChan, MINRF.packetMode);
     switch (MINRF.packetMode) {
-      case 0:
-      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  MINRF.channel[MINRF.currentChan] | 0x40);
+      case 0: case 7: case 8: 
+      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  MINRF.channel[MINRF.currentChan] | 0x40); // "BEACON" mode, "NLIGHT" mode, "MJYD2S" mode
       break;
-      case 1:
-      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_A[MINRF.currentChan]); // "flora" mode
+      case 1: case 3:
+      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_A[MINRF.currentChan]); // "flora" mode, "LYWSD02" mode
       break;
-      case 2:
-      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_B[MINRF.currentChan]); // "MJ_HT_V1" mode
+      case 2: case 4: case 5: case 6:
+      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_B[MINRF.currentChan]); // "MJ_HT_V1" mode, LYWSD03" mode, "CGG1" mode, "CGD1" mode
       break;
-      case 3:
-      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_A[MINRF.currentChan]); // "LYWSD02" mode
-      break;
-      case 4:
-      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_B[MINRF.currentChan]); // "LYWSD03" mode
-      break;
-      case 5:
-      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_B[MINRF.currentChan]); // "CGG1" mode
-      break;
-      case 6:
-      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_B[MINRF.currentChan]); // "CGD1" mode
-      break;
-      case 7:
-      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  MINRF.channel[MINRF.currentChan] | 0x40); // "NLIGHT" mode
+      case 9:
+      MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_C[MINRF.currentChan]); // "YEE-RC" mode
       break;
     }
     // DEBUG_SENSOR_LOG(PSTR("MINRF: LSFR:%x"),_lsfr);
@@ -400,7 +425,7 @@ bool MINRFreceivePacket(void)
   return true;
 }
 
-#ifdef DEBUG_TASMOTA_SENSOR
+// #ifdef DEBUG_TASMOTA_SENSOR
 void MINRFshowBuffer(uint8_t (&buf)[32]){ // we use this only for the 32-byte-FIFO-buffer, so 32 is hardcoded
   // DEBUG_SENSOR_LOG(PSTR("MINRF: Buffer: %c %c %c %c %c %c %c %c"
   //                                       " %c %c %c %c %c %c %c %c"
@@ -415,7 +440,7 @@ void MINRFshowBuffer(uint8_t (&buf)[32]){ // we use this only for the 32-byte-FI
   buf[24],buf[25],buf[26],buf[27],buf[28],buf[29],buf[30],buf[31]
   );
 }
-#endif // DEBUG_TASMOTA_SENSOR
+// #endif // DEBUG_TASMOTA_SENSOR
 
 /**
  * @brief change lsfrBuffer content to "wire bit order"
@@ -483,7 +508,7 @@ void MINRFhandleScan(void){
     MINRFscanResult.erase(std::remove_if(MINRFscanResult.begin(),
                           MINRFscanResult.end(),
                           [&i](scan_entry_t e) {
-                            if(e.showedUp>2) AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: Beacon %02u: %02X%02X%02X%02X%02X%02X Cid: %04X Svc: %04X UUID: %04X"),i,e.mac[0],e.mac[1],e.mac[2],e.mac[3],e.mac[4],e.mac[5],e.cid,e.svc,e.uuid);
+                            if(e.showedUp>2) AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: Beacon %02u: %02X%02X%02X%02X%02X%02X Cid: %04X Svc: %04X UUID: %04X"),i,e.MAC[0],e.MAC[1],e.MAC[2],e.MAC[3],e.MAC[4],e.MAC[5],e.cid,e.svc,e.uuid);
                             i++;
                             return ((e.showedUp < 3));
                             }),
@@ -492,11 +517,11 @@ void MINRFhandleScan(void){
     return;
   }
 
-  MINRFreverseMAC(MINRF.buffer.bleAdv.mac);
+  MINRFreverseMAC(MINRF.buffer.bleAdv.MAC);
   for(uint32_t i=0; i<MINRFscanResult.size(); i++){
-    if(memcmp(MINRF.buffer.bleAdv.mac,MINRFscanResult[i].mac,sizeof(MINRF.buffer.bleAdv.mac))==0){
+    if(memcmp(MINRF.buffer.bleAdv.MAC,MINRFscanResult[i].MAC,sizeof(MINRF.buffer.bleAdv.MAC))==0){
       MINRFscanResult[i].showedUp++;
-      // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: ADVk: %02x %02x %02x %02x %02x %02x"),MINRF.buffer.bleAdv.mac[0],MINRF.buffer.bleAdv.mac[1],MINRF.buffer.bleAdv.mac[2],MINRF.buffer.bleAdv.mac[3],MINRF.buffer.bleAdv.mac[4],MINRF.buffer.bleAdv.mac[5]);
+      // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: ADVk: %02x %02x %02x %02x %02x %02x"),MINRF.buffer.bleAdv.MAC[0],MINRF.buffer.bleAdv.MAC[1],MINRF.buffer.bleAdv.MAC[2],MINRF.buffer.bleAdv.MAC[3],MINRF.buffer.bleAdv.MAC[4],MINRF.buffer.bleAdv.MAC[5]);
       return;
     }
   }
@@ -506,8 +531,8 @@ void MINRFhandleScan(void){
   _new.cid = 0;
   _new.svc = 0;
   _new.uuid = 0;
-  memcpy(_new.mac,MINRF.buffer.bleAdv.mac,sizeof(_new.mac));
-  memcpy(MINRF.beacon.mac,MINRF.buffer.bleAdv.mac,sizeof(_new.mac));
+  memcpy(_new.MAC,MINRF.buffer.bleAdv.MAC,sizeof(_new.MAC));
+  memcpy(MINRF.beacon.MAC,MINRF.buffer.bleAdv.MAC,sizeof(_new.MAC));
   if (MINRFhandleBeacon(&_new,0)){
     MINRFscanResult.push_back(_new);
   }
@@ -519,8 +544,8 @@ void MINRFhandleScan(void){
  * @param entry number of entry in scan list
  */
 void MINRFstartBeacon(uint16_t entry){
-  memcpy(MINRF.beacon.mac,MINRFscanResult[entry].mac,sizeof(MINRF.beacon.mac));
-  AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: Beacon activated: %02x:%02x:%02x:%02x:%02x:%02x"),MINRF.beacon.mac[0],MINRF.beacon.mac[1],MINRF.beacon.mac[2],MINRF.beacon.mac[3],MINRF.beacon.mac[4],MINRF.beacon.mac[5]);
+  memcpy(MINRF.beacon.MAC,MINRFscanResult[entry].MAC,sizeof(MINRF.beacon.MAC));
+  AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: Beacon activated: %02x:%02x:%02x:%02x:%02x:%02x"),MINRF.beacon.MAC[0],MINRF.beacon.MAC[1],MINRF.beacon.MAC[2],MINRF.beacon.MAC[3],MINRF.beacon.MAC[4],MINRF.beacon.MAC[5]);
   MINRF.beacon.time = 0;
   MINRF.beacon.active = true;
 }
@@ -543,7 +568,7 @@ bool MINRFhandleBeacon(scan_entry_t * entry, uint32_t offset){
   MINRFwhiten((uint8_t *)&_buf, sizeof(_buf), MINRF.channel[MINRF.currentChan] | 0x40);
   if (offset == 6) MINRFreverseMAC((uint8_t*)&_buf[2]);
 
-  if(memcmp((uint8_t*)&_buf[2],MINRF.beacon.mac,2)==0){ // always at least 2 undestroyed bytes left
+  if(memcmp((uint8_t*)&_buf[2],MINRF.beacon.MAC,2)==0){ // always at least 2 undestroyed bytes left
     if(_buf[8]!=2 && _buf[9]!=1){
       DEBUG_SENSOR_LOG(PSTR("MINRF: unsupported ADV %02x %02x"), _buf[8],_buf[9]);
       return success;
@@ -624,15 +649,15 @@ void MINRFbeaconCounter(void) {
  * @brief compute "PDU" from MAC for each possible channel and store it globally
  *
  */
-void MINRFcomputeBeaconPDU(uint8_t (&_mac)[6], uint32_t (&PDU)[3]){
+void MINRFcomputeBeaconPDU(uint8_t (&_MAC)[6], uint32_t (&PDU)[3], uint32_t offset){
   uint32_t _PDU[3];
   for (uint32_t i = 0; i<3; i++){
     bleAdvPacket_t packet;
-    memcpy((uint8_t *)&packet.mac, (uint8_t *)&_mac, sizeof(packet.mac));
-    MINRFreverseMAC(packet.mac);
+    memcpy((uint8_t *)&packet.MAC, (uint8_t *)&_MAC, sizeof(packet.MAC));
+    MINRFreverseMAC(packet.MAC);
     MINRFwhiten((uint8_t *)&packet, sizeof(packet), MINRF.channel[i] | 0x40);
     MINRFswapbuf((uint8_t*)&packet,sizeof(packet));
-    uint32_t pdu = packet.mac[0]<<24 | packet.mac[1]<<16 | packet.mac[2]<<8 | packet.mac[3];
+    uint32_t pdu = packet.MAC[0+offset]<<24 | packet.MAC[1+offset]<<16 | packet.MAC[2+offset]<<8 | packet.MAC[3+offset];
     _PDU[i] = pdu;
   }
   memcpy(PDU,_PDU,sizeof(_PDU));
@@ -661,13 +686,13 @@ int MINRFdecryptPacket(char *_buf){
   uint8_t _bindkey[16] = {0x0};
   for(uint32_t i=0; i<MIBLEbindKeys.size(); i++){
     if(memcmp(packet->MAC,MIBLEbindKeys[i].MAC,sizeof(packet->MAC))==0){
-      AddLog_P2(LOG_LEVEL_DEBUG,PSTR("have key"));
+      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("have key"));
       memcpy(_bindkey,MIBLEbindKeys[i].key,sizeof(_bindkey));
       break;
     }
     // else{
-    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mac in packet: %02x  %02x  %02x  %02x  %02x  %02x"), packet->MAC[0], packet->MAC[1], packet->MAC[2], packet->MAC[3], packet->MAC[4], packet->MAC[5]);
-    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mac in vector: %02x  %02x  %02x  %02x  %02x  %02x"), MIBLEbindKeys[i].MAC[0], MIBLEbindKeys[i].MAC[1], MIBLEbindKeys[i].MAC[2], MIBLEbindKeys[i].MAC[3], MIBLEbindKeys[i].MAC[4], MIBLEbindKeys[i].MAC[5]);
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MAC in packet: %02x  %02x  %02x  %02x  %02x  %02x"), packet->MAC[0], packet->MAC[1], packet->MAC[2], packet->MAC[3], packet->MAC[4], packet->MAC[5]);
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MAC in vector: %02x  %02x  %02x  %02x  %02x  %02x"), MIBLEbindKeys[i].MAC[0], MIBLEbindKeys[i].MAC[1], MIBLEbindKeys[i].MAC[2], MIBLEbindKeys[i].MAC[3], MIBLEbindKeys[i].MAC[4], MIBLEbindKeys[i].MAC[5]);
     // }
   }
 
@@ -686,7 +711,80 @@ int MINRFdecryptPacket(char *_buf){
   ret = br_ccm_check_tag(&ctx, packet->payload.tag);
   AddLog_P2(LOG_LEVEL_DEBUG,PSTR("BEARSSL: Err:%i, Decrypted : %02x  %02x  %02x  %02x  %02x "), ret, output[0],output[1],output[2],output[3],output[4]);
   memcpy((uint8_t*)(packet->payload.cipher)+1,output,sizeof(packet->payload.cipher));
-  return (ret-1);
+  return ret;
+}
+
+int MINRFdecryptMJYD2SPacket(char *_buf, uint8_t _light, char* _output){
+  int ret = 0;
+  uint8_t nonce[12];
+  const unsigned char authData[1] = {0x11};
+  uint8_t tag[4];
+  mjysd02_Packet_t *packet = (mjysd02_Packet_t*)_buf;
+
+  // nonce: device MAC, device type, frame cnt, ext. cnt
+  for (uint32_t i = 0; i<6; i++){
+    nonce[i] = MIBLElights[_light-1].MAC[5-i];
+  }
+  memcpy((uint8_t*)&nonce+6,(uint8_t*)&packet->PID,2);
+  nonce[8] = packet->frameCnt;
+  memcpy((uint8_t*)&nonce+9,(uint8_t*)&packet->padding[0] + packet->payloadSize + 5, 3);
+  // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("nonce: %02x  %02x  %02x  %02x  %02x  %02x %02x  %02x  %02x  %02x  %02x  %02x"), nonce[0], nonce[1], nonce[2], nonce[3], nonce[4], nonce[5], nonce[6], nonce[7], nonce[8], nonce[9], nonce[10], nonce[11]);
+
+  uint8_t _bindkey[16];
+  for(uint32_t i=0; i<MIBLEbindKeys.size(); i++){
+    if(memcmp(MIBLElights[_light-1].MAC,MIBLEbindKeys[i].MAC,sizeof(MIBLElights[_light-1].MAC))==0){
+      AddLog_P2(LOG_LEVEL_DEBUG,PSTR("have key"));
+      memcpy(_bindkey,MIBLEbindKeys[i].key,sizeof(_bindkey));
+      break;
+    }
+    // else{
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MAC in packet: %02x  %02x  %02x  %02x  %02x  %02x"), packet->MAC[0], packet->MAC[1], packet->MAC[2], packet->MAC[3], packet->MAC[4], packet->MAC[5]);
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MAC in vector: %02x  %02x  %02x  %02x  %02x  %02x"), MIBLEbindKeys[i].MAC[0], MIBLEbindKeys[i].MAC[1], MIBLEbindKeys[i].MAC[2], MIBLEbindKeys[i].MAC[3], MIBLEbindKeys[i].MAC[4], MIBLEbindKeys[i].MAC[5]);
+    // }
+  }
+
+  // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("size %u"),packet->payloadSize);
+  uint32_t _size;
+  int32_t _offset;
+  uint32_t _tagSize;
+  switch (packet->payloadSize){
+  case 22:
+    _size = 7;
+    _offset = 2;
+    _tagSize = 4;
+    break;
+  case 25:
+    _size = packet->payloadSize - 21;
+    _offset = -1;
+    _tagSize = 4;
+    break;
+  case 27:
+    _size = packet->payloadSize - 21;
+    _offset = 1;
+    _tagSize = 3;
+    break;
+  default:
+    return 0;
+    break;
+  }
+  // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("size %u , offset %u"),_size,_offset);
+  memcpy(_output,(uint8_t*)&packet->padding[0] + packet->payloadSize - _offset, _size);
+  // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("BEARSSL: Output : %02x  %02x  %02x  %02x  %02x %02x  %02x"), _output[0], _output[1],_output[2],_output[3],_output[4],_output[5],_output[6]);
+
+  br_aes_small_ctrcbc_keys keyCtx;
+  br_aes_small_ctrcbc_init(&keyCtx, _bindkey, sizeof(_bindkey));
+
+  br_ccm_context ctx;
+  br_ccm_init(&ctx, &keyCtx.vtable);
+  br_ccm_reset(&ctx, nonce, sizeof(nonce), sizeof(authData),_size,4);
+	br_ccm_aad_inject(&ctx, authData, sizeof(authData));
+	br_ccm_flip(&ctx);
+  br_ccm_run(&ctx, 0, _output, _size);
+  // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("BEARSSL: Err:%i, Decrypted : %02x  %02x  %02x  %02x  %02x %02x  %02x"), ret, _output[0], _output[1],_output[2],_output[3],_output[4],_output[5],_output[6]);
+
+  br_ccm_get_tag(&ctx, tag);
+  ret = memcmp(tag,(uint8_t*)&packet->padding[0] + packet->payloadSize + 8, _tagSize);
+  return ret;
 }
 #endif //USE_MI_DECRYPTION
 
@@ -697,14 +795,14 @@ int MINRFdecryptPacket(char *_buf){
 /**
  * @brief reverse 6-byte-array, hard-coded size of 6
  *
- * @param _mac pass an uint_t[6]
+ * @param _MAC pass an uint_t[6]
  */
-void MINRFreverseMAC(uint8_t _mac[]){
+void MINRFreverseMAC(uint8_t _MAC[]){
   uint8_t _reversedMAC[6];
   for (uint8_t i=0; i<6; i++){
-    _reversedMAC[5-i] = _mac[i];
+    _reversedMAC[5-i] = _MAC[i];
   }
-  memcpy(_mac,_reversedMAC, sizeof(_reversedMAC));
+  memcpy(_MAC,_reversedMAC, sizeof(_reversedMAC));
 }
 #ifdef USE_MI_DECRYPTION
 void MINRFAddKey(char* payload){
@@ -728,9 +826,9 @@ void MINRFAddKey(char* payload){
  * @brief Convert combined key-MAC-string to
  *
  * @param _string input string in format: AABBCCDDEEFF... (upper case!), must be 44 chars!!
- * @param _mac  target byte array with fixed size of 16 + 6
+ * @param _MAC  target byte array with fixed size of 16 + 6
  */
-void MINRFKeyMACStringToBytes(char* _string,uint8_t _keyMac[]) { //uppercase
+void MINRFKeyMACStringToBytes(char* _string,uint8_t _keyMAC[]) { //uppercase
     uint32_t index = 0;
     while (index < 44) {
         char c = _string[index];
@@ -739,21 +837,21 @@ void MINRFKeyMACStringToBytes(char* _string,uint8_t _keyMac[]) { //uppercase
           value = (c - '0');
         else if (c >= 'A' && c <= 'F')
           value = (10 + (c - 'A'));
-        _keyMac[(index/2)] += value << (((index + 1) % 2) * 4);
+        _keyMAC[(index/2)] += value << (((index + 1) % 2) * 4);
         index++;
     }
     DEBUG_SENSOR_LOG(PSTR("MINRF:  %s to:"),_string);
-    DEBUG_SENSOR_LOG(PSTR("MINRF:  key-array: %02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"),_keyMac[0],_keyMac[1],_keyMac[2],_keyMac[3],_keyMac[4],_keyMac[5],_keyMac[6],_keyMac[7],_keyMac[8],_keyMac[9],_keyMac[10],_keyMac[11],_keyMac[12],_keyMac[13],_keyMac[14],_keyMac[15]);
-    DEBUG_SENSOR_LOG(PSTR("MINRF: MAC-array: %02X%02X%02X%02X%02X%02X"),_keyMac[16],_keyMac[17],_keyMac[18],_keyMac[19],_keyMac[20],_keyMac[21]);
+    DEBUG_SENSOR_LOG(PSTR("MINRF:  key-array: %02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"),_keyMAC[0],_keyMAC[1],_keyMAC[2],_keyMAC[3],_keyMAC[4],_keyMAC[5],_keyMAC[6],_keyMAC[7],_keyMAC[8],_keyMAC[9],_keyMAC[10],_keyMAC[11],_keyMAC[12],_keyMAC[13],_keyMAC[14],_keyMAC[15]);
+    DEBUG_SENSOR_LOG(PSTR("MINRF: MAC-array: %02X%02X%02X%02X%02X%02X"),_keyMAC[16],_keyMAC[17],_keyMAC[18],_keyMAC[19],_keyMAC[20],_keyMAC[21]);
 }
 #endif //USE_MI_DECRYPTION
 /**
  * @brief
  *
  * @param _string input string in format: AABBCCDDEEFF (upper case!)
- * @param _mac  target byte array with fixed size of 6
+ * @param _MAC  target byte array with fixed size of 6
  */
-void MINRFMACStringToBytes(char* _string, uint8_t _mac[]) { //uppercase
+void MINRFMACStringToBytes(char* _string, uint8_t _MAC[]) { //uppercase
     uint32_t index = 0;
     while (index < 12) {
         char c = _string[index];
@@ -762,10 +860,10 @@ void MINRFMACStringToBytes(char* _string, uint8_t _mac[]) { //uppercase
           value = (c - '0');
         else if (c >= 'A' && c <= 'F')
           value = (10 + (c - 'A'));
-        _mac[(index/2)] += value << (((index + 1) % 2) * 4);
+        _MAC[(index/2)] += value << (((index + 1) % 2) * 4);
         index++;
     }
-    // DEBUG_SENSOR_LOG(PSTR("MINRF:  %s to MAC-array: %02X%02X%02X%02X%02X%02X"),_string,_mac[0],_mac[1],_mac[2],_mac[3],_mac[4],_mac[5]);
+    // DEBUG_SENSOR_LOG(PSTR("MINRF:  %s to MAC-array: %02X%02X%02X%02X%02X%02X"),_string,_MAC[0],_MAC[1],_MAC[2],_MAC[3],_MAC[4],_MAC[5]);
 }
 
 /**
@@ -781,6 +879,22 @@ void MINRFcomputefirstUsedPacketMode(void){
       break;
     }
   }
+}
+
+/**
+ * @brief Recalculates the receive buffer with an offset in relation to a standard BLE advertisement.
+ *        Used for custom PDU, typically based on a MAC
+ * 
+ * @param _buf - The receive buffer
+ * @param offset - in bytes
+ */
+
+void MINRFrecalcBuffer(uint8_t *_buf, uint32_t offset){
+  MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer), MINRF.channel[MINRF.currentChan] | 0x40);
+  MINRFswapbuf((uint8_t*)&MINRF.buffer,sizeof(MINRF.buffer));
+  memcpy(_buf+offset,MINRF.buffer.raw,32);
+  MINRFswapbuf(_buf,32+offset);
+  MINRFwhiten(_buf, 32+offset, MINRF.channel[MINRF.currentChan] | 0x40);
 }
 
 /**
@@ -806,7 +920,7 @@ void MINRFchangePacketModeTo(uint8_t _mode) {
       NRF24radio.openReadingPipe(0,kMINRFL2PDU[_nextchannel]);// 95 fe 70 20 -> LYWSD02
     break;
     case 4: // special LYWSD03 packet
-      NRF24radio.openReadingPipe(0,kMINRFL3PDU[_nextchannel]);// 95 fe 58 30 -> LYWSD03 (= no data message)
+      NRF24radio.openReadingPipe(0,kMINRFL3PDU[_nextchannel]);// 95 fe 58 58 -> LYWSD03 (= encrypted data message)
     break;
     case 5: // special CGG1 packet
       NRF24radio.openReadingPipe(0,kMINRFCGGPDU[_nextchannel]); // 95 fe 50 30 -> CGG1
@@ -814,10 +928,13 @@ void MINRFchangePacketModeTo(uint8_t _mode) {
     case 6: // special CGD1 packet
       NRF24radio.openReadingPipe(0,kMINRFCGDPDU[_nextchannel]); // cd fd 08 0c -> CGD1
     break;
-    case 7: // MAC based NLIGHT packet
-      if (MIBLEnlights.size()==0) break;
-      NRF24radio.openReadingPipe(0,MIBLEnlights[MINRF.activeNlight].PDU[_nextchannel]); // computed from MAC -> NLIGHT
-      MINRF.activeNlight++;
+    case 7: case 8:// MAC based LIGHT packet
+      if (MIBLElights.size()==0) break;
+      NRF24radio.openReadingPipe(0,MIBLElights[MINRF.activeLight].PDU[_nextchannel]); // computed from MAC -> NLIGHT and MJYSD2S
+      MINRF.activeLight++;
+    break;
+    case 9: // YEE-RC packet 
+      NRF24radio.openReadingPipe(0,kMINRFYRCPDU[_nextchannel]);// 95 fe 50 30 -> YEE-RC
     break;
   }
   // DEBUG_SENSOR_LOG(PSTR("MINRF: Change Mode to %u"),_mode);
@@ -827,29 +944,29 @@ void MINRFchangePacketModeTo(uint8_t _mode) {
 /**
  * @brief Return the slot number of a known sensor or return create new sensor slot
  *
- * @param _serial     BLE address of the sensor
+ * @param _MAC     BLE address of the sensor
  * @param _type       Type number of the sensor
  * @return uint32_t   Known or new slot in the sensors-vector
  */
-uint32_t MINRFgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
+uint32_t MINRFgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type){
 
   DEBUG_SENSOR_LOG(PSTR("MINRF: will test ID-type: %x"), _type);
   bool _success = false;
-  for (uint32_t i=0;i<6;i++){ // i < sizeof(kMINRFSlaveID) gives compiler warning
-    if(_type == kMINRFSlaveID[i]){
+  for (uint32_t i=0;i<MI_TYPES;i++){ // i < sizeof(kMINRFDeviceID) gives compiler warning
+    if(_type == kMINRFDeviceID[i]){
       DEBUG_SENSOR_LOG(PSTR("MINRF: ID is type %u"), i);
       _type = i+1;
       _success = true;
     }
     else {
-      DEBUG_SENSOR_LOG(PSTR("MINRF: ID-type is not: %x"),kMINRFSlaveID[i]);
+      DEBUG_SENSOR_LOG(PSTR("MINRF: ID-type is not: %x"),kMINRFDeviceID[i]);
     }
   }
   if(!_success) return 0xff;
 
   DEBUG_SENSOR_LOG(PSTR("MINRF: vector size %u"), MIBLEsensors.size());
   for(uint32_t i=0; i<MIBLEsensors.size(); i++){
-    if(memcmp(_serial,MIBLEsensors[i].serial,sizeof(_serial))==0){
+    if(memcmp(_MAC,MIBLEsensors[i].MAC,sizeof(_MAC))==0){
       DEBUG_SENSOR_LOG(PSTR("MINRF: known sensor at slot: %u"), i);
         if(MIBLEsensors[i].showedUp < 3){ // if we got an intact packet, the sensor should show up several times
           MIBLEsensors[i].showedUp++;     // count up to the above number ... now we are pretty sure
@@ -858,13 +975,13 @@ uint32_t MINRFgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
       }
       return i;
     }
-    DEBUG_SENSOR_LOG(PSTR("MINRF i: %x %x %x %x %x %x"), MIBLEsensors[i].serial[5], MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[0]);
-    DEBUG_SENSOR_LOG(PSTR("MINRF n: %x %x %x %x %x %x"), _serial[5], _serial[4], _serial[3],_serial[2],_serial[1],_serial[0]);
+    DEBUG_SENSOR_LOG(PSTR("MINRF i: %x %x %x %x %x %x"), MIBLEsensors[i].MAC[5], MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[2],MIBLEsensors[i].MAC[1],MIBLEsensors[i].MAC[0]);
+    DEBUG_SENSOR_LOG(PSTR("MINRF n: %x %x %x %x %x %x"), _MAC[5], _MAC[4], _MAC[3],_MAC[2],_MAC[1],_MAC[0]);
   }
 
   DEBUG_SENSOR_LOG(PSTR("MINRF: found new sensor"));
   mi_sensor_t _newSensor;
-  memcpy(_newSensor.serial,_serial, sizeof(_serial));
+  memcpy(_newSensor.MAC,_MAC, sizeof(_MAC));
   _newSensor.type = _type;
   _newSensor.showedUp = 1;
   _newSensor.temp =NAN;
@@ -883,7 +1000,7 @@ uint32_t MINRFgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
       break;
     }
   MIBLEsensors.push_back(_newSensor);
-  AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: new %s at slot: %u"),kMINRFSlaveType[_type-1], MIBLEsensors.size()-1);
+  AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: new %s at slot: %u"),kMINRFDeviceType[_type-1], MIBLEsensors.size()-1);
   return (MIBLEsensors.size()-1);
 };
 
@@ -894,7 +1011,7 @@ uint32_t MINRFgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
  */
 void MINRFpurgeFakeSensors(void){
   for(uint32_t i=0; i<MIBLEsensors.size(); i++){
-    DEBUG_SENSOR_LOG(PSTR("MINRF: remove FAKE %s at slot: %u"),kMINRFSlaveType[MIBLEsensors[i].type-1], i);
+    DEBUG_SENSOR_LOG(PSTR("MINRF: remove FAKE %s at slot: %u"),kMINRFDeviceType[MIBLEsensors[i].type-1], i);
     MIBLEsensors.erase(std::remove_if(MIBLEsensors.begin(),
                       MIBLEsensors.end(),
                       [](mi_sensor_t i) { return ((i.showedUp < 3 || bitRead(MINRF.ignore,i.type))); }),
@@ -917,31 +1034,57 @@ void MINRFconfirmSensors(void){
 }
 
 /**
+ * @brief trigger real-time message for PIR or RC
+ * 
+ */
+void MINRFtriggerTele(void){
+    MINRF.triggeredTELE = true;
+    mqtt_data[0] = '\0';
+    if (MqttShowSensor()) {
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  #ifdef USE_RULES
+      RulesTeleperiod();  // Allow rule based HA messages
+  #endif  // USE_RULES
+    }
+}
+
+/**
  * @brief generic MiBeacon parser
  *
  */
 void MINRFhandleMiBeaconPacket(void){
-  MINRFreverseMAC(MINRF.buffer.miBeacon.Mac);
-  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.miBeacon.Mac, MINRF.buffer.miBeacon.productID);
+  MINRFreverseMAC(MINRF.buffer.miBeacon.MAC);
+  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.miBeacon.MAC, MINRF.buffer.miBeacon.PID);
   if(_slot==0xff) return;
   DEBUG_SENSOR_LOG(PSTR("MINRF: slot %u, size vector: %u %u"),_slot,MIBLEsensors.size());
   mi_sensor_t *_sensorVec = &MIBLEsensors.at(_slot);
   DEBUG_SENSOR_LOG(PSTR("MINRF: %u %u %u"),_slot,_sensorVec->type,MINRF.buffer.miBeacon.type);
   float _tempFloat;
+  int decryptRet;
 
-  if (_sensorVec->type==MJ_HT_V1 || _sensorVec->type==CGG1){
+  switch(_sensorVec->type){
+    case MJ_HT_V1: case CGG1: case YEERC:
     memcpy(MINRFtempBuf,(uint8_t*)&MINRF.buffer.miBeacon.spare, 32-9); // shift by one byte for the MJ_HT_V1 and CGG1
     memcpy((uint8_t*)&MINRF.buffer.miBeacon.type,MINRFtempBuf, 32-9);  // shift by one byte for the MJ_HT_V1 and CGG1
-  }
+    break;
 #ifdef USE_MI_DECRYPTION
-  if(_sensorVec->type==LYWSD03){
-    int decryptRet = -1;
+    case LYWSD03:
     decryptRet = MINRFdecryptPacket((char*)&MINRF.buffer); //start with PID
-    if(decryptRet==0) _sensorVec->showedUp=255; // if decryption worked, this must be a valid sensor
-  }
+    if(decryptRet==1) _sensorVec->showedUp=255; // if decryption worked, this must be a valid sensor
+    break;
 #endif //USE_MI_DECRYPTION
+  }
+
   DEBUG_SENSOR_LOG(PSTR("%s at slot %u"), kNRFSlaveType[_sensorVec->type-1],_slot);
   switch(MINRF.buffer.miBeacon.type){
+    case 0x1:
+    if(MINRF.buffer.miBeacon.counter==_sensorVec->lastCnt) break;
+    // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: YEE-RC button: %u Long: %u"), MINRF.buffer.miBeacon.Btn.num, MINRF.buffer.miBeacon.Btn.longPress);
+    _sensorVec->lastCnt=MINRF.buffer.miBeacon.counter;
+    _sensorVec->btn=MINRF.buffer.miBeacon.Btn.num + (MINRF.buffer.miBeacon.Btn.longPress/2)*6;
+    _sensorVec->shallSendMQTT = 1;
+    MINRFtriggerTele();
+    break;
     case 0x04:
     _tempFloat=(float)(MINRF.buffer.miBeacon.temp)/10.0f;
     if(_tempFloat<60){
@@ -1006,8 +1149,8 @@ void MINRFhandleMiBeaconPacket(void){
  *        Note: battery section is based on "internet data" -> not confirmed yet
  */
 void MINRFhandleCGD1Packet(void){ // no MiBeacon
-  MINRFreverseMAC(MINRF.buffer.CGDPacket.serial);
-  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.CGDPacket.serial, 0x0576); // This must be hard-coded, no object-id in Cleargrass-packet
+  MINRFreverseMAC(MINRF.buffer.CGDPacket.MAC);
+  uint32_t _slot = MINRFgetSensorSlot(MINRF.buffer.CGDPacket.MAC, 0x0576); // This must be hard-coded, no object-id in Cleargrass-packet
   DEBUG_SENSOR_LOG(PSTR("MINRF: Sensor slot: %u"), _slot);
   if(_slot==0xff) return;
 
@@ -1041,39 +1184,119 @@ void MINRFhandleCGD1Packet(void){ // no MiBeacon
 void MINRFhandleNlightPacket(void){ // no MiBeacon
   uint32_t offset = 6;
   uint8_t _buf[32+offset];
-  MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer), MINRF.channel[MINRF.currentChan] | 0x40);
-  MINRFswapbuf((uint8_t*)&MINRF.buffer,sizeof(MINRF.buffer));
-  memcpy((uint8_t*)&_buf+offset,MINRF.buffer.raw,32);
-  MINRFswapbuf((uint8_t*)&_buf,sizeof(_buf));
-  MINRFwhiten((uint8_t *)&_buf, sizeof(_buf), MINRF.channel[MINRF.currentChan] | 0x40);
-  if (offset == 6) MINRFreverseMAC((uint8_t*)&_buf[2]);
+  MINRFrecalcBuffer((uint8_t*)&_buf,offset);
   // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: NLIGHT: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x"),_buf[0],_buf[1],_buf[2],_buf[3],_buf[4],_buf[5],_buf[6],_buf[7],_buf[8],_buf[9],_buf[10],_buf[11],_buf[12],_buf[13],_buf[14],_buf[15],_buf[16],_buf[17],_buf[18]);
   uint32_t _frame_PID = _buf[15]<<24 | _buf[16]<<16 | _buf[17]<<8 | _buf[18];
-  if(_frame_PID!=0x4030dd03) return;
-  AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: NLIGHT:%x"),_frame_PID);
-  uint32_t _idx = MINRF.activeNlight-1;
-  if(_buf[19]!=MIBLEnlights[_idx].lastCnt){
-    MIBLEnlights[_idx].lastCnt = _buf[19];
-    MIBLEnlights[_idx].events++;
-    AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: NLIGHT %u: events: %u, Cnt:%u"), _idx,MIBLEnlights[_idx].events, MIBLEnlights[_idx].lastCnt);
+  if(_frame_PID!=0x4030dd03) return; // invalid packet
+  // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: NLIGHT:%x"),_frame_PID);
+  uint32_t _idx = MINRF.activeLight-1;
+  if((millis() - MIBLElights[_idx].lastTime)<1500) return;
+  if(_buf[19]!=MIBLElights[_idx].lastCnt){
+    MIBLElights[_idx].lastCnt = _buf[19];
+    MIBLElights[_idx].events++;
+    MIBLElights[_idx].shallSendMQTT = 1;
+    MIBLElights[_idx].lastTime = millis();
+    AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MINRF: NLIGHT %u: events: %u, Cnt:%u"), _idx,MIBLElights[_idx].events, MIBLElights[_idx].lastCnt);
   }
 }
 
-void MINRFaddNlight(uint8_t _mac[]){ // no MiBeacon
-  for(uint32_t i=0; i<MIBLEnlights.size(); i++){
-    if(memcmp(_mac,MIBLEnlights[i].MAC,sizeof(MIBLEnlights[i].MAC))==0){
+void MINRFhandleMJYD2SPacket(void){ // no MiBeacon
+  uint32_t offset = 8;
+  uint8_t _buf[32+offset];
+  MINRFrecalcBuffer((uint8_t*)&_buf,offset);
+  mjysd02_Packet_t *_packet = (mjysd02_Packet_t*)&_buf;
+  if(_packet->PID!=0x07f6) return; // invalid packet
+  // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: MJYD2S: %02u %04x %04x %04x %02x"),_packet->payloadSize,_packet->UUID,_packet->frameCtrl,_packet->PID,_packet->frameCnt);
+  // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: PAYLOAD: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x"),_packet->data[0],_packet->data[1],_packet->data[2],_packet->data[3],_packet->data[4],_packet->data[5],_packet->data[6],_packet->data[7],_packet->data[8],_packet->data[9],_packet->data[10],_packet->data[11],_packet->data[12],_packet->data[13],_packet->data[14],_packet->data[15],_packet->data[16],_packet->data[17]);
+  uint32_t _idx = MINRF.activeLight-1;
+  switch(_packet->frameCtrl){
+    case 0x5910:
+      if(_packet->frameCnt!=MIBLElights[_idx].lastCnt){
+        // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: MJYD2S after motion:%x"),_packet->frameCnt);
+        MIBLElights[_idx].lastCnt = _packet->frameCnt;
+        if(millis()-MIBLElights[_idx].lastTime>120000){
+          MIBLElights[_idx].eventType = 1;
+          MIBLElights[_idx].events++;
+          MIBLElights[_idx].shallSendMQTT = 1;
+          MIBLElights[_idx].lastTime = millis();
+          AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MINRF: MJYD2S secondary PIR"));
+        }
+      }
+      break;
+    case 0x5948: case 0x5958:
+      uint8_t output[16];
+      if(_packet->frameCnt==MIBLElights[_idx].lastCnt) break;
+      int32_t ret = MINRFdecryptMJYD2SPacket((char*)&_buf, MINRF.activeLight,(char*)&output);
+      if(ret==0){
+        MIBLElights[_idx].lastCnt = _packet->frameCnt;
+        switch(output[0]){
+          case 0x0f:
+            if(output[1] == 0){
+              if(millis()-MIBLElights[_idx].lastTime>1000){
+                MIBLElights[_idx].eventType = 1; //PIR
+                MIBLElights[_idx].shallSendMQTT = 1;
+                AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MINRF: MJYD2S primary PIR"));
+                MIBLElights[_idx].events++;
+              }
+              MIBLElights[_idx].lastTime = millis();
+              MIBLElights[_idx].lux = output[3];
+            }
+            break;
+          case 0x07:
+            if(output[1] == 0x10){
+              MIBLElights[_idx].eventType = 2; //No PIR
+              MIBLElights[_idx].lux = output[3];
+              MIBLElights[_idx].shallSendMQTT = 1;
+            }
+            break;
+          case 0x0a:
+            MIBLElights[_idx].bat = output[3];
+          break;
+          case 0x17:
+            MIBLElights[_idx].NMT = output[6]<<24 | output[5]<<16 | output[4]<<8 | output[3];
+            MIBLElights[_idx].eventType = 3; // NMT  0, 120, 300, 600, 1800, ... seconds
+            MIBLElights[_idx].shallSendMQTT = 1;
+            // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MINRF: MJYD2S NMT: %u"), MIBLElights[_idx].NMT );
+            break;
+        }
+      }
+  }
+  // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: NLIGHT:%x"),_frame_PID);
+}
+
+
+void MINRFhandleLightPacket(void){
+  switch(MIBLElights[MINRF.activeLight-1].type){
+    case NLIGHT:
+        // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: NLIGHT!!"));
+        MINRFhandleNlightPacket();
+        break;
+    case MJYD2S:
+        // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: MJYD2S !!"));
+        MINRFhandleMJYD2SPacket();
+        break;
+  }
+  if(MIBLElights[MINRF.activeLight-1].shallSendMQTT==1) MINRFtriggerTele();
+}
+
+void MINRFaddLight(uint8_t _MAC[], uint8_t _type){ // no MiBeacon
+  for(uint32_t i=0; i<MIBLElights.size(); i++){
+    if(memcmp(_MAC,MIBLElights[i].MAC,sizeof(MIBLElights[i].MAC))==0){
       // AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: NLIGHT: Known MAC!!"));
       return;
     }
   }
-  mi_nlight_t _nlight;
-  memcpy(_nlight.MAC,_mac,sizeof(_nlight.MAC));
-  MINRFcomputeBeaconPDU(_nlight.MAC,_nlight.PDU);
-  _nlight.type=7;
-  _nlight.events=0;
-  _nlight.lastCnt=0;
-  MIBLEnlights.push_back(_nlight);
-  AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: new %s at slot: %u"),kMINRFSlaveType[NLIGHT-1], MIBLEnlights.size()-1);
+  mi_light_t _light;
+  memcpy(_light.MAC,_MAC,sizeof(_light.MAC));
+  uint32_t offset = (_type == 7)? 0 : 2; // for the MJYD2S we transform the end of the MAC to a PDU
+  MINRFcomputeBeaconPDU(_light.MAC,_light.PDU, offset);
+  _light.type=_type;
+  _light.events=0;
+  _light.lastCnt=0;
+  _light.bat=0;
+  _light.lux=0;
+  MIBLElights.push_back(_light);
+  AddLog_P2(LOG_LEVEL_INFO,PSTR("MINRF: new %s at slot: %u"),kMINRFDeviceType[_type-1], MIBLElights.size()-1);
 }
 
 /*********************************************************************************************\
@@ -1101,14 +1324,14 @@ void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
         }
         else MINRFhandleScan();
         break;
-      case FLORA: case MJ_HT_V1: case LYWSD02: case CGG1: case LYWSD03:
+      case FLORA: case MJ_HT_V1: case LYWSD02: case CGG1: case LYWSD03: case YEERC:
         MINRFhandleMiBeaconPacket();
         break;
       case CGD1:
         MINRFhandleCGD1Packet();
         break;
-      case NLIGHT:
-        MINRFhandleNlightPacket();
+      case NLIGHT: //case MJYD2S:
+        MINRFhandleLightPacket();
         break;
       default:
         break;
@@ -1118,11 +1341,12 @@ void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
     MINRF.firstUsedPacketMode=0;
   }
 
-    if(MINRF.packetMode==NLIGHT){
-    if(MINRF.activeNlight+1>MIBLEnlights.size()){
-      MINRF.activeNlight=0;
-      MINRF.packetMode=MINRF.firstUsedPacketMode;
+  if(MINRF.packetMode==NLIGHT){
+    if(MINRF.activeLight+1>MIBLElights.size()){
+      MINRF.activeLight=0;
+      MINRF.packetMode+=2;
     }
+    else MINRF.packetMode+=2;
   }
   else{  
     MINRF.packetMode = (MINRF.packetMode+1>MI_TYPES) ? MINRF.firstUsedPacketMode : MINRF.packetMode+1;
@@ -1170,15 +1394,34 @@ bool NRFCmd(void) {
         if (XdrvMailbox.data_len > 0) {
             if (XdrvMailbox.payload == 0){
               MINRF.ignore = 0;
+              MINRF.firstUsedPacketMode = 1;
             }
             else if (XdrvMailbox.payload < MI_TYPES+1) {
               bitSet(MINRF.ignore,XdrvMailbox.payload);
               MINRFcomputefirstUsedPacketMode();
               MINRF.timer = 5900;
-              Response_P(S_JSON_NRF_COMMAND, command, kMINRFSlaveType[XdrvMailbox.payload-1]);
+              Response_P(S_JSON_NRF_COMMAND, command, kMINRFDeviceType[XdrvMailbox.payload-1]);
             }
-            else if (XdrvMailbox.payload == 255) {
-              MINRF.ignore = 255;
+            else if (XdrvMailbox.payload == 65535) {
+              MINRF.ignore = 65535;
+            }
+          }
+        Response_P(S_JSON_NRF_COMMAND_NVALUE, command, MINRF.ignore);
+        break;
+      case CMND_NRF_USE:
+        if (XdrvMailbox.data_len > 0) {
+            if (XdrvMailbox.payload == 0){
+              MINRF.ignore = 65535;
+              MINRF.firstUsedPacketMode = 1;
+            }
+            else if (XdrvMailbox.payload < MI_TYPES+1) {
+              bitClear(MINRF.ignore,XdrvMailbox.payload);
+              MINRFcomputefirstUsedPacketMode();
+              MINRF.timer = 5900;
+              Response_P(S_JSON_NRF_COMMAND, command, kMINRFDeviceType[XdrvMailbox.payload-1]);
+            }
+            else if (XdrvMailbox.payload == 65535) {
+              MINRF.ignore = 0;
             }
           }
         Response_P(S_JSON_NRF_COMMAND_NVALUE, command, MINRF.ignore);
@@ -1215,22 +1458,22 @@ bool NRFCmd(void) {
               }
             }
             if (XdrvMailbox.data_len==12){  // a MAC-string
-              memset(MINRF.beacon.mac,0,sizeof(MINRF.beacon.mac));
-              MINRFMACStringToBytes(XdrvMailbox.data, MINRF.beacon.mac);
+              memset(MINRF.beacon.MAC,0,sizeof(MINRF.beacon.MAC));
+              MINRFMACStringToBytes(XdrvMailbox.data, MINRF.beacon.MAC);
               MINRF.beacon.time=0;
               MINRF.beacon.active=true;
               Response_P(S_JSON_NRF_COMMAND, command, XdrvMailbox.data);
             }
-            MINRFcomputeBeaconPDU(MINRF.beacon.mac,MINRF.beacon.PDU);
+            MINRFcomputeBeaconPDU(MINRF.beacon.MAC,MINRF.beacon.PDU,0);
           }
         break;
       case CMND_NRF_NLIGHT:
           if (XdrvMailbox.data_len > 0) {
             if (XdrvMailbox.data_len==12){  // a MAC-string
-              uint8_t _mac[6] = {0};
-              MINRFMACStringToBytes(XdrvMailbox.data, _mac);
+              uint8_t _MAC[6] = {0};
+              MINRFMACStringToBytes(XdrvMailbox.data, _MAC);
               Response_P(S_JSON_NRF_COMMAND, command, XdrvMailbox.data);         
-              MINRFaddNlight(_mac);
+              MINRFaddLight(_MAC, 7);
             }
           }
         break;
@@ -1245,6 +1488,16 @@ bool NRFCmd(void) {
           Response_P(S_JSON_NRF_COMMAND_NVALUE, command, MINRF.channelIgnore);
         break;
 #ifdef USE_MI_DECRYPTION
+      case CMND_NRF_MJYD2S:
+        if (XdrvMailbox.data_len==44){  // a KEY-MAC-string
+          MINRFAddKey(XdrvMailbox.data);
+          uint8_t _MAC[6] = {0};
+          MINRFMACStringToBytes((XdrvMailbox.data)+32, _MAC);
+          MINRFaddLight(_MAC, 8);
+          Response_P(S_JSON_NRF_COMMAND, command, XdrvMailbox.data);
+        }
+        break;
+
       case CMND_NRF_KEY:
         if (XdrvMailbox.data_len==44){  // a KEY-MAC-string
           MINRFAddKey(XdrvMailbox.data);
@@ -1279,40 +1532,98 @@ void MINRFShow(bool json)
     for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
       if(MIBLEsensors[i].showedUp < 3){
         DEBUG_SENSOR_LOG(PSTR("MINRF: sensor not fully registered yet"));
-        break;
+        if(MIBLEsensors[i].type != YEERC) break; // send every RC code, even if there is a potentially false MAC 
         }
-      ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),kMINRFSlaveType[MIBLEsensors[i].type-1],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
-      if (MIBLEsensors[i].type==FLORA && !isnan(MIBLEsensors[i].temp)){
-        char stemp[FLOATSZ];
-        dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, stemp);
-        ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"), stemp);
+      switch(MIBLEsensors[i].type){
+        case YEERC:
+          if(MIBLEsensors[i].shallSendMQTT==0) continue;
+          break;
+        default:
+          if(MINRF.triggeredTELE) continue;
+          break;
+        }
+      ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),kMINRFDeviceType[MIBLEsensors[i].type-1],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[5]);
+      switch(MIBLEsensors[i].type){
+        case FLORA:
+          if(MINRF.triggeredTELE) {
+            ResponseJsonEnd();
+            break;
+          }
+          char stemp[FLOATSZ];
+          dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, stemp);
+          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"), stemp);
 
-        if(MIBLEsensors[i].lux!=0xffffffff){ // this is the error code -> no lux
-          ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
-        }
-        if(!isnan(MIBLEsensors[i].moisture)){
-          dtostrfd(MIBLEsensors[i].moisture, 0, stemp);
-          ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%s"), stemp);
-        }
-        if(!isnan(MIBLEsensors[i].fertility)){
-          dtostrfd(MIBLEsensors[i].fertility, 0, stemp);
-          ResponseAppend_P(PSTR(",\"Fertility\":%s"), stemp);
-        }
-        ResponseJsonEnd();
+          if(MIBLEsensors[i].lux!=0xffffffff){ // this is the error code -> no lux
+            ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
+          }
+          if(!isnan(MIBLEsensors[i].moisture)){
+            dtostrfd(MIBLEsensors[i].moisture, 0, stemp);
+            ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%s"), stemp);
+          }
+          if(!isnan(MIBLEsensors[i].fertility)){
+            dtostrfd(MIBLEsensors[i].fertility, 0, stemp);
+            ResponseAppend_P(PSTR(",\"Fertility\":%s"), stemp);
+          }
+          ResponseJsonEnd();
+          break;
+        case YEERC:
+          if(MIBLEsensors[i].shallSendMQTT == 1){
+            ResponseAppend_P(PSTR("\"Btn\":%u"), MIBLEsensors[i].btn);
+            MIBLEsensors[i].shallSendMQTT = 0;
+          }
+          ResponseJsonEnd();
+          break;
+        default:  
+          if(MINRF.triggeredTELE) {
+            ResponseJsonEnd();
+            break;
+          }
+          if(!isnan(MIBLEsensors[i].temp) && !isnan(MIBLEsensors[i].hum)){
+              ResponseAppendTHD(MIBLEsensors[i].temp,MIBLEsensors[i].hum);
+          }
+          if(MIBLEsensors[i].bat!=0x00){ // this is the error code -> no battery
+            ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
+          }
+          ResponseJsonEnd();
+          break;
       }
-      if (MIBLEsensors[i].type>FLORA){
-        if(!isnan(MIBLEsensors[i].temp) && !isnan(MIBLEsensors[i].hum)){
-            ResponseAppendTHD(MIBLEsensors[i].temp,MIBLEsensors[i].hum);
+    }
+    for(uint32_t i=0; i<MIBLElights.size(); i++){
+      if(MINRF.triggeredTELE && MIBLElights[i].shallSendMQTT==0) continue;
+      ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),kMINRFDeviceType[MIBLElights[i].type-1],MIBLElights[i].MAC[3],MIBLElights[i].MAC[4],MIBLElights[i].MAC[5]);
+      if(MIBLElights[i].shallSendMQTT == 1){
+        switch(MIBLElights[i].type){
+          case NLIGHT:
+            ResponseAppend_P(PSTR("\"PIR\":1,\"Events\":%u"),MIBLElights[i].events);
+            break;
+          case MJYD2S:
+            switch(MIBLElights[i].eventType){
+              case 1: //PIR
+                ResponseAppend_P(PSTR("\"PIR\":1,\"" D_JSON_ILLUMINANCE "\":%u,\"Events\":%u"), MIBLElights[i].lux,MIBLElights[i].events);
+                break;
+              case 2: //No PIR
+                ResponseAppend_P(PSTR("\"PIR\":0,\"" D_JSON_ILLUMINANCE "\":%u"), MIBLElights[i].lux);
+                break;
+              case 3: // contiguous time without motion
+                ResponseAppend_P(PSTR("\"NMT\":%u"), MIBLElights[i].NMT);
+                break;
+            }
         }
-        if(MIBLEsensors[i].bat!=0x00){ // this is the error code -> no battery
-          ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
-        }
-        ResponseJsonEnd();
+        MIBLElights[i].eventType=0;
+        MIBLElights[i].shallSendMQTT = 0;
       }
+      else{
+        if(MIBLElights[i].type==MJYD2S){
+          if(MIBLElights[i].bat!=0) ResponseAppend_P(PSTR("\"Battery\":%u,\"" D_JSON_ILLUMINANCE "\":%u,"), MIBLElights[i].bat, MIBLElights[i].lux);
+        }
+        ResponseAppend_P(PSTR("\"Events\":%u"),MIBLElights[i].events);
+      }
+      ResponseJsonEnd();
     }
     if(MINRF.beacon.active){
     ResponseAppend_P(PSTR(",\"Beacon\":{\"Timer\":%u}"),MINRF.beacon.time);
     }
+    if(MINRF.triggeredTELE) MINRF.triggeredTELE = false;
     // ResponseJsonEnd();
 #ifdef USE_WEBSERVER
     } else {
@@ -1338,41 +1649,51 @@ void MINRFShow(bool json)
           continue;
           }
         WSContentSend_PD(HTTP_MINRF_HL);
-        WSContentSend_PD(HTTP_MINRF_MAC, kMINRFSlaveType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].serial[0], MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
+        WSContentSend_PD(HTTP_MINRF_MAC, kMINRFDeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].MAC[0], MIBLEsensors[i].MAC[1],MIBLEsensors[i].MAC[2],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[5]);
+        if (MIBLEsensors[i].type==YEERC) continue;
         if (MIBLEsensors[i].type==FLORA){
           if(!isnan(MIBLEsensors[i].temp)){
             char temperature[FLOATSZ];
             dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-            WSContentSend_PD(HTTP_SNS_TEMP, kMINRFSlaveType[MIBLEsensors[i].type-1], temperature, TempUnit());
+            WSContentSend_PD(HTTP_SNS_TEMP, kMINRFDeviceType[MIBLEsensors[i].type-1], temperature, TempUnit());
           }
           if(MIBLEsensors[i].lux!=0xffffffff){ // this is the error code -> no valid value
-            WSContentSend_PD(HTTP_SNS_ILLUMINANCE, kMINRFSlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].lux);
+            WSContentSend_PD(HTTP_SNS_ILLUMINANCE, kMINRFDeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].lux);
           }
           if(!isnan(MIBLEsensors[i].moisture)){ // this is the error code -> no valid value
-            WSContentSend_PD(HTTP_SNS_MOISTURE, kMINRFSlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].moisture);
+            WSContentSend_PD(HTTP_SNS_MOISTURE, kMINRFDeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].moisture);
           }
           if(!isnan(MIBLEsensors[i].fertility)){ // this is the error code -> no valid value
-            WSContentSend_PD(HTTP_MINRF_FLORA_DATA, kMINRFSlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].fertility);
+            WSContentSend_PD(HTTP_MINRF_FLORA_DATA, kMINRFDeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].fertility);
           }
         }
         if (MIBLEsensors[i].type>FLORA){ // everything "above" Flora
-          WSContentSend_THD(kMINRFSlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp, MIBLEsensors[i].hum);
+          WSContentSend_THD(kMINRFDeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp, MIBLEsensors[i].hum);
           if(MIBLEsensors[i].bat!=0x00){ // without "juice" nothing can be done
-            WSContentSend_PD(HTTP_BATTERY, kMINRFSlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].bat);
+            WSContentSend_PD(HTTP_BATTERY, kMINRFDeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].bat);
           }
         }
       }
       if(MINRF.beacon.active){
         WSContentSend_PD(HTTP_MINRF_HL);
         WSContentSend_PD(HTTP_MINRF_HL);
-        WSContentSend_PD(HTTP_MINRF_MAC, F("Beacon"), D_MAC_ADDRESS, MINRF.beacon.mac[0], MINRF.beacon.mac[1],MINRF.beacon.mac[2],MINRF.beacon.mac[3],MINRF.beacon.mac[4],MINRF.beacon.mac[5]);
+        WSContentSend_PD(HTTP_MINRF_MAC, F("Beacon"), D_MAC_ADDRESS, MINRF.beacon.MAC[0], MINRF.beacon.MAC[1],MINRF.beacon.MAC[2],MINRF.beacon.MAC[3],MINRF.beacon.MAC[4],MINRF.beacon.MAC[5]);
         WSContentSend_PD(PSTR("{s}Beacon Time{m}%u seconds{e}"),MINRF.beacon.time);
       }
 
-      for(uint32_t i=0; i<MIBLEnlights.size(); i++){
+      for(uint32_t i=0; i<MIBLElights.size(); i++){
         WSContentSend_PD(HTTP_MINRF_HL);
-        WSContentSend_PD(HTTP_MINRF_MAC, F("NLIGHT"), D_MAC_ADDRESS, MIBLEnlights[i].MAC[0], MIBLEnlights[i].MAC[1],MIBLEnlights[i].MAC[2],MIBLEnlights[i].MAC[3],MIBLEnlights[i].MAC[4],MIBLEnlights[i].MAC[5]);
-        WSContentSend_PD(PSTR("{s}Events {m}%u (Cnt: %u){e}"),MIBLEnlights[i].events, MIBLEnlights[i].lastCnt);
+        if(i==0) WSContentSend_PD(HTTP_MINRF_HL);
+        WSContentSend_PD(HTTP_MINRF_MAC, kMINRFDeviceType[MIBLElights[i].type-1], D_MAC_ADDRESS, MIBLElights[i].MAC[0], MIBLElights[i].MAC[1],MIBLElights[i].MAC[2],MIBLElights[i].MAC[3],MIBLElights[i].MAC[4],MIBLElights[i].MAC[5]);
+        WSContentSend_PD(PSTR("{s}%s Events {m}%u (PC: %u){e}"),kMINRFDeviceType[MIBLElights[i].type-1],MIBLElights[i].events, MIBLElights[i].lastCnt);
+        if(MIBLElights[i].type==MJYD2S){
+          if(MIBLElights[i].bat>0){
+            WSContentSend_PD(HTTP_BATTERY, kMINRFDeviceType[MIBLElights[i].type-1], MIBLElights[i].bat);
+          }
+          if(MIBLElights[i].lux>0){
+            WSContentSend_PD(HTTP_SNS_ILLUMINANCE, kMINRFDeviceType[MIBLElights[i].type-1], MIBLElights[i].lux);
+          }
+        }
       }
 
       if(counter>3) {
