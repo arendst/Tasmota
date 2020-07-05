@@ -60,6 +60,8 @@ void ESP_Restart(void) {
 
 #ifdef ESP32
 
+// Handle 20k of NVM
+
 #include <nvs.h>
 #include <rom/rtc.h>
 
@@ -118,6 +120,14 @@ void QPCRead(void *pSettings, unsigned nSettingsLen) {
 
 void QPCWrite(const void *pSettings, unsigned nSettingsLen) {
   NvmSave("qpc", "pcreg", pSettings, nSettingsLen);
+}
+
+void ZigbeeRead(void *pSettings, unsigned nSettingsLen) {
+  NvmLoad("zb", "zigbee", pSettings, nSettingsLen);
+}
+
+void ZigbeeWrite(const void *pSettings, unsigned nSettingsLen) {
+  NvmSave("zb", "zigbee", pSettings, nSettingsLen);
 }
 
 //
