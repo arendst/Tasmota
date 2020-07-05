@@ -122,6 +122,10 @@ void QPCWrite(const void *pSettings, unsigned nSettingsLen) {
   NvmSave("qpc", "pcreg", pSettings, nSettingsLen);
 }
 
+void ZigbeeErase(void) {
+  NvmErase("zb");
+}
+
 void ZigbeeRead(void *pSettings, unsigned nSettingsLen) {
   NvmLoad("zb", "zigbee", pSettings, nSettingsLen);
 }

@@ -236,7 +236,6 @@ void hydrateDevices(const SBuffer &buf) {
 }
 
 void loadZigbeeDevices(void) {
-
 #ifdef ESP32
   // first copy SPI buffer into ram
   uint8_t *spi_buffer = (uint8_t*) malloc(z_spi_len);
@@ -247,7 +246,6 @@ void loadZigbeeDevices(void) {
   ZigbeeRead(&spi_buffer, z_spi_len);
   z_dev_start = spi_buffer;
 #endif  // ESP32
-
   z_flashdata_t flashdata;
   memcpy_P(&flashdata, z_dev_start, sizeof(z_flashdata_t));
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP_getFreeHeap());
@@ -268,7 +266,7 @@ void loadZigbeeDevices(void) {
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP_getFreeHeap());
 #ifdef ESP32
   free(spi_buffer);
-#endif
+#endif  // ESP32
 }
 
 void saveZigbeeDevices(void) {
@@ -290,7 +288,7 @@ void saveZigbeeDevices(void) {
   ESP.flashRead(z_spi_start_sector * SPI_FLASH_SEC_SIZE, (uint32_t*) spi_buffer, SPI_FLASH_SEC_SIZE);
 #else  // ESP32
   ZigbeeRead(&spi_buffer, z_spi_len);
-#endif
+#endif  // ESP8266 - ESP32
 
   z_flashdata_t *flashdata = (z_flashdata_t*)(spi_buffer + z_block_offset);
   flashdata->name = ZIGB_NAME;
@@ -308,14 +306,14 @@ void saveZigbeeDevices(void) {
 #else  // ESP32
   ZigbeeWrite(&spi_buffer, z_spi_len);
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data saved (%d bytes)"), buf_len);
-#endif
-
+#endif  // ESP8266 - ESP32
   free(spi_buffer);
 }
 
 // Erase the flash area containing the ZigbeeData
 void eraseZigbeeDevices(void) {
   zigbee_devices.clean();     // avoid writing data to flash after erase
+#ifdef ESP8266
   // first copy SPI buffer into ram
   uint8_t *spi_buffer = (uint8_t*) malloc(z_spi_len);
   if (!spi_buffer) {
@@ -323,27 +321,22 @@ void eraseZigbeeDevices(void) {
     return;
   }
   // copy the flash into RAM to make local change, and write back the whole buffer
-#ifdef ESP8266
   ESP.flashRead(z_spi_start_sector * SPI_FLASH_SEC_SIZE, (uint32_t*) spi_buffer, SPI_FLASH_SEC_SIZE);
-#else  // ESP32
-  ZigbeeRead(&spi_buffer, z_spi_len);
-#endif
 
   // Fill the Zigbee area with 0xFF
   memset(spi_buffer + z_block_offset, 0xFF, z_block_len);
 
   // buffer is now ready, write it back
-#ifdef ESP8266
   if (ESP.flashEraseSector(z_spi_start_sector)) {
     ESP.flashWrite(z_spi_start_sector * SPI_FLASH_SEC_SIZE, (uint32_t*) spi_buffer, SPI_FLASH_SEC_SIZE);
   }
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (0x%08X - %d bytes)"), z_dev_start, z_block_len);
-#else  // ESP32
-  ZigbeeWrite(&spi_buffer, z_spi_len);
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (%d bytes)"), z_block_len);
-#endif
 
   free(spi_buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (0x%08X - %d bytes)"), z_dev_start, z_block_len);
+#else  // ESP32
+  ZigbeeErase();
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (%d bytes)"), z_block_len);
+#endif  // ESP8266 - ESP32
 }
 
 #endif // USE_ZIGBEE
