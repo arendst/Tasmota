@@ -958,6 +958,9 @@ double dval;
   if (*cp==0x64 && *cpx==0 && *(cpx+1)==0x01 && *(cpx+2)==0x08 && *(cpx+3)==0) {
       sml_status[g_mindex]=*(cp+3);
   }
+  if (*cp==0x63 && *cpx==0 && *(cpx+1)==0x01 && *(cpx+2)==0x08 && *(cpx+3)==0) {
+      sml_status[g_mindex]=*(cp+2);
+  }
 #endif
 
   cp=skip_sml(cp,&result);
@@ -2197,11 +2200,13 @@ uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
 
 #ifdef ESP32
   meter_ss[meter]->flush();
+  meter_ss[meter]->updateBaudRate(br);
+  /*
   if (meter_desc_p[meter].type=='M') {
     meter_ss[meter]->begin(br,SERIAL_8E1,meter_desc_p[meter].srcpin,meter_desc_p[meter].trxpin);
   } else {
     meter_ss[meter]->begin(br,SERIAL_8N1,meter_desc_p[meter].srcpin,meter_desc_p[meter].trxpin);
-  }
+  }*/
 #else
   if (meter_ss[meter]->begin(br)) {
     meter_ss[meter]->flush();
