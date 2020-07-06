@@ -22,7 +22,6 @@
 
 #include "NimBLEClient.h"
 #include "NimBLEUUID.h"
-#include "FreeRTOS.h"
 #include "NimBLERemoteCharacteristic.h"
 
 #include <vector>
@@ -43,6 +42,8 @@ public:
     std::vector<NimBLERemoteCharacteristic*>::iterator end();
     NimBLERemoteCharacteristic*               getCharacteristic(const char* uuid);
     NimBLERemoteCharacteristic*               getCharacteristic(const NimBLEUUID &uuid);
+    void                                      deleteCharacteristics();
+    size_t                                    deleteCharacteristic(const NimBLEUUID &uuid);
     NimBLEClient*                             getClient(void);
     uint16_t                                  getHandle();
     NimBLEUUID                                getUUID(void);
@@ -70,7 +71,6 @@ private:
     uint16_t            getStartHandle();
     uint16_t            getEndHandle();
     void                releaseSemaphores();
-    void                removeCharacteristics();
 
     // Properties
 
@@ -78,7 +78,6 @@ private:
     std::vector<NimBLERemoteCharacteristic*> m_characteristicVector;
 
     NimBLEClient*       m_pClient;
-    FreeRTOS::Semaphore m_semaphoreGetCharEvt = FreeRTOS::Semaphore("GetCharEvt");
     NimBLEUUID          m_uuid;
     uint16_t            m_startHandle;
     uint16_t            m_endHandle;

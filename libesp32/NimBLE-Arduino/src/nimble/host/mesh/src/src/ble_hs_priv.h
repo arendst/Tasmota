@@ -115,9 +115,9 @@ int ble_hs_hci_evt_acl_process(struct os_mbuf *om);
 int ble_hs_misc_conn_chan_find(uint16_t conn_handle, uint16_t cid,
                                struct ble_hs_conn **out_conn,
                                struct ble_l2cap_chan **out_chan);
-void ble_hs_misc_conn_chan_find_reqd(uint16_t conn_handle, uint16_t cid,
-                                     struct ble_hs_conn **out_conn,
-                                     struct ble_l2cap_chan **out_chan);
+int ble_hs_misc_conn_chan_find_reqd(uint16_t conn_handle, uint16_t cid,
+                                    struct ble_hs_conn **out_conn,
+                                    struct ble_l2cap_chan **out_chan);
 uint8_t ble_hs_misc_addr_type_to_id(uint8_t addr_type);
 int ble_hs_misc_restore_irks(void);
 

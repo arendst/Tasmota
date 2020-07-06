@@ -239,7 +239,10 @@ ble_uuid_flat(const ble_uuid_t *uuid, void *dst)
         break;
     case BLE_UUID_TYPE_32:
         memcpy(dst, ble_uuid_base, 16);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
         put_le32(dst + 12, BLE_UUID32(uuid)->value);
+#pragma GCC diagnostic pop
         break;
     case BLE_UUID_TYPE_128:
         memcpy(dst, BLE_UUID128(uuid)->value, 16);

@@ -27,7 +27,6 @@
 /**************************/
 
 #include "NimBLEUUID.h"
-#include "FreeRTOS.h"
 
 #include <vector>
 
@@ -103,7 +102,7 @@ private:
     bool                 m_customAdvData = false;  // Are we using custom advertising data?
     bool                 m_customScanResponseData = false;  // Are we using custom scan response data?
     bool                 m_scanResp = true;
-    bool                 m_advSvcsSet = false;
+    bool                 m_advDataSet = false;
 
 };
 

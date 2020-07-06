@@ -116,6 +116,7 @@ public:
     static void             setSecurityPasskey(uint32_t pin);
     static uint32_t         getSecurityPasskey();
     static void             setSecurityCallbacks(NimBLESecurityCallbacks* pCallbacks);
+    static int              startSecurity(uint16_t conn_id);
     static int              setMTU(uint16_t mtu);
     static uint16_t         getMTU();
     static bool             isIgnored(const NimBLEAddress &address);
@@ -159,7 +160,6 @@ private:
     static void        onReset(int reason);
     static void        onSync(void);
     static void        host_task(void *param);
-    static int         startSecurity(uint16_t conn_id);
     static bool        m_synced;
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)

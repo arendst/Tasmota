@@ -32,6 +32,12 @@ class NimBLERemoteDescriptor;
 typedef void (*notify_callback)(NimBLERemoteCharacteristic* pBLERemoteCharacteristic,
                                 uint8_t* pData, size_t length, bool isNotify);
 
+typedef struct {
+    const NimBLEUUID *uuid;
+    void *task_data;
+} desc_filter_t;
+
+
 /**
  * @brief A model of a remote %BLE characteristic.
  */
@@ -50,26 +56,54 @@ public:
     std::vector<NimBLERemoteDescriptor*>::iterator end();
     NimBLERemoteDescriptor*                        getDescriptor(const NimBLEUUID &uuid);
     std::vector<NimBLERemoteDescriptor*>*          getDescriptors(bool refresh = false);
+    void                                           deleteDescriptors();
+    size_t                                         deleteDescriptor(const NimBLEUUID &uuid);
     uint16_t                                       getHandle();
     uint16_t                                       getDefHandle();
     NimBLEUUID                                     getUUID();
-    std::string                                    readValue();
-    uint8_t                                        readUInt8();
-    uint16_t                                       readUInt16();
-    uint32_t                                       readUInt32();
-    bool                                           registerForNotify(notify_callback _callback,
+    std::string                                    readValue(time_t *timestamp = nullptr);
+
+    template<typename T>
+    T                                              readValue(time_t *timestamp = nullptr, bool skipSizeCheck = false) {
+        std::string value = readValue(timestamp);
+        if(!skipSizeCheck && value.size() < sizeof(T)) return T();
+        const char *pData = value.data();
+        return *((T *)pData);
+    }
+
+    uint8_t                                        readUInt8()  __attribute__ ((deprecated("Use template readValue<uint8_t>()")));
+    uint16_t                                       readUInt16() __attribute__ ((deprecated("Use template readValue<uint16_t>()")));
+    uint32_t                                       readUInt32() __attribute__ ((deprecated("Use template readValue<uint32_t>()")));
+    float                                          readFloat()  __attribute__ ((deprecated("Use template readValue<float>()")));
+    std::string                                    getValue(time_t *timestamp = nullptr);
+
+    template<typename T>
+    T                                              getValue(time_t *timestamp = nullptr, bool skipSizeCheck = false) {
+        std::string value = getValue(timestamp);
+        if(!skipSizeCheck && value.size() < sizeof(T)) return T();
+        const char *pData = value.data();
+        return *((T *)pData);
+    }
+
+    bool                                           subscribe(bool notifications = true,
+                                                             bool response = true,
+                                                             notify_callback notifyCallback = nullptr);
+    bool                                           unsubscribe(bool response = true);
+    bool                                           registerForNotify(notify_callback notifyCallback,
                                                                      bool notifications = true,
-                                                                     bool response = true);
+                                                                     bool response = true)
+                                                                     __attribute__ ((deprecated("Use subscribe()/unsubscribe()")));
     bool                                           writeValue(const uint8_t* data,
                                                               size_t length,
                                                               bool response = false);
     bool                                           writeValue(const std::string &newValue,
                                                               bool response = false);
-    bool                                           writeValue(uint8_t newValue,
-                                                              bool response = false);
+    template<typename T>
+    bool writeValue(const T &s, bool response = false) {
+        return writeValue((uint8_t*)&s, sizeof(T), response);
+    }
+
     std::string                                    toString();
-    uint8_t*                                       readRawData();
-    size_t                                         getDataLength();
     NimBLERemoteService*                           getRemoteService();
 
 private:
@@ -81,13 +115,12 @@ private:
     friend class      NimBLERemoteDescriptor;
 
     // Private member functions
-    void              removeDescriptors();
+    bool              setNotify(uint16_t val, bool response = true, notify_callback notifyCallback = nullptr);
     bool              retrieveDescriptors(const NimBLEUUID *uuid_filter = nullptr);
     static int        onReadCB(uint16_t conn_handle, const struct ble_gatt_error *error,
                                struct ble_gatt_attr *attr, void *arg);
     static int        onWriteCB(uint16_t conn_handle, const struct ble_gatt_error *error,
                                 struct ble_gatt_attr *attr, void *arg);
-    void              releaseSemaphores();
     static int        descriptorDiscCB(uint16_t conn_handle, const struct ble_gatt_error *error,
                                        uint16_t chr_val_handle, const struct ble_gatt_dsc *dsc,
                                        void *arg);
@@ -98,13 +131,10 @@ private:
     uint16_t                m_handle;
     uint16_t                m_defHandle;
     NimBLERemoteService*    m_pRemoteService;
-    FreeRTOS::Semaphore     m_semaphoreGetDescEvt       = FreeRTOS::Semaphore("GetDescEvt");
-    FreeRTOS::Semaphore     m_semaphoreReadCharEvt      = FreeRTOS::Semaphore("ReadCharEvt");
-    FreeRTOS::Semaphore     m_semaphoreWriteCharEvt     = FreeRTOS::Semaphore("WriteCharEvt");
     std::string             m_value;
-    uint8_t*                m_rawData;
-    size_t                  m_dataLen;
     notify_callback         m_notifyCallback;
+    time_t                  m_timestamp;
+    portMUX_TYPE            m_valMux;
 
     // We maintain a vector of descriptors owned by this characteristic.
     std::vector<NimBLERemoteDescriptor*> m_descriptorVector;

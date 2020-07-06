@@ -37,6 +37,8 @@ NimBLEAdvertisedDevice::NimBLEAdvertisedDevice() {
     m_serviceData      = "";
     m_txPower          = 0;
     m_pScan            = nullptr;
+    m_payloadLength    = 0;
+    m_payload          = nullptr;
 
     m_haveAppearance       = false;
     m_haveManufacturerData = false;
@@ -45,6 +47,7 @@ NimBLEAdvertisedDevice::NimBLEAdvertisedDevice() {
     m_haveServiceData      = false;
     m_haveServiceUUID      = false;
     m_haveTXPower          = false;
+    m_callbackSent         = false;
 
 } // NimBLEAdvertisedDevice
 
@@ -59,6 +62,16 @@ NimBLEAdvertisedDevice::NimBLEAdvertisedDevice() {
  */
 NimBLEAddress NimBLEAdvertisedDevice::getAddress() {
     return m_address;
+} // getAddress
+
+
+/**
+ * @brief Get the advertised type.
+ *
+ * @return The advertised type of the advertised device.
+ */
+uint8_t NimBLEAdvertisedDevice::getAdvType() {
+    return m_advType;
 } // getAddress
 
 
@@ -533,6 +546,11 @@ uint8_t* NimBLEAdvertisedDevice::getPayload() {
 
 uint8_t NimBLEAdvertisedDevice::getAddressType() {
     return m_addressType;
+}
+
+
+time_t NimBLEAdvertisedDevice::getTimestamp() {
+    return m_timestamp;
 }
 
 

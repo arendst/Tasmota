@@ -21,16 +21,13 @@
 #if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLEAddress.h"
+#include "NimBLEUUID.h"
+#include "NimBLEUtils.h"
 #include "NimBLEAdvertisedDevice.h"
 #include "NimBLERemoteService.h"
 
 #include <vector>
 #include <string>
-
-typedef struct {
-    const NimBLEUUID *uuid;
-    const void *attribute;
-} disc_filter_t;
 
 class NimBLERemoteService;
 class NimBLEClientCallbacks;
@@ -52,6 +49,8 @@ public:
     std::vector<NimBLERemoteService*>::iterator end();
     NimBLERemoteService*                        getService(const char* uuid);
     NimBLERemoteService*                        getService(const NimBLEUUID &uuid);
+    void                                        deleteServices();
+    size_t                                      deleteService(const NimBLEUUID &uuid);
     std::string                                 getValue(const NimBLEUUID &serviceUUID, const NimBLEUUID &characteristicUUID);
     bool                                        setValue(const NimBLEUUID &serviceUUID, const NimBLEUUID &characteristicUUID,
                                                          const std::string &value);
@@ -82,19 +81,16 @@ private:
                                                 const struct ble_gatt_error *error,
                                                 const struct ble_gatt_svc *service,
                                                 void *arg);
-    void                    clearServices();
     bool                    retrieveServices(const NimBLEUUID *uuid_filter = nullptr);
 
     NimBLEAddress           m_peerAddress = NimBLEAddress("");
     uint16_t                m_conn_id;
-    bool                    m_isConnected = false;
-    bool                    m_waitingToConnect =false;
-    bool                    m_deleteCallbacks = true;
+    bool                    m_isConnected;
+    bool                    m_waitingToConnect;
+    bool                    m_deleteCallbacks;
     int32_t                 m_connectTimeout;
-    NimBLEClientCallbacks*  m_pClientCallbacks = nullptr;
-    FreeRTOS::Semaphore     m_semaphoreOpenEvt       = FreeRTOS::Semaphore("OpenEvt");
-    FreeRTOS::Semaphore     m_semaphoreSearchCmplEvt = FreeRTOS::Semaphore("SearchCmplEvt");
-    FreeRTOS::Semaphore     m_semeaphoreSecEvt       = FreeRTOS::Semaphore("Security");
+    NimBLEClientCallbacks*  m_pClientCallbacks;
+    ble_task_data_t         *m_pTaskData;
 
     std::vector<NimBLERemoteService*> m_servicesVector;
 

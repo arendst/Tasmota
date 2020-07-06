@@ -100,7 +100,8 @@ void NimBLEAdvertising::setMaxInterval(uint16_t maxinterval) {
     m_advParams.itvl_max = maxinterval;
 } // setMaxInterval
 
-// These are dummy functions for now for compatibility
+
+/* These are dummy functions for now for compatibility */
 void NimBLEAdvertising::setMinPreferred(uint16_t mininterval) {
     //m_advData.min_interval = mininterval;
 } //
@@ -108,7 +109,8 @@ void NimBLEAdvertising::setMinPreferred(uint16_t mininterval) {
 void NimBLEAdvertising::setMaxPreferred(uint16_t maxinterval) {
     //m_advData.max_interval = maxinterval;
 } //
-//////////////////////////////////////////////////////////
+/*******************************************************/
+
 
 void NimBLEAdvertising::setScanResponse(bool set) {
     m_scanResp = set;
@@ -204,19 +206,19 @@ void NimBLEAdvertising::start() {
     }
 #endif
 
-    int numServices = m_serviceUUIDs.size();
-    int rc = 0;
-    uint8_t addressType;
-    uint8_t payloadLen = 3; //start with 3 bytes for the flags data
-
     // If already advertising just return
     if(ble_gap_adv_active()) {
         return;
     }
 
-    if (!m_customAdvData && !m_advSvcsSet && numServices > 0) {
-        for (int i = 0; i < numServices; i++) {
-            if(m_serviceUUIDs[i].getNative()->u.type == BLE_UUID_TYPE_16) {
+    int rc = 0;
+
+    if (!m_customAdvData && !m_advDataSet) {
+        //start with 3 bytes for the flags data
+        uint8_t payloadLen = 3;
+
+        for(auto &it : m_serviceUUIDs) {
+            if(it.getNative()->u.type == BLE_UUID_TYPE_16) {
                 int add = (m_advData.num_uuids16 > 0) ? 2 : 4;
                 if((payloadLen + add) > 31){
                     m_advData.uuids16_is_complete = 0;
@@ -225,19 +227,19 @@ void NimBLEAdvertising::start() {
                 payloadLen += add;
 
                 if(nullptr == (m_advData.uuids16 = (ble_uuid16_t*)realloc(m_advData.uuids16,
-                                    (m_advData.num_uuids16 + 1) * sizeof(ble_uuid16_t))))
+                                                   (m_advData.num_uuids16 + 1) * sizeof(ble_uuid16_t))))
                 {
                     NIMBLE_LOGE(LOG_TAG, "Error, no mem");
                     abort();
                 }
                 memcpy(&m_advData.uuids16[m_advData.num_uuids16].value,
-                            &m_serviceUUIDs[i].getNative()->u16.value, sizeof(uint16_t));
+                       &it.getNative()->u16.value, 2);
 
                 m_advData.uuids16[m_advData.num_uuids16].u.type = BLE_UUID_TYPE_16;
                 m_advData.uuids16_is_complete = 1;
                 m_advData.num_uuids16++;
             }
-            if(m_serviceUUIDs[i].getNative()->u.type == BLE_UUID_TYPE_32) {
+            if(it.getNative()->u.type == BLE_UUID_TYPE_32) {
                 int add = (m_advData.num_uuids32 > 0) ? 4 : 6;
                 if((payloadLen + add) > 31){
                     m_advData.uuids32_is_complete = 0;
@@ -246,19 +248,19 @@ void NimBLEAdvertising::start() {
                 payloadLen += add;
 
                 if(nullptr == (m_advData.uuids32 = (ble_uuid32_t*)realloc(m_advData.uuids32,
-                                    (m_advData.num_uuids32 + 1) * sizeof(ble_uuid32_t))))
+                                                   (m_advData.num_uuids32 + 1) * sizeof(ble_uuid32_t))))
                 {
                     NIMBLE_LOGE(LOG_TAG, "Error, no mem");
                     abort();
                 }
                 memcpy(&m_advData.uuids32[m_advData.num_uuids32].value,
-                            &m_serviceUUIDs[i].getNative()->u32.value, sizeof(uint32_t));
+                       &it.getNative()->u32.value, 4);
 
                 m_advData.uuids32[m_advData.num_uuids32].u.type = BLE_UUID_TYPE_32;
                 m_advData.uuids32_is_complete = 1;
                 m_advData.num_uuids32++;
             }
-            if(m_serviceUUIDs[i].getNative()->u.type == BLE_UUID_TYPE_128){
+            if(it.getNative()->u.type == BLE_UUID_TYPE_128){
                 int add = (m_advData.num_uuids128 > 0) ? 16 : 18;
                 if((payloadLen + add) > 31){
                     m_advData.uuids128_is_complete = 0;
@@ -267,12 +269,13 @@ void NimBLEAdvertising::start() {
                 payloadLen += add;
 
                 if(nullptr == (m_advData.uuids128 = (ble_uuid128_t*)realloc(m_advData.uuids128,
-                                    (m_advData.num_uuids128 + 1) * sizeof(ble_uuid128_t)))) {
+                              (m_advData.num_uuids128 + 1) * sizeof(ble_uuid128_t))))
+                {
                     NIMBLE_LOGE(LOG_TAG, "Error, no mem");
                     abort();
                 }
                 memcpy(&m_advData.uuids128[m_advData.num_uuids128].value,
-                            &m_serviceUUIDs[i].getNative()->u128.value, 16);
+                       &it.getNative()->u128.value, 16);
 
                 m_advData.uuids128[m_advData.num_uuids128].u.type = BLE_UUID_TYPE_128;
                 m_advData.uuids128_is_complete = 1;
@@ -315,11 +318,11 @@ void NimBLEAdvertising::start() {
 
             rc = ble_gap_adv_rsp_set_fields(&m_scanData);
             if (rc != 0) {
-                NIMBLE_LOGE(LOG_TAG, "error setting scan response data; rc=%d, %s", rc, NimBLEUtils::returnCodeToString(rc));
+                NIMBLE_LOGC(LOG_TAG, "error setting scan response data; rc=%d, %s", rc, NimBLEUtils::returnCodeToString(rc));
                 abort();
             }
         // if not using scan response and there is room,
-        // throw the tx power data into the advertisment
+        // put the tx power data into the advertisment
         } else if (payloadLen < 29) {
             m_advData.tx_pwr_lvl_is_present = 1;
             m_advData.tx_pwr_lvl = NimBLEDevice::getPower();
@@ -327,7 +330,7 @@ void NimBLEAdvertising::start() {
 
         rc = ble_gap_adv_set_fields(&m_advData);
         if (rc != 0) {
-            NIMBLE_LOGE(LOG_TAG, "error setting advertisement data; rc=%d, %s", rc, NimBLEUtils::returnCodeToString(rc));
+            NIMBLE_LOGC(LOG_TAG, "error setting advertisement data; rc=%d, %s", rc, NimBLEUtils::returnCodeToString(rc));
             abort();
         }
 
@@ -349,22 +352,16 @@ void NimBLEAdvertising::start() {
             m_advData.num_uuids16 = 0;
         }
 
-        m_advSvcsSet = true;
-    }
-
-    rc = ble_hs_id_infer_auto(0, &addressType);
-    if (rc != 0) {
-        NIMBLE_LOGC(LOG_TAG, "Error determining address type; rc=%d, %s", rc, NimBLEUtils::returnCodeToString(rc));
-        abort();
+        m_advDataSet = true;
     }
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
-    rc = ble_gap_adv_start(addressType, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(0, NULL, BLE_HS_FOREVER,
                            &m_advParams,
                            (pServer != nullptr) ? NimBLEServer::handleGapEvent : NULL,
                            pServer);
 #else
-    rc = ble_gap_adv_start(addressType, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(0, NULL, BLE_HS_FOREVER,
                            &m_advParams, NULL,NULL);
 #endif
     if (rc != 0) {
@@ -398,7 +395,7 @@ void NimBLEAdvertising::stop() {
  * we need clear the flag so it reloads it.
  */
 void NimBLEAdvertising::onHostReset() {
-    m_advSvcsSet = false;
+    m_advDataSet = false;
 }
 
 
