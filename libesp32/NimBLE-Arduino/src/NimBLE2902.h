@@ -22,10 +22,15 @@
 
 #include "NimBLEDescriptor.h"
 
-#include <map>
+#include <vector>
 
 #define NIMBLE_DESC_FLAG_NOTIFY   0x0001
 #define NIMBLE_DESC_FLAG_INDICATE 0x0002
+
+typedef struct {
+    uint16_t conn_id;
+    uint16_t sub_val;
+} chr_sub_status_t;
 
 
 /**
@@ -45,7 +50,7 @@ public:
 private:
     NimBLE2902(NimBLECharacteristic* pCharacterisitic);
     friend class NimBLECharacteristic;
-    std::map<uint16_t, uint16_t> m_subscribedMap;
+    std::vector<chr_sub_status_t> m_subscribedVec;
 
 }; // NimBLE2902
 

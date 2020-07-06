@@ -1,5 +1,17 @@
-# *** UPDATE ***
-**Breaking change:** Client and scan now use `std::vector` instead of `std::map` for storing the remote attribute database.   
+# *** UPDATES ***
+**Breaking changes:**   
+**NEW** on June 21, 2020
+> ```
+> NimBLEClient::getServices(bool refresh = false)   
+> NimBLERemoteService::getCharacteristics(bool refresh = false)   
+> NimBLERemoteCharacteristic::getDecriptors(bool refresh = false)
+>```
+These methods now take an optional (bool) parameter.   
+If true it will clear the respective vector and retrieve all the respective attributes from the peripheral.   
+If false(default) it will return the respective vector empty or otherwise with the currently stored attributes. 
+
+**NEW** on May 23, 2020   
+Client and scan now use `std::vector` instead of `std::map` for storing the remote attribute database.   
    
 This change will affect your application code if you use `NimBLEClient::getServices()` or `NimBLERemoteService::getCharacteristics()`   
 in your application as they now return a pointer to `std::vector` of the respective attributes.   
@@ -13,30 +25,33 @@ It is expected that there will be minimal impact on most applications, if you ne
 # NimBLE-Arduino
 A fork of the NimBLE stack restructured for compilation in the Ardruino IDE with a CPP library for use with ESP32.
 
-Why? Because the Bluedroid library is too bulky. 
+This library **significantly** reduces resource usage and improves performance for ESP32 BLE applications as compared    
+with the bluedroid based library. The goal is to maintain, as much as reasonable, compatibility with the original   
+library but refactored to use the NimBLE stack. In addition, this library will be more actively developed and maintained   
+to provide improved capabilites and stability over the original.
 
-Initial client code testing has resulted in code size reduction of ~115k and reduced ram consumption of ~37k.
+## Resource use improvement:
 
-Server code testing results from @beegee-toyo [from the project here](https://github.com/beegee-tokyo/ESP32WiFiBLE-NimBLE):
+### (Original) BLE_client example comparison (Debug):
+#### Arduino BLE Library   
+Sketch uses **1216377** bytes (58%) of program storage space.   
+Memory after connection: Free Heap: **171548**  
 
-
-### Memory usage (compilation output)
-#### Arduino BLE library
-```log
-RAM:   [==        ]  17.7% (used 58156 bytes from 327680 bytes)    
-Flash: [========  ]  76.0% (used 1345630 bytes from 1769472 bytes)    
-```
 #### NimBLE-Arduino library
-```log
-RAM:   [=         ]  14.5% (used 47476 bytes from 327680 bytes)    
-Flash: [=======   ]  69.5% (used 911378 bytes from 1310720 bytes)    
-```
-### Memory usage after **`setup()`** function
-#### Arduino BLE library
-**`Internal Total heap 259104, internal Free Heap 91660`**    
-#### NimBLE-Arduino library
-**`Internal Total heap 290288, internal Free Heap 182344`** 
-  
+Sketch uses **617256** bytes (29%) of program storage space.   
+Memory after connection: Free Heap: **270336**   
+***
+### (Original) BLE_notify example comparison (Debug):   
+#### Arduino BLE Library
+Sketch uses **1208409** bytes (57%) of program storage space.   
+Memory after connection: Free Heap: **173300**   
+
+#### NimBLE-Arduino library   
+Sketch uses **603432** bytes (28%) of program storage space.   
+Memory after connection: Free Heap: **269792**  
+
+**As shown: there is nearly a 50% reduction in flash use and approx. 100kB less ram consumed!**
+ 
   
 # Installation:
 
@@ -62,20 +77,21 @@ Change the settings in the `nimconfig.h` file to customize NimBLE to your projec
 
 # Continuing development:
 
-This Library is tracking the esp-nimble repo, nimble-1.2.0-idf master branch, currently [@fead24e.](https://github.com/espressif/esp-nimble)
+This Library is tracking the esp-nimble repo, nimble-1.2.0-idf master branch, currently [@46c1d9f.](https://github.com/espressif/esp-nimble)
 
-Also tracking the NimBLE related changes in esp-idf, master branch, currently [@2bc28bb.](https://github.com/espressif/esp-idf/tree/master/components/bt/host/nimble)
+Also tracking the NimBLE related changes in esp-idf, master branch, currently [@2ef4890.](https://github.com/espressif/esp-idf/tree/master/components/bt/host/nimble)
 
 # Acknowledgments:
 
 * @nkolban and @chegewara for the [original esp32 BLE library](https://github.com/nkolban/esp32-snippets) this project was derived from.
 * @beegee-tokyo for contributing your time to test/debug and contributing the beacon examples.
+* @Jeroen88 for the amazing help debugging and improving the client code.
 
 
 # Todo:
 
-1. Code cleanup.
-2. Create documentation.
+1. Create documentation.
+2. Add BLE Mesh code.
 3. Expose more NimBLE features.
-4. Add BLE Mesh code.
+
 

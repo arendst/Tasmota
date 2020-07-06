@@ -9,27 +9,27 @@
 /* Detect if using ESP-IDF or Arduino (Arduino won't have these defines in sdkconfig)*/
 #if defined(CONFIG_BT_NIMBLE_TASK_STACK_SIZE) || defined(CONFIG_NIMBLE_TASK_STACK_SIZE)
 
-#if defined(CONFIG_NIMBLE_ENABLED)
+#if defined(CONFIG_NIMBLE_ENABLED) && !defined(CONFIG_BT_NIMBLE_ENABLED)
 #define CONFIG_BT_NIMBLE_ENABLED
 #endif
 
-#if defined(CONFIG_NIMBLE_ROLE_OBSERVER)
+#if defined(CONFIG_NIMBLE_ROLE_OBSERVER) && !defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
 #define CONFIG_BT_NIMBLE_ROLE_OBSERVER
 #endif
 
-#if defined(CONFIG_NIMBLE_ROLE_BROADCASTER)
+#if defined(CONFIG_NIMBLE_ROLE_BROADCASTER) && !defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
 #define CONFIG_BT_NIMBLE_ROLE_BROADCASTER
 #endif
 
-#if defined(CONFIG_NIMBLE_ROLE_CENTRAL)
+#if defined(CONFIG_NIMBLE_ROLE_CENTRAL) && !defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 #define CONFIG_BT_NIMBLE_ROLE_CENTRAL
 #endif
 
-#if defined(CONFIG_NIMBLE_ROLE_PERIPHERAL)
+#if defined(CONFIG_NIMBLE_ROLE_PERIPHERAL) && !defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 #define CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
 #endif
 
-#if defined(CONFIG_NIMBLE_DEBUG)
+#if defined(CONFIG_NIMBLE_DEBUG) && !defined(CONFIG_BT_NIMBLE_DEBUG)
 #define CONFIG_BT_NIMBLE_DEBUG
 #endif
 
@@ -52,12 +52,12 @@
 /** Comment out if not using NimBLE Server functions
  *  Reduces flash size by approx. 16kB.
  */
-// #define CONFIG_BT_NIMBLE_ROLE_PERIPHERAL // Tasmota
+// #define CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
 
 /** Comment out if not using NimBLE Advertising functions
  *  Reduces flash size by approx. 5kB.
  */
-// #define CONFIG_BT_NIMBLE_ROLE_BROADCASTER // Tasmota
+// #define CONFIG_BT_NIMBLE_ROLE_BROADCASTER
 
 /** Uncomment to see debug log messages from the NimBLE host
  *  Uses approx. 32kB of flash memory.
@@ -89,12 +89,12 @@
 #define CONFIG_BT_NIMBLE_MAX_CONNECTIONS 3
 
 /** Sets the number of devices allowed to store/bond with */
-#define CONFIG_BT_NIMBLE_MAX_BONDS 3 // Tasmota
+#define CONFIG_BT_NIMBLE_MAX_BONDS 3
 
 /** Sets the number of CCCD's to store per bonded device */
-#define CONFIG_BT_NIMBLE_MAX_CCCDS 3 // Tasmota
+#define CONFIG_BT_NIMBLE_MAX_CCCDS 8
 
-#define CONFIG_BT_NIMBLE_NVS_PERSIST 0 // Tasmota
+#define CONFIG_BT_NIMBLE_NVS_PERSIST 0
 #define CONFIG_BT_NIMBLE_SM_LEGACY 1
 #define CONFIG_BT_NIMBLE_SM_SC 1
 #define CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME "nimble"

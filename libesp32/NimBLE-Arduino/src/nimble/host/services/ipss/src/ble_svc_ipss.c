@@ -17,29 +17,35 @@
  * under the License.
  */
 
-#ifndef H_BLE_HS_ID_PRIV_
-#define H_BLE_HS_ID_PRIV_
+#include <assert.h>
 
-#include <inttypes.h>
+#include "sysinit/sysinit.h"
+#include "host/ble_hs.h"
+#include "services/ipss/ble_svc_ipss.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+static const struct ble_gatt_svc_def ble_svc_ipss_defs[] = {
+    {
+        /*** Service: GATT */
+        .type = BLE_GATT_SVC_TYPE_PRIMARY,
+        .uuid = BLE_UUID16_DECLARE(BLE_SVC_IPSS_UUID16),
+        .characteristics = NULL,
+    },
+    {
+        0, /* No more services. */
+    },
+};
 
-void ble_hs_id_set_pub(const uint8_t *pub_addr);
-int ble_hs_id_addr(uint8_t id_addr_type, const uint8_t **out_id_addr,
-                   int *out_is_nrpa);
-int ble_hs_id_use_addr(uint8_t addr_type);
-void ble_hs_id_reset(void);
-void ble_hs_id_rnd_reset(void);
+void
+ble_svc_ipss_init(void)
+{
+    int rc;
 
-#if MYNEWT_VAL(BLE_HOST_BASED_PRIVACY)
-bool ble_hs_is_rpa(uint8_t *addr, uint8_t addr_type);
-int ble_hs_id_set_pseudo_rnd(const uint8_t *);
-int ble_hs_id_set_nrpa_rnd(void);
-#endif
-#ifdef __cplusplus
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
+    rc = ble_gatts_count_cfg(ble_svc_ipss_defs);
+    SYSINIT_PANIC_ASSERT(rc == 0);
+
+    rc = ble_gatts_add_svcs(ble_svc_ipss_defs);
+    SYSINIT_PANIC_ASSERT(rc == 0);
 }
-#endif
-
-#endif

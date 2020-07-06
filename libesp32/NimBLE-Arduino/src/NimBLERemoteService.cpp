@@ -58,7 +58,7 @@ NimBLERemoteService::NimBLERemoteService(NimBLEClient* pClient, const struct ble
  * Also release any semaphores they may be holding.
  */
 NimBLERemoteService::~NimBLERemoteService() {
-    removeCharacteristics();
+    deleteCharacteristics();
 }
 
 
@@ -118,17 +118,15 @@ NimBLERemoteCharacteristic* NimBLERemoteService::getCharacteristic(const NimBLEU
  * @param [in] bool value to indicate if the current vector should be cleared and
  * subsequently all characteristics for this service retrieved from the peripheral.
  * If false the vector will be returned with the currently stored characteristics,
- * if the vector is empty it will retrieve all characteristics of this service
- * from the peripheral.
+ * If true it will retrieve all characteristics of this service from the peripheral 
+ * and return the vector with all characteristics for this service.
  * @return a pointer to the vector of descriptors for this characteristic.
  */
 
 std::vector<NimBLERemoteCharacteristic*>* NimBLERemoteService::getCharacteristics(bool refresh) {
     if(refresh) {
-        removeCharacteristics();
-    }
+        deleteCharacteristics();
 
-    if(m_characteristicVector.empty()) {
         if (!retrieveCharacteristics()) {
             NIMBLE_LOGE(LOG_TAG, "Error: Failed to get characteristics");
         }
@@ -150,43 +148,34 @@ int NimBLERemoteService::characteristicDiscCB(uint16_t conn_handle,
     NIMBLE_LOGD(LOG_TAG,"Characteristic Discovered >> status: %d handle: %d",
                         error->status, (error->status == 0) ? chr->val_handle : -1);
 
-    NimBLERemoteService *service = (NimBLERemoteService*)arg;
-    int rc=0;
+    ble_task_data_t *pTaskData = (ble_task_data_t*)arg;
+    NimBLERemoteService *service = (NimBLERemoteService*)pTaskData->pATT;
 
     // Make sure the discovery is for this device
     if(service->getClient()->getConnId() != conn_handle){
         return 0;
     }
 
-    switch (error->status) {
-        case 0: {
-            // Found a service - add it to the vector
-            NimBLERemoteCharacteristic* pRemoteCharacteristic = new NimBLERemoteCharacteristic(service, chr);
-            service->m_characteristicVector.push_back(pRemoteCharacteristic);
-            break;
-        }
-        case BLE_HS_EDONE:{
-            /** All characteristics in this service discovered; start discovering
-             *  characteristics in the next service.
-             */
-            service->m_semaphoreGetCharEvt.give(0);
-            rc = 0;
-            break;
-        }
-        default:
-            rc = error->status;
-            break;
+    if(error->status == 0) {
+        // Found a service - add it to the vector
+        NimBLERemoteCharacteristic* pRemoteCharacteristic = new NimBLERemoteCharacteristic(service, chr);
+        service->m_characteristicVector.push_back(pRemoteCharacteristic);
+        return 0;
     }
-    if (rc != 0) {
-        /* Error; abort discovery. */
-        // pass non-zero to semaphore on error to indicate an error finding characteristics
-        // release memory from any characteristics we created
-        //service->removeCharacteristics(); --this will now be done when we clear services on returning with error
-        NIMBLE_LOGE(LOG_TAG, "characteristicDiscCB() rc=%d %s", rc, NimBLEUtils::returnCodeToString(rc));
-        service->m_semaphoreGetCharEvt.give(1);
+
+    if(error->status == BLE_HS_EDONE) {
+        pTaskData->rc = 0;
+    } else {
+        NIMBLE_LOGE(LOG_TAG, "characteristicDiscCB() rc=%d %s",
+                             error->status,
+                             NimBLEUtils::returnCodeToString(error->status));
+        pTaskData->rc = error->status;
     }
-    NIMBLE_LOGD(LOG_TAG,"<< Characteristic Discovered. status: %d", rc);
-    return rc;
+
+    xTaskNotifyGive(pTaskData->task);
+
+    NIMBLE_LOGD(LOG_TAG,"<< Characteristic Discovered");
+    return error->status;
 }
 
 
@@ -199,32 +188,31 @@ bool NimBLERemoteService::retrieveCharacteristics(const NimBLEUUID *uuid_filter)
     NIMBLE_LOGD(LOG_TAG, ">> retrieveCharacteristics() for service: %s", getUUID().toString().c_str());
 
     int rc = 0;
-    //removeCharacteristics(); // Forget any previous characteristics.
-
-    m_semaphoreGetCharEvt.take("retrieveCharacteristics");
+    ble_task_data_t taskData = {this, xTaskGetCurrentTaskHandle(), 0, nullptr};
 
     if(uuid_filter == nullptr) {
         rc = ble_gattc_disc_all_chrs(m_pClient->getConnId(),
                              m_startHandle,
                              m_endHandle,
                              NimBLERemoteService::characteristicDiscCB,
-                             this);
+                             &taskData);
     } else {
         rc = ble_gattc_disc_chrs_by_uuid(m_pClient->getConnId(),
                              m_startHandle,
                              m_endHandle,
                              &uuid_filter->getNative()->u,
                              NimBLERemoteService::characteristicDiscCB,
-                             this);
+                             &taskData);
     }
 
     if (rc != 0) {
         NIMBLE_LOGE(LOG_TAG, "ble_gattc_disc_all_chrs: rc=%d %s", rc, NimBLEUtils::returnCodeToString(rc));
-        m_semaphoreGetCharEvt.give();
         return false;
     }
 
-    if(m_semaphoreGetCharEvt.wait("retrieveCharacteristics") == 0){
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    if(taskData.rc == 0){
         NIMBLE_LOGD(LOG_TAG, "<< retrieveCharacteristics()");
         return true;
     }
@@ -316,12 +304,36 @@ bool NimBLERemoteService::setValue(const NimBLEUUID &characteristicUuid, const s
  * them. This method does just that.
  * @return N/A.
  */
-void NimBLERemoteService::removeCharacteristics() {
+void NimBLERemoteService::deleteCharacteristics() {
+    NIMBLE_LOGD(LOG_TAG, ">> deleteCharacteristics");
     for(auto &it: m_characteristicVector) {
         delete it;
     }
-    m_characteristicVector.clear();   // Clear the vector
-} // removeCharacteristics
+    m_characteristicVector.clear();
+    NIMBLE_LOGD(LOG_TAG, "<< deleteCharacteristics");
+} // deleteCharacteristics
+
+
+/**
+ * @brief Delete characteristic by UUID
+ * @param [in] uuid The UUID of the characteristic to be cleared.
+ * @return Number of characteristics left.
+ */
+size_t NimBLERemoteService::deleteCharacteristic(const NimBLEUUID &uuid) {
+    NIMBLE_LOGD(LOG_TAG, ">> deleteCharacteristic");
+
+    for(auto it = m_characteristicVector.begin(); it != m_characteristicVector.end(); ++it) {
+        if((*it)->getUUID() == uuid) {
+            delete *it;
+            m_characteristicVector.erase(it);
+            break;
+        }
+    }
+
+    NIMBLE_LOGD(LOG_TAG, "<< deleteCharacteristic");
+
+    return m_characteristicVector.size();
+} // deleteCharacteristic
 
 
 /**
@@ -351,17 +363,6 @@ std::string NimBLERemoteService::toString() {
     return res;
 } // toString
 
-
-/**
- * @brief called when an error occurrs and we need to release the semaphores to resume operations.
- * Will release all characteristic and subsequently all descriptor semaphores for this service.
- */
-void NimBLERemoteService::releaseSemaphores() {
-    for(auto &it: m_characteristicVector) {
-       it->releaseSemaphores();
-    }
-    m_semaphoreGetCharEvt.give(1);
-}
 
 #endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 #endif /* CONFIG_BT_ENABLED */

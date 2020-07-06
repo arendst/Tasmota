@@ -50,6 +50,7 @@ NimBLEDescriptor::NimBLEDescriptor(NimBLEUUID uuid, uint16_t properties, uint16_
     m_pCharacteristic    = nullptr;                     // No initial characteristic.
     m_pCallbacks         = &defaultCallbacks;           // No initial callback.
     m_value.attr_value   = (uint8_t*) calloc(max_len,1);  // Allocate storage for the value.
+    m_valMux             = portMUX_INITIALIZER_UNLOCKED;
     m_properties         = 0;
 
     if (properties & BLE_GATT_CHR_F_READ) {             // convert uint16_t properties to uint8_t
@@ -137,17 +138,37 @@ int NimBLEDescriptor::handleGapEvent(uint16_t conn_handle, uint16_t attr_handle,
     if(ble_uuid_cmp(uuid, &pDescriptor->getUUID().getNative()->u) == 0){
         switch(ctxt->op) {
             case BLE_GATT_ACCESS_OP_READ_DSC: {
-                pDescriptor->m_pCallbacks->onRead(pDescriptor);
+                // If the packet header is only 8 bytes this is a follow up of a long read
+                // so we don't want to call the onRead() callback again.
+                if(ctxt->om->om_pkthdr_len > 8) {
+                    pDescriptor->m_pCallbacks->onRead(pDescriptor);
+                }
+                portENTER_CRITICAL(&pDescriptor->m_valMux);
                 rc = os_mbuf_append(ctxt->om, pDescriptor->getValue(), pDescriptor->getLength());
+                portEXIT_CRITICAL(&pDescriptor->m_valMux);
                 return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
             }
 
             case BLE_GATT_ACCESS_OP_WRITE_DSC: {
-                if (ctxt->om->om_len > BLE_ATT_ATTR_MAX_LEN) {
+                if (ctxt->om->om_len > pDescriptor->m_value.attr_max_len) {
                     return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
                 }
 
-                pDescriptor->setValue(ctxt->om->om_data, ctxt->om->om_len);
+                uint8_t buf[pDescriptor->m_value.attr_max_len];
+                size_t len = ctxt->om->om_len;
+                memcpy(buf, ctxt->om->om_data,len);
+                os_mbuf *next;
+                next = SLIST_NEXT(ctxt->om, om_next);
+                while(next != NULL){
+                    if((len + next->om_len) > pDescriptor->m_value.attr_max_len) {
+                        return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+                    }
+                    memcpy(&buf[len-1], next->om_data, next->om_len);
+                    len += next->om_len;
+                    next = SLIST_NEXT(next, om_next);
+                }
+
+                pDescriptor->setValue(buf, len);
                 pDescriptor->m_pCallbacks->onWrite(pDescriptor);
                 return 0;
             }
@@ -191,12 +212,14 @@ void NimBLEDescriptor::setHandle(uint16_t handle) {
  * @param [in] length The length of the data in bytes.
  */
 void NimBLEDescriptor::setValue(const uint8_t* data, size_t length) {
-    if (length > BLE_ATT_ATTR_MAX_LEN) {
-        NIMBLE_LOGE(LOG_TAG, "Size %d too large, must be no bigger than %d", length, BLE_ATT_ATTR_MAX_LEN);
+    if (length > m_value.attr_max_len) {
+        NIMBLE_LOGE(LOG_TAG, "Size %d too large, must be no bigger than %d", length, m_value.attr_max_len);
         return;
     }
+    portENTER_CRITICAL(&m_valMux);
     m_value.attr_len = length;
     memcpy(m_value.attr_value, data, length);
+    portEXIT_CRITICAL(&m_valMux);
 } // setValue
 
 
@@ -207,13 +230,6 @@ void NimBLEDescriptor::setValue(const uint8_t* data, size_t length) {
 void NimBLEDescriptor::setValue(const std::string &value) {
     setValue((uint8_t*) value.data(), value.length());
 } // setValue
-
-
-/*
-void NimBLEDescriptor::setAccessPermissions(uint8_t perm) {
-    m_permissions = perm;
-}
-*/
 
 
 /**

@@ -17,27 +17,20 @@
  * under the License.
  */
 
-#ifndef H_BLE_HS_ID_PRIV_
-#define H_BLE_HS_ID_PRIV_
-
-#include <inttypes.h>
+#ifndef H_BLE_SVC_IPSS_
+#define H_BLE_SVC_IPSS_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void ble_hs_id_set_pub(const uint8_t *pub_addr);
-int ble_hs_id_addr(uint8_t id_addr_type, const uint8_t **out_id_addr,
-                   int *out_is_nrpa);
-int ble_hs_id_use_addr(uint8_t addr_type);
-void ble_hs_id_reset(void);
-void ble_hs_id_rnd_reset(void);
+#define BLE_SVC_IPSS_UUID16         0x1820
 
-#if MYNEWT_VAL(BLE_HOST_BASED_PRIVACY)
-bool ble_hs_is_rpa(uint8_t *addr, uint8_t addr_type);
-int ble_hs_id_set_pseudo_rnd(const uint8_t *);
-int ble_hs_id_set_nrpa_rnd(void);
-#endif
+/**
+ * @brief   Initialize the IPSS service
+ */
+void ble_svc_ipss_init(void);
+
 #ifdef __cplusplus
 }
 #endif
