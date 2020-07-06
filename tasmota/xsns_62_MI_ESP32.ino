@@ -20,6 +20,7 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.0.1 20200706  changed - adapt to new NimBLE-API, tweak scan process
   0.9.0.0 20200413  started - initial development by Christian Baars
                     forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
 
@@ -232,7 +233,6 @@ class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Advertised Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData().length());
     if (advertisedDevice->getServiceData().length() == 0) {
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("No Xiaomi Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData().length());
-      MI32Scan->erase(advertisedDevice->getAddress());
       return;
     }
     uint16_t uuid = advertisedDevice->getServiceDataUUID().getNative()->u16.value;
@@ -242,13 +242,14 @@ class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     MI32_ReverseMAC(addr);
     if(uuid==0xfe95) {
       MI32ParseResponse((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr);
+      MI32Scan->erase(advertisedDevice->getAddress());
     }
     else if(uuid==0xfdcd) {
       MI32parseCGD1Packet((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr);
+      MI32Scan->erase(advertisedDevice->getAddress());
     }
     else {
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("No Xiaomi Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData().length());
-      MI32Scan->erase(advertisedDevice->getAddress());
     }
   };
 };
@@ -551,7 +552,7 @@ bool MI32connectLYWSD03forNotification(){
   }
   if (pChr){
     if(pChr->canNotify()) {
-      if(pChr->registerForNotify(MI32notifyCB)) {
+      if(pChr->subscribe(true,false,MI32notifyCB)) {
         return true;
       }
     }
