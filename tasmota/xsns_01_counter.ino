@@ -83,11 +83,12 @@ void CounterUpdate(uint8_t index)
       // restart PWM each second (german 50Hz has to up to 0.01% deviation)
       // set COUNTERDEBOUNCELOW 1 to catch the raising edge
       // Zero-HIGH is typical 2ms
-      if (RtcSettings.pulse_counter[index]%100 == 0 && PinUsed(GPIO_PWM1, index)) {
+      if (bitRead(Counter.pin_state, index) && Settings.flag4.zerocross_dimmer) {
         const uint32_t current_cycle = ESP.getCycleCount();
         // stop pwm on PIN to start in Sync with rising edge
         // calculate timeoffset to fire PWM
-        uint16_t dimm_time= 10000 * (100 - light_state.getDimmer(index)) / Settings.pwm_frequency;
+        uint16_t cur_col = Light.fade_start_10[0 + Light.pwm_offset];
+        uint32_t dimm_time= 1000000 / Settings.pwm_frequency * (1024 - cur_col) / 1024;
         digitalWrite(Pin(GPIO_PWM1, index), LOW);
         // 1000µs to ensure not to fire on the next sinus wave
         if (dimm_time < (1000000 / Settings.pwm_frequency)-1000) {
