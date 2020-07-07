@@ -705,6 +705,15 @@
 #define D_SENSOR_TCP_RXD       "TCP Rx"
 #define D_SENSOR_IEM3000_TX    "iEM3000 TX"
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
+#define D_SENSOR_GSD_DIR     "GSD DIR"
+#define D_SENSOR_GSD_STP     "GSD STP"
+#define D_SENSOR_GSD_ENA     "GSD ENA"
+#define D_SENSOR_GSD_ENA_INV "GSD ENA INV"
+#define D_SENSOR_GSD_MS1     "GSD MS1"
+#define D_SENSOR_GSD_MS2     "GSD MS2"
+#define D_SENSOR_GSD_MS3     "GSD MS3"
+#define D_SENSOR_GSD_UART_TX "GSD UART TX"
+#define D_SENSOR_GSD_UART_RX "GSD UART RX"
 
 // Units
 #define D_UNIT_AMPERE "安"

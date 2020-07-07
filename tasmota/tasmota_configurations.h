@@ -190,6 +190,7 @@
   #define USE_ALECTO_V2                          // Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 using 868MHz RF sensor receiver (+1k7 code)
 #define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
+//#define USE_GENERIC_STEPPER                      // Add support for Generic Stepper driver circuit (A4988/DRV8825/TMC2208) (+?????k5 code)
 //#define USE_THERMOSTAT                           // Add support for Thermostat
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
@@ -401,6 +402,7 @@
 #undef USE_RF_SENSOR                             // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef USE_HRE                                   // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef USE_A4988_STEPPER                         // Disable support for A4988_Stepper
+#undef USE_GENERIC_STEPPER                       // Disable support for Generic_Stepper
 #undef USE_THERMOSTAT                            // Disable support for Thermostat
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
@@ -522,6 +524,7 @@
 #undef USE_RF_SENSOR                             // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef USE_HRE                                   // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef USE_A4988_STEPPER                         // Disable support for A4988_Stepper
+#undef USE_GENERIC_STEPPER                       // Disable support for Generic_Stepper
 #undef USE_THERMOSTAT                            // Disable support for Thermostat
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
@@ -655,6 +658,7 @@
 #undef USE_RF_SENSOR                             // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef USE_HRE                                   // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef USE_A4988_STEPPER                         // Disable support for A4988_Stepper
+#undef USE_GENERIC_STEPPER                       // Disable support for Generic_Stepper
 #undef USE_THERMOSTAT                            // Disable support for Thermostat
 #undef USE_PROMETHEUS                            // Disable support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
 #undef DEBUG_THEO                                // Disable debug code

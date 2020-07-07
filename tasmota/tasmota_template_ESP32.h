@@ -138,6 +138,9 @@ enum UserSelectablePins {
   GPIO_TELEINFO_ENABLE,                // Teleinfo Enable Receive Pin
   GPIO_LMT01,                          // LMT01 input counting pin
   GPIO_IEM3000_TX, GPIO_IEM3000_RX,    // IEM3000 Serial interface
+  GPIO_GSD_DIR, GPIO_GSD_STP, GPIO_GSD_ENA, GPIO_GSD_ENA_INV, // Generic stepper control pins
+  GPIO_GSD_MS1, GPIO_GSD_MS2, GPIO_GSD_MS3,                   // Generic stepper microstep setting pins
+  GPIO_GSD_UART_TX, GPIO_GSD_UART_RX,                         // Generic stepper UART pins
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -235,7 +238,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ETH_PHY_POWER "|" D_SENSOR_ETH_PHY_MDC "|" D_SENSOR_ETH_PHY_MDIO "|"
   D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
   D_SENSOR_LMT01_PULSE "|"
-  D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX
+  D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX "|"
+  D_SENSOR_GSD_DIR "|" D_SENSOR_GSD_STP "|" D_SENSOR_GSD_ENA "|" D_SENSOR_GSD_ENA_INV "|" D_SENSOR_GSD_MS1 "|" D_SENSOR_GSD_MS2 "|" D_SENSOR_GSD_MS3 "|" D_SENSOR_GSD_UART_TX "|" D_SENSOR_GSD_UART_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -583,6 +587,17 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ETH_PHY_POWER),
   AGPIO(GPIO_ETH_PHY_MDC),
   AGPIO(GPIO_ETH_PHY_MDIO),  // Ethernet
+#endif
+#ifdef USE_GENERIC_STEPPER
+  AGPIO(GPIO_GSD_DIR),
+  AGPIO(GPIO_GSD_STP),
+  AGPIO(GPIO_GSD_ENA),
+  AGPIO(GPIO_GSD_ENA_INV),
+  AGPIO(GPIO_GSD_MS1),
+  AGPIO(GPIO_GSD_MS2),
+  AGPIO(GPIO_GSD_MS3),
+  AGPIO(GPIO_GSD_UART_TX),
+  AGPIO(GPIO_GSD_UART_RX),
 #endif
 };
 

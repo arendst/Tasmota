@@ -1,0 +1,33 @@
+#######################################
+# Syntax Coloring Map For Test
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+Generic_Stepper	KEYWORD1	Generic_Stepper
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setMicrosteps KEYWORD2
+setFullStepsPerRev KEYWORD2
+setRmsCurrent KEYWORD2
+setHold KEYWORD2
+doMove KEYWORD2
+doRotate KEYWORD2
+doTurn KEYWORD2
+setSpeed KEYWORD2
+setRotSpeed KEYWORD2
+setRPM KEYWORD2
+setAccel KEYWORD2
+setAngleAccel KEYWORD2
+setRpmAccel KEYWORD2
+enable KEYWORD2
+disable KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################

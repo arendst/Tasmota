@@ -1,0 +1,154 @@
+== Generic Stepper Driver Control for Tasmota
+
+This Class allows you to control bipolar stepper motors.
+To use it you will need any stepper driver, connected at least with 2 GPIO's (direction and step) and ofcourse a stepper motor.
+Optionally, additional GPIOs can be used to enable/disable the driver, set microsteps via pins or communicate via UART to set microsteps and current.
+
+All pins can be selected as components in the module configuration.
+If a pin is configured, it is used.
+Otherwise the respective function is ignored.
+
+== GPIOs
+
+The mandatory GPIOs are GSD DIR and GSD STP, used to control turning direction and steps, respectively.
+If no other GPIOs are configured, all other stepper driver functions (enable, microsteps, current...) must be controlled externally.
+The additional GPIOs are configured as described below, additional functions can be controlled by commands.
+
+By setting a GPIO to GSD ENA or GSD ENA INV, the stepper driver can be enabled/disabled automatically or on command.
+Most stepper drivers use an enable pin that powers the motor, if it is LOW.
+For those, use GSD ENA INV.
+Otherwise (for example for the sleep pin of A4988), use GSD ENA, which is HIGH if the motor is enabled.
+
+The microstepping of A4988-style stepper drivers can be configured by setting three GPIO to GSD MS1, GSD MS2 and GSD MS3.
+Pin-configured microstepping for other types of drivers is currently not supported.
+
+By setting two GPIOs to GSD UART TX and GSD UART RX, microstepping and current can be controlled by commands on TMC2208 drivers.
+Other TMCxxxx drivers cannot be controlled by UART in the moment.
+
+== Commands
+
+GSDMicrosteps _param_::
+If the required GPIOs are configured, this command sets the microsteps of the driver to _param_.
+Otherwise only the internal value is changed which is used for calculations.
+After changing this value, speed and acceleration commands should be reissued to update calculated values.
+Allowed values are powers of 2, i.e. 1, 2, 4, 8, 16, 32, 64, 128 and 256.
+Values above 16 are only allowed for UART controlled TMC2208 drivers.
++
+DEFAULT: 1 microstep per full step
+
+GSDStepsPerRev _param_::
+Sets the number of full steps (not microsteps) per revolution to _param_.
+This value depends on the stepper motor connected to the driver, not the driver itself.
+This value is used internally for calculations.
+After changing this value, speed and acceleration commands should be reissued to update calculated values.
+Every positive integer number is allowed, but typical values are 200 or 400.
++
+DEFAULT: 200 full steps per revolution
+
+GSDRmsCurrent _param_::
+Sets the RMS current in mA of TMC2208 drivers to _param_.
+Every positive integer number is allowed, but the actual number set in the driver may be somewhat off.
+Look in the documentation of TMC2208 drivers to see the values that can be set for sensing resistors of 0.11 Ohms.
++
+DEFAULT: 30 mA
+
+GSDHold _param_::
+Enables or disables hold mode.
+_param_ 1 enables hold mode, _param_ 0 disables hold mode.
+If hold mode is off, the driver is enabled (motor powered) before a move and disabled (motor unpowered) after the move.
+It can still be enabled/disabled by the user with the enable command.
+If hold mode is on, the driver is not disabled after a move, i.e. the motor stays powered and the position is held, but also energy is used and heat is generated.
+In this case, the driver must eventually be disabled by the enable command by the user.
++
+DEFAULT: Off (0)
+
+GSDEnable::
+Disables the driver (motor unpowered) if the parameter is 0. If the parameter is 1, the driver is enabled and the motor is powered.
+
+GSDMove _param_::
+Moves the stepper motor by _param_ microsteps.
+If _param_ is greater than zero, the direction pin is HIGH, otherwise LOW.
+If acceleration it greater than zero, movement starts and stops smoothly, accelerating up to and down from the set speed.
+Maximum speed may not be reached if movement is too short.
+If acceleration is zero, no acceleration or decceleration is performed and the motors starts at the set speed.
+Negative and positive integer numbers are allowed.
+Zero is possible not very useful.
+
+GSDRotate _param_::
+Similar to GSDMove, but _param_ is in degree.
+Allowed values are usefull floating point numbers (not NaN or Inf), which will be converted to microsteps using configured steps per revolution.
+Therefore, precision can never be better than one microstep.
+
+GSDTurn _param_::
+Similar to GSDMove, but _param_ is in full turns.
+Allowed values are usefull floating point numbers (not NaN or Inf), which will be converted to microsteps using configured steps per revolution.
+Therefore, precision can never be better than one microstep.
+
+GSDSpeed _param_::
+Sets (maximum) speed to _param_ microsteps per second.
+Allowed values are positive floating point numbers (not NaN or Inf).
+This command affects all movement commands.
+Final turning speed depends on microsteps and steps per revolution.
++
+DEFAULT: 100 microsteps / second
+
+GSDRotSpeed _param_::
+Sets (maximum) speed to _param_ degrees per second.
+Allowed values are positive floating point numbers (not NaN or Inf).
+This command affects all movement commands.
++
+DEFAULT: 180 degree / second
+
+GSDRPM _param_::
+Sets (maximum) speed to _param_ revolutions per minute.
+Allowed values are positive floating point numbers (not NaN or Inf).
+This command affects all movement commands.
++
+DEFAULT: 30 RPM
+
+GSDAcceleration _param_::
+Sets acceleration to _param_ microsteps per second^2.
+Allowed values are zero or positive floating point numbers (not NaN or Inf).
+If acceleration is set to zero, no acceleration is performed and the speed jumps to the set maximum speed in the first step.
+This speed affects all movement commands.
++
+DEFAULT: 0
+
+GSDAngleAccel _param_::
+Sets acceleration to _param_ degrees per second^2.
+Allowed values are zero or positive floating point numbers (not NaN or Inf).
+If acceleration is set to zero, no acceleration is performed and the speed jumps to the set maximum speed in the first step.
+This speed affects all movement commands.
++
+DEFAULT: 0
+
+GSDRPMAccel _param_::
+Sets acceleration to _param_ revolutions per minute per second.
+Allowed values are zero or positive floating point numbers (not NaN or Inf).
+If acceleration is set to zero, no acceleration is performed and the speed jumps to the set maximum speed in the first step.
+This speed affects all movement commands.
++
+DEFAULT: 0
+
+== Open Points
+* R_sense is fixed to 0.11 Ohms and cannot be changed in the moment.
+* Return actually set value for RMS current.
+* Support pin configured drivers other than A4988 (and comparable).
+* Support UART configured drivers other than TMC2208 (and comparable).
+* Maybe support separate speed and acceleration values for all three movement modes.
+
+== License
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA

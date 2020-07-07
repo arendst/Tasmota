@@ -595,6 +595,21 @@ void GetFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_IEM3000)
   feature6 |= 0x00200000;  // xnrg_16_iem3000.ino
 #endif
+#ifdef USE_GENERIC_STEPPER
+  feature6 |= 0x00400000; // xdrv_40_Generic_Stepper.ino
+#endif
+
+//  feature6 |= 0x00002000;
+//  feature6 |= 0x00004000;
+//  feature6 |= 0x00008000;
+
+//  feature6 |= 0x00010000;
+//  feature6 |= 0x00020000;
+//  feature6 |= 0x00040000;
+//  feature6 |= 0x00080000;
+
+//  feature6 |= 0x00100000;
+//  feature6 |= 0x00200000;
 //  feature6 |= 0x00400000;
 //  feature6 |= 0x00800000;
 

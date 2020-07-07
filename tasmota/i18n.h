@@ -613,6 +613,21 @@
 #define D_CMND_PING "Ping"
 #define D_JSON_PING "Ping"
 
+// Commands xdrv_40_Generic_Stepper.ino
+#define D_CMND_GSD "GSD"
+#define D_JSON_GSD_MICROSTEPS "setMicrosteps"
+#define D_JSON_GSD_STEPSPERREV "setStepsPerRev"
+#define D_JSON_GSD_RMSCURRENT "setRmsCurrent"
+#define D_JSON_GSD_MOVE "doMove"
+#define D_JSON_GSD_ROTATE "doRotate"
+#define D_JSON_GSD_TURN "doTurn"
+#define D_JSON_GSD_SPEED "setSpeed"
+#define D_JSON_GSD_ROTSPEED "setRotSpeed"
+#define D_JSON_GSD_RPM "setRPM"
+#define D_JSON_GSD_ACCEL "setAccel"
+#define D_JSON_GSD_ANGLEACCEL "setAngleAccel"
+#define D_JSON_GSD_RPMACCEL "setRpmAccel"
+
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
 
