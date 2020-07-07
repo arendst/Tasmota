@@ -81,13 +81,13 @@ void CounterUpdate(uint8_t index)
     if bitRead(Counter.pin_state, index) {
       // PWMfrequency 100
       // restart PWM each second (german 50Hz has to up to 0.01% deviation)
-      // set COUNTERDEBOUNCELOW 1 to catch the raising edge
       // Zero-HIGH is typical 2ms
-      if (RtcSettings.pulse_counter[index]%100 == 0 && PinUsed(GPIO_PWM1, index)) {
+      if (RtcSettings.pulse_counter[index]%100 == 0 && PinUsed(GPIO_PWM1, index) && Settings.flag4.zerocross_dimmer) {
         const uint32_t current_cycle = ESP.getCycleCount();
         // stop pwm on PIN to start in Sync with rising edge
         // calculate timeoffset to fire PWM
-        uint16_t dimm_time= 10000 * (100 - light_state.getDimmer(index)) / Settings.pwm_frequency;
+        uint16_t cur_col = Light.fade_start_10[0 + Light.pwm_offset];
+        uint32_t dimm_time= 1000000 / Settings.pwm_frequency * (1024 - cur_col) / 1024;
         digitalWrite(Pin(GPIO_PWM1, index), LOW);
         // 1000µs to ensure not to fire on the next sinus wave
         if (dimm_time < (1000000 / Settings.pwm_frequency)-1000) {
@@ -166,7 +166,7 @@ void CounterInit(void)
     if (PinUsed(GPIO_CNTR1, i)) {
       Counter.any_counter = true;
       pinMode(Pin(GPIO_CNTR1, i), bitRead(Counter.no_pullup, i) ? INPUT : INPUT_PULLUP);
-      if ((0 == Settings.pulse_counter_debounce_low) && (0 == Settings.pulse_counter_debounce_high)) {
+      if ((0 == Settings.pulse_counter_debounce_low) && (0 == Settings.pulse_counter_debounce_high) && !Settings.flag4.zerocross_dimmer) {
         Counter.pin_state = 0;
         attachInterrupt(Pin(GPIO_CNTR1, i), counter_callbacks[i], FALLING);
       } else {
