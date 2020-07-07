@@ -81,9 +81,8 @@ void CounterUpdate(uint8_t index)
     if bitRead(Counter.pin_state, index) {
       // PWMfrequency 100
       // restart PWM each second (german 50Hz has to up to 0.01% deviation)
-      // set COUNTERDEBOUNCELOW 1 to catch the raising edge
       // Zero-HIGH is typical 2ms
-      if (bitRead(Counter.pin_state, index) && Settings.flag4.zerocross_dimmer) {
+      if (RtcSettings.pulse_counter[index]%100 == 0 && PinUsed(GPIO_PWM1, index) && Settings.flag4.zerocross_dimmer) {
         const uint32_t current_cycle = ESP.getCycleCount();
         // stop pwm on PIN to start in Sync with rising edge
         // calculate timeoffset to fire PWM
