@@ -166,7 +166,7 @@ void CounterInit(void)
     if (PinUsed(GPIO_CNTR1, i)) {
       Counter.any_counter = true;
       pinMode(Pin(GPIO_CNTR1, i), bitRead(Counter.no_pullup, i) ? INPUT : INPUT_PULLUP);
-      if ((0 == Settings.pulse_counter_debounce_low) && (0 == Settings.pulse_counter_debounce_high)) {
+      if ((0 == Settings.pulse_counter_debounce_low) && (0 == Settings.pulse_counter_debounce_high) && !Settings.flag4.zerocross_dimmer) {
         Counter.pin_state = 0;
         attachInterrupt(Pin(GPIO_CNTR1, i), counter_callbacks[i], FALLING);
       } else {
