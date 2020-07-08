@@ -344,15 +344,16 @@ class Unishox:
         #print("getCodeIdx  not found = {r}".format(r=1))
         return 1, bit_no_p
 
-    def getNumFromBits(self, inn, bit_no, count):
+    def getNumFromBits(self, inn, bit_no_p, count):
         ret = 0
         while count:
             count -= 1
-            if self.ESCAPE_MARKER == inn[bit_no >> 3]:
-                bit_no += 8      # skip marker
-            ret += self.getBitVal(inn, bit_no, count)
-            bit_no += 1
-        return ret
+            if self.ESCAPE_MARKER == inn[bit_no_p >> 3]:
+                bit_no_p += 8      # skip marker
+            ret += self.getBitVal(inn, bit_no_p, count)
+            bit_no_p += 1
+        # print("getNumFromBits = {r}".format(r=ret))
+        return ret, bit_no_p
 
     def readCount(self, inn, bit_no_p, len_):
         (idx, bit_no_p) = self.getCodeIdx(self.us_hcode, inn, len_, bit_no_p)
@@ -372,10 +373,10 @@ class Unishox:
             till += (1 << bit_len_idx)
             i += 1
 
-        count = self.getNumFromBits(inn, bit_no_p, bit_len_idx) + base
+        (count, bit_no_p) = self.getNumFromBits(inn, bit_no_p, bit_len_idx)
+        count = count + base
         #print("readCount getNumFromBits = {count} ({bl})".format(count=count,bl=bit_len_idx))
 
-        bit_no_p += bit_len_idx
         return count, bit_no_p
 
     def decodeRepeat(self, inn, len_, out, ol, bit_no):
