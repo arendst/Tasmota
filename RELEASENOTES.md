@@ -94,3 +94,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add compile time interlock parameters (#8759)
 - Add compile time user template (#8766)
 - Add rotary encoder support for light dimmer and optional color temperature if button1 still pressed (#8670)
+- Add support for switches/relays using an AC detection circuitry e.g. MOES MS-104B / BlitzWolf SS5 / etc. (#8606)
