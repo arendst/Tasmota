@@ -1189,9 +1189,9 @@ bool MI32Cmd(void) {
 
 const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 {m}%u%s / %u{e}";
 const char HTTP_MI32_SERIAL[] PROGMEM = "{s}%s %s{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
-const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u%%{e}";
+const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
 const char HTTP_VOLTAGE[] PROGMEM = "{s}%s " D_VOLTAGE "{m}%s V{e}";
-const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%uus/cm{e}";
+const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}";
 const char HTTP_MI32_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 
 void MI32Show(bool json)
@@ -1222,10 +1222,10 @@ void MI32Show(bool json)
           ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
         }
         if (!isnan(MIBLEsensors[i].moisture)) {
-          ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%d"), MIBLEsensors[i].moisture);
+          ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%f"), MIBLEsensors[i].moisture);
         }
         if (!isnan(MIBLEsensors[i].fertility)) {
-          ResponseAppend_P(PSTR(",\"Fertility\":%d"), MIBLEsensors[i].fertility);
+          ResponseAppend_P(PSTR(",\"Fertility\":%f"), MIBLEsensors[i].fertility);
         }
       }
       if (MIBLEsensors[i].type > FLORA){
@@ -1273,10 +1273,10 @@ void MI32Show(bool json)
             WSContentSend_PD(HTTP_SNS_ILLUMINANCE, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].lux);
           }
           if (!isnan(MIBLEsensors[i].moisture)) {
-            WSContentSend_PD(HTTP_SNS_MOISTURE, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].moisture);
+            WSContentSend_PD(HTTP_SNS_MOISTURE, kMI32SlaveType[MIBLEsensors[i].type-1], int(MIBLEsensors[i].moisture));
           }
           if (!isnan(MIBLEsensors[i].fertility)) {
-            WSContentSend_PD(HTTP_MI32_FLORA_DATA, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].fertility);
+            WSContentSend_PD(HTTP_MI32_FLORA_DATA, kMI32SlaveType[MIBLEsensors[i].type-1], int(MIBLEsensors[i].fertility));
           }
         }
         if (MIBLEsensors[i].type>FLORA) { // everything "above" Flora
