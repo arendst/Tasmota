@@ -935,6 +935,12 @@ void Z_IncomingMessage(ZCLFrame &zcl_received) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":%s}"), srcaddr, msg.c_str());
     }
 
+    // discard the message if it was sent by us (broadcast or group loopback)
+    if (srcaddr == localShortAddr) {
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE  "loopback message, ignoring"));
+      return;     // abort the rest of message management
+    }
+
     zcl_received.postProcessAttributes(srcaddr, json);
     // Add Endpoint
     json[F(D_CMND_ZIGBEE_ENDPOINT)] = srcendpoint;

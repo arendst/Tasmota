@@ -509,6 +509,7 @@
 #define D_CMND_ZIGBEEZNPRECEIVE "ZNPReceive"      // only for debug
 #define D_CMND_ZIGBEE_EZSP_RECEIVE "EZSPReceive"      // only for debug
 #define D_CMND_ZIGBEE_EZSP_RECEIVE_RAW "EZSPReceiveRaw"      // only for debug
+#define D_CMND_ZIGBEE_EZSP_LISTEN "Listen"      // only for EZSP
 #define D_CMND_ZIGBEEZNPSEND "ZNPSend"
 #define D_CMND_ZIGBEE_EZSP_SEND "EZSPSend"
 #define D_CMND_ZIGBEE_EZSP_SEND_RAW "EZSPSendRaw"
