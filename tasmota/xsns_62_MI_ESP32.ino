@@ -1210,7 +1210,6 @@ bool MI32Cmd(void) {
 const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 {m}%u%s / %u{e}";
 const char HTTP_MI32_SERIAL[] PROGMEM = "{s}%s %s{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
-const char HTTP_FIRMWARE[] PROGMEM = "{s}%s" " Firmware" "{m}%s{e}";
 const char HTTP_VOLTAGE[] PROGMEM = "{s}%s " D_VOLTAGE "{m}%s V{e}";
 const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}";
 const char HTTP_MI32_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
@@ -1315,9 +1314,6 @@ void MI32Show(bool json)
             char voltage[FLOATSZ];
             dtostrfd((MIBLEsensors[i].volt)/1000.0f, Settings.flag2.voltage_resolution, voltage);
             WSContentSend_PD(HTTP_VOLTAGE, kMI32SlaveType[MIBLEsensors[i].type-1], voltage);
-          }
-          if (MIBLEsensors[i].type == FLORA) {
-            WSContentSend_PD(HTTP_FIRMWARE, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].firmware);
           }
         }
       }
