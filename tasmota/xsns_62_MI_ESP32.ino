@@ -125,6 +125,7 @@ struct mi_sensor_t{
   uint8_t type; //Flora = 1; MI-HT_V1=2; LYWSD02=3; LYWSD03=4; CGG1=5; CGD1=6
   uint8_t serial[6];
   uint8_t showedUp;
+  int rssi;
   float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
   union {
     struct {
@@ -242,11 +243,11 @@ class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     memcpy(addr,advertisedDevice->getAddress().getNative(),6);
     MI32_ReverseMAC(addr);
     if(uuid==0xfe95) {
-      MI32ParseResponse((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr);
+      MI32ParseResponse((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr, advertisedDevice->getRSSI());
       MI32Scan->erase(advertisedDevice->getAddress());
     }
     else if(uuid==0xfdcd) {
-      MI32parseCGD1Packet((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr);
+      MI32parseCGD1Packet((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr, advertisedDevice->getRSSI());
       MI32Scan->erase(advertisedDevice->getAddress());
     }
     else {
@@ -925,12 +926,13 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot){
   }
 }
 
-void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6]){ // no MiBeacon
+void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int rssi){ // no MiBeacon
   uint8_t _addr[6];
   memcpy(_addr,addr,6);
   uint32_t _slot = MIBLEgetSensorSlot(_addr, 0x0576); // This must be hard-coded, no object-id in Cleargrass-packet
   DEBUG_SENSOR_LOG(PSTR("MI32: Sensor slot: %u"), _slot);
   if(_slot==0xff) return;
+  MIBLEsensors[_slot].rssi=rssi;
   cg_packet_t _packet;
   memcpy((char*)&_packet,_buf,sizeof(_packet));
   switch (_packet.mode){
@@ -959,7 +961,7 @@ void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6]){ // no M
   }
 }
 
-void MI32ParseResponse(char *buf, uint16_t bufsize, uint8_t addr[6]) {
+void MI32ParseResponse(char *buf, uint16_t bufsize, uint8_t addr[6], int rssi) {
     if(bufsize<10) {
       return;
     }
@@ -969,7 +971,10 @@ void MI32ParseResponse(char *buf, uint16_t bufsize, uint8_t addr[6]) {
     uint8_t _addr[6];
     memcpy(_addr,addr,6);
     uint16_t _slot = MIBLEgetSensorSlot(_addr, _type);
-    if(_slot!=0xff) MI32parseMiBeacon(_pos,_slot);
+    if(_slot!=0xff) {
+      MIBLEsensors[_slot].rssi=rssi;
+      MI32parseMiBeacon(_pos,_slot);
+    }
 }
 
 /***********************************************************************\
@@ -1209,6 +1214,7 @@ bool MI32Cmd(void) {
 
 const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 {m}%u%s / %u{e}";
 const char HTTP_MI32_SERIAL[] PROGMEM = "{s}%s %s{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
+const char HTTP_RSSI[] PROGMEM = "{s}%s" " RSSI" "{m}%d dBm{e}";
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
 const char HTTP_VOLTAGE[] PROGMEM = "{s}%s " D_VOLTAGE "{m}%s V{e}";
 const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}";
@@ -1229,14 +1235,13 @@ void MI32Show(bool json)
         kMI32SlaveType[MIBLEsensors[i].type-1],
         MIBLEsensors[i].serial[3], MIBLEsensors[i].serial[4], MIBLEsensors[i].serial[5]);
 
+      ResponseAppend_P(PSTR("\"RSSI\":%d"), MIBLEsensors[i].rssi);  // all sensors have rssi
+
       if (MIBLEsensors[i].type == FLORA) {
         if (!isnan(MIBLEsensors[i].temp)) {
           char temperature[FLOATSZ]; // all sensors have temperature
           dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"), temperature);
-        } else {
-          ResponseAppend_P(PSTR("}"));
-          continue;
+          ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"), temperature);
         }
         if (MIBLEsensors[i].lux!=0x0ffffff) { // this is the error code -> no lux
           ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
@@ -1250,6 +1255,7 @@ void MI32Show(bool json)
       }
       if (MIBLEsensors[i].type > FLORA){
         if (!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)) {
+          ResponseAppend_P(PSTR(","));
           ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
         }
       }
@@ -1286,6 +1292,7 @@ void MI32Show(bool json)
       for (i; i<j; i++) {
         WSContentSend_PD(HTTP_MI32_HL);
         WSContentSend_PD(HTTP_MI32_SERIAL, kMI32SlaveType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].serial[0], MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
+        WSContentSend_PD(HTTP_RSSI, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].rssi);
         if (MIBLEsensors[i].type==FLORA) {
           if (!isnan(MIBLEsensors[i].temp)) {
             char temperature[FLOATSZ];
