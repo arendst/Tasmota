@@ -141,6 +141,7 @@ struct mi_sensor_t{
     uint8_t bat; // many values seem to be hard-coded garbage (LYWSD0x, GCD1)
     uint16_t volt; // LYWSD03MMC
   };
+  char firmware[6]; // actually only for FLORA but hopefully we can add for more devices
 };
 
 std::vector<mi_sensor_t> MIBLEsensors;
@@ -773,6 +774,8 @@ void MI32batteryFLORA(){
     if(pChr->canRead()) {
       const char *buf = pChr->readValue().c_str();
       MI32readBat((char*)buf);
+      //we also can read the firmware from response no extra request needed
+      MI32readFirmwareFLORA((char*)buf);
     }
   }
   MI32.mode.readingDone = 1;
@@ -1012,6 +1015,23 @@ bool MI32readBat(char *_buf){
   return false;
 }
 
+bool MI32readFirmwareFLORA(char *_buf){
+  DEBUG_SENSOR_LOG(PSTR("%s: raw data: %x%x%x%x%x%x%x"),D_CMND_MI32,_buf[0],_buf[1],_buf[2],_buf[3],_buf[4],_buf[5],_buf[6]);
+  if(_buf[0] != 0){
+    char _firmware[5]; // FLORA send 5 byte for firmware version
+    strncpy(_firmware, _buf+2, 5);
+    AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: Firmware: %s"),D_CMND_MI32,_firmware);
+
+    uint32_t _slot = MI32.state.sensor;
+    DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
+
+    memcpy(MIBLEsensors[_slot].firmware, _firmware, 5);
+    MIBLEsensors[_slot].firmware[5] = '\0';
+    return true;
+  }
+  return false;
+}
+
 /**
  * @brief Main loop of the driver, "high level"-loop
  *
@@ -1240,6 +1260,9 @@ void MI32Show(bool json)
           char voltage[FLOATSZ];
           dtostrfd((MIBLEsensors[i].volt)/1000.0f, Settings.flag2.voltage_resolution, voltage);
           ResponseAppend_P(PSTR(",\"" D_VOLTAGE "\":%s"), voltage);
+        }
+        if (MIBLEsensors[i].type == FLORA) { //actually we can only read FLORA
+          ResponseAppend_P(PSTR(",\"Firmware\":\"%s\""), MIBLEsensors[i].firmware);
         }
       }
       ResponseAppend_P(PSTR("}"));
