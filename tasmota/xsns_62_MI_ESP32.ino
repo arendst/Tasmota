@@ -242,12 +242,17 @@ class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     uint8_t addr[6];
     memcpy(addr,advertisedDevice->getAddress().getNative(),6);
     MI32_ReverseMAC(addr);
+    int rssi = 0xffff;
+    if(advertisedDevice->haveRSSI()) {
+      rssi = advertisedDevice->getRSSI();
+    }
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("RSSI: %d"),rssi); // actually i never got a 0xffff
     if(uuid==0xfe95) {
-      MI32ParseResponse((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr, advertisedDevice->getRSSI());
+      MI32ParseResponse((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr, rssi);
       MI32Scan->erase(advertisedDevice->getAddress());
     }
     else if(uuid==0xfdcd) {
-      MI32parseCGD1Packet((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr, advertisedDevice->getRSSI());
+      MI32parseCGD1Packet((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr, rssi);
       MI32Scan->erase(advertisedDevice->getAddress());
     }
     else {
@@ -341,6 +346,8 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_serial)[6], uint16_t _type){
   _newSensor.showedUp = 255;
   _newSensor.temp =NAN;
   _newSensor.bat=0x00;
+  _newSensor.rssi=0xffff;
+  _newSensor.firmware[0]='\0';
   switch (_type)
     {
     case 1:
@@ -1235,8 +1242,11 @@ void MI32Show(bool json)
         kMI32SlaveType[MIBLEsensors[i].type-1],
         MIBLEsensors[i].serial[3], MIBLEsensors[i].serial[4], MIBLEsensors[i].serial[5]);
 
-      ResponseAppend_P(PSTR("\"RSSI\":%d"), MIBLEsensors[i].rssi);  // all sensors have rssi
-
+      if (MIBLEsensors[i].rssi!=0xffff) { // this is the error code -> no valid value
+        ResponseAppend_P(PSTR("\"RSSI\":%d"), MIBLEsensors[i].rssi);  // all sensors have rssi
+      } else {
+        ResponseAppend_P(PSTR("\"RSSI\":null")); // to know that it is sometimes out of range
+      }
       if (MIBLEsensors[i].type == FLORA) {
         if (!isnan(MIBLEsensors[i].temp)) {
           char temperature[FLOATSZ]; // all sensors have temperature
@@ -1292,7 +1302,9 @@ void MI32Show(bool json)
       for (i; i<j; i++) {
         WSContentSend_PD(HTTP_MI32_HL);
         WSContentSend_PD(HTTP_MI32_SERIAL, kMI32SlaveType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].serial[0], MIBLEsensors[i].serial[1],MIBLEsensors[i].serial[2],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
-        WSContentSend_PD(HTTP_RSSI, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].rssi);
+        if (MIBLEsensors[i].rssi!=0xffff) { // this is the error code -> no valid value
+          WSContentSend_PD(HTTP_RSSI, kMI32SlaveType[MIBLEsensors[i].type-1], MIBLEsensors[i].rssi);
+        }
         if (MIBLEsensors[i].type==FLORA) {
           if (!isnan(MIBLEsensors[i].temp)) {
             char temperature[FLOATSZ];
