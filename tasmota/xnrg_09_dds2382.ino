@@ -74,7 +74,7 @@ void Dds2382EverySecond(void)
       if (Settings.flag3.dds2382_model) {  // SetOption71 - Select different Modbus registers for Active Energy (#6531)
         offset = 19;
       }
-      Energy.export_active = (float)((buffer[offset] << 24) + (buffer[offset +1] << 16) + (buffer[offset +2] << 8) + buffer[offset +3]) / 100.0;    // 429496.729 kW
+      Energy.export_active[0] = (float)((buffer[offset] << 24) + (buffer[offset +1] << 16) + (buffer[offset +2] << 8) + buffer[offset +3]) / 100.0;    // 429496.729 kW
       float import_active = (float)((buffer[offset +4] << 24) + (buffer[offset +5] << 16) + (buffer[offset +6] << 8) + buffer[offset +7]) / 100.0;  // 429496.729 kW
 
       EnergyUpdateTotal(import_active, true);  // 484.708 kWh
@@ -91,7 +91,7 @@ void Dds2382EverySecond(void)
 
 void Dds2382SnsInit(void)
 {
-  Dds2382Modbus = new TasmotaModbus(pin[GPIO_DDS2382_RX], pin[GPIO_DDS2382_TX]);
+  Dds2382Modbus = new TasmotaModbus(Pin(GPIO_DDS2382_RX), Pin(GPIO_DDS2382_TX));
   uint8_t result = Dds2382Modbus->Begin(DDS2382_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
@@ -102,7 +102,7 @@ void Dds2382SnsInit(void)
 
 void Dds2382DrvInit(void)
 {
-  if ((pin[GPIO_DDS2382_RX] < 99) && (pin[GPIO_DDS2382_TX] < 99)) {
+  if (PinUsed(GPIO_DDS2382_RX) && PinUsed(GPIO_DDS2382_TX)) {
     energy_flg = XNRG_09;
   }
 }

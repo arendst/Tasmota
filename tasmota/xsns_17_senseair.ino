@@ -132,8 +132,8 @@ void Senseair250ms(void)              // Every 250 mSec
 void SenseairInit(void)
 {
   senseair_type = 0;
-  if ((pin[GPIO_SAIR_RX] < 99) && (pin[GPIO_SAIR_TX] < 99)) {
-    SenseairModbus = new TasmotaModbus(pin[GPIO_SAIR_RX], pin[GPIO_SAIR_TX]);
+  if (PinUsed(GPIO_SAIR_RX) && PinUsed(GPIO_SAIR_TX)) {
+    SenseairModbus = new TasmotaModbus(Pin(GPIO_SAIR_RX), Pin(GPIO_SAIR_TX));
     uint8_t result = SenseairModbus->Begin(SENSEAIR_MODBUS_SPEED);
     if (result) {
       if (2 == result) { ClaimSerial(); }

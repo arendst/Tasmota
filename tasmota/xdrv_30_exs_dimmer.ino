@@ -395,11 +395,11 @@ void EsxMcuStart(void)
   int retries = 3;
 
 #ifdef EXS_DEBUG
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EXS: Request MCU configuration, PIN %d to Low"), pin[GPIO_EXS_ENABLE]);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EXS: Request MCU configuration, PIN %d to Low"), Pin(GPIO_EXS_ENABLE));
 #endif
 
-  pinMode(pin[GPIO_EXS_ENABLE], OUTPUT);
-  digitalWrite(pin[GPIO_EXS_ENABLE], LOW);
+  pinMode(Pin(GPIO_EXS_ENABLE), OUTPUT);
+  digitalWrite(Pin(GPIO_EXS_ENABLE), LOW);
 
   delay(1); // wait 1ms fot the MCU to come online
 
@@ -413,13 +413,13 @@ void EsxMcuStart(void)
 void ExsInit(void)
 {
 #ifdef EXS_DEBUG
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("EXS: Starting Tx %d Rx %d"), pin[GPIO_TXD], pin[GPIO_RXD]);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("EXS: Starting Tx %d Rx %d"), Pin(GPIO_TXD), Pin(GPIO_RXD));
 #endif
 
   Exs.buffer = (uint8_t *)malloc(EXS_BUFFER_SIZE);
   if (Exs.buffer != nullptr)
   {
-    ExsSerial = new TasmotaSerial(pin[GPIO_RXD], pin[GPIO_TXD], 2);
+    ExsSerial = new TasmotaSerial(Pin(GPIO_RXD), Pin(GPIO_TXD), 2);
     if (ExsSerial->begin(9600))
     {
       if (ExsSerial->hardwareSerial())

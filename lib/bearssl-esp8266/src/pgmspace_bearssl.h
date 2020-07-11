@@ -50,7 +50,7 @@ extern "C" {
 //     w1,     w0
 
 #define pgm_read_with_offset(addr, res) \
-  asm("extui    %0, %1, 0, 2\n"     /* Extract offset within word (in bytes) */ \
+  __asm__ ("extui    %0, %1, 0, 2\n"     /* Extract offset within word (in bytes) */ \
       "sub      %1, %1, %0\n"       /* Subtract offset from addr, yielding an aligned address */ \
       "l32i.n   %1, %1, 0x0\n"      /* Load word from aligned address */ \
       "slli     %0, %0, 3\n"        /* Mulitiply offset by 8, yielding an offset in bits */ \

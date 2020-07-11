@@ -80,22 +80,37 @@ void ILI9488_InitDriver()
     bg_color = ILI9488_BLACK;
 
     uint8_t bppin=BACKPLANE_PIN;
-    if  (pin[GPIO_BACKLIGHT]<99) {
-      bppin=pin[GPIO_BACKLIGHT];
+    if  (PinUsed(GPIO_BACKLIGHT)) {
+      bppin=Pin(GPIO_BACKLIGHT);
     }
 
-    // init renderer
-    if  ((pin[GPIO_SSPI_CS]<99) && (pin[GPIO_SSPI_MOSI]<99) && (pin[GPIO_SSPI_SCLK]<99)){
-      ili9488  = new ILI9488(pin[GPIO_SSPI_CS],pin[GPIO_SSPI_MOSI],pin[GPIO_SSPI_SCLK],bppin);
+#ifdef ESP32
+#undef HW_SPI_MOSI
+#define HW_SPI_MOSI 23
+#undef HW_SPI_MISO
+#define HW_SPI_MISO 19
+#undef HW_SPI_CLK
+#define HW_SPI_CLK 18
+#else
+#undef HW_SPI_MOSI
+#define HW_SPI_MOSI 13
+#undef HW_SPI_MISO
+#define HW_SPI_MISO 12
+#undef HW_SPI_CLK
+#define HW_SPI_CLK 14
+#endif
+
+    // init renderer, must use hardware spi
+    if (PinUsed(GPIO_SSPI_CS) && (Pin(GPIO_SSPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SSPI_SCLK)==HW_SPI_CLK)) {
+        ili9488  = new ILI9488(Pin(GPIO_SSPI_CS),Pin(GPIO_SSPI_MOSI),Pin(GPIO_SSPI_SCLK),bppin);
     } else {
-      if ((pin[GPIO_SPI_CS]<99) && (pin[GPIO_SPI_MOSI]<99) && (pin[GPIO_SPI_CLK]<99)) {
-        ili9488  = new ILI9488(pin[GPIO_SPI_CS],pin[GPIO_SPI_MOSI],pin[GPIO_SPI_CLK],bppin);
+      if (PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SPI_CLK)==HW_SPI_CLK)) {
+        ili9488  = new ILI9488(Pin(GPIO_SPI_CS),Pin(GPIO_SPI_MOSI),Pin(GPIO_SPI_CLK),bppin);
       } else {
         return;
       }
     }
 
-    SPI.begin();
     ili9488->begin();
     renderer = ili9488;
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);

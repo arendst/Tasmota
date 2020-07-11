@@ -58,7 +58,9 @@ void FrogmoreScd30::begin(TwoWire *pWire, uint8_t i2cAddress)
     }
 
     co2NewDataLocation = -1; // indicates there is no data, so the 1st data point needs to fill up the median filter
+#ifdef ESP8266
     this->pWire->setClockStretchLimit(200000);
+#endif
     this->ambientPressure = 0;
 }
 
@@ -106,7 +108,11 @@ int FrogmoreScd30::clearI2CBus(void)
     snprintf_P(scd30log_data, sizeof(scd30log_data), "clearI2CBus");
     AddLog(LOG_LEVEL_DEBUG_MORE);
 #endif
+#ifdef ESP8266
     return (twi_status());
+#else
+    return 0;
+#endif
 }
 
 #ifdef SCD30_DEBUG
@@ -253,7 +259,7 @@ int FrogmoreScd30::get16BitRegCheckCRC(void* pInput, uint16_t *pData)
 }
 
 // gets 32 bits, (2) 16-bit chunks, and validates the CRCs
-// 
+//
 int FrogmoreScd30::get32BitRegCheckCRC(void *pInput, float *pData)
 {
     uint16_t tempU16High;
@@ -458,7 +464,7 @@ int FrogmoreScd30::setTemperatureOffset(float offset_degC)
     {
         return (ERROR_SCD30_INVALID_VALUE);
     }
-    
+
 }
 
 int FrogmoreScd30::setTemperatureOffset(uint16_t offset_centiDegC)
@@ -568,7 +574,7 @@ int FrogmoreScd30::readMeasurement(
         return (error);
     }
 
-    error = get32BitRegCheckCRC(&bytes[12], &tempHumidity);  
+    error = get32BitRegCheckCRC(&bytes[12], &tempHumidity);
     if (error)
     {
 #ifdef SCD30_DEBUG
@@ -650,4 +656,3 @@ int FrogmoreScd30::stopMeasuring(void)
 {
     return (sendCommand(COMMAND_SCD30_STOP_MEASUREMENT));
 }
-

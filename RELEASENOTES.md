@@ -21,7 +21,7 @@ While fallback or downgrading is common practice it was never supported due to S
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.6.3 + e64cb61** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.1** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 Although it might still compile on previous Core versions all support will be removed in the near future.
 
@@ -35,7 +35,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Provided Binary Downloads
 
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.6.3 + e64cb61**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.1**.
 
 - **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
@@ -52,34 +52,46 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.2.0.3
+### Version 8.4.0 George
 
-- Change HM-10 sensor type detection and add features (#7962)
-- Change light scheme 2,3,4 cycle time speed from 24,48,72,... seconds to 4,6,12,24,36,48,... seconds (#8034)
-- Change remove floating point libs from IRAM
-- Change remove MQTT Info messages on restart for DeepSleep Wake (#8044)
-- Change IRremoteESP8266 library updated to v2.7.5
-- Fix possible Relay toggle on (OTA) restart
-- Fix PWM flickering during wifi connection (#8046)
-- Fix Zigbee sending wrong Sat value with Hue emulation
-- Fix Zigbee crash with Occupancy sensor (#8089)
-- Add Zigbee command ``ZbRestore`` to restore device configuration dumped with ``ZbStatus 2``
-- Add Zigbee command ``ZbUnbind``
-- Add Zigbee command ``ZbBindState`` and ``manuf``attribute
-- Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
-- Add commands ``NrfPage``, ``NrfIgnore``, ``NrfScan`` and ``NrfBeacon`` to NRF24 Bluetooth driver (#8075)
-- Add command ``SetOption41 <x>`` to force sending gratuitous ARP every <x> seconds
-- Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
-- Add command ``SetOption91 1`` to enable fading at startup / power on
-- Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
-- Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
-- Add command ``DevGroupName`` to specify up to four Device Group Names (#8087)
-- Add command ``DevGroupSend`` to send an update to a Device Group (#8093)
-- Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
-- Add support for 64x48 SSD1306 OLED (#6740)
-- Add support for up to four MQTT GroupTopics (#8014)
-- Add support for longer template names
-- Add support for an iAQ sensor (#8107)
-- Add console command history (#7483, #8015)
-- Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
-- Add more accuracy to GPS NTP server (#8088)
+- Change IRremoteESP8266 library updated to v2.7.7
+- Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)
+- Change Energy JSON Total field from ``"Total":[33.736,11.717,16.978]`` to ``"Total":33.736,"TotalTariff":[11.717,16.978]``
+- Change Energy JSON ExportActive field from ``"ExportActive":[33.736,11.717,16.978]`` to ``"ExportActive":33.736,"ExportTariff":[11.717,16.978]``
+- Change ESP32 USER GPIO template representation decreasing template message size
+- Change define USE_TASMOTA_SLAVE into USE_TASMOTA_CLIENT
+- Change commands ``SlaveSend`` and ``SlaveReset`` into ``ClientSend`` and ``ClientReset``
+- Fix escape of non-JSON received serial data (#8329)
+- Fix exception or watchdog on rule re-entry (#8757)
+- Add command ``Rule0`` to change global rule parameters
+- Add command ``Time 4`` to display timestamp using milliseconds (#8537)
+- Add command ``SetOption94 0/1`` to select MAX31855 or MAX6675 thermocouple support (#8616)
+- Add command ``SetOption97 0/1`` to switch between Tuya serial speeds 9600 bps (0) or 115200 bps (1)
+- Add command ``SetOption98 0/1`` to provide rotary rule triggers (1) instead of controlling light (0)
+- Add command ``Module2`` to configure fallback module on fast reboot (#8464)
+- Add commands ``LedPwmOn 0..255``, ``LedPwmOff 0..255`` and ``LedPwmMode1 0/1`` to control led brightness by George (#8491)
+- Add ESP32 ethernet commands ``EthType 0/1``, ``EthAddress 0..31`` and ``EthClockMode 0..3``
+- Add support for unique MQTTClient (and inherited fallback topic) by full Mac address using ``mqttclient DVES_%12X`` (#8300)
+- Add more functionality to ``Switchmode`` 11 and 12 (#8450)
+- Add wildcard pattern ``?`` for JSON matching in rules
+- Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)
+- Add support for VEML7700 Ambient light intensity Sensor by device111 (#8432)
+- Add Three Phase Export Active Energy to SDM630 driver
+- Add Zigbee options to ``ZbSend`` to write and report attributes
+- Add Zigbee auto-responder for common attributes
+- Add ``CpuFrequency`` to ``status 2``
+- Add ``FlashFrequency`` to ``status 4``
+- Add support for up to two BH1750 sensors controlled by commands ``BH1750Resolution`` and ``BH1750MTime`` (#8139)
+- Add support for up to eight MCP9808 temperature sensors by device111 (#8594)
+- Add support for BL0940 energy monitor as used in Blitzwolf BW-SHP10 (#8175)
+- Add initial support for Telegram bot (#8619)
+- Add support for HP303B Temperature and Pressure sensor by Robert Jaakke (#8638)
+- Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet
+- Add support for Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
+- Add Library to be used for decoding Teleinfo (French Metering Smart Meter)
+- Add basic support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON
+- Add support for single wire LMT01 temperature Sensor by justifiably (#8713)
+- Add compile time interlock parameters (#8759)
+- Add compile time user template (#8766)
+- Add rotary encoder support for light dimmer and optional color temperature if button1 still pressed (#8670)
+- Add support for switches/relays using an AC detection circuitry e.g. MOES MS-104B / BlitzWolf SS5 / etc. (#8606)

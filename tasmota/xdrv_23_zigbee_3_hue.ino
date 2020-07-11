@@ -75,16 +75,21 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
 
 void HueLightStatus2Zigbee(uint16_t shortaddr, String *response)
 {
-  const size_t buf_size = 192;
+  const size_t buf_size = 300;
   char * buf = (char*) malloc(buf_size);
 
   const char * friendlyName = zigbee_devices.getFriendlyName(shortaddr);
+  const char * modelId = zigbee_devices.getModelId(shortaddr);
+  const char * manufacturerId = zigbee_devices.getManufacturerId(shortaddr);
   char shortaddrname[8];
   snprintf_P(shortaddrname, sizeof(shortaddrname), PSTR("0x%04X"), shortaddr);
 
   snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON2,
-              (friendlyName) ? friendlyName : shortaddrname,
+              (friendlyName) ? EscapeJSONString(friendlyName).c_str() : shortaddrname,
+              (modelId) ? EscapeJSONString(modelId).c_str() : PSTR("Unknown"),
+              (manufacturerId) ? EscapeJSONString(manufacturerId).c_str() : PSTR("Tasmota"),
               GetHueDeviceId(shortaddr).c_str());
+              
   *response += buf;
   free(buf);
 }
@@ -190,23 +195,21 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
   const size_t buf_size = 100;
   char * buf = (char*) malloc(buf_size);
 
-  if (WebServer->args()) {
+  if (Webserver->args()) {
     response = "[";
 
     StaticJsonBuffer<300> jsonBuffer;
-    JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg((WebServer->args())-1));
+    JsonObject &hue_json = jsonBuffer.parseObject(Webserver->arg((Webserver->args())-1));
     if (hue_json.containsKey("on")) {
       on = hue_json["on"];
       snprintf_P(buf, buf_size,
                  PSTR("{\"success\":{\"/lights/%d/state/on\":%s}}"),
                  device_id, on ? "true" : "false");
 
-      switch(on)
-      {
-        case false : ZigbeeHuePower(shortaddr, 0x00);
-                    break;
-        case true  : ZigbeeHuePower(shortaddr, 0x01);
-                    break;
+      if (on) {
+        ZigbeeHuePower(shortaddr, 0x01);
+      } else {
+        ZigbeeHuePower(shortaddr, 0x00);
       }
       response += buf;
       resp = true;

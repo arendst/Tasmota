@@ -68,8 +68,8 @@ public:
     int16_t width;
     int16_t height;
 
-    Epd();
-    ~Epd();
+//    Epd();
+//    ~Epd();
     int  Init(const unsigned char* lut);
     void Init(int8_t p);
     void SendCommand(unsigned char command);

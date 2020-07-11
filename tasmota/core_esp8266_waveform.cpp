@@ -3,15 +3,16 @@
                      supporting outputs on all pins in parallel.
 
   Copyright (c) 2018 Earle F. Philhower, III.  All rights reserved.
+  Copyright (c) 2020 Dirk O. Kaar.
 
   The core idea is to have a programmable waveform generator with a unique
-  high and low period (defined in microseconds).  TIMER1 is set to 1-shot
-  mode and is always loaded with the time until the next edge of any live
-  waveforms.
+  high and low period (defined in microseconds or CPU clock cycles).  TIMER1 is
+  set to 1-shot mode and is always loaded with the time until the next edge
+  of any live waveforms.
 
   Up to one waveform generator per pin supported.
 
-  Each waveform generator is synchronized to the ESP cycle counter, not the
+  Each waveform generator is synchronized to the ESP clock cycle counter, not the
   timer.  This allows for removing interrupt jitter and delay as the counter
   always increments once per 80MHz clock.  Changes to a waveform are
   contiguous and only take effect on the next waveform transition,
@@ -19,8 +20,9 @@
 
   This replaces older tone(), analogWrite(), and the Servo classes.
 
-  Everywhere in the code where "cycles" is used, it means ESP.getCycleTime()
-  cycles, not TIMER1 cycles (which may be 2 CPU clocks @ 160MHz).
+  Everywhere in the code where "ccy" or "ccys" is used, it means ESP.getCycleCount()
+  clock cycle time, or an interval measured in clock cycles, but not TIMER1
+  cycles (which may be 2 CPU clock cycles @ 160MHz).
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -37,308 +39,402 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#include <core_version.h>
-#if defined(ARDUINO_ESP8266_RELEASE_2_6_1) || defined(ARDUINO_ESP8266_RELEASE_2_6_2) || defined(ARDUINO_ESP8266_RELEASE_2_6_3) || !defined(ARDUINO_ESP8266_RELEASE)
-#warning **** Tasmota is using a patched PWM Arduino version as planned ****
+#ifdef ESP8266
 
-
+#include "core_esp8266_waveform.h"
 #include <Arduino.h>
 #include "ets_sys.h"
-#include "core_esp8266_waveform.h"
+#include <atomic>
 
-extern "C" {
+// Timer is 80MHz fixed. 160MHz CPU frequency need scaling.
+constexpr bool ISCPUFREQ160MHZ = clockCyclesPerMicrosecond() == 160;
+// Maximum delay between IRQs, Timer1, <= 2^23 / 80MHz
+constexpr int32_t MAXIRQTICKSCCYS = microsecondsToClockCycles(10000);
+// Maximum servicing time for any single IRQ
+constexpr uint32_t ISRTIMEOUTCCYS = microsecondsToClockCycles(18);
+// The latency between in-ISR rearming of the timer and the earliest firing
+constexpr int32_t IRQLATENCYCCYS = microsecondsToClockCycles(2);
+// The SDK and hardware take some time to actually get to our NMI code
+constexpr int32_t DELTAIRQCCYS = ISCPUFREQ160MHZ ?
+  microsecondsToClockCycles(2) >> 1 : microsecondsToClockCycles(2);
 
-// Maximum delay between IRQs
-#define MAXIRQUS (10000)
-
-// Set/clear GPIO 0-15 by bitmask
-#define SetGPIO(a) do { GPOS = a; } while (0)
-#define ClearGPIO(a) do { GPOC = a; } while (0)
+// for INFINITE, the NMI proceeds on the waveform without expiry deadline.
+// for EXPIRES, the NMI expires the waveform automatically on the expiry ccy.
+// for UPDATEEXPIRY, the NMI recomputes the exact expiry ccy and transitions to EXPIRES.
+// for INIT, the NMI initializes nextPeriodCcy, and if expiryCcy != 0 includes UPDATEEXPIRY.
+enum class WaveformMode : uint8_t {INFINITE = 0, EXPIRES = 1, UPDATEEXPIRY = 2, INIT = 3};
 
 // Waveform generator can create tones, PWM, and servos
 typedef struct {
-  uint32_t nextServiceCycle;   // ESP cycle timer when a transition required
-  uint32_t expiryCycle;        // For time-limited waveform, the cycle when this waveform must stop
-  uint32_t nextTimeHighCycles; // Copy over low->high to keep smooth waveform
-  uint32_t nextTimeLowCycles;  // Copy over high->low to keep smooth waveform
+  uint32_t nextPeriodCcy; // ESP clock cycle when a period begins. If WaveformMode::INIT, temporarily holds positive phase offset ccy count
+  uint32_t endDutyCcy;    // ESP clock cycle when going from duty to off
+  int32_t dutyCcys;       // Set next off cycle at low->high to maintain phase
+  int32_t adjDutyCcys;    // Temporary correction for next period
+  int32_t periodCcys;     // Set next phase cycle at low->high to maintain phase
+  uint32_t expiryCcy;     // For time-limited waveform, the CPU clock cycle when this waveform must stop. If WaveformMode::UPDATE, temporarily holds relative ccy count
+  WaveformMode mode;
+  int8_t alignPhase;      // < 0 no phase alignment, otherwise starts waveform in relative phase offset to given pin
+  bool autoPwm;           // perform PWM duty to idle cycle ratio correction under high load at the expense of precise timings
 } Waveform;
 
-static Waveform waveform[17];        // State of all possible pins
-static volatile uint32_t waveformState = 0;   // Is the pin high or low, updated in NMI so no access outside the NMI code
-static volatile uint32_t waveformEnabled = 0; // Is it actively running, updated in NMI so no access outside the NMI code
+namespace {
 
-// Enable lock-free by only allowing updates to waveformState and waveformEnabled from IRQ service routine
-static volatile uint32_t waveformToEnable = 0;  // Message to the NMI handler to start a waveform on a inactive pin
-static volatile uint32_t waveformToDisable = 0; // Message to the NMI handler to disable a pin from waveform generation
+  static struct {
+    Waveform pins[17];             // State of all possible pins
+    uint32_t states = 0;           // Is the pin high or low, updated in NMI so no access outside the NMI code
+    uint32_t enabled = 0; // Is it actively running, updated in NMI so no access outside the NMI code
 
-static uint32_t (*timer1CB)() = NULL;
+    // Enable lock-free by only allowing updates to waveform.states and waveform.enabled from IRQ service routine
+    int32_t toSetBits = 0;     // Message to the NMI handler to start/modify exactly one waveform
+    int32_t toDisableBits = 0; // Message to the NMI handler to disable exactly one pin from waveform generation
 
+    uint32_t(*timer1CB)() = nullptr;
 
-// Non-speed critical bits
-#pragma GCC optimize ("Os")
+    bool timer1Running = false;
 
-static inline ICACHE_RAM_ATTR uint32_t GetCycleCount() {
-  uint32_t ccount;
-  __asm__ __volatile__("esync; rsr %0,ccount":"=a"(ccount));
-  return ccount;
+    uint32_t nextEventCcy;
+  } waveform;
+
 }
 
 // Interrupt on/off control
 static ICACHE_RAM_ATTR void timer1Interrupt();
-static bool timerRunning = false;
+
+// Non-speed critical bits
+#pragma GCC optimize ("Os")
 
 static void initTimer() {
   timer1_disable();
   ETS_FRC_TIMER1_INTR_ATTACH(NULL, NULL);
   ETS_FRC_TIMER1_NMI_INTR_ATTACH(timer1Interrupt);
   timer1_enable(TIM_DIV1, TIM_EDGE, TIM_SINGLE);
-  timerRunning = true;
+  waveform.timer1Running = true;
+  timer1_write(IRQLATENCYCCYS); // Cause an interrupt post-haste
 }
 
 static void ICACHE_RAM_ATTR deinitTimer() {
   ETS_FRC_TIMER1_NMI_INTR_ATTACH(NULL);
   timer1_disable();
   timer1_isr_init();
-  timerRunning = false;
+  waveform.timer1Running = false;
 }
+
+extern "C" {
 
 // Set a callback.  Pass in NULL to stop it
 void setTimer1Callback(uint32_t (*fn)()) {
-  timer1CB = fn;
-  if (!timerRunning && fn) {
+  waveform.timer1CB = fn;
+  std::atomic_thread_fence(std::memory_order_acq_rel);
+  if (!waveform.timer1Running && fn) {
     initTimer();
-    timer1_write(microsecondsToClockCycles(1)); // Cause an interrupt post-haste
-  } else if (timerRunning && !fn && !waveformEnabled) {
+  } else if (waveform.timer1Running && !fn && !waveform.enabled) {
     deinitTimer();
   }
+}
+
+int startWaveform(uint8_t pin, uint32_t highUS, uint32_t lowUS,
+  uint32_t runTimeUS, int8_t alignPhase, uint32_t phaseOffsetUS, bool autoPwm) {
+  return startWaveformClockCycles(pin,
+    microsecondsToClockCycles(highUS), microsecondsToClockCycles(lowUS),
+    microsecondsToClockCycles(runTimeUS), alignPhase, microsecondsToClockCycles(phaseOffsetUS), autoPwm);
 }
 
 // Start up a waveform on a pin, or change the current one.  Will change to the new
 // waveform smoothly on next low->high transition.  For immediate change, stopWaveform()
 // first, then it will immediately begin.
-int startWaveform(uint8_t pin, uint32_t timeHighUS, uint32_t timeLowUS, uint32_t runTimeUS) {
-  if ((pin > 16) || isFlashInterfacePin(pin)) {
+int startWaveformClockCycles(uint8_t pin, uint32_t highCcys, uint32_t lowCcys,
+  uint32_t runTimeCcys, int8_t alignPhase, uint32_t phaseOffsetCcys, bool autoPwm) {
+  uint32_t periodCcys = highCcys + lowCcys;
+  if (periodCcys < MAXIRQTICKSCCYS) {
+    if (!highCcys) {
+      periodCcys = (MAXIRQTICKSCCYS / periodCcys) * periodCcys;
+    }
+    else if (!lowCcys) {
+      highCcys = periodCcys = (MAXIRQTICKSCCYS / periodCcys) * periodCcys;
+    }
+  }
+  // sanity checks, including mixed signed/unsigned arithmetic safety
+  if ((pin > 16) || isFlashInterfacePin(pin) || (alignPhase > 16) ||
+    static_cast<int32_t>(periodCcys) <= 0 ||
+    static_cast<int32_t>(highCcys) < 0 || static_cast<int32_t>(lowCcys) < 0) {
     return false;
   }
-  Waveform *wave = &waveform[pin];
-  // Adjust to shave off some of the IRQ time, approximately
-  wave->nextTimeHighCycles = microsecondsToClockCycles(timeHighUS);
-  wave->nextTimeLowCycles = microsecondsToClockCycles(timeLowUS);
-  wave->expiryCycle = runTimeUS ? GetCycleCount() + microsecondsToClockCycles(runTimeUS) : 0;
-  if (runTimeUS && !wave->expiryCycle) {
-    wave->expiryCycle = 1; // expiryCycle==0 means no timeout, so avoid setting it
-  }
+  Waveform& wave = waveform.pins[pin];
+  wave.dutyCcys = highCcys;
+  wave.adjDutyCcys = 0;
+  wave.periodCcys = periodCcys;
+  wave.autoPwm = autoPwm;
 
-  uint32_t mask = 1<<pin;
-  if (!(waveformEnabled & mask)) {
-    // Actually set the pin high or low in the IRQ service to guarantee times
-    wave->nextServiceCycle = GetCycleCount() + microsecondsToClockCycles(1);
-    waveformToEnable |= mask;
-    if (!timerRunning) {
-      initTimer();
-      timer1_write(microsecondsToClockCycles(10));
-    } else {
-      // Ensure timely service....
-      if (T1L > microsecondsToClockCycles(10)) {
-        timer1_write(microsecondsToClockCycles(10));
+  std::atomic_thread_fence(std::memory_order_acquire);
+  const uint32_t pinBit = 1UL << pin;
+  if (!(waveform.enabled & pinBit)) {
+    // wave.nextPeriodCcy and wave.endDutyCcy are initialized by the ISR
+    wave.nextPeriodCcy = phaseOffsetCcys;
+    wave.expiryCcy = runTimeCcys; // in WaveformMode::INIT, temporarily hold relative cycle count
+    wave.mode = WaveformMode::INIT;
+    wave.alignPhase = (alignPhase < 0) ? -1 : alignPhase;
+    if (!wave.dutyCcys) {
+      // If initially at zero duty cycle, force GPIO off
+      if (pin == 16) {
+        GP16O = 0;
+      }
+      else {
+        GPOC = pinBit;
       }
     }
-    while (waveformToEnable) {
-      delay(0); // Wait for waveform to update
+    std::atomic_thread_fence(std::memory_order_release);
+    waveform.toSetBits = 1UL << pin;
+    std::atomic_thread_fence(std::memory_order_release);
+    if (!waveform.timer1Running) {
+      initTimer();
+    }
+    else if (T1V > IRQLATENCYCCYS) {
+      // Must not interfere if Timer is due shortly
+      timer1_write(IRQLATENCYCCYS);
     }
   }
-
+  else {
+    wave.mode = WaveformMode::INFINITE; // turn off possible expiry to make update atomic from NMI
+    std::atomic_thread_fence(std::memory_order_release);
+    wave.expiryCcy = runTimeCcys; // in WaveformMode::UPDATEEXPIRY, temporarily hold relative cycle count
+    if (runTimeCcys) {
+      wave.mode = WaveformMode::UPDATEEXPIRY;
+      std::atomic_thread_fence(std::memory_order_release);
+      waveform.toSetBits = 1UL << pin;
+    }
+  }
+  std::atomic_thread_fence(std::memory_order_acq_rel);
+  while (waveform.toSetBits) {
+    delay(0); // Wait for waveform to update
+    std::atomic_thread_fence(std::memory_order_acquire);
+  }
   return true;
-}
-
-// Speed critical bits
-#pragma GCC optimize ("O2")
-// Normally would not want two copies like this, but due to different
-// optimization levels the inline attribute gets lost if we try the
-// other version.
-
-static inline ICACHE_RAM_ATTR uint32_t GetCycleCountIRQ() {
-  uint32_t ccount;
-  __asm__ __volatile__("rsr %0,ccount":"=a"(ccount));
-  return ccount;
-}
-
-static inline ICACHE_RAM_ATTR uint32_t min_u32(uint32_t a, uint32_t b) {
-  if (a < b) {
-    return a;
-  }
-  return b;
-}
-
-static inline ICACHE_RAM_ATTR int32_t max_32(int32_t a, int32_t b) {
-    if (a < b) {
-        return b;
-    }
-    return a;
 }
 
 // Stops a waveform on a pin
 int ICACHE_RAM_ATTR stopWaveform(uint8_t pin) {
   // Can't possibly need to stop anything if there is no timer active
-  if (!timerRunning) {
+  if (!waveform.timer1Running) {
     return false;
   }
   // If user sends in a pin >16 but <32, this will always point to a 0 bit
   // If they send >=32, then the shift will result in 0 and it will also return false
-  uint32_t mask = 1<<pin;
-  if (!(waveformEnabled & mask)) {
-    return false; // It's not running, nothing to do here
+  std::atomic_thread_fence(std::memory_order_acquire);
+  const uint32_t pinBit = 1UL << pin;
+  if (waveform.enabled & pinBit) {
+    waveform.toDisableBits = 1UL << pin;
+    std::atomic_thread_fence(std::memory_order_release);
+    // Must not interfere if Timer is due shortly
+    if (T1V > IRQLATENCYCCYS) {
+      timer1_write(IRQLATENCYCCYS);
+    }
+    while (waveform.toDisableBits) {
+      /* no-op */ // Can't delay() since stopWaveform may be called from an IRQ
+      std::atomic_thread_fence(std::memory_order_acquire);
+    }
   }
-  waveformToDisable |= mask;
-  // Ensure timely service....
-  if (T1L > microsecondsToClockCycles(10)) {
-    timer1_write(microsecondsToClockCycles(10));
-  }
-  while (waveformToDisable) {
-    /* no-op */ // Can't delay() since stopWaveform may be called from an IRQ
-  }
-  if (!waveformEnabled && !timer1CB) {
+  if (!waveform.enabled && !waveform.timer1CB) {
     deinitTimer();
   }
   return true;
 }
 
-// The SDK and hardware take some time to actually get to our NMI code, so
-// decrement the next IRQ's timer value by a bit so we can actually catch the
-// real CPU cycle counter we want for the waveforms.
-#if F_CPU == 80000000
-  #define DELTAIRQ (microsecondsToClockCycles(3))
-#else
-  #define DELTAIRQ (microsecondsToClockCycles(2))
-#endif
-
-
-static ICACHE_RAM_ATTR void timer1Interrupt() {
-  // Optimize the NMI inner loop by keeping track of the min and max GPIO that we
-  // are generating.  In the common case (1 PWM) these may be the same pin and
-  // we can avoid looking at the other pins.
-  static int startPin = 0;
-  static int endPin = 0;
-
-  uint32_t nextEventCycles = microsecondsToClockCycles(MAXIRQUS);
-  uint32_t timeoutCycle = GetCycleCountIRQ() + microsecondsToClockCycles(14);
-
-  if (waveformToEnable || waveformToDisable) {
-    // Handle enable/disable requests from main app.
-    waveformEnabled = (waveformEnabled & ~waveformToDisable) | waveformToEnable; // Set the requested waveforms on/off
-    waveformState &= ~waveformToEnable;  // And clear the state of any just started
-    waveformToEnable = 0;
-    waveformToDisable = 0;
-    // Find the first GPIO being generated by checking GCC's find-first-set (returns 1 + the bit of the first 1 in an int32_t)
-    startPin = __builtin_ffs(waveformEnabled) - 1;
-    // Find the last bit by subtracting off GCC's count-leading-zeros (no offset in this one)
-    endPin = 32 - __builtin_clz(waveformEnabled);
-  }
-
-  bool done = false;
-  if (waveformEnabled) {
-    do {
-      nextEventCycles = microsecondsToClockCycles(MAXIRQUS);
-      for (int i = startPin; i <= endPin; i++) {
-        uint32_t mask = 1<<i;
-
-        // If it's not on, ignore!
-        if (!(waveformEnabled & mask)) {
-          continue;
-        }
-
-        Waveform *wave = &waveform[i];
-        uint32_t now = GetCycleCountIRQ();
-
-        // Disable any waveforms that are done
-        if (wave->expiryCycle) {
-          int32_t expiryToGo = wave->expiryCycle - now;
-          if (expiryToGo < 0) {
-              // Done, remove!
-              waveformEnabled &= ~mask;
-              if (i == 16) {
-                GP16O &= ~1;
-              } else {
-                ClearGPIO(mask);
-              }
-              continue;
-            }
-        }
-
-        // Check for toggles
-        int32_t cyclesToGo = wave->nextServiceCycle - now;
-        if (cyclesToGo < 0) {
-          // See #7057
-          // The following is a no-op unless we have overshot by an entire waveform cycle.
-          // As modulus is an expensive operation, this code is removed for now:
-          // cyclesToGo = -((-cyclesToGo) % (wave->nextTimeHighCycles + wave->nextTimeLowCycles));
-          //
-          // Alternative version with lower CPU impact:
-          // while (-cyclesToGo > wave->nextTimeHighCycles + wave->nextTimeLowCycles) { cyclesToGo += wave->nextTimeHighCycles + wave->nextTimeLowCycles); }
-          //
-          // detect interrupt storm, for example during wifi connection.
-          // if we overshoot the cycle by more than 25%, we forget phase and keep PWM duration
-          int32_t overshoot = (-cyclesToGo) > ((wave->nextTimeHighCycles + wave->nextTimeLowCycles) >> 2);
-          waveformState ^= mask;
-          if (waveformState & mask) {
-            if (i == 16) {
-              GP16O |= 1; // GPIO16 write slow as it's RMW
-            } else {
-              SetGPIO(mask);
-            }
-            if (overshoot) {
-              wave->nextServiceCycle = now + wave->nextTimeHighCycles;
-              nextEventCycles = min_u32(nextEventCycles, wave->nextTimeHighCycles);
-            } else {
-              wave->nextServiceCycle += wave->nextTimeHighCycles;
-              nextEventCycles = min_u32(nextEventCycles, max_32(wave->nextTimeHighCycles + cyclesToGo, microsecondsToClockCycles(1)));
-            }
-          } else {
-            if (i == 16) {
-              GP16O &= ~1; // GPIO16 write slow as it's RMW
-            } else {
-              ClearGPIO(mask);
-            }
-            if (overshoot) {
-              wave->nextServiceCycle = now + wave->nextTimeLowCycles;
-              nextEventCycles = min_u32(nextEventCycles, wave->nextTimeLowCycles);
-            } else {
-              wave->nextServiceCycle += wave->nextTimeLowCycles;
-              nextEventCycles = min_u32(nextEventCycles, max_32(wave->nextTimeLowCycles + cyclesToGo, microsecondsToClockCycles(1)));
-            }
-          }
-        } else {
-          uint32_t deltaCycles = wave->nextServiceCycle - now;
-          nextEventCycles = min_u32(nextEventCycles, deltaCycles);
-        }
-      }
-
-      // Exit the loop if we've hit the fixed runtime limit or the next event is known to be after that timeout would occur
-      uint32_t now = GetCycleCountIRQ();
-      int32_t cycleDeltaNextEvent = timeoutCycle - (now + nextEventCycles);
-      int32_t cyclesLeftTimeout = timeoutCycle - now;
-      done = (cycleDeltaNextEvent < 0) || (cyclesLeftTimeout < 0);
-    } while (!done);
-  } // if (waveformEnabled)
-
-  if (timer1CB) {
-    nextEventCycles = min_u32(nextEventCycles, timer1CB());
-  }
-
-  if (nextEventCycles < microsecondsToClockCycles(10)) {
-    nextEventCycles = microsecondsToClockCycles(10);
-  }
-  nextEventCycles -= DELTAIRQ;
-
-  // Do it here instead of global function to save time and because we know it's edge-IRQ
-#if F_CPU == 160000000
-  T1L = nextEventCycles >> 1; // Already know we're in range by MAXIRQUS
-#else
-  T1L = nextEventCycles; // Already know we're in range by MAXIRQUS
-#endif
-  TEIE |= TEIE1; // Edge int enable
-}
-
 };
 
-#endif  // ARDUINO_ESP8266_RELEASE
+// Speed critical bits
+#pragma GCC optimize ("O2")
+
+// For dynamic CPU clock frequency switch in loop the scaling logic would have to be adapted.
+// Using constexpr makes sure that the CPU clock frequency is compile-time fixed.
+static inline ICACHE_RAM_ATTR int32_t scaleCcys(const int32_t ccys, const bool isCPU2X) {
+  if (ISCPUFREQ160MHZ) {
+    return isCPU2X ? ccys : (ccys >> 1);
+  }
+  else {
+    return isCPU2X ? (ccys << 1) : ccys;
+  }
+}
+
+static ICACHE_RAM_ATTR void timer1Interrupt() {
+  const uint32_t isrStartCcy = ESP.getCycleCount();
+  int32_t clockDrift = isrStartCcy - waveform.nextEventCcy;
+  const bool isCPU2X = CPU2X & 1;
+  if ((waveform.toSetBits && !(waveform.enabled & waveform.toSetBits)) || waveform.toDisableBits) {
+    // Handle enable/disable requests from main app.
+    waveform.enabled = (waveform.enabled & ~waveform.toDisableBits) | waveform.toSetBits; // Set the requested waveforms on/off
+    // Find the first GPIO being generated by checking GCC's find-first-set (returns 1 + the bit of the first 1 in an int32_t)
+    waveform.toDisableBits = 0;
+  }
+
+  if (waveform.toSetBits) {
+    const int toSetPin = __builtin_ffs(waveform.toSetBits) - 1;
+    Waveform& wave = waveform.pins[toSetPin];
+    switch (wave.mode) {
+    case WaveformMode::INIT:
+      waveform.states &= ~waveform.toSetBits; // Clear the state of any just started
+      if (wave.alignPhase >= 0 && waveform.enabled & (1UL << wave.alignPhase)) {
+        wave.nextPeriodCcy = waveform.pins[wave.alignPhase].nextPeriodCcy + wave.nextPeriodCcy;
+      }
+      else {
+        wave.nextPeriodCcy = waveform.nextEventCcy;
+      }
+      if (!wave.expiryCcy) {
+        wave.mode = WaveformMode::INFINITE;
+        break;
+      }
+      // fall through
+    case WaveformMode::UPDATEEXPIRY:
+      // in WaveformMode::UPDATEEXPIRY, expiryCcy temporarily holds relative CPU cycle count
+      wave.expiryCcy = wave.nextPeriodCcy + scaleCcys(wave.expiryCcy, isCPU2X);
+      wave.mode = WaveformMode::EXPIRES;
+      break;
+    default:
+      break;
+    }
+    waveform.toSetBits = 0;
+  }
+
+  // Exit the loop if the next event, if any, is sufficiently distant.
+  const uint32_t isrTimeoutCcy = isrStartCcy + ISRTIMEOUTCCYS;
+  uint32_t busyPins = waveform.enabled;
+  waveform.nextEventCcy = isrStartCcy + MAXIRQTICKSCCYS;
+
+  uint32_t now = ESP.getCycleCount();
+  uint32_t isrNextEventCcy = now;
+  while (busyPins) {
+    if (static_cast<int32_t>(isrNextEventCcy - now) > IRQLATENCYCCYS) {
+      waveform.nextEventCcy = isrNextEventCcy;
+      break;
+    }
+    isrNextEventCcy = waveform.nextEventCcy;
+    uint32_t loopPins = busyPins;
+    while (loopPins) {
+      const int pin = __builtin_ffsl(loopPins) - 1;
+      const uint32_t pinBit = 1UL << pin;
+      loopPins ^= pinBit;
+
+      Waveform& wave = waveform.pins[pin];
+
+      if (clockDrift) {
+        wave.endDutyCcy += clockDrift;
+        wave.nextPeriodCcy += clockDrift;
+        wave.expiryCcy += clockDrift;
+      }
+
+      uint32_t waveNextEventCcy = (waveform.states & pinBit) ? wave.endDutyCcy : wave.nextPeriodCcy;
+      if (WaveformMode::EXPIRES == wave.mode &&
+        static_cast<int32_t>(waveNextEventCcy - wave.expiryCcy) >= 0 &&
+        static_cast<int32_t>(now - wave.expiryCcy) >= 0) {
+        // Disable any waveforms that are done
+        waveform.enabled ^= pinBit;
+        busyPins ^= pinBit;
+      }
+      else {
+        const int32_t overshootCcys = now - waveNextEventCcy;
+        if (overshootCcys >= 0) {
+          const int32_t periodCcys = scaleCcys(wave.periodCcys, isCPU2X);
+          if (waveform.states & pinBit) {
+            // active configuration and forward are 100% duty
+            if (wave.periodCcys == wave.dutyCcys) {
+              wave.nextPeriodCcy += periodCcys;
+              wave.endDutyCcy = wave.nextPeriodCcy;
+            }
+            else {
+              if (wave.autoPwm) {
+                wave.adjDutyCcys += overshootCcys;
+              }
+              waveform.states ^= pinBit;
+              if (16 == pin) {
+                GP16O = 0;
+              }
+              else {
+                GPOC = pinBit;
+              }
+            }
+            waveNextEventCcy = wave.nextPeriodCcy;
+          }
+          else {
+            wave.nextPeriodCcy += periodCcys;
+            if (!wave.dutyCcys) {
+              wave.endDutyCcy = wave.nextPeriodCcy;
+            }
+            else {
+              int32_t dutyCcys = scaleCcys(wave.dutyCcys, isCPU2X);
+              if (dutyCcys <= wave.adjDutyCcys) {
+                dutyCcys >>= 1;
+                wave.adjDutyCcys -= dutyCcys;
+              }
+              else if (wave.adjDutyCcys) {
+                dutyCcys -= wave.adjDutyCcys;
+                wave.adjDutyCcys = 0;
+              }
+              wave.endDutyCcy = now + dutyCcys;
+              if (static_cast<int32_t>(wave.endDutyCcy - wave.nextPeriodCcy) > 0) {
+                wave.endDutyCcy = wave.nextPeriodCcy;
+              }
+              waveform.states |= pinBit;
+              if (16 == pin) {
+                GP16O = 1;
+              }
+              else {
+                GPOS = pinBit;
+              }
+            }
+            waveNextEventCcy = wave.endDutyCcy;
+          }
+
+          if (WaveformMode::EXPIRES == wave.mode && static_cast<int32_t>(waveNextEventCcy - wave.expiryCcy) > 0) {
+            waveNextEventCcy = wave.expiryCcy;
+          }
+        }
+
+        if (static_cast<int32_t>(waveNextEventCcy - isrTimeoutCcy) >= 0) {
+          busyPins ^= pinBit;
+          if (static_cast<int32_t>(waveform.nextEventCcy - waveNextEventCcy) > 0) {
+            waveform.nextEventCcy = waveNextEventCcy;
+          }
+        }
+        else if (static_cast<int32_t>(isrNextEventCcy - waveNextEventCcy) > 0) {
+          isrNextEventCcy = waveNextEventCcy;
+        }
+      }
+      now = ESP.getCycleCount();
+    }
+    clockDrift = 0;
+  }
+
+  int32_t callbackCcys = 0;
+  if (waveform.timer1CB) {
+    callbackCcys = scaleCcys(microsecondsToClockCycles(waveform.timer1CB()), isCPU2X);
+  }
+  now = ESP.getCycleCount();
+  int32_t nextEventCcys = waveform.nextEventCcy - now;
+  // Account for unknown duration of timer1CB().
+  if (waveform.timer1CB && nextEventCcys > callbackCcys) {
+    waveform.nextEventCcy = now + callbackCcys;
+    nextEventCcys = callbackCcys;
+  }
+
+  // Timer is 80MHz fixed. 160MHz CPU frequency need scaling.
+  int32_t deltaIrqCcys = DELTAIRQCCYS;
+  int32_t irqLatencyCcys = IRQLATENCYCCYS;
+  if (isCPU2X) {
+    nextEventCcys >>= 1;
+    deltaIrqCcys >>= 1;
+    irqLatencyCcys >>= 1;
+  }
+
+  // Firing timer too soon, the NMI occurs before ISR has returned.
+  if (nextEventCcys < irqLatencyCcys + deltaIrqCcys) {
+    waveform.nextEventCcy = now + IRQLATENCYCCYS + DELTAIRQCCYS;
+    nextEventCcys = irqLatencyCcys;
+  }
+  else {
+    nextEventCcys -= deltaIrqCcys;
+  }
+
+  // Register access is fast and edge IRQ was configured before.
+  T1L = nextEventCcys;
+}
+
+#endif  // ESP8266 

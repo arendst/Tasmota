@@ -59,14 +59,18 @@
 
 const char kHtuTypes[] PROGMEM = "HTU21|SI7013|SI7020|SI7021|T/RH?";
 
-uint8_t htu_address;
-uint8_t htu_type = 0;
-uint8_t htu_delay_temp;
-uint8_t htu_delay_humidity = 50;
-uint8_t htu_valid = 0;
-float htu_temperature = 0;
-float htu_humidity = 0;
-char htu_types[7];
+struct {
+  float temperature = 0;
+  float humidity = 0;
+  uint8_t address;
+  uint8_t type = 0;
+  uint8_t delay_temp;
+  uint8_t delay_humidity = 50;
+  uint8_t valid = 0;
+  char types[7];
+} Htu;
+
+/*********************************************************************************************/
 
 uint8_t HtuCheckCrc8(uint16_t data)
 {
@@ -82,6 +86,8 @@ uint8_t HtuCheckCrc8(uint16_t data)
 
 uint8_t HtuReadDeviceId(void)
 {
+  HtuReset();  // Fixes ESP32 sensor loss at restart
+
   uint16_t deviceID = 0;
   uint8_t checksum = 0;
 
@@ -146,12 +152,12 @@ bool HtuRead(void)
   uint8_t  checksum = 0;
   uint16_t sensorval = 0;
 
-  if (htu_valid) { htu_valid--; }
+  if (Htu.valid) { Htu.valid--; }
 
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READTEMP);
   if (Wire.endTransmission() != 0) { return false; }           // In case of error
-  delay(htu_delay_temp);                                       // Sensor time at max resolution
+  delay(Htu.delay_temp);                                       // Sensor time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
   if (3 == Wire.available()) {
@@ -161,12 +167,12 @@ bool HtuRead(void)
   }
   if (HtuCheckCrc8(sensorval) != checksum) { return false; }   // Checksum mismatch
 
-  htu_temperature = ConvertTemp(0.002681 * (float)sensorval - 46.85);
+  Htu.temperature = ConvertTemp(0.002681 * (float)sensorval - 46.85);
 
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READHUM);
   if (Wire.endTransmission() != 0) { return false; }           // In case of error
-  delay(htu_delay_humidity);                                   // Sensor time at max resolution
+  delay(Htu.delay_humidity);                                   // Sensor time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
   if (3 <= Wire.available()) {
@@ -177,19 +183,19 @@ bool HtuRead(void)
   if (HtuCheckCrc8(sensorval) != checksum) { return false; }   // Checksum mismatch
 
   sensorval ^= 0x02;                                           // clear status bits
-  htu_humidity = 0.001907 * (float)sensorval - 6;
-  if (htu_humidity > 100) { htu_humidity = 100.0; }
-  if (htu_humidity < 0) { htu_humidity = 0.01; }
+  Htu.humidity = 0.001907 * (float)sensorval - 6;
+  if (Htu.humidity > 100) { Htu.humidity = 100.0; }
+  if (Htu.humidity < 0) { Htu.humidity = 0.01; }
 
-  if ((0.00 == htu_humidity) && (0.00 == htu_temperature)) {
-    htu_humidity = 0.0;
+  if ((0.00 == Htu.humidity) && (0.00 == Htu.temperature)) {
+    Htu.humidity = 0.0;
   }
-  if ((htu_temperature > 0.00) && (htu_temperature < 80.00)) {
-    htu_humidity = (-0.15) * (25 - htu_temperature) + htu_humidity;
+  if ((Htu.temperature > 0.00) && (Htu.temperature < 80.00)) {
+    Htu.humidity = (-0.15) * (25 - Htu.temperature) + Htu.humidity;
   }
-  htu_humidity = ConvertHumidity(htu_humidity);
+  Htu.humidity = ConvertHumidity(Htu.humidity);
 
-  htu_valid = SENSOR_MAX_MISS;
+  Htu.valid = SENSOR_MAX_MISS;
   return true;
 }
 
@@ -197,17 +203,17 @@ bool HtuRead(void)
 
 void HtuDetect(void)
 {
-  htu_address = HTU21_ADDR;
-  if (I2cActive(htu_address)) { return; }
+  Htu.address = HTU21_ADDR;
+  if (I2cActive(Htu.address)) { return; }
 
-  htu_type = HtuReadDeviceId();
-  if (htu_type) {
+  Htu.type = HtuReadDeviceId();
+  if (Htu.type) {
     uint8_t index = 0;
     HtuInit();
-    switch (htu_type) {
+    switch (Htu.type) {
       case HTU21_CHIPID:
-        htu_delay_temp = 50;
-        htu_delay_humidity = 16;
+        Htu.delay_temp = 50;
+        Htu.delay_humidity = 16;
         break;
       case SI7021_CHIPID:
         index++;  // 3
@@ -215,16 +221,16 @@ void HtuDetect(void)
         index++;  // 2
       case SI7013_CHIPID:
         index++;  // 1
-        htu_delay_temp = 12;
-        htu_delay_humidity = 23;
+        Htu.delay_temp = 12;
+        Htu.delay_humidity = 23;
         break;
       default:
         index = 4;
-        htu_delay_temp = 50;
-        htu_delay_humidity = 23;
+        Htu.delay_temp = 50;
+        Htu.delay_humidity = 23;
     }
-    GetTextIndexed(htu_types, sizeof(htu_types), index, kHtuTypes);
-    I2cSetActiveFound(htu_address, htu_types);
+    GetTextIndexed(Htu.types, sizeof(Htu.types), index, kHtuTypes);
+    I2cSetActiveFound(Htu.address, Htu.types);
   }
 }
 
@@ -233,15 +239,15 @@ void HtuEverySecond(void)
   if (uptime &1) {  // Every 2 seconds
     // HTU21: 68mS, SI70xx: 37mS
     if (!HtuRead()) {
-      AddLogMissed(htu_types, htu_valid);
+      AddLogMissed(Htu.types, Htu.valid);
     }
   }
 }
 
 void HtuShow(bool json)
 {
-  if (htu_valid) {
-    TempHumDewShow(json, (0 == tele_period), htu_types, htu_temperature, htu_humidity);
+  if (Htu.valid) {
+    TempHumDewShow(json, (0 == tele_period), Htu.types, Htu.temperature, Htu.humidity);
   }
 }
 
@@ -258,7 +264,7 @@ bool Xsns08(uint8_t function)
   if (FUNC_INIT == function) {
     HtuDetect();
   }
-  else if (htu_type) {
+  else if (Htu.type) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         HtuEverySecond();

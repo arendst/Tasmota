@@ -114,6 +114,7 @@ device_parameters_t device_param[] = {
   { KNX_SLOT3 , false, false, KNX_Empty },
   { KNX_SLOT4 , false, false, KNX_Empty },
   { KNX_SLOT5 , false, false, KNX_Empty },
+  { KNX_SCENE , false, false, KNX_Empty },
   { KNX_Empty, false, false, KNX_Empty}
 };
 
@@ -149,6 +150,7 @@ const char * device_param_ga[] = {
   D_KNX_TX_SLOT   " 3",
   D_KNX_TX_SLOT   " 4",
   D_KNX_TX_SLOT   " 5",
+  D_KNX_TX_SCENE      ,
   nullptr
 };
 
@@ -184,6 +186,7 @@ const char *device_param_cb[] = {
   D_KNX_RX_SLOT   " 3",
   D_KNX_RX_SLOT   " 4",
   D_KNX_RX_SLOT   " 5",
+  D_KNX_RX_SCENE      ,
   nullptr
 };
 
@@ -196,12 +199,14 @@ const char *device_param_cb[] = {
 #define D_CMND_KNX_PA "_PA"
 #define D_CMND_KNX_GA "_GA"
 #define D_CMND_KNX_CB "_CB"
+#define D_CMND_KNXTXSCENE "Tx_Scene"
+
 
 const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
-  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB ;
+  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB "|" D_CMND_KNXTXSCENE ;
 
 void (* const KnxCommand[])(void) PROGMEM = {
-  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb };
+  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene };
 
 uint8_t KNX_GA_Search( uint8_t param, uint8_t start = 0 )
 {
@@ -473,19 +478,19 @@ void KNX_INIT(void)
   {
     device_param[i].show = true;
   }
-  for (uint32_t i = GPIO_SWT1; i < GPIO_SWT4 + 1; ++i)
+  for (uint32_t i = GPIO_SWT1; i < GPIO_SWT1 + 4; ++i)
   {
     if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_SWT1 + 8].show = true; }
   }
-  for (uint32_t i = GPIO_KEY1; i < GPIO_KEY4 + 1; ++i)
+  for (uint32_t i = GPIO_KEY1; i < GPIO_KEY1 + 4; ++i)
   {
     if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_KEY1 + 8].show = true; }
   }
-  for (uint32_t i = GPIO_SWT1_NP; i < GPIO_SWT4_NP + 1; ++i)
+  for (uint32_t i = GPIO_SWT1_NP; i < GPIO_SWT1_NP + 4; ++i)
   {
     if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_SWT1_NP + 8].show = true; }
   }
-  for (uint32_t i = GPIO_KEY1_NP; i < GPIO_KEY4_NP + 1; ++i)
+  for (uint32_t i = GPIO_KEY1_NP; i < GPIO_KEY1_NP + 4; ++i)
   {
     if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_KEY1_NP + 8].show = true; }
   }
@@ -518,6 +523,7 @@ void KNX_INIT(void)
   device_param[KNX_SLOT3-1].show = true;
   device_param[KNX_SLOT4-1].show = true;
   device_param[KNX_SLOT5-1].show = true;
+  device_param[KNX_SCENE-1].show = true;
 #endif
 
   // Delete from KNX settings all configuration is not anymore related to this device
@@ -556,9 +562,12 @@ void KNX_CB_Action(message_t const &msg, void *arg)
 
   if (msg.data_len == 1) {
     // COMMAND
-    tempchar[0] = msg.data[0];
-    tempchar[1] = '\0';
-  }  else  {
+    sprintf(tempchar,"%d",msg.data[0]);
+  } else if (chan->type == KNX_SCENE) {
+    // VALUE
+    uint8_t tempvar = knx.data_to_1byte_uint(msg.data);    
+    dtostrfd(tempvar,2,tempchar);
+  } else {
     // VALUE
     float tempvar = knx.data_to_2byte_float(msg.data);
     dtostrfd(tempvar,2,tempchar);
@@ -603,6 +612,18 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           }
         }
       }
+      else if (chan->type == KNX_SCENE)  // KNX RX SCENE SLOT (write command)
+      {
+        if (!toggle_inhibit) {
+          char command[25];
+          // Value received
+          snprintf_P(command, sizeof(command), PSTR("event KNX_SCENE=%s"), tempchar);
+          ExecuteCommand(command, SRC_KNX);
+          if (Settings.flag.knx_enable_enhancement) {
+            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+          }
+        }
+      }      
 #endif
       break;
 
@@ -810,22 +831,22 @@ void HandleKNXConfiguration(void)
   char tmp[100];
   String stmp;
 
-  if ( WebServer->hasArg("save") ) {
+  if ( Webserver->hasArg("save") ) {
     KNX_Save_Settings();
     HandleConfiguration();
   }
   else
   {
-    if ( WebServer->hasArg("btn_add") ) {
-      if ( WebServer->arg("btn_add") == "1" ) {
+    if ( Webserver->hasArg("btn_add") ) {
+      if ( Webserver->arg("btn_add") == "1" ) {
 
-        stmp = WebServer->arg("GAop"); //option selected
+        stmp = Webserver->arg("GAop"); //option selected
         uint8_t GAop = stmp.toInt();
-        stmp = WebServer->arg("GA_FNUM");
+        stmp = Webserver->arg("GA_FNUM");
         uint8_t GA_FNUM = stmp.toInt();
-        stmp = WebServer->arg("GA_AREA");
+        stmp = Webserver->arg("GA_AREA");
         uint8_t GA_AREA = stmp.toInt();
-        stmp = WebServer->arg("GA_FDEF");
+        stmp = Webserver->arg("GA_FDEF");
         uint8_t GA_FDEF = stmp.toInt();
 
         if (GAop) {
@@ -835,13 +856,13 @@ void HandleKNXConfiguration(void)
       else
       {
 
-        stmp = WebServer->arg("CBop"); //option selected
+        stmp = Webserver->arg("CBop"); //option selected
         uint8_t CBop = stmp.toInt();
-        stmp = WebServer->arg("CB_FNUM");
+        stmp = Webserver->arg("CB_FNUM");
         uint8_t CB_FNUM = stmp.toInt();
-        stmp = WebServer->arg("CB_AREA");
+        stmp = Webserver->arg("CB_AREA");
         uint8_t CB_AREA = stmp.toInt();
-        stmp = WebServer->arg("CB_FDEF");
+        stmp = Webserver->arg("CB_FDEF");
         uint8_t CB_FDEF = stmp.toInt();
 
         if (CBop) {
@@ -849,19 +870,19 @@ void HandleKNXConfiguration(void)
         }
       }
     }
-    else if ( WebServer->hasArg("btn_del_ga") )
+    else if ( Webserver->hasArg("btn_del_ga") )
     {
 
-      stmp = WebServer->arg("btn_del_ga");
+      stmp = Webserver->arg("btn_del_ga");
       uint8_t GA_NUM = stmp.toInt();
 
       KNX_DEL_GA(GA_NUM);
 
     }
-    else if ( WebServer->hasArg("btn_del_cb") )
+    else if ( Webserver->hasArg("btn_del_cb") )
     {
 
-      stmp = WebServer->arg("btn_del_cb");
+      stmp = Webserver->arg("btn_del_cb");
       uint8_t CB_NUM = stmp.toInt();
 
       KNX_DEL_CB(CB_NUM);
@@ -955,16 +976,16 @@ void KNX_Save_Settings(void)
   String stmp;
   address_t KNX_addr;
 
-  Settings.flag.knx_enabled = WebServer->hasArg("b1");
-  Settings.flag.knx_enable_enhancement = WebServer->hasArg("b2");
+  Settings.flag.knx_enabled = Webserver->hasArg("b1");
+  Settings.flag.knx_enable_enhancement = Webserver->hasArg("b2");
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_ENABLED ": %d, " D_KNX_ENHANCEMENT ": %d"),
    Settings.flag.knx_enabled, Settings.flag.knx_enable_enhancement );
 
-  stmp = WebServer->arg("area");
+  stmp = Webserver->arg("area");
   KNX_addr.pa.area = stmp.toInt();
-  stmp = WebServer->arg("line");
+  stmp = Webserver->arg("line");
   KNX_addr.pa.line = stmp.toInt();
-  stmp = WebServer->arg("member");
+  stmp = Webserver->arg("member");
   KNX_addr.pa.member = stmp.toInt();
   Settings.knx_physsical_addr = KNX_addr.value;
   knx.physical_address_set( KNX_addr ); // Set Physical KNX Address of the device
@@ -1052,6 +1073,31 @@ void CmndKnxTxVal(void)
       i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
     }
     ResponseCmndIdxChar (XdrvMailbox.data );
+  }
+}
+
+void CmndKnxTxScene(void)
+{
+  if ( (XdrvMailbox.data_len > 0) && Settings.flag.knx_enabled ) {
+    // XdrvMailbox.payload <- scene number to send
+    uint8_t i = KNX_GA_Search(KNX_SCENE);
+    if ( i != KNX_Empty ) {
+      KNX_addr.value = Settings.knx_GA_addr[i];
+
+      uint8_t tempvar = TextToInt(XdrvMailbox.data);
+      dtostrfd(tempvar,0,XdrvMailbox.data);
+
+      knx.write_1byte_uint(KNX_addr, tempvar);
+      if (Settings.flag.knx_enable_enhancement) {
+        knx.write_1byte_uint(KNX_addr, tempvar);
+        knx.write_1byte_uint(KNX_addr, tempvar);
+      }
+
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d.%d.%d"),
+       device_param_ga[KNX_SCENE-1], XdrvMailbox.data,
+       KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
+      ResponseCmndIdxChar (XdrvMailbox.data);
+    }    
   }
 }
 
@@ -1209,7 +1255,7 @@ bool Xdrv11(uint8_t function)
   bool result = false;
     switch (function) {
       case FUNC_LOOP:
-        if (!global_state.wifi_down) { knx.loop(); }  // Process knx events
+        if (!global_state.network_down) { knx.loop(); }  // Process knx events
         break;
       case FUNC_EVERY_50_MSECOND:
         if (toggle_inhibit) {
@@ -1225,7 +1271,7 @@ bool Xdrv11(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_KNX);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        WebServer->on("/kn", HandleKNXConfiguration);
+        Webserver->on("/kn", HandleKNXConfiguration);
         break;
 #endif // USE_KNX_WEB_MENU
 #endif  // USE_WEBSERVER

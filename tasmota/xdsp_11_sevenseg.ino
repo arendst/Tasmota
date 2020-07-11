@@ -189,7 +189,7 @@ void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uin
 #ifdef USE_DISPLAY_MODES1TO5
 void SevensegTime(boolean time_24)
 {
-  
+
   uint hours = RtcTime.hour;
   uint minutes = RtcTime.minute;
   uint second = RtcTime.second;
@@ -239,8 +239,6 @@ void SevensegTime(boolean time_24)
   sevenseg.writeDisplay();
 }
 
-#endif  // USE_DISPLAY_MODES1TO5
-
 void SevensegRefresh(void)  // Every second
 {
   if (disp_power) {
@@ -261,6 +259,8 @@ void SevensegRefresh(void)  // Every second
     }
   }
 }
+
+#endif  // USE_DISPLAY_MODES1TO5
 
 /*********************************************************************************************\
  * Interface
@@ -286,9 +286,11 @@ bool Xdsp11(uint8_t function)
       case FUNC_DISPLAY_CLEAR:
         SevensegClear();
         break;
+#ifdef USE_DISPLAY_MODES1TO5
       case FUNC_DISPLAY_EVERY_SECOND:
         SevensegRefresh();
         break;
+#endif  // USE_DISPLAY_MODES1TO5
       case FUNC_DISPLAY_ONOFF:
       case FUNC_DISPLAY_POWER:
         SevensegOnOff();
@@ -301,6 +303,6 @@ bool Xdsp11(uint8_t function)
   return result;
 }
 
-#endif  // USE_DISPLAY_MATRIX
+#endif  // USE_DISPLAY_SEVENSEG
 #endif  // USE_DISPLAY
 #endif  // USE_I2C

@@ -1,4 +1,123 @@
+## Released
+
+### 8.4.0 20200716
+
+- Release George
+
 ## Unreleased (development)
+
+### 8.3.1.6 20200617
+
+- Add command ``Module2`` to configure fallback module on fast reboot (#8464)
+- Add command ``SetOption97 0/1`` to switch between Tuya serial speeds 9600 bps (0) or 115200 bps (1)
+- Add command ``SetOption98 0/1`` to provide rotary rule triggers (1) instead of controlling light (0)
+- Add support for Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
+- Add library to be used for decoding Teleinfo (French Metering Smart Meter)
+- Add support for single wire LMT01 temperature Sensor by justifiably (#8713)
+- Add compile time interlock parameters (#8759)
+- Add compile time user template (#8766)
+- Add rotary encoder support for light dimmer and optional color temperature if button1 still pressed (#8670)
+- Fix exception or watchdog on rule re-entry (#8757)
+- Change ESP32 USER GPIO template representation decreasing template message size
+- Change define USE_TASMOTA_SLAVE into USE_TASMOTA_CLIENT
+- Change commands ``SlaveSend`` and ``SlaveReset`` into ``ClientSend`` and ``ClientReset``
+- Change IRremoteESP8266 library updated to v2.7.8
+
+### 8.3.1.5 20200616
+
+- Add ESP32 ethernet commands ``EthType 0/1``, ``EthAddress 0..31`` and ``EthClockMode 0..3``
+- Add Zigbee initial support for EmberZNet protocol (raw send/receive only)
+
+### 8.3.1.4 20200615
+
+- Add basic support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON
+
+### 8.3.1.3 20200611
+
+- Add initial support for Telegram bot (#8619)
+- Add support for HP303B Temperature and Pressure sensor by Robert Jaakke (#8638)
+- Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet
+- Add serial to TCP bridge, ``TCPStart`` and ``TCPBaudRate`` (needs #define USE_TCP_BRIDGE)
+
+### 8.3.1.2 20200522
+
+- Change Energy JSON Total field from ``"Total":[33.736,11.717,16.978]`` to ``"Total":33.736,"TotalTariff":[11.717,16.978]``
+- Change Energy JSON ExportActive field from ``"ExportActive":[33.736,11.717,16.978]`` to ``"ExportActive":33.736,"ExportTariff":[11.717,16.978]``
+- Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)
+- Fix escape of non-JSON received serial data (#8329)
+- Add command ``Time 4`` to display timestamp using milliseconds (#8537)
+- Add command ``SetOption94 0/1`` to select MAX31855 or MAX6675 thermocouple support (#8616)
+- Add commands ``LedPwmOn 0..255``, ``LedPwmOff 0..255`` and ``LedPwmMode1 0/1`` to control led brightness by George (#8491)
+- Add Three Phase Export Active Energy to SDM630 driver
+- Add wildcard pattern ``?`` for JSON matching in rules
+- Add support for unique MQTTClient (and inherited fallback topic) by full Mac address using ``mqttclient DVES_%12X`` (#8300)
+- Add Zigbee options to ``ZbSend`` to write and report attributes
+- Add ``CpuFrequency`` to ``status 2``
+- Add ``FlashFrequency`` to ``status 4``
+- Add support for up to two BH1750 sensors controlled by commands ``BH1750Resolution`` and ``BH1750MTime`` (#8139)
+- Add Zigbee auto-responder for common attributes
+- Add support for BL0940 energy monitor as used in Blitzwolf BW-SHP10 (#8175)
+
+### 8.3.1.1 20200518
+
+- Change IRremoteESP8266 library updated to v2.7.7
+- Add command ``Rule0`` to change global rule parameters
+- Add more functionality to ``Switchmode`` 11 and 12 (#8450)
+- Add dump of compressed rules over 512 chars and unishox decompress fix
+- Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)
+- Add support for VEML7700 Ambient light intensity Sensor by device111 (#8432)
+
+### 8.3.1 20200518
+
+- Release Fred
+
+### 8.3.0.2 20200517
+
+- Change Hass discovery from using template name to new Device name (#8462)
+- Add command ``DeviceName`` defaults to FriendlyName1 and replaces FriendlyName1 in GUI
+
+### 8.3.0.1 20200514
+
+- Change KNX pow function to approximative pow saving 5k of code space
+- Change Mutichannel Gas sensor pow function to approximative pow saving 5k of code space
+- Change Quick Power Cycle detection from 4 to 7 power interrupts (#4066)
+- Fix default state of ``SetOption73 0`` for button decoupling and send multi-press and hold MQTT messages
+
+### 8.3.0 20200514
+
+- Release Fred
+
+### 8.2.0.6 20200501
+
+- Add experimental basic support for Tasmota on ESP32 based on work by Jörg Schüler-Maroldt
+- Add support for analog anemometer by Matteo Albinola (#8283)
+- Add support for OpenTherm by Yuriy Sannikov (#8373)
+- Add support for Thermostat control by arijav (#8212)
+- Add automatic compression of Rules to achieve ~60% compression by Stefan Hadinger
+- Add command ``SetOption93 1`` to control caching of compressed rules
+- Add rule trigger at root level like ``on loadavg<50 do power 2 endon`` after ``state`` command
+- Change flash access removing support for any Core before 2.6.3
+- Change HAss discovery by Federico Leoni (#8370)
+- Change default PWM Frequency to 977 Hz from 223 Hz
+- Change minimum PWM Frequency from 100 Hz to 40 Hz
+- Change PWM updated to the latest version of Arduino PR #7231
+- Change Philips Hue emulation now exposes modelId and manufacturerId
+- Add Zigbee support for router and end-device mode
+
+### 8.2.0.5 20200425
+
+- Breaking Change Device Groups multicast address and port  (#8270)
+- Change IRremoteESP8266 library updated to v2.7.6
+
+### 8.2.0.4 20200417
+
+- Change PWM implementation to Arduino #7231 removing support for Core versions before 2.6.3
+- Change default PWM Frequency to 223 Hz instead of 880 Hz for less interrupt pressure
+- Fix Zigbee DimmerUp/DimmerDown malformed
+- Add config version tag
+- Add command ``SetOption73 1`` for button decoupling and send multi-press and hold MQTT messages by Federico Leoni (#8235)
+- Add command ``SetOption92 1`` to set PWM Mode from regular PWM to ColorTemp control (Xiaomi Philips ...)
+- Add command ``SO`` as shortcut for command ``SetOption``
 
 ### 8.2.0.3 20200329
 
@@ -10,18 +129,28 @@
 - Fix Zigbee crash with Occupancy sensor (#8089)
 - Add support for longer template names
 - Add Zigbee command ``ZbBindState`` and ``manuf``attribute
+- Add Zigbee command ``ZbConfig`` and configuration in Settings
 - Add commands ``CounterDebounceLow`` and ``CounterDebounceHigh`` to control debouncing (#8021)
 - Add commands ``NrfPage``, ``NrfIgnore``, ``NrfScan`` and ``NrfBeacon`` to NRF24 Bluetooth driver (#8075)
 - Add command ``SetOption90 1`` to disable non-json MQTT messages (#8044)
 - Add command ``Sensor10 0/1/2`` to control BH1750 resolution - 0 = High (default), 1 = High2, 2 = Low (#8016)
 - Add command ``Sensor10 31..254`` to control BH1750 measurement time which defaults to 69 (#8016)
+- Add command ``Sensor18 0..32000`` to control PMS5003 sensor interval to extend lifetime by Gene Ruebsamen (#8128)
 - Add command ``SetOption91 1`` to enable fading at startup / power on
 - Add command ``SetOption41 <x>`` to force sending gratuitous ARP every <x> seconds
 - Add command ``DevGroupName`` to specify up to four Device Group Names (#8087)
 - Add command ``DevGroupSend`` to send an update to a Device Group (#8093)
+- Add command ``Ping`` (#7176)
+- Add command ``Palette`` to add the ability to specify a palette of colors (#8150)
+- Add commands ``GlobalTemp`` and ``GlobalHum`` to init sensor data (#8152)
 - Add quick wifi reconnect using saved AP parameters when ``SetOption56 0`` (#3189)
 - Add more accuracy to GPS NTP server (#8088)
 - Add support for an iAQ sensor (#8107)
+- Add support for Seven Segment display using HT16K33 (#8116)
+- Add support for AS3935 Lightning Sensor by device111 (#8130)
+- Fix prevent multiple pings to run concurrently
+- Fix Scheme 2-4 brightness when SetOption68 1 (#8058)
+- Add ``DimmerRange`` for PWM lights (#8120)
 
 ### 8.2.0.2 20200328
 
@@ -37,8 +166,6 @@
 - Add Zigbee command ``ZbUnbind``
 - Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
 - Add support for 64x48 SSD1306 OLED (#6740)
-
-## Released
 
 ### 8.2.0 20200321
 

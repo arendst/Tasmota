@@ -51,10 +51,10 @@ void MAX31865_Init(void){
         return;
 
   max31865.setPins(
-    pin[GPIO_SSPI_CS],
-    pin[GPIO_SSPI_MOSI],
-    pin[GPIO_SSPI_MISO],
-    pin[GPIO_SSPI_SCLK]
+    Pin(GPIO_SSPI_CS),
+    Pin(GPIO_SSPI_MOSI),
+    Pin(GPIO_SSPI_MISO),
+    Pin(GPIO_SSPI_SCLK)
   );
 
   if(max31865.begin(PTD_WIRES))
@@ -110,8 +110,8 @@ void MAX31865_Show(bool Json){
 bool Xsns47(uint8_t function)
 {
   bool result = false;
-  if((pin[GPIO_SSPI_MISO] < 99) && (pin[GPIO_SSPI_MOSI] < 99) &&
-     (pin[GPIO_SSPI_SCLK] < 99) && (pin[GPIO_SSPI_CS] < 99)) {
+  if (PinUsed(GPIO_SSPI_MISO) && PinUsed(GPIO_SSPI_MOSI) &&
+      PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_CS)) {
 
     switch (function) {
       case FUNC_INIT:

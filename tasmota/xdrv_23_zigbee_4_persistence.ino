@@ -45,62 +45,34 @@
 // str    - Manuf   (null terminated C string, 32 chars max)
 // str    - FriendlyName   (null terminated C string, 32 chars max)
 // reserved for extensions
-//  -- V2 -- 
+//  -- V2 --
 // int8_t - bulbtype
 
 // Memory footprint
+#ifdef ESP8266
 const static uint16_t z_spi_start_sector = 0xFF;  // Force last bank of first MB
 const static uint8_t* z_spi_start    = (uint8_t*) 0x402FF000;  // 0x402FF000
-const static uint8_t* z_dev_start    = z_spi_start + 0x0800;  // 0x402FF800 - 2KB
-const static size_t   z_spi_len      = 0x1000;  // 4kb blocs
+const static uint8_t* z_dev_start    = z_spi_start + 0x0800;   // 0x402FF800 - 2KB
+const static size_t   z_spi_len      = 0x1000;   // 4kb blocks
 const static size_t   z_block_offset = 0x0800;
 const static size_t   z_block_len    = 0x0800;   // 2kb
+#else  // ESP32
+uint8_t* z_dev_start;
+const static size_t   z_spi_len      = 0x1000;   // 4kb blocks
+const static size_t   z_block_offset = 0x0000;   // No offset needed
+const static size_t   z_block_len    = 0x1000;   // 4kb
+#endif
 
 class z_flashdata_t {
 public:
   uint32_t name;    // simple 4 letters name. Currently 'skey', 'crt ', 'crt1', 'crt2'
   uint16_t len;     // len of object
   uint16_t reserved; // align on 4 bytes boundary
-}; 
+};
 
 const static uint32_t ZIGB_NAME = 0x3167697A; // 'zig1' little endian
 const static size_t   Z_MAX_FLASH = z_block_len - sizeof(z_flashdata_t);  // 2040
 
-// encoding for the most commonly 32 clusters, used for binary encoding
-const uint16_t Z_ClusterNumber[] PROGMEM = {
-  0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
-  0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
-  0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
-  0x0018, 0x0019, 0x001A, 0x001B, 0x001C, 0x001D, 0x001E, 0x001F,
-  0x0020, 0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
-  0x0100, 0x0101, 0x0102,
-  0x0201, 0x0202, 0x0203, 0x0204,
-  0x0300, 0x0301,
-  0x0400, 0x0401, 0x0402, 0x0403, 0x0404, 0x0405, 0x0406,
-  0x0500, 0x0501, 0x0502,
-  0x0700, 0x0701, 0x0702,
-  0x0B00, 0x0B01, 0x0B02, 0x0B03, 0x0B04, 0x0B05,
-  0x1000,
-  0xFC0F,
-};
-
-// convert a 1 byte cluster code to the actual cluster number
-uint16_t fromClusterCode(uint8_t c) {
-  if (c >= sizeof(Z_ClusterNumber)/sizeof(Z_ClusterNumber[0])) {
-    return 0xFFFF;      // invalid
-  }
-  return pgm_read_word(&Z_ClusterNumber[c]);
-}
-
-// convert a cluster number to 1 byte, or 0xFF if not in table
-uint8_t toClusterCode(uint16_t c) {
-  for (uint32_t i = 0; i < sizeof(Z_ClusterNumber)/sizeof(Z_ClusterNumber[0]); i++) {
-    if (c == pgm_read_word(&Z_ClusterNumber[i])) {
-      return i;
-    }
-  }
-  return 0xFF;        // not found
-}
 
 class SBuffer hibernateDevice(const struct Z_Device &device) {
   SBuffer buf(128);
@@ -202,17 +174,7 @@ void hydrateDevices(const SBuffer &buf) {
   for (uint32_t i = 0; (i < num_devices) && (k < buf_len); i++) {
     uint32_t dev_record_len = buf.get8(k);
 
-// AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device %d Before Memory = %d // DIFF %d // record_len %d"), i, ESP.getFreeHeap(), before - ESP.getFreeHeap(), dev_record_len);
-// before = ESP.getFreeHeap();
-
     SBuffer buf_d = buf.subBuffer(k, dev_record_len);
-
-// char *hex_char = (char*) malloc((dev_record_len * 2) + 2);
-// if (hex_char) {
-//   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "/// SUB %s"),
-//                                   ToHex_P(buf_d.getBuffer(), dev_record_len, hex_char, (dev_record_len * 2) + 2));
-//   free(hex_char);
-// }
 
     uint32_t d = 1;   // index in device buffer
     uint16_t shortaddr = buf_d.get16(d);  d += 2;
@@ -238,7 +200,7 @@ void hydrateDevices(const SBuffer &buf) {
         // ignore
       }
     }
-//AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device 0x%04X Memory3.shrink = %d"), shortaddr, ESP.getFreeHeap());
+//AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device 0x%04X Memory3.shrink = %d"), shortaddr, ESP_getFreeHeap());
 
     // parse 3 strings
     char empty[] = "";
@@ -269,14 +231,24 @@ void hydrateDevices(const SBuffer &buf) {
 
     // next iteration
     k += dev_record_len;
-//AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device %d After  Memory = %d"), i, ESP.getFreeHeap());
+//AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device %d After  Memory = %d"), i, ESP_getFreeHeap());
   }
 }
 
 void loadZigbeeDevices(void) {
+#ifdef ESP32
+  // first copy SPI buffer into ram
+  uint8_t *spi_buffer = (uint8_t*) malloc(z_spi_len);
+  if (!spi_buffer) {
+    AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Cannot allocate 4KB buffer"));
+    return;
+  }
+  ZigbeeRead(&spi_buffer, z_spi_len);
+  z_dev_start = spi_buffer;
+#endif  // ESP32
   z_flashdata_t flashdata;
   memcpy_P(&flashdata, z_dev_start, sizeof(z_flashdata_t));
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP.getFreeHeap());
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP_getFreeHeap());
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Zigbee signature in Flash: %08X - %d"), flashdata.name, flashdata.len);
 
   // Check the signature
@@ -291,7 +263,10 @@ void loadZigbeeDevices(void) {
   } else {
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No zigbee devices data in Flash"));
   }
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP.getFreeHeap());
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP_getFreeHeap());
+#ifdef ESP32
+  free(spi_buffer);
+#endif  // ESP32
 }
 
 void saveZigbeeDevices(void) {
@@ -309,7 +284,11 @@ void saveZigbeeDevices(void) {
     return;
   }
   // copy the flash into RAM to make local change, and write back the whole buffer
+#ifdef ESP8266
   ESP.flashRead(z_spi_start_sector * SPI_FLASH_SEC_SIZE, (uint32_t*) spi_buffer, SPI_FLASH_SEC_SIZE);
+#else  // ESP32
+  ZigbeeRead(&spi_buffer, z_spi_len);
+#endif  // ESP8266 - ESP32
 
   z_flashdata_t *flashdata = (z_flashdata_t*)(spi_buffer + z_block_offset);
   flashdata->name = ZIGB_NAME;
@@ -319,17 +298,22 @@ void saveZigbeeDevices(void) {
   memcpy(spi_buffer + z_block_offset + sizeof(z_flashdata_t), buf.getBuffer(), buf_len);
 
   // buffer is now ready, write it back
+#ifdef ESP8266
   if (ESP.flashEraseSector(z_spi_start_sector)) {
     ESP.flashWrite(z_spi_start_sector * SPI_FLASH_SEC_SIZE, (uint32_t*) spi_buffer, SPI_FLASH_SEC_SIZE);
   }
-
-  free(spi_buffer);
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data store in Flash (0x%08X - %d bytes)"), z_dev_start, buf_len);
+#else  // ESP32
+  ZigbeeWrite(&spi_buffer, z_spi_len);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data saved (%d bytes)"), buf_len);
+#endif  // ESP8266 - ESP32
+  free(spi_buffer);
 }
 
 // Erase the flash area containing the ZigbeeData
 void eraseZigbeeDevices(void) {
   zigbee_devices.clean();     // avoid writing data to flash after erase
+#ifdef ESP8266
   // first copy SPI buffer into ram
   uint8_t *spi_buffer = (uint8_t*) malloc(z_spi_len);
   if (!spi_buffer) {
@@ -341,7 +325,7 @@ void eraseZigbeeDevices(void) {
 
   // Fill the Zigbee area with 0xFF
   memset(spi_buffer + z_block_offset, 0xFF, z_block_len);
- 
+
   // buffer is now ready, write it back
   if (ESP.flashEraseSector(z_spi_start_sector)) {
     ESP.flashWrite(z_spi_start_sector * SPI_FLASH_SEC_SIZE, (uint32_t*) spi_buffer, SPI_FLASH_SEC_SIZE);
@@ -349,6 +333,10 @@ void eraseZigbeeDevices(void) {
 
   free(spi_buffer);
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (0x%08X - %d bytes)"), z_dev_start, z_block_len);
+#else  // ESP32
+  ZigbeeErase();
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (%d bytes)"), z_block_len);
+#endif  // ESP8266 - ESP32
 }
 
 #endif // USE_ZIGBEE

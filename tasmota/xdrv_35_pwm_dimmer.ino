@@ -40,7 +40,7 @@ void (* const PWMDimmerCommand[])(void) PROGMEM = {
 
 #ifdef USE_PWM_DIMMER_REMOTE
 struct remote_pwm_dimmer {
-  power_t power;
+  bool power_on;
   uint8_t bri_power_on;
   uint8_t bri_preset_low;
   uint8_t bri_preset_high;
@@ -94,7 +94,7 @@ void PWMModulePreInit(void)
   PWMDimmerSetPoweredOffLed();
 
   // The relay initializes to on. If the power is supposed to be off, turn the relay off.
-  if (!power && pin[GPIO_REL1] < 99) digitalWrite(pin[GPIO_REL1], bitRead(rel_inverted, 0) ? 1 : 0);
+  if (!power && PinUsed(GPIO_REL1)) digitalWrite(Pin(GPIO_REL1), bitRead(rel_inverted, 0) ? 1 : 0);
 
 #ifdef USE_PWM_DIMMER_REMOTE
   // If remote device mode is enabled, set the device group count to the number of buttons
@@ -104,7 +104,7 @@ void PWMModulePreInit(void)
 
     device_group_count = 0;
     for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
-      if (pin[GPIO_KEY1 + button_index] < 99) device_group_count++;
+      if (PinUsed(GPIO_KEY1, button_index)) device_group_count++;
     }
 
     remote_pwm_dimmer_count = device_group_count - 1;
@@ -156,16 +156,16 @@ void PWMDimmerSetBrightnessLeds(int32_t operation)
 void PWMDimmerSetPoweredOffLed(void)
 {
   // Set the powered-off LED state.
-  if (pin[GPIO_LEDLNK] < 99) {
+  if (PinUsed(GPIO_LEDLNK)) {
     bool power_off_led_on = !power && Settings.flag4.powered_off_led;
     if (ledlnk_inverted) power_off_led_on ^= 1;
-    digitalWrite(pin[GPIO_LEDLNK], power_off_led_on);
+    digitalWrite(Pin(GPIO_LEDLNK), power_off_led_on);
   }
 }
 
 void PWMDimmerSetPower(void)
 {
-  DigitalWrite(GPIO_REL1, bitRead(rel_inverted, 0) ? !power : power);
+  DigitalWrite(GPIO_REL1, 0, bitRead(rel_inverted, 0) ? !power : power);
   PWMDimmerSetBrightnessLeds(0);
   PWMDimmerSetPoweredOffLed();
 }
@@ -178,7 +178,7 @@ void PWMDimmerHandleDevGroupItem(void)
   uint8_t device_group_index = *(uint8_t *)XdrvMailbox.topic;
   if (device_group_index > remote_pwm_dimmer_count) return;
   bool device_is_local = device_groups[device_group_index].local;
-  struct remote_pwm_dimmer * remote_pwm_dimmer = &remote_pwm_dimmers[device_group_index];
+  struct remote_pwm_dimmer * remote_pwm_dimmer = &remote_pwm_dimmers[device_group_index - 1];
 #else  // USE_PWM_DIMMER_REMOTE
   if (*(uint8_t *)XdrvMailbox.topic) return;
 #endif  // !USE_PWM_DIMMER_REMOTE
@@ -190,7 +190,7 @@ void PWMDimmerHandleDevGroupItem(void)
       break;
     case DGR_ITEM_POWER:
       if (!device_is_local) {
-        remote_pwm_dimmer->power = value;
+        remote_pwm_dimmer->power_on = value & 1;
         remote_pwm_dimmer->power_button_increases_bri = (remote_pwm_dimmer->bri < 128);
       }
       break;
@@ -250,13 +250,13 @@ void PWMDimmerHandleButton(void)
   * Released              Hold down               On      No            Dimmer
   * Released              Press & release up      Off     No            Power on at bri preset low
   * Released              Press & release down    Off     No            Power on at bri preset high
-  * 
+  *
   * Holding any button for over 10 seconds executes the WiFiConfig 2 command.
-  * 
+  *
   * In remote mode, whichever button is pressed first becomes the power button and any buttons
   * pressed while it is held affect the device associated with it. The up and down buttons change
   * depeneding on which button is the current power button:
-  * 
+  *
   * Power Down  Up
   * ----- ----  --
   * 1     2     3
@@ -276,17 +276,17 @@ void PWMDimmerHandleButton(void)
   }
 
   bool state_updated = false;
-  int8_t bri_offset = 0;
+  int32_t bri_offset = 0;
   uint8_t power_on_bri = 0;
   uint8_t dgr_item = 0;
   uint8_t dgr_value;
   uint8_t dgr_more_to_come = false;
   uint32_t button_index = XdrvMailbox.index;
   uint32_t now = millis();
-  
+
   // Initialize some variables.
 #ifdef USE_PWM_DIMMER_REMOTE
-  bool power_is_on = (!active_device_is_local ? active_remote_pwm_dimmer->power : power);
+  bool power_is_on = (!active_device_is_local ? active_remote_pwm_dimmer->power_on : power);
   bool is_power_button = (button_index == power_button_index);
 #else // USE_PWM_DIMMER_REMOTE
   bool power_is_on = power;
@@ -344,8 +344,9 @@ void PWMDimmerHandleButton(void)
         // If this is about the power button, ...
         if (is_power_button) {
 
-          // If no other buttons are pressed, ...
-          if (buttons_pressed == 1) {
+          // If no other buttons are pressed and the up or down button was not tapped while holding
+          // the power button before this, ...
+          if (buttons_pressed == 1 && !tap_count) {
 
             // If the power is on, adjust the brightness. Set the direction based on the current
             // direction for the device and then invert the direction when the power button is
@@ -400,18 +401,10 @@ void PWMDimmerHandleButton(void)
                 else
 #endif  // USE_PWM_DIMMER_REMOTE
                   uint8_value = Light.fixed_color_index;
-                if (is_down_button) {
-                  if (uint8_value)
-                    uint8_value--;
-                  else
-                    uint8_value = MAX_FIXED_COLOR;
-                }
-                else {
-                  if (uint8_value < MAX_FIXED_COLOR)
-                    uint8_value++;
-                  else
-                    uint8_value = 0;
-                }
+                if (is_down_button)
+                  uint8_value--;
+                else
+                  uint8_value++;
 #ifdef USE_PWM_DIMMER_REMOTE
                 if (!active_device_is_local)
                   active_remote_pwm_dimmer->fixed_color_index = uint8_value;
@@ -489,7 +482,7 @@ void PWMDimmerHandleButton(void)
 
           // If the up or down button was tapped while the power button was held, ...
           else if (tap_count) {
-          
+
             // If the button was tapped but not held, handle the operation based on which button was
             // tapped.
             if (!button_was_held) {
@@ -553,12 +546,13 @@ void PWMDimmerHandleButton(void)
 
           // If the power is on, ...
           if (power_is_on) {
-          
+
             // If the button was not held, adjust the brightness. Set the direction based on which
             // button is pressed. The new brightness will be calculated below.
             if (button_hold_time[button_index] >= now) {
-              bri_offset = (is_down_button ? -10 : 10);
+              bri_offset = (is_down_button ? -1 : 1);
               dgr_item = 255;
+              state_updated = true;
             }
 
             // If the button was held and the hold was not processed by a rule, we changed the
@@ -598,9 +592,8 @@ void PWMDimmerHandleButton(void)
     else
 #endif  // USE_PWM_DIMMER_REMOTE
       bri = light_state.getBri();
-    int32_t new_bri;
-    bri_offset *= (Settings.light_correction ? 4 : bri / 16 + 1);
-    new_bri = bri + bri_offset;
+    int32_t new_bri = bri + bri_offset * ((dgr_item ? 16 : Settings.light_correction ? 4 : bri / 16 + 1));
+
     if (bri_offset > 0) {
       if (new_bri > 255) new_bri = 255;
     }
@@ -609,7 +602,7 @@ void PWMDimmerHandleButton(void)
     }
     if (new_bri != bri) {
 #ifdef USE_DEVICE_GROUPS
-      SendDeviceGroupMessage(power_button_index, (dgr_item ? DGR_MSGTYP_UPDATE : DGR_MSGTYP_UPDATE_MORE_TO_COME), DGR_ITEM_LIGHT_BRI, new_bri);
+      SendDeviceGroupMessage(power_button_index, DGR_MSGTYP_UPDATE_MORE_TO_COME, DGR_ITEM_LIGHT_BRI, new_bri);
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_PWM_DIMMER_REMOTE
       if (!active_device_is_local)
@@ -617,9 +610,15 @@ void PWMDimmerHandleButton(void)
       else {
 #endif  // USE_PWM_DIMMER_REMOTE
         skip_light_fade = true;
+#ifdef USE_DEVICE_GROUPS
+        ignore_dgr_sends = true;
+#endif  // USE_DEVICE_GROUPS
         light_state.setBri(new_bri);
         LightAnimate();
         skip_light_fade = false;
+#ifdef USE_DEVICE_GROUPS
+        ignore_dgr_sends = false;
+#endif  // USE_DEVICE_GROUPS
         Settings.bri_power_on = new_bri;
 #ifdef USE_PWM_DIMMER_REMOTE
       }
@@ -636,8 +635,8 @@ void PWMDimmerHandleButton(void)
 #ifdef USE_DEVICE_GROUPS
 #ifdef USE_PWM_DIMMER_REMOTE
     if (!active_device_is_local) {
-      active_remote_pwm_dimmer->power ^= 1;
-      new_power = active_remote_pwm_dimmer->power;
+      active_remote_pwm_dimmer->power_on ^= 1;
+      new_power = active_remote_pwm_dimmer->power_on;
     }
     else {
 #endif  // USE_PWM_DIMMER_REMOTE
@@ -665,7 +664,7 @@ void PWMDimmerHandleButton(void)
 
   // If we're not changing the brightness or toggling the power and we made changes, send a group
   // update.
-  else if (dgr_item) {
+  if (dgr_item) {
 #ifdef USE_DEVICE_GROUPS
     if (dgr_item == 255) dgr_item = 0;
     SendDeviceGroupMessage(power_button_index, (dgr_more_to_come ? DGR_MSGTYP_UPDATE_MORE_TO_COME : DGR_MSGTYP_UPDATE_DIRECT), dgr_item, dgr_value);

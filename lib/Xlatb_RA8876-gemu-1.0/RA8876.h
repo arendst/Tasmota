@@ -23,6 +23,7 @@
 #include <SPI.h>
 #include <renderer.h>
 
+#undef SPRINT
 #define SPRINT(A) {char str[32];sprintf(str,"val: %d ",A);Serial.println((char*)str);}
 
 

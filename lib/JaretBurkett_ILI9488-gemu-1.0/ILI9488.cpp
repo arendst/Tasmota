@@ -19,7 +19,7 @@
 #include <limits.h>
 
 // if using software spi this optimizes the code
-#define SWSPI_OPTMODE
+
 
 #define ILI9488_START start();
 #define ILI9488_STOP stop();
@@ -36,9 +36,6 @@ ILI9488::ILI9488(int8_t cs,int8_t mosi,int8_t sclk,int8_t bp) : Renderer(ILI9488
   _bp = bp;
   _hwspi = 0;
 }
-
-
-#include "spi_register.h"
 
 /*
 
@@ -72,6 +69,13 @@ GPIO15:	PERIPHS_IO_MUX_MTDO_U
 */
 
 uint8_t ili9488_start;
+
+#ifndef ESP32
+// ESP8266
+#include "spi_register.h"
+#define SWSPI_OPTMODE
+// this enables the 27 bit packed mode
+#define RGB_PACK_MODE
 
 uint32_t ili9488_clock;
 uint32_t ili9488_usr;
@@ -192,32 +196,6 @@ void ILI9488::stop(void) {
   ili9488_start=0;
 }
 
-
-#if 0
-// code from espressif SDK
-/******************************************************************************
- * FunctionName : spi_lcd_9bit_write
- * Description  : SPI 9bits transmission function for driving LCD TM035PDZV36
- * Parameters   : 	uint8 spi_no - SPI module number, Only "SPI" and "HSPI" are valid
- *				uint8 high_bit - first high bit of the data, 0 is for "0",the other value 1-255 is for "1"
- *				uint8 low_8bit- the rest 8bits of the data.
-*******************************************************************************/
-void spi_lcd_9bit_write(uint8_t high_bit,uint8_t low_8bit)
-{
-	uint32_t regvalue;
-	uint8_t bytetemp;
-
-	if(high_bit)		bytetemp=(low_8bit>>1)|0x80;
-	else				bytetemp=(low_8bit>>1)&0x7f;
-
-	regvalue= ((8&SPI_USR_COMMAND_BITLEN)<<SPI_USR_COMMAND_BITLEN_S)|((uint32)bytetemp);		//configure transmission variable,9bit transmission length and first 8 command bit
-	if(low_8bit&0x01) 	regvalue|=BIT15;        //write the 9th bit
-	while(READ_PERI_REG(SPI_CMD(1))&SPI_USR);		//waiting for spi module available
-	WRITE_PERI_REG(SPI_USER2(1), regvalue);				//write  command and command length into spi reg
-	SET_PERI_REG_MASK(SPI_CMD(1), SPI_USR);		//transmission start
-}
-#endif
-
 // dc = 0
 void ILI9488::writecommand(uint8_t c) {
   if (_hwspi) {
@@ -226,9 +204,6 @@ void ILI9488::writecommand(uint8_t c) {
     bytetemp=(c>>1)&0x7f;
 
     ILI9488_START
-
-//#define SPI_USR_COMMAND_BITLEN 0x0000000F
-//#define SPI_USR_COMMAND_BITLEN_S 28
 
     regvalue= ((8&SPI_USR_COMMAND_BITLEN)<<SPI_USR_COMMAND_BITLEN_S)|((uint32)bytetemp);		//configure transmission variable,9bit transmission length and first 8 command bit
     if(c&0x01) 	regvalue|=BIT15;        //write the 9th bit
@@ -255,39 +230,76 @@ void ILI9488::writedata(uint8_t d) {
   } else  fastSPIwrite(d,1);
 }
 
-// Rather than a bazillion writecommand() and writedata() calls, screen
-// initialization commands and arguments are organized in these tables
-// stored in PROGMEM.  The table may look bulky, but that's mostly the
-// formatting -- storage-wise this is hundreds of bytes more compact
-// than the equivalent code.  Companion function follows.
+void ICACHE_RAM_ATTR ILI9488::fastSPIwrite(uint8_t d,uint8_t dc) {
 
+  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_cs);
+  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
+  if(dc) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
+  else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_mosi);
+  WRITE_PERI_REG( PIN_OUT_SET, 1<<_sclk);
 
-/*
-// Companion code to the above tables.  Reads and issues
-// a series of LCD commands stored in PROGMEM byte array.
-void ILI9488::commandList(uint8_t *addr) {
-
-  uint8_t  numCommands, numArgs;
-  uint16_t ms;
-
-  numCommands = pgm_read_byte(addr++);   // Number of commands to follow
-  while(numCommands--) {                 // For each command...
-    writecommand(pgm_read_byte(addr++)); //   Read, issue command
-    numArgs  = pgm_read_byte(addr++);    //   Number of args to follow
-    ms       = numArgs & DELAY;          //   If hibit set, delay follows args
-    numArgs &= ~DELAY;                   //   Mask out delay bit
-    while(numArgs--) {                   //   For each argument...
-      writedata(pgm_read_byte(addr++));  //     Read, issue argument
-    }
-
-    if(ms) {
-      ms = pgm_read_byte(addr++); // Read post-command delay time (ms)
-      if(ms == 255) ms = 500;     // If 255, delay for 500 ms
-      delay(ms);
-    }
+  for(uint8_t bit = 0x80; bit; bit >>= 1) {
+    WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
+    if(d&bit) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
+    else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_mosi);
+    WRITE_PERI_REG( PIN_OUT_SET, 1<<_sclk);
   }
+  WRITE_PERI_REG( PIN_OUT_SET, 1<<_cs);
 }
-*/
+#else
+// ESP32 section
+void ILI9488::writedata(uint8_t d) {
+  ILI9488_START
+  fastSPIwrite(d,1);
+}
+
+void ILI9488::writecommand(uint8_t c) {
+  ILI9488_START
+  fastSPIwrite(c,0);
+}
+
+#include "soc/spi_reg.h"
+#include "soc/spi_struct.h"
+#include "esp32-hal-spi.h"
+#include "esp32-hal.h"
+#include "soc/spi_struct.h"
+
+#define RGB_PACK_MODE
+
+// since ardunio transferBits ia completely disfunctional
+// we use our own hardware driver for 9 bit spi
+void ILI9488::fastSPIwrite(uint8_t d,uint8_t dc) {
+    digitalWrite( _cs, LOW);
+
+    uint32_t regvalue=d>>1;
+    if (dc) regvalue|=0x80;
+    else regvalue&=0x7f;
+    if (d&1) regvalue|=0x8000;
+
+    REG_SET_BIT(SPI_USER_REG(3), SPI_USR_MOSI);
+    REG_WRITE(SPI_MOSI_DLEN_REG(3), 9 - 1);
+    uint32_t *dp=(uint32_t*)SPI_W0_REG(3);
+    *dp=regvalue;
+    REG_SET_BIT(SPI_CMD_REG(3), SPI_USR);
+    while (REG_GET_FIELD(SPI_CMD_REG(3), SPI_USR));
+
+    digitalWrite( _cs, HIGH);
+}
+
+SPISettings ili9488_spiSettings;
+
+void ILI9488::start(void) {
+  if (ili9488_start) return;
+  SPI.beginTransaction(ili9488_spiSettings);
+  ili9488_start=1;
+}
+void ILI9488::stop(void) {
+  if (!ili9488_start) return;
+  SPI.endTransaction();
+  ili9488_start=0;
+}
+#endif
+
 
 uint16_t ILI9488::GetColorFromIndex(uint8_t index) {
   if (index>=sizeof(ili9488_colors)/2) index=0;
@@ -339,14 +351,23 @@ void ILI9488::begin(void) {
     pinMode(_bp, OUTPUT);
     digitalWrite(_bp,HIGH);
   }
+
+#ifndef ESP32
   if ((_sclk==14) && (_mosi==13) && (_cs==15)) {
     // we use hardware spi
+      SPI.begin();
       _hwspi=1;
       spi_lcd_mode_init();
   } else {
     // we must use software spi
       _hwspi=0;
   }
+#else
+  SPI.begin(_sclk,-1,_mosi, -1);
+  ili9488_spiSettings = SPISettings(10000000, MSBFIRST, SPI_MODE3);
+  _hwspi=1;
+#endif
+
   ILI9488_START
   delay(1);
 
@@ -817,8 +838,7 @@ void ILI9488::fillScreen(uint16_t color) {
 
 //#define WRITE_SPI_REG
 
-// this enables the 27 bit packed mode
-#define RGB_PACK_MODE
+
 
 // extremely strange => if this code is merged into pack_rgb() the software crashes
 // swap bytes
@@ -844,9 +864,9 @@ uint32_t pack_rgb(uint32_t r, uint32_t g, uint32_t b) {
   return ulswap(data);
 }
 
+#ifndef ESP32
 // fill a rectangle
-void ILI9488::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
-  uint16_t color) {
+void ILI9488::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
 
   ILI9488_START
   // rudimentary clipping (drawChar w/big text requires this)
@@ -990,6 +1010,56 @@ void ILI9488::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 #endif
 
 }
+#else
+// ESP32
+void ILI9488::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
+
+    // rudimentary clipping (drawChar w/big text requires this)
+    if((x >= _width) || (y >= _height)) return;
+    if((x + w - 1) >= _width)  w = _width  - x;
+    if((y + h - 1) >= _height) h = _height - y;
+
+    setAddrWindow(x, y, x+w-1, y+h-1);
+
+    uint8_t r = (color & 0xF800) >> 11;
+    uint8_t g = (color & 0x07E0) >> 5;
+    uint8_t b = color & 0x001F;
+
+    r = (r * 255) / 31;
+    g = (g * 255) / 63;
+    b = (b * 255) / 31;
+
+#ifdef RGB_PACK_MODE
+    // init 27 bit mode
+    uint32_t data=pack_rgb(r,g,b);
+    REG_SET_BIT(SPI_USER_REG(3), SPI_USR_MOSI);
+    REG_WRITE(SPI_MOSI_DLEN_REG(3), 27 - 1);
+    uint32_t *dp=(uint32_t*)SPI_W0_REG(3);
+    digitalWrite( _cs, LOW);
+#endif
+
+    for(y=h; y>0; y--) {
+      for(x=w; x>0; x--) {
+  #ifndef RGB_PACK_MODE
+        writedata(r);
+        writedata(g);
+        writedata(b);
+  #else
+        while (REG_GET_FIELD(SPI_CMD_REG(3), SPI_USR));
+        *dp=data;
+        REG_SET_BIT(SPI_CMD_REG(3), SPI_USR);
+  #endif
+      }
+    }
+
+#ifdef RGB_PACK_MODE
+    while (REG_GET_FIELD(SPI_CMD_REG(3), SPI_USR));
+    digitalWrite( _cs, HIGH);
+#endif
+
+    ILI9488_STOP
+}
+#endif
 
 
 // Pass 8-bit (each) R,G,B, get back 16-bit packed color
@@ -1040,65 +1110,3 @@ void ILI9488::invertDisplay(boolean i) {
   writecommand(i ? ILI9488_INVON : ILI9488_INVOFF);
   ILI9488_STOP
 }
-
-void ICACHE_RAM_ATTR ILI9488::fastSPIwrite(uint8_t d,uint8_t dc) {
-
-  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_cs);
-  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
-  if(dc) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
-  else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_mosi);
-  WRITE_PERI_REG( PIN_OUT_SET, 1<<_sclk);
-
-  for(uint8_t bit = 0x80; bit; bit >>= 1) {
-    WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
-    if(d&bit) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
-    else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_mosi);
-    WRITE_PERI_REG( PIN_OUT_SET, 1<<_sclk);
-  }
-  WRITE_PERI_REG( PIN_OUT_SET, 1<<_cs);
-}
-
-/*
-
- uint16_t ILI9488::readcommand16(uint8_t c) {
- digitalWrite(_dc, LOW);
- if (_cs)
- digitalWrite(_cs, LOW);
-
- spiwrite(c);
- pinMode(_sid, INPUT); // input!
- uint16_t r = spiread();
- r <<= 8;
- r |= spiread();
- if (_cs)
- digitalWrite(_cs, HIGH);
-
- pinMode(_sid, OUTPUT); // back to output
- return r;
- }
-
- uint32_t ILI9488::readcommand32(uint8_t c) {
- digitalWrite(_dc, LOW);
- if (_cs)
- digitalWrite(_cs, LOW);
- spiwrite(c);
- pinMode(_sid, INPUT); // input!
-
- dummyclock();
- dummyclock();
-
- uint32_t r = spiread();
- r <<= 8;
- r |= spiread();
- r <<= 8;
- r |= spiread();
- r <<= 8;
- r |= spiread();
- if (_cs)
- digitalWrite(_cs, HIGH);
-
- pinMode(_sid, OUTPUT); // back to output
- return r;
- }
-
- */

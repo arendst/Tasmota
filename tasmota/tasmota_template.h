@@ -20,6 +20,8 @@
 #ifndef _TASMOTA_TEMPLATE_H_
 #define _TASMOTA_TEMPLATE_H_
 
+#ifdef ESP8266
+
 // User selectable GPIO functionality
 // ATTENTION: Only add at the end of this list just before GPIO_SENSOR_END
 //            Then add the same name(s) in a nice location in array kGpioNiceList
@@ -93,7 +95,7 @@ enum UserSelectablePins {
   GPIO_SPI_CS,         // SPI Chip Select
   GPIO_SPI_DC,         // SPI Data Direction
   GPIO_BACKLIGHT,      // Display backlight control
-  GPIO_PMS5003,        // Plantower PMS5003 Serial interface
+  GPIO_PMS5003_RX,     // Plantower PMS5003 Serial interface
   GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
@@ -135,8 +137,8 @@ enum UserSelectablePins {
   GPIO_TUYA_RX,        // Tuya Serial interface
   GPIO_MGC3130_XFER,   // MGC3130 Transfer
   GPIO_MGC3130_RESET,  // MGC3130 Reset
-  GPIO_SSPI_MISO,      // Software SPI Master Input Slave Output
-  GPIO_SSPI_MOSI,      // Software SPI Master Output Slave Input
+  GPIO_SSPI_MISO,      // Software SPI Master Input Client Output
+  GPIO_SSPI_MOSI,      // Software SPI Master Output Client Input
   GPIO_SSPI_SCLK,      // Software SPI Serial Clock
   GPIO_SSPI_CS,        // Software SPI Chip Select
   GPIO_SSPI_DC,        // Software SPI Data or Command
@@ -208,10 +210,10 @@ enum UserSelectablePins {
   GPIO_SM2135_DAT,     // SM2135 Dat
   GPIO_DEEPSLEEP,      // Kill switch for deepsleep
   GPIO_EXS_ENABLE,     // EXS MCU Enable
-  GPIO_TASMOTASLAVE_TXD,     // Slave TX
-  GPIO_TASMOTASLAVE_RXD,     // Slave RX
-  GPIO_TASMOTASLAVE_RST,     // Slave Reset Pin
-  GPIO_TASMOTASLAVE_RST_INV, // Slave Reset Inverted
+  GPIO_TASMOTACLIENT_TXD,     // Client TX
+  GPIO_TASMOTACLIENT_RXD,     // Client RX
+  GPIO_TASMOTACLIENT_RST,     // Client Reset Pin
+  GPIO_TASMOTACLIENT_RST_INV, // Client Reset Inverted
   GPIO_HPMA_RX,        // Honeywell HPMA115S0 Serial interface
   GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
   GPIO_GPS_RX,         // GPS serial interface
@@ -226,6 +228,17 @@ enum UserSelectablePins {
   GPIO_CC1101_GDO2,    // CC1101 pin for RX
   GPIO_HRXL_RX,       // Data from MaxBotix HRXL sonar range sensor
   GPIO_ELECTRIQ_MOODL_TX, // ElectriQ iQ-wifiMOODL Serial TX
+  GPIO_AS3935,
+  GPIO_PMS5003_TX,     // Plantower PMS5003 Serial interface
+  GPIO_BOILER_OT_RX,   // OpenTherm Boiler RX pin
+  GPIO_BOILER_OT_TX,   // OpenTherm Boiler TX pin
+  GPIO_WINDMETER_SPEED,  // WindMeter speed counter pin
+  GPIO_BL0940_RX,      // BL0940 serial interface
+  GPIO_TCP_TX,         // TCP Serial bridge
+  GPIO_TCP_RX,         // TCP Serial bridge
+  GPIO_TELEINFO_RX,    // TELEINFO serial interface
+  GPIO_TELEINFO_ENABLE,// TELEINFO Enable PIN
+  GPIO_LMT01,          // LMT01 input counting pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -259,7 +272,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PZEM0XX_TX "|" D_SENSOR_PZEM004_RX "|"
   D_SENSOR_SAIR_TX "|" D_SENSOR_SAIR_RX "|"
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
-  D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1_RX "|"
+  D_SENSOR_PMS5003_RX "|" D_SENSOR_SDS0X1_RX "|"
   D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
   D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO "|"
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
@@ -304,7 +317,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DDSU666_TX "|" D_SENSOR_DDSU666_RX "|"
   D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
-  D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
+  D_SENSOR_CLIENT_TX "|" D_SENSOR_CLIENT_RX "|" D_SENSOR_CLIENT_RESET "|" D_SENSOR_CLIENT_RESET "i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
   D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX "|"
   D_SENSOR_DS18X20 "o|" D_SENSOR_DHT11 "o|"
@@ -312,7 +325,14 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LE01MR_RX "|" D_SENSOR_LE01MR_TX "|"
   D_SENSOR_CC1101_GDO0 "|" D_SENSOR_CC1101_GDO2 "|"
   D_SENSOR_HRXL_RX "|"
-  D_SENSOR_ELECTRIQ_MOODL
+  D_SENSOR_ELECTRIQ_MOODL "|"
+  D_SENSOR_AS3935 "|" D_SENSOR_PMS5003_TX "|"
+  D_SENSOR_BOILER_OT_RX "|" D_SENSOR_BOILER_OT_TX "|"
+  D_SENSOR_WINDMETER_SPEED "|"
+  D_SENSOR_BL0940_RX "|"
+  D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD "|"
+  D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
+  D_SENSOR_LMT01_PULSE
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -412,8 +432,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SPI
   GPIO_SPI_CS,         // SPI Chip Select
   GPIO_SPI_DC,         // SPI Data Direction
-  GPIO_SSPI_MISO,      // Software SPI Master Input Slave Output
-  GPIO_SSPI_MOSI,      // Software SPI Master Output Slave Input
+  GPIO_SSPI_MISO,      // Software SPI Master Input Client Output
+  GPIO_SSPI_MOSI,      // Software SPI Master Output Client Input
   GPIO_SSPI_SCLK,      // Software SPI Serial Clock
   GPIO_SSPI_CS,        // Software SPI Chip Select
   GPIO_SSPI_DC,        // Software SPI Data or Command
@@ -431,6 +451,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DS18x20
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
   GPIO_DSB_OUT,        // Pseudo Single wire DS18B20 or DS18S20
+#endif
+#ifdef USE_LMT01       // LMT01, count pulses on GPIO
+  GPIO_LMT01,
 #endif
 
 // Light
@@ -543,21 +566,28 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DDSU666
   GPIO_DDSU666_TX,     // DDSU666 Serial interface
   GPIO_DDSU666_RX,     // DDSU666 Serial interface
-#endif  // USE_DDSU666
+#endif
 #ifdef USE_SOLAX_X1
   GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
-#endif // USE_SOLAX_X1
+#endif
 #ifdef USE_LE01MR
   GPIO_LE01MR_RX,     // F7F LE-01MR energy meter rx pin
   GPIO_LE01MR_TX,     // F7F LE-01MR energy meter tx pin
-#endif // IFDEF:USE_LE01MR
+#endif
+#ifdef USE_BL0940
+  GPIO_BL0940_RX,     // BL0940 Serial interface
+#endif
 #endif  // USE_ENERGY_SENSOR
 
 // Serial
 #ifdef USE_SERIAL_BRIDGE
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
+#endif
+#ifdef USE_TCP_BRIDGE
+  GPIO_TCP_TX,         // TCP Serial bridge
+  GPIO_TCP_RX,         // TCP Serial bridge
 #endif
 #ifdef USE_ZIGBEE
   GPIO_ZIGBEE_TX,      // Zigbee Serial interface
@@ -576,14 +606,18 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
 #endif
 #ifdef USE_HPMA
-  GPIO_HPMA_TX,      // Honeywell HPMA115S0 Serial interface
-  GPIO_HPMA_RX,      // Honeywell HPMA115S0 Serial interface
+  GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
+  GPIO_HPMA_RX,        // Honeywell HPMA115S0 Serial interface
 #endif
 #ifdef USE_PMS5003
-  GPIO_PMS5003,        // Plantower PMS5003 Serial interface
+  GPIO_PMS5003_TX,     // Plantower PMS5003 Serial interface
+  GPIO_PMS5003_RX,     // Plantower PMS5003 Serial interface
 #endif
 #if defined(USE_TX20_WIND_SENSOR) || defined(USE_TX23_WIND_SENSOR)
   GPIO_TX2X_TXD_BLACK, // TX20/TX23 Transmission Pin
+#endif
+#ifdef USE_WINDMETER
+  GPIO_WINDMETER_SPEED,
 #endif
 #ifdef USE_MP3_PLAYER
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
@@ -596,26 +630,30 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_PN532_TXD,      // PN532 HSU Tx
   GPIO_PN532_RXD,      // PN532 HSU Rx
 #endif
-#ifdef USE_TASMOTA_SLAVE
-  GPIO_TASMOTASLAVE_TXD,     // Tasmota Slave TX
-  GPIO_TASMOTASLAVE_RXD,     // Tasmota Slave RX
-  GPIO_TASMOTASLAVE_RST,     // Tasmota Slave Reset
-  GPIO_TASMOTASLAVE_RST_INV, // Tasmota Slave Reset Inverted
+#ifdef USE_TASMOTA_CLIENT
+  GPIO_TASMOTACLIENT_TXD,     // Tasmota Client TX
+  GPIO_TASMOTACLIENT_RXD,     // Tasmota Client RX
+  GPIO_TASMOTACLIENT_RST,     // Tasmota Client Reset
+  GPIO_TASMOTACLIENT_RST_INV, // Tasmota Client Reset Inverted
 #endif
 #ifdef USE_RDM6300
   GPIO_RDM6300_RX,
 #endif
 #ifdef USE_IBEACON
-  GPIO_IBEACON_RX,
   GPIO_IBEACON_TX,
+  GPIO_IBEACON_RX,
 #endif
 #ifdef USE_GPS
-  GPIO_GPS_RX,         // GPS serial interface
   GPIO_GPS_TX,         // GPS serial interface
+  GPIO_GPS_RX,         // GPS serial interface
 #endif
 #ifdef USE_HM10
-  GPIO_HM10_RX,         // GPS serial interface
   GPIO_HM10_TX,         // GPS serial interface
+  GPIO_HM10_RX,         // GPS serial interface
+#endif
+#ifdef USE_OPENTHERM
+  GPIO_BOILER_OT_TX,
+  GPIO_BOILER_OT_RX,
 #endif
 
 #ifdef USE_MGC3130
@@ -656,6 +694,13 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_HRXL
   GPIO_HRXL_RX,
 #endif
+#ifdef USE_AS3935
+  GPIO_AS3935,
+#endif
+#ifdef USE_TELEINFO
+  GPIO_TELEINFO_RX,
+  GPIO_TELEINFO_ENABLE,
+#endif
 };
 
 /********************************************************************************************/
@@ -694,8 +739,13 @@ const char kAdc0Names[] PROGMEM =
 
 #define MAX_GPIO_PIN       17   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
+#define MAX_USER_PINS      13   // MAX_GPIO_PIN - MIN_FLASH_PINS
+#define ADC0_PIN           17   // Pin number of ADC0
+#define WEMOS_MODULE       17   // Wemos module
 
 const char PINS_WEMOS[] PROGMEM = "D3TXD4RXD2D1flashcFLFLolD6D7D5D8D0A0";
+
+/********************************************************************************************/
 
 typedef struct MYIO {
   uint8_t      io[MAX_GPIO_PIN];
@@ -729,8 +779,8 @@ typedef struct MYTMPLT {
 } mytmplt;
 
 /********************************************************************************************/
-
 // Supported hardware modules
+
 enum SupportedModules {
   SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, SONOFF_S2X, SLAMPHER, SONOFF_TOUCH,
   SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, EXS_RELAY, WION, WEMOS, SONOFF_DEV, H801,
@@ -2220,5 +2270,11 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     0, 0, 0, 0
   }
 };
+
+#endif  // ESP8266
+
+#ifdef ESP32
+#include "tasmota_template_ESP32.h"
+#endif  // ESP32
 
 #endif  // _TASMOTA_TEMPLATE_H_

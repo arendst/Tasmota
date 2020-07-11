@@ -52,7 +52,7 @@ void OsWatchTicker(void)
 
 #ifdef DEBUG_THEO
   int32_t rssi = WiFi.RSSI();
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(rssi), rssi, last_run);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP_getFreeHeap(), WifiGetRssiAsQuality(rssi), rssi, last_run);
 #endif  // DEBUG_THEO
   if (last_run >= (OSWATCH_RESET_TIME * 1000)) {
 //    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));  // Save iram space
@@ -99,7 +99,7 @@ uint32_t ResetReason(void)
     REASON_DEEP_SLEEP_AWAKE = 5,  // "Deep-Sleep Wake"         wake up from deep-sleep
     REASON_EXT_SYS_RST      = 6   // "External System"         external system reset
   */
-  return resetInfo.reason;
+  return ESP_ResetInfoReason();
 }
 
 String GetResetReason(void)
@@ -109,7 +109,7 @@ String GetResetReason(void)
     strncpy_P(buff, PSTR(D_JSON_BLOCKED_LOOP), sizeof(buff));
     return String(buff);
   } else {
-    return ESP.getResetReason();
+    return ESP_getResetReason();
   }
 }
 
@@ -156,7 +156,7 @@ float CharToFloat(const char *str)
 
   signed char sign = 1;
   if (*pt == '-') { sign = -1; }
-  if (*pt == '-' || *pt=='+') { pt++; }            // Skip any sign
+  if (*pt == '-' || *pt == '+') { pt++; }          // Skip any sign
 
   float left = 0;
   if (*pt != '.') {
@@ -167,6 +167,9 @@ float CharToFloat(const char *str)
   float right = 0;
   if (*pt == '.') {
     pt++;
+    uint32_t max_decimals = 0;
+    while ((max_decimals < 8) && isdigit(pt[max_decimals])) { max_decimals++; }
+    pt[max_decimals] = '\0';                       // Limit decimals to float max of 8
     right = atoi(pt);                              // Decimal part
     while (isdigit(*pt)) {
       pt++;
@@ -562,6 +565,7 @@ char* GetPowerDevice(char* dest, uint32_t idx, size_t size)
 
 void GetEspHardwareType(void)
 {
+#ifdef ESP8266
   // esptool.py get_efuses
   uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
   uint32_t efuse2 = *(uint32_t*)(0x3FF00054);
@@ -572,16 +576,23 @@ void GetEspHardwareType(void)
   if (is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
     is_8285 = false;  // ESP8285 can only have 1M flash
   }
+#else
+  is_8285 = false;    // ESP8285 can only have 1M flash
+#endif
 }
 
 String GetDeviceHardware(void)
 {
   char buff[10];
+#ifdef ESP8266
   if (is_8285) {
     strcpy_P(buff, PSTR("ESP8285"));
   } else {
     strcpy_P(buff, PSTR("ESP8266EX"));
   }
+#else
+  strcpy_P(buff, PSTR("ESP32"));
+#endif
   return String(buff);
 }
 
@@ -590,7 +601,7 @@ float ConvertTemp(float c)
   float result = c;
 
   global_update = uptime;
-  global_temperature = c;
+  global_temperature_celsius = c;
 
   if (!isnan(c) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
     result = c * 1.8 + 32;                                    // Fahrenheit
@@ -612,7 +623,8 @@ float ConvertTempToCelsius(float c)
 
 char TempUnit(void)
 {
-  return (Settings.flag.temperature_conversion) ? 'F' : 'C';  // SetOption8  - Switch between Celsius or Fahrenheit
+  // SetOption8  - Switch between Celsius or Fahrenheit
+  return (Settings.flag.temperature_conversion) ? D_UNIT_FAHRENHEIT[0] : D_UNIT_CELSIUS[0];
 }
 
 float ConvertHumidity(float h)
@@ -629,7 +641,7 @@ float ConvertHumidity(float h)
 
 float CalcTempHumToDew(float t, float h)
 {
-  if (isnan(h) || isnan(t)) { return 0.0; }
+  if (isnan(h) || isnan(t)) { return NAN; }
 
   if (Settings.flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
     t = (t - 32) / 1.8;                                       // Celsius
@@ -649,7 +661,7 @@ float ConvertPressure(float p)
   float result = p;
 
   global_update = uptime;
-  global_pressure = p;
+  global_pressure_hpa = p;
 
   if (!isnan(p) && Settings.flag.pressure_conversion) {  // SetOption24 - Switch between hPa or mmHg pressure unit
     result = p * 0.75006375541921;                       // mmHg
@@ -678,9 +690,9 @@ void ResetGlobalValues(void)
 {
   if ((uptime - global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
     global_update = 0;
-    global_temperature = 9999;
-    global_humidity = 0;
-    global_pressure = 0;
+    global_temperature_celsius = NAN;
+    global_humidity = 0.0f;
+    global_pressure_hpa = 0.0f;
   }
 }
 
@@ -987,6 +999,9 @@ char* ResponseGetTime(uint32_t format, char* time_str)
   case 2:
     snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":%u"), UtcTime());
     break;
+  case 3:
+    snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL_MILLIS).c_str());
+    break;
   default:
     snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
   }
@@ -1065,10 +1080,46 @@ int ResponseJsonEndEnd(void)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
-void DigitalWrite(uint32_t gpio_pin, uint32_t state)
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0  // Fix core 2.5.x ISR not in IRAM Exception
+uint32_t Pin(uint32_t gpio, uint32_t index) ICACHE_RAM_ATTR;
+#endif
+
+uint32_t Pin(uint32_t gpio, uint32_t index = 0);
+uint32_t Pin(uint32_t gpio, uint32_t index) {
+#ifdef ESP8266
+  uint16_t real_gpio = gpio + index;
+#else  // ESP32
+  uint16_t real_gpio = (gpio << 5) + index;
+#endif  // ESP8266 - ESP32
+  for (uint32_t i = 0; i < ARRAY_SIZE(gpio_pin); i++) {
+    if (gpio_pin[i] == real_gpio) {
+      return i;              // Pin number configured for gpio
+    }
+  }
+  return 99;                 // No pin used for gpio
+}
+
+bool PinUsed(uint32_t gpio, uint32_t index = 0);
+bool PinUsed(uint32_t gpio, uint32_t index) {
+  return (Pin(gpio, index) < 99);
+}
+
+uint32_t GetPin(uint32_t lpin) {
+  if (lpin < ARRAY_SIZE(gpio_pin)) {
+    return gpio_pin[lpin];
+  } else {
+    return GPIO_NONE;
+  }
+}
+
+void SetPin(uint32_t lpin, uint32_t gpio) {
+  gpio_pin[lpin] = gpio;
+}
+
+void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state)
 {
-  if (pin[gpio_pin] < 99) {
-    digitalWrite(pin[gpio_pin], state &1);
+  if (PinUsed(gpio_pin, index)) {
+    digitalWrite(Pin(gpio_pin, index), state &1);
   }
 }
 
@@ -1095,6 +1146,16 @@ bool ValidModule(uint32_t index)
   return ValidTemplateModule(index);
 }
 
+bool ValidTemplate(const char *search) {
+  char template_name[strlen(SettingsText(SET_TEMPLATE_NAME)) +1];
+  char search_name[strlen(search) +1];
+
+  LowerCase(template_name, SettingsText(SET_TEMPLATE_NAME));
+  LowerCase(search_name, search);
+
+  return (strstr(template_name, search_name) != nullptr);
+}
+
 String AnyModuleName(uint32_t index)
 {
   if (USER_MODULE == index) {
@@ -1112,21 +1173,30 @@ String ModuleName(void)
 
 void ModuleGpios(myio *gp)
 {
+#ifdef ESP8266
   uint8_t *dest = (uint8_t *)gp;
-  memset(dest, GPIO_NONE, sizeof(myio));
+  uint8_t src[ARRAY_SIZE(Settings.user_template.gp.io)];
+#else  // ESP32
+  uint16_t *dest = (uint16_t *)gp;
+  uint16_t src[ARRAY_SIZE(Settings.user_template.gp.io)];
+#endif  // ESP8266 - ESP32
 
-  uint8_t src[sizeof(mycfgio)];
+  memset(dest, GPIO_NONE, sizeof(myio));
   if (USER_MODULE == Settings.module) {
     memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
   } else {
+#ifdef ESP8266
     memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
+#else  // ESP32
+    memcpy_P(&src, &kModules.gp, sizeof(mycfgio));
+#endif  // ESP8266 - ESP32
   }
   // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
 
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
 
   uint32_t j = 0;
-  for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
     dest[j] = src[i];
@@ -1144,7 +1214,11 @@ gpio_flag ModuleFlag(void)
   if (USER_MODULE == Settings.module) {
     flag = Settings.user_template.flag;
   } else {
+#ifdef ESP8266
     memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
+#else  // ESP32
+    memcpy_P(&flag, &kModules.flag, sizeof(gpio_flag));
+#endif  // ESP8266 - ESP32
   }
 
   return flag;
@@ -1156,7 +1230,11 @@ void ModuleDefault(uint32_t module)
   Settings.user_template_base = module;
   char name[TOPSZ];
   SettingsUpdateText(SET_TEMPLATE_NAME, GetTextIndexed(name, sizeof(name), module, kModuleNames));
+#ifdef ESP8266
   memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
+#else  // ESP32
+  memcpy_P(&Settings.user_template, &kModules, sizeof(mytmplt));
+#endif  // ESP8266 - ESP32
 }
 
 void SetModuleType(void)
@@ -1169,7 +1247,7 @@ bool FlashPin(uint32_t pin)
   return (((pin > 5) && (pin < 9)) || (11 == pin));
 }
 
-uint8_t ValidPin(uint32_t pin, uint32_t gpio)
+uint32_t ValidPin(uint32_t pin, uint32_t gpio)
 {
   if (FlashPin(pin)) {
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
@@ -1187,17 +1265,23 @@ uint8_t ValidPin(uint32_t pin, uint32_t gpio)
 
 bool ValidGPIO(uint32_t pin, uint32_t gpio)
 {
-  return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
+  return (GPIO_USER == ValidPin(pin, BGPIO(gpio)));  // Only allow GPIO_USER pins
 }
 
+#ifdef ESP8266
 bool ValidAdc(void)
 {
   gpio_flag flag = ModuleFlag();
   uint32_t template_adc0 = flag.data &15;
   return (ADC0_USER == template_adc0);
 }
+#endif  // ESP8266
 
+#ifdef ESP8266
 bool GetUsedInModule(uint32_t val, uint8_t *arr)
+#else  // ESP32
+bool GetUsedInModule(uint32_t val, uint16_t *arr)
+#endif  // ESP8266 - ESP32
 {
   int offset = 0;
 
@@ -1264,7 +1348,11 @@ bool JsonTemplate(const char* dataBuf)
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
 
+#ifdef ESP8266
   StaticJsonBuffer<400> jb;  // 331 from https://arduinojson.org/v5/assistant/
+#else
+  StaticJsonBuffer<999> jb;  // 654 from https://arduinojson.org/v5/assistant/
+#endif
   JsonObject& obj = jb.parseObject(dataBuf);
   if (!obj.success()) { return false; }
 
@@ -1274,16 +1362,24 @@ bool JsonTemplate(const char* dataBuf)
     SettingsUpdateText(SET_TEMPLATE_NAME, name);
   }
   if (obj[D_JSON_GPIO].success()) {
-    for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
+    for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
+#ifdef ESP8266
       Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
+#else  // ESP32
+      uint16_t gpio = obj[D_JSON_GPIO][i] | 0;
+      if (gpio == (AGPIO(GPIO_NONE) +1)) {
+        gpio = AGPIO(GPIO_USER);
+      }
+      Settings.user_template.gp.io[i] = gpio;
+#endif
     }
   }
   if (obj[D_JSON_FLAG].success()) {
-    uint8_t flag = obj[D_JSON_FLAG] | 0;
+    uint32_t flag = obj[D_JSON_FLAG] | 0;
     memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
   }
   if (obj[D_JSON_BASE].success()) {
-    uint8_t base = obj[D_JSON_BASE];
+    uint32_t base = obj[D_JSON_BASE];
     if ((0 == base) || !ValidTemplateModule(base -1)) { base = 18; }
     Settings.user_template_base = base -1;  // Default WEMOS
   }
@@ -1293,8 +1389,16 @@ bool JsonTemplate(const char* dataBuf)
 void TemplateJson(void)
 {
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
-  for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
+#ifdef ESP8266
     ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings.user_template.gp.io[i]);
+#else  // ESP32
+    uint16_t gpio = Settings.user_template.gp.io[i];
+    if (gpio == AGPIO(GPIO_USER)) {
+      gpio = AGPIO(GPIO_NONE) +1;
+    }
+    ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", gpio);
+#endif
   }
   ResponseAppend_P(PSTR("],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), Settings.user_template.flag, Settings.user_template_base +1);
 }
@@ -1378,6 +1482,7 @@ bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
     }
     retry--;
   }
+  if (!retry) Wire.endTransmission();
   return status;
 }
 
@@ -1519,8 +1624,8 @@ void I2cScan(char *devs, unsigned int devs_len)
   // Return error codes defined in twi.h and core_esp8266_si2c.c
   // I2C_OK                      0
   // I2C_SCL_HELD_LOW            1 = SCL held low by another device, no procedure available to recover
-  // I2C_SCL_HELD_LOW_AFTER_READ 2 = I2C bus error. SCL held low beyond slave clock stretch time
-  // I2C_SDA_HELD_LOW            3 = I2C bus error. SDA line held low by slave/another_master after n bits
+  // I2C_SCL_HELD_LOW_AFTER_READ 2 = I2C bus error. SCL held low beyond client clock stretch time
+  // I2C_SDA_HELD_LOW            3 = I2C bus error. SDA line held low by client/another_master after n bits
   // I2C_SDA_HELD_LOW_AFTER_INIT 4 = line busy. SDA again held low by another device. 2nd master?
 
   uint8_t error = 0;
@@ -1656,11 +1761,11 @@ void Syslog(void)
   }
   if (PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
     char syslog_preamble[64];  // Hostname + Id
-    snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), my_hostname);
+    snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), NetworkHostname());
     memmove(log_data + strlen(syslog_preamble), log_data, sizeof(log_data) - strlen(syslog_preamble));
     log_data[sizeof(log_data) -1] = '\0';
     memcpy(log_data, syslog_preamble, strlen(syslog_preamble));
-    PortUdp.write(log_data, strlen(log_data));
+    PortUdp_write(log_data, strlen(log_data));
     PortUdp.endPacket();
     delay(1);  // Add time for UDP handling (#5512)
   } else {
@@ -1703,7 +1808,7 @@ void AddLog(uint32_t loglevel)
       !global_state.mqtt_down &&
       (loglevel <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
 
-  if (!global_state.wifi_down &&
+  if (!global_state.network_down &&
       (loglevel <= syslog_level)) { Syslog(); }
 
   prepped_loglevel = 0;
@@ -1778,7 +1883,52 @@ void AddLogSerial(uint32_t loglevel)
   AddLogBuffer(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
 }
 
-void AddLogMissed(char *sensor, uint32_t misses)
+void AddLogMissed(const char *sensor, uint32_t misses)
 {
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
 }
+
+void AddLogBufferSize(uint32_t loglevel, uint8_t *buffer, uint32_t count, uint32_t size) {
+  snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
+  for (uint32_t i = 0; i < count; i++) {
+    if (1 ==  size) {  // uint8_t
+      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer));
+    } else {           // uint16_t
+      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X%02X"), log_data, *(buffer +1), *(buffer));
+    }
+    buffer += size;
+  }
+  AddLog(loglevel);
+}
+
+/*********************************************************************************************\
+ * Uncompress static PROGMEM strings
+\*********************************************************************************************/
+
+#ifdef USE_UNISHOX_COMPRESSION
+
+#include <unishox.h>
+
+Unishox compressor;
+
+String Decompress(const char * compressed, size_t uncompressed_size) {
+  String content("");
+
+  uncompressed_size += 2;    // take a security margin
+
+  // We use a nasty trick here. To avoid allocating twice the buffer,
+  // we first extend the buffer of the String object to the target size (maybe overshooting by 7 bytes)
+  // then we decompress in this buffer,
+  // and finally assign the raw string to the String, which happens to work: String uses memmove(), so overlapping works
+  content.reserve(uncompressed_size);
+  char * buffer = content.begin();
+
+  int32_t len = compressor.unishox_decompress(compressed, strlen_P(compressed), buffer, uncompressed_size);
+  if (len > 0) {
+    buffer[len] = 0;    // terminate string with NULL
+    content = buffer;         // copy in place
+  }
+  return content;
+}
+
+#endif // USE_UNISHOX_COMPRESSION

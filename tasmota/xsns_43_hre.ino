@@ -71,10 +71,10 @@ bool hre_good =  false;
 // The settling times here were determined using a single unit hooked to a scope
 int hreReadBit()
 {
-   digitalWrite(pin[GPIO_HRE_CLOCK], HIGH);
+   digitalWrite(Pin(GPIO_HRE_CLOCK), HIGH);
    delay(1);
-   int bit = digitalRead(pin[GPIO_HRE_DATA]);
-   digitalWrite(pin[GPIO_HRE_CLOCK], LOW);
+   int bit = digitalRead(Pin(GPIO_HRE_DATA));
+   digitalWrite(Pin(GPIO_HRE_CLOCK), LOW);
    delay(1);
    return bit;
 }
@@ -110,12 +110,12 @@ void hreInit(void)
    hre_read_errors = 0;
    hre_good = false;
 
-   pinMode(pin[GPIO_HRE_CLOCK], OUTPUT);
-   pinMode(pin[GPIO_HRE_DATA], INPUT);
+   pinMode(Pin(GPIO_HRE_CLOCK), OUTPUT);
+   pinMode(Pin(GPIO_HRE_DATA), INPUT);
 
    // Note that the level shifter inverts this line and we want to leave it
    // high when not being read.
-   digitalWrite(pin[GPIO_HRE_CLOCK], LOW);
+   digitalWrite(Pin(GPIO_HRE_CLOCK), LOW);
 
    hre_state = hre_sync;
 }
@@ -260,8 +260,7 @@ void hreShow(boolean json)
 bool Xsns43(byte function)
 {
    // If we don't have pins assigned give up quickly.
-   if (pin[GPIO_HRE_CLOCK] >= 99 || pin[GPIO_HRE_DATA] >= 99)
-      return false;
+   if (!PinUsed(GPIO_HRE_CLOCK) || !PinUsed(GPIO_HRE_DATA)) { return false; }
 
    switch (function)
    {
