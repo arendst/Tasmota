@@ -26,7 +26,7 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEEZNPRECEIVE "|"
 #endif // USE_ZIGBEE_ZNP
 #ifdef USE_ZIGBEE_EZSP
-  D_CMND_ZIGBEE_EZSP_SEND "|" D_CMND_ZIGBEE_EZSP_RECEIVE "|"
+  D_CMND_ZIGBEE_EZSP_SEND "|" D_CMND_ZIGBEE_EZSP_RECEIVE "|" D_CMND_ZIGBEE_EZSP_LISTEN "|"
 #endif // USE_ZIGBEE_EZSP
   D_CMND_ZIGBEE_PERMITJOIN "|"
   D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND "|" D_CMND_ZIGBEE_PROBE "|"
@@ -41,7 +41,7 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbZNPSend, &CmndZbZNPReceive,
 #endif // USE_ZIGBEE_ZNP
 #ifdef USE_ZIGBEE_EZSP
-  &CmndZbEZSPSend, &CmndZbEZSPReceive,
+  &CmndZbEZSPSend, &CmndZbEZSPReceive, &CmndZbEZSPListen,
 #endif // USE_ZIGBEE_EZSP
   &CmndZbPermitJoin,
   &CmndZbStatus, &CmndZbReset, &CmndZbSend, &CmndZbProbe,
@@ -1023,6 +1023,36 @@ void CmndZbPermitJoin(void) {
 
   ResponseCmndDone();
 }
+
+#ifdef USE_ZIGBEE_EZSP
+//
+// `ZbListen`: add a multicast group to listen to
+// Overcomes a current limitation that EZSP only shows messages from multicast groups it listens too
+//
+// Ex: `ZbListen 99`, `ZbListen2 100`
+void CmndZbEZSPListen(void) {
+  if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+
+  int32_t  index = XdrvMailbox.index - 1;   // 0 based
+  int32_t  group = XdrvMailbox.payload;
+
+  if (group <= 0) {
+    group = 0;
+  } else if (group > 0xFFFF) {
+    group = 0xFFFF;
+  }
+  
+  SBuffer buf(8);
+  buf.add16(EZSP_setMulticastTableEntry);
+  buf.add8(index);
+  buf.add16(group);   // group
+  buf.add8(0x01);       // endpoint
+  buf.add8(0x00);       // network index
+  ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len(), true);
+
+  ResponseCmndDone();
+}
+#endif // USE_ZIGBEE_EZSP
 
 //
 // Command `ZbStatus`
