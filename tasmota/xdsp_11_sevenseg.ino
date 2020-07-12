@@ -128,7 +128,7 @@ void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uin
     // Prefixes:
     // x  upcoming number decimal integer displayed as hex
     // :  turn on middle colon
-    // ^  turh on top left dot
+    // ^  turn on top left dot
     // v  turn on bottom left dot
     // .  turn on AM/PM/Degree dot
     // s  upcoming number is seconds, print as HH:MM or MM:SS
