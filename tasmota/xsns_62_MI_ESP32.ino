@@ -520,13 +520,13 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
   _newSensor.temp =NAN;
   _newSensor.bat=0x00;
   _newSensor.rssi=0xffff;
-  _newSensor.firmware[0]='\0';
   _newSensor.lux = 0x00ffffff;
   switch (_type)
     {
     case FLORA:
       _newSensor.moisture =NAN;
       _newSensor.fertility =NAN;
+      _newSensor.firmware[0]='\0';
       break;
     case 2: case 3: case 4: case 5: case 6:
       _newSensor.hum=NAN;
