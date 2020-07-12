@@ -91,13 +91,6 @@ struct ROTARY {
 void update_rotary(void) ICACHE_RAM_ATTR;
 void update_rotary(void) {
   if (Rotary.busy) { return; }
-  bool powered_on = (power);
-#ifdef USE_LIGHT
-  if (!Settings.flag4.rotary_uses_rules) {   // SetOption98 - Use rules instead of light control
-    powered_on = (LightPowerIRAM());
-  }
-#endif  // USE_LIGHT
-  if (!powered_on) { return; }
 
 #ifdef ROTARY_OPTION1
   // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
@@ -212,8 +205,10 @@ void update_rotary(void) {
 #endif  // ROTARY_OPTION3
 }
 
-bool RotaryButtonPressed(void) {
+//bool RotaryButtonPressed(void) {
+bool RotaryButtonPressed(uint32_t button_index) {
   if (!Rotary.present) { return false; }
+  if (0 != button_index) { return false; }
 
   bool powered_on = (power);
 #ifdef USE_LIGHT
@@ -254,6 +249,13 @@ void RotaryHandler(void) {
     Rotary.timeout--;
     if (!Rotary.timeout) {
       Rotary.direction = 0;
+#ifdef USE_LIGHT
+      if (!Settings.flag4.rotary_uses_rules) {  // SetOption98 - Use rules instead of light control
+        LightState(0);
+        MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_DIMMER));
+        XdrvRulesProcess();
+      }
+#endif  // USE_LIGHT
     }
   }
   if (Rotary.last_position == Rotary.position) { return; }
