@@ -83,8 +83,9 @@
 #define NLIGHT      7
 #define MJYD2S      8
 #define YEERC       9
+#define MHOC401     10
 
-#define MI_TYPES    9 //count this manually
+#define MI_TYPES    10 //count this manually
 
 #define D_CMND_NRF "NRF"
 
@@ -119,7 +120,8 @@ const uint16_t kMINRFDeviceID[MI_TYPES]={ 0x0098, // Flora
                                           0x0576, // CGD1
                                           0x03dd, // NLIGHT
                                           0x07f6, // MJYD2S
-                                          0x0153  // yee-rc
+                                          0x0153, // yee-rc
+                                          0x0387  // MHO-C401
                                           };
 
 const char kMINRFDeviceType1[] PROGMEM = "Flora";
@@ -131,7 +133,8 @@ const char kMINRFDeviceType6[] PROGMEM = "CGD1";
 const char kMINRFDeviceType7[] PROGMEM = "NLIGHT";
 const char kMINRFDeviceType8[] PROGMEM = "MJYD2S";
 const char kMINRFDeviceType9[] PROGMEM = "YEERC";
-const char * kMINRFDeviceType[] PROGMEM = {kMINRFDeviceType1,kMINRFDeviceType2,kMINRFDeviceType3,kMINRFDeviceType4,kMINRFDeviceType5,kMINRFDeviceType6,kMINRFDeviceType7,kMINRFDeviceType8,kMINRFDeviceType9};
+const char kMINRFDeviceType10[] PROGMEM = "MHOC401";
+const char * kMINRFDeviceType[] PROGMEM = {kMINRFDeviceType1,kMINRFDeviceType2,kMINRFDeviceType3,kMINRFDeviceType4,kMINRFDeviceType5,kMINRFDeviceType6,kMINRFDeviceType7,kMINRFDeviceType8,kMINRFDeviceType9,kMINRFDeviceType10};
 
 // PDU's or different channels 37-39
 const uint32_t kMINRFFloPDU[3] = {0x3eaa857d,0xef3b8730,0x71da7b46};
@@ -411,7 +414,7 @@ bool MINRFreceivePacket(void)
       case 1: case 3:
       MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_A[MINRF.currentChan]); // "flora" mode, "LYWSD02" mode
       break;
-      case 2: case 4: case 5: case 6:
+      case 2: case 4: case 5: case 6: case MHOC401:
       MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_B[MINRF.currentChan]); // "MJ_HT_V1" mode, LYWSD03" mode, "CGG1" mode, "CGD1" mode
       break;
       case 9:
@@ -919,7 +922,7 @@ void MINRFchangePacketModeTo(uint8_t _mode) {
     case 3: // special LYWSD02 packet
       NRF24radio.openReadingPipe(0,kMINRFL2PDU[_nextchannel]);// 95 fe 70 20 -> LYWSD02
     break;
-    case 4: // special LYWSD03 packet
+    case 4: case MHOC401: // special LYWSD03 packet, MHOC401 has the same
       NRF24radio.openReadingPipe(0,kMINRFL3PDU[_nextchannel]);// 95 fe 58 58 -> LYWSD03 (= encrypted data message)
     break;
     case 5: // special CGG1 packet
@@ -1068,7 +1071,7 @@ void MINRFhandleMiBeaconPacket(void){
     memcpy((uint8_t*)&MINRF.buffer.miBeacon.type,MINRFtempBuf, 32-9);  // shift by one byte for the MJ_HT_V1 and CGG1
     break;
 #ifdef USE_MI_DECRYPTION
-    case LYWSD03:
+    case LYWSD03: case MHOC401:
     decryptRet = MINRFdecryptPacket((char*)&MINRF.buffer); //start with PID
     if(decryptRet==1) _sensorVec->showedUp=255; // if decryption worked, this must be a valid sensor
     break;
@@ -1324,7 +1327,7 @@ void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
         }
         else MINRFhandleScan();
         break;
-      case FLORA: case MJ_HT_V1: case LYWSD02: case CGG1: case LYWSD03: case YEERC:
+      case FLORA: case MJ_HT_V1: case LYWSD02: case CGG1: case LYWSD03: case YEERC: case MHOC401:
         MINRFhandleMiBeaconPacket();
         break;
       case CGD1:
