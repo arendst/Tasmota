@@ -1508,7 +1508,7 @@ void MI32Show(bool json)
         if (!isnan(MIBLEsensors[i].fertility)) {
           ResponseAppend_P(PSTR(",\"Fertility\":%f"), MIBLEsensors[i].fertility);
         }
-        if (MIBLEsensors[i].firmware != 0x00) { // this is the error code -> no firmware
+        if (MIBLEsensors[i].firmware[0] != '\0') { // this is the error code -> no firmware
           ResponseAppend_P(PSTR(",\"Firmware\":\"%s\""), MIBLEsensors[i].firmware);
         }
       }
