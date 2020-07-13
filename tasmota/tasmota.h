@@ -84,6 +84,7 @@ const uint8_t MAX_GROUP_TOPICS = 4;         // Max number of Group Topics
 const uint8_t MAX_DEV_GROUP_NAMES = 4;      // Max number of Device Group names
 
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
+const uint8_t MAX_ROTARIES = 2;             // Max number of Rotary Encoders
 
 const char MQTT_TOKEN_PREFIX[] PROGMEM = "%prefix%";  // To be substituted by mqtt_prefix[x]
 const char MQTT_TOKEN_TOPIC[] PROGMEM = "%topic%";    // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
