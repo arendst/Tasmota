@@ -43,15 +43,15 @@ const uint8_t rotary_ct_increment = 350 / ROTARY_MAX_STEPS;      // Ct 153..500 
 const uint8_t rotary_color_increment = 360 / ROTARY_MAX_STEPS;   // Hue 0..359 = 360
 
 const uint8_t ROTARY_TIMEOUT = 10;             // 10 * RotaryHandler() call which is usually 10 * 0.05 seconds
+const uint8_t ROTARY_DEBOUNCE = 10;            // Debounce time in milliseconds
 
 struct ROTARY {
   bool present = false;
 } Rotary;
 
-struct ENCODER {
+struct tEncoder {
   uint32_t debounce = 0;
-  int8_t abs_position1 = 0;
-  int8_t abs_position2 = 0;
+  int8_t abs_position[2] = { 0 };
   int8_t direction = 0;                        // Control consistent direction
   int8_t pin = -1;
   uint8_t position = 128;
@@ -59,31 +59,10 @@ struct ENCODER {
   uint8_t timeout = 0;                         // Disallow direction change within 0.5 second
   bool changed = false;
   bool busy = false;
-} Encoder[MAX_ROTARIES];
+};
+tEncoder Encoder[MAX_ROTARIES];
 
 /********************************************************************************************/
-
-void ICACHE_RAM_ATTR RotaryIsr(uint32_t index) {
-  if (Encoder[index].busy) { return; }
-
-  uint32_t time = micros();
-  if (Encoder[index].debounce < time) {
-    int direction = (digitalRead(Encoder[index].pin)) ? -1 : 1;
-    if ((0 == Encoder[index].direction) || (direction == Encoder[index].direction)) {
-      Encoder[index].position += direction;
-      Encoder[index].direction = direction;
-    }
-    Encoder[index].debounce = time +50;        // Experimental debounce in microseconds
-  }
-}
-
-void ICACHE_RAM_ATTR RotaryIsr1(void) {
-  RotaryIsr(0);
-}
-
-void ICACHE_RAM_ATTR RotaryIsr2(void) {
-  RotaryIsr(1);
-}
 
 bool RotaryButtonPressed(uint32_t button_index) {
   if (!Rotary.present) { return false; }
@@ -107,6 +86,22 @@ bool RotaryButtonPressed(uint32_t button_index) {
   return false;
 }
 
+void ICACHE_RAM_ATTR RotaryIsrArg(void *arg) {
+  tEncoder* encoder = static_cast<tEncoder*>(arg);
+
+  if (encoder->busy) { return; }
+
+  uint32_t time = millis();
+  if ((encoder->debounce < time) || (encoder->debounce > time + ROTARY_DEBOUNCE)) {
+    int direction = (digitalRead(encoder->pin)) ? -1 : 1;
+    if ((0 == encoder->direction) || (direction == encoder->direction)) {
+      encoder->position += direction;
+      encoder->direction = direction;
+    }
+    encoder->debounce = time + ROTARY_DEBOUNCE;  // Experimental debounce
+  }
+}
+
 void RotaryInit(void) {
   Rotary.present = false;
   for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
@@ -119,11 +114,7 @@ void RotaryInit(void) {
       Encoder[index].pin = Pin(GPIO_ROT1B, idx);
       pinMode(Encoder[index].pin, INPUT_PULLUP);
       pinMode(Pin(GPIO_ROT1A, idx), INPUT_PULLUP);
-      if (0 == index) {
-        attachInterrupt(Pin(GPIO_ROT1A, idx), RotaryIsr1, FALLING);
-      } else {
-        attachInterrupt(Pin(GPIO_ROT1A, idx), RotaryIsr2, FALLING);
-      }
+      attachInterruptArg(Pin(GPIO_ROT1A, idx), RotaryIsrArg, &Encoder[index], FALLING);
     }
     Rotary.present |= (Encoder[index].pin > -1);
   }
@@ -160,7 +151,7 @@ void RotaryHandler(void) {
     int rotary_position = Encoder[index].position - Encoder[index].last_position;
 
     if (Settings.save_data && (save_data_counter < 2)) {
-      save_data_counter = 2;                   // Postpone flash writes while rotary is turned
+      save_data_counter = 3;                   // Postpone flash writes while rotary is turned
     }
 
     bool button_pressed = (Button.hold_timer[index]);  // Button is pressed: set color temperature
@@ -191,16 +182,14 @@ void RotaryHandler(void) {
       }
     } else {
 #endif  // USE_LIGHT
-      if (button_pressed) {
-        Encoder[index].abs_position2 += rotary_position;
-        if (Encoder[index].abs_position2 < 0) { Encoder[index].abs_position2 = 0; }
-        if (Encoder[index].abs_position2 > ROTARY_MAX_STEPS) { Encoder[index].abs_position2 = ROTARY_MAX_STEPS; }
-      } else {
-        Encoder[index].abs_position1 += rotary_position;
-        if (Encoder[index].abs_position1 < 0) { Encoder[index].abs_position1 = 0; }
-        if (Encoder[index].abs_position1 > ROTARY_MAX_STEPS) { Encoder[index].abs_position1 = ROTARY_MAX_STEPS; }
+      Encoder[index].abs_position[button_pressed] += rotary_position;
+      if (Encoder[index].abs_position[button_pressed] < 0) {
+        Encoder[index].abs_position[button_pressed] = 0;
       }
-      Response_P(PSTR("{\"Rotary%d\":{\"Pos1\":%d,\"Pos2\":%d}}"), index +1, Encoder[index].abs_position1, Encoder[index].abs_position2);
+      if (Encoder[index].abs_position[button_pressed] > ROTARY_MAX_STEPS) {
+        Encoder[index].abs_position[button_pressed] = ROTARY_MAX_STEPS;
+      }
+      Response_P(PSTR("{\"Rotary%d\":{\"Pos1\":%d,\"Pos2\":%d}}"), index +1, Encoder[index].abs_position[0], Encoder[index].abs_position[1]);
       XdrvRulesProcess();
 #ifdef USE_LIGHT
     }
