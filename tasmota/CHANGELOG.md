@@ -1,9 +1,3 @@
-## Released
-
-### 8.4.0 20200716
-
-- Release George
-
 ## Unreleased (development)
 
 ### 8.3.1.6 20200617
@@ -17,6 +11,7 @@
 - Add compile time interlock parameters (#8759)
 - Add compile time user template (#8766)
 - Add rotary encoder support for light dimmer and optional color temperature if button1 still pressed (#8670)
+- Add support for switches/relays using an AC detection circuitry e.g. MOES MS-104B or BlitzWolf SS5 (#8606)
 - Fix exception or watchdog on rule re-entry (#8757)
 - Change ESP32 USER GPIO template representation decreasing template message size
 - Change define USE_TASMOTA_SLAVE into USE_TASMOTA_CLIENT
@@ -67,6 +62,8 @@
 - Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)
 - Add support for VEML7700 Ambient light intensity Sensor by device111 (#8432)
 
+## Released
+
 ### 8.3.1 20200518
 
 - Release Fred
@@ -82,6 +79,8 @@
 - Change Mutichannel Gas sensor pow function to approximative pow saving 5k of code space
 - Change Quick Power Cycle detection from 4 to 7 power interrupts (#4066)
 - Fix default state of ``SetOption73 0`` for button decoupling and send multi-press and hold MQTT messages
+
+## Released
 
 ### 8.3.0 20200514
 
@@ -166,6 +165,8 @@
 - Add Zigbee command ``ZbUnbind``
 - Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
 - Add support for 64x48 SSD1306 OLED (#6740)
+
+## Released
 
 ### 8.2.0 20200321
 

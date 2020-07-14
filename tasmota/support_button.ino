@@ -303,7 +303,7 @@ void ButtonHandler(void)
                 }
               }
 #ifdef ROTARY_V1
-              if (!((0 == button_index) && RotaryButtonPressed())) {
+              if (!RotaryButtonPressed(button_index)) {
 #endif
                 if (!Settings.flag3.mqtt_buttons && single_press && SendKey(KEY_BUTTON, button_index + Button.press_counter[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
                   // Success

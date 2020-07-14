@@ -663,7 +663,7 @@ void MqttShowState(void)
   for (uint32_t i = 1; i <= devices_present; i++) {
 #ifdef USE_LIGHT
     if ((LightDevice()) && (i >= LightDevice())) {
-      if (i == LightDevice())  { LightState(1); }    // call it only once
+      if (i == LightDevice())  { ResponseLightState(1); }    // call it only once
     } else {
 #endif
       ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetPowerDevice(stemp1, i, sizeof(stemp1), Settings.flag.device_index_enable),  // SetOption26 - Switch between POWER or POWER1
