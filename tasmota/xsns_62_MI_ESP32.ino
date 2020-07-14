@@ -160,6 +160,7 @@ struct mi_sensor_t{
   uint8_t lastCnt; //device generated counter of the packet
   uint8_t shallSendMQTT;
   uint8_t MAC[6];
+  int rssi;
   // uint8_t showedUp;
   uint32_t lastTime;
   uint32_t lux;
@@ -294,11 +295,16 @@ class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     uint8_t addr[6];
     memcpy(addr,advertisedDevice->getAddress().getNative(),6);
     MI32_ReverseMAC(addr);
+    int rssi = 0xffff;
+    if(advertisedDevice->haveRSSI()) {
+      rssi = advertisedDevice->getRSSI();
+    }
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("RSSI: %d"),rssi); // actually i never got a 0xffff
     if(uuid==0xfe95) {
-      MI32ParseResponse((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr);
+      MI32ParseResponse((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr, rssi);
     }
     else if(uuid==0xfdcd) {
-      MI32parseCGD1Packet((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr);
+      MI32parseCGD1Packet((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr, rssi);
     }
     else {
       MI32Scan->erase(advertisedDevice->getAddress());
@@ -513,12 +519,14 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
 
   _newSensor.temp =NAN;
   _newSensor.bat=0x00;
+  _newSensor.rssi=0xffff;
   _newSensor.lux = 0x00ffffff;
   switch (_type)
     {
     case FLORA:
       _newSensor.moisture =NAN;
       _newSensor.fertility =NAN;
+      _newSensor.firmware[0]='\0';
       break;
     case 2: case 3: case 4: case 5: case 6:
       _newSensor.hum=NAN;
@@ -1154,12 +1162,13 @@ if (MIBLEsensors[_slot].type==NLIGHT){
   }
 }
 
-void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6]){ // no MiBeacon
+void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int rssi){ // no MiBeacon
   uint8_t _addr[6];
   memcpy(_addr,addr,6);
   uint32_t _slot = MIBLEgetSensorSlot(_addr, 0x0576, 0); // This must be hard-coded, no object-id in Cleargrass-packet, we have no packet counter too
   AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1],_slot);
   if(_slot==0xff) return;
+  MIBLEsensors[_slot].rssi=rssi;
   cg_packet_t _packet;
   memcpy((char*)&_packet,_buf,sizeof(_packet));
   switch (_packet.mode){
@@ -1188,7 +1197,7 @@ void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6]){ // no M
   }
 }
 
-void MI32ParseResponse(char *buf, uint16_t bufsize, uint8_t addr[6]) {
+void MI32ParseResponse(char *buf, uint16_t bufsize, uint8_t addr[6], int rssi) {
     if(bufsize<9) {  //9 is from the NLIGHT
       return;
     }
@@ -1197,7 +1206,10 @@ void MI32ParseResponse(char *buf, uint16_t bufsize, uint8_t addr[6]) {
     uint8_t _addr[6];
     memcpy(_addr,addr,6);
     uint16_t _slot = MIBLEgetSensorSlot(_addr, _type, buf[4]);
-    if(_slot!=0xff) MI32parseMiBeacon(buf,_slot,bufsize);
+    if(_slot!=0xff) {
+      MIBLEsensors[_slot].rssi=rssi;
+      MI32parseMiBeacon(buf,_slot,bufsize);
+    }
 }
 
 /***********************************************************************\
@@ -1442,6 +1454,7 @@ bool MI32Cmd(void) {
 
 const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 {m}%u%s / %u{e}";
 const char HTTP_MI32_SERIAL[] PROGMEM = "{s}%s %s{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
+const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
 const char HTTP_VOLTAGE[] PROGMEM = "{s}%s " D_VOLTAGE "{m}%s V{e}";
 const char HTTP_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%u {e}";
@@ -1475,14 +1488,16 @@ void MI32Show(bool json)
         kMI32DeviceType[MIBLEsensors[i].type-1],
         MIBLEsensors[i].MAC[3], MIBLEsensors[i].MAC[4], MIBLEsensors[i].MAC[5]);
 
+      if (MIBLEsensors[i].rssi!=0xffff) { // this is the error code -> no valid value
+        ResponseAppend_P(PSTR("\"RSSI\":%d"), MIBLEsensors[i].rssi);  // all sensors have rssi
+      } else {
+        ResponseAppend_P(PSTR("\"RSSI\":null")); // to know that it is sometimes out of range
+      }
       if (MIBLEsensors[i].type == FLORA) {
         if (!isnan(MIBLEsensors[i].temp)) {
           char temperature[FLOATSZ]; // all sensors have temperature
           dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"), temperature);
-        } else {
-          ResponseAppend_P(PSTR("}"));
-          continue;
+          ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"), temperature);
         }
         if (MIBLEsensors[i].lux!=0x0ffffff) { // this is the error code -> no lux
           ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
@@ -1493,10 +1508,13 @@ void MI32Show(bool json)
         if (!isnan(MIBLEsensors[i].fertility)) {
           ResponseAppend_P(PSTR(",\"Fertility\":%f"), MIBLEsensors[i].fertility);
         }
-        ResponseAppend_P(PSTR(",\"Firmware\":\"%s\""), MIBLEsensors[i].firmware);
+        if (MIBLEsensors[i].firmware[0] != '\0') { // this is the error code -> no firmware
+          ResponseAppend_P(PSTR(",\"Firmware\":\"%s\""), MIBLEsensors[i].firmware);
+        }
       }
       if (MIBLEsensors[i].type > FLORA){
         if (!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)) {
+          ResponseAppend_P(PSTR(","));
           ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
         }
       }
@@ -1542,6 +1560,9 @@ void MI32Show(bool json)
       for (i; i<j; i++) {
         WSContentSend_PD(HTTP_MI32_HL);
         WSContentSend_PD(HTTP_MI32_SERIAL, kMI32DeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].MAC[0], MIBLEsensors[i].MAC[1],MIBLEsensors[i].MAC[2],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[5]);
+        if (MIBLEsensors[i].rssi!=0xffff) { // this is the error code -> no valid value
+          WSContentSend_PD(HTTP_RSSI, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].rssi);
+        }
         if (MIBLEsensors[i].type==FLORA) {
           if (!isnan(MIBLEsensors[i].temp)) {
             char temperature[FLOATSZ];

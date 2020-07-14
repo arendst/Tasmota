@@ -1333,7 +1333,13 @@ void ThermostatGetLocalSensor(uint8_t ctr_output) {
   if (root.success()) {
     const char* value_c = root[THERMOSTAT_SENSOR_NAME]["Temperature"];
     if (value_c != NULL && strlen(value_c) > 0 && (isdigit(value_c[0]) || (value_c[0] == '-' && isdigit(value_c[1])) ) ) {
-      int16_t value = (int16_t)(CharToFloat(value_c) * 10);
+      int16_t value;
+      if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
+        value = (int16_t)ThermostatFahrenheitToCelsius((int32_t)(CharToFloat(value_c) * 10), TEMP_CONV_ABSOLUTE);
+      }
+      else {
+        value = (int16_t)(CharToFloat(value_c) * 10);
+      }
       if ( (value >= -1000) 
         && (value <= 1000)
         && (Thermostat[ctr_output].status.sensor_type == SENSOR_LOCAL)) {
