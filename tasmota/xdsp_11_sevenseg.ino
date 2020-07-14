@@ -149,7 +149,7 @@ void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uin
     //  x88     -> 58
     //  f8.5    -> 8.5
     //  f-9.34  -> -9.34
-    //  f:-9.34 -> -9.34
+    //  f:-9.34 -> -9.:34
     //  r255    -> 8. (all 8 segments on)
 
     switch (str[i]) {
