@@ -71,12 +71,13 @@ void Renderer::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 void Renderer::DisplayOnff(int8_t on) {
 
 }
+
 void Renderer::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
 
 }
 
-int16_t Renderer::Begin(int16_t p1,int16_t p2,int16_t p3) {
-  return 0;
+void Renderer::Begin(int16_t p1,int16_t p2,int16_t p3) {
+
 }
 
 void Renderer::Updateframe() {
