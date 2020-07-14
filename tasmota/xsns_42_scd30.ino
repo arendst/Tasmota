@@ -101,7 +101,7 @@ void Scd30Update(void)
 {
   scd30Loop_count++;
   if (scd30Loop_count > (scd30Interval_sec - 1)) {
-    int error = 0;
+    uint32_t error = 0;
     switch (scd30ErrorState) {
       case SCD30_STATE_NO_ERROR: {
         error = scd30.readMeasurement(&scd30_CO2, &scd30_CO2EAvg, &scd30_Temp, &scd30_Humid);
