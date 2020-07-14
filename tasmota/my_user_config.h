@@ -563,6 +563,9 @@
                                                  // MTX_ADDRESS2 at y=1, up to MTX_ADDRESS8 at y=7
                                                  // Command: DisplayText [yn]8888
                                                  // will display 8888 at sevenseg display at I2C address MTX_ADDRESS(n-1)
+                                                 // Each segment may be address Command: DisplayText [xn]m
+                                                 //  where n is 0..4 (4 digits and middle :) and m is decimal for bitmap of which segment to turn on.
+                                                 // Reference: https://cdn-learn.adafruit.com/downloads/pdf/adafruit-led-backpack.pdf
     // #define SEVENSEG_ADDRESS1     0x70      // No longer used.  Use MTX_ADDRESS1 - MTX_ADDRESS8 instead to specify I2C address of sevenseg displays
 //    #define USE_DISPLAY_SH1106                   // [DisplayModel 7] [I2cDriver6] Enable SH1106 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
 #endif  // USE_I2C

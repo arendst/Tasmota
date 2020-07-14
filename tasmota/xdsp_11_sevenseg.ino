@@ -106,16 +106,18 @@ void SevensegOnOff(void)
 
 void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag)
 {
-  uint16_t number = 0;
+  enum OutNumType {DECIMAL, HEXADECIMAL, FLOAT, SEGMENTS};
+  int16_t number = 0;
+  double numberf = 0;
   boolean hasnumber= false;
   uint8_t dots= 0;
-  boolean t=false;
-  boolean T=false;
-  boolean d=false;
-  boolean hex=false;
-  boolean done=false;
-  boolean s=false;
-  uint8_t unit=y;
+  OutNumType outnumtype= DECIMAL;
+  uint8 fds = 0; // number of fractional digits for fp number
+  boolean done= false;
+  boolean s= false;
+  uint8_t unit= y;
+  char *buf;
+
   if ((unit>=sevensegs) || (unit<0)) {
     unit=0;
   }
@@ -123,29 +125,41 @@ void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uin
   for (int i=0; (str[i]!='\0') && (!done); i++) {
     // [optional prefix(es) chars]digits
     // Some combinations won't make sense.
-    // Reference: https://learn.adafruit.com/adafruit-led-backpack/1-2-inch-7-segment-backpack-arduino-wiring-and-setup
+    // Reference: https://cdn-learn.adafruit.com/downloads/pdf/adafruit-led-backpack.pdf
+    // This code has been tested on 1.2" and 0.56" 7-Segment LED displays, but should mostly work for others.
     // 
     // Prefixes:
-    // x  upcoming number decimal integer displayed as hex
+    // x  upcoming decimal integer number displayed as hex
     // :  turn on middle colon
     // ^  turn on top left dot
     // v  turn on bottom left dot
     // .  turn on AM/PM/Degree dot
     // s  upcoming number is seconds, print as HH:MM or MM:SS
     // z  clear this display
+    // f  upcoming number is floating point
+    // r  raw segment based on bitmap of upcoming integer number (see reference document above)
     // 
     // Some sample valid combinations:
-    // 787    -> 787
-    // x47    -> 2F
-    // s:241  -> 04:01
-    // s241   -> 4 01
-    // s1241  -> 20:41
-    // z      ->
-    // x88    -> 58
+    //  787     -> 787
+    //  x47     -> 2F
+    //  s:241   -> 04:01
+    //  s241    -> 4 01
+    //  s1241   -> 20:41
+    //  z       ->
+    //  x88     -> 58
+    //  f8.5    -> 8.5
+    //  f-9.34  -> -9.34
+    //  f:-9.34 -> -9.:34
+    //  r255    -> 8. (all 8 segments on)
 
     switch (str[i]) {
       case 'x': // print given dec value as hex
-        hex = true;
+        // hex = true;
+        outnumtype = HEXADECIMAL;
+        break;
+      case 'f': // given number is floating point number
+        // fp = true;
+        outnumtype = FLOAT;
         break;
       case ':': // print colon
         dots |= 0x02;
@@ -162,6 +176,7 @@ void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uin
       case 's': // duration in seconds
         s = true;
         break;
+      case '-':
       case '0':
       case '1':
       case '2':
@@ -173,7 +188,21 @@ void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uin
       case '8':
       case '9':
         hasnumber= true;
-        number = atoi(str+i);
+        if (outnumtype == FLOAT) {
+          // Floating point number is given
+          numberf = atof(str+i);
+          // Find number of fractional digits
+          buf= str+i;
+          char *cp= strchr(buf, '.');
+          if (cp == NULL) {
+            fds= 0;
+          } else {
+            fds= buf+strlen(buf) - 1 - cp;
+          }
+        } else {
+          // Integer is given
+          number = atoi(str+i);
+        }
         done = true;
         break;
       case 'z': // Clear this display
@@ -182,30 +211,41 @@ void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uin
         s=false;
         sevenseg[unit]->clear();
         break;
+      case 'r': // Raw segment
+        outnumtype= SEGMENTS;
+        break;
       default: // unknown format, ignore
         break;
     }
   }
 
-  if (s) {
-    // number is duration in seconds
-    hex = false;
-    int hour = number/60/60;
-    int minute = (number/60)%60;
-
-    if (hour) {
-      // HH:MM
-      number = hour*100 + minute;
-    } else {
-      // MM:SS
-      number = minute*100 + number%60;
-    }
-  }
 
   if (hasnumber) {
-    if (hex) {
+    if (s) {
+      // number is duration in seconds
+      int hour = number/60/60;
+      int minute = (number/60)%60;
+
+      if (hour) {
+        // HH:MM
+        number = hour*100 + minute;
+      } else {
+        // MM:SS
+        number = minute*100 + number%60;
+      }
+    }
+
+    if (outnumtype == HEXADECIMAL) {
+      // Hex
       sevenseg[unit]->print(number, HEX);
+    } else if (outnumtype == FLOAT) {
+      // Floating point
+      sevenseg[unit]->printFloat(numberf, fds, 10);
+    } else if (outnumtype == SEGMENTS) {
+      // Raw segments
+      sevenseg[unit]->writeDigitRaw(x, number);
     } else {
+      // Decimal
       sevenseg[unit]->print(number, DEC);
     }
   }
