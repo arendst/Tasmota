@@ -63,7 +63,7 @@ uint32_t DS1624_Idx2Addr(uint32_t idx) {
   return 0x48 + idx;
 }
 
-int DS1624_Restart(uint8_t config, uint32_t idx) {
+void DS1624_Restart(uint8_t config, uint32_t idx) {
   uint32_t addr = DS1624_Idx2Addr(idx);
   if ((config & 1) == 1) {
     config &= ~(DS1621_CFG_DONE|DS1621_CFG_1SHOT);
