@@ -149,7 +149,7 @@ bool (* const xnrg_func_ptr[])(uint8_t) = {   // Energy driver Function Pointers
   &Xnrg31,
 #endif
 
-#ifdef XNRG_32
+#ifdef XNRG_32  // Reserved for use by xdrv_16_tuyamcu.ino
   &Xnrg32
 #endif
 };

@@ -12,6 +12,7 @@
 - Add compile time user template (#8766)
 - Add rotary encoder support for light dimmer and optional color temperature if button1 still pressed (#8670)
 - Add support for switches/relays using an AC detection circuitry e.g. MOES MS-104B or BlitzWolf SS5 (#8606)
+- Add support for Schneider Electric iEM3000 series Modbus energy meter by Marius Bezuidenhout
 - Fix exception or watchdog on rule re-entry (#8757)
 - Change ESP32 USER GPIO template representation decreasing template message size
 - Change define USE_TASMOTA_SLAVE into USE_TASMOTA_CLIENT

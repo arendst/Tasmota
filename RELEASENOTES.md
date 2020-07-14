@@ -71,6 +71,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``Module2`` to configure fallback module on fast reboot (#8464)
 - Add commands ``LedPwmOn 0..255``, ``LedPwmOff 0..255`` and ``LedPwmMode1 0/1`` to control led brightness by George (#8491)
 - Add ESP32 ethernet commands ``EthType 0/1``, ``EthAddress 0..31`` and ``EthClockMode 0..3``
+- Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet
 - Add support for unique MQTTClient (and inherited fallback topic) by full Mac address using ``mqttclient DVES_%12X`` (#8300)
 - Add more functionality to ``Switchmode`` 11 and 12 (#8450)
 - Add wildcard pattern ``?`` for JSON matching in rules
@@ -84,14 +85,14 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for up to two BH1750 sensors controlled by commands ``BH1750Resolution`` and ``BH1750MTime`` (#8139)
 - Add support for up to eight MCP9808 temperature sensors by device111 (#8594)
 - Add support for BL0940 energy monitor as used in Blitzwolf BW-SHP10 (#8175)
-- Add initial support for Telegram bot (#8619)
+- Add support for Telegram bot (#8619)
 - Add support for HP303B Temperature and Pressure sensor by Robert Jaakke (#8638)
-- Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet
 - Add support for Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
 - Add Library to be used for decoding Teleinfo (French Metering Smart Meter)
-- Add basic support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON
+- Add support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON
 - Add support for single wire LMT01 temperature Sensor by justifiably (#8713)
 - Add compile time interlock parameters (#8759)
 - Add compile time user template (#8766)
 - Add rotary encoder support for light dimmer and optional color temperature if button1 still pressed (#8670)
 - Add support for switches/relays using an AC detection circuitry e.g. MOES MS-104B or BlitzWolf SS5 (#8606)
+- Add support for Schneider Electric iEM3000 series Modbus energy meter by Marius Bezuidenhout

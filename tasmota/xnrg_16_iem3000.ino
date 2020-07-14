@@ -1,5 +1,5 @@
 /*
-  xnrg_17_iem3000.ino - Schneider Electric iEM3000 series Modbus energy meter support for Tasmota
+  xnrg_16_iem3000.ino - Schneider Electric iEM3000 series Modbus energy meter support for Tasmota
 
   Copyright (C) 2020  Marius Bezuidenhout
 
@@ -25,7 +25,7 @@
  * Important! Set meter Commnication -> Parity to None
 \*********************************************************************************************/
 
-#define XNRG_17             17
+#define XNRG_16             16
 
 // can be user defined in my_user_config.h
 #ifndef IEM3000_SPEED
@@ -105,11 +105,11 @@ void IEM3000Every250ms(void)
         case 0:
           Energy.current[0] = value;
           break;
-        
+
         case 1:
           Energy.current[1] = value;
           break;
-        
+
         case 2:
           Energy.current[2] = value;
           break;
@@ -178,7 +178,7 @@ void Iem3000SnsInit(void)
 void Iem3000DrvInit(void)
 {
   if (PinUsed(GPIO_IEM3000_RX) && PinUsed(GPIO_IEM3000_TX)) {
-    energy_flg = XNRG_17;
+    energy_flg = XNRG_16;
   }
 }
 
@@ -186,7 +186,7 @@ void Iem3000DrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg17(uint8_t function)
+bool Xnrg16(uint8_t function)
 {
   bool result = false;
 
