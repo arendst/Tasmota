@@ -373,6 +373,12 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SWT7_NP,
   GPIO_SWT8,
   GPIO_SWT8_NP,
+#ifdef ROTARY_V1
+  GPIO_ROT1A,          // Rotary switch1 A Pin
+  GPIO_ROT1B,          // Rotary switch1 B Pin
+  GPIO_ROT2A,          // Rotary switch2 A Pin
+  GPIO_ROT2B,          // Rotary switch2 B Pin
+#endif
   GPIO_REL1,           // Relays
   GPIO_REL1_INV,
   GPIO_REL2,
@@ -664,12 +670,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_MAX31855CS,     // MAX31855 Serial interface
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
-#endif
-#ifdef ROTARY_V1
-  GPIO_ROT1A,          // Rotary switch1 A Pin
-  GPIO_ROT1B,          // Rotary switch1 B Pin
-  GPIO_ROT2A,          // Rotary switch2 A Pin
-  GPIO_ROT2B,          // Rotary switch2 B Pin
 #endif
 #ifdef USE_HRE
   GPIO_HRE_CLOCK,

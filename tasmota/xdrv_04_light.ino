@@ -314,16 +314,6 @@ power_t LightPower(void)
   return Light.power;                     // Make external
 }
 
-// IRAM variant for rotary
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0      // Fix core 2.5.x ISR not in IRAM Exception
-power_t LightPowerIRAM(void) ICACHE_RAM_ATTR;
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
-
-power_t LightPowerIRAM(void)
-{
-  return Light.power;                     // Make external
-}
-
 uint8_t LightDevice(void)
 {
   return Light.device;                    // Make external
@@ -1568,7 +1558,7 @@ void LightPowerOn(void)
   }
 }
 
-void LightState(uint8_t append)
+void ResponseLightState(uint8_t append)
 {
   char scolor[LIGHT_COLOR_SIZE];
   char scommand[33];
@@ -1718,7 +1708,7 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
   AddLog_P2(LOG_LEVEL_DEBUG, "LightPreparePower End power=%d Light.power=%d", power, Light.power);
 #endif
   Light.power = power >> (Light.device - 1);  // reset next state, works also with unlinked RGB/CT
-  LightState(0);
+  ResponseLightState(0);
 }
 
 #ifdef USE_LIGHT_PALETTE
@@ -1886,7 +1876,7 @@ void LightAnimate(void)
             MqttPublishPrefixTopic_P(TELE, PSTR(D_CMND_WAKEUP));
 */
             Response_P(PSTR("{\"" D_CMND_WAKEUP "\":\"" D_JSON_DONE "\""));
-            LightState(1);
+            ResponseLightState(1);
             ResponseJsonEnd();
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_WAKEUP));
             XdrvRulesProcess();
@@ -2689,7 +2679,7 @@ void CmndHsbColor(void)
       light_controller.changeHSB(HSB[0], HSB[1], HSB[2]);
       LightPreparePower(1);
     } else {
-      LightState(0);
+      ResponseLightState(0);
     }
   }
 }
@@ -2774,12 +2764,12 @@ void CmndColorTemperature(void)
   }
 }
 
-void LightDimmerOffset(int32_t offset) {
-  int32_t dimmer = light_state.getDimmer() + offset;
-  if (dimmer < 1) { dimmer = 1; }
+void LightDimmerOffset(uint32_t index, int32_t offset) {
+  int32_t dimmer = light_state.getDimmer(index) + offset;
+  if (dimmer < 1) { dimmer = Settings.flag3.slider_dimmer_stay_on; }  // SetOption77 - Do not power off if slider moved to far left
   if (dimmer > 100) { dimmer = 100; }
 
-  XdrvMailbox.index = 0;
+  XdrvMailbox.index = index;
   XdrvMailbox.payload = dimmer;
   CmndDimmer();
 }
