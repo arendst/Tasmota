@@ -103,17 +103,18 @@ char* NetworkHostname(void) {
 }
 
 IPAddress NetworkAddress(void) {
+  IPAddress result;
   if (global_state.eth_down) {
-    return WiFi.localIP();
+    result = WiFi.localIP();
   }
 #ifdef ESP32
 #ifdef USE_ETHERNET
   else {
-    return EthernetLocalIP();
+    result = EthernetLocalIP();
   }
 #endif
 #endif
-  return 0;  // Never reached. Fix GCC10 warning
+  return result;
 }
 
 String NetworkMacAddress(void) {
@@ -127,5 +128,5 @@ String NetworkMacAddress(void) {
   }
 #endif
 #endif
-  return "";  // Never reached. Fix GCC10 warning
+  return String("");  // Never reached. Fix GCC10 warning
 }
