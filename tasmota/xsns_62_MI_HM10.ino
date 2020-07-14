@@ -427,7 +427,7 @@ void HM10parseMiBeacon(char * _buf, uint32_t _slot){
   float _tempFloat;
   mi_beacon_t _beacon;
   if (MIBLEsensors[_slot].type==MJ_HT_V1 || MIBLEsensors[_slot].type==CGG1){
-    memcpy((uint8_t*)&_beacon+1,(uint8_t*)_buf, sizeof(_beacon)); // shift by one byte for the MJ_HT_V1
+    memcpy((uint8_t*)&_beacon+1,(uint8_t*)_buf, sizeof(_beacon)-1); // shift by one byte for the MJ_HT_V1
     memcpy((uint8_t*)&_beacon.Mac,(uint8_t*)&_beacon.Mac+1,6);    // but shift back the MAC
   }
   else{
