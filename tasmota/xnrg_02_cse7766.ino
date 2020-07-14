@@ -141,7 +141,7 @@ void CseReceived(void) {
   }
 }
 
-bool CseSerialInput(void) {
+void CseSerialInput(void) {
   while (CseSerial->available()) {
     yield();
     uint8_t serial_in_byte = CseSerial->read();
@@ -158,7 +158,7 @@ bool CseSerialInput(void) {
           Energy.data_valid[0] = 0;
           CseReceived();
           Cse.received = false;
-          return true;
+          return;
         } else {
           do {  // Sync buffer with data (issue #1907 and #3425)
             memmove(Cse.rx_buffer, Cse.rx_buffer +1, 24);

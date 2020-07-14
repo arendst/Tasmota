@@ -99,6 +99,7 @@ char* NetworkHostname(void) {
   }
 #endif
 #endif
+  return nullptr;  // Never reached. Fix GCC10 warning
 }
 
 IPAddress NetworkAddress(void) {
@@ -112,6 +113,7 @@ IPAddress NetworkAddress(void) {
   }
 #endif
 #endif
+  return 0;  // Never reached. Fix GCC10 warning
 }
 
 String NetworkMacAddress(void) {
@@ -125,4 +127,5 @@ String NetworkMacAddress(void) {
   }
 #endif
 #endif
+  return "";  // Never reached. Fix GCC10 warning
 }

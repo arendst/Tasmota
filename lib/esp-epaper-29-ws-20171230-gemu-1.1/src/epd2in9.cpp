@@ -81,6 +81,7 @@ int16_t Epd::Begin(int16_t cs,int16_t mosi,int16_t sclk) {
   cs_pin=cs;
   mosi_pin=mosi;
   sclk_pin=sclk;
+  return 0;
 }
 
 

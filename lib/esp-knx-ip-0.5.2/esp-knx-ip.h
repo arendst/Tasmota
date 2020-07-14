@@ -270,7 +270,8 @@ typedef struct __cemi_msg
   uint8_t additional_info_len;
   union
   {
-    cemi_addi_t additional_info[];
+//    cemi_addi_t additional_info[];   // Errors in GCC 10.1
+    cemi_addi_t additional_info[10];   // Changed to arbitrary number to fix compilation
     cemi_service_t service_information;
   } data;
 } cemi_msg_t;

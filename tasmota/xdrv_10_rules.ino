@@ -294,6 +294,7 @@ String GetRule(uint32_t idx) {
     return rule;
 #endif
   }
+  return "";  // Fix GCC10 warning
 }
 
 #ifdef USE_UNISHOX_COMPRESSION

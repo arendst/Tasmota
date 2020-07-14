@@ -218,6 +218,7 @@ float cos_52(float x)
     case 2: return -cos_52s(x-(float)f_pi);
     case 3: return  cos_52s((float)f_twopi - x);
   }
+  return 0.0;  // Never reached. Fixes compiler warning
 }
 //
 // The sine is just cosine shifted a half-f_pi, so
@@ -278,6 +279,7 @@ float tan_56(float x)
     case 6: return -1.0f / tan_56s((x-(float)f_threehalfpi)   * (float)f_four_over_pi);
     case 7: return -       tan_56s(((float)f_twopi - x)       * (float)f_four_over_pi);
   }
+  return 0.0;  // Never reached. Fixes compiler warning
 }
 
 // *******************************************************************
