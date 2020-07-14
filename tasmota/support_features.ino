@@ -323,7 +323,6 @@ void GetFeatures(void)
 #ifdef USE_TM1638
   feature_sns1 |= 0x80000000;  // xsns_28_tm1638.ino
 #endif
-
 /*********************************************************************************************/
 
   feature_sns2 = 0x00000000;
@@ -593,7 +592,9 @@ void GetFeatures(void)
 #ifdef USE_PROMETHEUS
   feature6 |= 0x00100000;  // xsns_75_prometheus.ino
 #endif
-//  feature6 |= 0x00200000;
+#if defined(USE_ENERGY_SENSOR) && defined(USE_IEM3000)
+  feature6 |= 0x00200000;  // xnrg_16_iem3000.ino
+#endif
 //  feature6 |= 0x00400000;
 //  feature6 |= 0x00800000;
 

@@ -86,7 +86,11 @@ bool (* const xnrg_func_ptr[])(uint8_t) = {   // Energy driver Function Pointers
 #endif
 
 #ifdef XNRG_16
-  &Xnrg16
+  &Xnrg16,
+#endif
+
+#ifdef XNRG_17
+  &Xnrg17
 #endif
 };
 

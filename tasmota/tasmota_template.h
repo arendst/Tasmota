@@ -239,6 +239,8 @@ enum UserSelectablePins {
   GPIO_TELEINFO_RX,    // TELEINFO serial interface
   GPIO_TELEINFO_ENABLE,// TELEINFO Enable PIN
   GPIO_LMT01,          // LMT01 input counting pin
+  GPIO_IEM3000_TX,     // IEM3000 Serial interface
+  GPIO_IEM3000_RX,     // IEM3000 Serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -332,7 +334,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BL0940_RX "|"
   D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD "|"
   D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
-  D_SENSOR_LMT01_PULSE
+  D_SENSOR_LMT01_PULSE "|"
+  D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -583,6 +586,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_BL0940
   GPIO_BL0940_RX,     // BL0940 Serial interface
+#endif
+#ifdef USE_IEM3000
+  GPIO_IEM3000_TX,    // IEM3000 Serial interface
+  GPIO_IEM3000_RX,    // IEM3000 Serial interface
 #endif
 #endif  // USE_ENERGY_SENSOR
 
