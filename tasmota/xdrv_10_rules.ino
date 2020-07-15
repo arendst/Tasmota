@@ -700,6 +700,14 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       }
 
       RulesVarReplace(commands, F("%VALUE%"), Rules.event_value);
+      uint32_t value_ui = TextToInt(Rules.event_value.cstr());
+      char value_hexstr[8];
+      sprintf(value_hexstr, "%08x", value_ui);
+      RulesVarReplace(commands, F("%VALUEHEX%"), String(value_hexstr));
+      for (uint32_t i = 0; i < 4; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%VALUEHEX%d%%"), i +1);
+        RulesVarReplace(commands, stemp, String(&value_hexstr[8-(2*i)]));
+      }
       for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%VAR%d%%"), i +1);
         RulesVarReplace(commands, stemp, rules_vars[i]);
