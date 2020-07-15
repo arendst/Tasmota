@@ -20,6 +20,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.1.1 20200715  changed - add MHO-C401, refactoring
+  -------
   0.9.1.0 20200712  changed - add lights and yeerc, add pure passive mode with decryption,
                               lots of refactoring
   -------
@@ -167,8 +169,8 @@ struct mi_sensor_t{
   float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
   union {
     struct {
-      float moisture;
-      float fertility;
+      uint8_t moisture;
+      uint16_t fertility;
       char firmware[6]; // actually only for FLORA but hopefully we can add for more devices
     }; // Flora
     struct {
@@ -210,8 +212,11 @@ const char kMI32_Commands[] PROGMEM             = "Period|Time|Page|Battery|Unit
 #define NLIGHT      7
 #define MJYD2S      8
 #define YEERC       9
+#define MHOC401     10
 
-const uint16_t kMI32DeviceID[9]={ 0x0098, // Flora
+#define MI_TYPES    10 //count this manually
+
+const uint16_t kMI32DeviceID[MI_TYPES]={ 0x0098, // Flora
                                   0x01aa, // MJ_HT_V1
                                   0x045b, // LYWSD02
                                   0x055b, // LYWSD03
@@ -219,7 +224,8 @@ const uint16_t kMI32DeviceID[9]={ 0x0098, // Flora
                                   0x0576, // CGD1
                                   0x03dd, // NLIGHT
                                   0x07f6, // MJYD2S
-                                  0x0153  // yee-rc
+                                  0x0153, // yee-rc
+                                  0x0387  // MHO-C401
                                   };
 
 const char kMI32DeviceType1[] PROGMEM = "Flora";
@@ -231,7 +237,8 @@ const char kMI32DeviceType6[] PROGMEM = "CGD1";
 const char kMI32DeviceType7[] PROGMEM = "NLIGHT";
 const char kMI32DeviceType8[] PROGMEM = "MJYD2S";
 const char kMI32DeviceType9[] PROGMEM = "YEERC";
-const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9};
+const char kMI32DeviceType10[] PROGMEM ="MHOC401";
+const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10};
 
 /*********************************************************************************************\
  * enumerations
@@ -330,7 +337,7 @@ void MI32scanEndedCB(NimBLEScanResults results){
 void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
     AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Notified length: %u"),length);
     switch(MIBLEsensors[MI32.state.sensor].type){
-      case LYWSD03MMC: case LYWSD02:
+      case LYWSD03MMC: case LYWSD02: case MHOC401:
         MI32readHT_LY((char*)pData);
         MI32.mode.readingDone = 1;
         break;
@@ -486,7 +493,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
 
   DEBUG_SENSOR_LOG(PSTR("%s: will test ID-type: %x"),D_CMND_MI32, _type);
   bool _success = false;
-  for (uint32_t i=0;i<9;i++){ // i < sizeof(kMI32DeviceID) gives compiler warning
+  for (uint32_t i=0;i<MI_TYPES;i++){ // i < sizeof(kMI32DeviceID) gives compiler warning
     if(_type == kMI32DeviceID[i]){
       DEBUG_SENSOR_LOG(PSTR("MI32: ID is type %u"), i);
       _type = i+1;
@@ -524,17 +531,17 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
   switch (_type)
     {
     case FLORA:
-      _newSensor.moisture =NAN;
-      _newSensor.fertility =NAN;
+      _newSensor.moisture =0xff;
+      _newSensor.fertility =0xffff;
       _newSensor.firmware[0]='\0';
       break;
-    case 2: case 3: case 4: case 5: case 6:
-      _newSensor.hum=NAN;
-      break;
-    default:
+    case NLIGHT: case MJYD2S:
       _newSensor.NMT=0;
       _newSensor.events=0x00;
       _newSensor.eventType=0x00;
+      break;
+    default:
+      _newSensor.hum=NAN;
       break;
     }
   MIBLEsensors.push_back(_newSensor);
@@ -685,10 +692,14 @@ void MI32ScanTask(void *pvParameters){
 
 void MI32StartSensorTask(){
     MI32.mode.willConnect = 1;
-    if (MIBLEsensors[MI32.state.sensor].type != LYWSD03MMC) {
-      MI32.mode.willConnect = 0;
-      return;
+    switch(MIBLEsensors[MI32.state.sensor].type){
+      case LYWSD03MMC: case MHOC401:
+        break;
+      default:
+        MI32.mode.willConnect = 0;
+        return;
     }
+
     xTaskCreatePinnedToCore(
       MI32SensorTask,    /* Function to implement the task */
       "MI32SensorTask",  /* Name of the task */
@@ -718,7 +729,7 @@ void MI32SensorTask(void *pvParameters){
 
       timer = 150;
       switch(MIBLEsensors[MI32.state.sensor].type){
-        case LYWSD03MMC:
+        case LYWSD03MMC: case MHOC401:
           MI32.mode.readingDone = 0;
           if(MI32connectLYWSD03forNotification()) timer=0;
           break;
@@ -900,7 +911,7 @@ void MI32StartBatteryTask(){
     MI32.mode.canScan = 0;
 
     switch (MIBLEsensors[MI32.state.sensor].type){
-      case LYWSD03MMC: case MJ_HT_V1: case CGG1: case NLIGHT: case MJYD2S: case YEERC:
+      case LYWSD03MMC: case MJ_HT_V1: case CGG1: case NLIGHT: case MJYD2S: case YEERC: case MHOC401:
         MI32.mode.willConnect = 0;
         MI32.mode.willReadBatt = 0;
         return;
@@ -1018,7 +1029,7 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot, uint16_t _bufSize){
   MIBLEsensors[_slot].lastCnt = _beacon.counter;
 #ifdef USE_MI_DECRYPTION
   switch(MIBLEsensors[_slot].type){
-    case LYWSD03MMC:
+    case LYWSD03MMC: case MHOC401:
       if (_beacon.frame == 0x5858){
         int decryptRet = MI32_decryptPacket((char*)&_beacon.productID,_bufSize, LYWSD03MMC); //start with PID
       }
@@ -1035,15 +1046,16 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot, uint16_t _bufSize){
         int decryptRet = MI32_decryptPacket((char*)&_beacon.productID,_bufSize,MJYD2S); //start with PID
       }
       else{
-        if(millis()-MIBLEsensors[_slot].lastTime>120000){
-          MIBLEsensors[_slot].eventType = 1;
-          MIBLEsensors[_slot].events++;
-          MIBLEsensors[_slot].shallSendMQTT = 1;
-          MIBLEsensors[_slot].lastTime = millis();
-          AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MI32: MJYD2S secondary PIR"));
-          MIBLEsensors[_slot].NMT = 0; 
-          MI32triggerTele();
-        }
+        // This seems to be some kind of wake-up packet only, as it shows up before all kinds of messages, not only motion
+        // if(millis()-MIBLEsensors[_slot].lastTime>120000){
+        //   MIBLEsensors[_slot].eventType = 1;
+        //   MIBLEsensors[_slot].events++;
+        //   MIBLEsensors[_slot].shallSendMQTT = 1;
+        //   MIBLEsensors[_slot].lastTime = millis();
+        //   AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MI32: MJYD2S secondary PIR"));
+        //   MIBLEsensors[_slot].NMT = 0; 
+        //   MI32triggerTele();
+        // }
       }
       break;
   }
@@ -1093,19 +1105,13 @@ if (MIBLEsensors[_slot].type==NLIGHT){
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 7: U24: %u Lux"), _beacon.lux & 0x00ffffff);
     break;
     case 0x08:
-      _tempFloat =(float)_beacon.moist;
-      if(_tempFloat<100){
-          MIBLEsensors[_slot].moisture=_tempFloat;
+          MIBLEsensors[_slot].moisture=_beacon.moist;
           DEBUG_SENSOR_LOG(PSTR("Mode 8: moisture updated"));
-      }
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 8: U8: %u Moisture"), _beacon.moist);
     break;
     case 0x09:
-      _tempFloat=(float)(_beacon.fert);
-      if(_tempFloat<65535){ // ???
-          MIBLEsensors[_slot].fertility=_tempFloat;
+           MIBLEsensors[_slot].fertility=_beacon.fert;
           DEBUG_SENSOR_LOG(PSTR("Mode 9: fertility updated"));
-      }
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 9: U16: %u Fertility"), _beacon.fert);
     break;
     case 0x0a:
@@ -1235,7 +1241,7 @@ void MI32readHT_LY(char *_buf){
       MIBLEsensors[_slot].hum = _tempFloat;
       DEBUG_SENSOR_LOG(PSTR("LYWSD0x: hum updated"));
     }
-    if (MIBLEsensors[_slot].type == LYWSD03MMC){
+    if (MIBLEsensors[_slot].type == LYWSD03MMC || MIBLEsensors[_slot].type == MHOC401){
       MIBLEsensors[_slot].bat = ((float)LYWSD0x_HT.volt-2100.0f)/12.0f;
     }
   }
@@ -1456,7 +1462,6 @@ const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 {m}%u%s / %u{e}";
 const char HTTP_MI32_SERIAL[] PROGMEM = "{s}%s %s{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
 const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
-const char HTTP_VOLTAGE[] PROGMEM = "{s}%s " D_VOLTAGE "{m}%s V{e}";
 const char HTTP_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%u {e}";
 const char HTTP_EVENTS[] PROGMEM = "{s}%s Events{m}%u {e}";
 const char HTTP_NMT[] PROGMEM = "{s}%s No motion{m}> %u seconds{e}";
@@ -1471,28 +1476,20 @@ void MI32Show(bool json)
       }
     for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
       switch(MIBLEsensors[i].type){
-        case YEERC:
+        case NLIGHT: case MJYD2S: case YEERC: 
           if(MIBLEsensors[i].shallSendMQTT==0) continue;
           break;
         default:
           if(MI32.mode.triggeredTele) continue;
           break;
         }
-/*
-      char slave[33];
-      snprintf_P(slave, sizeof(slave), PSTR("%s-%02x%02x%02x"),
-        kMI32DeviceType[MIBLEsensors[i].type-1],MIBLEsensors[i].serial[3],MIBLEsensors[i].serial[4],MIBLEsensors[i].serial[5]);
-      ResponseAppend_P(PSTR(",\"%s\":{"), slave);
-*/
+
       ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),
         kMI32DeviceType[MIBLEsensors[i].type-1],
         MIBLEsensors[i].MAC[3], MIBLEsensors[i].MAC[4], MIBLEsensors[i].MAC[5]);
 
-      if (MIBLEsensors[i].rssi!=0xffff) { // this is the error code -> no valid value
-        ResponseAppend_P(PSTR("\"RSSI\":%d"), MIBLEsensors[i].rssi);  // all sensors have rssi
-      } else {
-        ResponseAppend_P(PSTR("\"RSSI\":null")); // to know that it is sometimes out of range
-      }
+      ResponseAppend_P(PSTR("\"RSSI\":%d"), MIBLEsensors[i].rssi);
+
       if (MIBLEsensors[i].type == FLORA) {
         if (!isnan(MIBLEsensors[i].temp)) {
           char temperature[FLOATSZ]; // all sensors have temperature
@@ -1502,11 +1499,11 @@ void MI32Show(bool json)
         if (MIBLEsensors[i].lux!=0x0ffffff) { // this is the error code -> no lux
           ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
         }
-        if (!isnan(MIBLEsensors[i].moisture)) {
-          ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%f"), MIBLEsensors[i].moisture);
+        if (MIBLEsensors[i].moisture!=0xff) {
+          ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%u"), MIBLEsensors[i].moisture);
         }
-        if (!isnan(MIBLEsensors[i].fertility)) {
-          ResponseAppend_P(PSTR(",\"Fertility\":%f"), MIBLEsensors[i].fertility);
+        if (MIBLEsensors[i].fertility!=0xffff) {
+          ResponseAppend_P(PSTR(",\"Fertility\":%u"), MIBLEsensors[i].fertility);
         }
         if (MIBLEsensors[i].firmware[0] != '\0') { // this is the error code -> no firmware
           ResponseAppend_P(PSTR(",\"Firmware\":\"%s\""), MIBLEsensors[i].firmware);
@@ -1520,7 +1517,7 @@ void MI32Show(bool json)
       }
 #ifdef USE_MI_DECRYPTION
       if (MIBLEsensors[i].type == MJYD2S){
-        ResponseAppend_P(PSTR("\"Events\":%u"),MIBLEsensors[i].events);
+        ResponseAppend_P(PSTR(",\"Events\":%u"),MIBLEsensors[i].events);
         if(MIBLEsensors[i].shallSendMQTT && MIBLEsensors[i].eventType<3) ResponseAppend_P(PSTR(",\"PIR\":%u"), 2 - MIBLEsensors[i].eventType);
         if(MIBLEsensors[i].eventType==3) ResponseAppend_P(PSTR(",\"NMT\":%u"), MIBLEsensors[i].NMT);
         MIBLEsensors[i].eventType=0;
@@ -1528,11 +1525,11 @@ void MI32Show(bool json)
       }
 #endif //USE_MI_DECRYPTION
       if (MIBLEsensors[i].type == NLIGHT){
-        ResponseAppend_P(PSTR("\"Events\":%u"),MIBLEsensors[i].events);
+        ResponseAppend_P(PSTR(",\"Events\":%u"),MIBLEsensors[i].events);
         if(MIBLEsensors[i].shallSendMQTT) ResponseAppend_P(PSTR(",\"PIR\":1"));
       }
       if (MIBLEsensors[i].type == YEERC){
-        if(MIBLEsensors[i].shallSendMQTT) ResponseAppend_P(PSTR("\"Btn\":%u"),MIBLEsensors[i].Btn);
+        if(MIBLEsensors[i].shallSendMQTT) ResponseAppend_P(PSTR(",\"Btn\":%u"),MIBLEsensors[i].Btn);
       }
       if (MIBLEsensors[i].bat != 0x00) { // this is the error code -> no battery
         ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
@@ -1560,20 +1557,18 @@ void MI32Show(bool json)
       for (i; i<j; i++) {
         WSContentSend_PD(HTTP_MI32_HL);
         WSContentSend_PD(HTTP_MI32_SERIAL, kMI32DeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].MAC[0], MIBLEsensors[i].MAC[1],MIBLEsensors[i].MAC[2],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[5]);
-        if (MIBLEsensors[i].rssi!=0xffff) { // this is the error code -> no valid value
-          WSContentSend_PD(HTTP_RSSI, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].rssi);
-        }
+        WSContentSend_PD(HTTP_RSSI, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].rssi);
         if (MIBLEsensors[i].type==FLORA) {
           if (!isnan(MIBLEsensors[i].temp)) {
             char temperature[FLOATSZ];
             dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
             WSContentSend_PD(HTTP_SNS_TEMP, kMI32DeviceType[MIBLEsensors[i].type-1], temperature, TempUnit());
           }
-          if (!isnan(MIBLEsensors[i].moisture)) {
-            WSContentSend_PD(HTTP_SNS_MOISTURE, kMI32DeviceType[MIBLEsensors[i].type-1], int(MIBLEsensors[i].moisture));
+          if (MIBLEsensors[i].moisture!=0xff) {
+            WSContentSend_PD(HTTP_SNS_MOISTURE, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].moisture);
           }
-          if (!isnan(MIBLEsensors[i].fertility)) {
-            WSContentSend_PD(HTTP_MI32_FLORA_DATA, kMI32DeviceType[MIBLEsensors[i].type-1], int(MIBLEsensors[i].fertility));
+          if (MIBLEsensors[i].fertility!=0xffff) {
+            WSContentSend_PD(HTTP_MI32_FLORA_DATA, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].fertility);
           }
         }
         if (MIBLEsensors[i].type>FLORA) { // everything "above" Flora
