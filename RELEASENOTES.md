@@ -54,7 +54,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ### Version 8.3.1.6
 
-- Change IRremoteESP8266 library updated to v2.7.7
+- Change IRremoteESP8266 library from v2.7.6 to v2.7.8
 - Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)
 - Change Energy JSON Total field from ``"Total":[33.736,11.717,16.978]`` to ``"Total":33.736,"TotalTariff":[11.717,16.978]``
 - Change Energy JSON ExportActive field from ``"ExportActive":[33.736,11.717,16.978]`` to ``"ExportActive":33.736,"ExportTariff":[11.717,16.978]``
