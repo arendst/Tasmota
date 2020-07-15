@@ -698,14 +698,14 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
           (ucommand.indexOf("BACKLOG ") == -1)) {
         commands = "backlog " + commands;
       }
-
       RulesVarReplace(commands, F("%VALUE%"), Rules.event_value);
-      uint32_t value_ui = TextToInt(Rules.event_value.cstr());
+      // %VALUEH%: format as hex (e.g. value 255 as "000000FF"), %VALUEHx%: format as hex, x bytes wide (e.g. %VALUEH1%, value 255 as "FF")
+      uint32_t value_ui = Rules.event_value.toInt();
       char value_hexstr[8];
       sprintf(value_hexstr, "%08x", value_ui);
-      RulesVarReplace(commands, F("%VALUEHEX%"), String(value_hexstr));
+      RulesVarReplace(commands, F("%VALUEH%"), String(value_hexstr));
       for (uint32_t i = 0; i < 4; i++) {
-        snprintf_P(stemp, sizeof(stemp), PSTR("%%VALUEHEX%d%%"), i +1);
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%VALUEH%d%%"), i +1);
         RulesVarReplace(commands, stemp, String(&value_hexstr[8-(2*i)]));
       }
       for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
