@@ -211,7 +211,11 @@ void setup(void) {
   if (!RtcRebootValid()) {
     RtcReboot.fast_reboot_count = 0;
   }
+#ifdef FIRMWARE_MINIMAL
+  RtcReboot.fast_reboot_count = 0;  // Disable fast reboot and quick power cycle detection
+#else
   RtcReboot.fast_reboot_count++;
+#endif
   RtcRebootSave();
 
   Serial.begin(APP_BAUDRATE);
