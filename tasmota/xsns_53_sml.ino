@@ -467,7 +467,9 @@ TasmotaSerial *meter_ss[MAX_METERS];
 #endif
 
 // serial buffers, may be made larger depending on telegram lenght
+#ifndef SML_BSIZ
 #define SML_BSIZ 48
+#endif
 uint8_t smltbuf[MAX_METERS][SML_BSIZ];
 
 // meter nr as string
@@ -1186,7 +1188,7 @@ void sml_empty_receiver(uint32_t meters) {
 
 void sml_shift_in(uint32_t meters,uint32_t shard) {
   uint32_t count;
-  if (meter_desc_p[meters].type!='e' && meter_desc_p[meters].type!='m' && meter_desc_p[meters].type!='M' && meter_desc_p[meters].type!='p') {
+  if (meter_desc_p[meters].type!='e' && meter_desc_p[meters].type!='m' && meter_desc_p[meters].type!='M' && meter_desc_p[meters].type!='p' && meter_desc_p[meters].type!='R') {
     // shift in
     for (count=0; count<SML_BSIZ-1; count++) {
       smltbuf[meters][count]=smltbuf[meters][count+1];
@@ -1217,7 +1219,14 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
       sml_empty_receiver(meters);
       meter_spos[meters]=0;
     }
-  } else {
+  } else if (meter_desc_p[meters].type=='R') {
+    smltbuf[meters][meter_spos[meters]] = iob;
+    meter_spos[meters]++;
+    if (meter_spos[meters]>=SML_BSIZ) {
+      meter_spos[meters]=0;
+    }
+  }
+  else {
     if (iob==EBUS_SYNC) {
     	// should be end of telegramm
       // QQ,ZZ,PB,SB,NN ..... CRC, ACK SYNC
@@ -1243,7 +1252,7 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
 		}
   }
   sb_counter++;
-  if (meter_desc_p[meters].type!='e' && meter_desc_p[meters].type!='m' && meter_desc_p[meters].type!='M' && meter_desc_p[meters].type!='p') SML_Decode(meters);
+  if (meter_desc_p[meters].type!='e' && meter_desc_p[meters].type!='m' && meter_desc_p[meters].type!='M' && meter_desc_p[meters].type!='p' && meter_desc_p[meters].type!='R') SML_Decode(meters);
 }
 
 
@@ -1271,6 +1280,7 @@ void SML_Decode(uint8_t index) {
   delay(0);
   while (mp != NULL) {
     // check list of defines
+    if (*mp==0) break;
 
     // new section
     mindex=((*mp)&7)-1;
@@ -1648,6 +1658,7 @@ void SML_Show(boolean json) {
     int8_t lastmind=((*mp)&7)-1;
     if (lastmind<0 || lastmind>=meters_used) lastmind=0;
     while (mp != NULL) {
+        if (*mp==0) break;
         // setup sections
         mindex=((*mp)&7)-1;
         if (mindex<0 || mindex>=meters_used) mindex=0;
@@ -2151,7 +2162,7 @@ init10:
     } else {
       // serial input, init
 #ifdef SPECIAL_SS
-        if (meter_desc_p[meters].type=='m' || meter_desc_p[meters].type=='M' || meter_desc_p[meters].type=='p') {
+        if (meter_desc_p[meters].type=='m' || meter_desc_p[meters].type=='M' || meter_desc_p[meters].type=='p' || meter_desc_p[meters].type=='R') {
           meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,0,TMSBSIZ);
         } else {
           meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,1,TMSBSIZ);
@@ -2201,6 +2212,12 @@ uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
 #ifdef ESP32
   meter_ss[meter]->flush();
   meter_ss[meter]->updateBaudRate(br);
+  /*
+  if (meter_desc_p[meter].type=='M') {
+    meter_ss[meter]->begin(br,SERIAL_8E1,meter_desc_p[meter].srcpin,meter_desc_p[meter].trxpin);
+  } else {
+    meter_ss[meter]->begin(br,SERIAL_8N1,meter_desc_p[meter].srcpin,meter_desc_p[meter].trxpin);
+  }*/
 #else
   if (meter_ss[meter]->begin(br)) {
     meter_ss[meter]->flush();
@@ -2230,6 +2247,37 @@ uint32_t SML_Write(uint32_t meter,char *hstr) {
   meter--;
   if (!meter_ss[meter]) return 0;
   SML_Send_Seq(meter,hstr);
+  return 1;
+}
+
+uint32_t SML_Read(int32_t meter,char *str, uint32_t slen) {
+uint8_t hflg=0;
+  if (meter<0) {
+    meter=abs(meter);
+    hflg=1;
+  }
+  if (meter<1 || meter>meters_used) return 0;
+  meter--;
+  if (!meter_ss[meter]) return 0;
+
+  if (!meter_spos[meter]) {
+    return 0;
+  }
+
+  smltbuf[meter][meter_spos[meter]]=0;
+
+  if (!hflg) {
+    strlcpy(str,(char*)&smltbuf[meter][0],slen);
+  } else {
+    uint32_t index=0;
+    for (uint32_t cnt=0; cnt<meter_spos[meter]; cnt++) {
+      sprintf(str,"%02x",smltbuf[meter][cnt]);
+      str+=2;
+      index+=2;
+      if (index>=slen-2) break;
+    }
+  }
+  meter_spos[meter]=0;
   return 1;
 }
 

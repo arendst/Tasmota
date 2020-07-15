@@ -1237,6 +1237,7 @@ uint32_t match_vars(char *dvnam, float **fp, char **sp, uint32_t *ind) {
 }
 #endif
 
+
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
 char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,JsonObject *jo) {
@@ -1486,6 +1487,14 @@ chknext:
             goto exit;
         }
 #endif
+        if (!strncmp(vname,"asc(",4)) {
+          char str[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp+4,OPER_EQU,str,0);
+          fvar=str[0];
+          lp++;
+          len=0;
+          goto exit;
+        }
         break;
 
       case 'b':
@@ -1974,6 +1983,14 @@ chknext:
             sprintf(sp,"%08x",(uint32_t)fvar);
           }
           goto strexit;
+        }
+        if (!strncmp(vname,"hd(",3)) {
+          char str[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp+3,OPER_EQU,str,0);
+          fvar=strtol(str,NULL,16);
+          lp++;
+          len=0;
+          goto exit;
         }
 #ifdef USE_LIGHT
 //#ifdef USE_WS2812
@@ -2505,6 +2522,15 @@ chknext:
             char str[SCRIPT_MAXSSIZE];
             lp=GetStringResult(lp,OPER_EQU,str,0);
             fvar=SML_Write(fvar1,str);
+          } else if (fvar2==2) {
+            char str[SCRIPT_MAXSSIZE];
+            str[0]=0;
+            fvar=SML_Read(fvar1,str,SCRIPT_MAXSSIZE);
+            if (sp) strlcpy(sp,str,glob_script_mem.max_ssize);
+            lp++;
+            len=0;
+            goto strexit;
+
           } else {
 #ifdef ED300L
             fvar=SML_Status(fvar1);
@@ -2914,7 +2940,7 @@ char *GetStringResult(char *lp,uint8_t lastop,char *cp,JsonObject *jo) {
           strlcpy(str,str1,sizeof(str));
           break;
         case OPER_PLS:
-          strncat(str,str1,sizeof(str));
+          strncat(str,str1,sizeof(str)-strlen(str1));
           break;
     }
     slp=lp;
@@ -2939,6 +2965,7 @@ char *GetStringResult(char *lp,uint8_t lastop,char *cp,JsonObject *jo) {
       return lp;
     }
   }
+  return lp;
 }
 
 char *GetNumericResult(char *lp,uint8_t lastop,float *fp,JsonObject *jo) {
@@ -6408,6 +6435,7 @@ void ScriptJsonAppend(void) {
 
 bool RulesProcessEvent(char *json_event) {
   if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">E",2,json_event);
+  return true;
 }
 
 #ifdef ESP32
