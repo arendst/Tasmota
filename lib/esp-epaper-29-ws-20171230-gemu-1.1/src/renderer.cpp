@@ -36,6 +36,8 @@ uint8_t wr_redir=0;
 
 uint8_t *buffer;
 
+#define register
+
 #define SPRINT(A) char str[32];sprintf(str,"val: %d ",A);Serial.println((char*)str);
 
 #define OLED_FONT_WIDTH        6
