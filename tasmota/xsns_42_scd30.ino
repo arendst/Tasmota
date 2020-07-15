@@ -249,6 +249,7 @@ int Scd30GetCommand(int command_code, uint16_t *pvalue)
         // else for Unknown command
       break;
   }
+  return 0;  // Fix GCC 10.1 warning
 }
 
 int Scd30SetCommand(int command_code, uint16_t value)
@@ -291,6 +292,7 @@ int Scd30SetCommand(int command_code, uint16_t value)
         // else for Unknown command
       break;
   }
+  return 0;  // Fix GCC 10.1 warning
 }
 
 /*********************************************************************************************\

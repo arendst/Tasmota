@@ -218,6 +218,7 @@ uint8_t AS3935TranslMinLightsInt(uint8_t min_lights) {
     case 2:   return 9;
     case 3:   return 16;
   }
+  return 0;  // Fix GCC 10.1 warning
 }
 
 uint8_t AS3935TranslIrq(uint8_t irq, uint8_t distance) {
@@ -231,6 +232,7 @@ uint8_t AS3935TranslIrq(uint8_t irq, uint8_t distance) {
       else if (distance == 1) return 4;  // Storm is Overhead
       else  return 1; // Lightning with Distance detected
    }
+  return 0;  // Fix GCC 10.1 warning
 }
 
 void AS3935CalcVrmsLevel(uint16_t &vrms, uint8_t &stage)
@@ -346,7 +348,7 @@ uint8_t AS3935GetDisturber() {
   return AS3935ReadRegister(DISTURBER);
 }
 
-uint8_t AS3935SetDisturber(uint8_t stat) {
+void AS3935SetDisturber(uint8_t stat) {
   AS3935WriteRegister(DISTURBER, stat);
 }
 
@@ -354,7 +356,7 @@ uint8_t AS3935GetMinLights() {
   return AS3935ReadRegister(MIN_NUM_LIGH);
 }
 
-uint8_t AS3935SetMinLights(uint8_t stat) {
+void AS3935SetMinLights(uint8_t stat) {
   AS3935WriteRegister(MIN_NUM_LIGH, stat);
 }
 
@@ -362,7 +364,7 @@ uint8_t AS3935GetNoiseFloor() {
   return AS3935ReadRegister(NF_LEVEL);
 }
 
-uint8_t AS3935SetNoiseFloor(uint8_t noise) {
+void AS3935SetNoiseFloor(uint8_t noise) {
    AS3935WriteRegister(NF_LEVEL , noise);
 }
 
@@ -372,7 +374,7 @@ uint8_t AS3935GetGain() {
   return INDOORS;
 }
 
-uint8_t AS3935SetGain(uint8_t room) {
+void AS3935SetGain(uint8_t room) {
   AS3935WriteRegister(AFE_GB, room);
 }
 
