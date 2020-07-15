@@ -42,7 +42,7 @@ typedef struct Z_XYZ_Var {    // Holds values for vairables X, Y and Z
 
 ZF(AddGroup) ZF(ViewGroup) ZF(GetGroup) ZF(GetAllGroups) ZF(RemoveGroup) ZF(RemoveAllGroups)
 ZF(AddScene) ZF(ViewScene) ZF(RemoveScene) ZF(RemoveAllScenes) ZF(RecallScene) ZF(StoreScene) ZF(GetSceneMembership)
-//ZF(Power) ZF(Dimmer) 
+//ZF(Power) ZF(Dimmer)
 ZF(DimmerUp) ZF(DimmerDown) ZF(DimmerStop)
 ZF(ResetAlarm) ZF(ResetAllAlarms)
 //ZF(Hue) ZF(Sat) ZF(CT)
@@ -52,7 +52,7 @@ ZF(ShutterOpen) ZF(ShutterClose) ZF(ShutterStop) ZF(ShutterLift) ZF(ShutterTilt)
 ZF(DimmerMove) ZF(DimmerStep) ZF(DimmerStepUp) ZF(DimmerStepDown)
 ZF(HueMove) ZF(HueStep) ZF(HueStepUp) ZF(HueStepDown) ZF(SatMove) ZF(SatStep) ZF(ColorMove) ZF(ColorStep)
 ZF(ColorTempMoveUp) ZF(ColorTempMoveDown) ZF(ColorTempMoveStop) ZF(ColorTempMove)
-ZF(ColorTempStep) ZF(ColorTempStepUp) ZF(ColorTempStepDown) 
+ZF(ColorTempStep) ZF(ColorTempStepUp) ZF(ColorTempStepDown)
 ZF(ArrowClick) ZF(ArrowHold) ZF(ArrowRelease) ZF(ZoneStatusChange)
 
 ZF(xxxx00) ZF(xxxx) ZF(01xxxx) ZF(03xxxx) ZF(00) ZF(01) ZF() ZF(xxxxyy) ZF(00190200) ZF(01190200) ZF(xxyyyy) ZF(xx)
@@ -189,6 +189,7 @@ int32_t Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t clus
     }
     ZigbeeZCLSend_Raw(shortaddr, groupaddr, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, 0, attrs, attrs_len, true /* we do want a response */, zigbee_devices.getNextSeqNumber(shortaddr));
   }
+  return 0;  // Fix GCC 10.1 warning
 }
 
 
@@ -197,6 +198,7 @@ int32_t Z_Unreachable(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, 
   if (BAD_SHORTADDR != shortaddr) {
     zigbee_devices.setReachable(shortaddr, false);     // mark device as reachable
   }
+  return 0;  // Fix GCC 10.1 warning
 }
 
 // set a timer to read back the value in the future

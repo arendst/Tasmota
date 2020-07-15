@@ -838,7 +838,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
 
     // wait for device to start
     ZI_WAIT_UNTIL(5000, ZBR_RSTACK)     // wait for RSTACK message
- 
+
     // Init device and probe version
     ZI_SEND(ZBS_VERSION)                ZI_WAIT_RECV_FUNC(1000, ZBR_VERSION, &EZ_ReceiveCheckVersion)       // check EXT PAN ID
 
@@ -886,7 +886,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     // ZI_GOTO(ZIGBEE_LABEL_CONFIGURE_EZSP)
 
     // // Try networkInit to restore settings, and check if network comes up
-    ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_BAD_CONFIG)    // 
+    ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_BAD_CONFIG)    //
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_BAD_CONFIG)
     ZI_SEND(ZBS_NETWORK_INIT)           ZI_WAIT_RECV(500, ZBR_NETWORK_INIT)
     ZI_WAIT_RECV(1500, ZBR_NETWORK_UP)    // wait for network to start
@@ -1217,6 +1217,7 @@ int32_t ZigbeeProcessInput(class SBuffer &buf) {
     // any other negative value means error
     ZigbeeGotoLabel(zigbee.on_error_goto);
   }
+  return 0;  // Fix GCC 10.1 warning
 }
 
 #endif // USE_ZIGBEE

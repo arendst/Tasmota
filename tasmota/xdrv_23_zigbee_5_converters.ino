@@ -1192,6 +1192,7 @@ int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t clu
   JsonObject& json = jsonBuffer.createObject();
   json[F(OCCUPANCY)] = 0;
   zigbee_devices.jsonPublishNow(shortaddr, json);
+  return 0;  // Fix GCC 10.1 warning
 }
 
 // Aqara Cube
@@ -1420,6 +1421,7 @@ int32_t Z_ApplyConverter(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObje
   if (func) {
     return (*func)(zcl, shortaddr, json, name, value, new_name, cluster, attr);
   }
+  return 1;  // Fix GCC 10.1 warning
 }
 
 void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
