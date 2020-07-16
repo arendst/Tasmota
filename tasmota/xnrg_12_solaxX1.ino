@@ -236,6 +236,7 @@ uint8_t solaxX1_ParseErrorCode(uint32_t code){
   if (ErrCode.TemperatureOverFault) return 6;
   if (ErrCode.FanFault) return 7;
   if (ErrCode.OtherDeviceFault) return 8;
+  return 0;
 }
 
 /*********************************************************************************************/
