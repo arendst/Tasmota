@@ -802,8 +802,9 @@ void TuyaSetWifiLed(void)
 }
 
 #ifdef USE_TUYA_TIME
-void TuyaSetTime(void)
-{
+void TuyaSetTime(void) {
+  if (!RtcTime.valid) { return; }
+
   uint16_t payload_len = 8;
   uint8_t payload_buffer[8];
   payload_buffer[0] = 0x01;
@@ -878,13 +879,13 @@ bool Xdrv16(uint8_t function)
             Tuya.heartbeat_timer = 0;
             TuyaSendCmd(TUYA_CMD_HEARTBEAT);
           }
-          #ifdef USE_TUYA_TIME
+#ifdef USE_TUYA_TIME
           if (!(uptime % 60)) {
             TuyaSetTime();
           }
-          #endif  //USE_TUYA_TIME
+#endif  //USE_TUYA_TIME
         } else {
-            TuyaSendLowPowerSuccessIfNeeded();
+          TuyaSendLowPowerSuccessIfNeeded();
         }
         break;
       case FUNC_SET_CHANNELS:
