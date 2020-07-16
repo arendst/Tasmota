@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.3.1.7 20200716
+
+- Change to limited support of Arduino IDE as an increasing amount of features cannot be compiled with Arduino IDE
+
 ### 8.3.1.6 20200617
 
 - Add command ``Module2`` to configure fallback module on fast reboot (#8464)
