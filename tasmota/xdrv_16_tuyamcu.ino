@@ -62,6 +62,9 @@ struct TUYA {
   uint8_t data_len = 0;                  // Data lenght of command
   uint8_t wifi_state = -2;                // Keep MCU wifi-status in sync with WifiState()
   uint8_t heartbeat_timer = 0;           // 10 second heartbeat timer for tuya module
+#ifdef USE_TUYA_TIME
+  uint8_t settime_timer = 0;             // 60 second settime timer for tuya module
+#endif //USE_TUYA_TIME  
 #ifdef USE_ENERGY_SENSOR
   uint32_t lastPowerCheckTime = 0;       // Time when last power was checked
 #endif // USE_ENERGY_SENSOR
@@ -881,6 +884,13 @@ bool Xdrv16(uint8_t function)
             Tuya.heartbeat_timer = 0;
             TuyaSendCmd(TUYA_CMD_HEARTBEAT);
           }
+          #ifdef USE_TUYA_TIME
+          Tuya.settime_timer++;     
+          if (Tuya.settime_timer > 60) {
+            Tuya.settime_timer = 0;
+            TuyaSetTime();
+          }      
+          #endif
         } else {
             TuyaSendLowPowerSuccessIfNeeded();
         }
