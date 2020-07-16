@@ -194,7 +194,7 @@ void LoadFile(const char *name,uint8_t *buf,uint32_t len) {
 #define EPOCH_OFFSET 1546300800
 
 enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPER_MULEQU,OPER_DIVEQU,OPER_EQUEQU,OPER_NOTEQU,OPER_GRTEQU,OPER_LOWEQU,OPER_GRT,OPER_LOW,OPER_PERC,OPER_XOR,OPER_AND,OPER_OR,OPER_ANDEQU,OPER_OREQU,OPER_XOREQU,OPER_PERCEQU};
-enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD};
+enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED};
 
 #ifdef USE_SCRIPT_FATFS
 
@@ -379,6 +379,7 @@ struct SCRIPT_MEM {
 #endif
 } glob_script_mem;
 
+bool event_handeled = false;
 
 
 #ifdef USE_SCRIPT_GLOBVARS
@@ -1572,6 +1573,11 @@ chknext:
         if (!strncmp(vname,"epoch",5)) {
           fvar=UtcTime()-(uint32_t)EPOCH_OFFSET;
           goto exit;
+        }
+        if (!strncmp(vname,"eres",4)) {
+          fvar=event_handeled;
+          tind->index=SCRIPT_EVENT_HANDLED;
+          goto exit_settable;
         }
 #ifdef USE_ENERGY_SENSOR
         if (!strncmp(vname,"enrg[",5)) {
@@ -3901,6 +3907,9 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
                             if (*dfvar>300) *dfvar=300;
                             Settings.tele_period=*dfvar;
                             break;
+                          case SCRIPT_EVENT_HANDLED:
+                            event_handeled=*dfvar;
+                            break;
                         }
                         sysv_type=0;
                       }
@@ -4063,7 +4072,9 @@ void ScripterEvery100ms(void) {
       Run_Scripter(">T",2, mqtt_data);
     }
   }
-  if (fast_script==99) Run_Scripter(">F",2,0);
+  if (Settings.rule_enabled) {
+    if (fast_script==99) Run_Scripter(">F",2,0);
+  }
 }
 
 //mems[5] is 50 bytes in 6.5
@@ -6619,6 +6630,7 @@ void cpy2lf(char *dst,uint32_t dstlen, char *src) {
 bool Xdrv10(uint8_t function)
 {
   bool result = false;
+  event_handeled = false;
   char *sprt;
 
   switch (function) {
@@ -6778,11 +6790,17 @@ bool Xdrv10(uint8_t function)
 #ifdef SCRIPT_POWER_SECTION
       if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">P",2,0);
 #else
-      if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">E",2,0);
+      if (bitRead(Settings.rule_enabled, 0)) {
+        Run_Scripter(">E",2,0);
+        result=event_handeled;
+      }
 #endif
       break;
     case FUNC_RULES_PROCESS:
-      if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">E",2,mqtt_data);
+      if (bitRead(Settings.rule_enabled, 0)) {
+        Run_Scripter(">E",2,mqtt_data);
+        result=event_handeled;
+      }
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_BUTTON:
