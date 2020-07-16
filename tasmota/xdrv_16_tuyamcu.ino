@@ -540,9 +540,6 @@ void TuyaNormalPowerModePacketProcess(void)
       if (Tuya.buffer[6] == 0) {
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Detected MCU restart"));
         Tuya.wifi_state = -2;
-        #ifdef USE_TUYA_TIME
-        TuyaSetTime();
-        #endif
       }
       break;
 
@@ -881,6 +878,11 @@ bool Xdrv16(uint8_t function)
             Tuya.heartbeat_timer = 0;
             TuyaSendCmd(TUYA_CMD_HEARTBEAT);
           }
+          #ifdef USE_TUYA_TIME
+          if (!(uptime % 60)) {
+            TuyaSetTime();
+          }
+          #endif  //USE_TUYA_TIME
         } else {
             TuyaSendLowPowerSuccessIfNeeded();
         }
