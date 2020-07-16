@@ -245,22 +245,22 @@
 #define D_SECONDS "secondi"
 #define D_DEVICE_WILL_RESTART "Il dispositivo verrà riavviato tra pochi secondi"
 #define D_BUTTON_TOGGLE "ON/OFF"
-#define D_CONFIGURATION "Configurazione"
+#define D_CONFIGURATION "Impostazioni"
 #define D_INFORMATION "Informazioni"
 #define D_FIRMWARE_UPGRADE "Aggiorna firmware"
 #define D_CONSOLE "Console"
 #define D_CONFIRM_RESTART "Conferma riavvio"
 
-#define D_CONFIGURE_MODULE "Configura modulo"
-#define D_CONFIGURE_WIFI "Configura WiFi"
-#define D_CONFIGURE_MQTT "Configura MQTT"
-#define D_CONFIGURE_DOMOTICZ "Configura Domoticz"
-#define D_CONFIGURE_LOGGING "Livello registro"
+#define D_CONFIGURE_MODULE "Modulo"
+#define D_CONFIGURE_WIFI "Rete WiFi"
+#define D_CONFIGURE_MQTT "MQTT"
+#define D_CONFIGURE_DOMOTICZ "Domoticz"
+#define D_CONFIGURE_LOGGING "Livelli registri"
 #define D_CONFIGURE_OTHER "Altre impostazioni"
-#define D_CONFIRM_RESET_CONFIGURATION "Conferma ripristino configurazione"
-#define D_RESET_CONFIGURATION "Ripristino configurazione"
-#define D_BACKUP_CONFIGURATION "Backup configurazione"
-#define D_RESTORE_CONFIGURATION "Ripristino configurazione"
+#define D_CONFIRM_RESET_CONFIGURATION "Conferma ripristino impostazioni"
+#define D_RESET_CONFIGURATION "Ripristino impostazioni"
+#define D_BACKUP_CONFIGURATION "Backup impostazioni"
+#define D_RESTORE_CONFIGURATION "Ripristino impostazioni"
 #define D_MAIN_MENU "Menu principale"
 
 #define D_MODULE_PARAMETERS "Parametri modulo"
@@ -291,7 +291,7 @@
 #define D_CLIENT "Client"
 #define D_FULL_TOPIC "Full topic"
 
-#define D_LOGGING_PARAMETERS "Livelli registro eventi"
+#define D_LOGGING_PARAMETERS "Livelli registri eventi"
 #define D_SERIAL_LOG_LEVEL "Livello registro seriale"
 #define D_MQTT_LOG_LEVEL "Livello registro MQTT"
 #define D_WEB_LOG_LEVEL "Livello registro web"
@@ -313,15 +313,15 @@
 #define D_SINGLE_DEVICE "dispositivo singolo"
 #define D_MULTI_DEVICE "dispositivo multiplo"
 
-#define D_CONFIGURE_TEMPLATE "Configura modello"
+#define D_CONFIGURE_TEMPLATE "Modello"
 #define D_TEMPLATE_PARAMETERS "Parametri modello"
 #define D_TEMPLATE_NAME "Nome"
 #define D_BASE_TYPE "Basato su"
 #define D_TEMPLATE_FLAGS "Opzioni"
 
-#define D_SAVE_CONFIGURATION "Salva configurazione"
-#define D_CONFIGURATION_SAVED "Configurazione salvata"
-#define D_CONFIGURATION_RESET "Configurazione ripristinata"
+#define D_SAVE_CONFIGURATION "Salva impostazioni"
+#define D_CONFIGURATION_SAVED "Impostazioni salvate"
+#define D_CONFIGURATION_RESET "Impostazioni ripristinate"
 
 #define D_PROGRAM_VERSION "Versione programma"
 #define D_BUILD_DATE_AND_TIME "Data/ora compilazione"
@@ -416,7 +416,7 @@
 #define D_DOMOTICZ_UPDATE_TIMER "Intervallo aggiornamento"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Configura timer"
+#define D_CONFIGURE_TIMER "Timer"
 #define D_TIMER_PARAMETERS "Parametri timer"
 #define D_TIMER_ENABLE "Abilita timer"
 #define D_TIMER_ARM "Attiva"
@@ -427,7 +427,7 @@
 #define D_TIMER_ACTION "Azione"
 
 // xdrv_10_knx.ino
-#define D_CONFIGURE_KNX "Configura KNX"
+#define D_CONFIGURE_KNX "KNX"
 #define D_KNX_PARAMETERS "Parametri KNX"
 #define D_KNX_GENERAL_CONFIG "Generale"
 #define D_KNX_PHYSICAL_ADDRESS "Indirizzo fisico"
@@ -461,7 +461,7 @@
 #define D_DOMOTICZ_SHUTTER "Serranda"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574 "Configura PCF8574"
+#define D_CONFIGURE_PCF8574 "PCF8574"
 #define D_PCF8574_PARAMETERS "Parametri PCF8574"
 #define D_INVERT_PORTS "Inverti porte"
 #define D_DEVICE "Dispositivo"
@@ -511,7 +511,7 @@
 #define D_HX_CAL_DONE "Calibrato"
 #define D_HX_CAL_FAIL "Calibrazione fallita"
 #define D_RESET_HX711 "Ripristino scala"
-#define D_CONFIGURE_HX711 "Configura scala"
+#define D_CONFIGURE_HX711 "Scala"
 #define D_HX711_PARAMETERS "Parametri scala"
 #define D_ITEM_WEIGHT "Peso oggetto"
 #define D_REFERENCE_WEIGHT "Peso di riferimento"
@@ -703,8 +703,8 @@
 #define D_SENSOR_ETH_PHY_MDIO  "ETH MDIO"
 #define D_SENSOR_TCP_TXD       "TCP - TX"
 #define D_SENSOR_TCP_RXD       "TCP - RX"
-#define D_SENSOR_IEM3000_TX    "iEM3000 TX"
-#define D_SENSOR_IEM3000_RX    "iEM3000 RX"
+#define D_SENSOR_IEM3000_TX    "iEM3000 - TX"
+#define D_SENSOR_IEM3000_RX    "iEM3000 - RX"
 
 // Units
 #define D_UNIT_AMPERE "A"
