@@ -2874,6 +2874,9 @@ void HandleUploadLoop(void)
   } else if (UPLOAD_FILE_ABORTED == upload.status) {
     restart_flag = 0;
     MqttRetryCounter(0);
+#ifdef USE_COUNTER
+    CounterInterruptDisable(false);
+#endif
     Web.upload_error = 7;  // Upload aborted
     if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
   }
