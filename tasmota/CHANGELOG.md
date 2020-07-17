@@ -2,6 +2,7 @@
 
 ### 8.3.1.7 20200716
 
+- Remove Arduino ESP8266 Core support for versions before 2.7.1
 - Change to limited support of Arduino IDE as an increasing amount of features cannot be compiled with Arduino IDE
 
 ### 8.3.1.6 20200617

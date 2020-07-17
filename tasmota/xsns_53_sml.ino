@@ -1811,16 +1811,7 @@ struct SML_COUNTER {
 #endif
 } sml_counters[MAX_COUNTERS];
 
-
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0       // Fix core 2.5.x ISR not in IRAM Exception
-void SML_CounterUpd(uint8_t index) ICACHE_RAM_ATTR;
-void SML_CounterUpd1(void) ICACHE_RAM_ATTR;
-void SML_CounterUpd2(void) ICACHE_RAM_ATTR;
-void SML_CounterUpd3(void) ICACHE_RAM_ATTR;
-void SML_CounterUpd4(void) ICACHE_RAM_ATTR;
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
-
-void SML_CounterUpd(uint8_t index) {
+void ICACHE_RAM_ATTR SML_CounterUpd(uint8_t index) {
 
   uint8_t level=digitalRead(meter_desc_p[sml_counters[index].sml_cnt_old_state].srcpin);
   if (!level) {
@@ -1838,19 +1829,19 @@ void SML_CounterUpd(uint8_t index) {
   }
 }
 
-void SML_CounterUpd1(void) {
+void ICACHE_RAM_ATTR SML_CounterUpd1(void) {
   SML_CounterUpd(0);
 }
 
-void SML_CounterUpd2(void) {
+void ICACHE_RAM_ATTR SML_CounterUpd2(void) {
   SML_CounterUpd(1);
 }
 
-void SML_CounterUpd3(void) {
+void ICACHE_RAM_ATTR SML_CounterUpd3(void) {
   SML_CounterUpd(2);
 }
 
-void SML_CounterUpd4(void) {
+void ICACHE_RAM_ATTR SML_CounterUpd4(void) {
   SML_CounterUpd(3);
 }
 

@@ -1164,11 +1164,9 @@ uint32_t pulse_ltime_hl;
 uint32_t pulse_ltime_lh;
 uint8_t pt_pin;
 
-void MP_Timer(void) ICACHE_RAM_ATTR;
-
 #define MPT_DEBOUNCE 10
 
-void MP_Timer(void) {
+void ICACHE_RAM_ATTR MP_Timer(void) {
   uint32_t level = digitalRead(pt_pin&0x3f);
   uint32_t ms = millis();
   uint32_t time;
@@ -2899,19 +2897,6 @@ char *getop(char *lp, uint8_t *operand) {
 
 
 #ifdef ESP8266
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1)
-// All version before core 2.4.2
-// https://github.com/esp8266/Arduino/issues/2557
-extern "C" {
-#include <cont.h>
-  extern cont_t g_cont;
-}
-uint16_t GetStack(void) {
-  register uint32_t *sp asm("a1");
-  return (4 * (sp - g_cont.stack));
-}
-
-#else
 extern "C" {
 #include <cont.h>
   extern cont_t* g_pcont;
@@ -2920,7 +2905,6 @@ uint16_t GetStack(void) {
   register uint32_t *sp asm("a1");
   return (4 * (sp - g_pcont->stack));
 }
-#endif
 #else
 uint16_t GetStack(void) {
   register uint8_t *sp asm("a1");
@@ -4349,18 +4333,10 @@ uint8_t reject(char *name) {
   if (*name=='_') return 1;
   if (*name=='.') return 1;
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
   if (!strncasecmp(name,"SPOTLI~1",REJCMPL)) return 1;
   if (!strncasecmp(name,"TRASHE~1",REJCMPL)) return 1;
   if (!strncasecmp(name,"FSEVEN~1",REJCMPL)) return 1;
   if (!strncasecmp(name,"SYSTEM~1",REJCMPL)) return 1;
-#else
-  if (!strcasecmp(name,"SPOTLI~1")) return 1;
-  if (!strcasecmp(name,"TRASHE~1")) return 1;
-  if (!strcasecmp(name,"FSEVEN~1")) return 1;
-  if (!strcasecmp(name,"SYSTEM~1")) return 1;
-#endif
-
   if (!strncasecmp(name,"System Volume",13)) return 1;
   return 0;
 }

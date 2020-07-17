@@ -280,13 +280,11 @@
 
 #define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
     #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0            // There is not enough spare RAM with core 2.3.0 to support the following
     #define USE_DISPLAY_EPAPER_29                // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
     #define USE_DISPLAY_EPAPER_42                // [DisplayModel 6] Enable e-paper 4.2 inch display
 //    #define USE_DISPLAY_ILI9488                  // [DisplayModel 8]
 //    #define USE_DISPLAY_SSD1351                  // [DisplayModel 9]
 //    #define USE_DISPLAY_RA8876                   // [DisplayModel 10]
-#endif
 
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code

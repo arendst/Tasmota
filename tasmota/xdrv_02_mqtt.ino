@@ -1217,11 +1217,7 @@ void CmndTlsDump(void) {
   uint32_t end   = start + tls_block_len -1;
   for (uint32_t pos = start; pos < end; pos += 0x10) {
     uint32_t* values = (uint32_t*)(pos);
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-    Serial.printf("%08x:  %08x %08x %08x %08x\n", pos, bswap32(values[0]), bswap32(values[1]), bswap32(values[2]), bswap32(values[3]));
-#else
     Serial.printf_P(PSTR("%08x:  %08x %08x %08x %08x\n"), pos, bswap32(values[0]), bswap32(values[1]), bswap32(values[2]), bswap32(values[3]));
-#endif
   }
 }
 #endif  // DEBUG_DUMP_TLS

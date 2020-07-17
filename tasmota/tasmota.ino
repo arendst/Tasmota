@@ -34,7 +34,7 @@
 \*********************************************************************************************/
 
 // Location specific includes
-#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_7_1)
 #include "tasmota_compat.h"
 #include "tasmota_version.h"                // Tasmota version information
 #include "tasmota.h"                        // Enumeration used in my_user_config.h
@@ -45,13 +45,6 @@
 #include "tasmota_globals.h"                // Function prototypes and global configuration
 #include "i18n.h"                           // Language support configured by my_user_config.h
 #include "tasmota_template.h"               // Hardware configuration
-
-#ifdef ARDUINO_ESP8266_RELEASE_2_4_0
-#include "lwip/init.h"
-#if LWIP_VERSION_MAJOR != 1
-  #error Please use stable lwIP v1.4
-#endif
-#endif
 
 // Libraries
 #include <ESP8266HTTPClient.h>              // Ota

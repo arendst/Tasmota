@@ -50,9 +50,7 @@ extern "C" {
 #include "c_types.h"
 
 #include <core_version.h>
-#ifndef ARDUINO_ESP8266_RELEASE_2_5_2
 #undef DEBUG_TLS
-#endif
 
 #ifdef DEBUG_TLS
 #include "coredecls.h"
@@ -255,24 +253,14 @@ void WiFiClientSecure_light::setBufferSizes(int recv, int xmit) {
 }
 
 bool WiFiClientSecure_light::stop(unsigned int maxWaitMs) {
-#ifdef ARDUINO_ESP8266_RELEASE_2_4_2
-  WiFiClient::stop(); // calls our virtual flush()
-  _freeSSL();
-	return true;
-#else
   bool ret = WiFiClient::stop(maxWaitMs); // calls our virtual flush()
   _freeSSL();
   return ret;
-#endif
 }
 
 bool WiFiClientSecure_light::flush(unsigned int maxWaitMs) {
   (void) _run_until(BR_SSL_SENDAPP);
-#ifdef ARDUINO_ESP8266_RELEASE_2_4_2
-  WiFiClient::flush();
-#else
   return WiFiClient::flush(maxWaitMs);
-#endif
 }
 
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
