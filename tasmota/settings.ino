@@ -174,10 +174,10 @@ const uint32_t SPIFFS_END = ((uint32_t)&_FS_end - 0x40200000) / SPI_FLASH_SEC_SI
 
 #endif  // AUTOFLASHSIZE
 
-#endif  // All cores < pre-2.6.0
-
 // Version 4.2 config = eeprom area
 const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses EEPROM area
+
+#endif  // ESP8266
 
 // Version 5.2 allow for more flash space
 const uint8_t CFG_ROTATES = 8;          // Number of flash sectors used (handles uploads)
