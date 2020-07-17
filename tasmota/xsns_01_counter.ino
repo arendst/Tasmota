@@ -36,6 +36,8 @@ const char kCounterCommands[] PROGMEM = D_PRFX_COUNTER "|"  // Prefix
 void (* const CounterCommand[])(void) PROGMEM = {
   &CmndCounter, &CmndCounterType, &CmndCounterDebounce, &CmndCounterDebounceLow, &CmndCounterDebounceHigh };
 
+uint8_t ctr_index[MAX_COUNTERS] =  { 0, 1, 2, 3 };
+
 struct COUNTER {
   uint32_t timer[MAX_COUNTERS];  // Last counter time in micro seconds
   uint32_t timer_low_high[MAX_COUNTERS];  // Last low/high counter time in micro seconds
@@ -47,8 +49,10 @@ struct COUNTER {
 uint32_t last_cycle;
 uint32_t cycle_time;
 
-void ICACHE_RAM_ATTR CounterUpdate(uint8_t index)
-{
+//void ICACHE_RAM_ATTR CounterUpdate(uint8_t index) {
+void ICACHE_RAM_ATTR CounterIsrArg(void *arg) {
+  uint32_t index = *static_cast<uint8_t*>(arg);
+
   uint32_t time = micros();
   uint32_t debounce_time;
 
@@ -116,7 +120,7 @@ void ICACHE_RAM_ATTR CounterUpdate(uint8_t index)
     }
   }
 }
-
+/*
 void ICACHE_RAM_ATTR CounterUpdate1(void)
 {
   CounterUpdate(0);
@@ -136,7 +140,7 @@ void ICACHE_RAM_ATTR CounterUpdate4(void)
 {
   CounterUpdate(3);
 }
-
+*/
 /********************************************************************************************/
 
 bool CounterPinState(void)
@@ -151,8 +155,8 @@ bool CounterPinState(void)
 
 void CounterInit(void)
 {
-  typedef void (*function) () ;
-  function counter_callbacks[] = { CounterUpdate1, CounterUpdate2, CounterUpdate3, CounterUpdate4 };
+//  typedef void (*function) () ;
+//  function counter_callbacks[] = { CounterUpdate1, CounterUpdate2, CounterUpdate3, CounterUpdate4 };
 
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (PinUsed(GPIO_CNTR1, i)) {
@@ -160,10 +164,12 @@ void CounterInit(void)
       pinMode(Pin(GPIO_CNTR1, i), bitRead(Counter.no_pullup, i) ? INPUT : INPUT_PULLUP);
       if ((0 == Settings.pulse_counter_debounce_low) && (0 == Settings.pulse_counter_debounce_high) && !Settings.flag4.zerocross_dimmer) {
         Counter.pin_state = 0;
-        attachInterrupt(Pin(GPIO_CNTR1, i), counter_callbacks[i], FALLING);
+//        attachInterrupt(Pin(GPIO_CNTR1, i), counter_callbacks[i], FALLING);
+        attachInterruptArg(Pin(GPIO_CNTR1, i), CounterIsrArg, &ctr_index[i], FALLING);
       } else {
         Counter.pin_state = 0x8f;
-        attachInterrupt(Pin(GPIO_CNTR1, i), counter_callbacks[i], CHANGE);
+//        attachInterrupt(Pin(GPIO_CNTR1, i), counter_callbacks[i], CHANGE);
+        attachInterruptArg(Pin(GPIO_CNTR1, i), CounterIsrArg, &ctr_index[i], CHANGE);
       }
     }
   }
