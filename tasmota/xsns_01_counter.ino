@@ -44,6 +44,7 @@ struct COUNTER {
   uint8_t no_pullup = 0;         // Counter input pullup flag (1 = No pullup)
   uint8_t pin_state = 0;         // LSB0..3 Last state of counter pin; LSB7==0 IRQ is FALLING, LSB7==1 IRQ is CHANGE
   bool any_counter = false;
+  bool disable = false;
 } Counter;
 
 uint32_t last_cycle;
@@ -51,6 +52,8 @@ uint32_t cycle_time;
 
 //void ICACHE_RAM_ATTR CounterUpdate(uint8_t index) {
 void ICACHE_RAM_ATTR CounterIsrArg(void *arg) {
+  if (Counter.disable) { return; }
+
   uint32_t index = *static_cast<uint8_t*>(arg);
 
   uint32_t time = micros();
@@ -142,6 +145,10 @@ void ICACHE_RAM_ATTR CounterUpdate4(void)
 }
 */
 /********************************************************************************************/
+
+void CounterInterruptDisable(bool state) {
+  Counter.disable = state;
+}
 
 bool CounterPinState(void)
 {

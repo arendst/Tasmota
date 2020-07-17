@@ -2598,6 +2598,9 @@ void HandleUploadDone(void)
   WifiConfigCounter();
   restart_flag = 0;
   MqttRetryCounter(0);
+#ifdef USE_COUNTER
+  CounterInterruptDisable(false);
+#endif
 
   WSContentStart_P(S_INFORMATION);
   if (!Web.upload_error) {
@@ -2673,6 +2676,9 @@ void HandleUploadLoop(void)
       }
     } else {
       MqttRetryCounter(60);
+#ifdef USE_COUNTER
+      CounterInterruptDisable(true);
+#endif
 #ifdef USE_EMULATION
       UdpDisconnect();
 #endif  // USE_EMULATION
