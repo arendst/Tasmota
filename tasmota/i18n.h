@@ -616,7 +616,7 @@
 
 // xsns_70_veml6075.ino
 #define D_JSON_UVA_INTENSITY "UvaIntensity"
-#define D_JSON_UVB_INTENSITY  "UvbItensity"
+#define D_JSON_UVB_INTENSITY  "UvbIntensity"
 #define D_CMND_VEML6075_POWER "power"
 #define D_CMND_VEML6075_DYNAMIC "dynamic"
 #define D_CMND_VEML6075_INTTIME "inttime"
