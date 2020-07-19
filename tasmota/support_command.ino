@@ -1354,6 +1354,9 @@ void CmndSerialSend(void)
       else if (5 == XdrvMailbox.index) {
         SerialSendRaw(RemoveSpace(XdrvMailbox.data));               // "AA004566" as hex values
       }
+      else if (6 == XdrvMailbox.index) {
+        SerialSendDecimal(XdrvMailbox.data);
+      }
       ResponseCmndDone();
     }
   }
