@@ -70,6 +70,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``SetOption94 0/1`` to select MAX31855 or MAX6675 thermocouple support (#8616)
 - Add command ``SetOption97 0/1`` to switch between Tuya serial speeds 9600 bps (0) or 115200 bps (1)
 - Add command ``SetOption98 0/1`` to provide rotary rule triggers (1) instead of controlling light (0)
+- Add command ``SetOption99 0/1`` to enable zero cross detection on PWM dimmer
+- Add command ``SetOption100 0/1`` to remove ``ZbReceived`` value from ``{"ZbReceived":{xxx:yyy}}`` JSON message
 - Add command ``Module2`` to configure fallback module on fast reboot (#8464)
 - Add commands ``LedPwmOn 0..255``, ``LedPwmOff 0..255`` and ``LedPwmMode1 0/1`` to control led brightness by George (#8491)
 - Add ESP32 ethernet commands ``EthType 0/1``, ``EthAddress 0..31`` and ``EthClockMode 0..3``

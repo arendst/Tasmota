@@ -102,7 +102,7 @@ typedef struct Z_Deferred {
   uint16_t              groupaddr;      // group address (if needed)
   uint16_t              cluster;        // cluster to use for the timer
   uint8_t               endpoint;       // endpoint to use for timer
-  uint8_t               category;       // which category of deferred is it 
+  uint8_t               category;       // which category of deferred is it
   uint32_t              value;          // any raw value to use for the timer
   Z_DeviceTimer         func;           // function to call when timer occurs
 } Z_Deferred;
@@ -213,7 +213,7 @@ public:
 private:
   std::vector<Z_Device*>    _devices = {};
   std::vector<Z_Deferred>   _deferred = {};   // list of deferred calls
-  uint32_t                  _saveTimer = 0;   
+  uint32_t                  _saveTimer = 0;
   uint8_t                   _seqNumber = 0;     // global seqNumber if device is unknown
 
   template < typename T>
@@ -738,7 +738,7 @@ bool Z_Devices::getHueState(uint16_t shortaddr,
 void Z_Devices::resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category) {
   // iterate the list of deferred, and remove any linked to the shortaddr
   for (auto it = _deferred.begin(); it != _deferred.end(); it++) {
-    // Notice that the iterator is decremented after it is passed 
+    // Notice that the iterator is decremented after it is passed
 		// to erase() but before erase() is executed
     // see https://www.techiedelight.com/remove-elements-vector-inside-loop-cpp/
     if ((it->shortaddr == shortaddr) && (it->groupaddr == groupaddr)) {
@@ -937,9 +937,17 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
   zigbee_devices.jsonClear(shortaddr);
 
   if (use_fname) {
-    Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":{\"%s\":%s}}"), fname, msg.c_str());
+    if (Settings.flag4.remove_zbreceived) {
+      Response_P(PSTR("{\"%s\":%s}"), fname, msg.c_str());
+    } else {
+      Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":{\"%s\":%s}}"), fname, msg.c_str());
+    }
   } else {
-    Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":{\"0x%04X\":%s}}"), shortaddr, msg.c_str());
+    if (Settings.flag4.remove_zbreceived) {
+      Response_P(PSTR("{\"0x%04X\":%s}"), shortaddr, msg.c_str());
+    } else {
+      Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":{\"0x%04X\":%s}}"), shortaddr, msg.c_str());
+    }
   }
   if (Settings.flag4.zigbee_distinct_topics) {
     char subtopic[16];
