@@ -1157,7 +1157,7 @@ void ZCLFrame::parseResponse(void) {
 
 // Parse non-normalized attributes
 void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
-  convertClusterSpecific(json, _cluster_id, _cmd_id, _frame_control.b.direction, _payload);
+  convertClusterSpecific(json, _cluster_id, _cmd_id, _frame_control.b.direction, _srcaddr, _srcendpoint, _payload);
   sendHueUpdate(_srcaddr, _groupaddr, _cluster_id, _cmd_id, _frame_control.b.direction);
 }
 
@@ -1423,6 +1423,8 @@ int32_t Z_ApplyConverter(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObje
 }
 
 void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
+  // source endpoint
+  uint8_t src_ep = _srcendpoint;
   // iterate on json elements
   for (auto kv : json) {
     String key_string = kv.key;
@@ -1490,6 +1492,11 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
             ((conv_attribute == attribute) || (conv_attribute == 0xFFFF)) ) {
           String new_name_str = (const __FlashStringHelper*) converter->name;
           if (suffix > 1) { new_name_str += suffix; }   // append suffix number
+          // else if (Settings.flag4.zb_index_ep) {
+          //   if (zigbee_devices.countEndpoints(shortaddr) > 0) {
+          //     new_name_str += _srcendpoint;
+          //   }
+          // }
           // apply the transformation
           int32_t drop = Z_ApplyConverter(this, shortaddr, json, key, value, new_name_str, conv_cluster, conv_attribute, conv_multiplier, conv_cb);
           if (drop) {

@@ -120,7 +120,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t rotary_uses_rules : 1;        // bit 16 (v8.3.1.6)  - SetOption98 - Use rules instead of light control
     uint32_t zerocross_dimmer : 1;         // bit 17 (v8.3.1.4)  - SetOption99 - Enable zerocross dimmer on PWM DIMMER
     uint32_t remove_zbreceived : 1;        // bit 18 (v8.3.1.7)  - SetOption100 - Remove ZbReceived form JSON message
-    uint32_t spare19 : 1;
+    uint32_t zb_index_ep : 1;              // bit 19 (v8.3.1.7)  - SetOption101 - Add the source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
     uint32_t spare20 : 1;
     uint32_t spare21 : 1;
     uint32_t spare22 : 1;

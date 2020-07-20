@@ -992,12 +992,14 @@ void CmndZbPermitJoin(void) {
 
   if (payload <= 0) {
     duration = 0;
-  } else if (99 == payload) {
-    duration = 0xFF;                    // unlimited time
   }
 
 // ZNP Version
 #ifdef USE_ZIGBEE_ZNP
+  if (99 == payload) {
+    duration = 0xFF;                    // unlimited time
+  }
+
   uint16_t dstAddr = 0xFFFC;            // default addr
 
   SBuffer buf(34);
@@ -1014,10 +1016,20 @@ void CmndZbPermitJoin(void) {
 
 // EZSP VERSION
 #ifdef USE_ZIGBEE_EZSP
+  if (99 == payload) {
+    ResponseCmndChar_P(PSTR("Unlimited time not supported")); return;
+  }
+
   SBuffer buf(3);
   buf.add16(EZSP_permitJoining);
   buf.add8(duration);
   ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len(), true);
+
+  // send ZDO_Mgmt_Permit_Joining_req to all routers
+  buf.setLen(0);
+  buf.add8(duration);
+  buf.add8(0x01);       // TC_Significance - This field shall always have a value of 1, indicating a request to change the Trust Center policy. If a frame is received with a value of 0, it shall be treated as having a value of 1.
+  // EZ_SendZDO(0xFFFC, ZDO_Mgmt_Permit_Joining_req, buf.buf(), buf.len());  TODO fix NAK/ACK first
 #endif // USE_ZIGBEE_EZSP
 
   ResponseCmndDone();
