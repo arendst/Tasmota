@@ -966,23 +966,44 @@ void EZ_SendZDO(uint16_t shortaddr, uint16_t cmd, const unsigned char *payload, 
   SBuffer buf(payload_len + 22);
   uint8_t seq = zigbee_devices.getNextSeqNumber(0x0000);
 
-  buf.add16(EZSP_sendUnicast);
+  if (shortaddr < 0xFFFC) {
+    // send unicast
+    buf.add16(EZSP_sendUnicast);
 
-  buf.add8(EMBER_OUTGOING_DIRECT);    // 00
-  buf.add16(shortaddr);               // dest addr
-  // ApsFrame
-  buf.add16(0x0000);                  // ZOD profile
-  buf.add16(cmd);                     // ZDO cmd in cluster
-  buf.add8(0);                        // srcEp
-  buf.add8(0);                        // dstEp
-  buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
-  buf.add16(0x0000);                  // groupId
-  buf.add8(seq);
-  // end of ApsFrame
-  buf.add8(0x01);                     // tag TODO
-  buf.add8(payload_len + 1);        // insert seq number
-  buf.add8(seq);
-  buf.addBuffer(payload, payload_len);
+    buf.add8(EMBER_OUTGOING_DIRECT);    // 00
+    buf.add16(shortaddr);               // dest addr
+    // ApsFrame
+    buf.add16(0x0000);                  // ZOD profile
+    buf.add16(cmd);                     // ZDO cmd in cluster
+    buf.add8(0);                        // srcEp
+    buf.add8(0);                        // dstEp
+    buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
+    buf.add16(0x0000);                  // groupId
+    buf.add8(seq);
+    // end of ApsFrame
+    buf.add8(0x01);                     // tag TODO
+    buf.add8(payload_len + 1);        // insert seq number
+    buf.add8(seq);
+    buf.addBuffer(payload, payload_len);
+  } else {
+    // send broadcast
+    buf.add16(EZSP_sendBroadcast);
+    buf.add16(shortaddr);               // dest addr
+    // ApsFrame
+    buf.add16(0x0000);                  // ZOD profile
+    buf.add16(cmd);                     // ZDO cmd in cluster
+    buf.add8(0);                        // srcEp
+    buf.add8(0);                        // dstEp
+    buf.add16(0x00);      // APS frame
+    buf.add16(0x0000);                  // groupId
+    buf.add8(seq);
+    // end of ApsFrame
+    buf.add8(0x1E);                     // radius
+    buf.add8(0x01);                     // tag TODO
+    buf.add8(payload_len + 1);        // insert seq number
+    buf.add8(seq);
+    buf.addBuffer(payload, payload_len);
+  }
 
   ZigbeeEZSPSendCmd(buf.buf(), buf.len(), true);
 }

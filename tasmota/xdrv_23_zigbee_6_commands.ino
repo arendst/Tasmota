@@ -341,7 +341,7 @@ void sendHueUpdate(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uin
 
 
 // Parse a cluster specific command, and try to convert into human readable
-void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, bool direction, const SBuffer &payload) {
+void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, bool direction, uint16_t shortaddr, uint8_t srcendpoint, const SBuffer &payload) {
   size_t hex_char_len = payload.len()*2+2;
   char *hex_char = (char*) malloc(hex_char_len);
   if (!hex_char) { return; }
@@ -414,11 +414,11 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
 
   if (command_name) {
     // Now try to transform into a human readable format
+    String command_name2 = String(command_name);
     // if (direction & 0x80) then specific transform
     if (conv_direction & 0x80) {
       // TODO need to create a specific command
       // IAS
-      String command_name2 = String(command_name);
       if ((cluster == 0x0500) && (cmd == 0x00)) {
         // "ZoneStatusChange"
         json[command_name] = xyz.x;
@@ -465,11 +465,21 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
         String scene_payload = json[attrid_str];
         json[F("ScenePayload")] = scene_payload.substring(8); // remove first 8 characters
       }
-    } else {
+    } else {  // general case
+      bool extended_command = false;    // do we send command with endpoint suffix
+      // if SO101 and multiple endpoints, append endpoint number
+      if (Settings.flag4.zb_index_ep) {
+        if (zigbee_devices.countEndpoints(shortaddr) > 0) {
+          command_name2 += srcendpoint;
+          extended_command = true;
+        }
+      }
       if (0 == xyz.x_type) {
         json[command_name] = true;    // no parameter
+        if (extended_command) { json[command_name2] = true; }
       } else if (0 == xyz.y_type) {
         json[command_name] = xyz.x;       // 1 parameter
+        if (extended_command) { json[command_name2] = xyz.x; }
       } else {
         // multiple answers, create an array
         JsonArray &arr = json.createNestedArray(command_name);
@@ -477,6 +487,14 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
         arr.add(xyz.y);
         if (xyz.z_type) {
           arr.add(xyz.z);
+        }
+        if (extended_command) {
+          JsonArray &arr = json.createNestedArray(command_name2);
+          arr.add(xyz.x);
+          arr.add(xyz.y);
+          if (xyz.z_type) {
+            arr.add(xyz.z);
+          }
         }
       }
     }
