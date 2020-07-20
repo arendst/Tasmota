@@ -1429,8 +1429,7 @@ void SerialInput(void)
     }
     ResponseJsonEnd();
 
-    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
-    XdrvRulesProcess();
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
     serial_in_byte_counter = 0;
   }
 }

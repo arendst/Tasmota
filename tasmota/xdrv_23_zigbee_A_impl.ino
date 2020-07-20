@@ -715,7 +715,7 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
 
 #ifdef USE_ZIGBEE_EZSP
   SBuffer buf(24);
-  
+
   // ZDO message payload (see Zigbee spec 2.4.3.2.2)
   buf.add64(srcLongAddr);
   buf.add8(endpoint);
@@ -895,8 +895,7 @@ void CmndZbLight(void) {
   String dump = zigbee_devices.dumpLightState(shortaddr);
   Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_LIGHT "\":%s}"), dump.c_str());
 
-  MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_LIGHT));
-  XdrvRulesProcess();
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_LIGHT));
   ResponseCmndDone();
 }
 
@@ -1041,7 +1040,7 @@ void CmndZbEZSPListen(void) {
   } else if (group > 0xFFFF) {
     group = 0xFFFF;
   }
-  
+
   SBuffer buf(8);
   buf.add16(EZSP_setMulticastTableEntry);
   buf.add8(index);

@@ -370,8 +370,7 @@ void EnergyMarginCheck(void)
   }
   if (jsonflg) {
     ResponseJsonEndEnd();
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
-    XdrvRulesProcess();
+    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
     EnergyMqttShow();
   }
 

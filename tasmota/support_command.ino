@@ -288,8 +288,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
   }
 
   if (mqtt_data[0] != '\0') {
-     MqttPublishPrefixTopic_P(RESULT_OR_STAT, type);
-     XdrvRulesProcess();
+     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, type);
   }
   fallback_topic_flag = false;
 }

@@ -279,8 +279,7 @@ void ShutterReportPosition(bool always, uint32_t index)
   }
   ResponseJsonEnd();
   if (always || (rules_flag.shutter_moving)) {
-    MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
-    XdrvRulesProcess();  //RulesProcess() now re-entry protected
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));  // RulesProcess() now re-entry protected
   }
 
   //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
@@ -716,8 +715,7 @@ void ShutterButtonHandler(void)
     Response_P(PSTR("{"));
     ResponseAppend_P(JSON_SHUTTER_BUTTON, shutter_index+1, (buttonState <= SHT_PRESSED_EXT_HOLD) ? (button_index+1) : 0, press_index);
     ResponseJsonEnd();
-    MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
-    XdrvRulesProcess();
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
   }
 }
 

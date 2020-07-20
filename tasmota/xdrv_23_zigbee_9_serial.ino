@@ -131,8 +131,7 @@ void ZigbeeInputLoop(void) {
 			ToHex_P((unsigned char*)znp_buffer.getBuffer(), znp_buffer.len(), hex_char, sizeof(hex_char));
       Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
       if (Settings.flag3.tuya_serial_mqtt_publish) {
-        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-        XdrvRulesProcess();
+        MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
       } else {
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);
       }
@@ -194,7 +193,7 @@ void ZigbeeInputLoop(void) {
     if (zigbee_buffer->len() < ZIGBEE_BUFFER_SIZE) {
       if (escape) {
         // invert bit 5
-        zigbee_in_byte ^= 0x20; 
+        zigbee_in_byte ^= 0x20;
         escape = false;
       }
 
@@ -252,8 +251,7 @@ void ZigbeeInputLoop(void) {
         ToHex_P((unsigned char*)ezsp_buffer.getBuffer(), ezsp_buffer.len(), hex_char, sizeof(hex_char));
         Response_P(PSTR("{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "2\":\"%s\"}"), hex_char);
         if (Settings.flag3.tuya_serial_mqtt_publish) {
-          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-          XdrvRulesProcess();
+          MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
         } else {
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);    // TODO move to LOG_LEVEL_DEBUG when stable
         }
@@ -435,7 +433,7 @@ void ZigbeeEZSPSendRaw(const uint8_t *msg, size_t len, bool send_cancel) {
     bool data_frame = (0 == (msg[0] & 0x80));
     uint8_t rand = 0x42;          // pseudo-randomizer initial value
     uint16_t crc = 0xFFFF;        // CRC16 CCITT initialization
-    
+
     for (uint32_t i=0; i<len; i++) {
       uint8_t out_byte = msg[i];
 
@@ -508,7 +506,7 @@ void ZigbeeEZSPSendDATA(const uint8_t *msg, size_t len, bool send_cancel) {
   ZigbeeEZSPSendRaw(buf.getBuffer(), buf.len(), send_cancel);
 }
 
-// Receive a high-level EZSP command/response, starting with 16-bits frame ID 
+// Receive a high-level EZSP command/response, starting with 16-bits frame ID
 int32_t ZigbeeProcessInputEZSP(class SBuffer &buf) {
   // verify errors in first 2 bytes.
   // TODO
@@ -534,8 +532,7 @@ int32_t ZigbeeProcessInputEZSP(class SBuffer &buf) {
   ToHex_P((unsigned char*)buf.getBuffer(), buf.len(), hex_char, sizeof(hex_char));
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_EZSP_RECEIVED "\":\"%s\"}"), hex_char);
   if (Settings.flag3.tuya_serial_mqtt_publish) {
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-    XdrvRulesProcess();
+    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
   } else {
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);    // TODO move to LOG_LEVEL_DEBUG when stable
   }
@@ -562,7 +559,7 @@ int32_t ZigbeeProcessInputRaw(class SBuffer &buf) {
       // NAK
       AddLog_P2(LOG_LEVEL_INFO, PSTR("ZIG: Received NAK %d, resending not implemented"), ack_num);
     } else if (control_byte == 0xC1) {
-      
+
       // RSTACK
       // received just after boot, either because of Power up, hardware reset or RST
       EZ_RSTACK(buf.get8(2));
@@ -576,7 +573,7 @@ int32_t ZigbeeProcessInputRaw(class SBuffer &buf) {
       buf.setLen(3);
       ZigbeeProcessInput(buf);
     } else if (control_byte == 0xC2) {
-      
+
       // ERROR
       EZ_ERROR(buf.get8(2));
       zigbee.active = false;           // stop all zigbee activities
@@ -641,7 +638,7 @@ void CmndZbEZSPSendOrReceive(bool send)
       if      (2 == XdrvMailbox.index) { ZigbeeEZSPSendDATA(buf.getBuffer(), buf.len(), true); }
       else if (3 == XdrvMailbox.index) { ZigbeeEZSPSendRaw(buf.getBuffer(), buf.len(), true); }
       else                             { ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len(), true); }
-      
+
     } else {
       // Command was `ZbEZSPReceive`
       if      (2 == XdrvMailbox.index) { ZigbeeProcessInput(buf); }

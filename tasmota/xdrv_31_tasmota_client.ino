@@ -539,8 +539,7 @@ void TasmotaClient_ProcessIn(void) {
       Response_P(PSTR("{\"TasmotaClient\":"));
       ResponseAppend_P("%s", inbuf);
       ResponseJsonEnd();
-      MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
-      XdrvRulesProcess();
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, mqtt_data);
     }
     if (CMND_EXECUTE_CMND == TClientCommand.command) { // We need to execute the incoming command
       ExecuteCommand(inbuf, SRC_IGNORE);

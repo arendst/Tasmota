@@ -381,10 +381,20 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic)
   MqttPublishPrefixTopic_P(prefix, subtopic, false);
 }
 
+void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic, bool retained)
+{
+  MqttPublishPrefixTopic_P(prefix, subtopic, retained);
+  XdrvRulesProcess();
+}
+
+void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic)
+{
+  MqttPublishPrefixTopicRulesProcess_P(prefix, subtopic, false);
+}
+
 void MqttPublishTeleSensor(void)
 {
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
-  XdrvRulesProcess();
+  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
 }
 
 void MqttPublishPowerState(uint32_t device)

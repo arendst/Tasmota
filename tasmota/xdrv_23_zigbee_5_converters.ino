@@ -622,8 +622,7 @@ public:
                     _frame_control, _manuf_code, _transact_seq, _cmd_id,
                     hex_char);
     if (Settings.flag3.tuya_serial_mqtt_publish) {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-      XdrvRulesProcess();
+      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);
     }
@@ -1152,8 +1151,7 @@ void ZCLFrame::parseResponse(void) {
   msg.reserve(100);
   json.printTo(msg);
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_RESPONSE "\":%s}"), msg.c_str());
-  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
-  XdrvRulesProcess();
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
 }
 
 

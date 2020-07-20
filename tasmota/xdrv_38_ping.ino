@@ -35,7 +35,7 @@ void (* const PingCommand[])(void) PROGMEM = {
   };
 
 extern "C" {
-  
+
   extern uint32 system_relative_time(uint32 time);
   extern void ets_bzero(void *s, size_t n);
 
@@ -130,7 +130,7 @@ extern "C" {
     if ((p->len == p->tot_len) && (p->next == nullptr)) {
       ip_addr_t ping_target;
       struct icmp_echo_hdr *iecho;
-      
+
       ping_target.addr = ping->ip;
       iecho = (struct icmp_echo_hdr *) p->payload;
 
@@ -177,7 +177,7 @@ extern "C" {
       iecho = (struct icmp_echo_hdr *)p->payload;
 
       if ((iecho->id == Ping_ID) && (iecho->seqno == htons(ping->seq_num)) && iecho->type == ICMP_ER) {
-        
+
         if (iecho->seqno != ping->seqno){   // debounce already received packet
           /* do some ping result processing */
           sys_untimeout(t_ping_timeout, ping);      // remove time-out handler
@@ -282,9 +282,8 @@ void PingResponsePoll(void) {
                       success ? ping->min_time : 0, ping->max_time,
                       success ? ping->sum_time / success : 0
                       );
-      MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_PING));
-      XdrvRulesProcess();
-      
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_PING));
+
       // remove from linked list
       *prev_link = ping->next;
       // don't increment prev_link

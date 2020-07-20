@@ -1878,8 +1878,7 @@ void LightAnimate(void)
             Response_P(PSTR("{\"" D_CMND_WAKEUP "\":\"" D_JSON_DONE "\""));
             ResponseLightState(1);
             ResponseJsonEnd();
-            MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_WAKEUP));
-            XdrvRulesProcess();
+            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WAKEUP));
 
             Light.wakeup_active = 0;
             Settings.light_scheme = LS_POWER;
