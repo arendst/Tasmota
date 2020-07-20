@@ -419,7 +419,7 @@
 #define D_CONFIGURE_TIMER "Configure Timer"
 #define D_TIMER_PARAMETERS "Timer parameters"
 #define D_TIMER_ENABLE "Enable Timers"
-#define D_TIMER_ARM "Arm"
+#define D_TIMER_ARM "Enable"
 #define D_TIMER_TIME "Time"
 #define D_TIMER_DAYS "Days"
 #define D_TIMER_REPEAT "Repeat"
