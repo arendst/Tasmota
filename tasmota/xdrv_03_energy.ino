@@ -306,7 +306,7 @@ void EnergyMarginCheck(void)
   uint16_t energy_power_u = (uint16_t)(Energy.active_power[0]);
 
   bool jsonflg = false;
-  Response_P(PSTR("{"));
+  Response_P(PSTR("{\"" D_RSLT_MARGINS "\":{"));
 
   if (Settings.energy_power_delta) {
     int16_t  power_diff = energy_power_u - Energy.power_history[0];
@@ -369,7 +369,7 @@ void EnergyMarginCheck(void)
     }
   }
   if (jsonflg) {
-    ResponseJsonEnd();
+    ResponseJsonEndEnd();
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
     XdrvRulesProcess();
     EnergyMqttShow();
