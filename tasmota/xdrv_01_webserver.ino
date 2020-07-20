@@ -2600,7 +2600,7 @@ void HandleUploadDone(void)
   MqttRetryCounter(0);
 #ifdef USE_COUNTER
   CounterInterruptDisable(false);
-#endif
+#endif  // USE_COUNTER
 
   WSContentStart_P(S_INFORMATION);
   if (!Web.upload_error) {
@@ -2677,8 +2677,8 @@ void HandleUploadLoop(void)
     } else {
       MqttRetryCounter(60);
 #ifdef USE_COUNTER
-      CounterInterruptDisable(true);
-#endif
+      CounterInterruptDisable(true);  // Prevent OTA failures on 100Hz counter interrupts
+#endif  // USE_COUNTER
 #ifdef USE_EMULATION
       UdpDisconnect();
 #endif  // USE_EMULATION
@@ -2876,7 +2876,7 @@ void HandleUploadLoop(void)
     MqttRetryCounter(0);
 #ifdef USE_COUNTER
     CounterInterruptDisable(false);
-#endif
+#endif  // USE_COUNTER
     Web.upload_error = 7;  // Upload aborted
     if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
   }
