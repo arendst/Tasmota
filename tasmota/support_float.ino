@@ -17,9 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-// Functions not available in 2.3.0
-
 float fmodf(float x, float y)
 {
   // https://github.com/micropython/micropython/blob/master/lib/libm/fmodf.c
@@ -83,7 +80,6 @@ float fmodf(float x, float y)
   ux.i = uxi;
   return ux.f;
 }
-//#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
 double FastPrecisePow(double a, double b)
 {

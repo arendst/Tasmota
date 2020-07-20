@@ -913,14 +913,8 @@ void WifiManagerBegin(bool reset_only)
   int channel = WIFI_SOFT_AP_CHANNEL;
   if ((channel < 1) || (channel > 13)) { channel = 1; }
 
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-  // bool softAP(const char* ssid, const char* passphrase = NULL, int channel = 1, int ssid_hidden = 0);
-  WiFi.softAP(my_hostname, WIFI_AP_PASSPHRASE, channel, 0);
-#else
   // bool softAP(const char* ssid, const char* passphrase = NULL, int channel = 1, int ssid_hidden = 0, int max_connection = 4);
   WiFi.softAP(my_hostname, WIFI_AP_PASSPHRASE, channel, 0, 1);
-#endif
-
   delay(500); // Without delay I've seen the IP address blank
   /* Setup the DNS server redirecting all the domains to the apIP */
   DnsServer->setErrorReplyCode(DNSReplyCode::NoError);
@@ -992,10 +986,6 @@ void WSContentBegin(int code, int ctype)
 {
   Webserver->client().flush();
   WSHeaderSend();
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-  Webserver->sendHeader(F("Accept-Ranges"),F("none"));
-  Webserver->sendHeader(F("Transfer-Encoding"),F("chunked"));
-#endif
   Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN);
   WSSend(code, ctype, "");                        // Signal start of chunked content
   Web.chunk_buffer = "";
@@ -1004,15 +994,7 @@ void WSContentBegin(int code, int ctype)
 void _WSContentSend(const String& content)        // Low level sendContent for all core versions
 {
   size_t len = content.length();
-
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-  const char * footer = "\r\n";
-  char chunk_size[11];
-  sprintf(chunk_size, "%x\r\n", len);
-  Webserver->sendContent(String() + chunk_size + content + footer);
-#else
   Webserver->sendContent(content);
-#endif
 
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("WSContentSend"));
@@ -1377,7 +1359,7 @@ void HandleRoot(void)
           "c",               // c - Unique HTML id
           "#000", "#fff",    // Black to White
           4,                 // sl4 - Unique range HTML id - Used as source for Saturation begin color
-          Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100%
+          Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100% (SetOption77 - Do not power off if slider moved to far left)
           Settings.light_dimmer,
           'd', 0);           // d0 - Value id is related to lc("d0", value) and WebGetArg("d0", tmp, sizeof(tmp));
 
@@ -1389,7 +1371,7 @@ void HandleRoot(void)
             "f",             // f - Unique HTML id
             "#000", "#fff",  // Black to White
             5,               // sl5 - Unique range HTML id - Not used
-            Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100%
+            Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100% (SetOption77 - Do not power off if slider moved to far left)
             LightGetDimmer(2),
             'w', 0);         // w0 - Value id is related to lc("w0", value) and WebGetArg("w0", tmp, sizeof(tmp));
         }
@@ -2367,14 +2349,7 @@ void HandleBackupConfiguration(void)
     }
   }
 
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-  size_t written = myClient.write((const char*)settings_buffer, sizeof(Settings));
-  if (written < sizeof(Settings)) {  // https://github.com/esp8266/Arduino/issues/3218
-    myClient.write((const char*)settings_buffer +written, sizeof(Settings) -written);
-  }
-#else
   myClient.write((const char*)settings_buffer, sizeof(Settings));
-#endif
 
   SettingsBufferFree();
 
@@ -2623,6 +2598,9 @@ void HandleUploadDone(void)
   WifiConfigCounter();
   restart_flag = 0;
   MqttRetryCounter(0);
+#ifdef USE_COUNTER
+  CounterInterruptDisable(false);
+#endif
 
   WSContentStart_P(S_INFORMATION);
   if (!Web.upload_error) {
@@ -2698,6 +2676,9 @@ void HandleUploadLoop(void)
       }
     } else {
       MqttRetryCounter(60);
+#ifdef USE_COUNTER
+      CounterInterruptDisable(true);
+#endif
 #ifdef USE_EMULATION
       UdpDisconnect();
 #endif  // USE_EMULATION
@@ -2893,6 +2874,9 @@ void HandleUploadLoop(void)
   } else if (UPLOAD_FILE_ABORTED == upload.status) {
     restart_flag = 0;
     MqttRetryCounter(0);
+#ifdef USE_COUNTER
+    CounterInterruptDisable(false);
+#endif
     Web.upload_error = 7;  // Upload aborted
     if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
   }
@@ -3152,14 +3136,9 @@ int WebSend(char *buffer)
 
     DEBUG_CORE_LOG(PSTR("WEB: Uri |%s|"), url.c_str());
 
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
-    HTTPClient http;
-    if (http.begin(UrlEncode(url))) {         // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
-#else
     WiFiClient http_client;
     HTTPClient http;
     if (http.begin(http_client, UrlEncode(url))) {  // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
-#endif
       int http_code = http.GET();             // Start connection and send HTTP header
       if (http_code > 0) {                    // http_code will be negative on error
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {

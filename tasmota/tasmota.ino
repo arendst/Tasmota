@@ -16,22 +16,25 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/*====================================================
-  Prerequisites:
-    - Change libraries/PubSubClient/src/PubSubClient.h
-        #define MQTT_MAX_PACKET_SIZE 1200
 
-  Arduino IDE 1.8.12 and up parameters
-    - Select IDE Tools - Board: "Generic ESP8266 Module"
-    - Select IDE Tools - Flash Mode: "DOUT (compatible)"
-    - Select IDE Tools - Flash Size: "1M (FS:none OTA:~502KB)"
-    - Select IDE Tools - LwIP Variant: "v2 Higher Bandwidth (no feature)"
-    - Select IDE Tools - VTables: "Flash"
-    - Select IDE Tools - Espressif FW: "nonos-sdk-2.2.1+100 (190703)"
-  ====================================================*/
+/*********************************************************************************************\
+ * Preferred IDE is Visual Studio Code with PlatformIO extension which doesn't need prerequisites
+ *
+ * Limited support for Arduino IDE needs Prerequisites:
+ *    - Change libraries/PubSubClient/src/PubSubClient.h
+ *       #define MQTT_MAX_PACKET_SIZE 1200
+ *
+ *  Arduino IDE 1.8.12 and up parameters for partly support
+ *    - Select IDE Tools - Board: "Generic ESP8266 Module"
+ *    - Select IDE Tools - Flash Mode: "DOUT (compatible)"
+ *    - Select IDE Tools - Flash Size: "1M (FS:none OTA:~502KB)"
+ *    - Select IDE Tools - LwIP Variant: "v2 Higher Bandwidth (no feature)"
+ *    - Select IDE Tools - VTables: "Flash"
+ *    - Select IDE Tools - Espressif FW: "nonos-sdk-2.2.1+100 (190703)"
+\*********************************************************************************************/
 
 // Location specific includes
-#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_7_1)
 #include "tasmota_compat.h"
 #include "tasmota_version.h"                // Tasmota version information
 #include "tasmota.h"                        // Enumeration used in my_user_config.h
@@ -42,13 +45,6 @@
 #include "tasmota_globals.h"                // Function prototypes and global configuration
 #include "i18n.h"                           // Language support configured by my_user_config.h
 #include "tasmota_template.h"               // Hardware configuration
-
-#ifdef ARDUINO_ESP8266_RELEASE_2_4_0
-#include "lwip/init.h"
-#if LWIP_VERSION_MAJOR != 1
-  #error Please use stable lwIP v1.4
-#endif
-#endif
 
 // Libraries
 #include <ESP8266HTTPClient.h>              // Ota

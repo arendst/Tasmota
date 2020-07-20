@@ -159,14 +159,6 @@ extern "C" {
 
 #ifdef ESP8266
 
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
-
-extern "C" uint32_t _SPIFFS_end;
-// From libraries/EEPROM/EEPROM.cpp EEPROMClass
-const uint32_t SPIFFS_END = ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
-
-#else  // Core > 2.5.2 and STAGE
-
 #if AUTOFLASHSIZE
 
 #include "flash_hal.h"
@@ -181,8 +173,6 @@ extern "C" uint32_t _FS_end;
 const uint32_t SPIFFS_END = ((uint32_t)&_FS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
 
 #endif  // AUTOFLASHSIZE
-
-#endif  // All cores < pre-2.6.0
 
 // Version 4.2 config = eeprom area
 const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses EEPROM area
@@ -632,11 +622,7 @@ void EspErase(uint32_t start_sector, uint32_t end_sector)
 //    bool result = EsptoolEraseSector(sector);    // Esptool - erases flash completely (slow)
 
     if (serial_output) {
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-      Serial.printf(D_LOG_APPLICATION D_ERASED_SECTOR " %d %s\n", sector, (result) ? D_OK : D_ERROR);
-#else
       Serial.printf_P(PSTR(D_LOG_APPLICATION D_ERASED_SECTOR " %d %s\n"), sector, (result) ? D_OK : D_ERROR);
-#endif
       delay(10);
     } else {
       yield();

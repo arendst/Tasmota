@@ -72,11 +72,7 @@ struct WINDMETER {
 #endif  // USE_WINDMETER_NOSTATISTICS
 } WindMeter;
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0  // Fix core 2.5.x ISR not in IRAM Exception
-void WindMeterUpdateSpeed(void) ICACHE_RAM_ATTR;
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
-
-void WindMeterUpdateSpeed(void)
+void ICACHE_RAM_ATTR WindMeterUpdateSpeed(void)
 {
   uint32_t time = micros();
   uint32_t time_diff = time - WindMeter.counter_time;

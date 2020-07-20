@@ -176,7 +176,7 @@
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
   #define USE_IR_RECEIVE                         // Support for IR receiver (+5k5 code, 264 iram)
 
-#define USE_LMT01				 // Add support for TI LMT01 temperature sensor, count pulses on single GPIO (+0k5 code)
+#define USE_LMT01                                // Add support for TI LMT01 temperature sensor, count pulses on single GPIO (+0k5 code)
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 #define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
 #define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
@@ -280,13 +280,11 @@
 
 #define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
     #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0            // There is not enough spare RAM with core 2.3.0 to support the following
     #define USE_DISPLAY_EPAPER_29                // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
     #define USE_DISPLAY_EPAPER_42                // [DisplayModel 6] Enable e-paper 4.2 inch display
 //    #define USE_DISPLAY_ILI9488                  // [DisplayModel 8]
 //    #define USE_DISPLAY_SSD1351                  // [DisplayModel 9]
 //    #define USE_DISPLAY_RA8876                   // [DisplayModel 10]
-#endif
 
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
@@ -539,16 +537,17 @@
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "minimal"
 
-#undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
-#undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
-#undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
-#undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
-#undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
-#undef FIRMWARE_IR_CUSTOM                       // Disable tasmota customizable with special marker to add all IR protocols
+#undef FIRMWARE_LITE                             // Disable tasmota-lite with no sensors
+#undef FIRMWARE_SENSORS                          // Disable tasmota-sensors with useful sensors enabled
+#undef FIRMWARE_KNX_NO_EMULATION                 // Disable tasmota-knx with KNX but without Emulation
+#undef FIRMWARE_DISPLAYS                         // Disable tasmota-display with display drivers enabled
+#undef FIRMWARE_IR                               // Disable tasmota-ir with IR full protocols activated
+#undef FIRMWARE_IR_CUSTOM                        // Disable tasmota customizable with special marker to add all IR protocols
 
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #undef USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
+#undef USE_TELEGRAM                              // Disable support for Telegram protocol (+49k code, +7.0k mem and +4.8k additional during connection handshake)
 //#undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
@@ -561,6 +560,8 @@
 #undef USE_TIMERS                                // Disable support for up to 16 timers
 #undef USE_TIMERS_WEB                            // Disable support for timer webpage
 #undef USE_SUNRISE                               // Disable support for Sunrise and sunset tools
+#undef USE_PING                                  // Disable Ping command (+2k code)
+#undef USE_UNISHOX_COMPRESSION                   // Disable support for string compression in Rules or Scripts
 #undef USE_RULES                                 // Disable support for rules
 #undef USE_SCRIPT                                // Disable support for script
 
@@ -594,6 +595,7 @@
 #undef USE_SONOFF_L1                             // Disable support for Sonoff L1 led control
 #undef USE_ELECTRIQ_MOODL                        // Disable support for ElectriQ iQ-wifiMOODL RGBW LED controller
 #undef USE_LIGHT_PALETTE                         // Disable support for color palette (+0k9 code)
+#undef USE_DGR_LIGHT_SEQUENCE                    // Disable support for device group light sequencing (requires USE_DEVICE_GROUPS) (+0k2 code)
 
 #undef USE_COUNTER                               // Disable counters
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
@@ -609,6 +611,7 @@
 #undef USE_NOVA_SDS                              // Disable support for SDS011 and SDS021 particle concentration sensor
 #undef USE_HPMA                                  // Disable support for Honeywell HPMA115S0 particle concentration sensor
 #undef USE_SERIAL_BRIDGE                         // Disable support for software Serial Bridge
+#undef USE_TCP_BRIDGE                            // DIsable support for Serial to TCP bridge (+1.3k code)
 #undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                             // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
@@ -633,11 +636,14 @@
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
 #undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k1 code)
 #undef USE_LE01MR                                // Disable support for F&F LE-01MR Modbus energy meter (+2k code)
+#undef USE_BL0940                                // Disable support for BL0940 Energy monitor as used in Blitzwolf SHP-10 (+1k6 code)
 #undef USE_TELEINFO                              // Disable support for French Energy Provider metering telemetry
+#undef USE_IEM3000                               // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_MAX31865                              // Disable support for MAX31865 RTD sensors using softSPI
+#undef USE_LMT01                                 // Disable support for TI LMT01 temperature sensor, count pulses on single GPIO (+0k5 code)
 #undef USE_IR_REMOTE                             // Disable IR driver
 #undef USE_SR04                                  // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                                // Disable support for TM1638 switches copying Switch1 .. Switch8
@@ -650,6 +656,7 @@
 #undef USE_HRE                                   // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef USE_A4988_STEPPER                         // Disable support for A4988_Stepper
 #undef USE_THERMOSTAT                            // Disable support for Thermostat
+#undef USE_PROMETHEUS                            // Disable support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_MINIMAL

@@ -852,11 +852,8 @@ void PerformEverySecond(void)
     }
   }
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
   // Wifi keep alive to send Gratuitous ARP
   wifiKeepAlive();
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
-
 
 #ifdef ESP32
   if (11 == uptime) {      // Perform one-time ESP32 houskeeping
@@ -1027,13 +1024,8 @@ void Every250mSeconds(void)
           }
 #endif  // FIRMWARE_MINIMAL
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s"), mqtt_data);
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
-          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(mqtt_data));
-#else
-          // If using core stage or 2.5.0+ the syntax has changed
           WiFiClient OTAclient;
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, mqtt_data));
-#endif
           if (!ota_result) {
 #ifndef FIRMWARE_MINIMAL
             int ota_error = ESPhttpUpdate.getLastError();

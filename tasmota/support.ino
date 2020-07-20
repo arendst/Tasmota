@@ -1080,12 +1080,8 @@ int ResponseJsonEndEnd(void)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0  // Fix core 2.5.x ISR not in IRAM Exception
-uint32_t Pin(uint32_t gpio, uint32_t index) ICACHE_RAM_ATTR;
-#endif
-
-uint32_t Pin(uint32_t gpio, uint32_t index = 0);
-uint32_t Pin(uint32_t gpio, uint32_t index) {
+uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
+uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
 #ifdef ESP8266
   uint16_t real_gpio = gpio + index;
 #else  // ESP32

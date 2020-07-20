@@ -1,10 +1,17 @@
 ## Unreleased (development)
 
+### 8.3.1.7 20200716
+
+- Remove Arduino ESP8266 Core support for versions before 2.7.1
+- Change to limited support of Arduino IDE as an increasing amount of features cannot be compiled with Arduino IDE
+- Add command ``SetOption100 0/1`` to remove ``ZbReceived`` value from ``{"ZbReceived":{xxx:yyy}}`` JSON message
+
 ### 8.3.1.6 20200617
 
 - Add command ``Module2`` to configure fallback module on fast reboot (#8464)
 - Add command ``SetOption97 0/1`` to switch between Tuya serial speeds 9600 bps (0) or 115200 bps (1)
 - Add command ``SetOption98 0/1`` to provide rotary rule triggers (1) instead of controlling light (0)
+- Add command ``SetOption99 0/1`` to enable zero cross detection on PWM dimmer
 - Add support for Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
 - Add library to be used for decoding Teleinfo (French Metering Smart Meter)
 - Add support for single wire LMT01 temperature Sensor by justifiably (#8713)

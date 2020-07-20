@@ -128,8 +128,8 @@ String EthernetMacAddress(void);
   const uint16_t WEB_LOG_SIZE = 4000;          // Max number of characters in weblog
 #endif
 
-#if defined(USE_TLS) && defined(ARDUINO_ESP8266_RELEASE_2_3_0)
-  #error "TLS is no more supported on Core 2.3.0, use 2.4.2 or higher."
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
+  #error "Arduino ESP8266 Core versions before 2.7.1 are not supported"
 #endif
 
 #ifndef MQTT_MAX_PACKET_SIZE
