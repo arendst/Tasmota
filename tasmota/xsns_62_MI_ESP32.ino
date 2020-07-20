@@ -66,14 +66,21 @@ struct {
     uint32_t willReadBatt:1;
     uint32_t shallSetUnit:1;
     uint32_t willSetUnit:1;
+    uint32_t shallTriggerTele:1;
     uint32_t triggeredTele:1;
-    uint32_t shallClearResults:1;
-    uint32_t directMQTT:1;    // TODO: direct bridging of every single sensor message
+    uint32_t shallClearResults:1; // BLE scan results
 
   } mode;
   struct {
     uint8_t sensor;           // points to to the number 0...255
   } state;
+  struct {
+    uint32_t allwaysAggregate:1;
+    uint32_t showRSSI:1;
+    uint32_t ignoreBogusBattery:1;
+    uint32_t noSummary:1;
+    uint32_t minimalSummary:1;
+  } option;
 } MI32;
 
 #pragma pack(1)  // byte-aligned structures to read the sensor data
@@ -162,8 +169,39 @@ struct mi_sensor_t{
   uint8_t lastCnt; //device generated counter of the packet
   uint8_t shallSendMQTT;
   uint8_t MAC[6];
+  union {
+    struct {
+      uint32_t temp:1;
+      uint32_t hum:1;
+      uint32_t tempHum:1; //every hum sensor has temp too, easier to use Tasmota dew point functions
+      uint32_t lux:1;
+      uint32_t moist:1;
+      uint32_t fert:1;
+      uint32_t bat:1;
+      uint32_t NMT:1;
+      uint32_t PIR:1;
+      uint32_t Btn:1;
+    };
+    uint32_t raw;
+  } feature;
+  union {
+    struct {
+      uint32_t temp:1;
+      uint32_t hum:1;
+      uint32_t tempHum:1; //can be combined from the sensor
+      uint32_t lux:1;
+      uint32_t moist:1;
+      uint32_t fert:1;
+      uint32_t bat:1;
+      uint32_t NMT:1;
+      uint32_t motion:1;
+      uint32_t noMotion:1;
+      uint32_t Btn:1;
+    };
+    uint32_t raw;
+  } eventType;
+ 
   int rssi;
-  // uint8_t showedUp;
   uint32_t lastTime;
   uint32_t lux;
   float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
@@ -179,7 +217,6 @@ struct mi_sensor_t{
     struct {
       uint16_t events; //"alarms" since boot
       uint32_t NMT;    // no motion time in seconds for the MJYD2S
-      uint8_t eventType; //internal type of actual event for the MJYD2S -> 1: PIR, 2: No PIR, 3: NMT
     };
     uint16_t Btn;
   };
@@ -523,7 +560,8 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
   mi_sensor_t _newSensor;
   memcpy(_newSensor.MAC,_MAC, sizeof(_MAC));
   _newSensor.type = _type;
-
+  _newSensor.eventType.raw = 0;
+  _newSensor.feature.raw = 0;
   _newSensor.temp =NAN;
   _newSensor.bat=0x00;
   _newSensor.rssi=0xffff;
@@ -534,14 +572,34 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
       _newSensor.moisture =0xff;
       _newSensor.fertility =0xffff;
       _newSensor.firmware[0]='\0';
+      _newSensor.feature.temp=1;
+      _newSensor.feature.moist=1;
+      _newSensor.feature.fert=1;
+      _newSensor.feature.lux=1;
+      _newSensor.feature.bat=1;
       break;
-    case NLIGHT: case MJYD2S:
+    case NLIGHT: 
+      _newSensor.events=0x00;
+      _newSensor.feature.PIR=1;
+      _newSensor.feature.NMT=1;
+      break;
+    case MJYD2S:
       _newSensor.NMT=0;
       _newSensor.events=0x00;
-      _newSensor.eventType=0x00;
+      _newSensor.feature.PIR=1;
+      _newSensor.feature.NMT=1;
+      _newSensor.feature.lux=1;
+      _newSensor.feature.bat=1;
+      break;
+    case YEERC:
+      _newSensor.feature.Btn=1;
       break;
     default:
       _newSensor.hum=NAN;
+      _newSensor.feature.temp=1;
+      _newSensor.feature.hum=1;
+      _newSensor.feature.tempHum=1;
+      _newSensor.feature.bat=1;
       break;
     }
   MIBLEsensors.push_back(_newSensor);
@@ -554,7 +612,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
  * 
  */
 void MI32triggerTele(void){
-    MI32.mode.triggeredTele = true;
+    MI32.mode.triggeredTele = 1;
     mqtt_data[0] = '\0';
     if (MqttShowSensor()) {
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
@@ -575,6 +633,13 @@ void MI32Init(void) {
     MI32.mode.canScan = 1;
     MI32.mode.init = 1;
     MI32.period = Settings.tele_period;
+
+    //test section for options
+    MI32.option.allwaysAggregate = 1;
+    MI32.option.showRSSI = 1;
+    MI32.option.ignoreBogusBattery = 1; // from advertisements
+    MI32.option.noSummary = 0;
+    MI32.option.minimalSummary = 1;
 
     MI32StartScanTask(); // Let's get started !!
   }
@@ -603,7 +668,14 @@ void MI32StartTask(uint32_t task){
       break;
     case MI32_TASK_BATT:
       if (MI32.mode.willReadBatt == 1) return;
-      MI32StartBatteryTask();
+      switch(MIBLEsensors[MI32.state.sensor].type) {
+        case LYWSD03MMC: case MHOC401: // the "original" battery value is crap ...
+        MI32.mode.willReadBatt = 1;
+        MI32StartSensorTask();         // ... but the part of the temp/hum-message is good!
+        break;
+        default:
+        MI32StartBatteryTask();
+      }
       break;
     case MI32_TASK_UNIT:
       if (MI32.mode.shallSetUnit == 0) return;
@@ -720,6 +792,7 @@ void MI32SensorTask(void *pvParameters){
           MI32Client->disconnect();
           // NimBLEDevice::deleteClient(MI32Client);
           MI32.mode.willConnect = 0;
+          MI32.mode.willReadBatt = 0; //could be a "battery task" for LYWSD03MMC or MHO-C401
           vTaskDelay(100/ portTICK_PERIOD_MS);
           vTaskDelete( NULL );
         }
@@ -1054,7 +1127,7 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot, uint16_t _bufSize){
         //   MIBLEsensors[_slot].lastTime = millis();
         //   AddLog_P2(LOG_LEVEL_DEBUG,PSTR("MI32: MJYD2S secondary PIR"));
         //   MIBLEsensors[_slot].NMT = 0; 
-        //   MI32triggerTele();
+        //   MI32.mode.shallTriggerTele = 1;
         // }
       }
       break;
@@ -1067,56 +1140,63 @@ if (MIBLEsensors[_slot].type==NLIGHT){
 }
 
   if(MIBLEsensors[_slot].type==6){
-    DEBUG_SENSOR_LOG(PSTR("LYWSD03 and CGD1 no support for MiBeacon, type %u"),MIBLEsensors[_slot].type);
+    DEBUG_SENSOR_LOG(PSTR("CGD1 no support for MiBeacon, type %u"),MIBLEsensors[_slot].type);
     return;
   }
   AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1],_slot);
   switch(_beacon.type){
     case 0x01:
       MIBLEsensors[_slot].Btn=_beacon.Btn.num + (_beacon.Btn.longPress/2)*6;
-      MIBLEsensors[_slot].shallSendMQTT = 1;
-      MI32triggerTele();
+      MIBLEsensors[_slot].eventType.Btn = 1;
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 1: U16:  %u Button"), MIBLEsensors[_slot].Btn );
     break;
     case 0x04:
       _tempFloat=(float)(_beacon.temp)/10.0f;
       if(_tempFloat<60){
-          MIBLEsensors[_slot].temp=_tempFloat;
-          DEBUG_SENSOR_LOG(PSTR("Mode 4: temp updated"));
+        MIBLEsensors[_slot].temp=_tempFloat;
+        MIBLEsensors[_slot].eventType.temp = 1;
+        DEBUG_SENSOR_LOG(PSTR("Mode 4: temp updated"));
       }
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 4: U16:  %u Temp"), _beacon.temp );
     break;
     case 0x06:
       _tempFloat=(float)(_beacon.hum)/10.0f;
       if(_tempFloat<101){
-          MIBLEsensors[_slot].hum=_tempFloat;
-          DEBUG_SENSOR_LOG(PSTR("Mode 6: hum updated"));
+        MIBLEsensors[_slot].hum=_tempFloat;
+        MIBLEsensors[_slot].eventType.hum = 1;
+        DEBUG_SENSOR_LOG(PSTR("Mode 6: hum updated"));
       }
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 6: U16:  %u Hum"), _beacon.hum);
     break;
     case 0x07:
       MIBLEsensors[_slot].lux=_beacon.lux & 0x00ffffff;
       if(MIBLEsensors[_slot].type==MJYD2S){
-        MIBLEsensors[_slot].eventType = 2; //No PIR
-        MIBLEsensors[_slot].shallSendMQTT = 1;      
-        MIBLEsensors[_slot].lastTime = millis();
-        MI32triggerTele();
+        MIBLEsensors[_slot].eventType.noMotion  = 1;
       }
+      MIBLEsensors[_slot].eventType.lux  = 1;
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 7: U24: %u Lux"), _beacon.lux & 0x00ffffff);
     break;
     case 0x08:
-          MIBLEsensors[_slot].moisture=_beacon.moist;
-          DEBUG_SENSOR_LOG(PSTR("Mode 8: moisture updated"));
+      MIBLEsensors[_slot].moisture=_beacon.moist;
+      MIBLEsensors[_slot].eventType.moist  = 1;
+      DEBUG_SENSOR_LOG(PSTR("Mode 8: moisture updated"));
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 8: U8: %u Moisture"), _beacon.moist);
     break;
     case 0x09:
            MIBLEsensors[_slot].fertility=_beacon.fert;
+           MIBLEsensors[_slot].eventType.fert  = 1;
           DEBUG_SENSOR_LOG(PSTR("Mode 9: fertility updated"));
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 9: U16: %u Fertility"), _beacon.fert);
     break;
     case 0x0a:
+      if(MI32.option.ignoreBogusBattery){
+        if(MIBLEsensors[_slot].type==LYWSD03MMC || MIBLEsensors[_slot].type==MHOC401){
+          break;
+        }
+      }
       if(_beacon.bat<101){
         MIBLEsensors[_slot].bat = _beacon.bat;
+        MIBLEsensors[_slot].eventType.bat  = 1;
         DEBUG_SENSOR_LOG(PSTR("Mode a: bat updated"));
         }
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode a: U8: %u %%"), _beacon.bat);
@@ -1132,40 +1212,39 @@ if (MIBLEsensors[_slot].type==NLIGHT){
           MIBLEsensors[_slot].hum = _tempFloat;
           DEBUG_SENSOR_LOG(PSTR("Mode d: hum updated"));
       }
+      MIBLEsensors[_slot].eventType.tempHum  = 1;
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode d: U16:  %x Temp U16: %x Hum"), _beacon.HT.temp,  _beacon.HT.hum);
     break;
 #ifdef USE_MI_DECRYPTION
     case 0x0f:
     if (_beacon.ten!=0) break;
-      MIBLEsensors[_slot].eventType = 1; //PIR
-      MIBLEsensors[_slot].shallSendMQTT = 1;
+      MIBLEsensors[_slot].eventType.motion = 1;
       MIBLEsensors[_slot].lastTime = millis();
       MIBLEsensors[_slot].events++;
       MIBLEsensors[_slot].lux = _beacon.lux;
+      MIBLEsensors[_slot].eventType.lux = 1;
       MIBLEsensors[_slot].NMT = 0; 
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("PIR: primary"),MIBLEsensors[_slot].lux );
-      MI32triggerTele();
     break;
     case 0x17:
       MIBLEsensors[_slot].NMT = _beacon.NMT;
-      MIBLEsensors[_slot].eventType = 3; // NMT
-      MIBLEsensors[_slot].shallSendMQTT = 1;      
+      MIBLEsensors[_slot].eventType.NMT = 1;
       // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 17: NMT: %u seconds"), _beacon.NMT);
-      MI32triggerTele();
     break;
 #endif //USE_MI_DECRYPTION
     default:
       if (MIBLEsensors[_slot].type==NLIGHT){
-        MIBLEsensors[_slot].eventType = 1; //PIR
-        MIBLEsensors[_slot].shallSendMQTT = 1;
+        MIBLEsensors[_slot].eventType.motion = 1; //PIR
         MIBLEsensors[_slot].events++;
         MIBLEsensors[_slot].NMT = 0; 
         MIBLEsensors[_slot].lastTime = millis();
         // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("PIR: primary"),MIBLEsensors[_slot].lux );
-        MI32triggerTele();
       }
     break;
   }
+  if(MIBLEsensors[_slot].eventType.raw == 0) return;
+  MIBLEsensors[_slot].shallSendMQTT = 1;
+  MI32.mode.shallTriggerTele = 1;
 }
 
 void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int rssi){ // no MiBeacon
@@ -1183,11 +1262,13 @@ void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int rssi
       _tempFloat=(float)(_packet.temp)/10.0f;
       if(_tempFloat<60){
           MIBLEsensors.at(_slot).temp = _tempFloat;
+          MIBLEsensors[_slot].eventType.temp  = 1;
           DEBUG_SENSOR_LOG(PSTR("CGD1: temp updated"));
       }
       _tempFloat=(float)(_packet.hum)/10.0f;
       if(_tempFloat<100){
           MIBLEsensors.at(_slot).hum = _tempFloat;
+          MIBLEsensors[_slot].eventType.hum  = 1;
           DEBUG_SENSOR_LOG(PSTR("CGD1: hum updated"));
       }
       DEBUG_SENSOR_LOG(PSTR("CGD1: U16:  %x Temp U16: %x Hum"), _packet.temp,  _packet.hum);
@@ -1195,12 +1276,16 @@ void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int rssi
     case 0x0102:
       if(_packet.bat<101){
       MIBLEsensors.at(_slot).bat = _packet.bat;
+      MIBLEsensors[_slot].eventType.bat  = 1;
       DEBUG_SENSOR_LOG(PSTR("Mode a: bat updated"));
       }
       break;
     default:
       DEBUG_SENSOR_LOG(PSTR("MI32: unexpected CGD1-packet"));
   }
+  if(MIBLEsensors[_slot].eventType.raw == 0) return;
+  MIBLEsensors[_slot].shallSendMQTT = 1;
+  MI32.mode.shallTriggerTele = 1;
 }
 
 void MI32ParseResponse(char *buf, uint16_t bufsize, uint8_t addr[6], int rssi) {
@@ -1241,9 +1326,14 @@ void MI32readHT_LY(char *_buf){
       MIBLEsensors[_slot].hum = _tempFloat;
       DEBUG_SENSOR_LOG(PSTR("LYWSD0x: hum updated"));
     }
+    MIBLEsensors[_slot].eventType.tempHum  = 1;
     if (MIBLEsensors[_slot].type == LYWSD03MMC || MIBLEsensors[_slot].type == MHOC401){
       MIBLEsensors[_slot].bat = ((float)LYWSD0x_HT.volt-2100.0f)/12.0f;
+      MI32.mode.willReadBatt = 0;
+      MIBLEsensors[_slot].eventType.bat  = 1;
     }
+    MIBLEsensors[_slot].shallSendMQTT = 1;
+    MI32.mode.shallTriggerTele = 1;
   }
 }
 
@@ -1260,10 +1350,25 @@ bool MI32readBat(char *_buf){
           MIBLEsensors[_slot].firmware[5] = '\0';
           AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: Firmware: %s"),D_CMND_MI32,MIBLEsensors[_slot].firmware);
          }
-        return true;
+      MIBLEsensors[_slot].eventType.bat  = 1;
+      MIBLEsensors[_slot].shallSendMQTT = 1;
+      MI32.mode.shallTriggerTele = 1;
+      return true;
     }
   }
   return false;
+}
+
+/**
+ * @brief Launch functions from Core 1 to make race conditions less likely
+ * 
+ */
+
+void MI32Every50mSecond(){
+  if(MI32.mode.shallTriggerTele){
+      MI32.mode.shallTriggerTele = 0;
+      MI32triggerTele();
+  }
 }
 
 /**
@@ -1473,71 +1578,117 @@ void MI32Show(bool json)
   if (json) {
     if(!MI32.mode.triggeredTele){
       MI32.mode.shallClearResults=1;
+      if(MI32.option.noSummary) return; // no message at TELEPERIOD
       }
-    for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
-      switch(MIBLEsensors[i].type){
-        case NLIGHT: case MJYD2S: case YEERC: 
-          if(MIBLEsensors[i].shallSendMQTT==0) continue;
-          break;
-        default:
-          if(MI32.mode.triggeredTele) continue;
-          break;
-        }
 
-      ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":{"),
+    for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
+      if(MI32.mode.triggeredTele && MIBLEsensors[i].eventType.raw == 0) continue;
+      if(MI32.mode.triggeredTele && MIBLEsensors[i].shallSendMQTT==0) continue;
+      
+      ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":"), // do not add the '{' now ...
         kMI32DeviceType[MIBLEsensors[i].type-1],
         MIBLEsensors[i].MAC[3], MIBLEsensors[i].MAC[4], MIBLEsensors[i].MAC[5]);
 
-      ResponseAppend_P(PSTR("\"RSSI\":%d"), MIBLEsensors[i].rssi);
+      uint32_t _positionCurlyBracket = strlen(mqtt_data); // ... this will be a ',' first, but later be replaced
 
-      if (MIBLEsensors[i].type == FLORA) {
-        if (!isnan(MIBLEsensors[i].temp)) {
-          char temperature[FLOATSZ]; // all sensors have temperature
-          dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-          ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"), temperature);
+      if((!MI32.mode.triggeredTele && !MI32.option.minimalSummary)||MI32.mode.triggeredTele){
+        bool tempHumSended = false;
+        if(MIBLEsensors[i].feature.tempHum){
+          if(MIBLEsensors[i].eventType.tempHum || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
+            if (!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)) {
+              ResponseAppend_P(PSTR(","));
+              ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
+              tempHumSended = true;
+            }
+          }
         }
-        if (MIBLEsensors[i].lux!=0x0ffffff) { // this is the error code -> no lux
-          ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
+        if(MIBLEsensors[i].feature.temp && !tempHumSended){
+          if(MIBLEsensors[i].eventType.temp || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate) {
+            if (!isnan(MIBLEsensors[i].temp)) {
+              char temperature[FLOATSZ];
+              dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
+              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"), temperature);
+            }
+          }
         }
-        if (MIBLEsensors[i].moisture!=0xff) {
-          ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%u"), MIBLEsensors[i].moisture);
+        if(MIBLEsensors[i].feature.hum && !tempHumSended){
+          if(MIBLEsensors[i].eventType.hum || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate) {
+            if (!isnan(MIBLEsensors[i].hum)) {
+              char hum[FLOATSZ];
+              dtostrfd(MIBLEsensors[i].hum, Settings.flag2.humidity_resolution, hum);
+              ResponseAppend_P(PSTR(",\"" D_JSON_HUMIDITY "\":%s"), hum);
+            }
+          }
         }
-        if (MIBLEsensors[i].fertility!=0xffff) {
-          ResponseAppend_P(PSTR(",\"Fertility\":%u"), MIBLEsensors[i].fertility);
+        if (MIBLEsensors[i].feature.lux){
+          if(MIBLEsensors[i].eventType.lux || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
+            if (MIBLEsensors[i].lux!=0x0ffffff) { // this is the error code -> no lux
+              ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
+            }
+          }
         }
+        if (MIBLEsensors[i].feature.moist){
+          if(MIBLEsensors[i].eventType.moist || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
+            if (MIBLEsensors[i].moisture!=0xff) {
+              ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%u"), MIBLEsensors[i].moisture);
+            }
+          }
+        }
+        if (MIBLEsensors[i].feature.fert){
+          if(MIBLEsensors[i].eventType.fert || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
+            if (MIBLEsensors[i].fertility!=0xffff) {
+              ResponseAppend_P(PSTR(",\"Fertility\":%u"), MIBLEsensors[i].fertility);
+            }
+          }
+        }
+        if (MIBLEsensors[i].feature.Btn){
+          if(MIBLEsensors[i].eventType.Btn){
+            ResponseAppend_P(PSTR(",\"Btn\":%u"),MIBLEsensors[i].Btn);
+          }
+        }
+      } // minimal summary
+      if (MIBLEsensors[i].feature.PIR){
+        if(MIBLEsensors[i].eventType.motion || !MI32.mode.triggeredTele){
+          if(MI32.mode.triggeredTele) ResponseAppend_P(PSTR(",\"PIR\":1")); // only real-time
+          ResponseAppend_P(PSTR(",\"Events\":%u"),MIBLEsensors[i].events);
+        }
+        else if(MIBLEsensors[i].eventType.noMotion && MI32.mode.triggeredTele){
+          ResponseAppend_P(PSTR(",\"PIR\":0"));
+        }
+      }
+
+      if (MIBLEsensors[i].type == FLORA && !MI32.mode.triggeredTele) {
         if (MIBLEsensors[i].firmware[0] != '\0') { // this is the error code -> no firmware
           ResponseAppend_P(PSTR(",\"Firmware\":\"%s\""), MIBLEsensors[i].firmware);
         }
       }
-      if (MIBLEsensors[i].type > FLORA){
-        if (!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)) {
-          ResponseAppend_P(PSTR(","));
-          ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
+
+      if (MIBLEsensors[i].feature.NMT || !MI32.mode.triggeredTele){
+        if(MIBLEsensors[i].eventType.NMT){
+          ResponseAppend_P(PSTR(",\"NMT\":%u"), MIBLEsensors[i].NMT);
         }
       }
-#ifdef USE_MI_DECRYPTION
-      if (MIBLEsensors[i].type == MJYD2S){
-        ResponseAppend_P(PSTR(",\"Events\":%u"),MIBLEsensors[i].events);
-        if(MIBLEsensors[i].shallSendMQTT && MIBLEsensors[i].eventType<3) ResponseAppend_P(PSTR(",\"PIR\":%u"), 2 - MIBLEsensors[i].eventType);
-        if(MIBLEsensors[i].eventType==3) ResponseAppend_P(PSTR(",\"NMT\":%u"), MIBLEsensors[i].NMT);
-        MIBLEsensors[i].eventType=0;
-        if(MIBLEsensors[i].lux!=0x0ffffff) ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
+      if (MIBLEsensors[i].feature.bat){
+        if(MIBLEsensors[i].eventType.bat || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
+          if (MIBLEsensors[i].bat != 0x00) { // this is the error code -> no battery
+          ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
+          }
+        }
       }
-#endif //USE_MI_DECRYPTION
-      if (MIBLEsensors[i].type == NLIGHT){
-        ResponseAppend_P(PSTR(",\"Events\":%u"),MIBLEsensors[i].events);
-        if(MIBLEsensors[i].shallSendMQTT) ResponseAppend_P(PSTR(",\"PIR\":1"));
-      }
-      if (MIBLEsensors[i].type == YEERC){
-        if(MIBLEsensors[i].shallSendMQTT) ResponseAppend_P(PSTR(",\"Btn\":%u"),MIBLEsensors[i].Btn);
-      }
-      if (MIBLEsensors[i].bat != 0x00) { // this is the error code -> no battery
-        ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
-      }
+      if (MI32.option.showRSSI && MI32.mode.triggeredTele) ResponseAppend_P(PSTR(",\"RSSI\":%d"), MIBLEsensors[i].rssi);
+
+
+      if(_positionCurlyBracket==strlen(mqtt_data)) ResponseAppend_P(PSTR(",")); // write some random char, to be overwritten in the next step
       ResponseAppend_P(PSTR("}"));
-    MIBLEsensors[i].shallSendMQTT = 0;
-    MI32.mode.triggeredTele = 0;  
+      mqtt_data[_positionCurlyBracket] = '{';
+      MIBLEsensors[i].eventType.raw = 0;
+      if(MIBLEsensors[i].shallSendMQTT==1){
+        MIBLEsensors[i].shallSendMQTT = 0;
+        break;
+      }
     }
+    MI32.mode.triggeredTele = 0;
+    // ResponseAppend_P(PSTR("}"));
 #ifdef USE_WEBSERVER
     } else {
       static  uint16_t _page = 0;
@@ -1618,6 +1769,9 @@ bool Xsns62(uint8_t function)
 
   if (MI32.mode.init) {
     switch (function) {
+      case FUNC_EVERY_50_MSECOND:
+        MI32Every50mSecond();
+        break;
       case FUNC_EVERY_SECOND:
         MI32EverySecond(false);
         break;
