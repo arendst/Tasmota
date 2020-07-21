@@ -906,6 +906,17 @@ void SerialSendRaw(char *codes)
   }
 }
 
+// values is a comma-delimited string: e.g. "72,101,108,108,111,32,87,111,114,108,100,33,10"
+void SerialSendDecimal(char *values)
+{
+  char *p;
+  uint8_t code;
+  for (char* str = strtok_r(values, ",", &p); str; str = strtok_r(nullptr, ",", &p)) {
+    code = (uint8_t)atoi(str);
+    Serial.write(code);
+  }
+}
+
 uint32_t GetHash(const char *buffer, size_t size)
 {
   uint32_t hash = 0;

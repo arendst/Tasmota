@@ -1333,7 +1333,7 @@ void CmndSerialConfig(void)
 
 void CmndSerialSend(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
     SetSeriallog(LOG_LEVEL_NONE);
     Settings.flag.mqtt_serial = 1;                                  // CMND_SERIALSEND and CMND_SERIALLOG
     Settings.flag.mqtt_serial_raw = (XdrvMailbox.index > 3) ? 1 : 0;  // CMND_SERIALSEND3
@@ -1352,6 +1352,9 @@ void CmndSerialSend(void)
       }
       else if (5 == XdrvMailbox.index) {
         SerialSendRaw(RemoveSpace(XdrvMailbox.data));               // "AA004566" as hex values
+      }
+      else if (6 == XdrvMailbox.index) {
+        SerialSendDecimal(XdrvMailbox.data);
       }
       ResponseCmndDone();
     }
