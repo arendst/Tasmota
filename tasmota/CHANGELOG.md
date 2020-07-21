@@ -7,6 +7,7 @@
 - Change all timer references from ``Arm`` to ``Enable`` in GUI, ``Timer`` command and JSON message
 - Add command ``SetOption100 0/1`` to remove Zigbee ``ZbReceived`` value from ``{"ZbReceived":{xxx:yyy}}`` JSON message
 - Add command ``SetOption101 0/1`` to add the Zigbee source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
+- Add command (``S``)``SerialSend6`` \<comma seperated values\> (#8937)
 
 ### 8.3.1.6 20200617
 

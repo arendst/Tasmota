@@ -75,6 +75,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``SetOption100 0/1`` to remove Zigbee ``ZbReceived`` value from ``{"ZbReceived":{xxx:yyy}}`` JSON message
 - Add command ``SetOption101 0/1`` to add the Zigbee source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
 - Add command ``Module2`` to configure fallback module on fast reboot (#8464)
+- Add command (``S``)``SerialSend6`` \<comma seperated values\> (#8937)
 - Add commands ``LedPwmOn 0..255``, ``LedPwmOff 0..255`` and ``LedPwmMode1 0/1`` to control led brightness by George (#8491)
 - Add ESP32 ethernet commands ``EthType 0/1``, ``EthAddress 0..31`` and ``EthClockMode 0..3``
 - Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet
