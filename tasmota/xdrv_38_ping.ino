@@ -58,6 +58,7 @@ extern "C" {
     uint32_t    sum_time;           // cumulated time in ms for all successful responses (used to compute the average)
     bool        done;               // indicates the ping campaign is finished
     bool        fast;               // fast mode, i.e. stop pings when first successful response
+    String      hostname;           // original hostname before convertion to IP address
   } Ping_t;
 
   // globals
@@ -229,10 +230,22 @@ extern "C" {
   // ================================================================================
   // Start pings
   // ================================================================================
-  bool t_ping_start(uint32_t ip, uint32_t count) {
+  // returns:
+  //  0: OK
+  // -1: ping already ongoing for this address
+  // -2: unable to resolve address
+  int32_t t_ping_start(const char *hostname, uint32_t count) {
+    IPAddress ipfull;
+    if (!WiFi.hostByName(hostname, ipfull)) {
+      return -2;
+    }
+
+    uint32_t ip = ipfull;
+    if (0xFFFFFFFF == ip) { return -2; }    // invalid address
+    
     // check if pings are already ongoing for this IP
     if (t_ping_find(ip)) {
-      return false;
+      return -1;
     }
 
     Ping_t *ping = new Ping_t();
@@ -243,6 +256,7 @@ extern "C" {
     ping->min_time = UINT32_MAX;
     ping->ip = ip;
     ping->to_send_count = count - 1;
+    ping->hostname = hostname;
 
     // add to Linked List from head
     ping->next = ping_head;
@@ -254,6 +268,8 @@ extern "C" {
     // set timers for time-out and cadence
     sys_timeout(Ping_timeout_ms, t_ping_timeout, ping);
     sys_timeout(Ping_coarse, t_ping_coarse_tmr, ping);
+
+    return 0;
   }
 
 }
@@ -268,18 +284,22 @@ void PingResponsePoll(void) {
       uint32_t success = ping->success_count;
       uint32_t ip = ping->ip;
 
-      Response_P(PSTR("{\"" D_JSON_PING "\":{\"%d.%d.%d.%d\":{"
+      Response_P(PSTR("{\"" D_JSON_PING "\":{\"%s\":{"
                       "\"Reachable\":%s"
+                      ",\"IP\":\"%d.%d.%d.%d\""
                       ",\"Success\":%d"
                       ",\"Timeout\":%d"
                       ",\"MinTime\":%d"
                       ",\"MaxTime\":%d"
                       ",\"AvgTime\":%d"
                       "}}}"),
-                      ip & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, ip >> 24,
+                      ping->hostname.c_str(),
                       success ? "true" : "false",
-                      success, ping->timeout_count,
-                      success ? ping->min_time : 0, ping->max_time,
+                      ip & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, ip >> 24,
+                      success,
+                      ping->timeout_count,
+                      success ? ping->min_time : 0,
+                      ping->max_time,
                       success ? ping->sum_time / success : 0
                       );
       MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_PING));
@@ -303,18 +323,15 @@ void PingResponsePoll(void) {
 
 void CmndPing(void) {
   uint32_t count = XdrvMailbox.index;
-  IPAddress ip;
 
   RemoveSpace(XdrvMailbox.data);
   if (count > 10) { count = 8; }   // max 8 seconds
 
-  if (WiFi.hostByName(XdrvMailbox.data, ip)) {
-    bool ok = t_ping_start(ip, count);
-    if (ok) {
-      ResponseCmndDone();
-    } else {
-      ResponseCmndChar_P(PSTR("Ping already ongoing for this IP"));
-    }
+  int32_t res = t_ping_start(XdrvMailbox.data, count);
+  if (0 == res) {
+    ResponseCmndDone();
+  } else if (-1 == res) {
+    ResponseCmndChar_P(PSTR("Ping already ongoing for this IP"));
   } else {
     ResponseCmndChar_P(PSTR("Unable to resolve IP address"));
   }
