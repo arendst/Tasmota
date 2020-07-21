@@ -481,7 +481,7 @@
 
 // Commands xdrv_09_timers.ino
 #define D_CMND_TIMER "Timer"
-  #define D_JSON_TIMER_ARM "Arm"
+  #define D_JSON_TIMER_ARM "Enable"
   #define D_JSON_TIMER_MODE "Mode"
   #define D_JSON_TIMER_TIME "Time"
   #define D_JSON_TIMER_WINDOW "Window"

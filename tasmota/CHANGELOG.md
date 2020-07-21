@@ -4,7 +4,9 @@
 
 - Remove Arduino ESP8266 Core support for versions before 2.7.1
 - Change to limited support of Arduino IDE as an increasing amount of features cannot be compiled with Arduino IDE
-- Add command ``SetOption100 0/1`` to remove ``ZbReceived`` value from ``{"ZbReceived":{xxx:yyy}}`` JSON message
+- Change all timer references from ``Arm`` to ``Enable`` in GUI, ``Timer`` command and JSON message
+- Add command ``SetOption100 0/1`` to remove Zigbee ``ZbReceived`` value from ``{"ZbReceived":{xxx:yyy}}`` JSON message
+- Add command ``SetOption101 0/1`` to add the Zigbee source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
 
 ### 8.3.1.6 20200617
 
