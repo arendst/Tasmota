@@ -152,7 +152,9 @@ a_setoption = [[
     "Enable Ethernet (ESP32)",
     "Set Baud rate for TuyaMCU serial communication (0 = 9600 or 1 = 115200)",
     "Rotary encoder uses rules instead of light control",
-    "","","",
+    "Enable zerocross dimmer on PWM DIMMER",
+    "Remove ZbReceived form JSON message",
+    "Add the source endpoint as suffix to attributes",
     "","","","",
     "","","","",
     "","","",""
@@ -239,7 +241,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20200714 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20200721 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
