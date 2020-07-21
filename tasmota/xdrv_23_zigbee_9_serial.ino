@@ -302,6 +302,16 @@ void ZigbeeInitSerial(void)
 
 #ifdef USE_ZIGBEE_ZNP
 
+// flush any ongoing frame, sending 256 times 0xFF
+void ZigbeeZNPFlush(void) {
+  if (ZigbeeSerial) {
+		for (uint32_t i = 0; i < 256; i++) {
+			ZigbeeSerial->write(0xFF);
+    }
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPSENT " 0xFF x 255"));
+  }
+}
+
 void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
 	if ((len < 2) || (len > 252)) {
 		// abort, message cannot be less than 2 bytes for CMD1 and CMD2
