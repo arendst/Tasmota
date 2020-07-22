@@ -1070,9 +1070,13 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
 // value = 0 : drive reset pin and halt MCU
 // value = 1 : release the reset pin, restart
 int32_t EZ_Reset_Device(uint8_t value) {
+/*
   // we use Led4i to drive the reset pin. Since it is reverted we need to pass 1 to start reset, and 0 to release reset
   if (PinUsed(GPIO_LED1, ZIGBEE_EZSP_RESET_LED - 1)) {
     SetLedPowerIdx(ZIGBEE_EZSP_RESET_LED - 1, value ? 0 : 1);
+*/
+  if (PinUsed(GPIO_ZIGBEE_RST)) {
+    digitalWrite(Pin(GPIO_ZIGBEE_RST), value);
   } else {
     // no GPIO so we use software Reset instead
     if (value) {  // send reset only when we are supposed to release reset
@@ -1153,9 +1157,13 @@ int32_t Z_PublishAttributes(uint16_t shortaddr, uint16_t groupaddr, uint16_t clu
 // value = 0 : drive reset pin and halt MCU
 // value = 1 : release the reset pin, restart
 int32_t ZNP_Reset_Device(uint8_t value) {
+/*
   // we use Led4i to drive the reset pin. Since it is reverted we need to pass 1 to start reset, and 0 to release reset
   if (PinUsed(GPIO_LED1, ZIGBEE_EZSP_RESET_LED - 1)) {
     SetLedPowerIdx(ZIGBEE_EZSP_RESET_LED - 1, value ? 0 : 1);
+*/
+  if (PinUsed(GPIO_ZIGBEE_RST)) {
+    digitalWrite(Pin(GPIO_ZIGBEE_RST), value);
   } else {
     // no GPIO so we use software Reset instead
     if (value) {  // send reset only when we are supposed to release reset
