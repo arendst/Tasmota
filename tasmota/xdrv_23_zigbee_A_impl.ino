@@ -1023,13 +1023,13 @@ void CmndZbPermitJoin(void) {
   SBuffer buf(3);
   buf.add16(EZSP_permitJoining);
   buf.add8(duration);
-  ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len(), true);
+  ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len());
 
   // send ZDO_Mgmt_Permit_Joining_req to all routers
   buf.setLen(0);
   buf.add8(duration);
   buf.add8(0x01);       // TC_Significance - This field shall always have a value of 1, indicating a request to change the Trust Center policy. If a frame is received with a value of 0, it shall be treated as having a value of 1.
-  // EZ_SendZDO(0xFFFC, ZDO_Mgmt_Permit_Joining_req, buf.buf(), buf.len());  TODO fix NAK/ACK first
+  EZ_SendZDO(0xFFFC, ZDO_Mgmt_Permit_Joining_req, buf.buf(), buf.len());
 #endif // USE_ZIGBEE_EZSP
 
   ResponseCmndDone();
@@ -1059,7 +1059,7 @@ void CmndZbEZSPListen(void) {
   buf.add16(group);   // group
   buf.add8(0x01);       // endpoint
   buf.add8(0x00);       // network index
-  ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len(), true);
+  ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len());
 
   ResponseCmndDone();
 }
@@ -1240,7 +1240,10 @@ bool Xdrv23(uint8_t function)
         }
         break;
       case FUNC_LOOP:
-        if (ZigbeeSerial) { ZigbeeInputLoop(); }
+        if (ZigbeeSerial) {
+          ZigbeeInputLoop();
+          ZigbeeOutputLoop();   // send any outstanding data
+        }
 				if (zigbee.state_machine) {
           ZigbeeStateMachine_Run();
 				}

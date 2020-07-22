@@ -1005,7 +1005,7 @@ void EZ_SendZDO(uint16_t shortaddr, uint16_t cmd, const unsigned char *payload, 
     buf.addBuffer(payload, payload_len);
   }
 
-  ZigbeeEZSPSendCmd(buf.buf(), buf.len(), true);
+  ZigbeeEZSPSendCmd(buf.buf(), buf.len());
 }
 
 /*********************************************************************************************\
