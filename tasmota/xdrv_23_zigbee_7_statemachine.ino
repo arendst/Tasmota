@@ -1097,7 +1097,7 @@ void ZigbeeStateMachine_Run(void) {
         ZigbeeZNPSend((uint8_t*) cur_ptr1, cur_d8 /* len */);
 #endif // USE_ZIGBEE_ZNP
 #ifdef USE_ZIGBEE_EZSP
-        ZigbeeEZSPSendCmd((uint8_t*) cur_ptr1, cur_d8 /* len */, true);  // send cancel byte
+        ZigbeeEZSPSendCmd((uint8_t*) cur_ptr1, cur_d8 /* len */);  // send cancel byte
 #endif // USE_ZIGBEE_EZSP
         break;
       case ZGB_INSTR_WAIT_UNTIL:
