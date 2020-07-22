@@ -647,6 +647,7 @@
 #define D_SENSOR_OLED_RESET    "OLED Reset"
 #define D_SENSOR_ZIGBEE_TXD    "Zigbee TX"
 #define D_SENSOR_ZIGBEE_RXD    "Zigbee RX"
+#define D_SENSOR_ZIGBEE_RST    "Zigbee Rst"
 #define D_SENSOR_SOLAXX1_TX    "SolaxX1 TX"
 #define D_SENSOR_SOLAXX1_RX    "SolaxX1 RX"
 #define D_SENSOR_IBEACON_TX    "iBeacon TX"

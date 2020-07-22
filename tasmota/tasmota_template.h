@@ -241,6 +241,7 @@ enum UserSelectablePins {
   GPIO_LMT01,          // LMT01 input counting pin
   GPIO_IEM3000_TX,     // IEM3000 Serial interface
   GPIO_IEM3000_RX,     // IEM3000 Serial interface
+  GPIO_ZIGBEE_RST,     // Zigbee reset
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -335,7 +336,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TCP_TXD "|" D_SENSOR_TCP_RXD "|"
   D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
   D_SENSOR_LMT01_PULSE "|"
-  D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX
+  D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX "|"
+  D_SENSOR_ZIGBEE_RST
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -605,6 +607,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_ZIGBEE
   GPIO_ZIGBEE_TX,      // Zigbee Serial interface
   GPIO_ZIGBEE_RX,      // Zigbee Serial interface
+  GPIO_ZIGBEE_RST,     // Zigbee reset
 #endif
 #ifdef USE_MHZ19
   GPIO_MHZ_TXD,        // MH-Z19 Serial interface

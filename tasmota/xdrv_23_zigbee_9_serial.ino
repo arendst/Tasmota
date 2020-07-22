@@ -292,6 +292,12 @@ void ZigbeeInitSerial(void)
 			zigbee_buffer = new SBuffer(ZIGBEE_BUFFER_SIZE);
 // AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem3 = %d"), ESP_getFreeHeap());
 		}
+
+    if (PinUsed(GPIO_ZIGBEE_RST)) {
+      pinMode(Pin(GPIO_ZIGBEE_RST), OUTPUT);
+      digitalWrite(Pin(GPIO_ZIGBEE_RST), 1);
+    }
+
     zigbee.active = true;
 		zigbee.init_phase = true;			// start the state machine
     zigbee.state_machine = true;      // start the state machine
