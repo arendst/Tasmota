@@ -350,7 +350,7 @@ void TelegramLoop(void) {
             Telegram.state++;
           }
         } else {
-          if (Telegram.skip) {  // Skip first update as it may be a restart (again)
+          if (Telegram.skip) {  // Skip first update after restart as it may be a restart (again)
             Telegram.skip = false;
           } else {
             if (Telegram.message[0][0].toInt() && (Telegram.message[Telegram.index][5].length() > 0)) {
