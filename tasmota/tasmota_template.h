@@ -799,7 +799,7 @@ enum SupportedModules {
   SONOFF_S31, ZENGGE_ZF_WF017, SONOFF_POW_R2, SONOFF_IFAN02, BLITZWOLF_BWSHP, SHELLY1, SHELLY2, PHILIPS, NEO_COOLCAM, ESP_SWITCH,
   OBI, TECKIN, APLIC_WDP303075, TUYA_DIMMER, GOSUND, ARMTRONIX_DIMMERS, SK03_TUYA, PS_16_DZ, TECKIN_US, MANZOKU_EU_4,
   OBI2, YTF_IR_BRIDGE, DIGOO, KA10, ZX2820, MI_DESK_LAMP, SP10, WAGA, SYF05, SONOFF_L1,
-  SONOFF_IFAN03, EXS_DIMMER, PWM_DIMMER, SONOFF_D1,
+  SONOFF_IFAN03, EXS_DIMMER, PWM_DIMMER, SONOFF_D1, SONOFF_ZB_BRIDGE,
   MAXMODULE};
 
 #define USER_MODULE        255
@@ -812,7 +812,7 @@ const char kModuleNames[] PROGMEM =
   "Sonoff S31|Zengge WF017|Sonoff Pow R2|Sonoff iFan02|BlitzWolf SHP|Shelly 1|Shelly 2|Xiaomi Philips|Neo Coolcam|ESP Switch|"
   "OBI Socket|Teckin|AplicWDP303075|Tuya MCU|Gosund SP1 v23|ARMTR Dimmer|SK03 Outdoor|PS-16-DZ|Teckin US|Manzoku strip|"
   "OBI Socket 2|YTF IR Bridge|Digoo DG-SP202|KA10|Luminea ZX2820|Mi Desk Lamp|SP10|WAGA CHCZ02MB|SYF05|Sonoff L1|"
-  "Sonoff iFan03|EXS Dimmer|PWM Dimmer|Sonoff D1"
+  "Sonoff iFan03|EXS Dimmer|PWM Dimmer|Sonoff D1|Sonoff ZbBridge"
   ;
 
 const uint8_t kModuleNiceList[] PROGMEM = {
@@ -850,6 +850,9 @@ const uint8_t kModuleNiceList[] PROGMEM = {
 #endif
 #ifdef USE_SONOFF_RF
   SONOFF_BRIDGE,       // Sonoff Bridge
+#endif
+#ifdef USE_ZIGBEE_EZSP
+  SONOFF_ZB_BRIDGE,
 #endif
   SONOFF_SV,           // Sonoff Development Devices
   SONOFF_DEV,
@@ -2278,6 +2281,25 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     0,                // GPIO12
     GPIO_LED1_INV,    // GPIO13 WiFi Blue Led - Link and Power status
     0, 0, 0, 0
+  },
+  {                   // SONOFF_ZB_BRIDGE - Sonoff Zigbee Bridge (ESP8266)
+    GPIO_LED1_INV,    // GPIO00 Led (0 = On, 1 = Off) - Status
+    GPIO_ZIGBEE_TX,   // GPIO01 Zigbee Serial control
+    0,                // GPIO02
+    GPIO_ZIGBEE_RX,   // GPIO03 Zigbee Serial control
+    GPIO_ZIGBEE_RST,  // GPIO04 ZIgbee Reset
+    0,
+                      // GPIO06 (SD_CLK   Flash)
+                      // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                      // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+    0,                // GPIO09 (SD_DATA2 Flash QIO)
+    0,                // GPIO10 (SD_DATA3 Flash QIO)
+                      // GPIO11 (SD_CMD   Flash)
+    0,
+    GPIO_LEDLNK_INV,  // GPIO13 Blue Led (0 = On, 1 = Off) - Link status
+    0, 0,
+    GPIO_KEY1,        // GPIO16 Button
+    0
   }
 };
 
