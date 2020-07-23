@@ -1504,6 +1504,7 @@ jobs:
         [ ! -f ./mv_firmware/tasmota-ir*.* ] || mv ./mv_firmware/tasmota-ir*.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/tasmota-display.* ] || mv ./mv_firmware/tasmota-display.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/tasmota-knx.* ] || mv ./mv_firmware/tasmota-knx.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/tasmota-zbbridge.* ./firmware/tasmota/        
         [ ! -f ./mv_firmware/tasmota32.* ] || mv ./mv_firmware/tasmota32.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-sensors.* ] || mv ./mv_firmware/tasmota32-sensors.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-minimal.* ] || mv ./mv_firmware/tasmota32-minimal.* ./firmware/tasmota32/
