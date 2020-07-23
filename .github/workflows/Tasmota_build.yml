@@ -207,6 +207,28 @@ jobs:
         path: ./build_output/firmware
 
   
+  tasmota-zbbridge:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -U platformio
+        platformio upgrade --dev
+        platformio update
+    - name: Run PlatformIO
+      run: | 
+        platformio run -e tasmota-zbbridge
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output/firmware
+  
   tasmota-BG:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1482,6 +1504,7 @@ jobs:
         [ ! -f ./mv_firmware/tasmota-ir*.* ] || mv ./mv_firmware/tasmota-ir*.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/tasmota-display.* ] || mv ./mv_firmware/tasmota-display.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/tasmota-knx.* ] || mv ./mv_firmware/tasmota-knx.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/tasmota-zbbridge.* ./firmware/tasmota/        
         [ ! -f ./mv_firmware/tasmota32.* ] || mv ./mv_firmware/tasmota32.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-sensors.* ] || mv ./mv_firmware/tasmota32-sensors.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/tasmota32-minimal.* ] || mv ./mv_firmware/tasmota32-minimal.* ./firmware/tasmota32/
