@@ -422,7 +422,7 @@ struct {
   uint8_t       light_correction;          // 49D
   uint8_t       light_dimmer;              // 49E
   uint8_t       rule_enabled;              // 49F
-  uint8_t       rule_once;                 // 4A0
+  uint8_t       rule_once;                 // 4A0  bit 6+7 used by xdrv_10_scripter
   uint8_t       light_fade;                // 4A1
   uint8_t       light_speed;               // 4A2
   uint8_t       light_scheme;              // 4A3

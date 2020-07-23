@@ -791,6 +791,11 @@ bool RulesProcess(void)
 
 void RulesInit(void)
 {
+  // indicates scripter not enabled
+  bitWrite(Settings.rule_once, 7, 0);
+  // and indicates scripter do not use compress
+  bitWrite(Settings.rule_once, 6, 0);
+
   rules_flag.data = 0;
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (0 == GetRuleLen(i)) {

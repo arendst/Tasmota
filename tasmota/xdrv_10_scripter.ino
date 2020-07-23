@@ -6619,6 +6619,8 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_pram=(uint8_t*)Settings.script_pram[0];
       glob_script_mem.script_pram_size=PMEM_SIZE;
 
+      // indicates scripter enabled (use rules[][] as single array)
+      bitWrite(Settings.rule_once, 7, 1);
 #ifdef USE_SCRIPT_COMPRESSION
       int32_t len_decompressed;
       sprt=(char*)calloc(UNISHOXRSIZE+8,1);
@@ -6627,7 +6629,12 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_size=UNISHOXRSIZE;
       len_decompressed = SCRIPT_DECOMPRESS(Settings.rules[0], strlen(Settings.rules[0]), glob_script_mem.script_ram, glob_script_mem.script_size);
       if (len_decompressed>0) glob_script_mem.script_ram[len_decompressed]=0;
+      // indicates scripter use compression
+      bitWrite(Settings.rule_once, 6, 1);
       //AddLog_P2(LOG_LEVEL_INFO, PSTR("decompressed script len %d"),len_decompressed);
+#else  // USE_SCRIPT_COMPRESSION
+      // indicates scripter does not use compression
+      bitWrite(Settings.rule_once, 6, 0);
 #endif // USE_SCRIPT_COMPRESSION
 
 #ifdef USE_BUTTON_EVENT
