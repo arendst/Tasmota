@@ -417,6 +417,11 @@
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "zbbridge"
 
+#undef MODULE
+#define MODULE                 SONOFF_ZB_BRIDGE  // [Module] Select default module from tasmota_template.h
+#undef FALLBACK_MODULE
+#define FALLBACK_MODULE        SONOFF_ZB_BRIDGE  // [Module2] Select default module on fast reboot where USER_MODULE is user template
+
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #define USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
