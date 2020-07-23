@@ -330,12 +330,33 @@ void MCP230xx_Show(bool json)
   if (json) {
     uint8_t gpio = MCP230xx_readGPIO(0);
     ResponseAppend_P(PSTR(",\"MCP230XX\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i"),
-                (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
+                (gpio>>0)&1, (gpio>>1)&1, (gpio>>2)&1, (gpio>>3)&1, (gpio>>4)&1, (gpio>>5)&1, (gpio>>6)&1, (gpio>>7)&1);
+    uint8_t gpiob = 0;
     if (2 == mcp230xx_type) {
-      gpio = MCP230xx_readGPIO(1);
+      gpiob = MCP230xx_readGPIO(1);
       ResponseAppend_P(PSTR(",\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i"),
-                  (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
+                  (gpiob>>0)&1, (gpiob>>1)&1, (gpiob>>2)&1, (gpiob>>3)&1, (gpiob>>4)&1, (gpiob>>5)&1, (gpiob>>6)&1, (gpiob>>7)&1);
     }
+
+#ifdef USE_MCP230xx_OUTPUT
+    uint8_t outputcount = 0;
+    for (uint32_t pinx = 0; pinx < mcp230xx_pincount; pinx++) {
+      if (Settings.mcp230xx_config[pinx].pinmode >= 5) { outputcount++; }
+    }
+    if (outputcount) {
+      uint16_t gpiototal = ((uint16_t)gpiob << 8) | gpio;
+      ResponseAppend_P(PSTR(",\"MCP230_OUT\":{"));
+      char stt[7];
+      for (uint32_t pinx = 0; pinx < mcp230xx_pincount; pinx++) {
+        if (Settings.mcp230xx_config[pinx].pinmode >= 5) {
+          sprintf(stt, ConvertNumTxt(((gpiototal>>pinx)&1), Settings.mcp230xx_config[pinx].pinmode));
+          ResponseAppend_P(PSTR("\"OUT_D%i\":\"%s\","), pinx, stt);
+        }
+      }
+      ResponseAppend_P(PSTR("\"END\":1}"));
+    }
+#endif  // USE_MCP230xx_OUTPUT
+
     ResponseJsonEnd();
   }
 }
@@ -714,6 +735,7 @@ void MCP230xx_UpdateWebData(void)
 
 #endif // USE_MCP230xx_DISPLAYOUTPUT
 
+/*
 #ifdef USE_MCP230xx_OUTPUT
 
 void MCP230xx_OutputTelemetry(void)
@@ -743,6 +765,7 @@ void MCP230xx_OutputTelemetry(void)
 }
 
 #endif // USE_MCP230xx_OUTPUT
+*/
 
 void MCP230xx_Interrupt_Counter_Report(void) {
   ResponseTime_P(PSTR(",\"MCP230_INTTIMER\":{"));
@@ -806,9 +829,11 @@ bool Xsns29(uint8_t function)
           if (mcp230xx_int_retainer_en) { // We have pins configured for interrupt retain reporting
             MCP230xx_Interrupt_Retain_Report();
           }
+/*
 #ifdef USE_MCP230xx_OUTPUT
           MCP230xx_OutputTelemetry();
 #endif // USE_MCP230xx_OUTPUT
+*/
         }
         break;
       case FUNC_JSON_APPEND:
