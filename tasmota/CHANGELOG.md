@@ -5,6 +5,8 @@
 - Remove Arduino ESP8266 Core support for versions before 2.7.1
 - Change to limited support of Arduino IDE as an increasing amount of features cannot be compiled with Arduino IDE
 - Change all timer references from ``Arm`` to ``Enable`` in GUI, ``Timer`` command and JSON message
+- Change Domoticz commands prefix from ``Domoticz`` to ``Dz``
+- Add command ``DzSend<type> <index>,<value1(;value2)|state>`` to send values or state to Domoticz
 - Add command ``SetOption100 0/1`` to remove Zigbee ``ZbReceived`` value from ``{"ZbReceived":{xxx:yyy}}`` JSON message
 - Add command ``SetOption101 0/1`` to add the Zigbee source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
 - Add command (``S``)``SerialSend6`` \<comma seperated values\> (#8937)
