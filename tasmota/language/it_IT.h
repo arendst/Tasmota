@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - rev. 24.07.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -625,7 +625,7 @@
 #define D_SENSOR_HJL_CF        "BL0937 - CF"
 #define D_SENSOR_MCP39F5_TX    "MCP39F5 - TX"
 #define D_SENSOR_MCP39F5_RX    "MCP39F5 - RX"
-#define D_SENSOR_MCP39F5_RST   "MCP39F5 Rst"
+#define D_SENSOR_MCP39F5_RST   "MCP39F5 - Reset"
 #define D_SENSOR_CSE7766_TX    "CSE7766 - TX"
 #define D_SENSOR_CSE7766_RX    "CSE7766 - RX"
 #define D_SENSOR_PN532_TX      "PN532 - TX"
@@ -644,10 +644,10 @@
 #define D_SENSOR_HRE_DATA      "HRE - Dati"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 - IRQ"
 #define D_SENSOR_BUZZER        "Cicalino"
-#define D_SENSOR_OLED_RESET    "Ripristino OLED"
+#define D_SENSOR_OLED_RESET    "OLED - Reset"
 #define D_SENSOR_ZIGBEE_TXD    "Zigbee - TX"
 #define D_SENSOR_ZIGBEE_RXD    "Zigbee - RX"
-#define D_SENSOR_ZIGBEE_RST    "Zigbee Rst"
+#define D_SENSOR_ZIGBEE_RST    "Zigbee - Reset"
 #define D_SENSOR_SOLAXX1_TX    "SolaxX1 - TX"
 #define D_SENSOR_SOLAXX1_RX    "SolaxX1- RX"
 #define D_SENSOR_IBEACON_TX    "iBeacon - TX"
@@ -801,7 +801,7 @@
 #define D_AS3935_DISTANCE "distanza:"
 #define D_AS3935_DISTURBER "disturbatore:"
 #define D_AS3935_VRMS "µVrms:"
-#define D_AS3935_APRX "apross.:"
+#define D_AS3935_APRX "appross.:"
 #define D_AS3935_AWAY "lontano"
 #define D_AS3935_LIGHT "illuminazione"
 #define D_AS3935_OUT "illuminazione fuori intervallo"
