@@ -1105,12 +1105,6 @@ enum ZCL_Global_Commands {
 #define ZF(s) static const char ZS_ ## s[] PROGMEM = #s;
 #define Z(s)  ZS_ ## s
 
-typedef struct Z_StatusLine {
-  uint32_t     status;          // no need to use uint8_t since it uses 32 bits anyways
-  const char * status_msg;
-} Z_StatusLine;
-
-
 // ZDP Enumeration, see Zigbee spec 2.4.5
 String getZDPStatusMessage(uint8_t status) {
   static const char    StatusMsg[] PROGMEM = "SUCCESS|INV_REQUESTTYPE|DEVICE_NOT_FOUND|INVALID_EP|NOT_ACTIVE|NOT_SUPPORTED"

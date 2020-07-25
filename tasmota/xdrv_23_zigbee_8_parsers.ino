@@ -115,6 +115,43 @@ int32_t EZ_NetworkParameters(int32_t res, class SBuffer &buf) {
   return res;
 }
 
+//
+// Handle a "incomingRouteErrorHandler" incoming message
+//
+int32_t EZ_RouteError(int32_t res, const class SBuffer &buf) {
+  uint8_t  status = buf.get8(2);
+  uint16_t shortaddr = buf.get16(3);
+
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_ROUTE_ERROR "\":{"
+                  "\"ShortAddr\":\"0x%04X\",\"" D_JSON_ZIGBEE_STATUS "\":%d,\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"0x%s\"}}"),
+                  shortaddr, status, "");
+
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+
+  return -1;
+}
+
+//
+// Handle a "permitJoining" incoming message
+//
+int32_t EZ_PermitJoinRsp(int32_t res, const class SBuffer &buf) {
+  uint8_t  status = buf.get8(2);
+  
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
+                  "\"Status\":%d,\"Message\":\"%s"),
+                  (0 == status) ? ZIGBEE_STATUS_PERMITJOIN_OPEN_60 : ZIGBEE_STATUS_PERMITJOIN_CLOSE,
+                  (0 == status) ? PSTR("Pairing mode enabled") : PSTR("Pairing mode error")
+                  );
+  if (status)  {
+    ResponseAppend_P("0x%02X", status);
+  }
+  ResponseAppend_P(PSTR("\"}}"));
+
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+
+  return -1;
+}
+
 #endif // USE_ZIGBEE_EZSP
 
 /*********************************************************************************************\
@@ -785,6 +822,72 @@ int32_t Z_MgmtBindRsp(int32_t res, const class SBuffer &buf) {
   return -1;
 }
 
+//
+// Handle Parent Annonce Rsp incoming message
+//
+// rsp: true = ZDO_Parent_annce_rsp, false = ZDO_Parent_annce
+int32_t Z_ParentAnnceRsp(int32_t res, const class SBuffer &buf, bool rsp) {
+#ifdef USE_ZIGBEE_ZNP
+//   uint16_t    shortaddr   = buf.get16(2);
+//   uint8_t     status      = buf.get8(4);
+//   uint8_t     bind_total  = buf.get8(5);
+//   uint8_t     bind_start  = buf.get8(6);
+//   uint8_t     bind_len    = buf.get8(7);
+//   const size_t prefix_len = 8;
+#endif // USE_ZIGBEE_ZNP
+#ifdef USE_ZIGBEE_EZSP
+  size_t prefix_len;
+  uint8_t     status;
+  uint8_t     num_children;
+  uint16_t    shortaddr   = buf.get16(buf.len()-2);
+  if (rsp) {
+    status      = buf.get8(0);
+    num_children = buf.get8(1);
+    prefix_len = 2;
+  } else {
+    status      = 0;
+    num_children = buf.get8(0);
+    prefix_len = 1;
+  }
+#endif // USE_ZIGBEE_EZSP
+
+  const char * friendlyName = zigbee_devices.getFriendlyName(shortaddr);
+
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_PARENT "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""), shortaddr);
+  if (friendlyName) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_NAME "\":\"%s\""), friendlyName);
+  }
+  if (rsp) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_STATUS "\":%d"
+                          ",\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"%s\""
+                          ), status, getZigbeeStatusMessage(status).c_str());
+  }
+  ResponseAppend_P(PSTR(",\"Children\":%d"
+                        ",\"ChildInfo\":["
+                        ), num_children);
+
+  uint32_t idx = prefix_len;
+  for (uint32_t i = 0; i < num_children; i++) {
+    if (idx + 8 > buf.len()) { break; }   // overflow, frame size is between 14 and 21
+
+    uint64_t    child_ieee = buf.get64(idx);
+    idx += 8;
+
+    if (i > 0) {
+      ResponseAppend_P(PSTR(","));
+    }
+    char hex[20];
+    Uint64toHex(child_ieee, hex, 64);
+    ResponseAppend_P(PSTR("\"0x%s\""), hex);
+  }
+
+  ResponseAppend_P(PSTR("]}}"));
+
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_BIND_STATE));
+
+  return -1;
+}
+
 /*********************************************************************************************\
  * Send specific ZNP messages
 \*********************************************************************************************/
@@ -1051,6 +1154,14 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
         return Z_UnbindRsp(res, zdo_buf);
       case ZDO_Mgmt_Bind_rsp:
         return Z_MgmtBindRsp(res, zdo_buf);
+      case ZDO_Parent_annce:
+        return Z_ParentAnnceRsp(res, zdo_buf, false);
+      case ZDO_Parent_annce_rsp:
+        return Z_ParentAnnceRsp(res, zdo_buf, true);
+      default:
+        // TODO move later to LOG_LEVEL_DEBUG
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("ZIG: Internal ZDO message 0x%04X sent from 0x%04X %s"), clusterid, srcaddr, wasbroadcast ? PSTR("(broadcast)") : "");
+        break;
     }
   } else {
     bool            defer_attributes = false;     // do we defer attributes reporting to coalesce
@@ -1105,6 +1216,12 @@ int32_t EZ_Recv_Default(int32_t res, const class SBuffer &buf) {
         break;
       case EZSP_trustCenterJoinHandler:
         return EZ_ReceiveTCJoinHandler(res, buf);
+        break;
+      case EZSP_incomingRouteErrorHandler:
+        return EZ_RouteError(res, buf);
+        break;
+      case EZSP_permitJoining:
+        return EZ_PermitJoinRsp(res, buf);
         break;
     }
     return -1;
