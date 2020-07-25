@@ -44,7 +44,7 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 28000;  // milliseconds - Allow
 uint8_t *efm8bb1_update = nullptr;
 #endif  // USE_RF_FLASH
 
-enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT };
+enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32 };
 
 static const char * HEADER_KEYS[] = { "User-Agent", };
 
@@ -2627,20 +2627,26 @@ void HandleUploadDone(void)
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     WSContentSend_P(HTTP_MSG_RSTRT);
     ShowWebSource(SRC_WEBGUI);
+    restart_flag = 2;  // Always restart to re-enable disabled features during update
+#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+    if (ZigbeeUploadOtaReady()) {
+      restart_flag = 0;  // Hold restart as firmware still needs to be written to MCU EFR32
+    }
+#endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_TASMOTA_CLIENT
     if (TasmotaClient_GetFlagFlashing()) {
-      restart_flag = 0;
-    } else { // It was a normal firmware file, or we are ready to restart device
-      restart_flag = 2;
+      restart_flag = 0;  // Hold restart as code still needs to be trasnferred to Atmega
     }
-#else
-    restart_flag = 2;  // Always restart to re-enable disabled features during update
-#endif
+#endif  // USE_TASMOTA_CLIENT
   }
   SettingsBufferFree();
   WSContentSend_P(PSTR("</div><br>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
+
+#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+  ZigbeeUploadXmodem();
+#endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_TASMOTA_CLIENT
   if (TasmotaClient_GetFlagFlashing()) {
     TasmotaClient_Flash();
@@ -2707,6 +2713,15 @@ void HandleUploadLoop(void)
         Web.config_block_count = 0;
       }
       else {
+#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+        if ((SONOFF_ZB_BRIDGE == my_module_type) && (upload.buf[0] == 0xEB)) {  // Check if this is a Zigbee bridge FW file
+          Update.end();              // End esp8266 update session
+          Web.upload_file_type = UPL_EFR32;
+
+          Web.upload_error = ZigbeeUploadInit();  // 15
+          if (Web.upload_error != 0) { return; }
+        } else
+#endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_RF_FLASH
         if ((SONOFF_BRIDGE == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a RF bridge FW file
           Update.end();              // End esp8266 update session
@@ -2750,6 +2765,15 @@ void HandleUploadLoop(void)
         Web.config_block_count++;
       }
     }
+#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+    else if (UPL_EFR32 == Web.upload_file_type) {
+      // Write buffers to MCU EFR32
+      if (!ZigbeeUploadWriteBuffer(upload.buf, upload.currentSize)) {
+        Web.upload_error = 9;  // File too large
+        return;
+      }
+    }
+#endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_RF_FLASH
     else if (UPL_EFM8BB1 == Web.upload_file_type) {
       if (efm8bb1_update != nullptr) {    // We have carry over data since last write, i. e. a start but not an end
@@ -2844,6 +2868,13 @@ void HandleUploadLoop(void)
         return;
       }
     }
+#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+    else if (UPL_EFR32 == Web.upload_file_type) {
+      // Zigbee FW upload to ESP8266 flash is done
+      ZigbeeUploadDone();  // Signal upload done and ready for delayed upload to MCU EFR32
+      Web.upload_file_type = UPL_TASMOTA;
+    }
+#endif
 #ifdef USE_RF_FLASH
     else if (UPL_EFM8BB1 == Web.upload_file_type) {
       // RF FW flash done
