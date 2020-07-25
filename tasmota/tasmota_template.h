@@ -2283,21 +2283,22 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     0, 0, 0, 0
   },
   {                   // SONOFF_ZB_BRIDGE - Sonoff Zigbee Bridge (ESP8266)
-    GPIO_LED1_INV,    // GPIO00 Led (0 = On, 1 = Off) - Status
+    GPIO_LED1_INV,    // GPIO00 Green Led (0 = On, 1 = Off) - Traffic between ESP and EFR
     GPIO_ZIGBEE_TX,   // GPIO01 Zigbee Serial control
     0,                // GPIO02
     GPIO_ZIGBEE_RX,   // GPIO03 Zigbee Serial control
-    GPIO_ZIGBEE_RST,  // GPIO04 ZIgbee Reset
-    0,
+    GPIO_ZIGBEE_RST,  // GPIO04 Zigbee Reset
+    0,                // GPIO05 EFR32 Bootloader mode (drive Low for Gecko Bootloader, inactive or high for Zigbee EmberZNet)
                       // GPIO06 (SD_CLK   Flash)
                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
     0,                // GPIO09 (SD_DATA2 Flash QIO)
     0,                // GPIO10 (SD_DATA3 Flash QIO)
                       // GPIO11 (SD_CMD   Flash)
-    0,
+    GPIO_I2C_SDA,     // GPIO12 I2C SDA - connected to 512KB EEPROM
     GPIO_LEDLNK_INV,  // GPIO13 Blue Led (0 = On, 1 = Off) - Link status
-    0, 0,
+    GPIO_I2C_SCL,     // GPIO14 I2C SCL - connected to 512KB EEPROM
+    0,                // GPIO15 connected to IO15 pad, also used for logging
     GPIO_KEY1,        // GPIO16 Button
     0
   }
