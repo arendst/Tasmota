@@ -822,20 +822,12 @@ int32_t Z_MgmtBindRsp(int32_t res, const class SBuffer &buf) {
   return -1;
 }
 
+#ifdef USE_ZIGBEE_EZSP
 //
 // Handle Parent Annonce Rsp incoming message
 //
 // rsp: true = ZDO_Parent_annce_rsp, false = ZDO_Parent_annce
-int32_t Z_ParentAnnceRsp(int32_t res, const class SBuffer &buf, bool rsp) {
-#ifdef USE_ZIGBEE_ZNP
-//   uint16_t    shortaddr   = buf.get16(2);
-//   uint8_t     status      = buf.get8(4);
-//   uint8_t     bind_total  = buf.get8(5);
-//   uint8_t     bind_start  = buf.get8(6);
-//   uint8_t     bind_len    = buf.get8(7);
-//   const size_t prefix_len = 8;
-#endif // USE_ZIGBEE_ZNP
-#ifdef USE_ZIGBEE_EZSP
+int32_t EZ_ParentAnnceRsp(int32_t res, const class SBuffer &buf, bool rsp) {
   size_t prefix_len;
   uint8_t     status;
   uint8_t     num_children;
@@ -849,7 +841,6 @@ int32_t Z_ParentAnnceRsp(int32_t res, const class SBuffer &buf, bool rsp) {
     num_children = buf.get8(0);
     prefix_len = 1;
   }
-#endif // USE_ZIGBEE_EZSP
 
   const char * friendlyName = zigbee_devices.getFriendlyName(shortaddr);
 
@@ -887,6 +878,7 @@ int32_t Z_ParentAnnceRsp(int32_t res, const class SBuffer &buf, bool rsp) {
 
   return -1;
 }
+#endif // USE_ZIGBEE_EZSP
 
 /*********************************************************************************************\
  * Send specific ZNP messages
@@ -1155,9 +1147,9 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
       case ZDO_Mgmt_Bind_rsp:
         return Z_MgmtBindRsp(res, zdo_buf);
       case ZDO_Parent_annce:
-        return Z_ParentAnnceRsp(res, zdo_buf, false);
+        return EZ_ParentAnnceRsp(res, zdo_buf, false);
       case ZDO_Parent_annce_rsp:
-        return Z_ParentAnnceRsp(res, zdo_buf, true);
+        return EZ_ParentAnnceRsp(res, zdo_buf, true);
       default:
         // TODO move later to LOG_LEVEL_DEBUG
         AddLog_P2(LOG_LEVEL_INFO, PSTR("ZIG: Internal ZDO message 0x%04X sent from 0x%04X %s"), clusterid, srcaddr, wasbroadcast ? PSTR("(broadcast)") : "");
