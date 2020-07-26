@@ -1240,13 +1240,18 @@ bool Xdrv23(uint8_t function)
         }
         break;
       case FUNC_LOOP:
+#ifdef USE_ZIGBEE_EZSP
+        if (ZigbeeUploadXmodem()) {
+          return false;
+        }
+#endif
         if (ZigbeeSerial) {
           ZigbeeInputLoop();
           ZigbeeOutputLoop();   // send any outstanding data
         }
-				if (zigbee.state_machine) {
+        if (zigbee.state_machine) {
           ZigbeeStateMachine_Run();
-				}
+        }
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:

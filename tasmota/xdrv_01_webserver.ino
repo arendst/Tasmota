@@ -2644,9 +2644,6 @@ void HandleUploadDone(void)
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 
-#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
-  ZigbeeUploadXmodem();
-#endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_TASMOTA_CLIENT
   if (TasmotaClient_GetFlagFlashing()) {
     TasmotaClient_Flash();
