@@ -267,7 +267,6 @@ bool ZigbeeUploadXmodem(void) {
         // The target device’s bootloader sends output over its serial port after it receives a carriage return
         // from the source device
         if (millis() > XModem.delay) {
-          ZigbeeSerial->write('a');
           ZigbeeSerial->write(XM_CR);
           XModem.delay = millis() + 500;
         }
