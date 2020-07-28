@@ -44,6 +44,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - **tasmota-sensors.bin** = The Sensors version adds more useful sensors.
 - **tasmota-ir** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features.
 - **tasmota-display.bin** = The Display version without Energy Monitoring but adds display support.
+- **tasmota-zbbridge.bin** = The dedicated Sonoff Zigbee Bridge version.
 - **tasmota-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
 
 [List](MODULES.md) of embedded modules.
