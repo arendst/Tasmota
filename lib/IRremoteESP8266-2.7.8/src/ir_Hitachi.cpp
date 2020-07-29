@@ -52,6 +52,8 @@ using irutils::addModeToString;
 using irutils::addModelToString;
 using irutils::addFanToString;
 using irutils::addTempToString;
+using irutils::checkInvertedBytePairs;
+using irutils::invertBytePairs;
 using irutils::minsToString;
 using irutils::setBit;
 using irutils::setBits;
@@ -1047,8 +1049,7 @@ void IRHitachiAc424::stateReset(void) {
 
 /// Update the internal consistency check for the protocol.
 void IRHitachiAc424::setInvertedStates(void) {
-  for (uint8_t i = 3; i < kHitachiAc424StateLength - 1; i += 2)
-    remote_state[i + 1] = ~remote_state[i];
+  invertBytePairs(remote_state + 3, kHitachiAc424StateLength - 3);
 }
 
 /// Set up hardware to be able to send a message.
@@ -1402,8 +1403,7 @@ void IRHitachiAc3::stateReset(void) {
 /// @param[in] length The size of the state array.
 /// @note This is this protocols integrity check.
 void IRHitachiAc3::setInvertedStates(const uint16_t length) {
-  for (uint8_t i = 3; i < length - 1; i += 2)
-    remote_state[i + 1] = ~remote_state[i];
+  if (length > 3) invertBytePairs(remote_state + 3, length - 3);
 }
 
 /// Check if every second byte of the state, after the fixed header
@@ -1413,9 +1413,7 @@ void IRHitachiAc3::setInvertedStates(const uint16_t length) {
 /// @note This is this protocols integrity check.
 bool IRHitachiAc3::hasInvertedStates(const uint8_t state[],
                                      const uint16_t length) {
-  for (uint8_t i = 3; i < length - 1; i += 2)
-    if ((state[i + 1] ^ state[i]) != 0xFF) return false;
-  return true;
+  return (length <= 3 || checkInvertedBytePairs(state + 3, length - 3));
 }
 
 /// Set up hardware to be able to send a message.

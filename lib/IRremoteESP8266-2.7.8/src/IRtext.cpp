@@ -130,6 +130,7 @@ const PROGMEM char* kTopStr = D_STR_TOP;  ///< "Top"
 const PROGMEM char* kBottomStr = D_STR_BOTTOM;  ///< "Bottom"
 
 // Compound words/phrases/descriptions from pre-defined words.
+const PROGMEM char* kEconoToggleStr = D_STR_ECONOTOGGLE;  ///< "Econo Toggle"
 const PROGMEM char* kEyeAutoStr = D_STR_EYEAUTO;  ///< "Eye Auto"
 const PROGMEM char* kLightToggleStr = D_STR_LIGHTTOGGLE;  ///< "Light Toggle"
 const PROGMEM char* kOutsideQuietStr = D_STR_OUTSIDEQUIET;  ///< "Outside Quiet"
@@ -264,5 +265,6 @@ const PROGMEM char *kAllProtocolNamesStr =
     D_STR_CORONA_AC "\x0"
     D_STR_MIDEA24 "\x0"
     D_STR_ZEPEAL "\x0"
+    D_STR_SANYO_AC "\x0"
     ///< New protocol strings should be added just above this line.
     "\x0";  ///< This string requires double null termination.

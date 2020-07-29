@@ -598,7 +598,7 @@ class IRDaikinESP {
 };
 
 /// Class for handling detailed Daikin 312-bit A/C messages.
-/// Code by crankyoldgit, Reverse engineering analysis by sheppy99
+/// @note Code by crankyoldgit, Reverse engineering analysis by sheppy99
 class IRDaikin2 {
  public:
   explicit IRDaikin2(const uint16_t pin, const bool inverted = false,
@@ -859,8 +859,7 @@ class IRDaikin176 {
 };
 
 /// Class for handling detailed Daikin 128-bit A/C messages.
-/// Code by crankyoldgit.
-/// Analysis by Daniel Vena
+/// @note Code by crankyoldgit. Analysis by Daniel Vena
 class IRDaikin128 {
  public:
   explicit IRDaikin128(const uint16_t pin, const bool inverted = false,

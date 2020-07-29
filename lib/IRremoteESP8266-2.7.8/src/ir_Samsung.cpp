@@ -53,6 +53,14 @@ const uint16_t kSamsungAcBitMark = 586;
 const uint16_t kSamsungAcOneSpace = 1432;
 const uint16_t kSamsungAcZeroSpace = 436;
 
+// Data from https://github.com/crankyoldgit/IRremoteESP8266/issues/1220
+// Values calculated based on the average of ten messages.
+const uint16_t kSamsung36HdrMark = 4515;  /// < uSeconds
+const uint16_t kSamsung36HdrSpace = 4438;  /// < uSeconds
+const uint16_t kSamsung36BitMark = 512;  /// < uSeconds
+const uint16_t kSamsung36OneSpace = 1468;  /// < uSeconds
+const uint16_t kSamsung36ZeroSpace = 490;  /// < uSeconds
+
 using irutils::addBoolToString;
 using irutils::addFanToString;
 using irutils::addIntToString;
@@ -146,7 +154,7 @@ bool IRrecv::decodeSAMSUNG(decode_results *results, uint16_t offset,
 
 #if SEND_SAMSUNG36
 /// Send a Samsung 36-bit formatted message.
-/// Status: Alpha / Experimental.
+/// Status: STABLE / Works on real devices.
 /// @param[in] data The message to be sent.
 /// @param[in] nbits The number of bits of message to be sent.
 /// @param[in] repeat The number of times the command is to be repeated.
@@ -156,16 +164,16 @@ void IRsend::sendSamsung36(const uint64_t data, const uint16_t nbits,
   if (nbits < 16) return;  // To small to send.
   for (uint16_t r = 0; r <= repeat; r++) {
     // Block #1 (16 bits)
-    sendGeneric(kSamsungHdrMark, kSamsungHdrSpace,
-                kSamsungBitMark, kSamsungOneSpace,
-                kSamsungBitMark, kSamsungZeroSpace,
-                kSamsungBitMark, kSamsungHdrSpace,
+    sendGeneric(kSamsung36HdrMark, kSamsung36HdrSpace,
+                kSamsung36BitMark, kSamsung36OneSpace,
+                kSamsung36BitMark, kSamsung36ZeroSpace,
+                kSamsung36BitMark, kSamsung36HdrSpace,
                 data >> (nbits - 16), 16, 38, true, 0, kDutyDefault);
     // Block #2 (The rest, typically 20 bits)
     sendGeneric(0, 0,  // No header
-                kSamsungBitMark, kSamsungOneSpace,
-                kSamsungBitMark, kSamsungZeroSpace,
-                kSamsungBitMark, kSamsungMinGap,  // Gap is just a guess.
+                kSamsung36BitMark, kSamsung36OneSpace,
+                kSamsung36BitMark, kSamsung36ZeroSpace,
+                kSamsung36BitMark, kSamsungMinGap,  // Gap is just a guess.
                 // Mask off the rest of the bits.
                 data & ((1ULL << (nbits - 16)) - 1),
                 nbits - 16, 38, true, 0, kDutyDefault);
@@ -175,7 +183,7 @@ void IRsend::sendSamsung36(const uint64_t data, const uint16_t nbits,
 
 #if DECODE_SAMSUNG36
 /// Decode the supplied Samsung36 message.
-/// Status: Alpha / Experimental
+/// Status: STABLE / Expected to work.
 /// @param[in,out] results Ptr to the data to decode & where to store the result
 /// @param[in] offset The starting index to use when attempting to decode the
 ///   raw data. Typically/Defaults to kStartOffset.
@@ -198,10 +206,10 @@ bool IRrecv::decodeSamsung36(decode_results *results, uint16_t offset,
   uint16_t used;
   used = matchGeneric(results->rawbuf + offset, &data,
                       results->rawlen - offset, 16,
-                      kSamsungHdrMark, kSamsungHdrSpace,
-                      kSamsungBitMark, kSamsungOneSpace,
-                      kSamsungBitMark, kSamsungZeroSpace,
-                      kSamsungBitMark, kSamsungHdrSpace, false);
+                      kSamsung36HdrMark, kSamsung36HdrSpace,
+                      kSamsung36BitMark, kSamsung36OneSpace,
+                      kSamsung36BitMark, kSamsung36ZeroSpace,
+                      kSamsung36BitMark, kSamsung36HdrSpace, false);
   if (!used) return false;
   offset += used;
   // Data (Block #2)
@@ -209,9 +217,9 @@ bool IRrecv::decodeSamsung36(decode_results *results, uint16_t offset,
   if (!matchGeneric(results->rawbuf + offset, &data2,
                     results->rawlen - offset, nbits - 16,
                     0, 0,
-                    kSamsungBitMark, kSamsungOneSpace,
-                    kSamsungBitMark, kSamsungZeroSpace,
-                    kSamsungBitMark, kSamsungMinGap, true)) return false;
+                    kSamsung36BitMark, kSamsung36OneSpace,
+                    kSamsung36BitMark, kSamsung36ZeroSpace,
+                    kSamsung36BitMark, kSamsungMinGap, true)) return false;
   data <<= (nbits - 16);
   data += data2;
 

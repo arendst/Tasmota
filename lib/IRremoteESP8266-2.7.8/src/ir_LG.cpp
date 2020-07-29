@@ -400,6 +400,7 @@ uint8_t IRLgAc::getTemp(void) {
 void IRLgAc::setFan(const uint8_t speed) {
   switch (speed) {
     case kLgAcFanAuto:
+    case kLgAcFanLowest:
     case kLgAcFanLow:
     case kLgAcFanMedium:
     case kLgAcFanHigh:
@@ -469,12 +470,12 @@ stdAc::opmode_t IRLgAc::toCommonMode(const uint8_t mode) {
 /// @return The native equivilant of the enum.
 uint8_t IRLgAc::convertFan(const stdAc::fanspeed_t speed) {
   switch (speed) {
-    case stdAc::fanspeed_t::kMin:
+    case stdAc::fanspeed_t::kMin:    return kLgAcFanLowest;
     case stdAc::fanspeed_t::kLow:    return kLgAcFanLow;
     case stdAc::fanspeed_t::kMedium: return kLgAcFanMedium;
     case stdAc::fanspeed_t::kHigh:
-    case stdAc::fanspeed_t::kMax:    return kHitachiAcFanHigh;
-    default:                         return kHitachiAcFanAuto;
+    case stdAc::fanspeed_t::kMax:    return kLgAcFanHigh;
+    default:                         return kLgAcFanAuto;
   }
 }
 
@@ -486,6 +487,7 @@ stdAc::fanspeed_t IRLgAc::toCommonFanSpeed(const uint8_t speed) {
     case kLgAcFanHigh:    return stdAc::fanspeed_t::kMax;
     case kLgAcFanMedium:  return stdAc::fanspeed_t::kMedium;
     case kLgAcFanLow:     return stdAc::fanspeed_t::kLow;
+    case kLgAcFanLowest:  return stdAc::fanspeed_t::kMin;
     default:              return stdAc::fanspeed_t::kAuto;
   }
 }
@@ -528,7 +530,7 @@ String IRLgAc::toString(void) {
                               kLgAcHeat, kLgAcDry, kLgAcFan);
     result += addTempToString(getTemp());
     result += addFanToString(getFan(), kLgAcFanHigh, kLgAcFanLow,
-                             kLgAcFanAuto, kLgAcFanAuto, kLgAcFanMedium);
+                             kLgAcFanAuto, kLgAcFanLowest, kLgAcFanMedium);
   }
   return result;
 }

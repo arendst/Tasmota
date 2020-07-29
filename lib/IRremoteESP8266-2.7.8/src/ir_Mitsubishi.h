@@ -163,7 +163,7 @@ const uint8_t kMitsubishi112SwingHAuto =                 0b1100;
 
 
 /// Class for handling detailed Mitsubishi 144-bit A/C messages.
-/// Inspired and derived from the work done at: https://github.com/r45635/HVAC-IR-Control
+/// @note Inspired and derived from the work done at: https://github.com/r45635/HVAC-IR-Control
 /// @warning Consider this very alpha code. Seems to work, but not validated.
 class IRMitsubishiAC {
  public:
@@ -282,7 +282,7 @@ class IRMitsubishi136 {
   void checksum(void);
 };
 
-
+/// Class for handling detailed Mitsubishi 122-bit A/C messages.
 class IRMitsubishi112 {
  public:
   explicit IRMitsubishi112(const uint16_t pin, const bool inverted = false,

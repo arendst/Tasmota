@@ -201,6 +201,13 @@
 #define SEND_SANYO             _IR_ENABLE_DEFAULT_
 #endif  // SEND_SANYO
 
+#ifndef DECODE_SANYO_AC
+#define DECODE_SANYO_AC        _IR_ENABLE_DEFAULT_
+#endif  // DECODE_SANYO_AC
+#ifndef SEND_SANYO_AC
+#define SEND_SANYO_AC          _IR_ENABLE_DEFAULT_
+#endif  // SEND_SANYO_AC
+
 #ifndef DECODE_MITSUBISHI
 #define DECODE_MITSUBISHI      _IR_ENABLE_DEFAULT_
 #endif  // DECODE_MITSUBISHI
@@ -674,7 +681,7 @@
      DECODE_NEOCLIMA || DECODE_DAIKIN176 || DECODE_DAIKIN128 || \
      DECODE_AMCOR || DECODE_DAIKIN152 || DECODE_MITSUBISHI136 || \
      DECODE_MITSUBISHI112 || DECODE_HITACHI_AC424 || DECODE_HITACHI_AC3 || \
-     DECODE_HITACHI_AC344 || DECODE_CORONA_AC)
+     DECODE_HITACHI_AC344 || DECODE_CORONA_AC || DECODE_SANYO_AC)
   // Add any DECODE to the above if it uses result->state (see kStateSizeMax)
   // you might also want to add the protocol to hasACState function
 #define DECODE_AC true  // We need some common infrastructure for decoding A/Cs.
@@ -802,8 +809,9 @@ enum decode_type_t {
   CORONA_AC,
   MIDEA24,
   ZEPEAL,
+  SANYO_AC,
   // Add new entries before this one, and update it to point to the last entry.
-  kLastDecodeType = ZEPEAL,
+  kLastDecodeType = SANYO_AC,
 };
 
 // Message lengths & required repeat values
@@ -971,6 +979,8 @@ const uint16_t kSamsungAcBits = kSamsungAcStateLength * 8;
 const uint16_t kSamsungAcExtendedStateLength = 21;
 const uint16_t kSamsungAcExtendedBits = kSamsungAcExtendedStateLength * 8;
 const uint16_t kSamsungAcDefaultRepeat = kNoRepeat;
+const uint16_t kSanyoAcStateLength = 9;
+const uint16_t kSanyoAcBits = kSanyoAcStateLength * 8;
 const uint16_t kSanyoSA8650BBits = 12;
 const uint16_t kSanyoLC7461AddressBits = 13;
 const uint16_t kSanyoLC7461CommandBits = 8;
@@ -999,6 +1009,10 @@ const uint16_t kTecoDefaultRepeat = kNoRepeat;
 const uint16_t kToshibaACStateLength = 9;
 const uint16_t kToshibaACBits = kToshibaACStateLength * 8;
 const uint16_t kToshibaACMinRepeat = kSingleRepeat;
+const uint16_t kToshibaACStateLengthShort = kToshibaACStateLength - 2;
+const uint16_t kToshibaACBitsShort = kToshibaACStateLengthShort * 8;
+const uint16_t kToshibaACStateLengthLong = kToshibaACStateLength + 1;
+const uint16_t kToshibaACBitsLong = kToshibaACStateLengthLong * 8;
 const uint16_t kTrotecStateLength = 9;
 const uint16_t kTrotecBits = kTrotecStateLength * 8;
 const uint16_t kTrotecDefaultRepeat = kNoRepeat;

@@ -14,6 +14,8 @@
 //   Brand: Samsung,  Model: DB93-16761C remote
 //   Brand: Samsung,  Model: IEC-R03 remote
 //   Brand: Samsung,  Model: AK59-00167A Bluray remote (SAMSUNG36)
+//   Brand: Samsung,  Model: AH59-02692E Soundbar remote (SAMSUNG36)
+//   Brand: Samsung,  Model: HW-J551 Soundbar (SAMSUNG36)
 //   Brand: Samsung,  Model: AR09FSSDAWKNFA A/C (SAMSUNG_AC)
 //   Brand: Samsung,  Model: AR12KSFPEWQNET A/C (SAMSUNG_AC)
 //   Brand: Samsung,  Model: AR12HSSDBWKNEU A/C (SAMSUNG_AC)

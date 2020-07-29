@@ -3,7 +3,9 @@
 /// @brief Support for Midea protocols.
 /// Midea added by crankyoldgit & bwze.
 /// send: bwze/crankyoldgit, decode: crankyoldgit
+/// @note SwingV has the function of an Ion Filter on Danby A/C units.
 /// @see https://docs.google.com/spreadsheets/d/1TZh4jWrx4h9zzpYUI9aYXMl1fYOiqu-xVuOOMqagxrs/edit?usp=sharing
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/pull/1213
 
 #include "ir_Midea.h"
 #include "ir_NEC.h"
@@ -99,6 +101,7 @@ void IRMideaAC::stateReset(void) {
   // Power On, Mode Auto, Fan Auto, Temp = 25C/77F
   remote_state = 0xA1826FFFFF62;
   _SwingVToggle = false;
+  _EconoToggle = false;
 }
 
 /// Set up hardware to be able to send a message.
@@ -110,11 +113,14 @@ void IRMideaAC::begin(void) { _irsend.begin(); }
 void IRMideaAC::send(const uint16_t repeat) {
   this->checksum();  // Ensure correct checksum before sending.
   _irsend.sendMidea(remote_state, kMideaBits, repeat);
-  // Handle toggling the swing if we need to.
-  if (_SwingVToggle && !isSwingVToggle()) {
+  // Handle toggling the swing & econo mode if we need to.
+  if (_SwingVToggle && !isSwingVToggle())
     _irsend.sendMidea(kMideaACToggleSwingV, kMideaBits, repeat);
-  }
-  _SwingVToggle = false;  // The toggle message has been sent, so reset.
+  if (_EconoToggle && !isEconoToggle())
+    _irsend.sendMidea(kMideaACToggleEcono, kMideaBits, repeat);
+  // The toggle messages has been sent, so reset.
+  _SwingVToggle = false;
+  _EconoToggle = false;
 }
 #endif  // SEND_MIDEA
 
@@ -246,20 +252,40 @@ bool IRMideaAC::getSleep(void) {
 }
 
 /// Set the A/C to toggle the vertical swing toggle for the next send.
+/// @note On Danby A/C units, this is associated with the Ion Filter instead.
 /// @param[in] on true, the setting is on. false, the setting is off.
 void IRMideaAC::setSwingVToggle(const bool on) { _SwingVToggle = on; }
 
 /// Is the current state a vertical swing toggle message?
+/// @note On Danby A/C units, this is associated with the Ion Filter instead.
 /// @return true, it is. false, it isn't.
 bool IRMideaAC::isSwingVToggle(void) {
   return remote_state == kMideaACToggleSwingV;
 }
 
 // Get the vertical swing toggle state of the A/C.
+/// @note On Danby A/C units, this is associated with the Ion Filter instead.
 /// @return true, the setting is on. false, the setting is off.
 bool IRMideaAC::getSwingVToggle(void) {
   _SwingVToggle |= isSwingVToggle();
   return _SwingVToggle;
+}
+
+/// Set the A/C to toggle the Econo (energy saver) mode for the next send.
+/// @param[in] on true, the setting is on. false, the setting is off.
+void IRMideaAC::setEconoToggle(const bool on) { _EconoToggle = on; }
+
+/// Is the current state an Econo (energy saver) toggle message?
+/// @return true, it is. false, it isn't.
+bool IRMideaAC::isEconoToggle(void) {
+  return remote_state == kMideaACToggleEcono;
+}
+
+// Get the Econo (energy saver) toggle state of the A/C.
+/// @return true, the setting is on. false, the setting is off.
+bool IRMideaAC::getEconoToggle(void) {
+  _EconoToggle |= isEconoToggle();
+  return _EconoToggle;
 }
 
 /// Calculate the checksum for a given state.
@@ -376,6 +402,7 @@ stdAc::state_t IRMideaAC::toCommon(const stdAc::state_t *prev) {
   result.degrees = this->getTemp(result.celsius);
   result.fanspeed = this->toCommonFanSpeed(this->getFan());
   result.sleep = this->getSleep() ? 0 : -1;
+  result.econo = this->getEconoToggle();
   return result;
 }
 
@@ -384,7 +411,8 @@ stdAc::state_t IRMideaAC::toCommon(const stdAc::state_t *prev) {
 String IRMideaAC::toString(void) {
   String result = "";
   result.reserve(100);  // Reserve some heap for the string to reduce fragging.
-  if (!isSwingVToggle()) {
+  bool needComma = false;
+  if (!isSwingVToggle() && !isEconoToggle()) {
     result += addBoolToString(getPower(), kPowerStr, false);
     result += addModeToString(getMode(), kMideaACAuto, kMideaACCool,
                               kMideaACHeat, kMideaACDry, kMideaACFan);
@@ -396,9 +424,10 @@ String IRMideaAC::toString(void) {
     result += addFanToString(getFan(), kMideaACFanHigh, kMideaACFanLow,
                              kMideaACFanAuto, kMideaACFanAuto, kMideaACFanMed);
     result += addBoolToString(getSleep(), kSleepStr);
+    needComma = true;
   }
-  result += addBoolToString(getSwingVToggle(), kSwingVToggleStr,
-                            !isSwingVToggle());
+  result += addBoolToString(getSwingVToggle(), kSwingVToggleStr, needComma);
+  result += addBoolToString(getEconoToggle(), kEconoToggleStr);
   return result;
 }
 

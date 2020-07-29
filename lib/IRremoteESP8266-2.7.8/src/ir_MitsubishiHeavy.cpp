@@ -33,6 +33,8 @@ using irutils::addIntToString;
 using irutils::addLabeledString;
 using irutils::addModeToString;
 using irutils::addTempToString;
+using irutils::checkInvertedBytePairs;
+using irutils::invertBytePairs;
 using irutils::setBit;
 using irutils::setBits;
 
@@ -321,32 +323,24 @@ bool IRMitsubishiHeavy152Ac::checkZmsSig(const uint8_t *state) {
 }
 
 /// Calculate the checksum for the current internal state of the remote.
-/// Note: Technically it has no checksum, but does has inverted byte pairs.
+/// Note: Technically it has no checksum, but does have inverted byte pairs.
 void IRMitsubishiHeavy152Ac::checksum(void) {
-  for (uint8_t i = kMitsubishiHeavySigLength - 2;
-       i < kMitsubishiHeavy152StateLength;
-       i += 2) {
-    remote_state[i + 1] = ~remote_state[i];
-  }
+  const uint8_t kOffset = kMitsubishiHeavySigLength - 2;
+  invertBytePairs(remote_state + kOffset,
+                  kMitsubishiHeavy152StateLength - kOffset);
 }
 
 /// Verify the checksum is valid for a given state.
 /// @param[in] state The array to verify the checksum of.
 /// @param[in] length The length/size of the state array.
 /// @return true, if the state has a valid checksum. Otherwise, false.
-/// Note: Technically it has no checksum, but does has inverted byte pairs.
+/// Note: Technically it has no checksum, but does have inverted byte pairs.
 bool IRMitsubishiHeavy152Ac::validChecksum(const uint8_t *state,
                                            const uint16_t length) {
   // Assume anything too short is fine.
   if (length < kMitsubishiHeavySigLength) return true;
-  // Check all the byte pairs.
-  for (uint16_t i = kMitsubishiHeavySigLength - 2;
-       i < length;
-       i += 2) {
-    // XOR of a byte and it's self inverted should be 0xFF;
-    if ((state[i] ^ state[i + 1]) != 0xFF) return false;
-  }
-  return true;
+  const uint8_t kOffset = kMitsubishiHeavySigLength - 2;
+  return checkInvertedBytePairs(state + kOffset, length - kOffset);
 }
 
 /// Convert a stdAc::opmode_t enum into its native mode.
@@ -856,20 +850,18 @@ bool IRMitsubishiHeavy88Ac::checkZjsSig(const uint8_t *state) {
 }
 
 /// Calculate the checksum for the current internal state of the remote.
-/// Note: Technically it has no checksum, but does has inverted byte pairs.
+/// Note: Technically it has no checksum, but does have inverted byte pairs.
 void IRMitsubishiHeavy88Ac::checksum(void) {
-  for (uint8_t i = kMitsubishiHeavySigLength - 2;
-       i < kMitsubishiHeavy88StateLength;
-       i += 2) {
-    remote_state[i + 1] = ~remote_state[i];
-  }
+  const uint8_t kOffset = kMitsubishiHeavySigLength - 2;
+  invertBytePairs(remote_state + kOffset,
+                  kMitsubishiHeavy88StateLength - kOffset);
 }
 
 /// Verify the checksum is valid for a given state.
 /// @param[in] state The array to verify the checksum of.
 /// @param[in] length The length/size of the state array.
 /// @return true, if the state has a valid checksum. Otherwise, false.
-/// Note: Technically it has no checksum, but does has inverted byte pairs.
+/// Note: Technically it has no checksum, but does have inverted byte pairs.
 bool IRMitsubishiHeavy88Ac::validChecksum(const uint8_t *state,
                                            const uint16_t length) {
   return IRMitsubishiHeavy152Ac::validChecksum(state, length);
