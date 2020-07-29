@@ -80,4 +80,4 @@ Module             | Description
 74 Sonoff D1       | Sonoff D1 Wifi and RF Dimmer
 75 Sonoff ZbBridge | Sonoff Zigbee bridge
 
-Over 1000 additional devices are supported using [templates](TEMPLATES.md).
+Over 1400 additional devices are supported using [templates](TEMPLATES.md).

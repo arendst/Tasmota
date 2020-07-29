@@ -681,11 +681,11 @@
 
 // -- Zigbee interface ----------------------------
 //#define USE_ZIGBEE                                // Enable serial communication with Zigbee CC2530 flashed with ZNP (+49k code, +3k mem)
-  #define USE_ZIGBEE_ZNP                          // Enable ZNP protocol, needed for CC2530 based devices
-  // #define USE_ZIGBEE_EZSP                         // [EXPERIMENTAL - DO NOT USE] Enable EZSP protocol, needed for EFR32 EmberZNet based devices, like Sonoff Zigbee bridge
-                                                  // Note: USE_ZIGBEE_ZNP and USE_ZIGBEE_EZSP are mutually incompatible, you must select exactly one
-  #define USE_ZIGBEE_CHANNEL  11                  // Zigbee Channel (11-26)
-  #define USE_ZIGBEE_TXRADIO_DBM  20                  // Tx Radio power in dBm (only for EZSP, EFR32 can go up to 20 dBm)
+  #define USE_ZIGBEE_ZNP                         // Enable ZNP protocol, needed for CC2530 based devices
+//  #define USE_ZIGBEE_EZSP                        // Enable EZSP protocol, needed for EFR32 EmberZNet based devices, like Sonoff Zigbee bridge
+                                                 // Note: USE_ZIGBEE_ZNP and USE_ZIGBEE_EZSP are mutually incompatible, you must select exactly one
+  #define USE_ZIGBEE_CHANNEL  11                 // Zigbee Channel (11-26)
+  #define USE_ZIGBEE_TXRADIO_DBM  20             // Tx Radio power in dBm (only for EZSP, EFR32 can go up to 20 dBm)
 
   #define USE_ZIGBEE_COALESCE_ATTR_TIMER 350     // timer to coalesce attribute values (in ms)
   #define USE_ZIGBEE_MODELID      "Tasmota Z2T"  // reported "ModelId"      (cluster 0000 / attribute 0005)

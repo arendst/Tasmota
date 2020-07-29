@@ -66,6 +66,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Change commands ``SlaveSend`` and ``SlaveReset`` into ``ClientSend`` and ``ClientReset``
 - Change all timer references from ``Arm`` to ``Enable`` in GUI, ``Timer`` command and JSON message
 - Change Domoticz commands prefix from ``Domoticz`` to ``Dz``
+- Change Zigbee randomizing of parameters at first run or after Reset
 - Fix escape of non-JSON received serial data (#8329)
 - Fix exception or watchdog on rule re-entry (#8757)
 - Add command ``Rule0`` to change global rule parameters
@@ -81,28 +82,28 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command (``S``)``SerialSend6`` \<comma seperated values\> (#8937)
 - Add commands ``LedPwmOn 0..255``, ``LedPwmOff 0..255`` and ``LedPwmMode1 0/1`` to control led brightness by George (#8491)
 - Add ESP32 ethernet commands ``EthType 0/1``, ``EthAddress 0..31`` and ``EthClockMode 0..3``
+- Add more functionality to command ``Switchmode`` 11 and 12 (#8450)
 - Add rule trigger ``System#Init`` to allow early rule execution without wifi and mqtt initialized yet
 - Add support for unique MQTTClient (and inherited fallback topic) by full Mac address using ``mqttclient DVES_%12X`` (#8300)
-- Add more functionality to ``Switchmode`` 11 and 12 (#8450)
 - Add wildcard pattern ``?`` for JSON matching in rules
-- Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)
-- Add support for VEML7700 Ambient light intensity Sensor by device111 (#8432)
 - Add Three Phase Export Active Energy to SDM630 driver
 - Add Zigbee options to ``ZbSend`` to write and report attributes
 - Add Zigbee auto-responder for common attributes
 - Add ``CpuFrequency`` to ``status 2``
 - Add ``FlashFrequency`` to ``status 4``
+- Add compile time interlock parameters (#8759)
+- Add compile time user template (#8766)
+- Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)
+- Add support for VEML7700 Ambient light intensity Sensor by device111 (#8432)
 - Add support for up to two BH1750 sensors controlled by commands ``BH1750Resolution`` and ``BH1750MTime`` (#8139)
 - Add support for up to eight MCP9808 temperature sensors by device111 (#8594)
 - Add support for BL0940 energy monitor as used in Blitzwolf BW-SHP10 (#8175)
 - Add support for Telegram bot (#8619)
 - Add support for HP303B Temperature and Pressure sensor by Robert Jaakke (#8638)
 - Add support for Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
-- Add Library to be used for decoding Teleinfo (French Metering Smart Meter)
 - Add support for ESP32 ethernet adding commands ``Wifi 0/1`` and ``Ethernet 0/1`` both default ON
 - Add support for single wire LMT01 temperature Sensor by justifiably (#8713)
-- Add compile time interlock parameters (#8759)
-- Add compile time user template (#8766)
-- Add rotary encoder support for light dimmer and optional color temperature if button1 still pressed (#8670)
+- Add support for rotary encoder as light dimmer and optional color temperature if button1 still pressed (#8670)
 - Add support for switches/relays using an AC detection circuitry e.g. MOES MS-104B or BlitzWolf SS5 (#8606)
 - Add support for Schneider Electric iEM3000 series Modbus energy meter by Marius Bezuidenhout
+- Add support for Sonoff Zigbee Bridge as module 75 (#8583)
