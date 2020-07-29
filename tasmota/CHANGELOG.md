@@ -3,6 +3,7 @@
 ### 8.3.1.7 20200716
 
 - Remove Arduino ESP8266 Core support for versions before 2.7.1
+- Change IRRemoteESP8266 library to v2.7.8.10, fixing Samsung and Pioneer protocols (#8938)
 - Change to limited support of Arduino IDE as an increasing amount of features cannot be compiled with Arduino IDE
 - Change all timer references from ``Arm`` to ``Enable`` in GUI, ``Timer`` command and JSON message
 - Change Domoticz commands prefix from ``Domoticz`` to ``Dz``
@@ -13,7 +14,6 @@
 - Add command ``SetOption101 0/1`` to add the Zigbee source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
 - Add command (``S``)``SerialSend6`` \<comma seperated values\> (#8937)
 - Add support for Sonoff Zigbee Bridge as module 75 (#8583)
-- Change IRRemoteESP8266 IR lib to pre-2.7.9, fixing Samsung and Pioneer protocols (#8938)
 
 ### 8.3.1.6 20200617
 
@@ -79,8 +79,6 @@
 - Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)
 - Add support for VEML7700 Ambient light intensity Sensor by device111 (#8432)
 
-## Released
-
 ### 8.3.1 20200518
 
 - Release Fred
@@ -96,8 +94,6 @@
 - Change Mutichannel Gas sensor pow function to approximative pow saving 5k of code space
 - Change Quick Power Cycle detection from 4 to 7 power interrupts (#4066)
 - Fix default state of ``SetOption73 0`` for button decoupling and send multi-press and hold MQTT messages
-
-## Released
 
 ### 8.3.0 20200514
 
@@ -182,8 +178,6 @@
 - Add Zigbee command ``ZbUnbind``
 - Add support for unreachable (unplugged) Zigbee devices in Philips Hue emulation and Alexa
 - Add support for 64x48 SSD1306 OLED (#6740)
-
-## Released
 
 ### 8.2.0 20200321
 
