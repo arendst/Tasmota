@@ -1,9 +1,14 @@
 ## Unreleased (development)
 
+### 8.4.0.1 20200730
+
+### 8.4.0 20200730
+
+- Release George
+
 ### 8.3.1.7 20200716
 
 - Remove Arduino ESP8266 Core support for versions before 2.7.1
-- Change IRRemoteESP8266 library to v2.7.8.10, fixing Samsung and Pioneer protocols (#8938)
 - Change to limited support of Arduino IDE as an increasing amount of features cannot be compiled with Arduino IDE
 - Change all timer references from ``Arm`` to ``Enable`` in GUI, ``Timer`` command and JSON message
 - Change Domoticz commands prefix from ``Domoticz`` to ``Dz``
