@@ -1,0 +1,166 @@
+#######################################
+# Syntax Coloring Map ESP32-Mail-Client
+#######################################
+
+#######################################
+# Classes (KEYWORD1)
+#######################################
+
+IMAPData	KEYWORD1
+SMTPData	KEYWORD1
+attachmentData  KEYWORD1
+SendStatus	KEYWORD1
+messageBodyData	KEYWORD1
+DownloadProgress	KEYWORD1
+MessageData	KEYWORD1
+
+TIME    KEYWORD1
+
+
+##################################
+# Methods and Functions (KEYWORD2)
+##################################
+
+sendMail	KEYWORD2
+readMail	KEYWORD2
+smtpErrorReason	KEYWORD2
+imapErrorReason	KEYWORD2
+sdBegin	KEYWORD2
+setFlag KEYWORD2
+addFlag KEYWORD2
+removeFlag  KEYWORD2
+
+
+setClock    KEYWORD2
+getUnixTime KEYWORD2
+getTimestamp    KEYWORD2
+getYear	KEYWORD2
+getMonth	KEYWORD2
+getDay	KEYWORD2
+getDayOfWeek	KEYWORD2
+getDayOfWeekString	KEYWORD2
+getHour	KEYWORD2
+getMin	KEYWORD2
+getSec	KEYWORD2
+getNumberOfDayThisYear	KEYWORD2
+getTotalDays	KEYWORD2
+dayofweek	KEYWORD2
+getCurrentSecond	KEYWORD2
+getCurrentTimestamp	KEYWORD2
+getTimeFromSec	KEYWORD2
+
+#########################################
+# Methods for IMAP Data object (KEYWORD2)
+#########################################
+
+setLogin	KEYWORD2
+setSTARTTLS KEYWORD2
+setDebug    KEYWORD2
+setFolder   KEYWORD2
+setMessageBufferSize    KEYWORD2
+setAttachmentSizeLimit  KEYWORD2
+setSearchCriteria   KEYWORD2
+setSaveFilePath	KEYWORD2
+setFechUID  KEYWORD2
+setDownloadAttachment   KEYWORD2
+setHTMLMessage  KEYWORD2
+setTextMessage  KEYWORD2
+setSearchLimit  KEYWORD2
+setRecentSort	KEYWORD2
+setReadCallback	KEYWORD2
+setDownloadReport   KEYWORD2
+isHeaderOnly	KEYWORD2
+getFrom	KEYWORD2
+getFromCharset	KEYWORD2
+getTo	KEYWORD2
+getToCharset	KEYWORD2
+getCC	KEYWORD2
+getCCCharset	KEYWORD2
+getSubject	KEYWORD2
+getSubjectCharset	KEYWORD2
+getHTMLMessage	KEYWORD2
+getTextMessage	KEYWORD2
+getHTMLMessgaeCharset	KEYWORD2
+getTextMessgaeCharset	KEYWORD2
+getDate	KEYWORD2
+getUID	KEYWORD2
+getNumber	KEYWORD2
+getMessageID	KEYWORD2
+getAcceptLanguage	KEYWORD2
+getContentLanguage	KEYWORD2
+isFetchMessageFailed	KEYWORD2
+getFetchMessageFailedReason	KEYWORD2
+isDownloadAttachmentFailed	KEYWORD2
+getDownloadAttachmentFailedReason	KEYWORD2
+isDownloadMessageFailed	KEYWORD2
+getDownloadMessageFailedReason	KEYWORD2
+saveHTMLMessage	KEYWORD2
+saveTextMessage	KEYWORD2
+getFolderCount	KEYWORD2
+getFolder	KEYWORD2
+getFlagCount	KEYWORD2
+getFlag	KEYWORD2
+totalMessages	KEYWORD2
+searchCount	KEYWORD2
+availableMessages	KEYWORD2
+getAttachmentCount	KEYWORD2
+getAttachmentFileName	KEYWORD2
+getAttachmentName	KEYWORD2
+getAttachmentFileSize	KEYWORD2
+getAttachmentCreationDate	KEYWORD2
+getAttachmentType	KEYWORD2
+empty	KEYWORD2
+clearMessageData	KEYWORD2
+
+#########################################
+# Methods for SMTP Data object (KEYWORD2)
+#########################################
+
+setSender	KEYWORD2
+getFromName	KEYWORD2
+getSenderEmail	KEYWORD2
+setPriority	KEYWORD2
+getPriority	KEYWORD2
+addRecipient	KEYWORD2
+removeRecipient	KEYWORD2
+clearRecipient	KEYWORD2
+getRecipient	KEYWORD2
+recipientCount	KEYWORD2
+setSubject	KEYWORD2
+getSubject	KEYWORD2
+setMessage	KEYWORD2
+getMessage	KEYWORD2
+htmlFormat	KEYWORD2
+addCC	KEYWORD2
+removeCC	KEYWORD2
+clearCC	KEYWORD2
+getCC	KEYWORD2
+ccCount	KEYWORD2
+addBCC	KEYWORD2
+removeBCC	KEYWORD2
+clearBCC	KEYWORD2
+getBCC	KEYWORD2
+bccCount	KEYWORD2
+addAttachData	KEYWORD2
+removeAttachData	KEYWORD2
+attachDataCount	KEYWORD2
+addAttachFile	KEYWORD2
+removeAttachFile	KEYWORD2
+clearAttachData	KEYWORD2
+clearAttachFile	KEYWORD2
+clearAttachment	KEYWORD2
+attachFileCount	KEYWORD2
+setSendCallback	KEYWORD2
+
+
+############################################################
+# Functions for ReadStatus and SendStatus classes (KEYWORD2)
+############################################################
+
+SendStatus	KEYWORD2
+info	KEYWORD2
+success	KEYWORD2
+ReadStatus	KEYWORD2
+status	KEYWORD2
+
+clockReady	KEYWORD3

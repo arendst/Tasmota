@@ -1,0 +1,13 @@
+This library is adapted from bearssl-esp8266 to avoid conflict with the
+BearSSL headers in Arduino Core.
+
+To recreate, copy all original 'src/' and 'inc/' into 'src/' lib.
+
+Then rename the following:
+ - "bearssl with "t_bearssl
+ - "inner with "t_inner
+ - "config with "t_config
+
+Add the customized files in src/:
+ - t_bearssl_tasmota_config.h
+ - pgmspace_bearssl.h
