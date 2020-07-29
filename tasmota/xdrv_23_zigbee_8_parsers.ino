@@ -20,6 +20,16 @@
 #ifdef USE_ZIGBEE
 
 #ifdef USE_ZIGBEE_EZSP
+//
+// Trying to get a uniform LQI measure, we are aligning with the definition of ZNP
+// I.e. a linear projection from -87dBm to +10dB over 0..255
+// for ZNP, lqi is linear from -87 to +10 dBm (https://sunmaysky.blogspot.com/2017/02/conversion-between-rssi-and-lqi-in-z.html)
+uint8_t ZNP_RSSI2Lqi(int8_t rssi) {
+  if (rssi < -87)  { rssi = -87; }
+  if (rssi > 10)   { rssi = 10; }
+  return changeUIntScale(rssi + 87, 0, 87+10, 0, 255);
+}
+
 /*********************************************************************************************\
  * Parsers for incoming EZSP messages
 \*********************************************************************************************/
@@ -123,8 +133,8 @@ int32_t EZ_RouteError(int32_t res, const class SBuffer &buf) {
   uint16_t shortaddr = buf.get16(3);
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_ROUTE_ERROR "\":{"
-                  "\"ShortAddr\":\"0x%04X\",\"" D_JSON_ZIGBEE_STATUS "\":%d,\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"0x%s\"}}"),
-                  shortaddr, status, "");
+                  "\"ShortAddr\":\"0x%04X\",\"" D_JSON_ZIGBEE_STATUS "\":%d,\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"%s\"}}"),
+                  shortaddr, status, getEmberStatus(status).c_str());
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
@@ -776,8 +786,9 @@ int32_t Z_MgmtBindRsp(int32_t res, const class SBuffer &buf) {
   ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_STATUS "\":%d"
                         ",\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"%s\""
                         ",\"BindingsTotal\":%d"
+                        ",\"BindingsStart\":%d"
                         ",\"Bindings\":["
-                        ), status, getZigbeeStatusMessage(status).c_str(), bind_total);
+                        ), status, getZigbeeStatusMessage(status).c_str(), bind_total, bind_start + 1);
 
   uint32_t idx = prefix_len;
   for (uint32_t i = 0; i < bind_len; i++) {
@@ -1118,8 +1129,9 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
   bool            securityuse = (apsoptions & EMBER_APS_OPTION_ENCRYPTION) ? true : false;
   uint16_t        groupid = buf.get16(11);
   uint8_t         seqnumber = buf.get8(13);
-  uint8_t         linkquality = buf.get8(14);
-  // uint8_t         linkrsssi = buf.get8(15);     // probably not used as there is no equivalent in Z-Stack
+  // uint8_t         linkquality = buf.get8(14);
+  int8_t          linkrssi = buf.get8(15);
+  uint8_t         linkquality = ZNP_RSSI2Lqi(linkrssi);   // don't take EZSP LQI but calculate our own based on ZNP 
   uint16_t        srcaddr = buf.get16(16);
   // uint8_t         bindingindex = buf.get8(18);      // not sure we need this one as a coordinator
   // uint8_t         addressindex = buf.get8(19);      // not sure how to handle this one
@@ -1314,30 +1326,6 @@ int32_t ZNP_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
 /*********************************************************************************************\
  * Global dispatcher for incoming messages
 \*********************************************************************************************/
-
-int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
-  uint16_t        groupid = buf.get16(2);
-  uint16_t        clusterid = buf.get16(4);
-  uint16_t        srcaddr = buf.get16(6);
-  uint8_t         srcendpoint = buf.get8(8);
-  uint8_t         dstendpoint = buf.get8(9);
-  uint8_t         wasbroadcast = buf.get8(10);
-  uint8_t         linkquality = buf.get8(11);
-  uint8_t         securityuse = buf.get8(12);
-  // uint32_t        timestamp = buf.get32(13);
-  uint8_t         seqnumber = buf.get8(17);
-
-  bool            defer_attributes = false;     // do we defer attributes reporting to coalesce
-
-  ZCLFrame zcl_received = ZCLFrame::parseRawFrame(buf, 19, buf.get8(18), clusterid, groupid,
-                              srcaddr,
-                              srcendpoint, dstendpoint, wasbroadcast,
-                              linkquality, securityuse, seqnumber);
-  //
-  Z_IncomingMessage(zcl_received);
-
-  return -1;
-}
 
 #ifdef USE_ZIGBEE_ZNP
 

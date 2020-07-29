@@ -1131,6 +1131,47 @@ String getZDPStatusMessage(uint8_t status) {
   return String(msg);
 }
 
+String getEmberStatus(uint8_t status) {
+  static const char    StatusMsg[] PROGMEM = "SUCCESS|ERR_FATAL|BAD_ARGUMENT|EEPROM_MFG_STACK_VERSION_MISMATCH|INCOMPATIBLE_STATIC_MEMORY_DEFINITIONS|EEPROM_MFG_VERSION_MISMATCH|EEPROM_STACK_VERSION_MISMATCH"
+                                             "|NO_BUFFERS|SERIAL_INVALID_BAUD_RATE|SERIAL_INVALID_PORT|SERIAL_TX_OVERFLOW|SERIAL_RX_OVERFLOW|SERIAL_RX_FRAME_ERROR|SERIAL_RX_PARITY_ERROR|SERIAL_RX_EMPTY|SERIAL_RX_OVERRUN_ERROR"
+                                             "|MAC_TRANSMIT_QUEUE_FULL|MAC_UNKNOWN_HEADER_TYPE|MAC_SCANNING|MAC_NO_DATA|MAC_JOINED_NETWORK|MAC_BAD_SCAN_DURATION|MAC_INCORRECT_SCAN_TYPE|MAC_INVALID_CHANNEL_MASK|MAC_COMMAND_TRANSMIT_FAILURE"
+                                             "|MAC_NO_ACK_RECEIVED|MAC_INDIRECT_TIMEOUT|SIM_EEPROM_ERASE_PAGE_GREEN|SIM_EEPROM_ERASE_PAGE_RED|SIM_EEPROM_FULL|ERR_FLASH_WRITE_INHIBITED|ERR_FLASH_VERIFY_FAILED|SIM_EEPROM_INIT_1_FAILED|SIM_EEPROM_INIT_2_FAILED|SIM_EEPROM_INIT_3_FAILED|ERR_FLASH_PROG_FAIL|ERR_FLASH_ERASE_FAIL"
+                                             "|ERR_BOOTLOADER_TRAP_TABLE_BAD|ERR_BOOTLOADER_TRAP_UNKNOWN|ERR_BOOTLOADER_NO_IMAGE|DELIVERY_FAILED|BINDING_INDEX_OUT_OF_RANGE|ADDRESS_TABLE_INDEX_OUT_OF_RANGE|INVALID_BINDING_INDEX"
+                                             "|INVALID_CALL|COST_NOT_KNOWN|MAX_MESSAGE_LIMIT_REACHED|MESSAGE_TOO_LONG|BINDING_IS_ACTIVE|ADDRESS_TABLE_ENTRY_IS_ACTIVE"
+                                             "|ADC_CONVERSION_DONE|ADC_CONVERSION_BUSY|ADC_CONVERSION_DEFERRED|ADC_NO_CONVERSION_PENDING|SLEEP_INTERRUPTED|PHY_TX_UNDERFLOW|PHY_TX_INCOMPLETE|PHY_INVALID_CHANNEL|PHY_INVALID_POWER|PHY_TX_BUSY|PHY_TX_CCA_FAIL|PHY_OSCILLATOR_CHECK_FAILED|PHY_ACK_RECEIVED"
+                                             "|NETWORK_UP|NETWORK_DOWN|JOIN_FAILED|MOVE_FAILED|CANNOT_JOIN_AS_ROUTER|NODE_ID_CHANGED|PAN_ID_CHANGED|NO_BEACONS|RECEIVED_KEY_IN_THE_CLEAR|NO_NETWORK_KEY_RECEIVED|NO_LINK_KEY_RECEIVED|PRECONFIGURED_KEY_REQUIRED"
+                                             "|NOT_JOINED|INVALID_SECURITY_LEVEL|NETWORK_BUSY|INVALID_ENDPOINT|BINDING_HAS_CHANGED|INSUFFICIENT_RANDOM_DATA|APS_ENCRYPTION_ERROR|SECURITY_STATE_NOT_SET"
+                                             "|KEY_TABLE_INVALID_ADDRESS|SECURITY_CONFIGURATION_INVALID|TOO_SOON_FOR_SWITCH_KEY|KEY_NOT_AUTHORIZED|SECURITY_DATA_INVALID|SOURCE_ROUTE_FAILURE|MANY_TO_ONE_ROUTE_FAILURE"
+                                             "|STACK_AND_HARDWARE_MISMATCH|INDEX_OUT_OF_RANGE|TABLE_FULL|TABLE_ENTRY_ERASED|LIBRARY_NOT_PRESENT|OPERATION_IN_PROGRESS"
+                                             ;
+  static const uint8_t StatusIdx[] PROGMEM = { 0x00, 0x01, 0x02, 0x04, 0x05, 0x06, 0x07,
+                                               0x18, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+                                               0x39, 0x3A, 0x3D, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36,
+                                               0x40, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C,
+                                               0x58, 0x59, 0x5A, 0x66, 0x69, 0x6A, 0x6C,
+                                               0x70, 0x71, 0x72, 0x74, 0x75, 0x76, 
+                                               0x80, 0x81, 0x82, 0x84, 0x85, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 
+                                               0x90, 0x91, 0x94, 0x96, 0x98, 0x99, 0x9A, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF,
+                                               0x93, 0x95, 0xA1, 0xA3, 0xA4, 0xA5, 0xA6, 0xA8, 
+                                               0xB3, 0xB7, 0xB8, 0xBB, 0xBD, 0xA9, 0xAA, 
+                                               0xB0, 0xB1, 0xB4, 0xB6, 0xB5, 0xBA };
+
+  char msg[32];
+  int32_t idx = -1;
+  for (uint32_t i = 0; i < sizeof(StatusIdx); i++) {
+    if (status == pgm_read_byte(&StatusIdx[i])) {
+      idx = i;
+      break;
+    }
+  }
+  if (idx >= 0) {
+    GetTextIndexed(msg, sizeof(msg), idx, StatusMsg);
+  } else {
+    *msg = 0x00;    // empty string
+  }
+  return String(msg);
+}
+
 
 // Undocumented Zigbee ZCL code here: https://github.com/dresden-elektronik/deconz-rest-plugin/wiki/Zigbee-Error-Codes-in-the-Log
 String getZigbeeStatusMessage(uint8_t status) {
