@@ -1,5 +1,6 @@
 // Copyright 2020 David Conran
 
+#include "ir_Airwell.h"
 #include "IRac.h"
 #include "IRrecv.h"
 #include "IRrecv_test.h"
@@ -44,6 +45,9 @@ TEST(TestDecodeAirwell, RealExample) {
   EXPECT_EQ(0x2B0D0181B, irsend.capture.value);
   EXPECT_EQ(0x0, irsend.capture.address);
   EXPECT_EQ(0x0, irsend.capture.command);
+  EXPECT_EQ(
+      "Power Toggle: On, Mode: 2 (Heat), Fan: 3 (Auto), Temp: 25C",
+      IRAcUtils::resultAcToString(&irsend.capture));
 
   const uint16_t rawData_2[175] = {
       2862, 3892,
@@ -76,6 +80,9 @@ TEST(TestDecodeAirwell, RealExample) {
   EXPECT_EQ(0x270F8181B, irsend.capture.value);
   EXPECT_EQ(0x0, irsend.capture.address);
   EXPECT_EQ(0x0, irsend.capture.command);
+  EXPECT_EQ(
+      "Power Toggle: On, Mode: 1 (Cool), Fan: 3 (Auto), Temp: 30C",
+      IRAcUtils::resultAcToString(&irsend.capture));
 }
 
 TEST(TestDecodeAirwell, SyntheticExample) {
@@ -192,6 +199,9 @@ TEST(TestDecodeAirwell, RealExample2) {
   EXPECT_EQ(0xB0C0181B, irsend.capture.value);
   EXPECT_EQ(0x0, irsend.capture.address);
   EXPECT_EQ(0x0, irsend.capture.command);
+  EXPECT_EQ(
+      "Power Toggle: Off, Mode: 2 (Heat), Fan: 3 (Auto), Temp: 23C",
+      IRAcUtils::resultAcToString(&irsend.capture));
 
   // Resend it as a synthetic to see if it decodes to the same value.
   irsend.reset();
@@ -210,7 +220,7 @@ TEST(TestUtils, Housekeeping) {
   ASSERT_EQ("AIRWELL", typeToString(decode_type_t::AIRWELL));
   ASSERT_EQ(decode_type_t::AIRWELL, strToDecodeType("AIRWELL"));
   ASSERT_FALSE(hasACState(decode_type_t::AIRWELL));
-  ASSERT_FALSE(IRac::isProtocolSupported(decode_type_t::AIRWELL));
+  ASSERT_TRUE(IRac::isProtocolSupported(decode_type_t::AIRWELL));
   ASSERT_EQ(kAirwellBits, IRsend::defaultBits(decode_type_t::AIRWELL));
   ASSERT_EQ(kAirwellMinRepeats, IRsend::minRepeats(decode_type_t::AIRWELL));
 }
@@ -250,4 +260,142 @@ TEST(TestDecodeAirwell, RealExample3) {
   EXPECT_EQ(0x60080002, irsend.capture.value);
   EXPECT_EQ(0x0, irsend.capture.address);
   EXPECT_EQ(0x0, irsend.capture.command);
+  EXPECT_EQ(
+      "Power Toggle: Off, Mode: 1 (Cool), Fan: 2 (High), Temp: 16C",
+      IRAcUtils::resultAcToString(&irsend.capture));
+}
+
+// Tests for IRAirwellAc class.
+
+TEST(TestAirwellAcClass, PowerToggle) {
+  IRAirwellAc ac(kGpioUnused);
+  ac.begin();
+
+  ac.setPowerToggle(true);
+  EXPECT_TRUE(ac.getPowerToggle());
+  ac.setPowerToggle(false);
+  EXPECT_FALSE(ac.getPowerToggle());
+  ac.setPowerToggle(true);
+  EXPECT_TRUE(ac.getPowerToggle());
+}
+
+TEST(TestAirwellAcClass, Temperature) {
+  IRAirwellAc ac(kGpioUnused);
+  ac.begin();
+
+  ac.setTemp(0);
+  EXPECT_EQ(kAirwellMinTemp, ac.getTemp());
+
+  ac.setTemp(255);
+  EXPECT_EQ(kAirwellMaxTemp, ac.getTemp());
+
+  ac.setTemp(kAirwellMinTemp);
+  EXPECT_EQ(kAirwellMinTemp, ac.getTemp());
+
+  ac.setTemp(kAirwellMaxTemp);
+  EXPECT_EQ(kAirwellMaxTemp, ac.getTemp());
+
+  ac.setTemp(kAirwellMinTemp - 1);
+  EXPECT_EQ(kAirwellMinTemp, ac.getTemp());
+
+  ac.setTemp(kAirwellMaxTemp + 1);
+  EXPECT_EQ(kAirwellMaxTemp, ac.getTemp());
+
+  ac.setTemp(17);
+  EXPECT_EQ(17, ac.getTemp());
+
+  ac.setTemp(21);
+  EXPECT_EQ(21, ac.getTemp());
+
+  ac.setTemp(25);
+  EXPECT_EQ(25, ac.getTemp());
+
+  ac.setTemp(29);
+  EXPECT_EQ(29, ac.getTemp());
+}
+
+TEST(TestAirwellAcClass, OperatingMode) {
+  IRAirwellAc ac(kGpioUnused);
+  ac.begin();
+
+  ac.setMode(kAirwellAuto);
+  EXPECT_EQ(kAirwellAuto, ac.getMode());
+
+  ac.setMode(kAirwellCool);
+  EXPECT_EQ(kAirwellCool, ac.getMode());
+
+  ac.setMode(kAirwellHeat);
+  EXPECT_EQ(kAirwellHeat, ac.getMode());
+
+  ac.setMode(kAirwellDry);
+  EXPECT_EQ(kAirwellDry, ac.getMode());
+
+  ac.setMode(kAirwellFan);
+  EXPECT_EQ(kAirwellFan, ac.getMode());
+
+  ac.setMode(kAirwellFan + 1);
+  EXPECT_EQ(kAirwellAuto, ac.getMode());
+
+  ac.setMode(255);
+  EXPECT_EQ(kAirwellAuto, ac.getMode());
+}
+
+TEST(TestAirwellAcClass, FanSpeed) {
+  IRAirwellAc ac(0);
+  ac.begin();
+
+  ac.setFan(0);
+  EXPECT_EQ(kAirwellFanLow, ac.getFan());
+
+  ac.setFan(255);
+  EXPECT_EQ(kAirwellFanAuto, ac.getFan());
+
+  ac.setFan(kAirwellFanHigh);
+  EXPECT_EQ(kAirwellFanHigh, ac.getFan());
+
+  ac.setFan(kAirwellFanHigh + 2);
+  EXPECT_EQ(kAirwellFanAuto, ac.getFan());
+
+  ac.setFan(kAirwellFanHigh - 1);
+  EXPECT_EQ(kAirwellFanHigh - 1, ac.getFan());
+
+  ac.setFan(1);
+  EXPECT_EQ(1, ac.getFan());
+
+  ac.setFan(1);
+  EXPECT_EQ(1, ac.getFan());
+
+  ac.setFan(3);
+  EXPECT_EQ(3, ac.getFan());
+}
+
+// Test human readable output.
+TEST(TestAirwellAcClass, HumanReadable) {
+  IRAirwellAc ac(kGpioUnused);
+  EXPECT_EQ(
+      "Power Toggle: Off, Mode: 5 (Fan), Fan: 0 (Low), Temp: 25C",
+      ac.toString());
+  ac.setPowerToggle(true);
+  ac.setMode(kAirwellHeat);
+  ac.setTemp(30);
+  ac.setFan(kAirwellFanAuto);
+  EXPECT_EQ(
+      "Power Toggle: On, Mode: 2 (Heat), Fan: 3 (Auto), Temp: 30C",
+      ac.toString());
+}
+
+TEST(TestAirwellAcClass, ReconstructKnownState) {
+  IRAirwellAc ac(kGpioUnused);
+  const uint64_t expected = 0x240380002;
+  ac.begin();
+  ac.stateReset();
+  ASSERT_NE(expected, ac.getRaw());
+  ac.setPowerToggle(true);
+  ac.setMode(kAirwellCool);
+  ac.setTemp(22);
+  ac.setFan(kAirwellFanLow);
+  EXPECT_EQ(expected, ac.getRaw());
+  EXPECT_EQ(
+      "Power Toggle: On, Mode: 1 (Cool), Fan: 0 (Low), Temp: 22C",
+      ac.toString());
 }

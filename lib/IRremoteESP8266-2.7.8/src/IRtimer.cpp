@@ -14,7 +14,7 @@ uint32_t _TimerMs_unittest_now = 0;
 /// Class constructor.
 IRtimer::IRtimer() { reset(); }
 
-/// Resets the IRtimer object.
+/// Resets the IRtimer object. I.e. The counter starts again from now.
 void IRtimer::reset() {
 #ifndef UNIT_TEST
   start = micros();
@@ -47,7 +47,7 @@ void IRtimer::add(uint32_t usecs) { _IRtimer_unittest_now += usecs; }
 /// Class constructor.
 TimerMs::TimerMs() { reset(); }
 
-/// Resets the TimerMs object.
+/// Resets the TimerMs object. I.e. The counter starts again from now.
 void TimerMs::reset() {
 #ifndef UNIT_TEST
   start = millis();

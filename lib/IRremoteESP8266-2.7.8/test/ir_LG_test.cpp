@@ -448,7 +448,7 @@ TEST(TestDecodeLG, Issue620) {
 
   // Resend the same code as the report is a sent code doesn't decode
   // to the same message code.
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
   irsend.sendLG(0x8808721);
   irsend.makeDecodeResult();
   ASSERT_TRUE(irrecv.decode(&irsend.capture));
@@ -477,7 +477,7 @@ TEST(TestDecodeLG, Issue620) {
 }
 
 TEST(TestIRLgAcClass, SetAndGetPower) {
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
   ac.on();
   EXPECT_TRUE(ac.getPower());
   ac.off();
@@ -489,7 +489,7 @@ TEST(TestIRLgAcClass, SetAndGetPower) {
 }
 
 TEST(TestIRLgAcClass, SetAndGetTemp) {
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
   ac.setTemp(25);
   EXPECT_EQ(25, ac.getTemp());
   ac.setTemp(kLgAcMinTemp);
@@ -503,7 +503,7 @@ TEST(TestIRLgAcClass, SetAndGetTemp) {
 }
 
 TEST(TestIRLgAcClass, SetAndGetMode) {
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
   ac.setMode(kLgAcCool);
   ac.setFan(kLgAcFanAuto);
   ac.setTemp(25);
@@ -517,22 +517,22 @@ TEST(TestIRLgAcClass, SetAndGetMode) {
 }
 
 TEST(TestIRLgAcClass, SetAndGetFan) {
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
   ac.setMode(kLgAcCool);
   ac.setFan(kLgAcFanAuto);
   EXPECT_EQ(kLgAcFanAuto, ac.getFan());
-  ac.setFan(kLgAcFanLow);
-  EXPECT_EQ(kLgAcFanLow, ac.getFan());
+  ac.setFan(kLgAcFanLowest);
+  EXPECT_EQ(kLgAcFanLowest, ac.getFan());
   ac.setFan(kLgAcFanHigh);
   EXPECT_EQ(kLgAcFanHigh, ac.getFan());
   ac.setFan(kLgAcFanAuto + 1);
   EXPECT_EQ(kLgAcFanAuto, ac.getFan());
-  ac.setFan(kLgAcFanLow - 1);
+  ac.setFan(kLgAcFanLowest - 1);
   EXPECT_EQ(kLgAcFanAuto, ac.getFan());
 }
 
 TEST(TestIRLgAcClass, toCommon) {
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
   ac.setPower(true);
   ac.setMode(kLgAcCool);
   ac.setTemp(20);
@@ -564,7 +564,7 @@ TEST(TestIRLgAcClass, toCommon) {
 }
 
 TEST(TestIRLgAcClass, HumanReadable) {
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
 
   EXPECT_EQ(
       "Model: 1 (GE6711AR2853M), "
@@ -583,17 +583,17 @@ TEST(TestIRLgAcClass, HumanReadable) {
   ac.setTemp(kLgAcMinTemp);
   EXPECT_EQ(
       "Model: 1 (GE6711AR2853M), "
-      "Power: On, Mode: 0 (Cool), Temp: 16C, Fan: 0 (Low)",
+      "Power: On, Mode: 0 (Cool), Temp: 16C, Fan: 1 (Low)",
       ac.toString());
   ac.setTemp(ac.getTemp() + 1);
   EXPECT_EQ(
       "Model: 1 (GE6711AR2853M), "
-      "Power: On, Mode: 0 (Cool), Temp: 17C, Fan: 0 (Low)",
+      "Power: On, Mode: 0 (Cool), Temp: 17C, Fan: 1 (Low)",
       ac.toString());
   ac.setTemp(ac.getTemp() - 1);
   EXPECT_EQ(
       "Model: 1 (GE6711AR2853M), "
-      "Power: On, Mode: 0 (Cool), Temp: 16C, Fan: 0 (Low)",
+      "Power: On, Mode: 0 (Cool), Temp: 16C, Fan: 1 (Low)",
       ac.toString());
   ac.setPower(false);
   EXPECT_EQ(
@@ -603,7 +603,7 @@ TEST(TestIRLgAcClass, HumanReadable) {
 }
 
 TEST(TestIRLgAcClass, SetAndGetRaw) {
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
 
   ac.setRaw(0x8800A4E);
   ASSERT_EQ(0x8800A4E, ac.getRaw());
@@ -621,7 +621,7 @@ TEST(TestIRLgAcClass, SetAndGetRaw) {
 }
 
 TEST(TestIRLgAcClass, MessageConstruction) {
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
 
   ac.on();
   ac.setMode(kLgAcCool);
@@ -635,7 +635,7 @@ TEST(TestIRLgAcClass, MessageConstruction) {
 }
 
 TEST(TestIRLgAcClass, isValidLgAc) {
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
 
   ac.setRaw(0x8800A4E);
   ASSERT_TRUE(ac.isValidLgAc());
@@ -670,7 +670,7 @@ TEST(TestUtils, Housekeeping) {
 }
 
 TEST(TestIRLgAcClass, KnownExamples) {
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
   // Ref:
   // https://github.com/crankyoldgit/IRremoteESP8266/issues/1008#issuecomment-570646648
 
@@ -694,7 +694,7 @@ TEST(TestIRLgAcClass, KnownExamples) {
   ASSERT_TRUE(ac.isValidLgAc());
   EXPECT_EQ(
       "Model: 1 (GE6711AR2853M), "
-      "Power: On, Mode: 1 (Dry), Temp: 21C, Fan: 0 (Low)",
+      "Power: On, Mode: 1 (Dry), Temp: 21C, Fan: 0 (Quiet)",
       ac.toString());
 
   ac.setRaw(0x880C758);
@@ -716,7 +716,7 @@ TEST(TestIRLgAcClass, KnownExamples) {
   ASSERT_TRUE(ac.isValidLgAc());
   EXPECT_EQ(
       "Model: 1 (GE6711AR2853M), "
-      "Power: On, Mode: 0 (Cool), Temp: 22C, Fan: 0 (Low)",
+      "Power: On, Mode: 0 (Cool), Temp: 22C, Fan: 0 (Quiet)",
       ac.toString());
 
   ac.setRaw(0x8808721);
@@ -816,7 +816,7 @@ TEST(TestDecodeLG2, Issue1008) {
   EXPECT_EQ(0x8800347, irsend.capture.value);
 
   irsend.reset();
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
   ac.setRaw(0x8800347);
   ac.setModel(lg_ac_remote_model_t::AKB75215403);  // aka. 2
   ac.send();
@@ -835,7 +835,7 @@ TEST(TestDecodeLG2, Issue1008) {
 }
 
 TEST(TestIRLgAcClass, DifferentModels) {
-  IRLgAc ac(0);
+  IRLgAc ac(kGpioUnused);
   IRrecv capture(0);
 
   ac.setRaw(0x8800347);
@@ -871,4 +871,13 @@ TEST(TestIRLgAcClass, DifferentModels) {
   ASSERT_EQ(kLgBits, ac._irsend.capture.bits);
   ASSERT_EQ(expected2, IRAcUtils::resultAcToString(&ac._irsend.capture));
   ASSERT_TRUE(IRAcUtils::decodeToState(&ac._irsend.capture, &r, &p));
+}
+
+TEST(TestIRLgAcClass, FanSpeedIssue1214) {
+  EXPECT_EQ(kLgAcFanLowest, IRLgAc::convertFan(stdAc::fanspeed_t::kMin));
+  EXPECT_EQ(kLgAcFanLow, IRLgAc::convertFan(stdAc::fanspeed_t::kLow));
+  EXPECT_EQ(kLgAcFanMedium, IRLgAc::convertFan(stdAc::fanspeed_t::kMedium));
+  EXPECT_EQ(kLgAcFanHigh, IRLgAc::convertFan(stdAc::fanspeed_t::kHigh));
+  EXPECT_EQ(kLgAcFanHigh, IRLgAc::convertFan(stdAc::fanspeed_t::kMax));
+  EXPECT_EQ(kLgAcFanAuto, IRLgAc::convertFan(stdAc::fanspeed_t::kAuto));
 }

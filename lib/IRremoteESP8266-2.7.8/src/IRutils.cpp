@@ -161,6 +161,7 @@ bool hasACState(const decode_type_t protocol) {
     case NEOCLIMA:
     case PANASONIC_AC:
     case SAMSUNG_AC:
+    case SANYO_AC:
     case SHARP_AC:
     case TCL112AC:
     case TOSHIBA_AC:
@@ -914,5 +915,36 @@ namespace irutils {
     *dst &= ~(mask << offset);
     // Merge in the data.
     *dst |= ((data & mask) << offset);
+  }
+
+  /// Create byte pairs where the second byte of the pair is a bit
+  /// inverted/flipped copy of the first/previous byte of the pair.
+  /// @param[in,out] ptr A pointer to the start of array to modify.
+  /// @param[in] length The byte size of the array.
+  /// @note A length of `<= 1` will do nothing.
+  /// @return A ptr to the modified array.
+  uint8_t * invertBytePairs(uint8_t *ptr, const uint16_t length) {
+    for (uint16_t i = 1; i < length; i += 2) {
+      // Code done this way to avoid a compiler warning bug.
+      uint8_t inv = ~*(ptr + i - 1);
+      *(ptr + i) = inv;
+    }
+    return ptr;
+  }
+
+  /// Check an array to see if every second byte of a pair is a bit
+  /// inverted/flipped copy of the first/previous byte of the pair.
+  /// @param[in] ptr A pointer to the start of array to check.
+  /// @param[in] length The byte size of the array.
+  /// @note A length of `<= 1` will always return true.
+  /// @return true, if every second byte is inverted. Otherwise false.
+  bool checkInvertedBytePairs(const uint8_t * const ptr,
+                              const uint16_t length) {
+    for (uint16_t i = 1; i < length; i += 2) {
+      // Code done this way to avoid a compiler warning bug.
+      uint8_t inv = ~*(ptr + i - 1);
+      if (*(ptr + i) != inv) return false;
+    }
+    return true;
   }
 }  // namespace irutils

@@ -441,13 +441,13 @@ TEST(TestMideaACClass, Sleep) {
 }
 
 TEST(TestMideaACClass, HumanReadableOutput) {
-  IRMideaAC ac(0);
+  IRMideaAC ac(kGpioUnused);
   ac.begin();
 
   ac.setRaw(0xA1826FFFFF62);
   EXPECT_EQ(
       "Power: On, Mode: 2 (Auto), Celsius: Off, Temp: 25C/77F, Fan: 0 (Auto), "
-      "Sleep: Off, Swing(V) Toggle: Off", ac.toString());
+      "Sleep: Off, Swing(V) Toggle: Off, Econo Toggle: Off", ac.toString());
   ac.off();
   ac.setTemp(25, true);
   ac.setFan(kMideaACFanHigh);
@@ -455,16 +455,16 @@ TEST(TestMideaACClass, HumanReadableOutput) {
   ac.setSleep(true);
   EXPECT_EQ(
       "Power: Off, Mode: 1 (Dry), Celsius: Off, Temp: 25C/77F, Fan: 3 (High), "
-      "Sleep: On, Swing(V) Toggle: Off", ac.toString());
+      "Sleep: On, Swing(V) Toggle: Off, Econo Toggle: Off", ac.toString());
   ac.setUseCelsius(true);
   EXPECT_EQ(
       "Power: Off, Mode: 1 (Dry), Celsius: On, Temp: 25C/77F, Fan: 3 (High), "
-      "Sleep: On, Swing(V) Toggle: Off", ac.toString());
+      "Sleep: On, Swing(V) Toggle: Off, Econo Toggle: Off", ac.toString());
 
   ac.setRaw(0xA19867FFFF7E);
   EXPECT_EQ(
       "Power: On, Mode: 0 (Cool), Celsius: Off, Temp: 21C/69F, Fan: 3 (High), "
-      "Sleep: Off, Swing(V) Toggle: Off", ac.toString());
+      "Sleep: Off, Swing(V) Toggle: Off, Econo Toggle: Off", ac.toString());
 }
 
 // Tests for decodeMidea().
@@ -672,14 +672,14 @@ TEST(TestDecodeMidea, DecodeRealExample) {
   EXPECT_EQ(0xA18263FFFF6E, irsend.capture.value);
   EXPECT_EQ(
       "Power: On, Mode: 2 (Auto), Celsius: Off, Temp: 18C/65F, Fan: 0 (Auto), "
-      "Sleep: Off, Swing(V) Toggle: Off",
+      "Sleep: Off, Swing(V) Toggle: Off, Econo Toggle: Off",
       IRAcUtils::resultAcToString(&irsend.capture));
   stdAc::state_t r, p;
   ASSERT_TRUE(IRAcUtils::decodeToState(&irsend.capture, &r, &p));
 }
 
 TEST(TestMideaACClass, toCommon) {
-  IRMideaAC ac(0);
+  IRMideaAC ac(kGpioUnused);
   ac.setPower(true);
   ac.setMode(kMideaACCool);
   ac.setUseCelsius(true);
@@ -709,7 +709,7 @@ TEST(TestMideaACClass, toCommon) {
 
 // https://github.com/crankyoldgit/IRremoteESP8266/issues/819
 TEST(TestMideaACClass, CelsiusRemoteTemp) {
-  IRMideaAC ac(0);
+  IRMideaAC ac(kGpioUnused);
   uint64_t on_cool_low_17c = 0xA18840FFFF56;
   uint64_t on_cool_low_30c = 0xA1884DFFFF5D;
   ac.on();
@@ -722,13 +722,13 @@ TEST(TestMideaACClass, CelsiusRemoteTemp) {
   EXPECT_EQ(on_cool_low_17c, ac.getRaw());
   EXPECT_EQ(
       "Power: On, Mode: 0 (Cool), Celsius: On, Temp: 17C/62F, Fan: 1 (Low), "
-      "Sleep: Off, Swing(V) Toggle: Off", ac.toString());
+      "Sleep: Off, Swing(V) Toggle: Off, Econo Toggle: Off", ac.toString());
   ac.setRaw(on_cool_low_17c);
   EXPECT_EQ(17, ac.getTemp(true));
   EXPECT_EQ(62, ac.getTemp(false));
   EXPECT_EQ(
       "Power: On, Mode: 0 (Cool), Celsius: On, Temp: 17C/62F, Fan: 1 (Low), "
-      "Sleep: Off, Swing(V) Toggle: Off", ac.toString());
+      "Sleep: Off, Swing(V) Toggle: Off, Econo Toggle: Off", ac.toString());
   ac.setTemp(17, true);
   EXPECT_EQ(17, ac.getTemp(true));
   EXPECT_EQ(62, ac.getTemp(false));
@@ -737,26 +737,45 @@ TEST(TestMideaACClass, CelsiusRemoteTemp) {
   ac.setRaw(on_cool_low_30c);
   EXPECT_EQ(
       "Power: On, Mode: 0 (Cool), Celsius: On, Temp: 30C/86F, Fan: 1 (Low), "
-      "Sleep: Off, Swing(V) Toggle: Off", ac.toString());
+      "Sleep: Off, Swing(V) Toggle: Off, Econo Toggle: Off", ac.toString());
 }
 
 // https://github.com/crankyoldgit/IRremoteESP8266/issues/819
 TEST(TestMideaACClass, SwingV) {
-  IRMideaAC ac(0);
+  IRMideaAC ac(kGpioUnused);
   ac.setSwingVToggle(false);
   ASSERT_FALSE(ac.getSwingVToggle());
   ac.setSwingVToggle(true);
   ASSERT_TRUE(ac.getSwingVToggle());
   EXPECT_EQ(
       "Power: On, Mode: 2 (Auto), Celsius: Off, Temp: 25C/77F, Fan: 0 (Auto), "
-      "Sleep: Off, Swing(V) Toggle: On", ac.toString());
+      "Sleep: Off, Swing(V) Toggle: On, Econo Toggle: Off", ac.toString());
   ac.setSwingVToggle(false);
   ASSERT_FALSE(ac.getSwingVToggle());
   EXPECT_EQ(
       "Power: On, Mode: 2 (Auto), Celsius: Off, Temp: 25C/77F, Fan: 0 (Auto), "
-      "Sleep: Off, Swing(V) Toggle: Off", ac.toString());
+      "Sleep: Off, Swing(V) Toggle: Off, Econo Toggle: Off", ac.toString());
   ac.setRaw(kMideaACToggleSwingV);
-  EXPECT_EQ("Swing(V) Toggle: On", ac.toString());
+  EXPECT_EQ("Swing(V) Toggle: On, Econo Toggle: Off", ac.toString());
+}
+
+// https://github.com/crankyoldgit/IRremoteESP8266/pull/1213
+TEST(TestMideaACClass, Econo) {
+  IRMideaAC ac(kGpioUnused);
+  ac.setEconoToggle(false);
+  ASSERT_FALSE(ac.getEconoToggle());
+  ac.setEconoToggle(true);
+  ASSERT_TRUE(ac.getEconoToggle());
+  EXPECT_EQ(
+      "Power: On, Mode: 2 (Auto), Celsius: Off, Temp: 25C/77F, Fan: 0 (Auto), "
+      "Sleep: Off, Swing(V) Toggle: Off, Econo Toggle: On", ac.toString());
+  ac.setEconoToggle(false);
+  ASSERT_FALSE(ac.getEconoToggle());
+  EXPECT_EQ(
+      "Power: On, Mode: 2 (Auto), Celsius: Off, Temp: 25C/77F, Fan: 0 (Auto), "
+      "Sleep: Off, Swing(V) Toggle: Off, Econo Toggle: Off", ac.toString());
+  ac.setRaw(kMideaACToggleEcono);
+  EXPECT_EQ("Swing(V) Toggle: Off, Econo Toggle: On", ac.toString());
 }
 
 // Test abusing the protocol for sending 6 arbitary bytes.

@@ -8,7 +8,7 @@
 
 // Classes
 
-/// This class performs a simple timer in useconds since instantiated.
+/// This class offers a simple counter in micro-seconds since instantiated.
 /// @note Handles when the system timer wraps around (once).
 class IRtimer {
  public:
@@ -20,10 +20,10 @@ class IRtimer {
 #endif  // UNIT_TEST
 
  private:
-  uint32_t start;
+  uint32_t start;  ///< Time in uSeconds when the class was instantiated/reset.
 };
 
-/// This class performs a simple timer in milli-seoncds since instantiated.
+/// This class offers a simple counter in milli-seconds since instantiated.
 /// @note Handles when the system timer wraps around (once).
 class TimerMs {
  public:
@@ -35,6 +35,6 @@ class TimerMs {
 #endif  // UNIT_TEST
 
  private:
-  uint32_t start;
+  uint32_t start;  ///< Time in mSeconds when the class was instantiated/reset.
 };
 #endif  // IRTIMER_H_

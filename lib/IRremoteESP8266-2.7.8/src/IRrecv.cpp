@@ -614,8 +614,12 @@ bool IRrecv::decode(decode_results *results, irparams_t *save,
     if (decodeDaikin216(results, offset)) return true;
 #endif
 #if DECODE_TOSHIBA_AC
-    DPRINTLN("Attempting Toshiba AC decode");
+    DPRINTLN("Attempting Toshiba AC 72bit decode");
     if (decodeToshibaAC(results, offset)) return true;
+    DPRINTLN("Attempting Toshiba AC 80bit decode");
+    if (decodeToshibaAC(results, offset, kToshibaACBitsLong)) return true;
+    DPRINTLN("Attempting Toshiba AC 56bit decode");
+    if (decodeToshibaAC(results, offset, kToshibaACBitsShort)) return true;
 #endif
 #if DECODE_MIDEA
     DPRINTLN("Attempting Midea decode");
@@ -852,6 +856,10 @@ bool IRrecv::decode(decode_results *results, irparams_t *save,
     DPRINTLN("Attempting Zepeal decode");
     if (decodeZepeal(results, offset)) return true;
 #endif  // DECODE_ZEPEAL
+#if DECODE_SANYO_AC
+    DPRINTLN("Attempting Sanyo AC decode");
+    if (decodeSanyoAc(results, offset)) return true;
+#endif  // DECODE_SANYO_AC
   // Typically new protocols are added above this line.
   }
 #if DECODE_HASH

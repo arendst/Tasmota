@@ -7,6 +7,7 @@
 #include <Arduino.h>
 #endif
 #include "IRremoteESP8266.h"
+#include "ir_Airwell.h"
 #include "ir_Amcor.h"
 #include "ir_Argo.h"
 #include "ir_Carrier.h"
@@ -28,6 +29,7 @@
 #include "ir_Neoclima.h"
 #include "ir_Panasonic.h"
 #include "ir_Samsung.h"
+#include "ir_Sanyo.h"
 #include "ir_Sharp.h"
 #include "ir_Tcl.h"
 #include "ir_Teco.h"
@@ -37,9 +39,10 @@
 #include "ir_Whirlpool.h"
 
 // Constants
-const int8_t kGpioUnused = -1;
+const int8_t kGpioUnused = -1;  ///< A placeholder for not using an actual GPIO.
 
 // Class
+/// A universal/common/generic interface for controling supported A/Cs.
 class IRac {
  public:
   explicit IRac(const uint16_t pin, const bool inverted = false,
@@ -93,10 +96,15 @@ class IRac {
 
  private:
 #endif
-  uint16_t _pin;
-  bool _inverted;
-  bool _modulation;
-  stdAc::state_t _prev;  // The state we expect the device to currently be in.
+  uint16_t _pin;  ///< The GPIO to use to transmit messages from.
+  bool _inverted;  ///< IR LED is lit when GPIO is LOW (true) or HIGH (false)?
+  bool _modulation;  ///< Is frequency modulation to be used?
+  stdAc::state_t _prev;  ///< The state we expect the device to currently be in.
+#if SEND_AIRWELL
+  void airwell(IRAirwellAc *ac,
+               const bool on, const stdAc::opmode_t mode, const float degrees,
+               const stdAc::fanspeed_t fan);
+#endif  // SEND_AIRWELL
 #if SEND_AMCOR
   void amcor(IRAmcorAc *ac,
              const bool on, const stdAc::opmode_t mode, const float degrees,
@@ -286,7 +294,8 @@ void electra(IRElectraAc *ac,
   void midea(IRMideaAC *ac,
              const bool on, const stdAc::opmode_t mode, const bool celsius,
              const float degrees, const stdAc::fanspeed_t fan,
-             const stdAc::swingv_t swingv, const int16_t sleep = -1);
+             const stdAc::swingv_t swingv, const bool econo,
+             const int16_t sleep = -1);
 #endif  // SEND_MIDEA
 #if SEND_MITSUBISHI_AC
   void mitsubishi(IRMitsubishiAC *ac,
@@ -350,6 +359,12 @@ void electra(IRElectraAc *ac,
                const bool beep, const bool prevpower = true,
                const bool forcepower = true);
 #endif  // SEND_SAMSUNG_AC
+#if SEND_SANYO_AC
+  void sanyo(IRSanyoAc *ac,
+             const bool on, const stdAc::opmode_t mode, const float degrees,
+             const stdAc::fanspeed_t fan, const stdAc::swingv_t swingv,
+             const bool beep, const int16_t sleep = -1);
+#endif  // SEND_SANYO_AC
 #if SEND_SHARP_AC
   void sharp(IRSharpAc *ac,
              const bool on, const bool prev_power, const stdAc::opmode_t mode,
@@ -374,7 +389,8 @@ void electra(IRElectraAc *ac,
 #if SEND_TOSHIBA_AC
   void toshiba(IRToshibaAC *ac,
                const bool on, const stdAc::opmode_t mode, const float degrees,
-               const stdAc::fanspeed_t fan);
+               const stdAc::fanspeed_t fan, const stdAc::swingv_t swingv,
+               const bool turbo, const bool econo);
 #endif  // SEND_TOSHIBA_AC
 #if SEND_TROTEC
   void trotec(IRTrotecESP *ac,
@@ -401,6 +417,7 @@ static stdAc::state_t handleToggles(const stdAc::state_t desired,
                                     const stdAc::state_t *prev = NULL);
 };  // IRac class
 
+/// Common functions for use with all A/Cs supported by the IRac class.
 namespace IRAcUtils {
   String resultAcToString(const decode_results * const results);
   bool decodeToState(const decode_results *decode, stdAc::state_t *result,

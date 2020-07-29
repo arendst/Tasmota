@@ -283,8 +283,14 @@ class IRrecv {
   bool decodeSanyoLC7461(decode_results *results,
                          uint16_t offset = kStartOffset,
                          const uint16_t nbits = kSanyoLC7461Bits,
-                         bool strict = true);
+                         const bool strict = true);
 #endif
+#if DECODE_SANYO_AC
+  bool decodeSanyoAc(decode_results *results,
+                     uint16_t offset = kStartOffset,
+                     const uint16_t nbits = kSanyoAcBits,
+                     const bool strict = true);
+#endif  // DECODE_SANYO_AC
 #if DECODE_MITSUBISHI
   bool decodeMitsubishi(decode_results *results, uint16_t offset = kStartOffset,
                         const uint16_t nbits = kMitsubishiBits,
@@ -469,7 +475,7 @@ class IRrecv {
 #endif
 #if DECODE_TOSHIBA_AC
   bool decodeToshibaAC(decode_results *results, uint16_t offset = kStartOffset,
-                       const uint16_t nbytes = kToshibaACBits,
+                       const uint16_t nbits = kToshibaACBits,
                        const bool strict = true);
 #endif
 #if DECODE_TROTEC

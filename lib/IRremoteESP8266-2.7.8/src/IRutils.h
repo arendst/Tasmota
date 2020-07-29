@@ -107,5 +107,7 @@ namespace irutils {
                const uint32_t data);
   void setBits(uint64_t * const dst, const uint8_t offset, const uint8_t nbits,
                const uint64_t data);
+  uint8_t * invertBytePairs(uint8_t *ptr, const uint16_t length);
+  bool checkInvertedBytePairs(const uint8_t * const ptr, const uint16_t length);
 }  // namespace irutils
 #endif  // IRUTILS_H_

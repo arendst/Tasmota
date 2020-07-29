@@ -1,6 +1,7 @@
 // Copyright 2019 David Conran
 
 #include <string>
+#include "ir_Airwell.h"
 #include "ir_Amcor.h"
 #include "ir_Argo.h"
 #include "ir_Carrier.h"
@@ -39,10 +40,33 @@
 
 // Tests for IRac class.
 
+TEST(TestIRac, Airwell) {
+  IRAirwellAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
+  char expected[] =
+      "Power Toggle: On, Mode: 3 (Auto), Fan: 1 (Medium), Temp: 18C";
+
+  ac.begin();
+  irac.airwell(&ac,
+               true,                        // Power
+               stdAc::opmode_t::kAuto,      // Mode
+               18,                          // Celsius
+               stdAc::fanspeed_t::kMedium);   // Fan speed
+  ASSERT_EQ(expected, ac.toString());
+  ac._irsend.makeDecodeResult();
+  EXPECT_TRUE(capture.decode(&ac._irsend.capture));
+  ASSERT_EQ(AIRWELL, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kAirwellBits, ac._irsend.capture.bits);
+  ASSERT_EQ(expected, IRAcUtils::resultAcToString(&ac._irsend.capture));
+  stdAc::state_t r, p;
+  ASSERT_TRUE(IRAcUtils::decodeToState(&ac._irsend.capture, &r, &p));
+}
+
 TEST(TestIRac, Amcor) {
-  IRAmcorAc ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRAmcorAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 5 (Auto), Fan: 3 (High), Temp: 19C, Max: Off";
 
@@ -63,8 +87,8 @@ TEST(TestIRac, Amcor) {
 }
 
 TEST(TestIRac, Argo) {
-  IRArgoAC ac(0);
-  IRac irac(0);
+  IRArgoAC ac(kGpioUnused);
+  IRac irac(kGpioUnused);
 
   ac.begin();
   irac.argo(&ac,
@@ -118,9 +142,9 @@ TEST(TestIRac, Carrier64) {
 }
 
 TEST(TestIRac, Coolix) {
-  IRCoolixAC ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRCoolixAC ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 3 (Heat), Fan: 1 (Max), Temp: 21C, Zone Follow: Off, "
       "Sensor Temp: Off";
@@ -221,9 +245,9 @@ TEST(TestIRac, Corona) {
 }
 
 TEST(TestIRac, Daikin) {
-  IRDaikinESP ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRDaikinESP ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 3 (Cool), Temp: 19C, Fan: 5 (High), Powerful: Off, "
       "Quiet: Off, Sensor: Off, Mould: On, Comfort: Off, "
@@ -254,9 +278,9 @@ TEST(TestIRac, Daikin) {
 }
 
 TEST(TestIRac, Daikin128) {
-  IRDaikin128 ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRDaikin128 ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power Toggle: On, Mode: 8 (Heat), Temp: 27C, Fan: 9 (Quiet), "
       "Powerful: Off, Quiet: On, Swing(V): On, Sleep: On, "
@@ -287,9 +311,9 @@ TEST(TestIRac, Daikin128) {
 }
 
 TEST(TestIRac, Daikin152) {
-  IRDaikin152 ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRDaikin152 ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 3 (Cool), Temp: 27C, Fan: 3 (Medium), Swing(V): On, "
       "Powerful: Off, Quiet: Off, Econo: On, Sensor: Off, Comfort: Off";
@@ -315,9 +339,9 @@ TEST(TestIRac, Daikin152) {
 }
 
 TEST(TestIRac, Daikin160) {
-  IRDaikin160 ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRDaikin160 ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 2 (Dry), Temp: 23C, Fan: 1 (Low), "
       "Swing(V): 3 (Middle)";
@@ -340,9 +364,9 @@ TEST(TestIRac, Daikin160) {
 }
 
 TEST(TestIRac, Daikin176) {
-  IRDaikin176 ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRDaikin176 ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 7 (Cool), Temp: 26C, Fan: 1 (Low), Swing(H): 5 (Auto)";
 
@@ -364,9 +388,9 @@ TEST(TestIRac, Daikin176) {
 }
 
 TEST(TestIRac, Daikin2) {
-  IRDaikin2 ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRDaikin2 ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 3 (Cool), Temp: 19C, Fan: 1 (Low), "
       "Swing(V): 14 (Auto), Swing(H): 170 (UNKNOWN), Clock: 00:00, "
@@ -402,9 +426,9 @@ TEST(TestIRac, Daikin2) {
 }
 
 TEST(TestIRac, Daikin216) {
-  IRDaikin216 ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRDaikin216 ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 4 (Heat), Temp: 31C, Fan: 11 (Quiet), "
       "Swing(H): On, Swing(V): On, Quiet: On, Powerful: Off";
@@ -511,9 +535,9 @@ TEST(TestIRac, Electra) {
 }
 
 TEST(TestIRac, Fujitsu) {
-  IRFujitsuAC ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRFujitsuAC ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   std::string ardb1_expected =
       "Model: 2 (ARDB1), Power: On, Mode: 1 (Cool), Temp: 19C, "
       "Fan: 2 (Medium), Command: N/A";
@@ -591,9 +615,9 @@ TEST(TestIRac, Fujitsu) {
 }
 
 TEST(TestIRac, Goodweather) {
-  IRGoodweatherAc ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRGoodweatherAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 1 (Cool), Temp: 19C, Fan: 2 (Medium), Turbo: Toggle, "
       "Light: Toggle, Sleep: Toggle, Swing: 1 (Slow), Command: 0 (Power)";
@@ -619,9 +643,9 @@ TEST(TestIRac, Goodweather) {
 }
 
 TEST(TestIRac, Gree) {
-  IRGreeAC ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRGreeAC ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Model: 1 (YAW1F), Power: On, Mode: 1 (Cool), Temp: 71F, "
       "Fan: 2 (Medium), Turbo: Off, IFeel: Off, WiFi: Off, XFan: On, "
@@ -652,9 +676,9 @@ TEST(TestIRac, Gree) {
 }
 
 TEST(TestIRac, Haier) {
-  IRHaierAC ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRHaierAC ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Command: 1 (On), Mode: 1 (Cool), Temp: 24C, Fan: 2 (Medium), "
       "Swing: 1 (Up), Sleep: On, Health: On, Clock: 13:45, "
@@ -682,9 +706,9 @@ TEST(TestIRac, Haier) {
 
 
 TEST(TestIRac, HaierYrwo2) {
-  IRHaierACYRW02 ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRHaierACYRW02 ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Button: 5 (Power), Mode: 1 (Cool), Temp: 23C, "
       "Fan: 2 (Medium), Turbo: 1 (High), Swing: 1 (Highest), Sleep: On, "
@@ -711,9 +735,9 @@ TEST(TestIRac, HaierYrwo2) {
 }
 
 TEST(TestIRac, Hitachi) {
-  IRHitachiAc ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRHitachiAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 2 (Auto), Temp: 22C, Fan: 3 (Medium), "
       "Swing(V): Off, Swing(H): On";
@@ -821,9 +845,9 @@ TEST(TestIRac, Hitachi344) {
 }
 
 TEST(TestIRac, Hitachi424) {
-  IRHitachiAc424 ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRHitachiAc424 ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 6 (Heat), Temp: 25C, Fan: 6 (Max), "
       "Button: 19 (Power/Mode), Swing(V) Toggle: Off";
@@ -866,9 +890,9 @@ TEST(TestIRac, Hitachi424) {
 }
 
 TEST(TestIRac, Kelvinator) {
-  IRKelvinatorAC ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRKelvinatorAC ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 1 (Cool), Temp: 19C, Fan: 3 (Medium), Turbo: Off, "
       "Quiet: Off, XFan: On, Ion: On, Light: On, "
@@ -899,9 +923,9 @@ TEST(TestIRac, Kelvinator) {
 }
 
 TEST(TestIRac, LG) {
-  IRLgAc ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRLgAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Model: 1 (GE6711AR2853M), "
       "Power: On, Mode: 1 (Dry), Temp: 27C, Fan: 2 (Medium)";
@@ -925,12 +949,12 @@ TEST(TestIRac, LG) {
 }
 
 TEST(TestIRac, Midea) {
-  IRMideaAC ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRMideaAC ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 1 (Dry), Celsius: On, Temp: 27C/80F, Fan: 2 (Medium), "
-      "Sleep: On, Swing(V) Toggle: Off";
+      "Sleep: On, Swing(V) Toggle: Off, Econo Toggle: Off";
 
   ac.begin();
   irac.midea(&ac,
@@ -940,6 +964,7 @@ TEST(TestIRac, Midea) {
              27,                          // Degrees
              stdAc::fanspeed_t::kMedium,  // Fan speed
              stdAc::swingv_t::kOff,       // Swing(V)
+             false,                       // Econo
              8 * 60 + 0);                 // Sleep time
 
   ASSERT_EQ(expected, ac.toString());
@@ -953,9 +978,9 @@ TEST(TestIRac, Midea) {
 }
 
 TEST(TestIRac, Mitsubishi) {
-  IRMitsubishiAC ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRMitsubishiAC ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 3 (Cool), Temp: 20C, Fan: 2 (Medium), "
       "Swing(V): 0 (Auto), Swing(H): 3 (UNKNOWN), "
@@ -982,9 +1007,9 @@ TEST(TestIRac, Mitsubishi) {
 }
 
 TEST(TestIRac, Mitsubishi136) {
-  IRMitsubishi136 ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRMitsubishi136 ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 5 (Dry), Temp: 22C, Fan: 3 (High), "
       "Swing(V): 3 (Highest), Quiet: Off";
@@ -1008,9 +1033,9 @@ TEST(TestIRac, Mitsubishi136) {
 }
 
 TEST(TestIRac, MitsubishiHeavy88) {
-  IRMitsubishiHeavy88Ac ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRMitsubishiHeavy88Ac ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 1 (Cool), Temp: 21C, Fan: 3 (Med), "
       "Swing(V): 4 (Auto), Swing(H): 0 (Off), Turbo: Off, Econo: Off, "
@@ -1038,9 +1063,9 @@ TEST(TestIRac, MitsubishiHeavy88) {
 }
 
 TEST(TestIRac, MitsubishiHeavy152) {
-  IRMitsubishiHeavy152Ac ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRMitsubishiHeavy152Ac ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 1 (Cool), Temp: 20C, Fan: 6 (Econo), "
       "Swing(V): 6 (Off), Swing(H): 0 (Auto), Silent: On, Turbo: Off, "
@@ -1071,9 +1096,9 @@ TEST(TestIRac, MitsubishiHeavy152) {
 }
 
 TEST(TestIRac, Neoclima) {
-  IRNeoclimaAc ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRNeoclimaAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 1 (Cool), Temp: 20C, Fan: 3 (Low), "
       "Swing(V): Off, Swing(H): On, Sleep: On, Turbo: Off, Hold: Off, Ion: On, "
@@ -1103,9 +1128,9 @@ TEST(TestIRac, Neoclima) {
 }
 
 TEST(TestIRac, Panasonic) {
-  IRPanasonicAc ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRPanasonicAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected_nke[] =
       "Model: 2 (NKE), Power: On, Mode: 4 (Heat), Temp: 28C, Fan: 2 (Medium), "
       "Swing(V): 15 (Auto), Swing(H): 6 (Middle), Quiet: On, "
@@ -1161,9 +1186,9 @@ TEST(TestIRac, Panasonic) {
 }
 
 TEST(TestIRac, Samsung) {
-  IRSamsungAc ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRSamsungAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 0 (Auto), Temp: 28C, Fan: 6 (Auto), Swing: On, "
       "Beep: On, Clean: On, Quiet: On, Powerful: Off, Breeze: Off, "
@@ -1223,10 +1248,38 @@ TEST(TestIRac, Samsung) {
   ASSERT_TRUE(IRAcUtils::decodeToState(&ac._irsend.capture, &r, &p));
 }
 
+TEST(TestIRac, Sanyo) {
+  IRSanyoAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
+  char expected[] =
+      "Power: On, Mode: 2 (Cool), Temp: 28C, Fan: 3 (Medium), "
+      "Swing(V): 7 (Highest), Sleep: On, Beep: On, "
+      "Sensor: Wall, Sensor Temp: 28C, Off Timer: Off";
+
+  ac.begin();
+  irac.sanyo(&ac,
+             true,                         // Power
+             stdAc::opmode_t::kCool,       // Mode
+             28,                           // Celsius
+             stdAc::fanspeed_t::kMedium,   // Fan speed
+             stdAc::swingv_t::kHighest,    // Vertical Swing
+             true,                         // Beep
+             17);                          // Sleep
+  ASSERT_EQ(expected, ac.toString());
+  ac._irsend.makeDecodeResult();
+  EXPECT_TRUE(capture.decode(&ac._irsend.capture));
+  ASSERT_EQ(SANYO_AC, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kSanyoAcBits, ac._irsend.capture.bits);
+  ASSERT_EQ(expected, IRAcUtils::resultAcToString(&ac._irsend.capture));
+  stdAc::state_t r, p;
+  ASSERT_TRUE(IRAcUtils::decodeToState(&ac._irsend.capture, &r, &p));
+}
+
 TEST(TestIRac, Sharp) {
-  IRSharpAc ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRSharpAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 2 (Cool), Temp: 28C, Fan: 3 (Medium), "
       "Turbo: Off, Swing(V) Toggle: On, Ion: On, Econo: -, Clean: Off";
@@ -1253,9 +1306,9 @@ TEST(TestIRac, Sharp) {
 }
 
 TEST(TestIRac, Tcl112) {
-  IRTcl112Ac ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRTcl112Ac ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 3 (Cool), Temp: 20C, Fan: 3 (Medium), Econo: On, "
       "Health: On, Light: On, Turbo: Off, Swing(H): On, Swing(V): Off";
@@ -1283,9 +1336,9 @@ TEST(TestIRac, Tcl112) {
 }
 
 TEST(TestIRac, Teco) {
-  IRTecoAc ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRTecoAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 0 (Auto), Temp: 21C, Fan: 2 (Medium), Sleep: On, "
       "Swing: On, Light: On, Humid: Off, Save: Off, Timer: Off";
@@ -1310,31 +1363,82 @@ TEST(TestIRac, Teco) {
 }
 
 TEST(TestIRac, Toshiba) {
-  IRToshibaAC ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
-  char expected[] = "Power: On, Mode: 2 (Dry), Temp: 29C, Fan: 2 (UNKNOWN)";
+  IRToshibaAC ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
+  char expected[] =
+      "Temp: 29C, Power: On, Mode: 2 (Dry), Fan: 2 (UNKNOWN), "
+      "Turbo: Off, Econo: On";
 
   ac.begin();
   irac.toshiba(&ac,
                true,                      // Power
                stdAc::opmode_t::kDry,     // Mode
                29,                        // Celsius
-               stdAc::fanspeed_t::kLow);  // Fan speed
+               stdAc::fanspeed_t::kLow,   // Fan speed
+               stdAc::swingv_t::kOff,     // Vertical Swing
+               false,                     // Turbo
+               true);                     // Econo
   ASSERT_EQ(expected, ac.toString());
+  ASSERT_EQ(kToshibaACStateLengthLong, ac.getStateLength());
   ac._irsend.makeDecodeResult();
   EXPECT_TRUE(capture.decode(&ac._irsend.capture));
   ASSERT_EQ(TOSHIBA_AC, ac._irsend.capture.decode_type);
-  ASSERT_EQ(kToshibaACBits, ac._irsend.capture.bits);
+  ASSERT_EQ(kToshibaACBitsLong, ac._irsend.capture.bits);
   ASSERT_EQ(expected, IRAcUtils::resultAcToString(&ac._irsend.capture));
   stdAc::state_t r, p;
   ASSERT_TRUE(IRAcUtils::decodeToState(&ac._irsend.capture, &r, &p));
+  EXPECT_EQ(
+      "f38000d50"
+      "m4400s4300"
+      "m580s1600m580s1600m580s1600m580s1600m580s490m580s490m580s1600m580s490"
+      "m580s490m580s490m580s490m580s490m580s1600m580s1600m580s490m580s1600"
+      "m580s490m580s490m580s490m580s490m580s490m580s1600m580s490m580s490"
+      "m580s1600m580s1600m580s1600m580s1600m580s1600m580s490m580s1600m580s1600"
+      "m580s490m580s490m580s490m580s490m580s1600m580s490m580s490m580s1600"
+      "m580s1600m580s1600m580s490m580s490m580s490m580s490m580s490m580s490"
+      "m580s490m580s1600m580s1600m580s490m580s490m580s490m580s1600m580s490"
+      "m580s490m580s490m580s490m580s490m580s490m580s490m580s490m580s490"
+      "m580s490m580s490m580s490m580s490m580s490m580s490m580s1600m580s1600"
+      "m580s1600m580s490m580s1600m580s490m580s1600m580s490m580s490m580s490"
+      "m580s7400"
+      "m4400s4300"
+      "m580s1600m580s1600m580s1600m580s1600m580s490m580s490m580s1600m580s490"
+      "m580s490m580s490m580s490m580s490m580s1600m580s1600m580s490m580s1600"
+      "m580s490m580s490m580s490m580s490m580s490m580s1600m580s490m580s490"
+      "m580s1600m580s1600m580s1600m580s1600m580s1600m580s490m580s1600m580s1600"
+      "m580s490m580s490m580s490m580s490m580s1600m580s490m580s490m580s1600"
+      "m580s1600m580s1600m580s490m580s490m580s490m580s490m580s490m580s490"
+      "m580s490m580s1600m580s1600m580s490m580s490m580s490m580s1600m580s490"
+      "m580s490m580s490m580s490m580s490m580s490m580s490m580s490m580s490"
+      "m580s490m580s490m580s490m580s490m580s490m580s490m580s1600m580s1600"
+      "m580s1600m580s490m580s1600m580s490m580s1600m580s490m580s490m580s490"
+      "m580s7400"
+      "m4400s4300"
+      "m580s1600m580s1600m580s1600m580s1600m580s490m580s490m580s1600m580s490"
+      "m580s490m580s490m580s490m580s490m580s1600m580s1600m580s490m580s1600"
+      "m580s490m580s490m580s490m580s490m580s490m580s490m580s490m580s1600"
+      "m580s1600m580s1600m580s1600m580s1600m580s1600m580s1600m580s1600m580s490"
+      "m580s490m580s490m580s1600m580s490m580s490m580s490m580s490m580s1600"
+      "m580s490m580s490m580s490m580s490m580s490m580s490m580s1600m580s490"
+      "m580s490m580s490m580s1600m580s490m580s490m580s490m580s1600m580s1600"
+      "m580s7400"
+      "m4400s4300"
+      "m580s1600m580s1600m580s1600m580s1600m580s490m580s490m580s1600m580s490"
+      "m580s490m580s490m580s490m580s490m580s1600m580s1600m580s490m580s1600"
+      "m580s490m580s490m580s490m580s490m580s490m580s490m580s490m580s1600"
+      "m580s1600m580s1600m580s1600m580s1600m580s1600m580s1600m580s1600m580s490"
+      "m580s490m580s490m580s1600m580s490m580s490m580s490m580s490m580s1600"
+      "m580s490m580s490m580s490m580s490m580s490m580s490m580s1600m580s490"
+      "m580s490m580s490m580s1600m580s490m580s490m580s490m580s1600m580s1600"
+      "m580s7400",
+      ac._irsend.outputStr());
 }
 
 TEST(TestIRac, Trotec) {
-  IRTrotecESP ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRTrotecESP ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 1 (Cool), Temp: 18C, Fan: 3 (High), Sleep: On";
 
@@ -1361,9 +1465,9 @@ TEST(TestIRac, Trotec) {
 }
 
 TEST(TestIRac, Vestel) {
-  IRVestelAc ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRVestelAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Power: On, Mode: 0 (Auto), Temp: 22C, Fan: 5 (Low), Sleep: On, "
       "Turbo: Off, Ion: On, Swing: On";
@@ -1452,9 +1556,9 @@ TEST(TestIRac, Vestel) {
 
 
 TEST(TestIRac, Whirlpool) {
-  IRWhirlpoolAc ac(0);
-  IRac irac(0);
-  IRrecv capture(0);
+  IRWhirlpoolAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
   char expected[] =
       "Model: 1 (DG11J13A), Power Toggle: On, Mode: 1 (Auto), Temp: 21C, "
       "Fan: 3 (Low), Swing: On, Light: On, Clock: 23:58, On Timer: Off, "
@@ -1755,9 +1859,9 @@ TEST(TestIRac, Issue821) {
   next = prev;
   next.light = true;
 
-  IRac irac(0);
-  IRrecv capture(0);
-  IRCoolixAC ac(0);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
+  IRCoolixAC ac(kGpioUnused);
 
   ac.begin();
   result = irac.handleToggles(next, &prev);
@@ -1844,9 +1948,9 @@ TEST(TestIRac, Issue1001) {
   desired = prev;
   desired.power = false;
 
-  IRac irac(0);
-  IRrecv capture(0);
-  IRWhirlpoolAc ac(0);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
+  IRWhirlpoolAc ac(kGpioUnused);
 
   ac.begin();
   ASSERT_TRUE(prev.power);

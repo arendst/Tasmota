@@ -360,6 +360,9 @@
 
 // Compound words/phrases/descriptions from pre-defined words.
 // Note: Obviously these need to be defined *after* their component words.
+#ifndef D_STR_ECONOTOGGLE
+#define D_STR_ECONOTOGGLE D_STR_ECONO " " D_STR_TOGGLE
+#endif  // D_STR_ECONOTOGGLE
 #ifndef D_STR_EYEAUTO
 #define D_STR_EYEAUTO D_STR_EYE " " D_STR_AUTO
 #endif  // D_STR_EYEAUTO
@@ -685,6 +688,9 @@
 #ifndef D_STR_SANYO
 #define D_STR_SANYO "SANYO"
 #endif  // D_STR_SANYO
+#ifndef D_STR_SANYO_AC
+#define D_STR_SANYO_AC "SANYO_AC"
+#endif  // D_STR_SANYO_AC
 #ifndef D_STR_SANYO_LC7461
 #define D_STR_SANYO_LC7461 "SANYO_LC7461"
 #endif  // D_STR_SANYO_LC7461
