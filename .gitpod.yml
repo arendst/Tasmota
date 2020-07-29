@@ -1,3 +1,0 @@
-tasks:
-  - before: pip3 install -U platformio
-    command: platformio run -e tasmota
