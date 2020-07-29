@@ -65,6 +65,7 @@
 #define D_JSON_ERROR "Error"
 #define D_JSON_EVENT "Event"
 #define D_JSON_EVERY "Every"
+#define D_JSON_EXPORT "Export"
 #define D_JSON_EXPORT_ACTIVE "ExportActive"
 #define D_JSON_EXPORT_REACTIVE "ExportReactive"
 #define D_JSON_FAILED "Failed"
@@ -146,6 +147,7 @@
 #define D_JSON_SPEED "Speed"
 #define D_JSON_SPEED_UNIT "SpeedUnit"
 #define D_JSON_SSID "SSId"
+#define D_JSON_STAGE "Stage"
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
 #define D_JSON_STARTUPUTC "StartupUTC"
@@ -269,6 +271,8 @@
 #define D_CMND_SSID "SSId"
 #define D_CMND_PASSWORD "Password"
 #define D_CMND_HOSTNAME "Hostname"
+#define D_CMND_WIFI "Wifi"
+#define D_CMND_ETHERNET "Ethernet"
 #define D_CMND_WIFICONFIG "WifiConfig"
   #define D_WCFG_0_RESTART "Restart"
   #define D_WCFG_2_WIFIMANAGER "WifiManager"
@@ -294,6 +298,9 @@
 #define D_CMND_LEDPOWER "LedPower"
 #define D_CMND_LEDSTATE "LedState"
 #define D_CMND_LEDMASK "LedMask"
+#define D_CMND_LEDPWM_OFF "LedPwmOff"
+#define D_CMND_LEDPWM_ON "LedPwmOn"
+#define D_CMND_LEDPWM_MODE "LedPwmMode"
 #define D_CMND_WIFIPOWER "WifiPower"
 #define D_CMND_SPEEDUNIT "SpeedUnit"
 #define D_CMND_I2CSCAN "I2CScan"
@@ -315,6 +322,13 @@
 #define D_CMND_HUMOFFSET "HumOffset"
 #define D_CMND_GLOBAL_TEMP "GlobalTemp"
 #define D_CMND_GLOBAL_HUM "GlobalHum"
+
+#ifdef ESP32
+#define D_CMND_TOUCH_CAL "TouchCal"
+#define D_CMND_TOUCH_THRES "TouchThres"
+#define D_CMND_TOUCH_NUM "TouchNum"
+#define D_CMND_CPU_FREQUENCY "CpuFrequency"
+#endif //ESP32
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTLOG "MqttLog"
@@ -467,7 +481,7 @@
 
 // Commands xdrv_09_timers.ino
 #define D_CMND_TIMER "Timer"
-  #define D_JSON_TIMER_ARM "Arm"
+  #define D_JSON_TIMER_ARM "Enable"
   #define D_JSON_TIMER_MODE "Mode"
   #define D_JSON_TIMER_TIME "Time"
   #define D_JSON_TIMER_WINDOW "Window"
@@ -493,10 +507,19 @@
 #define D_CMND_ZIGBEE_RESET "Reset"
   #define D_JSON_ZIGBEE_CC2530 "CC2530"
 #define D_CMND_ZIGBEEZNPRECEIVE "ZNPReceive"      // only for debug
+#define D_CMND_ZIGBEE_EZSP_RECEIVE "EZSPReceive"      // only for debug
+#define D_CMND_ZIGBEE_EZSP_RECEIVE_RAW "EZSPReceiveRaw"      // only for debug
+#define D_CMND_ZIGBEE_EZSP_LISTEN "Listen"      // only for EZSP
 #define D_CMND_ZIGBEEZNPSEND "ZNPSend"
+#define D_CMND_ZIGBEE_EZSP_SEND "EZSPSend"
+#define D_CMND_ZIGBEE_EZSP_SEND_RAW "EZSPSendRaw"
   #define D_JSON_ZIGBEE_STATE "ZbState"
+  #define D_JSON_ZIGBEE_ROUTE_ERROR "ZbRouteError"
   #define D_JSON_ZIGBEEZNPRECEIVED "ZbZNPReceived"
+  #define D_JSON_ZIGBEE_EZSP_RECEIVED "ZbEZSPReceived"
   #define D_JSON_ZIGBEEZNPSENT "ZbZNPSent"
+  #define D_JSON_ZIGBEE_EZSP_SENT "ZbEZSPSent"
+  #define D_JSON_ZIGBEE_EZSP_SENT_RAW "ZbEZSPSentRaw"
   #define D_JSON_ZIGBEEZCL_RECEIVED "ZbZCLReceived"
   #define D_JSON_ZIGBEEZCL_RAW_RECEIVED "ZbZCLRawReceived"
   #define D_JSON_ZIGBEE_DEVICE "Device"
@@ -509,10 +532,16 @@
 #define D_CMND_ZIGBEE_FORGET "Forget"
 #define D_CMND_ZIGBEE_SAVE "Save"
   #define D_CMND_ZIGBEE_LINKQUALITY "LinkQuality"
+  #define D_CMND_ZIGBEE_CLUSTER "Cluster"
   #define D_CMND_ZIGBEE_ENDPOINT "Endpoint"
   #define D_CMND_ZIGBEE_GROUP "Group"
+  #define D_CMND_ZIGBEE_MANUF "Manuf"
+  #define D_CMND_ZIGBEE_DEVICE "Device"
 #define D_CMND_ZIGBEE_READ "Read"
 #define D_CMND_ZIGBEE_SEND "Send"
+#define D_CMND_ZIGBEE_WRITE "Write"
+#define D_CMND_ZIGBEE_REPORT "Report"
+#define D_CMND_ZIGBEE_RESPONSE "Response"
   #define D_JSON_ZIGBEE_ZCL_SENT "ZbZCLSent"
 #define D_JSON_ZIGBEE_RECEIVED "ZbReceived"
 #define D_CMND_ZIGBEE_BIND "Bind"
@@ -521,6 +550,7 @@
   #define D_JSON_ZIGBEE_UNBIND "ZbUnbind"
 #define D_CMND_ZIGBEE_BIND_STATE "BindState"
   #define D_JSON_ZIGBEE_BIND_STATE "ZbBindState"
+#define D_JSON_ZIGBEE_PARENT "ZbParent"
 #define D_CMND_ZIGBEE_PING "Ping"
   #define D_JSON_ZIGBEE_PING "ZbPing"
   #define D_JSON_ZIGBEE_IEEE "IEEEAddr"
@@ -548,11 +578,13 @@
 #define D_CMND_SHUTTER_OPEN "Open"
 #define D_CMND_SHUTTER_CLOSE "Close"
 #define D_CMND_SHUTTER_TOGGLE "Toggle"
+#define D_CMND_SHUTTER_TOGGLEDIR "ToggleDir"
 #define D_CMND_SHUTTER_UP "Up"
 #define D_CMND_SHUTTER_DOWN "Down"
 #define D_CMND_SHUTTER_STOPOPEN "StopOpen"
 #define D_CMND_SHUTTER_STOPCLOSE "StopClose"
 #define D_CMND_SHUTTER_STOPTOGGLE "StopToggle"
+#define D_CMND_SHUTTER_STOPTOGGLEDIR "StopToggleDir"
 #define D_CMND_SHUTTER_STOPPOSITION "StopPosition"
 #define D_CMND_SHUTTER_STOP "Stop"
 #define D_CMND_SHUTTER_POSITION "Position"
@@ -586,6 +618,16 @@
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
 
+// xsns_70_veml6075.ino
+#define D_JSON_UVA_INTENSITY "UvaIntensity"
+#define D_JSON_UVB_INTENSITY  "UvbIntensity"
+#define D_CMND_VEML6075_POWER "power"
+#define D_CMND_VEML6075_DYNAMIC "dynamic"
+#define D_CMND_VEML6075_INTTIME "inttime"
+
+// xsns_71_veml7700.ino
+#define D_JSON_WHITE_CONTENT "WhiteContent"
+
 /********************************************************************************************/
 
 // Log message prefix
@@ -615,6 +657,7 @@
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
 #define D_LOG_ZIGBEE "ZIG: "       // Zigbee
+#define D_LOG_TCP "TCP: "          // TCP bridge
 
 /********************************************************************************************/
 

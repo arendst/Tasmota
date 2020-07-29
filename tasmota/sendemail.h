@@ -25,12 +25,8 @@ class SendEmail
     const bool ssl;
     const int auth_used;
 #ifdef ESP8266
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
-    WiFiClient* client;
-#else
     // use bear ssl
     BearSSL::WiFiClientSecure_light *client;
-#endif
 #else
     WiFiClient *client;
 #endif

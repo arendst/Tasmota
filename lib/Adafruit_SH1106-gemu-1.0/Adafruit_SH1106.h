@@ -144,7 +144,7 @@ class Adafruit_SH1106 : public Renderer  {
 
   void DisplayOnff(int8_t on);
   void DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
-  int16_t Begin(int16_t p1,int16_t p2,int16_t p3);
+  void Begin(int16_t p1,int16_t p2,int16_t p3);
   void Updateframe();
   void dim(uint8_t contrast);
 

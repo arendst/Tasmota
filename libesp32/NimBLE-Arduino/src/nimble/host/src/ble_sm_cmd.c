@@ -52,14 +52,19 @@ ble_sm_tx(uint16_t conn_handle, struct os_mbuf *txom)
 {
     struct ble_l2cap_chan *chan;
     struct ble_hs_conn *conn;
+    int rc;
 
     BLE_HS_DBG_ASSERT(ble_hs_locked_by_cur_task());
 
     STATS_INC(ble_l2cap_stats, sm_tx);
 
-    ble_hs_misc_conn_chan_find_reqd(conn_handle, BLE_L2CAP_CID_SM,
-                                    &conn, &chan);
-    return ble_l2cap_tx(conn, chan, txom);
+    rc = ble_hs_misc_conn_chan_find_reqd(conn_handle, BLE_L2CAP_CID_SM,
+                                         &conn, &chan);
+    if (rc == 0) {
+        rc = ble_l2cap_tx(conn, chan, txom);
+    }
+
+    return rc;
 }
 
 #if NIMBLE_BLE_SM

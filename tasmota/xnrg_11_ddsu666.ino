@@ -110,7 +110,7 @@ void DDSU666Every250ms(void)
           break;
 
         case 7:
-          Energy.export_active = value;    // 6.216 kWh
+          Energy.export_active[0] = value;    // 6.216 kWh
           break;
       }
 

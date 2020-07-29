@@ -288,8 +288,6 @@ int ble_store_clear(void);
 
 /*** Utility functions. */
 
-int ble_store_clean_old_cccds(const ble_addr_t *curr_peer);
-
 int ble_store_util_bonded_peers(ble_addr_t *out_peer_id_addrs,
                                 int *out_num_peers,
                                 int max_peers);

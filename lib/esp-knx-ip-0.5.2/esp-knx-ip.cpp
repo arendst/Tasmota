@@ -247,6 +247,7 @@ callback_assignment_id_t ESPKNXIP::__callback_register_assignment(address_t addr
       return id;
     }
   }
+  return -1;
 }
 
 void ESPKNXIP::__callback_delete_assignment(callback_assignment_id_t id)
@@ -358,6 +359,7 @@ callback_id_t ESPKNXIP::callback_register(String name, callback_fptr_t cb, void 
       return id;
     }
   }
+  return -1;
 }
 
 void ESPKNXIP::callback_deregister(callback_id_t id)
@@ -536,7 +538,6 @@ void ESPKNXIP::__loop_knx()
 
   uint8_t buf[read];
   udp.read(buf, read);
-  udp.flush();
 
   DEBUG_PRINT(F("Got packet:"));
 

@@ -21,6 +21,7 @@
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
 
+  0.9.0.1 20200624  changes - removed unused legacy code
   ---
   0.9.0.0 20191127  started - further development by Christian Baars
                     forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
@@ -38,17 +39,9 @@
 
 #define XDRV_33             33
 
-#define MOSI 13
-#define MISO 12
-#define SCK  14
-
-#include <SPI.h>
 #include <RF24.h>
 
 const char NRF24type[] PROGMEM = "NRF24";
-
-const char HTTP_NRF24[] PROGMEM =
- "{s}%sL01%c: " "{m}started{e}";
 
 struct {
   uint8_t chipType = 0; // NRF24l01 active: 32 - NRF24L01 , 43- NRF24L01+  ... we mis-use ascii-codes
@@ -74,7 +67,6 @@ bool NRF24initRadio()
 bool NRF24Detect(void)
 {
   if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_DC)) {
-    SPI.pins(SCK,MOSI,MISO,-1);
     if(NRF24initRadio()){
       NRF24.chipType = 32; // SPACE
      AddLog_P2(LOG_LEVEL_INFO,PSTR("NRF24L01 initialized"));

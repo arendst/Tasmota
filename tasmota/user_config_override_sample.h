@@ -29,8 +29,7 @@
  *   (1) copy this file to "user_config_override.h" (It will be ignored by Git)
  *   (2) define your own settings below
  *   (3) for platformio:
- *         define USE_CONFIG_OVERRIDE as a build flags.
- *         ie1 : export PLATFORMIO_BUILD_FLAGS='-DUSE_CONFIG_OVERRIDE'
+ *         All done.
  *       for Arduino IDE:
  *         enable define USE_CONFIG_OVERRIDE in my_user_config.h
  ******************************************************************************************************

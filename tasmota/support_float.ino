@@ -17,9 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-// Functions not available in 2.3.0
-
 float fmodf(float x, float y)
 {
   // https://github.com/micropython/micropython/blob/master/lib/libm/fmodf.c
@@ -83,7 +80,6 @@ float fmodf(float x, float y)
   ux.i = uxi;
   return ux.f;
 }
-//#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
 double FastPrecisePow(double a, double b)
 {
@@ -218,6 +214,7 @@ float cos_52(float x)
     case 2: return -cos_52s(x-(float)f_pi);
     case 3: return  cos_52s((float)f_twopi - x);
   }
+  return 0.0;  // Never reached. Fixes compiler warning
 }
 //
 // The sine is just cosine shifted a half-f_pi, so
@@ -278,6 +275,7 @@ float tan_56(float x)
     case 6: return -1.0f / tan_56s((x-(float)f_threehalfpi)   * (float)f_four_over_pi);
     case 7: return -       tan_56s(((float)f_twopi - x)       * (float)f_four_over_pi);
   }
+  return 0.0;  // Never reached. Fixes compiler warning
 }
 
 // *******************************************************************

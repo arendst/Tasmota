@@ -155,9 +155,8 @@ void IrReceiveCheck(void)
       }
 
       ResponseJsonEndEnd();
-      MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
 
-      XdrvRulesProcess();
 #ifdef USE_DOMOTICZ
       if (iridx) {
         unsigned long value = results.value | (iridx << 28);  // [Protocol:4, Data:28]

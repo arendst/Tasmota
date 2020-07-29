@@ -99,7 +99,7 @@ int ble_gap_rx_l2cap_update_req(uint16_t conn_handle,
                                 struct ble_gap_upd_params *params);
 void ble_gap_rx_phy_update_complete(struct hci_le_phy_upd_complete *evt);
 void ble_gap_enc_event(uint16_t conn_handle, int status,
-                       int security_restored);
+                       int security_restored, int bonded);
 void ble_gap_passkey_event(uint16_t conn_handle,
                            struct ble_gap_passkey_params *passkey_params);
 void ble_gap_notify_rx_event(uint16_t conn_handle, uint16_t attr_handle,
@@ -119,6 +119,7 @@ void ble_gap_preempt(void);
 void ble_gap_preempt_done(void);
 
 void ble_gap_conn_broken(uint16_t conn_handle, int reason);
+void ble_gap_reset_state(int reason);
 int32_t ble_gap_timer(void);
 
 int ble_gap_init(void);

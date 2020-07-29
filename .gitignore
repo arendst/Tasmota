@@ -1,6 +1,7 @@
 ## OS specific ########
 .DS_Store
 .fuse_hidden*
+*.pyc
 
 ## Project files ######
 .pioenvs

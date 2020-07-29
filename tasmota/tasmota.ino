@@ -16,39 +16,35 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/*====================================================
-  Prerequisites:
-    - Change libraries/PubSubClient/src/PubSubClient.h
-        #define MQTT_MAX_PACKET_SIZE 1200
 
-  Arduino IDE 1.8.12 and up parameters
-    - Select IDE Tools - Board: "Generic ESP8266 Module"
-    - Select IDE Tools - Flash Mode: "DOUT (compatible)"
-    - Select IDE Tools - Flash Size: "1M (FS:none OTA:~502KB)"
-    - Select IDE Tools - LwIP Variant: "v2 Higher Bandwidth (no feature)"
-    - Select IDE Tools - VTables: "Flash"
-    - Select IDE Tools - Espressif FW: "nonos-sdk-2.2.1+100 (190703)"
-  ====================================================*/
+/*********************************************************************************************\
+ * Preferred IDE is Visual Studio Code with PlatformIO extension which doesn't need prerequisites
+ *
+ * Limited support for Arduino IDE needs Prerequisites:
+ *    - Change libraries/PubSubClient/src/PubSubClient.h
+ *       #define MQTT_MAX_PACKET_SIZE 1200
+ *
+ *  Arduino IDE 1.8.12 and up parameters for partly support
+ *    - Select IDE Tools - Board: "Generic ESP8266 Module"
+ *    - Select IDE Tools - Flash Mode: "DOUT (compatible)"
+ *    - Select IDE Tools - Flash Size: "1M (FS:none OTA:~502KB)"
+ *    - Select IDE Tools - LwIP Variant: "v2 Higher Bandwidth (no feature)"
+ *    - Select IDE Tools - VTables: "Flash"
+ *    - Select IDE Tools - Espressif FW: "nonos-sdk-2.2.1+100 (190703)"
+\*********************************************************************************************/
 
 // Location specific includes
-#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_7_1)
 #include "tasmota_compat.h"
 #include "tasmota_version.h"                // Tasmota version information
 #include "tasmota.h"                        // Enumeration used in my_user_config.h
 #include "my_user_config.h"                 // Fixed user configurable options
-#ifdef USE_MQTT_TLS
+#ifdef USE_TLS
   #include <t_bearssl.h>                    // We need to include before "tasmota_globals.h" to take precedence over the BearSSL version in Arduino
-#endif  // USE_MQTT_TLS
+#endif  // USE_TLS
 #include "tasmota_globals.h"                // Function prototypes and global configuration
 #include "i18n.h"                           // Language support configured by my_user_config.h
 #include "tasmota_template.h"               // Hardware configuration
-
-#ifdef ARDUINO_ESP8266_RELEASE_2_4_0
-#include "lwip/init.h"
-#if LWIP_VERSION_MAJOR != 1
-  #error Please use stable lwIP v1.4
-#endif
-#endif
 
 // Libraries
 #include <ESP8266HTTPClient.h>              // Ota
@@ -111,9 +107,9 @@ uint32_t uptime = 0;                        // Counting every second until 42949
 uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
 uint32_t web_log_index = 1;                 // Index in Web log buffer (should never be 0)
-float global_temperature = 9999;            // Provide a global temperature to be used by some sensors
-float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
-float global_pressure = 0;                  // Provide a global pressure to be used by some sensors
+float global_temperature_celsius = NAN;     // Provide a global temperature to be used by some sensors
+float global_humidity = 0.0f;               // Provide a global humidity to be used by some sensors
+float global_pressure_hpa = 0.0f;           // Provide a global pressure to be used by some sensors
 uint16_t tele_period = 9999;                // Tele period timer
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
@@ -205,13 +201,17 @@ void setup(void) {
 #endif
 #endif
 
-  global_state.data = 3;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
+  global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 
   RtcRebootLoad();
   if (!RtcRebootValid()) {
     RtcReboot.fast_reboot_count = 0;
   }
+#ifdef FIRMWARE_MINIMAL
+  RtcReboot.fast_reboot_count = 0;  // Disable fast reboot and quick power cycle detection
+#else
   RtcReboot.fast_reboot_count++;
+#endif
   RtcRebootSave();
 
   Serial.begin(APP_BAUDRATE);
@@ -278,12 +278,8 @@ void setup(void) {
 #endif
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +4) {  // Restarted 6 times
-#ifdef ESP8266
-        Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
-  //      Settings.last_module = SONOFF_BASIC;
-#else  // ESP32
-        Settings.module = WEMOS;                    // Reset module to Wemos
-#endif  // ESP8266 - ESP32
+        Settings.module = Settings.fallback_module;  // Reset module to fallback module
+//        Settings.last_module = Settings.fallback_module;
       }
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     }
@@ -322,6 +318,11 @@ void setup(void) {
 
   XdrvCall(FUNC_INIT);
   XsnsCall(FUNC_INIT);
+#ifdef USE_SCRIPT
+  if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">BS",3,0);
+#endif
+
+  rules_flag.system_init = 1;
 }
 
 void BacklogLoop(void) {
@@ -364,9 +365,6 @@ void loop(void) {
 
   ButtonLoop();
   SwitchLoop();
-#ifdef ROTARY_V1
-  RotaryLoop();
-#endif
 #ifdef USE_DEVICE_GROUPS
   DeviceGroupsLoop();
 #endif  // USE_DEVICE_GROUPS
@@ -374,6 +372,9 @@ void loop(void) {
 
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
+#ifdef ROTARY_V1
+    RotaryHandler();
+#endif  // ROTARY_V1
     XdrvCall(FUNC_EVERY_50_MSECOND);
     XsnsCall(FUNC_EVERY_50_MSECOND);
   }
@@ -411,7 +412,7 @@ void loop(void) {
     if (my_activity < (uint32_t)ssleep) {
       SleepDelay((uint32_t)ssleep - my_activity);  // Provide time for background tasks like wifi
     } else {
-      if (global_state.wifi_down) {
+      if (global_state.network_down) {
         SleepDelay(my_activity /2);                // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
       }
     }

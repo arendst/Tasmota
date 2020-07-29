@@ -3,7 +3,7 @@
  *
  *  Created: on Jan 24 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  *
  * BLEUUID.cpp
@@ -17,6 +17,8 @@
 #include "NimBLEUtils.h"
 #include "NimBLEUUID.h"
 #include "NimBLELog.h"
+
+#include <algorithm>
 
 static const char* LOG_TAG = "NimBLEUUID";
 
@@ -38,54 +40,29 @@ static const char* LOG_TAG = "NimBLEUUID";
  *
  * @param [in] value The string to build a UUID from.
  */
- NimBLEUUID::NimBLEUUID(std::string value) {
+ NimBLEUUID::NimBLEUUID(const std::string &value) {
     m_valueSet = true;
     if (value.length() == 4) {
         m_uuid.u.type         = BLE_UUID_TYPE_16;
-        m_uuid.u16.value      = 0;
-        for(int i=0;i<value.length();){
-            uint8_t MSB = value.c_str()[i];
-            uint8_t LSB = value.c_str()[i+1];
-            
-            if(MSB > '9') MSB -= 7;
-            if(LSB > '9') LSB -= 7;
-            m_uuid.u16.value += (((MSB&0x0F) <<4) | (LSB & 0x0F))<<(2-i)*4;
-            i+=2;   
-        }
+        m_uuid.u16.value = strtoul(value.c_str(), NULL, 16);
     }
     else if (value.length() == 8) {
         m_uuid.u.type         = BLE_UUID_TYPE_32;
-        m_uuid.u32.value      = 0;
-        for(int i=0;i<value.length();){
-            uint8_t MSB = value.c_str()[i];
-            uint8_t LSB = value.c_str()[i+1];
-            
-            if(MSB > '9') MSB -= 7; 
-            if(LSB > '9') LSB -= 7;
-            m_uuid.u32.value += (((MSB&0x0F) <<4) | (LSB & 0x0F))<<(6-i)*4;
-            i+=2;
-        }       
+        m_uuid.u32.value = strtoul(value.c_str(), NULL, 16);
     }
-    else if (value.length() == 16) {  // how we can have 16 byte length string reprezenting 128 bit uuid??? needs to be investigated (lack of time)
-        m_uuid.u.type = BLE_UUID_TYPE_128;
-        NimBLEUtils::memrcpy(m_uuid.u128.value, (uint8_t*)value.data(), 16);
+    else if (value.length() == 16) {
+        *this = NimBLEUUID((uint8_t*)value.data(), 16, true);
     }
     else if (value.length() == 36) {
         // If the length of the string is 36 bytes then we will assume it is a long hex string in
         // UUID format.
-        m_uuid.u.type = BLE_UUID_TYPE_128;
-        int n = 0;
-        for(int i=0;i<value.length();){
-            if(value.c_str()[i] == '-')
-                i++;
-            uint8_t MSB = value.c_str()[i];
-            uint8_t LSB = value.c_str()[i+1];
-            
-            if(MSB > '9') MSB -= 7; 
-            if(LSB > '9') LSB -= 7;
-            m_uuid.u128.value[15-n++] = ((MSB&0x0F) <<4) | (LSB & 0x0F);
-            i+=2;   
-        }
+        char * position = const_cast<char *>(value.c_str());
+        uint32_t first =    strtoul(position, &position, 16);
+        uint16_t second =   strtoul(position + 1, &position, 16);
+        uint16_t third =    strtoul(position + 1, &position, 16);
+        uint16_t fourth =   strtoul(position + 1, &position, 16);
+        uint64_t fifth =    strtoull(position + 1, NULL, 16);
+        *this = NimBLEUUID(first, second, third, (uint64_t(fourth) << 48) + fifth);
     }
     else {
         NIMBLE_LOGE(LOG_TAG,"ERROR: UUID value not 2, 4, 16 or 36 bytes");
@@ -101,7 +78,7 @@ static const char* LOG_TAG = "NimBLEUUID";
  * @param [in] size The size of the data.
  * @param [in] msbFirst Is the MSB first in pData memory?
  */
-NimBLEUUID::NimBLEUUID(uint8_t* pData, size_t size, bool msbFirst) {
+NimBLEUUID::NimBLEUUID(const uint8_t* pData, size_t size, bool msbFirst) {
 /*** TODO: change this to use the Nimble function for various lenght UUIDs:
     int ble_uuid_init_from_buf(ble_uuid_any_t *uuid, const void *buf, size_t len);
 ***/
@@ -110,8 +87,9 @@ NimBLEUUID::NimBLEUUID(uint8_t* pData, size_t size, bool msbFirst) {
         return;
     }
     m_uuid.u.type = BLE_UUID_TYPE_128;
+
     if (msbFirst) {
-        NimBLEUtils::memrcpy(m_uuid.u128.value, pData, 16);
+        std::reverse_copy(pData, pData + 16, m_uuid.u128.value);
     } else {
         memcpy(m_uuid.u128.value, pData, 16);
     }
@@ -148,12 +126,31 @@ NimBLEUUID::NimBLEUUID(uint32_t uuid) {
  *
  * @param [in] uuid The native UUID.
  */
- 
-NimBLEUUID::NimBLEUUID(ble_uuid128_t* uuid) {
+NimBLEUUID::NimBLEUUID(const ble_uuid128_t* uuid) {
     m_uuid.u.type        = BLE_UUID_TYPE_128;
     memcpy(m_uuid.u128.value, uuid->value, 16);
     m_valueSet = true;
 } // NimBLEUUID
+
+
+/**
+ * @brief Create a UUID from the 128bit value using hex parts instead of string,
+ * instead of BLEUUID("ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6"), it becomes
+ * BLEUUID(0xebe0ccb0, 0x7a0a, 0x4b0c, 0x8a1a6ff2997da3a6)
+ *
+ * @param [in] first  The first 32bit of the UUID.
+ * @param [in] second The next 16bit of the UUID.
+ * @param [in] third  The next 16bit of the UUID.
+ * @param [in] fourth The last 64bit of the UUID, combining the last 2 parts of the string equivalent
+ */
+NimBLEUUID::NimBLEUUID(uint32_t first, uint16_t second, uint16_t third, uint64_t fourth) {
+    m_uuid.u.type        = BLE_UUID_TYPE_128;
+    memcpy(m_uuid.u128.value + 12, &first,  4);
+    memcpy(m_uuid.u128.value + 10, &second, 2);
+    memcpy(m_uuid.u128.value + 8,  &third,  2);
+    memcpy(m_uuid.u128.value,      &fourth, 8);
+    m_valueSet = true;
+}
 
 
 NimBLEUUID::NimBLEUUID() {
@@ -165,7 +162,7 @@ NimBLEUUID::NimBLEUUID() {
  * @brief Get the number of bits in this uuid.
  * @return The number of bits in the UUID.  One of 16, 32 or 128.
  */
-uint8_t NimBLEUUID::bitSize() {
+uint8_t NimBLEUUID::bitSize() const {
     if (!m_valueSet) return 0;
     return m_uuid.u.type;
 } // bitSize
@@ -177,11 +174,8 @@ uint8_t NimBLEUUID::bitSize() {
  * @param [in] uuid The UUID to compare against.
  * @return True if the UUIDs are equal and false otherwise.
  */
-bool NimBLEUUID::equals(NimBLEUUID uuid) {
-    if(ble_uuid_cmp(&m_uuid.u, &uuid.getNative()->u) == 0){
-        return true;
-    }
-    return false;
+bool NimBLEUUID::equals(const NimBLEUUID &uuid) const {
+    return *this == uuid;
 }
 
 
@@ -194,8 +188,7 @@ bool NimBLEUUID::equals(NimBLEUUID uuid) {
  * NNNNNNNN
  * <UUID>
  */
- 
-NimBLEUUID NimBLEUUID::fromString(std::string _uuid) {
+NimBLEUUID NimBLEUUID::fromString(const std::string &_uuid) {
     uint8_t start = 0;
     if (strstr(_uuid.c_str(), "0x") != nullptr) { // If the string starts with 0x, skip those characters.
         start = 2;
@@ -220,7 +213,7 @@ NimBLEUUID NimBLEUUID::fromString(std::string _uuid) {
  *
  * @return The native UUID value or NULL if not set.
  */
-ble_uuid_any_t* NimBLEUUID::getNative() {
+const ble_uuid_any_t* NimBLEUUID::getNative() const {
     if (m_valueSet == false) {
         NIMBLE_LOGD(LOG_TAG,"<< Return of un-initialized UUID!");
         return nullptr;
@@ -235,47 +228,20 @@ ble_uuid_any_t* NimBLEUUID::getNative() {
  * A UUID can be internally represented as 16bit, 32bit or the full 128bit.  This method
  * will convert 16 or 32 bit representations to the full 128bit.
  */
-NimBLEUUID NimBLEUUID::to128() {
+const NimBLEUUID &NimBLEUUID::to128() {
     // If we either don't have a value or are already a 128 bit UUID, nothing further to do.
     if (!m_valueSet || m_uuid.u.type == BLE_UUID_TYPE_128) {
         return *this;
     }
 
-    // If we are 16 bit or 32 bit, then set the 4 bytes of the variable part of the UUID.
+    // If we are 16 bit or 32 bit, then set the other bytes of the UUID.
     if (m_uuid.u.type == BLE_UUID_TYPE_16) {
-        uint16_t temp = m_uuid.u16.value;
-        m_uuid.u128.value[15] = 0;
-        m_uuid.u128.value[14] = 0;
-        m_uuid.u128.value[13] = (temp >> 8) & 0xff;
-        m_uuid.u128.value[12] = temp & 0xff;
-
+        *this = NimBLEUUID(m_uuid.u16.value, 0x0000, 0x1000, 0x800000805f9b34fb);
     }
     else if (m_uuid.u.type == BLE_UUID_TYPE_32) {
-        uint32_t temp = m_uuid.u32.value;
-        m_uuid.u128.value[15] = (temp >> 24) & 0xff;
-        m_uuid.u128.value[14] = (temp >> 16) & 0xff;
-        m_uuid.u128.value[13] = (temp >> 8) & 0xff;
-        m_uuid.u128.value[12] = temp & 0xff;
+        *this = NimBLEUUID(m_uuid.u32.value, 0x0000, 0x1000, 0x800000805f9b34fb);
     }
 
-    // Set the fixed parts of the UUID.
-    m_uuid.u128.value[11] = 0x00;
-    m_uuid.u128.value[10] = 0x00;
-
-    m_uuid.u128.value[9]  = 0x10;
-    m_uuid.u128.value[8]  = 0x00;
-
-    m_uuid.u128.value[7]  = 0x80;
-    m_uuid.u128.value[6]  = 0x00;
-
-    m_uuid.u128.value[5]  = 0x00;
-    m_uuid.u128.value[4]  = 0x80;
-    m_uuid.u128.value[3]  = 0x5f;
-    m_uuid.u128.value[2]  = 0x9b;
-    m_uuid.u128.value[1]  = 0x34;
-    m_uuid.u128.value[0]  = 0xfb;
-
-    m_uuid.u.type = BLE_UUID_TYPE_128;
     return *this;
 } // to128
 
@@ -290,12 +256,32 @@ NimBLEUUID NimBLEUUID::to128() {
  *
  * @return A string representation of the UUID.
  */
-std::string NimBLEUUID::toString() {
-    if (!m_valueSet) return "<NULL>";   // If we have no value, nothing to format.
+std::string NimBLEUUID::toString() const {
+    return std::string(*this);
+} // toString
+
+
+bool NimBLEUUID::operator ==(const NimBLEUUID & rhs) const {
+    if(m_valueSet && rhs.m_valueSet) {
+        return ble_uuid_cmp(&m_uuid.u, &rhs.m_uuid.u) == 0;
+    }
+
+    return m_valueSet == rhs.m_valueSet;
+}
+
+
+bool NimBLEUUID::operator !=(const NimBLEUUID & rhs) const {
+    return !this->operator==(rhs);
+}
+
+
+NimBLEUUID::operator std::string() const {
+    if (!m_valueSet) return std::string();   // If we have no value, nothing to format.
 
     char buf[BLE_UUID_STR_LEN];
 
     return ble_uuid_to_str(&m_uuid.u, buf);
-} // toString
+}
+
 
 #endif /* CONFIG_BT_ENABLED */

@@ -3,7 +3,7 @@
  *
  *  Created: on March 10, 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  *
  * BLE2902.cpp
@@ -20,16 +20,19 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
+#include "nimconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+
 #include "NimBLE2902.h"
 
-NimBLE2902::NimBLE2902(NimBLECharacteristic* pCharacterisitic) 
-: NimBLEDescriptor(NimBLEUUID((uint16_t) 0x2902), 
-						BLE_GATT_CHR_F_READ | 
-						BLE_GATT_CHR_F_WRITE,
-                        2, pCharacterisitic) 
+NimBLE2902::NimBLE2902(NimBLECharacteristic* pCharacterisitic)
+: NimBLEDescriptor(NimBLEUUID((uint16_t) 0x2902),
+                        BLE_GATT_CHR_F_READ |
+                        BLE_GATT_CHR_F_WRITE,
+                        2, pCharacterisitic)
 {
-	uint8_t data[2] = { 0, 0 };
-	setValue(data, 2);
+    uint8_t data[2] = { 0, 0 };
+    setValue(data, 2);
 } // NimBLE2902
 
 
@@ -38,7 +41,7 @@ NimBLE2902::NimBLE2902(NimBLECharacteristic* pCharacterisitic)
  * @return The notifications value.  True if notifications are enabled and false if not.
  */
 bool NimBLE2902::getNotifications() {
-	return (getValue()[0] & (1 << 0)) != 0;
+    return (getValue()[0] & (1 << 0)) != 0;
 } // getNotifications
 
 
@@ -47,7 +50,7 @@ bool NimBLE2902::getNotifications() {
  * @return The indications value.  True if indications are enabled and false if not.
  */
 bool NimBLE2902::getIndications() {
-	return (getValue()[0] & (1 << 1)) != 0;
+    return (getValue()[0] & (1 << 1)) != 0;
 } // getIndications
 
 
@@ -56,9 +59,9 @@ bool NimBLE2902::getIndications() {
  * @param [in] flag The indications flag.
  */
 void NimBLE2902::setIndications(bool flag) {
-	uint8_t *pValue = getValue();
-	if (flag) pValue[0] |= 1 << 1;
-	else pValue[0] &= ~(1 << 1);
+    uint8_t *pValue = getValue();
+    if (flag) pValue[0] |= 1 << 1;
+    else pValue[0] &= ~(1 << 1);
 } // setIndications
 
 
@@ -67,9 +70,10 @@ void NimBLE2902::setIndications(bool flag) {
  * @param [in] flag The notifications flag.
  */
 void NimBLE2902::setNotifications(bool flag) {
-	uint8_t *pValue = getValue();
-	if (flag) pValue[0] |= 1 << 0;
-	else pValue[0] &= ~(1 << 0);
+    uint8_t *pValue = getValue();
+    if (flag) pValue[0] |= 1 << 0;
+    else pValue[0] &= ~(1 << 0);
 } // setNotifications
 
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 #endif

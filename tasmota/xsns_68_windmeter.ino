@@ -58,8 +58,8 @@ float const windmeter_pi = 3.1415926535897932384626433;  // Pi
 float const windmeter_2pi = windmeter_pi * 2;
 
 struct WINDMETER {
-  uint32_t counter_time;
-  unsigned long counter = 0;
+  volatile uint32_t counter_time;
+  volatile unsigned long counter = 0;
   //uint32_t speed_time;
   float speed = 0;
   float last_tele_speed = 0;
@@ -72,18 +72,14 @@ struct WINDMETER {
 #endif  // USE_WINDMETER_NOSTATISTICS
 } WindMeter;
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0  // Fix core 2.5.x ISR not in IRAM Exception
-void WindMeterUpdateSpeed(void) ICACHE_RAM_ATTR;
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
-
-void WindMeterUpdateSpeed(void)
+void ICACHE_RAM_ATTR WindMeterUpdateSpeed(void)
 {
   uint32_t time = micros();
   uint32_t time_diff = time - WindMeter.counter_time;
   if (time_diff > Settings.windmeter_pulse_debounce * 1000) {
     WindMeter.counter_time = time;
     WindMeter.counter++;
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("WMET: Counter %d"), WindMeter.counter);
   }
 }
 

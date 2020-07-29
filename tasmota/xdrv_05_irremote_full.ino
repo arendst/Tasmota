@@ -232,9 +232,7 @@ void IrReceiveCheck(void)
       }
 
       ResponseJsonEndEnd();
-      MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
-
-      XdrvRulesProcess();
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
     }
 
     irrecv->resume();
@@ -469,6 +467,21 @@ uint32_t IrRemoteCmndIrSendRaw(void)
     if (count < 2) {
       return IE_INVALID_RAWDATA;
     }   // Parameters must be at least 3
+
+   if (strcasecmp(str, "gc") == 0) {  //if first parameter is gc then we process global cache data else it is raw
+	uint16_t GC[count+1];
+	for (uint32_t i = 0; i <= count; i++) {
+	  GC[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);
+      if (!GC[i]) {
+        return IE_INVALID_RAWDATA;
+      }
+    }
+	irsend_active = true;
+	for (uint32_t r = 0; r <= repeat; r++) {
+      irsend->sendGC(GC, count+1);
+    }
+	return IE_NO_ERROR;
+  }
 
     uint16_t parm[count];
     for (uint32_t i = 0; i < count; i++) {

@@ -205,19 +205,19 @@ void ExsSendCmd(uint8_t cmd, uint8_t value)
   ExsSerialSend(buffer, len);
 }
 
-uint8_t ExsSetPower(uint8_t device, uint8_t power)
+void ExsSetPower(uint8_t device, uint8_t power)
 {
   Exs.dimmer.channel[device].dimm = power;
   ExsSendCmd(EXS_DIMM_1_ON + 0x10 * device + power ^ 1, 0);
 }
 
-uint8_t ExsSetBri(uint8_t device, uint8_t bri)
+void ExsSetBri(uint8_t device, uint8_t bri)
 {
   Exs.dimmer.channel[device].bright_tbl = bri;
   ExsSendCmd(EXS_DIMM_1_TBL + 0x10 * device, bri);
 }
 
-uint8_t ExsSyncState(uint8_t device)
+void ExsSyncState(uint8_t device)
 {
 #ifdef EXS_DEBUG
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EXS: Channel %d Power Want %d, Is %d"),
@@ -249,6 +249,7 @@ bool ExsSyncState()
 
   ExsSyncState(0);
   ExsSyncState(1);
+  return true;
 }
 
 void ExsDebugState()

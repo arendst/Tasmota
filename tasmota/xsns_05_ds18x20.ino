@@ -375,12 +375,19 @@ bool Ds18x20Read(uint8_t sensor)
     if (OneWireCrc8(data)) {
       switch(ds18x20_sensor[index].address[0]) {
         case DS18S20_CHIPID: {
+/*
           if (data[1] > 0x80) {
             data[0] = (~data[0]) +1;
             sign = -1;                     // App-Note fix possible sign error
           }
           float temp9 = (float)(data[0] >> 1) * sign;
           ds18x20_sensor[index].temperature = ConvertTemp((temp9 - 0.25) + ((16.0 - data[6]) / 16.0));
+
+          Replaced by below based on issue #8777
+*/
+          int16_t tempS = (((data[1] << 8) | (data[0] & 0xFE)) << 3) | ((0x10 - data[6]) & 0x0F);
+          ds18x20_sensor[index].temperature = ConvertTemp(tempS * 0.0625 - 0.250);
+
           ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
           return true;
         }

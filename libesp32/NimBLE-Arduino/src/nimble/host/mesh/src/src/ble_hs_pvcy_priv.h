@@ -35,6 +35,9 @@ int ble_hs_pvcy_add_entry(const uint8_t *addr, uint8_t addrtype,
                           const uint8_t *irk);
 int ble_hs_pvcy_ensure_started(void);
 int ble_hs_pvcy_set_mode(const ble_addr_t *addr, uint8_t priv_mode);
+#if MYNEWT_VAL(BLE_HOST_BASED_PRIVACY)
+bool ble_hs_pvcy_enabled(void);
+#endif
 
 #ifdef __cplusplus
 }

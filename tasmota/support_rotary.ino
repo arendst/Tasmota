@@ -17,85 +17,106 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_LIGHT
-//#define ROTARY_V1
 #ifdef ROTARY_V1
 /*********************************************************************************************\
  * Rotary support
+ *
+ * Supports full range in 10 steps of the Rotary Encoder:
+ * - Light Dimmer
+ * - Light Color for RGB lights when Button1 pressed
+ * - Light Color Temperature for CW lights when Button1 pressed
+ *
+ *                                _______         _______
+ *              GPIO_ROT1A ______|       |_______|       |______ GPIO_ROT1A
+ * negative <--               _______         _______         __            --> positive
+ *              GPIO_ROT1B __|       |_______|       |_______|   GPIO_ROT1B
+ *
 \*********************************************************************************************/
 
+#ifndef ROTARY_MAX_STEPS
+#define ROTARY_MAX_STEPS     10                // Rotary step boundary
+#endif
+
+// 1 pulse per step
+const uint8_t rotary_dimmer_increment = 100 / ROTARY_MAX_STEPS;  // Dimmer 1..100 = 100
+const uint8_t rotary_ct_increment = 350 / ROTARY_MAX_STEPS;      // Ct 153..500 = 347
+const uint8_t rotary_color_increment = 360 / ROTARY_MAX_STEPS;   // Hue 0..359 = 360
+
+const uint8_t ROTARY_TIMEOUT = 10;             // 10 * RotaryHandler() call which is usually 10 * 0.05 seconds
+const uint8_t ROTARY_DEBOUNCE = 10;            // Debounce time in milliseconds
+
 struct ROTARY {
-  unsigned long debounce = 0;          // Rotary debounce timer
-  uint8_t present = 0;
-  uint8_t state = 0;
+  bool present = false;
+} Rotary;
+
+struct tEncoder {
+  uint32_t debounce = 0;
+  int8_t abs_position[2] = { 0 };
+  int8_t direction = 0;                        // Control consistent direction
+  int8_t pin = -1;
   uint8_t position = 128;
   uint8_t last_position = 128;
-  uint8_t interrupts_in_use_count = 0;
-  uint8_t changed = 0;
-} Rotary;
+  uint8_t timeout = 0;                         // Disallow direction change within 0.5 second
+  bool changed = false;
+  bool busy = false;
+};
+tEncoder Encoder[MAX_ROTARIES];
 
 /********************************************************************************************/
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0      // Fix core 2.5.x ISR not in IRAM Exception
-void update_rotary(void) ICACHE_RAM_ATTR;
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+bool RotaryButtonPressed(uint32_t button_index) {
+  if (!Rotary.present) { return false; }
 
-void update_rotary(void)
-{
-  if (MI_DESK_LAMP == my_module_type) {
-    if (LightPowerIRAM()) {
-      /*
-      * https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
-      */
+  for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
+    if (-1 == Encoder[index].pin) { continue; }
+    if (index != button_index) { continue; }
 
-      uint8_t s = Rotary.state & 3;
-      if (digitalRead(Pin(GPIO_ROT1A))) { s |= 4; }
-      if (digitalRead(Pin(GPIO_ROT1B))) { s |= 8; }
-      switch (s) {
-        case 0: case 5: case 10: case 15:
-          break;
-        case 1: case 7: case 8: case 14:
-          Rotary.position++; break;
-        case 2: case 4: case 11: case 13:
-          Rotary.position--; break;
-        case 3: case 12:
-          Rotary.position = Rotary.position + 2; break;
-        default:
-          Rotary.position = Rotary.position - 2; break;
-      }
-      Rotary.state = (s >> 2);
+    bool powered_on = (power);
+#ifdef USE_LIGHT
+    if (!Settings.flag4.rotary_uses_rules) {   // SetOption98 - Use rules instead of light control
+      powered_on = LightPower();
     }
-  }
-}
-
-bool RotaryButtonPressed(void)
-{
-  if ((MI_DESK_LAMP == my_module_type) && (Rotary.changed) && LightPower()) {
-    Rotary.changed = 0;                    // Color temp changed, no need to turn of the light
-    return true;
+#endif  // USE_LIGHT
+    if (Encoder[index].changed && powered_on) {
+      Encoder[index].changed = false;          // Color (temp) changed, no need to turn of the light
+      return true;
+    }
+    return false;
   }
   return false;
 }
 
-void RotaryInit(void)
-{
-  Rotary.present = 0;
-  if (PinUsed(GPIO_ROT1A) && PinUsed(GPIO_ROT1B)) {
-    Rotary.present++;
-    pinMode(Pin(GPIO_ROT1A), INPUT_PULLUP);
-    pinMode(Pin(GPIO_ROT1B), INPUT_PULLUP);
+void ICACHE_RAM_ATTR RotaryIsrArg(void *arg) {
+  tEncoder* encoder = static_cast<tEncoder*>(arg);
 
-    // GPIO6-GPIO11 are typically used to interface with the flash memory IC on
-    // most esp8266 modules, so we should avoid adding interrupts to these pins.
+  if (encoder->busy) { return; }
 
-    if ((Pin(GPIO_ROT1A) < 6) || (Pin(GPIO_ROT1A) > 11)) {
-      attachInterrupt(digitalPinToInterrupt(Pin(GPIO_ROT1A)), update_rotary, CHANGE);
-      Rotary.interrupts_in_use_count++;
+  uint32_t time = millis();
+  if ((encoder->debounce < time) || (encoder->debounce > time + ROTARY_DEBOUNCE)) {
+    int direction = (digitalRead(encoder->pin)) ? -1 : 1;
+    if ((0 == encoder->direction) || (direction == encoder->direction)) {
+      encoder->position += direction;
+      encoder->direction = direction;
     }
-    if ((Pin(GPIO_ROT1B) < 6) || (Pin(GPIO_ROT1B) > 11)) {
-      attachInterrupt(digitalPinToInterrupt(Pin(GPIO_ROT1B)), update_rotary, CHANGE);
-      Rotary.interrupts_in_use_count++;
+    encoder->debounce = time + ROTARY_DEBOUNCE;  // Experimental debounce
+  }
+}
+
+void RotaryInit(void) {
+  Rotary.present = false;
+  for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
+#ifdef ESP8266
+    uint32_t idx = index *2;
+#else  // ESP32
+    uint32_t idx = index;
+#endif  // ESP8266 or ESP32
+    if (PinUsed(GPIO_ROT1A, idx) && PinUsed(GPIO_ROT1B, idx)) {
+      Encoder[index].pin = Pin(GPIO_ROT1B, idx);
+      pinMode(Encoder[index].pin, INPUT_PULLUP);
+      pinMode(Pin(GPIO_ROT1A, idx), INPUT_PULLUP);
+      attachInterruptArg(Pin(GPIO_ROT1A, idx), RotaryIsrArg, &Encoder[index], FALLING);
     }
+    Rotary.present |= (Encoder[index].pin > -1);
   }
 }
 
@@ -103,59 +124,80 @@ void RotaryInit(void)
  * Rotary handler
 \*********************************************************************************************/
 
-void RotaryHandler(void)
-{
-  if (Rotary.interrupts_in_use_count < 2) {
-    noInterrupts();
-    update_rotary();
-  } else {
-    noInterrupts();
-  }
-  if (Rotary.last_position != Rotary.position) {
-    if (MI_DESK_LAMP == my_module_type) { // Mi Desk lamp
-      if (Button.hold_timer[0]) {
-        Rotary.changed = 1;
-        // button1 is pressed: set color temperature
-        int16_t t = LightGetColorTemp();
-        t = t + (Rotary.position - Rotary.last_position);
-        if (t < 153) {
-          t = 153;
-        }
-        if (t > 500) {
-          t = 500;
-        }
-        DEBUG_CORE_LOG(PSTR("ROT: " D_CMND_COLORTEMPERATURE " %d"), Rotary.position - Rotary.last_position);
-        LightSetColorTemp((uint16_t)t);
-      } else {
-        int8_t d = Settings.light_dimmer;
-        d = d + (Rotary.position - Rotary.last_position);
-        if (d < 1) {
-          d = 1;
-        }
-        if (d > 100) {
-          d = 100;
-        }
-        DEBUG_CORE_LOG(PSTR("ROT: " D_CMND_DIMMER " %d"), Rotary.position - Rotary.last_position);
+void RotaryHandler(void) {
+  if (!Rotary.present) { return; }
 
-        LightSetDimmer((uint8_t)d);
-        Settings.light_dimmer = d;
+  for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
+    if (-1 == Encoder[index].pin) { continue; }
+
+    if (Encoder[index].timeout) {
+      Encoder[index].timeout--;
+      if (!Encoder[index].timeout) {
+#ifdef USE_LIGHT
+        if (!Settings.flag4.rotary_uses_rules) {  // SetOption98 - Use rules instead of light control
+          ResponseLightState(0);
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_STATE));
+        }
+#endif  // USE_LIGHT
+        Encoder[index].direction = 0;
       }
     }
-    Rotary.last_position = 128;
-    Rotary.position = 128;
-  }
-  interrupts();
-}
+    if (Encoder[index].last_position == Encoder[index].position) { continue; }
+    Encoder[index].busy = true;
 
-void RotaryLoop(void)
-{
-  if (Rotary.present) {
-    if (TimeReached(Rotary.debounce)) {
-      SetNextTimeInterval(Rotary.debounce, Settings.button_debounce); // Using button_debounce setting for this as well
-      RotaryHandler();
+    Encoder[index].timeout = ROTARY_TIMEOUT;   // Prevent fast direction changes within 0.5 second
+
+    int rotary_position = Encoder[index].position - Encoder[index].last_position;
+
+    if (Settings.save_data && (save_data_counter < 2)) {
+      save_data_counter = 3;                   // Postpone flash writes while rotary is turned
     }
+
+    bool button_pressed = (Button.hold_timer[index]);  // Button is pressed: set color temperature
+    if (button_pressed) { Encoder[index].changed = true; }
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ROT: Button1 %d, Position %d"), button_pressed, rotary_position);
+
+#ifdef USE_LIGHT
+    if (!Settings.flag4.rotary_uses_rules) {   // SetOption98 - Use rules instead of light control
+      bool second_rotary = (Encoder[1].pin > -1);
+      if (0 == index) {                        // Rotary1
+        if (button_pressed) {
+          if (second_rotary) {                 // Color RGB
+            LightColorOffset(rotary_position * rotary_color_increment);
+          } else {                             // Color Temperature or Color RGB
+            if (!LightColorTempOffset(rotary_position * rotary_ct_increment)) {
+              LightColorOffset(rotary_position * rotary_color_increment);
+            }
+          }
+        } else {                               // Dimmer RGBCW or RGB only if second rotary
+          LightDimmerOffset(second_rotary ? 1 : 0, rotary_position * rotary_dimmer_increment);
+        }
+      } else {                                 // Rotary2
+        if (button_pressed) {                  // Color Temperature
+          LightColorTempOffset(rotary_position * rotary_ct_increment);
+        } else {                               // Dimmer CW
+          LightDimmerOffset(2, rotary_position * rotary_dimmer_increment);
+        }
+      }
+    } else {
+#endif  // USE_LIGHT
+      Encoder[index].abs_position[button_pressed] += rotary_position;
+      if (Encoder[index].abs_position[button_pressed] < 0) {
+        Encoder[index].abs_position[button_pressed] = 0;
+      }
+      if (Encoder[index].abs_position[button_pressed] > ROTARY_MAX_STEPS) {
+        Encoder[index].abs_position[button_pressed] = ROTARY_MAX_STEPS;
+      }
+      Response_P(PSTR("{\"Rotary%d\":{\"Pos1\":%d,\"Pos2\":%d}}"), index +1, Encoder[index].abs_position[0], Encoder[index].abs_position[1]);
+      XdrvRulesProcess();
+#ifdef USE_LIGHT
+    }
+#endif  // USE_LIGHT
+
+    Encoder[index].last_position = 128;
+    Encoder[index].position = 128;
+    Encoder[index].busy = false;
   }
 }
 
 #endif  // ROTARY_V1
-#endif  // USE_LIGHT

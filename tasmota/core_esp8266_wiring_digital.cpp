@@ -33,12 +33,6 @@
 
 extern "C" {
 
-// Internal-only calls, not for applications
-extern void _setPWMFreq(uint32_t freq);
-extern bool _stopPWM(int pin);
-extern bool _setPWM(int pin, uint32_t val, uint32_t range);
-extern void resetPins();
-
 volatile uint32_t* const esp8266_gpioToFn[16] PROGMEM = { &GPF0, &GPF1, &GPF2, &GPF3, &GPF4, &GPF5, &GPF6, &GPF7, &GPF8, &GPF9, &GPF10, &GPF11, &GPF12, &GPF13, &GPF14, &GPF15 };
 
 extern void __pinMode(uint8_t pin, uint8_t mode) {
@@ -91,8 +85,7 @@ extern void __pinMode(uint8_t pin, uint8_t mode) {
 }
 
 extern void ICACHE_RAM_ATTR __digitalWrite(uint8_t pin, uint8_t val) {
-  stopWaveform(pin); // Disable any tone
-  _stopPWM(pin);     // ...and any analogWrite
+  stopWaveform(pin);
   if(pin < 16){
     if(val) GPOS = (1 << pin);
     else GPOC = (1 << pin);
@@ -140,8 +133,10 @@ typedef struct {
 static interrupt_handler_t interrupt_handlers[16] = { {0, 0, 0, 0}, };
 static uint32_t interrupt_reg = 0;
 
-void ICACHE_RAM_ATTR interrupt_handler(void*)
+void ICACHE_RAM_ATTR interrupt_handler(void *arg, void *frame)
 {
+  (void) arg;
+  (void) frame;
   uint32_t status = GPIE;
   GPIEC = status;//clear them interrupts
   uint32_t levels = GPI;
@@ -271,4 +266,4 @@ extern void detachInterrupt(uint8_t pin) __attribute__ ((weak, alias("__detachIn
 
 };
 
-#endif  // ESP8266
+#endif  // ESP8266 

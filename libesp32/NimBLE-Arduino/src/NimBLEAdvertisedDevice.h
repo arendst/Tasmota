@@ -3,7 +3,7 @@
  *
  *  Created: on Jan 24 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  *
  * BLEAdvertisedDevice.h
@@ -17,6 +17,9 @@
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
+#include "nimconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
+
 #include "NimBLEAddress.h"
 #include "NimBLEScan.h"
 #include "NimBLEUUID.h"
@@ -24,7 +27,7 @@
 #include "host/ble_hs_adv.h"
 
 #include <map>
-#include <vector> 
+#include <vector>
 
 
 class NimBLEScan;
@@ -39,22 +42,42 @@ public:
     NimBLEAdvertisedDevice();
 
     NimBLEAddress   getAddress();
+    uint8_t         getAdvType();
     uint16_t        getAppearance();
     std::string     getManufacturerData();
+
+    template<typename T>
+    T               getManufacturerData(bool skipSizeCheck = false) {
+        std::string data = getManufacturerData();
+        if(!skipSizeCheck && data.size() < sizeof(T)) return T();
+        const char *pData = data.data();
+        return *((T *)pData);
+    }
+
     std::string     getName();
     int             getRSSI();
     NimBLEScan*     getScan();
     std::string     getServiceData();
+
+    template<typename T>
+    T               getServiceData(bool skipSizeCheck = false) {
+        std::string data = getServiceData();
+        if(!skipSizeCheck && data.size() < sizeof(T)) return T();
+        const char *pData = data.data();
+        return *((T *)pData);
+    }
+
     NimBLEUUID      getServiceDataUUID();
     NimBLEUUID      getServiceUUID();
     int8_t          getTXPower();
     uint8_t*        getPayload();
     size_t          getPayloadLength();
     uint8_t         getAddressType();
-    void setAddressType(uint8_t type);
+    time_t          getTimestamp();
+    void            setAddressType(uint8_t type);
 
 
-    bool        isAdvertisingService(NimBLEUUID uuid);
+    bool        isAdvertisingService(const NimBLEUUID &uuid);
     bool        haveAppearance();
     bool        haveManufacturerData();
     bool        haveName();
@@ -92,7 +115,7 @@ private:
     bool m_haveTXPower;
 
 
-    NimBLEAddress  m_address = NimBLEAddress("\0\0\0\0\0\0");
+    NimBLEAddress   m_address = NimBLEAddress("");
     uint8_t         m_advType;
     uint16_t        m_appearance;
     int             m_deviceType;
@@ -105,8 +128,10 @@ private:
     std::string     m_serviceData;
     NimBLEUUID      m_serviceDataUUID;
     uint8_t*        m_payload;
-    size_t          m_payloadLength = 0;
+    size_t          m_payloadLength;
     uint8_t         m_addressType;
+    time_t          m_timestamp;
+    bool            m_callbackSent;
 };
 
 /**
@@ -129,5 +154,6 @@ public:
     virtual void onResult(NimBLEAdvertisedDevice* advertisedDevice) = 0;
 };
 
+#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 #endif /* CONFIG_BT_ENABLED */
 #endif /* COMPONENTS_NIMBLEADVERTISEDDEVICE_H_ */

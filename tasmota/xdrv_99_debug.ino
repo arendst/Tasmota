@@ -45,7 +45,6 @@
 #define D_CMND_CFGDUMP   "CfgDump"
 #define D_CMND_CFGPEEK   "CfgPeek"
 #define D_CMND_CFGPOKE   "CfgPoke"
-#define D_CMND_CFGSHOW   "CfgShow"
 #define D_CMND_CFGXOR    "CfgXor"
 #define D_CMND_CPUCHECK  "CpuChk"
 #define D_CMND_EXCEPTION "Exception"
@@ -190,24 +189,6 @@ void CpuLoadLoop(void)
 /*******************************************************************************************/
 
 #ifdef ESP8266
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1)
-// All version before core 2.4.2
-// https://github.com/esp8266/Arduino/issues/2557
-
-extern "C" {
-#include <cont.h>
-  extern cont_t g_cont;
-}
-
-void DebugFreeMem(void)
-{
-  register uint32_t *sp asm("a1");
-
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d, UnmodifiedStack %d (%s)"), ESP.getFreeHeap(), 4 * (sp - g_cont.stack), cont_get_free_stack(&g_cont), XdrvMailbox.data);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), 4 * (sp - g_cont.stack), XdrvMailbox.data);
-}
-
-#else
 // All version from core 2.4.2
 // https://github.com/esp8266/Arduino/pull/5018
 // https://github.com/esp8266/Arduino/pull/4553
@@ -223,8 +204,6 @@ void DebugFreeMem(void)
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), 4 * (sp - g_pcont->stack), XdrvMailbox.data);
 }
-
-#endif  // ARDUINO_ESP8266_RELEASE_2_x_x
 
 #else  // ESP32
 
@@ -459,7 +438,9 @@ void CmndCfgXor(void)
   if (XdrvMailbox.data_len > 0) {
     Web.config_xor_on_set = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(Web.config_xor_on_set);
+  char temp[10];
+  snprintf_P(temp, sizeof(temp), PSTR("0x%02X"), Web.config_xor_on_set);
+  ResponseCmndChar(temp);
 }
 #endif  // USE_WEBSERVER
 

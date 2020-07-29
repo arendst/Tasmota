@@ -101,7 +101,7 @@ void Scd30Update(void)
 {
   scd30Loop_count++;
   if (scd30Loop_count > (scd30Interval_sec - 1)) {
-    int error = 0;
+    uint32_t error = 0;
     switch (scd30ErrorState) {
       case SCD30_STATE_NO_ERROR: {
         error = scd30.readMeasurement(&scd30_CO2, &scd30_CO2EAvg, &scd30_Temp, &scd30_Humid);
@@ -249,6 +249,7 @@ int Scd30GetCommand(int command_code, uint16_t *pvalue)
         // else for Unknown command
       break;
   }
+  return 0;  // Fix GCC 10.1 warning
 }
 
 int Scd30SetCommand(int command_code, uint16_t value)
@@ -291,6 +292,7 @@ int Scd30SetCommand(int command_code, uint16_t value)
         // else for Unknown command
       break;
   }
+  return 0;  // Fix GCC 10.1 warning
 }
 
 /*********************************************************************************************\

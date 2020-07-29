@@ -63,7 +63,7 @@ uint32_t DS1624_Idx2Addr(uint32_t idx) {
   return 0x48 + idx;
 }
 
-int DS1624_Restart(uint8_t config, uint32_t idx) {
+void DS1624_Restart(uint8_t config, uint32_t idx) {
   uint32_t addr = DS1624_Idx2Addr(idx);
   if ((config & 1) == 1) {
     config &= ~(DS1621_CFG_DONE|DS1621_CFG_1SHOT);
@@ -184,7 +184,7 @@ void DS1624Show(bool json)
 
     dtostrfd(ds1624_sns[i].value, Settings.flag2.temperature_resolution, temperature);
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), ds1624_sns[i].name, temperature);
+      ResponseAppend_P(JSON_SNS_TEMP, ds1624_sns[i].name, temperature);
       if ((0 == tele_period) && once) {
 #ifdef USE_DOMOTICZ
         DomoticzSensor(DZ_TEMP, temperature);

@@ -90,7 +90,7 @@ void Epd42::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
   fillScreen(BLACK);
 }
 
-int16_t Epd42::Begin(int16_t cs,int16_t mosi,int16_t sclk) {
+void Epd42::Begin(int16_t cs,int16_t mosi,int16_t sclk) {
   cs_pin=cs;
   mosi_pin=mosi;
   sclk_pin=sclk;
@@ -130,14 +130,14 @@ int Epd42::Init(void) {
     SendCommand(PANEL_SETTING);
    // SendData(0xbf);    // KW-BF   KWR-AF  BWROTP 0f
   //  SendData(0x0b);
-//  SendData(0x0F);  //300x400 Red mode, LUT from OTP
-//  SendData(0x1F);  //300x400 B/W mode, LUT from OTP
-  SendData(0x3F); //300x400 B/W mode, LUT set by register
-//  SendData(0x2F); //300x400 Red mode, LUT set by register
+//	SendData(0x0F);  //300x400 Red mode, LUT from OTP
+//	SendData(0x1F);  //300x400 B/W mode, LUT from OTP
+	SendData(0x3F); //300x400 B/W mode, LUT set by register
+//	SendData(0x2F); //300x400 Red mode, LUT set by register
 
     SendCommand(PLL_CONTROL);
     SendData(0x3C);        // 3A 100Hz   29 150Hz   39 200Hz    31 171Hz       3C 50Hz (default)    0B 10Hz
-  //SendData(0x0B);   //0B is 10Hz
+	//SendData(0x0B);   //0B is 10Hz
     /* EPD hardware init end */
     return 0;
 }

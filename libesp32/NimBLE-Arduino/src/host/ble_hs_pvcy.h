@@ -19,6 +19,9 @@
  * under the License.
  */
 
+#ifndef H_BLE_HS_PVCY_
+#define H_BLE_HS_PVCY_
+
 #include "host/ble_hs.h"
 
 #ifdef __cplusplus
@@ -26,15 +29,45 @@ extern "C" {
 #endif
 
 #if MYNEWT_VAL(BLE_HOST_BASED_PRIVACY)
-/* Called to configure local(own) privacy (RPA) when using host based privacy. In
- * Host based privacy as controller is not aware of RPA, we do it via
- * 'BLE_ADDR_RANDOM' addr_type route.
+
+#define NIMBLE_HOST_DISABLE_PRIVACY            0x00
+#define NIMBLE_HOST_ENABLE_RPA                 0x01
+#define NIMBLE_HOST_ENABLE_NRPA                0x02
+
+/* Called to configure local(own) privacy (RPA/NRPA) when using Host based privacy.
+ * In Host based privacy, as controller is not aware of RPA/NRPA address is in use,
+ * we do it through 'BLE_ADDR_RANDOM (0x01)' addr_type route. This is necessary
+ * so as to set the private address as random address in controller.
+ * Remember to configure `BLE_SM_PAIR_KEY_DIST_ID` in our & their
+ * key distributions for using RPA. For NRPA part of privacy it is not
+ * necessary to configure key distributions in host, as anyway NRPA is non-resolvable.
+ * Please call this API once host-controller are synced as we set the private
+ * (RPA/NRPA) address using host-controller HCI commands.
  *
- * @param                enable RPA when enable is not 0
- *                       disable RPA otherwise
+ * To give brief information on how to use this feature,
+ * please refer to following steps while using RPA feature:
+ *
+ * 1. Include "host/ble_hs_pvcy.h".
+ * 2. Set own_addr_type to `BLE_OWN_ADDR_RANDOM`.
+ * 3. Add `BLE_SM_PAIR_KEY_DIST_ID` to key distribution in
+ *    `ble_hs_cfg.sm_our_key_dist` & `ble_hs_cfg.sm_their_key_dist`.
+ * 4. Call `ble_hs_pvcy_rpa_config(1)` in Host-Controller sync callback.
+ *
+ * In case of NRPA, steps 1, 2 and calling ble_hs_pvcy_rpa_config(2) will
+ * suffice.
+ *
+ * @param                enable RPA when param      = 1 (NIMBLE_HOST_ENABLE_RPA)
+ *                       enable NRPA when param     = 2 (NIMBLE_HOST_ENABLE_NRPA)
+ *                       disable privacy when param = 0 (NIMBLE_HOST_DISABLE_PRIVACY)
  *
  * @return               return 0 when successful.
  *                       return appropriate error code otherwise
  */
 int ble_hs_pvcy_rpa_config(uint8_t enable);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

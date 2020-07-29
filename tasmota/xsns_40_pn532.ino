@@ -559,6 +559,7 @@ bool PN532_Command(void)
       return serviced;
     }
   }
+  return false;
 }
 
 #endif // USE_PN532_DATA_FUNCTION

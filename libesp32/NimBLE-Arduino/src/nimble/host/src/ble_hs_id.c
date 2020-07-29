@@ -68,6 +68,37 @@ ble_hs_id_gen_rnd(int nrpa, ble_addr_t *out_addr)
 
 #if MYNEWT_VAL(BLE_HOST_BASED_PRIVACY)
 /**
+ * Sets the device's pseudo Non Resolvable Private Address when 'Host based
+ * privacy' is in use.
+ *
+ * @return                      0 on success;
+ *                              Appropriate error code if failure.
+ */
+int
+ble_hs_id_set_nrpa_rnd()
+{
+
+    ble_addr_t nrpa_addr;
+    int rc;
+
+    ble_hs_id_gen_rnd(1, &nrpa_addr);
+
+    ble_hs_lock();
+
+    /* set the NRPA address as pseudo random address in controller */
+    rc = ble_hs_hci_util_set_random_addr(nrpa_addr.val);
+    if (rc != 0) {
+        goto done;
+    }
+
+    memcpy(ble_hs_id_rnd, nrpa_addr.val, BLE_DEV_ADDR_LEN);
+
+done:
+    ble_hs_unlock();
+    return rc;
+}
+
+/**
  * Sets the device's pseudo RPA address when 'Host based privacy' is in use.
  * The address type (RPA) is inferred from the most-significant bits. The
  * address is specified in host byte order (little-endian!).

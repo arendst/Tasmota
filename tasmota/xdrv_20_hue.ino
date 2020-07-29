@@ -114,6 +114,29 @@ void HueRespondToMSearch(void)
  * Hue web server additions
 \*********************************************************************************************/
 
+//<?xml version="1.0"?><root xmlns="urn:schemas-upnp-org:device-1-0"><specVersion><major>1</major><minor>0</minor></specVersion><URLBase>http://{x1:80/</URLBase><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>Amazon-Echo-HA-Bridge ({x1)</friendlyName><manufacturer>Royal Philips Electronics</manufacturer><manufacturerURL>http://www.philips.com</manufacturerURL><modelDescription>Philips hue Personal Wireless Lighting</modelDescription><modelName>Philips hue bridge 2012</modelName><modelNumber>929000226503</modelNumber><serialNumber>{x3</serialNumber><UDN>uuid:{x2</UDN></device></root>\r\n\r\n
+//Successfully compressed from 625 to 391 bytes (-37.4%)
+// const size_t HUE_DESCRIPTION_XML_size = 625;
+// const char HUE_DESCRIPTION_XML[] PROGMEM = "\x3D\x0E\xD1\xB0\x68\x48\xCD\xFF\xDB\x9C\x7C\x3D\x87\x21\xD1\x9E\xC3\xB4\x7E\x1E"
+//                              "\x85\xFC\xCA\x46\xC1\xA1\x77\x8F\x87\xB0\x5F\xF8\xF3\xF0\x62\x98\xDB\xF1\xD6\x2C"
+//                              "\x67\x0C\x3A\xF3\xE3\xC7\x98\x8C\xCF\x43\x67\x59\xC8\x75\xB3\xD8\x7E\x1E\x85\xE1"
+//                              "\x8C\x32\x33\x04\x1C\x78\xFC\x3D\x06\xD9\xAF\x3E\x7E\x1C\x87\xA1\xD8\x40\x83\x14"
+//                              "\xF4\x1B\xBD\x9F\x3F\x0E\x33\xD0\xEC\x20\x41\x8A\x7A\x1D\x80\x91\x85\x10\xB2\xF9"
+//                              "\x04\x43\xAF\xCC\xFC\x15\x54\x30\xF3\x3B\x0E\xC3\xDA\x6C\x39\x0F\x3F\xB3\xB0\xF4"
+//                              "\x3B\x08\x10\xEA\x1E\x80\x83\xA2\x82\x1C\x42\xA3\x21\x8C\xFC\x05\x6D\xB4\xF3\x21"
+//                              "\xD7\xED\x0C\xF3\x39\x0F\x43\xB0\x81\x1B\x0C\x3D\x0C\x7F\x5F\x08\x11\x91\x75\x8D"
+//                              "\x67\xE1\x58\xDB\x36\xE7\x1D\x64\xC3\x15\x87\x59\x0A\x2B\x3A\xC8\x77\xF4\x41\xE6"
+//                              "\x8E\xE9\xED\x36\x1C\x87\x78\xF4\x3B\x08\x12\x30\x63\xD0\x6D\xF0\xB3\x16\x1D\x0B"
+//                              "\xFB\xF9\xF8\x5F\xC3\x2B\x09\x10\xC1\x5A\x16\x8C\xF2\x26\x13\x0E\xBF\x9D\xA1\xF8"
+//                              "\xF4\x3B\x01\x23\x04\x04\x8C\x48\x85\x97\xC8\x20\x43\xE0\xDC\x7C\x7C\x7C\xE8\x30"
+//                              "\x10\x71\xA3\xA0\x78\x34\x12\x71\x22\x16\x5F\x20\x8F\xC3\xD0\x6E\x08\xC2\x21\x1F"
+//                              "\x83\xFE\x8C\xAD\xCE\x3F\x01\x0F\x49\x14\x2D\xA2\x18\xFF\xEC\xEB\x09\x10\xFE\xFD"
+//                              "\x84\xFD\xE4\x41\x68\xF0\xAA\xDE\x1E\x3D\x0E\xC0\x4C\xC5\x41\x07\x27\x2E\xB1\xAC"
+//                              "\x12\x32\x01\xC0\x83\xC2\x41\xCA\x72\x88\x10\xB1\x10\x42\xE1\x13\x04\x61\x17\x0B"
+//                              "\x1A\x39\xFC\xFC\x38\xA9\x36\xEA\xBB\x5D\x90\x21\xE0\x20\x83\x58\xF4\xF3\xFE\xD8"
+//                              "\x21\xCA\x3D\xA6\xC3\x96\x7A\x1D\x84\x09\x13\x8F\x42\x16\x42\x17\x1F\x82\xC5\xE8"
+//                              "\x87\x99\xED\x36\x1C\xA3\xD0\xEC\x22\x16\x42\x17\x1F\x80\x87\xC7\x19\xF8\x7A\x1D"
+//                              "\x9F\xCC\xA3\xF2\x70\xA4\x6E\x9C\x29\x1B\x8D";
 const char HUE_DESCRIPTION_XML[] PROGMEM =
   "<?xml version=\"1.0\"?>"
   "<root xmlns=\"urn:schemas-upnp-org:device-1-0\">"
@@ -137,22 +160,59 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
   "</device>"
   "</root>\r\n"
   "\r\n";
+
+//%s"alert":"none","effect":"none","reachable":true}
+//Successfully compressed from 50 to 34 bytes (-32%)
+// const size_t HUE_LIGHTS_STATUS_JSON1_SUFFIX_size = 50;
+// const char HUE_LIGHTS_STATUS_JSON1_SUFFIX[] PROGMEM = "\x3E\xBC\x7B\x2C\x27\xFA\x3D\x87\x99\xEC\xEC\xE6\x7B\x0E\xA3\xD8\xCC\x18\x61\x82"
+//                              "\x34\xCF\xBB\x0C\x55\x8E\x09\x9E\xC3\xCE\xBE\x2D\x9E\xE3";
 const char HUE_LIGHTS_STATUS_JSON1_SUFFIX[] PROGMEM =
   "%s\"alert\":\"none\","
   "\"effect\":\"none\","
   "\"reachable\":true}";
+
+//,"type":"Extended color light","name":"%s","modelid":"%s","manufacturername":"%s","uniqueid":"%s"}
+//Successfully compressed from 98 to 64 bytes (-34.7%)
+// const size_t HUE_LIGHTS_STATUS_JSON2_size = 98;
+// const char HUE_LIGHTS_STATUS_JSON2[] PROGMEM = "\x3A\x8F\x65\x19\x0C\x67\xB0\xF3\x3D\x84\xCD\x94\xF8\x46\x22\x0F\x02\xCF\xA0\xB4"
+//                              "\x78\x55\x1E\xC3\xA8\xF6\x75\x8D\x67\xB0\xF3\x3D\x87\xD7\x8F\x61\xD4\x7B\x06\xE0"
+//                              "\x8C\x2D\x10\x11\x25\xDF\x0B\x31\x61\xD0\xBF\xBF\x82\x3E\x06\x2F\xB4\xD4\x2D\x82"
+//                              "\x1E\x08\x7B\x8D";
 const char HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
   ",\"type\":\"Extended color light\","
   "\"name\":\"%s\","
   "\"modelid\":\"%s\","
   "\"manufacturername\":\"%s\","
   "\"uniqueid\":\"%s\"}";
+
+//{"name":"Group 0","lights":[{l1],"type":"LightGroup","action":
+//Successfully compressed from 62 to 61 bytes (-1.6%)
 const char HUE_GROUP0_STATUS_JSON[] PROGMEM =
   "{\"name\":\"Group 0\","
    "\"lights\":[{l1],"
    "\"type\":\"LightGroup\","
    "\"action\":";
 //     "\"scene\":\"none\",";
+
+//{"name":"Philips hue","mac":"{ma","dhcp":true,"ipaddress":"{ip","netmask":"{ms","gateway":"{gw","proxyaddress":"none","proxyport":0,"bridgeid":"{br","UTC":"{dt","whitelist":{"{id":{"last use date":"{dt","create date":"{dt","name":"Remote"}},"swversion":"01041302","apiversion":"1.17.0","swupdate":{"updatestate":0,"url":"","text":"","notify": false},"linkbutton":false,"portalservices":false}
+//Successfully compressed from 392 to 302 bytes (-23%)
+// const size_t HueConfigResponse_JSON_size = 392;
+// const char HueConfigResponse_JSON[] PROGMEM = "\x3D\xA7\xB3\xAC\x6B\x3D\x87\x99\xEC\x21\x82\xB4\x2D\x19\xE4\x28\x5B\x3D\x87\x51"
+//                              "\xEC\x1B\x61\x9E\xC3\xCC\xF6\x1E\xD1\xB6\x7B\x0E\xA3\xD8\x20\xA0\xC6\x1E\xC3\xCE"
+//                              "\xBE\x2D\x9D\x47\xB3\x46\x58\x82\x7D\xFB\xC7\xB0\xF3\x3D\x87\xB7\x46\x1E\xC3\xA8"
+//                              "\xF6\x73\xA1\xB7\xE3\x43\xD8\x79\x9E\xC3\xDA\x37\xC7\xB0\xEA\x3D\x83\xD7\x4C\x7E"
+//                              "\xCC\x8F\x61\xE6\x7B\x0F\x68\xF0\xF9\xEC\x3A\x8F\x60\xCF\xE1\xB0\xC8\x11\x71\x1E"
+//                              "\xCE\x60\x87\x48\x66\x7E\x8F\x61\xE6\x71\x9D\x47\xB0\x87\x7F\x44\x1E\x7A\x21\xEC"
+//                              "\x3C\xCF\x61\xED\x1D\xF3\xD8\x75\x1E\xC2\x16\x54\x41\x9E\xC3\xCC\xF6\x1E\xD1\x28"
+//                              "\xF6\x1D\x47\xB0\x7C\x56\xD3\x0B\x7D\x47\xB0\xF3\x3D\xA7\xB0\xF6\xE8\x87\xB0\xF3"
+//                              "\x3D\xA7\xB0\x2B\xF5\x21\x7E\x68\x4B\xA6\x08\x98\x30\x7F\x77\x40\x95\x40\x10\xB8"
+//                              "\x3A\x2F\xB1\xB9\x4C\xF6\x1E\xE3\xDC\x75\x1E\xCF\x0F\x99\xBF\xFB\x73\x8F\x61\xE6"
+//                              "\x7B\x0E\x38\xF2\x5B\xA3\xD8\x75\x1E\xC2\xB1\x9A\x08\xB5\x0E\x43\xA4\xF1\xD1\x9E"
+//                              "\xC3\xA8\xF6\x17\x87\xC5\x8C\x04\x1C\xB0\xF6\x9E\xC0\x41\x8D\xEA\xBA\x67\xB0\xF3"
+//                              "\x38\xCE\xA3\xD8\x42\xFE\x11\xEC\x3C\xCF\x61\xEC\x3A\x8F\x65\x33\x65\x02\x0C\x6E"
+//                              "\xCA\xD3\x06\x47\xB0\xF3\x46\x2C\x2F\x33\xDC\x75\x1E\xC0\xB7\x8D\x07\x0B\xAA\xCE"
+//                              "\x3D\x87\x99\x8B\x0B\xCC\xEA\x3D\x83\x33\xF5\x61\x79\xFC\xCF\x43\x7E\x04\x2A\x2B"
+//                              "\x67\xB8";
 const char HueConfigResponse_JSON[] PROGMEM =
   "{\"name\":\"Philips hue\","
    "\"mac\":\"{ma\","
@@ -377,8 +437,8 @@ void HueLightStatus2(uint8_t device, String *response)
     fname[fname_len] = 0x00;
   }
   snprintf_P(buf, buf_size, HUE_LIGHTS_STATUS_JSON2,
-            escapeJSONString(fname).c_str(),
-            escapeJSONString(Settings.user_template_name).c_str(),
+            EscapeJSONString(fname).c_str(),
+            EscapeJSONString(Settings.user_template_name).c_str(),
             PSTR("Tasmota"),
             GetHueDeviceId(device).c_str());
   *response += buf;

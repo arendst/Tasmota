@@ -868,6 +868,11 @@ void XsnsSensorState(void)
 
 bool XsnsNextCall(uint8_t Function, uint8_t &xsns_index)
 {
+  if (0 == xsns_present) {
+    xsns_index = 0;
+    return false;
+  }
+
   xsns_index++;
   if (xsns_index == xsns_present) { xsns_index = 0; }
 

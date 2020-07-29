@@ -101,9 +101,9 @@ void BuzzerEnabledBeep(uint32_t count, uint32_t duration)
 
 bool BuzzerPinState(void)
 {
-  if (XdrvMailbox.index == GPIO_BUZZER_INV) {
+  if (XdrvMailbox.index == AGPIO(GPIO_BUZZER_INV)) {
     Buzzer.inverted = 1;
-    XdrvMailbox.index -= (GPIO_BUZZER_INV - GPIO_BUZZER);
+    XdrvMailbox.index -= (AGPIO(GPIO_BUZZER_INV) - AGPIO(GPIO_BUZZER));
     return true;
   }
   return false;

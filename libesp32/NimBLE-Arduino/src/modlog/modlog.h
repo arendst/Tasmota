@@ -41,31 +41,43 @@ modlog_dummy(const char *msg, ...)
 #endif
 
 #ifdef ESP_PLATFORM
-/// Uncomment these and comment out the 3 defines below to see NimBLE messages in Arduino.
-/*
+#define MODLOG_ESP_LOCAL(level, ml_msg_, ...) do { \
+    if (LOG_LOCAL_LEVEL >= level) esp_log_write(level, "NimBLE", ml_msg_, ##__VA_ARGS__); \
+} while(0)
+
+#ifdef ARDUINO_ARCH_ESP32
+#include "nimconfig.h"
+#endif
+
+#if defined(ARDUINO_ARCH_ESP32) && defined(CONFIG_BT_NIMBLE_DEBUG)
+
 #define MODLOG_DEBUG(ml_mod_, ml_msg_, ...) \
-    esp_log_write(ESP_LOG_ERROR, "NimBLE",ml_msg_, ##__VA_ARGS__)
+    MODLOG_ESP_LOCAL(ESP_LOG_ERROR, ml_msg_, ##__VA_ARGS__)
 
 #define MODLOG_INFO(ml_mod_, ml_msg_, ...) \
-    esp_log_write(ESP_LOG_ERROR, "NimBLE",ml_msg_, ##__VA_ARGS__)
+    MODLOG_ESP_LOCAL(ESP_LOG_ERROR, ml_msg_, ##__VA_ARGS__)
 
 #define MODLOG_WARN(ml_mod_, ml_msg_, ...) \
-    esp_log_write(ESP_LOG_ERROR, "NimBLE",ml_msg_, ##__VA_ARGS__)
-*/
+    MODLOG_ESP_LOCAL(ESP_LOG_ERROR, ml_msg_, ##__VA_ARGS__)
+
+#else
+
 #define MODLOG_DEBUG(ml_mod_, ml_msg_, ...) \
-    esp_log_write(ESP_LOG_DEBUG, "NimBLE",ml_msg_, ##__VA_ARGS__)
+    MODLOG_ESP_LOCAL(ESP_LOG_DEBUG, ml_msg_, ##__VA_ARGS__)
 
 #define MODLOG_INFO(ml_mod_, ml_msg_, ...) \
-    esp_log_write(ESP_LOG_INFO, "NimBLE",ml_msg_, ##__VA_ARGS__)
+    MODLOG_ESP_LOCAL(ESP_LOG_INFO, ml_msg_, ##__VA_ARGS__)
 
 #define MODLOG_WARN(ml_mod_, ml_msg_, ...) \
-    esp_log_write(ESP_LOG_WARN, "NimBLE",ml_msg_, ##__VA_ARGS__)
+    MODLOG_ESP_LOCAL(ESP_LOG_WARN, ml_msg_, ##__VA_ARGS__)
+
+#endif
 
 #define MODLOG_ERROR(ml_mod_, ml_msg_, ...) \
-    esp_log_write(ESP_LOG_ERROR, "NimBLE",ml_msg_, ##__VA_ARGS__)
+    MODLOG_ESP_LOCAL(ESP_LOG_ERROR, ml_msg_, ##__VA_ARGS__)
 
 #define MODLOG_CRITICAL(ml_mod_, ml_msg_, ...) \
-    esp_log_write(ESP_LOG_ERROR, "NimBLE",ml_msg_, ##__VA_ARGS__)
+    MODLOG_ESP_LOCAL(ESP_LOG_ERROR, ml_msg_, ##__VA_ARGS__)
 
 #else
 

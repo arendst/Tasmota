@@ -17,8 +17,6 @@
  * under the License.
  */
 
- /* Modifications copyright (C) 2020 Ryan Powell */
- 
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
@@ -1855,7 +1853,6 @@ ble_gap_update_timer(void)
         ble_hs_unlock();
 
         if (entry != NULL) {
-            ble_gap_update_notify(conn_handle, BLE_HS_ETIMEOUT);
             ble_gap_update_entry_free(entry);
         }
     } while (entry != NULL);
@@ -5303,8 +5300,7 @@ ble_gap_unpair_oldest_peer(void)
     }
 
     if (num_peers == 0) {
-		return BLE_HS_ENOENT;
-        //return 0;
+        return 0;
     }
 
     rc = ble_gap_unpair(&oldest_peer_id_addr);
@@ -5316,14 +5312,14 @@ ble_gap_unpair_oldest_peer(void)
 }
 
 int
-ble_gap_unpair_oldest_except_curr(const ble_addr_t *curr_peer)
+ble_gap_unpair_oldest_except(const ble_addr_t *peer_addr)
 {
-    ble_addr_t oldest_peer_id_addr[MYNEWT_VAL(BLE_STORE_MAX_BONDS)];
+    ble_addr_t peer_id_addrs[MYNEWT_VAL(BLE_STORE_MAX_BONDS)];
     int num_peers;
     int rc, i;
 
     rc = ble_store_util_bonded_peers(
-            &oldest_peer_id_addr[0], &num_peers, MYNEWT_VAL(BLE_STORE_MAX_BONDS));
+            &peer_id_addrs[0], &num_peers, MYNEWT_VAL(BLE_STORE_MAX_BONDS));
     if (rc != 0) {
         return rc;
     }
@@ -5333,21 +5329,16 @@ ble_gap_unpair_oldest_except_curr(const ble_addr_t *curr_peer)
     }
 
     for (i = 0; i < num_peers; i++) {
-        if (memcmp(curr_peer, &oldest_peer_id_addr[i], sizeof (ble_addr_t)) != 0) {
+        if (ble_addr_cmp(peer_addr, &peer_id_addrs[i]) != 0) {
             break;
         }
     }
 
-    if (i < num_peers) {
-        rc = ble_gap_unpair(&oldest_peer_id_addr[i]);
-        if (rc != 0) {
-            return rc;
-        }
-    } else {
+    if (i >= num_peers) {
         return BLE_HS_ENOMEM;
     }
 
-    return 0;
+    return ble_gap_unpair(&peer_id_addrs[i]);
 }
 
 void
@@ -5371,7 +5362,8 @@ ble_gap_passkey_event(uint16_t conn_handle,
 }
 
 void
-ble_gap_enc_event(uint16_t conn_handle, int status, int security_restored)
+ble_gap_enc_event(uint16_t conn_handle, int status,
+                  int security_restored, int bonded)
 {
 #if !NIMBLE_BLE_SM
     return;
@@ -5387,17 +5379,24 @@ ble_gap_enc_event(uint16_t conn_handle, int status, int security_restored)
     ble_gap_event_listener_call(&event);
     ble_gap_call_conn_event_cb(&event, conn_handle);
 
-/* H2zero mod
-   If bonding is not enabled don't store cccd data
-   if (status == 0) {
-*/
-    if (status == 0 && ble_hs_cfg.sm_bonding) {
-/* End mod */
-        if (security_restored) {
-            ble_gatts_bonding_restored(conn_handle);
-        } else {
-            ble_gatts_bonding_established(conn_handle);
-        }
+    if (status != 0) {
+        return;
+    }
+
+    /* If encryption succeded and encryption has been restored for bonded device,
+     * notify gatt server so it has chance to send notification/indication if needed.
+     */
+    if (security_restored) {
+        ble_gatts_bonding_restored(conn_handle);
+        return;
+    }
+
+    /* If this is fresh pairing and bonding has been established,
+     * notify gatt server about that so previous subscriptions (before bonding)
+     * can be stored.
+     */
+    if (bonded) {
+        ble_gatts_bonding_established(conn_handle);
     }
 }
 

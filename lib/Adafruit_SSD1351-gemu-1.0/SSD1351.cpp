@@ -29,6 +29,8 @@ SSD1351::SSD1351(int8_t cs,int8_t mosi,int8_t sclk) : Renderer(SSD1351_WIDTH, SS
   _hwspi = 0;
 }
 
+#ifndef ESP32
+
 #include "spi_register.h"
 
 /* CPU Clock = 80 Mhz
@@ -189,84 +191,81 @@ void SSD1351::writedata(uint8_t d) {
 }
 
 
-uint16_t SSD1351::GetColorFromIndex(uint8_t index) {
-  if (index>=sizeof(ssd1351_colors)/2) index=0;
-  return ssd1351_colors[index];
-}
+void ICACHE_RAM_ATTR SSD1351::fastSPIwrite(uint8_t d,uint8_t dc) {
 
-void SSD1351::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
-  setRotation(rot);
-  invertDisplay(false);
-  setTextWrap(false);         // Allow text to run off edges
-  cp437(true);
-  setTextFont(font&3);
-  setTextSize(size&7);
-  setTextColor(SSD1351_WHITE,SSD1351_BLACK);
-  setCursor(0,0);
-  fillScreen(SSD1351_BLACK);
-  stop();
-}
+  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_cs);
+  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
+  if(dc) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
+  else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_mosi);
+  WRITE_PERI_REG( PIN_OUT_SET, 1<<_sclk);
 
-void SSD1351::DisplayOnff(int8_t on) {
-  if (on) {
-    writecommand(SSD1351_CMD_DISPLAYON);    //Display on
-  } else {
-    writecommand(SSD1351_CMD_DISPLAYOFF);
+  for(uint8_t bit = 0x80; bit; bit >>= 1) {
+    WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
+    if(d&bit) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
+    else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_mosi);
+    WRITE_PERI_REG( PIN_OUT_SET, 1<<_sclk);
   }
-  stop();
+  WRITE_PERI_REG( PIN_OUT_SET, 1<<_cs);
 }
 
-// dimmer 0-100
-void SSD1351::dim(uint8_t contrast) {
-  writecommand(SSD1351_CMD_CONTRASTMASTER);
-  if (contrast>15) contrast=15;
-  writedata(contrast);
-  stop();
+
+#else
+// ESP32 section
+uint8_t ssd131_start;
+
+void SSD1351::writedata(uint8_t d) {
+  fastSPIwrite(d,1);
 }
 
-/*
-if (SSD_COMSPLIT == 1){
-			_remapReg |= ((1 << 5));
-		} else {
-			_remapReg |= ((0 << 5));
-		}
-		setRegister_cont(CMD_CMDLOCK,SSD_COMMANDLOCK1);
-		setRegister_cont(CMD_CMDLOCK,SSD_COMMANDLOCK2);
-		writecommand_cont(CMD_DISPLAYOFF);
-		setRegister_cont(CMD_CLOCKDIV,SSD_CLOCKDIV);
-		setRegister_cont(CMD_MUXRATIO,SSD_MUXRATIO);
-		setRegister_cont(CMD_STARTLINE,SSD_STARTLINE); >>>
-		setRegister_cont(CMD_DISPLAYOFFSET,SSD_DISPLAYOFFSET);
-		setRegister_cont(CMD_SETGPIO,SSD_SETGPIO);
-		setRegister_cont(CMD_FUNCTIONSELECT,SSD_FUNCTIONSELECT);
-		writecommand_cont(CMD_SETVSL);
-		writedata8_cont(SSD_SETVSL_A);writedata8_cont(SSD_SETVSL_B);writedata8_cont(SSD_SETVSL_C);
-		writecommand_cont(CMD_CONTRASTABC);
-		writedata8_cont(SSD_CONTRAST_A);writedata8_cont(SSD_CONTRAST_B);writedata8_cont(SSD_CONTRAST_C);
-		setRegister_cont(CMD_MASTERCURRENT,SSD_MASTERCURRENT); >>>
-		writecommand_cont(CMD_DISPLAYENHANCE); >>
-		if (SSD_ENHANCE){
-			writedata8_cont(0xA4);
-		} else {
-			writedata8_cont(0x00);
-		}
-		writedata8_cont(0x00);
-		writedata8_cont(0x00);
-		#if defined(SSD_GAMMASET)
-			//writecommand_cont(CMD_GRAYSCALE); for (uint8_t i =0;i<32;i++){writedata8_cont(SSD_GRAYTABLE[i]);}
-		#else
-			writecommand_cont(CMD_USELUT);
-		#endif
-		// phase here
-		setRegister_cont(CMD_PRECHARGE,SSD_PRECHARGE);  >>
-		setRegister_cont(CMD_PRECHARGE2,SSD_PRECHARGE2);
-		setRegister_cont(CMD_VCOMH,SSD_VCOMH);
-	#endif
-	//setAddrWindow_cont(0,0,SSD_WIDTH-1,SSD_HEIGHT-1,false);// ???
-	//_pushColors_cont(_defaultBgColor, SSD_CGRAM);//???
-	//Normal Display and turn ON
-	writecommand_cont(CMD_NORMALDISPLAY);
-*/
+void SSD1351::writecommand(uint8_t c) {
+  fastSPIwrite(c,0);
+}
+
+#include "soc/spi_reg.h"
+#include "soc/spi_struct.h"
+#include "esp32-hal-spi.h"
+#include "esp32-hal.h"
+#include "soc/spi_struct.h"
+
+SPISettings oled_spiSettings;
+
+// diconnect from spi
+void SSD1351::start(void) {
+  if (ssd131_start) return;
+  SPI.beginTransaction(oled_spiSettings);
+  ssd131_start = 1;
+}
+
+// reconnect to spi
+void SSD1351::stop(void) {
+  if (!ssd131_start) return;
+  SPI.endTransaction();
+  ssd131_start = 0;
+}
+
+// since ardunio transferBits ia completely disfunctional
+// we use our own hardware driver for 9 bit spi
+void SSD1351::fastSPIwrite(uint8_t d,uint8_t dc) {
+    digitalWrite( _cs, LOW);
+
+    uint32_t regvalue=d>>1;
+    if (dc) regvalue|=0x80;
+    else regvalue&=0x7f;
+    if (d&1) regvalue|=0x8000;
+
+    REG_SET_BIT(SPI_USER_REG(3), SPI_USR_MOSI);
+    REG_WRITE(SPI_MOSI_DLEN_REG(3), 9 - 1);
+    uint32_t *dp=(uint32_t*)SPI_W0_REG(3);
+    *dp=regvalue;
+    REG_SET_BIT(SPI_CMD_REG(3), SPI_USR);
+    while (REG_GET_FIELD(SPI_CMD_REG(3), SPI_USR));
+
+    digitalWrite( _cs, HIGH);
+}
+
+#endif
+
+
 static const uint8_t PROGMEM initList[] = {
   SSD1351_CMD_COMMANDLOCK, 1, // Set command lock, 1 arg
     0x12,
@@ -305,34 +304,30 @@ static const uint8_t PROGMEM initList[] = {
   0 }; // END OF COMMAND LIST
 
 
-  void SSD1351::sendcommand(uint8_t commandByte, const uint8_t *dataBytes, uint8_t numDataBytes) {
-      writecommand(commandByte);
-      for (int i=0; i<numDataBytes; i++) {
-        writedata(pgm_read_byte(dataBytes++)); // Send the data bytes
-      }
-  }
-
-  void SSD1351::sendcommand(uint8_t commandByte,uint8_t *dataBytes, uint8_t numDataBytes) {
-      writecommand(commandByte);
-      for (int i=0; i<numDataBytes; i++) {
-        writedata(*dataBytes++); // Send the data bytes
-      }
-  }
-
 void SSD1351::begin(void) {
   pinMode(_cs, OUTPUT);
   digitalWrite(_cs,HIGH);
   pinMode(_sclk, OUTPUT);
+  digitalWrite(_sclk, LOW);
   pinMode(_mosi, OUTPUT);
+  digitalWrite(_mosi, LOW);
+
+
+#ifndef ESP32
   if ((_sclk==14) && (_mosi==13) && (_cs==15)) {
     // we use hardware spi
       _hwspi=1;
+      SPI.begin();
       spi_lcd_mode_init();
   } else {
     // we must use software spi
       _hwspi=0;
   }
-
+#else
+  _hwspi=1;
+  SPI.begin(_sclk,-1,_mosi, -1);
+  oled_spiSettings = SPISettings(4500000, MSBFIRST, SPI_MODE3);
+#endif
 
   const uint8_t *addr = (const uint8_t *)initList;
   uint8_t cmd, x, numArgs;
@@ -351,8 +346,56 @@ void SSD1351::begin(void) {
 }
 
 
-#define ssd1351_swap(a, b) (((a) ^= (b)), ((b) ^= (a)), ((a) ^= (b))) ///< No-temp-var swap operation
+void SSD1351::sendcommand(uint8_t commandByte, const uint8_t *dataBytes, uint8_t numDataBytes) {
+    writecommand(commandByte);
+    for (int i=0; i<numDataBytes; i++) {
+      writedata(pgm_read_byte(dataBytes++)); // Send the data bytes
+    }
+}
 
+void SSD1351::sendcommand(uint8_t commandByte,uint8_t *dataBytes, uint8_t numDataBytes) {
+    writecommand(commandByte);
+    for (int i=0; i<numDataBytes; i++) {
+      writedata(*dataBytes++); // Send the data bytes
+    }
+}
+
+uint16_t SSD1351::GetColorFromIndex(uint8_t index) {
+  if (index>=sizeof(ssd1351_colors)/2) index=0;
+  return ssd1351_colors[index];
+}
+
+void SSD1351::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
+  setRotation(rot);
+  invertDisplay(false);
+  setTextWrap(false);         // Allow text to run off edges
+  cp437(true);
+  setTextFont(font&3);
+  setTextSize(size&7);
+  setTextColor(SSD1351_WHITE,SSD1351_BLACK);
+  setCursor(0,0);
+  fillScreen(SSD1351_BLACK);
+  stop();
+}
+
+void SSD1351::DisplayOnff(int8_t on) {
+  if (on) {
+    writecommand(SSD1351_CMD_DISPLAYON);    //Display on
+  } else {
+    writecommand(SSD1351_CMD_DISPLAYOFF);
+  }
+  stop();
+}
+
+// dimmer 0-100
+void SSD1351::dim(uint8_t contrast) {
+  writecommand(SSD1351_CMD_CONTRASTMASTER);
+  if (contrast>15) contrast=15;
+  writedata(contrast);
+  stop();
+}
+
+#define ssd1351_swap(a, b) (((a) ^= (b)), ((b) ^= (a)), ((a) ^= (b))) ///< No-temp-var swap operation
 
 
 void SSD1351::setAddrWindow_i(uint16_t x1, uint16_t y1, uint16_t w, uint16_t h) {
@@ -500,21 +543,4 @@ void SSD1351::drawFastHLine(int16_t x,int16_t y,int16_t w,uint16_t color) {
     write16BitColor(color);
   }
   stop();
-}
-
-void ICACHE_RAM_ATTR SSD1351::fastSPIwrite(uint8_t d,uint8_t dc) {
-
-  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_cs);
-  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
-  if(dc) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
-  else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_mosi);
-  WRITE_PERI_REG( PIN_OUT_SET, 1<<_sclk);
-
-  for(uint8_t bit = 0x80; bit; bit >>= 1) {
-    WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_sclk);
-    if(d&bit) WRITE_PERI_REG( PIN_OUT_SET, 1<<_mosi);
-    else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<_mosi);
-    WRITE_PERI_REG( PIN_OUT_SET, 1<<_sclk);
-  }
-  WRITE_PERI_REG( PIN_OUT_SET, 1<<_cs);
 }

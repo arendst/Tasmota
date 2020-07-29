@@ -71,7 +71,6 @@ void SSD1351_InitDriver() {
     }
 
     delay(100);
-    SPI.begin();
     ssd1351->begin();
     renderer = ssd1351;
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);

@@ -134,7 +134,7 @@ void SDM120Every250ms(void)
           break;
 
         case 9:
-          Energy.export_active = value;    // 6.216 kWh
+          Energy.export_active[0] = value;    // 6.216 kWh
           break;
 
         case 10:
