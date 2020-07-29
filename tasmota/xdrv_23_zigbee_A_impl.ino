@@ -57,14 +57,25 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
 void ZigbeeInit(void)
 {
   // Check if settings in Flash are set
-  if (0 == Settings.zb_channel) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Initializing Zigbee parameters from defaults"));
-    Settings.zb_ext_panid = USE_ZIGBEE_EXTPANID;
-    Settings.zb_precfgkey_l = USE_ZIGBEE_PRECFGKEY_L;
-    Settings.zb_precfgkey_h = USE_ZIGBEE_PRECFGKEY_H;
-    Settings.zb_pan_id = USE_ZIGBEE_PANID;
-    Settings.zb_channel = USE_ZIGBEE_CHANNEL;
-    Settings.zb_txradio_dbm = USE_ZIGBEE_TXRADIO_DBM;
+  if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX)) {
+    if (0 == Settings.zb_channel) {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Randomizing Zigbee parameters, please check with 'ZbConfig'"));
+      uint64_t mac64 = 0;     // stuff mac address into 64 bits
+      WiFi.macAddress((uint8_t*) &mac64);
+      uint32_t esp_id = ESP.getChipId();
+      uint32_t flash_id = ESP.getFlashChipId();
+
+      uint16_t  pan_id = (mac64 & 0x3FFF);
+      if (0x0000 == pan_id) { pan_id = 0x0001; }    // avoid extreme values
+      if (0x3FFF == pan_id) { pan_id = 0x3FFE; }    // avoid extreme values
+      Settings.zb_pan_id = pan_id;
+
+      Settings.zb_ext_panid = 0xCCCCCCCC00000000L | (mac64 & 0x00000000FFFFFFFFL);
+      Settings.zb_precfgkey_l = (mac64 << 32) | (esp_id << 16) | flash_id;
+      Settings.zb_precfgkey_h = (mac64 << 32) | (esp_id << 16) | flash_id;
+      Settings.zb_channel = USE_ZIGBEE_CHANNEL;
+      Settings.zb_txradio_dbm = USE_ZIGBEE_TXRADIO_DBM;
+    }
   }
 
   // update commands with the current settings
@@ -751,18 +762,20 @@ void CmndZbUnbind(void) {
 
 //
 // Command `ZbBindState`
+// `ZbBindState<x>` as index if it does not fit. If default, `1` starts at the beginning
 //
 void CmndZbBindState(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
   uint16_t shortaddr = zigbee_devices.parseDeviceParam(XdrvMailbox.data);
   if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
+  uint8_t index = XdrvMailbox.index - 1;   // change default 1 to 0
 
 #ifdef USE_ZIGBEE_ZNP
   SBuffer buf(10);
   buf.add8(Z_SREQ | Z_ZDO);             // 25
   buf.add8(ZDO_MGMT_BIND_REQ);          // 33
   buf.add16(shortaddr);                 // shortaddr
-  buf.add8(0);                          // StartIndex = 0
+  buf.add8(index);                      // StartIndex = 0
 
   ZigbeeZNPSend(buf.getBuffer(), buf.len());
 #endif // USE_ZIGBEE_ZNP
@@ -770,7 +783,7 @@ void CmndZbBindState(void) {
 
 #ifdef USE_ZIGBEE_EZSP
   // ZDO message payload (see Zigbee spec 2.4.3.3.4)
-  uint8_t buf[] = { 0x00 };           // index = 0
+  uint8_t buf[] = { index };           // index = 0
 
   EZ_SendZDO(shortaddr, ZDO_Mgmt_Bind_req, buf, sizeof(buf));
 #endif // USE_ZIGBEE_EZSP

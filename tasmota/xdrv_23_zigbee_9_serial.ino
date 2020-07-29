@@ -585,12 +585,15 @@ int32_t ZigbeeProcessInputEZSP(class SBuffer &buf) {
       case EZSP_permitJoining:            // 2200
       case EZSP_getEui64:                 // 2600
       case EZSP_getNodeId:                // 2700
+      case EZSP_getNetworkParameters:     // 2800
       case EZSP_sendUnicast:              // 3400
       case EZSP_sendBroadcast:            // 3600
       case EZSP_messageSentHandler:       // 3F00
       case EZSP_setConfigurationValue:    // 5300
       case EZSP_setPolicy:                // 5500
       case EZSP_setMulticastTableEntry:   // 6400
+      case EZSP_setInitialSecurityState:  // 6800
+      case EZSP_getCurrentSecurityState:  // 6900
         log_level = LOG_LEVEL_DEBUG;
         break;
     }

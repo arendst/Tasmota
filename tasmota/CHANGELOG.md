@@ -11,6 +11,7 @@
 - Add command ``SetOption101 0/1`` to add the Zigbee source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
 - Add command (``S``)``SerialSend6`` \<comma seperated values\> (#8937)
 - Change ``Ping`` now reports the hostname instead of IP address (#8948)
+- Change Zigbee randomizing of parameters at first run or after Reset
 
 ### 8.3.1.6 20200617
 
