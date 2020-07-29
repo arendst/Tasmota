@@ -57,7 +57,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 - Remove Arduino ESP8266 Core support for versions before 2.7.1
 - Change to limited support of Arduino IDE as an increasing amount of features cannot be compiled with Arduino IDE
-- Change IRremoteESP8266 library from v2.7.6 to v2.7.8
+- Change IRRemoteESP8266 library from v2.7.6 to v2.7.8.10, fixing Samsung and Pioneer protocols (#8938)
 - Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)
 - Change Energy JSON Total field from ``"Total":[33.736,11.717,16.978]`` to ``"Total":33.736,"TotalTariff":[11.717,16.978]``
 - Change Energy JSON ExportActive field from ``"ExportActive":[33.736,11.717,16.978]`` to ``"ExportActive":33.736,"ExportTariff":[11.717,16.978]``
