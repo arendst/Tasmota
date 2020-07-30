@@ -238,6 +238,7 @@ void ShutterInit(void)
       //Shutter.real_position[i] =   Settings.shutter_position[i] <= 5 ?  Settings.shuttercoeff[2][i] * Settings.shutter_position[i] : Settings.shuttercoeff[1][i] * Settings.shutter_position[i] + Settings.shuttercoeff[0,i];
       Shutter.start_position[i] = Shutter.target_position[i] = Shutter.real_position[i];
       Shutter.motordelay[i] = Settings.shutter_motordelay[i];
+      Shutter.lastdirection[i] = (50 < Settings.shutter_position[i]) ? 1 : -1;
 
       char shutter_open_chr[10];
       dtostrfd((float)Shutter.open_time[i] / 10 , 1, shutter_open_chr);
