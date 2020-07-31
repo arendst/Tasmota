@@ -144,6 +144,7 @@ uint8_t light_type = 0;                     // Light types
 uint8_t serial_in_byte;                     // Received byte
 uint8_t ota_retry_counter = OTA_ATTEMPTS;   // OTA retry counter
 uint8_t devices_present = 0;                // Max number of devices supported
+uint8_t masterlog_level = 0;                // Master log level used to override set log level
 uint8_t seriallog_level;                    // Current copy of Settings.seriallog_level
 uint8_t syslog_level;                       // Current copy of Settings.syslog_level
 uint8_t my_module_type;                     // Current copy of Settings.module or user template type

@@ -1784,8 +1784,9 @@ void Syslog(void)
 
 void AddLog(uint32_t loglevel)
 {
-  char mxtime[10];  // "13:45:21 "
+  if ((masterlog_level > 0) && (loglevel < masterlog_level)) { return; }
 
+  char mxtime[10];  // "13:45:21 "
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
 
   if (loglevel <= seriallog_level) {
