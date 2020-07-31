@@ -1784,16 +1784,17 @@ void Syslog(void)
 
 void AddLog(uint32_t loglevel)
 {
-  if ((masterlog_level > 0) && (loglevel < masterlog_level)) { return; }
-
   char mxtime[10];  // "13:45:21 "
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
 
-  if (loglevel <= seriallog_level) {
+  if ((loglevel <= seriallog_level) &&
+      (masterlog_level <= seriallog_level)) {
     Serial.printf("%s%s\r\n", mxtime, log_data);
   }
 #ifdef USE_WEBSERVER
-  if (Settings.webserver && (loglevel <= Settings.weblog_level)) {
+  if (Settings.webserver &&
+     (loglevel <= Settings.weblog_level) &&
+     (masterlog_level <= Settings.weblog_level)) {
     // Delimited, zero-terminated buffer of log lines.
     // Each entry has this format: [index][log data]['\1']
     web_log_index &= 0xFF;
@@ -1814,10 +1815,12 @@ void AddLog(uint32_t loglevel)
 #endif  // USE_WEBSERVER
   if (Settings.flag.mqtt_enabled &&        // SetOption3 - Enable MQTT
       !global_state.mqtt_down &&
-      (loglevel <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
+      (loglevel <= Settings.mqttlog_level) &&
+      (masterlog_level <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
 
   if (!global_state.network_down &&
-      (loglevel <= syslog_level)) { Syslog(); }
+      (loglevel <= syslog_level) &&
+      (masterlog_level <= syslog_level)) { Syslog(); }
 
   prepped_loglevel = 0;
 }
