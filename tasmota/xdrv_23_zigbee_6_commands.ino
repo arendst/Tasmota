@@ -56,8 +56,8 @@ ZF(ColorTempStep) ZF(ColorTempStepUp) ZF(ColorTempStepDown)
 ZF(ArrowClick) ZF(ArrowHold) ZF(ArrowRelease) ZF(ZoneStatusChange)
 
 ZF(xxxx00) ZF(xxxx) ZF(01xxxx) ZF(03xxxx) ZF(00) ZF(01) ZF() ZF(xxxxyy) ZF(00190200) ZF(01190200) ZF(xxyyyy) ZF(xx)
-ZF(xx000A00) ZF(xx0A00) ZF(xxyy0A00) ZF(xxxxyyyy0A00) ZF(xxxx0A00) ZF(xx0A)
-ZF(xx190A00) ZF(xx19) ZF(xx190A) ZF(xxxxyyyy) ZF(xxxxyyzz) ZF(xxyyzzzz) ZF(xxyyyyzz)
+ZF(xx000A00) ZF(xx0A00) ZF(xxyy0A00) ZF(xxxxyyyy0A00) ZF(xxxx0A00) ZF(xx0A) ZF(xxyy)
+ZF(xx190A00) ZF(xx19) ZF(xx190A) ZF(xxxxyyyy) ZF(xxxxyyzz) ZF(xxyyzzzz) ZF(xxyyyyzz) ZF(xxyyyyzzzz)
 ZF(01xxxx000000000000) ZF(03xxxx000000000000) ZF(00xxxx000000000000) ZF(xxyyyy000000000000)
 ZF(00xx0A00) ZF(01xx0A00) ZF(03xx0A00) ZF(01xxxx0A0000000000) ZF(03xxxx0A0000000000) ZF(xxyyyy0A0000000000)
 
@@ -84,6 +84,9 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z(RecallScene),    0x0005, 0x05, 0x01,   Z(xxxxyy) },
   { Z(GetSceneMembership),0x0005, 0x06, 0x01,   Z(xxxx) },
   // Light & Shutter commands
+  { Z(Power),          0x0006, 0x40, 0x81,   Z(xxyy) },         // Power Off With Effect
+  { Z(Power),          0x0006, 0x41, 0x81,   Z() },             // Power On With Recall Global Scene
+  { Z(Power),          0x0006, 0x42, 0x81,   Z(xxyyyyzzzz) },   // Power On with Timed Off
   { Z(Power),          0x0006, 0xFF, 0x01,   Z() },             // 0=Off, 1=On, 2=Toggle
   { Z(Dimmer),         0x0008, 0x04, 0x01,   Z(xx0A00) },       // Move to Level with On/Off, xx=0..254 (255 is invalid)
   { Z(DimmerUp),       0x0008, 0x06, 0x01,   Z(00190200) },       // Step up by 10%, 0.2 secs
@@ -464,6 +467,21 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
         json[F("GroupId")] = xyz.z;
         String scene_payload = json[attrid_str];
         json[F("ScenePayload")] = scene_payload.substring(8); // remove first 8 characters
+      } else if ((cluster == 0x0006) && (cmd == 0x40)) {
+        // Power Off With Effect
+        json[command_name] = 0;       // always "Power":0
+        json[command_name2 + F("Effect")] = xyz.x;
+        json[command_name2 + F("EffectVariant")] = xyz.y;
+      } else if ((cluster == 0x0006) && (cmd == 0x41)) {
+        // Power On With Recall Global Scene
+        json[command_name] = 1;       // always "Power":1
+        json[command_name2 + F("RecallGlobalScene")] = true;
+      } else if ((cluster == 0x0006) && (cmd == 0x42)) {
+        // Power On With Timed Off Command
+        json[command_name] = 1;       // always "Power":1
+        json[command_name2 + F("OnlyWhenOn")] = xyz.x;
+        json[command_name2 + F("OnTime")] = xyz.y / 10.0f;
+        json[command_name2 + F("OffWait")] = xyz.z / 10.0f;
       }
     } else {  // general case
       bool extended_command = false;    // do we send command with endpoint suffix
