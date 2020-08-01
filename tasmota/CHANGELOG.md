@@ -2,6 +2,8 @@
 
 ### 8.4.0.1 20200730
 
+- Add Zigbee better support for IKEA Motion Sensor
+
 ### 8.4.0 20200730
 
 - Release George
