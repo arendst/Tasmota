@@ -388,9 +388,9 @@ WiFiUDP Script_PortUdp;
 
 #ifndef USE_DEVICE_GROUPS
 char * IPAddressToString(const IPAddress& ip_address) {
-  static char buffer[16];
-  sprintf_P(buffer, PSTR("%u.%u.%u.%u"), ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
-  return buffer;
+  static char ipbuffer[16];
+  sprintf_P(ipbuffer, PSTR("%u.%u.%u.%u"), ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
+  return ipbuffer;
 }
 #endif
 #endif
@@ -5291,6 +5291,23 @@ bool ScriptCommand(void) {
           execute_script(XdrvMailbox.data);
         }
       }
+      if ('?' == XdrvMailbox.data[0]) {
+        char *lp=XdrvMailbox.data;
+        lp++;
+        while (*lp==' ') lp++;
+        float fvar;
+        char str[SCRIPT_MAXSSIZE];
+        glob_script_mem.glob_error=0;
+        GetNumericResult(lp,OPER_EQU,&fvar,0);
+        if (glob_script_mem.glob_error==1) {
+          // was string, not number
+          GetStringResult(lp,OPER_EQU,str,0);
+          snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"script\":{\"%s\":\"%s\"}}"),lp,str);
+        } else {
+          dtostrfd(fvar,6,str);
+          snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"script\":{\"%s\":%s}}"),lp,str);
+        }
+      }
       return serviced;
     }
     snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"Free\":%d}"),command, GetStateText(bitRead(Settings.rule_enabled,0)),glob_script_mem.script_size-strlen(glob_script_mem.script_ram));
@@ -5606,31 +5623,53 @@ const char HTTP_SCRIPT_MIMES[] PROGMEM =
   "Content-type: %s\r\n\r\n";
 
 void ScriptGetSDCard(void) {
+
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   String stmp = Webserver->uri();
-  char *cp=strstr(stmp.c_str(),"/sdc/");
+  char *cp=strstr_P(stmp.c_str(),PSTR("/sdc/"));
 //  if (cp) Serial.printf(">>>%s\n",cp);
   if (cp) {
 #ifdef ESP32
-    cp+=4
+    cp+=4;
 #else
     cp+=5;
 #endif
-    if (fsp->exists(cp)) {
+    if (strstr_P(cp,PSTR("scrdmp.bmp"))) {
       SendFile(cp);
       return;
+    } else {
+      if (fsp->exists(cp)) {
+        SendFile(cp);
+        return;
+      }
     }
   }
   HandleNotFound();
 }
 
+extern uint8_t *buffer;
+
 void SendFile(char *fname) {
 char buff[512];
   const char *mime;
+  uint8_t sflg=0;
   char *jpg=strstr(fname,".jpg");
   if (jpg) {
     mime="image/jpeg";
+  }
+
+#ifdef USE_DISPLAY_DUMP
+  char *sbmp=strstr_P(fname,PSTR("scrdmp.bmp"));
+  if (sbmp) {
+    mime="image/bmp";
+    sflg=1;
+  }
+#endif // USE_DISPLAY_DUMP
+
+  char *bmp=strstr(fname,".bmp");
+  if (bmp) {
+    mime="image/bmp";
   }
   char *html=strstr(fname,".html");
   if (html) {
@@ -5643,18 +5682,57 @@ char buff[512];
 
   WSContentSend_P(HTTP_SCRIPT_MIMES,fname,mime);
 
-
-  File file=fsp->open(fname,FILE_READ);
-  uint32_t siz = file.size();
-  uint32_t len=sizeof(buff);
-  while (siz > 0) {
+  if (sflg) {
+#ifdef USE_DISPLAY_DUMP
+    // screen copy
+    #define fileHeaderSize 14
+    #define infoHeaderSize 40
+    if (buffer) {
+      uint8_t *bp=buffer;
+      uint8_t *lbuf=(uint8_t*)calloc(Settings.display_width+2,3);
+      uint8_t *lbp;
+      uint8_t fileHeader[fileHeaderSize];
+      createBitmapFileHeader(Settings.display_height , Settings.display_width , fileHeader);
+      Webserver->client().write((uint8_t *)fileHeader, fileHeaderSize);
+      uint8_t infoHeader[infoHeaderSize];
+      createBitmapInfoHeader(Settings.display_height, Settings.display_width, infoHeader );
+      Webserver->client().write((uint8_t *)infoHeader, infoHeaderSize);
+      for (uint32_t lins=0; lins<Settings.display_height; lins++) {
+        lbp=lbuf+(Settings.display_width*3);
+        for (uint32_t cols=0; cols<Settings.display_width; cols+=8) {
+          uint8_t bits=0x80;
+          while (bits) {
+            if (!((*bp)&bits)) {
+              *--lbp=0xff;
+              *--lbp=0xff;
+              *--lbp=0xff;
+            } else {
+              *--lbp=0;
+              *--lbp=0;
+              *--lbp=0;
+            }
+            bits=bits>>1;
+          }
+          bp++;
+        }
+        Webserver->client().write((const char*)lbuf, Settings.display_width*3);
+      }
+      if (lbuf) free(lbuf);
+      Webserver->client().stop();
+    }
+#endif // USE_DISPLAY_DUMP
+  } else {
+    File file=fsp->open(fname,FILE_READ);
+    uint32_t siz = file.size();
+    uint32_t len=sizeof(buff);
+    while (siz > 0) {
       if (len>siz) len=siz;
       file.read((uint8_t *)buff,len );
       Webserver->client().write((const char*)buff, len);
       siz -= len;
+    }
+    file.close();
   }
-  file.close();
-
   Webserver->client().stop();
 }
 #endif // USE_SCRIPT_FATFS
