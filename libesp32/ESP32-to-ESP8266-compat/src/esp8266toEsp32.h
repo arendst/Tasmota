@@ -28,16 +28,23 @@
 
 #include <Esp.h>
 
+/*********************************************************************************************\
+ * ESP32 analogWrite support
+\*********************************************************************************************/
 
-// webcam uses channel 0, so we offset standard PWM
-#define PWM_CHANNEL_OFFSET 2
-// Analog
+#define PWM_SUPPORTED_CHANNELS 8
+#define PWM_CHANNEL_OFFSET     2   // Webcam uses channel 0, so we offset standard PWM
 
-uint8_t pwm_channel[8]={99,99,99,99,99,99,99,99};
+uint8_t _pwm_channel[PWM_SUPPORTED_CHANNELS] = { 99, 99, 99, 99, 99, 99, 99, 99 };
 
-inline uint32_t pin2chan(uint32_t pin) {
-  for (uint32_t cnt=0;cnt<8;cnt++) {
-    if ((pwm_channel[cnt]<99) && (pwm_channel[cnt]==pin)) {
+inline void analogWriteFreq(uint32_t freq) {
+}
+inline void analogWriteRange(uint32_t range) {
+}
+
+inline uint32_t _analog_pin2chan(uint32_t pin) {
+  for (uint32_t cnt = 0; cnt < PWM_SUPPORTED_CHANNELS; cnt++) {
+    if ((_pwm_channel[cnt] < 99) && (_pwm_channel[cnt] == pin)) {
       return cnt;
     }
   }
@@ -46,42 +53,39 @@ inline uint32_t pin2chan(uint32_t pin) {
 
 inline void analogWrite(uint8_t pin, int val)
 {
-  uint32_t channel=pin2chan(pin);
-  ledcWrite(channel+PWM_CHANNEL_OFFSET,val);
-  //Serial.printf("write %d - %d\n",channel,val);
-}
-
-inline void analogWriteFreq(uint32_t freq)
-{
-}
-inline void analogWriteRange(uint32_t range)
-{
+  uint32_t channel = _analog_pin2chan(pin);
+  ledcWrite(channel + PWM_CHANNEL_OFFSET, val);
+//  Serial.printf("write %d - %d\n",channel,val);
 }
 
 inline void analogAttach(uint32_t pin, uint32_t channel) {
-  pwm_channel[channel&7]=pin;
-  ledcAttachPin(pin,channel+PWM_CHANNEL_OFFSET);
-  //Serial.printf("attach %d - %d\n",channel,pin);
+  _pwm_channel[channel &7] = pin;
+  ledcAttachPin(pin, channel + PWM_CHANNEL_OFFSET);
+//  Serial.printf("attach %d - %d\n",channel,pin);
 }
 
-inline uint32_t pow2(uint32_t x) {
-uint32_t power = 1,bits=0;
+inline uint32_t _analog_pow2(uint32_t x) {
+  uint32_t power = 1;
+  uint32_t bits = 0;
   while (power < x) {
-    power*=2;
+    power *= 2;
     bits++;
   }
-  return bits-1;
+  return bits;
 }
+
 // input range is in full range, ledc needs bits
-inline void analogWriteFreqRange(uint32_t channel,uint32_t freq, uint32_t irange) {
-  uint32_t range=pow2(irange);
-  for (uint32_t cnt=0;cnt<8;cnt++) {
-    if (pwm_channel[cnt]<99) {
-      ledcSetup(cnt+PWM_CHANNEL_OFFSET,freq,range);
+inline void analogWriteFreqRange(uint32_t channel, uint32_t freq, uint32_t irange) {
+  uint32_t range = _analog_pow2(irange);
+  for (uint32_t cnt = 0; cnt < PWM_SUPPORTED_CHANNELS; cnt++) {
+    if (_pwm_channel[cnt] < 99) {
+      ledcSetup(cnt + PWM_CHANNEL_OFFSET, freq, range);
     }
   }
-  //Serial.printf("freq - range %d - %d\n",freq,range);
+//  Serial.printf("freq - range %d - %d\n",freq,range);
 }
+
+/*********************************************************************************************/
 
 #define INPUT_PULLDOWN_16 INPUT_PULLUP
 

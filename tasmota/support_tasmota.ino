@@ -1686,12 +1686,12 @@ void GpioInit(void)
 
   for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
     if (PinUsed(GPIO_PWM1, i)) {
+#ifdef ESP8266
       pinMode(Pin(GPIO_PWM1, i), OUTPUT);
-#ifdef ESP32
-      analogAttach(Pin(GPIO_PWM1, i),i);
-      analogWriteFreqRange(i,Settings.pwm_frequency,Settings.pwm_range);
+#else  // ESP32
+      analogAttach(Pin(GPIO_PWM1, i), i);
+      analogWriteFreqRange(i, Settings.pwm_frequency, Settings.pwm_range);
 #endif
-
       if (light_type) {
         // force PWM GPIOs to low or high mode, see #7165
         analogWrite(Pin(GPIO_PWM1, i), bitRead(pwm_inverted, i) ? Settings.pwm_range : 0);
