@@ -207,6 +207,7 @@ void SetDevicePower(power_t rpower, uint32_t source)
 
   XdrvMailbox.index = rpower;
   XdrvCall(FUNC_SET_POWER);               // Signal power state
+  XsnsCall(FUNC_SET_POWER);               // Signal power state
 
   XdrvMailbox.index = rpower;
   XdrvMailbox.payload = source;
@@ -1748,4 +1749,5 @@ void GpioInit(void)
   SetLedLink(Settings.ledstate &8);
 
   XdrvCall(FUNC_PRE_INIT);
+  XsnsCall(FUNC_PRE_INIT);
 }
