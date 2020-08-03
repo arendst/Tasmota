@@ -20,6 +20,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.1.2 20200802  changed - add MHO-C303
+  -------
   0.9.1.1 20200715  changed - add MHO-C401, refactoring
   -------
   0.9.1.0 20200712  changed - add lights and yeerc, add pure passive mode with decryption,
@@ -250,10 +252,11 @@ const char kMI32_Commands[] PROGMEM             = "Period|Time|Page|Battery|Unit
 #define MJYD2S      8
 #define YEERC       9
 #define MHOC401     10
+#define MHOC303     11
 
-#define MI_TYPES    10 //count this manually
+#define MI32_TYPES    11 //count this manually
 
-const uint16_t kMI32DeviceID[MI_TYPES]={ 0x0098, // Flora
+const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
                                   0x01aa, // MJ_HT_V1
                                   0x045b, // LYWSD02
                                   0x055b, // LYWSD03
@@ -262,7 +265,8 @@ const uint16_t kMI32DeviceID[MI_TYPES]={ 0x0098, // Flora
                                   0x03dd, // NLIGHT
                                   0x07f6, // MJYD2S
                                   0x0153, // yee-rc
-                                  0x0387  // MHO-C401
+                                  0x0387, // MHO-C401
+                                  0x06d3  // MHO-C303
                                   };
 
 const char kMI32DeviceType1[] PROGMEM = "Flora";
@@ -275,7 +279,8 @@ const char kMI32DeviceType7[] PROGMEM = "NLIGHT";
 const char kMI32DeviceType8[] PROGMEM = "MJYD2S";
 const char kMI32DeviceType9[] PROGMEM = "YEERC";
 const char kMI32DeviceType10[] PROGMEM ="MHOC401";
-const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10};
+const char kMI32DeviceType11[] PROGMEM ="MHOC303";
+const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11};
 
 /*********************************************************************************************\
  * enumerations
@@ -530,7 +535,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
 
   DEBUG_SENSOR_LOG(PSTR("%s: will test ID-type: %x"),D_CMND_MI32, _type);
   bool _success = false;
-  for (uint32_t i=0;i<MI_TYPES;i++){ // i < sizeof(kMI32DeviceID) gives compiler warning
+  for (uint32_t i=0;i<MI32_TYPES;i++){ // i < sizeof(kMI32DeviceID) gives compiler warning
     if(_type == kMI32DeviceID[i]){
       DEBUG_SENSOR_LOG(PSTR("MI32: ID is type %u"), i);
       _type = i+1;
@@ -859,12 +864,11 @@ void MI32StartTimeTask(){
 }
 
 void MI32TimeTask(void *pvParameters){
-  if (MIBLEsensors[MI32.state.sensor].type != LYWSD02) {
+  if (MIBLEsensors[MI32.state.sensor].type != LYWSD02 && MIBLEsensors[MI32.state.sensor].type != MHOC303) {
       MI32.mode.shallSetTime = 0;
       vTaskDelete( NULL );
     }
-
-  if(MI32ConnectActiveSensor()){  
+  if(MI32ConnectActiveSensor()){
     uint32_t timer = 0;
     while (MI32.mode.connected == 0){
         if (timer>1000){
@@ -925,7 +929,7 @@ void MI32StartUnitTask(){
 }
 
 void MI32UnitTask(void *pvParameters){
-  if (MIBLEsensors[MI32.state.sensor].type != LYWSD02) {
+  if (MIBLEsensors[MI32.state.sensor].type != LYWSD02 && MIBLEsensors[MI32.state.sensor].type != MHOC303) {
       MI32.mode.shallSetUnit = 0;
       vTaskDelete( NULL );
     }
@@ -1497,7 +1501,7 @@ bool MI32Cmd(void) {
       case CMND_MI32_TIME:
         if (XdrvMailbox.data_len > 0) {
           if(MIBLEsensors.size()>XdrvMailbox.payload){
-            if(MIBLEsensors[XdrvMailbox.payload].type == LYWSD02){
+            if(MIBLEsensors[XdrvMailbox.payload].type == LYWSD02 || MIBLEsensors[XdrvMailbox.payload].type == MHOC303){
               AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: will set Time"),D_CMND_MI32);
               MI32.state.sensor = XdrvMailbox.payload;
               MI32.mode.canScan = 0;
@@ -1512,7 +1516,7 @@ bool MI32Cmd(void) {
       case CMND_MI32_UNIT:
         if (XdrvMailbox.data_len > 0) {
           if(MIBLEsensors.size()>XdrvMailbox.payload){
-            if(MIBLEsensors[XdrvMailbox.payload].type == LYWSD02){
+            if(MIBLEsensors[XdrvMailbox.payload].type == LYWSD02 || MIBLEsensors[XdrvMailbox.payload].type == MHOC303){
               AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: will set Unit"),D_CMND_MI32);
               MI32.state.sensor = XdrvMailbox.payload;
               MI32.mode.canScan = 0;
