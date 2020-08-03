@@ -54,3 +54,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 ## Changelog
 
 ### Version 8.4.0.1
+
+- Fix ESP32 PWM range
+- Add Zigbee better support for IKEA Motion Sensor

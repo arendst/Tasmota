@@ -1355,7 +1355,6 @@ void LightInit(void)
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
 #else  // ESP32
         analogAttach(Pin(GPIO_PWM1, i), i);
-        analogWriteFreqRange(i, Settings.pwm_frequency, Settings.pwm_range);
 #endif
       }
     }

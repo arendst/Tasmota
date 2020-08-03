@@ -2,6 +2,7 @@
 
 ### 8.4.0.1 20200730
 
+- Fix ESP32 PWM range
 - Add Zigbee better support for IKEA Motion Sensor
 
 ### 8.4.0 20200730
