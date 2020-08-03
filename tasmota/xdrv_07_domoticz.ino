@@ -66,6 +66,7 @@ int DomoticzBatteryQuality(void) {
 
   int quality = 100;	// Voltage range from 2,6V > 0%  to 3,6V > 100%
 
+#ifdef ESP8266
 #ifdef USE_ADC_VCC
   uint16_t voltage = ESP.getVcc();
   if (voltage <= 2600) {
@@ -75,7 +76,8 @@ int DomoticzBatteryQuality(void) {
   } else {
     quality = (voltage - 2600) / 10;
   }
-#endif
+#endif  // USE_ADC_VCC
+#endif  // ESP8266
   return quality;
 }
 

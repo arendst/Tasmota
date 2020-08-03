@@ -230,7 +230,7 @@ void GetFeatures(void)
 #ifdef USE_COUNTER
   feature_sns1 |= 0x00000001;  // xsns_01_counter.ino
 #endif
-#ifdef USE_ADC_VCC
+#if defined(USE_ADC_VCC) || defined(USE_ADC)
   feature_sns1 |= 0x00000002;  // xsns_02_analog.ino
 #endif
 #ifdef USE_ENERGY_SENSOR

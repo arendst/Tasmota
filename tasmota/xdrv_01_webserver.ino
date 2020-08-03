@@ -1921,7 +1921,7 @@ void HandleModuleConfiguration(void)
   }
   WSContentSend_P(PSTR("\";sk(%d," STR(ADC0_PIN) ");"), Settings.my_adc0);
 #endif  // USE_ADC_VCC
-#endif  // ESP8266 - ESP32
+#endif  // ESP8266
 
   WSContentSend_P(PSTR("}wl(sl);"));
 

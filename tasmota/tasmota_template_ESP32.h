@@ -36,7 +36,6 @@
 
 // Not ported (yet)
 #undef USE_DISCOVERY
-#undef USE_ADC_VCC    // Needs to be ported
 #undef USE_DEEPSLEEP
 #undef USE_MY92X1
 #undef USE_TUYA_MCU
@@ -115,12 +114,12 @@ enum UserSelectablePins {
   GPIO_HRXL_RX,                        // Data from MaxBotix HRXL sonar range sensor
   GPIO_ELECTRIQ_MOODL_TX,              // ElectriQ iQ-wifiMOODL Serial TX
   GPIO_AS3935,
-  ADC0_INPUT,                          // Analog input
-  ADC0_TEMP,                           // Analog Thermistor
-  ADC0_LIGHT,                          // Analog Light sensor
-  ADC0_BUTTON, ADC0_BUTTON_INV,        // Analog Button
-  ADC0_RANGE,                          // Analog Range
-  ADC0_CT_POWER,                       // ANalog Current
+  GPIO_ADC_INPUT,                      // Analog input
+  GPIO_ADC_TEMP,                       // Analog Thermistor
+  GPIO_ADC_LIGHT,                      // Analog Light sensor
+  GPIO_ADC_BUTTON, GPIO_ADC_BUTTON_INV,  // Analog Button
+  GPIO_ADC_RANGE,                      // Analog Range
+  GPIO_ADC_CT_POWER,                   // ANalog Current
   GPIO_WEBCAM_PWDN, GPIO_WEBCAM_RESET, GPIO_WEBCAM_XCLK,  // Webcam
   GPIO_WEBCAM_SIOD, GPIO_WEBCAM_SIOC,  // Webcam I2C
   GPIO_WEBCAM_DATA,
@@ -557,17 +556,15 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_TELEINFO_RX),
   AGPIO(GPIO_TELEINFO_ENABLE),
 #endif
-/*
-#ifndef USE_ADC_VCC
-  AGPIO(ADC0_INPUT),          // Analog input
-  AGPIO(ADC0_TEMP),           // Thermistor
-  AGPIO(ADC0_LIGHT),          // Light sensor
-  AGPIO(ADC0_BUTTON),         // Button
-  AGPIO(ADC0_BUTTON_INV),
-  AGPIO(ADC0_RANGE),          // Range
-  AGPIO(ADC0_CT_POWER),       // Current
+#ifdef USE_ADC
+  AGPIO(GPIO_ADC_INPUT) + MAX_ADCS,       // Analog inputs
+  AGPIO(GPIO_ADC_TEMP) + MAX_ADCS,        // Thermistor
+  AGPIO(GPIO_ADC_LIGHT) + MAX_ADCS,       // Light sensor
+  AGPIO(GPIO_ADC_BUTTON) + MAX_ADCS,      // Button
+  AGPIO(GPIO_ADC_BUTTON_INV) + MAX_ADCS,
+  AGPIO(GPIO_ADC_RANGE) + MAX_ADCS,       // Range
+  AGPIO(GPIO_ADC_CT_POWER) + MAX_ADCS,    // Current
 #endif
-*/
 #ifdef USE_WEBCAM
   AGPIO(GPIO_WEBCAM_PWDN),
   AGPIO(GPIO_WEBCAM_RESET),
@@ -590,6 +587,21 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 };
 
 //********************************************************************************************
+
+// User selectable ADC functionality
+enum UserSelectableAdc {
+  ADC_NONE,           // Not used
+  ADC_INPUT,          // Analog input
+  ADC_TEMP,           // Thermistor
+  ADC_LIGHT,          // Light sensor
+  ADC_BUTTON,         // Button
+  ADC_BUTTON_INV,
+  ADC_RANGE,          // Range
+  ADC_CT_POWER,       // Current
+
+//  ADC_SWITCH,         // Switch
+//  ADC_SWITCH_INV,
+  ADC_END };
 
 #define MAX_GPIO_PIN       40   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)

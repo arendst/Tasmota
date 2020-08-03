@@ -691,8 +691,10 @@ typedef union {
 } StateBitfield;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
+#ifdef ESP8266
 #ifdef USE_ADC_VCC
   ADC_MODE(ADC_VCC);                       // Set ADC input for Power Supply Voltage usage
+#endif
 #endif
 
 #endif  // _SETTINGS_H_
