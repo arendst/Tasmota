@@ -127,6 +127,18 @@ size_t strchrspn(const char *str1, int character)
   return ret;
 }
 
+uint32_t ChrCount(const char *str, const char *delim) {
+  uint32_t count = 0;
+  char* read = (char*)str;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    if (ch == *delim) { count++; }
+  }
+  return count;
+}
+
 // Function to return a substring defined by a delimiter at an index
 char* subStr(char* dest, char* str, const char *delim, int index)
 {
@@ -152,6 +164,8 @@ float CharToFloat(const char *str)
 
   strlcpy(strbuf, str, sizeof(strbuf));
   char *pt = strbuf;
+  if (*pt == '\0') { return 0.0; }
+
   while ((*pt != '\0') && isblank(*pt)) { pt++; }  // Trim leading spaces
 
   signed char sign = 1;
@@ -394,11 +408,13 @@ char* UpperCase_P(char* dest, const char* source)
 
 char* Trim(char* p)
 {
-  while ((*p != '\0') && isblank(*p)) { p++; }  // Trim leading spaces
-  char* q = p + strlen(p) -1;
-  while ((q >= p) && isblank(*q)) { q--; }   // Trim trailing spaces
-  q++;
-  *q = '\0';
+  if (*p != '\0') {
+    while ((*p != '\0') && isblank(*p)) { p++; }  // Trim leading spaces
+    char* q = p + strlen(p) -1;
+    while ((q >= p) && isblank(*q)) { q--; }   // Trim trailing spaces
+    q++;
+    *q = '\0';
+  }
   return p;
 }
 

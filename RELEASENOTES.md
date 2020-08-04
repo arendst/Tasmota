@@ -57,3 +57,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 - Fix ESP32 PWM range
 - Add Zigbee better support for IKEA Motion Sensor
+- Add ESP32 Analog input support for GPIO32 to GPIO39

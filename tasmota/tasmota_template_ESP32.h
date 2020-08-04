@@ -88,8 +88,9 @@ enum UserSelectablePins {
   GPIO_ARIRFRCV, GPIO_ARIRFSEL,        // Arilux RF Receive input
   GPIO_TXD, GPIO_RXD,                  // Serial interface
   GPIO_ROT1A, GPIO_ROT1B,              // Rotary switch
+  GPIO_ADC_JOY,                        // Analog joystick
 
-  GPIO_SPARE1, GPIO_SPARE2,            // Spare GPIOs
+  GPIO_SPARE1,                         // Spare GPIOs
 
   GPIO_HRE_CLOCK, GPIO_HRE_DATA,       // HR-E Water Meter
   GPIO_ADE7953_IRQ,                    // ADE7953 IRQ
@@ -193,8 +194,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ARIRFRCV "|" D_SENSOR_ARIRFSEL "|"
   D_SENSOR_TXD "|" D_SENSOR_RXD "|"
   D_SENSOR_ROTARY "_a|" D_SENSOR_ROTARY "_b|"
+  D_SENSOR_ADC_JOYSTICK "|"
 
-  "Spare1|Spare2|"
+  "Spare1|"
 
   D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
   D_SENSOR_ADE7953_IRQ "|"
@@ -216,11 +218,12 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HRXL_RX "|"
   D_SENSOR_ELECTRIQ_MOODL "|"
   D_SENSOR_AS3935 "|"
-  D_ANALOG_INPUT "|"
-  D_TEMPERATURE "|" D_LIGHT "|"
-  D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "_i|"
-  D_RANGE "|"
-  D_CT_POWER "|"
+  D_SENSOR_ADC_INPUT "|"
+  D_SENSOR_ADC_TEMP "|"
+  D_SENSOR_ADC_LIGHT "|"
+  D_SENSOR_ADC_BUTTON "|" D_SENSOR_ADC_BUTTON "_i|"
+  D_SENSOR_ADC_RANGE "|"
+  D_SENSOR_ADC_CT_POWER "|"
   D_GPIO_WEBCAM_PWDN "|" D_GPIO_WEBCAM_RESET "|" D_GPIO_WEBCAM_XCLK "|"
   D_GPIO_WEBCAM_SIOD "|" D_GPIO_WEBCAM_SIOC "|"
   D_GPIO_WEBCAM_DATA "|"
@@ -564,6 +567,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_BUTTON_INV) + MAX_ADCS,
   AGPIO(GPIO_ADC_RANGE) + MAX_ADCS,       // Range
   AGPIO(GPIO_ADC_CT_POWER) + MAX_ADCS,    // Current
+  AGPIO(GPIO_ADC_JOY) + MAX_ADCS,         // Joystick
 #endif
 #ifdef USE_WEBCAM
   AGPIO(GPIO_WEBCAM_PWDN),
@@ -598,7 +602,7 @@ enum UserSelectableAdc {
   ADC_BUTTON_INV,
   ADC_RANGE,          // Range
   ADC_CT_POWER,       // Current
-
+  ADC_JOY,            // Joystick
 //  ADC_SWITCH,         // Switch
 //  ADC_SWITCH_INV,
   ADC_END };
@@ -609,7 +613,7 @@ enum UserSelectableAdc {
 #define WEMOS_MODULE       0    // Wemos module
 
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839
-const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOflashcFLFLolIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOA6A7A0IoIoA3";
+const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOflashcFLFLolIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOIAIAIAIAIAIA";
 
 //********************************************************************************************
 

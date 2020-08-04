@@ -4,6 +4,7 @@
 
 - Fix ESP32 PWM range
 - Add Zigbee better support for IKEA Motion Sensor
+- Add ESP32 Analog input support for GPIO32 to GPIO39
 
 ### 8.4.0 20200730
 
