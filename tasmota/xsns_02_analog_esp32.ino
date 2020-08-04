@@ -210,7 +210,7 @@ void AdcEvery250ms(void) {
       if ((new_value < Adc[idx].last_value -10) || (new_value > Adc[idx].last_value +10)) {
         Adc[idx].last_value = new_value;
         uint16_t value = Adc[idx].last_value / 10;
-        Response_P(PSTR("{\"ANALOG\":{\"A%ddiv10\":%d}}"), idx, (value > 99) ? 100 : value);
+        Response_P(PSTR("{\"ANALOG\":{\"A%ddiv10\":%d}}"), idx +1, (value > 99) ? 100 : value);
         XdrvRulesProcess();
       }
     }
@@ -219,7 +219,7 @@ void AdcEvery250ms(void) {
       if (new_value && (new_value != Adc[idx].last_value)) {
         Adc[idx].last_value = new_value;
         uint16_t value = new_value / Adc[idx].param1;
-        Response_P(PSTR("{\"ANALOG\":{\"JOY%d\":%d}}"), idx, value);
+        Response_P(PSTR("{\"ANALOG\":{\"Joy%d\":%d}}"), idx +1, value);
         XdrvRulesProcess();
       } else {
         Adc[idx].last_value = 0;
@@ -305,21 +305,33 @@ void AdcEverySecond(void) {
   }
 }
 
+void AdcShowContinuation(bool *jsonflg) {
+  if (*jsonflg) {
+    ResponseAppend_P(PSTR(","));
+  } else {
+    ResponseAppend_P(PSTR(",\"ANALOG\":{"));
+    *jsonflg = true;
+  }
+}
+
 void AdcShow(bool json) {
   bool domo_flag[ADC_END] = { false };
-  char adc_name[10];  // ANALOG12
+  char adc_name[10];  // ANALOG8
+
+  bool jsonflg = false;
   for (uint32_t idx = 0; idx < Adcs.present; idx++) {
-    snprintf_P(adc_name, sizeof(adc_name), PSTR("ANALOG%d"), idx);
+    snprintf_P(adc_name, sizeof(adc_name), PSTR("Analog%d"), idx +1);
 
     switch (Adc[idx].type) {
       case ADC_INPUT: {
         uint16_t analog = AdcRead(Adc[idx].pin, 5);
 
         if (json) {
-          ResponseAppend_P(PSTR(",\"%s\":{\"A0\":%d}"), adc_name, analog);
+          AdcShowContinuation(&jsonflg);
+          ResponseAppend_P(PSTR("\"A%d\":%d"), idx +1, analog);
 #ifdef USE_WEBSERVER
         } else {
-          WSContentSend_PD(HTTP_SNS_ANALOG, "", idx, analog);
+          WSContentSend_PD(HTTP_SNS_ANALOG, "", idx +1, analog);
 #endif  // USE_WEBSERVER
         }
         break;
@@ -329,7 +341,8 @@ void AdcShow(bool json) {
         dtostrfd(Adc[idx].temperature, Settings.flag2.temperature_resolution, temperature);
 
         if (json) {
-          ResponseAppend_P(JSON_SNS_TEMP, adc_name, temperature);
+          AdcShowContinuation(&jsonflg);
+          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%d\":%s"), idx +1, temperature);
           if ((0 == tele_period) && (!domo_flag[ADC_TEMP])) {
 #ifdef USE_DOMOTICZ
             DomoticzSensor(DZ_TEMP, temperature);
@@ -350,7 +363,8 @@ void AdcShow(bool json) {
         uint16_t adc_light = AdcGetLux(idx);
 
         if (json) {
-          ResponseAppend_P(JSON_SNS_ILLUMINANCE, adc_name, adc_light);
+          AdcShowContinuation(&jsonflg);
+          ResponseAppend_P(PSTR("\"" D_JSON_ILLUMINANCE "%d\":%d"), idx +1, adc_light);
 #ifdef USE_DOMOTICZ
           if ((0 == tele_period) && (!domo_flag[ADC_LIGHT])) {
             DomoticzSensor(DZ_ILLUMINANCE, adc_light);
@@ -368,7 +382,8 @@ void AdcShow(bool json) {
         uint16_t adc_range = AdcGetRange(idx);
 
         if (json) {
-          ResponseAppend_P(JSON_SNS_RANGE, adc_name, adc_range);
+          AdcShowContinuation(&jsonflg);
+          ResponseAppend_P(PSTR("\"" D_JSON_RANGE "%d\":%d"), idx +1, adc_range);
 #ifdef USE_WEBSERVER
         } else {
           WSContentSend_PD(HTTP_SNS_RANGE, adc_name, adc_range);
@@ -390,8 +405,9 @@ void AdcShow(bool json) {
         dtostrfd(Adc[idx].energy, Settings.flag2.energy_resolution, energy_chr);
 
         if (json) {
-          ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ENERGY "\":%s,\"" D_JSON_POWERUSAGE "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
-            adc_name, energy_chr, power_chr, voltage_chr, current_chr);
+          AdcShowContinuation(&jsonflg);
+          ResponseAppend_P(PSTR("\"CTEnergy%d\":{\"" D_JSON_ENERGY "\":%s,\"" D_JSON_POWERUSAGE "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
+            idx +1, energy_chr, power_chr, voltage_chr, current_chr);
 #ifdef USE_DOMOTICZ
           if ((0 == tele_period) && (!domo_flag[ADC_CT_POWER])) {
             DomoticzSensor(DZ_POWER_ENERGY, power_chr);
@@ -410,7 +426,19 @@ void AdcShow(bool json) {
         }
         break;
       }
+      case ADC_JOY: {
+        uint16_t new_value = AdcRead(Adc[idx].pin, 1);
+        uint16_t value = new_value / Adc[idx].param1;
+        if (json) {
+          AdcShowContinuation(&jsonflg);
+          ResponseAppend_P(PSTR("\"Joy%d\":%d"), idx +1, value);
+        }
+        break;
+      }
     }
+  }
+  if (jsonflg) {
+    ResponseJsonEnd();
   }
 }
 
@@ -474,7 +502,7 @@ void CmndAdcParam(void) {
     // AdcParam
     AdcGetSettings(idx);
     Response_P(PSTR("{\"" D_CMND_ADCPARAM "%d\":[%d,%d,%d"), idx +1, Adcs.type, Adc[idx].param1, Adc[idx].param2);
-    if (ADC_RANGE == my_adc0) {
+    if (ADC_RANGE == Adc[idx].type) {
       ResponseAppend_P(PSTR(",%d,%d"), Adc[idx].param3, Adc[idx].param4);
     } else {
       int value = Adc[idx].param3;
