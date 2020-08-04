@@ -433,6 +433,8 @@
   #define ROTARY_MAX_STEPS     10                // Rotary step boundary
 #define USE_SONOFF_RF                            // Add support for Sonoff Rf Bridge (+3k2 code)
   #define USE_RF_FLASH                           // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (+2k7 code)
+  #define USE_433_RAW                            // Add support for OOK receiver
+
 #define USE_SONOFF_SC                            // Add support for Sonoff Sc (+1k1 code)
 #define USE_TUYA_MCU                             // Add support for Tuya Serial MCU
   #define TUYA_DIMMER_ID       0                 // Default dimmer Id
@@ -574,6 +576,8 @@
 //#define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
 #ifdef USE_SPI
 //  #define USE_NRF24                              // Add SPI support for NRF24L01(+) (+2k6 code)
+//  #define USE_CC1101                             // CC1101 as OOK receiver
+
   #ifdef USE_NRF24
     #define USE_MIBLE                            // BLE-bridge for some Mijia-BLE-sensors (+4k7 code)
   #else

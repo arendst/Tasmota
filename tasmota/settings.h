@@ -278,6 +278,10 @@ typedef struct {
   uint8_t dpid = 0;
 } TuyaFnidDpidMap;
 
+typedef struct {
+  uint32_t freq1000 = 433920; // 433.92 = frequency * 1000
+} CC1101ook;
+
 const uint32_t settings_text_size = 699;   // Settings.text_pool[size] = Settings.display_model (2D2) - Settings.text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
@@ -572,8 +576,9 @@ struct {
   uint8_t       tcp_baudrate;              // F41
   uint8_t       fallback_module;           // F42
 
-  uint8_t       free_f43[117];             // F43 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f43[117-sizeof(CC1101ook)];             // F43 - Decrement if adding new Setting variables just above and below
 
+  CC1101ook     cc1101ook;                  // FB4
   // Only 32 bit boundary variables below
   uint16_t      pulse_counter_debounce_low;  // FB8
   uint16_t      pulse_counter_debounce_high; // FBA

@@ -706,6 +706,7 @@
 #define D_SENSOR_TCP_RXD       "TCP Rx"
 #define D_SENSOR_IEM3000_TX    "iEM3000 TX"
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
+#define D_SENSOR_OOK_RAW       "OOK RX" 
 
 // Units
 #define D_UNIT_AMPERE "A"
