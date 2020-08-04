@@ -46,7 +46,9 @@ uint8_t MCP230xx_GPIO           = 0x09;
 uint8_t mcp230xx_type = 0;
 uint8_t mcp230xx_pincount = 0;
 uint8_t mcp230xx_oldoutpincount = 0;
+#ifdef USE_MCP230xx_OUTPUT
 uint8_t mcp230xx_outpinmapping[16];
+#endif
 uint8_t mcp230xx_int_en = 0;
 uint8_t mcp230xx_int_prio_counter = 0;
 uint8_t mcp230xx_int_counter_en = 0;
@@ -347,24 +349,24 @@ void MCP230xx_Show(bool json)
                   (gpiob>>0)&1, (gpiob>>1)&1, (gpiob>>2)&1, (gpiob>>3)&1, (gpiob>>4)&1, (gpiob>>5)&1, (gpiob>>6)&1, (gpiob>>7)&1);
     }
 
-#ifdef USE_MCP230xx_OUTPUT	
-    uint8_t outputcount = 0;	
-    for (uint32_t pinx = 0; pinx < mcp230xx_pincount; pinx++) {	
-      if (Settings.mcp230xx_config[pinx].pinmode >= 5) { outputcount++; }	
-    }	
-    if (outputcount) {	
-      uint16_t gpiototal = ((uint16_t)gpiob << 8) | gpio;	
-      ResponseAppend_P(PSTR(",\"MCP230_OUT\":{"));	
-      char stt[7];	
-      for (uint32_t pinx = 0; pinx < mcp230xx_pincount; pinx++) {	
-        if (Settings.mcp230xx_config[pinx].pinmode >= 5) {	
-          sprintf(stt, ConvertNumTxt(((gpiototal>>pinx)&1), Settings.mcp230xx_config[pinx].pinmode));	
-          ResponseAppend_P(PSTR("\"OUT_D%i\":\"%s\","), pinx, stt);	
-        }	
-      }	
-      ResponseAppend_P(PSTR("\"END\":1}")); 
-    }  
-#endif  // USE_MCP230xx_OUTPUT   
+#ifdef USE_MCP230xx_OUTPUT
+    uint8_t outputcount = 0;
+    for (uint32_t pinx = 0; pinx < mcp230xx_pincount; pinx++) {
+      if (Settings.mcp230xx_config[pinx].pinmode >= 5) { outputcount++; }
+    }
+    if (outputcount) {
+      uint16_t gpiototal = ((uint16_t)gpiob << 8) | gpio;
+      ResponseAppend_P(PSTR(",\"MCP230_OUT\":{"));
+      char stt[7];
+      for (uint32_t pinx = 0; pinx < mcp230xx_pincount; pinx++) {
+        if (Settings.mcp230xx_config[pinx].pinmode >= 5) {
+          sprintf(stt, ConvertNumTxt(((gpiototal>>pinx)&1), Settings.mcp230xx_config[pinx].pinmode));
+          ResponseAppend_P(PSTR("\"OUT_D%i\":\"%s\","), pinx, stt);
+        }
+      }
+      ResponseAppend_P(PSTR("\"END\":1}"));
+    }
+#endif  // USE_MCP230xx_OUTPUT
     ResponseJsonEnd();
   }
 }
@@ -380,27 +382,13 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   char cmnd[7], stt[4];
   if (pin > 7) { port = 1; }
   portpins = MCP230xx_readGPIO(port);
-  if (interlock && (pinmo == Settings.mcp230xx_config[pin+pinadd].pinmode)) {
-    if (pinstate < 2) {
-      if (6 == pinmo) {
-        if (pinstate) portpins |= (1 << (pin-(port*8))); else portpins |= (1 << (pin+pinadd-(port*8))),portpins &= ~(1 << (pin-(port*8)));
-      } else {
-        if (pinstate) portpins &= ~(1 << (pin+pinadd-(port*8))),portpins |= (1 << (pin-(port*8))); else portpins &= ~(1 << (pin-(port*8)));
-      }
-    } else {
-      if (6 == pinmo) {
-      portpins |= (1 << (pin+pinadd-(port*8))),portpins ^= (1 << (pin-(port*8)));
-      } else {
-      portpins &= ~(1 << (pin+pinadd-(port*8))),portpins ^= (1 << (pin-(port*8)));
-      }
-    }
+
+  if (pinstate < 2) {
+    if (pinstate) portpins |= (1 << (pin-(port*8))); else portpins &= ~(1 << (pin-(port*8)));
   } else {
-    if (pinstate < 2) {
-      if (pinstate) portpins |= (1 << (pin-(port*8))); else portpins &= ~(1 << (pin-(port*8)));
-    } else {
-      portpins ^= (1 << (pin-(port*8)));
-    }
+    portpins ^= (1 << (pin-(port*8)));
   }
+
   I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO + port, portpins);
   if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart - Firmware configured to save last known state in settings
     Settings.mcp230xx_config[pin].saved_state=portpins>>(pin-(port*8))&1;
@@ -657,16 +645,21 @@ bool MCP230xx_Command(void)
 #ifdef USE_MCP230xx_OUTPUT
     if (Settings.mcp230xx_config[pin].pinmode >= 5) {
       uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
+      uint8_t relay_no = 0;
+      for (relay_no = 0; relay_no < mcp230xx_pincount ; relay_no ++) {
+        if ( mcp230xx_outpinmapping[relay_no] == pin) break;
+      }
+      relay_no = devices_present - mcp230xx_oldoutpincount + relay_no +1;
       if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "ON")) || (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "1"))) {
-        MCP230xx_SetOutPin(pin,abs(pincmd-1));
+        ExecuteCommandPower(relay_no, 1, SRC_IGNORE);
         return serviced;
       }
       if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "OFF")) || (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "0"))) {
-        MCP230xx_SetOutPin(pin,pincmd);
+        ExecuteCommandPower(relay_no, 0, SRC_IGNORE);
         return serviced;
       }
       if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "T")) || (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "2")))  {
-        MCP230xx_SetOutPin(pin,2);
+        ExecuteCommandPower(relay_no, 2, SRC_IGNORE);
         return serviced;
       }
     }
@@ -802,9 +795,8 @@ void MCP230xx_Interrupt_Retain_Report(void) {
   MqttPublishTeleSensor();
 }
 
+#ifdef USE_MCP230xx_OUTPUT
 void MCP230xx_SwitchRelay() {
-
-  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("MCP: devices_present %d"), devices_present);
   for (uint32_t i = devices_present - mcp230xx_oldoutpincount; i < devices_present; i++) {
     uint8_t pin = mcp230xx_outpinmapping[i - (devices_present - mcp230xx_oldoutpincount)];
     uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
@@ -820,7 +812,7 @@ void MCP230xx_SwitchRelay() {
     }
   }
 }
-
+#endif // USE_MCP230xx_OUTPUT
 
 /*********************************************************************************************\
    Interface
@@ -864,9 +856,11 @@ bool Xsns29(uint8_t function)
 */
         }
         break;
+#ifdef USE_MCP230xx_OUTPUT
       case FUNC_SET_POWER:
           MCP230xx_SwitchRelay();
           break;
+#endif // USE_MCP230xx_OUTPUT
       case FUNC_JSON_APPEND:
         MCP230xx_Show(1);
         break;
