@@ -136,8 +136,7 @@ void RotaryHandler(void) {
 #ifdef USE_LIGHT
         if (!Settings.flag4.rotary_uses_rules) {  // SetOption98 - Use rules instead of light control
           ResponseLightState(0);
-          MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_STATE));
-          XdrvRulesProcess();
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_STATE));
         }
 #endif  // USE_LIGHT
         Encoder[index].direction = 0;

@@ -1351,7 +1351,11 @@ void LightInit(void)
     for (uint32_t i = 0; i < light_type; i++) {
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
       if (PinUsed(GPIO_PWM1, i)) {
+#ifdef ESP8266
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
+#else  // ESP32
+        analogAttach(Pin(GPIO_PWM1, i), i);
+#endif
       }
     }
     if (PinUsed(GPIO_ARIRFRCV)) {
@@ -1878,8 +1882,7 @@ void LightAnimate(void)
             Response_P(PSTR("{\"" D_CMND_WAKEUP "\":\"" D_JSON_DONE "\""));
             ResponseLightState(1);
             ResponseJsonEnd();
-            MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_WAKEUP));
-            XdrvRulesProcess();
+            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WAKEUP));
 
             Light.wakeup_active = 0;
             Settings.light_scheme = LS_POWER;

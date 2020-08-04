@@ -57,14 +57,29 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
 void ZigbeeInit(void)
 {
   // Check if settings in Flash are set
-  if (0 == Settings.zb_channel) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Initializing Zigbee parameters from defaults"));
-    Settings.zb_ext_panid = USE_ZIGBEE_EXTPANID;
-    Settings.zb_precfgkey_l = USE_ZIGBEE_PRECFGKEY_L;
-    Settings.zb_precfgkey_h = USE_ZIGBEE_PRECFGKEY_H;
-    Settings.zb_pan_id = USE_ZIGBEE_PANID;
-    Settings.zb_channel = USE_ZIGBEE_CHANNEL;
-    Settings.zb_txradio_dbm = USE_ZIGBEE_TXRADIO_DBM;
+  if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX)) {
+    if (0 == Settings.zb_channel) {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Randomizing Zigbee parameters, please check with 'ZbConfig'"));
+      uint64_t mac64 = 0;     // stuff mac address into 64 bits
+      WiFi.macAddress((uint8_t*) &mac64);
+      uint32_t esp_id = ESP_getChipId();
+#ifdef ESP8266
+      uint32_t flash_id = ESP.getFlashChipId();
+#else  // ESP32
+      uint32_t flash_id = 0;
+#endif  // ESP8266 or ESP32
+
+      uint16_t  pan_id = (mac64 & 0x3FFF);
+      if (0x0000 == pan_id) { pan_id = 0x0001; }    // avoid extreme values
+      if (0x3FFF == pan_id) { pan_id = 0x3FFE; }    // avoid extreme values
+      Settings.zb_pan_id = pan_id;
+
+      Settings.zb_ext_panid = 0xCCCCCCCC00000000L | (mac64 & 0x00000000FFFFFFFFL);
+      Settings.zb_precfgkey_l = (mac64 << 32) | (esp_id << 16) | flash_id;
+      Settings.zb_precfgkey_h = (mac64 << 32) | (esp_id << 16) | flash_id;
+      Settings.zb_channel = USE_ZIGBEE_CHANNEL;
+      Settings.zb_txradio_dbm = USE_ZIGBEE_TXRADIO_DBM;
+    }
   }
 
   // update commands with the current settings
@@ -164,7 +179,9 @@ void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, 
   ZigbeeZCLSend_Raw(shortaddr, groupaddr, cluster, endpoint, cmd, clusterSpecific, manuf, buf.getBuffer(), buf.len(), true, zigbee_devices.getNextSeqNumber(shortaddr));
   // now set the timer, if any, to read back the state later
   if (clusterSpecific) {
+#ifndef USE_ZIGBEE_NO_READ_ATTRIBUTES   // read back attribute value unless it is disabled
     zigbeeSetCommandTimer(shortaddr, groupaddr, cluster, endpoint);
+#endif
   }
 }
 
@@ -715,7 +732,7 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
 
 #ifdef USE_ZIGBEE_EZSP
   SBuffer buf(24);
-  
+
   // ZDO message payload (see Zigbee spec 2.4.3.2.2)
   buf.add64(srcLongAddr);
   buf.add8(endpoint);
@@ -751,18 +768,20 @@ void CmndZbUnbind(void) {
 
 //
 // Command `ZbBindState`
+// `ZbBindState<x>` as index if it does not fit. If default, `1` starts at the beginning
 //
 void CmndZbBindState(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
   uint16_t shortaddr = zigbee_devices.parseDeviceParam(XdrvMailbox.data);
   if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
+  uint8_t index = XdrvMailbox.index - 1;   // change default 1 to 0
 
 #ifdef USE_ZIGBEE_ZNP
   SBuffer buf(10);
   buf.add8(Z_SREQ | Z_ZDO);             // 25
   buf.add8(ZDO_MGMT_BIND_REQ);          // 33
   buf.add16(shortaddr);                 // shortaddr
-  buf.add8(0);                          // StartIndex = 0
+  buf.add8(index);                      // StartIndex = 0
 
   ZigbeeZNPSend(buf.getBuffer(), buf.len());
 #endif // USE_ZIGBEE_ZNP
@@ -770,7 +789,7 @@ void CmndZbBindState(void) {
 
 #ifdef USE_ZIGBEE_EZSP
   // ZDO message payload (see Zigbee spec 2.4.3.3.4)
-  uint8_t buf[] = { 0x00 };           // index = 0
+  uint8_t buf[] = { index };           // index = 0
 
   EZ_SendZDO(shortaddr, ZDO_Mgmt_Bind_req, buf, sizeof(buf));
 #endif // USE_ZIGBEE_EZSP
@@ -895,8 +914,7 @@ void CmndZbLight(void) {
   String dump = zigbee_devices.dumpLightState(shortaddr);
   Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_LIGHT "\":%s}"), dump.c_str());
 
-  MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_LIGHT));
-  XdrvRulesProcess();
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_LIGHT));
   ResponseCmndDone();
 }
 
@@ -993,12 +1011,14 @@ void CmndZbPermitJoin(void) {
 
   if (payload <= 0) {
     duration = 0;
-  } else if (99 == payload) {
-    duration = 0xFF;                    // unlimited time
   }
 
 // ZNP Version
 #ifdef USE_ZIGBEE_ZNP
+  if (99 == payload) {
+    duration = 0xFF;                    // unlimited time
+  }
+
   uint16_t dstAddr = 0xFFFC;            // default addr
 
   SBuffer buf(34);
@@ -1015,10 +1035,20 @@ void CmndZbPermitJoin(void) {
 
 // EZSP VERSION
 #ifdef USE_ZIGBEE_EZSP
+  if (99 == payload) {
+    ResponseCmndChar_P(PSTR("Unlimited time not supported")); return;
+  }
+
   SBuffer buf(3);
   buf.add16(EZSP_permitJoining);
   buf.add8(duration);
-  ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len(), true);
+  ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len());
+
+  // send ZDO_Mgmt_Permit_Joining_req to all routers
+  buf.setLen(0);
+  buf.add8(duration);
+  buf.add8(0x01);       // TC_Significance - This field shall always have a value of 1, indicating a request to change the Trust Center policy. If a frame is received with a value of 0, it shall be treated as having a value of 1.
+  EZ_SendZDO(0xFFFC, ZDO_Mgmt_Permit_Joining_req, buf.buf(), buf.len());
 #endif // USE_ZIGBEE_EZSP
 
   ResponseCmndDone();
@@ -1041,14 +1071,14 @@ void CmndZbEZSPListen(void) {
   } else if (group > 0xFFFF) {
     group = 0xFFFF;
   }
-  
+
   SBuffer buf(8);
   buf.add16(EZSP_setMulticastTableEntry);
   buf.add8(index);
   buf.add16(group);   // group
   buf.add8(0x01);       // endpoint
   buf.add8(0x00);       // network index
-  ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len(), true);
+  ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len());
 
   ResponseCmndDone();
 }
@@ -1229,10 +1259,18 @@ bool Xdrv23(uint8_t function)
         }
         break;
       case FUNC_LOOP:
-        if (ZigbeeSerial) { ZigbeeInputLoop(); }
-				if (zigbee.state_machine) {
+#ifdef USE_ZIGBEE_EZSP
+        if (ZigbeeUploadXmodem()) {
+          return false;
+        }
+#endif
+        if (ZigbeeSerial) {
+          ZigbeeInputLoop();
+          ZigbeeOutputLoop();   // send any outstanding data
+        }
+        if (zigbee.state_machine) {
           ZigbeeStateMachine_Run();
-				}
+        }
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:

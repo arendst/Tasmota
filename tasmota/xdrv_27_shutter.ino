@@ -37,18 +37,18 @@ enum ShutterModes { SHT_OFF_OPEN__OFF_CLOSE, SHT_OFF_ON__OPEN_CLOSE, SHT_PULSE_O
 enum ShutterButtonStates { SHT_NOT_PRESSED, SHT_PRESSED_MULTI, SHT_PRESSED_HOLD, SHT_PRESSED_IMMEDIATE, SHT_PRESSED_EXT_HOLD, SHT_PRESSED_MULTI_SIMULTANEOUS, SHT_PRESSED_HOLD_SIMULTANEOUS, SHT_PRESSED_EXT_HOLD_SIMULTANEOUS,};
 
 const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
-  D_CMND_SHUTTER_OPEN "|" D_CMND_SHUTTER_CLOSE "|" D_CMND_SHUTTER_TOGGLE "|" D_CMND_SHUTTER_STOP "|" D_CMND_SHUTTER_POSITION "|"
+  D_CMND_SHUTTER_OPEN "|" D_CMND_SHUTTER_CLOSE "|" D_CMND_SHUTTER_TOGGLE "|" D_CMND_SHUTTER_TOGGLEDIR "|" D_CMND_SHUTTER_STOP "|" D_CMND_SHUTTER_POSITION "|"
   D_CMND_SHUTTER_OPENTIME "|" D_CMND_SHUTTER_CLOSETIME "|" D_CMND_SHUTTER_RELAY "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_SETOPEN "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
   D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
-  D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPPOSITION;
+  D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPTOGGLEDIR "|" D_CMND_SHUTTER_STOPPOSITION;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
-  &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterStop, &CmndShutterPosition,
+  &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterToggleDir, &CmndShutterStop, &CmndShutterPosition,
   &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay,
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
   &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
-  &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopPosition};
+  &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition};
 
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d}";
   const char JSON_SHUTTER_BUTTON[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Button%d\":%d}";
@@ -70,6 +70,7 @@ struct SHUTTER {
   uint16_t close_time[MAX_SHUTTERS];      // duration to close the shutter. 112 = 11.2sec
   uint16_t close_velocity[MAX_SHUTTERS];  // in relation to open velocity. higher value = faster
   int8_t  direction[MAX_SHUTTERS];        // 1 == UP , 0 == stop; -1 == down
+  int8_t  lastdirection[MAX_SHUTTERS];    // last direction (1 == UP , -1 == down)
   uint8_t mode = 0;                       // operation mode definition. see enum type above SHT_OFF_OPEN__OFF_CLOSE, SHT_OFF_ON__OPEN_CLOSE, SHT_PULSE_OPEN__PULSE_CLOSE
   int16_t motordelay[MAX_SHUTTERS];       // initial motorstarttime in 0.05sec.
   int16_t pwm_frequency[MAX_SHUTTERS];    // frequency of PWN for stepper motors
@@ -237,6 +238,7 @@ void ShutterInit(void)
       //Shutter.real_position[i] =   Settings.shutter_position[i] <= 5 ?  Settings.shuttercoeff[2][i] * Settings.shutter_position[i] : Settings.shuttercoeff[1][i] * Settings.shutter_position[i] + Settings.shuttercoeff[0,i];
       Shutter.start_position[i] = Shutter.target_position[i] = Shutter.real_position[i];
       Shutter.motordelay[i] = Settings.shutter_motordelay[i];
+      Shutter.lastdirection[i] = (50 < Settings.shutter_position[i]) ? 1 : -1;
 
       char shutter_open_chr[10];
       dtostrfd((float)Shutter.open_time[i] / 10 , 1, shutter_open_chr);
@@ -279,8 +281,7 @@ void ShutterReportPosition(bool always, uint32_t index)
   }
   ResponseJsonEnd();
   if (always || (rules_flag.shutter_moving)) {
-    MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
-    XdrvRulesProcess();  //RulesProcess() now re-entry protected
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));  // RulesProcess() now re-entry protected
   }
 
   //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
@@ -402,6 +403,9 @@ void ShutterUpdatePosition(void)
         Response_P("%d", (Settings.shutter_options[i] & 1) ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i]);
         MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
 
+        if (Shutter.direction[i] != 0) {
+          Shutter.lastdirection[i] = Shutter.direction[i];
+        }
         Shutter.direction[i] = 0;
         ShutterReportPosition(true, i);
         rules_flag.shutter_moved = 1;
@@ -716,8 +720,7 @@ void ShutterButtonHandler(void)
     Response_P(PSTR("{"));
     ResponseAppend_P(JSON_SHUTTER_BUTTON, shutter_index+1, (buttonState <= SHT_PRESSED_EXT_HOLD) ? (button_index+1) : 0, press_index);
     ResponseJsonEnd();
-    MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
-    XdrvRulesProcess();
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
   }
 }
 
@@ -726,6 +729,26 @@ void ShutterSetPosition(uint32_t device, uint32_t position)
   char svalue[32];                   // Command and number parameter
   snprintf_P(svalue, sizeof(svalue), PSTR(D_PRFX_SHUTTER D_CMND_SHUTTER_POSITION "%d %d"), device, position);
   ExecuteCommand(svalue, SRC_IGNORE);
+}
+
+void ShutterToggle(bool dir)
+{
+  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Payload toggle: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.index);
+  if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
+    XdrvMailbox.index = XdrvMailbox.payload;
+  }
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    uint32_t index = XdrvMailbox.index-1;
+    if (dir) {
+      XdrvMailbox.payload = (Shutter.lastdirection[index] > 0) ? 0 : 100;
+    }
+    else {
+      XdrvMailbox.payload = (50 < ShutterRealToPercentPosition(Shutter.real_position[index], index)) ? 0 : 100;
+    }
+    XdrvMailbox.data_len = 0;
+    last_source = SRC_WEBGUI;
+    CmndShutterPosition();
+  }
 }
 
 /*********************************************************************************************\
@@ -781,17 +804,12 @@ void CmndShutterStopClose(void)
 
 void CmndShutterToggle(void)
 {
-  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Payload toggle: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.index);
-  if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
-    XdrvMailbox.index = XdrvMailbox.payload;
-  }
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
-    uint32_t index = XdrvMailbox.index-1;
-    XdrvMailbox.payload = (50 < ShutterRealToPercentPosition(Shutter.real_position[index], index)) ? 0 : 100;
-    XdrvMailbox.data_len = 0;
-    last_source = SRC_WEBGUI;
-    CmndShutterPosition();
-  }
+  ShutterToggle(false);
+}
+
+void CmndShutterToggleDir(void)
+{
+  ShutterToggle(true);
 }
 
 void CmndShutterStopToggle(void)
@@ -802,6 +820,18 @@ void CmndShutterStopToggle(void)
       CmndShutterStop();
     } else {
       CmndShutterToggle();
+    }
+  }
+}
+
+void CmndShutterStopToggleDir(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    uint32_t index = XdrvMailbox.index-1;
+    if (Shutter.direction[index]) {
+      CmndShutterStop();
+    } else {
+      CmndShutterToggleDir();
     }
   }
 }
@@ -856,6 +886,10 @@ void CmndShutterPosition(void)
         }
         if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_TOGGLE)) {
           CmndShutterToggle();
+          return;
+        }
+        if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_TOGGLEDIR)) {
+          CmndShutterToggleDir();
           return;
         }
         if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP) || ((Shutter.direction[index]) && (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE)))) {

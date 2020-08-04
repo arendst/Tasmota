@@ -232,9 +232,7 @@ void IrReceiveCheck(void)
       }
 
       ResponseJsonEndEnd();
-      MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
-
-      XdrvRulesProcess();
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
     }
 
     irrecv->resume();
@@ -475,7 +473,7 @@ uint32_t IrRemoteCmndIrSendRaw(void)
 	for (uint32_t i = 0; i <= count; i++) {
 	  GC[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);
       if (!GC[i]) {
-        return IE_INVALID_RAWDATA;                
+        return IE_INVALID_RAWDATA;
       }
     }
 	irsend_active = true;

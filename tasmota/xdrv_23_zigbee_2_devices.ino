@@ -141,6 +141,7 @@ public:
   // Add an endpoint to a device
   void addEndpoint(uint16_t shortaddr, uint8_t endpoint);
   void clearEndpoints(uint16_t shortaddr);
+  uint32_t countEndpoints(uint16_t shortaddr) const;    // return the number of known endpoints (0 if unknown)
 
   void setManufId(uint16_t shortaddr, const char * str);
   void setModelId(uint16_t shortaddr, const char * str);
@@ -531,6 +532,23 @@ void Z_Devices::addEndpoint(uint16_t shortaddr, uint8_t endpoint) {
       return;
     }
   }
+}
+
+//
+// Count the number of known endpoints
+//
+uint32_t Z_Devices::countEndpoints(uint16_t shortaddr) const {
+  uint32_t count_ep = 0;
+  int32_t found = findShortAddr(shortaddr);
+  if (found < 0)  return 0;     // avoid creating an entry if the device was never seen
+  const Z_Device &device = devicesAt(found);
+
+  for (uint32_t i = 0; i < endpoints_max; i++) {
+    if (0 != device.endpoints[i]) {
+      count_ep++;
+    }
+  }
+  return count_ep;
 }
 
 // Find the first endpoint of the device

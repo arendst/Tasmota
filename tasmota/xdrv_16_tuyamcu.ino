@@ -808,7 +808,7 @@ void TuyaSetTime(void) {
   uint16_t payload_len = 8;
   uint8_t payload_buffer[8];
   payload_buffer[0] = 0x01;
-  payload_buffer[1] = (uint8_t)RtcTime.year;
+  payload_buffer[1] = RtcTime.year %100;
   payload_buffer[2] = RtcTime.month;
   payload_buffer[3] = RtcTime.day_of_month;
   payload_buffer[4] = RtcTime.hour;

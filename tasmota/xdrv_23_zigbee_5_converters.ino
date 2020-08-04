@@ -622,8 +622,7 @@ public:
                     _frame_control, _manuf_code, _transact_seq, _cmd_id,
                     hex_char);
     if (Settings.flag3.tuya_serial_mqtt_publish) {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-      XdrvRulesProcess();
+      MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);
     }
@@ -1152,15 +1151,16 @@ void ZCLFrame::parseResponse(void) {
   msg.reserve(100);
   json.printTo(msg);
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_RESPONSE "\":%s}"), msg.c_str());
-  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
-  XdrvRulesProcess();
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
 }
 
 
 // Parse non-normalized attributes
 void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
-  convertClusterSpecific(json, _cluster_id, _cmd_id, _frame_control.b.direction, _payload);
+  convertClusterSpecific(json, _cluster_id, _cmd_id, _frame_control.b.direction, _srcaddr, _srcendpoint, _payload);
+#ifndef USE_ZIGBEE_NO_READ_ATTRIBUTES   // read attributes unless disabled
   sendHueUpdate(_srcaddr, _groupaddr, _cluster_id, _cmd_id, _frame_control.b.direction);
+#endif
 }
 
 // ======================================================================
@@ -1425,6 +1425,8 @@ int32_t Z_ApplyConverter(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObje
 }
 
 void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
+  // source endpoint
+  uint8_t src_ep = _srcendpoint;
   // iterate on json elements
   for (auto kv : json) {
     String key_string = kv.key;
@@ -1492,6 +1494,11 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
             ((conv_attribute == attribute) || (conv_attribute == 0xFFFF)) ) {
           String new_name_str = (const __FlashStringHelper*) converter->name;
           if (suffix > 1) { new_name_str += suffix; }   // append suffix number
+          // else if (Settings.flag4.zb_index_ep) {
+          //   if (zigbee_devices.countEndpoints(shortaddr) > 0) {
+          //     new_name_str += _srcendpoint;
+          //   }
+          // }
           // apply the transformation
           int32_t drop = Z_ApplyConverter(this, shortaddr, json, key, value, new_name_str, conv_cluster, conv_attribute, conv_multiplier, conv_cb);
           if (drop) {

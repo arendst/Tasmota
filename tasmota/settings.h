@@ -120,7 +120,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t rotary_uses_rules : 1;        // bit 16 (v8.3.1.6)  - SetOption98 - Use rules instead of light control
     uint32_t zerocross_dimmer : 1;         // bit 17 (v8.3.1.4)  - SetOption99 - Enable zerocross dimmer on PWM DIMMER
     uint32_t remove_zbreceived : 1;        // bit 18 (v8.3.1.7)  - SetOption100 - Remove ZbReceived form JSON message
-    uint32_t spare19 : 1;
+    uint32_t zb_index_ep : 1;              // bit 19 (v8.3.1.7)  - SetOption101 - Add the source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
     uint32_t spare20 : 1;
     uint32_t spare21 : 1;
     uint32_t spare22 : 1;
@@ -422,7 +422,7 @@ struct {
   uint8_t       light_correction;          // 49D
   uint8_t       light_dimmer;              // 49E
   uint8_t       rule_enabled;              // 49F
-  uint8_t       rule_once;                 // 4A0
+  uint8_t       rule_once;                 // 4A0  bit 6+7 used by xdrv_10_scripter
   uint8_t       light_fade;                // 4A1
   uint8_t       light_speed;               // 4A2
   uint8_t       light_scheme;              // 4A3
@@ -691,8 +691,10 @@ typedef union {
 } StateBitfield;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
+#ifdef ESP8266
 #ifdef USE_ADC_VCC
   ADC_MODE(ADC_VCC);                       // Set ADC input for Power Supply Voltage usage
+#endif
 #endif
 
 #endif  // _SETTINGS_H_

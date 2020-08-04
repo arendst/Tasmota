@@ -148,6 +148,8 @@
 | USE_NRF24             | - | - | - | - | - | - | - |
 | USE_MIBLE             | - | - | - | - | - | - | - |
 | USE_ZIGBEE            | - | - | - | - | - | - | - |
+| USE_ZIGBEE_ZNP        | - | - | - | - | - | - | - |
+| USE_ZIGBEE_EZSP       | - | - | - | - | - | - | - | Sonoff ZbBridge
 |                       |   |   |   |   |   |   |   |
 | USE_IR_REMOTE         | - | - | x | x | x | x | x |
 | USE_IR_RECEIVE        | - | - | x | x | x | x | x |

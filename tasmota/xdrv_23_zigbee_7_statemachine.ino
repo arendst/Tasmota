@@ -114,8 +114,6 @@ const uint8_t  ZIGBEE_LABEL_START_ROUTER = 13;    // Start ZNP as router
 const uint8_t  ZIGBEE_LABEL_INIT_DEVICE = 14;    // Init ZNP as end-device
 const uint8_t  ZIGBEE_LABEL_START_DEVICE = 15;    // Start ZNP as end-device
 const uint8_t  ZIGBEE_LABEL_START_ROUTER_DEVICE = 16;    // Start common to router and device
-const uint8_t  ZIGBEE_LABEL_BOOT_OK = 17;    // MCU has rebooted
-const uint8_t  ZIGBEE_LABEL_BOOT_TIME_OUT = 18;    // MCU has not rebooted
 const uint8_t  ZIGBEE_LABEL_FACT_RESET_ROUTER_DEVICE_POST = 19;   // common post configuration for router and device
 const uint8_t  ZIGBEE_LABEL_READY = 20;   // goto label 20 for main loop
 const uint8_t  ZIGBEE_LABEL_MAIN_LOOP = 21;   // main loop
@@ -206,13 +204,12 @@ ZBM(ZBR_ZNPHC, Z_SRSP | Z_SYS, SYS_OSAL_NV_READ, Z_SUCCESS, 0x01 /* len */, 0x55
 
 ZBM(ZBS_PAN, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_PANID )				// 260483
 ZBR(ZBR_PAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PANID, 0x02 /* len */,
-              Z_B0(USE_ZIGBEE_PANID), Z_B1(USE_ZIGBEE_PANID) )				// 6604008302xxxx
+              0x00, 0x00 /* pan_id */ )				// 6604008302xxxx
 
 ZBM(ZBS_EXTPAN, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_EXTENDED_PAN_ID )				// 26042D
 ZBR(ZBR_EXTPAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_EXTENDED_PAN_ID,
                 0x08 /* len */,
-                Z_B0(USE_ZIGBEE_EXTPANID), Z_B1(USE_ZIGBEE_EXTPANID), Z_B2(USE_ZIGBEE_EXTPANID), Z_B3(USE_ZIGBEE_EXTPANID),
-                Z_B4(USE_ZIGBEE_EXTPANID), Z_B5(USE_ZIGBEE_EXTPANID), Z_B6(USE_ZIGBEE_EXTPANID), Z_B7(USE_ZIGBEE_EXTPANID),
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* ext_pan_id */
                 )				// 6604002D08xxxxxxxxxxxxxxxx
 
 ZBM(ZBS_CHANN, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_CHANLIST )				// 260484
@@ -224,10 +221,8 @@ ZBR(ZBR_CHANN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_CHANLIS
 ZBM(ZBS_PFGK, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_PRECFGKEY )				// 260462
 ZBR(ZBR_PFGK, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_SUCCESS, CONF_PRECFGKEY,
               0x10 /* len */,
-              Z_B0(USE_ZIGBEE_PRECFGKEY_L), Z_B1(USE_ZIGBEE_PRECFGKEY_L), Z_B2(USE_ZIGBEE_PRECFGKEY_L), Z_B3(USE_ZIGBEE_PRECFGKEY_L),
-              Z_B4(USE_ZIGBEE_PRECFGKEY_L), Z_B5(USE_ZIGBEE_PRECFGKEY_L), Z_B6(USE_ZIGBEE_PRECFGKEY_L), Z_B7(USE_ZIGBEE_PRECFGKEY_L),
-              Z_B0(USE_ZIGBEE_PRECFGKEY_H), Z_B1(USE_ZIGBEE_PRECFGKEY_H), Z_B2(USE_ZIGBEE_PRECFGKEY_H), Z_B3(USE_ZIGBEE_PRECFGKEY_H),
-              Z_B4(USE_ZIGBEE_PRECFGKEY_H), Z_B5(USE_ZIGBEE_PRECFGKEY_H), Z_B6(USE_ZIGBEE_PRECFGKEY_H), Z_B7(USE_ZIGBEE_PRECFGKEY_H),
+              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_l */
+              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_h */
               /*0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F,
               0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D*/ )				// 660400621001030507090B0D0F00020406080A0C0D
 
@@ -252,13 +247,12 @@ ZBM(ZBR_WNV_OK, Z_SRSP | Z_SYS, SYS_OSAL_NV_WRITE, Z_SUCCESS )				// 610900 - NV
 // Factory reset
 ZBM(ZBS_FACTRES, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_STARTUP_OPTION, 0x01 /* len */, 0x03 )				// 2605030103
 // Write PAN ID
-ZBR(ZBS_W_PAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PANID, 0x02 /* len */, Z_B0(USE_ZIGBEE_PANID), Z_B1(USE_ZIGBEE_PANID)  )				// 26058302xxxx
+ZBR(ZBS_W_PAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PANID, 0x02 /* len */, 0x00, 0x00 /* pan_id */  )				// 26058302xxxx
 // Write Universal PAN ID
 ZBR(ZBS_W_ALL_PAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PANID, 0x02 /* len */, Z_B0(0xFFFF), Z_B1(0xFFFF)  )				// 26058302FFFF
 // Write EXT PAN ID
 ZBR(ZBS_W_EXTPAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_EXTENDED_PAN_ID, 0x08 /* len */,
-                  Z_B0(USE_ZIGBEE_EXTPANID), Z_B1(USE_ZIGBEE_EXTPANID), Z_B2(USE_ZIGBEE_EXTPANID), Z_B3(USE_ZIGBEE_EXTPANID),
-                  Z_B4(USE_ZIGBEE_EXTPANID), Z_B5(USE_ZIGBEE_EXTPANID), Z_B6(USE_ZIGBEE_EXTPANID), Z_B7(USE_ZIGBEE_EXTPANID)
+                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* ext_pan_id */
                   ) // 26052D086263151D004B1200
 // Write Channel ID
 ZBR(ZBS_W_CHANN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_CHANLIST, 0x04 /* len */,
@@ -278,11 +272,8 @@ ZBM(ZBS_W_LOGTYP_DEVICE, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_LOGICAL
 // Write precfgkey
 ZBR(ZBS_W_PFGK, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PRECFGKEY,
                 0x10 /* len */,
-                Z_B0(USE_ZIGBEE_PRECFGKEY_L), Z_B1(USE_ZIGBEE_PRECFGKEY_L), Z_B2(USE_ZIGBEE_PRECFGKEY_L), Z_B3(USE_ZIGBEE_PRECFGKEY_L),
-                Z_B4(USE_ZIGBEE_PRECFGKEY_L), Z_B5(USE_ZIGBEE_PRECFGKEY_L), Z_B6(USE_ZIGBEE_PRECFGKEY_L), Z_B7(USE_ZIGBEE_PRECFGKEY_L),
-                Z_B0(USE_ZIGBEE_PRECFGKEY_H), Z_B1(USE_ZIGBEE_PRECFGKEY_H), Z_B2(USE_ZIGBEE_PRECFGKEY_H), Z_B3(USE_ZIGBEE_PRECFGKEY_H),
-                Z_B4(USE_ZIGBEE_PRECFGKEY_H), Z_B5(USE_ZIGBEE_PRECFGKEY_H), Z_B6(USE_ZIGBEE_PRECFGKEY_H), Z_B7(USE_ZIGBEE_PRECFGKEY_H),
-                /*0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_l */
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_h */                /*0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F,
                 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D*/ )				// 2605621001030507090B0D0F00020406080A0C0D
 // Write precfgkey enable
 ZBM(ZBS_W_PFGKEN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_PRECFGKEYS_ENABLE, 0x01 /* len */, 0x00 )				// 2605630100
@@ -430,18 +421,12 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT(10500)                             // wait for 10 seconds for Tasmota to stabilize
 
     //ZI_MQTT_STATE(ZIGBEE_STATUS_BOOT, "Booting")
-    //ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "rebooting device")
-    ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_BOOT_TIME_OUT)    // give a second chance
-    ZI_SEND(ZBS_RESET)                        // reboot cc2530 just in case we rebooted ESP8266 but not cc2530
-    ZI_WAIT_RECV_FUNC(5000, ZBR_RESET, &ZNP_Reboot)             // timeout 5s
-    ZI_GOTO(ZIGBEE_LABEL_BOOT_OK)
+    ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "rebooting CC2530 device")
 
-  ZI_LABEL(ZIGBEE_LABEL_BOOT_TIME_OUT)
-    ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
-    ZI_SEND(ZBS_RESET)                        // reboot cc2530 just in case we rebooted ESP8266 but not cc2530
+    ZI_CALL(&ZNP_Reset_Device, 0)         // LOW = reset
+    ZI_WAIT(100)                          // wait for .1 second
+    ZI_CALL(&ZNP_Reset_Device, 1)         // HIGH = release reset
     ZI_WAIT_RECV_FUNC(5000, ZBR_RESET, &ZNP_Reboot)             // timeout 5s
-
-  ZI_LABEL(ZIGBEE_LABEL_BOOT_OK)
     ZI_WAIT(100)
     ZI_LOG(LOG_LEVEL_DEBUG, kCheckingDeviceConfiguration)     // Log Debug: checking device configuration
     ZI_SEND(ZBS_VERSION)                      // check ZNP software version
@@ -701,11 +686,8 @@ ZBR(ZBS_SET_SECURITY,     EZSP_setInitialSecurityState, 0x00 /*high*/,
                           // preConfiguredKey
                           0x5A, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6C, 0x6C, 0x69, 0x61, 0x6E, 0x63, 0x65, 0x30, 0x39,   // well known key "ZigBeeAlliance09"
                           // networkKey
-                          Z_B0(USE_ZIGBEE_PRECFGKEY_L), Z_B1(USE_ZIGBEE_PRECFGKEY_L), Z_B2(USE_ZIGBEE_PRECFGKEY_L), Z_B3(USE_ZIGBEE_PRECFGKEY_L),
-                          Z_B4(USE_ZIGBEE_PRECFGKEY_L), Z_B5(USE_ZIGBEE_PRECFGKEY_L), Z_B6(USE_ZIGBEE_PRECFGKEY_L), Z_B7(USE_ZIGBEE_PRECFGKEY_L),
-                          Z_B0(USE_ZIGBEE_PRECFGKEY_H), Z_B1(USE_ZIGBEE_PRECFGKEY_H), Z_B2(USE_ZIGBEE_PRECFGKEY_H), Z_B3(USE_ZIGBEE_PRECFGKEY_H),
-                          Z_B4(USE_ZIGBEE_PRECFGKEY_H), Z_B5(USE_ZIGBEE_PRECFGKEY_H), Z_B6(USE_ZIGBEE_PRECFGKEY_H), Z_B7(USE_ZIGBEE_PRECFGKEY_H),
-                          0x00 /*sequence*/,
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_l */
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* key_h */                          0x00 /*sequence*/,
                           0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /*trustcenter*/
                           )
 ZBM(ZBR_SET_SECURITY,     EZSP_setInitialSecurityState, 0x00 /*high*/, 0x00 /*status*/)
@@ -718,7 +700,7 @@ ZBM(ZBS_SET_POLICY_02,    EZSP_setPolicy, 0x00 /*high*/, EZSP_UNICAST_REPLIES_PO
 ZBM(ZBS_SET_POLICY_03,    EZSP_setPolicy, 0x00 /*high*/, EZSP_POLL_HANDLER_POLICY,
                           EZSP_POLL_HANDLER_IGNORE)    // 55000330
 ZBM(ZBS_SET_POLICY_04,    EZSP_setPolicy, 0x00 /*high*/, EZSP_MESSAGE_CONTENTS_IN_CALLBACK_POLICY,
-                          EZSP_MESSAGE_TAG_AND_CONTENTS_IN_CALLBACK)    // 55000441
+                          EZSP_MESSAGE_TAG_ONLY_IN_CALLBACK)    // 55000440
 ZBM(ZBS_SET_POLICY_05,    EZSP_setPolicy, 0x00 /*high*/, EZSP_TC_KEY_REQUEST_POLICY,
                           EZSP_ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY)    // 55000551
 ZBM(ZBS_SET_POLICY_06,    EZSP_setPolicy, 0x00 /*high*/, EZSP_APP_KEY_REQUEST_POLICY,
@@ -731,9 +713,8 @@ ZBM(ZBR_NETWORK_INIT,     EZSP_networkInit, 0x00 /*high*/, 0x00 /*status*/)   //
 
 // formNetwork - i.e. start zigbee network as coordinator
 ZBR(ZBS_FORM_NETWORK,     EZSP_formNetwork, 0x00 /*high*/,
-                          Z_B0(USE_ZIGBEE_EXTPANID), Z_B1(USE_ZIGBEE_EXTPANID), Z_B2(USE_ZIGBEE_EXTPANID), Z_B3(USE_ZIGBEE_EXTPANID),
-                          Z_B4(USE_ZIGBEE_EXTPANID), Z_B5(USE_ZIGBEE_EXTPANID), Z_B6(USE_ZIGBEE_EXTPANID), Z_B7(USE_ZIGBEE_EXTPANID),
-                          Z_B0(USE_ZIGBEE_PANID), Z_B1(USE_ZIGBEE_PANID),
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* ext_pan_id */
+                          0x00, 0x00,   // pan_id
                           USE_ZIGBEE_TXRADIO_DBM /*radioTxPower*/,
                           USE_ZIGBEE_CHANNEL /*channel*/,
                           EMBER_USE_MAC_ASSOCIATION,
@@ -754,9 +735,8 @@ ZBM(ZBR_GET_NETW_PARM,    EZSP_getNetworkParameters, 0x00 /*high*/, 0x00 /*ok*/)
 ZBR(ZBR_CHECK_NETW_PARM,  EZSP_getNetworkParameters, 0x00 /*high*/,
                           0x00 /*status*/,
                           EMBER_COORDINATOR /*0x01*/,
-                          Z_B0(USE_ZIGBEE_EXTPANID), Z_B1(USE_ZIGBEE_EXTPANID), Z_B2(USE_ZIGBEE_EXTPANID), Z_B3(USE_ZIGBEE_EXTPANID),
-                          Z_B4(USE_ZIGBEE_EXTPANID), Z_B5(USE_ZIGBEE_EXTPANID), Z_B6(USE_ZIGBEE_EXTPANID), Z_B7(USE_ZIGBEE_EXTPANID),
-                          Z_B0(USE_ZIGBEE_PANID), Z_B1(USE_ZIGBEE_PANID),
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* ext_pan_id */
+                          0x00, 0x00,     // pan_id
                           USE_ZIGBEE_TXRADIO_DBM /*radioTxPower*/,
                           USE_ZIGBEE_CHANNEL /*channel*/,
                           )   // 2800...
@@ -892,7 +872,9 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT_RECV(1500, ZBR_NETWORK_UP)    // wait for network to start
     // check if configuration is ok
     ZI_SEND(ZBS_GET_CURR_SEC)           ZI_WAIT_RECV(500, ZBR_GET_CURR_SEC)
-    ZI_SEND(ZBS_GET_NETW_PARM)          ZI_WAIT_RECV(500, ZBR_CHECK_NETW_PARM)
+    ZI_SEND(ZBS_GET_EUI64)              ZI_WAIT_RECV_FUNC(500, ZBR_GET_EUI64, &EZ_GetEUI64)
+    ZI_SEND(ZBS_GET_NETW_PARM)          ZI_WAIT_RECV_FUNC(500, ZBR_CHECK_NETW_PARM, &EZ_NetworkParameters)
+
     // all ok, proceed to next step
     ZI_GOTO(ZIGBEE_LABEL_NETWORK_CONFIGURED)
 
@@ -916,14 +898,15 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     // Query device information
     ZI_SEND(ZBS_GET_EUI64)              ZI_WAIT_RECV_FUNC(500, ZBR_GET_EUI64, &EZ_GetEUI64)
     ZI_SEND(ZBS_GET_NODEID)             ZI_WAIT_RECV_FUNC(500, ZBR_GET_NODEID, &EZ_GetNodeId)
-    ZI_SEND(ZBS_GET_NETW_PARM)          ZI_WAIT_RECV_FUNC(500, ZBR_GET_NETW_PARM, &EZ_NetworkParameters)
 
   ZI_LABEL(ZIGBEE_LABEL_READY)
     ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
     ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
     ZI_CALL(&Z_Load_Devices, 0)
+#ifndef USE_ZIGBEE_NO_READ_ATTRIBUTES
     ZI_CALL(&Z_Query_Bulbs, 0)
+#endif
 
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
     ZI_WAIT_FOREVER()
@@ -1097,8 +1080,7 @@ void ZigbeeStateMachine_Run(void) {
         const char *f_msg = (const char*) cur_ptr1;
         Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":%d,\"Message\":\"%s\"}}"),
                           cur_d8, f_msg);
-      	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
-      	XdrvRulesProcess();
+      	MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
         }
         break;
       case ZGB_INSTR_SEND:
@@ -1106,7 +1088,7 @@ void ZigbeeStateMachine_Run(void) {
         ZigbeeZNPSend((uint8_t*) cur_ptr1, cur_d8 /* len */);
 #endif // USE_ZIGBEE_ZNP
 #ifdef USE_ZIGBEE_EZSP
-        ZigbeeEZSPSendCmd((uint8_t*) cur_ptr1, cur_d8 /* len */, true);  // send cancel byte
+        ZigbeeEZSPSendCmd((uint8_t*) cur_ptr1, cur_d8 /* len */);  // send cancel byte
 #endif // USE_ZIGBEE_EZSP
         break;
       case ZGB_INSTR_WAIT_UNTIL:

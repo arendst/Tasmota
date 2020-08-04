@@ -1268,7 +1268,9 @@ void DisplayInitDriver(void)
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
   if (Settings.display_model) {
-    devices_present++;
+    if (!light_type) {
+      devices_present++;  // If no PWM channel for backlight then use "normal" power control
+    }
     disp_device = devices_present;
 
 #ifndef USE_DISPLAY_MODES1TO5

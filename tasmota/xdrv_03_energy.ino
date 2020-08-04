@@ -110,7 +110,6 @@ struct ENERGY {
 #ifdef USE_ENERGY_MARGIN_DETECTION
   uint16_t power_history[3] = { 0 };
   uint8_t power_steady_counter = 8;  // Allow for power on stabilization
-  bool power_delta = false;
   bool min_power_flag = false;
   bool max_power_flag = false;
   bool min_voltage_flag = false;
@@ -306,23 +305,30 @@ void EnergyMarginCheck(void)
 
   uint16_t energy_power_u = (uint16_t)(Energy.active_power[0]);
 
+  bool jsonflg = false;
+  Response_P(PSTR("{\"" D_RSLT_MARGINS "\":{"));
+
   if (Settings.energy_power_delta) {
-    uint16_t delta = abs(Energy.power_history[0] - energy_power_u);
+    int16_t  power_diff = energy_power_u - Energy.power_history[0];
+    uint16_t delta = abs(power_diff);
     if (delta > 0) {
       if (Settings.energy_power_delta < 101) {  // 1..100 = Percentage
         uint16_t min_power = (Energy.power_history[0] > energy_power_u) ? energy_power_u : Energy.power_history[0];
         if (0 == min_power) { min_power++; }    // Fix divide by 0 exception (#6741)
-        if (((delta * 100) / min_power) > Settings.energy_power_delta) {
-          Energy.power_delta = true;
+        delta = (delta * 100) / min_power;
+        if (delta > Settings.energy_power_delta) {
+          jsonflg = true;
         }
       } else {                                  // 101..32000 = Absolute
         if (delta > (Settings.energy_power_delta -100)) {
-          Energy.power_delta = true;
+          jsonflg = true;
         }
       }
-      if (Energy.power_delta) {
+      if (jsonflg) {
         Energy.power_history[1] = Energy.active_power[0];  // We only want one report so reset history
         Energy.power_history[2] = Energy.active_power[0];
+
+        ResponseAppend_P(PSTR("\"" D_CMND_POWERDELTA "\":%d"), power_diff);
       }
     }
   }
@@ -336,9 +342,7 @@ void EnergyMarginCheck(void)
 
     DEBUG_DRIVER_LOG(PSTR("NRG: W %d, U %d, I %d"), energy_power_u, energy_voltage_u, energy_current_u);
 
-    Response_P(PSTR("{"));
     bool flag;
-    bool jsonflg = false;
     if (EnergyMargin(false, Settings.energy_min_power, energy_power_u, flag, Energy.min_power_flag)) {
       ResponseAppend_P(PSTR("%s\"" D_CMND_POWERLOW "\":\"%s\""), (jsonflg)?",":"", GetStateText(flag));
       jsonflg = true;
@@ -363,11 +367,11 @@ void EnergyMarginCheck(void)
       ResponseAppend_P(PSTR("%s\"" D_CMND_CURRENTHIGH "\":\"%s\""), (jsonflg)?",":"", GetStateText(flag));
       jsonflg = true;
     }
-    if (jsonflg) {
-      ResponseJsonEnd();
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
-      EnergyMqttShow();
-    }
+  }
+  if (jsonflg) {
+    ResponseJsonEndEnd();
+    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
+    EnergyMqttShow();
   }
 
 #ifdef USE_ENERGY_POWER_LIMIT
@@ -436,8 +440,6 @@ void EnergyMarginCheck(void)
     }
   }
 #endif  // USE_ENERGY_POWER_LIMIT
-
-  if (Energy.power_delta) { EnergyMqttShow(); }
 }
 
 void EnergyMqttShow(void)
@@ -451,7 +453,6 @@ void EnergyMqttShow(void)
   tele_period = tele_period_save;
   ResponseJsonEnd();
   MqttPublishTeleSensor();
-  Energy.power_delta = false;
 }
 #endif  // USE_ENERGY_MARGIN_DETECTION
 

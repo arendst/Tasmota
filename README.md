@@ -7,6 +7,8 @@ _Written for PlatformIO with limited support for Arduino IDE._
 [![GitHub download](https://img.shields.io/github/downloads/arendst/Tasmota/total.svg)](https://github.com/arendst/Tasmota/releases/latest)
 [![License](https://img.shields.io/github/license/arendst/Tasmota.svg)](LICENSE.txt)
 [![Chat](https://img.shields.io/discord/479389167382691863.svg)](https://discord.gg/Ks2Kzd4)
+[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/arendst/Tasmota.svg)](http://isitmaintained.com/project/arendst/Tasmota "Average time to resolve an issue")
+[![Percentage of issues still open](http://isitmaintained.com/badge/open/arendst/Tasmota.svg)](http://isitmaintained.com/project/arendst/Tasmota "Percentage of issues still open")
 
 If you like **Tasmota**, give it a star, or fork it and contribute!
 
@@ -20,7 +22,7 @@ In addition to the [release webpage](https://github.com/arendst/Tasmota/releases
 
 ## Development
 
-[![Dev Version](https://img.shields.io/badge/development%20version-v8.3.x.x-blue.svg)](https://github.com/arendst/Tasmota)
+[![Dev Version](https://img.shields.io/badge/development%20version-v8.4.x.x-blue.svg)](https://github.com/arendst/Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Tasmota CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+CI%22)
 [![Tasmota ESP32 CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20ESP32%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+ESP32+CI%22)

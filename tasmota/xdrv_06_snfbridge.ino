@@ -226,9 +226,7 @@ void SonoffBridgeReceivedRaw(void)
     }
   }
   ResponseAppend_P(PSTR("\"}}"));
-  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_CMND_RFRAW));
-
-  XdrvRulesProcess();
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_CMND_RFRAW));
 }
 
 /********************************************************************************************/
@@ -298,8 +296,7 @@ void SonoffBridgeReceived(void)
         }
         ResponseTime_P(PSTR(",\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":%s,\"" D_CMND_RFKEY "\":%s}}"),
           sync_time, low_time, high_time, stemp, rfkey);
-        MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_RFRECEIVED));
-        XdrvRulesProcess();
+        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_RFRECEIVED));
   #ifdef USE_DOMOTICZ
         DomoticzSensor(DZ_COUNT, received_id);  // Send rid as Domoticz Counter value
   #endif  // USE_DOMOTICZ
