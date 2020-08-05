@@ -22,19 +22,19 @@
 
 /*********************************************************************************************\
  * Decoding of OOK (on-off-keying) based temperature/humidity sensors from various 
- * weather stations sending at 433.92MHz and forwarding them via MQTT
+ * weather stations sending at 433.92MHz and forwarding them via MQTT.
  * Just set the pin connected to the receiver to "OOK RX"
  * 
  * Required hardware:
- * Tested:
- *   1. A Sonoff-RF-Bridge (433MHz) can be used with a minor hardware-patch, no Portisch-Firmware needed!
+ * Tested with:
+ *   -- A Sonoff-RF-Bridge (433MHz) can be used with a minor hardware-patch, no Portisch-Firmware needed.
  *      Also the "normal" or Portisch features for decoding/sending are unharmed. 
  *     - Wire a 160...680 Ohm resistor from pin 10 of the EFM8BB1 to any free gpio of the ESP. 
- *       This might be gpio 4/5 if the USB lines have been cut of (R2)f, or one of the free gpio 12/14 
- *       pads on the bottom-side. 
+ *       This might be gpio 4/5 if the USB lines have been cut (R2), or one of the free gpio 12/14 
+ *       pads on the bottom-side. Im using gpio 4.
  *       See https://github.com/xoseperez/espurna/wiki/Hardware-Itead-Sonoff-RF-Bridge---Direct-Hack
- * 
- *   2. A CC1101 module (attached to a D1 mini) (#define USE_CC1101)
+ *  
+ *   -- A CC1101 module (attached to a D1 mini) (#define USE_CC1101)
  *      using the Driver-lib from ELECHOUSE/lSatan
  *      With this you are not fixed to 433.92MHz, but any the CC1101 is capable, including 868MHz
  *      (I used a 868MHz module for 433MHz which is no problem since we are only receiving. 
