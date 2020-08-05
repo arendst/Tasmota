@@ -695,7 +695,7 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
     if (0 == dstLongAddr) { ResponseCmndChar_P(PSTR("Unknown dest IEEE address")); return; }
 
     const JsonVariant &val_toendpoint = GetCaseInsensitive(json, PSTR("ToEndpoint"));
-    if (nullptr != &val_toendpoint) { toendpoint = strToUInt(val_endpoint); } else { toendpoint = endpoint; }
+    if (nullptr != &val_toendpoint) { toendpoint = strToUInt(val_toendpoint); } else { toendpoint = endpoint; }
   }
 
   // Or Group Address - we don't need a dstEndpoint in this case
@@ -1063,7 +1063,7 @@ void CmndZbPermitJoin(void) {
 void CmndZbEZSPListen(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
 
-  int32_t  index = XdrvMailbox.index - 1;   // 0 based
+  int32_t  index = XdrvMailbox.index;   // 0 is reserved for group 0 (auto-config)
   int32_t  group = XdrvMailbox.payload;
 
   if (group <= 0) {

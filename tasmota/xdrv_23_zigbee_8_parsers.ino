@@ -126,6 +126,25 @@ int32_t EZ_NetworkParameters(int32_t res, class SBuffer &buf) {
 }
 
 //
+// Analyze response to "getKey" and check NWK key
+//
+int32_t EZ_CheckKeyNWK(int32_t res, class SBuffer &buf) {
+  uint8_t  status = buf.get8(2);
+  uint16_t bitmask = buf.get16(3);
+  uint8_t  key_type = buf.get8(5);
+  uint64_t key_low  = buf.get64(6);
+  uint64_t key_high = buf.get64(14);
+
+  if ( (key_type == EMBER_CURRENT_NETWORK_KEY) &&
+       (key_low  == ezsp_key_low) &&
+       (key_high == ezsp_key_high) ) {
+    return 0;     // proceed to next step
+  } else {
+    return -2;    // error state
+  }
+}
+
+//
 // Handle a "incomingRouteErrorHandler" incoming message
 //
 int32_t EZ_RouteError(int32_t res, const class SBuffer &buf) {
