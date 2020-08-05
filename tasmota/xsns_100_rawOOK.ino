@@ -23,31 +23,47 @@
 /*********************************************************************************************\
  * Decoding of OOK (on-off-keying) based temperature/humidity sensors from various 
  * weather stations sending at 433.92MHz and forwarding them via MQTT
+ * Just set the pin connected to the receiver to "OOK RX"
  * 
  * Required hardware:
- * A Sonoff-RF-Bridge (433MHz) can be used with a minor hardware-patch, no Portisch-Firmware needed!
- *   Also the "normal" or Portisch features for decoding/sending are unharmed. 
- * - Wire a 160...680 Ohm resistor from pin 10 of the EFM8BB1 to any free gpio of the ESP. 
- *   This might be gpio 4/5 if the USB lines have been cut off, or one of the free gpio 12/14 
- *   pads on the bottom-side. 
- *   See https://github.com/xoseperez/espurna/wiki/Hardware-Itead-Sonoff-RF-Bridge---Direct-Hack
+ * Tested:
+ *   1. A Sonoff-RF-Bridge (433MHz) can be used with a minor hardware-patch, no Portisch-Firmware needed!
+ *      Also the "normal" or Portisch features for decoding/sending are unharmed. 
+ *     - Wire a 160...680 Ohm resistor from pin 10 of the EFM8BB1 to any free gpio of the ESP. 
+ *       This might be gpio 4/5 if the USB lines have been cut of (R2)f, or one of the free gpio 12/14 
+ *       pads on the bottom-side. 
+ *       See https://github.com/xoseperez/espurna/wiki/Hardware-Itead-Sonoff-RF-Bridge---Direct-Hack
  * 
- * It should also work with some cheap fixed 433MHz receivers
+ *   2. A CC1101 module (attached to a D1 mini) (#define USE_CC1101)
+ *      using the Driver-lib from ELECHOUSE/lSatan
+ *      With this you are not fixed to 433.92MHz, but any the CC1101 is capable, including 868MHz
+ *      (I used a 868MHz module for 433MHz which is no problem since we are only receiving. 
+ *       Maybe the sensitivity is not as good as with a 433MHz module)
+ *      The pins for the CC1101 are fixed:
+ *        SCK_PIN   = D1 Mini: D5 (GPIO 14)
+ *        MISO_PIN  = D1 Mini: D6 (GPIO 12)
+ *        MOSI_PIN  = D1 Mini: D7 (GPIO 13)
+ *        SS_PIN    = D1 Mini: D8 (GPIO 15)
+ *        GDO0      = any free gpio ("OOK RX")
  * 
- * Also a CC1101 module is  (#define USE_CC1101), then the frequency is tunable
- *   Driver-lib from ELECHOUSE/lSatan
+ * Not tested, but should work with any 433MHz receiver providing a "carrier" signal
  * 
  * Commands: sensor100 debug 0..3 0: no debug output
- *                                1: pulse-duration output for reverse-engineering
+ *                                1: pulse-duration output for protocol reverse-engineering
  *                                2: output from the various OOK decoders
  *                                3: 1+2   
  * 
  *           #if USE_CC1101:
- *           sensor100 freq xxx.yyy set CC1101 to xxx.yyyMHz
+ *           sensor100 freq xxx.yyy    set CC1101 to xxx.yyy MHz
  * 
+ * Implemented decoder:
+ * ====================
  * 
+ * 1. WT450H (temp, hum, batt)
+ * 2. LaCrosse TX3 (temp, hum)
+ * 3. Infactory (Pearl) (temp, hum, batt)
  * 
- * New decoders:
+ * New decoder:
  * ====================
  * 
  * 1.: implement: int your_protocol_decoder(bool initial_ook, uint16_t* pulses, int len) 
@@ -85,7 +101,9 @@
 */
 
   #include "../lib/SmartRC-CC1101-Driver-Lib/ELECHOUSE_CC1101_SRC_DRV.h"
-  static float freq = 433.866;
+  static float cc1101_freq = 433.866;
+
+  static bool use_cc1101 = false;
 #endif
 
 static uint8_t raw433_pin = 0; 
@@ -107,13 +125,25 @@ static void raw433Init(void)
 
   pinMode(raw433_pin, INPUT);
 
-#ifdef USE_CC1101
-  ELECHOUSE_cc1101.Init(); //Initialize the cc1101. Must be set first!
+#if defined USE_CC1101 && defined ESP8266
+  // ESP-32 pins?
+  // check if the fixed CC1101 pins are being used by other sensors
+  if(GetPin(10) + GetPin(11) + GetPin(12) + GetPin(13) == GPIO_NONE)
+  {
+    use_cc1101 = true;
+    ELECHOUSE_cc1101.Init(); // Initialize the cc1101. 
 
-  ELECHOUSE_cc1101.SetRx(freq); //Sets receive on and changes the frequency.
-  snprintf_P(log_data, sizeof(log_data), "CC1101 freq: %i.%03i", (int)freq, (int)(freq*100)%100);
+    if(Settings.cc1101ook.freq1000 != 0)
+      cc1101_freq = Settings.cc1101ook.freq1000;
+
+    ELECHOUSE_cc1101.SetRx(cc1101_freq); //Sets receive on and changes the frequency.
+    snprintf_P(log_data, sizeof(log_data), "CC1101 freq: %i.%03i", (int)cc1101_freq, (int)(cc1101_freq*100)%100);
+  }
+  else
+  {
+    snprintf_P(log_data, sizeof(log_data), "CC1101 default pins occupied");
+  }
   AddLog(LOG_LEVEL_INFO);
-
 #endif
 
   snprintf_P(log_data, sizeof(log_data), "433RAW init (pin: %i)", raw433_pin);
@@ -140,8 +170,9 @@ static void raw433Init(void)
 
 #ifdef USE_CC1101
 const char CC1101_FREQ[] PROGMEM = "{\"CC1101_FREQ\":{%i.%03i}}";
-const char OOK_DEBUG[] PROGMEM = "{\"OOK_DEBUG\":{%u}}";
 #endif
+
+const char OOK_DEBUG[] PROGMEM = "{\"OOK_DEBUG\":{%u}}";
 
 typedef enum
 {
@@ -180,24 +211,26 @@ static bool ook_Command(void)
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"FREQ")) 
   { // Note 1 used for param number
     ret = true;
-    if(paramcount)
+    if(use_cc1101)
     {
-      float f = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2));  // Note 2 used for param number
-      if(f > 430)
+      if(paramcount)
       {
-        Settings.cc1101ook.freq1000 = (int)(f*1000);
-        freq = f;
+        float f = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2));  // Note 2 used for param number
+        if(f > 430)
+        {
+          Settings.cc1101ook.freq1000 = (int)(f*1000);
+          cc1101_freq = f;
 
-        snprintf_P(log_data, sizeof(log_data), "CC1101 set freq: %i.%03i", (int)freq, (int)(freq*1000)%1000);
-        AddLog(LOG_LEVEL_INFO);
+          snprintf_P(log_data, sizeof(log_data), "CC1101 set freq: %i.%03i", (int)cc1101_freq, (int)(cc1101_freq*1000)%1000);
+          AddLog(LOG_LEVEL_INFO);
 
-        ELECHOUSE_cc1101.SetRx(freq); //Sets receive on and changes the frequency.
+          ELECHOUSE_cc1101.SetRx(cc1101_freq); //Sets receive on and changes the frequency.
+        }
       }
+      snprintf_P(log_data, sizeof(log_data), "CC1101 freq is: %i.%03i", (int)cc1101_freq, (int)(cc1101_freq*1000)%1000);
+      AddLog(LOG_LEVEL_INFO);
+      Response_P(CC1101_FREQ, (int)cc1101_freq, (int)(cc1101_freq*1000)%1000);
     }
-    snprintf_P(log_data, sizeof(log_data), "CC1101 freq is: %i.%03i", (int)freq, (int)(freq*1000)%1000);
-    AddLog(LOG_LEVEL_INFO);
-    Response_P(CC1101_FREQ, (int)freq, (int)(freq*1000)%1000);
-
   }
   else
 #endif // USE_CC1101
@@ -226,9 +259,9 @@ static bool ook_Command(void)
 
 typedef struct 
 {
-  int     num_pulses;
-  uint8_t initial_ook;
-  uint16_t pulse[MAX_PULSES_NUM];
+  int       num_pulses;
+  uint8_t   initial_ook;
+  uint16_t  pulse[MAX_PULSES_NUM];
 }pulses_t;
 
 // buffer for pulse measurement
@@ -267,7 +300,7 @@ static void ICACHE_RAM_ATTR interruptHandler()
       }
       else
       {
-        p.num_pulses = 0;
+        p.num_pulses = 0; // too many errors, restart buffer
         err_cnt = 0;
         good_cnt = 0;
         return;
@@ -290,7 +323,7 @@ static void ICACHE_RAM_ATTR interruptHandler()
 
   cur_pulses_wr = (cur_pulses_wr+1) & 7; // next buffer 
 
-  int pin = digitalRead(raw433_pin);
+  int pin = digitalRead(raw433_pin); // current pin state
 
   pulses_arr[cur_pulses_wr].initial_ook = pin;
   pulses_arr[cur_pulses_wr].num_pulses = 0;
@@ -358,6 +391,7 @@ static struct
   float hum = -1000;
 }last_values;
 
+// Output for tele/sensor and web
 void TempHumShow(bool json, bool pass_on)
 {
   if(*last_values.sensor == 0)
@@ -401,13 +435,13 @@ void TempHumShow(bool json, bool pass_on)
 
 const char S_OOK_TEMPERATURE[]  PROGMEM =  ",\"Temperature\":%i.%i}";
 const char S_OOK_HUMIDITY[]     PROGMEM =  ",\"Humidity\":%i.%i}";
-const char S_OOK_TEMP_HUM[]     PROGMEM =  ",\"Humidity\":%i.%i, \"Temperature\":%i.%i}";
 
-
+// mqtt output:
 // mqtt: /tele/<tasmota_device>/OOK/device-21 = {"Time":"2020-08-02T12:26:40","type":"my decoder","Temperature":27.0,"Humidity":53.0,"BatteryGood":1}
-//                                  ---------                                         ----------
+//                                  111111111                                         2222222222
 
 // mqttStart("my decoder", "device-%i", device.addr) // prepare mqtt frame
+//            2222222222    111111111
 //  optional: mqttTemperature(27.0)                  // add temperature to mqtt frame
 //  optional: mqttHumidity(53.0)
 //  optional: mqttBatteryGood(true)
@@ -424,7 +458,8 @@ void mqttStart(const char* type, const char* sensor, ...)
   ResponseTime_P(PSTR(",\"type\":\"%s\","), type);
 
 #ifdef USE_CC1101
-  ResponseAppend_P(PSTR("\"Frequency\":%i.%03i,"  ), (int)freq, (int)(freq*1000) % 1000);
+  if(use_cc1101)
+    ResponseAppend_P(PSTR("\"Frequency\":%i.%03i,"  ), (int)cc1101_freq, (int)(cc1101_freq*1000) % 1000);
 #endif
 
   last_values.temp = -1000;
@@ -505,6 +540,38 @@ static struct
   uint8_t data[MAX_PULSES_NUM];
 }ook_data;
 
+///////////////////////////////////////////////////////////////////
+
+
+static const char S_OOK_DEBUG1[]  PROGMEM = "pulses: %u, ook-bits: %u(min %u)";
+//                                           0123456789abcdef0
+static const char S_OOK_DEBUG2[]  PROGMEM = "|0              |16              |32              |48              |64              |80";
+
+static void print_ook_debug(char* pr, int pr_len, int len, int min_bits)
+{
+  if(debug_val & deb_ook)
+  {
+    if(pr_len >= min_bits/2)
+    {
+      pr[pr_len] = 0;
+
+      snprintf_P(log_data, sizeof(log_data), S_OOK_DEBUG1, len, ook_data.num_data, min_bits);
+      AddLog(LOG_LEVEL_INFO);
+
+      snprintf_P(log_data, sizeof(log_data), "%s", pr);
+      AddLog(LOG_LEVEL_INFO);
+
+      snprintf_P(log_data, sizeof(log_data), S_OOK_DEBUG2, pr);
+      AddLog(LOG_LEVEL_INFO);
+    }
+  }
+}
+
+#define OOK_DEBUG_INIT char pr[MAX_PULSES_NUM*2+100]; int pr_len = 0
+
+
+///////////////////////////////////////////////////////////////////
+
 // OOK infactory
 // _____                      _____                                          _____
 //      |____________________|     |________________________________________|     |____
@@ -517,8 +584,8 @@ static int decodeOOKI(int min_bits, uint16_t* pulses, int len, int min_hi, int m
   ook_data.num_data = 0;
   int s = 0;
 
-  char pr[MAX_PULSES_NUM*2+100];
-  int pr_len = 0;
+  OOK_DEBUG_INIT;
+
   int ret = 0;
 
   for(int t = 0; t < len; t++)
@@ -570,22 +637,7 @@ static int decodeOOKI(int min_bits, uint16_t* pulses, int len, int min_hi, int m
     }
   }
 
-  if(debug_val & deb_ook)
-  {
-    if(pr_len >= min_bits/2)
-    {
-      pr[pr_len] = 0;
-
-      snprintf_P(log_data, sizeof(log_data), "pulses: %u, ook-bits: %u(min %u)", len, ook_data.num_data, min_bits);
-      AddLog(LOG_LEVEL_INFO);
-
-      snprintf_P(log_data, sizeof(log_data), "%s", pr);
-      AddLog(LOG_LEVEL_INFO);
-      //                                      0123456789abcdef0
-      snprintf_P(log_data, sizeof(log_data), "|0              |16              |32              |48              |64              |80", pr);
-      AddLog(LOG_LEVEL_INFO);
-    }
-  }
+  print_ook_debug(pr, pr_len, len, min_bits);
 
   return ret;
 }
@@ -603,8 +655,7 @@ static int decodeOOK(int min_bits, uint16_t* pulses, int len, int min_1, int max
   ook_data.num_data = 0;
   int s = 0;
 
-  char pr[MAX_PULSES_NUM*2+100];
-  int pr_len = 0;
+  OOK_DEBUG_INIT;
 
   int ret = 0;
 
@@ -646,22 +697,7 @@ static int decodeOOK(int min_bits, uint16_t* pulses, int len, int min_1, int max
     }
   }
 
-  if(debug_val & deb_ook)
-  {
-    if(pr_len >= min_bits/2)
-    {
-      pr[pr_len] = 0;
-
-      snprintf_P(log_data, sizeof(log_data), "pulses: %u, ook-bits: %u(min %u)", len, ook_data.num_data, min_bits);
-      AddLog(LOG_LEVEL_INFO);
-
-      snprintf_P(log_data, sizeof(log_data), "%s", pr);
-      AddLog(LOG_LEVEL_INFO);
-      //                                      0123456789abcdef0
-      snprintf_P(log_data, sizeof(log_data), "|0              |16              |32              |48              |64              |80", pr);
-      AddLog(LOG_LEVEL_INFO);
-    }
-  }
+  print_ook_debug(pr, pr_len, len, min_bits);
 
   return ret;
 }
@@ -682,8 +718,8 @@ static int decodeOOK2(int min_bits, uint16_t* pulses, int len, int min_1, int ma
   ook_data.num_data = 0;
   int s = 0;
 
-  char pr[MAX_PULSES_NUM*2+100];
-  int pr_len = 0;
+  OOK_DEBUG_INIT;
+
   int ret = 0;
 
   for(int t = 0; t < len; t++)
@@ -739,22 +775,7 @@ static int decodeOOK2(int min_bits, uint16_t* pulses, int len, int min_1, int ma
     }
   }
 
-  if(debug_val & deb_ook)
-  {
-    if(pr_len >= min_bits/2)
-    {
-      pr[pr_len] = 0;
-
-      snprintf_P(log_data, sizeof(log_data), "pulses: %u, ook-bits: %u(min %u)", len, ook_data.num_data, min_bits);
-      AddLog(LOG_LEVEL_INFO);
-
-      snprintf_P(log_data, sizeof(log_data), "%s", pr);
-      AddLog(LOG_LEVEL_INFO);
-      //                                      0123456789abcdef0
-      snprintf_P(log_data, sizeof(log_data), "|0              |16              |32              |48              |64              |80", pr);
-      AddLog(LOG_LEVEL_INFO);
-    }
-  }
+  print_ook_debug(pr, pr_len, len, min_bits);
 
   return ret;
 }
@@ -1101,7 +1122,6 @@ static int decodeInfactory(bool initial_ook, uint16_t* pulses, int len)
       snprintf_P(log_data, sizeof(log_data), "Infactory: id:%u channel:%u humidity:%i temperature:%i.%i", pdata.id, pdata.channel, (int)pdata.hum, (int)pdata.temp, (int)(pdata.temp*10)%10);
       AddLog(LOG_LEVEL_INFO);
 
-      //tempHumMqtt(pdata.temp, (int)pdata.hum, PSTR("Infactory-%u-%u"), pdata.id, pdata.channel);
       mqttStart(PSTR("Infactory"), PSTR("Infactory-%u-%u"), pdata.id, pdata.channel);
       mqttTemperature(pdata.temp);
       mqttHumidity(pdata.hum);
@@ -1277,7 +1297,6 @@ static int decodeWT450H(bool initial_ook, uint16_t* pulses, int len)
         snprintf_P(log_data, sizeof(log_data), "WT450H: house:%u channel:%u battery_weak:%i humidity:%i temperature:%i.%i", pdata.house, pdata.channel, (int)pdata.battery_weak, (int)pdata.hum, (int)pdata.temp, (int)(pdata.temp*10)%10);
         AddLog(LOG_LEVEL_INFO);
 
-        //tempHumMqtt(pdata.temp, (int)pdata.hum, PSTR("WT450H-%u-%u"), pdata.house, pdata.channel);
         mqttStart(PSTR("WT450H"), PSTR("WT450H-%u-%u"), pdata.house, pdata.channel);
         mqttTemperature(pdata.temp);
         mqttHumidity(pdata.hum);
