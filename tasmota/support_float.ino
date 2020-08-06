@@ -116,6 +116,7 @@ double TaylorLog(double x)
   // https://stackoverflow.com/questions/46879166/finding-the-natural-logarithm-of-a-number-using-taylor-series-in-c
 
   if (x <= 0.0) { return NAN; }
+  if (x == 1.0) { return 0; }
   double z = (x + 1) / (x - 1);                              // We start from power -1, to make sure we get the right power in each iteration;
   double step = ((x - 1) * (x - 1)) / ((x + 1) * (x + 1));   // Store step to not have to calculate it each time
   double totalValue = 0;
