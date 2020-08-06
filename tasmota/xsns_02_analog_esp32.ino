@@ -26,7 +26,7 @@
 #define XSNS_02                       2
 
 #define ANALOG_RESOLUTION             12               // 12 = 4095, 11 = 2047, 10 = 1023
-#define ANALOG_RANGE                  4095
+#define ANALOG_RANGE                  4095             // 4095 = 12, 2047 = 11, 1023 = 10
 
 #define TO_CELSIUS(x) ((x) - 273.15)
 #define TO_KELVIN(x) ((x) + 273.15)
@@ -64,6 +64,17 @@
 #define ANALOG_CT_VOLTAGE             2300             // (int) Convert current in Amps to apparrent power in Watts using voltage in Volts*10. Value of 2200 corresponds to 220V
 
 #define CT_FLAG_ENERGY_RESET          (1 << 0)         // Reset energy total
+
+// Odroid joysticks
+//        ---- Up
+// 3V3 ---|  |------------
+//                        |
+//        ---- Dn         |--- R10k --- Gnd
+// 3V3 ---|  |--- R10k ---|
+//                        |
+//                       ADC
+// Press "Up" will raise ADC to ANALOG_RANGE, Press "Dn" will raise ADC to ANALOG_RANGE/2
+#define ANALOG_JOYSTICK              (ANALOG_RANGE / 3) +100  // Add resistor tolerance
 
 struct {
   uint8_t present = 0;
@@ -127,12 +138,12 @@ void AdcInitParams(uint8_t idx) {
       Adc[idx].param4 = 100;
     }
     else if (ADC_CT_POWER == Adc[idx].type) {
-      Adc[idx].param1 = ANALOG_CT_FLAGS;              //(uint32_t) 0
-      Adc[idx].param2 = ANALOG_CT_MULTIPLIER;         //(uint32_t) 100000
-      Adc[idx].param3 = ANALOG_CT_VOLTAGE;            //(int)      10
+      Adc[idx].param1 = ANALOG_CT_FLAGS;         // (uint32_t) 0
+      Adc[idx].param2 = ANALOG_CT_MULTIPLIER;    // (uint32_t) 100000
+      Adc[idx].param3 = ANALOG_CT_VOLTAGE;       // (int)      10
     }
     else if (ADC_JOY == Adc[idx].type) {
-      Adc[idx].param1 = (ANALOG_RANGE / 2) -128;
+      Adc[idx].param1 = ANALOG_JOYSTICK;
     }
   }
 }
