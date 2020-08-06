@@ -242,7 +242,7 @@ enum UserSelectablePins {
   GPIO_IEM3000_TX,     // IEM3000 Serial interface
   GPIO_IEM3000_RX,     // IEM3000 Serial interface
   GPIO_ZIGBEE_RST,     // Zigbee reset
-  GPIO_433M_RAW,
+  GPIO_433M_RAW,       // OOK decoder 
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -338,7 +338,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
   D_SENSOR_LMT01_PULSE "|"
   D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX "|"
-  D_SENSOR_ZIGBEE_RST"|"
+  D_SENSOR_ZIGBEE_RST "|"
   D_SENSOR_OOK_RAW
   ;
 
