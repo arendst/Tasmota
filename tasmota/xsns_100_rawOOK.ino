@@ -22,19 +22,19 @@
 
 /*********************************************************************************************\
  * Decoding of OOK (on-off-keying) based temperature/humidity sensors from various 
- * weather stations sending at 433.92MHz and forwarding them via MQTT
+ * weather stations sending at 433.92MHz and forwarding them via MQTT.
  * Just set the pin connected to the receiver to "OOK RX"
  * 
  * Required hardware:
- * Tested:
- *   1. A Sonoff-RF-Bridge (433MHz) can be used with a minor hardware-patch, no Portisch-Firmware needed!
+ * Tested with:
+ *   -- A Sonoff-RF-Bridge (433MHz) can be used with a minor hardware-patch, no Portisch-Firmware needed.
  *      Also the "normal" or Portisch features for decoding/sending are unharmed. 
  *     - Wire a 160...680 Ohm resistor from pin 10 of the EFM8BB1 to any free gpio of the ESP. 
- *       This might be gpio 4/5 if the USB lines have been cut of (R2)f, or one of the free gpio 12/14 
- *       pads on the bottom-side. 
+ *       This might be gpio 4/5 if the USB lines have been cut (R2), or one of the free gpio 12/14 
+ *       pads on the bottom-side. Im using gpio 4.
  *       See https://github.com/xoseperez/espurna/wiki/Hardware-Itead-Sonoff-RF-Bridge---Direct-Hack
- * 
- *   2. A CC1101 module (attached to a D1 mini) (#define USE_CC1101)
+ *  
+ *   -- A CC1101 module (attached to a D1 mini) (#define USE_CC1101)
  *      using the Driver-lib from ELECHOUSE/lSatan
  *      With this you are not fixed to 433.92MHz, but any the CC1101 is capable, including 868MHz
  *      (I used a 868MHz module for 433MHz which is no problem since we are only receiving. 
@@ -118,8 +118,8 @@ static void raw433Init(void)
 
   if(raw433_pin >= 99)
   {
-    snprintf_P(log_data, sizeof(log_data), "433RAW init: no pin");
-    AddLog(LOG_LEVEL_DEBUG);
+   // snprintf_P(log_data, sizeof(log_data), "433RAW init: no pin");
+   // AddLog(LOG_LEVEL_DEBUG);
     return;
   }
 
@@ -177,7 +177,7 @@ const char OOK_DEBUG[] PROGMEM = "{\"OOK_DEBUG\":{%u}}";
 typedef enum
 {
   deb_pulses = 1<<0,
-  deb_ook = 1<<1,
+  deb_ook    = 1<<1,
   deb_ookval = 1<<2,
 }debug_e;
 
@@ -251,11 +251,11 @@ static bool ook_Command(void)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define MIN_OOKLEN 400
-#define MAX_OOKLEN 8000
+#define MIN_OOKLEN       400
+#define MAX_OOKLEN       8000
 #define MIN_VALID_PULSES 20
 
-#define MAX_PULSES_NUM 256
+#define MAX_PULSES_NUM   256
 
 typedef struct 
 {
@@ -407,14 +407,17 @@ void TempHumShow(bool json, bool pass_on)
     ResponseAppend_P(PSTR(",\"%s\":{"), last_values.sensor);
     if(last_values.temp != -1000)
       ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s,\""  ), temperature);
+	  
     if(last_values.hum != -1000)
       ResponseAppend_P(PSTR("\"" D_JSON_HUMIDITY "\":%s,\"" ),  humidity);
+	  
     ResponseJsonEnd();
 #ifdef USE_KNX
     if (pass_on) 
     {
       if(last_values.temp != -1000)
         KnxSensor(KNX_TEMPERATURE, last_values.temp);
+	    
       if(last_values.hum != -1000)
         KnxSensor(KNX_HUMIDITY, last_values.hum);
     }
@@ -424,6 +427,7 @@ void TempHumShow(bool json, bool pass_on)
   {
     if(last_values.temp != -1000)
       WSContentSend_PD(HTTP_SNS_TEMP, last_values.sensor, temperature, TempUnit());
+	  
     if(last_values.hum != -1000)
       WSContentSend_PD(HTTP_SNS_HUM, last_values.sensor, humidity);
 #endif  // USE_WEBSERVER
@@ -432,9 +436,6 @@ void TempHumShow(bool json, bool pass_on)
 
 ///////////////////////////////////////////////////////////////////
 
-
-const char S_OOK_TEMPERATURE[]  PROGMEM =  ",\"Temperature\":%i.%i}";
-const char S_OOK_HUMIDITY[]     PROGMEM =  ",\"Humidity\":%i.%i}";
 
 // mqtt output:
 // mqtt: /tele/<tasmota_device>/OOK/device-21 = {"Time":"2020-08-02T12:26:40","type":"my decoder","Temperature":27.0,"Humidity":53.0,"BatteryGood":1}
