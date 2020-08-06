@@ -186,6 +186,7 @@ const char kZNP12[] PROGMEM = "Only ZNP 1.2 is currently supported";
 const char kEZ8[] PROGMEM = "Only EZSP protocol v8 is currently supported";
 const char kAbort[] PROGMEM = "Abort";
 const char kZigbeeAbort[] PROGMEM = D_LOG_ZIGBEE "Abort";
+const char kZigbeeGroup0[] PROGMEM = D_LOG_ZIGBEE "Subscribe to group 0 'ZbListen0 0'";
 
 #ifdef USE_ZIGBEE_ZNP
 
@@ -746,23 +747,30 @@ ZBM(ZBR_GET_EUI64,        EZSP_getEui64, 0x00 /*high*/)   // 2600
 ZBM(ZBS_GET_NODEID,       EZSP_getNodeId, 0x00 /*high*/)   // 2700
 ZBM(ZBR_GET_NODEID,       EZSP_getNodeId, 0x00 /*high*/)   // 2700
 
+// auto subscribe to group 0 in slot 0
+ZBM(ZBS_SET_MCAST_ENTRY,  EZSP_setMulticastTableEntry, 0x00 /*high*/,
+                          0x00 /* slot */, 0x00,0x00 /* group */, 0x01 /* endpoint */, 0x00 /* network */)  // 64000000000100
+ZBM(ZBR_SET_MCAST_ENTRY,  EZSP_setMulticastTableEntry, 0x00 /*high*/, 0x00 /* status */)
+
+// check the network key
 // getCurrentSecurityState
 // TODO double check the security bitmask
-ZBM(ZBS_GET_CURR_SEC,     EZSP_getCurrentSecurityState, 0x00 /*high*/)   // 6900
-ZBR(ZBR_GET_CURR_SEC,     EZSP_getCurrentSecurityState, 0x00 /*high*/,
-                          0x00 /*status*/,
-                          0x7C, 0x00 /*Current Security Bitmask*/,
-                          )   // 6900...
+ZBM(ZBS_GET_KEY_NWK,      EZSP_getKey, 0x00 /*high*/, EMBER_CURRENT_NETWORK_KEY)   // 6A0003
+ZBM(ZBR_GET_KEY_NWK,      EZSP_getKey, 0x00 /*high*/, 0x00 /*status*/)   // 6A0000...
 
 /*********************************************************************************************\
  * Update the relevant commands with Settings
 \*********************************************************************************************/
 //
+uint64_t ezsp_key_low, ezsp_key_high;
+
 void EZ_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_panid, uint64_t zb_precfgkey_l, uint64_t zb_precfgkey_h, uint8_t zb_txradio_dbm) {
   uint8_t txradio = zb_txradio_dbm;
   // restrict txradio to acceptable range, and use default otherwise
   if (txradio == 0) { txradio = USE_ZIGBEE_TXRADIO_DBM; }
   if (txradio > 20) { txradio = USE_ZIGBEE_TXRADIO_DBM; }
+  ezsp_key_low = zb_precfgkey_l;
+  ezsp_key_high = zb_precfgkey_h;
 
   ZBW(ZBS_SET_SECURITY,     EZSP_setInitialSecurityState, 0x00 /*high*/,
                             Z_B0(EZ_SECURITY_MODE), Z_B1(EZ_SECURITY_MODE),
@@ -789,15 +797,15 @@ void EZ_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_pan
                             0x00,0x00,0x00,0x00, /*NWK channel mask, unused*/
                             )  // 1E00...
 
-ZBW(ZBR_CHECK_NETW_PARM,      EZSP_getNetworkParameters, 0x00 /*high*/,
-                          0x00 /*status*/,
-                          EMBER_COORDINATOR /*0x01*/,
-                          Z_B0(zb_ext_panid), Z_B1(zb_ext_panid), Z_B2(zb_ext_panid), Z_B3(zb_ext_panid),
-                          Z_B4(zb_ext_panid), Z_B5(zb_ext_panid), Z_B6(zb_ext_panid), Z_B7(zb_ext_panid),
-                          Z_B0(zb_pan_id), Z_B1(zb_pan_id),
-                          txradio /*radioTxPower*/,
-                          zb_channel /*channel*/,
-                          )   // 2800...
+  ZBW(ZBR_CHECK_NETW_PARM,  EZSP_getNetworkParameters, 0x00 /*high*/,
+                            0x00 /*status*/,
+                            EMBER_COORDINATOR /*0x01*/,
+                            Z_B0(zb_ext_panid), Z_B1(zb_ext_panid), Z_B2(zb_ext_panid), Z_B3(zb_ext_panid),
+                            Z_B4(zb_ext_panid), Z_B5(zb_ext_panid), Z_B6(zb_ext_panid), Z_B7(zb_ext_panid),
+                            Z_B0(zb_pan_id), Z_B1(zb_pan_id),
+                            txradio /*radioTxPower*/,
+                            zb_channel /*channel*/,
+                            )   // 2800...
 }
 
 static const Zigbee_Instruction zb_prog[] PROGMEM = {
@@ -857,21 +865,18 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_SET_POLICY_05)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
     ZI_SEND(ZBS_SET_POLICY_06)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
 
-    // set encryption keys
-    ZI_SEND(ZBS_SET_SECURITY)           ZI_WAIT_RECV(500, ZBR_SET_SECURITY)
-
     // Decide whether we try 'networkInit()' to restore configuration, or create a new network
     ZI_CALL(&EZ_GotoIfResetConfig, ZIGBEE_LABEL_CONFIGURE_EZSP)    // goto ZIGBEE_LABEL_CONFIGURE_EZSP if reset_config is set
 
     // ZI_GOTO(ZIGBEE_LABEL_CONFIGURE_EZSP)
 
-    // // Try networkInit to restore settings, and check if network comes up
+    // Try networkInit to restore settings, and check if network comes up
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_BAD_CONFIG)    //
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_BAD_CONFIG)
     ZI_SEND(ZBS_NETWORK_INIT)           ZI_WAIT_RECV(500, ZBR_NETWORK_INIT)
     ZI_WAIT_RECV(1500, ZBR_NETWORK_UP)    // wait for network to start
     // check if configuration is ok
-    ZI_SEND(ZBS_GET_CURR_SEC)           ZI_WAIT_RECV(500, ZBR_GET_CURR_SEC)
+    ZI_SEND(ZBS_GET_KEY_NWK)            ZI_WAIT_RECV_FUNC(500, ZBR_GET_KEY_NWK, &EZ_CheckKeyNWK)
     ZI_SEND(ZBS_GET_EUI64)              ZI_WAIT_RECV_FUNC(500, ZBR_GET_EUI64, &EZ_GetEUI64)
     ZI_SEND(ZBS_GET_NETW_PARM)          ZI_WAIT_RECV_FUNC(500, ZBR_CHECK_NETW_PARM, &EZ_NetworkParameters)
 
@@ -887,6 +892,8 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     // Set back normal error handlers
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
+    // set encryption keys
+    ZI_SEND(ZBS_SET_SECURITY)           ZI_WAIT_RECV(500, ZBR_SET_SECURITY)
     // formNetwork
     ZI_SEND(ZBS_FORM_NETWORK)           ZI_WAIT_RECV(500, ZBR_FORM_NETWORK)
     ZI_WAIT_RECV(5000, ZBR_NETWORK_UP)    // wait for network to start
@@ -898,8 +905,11 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     // Query device information
     ZI_SEND(ZBS_GET_EUI64)              ZI_WAIT_RECV_FUNC(500, ZBR_GET_EUI64, &EZ_GetEUI64)
     ZI_SEND(ZBS_GET_NODEID)             ZI_WAIT_RECV_FUNC(500, ZBR_GET_NODEID, &EZ_GetNodeId)
+    // auto-register multicast group 0x0000
+    ZI_LOG(LOG_LEVEL_INFO, kZigbeeGroup0)
+    ZI_SEND(ZBS_SET_MCAST_ENTRY)        ZI_WAIT_RECV(500, ZBR_SET_MCAST_ENTRY)
 
-  ZI_LABEL(ZIGBEE_LABEL_READY)
+  // ZI_LABEL(ZIGBEE_LABEL_READY)
     ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
     ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages

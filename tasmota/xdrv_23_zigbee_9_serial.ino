@@ -594,6 +594,7 @@ int32_t ZigbeeProcessInputEZSP(class SBuffer &buf) {
       case EZSP_setMulticastTableEntry:   // 6400
       case EZSP_setInitialSecurityState:  // 6800
       case EZSP_getCurrentSecurityState:  // 6900
+      case EZSP_getKey:                   // 6A00
         log_level = LOG_LEVEL_DEBUG;
         break;
     }

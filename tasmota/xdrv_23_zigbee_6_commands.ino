@@ -84,6 +84,7 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z(RecallScene),    0x0005, 0x05, 0x01,   Z(xxxxyy) },
   { Z(GetSceneMembership),0x0005, 0x06, 0x01,   Z(xxxx) },
   // Light & Shutter commands
+  { Z(Power),          0x0006, 0xFF, 0x01,   Z() },             // 0=Off, 1=On, 2=Toggle
   { Z(Power),          0x0006, 0x40, 0x81,   Z(xxyy) },         // Power Off With Effect
   { Z(Power),          0x0006, 0x41, 0x81,   Z() },             // Power On With Recall Global Scene
   { Z(Power),          0x0006, 0x42, 0x81,   Z(xxyyyyzzzz) },   // Power On with Timed Off
