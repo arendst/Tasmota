@@ -43,6 +43,7 @@ typedef struct Z_XYZ_Var {    // Holds values for vairables X, Y and Z
 ZF(AddGroup) ZF(ViewGroup) ZF(GetGroup) ZF(GetAllGroups) ZF(RemoveGroup) ZF(RemoveAllGroups)
 ZF(AddScene) ZF(ViewScene) ZF(RemoveScene) ZF(RemoveAllScenes) ZF(RecallScene) ZF(StoreScene) ZF(GetSceneMembership)
 //ZF(Power) ZF(Dimmer)
+ZF(PowerOffEffect) ZF(PowerOnRecall) ZF(PowerOnTimer)
 ZF(DimmerUp) ZF(DimmerDown) ZF(DimmerStop)
 ZF(ResetAlarm) ZF(ResetAllAlarms)
 //ZF(Hue) ZF(Sat) ZF(CT)
@@ -84,10 +85,9 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z(RecallScene),    0x0005, 0x05, 0x01,   Z(xxxxyy) },
   { Z(GetSceneMembership),0x0005, 0x06, 0x01,   Z(xxxx) },
   // Light & Shutter commands
-  { Z(Power),          0x0006, 0xFF, 0x01,   Z() },             // 0=Off, 1=On, 2=Toggle
-  { Z(Power),          0x0006, 0x40, 0x81,   Z(xxyy) },         // Power Off With Effect
-  { Z(Power),          0x0006, 0x41, 0x81,   Z() },             // Power On With Recall Global Scene
-  { Z(Power),          0x0006, 0x42, 0x81,   Z(xxyyyyzzzz) },   // Power On with Timed Off
+  { Z(PowerOffEffect), 0x0006, 0x40, 0x81,   Z(xxyy) },         // Power Off With Effect
+  { Z(PowerOnRecall),  0x0006, 0x41, 0x81,   Z() },             // Power On With Recall Global Scene
+  { Z(PowerOnTimer),   0x0006, 0x42, 0x81,   Z(xxyyyyzzzz) },   // Power On with Timed Off
   { Z(Power),          0x0006, 0xFF, 0x01,   Z() },             // 0=Off, 1=On, 2=Toggle
   { Z(Dimmer),         0x0008, 0x04, 0x01,   Z(xx0A00) },       // Move to Level with On/Off, xx=0..254 (255 is invalid)
   { Z(DimmerUp),       0x0008, 0x06, 0x01,   Z(00190200) },       // Step up by 10%, 0.2 secs
@@ -470,19 +470,19 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
         json[F("ScenePayload")] = scene_payload.substring(8); // remove first 8 characters
       } else if ((cluster == 0x0006) && (cmd == 0x40)) {
         // Power Off With Effect
-        json[command_name] = 0;       // always "Power":0
-        json[command_name2 + F("Effect")] = xyz.x;
-        json[command_name2 + F("EffectVariant")] = xyz.y;
+        json[F("Power")] = 0;       // always "Power":0
+        json[F("PowerEffect")] = xyz.x;
+        json[F("PowerEffectVariant")] = xyz.y;
       } else if ((cluster == 0x0006) && (cmd == 0x41)) {
         // Power On With Recall Global Scene
-        json[command_name] = 1;       // always "Power":1
-        json[command_name2 + F("RecallGlobalScene")] = true;
+        json[F("Power")] = 1;       // always "Power":1
+        json[F("PowerRecallGlobalScene")] = true;
       } else if ((cluster == 0x0006) && (cmd == 0x42)) {
         // Power On With Timed Off Command
-        json[command_name] = 1;       // always "Power":1
-        json[command_name2 + F("OnlyWhenOn")] = xyz.x;
-        json[command_name2 + F("OnTime")] = xyz.y / 10.0f;
-        json[command_name2 + F("OffWait")] = xyz.z / 10.0f;
+        json[F("Power")] = 1;       // always "Power":1
+        json[F("PowerOnlyWhenOn")] = xyz.x;
+        json[F("PowerOnTime")] = xyz.y / 10.0f;
+        json[F("PowerOffWait")] = xyz.z / 10.0f;
       }
     } else {  // general case
       bool extended_command = false;    // do we send command with endpoint suffix
