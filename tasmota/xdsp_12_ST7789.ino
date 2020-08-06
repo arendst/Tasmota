@@ -53,7 +53,6 @@ Arduino_ST7789 *st7789;
 #ifdef USE_TOUCH_BUTTONS
 extern VButton *buttons[];
 #endif
-TwoWire I2C2 = TwoWire(1);
 FT5206_Class *touchp;
 uint8_t FT5206_found;
 TP_Point st7789_pLoc;
@@ -142,11 +141,11 @@ void ST7789_InitDriver()
     // start digitizer with fixed adress and pins for esp32
     #define SDA_2 23
     #define SCL_2 32
-    I2C2.begin(SDA_2, SCL_2, 400000);
+    Wire1.begin(SDA_2, SCL_2, 400000);
     touchp = new FT5206_Class();
-    if (touchp->begin(I2C2, FT5206_address)) {
+    if (touchp->begin(Wire1, FT5206_address)) {
       FT5206_found=1;
-      I2cSetDevice(FT5206_address);
+      //I2cSetDevice(FT5206_address);
       I2cSetActiveFound(FT5206_address, "FT5206");
     } else {
       FT5206_found=0;

@@ -35,10 +35,12 @@ int FT5206_Class::begin(TwoWire &port, uint8_t addr)
     _address = addr;
     uint8_t val;
     _readByte(FT5206_VENDID_REG, 1, &val);
+    //Serial.printf("vend id %d\n",val );
     if (val != FT5206_VENDID) {
-        return false;
+  //      return false;
     }
     _readByte(FT5206_CHIPID_REG, 1, &val);
+    //Serial.printf("chip id %d\n",val );
     if ((val != FT6206_CHIPID) && (val != FT6236_CHIPID) && (val != FT6236U_CHIPID) && (val != FT5206U_CHIPID)) {
         return false;
     }
