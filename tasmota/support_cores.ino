@@ -1,5 +1,5 @@
 /*
-  support_legacy_cores.ino - Legacy arduino core support for Tasmota
+  support_cores.ino - Arduino core support for Tasmota
 
   Copyright (C) 2020  Theo Arends
 
@@ -35,3 +35,29 @@ void resetPins()
   }
 */
 }
+
+/*********************************************************************************************\
+ * Hardware related
+\*********************************************************************************************/
+
+#ifdef ESP8266
+
+void HwWdtDisable(void) {
+  *((volatile uint32_t*) 0x60000900) &= ~(1);  // Hardware WDT OFF
+}
+
+void HwWdtEnable(void) {
+  *((volatile uint32_t*) 0x60000900) |= 1;     // Hardware WDT ON
+}
+
+void WdtDisable(void) {
+  ESP.wdtDisable();
+  HwWdtDisable();
+}
+
+void WdtEnable(void) {
+  HwWdtEnable();
+  ESP.wdtEnable(0);
+}
+
+#endif  // ESP8266
