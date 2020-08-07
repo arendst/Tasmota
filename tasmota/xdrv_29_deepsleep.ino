@@ -71,13 +71,12 @@ void DeepSleepReInit(void)
       AddLog_P2(LOG_LEVEL_ERROR, PSTR("DSL: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
       RtcSettingsSave();
       RtcRebootReset();
-      #ifdef ESP8266
-        ESP.deepSleep(100 * RtcSettings.deepsleep_slip * (DEEPSLEEP_MAX_CYCLE < RtcSettings.ultradeepsleep ? DEEPSLEEP_MAX_CYCLE : RtcSettings.ultradeepsleep), WAKE_RF_DEFAULT);
-      #endif
-      #ifdef ESP32
-        esp_sleep_enable_timer_wakeup(100 * RtcSettings.deepsleep_slip * (DEEPSLEEP_MAX_CYCLE < RtcSettings.ultradeepsleep ? DEEPSLEEP_MAX_CYCLE : RtcSettings.ultradeepsleep));
-        esp_deep_sleep_start();
-      #endif
+#ifdef ESP8266
+      ESP.deepSleep(100 * RtcSettings.deepsleep_slip * (DEEPSLEEP_MAX_CYCLE < RtcSettings.ultradeepsleep ? DEEPSLEEP_MAX_CYCLE : RtcSettings.ultradeepsleep), WAKE_RF_DEFAULT);
+#else  // ESP32
+      esp_sleep_enable_timer_wakeup(100 * RtcSettings.deepsleep_slip * (DEEPSLEEP_MAX_CYCLE < RtcSettings.ultradeepsleep ? DEEPSLEEP_MAX_CYCLE : RtcSettings.ultradeepsleep));
+      esp_deep_sleep_start();
+#endif  // ESP8266 or ESP32
       yield();
       // Sleeping
     }
@@ -144,11 +143,10 @@ void DeepSleepStart(void)
   RtcSettingsSave();
 #ifdef ESP8266
   ESP.deepSleep(100 * RtcSettings.deepsleep_slip * deepsleep_sleeptime);
-#endif
-#ifdef ESP32
+#else  // ESP32
   esp_sleep_enable_timer_wakeup(100 * RtcSettings.deepsleep_slip * deepsleep_sleeptime);
   esp_deep_sleep_start();
-#endif
+#endif  // ESP8266 or ESP32
   yield();
 }
 
