@@ -426,8 +426,12 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
       if ((cluster == 0x0500) && (cmd == 0x00)) {
         // "ZoneStatusChange"
         json[command_name] = xyz.x;
-        json[command_name2 + F("Ext")] = xyz.y;
-        json[command_name2 + F("Zone")] = xyz.z;
+        if (0 != xyz.y) {
+          json[command_name2 + F("Ext")] = xyz.y;
+        }
+        if ((0 != xyz.z) && (0xFF != xyz.z)) {
+          json[command_name2 + F("Zone")] = xyz.z;
+        }
       } else if ((cluster == 0x0004) && ((cmd == 0x00) || (cmd == 0x01) || (cmd == 0x03))) {
         // AddGroupResp or ViewGroupResp (group name ignored) or RemoveGroup
         json[command_name] = xyz.y;
@@ -525,6 +529,7 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
 // If not found:
 //  - returns nullptr
 const __FlashStringHelper* zigbeeFindCommand(const char *command, uint16_t *cluster, uint16_t *cmd) {
+  if (nullptr == command) { return nullptr; }
   for (uint32_t i = 0; i < sizeof(Z_Commands) / sizeof(Z_Commands[0]); i++) {
     const Z_CommandConverter *conv = &Z_Commands[i];
     uint8_t conv_direction = pgm_read_byte(&conv->direction);
