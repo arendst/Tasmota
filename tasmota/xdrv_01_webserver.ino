@@ -35,7 +35,7 @@ const uint16_t CHUNKED_BUFFER_SIZE = (MESSZ / 2) - 100;  // Chunk buffer size (s
 
 const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
 const uint16_t HTTP_RESTART_RECONNECT_TIME = 9000;       // milliseconds - Allow time for restart and wifi reconnect
-const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 28000;  // milliseconds - Allow time for uploading binary, unzip/write to final destination and wifi reconnect
+const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 20000;  // milliseconds - Allow time for uploading binary, unzip/write to final destination and wifi reconnect
 
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
@@ -2604,7 +2604,13 @@ void HandleUploadDone(void)
 
   WSContentStart_P(S_INFORMATION);
   if (!Web.upload_error) {
-    WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, HTTP_OTA_RESTART_RECONNECT_TIME);  // Refesh main web ui after OTA upgrade
+    uint32_t javascript_settimeout = HTTP_OTA_RESTART_RECONNECT_TIME;
+#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+    if (ZigbeeUploadOtaReady()) {
+      javascript_settimeout = 30000;                                  // Refesh main web ui after transfer upgrade
+    }
+#endif
+    WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, javascript_settimeout);  // Refesh main web ui after OTA upgrade
   }
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
