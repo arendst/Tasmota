@@ -47,11 +47,6 @@ public:
 
 EZSP_Serial_t EZSP_Serial;
 
-#endif // USE_ZIGBEE_EZSP
-
-#include <TasmotaSerial.h>
-TasmotaSerial *ZigbeeSerial = nullptr;
-
 //
 // Blink Led Status
 //
@@ -70,6 +65,11 @@ bool Z_LedStatusSet(bool onoff) {
   }
   return led_status_on;
 }
+
+#endif // USE_ZIGBEE_EZSP
+
+#include <TasmotaSerial.h>
+TasmotaSerial *ZigbeeSerial = nullptr;
 
 /********************************************************************************************/
 //
