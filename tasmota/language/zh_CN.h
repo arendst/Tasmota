@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "开始上传"
 #define D_UPGRADE_STARTED "开始升级"
 #define D_UPLOAD_DONE "上传完成"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "没有选择任何文件"
 #define D_UPLOAD_ERR_2 "没有足够空间"
 #define D_UPLOAD_ERR_3 "固件头不是 0xE9"

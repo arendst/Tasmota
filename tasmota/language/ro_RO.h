@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Încărcare începută"
 #define D_UPGRADE_STARTED "Actualizare începută"
 #define D_UPLOAD_DONE "Încărcare terminată"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nici un fișier selectat"
 #define D_UPLOAD_ERR_2 "Spațiu insuficient"
 #define D_UPLOAD_ERR_3 "Magic byte nu este 0xE9"

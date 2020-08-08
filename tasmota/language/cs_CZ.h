@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Nahrávání zahájeno"
 #define D_UPGRADE_STARTED "Zahájení aktualizace"
 #define D_UPLOAD_DONE "Nahrávání ukončeno"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Soubor nebyl vybrán"
 #define D_UPLOAD_ERR_2 "Málo místa"
 #define D_UPLOAD_ERR_3 "Magický byte má hodnotu jinou než 0xE9"

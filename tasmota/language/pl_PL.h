@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Wgrywanie rozpoczęte"
 #define D_UPGRADE_STARTED "Aktualizacja rozpoczęta"
 #define D_UPLOAD_DONE "Wgrywanie zakończone"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nie wybrano pliku"
 #define D_UPLOAD_ERR_2 "Niewystarczająca ilość miejsca"
 #define D_UPLOAD_ERR_3 "Magiczny bajt jest inny niz 0xE9"

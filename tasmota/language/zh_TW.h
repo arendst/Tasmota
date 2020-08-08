@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "已開始上傳"
 #define D_UPGRADE_STARTED "已開始升級"
 #define D_UPLOAD_DONE "已上傳完成"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "沒選擇任何檔案"
 #define D_UPLOAD_ERR_2 "可用空間不足"
 #define D_UPLOAD_ERR_3 "魔術數字(Magic byte)不是 0xE9"

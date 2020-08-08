@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Загрузка началась"
 #define D_UPGRADE_STARTED "Обновление началось"
 #define D_UPLOAD_DONE "Загрузка завершена"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Файл не выбран"
 #define D_UPLOAD_ERR_2 "Недостаточно места"
 #define D_UPLOAD_ERR_3 "Magic байт не 0xE9"

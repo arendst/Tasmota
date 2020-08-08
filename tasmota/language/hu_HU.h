@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Feltöltés elindítva"
 #define D_UPGRADE_STARTED "Frissítés elindítva"
 #define D_UPLOAD_DONE "Feltöltés kész"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nincs fájl kijelölve"
 #define D_UPLOAD_ERR_2 "Nincs elég memória"
 #define D_UPLOAD_ERR_3 "A \"magic byte\" nem 0xE9"

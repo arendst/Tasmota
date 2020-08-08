@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Envio Iniciado"
 #define D_UPGRADE_STARTED "Atualização Iniciada"
 #define D_UPLOAD_DONE "Atualização Finalizada"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nenhum ficheiro selecionado"
 #define D_UPLOAD_ERR_2 "Não existe espaço disponível"
 #define D_UPLOAD_ERR_3 "O Byte mágico não é 0xE9"

@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Yükleme başlatıldı"
 #define D_UPGRADE_STARTED "YÜkestlme başlatıldı"
 #define D_UPLOAD_DONE "Yükleme Tamamlandı"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Dosya seçilmedi"
 #define D_UPLOAD_ERR_2 "Boş yer yok"
 #define D_UPLOAD_ERR_3 "Magic byte is not 0xE9"

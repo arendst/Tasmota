@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Téléchargement lancé"
 #define D_UPGRADE_STARTED "Mise à jour lancée"
 #define D_UPLOAD_DONE "Téléchargement terminé"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Aucun fichier sélectionné"
 #define D_UPLOAD_ERR_2 "Espace insuffisant"
 #define D_UPLOAD_ERR_3 "L'octet magique n'est pas 0xE9"

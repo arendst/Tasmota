@@ -2625,19 +2625,23 @@ void HandleUploadDone(void)
     stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
-    WSContentSend_P(HTTP_MSG_RSTRT);
-    ShowWebSource(SRC_WEBGUI);
     restart_flag = 2;  // Always restart to re-enable disabled features during update
 #if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
     if (ZigbeeUploadOtaReady()) {
+      WSContentSend_P(PSTR("<br><div style='text-align:center;'>" D_TRANSFER_STARTED " ...</div><br>"));
       restart_flag = 0;  // Hold restart as firmware still needs to be written to MCU EFR32
     }
 #endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_TASMOTA_CLIENT
     if (TasmotaClient_GetFlagFlashing()) {
-      restart_flag = 0;  // Hold restart as code still needs to be trasnferred to Atmega
+      WSContentSend_P(PSTR("<br><div style='text-align:center;'>" D_TRANSFER_STARTED " ...</div><br>"));
+      restart_flag = 0;  // Hold restart as code still needs to be transferred to Atmega
     }
 #endif  // USE_TASMOTA_CLIENT
+    if (restart_flag) {
+      WSContentSend_P(HTTP_MSG_RSTRT);
+      ShowWebSource(SRC_WEBGUI);
+    }
   }
   SettingsBufferFree();
   WSContentSend_P(PSTR("</div><br>"));

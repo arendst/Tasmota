@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Зареждането започна"
 #define D_UPGRADE_STARTED "Обновяването започна"
 #define D_UPLOAD_DONE "Зареждането завърши"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Не е избран файл"
 #define D_UPLOAD_ERR_2 "Недостатъчно свободно място"
 #define D_UPLOAD_ERR_3 "Magic байтът не е 0xE9"

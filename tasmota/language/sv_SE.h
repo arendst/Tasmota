@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Uppladdning startad"
 #define D_UPGRADE_STARTED "Uppgradeing startad"
 #define D_UPLOAD_DONE "Uppladdning klar"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Ingen fil vald"
 #define D_UPLOAD_ERR_2 "Inte tillräckligt med ledigt utrymme"
 #define D_UPLOAD_ERR_3 "Magisk byte är inte 0xE9"

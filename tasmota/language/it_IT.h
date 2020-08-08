@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Caricamento..."
 #define D_UPGRADE_STARTED "Aggiornamento..."
 #define D_UPLOAD_DONE "Caricamento completato"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nessun file selezionato"
 #define D_UPLOAD_ERR_2 "Spazio insufficiente"
 #define D_UPLOAD_ERR_3 "Magic byte non corrispondente a 0xE9"

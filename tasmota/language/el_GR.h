@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Η μεταφόρτωση ξεκίνησε"
 #define D_UPGRADE_STARTED "Η αναβάθμιση ξεκίνησε"
 #define D_UPLOAD_DONE "Η μεταφόρτωση ολοκληρώθηκε"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Δεν έχει επιλεγεί αρχείο"
 #define D_UPLOAD_ERR_2 "Δεν υπάρχει επαρκής χώρος"
 #define D_UPLOAD_ERR_3 "Magic byte is not 0xE9"

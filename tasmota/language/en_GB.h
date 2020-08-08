@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Upload started"
 #define D_UPGRADE_STARTED "Upgrade started"
 #define D_UPLOAD_DONE "Upload done"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "No file selected"
 #define D_UPLOAD_ERR_2 "Not enough space"
 #define D_UPLOAD_ERR_3 "Magic byte is not 0xE9"

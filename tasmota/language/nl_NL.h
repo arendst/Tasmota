@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "Verzending gestart"
 #define D_UPGRADE_STARTED "Opwaarderen gestart"
 #define D_UPLOAD_DONE "Opwaarderen klaar"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Geen bestand gekozen"
 #define D_UPLOAD_ERR_2 "Onvoldoende geheugen ruimte"
 #define D_UPLOAD_ERR_3 "Magische byte is niet 0xE9"

@@ -349,6 +349,7 @@
 #define D_UPLOAD_STARTED "업로드 시작됨"
 #define D_UPGRADE_STARTED "업그레이드 시작됨"
 #define D_UPLOAD_DONE "업그레이드 완료"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "파일이 선택되지 않았습니다"
 #define D_UPLOAD_ERR_2 "용량이 충분하지 않습니다"
 #define D_UPLOAD_ERR_3 "Magic 바이트가 0xE9가 아닙니다"
