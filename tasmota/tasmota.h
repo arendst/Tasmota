@@ -209,6 +209,12 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define KNX_MAX_device_param   31
 #define MAX_KNXTX_CMNDS        5
 
+// Switch Mode definietions
+#define SM_TIMER_MASK         0x3F
+#define SM_NO_TIMER_MASK      0xFF
+#define SM_FIRST_PRESS        0x40
+#define SM_SECOND_PRESS       0x80
+
 /*********************************************************************************************\
  * Enumeration
 \*********************************************************************************************/
