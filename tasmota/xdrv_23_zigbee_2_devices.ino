@@ -647,12 +647,14 @@ void Z_Devices::setReachable(uint16_t shortaddr, bool reachable) {
 }
 
 void Z_Devices::setLQI(uint16_t shortaddr, uint8_t lqi) {
+  if (shortaddr == localShortAddr) { return; }
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
   device.linkquality = lqi;
 }
 
 uint8_t Z_Devices::getLQI(uint16_t shortaddr) const {
+  if (shortaddr == localShortAddr) { return 0xFF; }
   int32_t found = findShortAddr(shortaddr);
   if (found >= 0) {
     const Z_Device & device = devicesAt(found);

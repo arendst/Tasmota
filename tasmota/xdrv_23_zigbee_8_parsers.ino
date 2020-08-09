@@ -1152,7 +1152,6 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
   bool            securityuse = (apsoptions & EMBER_APS_OPTION_ENCRYPTION) ? true : false;
   uint16_t        groupid = buf.get16(11);
   uint8_t         seqnumber = buf.get8(13);
-  // uint8_t         linkquality = buf.get8(14);
   int8_t          linkrssi = buf.get8(15);
   uint8_t         linkquality = ZNP_RSSI2Lqi(linkrssi);   // don't take EZSP LQI but calculate our own based on ZNP 
   uint16_t        srcaddr = buf.get16(16);
@@ -1163,6 +1162,8 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
 
   if ((0x0000 == profileid) && (0x00 == srcendpoint))  {
     // ZDO request
+    // Report LQI
+    zigbee_devices.setLQI(srcaddr, linkquality);
     // Since ZDO messages start with a sequence number, we skip it
     // but we add the source address in the last 2 bytes
     SBuffer zdo_buf(buf.get8(20) - 1 + 2);
