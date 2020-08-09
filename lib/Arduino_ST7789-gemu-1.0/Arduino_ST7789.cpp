@@ -17,6 +17,9 @@ const uint16_t ST7789_colors[]={ST7789_BLACK,ST7789_WHITE,ST7789_RED,ST7789_GREE
   ST7789_YELLOW,ST7789_NAVY,ST7789_DARKGREEN,ST7789_DARKCYAN,ST7789_MAROON,ST7789_PURPLE,ST7789_OLIVE,\
 ST7789_LIGHTGREY,ST7789_DARKGREY,ST7789_ORANGE,ST7789_GREENYELLOW,ST7789_PINK};
 
+#ifdef ESP32
+#define ST7789_DIMMER
+#endif
 
 uint16_t Arduino_ST7789::GetColorFromIndex(uint8_t index) {
   if (index>=sizeof(ST7789_colors)/2) index=0;
@@ -87,7 +90,7 @@ Arduino_ST7789::Arduino_ST7789(int8_t dc, int8_t rst, int8_t sid, int8_t sclk, i
 
 // Constructor when using hardware SPI.  Faster, but must use SPI pins
 // specific to each board type (e.g. 11,13 for Uno, 51,52 for Mega, etc.)
-Arduino_ST7789::Arduino_ST7789(int8_t dc, int8_t rst, int8_t cs)
+Arduino_ST7789::Arduino_ST7789(int8_t dc, int8_t rst, int8_t cs, int8_t bp)
   : Renderer(ST7789_TFTWIDTH, ST7789_TFTHEIGHT) {
   _cs   = cs;
   _dc   = dc;
@@ -95,6 +98,7 @@ Arduino_ST7789::Arduino_ST7789(int8_t dc, int8_t rst, int8_t cs)
   _hwSPI = true;
   _SPI9bit = false;
   _sid  = _sclk = -1;
+  _bp = bp;
 }
 
 
@@ -253,7 +257,15 @@ void Arduino_ST7789::commonInit(const uint8_t *cmdList) {
   }
 
   if (_bp>=0) {
+#define ESP32_PWM_CHANNEL 1
+#ifdef ST7789_DIMMER
+    ledcSetup(ESP32_PWM_CHANNEL,4000,8);
+    ledcAttachPin(_bp,ESP32_PWM_CHANNEL);
+    ledcWrite(ESP32_PWM_CHANNEL,128);
+#else
     pinMode(_bp, OUTPUT);
+#endif
+
   }
 
 
@@ -348,12 +360,14 @@ void Arduino_ST7789::setRotation(uint8_t m) {
   }
 }
 
-void Arduino_ST7789::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1,
- uint16_t y1) {
+void Arduino_ST7789::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+  setAddrWindow_int(x0,y0,x1-1,y1-1);
+}
 
+
+void Arduino_ST7789::setAddrWindow_int(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
   uint16_t x_start = x0 + _xstart, x_end = x1 + _xstart;
   uint16_t y_start = y0 + _ystart, y_end = y1 + _ystart;
-
 
   writecommand(ST7789_CASET); // Column addr set
   writedata(x_start >> 8);
@@ -370,23 +384,11 @@ void Arduino_ST7789::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1,
   writecommand(ST7789_RAMWR); // write to RAM
 }
 
-void Arduino_ST7789::pushColor(uint16_t color) {
-  SPI_BEGIN_TRANSACTION();
-  DC_HIGH();
-  CS_LOW();
-
-  spiwrite(color >> 8);
-  spiwrite(color);
-
-  CS_HIGH();
-  SPI_END_TRANSACTION();
-}
-
 void Arduino_ST7789::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
   if((x < 0) ||(x >= _width) || (y < 0) || (y >= _height)) return;
 
-  setAddrWindow(x,y,x+1,y+1);
+  setAddrWindow_int(x,y,x+1,y+1);
 
   SPI_BEGIN_TRANSACTION();
   DC_HIGH();
@@ -405,7 +407,7 @@ void Arduino_ST7789::drawFastVLine(int16_t x, int16_t y, int16_t h,
   // Rudimentary clipping
   if((x >= _width) || (y >= _height)) return;
   if((y+h-1) >= _height) h = _height-y;
-  setAddrWindow(x, y, x, y+h-1);
+  setAddrWindow_int(x, y, x, y+h-1);
 
   uint8_t hi = color >> 8, lo = color;
 
@@ -428,7 +430,7 @@ void Arduino_ST7789::drawFastHLine(int16_t x, int16_t y, int16_t w,
   // Rudimentary clipping
   if((x >= _width) || (y >= _height)) return;
   if((x+w-1) >= _width)  w = _width-x;
-  setAddrWindow(x, y, x+w-1, y);
+  setAddrWindow_int(x, y, x+w-1, y);
 
   uint8_t hi = color >> 8, lo = color;
 
@@ -458,7 +460,7 @@ void Arduino_ST7789::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
   if((x + w - 1) >= _width)  w = _width  - x;
   if((y + h - 1) >= _height) h = _height - y;
 
-  setAddrWindow(x, y, x+w-1, y+h-1);
+  setAddrWindow_int(x, y, x+w-1, y+h-1);
 
   uint8_t hi = color >> 8, lo = color;
 
@@ -543,12 +545,58 @@ void Arduino_ST7789::DisplayOnff(int8_t on) {
   if (on) {
     writecommand(ST7789_DISPON);    //Display on
     if (_bp>=0) {
+#ifdef ST7789_DIMMER
+      ledcWrite(ESP32_PWM_CHANNEL,255);
+#else
       digitalWrite(_bp,HIGH);
+#endif
     }
   } else {
     writecommand(ST7789_DISPOFF);
     if (_bp>=0) {
+#ifdef ST7789_DIMMER
+      ledcWrite(ESP32_PWM_CHANNEL,0);
+#else
       digitalWrite(_bp,LOW);
+#endif
     }
   }
+}
+
+// dimmer 0-100
+void Arduino_ST7789::dim(uint8_t dimmer) {
+  if (dimmer>15) dimmer=15;
+  dimmer=((float)dimmer/15.0)*255.0;
+#ifdef ESP32
+  ledcWrite(ESP32_PWM_CHANNEL,dimmer);
+#endif
+}
+
+void Arduino_ST7789::pushColor(uint16_t color) {
+  SPI_BEGIN_TRANSACTION();
+  DC_HIGH();
+  CS_LOW();
+
+  spiwrite(color >> 8);
+  spiwrite(color);
+
+  CS_HIGH();
+  SPI_END_TRANSACTION();
+}
+
+void Arduino_ST7789::pushColors(uint16_t *data, uint8_t len, boolean first) {
+  uint16_t color;
+
+  SPI_BEGIN_TRANSACTION();
+  DC_HIGH();
+  CS_LOW();
+
+  while (len--) {
+    color = *data++;
+    spiwrite(color >> 8);
+    spiwrite(color);
+  }
+
+  CS_HIGH();
+  SPI_END_TRANSACTION();
 }

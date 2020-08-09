@@ -83,17 +83,17 @@ void ST7789_InitDriver()
     fg_color = ST7789_WHITE;
     bg_color = ST7789_BLACK;
 
-    uint8_t bppin=BACKPLANE_PIN;
+    int8_t bppin=BACKPLANE_PIN;
     if  (PinUsed(GPIO_BACKLIGHT)) {
       bppin=Pin(GPIO_BACKLIGHT);
     }
 
-    uint8_t reset = -1;
+    int8_t reset = -1;
     if  (PinUsed(GPIO_OLED_RESET)) {
       reset=Pin(GPIO_OLED_RESET);
     }
 
-    uint8_t cs = -1;
+    int8_t cs = -1;
     if  (PinUsed(GPIO_SSPI_CS)) {
       cs=Pin(GPIO_SSPI_CS);
     } else if (PinUsed(GPIO_SPI_CS)) {
@@ -114,7 +114,7 @@ void ST7789_InitDriver()
 
     // init renderer, may use hardware spi
     if (PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SPI_CLK)==HW_SPI_CLK) && PinUsed(GPIO_SPI_DC)) {
-        st7789  = new Arduino_ST7789(Pin(GPIO_SPI_DC), reset, Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK), cs, bppin);
+        st7789  = new Arduino_ST7789(Pin(GPIO_SPI_DC), reset, cs, bppin);
     } else {
       if ((PinUsed(GPIO_SSPI_CS) || PinUsed(GPIO_OLED_RESET)) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_DC)) {
         st7789  = new Arduino_ST7789(Pin(GPIO_SSPI_DC), reset, Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), cs, bppin);

@@ -505,7 +505,7 @@ void DisplayText(void)
             cp += var;
             linebuf[fill] = 0;
             break;
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT) && USE_SCRIPT_FATFS>=0
+#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
           case 'P':
             { char *ep=strchr(cp,':');
              if (ep) {
@@ -1512,7 +1512,7 @@ void rgb888_to_565(uint8_t *in, uint16_t *out, uint32_t len);
 #endif
 #endif
 
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT) && USE_SCRIPT_FATFS>=0
+#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
 
 #ifdef ESP32
 extern FS *fsp;
@@ -1541,14 +1541,13 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
     uint16_t ysize;
     fp.read((uint8_t*)&ysize,2);
 #if 1
-    uint16_t xdiv=xsize/XBUFF_LEN;
     renderer->setAddrWindow(xp,yp,xp+xsize,yp+ysize);
-    for(int16_t j=0; j<ysize; j++) {
-      for(int16_t i=0; i<xsize; i+=XBUFF_LEN) {
-        uint16_t rgb[XBUFF_LEN];
-        uint16_t len=fp.read((uint8_t*)rgb,XBUFF_LEN*2);
-        if (len>=2) renderer->pushColors(rgb,len/2,true);
-      }
+    uint16_t rgb[xsize];
+    for (int16_t j=0; j<ysize; j++) {
+    //  for(int16_t i=0; i<xsize; i+=XBUFF_LEN) {
+        fp.read((uint8_t*)rgb,xsize*2);
+        renderer->pushColors(rgb,xsize,true);
+    //  }
       OsWatchLoop();
     }
     renderer->setAddrWindow(0,0,0,0);

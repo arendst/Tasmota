@@ -121,8 +121,8 @@ class Arduino_ST7789 : public Renderer {
 
  public:
 
-  Arduino_ST7789(int8_t DC, int8_t RST, int8_t SID, int8_t SCLK, int8_t CS = -1,int8_t bp = -1);
-  Arduino_ST7789(int8_t DC, int8_t RST, int8_t CS = -1);
+  Arduino_ST7789(int8_t DC, int8_t RST, int8_t SID, int8_t SCLK, int8_t CS, int8_t bp);
+  Arduino_ST7789(int8_t DC, int8_t RST, int8_t CS, int8_t bp);
 
   void     setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1),
            pushColor(uint16_t color),
@@ -134,12 +134,14 @@ class Arduino_ST7789 : public Renderer {
            setRotation(uint8_t r),
            invertDisplay(boolean i),
            DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font),
-
-		   init(uint16_t width, uint16_t height);
+           setAddrWindow_int(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1),
+		       init(uint16_t width, uint16_t height);
   uint16_t Color565(uint8_t r, uint8_t g, uint8_t b);
   uint16_t GetColorFromIndex(uint8_t index);
   uint16_t color565(uint8_t r, uint8_t g, uint8_t b) { return Color565(r, g, b); }
   void DisplayOnff(int8_t on);
+  void dim(uint8_t contrast);
+  void pushColors(uint16_t *data, uint8_t len, boolean first);
 
  protected:
   uint8_t  _colstart, _rowstart, _xstart, _ystart; // some displays need this changed
