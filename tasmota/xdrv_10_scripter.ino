@@ -43,6 +43,8 @@ keywords if then else endif, or, and are better readable for beginners (others m
 
 #define SCRIPT_DEBUG 0
 
+#define FORMAT_SPIFFS_IF_FAILED true
+
 
 #ifndef MAXVARS
 #define MAXVARS 50
@@ -78,11 +80,13 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #undef EEP_SCRIPT_SIZE
 #undef USE_SCRIPT_COMPRESSION
 #if USE_SCRIPT_FATFS==-1
+
 #ifdef ESP32
-#error "script fat file option -1 currently not supported for ESP32"
+#pragma message "script fat file option -1 used"
 #else
 #pragma message "script fat file option -1 used"
 #endif
+
 #else
 #pragma message "script fat file SDC option used"
 #endif
@@ -152,7 +156,11 @@ void Script_ticker4_end(void) {
 #if defined(LITTLEFS_SCRIPT_SIZE) || (USE_SCRIPT_FATFS==-1)
 #ifdef ESP32
 #include "FS.h"
+#ifdef LITTLEFS_SCRIPT_SIZE
 #include "SPIFFS.h"
+#else
+#include "FFat.h"
+#endif
 #else
 #include <LittleFS.h>
 #endif
@@ -168,15 +176,15 @@ void SaveFile(const char *name,const uint8_t *buf,uint32_t len) {
   file.close();
 }
 
-#define FORMAT_SPIFFS_IF_FAILED true
+
 uint8_t fs_mounted=0;
 
 void LoadFile(const char *name,uint8_t *buf,uint32_t len) {
   if (!fs_mounted) {
 #ifdef ESP32
-    if(!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)){
+    if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
 #else
-    if(!fsp->begin()){
+    if (!fsp->begin()) {
 #endif
           //Serial.println("SPIFFS Mount Failed");
       return;
@@ -776,11 +784,20 @@ char *script;
     if (!glob_script_mem.script_sd_found) {
 
 #if USE_SCRIPT_FATFS>=0
+    // user sd card
       fsp=&SD;
       if (SD.begin(USE_SCRIPT_FATFS)) {
 #else
+    // use flash file
+#ifdef ESP32
+    //  if (SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
+      if (FFat.begin(true)) {
+#else
       if (fsp->begin()) {
 #endif
+
+#endif // USE_SCRIPT_FATFS>=0
+
         glob_script_mem.script_sd_found=1;
       } else {
         glob_script_mem.script_sd_found=0;
@@ -3590,7 +3607,22 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
               // number precision
               glob_script_mem.script_dprec=atoi(lp);
               goto next_line;
-            } else if (!strncmp(lp,"delay(",6)) {
+            }
+#ifdef USE_DISPLAY
+            else if (!strncmp(lp,"dt",2)) {
+              char dstbuf[256];
+              lp+=2;
+              SCRIPT_SKIP_SPACES
+              Replace_Cmd_Vars(lp,1,dstbuf,sizeof(dstbuf));
+              char *savptr = XdrvMailbox.data;
+              XdrvMailbox.data = dstbuf;
+              XdrvMailbox.data_len = 0;
+              DisplayText();
+              XdrvMailbox.data = savptr;
+              goto next_line;
+            }
+#endif
+            else if (!strncmp(lp,"delay(",6)) {
               lp+=5;
               // delay
               lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
@@ -4415,6 +4447,7 @@ char path[48];
 
 void Script_FileUploadConfiguration(void) {
   uint8_t depth=0;
+
   strcpy(path,"/");
 
   if (!HttpCheckPriviledgedAccess()) { return; }
@@ -4464,7 +4497,12 @@ void script_upload(void) {
   HTTPUpload& upload = Webserver->upload();
   if (upload.status == UPLOAD_FILE_START) {
     char npath[48];
+#if defined(ESP32) && defined(USE_SCRIPT_FATFS) && USE_SCRIPT_FATFS==-1
+    //sprintf(npath,"/%s",upload.filename.c_str());
     sprintf(npath,"%s/%s",path,upload.filename.c_str());
+#else
+    sprintf(npath,"%s/%s",path,upload.filename.c_str());
+#endif
     fsp->remove(npath);
     upload_file=fsp->open(npath,FILE_WRITE);
     if (!upload_file) Web.upload_error=1;
@@ -6755,13 +6793,21 @@ bool Xdrv10(uint8_t function)
       fsp = &SD;
       if (SD.begin(USE_SCRIPT_FATFS)) {
 #else
+    // flash file system
+#ifdef ESP32
+      //fsp = &SPIFFS;
+      //if (SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
+      fsp=&FFat;
+      if (FFat.begin(true)) {
+#else
         // fs on flash
       fsp = &LittleFS;
       if (fsp->begin()) {
+#endif // ESP
+
 #endif // USE_SCRIPT_FATFS>=0
-
+        AddLog_P(LOG_LEVEL_INFO,PSTR("FATFS mount OK!"));
         //fsp->dateTimeCallback(dateTime);
-
         glob_script_mem.script_sd_found=1;
         char *script;
         script=(char*)calloc(FAT_SCRIPT_SIZE+4,1);
@@ -6781,6 +6827,7 @@ bool Xdrv10(uint8_t function)
         glob_script_mem.flags=1;
 
       } else {
+        AddLog_P(LOG_LEVEL_INFO,PSTR("FATFS mount failed!"));
         glob_script_mem.script_sd_found=0;
       }
 #endif // USE_SCRIPT_FATFS
