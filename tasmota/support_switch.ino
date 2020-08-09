@@ -330,7 +330,7 @@ void SwitchHandler(uint8_t mode)
         case PUSHHOLDMULTI:
           if (NOT_PRESSED == button) {
             if ((Switch.hold_timer[i] & SM_TIMER_MASK) != 0) {
-              Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK)) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;              
+              Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;              
               SendKey(KEY_SWITCH, i +1, POWER_INV);  // Execute command via MQTT
             }
           } else {
