@@ -37,8 +37,7 @@
   typedef unsigned char prog_uchar;
 #endif
 
-#define SPI_HAS_TRANSACTION
-
+//#define SPI_HAS_TRANSACTION // already defined in SPI.h
 
 #define ST7789_TFTWIDTH 	240
 #define ST7789_TFTHEIGHT 	240

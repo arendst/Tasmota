@@ -29,6 +29,12 @@ const uint8_t SWITCH_PROBE_INTERVAL = 10;   // Time in milliseconds between swit
 const uint8_t SWITCH_FAST_PROBE_INTERVAL =2;// Time in milliseconds between switch input probe for AC detection
 const uint8_t AC_PERIOD = (20 + SWITCH_FAST_PROBE_INTERVAL - 1) / SWITCH_FAST_PROBE_INTERVAL;   // Duration of an AC wave in probe intervals
 
+// Switch Mode definietions
+#define SM_TIMER_MASK         0x3F
+#define SM_NO_TIMER_MASK      0xFF
+#define SM_FIRST_PRESS        0x40
+#define SM_SECOND_PRESS       0x80
+
 #include <Ticker.h>
 
 Ticker TickerSwitch;
@@ -330,7 +336,7 @@ void SwitchHandler(uint8_t mode)
         case PUSHHOLDMULTI:
           if (NOT_PRESSED == button) {
             if ((Switch.hold_timer[i] & SM_TIMER_MASK) != 0) {
-              Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;              
+              Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;
               SendKey(KEY_SWITCH, i +1, POWER_INV);  // Execute command via MQTT
             }
           } else {
@@ -353,7 +359,7 @@ void SwitchHandler(uint8_t mode)
         case PUSHHOLDMULTI_INV:
           if (PRESSED == button) {
             if ((Switch.hold_timer[i] & SM_TIMER_MASK) != 0) {
-              Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;              
+              Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;
               SendKey(KEY_SWITCH, i +1, POWER_INV);  // Execute command via MQTT
             }
           } else {

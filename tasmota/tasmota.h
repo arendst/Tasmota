@@ -82,10 +82,10 @@ const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
 const uint8_t MAX_BUTTON_TEXT = 16;         // Max number of GUI button labels
 const uint8_t MAX_GROUP_TOPICS = 4;         // Max number of Group Topics
 const uint8_t MAX_DEV_GROUP_NAMES = 4;      // Max number of Device Group names
+const uint8_t MAX_ADCS = 8;                 // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
 
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 const uint8_t MAX_ROTARIES = 2;             // Max number of Rotary Encoders
-const uint8_t MAX_ADCS = 8;                 // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
 
 const char MQTT_TOKEN_PREFIX[] PROGMEM = "%prefix%";  // To be substituted by mqtt_prefix[x]
 const char MQTT_TOKEN_TOPIC[] PROGMEM = "%topic%";    // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
@@ -209,12 +209,6 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define KNX_MAX_device_param   31
 #define MAX_KNXTX_CMNDS        5
 
-// Switch Mode definietions
-#define SM_TIMER_MASK         0x3F
-#define SM_NO_TIMER_MASK      0xFF
-#define SM_FIRST_PRESS        0x40
-#define SM_SECOND_PRESS       0x80
-
 /*********************************************************************************************\
  * Enumeration
 \*********************************************************************************************/
@@ -281,30 +275,30 @@ enum XsnsFunctions {FUNC_SETTINGS_OVERRIDE, FUNC_PIN_STATE, FUNC_MODULE_INIT, FU
 enum AddressConfigSteps { ADDR_IDLE, ADDR_RECEIVE, ADDR_SEND };
 
 enum SettingsTextIndex { SET_OTAURL,
-                         SET_MQTTPREFIX1, SET_MQTTPREFIX2, SET_MQTTPREFIX3,
-                         SET_STASSID1, SET_STASSID2,
-                         SET_STAPWD1, SET_STAPWD2,
+                         SET_MQTTPREFIX1, SET_MQTTPREFIX2, SET_MQTTPREFIX3,  // MAX_MQTT_PREFIXES
+                         SET_STASSID1, SET_STASSID2,  // MAX_SSIDS
+                         SET_STAPWD1, SET_STAPWD2,  // MAX_SSIDS
                          SET_HOSTNAME, SET_SYSLOG_HOST,
                          SET_WEBPWD, SET_CORS,
                          SET_MQTT_HOST, SET_MQTT_CLIENT,
                          SET_MQTT_USER, SET_MQTT_PWD,
                          SET_MQTT_FULLTOPIC, SET_MQTT_TOPIC,
                          SET_MQTT_BUTTON_TOPIC, SET_MQTT_SWITCH_TOPIC, SET_MQTT_GRP_TOPIC,
-                         SET_STATE_TXT1, SET_STATE_TXT2, SET_STATE_TXT3, SET_STATE_TXT4,
-                         SET_NTPSERVER1, SET_NTPSERVER2, SET_NTPSERVER3,
+                         SET_STATE_TXT1, SET_STATE_TXT2, SET_STATE_TXT3, SET_STATE_TXT4,  // MAX_STATE_TEXT
+                         SET_NTPSERVER1, SET_NTPSERVER2, SET_NTPSERVER3,  // MAX_NTP_SERVERS
                          SET_MEM1, SET_MEM2, SET_MEM3, SET_MEM4, SET_MEM5, SET_MEM6, SET_MEM7, SET_MEM8,
-                         SET_MEM9, SET_MEM10, SET_MEM11, SET_MEM12, SET_MEM13, SET_MEM14, SET_MEM15, SET_MEM16,
+                         SET_MEM9, SET_MEM10, SET_MEM11, SET_MEM12, SET_MEM13, SET_MEM14, SET_MEM15, SET_MEM16,  // MAX_RULE_MEMS
                          SET_FRIENDLYNAME1, SET_FRIENDLYNAME2, SET_FRIENDLYNAME3, SET_FRIENDLYNAME4,
-                         SET_FRIENDLYNAME5, SET_FRIENDLYNAME6, SET_FRIENDLYNAME7, SET_FRIENDLYNAME8,
+                         SET_FRIENDLYNAME5, SET_FRIENDLYNAME6, SET_FRIENDLYNAME7, SET_FRIENDLYNAME8,  // MAX_FRIENDLYNAMES
                          SET_BUTTON1, SET_BUTTON2, SET_BUTTON3, SET_BUTTON4, SET_BUTTON5, SET_BUTTON6, SET_BUTTON7, SET_BUTTON8,
-                         SET_BUTTON9, SET_BUTTON10, SET_BUTTON11, SET_BUTTON12, SET_BUTTON13, SET_BUTTON14, SET_BUTTON15, SET_BUTTON16,
-                         SET_MQTT_GRP_TOPIC2, SET_MQTT_GRP_TOPIC3, SET_MQTT_GRP_TOPIC4,
+                         SET_BUTTON9, SET_BUTTON10, SET_BUTTON11, SET_BUTTON12, SET_BUTTON13, SET_BUTTON14, SET_BUTTON15, SET_BUTTON16,  // MAX_BUTTON_TEXT
+                         SET_MQTT_GRP_TOPIC2, SET_MQTT_GRP_TOPIC3, SET_MQTT_GRP_TOPIC4,  // MAX_GROUP_TOPICS
                          SET_TEMPLATE_NAME,
-                         SET_DEV_GROUP_NAME1, SET_DEV_GROUP_NAME2, SET_DEV_GROUP_NAME3, SET_DEV_GROUP_NAME4,
+                         SET_DEV_GROUP_NAME1, SET_DEV_GROUP_NAME2, SET_DEV_GROUP_NAME3, SET_DEV_GROUP_NAME4,  // MAX_DEV_GROUP_NAMES
                          SET_DEVICENAME,
                          SET_TELEGRAM_TOKEN, SET_TELEGRAM_CHATID,
 #ifdef ESP32
-                         SET_ADC_PARAM1, SET_ADC_PARAM2, SET_ADC_PARAM3, SET_ADC_PARAM4, SET_ADC_PARAM5, SET_ADC_PARAM6, SET_ADC_PARAM7, SET_ADC_PARAM8,  // Relates to MAX_ADCS
+                         SET_ADC_PARAM1, SET_ADC_PARAM2, SET_ADC_PARAM3, SET_ADC_PARAM4, SET_ADC_PARAM5, SET_ADC_PARAM6, SET_ADC_PARAM7, SET_ADC_PARAM8,  // MAX_ADCS
 #endif
                          SET_MAX };
 
