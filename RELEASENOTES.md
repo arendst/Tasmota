@@ -58,3 +58,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix ESP32 PWM range
 - Add Zigbee better support for IKEA Motion Sensor
 - Add ESP32 Analog input support for GPIO32 to GPIO39
+- Add Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
+- Add command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)

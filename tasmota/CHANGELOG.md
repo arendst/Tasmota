@@ -5,7 +5,8 @@
 - Fix ESP32 PWM range
 - Add Zigbee better support for IKEA Motion Sensor
 - Add ESP32 Analog input support for GPIO32 to GPIO39
-- Add Zigbee add options to ``ZbSend`` ``Config`` and ``ReadCondig``
+- Add Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
+- Add command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)
 
 ### 8.4.0 20200730
 

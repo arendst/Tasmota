@@ -695,6 +695,11 @@ void CmndRestart(void)
     restart_flag = 2;
     ResponseCmndChar(D_JSON_RESTARTING);
     break;
+  case 2:
+    restart_flag = 2;
+    restart_halt = true;
+    ResponseCmndChar(D_JSON_HALTING);
+    break;
   case -1:
     CmndCrash();    // force a crash
     break;
