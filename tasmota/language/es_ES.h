@@ -830,4 +830,13 @@
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
 #define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
 
+// xnrg_15_teleinfo Denky (Teleinfo)
+#define D_CONTRACT        "Contract"
+#define D_POWER_LOAD      "Power load"
+#define D_CURRENT_TARIFF  "Current Tariff"
+#define D_TARIFF          "Tariff"
+#define D_OVERLOAD        "ADPS"
+#define D_MAX_POWER       "Max Power"
+#define D_MAX_CURRENT     "Max Current"
+
 #endif  // _LANGUAGE_ES_ES_H_
