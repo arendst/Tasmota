@@ -502,8 +502,13 @@ void print_bytes(const uint8_t *bytes, int len)
     int i;
 
     for (i = 0; i < len; i++) {
-        MODLOG_DFLT(DEBUG, "%s0x%02x", i != 0 ? ":" : "", bytes[i]);
+        MODLOG_DFLT(ERROR, "%s0x%02x", i != 0 ? ":" : "", bytes[i]);
+        if(i % 30 == 0){
+            MODLOG_DFLT(ERROR, "\n");
+        }
     }
+
+    MODLOG_DFLT(ERROR, "\n");
 }
 
 void print_mbuf(const struct os_mbuf *om)

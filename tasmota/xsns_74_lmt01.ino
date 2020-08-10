@@ -40,13 +40,9 @@ void LMT01_Init(void) {
   }
 }
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0  // Fix core 2.5.x ISR not in IRAM Exception
-void LMT01_countPulse(void) ICACHE_RAM_ATTR;
-#endif // ARDUINO_ESP8266_RELEASE_2_3_0
-
 volatile int lmt01_pulseCount = 0;
 
-void LMT01_countPulse(void) {
+void ICACHE_RAM_ATTR LMT01_countPulse(void) {
   lmt01_pulseCount++;
 }
 
@@ -81,7 +77,8 @@ int LMT01_getPulses(void) {
     hold = lmt01_pulseCount;
     delay(1);
   }
-  if (timeout > 0) {
+  // discard spurious low counts
+  if (timeout > 0 && hold >= 10) {
     return hold;
   }
   return -1;

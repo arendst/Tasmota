@@ -57,7 +57,7 @@ BearSSL::WiFiClientSecure_light *telegramClient = nullptr;
 static const uint8_t Telegram_Fingerprint[] PROGMEM = USE_TELEGRAM_FINGERPRINT;
 
 struct {
-  String message[3][6];  // amount of messages read per time  (update_id, name_id, name, lastname, chat_id, text)
+  String message[3][6];  // Amount of messages read per time  (update_id, name_id, name, lastname, chat_id, text)
   uint8_t state = 0;
   uint8_t index = 0;
   uint8_t retry = 0;
@@ -67,6 +67,7 @@ struct {
   bool recv_enable = false;
   bool echo_enable = false;
   bool recv_busy = false;
+  bool skip = true;      // Skip first telegram if restarted
 } Telegram;
 
 bool TelegramInit(void) {
@@ -172,7 +173,7 @@ void TelegramGetUpdates(String offset) {
   //  }
   // ]}
 
-//  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 
   // parsing of reply from Telegram into separate received messages
   int i = 0;                //messages received counter
@@ -349,10 +350,14 @@ void TelegramLoop(void) {
             Telegram.state++;
           }
         } else {
-          if (Telegram.message[0][0].toInt() && (Telegram.message[Telegram.index][5].length() > 0)) {
-            String logging = TelegramExecuteCommand(Telegram.message[Telegram.index][5].c_str());
-            if (logging.length() > 0) {
-              TelegramSendMessage(Telegram.message[Telegram.index][4], logging);
+          if (Telegram.skip) {  // Skip first update after restart as it may be a restart (again)
+            Telegram.skip = false;
+          } else {
+            if (Telegram.message[0][0].toInt() && (Telegram.message[Telegram.index][5].length() > 0)) {
+              String logging = TelegramExecuteCommand(Telegram.message[Telegram.index][5].c_str());
+              if (logging.length() > 0) {
+                TelegramSendMessage(Telegram.message[Telegram.index][4], logging);
+              }
             }
           }
           Telegram.message[0][0] = "";   // All messages have been replied - reset new messages

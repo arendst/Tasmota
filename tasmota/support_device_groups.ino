@@ -115,7 +115,7 @@ void DeviceGroupsInit(void)
 
     // If relays in sepaate device groups is enabled, set the device group count to highest numbered
     // relay.
-    if (Settings.flag4.remote_device_mode) {  // SetOption88 - Enable relays in separate device groups
+    if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
       for (uint32_t relay_index = 0; relay_index < MAX_RELAYS; relay_index++) {
         if (PinUsed(GPIO_REL1, relay_index)) device_group_count = relay_index + 1;
       }
@@ -385,7 +385,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
       log_remaining--;
       switch (item) {
         case DGR_ITEM_POWER:
-          if (Settings.flag4.remote_device_mode) {  // SetOption88 - Enable relays in separate device groups
+          if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
             bool on = (value & 1);
             if (on != (power & (1 << device_group_index))) ExecuteCommandPower(device_group_index + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
           }
@@ -496,7 +496,7 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
     building_status_message = true;
 
     // Call the drivers to build the status update.
-    if (device_group->local || Settings.flag4.remote_device_mode) {  // SetOption88 - Enable relays in separate device groups
+    if (device_group->local || Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
       SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_POWER, power);
     }
     XdrvMailbox.index = device_group_index << 16;

@@ -61,7 +61,7 @@ struct ble_hs_dev_records {
 
 /* Add a device to the resolving list */
 int ble_hs_resolv_list_add(uint8_t *cmdbuf);
-int ble_hs_gen_own_rpa_random(void);
+int ble_hs_gen_own_private_rnd(void);
 uint8_t *ble_hs_get_rpa_local(void);
 
 /* Remove a device from the resolving list */
@@ -71,6 +71,8 @@ void ble_hs_resolv_list_clear_all(void);
 
 /* Address resolution enable command */
 void ble_hs_resolv_enable(bool);
+void ble_hs_resolv_nrpa_enable(void);
+void ble_hs_resolv_nrpa_disable(void);
 
 /* Finds 'addr' in resolving list. Doesnt check if address resolution enabled */
 struct ble_hs_resolv_entry *

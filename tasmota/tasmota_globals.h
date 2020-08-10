@@ -42,6 +42,8 @@ void DomoticzTempHumPressureSensor(float temp, float hum, float baro = -1);
 char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0');
 extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack, uint32_t stack_end);
 extern "C" void resetPins();
+extern "C" int startWaveformClockCycles(uint8_t pin, uint32_t highCcys, uint32_t lowCcys,
+  uint32_t runTimeCcys, int8_t alignPhase, uint32_t phaseOffsetCcys, bool autoPwm);
 
 #ifdef ESP32
 
@@ -88,6 +90,22 @@ String EthernetMacAddress(void);
 #undef USE_RF_FLASH                            // Disable RF firmware flash when Sonoff Rf is disabled
 #endif
 
+#ifndef APP_INTERLOCK_MODE
+#define APP_INTERLOCK_MODE     false           // [Interlock] Relay interlock mode
+#endif
+#ifndef APP_INTERLOCK_GROUP_1
+#define APP_INTERLOCK_GROUP_1  0xFF            // [Interlock] Relay bitmask for interlock group 1 - Legacy support using all relays in one interlock group
+#endif
+#ifndef APP_INTERLOCK_GROUP_2
+#define APP_INTERLOCK_GROUP_2  0x00            // [Interlock] Relay bitmask for interlock group 2
+#endif
+#ifndef APP_INTERLOCK_GROUP_3
+#define APP_INTERLOCK_GROUP_3  0x00            // [Interlock] Relay bitmask for interlock group 3
+#endif
+#ifndef APP_INTERLOCK_GROUP_4
+#define APP_INTERLOCK_GROUP_4  0x00            // [Interlock] Relay bitmask for interlock group 4
+#endif
+
 #ifndef SWITCH_MODE
 #define SWITCH_MODE                 TOGGLE     // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
 #endif
@@ -96,8 +114,8 @@ String EthernetMacAddress(void);
 // Set an all-zeros default fingerprint to activate auto-learning on first connection (AWS IoT)
 #define MQTT_FINGERPRINT1           "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
 #endif
-#ifndef MQTT_FINGERPRINT2
-#define MQTT_FINGERPRINT2           "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
+#ifndef MQTT_FINGERPRINT2           // SHA1('')
+#define MQTT_FINGERPRINT2           "DA 39 A3 EE 5E 6B 4B 0D 32 55 BF EF 95 60 18 90 AF D8 07 09"
 #endif
 
 #ifndef WS2812_LEDS
@@ -110,8 +128,8 @@ String EthernetMacAddress(void);
   const uint16_t WEB_LOG_SIZE = 4000;          // Max number of characters in weblog
 #endif
 
-#if defined(USE_TLS) && defined(ARDUINO_ESP8266_RELEASE_2_3_0)
-  #error "TLS is no more supported on Core 2.3.0, use 2.4.2 or higher."
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
+  #error "Arduino ESP8266 Core versions before 2.7.1 are not supported"
 #endif
 
 #ifndef MQTT_MAX_PACKET_SIZE
@@ -356,14 +374,16 @@ const char kWebColors[] PROGMEM =
 
 #ifdef ESP8266
 #define AGPIO(x) (x)
+#define BGPIO(x) (x)
 #else  // ESP32
 #define AGPIO(x) (x<<5)
+#define BGPIO(x) (x>>5)
 #endif  // ESP8266 - ESP32
 
 #ifdef USE_DEVICE_GROUPS
 #define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)
 #define SendLocalDeviceGroupMessage(REQUEST_TYPE, ...) _SendDeviceGroupMessage(0, REQUEST_TYPE, __VA_ARGS__, 0)
-uint8_t device_group_count = 1;
+uint8_t device_group_count = 0;
 #endif  // USE_DEVICE_GROUPS
 
 #ifdef DEBUG_TASMOTA_CORE

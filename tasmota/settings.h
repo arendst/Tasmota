@@ -107,7 +107,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t device_groups_enabled : 1;    // bit 3 (v8.1.0.9)   - SetOption85 - Enable Device Groups
     uint32_t led_timeout : 1;              // bit 4 (v8.1.0.9)   - SetOption86 - PWM Dimmer Turn brightness LED's off 5 seconds after last change
     uint32_t powered_off_led : 1;          // bit 5 (v8.1.0.9)   - SetOption87 - PWM Dimmer Turn red LED on when powered off
-    uint32_t remote_device_mode : 1;       // bit 6 (v8.1.0.9)   - SetOption88 - Enable relays in separate device groups/PWM Dimmer Buttons control remote devices
+    uint32_t multiple_device_groups : 1;   // bit 6 (v8.1.0.9)   - SetOption88 - Enable relays in separate device groups/PWM Dimmer Buttons control remote devices
     uint32_t zigbee_distinct_topics : 1;   // bit 7 (v8.1.0.10)  - SetOption89 - Distinct MQTT topics per device for Zigbee (#7835)
     uint32_t only_json_message : 1;        // bit 8 (v8.2.0.3)   - SetOption90 - Disable non-json MQTT response
     uint32_t fade_at_startup : 1;          // bit 9 (v8.2.0.3)   - SetOption91 - Enable light fading at start/power on
@@ -115,12 +115,12 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t compress_rules_cpu : 1;       // bit 11 (v8.2.0.6)  - SetOption93 - Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick
     uint32_t max6675 : 1;                  // bit 12 (v8.3.1.2)  - SetOption94 - Implement simpler MAX6675 protocol instead of MAX31855
     uint32_t network_wifi : 1;             // bit 13 (v8.3.1.3)  - CMND_WIFI
-    uint32_t network_ethernet : 1;         // bit 14 (v8.3.1.3)  = CMND_ETHERNET
-    uint32_t spare15 : 1;
-    uint32_t spare16 : 1;
-    uint32_t spare17 : 1;
-    uint32_t spare18 : 1;
-    uint32_t spare19 : 1;
+    uint32_t network_ethernet : 1;         // bit 14 (v8.3.1.3)  - CMND_ETHERNET
+    uint32_t tuyamcu_baudrate : 1;         // bit 15 (v8.3.1.6)  - SetOption97 - Set Baud rate for TuyaMCU serial communication (0 = 9600 or 1 = 115200)
+    uint32_t rotary_uses_rules : 1;        // bit 16 (v8.3.1.6)  - SetOption98 - Use rules instead of light control
+    uint32_t zerocross_dimmer : 1;         // bit 17 (v8.3.1.4)  - SetOption99 - Enable zerocross dimmer on PWM DIMMER
+    uint32_t remove_zbreceived : 1;        // bit 18 (v8.3.1.7)  - SetOption100 - Remove ZbReceived form JSON message
+    uint32_t zb_index_ep : 1;              // bit 19 (v8.3.1.7)  - SetOption101 - Add the source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
     uint32_t spare20 : 1;
     uint32_t spare21 : 1;
     uint32_t spare22 : 1;
@@ -422,7 +422,7 @@ struct {
   uint8_t       light_correction;          // 49D
   uint8_t       light_dimmer;              // 49E
   uint8_t       rule_enabled;              // 49F
-  uint8_t       rule_once;                 // 4A0
+  uint8_t       rule_once;                 // 4A0  bit 6+7 used by xdrv_10_scripter
   uint8_t       light_fade;                // 4A1
   uint8_t       light_speed;               // 4A2
   uint8_t       light_scheme;              // 4A3
@@ -559,7 +559,7 @@ struct {
   uint64_t      zb_precfgkey_h;            // F28
   uint16_t      zb_pan_id;                 // F30
   uint8_t       zb_channel;                // F32
-  uint8_t       zb_free_byte;              // F33
+  uint8_t       zb_txradio_dbm;            // F33
   uint16_t      pms_wake_interval;         // F34
   uint8_t       config_version;            // F36
   uint8_t       windmeter_pulses_x_rot;    // F37
@@ -691,8 +691,10 @@ typedef union {
 } StateBitfield;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
+#ifdef ESP8266
 #ifdef USE_ADC_VCC
   ADC_MODE(ADC_VCC);                       // Set ADC input for Power Supply Voltage usage
+#endif
 #endif
 
 #endif  // _SETTINGS_H_

@@ -181,7 +181,7 @@ void MPU_6050Show(bool json)
 {
   MPU_6050PerformReading();
 
-  double tempConv = (MPU_6050_temperature / 340.0 + 35.53);
+  float tempConv = ConvertTemp(MPU_6050_temperature / 340.0 + 35.53);
   char temperature[33];
   dtostrfd(tempConv, Settings.flag2.temperature_resolution, temperature);
   char axis_ax[33];

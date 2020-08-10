@@ -427,7 +427,7 @@ void TasmotaClient_Init(void) {
         }
         TasmotaClient_Serial->setTimeout(100);  // Theo 20200502 - increase from 50
         if (PinUsed(GPIO_TASMOTACLIENT_RST_INV)) {
-          SetPin(Pin(GPIO_TASMOTACLIENT_RST_INV), GPIO_TASMOTACLIENT_RST);
+          SetPin(Pin(GPIO_TASMOTACLIENT_RST_INV), AGPIO(GPIO_TASMOTACLIENT_RST));
           TClient.inverted = HIGH;
         }
         pinMode(Pin(GPIO_TASMOTACLIENT_RST), OUTPUT);
@@ -503,15 +503,17 @@ void CmndClientReset(void) {
 }
 
 void CmndClientSend(void) {
-  if (0 < XdrvMailbox.data_len) {
-    TasmotaClient_sendCmnd(CMND_CLIENT_SEND, XdrvMailbox.data_len);
-    TasmotaClient_Serial->write(char(PARAM_DATA_START));
-    for (uint8_t idx = 0; idx < XdrvMailbox.data_len; idx++) {
-      TasmotaClient_Serial->write(XdrvMailbox.data[idx]);
+  if (TClient.SerialEnabled) {
+    if (0 < XdrvMailbox.data_len) {
+      TasmotaClient_sendCmnd(CMND_CLIENT_SEND, XdrvMailbox.data_len);
+      TasmotaClient_Serial->write(char(PARAM_DATA_START));
+      for (uint8_t idx = 0; idx < XdrvMailbox.data_len; idx++) {
+        TasmotaClient_Serial->write(XdrvMailbox.data[idx]);
+      }
+      TasmotaClient_Serial->write(char(PARAM_DATA_END));
     }
-    TasmotaClient_Serial->write(char(PARAM_DATA_END));
+    ResponseCmndDone();
   }
-  ResponseCmndDone();
 }
 
 void TasmotaClient_ProcessIn(void) {
@@ -537,8 +539,7 @@ void TasmotaClient_ProcessIn(void) {
       Response_P(PSTR("{\"TasmotaClient\":"));
       ResponseAppend_P("%s", inbuf);
       ResponseJsonEnd();
-      MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
-      XdrvRulesProcess();
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, mqtt_data);
     }
     if (CMND_EXECUTE_CMND == TClientCommand.command) { // We need to execute the incoming command
       ExecuteCommand(inbuf, SRC_IGNORE);

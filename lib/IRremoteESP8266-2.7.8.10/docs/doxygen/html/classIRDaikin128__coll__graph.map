@@ -1,0 +1,4 @@
+<map id="IRDaikin128" name="IRDaikin128">
+<area shape="rect" id="node1" title="Class for handling detailed Daikin 128&#45;bit A/C messages. Code by crankyoldgit. Analysis by Daniel Ven..." alt="" coords="5,95,107,121"/>
+<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="23,5,89,32"/>
+</map>

@@ -37,8 +37,7 @@ Renderer(width,height) {
 void Paint::DisplayOnff(int8_t on) {
 }
 
-int16_t Paint::Begin(int16_t p1,int16_t p2,int16_t p3) {
-
+void Paint::Begin(int16_t p1,int16_t p2,int16_t p3) {
 }
 
 void Paint::Updateframe() {

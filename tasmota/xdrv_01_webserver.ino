@@ -35,7 +35,7 @@ const uint16_t CHUNKED_BUFFER_SIZE = (MESSZ / 2) - 100;  // Chunk buffer size (s
 
 const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
 const uint16_t HTTP_RESTART_RECONNECT_TIME = 9000;       // milliseconds - Allow time for restart and wifi reconnect
-const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 28000;  // milliseconds - Allow time for uploading binary, unzip/write to final destination and wifi reconnect
+const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 20000;  // milliseconds - Allow time for uploading binary, unzip/write to final destination and wifi reconnect
 
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
@@ -44,7 +44,7 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 28000;  // milliseconds - Allow
 uint8_t *efm8bb1_update = nullptr;
 #endif  // USE_RF_FLASH
 
-enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT };
+enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32 };
 
 static const char * HEADER_KEYS[] = { "User-Agent", };
 
@@ -913,14 +913,8 @@ void WifiManagerBegin(bool reset_only)
   int channel = WIFI_SOFT_AP_CHANNEL;
   if ((channel < 1) || (channel > 13)) { channel = 1; }
 
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-  // bool softAP(const char* ssid, const char* passphrase = NULL, int channel = 1, int ssid_hidden = 0);
-  WiFi.softAP(my_hostname, WIFI_AP_PASSPHRASE, channel, 0);
-#else
   // bool softAP(const char* ssid, const char* passphrase = NULL, int channel = 1, int ssid_hidden = 0, int max_connection = 4);
   WiFi.softAP(my_hostname, WIFI_AP_PASSPHRASE, channel, 0, 1);
-#endif
-
   delay(500); // Without delay I've seen the IP address blank
   /* Setup the DNS server redirecting all the domains to the apIP */
   DnsServer->setErrorReplyCode(DNSReplyCode::NoError);
@@ -992,10 +986,6 @@ void WSContentBegin(int code, int ctype)
 {
   Webserver->client().flush();
   WSHeaderSend();
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-  Webserver->sendHeader(F("Accept-Ranges"),F("none"));
-  Webserver->sendHeader(F("Transfer-Encoding"),F("chunked"));
-#endif
   Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN);
   WSSend(code, ctype, "");                        // Signal start of chunked content
   Web.chunk_buffer = "";
@@ -1004,15 +994,7 @@ void WSContentBegin(int code, int ctype)
 void _WSContentSend(const String& content)        // Low level sendContent for all core versions
 {
   size_t len = content.length();
-
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-  const char * footer = "\r\n";
-  char chunk_size[11];
-  sprintf(chunk_size, "%x\r\n", len);
-  Webserver->sendContent(String() + chunk_size + content + footer);
-#else
   Webserver->sendContent(content);
-#endif
 
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("WSContentSend"));
@@ -1377,7 +1359,7 @@ void HandleRoot(void)
           "c",               // c - Unique HTML id
           "#000", "#fff",    // Black to White
           4,                 // sl4 - Unique range HTML id - Used as source for Saturation begin color
-          Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100%
+          Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100% (SetOption77 - Do not power off if slider moved to far left)
           Settings.light_dimmer,
           'd', 0);           // d0 - Value id is related to lc("d0", value) and WebGetArg("d0", tmp, sizeof(tmp));
 
@@ -1389,7 +1371,7 @@ void HandleRoot(void)
             "f",             // f - Unique HTML id
             "#000", "#fff",  // Black to White
             5,               // sl5 - Unique range HTML id - Not used
-            Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100%
+            Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100% (SetOption77 - Do not power off if slider moved to far left)
             LightGetDimmer(2),
             'w', 0);         // w0 - Value id is related to lc("w0", value) and WebGetArg("w0", tmp, sizeof(tmp));
         }
@@ -1595,9 +1577,7 @@ bool HandleRootStatusRefresh(void)
   WSContentBegin(200, CT_HTML);
   WSContentSend_P(PSTR("{t}"));
   XsnsCall(FUNC_WEB_SENSOR);
-#ifdef USE_SCRIPT_WEB_DISPLAY
   XdrvCall(FUNC_WEB_SENSOR);
-#endif
 
   WSContentSend_P(PSTR("</table>"));
 
@@ -1728,7 +1708,7 @@ void HandleTemplateConfiguration(void)
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), D_SENSOR_USER);  // }2'255'>User}3
     }
     uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
-    uint32_t midx = ridx >> 5;
+    uint32_t midx = BGPIO(ridx);
     WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
 #endif  // ESP8266 - ESP32
   }
@@ -1905,7 +1885,7 @@ void HandleModuleConfiguration(void)
     }
 #else  // ESP32
     uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
-    midx = ridx >> 5;
+    midx = BGPIO(ridx);
     if (!GetUsedInModule(midx, cmodule.io)) {
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
     }
@@ -1941,7 +1921,7 @@ void HandleModuleConfiguration(void)
   }
   WSContentSend_P(PSTR("\";sk(%d," STR(ADC0_PIN) ");"), Settings.my_adc0);
 #endif  // USE_ADC_VCC
-#endif  // ESP8266 - ESP32
+#endif  // ESP8266
 
   WSContentSend_P(PSTR("}wl(sl);"));
 
@@ -2369,14 +2349,7 @@ void HandleBackupConfiguration(void)
     }
   }
 
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-  size_t written = myClient.write((const char*)settings_buffer, sizeof(Settings));
-  if (written < sizeof(Settings)) {  // https://github.com/esp8266/Arduino/issues/3218
-    myClient.write((const char*)settings_buffer +written, sizeof(Settings) -written);
-  }
-#else
   myClient.write((const char*)settings_buffer, sizeof(Settings));
-#endif
 
   SettingsBufferFree();
 
@@ -2625,10 +2598,19 @@ void HandleUploadDone(void)
   WifiConfigCounter();
   restart_flag = 0;
   MqttRetryCounter(0);
+#ifdef USE_COUNTER
+  CounterInterruptDisable(false);
+#endif  // USE_COUNTER
 
   WSContentStart_P(S_INFORMATION);
   if (!Web.upload_error) {
-    WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, HTTP_OTA_RESTART_RECONNECT_TIME);  // Refesh main web ui after OTA upgrade
+    uint32_t javascript_settimeout = HTTP_OTA_RESTART_RECONNECT_TIME;
+#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+    if (ZigbeeUploadOtaReady()) {
+      javascript_settimeout = 30000;                                  // Refesh main web ui after transfer upgrade
+    }
+#endif
+    WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, javascript_settimeout);  // Refesh main web ui after OTA upgrade
   }
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
@@ -2649,22 +2631,29 @@ void HandleUploadDone(void)
     stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
-    WSContentSend_P(HTTP_MSG_RSTRT);
-    ShowWebSource(SRC_WEBGUI);
+    restart_flag = 2;  // Always restart to re-enable disabled features during update
+#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+    if (ZigbeeUploadOtaReady()) {
+      WSContentSend_P(PSTR("<br><div style='text-align:center;'>" D_TRANSFER_STARTED " ...</div><br>"));
+      restart_flag = 0;  // Hold restart as firmware still needs to be written to MCU EFR32
+    }
+#endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_TASMOTA_CLIENT
     if (TasmotaClient_GetFlagFlashing()) {
-      restart_flag = 0;
-    } else { // It was a normal firmware file, or we are ready to restart device
-      restart_flag = 2;
+      WSContentSend_P(PSTR("<br><div style='text-align:center;'>" D_TRANSFER_STARTED " ...</div><br>"));
+      restart_flag = 0;  // Hold restart as code still needs to be transferred to Atmega
     }
-#else
-    restart_flag = 2;  // Always restart to re-enable disabled features during update
-#endif
+#endif  // USE_TASMOTA_CLIENT
+    if (restart_flag) {
+      WSContentSend_P(HTTP_MSG_RSTRT);
+      ShowWebSource(SRC_WEBGUI);
+    }
   }
   SettingsBufferFree();
   WSContentSend_P(PSTR("</div><br>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
+
 #ifdef USE_TASMOTA_CLIENT
   if (TasmotaClient_GetFlagFlashing()) {
     TasmotaClient_Flash();
@@ -2700,6 +2689,9 @@ void HandleUploadLoop(void)
       }
     } else {
       MqttRetryCounter(60);
+#ifdef USE_COUNTER
+      CounterInterruptDisable(true);  // Prevent OTA failures on 100Hz counter interrupts
+#endif  // USE_COUNTER
 #ifdef USE_EMULATION
       UdpDisconnect();
 #endif  // USE_EMULATION
@@ -2728,6 +2720,19 @@ void HandleUploadLoop(void)
         Web.config_block_count = 0;
       }
       else {
+#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+#ifdef ESP8266
+        if ((SONOFF_ZB_BRIDGE == my_module_type) && (upload.buf[0] == 0xEB)) {  // Check if this is a Zigbee bridge FW file
+#else  // ESP32
+        if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX) && (upload.buf[0] == 0xEB)) {  // Check if this is a Zigbee bridge FW file
+#endif  // ESP8266 or ESP32
+          Update.end();              // End esp8266 update session
+          Web.upload_file_type = UPL_EFR32;
+
+          Web.upload_error = ZigbeeUploadInit();  // 15
+          if (Web.upload_error != 0) { return; }
+        } else
+#endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_RF_FLASH
         if ((SONOFF_BRIDGE == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a RF bridge FW file
           Update.end();              // End esp8266 update session
@@ -2771,6 +2776,15 @@ void HandleUploadLoop(void)
         Web.config_block_count++;
       }
     }
+#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+    else if (UPL_EFR32 == Web.upload_file_type) {
+      // Write buffers to MCU EFR32
+      if (!ZigbeeUploadWriteBuffer(upload.buf, upload.currentSize)) {
+        Web.upload_error = 9;  // File too large
+        return;
+      }
+    }
+#endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_RF_FLASH
     else if (UPL_EFM8BB1 == Web.upload_file_type) {
       if (efm8bb1_update != nullptr) {    // We have carry over data since last write, i. e. a start but not an end
@@ -2865,6 +2879,13 @@ void HandleUploadLoop(void)
         return;
       }
     }
+#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+    else if (UPL_EFR32 == Web.upload_file_type) {
+      // Zigbee FW upload to ESP8266 flash is done
+      ZigbeeUploadDone();  // Signal upload done and ready for delayed upload to MCU EFR32
+      Web.upload_file_type = UPL_TASMOTA;
+    }
+#endif
 #ifdef USE_RF_FLASH
     else if (UPL_EFM8BB1 == Web.upload_file_type) {
       // RF FW flash done
@@ -2895,6 +2916,9 @@ void HandleUploadLoop(void)
   } else if (UPLOAD_FILE_ABORTED == upload.status) {
     restart_flag = 0;
     MqttRetryCounter(0);
+#ifdef USE_COUNTER
+    CounterInterruptDisable(false);
+#endif  // USE_COUNTER
     Web.upload_error = 7;  // Upload aborted
     if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
   }
@@ -3154,14 +3178,9 @@ int WebSend(char *buffer)
 
     DEBUG_CORE_LOG(PSTR("WEB: Uri |%s|"), url.c_str());
 
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
-    HTTPClient http;
-    if (http.begin(UrlEncode(url))) {         // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
-#else
     WiFiClient http_client;
     HTTPClient http;
     if (http.begin(http_client, UrlEncode(url))) {  // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
-#endif
       int http_code = http.GET();             // Start connection and send HTTP header
       if (http_code > 0) {                    // http_code will be negative on error
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {

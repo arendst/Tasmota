@@ -22,6 +22,7 @@
 #include "stats/stats.h"
 #include "ble_hs_priv.h"
 #include "ble_hs_resolv_priv.h"
+#include "host/ble_hs_pvcy.h"
 
 static uint8_t ble_hs_pvcy_started;
 static uint8_t ble_hs_pvcy_irk[16];
@@ -329,7 +330,7 @@ ble_hs_pvcy_rpa_config(uint8_t enable)
 {
     int rc = 0;
 
-    if (enable != 0) {
+    if (enable != NIMBLE_HOST_DISABLE_PRIVACY) {
         rc = ble_hs_pvcy_ensure_started();
         if (rc != 0) {
             return rc;
@@ -337,8 +338,15 @@ ble_hs_pvcy_rpa_config(uint8_t enable)
 
         ble_hs_resolv_enable(true);
 
+        /* Configure NRPA address related flags according to input parameter */
+        if (enable == NIMBLE_HOST_ENABLE_NRPA) {
+            ble_hs_resolv_nrpa_enable();
+        } else {
+            ble_hs_resolv_nrpa_disable();
+        }
+
         /* Generate local RPA address and set it in controller */
-        rc = ble_hs_gen_own_rpa_random();
+        rc = ble_hs_gen_own_private_rnd();
     } else {
         ble_hs_resolv_enable(false);
     }

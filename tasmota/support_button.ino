@@ -90,12 +90,14 @@ void ButtonInit(void)
       Button.present++;
       pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
     }
+#ifdef ESP8266
 #ifndef USE_ADC_VCC
     else if ((99 == Button.adc) && ((ADC0_BUTTON == my_adc0) || (ADC0_BUTTON_INV == my_adc0))) {
       Button.present++;
       Button.adc = i;
     }
 #endif  // USE_ADC_VCC
+#endif  // ESP8266
   }
 }
 
@@ -162,7 +164,18 @@ void ButtonHandler(void)
         button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
       }
     }
-#else
+#ifndef USE_ADC_VCC
+    if (Button.adc == button_index) {
+      button_present = 1;
+      if (ADC0_BUTTON_INV == my_adc0) {
+        button = (AdcRead(1) < 128);
+      }
+      else if (ADC0_BUTTON == my_adc0) {
+        button = (AdcRead(1) > 128);
+      }
+    }
+#endif  // USE_ADC_VCC
+#else  // ESP32
     if (PinUsed(GPIO_KEY1, button_index)) {
       button_present = 1;
       if (bitRead(Button.touch_mask, button_index)) {          // Touch
@@ -188,18 +201,7 @@ void ButtonHandler(void)
         button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
       }
     }
-#endif  // ESP8266
-#ifndef USE_ADC_VCC
-    if (Button.adc == button_index) {
-      button_present = 1;
-      if (ADC0_BUTTON_INV == my_adc0) {
-        button = (AdcRead(1) < 128);
-      }
-      else if (ADC0_BUTTON == my_adc0) {
-        button = (AdcRead(1) > 128);
-      }
-    }
-#endif  // USE_ADC_VCC
+#endif  // ESP8266 or ESP32
     if (button_present) {
       XdrvMailbox.index = button_index;
       XdrvMailbox.payload = button;
@@ -302,8 +304,8 @@ void ButtonHandler(void)
                   }
                 }
               }
-#if defined(USE_LIGHT) && defined(ROTARY_V1)
-              if (!((0 == button_index) && RotaryButtonPressed())) {
+#ifdef ROTARY_V1
+              if (!RotaryButtonPressed(button_index)) {
 #endif
                 if (!Settings.flag3.mqtt_buttons && single_press && SendKey(KEY_BUTTON, button_index + Button.press_counter[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
                   // Success
@@ -333,7 +335,7 @@ void ButtonHandler(void)
                     }
 
                   } else {    // 6 press start wificonfig 2
-                    if (!Settings.flag.button_restrict) {
+                    if (!Settings.flag.button_restrict) {  // SetOption1  - Control button multipress
                       snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_WIFICONFIG " 2"));
                       ExecuteCommand(scmnd, SRC_BUTTON);
                     }
@@ -344,7 +346,7 @@ void ButtonHandler(void)
                     }
                   }
                 }
-#if defined(USE_LIGHT) && defined(ROTARY_V1)
+#ifdef ROTARY_V1
               }
 #endif
               Button.press_counter[button_index] = 0;

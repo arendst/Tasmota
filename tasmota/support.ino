@@ -127,6 +127,18 @@ size_t strchrspn(const char *str1, int character)
   return ret;
 }
 
+uint32_t ChrCount(const char *str, const char *delim) {
+  uint32_t count = 0;
+  char* read = (char*)str;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    if (ch == *delim) { count++; }
+  }
+  return count;
+}
+
 // Function to return a substring defined by a delimiter at an index
 char* subStr(char* dest, char* str, const char *delim, int index)
 {
@@ -152,6 +164,8 @@ float CharToFloat(const char *str)
 
   strlcpy(strbuf, str, sizeof(strbuf));
   char *pt = strbuf;
+  if (*pt == '\0') { return 0.0; }
+
   while ((*pt != '\0') && isblank(*pt)) { pt++; }  // Trim leading spaces
 
   signed char sign = 1;
@@ -394,11 +408,13 @@ char* UpperCase_P(char* dest, const char* source)
 
 char* Trim(char* p)
 {
-  while ((*p != '\0') && isblank(*p)) { p++; }  // Trim leading spaces
-  char* q = p + strlen(p) -1;
-  while ((q >= p) && isblank(*q)) { q--; }   // Trim trailing spaces
-  q++;
-  *q = '\0';
+  if (*p != '\0') {
+    while ((*p != '\0') && isblank(*p)) { p++; }  // Trim leading spaces
+    char* q = p + strlen(p) -1;
+    while ((q >= p) && isblank(*q)) { q--; }   // Trim trailing spaces
+    q++;
+    *q = '\0';
+  }
   return p;
 }
 
@@ -601,7 +617,7 @@ float ConvertTemp(float c)
   float result = c;
 
   global_update = uptime;
-  global_temperature = c;
+  global_temperature_celsius = c;
 
   if (!isnan(c) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
     result = c * 1.8 + 32;                                    // Fahrenheit
@@ -661,7 +677,7 @@ float ConvertPressure(float p)
   float result = p;
 
   global_update = uptime;
-  global_pressure = p;
+  global_pressure_hpa = p;
 
   if (!isnan(p) && Settings.flag.pressure_conversion) {  // SetOption24 - Switch between hPa or mmHg pressure unit
     result = p * 0.75006375541921;                       // mmHg
@@ -690,9 +706,9 @@ void ResetGlobalValues(void)
 {
   if ((uptime - global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
     global_update = 0;
-    global_temperature = NAN;
+    global_temperature_celsius = NAN;
     global_humidity = 0.0f;
-    global_pressure = 0.0f;
+    global_pressure_hpa = 0.0f;
   }
 }
 
@@ -906,6 +922,17 @@ void SerialSendRaw(char *codes)
   }
 }
 
+// values is a comma-delimited string: e.g. "72,101,108,108,111,32,87,111,114,108,100,33,10"
+void SerialSendDecimal(char *values)
+{
+  char *p;
+  uint8_t code;
+  for (char* str = strtok_r(values, ",", &p); str; str = strtok_r(nullptr, ",", &p)) {
+    code = (uint8_t)atoi(str);
+    Serial.write(code);
+  }
+}
+
 uint32_t GetHash(const char *buffer, size_t size)
 {
   uint32_t hash = 0;
@@ -1080,12 +1107,8 @@ int ResponseJsonEndEnd(void)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0  // Fix core 2.5.x ISR not in IRAM Exception
-uint32_t Pin(uint32_t gpio, uint32_t index) ICACHE_RAM_ATTR;
-#endif
-
-uint32_t Pin(uint32_t gpio, uint32_t index = 0);
-uint32_t Pin(uint32_t gpio, uint32_t index) {
+uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
+uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
 #ifdef ESP8266
   uint16_t real_gpio = gpio + index;
 #else  // ESP32
@@ -1099,9 +1122,17 @@ uint32_t Pin(uint32_t gpio, uint32_t index) {
   return 99;                 // No pin used for gpio
 }
 
-boolean PinUsed(uint32_t gpio, uint32_t index = 0);
-boolean PinUsed(uint32_t gpio, uint32_t index) {
+bool PinUsed(uint32_t gpio, uint32_t index = 0);
+bool PinUsed(uint32_t gpio, uint32_t index) {
   return (Pin(gpio, index) < 99);
+}
+
+uint32_t GetPin(uint32_t lpin) {
+  if (lpin < ARRAY_SIZE(gpio_pin)) {
+    return gpio_pin[lpin];
+  } else {
+    return GPIO_NONE;
+  }
 }
 
 void SetPin(uint32_t lpin, uint32_t gpio) {
@@ -1257,11 +1288,7 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio)
 
 bool ValidGPIO(uint32_t pin, uint32_t gpio)
 {
-#ifdef ESP8266
-  return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
-#else  // ESP32
-  return (GPIO_USER == ValidPin(pin, gpio >> 5));  // Only allow GPIO_USER pins
-#endif  // ESP8266 - ESP32
+  return (GPIO_USER == ValidPin(pin, BGPIO(gpio)));  // Only allow GPIO_USER pins
 }
 
 #ifdef ESP8266
@@ -1774,14 +1801,16 @@ void Syslog(void)
 void AddLog(uint32_t loglevel)
 {
   char mxtime[10];  // "13:45:21 "
-
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
 
-  if (loglevel <= seriallog_level) {
+  if ((loglevel <= seriallog_level) &&
+      (masterlog_level <= seriallog_level)) {
     Serial.printf("%s%s\r\n", mxtime, log_data);
   }
 #ifdef USE_WEBSERVER
-  if (Settings.webserver && (loglevel <= Settings.weblog_level)) {
+  if (Settings.webserver &&
+     (loglevel <= Settings.weblog_level) &&
+     (masterlog_level <= Settings.weblog_level)) {
     // Delimited, zero-terminated buffer of log lines.
     // Each entry has this format: [index][log data]['\1']
     web_log_index &= 0xFF;
@@ -1802,10 +1831,12 @@ void AddLog(uint32_t loglevel)
 #endif  // USE_WEBSERVER
   if (Settings.flag.mqtt_enabled &&        // SetOption3 - Enable MQTT
       !global_state.mqtt_down &&
-      (loglevel <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
+      (loglevel <= Settings.mqttlog_level) &&
+      (masterlog_level <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
 
   if (!global_state.network_down &&
-      (loglevel <= syslog_level)) { Syslog(); }
+      (loglevel <= syslog_level) &&
+      (masterlog_level <= syslog_level)) { Syslog(); }
 
   prepped_loglevel = 0;
 }

@@ -1,14 +1,14 @@
 ![Tasmota logo](https://github.com/arendst/Tasmota/blob/development/tools/logo/TASMOTA_FullLogo_Vector.svg)
 
 Alternative firmware for [ESP8266](https://en.wikipedia.org/wiki/ESP8266) based devices with **easy configuration using webUI, OTA updates, automation using timers or rules, expandability and entirely local control over MQTT, HTTP, Serial or KNX**.
-_Written for Arduino IDE and PlatformIO._
+_Written for PlatformIO with limited support for Arduino IDE._
 
 [![GitHub version](https://img.shields.io/github/release/arendst/Tasmota.svg)](https://github.com/arendst/Tasmota/releases/latest)
 [![GitHub download](https://img.shields.io/github/downloads/arendst/Tasmota/total.svg)](https://github.com/arendst/Tasmota/releases/latest)
 [![License](https://img.shields.io/github/license/arendst/Tasmota.svg)](LICENSE.txt)
 [![Chat](https://img.shields.io/discord/479389167382691863.svg)](https://discord.gg/Ks2Kzd4)
 
-If you like **Tasmota**, give it a star, or fork it and contribute! 
+If you like **Tasmota**, give it a star, or fork it and contribute!
 
 [![GitHub stars](https://img.shields.io/github/stars/arendst/Tasmota.svg?style=social&label=Star)](https://github.com/arendst/Tasmota/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Tasmota/network)
@@ -18,7 +18,7 @@ See [CHANGELOG.md](https://github.com/arendst/Tasmota/blob/development/tasmota/C
 
 ## Development
 
-[![Dev Version](https://img.shields.io/badge/development%20version-v8.3.x.x-blue.svg)](https://github.com/arendst/Tasmota)
+[![Dev Version](https://img.shields.io/badge/development%20version-v8.4.x.x-blue.svg)](https://github.com/arendst/Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Tasmota CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+CI%22)
 [![Tasmota ESP32 CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20ESP32%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+ESP32+CI%22)

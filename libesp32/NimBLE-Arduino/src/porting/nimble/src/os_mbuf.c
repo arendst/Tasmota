@@ -385,7 +385,10 @@ os_mbuf_append(struct os_mbuf *om, const void *data,  uint16_t len)
         memcpy(OS_MBUF_DATA(last, uint8_t *) + last->om_len , data, space);
 
         last->om_len += space;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
         data += space;
+#pragma GCC diagnostic pop
         remainder -= space;
     }
 
@@ -400,7 +403,10 @@ os_mbuf_append(struct os_mbuf *om, const void *data,  uint16_t len)
 
         new->om_len = min(omp->omp_databuf_len, remainder);
         memcpy(OS_MBUF_DATA(new, void *), data, new->om_len);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
         data += new->om_len;
+#pragma GCC diagnostic pop
         remainder -= new->om_len;
         SLIST_NEXT(last, om_next) = new;
         last = new;
@@ -651,7 +657,10 @@ os_mbuf_cmpf(const struct os_mbuf *om, int off, const void *data, int len)
 
         chunk_sz = min(om->om_len - om_off, len - data_off);
         if (chunk_sz > 0) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
             rc = memcmp(om->om_data + om_off, data + data_off, chunk_sz);
+#pragma GCC diagnostic pop
             if (rc != 0) {
                 return rc;
             }

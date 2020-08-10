@@ -36,6 +36,8 @@ uint8_t wr_redir=0;
 
 uint8_t *buffer;
 
+#define register
+
 #define SPRINT(A) char str[32];sprintf(str,"val: %d ",A);Serial.println((char*)str);
 
 #define OLED_FONT_WIDTH        6
@@ -71,12 +73,13 @@ void Renderer::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 void Renderer::DisplayOnff(int8_t on) {
 
 }
+
 void Renderer::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
 
 }
 
-int16_t Renderer::Begin(int16_t p1,int16_t p2,int16_t p3) {
-  return 0;
+void Renderer::Begin(int16_t p1,int16_t p2,int16_t p3) {
+
 }
 
 void Renderer::Updateframe() {

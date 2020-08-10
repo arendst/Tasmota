@@ -56,6 +56,7 @@
 #define D_AP "AP"                    // Access Point
 #define D_AS "as"
 #define D_AUTO "OTOMATIK"
+#define D_BATT "Batt"                // Short for Battery
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Yeniden başlama sayısı"
@@ -116,6 +117,7 @@
 #define D_IP_ADDRESS "IP Adresi"
 #define D_LIGHT "Işık"
 #define D_LWT "LWT"
+#define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_MODULE "Modül"
 #define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
@@ -347,6 +349,7 @@
 #define D_UPLOAD_STARTED "Yükleme başlatıldı"
 #define D_UPGRADE_STARTED "YÜkestlme başlatıldı"
 #define D_UPLOAD_DONE "Yükleme Tamamlandı"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Dosya seçilmedi"
 #define D_UPLOAD_ERR_2 "Boş yer yok"
 #define D_UPLOAD_ERR_3 "Magic byte is not 0xE9"
@@ -645,6 +648,7 @@
 #define D_SENSOR_OLED_RESET    "OLED Reset"
 #define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
 #define D_SENSOR_ZIGBEE_RXD    "Zigbee Rx"
+#define D_SENSOR_ZIGBEE_RST    "Zigbee Rst"
 #define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
 #define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
 #define D_SENSOR_IBEACON_TX    "iBeacon TX"
@@ -684,6 +688,13 @@
 #define D_SENSOR_TELEINFO_RX   "TInfo Rx"
 #define D_SENSOR_TELEINFO_ENABLE "TInfo EN"
 #define D_SENSOR_LMT01_PULSE   "LMT01 Pulse"
+#define D_SENSOR_ADC_INPUT     "ADC Input"
+#define D_SENSOR_ADC_TEMP      "ADC Temp"
+#define D_SENSOR_ADC_LIGHT     "ADC Light"
+#define D_SENSOR_ADC_BUTTON    "ADC Button"
+#define D_SENSOR_ADC_RANGE     "ADC Range"
+#define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
+#define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -701,6 +712,8 @@
 #define D_SENSOR_ETH_PHY_MDIO  "ETH MDIO"
 #define D_SENSOR_TCP_TXD       "TCP Tx"
 #define D_SENSOR_TCP_RXD       "TCP Rx"
+#define D_SENSOR_IEM3000_TX    "iEM3000 TX"
+#define D_SENSOR_IEM3000_RX    "iEM3000 RX"
 
 // Units
 #define D_UNIT_AMPERE "A"

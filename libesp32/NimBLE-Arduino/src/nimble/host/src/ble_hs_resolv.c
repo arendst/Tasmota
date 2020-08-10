@@ -50,6 +50,9 @@ struct ble_hs_resolv_data {
     struct ble_npl_callout rpa_timer;
 };
 
+/* NRPA bit: Enables NRPA as private address. */
+static bool nrpa_pvcy;
+
 /*** APIs for Peer Device Records.
  *
  * These Peer records are necessary to take care of Peers with RPA address when
@@ -305,6 +308,10 @@ is_ble_hs_resolv_enabled(void)
 bool
 ble_host_rpa_enabled(void)
 {
+    if (nrpa_pvcy) {
+        return false;
+    }
+
     if (is_ble_hs_resolv_enabled() && ble_hs_pvcy_enabled()) {
         return true;
     }
@@ -385,12 +392,16 @@ ble_hs_resolv_gen_priv_addr(struct ble_hs_resolv_entry *rl, int local)
     addr[2] = ecb.cipher_text[13];
 }
 
-/* Called to generate RPA address and this address is set in controller as
- * Random address. This is necessary in Host based privacy because controller is unaware of RPA
- * address is being used */
+/* Called to generate private (RPA/NRPA) address and this address is set in controller as
+ * Random address. This is necessary in Host based privacy because controller
+ * is unaware of private address is being used */
 int
-ble_hs_gen_own_rpa_random(void)
+ble_hs_gen_own_private_rnd(void)
 {
+    if (nrpa_pvcy) {
+        return ble_hs_id_set_nrpa_rnd();
+    }
+
     struct ble_hs_resolv_entry *rl = &g_ble_hs_resolv_list[0];
 
     ble_hs_resolv_gen_priv_addr(rl, 1);
@@ -412,12 +423,11 @@ ble_hs_get_rpa_local(void)
 static void
 ble_hs_resolv_rpa_timer_cb(struct ble_npl_event *ev)
 {
-    if (ble_host_rpa_enabled()) {
-        BLE_HS_LOG(DEBUG, "RPA Timeout; start active adv & scan with new RPA\n");
-
+    if (ble_host_rpa_enabled() || (nrpa_pvcy)) {
+        BLE_HS_LOG(DEBUG, "RPA/NRPA Timeout; start active adv & scan with new Private address \n");
         ble_gap_preempt();
-        /* Generate local RPA */
-        ble_hs_gen_own_rpa_random();
+        /* Generate local private address */
+        ble_hs_gen_own_private_rnd();
         ble_npl_callout_reset(&g_ble_hs_resolv_data.rpa_timer,
                               (int32_t)g_ble_hs_resolv_data.rpa_tmo);
         ble_gap_preempt_done();
@@ -595,6 +605,23 @@ ble_hs_resolv_list_clear_all(void)
     return;
 }
 
+/**
+* Called by host stack to enable NRPA privacy flag for future reference
+*/
+void
+ble_hs_resolv_nrpa_enable(void)
+{
+    nrpa_pvcy = true;
+}
+
+/**
+* Called by host stack to disable NRPA privacy flag
+*/
+void
+ble_hs_resolv_nrpa_disable(void)
+{
+    nrpa_pvcy = false;
+}
 /**
  * Called to enable or disable address resolution in the host
  *

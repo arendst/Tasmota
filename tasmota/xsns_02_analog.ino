@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef ESP8266
 #ifndef USE_ADC_VCC
 /*********************************************************************************************\
  * ADC support
@@ -456,3 +457,4 @@ bool Xsns02(uint8_t function)
 }
 
 #endif  // USE_ADC_VCC
+#endif  // ESP8266

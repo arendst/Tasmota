@@ -31,6 +31,7 @@ struct BLE2904_Data {
 
 } __attribute__((packed));
 
+
 /**
  * @brief Descriptor for Characteristic Presentation Format.
  *

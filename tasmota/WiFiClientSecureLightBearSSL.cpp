@@ -50,9 +50,7 @@ extern "C" {
 #include "c_types.h"
 
 #include <core_version.h>
-#ifndef ARDUINO_ESP8266_RELEASE_2_5_2
 #undef DEBUG_TLS
-#endif
 
 #ifdef DEBUG_TLS
 #include "coredecls.h"
@@ -255,24 +253,14 @@ void WiFiClientSecure_light::setBufferSizes(int recv, int xmit) {
 }
 
 bool WiFiClientSecure_light::stop(unsigned int maxWaitMs) {
-#ifdef ARDUINO_ESP8266_RELEASE_2_4_2
-  WiFiClient::stop(); // calls our virtual flush()
-  _freeSSL();
-	return true;
-#else
   bool ret = WiFiClient::stop(maxWaitMs); // calls our virtual flush()
   _freeSSL();
   return ret;
-#endif
 }
 
 bool WiFiClientSecure_light::flush(unsigned int maxWaitMs) {
   (void) _run_until(BR_SSL_SENDAPP);
-#ifdef ARDUINO_ESP8266_RELEASE_2_4_2
-  WiFiClient::flush();
-#else
   return WiFiClient::flush(maxWaitMs);
-#endif
 }
 
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
@@ -695,18 +683,56 @@ extern "C" {
     xc->done_cert = true;   // first cert already processed
   }
 
+// **** Start patch Castellucci
+/*
   static void pubkeyfingerprint_pubkey_fingerprint(br_sha1_context *shactx, br_rsa_public_key rsakey) {
     br_sha1_init(shactx);
     br_sha1_update(shactx, "ssh-rsa", 7);           // tag
     br_sha1_update(shactx, rsakey.e, rsakey.elen);  // exponent
     br_sha1_update(shactx, rsakey.n, rsakey.nlen);  // modulus
   }
+*/
+  // If `compat` id false, adds a u32be length prefixed value to the sha1 state.
+  // If `compat` is true, the length will be omitted for compatibility with
+  // data from older versions of Tasmota.
+  static void sha1_update_len(br_sha1_context *shactx, const void *msg, uint32_t len, bool compat) {
+    uint8_t buf[] = {0, 0, 0, 0};
+
+    if (!compat) {
+      buf[0] = (len >> 24) & 0xff;
+      buf[1] = (len >> 16) & 0xff;
+      buf[2] = (len >>  8) & 0xff;
+      buf[3] = (len >>  0) & 0xff;
+      br_sha1_update(shactx, buf, 4); // length
+    }
+    br_sha1_update(shactx, msg, len); // message
+  }
+
+  // Update the received fingerprint based on the certificate's public key.
+  // If `compat` is true, an insecure version of the fingerprint will be
+  // calcualted for compatibility with older versions of Tasmota. Normally,
+  // `compat` should be false.
+  static void pubkeyfingerprint_pubkey_fingerprint(br_x509_pubkeyfingerprint_context *xc, bool compat) {
+    br_rsa_public_key rsakey = xc->ctx.pkey.key.rsa;
+
+    br_sha1_context shactx;
+
+    br_sha1_init(&shactx);
+
+    sha1_update_len(&shactx, "ssh-rsa", 7, compat);          // tag
+    sha1_update_len(&shactx, rsakey.e, rsakey.elen, compat); // exponent
+    sha1_update_len(&shactx, rsakey.n, rsakey.nlen, compat); // modulus
+
+    br_sha1_out(&shactx, xc->pubkey_recv_fingerprint); // copy to fingerprint
+  }
+// **** End patch Castellucci
 
   // Callback when complete chain has been parsed.
   // Return 0 on validation success, !0 on validation error
   static unsigned pubkeyfingerprint_end_chain(const br_x509_class **ctx) {
     br_x509_pubkeyfingerprint_context *xc = (br_x509_pubkeyfingerprint_context *)ctx;
-
+// **** Start patch Castellucci
+/*
     br_sha1_context sha1_context;
     pubkeyfingerprint_pubkey_fingerprint(&sha1_context, xc->ctx.pkey.key.rsa);
     br_sha1_out(&sha1_context, xc->pubkey_recv_fingerprint); // copy to fingerprint
@@ -723,6 +749,59 @@ extern "C" {
 	    // Default (no validation at all) or no errors in prior checks = success.
 	    return 0;
 		}
+*/
+    // set fingerprint status byte to zero
+    // FIXME: find a better way to pass this information
+    xc->pubkey_recv_fingerprint[20] = 0;
+    // Try matching using the the new fingerprint algorithm
+    pubkeyfingerprint_pubkey_fingerprint(xc, false);
+    if (!xc->fingerprint_all) {
+      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint1, 20)) {
+        return 0;
+      }
+      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint2, 20)) {
+        return 0;
+      }
+
+      // No match under new algorithm, do some basic checking on the key.
+      //
+      // RSA keys normally have an e value of 65537, which is three bytes long.
+      // Other e values are suspicious, but if the modulus is a standard size
+      // (multiple of 512 bits/64 bytes), any public exponent up to eight bytes
+      // long will be allowed.
+      //
+      // A legitimate key could possibly be marked as bad by this check, but
+      // the user would have had to really worked at making a strange key.
+      if (!(xc->ctx.pkey.key.rsa.elen == 3
+            && xc->ctx.pkey.key.rsa.e[0] == 1
+            && xc->ctx.pkey.key.rsa.e[1] == 0
+            && xc->ctx.pkey.key.rsa.e[2] == 1)) {
+        if (xc->ctx.pkey.key.rsa.nlen & 63 != 0 || xc->ctx.pkey.key.rsa.elen > 8) {
+          return 2; // suspicious key, return error
+        }
+      }
+
+      // try the old algorithm and potentially mark for update
+      pubkeyfingerprint_pubkey_fingerprint(xc, true);
+      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint1, 20)) {
+        xc->pubkey_recv_fingerprint[20] |= 1; // mark for update
+      }
+      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint2, 20)) {
+        xc->pubkey_recv_fingerprint[20] |= 2; // mark for update
+      }
+      if (!xc->pubkey_recv_fingerprint[20]) {
+        return 1;    // not marked for update because no match, error
+      }
+
+      // the old fingerprint format matched, recompute new one for update
+      pubkeyfingerprint_pubkey_fingerprint(xc, false);
+
+      return 0;
+    } else {
+      // Default (no validation at all) or no errors in prior checks = success.
+      return 0;
+    }
+// **** End patch Castellucci
   }
 
   // Return the public key from the validator (set by x509_minimal)

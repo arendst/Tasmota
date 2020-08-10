@@ -22,19 +22,16 @@
 
 #include "NimBLECharacteristic.h"
 #include "NimBLEUUID.h"
-#include "FreeRTOS.h"
 
 #include <string>
 
 
 typedef struct
 {
-    uint16_t attr_max_len;                                  /*!<  attribute max value length */
-    uint16_t attr_len;                                      /*!<  attribute current value length */
-    uint8_t  *attr_value;                                   /*!<  the pointer to attribute value */
+    uint16_t attr_max_len;  /*!<  attribute max value length */
+    uint16_t attr_len;      /*!<  attribute current value length */
+    uint8_t  *attr_value;    /*!<  the pointer to attribute value */
 } attr_value_t;
-
-typedef attr_value_t esp_attr_value_t; /*!< compatibility for esp32 */
 
 class NimBLEService;
 class NimBLECharacteristic;
@@ -46,32 +43,39 @@ class NimBLEDescriptorCallbacks;
  */
 class NimBLEDescriptor {
 public:
-    virtual ~NimBLEDescriptor();
-    uint16_t getHandle();                                   // Get the handle of the descriptor.
-    size_t   getLength();                                   // Get the length of the value of the descriptor.
-    NimBLEUUID  getUUID();                                     // Get the UUID of the descriptor.
-    uint8_t* getValue();                                    // Get a pointer to the value of the descriptor.
-//  void setAccessPermissions(uint8_t perm);          // Set the permissions of the descriptor.
-    void setCallbacks(NimBLEDescriptorCallbacks* pCallbacks);  // Set callbacks to be invoked for the descriptor.
-    void setValue(const uint8_t* data, size_t size);              // Set the value of the descriptor as a pointer to data.
-    void setValue(const std::string &value);                       // Set the value of the descriptor as a data buffer.
+    uint16_t     getHandle();
+    size_t       getLength();
+    NimBLEUUID   getUUID();
+    uint8_t*     getValue();
+    void         setCallbacks(NimBLEDescriptorCallbacks* pCallbacks);
+    void         setValue(const uint8_t* data, size_t size);
+    void         setValue(const std::string &value);
+    std::string  toString();
 
-    std::string toString();                                 // Convert the descriptor to a string representation.
+    template<typename T>
+    void setValue(const T &s) {
+        setValue((uint8_t*)&s, sizeof(T));
+    }
 
 private:
-    friend class NimBLEDescriptorMap;
     friend class NimBLECharacteristic;
     friend class NimBLEService;
     friend class NimBLE2902;
     friend class NimBLE2904;
 
     NimBLEDescriptor(const char* uuid, uint16_t properties,
-                            uint16_t max_len,
-                            NimBLECharacteristic* pCharacteristic);
+                     uint16_t max_len,
+                     NimBLECharacteristic* pCharacteristic);
 
     NimBLEDescriptor(NimBLEUUID uuid, uint16_t properties,
-                            uint16_t max_len,
-                            NimBLECharacteristic* pCharacteristic);
+                     uint16_t max_len,
+                     NimBLECharacteristic* pCharacteristic);
+
+    ~NimBLEDescriptor();
+
+    static int handleGapEvent(uint16_t conn_handle, uint16_t attr_handle,
+                              struct ble_gatt_access_ctxt *ctxt, void *arg);
+    void       setHandle(uint16_t handle);
 
     NimBLEUUID                 m_uuid;
     uint16_t                   m_handle;
@@ -79,12 +83,8 @@ private:
     NimBLECharacteristic*      m_pCharacteristic;
     uint8_t                    m_properties;
     attr_value_t               m_value;
-
-    static int handleGapEvent(uint16_t conn_handle, uint16_t attr_handle,
-                           struct ble_gatt_access_ctxt *ctxt, void *arg);
-
-    void setHandle(uint16_t handle);
-}; // BLEDescriptor
+    portMUX_TYPE               m_valMux;
+}; // NimBLEDescriptor
 
 
 /**

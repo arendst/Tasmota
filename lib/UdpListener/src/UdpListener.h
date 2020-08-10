@@ -48,7 +48,7 @@
  * only the <n> first bytes (200 by default) of each packet.
  * The number of packets treated is limited (3 by default), any
  * new packet arriving is dropped.
- * 
+ *
  * This class does only receiving multicast packets for LWIP2
 */
 
@@ -175,7 +175,7 @@ private:
             if (buf != dst)
                 memcpy(dst, buf, packet_len);
             _buffers[next_slot].len = packet_len;
-            
+
             _buffers[next_slot].srcaddr = srcaddr;
             _buffers[next_slot].dstaddr = ip_current_dest_addr();
             _buffers[next_slot].srcport = srcport;
@@ -187,7 +187,7 @@ private:
 
     static void _s_recv(void *arg,
             udp_pcb *upcb, pbuf *p,
-            CONST ip_addr_t *srcaddr, u16_t srcport)
+            const ip_addr_t *srcaddr, u16_t srcport)
     {
         reinterpret_cast<UdpListener*>(arg)->_recv(upcb, p, srcaddr, srcport);
     }

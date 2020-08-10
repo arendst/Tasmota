@@ -1,0 +1,4 @@
+<map id="IRDelonghiAc" name="IRDelonghiAc">
+<area shape="rect" id="node1" title="Class for handling detailed Delonghi A/C messages." alt="" coords="5,95,115,121"/>
+<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="27,5,93,32"/>
+</map>

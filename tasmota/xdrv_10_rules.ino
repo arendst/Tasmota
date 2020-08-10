@@ -165,9 +165,10 @@ struct RULES {
   long old_dimm = -1;
 
   uint16_t last_minute = 60;
-  uint16_t vars_event = 0;
-  uint8_t mems_event = 0;
+  uint16_t vars_event = 0;   // Bitmask supporting MAX_RULE_VARS bits
+  uint16_t mems_event = 0;   // Bitmask supporting MAX_RULE_MEMS bits
   bool teleperiod = false;
+  bool busy = false;
 
   char event_data[100];
 } Rules;
@@ -293,6 +294,7 @@ String GetRule(uint32_t idx) {
     return rule;
 #endif
   }
+  return "";  // Fix GCC10 warning
 }
 
 #ifdef USE_UNISHOX_COMPRESSION
@@ -564,7 +566,6 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match 1 %d"), match);
 
-
   if (bitRead(Settings.rule_once, rule_set)) {
     if (match) {                                       // Only allow match state changes
       if (!bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set])) {
@@ -749,6 +750,9 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
 bool RulesProcessEvent(char *json_event)
 {
+  if (Rules.busy) { return false; }
+
+  Rules.busy = true;
   bool serviced = false;
 
 #ifdef USE_DEBUG_DRIVER
@@ -774,6 +778,9 @@ bool RulesProcessEvent(char *json_event)
       if (RuleSetProcess(i, event_saved)) { serviced = true; }
     }
   }
+
+  Rules.busy = false;
+
   return serviced;
 }
 
@@ -784,6 +791,11 @@ bool RulesProcess(void)
 
 void RulesInit(void)
 {
+  // indicates scripter not enabled
+  bitWrite(Settings.rule_once, 7, 0);
+  // and indicates scripter do not use compress
+  bitWrite(Settings.rule_once, 6, 0);
+
   rules_flag.data = 0;
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (0 == GetRuleLen(i)) {
@@ -796,7 +808,7 @@ void RulesInit(void)
 
 void RulesEvery50ms(void)
 {
-  if (Settings.rule_enabled) {  // Any rule enabled
+  if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
     char json_event[120];
 
     if (-1 == Rules.new_power) { Rules.new_power = power; }
@@ -916,7 +928,7 @@ uint8_t rules_xsns_index = 0;
 
 void RulesEvery100ms(void)
 {
-  if (Settings.rule_enabled && (uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
+  if (Settings.rule_enabled && !Rules.busy && (uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
     mqtt_data[0] = '\0';
     int tele_period_save = tele_period;
     tele_period = 2;                                   // Do not allow HA updates during next function call
@@ -925,14 +937,14 @@ void RulesEvery100ms(void)
     if (strlen(mqtt_data)) {
       mqtt_data[0] = '{';                              // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
       ResponseJsonEnd();
-      RulesProcess();
+      RulesProcessEvent(mqtt_data);
     }
   }
 }
 
 void RulesEverySecond(void)
 {
-  if (Settings.rule_enabled) {  // Any rule enabled
+  if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
     char json_event[120];
 
     if (RtcTime.valid) {
@@ -956,7 +968,7 @@ void RulesEverySecond(void)
 
 void RulesSaveBeforeRestart(void)
 {
-  if (Settings.rule_enabled) {  // Any rule enabled
+  if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
     char json_event[32];
 
     strncpy_P(json_event, PSTR("{\"System\":{\"Save\":1}}"), sizeof(json_event));

@@ -121,7 +121,7 @@ void Bl0940Received(void) {
   }
 }
 
-bool Bl0940SerialInput(void) {
+void Bl0940SerialInput(void) {
   while (Bl0940Serial->available()) {
     yield();
     uint8_t serial_in_byte = Bl0940Serial->read();
@@ -142,7 +142,7 @@ bool Bl0940SerialInput(void) {
           Energy.data_valid[0] = 0;
           Bl0940Received();
           Bl0940.received = false;
-          return true;
+          return;
         } else {
           do {  // Sync buffer with data (issue #1907 and #3425)
             memmove(Bl0940.rx_buffer, Bl0940.rx_buffer +1, BL0940_BUFFER_SIZE -1);

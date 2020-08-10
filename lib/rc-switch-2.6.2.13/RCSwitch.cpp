@@ -13,19 +13,20 @@
   - Robert ter Vehn / <first name>.<last name>(at)gmail(dot)com
   - Johann Richard / <first name>.<last name>(at)gmail(dot)com
   - Vlad Gheorghe / <first name>.<last name>(at)gmail(dot)com https://github.com/vgheo
+  - Matias Cuenca-Acuna 
   
   Project home: https://github.com/sui77/rc-switch/
-
+  
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
   version 2.1 of the License, or (at your option) any later version.
-
+  
   This library is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   Lesser General Public License for more details.
-
+  
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
@@ -40,17 +41,22 @@
     #define memcpy_P(dest, src, num) memcpy((dest), (src), (num))
 #endif
 
-#if defined(ESP8266) || defined(ESP32)
+#if defined(ESP8266)
     // interrupt handler and related code must be in RAM on ESP8266,
     // according to issue #46.
     #define RECEIVE_ATTR ICACHE_RAM_ATTR
+    #define VAR_ISR_ATTR
+#elif defined(ESP32)
+    #define RECEIVE_ATTR IRAM_ATTR
+    #define VAR_ISR_ATTR DRAM_ATTR
 #else
     #define RECEIVE_ATTR
+    #define VAR_ISR_ATTR
 #endif
 
 
 /* Format for protocol definitions:
- * {pulselength, Sync bit, "0" bit, "1" bit}
+ * {pulselength, Sync bit, "0" bit, "1" bit, invertedSignal}
  * 
  * pulselength: pulse length in microseconds, e.g. 350
  * Sync bit: {1, 31} means 1 high pulse and 31 low pulses
@@ -69,7 +75,7 @@
  * These are combined to form Tri-State bits when sending or receiving codes.
  */
 #if defined(ESP8266) || defined(ESP32)
-static const RCSwitch::Protocol proto[] = {
+static const VAR_ISR_ATTR RCSwitch::Protocol proto[] = {
 #else
 static const RCSwitch::Protocol PROGMEM proto[] = {
 #endif
@@ -81,7 +87,10 @@ static const RCSwitch::Protocol PROGMEM proto[] = {
   { 450, { 23,  1 }, {  1,  2 }, {  2,  1 }, true },     // protocol 6 (HT6P20B)
   { 150, {  2, 62 }, {  1,  6 }, {  6,  1 }, false },    // protocol 7 (HS2303-PT, i. e. used in AUKEY Remote)
   { 200, {  3, 130}, {  7, 16 }, {  3,  16}, false},     // protocol 8 Conrad RS-200 RX
-  { 200, { 130, 7 }, {  16, 7 }, { 16,  3 }, true}       // protocol 9 Conrad RS-200 TX
+  { 200, { 130, 7 }, {  16, 7 }, { 16,  3 }, true},      // protocol 9 Conrad RS-200 TX
+  { 365, { 18,  1 }, {  3,  1 }, {  1,  3 }, true },     // protocol 10 (1ByOne Doorbell)
+  { 270, { 36,  1 }, {  1,  2 }, {  2,  1 }, true },     // protocol 11 (HT12E)
+  { 320, { 36,  1 }, {  1,  2 }, {  2,  1 }, true }      // protocol 12 (SM5212)
 };
 
 enum {

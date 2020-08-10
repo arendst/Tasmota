@@ -142,4 +142,10 @@ NimBLEAddress::operator std::string() const {
     return std::string(buffer);
 }
 
+NimBLEAddress::operator uint64_t() const {
+    uint64_t address = 0;
+    memcpy(&address, m_address, sizeof m_address);
+    return address;
+}
+
 #endif

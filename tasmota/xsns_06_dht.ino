@@ -77,7 +77,8 @@ bool DhtRead(uint32_t sensor)
       delay(19);  // minimum 18ms
       break;
     case GPIO_DHT22:                                    // DHT21, DHT22, AM2301, AM2302, AM2321
-      delay(2);   // minimum 1ms
+//      delay(2);   // minimum 1ms
+      delayMicroseconds(2000);                          // See https://github.com/arendst/Tasmota/pull/7468#issuecomment-647067015
       break;
     case GPIO_SI7021:                                   // iTead SI7021
       delayMicroseconds(500);
@@ -187,12 +188,12 @@ bool DhtRead(uint32_t sensor)
 
 bool DhtPinState()
 {
-  if ((XdrvMailbox.index >= GPIO_DHT11) && (XdrvMailbox.index <= GPIO_SI7021)) {
+  if ((XdrvMailbox.index >= AGPIO(GPIO_DHT11)) && (XdrvMailbox.index <= AGPIO(GPIO_SI7021))) {
     if (dht_sensors < DHT_MAX_SENSORS) {
       Dht[dht_sensors].pin = XdrvMailbox.payload;
-      Dht[dht_sensors].type = XdrvMailbox.index;
+      Dht[dht_sensors].type = BGPIO(XdrvMailbox.index);
       dht_sensors++;
-      XdrvMailbox.index = GPIO_DHT11;
+      XdrvMailbox.index = AGPIO(GPIO_DHT11);
     } else {
       XdrvMailbox.index = 0;
     }

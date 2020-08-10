@@ -90,7 +90,7 @@ void Epd42::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
   fillScreen(BLACK);
 }
 
-int16_t Epd42::Begin(int16_t cs,int16_t mosi,int16_t sclk) {
+void Epd42::Begin(int16_t cs,int16_t mosi,int16_t sclk) {
   cs_pin=cs;
   mosi_pin=mosi;
   sclk_pin=sclk;

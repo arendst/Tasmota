@@ -1,1 +1,0 @@
-Stripped down library for aes-ccm-decryption in the MI_NRF24.ino.

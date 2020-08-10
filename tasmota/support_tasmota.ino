@@ -207,6 +207,7 @@ void SetDevicePower(power_t rpower, uint32_t source)
 
   XdrvMailbox.index = rpower;
   XdrvCall(FUNC_SET_POWER);               // Signal power state
+  XsnsCall(FUNC_SET_POWER);               // Signal power state
 
   XdrvMailbox.index = rpower;
   XdrvMailbox.payload = source;
@@ -572,7 +573,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
     }
 #ifdef USE_DEVICE_GROUPS
     if (SRC_REMOTE != source && SRC_RETRY != source) {
-      if (Settings.flag4.remote_device_mode)  // SetOption88 - Enable relays in separate device groups
+      if (Settings.flag4.multiple_device_groups)  // SetOption88 - Enable relays in separate device groups
         SendDeviceGroupMessage(device - 1, DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, (power >> (device - 1)) & 1 | 0x01000000);  // Explicitly set number of relays to one
       else
         SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, power);
@@ -651,10 +652,12 @@ void MqttShowState(void)
   ResponseAppendTime();
   ResponseAppend_P(PSTR(",\"" D_JSON_UPTIME "\":\"%s\",\"UptimeSec\":%u"), GetUptime().c_str(), UpTime());
 
+#ifdef ESP8266
 #ifdef USE_ADC_VCC
   dtostrfd((double)ESP.getVcc()/1000, 3, stemp1);
   ResponseAppend_P(PSTR(",\"" D_JSON_VCC "\":%s"), stemp1);
-#endif
+#endif  // USE_ADC_VCC
+#endif  // ESP8266
 
   ResponseAppend_P(PSTR(",\"" D_JSON_HEAPSIZE "\":%d,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u,\"MqttCount\":%u"),
     ESP_getFreeHeap()/1024, GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode),  // SetOption60 - Enable normal sleep instead of dynamic sleep
@@ -663,7 +666,7 @@ void MqttShowState(void)
   for (uint32_t i = 1; i <= devices_present; i++) {
 #ifdef USE_LIGHT
     if ((LightDevice()) && (i >= LightDevice())) {
-      if (i == LightDevice())  { LightState(1); }    // call it only once
+      if (i == LightDevice())  { ResponseLightState(1); }    // call it only once
     } else {
 #endif
       ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetPowerDevice(stemp1, i, sizeof(stemp1), Settings.flag.device_index_enable),  // SetOption26 - Switch between POWER or POWER1
@@ -852,11 +855,8 @@ void PerformEverySecond(void)
     }
   }
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
   // Wifi keep alive to send Gratuitous ARP
   wifiKeepAlive();
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
-
 
 #ifdef ESP32
   if (11 == uptime) {      // Perform one-time ESP32 houskeeping
@@ -972,6 +972,9 @@ void Every250mSeconds(void)
         SettingsSave(1);  // Free flash for OTA update
       }
       if (ota_state_flag <= 0) {
+#ifdef USE_COUNTER
+        CounterInterruptDisable(true);  // Prevent OTA failures on 100Hz counter interrupts
+#endif  // USE_COUNTER
 #ifdef USE_WEBSERVER
         if (Settings.webserver) StopWebserver();
 #endif  // USE_WEBSERVER
@@ -1003,15 +1006,6 @@ void Every250mSeconds(void)
 
             char *bch = strrchr(mqtt_data, '/');                       // Only consider filename after last backslash prevent change of urls having "-" in it
             if (bch == nullptr) { bch = mqtt_data; }                   // No path found so use filename only
-/*
-            char *ech = strrchr(bch, '.');                             // Find file type in filename (none, .bin or .gz)
-            if ((ech != nullptr) && (0 == strncasecmp_P(ech, PSTR(".GZ"), 3))) {
-              char *fch = ech;
-              *fch = '\0';
-              ech = strrchr(bch, '.');                                 // Find file type .bin.gz
-              *fch = '.';
-            }
-*/
             char *ech = strchr(bch, '.');                              // Find file type in filename (none, .ino.bin, .ino.bin.gz, .bin, .bin.gz or .gz)
             if (ech == nullptr) { ech = mqtt_data + strlen(mqtt_data); }  // Point to '/0' at end of mqtt_data becoming an empty string
 
@@ -1027,13 +1021,8 @@ void Every250mSeconds(void)
           }
 #endif  // FIRMWARE_MINIMAL
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s"), mqtt_data);
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
-          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(mqtt_data));
-#else
-          // If using core stage or 2.5.0+ the syntax has changed
           WiFiClient OTAclient;
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, mqtt_data));
-#endif
           if (!ota_result) {
 #ifndef FIRMWARE_MINIMAL
             int ota_error = ESPhttpUpdate.getLastError();
@@ -1063,6 +1052,9 @@ void Every250mSeconds(void)
         ResponseAppend_P(PSTR("\"}"));
 //        restart_flag = 2;          // Restart anyway to keep memory clean webserver
         MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_UPGRADE));
+#ifdef USE_COUNTER
+        CounterInterruptDisable(false);
+#endif  // USE_COUNTER
       }
     }
     break;
@@ -1440,8 +1432,7 @@ void SerialInput(void)
     }
     ResponseJsonEnd();
 
-    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
-    XdrvRulesProcess();
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
     serial_in_byte_counter = 0;
   }
 }
@@ -1576,11 +1567,11 @@ void GpioInit(void)
 
 //  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)gpio_pin, ARRAY_SIZE(gpio_pin), sizeof(gpio_pin[0]));
 
-#ifdef ESP8266
-  if ((2 == Pin(GPIO_TXD)) || (H801 == my_module_type)) { Serial.set_tx(2); }
-
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
+
+#ifdef ESP8266
+  if ((2 == Pin(GPIO_TXD)) || (H801 == my_module_type)) { Serial.set_tx(2); }
 
 #ifdef USE_SPI
   spi_flg = (((PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_CS) > 14)) || (Pin(GPIO_SPI_CS) < 12)) || ((PinUsed(GPIO_SPI_DC) && (Pin(GPIO_SPI_DC) > 14)) || (Pin(GPIO_SPI_DC) < 12)));
@@ -1591,14 +1582,61 @@ void GpioInit(void)
     SetPin(13, GPIO_SPI_MOSI);
     my_module.io[14] = GPIO_SPI_CLK;
     SetPin(14, GPIO_SPI_CLK);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK)"));
   }
   soft_spi_flg = (PinUsed(GPIO_SSPI_CS) && PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
 #endif  // USE_SPI
 #else // ESP32
-  analogWriteFreqRange(0, Settings.pwm_frequency, Settings.pwm_range);
-
 #ifdef USE_SPI
-  spi_flg = (PinUsed(GPIO_SPI_CLK) && (PinUsed(GPIO_SPI_MOSI) || PinUsed(GPIO_SPI_MISO)));
+  if (PinUsed(GPIO_SPI_CS) || PinUsed(GPIO_SPI_DC)) {
+    if ((15 == Pin(GPIO_SPI_CS)) && (!GetPin(12) && !GetPin(13) && !GetPin(14))) {  // HSPI
+      my_module.io[12] = AGPIO(GPIO_SPI_MISO);
+      SetPin(12, AGPIO(GPIO_SPI_MISO));
+      my_module.io[13] = AGPIO(GPIO_SPI_MOSI);
+      SetPin(13, AGPIO(GPIO_SPI_MOSI));
+      my_module.io[14] = AGPIO(GPIO_SPI_CLK);
+      SetPin(14, AGPIO(GPIO_SPI_CLK));
+    }
+    else if ((5 == Pin(GPIO_SPI_CS)) && (!GetPin(19) && !GetPin(23) && !GetPin(18))) {  // VSPI
+      my_module.io[19] = AGPIO(GPIO_SPI_MISO);
+      SetPin(19, AGPIO(GPIO_SPI_MISO));
+      my_module.io[23] = AGPIO(GPIO_SPI_MOSI);
+      SetPin(23, AGPIO(GPIO_SPI_MOSI));
+      my_module.io[18] = AGPIO(GPIO_SPI_CLK);
+      SetPin(18, AGPIO(GPIO_SPI_CLK));
+    }
+    else if ((12 == Pin(GPIO_SPI_MISO)) || (13 == Pin(GPIO_SPI_MOSI)) || (14 == Pin(GPIO_SPI_CLK))) {  // HSPI
+      my_module.io[12] = AGPIO(GPIO_SPI_MISO);
+      SetPin(12, AGPIO(GPIO_SPI_MISO));
+      my_module.io[13] = AGPIO(GPIO_SPI_MOSI);
+      SetPin(13, AGPIO(GPIO_SPI_MOSI));
+      my_module.io[14] = AGPIO(GPIO_SPI_CLK);
+      SetPin(14, AGPIO(GPIO_SPI_CLK));
+    }
+    else if ((19 == Pin(GPIO_SPI_MISO)) || (23 == Pin(GPIO_SPI_MOSI)) || (18 == Pin(GPIO_SPI_CLK))) {  // VSPI
+      my_module.io[19] = AGPIO(GPIO_SPI_MISO);
+      SetPin(19, AGPIO(GPIO_SPI_MISO));
+      my_module.io[23] = AGPIO(GPIO_SPI_MOSI);
+      SetPin(23, AGPIO(GPIO_SPI_MOSI));
+      my_module.io[18] = AGPIO(GPIO_SPI_CLK);
+      SetPin(18, AGPIO(GPIO_SPI_CLK));
+    }
+    spi_flg = (PinUsed(GPIO_SPI_CLK) && (PinUsed(GPIO_SPI_MOSI) || PinUsed(GPIO_SPI_MISO)));
+    if (spi_flg) {
+      if (PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_MISO)) {
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MISO), GPIO%02d(MOSI) and GPIO%02d(CLK)"),
+          Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
+      }
+      else if (PinUsed(GPIO_SPI_MOSI)) {
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MOSI) and GPIO%02d(CLK)"),
+          Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
+      }
+      else if (PinUsed(GPIO_SPI_MISO)) {
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MISO) and GPIO%02d(CLK)"),
+          Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK));
+      }
+    }
+  }
   soft_spi_flg = (PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
 #endif  // USE_SPI
 #endif  // ESP8266 - ESP32
@@ -1649,12 +1687,11 @@ void GpioInit(void)
 
   for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
     if (PinUsed(GPIO_PWM1, i)) {
+#ifdef ESP8266
       pinMode(Pin(GPIO_PWM1, i), OUTPUT);
-#ifdef ESP32
-      analogAttach(Pin(GPIO_PWM1, i),i);
-      analogWriteFreqRange(i,Settings.pwm_frequency,Settings.pwm_range);
+#else  // ESP32
+      analogAttach(Pin(GPIO_PWM1, i), i);
 #endif
-
       if (light_type) {
         // force PWM GPIOs to low or high mode, see #7165
         analogWrite(Pin(GPIO_PWM1, i), bitRead(pwm_inverted, i) ? Settings.pwm_range : 0);
@@ -1682,7 +1719,7 @@ void GpioInit(void)
     if (PinUsed(GPIO_LED1, i)) {
 #ifdef USE_ARILUX_RF
       if ((3 == i) && (leds_present < 2) && !PinUsed(GPIO_ARIRFSEL)) {
-        SetPin(Pin(GPIO_LED1, i), GPIO_ARIRFSEL);  // Legacy support where LED4 was Arilux RF enable
+        SetPin(Pin(GPIO_LED1, i), AGPIO(GPIO_ARIRFSEL));  // Legacy support where LED4 was Arilux RF enable
       } else {
 #endif
         pinMode(Pin(GPIO_LED1, i), OUTPUT);
@@ -1712,4 +1749,5 @@ void GpioInit(void)
   SetLedLink(Settings.ledstate &8);
 
   XdrvCall(FUNC_PRE_INIT);
+  XsnsCall(FUNC_PRE_INIT);
 }

@@ -332,6 +332,8 @@ static inline void net_buf_simple_restore(struct os_mbuf *buf,
 
 static inline void sys_memcpy_swap(void *dst, const void *src, size_t length)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
     __ASSERT(((src < dst && (src + length) <= dst) ||
           (src > dst && (dst + length) <= src)),
          "Source and destination buffers must not overlap");
@@ -341,6 +343,7 @@ static inline void sys_memcpy_swap(void *dst, const void *src, size_t length)
     for (; length > 0; length--) {
         *((u8_t *)dst++) = *((u8_t *)src--);
     }
+#pragma GCC diagnostic pop
 }
 
 #define popcount(x) __builtin_popcount(x)

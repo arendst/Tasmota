@@ -44,6 +44,7 @@ public:
     bool operator   ==(const NimBLEAddress & rhs) const;
     bool operator   !=(const NimBLEAddress & rhs) const;
     operator        std::string() const;
+    operator        uint64_t() const;
 
 private:
     uint8_t        m_address[6];

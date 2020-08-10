@@ -13,6 +13,20 @@
 
 #include "host/ble_gap.h"
 
+/****  FIX COMPILATION ****/
+#undef min
+#undef max
+/**************************/
+
+#include <string>
+
+typedef struct {
+    void *pATT;
+    TaskHandle_t task;
+    int rc;
+    std::string *buf;
+} ble_task_data_t;
+
 extern "C"{
 char *addr_str(const void *addr);
 void print_conn_desc(const struct ble_gap_conn_desc *desc);

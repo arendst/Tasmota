@@ -53,8 +53,10 @@
 //#define MODULE                 SONOFF_BASIC      // [Module] Select default module from tasmota_template.h
 #ifdef ESP8266
 #define FALLBACK_MODULE        SONOFF_BASIC      // [Module2] Select default module on fast reboot where USER_MODULE is user template
+//#define USER_TEMPLATE "{\"NAME\":\"Generic\",\"GPIO\":[255,255,255,255,255,255,255,255,255,255,255,255,255],\"FLAG\":15,\"BASE\":18}"  // [Template] Set JSON template
 #else // ESP32
 #define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
+//#define USER_TEMPLATE "{\"NAME\":\"ESP32-DevKit\",\"GPIO\":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,1],\"FLAG\":0,\"BASE\":1}"  // [Template] Set JSON template
 #endif
 
 #define SAVE_DATA              1                 // [SaveData] Save changed parameters to Flash (0 = disable, 1 - 3600 seconds)
@@ -95,8 +97,8 @@
 #define MQTT_USE               true              // [SetOption3] Select default MQTT use (false = Off, true = On)
 
 #define MQTT_HOST              ""                // [MqttHost]
-#define MQTT_FINGERPRINT1      "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"  // [MqttFingerprint1]
-#define MQTT_FINGERPRINT2      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint2]
+#define MQTT_FINGERPRINT1      "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"  // [MqttFingerprint1] (auto-learn)
+#define MQTT_FINGERPRINT2      "DA 39 A3 EE 5E 6B 4B 0D 32 55 BF EF 95 60 18 90 AF D8 07 09"  // [MqttFingerprint2] (invalid)
 #define MQTT_PORT              1883              // [MqttPort] MQTT port (10123 on CloudMQTT)
 #define MQTT_USER              "DVES_USER"       // [MqttUser] MQTT user
 #define MQTT_PASS              "DVES_PASS"       // [MqttPassword] MQTT password
@@ -280,6 +282,12 @@
 #define APP_DISABLE_POWERCYCLE false             // [SetOption65] Disable fast power cycle detection for device reset
 #define DEEPSLEEP_BOOTCOUNT    false             // [SetOption76] Enable incrementing bootcount when deepsleep is enabled
 
+#define APP_INTERLOCK_MODE     false             // [Interlock] Relay interlock mode
+#define APP_INTERLOCK_GROUP_1  0xFF              // [Interlock] Relay bitmask for interlock group 1 (0xFF if undef)
+//#define APP_INTERLOCK_GROUP_2  0x00              // [Interlock] Relay bitmask for interlock group 2 (0x00 if undef)
+//#define APP_INTERLOCK_GROUP_3  0x00              // [Interlock] Relay bitmask for interlock group 3 (0x00 if undef)
+//#define APP_INTERLOCK_GROUP_4  0x00              // [Interlock] Relay bitmask for interlock group 4 (0x00 if undef)
+
 // -- Lights --------------------------------------
 #define WS2812_LEDS            30                // [Pixels] Number of WS2812 LEDs to start with (max is 512)
 #define LIGHT_MODE             true              // [SetOption15] Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
@@ -421,7 +429,8 @@
 //  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 
 // -- Optional modules ----------------------------
-//#define ROTARY_V1                                // Add support for MI Desk Lamp
+#define ROTARY_V1                                // Add support for Rotary Encoder as used in MI Desk Lamp (+0k8 code)
+  #define ROTARY_MAX_STEPS     10                // Rotary step boundary
 #define USE_SONOFF_RF                            // Add support for Sonoff Rf Bridge (+3k2 code)
   #define USE_RF_FLASH                           // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (+2k7 code)
 #define USE_SONOFF_SC                            // Add support for Sonoff Sc (+1k1 code)
@@ -550,7 +559,14 @@
       #define MTX_ADDRESS7     0x00              // [DisplayAddress7] I2C address of seventh 8x8 matrix module
       #define MTX_ADDRESS8     0x00              // [DisplayAddress8] I2C address of eigth 8x8 matrix module
     #define USE_DISPLAY_SEVENSEG                 // [DisplayModel 11] [I2cDriver47] Enable sevenseg display (I2C 0x70-0x77) (<+11k code)
-      #define SEVENSEG_ADDRESS1     0x70         // [DisplayAddress1] I2C address of first sevenseg matrix module
+                                                 // Multiple sevenseg displays are logically arranged vertically with MTX_ADDRESS1 at y=0,
+                                                 // MTX_ADDRESS2 at y=1, up to MTX_ADDRESS8 at y=7
+                                                 // Command: DisplayText [yn]8888
+                                                 // will display 8888 at sevenseg display at I2C address MTX_ADDRESS(n-1)
+                                                 // Each segment may be address Command: DisplayText [xn]m
+                                                 //  where n is 0..4 (4 digits and middle :) and m is decimal for bitmap of which segment to turn on.
+                                                 // Reference: https://cdn-learn.adafruit.com/downloads/pdf/adafruit-led-backpack.pdf
+    // #define SEVENSEG_ADDRESS1     0x70      // No longer used.  Use MTX_ADDRESS1 - MTX_ADDRESS8 instead to specify I2C address of sevenseg displays
 //    #define USE_DISPLAY_SH1106                   // [DisplayModel 7] [I2cDriver6] Enable SH1106 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
 #endif  // USE_I2C
 
@@ -627,6 +643,9 @@
 #define USE_BL0940                               // Add support for BL0940 Energy monitor as used in Blitzwolf SHP-10 (+1k6 code)
 //#define USE_TELEINFO                             // Add support for Teleinfo via serial RX interface (+5k2 code, +168 RAM + SmartMeter LinkedList Values RAM)
 //  #define USE_TELEINFO_STANDARD                  // Use standard mode (9600 bps) else it's historical mode (1200 bps)
+//#define USE_IEM3000                              // Add support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
+  #define IEM3000_SPEED          19200           // iEM3000-Modbus RS485 serial speed (default: 19200 baud)
+  #define IEM3000_ADDR           1               // iEM3000-Modbus modbus address (default: 0x01)
 
 // -- Low level interface devices -----------------
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor (1k6 code)
@@ -662,16 +681,11 @@
 
 // -- Zigbee interface ----------------------------
 //#define USE_ZIGBEE                                // Enable serial communication with Zigbee CC2530 flashed with ZNP (+49k code, +3k mem)
-  #define USE_ZIGBEE_ZNP                          // Enable ZNP protocol, needed for CC2530 based devices
-  // #define USE_ZIGBEE_EZSP                         // [EXPERIMENTAL - DO NOT USE] Enable EZSP protocol, needed for EFR32 EmberZNet based devices, like Sonoff Zigbee bridge
-                                                  // Note: USE_ZIGBEE_ZNP and USE_ZIGBEE_EZSP are mutually incompatible, you must select exactly one
-  #define USE_ZIGBEE_PANID  0x1A63                // arbitrary PAN ID for Zigbee network, must be unique in the home
-                                                  // if PANID == 0xFFFF, then the device will act as a Zigbee router, the parameters below are ignored
-                                                  // if PANID == 0xFFFE, then the device will act as a Zigbee end-device (non-router), the parameters below are ignored
-  #define USE_ZIGBEE_EXTPANID 0xCCCCCCCCCCCCCCCCL // arbitrary extended PAN ID
-  #define USE_ZIGBEE_CHANNEL  11                  // Zigbee Channel (11-26)
-  #define USE_ZIGBEE_PRECFGKEY_L 0x0F0D0B0907050301L  // note: changing requires to re-pair all devices
-  #define USE_ZIGBEE_PRECFGKEY_H 0x0D0C0A0806040200L  // note: changing requires to re-pair all devices
+  #define USE_ZIGBEE_ZNP                         // Enable ZNP protocol, needed for CC2530 based devices
+//  #define USE_ZIGBEE_EZSP                        // Enable EZSP protocol, needed for EFR32 EmberZNet based devices, like Sonoff Zigbee bridge
+                                                 // Note: USE_ZIGBEE_ZNP and USE_ZIGBEE_EZSP are mutually incompatible, you must select exactly one
+  #define USE_ZIGBEE_CHANNEL  11                 // Zigbee Channel (11-26)
+  #define USE_ZIGBEE_TXRADIO_DBM  20             // Tx Radio power in dBm (only for EZSP, EFR32 can go up to 20 dBm)
 
   #define USE_ZIGBEE_COALESCE_ATTR_TIMER 350     // timer to coalesce attribute values (in ms)
   #define USE_ZIGBEE_MODELID      "Tasmota Z2T"  // reported "ModelId"      (cluster 0000 / attribute 0005)
@@ -733,6 +747,9 @@
   #define THERMOSTAT_TEMP_BAND_NO_PEAK_DET      1         // Default temperature band in thenths of degrees celsius within no peak will be detected
   #define THERMOSTAT_TIME_STD_DEV_PEAK_DET_OK   10        // Default standard deviation in minutes of the oscillation periods within the peak detection is successful
 
+// -- Prometheus exporter ---------------------------
+//#define USE_PROMETHEUS                           // Add support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
+
 // -- End of general directives -------------------
 
 /*********************************************************************************************\
@@ -750,6 +767,8 @@
 //  #define ETH_TYPE          0                    // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110, 2 = ETH_PHY_IP101
 //  #define ETH_ADDR          0                    // [EthAddress] 0 = PHY0 .. 31 = PHY31
 //  #define ETH_CLKMODE       0                    // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
+
+#define USE_ADC                                  // Add support for ADC on GPIO32 to GPIO39
 
 //#define USE_SPI                                  // Add support for hardware SPI
 //#define USE_MI_ESP32                             // Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)

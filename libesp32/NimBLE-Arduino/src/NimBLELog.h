@@ -25,25 +25,25 @@
 #if CORE_DEBUG_LEVEL >= 4
 #define NIMBLE_LOGD( tag, format, ... ) MODLOG_DFLT(ERROR,      "D %s: "#format"\n",tag,##__VA_ARGS__)
 #else
-#define NIMBLE_LOGD( tag, format, ... )
+#define NIMBLE_LOGD( tag, format, ... ) (void)tag
 #endif
 
 #if CORE_DEBUG_LEVEL >= 3
 #define NIMBLE_LOGI( tag, format, ... ) MODLOG_DFLT(ERROR,      "I %s: "#format"\n",tag,##__VA_ARGS__)
 #else
-#define NIMBLE_LOGI( tag, format, ... )
+#define NIMBLE_LOGI( tag, format, ... ) (void)tag
 #endif
 
 #if CORE_DEBUG_LEVEL >= 2
 #define NIMBLE_LOGW( tag, format, ... ) MODLOG_DFLT(ERROR,      "W %s: "#format"\n",tag,##__VA_ARGS__)
 #else
-#define NIMBLE_LOGW( tag, format, ... )
+#define NIMBLE_LOGW( tag, format, ... ) (void)tag
 #endif
 
 #if CORE_DEBUG_LEVEL >= 1
 #define NIMBLE_LOGE( tag, format, ... ) MODLOG_DFLT(ERROR,      "E %s: "#format"\n",tag,##__VA_ARGS__)
 #else
-#define NIMBLE_LOGE( tag, format, ... )
+#define NIMBLE_LOGE( tag, format, ... ) (void)tag
 #endif
 
 #define NIMBLE_LOGC( tag, format, ... ) MODLOG_DFLT(CRITICAL,   "CRIT %s: "#format"\n",tag,##__VA_ARGS__)

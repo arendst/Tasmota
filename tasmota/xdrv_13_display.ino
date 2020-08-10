@@ -45,8 +45,8 @@ uint8_t color_type = COLOR_BW;
 uint8_t auto_draw=1;
 
 const uint8_t DISPLAY_MAX_DRIVERS = 16;        // Max number of display drivers/models supported by xdsp_interface.ino
-const uint8_t DISPLAY_MAX_COLS = 44;           // Max number of columns allowed with command DisplayCols
-const uint8_t DISPLAY_MAX_ROWS = 32;           // Max number of lines allowed with command DisplayRows
+const uint8_t DISPLAY_MAX_COLS = 64;           // Max number of columns allowed with command DisplayCols
+const uint8_t DISPLAY_MAX_ROWS = 64;           // Max number of lines allowed with command DisplayRows
 
 const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log buffer
 
@@ -505,7 +505,7 @@ void DisplayText(void)
             cp += var;
             linebuf[fill] = 0;
             break;
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT) && USE_SCRIPT_FATFS>=0
+#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
           case 'P':
             { char *ep=strchr(cp,':');
              if (ep) {
@@ -1268,7 +1268,9 @@ void DisplayInitDriver(void)
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
   if (Settings.display_model) {
-    devices_present++;
+    if (!light_type) {
+      devices_present++;  // If no PWM channel for backlight then use "normal" power control
+    }
     disp_device = devices_present;
 
 #ifndef USE_DISPLAY_MODES1TO5
@@ -1510,7 +1512,7 @@ void rgb888_to_565(uint8_t *in, uint16_t *out, uint32_t len);
 #endif
 #endif
 
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT) && USE_SCRIPT_FATFS>=0
+#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
 
 #ifdef ESP32
 extern FS *fsp;
@@ -1539,14 +1541,13 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
     uint16_t ysize;
     fp.read((uint8_t*)&ysize,2);
 #if 1
-    uint16_t xdiv=xsize/XBUFF_LEN;
     renderer->setAddrWindow(xp,yp,xp+xsize,yp+ysize);
-    for(int16_t j=0; j<ysize; j++) {
-      for(int16_t i=0; i<xsize; i+=XBUFF_LEN) {
-        uint16_t rgb[XBUFF_LEN];
-        uint16_t len=fp.read((uint8_t*)rgb,XBUFF_LEN*2);
-        if (len>=2) renderer->pushColors(rgb,len/2,true);
-      }
+    uint16_t rgb[xsize];
+    for (int16_t j=0; j<ysize; j++) {
+    //  for(int16_t i=0; i<xsize; i+=XBUFF_LEN) {
+        fp.read((uint8_t*)rgb,xsize*2);
+        renderer->pushColors(rgb,xsize,true);
+    //  }
       OsWatchLoop();
     }
     renderer->setAddrWindow(0,0,0,0);

@@ -122,21 +122,20 @@ Has been removed from the API as it is no longer maintained in the library.
 
 The last two above changes reduce the heap usage significantly with minimal application code adjustments.   
 
-**NEW** on May 23, 2020
+**UPDATED** on June 21, 2020
 > ```
 > NimBLEClient::getServices(bool refresh = false)   
 > NimBLERemoteService::getCharacteristics(bool refresh = false)   
 > NimBLERemoteCharacteristic::getDecriptors(bool refresh = false)
 >```
-> These methods now take an optional (bool) parameter.   
+These methods now take an optional (bool) parameter.   
 If true it will clear the respective vector and retrieve all the respective attributes from the peripheral.   
-If false it will retrieve the attributes only if the vector is empty, otherwise the vector is returned   
-with the currently stored attributes.   
+If false(default) it will return the respective vector empty or otherwise with the currently stored attributes.   
 
-> Removed the automatic discovery of all peripheral attributes as they consumed time and resources for data   
+**Removed:** the automatic discovery of all peripheral attributes as they consumed time and resources for data   
 the user may not be interested in.   
    
-> Added `NimBLEClient::discoverAtrributes()` for the user to discover all the peripheral attributes   
+**Added:** `NimBLEClient::discoverAtrributes()` for the user to discover all the peripheral attributes   
 to replace the the former functionality.
    
    
@@ -145,12 +144,11 @@ to replace the the former functionality.
 >getCharacteristic(NimBLEUUID)   
 >getDescriptor(NimBLEUUID)
 >```
->These methods will now check the respective vectors for the attribute object and, if not found, will retrieve (only)   
+These methods will now check the respective vectors for the attribute object and, if not found, will retrieve (only)   
 the specified attribute from the peripheral.
 
-> These changes allow more control for the user to manage the resources used for the attributes.   
-
-
+These changes allow more control for the user to manage the resources used for the attributes.   
+***
 #### Client Security:
 The client will automatically initiate security when the peripheral responds that it's required.    
 The default configuration will use "just-works" pairing with no bonding, if you wish to enable bonding see below.

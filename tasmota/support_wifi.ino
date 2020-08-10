@@ -153,14 +153,11 @@ void WiFiSetSleepMode(void)
  */
 
 // Sleep explanation: https://github.com/esp8266/Arduino/blob/3f0c601cfe81439ce17e9bd5d28994a7ed144482/libraries/ESP8266WiFi/src/ESP8266WiFiGeneric.cpp#L255
-#if defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
-#else  // Enabled in 2.3.0, 2.4.0 and stage
   if (ssleep && Settings.flag3.sleep_normal) {  // SetOption60 - Enable normal sleep instead of dynamic sleep
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);        // Allow light sleep during idle times
   } else {
     WiFi.setSleepMode(WIFI_MODEM_SLEEP);        // Disable sleep (Esp8288/Arduino core and sdk default)
   }
-#endif
   WifiSetOutputPower();
 }
 
@@ -171,12 +168,6 @@ void WifiBegin(uint8_t flag, uint8_t channel)
 #ifdef USE_EMULATION
   UdpDisconnect();
 #endif  // USE_EMULATION
-
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0  // (!strncmp_P(ESP.getSdkVersion(),PSTR("1.5.3"),5))
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_PATCH_ISSUE_2186));
-//  WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
-  WifiSetMode(WIFI_OFF);
-#endif
 
   WiFi.persistent(false);   // Solve possible wifi init errors (re-add at 6.2.1.16 #4044, #4083)
   WiFi.disconnect(true);    // Delete SDK wifi config
@@ -652,7 +643,6 @@ void EspRestart(void)
   ESP_Restart();
 }
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
 //
 // Gratuitous ARP, backported from https://github.com/esp8266/Arduino/pull/6889
 //
@@ -700,4 +690,3 @@ void wifiKeepAlive(void) {
     SetNextTimeInterval(wifiTimer, wifiTimerSec * 1000);
   }
 }
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0

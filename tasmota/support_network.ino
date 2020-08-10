@@ -89,40 +89,34 @@ void MdnsUpdate(void) {
 \*********************************************************************************************/
 
 char* NetworkHostname(void) {
-  if (global_state.eth_down) {
-    return my_hostname;
-  }
 #ifdef ESP32
 #ifdef USE_ETHERNET
-  else {
+  if (!global_state.eth_down) {
     return EthernetHostname();
   }
 #endif
 #endif
+  return my_hostname;
 }
 
 IPAddress NetworkAddress(void) {
-  if (global_state.eth_down) {
-    return WiFi.localIP();
-  }
 #ifdef ESP32
 #ifdef USE_ETHERNET
-  else {
+  if (!global_state.eth_down) {
     return EthernetLocalIP();
   }
 #endif
 #endif
+  return WiFi.localIP();
 }
 
 String NetworkMacAddress(void) {
-  if (global_state.eth_down) {
-    return WiFi.macAddress();
-  }
 #ifdef ESP32
 #ifdef USE_ETHERNET
-  else {
+  if (!global_state.eth_down) {
     return EthernetMacAddress();
   }
 #endif
 #endif
+  return WiFi.macAddress();
 }
