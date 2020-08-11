@@ -30,7 +30,6 @@
  * {"NAME":"WifInfo","GPIO":[7,255,255,210,6,5,255,255,255,255,255,255,255],"FLAG":15,"BASE":18}
  * 
 \*********************************************************************************************/
-
 #define XNRG_15            15 
 
 #include "LibTeleinfo.h"
@@ -38,7 +37,7 @@
 
 #define TINFO_READ_TIMEOUT 400 
 
-// All contract type
+// All contract type for legacy, standard mode has in clear text
 enum TInfoContrat{
     CONTRAT_BAS = 1,  // BASE => Option Base. 
     CONTRAT_HC,       // HC.. => Option Heures Creuses. 
@@ -47,17 +46,17 @@ enum TInfoContrat{
     CONTRAT_END
 };
 
-// contract displayed name
+// contract displayed name for legacy, standard mode has in clear text
 const char kContratName[] PROGMEM = 
     "|Base|Heures Creuses|EJP|Bleu Blanc Rouge"
     ;
 
-// Received current contract value
+// Received current contract value for legacy, standard mode has in clear text
 const char kContratValue[] PROGMEM = 
     "|BASE|HC..|EJP.|BBR"
     ;
 
-// all tariff type
+// all tariff type for legacy, standard mode has in clear text
 enum TInfoTarif{
     TARIF_TH = 1,   
     TARIF_HC,  TARIF_HP, 
@@ -67,7 +66,8 @@ enum TInfoTarif{
     TARIF_END
 };
 
-// Received current tariff values
+// Received current tariff values 
+// for legacy, standard mode has in clear text
 const char kTarifValue[] PROGMEM = 
     "|TH..|HC..|HP.." 
     "|HN..|PM.." 
@@ -75,7 +75,7 @@ const char kTarifValue[] PROGMEM =
     "|HPJB|HPJW|HPJR" 
     ;
 
-// tariff displayed name
+// tariff displayed name (for legacy, standard mode has in clear text)
 const char kTarifName[] PROGMEM = 
     "|Toutes|Creuses|Pleines" 
     "|Normales|Pointe Mobile" 
@@ -83,27 +83,30 @@ const char kTarifName[] PROGMEM =
     "|Pleines Bleu|Pleines Blanc|Pleines Rouges" 
     ;
 
+// Label used to do some post processing and/or calculation
 enum TInfoLabel{
     LABEL_BASE = 1, 
-    LABEL_ADCO,
-    LABEL_HCHC, LABEL_HCHP,  
-    LABEL_OPTARIF, LABEL_ISOUSC, LABEL_PTEC,
-    LABEL_PAPP, LABEL_IINST, LABEL_TENSION,
-    LABEL_IMAX, LABEL_PMAX,
+    LABEL_ADCO, LABEL_ADSC,
+    LABEL_HCHC, LABEL_HCHP, LABEL_EAST, LABEL_EASF01, LABEL_EASF02,
+    LABEL_OPTARIF, LABEL_NGTF, LABEL_ISOUSC, LABEL_PREF, LABEL_PTEC, LABEL_LTARF, LABEL_NTARF,
+    LABEL_PAPP, LABEL_SINSTS, LABEL_IINST, LABEL_IRMS1, LABEL_TENSION, LABEL_URMS1,
+    LABEL_IMAX, LABEL_PMAX, LABEL_SMAXSN,
     LABEL_DEMAIN,
     LABEL_END
 };
 
 const char kLabel[] PROGMEM = 
-    "|BASE|ADCO|HCHC|HCHP"
-    "|OPTARIF|ISOUSC|PTEC"
-    "|PAPP|IINST|TENSION"
-    "|IMAX|PMAX"
+    "|BASE|ADCO|ADSC"
+    "|HCHC|HCHP|EAST|EASF01|EASF02"
+    "|OPTARIF|NGTF|ISOUSC|PREF|PTEC|LTARF|NTARF"
+    "|PAPP|SINSTS|IINST|IRMS1|TENSION|URMS1"
+    "|IMAX|PMAX|SMAXSN"
     "|DEMAIN"
     ;
 
 TInfo tinfo; // Teleinfo object
 TasmotaSerial *TInfoSerial = nullptr;
+_Mode_e tinfo_mode = TINFO_MODE_HISTORIQUE;
 bool tinfo_found = false;
 int contrat;
 int tarif;
@@ -147,10 +150,12 @@ void ADPSCallback(uint8_t phase)
     if (phase == 0){
         phase = 1;
     }
-    
-    if (getValueFromLabelIndex(LABEL_ADCO, adco)) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"ADPS\":%i}}"), adco, phase );
-        MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
+
+    if (tinfo_mode == TINFO_MODE_HISTORIQUE) {
+        if (getValueFromLabelIndex(LABEL_ADCO, adco) ) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"ADPS\":%i}}"), adco, phase );
+            MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
+        }
     }
 
     AddLog_P2(LOG_LEVEL_INFO, PSTR("ADPS on phase %d"), phase);
@@ -180,7 +185,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             }
         }
 
-        // Current tariff 
+        // Current tariff (legacy)
         if (ilabel == LABEL_PTEC)
         {
             char tarif_value[] = "    "; // 4 spaces
@@ -194,8 +199,21 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif changed, now '%s' (%d)"), me->value, tarif);
         } 
 
+        // Current tariff (standard is in clear text in value)
+        else if (ilabel == LABEL_LTARF)
+        {
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif name changed, now '%s'"), me->value);
+        } 
+        // Current tariff (standard index is is in clear text in value)
+        else if (ilabel == LABEL_NTARF)
+        {
+            tarif = atoi(me->value);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif index changed, now '%d'"), tarif);
+        } 
+
+
         // Voltage V (not present on all Smart Meter)
-        else if ( ilabel == LABEL_TENSION)
+        else if ( ilabel == LABEL_TENSION || ilabel == LABEL_URMS1)
         {
             Energy.voltage_available = true;
             Energy.voltage[0]  = (float) atoi(me->value);
@@ -207,7 +225,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
         }
 
         // Current I
-        else if (ilabel == LABEL_IINST)
+        else if (ilabel == LABEL_IINST || ilabel == LABEL_IRMS1)
         {
             if (!Energy.voltage_available) {
                 Energy.current[0]  = (float) atoi(me->value);
@@ -218,7 +236,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
         }
 
         // Power P
-        else if (ilabel == LABEL_PAPP)
+        else if (ilabel == LABEL_PAPP || ilabel == LABEL_SINSTS)
         {
             int papp = atoi(me->value);
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s, now %d"), me->value, papp);
@@ -229,7 +247,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             }
         }
 
-        // Wh indexes
+        // Wh indexes (legacy)
         else if ( ilabel == LABEL_HCHC || ilabel == LABEL_HCHP)
         {
             char value[32];
@@ -244,7 +262,25 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u  HP:%u  Total:%u"), hc, hp, total);
         }
 
-        // Contract subscribed
+        // Wh total index (standard)
+        else if ( ilabel == LABEL_EAST)
+        {
+            uint32_t total = atoi(me->value);
+            EnergyUpdateTotal(total/1000.0f, true);  
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%uWh"), total);
+        }
+
+        // Wh indexes (standard)
+        else if ( ilabel == LABEL_EASF01)
+        {
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u"),  atoi(me->value));
+        }
+        else if ( ilabel == LABEL_EASF02)
+        {
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HP:%u"),  atoi(me->value));
+        }
+
+        // Contract subscribed (legacy)
         else if (ilabel == LABEL_OPTARIF)
         {
             char contrat_value[] = "    "; // 4 spaces
@@ -257,9 +293,14 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             }
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s' (%d)"), me->value, contrat);
         } 
+        // Contract subscribed (standard is in clear text in value)
+        else if (ilabel == LABEL_NGTF)
+        {
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s'"), me->value);
+        } 
 
         // Contract subscribed (Power)
-        else if (ilabel == LABEL_ISOUSC)
+        else if (ilabel == LABEL_ISOUSC || ilabel == LABEL_PREF)
         {
             isousc = atoi( me->value);
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
@@ -284,7 +325,6 @@ void NewFrameCallback(struct _ValueList * me)
     // Reset Energy Watchdog
     Energy.data_valid[0] = 0;
 }
-
 
 /* ======================================================================
 Function: TInfoDrvInit 
@@ -311,13 +351,20 @@ Comments: -
 ====================================================================== */
 void TInfoInit(void)
 {
-    #ifdef USE_TELEINFO_STANDARD
-    #define TINFO_SPEED 9600
-    #else
-    #define TINFO_SPEED 1200
-    #endif
+    int baudrate;
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: inferface speed %d bps"),TINFO_SPEED);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: inferface saved settings %d bps"), Settings.flag4.teleinfo_baudrate );
+
+    // SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
+    if (Settings.flag4.teleinfo_baudrate) { 
+        baudrate = 9600; 
+        tinfo_mode = TINFO_MODE_STANDARD;
+    }  else {
+        baudrate = 1200; 
+        tinfo_mode = TINFO_MODE_HISTORIQUE;
+    }
+
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: inferface speed %d bps"),baudrate);
     
     if (PinUsed(GPIO_TELEINFO_RX)) {
          uint8_t rx_pin = Pin(GPIO_TELEINFO_RX);
@@ -333,12 +380,17 @@ void TInfoInit(void)
             AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: always enabled"));
         }
 
-        TInfoSerial = new TasmotaSerial(rx_pin, -1, 1);
+#if defined (ESP8266)
+        // Allow GPIO3 AND GPIO13 with hardware fallback to 2
+        TInfoSerial = new TasmotaSerial(rx_pin, -1, 2);
         //pinMode(rx_pin, INPUT_PULLUP);
+#else
+        TInfoSerial = new TasmotaSerial(rx_pin, -1, 1);
+#endif
 
         // Trick here even using SERIAL_7E1 or TS_SERIAL_7E1
         // this is not working, need to call SetSerialConfig after  
-        if (TInfoSerial->begin(TINFO_SPEED)) {
+        if (TInfoSerial->begin(baudrate)) {
 
 
 #if defined (ESP8266)
@@ -360,7 +412,7 @@ void TInfoInit(void)
             AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: using ESP32 hardware serial"));
 #endif
             // Init teleinfo
-            tinfo.init();
+            tinfo.init(tinfo_mode);
             // Attach needed callbacks
             tinfo.attachADPS(ADPSCallback);
             tinfo.attachData(DataCallback); 
@@ -479,15 +531,29 @@ void TInfoShow(bool json)
             WSContentSend_PD(HTTP_ENERGY_PMAX_TELEINFO, atoi(value));
         }
 
-        if (tarif) {
-            GetTextIndexed(name, sizeof(name), tarif-1, kTarifName);
-            WSContentSend_PD(HTTP_ENERGY_TARIF_TELEINFO, name);
-        }
-        if (contrat && isousc) {
-            int percent = (int) ((Energy.current[0]*100.0f) / isousc) ;
-            GetTextIndexed(name, sizeof(name), contrat, kContratName);
-            WSContentSend_PD(HTTP_ENERGY_CONTRAT_TELEINFO, name, isousc);
-            WSContentSend_PD(HTTP_ENERGY_LOAD_TELEINFO,  percent);
+        if (tinfo_mode==TINFO_MODE_STANDARD ) {
+            if (tarif) {
+                GetTextIndexed(name, sizeof(name), tarif-1, kTarifName);
+                WSContentSend_PD(HTTP_ENERGY_TARIF_TELEINFO, name);
+            }
+            if (contrat && isousc) {
+                int percent = (int) ((Energy.current[0]*100.0f) / isousc) ;
+                GetTextIndexed(name, sizeof(name), contrat, kContratName);
+                WSContentSend_PD(HTTP_ENERGY_CONTRAT_TELEINFO, name, isousc);
+                WSContentSend_PD(HTTP_ENERGY_LOAD_TELEINFO,  percent);
+            }
+        } else {
+            if (getValueFromLabelIndex(LABEL_LTARF, name) ) {
+                WSContentSend_PD(HTTP_ENERGY_TARIF_TELEINFO, name);
+            }
+
+            if (getValueFromLabelIndex(LABEL_NGTF, name) ) {
+                if (isousc) {
+                    int percent = (int) ((Energy.current[0]*100.0f) / isousc) ;
+                    WSContentSend_PD(HTTP_ENERGY_CONTRAT_TELEINFO, name, isousc);
+                    WSContentSend_PD(HTTP_ENERGY_LOAD_TELEINFO,  percent);
+                }
+            }
         }
 #endif  // USE_WEBSERVER
     }
