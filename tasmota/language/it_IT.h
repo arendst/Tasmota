@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - rev. 24.07.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 11.08.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -831,12 +831,12 @@
 #define D_SENSOR_BOILER_OT_TX   "OpenTherm - TX"
 
 // xnrg_15_teleinfo Denky (Teleinfo)
-#define D_CONTRACT        "Contract"
-#define D_POWER_LOAD      "Power load"
-#define D_CURRENT_TARIFF  "Current Tariff"
-#define D_TARIFF          "Tariff"
+#define D_CONTRACT        "Contratto"
+#define D_POWER_LOAD      "Carico di potenza"
+#define D_CURRENT_TARIFF  "Tariffa attuale"
+#define D_TARIFF          "Tariffa"
 #define D_OVERLOAD        "ADPS"
-#define D_MAX_POWER       "Max Power"
-#define D_MAX_CURRENT     "Max Current"
+#define D_MAX_POWER       "Potenza max"
+#define D_MAX_CURRENT     "Corrente max"
 
 #endif  // _LANGUAGE_IT_IT_H_
