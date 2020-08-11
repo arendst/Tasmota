@@ -480,7 +480,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_TX2X_TXD_BLACK), // TX20/TX23 Transmission Pin
 #endif
 #ifdef USE_WINDMETER
-  GPIO_WINDMETER_SPEED,
+  AGPIO(GPIO_WINDMETER_SPEED),
 #endif
 #ifdef USE_MP3_PLAYER
   AGPIO(GPIO_MP3_DFR562),     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
@@ -515,8 +515,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_HM10_RX),         // GPS serial interface
 #endif
 #ifdef USE_OPENTHERM
-  GPIO_BOILER_OT_TX,
-  GPIO_BOILER_OT_RX,
+  AGPIO(GPIO_BOILER_OT_TX),
+  AGPIO(GPIO_BOILER_OT_RX),
 #endif
 
 #ifdef USE_MGC3130
