@@ -24,10 +24,10 @@
  * Source: http://hallard.me/category/tinfo/
  *
  * Denky ESP32 Teleinfo Template
- * {"NAME":"Denky (Teleinfo)","GPIO":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
- *
+ * {"NAME":"Denky (Teleinfo)","GPIO":[1,1,1,1,5664,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1376,1,1,0,0,0,0,1,5632,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+ * 
  * Denky (aka WifInfo) ESP8266 Teleinfo Template
- * {"NAME":"WifInfo","GPIO":[7,255,255,208,6,5,255,255,255,255,255,255,255],"FLAG":15,"BASE":18}
+ * {"NAME":"WifInfo","GPIO":[7,255,255,210,6,5,255,255,255,255,255,255,255],"FLAG":15,"BASE":18}
  * 
 \*********************************************************************************************/
 
@@ -85,26 +85,29 @@ const char kTarifName[] PROGMEM =
 
 enum TInfoLabel{
     LABEL_BASE = 1, 
+    LABEL_ADCO,
     LABEL_HCHC, LABEL_HCHP,  
     LABEL_OPTARIF, LABEL_ISOUSC, LABEL_PTEC,
-    LABEL_PAPP, LABEL_IINST, LABEL_IMAX, LABEL_TENSION,
+    LABEL_PAPP, LABEL_IINST, LABEL_TENSION,
+    LABEL_IMAX, LABEL_PMAX,
     LABEL_DEMAIN,
     LABEL_END
 };
 
 const char kLabel[] PROGMEM = 
-    "|BASE|HCHC|HCHP"
+    "|BASE|ADCO|HCHC|HCHP"
     "|OPTARIF|ISOUSC|PTEC"
-    "|PAPP|IINST|IMAX|TENSION"
+    "|PAPP|IINST|TENSION"
+    "|IMAX|PMAX"
     "|DEMAIN"
     ;
 
 TInfo tinfo; // Teleinfo object
 TasmotaSerial *TInfoSerial = nullptr;
 bool tinfo_found = false;
-uint8_t contrat;
-uint8_t tarif;
-uint8_t isousc;
+int contrat;
+int tarif;
+int isousc;
 
 /*********************************************************************************************/
 
@@ -133,16 +136,24 @@ Input   : phase number
             2 for ADIR2 triphase
             3 for ADIR3 triphase
 Output  : - 
-Comments: should have been initialised in the main sketch with a
+Comments: should have been initialised with a
           tinfo.attachADPSCallback(ADPSCallback())
 ====================================================================== */
 void ADPSCallback(uint8_t phase)
 {
-  // n = phase number 1 to 3
-  if (phase == 0){
-    phase = 1;
-  }
-   AddLog_P2(LOG_LEVEL_INFO, PSTR("ADPS on phase %d"), phase);
+    char adco[13];
+
+    // n = phase number 1 to 3
+    if (phase == 0){
+        phase = 1;
+    }
+    
+    if (getValueFromLabelIndex(LABEL_ADCO, adco)) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"ADPS\":%i}}"), adco, phase );
+        MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
+    }
+
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("ADPS on phase %d"), phase);
 }
 
 /* ======================================================================
@@ -323,20 +334,23 @@ void TInfoInit(void)
         }
 
         TInfoSerial = new TasmotaSerial(rx_pin, -1, 1);
-        // pinMode(GPIO_TELEINFO_RX, INPUT_PULLUP);
+        //pinMode(rx_pin, INPUT_PULLUP);
 
         // Trick here even using SERIAL_7E1 or TS_SERIAL_7E1
         // this is not working, need to call SetSerialConfig after  
         if (TInfoSerial->begin(TINFO_SPEED)) {
-            // This is a hack, looks like begin does not take into account
-            // the TS_SERIAL_7E1 configuration so on ESP8266 this is 
-            // working only on Serial RX pin (Hardware Serial) for now
-            SetSerialConfig(TS_SERIAL_7E1);
-            TInfoSerial->setTimeout(TINFO_READ_TIMEOUT);
+
 
 #if defined (ESP8266)
             if (TInfoSerial->hardwareSerial() ) {
                 ClaimSerial();
+
+                // This is a hack, looks like begin does not take into account
+                // the TS_SERIAL_7E1 configuration so on ESP8266 this is 
+                // working only on Serial RX pin (Hardware Serial) for now
+                SetSerialConfig(TS_SERIAL_7E1);
+                TInfoSerial->setTimeout(TINFO_READ_TIMEOUT);
+
                 AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: using hardware serial"));
             } else {
                 AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: using software serial"));
@@ -352,6 +366,7 @@ void TInfoInit(void)
             tinfo.attachData(DataCallback); 
             tinfo.attachNewFrame(NewFrameCallback); 
             tinfo_found = true;
+
             AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: Ready"));
         }
     }
@@ -393,9 +408,11 @@ Comments: -
 const char HTTP_ENERGY_INDEX_TELEINFO[] PROGMEM =  "{s}%s{m}%s " D_UNIT_WATTHOUR "{e}" ;
 const char HTTP_ENERGY_PAPP_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE "{m}%d " D_UNIT_WATT "{e}" ;
 const char HTTP_ENERGY_IINST_TELEINFO[] PROGMEM =  "{s}" D_CURRENT "{m}%d " D_UNIT_AMPERE "{e}" ;
-const char HTTP_ENERGY_TARIF_TELEINFO[] PROGMEM =  "{s}Tarif en cours{m}Heures %s{e}" ;
-const char HTTP_ENERGY_CONTRAT_TELEINFO[] PROGMEM =  "{s}Contrat{m}%s %d" D_UNIT_AMPERE "{e}" ;
-const char HTTP_ENERGY_LOAD_TELEINFO[] PROGMEM =  "{s}Charge actuelle{m}%d" D_UNIT_PERCENT "{e}" ;
+const char HTTP_ENERGY_TARIF_TELEINFO[] PROGMEM =  "{s}" D_CURRENT_TARIFF "{m}Heures %s{e}" ;
+const char HTTP_ENERGY_CONTRAT_TELEINFO[] PROGMEM =  "{s}" D_CONTRACT "{m}%s %d" D_UNIT_AMPERE "{e}" ;
+const char HTTP_ENERGY_LOAD_TELEINFO[] PROGMEM =  "{s}" D_POWER_LOAD "{m}%d" D_UNIT_PERCENT "{e}" ;
+const char HTTP_ENERGY_IMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_CURRENT "{m}%d" D_UNIT_AMPERE "{e}" ;
+const char HTTP_ENERGY_PMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_POWER "{m}%d" D_UNIT_WATT "{e}" ;
 #endif  // USE_WEBSERVER
 
 void TInfoShow(bool json)
@@ -405,28 +422,43 @@ void TInfoShow(bool json)
 
     // Since it's an Energy device , current, voltage and power are 
     // already present on the telemetry frame. No need to add here
-    // Just add the specific and missing ones there
+    // Just add the raw label/values of the teleinfo frame
     if (json)
     {
-        if ( getValueFromLabelIndex(LABEL_PTEC, value) ) { 
-            ResponseAppend_P(PSTR(",\"" "TARIF" "\":\"%s\""), value);
-        }
+        struct _ValueList * me = tinfo.getList();
 
-        GetTextIndexed(name, sizeof(name), LABEL_ISOUSC, kLabel);
-        ResponseAppend_P(PSTR(",\"%s\":%d"), name, isousc);
-
-        if ( getValueFromLabelIndex(LABEL_HCHC, value) ) { 
-            GetTextIndexed(name, sizeof(name), LABEL_HCHC, kLabel);
-            ResponseAppend_P(PSTR(",\"%s\":\"%u\""), name, atoi(value));
-        }
-        if ( getValueFromLabelIndex(LABEL_HCHP, value) ) { 
-            GetTextIndexed(name, sizeof(name), LABEL_HCHP, kLabel);
-            ResponseAppend_P(PSTR(",\"%s\":\"%u\""),name , atoi(value));
-        }
-
+        // Calculated values
         if (isousc) {
-            ResponseAppend_P(PSTR(",\"Load\":\"%d\""),(int) ((Energy.current[0]*100.0f) / isousc));
+            ResponseAppend_P(PSTR(",\"Load\":%d"),(int) ((Energy.current[0]*100.0f) / isousc));
         }
+
+        // Loop thru all the teleinfo frame
+        while (me->next) {
+            // go to next node
+            me = me->next;
+
+            if (me->name && me->value && *me->name && *me->value) {
+                boolean isNumber = true;
+                char * p = me->value;
+
+                // check if value is number
+                while (*p && isNumber) {
+                    if ( *p < '0' || *p > '9' ) {
+                        isNumber = false;
+                    }
+                    p++;
+                }
+    
+                // this will add "" on not number values
+                ResponseAppend_P(PSTR(",\"%s\":"), me->name);
+                if (!isNumber) {
+                    ResponseAppend_P(PSTR("\"%s\""), me->value);
+                } else {
+                    ResponseAppend_P(PSTR("%u"), atol(me->value));
+                }
+            }
+        }
+
 
 #ifdef USE_WEBSERVER
     }
@@ -440,17 +472,22 @@ void TInfoShow(bool json)
             GetTextIndexed(name, sizeof(name), LABEL_HCHP, kLabel);
             WSContentSend_PD(HTTP_ENERGY_INDEX_TELEINFO, name, value);
         }
+        if (getValueFromLabelIndex(LABEL_IMAX, value) ) {
+            WSContentSend_PD(HTTP_ENERGY_IMAX_TELEINFO, atoi(value));
+        }
+        if (getValueFromLabelIndex(LABEL_PMAX, value) ) {
+            WSContentSend_PD(HTTP_ENERGY_PMAX_TELEINFO, atoi(value));
+        }
+
         if (tarif) {
             GetTextIndexed(name, sizeof(name), tarif-1, kTarifName);
-            WSContentSend_PD(HTTP_ENERGY_TARIF_TELEINFO, name,value);
+            WSContentSend_PD(HTTP_ENERGY_TARIF_TELEINFO, name);
         }
-        if (contrat) {
+        if (contrat && isousc) {
+            int percent = (int) ((Energy.current[0]*100.0f) / isousc) ;
             GetTextIndexed(name, sizeof(name), contrat, kContratName);
             WSContentSend_PD(HTTP_ENERGY_CONTRAT_TELEINFO, name, isousc);
-            if (isousc) {
-                int percent = (int) ((Energy.current[0]*100.0f) / isousc) ;
-                WSContentSend_PD(HTTP_ENERGY_LOAD_TELEINFO,  percent);
-            }
+            WSContentSend_PD(HTTP_ENERGY_LOAD_TELEINFO,  percent);
         }
 #endif  // USE_WEBSERVER
     }
