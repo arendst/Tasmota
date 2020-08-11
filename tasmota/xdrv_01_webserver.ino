@@ -1263,7 +1263,7 @@ void WebSliderColdWarm(void)
 {
   WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Cold Warm
     "a",             // a - Unique HTML id
-    "#fff", "#ff0",  // White to Yellow
+    "#eff", "#f81",  // 6500k in RGB (White) to 2500k in RGB (Warm Yellow)
     1,               // sl1
     153, 500,        // Range color temperature
     LightGetColorTemp(),
