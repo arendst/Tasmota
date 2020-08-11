@@ -42,7 +42,7 @@ const char kHAssJsonSensorDevCla[] PROGMEM =
   "ic\":\"mdi:cup-water|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|"
   "ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:alpha-f-circle-outline|dev_cla\":\"power|ic\":\"mdi:progress-clock|"
   "dev_cla\":\"power|dev_cla\":\"power|dev_cla\":\"power|ic\":\"mdi:alpha-v-circle-outline|ic\":\"mdi:scale|dev_cla\":\"power|"
-  "ic\":\"mdi:periodic-table-co2|ic\":\"mdi:air-filter|ic\":\"mdi:periodic-table-co2|"
+  "ic\":\"mdi:molecule-co2|ic\":\"mdi:air-filter|ic\":\"mdi:molecule-co2|"
   "ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:temperature-kelvin|ic\":\"mdi:ruler|dev_cla\":\"illuminance|";
    //"ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|"
 // List of sensors ready for discovery
