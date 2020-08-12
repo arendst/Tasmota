@@ -497,7 +497,8 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     rule_name = rule_name.substring(0, pos);           // "SUBTYPE1#CURRENT"
   }
 
-  StaticJsonBuffer<1280> jsonBuf;                      // Was 1024 until 20200811
+//  StaticJsonBuffer<1280> jsonBuf;                      // Was 1024 until 20200811
+  DynamicJsonBuffer jsonBuf;                           // Was static until 20200812
   JsonObject &root = jsonBuf.parseObject(event);
   if (!root.success()) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event too long (%d)"), event.length());
