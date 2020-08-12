@@ -905,6 +905,8 @@ void CmndSetoption(void)
               case 6:                      // SetOption88 - PWM Dimmer Buttons control remote devices
               case 15:                     // SetOption97 - Set Baud rate for TuyaMCU serial communication (0 = 9600 or 1 = 115200)
               case 20:                     // SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
+              case 21:                     // SetOption103 - Enable TLS mode (requires TLS version)
+              case 22:                     // SetOption104 - No Retain - disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
                 restart_flag = 2;
                 break;
             }
