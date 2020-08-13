@@ -359,7 +359,7 @@ void AudioGeneratorMIDI::PrepareMIDI(AudioFileSource *src)
   earliest_time = 0;
 }
 
-// Parses the note on/offs ujntil we are ready to render some more samples.  Then return the
+// Parses the note on/offs until we are ready to render some more samples.  Then return the
 // total number of samples to render before we need to be called again
 int AudioGeneratorMIDI::PlayMIDI()
 {
@@ -472,7 +472,7 @@ int AudioGeneratorMIDI::PlayMIDI()
         if (tg->instrument != midi_chan_instrument[trk->chan]) {    /* new instrument for this generator */
           tg->instrument = midi_chan_instrument[trk->chan];
         }
-        tsf_note_on (g_tsf, tg->instrument, tg->note, trk->velocity / 256.0);
+        tsf_note_on (g_tsf, tg->instrument, tg->note, trk->velocity / 127.0); // velocity = 0...127
       } else {
         ++notes_skipped;
       }

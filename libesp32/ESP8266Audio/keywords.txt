@@ -15,6 +15,7 @@ AudioGeneratorFLAC	KEYWORD1
 AudioGeneratorMOD	KEYWORD1
 AudioGeneratorMIDI	KEYWORD1
 AudioGeneratorMP3	KEYWORD1
+AudioGeneratorOpus	KEYWORD1
 AudioGeneratorRTTTL	KEYWORD1
 AudioGeneratorTalkie	KEYWORD1
 AudioGeneratorWAV	KEYWORD1

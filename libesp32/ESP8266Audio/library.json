@@ -14,7 +14,7 @@
         "type": "git",
          "url": "https://github.com/earlephilhower/ESP8266Audio"
     },
-    "version": "1.4",
+    "version": "1.5.0",
     "homepage": "https://github.com/earlephilhower/ESP8266Audio",
     "dependencies": {
         "SPI": "1.0"

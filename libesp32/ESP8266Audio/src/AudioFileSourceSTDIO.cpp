@@ -69,7 +69,7 @@ uint32_t AudioFileSourceSTDIO::read(void *data, uint32_t len)
 
 bool AudioFileSourceSTDIO::seek(int32_t pos, int dir)
 {
-  return fseek(f, pos, dir);
+  return fseek(f, pos, dir) == 0;
 }
 
 bool AudioFileSourceSTDIO::close()

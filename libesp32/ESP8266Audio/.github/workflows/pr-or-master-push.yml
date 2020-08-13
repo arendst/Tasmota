@@ -3,7 +3,7 @@
 # Most jobs check out the code, ensure Python3 is installed, and for build
 # tests the ESP8266 toolchain is cached when possible to speed up execution.
 
-name: ESP8266 Arduino CI
+name: ESP8266Audio
 
 on:
   push:

@@ -96,7 +96,7 @@ bool AudioGeneratorFLAC::loop()
 
     // Check for some weird case where above didn't give any data
     if (buffPtr == buffLen) {
-      goto done; // At some point the flac better error and we'll retudn 
+      goto done; // At some point the flac better error and we'll return 
     }
     if (bitsPerSample <= 16) {
       lastSample[AudioOutput::LEFTCHANNEL] = buff[0][buffPtr] & 0xffff; 
