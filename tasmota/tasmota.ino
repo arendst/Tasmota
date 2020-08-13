@@ -283,7 +283,7 @@ void setup(void) {
         Settings.module = Settings.fallback_module;  // Reset module to fallback module
 //        Settings.last_module = Settings.fallback_module;
       }
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("FRC: " D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     }
   }
 
