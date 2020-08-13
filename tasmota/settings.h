@@ -124,9 +124,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t teleinfo_baudrate : 1;        // bit 20 (v8.4.0.1)  - SetOption102 - Set Baud rate for Teleinfo communication (0 = 1200 or 1 = 9600)
     uint32_t mqtt_tls : 1;                 // bit 21 (v8.4.0.1)  - SetOption103 - Enable TLS mode (requires TLS version)
     uint32_t mqtt_no_retain : 1;           // bit 22 (v8.4.0.1)  - SetOption104 - No Retain - disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
-    uint32_t spare23 : 1;
-    uint32_t spare24 : 1;
-    uint32_t spare25 : 1;
+    uint32_t white_blend_mode : 1;         // bit 23 (v8.4.0.1)  - SetOption105 - White Blend Mode - used to be `RGBWWTable` last value `0`, now deprecated in favor of this option
+    uint32_t virtual_ct : 1;               // bit 24 (v8.4.0.1)  - SetOption106 - Virtual CT - Creates a virtual White ColorTemp for RGBW lights
+    uint32_t virtual_ct_cw : 1;            // bit 25 (v8.4.0.1)  - SetOption107 - Virtual CT Channel - signals whether the hardware white is cold CW (true) or warm WW (false)
     uint32_t spare26 : 1;
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
