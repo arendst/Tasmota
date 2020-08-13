@@ -552,10 +552,10 @@ void SettingsSave(uint8_t rotate)
   RtcSettingsSave();
 }
 
-void SettingsLoad(void)
-{
+void SettingsLoad(void) {
 #ifdef ESP8266
   // Load configuration from eeprom or one of 7 slots below if first valid load does not stop_flash_rotate
+#ifdef CFG_LEGACY_LOAD
   struct {
     uint16_t cfg_holder;                     // 000
     uint16_t cfg_size;                       // 002
@@ -566,7 +566,7 @@ void SettingsLoad(void)
   settings_location = 0;
   uint32_t flash_location = SETTINGS_LOCATION +1;
   uint16_t cfg_holder = 0;
-  for (uint32_t i = 0; i < CFG_ROTATES; i++) {
+  for (uint32_t i = 0; i < CFG_ROTATES; i++) {              // Read all config pages in search of valid and latest
     flash_location--;
     ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     bool valid = false;
@@ -583,10 +583,10 @@ void SettingsLoad(void)
       valid = (Settings.cfg_holder == _SettingsH.cfg_holder);
     }
     if (valid) {
-      if (Settings.save_flag > save_flag) {
+      if (Settings.save_flag > save_flag) {                 // Find latest page based on incrementing save_flag
         save_flag = Settings.save_flag;
         settings_location = flash_location;
-        if (Settings.flag.stop_flash_rotate && (0 == i)) {  // Stop only if eeprom area should be used and it is valid
+        if (Settings.flag.stop_flash_rotate && (0 == i)) {  // Stop if only eeprom area should be used and it is valid
           break;
         }
       }
@@ -597,13 +597,36 @@ void SettingsLoad(void)
     ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
   }
+#else  // CFG_RESILIENT
+  settings_location = 0;
+  uint32_t save_flag = 0;
+  uint32_t flash_location = SETTINGS_LOCATION +1;
+  for (uint32_t i = 0; i < CFG_ROTATES; i++) {              // Read all config pages in search of valid and latest
+    flash_location--;
+    ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
+    if ((Settings.cfg_crc32 != 0xFFFFFFFF) && (Settings.cfg_crc32 != 0x00000000) && (Settings.cfg_crc32 == GetSettingsCrc32())) {
+      if (Settings.save_flag > save_flag) {                 // Find latest page based on incrementing save_flag
+        save_flag = Settings.save_flag;
+        settings_location = flash_location;
+        if (Settings.flag.stop_flash_rotate && (0 == i)) {  // Stop if only eeprom area should be used and it is valid
+          break;
+        }
+      }
+    }
+    delay(1);
+  }
+  if (settings_location > 0) {
+    ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
+    AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
+  }
+#endif  // CFG_RESILIENT
 #else  // ESP32
   SettingsRead(&Settings, sizeof(Settings));
   AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded, " D_COUNT " %lu"), Settings.save_flag);
 #endif  // ESP8266 - ESP32
 
 #ifndef FIRMWARE_MINIMAL
-  if (!settings_location || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
+  if ((0 == settings_location) || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
     SettingsDefault();
   }
   settings_crc32 = GetSettingsCrc32();

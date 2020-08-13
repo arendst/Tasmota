@@ -1,5 +1,10 @@
 ## Unreleased (development)
 
+### 8.4.0.2 20200813
+
+- Add better config corruption recovery (#9046)
+- Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
+
 ### 8.4.0.1 20200730
 
 - Fix ESP32 PWM range
