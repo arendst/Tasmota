@@ -767,6 +767,7 @@ void SettingsDefaultSet2(void)
   SysBitfield2  flag2 = { 0 };
   SysBitfield3  flag3 = { 0 };
   SysBitfield4  flag4 = { 0 };
+  SysBitfield5  flag5 = { 0 };
 
 #ifdef ESP8266
 //  Settings.config_version = 0;  // ESP8266 (Has been 0 for long time)
