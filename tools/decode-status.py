@@ -158,6 +158,15 @@ a_setoption = [[
     "","","","",
     "","","","",
     "","","",""
+    ],[
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","",""
     ]]
 
 a_features = [[
@@ -270,13 +279,14 @@ def StartDecode():
                         continue
 
                     elif len(register) == 36:         # 6.1.1.14: array consists of SetOptions 0..31, SetOptions 32..49, and SetOptions 50..81
+                                                      # 8.4.0.2: adds another SetOptions 114..145
                         split_register = [int(register[opt*2:opt*2+2],16) for opt in range(18)] # split register into 18 values
 
                         for opt_idx, option in enumerate(opt_group):
                             options.append(str("{0:2d} ({1:3d}) {2}".format(i, split_register[opt_idx], option)))
                             i += 1
 
-                if r in (0, 2, 3): #registers 1 and 3 hold binary values
+                if r in (0, 2, 3, 4):                 #registers 1 and 4 hold binary values
                     for opt_idx, option in enumerate(opt_group):
                         i_register = int(register,16)
                         state = (i_register >> opt_idx) & 1
