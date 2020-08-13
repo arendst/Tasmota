@@ -27,7 +27,7 @@ typedef struct Z_CommandConverter {
   const char * tasmota_cmd;
   uint16_t     cluster;
   uint8_t      cmd;         // normally 8 bits, 0xFF means it's a parameter
-  uint8_t      direction;   // direction of the command. 0x01 client->server, 0x02 server->client, 0x03 both
+  uint8_t      direction;   // direction of the command. 0x01 client->server, 0x02 server->client, 0x03 both, 0x80 requires custom decoding
   const char * param;
 } Z_CommandConverter;
 
@@ -40,6 +40,7 @@ typedef struct Z_XYZ_Var {    // Holds values for vairables X, Y and Z
   uint8_t     z_type = 0;
 } Z_XYZ_Var;
 
+ZF(Identify) ZF(IdentifyQuery)
 ZF(AddGroup) ZF(ViewGroup) ZF(GetGroup) ZF(GetAllGroups) ZF(RemoveGroup) ZF(RemoveAllGroups)
 ZF(AddScene) ZF(ViewScene) ZF(RemoveScene) ZF(RemoveAllScenes) ZF(RecallScene) ZF(StoreScene) ZF(GetSceneMembership)
 //ZF(Power) ZF(Dimmer)
@@ -70,6 +71,9 @@ ZF(00xx0A00) ZF(01xx0A00) ZF(03xx0A00) ZF(01xxxx0A0000000000) ZF(03xxxx0A0000000
 // - direction: the direction of the command (bit field). 0x01=from client to server (coord to device), 0x02= from server to client (response), 0x80=needs specific decoding
 // - param: the paylod template, x/y/z are substituted with arguments, little endian. For command display, payload must match until x/y/z character or until the end of the paylod. '??' means ignore.
 const Z_CommandConverter Z_Commands[] PROGMEM = {
+  // Identify cluster
+  { Z(Identify),       0x0003, 0x00, 0x01,   Z(xxxx) },         // Identify device, time in seconds
+  { Z(IdentifyQuery),  0x0003, 0x01, 0x01,   Z() },             // Identify Query (no param)
   // Group adress commands
   { Z(AddGroup),       0x0004, 0x00, 0x01,   Z(xxxx00) },       // Add group id, group name is not supported
   { Z(ViewGroup),      0x0004, 0x01, 0x01,   Z(xxxx) },         // Ask for the group name
@@ -137,6 +141,8 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z(ArrowClick),     0x0005, 0x07, 0x01,   Z(xx) },         // xx == 0x01 = left, 0x00 = right
   { Z(ArrowHold),      0x0005, 0x08, 0x01,   Z(xx) },         // xx == 0x01 = left, 0x00 = right
   { Z(ArrowRelease),   0x0005, 0x09, 0x01,   Z() },
+  // Response for Indetify cluster
+  { Z(IdentifyQuery),  0x0003, 0x00, 0x02,   Z(xxxx) },             // timeout in seconds
   // IAS - Intruder Alarm System + leak/fire detection
   { Z(ZoneStatusChange),0x0500, 0x00, 0x82,  Z(xxxxyyzz) },   // xxxx = zone status, yy = extended status, zz = zone id, Delay is ignored
   // responses for Group cluster commands
