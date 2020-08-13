@@ -417,8 +417,8 @@ uint16_t Z_Devices::isKnownFriendlyName(const char * name) const {
 }
 
 uint64_t Z_Devices::getDeviceLongAddr(uint16_t shortaddr) const {
-  const Z_Device & device = getShortAddrConst(shortaddr);
-  return device.longaddr;
+  const Z_Device &device = getShortAddrConst(shortaddr);
+  return (&device != nullptr) ? device.longaddr : 0;
 }
 
 //
