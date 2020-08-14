@@ -27,6 +27,7 @@
  * {"NAME":"Denky (Teleinfo)","GPIO":[1,1,1,1,5664,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1376,1,1,0,0,0,0,1,5632,1,1,1,0,0,1],"FLAG":0,"BASE":1}
  * 
  * Denky (aka WifInfo) ESP8266 Teleinfo Template
+ * {"NAME":"WifInfo v1.0a","GPIO":[17,255,255,255,6,5,255,255,7,210,255,255,255],"FLAG":15,"BASE":18}
  * {"NAME":"WifInfo","GPIO":[7,255,255,210,6,5,255,255,255,255,255,255,255],"FLAG":15,"BASE":18}
  * 
 \*********************************************************************************************/
@@ -185,6 +186,8 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             }
         }
 
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Label[%02d] %s=%s"), ilabel, labelName, me->value);
+
         // Current tariff (legacy)
         if (ilabel == LABEL_PTEC)
         {
@@ -217,34 +220,21 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
         {
             Energy.voltage_available = true;
             Energy.voltage[0]  = (float) atoi(me->value);
-            // Update current
-            if (Energy.voltage_available && Energy.voltage[0]) {
-                Energy.current[0] = Energy.active_power[0] / Energy.voltage[0] ;
-            }
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Voltage %s, now %d"), me->value, (int) Energy.voltage[0]);
         }
 
         // Current I
         else if (ilabel == LABEL_IINST || ilabel == LABEL_IRMS1)
         {
-            if (!Energy.voltage_available) {
-                Energy.current[0]  = (float) atoi(me->value);
-            } else if (Energy.voltage[0]) {
-                Energy.current[0] = Energy.active_power[0] / Energy.voltage[0] ;
-            }
+            Energy.current[0]  = (float) atoi(me->value);
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Current %s, now %d"), me->value, (int) Energy.current[0]);
         }
 
         // Power P
         else if (ilabel == LABEL_PAPP || ilabel == LABEL_SINSTS)
         {
-            int papp = atoi(me->value);
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s, now %d"), me->value, papp);
-            Energy.active_power[0]  = (float) atoi(me->value);
-            // Update current
-            if (Energy.voltage_available && Energy.voltage[0]) {
-            Energy.current[0] = Energy.active_power[0] / Energy.voltage[0] ;
-            }
+            Energy.active_power[0]  = (float) atoi(me->value);;
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s, now %d"), me->value, (int)  Energy.active_power[0]);
         }
 
         // Wh indexes (legacy)
@@ -258,7 +248,10 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             if ( getValueFromLabelIndex(LABEL_HCHC, value) ) { hc = atoi(value);}
             if ( getValueFromLabelIndex(LABEL_HCHP, value) ) { hp = atoi(value);}
             total = hc + hp;
-            EnergyUpdateTotal(total/1000.0f, true);  
+
+            if (!Settings.flag4.teleinfo_rawdata) { 
+                EnergyUpdateTotal(total/1000.0f, true);  
+            }
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u  HP:%u  Total:%u"), hc, hp, total);
         }
 
@@ -266,7 +259,9 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
         else if ( ilabel == LABEL_EAST)
         {
             uint32_t total = atoi(me->value);
-            EnergyUpdateTotal(total/1000.0f, true);  
+            if (!Settings.flag4.teleinfo_rawdata) { 
+                EnergyUpdateTotal(total/1000.0f, true);  
+            }
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%uWh"), total);
         }
 
@@ -324,6 +319,62 @@ void NewFrameCallback(struct _ValueList * me)
 {
     // Reset Energy Watchdog
     Energy.data_valid[0] = 0;
+
+    // send teleinfo full frame only if setup like that
+    // see setOption103
+    if (Settings.flag4.teleinfo_rawdata) { 
+        struct _ValueList * me = tinfo.getList();
+
+        // Total size we can use, remove { } and \0
+        int remaining_size;
+        char sep = ' ';
+        char * p ;
+        int len;
+        boolean isNumber ;
+
+        strcpy_P(mqtt_data, PSTR("{"));
+        len = strlen(mqtt_data);
+        remaining_size = sizeof(mqtt_data) - len - 2;
+
+        // Loop thru all the teleinfo frame but
+        // always check we don't buffer overflow of MQTT data
+        while (me->next) {
+            // go to next node
+            me = me->next;
+
+            if (me->name && me->value && *me->name && *me->value) {
+                isNumber = true;
+                p = me->value;
+
+                // check if value is number
+                while (*p && isNumber) {
+                    if ( *p < '0' || *p > '9' ) {
+                        isNumber = false;
+                    }
+                    p++;
+                }
+
+                if (!isNumber) {
+                    snprintf_P(mqtt_data+len, remaining_size, PSTR("%c\"%s\":\"%s\""), sep, me->name, me->value);
+                } else {
+                    snprintf_P(mqtt_data+len, remaining_size, PSTR("%c\"%s\":%d"), sep, me->name, atoi(me->value));
+                }
+                // Total size we can use now
+                // Still remove space for latest } and \0 and current size
+                len = strlen(mqtt_data);
+                remaining_size = sizeof(mqtt_data) - len - 2 ;
+
+                // Now separator is comma
+                sep =',';
+    
+            }
+        }
+
+        strcat_P(mqtt_data, PSTR("}"));
+        MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
+    }
+
+
 }
 
 /* ======================================================================
@@ -335,10 +386,8 @@ Comments: -
 ====================================================================== */
 void TInfoDrvInit(void) {
   if (PinUsed(GPIO_TELEINFO_RX)) {
-      energy_flg = XNRG_15;
-      Energy.voltage_available = false;
-      //Energy.current_available = false;
-      Energy.type_dc = true;
+    energy_flg = XNRG_15;
+    Energy.voltage_available = false;
   }
 }
 
@@ -433,14 +482,16 @@ Comments: -
 ====================================================================== */
 void TInfoEvery250ms(void)
 {
-    char c;
-    if (!tinfo_found)
+    if (!tinfo_found) {
         return;
+    }
 
     if (TInfoSerial->available()) {
-        //AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: received %d chars"), TInfoSerial->available());
-        // We received some data?
-        while (TInfoSerial->available()>8) {
+        unsigned long start = millis();
+        char c;
+
+        // We received some data, process but never more than 100ms ?
+        while (TInfoSerial->available()>8 && millis()-start < 100) {
             // get char
             c = TInfoSerial->read();
             // data processing
@@ -477,36 +528,39 @@ void TInfoShow(bool json)
     // Just add the raw label/values of the teleinfo frame
     if (json)
     {
-        struct _ValueList * me = tinfo.getList();
-
         // Calculated values
         if (isousc) {
             ResponseAppend_P(PSTR(",\"Load\":%d"),(int) ((Energy.current[0]*100.0f) / isousc));
         }
 
-        // Loop thru all the teleinfo frame
-        while (me->next) {
-            // go to next node
-            me = me->next;
+        // add teleinfo full frame only if no teleinfo raw data setup
+        if (!Settings.flag4.teleinfo_rawdata) { 
+            struct _ValueList * me = tinfo.getList();
 
-            if (me->name && me->value && *me->name && *me->value) {
-                boolean isNumber = true;
-                char * p = me->value;
+            // Loop thru all the teleinfo frame
+            while (me->next) {
+                // go to next node
+                me = me->next;
 
-                // check if value is number
-                while (*p && isNumber) {
-                    if ( *p < '0' || *p > '9' ) {
-                        isNumber = false;
+                if (me->name && me->value && *me->name && *me->value) {
+                    boolean isNumber = true;
+                    char * p = me->value;
+
+                    // check if value is number
+                    while (*p && isNumber) {
+                        if ( *p < '0' || *p > '9' ) {
+                            isNumber = false;
+                        }
+                        p++;
                     }
-                    p++;
-                }
-    
-                // this will add "" on not number values
-                ResponseAppend_P(PSTR(",\"%s\":"), me->name);
-                if (!isNumber) {
-                    ResponseAppend_P(PSTR("\"%s\""), me->value);
-                } else {
-                    ResponseAppend_P(PSTR("%u"), atol(me->value));
+        
+                    // this will add "" on not number values
+                    ResponseAppend_P(PSTR(",\"%s\":"), me->name);
+                    if (!isNumber) {
+                        ResponseAppend_P(PSTR("\"%s\""), me->value);
+                    } else {
+                        ResponseAppend_P(PSTR("%u"), atol(me->value));
+                    }
                 }
             }
         }
@@ -531,7 +585,7 @@ void TInfoShow(bool json)
             WSContentSend_PD(HTTP_ENERGY_PMAX_TELEINFO, atoi(value));
         }
 
-        if (tinfo_mode==TINFO_MODE_STANDARD ) {
+        if (tinfo_mode==TINFO_MODE_HISTORIQUE ) {
             if (tarif) {
                 GetTextIndexed(name, sizeof(name), tarif-1, kTarifName);
                 WSContentSend_PD(HTTP_ENERGY_TARIF_TELEINFO, name);
@@ -542,7 +596,7 @@ void TInfoShow(bool json)
                 WSContentSend_PD(HTTP_ENERGY_CONTRAT_TELEINFO, name, isousc);
                 WSContentSend_PD(HTTP_ENERGY_LOAD_TELEINFO,  percent);
             }
-        } else {
+        } else if (tinfo_mode==TINFO_MODE_STANDARD ) {
             if (getValueFromLabelIndex(LABEL_LTARF, name) ) {
                 WSContentSend_PD(HTTP_ENERGY_TARIF_TELEINFO, name);
             }
