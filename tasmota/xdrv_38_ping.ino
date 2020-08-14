@@ -333,6 +333,14 @@ void CmndPing(void) {
   } else if (-1 == res) {
     ResponseCmndChar_P(PSTR("Ping already ongoing for this IP"));
   } else {
+    Response_P(PSTR("{\"" D_JSON_PING "\":{\"%s\":{"
+                    "\"Reachable\":false"
+                    ",\"IP\":\"\""
+                    ",\"Success\":false"
+                    "}}}"),
+                    XdrvMailbox.data
+                    );
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_PING));
     ResponseCmndChar_P(PSTR("Unable to resolve IP address"));
   }
 }
