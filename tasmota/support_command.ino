@@ -369,6 +369,9 @@ void CmndPower(void)
       XdrvMailbox.payload = POWER_SHOW_STATE;
     }
     SetAllPower(XdrvMailbox.payload, SRC_IGNORE);
+    if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+      MqttPublishTeleState();
+    }
     mqtt_data[0] = '\0';
   }
 }
