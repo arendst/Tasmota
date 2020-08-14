@@ -369,6 +369,9 @@ void CmndPower(void)
       XdrvMailbox.payload = POWER_SHOW_STATE;
     }
     SetAllPower(XdrvMailbox.payload, SRC_IGNORE);
+    if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+      MqttPublishTeleState();
+    }
     mqtt_data[0] = '\0';
   }
 }
@@ -458,11 +461,11 @@ void CmndStatus(void)
   if ((0 == payload) || (3 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS3_LOGGING "\":{\"" D_CMND_SERIALLOG "\":%d,\"" D_CMND_WEBLOG "\":%d,\"" D_CMND_MQTTLOG "\":%d,\"" D_CMND_SYSLOG "\":%d,\""
                           D_CMND_LOGHOST "\":\"%s\",\"" D_CMND_LOGPORT "\":%d,\"" D_CMND_SSID "\":[\"%s\",\"%s\"],\"" D_CMND_TELEPERIOD "\":%d,\""
-                          D_JSON_RESOLUTION "\":\"%08X\",\"" D_CMND_SETOPTION "\":[\"%08X\",\"%s\",\"%08X\",\"%08X\"]}}"),
+                          D_JSON_RESOLUTION "\":\"%08X\",\"" D_CMND_SETOPTION "\":[\"%08X\",\"%s\",\"%08X\",\"%08X\",\"%08X\"]}}"),
                           Settings.seriallog_level, Settings.weblog_level, Settings.mqttlog_level, Settings.syslog_level,
                           SettingsText(SET_SYSLOG_HOST), Settings.syslog_port, EscapeJSONString(SettingsText(SET_STASSID1)).c_str(), EscapeJSONString(SettingsText(SET_STASSID2)).c_str(), Settings.tele_period,
                           Settings.flag2.data, Settings.flag.data, ToHex_P((unsigned char*)Settings.param, PARAM8_SIZE, stemp2, sizeof(stemp2)),
-                          Settings.flag3.data, Settings.flag4.data);
+                          Settings.flag3.data, Settings.flag4.data, Settings.flag5.data);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "3"));
   }
 
@@ -803,7 +806,7 @@ void CmndSetoption(void)
 {
   snprintf_P(XdrvMailbox.command, CMDSZ, PSTR(D_CMND_SETOPTION));  // Rename result shortcut command SO to SetOption
 
-  if (XdrvMailbox.index < 114) {
+  if (XdrvMailbox.index < 146) {
     uint32_t ptype;
     uint32_t pindex;
     if (XdrvMailbox.index <= 31) {         // SetOption0 .. 31 = Settings.flag
@@ -818,9 +821,13 @@ void CmndSetoption(void)
       ptype = 3;
       pindex = XdrvMailbox.index -50;      // 0 .. 31
     }
-    else {                                 // SetOption82 .. 113 = Settings.flag4
+    else if (XdrvMailbox.index <= 113) {    // SetOption82 .. 113 = Settings.flag4
       ptype = 4;
       pindex = XdrvMailbox.index -82;      // 0 .. 31
+    }
+    else {                                 // SetOption114 .. 145 = Settings.flag5
+      ptype = 5;
+      pindex = XdrvMailbox.index -114;     // 0 .. 31
     }
 
     if (XdrvMailbox.payload >= 0) {
@@ -905,9 +912,14 @@ void CmndSetoption(void)
               case 6:                      // SetOption88 - PWM Dimmer Buttons control remote devices
               case 15:                     // SetOption97 - Set Baud rate for TuyaMCU serial communication (0 = 9600 or 1 = 115200)
               case 20:                     // SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
+              case 21:                     // SetOption103 - Enable TLS mode (requires TLS version)
+              case 22:                     // SetOption104 - No Retain - disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
                 restart_flag = 2;
                 break;
             }
+          }
+          else if (5 == ptype) {           // SetOption114 .. 145
+            bitWrite(Settings.flag5.data, pindex, XdrvMailbox.payload);
           }
         } else {
           ptype = 99;                      // Command Error
@@ -925,6 +937,9 @@ void CmndSetoption(void)
         }
         else if (4 == ptype) {
           flag = Settings.flag4.data;
+        }
+        else if (5 == ptype) {
+          flag = Settings.flag5.data;
         }
         ResponseCmndIdxChar(GetStateText(bitRead(flag, pindex)));
       }

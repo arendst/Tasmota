@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - rev. 24.07.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 11.08.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -307,6 +307,7 @@
 #define D_DEVICE_NAME "Nome dispositivo"
 #define D_WEB_ADMIN_PASSWORD "Password amministratore web"
 #define D_MQTT_ENABLE "Abilita MQTT"
+#define D_MQTT_TLS_ENABLE "MQTT TLS"
 #define D_FRIENDLY_NAME "Nome amichevole"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Bridge Hue"
@@ -335,6 +336,7 @@
 #define D_MQTT_TOPIC "Topic MQTT"
 #define D_MQTT_GROUP_TOPIC "Gruppo topic MQTT"
 #define D_MQTT_FULL_TOPIC "Full topic MQTT"
+#define D_MQTT_NO_RETAIN "MQTT No Retain"
 #define D_MDNS_DISCOVERY "Ricerca mDNS"
 #define D_MDNS_ADVERTISE "Notifica mDNS"
 #define D_ESP_CHIP_ID "ID chip ESP"
@@ -831,12 +833,12 @@
 #define D_SENSOR_BOILER_OT_TX   "OpenTherm - TX"
 
 // xnrg_15_teleinfo Denky (Teleinfo)
-#define D_CONTRACT        "Contract"
-#define D_POWER_LOAD      "Power load"
-#define D_CURRENT_TARIFF  "Current Tariff"
-#define D_TARIFF          "Tariff"
+#define D_CONTRACT        "Contratto"
+#define D_POWER_LOAD      "Carico di potenza"
+#define D_CURRENT_TARIFF  "Tariffa attuale"
+#define D_TARIFF          "Tariffa"
 #define D_OVERLOAD        "ADPS"
-#define D_MAX_POWER       "Max Power"
-#define D_MAX_CURRENT     "Max Current"
+#define D_MAX_POWER       "Potenza max"
+#define D_MAX_CURRENT     "Corrente max"
 
 #endif  // _LANGUAGE_IT_IT_H_

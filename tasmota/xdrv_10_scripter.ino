@@ -1511,6 +1511,20 @@ chknext:
           len=0;
           goto exit;
         }
+        if (!strncmp(vname,"adc(",4)) {
+          lp=GetNumericResult(lp+4,OPER_EQU,&fvar,0);
+          while (*lp==' ') lp++;
+          float fvar1=1;
+          if (*lp!=')') {
+            lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
+          }
+          lp++;
+#ifdef ESP32
+          fvar=AdcRead(fvar, fvar1);
+#else
+          fvar=AdcRead(fvar);
+#endif
+        }
         break;
 
       case 'b':
@@ -2265,14 +2279,16 @@ chknext:
           len++;
           goto exit;
         }
-        if (!strncmp(vname,"pn[",3)) {
-          GetNumericResult(vname+3,OPER_EQU,&fvar,0);
-//          fvar=pin_gpio[(uint8_t)fvar];
-          fvar=Pin(fvar);
-          // skip ] bracket
+#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH))
+        if (!strncmp(vname,"pl(",3)) {
+          char path[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp+3,OPER_EQU,path,0);
+          Play_mp3(path);
           len++;
+          len=0;
           goto exit;
         }
+#endif // USE_I2S_AUDIO
         if (!strncmp(vname,"pd[",3)) {
           GetNumericResult(vname+3,OPER_EQU,&fvar,0);
           uint8_t gpiopin=fvar;
@@ -2461,6 +2477,17 @@ chknext:
           len=0;
           goto strexit;
         }
+#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH))
+        if (!strncmp(vname,"say(",4)) {
+          char text[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp+4,OPER_EQU,text,0);
+          Say(text);
+          len++;
+          len=0;
+          goto exit;
+        }
+#endif // USE_I2S_AUDIO
+
 #ifdef ESP32
         if (!strncmp(vname,"sf(",3)) {
           lp+=2;

@@ -53,10 +53,12 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.4.0.1
+### Version 8.4.0.2
 
+- Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
 - Fix ESP32 PWM range
 - Add Zigbee better support for IKEA Motion Sensor
 - Add ESP32 Analog input support for GPIO32 to GPIO39
 - Add Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
 - Add command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)
+- Add better config corruption recovery (#9046)
