@@ -321,7 +321,7 @@ void NewFrameCallback(struct _ValueList * me)
     Energy.data_valid[0] = 0;
 
     // send teleinfo full frame only if setup like that
-    // see setOption103
+    // see setOption108
     if (Settings.flag4.teleinfo_rawdata) { 
         struct _ValueList * me = tinfo.getList();
 
