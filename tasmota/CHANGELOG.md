@@ -8,6 +8,7 @@
 - Add Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
 - Add command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)
 - Add command ``SetOption102 0/1`` to switch between Teleinfo French Metering mode, legacy 1200 bps (0) or Linky standard 9600 bps (1)
+- Add command ``SetOption103 0/1`` to enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1) in this case MQTT will send RAW Teleinfo telemetry on each frame received and not into Tasmota energy calculation telemetry.
 
 ### 8.4.0 20200730
 
