@@ -914,6 +914,8 @@ void CmndSetoption(void)
               case 20:                     // SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
               case 21:                     // SetOption103 - Enable TLS mode (requires TLS version)
               case 22:                     // SetOption104 - No Retain - disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
+              case 24:                     // SetOption106 - Virtual CT - Creates a virtual White ColorTemp for RGBW lights
+              case 25:                     // SetOption107 - Virtual CT Channel - signals whether the hardware white is cold CW (true) or warm WW (false)
                 restart_flag = 2;
                 break;
             }

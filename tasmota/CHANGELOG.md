@@ -4,6 +4,8 @@
 
 - Add better config corruption recovery (#9046)
 - Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
+- Change White blend mode moved to using ``SetOption 105`` instead of ``RGBWWTable``
+- Add Virtual CT for 4 channels lights, emulating a 5th channel
 
 ### 8.4.0.1 20200730
 
