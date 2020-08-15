@@ -266,11 +266,20 @@ void Say(char *text) {
   TTGO_PWR_OFF
 }
 
+
 const char kI2SAudio_Commands[] PROGMEM = "I2S|"
-  "Say|Play|Gain|Time";
+  "Say|Gain|Time"
+#ifdef ESP32
+  "|Play"
+#endif
+  ;
 
 void (* const I2SAudio_Command[])(void) PROGMEM = {
-  &Cmd_Say, &Cmd_Play, &Cmd_Gain, &Cmd_Time};
+  &Cmd_Say, &Cmd_Gain, &Cmd_Time
+#ifdef ESP32
+  ,&Cmd_Play
+#endif
+};
 
 void Cmd_Play(void) {
   if (XdrvMailbox.data_len > 0) {
