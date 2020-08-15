@@ -23,9 +23,9 @@
 
 #include <Arduino.h>
 #ifdef ESP32
-//  #include <HTTPClient.h>
+  #include <HTTPClient.h>
 #else
-//  #include <ESP8266HTTPClient.h>
+  #include <ESP8266HTTPClient.h>
 #endif
 
 #include "AudioFileSourceHTTPStream.h"
