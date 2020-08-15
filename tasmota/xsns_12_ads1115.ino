@@ -122,6 +122,7 @@ struct ADS1115 {
   uint8_t address;
   uint8_t addresses[4] = { ADS1115_ADDRESS_ADDR_GND, ADS1115_ADDRESS_ADDR_VDD, ADS1115_ADDRESS_ADDR_SDA, ADS1115_ADDRESS_ADDR_SCL };
   uint8_t found[4] = {false,false,false,false};
+  int16_t last_values[4][4] = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
 } Ads1115;
 
 //Ads1115StartComparator(channel, ADS1115_REG_CONFIG_MODE_SINGLE);
@@ -191,7 +192,7 @@ void Ads1115Show(bool json)
       Ads1115.address = Ads1115.addresses[t];
       for (uint32_t i = 0; i < 4; i++) {
         values[i] = Ads1115GetConversion(i);
-        //AddLog_P2(LOG_LEVEL_INFO, "Logging ADS1115 %02x (%i) = %i", address, i, values[i] );
+        //AddLog_P2(LOG_LEVEL_INFO, "Logging ADS1115 %02x (%i) = %i", Ads1115.address, i, values[i] );
       }
       Ads1115.address = old_address;
 
@@ -208,6 +209,13 @@ void Ads1115Show(bool json)
         ResponseAppend_P(PSTR(",\"%s\":{"), label);
         for (uint32_t i = 0; i < 4; i++) {
           ResponseAppend_P(PSTR("%s\"A%d\":%d"), (0 == i) ? "" : ",", i, values[i]);
+
+          // Check if value has changed more than 1 percent from last stored value
+          // we assume that gain is set up correctly, and we could use the whole 16bit result space
+          if (values[i] >= Ads1115.last_values[t][i] + 327 || values[i] <= Ads1115.last_values[t][i] - 327) {
+            ResponseAppend_P(PSTR(",\"A%ddiv10\":%d"), i, values[i]);
+            Ads1115.last_values[t][i] = values[i];
+          }
         }
         ResponseJsonEnd();
       }
