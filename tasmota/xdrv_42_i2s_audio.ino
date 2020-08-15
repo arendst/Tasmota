@@ -29,9 +29,13 @@
 #endif
 
 #ifdef USE_TTGO_WATCH
+#undef TTGO_PWR_ON
+#undef TTGO_PWR_OFF
 #define TTGO_PWR_ON TTGO_audio_power(true);
 #define TTGO_PWR_OFF TTGO_audio_power(false);
 #else
+#undef TTGO_PWR_ON
+#undef TTGO_PWR_OFF
 #define TTGO_PWR_ON
 #define TTGO_PWR_OFF
 #endif // USE_TTGO_WATCH
@@ -121,7 +125,7 @@ void sayTime(int hour, int minutes, AudioGeneratorTalkie *talkie) {
   TTGO_PWR_ON
   talkie = new AudioGeneratorTalkie();
   talkie->begin(nullptr, out);
-  
+
   bool pm = (hour >= 12);
   uint8_t *spHour[] = { spTWELVE, spONE, spTWO, spTHREE, spFOUR, spFIVE, spSIX,
                         spSEVEN, spEIGHT, spNINE, spTEN, spELEVEN };
