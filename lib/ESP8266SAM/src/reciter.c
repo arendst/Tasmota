@@ -2,7 +2,7 @@
 #include <string.h>
 #include "reciter.h"
 #include "ReciterTabs.h"
-#include "debug.h"
+#include "samdebug.h"
 #include "SamData.h"
 
 unsigned char A, X, Y;
