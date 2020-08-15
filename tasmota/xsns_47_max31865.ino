@@ -35,32 +35,87 @@
   #define PTD_WIRES MAX31865_2WIRE
 #endif
 
-int8_t init_status = 0;
+#define MAX31865_MAX_SENSORS 6
 
-Adafruit_MAX31865 max31865;
+int8_t init_status = 0;
+uint8_t pins_used = 0; //used as a bit array
+
+Adafruit_MAX31865 max31865[MAX31865_MAX_SENSORS];
 
 struct MAX31865_Result_Struct {
     uint8_t   ErrorCode;
     uint16_t  Rtd;
     float     PtdResistance;
     float     PtdTemp;
-} MAX31865_Result;
+} MAX31865_Result[MAX31865_MAX_SENSORS];
 
 void MAX31865_Init(void){
     if(init_status)
         return;
 
-  max31865.setPins(
-    Pin(GPIO_SSPI_CS),
-    Pin(GPIO_SSPI_MOSI),
-    Pin(GPIO_SSPI_MISO),
-    Pin(GPIO_SSPI_SCLK)
-  );
+  if (PinUsed(GPIO_SSPI_CS)) {
+      pins_used |= 1<<0; //set lowest bit
+      max31865[0].setPins(
+        Pin(GPIO_SSPI_CS),
+        Pin(GPIO_SSPI_MOSI),
+        Pin(GPIO_SSPI_MISO),
+        Pin(GPIO_SSPI_SCLK)
+      );
+  }
+  if (PinUsed(GPIO_SSPI_MAX31865_CS1)) {
+      pins_used |= 1<<1; //set second bit;
+      max31865[1].setPins(
+        Pin(GPIO_SSPI_MAX31865_CS1),
+        Pin(GPIO_SSPI_MOSI),
+        Pin(GPIO_SSPI_MISO),
+        Pin(GPIO_SSPI_SCLK)
+      );
+  }
+  if (PinUsed(GPIO_SSPI_MAX31865_CS2)) {
+      pins_used |= 1<<2;
+      max31865[2].setPins(
+        Pin(GPIO_SSPI_MAX31865_CS2),
+        Pin(GPIO_SSPI_MOSI),
+        Pin(GPIO_SSPI_MISO),
+        Pin(GPIO_SSPI_SCLK)
+      );
+  }
+  if (PinUsed(GPIO_SSPI_MAX31865_CS3)) {
+      pins_used |= 1<<3;
+      max31865[3].setPins(
+        Pin(GPIO_SSPI_MAX31865_CS3),
+        Pin(GPIO_SSPI_MOSI),
+        Pin(GPIO_SSPI_MISO),
+        Pin(GPIO_SSPI_SCLK)
+      );
+  }
+  if (PinUsed(GPIO_SSPI_MAX31865_CS4)) {
+      pins_used |= 1<<4;
+      max31865[4].setPins(
+        Pin(GPIO_SSPI_MAX31865_CS4),
+        Pin(GPIO_SSPI_MOSI),
+        Pin(GPIO_SSPI_MISO),
+        Pin(GPIO_SSPI_SCLK)
+      );
+  }
+  if (PinUsed(GPIO_SSPI_MAX31865_CS5)) {
+      pins_used |= 1<<5;
+      max31865[5].setPins(
+        Pin(GPIO_SSPI_MAX31865_CS5),
+        Pin(GPIO_SSPI_MOSI),
+        Pin(GPIO_SSPI_MISO),
+        Pin(GPIO_SSPI_SCLK)
+      );
+  }
 
-  if(max31865.begin(PTD_WIRES))
-    init_status = 1;
-  else
-    init_status = -1;
+  init_status=1;
+  for (uint32_t i = 0; i < MAX31865_MAX_SENSORS; i++) {
+    if (pins_used&(1<<i)) {
+        if (!max31865[i].begin(PTD_WIRES)) {
+        init_status = -1;
+      }
+    }
+  }
 }
 
 /*
@@ -68,38 +123,49 @@ void MAX31865_Init(void){
 *   Acquires the raw data via SPI, checks for MAX31865 errors and fills result structure
 */
 void MAX31865_GetResult(void){
-    uint16_t rtd;
+    for (uint32_t i = 0; i < MAX31865_MAX_SENSORS; i++) {
+      if (pins_used&(1<<i)){
+        uint16_t rtd;
 
-    rtd = max31865.readRTD();
-    MAX31865_Result.Rtd = rtd;
-    MAX31865_Result.PtdResistance = max31865.rtd_to_resistance(rtd, MAX31865_REF_RES);
-    MAX31865_Result.PtdTemp = max31865.rtd_to_temperature(rtd, MAX31865_PTD_RES, MAX31865_REF_RES) + MAX31865_PTD_BIAS;
+        rtd = max31865[i].readRTD();
+        MAX31865_Result[i].Rtd = rtd;
+        MAX31865_Result[i].PtdResistance = max31865[i].rtd_to_resistance(rtd, MAX31865_REF_RES);
+        MAX31865_Result[i].PtdTemp = max31865[i].rtd_to_temperature(rtd, MAX31865_PTD_RES, MAX31865_REF_RES) + MAX31865_PTD_BIAS;
+      }
+    }
 }
 
 void MAX31865_Show(bool Json){
-    char temperature[33];
-    char resistance[33];
+    for (uint32_t i = 0; i < MAX31865_MAX_SENSORS; i++) {
+      if (pins_used&(1<<i)) {
+        char temperature[33];
+        char resistance[33];
 
-    dtostrfd(MAX31865_Result.PtdResistance, Settings.flag2.temperature_resolution, resistance);
-    dtostrfd(MAX31865_Result.PtdTemp, Settings.flag2.temperature_resolution, temperature);
+        dtostrfd(MAX31865_Result[i].PtdResistance, Settings.flag2.temperature_resolution, resistance);
+        dtostrfd(MAX31865_Result[i].PtdTemp, Settings.flag2.temperature_resolution, temperature);
 
-    if(Json){
-        ResponseAppend_P(PSTR(",\"MAX31865\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RESISTANCE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
-          temperature, resistance, MAX31865_Result.ErrorCode);
+        if(Json){
+          ResponseAppend_P(PSTR(",\"MAX31865(%d)\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RESISTANCE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
+            i, temperature, resistance, MAX31865_Result[i].ErrorCode);
 #ifdef USE_DOMOTICZ
-        if (0 == tele_period) {
-          DomoticzSensor(DZ_TEMP, temperature);
-        }
+          if (0 == tele_period) {
+            DomoticzSensor(DZ_TEMP, temperature);
+          }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-        if (0 == tele_period) {
-          KnxSensor(KNX_TEMPERATURE, MAX31865_Result.PtdTemp);
-        }
+          if (0 == tele_period) {
+            KnxSensor(KNX_TEMPERATURE, MAX31865_Result[i].PtdTemp);
+          }
 #endif  // USE_KNX
-    } else {
+        } else {
 #ifdef USE_WEBSERVER
-        WSContentSend_PD(HTTP_SNS_TEMP, "MAX31865", temperature, TempUnit());
+        //TODO make sure this prints properly
+          char sensorname[33];
+          sprintf(sensorname, "MAX31865(%d)",i);
+            WSContentSend_PD(HTTP_SNS_TEMP, sensorname, temperature, TempUnit());
 #endif  // USE_WEBSERVER
+        }
+      }
     }
 }
 
@@ -111,7 +177,9 @@ bool Xsns47(uint8_t function)
 {
   bool result = false;
   if (PinUsed(GPIO_SSPI_MISO) && PinUsed(GPIO_SSPI_MOSI) &&
-      PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_CS)) {
+      PinUsed(GPIO_SSPI_SCLK) &&
+      (PinUsed(GPIO_SSPI_CS) || PinUsed(GPIO_SSPI_MAX31865_CS1) || PinUsed(GPIO_SSPI_MAX31865_CS2) ||
+      PinUsed(GPIO_SSPI_MAX31865_CS3) || PinUsed(GPIO_SSPI_MAX31865_CS4) || PinUsed(GPIO_SSPI_MAX31865_CS5))) {
 
     switch (function) {
       case FUNC_INIT:
