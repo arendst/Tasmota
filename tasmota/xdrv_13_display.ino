@@ -1513,12 +1513,7 @@ void rgb888_to_565(uint8_t *in, uint16_t *out, uint32_t len);
 #endif
 
 #if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
-
-#ifdef ESP32
 extern FS *fsp;
-#else
-extern SDClass *fsp;
-#endif
 #define XBUFF_LEN 128
 void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
   if (!renderer) return;
