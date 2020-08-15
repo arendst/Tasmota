@@ -823,7 +823,7 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
   MqttPublish(stopic, true);
   if (!Settings.flag.hass_discovery) {
     masterlog_level = 0;
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant Discovery disabled"));
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant Discovery disabled. "));
   }
 }
 
@@ -930,11 +930,19 @@ bool HAssMqttLWT(void)
   if (strncasecmp_P(XdrvMailbox.topic, PSTR(HOME_ASSISTANT_LWT_TOPIC), strlen(HOME_ASSISTANT_LWT_TOPIC)) != 0) {
     return false;
   }
-
-  if ((strncasecmp_P(XdrvMailbox.data, PSTR("online"), strlen("online")) == 0) && (XdrvMailbox.data_len == 6))  {
+  if (Settings.flag.hass_discovery && (strncasecmp_P(XdrvMailbox.data, PSTR("online"), strlen("online")) == 0) && (XdrvMailbox.data_len == 6)) {
     MqttPublishTeleState();
     return true;
   }
+}
+
+void HassLwtSubscribe(bool hasslwt)
+{
+  char htopic[TOPSZ];
+  snprintf_P(htopic, sizeof(htopic), PSTR(HOME_ASSISTANT_LWT_TOPIC));
+  if (hasslwt) {
+    MqttSubscribe(htopic);
+  } else { MqttUnsubscribe(htopic); }
 }
 
 /*********************************************************************************************\
@@ -964,7 +972,6 @@ bool Xdrv12(uint8_t function)
         if (hass_tele_period >= Settings.tele_period)
         {
           hass_tele_period = 0;
-
           mqtt_data[0] = '\0';
           HAssPublishStatus();
         }
@@ -981,17 +988,11 @@ bool Xdrv12(uint8_t function)
       //   AddLog_P2(LOG_LEVEL_INFO, PSTR("MQT: homeassistant/49A3BC/Discovery = {\"dev\":{\"ids\":[\"49A3BC\"]},\"cmd_t\":\"cmnd/test1/\",\"Discovery\":0}"));
       // }
     case FUNC_MQTT_SUBSCRIBE:
-      if (hasslwt) {
-        char htopic[TOPSZ];
-        snprintf_P(htopic, sizeof(htopic), PSTR(HOME_ASSISTANT_LWT_TOPIC));
-        MqttSubscribe(htopic);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("MQT: subscribed to " HOME_ASSISTANT_LWT_TOPIC));
-      }
+      HassLwtSubscribe(hasslwt);
       break;
     case FUNC_MQTT_DATA:
-      if (hasslwt) { result = HAssMqttLWT(); }
+      result = HAssMqttLWT();
       break;
-
     }
   }
   return result;
