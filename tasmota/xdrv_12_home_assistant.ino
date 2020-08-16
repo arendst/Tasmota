@@ -42,7 +42,7 @@ const char kHAssJsonSensorDevCla[] PROGMEM =
   "ic\":\"mdi:cup-water|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|"
   "ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:alpha-f-circle-outline|dev_cla\":\"power|ic\":\"mdi:progress-clock|"
   "dev_cla\":\"power|dev_cla\":\"power|dev_cla\":\"power|ic\":\"mdi:alpha-v-circle-outline|ic\":\"mdi:scale|dev_cla\":\"power|"
-  "ic\":\"mdi:periodic-table-co2|ic\":\"mdi:air-filter|ic\":\"mdi:periodic-table-co2|"
+  "ic\":\"mdi:molecule-co2|ic\":\"mdi:molecule-co2|ic\":\"mdi:air-filter|"
   "ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:temperature-kelvin|ic\":\"mdi:ruler|dev_cla\":\"illuminance|";
    //"ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|"
 // List of sensors ready for discovery
@@ -289,11 +289,11 @@ void HAssAnnounceRelayLight(void)
           char *command_topic = stemp1;
           char *state_topic = stemp2;
           char *availability_topic = stemp3;
-
+          masterlog_level = 0;
           if (i > MAX_FRIENDLYNAMES) {
-            snprintf_P(name, sizeof(name), PSTR("%s %s %d"), SettingsText(SET_DEVICENAME), SettingsText(SET_FRIENDLYNAME1), i-1);
+            snprintf_P(name, sizeof(name), PSTR("%s %d"), SettingsText(SET_FRIENDLYNAME1), i-1);
           } else {
-            snprintf_P(name, sizeof(name), PSTR ("%s %s"), SettingsText(SET_DEVICENAME), SettingsText(SET_FRIENDLYNAME1 + i-1));
+            snprintf_P(name, sizeof(name), PSTR ("%s"), SettingsText(SET_FRIENDLYNAME1 + i-1));
           }
 
           GetPowerDevice(value_template, i, sizeof(value_template), Settings.flag.device_index_enable); // SetOption26 - Switch between POWER or POWER1
@@ -364,6 +364,7 @@ void HAssAnnounceRelayLight(void)
       }
     }
     MqttPublish(stopic, true);
+    masterlog_level = 4;
   }
 }
 
@@ -391,6 +392,7 @@ void HAssAnnouncerTriggers(uint8_t device, uint8_t present, uint8_t key, uint8_t
       char *state_topic = stemp1;
       char *availability_topic = stemp2;
       char jsoname[8];
+      masterlog_level = 0;
 
       GetPowerDevice(value_template, device + 1, sizeof(value_template), key + Settings.flag.device_index_enable);     // Force index for Switch 1, Index on Button1 is controlled by SetOption26 - Switch between POWER or POWER1
       snprintf_P(jsoname, sizeof(jsoname), PSTR("%s%d"), key ? "SWITCH" : "BUTTON", device + 1);
@@ -419,6 +421,7 @@ void HAssAnnouncerTriggers(uint8_t device, uint8_t present, uint8_t key, uint8_t
       }
     }
     MqttPublish(stopic, true);
+    masterlog_level = 4;
   }
 }
 
@@ -428,7 +431,6 @@ void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint
   char stemp1[TOPSZ];
   char stemp2[TOPSZ];
   char unique_id[30];
-
   mqtt_data[0] = '\0'; // Clear retained message
 
   snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_SW_%d"), ESP_getChipId(), device + 1);
@@ -436,6 +438,7 @@ void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint
 
 
   if (Settings.flag.hass_discovery && present ) {    // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
+    masterlog_level = 0;
     if (!toggle || dual) {
       char name[TOPSZ];        // friendlyname(33) + " " + "BTN" + " " + index
       char value_template[33];
@@ -469,6 +472,7 @@ void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint
     }
   }
   MqttPublish(stopic, true);
+  masterlog_level = 4;
 }
 
 void HAssAnnounceSwitches(void)
@@ -756,6 +760,7 @@ void HAssAnnounceShutters(void)
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/cover/%s/config"), unique_id);
 
     if (Settings.flag.hass_discovery && Settings.flag3.shutter_mode && Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_RELAYS) {
+      masterlog_level = 0;
       if (i > MAX_FRIENDLYNAMES) {
         snprintf_P(stemp1, sizeof(stemp1), PSTR("%s Shutter %d"), SettingsText(SET_DEVICENAME), i + 1);
       } else {
@@ -779,6 +784,7 @@ void HAssAnnounceShutters(void)
     }
 
     MqttPublish(stopic, true);
+    masterlog_level = 4;
   }
 #endif
 }
@@ -789,7 +795,6 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
   char stemp1[TOPSZ];
   char stemp2[TOPSZ];
   char unique_id[30];
-
   // Announce sensor
   mqtt_data[0] = '\0'; // Clear retained message
 
@@ -803,7 +808,7 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
     char prefix[TOPSZ];
     char *state_topic = stemp1;
     char *availability_topic = stemp2;
-
+    masterlog_level = 0;
     snprintf_P(name, sizeof(name), PSTR("%s status"), SettingsText(SET_DEVICENAME));
     GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_HASS_STATE));
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
@@ -816,6 +821,10 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
     TryResponseAppend_P(PSTR("}"));
   }
   MqttPublish(stopic, true);
+  if (!Settings.flag.hass_discovery) {
+    masterlog_level = 0;
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant Discovery disabled. "));
+  }
 }
 
 void HAssPublishStatus(void)
@@ -845,7 +854,7 @@ void HAssDiscovery(void)
 
   if (Settings.flag.hass_discovery || (1 == hass_mode))
   { // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
-
+    masterlog_level = 4;
     // Send info about buttons
     HAssAnnounceButtons();
 
@@ -855,14 +864,16 @@ void HAssDiscovery(void)
     // Send info about sensors
     HAssAnnounceSensors();
 
-    // Send info about relays and lights
-    HAssAnnounceRelayLight();
-
     // Send info about shutters
     HAssAnnounceShutters();
 
+    // Send info about relays and lights
+    HAssAnnounceRelayLight();
+
     // Send info about status sensor
     HAssAnnounceDeviceInfoAndStatusSensor();
+
+    masterlog_level = Settings.weblog_level;
   }
 }
 
@@ -914,6 +925,26 @@ void HAssAnyKey(void)
   MqttPublish(stopic);
 }
 
+bool HAssMqttLWT(void)
+{
+  if (strncasecmp_P(XdrvMailbox.topic, PSTR(HOME_ASSISTANT_LWT_TOPIC), strlen(HOME_ASSISTANT_LWT_TOPIC)) != 0) {
+    return false;
+  }
+  if (Settings.flag.hass_discovery && (strncasecmp_P(XdrvMailbox.data, PSTR("online"), strlen("online")) == 0) && (XdrvMailbox.data_len == 6)) {
+    MqttPublishTeleState();
+    return true;
+  }
+}
+
+void HassLwtSubscribe(bool hasslwt)
+{
+  char htopic[TOPSZ];
+  snprintf_P(htopic, sizeof(htopic), PSTR(HOME_ASSISTANT_LWT_TOPIC));
+  if (hasslwt) {
+    MqttSubscribe(htopic);
+  } else { MqttUnsubscribe(htopic); }
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -921,6 +952,7 @@ void HAssAnyKey(void)
 bool Xdrv12(uint8_t function)
 {
   bool result = false;
+  bool hasslwt = HOME_ASSISTANT_LWT_SUBSCRIBE;
   if (Settings.flag.mqtt_enabled)
   { // SetOption3 - Enable MQTT
     switch (function)
@@ -940,7 +972,6 @@ bool Xdrv12(uint8_t function)
         if (hass_tele_period >= Settings.tele_period)
         {
           hass_tele_period = 0;
-
           mqtt_data[0] = '\0';
           HAssPublishStatus();
         }
@@ -952,9 +983,15 @@ bool Xdrv12(uint8_t function)
     case FUNC_MQTT_INIT:
       hass_mode = 0;      // Discovery only if Settings.flag.hass_discovery is set
       hass_init_step = 2; // Delayed discovery
+      break;
       // if (!Settings.flag.hass_discovery) {
       //   AddLog_P2(LOG_LEVEL_INFO, PSTR("MQT: homeassistant/49A3BC/Discovery = {\"dev\":{\"ids\":[\"49A3BC\"]},\"cmd_t\":\"cmnd/test1/\",\"Discovery\":0}"));
       // }
+    case FUNC_MQTT_SUBSCRIBE:
+      HassLwtSubscribe(hasslwt);
+      break;
+    case FUNC_MQTT_DATA:
+      result = HAssMqttLWT();
       break;
     }
   }

@@ -1,5 +1,13 @@
 ## Unreleased (development)
 
+### 8.4.0.2 20200813
+
+- Add better config corruption recovery (#9046)
+- Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
+- Add command ``SetOption108 0/1`` to enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1) in this case MQTT will send RAW Teleinfo telemetry on each frame received and not into Tasmota energy calculation telemetry.
+- Change White blend mode moved to using ``SetOption 105`` instead of ``RGBWWTable``
+- Add Virtual CT for 4 channels lights, emulating a 5th channel
+
 ### 8.4.0.1 20200730
 
 - Fix ESP32 PWM range
@@ -8,7 +16,7 @@
 - Add Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
 - Add command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)
 - Add command ``SetOption102 0/1`` to switch between Teleinfo French Metering mode, legacy 1200 bps (0) or Linky standard 9600 bps (1)
-- Add command ``SetOption108 0/1`` to enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1) in this case MQTT will send RAW Teleinfo telemetry on each frame received and not into Tasmota energy calculation telemetry.
+- Change triple-mode TLS via configuration in a single firmware (TLS AWS IoT, Letsencrypt and No-TLS)
 
 ### 8.4.0 20200730
 
