@@ -5,7 +5,7 @@
 #include "render.h"
 #include "RenderTabs.h"
 
-#include "debug.h"
+#include "samdebug.h"
 //extern int debug;
 #include <pgmspace.h>
 #include "SamData.h"

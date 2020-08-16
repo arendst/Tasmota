@@ -1,7 +1,7 @@
 /*
-  AudioFileSourceSPIFFS
-  Input SD card "file" to be used by AudioGenerator
-  
+  AudioFileSourceHTTPStream
+  Connect to a HTTP based streaming service
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,32 +18,32 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCESD_H
-#define _AUDIOFILESOURCESD_H
+#ifndef _AUDIOFILESOURCEICYSTREAM_H
+#define _AUDIOFILESOURCEICYSTREAM_H
 
-#include "AudioFileSource.h"
-#include <SD.h>
+#include <Arduino.h>
+#ifdef ESP32
+  #include <HTTPClient.h>
+#else
+  #include <ESP8266HTTPClient.h>
+#endif
 
+#include "AudioFileSourceHTTPStream.h"
 
-class AudioFileSourceSD : public AudioFileSource
+class AudioFileSourceICYStream : public AudioFileSourceHTTPStream
 {
   public:
-    AudioFileSourceSD();
-    AudioFileSourceSD(const char *filename);
-    virtual ~AudioFileSourceSD() override;
-    
-    virtual bool open(const char *filename) override;
-    virtual uint32_t read(void *data, uint32_t len) override;
-    virtual bool seek(int32_t pos, int dir) override;
-    virtual bool close() override;
-    virtual bool isOpen() override;
-    virtual uint32_t getSize() override;
-    virtual uint32_t getPos() override;
+    AudioFileSourceICYStream();
+    AudioFileSourceICYStream(const char *url);
+    virtual ~AudioFileSourceICYStream() override;
+
+    virtual bool open(const char *url) override;
 
   private:
-    File f;
+    virtual uint32_t readInternal(void *data, uint32_t len, bool nonBlock) override;
+    int icyMetaInt;
+    int icyByteCount;
 };
 
 
 #endif
-
