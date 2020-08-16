@@ -108,6 +108,7 @@ const char kLabel[] PROGMEM =
 TInfo tinfo; // Teleinfo object
 TasmotaSerial *TInfoSerial = nullptr;
 _Mode_e tinfo_mode = TINFO_MODE_HISTORIQUE;
+char serialNumber[13] = ""; // Serial number is 12 char long
 bool tinfo_found = false;
 int contrat;
 int tarif;
@@ -145,19 +146,17 @@ Comments: should have been initialised with a
 ====================================================================== */
 void ADPSCallback(uint8_t phase)
 {
-    char adco[13];
-
     // n = phase number 1 to 3
     if (phase == 0){
         phase = 1;
     }
 
-    if (tinfo_mode == TINFO_MODE_HISTORIQUE) {
-        if (getValueFromLabelIndex(LABEL_ADCO, adco) ) {
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"ADPS\":%i}}"), adco, phase );
-            MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
-        }
-    }
+    Response_P(PSTR("{"));
+    ResponseAppend_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"ADPS\":%i}}"), serialNumber, phase );
+    ResponseJsonEnd();
+
+    // Publish adding ADCO serial number into the topic
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, serialNumber, false);
 
     AddLog_P2(LOG_LEVEL_INFO, PSTR("ADPS on phase %d"), phase);
 }
@@ -186,126 +185,191 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             }
         }
 
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Label[%02d] %s=%s"), ilabel, labelName, me->value);
+        if (flags & TINFO_FLAGS_ADDED)   { c = '#';  }
+        if (flags & TINFO_FLAGS_UPDATED) { c = '*';  }
+        if (flags & TINFO_FLAGS_STRING)  { c = '$';  }
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: [%d]%c %s=%s"), ilabel, c , me->name, me->value);
 
-        // Current tariff (legacy)
-        if (ilabel == LABEL_PTEC)
-        {
-            char tarif_value[] = "    "; // 4 spaces
-            // Find the tariff index
-            for (tarif = TARIF_TH ; tarif < TARIF_END ; tarif++) {
-                GetTextIndexed(tarif_value, sizeof(tarif_value), tarif-1, kTarifValue);
-                if (!strcmp(tarif_value, me->value)) { 
-                    break;
+        if (ilabel<LABEL_END) {
+
+            // Current tariff (legacy)
+            if (ilabel == LABEL_PTEC)
+            {
+                char tarif_value[] = "    "; // 4 spaces
+                // Find the tariff index
+                for (tarif = TARIF_TH ; tarif < TARIF_END ; tarif++) {
+                    GetTextIndexed(tarif_value, sizeof(tarif_value), tarif-1, kTarifValue);
+                    if (!strcmp(tarif_value, me->value)) { 
+                        break;
+                    }
                 }
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif changed, now '%s' (%d)"), me->value, tarif);
+            } 
+
+            // Current tariff (standard is in clear text in value)
+            else if (ilabel == LABEL_LTARF)
+            {
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif name changed, now '%s'"), me->value);
+            } 
+            // Current tariff (standard index is is in clear text in value)
+            else if (ilabel == LABEL_NTARF)
+            {
+                tarif = atoi(me->value);
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif index changed, now '%d'"), tarif);
+            } 
+
+
+            // Voltage V (not present on all Smart Meter)
+            else if ( ilabel == LABEL_TENSION || ilabel == LABEL_URMS1)
+            {
+                Energy.voltage_available = true;
+                Energy.voltage[0]  = (float) atoi(me->value);
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Voltage %s, now %d"), me->value, (int) Energy.voltage[0]);
             }
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif changed, now '%s' (%d)"), me->value, tarif);
-        } 
 
-        // Current tariff (standard is in clear text in value)
-        else if (ilabel == LABEL_LTARF)
-        {
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif name changed, now '%s'"), me->value);
-        } 
-        // Current tariff (standard index is is in clear text in value)
-        else if (ilabel == LABEL_NTARF)
-        {
-            tarif = atoi(me->value);
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif index changed, now '%d'"), tarif);
-        } 
-
-
-        // Voltage V (not present on all Smart Meter)
-        else if ( ilabel == LABEL_TENSION || ilabel == LABEL_URMS1)
-        {
-            Energy.voltage_available = true;
-            Energy.voltage[0]  = (float) atoi(me->value);
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Voltage %s, now %d"), me->value, (int) Energy.voltage[0]);
-        }
-
-        // Current I
-        else if (ilabel == LABEL_IINST || ilabel == LABEL_IRMS1)
-        {
-            Energy.current[0]  = (float) atoi(me->value);
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Current %s, now %d"), me->value, (int) Energy.current[0]);
-        }
-
-        // Power P
-        else if (ilabel == LABEL_PAPP || ilabel == LABEL_SINSTS)
-        {
-            Energy.active_power[0]  = (float) atoi(me->value);;
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s, now %d"), me->value, (int)  Energy.active_power[0]);
-        }
-
-        // Wh indexes (legacy)
-        else if ( ilabel == LABEL_HCHC || ilabel == LABEL_HCHP)
-        {
-            char value[32];
-            uint32_t hc = 0;
-            uint32_t hp = 0;
-            uint32_t total = 0;
-
-            if ( getValueFromLabelIndex(LABEL_HCHC, value) ) { hc = atoi(value);}
-            if ( getValueFromLabelIndex(LABEL_HCHP, value) ) { hp = atoi(value);}
-            total = hc + hp;
-
-            if (!Settings.flag4.teleinfo_rawdata) { 
-                EnergyUpdateTotal(total/1000.0f, true);  
+            // Current I
+            else if (ilabel == LABEL_IINST || ilabel == LABEL_IRMS1)
+            {
+                Energy.current[0]  = (float) atoi(me->value);
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Current %s, now %d"), me->value, (int) Energy.current[0]);
             }
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u  HP:%u  Total:%u"), hc, hp, total);
-        }
 
-        // Wh total index (standard)
-        else if ( ilabel == LABEL_EAST)
-        {
-            uint32_t total = atoi(me->value);
-            if (!Settings.flag4.teleinfo_rawdata) { 
-                EnergyUpdateTotal(total/1000.0f, true);  
+            // Power P
+            else if (ilabel == LABEL_PAPP || ilabel == LABEL_SINSTS)
+            {
+                Energy.active_power[0]  = (float) atoi(me->value);;
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s, now %d"), me->value, (int)  Energy.active_power[0]);
             }
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%uWh"), total);
-        }
 
-        // Wh indexes (standard)
-        else if ( ilabel == LABEL_EASF01)
-        {
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u"),  atoi(me->value));
-        }
-        else if ( ilabel == LABEL_EASF02)
-        {
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HP:%u"),  atoi(me->value));
-        }
+            // Wh indexes (legacy)
+            else if ( ilabel == LABEL_HCHC || ilabel == LABEL_HCHP)
+            {
+                char value[32];
+                uint32_t hc = 0;
+                uint32_t hp = 0;
+                uint32_t total = 0;
 
-        // Contract subscribed (legacy)
-        else if (ilabel == LABEL_OPTARIF)
-        {
-            char contrat_value[] = "    "; // 4 spaces
-            // Find the contract index
-            for (contrat = CONTRAT_BAS ; contrat < CONTRAT_END ; contrat++) {
-                GetTextIndexed(contrat_value, sizeof(contrat_value), contrat, kContratValue);
-                if (!strcmp(contrat_value, me->value)) { 
-                    break;
+                if ( getValueFromLabelIndex(LABEL_HCHC, value) ) { hc = atoi(value);}
+                if ( getValueFromLabelIndex(LABEL_HCHP, value) ) { hp = atoi(value);}
+                total = hc + hp;
+
+                if (!Settings.flag4.teleinfo_rawdata) { 
+                    EnergyUpdateTotal(total/1000.0f, true);  
                 }
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u  HP:%u  Total:%u"), hc, hp, total);
             }
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s' (%d)"), me->value, contrat);
-        } 
-        // Contract subscribed (standard is in clear text in value)
-        else if (ilabel == LABEL_NGTF)
-        {
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s'"), me->value);
-        } 
 
-        // Contract subscribed (Power)
-        else if (ilabel == LABEL_ISOUSC || ilabel == LABEL_PREF)
-        {
-            isousc = atoi( me->value);
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
-        } 
+            // Wh total index (standard)
+            else if ( ilabel == LABEL_EAST)
+            {
+                uint32_t total = atoi(me->value);
+                if (!Settings.flag4.teleinfo_rawdata) { 
+                    EnergyUpdateTotal(total/1000.0f, true);  
+                }
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%uWh"), total);
+            }
 
+            // Wh indexes (standard)
+            else if ( ilabel == LABEL_EASF01)
+            {
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u"),  atoi(me->value));
+            }
+            else if ( ilabel == LABEL_EASF02)
+            {
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HP:%u"),  atoi(me->value));
+            }
+
+            // Contract subscribed (legacy)
+            else if (ilabel == LABEL_OPTARIF)
+            {
+                char contrat_value[] = "    "; // 4 spaces
+                // Find the contract index
+                for (contrat = CONTRAT_BAS ; contrat < CONTRAT_END ; contrat++) {
+                    GetTextIndexed(contrat_value, sizeof(contrat_value), contrat, kContratValue);
+                    if (!strcmp(contrat_value, me->value)) { 
+                        break;
+                    }
+                }
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s' (%d)"), me->value, contrat);
+            } 
+            // Contract subscribed (standard is in clear text in value)
+            else if (ilabel == LABEL_NGTF)
+            {
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s'"), me->value);
+            } 
+
+            // Contract subscribed (Power)
+            else if (ilabel == LABEL_ISOUSC || ilabel == LABEL_PREF)
+            {
+                isousc = atoi( me->value);
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
+            } 
+
+            // Serial Number of device
+            else if (ilabel == LABEL_ADCO || ilabel == LABEL_ADSC)
+            {
+                strcpy(serialNumber, me->value);
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: %s set to %s"), me->name, serialNumber);
+            } 
+
+        }
     }
 
-    if (flags & TINFO_FLAGS_ADDED)   { c = '#';  }
-    if (flags & TINFO_FLAGS_UPDATED) { c = '*';  }
-    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: %c %s=%s"),c , me->name, me->value);
+ 
+
+
+}
+
+/* ======================================================================
+Function: responseDumpTInfo 
+Purpose : add teleinfo values into JSON response
+Input   : -
+Output  : - 
+Comments: -
+====================================================================== */
+void ResponseAppendTInfo()
+{
+    struct _ValueList * me = tinfo.getList();
+
+    char sep = ' '; // First JSON value separator
+    char * p ;
+    boolean isNumber ;
+
+    // Loop thru all the teleinfo frame but
+    // always check we don't buffer overflow of MQTT data
+    while (me->next) {
+        // go to next node
+        me = me->next;
+
+        if (me->name && me->value && *me->name && *me->value) {
+            isNumber = true;
+            p = me->value;
+
+            // Specific treatment serial number don't convert to number later
+            if (strcmp(me->name, "ADCO")==0 || strcmp(me->name, "ADSC")==0) {
+                isNumber = false;
+            } else {
+                // check if value is number
+                while (*p && isNumber) {
+                    if ( *p < '0' || *p > '9' ) {
+                        isNumber = false;
+                    }
+                    p++;
+                }
+            }
+
+            ResponseAppend_P( PSTR("%c\"%s\":"), sep, me->name );
+
+            if (!isNumber || (me->flags & TINFO_FLAGS_STRING) ) {
+                ResponseAppend_P( PSTR("\"%s\""), me->value );
+            } else {
+                ResponseAppend_P( PSTR("%d"), atoi(me->value));
+            }
+
+            // Now JSON separator is needed 
+            sep =',';
+        }
+    }
 }
 
 /* ======================================================================
@@ -323,50 +387,13 @@ void NewFrameCallback(struct _ValueList * me)
     // send teleinfo full frame only if setup like that
     // see setOption108
     if (Settings.flag4.teleinfo_rawdata) { 
-        struct _ValueList * me = tinfo.getList();
-
-        char sep = ' '; // First JSON value separator
-        char * p ;
-        boolean isNumber ;
-
         Response_P(PSTR("{"));
-
-        // Loop thru all the teleinfo frame but
-        // always check we don't buffer overflow of MQTT data
-        while (me->next) {
-            // go to next node
-            me = me->next;
-
-            if (me->name && me->value && *me->name && *me->value) {
-                isNumber = true;
-                p = me->value;
-
-                // check if value is number
-                while (*p && isNumber) {
-                    if ( *p < '0' || *p > '9' ) {
-                        isNumber = false;
-                    }
-                    p++;
-                }
-
-                ResponseAppend_P( PSTR("%c\"%s\":"), sep, me->name );
-
-                if (!isNumber) {
-                    ResponseAppend_P( PSTR("\"%s\""), me->value );
-                } else {
-                    ResponseAppend_P( PSTR("%d"), atoi(me->value));
-                }
-
-                // Now separator is comma
-                sep =',';
-            }
-        }
-
+        ResponseAppendTInfo();
         ResponseJsonEnd();
-        MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
+        // Publish adding ADCO serial number into the topic
+        // Need setOption4 to be enabled
+        MqttPublishPrefixTopic_P(RESULT_OR_TELE, serialNumber, false);
     }
-
-
 }
 
 /* ======================================================================
@@ -500,6 +527,7 @@ Output  : -
 Comments: -
 ====================================================================== */
 #ifdef USE_WEBSERVER
+const char HTTP_ENERGY_ID_TELEINFO[] PROGMEM =  "{s}ID{m}%s{e}" ;
 const char HTTP_ENERGY_INDEX_TELEINFO[] PROGMEM =  "{s}%s{m}%s " D_UNIT_WATTHOUR "{e}" ;
 const char HTTP_ENERGY_PAPP_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE "{m}%d " D_UNIT_WATT "{e}" ;
 const char HTTP_ENERGY_IINST_TELEINFO[] PROGMEM =  "{s}" D_CURRENT "{m}%d " D_UNIT_AMPERE "{e}" ;
@@ -512,9 +540,6 @@ const char HTTP_ENERGY_PMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_POWER "{m}%d" D_UN
 
 void TInfoShow(bool json)
 {
-    char name[32];
-    char value[32];
-
     // Since it's an Energy device , current, voltage and power are 
     // already present on the telemetry frame. No need to add here
     // Just add the raw label/values of the teleinfo frame
@@ -527,34 +552,7 @@ void TInfoShow(bool json)
 
         // add teleinfo full frame only if no teleinfo raw data setup
         if (!Settings.flag4.teleinfo_rawdata) { 
-            struct _ValueList * me = tinfo.getList();
-
-            // Loop thru all the teleinfo frame
-            while (me->next) {
-                // go to next node
-                me = me->next;
-
-                if (me->name && me->value && *me->name && *me->value) {
-                    boolean isNumber = true;
-                    char * p = me->value;
-
-                    // check if value is number
-                    while (*p && isNumber) {
-                        if ( *p < '0' || *p > '9' ) {
-                            isNumber = false;
-                        }
-                        p++;
-                    }
-        
-                    // this will add "" on not number values
-                    ResponseAppend_P(PSTR(",\"%s\":"), me->name);
-                    if (!isNumber) {
-                        ResponseAppend_P(PSTR("\"%s\""), me->value);
-                    } else {
-                        ResponseAppend_P(PSTR("%u"), atol(me->value));
-                    }
-                }
-            }
+            ResponseAppendTInfo();
         }
 
 
@@ -562,6 +560,9 @@ void TInfoShow(bool json)
     }
     else
     {
+        char name[32];
+        char value[32];
+
         if (getValueFromLabelIndex(LABEL_HCHC, value) ) {
             GetTextIndexed(name, sizeof(name), LABEL_HCHC, kLabel);
             WSContentSend_PD(HTTP_ENERGY_INDEX_TELEINFO, name, value);
@@ -601,6 +602,10 @@ void TInfoShow(bool json)
                 }
             }
         }
+
+        // Serial number ADCO or ADSC
+        WSContentSend_PD(HTTP_ENERGY_ID_TELEINFO, serialNumber);
+
 #endif  // USE_WEBSERVER
     }
 }
