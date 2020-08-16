@@ -27,6 +27,9 @@
 #ifdef SAY_TIME
 #include "AudioGeneratorTalkie.h"
 #endif
+#include "AudioFileSourceICYStream.h"
+#include "AudioFileSourceBuffer.h"
+#include "AudioGeneratorAAC.h"
 
 #ifdef USE_TTGO_WATCH
 #undef TTGO_PWR_ON
@@ -40,14 +43,6 @@
 #define TTGO_PWR_OFF
 #endif // USE_TTGO_WATCH
 
-
-// unfortunately tasks do not help very much,
-// mp3 is extremely sensitive to interruptions
-// also mp3 needs 240 Mhz CPU clock
-#ifdef ESP32
-#define MP3_TASK
-#endif
-
 #define EXTERNAL_DAC_PLAY   1
 
 #define XDRV_42           42
@@ -56,6 +51,27 @@ AudioGeneratorMP3 *mp3 = nullptr;
 AudioFileSourceFS *file;
 AudioOutputI2S *out;
 AudioFileSourceID3 *id3;
+AudioGeneratorMP3 *decoder = NULL;
+
+#ifdef USE_WEBRADIO
+AudioFileSourceICYStream *ifile = NULL;
+AudioFileSourceBuffer *buff = NULL;
+//char title[64];
+//char status[64];
+
+#ifdef ESP8266
+const int preallocateBufferSize = 5*1024;
+const int preallocateCodecSize = 29192; // MP3 codec max mem needed
+#else
+const int preallocateBufferSize = 16*1024;
+const int preallocateCodecSize = 29192; // MP3 codec max mem needed
+//const int preallocateCodecSize = 85332; // AAC+SBR codec max mem needed
+#endif
+
+void *preallocateBuffer = NULL;
+void *preallocateCodec = NULL;
+uint32_t retryms = 0;
+#endif // USE_WEBRADIO
 
 #ifdef SAY_TIME
 AudioGeneratorTalkie *talkie = nullptr;
@@ -194,11 +210,16 @@ void I2S_Init(void) {
   out->SetGain(((float)is2_volume/100.0)*4.0);
   out->stop();
 
+#ifdef USE_WEBRADIO
+  preallocateBuffer = malloc(preallocateBufferSize);
+  preallocateCodec = malloc(preallocateCodecSize);
+  if (!preallocateBuffer || !preallocateCodec) {
+    //Serial.printf_P(PSTR("FATAL ERROR:  Unable to preallocate %d bytes for app\n"), preallocateBufferSize+preallocateCodecSize);
+  }
+#endif // USE_WEBRADIO
 }
 
-
-#ifdef MP3_TASK
-uint16_t mp3_task_timer;
+#ifdef ESP32
 TaskHandle_t mp3_task_h;
 
 void mp3_task(void *arg) {
@@ -207,18 +228,115 @@ void mp3_task(void *arg) {
       if (!mp3->loop()) {
         mp3->stop();
         mp3_delete();
-        vTaskDelete(mp3_task_h);
+        if (mp3_task_h) {
+          vTaskDelete(mp3_task_h);
+          mp3_task_h = 0;
+        }
         //mp3_task_h=nullptr;
       }
+      delay(1);
     }
   }
 }
-#endif // MP3_TASK
+#endif
 
+#ifdef USE_WEBRADIO
+void MDCallback(void *cbData, const char *type, bool isUnicode, const char *str) {
+  const char *ptr = reinterpret_cast<const char *>(cbData);
+  (void) isUnicode; // Punt this ball for now
+  (void) ptr;
+  if (strstr_P(type, PSTR("Title"))) {
+    //strncpy(title, str, sizeof(title));
+    //title[sizeof(title)-1] = 0;
+  } else {
+    // Who knows what to do?  Not me!
+  }
+}
 
+void StatusCallback(void *cbData, int code, const char *string) {
+  const char *ptr = reinterpret_cast<const char *>(cbData);
+  (void) code;
+  (void) ptr;
+  //strncpy_P(status, string, sizeof(status)-1);
+  //status[sizeof(status)-1] = 0;
+}
+
+void Webradio(const char *url) {
+  if (decoder || mp3) return;
+  TTGO_PWR_ON
+  ifile = new AudioFileSourceICYStream(url);
+  ifile->RegisterMetadataCB(MDCallback, NULL);
+  buff = new AudioFileSourceBuffer(ifile, preallocateBuffer, preallocateBufferSize);
+  buff->RegisterStatusCB(StatusCallback, NULL);
+  decoder = new AudioGeneratorMP3(preallocateCodec, preallocateCodecSize);
+  decoder->RegisterStatusCB(StatusCallback, NULL);
+  decoder->begin(buff, out);
+  if (!decoder->isRunning()) {
+  //  Serial.printf_P(PSTR("Can't connect to URL"));
+    StopPlaying();
+  //  strcpy_P(status, PSTR("Unable to connect to URL"));
+    retryms = millis() + 2000;
+  }
+
+  xTaskCreatePinnedToCore(mp3_task2, "MP3", 8192, NULL, 3, &mp3_task_h, 1);
+}
+
+void mp3_task2(void *arg){
+  while (1) {
+    if (decoder && decoder->isRunning()) {
+      if (!decoder->loop()) {
+        StopPlaying();
+        //retryms = millis() + 2000;
+      }
+      delay(1);
+    }
+  }
+}
+
+void StopPlaying() {
+
+  if (mp3_task_h) {
+    vTaskDelete(mp3_task_h);
+    mp3_task_h = nullptr;
+  }
+
+  if (decoder) {
+    decoder->stop();
+    delete decoder;
+    decoder = NULL;
+  }
+  if (buff) {
+    buff->close();
+    delete buff;
+    buff = NULL;
+  }
+  if (ifile) {
+    ifile->close();
+    delete ifile;
+    ifile = NULL;
+  }
+  TTGO_PWR_OFF
+}
+
+void Cmd_WebRadio(void) {
+  if (decoder) {
+    StopPlaying();
+  }
+  if (XdrvMailbox.data_len > 0) {
+    Webradio(XdrvMailbox.data);
+    ResponseCmndChar(XdrvMailbox.data);
+  } else {
+    ResponseCmndChar_P(PSTR("Stopped"));
+  }
+
+}
+
+#endif
+
+#ifdef ESP32
 void Play_mp3(const char *path) {
 #if defined(USE_SCRIPT) && defined(USE_SCRIPT_FATFS)
-  if (mp3) return;
+  if (decoder || mp3) return;
 
   TTGO_PWR_ON
 
@@ -227,20 +345,7 @@ void Play_mp3(const char *path) {
   mp3 = new AudioGeneratorMP3();
   mp3->begin(id3, out);
 
-#ifdef MP3_TASK
-  // esp32 use mp3 task
   xTaskCreatePinnedToCore(mp3_task, "MP3", 8192, NULL, 3, &mp3_task_h, 1);
-#else
-  // esp8266 must wait in loop
-  while (mp3->isRunning()) {
-    if (!mp3->loop()) {
-      mp3->stop();
-      mp3_delete();
-      break;
-    }
-    OsWatchLoop();
-  }
-#endif // MP3_TASK
 
 #endif // USE_SCRIPT
 }
@@ -252,6 +357,7 @@ void mp3_delete(void) {
   mp3=nullptr;
   TTGO_PWR_OFF
 }
+#endif // ESP32
 
 void Say(char *text) {
 
@@ -271,6 +377,9 @@ const char kI2SAudio_Commands[] PROGMEM = "I2S|"
   "Say|Gain|Time"
 #ifdef ESP32
   "|Play"
+#ifdef USE_WEBRADIO
+  "|WR"
+#endif
 #endif
   ;
 
@@ -278,8 +387,13 @@ void (* const I2SAudio_Command[])(void) PROGMEM = {
   &Cmd_Say, &Cmd_Gain, &Cmd_Time
 #ifdef ESP32
   ,&Cmd_Play
+#ifdef USE_WEBRADIO
+  ,&Cmd_WebRadio
+#endif
 #endif
 };
+
+
 
 void Cmd_Play(void) {
   if (XdrvMailbox.data_len > 0) {
