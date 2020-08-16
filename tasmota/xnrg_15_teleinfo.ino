@@ -325,16 +325,11 @@ void NewFrameCallback(struct _ValueList * me)
     if (Settings.flag4.teleinfo_rawdata) { 
         struct _ValueList * me = tinfo.getList();
 
-        // Total size we can use, remove { } and \0
-        int remaining_size;
-        char sep = ' ';
+        char sep = ' '; // First JSON value separator
         char * p ;
-        int len;
         boolean isNumber ;
 
-        strcpy_P(mqtt_data, PSTR("{"));
-        len = strlen(mqtt_data);
-        remaining_size = sizeof(mqtt_data) - len - 2;
+        Response_P(PSTR("{"));
 
         // Loop thru all the teleinfo frame but
         // always check we don't buffer overflow of MQTT data
@@ -354,23 +349,20 @@ void NewFrameCallback(struct _ValueList * me)
                     p++;
                 }
 
+                ResponseAppend_P( PSTR("%c\"%s\":"), sep, me->name );
+
                 if (!isNumber) {
-                    snprintf_P(mqtt_data+len, remaining_size, PSTR("%c\"%s\":\"%s\""), sep, me->name, me->value);
+                    ResponseAppend_P( PSTR("\"%s\""), me->value );
                 } else {
-                    snprintf_P(mqtt_data+len, remaining_size, PSTR("%c\"%s\":%d"), sep, me->name, atoi(me->value));
+                    ResponseAppend_P( PSTR("%d"), atoi(me->value));
                 }
-                // Total size we can use now
-                // Still remove space for latest } and \0 and current size
-                len = strlen(mqtt_data);
-                remaining_size = sizeof(mqtt_data) - len - 2 ;
 
                 // Now separator is comma
                 sep =',';
-    
             }
         }
 
-        strcat_P(mqtt_data, PSTR("}"));
+        ResponseJsonEnd();
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
     }
 
