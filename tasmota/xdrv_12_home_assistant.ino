@@ -823,7 +823,7 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
   MqttPublish(stopic, true);
   if (!Settings.flag.hass_discovery) {
     masterlog_level = 0;
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("LOG: Home Assistant Discovery disabled"));
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant Discovery disabled. "));
   }
 }
 
@@ -925,6 +925,26 @@ void HAssAnyKey(void)
   MqttPublish(stopic);
 }
 
+bool HAssMqttLWT(void)
+{
+  if (strncasecmp_P(XdrvMailbox.topic, PSTR(HOME_ASSISTANT_LWT_TOPIC), strlen(HOME_ASSISTANT_LWT_TOPIC)) != 0) {
+    return false;
+  }
+  if (Settings.flag.hass_discovery && (strncasecmp_P(XdrvMailbox.data, PSTR("online"), strlen("online")) == 0) && (XdrvMailbox.data_len == 6)) {
+    MqttPublishTeleState();
+    return true;
+  }
+}
+
+void HassLwtSubscribe(bool hasslwt)
+{
+  char htopic[TOPSZ];
+  snprintf_P(htopic, sizeof(htopic), PSTR(HOME_ASSISTANT_LWT_TOPIC));
+  if (hasslwt) {
+    MqttSubscribe(htopic);
+  } else { MqttUnsubscribe(htopic); }
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -932,6 +952,7 @@ void HAssAnyKey(void)
 bool Xdrv12(uint8_t function)
 {
   bool result = false;
+  bool hasslwt = HOME_ASSISTANT_LWT_SUBSCRIBE;
   if (Settings.flag.mqtt_enabled)
   { // SetOption3 - Enable MQTT
     switch (function)
@@ -951,7 +972,6 @@ bool Xdrv12(uint8_t function)
         if (hass_tele_period >= Settings.tele_period)
         {
           hass_tele_period = 0;
-
           mqtt_data[0] = '\0';
           HAssPublishStatus();
         }
@@ -963,9 +983,15 @@ bool Xdrv12(uint8_t function)
     case FUNC_MQTT_INIT:
       hass_mode = 0;      // Discovery only if Settings.flag.hass_discovery is set
       hass_init_step = 2; // Delayed discovery
+      break;
       // if (!Settings.flag.hass_discovery) {
       //   AddLog_P2(LOG_LEVEL_INFO, PSTR("MQT: homeassistant/49A3BC/Discovery = {\"dev\":{\"ids\":[\"49A3BC\"]},\"cmd_t\":\"cmnd/test1/\",\"Discovery\":0}"));
       // }
+    case FUNC_MQTT_SUBSCRIBE:
+      HassLwtSubscribe(hasslwt);
+      break;
+    case FUNC_MQTT_DATA:
+      result = HAssMqttLWT();
       break;
     }
   }
