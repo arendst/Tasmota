@@ -76,7 +76,6 @@ void DYPEverySecond(void)
         return;
     }
 
-
     // trash old data (only 7 last bytes are needed for calculate distance)
     while (DYPSerial->available() > 7)
         DYPSerial->read();
