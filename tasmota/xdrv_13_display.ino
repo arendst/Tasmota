@@ -71,7 +71,7 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
                      FUNC_DISPLAY_DRAW_HLINE, FUNC_DISPLAY_DRAW_VLINE, FUNC_DISPLAY_DRAW_LINE,
                      FUNC_DISPLAY_DRAW_CIRCLE, FUNC_DISPLAY_FILL_CIRCLE,
                      FUNC_DISPLAY_DRAW_RECTANGLE, FUNC_DISPLAY_FILL_RECTANGLE,
-                     FUNC_DISPLAY_TEXT_SIZE, FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING, FUNC_DISPLAY_ONOFF };
+                     FUNC_DISPLAY_TEXT_SIZE, FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING };
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
@@ -241,8 +241,7 @@ void DisplayDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint
 
 void DisplayOnOff(uint8_t on)
 {
-  dsp_on = on;
-  XdspCall(FUNC_DISPLAY_ONOFF);
+  ExecuteCommandPower(disp_device, on, SRC_DISPLAY);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -435,18 +434,10 @@ void DisplayText(void)
             DisplayInit(DISPLAY_INIT_FULL);
             break;
           case 'o':
-            if (!renderer) {
-              DisplayOnOff(0);
-            } else {
-              renderer->DisplayOnff(0);
-            }
+            DisplayOnOff(0);
             break;
           case 'O':
-            if (!renderer) {
-              DisplayOnOff(1);
-            } else {
-              renderer->DisplayOnff(1);
-            }
+            DisplayOnOff(1);
             break;
           case 'x':
             // set disp_xpos
@@ -1268,8 +1259,11 @@ void DisplayInitDriver(void)
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
   if (Settings.display_model) {
-    if (!light_type) {
-      devices_present++;  // If no PWM channel for backlight then use "normal" power control
+    devices_present++;
+    if (!PinUsed(GPIO_BACKLIGHT)) {
+      if (light_type && (4 == Settings.display_model)) {
+        devices_present--;  // Assume PWM channel is used for backlight
+      }
     }
     disp_device = devices_present;
 

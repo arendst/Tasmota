@@ -93,9 +93,9 @@ void LcdDrawStringAt(void)
   lcd->print(dsp_str);
 }
 
-void LcdDisplayOnOff(uint8_t on)
+void LcdDisplayOnOff()
 {
-  if (on) {
+  if (disp_power) {
     lcd->backlight();
   } else {
     lcd->noBacklight();
@@ -212,7 +212,7 @@ bool Xdsp01(uint8_t function)
         LcdInit(dsp_init);
         break;
       case FUNC_DISPLAY_POWER:
-        LcdDisplayOnOff(disp_power);
+        LcdDisplayOnOff();
         break;
       case FUNC_DISPLAY_CLEAR:
         lcd->clear();
@@ -237,9 +237,6 @@ bool Xdsp01(uint8_t function)
 //          break;
       case FUNC_DISPLAY_DRAW_STRING:
         LcdDrawStringAt();
-        break;
-      case FUNC_DISPLAY_ONOFF:
-        LcdDisplayOnOff(dsp_on);
         break;
 //        case FUNC_DISPLAY_ROTATION:
 //          break;

@@ -91,7 +91,7 @@ void SevensegInitDriver(void)
             break;
         }
     }
-    
+
     Settings.display_width = 4;
     Settings.display_height = sevensegs;
 
@@ -127,7 +127,7 @@ void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uin
     // Some combinations won't make sense.
     // Reference: https://cdn-learn.adafruit.com/downloads/pdf/adafruit-led-backpack.pdf
     // This code has been tested on 1.2" and 0.56" 7-Segment LED displays, but should mostly work for others.
-    // 
+    //
     // Prefixes:
     // x  upcoming decimal integer number displayed as hex
     // :  turn on middle colon
@@ -138,7 +138,7 @@ void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uin
     // z  clear this display
     // f  upcoming number is floating point
     // r  raw segment based on bitmap of upcoming integer number (see reference document above)
-    // 
+    //
     // Some sample valid combinations:
     //  787     -> 787
     //  x47     -> 2F
@@ -364,7 +364,6 @@ bool Xdsp11(uint8_t function)
         SevensegRefresh();
         break;
 #endif  // USE_DISPLAY_MODES1TO5
-      case FUNC_DISPLAY_ONOFF:
       case FUNC_DISPLAY_POWER:
         SevensegOnOff();
         break;
