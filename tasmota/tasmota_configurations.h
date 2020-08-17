@@ -1,6 +1,8 @@
 /*
   tasmota_configurations.h - Configurations for Tasmota
+
   Copyright (C) 2020  Theo Arends
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -666,7 +668,6 @@
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_LITE
 
-
 /*********************************************************************************************\
  * [tasmota-minimal.bin]
  * Provide the smallest image possible while still enabling a webserver for intermediate image load
@@ -830,6 +831,5 @@
 #ifdef ESP32
 #include "tasmota_configurations_ESP32.h"
 #endif  // ESP32
-
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_
