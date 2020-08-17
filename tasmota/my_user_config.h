@@ -45,6 +45,9 @@
 
 // -- Master parameter control --------------------
 #define CFG_HOLDER             4617              // [Reset 1] Change this value (max 32000) to load SECTION1 configuration parameters to flash
+                                                 // If following define is disabled it increases configuration corruption detection BUT
+                                                 //  it only allows firmware upgrades starting from version 6.6.0.11
+//#define CFG_LEGACY_LOAD                          // Support for firmware upgrades from version 6.0.0
 
 // -- Project -------------------------------------
 #define PROJECT                "tasmota"         // PROJECT is used as the default topic delimiter
