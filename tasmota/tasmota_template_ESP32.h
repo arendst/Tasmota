@@ -554,7 +554,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_HRXL_RX),
 #endif
 #ifdef USE_DYP
-  GPIO_DYP_RX,
+  AGPIO(GPIO_DYP_RX),
 #endif
 #ifdef USE_AS3935
   AGPIO(GPIO_AS3935),
