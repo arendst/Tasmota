@@ -7,10 +7,12 @@
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -426,7 +428,7 @@
 #define SERIAL_LOG_LEVEL       LOG_LEVEL_NONE    // [SerialLog] (LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE)
 
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
-#undef USE_DOMOTICZ                              // Disable Domoticz
+#define USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
 #undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
@@ -673,7 +675,6 @@
  * Provide the smallest image possible while still enabling a webserver for intermediate image load
 \*********************************************************************************************/
 
-#ifndef FIRMWARE_MINICUSTOM
 #ifdef FIRMWARE_MINIMAL
 
 #undef CODE_IMAGE_STR
@@ -802,31 +803,7 @@
 #undef USE_PROMETHEUS                            // Disable support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
-
 #endif  // FIRMWARE_MINIMAL
-#endif  // ifndef FIRMWARE_MINICUSTOM
-
-
-/*********************************************************************************************\
- * [tasmota-minicustom.bin]
- * Make a small minimal custom image possible
-\*********************************************************************************************/
-
-#ifdef FIRMWARE_MINICUSTOM
-#define FIRMWARE_MINIMAL
-
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "mini-custom"
-
-#undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
-#undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
-#undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
-#undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
-#undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
-#undef FIRMWARE_IR_CUSTOM                       // Disable tasmota customizable with special marker to add all IR protocols
-
-#endif  // FIRMWARE_MINICUSTOM
-
 
 #ifdef ESP32
 #include "tasmota_configurations_ESP32.h"
