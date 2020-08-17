@@ -595,7 +595,9 @@ void GetFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_IEM3000)
   feature6 |= 0x00200000;  // xnrg_16_iem3000.ino
 #endif
-//  feature6 |= 0x00400000;
+#ifdef USE_DYP
+  feature6 |= 0x00400000;  // xsns_76_dyp.ino
+#endif
 //  feature6 |= 0x00800000;
 
 //  feature6 |= 0x01000000;
@@ -611,4 +613,50 @@ void GetFeatures(void)
 #if defined(ESP32) && defined(USE_WEBCAM)
   feature6 |= 0x80000000;  // xdrv_81_webcam.ino
 #endif
-}
+
+/*********************************************************************************************/
+
+  feature7 = 0x00000000;
+
+//  feature7 |= 0x00000001;
+//  feature7 |= 0x00000002;
+//  feature7 |= 0x00000004;
+//  feature7 |= 0x00000008;
+
+//  feature7 |= 0x00000010;
+//  feature7 |= 0x00000020;
+//  feature7 |= 0x00000040;
+//  feature7 |= 0x00000080;
+
+//  feature7 |= 0x00000100;
+//  feature7 |= 0x00000200;
+//  feature7 |= 0x00000400;
+//  feature7 |= 0x00000800;
+
+//  feature7 |= 0x00001000;
+//  feature7 |= 0x00002000;
+//  feature7 |= 0x00004000;
+//  feature7 |= 0x00008000;
+
+//  feature7 |= 0x00010000;
+//  feature7 |= 0x00020000;
+//  feature7 |= 0x00040000;
+//  feature7 |= 0x00080000;
+
+//  feature7 |= 0x00100000;
+//  feature7 |= 0x00200000;
+//  feature7 |= 0x00400000;
+//  feature7 |= 0x00800000;
+
+//  feature7 |= 0x01000000;
+//  feature7 |= 0x02000000;
+//  feature7 |= 0x04000000;
+//  feature7 |= 0x08000000;
+
+//  feature7 |= 0x10000000;
+//  feature7 |= 0x20000000;
+//  feature7 |= 0x40000000;
+//  feature7 |= 0x80000000;
+
+
+}  // GetFeatures

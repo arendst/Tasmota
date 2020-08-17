@@ -3,12 +3,12 @@
 
   Copyright (C) 2020 Janusz Kostorz
 
-  This program is free software: you can reDYPDistanceribute it and/or modify
+  This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  This program is DYPDistanceributed in the hope that it will be useful,
+  This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
@@ -20,7 +20,7 @@
 #ifdef USE_DYP
 
 /*********************************************************************************************\
- * DYP ME007 ultrasonic distanceance sensor (300...4000mm), serial version
+ * DYP ME007 ultrasonic distance sensor (300...4000mm), serial version
  *
  * Every one second code check last received value from sensor via serial port and return:
  *     -1 for checksum error
@@ -49,93 +49,79 @@ bool DYPSensor = false;     // sensor available
 
 /*********************************************************************************************/
 
-void DYPInit(void)
-{
-    DYPSensor = false;
-    if (PinUsed(GPIO_DYP_RX))
-    {
-        DYPSerial = new TasmotaSerial(Pin(GPIO_DYP_RX), -1, 1);
-        if (DYPSerial->begin(9600))
-        {
-            if (DYPSerial->hardwareSerial())
-                ClaimSerial();
-            DYPSensor = true;
-        }
+void DYPInit(void) {
+  DYPSensor = false;
+  if (PinUsed(GPIO_DYP_RX)) {
+    DYPSerial = new TasmotaSerial(Pin(GPIO_DYP_RX), -1, 1);
+    if (DYPSerial->begin(9600)) {
+      if (DYPSerial->hardwareSerial()) {
+        ClaimSerial();
+      }
+      DYPSensor = true;
     }
+  }
 }
 
-void DYPEverySecond(void)
-{
-    if (!DYPSensor)
-        return;
+void DYPEverySecond(void) {
+  if (!DYPSensor) { return; }
 
-    // check for serial data
-    if (DYPSerial->available() < 6)
-    {
-        DYPDistance = DYP_NOSENSOR;
-        return;
+  // check for serial data
+  if (DYPSerial->available() < 6) {
+    DYPDistance = DYP_NOSENSOR;
+    return;
+  }
+
+  // trash old data (only 7 last bytes are needed for calculate distance)
+  while (DYPSerial->available() > 7) {
+    DYPSerial->read();
+  }
+
+  // read data from serial port - * 0xFF MSB LSB CRC *
+  while (DYPSerial->available() > 3) {
+    // check for start byte signature
+    if (DYPSerial->read() != 0xFF) {
+      continue;
     }
 
-    // trash old data (only 7 last bytes are needed for calculate distance)
-    while (DYPSerial->available() > 7)
-        DYPSerial->read();
-
-
-    // read data from serial port - * 0xFF MSB LSB CRC *
-    while (DYPSerial->available() > 3)
-    {
-        // check for start byte signature
-        if (DYPSerial->read() != 0xFF)
-            continue;
-
-        // check for data bytes
-        if (DYPSerial->available() > 2)
-        {
-            uint8_t msb = DYPSerial->read();
-            uint8_t lsb = DYPSerial->read();
-            if (((uint16_t)(0xFF + msb + lsb) & 0xFF) == DYPSerial->read()) {
-                uint16_t data = (msb << 8) | lsb;
-                if (data < DYP_MIN)
-                    data = DYP_BELOWMIN;
-                if (data > DYP_MAX)
-                    data = DYP_ABOVEMAX;
-                DYPDistance = data;
-            }
-            else {
-                DYPDistance = DYP_CRCERROR;
-            }
+    // check for data bytes
+    if (DYPSerial->available() > 2) {
+      uint8_t msb = DYPSerial->read();
+      uint8_t lsb = DYPSerial->read();
+      if (((uint16_t)(0xFF + msb + lsb) & 0xFF) == DYPSerial->read()) {
+        uint16_t data = (msb << 8) | lsb;
+        if (data < DYP_MIN) {
+          data = DYP_BELOWMIN;
         }
+        if (data > DYP_MAX) {
+          data = DYP_ABOVEMAX;
+        }
+        DYPDistance = data;
+      } else {
+        DYPDistance = DYP_CRCERROR;
+      }
     }
-
-
+  }
 }
 
-void DYPShow(bool json)
-{
-    char types[5] = "DYP";
-    if (json)
-    {
-        ResponseAppend_P(PSTR(",\"%s\":{\"" D_DISTANCE "\":%d}"), types, DYPDistance);
-        #ifdef USE_WEBSERVER
-    }
-    else
-    {
-        WSContentSend_PD(HTTP_SNS_RANGE, types, DYPDistance);
-        #endif  // USE_WEBSERVER
-    }
+void DYPShow(bool json) {
+  char types[5] = "DYP";
+  if (json) {
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_DISTANCE "\":%d}"), types, DYPDistance);
+#ifdef USE_WEBSERVER
+  } else {
+    WSContentSend_PD(HTTP_SNS_RANGE, types, DYPDistance);
+#endif  // USE_WEBSERVER
+  }
 }
 
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
-bool Xsns76(uint8_t function)
-{
-    if (!PinUsed(GPIO_DYP_RX))
-        return false;
+bool Xsns76(uint8_t function) {
+  if (!PinUsed(GPIO_DYP_RX)) { return false; }
 
-    switch (function)
-    {
+  switch (function) {
     case FUNC_INIT:
         DYPInit();
         break;
@@ -145,13 +131,13 @@ bool Xsns76(uint8_t function)
     case FUNC_JSON_APPEND:
         DYPShow(1);
         break;
-        #ifdef USE_WEBSERVER
+#ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:
         DYPShow(0);
         break;
-        #endif  // USE_WEBSERVER
-    }
-    return false;
+#endif  // USE_WEBSERVER
+  }
+  return false;
 }
 
 #endif  // USE_DYP
