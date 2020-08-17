@@ -1,0 +1,4 @@
+<map id="IRElectraAc" name="IRElectraAc">
+<area shape="rect" id="node1" title="Class for handling detailed Electra A/C messages." alt="" coords="5,95,101,121"/>
+<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="20,5,87,32"/>
+</map>

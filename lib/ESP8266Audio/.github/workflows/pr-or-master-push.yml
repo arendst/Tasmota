@@ -1,0 +1,88 @@
+# Run whenever a PR is generated or updated.
+
+# Most jobs check out the code, ensure Python3 is installed, and for build
+# tests the ESP8266 toolchain is cached when possible to speed up execution.
+
+name: ESP8266Audio
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+
+  build-esp8266:
+    name: Build ESP8266
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chunk: [0, 1, 2, 3, 4]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Build Sketches
+      env:
+        TRAVIS_BUILD_DIR: ${{ github.workspace }}
+        TRAVIS_TAG: ${{ github.ref }}
+        BUILD_TYPE: build
+        BUILD_MOD: 5
+        BUILD_REM: ${{ matrix.chunk }}
+      run: |
+        bash ./tests/common.sh
+
+
+  build-esp32:
+    name: Build ESP-32
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chunk: [0, 1, 2, 3, 4]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Build Sketches
+      env:
+        TRAVIS_BUILD_DIR: ${{ github.workspace }}
+        TRAVIS_TAG: ${{ github.ref }}
+        BUILD_TYPE: build_esp32
+        BUILD_MOD: 5
+        BUILD_REM: ${{ matrix.chunk }}
+      run: |
+        bash ./tests/common.sh
+
+# Run host test suite under valgrind for runtime checking of code.
+  host-tests:
+    name: Host tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Run host tests
+      env:
+        TRAVIS_BUILD_DIR: ${{ github.workspace }}
+        TRAVIS_TAG: ${{ github.ref }}
+      run: |
+        sudo dpkg --add-architecture i386
+        sudo apt-get update
+        sudo apt-get install valgrind lcov gcc-multilib g++-multilib libc6-dbg:i386
+        cd ./tests/host/
+        make
+        valgrind --leak-check=full --track-origins=yes -v --error-limit=no --show-leak-kinds=all --error-exitcode=999 ./mp3
+        valgrind --leak-check=full --track-origins=yes -v --error-limit=no --show-leak-kinds=all --error-exitcode=999 ./aac
+        valgrind --leak-check=full --track-origins=yes -v --error-limit=no --show-leak-kinds=all --error-exitcode=999 ./wav
+        valgrind --leak-check=full --track-origins=yes -v --error-limit=no --show-leak-kinds=all --error-exitcode=999 ./midi
+

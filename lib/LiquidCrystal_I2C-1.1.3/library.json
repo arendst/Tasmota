@@ -1,0 +1,15 @@
+{
+  "name": "LiquidCrystal_I2C",
+  "keywords": "LCD, liquidcrystal, I2C",
+  "description": "A library for DFRobot I2C LCD displays",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/marcoschwartz/LiquidCrystal_I2C.git"
+  },
+  "frameworks": "arduino",
+  "platforms":
+  [
+    "atmelavr"
+  ]
+}
