@@ -4,6 +4,7 @@
 
 - Add better config corruption recovery (#9046)
 - Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
+- Add command ``SetOption108 0/1`` to enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1) in this case MQTT will send RAW Teleinfo telemetry on each frame received and not into Tasmota energy calculation telemetry.
 - Change White blend mode moved to using ``SetOption 105`` instead of ``RGBWWTable``
 - Add Virtual CT for 4 channels lights, emulating a 5th channel
 

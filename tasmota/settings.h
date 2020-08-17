@@ -127,8 +127,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t white_blend_mode : 1;         // bit 23 (v8.4.0.1)  - SetOption105 - White Blend Mode - used to be `RGBWWTable` last value `0`, now deprecated in favor of this option
     uint32_t virtual_ct : 1;               // bit 24 (v8.4.0.1)  - SetOption106 - Virtual CT - Creates a virtual White ColorTemp for RGBW lights
     uint32_t virtual_ct_cw : 1;            // bit 25 (v8.4.0.1)  - SetOption107 - Virtual CT Channel - signals whether the hardware white is cold CW (true) or warm WW (false)
-    uint32_t spare26 : 1;                  // bit 26
-    uint32_t spare27 : 1;                  // bit 27
+    uint32_t teleinfo_rawdata : 1;         // bit 21 (v8.4.0.2)  - SetOption108 - enable Teleinfo + Tasmota Energy device (0) or Teleinfo raw data only (1) 
+    uint32_t spare27 : 1;
     uint32_t spare28 : 1;                  // bit 28
     uint32_t spare29 : 1;                  // bit 29
     uint32_t spare30 : 1;                  // bit 30
