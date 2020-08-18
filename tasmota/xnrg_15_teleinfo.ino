@@ -187,7 +187,6 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
 
         if (flags & TINFO_FLAGS_ADDED)   { c = '#';  }
         if (flags & TINFO_FLAGS_UPDATED) { c = '*';  }
-        if (flags & TINFO_FLAGS_STRING)  { c = '$';  }
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: [%d]%c %s=%s"), ilabel, c , me->name, me->value);
 
         if (ilabel<LABEL_END) {
@@ -360,7 +359,7 @@ void ResponseAppendTInfo()
 
             ResponseAppend_P( PSTR("%c\"%s\":"), sep, me->name );
 
-            if (!isNumber || (me->flags & TINFO_FLAGS_STRING) ) {
+            if (!isNumber) {
                 ResponseAppend_P( PSTR("\"%s\""), me->value );
             } else {
                 ResponseAppend_P( PSTR("%d"), atoi(me->value));
