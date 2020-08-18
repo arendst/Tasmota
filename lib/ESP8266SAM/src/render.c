@@ -445,7 +445,7 @@ do
 	mem44++;
 } while(mem44 != 0);
 yield();
-if (debug)
+if (sam_debug)
 {
         PrintOutput(sampledConsonantFlag, frequency1, frequency2, frequency3, amplitude1, amplitude2, amplitude3, pitches);
 }
@@ -786,7 +786,7 @@ if (debug)
 	X = A;
 	mem38 = A - (A>>2);     // 3/4*A ???
 yield();
-if (debug)
+if (sam_debug)
 {
         PrintOutput(sampledConsonantFlag, frequency1, frequency2, frequency3, amplitude1, amplitude2, amplitude3, pitches);
 }

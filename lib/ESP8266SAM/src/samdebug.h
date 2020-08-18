@@ -14,6 +14,6 @@ void PrintOutput(
 
 void PrintRule(int offset);
 
-#define debug 0
+#define sam_debug 0
 
 #endif

@@ -17,7 +17,7 @@ def bin_gzip(source, target, env):
 
     # write gzip firmware file
     with open(bin_file,"rb") as fp:
-        with gzip.open(gzip_file, "wb") as f:
+        with gzip.open(gzip_file, "wb", compresslevel = 9) as f:
             shutil.copyfileobj(fp, f)
 
 env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [bin_gzip])

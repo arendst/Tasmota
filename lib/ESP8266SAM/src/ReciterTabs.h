@@ -3,7 +3,7 @@
 
 #include <pgmspace.h>
 #include "debug.h"
-#if debug
+#if sam_debug
   #define PROGMEM
 #endif
 
