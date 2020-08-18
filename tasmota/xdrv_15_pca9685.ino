@@ -35,24 +35,23 @@
 #define PCA9685_REG_PRE_SCALE       0xFE
 
 #ifndef USE_PCA9685_ADDR
-  #define USE_PCA9685_ADDR          0x40
+  #define USE_PCA9685_ADDR          0x40 //Start address if multiples attached
 #endif
 #ifndef USE_PCA9685_FREQ
   #define USE_PCA9685_FREQ          50
 #endif
 
 #ifndef NUM_DEVICES
-  #define NUM_DEVICES               2
+  #define NUM_DEVICES               1 //How many PCA9685 device are present. Default is 1
 #endif
-#ifndef NUM_CHANNELS
-  #define NUM_CHANNELS              16
+#ifndef CHANNELS_PER_DEVICE
+  #define CHANNELS_PER_DEVICE       16
 #endif
 
- 
 
 bool pca9685_detected[NUM_DEVICES];
 uint16_t pca9685_freq = USE_PCA9685_FREQ;
-uint16_t pca9685_pin_pwm_value[NUM_DEVICES][NUM_CHANNELS];
+uint16_t pca9685_pin_pwm_value[NUM_DEVICES][CHANNELS_PER_DEVICE];
 
 void PCA9685_Detect(void)
 {
@@ -64,7 +63,6 @@ void PCA9685_Detect(void)
 
 void PCA9685_DetectHelper(uint8_t address, bool deviceDetected)
 {
-
   if (I2cActive(address))
   {
     return;
@@ -72,7 +70,6 @@ void PCA9685_DetectHelper(uint8_t address, bool deviceDetected)
 
   deviceDetected = false;
   uint8_t buffer;
-
   if (I2cValidRead8(&buffer, address, PCA9685_REG_MODE1))
   {
     I2cWrite8(address, PCA9685_REG_MODE1, 0x20);
@@ -105,7 +102,6 @@ bool detectHighChipHelper(uint8_t address, bool deviceDetected)
 
   deviceDetected = false;
   uint8_t buffer;
-
   if (I2cValidRead8(&buffer, address, PCA9685_REG_MODE1))
   {
     I2cWrite8(address, PCA9685_REG_MODE1, 0x20);
@@ -134,7 +130,7 @@ void PCA9685_ResetHelper(uint8_t address, uint16_t *pinArray)
   I2cWrite8(address, PCA9685_REG_MODE1, 0x80);
   PCA9685_SetPWMfreq(USE_PCA9685_FREQ);
 
-  for (uint32_t pin = 0; pin < NUM_CHANNELS; pin++)
+  for (uint32_t pin = 0; pin < CHANNELS_PER_DEVICE; pin++)
   {
     PCA9685_SetPWM(pin, 0, false);
     pinArray[pin] = 0;
@@ -156,7 +152,6 @@ void PCA9685_SetPWMfreqHelper(uint8_t address, double freq)
 7.3.5 from datasheet
 prescale value = round(25000000/(4096*freq))-1;
 */
-
   if (freq > 23 && freq < 1527)
   {
     pca9685_freq = freq;
@@ -167,7 +162,6 @@ prescale value = round(25000000/(4096*freq))-1;
   }
 
   uint8_t pre_scale_osc = round(25000000 / (4096 * pca9685_freq)) - 1;
-
   if (1526 == pca9685_freq)
     pre_scale_osc = 0xFF; // force setting for 24hz because rounding causes 1526 to be 254
 
@@ -181,8 +175,8 @@ prescale value = round(25000000/(4096*freq))-1;
 
 void PCA9685_SetPWM_Reg(uint8_t pin, uint16_t on, uint16_t off)
 {
-  uint8_t deviceOffset = pin / NUM_CHANNELS;
-  uint8_t devicePin = pin - (deviceOffset * NUM_CHANNELS);
+  uint8_t deviceOffset = pin / CHANNELS_PER_DEVICE;
+  uint8_t devicePin = pin - (deviceOffset * CHANNELS_PER_DEVICE);
 
   PCA9685_SetPWM_RegHelper(USE_PCA9685_ADDR + deviceOffset, devicePin, on, off);
 }
@@ -200,8 +194,8 @@ void PCA9685_SetPWM_RegHelper(uint8_t address, uint8_t pin, uint16_t on, uint16_
 
 void PCA9685_SetPWM(uint8_t pin, uint16_t pwm, bool inverted)
 {
-  uint8_t deviceOffset = pin / NUM_CHANNELS;
-  uint8_t devicePin = pin - (deviceOffset * NUM_CHANNELS);
+  uint8_t deviceOffset = pin / CHANNELS_PER_DEVICE;
+  uint8_t devicePin = pin - (deviceOffset * CHANNELS_PER_DEVICE);
 
   if (4096 == pwm)
   {
@@ -303,7 +297,7 @@ bool PCA9685_Command(void)
         }
 
         uint16_t pwm = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
-        if ((pin >= 0 && pin <= (NUM_CHANNELS * NUM_DEVICES - 1) && (pwm >= 0 && pwm <= 4096)))
+        if ((pin >= 0 && pin <= (CHANNELS_PER_DEVICE * NUM_DEVICES - 1) && (pwm >= 0 && pwm <= 4096)))
         {
           PCA9685_SetPWM(pin, pwm, false);
           Response_P(PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"), pin, pwm);
@@ -324,9 +318,9 @@ void PCA9685_OutputTelemetry(bool telemetry)
 
   for (uint32_t device = 0; device < NUM_DEVICES; device++)
   {
-    for (uint32_t pin = 0; pin < NUM_CHANNELS; pin++)
+    for (uint32_t pin = 0; pin < CHANNELS_PER_DEVICE; pin++)
     {
-      ResponseAppend_P(PSTR("\"PWM%i\":%i,"), pin + (device * NUM_CHANNELS), pca9685_pin_pwm_value[device][pin]);
+      ResponseAppend_P(PSTR("\"PWM%i\":%i,"), pin + (device * CHANNELS_PER_DEVICE), pca9685_pin_pwm_value[device][pin]);
     }
   }
 
@@ -359,7 +353,6 @@ bool Xdrv15(uint8_t function)
       {
         PCA9685_OutputTelemetry(true);
       }
-
       break;
     case FUNC_COMMAND_DRIVER:
       if (XDRV_15 == XdrvMailbox.index)
