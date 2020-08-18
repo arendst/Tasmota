@@ -2,8 +2,8 @@
 #define SAMTABS_H
 
 #include <pgmspace.h>
-#include "debug.h"
-#if debug
+#include "samdebug.h"
+#if sam_debug
   #define PROGMEM
 #endif
 

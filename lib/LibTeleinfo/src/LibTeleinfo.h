@@ -46,16 +46,24 @@
 // debugging, this should not interfere with main sketch or other 
 // libraries
 #ifdef TI_DEBUG
-  #ifdef ESP8266
-    #define TI_Debug(x)    Serial1.print(x)
-    #define TI_Debugln(x)  Serial1.println(x)
-    #define TI_Debugf(...) Serial1.printf(__VA_ARGS__)
-    #define TI_Debugflush  Serial1.flush
+  // Tasmota build
+  #ifdef CODE_IMAGE_STR
+      #define TI_Debug(x)    AddLog_P2(LOG_LEVEL_DEBUG, x);
+      #define TI_Debugln(x)  AddLog_P2(LOG_LEVEL_DEBUG, x);
+      #define TI_Debugf(...) AddLog_P2(LOG_LEVEL_DEBUG, __VA_ARGS__);
+      #define TI_Debugflush  {}
   #else
-    #define TI_Debug(x)    Serial.print(x)
-    #define TI_Debugln(x)  Serial.println(x)
-    #define TI_Debugf(...) Serial.printf(__VA_ARGS__)
-    #define TI_Debugflush  Serial.flush
+    #ifdef ESP8266
+      #define TI_Debug(x)    Serial1.print(x)
+      #define TI_Debugln(x)  Serial1.println(x)
+      #define TI_Debugf(...) Serial1.printf(__VA_ARGS__)
+      #define TI_Debugflush  Serial1.flush
+    #else
+      #define TI_Debug(x)    Serial.print(x)
+      #define TI_Debugln(x)  Serial.println(x)
+      #define TI_Debugf(...) Serial.printf(__VA_ARGS__)
+      #define TI_Debugflush  Serial.flush
+    #endif
   #endif
 #else
   #define TI_Debug(x)    {}

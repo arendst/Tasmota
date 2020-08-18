@@ -1342,6 +1342,7 @@ int32_t Z_AqaraCubeFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObjec
         json[aqara_cube_side] = val - 512;
         break;
     }
+    return 1;
   }
 
   //     Source: https://github.com/kirovilya/ioBroker.zigbee
@@ -1363,7 +1364,7 @@ int32_t Z_AqaraCubeFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObjec
   //     presentValue = x + 256 = push/slide cube while side x is on top
   //     presentValue = x + 512 = double tap while side x is on top
 
-  return 1;
+  return 0;
 }
 
 // Aqara Vibration Sensor - special proprietary attributes

@@ -615,7 +615,7 @@ void SettingsLoad(void) {
     AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
   }
 #else  // CFG_RESILIENT
-  // Activated with version 8.4.0.2
+  // Activated with version 8.4.0.2 - Fails to read any config before version 6.6.0.11
   settings_location = 0;
   uint32_t save_flag = 0;
   uint32_t flash_location = SETTINGS_LOCATION;
@@ -1169,6 +1169,7 @@ void SettingsDelta(void)
   if (Settings.version != VERSION) {      // Fix version dependent changes
 
 #ifdef ESP8266
+#ifdef CFG_LEGACY_LOAD
     if (Settings.version < 0x06000000) {
       Settings.cfg_size = sizeof(Settings);
       Settings.cfg_crc = GetSettingsCrc();
@@ -1304,6 +1305,7 @@ void SettingsDelta(void)
         Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_CURRENT_ID];
       }
     }
+#endif  // CFG_LEGACY_LOAD
     if (Settings.version < 0x0606000C) {
       memset((char*)&Settings +0x1D6, 0x00, 16);
     }

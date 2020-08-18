@@ -369,6 +369,9 @@ void CmndPower(void)
       XdrvMailbox.payload = POWER_SHOW_STATE;
     }
     SetAllPower(XdrvMailbox.payload, SRC_IGNORE);
+    if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+      MqttPublishTeleState();
+    }
     mqtt_data[0] = '\0';
   }
 }
@@ -476,7 +479,7 @@ void CmndStatus(void)
                           ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
 #endif
                           ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":%d,\""
-                          D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
+                          D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
                           ESP_getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP_getFreeHeap()/1024,
 #ifdef ESP32
                           ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
@@ -486,7 +489,7 @@ void CmndStatus(void)
                           , ESP.getFlashChipId()
 #endif
                           , ESP.getFlashChipSpeed()/1000000, ESP.getFlashChipMode(),
-                          LANGUAGE_LCID, feature_drv1, feature_drv2, feature_sns1, feature_sns2, feature5, feature6);
+                          LANGUAGE_LCID, feature_drv1, feature_drv2, feature_sns1, feature_sns2, feature5, feature6, feature7);
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
     XsnsSensorState();
@@ -911,6 +914,8 @@ void CmndSetoption(void)
               case 20:                     // SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
               case 21:                     // SetOption103 - Enable TLS mode (requires TLS version)
               case 22:                     // SetOption104 - No Retain - disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
+              case 24:                     // SetOption106 - Virtual CT - Creates a virtual White ColorTemp for RGBW lights
+              case 25:                     // SetOption107 - Virtual CT Channel - signals whether the hardware white is cold CW (true) or warm WW (false)
                 restart_flag = 2;
                 break;
             }

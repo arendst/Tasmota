@@ -2,7 +2,7 @@
 #include <string.h>
 #include "reciter.h"
 #include "ReciterTabs.h"
-#include "debug.h"
+#include "samdebug.h"
 #include "SamData.h"
 
 unsigned char A, X, Y;
@@ -527,7 +527,7 @@ pos37455:
 	Y = mem64;
 	mem61 = mem60;
 
-	if (debug)
+	if (sam_debug)
 		PrintRule(mem62);
 
 pos37461:

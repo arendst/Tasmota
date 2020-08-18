@@ -778,14 +778,13 @@ ValueList * TInfo::checkLine(char * pline)
     return NULL;
 
   p = &buff[0];
-  i = len + 1 ;
   sep = 0;
   // Get our own working copy and in the 
   // meantime, calculate separator count for
   // standard mode (to know if timestamped data)
-  while (i--) {
-    // count separator
-    if (*pline == _separator) {
+  for (i=0 ; i<len ; i++) {
+    // count separator, take care, checksum last one can be space separator
+    if (*pline==_separator && *(pline+1)!='\r') {
       // Label + sep + Date + sep + Etiquette + sep + Checksum 
       if (++sep >=3){
         hasts = true;

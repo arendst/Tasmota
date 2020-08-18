@@ -45,6 +45,9 @@
 
 // -- Master parameter control --------------------
 #define CFG_HOLDER             4617              // [Reset 1] Change this value (max 32000) to load SECTION1 configuration parameters to flash
+                                                 // If following define is disabled it increases configuration corruption detection BUT
+                                                 //  it only allows firmware upgrades starting from version 6.6.0.11
+//#define CFG_LEGACY_LOAD                          // Support for firmware upgrades from version 6.0.0
 
 // -- Project -------------------------------------
 #define PROJECT                "tasmota"         // PROJECT is used as the default topic delimiter
@@ -368,8 +371,10 @@
   #define DOMOTICZ_OUT_TOPIC   "domoticz/out"    // Domoticz Output Topic
 
 // -- MQTT - Home Assistant Discovery -------------
-#define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+4.1k code, +6 bytes mem)
-  #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant"  // Home Assistant discovery prefix
+#define USE_HOME_ASSISTANT                                   // Enable Home Assistant Discovery Support (+4.1k code, +6 bytes mem)
+  #define HOME_ASSISTANT_DISCOVERY_PREFIX   "homeassistant"  // Home Assistant discovery prefix
+  #define HOME_ASSISTANT_LWT_TOPIC   "homeassistant/status"  // home Assistant Birth and Last Will Topic (default = homeassistant/status)
+  #define HOME_ASSISTANT_LWT_SUBSCRIBE    true               // Subscribe to Home Assistant Birth and Last Will Topic (default = true)
 
 // -- MQTT - TLS - AWS IoT ------------------------
 // Using TLS starting with version v6.5.0.16 compilation will only work using Core 2.4.2 and 2.5.2. No longer supported: 2.3.0
@@ -599,6 +604,8 @@
 //#define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+1k5 code)
   #define STARTING_OFFSET      30                // Turn on NovaSDS XX-seconds before tele_period is reached
 //#define USE_HPMA                                 // Add support for Honeywell HPMA115S0 particle concentration sensor (+1k4)
+//#define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
+//#define USE_DYP                                  // Add support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
 //#define USE_TCP_BRIDGE                           //  Add support for Serial to TCP bridge (+1.3k code)
 //#define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
@@ -692,8 +699,6 @@
   #define USE_ZIGBEE_MANUFACTURER "Tasmota"      // reported "Manufacturer" (cluster 0000 / attribute 0004)
 
 // -- Other sensors/drivers -----------------------
-
-//#define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 
 //#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
 //#define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
