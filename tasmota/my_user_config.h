@@ -710,7 +710,7 @@
 
 //#define USE_WINDMETER                            // Add support for analog anemometer (+2k2 code)
 
-//#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
+//#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+3k2 code, 460 iram)
 
 //#define USE_RF_SENSOR                            // Add support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 //  #define USE_THEO_V2                            // Add support for decoding Theo V2 sensors as documented on https://sidweb.nl using 434MHz RF sensor receiver (+1k4 code)
