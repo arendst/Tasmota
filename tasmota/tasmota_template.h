@@ -805,7 +805,7 @@ enum SupportedModules {
   OBI, TECKIN, APLIC_WDP303075, TUYA_DIMMER, GOSUND, ARMTRONIX_DIMMERS, SK03_TUYA, PS_16_DZ, TECKIN_US, MANZOKU_EU_4,
   OBI2, YTF_IR_BRIDGE, DIGOO, KA10, ZX2820, MI_DESK_LAMP, SP10, WAGA, SYF05, SONOFF_L1,
   SONOFF_IFAN03, EXS_DIMMER, PWM_DIMMER, SONOFF_D1, SONOFF_ZB_BRIDGE,
-  MAXMODULE};
+  MAXMODULE };
 
 #define USER_MODULE        255
 
@@ -922,8 +922,97 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   WEMOS
 };
 
-// Default module settings
-const mytmplt kModules[MAXMODULE] PROGMEM = {
+enum SupportedTemplates {
+  TMP_SONOFF_BASIC, TMP_SONOFF_SV, TMP_SONOFF_DUAL, TMP_SONOFF_POW, TMP_SONOFF_4CH, TMP_SONOFF_LED, TMP_ELECTRODRAGON,
+  TMP_EXS_RELAY, TMP_WION, TMP_WEMOS, TMP_SONOFF_DEV, TMP_H801, TMP_SONOFF_SC, TMP_SONOFF_BN, TMP_HUAFAN_SS, TMP_SONOFF_BRIDGE,
+  TMP_SONOFF_B1, TMP_AILIGHT, TMP_SONOFF_T11, TMP_SONOFF_T12, TMP_SONOFF_T13, TMP_SUPLA1, TMP_WITTY, TMP_YUNSHAN, TMP_MAGICHOME,
+  TMP_LUANIHVIO, TMP_KMC_70011, TMP_ARILUX_LC01, TMP_ARILUX_LC11, TMP_SONOFF_DUAL_R2, TMP_ARILUX_LC06, TMP_ZENGGE_ZF_WF017,
+  TMP_SONOFF_POW_R2, TMP_BLITZWOLF_BWSHP, TMP_SHELLY1, TMP_SHELLY2, TMP_PHILIPS, TMP_NEO_COOLCAM, TMP_ESP_SWITCH, TMP_OBI,
+  TMP_TECKIN, TMP_APLIC_WDP303075, TMP_TUYA_DIMMER, TMP_GOSUND, TMP_ARMTRONIX_DIMMERS, TMP_SK03_TUYA, TMP_PS_16_DZ,
+  TMP_TECKIN_US, TMP_MANZOKU_EU_4, TMP_OBI2, TMP_YTF_IR_BRIDGE, TMP_DIGOO, TMP_KA10, TMP_ZX2820, TMP_MI_DESK_LAMP, TMP_SP10,
+  TMP_WAGA, TMP_SYF05, TMP_SONOFF_IFAN03, TMP_EXS_DIMMER, TMP_PWM_DIMMER, TMP_SONOFF_ZB_BRIDGE,
+  TMP_MAXMODULE };
+
+const uint8_t kModuleTemplateList[MAXMODULE] PROGMEM = {
+  TMP_SONOFF_BASIC,
+  TMP_SONOFF_BASIC,     // SONOFF_RF
+  TMP_SONOFF_SV,
+  TMP_SONOFF_BASIC,     // SONOFF_TH
+  TMP_SONOFF_DUAL,
+  TMP_SONOFF_POW,
+  TMP_SONOFF_4CH,
+  TMP_SONOFF_BASIC,     // SONOFF_S2X
+  TMP_SONOFF_BASIC,     // SLAMPHER
+  TMP_SONOFF_T11,       // SONOFF_TOUCH
+  TMP_SONOFF_LED,
+  TMP_SONOFF_BASIC,     // CH1
+  TMP_SONOFF_DUAL,      // CH4
+  TMP_SONOFF_BASIC,     // MOTOR
+  TMP_ELECTRODRAGON,
+  TMP_EXS_RELAY,
+  TMP_WION,
+  TMP_WEMOS,
+  TMP_SONOFF_DEV,
+  TMP_H801,
+  TMP_SONOFF_SC,
+  TMP_SONOFF_BN,
+  TMP_SONOFF_4CH,       // SONOFF_4CHPRO
+  TMP_HUAFAN_SS,
+  TMP_SONOFF_BRIDGE,
+  TMP_SONOFF_B1,
+  TMP_AILIGHT,
+  TMP_SONOFF_T11,
+  TMP_SONOFF_T12,
+  TMP_SONOFF_T13,
+  TMP_SUPLA1,
+  TMP_WITTY,
+  TMP_YUNSHAN,
+  TMP_MAGICHOME,
+  TMP_LUANIHVIO,
+  TMP_KMC_70011,
+  TMP_ARILUX_LC01,
+  TMP_ARILUX_LC11,
+  TMP_SONOFF_DUAL_R2,
+  TMP_ARILUX_LC06,
+  TMP_SONOFF_POW_R2,    // SONOFF_S31
+  TMP_ZENGGE_ZF_WF017,
+  TMP_SONOFF_POW_R2,
+  TMP_SONOFF_4CH,       // SONOFF_IFAN02
+  TMP_BLITZWOLF_BWSHP,
+  TMP_SHELLY1,
+  TMP_SHELLY2,
+  TMP_PHILIPS,
+  TMP_NEO_COOLCAM,
+  TMP_ESP_SWITCH,
+  TMP_OBI,
+  TMP_TECKIN,
+  TMP_APLIC_WDP303075,
+  TMP_TUYA_DIMMER,
+  TMP_GOSUND,
+  TMP_ARMTRONIX_DIMMERS,
+  TMP_SK03_TUYA,
+  TMP_PS_16_DZ,
+  TMP_TECKIN_US,
+  TMP_MANZOKU_EU_4,
+  TMP_OBI2,
+  TMP_YTF_IR_BRIDGE,
+  TMP_DIGOO,
+  TMP_KA10,
+  TMP_ZX2820,
+  TMP_MI_DESK_LAMP,
+  TMP_SP10,
+  TMP_WAGA,
+  TMP_SYF05,
+  TMP_SONOFF_DUAL,      // SONOFF_L1
+  TMP_SONOFF_IFAN03,
+  TMP_EXS_DIMMER,
+  TMP_PWM_DIMMER,
+  TMP_SONOFF_DUAL,      // SONOFF_D1
+  TMP_SONOFF_ZB_BRIDGE,
+  };
+
+// Default template settings
+const mytmplt kModules[TMP_MAXMODULE] PROGMEM = {
   {                            // SONOFF_BASIC - Sonoff Basic (ESP8266)
     AGPIO(GPIO_KEY1),          // GPIO00 Button
     AGPIO(GPIO_USER),          // GPIO01 Serial RXD and Optional sensor
@@ -944,6 +1033,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     0,                         // GPIO16
     0                          // ADC0 Analog input
   },
+/*
   {                            // SONOFF_RF - Sonoff RF (ESP8266)
     AGPIO(GPIO_KEY1),          // GPIO00 Button
     AGPIO(GPIO_USER),          // GPIO01 Serial RXD and Optional sensor
@@ -962,6 +1052,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_USER),          // GPIO14 Optional sensor
     0, 0, 0
   },
+*/
   {                            // SONOFF_SV - Sonoff SV (ESP8266)
     AGPIO(GPIO_KEY1),          // GPIO00 Button
     AGPIO(GPIO_USER),          // GPIO01 Serial RXD and Optional sensor
@@ -981,6 +1072,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     0, 0,
     AGPIO(ADC0_USER)           // ADC0 Analog input
   },
+/*
   {                            // SONOFF_TH - Sonoff TH10/16 (ESP8266)
     AGPIO(GPIO_KEY1),          // GPIO00 Button
     AGPIO(GPIO_USER),          // GPIO01 Serial RXD and Optional sensor
@@ -999,8 +1091,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_USER),          // GPIO14 Optional sensor
     0, 0, 0
   },
+*/
   {                            // SONOFF_DUAL - Sonoff Dual (ESP8266)
-    0,
+    AGPIO(GPIO_USER),          // GPIO00 Pad
     AGPIO(GPIO_TXD),           // GPIO01 Relay control
     0,
     AGPIO(GPIO_RXD),           // GPIO03 Relay control
@@ -1052,6 +1145,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_REL1) +3,       // GPIO15 Red Led and Relay 4 (0 = Off, 1 = On)
     0, 0
   },
+/*
   {                            // SONOFF_S2X - Sonoff S20, S22 and S26 Smart Socket (ESP8266)
     AGPIO(GPIO_KEY1),          // GPIO00 Button
     AGPIO(GPIO_USER),          // GPIO01 Serial RXD and Optional sensor
@@ -1068,6 +1162,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_LED1_INV),      // GPIO13 Green/Blue Led (0 = On, 1 = Off)
     0, 0, 0, 0
   },
+*/
+/*
   {                            // SLAMPHER - Slampher (ESP8266)
     AGPIO(GPIO_KEY1),          // GPIO00 Button
     AGPIO(GPIO_USER),          // GPIO01 Serial RXD and Optional sensor
@@ -1084,6 +1180,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_LED1_INV),      // GPIO13 Blue Led (0 = On, 1 = Off) - Link and Power status
     0, 0, 0, 0
   },
+*/
+/*
   {                            // SONOFF_TOUCH - Sonoff Touch (ESP8285)
     AGPIO(GPIO_KEY1),          // GPIO00 Button
     AGPIO(GPIO_USER),          // GPIO01 Serial RXD and Optional sensor
@@ -1100,6 +1198,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_LED1_INV),      // GPIO13 Blue Led (0 = On, 1 = Off)
     0, 0, 0, 0
   },
+*/
   {                            // SONOFF_LED - Sonoff LED (ESP8266)
     AGPIO(GPIO_KEY1),          // GPIO00 Button
     0, 0, 0,
@@ -1117,6 +1216,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_USER),          // GPIO15 Optional sensor (PWM4 Blue)
     0, 0
   },
+/*
   {                            // CH1 - 1 Channel Inching/Latching Relay using (PSA-B01 - ESP8266 and PSF-B01 - ESP8285)
     AGPIO(GPIO_KEY1),          // GPIO00 Button
     0, 0, 0, 0, 0,
@@ -1130,6 +1230,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_LED1_INV),      // GPIO13 Green Led (0 = On, 1 = Off) - Link and Power status
     0, 0, 0, 0
   },
+*/
+/*
   {                            // CH4 - 4 Channel Inching/Latching Relays (ESP8266)
     0,
     AGPIO(GPIO_TXD),           // GPIO01 Relay control
@@ -1146,6 +1248,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_LED1_INV),      // GPIO13 Blue Led (0 = On, 1 = Off) - Link and Power status
     0, 0, 0, 0
   },
+*/
+/*
   {                            // MOTOR - Motor Clockwise / Anti clockwise (PSA-B01 - ESP8266)
     AGPIO(GPIO_KEY1),          // GPIO00 Button
     0, 0, 0, 0, 0,
@@ -1159,6 +1263,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_LED1_INV),      // GPIO13 Green Led (0 = On, 1 = Off) - Link and Power status
     0, 0, 0, 0
   },
+*/
   {                            // ELECTRODRAGON - ElectroDragon IoT Relay Board (ESP8266)
     AGPIO(GPIO_KEY1) +1,       // GPIO00 Button 2
     AGPIO(GPIO_USER),          // GPIO01 Serial RXD and Optional sensor
@@ -1307,6 +1412,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_LED1_INV),      // GPIO13 Red Led (0 = On, 1 = Off) - Link and Power status
     0, 0, 0, 0
   },
+/*
   {                            // SONOFF_4CHPRO - Sonoff 4CH Pro (ESP8285)
     AGPIO(GPIO_KEY1),          // GPIO00 Button 1
     AGPIO(GPIO_USER),          // GPIO01 Serial RXD and Optional sensor
@@ -1326,6 +1432,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_REL1) +3,       // GPIO15 Red Led and Relay 4 (0 = Off, 1 = On)
     0, 0
   },
+*/
   {                            // HUAFAN_SS - Hua Fan Smart Socket (ESP8266) - like Sonoff Pow
     AGPIO(GPIO_LEDLNK_INV),    // GPIO00 Blue Led (0 = On, 1 = Off) - Link status
     0, 0,
@@ -1645,6 +1752,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_USER),          // GPIO15 RGBW LED White
     0, 0
   },
+/*
   {                            // SONOFF_S31 - Sonoff S31 (ESP8266 - CSE7766)
     AGPIO(GPIO_KEY1),          // GPIO00 Button
     AGPIO(GPIO_CSE7766_TX),    // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
@@ -1661,6 +1769,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_LED1_INV),      // GPIO13 Green Led (0 = On, 1 = Off) - Link and Power status
     0, 0, 0, 0
   },
+*/
   {                            // ZENGGE_ZF_WF017 - Zenggee ZJ-WF017-A (ESP12S))
                                // https://www.ebay.com/p/Smartphone-Android-IOS-WiFi-Music-Controller-for-RGB-5050-3528-LED-Strip-Light/534446632?_trksid=p2047675.l2644
     AGPIO(GPIO_KEY1),          // GPIO00 Optional Button
@@ -1696,6 +1805,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_LED1_INV),      // GPIO13 Blue Led (0 = On, 1 = Off) - Link and Power status
     0, 0, 0, 0
   },
+/*
   {                            // SONOFF_IFAN02 - Sonoff iFan02 (ESP8285)
     AGPIO(GPIO_KEY1),          // GPIO00 WIFI_KEY0 Virtual button 1 as feedback from RC
     AGPIO(GPIO_USER),          // GPIO01 ESP_TXD Serial RXD and Optional sensor
@@ -1715,6 +1825,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_REL1) +3,       // GPIO15 WIFI_O3 Relay 4 (0 = Off, 1 = On) controlling the fan
     0, 0
   },
+*/
   {                            // BLITZWOLF_BWSHP - BlitzWolf BW-SHP2 and BW-SHP6 (ESP8285 - BL0937 or HJL-01 Energy Monitoring)
                                // https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html
                                // https://www.amazon.de/Steckdose-Homecube-intelligente-Verbrauchsanzeige-funktioniert/dp/B076Q2LKHG/ref=sr_1_fkmr0_1
@@ -2187,6 +2298,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_USER),          // GPIO16 N.C.
     AGPIO(ADC0_USER)           // ADC0 A0 Analog input
   },
+/*
   {                            // SONOFF_L1 - Sonoff L1 RGB LED controller (ESP8266 w/ separate Nuvoton MCU)
     0,
     AGPIO(GPIO_TXD),           // GPIO01 MCU serial control
@@ -2203,6 +2315,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_LED1_INV),      // GPIO13 WiFi Blue Led - Link and Power status
     0, 0, 0, 0
   },
+*/
   {                            // SONOFF_IFAN03 - Sonoff iFan03 (ESP8285)
     AGPIO(GPIO_KEY1),          // GPIO00 WIFI_KEY0 Button 1
     AGPIO(GPIO_TXD),           // GPIO01 ESP_TXD Serial RXD connection to P0.5 of RF microcontroller
@@ -2270,6 +2383,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_REL1_INV),      // GPIO16 Power relay/Level 1 LED
     0
   },
+/*
   {                            // SONOFF_D1 - Sonoff D1 RF Dimmer 433 (ESP8285)
     AGPIO(GPIO_USER),          // GPIO00 Pad
     AGPIO(GPIO_TXD),           // GPIO01 D1 control
@@ -2287,6 +2401,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
     AGPIO(GPIO_LED1_INV),      // GPIO13 WiFi Blue Led - Link and Power status
     0, 0, 0, 0
   },
+*/
   {                            // SONOFF_ZB_BRIDGE - Sonoff Zigbee Bridge (ESP8266)
     AGPIO(GPIO_LED1_INV),      // GPIO00 Green Led (0 = On, 1 = Off) - Traffic between ESP and EFR
     AGPIO(GPIO_ZIGBEE_TX),     // GPIO01 Zigbee Serial control

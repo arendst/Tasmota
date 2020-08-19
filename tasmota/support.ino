@@ -1209,7 +1209,8 @@ void ModuleGpios(myio *gp)
     memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
   } else {
 #ifdef ESP8266
-    memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
+    uint8_t module_template = pgm_read_byte(kModuleTemplateList + Settings.module);
+    memcpy_P(&src, &kModules[module_template].gp, sizeof(mycfgio));
 #else  // ESP32
     memcpy_P(&src, &kModules.gp, sizeof(mycfgio));
 #endif  // ESP8266 - ESP32
@@ -1238,7 +1239,8 @@ gpio_flag ModuleFlag(void)
     flag = Settings.user_template.flag;
   } else {
 #ifdef ESP8266
-    memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
+    uint8_t module_template = pgm_read_byte(kModuleTemplateList + Settings.module);
+    memcpy_P(&flag, &kModules[module_template].flag, sizeof(gpio_flag));
 #else  // ESP32
     memcpy_P(&flag, &kModules.flag, sizeof(gpio_flag));
 #endif  // ESP8266 - ESP32
@@ -1254,7 +1256,8 @@ void ModuleDefault(uint32_t module)
   char name[TOPSZ];
   SettingsUpdateText(SET_TEMPLATE_NAME, GetTextIndexed(name, sizeof(name), module, kModuleNames));
 #ifdef ESP8266
-  memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
+  uint8_t module_template = pgm_read_byte(kModuleTemplateList + module);
+  memcpy_P(&Settings.user_template, &kModules[module_template], sizeof(mytmplt));
 #else  // ESP32
   memcpy_P(&Settings.user_template, &kModules, sizeof(mytmplt));
 #endif  // ESP8266 - ESP32
