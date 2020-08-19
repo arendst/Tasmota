@@ -1,17 +1,15 @@
-**Fork of RC-SWITCH by @sui77**
-
 # rc-switch
-[![Build Status](https://travis-ci.org/1technophile/rc-switch.svg?branch=master)](https://travis-ci.org/1technophile/rc-switch)
+[![Build Status](https://travis-ci.org/sui77/rc-switch.svg?branch=master)](https://travis-ci.org/sui77/rc-switch)
 
 Use your Arduino or Raspberry Pi to operate remote radio controlled devices
 
 ## Download
-https://github.com/1technophile/rc-switch/releases/latest
+https://github.com/sui77/rc-switch/releases/latest
 
 rc-switch is also listed in the arduino library manager.
 
 ## Wiki
-https://github.com/1technophile/rc-switch/wiki
+https://github.com/sui77/rc-switch/wiki
 
 ## Info
 ### Send RC codes
