@@ -924,6 +924,7 @@ void EnergyShow(bool json)
         float apparent_power = Energy.apparent_power[i];
         if (isnan(apparent_power)) {
           apparent_power = Energy.voltage[i] * Energy.current[i];
+          Energy.apparent_power[i] = apparent_power;
         }
         if (apparent_power < Energy.active_power[i]) {  // Should be impossible
           Energy.active_power[i] = apparent_power;
@@ -935,6 +936,7 @@ void EnergyShow(bool json)
           if (power_factor > 1) {
             power_factor = 1;
           }
+          Energy.power_factor[i] = power_factor;
         }
         if (0 == i) { power_factor_knx = power_factor; }
 
@@ -947,6 +949,7 @@ void EnergyShow(bool json)
             // difference between active and apparent power is greater than 1.5W or 1%
             reactive_power = (float)(RoundSqrtInt((uint32_t)(apparent_power * apparent_power * 100) - (uint32_t)(Energy.active_power[i] * Energy.active_power[i] * 100))) / 10;
           }
+          Energy.reactive_power[i] = reactive_power;
         }
 
         dtostrfd(apparent_power, Settings.flag2.wattage_resolution, apparent_power_chr[i]);
@@ -956,8 +959,9 @@ void EnergyShow(bool json)
     }
     for (uint32_t i = 0; i < Energy.phase_count; i++) {
       float frequency = Energy.frequency[i];
-      if (isnan(Energy.frequency[i])) {
+      if (isnan(frequency)) {
         frequency = 0;
+        Energy.frequency[i] = frequency;
       }
       dtostrfd(frequency, Settings.flag2.frequency_resolution, frequency_chr[i]);
     }
