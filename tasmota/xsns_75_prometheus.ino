@@ -63,20 +63,22 @@ void HandleMetrics(void)
   }
 
 #ifdef USE_ENERGY_SENSOR
-  dtostrfd(Energy.voltage[0], Settings.flag2.voltage_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE energy_voltage_volts gauge\nenergy_voltage_volts %s\n"), parameter);
-  dtostrfd(Energy.current[0], Settings.flag2.current_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE energy_current_amperes gauge\nenergy_current_amperes %s\n"), parameter);
-  dtostrfd(Energy.active_power[0], Settings.flag2.wattage_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE energy_power_active_watts gauge\nenergy_power_active_watts %s\n"), parameter);
-  dtostrfd(Energy.apparent_power[0], Settings.flag2.wattage_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE energy_power_apparent_voltamperes gauge\nenergy_power_apparent_voltamperes %s\n"), parameter);
-  dtostrfd(Energy.reactive_power[0], Settings.flag2.wattage_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE energy_power_reactive_voltamperes gauge\nenergy_power_reactive_voltamperes  %s\n"), parameter);
-  dtostrfd(Energy.frequency[0], Settings.flag2.frequency_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE energy_frequency_hertz gauge\nenergy_frequency_hertz %s\n"), parameter);
-  dtostrfd(Energy.power_factor[0], 2, parameter);
-  WSContentSend_P(PSTR("# TYPE energy_power_factor gauge\nenergy_power_factor %s\n"), parameter);
+  for (uint32_t i = 0; i < Energy.phase_count; i++) {
+    dtostrfd(Energy.voltage[i], Settings.flag2.voltage_resolution, parameter);
+    WSContentSend_P(PSTR("# TYPE energy_phase_%d_voltage_volts gauge\nenergy_phase_%d_voltage_volts %s\n"), i, i, parameter);
+    dtostrfd(Energy.current[i], Settings.flag2.current_resolution, parameter);
+    WSContentSend_P(PSTR("# TYPE energy_phase_%d_current_amperes gauge\nenergy_phase_%d_current_amperes %s\n"), i, i, parameter);
+    dtostrfd(Energy.active_power[i], Settings.flag2.wattage_resolution, parameter);
+    WSContentSend_P(PSTR("# TYPE energy_phase_%d_power_active_watts gauge\nenergy_phase_%d_power_active_watts %s\n"), i, i, parameter);
+    dtostrfd(Energy.apparent_power[i], Settings.flag2.wattage_resolution, parameter);
+    WSContentSend_P(PSTR("# TYPE energy_phase_%d_power_apparent_voltamperes gauge\nenergy_phase_%d_power_apparent_voltamperes %s\n"), i, i, parameter);
+    dtostrfd(Energy.reactive_power[i], Settings.flag2.wattage_resolution, parameter);
+    WSContentSend_P(PSTR("# TYPE energy_phase_%d_power_reactive_voltamperes gauge\nenergy_phase_%d_power_reactive_voltamperes  %s\n"), i, i, parameter);
+    dtostrfd(Energy.power_factor[i], 2, parameter);
+    WSContentSend_P(PSTR("# TYPE energy_phase_%d_power_factor gauge\nenergy_phase_%d_power_factor %s\n"), i, i, parameter);
+    dtostrfd(Energy.frequency[i], Settings.flag2.frequency_resolution, parameter);
+    WSContentSend_P(PSTR("# TYPE energy_phase_%d_frequency_hertz gauge\nenergy_phase_%d_frequency_hertz %s\n"), i, i, parameter);
+  }
   dtostrfd(Energy.daily, Settings.flag2.energy_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_power_kilowatts_daily counter\nenergy_power_kilowatts_daily %s\n"), parameter);
   dtostrfd(Energy.total, Settings.flag2.energy_resolution, parameter);
