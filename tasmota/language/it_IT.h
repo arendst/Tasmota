@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 16.08.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 19.08.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -652,7 +652,7 @@
 #define D_SENSOR_ZIGBEE_RXD    "Zigbee - RX"
 #define D_SENSOR_ZIGBEE_RST    "Zigbee - Reset"
 #define D_SENSOR_SOLAXX1_TX    "SolaxX1 - TX"
-#define D_SENSOR_SOLAXX1_RX    "SolaxX1- RX"
+#define D_SENSOR_SOLAXX1_RX    "SolaxX1 - RX"
 #define D_SENSOR_IBEACON_TX    "iBeacon - TX"
 #define D_SENSOR_IBEACON_RX    "iBeacon - RX"
 #define D_SENSOR_RDM6300_RX    "RDM6300 - RX"
