@@ -99,7 +99,7 @@ typedef struct Z_AttributeConverter {
   uint8_t  cluster_short;
   uint16_t attribute;
   const char * name;
-  int16_t  multiplier;     // multiplier for numerical value, (if > 0 multiply by x, if <0 device by x)
+  int8_t   multiplier;     // multiplier for numerical value, (if > 0 multiply by x, if <0 device by x)
   uint8_t  cb;            // callback func from Z_ConvOperators
   // Z_AttrConverter func;
 } Z_AttributeConverter;
@@ -142,10 +142,12 @@ enum Z_ConvOperators {
 };
 
 ZF(ZCLVersion) ZF(AppVersion) ZF(StackVersion) ZF(HWVersion) ZF(Manufacturer) ZF(ModelId)
-ZF(DateCode) ZF(PowerSource) ZF(SWBuildID) ZF(Power) ZF(SwitchType) ZF(Dimmer)
+ZF(GenericDeviceClass) ZF(GenericDeviceType) ZF(ProductCode) ZF(ProductURL)
+ZF(DateCode) ZF(PowerSource) ZF(SWBuildID) ZF(Power) ZF(SwitchType) ZF(Dimmer) ZF(DimmerOptions)
+ZF(DimmerRemainingTime) ZF(OnOffTransitionTime) ZF(StartUpOnOff)
 ZF(MainsVoltage) ZF(MainsFrequency) ZF(BatteryVoltage) ZF(BatteryPercentage)
 ZF(CurrentTemperature) ZF(MinTempExperienced) ZF(MaxTempExperienced) ZF(OverTempTotalDwell)
-ZF(IdentifyTime)
+ZF(IdentifyTime) ZF(GroupNameSupport)
 ZF(SceneCount) ZF(CurrentScene) ZF(CurrentGroup) ZF(SceneValid)
 ZF(AlarmCount) ZF(Time) ZF(TimeStatus) ZF(TimeZone) ZF(DstStart) ZF(DstEnd)
 ZF(DstShift) ZF(StandardTime) ZF(LocalTime) ZF(LastSetTime) ZF(ValidUntilTime) ZF(TimeEpoch)
@@ -243,6 +245,10 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zstring,  Cx0000, 0x0005,  Z(ModelId),              1,  Z_ModelKeep },    // record Model
   { Zstring,  Cx0000, 0x0006,  Z(DateCode),             1,  Z_Nop },
   { Zenum8,   Cx0000, 0x0007,  Z(PowerSource),          1,  Z_Nop },
+  { Zenum8,   Cx0000, 0x0008,  Z(GenericDeviceClass),   1,  Z_Nop },
+  { Zenum8,   Cx0000, 0x0009,  Z(GenericDeviceType),    1,  Z_Nop },
+  { Zoctstr,  Cx0000, 0x000A,  Z(ProductCode),          1,  Z_Nop },
+  { Zstring,  Cx0000, 0x000B,  Z(ProductURL),           1,  Z_Nop },
   { Zstring,  Cx0000, 0x4000,  Z(SWBuildID),            1,  Z_Nop },
   // { Zunk,     Cx0000, 0xFFFF,  nullptr,                 0,  Z_Nop },    // Remove all other values
   // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
@@ -263,6 +269,9 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   // Identify cluster
   { Zuint16,  Cx0003, 0x0000,  Z(IdentifyTime),         1,  Z_Nop },
 
+  // Groups cluster
+  { Zmap8,    Cx0004, 0x0000,  Z(GroupNameSupport),     1,  Z_Nop },
+
   // Scenes cluster
   { Zuint8,   Cx0005, 0x0000,  Z(SceneCount),           1,  Z_Nop },
   { Zuint8,   Cx0005, 0x0001,  Z(CurrentScene),         1,  Z_Nop },
@@ -272,6 +281,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
 
   // On/off cluster
   { Zbool,    Cx0006,    0x0000,  Z(Power),             1,  Z_Nop },
+  { Zenum8,   Cx0006,    0x4003,  Z(StartUpOnOff),      1,  Z_Nop },
   { Zbool,    Cx0006,    0x8000,  Z(Power),             1,  Z_Nop },   // See 7280
 
   // On/Off Switch Configuration cluster
@@ -279,12 +289,13 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
 
   // Level Control cluster
   { Zuint8,   Cx0008, 0x0000,  Z(Dimmer),               1,  Z_Nop },
-  // { Zuint16, Cx0008, 0x0001,  Z(RemainingTime",        1,  Z_Nop },
-  // { Zuint16, Cx0008, 0x0010,  Z(OnOffTransitionTime",  1,  Z_Nop },
-  // { Zuint8, Cx0008, 0x0011,  Z(OnLevel",              1,  Z_Nop },
-  // { Zuint16, Cx0008, 0x0012,  Z(OnTransitionTime",     1,  Z_Nop },
-  // { Zuint16, Cx0008, 0x0013,  Z(OffTransitionTime",    1,  Z_Nop },
-  // { Zuint16, Cx0008, 0x0014,  Z(DefaultMoveRate",      1,  Z_Nop },
+  { Zmap8,    Cx0008, 0x000F,  Z(DimmerOptions),        1,  Z_Nop },
+  { Zuint16,  Cx0008, 0x0001,  Z(DimmerRemainingTime),  1,  Z_Nop },
+  { Zuint16,  Cx0008, 0x0010,  Z(OnOffTransitionTime),   1,  Z_Nop },
+  // { Zuint8, Cx0008, 0x0011,  Z(OnLevel),              1,  Z_Nop },
+  // { Zuint16, Cx0008, 0x0012,  Z(OnTransitionTime),     1,  Z_Nop },
+  // { Zuint16, Cx0008, 0x0013,  Z(OffTransitionTime),    1,  Z_Nop },
+  // { Zuint16, Cx0008, 0x0014,  Z(DefaultMoveRate),      1,  Z_Nop },
 
   // Alarms cluster
   { Zuint16,  Cx0009, 0x0000,  Z(AlarmCount),           1,  Z_Nop },
@@ -615,7 +626,7 @@ typedef union ZCLHeaderFrameControl_t {
 // If not found:
 //  - returns nullptr
 const __FlashStringHelper* zigbeeFindAttributeByName(const char *command,
-                                    uint16_t *cluster, uint16_t *attribute, int16_t *multiplier,
+                                    uint16_t *cluster, uint16_t *attribute, int8_t *multiplier,
                                     uint8_t  *cb) {
   for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
@@ -623,7 +634,7 @@ const __FlashStringHelper* zigbeeFindAttributeByName(const char *command,
     if (0 == strcasecmp_P(command, converter->name)) {
       if (cluster)      { *cluster    = CxToCluster(pgm_read_byte(&converter->cluster_short)); }
       if (attribute)    { *attribute  = pgm_read_word(&converter->attribute); }
-      if (multiplier)   { *multiplier = pgm_read_word(&converter->multiplier); }
+      if (multiplier)   { *multiplier = pgm_read_byte(&converter->multiplier); }
       if (cb)           { *cb         = pgm_read_byte(&converter->cb); }
       return (const __FlashStringHelper*) converter->name;
     }
@@ -1363,7 +1374,6 @@ int32_t Z_AqaraCubeFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObjec
   //     presentValue = x + 128 = 180º flip to side x on top
   //     presentValue = x + 256 = push/slide cube while side x is on top
   //     presentValue = x + 512 = double tap while side x is on top
-
   return 0;
 }
 
@@ -1487,7 +1497,7 @@ int32_t Z_AqaraSensorFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObj
 
 // apply the transformation from the converter
 int32_t Z_ApplyConverter(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name,
-                        uint16_t cluster, uint16_t attr, int16_t multiplier, uint8_t cb) {
+                        uint16_t cluster, uint16_t attr, int8_t multiplier, uint8_t cb) {
   // apply multiplier if needed
   if (1 == multiplier) {          // copy unchanged
       json[new_name] = value;
@@ -1596,7 +1606,7 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
         const Z_AttributeConverter *converter = &Z_PostProcess[i];
         uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
         uint16_t conv_attribute = pgm_read_word(&converter->attribute);
-        int16_t  conv_multiplier = pgm_read_word(&converter->multiplier);
+        int8_t   conv_multiplier = pgm_read_byte(&converter->multiplier);
         uint8_t  conv_cb = pgm_read_byte(&converter->cb);                   // callback id
 
         if ((conv_cluster == cluster) &&

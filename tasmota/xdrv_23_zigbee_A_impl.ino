@@ -190,7 +190,7 @@ void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, 
 // multiplier == 1: ignore
 // multiplier > 0: divide by the multiplier
 // multiplier < 0: multiply by the -multiplier (positive)
-void ZbApplyMultiplier(double &val_d, int16_t multiplier) {
+void ZbApplyMultiplier(double &val_d, int8_t multiplier) {
   if ((0 != multiplier) && (1 != multiplier)) {
     if (multiplier > 0) {         // inverse of decoding
       val_d = val_d / multiplier;
@@ -217,7 +217,7 @@ void ZbSendReportWrite(const JsonObject &val_pubwrite, uint16_t device, uint16_t
     uint16_t attr_id = 0xFFFF;
     uint16_t cluster_id = 0xFFFF;
     uint8_t  type_id = Znodata;
-    int16_t  multiplier = 1;        // multiplier to adjust the key value
+    int8_t   multiplier = 1;        // multiplier to adjust the key value
     double   val_d = 0;             // I try to avoid `double` but this type capture both float and (u)int32_t without prevision loss
     const char* val_str = "";       // variant as string
 
@@ -245,7 +245,7 @@ void ZbSendReportWrite(const JsonObject &val_pubwrite, uint16_t device, uint16_t
         uint16_t local_attr_id = pgm_read_word(&converter->attribute);
         uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
         uint8_t  local_type_id = pgm_read_byte(&converter->type);
-        int16_t  local_multiplier = pgm_read_word(&converter->multiplier);
+        int8_t   local_multiplier = pgm_read_byte(&converter->multiplier);
         // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Try cluster = 0x%04X, attr = 0x%04X, type_id = 0x%02X"), local_cluster_id, local_attr_id, local_type_id);
 
         if (delimiter) {
