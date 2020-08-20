@@ -103,10 +103,10 @@ void ZigbeeHueStatus(String * response, uint16_t shortaddr) {
 void ZigbeeCheckHue(String * response, bool &appending) {
   uint32_t zigbee_num = zigbee_devices.devicesSize();
   for (uint32_t i = 0; i < zigbee_num; i++) {
-    int8_t bulbtype = zigbee_devices.devicesAt(i).bulbtype;
+    uint16_t shortaddr = zigbee_devices.devicesAt(i).shortaddr;
+    int8_t bulbtype = zigbee_devices.getHueBulbtype(shortaddr);
 
     if (bulbtype >= 0) {
-      uint16_t shortaddr = zigbee_devices.devicesAt(i).shortaddr;
       // this bulb is advertized
       if (appending) { *response += ","; }
       *response += "\"";
@@ -122,7 +122,8 @@ void ZigbeeCheckHue(String * response, bool &appending) {
 void ZigbeeHueGroups(String * lights) {
   uint32_t zigbee_num = zigbee_devices.devicesSize();
   for (uint32_t i = 0; i < zigbee_num; i++) {
-    int8_t bulbtype = zigbee_devices.devicesAt(i).bulbtype;
+    uint16_t shortaddr = zigbee_devices.devicesAt(i).shortaddr;
+    int8_t bulbtype = zigbee_devices.getHueBulbtype(shortaddr);
 
     if (bulbtype >= 0) {
       *lights += ",\"";

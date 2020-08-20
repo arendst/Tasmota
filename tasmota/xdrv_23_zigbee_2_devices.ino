@@ -22,7 +22,7 @@
 #include <vector>
 
 #ifndef ZIGBEE_SAVE_DELAY_SECONDS
-#define ZIGBEE_SAVE_DELAY_SECONDS 2;               // wait for 2s before saving Zigbee info
+#define ZIGBEE_SAVE_DELAY_SECONDS 2               // wait for 2s before saving Zigbee info
 #endif
 const uint16_t kZigbeeSaveDelaySeconds = ZIGBEE_SAVE_DELAY_SECONDS;    // wait for x seconds
 
@@ -63,14 +63,25 @@ typedef struct Z_Device {
   uint16_t              shortaddr;      // unique key if not null, or unspecified if null
   uint8_t               seqNumber;
   // Light information for Hue integration integration, last known values
-  int8_t                bulbtype;       // number of channel for the bulb: 0-5, or 0xFF if no Hue integration
+  uint8_t               zb_profile;     // profile of the device
+    // high 4 bits is device type:
+    //   0x0. = bulb
+    //   0x1. = switch
+    //   0x2. = motion sensor
+    //   0x3. = other alarms
+    //   0xE. = reserved for extension
+    //   0xF. = unknown
+    // For Bulb (0x0.)
+    //   0x0N = number of channel for the bulb: 0-5
+    //   0x08 = the device is hidden from Alexa
+  // other status
   uint8_t               power;          // power state (boolean), MSB (0x80) stands for reachable
-  uint8_t               colormode;      // 0x00: Hue/Sat, 0x01: XY, 0x02: CT
-  uint8_t               dimmer;         // last Dimmer value: 0-254
-  uint8_t               sat;            // last Sat: 0..254
-  uint16_t              ct;             // last CT: 153-500
-  uint16_t              hue;            // last Hue: 0..359
-  uint16_t              x, y;           // last color [x,y]
+  uint8_t               colormode;      // 0x00: Hue/Sat, 0x01: XY, 0x02: CT | 0xFF not set, default 0x01
+  uint8_t               dimmer;         // last Dimmer value: 0-254 | 0xFF not set, default 0x00
+  uint8_t               sat;            // last Sat: 0..254 | 0xFF not set, default 0x00
+  uint16_t              ct;             // last CT: 153-500 | 0xFFFF not set, default 200
+  uint16_t              hue;            // last Hue: 0..359 | 0xFFFF not set, default 0
+  uint16_t              x, y;           // last color [x,y] | 0xFFFF not set, default 0
   uint8_t               linkquality;    // lqi from last message, 0xFF means unknown
   uint8_t               batterypercent; // battery percentage (0..100), 0xFF means unknwon
 } Z_Device;
@@ -163,9 +174,15 @@ public:
   String dump(uint32_t dump_mode, uint16_t status_shortaddr = 0) const;
   int32_t deviceRestore(const JsonObject &json);
 
+  // General Zigbee device profile support
+  void setZbProfile(uint16_t shortaddr, uint8_t zb_profile);
+  uint8_t getZbProfile(uint16_t shortaddr) const ;
+
   // Hue support
   void setHueBulbtype(uint16_t shortaddr, int8_t bulbtype);
   int8_t getHueBulbtype(uint16_t shortaddr) const ;
+  void hideHueBulb(uint16_t shortaddr, bool hidden);
+  bool isHueBulbHidden(uint16_t shortaddr) const ;
   void updateHueState(uint16_t shortaddr,
                         const bool *power, const uint8_t *colormode,
                         const uint8_t *dimmer, const uint8_t *sat,
@@ -236,6 +253,8 @@ private:
   void freeDeviceEntry(Z_Device *device);
 
   void setStringAttribute(char*& attr, const char * str);
+
+  void updateZbProfile(uint16_t shortaddr);
 };
 
 /*********************************************************************************************\
@@ -294,14 +313,14 @@ Z_Device & Z_Devices::createDeviceEntry(uint16_t shortaddr, uint64_t longaddr) {
                       shortaddr,
                       0,          // seqNumber
                       // Hue support
-                      -1,         // no Hue support
+                      0xFF,       // no Hue support
                       0x80,       // power off + reachable
-                      0,          // colormode
-                      0,          // dimmer
-                      0,          // sat
-                      200,        // ct
-                      0,          // hue
-                      0, 0,       // x, y
+                      0xFF,       // colormode
+                      0xFF,       // dimmer
+                      0xFF,       // sat
+                      0xFFFF,     // ct
+                      0xFFFF,     // hue
+                      0xFFFF, 0xFFFF,  // x, y
                       0xFF,       // lqi, 0xFF = unknown
                       0xFF        // battery percentage x 2, 0xFF means unknown
                     };
@@ -691,22 +710,97 @@ uint8_t Z_Devices::getNextSeqNumber(uint16_t shortaddr) {
   }
 }
 
-
-// Hue support
-void Z_Devices::setHueBulbtype(uint16_t shortaddr, int8_t bulbtype) {
+// General Zigbee device profile support
+void Z_Devices::setZbProfile(uint16_t shortaddr, uint8_t zb_profile) {
   Z_Device &device = getShortAddr(shortaddr);
-  if (bulbtype != device.bulbtype) {
-    device.bulbtype = bulbtype;
+  if (zb_profile != device.zb_profile) {
+    device.zb_profile = zb_profile;
+    updateZbProfile(shortaddr);
     dirty();
   }
 }
-int8_t Z_Devices::getHueBulbtype(uint16_t shortaddr) const {
+
+// Do all the required action when a profile is changed
+void Z_Devices::updateZbProfile(uint16_t shortaddr) {
+  Z_Device &device = getShortAddr(shortaddr);
+  uint8_t zb_profile = device.zb_profile;
+  if (0xFF == zb_profile) { return; }
+
+  switch (zb_profile & 0xF0) {
+  case 0x00:      // bulb profile
+    {
+      uint32_t channels = zb_profile & 0x07;
+      // depending on the bulb type, the default parameters from unknown to credible defaults
+      if (0xFF == device.power) { device.power = 0; }
+      if (1 <= channels) {
+        if (0xFF == device.dimmer) { device.dimmer = 0; }
+      }
+      if (3 <= channels) {
+        if (0xFF == device.sat) { device.sat = 0; }
+        if (0xFFFF == device.hue) { device.hue = 0; }
+        if (0xFFFF == device.x) { device.x = 0; }
+        if (0xFFFF == device.y) { device.y = 0; }
+        if (0xFF == device.colormode) { device.colormode = 0; }   // HueSat mode
+      }
+      if ((2 == channels) || (5 == channels)) {
+        if (0xFFFF == device.ct) { device.ct = 200; }
+        if (0xFF == device.colormode) { device.colormode = 2; }   // CT mode
+      }
+    }
+    break;
+  }
+}
+
+// Returns the device profile or 0xFF if the device or profile is unknown
+uint8_t Z_Devices::getZbProfile(uint16_t shortaddr) const {
   int32_t found = findShortAddr(shortaddr);
   if (found >= 0) {
-    return _devices[found]->bulbtype;
+    return _devices[found]->zb_profile;
   } else {
-    return -1;      // Hue not activated
+    return 0xFF;      // Hue not activated
   }
+}
+
+// Hue support
+void Z_Devices::setHueBulbtype(uint16_t shortaddr, int8_t bulbtype) {
+  uint8_t zb_profile = (0 > bulbtype) ? 0xFF : (bulbtype & 0x07);
+  setZbProfile(shortaddr, zb_profile);
+}
+
+int8_t Z_Devices::getHueBulbtype(uint16_t shortaddr) const {
+  uint8_t zb_profile = getZbProfile(shortaddr);
+  if (0x00 == (zb_profile & 0xF0)) {
+    return (zb_profile & 0x07);
+  } else {
+    // not a bulb
+    return -1;
+  }
+}
+
+void Z_Devices::hideHueBulb(uint16_t shortaddr, bool hidden) {
+  uint8_t hue_hidden_flag = hidden ? 0x08 : 0x00;
+  
+  Z_Device &device = getShortAddr(shortaddr);
+  if (0x00 == (device.zb_profile & 0xF0)) {
+    // bulb type
+    // set bit 3 accordingly
+    if (hue_hidden_flag != (device.zb_profile & 0x08)) {
+      device.zb_profile = (device.zb_profile & 0xF7) | hue_hidden_flag;
+      dirty();
+    }
+  }
+}
+// true if device is not knwon or not a bulb - it wouldn't make sense to publish a non-bulb
+bool Z_Devices::isHueBulbHidden(uint16_t shortaddr) const {
+  int32_t found = findShortAddr(shortaddr);
+  if (found >= 0) {
+    uint8_t zb_profile = _devices[found]->zb_profile;
+    if (0x00 == (zb_profile & 0xF0)) {
+      // bulb type
+      return (zb_profile & 0x08) ? true : false;
+    }
+  }
+  return true;      // Fallback - Device is considered as hidden
 }
 
 // Hue support
@@ -1056,27 +1150,17 @@ String Z_Devices::dumpLightState(uint16_t shortaddr) const {
     }
 
     // expose the last known status of the bulb, for Hue integration
-    dev[F(D_JSON_ZIGBEE_LIGHT)] = device.bulbtype;   // sign extend, 0xFF changed as -1
-    if (0 <= device.bulbtype) {
-      // bulbtype is defined
-      dev[F("Power")] = bitRead(device.power, 0);
-      dev[F("Reachable")] = bitRead(device.power, 7);
-      if (1 <= device.bulbtype) {
-        dev[F("Dimmer")] = device.dimmer;
-      }
-      if (2 <= device.bulbtype) {
-        dev[F("Colormode")] = device.colormode;
-      }
-      if ((2 == device.bulbtype) || (5 == device.bulbtype)) {
-        dev[F("CT")] = device.ct;
-      }
-      if (3 <= device.bulbtype) {
-        dev[F("Sat")] = device.sat;
-        dev[F("Hue")] = device.hue;
-        dev[F("X")] = device.x;
-        dev[F("Y")] = device.y;
-      }
-    }
+    dev[F(D_JSON_ZIGBEE_LIGHT)] = getHueBulbtype(shortaddr);   // sign extend, 0xFF changed as -1
+    // dump all known values
+    dev[F("Reachable")] = bitRead(device.power, 7);   // TODO TODO
+    if (0xFF   != device.power)     { dev[F("Power")]     = bitRead(device.power, 0); }
+    if (0xFF   != device.dimmer)    { dev[F("Dimmer")]    = device.dimmer; }
+    if (0xFF   != device.colormode) { dev[F("Colormode")] = device.colormode; }
+    if (0xFFFF != device.ct)        { dev[F("CT")]        = device.ct; }
+    if (0xFF   != device.sat)       { dev[F("Sat")]       = device.sat; }
+    if (0xFFFF != device.hue)       { dev[F("Hue")]       = device.hue; }
+    if (0xFFFF != device.x)         { dev[F("X")]         = device.x; }
+    if (0xFFFF != device.y)         { dev[F("Y")]         = device.y; }
   }
 
   String payload = "";
@@ -1119,8 +1203,9 @@ String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
       if (device.modelId) {
         dev[F(D_JSON_MODEL D_JSON_ID)] = device.modelId;
       }
-      if (device.bulbtype >= 0) {
-        dev[F(D_JSON_ZIGBEE_LIGHT)] = device.bulbtype;   // sign extend, 0xFF changed as -1
+      int8_t bulbtype = getHueBulbtype(shortaddr);
+      if (bulbtype >= 0) {
+        dev[F(D_JSON_ZIGBEE_LIGHT)] = bulbtype;   // sign extend, 0xFF changed as -1
       }
       if (device.manufacturerId) {
         dev[F("Manufacturer")] = device.manufacturerId;
