@@ -253,9 +253,9 @@ void ZbSendReportWrite(const JsonObject &val_pubwrite, uint16_t device, uint16_t
             type_id = local_type_id;
             break;
           }
-        } else if (converter->name) {
+        } else if (pgm_read_word(&converter->name_offset)) {
           // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Comparing '%s' with '%s'"), attr_name, converter->name);
-          if (0 == strcasecmp_P(key, converter->name)) {
+          if (0 == strcasecmp_P(key, Z_strings + pgm_read_word(&converter->name_offset))) {
             // match
             cluster_id = local_cluster_id;
             attr_id = local_attr_id;
@@ -564,7 +564,7 @@ void ZbSendRead(const JsonVariant &val_attr, uint16_t device, uint16_t groupaddr
         uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
         // uint8_t  local_type_id = pgm_read_byte(&converter->type);
 
-        if ((converter->name) && (0 == strcasecmp_P(key, converter->name))) {
+        if ((pgm_read_word(&converter->name_offset)) && (0 == strcasecmp_P(key, Z_strings + pgm_read_word(&converter->name_offset)))) {
           // match name
           // check if there is a conflict with cluster
           // TODO
