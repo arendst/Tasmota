@@ -117,16 +117,17 @@ String GetResetReason(void)
  * Miscellaneous
 \*********************************************************************************************/
 
-#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
-#define BYTE_TO_BINARY(byte)  \
-  (byte & 0x80 ? '1' : '0'), \
-  (byte & 0x40 ? '1' : '0'), \
-  (byte & 0x20 ? '1' : '0'), \
-  (byte & 0x10 ? '1' : '0'), \
-  (byte & 0x08 ? '1' : '0'), \
-  (byte & 0x04 ? '1' : '0'), \
-  (byte & 0x02 ? '1' : '0'), \
-  (byte & 0x01 ? '1' : '0')
+String GetBinary(const void* ptr, size_t count) {
+  uint32_t value = *(uint32_t*)ptr;
+  value <<= (32 - count);
+  String result;
+  result.reserve(count + 1);
+  for (uint32_t i = 0; i < count; i++) {
+    result += (value &0x80000000) ? '1' : '0';
+    value <<= 1;
+  }
+  return result;
+}
 
 // Get span until single character in string
 size_t strchrspn(const char *str1, int character)
