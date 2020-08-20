@@ -63,17 +63,15 @@ const uint16_t CIEL_8_12[] PROGMEM = {
   2237, 2265, 2293, 2322, 2350, 2379, 2408, 2437, 2467, 2497, 2527, 2557, 2587, 2618, 2649, 2680, 2712, 2743, 2775, 2807, 2840, 2872, 2905, 2938, 2972, 3006, 3039, 3074, 3108, 3143, 3178, 3213, 3248,
   3284, 3320, 3356, 3393, 3430, 3467, 3504, 3542, 3579, 3617, 3656, 3694, 3733, 3773, 3812, 3852, 3892, 3932, 3973, 4013, 4055, 4095 };
 
-//Keep track of milliseconds.
-uint32_t now = 0;
+//Array to keep track of current lookup value index
+uint8_t pca9685_pin_lookup_value[NUM_DEVICES][CHANNELS_PER_DEVICE];
 #ifndef FADE_DELAY
-  #define FADE_DELAY 100 //In milliseconds
+  #define FADE_DELAY 10 //In milliseconds
 #endif
 
 bool pca9685_detected[NUM_DEVICES];
 uint16_t pca9685_freq = USE_PCA9685_FREQ;
 uint16_t pca9685_pin_pwm_value[NUM_DEVICES][CHANNELS_PER_DEVICE];
-
-uint8_t pca9685_pin_lookup_value[NUM_DEVICES][CHANNELS_PER_DEVICE]; //Array to keep track of current lookup value index
 
 void PCA9685_Detect(void)
 {
@@ -410,15 +408,17 @@ bool Xdrv15(uint8_t function)
 /*
 * Sets the brightness from 0 to 255 using the CIE1931 lookup value
 */
-void PCA9685_LEDBrightness(uint8_t pin, uint8_t brightness)
+void PCA9685_LEDBrightness(uint8_t pin, uint8_t brightness, bool storeCurrentIndex = true)
 {
   uint16_t pwmValue = pgm_read_word_near(CIEL_8_12 + brightness);
   
   uint8_t deviceOffset = pin / CHANNELS_PER_DEVICE;
   uint8_t devicePin = pin - (deviceOffset * CHANNELS_PER_DEVICE);
 
-  pca9685_pin_lookup_value[deviceOffset][devicePin] = brightness;
-  PCA9685_SetPWM(pin, pwmValue);
+  PCA9685_SetPWM(pin, pwmValue, false);
+
+  if (storeCurrentIndex)
+      pca9685_pin_lookup_value[deviceOffset][devicePin] = brightness;
 }
 
 /*
@@ -434,19 +434,23 @@ void PCA9685_LEDFade(uint8_t pin, uint8_t target)
   if (currentIndex == target) //Nothing to change
     return;
   
-  now = millis();
   int step = 1;  //Fade up by default
   if (currentIndex > target) 
     step = -1;  //Fade down
   
-  for (int i = currentIndex+step; i != target+step; i+=step;)
+  uint32_t now = millis();
+  for (int i = currentIndex+step; i != target+step; i+=step)
   {
-    while (millis() < now + FADE_DELAY)
+    while (millis() < (now + FADE_DELAY))
     {
       yield();
     }
-    PCA9685_LEDBrightness(i);
+    PCA9685_LEDBrightness(pin, i, false);
+    now = millis();
   }
+
+  //Remember the last current setting
+  pca9685_pin_lookup_value[deviceOffset][devicePin] = target;
 }
 
 #endif // USE_PCA9685
