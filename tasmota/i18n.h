@@ -224,6 +224,7 @@
   #define D_STATUS10_SENSOR "SNS"
   #define D_STATUS11_STATUS "STS"
   #define D_STATUS12_STATUS "STK"
+  #define D_STATUS13_SHUTTER "SHT"
 #define D_CMND_STATE "State"
 #define D_CMND_POWER "Power"
 #define D_CMND_FANSPEED "FanSpeed"
