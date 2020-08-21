@@ -240,25 +240,54 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Power %s, now %d"), me->value, (int)  Energy.active_power[0]);
             }
 
+            // Wh total base index (legacy)
+            else if ( ilabel == LABEL_BASE)
+            {
+                uint32_t total = atoi(me->value);
+                if (!Settings.flag4.teleinfo_rawdata) { 
+                    EnergyUpdateTotal(total/1000.0f, true);  
+                }
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Base:%uWh"), total);
+            }
+
             // Wh indexes (legacy)
-            else if ( ilabel == LABEL_HCHC || ilabel == LABEL_HCHP)
+            else if ( ilabel == LABEL_HCHC || ilabel == LABEL_HCHP || ilabel == LABEL_BASE)
             {
                 char value[32];
                 uint32_t hc = 0;
                 uint32_t hp = 0;
                 uint32_t total = 0;
 
-                if ( getValueFromLabelIndex(LABEL_HCHC, value) ) { hc = atoi(value);}
-                if ( getValueFromLabelIndex(LABEL_HCHP, value) ) { hp = atoi(value);}
-                total = hc + hp;
+                // Base, un seul index
+                if (ilabel == LABEL_BASE) {
+                    total = atoi(me->value);
+                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%u"), total);
+                // Heures creuses/pleines calculer total
+                } else {
+                    // Heures creuses get heures pleines
+                    if (ilabel == LABEL_HCHC) {
+                        hc = atoi(me->value);
+                        if ( getValueFromLabelIndex(LABEL_HCHP, value) ) { 
+                            hp = atoi(value);
+                        }
+                    
+                    // Heures pleines, get heures creuses
+                    } else if (ilabel == LABEL_HCHP) {
+                        hp = atoi(me->value);
+                        if ( getValueFromLabelIndex(LABEL_HCHC, value) ) { 
+                            hc = atoi(value);
+                        }
+                    }
+                    total = hc + hp;
+                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u  HP:%u  Total:%u"), hc, hp, total);
+                }
 
                 if (!Settings.flag4.teleinfo_rawdata) { 
                     EnergyUpdateTotal(total/1000.0f, true);  
                 }
-                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u  HP:%u  Total:%u"), hc, hp, total);
             }
 
-            // Wh total index (standard)
+            // Wh total index (standard) 
             else if ( ilabel == LABEL_EAST)
             {
                 uint32_t total = atoi(me->value);
@@ -562,6 +591,10 @@ void TInfoShow(bool json)
         char name[32];
         char value[32];
 
+        if (getValueFromLabelIndex(LABEL_BASE, value) ) {
+            GetTextIndexed(name, sizeof(name), LABEL_BASE, kLabel);
+            WSContentSend_PD(HTTP_ENERGY_INDEX_TELEINFO, name, value);
+        }
         if (getValueFromLabelIndex(LABEL_HCHC, value) ) {
             GetTextIndexed(name, sizeof(name), LABEL_HCHC, kLabel);
             WSContentSend_PD(HTTP_ENERGY_INDEX_TELEINFO, name, value);
