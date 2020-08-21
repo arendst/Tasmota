@@ -62,6 +62,10 @@ void RtcSettingsLoad(void)
     RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
     RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
     RtcSettings.energy_usage = Settings.energy_usage;
+    for (uint32_t i = 0; i < 3; i++) {
+      RtcSettings.energy_kWhtoday_phase[i] = Settings.energy_kWhtoday_phase[i];
+      RtcSettings.energy_kWhtotal_phase[i] = Settings.energy_kWhtotal_phase[i];
+    }
     for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
       RtcSettings.pulse_counter[i] = Settings.pulse_counter[i];
     }
@@ -960,6 +964,9 @@ void SettingsDefaultSet2(void)
 //  Settings.energy_max_energy_start = 0;                           // MaxEnergyStart
 //  Settings.energy_kWhtotal = 0;
   RtcSettings.energy_kWhtotal = 0;
+  for (uint32_t i=0; i < 3; i++) {
+      RtcSettings.energy_kWhtotal_phase[i] = 0;
+  }
 //  memset((char*)&Settings.energy_usage, 0x00, sizeof(Settings.energy_usage));
   memset((char*)&RtcSettings.energy_usage, 0x00, sizeof(RtcSettings.energy_usage));
   Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;

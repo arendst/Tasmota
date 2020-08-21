@@ -614,8 +614,10 @@ struct {
 
   uint16_t      energy_power_delta[3];     // F44
 
-  uint8_t       free_f4e[106];             // F4A - Decrement if adding new Setting variables just above and below
-
+  uint8_t       free_f4e[70];              // F4A - Decrement if adding new Setting variables just above and below
+  unsigned long energy_kWhtoday_phase[3];     // power consumption for phases
+  unsigned long energy_kWhyesterday_phase[3]; // yesterday's power consumption for phases
+  unsigned long energy_kWhtotal_phase[3];     // total power consumption for phases
   // Only 32 bit boundary variables below
   SysBitfield5  flag5;                     // FB4
   uint16_t      pulse_counter_debounce_low;  // FB8
@@ -648,18 +650,18 @@ typedef struct {
   uint16_t      valid;                     // 290 (RTC memory offset 100)
   uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
-  unsigned long energy_kWhtoday;              // 294
-  unsigned long energy_kWhtotal;              // 298
-  unsigned long pulse_counter[MAX_COUNTERS];  // 29C
-  power_t       power;                     // 2AC
-  EnergyUsage   energy_usage;              // 2B0
-  unsigned long nextwakeup;                // 2C8
-  uint8_t       free_004[4];               // 2CC
-  uint32_t      ultradeepsleep;            // 2D0
-  uint16_t      deepsleep_slip;            // 2D4
+  unsigned long energy_kWhtoday;           // 294
+  unsigned long energy_kWhtotal;           // 298
+  unsigned long energy_kWhtoday_phase[3];  // 29C
+  unsigned long energy_kWhtotal_phase[3];  // 2A8
+  unsigned long pulse_counter[MAX_COUNTERS];  // 2B4
+  power_t       power;                     // 2C4
+  EnergyUsage   energy_usage;              // 2C8
+  unsigned long nextwakeup;                // 2E0
+  uint32_t      ultradeepsleep;            // 2E4
+  uint16_t      deepsleep_slip;            // 2E8
+  uint8_t       free_002[2];
 
-  uint8_t       free_022[22];              // 2D6
-                                           // 2EC - 2FF free locations
 } TRtcSettings;
 TRtcSettings RtcSettings;
 #ifdef ESP32

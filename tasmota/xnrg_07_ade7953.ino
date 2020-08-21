@@ -173,6 +173,8 @@ void Ade7953GetData(void)
       } else {
         Energy.current[channel] = (float)Ade7953.current_rms[channel] / (Settings.energy_current_calibration * 10);
       }
+
+      Energy.kWhtoday_delta_phase[channel] += ((Ade7953.active_power[channel] * (100000 / (Settings.energy_power_calibration / 10))) / 3600);
     }
   } else {  // Powered off
     Energy.data_valid[0] = ENERGY_WATCHDOG;
@@ -201,6 +203,7 @@ void Ade7953DrvInit(void)
 {
   if (PinUsed(GPIO_ADE7953_IRQ)) {               // Irq on GPIO16 is not supported...
     delay(100);                                   // Need 100mS to init ADE7953
+    Energy.separate_power_channels = true;
     if (I2cSetDevice(ADE7953_ADDR)) {
       if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
         Settings.energy_power_calibration = ADE7953_PREF;
