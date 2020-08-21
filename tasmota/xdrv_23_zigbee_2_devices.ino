@@ -582,7 +582,8 @@ uint8_t Z_Devices::findFirstEndpoint(uint16_t shortaddr) const {
 }
 
 void Z_Devices::setStringAttribute(char*& attr, const char * str) {
-  size_t str_len = str ? strlen(str) : 0;             // len, handle both null ptr and zero length string
+  if (nullptr == str)  { return; }                    // ignore a null parameter
+  size_t str_len = strlen(str);
 
   if ((nullptr == attr) && (0 == str_len)) { return; } // if both empty, don't do anything
   if (attr) {
