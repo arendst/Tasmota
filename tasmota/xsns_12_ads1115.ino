@@ -180,6 +180,17 @@ void Ads1115Detect(void)
   }
 }
 
+// Create the identifier of the the selected sensor
+void Ads1115Label(char* label, uint32_t maxsize, uint8_t address) {
+  if (1 == Ads1115.count) {
+    // "ADS1115":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
+    snprintf_P(label, maxsize, PSTR("ADS1115"));
+  } else {
+    // "ADS1115-48":{"A0":3240,"A1":3235,"A2":3269,"A3":3269},"ADS1115-49":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
+    snprintf_P(label, maxsize, PSTR("ADS1115%c%02x"), IndexSeparator(), address);
+  }
+}
+
 #ifdef USE_RULES
 // Check every 250ms if there are relevant changes in any of the analog inputs
 // and if so then trigger a message
@@ -208,13 +219,7 @@ void AdsEvery250ms(void)
       Ads1115.address = old_address;
       if (changed) {
         char label[15];
-        if (1 == Ads1115.count) {
-          // "ADS1115":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
-          snprintf_P(label, sizeof(label), PSTR("ADS1115"));
-        } else {
-          // "ADS1115-48":{"A0":3240,"A1":3235,"A2":3269,"A3":3269},"ADS1115-49":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
-          snprintf_P(label, sizeof(label), PSTR("ADS1115%c%02x"), IndexSeparator(), Ads1115.addresses[t]);
-        }
+        Ads1115Label(label, sizeof(label), Ads1115.addresses[t]);
 
         Response_P(PSTR("{\"%s\":{"), label);
 
@@ -252,13 +257,7 @@ void Ads1115Show(bool json)
       Ads1115.address = old_address;
 
       char label[15];
-      if (1 == Ads1115.count) {
-        // "ADS1115":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
-        snprintf_P(label, sizeof(label), PSTR("ADS1115"));
-      } else {
-        // "ADS1115-48":{"A0":3240,"A1":3235,"A2":3269,"A3":3269},"ADS1115-49":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
-        snprintf_P(label, sizeof(label), PSTR("ADS1115%c%02x"), IndexSeparator(), Ads1115.addresses[t]);
-      }
+      Ads1115Label(label, sizeof(label), Ads1115.addresses[t]);
 
       if (json) {
         ResponseAppend_P(PSTR(",\"%s\":{"), label);
