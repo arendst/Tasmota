@@ -180,6 +180,61 @@ void Ads1115Detect(void)
   }
 }
 
+#ifdef USE_RULES
+// Check every 250ms if there are relevant changes in any of the analog inputs
+// and if so then trigger a message
+void AdsEvery250ms(void)
+{
+  int16_t value;
+
+  for (uint32_t t = 0; t < sizeof(Ads1115.addresses); t++) {
+    if (Ads1115.found[t]) {
+
+      uint8_t old_address = Ads1115.address;
+      Ads1115.address = Ads1115.addresses[t];
+
+      // collect first wich addresses have changed. We can save on rule processing this way
+      uint32_t changed = 0;
+      for (uint32_t i = 0; i < 4; i++) {
+        value = Ads1115GetConversion(i);
+
+        // Check if value has changed more than 1 percent from last stored value
+        // we assume that gain is set up correctly, and we could use the whole 16bit result space
+        if (value >= Ads1115.last_values[t][i] + 327 || value <= Ads1115.last_values[t][i] - 327) {
+          Ads1115.last_values[t][i] = value;
+          bitSet(changed, i);
+        }
+      }
+      Ads1115.address = old_address;
+      if (changed) {
+        char label[15];
+        if (1 == Ads1115.count) {
+          // "ADS1115":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
+          snprintf_P(label, sizeof(label), PSTR("ADS1115"));
+        } else {
+          // "ADS1115-48":{"A0":3240,"A1":3235,"A2":3269,"A3":3269},"ADS1115-49":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
+          snprintf_P(label, sizeof(label), PSTR("ADS1115%c%02x"), IndexSeparator(), Ads1115.addresses[t]);
+        }
+
+        Response_P(PSTR("{\"%s\":{"), label);
+
+        bool first = true;
+        for (uint32_t i = 0; i < 4; i++) {
+          if (bitRead(changed, i)) {
+            ResponseAppend_P(PSTR("%s\"A%ddiv10\":%d"), (first) ? "" : ",", i, Ads1115.last_values[t][i]);
+            first = false;
+          }
+        }
+        ResponseJsonEndEnd();
+        
+        XdrvRulesProcess();
+      }
+      
+    }
+  }
+}
+#endif  // USE_RULES
+
 void Ads1115Show(bool json)
 {
   int16_t values[4];
@@ -209,13 +264,6 @@ void Ads1115Show(bool json)
         ResponseAppend_P(PSTR(",\"%s\":{"), label);
         for (uint32_t i = 0; i < 4; i++) {
           ResponseAppend_P(PSTR("%s\"A%d\":%d"), (0 == i) ? "" : ",", i, values[i]);
-
-          // Check if value has changed more than 1 percent from last stored value
-          // we assume that gain is set up correctly, and we could use the whole 16bit result space
-          if (values[i] >= Ads1115.last_values[t][i] + 327 || values[i] <= Ads1115.last_values[t][i] - 327) {
-            ResponseAppend_P(PSTR(",\"A%ddiv10\":%d"), i, values[i]);
-            Ads1115.last_values[t][i] = values[i];
-          }
         }
         ResponseJsonEnd();
       }
@@ -245,6 +293,11 @@ bool Xsns12(uint8_t function)
   }
   else if (Ads1115.count) {
     switch (function) {
+#ifdef USE_RULES
+      case FUNC_EVERY_250_MSECOND:
+        AdsEvery250ms();
+        break;
+#endif  // USE_RULES
       case FUNC_JSON_APPEND:
         Ads1115Show(1);
         break;
