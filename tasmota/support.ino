@@ -1222,7 +1222,7 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&internal_template, sizeof(mytmplt));
 
   uint32_t index = 0;
-  uint32_t size = sizeof(mycfgio);           // kmodule[module_template].gp
+  uint32_t size = sizeof(mycfgio);           // kmodules[module_template].gp
   switch (option) {
     case 2: {
       index = sizeof(internal_template) -1;  // kModules[module_template].flag
@@ -1230,7 +1230,7 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
       break;
     }
     case 3: {
-      size = sizeof(internal_template);      // kmodule[module_template]
+      size = sizeof(internal_template);      // kmodules[module_template]
       break;
     }
   }

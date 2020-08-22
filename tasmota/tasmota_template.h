@@ -943,10 +943,10 @@ enum SupportedTemplates8285 {
   TMP_TECKIN, TMP_APLIC_WDP303075, TMP_TUYA_DIMMER, TMP_GOSUND, TMP_ARMTRONIX_DIMMERS, TMP_SK03_TUYA, TMP_PS_16_DZ,
   TMP_TECKIN_US, TMP_MANZOKU_EU_4, TMP_OBI2, TMP_YTF_IR_BRIDGE, TMP_DIGOO, TMP_KA10, TMP_ZX2820, TMP_MI_DESK_LAMP, TMP_SP10,
   TMP_WAGA, TMP_SYF05, TMP_EXS_DIMMER, TMP_PWM_DIMMER, TMP_SONOFF_ZB_BRIDGE,
-  TMP_MAXMODULE };
+  TMP_MAXMODULE_8285 };
 
 enum SupportedTemplates8266 {
-  TMP_WEMOS = 200, TMP_SONOFF_4CH, TMP_SONOFF_T12, TMP_SONOFF_T13, TMP_SONOFF_DUAL_R2, TMP_SONOFF_IFAN03,
+  TMP_WEMOS = TMP_MAXMODULE_8285, TMP_SONOFF_4CH, TMP_SONOFF_T12, TMP_SONOFF_T13, TMP_SONOFF_DUAL_R2, TMP_SONOFF_IFAN03,
   TMP_MAXMODULE_8266 };
 
 const uint8_t kModuleTemplateList[MAXMODULE] PROGMEM = {
@@ -1031,7 +1031,7 @@ const uint8_t kModuleTemplateList[MAXMODULE] PROGMEM = {
  * Templates with 12 usable pins (ESP8266)
 \*********************************************************************************************/
 
-const mytmplt8266 kModules8266[TMP_MAXMODULE] PROGMEM = {
+const mytmplt8266 kModules8266[TMP_MAXMODULE_8285] PROGMEM = {
   {                            // SONOFF_BASIC - Sonoff Basic (ESP8266)
     AGPIO(GPIO_KEY1),          // GPIO00 Button
     AGPIO(GPIO_USER),          // GPIO01 Serial RXD and Optional sensor
