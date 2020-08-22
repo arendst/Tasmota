@@ -145,8 +145,8 @@ void MAX31865_Show(bool Json){
         dtostrfd(MAX31865_Result[i].PtdTemp, Settings.flag2.temperature_resolution, temperature);
 
         if(Json){
-          ResponseAppend_P(PSTR(",\"MAX31865(%d)\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RESISTANCE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
-            i, temperature, resistance, MAX31865_Result[i].ErrorCode);
+          ResponseAppend_P(PSTR(",\"MAX31865%c%d\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RESISTANCE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
+            IndexSeparator(), i, temperature, resistance, MAX31865_Result[i].ErrorCode);
 #ifdef USE_DOMOTICZ
           if (0 == tele_period) {
             DomoticzSensor(DZ_TEMP, temperature);
@@ -161,7 +161,7 @@ void MAX31865_Show(bool Json){
 #ifdef USE_WEBSERVER
         //TODO make sure this prints properly
           char sensorname[33];
-          sprintf(sensorname, "MAX31865(%d)",i);
+          sprintf(sensorname, "MAX31865%c%d",IndexSeparator(),i);
             WSContentSend_PD(HTTP_SNS_TEMP, sensorname, temperature, TempUnit());
 #endif  // USE_WEBSERVER
         }
