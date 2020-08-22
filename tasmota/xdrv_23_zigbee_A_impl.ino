@@ -1328,46 +1328,61 @@ void ZigbeeShow(bool json)
     const uint8_t px_lqi = (strlen(D_LQI) + 4) * 10;        // LQI 254   = 70px
 
     WSContentSend_P(PSTR("</table>{t}"));  // Terminate current two column table and open new table
-//    WSContentSend_P(PSTR("<tr><td colspan='2'>{t}"));  // Insert multi column table
-
-//    WSContentSend_PD(PSTR("{s}Device 0x1234</th><td style='width:30%%'>" D_BATT " 100%%</td><td style='width:20%%'>" D_LQI " 254{e}"));
-//    WSContentSend_PD(PSTR("{s}Device 0x1234</th><td style='width:100px'>" D_BATT " 100%%</td><td style='width:70px'>" D_LQI " 254{e}"));
-//    WSContentSend_PD(PSTR("{s}Device 0x1234</th><td style='width:%dpx'>" D_BATT " 100%%</td><td style='width:%dpx'>" D_LQI " 254{e}"), px_batt, px_lqi);
-
-    char sdevice[33];
-    char sbatt[20];
-    char slqi[20];
 
     for (uint32_t i = 0; i < zigbee_num; i++) {
-      uint16_t shortaddr = zigbee_devices.devicesAt(i).shortaddr;
-      char *name = (char*)zigbee_devices.getFriendlyName(shortaddr);
-      if (nullptr == name) {
-        snprintf_P(sdevice, sizeof(sdevice), PSTR(D_DEVICE " 0x%04X"), shortaddr);
-        name = sdevice;
+      const Z_Device &device = zigbee_devices.devicesAt(i);
+      uint16_t shortaddr = device.shortaddr;
+      {   // exxplicit scope to free up stack allocated strings
+        char *name = (char*) device.friendlyName;
+        char sdevice[33];
+        if (nullptr == name) {
+          snprintf_P(sdevice, sizeof(sdevice), PSTR(D_DEVICE " 0x%04X"), shortaddr);
+          name = sdevice;
+        }
+
+        char slqi[8];
+        snprintf_P(slqi, sizeof(slqi), PSTR("-"));
+        if (device.validLqi()) {
+          snprintf_P(slqi, sizeof(slqi), PSTR("%d"), device.lqi);
+        }
+
+        char sbatt[20];
+        snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
+        if (device.validBatteryPercent()) {
+          snprintf_P(sbatt, sizeof(sbatt), PSTR(D_BATT " %d%%"), device.batterypercent);
+        }
+
+        if (!i) {  // First row needs style info
+          WSContentSend_PD(PSTR("<tr><td><b>%s</b></td><td style='width:%dpx'>%s</td><td style='width:%dpx'>" D_LQI " %s{e}"),
+            name, px_batt, sbatt, px_lqi, slqi);
+        } else {   // Following rows don't need style info so reducing ajax package
+          WSContentSend_PD(PSTR("<tr><td><b>%s</b></td><td>%s</td><td>" D_LQI " %s{e}"), name, sbatt, slqi);
+        }
       }
 
-      snprintf_P(slqi, sizeof(slqi), PSTR("-"));
-      uint8_t lqi = zigbee_devices.getLQI(shortaddr);
-      if (0xFF != lqi) {
-        snprintf_P(slqi, sizeof(slqi), PSTR("%d"), lqi);
-      }
+      // Sensor
+      bool temperature_ok = device.validTemperature();
+      bool humidity_ok    = device.validHumidity();
+      bool pressure_ok    = device.validPressure();
 
-      snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
-      uint8_t bp = zigbee_devices.getBatteryPercent(shortaddr);
-      if (0xFF != bp) {
-        snprintf_P(sbatt, sizeof(sbatt), PSTR(D_BATT " %d%%"), bp);
-      }
-
-      if (!i) {  // First row needs style info
-        WSContentSend_PD(PSTR("{s}%s</th><td style='width:%dpx'>%s</td><td style='width:%dpx'>" D_LQI " %s{e}"),
-          name, px_batt, sbatt, px_lqi, slqi);
-      } else {   // Following rows don't need style info so reducing ajax package
-        WSContentSend_PD(PSTR("{s}%s{m}%s</td><td>" D_LQI " %s{e}"), name, sbatt, slqi);
+      if (temperature_ok || humidity_ok || pressure_ok) {
+        WSContentSend_P(PSTR("<tr><td colspan=\"3\">| "));
+        if (temperature_ok) {
+          char buf[12];
+          dtostrf(device.temperature / 10.0f, 3, 1, buf);
+          WSContentSend_PD(PSTR(" &nbsp;&#x2600;&#xFE0F;%s°C"), buf);
+        }
+        if (humidity_ok) {
+          WSContentSend_P(PSTR(" &nbsp;&#x1F4A7;%d%%"), device.humidity);
+        }
+        if (pressure_ok) {
+          WSContentSend_P(PSTR(" &nbsp;&#x26C5; %d hPa"), device.pressure);
+        }
+        WSContentSend_P(PSTR("{e}"));
       }
     }
 
     WSContentSend_P(PSTR("</table>{t}"));  // Terminate current multi column table and open new table
-//    WSContentSend_P(PSTR("</table>{e}"));  // Terminate multi column table
 #endif
   }
 }
