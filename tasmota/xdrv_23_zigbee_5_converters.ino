@@ -138,6 +138,7 @@ enum Z_ConvOperators {
   Z_AqaraSensor,        // decode prioprietary Aqara Sensor message
   Z_AqaraVibration,     // decode Aqara vibration modes
   Z_AqaraCube,          // decode Aqara cube
+  Z_AqaraButton,          // decode Aqara button
   Z_BatteryPercentage,  // memorize Battery Percentage in RAM
 };
 
@@ -315,6 +316,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint16,  Cx0012, 0x004A,  Z_(MultiInNumberOfStates),1,  Z_Nop },
   { Zbool,    Cx0012, 0x0051,  Z_(MultiInOutOfService),  1,  Z_Nop },
   { Zuint16,  Cx0012, 0x0055,  Z_(MultiInValue),         0,  Z_AqaraCube },
+  { Zuint16,  Cx0012, 0x0055,  Z_(MultiInValue),         0,  Z_AqaraButton },
   { Zenum8,   Cx0012, 0x0067,  Z_(MultiInReliability),   1,  Z_Nop },
   { Zmap8,    Cx0012, 0x006F,  Z_(MultiInStatusFlags),   1,  Z_Nop },
   { Zuint32,  Cx0012, 0x0100,  Z_(MultiInApplicationType),1,  Z_Nop },
@@ -1283,6 +1285,39 @@ int32_t Z_AqaraCubeFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObjec
   return 0;
 }
 
+// Aqara Button
+int32_t Z_AqaraButtonFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
+  const char * modelId_c = zigbee_devices.getModelId(shortaddr);  // null if unknown
+  String modelId((char*) modelId_c);
+
+  if (modelId.startsWith(F("lumi.remote"))) {   // only for Aqara button
+    int32_t val = value;
+    const __FlashStringHelper *aqara_click = F("click");
+    const __FlashStringHelper *aqara_action = F("action");
+
+    switch (val) {
+      case 0:
+        json[aqara_action] = F("hold");
+        break;
+      case 1:
+        json[aqara_click] = F("single");
+        break;
+      case 2:
+        json[aqara_click] = F("double");
+        break;
+      case 255:
+        json[aqara_action] = F("release");
+        break;
+      default:
+        json[aqara_action] = val;
+        break;
+    }
+    return 1;
+  }
+
+  return 0;
+}
+
 // Aqara Vibration Sensor - special proprietary attributes
 int32_t Z_AqaraVibrationFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
   //json[new_name] = value;
@@ -1437,6 +1472,9 @@ int32_t Z_ApplyConverter(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObje
       break;
     case Z_AqaraCube:
       func = &Z_AqaraCubeFunc;
+      break;
+    case Z_AqaraButton:
+      func = &Z_AqaraButtonFunc;
       break;
     case Z_BatteryPercentage:
       func = &Z_BatteryPercentageKeepFunc;
