@@ -1206,6 +1206,7 @@ String ModuleName(void)
   return AnyModuleName(Settings.module);
 }
 
+#ifdef ESP8266
 void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
   uint8_t module_template = pgm_read_byte(kModuleTemplateList + module);
 
@@ -1238,6 +1239,7 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
 
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)ptr, size);
 }
+#endif  // ESP8266
 
 void ModuleGpios(myio *gp)
 {
