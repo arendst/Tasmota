@@ -285,12 +285,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SPI_CLK),        // SPI Clk
   AGPIO(GPIO_SPI_CS),         // SPI Chip Select
   AGPIO(GPIO_SPI_DC),         // SPI Data Direction
+#endif
   AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output
   AGPIO(GPIO_SSPI_MOSI),      // Software SPI Master Output Client Input
   AGPIO(GPIO_SSPI_SCLK),      // Software SPI Serial Clock
   AGPIO(GPIO_SSPI_CS),        // Software SPI Chip Select
   AGPIO(GPIO_SSPI_DC),        // Software SPI Data or Command
-#endif
 #ifdef USE_DISPLAY
   AGPIO(GPIO_BACKLIGHT),      // Display backlight control
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset

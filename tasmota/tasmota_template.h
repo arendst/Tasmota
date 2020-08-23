@@ -445,12 +445,12 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SPI
   GPIO_SPI_CS,         // SPI Chip Select
   GPIO_SPI_DC,         // SPI Data Direction
+#endif
   GPIO_SSPI_MISO,      // Software SPI Master Input Client Output
   GPIO_SSPI_MOSI,      // Software SPI Master Output Client Input
   GPIO_SSPI_SCLK,      // Software SPI Serial Clock
   GPIO_SSPI_CS,        // Software SPI Chip Select
   GPIO_SSPI_DC,        // Software SPI Data or Command
-#endif
 #ifdef USE_DISPLAY
   GPIO_BACKLIGHT,      // Display backlight control
   GPIO_OLED_RESET,     // OLED Display Reset
