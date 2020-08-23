@@ -622,6 +622,7 @@
 #define D_SENSOR_MAX31855_CS   "MX31855 - CS"
 #define D_SENSOR_MAX31855_CLK  "MX31855 - CLK"
 #define D_SENSOR_MAX31855_DO   "MX31855 - DO"
+#define D_SENSOR_MAX31865_CS   "MX31865 CS"
 #define D_SENSOR_NRG_SEL       "HLWBL - SEL"  // Suffix "i"
 #define D_SENSOR_NRG_CF1       "HLWBL - CF1"
 #define D_SENSOR_HLW_CF        "HLW8012 - CF"
