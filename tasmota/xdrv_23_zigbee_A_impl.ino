@@ -978,6 +978,7 @@ void CmndZbName(void) {
     const char * friendlyName = zigbee_devices.getFriendlyName(shortaddr);
     Response_P(PSTR("{\"0x%04X\":{\"" D_JSON_ZIGBEE_NAME "\":\"%s\"}}"), shortaddr, friendlyName ? friendlyName : "");
   } else {
+    if (strlen(p) > 32) { p[32] = 0x00; }     // truncate to 32 chars max
     zigbee_devices.setFriendlyName(shortaddr, p);
     Response_P(PSTR("{\"0x%04X\":{\"" D_JSON_ZIGBEE_NAME "\":\"%s\"}}"), shortaddr, p);
   }
