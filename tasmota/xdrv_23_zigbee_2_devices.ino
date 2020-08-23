@@ -818,8 +818,8 @@ void CopyJsonVariant(JsonObject &to, const String &key, const JsonVariant &val) 
   to.remove(key);    // force remove to have metadata like LinkQuality at the end
 
   if (val.is<char*>()) {
-    String sval = val.as<String>();       // force a copy of the String value, avoiding crash
-    to.set(key, sval);
+    const char * sval = val.as<char*>();    // using char* forces a copy, and also captures 'null' values
+    to.set(key, (char*) sval);
   } else if (val.is<JsonArray>()) {
     JsonArray &nested_arr = to.createNestedArray(key);
     CopyJsonArray(nested_arr, val.as<JsonArray>());   // deep copy
