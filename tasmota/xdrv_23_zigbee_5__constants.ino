@@ -445,7 +445,7 @@ const char Z_strings[] PROGMEM =
   "AddScene" "\x00"
   "xxyyyyzz" "\x00"
   "StoreScene" "\x00"
-  "\x00";
+  ;
 
 
 enum Z_offsets {

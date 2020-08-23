@@ -626,6 +626,7 @@ public:
   void parseResponse(void);
   void parseClusterSpecificCommand(JsonObject& json, uint8_t offset = 0);
   void postProcessAttributes(uint16_t shortaddr, JsonObject& json);
+  void updateInternalAttributes(uint16_t shortaddr, JsonObject& json);
 
   inline void setGroupId(uint16_t groupid) {
     _groupaddr = groupid;
@@ -1224,7 +1225,7 @@ int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t clu
 
 // Aqara Cube
 int32_t Z_AqaraCubeFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
-  const char * modelId_c = zigbee_devices.getModelId(shortaddr);  // null if unknown
+  const char * modelId_c = zigbee_devices.findShortAddr(shortaddr).modelId;  // null if unknown
   String modelId((char*) modelId_c);
 
   if (modelId.startsWith(F("lumi.sensor_cube"))) {   // only for Aqara cube
@@ -1487,6 +1488,24 @@ int32_t Z_ApplyConverter(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObje
   return 1;  // Fix GCC 10.1 warning
 }
 
+// Scan all the final attributes and update any internal representation like sensors
+void ZCLFrame::updateInternalAttributes(uint16_t shortaddr, JsonObject& json) {
+  Z_Device & device = zigbee_devices.getShortAddr(shortaddr);
+  for (auto kv : json) {
+    String key_string = kv.key;
+    const char * key = key_string.c_str();
+    JsonVariant& value = kv.value;
+
+    if (key_string.equalsIgnoreCase(F("Temperature"))) {
+      device.temperature = value.as<float>() * 10 + 0.5f;
+    } else if (key_string.equalsIgnoreCase(F("Humidity"))) {
+      device.humidity = value.as<float>() + 0.5f;
+    } else if (key_string.equalsIgnoreCase(F("Pressure"))) {
+      device.pressure = value.as<float>() + 0.5f;
+    }
+  }
+}
+
 void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
   // source endpoint
   uint8_t src_ep = _srcendpoint;
@@ -1509,40 +1528,26 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
         suffix = strtoul(delimiter2+1, nullptr, 10);
       }
 
+      Z_Device & device = zigbee_devices.getShortAddr(shortaddr);
+      uint16_t val16 = value;     // call converter from JSonVariant to int only once
       // see if we need to update the Hue bulb status
       if ((cluster == 0x0006) && ((attribute == 0x0000) || (attribute == 0x8000))) {
         bool power = value;
-        zigbee_devices.updateHueState(shortaddr, &power, nullptr, nullptr, nullptr,
-                                        nullptr, nullptr, nullptr, nullptr, nullptr);
+        device.setPower(power);
       } else if ((cluster == 0x0008) && (attribute == 0x0000)) {
-        uint8_t dimmer = value;
-        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, &dimmer, nullptr,
-                                        nullptr, nullptr, nullptr, nullptr, nullptr);
+        device.dimmer = val16;
       } else if ((cluster == 0x0300) && (attribute == 0x0000)) {
-        uint16_t hue8 = value;
-        uint16_t hue = changeUIntScale(hue8, 0, 254, 0, 360);     // change range from 0..254 to 0..360
-        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
-                                        nullptr, &hue, nullptr, nullptr, nullptr);
+        device.hue = changeUIntScale(val16, 0, 254, 0, 360);     // change range from 0..254 to 0..360
       } else if ((cluster == 0x0300) && (attribute == 0x0001)) {
-        uint8_t sat = value;
-        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, &sat,
-                                        nullptr, nullptr, nullptr, nullptr, nullptr);
+        device.sat = val16;
       } else if ((cluster == 0x0300) && (attribute == 0x0003)) {
-        uint16_t x = value;
-        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
-                                        nullptr, nullptr, &x, nullptr, nullptr);
+        device.x = val16;
       } else if ((cluster == 0x0300) && (attribute == 0x0004)) {
-        uint16_t y = value;
-        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
-                                        nullptr, nullptr, nullptr, &y, nullptr), nullptr;
+        device.y = val16;
       } else if ((cluster == 0x0300) && (attribute == 0x0007)) {
-        uint16_t ct = value;
-        zigbee_devices.updateHueState(shortaddr, nullptr, nullptr, nullptr, nullptr,
-                                        &ct, nullptr, nullptr, nullptr, nullptr);
+        device.ct = val16;
       } else if ((cluster == 0x0300) && (attribute == 0x0008)) {
-        uint8_t colormode = value;
-        zigbee_devices.updateHueState(shortaddr, nullptr, &colormode, nullptr, nullptr,
-                                        nullptr, nullptr, nullptr, nullptr, nullptr);
+        device.colormode = val16;
       }
 
       // Iterate on filter
@@ -1557,11 +1562,6 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
             ((conv_attribute == attribute) || (conv_attribute == 0xFFFF)) ) {
           String new_name_str = (const __FlashStringHelper*) (Z_strings + pgm_read_word(&converter->name_offset));
           if (suffix > 1) { new_name_str += suffix; }   // append suffix number
-          // else if (Settings.flag4.zb_index_ep) {
-          //   if (zigbee_devices.countEndpoints(shortaddr) > 0) {
-          //     new_name_str += _srcendpoint;
-          //   }
-          // }
           // apply the transformation
           int32_t drop = Z_ApplyConverter(this, shortaddr, json, key, value, new_name_str, conv_cluster, conv_attribute, conv_multiplier, conv_cb);
           if (drop) {
@@ -1572,6 +1572,8 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
       }
     }
   }
+
+  updateInternalAttributes(shortaddr, json);
 }
 
 #endif // USE_ZIGBEE

@@ -1121,8 +1121,6 @@ enum ZCL_Global_Commands {
   ZCL_DISCOVER_ATTRIBUTES_RESPONSE = 0x0d
 };
 
-#define ZF(s) static const char ZS_ ## s[] PROGMEM = #s;
-#define Z(s)  ZS_ ## s
 #define Z_(s) Zo_ ## s
 
 // ZDP Enumeration, see Zigbee spec 2.4.5
