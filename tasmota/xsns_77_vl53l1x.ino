@@ -1,7 +1,7 @@
 /*
   xsns_77_vl53l1x.ino - VL53L1X
 
-  Copyright (C) 2018  Theo Arends and Rui Marinho
+  Copyright (C) 2018  Theo Arends, Rui Marinho and Johann Obermeier
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
