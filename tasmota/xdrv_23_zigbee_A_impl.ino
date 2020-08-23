@@ -1315,6 +1315,24 @@ void CmndZbConfig(void) {
  * Presentation
 \*********************************************************************************************/
 
+extern "C" {
+  int device_cmp(const void * a, const void * b) {
+    const Z_Device &dev_a = zigbee_devices.devicesAt(*(uint8_t*)a);
+    const Z_Device &dev_b = zigbee_devices.devicesAt(*(uint8_t*)b);
+    const char * fn_a = dev_a.friendlyName;
+    const char * fn_b = dev_b.friendlyName;
+
+    if (fn_a && fn_b) {
+      return strcasecmp(fn_a, fn_b);
+    } else if (!fn_a && !fn_b) {
+      return (int32_t)dev_a.shortaddr - (int32_t)dev_b.shortaddr;
+    } else {
+      if (fn_a) return -1;
+      return 1;
+    }
+  }
+}
+
 void ZigbeeShow(bool json)
 {
   if (json) {
@@ -1323,6 +1341,7 @@ void ZigbeeShow(bool json)
   } else {
     uint32_t zigbee_num = zigbee_devices.devicesSize();
     if (!zigbee_num) { return; }
+    if (zigbee_num > 255) { zigbee_num = 255; }
 
     // Calculate fixed column width for best visual result (Theos opinion)
     const uint8_t px_batt = (strlen(D_BATT) + 5 + 1) * 10;  // Batt 100% = 90px + 10px column separator
@@ -1330,8 +1349,15 @@ void ZigbeeShow(bool json)
 
     WSContentSend_P(PSTR("</table>{t}"));  // Terminate current two column table and open new table
 
+    // sort elements by name, then by id
+    uint8_t sorted_idx[zigbee_num];
     for (uint32_t i = 0; i < zigbee_num; i++) {
-      const Z_Device &device = zigbee_devices.devicesAt(i);
+      sorted_idx[i] = i;
+    }
+    qsort(sorted_idx, zigbee_num, sizeof(sorted_idx[0]), device_cmp);
+
+    for (uint32_t i = 0; i < zigbee_num; i++) {
+      const Z_Device &device = zigbee_devices.devicesAt(sorted_idx[i]);
       uint16_t shortaddr = device.shortaddr;
       {   // exxplicit scope to free up stack allocated strings
         char *name = (char*) device.friendlyName;
