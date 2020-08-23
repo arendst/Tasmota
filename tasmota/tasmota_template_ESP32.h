@@ -88,9 +88,7 @@ enum UserSelectablePins {
   GPIO_TXD, GPIO_RXD,                  // Serial interface
   GPIO_ROT1A, GPIO_ROT1B,              // Rotary switch
   GPIO_ADC_JOY,                        // Analog joystick
-
-  GPIO_SPARE1,                         // Spare GPIOs
-
+  GPIO_SSPI_MAX31865_CS1,              // MAX31865 Chip Select
   GPIO_HRE_CLOCK, GPIO_HRE_DATA,       // HR-E Water Meter
   GPIO_ADE7953_IRQ,                    // ADE7953 IRQ
   GPIO_SOLAXX1_TX, GPIO_SOLAXX1_RX,    // Solax Inverter Serial interface
@@ -138,11 +136,7 @@ enum UserSelectablePins {
   GPIO_LMT01,                          // LMT01 input counting pin
   GPIO_IEM3000_TX, GPIO_IEM3000_RX,    // IEM3000 Serial interface
   GPIO_ZIGBEE_RST,                     // Zigbee reset
-  GPIO_SSPI_MAX31865_CS1,              //MAX31865 CS selectable pin 1
-  GPIO_SSPI_MAX31865_CS2,              //MAX31865 CS selectable pin 2
-  GPIO_SSPI_MAX31865_CS3,              //MAX31865 CS selectable pin 3
-  GPIO_SSPI_MAX31865_CS4,              //MAX31865 CS selectable pin 4
-  GPIO_SSPI_MAX31865_CS5,              //MAX31865 CS selectable pin 5
+  GPIO_DYP_RX,
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -199,9 +193,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TXD "|" D_SENSOR_RXD "|"
   D_SENSOR_ROTARY "_a|" D_SENSOR_ROTARY "_b|"
   D_SENSOR_ADC_JOYSTICK "|"
-
-  "Spare1|"
-
+  D_SENSOR_MAX31865_CS "|"
   D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
   D_SENSOR_ADE7953_IRQ "|"
   D_SENSOR_SOLAXX1_TX "|" D_SENSOR_SOLAXX1_RX "|"
@@ -244,12 +236,13 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LMT01_PULSE "|"
   D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX "|"
   D_SENSOR_ZIGBEE_RST "|"
-  D_SENSOR_MAX31865_CS "1|" D_SENSOR_MAX31865_CS "2|" D_SENSOR_MAX31865_CS "3|" D_SENSOR_MAX31865_CS "4|" D_SENSOR_MAX31865_CS "5"
+  D_SENSOR_DYP_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
+#define MAX_MAX31865_CS  6
 #define MAX_WEBCAM_DATA  8
 #define MAX_WEBCAM_HSD   3
 
@@ -534,12 +527,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MAX31855CLK),    // MAX31855 Serial interface
   AGPIO(GPIO_MAX31855DO),     // MAX31855 Serial interface
 #endif
-#ifdef USE_MAX31865
-  AGPIO(GPIO_SSPI_MAX31865_CS1), //MAX31865 CS selectable pin 1
-  AGPIO(GPIO_SSPI_MAX31865_CS2), //MAX31865 CS selectable pin 2
-  AGPIO(GPIO_SSPI_MAX31865_CS3), //MAX31865 CS selectable pin 3
-  AGPIO(GPIO_SSPI_MAX31865_CS4), //MAX31865 CS selectable pin 4
-  AGPIO(GPIO_SSPI_MAX31865_CS5), //MAX31865 CS selectable pin 5
+#ifdef USE_MAX31855
+  AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865_CS,
 #endif
 #ifdef USE_HRE
   AGPIO(GPIO_HRE_CLOCK),
@@ -563,6 +552,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_HRXL
   AGPIO(GPIO_HRXL_RX),
+#endif
+#ifdef USE_DYP
+  AGPIO(GPIO_DYP_RX),
 #endif
 #ifdef USE_AS3935
   AGPIO(GPIO_AS3935),
