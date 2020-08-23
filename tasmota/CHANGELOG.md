@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.4.0.3 20200823
+
+- Add command ``PowerDelta1`` to ``PowerDelta3`` to trigger on up to three phases (#9134)
+
 ### 8.4.0.2 20200813
 
 - Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
