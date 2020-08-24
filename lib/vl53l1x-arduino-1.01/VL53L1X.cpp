@@ -42,10 +42,16 @@ bool VL53L1X::init(bool io_2v8)
   delayMicroseconds(100);
   writeReg(SOFT_RESET, 0x01);
 
+  // give it some time to boot; otherwise the sensor NACKs during the readReg()
+  // call below and the Arduino 101 doesn't seem to handle that well
+  delay(1);
+
   // VL53L1_poll_for_boot_completion() begin
 
   startTimeout();
-  while ((readReg(FIRMWARE__SYSTEM_STATUS) & 0x01) == 0)
+
+  // check last_status in case we still get a NACK to try to deal with it correctly
+  while ((readReg(FIRMWARE__SYSTEM_STATUS) & 0x01) == 0 || last_status != 0)
   {
     if (checkTimeoutExpired())
     {
@@ -675,7 +681,7 @@ void VL53L1X::getRangingData()
       break;
 
     case 6: // SIGMATHRESHOLDCHECK
-      ranging_data.range_status = SignalFail;
+      ranging_data.range_status = SigmaFail;
       break;
 
     case 7: // PHASECONSISTENCY
