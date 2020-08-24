@@ -1344,7 +1344,7 @@ void ZigbeeShow(bool json)
     if (zigbee_num > 255) { zigbee_num = 255; }
 
     // Calculate fixed column width for best visual result (Theos opinion)
-    const uint8_t px_batt = (strlen(D_BATT) + 5 + 1) * 10;  // Batt 100% = 90px + 10px column separator
+    const uint8_t px_batt = 30;                         // Battery icon is 20px, add 10px as separator
     const uint8_t px_lqi = (strlen(D_LQI) + 4) * 10;        // LQI 254   = 70px
 
     WSContentSend_P(PSTR("</table>{t}"));  // Terminate current two column table and open new table
@@ -1373,10 +1373,10 @@ void ZigbeeShow(bool json)
           snprintf_P(slqi, sizeof(slqi), PSTR("%d"), device.lqi);
         }
 
-        char sbatt[20];
+        char sbatt[64];
         snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
         if (device.validBatteryPercent()) {
-          snprintf_P(sbatt, sizeof(sbatt), PSTR(D_BATT " %d%%"), device.batterypercent);
+          snprintf_P(sbatt, sizeof(sbatt), PSTR("<i class=\"bt\" title=\"%d%%\" style=\"--bl:%dpx\"></i>"), device.batterypercent, changeUIntScale(device.batterypercent, 0, 100, 0, 14));
         }
 
         if (!i) {  // First row needs style info
