@@ -1038,6 +1038,16 @@ void ZCLFrame::parseReportAttributes(JsonObject& json, uint8_t offset) {
     }
     i += parseSingleAttribute(json, key, _payload, i);
   }
+
+  // Issue Philips outdoor motion sensor SML002, see https://github.com/Koenkk/zigbee2mqtt/issues/897
+  // The sensor expects the coordinator to send a Default Response to acknowledge the attribute reporting
+  if (0 == _frame_control.b.disable_def_resp) {
+    // the device expects a default response
+    SBuffer buf(2);
+    buf.add8(_cmd_id);
+    buf.add8(0x00);   // Status = OK
+    ZigbeeZCLSend_Raw(_srcaddr, 0x0000, 0x0000 /*cluster*/, _srcendpoint, ZCL_DEFAULT_RESPONSE, false /* not cluster specific */, _manuf_code, buf.getBuffer(), buf.len(), false /* noresponse */, zigbee_devices.getNextSeqNumber(_srcaddr));
+  }
 }
 
 // ZCL_READ_ATTRIBUTES
