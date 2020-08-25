@@ -13,6 +13,7 @@
 - Add virtual CT for 4 channels lights, emulating a 5th channel
 - Add support for DYP ME007 ultrasonic distance sensor by Janusz Kostorz (#9113)
 - Add Zigbee web gui widget for Temp/Humidity/Pressure sensors
+- Add Zigbee battery icon
 
 ### 8.4.0.1 20200730
 
