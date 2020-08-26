@@ -88,9 +88,7 @@ enum UserSelectablePins {
   GPIO_TXD, GPIO_RXD,                  // Serial interface
   GPIO_ROT1A, GPIO_ROT1B,              // Rotary switch
   GPIO_ADC_JOY,                        // Analog joystick
-
-  GPIO_SPARE1,                         // Spare GPIOs
-
+  GPIO_SSPI_MAX31865_CS1,              // MAX31865 Chip Select
   GPIO_HRE_CLOCK, GPIO_HRE_DATA,       // HR-E Water Meter
   GPIO_ADE7953_IRQ,                    // ADE7953 IRQ
   GPIO_SOLAXX1_TX, GPIO_SOLAXX1_RX,    // Solax Inverter Serial interface
@@ -195,9 +193,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TXD "|" D_SENSOR_RXD "|"
   D_SENSOR_ROTARY "_a|" D_SENSOR_ROTARY "_b|"
   D_SENSOR_ADC_JOYSTICK "|"
-
-  "Spare1|"
-
+  D_SENSOR_MAX31865_CS "|"
   D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
   D_SENSOR_ADE7953_IRQ "|"
   D_SENSOR_SOLAXX1_TX "|" D_SENSOR_SOLAXX1_RX "|"
@@ -246,6 +242,7 @@ const char kSensorNames[] PROGMEM =
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
+#define MAX_MAX31865_CS  6
 #define MAX_WEBCAM_DATA  8
 #define MAX_WEBCAM_HSD   3
 
@@ -288,12 +285,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SPI_CLK),        // SPI Clk
   AGPIO(GPIO_SPI_CS),         // SPI Chip Select
   AGPIO(GPIO_SPI_DC),         // SPI Data Direction
+#endif
   AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output
   AGPIO(GPIO_SSPI_MOSI),      // Software SPI Master Output Client Input
   AGPIO(GPIO_SSPI_SCLK),      // Software SPI Serial Clock
   AGPIO(GPIO_SSPI_CS),        // Software SPI Chip Select
   AGPIO(GPIO_SSPI_DC),        // Software SPI Data or Command
-#endif
 #ifdef USE_DISPLAY
   AGPIO(GPIO_BACKLIGHT),      // Display backlight control
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
@@ -529,6 +526,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MAX31855CS),     // MAX31855 Serial interface
   AGPIO(GPIO_MAX31855CLK),    // MAX31855 Serial interface
   AGPIO(GPIO_MAX31855DO),     // MAX31855 Serial interface
+#endif
+#ifdef USE_MAX31855
+  AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865_CS,
 #endif
 #ifdef USE_HRE
   AGPIO(GPIO_HRE_CLOCK),

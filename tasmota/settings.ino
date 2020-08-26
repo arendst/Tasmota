@@ -935,7 +935,9 @@ void SettingsDefaultSet2(void)
   flag3.dds2382_model |= ENERGY_DDS2382_MODE;
   flag3.hardware_energy_total |= ENERGY_HARDWARE_TOTALS;
   Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
-//  Settings.energy_power_delta = 0;
+//  Settings.energy_power_delta[0] = 0;
+//  Settings.energy_power_delta[1] = 0;
+//  Settings.energy_power_delta[2] = 0;
   Settings.energy_power_calibration = HLW_PREF_PULSE;
   Settings.energy_voltage_calibration = HLW_UREF_PULSE;
   Settings.energy_current_calibration = HLW_IREF_PULSE;
@@ -1346,7 +1348,7 @@ void SettingsDelta(void)
       Settings.ex_sbaudrate = 0;
 */
       Settings.flag3.fast_power_cycle_disable = 0;
-      Settings.energy_power_delta = Settings.ex_energy_power_delta;
+      Settings.ex2_energy_power_delta = Settings.ex_energy_power_delta;
       Settings.ex_energy_power_delta = 0;
     }
     if (Settings.version < 0x06060015) {
@@ -1502,6 +1504,11 @@ void SettingsDelta(void)
 #endif
     if (Settings.version < 0x08030106) {
       Settings.fallback_module = FALLBACK_MODULE;
+    }
+    if (Settings.version < 0x08040003) {
+      Settings.energy_power_delta[0] = Settings.ex2_energy_power_delta;
+      Settings.energy_power_delta[1] = 0;
+      Settings.energy_power_delta[2] = 0;
     }
 
     Settings.version = VERSION;

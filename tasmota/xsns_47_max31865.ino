@@ -19,10 +19,6 @@
 
 #ifdef USE_MAX31865
 
-#ifndef USE_SPI
-#error "MAX31865 requires USE_SPI enabled"
-#endif
-
 #include "Adafruit_MAX31865.h"
 
 #define XSNS_47              47

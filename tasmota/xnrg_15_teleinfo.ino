@@ -241,24 +241,43 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             }
 
             // Wh indexes (legacy)
-            else if ( ilabel == LABEL_HCHC || ilabel == LABEL_HCHP)
+            else if ( ilabel == LABEL_HCHC || ilabel == LABEL_HCHP || ilabel == LABEL_BASE)
             {
                 char value[32];
                 uint32_t hc = 0;
                 uint32_t hp = 0;
                 uint32_t total = 0;
 
-                if ( getValueFromLabelIndex(LABEL_HCHC, value) ) { hc = atoi(value);}
-                if ( getValueFromLabelIndex(LABEL_HCHP, value) ) { hp = atoi(value);}
-                total = hc + hp;
+                // Base, un seul index
+                if (ilabel == LABEL_BASE) {
+                    total = atoi(me->value);
+                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Base:%u"), total);
+                // Heures creuses/pleines calculer total
+                } else {
+                    // Heures creuses get heures pleines
+                    if (ilabel == LABEL_HCHC) {
+                        hc = atoi(me->value);
+                        if ( getValueFromLabelIndex(LABEL_HCHP, value) ) { 
+                            hp = atoi(value);
+                        }
+                    
+                    // Heures pleines, get heures creuses
+                    } else if (ilabel == LABEL_HCHP) {
+                        hp = atoi(me->value);
+                        if ( getValueFromLabelIndex(LABEL_HCHC, value) ) { 
+                            hc = atoi(value);
+                        }
+                    }
+                    total = hc + hp;
+                    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u  HP:%u  Total:%u"), hc, hp, total);
+                }
 
                 if (!Settings.flag4.teleinfo_rawdata) { 
                     EnergyUpdateTotal(total/1000.0f, true);  
                 }
-                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u  HP:%u  Total:%u"), hc, hp, total);
             }
 
-            // Wh total index (standard)
+            // Wh total index (standard) 
             else if ( ilabel == LABEL_EAST)
             {
                 uint32_t total = atoi(me->value);
@@ -322,15 +341,14 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
 /* ======================================================================
 Function: responseDumpTInfo 
 Purpose : add teleinfo values into JSON response
-Input   : -
+Input   : 1st separator space if begining of JSON, else comma
 Output  : - 
 Comments: -
 ====================================================================== */
-void ResponseAppendTInfo()
+void ResponseAppendTInfo(char sep)
 {
     struct _ValueList * me = tinfo.getList();
 
-    char sep = ' '; // First JSON value separator
     char * p ;
     boolean isNumber ;
 
@@ -387,7 +405,7 @@ void NewFrameCallback(struct _ValueList * me)
     // see setOption108
     if (Settings.flag4.teleinfo_rawdata) { 
         Response_P(PSTR("{"));
-        ResponseAppendTInfo();
+        ResponseAppendTInfo(' ');
         ResponseJsonEnd();
         // Publish adding ADCO serial number into the topic
         // Need setOption4 to be enabled
@@ -419,8 +437,6 @@ Comments: -
 void TInfoInit(void)
 {
     int baudrate;
-
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: inferface saved settings %d bps"), Settings.flag4.teleinfo_baudrate );
 
     // SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
     if (Settings.flag4.teleinfo_baudrate) { 
@@ -467,8 +483,9 @@ void TInfoInit(void)
                 // This is a hack, looks like begin does not take into account
                 // the TS_SERIAL_7E1 configuration so on ESP8266 this is 
                 // working only on Serial RX pin (Hardware Serial) for now
-                SetSerialConfig(TS_SERIAL_7E1);
-                TInfoSerial->setTimeout(TINFO_READ_TIMEOUT);
+                
+                //SetSerialConfig(TS_SERIAL_7E1);
+                //TInfoSerial->setTimeout(TINFO_READ_TIMEOUT);
 
                 AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: using hardware serial"));
             } else {
@@ -513,7 +530,7 @@ void TInfoEvery250ms(void)
             // get char
             c = TInfoSerial->read();
             // data processing
-            tinfo.process(c);
+            tinfo.process(c & 0x7F);
         }
     }
 }
@@ -551,7 +568,7 @@ void TInfoShow(bool json)
 
         // add teleinfo full frame only if no teleinfo raw data setup
         if (!Settings.flag4.teleinfo_rawdata) { 
-            ResponseAppendTInfo();
+            ResponseAppendTInfo(',');
         }
 
 
@@ -562,6 +579,10 @@ void TInfoShow(bool json)
         char name[32];
         char value[32];
 
+        if (getValueFromLabelIndex(LABEL_BASE, value) ) {
+            GetTextIndexed(name, sizeof(name), LABEL_BASE, kLabel);
+            WSContentSend_PD(HTTP_ENERGY_INDEX_TELEINFO, name, value);
+        }
         if (getValueFromLabelIndex(LABEL_HCHC, value) ) {
             GetTextIndexed(name, sizeof(name), LABEL_HCHC, kLabel);
             WSContentSend_PD(HTTP_ENERGY_INDEX_TELEINFO, name, value);
@@ -602,8 +623,10 @@ void TInfoShow(bool json)
             }
         }
 
-        // Serial number ADCO or ADSC
-        WSContentSend_PD(HTTP_ENERGY_ID_TELEINFO, serialNumber);
+        // Serial number ADCO or ADSC if found
+        if (*serialNumber) {
+            WSContentSend_PD(HTTP_ENERGY_ID_TELEINFO, serialNumber);
+        }
 
 #endif  // USE_WEBSERVER
     }

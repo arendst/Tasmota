@@ -538,9 +538,9 @@ void CmndStatus(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_MARGIN_DETECTION)
   if (energy_flg) {
     if ((0 == payload) || (9 == payload)) {
-      Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERDELTA "\":%d,\"" D_CMND_POWERLOW "\":%d,\"" D_CMND_POWERHIGH "\":%d,\""
+      Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERDELTA "\":[%d,%d,%d],\"" D_CMND_POWERLOW "\":%d,\"" D_CMND_POWERHIGH "\":%d,\""
                             D_CMND_VOLTAGELOW "\":%d,\"" D_CMND_VOLTAGEHIGH "\":%d,\"" D_CMND_CURRENTLOW "\":%d,\"" D_CMND_CURRENTHIGH "\":%d}}"),
-                            Settings.energy_power_delta, Settings.energy_min_power, Settings.energy_max_power,
+                            Settings.energy_power_delta[0], Settings.energy_power_delta[1], Settings.energy_power_delta[2], Settings.energy_min_power, Settings.energy_max_power,
                             Settings.energy_min_voltage, Settings.energy_max_voltage, Settings.energy_min_current, Settings.energy_max_current);
       MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "9"));
     }
@@ -573,6 +573,26 @@ void CmndStatus(void)
       MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "12"));
     }
   }
+
+#ifdef USE_SHUTTER
+  if (Settings.flag3.shutter_mode) {
+    if ((0 == payload) || (13 == payload)) {
+      Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS13_SHUTTER "\":"));
+      for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
+        if (0 == Settings.shutter_startrelay[i]) { break; }
+        if (i > 0) { ResponseAppend_P(PSTR(",")); }
+        ResponseAppend_P(PSTR("{\"" D_STATUS13_SHUTTER "%d\":{\"Relay1\":%d,\"Relay2\":%d,\"Open\":%d,\"Close\":%d,"
+                                    "\"50perc\":%d,\"Delay\":%d,\"Opt\":\"%s\","
+                                    "\"Calib\":\"%d:%d:%d:%d:%d\"}"),
+                                    i, Settings.shutter_startrelay[i], Settings.shutter_startrelay[i] +1, Settings.shutter_opentime[i], Settings.shutter_closetime[i],
+                                    Settings.shutter_set50percent[i], Settings.shutter_motordelay[i], GetBinary(&Settings.shutter_options[i], 4).c_str(),
+                                    Settings.shuttercoeff[0][i], Settings.shuttercoeff[1][i], Settings.shuttercoeff[2][i], Settings.shuttercoeff[3][i], Settings.shuttercoeff[4][i]);
+      }
+      ResponseJsonEnd();
+      MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "13"));
+    }
+  }
+#endif
 
 #ifdef USE_SCRIPT_STATUS
   if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">U",2,mqtt_data);
