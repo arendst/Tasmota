@@ -3,6 +3,7 @@
 ### 8.4.0.3 20200823
 
 - Add command ``PowerDelta1`` to ``PowerDelta3`` to trigger on up to three phases (#9134)
+- Add Zigbee web ui widget for Lights
 
 ### 8.4.0.2 20200813
 

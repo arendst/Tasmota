@@ -1348,6 +1348,7 @@ void ZigbeeShow(bool json)
     const uint8_t px_lqi = (strlen(D_LQI) + 4) * 10;        // LQI 254   = 70px
 
     WSContentSend_P(PSTR("</table>{t}"));  // Terminate current two column table and open new table
+    WSContentSend_P(PSTR("<style>.bx{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}</style>"));
 
     // sort elements by name, then by id
     uint8_t sorted_idx[zigbee_num];
@@ -1393,19 +1394,44 @@ void ZigbeeShow(bool json)
       bool pressure_ok    = device.validPressure();
 
       if (temperature_ok || humidity_ok || pressure_ok) {
-        WSContentSend_P(PSTR("<tr><td colspan=\"3\">| "));
+        WSContentSend_P(PSTR("<tr><td colspan=\"3\">&#9478;"));
         if (temperature_ok) {
           char buf[12];
           dtostrf(device.temperature / 10.0f, 3, 1, buf);
-          WSContentSend_PD(PSTR(" &nbsp;&#x2600;&#xFE0F;%s°C"), buf);
+          WSContentSend_PD(PSTR(" &#x2600;&#xFE0F;%s°C"), buf);
         }
         if (humidity_ok) {
-          WSContentSend_P(PSTR(" &nbsp;&#x1F4A7;%d%%"), device.humidity);
+          WSContentSend_P(PSTR(" &#x1F4A7;%d%%"), device.humidity);
         }
         if (pressure_ok) {
-          WSContentSend_P(PSTR(" &nbsp;&#x26C5; %d hPa"), device.pressure);
+          WSContentSend_P(PSTR(" &#x26C5; %d hPa"), device.pressure);
         }
         WSContentSend_P(PSTR("{e}"));
+      }
+
+      // Light and switches
+      bool power_ok = device.validPower();
+      if (power_ok) {
+        uint8_t channels = device.getLightChannels();
+        if (0xFF == channels) { channels = 5; }     // if number of channel is unknown, display all known attributes
+        WSContentSend_P(PSTR("<tr><td colspan=\"3\">&#9478; %s"), device.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
+        if (device.validDimmer() && (channels >= 1)) {
+          WSContentSend_P(PSTR(" &#128261;%d%%"), changeUIntScale(device.dimmer,0,254,0,100));
+        }
+        if (device.validCT() && ((channels == 2) || (channels == 5))) {
+          uint32_t ct_k = (((1000000 / device.ct) + 25) / 50) * 50;
+          WSContentSend_P(PSTR(" <span title=\"CT %d\"><small>&#9898; </small>%dK</span>"), device.ct, ct_k);
+        }
+        if (device.validHue() && device.validSat() && (channels >= 3)) {
+          uint8_t r,g,b;
+          uint8_t sat = changeUIntScale(device.sat, 0, 254, 0, 255);    // scale to 0..255
+          LightStateClass::HsToRgb(device.hue, sat, &r, &g, &b);
+          WSContentSend_P(PSTR(" <i class=\"bx\" style=\"--cl:#%02X%02X%02X\"></i>#%02X%02X%02X"), r,g,b,r,g,b);
+        } else if (device.validX() && device.validY() && (channels >= 3)) {
+          uint8_t r,g,b;
+          LightStateClass::XyToRgb(device.x / 65535.0f, device.y / 65535.0f, &r, &g, &b);
+          WSContentSend_P(PSTR(" <i class=\"bx\" style=\"--cl:#%02X%02X%02X\"></i> #%02X%02X%02X"), r,g,b,r,g,b);
+        }
       }
     }
 
