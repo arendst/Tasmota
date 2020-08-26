@@ -39,7 +39,7 @@ uint16_t vl53l1x_distance = 0;
 /********************************************************************************************/
 
 void Vl53l1Detect(void) {
-  if (!I2cSetDevice(0x52)) { return; }
+  if (!I2cSetDevice(0x29)) { return; }
 
   if (!sensor.init()) { return; }
 
