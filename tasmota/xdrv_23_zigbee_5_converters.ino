@@ -136,9 +136,10 @@ enum Z_ConvOperators {
   Z_ManufKeep,          // copy and record Manufacturer attribute
   Z_ModelKeep,          // copy and record ModelId attribute
   Z_AqaraSensor,        // decode prioprietary Aqara Sensor message
+  Z_AqaraSensor2,       // decode prioprietary Aqara Sensor message V2
   Z_AqaraVibration,     // decode Aqara vibration modes
   Z_AqaraCube,          // decode Aqara cube
-  Z_AqaraButton,          // decode Aqara button
+  Z_AqaraButton,        // decode Aqara button
   Z_BatteryPercentage,  // memorize Battery Percentage in RAM
 };
 
@@ -159,7 +160,8 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zstring,  Cx0000, 0x4000,  Z_(SWBuildID),            1,  Z_Nop },
   // { Zunk,     Cx0000, 0xFFFF,  nullptr,                 0,  Z_Nop },    // Remove all other values
   // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
-  { Zmap8,    Cx0000, 0xFF01,  Z_(),                     0,  Z_AqaraSensor },    // Occupancy (map8)
+  { Zmap8,    Cx0000, 0xFF01,  Z_(),                     0,  Z_AqaraSensor },
+  { Zmap8,    Cx0000, 0xFF02,  Z_(),                     0,  Z_AqaraSensor2 },
 
   // Power Configuration cluster
   { Zuint16,  Cx0001, 0x0000,  Z_(MainsVoltage),         1,  Z_Nop },
@@ -909,6 +911,24 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
       // i += buf.get8(i) + 1;
       break;
 
+    case Zstruct:
+      {
+        uint16_t struct_size = buf.get16(i);
+        len = 2;
+        if (0xFFFF != struct_size) {
+          if (struct_size > 16) { struct_size = 16; }
+          // parse inner attributes - supports only fixed length for now
+          for (uint32_t j = 0; j < struct_size; j++) {
+            uint8_t attr_type = buf.get8(i+len);
+            len += Z_getDatatypeLen(attr_type) + 1;
+          }
+        char hex[2*len+1];
+        ToHex_P(buf.buf(i), len, hex, sizeof(hex));
+        json[attrid_str] = hex;
+        }
+      }
+      break;
+
     case Zdata8:      // data8
     case Zmap8:      // map8
       {
@@ -1017,6 +1037,16 @@ void ZCLFrame::parseReportAttributes(JsonObject& json, uint8_t offset) {
       }
     }
     i += parseSingleAttribute(json, key, _payload, i);
+  }
+
+  // Issue Philips outdoor motion sensor SML002, see https://github.com/Koenkk/zigbee2mqtt/issues/897
+  // The sensor expects the coordinator to send a Default Response to acknowledge the attribute reporting
+  if (0 == _frame_control.b.disable_def_resp) {
+    // the device expects a default response
+    SBuffer buf(2);
+    buf.add8(_cmd_id);
+    buf.add8(0x00);   // Status = OK
+    ZigbeeZCLSend_Raw(_srcaddr, 0x0000, 0x0000 /*cluster*/, _srcendpoint, ZCL_DEFAULT_RESPONSE, false /* not cluster specific */, _manuf_code, buf.getBuffer(), buf.len(), false /* noresponse */, zigbee_devices.getNextSeqNumber(_srcaddr));
   }
 }
 
@@ -1378,7 +1408,6 @@ int32_t Z_AqaraSensorFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObj
   uint32_t len = buf2.len();
   char tmp[] = "tmp";   // for obscure reasons, it must be converted from const char* to char*, otherwise ArduinoJson gets confused
 
-  JsonVariant sub_value;
   const char * modelId_c = zigbee_devices.getModelId(shortaddr);  // null if unknown
   String modelId((char*) modelId_c);
 
@@ -1435,6 +1464,35 @@ int32_t Z_AqaraSensorFunc(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObj
   }
   return 1;   // remove original key
 }
+
+int32_t Z_AqaraSensorFunc2(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const String &new_name, uint16_t cluster, uint16_t attr) {
+  String hex = value;
+  SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
+  uint32_t i = 0;
+  uint32_t len = buf2.len();
+
+  // Look for battery value which is the first attribute of type 0x21
+  uint16_t struct_size = buf2.get16(0);
+  size_t struct_len = 2;
+  if (0xFFFF != struct_size) {
+    if (struct_size > 16) { struct_size = 16; }
+    for (uint32_t j = 0; (j < struct_size) && (struct_len < len); j++) {
+      uint8_t attr_type = buf2.get8(struct_len);
+      if (0x21 == attr_type) {
+        uint16_t val = buf2.get16(struct_len+1);
+        float batteryvoltage = val / 1000.0f;
+        json[F("BatteryVoltage")] = batteryvoltage;
+        uint8_t batterypercentage = toPercentageCR2032(val);
+        json[F("BatteryPercentage")] = batterypercentage;
+        zigbee_devices.setBatteryPercent(shortaddr, batterypercentage);
+        break;
+      }
+      struct_len += Z_getDatatypeLen(attr_type) + 1;
+    }
+  }
+
+  return 0;   // remove original key
+}
 // ======================================================================
 
 // apply the transformation from the converter
@@ -1467,6 +1525,9 @@ int32_t Z_ApplyConverter(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObje
       break;
     case Z_AqaraSensor:
       func = &Z_AqaraSensorFunc;
+      break;
+    case Z_AqaraSensor2:
+      func = &Z_AqaraSensorFunc2;
       break;
     case Z_AqaraVibration:
       func = &Z_AqaraVibrationFunc;

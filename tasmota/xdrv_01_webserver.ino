@@ -620,6 +620,38 @@ const char HTTP_HEAD_STYLE2[] PROGMEM =
   ".r{border-radius:0.3em;padding:2px;margin:6px 2px;}";
 #endif //USE_UNISHOX_COMPRESSION
 
+#ifdef USE_ZIGBEE
+// Styles used for Zigbee Web UI
+// Battery icon from https://css.gg/battery
+//
+#ifdef USE_UNISHOX_COMPRESSION
+
+const size_t HTTP_HEAD_STYLE_ZIGBEE_SIZE = 363;
+const char HTTP_HEAD_STYLE_ZIGBEE_COMPRESSED[] PROGMEM = "\x3A\x0E\xA3\xDA\x3B\x0D\x87\x5F\xB4\xDB\xBC\x3C\x79\x8E\xCF\x88\xFE\x75\x8E\xC3"
+                             "\x61\xE0\x66\x7B\x6B\x73\x8F\x3F\xB0\xAE\xB4\xCD\x9E\x04\xDF\x0C\x0A\xCC\x8F\x3D"
+                             "\xE0\xB7\x99\xD6\x38\x2C\x0C\xD0\xF0\x3F\xA2\x50\xA3\xCC\xE5\x32\x18\x6C\x3C\x0A"
+                             "\x7A\x3C\x2A\x2B\x8F\x33\x92\x88\x61\xB0\xF0\x08\x39\x29\xE6\x72\x88\x61\xB1\x7B"
+                             "\x02\xD1\x01\x0A\x69\xD7\xFB\x13\x45\xF8\xF3\x39\x64\x30\xD8\x78\x1B\x7F\x1E\xDE"
+                             "\x3A\xC2\x66\x28\xF3\x3A\xCE\x59\x0C\x36\x1E\xE3\xA0\xEA\x3C\xCF\x3B\x31\x4F\xE7"
+                             "\x51\xD0\x75\x1E\x67\x98\xE6\x63\x3E\xCF\x68\x79\xD4\xFA\x8F\x33\xD8\x7B\x01\x13"
+                             "\x5E\x04\x1D\x5C\x16\xB8\x14\xB1\xDE\xC0\x85\xD3\x04\x3D\xD0\xE7\x10\xC3\x61\xE0"
+                             "\x75\x86\x68\x3D\xFC\x17\xC2\x1E\x61\x8B\xFF\xDF\x51\x07\x81\x67\xCF\x15\x83\x0F"
+                             "\x33\x90\x81\x0F\x5F\x04\x2D\x53\xFA\x3C\x2A\x2B\x8F\x33\xAC\xE6\x10\x22\x70\x54"
+                             "\x08\xFC\x0C\x82\x0F\x0A\x67\x30\x81\x23\x81\x23\xDA\x08\x34\x4C\xEF\xE7\x74\xEB"
+                             "\x3A\xC7\x04\x75\x1C\x98\x43\x0D\x87\x78\xF0\x13\x31\x47\x99\xC8\x43\x0D\x87\xB8";
+                             
+// Raw: .bt{box-sizing:border-box;position:relative;display:inline-block;width:20px;height:12px;border:2px solid;border-radius:3px;margin-left:-3px}.bt::after,.bt::before{content:"";display:block;box-sizing:border-box;position:absolute;height:6px;background:currentColor;top:1px}.bt::before{right:-4px;border-radius:3px;width:4px}.bt::after{width:var(--bl,14px);left:1px}
+// Successfully compressed from 363 to 240 bytes (-33.9%)
+#define  HTTP_HEAD_STYLE_ZIGBEE       Decompress(HTTP_HEAD_STYLE_ZIGBEE_COMPRESSED,HTTP_HEAD_STYLE_ZIGBEE_SIZE).c_str()
+#else // USE_UNISHOX_COMPRESSION
+const char HTTP_HEAD_STYLE_ZIGBEE[] PROGMEM = 
+  ".bt{box-sizing:border-box;position:relative;display:inline-block;width:20px;height:12px;border:2px solid;border-radius:3px;margin-left:-3px}"
+  ".bt::after,.bt::before{content:\"\";display:block;box-sizing:border-box;position:absolute;height:6px;background:currentColor;top:1px}"
+  ".bt::before{right:-4px;border-radius:3px;width:4px}"
+  ".bt::after{width:var(--bl,14px);left:1px}";
+#endif // USE_UNISHOX_COMPRESSION
+#endif // USE_ZIGBEE
+
 const char HTTP_HEAD_STYLE3[] PROGMEM =
   "</style>"
 
@@ -1113,6 +1145,9 @@ void WSContentSendStyle_P(const char* formatP, ...)
   WSContentSend_P(HTTP_HEAD_STYLE2, WebColor(COL_BUTTON), WebColor(COL_BUTTON_TEXT), WebColor(COL_BUTTON_HOVER),
                   WebColor(COL_BUTTON_RESET), WebColor(COL_BUTTON_RESET_HOVER), WebColor(COL_BUTTON_SAVE), WebColor(COL_BUTTON_SAVE_HOVER),
                   WebColor(COL_BUTTON));
+#ifdef USE_ZIGBEE
+  WSContentSend_P(HTTP_HEAD_STYLE_ZIGBEE);
+#endif // USE_ZIGBEE
   if (formatP != nullptr) {
     // This uses char strings. Be aware of sending %% if % is needed
     va_list arg;

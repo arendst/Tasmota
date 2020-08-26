@@ -53,7 +53,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.4.0.2
+### Version 8.4.0.3
 
 - Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
 - Change White blend mode moved to using ``SetOption 105`` instead of ``RGBWWTable``
@@ -63,6 +63,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)
 - Add ESP32 Analog input support for GPIO32 to GPIO39
 - Add Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
+- Add Zigbee web gui widget for Temp/Humidity/Pressure sensors
 - Add better config corruption recovery (#9046)
 - Add virtual CT for 4 channels lights, emulating a 5th channel
 - Add support for DYP ME007 ultrasonic distance sensor by Janusz Kostorz (#9113)
+- Add command ``PowerDelta1`` to ``PowerDelta3`` to trigger on up to three phases (#9134)

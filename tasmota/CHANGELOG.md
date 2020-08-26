@@ -1,5 +1,10 @@
 ## Unreleased (development)
 
+### 8.4.0.3 20200823
+
+- Add command ``PowerDelta1`` to ``PowerDelta3`` to trigger on up to three phases (#9134)
+- Add Zigbee web ui widget for Lights
+
 ### 8.4.0.2 20200813
 
 - Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
@@ -9,6 +14,7 @@
 - Add virtual CT for 4 channels lights, emulating a 5th channel
 - Add support for DYP ME007 ultrasonic distance sensor by Janusz Kostorz (#9113)
 - Add Zigbee web gui widget for Temp/Humidity/Pressure sensors
+- Add Zigbee battery icon
 
 ### 8.4.0.1 20200730
 
