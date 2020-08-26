@@ -146,6 +146,14 @@ public:
   inline bool getReachable(void)        const { return bitRead(power, 7); }
   inline void setPower(bool power_on)         { bitWrite(power, 0, power_on); bitWrite(power, 1, false); }
   inline bool getPower(void)            const { return bitRead(power, 0); }
+
+  // If light, returns the number of channels, or 0xFF if unknown
+  uint8_t getLightChannels(void)        const {
+    if ((zb_profile & 0xF0) == 0x00) {
+      return zb_profile & 0x07;
+    }
+    return 0xFF;
+  }
 };
 
 /*********************************************************************************************\
@@ -682,21 +690,21 @@ void Z_Devices::updateZbProfile(uint16_t shortaddr) {
     {
       uint32_t channels = zb_profile & 0x07;
       // depending on the bulb type, the default parameters from unknown to credible defaults
-      if (!device.validPower()) { device.setPower(false); }
-      if (1 <= channels) {
-        if (0xFF == device.dimmer) { device.dimmer = 0; }
-      }
-      if (3 <= channels) {
-        if (0xFF == device.sat) { device.sat = 0; }
-        if (0xFFFF == device.hue) { device.hue = 0; }
-        if (0xFFFF == device.x) { device.x = 0; }
-        if (0xFFFF == device.y) { device.y = 0; }
-        if (0xFF == device.colormode) { device.colormode = 0; }   // HueSat mode
-      }
-      if ((2 == channels) || (5 == channels)) {
-        if (0xFFFF == device.ct) { device.ct = 200; }
-        if (0xFF == device.colormode) { device.colormode = 2; }   // CT mode
-      }
+      // if (!device.validPower()) { device.setPower(false); }
+      // if (1 <= channels) {
+      //   if (0xFF == device.dimmer) { device.dimmer = 0; }
+      // }
+      // if (3 <= channels) {
+      //   if (0xFF == device.sat) { device.sat = 0; }
+      //   if (0xFFFF == device.hue) { device.hue = 0; }
+      //   if (0xFFFF == device.x) { device.x = 0; }
+      //   if (0xFFFF == device.y) { device.y = 0; }
+      //   if (0xFF == device.colormode) { device.colormode = 0; }   // HueSat mode
+      // }
+      // if ((2 == channels) || (5 == channels)) {
+      //   if (0xFFFF == device.ct) { device.ct = 200; }
+      //   if (0xFF == device.colormode) { device.colormode = 2; }   // CT mode
+      // }
     }
     break;
   }
