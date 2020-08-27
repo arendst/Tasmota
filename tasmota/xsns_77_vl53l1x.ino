@@ -67,20 +67,26 @@ void Vl53l1Every_250MSecond(void) {
   vl53l1x_distance = dist;
 }
 
+/* No Distance support for Domoticz
 #ifdef USE_DOMOTICZ
 void Vl53l1Every_Second(void) {
   DomoticzSensor(DZ_ILLUMINANCE, vl53l1x_distance);
 }
 #endif  // USE_DOMOTICZ
+*/
 
 void Vl53l1Show(boolean json) {
   if (json) {
     ResponseAppend_P(PSTR(",\"VL53L1X\":{\"" D_JSON_DISTANCE "\":%d}"), vl53l1x_distance);
+
+/* No Distance support for Domoticz
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) {
       DomoticzSensor(DZ_ILLUMINANCE, vl53l1x_distance);
     }
 #endif  // USE_DOMOTICZ
+*/
+
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_SNS_VL53L1X, vl53l1x_distance);
@@ -106,11 +112,11 @@ bool Xsns77(byte function)
       case FUNC_EVERY_250_MSECOND:
         Vl53l1Every_250MSecond();
         break;
-#ifdef USE_DOMOTICZ
+/* #ifdef USE_DOMOTICZ
      case FUNC_EVERY_SECOND:
         Vl53l1Every_Second();
         break;
-#endif  // USE_DOMOTICZ
+#endif  // USE_DOMOTICZ */
       case FUNC_JSON_APPEND:
         Vl53l1Show(1);
         break;
