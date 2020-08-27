@@ -120,7 +120,8 @@
 #define USE_HIH6                                 // Enable Honywell HIH Humidity and Temperature sensor (I2C address 0x27) (+0k6)
 #define USE_DHT12                                // Add I2C code for DHT12 temperature and humidity sensor (+0k7 code)
 #define USE_DS1624                               // Add I2C code for DS1624, DS1621 sensor
-//#define USE_AHT1x                                // Enable AHT10/15 humidity and temperature sensor (I2C address 0x38) (+0k8 code)
+//#define USE_AHT1x                                // Enable AHT10/15 humidity and temperature sensor (I2C address 0x38, 0x39) (+0k8 code)
+//  #define USE_AHT2x                                // Enable AHT20 instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code) (I2C address 0x38) (+0k8 code)
 #define USE_WEMOS_MOTOR_V1                       // Enable Wemos motor driver V1 (I2C addresses 0x2D - 0x30) (+0k7 code)
   #define WEMOS_MOTOR_V1_ADDR  0x30              // Default I2C address 0x30
   #define WEMOS_MOTOR_V1_FREQ  1000              // Default frequency

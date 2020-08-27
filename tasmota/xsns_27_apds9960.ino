@@ -1775,6 +1775,7 @@ void handleGesture(void) {
     }
     MqttPublishSensor();
   }
+  currentGesture[0] = '\0';
 }
 
 void APDS9960_loop(void) {
