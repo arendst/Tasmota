@@ -20,12 +20,14 @@
 
 #ifdef USE_I2C
 #ifdef USE_AHT1x
+
 /*********************************************************************************************\
- * AHT10/15 - Temperature and Humidity
+ * AHT10/15/20 - Temperature and Humidity
  *
- * I2C Address: 0x38
+ * AHT1x I2C Address: 0x38, 0x39
+ * the driver supports two I2c adresses but only one Sensor allowed.
  *
- * Attention: this Sensor is incompatible with other I2C devices on I2C bus.
+ * Attention: the AHT10/15 Sensor is incompatible with other I2C devices on I2C bus.
  *
  * The Datasheet write:
  * "Only a single AHT10 can be connected to the I2C bus and no other I2C
@@ -33,6 +35,11 @@
  *
  * after lot of search and tests, now is confirmed that works only reliable with one sensor
  * on I2C Bus
+ *
+ * 27.08.2020 support for AHT20 added. Now, the AHT20 should support standard I2C Protokoll
+ *            and allows other I2C Devices on the bus but have only one I2C Address (0x38)
+ *
+ * AHT20 I2C Address: 0x38
 \*********************************************************************************************/
 
 #define XSNS_63              63
@@ -52,40 +59,50 @@
 #define AHT1X_RST_DELAY      30
 #define AHT1X_MEAS_DELAY     80 // over 75ms in datasheet
 
-uint8_t AHTSetCalCmd[3]    = {0xE1, 0x08, 00}; //load factory calibration coeff
-uint8_t AHTSetCycleCmd[3]  = {0xE1, 0x28, 00}; //enable cycle mode
-uint8_t AHTMeasureCmd[3]   = {0xAC, 0x33, 00}; //start measurment command
-uint8_t AHTResetCmd        = 0xBA;             //soft reset command
+#ifdef USE_AHT2x
+  #define AHTX_CMD     0xB1 // Cmd for AHT2x
+  const char ahtTypes[] PROGMEM = "AHT2X|AHT2X";
+#else
+  #define AHTX_CMD     0xE1 // Cmd for AHT1x
+  const char ahtTypes[] PROGMEM = "AHT1X|AHT1X";
+#endif
 
-const char ahtTypes[] PROGMEM = "AHT1X|AHT1X";
-uint8_t aht1x_addresses[] = { AHT1X_ADDR1, AHT1X_ADDR2 };
-uint8_t aht1x_count  = 0;
-uint8_t aht1x_Pcount = 0;
+uint8_t AHTSetCalCmd[3]    = { AHTX_CMD, 0x08, 0x00 }; // load factory calibration coeff
+uint8_t AHTSetCycleCmd[3]  = { AHTX_CMD, 0x28, 0x00 }; // enable cycle mode
+uint8_t AHTMeasureCmd[3]   = { 0xAC, 0x33, 0x00 };     // start measurment command
+uint8_t AHTResetCmd        =   0xBA;                   // soft reset command
 
-struct AHT1XSTRUCT
-{
+struct {
+  bool write_ok = false;
+  uint8_t addresses[2] = { AHT1X_ADDR1, AHT1X_ADDR2 };
+  uint8_t count  = 0;
+  uint8_t Pcount = 0;
+} aht1x;
+
+struct {
   float   humidity = NAN;
   float   temperature = NAN;
-  uint8_t address;    // bus address
+  uint8_t address;     // bus address
   char    types[6];   // Sensor type name and address -
 } aht1x_sensors[AHT1X_MAX_SENSORS];
 
-bool AHT1XWrite(uint8_t aht1x_idx)
-{
+bool AHT1XWrite(uint8_t aht1x_idx) {
   Wire.beginTransmission(aht1x_sensors[aht1x_idx].address);
   Wire.write(AHTMeasureCmd, 3);
   if (Wire.endTransmission() != 0)
     return false;
+  return true;
 }
 
-bool AHT1XRead(uint8_t aht1x_idx)
-{
+bool AHT1XRead(uint8_t aht1x_idx) {
   uint8_t data[6];
   Wire.requestFrom(aht1x_sensors[aht1x_idx].address, (uint8_t) 6);
-  for(uint8_t i = 0; Wire.available() > 0; i++){
+
+  for(uint8_t i = 0; Wire.available() > 0; i++) {
      data[i] = Wire.read();
-   }
-   if ((data[0] & 0x80) == 0x80) return false; //device is busy
+  }
+  if (data[0] & 0x80)
+    return false; //device is busy
 
   aht1x_sensors[aht1x_idx].humidity    = (((data[1] << 12)| (data[2] << 4) | data[3] >> 4) * AHT_HUMIDITY_CONST / KILOBYTE_CONST);
   aht1x_sensors[aht1x_idx].temperature = ((AHT_TEMPERATURE_CONST * (((data[3] & 0x0F) << 16) | (data[4] << 8) | data[5]) / KILOBYTE_CONST) - AHT_TEMPERATURE_OFFSET);
@@ -95,32 +112,33 @@ bool AHT1XRead(uint8_t aht1x_idx)
 
 /********************************************************************************************/
 
-// Test for Polling the device without delays
+// Polling the device without delays
 // Incompatible with other devices on I2C bus
-void AHT1XPoll(void) // We have 100ms for read. Sensor needs 80-95 ms
-{
-  aht1x_Pcount++;
-   switch (aht1x_Pcount) {
+void AHT1XPoll(void) {  // We have 100ms for read. Sensor needs 80-95 ms
+  aht1x.Pcount++;
+  switch (aht1x.Pcount) {
     case 10:
-      AHT1XWrite(0);
+      aht1x.write_ok = AHT1XWrite(0);
       break;
     case 11:
-      AHT1XRead(0);
-      aht1x_Pcount = 0;
+      if (aht1x.write_ok) AHT1XRead(0);
+      aht1x.Pcount = 0;
       break;
-    }
+  }
 }
 
-unsigned char AHT1XReadStatus(uint8_t aht1x_address)
-{
+unsigned char AHT1XReadStatus(uint8_t aht1x_address) {
   uint8_t result = 0;
+  // Need for AHT20?
+  //Wire.beginTransmission(aht1x_address);
+  //Wire.write(0x71);
+  //if (Wire.endTransmission() != 0) return false;
   Wire.requestFrom(aht1x_address, (uint8_t) 1);
   result = Wire.read();
   return result;
 }
 
-void AHT1XReset(uint8_t aht1x_address)
-{
+void AHT1XReset(uint8_t aht1x_address) {
   Wire.beginTransmission(aht1x_address);
   Wire.write(AHTResetCmd);
   Wire.endTransmission();
@@ -128,35 +146,32 @@ void AHT1XReset(uint8_t aht1x_address)
 }
 
 /********************************************************************************************/
-bool AHT1XInit(uint8_t aht1x_address)
-{
+bool AHT1XInit(uint8_t aht1x_address) {
   Wire.beginTransmission(aht1x_address);
   Wire.write(AHTSetCalCmd, 3);
-  if (Wire.endTransmission() != 0) return false;
+  if (Wire.endTransmission() != 0)
+    return false;
   delay(AHT1X_CMD_DELAY);
-  if((AHT1XReadStatus(aht1x_address) & 0x68) == 0x08) // Sensor calcoef aktiv
+  if(AHT1XReadStatus(aht1x_address) & 0x08) // Sensor calibrated?
     return true;
   return false;
 }
 
-void AHT1XDetect(void)
-{
+void AHT1XDetect(void) {
   for (uint8_t i = 0; i < AHT1X_MAX_SENSORS; i++) {
-    if (I2cActive(aht1x_addresses[i])) { continue; }
-    if (AHT1XInit(aht1x_addresses[i]))
-    {
-      aht1x_sensors[aht1x_count].address = aht1x_addresses[i];
-      GetTextIndexed(aht1x_sensors[aht1x_count].types, sizeof(aht1x_sensors[aht1x_count].types), i, ahtTypes);
-      I2cSetActiveFound(aht1x_sensors[aht1x_count].address, aht1x_sensors[aht1x_count].types);
-      aht1x_count = 1;
+    if (!I2cSetDevice(aht1x.addresses[i])) {continue;}
+    if (AHT1XInit(aht1x.addresses[i])) {
+      aht1x_sensors[aht1x.count].address = aht1x.addresses[i];
+      GetTextIndexed(aht1x_sensors[aht1x.count].types, sizeof(aht1x_sensors[aht1x.count].types), i, ahtTypes);
+      I2cSetActiveFound(aht1x_sensors[aht1x.count].address, aht1x_sensors[aht1x.count].types);
+      aht1x.count++;
       break; // Only one Sensor allowed at the moment (I2C Sensor-Bug)
     }
   }
 }
 
-void AHT1XShow(bool json)
-{
-  for (uint32_t i = 0; i < aht1x_count; i++) {
+void AHT1XShow(bool json) {
+  for (uint32_t i = 0; i < aht1x.count; i++) {
     float tem = ConvertTemp(aht1x_sensors[i].temperature);
     float hum = ConvertHumidity(aht1x_sensors[i].humidity);
     char types[11]; // AHT1X-0x38
@@ -177,7 +192,7 @@ bool Xsns63(uint8_t function)
   if (FUNC_INIT == function) {
     AHT1XDetect();
   }
-  else if (aht1x_count){
+  else if (aht1x.count) {
     switch (function) {
       case FUNC_EVERY_100_MSECOND:
         AHT1XPoll();
