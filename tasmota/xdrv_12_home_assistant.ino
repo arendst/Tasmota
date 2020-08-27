@@ -95,7 +95,7 @@ const char HASS_DISCOVER_LIGHT_WHITE[] PROGMEM =
   ",\"whit_val_cmd_t\":\"%s\","                   // cmnd/led2/White
   "\"whit_val_stat_t\":\"%s\","                   // stat/led2/RESULT
   "\"whit_val_scl\":100,"
-  "\"whit_val_tpl\":\"{{value_json.Channel[3]}}\"";
+  "\"whit_val_tpl\":\"{{value_json." D_CMND_WHITE "}}\"";
 
 const char HASS_DISCOVER_LIGHT_CT[] PROGMEM =
   ",\"clr_temp_cmd_t\":\"%s\","                   // cmnd/led2/CT
@@ -336,7 +336,7 @@ void HAssAnnounceRelayLight(void)
               GetTopic_P(effect_command_topic, CMND, mqtt_topic, D_CMND_SCHEME);
               TryResponseAppend_P(HASS_DISCOVER_LIGHT_SCHEME, effect_command_topic, state_topic);
             }
-            if (LST_RGBW == Light.subtype) { wt_light = true; }
+            if (LST_RGBW <= Light.subtype) { wt_light = true; }
             if (LST_RGBCW == Light.subtype) { ct_light = true; }
           }
 
@@ -348,7 +348,7 @@ void HAssAnnounceRelayLight(void)
               TryResponseAppend_P(HASS_DISCOVER_LIGHT_CT, color_temp_command_topic, state_topic);
               ct_light = false;
           }
-          if ((!ind_light && wt_light) || (LST_RGBW == Light.subtype &&
+          if ((!ind_light && wt_light) || (LST_RGBW <= Light.subtype &&
               !PwmMulti && LightControl)) {
               char *white_temp_command_topic = stemp1;
 
