@@ -267,9 +267,13 @@ const char WEMO_SETUP_XML[] PROGMEM =
 
 /********************************************************************************************/
 
+void LogUpnpWithClient(const char *msg) {
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "%s from %s"), msg, Webserver->client().remoteIP().toString().c_str());
+}
+
 void HandleUpnpEvent(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
+  LogUpnpWithClient(PSTR(D_WEMO_BASIC_EVENT));
 
   char event[500];
   strlcpy(event, Webserver->arg(0).c_str(), sizeof(event));
@@ -303,7 +307,7 @@ void HandleUpnpEvent(void)
 
 void HandleUpnpService(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_EVENT_SERVICE));
+  LogUpnpWithClient(PSTR(D_WEMO_EVENT_SERVICE));
 
 #ifdef USE_UNISHOX_COMPRESSION
   WSSend(200, CT_PLAIN, Decompress(WEMO_EVENTSERVICE_XML, WEMO_EVENTSERVICE_XML_SIZE));
@@ -314,7 +318,7 @@ void HandleUpnpService(void)
 
 void HandleUpnpMetaService(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_META_SERVICE));
+  LogUpnpWithClient(PSTR(D_WEMO_META_SERVICE));
 
 #ifdef USE_UNISHOX_COMPRESSION
   WSSend(200, CT_PLAIN, Decompress(WEMO_METASERVICE_XML, WEMO_METASERVICE_XML_SIZE));
@@ -325,7 +329,7 @@ void HandleUpnpMetaService(void)
 
 void HandleUpnpSetupWemo(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_SETUP));
+  LogUpnpWithClient(PSTR(D_WEMO_SETUP));
 
 #ifdef USE_UNISHOX_COMPRESSION
   String setup_xml = Decompress(WEMO_SETUP_XML, WEMO_SETUP_XML_SIZE);
