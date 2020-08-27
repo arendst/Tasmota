@@ -46,8 +46,6 @@ uint8_t *efm8bb1_update = nullptr;
 
 enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32 };
 
-static const char * HEADER_KEYS[] = { "User-Agent", };
-
 #ifdef USE_UNISHOX_COMPRESSION
 #ifdef USE_JAVASCRIPT_ES6
 // insert D_HTML_LANGUAGE later
@@ -890,10 +888,6 @@ void StartWebserver(int type, IPAddress ipweb)
 #endif  // Not FIRMWARE_MINIMAL
     }
     Web.reset_web_log_flag = false;
-
-    // Collect User-Agent for Alexa Hue Emulation
-    // This is used in xdrv_20_hue.ino in function findEchoGeneration()
-    Webserver->collectHeaders(HEADER_KEYS, sizeof(HEADER_KEYS)/sizeof(char*));
 
     Webserver->begin(); // Web server start
   }
