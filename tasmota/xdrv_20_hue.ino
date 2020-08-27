@@ -505,10 +505,6 @@ uint32_t DecodeLightId(uint32_t hue_id, uint16_t * shortaddr = nullptr)
   return relay_id;
 }
 
-static const char * FIRST_GEN_UA[] = {  // list of User-Agents signature
-  "AEOBC",                              // Echo Dot 2ng Generation
-};
-
 // Check if the Echo device is of 1st generation, which triggers different results
 inline uint32_t findEchoGeneration(void) {
   // don't try to guess from User-Agent anymore but use SetOption109
