@@ -5,6 +5,7 @@
 - Add command ``PowerDelta1`` to ``PowerDelta3`` to trigger on up to three phases (#9134)
 - Add Zigbee web ui widget for Lights
 - Add ``SetOption109 1`` to force gen1 Alexa mode, for Echo Dot 2nd gen devices only
+- Add Zigbee web ui for power metering plugs
 
 ### 8.4.0.2 20200813
 

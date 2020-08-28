@@ -90,6 +90,9 @@ public:
   int16_t               temperature;    // temperature in 1/10th of Celsius, 0x8000 if unknown
   uint16_t              pressure;       // air pressure in hPa, 0xFFFF if unknown
   uint8_t               humidity;       // humidity in percent, 0..100, 0xFF if unknown
+  // powe plug data
+  uint16_t              mains_voltage;  // AC voltage
+  int16_t               mains_power;    // Active power
 
   // Constructor with all defaults
   Z_Device(uint16_t _shortaddr, uint64_t _longaddr = 0x00):
@@ -116,7 +119,9 @@ public:
     batterypercent(0xFF),
     temperature(-0x8000),
     pressure(0xFFFF),
-    humidity(0xFF)
+    humidity(0xFF),
+    mains_voltage(0xFFFF),
+    mains_power(-0x8000)
     { };
 
   inline bool valid(void)               const { return BAD_SHORTADDR != shortaddr; }    // is the device known, valid and found?
@@ -141,6 +146,9 @@ public:
   inline bool validTemperature(void)    const { return -0x8000 != temperature; }
   inline bool validPressure(void)       const { return 0xFFFF != pressure; }
   inline bool validHumidity(void)       const { return 0xFF != humidity; }
+
+  inline bool validMainsVoltage(void)   const { return 0xFFFF != mains_voltage; }
+  inline bool validMainsPower(void)     const { return -0x8000 != mains_power; }
 
   inline void setReachable(bool reachable)    { bitWrite(power, 7, reachable); }
   inline bool getReachable(void)        const { return bitRead(power, 7); }

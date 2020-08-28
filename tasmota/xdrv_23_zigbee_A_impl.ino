@@ -1398,10 +1398,10 @@ void ZigbeeShow(bool json)
         if (temperature_ok) {
           char buf[12];
           dtostrf(device.temperature / 10.0f, 3, 1, buf);
-          WSContentSend_PD(PSTR(" &#x2600;&#xFE0F;%s°C"), buf);
+          WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
         }
         if (humidity_ok) {
-          WSContentSend_P(PSTR(" &#x1F4A7;%d%%"), device.humidity);
+          WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), device.humidity);
         }
         if (pressure_ok) {
           WSContentSend_P(PSTR(" &#x26C5; %d hPa"), device.pressure);
@@ -1409,14 +1409,14 @@ void ZigbeeShow(bool json)
         WSContentSend_P(PSTR("{e}"));
       }
 
-      // Light and switches
+      // Light, switches and plugs
       bool power_ok = device.validPower();
       if (power_ok) {
         uint8_t channels = device.getLightChannels();
         if (0xFF == channels) { channels = 5; }     // if number of channel is unknown, display all known attributes
         WSContentSend_P(PSTR("<tr><td colspan=\"3\">&#9478; %s"), device.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
         if (device.validDimmer() && (channels >= 1)) {
-          WSContentSend_P(PSTR(" &#128261;%d%%"), changeUIntScale(device.dimmer,0,254,0,100));
+          WSContentSend_P(PSTR(" &#128261; %d%%"), changeUIntScale(device.dimmer,0,254,0,100));
         }
         if (device.validCT() && ((channels == 2) || (channels == 5))) {
           uint32_t ct_k = (((1000000 / device.ct) + 25) / 50) * 50;
@@ -1431,6 +1431,15 @@ void ZigbeeShow(bool json)
           uint8_t r,g,b;
           LightStateClass::XyToRgb(device.x / 65535.0f, device.y / 65535.0f, &r, &g, &b);
           WSContentSend_P(PSTR(" <i class=\"bx\" style=\"--cl:#%02X%02X%02X\"></i> #%02X%02X%02X"), r,g,b,r,g,b);
+        }
+        if (device.validMainsPower() || device.validMainsVoltage()) {
+          WSContentSend_P(PSTR(" &#9889; "));
+          if (device.validMainsVoltage()) {
+            WSContentSend_P(PSTR(" %dV"), device.mains_voltage);
+          }
+          if (device.validMainsPower()) {
+            WSContentSend_P(PSTR(" %dW"), device.mains_power);
+          }
         }
       }
     }
