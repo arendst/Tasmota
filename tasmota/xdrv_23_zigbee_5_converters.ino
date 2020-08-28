@@ -112,7 +112,7 @@ enum Cx_cluster_short {
   Cx0008, Cx0009, Cx000A, Cx000B, Cx000C, Cx000D, Cx000E, Cx000F,
   Cx0010, Cx0011, Cx0012, Cx0013, Cx0014, Cx001A, Cx0020, Cx0100,
   Cx0101, Cx0102, Cx0300, Cx0400, Cx0401, Cx0402, Cx0403, Cx0404,
-  Cx0405, Cx0406, Cx0500, Cx0B01, Cx0B05,
+  Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
 };
 
 const uint16_t Cx_cluster[] PROGMEM = {
@@ -120,7 +120,7 @@ const uint16_t Cx_cluster[] PROGMEM = {
   0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
   0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x001A, 0x0020, 0x0100,
   0x0101, 0x0102, 0x0300, 0x0400, 0x0401, 0x0402, 0x0403, 0x0404,
-  0x0405, 0x0406, 0x0500, 0x0B01, 0x0B05,
+  0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
 };
 
 uint16_t CxToCluster(uint8_t cx) {
@@ -186,7 +186,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0005, 0x0001,  Z_(CurrentScene),         1,  Z_Nop },
   { Zuint16,  Cx0005, 0x0002,  Z_(CurrentGroup),         1,  Z_Nop },
   { Zbool,    Cx0005, 0x0003,  Z_(SceneValid),           1,  Z_Nop },
-  //{ Zmap8,    Cx0005, 0x0004,  Z_(NameSupport),           1,  Z_Nop },
+  //{ Zmap8,    Cx0005, 0x0004,  (NameSupport),           1,  Z_Nop },
 
   // On/off cluster
   { Zbool,    Cx0006,    0x0000,  Z_(Power),             1,  Z_Nop },
@@ -201,10 +201,10 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zmap8,    Cx0008, 0x000F,  Z_(DimmerOptions),        1,  Z_Nop },
   { Zuint16,  Cx0008, 0x0001,  Z_(DimmerRemainingTime),  1,  Z_Nop },
   { Zuint16,  Cx0008, 0x0010,  Z_(OnOffTransitionTime),   1,  Z_Nop },
-  // { Zuint8, Cx0008, 0x0011,  Z_(OnLevel),              1,  Z_Nop },
-  // { Zuint16, Cx0008, 0x0012,  Z_(OnTransitionTime),     1,  Z_Nop },
-  // { Zuint16, Cx0008, 0x0013,  Z_(OffTransitionTime),    1,  Z_Nop },
-  // { Zuint16, Cx0008, 0x0014,  Z_(DefaultMoveRate),      1,  Z_Nop },
+  // { Zuint8, Cx0008, 0x0011,  (OnLevel),              1,  Z_Nop },
+  // { Zuint16, Cx0008, 0x0012,  (OnTransitionTime),     1,  Z_Nop },
+  // { Zuint16, Cx0008, 0x0013,  (OffTransitionTime),    1,  Z_Nop },
+  // { Zuint16, Cx0008, 0x0014,  (DefaultMoveRate),      1,  Z_Nop },
 
   // Alarms cluster
   { Zuint16,  Cx0009, 0x0000,  Z_(AlarmCount),           1,  Z_Nop },
@@ -230,16 +230,16 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx000B, 0x0004,  Z_(NumberOfDevices),      1,  Z_Nop },
 
   // Analog Input cluster
-  // { 0xFF, Cx000C, 0x0004,  Z_(AnalogInActiveText),   1,  Z_Nop },
+  // { 0xFF, Cx000C, 0x0004,  (AnalogInActiveText),   1,  Z_Nop },
   { Zstring,  Cx000C, 0x001C,  Z_(AnalogInDescription),  1,  Z_Nop },
-  // { 0xFF, Cx000C, 0x002E,  Z_(AnalogInInactiveText), 1,  Z_Nop },
+  // { 0xFF, Cx000C, 0x002E,  (AnalogInInactiveText), 1,  Z_Nop },
   { Zsingle,  Cx000C, 0x0041,  Z_(AnalogInMaxValue),     1,  Z_Nop },
   { Zsingle,  Cx000C, 0x0045,  Z_(AnalogInMinValue),     1,  Z_Nop },
   { Zbool,    Cx000C, 0x0051,  Z_(AnalogInOutOfService), 1,  Z_Nop },
   { Zsingle,  Cx000C, 0x0055,  Z_(AqaraRotate),          1,  Z_Nop },
-  // { 0xFF, Cx000C, 0x0057,  Z_(AnalogInPriorityArray),1,  Z_Nop },
+  // { 0xFF, Cx000C, 0x0057,  (AnalogInPriorityArray),1,  Z_Nop },
   { Zenum8,   Cx000C, 0x0067,  Z_(AnalogInReliability),  1,  Z_Nop },
-  // { 0xFF, Cx000C, 0x0068,  Z_(AnalogInRelinquishDefault),1,  Z_Nop },
+  // { 0xFF, Cx000C, 0x0068,  (AnalogInRelinquishDefault),1,  Z_Nop },
   { Zsingle,  Cx000C, 0x006A,  Z_(AnalogInResolution),   1,  Z_Nop },
   { Zmap8,    Cx000C, 0x006F,  Z_(AnalogInStatusFlags),  1,  Z_Nop },
   { Zenum16,  Cx000C, 0x0075,  Z_(AnalogInEngineeringUnits),1,  Z_Nop },
@@ -252,7 +252,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zsingle,  Cx000D, 0x0045,  Z_(AnalogOutMinValue),    1,  Z_Nop },
   { Zbool,    Cx000D, 0x0051,  Z_(AnalogOutOutOfService),1,  Z_Nop },
   { Zsingle,  Cx000D, 0x0055,  Z_(AnalogOutValue),       1,  Z_Nop },
-  // { Zunk,     Cx000D, 0x0057,  Z_(AnalogOutPriorityArray),1,  Z_Nop },
+  // { Zunk,     Cx000D, 0x0057,  (AnalogOutPriorityArray),1,  Z_Nop },
   { Zenum8,   Cx000D, 0x0067,  Z_(AnalogOutReliability), 1,  Z_Nop },
   { Zsingle,  Cx000D, 0x0068,  Z_(AnalogOutRelinquishDefault),1,  Z_Nop },
   { Zsingle,  Cx000D, 0x006A,  Z_(AnalogOutResolution),  1,  Z_Nop },
@@ -278,7 +278,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zbool,    Cx000F, 0x0051,  Z_(BinaryInOutOfService),1,  Z_Nop },
   { Zenum8,   Cx000F, 0x0054,  Z_(BinaryInPolarity),    1,  Z_Nop },
   { Zstring,  Cx000F, 0x0055,  Z_(BinaryInValue),       1,  Z_Nop },
-  // { 0xFF, Cx000F, 0x0057,  Z_(BinaryInPriorityArray),1,  Z_Nop },
+  // { 0xFF, Cx000F, 0x0057,  (BinaryInPriorityArray),1,  Z_Nop },
   { Zenum8,   Cx000F, 0x0067,  Z_(BinaryInReliability), 1,  Z_Nop },
   { Zmap8,    Cx000F, 0x006F,  Z_(BinaryInStatusFlags), 1,  Z_Nop },
   { Zuint32,  Cx000F, 0x0100,  Z_(BinaryInApplicationType),1,  Z_Nop },
@@ -292,7 +292,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zbool,    Cx0010, 0x0051,  Z_(BinaryOutOutOfService),1,  Z_Nop },
   { Zenum8,   Cx0010, 0x0054,  Z_(BinaryOutPolarity),    1,  Z_Nop },
   { Zbool,    Cx0010, 0x0055,  Z_(BinaryOutValue),       1,  Z_Nop },
-  // { Zunk,     Cx0010, 0x0057,  Z_(BinaryOutPriorityArray),1,  Z_Nop },
+  // { Zunk,     Cx0010, 0x0057,  (BinaryOutPriorityArray),1,  Z_Nop },
   { Zenum8,   Cx0010, 0x0067,  Z_(BinaryOutReliability), 1,  Z_Nop },
   { Zbool,    Cx0010, 0x0068,  Z_(BinaryOutRelinquishDefault),1,  Z_Nop },
   { Zmap8,    Cx0010, 0x006F,  Z_(BinaryOutStatusFlags), 1,  Z_Nop },
@@ -306,14 +306,14 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint32,  Cx0011, 0x0043,  Z_(BinaryMinimumOnTime),  1,  Z_Nop },
   { Zbool,    Cx0011, 0x0051,  Z_(BinaryOutOfService),   1,  Z_Nop },
   { Zbool,    Cx0011, 0x0055,  Z_(BinaryValue),          1,  Z_Nop },
-  // { Zunk,     Cx0011, 0x0057,  Z_(BinaryPriorityArray),  1,  Z_Nop },
+  // { Zunk,     Cx0011, 0x0057,  (BinaryPriorityArray),  1,  Z_Nop },
   { Zenum8,   Cx0011, 0x0067,  Z_(BinaryReliability),    1,  Z_Nop },
   { Zbool,    Cx0011, 0x0068,  Z_(BinaryRelinquishDefault),1,  Z_Nop },
   { Zmap8,    Cx0011, 0x006F,  Z_(BinaryStatusFlags),    1,  Z_Nop },
   { Zuint32,  Cx0011, 0x0100,  Z_(BinaryApplicationType),1,  Z_Nop },
 
   // Multistate Input cluster
-  // { Zunk,     Cx0012, 0x000E,  Z_(MultiInStateText),     1,  Z_Nop },
+  // { Zunk,     Cx0012, 0x000E,  (MultiInStateText),     1,  Z_Nop },
   { Zstring,  Cx0012, 0x001C,  Z_(MultiInDescription),   1,  Z_Nop },
   { Zuint16,  Cx0012, 0x004A,  Z_(MultiInNumberOfStates),1,  Z_Nop },
   { Zbool,    Cx0012, 0x0051,  Z_(MultiInOutOfService),  1,  Z_Nop },
@@ -324,19 +324,19 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint32,  Cx0012, 0x0100,  Z_(MultiInApplicationType),1,  Z_Nop },
 
   // Multistate output
-  // { Zunk,     Cx0013, 0x000E,  Z_(MultiOutStateText),    1,  Z_Nop },
+  // { Zunk,     Cx0013, 0x000E,  (MultiOutStateText),    1,  Z_Nop },
   { Zstring,  Cx0013, 0x001C,  Z_(MultiOutDescription),  1,  Z_Nop },
   { Zuint16,  Cx0013, 0x004A,  Z_(MultiOutNumberOfStates),1,  Z_Nop },
   { Zbool,    Cx0013, 0x0051,  Z_(MultiOutOutOfService), 1,  Z_Nop },
   { Zuint16,  Cx0013, 0x0055,  Z_(MultiOutValue),        1,  Z_Nop },
-  // { Zunk,     Cx0013, 0x0057,  Z_(MultiOutPriorityArray),1,  Z_Nop },
+  // { Zunk,     Cx0013, 0x0057,  (MultiOutPriorityArray),1,  Z_Nop },
   { Zenum8,   Cx0013, 0x0067,  Z_(MultiOutReliability),  1,  Z_Nop },
   { Zuint16,  Cx0013, 0x0068,  Z_(MultiOutRelinquishDefault),1,  Z_Nop },
   { Zmap8,    Cx0013, 0x006F,  Z_(MultiOutStatusFlags),  1,  Z_Nop },
   { Zuint32,  Cx0013, 0x0100,  Z_(MultiOutApplicationType),1,  Z_Nop },
 
   // Multistate Value cluster
-  // { Zunk,     Cx0014, 0x000E,  Z_(MultiStateText),       1,  Z_Nop },
+  // { Zunk,     Cx0014, 0x000E,  (MultiStateText),       1,  Z_Nop },
   { Zstring,  Cx0014, 0x001C,  Z_(MultiDescription),     1,  Z_Nop },
   { Zuint16,  Cx0014, 0x004A,  Z_(MultiNumberOfStates),  1,  Z_Nop },
   { Zbool,    Cx0014, 0x0051,  Z_(MultiOutOfService),    1,  Z_Nop },
@@ -496,6 +496,9 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zenum16,  Cx0500, 0x0001,  Z_(ZoneType),             1,  Z_Nop },    // Occupancy (map8)
   { Zmap16,   Cx0500, 0x0002,  Z_(ZoneStatus),           1,  Z_Nop },    // Occupancy (map8)
 
+  // Metering (Smart Energy) cluster
+  { Zuint48,  Cx0702, 0x0000,  Z_(CurrentSummDelivered), 1,  Z_Nop },
+
   // Meter Identification cluster
   { Zstring,  Cx0B01, 0x0000,  Z_(CompanyName),          1,  Z_Nop },
   { Zuint16,  Cx0B01, 0x0001,  Z_(MeterTypeID),          1,  Z_Nop },
@@ -509,6 +512,11 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zstring,  Cx0B01, 0x000C,  Z_(POD),                  1,  Z_Nop },
   { Zint24,   Cx0B01, 0x000D,  Z_(AvailablePower),       1,  Z_Nop },
   { Zint24,   Cx0B01, 0x000E,  Z_(PowerThreshold),       1,  Z_Nop },
+
+  // Electrical Measurement cluster
+  { Zuint16,  Cx0B04, 0x0505,  Z_(RMSVoltage),            1,  Z_Nop },
+  { Zuint16,  Cx0B04, 0x0508,  Z_(RMSCurrent),            1,  Z_Nop },
+  { Zint16,   Cx0B04, 0x050B,  Z_(ActivePower),           1,  Z_Nop },
 
   // Diagnostics cluster
   { Zuint16,  Cx0B05, 0x0000,  Z_(NumberOfResets),       1,  Z_Nop },
@@ -842,9 +850,12 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
     case Zint64:    // int64
       {
         // uint8_t len = attrtype - 0x27;   // 5 - 8
-        // print as HEX
-        char hex[2*len+1];
-        ToHex_P(buf.buf(i), len, hex, sizeof(hex));
+        // print as HEX "0x...."
+        char hex[2*len+3];
+        snprintf_P(hex, sizeof(hex), PSTR("0x"));
+        for (uint32_t j=0; j<len; j++) {
+          snprintf_P(hex, sizeof(hex), PSTR("%s%02X"), hex, buf.get8(i+len-j-1));
+        }
         json[attrid_str] = hex;
         // i += len;
       }
@@ -1590,25 +1601,30 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
       }
 
       Z_Device & device = zigbee_devices.getShortAddr(shortaddr);
-      uint16_t val16 = value;     // call converter from JSonVariant to int only once
+      uint16_t uval16 = value;     // call converter from JSonVariant to int only once
+      int16_t  ival16 = value;     // call converter from JSonVariant to int only once
       // see if we need to update the Hue bulb status
       if ((cluster == 0x0006) && ((attribute == 0x0000) || (attribute == 0x8000))) {
         bool power = value;
         device.setPower(power);
       } else if ((cluster == 0x0008) && (attribute == 0x0000)) {
-        device.dimmer = val16;
+        device.dimmer = uval16;
       } else if ((cluster == 0x0300) && (attribute == 0x0000)) {
-        device.hue = changeUIntScale(val16, 0, 254, 0, 360);     // change range from 0..254 to 0..360
+        device.hue = changeUIntScale(uval16, 0, 254, 0, 360);     // change range from 0..254 to 0..360
       } else if ((cluster == 0x0300) && (attribute == 0x0001)) {
-        device.sat = val16;
+        device.sat = uval16;
       } else if ((cluster == 0x0300) && (attribute == 0x0003)) {
-        device.x = val16;
+        device.x = uval16;
       } else if ((cluster == 0x0300) && (attribute == 0x0004)) {
-        device.y = val16;
+        device.y = uval16;
       } else if ((cluster == 0x0300) && (attribute == 0x0007)) {
-        device.ct = val16;
+        device.ct = uval16;
       } else if ((cluster == 0x0300) && (attribute == 0x0008)) {
-        device.colormode = val16;
+        device.colormode = uval16;
+      } else if ((cluster == 0x0B04) && (attribute == 0x0505)) {
+        device.mains_voltage = uval16;
+      } else if ((cluster == 0x0B04) && (attribute == 0x050B)) {
+        device.mains_power = ival16;
       }
 
       // Iterate on filter

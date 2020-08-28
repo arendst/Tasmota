@@ -181,6 +181,22 @@ int32_t EZ_PermitJoinRsp(int32_t res, const class SBuffer &buf) {
   return -1;
 }
 
+//
+// Received MessageSentHandler
+//
+// We normally ignore the message, but it's a way to sniff group ids for IKEA remote
+// In case of a multicast message sent to 0xFFFD with non-null group id, we log the group id
+int32_t EZ_MessageSent(int32_t res, const class SBuffer &buf) {
+  uint8_t  message_type = buf.get8(2);
+  uint16_t dst_addr = buf.get16(3);
+  uint16_t group_addr = buf.get16(13);
+
+  if ((EMBER_OUTGOING_MULTICAST == message_type) && (0xFFFD == dst_addr)) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Sniffing group 0x%04X"), group_addr);
+  }
+  return -1;    // ignore
+}
+
 #endif // USE_ZIGBEE_EZSP
 
 /*********************************************************************************************\
@@ -1250,6 +1266,9 @@ int32_t EZ_Recv_Default(int32_t res, const class SBuffer &buf) {
         break;
       case EZSP_permitJoining:
         return EZ_PermitJoinRsp(res, buf);
+        break;
+      case EZSP_messageSentHandler:
+        return EZ_MessageSent(res, buf);
         break;
     }
     return -1;
