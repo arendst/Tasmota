@@ -792,7 +792,7 @@ void ZigbeeZCLSend_Raw(uint16_t shortaddr, uint16_t groupaddr, uint16_t clusterI
   if (manuf) {
     buf.add16(manuf);               // add Manuf Id if not null
   }
-  buf.add8(transacId);              // Transaction Sequance Number
+  buf.add8(transacId);              // Transaction Sequence Number
   buf.add8(cmdId);
   if (len > 0) {
     buf.addBuffer(msg, len);        // add the payload

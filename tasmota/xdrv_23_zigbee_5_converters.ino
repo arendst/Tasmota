@@ -1057,7 +1057,7 @@ void ZCLFrame::parseReportAttributes(JsonObject& json, uint8_t offset) {
     SBuffer buf(2);
     buf.add8(_cmd_id);
     buf.add8(0x00);   // Status = OK
-    ZigbeeZCLSend_Raw(_srcaddr, 0x0000, 0x0000 /*cluster*/, _srcendpoint, ZCL_DEFAULT_RESPONSE, false /* not cluster specific */, _manuf_code, buf.getBuffer(), buf.len(), false /* noresponse */, zigbee_devices.getNextSeqNumber(_srcaddr));
+    ZigbeeZCLSend_Raw(_srcaddr, 0x0000, 0x0000 /*cluster*/, _srcendpoint, ZCL_DEFAULT_RESPONSE, false /* not cluster specific */, _manuf_code, buf.getBuffer(), buf.len(), false /* noresponse */, _transact_seq);
   }
 }
 
