@@ -2,6 +2,7 @@
 
 ### 8.4.0.3 20200823
 
+- Change references from http://thehackbox.org to http://ota.tasmota.com
 - Add command ``PowerDelta1`` to ``PowerDelta3`` to trigger on up to three phases (#9134)
 - Add Zigbee web ui widget for Lights
 - Add ``SetOption109 1`` to force gen1 Alexa mode, for Echo Dot 2nd gen devices only

@@ -56,14 +56,17 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 ### Version 8.4.0.3
 
 - Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
+- Change references from http://thehackbox.org to http://ota.tasmota.com
 - Change White blend mode moved to using ``SetOption 105`` instead of ``RGBWWTable``
 - Fix ESP32 PWM range
 - Fix display power control (#9114)
 - Add command ``SetOption108 0/1`` to enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1) - Add Zigbee better support for IKEA Motion Sensor
+- Add command ``SetOption109 1`` to force gen1 Alexa mode, for Echo Dot 2nd gen devices only
 - Add command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)
 - Add ESP32 Analog input support for GPIO32 to GPIO39
 - Add Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
 - Add Zigbee web gui widget for Temp/Humidity/Pressure sensors
+- Add Zigbee web ui for power metering plugs
 - Add better config corruption recovery (#9046)
 - Add virtual CT for 4 channels lights, emulating a 5th channel
 - Add support for DYP ME007 ultrasonic distance sensor by Janusz Kostorz (#9113)
