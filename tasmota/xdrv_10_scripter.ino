@@ -1517,13 +1517,27 @@ chknext:
           float fvar1=1;
           if (*lp!=')') {
             lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
+            if (fvar1<32 || fvar1>39) fvar1 = 32;
           }
           lp++;
+          if (fvar > 7) fvar = 7;
 #ifdef ESP32
-          fvar=AdcRead(fvar, fvar1);
+          // ESP32
+#ifdef USE_ADC
+          fvar=AdcRead(fvar1, fvar);
 #else
+          fvar=999.999;
+#endif // USE_ADC
+#else
+          // ESP8266
+#ifndef USE_ADC_VCC
           fvar=AdcRead(fvar);
-#endif
+#else
+          fvar=(float)ESP.getVcc()/1000.0;
+#endif // USE_ADC_VCC
+#endif // ESP32
+          len=0;
+          goto exit;
         }
         break;
 
@@ -2501,6 +2515,16 @@ chknext:
           goto exit;
         }
 #endif
+#ifdef USE_TTGO_WATCH
+        if (!strncmp(vname,"slp(",4)) {
+          lp=GetNumericResult(lp+4,OPER_EQU,&fvar,0);
+          SCRIPT_SKIP_SPACES
+          TTGO_Sleep(fvar);
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
         if (!strncmp(vname,"sunrise",7)) {
           fvar=SunMinutes(0);
@@ -2770,6 +2794,26 @@ chknext:
           goto exit;
         }
 #endif //ESP32, USE_WEBCAM
+#if defined(USE_TTGO_WATCH) && defined(USE_BMA423)
+        if (!strncmp(vname,"wdclk",5)) {
+          fvar=TTGO_doubleclick();
+          goto exit;
+        }
+        if (!strncmp(vname,"wbut",4)) {
+          fvar=TTGO_button();
+          goto exit;
+        }
+#endif // USE_TTGO_WATCH
+#if defined(USE_TTGO_WATCH) && defined(USE_FT5206)
+        if (!strncmp(vname,"wtch(",5)) {
+          lp=GetNumericResult(lp+5,OPER_EQU,&fvar,0);
+          fvar=FT5206_touched(fvar);
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif // USE_FT5206
+
         if (!strncmp(vname,"wday",4)) {
           fvar=RtcTime.day_of_week;
           goto exit;
@@ -3317,7 +3361,7 @@ exit:
 
 
 exit10:
-#if SCRIPT_DEBUG>0
+#if IFTHEN_DEBUG>0
   char tbuff[128];
   sprintf(tbuff,"p1=%d,p2=%d,cmpres=%d,and_or=%d line: ",(int32_t)*dfvar,(int32_t)fvar1,*result,and_or);
   toLogEOL(tbuff,llp);
@@ -3613,7 +3657,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
             if (!if_exe[ifstck] && if_state[ifstck]!=1) goto next_line;
 
 #ifdef IFTHEN_DEBUG
-            sdtoff(tbuff,"stack=%d,exe=%d,state=%d,cmpres=%d execute line: ",ifstck,if_exe[ifstck],if_state[ifstck],if_result[ifstck]);
+            sprintf(tbuff,"stack=%d,exe=%d,state=%d,cmpres=%d execute line: ",ifstck,if_exe[ifstck],if_state[ifstck],if_result[ifstck]);
             toLogEOL(tbuff,lp);
 #endif
 
@@ -6723,6 +6767,7 @@ uint32_t call2https(const char *host, const char *path) {
     }
   }
   httpsClient->stop();
+  delete httpsClient;
   Run_Scripter(">jp",3,(char*)result.c_str());
   return 0;
 }
