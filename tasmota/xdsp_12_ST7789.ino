@@ -165,6 +165,22 @@ void ST7789_MQTT(uint8_t count,const char *cp) {
   MqttPublishTeleSensor();
 }
 
+uint32_t FT5206_touched(uint32_t sel) {
+  if (touchp) {
+    switch (sel) {
+      case 0:
+        return  touchp->touched();
+      case 1:
+        return st7789_pLoc.x;
+      case 2:
+        return st7789_pLoc.y;
+    }
+    return 0;
+  } else {
+    return 0;
+  }
+}
+
 void ST7789_RDW_BUTT(uint32_t count,uint32_t pwr) {
   buttons[count]->xdrawButton(pwr);
   if (pwr) buttons[count]->vpower|=0x80;
@@ -186,13 +202,15 @@ if (2 == st7789_ctouch_counter) {
       uint8_t rot=renderer->getRotation();
       switch (rot) {
         case 0:
+          break;
+        case 1:
           temp=st7789_pLoc.y;
           st7789_pLoc.y=renderer->height()-st7789_pLoc.x;
           st7789_pLoc.x=temp;
           break;
-        case 1:
-          break;
         case 2:
+          st7789_pLoc.x=renderer->width()-st7789_pLoc.x;
+          st7789_pLoc.y=renderer->height()-st7789_pLoc.y;
           break;
         case 3:
           temp=st7789_pLoc.y;
@@ -200,6 +218,7 @@ if (2 == st7789_ctouch_counter) {
           st7789_pLoc.x=renderer->width()-temp;
           break;
       }
+      //AddLog_P2(LOG_LEVEL_INFO, PSTR("touch %d - %d"), st7789_pLoc.x, st7789_pLoc.y);
       // now must compare with defined buttons
       for (uint8_t count=0; count<MAXBUTTONS; count++) {
         if (buttons[count]) {
