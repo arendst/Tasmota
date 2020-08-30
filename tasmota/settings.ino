@@ -863,6 +863,7 @@ void SettingsDefaultSet2(void)
 
   // Webserver
   flag2.emulation |= EMULATION;
+  flag4.alexa_gen_1 |= EMULATION_HUE_1ST_GEN;
   flag3.gui_hostname_ip |= GUI_SHOW_HOSTNAME;
   flag3.mdns_enabled |= MDNS_ENABLED;
   Settings.webserver = WEB_SERVER;
@@ -1023,6 +1024,9 @@ void SettingsDefaultSet2(void)
   flag3.slider_dimmer_stay_on |= LIGHT_SLIDER_POWER;
   flag4.alexa_ct_range |= LIGHT_ALEXA_CT_RANGE;
   flag4.pwm_ct_mode |= LIGHT_PWM_CT_MODE;
+  flag4.white_blend_mode |= LIGHT_WHITE_BLEND_MODE;
+  flag4.virtual_ct |= LIGHT_VIRTUAL_CT;
+  flag4.virtual_ct_cw |= LIGHT_VIRTUAL_CT_CW;
 
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
@@ -1116,6 +1120,10 @@ void SettingsDefaultSet2(void)
   flag3.shutter_mode |= SHUTTER_SUPPORT;
   flag3.pcf8574_ports_inverted |= PCF8574_INVERT_PORTS;
   flag4.zigbee_use_names |= ZIGBEE_FRIENDLY_NAMES;
+  flag4.remove_zbreceived |= ZIGBEE_RMV_ZBRECEIVED;
+  flag4.zb_index_ep |= ZIGBEE_INDEX_EP;
+  flag4.mqtt_tls |= MQTT_TLS_ENABLED;
+  flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
 
 #ifdef USER_TEMPLATE
   JsonTemplate(USER_TEMPLATE);
