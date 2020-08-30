@@ -16,8 +16,23 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#ifdef ESP32
 #ifdef USE_MLX90640
+
+#if MQTT_ENABLE
+#include <PubSubClient.h>
+// --------------------------------------------------------------------
+// * * * IMPORTANT * * *
+// You must change <PubSubClient.h> to have the following value.
+// #define MQTT_MAX_PACKET_SIZE 5700
+// --------------------------------------------------------------------
+// Check that the user has set MQTT_MAX_PACKET_SIZE to an appropriate size.
+#if MQTT_MAX_PACKET_SIZE < 5700
+#error \
+    "MQTT_MAX_PACKET_SIZE in <PubSubClient.h> is too small. "\
+  "Increase the value per comments."
+#endif  // MQTT_MAX_PACKET_SIZE < 5700
+#endif  // MQTT_ENABLE
 
 /*********************************************************************************************\
  * MLX9064X Far Infrared Thermal Sensor Array
@@ -29,12 +44,13 @@
 Adafruit_MLX90640 mlx;
 uint8_t mlx_ready;
 float frame[32 * 24];  // buffer for full frame of temperatures
-
 uint8_t elasped_sec = 0;
-
-const int SENSOR_VAL_STR_LEN = 24 * 32 * 7 + 2;  // chars + [] - one comma + last null ch
-char result[SENSOR_VAL_STR_LEN];                 //[-100.1,] , no comma for 1 noumber
+char result[SENSOR_VAL_STR_LEN];  //[-100.1,] , no comma for 1 noumber
 char max_temp_str[6];
+
+const uint8_t TRIM_PIXEL_COLUMNS_CNT = 0;        // image crop. if 2, 2 layers of the outermost pixels are discarded
+const uint8_t POLL_INTERVAL_SEC = 5;             //data refresh rate esp for UI. mqtt reporting is teleperiod
+const int SENSOR_VAL_STR_LEN = 24 * 32 * 7 + 2;  // chars + [] - one comma + last null ch
 
 void MLX90640_Init() {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("MLX90640: Start of driver init"));
@@ -61,7 +77,7 @@ void MLX90640_Init() {
 }
 
 void MLX90640_Every_Second(void) {
-    if (++elasped_sec % 5 != 0 || !mlx_ready) return;
+    if (++elasped_sec % POLL_INTERVAL_SEC != 0 || !mlx_ready) return;
 
     if (mlx.getFrame(frame) != 0) {
         AddLog_P2(LOG_LEVEL_ERROR, PSTR("MLX90640: Unable to query sensor for temperatures"));
@@ -75,8 +91,8 @@ void MLX90640_Every_Second(void) {
     float temp;
     int location;
     float max_temp_so_far = -9999.0;
-    for (uint8_t h = 0; h < 24; h++) {
-        for (uint8_t w = 0; w < 32; w++) {
+    for (uint8_t h = 0 + TRIM_PIXEL_COLUMNS_CNT / 2; h < 24 - TRIM_PIXEL_COLUMNS_CNT / 2; h++) {
+        for (uint8_t w = 0 + TRIM_PIXEL_COLUMNS_CNT / 2; w < 32 - TRIM_PIXEL_COLUMNS_CNT / 2; w++) {
             location = h * 32 + w;
             temp = frame[location];
             dtostrf((temp * 1.8) + 32, 1, 1, value_as_str);  //1 = min string len, 1 = decimal precision
@@ -105,12 +121,11 @@ const char HTTP_IRMSG[] PROGMEM =
 #endif
 
 void MLX90640_Show(uint8_t json) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("MLX90640: MLX90640_Show called"));
     if (!mlx_ready) return;
 
     if (json) {
         ResponseAppend_P(PSTR(",\"MLX90640\":{\"max_temp\":\"%s F\", \"temperatures\":%s}"), max_temp_str, result);
-        MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
+        MqttPublishPrefixTopic_P(TELE, mqtt_data);
     }
 #ifdef USE_WEBSERVER
     else {
@@ -163,3 +178,4 @@ bool Xsns78(byte function) {
 }
 
 #endif  // USE_MLX90640
+#endif  // ESP32
