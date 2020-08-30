@@ -23,6 +23,7 @@
 \*********************************************************************************************/
 
 #define XDRV_08                    8
+#define HARDWARE_FALLBACK          2
 
 const uint8_t SERIAL_BRIDGE_BUFFER_SIZE = 130;
 
@@ -104,7 +105,7 @@ void SerialBridgeInit(void)
 {
   serial_bridge_active = false;
   if (PinUsed(GPIO_SBR_RX) && PinUsed(GPIO_SBR_TX)) {
-    SerialBridgeSerial = new TasmotaSerial(Pin(GPIO_SBR_RX), Pin(GPIO_SBR_TX));
+    SerialBridgeSerial = new TasmotaSerial(Pin(GPIO_SBR_RX), Pin(GPIO_SBR_TX), HARDWARE_FALLBACK);
     if (SerialBridgeSerial->begin(Settings.sbaudrate * 300)) {  // Baud rate is stored div 300 so it fits into 16 bits
       if (SerialBridgeSerial->hardwareSerial()) {
         ClaimSerial();
