@@ -243,6 +243,8 @@ enum UserSelectablePins {
   GPIO_IEM3000_RX,     // IEM3000 Serial interface
   GPIO_ZIGBEE_RST,     // Zigbee reset
   GPIO_DYP_RX,
+  GPIO_MIEL_HVAC_TX,   // Mitsubishi Electric HVAC TX pin
+  GPIO_MIEL_HVAC_RX,   // Mitsubishi Electric HVAC RX pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -339,7 +341,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LMT01_PULSE "|"
   D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX "|"
   D_SENSOR_ZIGBEE_RST "|"
-  D_SENSOR_DYP_RX
+  D_SENSOR_DYP_RX "|"
+  D_SENSOR_MIEL_HVAC_TX "|" D_SENSOR_MIEL_HVAC_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -715,6 +718,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_TELEINFO
   GPIO_TELEINFO_RX,
   GPIO_TELEINFO_ENABLE,
+#endif
+#ifdef USE_MIEL_HVAC
+  GPIO_MIEL_HVAC_TX,
+  GPIO_MIEL_HVAC_RX,
 #endif
 };
 
