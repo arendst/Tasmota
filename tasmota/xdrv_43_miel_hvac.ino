@@ -1,0 +1,716 @@
+/*
+ xdrv_43_miel_hvac.ino - Mitsubishi Electric HVAC support for Tasmota
+ */
+
+/*
+ * Copyright (c) 2020 David Gwynne <david@gwynne.id.au>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#ifdef USE_MIEL_HVAC
+
+#include <TasmotaSerial.h>
+
+#define XDRV_43			43
+
+#define nitems(_a)		(sizeof((_a)) / sizeof((_a)[0]))
+
+#define CTASSERT(x)		extern char  _ctassert[(x) ? 1 : -1 ]	\
+				    __attribute__((__unused__))
+
+#define MIEL_HVAC_LOGNAME	"MiElHVAC"
+
+/* from hvac */
+struct miel_hvac_rcv_header {
+	uint8_t			start;
+#define MIEL_HVAC_H_START		0xfc
+	int8_t			type;
+#define MIEL_HVAC_H_TYPE_UPDATED	0x61
+#define MIEL_HVAC_H_TYPE_DATA		0x62
+#define MIEL_HVAC_H_TYPE_CONNECTED	0x72
+	uint8_t			middle1;
+#define MIEL_HVAC_H_MIDDLE1		0x01
+	uint8_t			middle2;
+#define MIEL_HVAC_H_MIDDLE2		0x30
+	uint8_t			len;
+};
+
+struct miel_hvac_data_updated {
+	uint8_t			type;
+#define MIEL_HVAC_DATA_T_SETTINGS	0x02
+#define MIEL_HVAC_DATA_T_ROOMTEMP	0x03
+#define MIEL_HVAC_DATA_T_TIMER		0x05
+#define MIEL_HVAC_DATA_T_STATUS		0x06
+};
+
+/* to hvac */
+static const uint8_t miel_hvac_msg_connect[7] = {
+	0xfc, 0x5a, 0x01, 0x30, 0x02, 0xca, 0x01, /* 0xa8 */
+};
+
+static const uint8_t miel_hvac_msg_request_hdr[5] = {
+	0xfc, 0x42, 0x01, 0x30, 0x10
+};
+
+struct miel_hvac_msg_request {
+	uint8_t			hdr[sizeof(miel_hvac_msg_request_hdr)];
+	uint8_t			type;
+	uint8_t			pad1[15];
+};
+
+static const uint8_t miel_hvac_msg_update_hdr[6] = {
+	0xfc, 0x41, 0x01, 0x30, 0x10, 0x01
+};
+
+struct miel_hvac_msg_update {
+	uint8_t			hdr[sizeof(miel_hvac_msg_update_hdr)];
+	uint16_t		flags;
+#define MIEL_HVAC_UPDATE_F_WIDEVANE	(1 << 0)
+#define MIEL_HVAC_UPDATE_F_POWER	(1 << 8)
+#define MIEL_HVAC_UPDATE_F_MODE		(1 << 9)
+#define MIEL_HVAC_UPDATE_F_TEMP		(1 << 10)
+#define MIEL_HVAC_UPDATE_F_FAN		(1 << 11)
+#define MIEL_HVAC_UPDATE_F_VANE		(1 << 12)
+	uint8_t			power;
+#define MIEL_HVAC_UPDATE_POWER_OFF	0x00
+#define MIEL_HVAC_UPDATE_POWER_ON	0x01
+	uint8_t			mode;
+#define MIEL_HVAC_UPDATE_MODE_HEAT	0x01
+#define MIEL_HVAC_UPDATE_MODE_DRY	0x02
+#define MIEL_HVAC_UPDATE_MODE_COOL	0x03
+#define MIEL_HVAC_UPDATE_MODE_FAN	0x07
+#define MIEL_HVAC_UPDATE_MODE_AUTO	0x08
+	uint8_t			temp;
+#define MIEL_HVAC_UPDATE_TEMP_MIN	16
+#define MIEL_HVAC_UPDATE_TEMP_MAX	31
+	uint8_t			fan;
+#define MIEL_HVAC_UPDATE_FAN_AUTO	0x00
+#define MIEL_HVAC_UPDATE_FAN_QUIET	0x01
+#define MIEL_HVAC_UPDATE_FAN_1		0x02
+#define MIEL_HVAC_UPDATE_FAN_2		0x03
+#define MIEL_HVAC_UPDATE_FAN_3		0x05
+#define MIEL_HVAC_UPDATE_FAN_4		0x06
+	uint8_t			vane;
+#define MIEL_HVAC_UPDATE_VANE_AUTO	0x00
+#define MIEL_HVAC_UPDATE_VANE_1		0x01
+#define MIEL_HVAC_UPDATE_VANE_2		0x02
+#define MIEL_HVAC_UPDATE_VANE_3		0x03
+#define MIEL_HVAC_UPDATE_VANE_4		0x04
+#define MIEL_HVAC_UPDATE_VANE_5		0x05
+#define MIEL_HVAC_UPDATE_VANE_SWING	0x07
+	uint8_t			_pad1[5];
+	uint8_t			widevane;
+#define MIEL_HVAC_UPDATE_WIDEVANE_MASK	0x0f
+#define MIEL_HVAC_UPDATE_WIDEVANE_LL	0x01
+#define MIEL_HVAC_UPDATE_WIDEVANE_L	0x02
+#define MIEL_HVAC_UPDATE_WIDEVANE_LL	0x01
+#define MIEL_HVAC_UPDATE_WIDEVANE_L	0x02
+#define MIEL_HVAC_UPDATE_WIDEVANE_C	0x03
+#define MIEL_HVAC_UPDATE_WIDEVANE_R	0x04
+#define MIEL_HVAC_UPDATE_WIDEVANE_RR	0x05
+#define MIEL_HVAC_UPDATE_WIDEVANE_LR	0x08
+#define MIEL_HVAC_UPDATE_WIDEVANE_SWING	0x0c
+#define MIEL_HVAC_UPDATE_WIDEVANE_ADJ	0x80
+	uint8_t			_pad2[2];
+} __packed;
+
+CTASSERT(sizeof(struct miel_hvac_msg_update) == 21);
+CTASSERT(offsetof(struct miel_hvac_msg_update, flags) == 6);
+CTASSERT(offsetof(struct miel_hvac_msg_update, power) == 8);
+CTASSERT(offsetof(struct miel_hvac_msg_update, mode) == 9);
+CTASSERT(offsetof(struct miel_hvac_msg_update, temp) == 10);
+CTASSERT(offsetof(struct miel_hvac_msg_update, fan) == 11);
+CTASSERT(offsetof(struct miel_hvac_msg_update, vane) == 12);
+CTASSERT(offsetof(struct miel_hvac_msg_update, widevane) == 18);
+
+static inline uint8_t
+miel_hvac_deg2temp(uint8_t deg)
+{
+	return (31 - deg);
+}
+
+static inline uint8_t
+miel_hvac_temp2deg(uint8_t temp)
+{
+	return (31 - temp);
+}
+
+static inline uint8_t
+miel_hvac_cksum_fini(uint8_t sum)
+{
+	return (0xfc - sum);
+}
+
+struct miel_hvac_map {
+	uint8_t			 byte;
+	const char		*name;
+};
+
+#if 0
+static const struct miel_hvac_map miel_hvac_power_map[] = {
+	{ MIEL_HVAC_UPDATE_POWER_OFF,		"off"	},
+	{ MIEL_HVAC_UPDATE_POWER_ON,		"on"	},
+};
+#endif
+
+static const struct miel_hvac_map miel_hvac_mode_map[] = {
+	{ MIEL_HVAC_UPDATE_MODE_HEAT,		"heat"	},
+	{ MIEL_HVAC_UPDATE_MODE_DRY,		"dry"	},
+	{ MIEL_HVAC_UPDATE_MODE_COOL,		"cool"	},
+	{ MIEL_HVAC_UPDATE_MODE_FAN,		"fan"	},
+	{ MIEL_HVAC_UPDATE_MODE_AUTO,		"auto"	},
+};
+
+static const struct miel_hvac_map miel_hvac_fan_map[] = {
+	{ MIEL_HVAC_UPDATE_FAN_AUTO,		"auto"	},
+	{ MIEL_HVAC_UPDATE_FAN_QUIET,		"quiet"	},
+	{ MIEL_HVAC_UPDATE_FAN_1,		"1"	},
+	{ MIEL_HVAC_UPDATE_FAN_2,		"2"	},
+	{ MIEL_HVAC_UPDATE_FAN_3,		"3"	},
+	{ MIEL_HVAC_UPDATE_FAN_4,		"4"	},
+};
+
+static const struct miel_hvac_map miel_hvac_vane_map[] = {
+	{ MIEL_HVAC_UPDATE_VANE_AUTO,		"auto"	},
+	{ MIEL_HVAC_UPDATE_VANE_1,		"1"	},
+	{ MIEL_HVAC_UPDATE_VANE_2,		"2"	},
+	{ MIEL_HVAC_UPDATE_VANE_3,		"3"	},
+	{ MIEL_HVAC_UPDATE_VANE_4,		"4"	},
+	{ MIEL_HVAC_UPDATE_VANE_5,		"5"	},
+	{ MIEL_HVAC_UPDATE_VANE_SWING,		"swing"	},
+};
+
+static const struct miel_hvac_map miel_hvac_widevane_map[] = {
+	{ MIEL_HVAC_UPDATE_WIDEVANE_LL,		"LL"	},
+	{ MIEL_HVAC_UPDATE_WIDEVANE_L,		"L"	},
+	{ MIEL_HVAC_UPDATE_WIDEVANE_C,		"C"	},
+	{ MIEL_HVAC_UPDATE_WIDEVANE_R,		"R"	},
+	{ MIEL_HVAC_UPDATE_WIDEVANE_RR,		"RR"	},
+	{ MIEL_HVAC_UPDATE_WIDEVANE_LR,		"split"	},
+	{ MIEL_HVAC_UPDATE_WIDEVANE_SWING,	"swing"	},
+};
+
+enum miel_hvac_parser_state {
+	MIEL_HVAC_P_STARTING	= 0,
+	MIEL_HVAC_P_START,
+	MIEL_HVAC_P_TYPE,
+	MIEL_HVAC_P_MIDDLE1,
+	MIEL_HVAC_P_MIDDLE2,
+	MIEL_HVAC_P_LEN,
+	MIEL_HVAC_P_DATA,
+	MIEL_HVAC_P_CKSUM,
+
+	MIEL_HVAC_P_SKIP,
+	MIEL_HVAC_P_SKIP_CKSUM,
+};
+
+#define MIEL_HVAC_DATABUFLEN	64
+
+struct miel_hvac_parser {
+	enum miel_hvac_parser_state
+				 p_state;
+	uint8_t			 p_type;
+	uint8_t			 p_sum;
+	uint8_t			 p_len;
+	uint8_t			 p_off;
+	uint8_t			 p_data[MIEL_HVAC_DATABUFLEN];
+};
+
+struct miel_hvac_softc {
+	TasmotaSerial		*sc_serial;
+	struct miel_hvac_parser	 sc_parser;
+
+	unsigned int		 sc_device;
+};
+
+static struct miel_hvac_softc	*miel_hvac_sc = nullptr;
+
+static void	miel_hvac_input_connected(struct miel_hvac_softc *,
+		    const void *, size_t);
+static void	miel_hvac_input_data(struct miel_hvac_softc *,
+		    const void *, size_t);
+static void	miel_hvac_input_updated(struct miel_hvac_softc *,
+		    const void *, size_t);
+
+static enum miel_hvac_parser_state
+miel_hvac_parse(struct miel_hvac_softc *sc, uint8_t byte)
+{
+	struct miel_hvac_parser *p = &sc->sc_parser;
+	enum miel_hvac_parser_state nstate = p->p_state;
+
+	switch (p->p_state) {
+	case MIEL_HVAC_P_START:
+		if (byte != MIEL_HVAC_H_START)
+			return (MIEL_HVAC_P_START);
+
+		/* reset state */
+		p->p_sum = 0;
+
+		nstate = MIEL_HVAC_P_TYPE;
+		break;
+
+	case MIEL_HVAC_P_TYPE:
+		p->p_type = byte;
+		nstate = MIEL_HVAC_P_MIDDLE1;
+		break;
+
+	case MIEL_HVAC_P_MIDDLE1:
+		if (byte != MIEL_HVAC_H_MIDDLE1) {
+			AddLog_P2(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			   ": parse state MIDDLE1 expected %02x got %02x"
+			   ", restarting"), MIEL_HVAC_H_MIDDLE1, byte);
+			return (MIEL_HVAC_P_START);
+		}
+
+		nstate = MIEL_HVAC_P_MIDDLE2;
+		break;
+
+	case MIEL_HVAC_P_MIDDLE2:
+		if (byte != MIEL_HVAC_H_MIDDLE2) {
+			AddLog_P2(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			   ": parse state MIDDLE2 expected %02x got %02x"
+			   ", restarting"), MIEL_HVAC_H_MIDDLE2, byte);
+			return (MIEL_HVAC_P_START);
+		}
+
+		nstate = MIEL_HVAC_P_LEN;
+		break;
+
+	case MIEL_HVAC_P_LEN:
+		if (byte == 0) {
+			AddLog_P2(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			    ": skipping 0 byte message type 0x%02x"),
+			    p->p_type);
+			return (MIEL_HVAC_P_SKIP_CKSUM);
+		}
+
+		p->p_len = byte;
+		p->p_off = 0;
+
+		switch (p->p_type) {
+		case MIEL_HVAC_H_TYPE_CONNECTED:
+		case MIEL_HVAC_H_TYPE_DATA:
+		case MIEL_HVAC_H_TYPE_UPDATED:
+			break;
+		default:
+			AddLog_P2(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			    ": skipping unknown message type 0x%02x"),
+			    p->p_type);
+			return (MIEL_HVAC_P_SKIP);
+		}
+
+		if (byte > sizeof(p->p_data)) {
+			AddLog_P2(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			    ": skipping %u data bytes of message type 0x%02x"),
+			    p->p_len, p->p_type);
+			return (MIEL_HVAC_P_SKIP);
+		}
+
+		nstate = MIEL_HVAC_P_DATA;
+		break;
+
+	case MIEL_HVAC_P_DATA:
+		p->p_data[p->p_off++] = byte;
+		if (p->p_off >= p->p_len)
+			nstate = MIEL_HVAC_P_CKSUM;
+		break;
+
+	case MIEL_HVAC_P_CKSUM:
+		if (miel_hvac_cksum_fini(p->p_sum) != byte) {
+			AddLog_P2(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			    ": checksum failed, restarting"));
+			return (MIEL_HVAC_P_START);
+		}
+
+		switch (p->p_type) {
+		case MIEL_HVAC_H_TYPE_CONNECTED:
+			miel_hvac_input_connected(sc, p->p_data, p->p_len);
+			break;
+		case MIEL_HVAC_H_TYPE_DATA:
+			miel_hvac_input_data(sc, p->p_data, p->p_len);
+			break;
+		case MIEL_HVAC_H_TYPE_UPDATED:
+			miel_hvac_input_updated(sc, p->p_data, p->p_len);
+			break;
+		}
+
+		/* this message is done, wait for another */
+		return (MIEL_HVAC_P_START);
+
+	case MIEL_HVAC_P_SKIP:
+		if (++p->p_off >= p->p_len)
+			return (MIEL_HVAC_P_SKIP_CKSUM);
+		return (nstate);
+	case MIEL_HVAC_P_SKIP_CKSUM:
+		return (MIEL_HVAC_P_START);
+	}
+
+	p->p_sum += byte;
+
+	return (nstate);
+}
+
+static void
+miel_hvac_send(struct miel_hvac_softc *sc, const void *data, size_t len)
+{
+	TasmotaSerial *serial = sc->sc_serial;
+	const uint8_t *bytes = (const uint8_t *)data;
+	uint8_t cksum = 0;
+	size_t i;
+
+	for (i = 0; i < len; i++) {
+		uint8_t b = bytes[i];
+		serial->write(b);
+		cksum += b;
+	}
+	serial->write(miel_hvac_cksum_fini(cksum));
+	serial->flush();
+}
+
+#define miel_hvac_send_connect(_sc) \
+    miel_hvac_send((_sc), miel_hvac_msg_connect, sizeof(miel_hvac_msg_connect))
+
+static const struct miel_hvac_map *
+miel_hvac_map_byname(const char *name,
+    const struct miel_hvac_map *m, size_t n)
+{
+	const struct miel_hvac_map *e;
+	size_t i;
+
+	for (i = 0; i < n; i++) {
+		e = &m[i];
+		if (strcasecmp(e->name, name) == 0)
+			return (e);
+	}
+
+	return (NULL);
+}
+
+static void
+miel_hvac_init_update(struct miel_hvac_msg_update *update)
+{
+	memset(update, 0, sizeof(*update));
+	memcpy(update->hdr, miel_hvac_msg_update_hdr, sizeof(update->hdr));
+}
+
+static bool
+miel_hvac_set_power(struct miel_hvac_softc *sc)
+{
+	struct miel_hvac_msg_update update;
+
+	miel_hvac_init_update(&update);
+	update.flags |= htons(MIEL_HVAC_UPDATE_F_POWER);
+	update.power = (XdrvMailbox.index & (1 << sc->sc_device)) ?
+	    MIEL_HVAC_UPDATE_POWER_ON : MIEL_HVAC_UPDATE_POWER_OFF;
+
+	miel_hvac_send(sc, &update, sizeof(update));
+
+	return (true);
+}
+
+static void
+miel_hvac_respond_unsupported(void)
+{
+	ResponseCmndChar_P(PSTR("Unsupported"));
+}
+
+static void
+miel_hvac_cmnd_setfanspeed(void)
+{
+	struct miel_hvac_softc *sc = miel_hvac_sc;
+	struct miel_hvac_msg_update update;
+	const struct miel_hvac_map *e;
+
+	if (XdrvMailbox.data_len == 0)
+		return;
+
+	e = miel_hvac_map_byname(XdrvMailbox.data,
+	    miel_hvac_fan_map, nitems(miel_hvac_fan_map));
+	if (e == NULL) {
+		miel_hvac_respond_unsupported();
+		return;
+	}
+
+	miel_hvac_init_update(&update);
+	update.flags |= htons(MIEL_HVAC_UPDATE_F_FAN);
+	update.fan = e->byte;
+
+	miel_hvac_send(sc, &update, sizeof(update));
+
+	ResponseCmndDone();
+}
+
+static void
+miel_hvac_cmnd_setmode(void)
+{
+	struct miel_hvac_softc *sc = miel_hvac_sc;
+	struct miel_hvac_msg_update update;
+	const struct miel_hvac_map *e;
+
+	if (XdrvMailbox.data_len == 0)
+		return;
+
+	e = miel_hvac_map_byname(XdrvMailbox.data,
+	    miel_hvac_mode_map, nitems(miel_hvac_mode_map));
+	if (e == NULL) {
+		miel_hvac_respond_unsupported();
+		return;
+	}
+
+	miel_hvac_init_update(&update);
+	update.flags |= htons(MIEL_HVAC_UPDATE_F_MODE);
+	update.mode = e->byte;
+
+	miel_hvac_send(sc, &update, sizeof(update));
+
+	ResponseCmndDone();
+}
+
+static void
+miel_hvac_cmnd_settemp(void)
+{
+	struct miel_hvac_softc *sc = miel_hvac_sc;
+	struct miel_hvac_msg_update update;
+	unsigned long degc;
+
+	if (XdrvMailbox.data_len == 0)
+		return;
+
+	degc = strtoul(XdrvMailbox.data, nullptr, 0);
+	if (degc < MIEL_HVAC_UPDATE_TEMP_MIN ||
+	    degc > MIEL_HVAC_UPDATE_TEMP_MAX) {
+		miel_hvac_respond_unsupported();
+		return;
+	}
+
+	miel_hvac_init_update(&update);
+	update.flags |= htons(MIEL_HVAC_UPDATE_F_TEMP);
+	update.temp = miel_hvac_deg2temp(degc);
+
+	miel_hvac_send(sc, &update, sizeof(update));
+
+	ResponseCmndDone();
+}
+
+static void
+miel_hvac_cmnd_setvane(void)
+{
+	struct miel_hvac_softc *sc = miel_hvac_sc;
+	struct miel_hvac_msg_update update;
+	const struct miel_hvac_map *e;
+
+	if (XdrvMailbox.data_len == 0)
+		return;
+
+	e = miel_hvac_map_byname(XdrvMailbox.data,
+	    miel_hvac_vane_map, nitems(miel_hvac_vane_map));
+	if (e == NULL) {
+		miel_hvac_respond_unsupported();
+		return;
+	}
+
+	miel_hvac_init_update(&update);
+	update.flags |= htons(MIEL_HVAC_UPDATE_F_VANE);
+	update.vane = e->byte;
+
+	miel_hvac_send(sc, &update, sizeof(update));
+
+	ResponseCmndDone();
+}
+
+static void
+miel_hvac_cmnd_setwidevane(void)
+{
+	struct miel_hvac_softc *sc = miel_hvac_sc;
+	struct miel_hvac_msg_update update;
+	const struct miel_hvac_map *e;
+
+	if (XdrvMailbox.data_len == 0)
+		return;
+
+	e = miel_hvac_map_byname(XdrvMailbox.data,
+	    miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
+	if (e == NULL) {
+		miel_hvac_respond_unsupported();
+		return;
+	}
+
+	miel_hvac_init_update(&update);
+	update.flags |= htons(MIEL_HVAC_UPDATE_F_WIDEVANE);
+	update.widevane = e->byte;
+
+	miel_hvac_send(sc, &update, sizeof(update));
+
+	ResponseCmndDone();
+}
+
+/*
+ * serial data handlers
+ */
+
+static void
+miel_hvac_log_bytes(struct miel_hvac_softc *sc, const char *name,
+    const void *buf, size_t len)
+{
+	char hex[(MIEL_HVAC_DATABUFLEN + 1) * 2];
+	const unsigned char *b = (const unsigned char *)buf;
+
+	Response_P(PSTR("{\"MiElHVAC\":{\"Type\":\"%s\",\"Data\":\"%s\"}}"),
+	    name, ToHex_P(b, len, hex, sizeof(hex)));
+}
+
+static void
+miel_hvac_input_connected(struct miel_hvac_softc *sc,
+    const void *buf, size_t len)
+{
+	miel_hvac_log_bytes(sc, "connected", buf, len);
+}
+
+static void
+miel_hvac_input_data(struct miel_hvac_softc *sc,
+    const void *buf, size_t len)
+{
+	miel_hvac_log_bytes(sc, "data", buf, len);
+}
+
+static void
+miel_hvac_input_updated(struct miel_hvac_softc *sc,
+    const void *buf, size_t len)
+{
+	miel_hvac_log_bytes(sc, "updated", buf, len);
+}
+
+/*
+ * FUNC handlers
+ */
+
+static const char miel_hvac_unknown[] = "unknown";
+
+static void
+miel_hvac_pre_init(void)
+{
+	struct miel_hvac_softc *sc;
+	int baudrate = 2400;
+
+	if (!PinUsed(GPIO_MIEL_HVAC_TX) || !PinUsed(GPIO_MIEL_HVAC_RX))
+		return;
+
+	sc = (struct miel_hvac_softc *)malloc(sizeof(*sc));
+	if (sc == NULL) {
+		AddLog_P(LOG_LEVEL_ERROR,
+		    PSTR(MIEL_HVAC_LOGNAME ": unable to allocate state"));
+		return;
+	}
+
+	memset(sc, 0, sizeof(*sc));
+
+	sc->sc_serial = new TasmotaSerial(Pin(GPIO_MIEL_HVAC_RX),
+	    Pin(GPIO_MIEL_HVAC_TX), 2);
+
+	/* borrow SetOption97 Set Baud rate for TuyaMCU */
+	if (Settings.flag4.tuyamcu_baudrate)
+		baudrate = 9600;
+
+	if (!sc->sc_serial->begin(baudrate, SERIAL_8E1)) {
+		AddLog_P2(LOG_LEVEL_ERROR,
+		    PSTR(MIEL_HVAC_LOGNAME ": unable to begin serial "
+		    "(baudrate %d)"), baudrate);
+		return;
+	}
+
+	if (sc->sc_serial->hardwareSerial()) {
+		ClaimSerial();
+	}
+
+	AddLog_P2(LOG_LEVEL_DEBUG,
+	    PSTR(MIEL_HVAC_LOGNAME ": connecting to Mitsubishi Electric HVAC "
+	    "at %d baud rate"), baudrate);
+
+	sc->sc_device = devices_present++;
+
+	miel_hvac_send_connect(sc);
+
+	miel_hvac_sc = sc;
+}
+
+static void
+miel_hvac_loop(struct miel_hvac_softc *sc)
+{
+	TasmotaSerial *serial = sc->sc_serial;
+
+	while (serial->available()) {
+		yield();
+		sc->sc_parser.p_state = miel_hvac_parse(sc, serial->read());
+	}
+}
+
+/*
+ * Interface
+ */
+
+static const char miel_hvac_cmnd_names[] PROGMEM = "|"  // No prefix
+	D_CMND_MIEL_HVAC_SETFAN "|"
+	D_CMND_MIEL_HVAC_SETMODE "|"
+	D_CMND_MIEL_HVAC_SETTEMP "|"
+	D_CMND_MIEL_HVAC_SETVANE "|"
+	D_CMND_MIEL_HVAC_SETWIDEVANE;
+
+static void (*const miel_hvac_cmnds[])(void) PROGMEM = {
+	&miel_hvac_cmnd_setfanspeed,
+	&miel_hvac_cmnd_setmode,
+	&miel_hvac_cmnd_settemp,
+	&miel_hvac_cmnd_setvane,
+	&miel_hvac_cmnd_setwidevane,
+};
+
+bool
+Xdrv43(uint8_t function)
+{
+	bool result = false;
+	struct miel_hvac_softc *sc = miel_hvac_sc;
+
+	switch (function) {
+	case FUNC_PRE_INIT:
+		miel_hvac_pre_init();
+		return (false);
+	}
+
+	if (sc == NULL)
+		return (false);
+
+	switch (function) {
+	case FUNC_LOOP:
+		miel_hvac_loop(sc);
+		break;
+
+	case FUNC_SET_DEVICE_POWER:
+		result = miel_hvac_set_power(sc);
+		break;
+
+	case FUNC_EVERY_50_MSECOND:
+	case FUNC_EVERY_100_MSECOND:
+	case FUNC_EVERY_200_MSECOND:
+	case FUNC_EVERY_250_MSECOND:
+	case FUNC_EVERY_SECOND:
+		break;
+
+	case FUNC_COMMAND:
+		result = DecodeCommand(miel_hvac_cmnd_names, miel_hvac_cmnds);
+		break;
+	}
+
+	return (result);
+}
+
+#endif /* ifdef USE_MIEL_HVAC */
