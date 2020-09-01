@@ -619,6 +619,13 @@
 #define D_CMND_PING "Ping"
 #define D_JSON_PING "Ping"
 
+// Commands xdrv_43_miel_hvac
+#define D_CMND_MIEL_HVAC_SETFAN "HVACSetFan"
+#define D_CMND_MIEL_HVAC_SETMODE "HVACSetMode"
+#define D_CMND_MIEL_HVAC_SETTEMP "HVACSetTemp"
+#define D_CMND_MIEL_HVAC_SETVANE "HVACSetVane"
+#define D_CMND_MIEL_HVAC_SETWIDEVANE "HVACSetWideVane"
+
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
 
