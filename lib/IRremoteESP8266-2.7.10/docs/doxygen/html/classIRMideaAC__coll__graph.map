@@ -1,0 +1,5 @@
+<map id="IRMideaAC" name="IRMideaAC">
+<area shape="rect" id="node1" title="Class for handling detailed Midea A/C messages." alt="" coords="49,95,143,121"/>
+<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="5,5,72,32"/>
+<area shape="rect" id="node3" href="$unionMideaProtocol.html" title=" " alt="" coords="96,5,211,32"/>
+</map>
