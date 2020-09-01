@@ -1,3 +1,9 @@
+## Released
+
+### 8.4.0 20200730
+
+- Release George
+
 ## Unreleased (development)
 
 ### 8.4.0.3 20200823
