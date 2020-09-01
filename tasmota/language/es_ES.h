@@ -351,6 +351,7 @@
 #define D_UPLOAD_STARTED "Cargando archivo"
 #define D_UPGRADE_STARTED "Actualización iniciada"
 #define D_UPLOAD_DONE "Carga finalizada"
+#define D_UPLOAD_TRANSFER "Upload transfer"
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Ningún archivo seleccionado"
 #define D_UPLOAD_ERR_2 "Espacio insuficiente"

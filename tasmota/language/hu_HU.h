@@ -351,6 +351,7 @@
 #define D_UPLOAD_STARTED "Feltöltés elindítva"
 #define D_UPGRADE_STARTED "Frissítés elindítva"
 #define D_UPLOAD_DONE "Feltöltés kész"
+#define D_UPLOAD_TRANSFER "Upload transfer"
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nincs fájl kijelölve"
 #define D_UPLOAD_ERR_2 "Nincs elég memória"

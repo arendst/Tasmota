@@ -351,6 +351,7 @@
 #define D_UPLOAD_STARTED "Início do envio"
 #define D_UPGRADE_STARTED "Atualização iniciada"
 #define D_UPLOAD_DONE "Atualização finalizada"
+#define D_UPLOAD_TRANSFER "Upload transfer"
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nenhum arquivo selecionado"
 #define D_UPLOAD_ERR_2 "Não existe memória disponível"

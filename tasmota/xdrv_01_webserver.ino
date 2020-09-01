@@ -637,12 +637,12 @@ const char HTTP_HEAD_STYLE_ZIGBEE_COMPRESSED[] PROGMEM = "\x3A\x0E\xA3\xDA\x3B\x
                              "\x33\x90\x81\x0F\x5F\x04\x2D\x53\xFA\x3C\x2A\x2B\x8F\x33\xAC\xE6\x10\x22\x70\x54"
                              "\x08\xFC\x0C\x82\x0F\x0A\x67\x30\x81\x23\x81\x23\xDA\x08\x34\x4C\xEF\xE7\x74\xEB"
                              "\x3A\xC7\x04\x75\x1C\x98\x43\x0D\x87\x78\xF0\x13\x31\x47\x99\xC8\x43\x0D\x87\xB8";
-                             
+
 // Raw: .bt{box-sizing:border-box;position:relative;display:inline-block;width:20px;height:12px;border:2px solid;border-radius:3px;margin-left:-3px}.bt::after,.bt::before{content:"";display:block;box-sizing:border-box;position:absolute;height:6px;background:currentColor;top:1px}.bt::before{right:-4px;border-radius:3px;width:4px}.bt::after{width:var(--bl,14px);left:1px}
 // Successfully compressed from 363 to 240 bytes (-33.9%)
 #define  HTTP_HEAD_STYLE_ZIGBEE       Decompress(HTTP_HEAD_STYLE_ZIGBEE_COMPRESSED,HTTP_HEAD_STYLE_ZIGBEE_SIZE).c_str()
 #else // USE_UNISHOX_COMPRESSION
-const char HTTP_HEAD_STYLE_ZIGBEE[] PROGMEM = 
+const char HTTP_HEAD_STYLE_ZIGBEE[] PROGMEM =
   ".bt{box-sizing:border-box;position:relative;display:inline-block;width:20px;height:12px;border:2px solid;border-radius:3px;margin-left:-3px}"
   ".bt::after,.bt::before{content:\"\";display:block;box-sizing:border-box;position:absolute;height:6px;background:currentColor;top:1px}"
   ".bt::before{right:-4px;border-radius:3px;width:4px}"
@@ -869,6 +869,7 @@ void StartWebserver(int type, IPAddress ipweb)
       Webserver->on("/u1", HandleUpgradeFirmwareStart);  // OTA
       Webserver->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
       Webserver->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
+      Webserver->on("/u3", HandleUploadDone);
       Webserver->on("/cs", HTTP_GET, HandleConsole);
       Webserver->on("/cs", HTTP_OPTIONS, HandlePreflightRequest);
       Webserver->on("/cm", HandleHttpCommand);
@@ -2624,6 +2625,16 @@ void HandleUploadDone(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
+#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+  if (!Web.upload_error) {
+    // GUI xmodem
+    if (ZigbeeUploadOtaReady()) {
+      HandleZigbeeXfer();
+      return;
+    }
+  }
+#endif
+
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 
   char error[100];
@@ -2639,8 +2650,8 @@ void HandleUploadDone(void)
   if (!Web.upload_error) {
     uint32_t javascript_settimeout = HTTP_OTA_RESTART_RECONNECT_TIME;
 #if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
-    if (ZigbeeUploadOtaReady()) {
-      javascript_settimeout = 30000;                                  // Refesh main web ui after transfer upgrade
+    if (ZigbeeUploadFinish()) {
+      javascript_settimeout = 10000;                                  // Refesh main web ui after transfer upgrade
     }
 #endif
     WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, javascript_settimeout);  // Refesh main web ui after OTA upgrade
@@ -2665,15 +2676,9 @@ void HandleUploadDone(void)
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     restart_flag = 2;  // Always restart to re-enable disabled features during update
-#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
-    if (ZigbeeUploadOtaReady()) {
-      WSContentSend_P(PSTR("<br><div style='text-align:center;'>" D_TRANSFER_STARTED " ...</div><br>"));
-      restart_flag = 0;  // Hold restart as firmware still needs to be written to MCU EFR32
-    }
-#endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_TASMOTA_CLIENT
     if (TasmotaClient_GetFlagFlashing()) {
-      WSContentSend_P(PSTR("<br><div style='text-align:center;'>" D_TRANSFER_STARTED " ...</div><br>"));
+      WSContentSend_P(PSTR("<br><div style='text-align:center;'><b>" D_TRANSFER_STARTED " ...</b></div>"));
       restart_flag = 0;  // Hold restart as code still needs to be transferred to Atmega
     }
 #endif  // USE_TASMOTA_CLIENT
