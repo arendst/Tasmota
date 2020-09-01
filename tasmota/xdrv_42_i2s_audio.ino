@@ -53,10 +53,11 @@ AudioOutputI2S *out;
 AudioFileSourceID3 *id3;
 AudioGeneratorMP3 *decoder = NULL;
 
+
 #ifdef USE_WEBRADIO
 AudioFileSourceICYStream *ifile = NULL;
 AudioFileSourceBuffer *buff = NULL;
-//char title[64];
+char wr_title[64];
 //char status[64];
 
 #ifdef ESP8266
@@ -211,8 +212,13 @@ void I2S_Init(void) {
   out->stop();
 
 #ifdef USE_WEBRADIO
-  preallocateBuffer = malloc(preallocateBufferSize);
-  preallocateCodec = malloc(preallocateCodecSize);
+  if (psramFound()) {
+    preallocateBuffer = heap_caps_malloc(preallocateBufferSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    preallocateCodec = heap_caps_malloc(preallocateCodecSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  } else {
+    preallocateBuffer = malloc(preallocateBufferSize);
+    preallocateCodec = malloc(preallocateCodecSize);
+  }
   if (!preallocateBuffer || !preallocateCodec) {
     //Serial.printf_P(PSTR("FATAL ERROR:  Unable to preallocate %d bytes for app\n"), preallocateBufferSize+preallocateCodecSize);
   }
@@ -246,8 +252,9 @@ void MDCallback(void *cbData, const char *type, bool isUnicode, const char *str)
   (void) isUnicode; // Punt this ball for now
   (void) ptr;
   if (strstr_P(type, PSTR("Title"))) {
-    //strncpy(title, str, sizeof(title));
-    //title[sizeof(title)-1] = 0;
+    strncpy(wr_title, str, sizeof(wr_title));
+    wr_title[sizeof(wr_title)-1] = 0;
+    //AddLog_P2(LOG_LEVEL_INFO,PSTR("WR-Title: %s"),wr_title);
   } else {
     // Who knows what to do?  Not me!
   }
@@ -331,6 +338,15 @@ void Cmd_WebRadio(void) {
 
 }
 
+const char HTTP_WEBRADIO[] PROGMEM =
+   "{s}" "I2S_WR-Title" "{m}%s{e}";
+
+void I2S_WR_Show(void) {
+    if (decoder) {
+      WSContentSend_PD(HTTP_WEBRADIO,wr_title);
+    }
+}
+
 #endif
 
 #ifdef ESP32
@@ -338,14 +354,33 @@ void Play_mp3(const char *path) {
 #if defined(USE_SCRIPT) && defined(USE_SCRIPT_FATFS)
   if (decoder || mp3) return;
 
+  bool I2S_Task;
+
   TTGO_PWR_ON
+  if (*path=='+') {
+    I2S_Task = true;
+    path++;
+  } else {
+    I2S_Task = false;
+  }
 
   file = new AudioFileSourceFS(*fsp,path);
   id3 = new AudioFileSourceID3(file);
   mp3 = new AudioGeneratorMP3();
   mp3->begin(id3, out);
 
-  xTaskCreatePinnedToCore(mp3_task, "MP3", 8192, NULL, 3, &mp3_task_h, 1);
+  if (I2S_Task) {
+    xTaskCreatePinnedToCore(mp3_task, "MP3", 8192, NULL, 3, &mp3_task_h, 1);
+  } else {
+    while (mp3->isRunning()) {
+      if (!mp3->loop()) {
+        mp3->stop();
+        mp3_delete();
+        break;
+      }
+      OsWatchLoop();
+    }
+  }
 
 #endif // USE_SCRIPT
 }
@@ -440,7 +475,13 @@ bool Xdrv42(uint8_t function) {
     case FUNC_INIT:
       I2S_Init();
       break;
-
+#ifdef USE_WEBSERVER
+#ifdef USE_WEBRADIO
+    case FUNC_WEB_SENSOR:
+      I2S_WR_Show();
+      break;
+#endif
+#endif
   }
   return result;
 }
