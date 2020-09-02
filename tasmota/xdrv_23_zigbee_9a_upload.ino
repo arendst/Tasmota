@@ -491,28 +491,25 @@ const char HTTP_SCRIPT_XFER_STATE[] PROGMEM =
       "if(x.readyState==4&&x.status==200){"
         "var s=x.responseText;"
         "if(s!=7){"                 // ZBU_UPLOAD
-          "location.href='/u3';"
+          "location.href='/u3';"    // Load page HandleUploadDone()
         "}"
       "}"
     "};"
-    "x.open('GET','" WEB_HANDLE_ZIGBEE_XFER "?m=1',true);"       // ?m related to Webserver->hasArg("m")
+    "x.open('GET','" WEB_HANDLE_ZIGBEE_XFER "?z=1',true);"  // ?z related to Webserver->hasArg("z")
     "x.send();"
-    "if(pc==1){"
-      "lt=setTimeout(z9,950);"      // Poll every 0.95 second
-    "}"
+    "lt=setTimeout(z9,950);"        // Poll every 0.95 second
   "}"
-  "pc=1;"
-  "wl(z9);";
+  "wl(z9);";                        // Execute z9() on page load
 
 void HandleZigbeeXfer(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  if (Webserver->hasArg("m")) {     // Status refresh requested
+  if (Webserver->hasArg("z")) {     // Status refresh requested
     WSContentBegin(200, CT_PLAIN);
     WSContentSend_P(PSTR("%d"), ZbUpload.state);
     WSContentEnd();
     if (ZBU_ERROR == ZbUpload.state) {
-      Web.upload_error = 7;         // Upload aborted (failed)
+      Web.upload_error = 7;         // Upload aborted (xmodem transfer failed)
     }
     return;
   }
@@ -522,7 +519,7 @@ void HandleZigbeeXfer(void) {
   WSContentStart_P(S_INFORMATION);
   WSContentSend_P(HTTP_SCRIPT_XFER_STATE);
   WSContentSendStyle();
-  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD_TRANSFER "...</b></div>"));
+  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD_TRANSFER " ...</b></div>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 }
