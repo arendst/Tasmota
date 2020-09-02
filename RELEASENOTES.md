@@ -21,7 +21,7 @@ While fallback or downgrading is common practice it was never supported due to S
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.7.2.1** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.4.1** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 Support of Core versions before 2.7.1 has been removed.
 
@@ -35,7 +35,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Provided Binary Downloads
 
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.2.1**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.1**.
 
 - **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
@@ -53,7 +53,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.4.0.3
+### Version 8.5.0 Hannah
 
 - Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
 - Change references from http://thehackbox.org to http://ota.tasmota.com

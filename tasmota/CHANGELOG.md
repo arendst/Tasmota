@@ -1,8 +1,8 @@
 ## Released
 
-### 8.4.0 20200730
+### 8.5.0 20200911
 
-- Release George
+- Release Hannah
 
 ## Unreleased (development)
 
