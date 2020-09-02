@@ -158,6 +158,15 @@ a_setoption = [[
     "","","","",
     "","","","",
     "","","",""
+    ],[
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","",""
     ]]
 
 a_features = [[
@@ -211,9 +220,18 @@ a_features = [[
     "USE_WINDMETER","USE_OPENTHERM","USE_THERMOSTAT","USE_VEML6075",
     "USE_VEML7700","USE_MCP9808","USE_BL0940","USE_TELEGRAM",
     "USE_HP303B","USE_TCP_BRIDGE","USE_TELEINFO","USE_LMT01",
-    "USE_PROMETHEUS","USE_IEM3000","","",
+    "USE_PROMETHEUS","USE_IEM3000","USE_DYP","",
     "","","","",
     "","","USE_ETHERNET","USE_WEBCAM"
+    ],[
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","",""
     ]]
 
 usage = "usage: decode-status {-d | -f} arg"
@@ -241,7 +259,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20200721 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20200817 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
@@ -270,13 +288,14 @@ def StartDecode():
                         continue
 
                     elif len(register) == 36:         # 6.1.1.14: array consists of SetOptions 0..31, SetOptions 32..49, and SetOptions 50..81
+                                                      # 8.4.0.2: adds another SetOptions 114..145
                         split_register = [int(register[opt*2:opt*2+2],16) for opt in range(18)] # split register into 18 values
 
                         for opt_idx, option in enumerate(opt_group):
                             options.append(str("{0:2d} ({1:3d}) {2}".format(i, split_register[opt_idx], option)))
                             i += 1
 
-                if r in (0, 2, 3): #registers 1 and 3 hold binary values
+                if r in (0, 2, 3, 4):                 #registers 1 and 4 hold binary values
                     for opt_idx, option in enumerate(opt_group):
                         i_register = int(register,16)
                         state = (i_register >> opt_idx) & 1
@@ -290,7 +309,7 @@ def StartDecode():
     if "StatusMEM" in obj:
         if "Features" in obj["StatusMEM"]:
             features = []
-            for f in range(6):
+            for f in range(7):
                 feature = obj["StatusMEM"]["Features"][f]
                 i_feature = int(feature,16)
                 if f == 0:

@@ -505,29 +505,10 @@ uint32_t DecodeLightId(uint32_t hue_id, uint16_t * shortaddr = nullptr)
   return relay_id;
 }
 
-static const char * FIRST_GEN_UA[] = {  // list of User-Agents signature
-  "AEOBC",                              // Echo Dot 2ng Generation
-};
-
 // Check if the Echo device is of 1st generation, which triggers different results
-uint32_t findEchoGeneration(void) {
-  // result is 1 for 1st gen, 2 for 2nd gen and further
-  String user_agent = Webserver->header("User-Agent");
-  uint32_t gen = 2;
-
-  for (uint32_t i = 0; i < sizeof(FIRST_GEN_UA)/sizeof(char*); i++) {
-    if (user_agent.indexOf(FIRST_GEN_UA[i]) >= 0) {  // found
-      gen = 1;
-      break;
-    }
-  }
-  if (0 == user_agent.length()) {
-    gen = 1;        // if no user-agent, also revert to gen v1
-  }
-
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " User-Agent: %s, gen=%d"), user_agent.c_str(), gen);  // Header collection is set in xdrv_01_webserver.ino, in StartWebserver()
-
-  return gen;
+inline uint32_t findEchoGeneration(void) {
+  // don't try to guess from User-Agent anymore but use SetOption109
+  return Settings.flag4.alexa_gen_1 ? 1 : 2;
 }
 
 void HueGlobalConfig(String *path) {
@@ -893,7 +874,7 @@ void HandleHueApi(String *path)
 
   path->remove(0, 4);                                // remove /api
   uint16_t apilen = path->length();
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_API " (%s)"), path->c_str());         // HTP: Hue API (//lights/1/state
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_API " (%s) from %s"), path->c_str(), Webserver->client().remoteIP().toString().c_str());         // HTP: Hue API (//lights/1/state) from 192.168.1.20
   for (args = 0; args < Webserver->args(); args++) {
     String json = Webserver->arg(args);
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_POST_ARGS " (%s)"), json.c_str());  // HTP: Hue POST args ({"on":false})

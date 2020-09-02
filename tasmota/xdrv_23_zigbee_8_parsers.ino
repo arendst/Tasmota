@@ -126,6 +126,25 @@ int32_t EZ_NetworkParameters(int32_t res, class SBuffer &buf) {
 }
 
 //
+// Analyze response to "getKey" and check NWK key
+//
+int32_t EZ_CheckKeyNWK(int32_t res, class SBuffer &buf) {
+  uint8_t  status = buf.get8(2);
+  uint16_t bitmask = buf.get16(3);
+  uint8_t  key_type = buf.get8(5);
+  uint64_t key_low  = buf.get64(6);
+  uint64_t key_high = buf.get64(14);
+
+  if ( (key_type == EMBER_CURRENT_NETWORK_KEY) &&
+       (key_low  == ezsp_key_low) &&
+       (key_high == ezsp_key_high) ) {
+    return 0;     // proceed to next step
+  } else {
+    return -2;    // error state
+  }
+}
+
+//
 // Handle a "incomingRouteErrorHandler" incoming message
 //
 int32_t EZ_RouteError(int32_t res, const class SBuffer &buf) {
@@ -160,6 +179,22 @@ int32_t EZ_PermitJoinRsp(int32_t res, const class SBuffer &buf) {
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
   return -1;
+}
+
+//
+// Received MessageSentHandler
+//
+// We normally ignore the message, but it's a way to sniff group ids for IKEA remote
+// In case of a multicast message sent to 0xFFFD with non-null group id, we log the group id
+int32_t EZ_MessageSent(int32_t res, const class SBuffer &buf) {
+  uint8_t  message_type = buf.get8(2);
+  uint16_t dst_addr = buf.get16(3);
+  uint16_t group_addr = buf.get16(13);
+
+  if ((EMBER_OUTGOING_MULTICAST == message_type) && (0xFFFD == dst_addr)) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Sniffing group 0x%04X"), group_addr);
+  }
+  return -1;    // ignore
 }
 
 #endif // USE_ZIGBEE_EZSP
@@ -1009,6 +1044,10 @@ void Z_IncomingMessage(ZCLFrame &zcl_received) {
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES == zcl_received.getCmdId())) {
       zcl_received.parseReadAttributes(json);
       // never defer read_attributes, so the auto-responder can send response back on a per cluster basis
+    } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_REPORTING_CONFIGURATION_RESPONSE == zcl_received.getCmdId())) {
+      zcl_received.parseReadConfigAttributes(json);
+    } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_CONFIGURE_REPORTING_RESPONSE == zcl_received.getCmdId())) {
+      zcl_received.parseConfigAttributes(json);
     } else if (zcl_received.isClusterSpecificCommand()) {
       zcl_received.parseClusterSpecificCommand(json);
     }
@@ -1129,7 +1168,6 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
   bool            securityuse = (apsoptions & EMBER_APS_OPTION_ENCRYPTION) ? true : false;
   uint16_t        groupid = buf.get16(11);
   uint8_t         seqnumber = buf.get8(13);
-  // uint8_t         linkquality = buf.get8(14);
   int8_t          linkrssi = buf.get8(15);
   uint8_t         linkquality = ZNP_RSSI2Lqi(linkrssi);   // don't take EZSP LQI but calculate our own based on ZNP 
   uint16_t        srcaddr = buf.get16(16);
@@ -1140,6 +1178,8 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
 
   if ((0x0000 == profileid) && (0x00 == srcendpoint))  {
     // ZDO request
+    // Report LQI
+    zigbee_devices.setLQI(srcaddr, linkquality);
     // Since ZDO messages start with a sequence number, we skip it
     // but we add the source address in the last 2 bytes
     SBuffer zdo_buf(buf.get8(20) - 1 + 2);
@@ -1226,6 +1266,9 @@ int32_t EZ_Recv_Default(int32_t res, const class SBuffer &buf) {
         break;
       case EZSP_permitJoining:
         return EZ_PermitJoinRsp(res, buf);
+        break;
+      case EZSP_messageSentHandler:
+        return EZ_MessageSent(res, buf);
         break;
     }
     return -1;

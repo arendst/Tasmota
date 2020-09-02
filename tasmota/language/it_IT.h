@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - rev. 24.07.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 19.08.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -307,6 +307,7 @@
 #define D_DEVICE_NAME "Nome dispositivo"
 #define D_WEB_ADMIN_PASSWORD "Password amministratore web"
 #define D_MQTT_ENABLE "Abilita MQTT"
+#define D_MQTT_TLS_ENABLE "MQTT TLS"
 #define D_FRIENDLY_NAME "Nome amichevole"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Bridge Hue"
@@ -335,6 +336,7 @@
 #define D_MQTT_TOPIC "Topic MQTT"
 #define D_MQTT_GROUP_TOPIC "Gruppo topic MQTT"
 #define D_MQTT_FULL_TOPIC "Full topic MQTT"
+#define D_MQTT_NO_RETAIN "MQTT No Retain"
 #define D_MDNS_DISCOVERY "Ricerca mDNS"
 #define D_MDNS_ADVERTISE "Notifica mDNS"
 #define D_ESP_CHIP_ID "ID chip ESP"
@@ -349,6 +351,8 @@
 #define D_UPLOAD_STARTED "Caricamento..."
 #define D_UPGRADE_STARTED "Aggiornamento..."
 #define D_UPLOAD_DONE "Caricamento completato"
+#define D_UPLOAD_TRANSFER "Upload transfer"
+#define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nessun file selezionato"
 #define D_UPLOAD_ERR_2 "Spazio insufficiente"
 #define D_UPLOAD_ERR_3 "Magic byte non corrispondente a 0xE9"
@@ -619,6 +623,7 @@
 #define D_SENSOR_MAX31855_CS   "MX31855 - CS"
 #define D_SENSOR_MAX31855_CLK  "MX31855 - CLK"
 #define D_SENSOR_MAX31855_DO   "MX31855 - DO"
+#define D_SENSOR_MAX31865_CS   "MX31865 CS"
 #define D_SENSOR_NRG_SEL       "HLWBL - SEL"  // Suffix "i"
 #define D_SENSOR_NRG_CF1       "HLWBL - CF1"
 #define D_SENSOR_HLW_CF        "HLW8012 - CF"
@@ -649,7 +654,7 @@
 #define D_SENSOR_ZIGBEE_RXD    "Zigbee - RX"
 #define D_SENSOR_ZIGBEE_RST    "Zigbee - Reset"
 #define D_SENSOR_SOLAXX1_TX    "SolaxX1 - TX"
-#define D_SENSOR_SOLAXX1_RX    "SolaxX1- RX"
+#define D_SENSOR_SOLAXX1_RX    "SolaxX1 - RX"
 #define D_SENSOR_IBEACON_TX    "iBeacon - TX"
 #define D_SENSOR_IBEACON_RX    "iBeacon - RX"
 #define D_SENSOR_RDM6300_RX    "RDM6300 - RX"
@@ -681,12 +686,20 @@
 #define D_SENSOR_CC1101_GDO0   "CC1101 - GDO0"
 #define D_SENSOR_CC1101_GDO2   "CC1101 - GDO2"
 #define D_SENSOR_HRXL_RX       "HRXL - RX"
+#define D_SENSOR_DYP_RX        "DYP - RX"
 #define D_SENSOR_ELECTRIQ_MOODL "MOODL - TX"
 #define D_SENSOR_AS3935         "AS3935"
 #define D_SENSOR_WINDMETER_SPEED "Velocità vento"
-#define D_SENSOR_TELEINFO_RX    "TInfo Rx"
-#define D_SENSOR_TELEINFO_ENABLE "TInfo EN"
+#define D_SENSOR_TELEINFO_RX    "TInfo - RX"
+#define D_SENSOR_TELEINFO_ENABLE "TInfo - EN"
 #define D_SENSOR_LMT01_PULSE   "LMT01 Pulse"
+#define D_SENSOR_ADC_INPUT     "ADC Input"
+#define D_SENSOR_ADC_TEMP      "ADC Temp"
+#define D_SENSOR_ADC_LIGHT     "ADC Light"
+#define D_SENSOR_ADC_BUTTON    "ADC Button"
+#define D_SENSOR_ADC_RANGE     "ADC Range"
+#define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
+#define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -821,5 +834,14 @@
 //xsns_68_opentherm.ino
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm - RX"
 #define D_SENSOR_BOILER_OT_TX   "OpenTherm - TX"
+
+// xnrg_15_teleinfo Denky (Teleinfo)
+#define D_CONTRACT        "Contratto"
+#define D_POWER_LOAD      "Carico di potenza"
+#define D_CURRENT_TARIFF  "Tariffa attuale"
+#define D_TARIFF          "Tariffa"
+#define D_OVERLOAD        "ADPS"
+#define D_MAX_POWER       "Potenza max"
+#define D_MAX_CURRENT     "Corrente max"
 
 #endif  // _LANGUAGE_IT_IT_H_

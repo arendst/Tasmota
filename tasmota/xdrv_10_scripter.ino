@@ -43,6 +43,8 @@ keywords if then else endif, or, and are better readable for beginners (others m
 
 #define SCRIPT_DEBUG 0
 
+#define FORMAT_SPIFFS_IF_FAILED true
+
 
 #ifndef MAXVARS
 #define MAXVARS 50
@@ -78,11 +80,13 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #undef EEP_SCRIPT_SIZE
 #undef USE_SCRIPT_COMPRESSION
 #if USE_SCRIPT_FATFS==-1
+
 #ifdef ESP32
-#error "script fat file option -1 currently not supported for ESP32"
+#pragma message "script fat file option -1 used"
 #else
 #pragma message "script fat file option -1 used"
 #endif
+
 #else
 #pragma message "script fat file SDC option used"
 #endif
@@ -152,7 +156,11 @@ void Script_ticker4_end(void) {
 #if defined(LITTLEFS_SCRIPT_SIZE) || (USE_SCRIPT_FATFS==-1)
 #ifdef ESP32
 #include "FS.h"
+#ifdef LITTLEFS_SCRIPT_SIZE
 #include "SPIFFS.h"
+#else
+#include "FFat.h"
+#endif
 #else
 #include <LittleFS.h>
 #endif
@@ -168,15 +176,15 @@ void SaveFile(const char *name,const uint8_t *buf,uint32_t len) {
   file.close();
 }
 
-#define FORMAT_SPIFFS_IF_FAILED true
+
 uint8_t fs_mounted=0;
 
 void LoadFile(const char *name,uint8_t *buf,uint32_t len) {
   if (!fs_mounted) {
 #ifdef ESP32
-    if(!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)){
+    if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
 #else
-    if(!fsp->begin()){
+    if (!fsp->begin()) {
 #endif
           //Serial.println("SPIFFS Mount Failed");
       return;
@@ -388,9 +396,9 @@ WiFiUDP Script_PortUdp;
 
 #ifndef USE_DEVICE_GROUPS
 char * IPAddressToString(const IPAddress& ip_address) {
-  static char buffer[16];
-  sprintf_P(buffer, PSTR("%u.%u.%u.%u"), ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
-  return buffer;
+  static char ipbuffer[16];
+  sprintf_P(ipbuffer, PSTR("%u.%u.%u.%u"), ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
+  return ipbuffer;
 }
 #endif
 #endif
@@ -776,11 +784,20 @@ char *script;
     if (!glob_script_mem.script_sd_found) {
 
 #if USE_SCRIPT_FATFS>=0
+    // user sd card
       fsp=&SD;
       if (SD.begin(USE_SCRIPT_FATFS)) {
 #else
+    // use flash file
+#ifdef ESP32
+    //  if (SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
+      if (FFat.begin(true)) {
+#else
       if (fsp->begin()) {
 #endif
+
+#endif // USE_SCRIPT_FATFS>=0
+
         glob_script_mem.script_sd_found=1;
       } else {
         glob_script_mem.script_sd_found=0;
@@ -1491,6 +1508,34 @@ chknext:
           lp=GetStringResult(lp+4,OPER_EQU,str,0);
           fvar=str[0];
           lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"adc(",4)) {
+          lp=GetNumericResult(lp+4,OPER_EQU,&fvar,0);
+          while (*lp==' ') lp++;
+          float fvar1=1;
+          if (*lp!=')') {
+            lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
+            if (fvar1<32 || fvar1>39) fvar1 = 32;
+          }
+          lp++;
+          if (fvar > 7) fvar = 7;
+#ifdef ESP32
+          // ESP32
+#ifdef USE_ADC
+          fvar=AdcRead(fvar1, fvar);
+#else
+          fvar=999.999;
+#endif // USE_ADC
+#else
+          // ESP8266
+#ifndef USE_ADC_VCC
+          fvar=AdcRead(fvar);
+#else
+          fvar=(float)ESP.getVcc()/1000.0;
+#endif // USE_ADC_VCC
+#endif // ESP32
           len=0;
           goto exit;
         }
@@ -2248,14 +2293,16 @@ chknext:
           len++;
           goto exit;
         }
-        if (!strncmp(vname,"pn[",3)) {
-          GetNumericResult(vname+3,OPER_EQU,&fvar,0);
-//          fvar=pin_gpio[(uint8_t)fvar];
-          fvar=Pin(fvar);
-          // skip ] bracket
+#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH))
+        if (!strncmp(vname,"pl(",3)) {
+          char path[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp+3,OPER_EQU,path,0);
+          Play_mp3(path);
           len++;
+          len=0;
           goto exit;
         }
+#endif // USE_I2S_AUDIO
         if (!strncmp(vname,"pd[",3)) {
           GetNumericResult(vname+3,OPER_EQU,&fvar,0);
           uint8_t gpiopin=fvar;
@@ -2444,6 +2491,17 @@ chknext:
           len=0;
           goto strexit;
         }
+#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH))
+        if (!strncmp(vname,"say(",4)) {
+          char text[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp+4,OPER_EQU,text,0);
+          Say(text);
+          len++;
+          len=0;
+          goto exit;
+        }
+#endif // USE_I2S_AUDIO
+
 #ifdef ESP32
         if (!strncmp(vname,"sf(",3)) {
           lp+=2;
@@ -2452,6 +2510,16 @@ chknext:
           if (fvar>240) fvar=240;
           setCpuFrequencyMhz(fvar);
           fvar=getCpuFrequencyMhz();
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif
+#ifdef USE_TTGO_WATCH
+        if (!strncmp(vname,"slp(",4)) {
+          lp=GetNumericResult(lp+4,OPER_EQU,&fvar,0);
+          SCRIPT_SKIP_SPACES
+          TTGO_Sleep(fvar);
           lp++;
           len=0;
           goto exit;
@@ -2726,6 +2794,26 @@ chknext:
           goto exit;
         }
 #endif //ESP32, USE_WEBCAM
+#if defined(USE_TTGO_WATCH) && defined(USE_BMA423)
+        if (!strncmp(vname,"wdclk",5)) {
+          fvar=TTGO_doubleclick();
+          goto exit;
+        }
+        if (!strncmp(vname,"wbut",4)) {
+          fvar=TTGO_button();
+          goto exit;
+        }
+#endif // USE_TTGO_WATCH
+#if defined(USE_TTGO_WATCH) && defined(USE_FT5206)
+        if (!strncmp(vname,"wtch(",5)) {
+          lp=GetNumericResult(lp+5,OPER_EQU,&fvar,0);
+          fvar=FT5206_touched(fvar);
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif // USE_FT5206
+
         if (!strncmp(vname,"wday",4)) {
           fvar=RtcTime.day_of_week;
           goto exit;
@@ -3273,7 +3361,7 @@ exit:
 
 
 exit10:
-#if SCRIPT_DEBUG>0
+#if IFTHEN_DEBUG>0
   char tbuff[128];
   sprintf(tbuff,"p1=%d,p2=%d,cmpres=%d,and_or=%d line: ",(int32_t)*dfvar,(int32_t)fvar1,*result,and_or);
   toLogEOL(tbuff,llp);
@@ -3569,7 +3657,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
             if (!if_exe[ifstck] && if_state[ifstck]!=1) goto next_line;
 
 #ifdef IFTHEN_DEBUG
-            sdtoff(tbuff,"stack=%d,exe=%d,state=%d,cmpres=%d execute line: ",ifstck,if_exe[ifstck],if_state[ifstck],if_result[ifstck]);
+            sprintf(tbuff,"stack=%d,exe=%d,state=%d,cmpres=%d execute line: ",ifstck,if_exe[ifstck],if_state[ifstck],if_result[ifstck]);
             toLogEOL(tbuff,lp);
 #endif
 
@@ -3590,7 +3678,22 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
               // number precision
               glob_script_mem.script_dprec=atoi(lp);
               goto next_line;
-            } else if (!strncmp(lp,"delay(",6)) {
+            }
+#ifdef USE_DISPLAY
+            else if (!strncmp(lp,"dt",2)) {
+              char dstbuf[256];
+              lp+=2;
+              SCRIPT_SKIP_SPACES
+              Replace_Cmd_Vars(lp,1,dstbuf,sizeof(dstbuf));
+              char *savptr = XdrvMailbox.data;
+              XdrvMailbox.data = dstbuf;
+              XdrvMailbox.data_len = 0;
+              DisplayText();
+              XdrvMailbox.data = savptr;
+              goto next_line;
+            }
+#endif
+            else if (!strncmp(lp,"delay(",6)) {
               lp+=5;
               // delay
               lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
@@ -4415,6 +4518,7 @@ char path[48];
 
 void Script_FileUploadConfiguration(void) {
   uint8_t depth=0;
+
   strcpy(path,"/");
 
   if (!HttpCheckPriviledgedAccess()) { return; }
@@ -4464,7 +4568,12 @@ void script_upload(void) {
   HTTPUpload& upload = Webserver->upload();
   if (upload.status == UPLOAD_FILE_START) {
     char npath[48];
+#if defined(ESP32) && defined(USE_SCRIPT_FATFS) && USE_SCRIPT_FATFS==-1
+    //sprintf(npath,"/%s",upload.filename.c_str());
     sprintf(npath,"%s/%s",path,upload.filename.c_str());
+#else
+    sprintf(npath,"%s/%s",path,upload.filename.c_str());
+#endif
     fsp->remove(npath);
     upload_file=fsp->open(npath,FILE_WRITE);
     if (!upload_file) Web.upload_error=1;
@@ -5291,6 +5400,23 @@ bool ScriptCommand(void) {
           execute_script(XdrvMailbox.data);
         }
       }
+      if ('?' == XdrvMailbox.data[0]) {
+        char *lp=XdrvMailbox.data;
+        lp++;
+        while (*lp==' ') lp++;
+        float fvar;
+        char str[SCRIPT_MAXSSIZE];
+        glob_script_mem.glob_error=0;
+        GetNumericResult(lp,OPER_EQU,&fvar,0);
+        if (glob_script_mem.glob_error==1) {
+          // was string, not number
+          GetStringResult(lp,OPER_EQU,str,0);
+          snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"script\":{\"%s\":\"%s\"}}"),lp,str);
+        } else {
+          dtostrfd(fvar,6,str);
+          snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"script\":{\"%s\":%s}}"),lp,str);
+        }
+      }
       return serviced;
     }
     snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"Free\":%d}"),command, GetStateText(bitRead(Settings.rule_enabled,0)),glob_script_mem.script_size-strlen(glob_script_mem.script_ram));
@@ -5606,31 +5732,53 @@ const char HTTP_SCRIPT_MIMES[] PROGMEM =
   "Content-type: %s\r\n\r\n";
 
 void ScriptGetSDCard(void) {
+
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   String stmp = Webserver->uri();
-  char *cp=strstr(stmp.c_str(),"/sdc/");
+  char *cp=strstr_P(stmp.c_str(),PSTR("/sdc/"));
 //  if (cp) Serial.printf(">>>%s\n",cp);
   if (cp) {
 #ifdef ESP32
-    cp+=4
+    cp+=4;
 #else
     cp+=5;
 #endif
-    if (fsp->exists(cp)) {
+    if (strstr_P(cp,PSTR("scrdmp.bmp"))) {
       SendFile(cp);
       return;
+    } else {
+      if (fsp->exists(cp)) {
+        SendFile(cp);
+        return;
+      }
     }
   }
   HandleNotFound();
 }
 
+extern uint8_t *buffer;
+
 void SendFile(char *fname) {
 char buff[512];
   const char *mime;
+  uint8_t sflg=0;
   char *jpg=strstr(fname,".jpg");
   if (jpg) {
     mime="image/jpeg";
+  }
+
+#ifdef USE_DISPLAY_DUMP
+  char *sbmp=strstr_P(fname,PSTR("scrdmp.bmp"));
+  if (sbmp) {
+    mime="image/bmp";
+    sflg=1;
+  }
+#endif // USE_DISPLAY_DUMP
+
+  char *bmp=strstr(fname,".bmp");
+  if (bmp) {
+    mime="image/bmp";
   }
   char *html=strstr(fname,".html");
   if (html) {
@@ -5643,18 +5791,57 @@ char buff[512];
 
   WSContentSend_P(HTTP_SCRIPT_MIMES,fname,mime);
 
-
-  File file=fsp->open(fname,FILE_READ);
-  uint32_t siz = file.size();
-  uint32_t len=sizeof(buff);
-  while (siz > 0) {
+  if (sflg) {
+#ifdef USE_DISPLAY_DUMP
+    // screen copy
+    #define fileHeaderSize 14
+    #define infoHeaderSize 40
+    if (buffer) {
+      uint8_t *bp=buffer;
+      uint8_t *lbuf=(uint8_t*)calloc(Settings.display_width+2,3);
+      uint8_t *lbp;
+      uint8_t fileHeader[fileHeaderSize];
+      createBitmapFileHeader(Settings.display_height , Settings.display_width , fileHeader);
+      Webserver->client().write((uint8_t *)fileHeader, fileHeaderSize);
+      uint8_t infoHeader[infoHeaderSize];
+      createBitmapInfoHeader(Settings.display_height, Settings.display_width, infoHeader );
+      Webserver->client().write((uint8_t *)infoHeader, infoHeaderSize);
+      for (uint32_t lins=0; lins<Settings.display_height; lins++) {
+        lbp=lbuf+(Settings.display_width*3);
+        for (uint32_t cols=0; cols<Settings.display_width; cols+=8) {
+          uint8_t bits=0x80;
+          while (bits) {
+            if (!((*bp)&bits)) {
+              *--lbp=0xff;
+              *--lbp=0xff;
+              *--lbp=0xff;
+            } else {
+              *--lbp=0;
+              *--lbp=0;
+              *--lbp=0;
+            }
+            bits=bits>>1;
+          }
+          bp++;
+        }
+        Webserver->client().write((const char*)lbuf, Settings.display_width*3);
+      }
+      if (lbuf) free(lbuf);
+      Webserver->client().stop();
+    }
+#endif // USE_DISPLAY_DUMP
+  } else {
+    File file=fsp->open(fname,FILE_READ);
+    uint32_t siz = file.size();
+    uint32_t len=sizeof(buff);
+    while (siz > 0) {
       if (len>siz) len=siz;
       file.read((uint8_t *)buff,len );
       Webserver->client().write((const char*)buff, len);
       siz -= len;
+    }
+    file.close();
   }
-  file.close();
-
   Webserver->client().stop();
 }
 #endif // USE_SCRIPT_FATFS
@@ -6580,6 +6767,7 @@ uint32_t call2https(const char *host, const char *path) {
     }
   }
   httpsClient->stop();
+  delete httpsClient;
   Run_Scripter(">jp",3,(char*)result.c_str());
   return 0;
 }
@@ -6677,13 +6865,21 @@ bool Xdrv10(uint8_t function)
       fsp = &SD;
       if (SD.begin(USE_SCRIPT_FATFS)) {
 #else
+    // flash file system
+#ifdef ESP32
+      //fsp = &SPIFFS;
+      //if (SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
+      fsp=&FFat;
+      if (FFat.begin(true)) {
+#else
         // fs on flash
       fsp = &LittleFS;
       if (fsp->begin()) {
+#endif // ESP
+
 #endif // USE_SCRIPT_FATFS>=0
-
+        AddLog_P(LOG_LEVEL_INFO,PSTR("FATFS mount OK!"));
         //fsp->dateTimeCallback(dateTime);
-
         glob_script_mem.script_sd_found=1;
         char *script;
         script=(char*)calloc(FAT_SCRIPT_SIZE+4,1);
@@ -6703,6 +6899,7 @@ bool Xdrv10(uint8_t function)
         glob_script_mem.flags=1;
 
       } else {
+        AddLog_P(LOG_LEVEL_INFO,PSTR("FATFS mount failed!"));
         glob_script_mem.script_sd_found=0;
       }
 #endif // USE_SCRIPT_FATFS

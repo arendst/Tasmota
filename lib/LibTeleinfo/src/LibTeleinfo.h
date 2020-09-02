@@ -15,6 +15,8 @@
 //
 // History : V1.00 2015-06-14 - First release
 //           V2.00 2020-06-11 - Integration into Tasmota
+//           V2.01 2020-08-11 - Merged LibTeleinfo official and Tasmota version
+//                              Added support for new standard mode of linky smart meter
 //
 // All text above must be included in any redistribution.
 //
@@ -25,7 +27,17 @@
 #ifndef LibTeleinfo_h
 #define LibTeleinfo_h
 
-#include "Arduino.h"
+#ifdef __arm__
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#define boolean bool 
+#endif
+
+#ifdef ARDUINO
+#include <Arduino.h>
+#endif
 
 // Define this if you want library to be verbose
 //#define TI_DEBUG
@@ -34,16 +46,24 @@
 // debugging, this should not interfere with main sketch or other 
 // libraries
 #ifdef TI_DEBUG
-  #ifdef ESP8266
-    #define TI_Debug(x)    Serial1.print(x)
-    #define TI_Debugln(x)  Serial1.println(x)
-    #define TI_Debugf(...) Serial1.printf(__VA_ARGS__)
-    #define TI_Debugflush  Serial1.flush
+  // Tasmota build
+  #ifdef CODE_IMAGE_STR
+      #define TI_Debug(x)    AddLog_P2(LOG_LEVEL_DEBUG, x);
+      #define TI_Debugln(x)  AddLog_P2(LOG_LEVEL_DEBUG, x);
+      #define TI_Debugf(...) AddLog_P2(LOG_LEVEL_DEBUG, __VA_ARGS__);
+      #define TI_Debugflush  {}
   #else
-    #define TI_Debug(x)    Serial.print(x)
-    #define TI_Debugln(x)  Serial.println(x)
-    #define TI_Debugf(...) Serial.printf(__VA_ARGS__)
-    #define TI_Debugflush  Serial.flush
+    #ifdef ESP8266
+      #define TI_Debug(x)    Serial1.print(x)
+      #define TI_Debugln(x)  Serial1.println(x)
+      #define TI_Debugf(...) Serial1.printf(__VA_ARGS__)
+      #define TI_Debugflush  Serial1.flush
+    #else
+      #define TI_Debug(x)    Serial.print(x)
+      #define TI_Debugln(x)  Serial.println(x)
+      #define TI_Debugf(...) Serial.printf(__VA_ARGS__)
+      #define TI_Debugflush  Serial.flush
+    #endif
   #endif
 #else
   #define TI_Debug(x)    {}
@@ -53,7 +73,9 @@
 #endif
 
 // For 4 bytes Aligment boundaries
+#if defined (ESP8266) || defined (ESP32)
 #define ESP_allocAlign(size)  ((size + 3) & ~((size_t) 3))
+#endif
 
 #pragma pack(push)  // push current alignment to stack
 #pragma pack(1)     // set alignment to 1 byte boundary
@@ -63,6 +85,9 @@ typedef struct _ValueList ValueList;
 struct _ValueList 
 {
   ValueList *next; // next element
+//#ifdef USE_TELEINFO_STANDARD  
+  time_t  ts;      // TimeStamp of data if any
+//#endif
   uint8_t checksum;// checksum
   uint8_t flags;   // specific flags
   char  * name;    // LABEL of value name
@@ -71,6 +96,11 @@ struct _ValueList
 
 #pragma pack(pop)
 
+// Library state machine
+enum _Mode_e {
+  TINFO_MODE_HISTORIQUE,  // Legacy mode (1200)
+  TINFO_MODE_STANDARD     // Standard mode (9600)
+};
 
 // Library state machine
 enum _State_e {
@@ -90,11 +120,17 @@ enum _State_e {
 
 // Local buffer for one line of teleinfo 
 // maximum size, I think it should be enought
+#ifdef USE_TELEINFO_STANDARD  
+// Linky and standard mode may have longer lines
+#define TINFO_BUFSIZE  128
+#else
 #define TINFO_BUFSIZE  64
+#endif
 
 // Teleinfo start and end of frame characters
 #define TINFO_STX 0x02
 #define TINFO_ETX 0x03 
+#define TINFO_HT  0x09
 #define TINFO_SGR '\n' // start of group  
 #define TINFO_EGR '\r' // End of group    
 
@@ -107,7 +143,7 @@ class TInfo
 {
   public:
     TInfo();
-    void          init();
+    void          init(_Mode_e mode = TINFO_MODE_HISTORIQUE);
     _State_e      process (char c);
     void          attachADPS(void (*_fn_ADPS)(uint8_t phase));  
     void          attachData(void (*_fn_data)(ValueList * valueslist, uint8_t state));  
@@ -119,20 +155,22 @@ class TInfo
     char *        valueGet(char * name, char * value);
     char *        valueGet_P(const char * name, char * value);
     boolean       listDelete();
-    unsigned char calcChecksum(char *etiquette, char *valeur) ;
+    unsigned char calcChecksum(char *etiquette, char *valeur, char *horodate=NULL) ;
 
   private:
     void          clearBuffer();
-    ValueList *   valueAdd (char * name, char * value, uint8_t checksum, uint8_t * flags);
+    ValueList *   valueAdd (char * name, char * value, uint8_t checksum, uint8_t * flags, char * horodate=NULL);
     boolean       valueRemove (char * name);
     boolean       valueRemoveFlagged(uint8_t flags);
     int           labelCount();
+    uint32_t      horodate2Timestamp( char * pdate) ;
     void          customLabel( char * plabel, char * pvalue, uint8_t * pflags) ;
     ValueList *   checkLine(char * pline) ;
 
     _State_e  _state; // Teleinfo machine state
     ValueList _valueslist;   // Linked list of teleinfo values
     char      _recv_buff[TINFO_BUFSIZE]; // line receive buffer
+    char      _separator;
     uint8_t   _recv_idx;  // index in receive buffer
     boolean   _frame_updated; // Data on the frame has been updated
     void      (*_fn_ADPS)(uint8_t phase);

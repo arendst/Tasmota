@@ -99,7 +99,7 @@ void PWMModulePreInit(void)
 #ifdef USE_PWM_DIMMER_REMOTE
   // If remote device mode is enabled, set the device group count to the number of buttons
   // present.
-  if (Settings.flag4.remote_device_mode) {
+  if (Settings.flag4.multiple_device_groups) {
     Settings.flag4.device_groups_enabled = true;
 
     device_group_count = 0;
@@ -111,7 +111,7 @@ void PWMModulePreInit(void)
     if (remote_pwm_dimmer_count) {
       if ((remote_pwm_dimmers = (struct remote_pwm_dimmer *) calloc(remote_pwm_dimmer_count, sizeof(struct remote_pwm_dimmer))) == nullptr) {
         AddLog_P2(LOG_LEVEL_ERROR, PSTR("PWMDimmer: error allocating PWM dimmer array"));
-        Settings.flag4.remote_device_mode = false;
+        Settings.flag4.multiple_device_groups = false;
       }
       else {
         for (uint8_t i = 0; i < remote_pwm_dimmer_count; i++) {
@@ -309,7 +309,7 @@ void PWMDimmerHandleButton(void)
 #ifdef USE_PWM_DIMMER_REMOTE
       // If there are no other buttons pressed right now and remote mode is enabled, make the device
       // associated with this button the device we're going to control.
-      if (buttons_pressed == 1 && Settings.flag4.remote_device_mode) {
+      if (buttons_pressed == 1 && Settings.flag4.multiple_device_groups) {
         power_button_index = button_index;
         down_button_index = (button_index ? 0 : 1);
         active_device_is_local = device_groups[power_button_index].local;

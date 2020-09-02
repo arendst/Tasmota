@@ -45,6 +45,10 @@ uint8_t MCP230xx_GPIO           = 0x09;
 
 uint8_t mcp230xx_type = 0;
 uint8_t mcp230xx_pincount = 0;
+uint8_t mcp230xx_oldoutpincount = 0;
+#ifdef USE_MCP230xx_OUTPUT
+uint8_t mcp230xx_outpinmapping[16];
+#endif
 uint8_t mcp230xx_int_en = 0;
 uint8_t mcp230xx_int_prio_counter = 0;
 uint8_t mcp230xx_int_counter_en = 0;
@@ -192,9 +196,16 @@ void MCP230xx_ApplySettings(void)
     I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO+mcp230xx_port, reg_portpins);
 #endif // USE_MCP230xx_OUTPUT
   }
+  devices_present -= mcp230xx_oldoutpincount;
+  mcp230xx_oldoutpincount = 0;
   for (uint32_t idx=0;idx<mcp230xx_pincount;idx++) {
+    if (Settings.mcp230xx_config[idx].pinmode >= 5) {
+      mcp230xx_outpinmapping[mcp230xx_oldoutpincount] = idx;
+      mcp230xx_oldoutpincount++;
+    }
     int_millis[idx]=millis();
   }
+  devices_present += mcp230xx_oldoutpincount;
   mcp230xx_int_en = int_en;
   MCP230xx_CheckForIntCounter();  // update register on whether or not we should be counting interrupts
   MCP230xx_CheckForIntRetainer(); // update register on whether or not we should be retaining interrupt events for teleperiod
@@ -330,7 +341,7 @@ void MCP230xx_Show(bool json)
   if (json) {
     uint8_t gpio = MCP230xx_readGPIO(0);
     ResponseAppend_P(PSTR(",\"MCP230XX\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i"),
-                (gpio>>0)&1, (gpio>>1)&1, (gpio>>2)&1, (gpio>>3)&1, (gpio>>4)&1, (gpio>>5)&1, (gpio>>6)&1, (gpio>>7)&1);
+                (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
     uint8_t gpiob = 0;
     if (2 == mcp230xx_type) {
       gpiob = MCP230xx_readGPIO(1);
@@ -356,7 +367,6 @@ void MCP230xx_Show(bool json)
       ResponseAppend_P(PSTR("\"END\":1}"));
     }
 #endif  // USE_MCP230xx_OUTPUT
-
     ResponseJsonEnd();
   }
 }
@@ -372,27 +382,13 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   char cmnd[7], stt[4];
   if (pin > 7) { port = 1; }
   portpins = MCP230xx_readGPIO(port);
-  if (interlock && (pinmo == Settings.mcp230xx_config[pin+pinadd].pinmode)) {
-    if (pinstate < 2) {
-      if (6 == pinmo) {
-        if (pinstate) portpins |= (1 << (pin-(port*8))); else portpins |= (1 << (pin+pinadd-(port*8))),portpins &= ~(1 << (pin-(port*8)));
-      } else {
-        if (pinstate) portpins &= ~(1 << (pin+pinadd-(port*8))),portpins |= (1 << (pin-(port*8))); else portpins &= ~(1 << (pin-(port*8)));
-      }
-    } else {
-      if (6 == pinmo) {
-      portpins |= (1 << (pin+pinadd-(port*8))),portpins ^= (1 << (pin-(port*8)));
-      } else {
-      portpins &= ~(1 << (pin+pinadd-(port*8))),portpins ^= (1 << (pin-(port*8)));
-      }
-    }
+
+  if (pinstate < 2) {
+    if (pinstate) portpins |= (1 << (pin-(port*8))); else portpins &= ~(1 << (pin-(port*8)));
   } else {
-    if (pinstate < 2) {
-      if (pinstate) portpins |= (1 << (pin-(port*8))); else portpins &= ~(1 << (pin-(port*8)));
-    } else {
-      portpins ^= (1 << (pin-(port*8)));
-    }
+    portpins ^= (1 << (pin-(port*8)));
   }
+
   I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO + port, portpins);
   if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart - Firmware configured to save last known state in settings
     Settings.mcp230xx_config[pin].saved_state=portpins>>(pin-(port*8))&1;
@@ -649,16 +645,21 @@ bool MCP230xx_Command(void)
 #ifdef USE_MCP230xx_OUTPUT
     if (Settings.mcp230xx_config[pin].pinmode >= 5) {
       uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
+      uint8_t relay_no = 0;
+      for (relay_no = 0; relay_no < mcp230xx_pincount ; relay_no ++) {
+        if ( mcp230xx_outpinmapping[relay_no] == pin) break;
+      }
+      relay_no = devices_present - mcp230xx_oldoutpincount + relay_no +1;
       if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "ON")) || (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "1"))) {
-        MCP230xx_SetOutPin(pin,abs(pincmd-1));
+        ExecuteCommandPower(relay_no, 1, SRC_IGNORE);
         return serviced;
       }
       if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "OFF")) || (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "0"))) {
-        MCP230xx_SetOutPin(pin,pincmd);
+        ExecuteCommandPower(relay_no, 0, SRC_IGNORE);
         return serviced;
       }
       if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "T")) || (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "2")))  {
-        MCP230xx_SetOutPin(pin,2);
+        ExecuteCommandPower(relay_no, 2, SRC_IGNORE);
         return serviced;
       }
     }
@@ -794,6 +795,25 @@ void MCP230xx_Interrupt_Retain_Report(void) {
   MqttPublishTeleSensor();
 }
 
+#ifdef USE_MCP230xx_OUTPUT
+void MCP230xx_SwitchRelay() {
+  for (uint32_t i = devices_present - mcp230xx_oldoutpincount; i < devices_present; i++) {
+    uint8_t pin = mcp230xx_outpinmapping[i - (devices_present - mcp230xx_oldoutpincount)];
+    uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
+    uint8_t relay_state = bitRead(XdrvMailbox.index, i);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("MCP: relay %d pin_no %d state %d"), i,pin, relay_state);
+    switch (relay_state) {
+    case 1:
+      MCP230xx_SetOutPin(pin,abs(pincmd-1));
+      break;
+    case 0:
+      MCP230xx_SetOutPin(pin,pincmd);
+      break;
+    }
+  }
+}
+#endif // USE_MCP230xx_OUTPUT
+
 /*********************************************************************************************\
    Interface
 \*********************************************************************************************/
@@ -804,7 +824,7 @@ bool Xsns29(uint8_t function)
 
   bool result = false;
 
-  if (FUNC_INIT == function) {
+  if (FUNC_PRE_INIT == function) {
       MCP230xx_Detect();
   }
   else if (mcp230xx_type) {
@@ -836,6 +856,11 @@ bool Xsns29(uint8_t function)
 */
         }
         break;
+#ifdef USE_MCP230xx_OUTPUT
+      case FUNC_SET_POWER:
+          MCP230xx_SwitchRelay();
+          break;
+#endif // USE_MCP230xx_OUTPUT
       case FUNC_JSON_APPEND:
         MCP230xx_Show(1);
         break;

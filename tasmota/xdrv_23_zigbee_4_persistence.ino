@@ -46,7 +46,7 @@
 // str    - FriendlyName   (null terminated C string, 32 chars max)
 // reserved for extensions
 //  -- V2 --
-// int8_t - bulbtype
+// int8_t - zigbee profile of the device
 
 // Memory footprint
 #ifdef ESP8266
@@ -126,8 +126,8 @@ class SBuffer hibernateDevice(const struct Z_Device &device) {
   }
   buf.add8(0x00);     // end of string marker
 
-  // Hue Bulbtype
-  buf.add8(device.bulbtype);
+  // Zigbee Profile
+  buf.add8(device.zb_profile);
 
   // update overall length
   buf.set8(0, buf.len());
@@ -225,7 +225,7 @@ void hydrateDevices(const SBuffer &buf) {
 
     // Hue bulbtype - if present
     if (d < dev_record_len) {
-      zigbee_devices.setHueBulbtype(shortaddr, buf_d.get8(d));
+      zigbee_devices.setZbProfile(shortaddr, buf_d.get8(d));
       d++;
     }
 

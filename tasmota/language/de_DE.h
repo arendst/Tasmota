@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v8.1.0.1
+ * Updated until v8.4.0.3
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -119,7 +119,7 @@
 #define D_LWT "LWT"
 #define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_MODULE "Modul"
-#define D_MOISTURE "Moisture"
+#define D_MOISTURE "Feuchtigkeit"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "Mehrfachdruck"
 #define D_NOISE "Lautstärke"
@@ -142,7 +142,7 @@
 #define D_PROGRAM_SIZE "Ben. Flash Speicher"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Regen"
-#define D_RANGE "Range"
+#define D_RANGE "Bereich"
 #define D_RECEIVED "erhalten"
 #define D_RESTART "Neustart"
 #define D_RESTARTING "starte neu"
@@ -307,6 +307,7 @@
 #define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "Passwort für Web Oberfläche"
 #define D_MQTT_ENABLE "MQTT aktivieren"
+#define D_MQTT_TLS_ENABLE "MQTT TLS"
 #define D_FRIENDLY_NAME "Name [friendly name]"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
@@ -335,6 +336,7 @@
 #define D_MQTT_TOPIC "MQTT Topic"
 #define D_MQTT_GROUP_TOPIC "MQTT Group Topic"
 #define D_MQTT_FULL_TOPIC "MQTT Full Topic"
+#define D_MQTT_NO_RETAIN "MQTT No Retain"
 #define D_MDNS_DISCOVERY "mDNS-Ermittlung"
 #define D_MDNS_ADVERTISE "mDNS-Bekanntmachung"
 #define D_ESP_CHIP_ID "ESP Chip ID"
@@ -349,6 +351,8 @@
 #define D_UPLOAD_STARTED "Upload gestartet"
 #define D_UPGRADE_STARTED "Update gestartet"
 #define D_UPLOAD_DONE "Upload abgeschlossen"
+#define D_UPLOAD_TRANSFER "Upload Übertragung"
+#define D_TRANSFER_STARTED "Transfer gestartet"
 #define D_UPLOAD_ERR_1 "Keine Datei ausgewählt"
 #define D_UPLOAD_ERR_2 "Ungenügend Speicherplatz"
 #define D_UPLOAD_ERR_3 "Magic Byte ist nicht 0xE9"
@@ -619,6 +623,7 @@
 #define D_SENSOR_MAX31855_CS   "MX31855 CS"
 #define D_SENSOR_MAX31855_CLK  "MX31855 CLK"
 #define D_SENSOR_MAX31855_DO   "MX31855 DO"
+#define D_SENSOR_MAX31865_CS   "MX31865 CS"
 #define D_SENSOR_NRG_SEL       "HLWBL SEL"  // Suffix "i"
 #define D_SENSOR_NRG_CF1       "HLWBL CF1"
 #define D_SENSOR_HLW_CF        "HLW8012 CF"
@@ -681,12 +686,20 @@
 #define D_SENSOR_CC1101_GDO0   "CC1101 GDO0"
 #define D_SENSOR_CC1101_GDO2   "CC1101 GDO2"
 #define D_SENSOR_HRXL_RX       "HRXL Rx"
+#define D_SENSOR_DYP_RX        "DYP Rx"
 #define D_SENSOR_ELECTRIQ_MOODL "MOODL Tx"
 #define D_SENSOR_AS3935        "AS3935"
 #define D_SENSOR_WINDMETER_SPEED "WindMeter Spd"
 #define D_SENSOR_TELEINFO_RX   "TInfo Rx"
 #define D_SENSOR_TELEINFO_ENABLE "TInfo EN"
 #define D_SENSOR_LMT01_PULSE   "LMT01 Pulse"
+#define D_SENSOR_ADC_INPUT     "ADC Input"
+#define D_SENSOR_ADC_TEMP      "ADC Temp"
+#define D_SENSOR_ADC_LIGHT     "ADC Light"
+#define D_SENSOR_ADC_BUTTON    "ADC Button"
+#define D_SENSOR_ADC_RANGE     "ADC Range"
+#define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
+#define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -821,5 +834,14 @@
 //xsns_68_opentherm.ino
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
 #define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
+
+// xnrg_15_teleinfo Denky (Teleinfo)
+#define D_CONTRACT        "Vertrag"
+#define D_POWER_LOAD      "Leistung"
+#define D_CURRENT_TARIFF  "Aktueller Tarif"
+#define D_TARIFF          "Tarif"
+#define D_OVERLOAD        "ADPS"
+#define D_MAX_POWER       "max. Leistung"
+#define D_MAX_CURRENT     "max. Stromstärke"
 
 #endif  // _LANGUAGE_DE_DE_H_

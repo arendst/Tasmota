@@ -36,8 +36,6 @@
 
 // Not ported (yet)
 #undef USE_DISCOVERY
-#undef USE_ADC_VCC    // Needs to be ported
-#undef USE_DEEPSLEEP
 #undef USE_MY92X1
 #undef USE_TUYA_MCU
 #undef USE_PS_16_DZ
@@ -89,9 +87,8 @@ enum UserSelectablePins {
   GPIO_ARIRFRCV, GPIO_ARIRFSEL,        // Arilux RF Receive input
   GPIO_TXD, GPIO_RXD,                  // Serial interface
   GPIO_ROT1A, GPIO_ROT1B,              // Rotary switch
-
-  GPIO_SPARE1, GPIO_SPARE2,            // Spare GPIOs
-
+  GPIO_ADC_JOY,                        // Analog joystick
+  GPIO_SSPI_MAX31865_CS1,              // MAX31865 Chip Select
   GPIO_HRE_CLOCK, GPIO_HRE_DATA,       // HR-E Water Meter
   GPIO_ADE7953_IRQ,                    // ADE7953 IRQ
   GPIO_SOLAXX1_TX, GPIO_SOLAXX1_RX,    // Solax Inverter Serial interface
@@ -115,12 +112,12 @@ enum UserSelectablePins {
   GPIO_HRXL_RX,                        // Data from MaxBotix HRXL sonar range sensor
   GPIO_ELECTRIQ_MOODL_TX,              // ElectriQ iQ-wifiMOODL Serial TX
   GPIO_AS3935,
-  ADC0_INPUT,                          // Analog input
-  ADC0_TEMP,                           // Analog Thermistor
-  ADC0_LIGHT,                          // Analog Light sensor
-  ADC0_BUTTON, ADC0_BUTTON_INV,        // Analog Button
-  ADC0_RANGE,                          // Analog Range
-  ADC0_CT_POWER,                       // ANalog Current
+  GPIO_ADC_INPUT,                      // Analog input
+  GPIO_ADC_TEMP,                       // Analog Thermistor
+  GPIO_ADC_LIGHT,                      // Analog Light sensor
+  GPIO_ADC_BUTTON, GPIO_ADC_BUTTON_INV,  // Analog Button
+  GPIO_ADC_RANGE,                      // Analog Range
+  GPIO_ADC_CT_POWER,                   // ANalog Current
   GPIO_WEBCAM_PWDN, GPIO_WEBCAM_RESET, GPIO_WEBCAM_XCLK,  // Webcam
   GPIO_WEBCAM_SIOD, GPIO_WEBCAM_SIOC,  // Webcam I2C
   GPIO_WEBCAM_DATA,
@@ -139,6 +136,7 @@ enum UserSelectablePins {
   GPIO_LMT01,                          // LMT01 input counting pin
   GPIO_IEM3000_TX, GPIO_IEM3000_RX,    // IEM3000 Serial interface
   GPIO_ZIGBEE_RST,                     // Zigbee reset
+  GPIO_DYP_RX,
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -194,9 +192,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ARIRFRCV "|" D_SENSOR_ARIRFSEL "|"
   D_SENSOR_TXD "|" D_SENSOR_RXD "|"
   D_SENSOR_ROTARY "_a|" D_SENSOR_ROTARY "_b|"
-
-  "Spare1|Spare2|"
-
+  D_SENSOR_ADC_JOYSTICK "|"
+  D_SENSOR_MAX31865_CS "|"
   D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
   D_SENSOR_ADE7953_IRQ "|"
   D_SENSOR_SOLAXX1_TX "|" D_SENSOR_SOLAXX1_RX "|"
@@ -217,11 +214,12 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HRXL_RX "|"
   D_SENSOR_ELECTRIQ_MOODL "|"
   D_SENSOR_AS3935 "|"
-  D_ANALOG_INPUT "|"
-  D_TEMPERATURE "|" D_LIGHT "|"
-  D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "_i|"
-  D_RANGE "|"
-  D_CT_POWER "|"
+  D_SENSOR_ADC_INPUT "|"
+  D_SENSOR_ADC_TEMP "|"
+  D_SENSOR_ADC_LIGHT "|"
+  D_SENSOR_ADC_BUTTON "|" D_SENSOR_ADC_BUTTON "_i|"
+  D_SENSOR_ADC_RANGE "|"
+  D_SENSOR_ADC_CT_POWER "|"
   D_GPIO_WEBCAM_PWDN "|" D_GPIO_WEBCAM_RESET "|" D_GPIO_WEBCAM_XCLK "|"
   D_GPIO_WEBCAM_SIOD "|" D_GPIO_WEBCAM_SIOC "|"
   D_GPIO_WEBCAM_DATA "|"
@@ -237,12 +235,14 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
   D_SENSOR_LMT01_PULSE "|"
   D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX "|"
-  D_SENSOR_ZIGBEE_RST
+  D_SENSOR_ZIGBEE_RST "|"
+  D_SENSOR_DYP_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
+#define MAX_MAX31865_CS  6
 #define MAX_WEBCAM_DATA  8
 #define MAX_WEBCAM_HSD   3
 
@@ -285,12 +285,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SPI_CLK),        // SPI Clk
   AGPIO(GPIO_SPI_CS),         // SPI Chip Select
   AGPIO(GPIO_SPI_DC),         // SPI Data Direction
+#endif
   AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output
   AGPIO(GPIO_SSPI_MOSI),      // Software SPI Master Output Client Input
   AGPIO(GPIO_SSPI_SCLK),      // Software SPI Serial Clock
   AGPIO(GPIO_SSPI_CS),        // Software SPI Chip Select
   AGPIO(GPIO_SSPI_DC),        // Software SPI Data or Command
-#endif
 #ifdef USE_DISPLAY
   AGPIO(GPIO_BACKLIGHT),      // Display backlight control
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
@@ -479,7 +479,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_TX2X_TXD_BLACK), // TX20/TX23 Transmission Pin
 #endif
 #ifdef USE_WINDMETER
-  GPIO_WINDMETER_SPEED,
+  AGPIO(GPIO_WINDMETER_SPEED),
 #endif
 #ifdef USE_MP3_PLAYER
   AGPIO(GPIO_MP3_DFR562),     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
@@ -514,8 +514,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_HM10_RX),         // GPS serial interface
 #endif
 #ifdef USE_OPENTHERM
-  GPIO_BOILER_OT_TX,
-  GPIO_BOILER_OT_RX,
+  AGPIO(GPIO_BOILER_OT_TX),
+  AGPIO(GPIO_BOILER_OT_RX),
 #endif
 
 #ifdef USE_MGC3130
@@ -526,6 +526,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MAX31855CS),     // MAX31855 Serial interface
   AGPIO(GPIO_MAX31855CLK),    // MAX31855 Serial interface
   AGPIO(GPIO_MAX31855DO),     // MAX31855 Serial interface
+#endif
+#ifdef USE_MAX31855
+  AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865_CS,
 #endif
 #ifdef USE_HRE
   AGPIO(GPIO_HRE_CLOCK),
@@ -550,6 +553,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_HRXL
   AGPIO(GPIO_HRXL_RX),
 #endif
+#ifdef USE_DYP
+  AGPIO(GPIO_DYP_RX),
+#endif
 #ifdef USE_AS3935
   AGPIO(GPIO_AS3935),
 #endif
@@ -557,17 +563,16 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_TELEINFO_RX),
   AGPIO(GPIO_TELEINFO_ENABLE),
 #endif
-/*
-#ifndef USE_ADC_VCC
-  AGPIO(ADC0_INPUT),          // Analog input
-  AGPIO(ADC0_TEMP),           // Thermistor
-  AGPIO(ADC0_LIGHT),          // Light sensor
-  AGPIO(ADC0_BUTTON),         // Button
-  AGPIO(ADC0_BUTTON_INV),
-  AGPIO(ADC0_RANGE),          // Range
-  AGPIO(ADC0_CT_POWER),       // Current
+#ifdef USE_ADC
+  AGPIO(GPIO_ADC_INPUT) + MAX_ADCS,       // Analog inputs
+  AGPIO(GPIO_ADC_TEMP) + MAX_ADCS,        // Thermistor
+  AGPIO(GPIO_ADC_LIGHT) + MAX_ADCS,       // Light sensor
+  AGPIO(GPIO_ADC_BUTTON) + MAX_ADCS,      // Button
+  AGPIO(GPIO_ADC_BUTTON_INV) + MAX_ADCS,
+  AGPIO(GPIO_ADC_RANGE) + MAX_ADCS,       // Range
+  AGPIO(GPIO_ADC_CT_POWER) + MAX_ADCS,    // Current
+  AGPIO(GPIO_ADC_JOY) + MAX_ADCS,         // Joystick
 #endif
-*/
 #ifdef USE_WEBCAM
   AGPIO(GPIO_WEBCAM_PWDN),
   AGPIO(GPIO_WEBCAM_RESET),
@@ -591,13 +596,28 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 
 //********************************************************************************************
 
+// User selectable ADC functionality
+enum UserSelectableAdc {
+  ADC_NONE,           // Not used
+  ADC_INPUT,          // Analog input
+  ADC_TEMP,           // Thermistor
+  ADC_LIGHT,          // Light sensor
+  ADC_BUTTON,         // Button
+  ADC_BUTTON_INV,
+  ADC_RANGE,          // Range
+  ADC_CT_POWER,       // Current
+  ADC_JOY,            // Joystick
+//  ADC_SWITCH,         // Switch
+//  ADC_SWITCH_INV,
+  ADC_END };
+
 #define MAX_GPIO_PIN       40   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
 #define MAX_USER_PINS      36   // MAX_GPIO_PIN - MIN_FLASH_PINS
 #define WEMOS_MODULE       0    // Wemos module
 
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839
-const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOflashcFLFLolIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOA6A7A0IoIoA3";
+const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOflashcFLFLolIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOIAIAIAIAIAIA";
 
 //********************************************************************************************
 
@@ -699,7 +719,8 @@ const mytmplt kModules PROGMEM =
 
 {"NAME":"AITHINKER CAM","GPIO":[4992,1,1,1,1,5088,1,1,1,1,1,1,1,1,5089,5090,0,5091,5184,5152,0,5120,5024,5056,0,0,0,0,4928,1,5094,5095,5092,0,0,5093],"FLAG":0,"BASE":1}
 {"NAME":"Olimex ESP32-PoE","GPIO":[1,1,1,1,1,1,0,0,5536,1,1,1,1,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
-{"NAME":"wESP32","GPIO":[0,0,1,0,1,1,0,0,1,1,1,1,5568,5600,1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+{"NAME":"wESP32","GPIO":[1,1,1,1,1,1,0,0,0,1,1,1,5568,5600,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+{"NAME":"Denky (Teleinfo)","GPIO":[1,1,1,1,5664,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1376,1,1,0,0,0,0,1,5632,1,1,1,0,0,1],"FLAG":0,"BASE":1}
 
 \*********************************************************************************************/
 

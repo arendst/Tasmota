@@ -71,7 +71,7 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
                      FUNC_DISPLAY_DRAW_HLINE, FUNC_DISPLAY_DRAW_VLINE, FUNC_DISPLAY_DRAW_LINE,
                      FUNC_DISPLAY_DRAW_CIRCLE, FUNC_DISPLAY_FILL_CIRCLE,
                      FUNC_DISPLAY_DRAW_RECTANGLE, FUNC_DISPLAY_FILL_RECTANGLE,
-                     FUNC_DISPLAY_TEXT_SIZE, FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING, FUNC_DISPLAY_ONOFF };
+                     FUNC_DISPLAY_TEXT_SIZE, FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING };
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
@@ -241,8 +241,7 @@ void DisplayDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint
 
 void DisplayOnOff(uint8_t on)
 {
-  dsp_on = on;
-  XdspCall(FUNC_DISPLAY_ONOFF);
+  ExecuteCommandPower(disp_device, on, SRC_DISPLAY);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -435,18 +434,10 @@ void DisplayText(void)
             DisplayInit(DISPLAY_INIT_FULL);
             break;
           case 'o':
-            if (!renderer) {
-              DisplayOnOff(0);
-            } else {
-              renderer->DisplayOnff(0);
-            }
+            DisplayOnOff(0);
             break;
           case 'O':
-            if (!renderer) {
-              DisplayOnOff(1);
-            } else {
-              renderer->DisplayOnff(1);
-            }
+            DisplayOnOff(1);
             break;
           case 'x':
             // set disp_xpos
@@ -505,7 +496,7 @@ void DisplayText(void)
             cp += var;
             linebuf[fill] = 0;
             break;
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT) && USE_SCRIPT_FATFS>=0
+#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
           case 'P':
             { char *ep=strchr(cp,':');
              if (ep) {
@@ -1269,6 +1260,11 @@ void DisplayInitDriver(void)
 
   if (Settings.display_model) {
     devices_present++;
+    if (!PinUsed(GPIO_BACKLIGHT)) {
+      if (light_type && (4 == Settings.display_model)) {
+        devices_present--;  // Assume PWM channel is used for backlight
+      }
+    }
     disp_device = devices_present;
 
 #ifndef USE_DISPLAY_MODES1TO5
@@ -1510,13 +1506,8 @@ void rgb888_to_565(uint8_t *in, uint16_t *out, uint32_t len);
 #endif
 #endif
 
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT) && USE_SCRIPT_FATFS>=0
-
-#ifdef ESP32
+#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
 extern FS *fsp;
-#else
-extern SDClass *fsp;
-#endif
 #define XBUFF_LEN 128
 void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
   if (!renderer) return;
@@ -1539,14 +1530,13 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
     uint16_t ysize;
     fp.read((uint8_t*)&ysize,2);
 #if 1
-    uint16_t xdiv=xsize/XBUFF_LEN;
     renderer->setAddrWindow(xp,yp,xp+xsize,yp+ysize);
-    for(int16_t j=0; j<ysize; j++) {
-      for(int16_t i=0; i<xsize; i+=XBUFF_LEN) {
-        uint16_t rgb[XBUFF_LEN];
-        uint16_t len=fp.read((uint8_t*)rgb,XBUFF_LEN*2);
-        if (len>=2) renderer->pushColors(rgb,len/2,true);
-      }
+    uint16_t rgb[xsize];
+    for (int16_t j=0; j<ysize; j++) {
+    //  for(int16_t i=0; i<xsize; i+=XBUFF_LEN) {
+        fp.read((uint8_t*)rgb,xsize*2);
+        renderer->pushColors(rgb,xsize,true);
+    //  }
       OsWatchLoop();
     }
     renderer->setAddrWindow(0,0,0,0);

@@ -117,6 +117,18 @@ String GetResetReason(void)
  * Miscellaneous
 \*********************************************************************************************/
 
+String GetBinary(const void* ptr, size_t count) {
+  uint32_t value = *(uint32_t*)ptr;
+  value <<= (32 - count);
+  String result;
+  result.reserve(count + 1);
+  for (uint32_t i = 0; i < count; i++) {
+    result += (value &0x80000000) ? '1' : '0';
+    value <<= 1;
+  }
+  return result;
+}
+
 // Get span until single character in string
 size_t strchrspn(const char *str1, int character)
 {
@@ -125,6 +137,18 @@ size_t strchrspn(const char *str1, int character)
   char *end = strchr(str1, character);
   if (end) ret = end - start;
   return ret;
+}
+
+uint32_t ChrCount(const char *str, const char *delim) {
+  uint32_t count = 0;
+  char* read = (char*)str;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    if (ch == *delim) { count++; }
+  }
+  return count;
 }
 
 // Function to return a substring defined by a delimiter at an index
@@ -152,6 +176,8 @@ float CharToFloat(const char *str)
 
   strlcpy(strbuf, str, sizeof(strbuf));
   char *pt = strbuf;
+  if (*pt == '\0') { return 0.0; }
+
   while ((*pt != '\0') && isblank(*pt)) { pt++; }  // Trim leading spaces
 
   signed char sign = 1;
@@ -394,11 +420,13 @@ char* UpperCase_P(char* dest, const char* source)
 
 char* Trim(char* p)
 {
-  while ((*p != '\0') && isblank(*p)) { p++; }  // Trim leading spaces
-  char* q = p + strlen(p) -1;
-  while ((q >= p) && isblank(*q)) { q--; }   // Trim trailing spaces
-  q++;
-  *q = '\0';
+  if (*p != '\0') {
+    while ((*p != '\0') && isblank(*p)) { p++; }  // Trim leading spaces
+    char* q = p + strlen(p) -1;
+    while ((q >= p) && isblank(*q)) { q--; }   // Trim trailing spaces
+    q++;
+    *q = '\0';
+  }
   return p;
 }
 
@@ -1178,6 +1206,41 @@ String ModuleName(void)
   return AnyModuleName(Settings.module);
 }
 
+#ifdef ESP8266
+void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
+  uint8_t module_template = pgm_read_byte(kModuleTemplateList + module);
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Template %d, Option %d"), module_template, option);
+
+  uint8_t internal_template[sizeof(mytmplt)] = { GPIO_NONE };
+  if (module_template < TMP_WEMOS) {
+    memcpy_P(&internal_template, &kModules8266[module_template], 6);
+    memcpy_P(&internal_template[8], &kModules8266[module_template].gp.io[6], 6);
+  } else {
+    memcpy_P(&internal_template, &kModules8285[module_template - TMP_WEMOS], sizeof(mytmplt));
+  }
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&internal_template, sizeof(mytmplt));
+
+  uint32_t index = 0;
+  uint32_t size = sizeof(mycfgio);           // kmodules[module_template].gp
+  switch (option) {
+    case 2: {
+      index = sizeof(internal_template) -1;  // kModules[module_template].flag
+      size = 1;
+      break;
+    }
+    case 3: {
+      size = sizeof(internal_template);      // kmodules[module_template]
+      break;
+    }
+  }
+  memcpy(ptr, &internal_template[index], size);
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)ptr, size);
+}
+#endif  // ESP8266
+
 void ModuleGpios(myio *gp)
 {
 #ifdef ESP8266
@@ -1193,7 +1256,7 @@ void ModuleGpios(myio *gp)
     memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
   } else {
 #ifdef ESP8266
-    memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
+    GetInternalTemplate(&src, Settings.module, 1);
 #else  // ESP32
     memcpy_P(&src, &kModules.gp, sizeof(mycfgio));
 #endif  // ESP8266 - ESP32
@@ -1222,7 +1285,7 @@ gpio_flag ModuleFlag(void)
     flag = Settings.user_template.flag;
   } else {
 #ifdef ESP8266
-    memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
+    GetInternalTemplate(&flag, Settings.module, 2);
 #else  // ESP32
     memcpy_P(&flag, &kModules.flag, sizeof(gpio_flag));
 #endif  // ESP8266 - ESP32
@@ -1238,7 +1301,7 @@ void ModuleDefault(uint32_t module)
   char name[TOPSZ];
   SettingsUpdateText(SET_TEMPLATE_NAME, GetTextIndexed(name, sizeof(name), module, kModuleNames));
 #ifdef ESP8266
-  memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
+  GetInternalTemplate(&Settings.user_template, module, 3);
 #else  // ESP32
   memcpy_P(&Settings.user_template, &kModules, sizeof(mytmplt));
 #endif  // ESP8266 - ESP32
@@ -1785,14 +1848,16 @@ void Syslog(void)
 void AddLog(uint32_t loglevel)
 {
   char mxtime[10];  // "13:45:21 "
-
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
 
-  if (loglevel <= seriallog_level) {
+  if ((loglevel <= seriallog_level) &&
+      (masterlog_level <= seriallog_level)) {
     Serial.printf("%s%s\r\n", mxtime, log_data);
   }
 #ifdef USE_WEBSERVER
-  if (Settings.webserver && (loglevel <= Settings.weblog_level)) {
+  if (Settings.webserver &&
+     (loglevel <= Settings.weblog_level) &&
+     (masterlog_level <= Settings.weblog_level)) {
     // Delimited, zero-terminated buffer of log lines.
     // Each entry has this format: [index][log data]['\1']
     web_log_index &= 0xFF;
@@ -1813,10 +1878,12 @@ void AddLog(uint32_t loglevel)
 #endif  // USE_WEBSERVER
   if (Settings.flag.mqtt_enabled &&        // SetOption3 - Enable MQTT
       !global_state.mqtt_down &&
-      (loglevel <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
+      (loglevel <= Settings.mqttlog_level) &&
+      (masterlog_level <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
 
   if (!global_state.network_down &&
-      (loglevel <= syslog_level)) { Syslog(); }
+      (loglevel <= syslog_level) &&
+      (masterlog_level <= syslog_level)) { Syslog(); }
 
   prepped_loglevel = 0;
 }
