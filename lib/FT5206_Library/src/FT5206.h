@@ -49,6 +49,8 @@ github:https://github.com/lewisxhe/FT5206_Library
 #define FT6236U_CHIPID          0x64
 #define FT5206U_CHIPID          0x64
 
+#define FT5316_CHIPID           0x0a
+
 #define DEVIDE_MODE 0x00
 #define TD_STATUS   0x02
 #define TOUCH1_XH   0x03
