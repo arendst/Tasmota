@@ -812,7 +812,7 @@
 #define D_AS3935_GAIN "Rauschpegel:"
 #define D_AS3935_ENERGY "Energie:"
 #define D_AS3935_DISTANCE "Entfernung:"
-#define D_AS3935_DISTURBER "Enstörer:"
+#define D_AS3935_DISTURBER "Entstörer:"
 #define D_AS3935_VRMS "µVrms:"
 #define D_AS3935_APRX "ca.:"
 #define D_AS3935_AWAY "entfernt"
