@@ -809,7 +809,7 @@
 #define D_SCRIPT_UPLOAD_FILES  "Upload Dateien"
 
 //xsns_67_as3935.ino
-#define D_AS3935_GAIN "Rauschpegel:"
+#define D_AS3935_GAIN "Umgebung:"
 #define D_AS3935_ENERGY "Energie:"
 #define D_AS3935_DISTANCE "Entfernung:"
 #define D_AS3935_DISTURBER "Entstörer:"
