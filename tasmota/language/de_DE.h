@@ -823,7 +823,7 @@
 #define D_AS3935_NOISE "Rauschen entdeckt"
 #define D_AS3935_DISTDET "Störer entdeckt"
 #define D_AS3935_INTNOEV "Interrupt ohne Grund!"
-#define D_AS3935_FLICKER "IRQ Pin flackerd!"
+#define D_AS3935_FLICKER "IRQ Pin flackert!"
 #define D_AS3935_POWEROFF "Ausgeschaltet"
 #define D_AS3935_NOMESS "lausche..."
 #define D_AS3935_ON "On"
