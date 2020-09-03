@@ -823,6 +823,8 @@
 #define D_AS3935_NOISE "Ruido detectado"
 #define D_AS3935_DISTDET "Perturbancia detectada"
 #define D_AS3935_INTNOEV "Interrupción sin evento!"
+#define D_AS3935_FLICKER "IRQ flicker!"
+#define D_AS3935_POWEROFF "Power Off"
 #define D_AS3935_NOMESS "Escuchando..."
 #define D_AS3935_ON "Encendido"
 #define D_AS3935_OFF "Apagado"

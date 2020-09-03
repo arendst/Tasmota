@@ -823,6 +823,8 @@
 #define D_AS3935_NOISE "rilevato rumore"
 #define D_AS3935_DISTDET "rilevato disturbatore"
 #define D_AS3935_INTNOEV "Interrupt senza evento!"
+#define D_AS3935_FLICKER "IRQ flicker!"
+#define D_AS3935_POWEROFF "Power Off"
 #define D_AS3935_NOMESS "in ascolto..."
 #define D_AS3935_ON "ON"
 #define D_AS3935_OFF "OFF"

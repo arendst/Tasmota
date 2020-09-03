@@ -823,6 +823,8 @@
 #define D_AS3935_NOISE "偵測到雜訊"
 #define D_AS3935_DISTDET "偵測到干擾物"
 #define D_AS3935_INTNOEV "沒有任何事件觸發中斷!"
+#define D_AS3935_FLICKER "IRQ flicker!"
+#define D_AS3935_POWEROFF "Power Off"
 #define D_AS3935_NOMESS "聽取中..."
 #define D_AS3935_ON "開啟"
 #define D_AS3935_OFF "關閉"
