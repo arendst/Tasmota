@@ -458,6 +458,10 @@ void TasmotaClient_Init(void) {
   }
 }
 
+bool TasmotaClient_Available(void) {
+  return TClient.SerialEnabled;
+}
+
 void TasmotaClient_Show(void) {
   if ((TClient.type) && (TClientSettings.features.func_json_append)) {
     char buffer[100];

@@ -2781,9 +2781,10 @@ void HandleUploadLoop(void)
         } else
 #endif  // USE_RF_FLASH
 #ifdef USE_TASMOTA_CLIENT
-        if ((WEMOS == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO CLIENT hex file
+        if (TasmotaClient_Available() && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO CLIENT hex file
           Update.end();              // End esp8266 update session
           Web.upload_file_type = UPL_TASMOTACLIENT;
+
           Web.upload_error = TasmotaClient_UpdateInit();  // 0
           if (Web.upload_error != 0) { return; }
         } else
