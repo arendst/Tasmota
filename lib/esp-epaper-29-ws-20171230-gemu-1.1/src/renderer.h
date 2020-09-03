@@ -46,9 +46,23 @@ private:
   uint8_t font;
 };
 
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t spare0 : 1;
+    uint8_t spare1 : 1;
+    uint8_t spare2 : 1;
+    uint8_t spare3 : 1;
+    uint8_t disable : 1;
+    uint8_t on_off : 1;
+    uint8_t is_pushbutton : 1;
+    uint8_t is_virtual : 1;
+  };
+} TButton_State;
+
 class VButton : public Adafruit_GFX_Button {
   public:
-  uint8_t vpower;
+  TButton_State vpower;
   void xdrawButton(bool inverted);
 };
 

@@ -27,18 +27,12 @@
 #define COLORED                1
 #define UNCOLORED              0
 
-// touch panel controller
-#define FT6236_address 0x38
-
 // using font 8 is opional (num=3)
 // very badly readable, but may be useful for graphs
 #define USE_TINY_FONT
 
 
 #include <ILI9488.h>
-#include <FT6236.h>
-
-TouchLocation ili9488_pLoc;
 uint8_t ili9488_ctouch_counter = 0;
 
 // currently fixed
@@ -47,13 +41,7 @@ uint8_t ili9488_ctouch_counter = 0;
 extern uint8_t *buffer;
 extern uint8_t color_type;
 ILI9488 *ili9488;
-
-#ifdef USE_TOUCH_BUTTONS
-extern VButton *buttons[];
-#endif
-
 extern const uint16_t picture[];
-uint8_t FT6236_found;
 
 /*********************************************************************************************/
 
@@ -126,30 +114,52 @@ void ILI9488_InitDriver()
 #endif
 
     color_type = COLOR_COLOR;
-    // start digitizer with fixed adress
-
-    if (I2cEnabled(XI2C_38) && I2cSetDevice(FT6236_address)) {
-      FT6236begin(FT6236_address);
-      FT6236_found=1;
-      I2cSetActiveFound(FT6236_address, "FT6236");
-    } else {
-      FT6236_found=0;
-    }
-
+    // start digitizer
+#ifdef USE_FT5206
+    Touch_Init(Wire);
+#endif
   }
 }
 
+#ifdef USE_FT5206
 #ifdef USE_TOUCH_BUTTONS
-void ILI9488_MQTT(uint8_t count,const char *cp) {
-  ResponseTime_P(PSTR(",\"RA8876\":{\"%s%d\":\"%d\"}}"), cp,count+1,(buttons[count]->vpower&0x80)>>7);
-  MqttPublishTeleSensor();
+
+void ILI9488_RotConvert(int16_t *x, int16_t *y) {
+int16_t temp;
+  if (renderer) {
+    uint8_t rot=renderer->getRotation();
+    switch (rot) {
+      case 0:
+        temp=*y;
+        *y=renderer->height()-*x;
+        *x=temp;
+        break;
+      case 1:
+        break;
+      case 2:
+        break;
+      case 3:
+        temp=*y;
+        *y=*x;
+        *x=renderer->width()-temp;
+        break;
+    }
+  }
 }
 
-void ILI9488_RDW_BUTT(uint32_t count,uint32_t pwr) {
-  buttons[count]->xdrawButton(pwr);
-  if (pwr) buttons[count]->vpower|=0x80;
-  else buttons[count]->vpower&=0x7f;
+// check digitizer hit
+void ILI9488_CheckTouch(void) {
+  ili9488_ctouch_counter++;
+  if (2 == ili9488_ctouch_counter) {
+    // every 100 ms should be enough
+    ili9488_ctouch_counter = 0;
+    Touch_Check(ILI9488_RotConvert);
+  }
 }
+#endif // USE_TOUCH_BUTTONS
+#endif // USE_FT5206
+
+/*
 // check digitizer hit
 void FT6236Check() {
 uint16_t temp;
@@ -181,12 +191,11 @@ if (2 == ili9488_ctouch_counter) {
       // now must compare with defined buttons
       for (uint8_t count=0; count<MAXBUTTONS; count++) {
         if (buttons[count]) {
-            uint8_t bflags=buttons[count]->vpower&0x7f;
             if (buttons[count]->contains(ili9488_pLoc.x,ili9488_pLoc.y)) {
                 // did hit
                 buttons[count]->press(true);
                 if (buttons[count]->justPressed()) {
-                  if (!bflags) {
+                  if (!buttons[count]->vpower.is_virtual) {
                     uint8_t pwr=bitRead(power,rbutt);
                     if (!SendKey(KEY_BUTTON, rbutt+1, POWER_TOGGLE)) {
                       ExecuteCommandPower(rbutt+1, POWER_TOGGLE, SRC_BUTTON);
@@ -195,21 +204,21 @@ if (2 == ili9488_ctouch_counter) {
                   } else {
                     // virtual button
                     const char *cp;
-                    if (bflags==1) {
+                    if (!buttons[count]->vpower.is_pushbutton) {
                       // toggle button
-                      buttons[count]->vpower^=0x80;
+                      buttons[count]->vpower.on_off^=1;
                       cp="TBT";
                     } else {
                       // push button
-                      buttons[count]->vpower|=0x80;
+                      buttons[count]->vpower.on_off=1;
                       cp="PBT";
                     }
-                    buttons[count]->xdrawButton(buttons[count]->vpower&0x80);
+                    buttons[count]->xdrawButton(buttons[count]->vpower.on_off);
                     ILI9488_MQTT(count,cp);
                   }
                 }
             }
-            if (!bflags) {
+            if (!buttons[count]->vpower.is_virtual) {
               rbutt++;
             } else {
               vbutt++;
@@ -221,23 +230,21 @@ if (2 == ili9488_ctouch_counter) {
     // no hit
     for (uint8_t count=0; count<MAXBUTTONS; count++) {
       if (buttons[count]) {
-        uint8_t bflags=buttons[count]->vpower&0x7f;
         buttons[count]->press(false);
         if (buttons[count]->justReleased()) {
-          uint8_t bflags=buttons[count]->vpower&0x7f;
-          if (bflags>0) {
-            if (bflags>1) {
+          if (buttons[count]->vpower.is_virtual) {
+            if (buttons[count]->vpower.is_pushbutton) {
               // push button
-              buttons[count]->vpower&=0x7f;
+              buttons[count]->vpower.on_off=0;
               ILI9488_MQTT(count,"PBT");
             }
-            buttons[count]->xdrawButton(buttons[count]->vpower&0x80);
+            buttons[count]->xdrawButton(buttons[count]->vpower.on_off);
           }
         }
-        if (!bflags) {
+        if (!buttons[count]->vpower.is_virtual) {
           // check if power button stage changed
           uint8_t pwr=bitRead(power,rbutt);
-          uint8_t vpwr=(buttons[count]->vpower&0x80)>>7;
+          uint8_t vpwr=buttons[count]->vpower.on_off;
           if (pwr!=vpwr) {
             ILI9488_RDW_BUTT(count,pwr);
           }
@@ -251,6 +258,8 @@ if (2 == ili9488_ctouch_counter) {
 }
 }
 #endif // USE_TOUCH_BUTTONS
+*/
+
 /*********************************************************************************************/
 /*********************************************************************************************\
  * Interface
@@ -270,7 +279,9 @@ bool Xdsp08(uint8_t function)
           break;
         case FUNC_DISPLAY_EVERY_50_MSECOND:
 #ifdef USE_TOUCH_BUTTONS
-          if (FT6236_found) FT6236Check();
+          if (FT5206_found) {
+            ILI9488_CheckTouch();
+          }
 #endif
           break;
       }

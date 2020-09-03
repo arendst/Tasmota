@@ -161,7 +161,7 @@ class Arduino_ST7789 : public Renderer {
   boolean  _hwSPI;
   boolean  _SPI9bit;
   boolean  _DCbit;
-
+  uint8_t dimmer;
   int8_t  _cs, _dc, _rst, _sid, _sclk, _bp;
 
 #if defined(USE_FAST_IO)
