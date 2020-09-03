@@ -339,6 +339,7 @@ void BacklogLoop(void) {
 #else
       backlog_mutex = true;
       ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
+      backlog[backlog_pointer] = (const char*) nullptr;   // force deallocation of the String internal memory
       backlog_pointer++;
       if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
       backlog_mutex = false;
