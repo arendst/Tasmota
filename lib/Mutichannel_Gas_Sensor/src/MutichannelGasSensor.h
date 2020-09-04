@@ -6,7 +6,7 @@
     2015-3-17
     http://www.seeed.cc/
     modi by Jack, 2015-8
-    
+
     V2 by Loovee
     2016-11-11
 
@@ -38,7 +38,7 @@
 
 #define DEFAULT_I2C_ADDR    0x04
 
-#define ADDR_IS_SET             0           // if this is the first time to run, if 1126, set 
+#define ADDR_IS_SET             0           // if this is the first time to run, if 1126, set
 #define ADDR_FACTORY_ADC_NH3    2
 #define ADDR_FACTORY_ADC_CO     4
 #define ADDR_FACTORY_ADC_NO2    6
@@ -68,19 +68,23 @@
 
 enum{CO, NO2, NH3, C3H8, C4H10, GAS_CH4, H2, C2H5OH};
 
+// FastPrecisePowf from tasmota/support_float.ino
+extern float FastPrecisePowf(const float x, const float y);
+
 class MutichannelGasSensor{
 
 private:
+    static inline float pow(float a, float b) { return FastPrecisePowf(a, b); }
 
     int __version;
     int __send_error;
     unsigned char dta_test[20];
-    
+
     unsigned int readChAdcValue(int ch);
     unsigned int adcValueR0_NH3_Buf;
     unsigned int adcValueR0_CO_Buf;
     unsigned int adcValueR0_NO2_Buf;
-    
+
 public:
 
     uint8_t i2cAddress;     //I2C address of this MCU
@@ -98,7 +102,7 @@ public:
     int16_t readR0(void);
     int16_t readR(void);
     float calcGas(int gas);
-    
+
 public:
 
     void begin(int address);
@@ -107,7 +111,7 @@ public:
     void powerOn(void);
     void powerOff(void);
     void doCalibrate(void);
-    
+
     //get gas concentration, unit: ppm
     float measure_CO(){return calcGas(CO);}
     float measure_NO2(){return calcGas(NO2);}
@@ -117,7 +121,7 @@ public:
     float measure_CH4(){return calcGas(GAS_CH4);}
     float measure_H2(){return calcGas(H2);}
     float measure_C2H5OH(){return calcGas(C2H5OH);}
-    
+
     float getR0(unsigned char ch);      // 0:CH3, 1:CO, 2:NO2
     float getRs(unsigned char ch);      // 0:CH3, 1:CO, 2:NO2
 

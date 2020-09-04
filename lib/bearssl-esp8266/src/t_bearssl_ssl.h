@@ -2114,7 +2114,7 @@ void br_ssl_engine_sendapp_ack(br_ssl_engine_context *cc, size_t len);
 /**
  * \brief Get buffer for received application data.
  *
- * If the engine has received application data from the peer, hen this
+ * If the engine has received application data from the peer, then this
  * call returns a pointer to the buffer from where such data shall be
  * read, and its length is written in `*len`. Otherwise, `*len` is set
  * to 0 and `NULL` is returned.

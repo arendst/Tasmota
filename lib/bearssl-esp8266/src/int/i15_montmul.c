@@ -141,8 +141,8 @@ loop%=:                                                            \n\
 
 		py = &y[0];				// addresses of both arrays that will be scanned as uint16_t
 		pm = &m[0];
-		int py_unaligned = (((int)py) & 2) != 0;
-		int pm_unaligned = (((int)pm) & 2) != 0;
+		int py_unaligned = (((intptr_t)py) & 2) != 0;
+		int pm_unaligned = (((intptr_t)pm) & 2) != 0;
 		uint32_t ty, tm;	// 32 bits buffers
 		if (!py_unaligned && !pm_unaligned) {
 			// both are aligned to 32 bits, we always skip the first 16 bits

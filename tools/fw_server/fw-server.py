@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-fw-server.py - firmware server for Sonoff-Tasmota OTA upgrade
+fw-server.py - firmware server for Tasmota OTA upgrade
 
 Copyright (C) 2019 Gennaro Tortone
 
@@ -24,12 +24,12 @@ Requirements:
    - pip install netifaces flask
 
 Instructions:
-    Copy Sonoff-Tasmota firmware binary files in 'fw' directory or
+    Copy Tasmota firmware binary files in 'fw' directory or
     specify a different directory with -f parameter.
-    A set of prebuilt files can be downloaded by Sonoff-Tasmota release page:
-        https://github.com/arendst/Sonoff-Tasmota/releases
+    A set of prebuilt files can be downloaded by Tasmota release page:
+        https://github.com/arendst/Tasmota/releases
 
-    Configure your Sonoff-Tasmota device with your fw-server URL:
+    Configure your Tasmota device with your fw-server URL:
         Firmware Upgrade -> Upgrade by web server
             http://<ip_address>:5000/sonoff-minimal.bin
 

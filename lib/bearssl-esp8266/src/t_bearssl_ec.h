@@ -108,7 +108,7 @@ extern "C" {
  *
  *   - The multipliers (integers) MUST be lower than the subgroup order.
  *     If this property is not met, then the result is indeterminate,
- *     but an error value is not ncessearily returned.
+ *     but an error value is not necessarily returned.
  * 
  *
  * ## ECDSA
