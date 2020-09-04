@@ -1,4 +1,0 @@
-<map id="IRTecoAc" name="IRTecoAc">
-<area shape="rect" id="node1" title="Class for handling detailed Teco A/C messages." alt="" coords="5,95,84,121"/>
-<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="11,5,78,32"/>
-</map>

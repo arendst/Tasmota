@@ -2584,9 +2584,6 @@ br_cpuid(uint32_t mask_eax, uint32_t mask_ebx,
   #define optimistic_yield(ignored)
 #endif
 
-#ifdef ESP32
-#define memcpy_P memcpy
-#endif
 
 /* ==================================================================== */
 

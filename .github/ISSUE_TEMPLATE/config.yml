@@ -1,8 +1,0 @@
-blank_issues_enabled: false
-contact_links:
-  - name: Tasmota Docs
-    url: https://tasmota.github.io/docs
-    about: All the information related to Tasmota
-  - name: Tasmota Support Chat
-    url: https://discord.gg/Ks2Kzd4
-    about: Chat for feedback, questions and troubleshooting.

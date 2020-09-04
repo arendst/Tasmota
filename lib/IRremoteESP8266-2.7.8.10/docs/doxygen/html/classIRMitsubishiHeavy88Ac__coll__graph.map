@@ -1,4 +1,0 @@
-<map id="IRMitsubishiHeavy88Ac" name="IRMitsubishiHeavy88Ac">
-<area shape="rect" id="node1" title="Class for handling detailed Mitsubishi Heavy 88&#45;bit A/C messages." alt="" coords="5,95,181,121"/>
-<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="60,5,127,32"/>
-</map>
