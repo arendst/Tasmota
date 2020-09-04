@@ -1,4 +1,0 @@
-<map id="IRArgoAC" name="IRArgoAC">
-<area shape="rect" id="node1" title="Class for handling detailed Argo A/C messages." alt="" coords="5,95,88,121"/>
-<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="13,5,80,32"/>
-</map>

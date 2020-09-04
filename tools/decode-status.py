@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 """
-  decode-status.py - decode status for Tasmota
+  decode-status.py - decode status for Sonoff-Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2019 Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 
 Requirements:
    - Python
-   - pip json requests
+   - pip json pycurl
 
 Instructions:
     Execute command with option -d to retrieve status report from device or
@@ -42,17 +42,18 @@ Example:
 import io
 import os.path
 import json
-import requests
-import urllib
+import pycurl
+import urllib2
 from sys import exit
 from optparse import OptionParser
+from StringIO import StringIO
 
 a_on_off = ["OFF","ON "]
 
 a_setoption = [[
     "Save power state and use after restart",
     "Restrict button actions to single, double and hold",
-    "(not used) Show value units in JSON messages",
+    "Show value units in JSON messages",
     "MQTT enabled",
     "Respond as Command topic instead of RESULT",
     "MQTT retain on Power",
@@ -85,22 +86,12 @@ a_setoption = [[
     ],[
     "Key hold time (ms)",
     "Sonoff POW Max_Power_Retry",
-    "Backlog delay (ms)",
+    "Tuya dimmer device id",
     "(not used) mDNS delayed start (Sec)",
     "Boot loop retry offset (0 = disable)",
     "RGBWW remap",
-    "IR Unknown threshold",
-    "CSE7766 invalid power margin",
-    "Ignore hold time (s)",
-    "Gratuitous ARP repeat time",
-    "Over temperature threshold (celsius)",
-    "(not used) Tuya MCU max dimmer value",
-    "(not used) Tuya MCU voltage Id",
-    "(not used) Tuya MCU current Id",
-    "(not used) Tuya MCU power Id",
-    "(not used) Energy Tariff1 start hour",
-    "(not used) Energy Tariff2 start hour",
-    "",
+    "","","","","","",
+    "","","","","","",
     ],[
     "Timers enabled",
     "Generic ESP8285 GPIO enabled",
@@ -117,69 +108,33 @@ a_setoption = [[
     "Do not use retain flag on HOLD messages",
     "Do not scan relay power state at restart",
     "Use _ instead of - as sensor index separator",
-    "Disable fast power cycle detection for device reset",
-    "Enable TuyaMcuReceived messages over Mqtt",
-    "Enable buzzer when available",
-    "Enable multi-channels PWM instead of Color PWM",
-    "(not used) Limits Tuya MCU dimmers to minimum of 10% (25) when enabled",
-    "Enable Weekend Energy Tariff",
-    "Select different Modbus registers for Active Energy",
-    "Enable hardware energy total counter as reference",
-    "Detach buttons from relays and enable MQTT action state for multipress",
-    "Enable internal pullup for single DS18x20 sensor",
-    "GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)",
-    "Enable incrementing bootcount when deepsleep is enabled",
-    "Do not power off if slider moved to far left",
-    "Bypass Compatibility check",
-    "Enable resetting of counters after telemetry was sent",
-    "Enable shutter support",
-    "Invert PCF8574 ports"
-    ],[
-    "Reduced CT range for Alexa",
-    "Use FriendlyNames instead of ShortAddresses when possible",
-    "(AWS IoT) publish MQTT state to a device shadow",
-    "Enable Device Groups",
-    "PWM Dimmer Turn brightness LED's off 5 seconds after last change",
-    "PWM Dimmer Turn red LED on when powered off",
-    "PWM Dimmer Buttons control remote devices",
-    "Distinct MQTT topics per device for Zigbee",
-    "Disable non-json MQTT response",
-    "Enable light fading at start/power on",
-    "Set PWM Mode from regular PWM to ColorTemp control",
-    "Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick",
-    "Implement simpler MAX6675 protocol instead of MAX31855",
-    "Enable Wifi",
-    "Enable Ethernet (ESP32)",
-    "Set Baud rate for TuyaMCU serial communication (0 = 9600 or 1 = 115200)",
-    "Rotary encoder uses rules instead of light control",
-    "Enable zerocross dimmer on PWM DIMMER",
-    "Remove ZbReceived form JSON message",
-    "Add the source endpoint as suffix to attributes",
+    "",
+    "","","","",
     "","","","",
     "","","","",
     "","","",""
     ]]
 
 a_features = [[
-    "USE_ENERGY_MARGIN_DETECTION","USE_LIGHT","USE_I2C","USE_SPI",
+    "","","USE_I2C","USE_SPI",
     "USE_DISCOVERY","USE_ARDUINO_OTA","USE_MQTT_TLS","USE_WEBSERVER",
     "WEBSERVER_ADVERTISE","USE_EMULATION_HUE","MQTT_PUBSUBCLIENT","MQTT_TASMOTAMQTT",
     "MQTT_ESPMQTTARDUINO","MQTT_HOST_DISCOVERY","USE_ARILUX_RF","USE_WS2812",
     "USE_WS2812_DMA","USE_IR_REMOTE","USE_IR_HVAC","USE_IR_RECEIVE",
     "USE_DOMOTICZ","USE_DISPLAY","USE_HOME_ASSISTANT","USE_SERIAL_BRIDGE",
     "USE_TIMERS","USE_SUNRISE","USE_TIMERS_WEB","USE_RULES",
-    "USE_KNX","USE_WPS","USE_SMARTCONFIG","USE_ENERGY_POWER_LIMIT"
+    "USE_KNX","USE_WPS","USE_SMARTCONFIG","MQTT_ARDUINOMQTT"
     ],[
     "USE_CONFIG_OVERRIDE","FIRMWARE_MINIMAL","FIRMWARE_SENSORS","FIRMWARE_CLASSIC",
     "FIRMWARE_KNX_NO_EMULATION","USE_DISPLAY_MODES1TO5","USE_DISPLAY_GRAPH","USE_DISPLAY_LCD",
     "USE_DISPLAY_SSD1306","USE_DISPLAY_MATRIX","USE_DISPLAY_ILI9341","USE_DISPLAY_EPAPER",
     "USE_DISPLAY_SH1106","USE_MP3_PLAYER","USE_PCA9685","USE_TUYA_DIMMER",
     "USE_RC_SWITCH","USE_ARMTRONIX_DIMMERS","USE_SM16716","USE_SCRIPT",
-    "USE_EMULATION_WEMO","USE_SONOFF_IFAN","USE_ZIGBEE","NO_EXTRA_4K_HEAP",
+    "USE_EMULATION_WEMO","","","NO_EXTRA_4K_HEAP",
     "VTABLES_IN_IRAM","VTABLES_IN_DRAM","VTABLES_IN_FLASH","PIO_FRAMEWORK_ARDUINO_LWIP_HIGHER_BANDWIDTH",
     "PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY","PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH","DEBUG_THEO","USE_DEBUG_DRIVER"
     ],[
-    "USE_COUNTER","USE_ADC_VCC","USE_ENERGY_SENSOR","USE_PZEM004T",
+    "","USE_ADC_VCC","USE_ENERGY_SENSOR","USE_PZEM004T",
     "USE_DS18B20","USE_DS18x20_LEGACY","USE_DS18x20","USE_DHT",
     "USE_SHT","USE_HTU","USE_BMP","USE_BME680",
     "USE_BH1750","USE_VEML6070","USE_ADS1115_I2CDEV","USE_ADS1115",
@@ -194,27 +149,8 @@ a_features = [[
     "USE_PZEM_DC","USE_TX20_WIND_SENSOR","USE_MGC3130","USE_RF_SENSOR",
     "USE_THEO_V2","USE_ALECTO_V2","USE_AZ7798","USE_MAX31855",
     "USE_PN532_I2C","USE_MAX44009","USE_SCD30","USE_HRE",
-    "USE_ADE7953","USE_SPS30","USE_VL53L0X","USE_MLX90614",
-    "USE_MAX31865","USE_CHIRP","USE_SOLAX_X1","USE_PAJ7620"
-    ],[
-    "USE_BUZZER","USE_RDM6300","USE_IBEACON","USE_SML_M",
-    "USE_INA226","USE_A4988_STEPPER","USE_DDS2382","USE_SM2135",
-    "USE_SHUTTER","USE_PCF8574","USE_DDSU666","USE_DEEPSLEEP",
-    "USE_SONOFF_SC","USE_SONOFF_RF","USE_SONOFF_L1","USE_EXS_DIMMER",
-    "USE_TASMOTA_SLAVE","USE_HIH6","USE_HPMA","USE_TSL2591",
-    "USE_DHT12","USE_DS1624","USE_GPS","USE_HOTPLUG",
-    "USE_NRF24","USE_MIBLE","USE_HM10","USE_LE01MR",
-    "USE_AHT1x","USE_WEMOS_MOTOR_V1","USE_DEVICE_GROUPS","USE_PWM_DIMMER"
-    ],[
-    "USE_KEELOQ","USE_HRXL","USE_SONOFF_D1","USE_HDC1080",
-    "USE_IAQ","USE_DISPLAY_SEVENSEG","USE_AS3935","USE_PING",
-    "USE_WINDMETER","USE_OPENTHERM","USE_THERMOSTAT","USE_VEML6075",
-    "USE_VEML7700","USE_MCP9808","USE_BL0940","USE_TELEGRAM",
-    "USE_HP303B","USE_TCP_BRIDGE","USE_TELEINFO","USE_LMT01",
-    "USE_PROMETHEUS","USE_IEM3000","","",
-    "","","","",
-    "","","USE_ETHERNET","USE_WEBCAM"
-    ]]
+    "USE_ADE7953","","","",
+    "","","",""]]
 
 usage = "usage: decode-status {-d | -f} arg"
 parser = OptionParser(usage)
@@ -229,19 +165,25 @@ parser.add_option("-f", "--file", metavar="FILE",
 (options, args) = parser.parse_args()
 
 if (options.device):
+    buffer = StringIO()
     loginstr = ""
     if options.password is not None:
-        loginstr = "user={}&password={}&".format(urllib.parse.quote(options.username), urllib.parse.quote(options.password))
+        loginstr = "user={}&password={}&".format(urllib2.quote(options.username), urllib2.quote(options.password))
     url = str("http://{}/cm?{}cmnd=status%200".format(options.device, loginstr))
-    res = requests.get(url)
-    obj = json.loads(res.content)
+    c = pycurl.Curl()
+    c.setopt(c.URL, url)
+    c.setopt(c.WRITEDATA, buffer)
+    c.perform()
+    c.close()
+    body = buffer.getvalue()
+    obj = json.loads(body)
 else:
     jsonfile = options.jsonfile
     with open(jsonfile, "r") as fp:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20200721 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20190204 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
@@ -276,7 +218,7 @@ def StartDecode():
                             options.append(str("{0:2d} ({1:3d}) {2}".format(i, split_register[opt_idx], option)))
                             i += 1
 
-                if r in (0, 2, 3): #registers 1 and 3 hold binary values
+                if r in (0, 2): #registers 1 and 3 hold binary values
                     for opt_idx, option in enumerate(opt_group):
                         i_register = int(register,16)
                         state = (i_register >> opt_idx) & 1
@@ -290,7 +232,7 @@ def StartDecode():
     if "StatusMEM" in obj:
         if "Features" in obj["StatusMEM"]:
             features = []
-            for f in range(6):
+            for f in range(5):
                 feature = obj["StatusMEM"]["Features"][f]
                 i_feature = int(feature,16)
                 if f == 0:
