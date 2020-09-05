@@ -1280,6 +1280,7 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
       } else if ((nullptr != modelId) && (0 == getManufCode())) {
         translated = true;
         if (modelId.startsWith(F("lumi.sensor_ht")) ||
+            modelId.equals(F("lumi.sens")) ||
             modelId.startsWith(F("lumi.weather"))) {     // Temp sensor
           // Filter according to prefix of model name
           // onla Aqara Temp/Humidity has manuf_code of zero. If non-zero we skip the parameters
