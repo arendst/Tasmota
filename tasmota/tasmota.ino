@@ -60,9 +60,9 @@
 #ifdef USE_DISCOVERY
   #include <ESP8266mDNS.h>                  // MQTT, Webserver, Arduino OTA
 #endif  // USE_DISCOVERY
-#ifdef USE_I2C
+//#ifdef USE_I2C
   #include <Wire.h>                         // I2C support library
-#endif  // USE_I2C
+//#endif  // USE_I2C
 #ifdef USE_SPI
   #include <SPI.h>                          // SPI support, TFT
 #endif  // USE_SPI
@@ -339,6 +339,7 @@ void BacklogLoop(void) {
 #else
       backlog_mutex = true;
       ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
+      backlog[backlog_pointer] = (const char*) nullptr;   // force deallocation of the String internal memory
       backlog_pointer++;
       if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
       backlog_mutex = false;

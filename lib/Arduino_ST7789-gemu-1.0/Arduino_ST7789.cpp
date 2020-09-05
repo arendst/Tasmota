@@ -546,7 +546,7 @@ void Arduino_ST7789::DisplayOnff(int8_t on) {
     writecommand(ST7789_DISPON);    //Display on
     if (_bp>=0) {
 #ifdef ST7789_DIMMER
-      ledcWrite(ESP32_PWM_CHANNEL,255);
+      ledcWrite(ESP32_PWM_CHANNEL,dimmer);
 #else
       digitalWrite(_bp,HIGH);
 #endif
@@ -564,7 +564,8 @@ void Arduino_ST7789::DisplayOnff(int8_t on) {
 }
 
 // dimmer 0-100
-void Arduino_ST7789::dim(uint8_t dimmer) {
+void Arduino_ST7789::dim(uint8_t dim) {
+  dimmer = dim;
   if (dimmer>15) dimmer=15;
   dimmer=((float)dimmer/15.0)*255.0;
 #ifdef ESP32

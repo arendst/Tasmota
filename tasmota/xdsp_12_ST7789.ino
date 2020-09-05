@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//#ifdef USE_SPI
 #ifdef USE_SPI
 #ifdef USE_DISPLAY
 #ifdef USE_DISPLAY_ST7789
@@ -50,12 +51,6 @@ extern uint8_t color_type;
 Arduino_ST7789 *st7789;
 
 #ifdef USE_FT5206
-#ifdef USE_TOUCH_BUTTONS
-extern VButton *buttons[];
-#endif
-FT5206_Class *touchp;
-uint8_t FT5206_found;
-TP_Point st7789_pLoc;
 uint8_t st7789_ctouch_counter = 0;
 #endif // USE_FT5206
 
@@ -142,154 +137,50 @@ void ST7789_InitDriver()
     #define SDA_2 23
     #define SCL_2 32
     Wire1.begin(SDA_2, SCL_2, 400000);
-    touchp = new FT5206_Class();
-    if (touchp->begin(Wire1, FT5206_address)) {
-      FT5206_found=1;
-      //I2cSetDevice(FT5206_address);
-      I2cSetActiveFound(FT5206_address, "FT5206");
-    } else {
-      FT5206_found=0;
-    }
+    Touch_Init(Wire1);
 #endif // USE_FT5206
 #endif // ESP32
 
   }
 }
 
-
 #ifdef ESP32
 #ifdef USE_FT5206
 #ifdef USE_TOUCH_BUTTONS
-void ST7789_MQTT(uint8_t count,const char *cp) {
-  ResponseTime_P(PSTR(",\"ST7789\":{\"%s%d\":\"%d\"}}"), cp,count+1,(buttons[count]->vpower&0x80)>>7);
-  MqttPublishTeleSensor();
-}
 
-uint32_t FT5206_touched(uint32_t sel) {
-  if (touchp) {
-    switch (sel) {
+void ST7789_RotConvert(int16_t *x, int16_t *y) {
+int16_t temp;
+  if (renderer) {
+    uint8_t rot=renderer->getRotation();
+    switch (rot) {
       case 0:
-        return  touchp->touched();
+        break;
       case 1:
-        return st7789_pLoc.x;
+        temp=*y;
+        *y=renderer->height()-*x;
+        *x=temp;
+        break;
       case 2:
-        return st7789_pLoc.y;
+        *x=renderer->width()-*x;
+        *y=renderer->height()-*y;
+        break;
+      case 3:
+        temp=*y;
+        *y=*x;
+        *x=renderer->width()-temp;
+        break;
     }
-    return 0;
-  } else {
-    return 0;
   }
 }
 
-void ST7789_RDW_BUTT(uint32_t count,uint32_t pwr) {
-  buttons[count]->xdrawButton(pwr);
-  if (pwr) buttons[count]->vpower|=0x80;
-  else buttons[count]->vpower&=0x7f;
-}
 // check digitizer hit
-void FT5206Check() {
-uint16_t temp;
-uint8_t rbutt=0,vbutt=0;
+void ST7789_CheckTouch() {
 st7789_ctouch_counter++;
-if (2 == st7789_ctouch_counter) {
-  // every 100 ms should be enough
-  st7789_ctouch_counter=0;
-
-  if (touchp->touched()) {
-    // did find a hit
-    st7789_pLoc = touchp->getPoint(0);
-    if (renderer) {
-      uint8_t rot=renderer->getRotation();
-      switch (rot) {
-        case 0:
-          break;
-        case 1:
-          temp=st7789_pLoc.y;
-          st7789_pLoc.y=renderer->height()-st7789_pLoc.x;
-          st7789_pLoc.x=temp;
-          break;
-        case 2:
-          st7789_pLoc.x=renderer->width()-st7789_pLoc.x;
-          st7789_pLoc.y=renderer->height()-st7789_pLoc.y;
-          break;
-        case 3:
-          temp=st7789_pLoc.y;
-          st7789_pLoc.y=st7789_pLoc.x;
-          st7789_pLoc.x=renderer->width()-temp;
-          break;
-      }
-      //AddLog_P2(LOG_LEVEL_INFO, PSTR("touch %d - %d"), st7789_pLoc.x, st7789_pLoc.y);
-      // now must compare with defined buttons
-      for (uint8_t count=0; count<MAXBUTTONS; count++) {
-        if (buttons[count]) {
-            uint8_t bflags=buttons[count]->vpower&0x7f;
-            if (buttons[count]->contains(st7789_pLoc.x,st7789_pLoc.y)) {
-                // did hit
-                buttons[count]->press(true);
-                if (buttons[count]->justPressed()) {
-                  if (!bflags) {
-                    uint8_t pwr=bitRead(power,rbutt);
-                    if (!SendKey(KEY_BUTTON, rbutt+1, POWER_TOGGLE)) {
-                      ExecuteCommandPower(rbutt+1, POWER_TOGGLE, SRC_BUTTON);
-                      ST7789_RDW_BUTT(count,!pwr);
-                    }
-                  } else {
-                    // virtual button
-                    const char *cp;
-                    if (bflags==1) {
-                      // toggle button
-                      buttons[count]->vpower^=0x80;
-                      cp="TBT";
-                    } else {
-                      // push button
-                      buttons[count]->vpower|=0x80;
-                      cp="PBT";
-                    }
-                    buttons[count]->xdrawButton(buttons[count]->vpower&0x80);
-                    ST7789_MQTT(count,cp);
-                  }
-                }
-            }
-            if (!bflags) {
-              rbutt++;
-            } else {
-              vbutt++;
-            }
-        }
-      }
-    }
-  } else {
-    // no hit
-    for (uint8_t count=0; count<MAXBUTTONS; count++) {
-      if (buttons[count]) {
-        uint8_t bflags=buttons[count]->vpower&0x7f;
-        buttons[count]->press(false);
-        if (buttons[count]->justReleased()) {
-          uint8_t bflags=buttons[count]->vpower&0x7f;
-          if (bflags>0) {
-            if (bflags>1) {
-              // push button
-              buttons[count]->vpower&=0x7f;
-              ST7789_MQTT(count,"PBT");
-            }
-            buttons[count]->xdrawButton(buttons[count]->vpower&0x80);
-          }
-        }
-        if (!bflags) {
-          // check if power button stage changed
-          uint8_t pwr=bitRead(power,rbutt);
-          uint8_t vpwr=(buttons[count]->vpower&0x80)>>7;
-          if (pwr!=vpwr) {
-            ST7789_RDW_BUTT(count,pwr);
-          }
-          rbutt++;
-        }
-      }
-    }
-    st7789_pLoc.x=0;
-    st7789_pLoc.y=0;
+  if (2 == st7789_ctouch_counter) {
+    // every 100 ms should be enough
+    st7789_ctouch_counter = 0;
+    Touch_Check(ST7789_RotConvert);
   }
-}
 }
 #endif // USE_TOUCH_BUTTONS
 #endif // USE_FT5206
@@ -317,7 +208,7 @@ bool Xdsp12(uint8_t function)
 #ifdef USE_FT5206
 #ifdef USE_TOUCH_BUTTONS
           if (FT5206_found) {
-            FT5206Check();
+            ST7789_CheckTouch();
           }
 #endif
 #endif // USE_FT5206

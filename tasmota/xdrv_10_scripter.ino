@@ -300,11 +300,34 @@ struct T_INDEX {
 };
 
 struct M_FILT {
+#ifdef LARGE_ARRAYS
+  uint16_t numvals;
+  uint16_t index;
+#else
   uint8_t numvals;
   uint8_t index;
+#endif // LARGE_ARRAYS
   float maccu;
   float rbuff[1];
 };
+
+
+#ifdef LARGE_ARRAYS
+#undef AND_FILT_MASK
+#undef OR_FILT_MASK
+#define AND_FILT_MASK 0x7fff
+#define OR_FILT_MASK 0x8000
+#undef MAX_ARRAY_SIZE
+#define MAX_ARRAY_SIZE 1000
+#else
+#undef AND_FILT_MASK
+#undef OR_FILT_MASK
+#define AND_FILT_MASK 0x7f
+#define OR_FILT_MASK 0x80
+#undef MAX_ARRAY_SIZE
+#define MAX_ARRAY_SIZE 127
+#endif
+
 
 typedef union {
   uint8_t data;
@@ -462,6 +485,8 @@ void RulesTeleperiod(void) {
 #define SCRIPT_SKIP_SPACES while (*lp==' ' || *lp=='\t') lp++;
 #define SCRIPT_SKIP_EOL while (*lp==SCRIPT_EOL) lp++;
 
+float *Get_MFAddr(uint8_t index,uint16_t *len,uint16_t *ipos);
+
 // allocates all variables and presets them
 int16_t Init_Scripter(void) {
 char *script;
@@ -543,12 +568,16 @@ char *script;
                 if ((*lp=='m' || *lp=='M') && *(lp+1)==':') {
                     uint8_t flg=*lp;
                     lp+=2;
+                    if (*lp=='p' && *(lp+1)==':') {
+                      vtypes[vars].bits.is_permanent=1;
+                      lp+=2;
+                    }
                     if (flg=='M') mfilt[numflt].numvals=8;
                     else mfilt[numflt].numvals=5;
                     vtypes[vars].bits.is_filter=1;
                     mfilt[numflt].index=0;
                     if (flg=='M') {
-                      mfilt[numflt].numvals|=0x80;
+                      mfilt[numflt].numvals|=OR_FILT_MASK;
                     }
                     vtypes[vars].index=numflt;
                     numflt++;
@@ -587,9 +616,13 @@ char *script;
                       while (*op==' ') op++;
                       if (isdigit(*op)) {
                         // lenght define follows
-                        uint8_t flen=atoi(op);
-                        mfilt[numflt-1].numvals&=0x80;
-                        mfilt[numflt-1].numvals|=flen&0x7f;
+                        uint16_t flen=atoi(op);
+                        if (flen>MAX_ARRAY_SIZE) {
+                          // limit array size
+                          flen=MAX_ARRAY_SIZE;
+                        }
+                        mfilt[numflt-1].numvals&=OR_FILT_MASK;
+                        mfilt[numflt-1].numvals|=flen&AND_FILT_MASK;
                       }
                     }
 
@@ -635,11 +668,11 @@ char *script;
 
     uint16_t fsize=0;
     for (count=0; count<numflt; count++) {
-      fsize+=sizeof(struct M_FILT)+((mfilt[count].numvals&0x7f)-1)*sizeof(float);
+      fsize+=sizeof(struct M_FILT)+((mfilt[count].numvals&AND_FILT_MASK)-1)*sizeof(float);
     }
 
     // now copy vars to memory
-    uint16_t script_mem_size=
+    uint32_t script_mem_size=
     // number and number shadow vars
     (sizeof(float)*nvars)+
     (sizeof(float)*nvars)+
@@ -733,7 +766,7 @@ char *script;
     for (count=0; count<numflt; count++) {
       struct M_FILT *mflp=(struct M_FILT*)mp;
       mflp->numvals=mfilt[count].numvals;
-      mp+=sizeof(struct M_FILT)+((mfilt[count].numvals&0x7f)-1)*sizeof(float);
+      mp+=sizeof(struct M_FILT)+((mfilt[count].numvals&AND_FILT_MASK)-1)*sizeof(float);
     }
 
     glob_script_mem.numvars=vars;
@@ -760,12 +793,21 @@ char *script;
     for (uint8_t count=0; count<glob_script_mem.numvars; count++) {
       if (vtp[count].bits.is_permanent && !vtp[count].bits.is_string) {
         uint8_t index=vtp[count].index;
-        if (!isnan(*fp)) {
-          glob_script_mem.fvars[index]=*fp;
+        if (vtp[count].bits.is_filter) {
+            // preset array
+            uint16_t len=0;
+            float *fa=Get_MFAddr(index,&len,0);
+            while (len--) {
+              *fa++=*fp++;
+            }
         } else {
-          *fp=glob_script_mem.fvars[index];
+          if (!isnan(*fp)) {
+            glob_script_mem.fvars[index]=*fp;
+          } else {
+            *fp=glob_script_mem.fvars[index];
+          }
+          fp++;
         }
-        fp++;
       }
     }
     sp=(char*)fp;
@@ -947,7 +989,7 @@ void ws2812_set_array(float *array ,uint32_t len, uint32_t offset) {
 
 
 
-float median_array(float *array,uint8_t len) {
+float median_array(float *array,uint16_t len) {
     uint8_t ind[len];
     uint8_t mind=0,index=0,flg;
     float min=FLT_MAX;
@@ -975,45 +1017,48 @@ float median_array(float *array,uint8_t len) {
 }
 
 
-float *Get_MFAddr(uint8_t index,uint8_t *len,uint8_t *ipos) {
+float *Get_MFAddr(uint8_t index,uint16_t *len,uint16_t *ipos) {
   *len=0;
   uint8_t *mp=(uint8_t*)glob_script_mem.mfilt;
   for (uint8_t count=0; count<MAXFILT; count++) {
     struct M_FILT *mflp=(struct M_FILT*)mp;
     if (count==index) {
-        *len=mflp->numvals&0x7f;
+        *len=mflp->numvals&AND_FILT_MASK;
         if (ipos) *ipos=mflp->index;
         return mflp->rbuff;
     }
-    mp+=sizeof(struct M_FILT)+((mflp->numvals&0x7f)-1)*sizeof(float);
+    mp+=sizeof(struct M_FILT)+((mflp->numvals&AND_FILT_MASK)-1)*sizeof(float);
   }
   return 0;
 }
 
 
-float Get_MFVal(uint8_t index,uint8_t bind) {
+float Get_MFVal(uint8_t index,int16_t bind) {
   uint8_t *mp=(uint8_t*)glob_script_mem.mfilt;
   for (uint8_t count=0; count<MAXFILT; count++) {
     struct M_FILT *mflp=(struct M_FILT*)mp;
     if (count==index) {
-        uint8_t maxind=mflp->numvals&0x7f;
+        uint16_t maxind=mflp->numvals&AND_FILT_MASK;
         if (!bind) {
           return mflp->index;
+        }
+        if (bind<0) {
+          return maxind;
         }
         if (bind<1 || bind>maxind) bind=maxind;
         return mflp->rbuff[bind-1];
     }
-    mp+=sizeof(struct M_FILT)+((mflp->numvals&0x7f)-1)*sizeof(float);
+    mp+=sizeof(struct M_FILT)+((mflp->numvals&AND_FILT_MASK)-1)*sizeof(float);
   }
   return 0;
 }
 
-void Set_MFVal(uint8_t index,uint8_t bind,float val) {
+void Set_MFVal(uint8_t index,uint16_t bind,float val) {
   uint8_t *mp=(uint8_t*)glob_script_mem.mfilt;
   for (uint8_t count=0; count<MAXFILT; count++) {
     struct M_FILT *mflp=(struct M_FILT*)mp;
     if (count==index) {
-        uint8_t maxind=mflp->numvals&0x7f;
+        uint16_t maxind=mflp->numvals&AND_FILT_MASK;
         if (!bind) {
           mflp->index=val;
         } else {
@@ -1022,7 +1067,7 @@ void Set_MFVal(uint8_t index,uint8_t bind,float val) {
         }
         return;
     }
-    mp+=sizeof(struct M_FILT)+((mflp->numvals&0x7f)-1)*sizeof(float);
+    mp+=sizeof(struct M_FILT)+((mflp->numvals&AND_FILT_MASK)-1)*sizeof(float);
   }
 }
 
@@ -1032,15 +1077,15 @@ float Get_MFilter(uint8_t index) {
   for (uint8_t count=0; count<MAXFILT; count++) {
     struct M_FILT *mflp=(struct M_FILT*)mp;
     if (count==index) {
-      if (mflp->numvals&0x80) {
+      if (mflp->numvals&OR_FILT_MASK) {
         // moving average
-        return mflp->maccu/(mflp->numvals&0x7f);
+        return mflp->maccu/(mflp->numvals&AND_FILT_MASK);
       } else {
         // median, sort array indices
         return median_array(mflp->rbuff,mflp->numvals);
       }
     }
-    mp+=sizeof(struct M_FILT)+((mflp->numvals&0x7f)-1)*sizeof(float);
+    mp+=sizeof(struct M_FILT)+((mflp->numvals&AND_FILT_MASK)-1)*sizeof(float);
   }
   return 0;
 }
@@ -1050,13 +1095,13 @@ void Set_MFilter(uint8_t index, float invar) {
   for (uint8_t count=0; count<MAXFILT; count++) {
     struct M_FILT *mflp=(struct M_FILT*)mp;
     if (count==index) {
-      if (mflp->numvals&0x80) {
+      if (mflp->numvals&OR_FILT_MASK) {
         // moving average
         mflp->maccu-=mflp->rbuff[mflp->index];
         mflp->maccu+=invar;
         mflp->rbuff[mflp->index]=invar;
         mflp->index++;
-        if (mflp->index>=(mflp->numvals&0x7f)) mflp->index=0;
+        if (mflp->index>=(mflp->numvals&AND_FILT_MASK)) mflp->index=0;
       } else {
         // median
         mflp->rbuff[mflp->index]=invar;
@@ -1065,7 +1110,7 @@ void Set_MFilter(uint8_t index, float invar) {
       }
       break;
     }
-    mp+=sizeof(struct M_FILT)+((mflp->numvals&0x7f)-1)*sizeof(float);
+    mp+=sizeof(struct M_FILT)+((mflp->numvals&AND_FILT_MASK)-1)*sizeof(float);
   }
 }
 
@@ -2140,7 +2185,7 @@ chknext:
               }
             } else {
               if (index>glob_script_mem.si_num) {
-                fvar=glob_script_mem.si_num;
+                index=glob_script_mem.si_num;
               }
               strlcpy(str,glob_script_mem.last_index_string+(index*glob_script_mem.max_ssize),glob_script_mem.max_ssize);
             }
@@ -2691,7 +2736,7 @@ chknext:
           if (index<1 || index>MAXBUTTONS) index=1;
           index--;
           if (buttons[index]) {
-            fvar=buttons[index]->vpower&0x80;
+            fvar=buttons[index]->vpower.on_off;
           } else {
             fvar=-1;
           }
@@ -2807,7 +2852,7 @@ chknext:
 #if defined(USE_TTGO_WATCH) && defined(USE_FT5206)
         if (!strncmp(vname,"wtch(",5)) {
           lp=GetNumericResult(lp+5,OPER_EQU,&fvar,0);
-          fvar=FT5206_touched(fvar);
+          fvar=Touch_Status(fvar);
           lp++;
           len=0;
           goto exit;
@@ -3430,7 +3475,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
 int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
     uint8_t vtype=0,sindex,xflg,floop=0,globvindex,fromscriptcmd=0;
     char *lp_next;
-    int8_t globaindex,saindex;
+    int16_t globaindex,saindex;
     struct T_INDEX ind;
     uint8_t operand,lastop,numeric=1,if_state[IF_NEST],if_exe[IF_NEST],if_result[IF_NEST],and_or,ifstck=0;
     if_state[ifstck]=0;
@@ -3762,7 +3807,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
                 if ((vtype&STYPE)==0) {
                     // numeric result
                   if (glob_script_mem.type[ind.index].bits.is_filter) {
-                    uint8_t len=0;
+                    uint16_t len=0;
                     float *fa=Get_MFAddr(index,&len,0);
                     //Serial.printf(">> 2 %d\n",(uint32_t)*fa);
                     if (fa && len) ws2812_set_array(fa,len,fvar);
@@ -4175,12 +4220,26 @@ void Scripter_save_pvars(void) {
   for (uint8_t count=0; count<glob_script_mem.numvars; count++) {
     if (vtp[count].bits.is_permanent && !vtp[count].bits.is_string) {
       uint8_t index=vtp[count].index;
-      mlen+=sizeof(float);
-      if (mlen>PMEM_SIZE) {
-        vtp[count].bits.is_permanent=0;
-        return;
+      if (vtp[count].bits.is_filter) {
+        // save array
+        uint16_t len=0;
+        float *fa=Get_MFAddr(index,&len,0);
+        mlen+=sizeof(float)*len;
+        if (mlen>glob_script_mem.script_pram_size) {
+          vtp[count].bits.is_permanent=0;
+          return;
+        }
+        while (len--) {
+          *fp++=*fa++;
+        }
+      } else {
+        mlen+=sizeof(float);
+        if (mlen>glob_script_mem.script_pram_size) {
+          vtp[count].bits.is_permanent=0;
+          return;
+        }
+        *fp++=glob_script_mem.fvars[index];
       }
-      *fp++=glob_script_mem.fvars[index];
     }
   }
   char *cp=(char*)fp;
@@ -4190,7 +4249,7 @@ void Scripter_save_pvars(void) {
       char *sp=glob_script_mem.glob_snp+(index*glob_script_mem.max_ssize);
       uint8_t slen=strlen(sp);
       mlen+=slen+1;
-      if (mlen>PMEM_SIZE) {
+      if (mlen>glob_script_mem.script_pram_size) {
         vtp[count].bits.is_permanent=0;
         return;
       }
@@ -6013,6 +6072,9 @@ const char SCRIPT_MSG_GOPT4[] PROGMEM =
 const char SCRIPT_MSG_GOPT5[] PROGMEM =
 "new Date(0,1,1,%d,%d)";
 
+const char SCRIPT_MSG_GOPT6[] PROGMEM =
+"title:'%s',isStacked:false,vAxis:{viewWindow:{min:%d,max:%d}}%s";
+
 const char SCRIPT_MSG_GTE1[] PROGMEM = "'%s'";
 
 #define GLIBS_MAIN 1<<0
@@ -6022,11 +6084,11 @@ const char SCRIPT_MSG_GTE1[] PROGMEM = "'%s'";
 
 #define MAX_GARRAY 4
 
-char *gc_get_arrays(char *lp, float **arrays, uint8_t *ranum, uint8_t *rentries, uint8_t *ipos) {
+char *gc_get_arrays(char *lp, float **arrays, uint8_t *ranum, uint16_t *rentries, uint16_t *ipos) {
 struct T_INDEX ind;
 uint8_t vtype;
-uint8 entries=0;
-uint8_t cipos=0;
+uint16 entries=0;
+uint16_t cipos=0;
 
   uint8_t anum=0;
   while (anum<MAX_GARRAY) {
@@ -6042,9 +6104,9 @@ uint8_t cipos=0;
         //Serial.printf("numeric %d - %d \n",ind.index,index);
         if (glob_script_mem.type[ind.index].bits.is_filter) {
           //Serial.printf("numeric array\n");
-          uint8_t len=0;
+          uint16_t len=0;
           float *fa=Get_MFAddr(index,&len,&cipos);
-          //Serial.printf(">> 2 %d\n",(uint32_t)*fa);
+          //Serial.printf(">> 2 %d\n",len);
           if (fa && len>=entries) {
             if (!entries) {
               entries = len;
@@ -6295,12 +6357,12 @@ void ScriptWebShow(char mc) {
 
           } else {
             if (mc=='w') {
-              WSContentSend_PD(PSTR("%s"),tmp);
+              WSContentSend_PD(PSTR("%s"),lin);
             } else {
               if (optflg) {
-                WSContentSend_PD(PSTR("<div>%s</div>"),tmp);
+                WSContentSend_PD(PSTR("<div>%s</div>"),lin);
               } else {
-                WSContentSend_PD(PSTR("{s}%s{e}"),tmp);
+                WSContentSend_PD(PSTR("{s}%s{e}"),lin);
               }
             }
           }
@@ -6388,8 +6450,8 @@ exgc:
 
               float *arrays[MAX_GARRAY];
               uint8_t anum=0;
-              uint8 entries=0;
-              uint8 ipos=0;
+              uint16_t entries=0;
+              uint16_t ipos=0;
               lp=gc_get_arrays(lp, &arrays[0], &anum, &entries, &ipos);
 
               if (anum>nanum) {
@@ -6434,10 +6496,19 @@ exgc:
                 lp=GetStringResult(lp,OPER_EQU,label,0);
                 SCRIPT_SKIP_SPACES
 
-                int8_t todflg=-1;
+                int16_t divflg=1;
+                int16_t todflg=-1;
                 if (!strncmp(label,"cnt",3)) {
                   todflg=atoi(&label[3]);
                   if (todflg>=entries) todflg=entries-1;
+                } else {
+                  uint16 segments=1;
+                  for (uint32_t cnt=0; cnt<strlen(label); cnt++) {
+                    if (label[cnt]=='|') {
+                      segments++;
+                    }
+                  }
+                  divflg=entries/segments;
                 }
 
                 uint32_t aind=ipos;
@@ -6452,7 +6523,7 @@ exgc:
                       todflg=0;
                     }
                   } else {
-                    GetTextIndexed(lbl, sizeof(lbl), aind, label);
+                    GetTextIndexed(lbl, sizeof(lbl), aind/divflg, label);
                   }
                   WSContentSend_PD(lbl);
                   WSContentSend_PD("',");
@@ -6495,6 +6566,17 @@ exgc:
                   lp=GetNumericResult(lp,OPER_EQU,&max2,0);
                   SCRIPT_SKIP_SPACES
                   snprintf_P(options,sizeof(options),SCRIPT_MSG_GOPT3,header,(uint32_t)max1,(uint32_t)max2,func);
+                } else {
+                  SCRIPT_SKIP_SPACES
+                  if (*lp!=')') {
+                    float max1;
+                    lp=GetNumericResult(lp,OPER_EQU,&max1,0);
+                    SCRIPT_SKIP_SPACES
+                    float max2;
+                    lp=GetNumericResult(lp,OPER_EQU,&max2,0);
+                    SCRIPT_SKIP_SPACES
+                    snprintf_P(options,sizeof(options),SCRIPT_MSG_GOPT6,header,(uint32_t)max1,(uint32_t)max2,func);
+                  }
                 }
 
                 if (ctype=='g') {

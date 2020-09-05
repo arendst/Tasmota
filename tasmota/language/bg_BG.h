@@ -823,6 +823,8 @@
 #define D_AS3935_NOISE "открит шум"
 #define D_AS3935_DISTDET "открито смущение"
 #define D_AS3935_INTNOEV "Прекъсване без Събитие!"
+#define D_AS3935_FLICKER "IRQ flicker!"
+#define D_AS3935_POWEROFF "Power Off"
 #define D_AS3935_NOMESS "слушане..."
 #define D_AS3935_ON "Вкл."
 #define D_AS3935_OFF "Изкл."
