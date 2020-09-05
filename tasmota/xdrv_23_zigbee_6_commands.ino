@@ -328,13 +328,8 @@ void sendHueUpdate(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uin
 
 
 // Parse a cluster specific command, and try to convert into human readable
-void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, bool direction, uint16_t shortaddr, uint8_t srcendpoint, const SBuffer &payload) {
-  size_t hex_char_len = payload.len()*2+2;
-  char *hex_char = (char*) malloc(hex_char_len);
-  if (!hex_char) { return; }
-  ToHex_P((unsigned char*)payload.getBuffer(), payload.len(), hex_char, hex_char_len);
-
-  const __FlashStringHelper* command_name = nullptr;
+void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster, uint8_t cmd, bool direction, uint16_t shortaddr, uint8_t srcendpoint, const SBuffer &payload) {
+  const char * command_name = nullptr;
   uint8_t conv_direction;
   Z_XYZ_Var xyz;
 
@@ -373,7 +368,7 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
             p += 2;
           }
           if (match) {
-            command_name = (const __FlashStringHelper*) (Z_strings + pgm_read_word(&conv->tasmota_cmd_offset));
+            command_name = Z_strings + pgm_read_word(&conv->tasmota_cmd_offset);
             parseXYZ(Z_strings + pgm_read_word(&conv->param_offset), payload, &xyz);
             if (0xFF == conv_cmd) {
               // shift all values
@@ -396,112 +391,105 @@ void convertClusterSpecific(JsonObject& json, uint16_t cluster, uint8_t cmd, boo
   // Format: "0004<00": "00" = "<cluster><<cmd>": "<payload>" for commands to devices
   char attrid_str[12];
   snprintf_P(attrid_str, sizeof(attrid_str), PSTR("%04X%c%02X"), cluster, direction ? '<' : '!', cmd);
-  json[attrid_str] = hex_char;
-  free(hex_char);
+  attr_list.addAttribute(attrid_str).setBuf(payload, 0, payload.len());
 
   if (command_name) {
     // Now try to transform into a human readable format
-    String command_name2 = String(command_name);
     // if (direction & 0x80) then specific transform
     if (conv_direction & 0x80) {
-      // TODO need to create a specific command
+      uint32_t cccc00mm = (cluster << 16) | cmd;    // format = cccc00mm, cccc = cluster, mm = command
       // IAS
-      if ((cluster == 0x0500) && (cmd == 0x00)) {
-        // "ZoneStatusChange"
-        json[command_name] = xyz.x;
+      switch (cccc00mm) {
+      case 0x05000000:        // "ZoneStatusChange"
+        attr_list.addAttribute(command_name, true).setUInt(xyz.x);
         if (0 != xyz.y) {
-          json[command_name2 + F("Ext")] = xyz.y;
+          attr_list.addAttribute(command_name, PSTR("Ext")).setUInt(xyz.y);
         }
         if ((0 != xyz.z) && (0xFF != xyz.z)) {
-          json[command_name2 + F("Zone")] = xyz.z;
+          attr_list.addAttribute(command_name, PSTR("Zone")).setUInt(xyz.z);
         }
-      } else if ((cluster == 0x0004) && ((cmd == 0x00) || (cmd == 0x01) || (cmd == 0x03))) {
-        // AddGroupResp or ViewGroupResp (group name ignored) or RemoveGroup
-        json[command_name] = xyz.y;
-        json[command_name2 + F("Status")] = xyz.x;
-        json[command_name2 + F("StatusMsg")] = getZigbeeStatusMessage(xyz.x);
-      } else if ((cluster == 0x0004) && (cmd == 0x02)) {
-        // GetGroupResp
-        json[command_name2 + F("Capacity")] = xyz.x;
-        json[command_name2 + F("Count")] = xyz.y;
-        JsonArray &arr = json.createNestedArray(command_name);
-        for (uint32_t i = 0; i < xyz.y; i++) {
-          arr.add(payload.get16(2 + 2*i));
+        break;
+      case 0x00040000:
+      case 0x00040001:
+      case 0x00040003:      // AddGroupResp or ViewGroupResp (group name ignored) or RemoveGroup
+        attr_list.addAttribute(command_name, true).setUInt(xyz.y);
+        attr_list.addAttribute(command_name, PSTR("Status")).setUInt(xyz.x);
+        attr_list.addAttribute(command_name, PSTR("StatusMsg")).setStr(getZigbeeStatusMessage(xyz.x).c_str());
+        break;
+      case 0x00040002:      // GetGroupResp
+        attr_list.addAttribute(command_name, PSTR("Capacity")).setUInt(xyz.x);
+        attr_list.addAttribute(command_name, PSTR("Count")).setUInt(xyz.y);
+        {
+
+          Z_json_array group_list;
+          for (uint32_t i = 0; i < xyz.y; i++) {
+            group_list.add(payload.get16(2 + 2*i));
+          }
+          attr_list.addAttribute(command_name, true).setStrRaw(group_list.toString().c_str());
         }
-      } else if ((cluster == 0x0005) && ((cmd == 0x00) || (cmd == 0x02) || (cmd == 0x03))) {
-        // AddScene or RemoveScene or StoreScene
-        json[command_name2 + F("Status")] = xyz.x;
-        json[command_name2 + F("StatusMsg")] = getZigbeeStatusMessage(xyz.x);
-        json[F("GroupId")] = xyz.y;
-        json[F("SceneId")] = xyz.z;
-      } else if ((cluster == 0x0005) && (cmd == 0x01)) {
-        // ViewScene
-        json[command_name2 + F("Status")] = xyz.x;
-        json[command_name2 + F("StatusMsg")] = getZigbeeStatusMessage(xyz.x);
-        json[F("GroupId")] = xyz.y;
-        json[F("SceneId")] = xyz.z;
-        String scene_payload = json[attrid_str];
-        json[F("ScenePayload")] = scene_payload.substring(8); // remove first 8 characters
-      } else if ((cluster == 0x0005) && (cmd == 0x03)) {
-        // RemoveAllScenes
-        json[command_name2 + F("Status")] = xyz.x;
-        json[command_name2 + F("StatusMsg")] = getZigbeeStatusMessage(xyz.x);
-        json[F("GroupId")] = xyz.y;
-      } else if ((cluster == 0x0005) && (cmd == 0x06)) {
-        // GetSceneMembership
-        json[command_name2 + F("Status")] = xyz.x;
-        json[command_name2 + F("StatusMsg")] = getZigbeeStatusMessage(xyz.x);
-        json[F("Capacity")] = xyz.y;
-        json[F("GroupId")] = xyz.z;
-        String scene_payload = json[attrid_str];
-        json[F("ScenePayload")] = scene_payload.substring(8); // remove first 8 characters
-      } else if ((cluster == 0x0006) && (cmd == 0x40)) {
-        // Power Off With Effect
-        json[F("Power")] = 0;       // always "Power":0
-        json[F("PowerEffect")] = xyz.x;
-        json[F("PowerEffectVariant")] = xyz.y;
-      } else if ((cluster == 0x0006) && (cmd == 0x41)) {
-        // Power On With Recall Global Scene
-        json[F("Power")] = 1;       // always "Power":1
-        json[F("PowerRecallGlobalScene")] = true;
-      } else if ((cluster == 0x0006) && (cmd == 0x42)) {
-        // Power On With Timed Off Command
-        json[F("Power")] = 1;       // always "Power":1
-        json[F("PowerOnlyWhenOn")] = xyz.x;
-        json[F("PowerOnTime")] = xyz.y / 10.0f;
-        json[F("PowerOffWait")] = xyz.z / 10.0f;
+        break;
+      case 0x00050000:
+      case 0x00050001:      // ViewScene
+      case 0x00050002:
+      case 0x00050004:      // AddScene or RemoveScene or StoreScene
+        attr_list.addAttribute(command_name, PSTR("Status")).setUInt(xyz.x);
+        attr_list.addAttribute(command_name, PSTR("StatusMsg")).setStr(getZigbeeStatusMessage(xyz.x).c_str());
+        attr_list.addAttribute(PSTR("GroupId"), true).setUInt(xyz.y);
+        attr_list.addAttribute(PSTR("SceneId"), true).setUInt(xyz.z);
+        if (0x00050001 == cccc00mm) {   // ViewScene specific
+          attr_list.addAttribute(PSTR("ScenePayload"), true).setBuf(payload, 4, payload.len()-4); // remove first 4 bytes
+        }
+        break;
+      case 0x00050003:      // RemoveAllScenes
+        attr_list.addAttribute(command_name, PSTR("Status")).setUInt(xyz.x);
+        attr_list.addAttribute(command_name, PSTR("StatusMsg")).setStr(getZigbeeStatusMessage(xyz.x).c_str());
+        attr_list.addAttribute(PSTR("GroupId"), true).setUInt(xyz.y);
+        break;
+      case 0x00050006:      // GetSceneMembership
+        attr_list.addAttribute(command_name, PSTR("Status")).setUInt(xyz.x);
+        attr_list.addAttribute(command_name, PSTR("StatusMsg")).setStr(getZigbeeStatusMessage(xyz.x).c_str());
+        attr_list.addAttribute(PSTR("Capacity"), true).setUInt(xyz.y);
+        attr_list.addAttribute(PSTR("GroupId"), true).setUInt(xyz.z);
+        attr_list.addAttribute(PSTR("ScenePayload"), true).setBuf(payload, 4, payload.len()-4); // remove first 4 bytes
+        break;
+      case 0x00060040:      // Power Off With Effect
+        attr_list.addAttribute(PSTR("Power"), true).setUInt(0);
+        attr_list.addAttribute(PSTR("PowerEffect"), true).setUInt(xyz.x);
+        attr_list.addAttribute(PSTR("PowerEffectVariant"), true).setUInt(xyz.y);
+        break;
+      case 0x00060041:      // Power On With Recall Global Scene
+        attr_list.addAttribute(PSTR("Power"), true).setUInt(1);
+        attr_list.addAttribute(PSTR("PowerRecallGlobalScene"), true).setBool(true);
+        break;
+      case 0x00060042:      // Power On With Timed Off Command
+        attr_list.addAttribute(PSTR("Power"), true).setUInt(1);
+        attr_list.addAttribute(PSTR("PowerOnlyWhenOn"), true).setUInt(xyz.x);
+        attr_list.addAttribute(PSTR("PowerOnTime"), true).setFloat(xyz.y / 10.0f);
+        attr_list.addAttribute(PSTR("PowerOffWait"), true).setFloat(xyz.z / 10.0f);
+        break;
       }
     } else {  // general case
-      bool extended_command = false;    // do we send command with endpoint suffix
+      // do we send command with endpoint suffix
+      char command_suffix[4] = { 0x00 };  // empty string by default
       // if SO101 and multiple endpoints, append endpoint number
       if (Settings.flag4.zb_index_ep) {
         if (zigbee_devices.countEndpoints(shortaddr) > 0) {
-          command_name2 += srcendpoint;
-          extended_command = true;
+          snprintf_P(command_suffix, sizeof(command_suffix), PSTR("%d"), srcendpoint);
         }
       }
       if (0 == xyz.x_type) {
-        json[command_name] = true;    // no parameter
-        if (extended_command) { json[command_name2] = true; }
+        attr_list.addAttribute(command_name, command_suffix).setBool(true);
       } else if (0 == xyz.y_type) {
-        json[command_name] = xyz.x;       // 1 parameter
-        if (extended_command) { json[command_name2] = xyz.x; }
+        attr_list.addAttribute(command_name, command_suffix).setUInt(xyz.x);
       } else {
         // multiple answers, create an array
-        JsonArray &arr = json.createNestedArray(command_name);
+        Z_json_array arr;
         arr.add(xyz.x);
         arr.add(xyz.y);
         if (xyz.z_type) {
           arr.add(xyz.z);
         }
-        if (extended_command) {
-          JsonArray &arr = json.createNestedArray(command_name2);
-          arr.add(xyz.x);
-          arr.add(xyz.y);
-          if (xyz.z_type) {
-            arr.add(xyz.z);
-          }
-        }
+        attr_list.addAttribute(command_name, command_suffix).setStrRaw(arr.toString().c_str());
       }
     }
   }
