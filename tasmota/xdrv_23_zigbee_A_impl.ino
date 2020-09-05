@@ -795,7 +795,7 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
   if (nullptr != &val_cluster) {
     cluster = strToUInt(val_cluster);   // first convert as number
     if (0 == cluster) {
-      zigbeeFindAttributeByName(val_cluster.as<const char*>(), &cluster, nullptr, nullptr, nullptr);
+      zigbeeFindAttributeByName(val_cluster.as<const char*>(), &cluster, nullptr, nullptr);
     }
   }
 
