@@ -1011,53 +1011,53 @@ int32_t EZ_ReceiveTCJoinHandler(int32_t res, const class SBuffer &buf) {
 // Parse incoming ZCL message.
 //
 // This code is common to ZNP and EZSP
-void Z_IncomingMessage(ZCLFrame &zcl_received) {
+void Z_IncomingMessage(class ZCLFrame &zcl_received) {
   uint16_t srcaddr = zcl_received.getSrcAddr();
   uint16_t groupid = zcl_received.getGroupAddr();
   uint16_t clusterid = zcl_received.getClusterId();
   uint8_t  linkquality = zcl_received.getLinkQuality();
   uint8_t  srcendpoint = zcl_received.getSrcEndpoint();
+  linkquality = linkquality != 0xFF ? linkquality : 0xFE;   // avoid 0xFF (reserved for unknown)
 
   bool            defer_attributes = false;     // do we defer attributes reporting to coalesce
 
   // log the packet details
   zcl_received.log();
 
-  zigbee_devices.setLQI(srcaddr, linkquality != 0xFF ? linkquality : 0xFE);       // EFR32 has a different scale for LQI
+  zigbee_devices.setLQI(srcaddr, linkquality);       // EFR32 has a different scale for LQI
 
   char shortaddr[8];
   snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject& json = jsonBuffer.createObject();
+  Z_attribute_list attr_list;
+  attr_list.lqi = linkquality;
+  attr_list.src_ep = srcendpoint;
+  if (groupid) {      // TODO we miss the group_id == 0 here
+    attr_list.group_id = groupid;
+  }
 
   if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_DEFAULT_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseResponse();   // Zigbee general "Degault Response", publish ZbResponse message
+      zcl_received.parseResponse();   // Zigbee general "Default Response", publish ZbResponse message
   } else {
-    // Build the ZbReceive json
+    // Build the ZbReceive list
     if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
-      zcl_received.parseReportAttributes(json);    // Zigbee report attributes from sensors
+      zcl_received.parseReportAttributes(attr_list);    // Zigbee report attributes from sensors
       if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseReadAttributesResponse(json);
+      zcl_received.parseReadAttributesResponse(attr_list);
       if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES == zcl_received.getCmdId())) {
-      zcl_received.parseReadAttributes(json);
+      zcl_received.parseReadAttributes(attr_list);
       // never defer read_attributes, so the auto-responder can send response back on a per cluster basis
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_REPORTING_CONFIGURATION_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseReadConfigAttributes(json);
+      zcl_received.parseReadConfigAttributes(attr_list);
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_CONFIGURE_REPORTING_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseConfigAttributes(json);
+      zcl_received.parseConfigAttributes(attr_list);
     } else if (zcl_received.isClusterSpecificCommand()) {
-      zcl_received.parseClusterSpecificCommand(json);
+      zcl_received.parseClusterSpecificCommand(attr_list);
     }
 
-    {   // fence to force early de-allocation of msg
-      String msg("");
-      msg.reserve(100);
-      json.printTo(msg);
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":%s}"), srcaddr, msg.c_str());
-    }
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":{%s}}"), srcaddr, attr_list.toString().c_str());
 
     // discard the message if it was sent by us (broadcast or group loopback)
     if (srcaddr == localShortAddr) {
@@ -1065,37 +1065,25 @@ void Z_IncomingMessage(ZCLFrame &zcl_received) {
       return;     // abort the rest of message management
     }
 
-    zcl_received.postProcessAttributes(srcaddr, json);
-    // Add Endpoint
-    json[F(D_CMND_ZIGBEE_ENDPOINT)] = srcendpoint;
-    // Add Group if non-zero
-    if (groupid) {
-      json[F(D_CMND_ZIGBEE_GROUP)] = groupid;
-    }
-    // Add linkquality
-    json[F(D_CMND_ZIGBEE_LINKQUALITY)] = linkquality;
+    zcl_received.generateSyntheticAttributes(attr_list);
+    zcl_received.generateCallBacks(attr_list);      // set deferred callbacks, ex: Occupancy
+    zcl_received.postProcessAttributes(srcaddr, attr_list);
 
     // since we just receveived data from the device, it is reachable
     zigbee_devices.resetTimersForDevice(srcaddr, 0 /* groupaddr */, Z_CAT_REACHABILITY);    // remove any reachability timer already there
     zigbee_devices.setReachable(srcaddr, true);     // mark device as reachable
 
-    // Post-provess for Aqara Presence Senson
-    Z_AqaraOccupancy(srcaddr, clusterid, srcendpoint, json);
-
     if (defer_attributes) {
       // Prepare for publish
-      if (zigbee_devices.jsonIsConflict(srcaddr, json)) {
+      if (zigbee_devices.jsonIsConflict(srcaddr, attr_list)) {
         // there is conflicting values, force a publish of the previous message now and don't coalesce
         zigbee_devices.jsonPublishFlush(srcaddr);
       }
-      zigbee_devices.jsonAppend(srcaddr, json);
+      zigbee_devices.jsonAppend(srcaddr, attr_list);
       zigbee_devices.setTimer(srcaddr, 0 /* groupaddr */, USE_ZIGBEE_COALESCE_ATTR_TIMER, clusterid, srcendpoint, Z_CAT_READ_ATTR, 0, &Z_PublishAttributes);
     } else {
       // Publish immediately
-      zigbee_devices.jsonPublishNow(srcaddr, json);
-
-      // Add auto-responder here
-      Z_AutoResponder(srcaddr, clusterid, srcendpoint, json[F("ReadNames")]);
+      zigbee_devices.jsonPublishNow(srcaddr, attr_list);
     }
   }
 }
@@ -1281,30 +1269,8 @@ int32_t EZ_Recv_Default(int32_t res, const class SBuffer &buf) {
  * Callbacks
 \*********************************************************************************************/
 
-
-// Aqara Occupancy behavior: the Aqara device only sends Occupancy: true events every 60 seconds.
-// Here we add a timer so if we don't receive a Occupancy event for 90 seconds, we send Occupancy:false
-void Z_AqaraOccupancy(uint16_t shortaddr, uint16_t cluster, uint8_t endpoint, const JsonObject &json) {
-  static const uint32_t OCCUPANCY_TIMEOUT = 90 * 1000;  // 90 s
-  // Read OCCUPANCY value if any
-  const JsonVariant &val_endpoint = GetCaseInsensitive(json, PSTR(OCCUPANCY));
-  if (nullptr != &val_endpoint) {
-    uint32_t occupancy = strToUInt(val_endpoint);
-
-    if (occupancy) {
-      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, OCCUPANCY_TIMEOUT, cluster, endpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
-    } else {
-      zigbee_devices.resetTimersForDevice(shortaddr, 0 /* groupaddr */, Z_CAT_VIRTUAL_OCCUPANCY);
-    }
-  }
-}
-
-
 // Publish the received values once they have been coalesced
 int32_t Z_PublishAttributes(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
-  const JsonObject *json = zigbee_devices.jsonGet(shortaddr);
-  if (json == nullptr) { return 0; }                 // don't crash if not found
-
   zigbee_devices.jsonPublishFlush(shortaddr);
   return 1;
 }
@@ -1476,49 +1442,61 @@ int32_t Z_State_Ready(uint8_t value) {
 //
 // Mostly used for routers/end-devices
 // json: holds the attributes in JSON format
-void Z_AutoResponder(uint16_t srcaddr, uint16_t cluster, uint8_t endpoint, const JsonObject &json) {
+void Z_AutoResponder(uint16_t srcaddr, uint16_t cluster, uint8_t endpoint, const uint16_t *attr_list, size_t attr_len) {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& json_out = jsonBuffer.createObject();
 
-  // responder
-  switch (cluster) {
-    case 0x0000:
-      if (HasKeyCaseInsensitive(json, PSTR("ModelId")))           { json_out[F("ModelId")] = F(USE_ZIGBEE_MODELID); }
-      if (HasKeyCaseInsensitive(json, PSTR("Manufacturer")))      { json_out[F("Manufacturer")] = F(USE_ZIGBEE_MANUFACTURER); }
-      break;
+  for (uint32_t i=0; i<attr_len; i++) {
+    uint16_t attr = attr_list[i];
+    uint32_t ccccaaaa = (cluster << 16) || attr;
+
+    switch (ccccaaaa) {
+      case 0x00000004: json_out[F("Manufacturer")] = F(USE_ZIGBEE_MANUFACTURER);  break;    // Manufacturer
+      case 0x00000005: json_out[F("ModelId")] = F(USE_ZIGBEE_MODELID);            break;    // ModelId
 #ifdef USE_LIGHT
-    case 0x0006:
-      if (HasKeyCaseInsensitive(json, PSTR("Power")))             { json_out[F("Power")] = Light.power ? 1 : 0; }
-      break;
-    case 0x0008:
-      if (HasKeyCaseInsensitive(json, PSTR("Dimmer")))            { json_out[F("Dimmer")] = LightGetDimmer(0); }
-      break;
-    case 0x0300:
-      {
-      uint16_t hue;
-      uint8_t  sat;
-      float XY[2];
-      LightGetHSB(&hue, &sat, nullptr);
-      LightGetXY(&XY[0], &XY[1]);
-      uint16_t uxy[2];
-      for (uint32_t i = 0; i < ARRAY_SIZE(XY); i++) {
-        uxy[i] = XY[i] * 65536.0f;
-        uxy[i] = (uxy[i] > 0xFEFF) ? uxy[i] : 0xFEFF;
-      }
-      if (HasKeyCaseInsensitive(json, PSTR("Hue")))               { json_out[F("Hue")] = changeUIntScale(hue, 0, 360, 0, 254); }
-      if (HasKeyCaseInsensitive(json, PSTR("Sat")))               { json_out[F("Sat")] = changeUIntScale(sat, 0, 255, 0, 254); }
-      if (HasKeyCaseInsensitive(json, PSTR("CT")))                { json_out[F("CT")] = LightGetColorTemp(); }
-      if (HasKeyCaseInsensitive(json, PSTR("X")))                 { json_out[F("X")] = uxy[0]; }
-      if (HasKeyCaseInsensitive(json, PSTR("Y")))                 { json_out[F("Y")] = uxy[1]; }
-      }
-      break;
+      case 0x00060000: json_out[F("Power")] = Light.power ? 1 : 0;                break;    // Power
+      case 0x00080000: json_out[F("Dimmer")] = LightGetDimmer(0);                 break;    // Dimmer
+
+      case 0x03000000:  // Hue
+      case 0x03000001:  // Sat
+      case 0x03000003:  // X
+      case 0x03000004:  // Y
+      case 0x03000007:  // CT
+        {
+          uint16_t hue;
+          uint8_t  sat;
+          float XY[2];
+          LightGetHSB(&hue, &sat, nullptr);
+          LightGetXY(&XY[0], &XY[1]);
+          uint16_t uxy[2];
+          for (uint32_t i = 0; i < ARRAY_SIZE(XY); i++) {
+            uxy[i] = XY[i] * 65536.0f;
+            uxy[i] = (uxy[i] > 0xFEFF) ? uxy[i] : 0xFEFF;
+          }
+          if (0x0000 == attr) { json_out[F("Hue")] = changeUIntScale(hue, 0, 360, 0, 254); }
+          if (0x0001 == attr) { json_out[F("Sat")] = changeUIntScale(sat, 0, 255, 0, 254); }
+          if (0x0003 == attr) { json_out[F("X")] = uxy[0]; }
+          if (0x0004 == attr) { json_out[F("Y")] = uxy[1]; }
+          if (0x0007 == attr) { json_out[F("CT")] = LightGetColorTemp(); }
+        }
+        break;
 #endif
-    case 0x000A:    // Time
-      if (HasKeyCaseInsensitive(json, PSTR("Time")))              { json_out[F("Time")] = (Rtc.utc_time > (60 * 60 * 24 * 365 * 10)) ? Rtc.utc_time - 946684800 : Rtc.utc_time; }
-      if (HasKeyCaseInsensitive(json, PSTR("TimeEpoch")))         { json_out[F("TimeEpoch")] = Rtc.utc_time; }
-      if (HasKeyCaseInsensitive(json, PSTR("TimeStatus")))        { json_out[F("TimeStatus")] = (Rtc.utc_time > (60 * 60 * 24 * 365 * 10)) ? 0x02 : 0x00; }  // if time is beyond 2010 then we are synchronized
-      if (HasKeyCaseInsensitive(json, PSTR("TimeZone")))          { json_out[F("TimeZone")] = Settings.toffset[0] * 60; }   // seconds
-      break;
+      case 0x000A0000:    // Time
+        json_out[F("Time")] = (Rtc.utc_time > (60 * 60 * 24 * 365 * 10)) ? Rtc.utc_time - 946684800 : Rtc.utc_time;
+        break;
+      case 0x000AFF00:    // TimeEpoch - Tasmota specific
+        json_out[F("TimeEpoch")] = Rtc.utc_time;
+        break;
+      case 0x000A0001:    // TimeStatus
+        json_out[F("TimeStatus")] = (Rtc.utc_time > (60 * 60 * 24 * 365 * 10)) ? 0x02 : 0x00;  // if time is beyond 2010 then we are synchronized
+        break;
+      case 0x000A0002:    // TimeZone
+        json_out[F("TimeZone")] = Settings.toffset[0] * 60;
+        break;
+      case 0x000A0007:    // LocalTime    // TODO take DST
+        json_out[F("LocalTime")] = Settings.toffset[0] * 60 + ((Rtc.utc_time > (60 * 60 * 24 * 365 * 10)) ? Rtc.utc_time - 946684800 : Rtc.utc_time);
+        break;
+    }
   }
 
   if (json_out.size() > 0) {
