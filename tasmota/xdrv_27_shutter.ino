@@ -121,7 +121,7 @@ void ShutterRtc50mS(void)
     switch (Shutter.PositionMode) {
       case SHT_PWM_VALUE:
         if (Shutter.accelerator[i]) ShutterUpdateVelocity(i);
-        Shutter.real_position[i] +=  Shutter.direction[i] > 0 ? Shutter.pwm_velocity[i] : -Shutter.pwm_velocity[i];
+	Shutter.real_position[i] +=  Shutter.direction[i] > 0 ? Shutter.pwm_velocity[i] : (Shutter.direction[i] < 0 ? -Shutter.pwm_velocity[i] : 0);
         Shutter.pwm_value[i] = SHT_DIV_ROUND((Shutter.pwm_max[i]-Shutter.pwm_min[i]) * Shutter.real_position[i] , Shutter.open_max[i])+Shutter.pwm_min[i];
         analogWrite(Pin(GPIO_PWM1, i), Shutter.pwm_value[i]);
       break;
