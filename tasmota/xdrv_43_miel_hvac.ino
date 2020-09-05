@@ -91,6 +91,8 @@ struct miel_hvac_data {
 	}			data;
 };
 
+CTASSERT(sizeof(struct miel_hvac_data) == 16);
+
 CTASSERT(offsetof(struct miel_hvac_data, data.settings.power) == 3);
 CTASSERT(offsetof(struct miel_hvac_data, data.settings.mode) == 4);
 CTASSERT(offsetof(struct miel_hvac_data, data.settings.temp) == 5);
@@ -101,12 +103,9 @@ CTASSERT(offsetof(struct miel_hvac_data, data.settings.widevane) == 10);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.temp) == 3);
 
 /* to hvac */
+
 #define MIEL_HVAC_H_TYPE_CONNECT	0x5a
 static const uint8_t miel_hvac_msg_connect[] = { 0xca, 0x01 };
-
-static const uint8_t miel_hvac_msg_request_hdr[5] = {
-	0xfc, 0x42, 0x01, 0x30, 0x10
-};
 
 #define MIEL_HVAC_H_TYPE_REQUEST	0x42
 
@@ -116,6 +115,7 @@ struct miel_hvac_msg_request {
 #define MIEL_HVAC_REQUEST_ROOMTEMP	0x03
 #define MIEL_HVAC_REQUEST_TIMERS	0x05
 #define MIEL_HVAC_REQUEST_STATUS	0x06
+#define MIEL_HVAC_REQUEST_ACTION	0x09
 	uint8_t			zero[15];
 };
 
@@ -286,15 +286,27 @@ struct miel_hvac_softc {
 	struct miel_hvac_parser	 sc_parser;
 
 	unsigned int		 sc_device;
-	unsigned int		 sc_update;
+	unsigned int		 sc_tick;
 	unsigned int		 sc_settings_set;
 
 	int			 sc_room_temp;
 	uint8_t			 sc_compressor_freq;
 
-	struct miel_hvac_data_settings
+	struct miel_hvac_data
 				 sc_settings;
+	struct miel_hvac_data	 sc_status;
+
+	struct miel_hvac_msg_update
+				 sc_update;
 };
+
+static inline bool
+miel_hvac_update_pending(struct miel_hvac_softc *sc)
+{
+	struct miel_hvac_msg_update *update = &sc->sc_update;
+
+	return (update->flags != htons(0));
+}
 
 static struct miel_hvac_softc	*miel_hvac_sc = nullptr;
 
@@ -530,18 +542,15 @@ miel_hvac_send_update(struct miel_hvac_softc *sc,
 static bool
 miel_hvac_set_power(struct miel_hvac_softc *sc)
 {
-	struct miel_hvac_msg_update update;
+	struct miel_hvac_msg_update *update = &sc->sc_update;
 	uint16_t source = XdrvMailbox.payload;
 
 	if (source == SRC_SWITCH)
 		return (false);
 
-	miel_hvac_init_update(&update);
-	update.flags |= htons(MIEL_HVAC_UPDATE_F_POWER);
-	update.power = (XdrvMailbox.index & (1 << sc->sc_device)) ?
+	update->flags |= htons(MIEL_HVAC_UPDATE_F_POWER);
+	update->power = (XdrvMailbox.index & (1 << sc->sc_device)) ?
 	    MIEL_HVAC_UPDATE_POWER_ON : MIEL_HVAC_UPDATE_POWER_OFF;
-
-	miel_hvac_send_update(sc, &update);
 
 	return (true);
 }
@@ -556,7 +565,7 @@ static void
 miel_hvac_cmnd_setfanspeed(void)
 {
 	struct miel_hvac_softc *sc = miel_hvac_sc;
-	struct miel_hvac_msg_update update;
+	struct miel_hvac_msg_update *update = &sc->sc_update;
 	const struct miel_hvac_map *e;
 
 	if (XdrvMailbox.data_len == 0)
@@ -569,11 +578,8 @@ miel_hvac_cmnd_setfanspeed(void)
 		return;
 	}
 
-	miel_hvac_init_update(&update);
-	update.flags |= htons(MIEL_HVAC_UPDATE_F_FAN);
-	update.fan = e->byte;
-
-	miel_hvac_send_update(sc, &update);
+	update->flags |= htons(MIEL_HVAC_UPDATE_F_FAN);
+	update->fan = e->byte;
 
 	ResponseCmndDone();
 }
@@ -582,7 +588,7 @@ static void
 miel_hvac_cmnd_setmode(void)
 {
 	struct miel_hvac_softc *sc = miel_hvac_sc;
-	struct miel_hvac_msg_update update;
+	struct miel_hvac_msg_update *update = &sc->sc_update;
 	const struct miel_hvac_map *e;
 
 	if (XdrvMailbox.data_len == 0)
@@ -595,11 +601,43 @@ miel_hvac_cmnd_setmode(void)
 		return;
 	}
 
-	miel_hvac_init_update(&update);
-	update.flags |= htons(MIEL_HVAC_UPDATE_F_MODE);
-	update.mode = e->byte;
+	update->flags |= htons(MIEL_HVAC_UPDATE_F_MODE);
+	update->mode = e->byte;
 
-	miel_hvac_send_update(sc, &update);
+	ResponseCmndDone();
+}
+
+static void
+miel_hvac_cmnd_sethamode(void)
+{
+	struct miel_hvac_softc *sc = miel_hvac_sc;
+	struct miel_hvac_msg_update *update = &sc->sc_update;
+	const struct miel_hvac_map *e;
+
+	if (XdrvMailbox.data_len == 0)
+		return;
+
+	if (strcasecmp(XdrvMailbox.data, "off") == 0) {
+		update->flags |= htons(MIEL_HVAC_UPDATE_F_POWER);
+		update->power = MIEL_HVAC_UPDATE_POWER_OFF;
+	} else {
+		/*
+		 * I could set power and then call miel_hvac_cmnd_setmode,
+		 * but that would mean power gets turned on even if there's
+		 * an invalid argument.
+		 */
+		e = miel_hvac_map_byname(XdrvMailbox.data,
+		    miel_hvac_mode_map, nitems(miel_hvac_mode_map));
+		if (e == NULL) {
+			miel_hvac_respond_unsupported();
+			return;
+		}
+
+		update->flags |= htons(MIEL_HVAC_UPDATE_F_POWER) |
+		    htons(MIEL_HVAC_UPDATE_F_MODE);
+		update->power = MIEL_HVAC_UPDATE_POWER_OFF;
+		update->mode = e->byte;
+	}
 
 	ResponseCmndDone();
 }
@@ -608,7 +646,7 @@ static void
 miel_hvac_cmnd_settemp(void)
 {
 	struct miel_hvac_softc *sc = miel_hvac_sc;
-	struct miel_hvac_msg_update update;
+	struct miel_hvac_msg_update *update = &sc->sc_update;
 	unsigned long degc;
 
 	if (XdrvMailbox.data_len == 0)
@@ -621,11 +659,8 @@ miel_hvac_cmnd_settemp(void)
 		return;
 	}
 
-	miel_hvac_init_update(&update);
-	update.flags |= htons(MIEL_HVAC_UPDATE_F_TEMP);
-	update.temp = miel_hvac_deg2temp(degc);
-
-	miel_hvac_send_update(sc, &update);
+	update->flags |= htons(MIEL_HVAC_UPDATE_F_TEMP);
+	update->temp = miel_hvac_deg2temp(degc);
 
 	ResponseCmndDone();
 }
@@ -634,7 +669,7 @@ static void
 miel_hvac_cmnd_setvane(void)
 {
 	struct miel_hvac_softc *sc = miel_hvac_sc;
-	struct miel_hvac_msg_update update;
+	struct miel_hvac_msg_update *update = &sc->sc_update;
 	const struct miel_hvac_map *e;
 
 	if (XdrvMailbox.data_len == 0)
@@ -647,11 +682,8 @@ miel_hvac_cmnd_setvane(void)
 		return;
 	}
 
-	miel_hvac_init_update(&update);
-	update.flags |= htons(MIEL_HVAC_UPDATE_F_VANE);
-	update.vane = e->byte;
-
-	miel_hvac_send_update(sc, &update);
+	update->flags |= htons(MIEL_HVAC_UPDATE_F_VANE);
+	update->vane = e->byte;
 
 	ResponseCmndDone();
 }
@@ -660,7 +692,7 @@ static void
 miel_hvac_cmnd_setwidevane(void)
 {
 	struct miel_hvac_softc *sc = miel_hvac_sc;
-	struct miel_hvac_msg_update update;
+	struct miel_hvac_msg_update *update = &sc->sc_update;
 	const struct miel_hvac_map *e;
 
 	if (XdrvMailbox.data_len == 0)
@@ -673,15 +705,13 @@ miel_hvac_cmnd_setwidevane(void)
 		return;
 	}
 
-	miel_hvac_init_update(&update);
-	update.flags |= htons(MIEL_HVAC_UPDATE_F_WIDEVANE);
-	update.widevane = e->byte;
-
-	miel_hvac_send_update(sc, &update);
+	update->flags |= htons(MIEL_HVAC_UPDATE_F_WIDEVANE);
+	update->widevane = e->byte;
 
 	ResponseCmndDone();
 }
 
+#ifdef MIEL_HVAC_DEBUG
 static void
 miel_hvac_cmnd_request(void)
 {
@@ -695,6 +725,7 @@ miel_hvac_cmnd_request(void)
 
 	ResponseCmndDone();
 }
+#endif
 
 /*
  * serial data handlers
@@ -721,7 +752,9 @@ miel_hvac_input_connected(struct miel_hvac_softc *sc,
 static void
 miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 {
-	const struct miel_hvac_data_settings *set = &sc->sc_settings;
+	const struct miel_hvac_data_settings *set =
+	    &sc->sc_settings.data.settings;
+	char hex[(sizeof(sc->sc_settings) + 1) * 2];
 	char temp[33];
 	const char *name;
 
@@ -730,8 +763,11 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 	name = miel_hvac_map_byval( set->mode &
 	    MIEL_HVAC_SETTINGS_MODE_MASK,
 	    miel_hvac_mode_map, nitems(miel_hvac_mode_map));
-	if (name != NULL)
+	if (name != NULL) {
 		ResponseAppend_P(PSTR(",\"Mode\":\"%s\""), name);
+		ResponseAppend_P(PSTR(",\"HAMode\":\"%s\""),
+		    set->power ? name : "off");
+	}
 
 	dtostrfd(ConvertTemp(miel_hvac_temp2deg(set->temp)),
 	    Settings.flag2.temperature_resolution, temp);
@@ -753,6 +789,10 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 	if (name != NULL)
 		ResponseAppend_P(PSTR(",\"WideVane\":\"%s\""), name);
 
+	ResponseAppend_P(PSTR(",\"Bytes\":\"%s\""),
+	    ToHex_P((uint8_t *)&sc->sc_settings, sizeof(sc->sc_settings),
+	    hex, sizeof(hex)));
+
 	ResponseAppend_P(PSTR("}"));
 
 	MqttPublishPrefixTopic_P(TELE, PSTR("HVACSettings"));
@@ -762,18 +802,28 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 
 static void
 miel_hvac_input_settings(struct miel_hvac_softc *sc,
-    const struct miel_hvac_data_settings *set)
+    const struct miel_hvac_data *d)
 {
+	const struct miel_hvac_data_settings *set = &d->data.settings;
 	uint32_t state = set->power ? 1 : 0; /* see ExecuteCommandPower */
 	bool publish;
+
+	if (miel_hvac_update_pending(sc)) {
+		/*
+		 * Don't flop around printing settings that we might be
+		 * changing, but also force them to be published again.
+		 */
+		sc->sc_settings_set = 0;
+		return;
+	}
 
 	if (bitRead(power, sc->sc_device) != !!state)
 		ExecuteCommandPower(sc->sc_device, state, SRC_SWITCH);
 
 	publish = (sc->sc_settings_set == 0) ||
-	    !!memcmp(set, &sc->sc_settings, sizeof(sc->sc_settings));
+	    (memcmp(d, &sc->sc_settings, sizeof(sc->sc_settings)) != 0);
 	sc->sc_settings_set = 1;
-	sc->sc_settings = *set;
+	sc->sc_settings = *d;
 
 	if (publish)
 		miel_hvac_publish_settings(sc);
@@ -801,7 +851,7 @@ miel_hvac_input_status(struct miel_hvac_softc *sc,
 }
 
 static void
-miel_hvac_input_action(struct miel_hvac_softc *sc,
+miel_hvac_data_response(struct miel_hvac_softc *sc,
     const struct miel_hvac_data *d)
 {
 	char hex[(sizeof(*d) + 1) * 2];
@@ -810,6 +860,7 @@ miel_hvac_input_action(struct miel_hvac_softc *sc,
 	    ToHex_P((uint8_t *)d, sizeof(*d), hex, sizeof(hex)));
 
 	MqttPublishPrefixTopic_P(TELE, PSTR("HVACAction"));
+	XdrvRulesProcess();
 }
 
 static void
@@ -829,19 +880,20 @@ miel_hvac_input_data(struct miel_hvac_softc *sc,
 
 	switch (d->type) {
 	case MIEL_HVAC_DATA_T_SETTINGS:
-		miel_hvac_input_settings(sc, &d->data.settings);
+		miel_hvac_input_settings(sc, d);
 		break;
 	case MIEL_HVAC_DATA_T_ROOMTEMP:
 		miel_hvac_input_roomtemp(sc, &d->data.roomtemp);
 		break;
 	case MIEL_HVAC_DATA_T_STATUS:
+		if (memcmp(&sc->sc_status, d, sizeof(*d)) != 0) {
+			miel_hvac_data_response(sc, d);
+			sc->sc_status = *d;
+		}
 		miel_hvac_input_status(sc, &d->data.status);
 		break;
-	case MIEL_HVAC_DATA_T_ACTION:
-		miel_hvac_input_action(sc, d);
-		break;
 	default:
-		miel_hvac_log_bytes(sc, "data", buf, len);
+		miel_hvac_data_response(sc, d);
 		break;
 	}
 }
@@ -856,8 +908,6 @@ miel_hvac_input_updated(struct miel_hvac_softc *sc,
 /*
  * FUNC handlers
  */
-
-static const char miel_hvac_unknown[] = "unknown";
 
 static void
 miel_hvac_pre_init(void)
@@ -877,6 +927,7 @@ miel_hvac_pre_init(void)
 
 	memset(sc, 0, sizeof(*sc));
 	sc->sc_room_temp == -1;
+	miel_hvac_init_update(&sc->sc_update);
 
 	sc->sc_serial = new TasmotaSerial(Pin(GPIO_MIEL_HVAC_RX),
 	    Pin(GPIO_MIEL_HVAC_TX), 2);
@@ -901,7 +952,7 @@ miel_hvac_pre_init(void)
 	    PSTR(MIEL_HVAC_LOGNAME ": connecting to Mitsubishi Electric HVAC "
 	    "at %d baud rate"), baudrate);
 
-	sc->sc_device = devices_present++;
+	sc->sc_device = devices_present++; /* claim a POWER device slot */
 
 	miel_hvac_send_connect(sc);
 
@@ -921,13 +972,7 @@ miel_hvac_loop(struct miel_hvac_softc *sc)
 	while (serial->available()) {
 		yield();
 
-		//unsigned int pre = sc->sc_parser.p_state;
-		uint8_t byte = serial->read();
-
-		sc->sc_parser.p_state = miel_hvac_parse(sc, byte);
-		//AddLog_P2(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
-		//   ": byte %02x state %u -> %u"),
-		//    byte, pre, sc->sc_parser.p_state);
+		sc->sc_parser.p_state = miel_hvac_parse(sc, serial->read());
 	}
 }
 
@@ -935,7 +980,7 @@ static void
 miel_hvac_sensor(struct miel_hvac_softc *sc)
 {
 	char room_temp[33];
-	const char *action = "off";
+	char hex[(sizeof(sc->sc_status) + 1) * 2];
 
 	if (sc->sc_room_temp == -1)
 		return;
@@ -944,19 +989,49 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	    Settings.flag2.temperature_resolution, room_temp);
 	ResponseAppend_P(PSTR("," "\"MiElHVAC\":{"
 	    "\"" D_JSON_TEMPERATURE "\":%s" ","
-	    "\"Action\":\"%s\"" ","
-	    "\"CompressorFreq\":%u}"), room_temp, action,
-	    sc->sc_compressor_freq);
+	    "\"Bytes\":\"%s\"" "}"), room_temp,
+	    ToHex_P((uint8_t *)&sc->sc_status, sizeof(sc->sc_status),
+	    hex, sizeof(hex)));
 }
 
+/*
+ * This is set up to pace interactions with the aircon so we should
+ * only have a single outstanding request at a time, and to avoid trying
+ * to change settings while in the middle of reading them. SETTINGS is
+ * requested frequently so changes from the IR remote are noticed quickly
+ * and published. Posting new settings preempts queries for information.
+ */
+
 static void
-miel_hvac_update(struct miel_hvac_softc *sc)
+miel_hvac_tick(struct miel_hvac_softc *sc)
 {
 	static uint8_t updates[] = {
 		MIEL_HVAC_REQUEST_SETTINGS,
 		MIEL_HVAC_REQUEST_STATUS,
+		MIEL_HVAC_REQUEST_SETTINGS,
+		MIEL_HVAC_REQUEST_ROOMTEMP,
+#if 0
+		MIEL_HVAC_REQUEST_SETTINGS,
+		/* MUZ-GA80VA doesnt respond :( */
+		MIEL_HVAC_REQUEST_ACTION,
+#endif
 	};
-	unsigned int i = (sc->sc_update++ % nitems(updates));
+
+	unsigned int i;
+
+	if (miel_hvac_update_pending(sc)) {
+		struct miel_hvac_msg_update *update = &sc->sc_update;
+
+		miel_hvac_send_update(sc, update);
+
+		miel_hvac_init_update(update);
+
+		/* refresh settings on next tick */
+		sc->sc_tick = 0;
+		return;
+	}
+
+	i = (sc->sc_tick++ % nitems(updates));
 
 	miel_hvac_request(sc, updates[i]);
 }
@@ -965,21 +1040,29 @@ miel_hvac_update(struct miel_hvac_softc *sc)
  * Interface
  */
 
-static const char miel_hvac_cmnd_names[] PROGMEM = "|"  // No prefix
-	D_CMND_MIEL_HVAC_SETFAN "|"
-	D_CMND_MIEL_HVAC_SETMODE "|"
-	D_CMND_MIEL_HVAC_SETTEMP "|"
-	D_CMND_MIEL_HVAC_SETVANE "|"
-	D_CMND_MIEL_HVAC_SETWIDEVANE "|"
-	"HVACRequest";
+static const char miel_hvac_cmnd_names[] PROGMEM =
+	// No prefix
+	"|" D_CMND_MIEL_HVAC_SETFAN
+	"|" D_CMND_MIEL_HVAC_SETMODE
+	"|" D_CMND_MIEL_HVAC_SETHAMODE
+	"|" D_CMND_MIEL_HVAC_SETTEMP
+	"|" D_CMND_MIEL_HVAC_SETVANE
+	"|" D_CMND_MIEL_HVAC_SETWIDEVANE
+#ifdef MIEL_HVAC_DEBUG
+	"|" "HVACRequest"
+#endif
+	;
 
 static void (*const miel_hvac_cmnds[])(void) PROGMEM = {
 	&miel_hvac_cmnd_setfanspeed,
 	&miel_hvac_cmnd_setmode,
+	&miel_hvac_cmnd_sethamode, /* rain of hate */
 	&miel_hvac_cmnd_settemp,
 	&miel_hvac_cmnd_setvane,
 	&miel_hvac_cmnd_setwidevane,
+#ifdef MIEL_HVAC_DEBUG
 	&miel_hvac_cmnd_request,
+#endif
 };
 
 bool
@@ -1006,16 +1089,14 @@ Xdrv43(uint8_t function)
 		result = miel_hvac_set_power(sc);
 		break;
 
+	case FUNC_EVERY_250_MSECOND:
+		miel_hvac_tick(sc);
+		break;
+
 	case FUNC_EVERY_50_MSECOND:
 	case FUNC_EVERY_100_MSECOND:
 	case FUNC_EVERY_200_MSECOND:
-		break;
-	case FUNC_EVERY_250_MSECOND:
-		miel_hvac_update(sc);
-		break;
 	case FUNC_EVERY_SECOND:
-		miel_hvac_request(sc, MIEL_HVAC_REQUEST_ROOMTEMP);
-		//miel_hvac_update(sc);
 		break;
 
 	case FUNC_JSON_APPEND:
