@@ -581,7 +581,7 @@ miel_hvac_cmnd_setfanspeed(void)
 	update->flags |= htons(MIEL_HVAC_UPDATE_F_FAN);
 	update->fan = e->byte;
 
-	ResponseCmndDone();
+	ResponseCmndChar_P(e->name);
 }
 
 static void
@@ -604,7 +604,7 @@ miel_hvac_cmnd_setmode(void)
 	update->flags |= htons(MIEL_HVAC_UPDATE_F_MODE);
 	update->mode = e->byte;
 
-	ResponseCmndDone();
+	ResponseCmndChar_P(e->name);
 }
 
 static void
@@ -620,26 +620,28 @@ miel_hvac_cmnd_sethamode(void)
 	if (strcasecmp(XdrvMailbox.data, "off") == 0) {
 		update->flags |= htons(MIEL_HVAC_UPDATE_F_POWER);
 		update->power = MIEL_HVAC_UPDATE_POWER_OFF;
-	} else {
-		/*
-		 * I could set power and then call miel_hvac_cmnd_setmode,
-		 * but that would mean power gets turned on even if there's
-		 * an invalid argument.
-		 */
-		e = miel_hvac_map_byname(XdrvMailbox.data,
-		    miel_hvac_mode_map, nitems(miel_hvac_mode_map));
-		if (e == NULL) {
-			miel_hvac_respond_unsupported();
-			return;
-		}
-
-		update->flags |= htons(MIEL_HVAC_UPDATE_F_POWER) |
-		    htons(MIEL_HVAC_UPDATE_F_MODE);
-		update->power = MIEL_HVAC_UPDATE_POWER_ON;
-		update->mode = e->byte;
+		ResponseCmndChar_P(PSTR("off"));
+		return;
 	}
 
-	ResponseCmndDone();
+	/*
+	 * I could set power and then call miel_hvac_cmnd_setmode,
+	 * but that would mean power gets turned on even if there's
+	 * an invalid argument.
+	 */
+	e = miel_hvac_map_byname(XdrvMailbox.data,
+	    miel_hvac_mode_map, nitems(miel_hvac_mode_map));
+	if (e == NULL) {
+		miel_hvac_respond_unsupported();
+		return;
+	}
+
+	update->flags |= htons(MIEL_HVAC_UPDATE_F_POWER) |
+	    htons(MIEL_HVAC_UPDATE_F_MODE);
+	update->power = MIEL_HVAC_UPDATE_POWER_ON;
+	update->mode = e->byte;
+
+	ResponseCmndChar_P(e->name);
 }
 
 static void
@@ -662,7 +664,7 @@ miel_hvac_cmnd_settemp(void)
 	update->flags |= htons(MIEL_HVAC_UPDATE_F_TEMP);
 	update->temp = miel_hvac_deg2temp(degc);
 
-	ResponseCmndDone();
+	ResponseCmndNumber(degc);
 }
 
 static void
@@ -685,7 +687,7 @@ miel_hvac_cmnd_setvane(void)
 	update->flags |= htons(MIEL_HVAC_UPDATE_F_VANE);
 	update->vane = e->byte;
 
-	ResponseCmndDone();
+	ResponseCmndChar_P(e->name);
 }
 
 static void
@@ -708,7 +710,7 @@ miel_hvac_cmnd_setwidevane(void)
 	update->flags |= htons(MIEL_HVAC_UPDATE_F_WIDEVANE);
 	update->widevane = e->byte;
 
-	ResponseCmndDone();
+	ResponseCmndChar_P(e->name);
 }
 
 #ifdef MIEL_HVAC_DEBUG
