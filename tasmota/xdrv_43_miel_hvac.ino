@@ -635,7 +635,7 @@ miel_hvac_cmnd_sethamode(void)
 
 		update->flags |= htons(MIEL_HVAC_UPDATE_F_POWER) |
 		    htons(MIEL_HVAC_UPDATE_F_MODE);
-		update->power = MIEL_HVAC_UPDATE_POWER_OFF;
+		update->power = MIEL_HVAC_UPDATE_POWER_ON;
 		update->mode = e->byte;
 	}
 
