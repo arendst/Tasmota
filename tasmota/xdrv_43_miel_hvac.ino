@@ -292,8 +292,8 @@ struct miel_hvac_softc {
 	int			 sc_room_temp;
 	uint8_t			 sc_compressor_freq;
 
-	struct miel_hvac_data
-				 sc_settings;
+	struct miel_hvac_data	 sc_settings;
+	struct miel_hvac_data	 sc_temp;
 	struct miel_hvac_data	 sc_status;
 
 	struct miel_hvac_msg_update
@@ -830,14 +830,32 @@ miel_hvac_input_settings(struct miel_hvac_softc *sc,
 }
 
 static void
-miel_hvac_input_roomtemp(struct miel_hvac_softc *sc,
-    const struct miel_hvac_data_roomtemp *rt)
+miel_hvac_data_response(struct miel_hvac_softc *sc,
+    const struct miel_hvac_data *d)
 {
+	char hex[(sizeof(*d) + 1) * 2];
+
+	Response_P(PSTR("{\"Bytes\":\"%s\"}"),
+	    ToHex_P((uint8_t *)d, sizeof(*d), hex, sizeof(hex)));
+
+	MqttPublishPrefixTopic_P(TELE, PSTR("HVACData"));
+	XdrvRulesProcess();
+}
+
+static void
+miel_hvac_input_roomtemp(struct miel_hvac_softc *sc,
+    const struct miel_hvac_data *d)
+{
+	const struct miel_hvac_data_roomtemp *rt = &d->data.roomtemp;
 	unsigned int temp = miel_hvac_roomtemp2deg(rt->temp);
 	bool publish;
 
+	if (memcmp(d, &sc->sc_temp, sizeof(*d)) != 0)
+		miel_hvac_data_response(sc, d);
+
 	publish = (temp != sc->sc_room_temp);
 	sc->sc_room_temp = temp;
+	sc->sc_temp = *d;
 
 	if (publish)
 		MqttPublishSensor();
@@ -848,19 +866,6 @@ miel_hvac_input_status(struct miel_hvac_softc *sc,
     const struct miel_hvac_data_status *s)
 {
 	sc->sc_compressor_freq = s->compressor_freq;
-}
-
-static void
-miel_hvac_data_response(struct miel_hvac_softc *sc,
-    const struct miel_hvac_data *d)
-{
-	char hex[(sizeof(*d) + 1) * 2];
-
-	Response_P(PSTR("{\"Bytes\":\"%s\"}"),
-	    ToHex_P((uint8_t *)d, sizeof(*d), hex, sizeof(hex)));
-
-	MqttPublishPrefixTopic_P(TELE, PSTR("HVACAction"));
-	XdrvRulesProcess();
 }
 
 static void
@@ -883,7 +888,7 @@ miel_hvac_input_data(struct miel_hvac_softc *sc,
 		miel_hvac_input_settings(sc, d);
 		break;
 	case MIEL_HVAC_DATA_T_ROOMTEMP:
-		miel_hvac_input_roomtemp(sc, &d->data.roomtemp);
+		miel_hvac_input_roomtemp(sc, d);
 		break;
 	case MIEL_HVAC_DATA_T_STATUS:
 		if (memcmp(&sc->sc_status, d, sizeof(*d)) != 0) {
@@ -988,10 +993,14 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	dtostrfd(ConvertTemp(sc->sc_room_temp),
 	    Settings.flag2.temperature_resolution, room_temp);
 	ResponseAppend_P(PSTR("," "\"MiElHVAC\":{"
-	    "\"" D_JSON_TEMPERATURE "\":%s" ","
-	    "\"Bytes\":\"%s\"" "}"), room_temp,
+	    "\"" D_JSON_TEMPERATURE "\":%s"), room_temp);
+	ResponseAppend_P(PSTR("," "\"status\":\"%s\""),
 	    ToHex_P((uint8_t *)&sc->sc_status, sizeof(sc->sc_status),
 	    hex, sizeof(hex)));
+	ResponseAppend_P(PSTR("," "\"roomtemp\":\"%s\""),
+	    ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp),
+	    hex, sizeof(hex)));
+	ResponseAppend_P(PSTR("}"));
 }
 
 /*
@@ -1010,7 +1019,7 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 		MIEL_HVAC_REQUEST_STATUS,
 		MIEL_HVAC_REQUEST_SETTINGS,
 		MIEL_HVAC_REQUEST_ROOMTEMP,
-#if 0
+#if 1
 		MIEL_HVAC_REQUEST_SETTINGS,
 		/* MUZ-GA80VA doesnt respond :( */
 		MIEL_HVAC_REQUEST_ACTION,
