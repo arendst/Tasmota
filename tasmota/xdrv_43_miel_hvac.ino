@@ -280,7 +280,8 @@ struct miel_hvac_softc {
 
 	unsigned int		 sc_device;
 	unsigned int		 sc_tick;
-	unsigned int		 sc_settings_set;
+	bool			 sc_settings_set;
+	bool			 sc_connected;
 
 	int			 sc_room_temp;
 	uint8_t			 sc_compressor_freq;
@@ -741,7 +742,9 @@ static void
 miel_hvac_input_connected(struct miel_hvac_softc *sc,
     const void *buf, size_t len)
 {
-	miel_hvac_log_bytes(sc, "connected", buf, len);
+	AddLog_P2(LOG_LEVEL_INFO,
+	    PSTR(MIEL_HVAC_LOGNAME ": connected to Mitsubishi Electric HVAC"));
+	sc->sc_connected = 1;
 }
 
 static void
@@ -940,10 +943,6 @@ miel_hvac_pre_init(void)
 	sc->sc_serial = new TasmotaSerial(Pin(GPIO_MIEL_HVAC_RX),
 	    Pin(GPIO_MIEL_HVAC_TX), 2);
 
-	/* borrow SetOption97 Set Baud rate for TuyaMCU */
-	if (Settings.flag4.tuyamcu_baudrate)
-		baudrate = 9600;
-
 	if (!sc->sc_serial->begin(baudrate, 2)) {
 		AddLog_P2(LOG_LEVEL_ERROR,
 		    PSTR(MIEL_HVAC_LOGNAME ": unable to begin serial "
@@ -955,10 +954,6 @@ miel_hvac_pre_init(void)
 		ClaimSerial();
 		SetSerial(baudrate, TS_SERIAL_8E1);
 	}
-
-	AddLog_P2(LOG_LEVEL_DEBUG,
-	    PSTR(MIEL_HVAC_LOGNAME ": connecting to Mitsubishi Electric HVAC "
-	    "at %d baud rate"), baudrate);
 
 	sc->sc_device = devices_present++; /* claim a POWER device slot */
 
@@ -1013,6 +1008,41 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
  * requested frequently so changes from the IR remote are noticed quickly
  * and published. Posting new settings preempts queries for information.
  */
+
+enum miel_hvac_connect_states {
+	MIEL_HVAC_CONNECT_S_2400_MSG,
+	MIEL_HVAC_CONNECT_S_9600,
+	MIEL_HVAC_CONNECT_S_9600_MSG,
+	MIEL_HVAC_CONNECT_S_2400,
+
+	MIEL_HVAC_CONNECT_S_COUNT,
+};
+
+static void
+miel_hvac_connect(struct miel_hvac_softc *sc)
+{
+	TasmotaSerial *serial = sc->sc_serial;
+	uint32_t baudrate;
+	unsigned int state;
+
+	state = (sc->sc_tick++ % MIEL_HVAC_CONNECT_S_COUNT);
+
+	switch (state) {
+	case MIEL_HVAC_CONNECT_S_2400:
+		baudrate = 2400;
+		break;
+	case MIEL_HVAC_CONNECT_S_9600:
+		baudrate = 9600;
+		break;
+	default:
+		miel_hvac_send_connect(sc);
+		return;
+	}
+
+	serial->begin(baudrate, 2);
+	if (serial->hardwareSerial())
+		SetSerial(baudrate, TS_SERIAL_8E1);
+}
 
 static void
 miel_hvac_tick(struct miel_hvac_softc *sc)
@@ -1102,7 +1132,10 @@ Xdrv43(uint8_t function)
 		break;
 
 	case FUNC_EVERY_250_MSECOND:
-		miel_hvac_tick(sc);
+		if (sc->sc_connected)
+			miel_hvac_tick(sc);
+		else
+			miel_hvac_connect(sc);
 		break;
 
 	case FUNC_EVERY_50_MSECOND:
