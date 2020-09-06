@@ -957,8 +957,6 @@ miel_hvac_pre_init(void)
 
 	sc->sc_device = devices_present++; /* claim a POWER device slot */
 
-	miel_hvac_send_connect(sc);
-
 	miel_hvac_sc = sc;
 	return;
 del:
