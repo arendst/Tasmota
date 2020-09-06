@@ -292,7 +292,6 @@ void ShutterInit(void)
         case SHT_COUNTER:
         case SHT_PWM_VALUE:
           Shutter.max_close_pwm_velocity[i] = Shutter.max_pwm_velocity*Shutter.open_time[i] / Shutter.close_time[i];
-          stop_position_delta = 0;
         break;
       }
 
@@ -353,35 +352,35 @@ void ShutterCalculateAccelerator(uint8_t i)
   switch (Shutter.PositionMode) {
     case SHT_COUNTER:
     case SHT_PWM_VALUE:
-      int32_t  max_frequency = Shutter.direction[i] == 1 ? Shutter.max_pwm_velocity : Shutter.max_close_pwm_velocity[i];
-      int32_t  max_freq_change_per_sec =  Shutter.max_pwm_velocity*steps_per_second / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
-      int32_t  min_runtime_ms = Shutter.pwm_velocity[i]*1000 / max_freq_change_per_sec;
-      int32_t  velocity = Shutter.direction[i] == 1 ? 100 : Shutter.close_velocity[i];
-      int32_t  minstopway = min_runtime_ms * velocity / 100 * Shutter.pwm_velocity[i] / max_frequency * Shutter.direction[i] ;
+      int32_t  max_velocity = Shutter.direction[i] == 1 ? Shutter.max_pwm_velocity : Shutter.max_close_pwm_velocity[i];
+      int32_t  max_velocity_change_per_step =  Shutter.max_pwm_velocity / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
+      int32_t  min_runtime_ms = Shutter.pwm_velocity[i] * 1000 / steps_per_second / max_velocity_change_per_step;
+      //int32_t  velocity = Shutter.direction[i] == 1 ? 100 : Shutter.close_velocity[i];
+      int32_t  minstopway = (min_runtime_ms * (Shutter.pwm_velocity[i]+max_velocity_change_per_step)/100 - Shutter.pwm_velocity[i]) * Shutter.direction[i] ;
       int32_t  toBeAcc = 0;
       int32_t  next_possible_stop = Shutter.real_position[i] + minstopway ;
       stop_position_delta = Shutter.direction[i] * (next_possible_stop - Shutter.target_position[i]);
       if (Shutter.PositionMode == SHT_COUNTER) {
         // ToDo need to check the influence of frequency and speed on the secure area to stop right in time.
         // seems currently only work with motordelay but not ok without motordelay.
-        stop_position_delta =+ 200 * Shutter.pwm_velocity[i]/max_frequency;
+        stop_position_delta =+ 200 * Shutter.pwm_velocity[i]/max_velocity;
       } else {
-        stop_position_delta =+ Shutter.pwm_velocity[i];
+        stop_position_delta =+ Shutter.pwm_velocity[i]-max_velocity_change_per_step;
       }
 
-      //Shutter.accelerator[i] = tmin(tmax(max_freq_change_per_sec*(100-(Shutter.direction[i]*(Shutter.target_position[i]-next_possible_stop)    ))/2000 , max_freq_change_per_sec*9/200), max_freq_change_per_sec*11/200);
-      //int32_t act_freq_change = max_freq_change_per_sec/20;
+      //Shutter.accelerator[i] = tmin(tmax(max_velocity_change_per_step*(100-(Shutter.direction[i]*(Shutter.target_position[i]-next_possible_stop)    ))/2000 , max_velocity_change_per_step*9/200), max_velocity_change_per_step*11/200);
+      //int32_t act_freq_change = max_velocity_change_per_step/20;
 
-      if (Shutter.accelerator[i] < 0 || next_possible_stop * Shutter.direction[i] > (Shutter.target_position[i]- (2*stop_position_delta * Shutter.direction[i])) * Shutter.direction[i] ) {
-          toBeAcc = 100+(Shutter.direction[i]*velocity*(next_possible_stop-Shutter.target_position[i])/Shutter.pwm_velocity[i]);
-          Shutter.accelerator[i] = - tmin(tmax((toBeAcc > 100 ? max_freq_change_per_sec*toBeAcc/2000+1 : max_freq_change_per_sec*toBeAcc/2000) , (max_freq_change_per_sec*9/200)-1), (max_freq_change_per_sec*11/200)+1);
+      if (Shutter.accelerator[i] < 0 || next_possible_stop * Shutter.direction[i] > (Shutter.target_position[i]- (stop_position_delta * Shutter.direction[i])) * Shutter.direction[i] ) {
+          toBeAcc = 100+(Shutter.direction[i]*max_velocity*(next_possible_stop-Shutter.target_position[i])/Shutter.pwm_velocity[i]);
+          Shutter.accelerator[i] = - tmin(tmax((toBeAcc > 100 ? max_velocity_change_per_step*toBeAcc/100 : max_velocity_change_per_step*toBeAcc/100) , (max_velocity_change_per_step*9/10)-1), (max_velocity_change_per_step*11/10)+1);
           //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Ramp down: acc: %d"),   Shutter.accelerator[i]);
-      } else if (  Shutter.accelerator[i] > 0 && Shutter.pwm_velocity[i] ==  max_frequency) {
+      } else if (  Shutter.accelerator[i] > 0 && Shutter.pwm_velocity[i] ==  max_velocity) {
         Shutter.accelerator[i] = 0;
       }
 
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: time: %d, toBeAcc %d,velocity %d, minstopway %d,cur_vel %d, max_vel %d, act_vel_change %d, min_runtime_ms %d, act.pos %d, next_stop %d, target: %d, stop_position_delta %d, max_vel_change_per_sec %d"),Shutter.time[i],toBeAcc,velocity,minstopway,
-                                    Shutter.pwm_velocity[i],max_frequency, Shutter.accelerator[i],min_runtime_ms,Shutter.real_position[i], next_possible_stop,Shutter.target_position[i],stop_position_delta,max_freq_change_per_sec);
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: time: %d, toBeAcc %d, minstopway %d,cur_vel %d, max_vel %d, act_vel_change %d, min_runtime_ms %d, act.pos %d, next_stop %d, target: %d, stop_position_delta %d, max_vel_change_per_step %d"),Shutter.time[i],toBeAcc,minstopway,
+                                    Shutter.pwm_velocity[i],max_velocity, Shutter.accelerator[i],min_runtime_ms,Shutter.real_position[i], next_possible_stop,Shutter.target_position[i],stop_position_delta,max_velocity_change_per_step);
 
     break;
   }
@@ -393,7 +392,7 @@ void ShutterDecellerateForStop(uint8_t i)
     case SHT_PWM_VALUE:
     case SHT_COUNTER:
       int16_t missing_steps;
-      Shutter.accelerator[i] = -(Shutter.direction[i] == 1 ? Shutter.max_pwm_velocity : Shutter.max_close_pwm_velocity[i])/(Shutter.motordelay[i]+1);
+      Shutter.accelerator[i] = -(Shutter.max_pwm_velocity / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1));
       while (Shutter.pwm_velocity[i] > -Shutter.accelerator[i] && Shutter.accelerator[i] != 0) {
         AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: velocity: %ld, delta: %d"), Shutter.pwm_velocity[i], Shutter.accelerator[i] );
         //Shutter.pwm_velocity[i] = tmax(Shutter.pwm_velocity[i]-Shutter.accelerator[i] , 0);
@@ -526,7 +525,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
       break;
 #endif
       case SHT_PWM_VALUE:
-        Shutter.max_pwm_velocity = 100;
+        Shutter.max_pwm_velocity =  100;
       break;
     }
     Shutter.accelerator[i] = Shutter.max_pwm_velocity / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
