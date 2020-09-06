@@ -760,36 +760,44 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 	char temp[33];
 	const char *name;
 
-	Response_P(PSTR("{\"Power\":\"%s\""), set->power ? "ON" : "OFF");
+	Response_P(PSTR("{\"" D_JSON_IRHVAC_POWER "\":\"%s\""),
+	    set->power ? "ON" : "OFF");
 
 	name = miel_hvac_map_byval( set->mode &
 	    MIEL_HVAC_SETTINGS_MODE_MASK,
 	    miel_hvac_mode_map, nitems(miel_hvac_mode_map));
 	if (name != NULL) {
-		ResponseAppend_P(PSTR(",\"Mode\":\"%s\""), name);
-		ResponseAppend_P(PSTR(",\"HAMode\":\"%s\""),
+		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_MODE "\":\"%s\""),
+		    name);
+		ResponseAppend_P(PSTR(",\"HA" D_JSON_IRHVAC_MODE "\":\"%s\""),
 		    set->power ? name : "off");
 	}
 
 	dtostrfd(ConvertTemp(miel_hvac_temp2deg(set->temp)),
 	    Settings.flag2.temperature_resolution, temp);
-	ResponseAppend_P(PSTR(",\"Temperature\":%s"), temp);
+	ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_TEMP "\":%s"), temp);
 
 	name = miel_hvac_map_byval(set->fan,
 	    miel_hvac_fan_map, nitems(miel_hvac_fan_map));
-	if (name != NULL)
-		ResponseAppend_P(PSTR(",\"Fan\":\"%s\""), name);
+	if (name != NULL) {
+		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_FANSPEED "\":\"%s\""),
+		     name);
+	}
 
 	name = miel_hvac_map_byval(set->vane,
 	    miel_hvac_vane_map, nitems(miel_hvac_vane_map));
-	if (name != NULL)
-		ResponseAppend_P(PSTR(",\"Vane\":\"%s\""), name);
+	if (name != NULL) {
+		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGV "\":\"%s\""),
+		    name);
+	}
 
 	name = miel_hvac_map_byval(set->widevane &
 	    MIEL_HVAC_SETTTINGS_WIDEVANE_MASK,
 	    miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
-	if (name != NULL)
-		ResponseAppend_P(PSTR(",\"WideVane\":\"%s\""), name);
+	if (name != NULL) {
+		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGH "\":\"%s\""),
+		    name);
+	}
 
 	ResponseAppend_P(PSTR(",\"Bytes\":\"%s\""),
 	    ToHex_P((uint8_t *)&sc->sc_settings, sizeof(sc->sc_settings),
