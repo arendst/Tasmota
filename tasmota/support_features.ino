@@ -598,7 +598,9 @@ void GetFeatures(void)
 #ifdef USE_DYP
   feature6 |= 0x00400000;  // xsns_76_dyp.ino
 #endif
-//  feature6 |= 0x00800000;
+#ifdef USE_I2S_AUDIO
+  feature6 |= 0x00800000;  // xdrv_42_i2s_audio.ino
+#endif
 
 //  feature6 |= 0x01000000;
 //  feature6 |= 0x02000000;
@@ -606,7 +608,9 @@ void GetFeatures(void)
 //  feature6 |= 0x08000000;
 
 //  feature6 |= 0x10000000;
-//  feature6 |= 0x20000000;
+#if defined(ESP32) && defined(USE_TTGO_WATCH)
+  feature6 |= 0x20000000;  // xdrv_83_esp32watch.ino
+#endif
 #if defined(ESP32) && defined(USE_ETHERNET)
   feature6 |= 0x40000000;  // xdrv_82_ethernet.ino
 #endif

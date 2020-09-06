@@ -2,15 +2,16 @@
 
 ### 8.4.0.3 20200823
 
-- Change references from http://thehackbox.org to http://ota.tasmota.com
+- Change references from http://thehackbox.org/tasmota/ to http://ota.tasmota.com/tasmota/
 - Add command ``PowerDelta1`` to ``PowerDelta3`` to trigger on up to three phases (#9134)
 - Add Zigbee web ui widget for Lights
 - Add ``SetOption109 1`` to force gen1 Alexa mode, for Echo Dot 2nd gen devices only
 - Add Zigbee web ui for power metering plugs
+- Add experimental support for ESP32 TTGO Watch and I2S Audio by Gerhard Mutz
 
 ### 8.4.0.2 20200813
 
-- Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
+- Remove support for direct upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
 - Change White blend mode moved to using ``SetOption 105`` instead of ``RGBWWTable``
 - Fix display power control (#9114)
 - Add command ``SetOption108 0/1`` to enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1) - Add better config corruption recovery (#9046)
