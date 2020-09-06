@@ -80,4 +80,4 @@ Module             | LCode | Description
 74 Sonoff D1       |   x   | Sonoff D1 Wifi and RF Dimmer
 75 Sonoff ZbBridge |   x   | Sonoff Zigbee bridge
 
-Over 1400 additional devices are supported using [templates](TEMPLATES.md).
+Over 1500 additional devices are supported using [templates](TEMPLATES.md).

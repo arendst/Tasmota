@@ -155,8 +155,14 @@ a_setoption = [[
     "Enable zerocross dimmer on PWM DIMMER",
     "Remove ZbReceived form JSON message",
     "Add the source endpoint as suffix to attributes",
-    "","","","",
-    "","","","",
+    "Baud rate for Teleinfo communication (0 = 1200 or 1 = 9600)",
+    "TLS mode",
+    "Disable all MQTT retained messages",
+    "Enable White blend mode",
+    "Create a virtual White ColorTemp for RGBW lights",
+    "Select virtual White as (0) Warm or (1) Cold",
+    "Enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1)",
+    "Force gen1 Alexa mode",
     "","","",""
     ],[
     "","","","",
@@ -220,9 +226,9 @@ a_features = [[
     "USE_WINDMETER","USE_OPENTHERM","USE_THERMOSTAT","USE_VEML6075",
     "USE_VEML7700","USE_MCP9808","USE_BL0940","USE_TELEGRAM",
     "USE_HP303B","USE_TCP_BRIDGE","USE_TELEINFO","USE_LMT01",
-    "USE_PROMETHEUS","USE_IEM3000","USE_DYP","",
+    "USE_PROMETHEUS","USE_IEM3000","USE_DYP","USE_I2S_AUDIO",
     "","","","",
-    "","","USE_ETHERNET","USE_WEBCAM"
+    "","USE_TTGO_WATCH","USE_ETHERNET","USE_WEBCAM"
     ],[
     "","","","",
     "","","","",
@@ -259,7 +265,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20200817 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20200906 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
