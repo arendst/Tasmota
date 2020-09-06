@@ -626,6 +626,7 @@
 #define D_CMND_MIEL_HVAC_SETTEMP "HVACSetTemp"
 #define D_CMND_MIEL_HVAC_SETSWINGV "HVACSetSwingV"
 #define D_CMND_MIEL_HVAC_SETSWINGH "HVACSetSwingH"
+#define D_CMND_MIEL_HVAC_REMOTETEMP "HVACRemoteTemp"
 
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"

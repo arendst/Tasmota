@@ -201,6 +201,18 @@ miel_hvac_roomtemp2deg(uint8_t roomtemp)
 	return ((unsigned int)roomtemp + 10);
 }
 
+struct miel_hvac_msg_remotetemp {
+	uint8_t			seven;
+	uint8_t			control;
+#define MIEL_HVAC_REMOTETEMP_CLR	0x00
+#define MIEL_HVAC_REMOTETEMP_SET	0x01
+	uint8_t			roomtemp;
+	uint8_t			temp;
+	uint8_t			_pad2[12];
+};
+
+CTASSERT(sizeof(struct miel_hvac_msg_remotetemp) == 16);
+
 static inline uint8_t
 miel_hvac_cksum_fini(uint8_t sum)
 {
@@ -292,6 +304,8 @@ struct miel_hvac_softc {
 
 	struct miel_hvac_msg_update
 				 sc_update;
+	struct miel_hvac_msg_remotetemp
+				 sc_remotetemp;
 };
 
 static inline bool
@@ -533,6 +547,14 @@ miel_hvac_send_update(struct miel_hvac_softc *sc,
 	miel_hvac_send(sc, MIEL_HVAC_H_TYPE_UPDATE, update, sizeof(*update));
 }
 
+static inline void
+miel_hvac_send_remotetemp(struct miel_hvac_softc *sc,
+    const struct miel_hvac_msg_remotetemp *remotetemp)
+{
+	miel_hvac_send(sc, MIEL_HVAC_H_TYPE_UPDATE,
+	    remotetemp, sizeof(*remotetemp));
+}
+
 static bool
 miel_hvac_set_power(struct miel_hvac_softc *sc)
 {
@@ -705,6 +727,50 @@ miel_hvac_cmnd_setwidevane(void)
 	update->widevane = e->byte;
 
 	ResponseCmndChar_P(e->name);
+}
+
+static void
+miel_hvac_cmnd_remotetemp(void)
+{
+	struct miel_hvac_softc *sc = miel_hvac_sc;
+	struct miel_hvac_msg_remotetemp *rt = &sc->sc_remotetemp;
+	uint8_t control = MIEL_HVAC_REMOTETEMP_SET;
+	long degc;
+
+	if (XdrvMailbox.data_len == 0)
+		return;
+
+	if (strcasecmp(XdrvMailbox.data, "clear") == 0) {
+		control = MIEL_HVAC_REMOTETEMP_CLR;
+		degc = 0;
+
+		ResponseCmndChar_P("clear");
+	} else {
+		degc = strtol(XdrvMailbox.data, nullptr, 0);
+		/*
+		 * This is the max range supported by an MUZ-GA80VA. It
+		 * should be revisited if someone ever figures out how to
+		 * tell which HVAC supports which features.
+		 */
+		if (degc < 8 || degc > 38) {
+			miel_hvac_respond_unsupported();
+			return;
+		}
+
+		ResponseCmndNumber(degc);
+	}
+
+	memset(rt, 0, sizeof(*rt));
+	rt->seven = 0x7;
+	rt->control = control;
+
+	/*
+	 * Different units use different fields and encodings for the
+	 * remote temperature.
+	 */
+
+	rt->roomtemp = (degc * 2) - 16;
+	rt->temp = (degc * 2) + 128;
 }
 
 #ifdef MIEL_HVAC_DEBUG
@@ -1071,6 +1137,15 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 		return;
 	}
 
+	if (sc->sc_remotetemp.seven) {
+		struct miel_hvac_msg_remotetemp *remotetemp =
+		    &sc->sc_remotetemp;
+
+		miel_hvac_send_remotetemp(sc, remotetemp);
+		memset(remotetemp, 0, sizeof(*remotetemp));
+		return;
+	}
+
 	i = (sc->sc_tick++ % nitems(updates));
 
 	miel_hvac_request(sc, updates[i]);
@@ -1088,6 +1163,7 @@ static const char miel_hvac_cmnd_names[] PROGMEM =
 	"|" D_CMND_MIEL_HVAC_SETTEMP
 	"|" D_CMND_MIEL_HVAC_SETSWINGV
 	"|" D_CMND_MIEL_HVAC_SETSWINGH
+	"|" D_CMND_MIEL_HVAC_REMOTETEMP
 #ifdef MIEL_HVAC_DEBUG
 	"|" "HVACRequest"
 #endif
@@ -1100,6 +1176,7 @@ static void (*const miel_hvac_cmnds[])(void) PROGMEM = {
 	&miel_hvac_cmnd_settemp,
 	&miel_hvac_cmnd_setvane,
 	&miel_hvac_cmnd_setwidevane,
+	&miel_hvac_cmnd_remotetemp,
 #ifdef MIEL_HVAC_DEBUG
 	&miel_hvac_cmnd_request,
 #endif
