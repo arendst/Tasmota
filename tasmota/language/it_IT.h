@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 02.09.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 05.09.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -823,8 +823,8 @@
 #define D_AS3935_NOISE "rilevato rumore"
 #define D_AS3935_DISTDET "rilevato disturbatore"
 #define D_AS3935_INTNOEV "Interrupt senza evento!"
-#define D_AS3935_FLICKER "IRQ flicker!"
-#define D_AS3935_POWEROFF "Power Off"
+#define D_AS3935_FLICKER "Flicker PIN IRQ!"
+#define D_AS3935_POWEROFF "Spegnimento"
 #define D_AS3935_NOMESS "in ascolto..."
 #define D_AS3935_ON "ON"
 #define D_AS3935_OFF "OFF"
