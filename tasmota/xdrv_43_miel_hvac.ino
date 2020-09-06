@@ -1061,12 +1061,12 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 
 static const char miel_hvac_cmnd_names[] PROGMEM =
 	// No prefix
-	"|" D_CMND_MIEL_HVAC_SETFAN
+	"|" D_CMND_MIEL_HVAC_SETFANSPEED
 	"|" D_CMND_MIEL_HVAC_SETMODE
 	"|" D_CMND_MIEL_HVAC_SETHAMODE
 	"|" D_CMND_MIEL_HVAC_SETTEMP
-	"|" D_CMND_MIEL_HVAC_SETVANE
-	"|" D_CMND_MIEL_HVAC_SETWIDEVANE
+	"|" D_CMND_MIEL_HVAC_SETSWINGV
+	"|" D_CMND_MIEL_HVAC_SETSWINGH
 #ifdef MIEL_HVAC_DEBUG
 	"|" "HVACRequest"
 #endif

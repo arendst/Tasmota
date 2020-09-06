@@ -620,12 +620,12 @@
 #define D_JSON_PING "Ping"
 
 // Commands xdrv_43_miel_hvac
-#define D_CMND_MIEL_HVAC_SETFAN "HVACSetFanSpeed"
+#define D_CMND_MIEL_HVAC_SETFANSPEED "HVACSetFanSpeed"
 #define D_CMND_MIEL_HVAC_SETMODE "HVACSetMode"
 #define D_CMND_MIEL_HVAC_SETHAMODE "HVACSetHAMode"
 #define D_CMND_MIEL_HVAC_SETTEMP "HVACSetTemp"
-#define D_CMND_MIEL_HVAC_SETVANE "HVACSetSwingV"
-#define D_CMND_MIEL_HVAC_SETWIDEVANE "HVACSetSwingH"
+#define D_CMND_MIEL_HVAC_SETSWINGV "HVACSetSwingV"
+#define D_CMND_MIEL_HVAC_SETSWINGH "HVACSetSwingH"
 
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
