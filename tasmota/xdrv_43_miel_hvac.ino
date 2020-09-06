@@ -212,13 +212,6 @@ struct miel_hvac_map {
 	const char		*name;
 };
 
-#if 0
-static const struct miel_hvac_map miel_hvac_power_map[] = {
-	{ MIEL_HVAC_UPDATE_POWER_OFF,		"off"	},
-	{ MIEL_HVAC_UPDATE_POWER_ON,		"on"	},
-};
-#endif
-
 static const struct miel_hvac_map miel_hvac_mode_map[] = {
 	{ MIEL_HVAC_UPDATE_MODE_HEAT,		"heat"	},
 	{ MIEL_HVAC_UPDATE_MODE_DRY,		"dry"	},
