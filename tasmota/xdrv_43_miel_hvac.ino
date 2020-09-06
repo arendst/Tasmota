@@ -1017,7 +1017,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 static void
 miel_hvac_tick(struct miel_hvac_softc *sc)
 {
-	static uint8_t updates[] = {
+	static const uint8_t updates[] = {
 		MIEL_HVAC_REQUEST_SETTINGS,
 		MIEL_HVAC_REQUEST_STATUS,
 		MIEL_HVAC_REQUEST_SETTINGS,
