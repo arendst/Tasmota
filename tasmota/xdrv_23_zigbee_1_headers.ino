@@ -21,7 +21,22 @@
 
 // contains some definitions for functions used before their declarations
 
-void ZigbeeZCLSend_Raw(uint16_t dtsAddr, uint16_t groupaddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool needResponse, uint8_t transacId);
+class ZigbeeZCLSendMessage {
+public:
+  uint16_t shortaddr;
+  uint16_t groupaddr;
+  uint16_t clusterId;
+  uint8_t endpoint;
+  uint8_t cmdId;
+  uint16_t manuf;
+  bool clusterSpecific;
+  bool needResponse;
+  uint8_t transacId;    // ZCL transaction number
+  const uint8_t *msg;
+  size_t len;
+};
+
+void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl);
 
 // get the result as a string (const char*) and nullptr if there is no field or the string is empty
 const char * getCaseInsensitiveConstCharNull(const JsonObject &json, const char *needle) {
