@@ -1102,6 +1102,8 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		ResponseAppend_P(PSTR("%s" "\"status\":\"%s\""), sep,
 		    ToHex_P((uint8_t *)&sc->sc_status, sizeof(sc->sc_status),
 		    hex, sizeof(hex)));
+
+		sep = ",";
 	}
 
 	if (sc->sc_stage.type != 0) {
