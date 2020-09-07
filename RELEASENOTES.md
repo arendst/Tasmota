@@ -53,29 +53,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.4.0.3
-
-- Remove support for direct upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
-- Change references from http://thehackbox.org/tasmota/ to http://ota.tasmota.com/tasmota/
-- Change triple-mode TLS via configuration in a single firmware (TLS AWS IoT, Letsencrypt and No-TLS)
-- Change White blend mode to using command ``SetOption 105`` instead of ``RGBWWTable``
-- Fix ESP32 PWM range
-- Fix display power control (#9114)
-- Add command ``SetOption102 0/1`` to set Baud rate for Teleinfo communication (0 = 1200 or 1 = 9600)
-- Add command ``SetOption103 0/1`` to set TLS mode when TLS is selected
-- Add command ``SetOption104 1`` to disable all MQTT retained messages
-- Add command ``SetOption106 1`` to create a virtual White ColorTemp for RGBW lights
-- Add command ``SetOption107 0/1`` to select virtual White as (0) Warm or (1) Cold
-- Add command ``SetOption108 0/1`` to enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1)
-- Add command ``SetOption109 1`` to force gen1 Alexa mode, for Echo Dot 2nd gen devices only
-- Add command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)
-- Add command ``PowerDelta1`` to ``PowerDelta3`` to trigger on up to three phases (#9134)
-- Add Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
-- Add Zigbee better support for IKEA Motion Sensor
-- Add Zigbee web gui widget for Battery and Temp/Humidity/Pressure sensors
-- Add Zigbee web ui for power metering plugs
-- Add better configuration corruption recovery (#9046)
-- Add virtual CT for 4 channels lights, emulating a 5th channel
-- Add support for DYP ME007 ultrasonic distance sensor by Janusz Kostorz (#9113)
-- Add ESP32 Analog input support for GPIO32 to GPIO39
-- Add experimental support for ESP32 TTGO Watch and I2S Audio by Gerhard Mutz
+### Version 8.5.0.1

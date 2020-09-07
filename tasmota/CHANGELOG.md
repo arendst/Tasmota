@@ -1,4 +1,14 @@
+## Released
+
 ## Unreleased (development)
+
+### 8.5.0.1 20200907
+
+- New released
+
+### 8.5.0 20200907
+
+- Release Hannah
 
 ### 8.4.0.3 20200823
 
@@ -14,6 +24,10 @@
 - Remove support for direct upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
 - Change White blend mode moved to using ``SetOption 105`` instead of ``RGBWWTable``
 - Fix display power control (#9114)
+- Add command ``SetOption103 0/1`` to set TLS mode when TLS is selected
+- Add command ``SetOption104 1`` to disable all MQTT retained messages
+- Add command ``SetOption106 1`` to create a virtual White ColorTemp for RGBW lights
+- Add command ``SetOption107 0/1`` to select virtual White as (0) Warm or (1) Cold
 - Add command ``SetOption108 0/1`` to enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1) - Add better config corruption recovery (#9046)
 - Add virtual CT for 4 channels lights, emulating a 5th channel
 - Add support for DYP ME007 ultrasonic distance sensor by Janusz Kostorz (#9113)
