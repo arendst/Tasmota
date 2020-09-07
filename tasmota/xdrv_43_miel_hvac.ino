@@ -1075,18 +1075,6 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 
 	ResponseAppend_P(PSTR("," "\"MiElHVAC\":{"));
 
-	if (sc->sc_status.type != 0) {
-		const struct miel_hvac_data_status *s =
-		    &sc->sc_status.data.status;
-
-		ResponseAppend_P(PSTR("\"Operation\":\"%s\"" ","
-		    "\"Compressor\":\"%s\""),
-		    s->operation ? "ON" : "OFF",
-		    s->compressor ? "ON" : "OFF");
-
-		sep = ",";
-	}
-
 	if (sc->sc_temp.type != 0) {
 		const struct miel_hvac_data_roomtemp *rt =
 		    &sc->sc_temp.data.roomtemp;
@@ -1095,8 +1083,28 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 
 		dtostrfd(ConvertTemp(temp),
 		    Settings.flag2.temperature_resolution, room_temp);
-		ResponseAppend_P(PSTR("%s" "\"" D_JSON_TEMPERATURE "\":%s"),
-		    sep, room_temp);
+		ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"),
+		    room_temp);
+
+		sep = ",";
+	}
+
+	if (sc->sc_status.type != 0) {
+		const struct miel_hvac_data_status *s =
+		    &sc->sc_status.data.status;
+
+		ResponseAppend_P(PSTR("%s" "\"Operation\":\"%s\"" ","
+		    "\"Compressor\":\"%s\""), sep,
+		    s->operation ? "ON" : "OFF",
+		    s->compressor ? "ON" : "OFF");
+
+		sep = ",";
+	}
+
+	if (sc->sc_temp.type != 0) {
+		ResponseAppend_P(PSTR("%s" "\"roomtemp\":\"%s\""), sep,
+		    ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp),
+		    hex, sizeof(hex)));
 
 		sep = ",";
 	}
@@ -1104,13 +1112,6 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	if (sc->sc_status.type != 0) {
 		ResponseAppend_P(PSTR("%s" "\"status\":\"%s\""), sep,
 		    ToHex_P((uint8_t *)&sc->sc_status, sizeof(sc->sc_status),
-		    hex, sizeof(hex)));
-
-		sep = ",";
-	}
-	if (sc->sc_temp.type != 0) {
-		ResponseAppend_P(PSTR("%s" "\"roomtemp\":\"%s\""), sep,
-		    ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp),
 		    hex, sizeof(hex)));
 	}
 
