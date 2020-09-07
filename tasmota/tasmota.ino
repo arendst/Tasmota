@@ -34,9 +34,7 @@
 \*********************************************************************************************/
 
 // Location specific includes
-#ifdef ESP8266
-  #include <core_version.h>                 // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_7_1)
-#endif  // ESP8266
+#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_7_1)
 #include "tasmota_compat.h"
 #include "tasmota_version.h"                // Tasmota version information
 #include "tasmota.h"                        // Enumeration used in my_user_config.h
