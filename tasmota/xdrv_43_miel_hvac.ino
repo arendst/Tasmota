@@ -941,32 +941,17 @@ miel_hvac_data_response(struct miel_hvac_softc *sc,
 }
 
 static void
-miel_hvac_input_roomtemp(struct miel_hvac_softc *sc,
-    const struct miel_hvac_data *d)
+miel_hvac_input_sensor(struct miel_hvac_softc *sc, struct miel_hvac_data *dst,
+    const struct miel_hvac_data *src)
 {
-	const struct miel_hvac_data_roomtemp *rt = &d->data.roomtemp;
-	unsigned int temp = miel_hvac_roomtemp2deg(rt->temp);
 	bool publish;
 
-	publish = (memcmp(d, &sc->sc_temp, sizeof(*d)) != 0);
-	sc->sc_temp = *d;
+	publish = (memcmp(dst, src, sizeof(*dst)) != 0);
+	*dst = *src;
 
 	if (publish)
 		MqttPublishSensor();
-}
 
-static void
-miel_hvac_input_status(struct miel_hvac_softc *sc,
-    const struct miel_hvac_data *d)
-{
-	const struct miel_hvac_data_status *s = &d->data.status;
-	bool publish;
-
-	publish = (memcmp(d, &sc->sc_status, sizeof(*d)) != 0);
-	sc->sc_status = *d;
-
-	if (publish)
-		MqttPublishSensor();
 }
 
 static void
@@ -989,10 +974,10 @@ miel_hvac_input_data(struct miel_hvac_softc *sc,
 		miel_hvac_input_settings(sc, d);
 		break;
 	case MIEL_HVAC_DATA_T_ROOMTEMP:
-		miel_hvac_input_roomtemp(sc, d);
+		miel_hvac_input_sensor(sc, &sc->sc_temp, d);
 		break;
 	case MIEL_HVAC_DATA_T_STATUS:
-		miel_hvac_input_status(sc, d);
+		miel_hvac_input_sensor(sc, &sc->sc_status, d);
 		break;
 	default:
 		miel_hvac_data_response(sc, d);
