@@ -77,7 +77,7 @@ struct miel_hvac_data {
 #define MIEL_HVAC_DATA_T_ROOMTEMP	0x03
 #define MIEL_HVAC_DATA_T_TIMER		0x05
 #define MIEL_HVAC_DATA_T_STATUS		0x06
-#define MIEL_HVAC_DATA_T_ACTION		0x09
+#define MIEL_HVAC_DATA_T_STAGE		0x09
 
 	union {
 		struct miel_hvac_data_settings
@@ -115,7 +115,7 @@ struct miel_hvac_msg_request {
 #define MIEL_HVAC_REQUEST_ROOMTEMP	0x03
 #define MIEL_HVAC_REQUEST_TIMERS	0x05
 #define MIEL_HVAC_REQUEST_STATUS	0x06
-#define MIEL_HVAC_REQUEST_ACTION	0x09
+#define MIEL_HVAC_REQUEST_STAGE		0x09
 	uint8_t			zero[15];
 };
 
@@ -307,6 +307,7 @@ struct miel_hvac_softc {
 	struct miel_hvac_data	 sc_settings;
 	struct miel_hvac_data	 sc_temp;
 	struct miel_hvac_data	 sc_status;
+	struct miel_hvac_data	 sc_stage;
 
 	struct miel_hvac_msg_update
 				 sc_update;
@@ -979,6 +980,9 @@ miel_hvac_input_data(struct miel_hvac_softc *sc,
 	case MIEL_HVAC_DATA_T_STATUS:
 		miel_hvac_input_sensor(sc, &sc->sc_status, d);
 		break;
+	case MIEL_HVAC_DATA_T_STAGE:
+		miel_hvac_input_sensor(sc, &sc->sc_stage, d);
+		break;
 	default:
 		miel_hvac_data_response(sc, d);
 		break;
@@ -1100,6 +1104,12 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		    hex, sizeof(hex)));
 	}
 
+	if (sc->sc_stage.type != 0) {
+		ResponseAppend_P(PSTR("%s" "\"stage\":\"%s\""), sep,
+		    ToHex_P((uint8_t *)&sc->sc_stage, sizeof(sc->sc_stage),
+		    hex, sizeof(hex)));
+	}
+
 	ResponseAppend_P(PSTR("}"));
 }
 
@@ -1154,11 +1164,10 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 		MIEL_HVAC_REQUEST_STATUS,
 		MIEL_HVAC_REQUEST_SETTINGS,
 		MIEL_HVAC_REQUEST_ROOMTEMP,
-#if 1
+
 		MIEL_HVAC_REQUEST_SETTINGS,
 		/* MUZ-GA80VA doesnt respond :( */
-		MIEL_HVAC_REQUEST_ACTION,
-#endif
+		MIEL_HVAC_REQUEST_STAGE,
 	};
 
 	unsigned int i;
