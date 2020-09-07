@@ -969,9 +969,18 @@ void Z_SendAFInfoRequest(uint16_t shortaddr) {
 
   uint8_t InfoReq[] = { 0x04, 0x00, 0x05, 0x00 };
 
-  ZigbeeZCLSend_Raw(shortaddr, 0x0000 /*group*/, 0x0000 /*cluster*/, endpoint, ZCL_READ_ATTRIBUTES,
-                    false /*clusterSpecific*/, 0x0000 /*manuf*/,
-                    InfoReq, sizeof(InfoReq), true /*needResponse*/, transacid);
+  ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
+    shortaddr,
+    0x0000, /* group */
+    0x0000 /*cluster*/,
+    endpoint,
+    ZCL_READ_ATTRIBUTES,
+    0x0000,  /* manuf */
+    false /* not cluster specific */,
+    true /* response */,
+    transacid,  /* zcl transaction id */
+    InfoReq, sizeof(InfoReq)
+  }));
 }
 
 

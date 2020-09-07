@@ -849,7 +849,7 @@ void HAssDiscovery(void)
     Settings.flag3.hass_tele_on_power = 1;  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT - send tele/STATE message as stat/RESULT
                                             // the purpose of that is so that if HA is restarted, state in HA will be correct within one teleperiod otherwise state
                                             // will not be correct until the device state is changed this is why in the patterns for switch and light, we tell HA to trigger on STATE, not RESULT.
-    Settings.light_scheme = 0;              // To just control color it needs to be Scheme 0
+    //Settings.light_scheme = 0;            // To just control color it needs to be Scheme 0 (on hold due to new light configuration)
   }
 
   if (Settings.flag.hass_discovery || (1 == hass_mode))
@@ -940,7 +940,7 @@ void HassLwtSubscribe(bool hasslwt)
 {
   char htopic[TOPSZ];
   snprintf_P(htopic, sizeof(htopic), PSTR(HOME_ASSISTANT_LWT_TOPIC));
-  if (hasslwt) {
+  if (hasslwt && Settings.flag.hass_discovery) {
     MqttSubscribe(htopic);
   } else { MqttUnsubscribe(htopic); }
 }
@@ -984,9 +984,7 @@ bool Xdrv12(uint8_t function)
       hass_mode = 0;      // Discovery only if Settings.flag.hass_discovery is set
       hass_init_step = 2; // Delayed discovery
       break;
-      // if (!Settings.flag.hass_discovery) {
-      //   AddLog_P2(LOG_LEVEL_INFO, PSTR("MQT: homeassistant/49A3BC/Discovery = {\"dev\":{\"ids\":[\"49A3BC\"]},\"cmd_t\":\"cmnd/test1/\",\"Discovery\":0}"));
-      // }
+
     case FUNC_MQTT_SUBSCRIBE:
       HassLwtSubscribe(hasslwt);
       break;
