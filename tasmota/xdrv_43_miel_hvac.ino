@@ -206,8 +206,17 @@ struct miel_hvac_msg_remotetemp {
 	uint8_t			control;
 #define MIEL_HVAC_REMOTETEMP_CLR	0x00
 #define MIEL_HVAC_REMOTETEMP_SET	0x01
-	uint8_t			roomtemp;
+	/* setting for older units expressed as .5C units starting at 8C */
+	uint8_t			temp_old;
+#define MIEL_HVAC_REMOTETEMP_OLD_MIN	8
+#define MIEL_HVAC_REMOTETEMP_OLD_MAX	38
+#define MIEL_HVAC_REMOTETEMP_OLD_FACTOR	2
+	/* setting for newer units expressed as .5C units starting at -63C */
 	uint8_t			temp;
+#define MIEL_HVAC_REMOTETEMP_MIN	-63
+#define MIEL_HVAC_REMOTETEMP_MAX	 63
+#define MIEL_HVAC_REMOTETEMP_OFFSET	 64
+#define MIEL_HVAC_REMOTETEMP_FACTOR	 2
 	uint8_t			_pad2[12];
 };
 
@@ -729,6 +738,26 @@ miel_hvac_cmnd_setwidevane(void)
 	ResponseCmndChar_P(e->name);
 }
 
+static inline uint8_t
+miel_hvac_remotetemp_degc2old(unsigned int degc)
+{
+	/*
+	 * If a remote temperature reading is provided that cannot be
+	 * represented by the temp_old field, implicitly clamp it to the
+	 * supported min or max. The hardware does this anyway if you
+	 * provide a high value, but without this the min value will
+	 * underflow and turn a high value that the hardware thinks is 38.
+	 */
+
+	if (degc < MIEL_HVAC_REMOTETEMP_OLD_MIN)
+		degc = MIEL_HVAC_REMOTETEMP_OLD_MIN;
+	else if (degc > MIEL_HVAC_REMOTETEMP_OLD_MAX)
+		degc = MIEL_HVAC_REMOTETEMP_OLD_MIN;
+
+	return ((degc - MIEL_HVAC_REMOTETEMP_OLD_MIN) *
+	    MIEL_HVAC_REMOTETEMP_OLD_FACTOR);
+}
+
 static void
 miel_hvac_cmnd_remotetemp(void)
 {
@@ -747,15 +776,12 @@ miel_hvac_cmnd_remotetemp(void)
 		ResponseCmndChar_P("clear");
 	} else {
 		degc = strtol(XdrvMailbox.data, nullptr, 0);
-		/*
-		 * This is the max range supported by an MUZ-GA80VA. It
-		 * should be revisited if someone ever figures out how to
-		 * tell which HVAC supports which features.
-		 */
-		if (degc < 8 || degc > 38) {
-			miel_hvac_respond_unsupported();
-			return;
-		}
+
+		/* clamp the argument to supported values */
+		if (degc < MIEL_HVAC_REMOTETEMP_MIN)
+			degc = MIEL_HVAC_REMOTETEMP_MIN;
+		else if (degc > MIEL_HVAC_REMOTETEMP_MAX)
+			degc = MIEL_HVAC_REMOTETEMP_MAX;
 
 		ResponseCmndNumber(degc);
 	}
@@ -765,12 +791,15 @@ miel_hvac_cmnd_remotetemp(void)
 	rt->control = control;
 
 	/*
-	 * Different units use different fields and encodings for the
-	 * remote temperature.
+	 * Different HVACs (or more likely different generations
+	 * of these HVACs) have different ways to encode the remote
+	 * temperature value. This provides both of them to hopefully
+	 * support all known types of HVACs.
 	 */
 
-	rt->roomtemp = (degc * 2) - 16;
-	rt->temp = (degc * 2) + 128;
+	rt->temp_old = miel_hvac_remotetemp_degc2old(degc);
+	rt->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) *
+	    MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
 }
 
 #ifdef MIEL_HVAC_DEBUG
