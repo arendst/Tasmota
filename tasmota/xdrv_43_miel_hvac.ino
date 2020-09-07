@@ -739,7 +739,7 @@ miel_hvac_cmnd_setwidevane(void)
 }
 
 static inline uint8_t
-miel_hvac_remotetemp_degc2old(unsigned int degc)
+miel_hvac_remotetemp_degc2old(long degc)
 {
 	/*
 	 * If a remote temperature reading is provided that cannot be
