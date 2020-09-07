@@ -67,8 +67,8 @@ struct miel_hvac_data_roomtemp {
 
 struct miel_hvac_data_status {
 	uint8_t			_pad1[2];
-	uint8_t			compressor_freq;
-	uint8_t			operating;
+	uint8_t			compressor;
+	uint8_t			operation;
 };
 
 struct miel_hvac_data {
@@ -303,9 +303,6 @@ struct miel_hvac_softc {
 	unsigned int		 sc_tick;
 	bool			 sc_settings_set;
 	bool			 sc_connected;
-
-	int			 sc_room_temp;
-	uint8_t			 sc_compressor_freq;
 
 	struct miel_hvac_data	 sc_settings;
 	struct miel_hvac_data	 sc_temp;
@@ -951,11 +948,7 @@ miel_hvac_input_roomtemp(struct miel_hvac_softc *sc,
 	unsigned int temp = miel_hvac_roomtemp2deg(rt->temp);
 	bool publish;
 
-	if (memcmp(d, &sc->sc_temp, sizeof(*d)) != 0)
-		miel_hvac_data_response(sc, d);
-
-	publish = (temp != sc->sc_room_temp);
-	sc->sc_room_temp = temp;
+	publish = (memcmp(d, &sc->sc_temp, sizeof(*d)) != 0);
 	sc->sc_temp = *d;
 
 	if (publish)
@@ -964,9 +957,16 @@ miel_hvac_input_roomtemp(struct miel_hvac_softc *sc,
 
 static void
 miel_hvac_input_status(struct miel_hvac_softc *sc,
-    const struct miel_hvac_data_status *s)
+    const struct miel_hvac_data *d)
 {
-	sc->sc_compressor_freq = s->compressor_freq;
+	const struct miel_hvac_data_status *s = &d->data.status;
+	bool publish;
+
+	publish = (memcmp(d, &sc->sc_status, sizeof(*d)) != 0);
+	sc->sc_status = *d;
+
+	if (publish)
+		MqttPublishSensor();
 }
 
 static void
@@ -992,11 +992,7 @@ miel_hvac_input_data(struct miel_hvac_softc *sc,
 		miel_hvac_input_roomtemp(sc, d);
 		break;
 	case MIEL_HVAC_DATA_T_STATUS:
-		if (memcmp(&sc->sc_status, d, sizeof(*d)) != 0) {
-			miel_hvac_data_response(sc, d);
-			sc->sc_status = *d;
-		}
-		miel_hvac_input_status(sc, &d->data.status);
+		miel_hvac_input_status(sc, d);
 		break;
 	default:
 		miel_hvac_data_response(sc, d);
@@ -1032,7 +1028,6 @@ miel_hvac_pre_init(void)
 	}
 
 	memset(sc, 0, sizeof(*sc));
-	sc->sc_room_temp == -1;
 	miel_hvac_init_update(&sc->sc_update);
 
 	sc->sc_serial = new TasmotaSerial(Pin(GPIO_MIEL_HVAC_RX),
@@ -1075,22 +1070,50 @@ miel_hvac_loop(struct miel_hvac_softc *sc)
 static void
 miel_hvac_sensor(struct miel_hvac_softc *sc)
 {
-	char room_temp[33];
 	char hex[(sizeof(sc->sc_status) + 1) * 2];
+	const char *sep = "";
 
-	if (sc->sc_room_temp == -1)
-		return;
+	ResponseAppend_P(PSTR("," "\"MiElHVAC\":{"));
 
-	dtostrfd(ConvertTemp(sc->sc_room_temp),
-	    Settings.flag2.temperature_resolution, room_temp);
-	ResponseAppend_P(PSTR("," "\"MiElHVAC\":{"
-	    "\"" D_JSON_TEMPERATURE "\":%s"), room_temp);
-	ResponseAppend_P(PSTR("," "\"status\":\"%s\""),
-	    ToHex_P((uint8_t *)&sc->sc_status, sizeof(sc->sc_status),
-	    hex, sizeof(hex)));
-	ResponseAppend_P(PSTR("," "\"roomtemp\":\"%s\""),
-	    ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp),
-	    hex, sizeof(hex)));
+	if (sc->sc_status.type != 0) {
+		const struct miel_hvac_data_status *s =
+		    &sc->sc_status.data.status;
+
+		ResponseAppend_P(PSTR("\"Operation\":\"%s\"" ","
+		    "\"Compressor\":\"%s\""),
+		    s->operation ? "ON" : "OFF",
+		    s->compressor ? "ON" : "OFF");
+
+		sep = ",";
+	}
+
+	if (sc->sc_temp.type != 0) {
+		const struct miel_hvac_data_roomtemp *rt =
+		    &sc->sc_temp.data.roomtemp;
+		unsigned int temp = miel_hvac_roomtemp2deg(rt->temp);
+		char room_temp[33];
+
+		dtostrfd(ConvertTemp(temp),
+		    Settings.flag2.temperature_resolution, room_temp);
+		ResponseAppend_P(PSTR("%s" "\"" D_JSON_TEMPERATURE "\":%s"),
+		    sep, room_temp);
+
+		sep = ",";
+	}
+
+	if (sc->sc_status.type != 0) {
+		ResponseAppend_P(PSTR("%s" "\"status\":\"%s\""), sep,
+		    ToHex_P((uint8_t *)&sc->sc_status, sizeof(sc->sc_status),
+		    hex, sizeof(hex)));
+
+		sep = ",";
+	}
+	if (sc->sc_temp.type != 0) {
+		ResponseAppend_P(PSTR("%s" "\"roomtemp\":\"%s\""), sep,
+		    ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp),
+		    hex, sizeof(hex)));
+	}
+
 	ResponseAppend_P(PSTR("}"));
 }
 
