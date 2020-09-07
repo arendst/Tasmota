@@ -228,7 +228,7 @@ enum UserSelectablePins {
   GPIO_CC1101_GDO2,    // CC1101 pin for RX
   GPIO_HRXL_RX,       // Data from MaxBotix HRXL sonar range sensor
   GPIO_ELECTRIQ_MOODL_TX, // ElectriQ iQ-wifiMOODL Serial TX
-  GPIO_AS3935,
+  GPIO_AS3935,         // Franklin Lightning Sensor
   GPIO_PMS5003_TX,     // Plantower PMS5003 Serial interface
   GPIO_BOILER_OT_RX,   // OpenTherm Boiler RX pin
   GPIO_BOILER_OT_TX,   // OpenTherm Boiler TX pin
@@ -710,7 +710,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_DYP_RX,
 #endif
 #ifdef USE_AS3935
-  GPIO_AS3935,
+  GPIO_AS3935,         // AS3935 IRQ Pin
 #endif
 #ifdef USE_TELEINFO
   GPIO_TELEINFO_RX,

@@ -823,6 +823,8 @@
 #define D_AS3935_NOISE "noise detected"
 #define D_AS3935_DISTDET "disturber detected"
 #define D_AS3935_INTNOEV "Interrupt with no Event!"
+#define D_AS3935_FLICKER "IRQ Pin flicker!"
+#define D_AS3935_POWEROFF "Powerd Off"
 #define D_AS3935_NOMESS "listening..."
 #define D_AS3935_ON "On"
 #define D_AS3935_OFF "Off"

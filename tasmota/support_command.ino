@@ -323,7 +323,7 @@ void CmndBacklog(void)
           backlog.add(blcommand);
         }
 #else
-        backlog[backlog_index] = String(blcommand);
+        backlog[backlog_index] = blcommand;
         backlog_index++;
         if (backlog_index >= MAX_BACKLOG) backlog_index = 0;
 #endif

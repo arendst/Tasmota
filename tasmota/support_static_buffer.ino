@@ -237,3 +237,18 @@ public:
     _buf = nullptr;
   }
 } PreAllocatedSBuffer;
+
+// nullptr accepted
+bool equalsSBuffer(const class SBuffer * buf1, const class SBuffer * buf2) {
+  if (buf1 == buf2) { return true; }
+  if (!buf1 && (buf2->len() == 0)) { return true; }
+  if (!buf2 && (buf1->len() == 0)) { return true; }
+  if (!buf1 || !buf2) { return false; }   // at least one buf is not empty
+  // we know that both buf1 and buf2 are non-null
+  if (buf1->len() != buf2->len()) { return false; }
+  size_t len = buf1->len();
+  for (uint32_t i=0; i<len; i++) {
+    if (buf1->get8(i) != buf2->get8(i)) { return false; }
+  }
+  return true;
+}

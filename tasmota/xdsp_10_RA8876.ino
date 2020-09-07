@@ -27,28 +27,16 @@
 #define COLORED                1
 #define UNCOLORED              0
 
-// touch panel controller
-#define FT5316_address 0x38
-
 // using font 8 is opional (num=3)
 // very badly readable, but may be useful for graphs
 #define USE_TINY_FONT
 
 #include <RA8876.h>
-#include <FT6236.h>
 
-TouchLocation ra8876_pLoc;
 uint8_t ra8876_ctouch_counter = 0;
-
-#ifdef USE_TOUCH_BUTTONS
-extern VButton *buttons[];
-#endif
-
 extern uint8_t *buffer;
 extern uint8_t color_type;
 RA8876 *ra8876;
-
-uint8_t FT5316_found;
 
 /*********************************************************************************************/
 void RA8876_InitDriver()
@@ -114,147 +102,41 @@ void RA8876_InitDriver()
 #endif
     color_type = COLOR_COLOR;
 
-    if (I2cEnabled(XI2C_39) && I2cSetDevice(FT5316_address)) {
-      FT6236begin(FT5316_address);
-      FT5316_found=1;
-      I2cSetActiveFound(FT5316_address, "FT5316");
-    } else {
-      FT5316_found=0;
-    }
+#ifdef USE_FT5206
+    Touch_Init(Wire);
+#endif
 
   }
 }
 
-#ifdef USE_TOUCH_BUTTONS
-void RA8876_MQTT(uint8_t count,const char *cp) {
-  ResponseTime_P(PSTR(",\"RA8876\":{\"%s%d\":\"%d\"}}"), cp,count+1,(buttons[count]->vpower&0x80)>>7);
-  MqttPublishTeleSensor();
-}
 
-void RA8876_RDW_BUTT(uint32_t count,uint32_t pwr) {
-  buttons[count]->xdrawButton(pwr);
-  if (pwr) buttons[count]->vpower|=0x80;
-  else buttons[count]->vpower&=0x7f;
+#ifdef USE_FT5206
+#ifdef USE_TOUCH_BUTTONS
+
+// no rotation support
+void RA8876_RotConvert(int16_t *x, int16_t *y) {
+int16_t temp;
+  if (renderer) {
+    *x=*x*renderer->width()/800;
+    *y=*y*renderer->height()/480;
+
+    *x = renderer->width() - *x;
+    *y = renderer->height() - *y;
+  }
 }
 
 // check digitizer hit
-void FT5316Check() {
-uint16_t temp;
-uint8_t rbutt=0,vbutt=0;
-ra8876_ctouch_counter++;
-if (2 == ra8876_ctouch_counter) {
-  // every 100 ms should be enough
-  ra8876_ctouch_counter=0;
-  // panel has 800x480
-  if (FT6236readTouchLocation(&ra8876_pLoc,1)) {
-    ra8876_pLoc.x=ra8876_pLoc.x*RA8876_TFTWIDTH/800;
-    ra8876_pLoc.y=ra8876_pLoc.y*RA8876_TFTHEIGHT/480;
-    // did find a hit
-
-    if (renderer) {
-
-      // rotation not supported
-      ra8876_pLoc.x=RA8876_TFTWIDTH-ra8876_pLoc.x;
-      ra8876_pLoc.y=RA8876_TFTHEIGHT-ra8876_pLoc.y;
-
-      /*
-      uint8_t rot=renderer->getRotation();
-      switch (rot) {
-        case 0:
-          //temp=pLoc.y;
-          pLoc.x=renderer->width()-pLoc.x;
-          pLoc.y=renderer->height()-pLoc.y;
-          //pLoc.x=temp;
-          break;
-        case 1:
-          break;
-        case 2:
-          break;
-        case 3:
-          temp=pLoc.y;
-          pLoc.y=pLoc.x;
-          pLoc.x=renderer->width()-temp;
-          break;
-      }
-      */
-      //AddLog_P2(LOG_LEVEL_INFO, PSTR(">> %d,%d"),ra8876_pLoc.x,ra8876_pLoc.y);
-
-
-      //Serial.printf("loc x: %d , loc y: %d\n",pLoc.x,pLoc.y);
-
-      // now must compare with defined buttons
-      for (uint8_t count=0; count<MAXBUTTONS; count++) {
-        if (buttons[count]) {
-            uint8_t bflags=buttons[count]->vpower&0x7f;
-            if (buttons[count]->contains(ra8876_pLoc.x,ra8876_pLoc.y)) {
-                // did hit
-                buttons[count]->press(true);
-                if (buttons[count]->justPressed()) {
-                  if (!bflags) {
-                    // real button
-                    uint8_t pwr=bitRead(power,rbutt);
-                    if (!SendKey(KEY_BUTTON, rbutt+1, POWER_TOGGLE)) {
-                      ExecuteCommandPower(rbutt+1, POWER_TOGGLE, SRC_BUTTON);
-                      RA8876_RDW_BUTT(count,!pwr);
-                    }
-                  } else {
-                    // virtual button
-                    const char *cp;
-                    if (bflags==1) {
-                      // toggle button
-                      buttons[count]->vpower^=0x80;
-                      cp="TBT";
-                    } else {
-                      // push button
-                      buttons[count]->vpower|=0x80;
-                      cp="PBT";
-                    }
-                    buttons[count]->xdrawButton(buttons[count]->vpower&0x80);
-                    RA8876_MQTT(count,cp);
-                  }
-                }
-            }
-            if (!bflags) {
-              rbutt++;
-            } else {
-              vbutt++;
-            }
-        }
-      }
-    }
-  } else {
-    // no hit
-    for (uint8_t count=0; count<MAXBUTTONS; count++) {
-      if (buttons[count]) {
-        uint8_t bflags=buttons[count]->vpower&0x7f;
-        buttons[count]->press(false);
-        if (buttons[count]->justReleased()) {
-          if (bflags>0) {
-            if (bflags>1) {
-              // push button
-              buttons[count]->vpower&=0x7f;
-              RA8876_MQTT(count,"PBT");
-            }
-            buttons[count]->xdrawButton(buttons[count]->vpower&0x80);
-          }
-        }
-        if (!bflags) {
-          // check if power button stage changed
-          uint8_t pwr=bitRead(power,rbutt);
-          uint8_t vpwr=(buttons[count]->vpower&0x80)>>7;
-          if (pwr!=vpwr) {
-            RA8876_RDW_BUTT(count,pwr);
-          }
-          rbutt++;
-        }
-      }
-    }
-    ra8876_pLoc.x=0;
-    ra8876_pLoc.y=0;
+void RA8876_CheckTouch(void) {
+  ra8876_ctouch_counter++;
+  if (2 == ra8876_ctouch_counter) {
+    // every 100 ms should be enough
+    ra8876_ctouch_counter = 0;
+    Touch_Check(RA8876_RotConvert);
   }
 }
-}
-#endif  // USE_TOUCH_BUTTONS
+#endif // USE_TOUCH_BUTTONS
+#endif // USE_FT5206
+
 /*
 void testall() {
 ra8876->clearScreen(0);
@@ -452,8 +334,8 @@ bool Xdsp10(uint8_t function)
         result = true;
         break;
       case FUNC_DISPLAY_EVERY_50_MSECOND:
-#ifdef USE_TOUCH_BUTTONS
-        if (FT5316_found) FT5316Check();
+#ifdef USE_FT5206
+        if (FT5206_found) RA8876_CheckTouch();
 #endif
         break;
     }

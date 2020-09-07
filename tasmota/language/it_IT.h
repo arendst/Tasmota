@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 19.08.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 05.09.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -351,8 +351,8 @@
 #define D_UPLOAD_STARTED "Caricamento..."
 #define D_UPGRADE_STARTED "Aggiornamento..."
 #define D_UPLOAD_DONE "Caricamento completato"
-#define D_UPLOAD_TRANSFER "Upload transfer"
-#define D_TRANSFER_STARTED "Transfer started"
+#define D_UPLOAD_TRANSFER "Trasferimento caricamento"
+#define D_TRANSFER_STARTED "Trasferimento avviato"
 #define D_UPLOAD_ERR_1 "Nessun file selezionato"
 #define D_UPLOAD_ERR_2 "Spazio insufficiente"
 #define D_UPLOAD_ERR_3 "Magic byte non corrispondente a 0xE9"
@@ -823,6 +823,8 @@
 #define D_AS3935_NOISE "rilevato rumore"
 #define D_AS3935_DISTDET "rilevato disturbatore"
 #define D_AS3935_INTNOEV "Interrupt senza evento!"
+#define D_AS3935_FLICKER "Flicker PIN IRQ!"
+#define D_AS3935_POWEROFF "Spegnimento"
 #define D_AS3935_NOMESS "in ascolto..."
 #define D_AS3935_ON "ON"
 #define D_AS3935_OFF "OFF"

@@ -111,7 +111,7 @@ enum UserSelectablePins {
   GPIO_CC1101_GDO0, GPIO_CC1101_GDO2,  // CC1101 Serial interface
   GPIO_HRXL_RX,                        // Data from MaxBotix HRXL sonar range sensor
   GPIO_ELECTRIQ_MOODL_TX,              // ElectriQ iQ-wifiMOODL Serial TX
-  GPIO_AS3935,
+  GPIO_AS3935,                         // Franklin Lightning Sensor
   GPIO_ADC_INPUT,                      // Analog input
   GPIO_ADC_TEMP,                       // Analog Thermistor
   GPIO_ADC_LIGHT,                      // Analog Light sensor
@@ -557,7 +557,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_DYP_RX),
 #endif
 #ifdef USE_AS3935
-  AGPIO(GPIO_AS3935),
+  AGPIO(GPIO_AS3935),          // AS3935 IRQ Pin
 #endif
 #ifdef USE_TELEINFO
   AGPIO(GPIO_TELEINFO_RX),

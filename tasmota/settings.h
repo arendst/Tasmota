@@ -282,9 +282,9 @@ typedef union {
   struct {
   uint8_t nf_autotune : 1;            // Autotune the NF Noise Level
   uint8_t dist_autotune : 1;          // Autotune Disturber on/off
-  uint8_t nf_autotune_both : 1;        // Autotune over both Areas: INDOORS/OUDOORS
+  uint8_t nf_autotune_both : 1;       // Autotune over both Areas: INDOORS/OUDOORS
   uint8_t mqtt_only_Light_Event : 1;  // mqtt only if lightning Irq
-  uint8_t spare4 : 1;
+  uint8_t suppress_irq_no_Event : 1;  // suppress mqtt "IRQ with no Event". (Chip Bug)
   uint8_t spare5 : 1;
   uint8_t spare6 : 1;
   uint8_t spare7 : 1;

@@ -2712,6 +2712,7 @@ void HandleUploadLoop(void)
 
   HTTPUpload& upload = Webserver->upload();
 
+  // ***** Step1: Start upload file
   if (UPLOAD_FILE_START == upload.status) {
     restart_flag = 60;
     if (0 == upload.filename.c_str()[0]) {
@@ -2752,7 +2753,10 @@ void HandleUploadLoop(void)
       }
     }
     Web.upload_progress_dot_count = 0;
-  } else if (!Web.upload_error && (UPLOAD_FILE_WRITE == upload.status)) {
+  }
+
+  // ***** Step2: Write upload file
+  else if (!Web.upload_error && (UPLOAD_FILE_WRITE == upload.status)) {
     if (0 == upload.totalSize) {
       if (UPL_SETTINGS == Web.upload_file_type) {
         Web.config_block_count = 0;
@@ -2781,9 +2785,10 @@ void HandleUploadLoop(void)
         } else
 #endif  // USE_RF_FLASH
 #ifdef USE_TASMOTA_CLIENT
-        if ((WEMOS == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO CLIENT hex file
+        if (TasmotaClient_Available() && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO CLIENT hex file
           Update.end();              // End esp8266 update session
           Web.upload_file_type = UPL_TASMOTACLIENT;
+
           Web.upload_error = TasmotaClient_UpdateInit();  // 0
           if (Web.upload_error != 0) { return; }
         } else
@@ -2802,6 +2807,7 @@ void HandleUploadLoop(void)
 //            upload.buf[2] = 3;  // Force DOUT - ESP8285
           }
         }
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "File type %d"), Web.upload_file_type);
       }
     }
     if (UPL_SETTINGS == Web.upload_file_type) {
@@ -2873,7 +2879,10 @@ void HandleUploadLoop(void)
         if (!(Web.upload_progress_dot_count % 80)) { Serial.println(); }
       }
     }
-  } else if(!Web.upload_error && (UPLOAD_FILE_END == upload.status)) {
+  }
+
+  // ***** Step3: Finish upload file
+  else if(!Web.upload_error && (UPLOAD_FILE_END == upload.status)) {
     if (_serialoutput && (Web.upload_progress_dot_count % 80)) {
       Serial.println();
     }
@@ -2949,9 +2958,12 @@ void HandleUploadLoop(void)
       }
     }
     if (!Web.upload_error) {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_SUCCESSFUL " %u bytes. " D_RESTARTING), upload.totalSize);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_SUCCESSFUL " %u bytes"), upload.totalSize);
     }
-  } else if (UPLOAD_FILE_ABORTED == upload.status) {
+  }
+
+  // ***** Step4: Abort upload file
+  else if (UPLOAD_FILE_ABORTED == upload.status) {
     restart_flag = 0;
     MqttRetryCounter(0);
 #ifdef USE_COUNTER
