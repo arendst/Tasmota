@@ -598,6 +598,7 @@ int32_t ZigbeeProcessInputEZSP(class SBuffer &buf) {
       case EZSP_messageSentHandler:       // 3F00
       case EZSP_setConfigurationValue:    // 5300
       case EZSP_setPolicy:                // 5500
+      case 0x0059:                        // 5900 - supposedly removed by still happening
       case EZSP_setMulticastTableEntry:   // 6400
       case EZSP_setInitialSecurityState:  // 6800
       case EZSP_getCurrentSecurityState:  // 6900
