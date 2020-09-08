@@ -389,7 +389,8 @@
 //  #define USE_MQTT_TLS_CA_CERT                   // Force full CA validation instead of fingerprints, slower, but simpler to use.  (+2.2k code, +1.9k mem during connection handshake)
                                                    // This includes the LetsEncrypt CA in tasmota_ca.ino for verifying server certificates
 //  #define USE_MQTT_TLS_FORCE_EC_CIPHER           // Force Elliptic Curve cipher (higher security) required by some servers (automatically enabled with USE_MQTT_AWS_IOT) (+11.4k code, +0.4k mem)
-//  #define USE_MQTT_AWS_IOT                       // Enable MQTT for AWS IoT - requires a private key (+11.9k code, +0.4k mem)
+//  #define USE_MQTT_AWS_IOT_LIGHT                 // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
+//  #define USE_MQTT_AWS_IOT                       // [Deprecated] Enable MQTT for AWS IoT - requires a private key (+11.9k code, +0.4k mem)
                                                  //   Note: you need to generate a private key + certificate per device and update 'tasmota/tasmota_aws_iot.cpp'
                                                  //   Full documentation here: https://github.com/arendst/Tasmota/wiki/AWS-IoT
 //  #define USE_4K_RSA                             // Support 4096 bits certificates, instead of 2048
@@ -820,7 +821,7 @@
   #include "user_config_override.h"         // Configuration overrides for my_user_config.h
 #endif
 
-#if defined(USE_DISCOVERY) && defined(USE_MQTT_AWS_IOT)
+#if defined(USE_DISCOVERY) && (defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT))
   #error "Select either USE_DISCOVERY or USE_MQTT_AWS_IOT, mDNS takes too much code space and is not needed for AWS IoT"
 #endif
 
