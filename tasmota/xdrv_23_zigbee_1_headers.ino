@@ -57,7 +57,7 @@ JsonVariant &startsWithCaseInsensitive(const JsonObject &json, const char *needl
     return *(JsonVariant*)nullptr;
   }
 
-  String needle_s(needle);
+  String needle_s((const __FlashStringHelper *)needle);
   needle_s.toLowerCase();
 
   for (auto kv : json) {
