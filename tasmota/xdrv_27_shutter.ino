@@ -282,10 +282,6 @@ void ShutterInit(void)
       Shutter[i].open_time = Settings.shutter_opentime[i] = (Settings.shutter_opentime[i] > 0) ? Settings.shutter_opentime[i] : 100;
       Shutter[i].close_time = Settings.shutter_closetime[i] = (Settings.shutter_closetime[i] > 0) ? Settings.shutter_closetime[i] : 100;
 
-      //temporary hard coded.
-      Settings.shutter_pwmrange[0][i] = pwm_min;
-      Settings.shutter_pwmrange[1][i] = pwm_max;
-
       // Update Calculation 20 because time interval is 0.05 sec ans time is in 0.1sec
       Shutter[i].open_max = STEPS_PER_SECOND * RESOLUTION * Shutter[i].open_time / 10;
       Shutter[i].close_velocity =  Shutter[i].open_max / Shutter[i].close_time / 2 ;
@@ -1369,14 +1365,14 @@ void CmndShutterPwmRange(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
     if (XdrvMailbox.data_len > 0) {
-      uint32_t i = 0;
+      uint8_t i = 0;
       char *str_ptr;
 
       char data_copy[strlen(XdrvMailbox.data) +1];
       strncpy(data_copy, XdrvMailbox.data, sizeof(data_copy));  // Duplicate data as strtok_r will modify it.
       // Loop through the data string, splitting on ' ' seperators.
-      for (char *str = strtok_r(data_copy, " ", &str_ptr); str && i < 5; str = strtok_r(nullptr, " ", &str_ptr), i++) {
-        int field = atoi(str);
+      for (char *str = strtok_r(data_copy, " ", &str_ptr); str && i < 2; str = strtok_r(nullptr, " ", &str_ptr), i++) {
+        uint16_t field = atoi(str);
         // The fields in a data string can only range from 1-30000.
         // and following value must be higher than previous one
         if ((field <= 0) || (field > 1023)) {
@@ -1384,6 +1380,7 @@ void CmndShutterPwmRange(void)
         }
         Settings.shutter_pwmrange[i][XdrvMailbox.index -1] = field;
       }
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT%d: Init1. pwmmin %d, pwmmax %d"), XdrvMailbox.index , Settings.shutter_pwmrange[0][XdrvMailbox.index -1], Settings.shutter_pwmrange[1][XdrvMailbox.index -1]);
       ShutterInit();
       ResponseCmndIdxChar(XdrvMailbox.data);
     } else {
@@ -1398,7 +1395,7 @@ void CmndShutterCalibration(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
     if (XdrvMailbox.data_len > 0) {
-      uint32_t i = 0;
+      uint8_t i = 0;
       char *str_ptr;
 
       char data_copy[strlen(XdrvMailbox.data) +1];
