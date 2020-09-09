@@ -47,6 +47,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - **tasmota-zbbridge.bin** = The dedicated Sonoff Zigbee Bridge version.
 - **tasmota-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
 
+Binaries for ESP8266 based devices can be downloaded from http://ota.tasmota.com/tasmota/release. Binaries for ESP32 based devices can be downloaded from http://ota.tasmota.com/tasmota32/release. The base links can be used for OTA upgrades like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin``
+
 [List](MODULES.md) of embedded modules.
 
 [Complete list](BUILDS.md) of available feature and sensors.
