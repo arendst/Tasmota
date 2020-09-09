@@ -23,29 +23,44 @@
 \*********************************************************************************************/
 
 #define XDRV_27            27
+#ifndef SHUTTER_STEPPER
+  #define SHUTTER_STEPPER
+#endif
 
 #define D_SHUTTER "SHUTTER"
 
 const uint16_t MOTOR_STOP_TIME = 500;   // in mS
-const uint8_t steps_per_second = 20;    // FUNC_EVERY_50_MSECOND
+const uint16_t RESOLUTION = 1000;       // incresed to 1000 in 8.5 to ramp servos
+const uint8_t STEPS_PER_SECOND = 20;    // FUNC_EVERY_50_MSECOND
+const uint16_t pwm_max = 500;
+const uint16_t pwm_min = 90;
 
 uint8_t calibrate_pos[6] = {0,30,50,70,90,100};
 uint16_t messwerte[5] = {30,50,70,90,100};
-uint16_t last_execute_step;
 
-enum ShutterModes { SHT_OFF_OPEN__OFF_CLOSE, SHT_OFF_ON__OPEN_CLOSE, SHT_PULSE_OPEN__PULSE_CLOSE, SHT_OFF_ON__OPEN_CLOSE_STEPPER,};
+int32_t  velocity_max = 0;
+int32_t  velocity_change_per_step_max = 0;
+int32_t  min_runtime_ms = 0;
+int32_t  current_stop_way = 0;
+int32_t  next_possible_stop_position = 0;
+int32_t  toBeAcc = 0;
+
+
+const uint8_t MAX_MODES = 7;
+enum Shutterposition_mode {SHT_UNDEF, SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
+enum Shutterswitch_mode {SHT_SWITCH, SHT_PULSE,};
 enum ShutterButtonStates { SHT_NOT_PRESSED, SHT_PRESSED_MULTI, SHT_PRESSED_HOLD, SHT_PRESSED_IMMEDIATE, SHT_PRESSED_EXT_HOLD, SHT_PRESSED_MULTI_SIMULTANEOUS, SHT_PRESSED_HOLD_SIMULTANEOUS, SHT_PRESSED_EXT_HOLD_SIMULTANEOUS,};
 
 const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_OPEN "|" D_CMND_SHUTTER_CLOSE "|" D_CMND_SHUTTER_TOGGLE "|" D_CMND_SHUTTER_TOGGLEDIR "|" D_CMND_SHUTTER_STOP "|" D_CMND_SHUTTER_POSITION "|"
-  D_CMND_SHUTTER_OPENTIME "|" D_CMND_SHUTTER_CLOSETIME "|" D_CMND_SHUTTER_RELAY "|"
+  D_CMND_SHUTTER_OPENTIME "|" D_CMND_SHUTTER_CLOSETIME "|" D_CMND_SHUTTER_RELAY "|" D_CMND_SHUTTER_MODE "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_SETOPEN "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
   D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
   D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPTOGGLEDIR "|" D_CMND_SHUTTER_STOPPOSITION;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterToggleDir, &CmndShutterStop, &CmndShutterPosition,
-  &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay,
+  &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay, &CmndShutterMode,
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
   &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
   &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition};
@@ -58,52 +73,86 @@ void (* const ShutterCommand[])(void) PROGMEM = {
 Ticker TickerShutter;
 
 struct SHUTTER {
-  power_t mask = 0;                       // bit mask with 11 at the position of relays that belong to at least ONE shutter
-  power_t old_power = 0;                  // preserve old bitmask for power to extract the relay that changes.
-  power_t switched_relay = 0;             // bitmatrix that contain the relays that was lastly changed.
-  uint32_t time[MAX_SHUTTERS];            // operating time of the shutter in 0.05sec
-  int32_t open_max[MAX_SHUTTERS];         // max value on maximum open calculated
-  int32_t target_position[MAX_SHUTTERS];  // position to go to
-  int32_t start_position[MAX_SHUTTERS];   // position before a movement is started. init at start
-  int32_t real_position[MAX_SHUTTERS];    // value between 0 and Shutter.open_max
-  uint16_t open_time[MAX_SHUTTERS];       // duration to open the shutter. 112 = 11.2sec
-  uint16_t close_time[MAX_SHUTTERS];      // duration to close the shutter. 112 = 11.2sec
-  uint16_t close_velocity[MAX_SHUTTERS];  // in relation to open velocity. higher value = faster
-  int8_t  direction[MAX_SHUTTERS];        // 1 == UP , 0 == stop; -1 == down
-  int8_t  lastdirection[MAX_SHUTTERS];    // last direction (1 == UP , -1 == down)
-  uint8_t mode = 0;                       // operation mode definition. see enum type above SHT_OFF_OPEN__OFF_CLOSE, SHT_OFF_ON__OPEN_CLOSE, SHT_PULSE_OPEN__PULSE_CLOSE
-  int16_t motordelay[MAX_SHUTTERS];       // initial motorstarttime in 0.05sec.
-  int16_t pwm_frequency[MAX_SHUTTERS];    // frequency of PWN for stepper motors
-  uint16_t max_pwm_frequency = 1000;      // maximum of PWM frequency for openig the shutter. depend on the motor and drivers
-  uint16_t max_close_pwm_frequency[MAX_SHUTTERS];// maximum of PWM frequency for closeing the shutter. depend on the motor and drivers
+  power_t RelayShutterMask = 0;              // bit mask with 11 at the position of relays that belong to at least ONE shutter
+  power_t RelayOldMask = 0;                  // bitmatrix that contain the last known state of all relays. Required to detemine the manual changed relay.
+  power_t RelayCurrentMask = 0;              // bitmatrix that contain the current state of all relays
+  uint32_t time[MAX_SHUTTERS];               // operating time of the shutter in 0.05sec
+  int32_t open_max[MAX_SHUTTERS];            // max value on maximum open calculated
+  int32_t target_position[MAX_SHUTTERS];     // position to go to
+  int32_t start_position[MAX_SHUTTERS];      // position before a movement is started. init at start
+  int32_t real_position[MAX_SHUTTERS];       // value between 0 and Shutter.open_max
+  uint16_t open_time[MAX_SHUTTERS];          // duration to open the shutter. 112 = 11.2sec
+  uint16_t close_time[MAX_SHUTTERS];         // duration to close the shutter. 112 = 11.2sec
+  uint16_t close_velocity[MAX_SHUTTERS];     // in relation to open velocity. higher value = faster
+  int8_t  direction[MAX_SHUTTERS];           // 1 == UP , 0 == stop; -1 == down
+  int8_t  lastdirection[MAX_SHUTTERS];       // last direction (1 == UP , -1 == down)
+  uint8_t position_mode=0;                   // how to calculate actual position: SHT_TIME, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME
+  uint8_t switch_mode[MAX_SHUTTERS];         // how to switch relays: SHT_SWITCH, SHT_PULSE
+  int16_t motordelay[MAX_SHUTTERS];          // initial motorstarttime in 0.05sec. Also uses for ramp at steppers and servos
+  int16_t pwm_velocity[MAX_SHUTTERS];        // frequency of PWN for stepper motors or PWM duty cycle change for PWM servo
+  uint16_t pwm_value[MAX_SHUTTERS];          // dutyload of PWM 0..1023 on ESP8266
+  uint16_t pwm_min[MAX_SHUTTERS];            // dutyload of PWM 0..1023 on ESP8266
+  uint16_t pwm_max[MAX_SHUTTERS];            // dutyload of PWM 0..1023 on ESP8266
+  uint16_t open_velocity_max = 1000;         // maximum of PWM change during opening. Defines velocity on opening. Steppers and Servos only
+  uint16_t close_velocity_max[MAX_SHUTTERS]; // maximum of PWM change during closeing. Defines velocity on opening. Steppers and Servos only
   uint8_t skip_relay_change;                 // avoid overrun at endstops
-  int32_t accelerator[MAX_SHUTTERS];         // speed of ramp-up, ramp down of shutter
-  uint8_t start_reported = 0;
+  int32_t accelerator[MAX_SHUTTERS];         // speed of ramp-up, ramp down of shutters with velocity control. Steppers and Servos only
+  uint8_t start_reported = 0;                // indicates of the shutter start was reported through MQTT JSON
 } Shutter;
+
+#define SHT_DIV_ROUND(__A, __B) (((__A) + (__B)/2) / (__B))
 
 void ShutterLogPos(uint32_t i)
 {
   char stemp2[10];
-  dtostrfd((float)Shutter.time[i] / steps_per_second, 2, stemp2);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter%d Real %d, Start %d, Stop %d, Dir %d, Delay %d, Rtc %s [s], Freq %d"),
-    i+1, Shutter.real_position[i], Shutter.start_position[i], Shutter.target_position[i], Shutter.direction[i], Shutter.motordelay[i], stemp2, Shutter.pwm_frequency[i]);
+  dtostrfd((float)Shutter.time[i] / STEPS_PER_SECOND, 2, stemp2);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter %d Real %d, Start %d, Stop %d, Dir %d, Delay %d, Rtc %s [s], Freq %d, PWM %d"),
+    i+1, Shutter.real_position[i], Shutter.start_position[i], Shutter.target_position[i], Shutter.direction[i], Shutter.motordelay[i], stemp2, Shutter.pwm_velocity[i], Shutter.pwm_value[i]);
+}
+
+void ExecuteCommandPowerShutter(uint32_t device, uint32_t state, uint32_t source)
+{
+  // first implementation for virtual relays. Avoid switching relay numbers that do not exist.
+  if (device <= devices_present) ExecuteCommandPower(device,state,source);
+}
+
+void ShutterUpdateVelocity(uint8_t i)
+{
+  // No Logging allowed. Part of RTC Timer
+  // will be calles through RTC every 50ms.
+  Shutter.pwm_velocity[i] += Shutter.accelerator[i];
+  Shutter.pwm_velocity[i] = tmax(0,tmin(Shutter.direction[i]==1 ? Shutter.open_velocity_max : Shutter.close_velocity_max[i],Shutter.pwm_velocity[i]));
 }
 
 void ShutterRtc50mS(void)
 {
+    // No Logging allowed. RTC Timer
   for (uint8_t i = 0; i < shutters_present; i++) {
-    Shutter.time[i]++;
-    if (Shutter.accelerator[i]) {
-      //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: accelerator i=%d ->  %d"),i, Shutter.accelerator[i]);
-      Shutter.pwm_frequency[i] += Shutter.accelerator[i];
-      Shutter.pwm_frequency[i] = tmax(0,tmin(Shutter.direction[i]==1 ? Shutter.max_pwm_frequency : Shutter.max_close_pwm_frequency[i],Shutter.pwm_frequency[i]));
-      analogWriteFreq(Shutter.pwm_frequency[i]);
-      analogWrite(Pin(GPIO_PWM1, i), 50);
-    }
+    if (Shutter.direction[i]) {
+      // update position data before increasing counter
+      Shutter.real_position[i] =  ShutterCalculatePosition(i);
+      Shutter.time[i]++;
+      ShutterCalculateAccelerator(i);
+      switch (Shutter.position_mode) {
+        case SHT_PWM_VALUE:
+          ShutterUpdateVelocity(i);
+          Shutter.real_position[i] +=  Shutter.direction[i] > 0 ? Shutter.pwm_velocity[i] : (Shutter.direction[i] < 0 ? -Shutter.pwm_velocity[i] : 0);
+          Shutter.pwm_value[i] = SHT_DIV_ROUND((Shutter.pwm_max[i]-Shutter.pwm_min[i]) * Shutter.real_position[i] , Shutter.open_max[i])+Shutter.pwm_min[i];
+          analogWrite(Pin(GPIO_PWM1, i), Shutter.pwm_value[i]);
+        break;
+
+        case SHT_COUNTER:
+          if (Shutter.accelerator[i]) {
+            //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: accelerator i=%d ->  %d"),i, Shutter.accelerator[i]);
+            ShutterUpdateVelocity(i);
+            analogWriteFreq(Shutter.pwm_velocity[i]);
+            analogWrite(Pin(GPIO_PWM1, i), 50);
+          }
+        break;
+      }
+    } // if (Shutter.direction[i])
   }
 }
-
-#define SHT_DIV_ROUND(__A, __B) (((__A) + (__B)/2) / (__B))
 
 int32_t ShutterPercentToRealPosition(uint32_t percent, uint32_t index)
 {
@@ -169,14 +218,14 @@ uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
 void ShutterInit(void)
 {
   shutters_present = 0;
-  Shutter.mask = 0;
+  Shutter.RelayShutterMask = 0;
   //Initialize to get relay that changed
-  Shutter.old_power = power;
-  bool relay_in_interlock = false;
+  Shutter.RelayOldMask = power;
+
 
   // if shutter 4 is unused
   if (Settings.shutter_startrelay[MAX_SHUTTERS -1] == 0) {
-     Shutter.max_pwm_frequency = Settings.shuttercoeff[4][3] > 0 ? Settings.shuttercoeff[4][3] : Shutter.max_pwm_frequency;
+     Shutter.open_velocity_max = Settings.shuttercoeff[4][3] > 0 ? Settings.shuttercoeff[4][3] : Shutter.open_velocity_max;
   }
   for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
@@ -184,35 +233,54 @@ void ShutterInit(void)
     if (Settings.shutter_startrelay[i] && (Settings.shutter_startrelay[i] < 9)) {
       shutters_present++;
 
-      // Determine shutter types
-      Shutter.mask |= 3 << (Settings.shutter_startrelay[i] -1)  ;
+      // Add the two relays to the mask to knaw they belong to shutters
+      Shutter.RelayShutterMask |= 3 << (Settings.shutter_startrelay[i] -1)  ;
 
-      for (uint32_t j = 0; j < MAX_INTERLOCKS * Settings.flag.interlock; j++) {  // CMND_INTERLOCK - Enable/disable interlock
-        //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Interlock state i=%d %d, flag %d, , shuttermask %d, maskedIL %d"),i, Settings.interlock[i], Settings.flag.interlock,Shutter.mask, Settings.interlock[i]&Shutter.mask);
-        if (Settings.interlock[j] && (Settings.interlock[j] & Shutter.mask)) {
-          //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Relay in Interlock group"));
-          relay_in_interlock = true;
-        }
+      // All shutters must have same mode. Switch OR Pulse. N
+      switch (Settings.pulse_timer[i]) {
+        case 0:
+          Shutter.switch_mode[i] = SHT_SWITCH;
+        break;
+        default:
+          Shutter.switch_mode[i] = SHT_PULSE;
+        break;
       }
-      if (relay_in_interlock) {
-        if (Settings.pulse_timer[i] > 0) {
-          Shutter.mode = SHT_PULSE_OPEN__PULSE_CLOSE;
-        } else {
-          Shutter.mode = SHT_OFF_OPEN__OFF_CLOSE;
+
+      if (Settings.shutter_mode == SHT_UNDEF) {
+        bool relay_in_interlock = false;
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: mode undef.. calculate..."));
+
+        for (uint32_t j = 0; j < MAX_INTERLOCKS * Settings.flag.interlock; j++) {  // CMND_INTERLOCK - Enable/disable interlock
+          //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Interlock state i=%d %d, flag %d, , shuttermask %d, maskedIL %d"),i, Settings.interlock[i], Settings.flag.interlock,Shutter.RelayShutterMask, Settings.interlock[i]&Shutter.RelayShutterMask);
+          if (Settings.interlock[j] && (Settings.interlock[j] & Shutter.RelayShutterMask)) {
+            //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Relay in Interlock group"));
+            relay_in_interlock = true;
+          }
+        }
+
+        switch (Settings.pulse_timer[i+1]) {
+          case 0:
+            Shutter.position_mode = SHT_TIME_GARAGE;
+          break;
+          default:
+            if (relay_in_interlock) {
+              Shutter.position_mode = SHT_TIME;
+            } else {
+              Shutter.position_mode = SHT_TIME_UP_DOWN;
+              if (PinUsed(GPIO_PWM1, i) && PinUsed(GPIO_CNTR1, i)) {
+                Shutter.position_mode = SHT_COUNTER;
+              }
+            }
+
+          break;
         }
       } else {
-        Shutter.mode = SHT_OFF_ON__OPEN_CLOSE;
-        if (PinUsed(GPIO_PWM1, i) && PinUsed(GPIO_CNTR1, i)) {
-          Shutter.mode = SHT_OFF_ON__OPEN_CLOSE_STEPPER;
-          Shutter.pwm_frequency[i] = 0;
-          Shutter.accelerator[i] = 0;
-          analogWriteFreq(Shutter.pwm_frequency[i]);
-          analogWrite(Pin(GPIO_PWM1, i), 0);
-//          ExecuteCommandPower(Settings.shutter_startrelay[i]+2, 0, SRC_SHUTTER);
-        }
+        Shutter.position_mode = Settings.shutter_mode;
       }
 
+      // main function for stepper and servos to control velocity and acceleration.
       TickerShutter.attach_ms(50, ShutterRtc50mS );
+
       // default the 50 percent should not have any impact without changing it. set to 60
       Settings.shutter_set50percent[i] = (Settings.shutter_set50percent[i] > 0) ? Settings.shutter_set50percent[i] : 50;
 
@@ -220,11 +288,13 @@ void ShutterInit(void)
       Shutter.open_time[i] = (Settings.shutter_opentime[i] > 0) ? Settings.shutter_opentime[i] : 100;
       Shutter.close_time[i] = (Settings.shutter_closetime[i] > 0) ? Settings.shutter_closetime[i] : 100;
 
-      // Update Calculation 20 because time interval is 0.05 sec
-      Shutter.open_max[i] = 200 * Shutter.open_time[i];
+      //temporary hard coded.
+      Shutter.pwm_min[i] = pwm_min;
+      Shutter.pwm_max[i] = pwm_max;
+
+      // Update Calculation 20 because time interval is 0.05 sec ans time is in 0.1sec
+      Shutter.open_max[i] = STEPS_PER_SECOND * RESOLUTION * Shutter.open_time[i] / 10;
       Shutter.close_velocity[i] =  Shutter.open_max[i] / Shutter.close_time[i] / 2 ;
-      Shutter.max_close_pwm_frequency[i] = Shutter.max_pwm_frequency*Shutter.open_time[i] / Shutter.close_time[i];
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shutter %d Closefreq: %d"),i, Shutter.max_close_pwm_frequency[i]);
 
       // calculate a ramp slope at the first 5 percent to compensate that shutters move with down part later than the upper part
       if (Settings.shutter_set50percent[i] != 50) {
@@ -232,17 +302,25 @@ void ShutterInit(void)
       	Settings.shuttercoeff[0][i] = Shutter.open_max[i] - (Settings.shuttercoeff[1][i] * 100);
       	Settings.shuttercoeff[2][i] = (Settings.shuttercoeff[0][i] + 5 * Settings.shuttercoeff[1][i]) / 5;
       }
-      Shutter.mask |= 3 << (Settings.shutter_startrelay[i] -1);
+      Shutter.RelayShutterMask |= 3 << (Settings.shutter_startrelay[i] -1);
 
       Shutter.real_position[i] = ShutterPercentToRealPosition(Settings.shutter_position[i], i);
-      //Shutter.real_position[i] =   Settings.shutter_position[i] <= 5 ?  Settings.shuttercoeff[2][i] * Settings.shutter_position[i] : Settings.shuttercoeff[1][i] * Settings.shutter_position[i] + Settings.shuttercoeff[0,i];
+
       Shutter.start_position[i] = Shutter.target_position[i] = Shutter.real_position[i];
       Shutter.motordelay[i] = Settings.shutter_motordelay[i];
       Shutter.lastdirection[i] = (50 < Settings.shutter_position[i]) ? 1 : -1;
 
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT%d: Init. Pos: %d,inverted %d, locked %d, end stop time enabled %d, webButtons inverted %d, shuttermode %d"),
-        i+1,  Shutter.real_position[i], 
-        (Settings.shutter_options[i]&1) ? 1 : 0, (Settings.shutter_options[i]&2) ? 1 : 0, (Settings.shutter_options[i]&4) ? 1 : 0, (Settings.shutter_options[i]&8) ? 1 : 0, Shutter.mode);
+      switch (Shutter.position_mode) {
+        case SHT_PWM_VALUE:
+          Shutter.open_velocity_max =  RESOLUTION;
+        break;
+      }
+      Shutter.close_velocity_max[i] = Shutter.open_velocity_max*Shutter.open_time[i] / Shutter.close_time[i];
+
+      //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shutter %d Openvel %d, Closevel: %d"),i, Shutter.open_velocity_max, Shutter.close_velocity_max[i]);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT%d: Init. Pos: %d,inverted %d, locked %d, end stop time enabled %d, webButtons inverted %d"),
+        i+1,  Shutter.real_position[i],
+        (Settings.shutter_options[i]&1) ? 1 : 0, (Settings.shutter_options[i]&2) ? 1 : 0, (Settings.shutter_options[i]&4) ? 1 : 0, (Settings.shutter_options[i]&8) ? 1 : 0);
 
     } else {
       // terminate loop at first INVALID shutter.
@@ -250,6 +328,7 @@ void ShutterInit(void)
     }
     ShutterLimitRealAndTargetPositions(i);
     Settings.shutter_accuracy = 1;
+    Settings.shutter_mode = Shutter.position_mode;
   }
 }
 
@@ -290,6 +369,113 @@ void ShutterLimitRealAndTargetPositions(uint32_t i) {
   if (Shutter.target_position[i]>Shutter.open_max[i]) Shutter.target_position[i] = Shutter.open_max[i];
 }
 
+void ShutterCalculateAccelerator(uint8_t i)
+{
+  // No Logging allowed. Part of RTC Timer
+  if (Shutter.direction[i] != 0) {
+    switch (Shutter.position_mode) {
+      case SHT_COUNTER:
+      case SHT_PWM_VALUE:
+        // calculate max velocity allowed in this direction
+        velocity_max = Shutter.direction[i] == 1 ? Shutter.open_velocity_max : Shutter.close_velocity_max[i];
+        // calculate max change of velocyty based on the defined motordelay in steps
+        velocity_change_per_step_max =  velocity_max / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
+        // minimumtime required from current velocity to stop
+        min_runtime_ms = Shutter.pwm_velocity[i] * 1000 / STEPS_PER_SECOND / velocity_change_per_step_max;
+        // decellartion way from current velocity
+        current_stop_way = (min_runtime_ms * (Shutter.pwm_velocity[i]+velocity_change_per_step_max)/100 - Shutter.pwm_velocity[i])*RESOLUTION/Shutter.open_velocity_max * Shutter.direction[i] ;
+        next_possible_stop_position = Shutter.real_position[i] + current_stop_way ;
+        toBeAcc = 0;
+        // ensure that the accelerotor kicks in at least one step BEFORE it is to late and a hard stop required.
+        if (Shutter.accelerator[i] < 0 || (next_possible_stop_position * Shutter.direction[i]) +RESOLUTION*Shutter.pwm_velocity[i]/Shutter.open_velocity_max>= Shutter.target_position[i] * Shutter.direction[i] ) {
+            // 10 times the deviation is the p-value of this simple p-regulator
+            toBeAcc = 100+(Shutter.direction[i]*(next_possible_stop_position-Shutter.target_position[i])*velocity_max/Shutter.pwm_velocity[i]*10/RESOLUTION);
+            Shutter.accelerator[i] = - tmin(tmax( velocity_change_per_step_max*toBeAcc/100  , (velocity_change_per_step_max*9/10)), (velocity_change_per_step_max*11/10));
+        } else if (  Shutter.accelerator[i] > 0 && Shutter.pwm_velocity[i] ==  velocity_max) {
+          Shutter.accelerator[i] = 0;
+        }
+      break;
+    }
+  }
+}
+
+void ShutterDecellerateForStop(uint8_t i)
+{
+  switch (Shutter.position_mode) {
+    case SHT_PWM_VALUE:
+    case SHT_COUNTER:
+      int16_t missing_steps;
+      Shutter.accelerator[i] = -(Shutter.open_velocity_max / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1) *11/10);
+      while (Shutter.pwm_velocity[i] > -2*Shutter.accelerator[i] ) {
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: velocity: %ld, delta: %d"), Shutter.pwm_velocity[i], Shutter.accelerator[i] );
+        //Shutter.pwm_velocity[i] = tmax(Shutter.pwm_velocity[i]-Shutter.accelerator[i] , 0);
+        // Control will be done in RTC Ticker.
+        delay(50);
+      }
+      if (Shutter.position_mode == SHT_COUNTER){
+        missing_steps = ((Shutter.target_position[i]-Shutter.start_position[i])*Shutter.direction[i]*Shutter.open_velocity_max/RESOLUTION/STEPS_PER_SECOND) - RtcSettings.pulse_counter[i];
+        //prepare for stop PWM
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain steps %d, counter %d, freq %d"), missing_steps, RtcSettings.pulse_counter[i] ,Shutter.pwm_velocity[i]);
+        Shutter.accelerator[i] = 0;
+        Shutter.pwm_velocity[i] = Shutter.pwm_velocity[i] > 250 ? 250 : Shutter.pwm_velocity[i];
+        analogWriteFreq(Shutter.pwm_velocity[i]);
+        analogWrite(Pin(GPIO_PWM1, i), 50);
+        Shutter.pwm_velocity[i] = 0;
+        analogWriteFreq(Shutter.pwm_velocity[i]);
+        while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter.target_position[i]-Shutter.start_position[i])*Shutter.direction[i]*Shutter.open_velocity_max/RESOLUTION/STEPS_PER_SECOND) {
+          delay(1);
+        }
+        analogWrite(Pin(GPIO_PWM1, i), 0); // removed with 8.3 because of reset caused by watchog
+        Shutter.real_position[i] = ShutterCalculatePosition(i);
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Real %d, pulsecount %d, start %d"), Shutter.real_position[i],RtcSettings.pulse_counter[i], Shutter.start_position[i]);
+
+      }
+      Shutter.direction[i] = 0;
+      Shutter.pwm_velocity[i] = 0;
+    break;
+  }
+}
+
+void ShutterPowerOff(uint8_t i) {
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Stop Shutter %d .."), i);
+  ShutterDecellerateForStop(i);
+  if (Shutter.direction[i] !=0) {
+    Shutter.direction[i] = 0;
+    delay(MOTOR_STOP_TIME);
+  }
+  switch (Shutter.switch_mode[i]) {
+    case SHT_SWITCH:
+      if ((1 << (Settings.shutter_startrelay[i]-1)) & power) {
+        ExecuteCommandPowerShutter(Settings.shutter_startrelay[i], 0, SRC_SHUTTER);
+      }
+      if ((1 << (Settings.shutter_startrelay[i])) & power) {
+        ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
+      }
+    break;
+    case SHT_PULSE:
+      uint8_t cur_relay = Settings.shutter_startrelay[i] + (Shutter.direction[i] == 1 ? 0 : (uint8_t)(Shutter.position_mode == SHT_TIME)) ;
+      // we have a momentary switch here. Needs additional pulse on same relay after the end
+      if ((SRC_PULSETIMER == last_source || SRC_SHUTTER == last_source || SRC_WEBGUI == last_source)) {
+        ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
+        // switch off direction relay to make it power less
+        if ((1 << (Settings.shutter_startrelay[i])) & power) {
+          ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
+        }
+      } else {
+        last_source = SRC_SHUTTER;
+      }
+    break;
+  }
+  // Store current PWM value to ensure proper position after reboot.
+  switch (Shutter.position_mode) {
+    case SHT_PWM_VALUE:
+    char scmnd[20];
+    snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM " %d" ),Shutter.pwm_value[i]);
+    ExecuteCommand(scmnd, SRC_BUTTON);
+    break;
+  }
+}
+
 void ShutterUpdatePosition(void)
 {
 
@@ -298,110 +484,36 @@ void ShutterUpdatePosition(void)
 
   for (uint32_t i = 0; i < shutters_present; i++) {
     if (Shutter.direction[i] != 0) {
-      int32_t stop_position_delta = 20;
+
       // Calculate position with counter. Much more accurate and no need for motordelay workaround
       //                        adding some steps to stop early
-      Shutter.real_position[i] =  ShutterCounterBasedPosition(i);
+      //Shutter.real_position[i] =  ShutterCalculatePosition(i);
       if (!Shutter.start_reported) {
         ShutterReportPosition(true, i);
         XdrvRulesProcess();
         Shutter.start_reported = 1;
       }
+      //ShutterCalculateAccelerator(i);
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: time: %d, toBeAcc %d, current_stop_way %d,vel_vur %d, vel_max %d, act_vel_change %d, min_runtime_ms %d, act.pos %d, next_stop %d, target: %d,  velocity_change_per_step_max %d"),Shutter.time[i],toBeAcc,current_stop_way,
+                                    Shutter.pwm_velocity[i],velocity_max, Shutter.accelerator[i],min_runtime_ms,Shutter.real_position[i], next_possible_stop_position,Shutter.target_position[i],velocity_change_per_step_max);
 
-      if (Shutter.mode == SHT_OFF_ON__OPEN_CLOSE_STEPPER) {
-        int32_t  max_frequency = Shutter.direction[i] == 1 ? Shutter.max_pwm_frequency : Shutter.max_close_pwm_frequency[i];
-        int32_t  max_freq_change_per_sec =  Shutter.max_pwm_frequency*steps_per_second / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
-        int32_t  min_runtime_ms = Shutter.pwm_frequency[i]*1000 / max_freq_change_per_sec;
-        int32_t  velocity = Shutter.direction[i] == 1 ? 100 : Shutter.close_velocity[i];
-        int32_t  minstopway = min_runtime_ms * velocity / 100 * Shutter.pwm_frequency[i] / max_frequency * Shutter.direction[i] ;
 
-        int32_t  next_possible_stop = Shutter.real_position[i] + minstopway ;
-        stop_position_delta =200 * Shutter.pwm_frequency[i]/max_frequency + Shutter.direction[i] * (next_possible_stop - Shutter.target_position[i]);
-
-        //Shutter.accelerator[i] = tmin(tmax(max_freq_change_per_sec*(100-(Shutter.direction[i]*(Shutter.target_position[i]-next_possible_stop)    ))/2000 , max_freq_change_per_sec*9/200), max_freq_change_per_sec*11/200);
-        //int32_t act_freq_change = max_freq_change_per_sec/20;
-        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: time: %d, velocity %d, minstopway %d,cur_freq %d, max_frequency %d, act_freq_change %d, min_runtime_ms %d, act.pos %d, next_stop %d, target: %d"),Shutter.time[i],velocity,minstopway,
-                                      Shutter.pwm_frequency[i],max_frequency, Shutter.accelerator[i],min_runtime_ms,Shutter.real_position[i], next_possible_stop,Shutter.target_position[i]);
-
-        if (Shutter.accelerator[i] < 0 || next_possible_stop * Shutter.direction[i] > (Shutter.target_position[i]- (100 * Shutter.direction[i])) * Shutter.direction[i] ) {
-
-            Shutter.accelerator[i] = - tmin(tmax(max_freq_change_per_sec*(100-(Shutter.direction[i]*(Shutter.target_position[i]-next_possible_stop)    ))/2000 , max_freq_change_per_sec*9/200), max_freq_change_per_sec*11/200);
-            //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Ramp down: acc: %d"),   Shutter.accelerator[i]);
-        } else if (  Shutter.accelerator[i] > 0 && Shutter.pwm_frequency[i] ==  max_frequency) {
-          Shutter.accelerator[i] = 0;
+      if ( Shutter.real_position[i] * Shutter.direction[i] >= Shutter.target_position[i] * Shutter.direction[i] || Shutter.pwm_velocity[i]<velocity_change_per_step_max) {
+        if (Shutter.direction[i] != 0) {
+          Shutter.lastdirection[i] = Shutter.direction[i];
         }
-      } else {
-        Shutter.real_position[i] = Shutter.start_position[i] + ( (Shutter.time[i] - Shutter.motordelay[i]) * (Shutter.direction[i] > 0 ? 100 : -Shutter.close_velocity[i]));
-      }
-      if ( Shutter.real_position[i] * Shutter.direction[i] + stop_position_delta >= Shutter.target_position[i] * Shutter.direction[i]  ) {
-        // calculate relay number responsible for current movement.
-        //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Stop Condition detected: real: %d, Target: %d, direction: %d"),Shutter.real_position[i], Shutter.target_position[i],Shutter.direction[i]);
-        uint8_t cur_relay = Settings.shutter_startrelay[i] + (Shutter.direction[i] == 1 ? 0 : 1) ;
-        int16_t missing_steps;
-
-        switch (Shutter.mode) {
-          case SHT_PULSE_OPEN__PULSE_CLOSE:
-            // we have a momentary switch here. Needs additional pulse on same relay after the end
-            if (SRC_PULSETIMER == last_source || SRC_SHUTTER == last_source || SRC_WEBGUI == last_source) {
-              ExecuteCommandPower(cur_relay, 1, SRC_SHUTTER);
-            } else {
-              last_source = SRC_SHUTTER;
-            }
-          break;
-          case SHT_OFF_ON__OPEN_CLOSE_STEPPER:
-            missing_steps = ((Shutter.target_position[i]-Shutter.start_position[i])*Shutter.direction[i]*Shutter.max_pwm_frequency/2000) - RtcSettings.pulse_counter[i];
-            //prepare for stop PWM
-            AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain steps %d, counter %d, freq %d"), missing_steps, RtcSettings.pulse_counter[i] ,Shutter.pwm_frequency[i]);
-            Shutter.accelerator[i] = 0;
-            Shutter.pwm_frequency[i] = Shutter.pwm_frequency[i] > 250 ? 250 : Shutter.pwm_frequency[i];
-            analogWriteFreq(Shutter.pwm_frequency[i]);
-            analogWrite(Pin(GPIO_PWM1, i), 50);
-            Shutter.pwm_frequency[i] = 0;
-            analogWriteFreq(Shutter.pwm_frequency[i]);
-            while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter.target_position[i]-Shutter.start_position[i])*Shutter.direction[i]*Shutter.max_pwm_frequency/2000) {
-              delay(1);
-            }
-            analogWrite(Pin(GPIO_PWM1, i), 0); // removed with 8.3 because of reset caused by watchog
-//            ExecuteCommandPower(Settings.shutter_startrelay[i]+2, 0, SRC_SHUTTER);
-            Shutter.real_position[i] = ShutterCounterBasedPosition(i);
-            AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Real %d, pulsecount %d, start %d"), Shutter.real_position[i],RtcSettings.pulse_counter[i], Shutter.start_position[i]);
-
-            if ((1 << (Settings.shutter_startrelay[i]-1)) & power) {
-              ExecuteCommandPower(Settings.shutter_startrelay[i], 0, SRC_SHUTTER);
-              ExecuteCommandPower(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
-            }
-          break;
-          case SHT_OFF_ON__OPEN_CLOSE:
-          if ((1 << (Settings.shutter_startrelay[i]-1)) & power) {
-            ExecuteCommandPower(Settings.shutter_startrelay[i], 0, SRC_SHUTTER);
-            ExecuteCommandPower(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
-          }
-          break;
-          case SHT_OFF_OPEN__OFF_CLOSE:
-            // avoid switching OFF a relay already OFF
-            if ((1 << (cur_relay-1)) & power) {
-              // Relay is on and need to be switched off.
-              ExecuteCommandPower(cur_relay, 0, SRC_SHUTTER);
-            }
-          break;
-        }
+        ShutterPowerOff(i);
         ShutterLimitRealAndTargetPositions(i);
         Settings.shutter_position[i] = ShutterRealToPercentPosition(Shutter.real_position[i], i);
+        Shutter.start_position[i] = Shutter.real_position[i];
 
         ShutterLogPos(i);
-
-        Shutter.start_position[i] = Shutter.real_position[i];
 
         // sending MQTT result to broker
         snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i+1);
         GetTopic_P(stopic, STAT, mqtt_topic, scommand);
         Response_P("%d", (Settings.shutter_options[i] & 1) ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i]);
         MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
-
-        if (Shutter.direction[i] != 0) {
-          Shutter.lastdirection[i] = Shutter.direction[i];
-        }
-        Shutter.direction[i] = 0;
         ShutterReportPosition(true, i);
         rules_flag.shutter_moved = 1;
         XdrvRulesProcess();
@@ -415,7 +527,7 @@ bool ShutterState(uint32_t device)
   device--;
   device &= 3;
   return (Settings.flag3.shutter_mode &&  // SetOption80 - Enable shutter support
-          (Shutter.mask & (1 << (Settings.shutter_startrelay[device]-1))) );
+          (Shutter.RelayShutterMask & (1 << (Settings.shutter_startrelay[device]-1))) );
 }
 
 void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
@@ -425,14 +537,17 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
      || ( (-1 == direction) && (Shutter.real_position[i] / Shutter.close_velocity[i] <= 2)) ) {
     Shutter.skip_relay_change = 1;
   } else {
-    if (Shutter.mode == SHT_OFF_ON__OPEN_CLOSE_STEPPER) {
-      Shutter.pwm_frequency[i] = 0;
-      analogWriteFreq(Shutter.pwm_frequency[i]);
-      analogWrite(Pin(GPIO_PWM1, i), 0);
-      RtcSettings.pulse_counter[i] = 0;
-      Shutter.accelerator[i] = Shutter.max_pwm_frequency / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Ramp up: %d"), Shutter.accelerator[i]);
+    Shutter.pwm_velocity[i] = 0;
+    switch (Shutter.position_mode) {
+#ifdef SHUTTER_STEPPER
+      case SHT_COUNTER:
+        analogWriteFreq(Shutter.pwm_velocity[i]);
+        analogWrite(Pin(GPIO_PWM1, i), 0);
+        RtcSettings.pulse_counter[i] = 0;
+      break;
+#endif
     }
+    Shutter.accelerator[i] = Shutter.open_velocity_max / (Shutter.motordelay[i]>0 ? Shutter.motordelay[i] : 1);
     Shutter.target_position[i] = target_pos;
     Shutter.start_position[i] = Shutter.real_position[i];
     Shutter.time[i] = 0;
@@ -441,91 +556,114 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     rules_flag.shutter_moving = 1;
     rules_flag.shutter_moved  = 0;
     Shutter.start_reported = 0;
-    //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: real %d, start %d, counter %d, max_freq %d, dir %d, freq %d"),Shutter.real_position[i], Shutter.start_position[i] ,RtcSettings.pulse_counter[i],Shutter.max_pwm_frequency , Shutter.direction[i] ,Shutter.max_pwm_frequency );
+    //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: real %d, start %d, counter %d,freq_max %d, dir %d, freq %d"),Shutter.real_position[i], Shutter.start_position[i] ,RtcSettings.pulse_counter[i],Shutter.open_velocity_max , Shutter.direction[i] ,Shutter.open_velocity_max );
   }
-  //AddLog_P2(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shutter: %d from %d to %d in directin %d"), i, Shutter.start_position[i], Shutter.target_position[i], Shutter.direction[i]);
+  //AddLog_P2(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shutter: %d from %d to %d in direction %d"), i, Shutter.start_position[i], Shutter.target_position[i], Shutter.direction[i]);
 }
 
-void ShutterWaitForMotorStop(uint32_t i)
+
+int32_t ShutterCalculatePosition(uint32_t i)
 {
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Wait for Motorstop.."));
-  if ((SHT_OFF_ON__OPEN_CLOSE == Shutter.mode) || (SHT_OFF_ON__OPEN_CLOSE_STEPPER == Shutter.mode)) {
-    if (SHT_OFF_ON__OPEN_CLOSE_STEPPER == Shutter.mode) {
-      //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Frequency change %d"), Shutter.pwm_frequency);
-      while (Shutter.pwm_frequency[i] > 0) {
-        //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Frequency: %ld, delta: %d"), Shutter.pwm_frequency[i], (int32_t)((Shutter.direction[i] == 1 ? Shutter.max_pwm_frequency : Shutter.max_close_pwm_frequency[i])/(Shutter.motordelay[i]+1)) );
-        Shutter.pwm_frequency[i] = tmax(Shutter.pwm_frequency[i]-((Shutter.direction[i] == 1 ? Shutter.max_pwm_frequency : Shutter.max_close_pwm_frequency[i])/(Shutter.motordelay[i]+1)) , 0);
-        //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Frequency: %ld"),  Shutter.pwm_frequency[i]);
-        analogWriteFreq(Shutter.pwm_frequency[i]);
-        analogWrite(Pin(GPIO_PWM1, i), 50);
-        delay(50);
+    // No Logging allowed. Part of RTC Timer
+  if (Shutter.direction[i] != 0) {
+    switch (Shutter.position_mode) {
+      case SHT_COUNTER:
+        return ((int32_t)RtcSettings.pulse_counter[i]*Shutter.direction[i]*STEPS_PER_SECOND*RESOLUTION / Shutter.open_velocity_max)+Shutter.start_position[i];
+        break;
+      case SHT_TIME:
+      case SHT_TIME_UP_DOWN:
+      case SHT_TIME_GARAGE:
+        return Shutter.start_position[i] + ( (Shutter.time[i] - Shutter.motordelay[i]) * (Shutter.direction[i] > 0 ? RESOLUTION : -Shutter.close_velocity[i]));
+        break;
+      case SHT_PWM_TIME:
+        break;
+      case SHT_PWM_VALUE:
+        return Shutter.real_position[i];
+      break;
+      default:
+        break;
       }
-      analogWrite(Pin(GPIO_PWM1, i), 0);
-//      ExecuteCommandPower(Settings.shutter_startrelay[i]+2, 0, SRC_SHUTTER);
-      Shutter.real_position[i] = ShutterCounterBasedPosition(i);
     } else {
-      ExecuteCommandPower(Settings.shutter_startrelay[i], 0, SRC_SHUTTER);
-      delay(MOTOR_STOP_TIME);
+      return Shutter.real_position[i];
     }
-  } else {
-    delay(MOTOR_STOP_TIME);
-  }
-}
-
-int32_t ShutterCounterBasedPosition(uint32_t i)
-{
-  return ((int32_t)RtcSettings.pulse_counter[i]*Shutter.direction[i]*2000 / Shutter.max_pwm_frequency)+Shutter.start_position[i];
 }
 
 void ShutterRelayChanged(void)
 {
 
-  // Shutter.switched_relay = binary relay that was recently changed and cause an Action
+  // Shutter.RelayCurrentMask = binary relay that was recently changed and cause an Action
   // powerstate_local = binary powermatrix and relays from shutter: 0..3
   // relays_changed = bool if one of the relays that belong to the shutter changed not by shutter or pulsetimer
   char stemp1[10];
 
 	for (uint32_t i = 0; i < shutters_present; i++) {
 		power_t powerstate_local = (power >> (Settings.shutter_startrelay[i] -1)) & 3;
-		//uint8   manual_relays_changed = ((Shutter.switched_relay >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_IGNORE != last_source && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
-    uint8   manual_relays_changed = ((Shutter.switched_relay >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
-    //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shutter %d: source: %s, powerstate_local %ld, Shutter.switched_relay %d, manual change %d"), i+1, GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), powerstate_local,Shutter.switched_relay,manual_relays_changed);
+    // SRC_IGNORE added because INTERLOCK function bite causes this as last source for changing the relay.
+		//uint8   manual_relays_changed = ((Shutter.RelayCurrentMask >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_IGNORE != last_source && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
+    uint8   manual_relays_changed = ((Shutter.RelayCurrentMask >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shutter %d: source: %s, powerstate_local %ld, Shutter.RelayCurrentMask %d, manual change %d"), i+1, GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), powerstate_local,Shutter.RelayCurrentMask,manual_relays_changed);
     if (manual_relays_changed) {
       //Shutter.skip_relay_change = true;
       ShutterLimitRealAndTargetPositions(i);
-      if (Shutter.mode == SHT_OFF_ON__OPEN_CLOSE ||  Shutter.mode == SHT_OFF_ON__OPEN_CLOSE_STEPPER) {
-        ShutterWaitForMotorStop(i);
-				switch (powerstate_local) {
-					case 1:
-            ShutterStartInit(i, 1, Shutter.open_max[i]);
-					  break;
-					case 3:
-					  ShutterStartInit(i, -1, 0);
-					  break;
-					default:
-            //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shutter %d: Switch OFF motor."),i);
-					  Shutter.target_position[i] = Shutter.real_position[i];
-				  }
-			} else {
-        if (Shutter.direction[i] != 0 && (!powerstate_local || (powerstate_local && Shutter.mode == SHT_PULSE_OPEN__PULSE_CLOSE))) {
-					Shutter.target_position[i] = Shutter.real_position[i];
-					AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shutter %d: Switch OFF motor. Target: %ld, source: %s, powerstate_local %ld, Shutter.switched_relay %d, manual change %d"), i+1, Shutter.target_position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), powerstate_local,Shutter.switched_relay,manual_relays_changed);
-				} else {
-					last_source = SRC_SHUTTER; // avoid switch off in the next loop
-					if (powerstate_local == 2) { // testing on CLOSE relay, if ON
-					  // close with relay two
-            ShutterWaitForMotorStop(i);
-					  ShutterStartInit(i, -1, 0);
-					} else {
-					  // opens with relay one
-            ShutterWaitForMotorStop(i);
-					  ShutterStartInit(i, 1, Shutter.open_max[i]);
-					}
-				}
+      switch (Shutter.switch_mode[i] ) {
+        case SHT_PULSE:
+          if (Shutter.direction[i] != 0 && powerstate_local) {
+            Shutter.target_position[i] = Shutter.real_position[i];
+            powerstate_local = 0;
+  					AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shutter %d: Switch OFF motor. Target: %ld, source: %s, powerstate_local %ld, Shutter.RelayCurrentMask %d, manual change %d"), i+1, Shutter.target_position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), powerstate_local,Shutter.RelayCurrentMask,manual_relays_changed);
+          }
+        break;
+        default:
+          last_source = SRC_SHUTTER; // avoid switch off in the next loop
+          if (Shutter.direction[i] != 0 ) ShutterPowerOff(i);
+      }
+      switch (Shutter.position_mode) {
+        // enum Shutterposition_mode {SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
+        case SHT_TIME_UP_DOWN:
+        case SHT_COUNTER:
+        case SHT_PWM_VALUE:
+        case SHT_PWM_TIME:
+          ShutterPowerOff(i);
+          switch (powerstate_local) {
+            case 1:
+              ShutterStartInit(i, 1, Shutter.open_max[i]);
+              break;
+            case 3:
+              ShutterStartInit(i, -1, 0);
+              break;
+            default:
+              //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shutter %d: Switch OFF motor."),i);
+              Shutter.target_position[i] = Shutter.real_position[i];
+            }
+        break;
+        case SHT_TIME:
+          switch (powerstate_local) {
+            case 1:
+              ShutterStartInit(i, 1, Shutter.open_max[i]);
+              break;
+            case 2:
+              ShutterStartInit(i, -1, 0);
+              break;
+              default:
+                //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shutter %d: Switch OFF motor."),i);
+                Shutter.target_position[i] = Shutter.real_position[i];
+          }
+        break;
+        case SHT_TIME_GARAGE:
+         switch (powerstate_local) {
+           case 1:
+             ShutterStartInit(i, Shutter.lastdirection[i]*-1 , Shutter.lastdirection[i] == 1 ?  0 : Shutter.open_max[i]);
+             AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shutter %d Garage. NewTarget %d"), i, Shutter.target_position[i]);
+           break;
+           default:
+            Shutter.target_position[i] = Shutter.real_position[i];
+         }
+
+
+			  } // switch (Shutter.position_mode)
         AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shutter %d: Target: %ld, powerstatelocal %d"), i+1, Shutter.target_position[i], powerstate_local);
-			}
-		}
-	}
+		 } // if (manual_relays_changed)
+  } // for (uint32_t i = 0; i < shutters_present; i++)
 }
 
 bool ShutterButtonIsSimultaneousHold(uint32_t button_index, uint32_t shutter_index) {
@@ -723,12 +861,12 @@ void ShutterSetPosition(uint32_t device, uint32_t position)
 {
   char svalue[32];                   // Command and number parameter
   snprintf_P(svalue, sizeof(svalue), PSTR(D_PRFX_SHUTTER D_CMND_SHUTTER_POSITION "%d %d"), device, position);
-  ExecuteCommand(svalue, SRC_IGNORE);
+  ExecuteCommand(svalue, SRC_SHUTTER);
 }
 
 void ShutterToggle(bool dir)
 {
-  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Payload toggle: %d, i %d"), XdrvMailbox.payload, XdrvMailbox.index);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Payload toggle: %d, i %d, dir %d"), XdrvMailbox.payload, XdrvMailbox.index, dir);
   if ((1 == XdrvMailbox.index) && (XdrvMailbox.payload != -99)) {
     XdrvMailbox.index = XdrvMailbox.payload;
   }
@@ -843,6 +981,8 @@ void CmndShutterStop(void)
 
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Stop moving %d: dir: %d"), XdrvMailbox.index, Shutter.direction[i]);
         // set stop position 10 steps ahead (0.5sec to allow normal stop)
+
+        //ToDo: Replace with function
         int32_t temp_realpos = Shutter.start_position[i] + ( (Shutter.time[i]+10) * (Shutter.direction[i] > 0 ? 100 : -Shutter.close_velocity[i]));
         XdrvMailbox.payload = ShutterRealToPercentPosition(temp_realpos, i);
         //XdrvMailbox.payload = Settings.shuttercoeff[2][i] * 5 > temp_realpos ? temp_realpos / Settings.shuttercoeff[2][i] : (temp_realpos-Settings.shuttercoeff[0,i]) / Settings.shuttercoeff[1][i];
@@ -900,55 +1040,61 @@ void CmndShutterPosition(void)
       if (XdrvMailbox.payload != -99) {
         //target_pos_percent = (Settings.shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent;
         Shutter.target_position[index] = ShutterPercentToRealPosition(target_pos_percent, index);
-        //Shutter.accelerator[index] = Shutter.max_pwm_frequency / ((Shutter.motordelay[index] > 0) ? Shutter.motordelay[index] : 1);
+        //Shutter.accelerator[index] = Shutter.open_velocity_max / ((Shutter.motordelay[index] > 0) ? Shutter.motordelay[index] : 1);
         //Shutter.target_position[index] = XdrvMailbox.payload < 5 ?  Settings.shuttercoeff[2][index] * XdrvMailbox.payload : Settings.shuttercoeff[1][index] * XdrvMailbox.payload + Settings.shuttercoeff[0,index];
         AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: lastsource %d:, real %d, target %d, payload %d"), last_source, Shutter.real_position[index] ,Shutter.target_position[index],target_pos_percent);
       }
       if ( (target_pos_percent >= 0) && (target_pos_percent <= 100) && abs(Shutter.target_position[index] - Shutter.real_position[index] ) / Shutter.close_velocity[index] > 2) {
         if (Settings.shutter_options[index] & 4) {
-          if (0   == target_pos_percent) Shutter.target_position[index] -= 1 * 2000;
-          if (100 == target_pos_percent) Shutter.target_position[index] += 1 * 2000;
+          if (0   == target_pos_percent) Shutter.target_position[index] -= 1 * RESOLUTION * STEPS_PER_SECOND;
+          if (100 == target_pos_percent) Shutter.target_position[index] += 1 * RESOLUTION * STEPS_PER_SECOND;
         }
         int8_t new_shutterdirection = Shutter.real_position[index] < Shutter.target_position[index] ? 1 : -1;
         if (Shutter.direction[index] == -new_shutterdirection) {
-          // direction need to be changed. on momentary switches first stop the Shutter
-          if (SHT_PULSE_OPEN__PULSE_CLOSE == Shutter.mode) {
-            // code for momentary shutters only small switch on to stop Shutter
-            ExecuteCommandPower(Settings.shutter_startrelay[index] + ((new_shutterdirection == 1) ? 0 : 1), 1, SRC_SHUTTER);
-            delay(100);
-          } else {
-            if (SHT_OFF_OPEN__OFF_CLOSE == Shutter.mode) {
-              ExecuteCommandPower(Settings.shutter_startrelay[index] + ((new_shutterdirection == 1) ? 1 : 0), 0, SRC_SHUTTER);
-              ShutterWaitForMotorStop(index);
-            }
-          }
+          ShutterPowerOff(index);
         }
         if (Shutter.direction[index] != new_shutterdirection) {
-          if ((SHT_OFF_ON__OPEN_CLOSE == Shutter.mode) || (SHT_OFF_ON__OPEN_CLOSE_STEPPER == Shutter.mode)) {
-            //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay5 5s, xdrv %d"), XdrvMailbox.payload);
-            ShutterWaitForMotorStop(index);
-            ExecuteCommandPower(Settings.shutter_startrelay[index], 0, SRC_SHUTTER);
-            ShutterStartInit(index, new_shutterdirection, Shutter.target_position[index]);
-            if (Shutter.skip_relay_change == 0) {
-              // Code for shutters with circuit safe configuration, switch the direction Relay
-              ExecuteCommandPower(Settings.shutter_startrelay[index] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
-              // power on
-              ExecuteCommandPower(Settings.shutter_startrelay[index], 1, SRC_SHUTTER);
-              if (SHT_OFF_ON__OPEN_CLOSE_STEPPER == Shutter.mode) {
-                ExecuteCommandPower(Settings.shutter_startrelay[index]+2, 1, SRC_SHUTTER);
+          ShutterStartInit(index, new_shutterdirection, Shutter.target_position[index]);
+          switch (Shutter.position_mode) {
+            case SHT_COUNTER:
+            case SHT_PWM_TIME:
+            case SHT_PWM_VALUE:
+            case SHT_TIME_UP_DOWN:
+              if (!Shutter.skip_relay_change) {
+                // Code for shutters with circuit safe configuration, switch the direction Relay
+                ExecuteCommandPowerShutter(Settings.shutter_startrelay[index] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
+                // power on
+                ExecuteCommandPowerShutter(Settings.shutter_startrelay[index], 1, SRC_SHUTTER);
               }
-            }
-          } else {
-            // now start the motor for the right direction, work for momentary and normal shutters.
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Start in dir %d"), Shutter.direction[index]);
-            ShutterStartInit(index, new_shutterdirection, Shutter.target_position[index]);
-            if (Shutter.skip_relay_change == 0) {
-              ExecuteCommandPower(Settings.shutter_startrelay[index] + (new_shutterdirection == 1 ? 0 : 1), 1, SRC_SHUTTER);
-            }
-            //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay6 5s, xdrv %d"), XdrvMailbox.payload);
-          }
-          Shutter.switched_relay = 0;
-        }
+              if (Shutter.position_mode != SHT_TIME_UP_DOWN) ExecuteCommandPowerShutter(Settings.shutter_startrelay[index]+2, 1, SRC_SHUTTER);
+            break;
+            case SHT_TIME:
+              if (!Shutter.skip_relay_change) {
+                if ( (power >> (Settings.shutter_startrelay[index] -1)) & 3 > 0 ) {
+                  ExecuteCommandPowerShutter(Settings.shutter_startrelay[index] + (new_shutterdirection == 1 ? 1 : 0), Shutter.switch_mode[index] == SHT_SWITCH ? 0 : 1, SRC_SHUTTER);
+                }
+                ExecuteCommandPowerShutter(Settings.shutter_startrelay[index] + (new_shutterdirection == 1 ? 0 : 1), 1, SRC_SHUTTER);
+              }
+            break;
+            case SHT_TIME_GARAGE:
+              if (!Shutter.skip_relay_change) {
+                if (new_shutterdirection == Shutter.lastdirection[index]) {
+                  AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Garage not move in this direction: %d"), Shutter.switch_mode[index] == SHT_PULSE);
+                  for (uint8_t k=0 ; k <= (uint8_t)(Shutter.switch_mode[index] == SHT_PULSE) ; k++) {
+                    ExecuteCommandPowerShutter(Settings.shutter_startrelay[index], 1, SRC_SHUTTER);
+                    delay(500);
+                    ExecuteCommandPowerShutter(Settings.shutter_startrelay[index], 0, SRC_SHUTTER);
+                    delay(500);
+                  }
+                  // reset shutter time to avoid 2 seconds above count as runtime
+                  Shutter.time[index] = 0;
+                } // if (new_shutterdirection == Shutter.lastdirection[index])
+                ExecuteCommandPowerShutter(Settings.shutter_startrelay[index], 1, SRC_SHUTTER);
+              } // if (!Shutter.skip_relay_change)
+            break;
+          } // switch (Shutter.position_mode)
+          Shutter.RelayCurrentMask = 0;
+        } // if (Shutter.direction[index] != new_shutterdirection)
       } else {
         target_pos_percent = ShutterRealToPercentPosition(Shutter.real_position[index], index);
         ShutterReportPosition(true, index);
@@ -1006,12 +1152,24 @@ void CmndShutterMotorDelay(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
     if (XdrvMailbox.data_len > 0) {
-      Settings.shutter_motordelay[XdrvMailbox.index -1] = (uint16_t)(steps_per_second * CharToFloat(XdrvMailbox.data));
+      Settings.shutter_motordelay[XdrvMailbox.index -1] = (uint16_t)(STEPS_PER_SECOND * CharToFloat(XdrvMailbox.data));
       ShutterInit();
     }
     char time_chr[10];
-    dtostrfd((float)(Settings.shutter_motordelay[XdrvMailbox.index -1]) / steps_per_second, 2, time_chr);
+    dtostrfd((float)(Settings.shutter_motordelay[XdrvMailbox.index -1]) / STEPS_PER_SECOND, 2, time_chr);
     ResponseCmndIdxChar(time_chr);
+  }
+}
+
+void CmndShutterMode(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= MAX_MODES)) {
+    Shutter.position_mode =  XdrvMailbox.payload;
+    Settings.shutter_mode =  XdrvMailbox.payload;
+    ShutterInit();
+    ResponseCmndNumber(XdrvMailbox.payload);  // ????
+  } else {
+    ResponseCmndNumber(Shutter.position_mode);
   }
 }
 
@@ -1021,9 +1179,9 @@ void CmndShutterRelay(void)
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 64)) {
       Settings.shutter_startrelay[XdrvMailbox.index -1] = XdrvMailbox.payload;
       if (XdrvMailbox.payload > 0) {
-        Shutter.mask |= 3 << (XdrvMailbox.payload - 1);
+        Shutter.RelayShutterMask |= 3 << (XdrvMailbox.payload - 1);
       } else {
-        Shutter.mask ^= 3 << (Settings.shutter_startrelay[XdrvMailbox.index -1] - 1);
+        Shutter.RelayShutterMask ^= 3 << (Settings.shutter_startrelay[XdrvMailbox.index -1] - 1);
       }
       Settings.shutter_startrelay[XdrvMailbox.index -1] = XdrvMailbox.payload;
       ShutterInit();
@@ -1184,14 +1342,14 @@ void CmndShutterSetHalfway(void)
 void CmndShutterFrequency(void)
 {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 20000)) {
-    Shutter.max_pwm_frequency =  XdrvMailbox.payload;
+    Shutter.open_velocity_max =  XdrvMailbox.payload;
     if (shutters_present < 4) {
-      Settings.shuttercoeff[4][3] = Shutter.max_pwm_frequency;
+      Settings.shuttercoeff[4][3] = Shutter.open_velocity_max;
     }
     ShutterInit();
     ResponseCmndNumber(XdrvMailbox.payload);  // ????
   } else {
-    ResponseCmndNumber(Shutter.max_pwm_frequency);
+    ResponseCmndNumber(Shutter.open_velocity_max);
   }
 }
 
@@ -1335,25 +1493,25 @@ bool Xdrv27(uint8_t function)
       case FUNC_SET_POWER:
         char stemp1[10];
         // extract the number of the relay that was switched and save for later in Update Position.
-        Shutter.switched_relay = XdrvMailbox.index ^ Shutter.old_power;
-        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Switched relay: %d by %s"), Shutter.switched_relay,GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource));
+        Shutter.RelayCurrentMask = XdrvMailbox.index ^ Shutter.RelayOldMask;
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Switched relay: %d by %s"), Shutter.RelayCurrentMask,GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource));
         ShutterRelayChanged();
-        Shutter.old_power = XdrvMailbox.index;
+        Shutter.RelayOldMask = XdrvMailbox.index;
       break;
       case FUNC_SET_DEVICE_POWER:
         if (Shutter.skip_relay_change ) {
           uint8_t i;
           for (i = 0; i < devices_present; i++) {
-            if (Shutter.switched_relay &1) {
+            if (Shutter.RelayCurrentMask &1) {
               break;
             }
-            Shutter.switched_relay >>= 1;
+            Shutter.RelayCurrentMask >>= 1;
           }
           //AddLog_P2(LOG_LEVEL_ERROR, PSTR("SHT: skip relay change: %d"),i+1);
           result = true;
           Shutter.skip_relay_change = 0;
           AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Skipping switch off relay %d"),i);
-          ExecuteCommandPower(i+1, 0, SRC_SHUTTER);
+          ExecuteCommandPowerShutter(i+1, 0, SRC_SHUTTER);
         }
       break;
       case FUNC_BUTTON_PRESSED:

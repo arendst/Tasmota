@@ -609,12 +609,10 @@ struct {
   uint8_t       ledpwm_off;                // F40
   uint8_t       tcp_baudrate;              // F41
   uint8_t       fallback_module;           // F42
-
-  uint8_t       free_f43[1];               // F43
-
+  uint8_t       shutter_mode;              // F43
   uint16_t      energy_power_delta[3];     // F44
 
-  uint8_t       free_f4e[106];             // F4A - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f4a[106];             // F4A - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   SysBitfield5  flag5;                     // FB4

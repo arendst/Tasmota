@@ -585,6 +585,7 @@
 #define D_CMND_SHUTTER_TOGGLEDIR "ToggleDir"
 #define D_CMND_SHUTTER_UP "Up"
 #define D_CMND_SHUTTER_DOWN "Down"
+#define D_CMND_SHUTTER_MODE "Mode"
 #define D_CMND_SHUTTER_STOPOPEN "StopOpen"
 #define D_CMND_SHUTTER_STOPCLOSE "StopClose"
 #define D_CMND_SHUTTER_STOPTOGGLE "StopToggle"
