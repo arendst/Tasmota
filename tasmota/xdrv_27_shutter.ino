@@ -305,7 +305,7 @@ void ShutterInit(void)
           ShutterGlobal.open_velocity_max =  RESOLUTION;
           // Initiate pwm range with defaults if not already set.
           Settings.shutter_pwmrange[0][i] = Settings.shutter_pwmrange[0][i] > 0 ? Settings.shutter_pwmrange[0][i] : pwm_min;
-          Settings.shutter_pwmrange[1][i] = Settings.shutter_pwmrange[1][i] > 0 ? Settings.shutter_pwmrange[0][i] : pwm_max;
+          Settings.shutter_pwmrange[1][i] = Settings.shutter_pwmrange[1][i] > 0 ? Settings.shutter_pwmrange[1][i] : pwm_max;
         break;
       }
       Shutter[i].close_velocity_max = ShutterGlobal.open_velocity_max*Shutter[i].open_time / Shutter[i].close_time;
