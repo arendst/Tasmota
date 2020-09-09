@@ -208,7 +208,7 @@ void HlwEverySecond(void)
       hlw_len = 10000 * 1000 / Hlw.energy_period_counter;  // Add *1000 to fix rounding on loads at 3.6kW (#9160)
       Hlw.energy_period_counter = 0;
       if (hlw_len) {
-        Energy.kWhtoday_delta += ((Hlw.power_ratio * Settings.energy_power_calibration) * 1000 / hlw_len) / 36;
+        Energy.kWhtoday_delta += (((Hlw.power_ratio * Settings.energy_power_calibration) / 36) * 1000) / hlw_len;
         EnergyUpdateToday();
       }
     }
