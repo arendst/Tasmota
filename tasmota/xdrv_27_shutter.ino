@@ -53,14 +53,14 @@ enum ShutterButtonStates { SHT_NOT_PRESSED, SHT_PRESSED_MULTI, SHT_PRESSED_HOLD,
 
 const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_OPEN "|" D_CMND_SHUTTER_CLOSE "|" D_CMND_SHUTTER_TOGGLE "|" D_CMND_SHUTTER_TOGGLEDIR "|" D_CMND_SHUTTER_STOP "|" D_CMND_SHUTTER_POSITION "|"
-  D_CMND_SHUTTER_OPENTIME "|" D_CMND_SHUTTER_CLOSETIME "|" D_CMND_SHUTTER_RELAY "|" D_CMND_SHUTTER_MODE "|"
+  D_CMND_SHUTTER_OPENTIME "|" D_CMND_SHUTTER_CLOSETIME "|" D_CMND_SHUTTER_RELAY "|" D_CMND_SHUTTER_MODE "|"  D_CMND_SHUTTER_PWMRANGE "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_SETOPEN "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
   D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
   D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPTOGGLEDIR "|" D_CMND_SHUTTER_STOPPOSITION;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterToggleDir, &CmndShutterStop, &CmndShutterPosition,
-  &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay, &CmndShutterMode,
+  &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay, &CmndShutterMode, &CmndShutterPwmRange,
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
   &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
   &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition};
@@ -87,8 +87,6 @@ struct SHUTTER {
   int16_t  motordelay;         // initial motorstarttime in 0.05sec. Also uses for ramp at steppers and servos
   int16_t  pwm_velocity;       // frequency of PWN for stepper motors or PWM duty cycle change for PWM servo
   uint16_t pwm_value;          // dutyload of PWM 0..1023 on ESP8266
-  uint16_t pwm_min;            // dutyload of PWM 0..1023 on ESP8266
-  uint16_t pwm_max;            // dutyload of PWM 0..1023 on ESP8266
   uint16_t close_velocity_max; // maximum of PWM change during closeing. Defines velocity on opening. Steppers and Servos only
   int32_t  accelerator;        // speed of ramp-up, ramp down of shutters with velocity control. Steppers and Servos only
 } Shutter[MAX_SHUTTERS];
@@ -140,7 +138,7 @@ void ShutterRtc50mS(void)
         case SHT_PWM_VALUE:
           ShutterUpdateVelocity(i);
           Shutter[i].real_position +=  Shutter[i].direction > 0 ? Shutter[i].pwm_velocity : (Shutter[i].direction < 0 ? -Shutter[i].pwm_velocity : 0);
-          Shutter[i].pwm_value = SHT_DIV_ROUND((Shutter[i].pwm_max-Shutter[i].pwm_min) * Shutter[i].real_position , Shutter[i].open_max)+Shutter[i].pwm_min;
+          Shutter[i].pwm_value = SHT_DIV_ROUND((Settings.shutter_pwmrange[1][i]-Settings.shutter_pwmrange[0][i]) * Shutter[i].real_position , Shutter[i].open_max)+Settings.shutter_pwmrange[0][i];
           analogWrite(Pin(GPIO_PWM1, i), Shutter[i].pwm_value);
         break;
 
@@ -285,8 +283,8 @@ void ShutterInit(void)
       Shutter[i].close_time = Settings.shutter_closetime[i] = (Settings.shutter_closetime[i] > 0) ? Settings.shutter_closetime[i] : 100;
 
       //temporary hard coded.
-      Shutter[i].pwm_min = pwm_min;
-      Shutter[i].pwm_max = pwm_max;
+      Settings.shutter_pwmrange[0][i] = pwm_min;
+      Settings.shutter_pwmrange[1][i] = pwm_max;
 
       // Update Calculation 20 because time interval is 0.05 sec ans time is in 0.1sec
       Shutter[i].open_max = STEPS_PER_SECOND * RESOLUTION * Shutter[i].open_time / 10;
@@ -309,6 +307,9 @@ void ShutterInit(void)
       switch (ShutterGlobal.position_mode) {
         case SHT_PWM_VALUE:
           ShutterGlobal.open_velocity_max =  RESOLUTION;
+          // Initiate pwm range with defaults if not already set.
+          Settings.shutter_pwmrange[0][i] = Settings.shutter_pwmrange[0][i] > 0 ? Settings.shutter_pwmrange[0][i] : pwm_min;
+          Settings.shutter_pwmrange[1][i] = Settings.shutter_pwmrange[1][i] > 0 ? Settings.shutter_pwmrange[0][i] : pwm_max;
         break;
       }
       Shutter[i].close_velocity_max = ShutterGlobal.open_velocity_max*Shutter[i].open_time / Shutter[i].close_time;
@@ -1361,6 +1362,35 @@ void CmndShutterSetOpen(void)
     ShutterStartInit(XdrvMailbox.index -1, 0, Shutter[XdrvMailbox.index -1].open_max);
     Settings.shutter_position[XdrvMailbox.index -1] = 100;
     ResponseCmndIdxChar(D_CONFIGURATION_RESET);
+  }
+}
+
+void CmndShutterPwmRange(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    if (XdrvMailbox.data_len > 0) {
+      uint32_t i = 0;
+      char *str_ptr;
+
+      char data_copy[strlen(XdrvMailbox.data) +1];
+      strncpy(data_copy, XdrvMailbox.data, sizeof(data_copy));  // Duplicate data as strtok_r will modify it.
+      // Loop through the data string, splitting on ' ' seperators.
+      for (char *str = strtok_r(data_copy, " ", &str_ptr); str && i < 5; str = strtok_r(nullptr, " ", &str_ptr), i++) {
+        int field = atoi(str);
+        // The fields in a data string can only range from 1-30000.
+        // and following value must be higher than previous one
+        if ((field <= 0) || (field > 1023)) {
+          break;
+        }
+        Settings.shutter_pwmrange[i][XdrvMailbox.index -1] = field;
+      }
+      ShutterInit();
+      ResponseCmndIdxChar(XdrvMailbox.data);
+    } else {
+      char setting_chr[30] = "0";
+      snprintf_P(setting_chr, sizeof(setting_chr), PSTR("Shutter %d: min:%d max:%d"), XdrvMailbox.index, Settings.shutter_pwmrange[0][XdrvMailbox.index -1], Settings.shutter_pwmrange[1][XdrvMailbox.index -1]);
+      ResponseCmndIdxChar(setting_chr);
+    }
   }
 }
 
