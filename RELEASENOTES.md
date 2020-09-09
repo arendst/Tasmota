@@ -61,6 +61,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Change White blend mode to using command ``SetOption 105`` instead of ``RGBWWTable``
 - Fix ESP32 PWM range
 - Fix display power control (#9114)
+- Fix energy total counters (#9263, #9266)
 - Add command ``SetOption102 0/1`` to set Baud rate for Teleinfo communication (0 = 1200 or 1 = 9600)
 - Add command ``SetOption103 0/1`` to set TLS mode when TLS is selected
 - Add command ``SetOption104 1`` to disable all MQTT retained messages
