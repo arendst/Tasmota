@@ -395,6 +395,9 @@ void WifiCheckIp(void)
       Settings.ip_address[2] = (uint32_t)WiFi.subnetMask();
       Settings.ip_address[3] = (uint32_t)WiFi.dnsIP();
 
+#ifndef FIRMWARE_MINIMAL
+      SettingsAutoConf();
+#endif
       // Save current AP parameters for quick reconnect
       Settings.wifi_channel = WiFi.channel();
       uint8_t *bssid = WiFi.BSSID();
