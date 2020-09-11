@@ -506,7 +506,7 @@ void DisplayText(void)
              }
             }
             break;
-#endif
+#endif // USE_SCRIPT_FATFS
           case 'h':
             // hor line to
             var = atoiv(cp, &temp);
@@ -696,7 +696,7 @@ void DisplayText(void)
               Restore_graph(temp,bbuff);
               break;
             }
-#endif
+#endif // USE_SCRIPT_FATFS
             { int16_t num,gxp,gyp,gxs,gys,dec,icol;
               float ymin,ymax;
               var=atoiv(cp,&num);
@@ -744,7 +744,7 @@ void DisplayText(void)
                 AddValue(num,temp);
               }
             break;
-#endif
+#endif // USE_GRAPH
 
 #ifdef USE_AWATCH
           case 'w':
@@ -752,7 +752,7 @@ void DisplayText(void)
               cp += var;
               DrawAClock(temp);
               break;
-#endif
+#endif // USE_AWATCH
 
 #ifdef USE_TOUCH_BUTTONS
           case 'b':
@@ -834,12 +834,13 @@ void DisplayText(void)
                     buttons[num]->vpower.is_pushbutton=0;
                   }
                   if (dflg) buttons[num]->xdrawButton(buttons[num]->vpower.on_off);
+                  buttons[num]->vpower.disable=!dflg;
                 }
               }
             }
           }
           break;
-#endif
+#endif // USE_TOUCH_BUTTONS
           default:
             // unknown escape
             Response_P(PSTR("Unknown Escape"));
@@ -1530,8 +1531,8 @@ void CmndDisplayRows(void)
 bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t scale);
 char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *width, unsigned short *height);
 void rgb888_to_565(uint8_t *in, uint16_t *out, uint32_t len);
-#endif
-#endif
+#endif // JPEG_PICTS
+#endif // ESP32
 
 #if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
 extern FS *fsp;
@@ -1626,7 +1627,7 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
 #endif // ESP32
   }
 }
-#endif
+#endif // USE_SCRIPT_FATFS
 
 #ifdef USE_AWATCH
 #define MINUTE_REDUCT 4
@@ -1663,7 +1664,7 @@ void DrawAClock(uint16_t rad) {
     temp=((float)RtcTime.minute*(pi/30.0)-(pi/2.0));
     renderer->writeLine(disp_xpos, disp_ypos,disp_xpos+(frad-MINUTE_REDUCT)*cosf(temp),disp_ypos+(frad-MINUTE_REDUCT)*sinf(temp), fg_color);
 }
-#endif
+#endif // USE_AWATCH
 
 
 #ifdef USE_GRAPH
@@ -1938,7 +1939,7 @@ void Restore_graph(uint8_t num, char *path) {
   fp.close();
   RedrawGraph(num,1);
 }
-#endif
+#endif // USE_SCRIPT_FATFS
 
 void RedrawGraph(uint8_t num, uint8_t flags) {
   uint16_t index=num%NUM_GRAPHS;
@@ -2050,16 +2051,13 @@ void AddValue(uint8_t num,float fval) {
 
 #ifdef USE_FT5206
 
+#include <FT5206.h>
 // touch panel controller
 #undef FT5206_address
 #define FT5206_address 0x38
 
-#include <FT5206.h>
 FT5206_Class *touchp;
 TP_Point pLoc;
-
-
-extern VButton *buttons[];
 bool FT5206_found;
 
 bool Touch_Init(TwoWire &i2c) {
@@ -2087,6 +2085,7 @@ uint32_t Touch_Status(uint32_t sel) {
     return 0;
   }
 }
+
 
 #ifdef USE_TOUCH_BUTTONS
 void Touch_MQTT(uint8_t index, const char *cp) {
@@ -2184,6 +2183,7 @@ uint8_t vbutt=0;
     pLoc.y = 0;
   }
 }
+
 #endif // USE_TOUCH_BUTTONS
 #endif // USE_FT5206
 
