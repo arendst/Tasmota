@@ -1138,7 +1138,7 @@ void SettingsDefaultSet2(void)
 
 /********************************************************************************************/
 
-#ifndef FIRMWARE_MINIMAL
+#ifdef USE_AUTOLATLONG
 void SettingsAutoConf(void)
 {
   bool updated = false;
