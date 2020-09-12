@@ -1494,7 +1494,7 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
     //     presentValue = x + 128 = 180º flip to side x on top
     //     presentValue = x + 256 = push/slide cube while side x is on top
     //     presentValue = x + 512 = double tap while side x is on top
-  } else if (modelId.startsWith(F("lumi.remote"))) {   // only for Aqara button
+  } else if (modelId.startsWith(F("lumi.remote")) || modelId.startsWith(F("lumi.sensor_switch"))) {   // only for Aqara buttons WXKG11LM & WXKG12LM
     int32_t val = attr.getInt();
     const __FlashStringHelper *aqara_click = F("click");
     const __FlashStringHelper *aqara_action = F("action");
@@ -1509,8 +1509,17 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
       case 2:
         attr_list.addAttribute(aqara_click).setStr(PSTR("double"));
         break;
+      case 16:
+        attr_list.addAttribute(aqara_action).setStr(PSTR("hold"));
+        break;
+      case 17:
+        attr_list.addAttribute(aqara_action).setStr(PSTR("release"));
+        break;
+      case 18:
+        attr_list.addAttribute(aqara_action).setStr(PSTR("shake"));
+        break;
       case 255:
-        attr_list.addAttribute(aqara_click).setStr(PSTR("release"));
+        attr_list.addAttribute(aqara_action).setStr(PSTR("release"));
         break;
       default:
         attr_list.addAttribute(aqara_click).setUInt(val);
