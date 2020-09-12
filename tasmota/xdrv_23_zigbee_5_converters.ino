@@ -124,6 +124,16 @@ uint16_t CxToCluster(uint8_t cx) {
   }
   return 0xFFFF;
 }
+
+uint8_t ClusterToCx(uint16_t cluster) {
+  for (uint8_t i=0; i<ARRAY_SIZE(Cx_cluster); i++) {
+    if (pgm_read_word(&Cx_cluster[i]) == cluster) {
+      return i;
+    }
+  }
+  return 0xFF;
+}
+
 // list of post-processing directives
 const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0000, 0x0000,  Z_(ZCLVersion),           1 },
@@ -538,6 +548,25 @@ const __FlashStringHelper* zigbeeFindAttributeByName(const char *command,
       if (cluster)      { *cluster    = CxToCluster(pgm_read_byte(&converter->cluster_short)); }
       if (attribute)    { *attribute  = pgm_read_word(&converter->attribute); }
       if (multiplier)   { *multiplier = pgm_read_byte(&converter->multiplier); }
+      return (const __FlashStringHelper*) (Z_strings + pgm_read_word(&converter->name_offset));
+    }
+  }
+  return nullptr;
+}
+
+//
+// Find attribute details: Name, Type, Multiplier by cuslter/attr_id
+//
+const __FlashStringHelper* zigbeeFindAttributeById(uint16_t cluster, uint16_t attr_id,
+                                      uint8_t *attr_type, int8_t *multiplier) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+    const Z_AttributeConverter *converter = &Z_PostProcess[i];
+    uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
+    uint16_t conv_attr_id = pgm_read_word(&converter->attribute);
+
+    if ((conv_cluster == cluster) && (conv_attr_id == attr_id)) {
+      if (multiplier)   { *multiplier = pgm_read_byte(&converter->multiplier); }
+      if (attr_type)    { *attr_type  = pgm_read_byte(&converter->type); }
       return (const __FlashStringHelper*) (Z_strings + pgm_read_word(&converter->name_offset));
     }
   }
@@ -1095,35 +1124,30 @@ void ZCLFrame::generateCallBacks(Z_attribute_list& attr_list) {
 // Set timers to read back values.
 // If it's a device address, also set a timer for reachability test
 void sendHueUpdate(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint = 0) {
-  int32_t z_cat = -1;
-  uint32_t wait_ms = 0;
+  uint32_t wait_ms = 0xFFFF;
 
   switch (cluster) {
     case 0x0006:
-      z_cat = Z_CAT_READ_0006;
       wait_ms = 200;    // wait 0.2 s
       break;
     case 0x0008:
-      z_cat = Z_CAT_READ_0008;
       wait_ms = 1050;   // wait 1.0 s
       break;
     case 0x0102:
-      z_cat = Z_CAT_READ_0102;
       wait_ms = 10000;   // wait 10.0 s
       break;
     case 0x0300:
-      z_cat = Z_CAT_READ_0300;
       wait_ms = 1050;   // wait 1.0 s
       break;
     default:
       break;
   }
-  if (z_cat >= 0) {
+  if (0xFFFF != wait_ms) {
     if ((BAD_SHORTADDR != shortaddr) && (0 == endpoint)) {
       endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
     }
     if ((BAD_SHORTADDR == shortaddr) || (endpoint)) {   // send if group address or endpoint is known
-      zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms, cluster, endpoint, z_cat, 0 /* value */, &Z_ReadAttrCallback);
+      zigbee_devices.queueTimer(shortaddr, groupaddr, wait_ms, cluster, endpoint, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
       if (BAD_SHORTADDR != shortaddr) {      // reachability test is not possible for group addresses, since we don't know the list of devices in the group
         zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, cluster, endpoint, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
       }
@@ -1170,16 +1194,27 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
 
 // ZCL_CONFIGURE_REPORTING_RESPONSE
 void ZCLFrame::parseConfigAttributes(Z_attribute_list& attr_list) {
-  uint32_t i = 0;
   uint32_t len = _payload.len();
-  uint8_t  status = _payload.get8(i);
 
-  Z_attribute_list attr_config_response;
-  attr_config_response.addAttribute(F("Status")).setUInt(status);
-  attr_config_response.addAttribute(F("StatusMsg")).setStr(getZigbeeStatusMessage(status).c_str());
+  Z_attribute_list attr_config_list;
+  for (uint32_t i=0; len >= i+4; i+=4) {
+    uint8_t  status = _payload.get8(i);
+    uint16_t attr_id = _payload.get8(i+2);
+
+    Z_attribute_list attr_config_response;
+    attr_config_response.addAttribute(F("Status")).setUInt(status);
+    attr_config_response.addAttribute(F("StatusMsg")).setStr(getZigbeeStatusMessage(status).c_str());
+
+    const __FlashStringHelper* attr_name = zigbeeFindAttributeById(_cluster_id, attr_id, nullptr, nullptr);
+    if (attr_name) {
+      attr_config_list.addAttribute(attr_name).setStrRaw(attr_config_response.toString(true).c_str());
+    } else {
+      attr_config_list.addAttribute(_cluster_id, attr_id).setStrRaw(attr_config_response.toString(true).c_str());
+    }
+  }
 
   Z_attribute &attr_1 = attr_list.addAttribute(F("ConfigResponse"));
-  attr_1.setStrRaw(attr_config_response.toString(true).c_str());
+  attr_1.setStrRaw(attr_config_list.toString(true).c_str());
 }
 
 // ZCL_READ_REPORTING_CONFIGURATION_RESPONSE
@@ -1534,11 +1569,10 @@ void ZCLFrame::syntheticAqaraVibration(class Z_attribute_list &attr_list, class 
 }
 
 /// Publish a message for `"Occupancy":0` when the timer expired
-int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+void Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   Z_attribute_list attr_list;
   attr_list.addAttribute(F(OCCUPANCY)).setUInt(0);
   zigbee_devices.jsonPublishNow(shortaddr, attr_list);
-  return 0;  // Fix GCC 10.1 warning
 }
 
 // ======================================================================

@@ -148,7 +148,7 @@ const uint8_t CLUSTER_0009[] = { ZLE(0x0000) };    // AlarmCount
 const uint8_t CLUSTER_0300[] = { ZLE(0x0000), ZLE(0x0001), ZLE(0x0003), ZLE(0x0004), ZLE(0x0007), ZLE(0x0008) };    // Hue, Sat, X, Y, CT, ColorMode
 
 // This callback is registered after a cluster specific command and sends a read command for the same cluster
-int32_t Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+void Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   size_t         attrs_len = 0;
   const uint8_t* attrs = nullptr;
 
@@ -188,16 +188,14 @@ int32_t Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t clus
       attrs, attrs_len
     }));
   }
-  return 0;  // Fix GCC 10.1 warning
 }
 
 
 // This callback is registered after a an attribute read command was made to a light, and fires if we don't get any response after 1000 ms
-int32_t Z_Unreachable(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+void Z_Unreachable(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   if (BAD_SHORTADDR != shortaddr) {
     zigbee_devices.setReachable(shortaddr, false);     // mark device as reachable
   }
-  return 0;  // Fix GCC 10.1 warning
 }
 
 // returns true if char is 'x', 'y' or 'z'
@@ -349,6 +347,10 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
         if ((0 != xyz.z) && (0xFF != xyz.z)) {
           attr_list.addAttribute(command_name, PSTR("Zone")).setUInt(xyz.z);
         }
+        // for now convert alamrs 1 and 2 to Occupancy
+        // TODO we may only do this conversion to ZoneType == 0x000D 'Motion Sensor'
+        // Occupancy is 0406/0000 of type Zmap8
+        attr_list.addAttribute(0x0406, 0x0000).setUInt((xyz.x) & 0x01 ? 1 : 0);
         break;
       case 0x00040000:
       case 0x00040001:
