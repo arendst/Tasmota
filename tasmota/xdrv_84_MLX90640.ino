@@ -34,6 +34,7 @@
 \*********************************************************************************************/
 
 #define XDRV_84             84
+#define XI2C_53             53 // See I2CDEVICES.md
 #include <MLX90640_API.h>
 
 const char MLX90640type[] PROGMEM = "MLX90640";
