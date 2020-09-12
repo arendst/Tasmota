@@ -17,8 +17,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32
    
   tasmota32-webcam:
@@ -34,8 +33,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-webcam
 
   tasmota32-minimal:
@@ -51,8 +49,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-minimal
   tasmota32-lite:
     runs-on: ubuntu-latest
@@ -67,8 +64,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-lite
   tasmota32-knx:
     runs-on: ubuntu-latest
@@ -83,8 +79,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-knx
        
   tasmota32-sensors:
@@ -100,8 +95,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-sensors
   tasmota32-display:
     runs-on: ubuntu-latest
@@ -116,8 +110,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-display
   tasmota32-ir:
     runs-on: ubuntu-latest
@@ -132,8 +125,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-ir
   tasmota32-BG:
     runs-on: ubuntu-latest
@@ -148,8 +140,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-BG
   
   tasmota32-BR:
@@ -165,8 +156,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-BR
   tasmota32-CN:
     runs-on: ubuntu-latest
@@ -181,8 +171,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-CN
   tasmota32-CZ:
     runs-on: ubuntu-latest
@@ -197,8 +186,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-CZ
   tasmota32-DE:
     runs-on: ubuntu-latest
@@ -213,8 +201,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-DE
        
   tasmota32-ES:
@@ -230,8 +217,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-ES
   tasmota32-FR:
     runs-on: ubuntu-latest
@@ -246,8 +232,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-FR
   tasmota32-GR:
     runs-on: ubuntu-latest
@@ -262,8 +247,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-GR
   tasmota32-HE:
     runs-on: ubuntu-latest
@@ -278,8 +262,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-HE
         
   tasmota32-HU:
@@ -295,8 +278,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-HU
   tasmota32-IT:
     runs-on: ubuntu-latest
@@ -311,8 +293,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-IT
   tasmota32-KO:
     runs-on: ubuntu-latest
@@ -327,8 +308,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-KO
   tasmota32-NL:
     runs-on: ubuntu-latest
@@ -343,8 +323,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-NL
        
   tasmota32-PL:
@@ -360,8 +339,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-PL
   tasmota32-PT:
     runs-on: ubuntu-latest
@@ -376,8 +354,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-PT
   tasmota32-RO:
     runs-on: ubuntu-latest
@@ -392,8 +369,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-RO
   tasmota32-RU:
     runs-on: ubuntu-latest
@@ -408,8 +384,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-RU
   
   tasmota32-SE:
@@ -425,8 +400,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-SE
   tasmota32-SK:
     runs-on: ubuntu-latest
@@ -441,8 +415,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-SK
   tasmota32-TR:
     runs-on: ubuntu-latest
@@ -457,8 +430,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-TR
   tasmota32-TW:
     runs-on: ubuntu-latest
@@ -473,8 +445,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-TW
        
   tasmota32-UK:
@@ -490,6 +461,5 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-UK
