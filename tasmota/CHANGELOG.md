@@ -8,6 +8,7 @@
 - Fix crash in ``ZbRestore``
 - Add new shutter modes (#9244)
 - Add ``#define USE_MQTT_AWS_IOT_LIGHT`` for password based AWS IoT authentication
+- Add Zigbee auto-config when pairing
 
 ### 8.5.0 20200907
 

@@ -533,7 +533,11 @@ int32_t Z_ReceiveActiveEp(int32_t res, const class SBuffer &buf) {
 #endif
 
   for (uint32_t i = 0; i < activeEpCount; i++) {
-    zigbee_devices.addEndpoint(nwkAddr, activeEpList[i]);
+    uint8_t ep = activeEpList[i];
+    zigbee_devices.addEndpoint(nwkAddr, ep);
+    if ((i < 4) && (ep < 0x10)) {
+      zigbee_devices.queueTimer(nwkAddr, 0 /* groupaddr */, 1500, ep /* fake cluster as ep */, ep, Z_CAT_EP_DESC, 0 /* value */, &Z_SendSimpleDescReq);
+    }
   }
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
@@ -546,7 +550,132 @@ int32_t Z_ReceiveActiveEp(int32_t res, const class SBuffer &buf) {
   ResponseAppend_P(PSTR("]}}"));
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
 
-  Z_SendAFInfoRequest(nwkAddr);       // probe for ModelId and ManufId
+  Z_SendDeviceInfoRequest(nwkAddr);       // probe for ModelId and ManufId
+
+  return -1;
+}
+
+// list of clusters that need bindings
+const uint8_t Z_bindings[] PROGMEM = {
+  Cx0001, Cx0006, Cx0008, Cx0300,
+  Cx0400, Cx0402, Cx0403, Cx0405, Cx0406,
+  Cx0500,
+};
+
+int32_t Z_ClusterToCxBinding(uint16_t cluster) {
+  uint8_t cx = ClusterToCx(cluster);
+  for (uint32_t i=0; i<ARRAY_SIZE(Z_bindings); i++) {
+    if (pgm_read_byte(&Z_bindings[i]) == cx) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+void Z_AutoBindDefer(uint16_t shortaddr, uint8_t endpoint, const SBuffer &buf,
+                    size_t in_index, size_t in_len, size_t out_index, size_t out_len) {
+  // We use bitmaps to mark clusters that need binding and config attributes
+  // All clusters in 'in' and 'out' are bounded
+  // Only cluster in 'in' receive configure attribute requests
+  uint32_t cluster_map = 0;     // max 32 clusters to bind
+  uint32_t cluster_in_map = 0;  // map of clusters only in 'in' group, to be bounded
+
+  // First enumerate all clusters to bind, from in or out clusters
+  // scan in clusters
+  for (uint32_t i=0; i<in_len; i++) {
+    uint16_t cluster = buf.get16(in_index + i*2);
+    uint32_t found_cx = Z_ClusterToCxBinding(cluster);    // convert to Cx of -1 if not found
+    if (found_cx >= 0) {
+      bitSet(cluster_map, found_cx);
+      bitSet(cluster_in_map, found_cx);
+    }
+  }
+  // scan out clusters
+  for (uint32_t i=0; i<out_len; i++) {
+    uint16_t cluster = buf.get16(out_index + i*2);
+    uint32_t found_cx = Z_ClusterToCxBinding(cluster);    // convert to Cx of -1 if not found
+    if (found_cx >= 0) {
+      bitSet(cluster_map, found_cx);
+    }
+  }
+
+  // if IAS device, request the device type
+  if (bitRead(cluster_map, Z_ClusterToCxBinding(0x0500))) {
+    // send a read command to cluster 0x0500, attribute 0x0001 (ZoneType) - to read the type of sensor
+    zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, 0x0500, endpoint, Z_CAT_READ_ATTRIBUTE, 0x0001, &Z_SendSingleAttributeRead);
+  }
+
+  // enqueue bind requests
+  for (uint32_t i=0; i<ARRAY_SIZE(Z_bindings); i++) {
+    if (bitRead(cluster_map, i)) {
+      uint16_t cluster = CxToCluster(pgm_read_byte(&Z_bindings[i]));
+      zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, cluster, endpoint, Z_CAT_BIND, 0 /* value */, &Z_AutoBind);
+    }
+  }
+
+  // enqueue config attribute requests
+  for (uint32_t i=0; i<ARRAY_SIZE(Z_bindings); i++) {
+    if (bitRead(cluster_in_map, i)) {
+      uint16_t cluster = CxToCluster(pgm_read_byte(&Z_bindings[i]));
+      zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, cluster, endpoint, Z_CAT_CONFIG_ATTR, 0 /* value */, &Z_AutoConfigReportingForCluster);
+    }
+  }
+}
+
+int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
+#ifdef USE_ZIGBEE_ZNP
+  // Received ZDO_SIMPLE_DESC_RSP
+  // Z_ShortAddress    srcAddr = buf.get16(2);
+  uint8_t           status  = buf.get8(4);
+  Z_ShortAddress    nwkAddr = buf.get16(5);
+  uint8_t           lenDescriptor = buf.get8(7);
+  uint8_t           endpoint = buf.get8(8);
+  uint16_t          profileId = buf.get16(9);  // The profile Id for this endpoint.
+  uint16_t          deviceId = buf.get16(11);   // The Device Description Id for this endpoint.
+  uint8_t           deviceVersion = buf.get8(13); // 0 – Version 1.00
+  uint8_t           numInCluster = buf.get8(14);
+  uint8_t           numOutCluster = buf.get8(15 + numInCluster*2);
+  const size_t      numInIndex = 15;
+  const size_t      numOutIndex = 16 + numInCluster*2;
+#endif
+#ifdef USE_ZIGBEE_EZSP
+  uint8_t           status = buf.get8(0);
+  Z_ShortAddress    nwkAddr = buf.get16(1);
+  uint8_t           lenDescriptor = buf.get8(3);
+  uint8_t           endpoint = buf.get8(4);
+  uint16_t          profileId = buf.get16(5);  // The profile Id for this endpoint.
+  uint16_t          deviceId = buf.get16(7);   // The Device Description Id for this endpoint.
+  uint8_t           deviceVersion = buf.get8(9); // 0 – Version 1.00
+  uint8_t           numInCluster = buf.get8(10);
+  uint8_t           numOutCluster = buf.get8(11 + numInCluster*2);
+  const size_t      numInIndex = 11;
+  const size_t      numOutIndex = 12 + numInCluster*2;
+#endif
+
+  if (0 == status) {
+    if (!Settings.flag4.zb_disable_autobind) {
+      Z_AutoBindDefer(nwkAddr, endpoint, buf, numInIndex, numInCluster, numOutIndex, numOutCluster);
+    }
+
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
+                    "\"Status\":%d,\"Endpoint\":\"0x%02X\""
+                    ",\"ProfileId\":\"0x%04X\",\"DeviceId\":\"0x%04X\",\"DeviceVersion\":%d"
+                    "\"InClusters\":["),
+                    ZIGBEE_STATUS_SIMPLE_DESC, endpoint,
+                    profileId, deviceId, deviceVersion);
+    for (uint32_t i = 0; i < numInCluster; i++) {
+      if (i > 0) { ResponseAppend_P(PSTR(",")); }
+      ResponseAppend_P(PSTR("\"0x%04X\""), buf.get16(numInIndex + i*2));
+    }
+    ResponseAppend_P(PSTR("],\"OutClusters\":["));
+    for (uint32_t i = 0; i < numOutCluster; i++) {
+      if (i > 0) { ResponseAppend_P(PSTR(",")); }
+      ResponseAppend_P(PSTR("\"0x%04X\""), buf.get16(numOutIndex + i*2));
+    }
+    ResponseAppend_P(PSTR("]}}"));
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+    XdrvRulesProcess();
+  }
 
   return -1;
 }
@@ -831,7 +960,7 @@ int32_t Z_MgmtBindRsp(int32_t res, const class SBuffer &buf) {
 
     //uint64_t    srcaddr   = buf.get16(idx);     // unused
     uint8_t     srcep     = buf.get8(idx + 8);
-    uint8_t     cluster   = buf.get16(idx + 9);
+    uint16_t    cluster   = buf.get16(idx + 9);
     uint8_t     addrmode  = buf.get8(idx + 11);
     uint16_t    group     = 0x0000;
     uint64_t    dstaddr   = 0;
@@ -960,9 +1089,31 @@ void Z_SendActiveEpReq(uint16_t shortaddr) {
 }
 
 //
-// Send AF Info Request
+// Probe the clusters_out on the first endpoint
 //
-void Z_SendAFInfoRequest(uint16_t shortaddr) {
+// Send ZDO_SIMPLE_DESC_REQ to get full list of supported Clusters for a specific endpoint
+void Z_SendSimpleDescReq(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+#ifdef USE_ZIGBEE_ZNP
+  uint8_t SimpleDescReq[] = { Z_SREQ | Z_ZDO, ZDO_SIMPLE_DESC_REQ,  // 2504
+              Z_B0(shortaddr), Z_B1(shortaddr), Z_B0(shortaddr), Z_B1(shortaddr),
+              endpoint };
+  ZigbeeZNPSend(SimpleDescReq, sizeof(SimpleDescReq));
+#endif
+#ifdef USE_ZIGBEE_EZSP
+  uint8_t SimpleDescReq[] = { Z_B0(shortaddr), Z_B1(shortaddr), endpoint };
+  EZ_SendZDO(shortaddr, ZDO_SIMPLE_DESC_REQ, SimpleDescReq, sizeof(SimpleDescReq));
+#endif
+}
+
+
+//
+// Send AF Info Request
+// Queue requests for the device
+// 1. Request for 'ModelId' and 'Manufacturer': 0000/0005, 0000/0006
+// 2. Auto-bind to coordinator:
+//    Iterate among 
+//
+void Z_SendDeviceInfoRequest(uint16_t shortaddr) {
   uint8_t endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
   if (0x00 == endpoint) { endpoint = 0x01; }    // if we don't know the endpoint, try 0x01
   uint8_t transacid = zigbee_devices.getNextSeqNumber(shortaddr);
@@ -983,6 +1134,170 @@ void Z_SendAFInfoRequest(uint16_t shortaddr) {
   }));
 }
 
+//
+// Send sing attribute read request in Timer
+//
+void Z_SendSingleAttributeRead(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+  uint8_t transacid = zigbee_devices.getNextSeqNumber(shortaddr);
+  uint8_t InfoReq[2] = { Z_B0(value), Z_B1(value) };    // list of single attribute
+
+  ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
+    shortaddr,
+    0x0000, /* group */
+    cluster /*cluster*/,
+    endpoint,
+    ZCL_READ_ATTRIBUTES,
+    0x0000,  /* manuf */
+    false /* not cluster specific */,
+    true /* response */,
+    transacid,  /* zcl transaction id */
+    InfoReq, sizeof(InfoReq)
+  }));
+}
+
+//
+// Auto-bind some clusters to the coordinator's endpoint 0x01
+//
+void Z_AutoBind(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+  uint64_t srcLongAddr = zigbee_devices.getDeviceLongAddr(shortaddr);
+  
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `ZbBind {\"Device\":\"0x%04X\",\"Endpoint\":%d,\"Cluster\":\"0x%04X\"}`"),
+                                  shortaddr, endpoint, cluster);
+#ifdef USE_ZIGBEE_ZNP
+  SBuffer buf(34);
+  buf.add8(Z_SREQ | Z_ZDO);
+  buf.add8(ZDO_BIND_REQ);
+  buf.add16(shortaddr);
+  buf.add64(srcLongAddr);
+  buf.add8(endpoint);
+  buf.add16(cluster);
+  buf.add8(Z_Addr_IEEEAddress);         // DstAddrMode - 0x03 = ADDRESS_64_BIT
+  buf.add64(localIEEEAddr);
+  buf.add8(0x01);   // toEndpoint
+
+  ZigbeeZNPSend(buf.getBuffer(), buf.len());
+#endif // USE_ZIGBEE_ZNP
+
+#ifdef USE_ZIGBEE_EZSP
+  SBuffer buf(24);
+
+  // ZDO message payload (see Zigbee spec 2.4.3.2.2)
+  buf.add64(srcLongAddr);
+  buf.add8(endpoint);
+  buf.add16(cluster);
+  buf.add8(Z_Addr_IEEEAddress);         // DstAddrMode - 0x03 = ADDRESS_64_BIT
+  buf.add64(localIEEEAddr);
+  buf.add8(0x01);   // toEndpoint
+
+  EZ_SendZDO(shortaddr, ZDO_BIND_REQ, buf.buf(), buf.len());
+#endif // USE_ZIGBEE_EZSP
+}
+
+//
+// Auto-bind some clusters to the coordinator's endpoint 0x01
+//
+
+// the structure below indicates which attributes need to be configured for attribute reporting
+typedef struct Z_autoAttributeReporting_t {
+  uint16_t cluster;
+  uint16_t attr_id;
+  uint16_t min_interval;    // minimum interval in seconds (consecutive reports won't happen before this value)
+  uint16_t max_interval;    // maximum interval in seconds (attribut will always be reported after this interval)
+  float    report_change;   // for non discrete attributes, the value change that triggers a report
+} Z_autoAttributeReporting_t;
+
+// Note the attribute must be registered in the converter list, used to retrieve the type of the attribute
+const Z_autoAttributeReporting_t Z_autoAttributeReporting[] PROGMEM = {
+  { 0x0001, 0x0020,   15*60,    15*60,  0.1 },      // BatteryVoltage
+  { 0x0001, 0x0021,   15*60,    15*60,    1 },      // BatteryPercentage
+  { 0x0006, 0x0000,        1,   60*60,    0 },      // Power
+  { 0x0008, 0x0000,        1,   60*60,    5 },      // Dimmer
+  { 0x0300, 0x0000,        1,   60*60,    5 },      // Hue
+  { 0x0300, 0x0001,        1,   60*60,    5 },      // Sat
+  { 0x0300, 0x0003,        1,   60*60,  100 },      // X
+  { 0x0300, 0x0004,        1,   60*60,  100 },      // Y
+  { 0x0300, 0x0007,        1,   60*60,    5 },      // CT
+  { 0x0300, 0x0008,        1,   60*60,    0 },      // ColorMode
+  { 0x0400, 0x0000,       10,   60*60,    5 },      // Illuminance (5 lux)
+  { 0x0402, 0x0000,       30,   60*60,  0.2 },      // Temperature (0.2 °C)
+  { 0x0403, 0x0000,       30,   60*60,    1 },      // Pressure (1 hPa)
+  { 0x0405, 0x0000,       30,   60*60,  1.0 },      // Humidity (1 %)
+  { 0x0406, 0x0000,       10,   60*60,    0 },      // Occupancy
+  { 0x0500, 0x0002,        1,   60*60,    0 },      // ZoneStatus
+};
+
+//
+// Called by Device Auto-config
+// Configures default values for the most common Attribute Rerporting configurations
+//
+// Note: must be of type `Z_DeviceTimer`
+void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+  // Buffer, max 12 bytes per attribute
+  SBuffer buf(12*6);
+
+
+  Response_P(PSTR("ZbSend {\"Device\":\"0x%04X\",\"Config\":{"), shortaddr);
+
+  boolean comma = false;
+  for (uint32_t i=0; i<ARRAY_SIZE(Z_autoAttributeReporting); i++) {
+    uint16_t conv_cluster = pgm_read_word(&(Z_autoAttributeReporting[i].cluster));
+    uint16_t attr_id = pgm_read_word(&(Z_autoAttributeReporting[i].attr_id));
+
+    if (conv_cluster == cluster) {
+      uint16_t min_interval = pgm_read_word(&(Z_autoAttributeReporting[i].min_interval));
+      uint16_t max_interval = pgm_read_word(&(Z_autoAttributeReporting[i].max_interval));
+      float  report_change_raw = Z_autoAttributeReporting[i].report_change;
+      double report_change = report_change_raw;
+      uint8_t attr_type;
+      int8_t  multiplier;
+
+      const __FlashStringHelper* attr_name = zigbeeFindAttributeById(cluster, attr_id, &attr_type, &multiplier);
+
+      if (attr_name) {
+        if (comma) { ResponseAppend_P(PSTR(",")); }
+        comma = true;
+        ResponseAppend_P(PSTR("\"%s\":{\"MinInterval\":%d,\"MaxInterval\":%d"), attr_name, min_interval, max_interval);
+
+        buf.add8(0);            // direction, always 0
+        buf.add16(attr_id);
+        buf.add8(attr_type);
+        buf.add16(min_interval);
+        buf.add16(max_interval);
+        if (!Z_isDiscreteDataType(attr_type)) {   // report_change is only valid for non-discrete data types (numbers)
+          ZbApplyMultiplier(report_change, multiplier);
+          // encode value
+          int32_t res = encodeSingleAttribute(buf, report_change, "", attr_type);
+          if (res < 0) {
+            AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "internal error, unsupported attribute type"));
+          } else {
+            Z_attribute attr;
+            attr.setKeyName(PSTR("ReportableChange"), true);    // true because in PMEM
+            attr.setFloat(report_change_raw);
+            ResponseAppend_P(PSTR(",%s"), attr.toString().c_str());
+          }
+        }
+        ResponseAppend_P(PSTR("}"));
+      }
+    }
+  }
+  ResponseAppend_P(PSTR("}}"));
+
+  if (buf.len() > 0) {
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `%s`"), mqtt_data);
+    ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
+      shortaddr,
+      0x0000, /* group */
+      cluster /*cluster*/,
+      endpoint,
+      ZCL_CONFIGURE_REPORTING,
+      0x0000,  /* manuf */
+      false /* not cluster specific */,
+      false /* no response */,
+      zigbee_devices.getNextSeqNumber(shortaddr),  /* zcl transaction id */
+      buf.buf(), buf.len()
+    }));
+  }
+}
 
 //
 // Handle trustCenterJoinHandler
@@ -1189,6 +1504,8 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
         return Z_ReceiveActiveEp(res, zdo_buf);
       case ZDO_IEEE_addr_rsp:
         return Z_ReceiveIEEEAddr(res, zdo_buf);
+      case ZDO_Simple_Desc_rsp:
+        return Z_ReceiveSimpleDesc(res, zdo_buf);
       case ZDO_Bind_rsp:
         return Z_BindRsp(res, zdo_buf);
       case ZDO_Unbind_rsp:
@@ -1279,9 +1596,8 @@ int32_t EZ_Recv_Default(int32_t res, const class SBuffer &buf) {
 \*********************************************************************************************/
 
 // Publish the received values once they have been coalesced
-int32_t Z_PublishAttributes(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+void Z_PublishAttributes(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   zigbee_devices.jsonPublishFlush(shortaddr);
-  return 1;
 }
 
 /*********************************************************************************************\
@@ -1363,6 +1679,7 @@ const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
   { { Z_AREQ | Z_ZDO, ZDO_PERMIT_JOIN_IND },        &ZNP_ReceivePermitJoinStatus },   // 45CB
   { { Z_AREQ | Z_ZDO, ZDO_NODE_DESC_RSP },          &ZNP_ReceiveNodeDesc },           // 4582
   { { Z_AREQ | Z_ZDO, ZDO_ACTIVE_EP_RSP },          &Z_ReceiveActiveEp },             // 4585
+  { { Z_AREQ | Z_ZDO, ZDO_SIMPLE_DESC_RSP},         &Z_ReceiveSimpleDesc},            // 4584
   { { Z_AREQ | Z_ZDO, ZDO_IEEE_ADDR_RSP },          &Z_ReceiveIEEEAddr },             // 4581
   { { Z_AREQ | Z_ZDO, ZDO_BIND_RSP },               &Z_BindRsp },                   // 45A1
   { { Z_AREQ | Z_ZDO, ZDO_UNBIND_RSP },             &Z_UnbindRsp },                 // 45A2
@@ -1413,11 +1730,11 @@ void Z_Query_Bulb(uint16_t shortaddr, uint32_t &wait_ms) {
     uint8_t endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
 
     if (endpoint) {   // send only if we know the endpoint
-      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0006, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0006, endpoint, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
       wait_ms += inter_message_ms;
-      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0008, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0008, endpoint, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
       wait_ms += inter_message_ms;
-      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0300, endpoint, Z_CAT_NONE, 0 /* value */, &Z_ReadAttrCallback);
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0300, endpoint, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
       wait_ms += inter_message_ms;
       zigbee_devices.setTimer(shortaddr, 0, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, 0, endpoint, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
       wait_ms += 1000;              // wait 1 second between devices
