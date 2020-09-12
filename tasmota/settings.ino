@@ -20,7 +20,6 @@
 /*********************************************************************************************\
  * RTC memory
 \*********************************************************************************************/
-#include <ArduinoJson.h>
 
 const uint16_t RTC_MEM_VALID = 0xA55A;
 
@@ -1141,21 +1140,16 @@ void SettingsDefaultSet2(void)
 #ifdef USE_AUTOLATLONG
 void SettingsAutoConf(void)
 {
-  bool updated = false;
-
-  double lat = LATITUDE;
-  double lng = LONGITUDE;
-
-  // (lat=0, long=0) => Attempt to detect Lat/Long based on the IP address
-  if ((Settings.latitude == 0) && (Settings.longitude == 0)) {
+  // (lat=, long=) == DEFAULT => Attempt to detect Lat/Long based on the IP address
+  if ((Settings.latitude == (int)(LATITUDE * 1000000)) && (Settings.longitude == (int)(LONGITUDE * 1000000))) {
     struct RevGeoSite {
         String url;
         String lat;
         String lng;
-        String utc;
+//        String utc;
     } site[] = {
-        {"http://ip-api.com/json/?fields=33603776", "lat", "lon", "offset"},
-        {"http://ipwhois.app/json/", "latitude", "longitude", "timezone_gmtOffset"}
+        {"http://ip-api.com/json/?fields=33603776", "lat", "lon"/*, "offset"*/},
+        {"http://ipwhois.app/json/", "latitude", "longitude"/*, "timezone_gmtOffset"*/}
     };
 
     for (auto &elem: site) {
@@ -1169,35 +1163,21 @@ void SettingsAutoConf(void)
         DynamicJsonBuffer jsonBuf;
         JsonObject &doc = jsonBuf.parseObject(response.c_str());
 
-        if (!doc.success()) {
-          AddLog_P2(LOG_LEVEL_ERROR, PSTR("Failed to parse JSON from (%s)"), response.c_str());
-        } else {
-          if ((Settings.latitude == 0) && doc.containsKey(elem.lat)) {
-            lat = doc[elem.lat];
-            updated = true;
-          }
+        http.end();
 
-          if ((Settings.longitude == 0) && doc.containsKey(elem.lng)) {
-            lng = doc[elem.lng];
-            updated = true;
-          }
+        if (doc.success() && doc.containsKey(elem.lat) && doc.containsKey(elem.lng)) {
+          Settings.latitude = (int)((double)doc[elem.lat] * 1000000);
+          Settings.longitude = (int)((double)doc[elem.lng] * 1000000);
+          SettingsSaveAll();
+          return;
         }
+
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("Failed to parse JSON from (%s)"), response.c_str());
+
       } else {
         AddLog_P2(LOG_LEVEL_ERROR, PSTR("AutoConf Error: %d"), httpResponseCode);
       }
-
-      http.end();
-
-      if ((lat != 0.0) && (lng != 0.0))
-        break;
     }
-  }
-
-  Settings.latitude = (int)(lat * 1000000);
-  Settings.longitude = (int)(lng * 1000000);
-
-  if (updated) {
-    SettingsSaveAll();
   }
 }
 #endif
