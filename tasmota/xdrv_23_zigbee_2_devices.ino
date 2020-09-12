@@ -19,8 +19,6 @@
 
 #ifdef USE_ZIGBEE
 
-#include <vector>
-
 #ifndef ZIGBEE_SAVE_DELAY_SECONDS
 #define ZIGBEE_SAVE_DELAY_SECONDS 2               // wait for 2s before saving Zigbee info
 #endif
@@ -29,25 +27,6 @@ const uint16_t kZigbeeSaveDelaySeconds = ZIGBEE_SAVE_DELAY_SECONDS;    // wait f
 /*********************************************************************************************\
  * Structures for Rules variables related to the last received message
 \*********************************************************************************************/
-
-typedef struct Z_LastMessageVars {
-  uint16_t    device;               // device short address
-  uint16_t    groupaddr;            // group address
-  uint16_t    cluster;              // cluster id
-  uint8_t     endpoint;             // source endpoint
-} Z_LastMessageVars;
-
-Z_LastMessageVars gZbLastMessage;
-
-uint16_t Z_GetLastDevice(void) { return gZbLastMessage.device; }
-uint16_t Z_GetLastGroup(void) { return gZbLastMessage.groupaddr; }
-uint16_t Z_GetLastCluster(void) { return gZbLastMessage.cluster; }
-uint8_t  Z_GetLastEndpoint(void) { return gZbLastMessage.endpoint; }
-
-/*********************************************************************************************\
- * Structures for device configuration
-\*********************************************************************************************/
-
 const size_t endpoints_max = 8;         // we limit to 8 endpoints
 
 class Z_Device {
@@ -57,10 +36,13 @@ public:
   char *                manufacturerId;
   char *                modelId;
   char *                friendlyName;
+  // _defer_last_time : what was the last time an outgoing message is scheduled
+  // this is designed for flow control and avoid messages to be lost or unanswered
+  uint32_t              defer_last_message_sent;
+
   uint8_t               endpoints[endpoints_max];   // static array to limit memory consumption, list of endpoints until 0x00 or end of array
-  // json buffer used for attribute reporting
-  DynamicJsonBuffer    *json_buffer;
-  JsonObject           *json;
+  // Used for attribute reporting
+  Z_attribute_list      attr_list;
   // sequence number for Zigbee frames
   uint16_t              shortaddr;      // unique key if not null, or unspecified if null
   uint8_t               seqNumber;
@@ -95,14 +77,14 @@ public:
   int16_t               mains_power;    // Active power
 
   // Constructor with all defaults
-  Z_Device(uint16_t _shortaddr, uint64_t _longaddr = 0x00):
+  Z_Device(uint16_t _shortaddr = BAD_SHORTADDR, uint64_t _longaddr = 0x00):
     longaddr(_longaddr),
     manufacturerId(nullptr),
     modelId(nullptr),
     friendlyName(nullptr),
+    defer_last_message_sent(0),
     endpoints{ 0, 0, 0, 0, 0, 0, 0, 0 },
-    json_buffer(nullptr),
-    json(nullptr),
+    attr_list(),
     shortaddr(_shortaddr),
     seqNumber(0),
     // Hue support
@@ -168,21 +150,28 @@ public:
  * Structures for deferred callbacks
 \*********************************************************************************************/
 
-typedef int32_t (*Z_DeviceTimer)(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value);
+typedef void (*Z_DeviceTimer)(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value);
 
 // Category for Deferred actions, this allows to selectively remove active deferred or update them
 typedef enum Z_Def_Category {
-  Z_CAT_NONE = 0,             // no category, it will happen anyways
+  Z_CAT_ALWAYS = 0,           // no category, it will happen whatever new timers
+  // Below will clear any event in the same category for the same address (shortaddr / groupaddr)
+  Z_CLEAR_DEVICE = 0x01,
   Z_CAT_READ_ATTR,            // Attribute reporting, either READ_ATTRIBUTE or REPORT_ATTRIBUTE, we coalesce all attributes reported if we can
   Z_CAT_VIRTUAL_OCCUPANCY,    // Creation of a virtual attribute, typically after a time-out. Ex: Aqara presence sensor
   Z_CAT_REACHABILITY,         // timer set to measure reachability of device, i.e. if we don't get an answer after 1s, it is marked as unreachable (for Alexa)
-  Z_CAT_READ_0006,            // Read 0x0006 cluster
-  Z_CAT_READ_0008,            // Read 0x0008 cluster
-  Z_CAT_READ_0102,            // Read 0x0300 cluster
-  Z_CAT_READ_0300,            // Read 0x0300 cluster
+  // Below will clear based on device + cluster pair.
+  Z_CLEAR_DEVICE_CLUSTER,
+  Z_CAT_READ_CLUSTER,
+  // Below will clear based on device + cluster + endpoint
+  Z_CLEAR_DEVICE_CLUSTER_ENDPOINT,
+  Z_CAT_EP_DESC,              // read endpoint descriptor to gather clusters
+  Z_CAT_BIND,                 // send auto-binding to coordinator
+  Z_CAT_CONFIG_ATTR,          // send a config attribute reporting request
+  Z_CAT_READ_ATTRIBUTE,       // read a single attribute
 } Z_Def_Category;
 
-const uint32_t Z_CAT_REACHABILITY_TIMEOUT = 1000;     // 1000 ms or 1s
+const uint32_t Z_CAT_REACHABILITY_TIMEOUT = 2000;     // 1000 ms or 1s
 
 typedef struct Z_Deferred {
   // below are per device timers, used for example to query the new state of the device
@@ -207,7 +196,7 @@ typedef struct Z_Deferred {
 // - shortaddr and longaddr cannot be both null
 class Z_Devices {
 public:
-  Z_Devices() {};
+  Z_Devices() : _deferred() {};
 
   // Probe the existence of device keys
   // Results:
@@ -218,12 +207,17 @@ public:
   uint16_t isKnownIndex(uint32_t index) const;
   uint16_t isKnownFriendlyName(const char * name) const;
   
+  Z_Device & findShortAddr(uint16_t shortaddr);
   const Z_Device & findShortAddr(uint16_t shortaddr) const;
+  Z_Device & findLongAddr(uint64_t longaddr);
+  const Z_Device & findLongAddr(uint64_t longaddr) const;
   Z_Device & getShortAddr(uint16_t shortaddr);   // find Device from shortAddr, creates it if does not exist
-  const Z_Device & getShortAddrConst(uint16_t shortaddr) const ;   // find Device from shortAddr, creates it if does not exist
   Z_Device & getLongAddr(uint64_t longaddr);     // find Device from shortAddr, creates it if does not exist
+  // check if a device was found or if it's the fallback device
+  inline bool foundDevice(const Z_Device & device) const {
+    return (&device != &device_unk);
+  }
 
-  int32_t findLongAddr(uint64_t longaddr) const;
   int32_t findFriendlyName(const char * name) const;
   uint64_t getDeviceLongAddr(uint16_t shortaddr) const;
 
@@ -276,24 +270,28 @@ public:
   bool isHueBulbHidden(uint16_t shortaddr) const ;
 
   // Timers
-  void resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category);
+  void resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category, uint16_t cluster = 0xFFFF, uint8_t endpoint = 0xFF);
   void setTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait_ms, uint16_t cluster, uint8_t endpoint, uint8_t category, uint32_t value, Z_DeviceTimer func);
+  void queueTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait_ms, uint16_t cluster, uint8_t endpoint, uint8_t category, uint32_t value, Z_DeviceTimer func);
   void runTimer(void);
 
   // Append or clear attributes Json structure
-  void jsonClear(uint16_t shortaddr);
-  void jsonAppend(uint16_t shortaddr, const JsonObject &values);
-  const JsonObject *jsonGet(uint16_t shortaddr);
+  void jsonAppend(uint16_t shortaddr, const Z_attribute_list &attr_list);
   void jsonPublishFlush(uint16_t shortaddr);    // publish the json message and clear buffer
-  bool jsonIsConflict(uint16_t shortaddr, const JsonObject &values);
-  void jsonPublishNow(uint16_t shortaddr, JsonObject &values);
+  bool jsonIsConflict(uint16_t shortaddr, const Z_attribute_list &attr_list) const;
+  void jsonPublishNow(uint16_t shortaddr, Z_attribute_list &attr_list);
 
   // Iterator
   size_t devicesSize(void) const {
-    return _devices.size();
+    return _devices.length();
   }
-  const Z_Device &devicesAt(size_t i) const {
-    return *(_devices.at(i));
+  const Z_Device & devicesAt(size_t i) const {
+    const Z_Device * devp = _devices.at(i);
+    if (devp) {
+      return *devp;
+    } else {
+      return device_unk;
+    }
   }
 
   // Remove device from list
@@ -308,8 +306,8 @@ public:
   uint16_t parseDeviceParam(const char * param, bool short_must_be_known = false) const;
 
 private:
-  std::vector<Z_Device*>    _devices = {};
-  std::vector<Z_Deferred>   _deferred = {};   // list of deferred calls
+  LList<Z_Device>           _devices;     // list of devices
+  LList<Z_Deferred>         _deferred;    // list of deferred calls
   uint32_t                  _saveTimer = 0;
   uint8_t                   _seqNumber = 0;     // global seqNumber if device is unknown
 
@@ -317,10 +315,7 @@ private:
   // Any find() function will not return Null, instead it will return this instance
   const Z_Device device_unk = Z_Device(BAD_SHORTADDR);
 
-  template < typename T>
-  static bool findInVector(const std::vector<T>  & vecOfElements, const T  & element);
-
-  int32_t findShortAddrIdx(uint16_t shortaddr) const;
+  //int32_t findShortAddrIdx(uint16_t shortaddr) const;
   // Create a new entry in the devices list - must be called if it is sure it does not already exist
   Z_Device & createDeviceEntry(uint16_t shortaddr, uint64_t longaddr = 0);
   void freeDeviceEntry(Z_Device *device);
@@ -343,31 +338,16 @@ uint16_t localShortAddr = 0;
  * Implementation
 \*********************************************************************************************/
 
-// https://thispointer.com/c-how-to-find-an-element-in-vector-and-get-its-index/
-template < typename T>
-bool Z_Devices::findInVector(const std::vector<T>  & vecOfElements, const T  & element) {
-	// Find given element in vector
-	auto it = std::find(vecOfElements.begin(), vecOfElements.end(), element);
-
-	if (it != vecOfElements.end()) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
 //
 // Create a new Z_Device entry in _devices. Only to be called if you are sure that no
 // entry with same shortaddr or longaddr exists.
 //
 Z_Device & Z_Devices::createDeviceEntry(uint16_t shortaddr, uint64_t longaddr) {
   if ((BAD_SHORTADDR == shortaddr) && !longaddr) { return (Z_Device&) device_unk; }      // it is not legal to create this entry
-  Z_Device * device_alloc = new Z_Device(shortaddr, longaddr);
+  Z_Device device(shortaddr, longaddr);
 
-  device_alloc->json_buffer = new DynamicJsonBuffer(16);
-  _devices.push_back(device_alloc);
   dirty();
-  return *(_devices.back());
+  return _devices.addHead(device);
 }
 
 void Z_Devices::freeDeviceEntry(Z_Device *device) {
@@ -383,20 +363,17 @@ void Z_Devices::freeDeviceEntry(Z_Device *device) {
 // In:
 //    shortaddr (not BAD_SHORTADDR)
 // Out:
-//    index in _devices of entry, -1 if not found
-//
-int32_t Z_Devices::findShortAddrIdx(uint16_t shortaddr) const {
-  if (BAD_SHORTADDR == shortaddr) { return -1; }              // does not make sense to look for BAD_SHORTADDR shortaddr (broadcast)
-  int32_t found = 0;
-  for (auto &elem : _devices) {
-    if (elem->shortaddr == shortaddr) { return found; }
-    found++;
+//    reference to device, or to device_unk if not found
+//    (use foundDevice() to check if found)
+Z_Device & Z_Devices::findShortAddr(uint16_t shortaddr) {
+  for (auto & elem : _devices) {
+    if (elem.shortaddr == shortaddr) { return elem; }
   }
-  return -1;
+  return (Z_Device&) device_unk;
 }
 const Z_Device & Z_Devices::findShortAddr(uint16_t shortaddr) const {
-  for (auto &elem : _devices) {
-    if (elem->shortaddr == shortaddr) { return *elem; }
+  for (const auto & elem : _devices) {
+    if (elem.shortaddr == shortaddr) { return elem; }
   }
   return device_unk;
 }
@@ -408,14 +385,19 @@ const Z_Device & Z_Devices::findShortAddr(uint16_t shortaddr) const {
 // Out:
 //    index in _devices of entry, -1 if not found
 //
-int32_t Z_Devices::findLongAddr(uint64_t longaddr) const {
-  if (!longaddr) { return -1; }
-  int32_t found = 0;
+Z_Device & Z_Devices::findLongAddr(uint64_t longaddr) {
+  if (!longaddr) { return (Z_Device&) device_unk; }
   for (auto &elem : _devices) {
-    if (elem->longaddr == longaddr) { return found; }
-    found++;
+    if (elem.longaddr == longaddr) { return elem; }
   }
-  return -1;
+  return (Z_Device&) device_unk;
+}
+const Z_Device & Z_Devices::findLongAddr(uint64_t longaddr) const {
+  if (!longaddr) { return device_unk; }
+  for (const auto &elem : _devices) {
+    if (elem.longaddr == longaddr) { return elem; }
+  }
+  return device_unk;
 }
 //
 // Scan all devices to find a corresponding friendlyNme
@@ -431,8 +413,8 @@ int32_t Z_Devices::findFriendlyName(const char * name) const {
   int32_t found = 0;
   if (name_len) {
     for (auto &elem : _devices) {
-      if (elem->friendlyName) {
-        if (strcasecmp(elem->friendlyName, name) == 0) { return found; }
+      if (elem.friendlyName) {
+        if (strcasecmp(elem.friendlyName, name) == 0) { return found; }
       }
       found++;
     }
@@ -441,9 +423,8 @@ int32_t Z_Devices::findFriendlyName(const char * name) const {
 }
 
 uint16_t Z_Devices::isKnownLongAddr(uint64_t longaddr) const {
-  int32_t found = findLongAddr(longaddr);
-  if (found >= 0) {
-    const Z_Device & device = devicesAt(found);
+  const Z_Device & device = findLongAddr(longaddr);
+  if (foundDevice(device)) {
     return device.shortaddr;    // can be zero, if not yet registered
   } else {
     return BAD_SHORTADDR;
@@ -471,7 +452,7 @@ uint16_t Z_Devices::isKnownFriendlyName(const char * name) const {
 }
 
 uint64_t Z_Devices::getDeviceLongAddr(uint16_t shortaddr) const {
-  return getShortAddrConst(shortaddr).longaddr;     // if unknown, it reverts to the Unknown device and longaddr is 0x00
+  return findShortAddr(shortaddr).longaddr;     // if unknown, it reverts to the Unknown device and longaddr is 0x00
 }
 
 //
@@ -479,38 +460,28 @@ uint64_t Z_Devices::getDeviceLongAddr(uint16_t shortaddr) const {
 //
 Z_Device & Z_Devices::getShortAddr(uint16_t shortaddr) {
   if (BAD_SHORTADDR == shortaddr) { return (Z_Device&) device_unk; }   // this is not legal
-  int32_t found = findShortAddrIdx(shortaddr);
-  if (found >= 0) {
-    return *(_devices[found]);
+  Z_Device & device = findShortAddr(shortaddr);
+  if (foundDevice(device)) {
+    return device;
   }
-  //Serial.printf("Device entry created for shortaddr = 0x%02X, found = %d\n", shortaddr, found);
   return createDeviceEntry(shortaddr, 0);
-}
-// Same version but Const
-const Z_Device & Z_Devices::getShortAddrConst(uint16_t shortaddr) const {
-  int32_t found = findShortAddrIdx(shortaddr);
-  if (found >= 0) {
-    return *(_devices[found]);
-  }
-  return device_unk;
 }
 
 // find the Device object by its longaddr (unique key if not null)
 Z_Device & Z_Devices::getLongAddr(uint64_t longaddr) {
   if (!longaddr) { return (Z_Device&) device_unk; }
-  int32_t found = findLongAddr(longaddr);
-  if (found > 0) {
-    return *(_devices[found]);
+  Z_Device & device = findLongAddr(longaddr);
+  if (foundDevice(device)) {
+    return device;
   }
   return createDeviceEntry(0, longaddr);
 }
 
 // Remove device from list, return true if it was known, false if it was not recorded
 bool Z_Devices::removeDevice(uint16_t shortaddr) {
-  int32_t found = findShortAddrIdx(shortaddr);
-  if (found >= 0) {
-    freeDeviceEntry(_devices.at(found));
-    _devices.erase(_devices.begin() + found);
+  Z_Device & device = findShortAddr(shortaddr);
+  if (foundDevice(device)) {
+    _devices.remove(&device);
     dirty();
     return true;
   }
@@ -523,27 +494,27 @@ bool Z_Devices::removeDevice(uint16_t shortaddr) {
 //    shortaddr
 //    longaddr (both can't be null at the same time)
 void Z_Devices::updateDevice(uint16_t shortaddr, uint64_t longaddr) {
-  int32_t s_found = findShortAddrIdx(shortaddr);       // is there already a shortaddr entry
-  int32_t l_found = findLongAddr(longaddr);         // is there already a longaddr entry
+  Z_Device * s_found = &findShortAddr(shortaddr); // is there already a shortaddr entry
+  Z_Device * l_found = &findLongAddr(longaddr);      // is there already a longaddr entry
 
-  if ((s_found >= 0) && (l_found >= 0)) {           // both shortaddr and longaddr are already registered
+  if (foundDevice(*s_found) && foundDevice(*l_found)) {  // both shortaddr and longaddr are already registered
     if (s_found == l_found) {
     } else {                                        // they don't match
       // the device with longaddr got a new shortaddr
-      _devices[l_found]->shortaddr = shortaddr;      // update the shortaddr corresponding to the longaddr
+      l_found->shortaddr = shortaddr;      // update the shortaddr corresponding to the longaddr
       // erase the previous shortaddr
-      freeDeviceEntry(_devices.at(s_found));
-      _devices.erase(_devices.begin() + s_found);
+      freeDeviceEntry(s_found);
+      _devices.remove(s_found);
       dirty();
     }
-  } else if (s_found >= 0) {
+  } else if (foundDevice(*s_found)) {
     // shortaddr already exists but longaddr not
     // add the longaddr to the entry
-    _devices[s_found]->longaddr = longaddr;
+    s_found->longaddr = longaddr;
     dirty();
-  } else if (l_found >= 0) {
+  } else if (foundDevice(*l_found)) {
     // longaddr entry exists, update shortaddr
-    _devices[l_found]->shortaddr = shortaddr;
+    l_found->shortaddr = shortaddr;
     dirty();
   } else {
     // neither short/lonf addr are found.
@@ -588,9 +559,8 @@ void Z_Devices::addEndpoint(uint16_t shortaddr, uint8_t endpoint) {
 //
 uint32_t Z_Devices::countEndpoints(uint16_t shortaddr) const {
   uint32_t count_ep = 0;
-  int32_t found = findShortAddrIdx(shortaddr);
-  if (found < 0)  return 0;     // avoid creating an entry if the device was never seen
-  const Z_Device &device = devicesAt(found);
+  const Z_Device & device =findShortAddr(shortaddr);
+  if (!foundDevice(device)) return 0;
 
   for (uint32_t i = 0; i < endpoints_max; i++) {
     if (0 != device.endpoints[i]) {
@@ -666,9 +636,8 @@ void Z_Devices::setBatteryPercent(uint16_t shortaddr, uint8_t bp) {
 
 // get the next sequance number for the device, or use the global seq number if device is unknown
 uint8_t Z_Devices::getNextSeqNumber(uint16_t shortaddr) {
-  int32_t short_found = findShortAddrIdx(shortaddr);
-  if (short_found >= 0) {
-    Z_Device &device = getShortAddr(shortaddr);
+  Z_Device & device = findShortAddr(shortaddr);
+  if (foundDevice(device)) {
     device.seqNumber += 1;
     return device.seqNumber;
   } else {
@@ -754,9 +723,9 @@ void Z_Devices::hideHueBulb(uint16_t shortaddr, bool hidden) {
 }
 // true if device is not knwon or not a bulb - it wouldn't make sense to publish a non-bulb
 bool Z_Devices::isHueBulbHidden(uint16_t shortaddr) const {
-  int32_t found = findShortAddrIdx(shortaddr);
-  if (found >= 0) {
-    uint8_t zb_profile = _devices[found]->zb_profile;
+  const Z_Device & device = findShortAddr(shortaddr);
+  if (foundDevice(device)) {
+    uint8_t zb_profile = device.zb_profile;
     if (0x00 == (zb_profile & 0xF0)) {
       // bulb type
       return (zb_profile & 0x08) ? true : false;
@@ -767,15 +736,17 @@ bool Z_Devices::isHueBulbHidden(uint16_t shortaddr) const {
 
 // Deferred actions
 // Parse for a specific category, of all deferred for a device if category == 0xFF
-void Z_Devices::resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category) {
+// Only with specific cluster number or for all clusters if cluster == 0xFFFF
+void Z_Devices::resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category, uint16_t cluster, uint8_t endpoint) {
   // iterate the list of deferred, and remove any linked to the shortaddr
-  for (auto it = _deferred.begin(); it != _deferred.end(); it++) {
-    // Notice that the iterator is decremented after it is passed
-		// to erase() but before erase() is executed
-    // see https://www.techiedelight.com/remove-elements-vector-inside-loop-cpp/
-    if ((it->shortaddr == shortaddr) && (it->groupaddr == groupaddr)) {
-      if ((0xFF == category) || (it->category == category)) {
-        _deferred.erase(it--);
+  for (auto & defer : _deferred) {
+    if ((defer.shortaddr == shortaddr) && (defer.groupaddr == groupaddr)) {
+      if ((0xFF == category) || (defer.category == category)) {
+        if ((0xFFFF == cluster) || (defer.cluster == cluster)) {
+          if ((0xFF == endpoint) || (defer.endpoint == endpoint)) {
+            _deferred.remove(&defer);
+          }
+        }
       }
     }
   }
@@ -784,12 +755,13 @@ void Z_Devices::resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uin
 // Set timer for a specific device
 void Z_Devices::setTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait_ms, uint16_t cluster, uint8_t endpoint, uint8_t category, uint32_t value, Z_DeviceTimer func) {
   // First we remove any existing timer for same device in same category, except for category=0x00 (they need to happen anyway)
-  if (category) {     // if category == 0, we leave all previous
-    resetTimersForDevice(shortaddr, groupaddr, category);    // remove any cluster
+  if (category >= Z_CLEAR_DEVICE) {     // if category == 0, we leave all previous timers
+    resetTimersForDevice(shortaddr, groupaddr, category, category >= Z_CLEAR_DEVICE_CLUSTER ? cluster : 0xFFFF, category >= Z_CLEAR_DEVICE_CLUSTER_ENDPOINT ? endpoint : 0xFF);    // remove any cluster
   }
 
   // Now create the new timer
-  Z_Deferred deferred = { wait_ms + millis(),   // timer
+  Z_Deferred & deferred = _deferred.addHead();
+  deferred = { wait_ms + millis(),   // timer
                           shortaddr,
                           groupaddr,
                           cluster,
@@ -797,20 +769,32 @@ void Z_Devices::setTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait_m
                           category,
                           value,
                           func };
-  _deferred.push_back(deferred);
+}
+
+// Set timer after the already queued events
+// I.e. the wait_ms is not counted from now, but from the last event queued, which is 'now' or in the future
+void Z_Devices::queueTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait_ms, uint16_t cluster, uint8_t endpoint, uint8_t category, uint32_t value, Z_DeviceTimer func) {
+  Z_Device & device = getShortAddr(shortaddr);
+  uint32_t now_millis = millis();
+  if (TimeReached(device.defer_last_message_sent)) {
+    device.defer_last_message_sent = now_millis;
+  }
+  // defer_last_message_sent equals now or a value in the future
+  device.defer_last_message_sent += wait_ms;
+
+  // for queueing we don't clear the backlog, so we force category to Z_CAT_ALWAYS
+  setTimer(shortaddr, groupaddr, (device.defer_last_message_sent - now_millis), cluster, endpoint, Z_CAT_ALWAYS, value, func);
 }
 
 // Run timer at each tick
 // WARNING: don't set a new timer within a running timer, this causes memory corruption
 void Z_Devices::runTimer(void) {
   // visit all timers
-  for (auto it = _deferred.begin(); it != _deferred.end(); it++) {
-    Z_Deferred &defer = *it;
-
+  for (auto & defer : _deferred) {
     uint32_t timer = defer.timer;
     if (TimeReached(timer)) {
       (*defer.func)(defer.shortaddr, defer.groupaddr, defer.cluster, defer.endpoint, defer.value);
-      _deferred.erase(it--);    // remove from list
+      _deferred.remove(&defer);
     }
   }
 
@@ -821,173 +805,100 @@ void Z_Devices::runTimer(void) {
   }
 }
 
-// Clear the JSON buffer for coalesced and deferred attributes
-void Z_Devices::jsonClear(uint16_t shortaddr) {
-  Z_Device & device = getShortAddr(shortaddr);
-  device.json = nullptr;
-  device.json_buffer->clear();
-}
-
-// Copy JSON from one object to another, this helps preserving the order of attributes
-void CopyJsonVariant(JsonObject &to, const String &key, const JsonVariant &val) {
-  // first remove the potentially existing key in the target JSON, so new adds will be at the end of the list
-  to.remove(key);    // force remove to have metadata like LinkQuality at the end
-
-  if (val.is<char*>()) {
-    const char * sval = val.as<char*>();    // using char* forces a copy, and also captures 'null' values
-    to.set(key, (char*) sval);
-  } else if (val.is<JsonArray>()) {
-    JsonArray &nested_arr = to.createNestedArray(key);
-    CopyJsonArray(nested_arr, val.as<JsonArray>());   // deep copy
-  } else if (val.is<JsonObject>()) {
-    JsonObject &nested_obj = to.createNestedObject(key);
-    CopyJsonObject(nested_obj, val.as<JsonObject>()); // deep copy
-  } else {
-    to.set(key, val);                     // general case for non array, object or string
-  }
-}
-
-// Shallow copy of array, we skip any sub-array or sub-object. It may be added in the future
-void CopyJsonArray(JsonArray &to, const JsonArray &arr) {
-  for (auto v : arr) {
-    if (v.is<char*>()) {
-      String sval = v.as<String>();       // force a copy of the String value
-      to.add(sval);
-    } else if (v.is<JsonArray>()) {
-    } else if (v.is<JsonObject>()) {
-    } else {
-      to.add(v);
-    }
-  }
-}
-
-// Deep copy of object
-void CopyJsonObject(JsonObject &to, const JsonObject &from) {
-  for (auto kv : from) {
-    String key_string = kv.key;
-    JsonVariant &val = kv.value;
-
-    CopyJsonVariant(to, key_string, val);
-  }
-}
-
 // does the new payload conflicts with the existing payload, i.e. values would be overwritten
 // true - one attribute (except LinkQuality) woudl be lost, there is conflict
 // false - new attributes can be safely added
-bool Z_Devices::jsonIsConflict(uint16_t shortaddr, const JsonObject &values) {
-  Z_Device & device = getShortAddr(shortaddr);
-  if (&values == nullptr) { return false; }
+bool Z_Devices::jsonIsConflict(uint16_t shortaddr, const Z_attribute_list &attr_list) const {
+  const Z_Device & device = findShortAddr(shortaddr);
 
-  if (nullptr == device.json) {
+  if (!foundDevice(device)) { return false; }
+  if (attr_list.isEmpty()) {
     return false;                                           // if no previous value, no conflict
   }
 
   // compare groups
-  // Special case for group addresses. Group attribute is only present if the target
-  // address is a group address, so just comparing attributes will not work.
-  // Eg: if the first packet has no group attribute, and the second does, conflict would not be detected
-  // Here we explicitly compute the group address of both messages, and compare them. No group means group=0x0000
-  // (we use the property of an missing attribute returning 0)
-  // (note: we use .get() here which is case-sensitive. We know however that the attribute was set with the exact syntax D_CMND_ZIGBEE_GROUP, so we don't need a case-insensitive get())
-  uint16_t group1 = device.json->get<unsigned int>(D_CMND_ZIGBEE_GROUP);
-  uint16_t group2 = values.get<unsigned int>(D_CMND_ZIGBEE_GROUP);
-  if (group1 != group2) {
-    return true;      // if group addresses differ, then conflict
+  if (device.attr_list.isValidGroupId() && attr_list.isValidGroupId()) {
+    if (device.attr_list.group_id != attr_list.group_id) { return true; }     // groups are in conflict
   }
 
-  // parse all other parameters
-  for (auto kv : values) {
-    String key_string = kv.key;
+  // compare src_ep
+  if (device.attr_list.isValidSrcEp() && attr_list.isValidSrcEp()) {
+    if (device.attr_list.src_ep != attr_list.src_ep) { return true; }
+  }
+  
+  // LQI does not count as conflicting
 
-    if (0 == strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_GROUP))) {
-      // ignore group, it was handled already
-    } else if (0 == strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_ENDPOINT))) {
-      // attribute "Endpoint" or "Group"
-      if (device.json->containsKey(kv.key)) {
-        if (kv.value.as<unsigned int>() != device.json->get<unsigned int>(kv.key)) {
-          return true;
-        }
-      }
-    } else if (strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_LINKQUALITY))) {  // exception = ignore duplicates for LinkQuality
-      if (device.json->containsKey(kv.key)) {
-        return true;          // conflict!
+  // parse all other parameters
+  for (const auto & attr : attr_list) {
+    const Z_attribute * curr_attr = device.attr_list.findAttribute(attr);
+    if (nullptr != curr_attr) {
+      if (!curr_attr->equalsVal(attr)) {
+        return true;    // the value already exists and is different - conflict!
       }
     }
   }
   return false;
 }
 
-void Z_Devices::jsonAppend(uint16_t shortaddr, const JsonObject &values) {
+void Z_Devices::jsonAppend(uint16_t shortaddr, const Z_attribute_list &attr_list) {
   Z_Device & device = getShortAddr(shortaddr);
-  if (&values == nullptr) { return; }
-
-  if (nullptr == device.json) {
-    device.json = &(device.json_buffer->createObject());
-  }
-  // Prepend Device, will be removed later if redundant
-  char sa[8];
-  snprintf_P(sa, sizeof(sa), PSTR("0x%04X"), shortaddr);
-  device.json->set(F(D_JSON_ZIGBEE_DEVICE), sa);
-  // Prepend Friendly Name if it has one
-  const char * fname = zigbee_devices.getFriendlyName(shortaddr);
-  if (fname) {
-    device.json->set(F(D_JSON_ZIGBEE_NAME), (char*) fname);   // (char*) forces ArduinoJson to make a copy of the cstring
-  }
-
-  // copy all values from 'values' to 'json'
-  CopyJsonObject(*device.json, values);
-}
-
-const JsonObject *Z_Devices::jsonGet(uint16_t shortaddr) {
-  return getShortAddr(shortaddr).json;
+  device.attr_list.mergeList(attr_list);
 }
 
 void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
   Z_Device & device = getShortAddr(shortaddr);
   if (!device.valid()) { return; }                 // safeguard
-  JsonObject & json = *device.json;
-  if (&json == nullptr) { return; }                // abort if nothing in buffer
+  Z_attribute_list &attr_list = device.attr_list;
 
-  const char * fname = zigbee_devices.getFriendlyName(shortaddr);
-  bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
+  if (!attr_list.isEmpty()) {
+    const char * fname = zigbee_devices.getFriendlyName(shortaddr);
+    bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
 
-  // save parameters is global variables to be used by Rules
-  gZbLastMessage.device = shortaddr;                // %zbdevice%
-  gZbLastMessage.groupaddr = json[F(D_CMND_ZIGBEE_GROUP)];      // %zbgroup%
-  gZbLastMessage.cluster = json[F(D_CMND_ZIGBEE_CLUSTER)];      // %zbcluster%
-  gZbLastMessage.endpoint = json[F(D_CMND_ZIGBEE_ENDPOINT)];    // %zbendpoint%
+    // save parameters is global variables to be used by Rules
+    gZbLastMessage.device = shortaddr;                // %zbdevice%
+    gZbLastMessage.groupaddr = attr_list.group_id;      // %zbgroup%
+    gZbLastMessage.endpoint = attr_list.src_ep;    // %zbendpoint%
 
-  // dump json in string
-  String msg = "";
-  json.printTo(msg);
-  zigbee_devices.jsonClear(shortaddr);
-
-  if (use_fname) {
-    if (Settings.flag4.remove_zbreceived) {
-      Response_P(PSTR("{\"%s\":%s}"), fname, msg.c_str());
-    } else {
-      Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":{\"%s\":%s}}"), fname, msg.c_str());
+    mqtt_data[0] = 0; // clear string
+    // Do we prefix with `ZbReceived`?
+    if (!Settings.flag4.remove_zbreceived) {
+      Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":"));
     }
-  } else {
-    if (Settings.flag4.remove_zbreceived) {
-      Response_P(PSTR("{\"0x%04X\":%s}"), shortaddr, msg.c_str());
+    // What key do we use, shortaddr or name?
+    if (use_fname) {
+      Response_P(PSTR("%s{\"%s\":{"), mqtt_data, fname);
     } else {
-      Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":{\"0x%04X\":%s}}"), shortaddr, msg.c_str());
+      Response_P(PSTR("%s{\"0x%04X\":{"), mqtt_data, shortaddr);
     }
+    // Add "Device":"0x...."
+    Response_P(PSTR("%s\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\","), mqtt_data, shortaddr);
+    // Add "Name":"xxx" if name is present
+    if (fname) {
+      Response_P(PSTR("%s\"" D_JSON_ZIGBEE_NAME "\":\"%s\","), mqtt_data, EscapeJSONString(fname).c_str());
+    }
+    // Add all other attributes
+    Response_P(PSTR("%s%s}}"), mqtt_data, attr_list.toString().c_str());
+    
+    if (!Settings.flag4.remove_zbreceived) {
+      Response_P(PSTR("%s}"), mqtt_data);
+    }
+    // AddLog_P2(LOG_LEVEL_INFO, PSTR(">>> %s"), mqtt_data);   // TODO
+    attr_list.reset();    // clear the attributes
+
+    if (Settings.flag4.zigbee_distinct_topics) {
+      char subtopic[16];
+      snprintf_P(subtopic, sizeof(subtopic), PSTR("%04X/" D_RSLT_SENSOR), shortaddr);
+      MqttPublishPrefixTopic_P(TELE, subtopic, Settings.flag.mqtt_sensor_retain);
+    } else {
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+    }
+    XdrvRulesProcess();     // apply rules
   }
-  if (Settings.flag4.zigbee_distinct_topics) {
-    char subtopic[16];
-    snprintf_P(subtopic, sizeof(subtopic), PSTR("%04X/" D_RSLT_SENSOR), shortaddr);
-    MqttPublishPrefixTopic_P(TELE, subtopic, Settings.flag.mqtt_sensor_retain);
-  } else {
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-  }
-  XdrvRulesProcess();     // apply rules
 }
 
-void Z_Devices::jsonPublishNow(uint16_t shortaddr, JsonObject & values) {
+void Z_Devices::jsonPublishNow(uint16_t shortaddr, Z_attribute_list &attr_list) {
   jsonPublishFlush(shortaddr);    // flush any previous buffer
-  jsonAppend(shortaddr, values);
+  jsonAppend(shortaddr, attr_list);
   jsonPublishFlush(shortaddr);    // publish now
 }
 
@@ -1044,9 +955,8 @@ String Z_Devices::dumpLightState(uint16_t shortaddr) const {
   JsonObject& json = jsonBuffer.createObject();
   char hex[8];
 
-  int32_t found = findShortAddrIdx(shortaddr);
-  if (found >= 0) {
-    const Z_Device & device = devicesAt(found);
+  const Z_Device & device = findShortAddr(shortaddr);
+  if (foundDevice(device)) {
     const char * fname = getFriendlyName(shortaddr);
 
     bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
@@ -1090,8 +1000,7 @@ String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
   JsonArray& json = jsonBuffer.createArray();
   JsonArray& devices = json;
 
-  for (std::vector<Z_Device*>::const_iterator it = _devices.begin(); it != _devices.end(); ++it) {
-    const Z_Device &device = **it;
+  for (const auto & device : _devices) {
     uint16_t shortaddr = device.shortaddr;
     char hex[22];
 

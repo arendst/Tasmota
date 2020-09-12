@@ -21,7 +21,7 @@ While fallback or downgrading is common practice it was never supported due to S
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.7.2.1** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.4.1** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 Support of Core versions before 2.7.1 has been removed.
 
@@ -35,7 +35,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Provided Binary Downloads
 
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.2.1**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.1**.
 
 - **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
@@ -47,27 +47,17 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - **tasmota-zbbridge.bin** = The dedicated Sonoff Zigbee Bridge version.
 - **tasmota-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
 
+Binaries for ESP8266 based devices can be downloaded from http://ota.tasmota.com/tasmota/release. Binaries for ESP32 based devices can be downloaded from http://ota.tasmota.com/tasmota32/release. The base links can be used for OTA upgrades like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin``
+
 [List](MODULES.md) of embedded modules.
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
 ## Changelog
 
-### Version 8.4.0.3
+### Version 8.5.0.1
 
-- Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
-- Change references from http://thehackbox.org to http://ota.tasmota.com
-- Change White blend mode moved to using ``SetOption 105`` instead of ``RGBWWTable``
-- Fix ESP32 PWM range
-- Fix display power control (#9114)
-- Add command ``SetOption108 0/1`` to enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1) - Add Zigbee better support for IKEA Motion Sensor
-- Add command ``SetOption109 1`` to force gen1 Alexa mode, for Echo Dot 2nd gen devices only
-- Add command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)
-- Add ESP32 Analog input support for GPIO32 to GPIO39
-- Add Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
-- Add Zigbee web gui widget for Temp/Humidity/Pressure sensors
-- Add Zigbee web ui for power metering plugs
-- Add better config corruption recovery (#9046)
-- Add virtual CT for 4 channels lights, emulating a 5th channel
-- Add support for DYP ME007 ultrasonic distance sensor by Janusz Kostorz (#9113)
-- Add command ``PowerDelta1`` to ``PowerDelta3`` to trigger on up to three phases (#9134)
+- Fix energy total counters (#9263, #9266)
+- Fix crash in ``ZbRestore``
+- Add new shutter modes (#9244)
+- Add ``#define USE_MQTT_AWS_IOT_LIGHT`` for password based AWS IoT authentication

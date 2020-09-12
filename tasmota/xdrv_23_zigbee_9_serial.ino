@@ -598,6 +598,7 @@ int32_t ZigbeeProcessInputEZSP(class SBuffer &buf) {
       case EZSP_messageSentHandler:       // 3F00
       case EZSP_setConfigurationValue:    // 5300
       case EZSP_setPolicy:                // 5500
+      case 0x0059:                        // 5900 - supposedly removed by still happening
       case EZSP_setMulticastTableEntry:   // 6400
       case EZSP_setInitialSecurityState:  // 6800
       case EZSP_getCurrentSecurityState:  // 6900
@@ -765,96 +766,96 @@ void CmndZbEZSPSend(void)
 // - transacId: 8-bits, transation id of message (should be incremented at each message), used both for Zigbee message number and ZCL message number
 // Returns: None
 //
-void ZigbeeZCLSend_Raw(uint16_t shortaddr, uint16_t groupaddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, uint16_t manuf, const uint8_t *msg, size_t len, bool needResponse, uint8_t transacId) {
+void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
 
 #ifdef USE_ZIGBEE_ZNP
-  SBuffer buf(32+len);
+  SBuffer buf(32+zcl.len);
   buf.add8(Z_SREQ | Z_AF);          // 24
   buf.add8(AF_DATA_REQUEST_EXT);    // 02
-  if (BAD_SHORTADDR == shortaddr) {        // if no shortaddr we assume group address
+  if (BAD_SHORTADDR == zcl.shortaddr) {        // if no shortaddr we assume group address
     buf.add8(Z_Addr_Group);         // 01
-    buf.add64(groupaddr);           // group address, only 2 LSB, upper 6 MSB are discarded
+    buf.add64(zcl.groupaddr);           // group address, only 2 LSB, upper 6 MSB are discarded
     buf.add8(0xFF);                 // dest endpoint is not used for group addresses
   } else {
     buf.add8(Z_Addr_ShortAddress);  // 02
-    buf.add64(shortaddr);           // dest address, only 2 LSB, upper 6 MSB are discarded
-    buf.add8(endpoint);             // dest endpoint
+    buf.add64(zcl.shortaddr);           // dest address, only 2 LSB, upper 6 MSB are discarded
+    buf.add8(zcl.endpoint);             // dest endpoint
   }
   buf.add16(0x0000);                // dest Pan ID, 0x0000 = intra-pan
   buf.add8(0x01);                   // source endpoint
-  buf.add16(clusterId);
-  buf.add8(transacId);              // transacId
+  buf.add16(zcl.clusterId);
+  buf.add8(zcl.transacId);              // transacId
   buf.add8(0x30);                   // 30 options
   buf.add8(0x1E);                   // 1E radius
 
-  buf.add16(3 + len + (manuf ? 2 : 0));
-  buf.add8((needResponse ? 0x00 : 0x10) | (clusterSpecific ? 0x01 : 0x00) | (manuf ? 0x04 : 0x00));                 // Frame Control Field
-  if (manuf) {
-    buf.add16(manuf);               // add Manuf Id if not null
+  buf.add16(3 + zcl.len + (zcl.manuf ? 2 : 0));
+  buf.add8((zcl.needResponse ? 0x00 : 0x10) | (zcl.clusterSpecific ? 0x01 : 0x00) | (zcl.manuf ? 0x04 : 0x00));                 // Frame Control Field
+  if (zcl.manuf) {
+    buf.add16(zcl.manuf);               // add Manuf Id if not null
   }
-  buf.add8(transacId);              // Transaction Sequence Number
-  buf.add8(cmdId);
-  if (len > 0) {
-    buf.addBuffer(msg, len);        // add the payload
+  buf.add8(zcl.transacId);              // Transaction Sequence Number
+  buf.add8(zcl.cmdId);
+  if (zcl.len > 0) {
+    buf.addBuffer(zcl.msg, zcl.len);        // add the payload
   }
 
   ZigbeeZNPSend(buf.getBuffer(), buf.len());
 #endif // USE_ZIGBEE_ZNP
 
 #ifdef USE_ZIGBEE_EZSP
-  SBuffer buf(32+len);
+  SBuffer buf(32+zcl.len);
 
-  if (BAD_SHORTADDR != shortaddr) {
+  if (BAD_SHORTADDR != zcl.shortaddr) {
     // send unicast message to an address
     buf.add16(EZSP_sendUnicast);          // 3400
     buf.add8(EMBER_OUTGOING_DIRECT);    // 00
-    buf.add16(shortaddr);               // dest addr
+    buf.add16(zcl.shortaddr);               // dest addr
     // ApsFrame
     buf.add16(Z_PROF_HA);               // Home Automation profile
-    buf.add16(clusterId);               // cluster
+    buf.add16(zcl.clusterId);               // cluster
     buf.add8(0x01);                     // srcEp
-    buf.add8(endpoint);                 // dstEp
+    buf.add8(zcl.endpoint);                 // dstEp
     buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
-    buf.add16(groupaddr);               // groupId
-    buf.add8(transacId);
+    buf.add16(zcl.groupaddr);               // groupId
+    buf.add8(zcl.transacId);
     // end of ApsFrame
     buf.add8(0x01);                     // tag TODO
 
-    buf.add8(3 + len + (manuf ? 2 : 0));
-    buf.add8((needResponse ? 0x00 : 0x10) | (clusterSpecific ? 0x01 : 0x00) | (manuf ? 0x04 : 0x00));                 // Frame Control Field
-    if (manuf) {
-      buf.add16(manuf);               // add Manuf Id if not null
+    buf.add8(3 + zcl.len + (zcl.manuf ? 2 : 0));
+    buf.add8((zcl.needResponse ? 0x00 : 0x10) | (zcl.clusterSpecific ? 0x01 : 0x00) | (zcl.manuf ? 0x04 : 0x00));                 // Frame Control Field
+    if (zcl.manuf) {
+      buf.add16(zcl.manuf);               // add Manuf Id if not null
     }
-    buf.add8(transacId);              // Transaction Sequance Number
-    buf.add8(cmdId);
-    if (len > 0) {
-      buf.addBuffer(msg, len);        // add the payload
+    buf.add8(zcl.transacId);              // Transaction Sequance Number
+    buf.add8(zcl.cmdId);
+    if (zcl.len > 0) {
+      buf.addBuffer(zcl.msg, zcl.len);        // add the payload
     }
   } else {
     // send broadcast group address, aka groupcast
     buf.add16(EZSP_sendMulticast);      // 3800
     // ApsFrame
     buf.add16(Z_PROF_HA);               // Home Automation profile
-    buf.add16(clusterId);               // cluster
+    buf.add16(zcl.clusterId);               // cluster
     buf.add8(0x01);                     // srcEp
-    buf.add8(endpoint);                 // broadcast endpoint for groupcast
+    buf.add8(zcl.endpoint);                 // broadcast endpoint for groupcast
     buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
-    buf.add16(groupaddr);               // groupId
-    buf.add8(transacId);
+    buf.add16(zcl.groupaddr);               // groupId
+    buf.add8(zcl.transacId);
     // end of ApsFrame
     buf.add8(0);                        // hops, 0x00 = EMBER_MAX_HOPS
     buf.add8(7);                        // nonMemberRadius, 7 = infinite
     buf.add8(0x01);                     // tag TODO
 
-    buf.add8(3 + len + (manuf ? 2 : 0));
-    buf.add8((needResponse ? 0x00 : 0x10) | (clusterSpecific ? 0x01 : 0x00) | (manuf ? 0x04 : 0x00));                 // Frame Control Field
-    if (manuf) {
-      buf.add16(manuf);               // add Manuf Id if not null
+    buf.add8(3 + zcl.len + (zcl.manuf ? 2 : 0));
+    buf.add8((zcl.needResponse ? 0x00 : 0x10) | (zcl.clusterSpecific ? 0x01 : 0x00) | (zcl.manuf ? 0x04 : 0x00));                 // Frame Control Field
+    if (zcl.manuf) {
+      buf.add16(zcl.manuf);               // add Manuf Id if not null
     }
-    buf.add8(transacId);              // Transaction Sequance Number
-    buf.add8(cmdId);
-    if (len > 0) {
-      buf.addBuffer(msg, len);        // add the payload
+    buf.add8(zcl.transacId);              // Transaction Sequance Number
+    buf.add8(zcl.cmdId);
+    if (zcl.len > 0) {
+      buf.addBuffer(zcl.msg, zcl.len);        // add the payload
     }
   }
 

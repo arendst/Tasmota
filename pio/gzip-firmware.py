@@ -6,7 +6,7 @@ import gzip
 OUTPUT_DIR = "build_output{}".format(os.path.sep)
 
 def bin_gzip(source, target, env):
-    variant = str(target[0]).split(os.path.sep)[1]
+    variant = str(target[0]).split(os.path.sep)[2]
     
     # create string with location and file names based on variant
     bin_file = "{}firmware{}{}.bin".format(OUTPUT_DIR, os.path.sep, variant)

@@ -129,7 +129,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t virtual_ct_cw : 1;            // bit 25 (v8.4.0.1)  - SetOption107 - Virtual CT Channel - signals whether the hardware white is cold CW (true) or warm WW (false)
     uint32_t teleinfo_rawdata : 1;         // bit 26 (v8.4.0.2)  - SetOption108 - enable Teleinfo + Tasmota Energy device (0) or Teleinfo raw data only (1)
     uint32_t alexa_gen_1 : 1;              // bit 27 (v8.4.0.3)  - SetOption109 - Alexa gen1 mode - if you only have Echo Dot 2nd gen devices
-    uint32_t spare28 : 1;                  // bit 28
+    uint32_t zb_disable_autobind : 1;      // bit 28 (v8.5.0.1)  - SetOption110 - disable Zigbee auto-config when pairing new devices
     uint32_t spare29 : 1;                  // bit 29
     uint32_t spare30 : 1;                  // bit 30
     uint32_t spare31 : 1;                  // bit 31
@@ -609,12 +609,11 @@ struct {
   uint8_t       ledpwm_off;                // F40
   uint8_t       tcp_baudrate;              // F41
   uint8_t       fallback_module;           // F42
-
-  uint8_t       free_f43[1];               // F43
-
+  uint8_t       shutter_mode;              // F43
   uint16_t      energy_power_delta[3];     // F44
+  uint16_t      shutter_pwmrange[2][MAX_SHUTTERS];  // F4A
 
-  uint8_t       free_f4e[106];             // F4A - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f5a[90];             // F5A - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   SysBitfield5  flag5;                     // FB4

@@ -1,18 +1,37 @@
+## Released
+
 ## Unreleased (development)
+
+### 8.5.0.1 20200907
+
+- Fix energy total counters (#9263, #9266)
+- Fix crash in ``ZbRestore``
+- Add new shutter modes (#9244)
+- Add ``#define USE_MQTT_AWS_IOT_LIGHT`` for password based AWS IoT authentication
+- Add Zigbee auto-config when pairing
+
+### 8.5.0 20200907
+
+- Release Hannah
 
 ### 8.4.0.3 20200823
 
-- Change references from http://thehackbox.org to http://ota.tasmota.com
+- Change references from http://thehackbox.org/tasmota/ to http://ota.tasmota.com/tasmota/
 - Add command ``PowerDelta1`` to ``PowerDelta3`` to trigger on up to three phases (#9134)
 - Add Zigbee web ui widget for Lights
 - Add ``SetOption109 1`` to force gen1 Alexa mode, for Echo Dot 2nd gen devices only
 - Add Zigbee web ui for power metering plugs
+- Add experimental support for ESP32 TTGO Watch and I2S Audio by Gerhard Mutz
 
 ### 8.4.0.2 20200813
 
-- Remove support for 1-step upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
+- Remove support for direct upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
 - Change White blend mode moved to using ``SetOption 105`` instead of ``RGBWWTable``
 - Fix display power control (#9114)
+- Add command ``SetOption103 0/1`` to set TLS mode when TLS is selected
+- Add command ``SetOption104 1`` to disable all MQTT retained messages
+- Add command ``SetOption106 1`` to create a virtual White ColorTemp for RGBW lights
+- Add command ``SetOption107 0/1`` to select virtual White as (0) Warm or (1) Cold
 - Add command ``SetOption108 0/1`` to enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1) - Add better config corruption recovery (#9046)
 - Add virtual CT for 4 channels lights, emulating a 5th channel
 - Add support for DYP ME007 ultrasonic distance sensor by Janusz Kostorz (#9113)

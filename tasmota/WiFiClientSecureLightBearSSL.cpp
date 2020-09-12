@@ -872,7 +872,11 @@ extern "C" {
 
 #ifdef USE_MQTT_TLS_FORCE_EC_CIPHER
 		// we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
-		br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);
+		br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);    // TODO
+#endif
+#ifdef USE_MQTT_AWS_IOT_LIGHT
+    static const char * alpn_mqtt = "mqtt";
+    br_ssl_engine_set_protocol_names(&cc->eng, &alpn_mqtt, 1);
 #endif
   }
 }
@@ -880,13 +884,6 @@ extern "C" {
 // Called by connect() to do the actual SSL setup and handshake.
 // Returns if the SSL handshake succeeded.
 bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
-// #ifdef USE_MQTT_AWS_IOT
-// 	if ((!_chain_P) || (!_sk_ec_P)) {
-// 		setLastError(ERR_MISSING_EC_KEY);
-// 		return false;
-// 	}
-// #endif
-
 	// Validation context, either full CA validation or checking only fingerprints
 #ifdef USE_MQTT_TLS_CA_CERT
 	br_x509_minimal_context *x509_minimal;
