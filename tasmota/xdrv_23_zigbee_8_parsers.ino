@@ -1774,7 +1774,7 @@ void Z_AutoResponder(uint16_t srcaddr, uint16_t cluster, uint8_t endpoint, const
 
   for (uint32_t i=0; i<attr_len; i++) {
     uint16_t attr = attr_list[i];
-    uint32_t ccccaaaa = (cluster << 16) || attr;
+    uint32_t ccccaaaa = (cluster << 16) | attr;
 
     switch (ccccaaaa) {
       case 0x00000004: json_out[F("Manufacturer")] = F(USE_ZIGBEE_MANUFACTURER);  break;    // Manufacturer
