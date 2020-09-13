@@ -556,6 +556,7 @@ void ZbSendRead(const JsonVariant &val_attr, uint16_t device, uint16_t groupaddr
 
   uint16_t val = strToUInt(val_attr);
   if (val_attr.is<JsonArray>()) {
+    // value is an array []
     const JsonArray& attr_arr = val_attr.as<const JsonArray&>();
     attrs_len = attr_arr.size() * attr_item_len;
     attrs = (uint8_t*) calloc(attrs_len, 1);
@@ -569,6 +570,7 @@ void ZbSendRead(const JsonVariant &val_attr, uint16_t device, uint16_t groupaddr
       i += attr_item_len - 2 - attr_item_offset;    // normally 0
     }
   } else if (val_attr.is<JsonObject>()) {
+    // value is an object {}
     const JsonObject& attr_obj = val_attr.as<const JsonObject&>();
     attrs_len = attr_obj.size() * attr_item_len;
     attrs = (uint8_t*) calloc(attrs_len, 1);
@@ -619,10 +621,13 @@ void ZbSendRead(const JsonVariant &val_attr, uint16_t device, uint16_t groupaddr
 
     attrs_len = actual_attr_len;
   } else {
-    attrs_len = attr_item_len;
-    attrs = (uint8_t*) calloc(attrs_len, 1);
-    attrs[0 + attr_item_offset] = val & 0xFF;    // little endian
-    attrs[1 + attr_item_offset] = val >> 8;
+    // value is a literal
+    if (0xFFFF != cluster) {
+      attrs_len = attr_item_len;
+      attrs = (uint8_t*) calloc(attrs_len, 1);
+      attrs[0 + attr_item_offset] = val & 0xFF;    // little endian
+      attrs[1 + attr_item_offset] = val >> 8;
+    }
   }
 
   if (attrs_len > 0) {

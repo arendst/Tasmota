@@ -1080,6 +1080,11 @@ void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
     uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
 
     switch (ccccaaaa) {      // 0xccccaaaa . c=cluster, a=attribute
+      case 0x00010020:       // BatteryVoltage
+        if (attr_list.countAttribute(0x0001,0x0021) == 0) {   // if it does not already contain BatteryPercentage
+          uint32_t mv = attr.getUInt()*100;
+          attr_list.addAttribute(0x0001, 0x0021).setUInt(toPercentageCR2032(mv) * 2);
+        }
       case 0x0000FF01:
         syntheticAqaraSensor(attr_list, attr);
         break;
