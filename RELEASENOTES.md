@@ -59,6 +59,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 - Fix energy total counters (#9263, #9266)
 - Fix crash in ``ZbRestore``
+- Fix reset BMP sensors when executing command ``SaveData`` and define USE_DEEPSLEEP enabled (#9300)
 - Add new shutter modes (#9244)
 - Add ``#define USE_MQTT_AWS_IOT_LIGHT`` for password based AWS IoT authentication
 - Add Zigbee auto-config when pairing
