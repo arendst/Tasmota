@@ -874,10 +874,8 @@ extern "C" {
 		// we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
 		br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);    // TODO
 #endif
-#ifdef USE_MQTT_AWS_IOT_LIGHT
     static const char * alpn_mqtt = "mqtt";
     br_ssl_engine_set_protocol_names(&cc->eng, &alpn_mqtt, 1);
-#endif
   }
 }
 
