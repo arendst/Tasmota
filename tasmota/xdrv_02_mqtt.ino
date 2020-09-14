@@ -57,7 +57,7 @@ struct MQTT {
   uint8_t initial_connection_state = 2;  // MQTT connection messages state
   bool connected = false;                // MQTT virtual connection status
   bool allowed = false;                  // MQTT enabled and parameters valid
-  bool tls_private_key = false;          // MQTT require a private key before connecting
+  bool mqtt_tls = false;                 // MQTT TLS is enabled
 } Mqtt;
 
 #ifdef USE_MQTT_TLS
@@ -149,22 +149,24 @@ void MqttInit(void)
     // Turn on TLS for port 8883 (TLS) and 8884 (TLS, client certificate)
     Settings.flag4.mqtt_tls = true;
   }
+  Mqtt.mqtt_tls = Settings.flag4.mqtt_tls;   // this flag should not change even if we change the SetOption (until reboot)
 
   // Detect AWS IoT and set default parameters
   String host = String(SettingsText(SET_MQTT_HOST));
   if (host.indexOf(".iot.") && host.endsWith(".amazonaws.com")) {  // look for ".iot." and ".amazonaws.com" in the domain name
     Settings.flag4.mqtt_no_retain = true;
-    // Mqtt.tls_private_key = true;
   }
 
-  if (Settings.flag4.mqtt_tls) {
+  if (Mqtt.mqtt_tls) {
     tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
 
 #ifdef USE_MQTT_AWS_IOT
     loadTlsDir();   // load key and certificate data from Flash
-    tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
-                              AWS_IoT_Private_Key,
-                              0xFFFF /* all usages, don't care */, 0);
+    if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
+      tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
+                                AWS_IoT_Private_Key,
+                                0xFFFF /* all usages, don't care */, 0);
+    }
 #endif
 
 #ifdef USE_MQTT_TLS_CA_CERT
@@ -578,8 +580,8 @@ void MqttReconnect(void)
     }
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
     // don't enable MQTT for AWS IoT if Private Key or Certificate are not set
-    if (Settings.flag4.mqtt_tls && Mqtt.tls_private_key) {
-      if (!AWS_IoT_Private_Key || !AWS_IoT_Client_Certificate) {
+    if (Mqtt.mqtt_tls) {
+      if (0 == strlen(SettingsText(SET_MQTT_PWD))) {     // we anticipate that an empty password does not make sense with TLS. This avoids failed connections 
         Mqtt.allowed = false;
       }
     }
@@ -614,7 +616,7 @@ void MqttReconnect(void)
 
   if (MqttClient.connected()) { MqttClient.disconnect(); }
 #ifdef USE_MQTT_TLS
-  if (Settings.flag4.mqtt_tls) {
+  if (Mqtt.mqtt_tls) {
     tlsClient->stop();
   } else {
     EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
@@ -632,10 +634,12 @@ void MqttReconnect(void)
   MqttClient.setCallback(MqttDataHandler);
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   // re-assign private keys in case it was updated in between
-  if (Settings.flag4.mqtt_tls) {
-    tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
-                              AWS_IoT_Private_Key,
-                              0xFFFF /* all usages, don't care */, 0);
+  if (Mqtt.mqtt_tls) {
+    if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
+      tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
+                                AWS_IoT_Private_Key,
+                                0xFFFF /* all usages, don't care */, 0);
+    }
   }
 #endif
   MqttClient.setServer(SettingsText(SET_MQTT_HOST), Settings.mqtt_port);
@@ -645,7 +649,7 @@ void MqttReconnect(void)
   bool allow_all_fingerprints;
   bool learn_fingerprint1;
   bool learn_fingerprint2;
-  if (Settings.flag4.mqtt_tls) {
+  if (Mqtt.mqtt_tls) {
     allow_all_fingerprints = false;
     learn_fingerprint1 = is_fingerprint_mono_value(Settings.mqtt_fingerprint[0], 0x00);
     learn_fingerprint2 = is_fingerprint_mono_value(Settings.mqtt_fingerprint[1], 0x00);
@@ -658,16 +662,18 @@ void MqttReconnect(void)
 #endif
   bool lwt_retain = Settings.flag4.mqtt_no_retain ? false : true;   // no retained last will if "no_retain"
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  if (Settings.flag4.mqtt_tls && Mqtt.tls_private_key) {
-    // If we require private key then we should null user/pwd
-    mqtt_user = nullptr;
-    mqtt_pwd  = nullptr;
+  if (Mqtt.mqtt_tls) {
+    if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
+      // if private key is there, we remove user/pwd
+      mqtt_user = nullptr;
+      mqtt_pwd  = nullptr;
+    }
   }
 #endif
 
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, mqtt_data, MQTT_CLEAN_SESSION)) {
 #ifdef USE_MQTT_TLS
-    if (Settings.flag4.mqtt_tls) {
+    if (Mqtt.mqtt_tls) {
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connected in %d ms, max ThunkStack used %d"),
         millis() - mqtt_connect_time, tlsClient->getMaxThunkStackUse());
       if (!tlsClient->getMFLNStatus()) {
@@ -739,7 +745,7 @@ void MqttReconnect(void)
     MqttConnected();
   } else {
 #ifdef USE_MQTT_TLS
-    if (Settings.flag4.mqtt_tls) {
+    if (Mqtt.mqtt_tls) {
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connection error: %d"), tlsClient->getLastError());
     }
 #endif
@@ -1311,7 +1317,7 @@ void HandleMqttConfiguration(void)
     SettingsText(SET_MQTT_HOST),
     Settings.mqtt_port,
 #ifdef USE_MQTT_TLS
-    Settings.flag4.mqtt_tls ? " checked" : "",      // SetOption102 - Enable MQTT TLS
+    Mqtt.mqtt_tls ? " checked" : "",      // SetOption102 - Enable MQTT TLS
 #endif // USE_MQTT_TLS
     Format(str, MQTT_CLIENT_ID, sizeof(str)), MQTT_CLIENT_ID, SettingsText(SET_MQTT_CLIENT));
   WSContentSend_P(HTTP_FORM_MQTT2,
@@ -1346,7 +1352,7 @@ void MqttSaveSettings(void)
   WebGetArg("ml", tmp, sizeof(tmp));
   Settings.mqtt_port = (!strlen(tmp)) ? MQTT_PORT : atoi(tmp);
 #ifdef USE_MQTT_TLS
-  Settings.flag4.mqtt_tls = Webserver->hasArg("b3");  // SetOption102 - Enable MQTT TLS
+  Mqtt.mqtt_tls = Webserver->hasArg("b3");  // SetOption102 - Enable MQTT TLS
 #endif
   WebGetArg("mc", tmp, sizeof(tmp));
   SettingsUpdateText(SET_MQTT_CLIENT, (!strlen(tmp)) ? MQTT_CLIENT_ID : tmp);
