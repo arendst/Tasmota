@@ -9,6 +9,7 @@
 - Add new shutter modes (#9244)
 - Add ``#define USE_MQTT_AWS_IOT_LIGHT`` for password based AWS IoT authentication
 - Add Zigbee auto-config when pairing
+- Add support for MLX90640 IR array temperature sensor by Christian Baars
 
 ### 8.5.0 20200907
 

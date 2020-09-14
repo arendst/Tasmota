@@ -1,5 +1,5 @@
 /*
-  xdrv_84_MLX90640.ino - MLX90640 support for Tasmota
+  xdrv_43_mlx90640.ino - MLX90640 support for Tasmota
 
   Copyright (C) 2020  Christian Baars and Theo Arends
 
@@ -33,7 +33,7 @@
 * MLX90640
 \*********************************************************************************************/
 
-#define XDRV_84             84
+#define XDRV_43             43
 #define XI2C_53             53 // See I2CDEVICES.md
 #include <MLX90640_API.h>
 
@@ -144,7 +144,7 @@ const char HTTP_MLX90640_2a_SNS_COMPRESSED[] PROGMEM = "\x33\xBF\xA0\xB7\x9A\x3E
 #else
 const char HTTP_MLX90640_2a_SNS[] PROGMEM =
   "var line = 0;"
-  "setInterval(function() {"                
+  "setInterval(function() {"
   "rl('ul',line);"   // 0 = do NOT force refresh
   "},200);"
   "function rl(s,v){"         //source, value
@@ -209,7 +209,7 @@ const char HTTP_MLX90640_2b_SNS[] PROGMEM =
               "for (var j=0;j<32;j++){"
                   "var y = 239 - Math.floor(map(rA[(i*32)+j],0,40,0,239));" // 40 is max. temp for heat map
                   // console.log(gPx.data[y],gPx.data[y+1],gPx.data[y+2]);
-                  "octx.fillStyle = 'rgb(' + gPx.data[(y*4)] + ',' + gPx.data[(y*4)+1] +',' + gPx.data[(y*4)+2] + ')';"                  
+                  "octx.fillStyle = 'rgb(' + gPx.data[(y*4)] + ',' + gPx.data[(y*4)+1] +',' + gPx.data[(y*4)+2] + ')';"
                   "octx.fillRect(j*1,i*1,1,1);"
               "}"
       "}"
@@ -254,7 +254,7 @@ const char HTTP_MLX90640_3a_SNS[] PROGMEM =
 			    "rO.deleteContents();"
   				"for(var p in poi){"
   					//"console.log('poi:'+ poi[p][0]);"
-            "var c=150;" 
+            "var c=150;"
             "if(eb('poiL').value==p){c=255;}"
             // "console.log(c);"
             "ctx.fillStyle = 'rgba('+c+','+c+','+c+',0.6)';"
@@ -411,18 +411,18 @@ void MLX90640UpdateGUI(void){
 void MLX90640HandleWebGuiResponse(void){
   char tmp[(MLX90640_POI_NUM*2)+4];
   WebGetArg("ul", tmp, sizeof(tmp));                  // update line
-  if (strlen(tmp)) {           
+  if (strlen(tmp)) {
     uint8_t _line = atoi(tmp);
     // AddLog_P2(LOG_LEVEL_DEBUG, "MLX90640: send line %u", _line);
     float _buf[65];
-    if(_line==0){_buf[0]=1000+MLX90640.Ta;} //ambient temperature modulation hack 
+    if(_line==0){_buf[0]=1000+MLX90640.Ta;} //ambient temperature modulation hack
     else{_buf[0]=(float)_line;}
     memcpy((char*)&_buf[1],(char*)&MLX90640.To[_line*64],64*4);
     Webserver->send(200,PSTR("application/octet-stream"),(const char*)&_buf,65*4);
     return;
     }
   WebGetArg("up", tmp, sizeof(tmp));                  // update POI to browser
-  if (strlen(tmp)==1) {           
+  if (strlen(tmp)==1) {
     Webserver->send(200,PSTR("application/octet-stream"),(const char*)&MLX90640.pois,MLX90640_POI_NUM*2);
     return;
     }
@@ -591,7 +591,7 @@ void MLX90640Show(uint8_t json)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv84(uint8_t function)
+bool Xdrv43(uint8_t function)
 {
   bool result = false;
 

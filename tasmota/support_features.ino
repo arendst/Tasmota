@@ -601,8 +601,9 @@ void GetFeatures(void)
 #ifdef USE_I2S_AUDIO
   feature6 |= 0x00800000;  // xdrv_42_i2s_audio.ino
 #endif
-
-//  feature6 |= 0x01000000;
+#ifdef USE_MLX90640
+  feature6 |= 0x01000000;  // xdrv_43_mlx90640.ino
+#endif
 //  feature6 |= 0x02000000;
 //  feature6 |= 0x04000000;
 //  feature6 |= 0x08000000;
