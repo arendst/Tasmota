@@ -951,44 +951,43 @@ uint16_t Z_Devices::parseDeviceParam(const char * param, bool short_must_be_know
 
 // Display the tracked status for a light
 String Z_Devices::dumpLightState(uint16_t shortaddr) const {
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject& json = jsonBuffer.createObject();
+  Z_attribute_list attr_list;
   char hex[8];
 
   const Z_Device & device = findShortAddr(shortaddr);
-  if (foundDevice(device)) {
-    const char * fname = getFriendlyName(shortaddr);
+  const char * fname = getFriendlyName(shortaddr);
+  bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
+  snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), shortaddr);
 
-    bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
-
-    snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), shortaddr);
-
-    JsonObject& dev = use_fname ? json.createNestedObject((char*) fname)   // casting (char*) forces a copy
-                                : json.createNestedObject(hex);
-    if (use_fname) {
-      dev[F(D_JSON_ZIGBEE_DEVICE)] = hex;
-    } else if (fname) {
-      dev[F(D_JSON_ZIGBEE_NAME)] = (char*) fname;
-    }
-
-    // expose the last known status of the bulb, for Hue integration
-    dev[F(D_JSON_ZIGBEE_LIGHT)] = getHueBulbtype(shortaddr);   // sign extend, 0xFF changed as -1
-    // dump all known values
-    dev[F("Reachable")] = device.getReachable();   // TODO TODO
-    if (device.validPower())        { dev[F("Power")]     = device.getPower(); }
-    if (device.validDimmer())       { dev[F("Dimmer")]    = device.dimmer; }
-    if (device.validColormode())    { dev[F("Colormode")] = device.colormode; }
-    if (device.validCT())           { dev[F("CT")]        = device.ct; }
-    if (device.validSat())          { dev[F("Sat")]       = device.sat; }
-    if (device.validHue())          { dev[F("Hue")]       = device.hue; }
-    if (device.validX())            { dev[F("X")]         = device.x; }
-    if (device.validY())            { dev[F("Y")]         = device.y; }
+  attr_list.addAttribute(F(D_JSON_ZIGBEE_DEVICE)).setStr(hex);
+  if (fname) {
+    attr_list.addAttribute(F(D_JSON_ZIGBEE_NAME)).setStr(fname);
   }
 
-  String payload = "";
-  payload.reserve(200);
-  json.printTo(payload);
-  return payload;
+  if (foundDevice(device)) {
+    // expose the last known status of the bulb, for Hue integration
+    attr_list.addAttribute(F(D_JSON_ZIGBEE_LIGHT)).setInt(getHueBulbtype(shortaddr));  // sign extend, 0xFF changed as -1
+    // dump all known values
+    attr_list.addAttribute(F("Reachable")).setBool(device.getReachable());
+    if (device.validPower())        { attr_list.addAttribute(F("Power")).setUInt(device.getPower()); }
+    if (device.validDimmer())       { attr_list.addAttribute(F("Dimmer")).setUInt(device.dimmer); }
+    if (device.validColormode())    { attr_list.addAttribute(F("Colormode")).setUInt(device.colormode); }
+    if (device.validCT())           { attr_list.addAttribute(F("CT")).setUInt(device.ct); }
+    if (device.validSat())          { attr_list.addAttribute(F("Sat")).setUInt(device.sat); }
+    if (device.validHue())          { attr_list.addAttribute(F("Hue")).setUInt(device.hue); }
+    if (device.validX())            { attr_list.addAttribute(F("X")).setUInt(device.x); }
+    if (device.validY())            { attr_list.addAttribute(F("Y")).setUInt(device.y); }
+  }
+  
+  Z_attribute_list attr_list_root;
+  Z_attribute * attr_root;
+  if (use_fname) {
+    attr_root = &attr_list_root.addAttribute(fname);
+  } else {
+    attr_root = &attr_list_root.addAttribute(hex);
+  }
+  attr_root->setStrRaw(attr_list.toString(true).c_str());
+  return attr_list_root.toString(true);
 }
 
 // Dump the internal memory of Zigbee devices
