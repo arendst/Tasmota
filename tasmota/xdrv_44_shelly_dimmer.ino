@@ -1,5 +1,5 @@
 /*
-    xdrv_40_shelly_dimmer.ino - shelly dimmer support for Tasmota
+    xdrv_44_shelly_dimmer.ino - shelly dimmer support for Tasmota
 
     Copyright (C) 2020  James Turton
 
@@ -26,7 +26,7 @@
 // #define SHELLY_DIMMER_DEBUG
 // #define SHELLY_HW_DIMMING
 
-#define XDRV_40                     40
+#define XDRV_44                     44
 #define XNRG_17                     17
 
 #define SHD_DRIVER_MAJOR_VERSION    0
@@ -792,7 +792,7 @@ bool Xnrg17(uint8_t function)
  * Driver Interface
 \*********************************************************************************************/
 
-bool Xdrv40(uint8_t function)
+bool Xdrv44(uint8_t function)
 {
     bool result = false;
 
