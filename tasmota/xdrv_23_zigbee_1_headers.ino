@@ -37,6 +37,7 @@ public:
 };
 
 void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl);
+bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_status_ok = false);
 
 // get the result as a string (const char*) and nullptr if there is no field or the string is empty
 const char * getCaseInsensitiveConstCharNull(const JsonObject &json, const char *needle) {

@@ -1664,4 +1664,78 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
   }
 }
 
+//
+// Given an attribute string, retrieve all attribute details.
+// Input: the attribute has a key name, either: <cluster>/<attr> or <cluster>/<attr>%<type> or "<attribute_name>"
+// Ex: "0008/0000", "0008/0000%20", "Dimmer"
+// Use:
+//    Z_attribute attr;
+//    attr.setKeyName("0008/0000%20")
+//    if (Z_parseAttributeKey(attr)) {
+//      // ok
+//    }
+//
+// Output:
+//   The `attr` attribute has the correct cluster, attr_id, attr_type, attr_multiplier
+//   Note: the attribute value is unchanged and unparsed
+//
+// Note: if the type is specified in the key, the multiplier is not applied, no conversion happens
+bool Z_parseAttributeKey(class Z_attribute & attr) {
+  // check if the name has the format "XXXX/YYYY" where XXXX is the cluster, YYYY the attribute id
+  // alternative "XXXX/YYYY%ZZ" where ZZ is the type (for unregistered attributes)
+  if (attr.key_is_str) {
+    const char * key = attr.key.key;
+    char * delimiter = strchr(key, '/');
+    char * delimiter2 = strchr(key, '%');
+    if (delimiter) {
+      uint16_t attr_id = 0xFFFF;
+      uint16_t cluster_id = 0xFFFF;
+      uint8_t  type_id = Zunk;
+
+      cluster_id = strtoul(key, &delimiter, 16);
+      if (!delimiter2) {
+        attr_id = strtoul(delimiter+1, nullptr, 16);
+      } else {
+        attr_id = strtoul(delimiter+1, &delimiter2, 16);
+        type_id = strtoul(delimiter2+1, nullptr, 16);
+      }
+      attr.setKeyId(cluster_id, attr_id);
+      attr.attr_type = type_id;
+    }
+  }
+  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("cluster_id = 0x%04X, attr_id = 0x%04X"), cluster_id, attr_id);
+
+  // do we already know the type, i.e. attribute and cluster are also known
+  if (Zunk == attr.attr_type) {
+    // scan attributes to find by name, and retrieve type
+    for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+      const Z_AttributeConverter *converter = &Z_PostProcess[i];
+      bool match = false;
+      uint16_t local_attr_id = pgm_read_word(&converter->attribute);
+      uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
+      uint8_t  local_type_id = pgm_read_byte(&converter->type);
+      int8_t   local_multiplier = pgm_read_byte(&converter->multiplier);
+      // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Try cluster = 0x%04X, attr = 0x%04X, type_id = 0x%02X"), local_cluster_id, local_attr_id, local_type_id);
+
+      if (!attr.key_is_str) {
+        if ((attr.key.id.cluster == local_cluster_id) && (attr.key.id.attr_id == local_attr_id)) {
+          attr.attr_type = local_type_id;
+          break;
+        }
+      } else if (pgm_read_word(&converter->name_offset)) {
+        const char * key = attr.key.key;
+        // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Comparing '%s' with '%s'"), attr_name, converter->name);
+        if (0 == strcasecmp_P(key, Z_strings + pgm_read_word(&converter->name_offset))) {
+          // match
+          attr.setKeyId(local_cluster_id, local_attr_id);
+          attr.attr_type = local_type_id;
+          attr.attr_multiplier = local_multiplier;
+          break;
+        }
+      }
+    }
+  }
+  return (Zunk != attr.attr_type) ? true : false;
+}
+
 #endif // USE_ZIGBEE

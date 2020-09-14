@@ -101,11 +101,13 @@ public:
     SBuffer* bval;
     char*    sval;
   } val;
-  Za_type       type;       // uint8_t in size, type of attribute, see above
-  bool          key_is_str;   // is the key a string?
-  bool          key_is_pmem;  // is the string in progmem, so we don't need to make a copy
-  bool          val_str_raw;  // if val is String, it is raw JSON and should not be escaped
-  uint8_t       key_suffix; // append a suffix to key (default is 1, explicitly output if >1)
+  Za_type       type;             // uint8_t in size, type of attribute, see above
+  bool          key_is_str;       // is the key a string?
+  bool          key_is_pmem;      // is the string in progmem, so we don't need to make a copy
+  bool          val_str_raw;      // if val is String, it is raw JSON and should not be escaped
+  uint8_t       key_suffix;       // append a suffix to key (default is 1, explicitly output if >1)
+  uint8_t       attr_type;        // [opt] type of the attribute, default to Zunk (0xFF)
+  uint8_t       attr_multiplier;  // [opt] multiplier for attribute, defaults to 0x01 (no change)
 
   // Constructor with all defaults
   Z_attribute():
@@ -115,7 +117,9 @@ public:
     key_is_str(false),
     key_is_pmem(false),
     val_str_raw(false),
-    key_suffix(1)
+    key_suffix(1),
+    attr_type(0xFF),
+    attr_multiplier(1)
     {};
   
   Z_attribute(const Z_attribute & rhs) {
@@ -247,6 +251,7 @@ public:
   }
 
   inline bool isNum(void) const { return (type >= Za_type::Za_bool) && (type <= Za_type::Za_float); }
+  inline bool isNone(void) const { return (type == Za_type::Za_none);}
   // get num values
   float getFloat(void) const {
     switch (type) {
@@ -483,6 +488,8 @@ protected:
     key_is_str = rhs.key_is_str;
     key_is_pmem = rhs.key_is_pmem;
     key_suffix = rhs.key_suffix;
+    attr_type = rhs.attr_type;
+    attr_multiplier = rhs.attr_multiplier;
     // copy value
     copyVal(rhs);
     // don't touch next pointer

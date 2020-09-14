@@ -212,6 +212,34 @@ void ZbApplyMultiplier(double &val_d, int8_t multiplier) {
   }
 }
 
+//
+// Send Attribute Write, apply mutlipliers before
+//
+bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_status_ok) {
+  double val_d = attr.getFloat();
+  const char * val_str = attr.getStr();
+
+  if (attr.key_is_str) { return false; }
+  if (attr.isNum() && (1 != attr.attr_multiplier)) {
+    ZbApplyMultiplier(val_d, attr.attr_multiplier);
+  }
+
+  // push the value in the buffer
+  buf.add16(attr.key.id.attr_id);        // prepend with attribute identifier
+  if (prepend_status_ok) {
+    buf.add8(Z_SUCCESS);  // status OK = 0x00
+  }
+  buf.add8(attr.attr_type);     // prepend with attribute type
+  int32_t res = encodeSingleAttribute(buf, val_d, val_str, attr.attr_type);
+  if (res < 0) {
+    // remove the attribute type we just added
+    // buf.setLen(buf.len() - (operation == ZCL_READ_ATTRIBUTES_RESPONSE ? 4 : 3));
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Unsupported attribute type %04X/%04X '0x%02X'"), attr.key.id.cluster, attr.key.id.attr_id, attr.attr_type);
+    return false;
+  }
+  return true;
+}
+
 // Parse "Report", "Write", "Response" or "Condig" attribute
 // Operation is one of: ZCL_REPORT_ATTRIBUTES (0x0A), ZCL_WRITE_ATTRIBUTES (0x02) or ZCL_READ_ATTRIBUTES_RESPONSE (0x01)
 void ZbSendReportWrite(const JsonObject &val_pubwrite, uint16_t device, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint16_t manuf, uint8_t operation) {
@@ -226,99 +254,42 @@ void ZbSendReportWrite(const JsonObject &val_pubwrite, uint16_t device, uint16_t
     const char *key = it->key;
     const JsonVariant &value = it->value;
 
-    uint16_t attr_id = 0xFFFF;
-    uint16_t cluster_id = 0xFFFF;
-    uint8_t  type_id = Znodata;
-    int8_t   multiplier = 1;        // multiplier to adjust the key value
-    double   val_d = 0;             // I try to avoid `double` but this type capture both float and (u)int32_t without prevision loss
-    const char* val_str = "";       // variant as string
-
-    // check if the name has the format "XXXX/YYYY" where XXXX is the cluster, YYYY the attribute id
-    // alternative "XXXX/YYYY%ZZ" where ZZ is the type (for unregistered attributes)
-    char * delimiter = strchr(key, '/');
-    char * delimiter2 = strchr(key, '%');
-    if (delimiter) {
-      cluster_id = strtoul(key, &delimiter, 16);
-      if (!delimiter2) {
-        attr_id = strtoul(delimiter+1, nullptr, 16);
-      } else {
-        attr_id = strtoul(delimiter+1, &delimiter2, 16);
-        type_id = strtoul(delimiter2+1, nullptr, 16);
-      }
-    }
-    // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("cluster_id = 0x%04X, attr_id = 0x%04X"), cluster_id, attr_id);
-
-    // do we already know the type, i.e. attribute and cluster are also known
-    if (Znodata == type_id) {
-      // scan attributes to find by name, and retrieve type
-      for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
-        const Z_AttributeConverter *converter = &Z_PostProcess[i];
-        bool match = false;
-        uint16_t local_attr_id = pgm_read_word(&converter->attribute);
-        uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
-        uint8_t  local_type_id = pgm_read_byte(&converter->type);
-        int8_t   local_multiplier = pgm_read_byte(&converter->multiplier);
-        // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Try cluster = 0x%04X, attr = 0x%04X, type_id = 0x%02X"), local_cluster_id, local_attr_id, local_type_id);
-
-        if (delimiter) {
-          if ((cluster_id == local_cluster_id) && (attr_id == local_attr_id)) {
-            type_id = local_type_id;
-            break;
-          }
-        } else if (pgm_read_word(&converter->name_offset)) {
-          // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Comparing '%s' with '%s'"), attr_name, converter->name);
-          if (0 == strcasecmp_P(key, Z_strings + pgm_read_word(&converter->name_offset))) {
-            // match
-            cluster_id = local_cluster_id;
-            attr_id = local_attr_id;
-            type_id = local_type_id;
-            multiplier = local_multiplier;
-            break;
-          }
-        }
-      }
-    }
-
-    // Buffer ready, do some sanity checks
-    // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("cluster_id = 0x%04X, attr_id = 0x%04X, type_id = 0x%02X"), cluster_id, attr_id, type_id);
-    if ((0xFFFF == attr_id) || (0xFFFF == cluster_id)) {
-      Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR("Unknown attribute "), key);
-      return;
-    }
-    if (Znodata == type_id) {
-      Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR("Unknown attribute type for attribute "), key);
-      return;
-    }
-
-    if (0xFFFF == cluster) {
-      cluster = cluster_id;       // set the cluster for this packet
-    } else if (cluster != cluster_id) {
-      ResponseCmndChar_P(PSTR("No more than one cluster id per command"));
-      return;
-    }
-
-    // ////////////////////////////////////////////////////////////////////////////////
-    // Split encoding depending on message
-    if (operation != ZCL_CONFIGURE_REPORTING) {
-      // apply multiplier if needed
-      val_d = value.as<double>();
-      val_str = value.as<const char*>();
-      ZbApplyMultiplier(val_d, multiplier);
-
-      // push the value in the buffer
-      buf.add16(attr_id);        // prepend with attribute identifier
-      if (operation == ZCL_READ_ATTRIBUTES_RESPONSE) {
-        buf.add8(Z_SUCCESS);  // status OK = 0x00
-      }
-      buf.add8(type_id);     // prepend with attribute type
-      int32_t res = encodeSingleAttribute(buf, val_d, val_str, type_id);
-      if (res < 0) {
-        // remove the attribute type we just added
-        // buf.setLen(buf.len() - (operation == ZCL_READ_ATTRIBUTES_RESPONSE ? 4 : 3));
-        Response_P(PSTR("{\"%s\":\"%s'%s' 0x%02X\"}"), XdrvMailbox.command, PSTR("Unsupported attribute type "), key, type_id);
+    Z_attribute attr;
+    attr.setKeyName(key);
+    if (Z_parseAttributeKey(attr)) {
+      // Buffer ready, do some sanity checks
+      if (0xFFFF == cluster) {
+        cluster = attr.key.id.cluster;       // set the cluster for this packet
+      } else if (cluster != attr.key.id.cluster) {
+        ResponseCmndChar_P(PSTR("No more than one cluster id per command"));
         return;
       }
 
+    } else {
+      if (attr.key_is_str) {
+        Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR("Unknown attribute "), key);
+        return;
+      }
+      if (Zunk == attr.attr_type) {
+        Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR("Unknown attribute type for attribute "), key);
+        return;
+      }
+    }
+
+    if (value.is<const char*>()) {
+      attr.setStr(value.as<const char*>());
+    } else if (value.is<double>()) {
+      attr.setFloat(value.as<float>());
+    }
+
+    double   val_d = 0;             // I try to avoid `double` but this type capture both float and (u)int32_t without prevision loss
+    const char* val_str = "";       // variant as string
+    ////////////////////////////////////////////////////////////////////////////////
+    // Split encoding depending on message
+    if (operation != ZCL_CONFIGURE_REPORTING) {
+      if (!ZbAppendWriteBuf(buf, attr, operation == ZCL_READ_ATTRIBUTES_RESPONSE)) {
+        return;   // error
+      }
     } else {
       // ////////////////////////////////////////////////////////////////////////////////
       // ZCL_CONFIGURE_REPORTING
@@ -350,7 +321,7 @@ void ZbSendReportWrite(const JsonObject &val_pubwrite, uint16_t device, uint16_t
       if (nullptr != &val_attr_rc) {
         val_d = val_attr_rc.as<double>();
         val_str = val_attr_rc.as<const char*>();
-        ZbApplyMultiplier(val_d, multiplier);
+        ZbApplyMultiplier(val_d, attr.attr_multiplier);
       }
 
       // read TimeoutPeriod
@@ -358,22 +329,22 @@ void ZbSendReportWrite(const JsonObject &val_pubwrite, uint16_t device, uint16_t
       const JsonVariant &val_attr_timeout = GetCaseInsensitive(attr_config, PSTR("TimeoutPeriod"));
       if (nullptr != &val_attr_timeout) { attr_timeout = strToUInt(val_attr_timeout); }
 
-      bool attr_discrete = Z_isDiscreteDataType(type_id);
+      bool attr_discrete = Z_isDiscreteDataType(attr.attr_type);
 
       // all fields are gathered, output the butes into the buffer, ZCL 2.5.7.1
       // common bytes
       buf.add8(attr_direction ? 0x01 : 0x00);
-      buf.add16(attr_id);
+      buf.add16(attr.key.id.attr_id);
       if (attr_direction) {
         buf.add16(attr_timeout);
       } else {
-        buf.add8(type_id);
+        buf.add8(attr.attr_type);
         buf.add16(attr_min_interval);
         buf.add16(attr_max_interval);
         if (!attr_discrete) {
-          int32_t res = encodeSingleAttribute(buf, val_d, val_str, type_id);
+          int32_t res = encodeSingleAttribute(buf, val_d, val_str, attr.attr_type);
           if (res < 0) {
-            Response_P(PSTR("{\"%s\":\"%s'%s' 0x%02X\"}"), XdrvMailbox.command, PSTR("Unsupported attribute type "), key, type_id);
+            Response_P(PSTR("{\"%s\":\"%s'%s' 0x%02X\"}"), XdrvMailbox.command, PSTR("Unsupported attribute type "), key, attr.attr_type);
             return;
           }
         }
@@ -1311,6 +1282,13 @@ void CmndZbConfig(void) {
     // TxRadio dBm
     const JsonVariant &val_txradio = GetCaseInsensitive(json, PSTR("TxRadio"));
     if (nullptr != &val_txradio) { zb_txradio_dbm = strToUInt(val_txradio); }
+
+    // if network key is zero, we generate a truly random key with a hardware generator from ESP
+    if ((0 == zb_precfgkey_l) && (0 == zb_precfgkey_h)) {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "generating random Zigbee network key"));
+      zb_precfgkey_l = (uint64_t)HwRandom() << 32 | HwRandom();
+      zb_precfgkey_h = (uint64_t)HwRandom() << 32 | HwRandom();
+    }
 
     // Check if a parameter was changed after all
     if ( (zb_channel      != Settings.zb_channel) ||
