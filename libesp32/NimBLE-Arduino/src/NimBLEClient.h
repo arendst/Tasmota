@@ -38,11 +38,12 @@ class NimBLEAdvertisedDevice;
  */
 class NimBLEClient {
 public:
-    bool                                        connect(NimBLEAdvertisedDevice* device, bool refreshServices = true);
-    bool                                        connect(const NimBLEAddress &address, uint8_t type = BLE_ADDR_PUBLIC,
-                                                        bool refreshServices = true);
+    bool                                        connect(NimBLEAdvertisedDevice* device, bool deleteAttibutes = true);
+    bool                                        connect(const NimBLEAddress &address, bool deleteAttibutes = true);
+    bool                                        connect(bool deleteAttibutes = true);
     int                                         disconnect(uint8_t reason = BLE_ERR_REM_USER_CONN_TERM);
     NimBLEAddress                               getPeerAddress();
+    void                                        setPeerAddress(const NimBLEAddress &address);
     int                                         getRssi();
     std::vector<NimBLERemoteService*>*          getServices(bool refresh = false);
     std::vector<NimBLERemoteService*>::iterator begin();
@@ -70,7 +71,7 @@ public:
     void                                        discoverAttributes();
 
 private:
-    NimBLEClient();
+    NimBLEClient(const NimBLEAddress &peerAddress);
     ~NimBLEClient();
 
     friend class            NimBLEDevice;
@@ -83,7 +84,7 @@ private:
                                                 void *arg);
     bool                    retrieveServices(const NimBLEUUID *uuid_filter = nullptr);
 
-    NimBLEAddress           m_peerAddress = NimBLEAddress("");
+    NimBLEAddress           m_peerAddress;
     uint16_t                m_conn_id;
     bool                    m_isConnected;
     bool                    m_waitingToConnect;
@@ -107,13 +108,48 @@ private:
 class NimBLEClientCallbacks {
 public:
     virtual ~NimBLEClientCallbacks() {};
+
+    /**
+     * @brief Called after client connects.
+     * @param [in] pClient A pointer to the calling client object.
+     */
     virtual void onConnect(NimBLEClient* pClient);
+
+    /**
+     * @brief Called when disconnected from the server.
+     * @param [in] pClient A pointer to the calling client object.
+     */
     virtual void onDisconnect(NimBLEClient* pClient);
+
+    /**
+     * @brief Called when server requests to update the connection parameters.
+     * @param [in] pClient A pointer to the calling client object.
+     * @param [in] params A pointer to the struct containing the connection parameters requested.
+     * @return True to accept the parmeters.
+     */
     virtual bool onConnParamsUpdateRequest(NimBLEClient* pClient, const ble_gap_upd_params* params);
+
+    /**
+     * @brief Called when server requests a passkey for pairing.
+     * @return The passkey to be sent to the server.
+     */
     virtual uint32_t onPassKeyRequest();
-    virtual void onPassKeyNotify(uint32_t pass_key);
-    virtual bool onSecurityRequest();
+
+    /*virtual void onPassKeyNotify(uint32_t pass_key);
+    virtual bool onSecurityRequest();*/
+
+    /**
+     * @brief Called when the pairing procedure is complete.
+     * @param [in] desc A pointer to the struct containing the connection information.\n
+     * This can be used to check the status of the connection encryption/pairing.
+     */
     virtual void onAuthenticationComplete(ble_gap_conn_desc* desc);
+
+    /**
+     * @brief Called when using numeric comparision for pairing.
+     * @param [in] pin The pin to compare with the server.
+     * @return True to accept the pin.
+     */
     virtual bool onConfirmPIN(uint32_t pin);
 };
 

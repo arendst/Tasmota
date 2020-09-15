@@ -3,7 +3,7 @@
  *
  *  Created: on Jan 24 2020
  *      Author H2zero
- * 
+ *
  * Originally:
  *
  * BLEUUID.h
@@ -37,20 +37,21 @@ public:
     NimBLEUUID(const uint8_t* pData, size_t size, bool msbFirst);
     NimBLEUUID(uint32_t first, uint16_t second, uint16_t third, uint64_t fourth);
     NimBLEUUID();
-    uint8_t        bitSize() const;   // Get the number of bits in this uuid.
-    bool           equals(const NimBLEUUID &uuid) const;
+
+    uint8_t               bitSize() const;
+    bool                  equals(const NimBLEUUID &uuid) const;
     const ble_uuid_any_t* getNative() const;
-    const NimBLEUUID &     to128();
-    std::string    toString() const;
-    static NimBLEUUID fromString(const std::string &uuid);  // Create a NimBLEUUID from a string
+    const NimBLEUUID &    to128();
+    std::string           toString() const;
+    static NimBLEUUID     fromString(const std::string &uuid);
 
     bool operator ==(const NimBLEUUID & rhs) const;
     bool operator !=(const NimBLEUUID & rhs) const;
     operator std::string() const;
 
 private:
-    ble_uuid_any_t m_uuid;              // The underlying UUID structure that this class wraps.
-    bool           m_valueSet = false;   // Is there a value set for this instance.
+    ble_uuid_any_t m_uuid;
+    bool           m_valueSet = false;
 }; // NimBLEUUID
 #endif /* CONFIG_BT_ENABLED */
 #endif /* COMPONENTS_NIMBLEUUID_H_ */

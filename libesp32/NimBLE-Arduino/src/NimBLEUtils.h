@@ -27,14 +27,10 @@ typedef struct {
     std::string *buf;
 } ble_task_data_t;
 
-extern "C"{
-char *addr_str(const void *addr);
-void print_conn_desc(const struct ble_gap_conn_desc *desc);
-void print_adv_fields(const struct ble_hs_adv_fields *fields);
-void print_addr(const void *addr);
-void print_bytes(const uint8_t *bytes, int len);
-}
 
+/**
+ * @brief A BLE Utility class with methods for debugging and general purpose use.
+ */
 class NimBLEUtils {
 public:
     static void                 dumpGapEvent(ble_gap_event *event, void *arg);

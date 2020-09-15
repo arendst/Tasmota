@@ -25,8 +25,8 @@ static const char* LOG_TAG = "NimBLERemoteDescriptor";
 
 /**
  * @brief Remote descriptor constructor.
- * @param [in] Reference to the Characteristic that this belongs to.
- * @param [in] Reference to the struct that contains the descriptor information.
+ * @param [in] pRemoteCharacteristic A pointer to the Characteristic that this belongs to.
+ * @param [in] dsc A pointer to the struct that contains the descriptor information.
  */
 NimBLERemoteDescriptor::NimBLERemoteDescriptor(NimBLERemoteCharacteristic* pRemoteCharacteristic,
                                                const struct ble_gatt_dsc *dsc)
@@ -78,6 +78,11 @@ NimBLEUUID NimBLERemoteDescriptor::getUUID() {
 } // getUUID
 
 
+/**
+ * @brief Read a byte value
+ * @return The value as a byte
+ * @deprecated Use readValue<uint8_t>().
+ */
 uint8_t NimBLERemoteDescriptor::readUInt8() {
     std::string value = readValue();
     if (value.length() >= 1) {
@@ -87,6 +92,11 @@ uint8_t NimBLERemoteDescriptor::readUInt8() {
 } // readUInt8
 
 
+/**
+ * @brief Read an unsigned 16 bit value
+ * @return The unsigned 16 bit value.
+ * @deprecated Use readValue<uint16_t>().
+ */
 uint16_t NimBLERemoteDescriptor::readUInt16() {
     std::string value = readValue();
     if (value.length() >= 2) {
@@ -96,6 +106,11 @@ uint16_t NimBLERemoteDescriptor::readUInt16() {
 } // readUInt16
 
 
+/**
+ * @brief Read an unsigned 32 bit value.
+ * @return the unsigned 32 bit value.
+ * @deprecated Use readValue<uint32_t>().
+ */
 uint32_t NimBLERemoteDescriptor::readUInt32() {
     std::string value = readValue();
     if (value.length() >= 4) {
@@ -105,6 +120,10 @@ uint32_t NimBLERemoteDescriptor::readUInt32() {
 } // readUInt32
 
 
+/**
+ * @brief Read the value of the remote descriptor.
+ * @return The value of the remote descriptor.
+ */
 std::string NimBLERemoteDescriptor::readValue() {
     NIMBLE_LOGD(LOG_TAG, ">> Descriptor readValue: %s", toString().c_str());
 
@@ -161,7 +180,7 @@ std::string NimBLERemoteDescriptor::readValue() {
 
 /**
  * @brief Callback for Descriptor read operation.
- * @return 0 or error code.
+ * @return success == 0 or error code.
  */
 int NimBLERemoteDescriptor::onReadCB(uint16_t conn_handle,
                 const struct ble_gatt_error *error,
@@ -200,8 +219,8 @@ int NimBLERemoteDescriptor::onReadCB(uint16_t conn_handle,
 
 
 /**
- * @brief Return a string representation of this BLE Remote Descriptor.
- * @retun A string representation of this BLE Remote Descriptor.
+ * @brief Return a string representation of this Remote Descriptor.
+ * @return A string representation of this Remote Descriptor.
  */
 std::string NimBLERemoteDescriptor::toString() {
     std::string res = "Descriptor: uuid: " + getUUID().toString();
@@ -216,7 +235,7 @@ std::string NimBLERemoteDescriptor::toString() {
 
 /**
  * @brief Callback for descriptor write operation.
- * @return 0 or error code.
+ * @return success == 0 or error code.
  */
 int NimBLERemoteDescriptor::onWriteCB(uint16_t conn_handle,
                 const struct ble_gatt_error *error,
@@ -242,7 +261,8 @@ int NimBLERemoteDescriptor::onWriteCB(uint16_t conn_handle,
  * @brief Write data to the BLE Remote Descriptor.
  * @param [in] data The data to send to the remote descriptor.
  * @param [in] length The length of the data to send.
- * @param [in] response True if we expect a response.
+ * @param [in] response True if we expect a write response.
+ * @return True if successful
  */
 bool NimBLERemoteDescriptor::writeValue(const uint8_t* data, size_t length, bool response) {
 
@@ -322,11 +342,11 @@ bool NimBLERemoteDescriptor::writeValue(const uint8_t* data, size_t length, bool
  * @brief Write data represented as a string to the BLE Remote Descriptor.
  * @param [in] newValue The data to send to the remote descriptor.
  * @param [in] response True if we expect a response.
+ * @return True if successful
  */
 bool NimBLERemoteDescriptor::writeValue(const std::string &newValue, bool response) {
     return writeValue((uint8_t*) newValue.data(), newValue.length(), response);
 } // writeValue
-
 
 #endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 #endif /* CONFIG_BT_ENABLED */

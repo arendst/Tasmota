@@ -9,8 +9,6 @@
 */
 
 #include <NimBLEDevice.h>
-#include <NimBLE2904.h>
-#include <NimBLE2902.h>
 
 static NimBLEServer* pServer;
 
@@ -102,24 +100,33 @@ class CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
         str += NimBLEUtils::returnCodeToString(code);
         Serial.println(str);
     };
+
+    void onSubscribe(NimBLECharacteristic* pCharacteristic, ble_gap_conn_desc* desc, uint16_t subValue) {
+        String str = "Client ID: ";
+        str += desc->conn_handle;
+        str += " Address: ";
+        str += std::string(NimBLEAddress(desc->peer_ota_addr)).c_str();
+        if(subValue == 0) {
+            str += " Unsubscribed to ";
+        }else if(subValue == 1) {
+            str += " Subscribed to notfications for ";
+        } else if(subValue == 2) {
+            str += " Subscribed to indications for ";
+        } else if(subValue == 3) {
+            str += " Subscribed to notifications and indications for ";
+        }
+        str += std::string(pCharacteristic->getUUID()).c_str();
+
+        Serial.println(str);
+    };
 };
     
 /** Handler class for descriptor actions */    
 class DescriptorCallbacks : public NimBLEDescriptorCallbacks {
     void onWrite(NimBLEDescriptor* pDescriptor) {
-        if(pDescriptor->getUUID().equals(NimBLEUUID("2902"))) {
-            /** Cast to NimBLE2902 to use the class specific functions. **/
-            NimBLE2902* p2902 = (NimBLE2902*)pDescriptor;
-            if(p2902->getNotifications()) {
-                Serial.println("Client Subscribed to notfications");
-            } else {
-                Serial.println("Client Unubscribed to notfications");
-            }
-        } else {
-            std::string dscVal((char*)pDescriptor->getValue(), pDescriptor->getLength());
-            Serial.print("Descriptor witten value:");
-            Serial.println(dscVal.c_str());
-        }
+        std::string dscVal((char*)pDescriptor->getValue(), pDescriptor->getLength());
+        Serial.print("Descriptor witten value:");
+        Serial.println(dscVal.c_str());
     };
 
     void onRead(NimBLEDescriptor* pDescriptor) {
@@ -176,9 +183,9 @@ void setup() {
     pBeefCharacteristic->setValue("Burger");
     pBeefCharacteristic->setCallbacks(&chrCallbacks);
 
-    /** 2902 and 2904 descriptors are a special case, when createDescriptor is called with
-     *  either of those uuid's it will create the associated class with the correct properties
-     *  and sizes. However we must cast the returned reference to the correct type as the method
+    /** 2904 descriptors are a special case, when createDescriptor is called with
+     *  0x2904 a NimBLE2904 class is created with the correct properties and sizes.
+     *  However we must cast the returned reference to the correct type as the method
      *  only returns a pointer to the base NimBLEDescriptor class.
      */
     NimBLE2904* pBeef2904 = (NimBLE2904*)pBeefCharacteristic->createDescriptor("2904"); 
@@ -197,6 +204,10 @@ void setup() {
     pFoodCharacteristic->setValue("Fries");
     pFoodCharacteristic->setCallbacks(&chrCallbacks);
 
+    /** Note a 0x2902 descriptor MUST NOT be created as NimBLE will create one automatically
+     *  if notification or indication properties are assigned to a characteristic.
+     */
+
     /** Custom descriptor: Arguments are UUID, Properties, max length in bytes of the value */
     NimBLEDescriptor* pC01Ddsc = pFoodCharacteristic->createDescriptor(
                                                "C01D",
@@ -207,14 +218,6 @@ void setup() {
                                               );
     pC01Ddsc->setValue("Send it back!");
     pC01Ddsc->setCallbacks(&dscCallbacks);
-
-    /** Note a 2902 descriptor does NOT need to be created as any chactateristic with 
-     *  notification or indication properties will have one created autmatically.
-     *  Manually creating it is only useful if you wish to handle callback functions
-     *  as shown here. Otherwise this can be removed without loss of functionality.
-     */
-    NimBLE2902* pFood2902 = (NimBLE2902*)pFoodCharacteristic->createDescriptor("2902"); 
-    pFood2902->setCallbacks(&dscCallbacks);
 
     /** Start the services when finished creating all Characteristics and Descriptors */  
     pDeadService->start();

@@ -346,7 +346,8 @@ os_mempool_info_get_next(struct os_mempool *mp, struct os_mempool_info *omi)
     omi->omi_num_blocks = cur->mp_num_blocks;
     omi->omi_num_free = cur->mp_num_free;
     omi->omi_min_free = cur->mp_min_free;
-    strncpy(omi->omi_name, cur->name, sizeof(omi->omi_name));
+    strncpy(omi->omi_name, cur->name, sizeof(omi->omi_name) - 1);
+    omi->omi_name[sizeof(omi->omi_name) - 1] = '\0';
 
     return (cur);
 }
