@@ -130,7 +130,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t teleinfo_rawdata : 1;         // bit 26 (v8.4.0.2)  - SetOption108 - enable Teleinfo + Tasmota Energy device (0) or Teleinfo raw data only (1)
     uint32_t alexa_gen_1 : 1;              // bit 27 (v8.4.0.3)  - SetOption109 - Alexa gen1 mode - if you only have Echo Dot 2nd gen devices
     uint32_t zb_disable_autobind : 1;      // bit 28 (v8.5.0.1)  - SetOption110 - disable Zigbee auto-config when pairing new devices
-    uint32_t spare29 : 1;                  // bit 29
+    uint32_t buzzer_freq_mode : 1;         // bit 29 (v8.5.0.1)  - SetOption111 - Use frequency output for buzzer pin instead of on/off signal
     uint32_t spare30 : 1;                  // bit 30
     uint32_t spare31 : 1;                  // bit 31
   };
