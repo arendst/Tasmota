@@ -163,7 +163,9 @@ a_setoption = [[
     "Select virtual White as (0) Warm or (1) Cold",
     "Enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1)",
     "Force gen1 Alexa mode",
-    "","","",""
+    "Disable Zigbee auto-config when pairing new devices",
+    "Use frequency output for buzzer pin instead of on/off signal",
+    "",""
     ],[
     "","","","",
     "","","","",
@@ -265,7 +267,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20200906 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20200915 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
