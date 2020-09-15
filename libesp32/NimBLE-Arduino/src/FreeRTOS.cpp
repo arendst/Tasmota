@@ -114,6 +114,10 @@ bool FreeRTOS::Semaphore::timedWait(std::string owner, uint32_t timeoutMs) {
 } // wait
 
 
+/**
+ * @brief Construct a semaphore, the semaphore is given when created.
+ * @param [in] name A name string to provide debugging support.
+ */
 FreeRTOS::Semaphore::Semaphore(std::string name) {
     m_usePthreads = false;      // Are we using pThreads or FreeRTOS?
     if (m_usePthreads) {
@@ -140,8 +144,7 @@ FreeRTOS::Semaphore::~Semaphore() {
 
 
 /**
- * @brief Give a semaphore.
- * The Semaphore is given.
+ * @brief Give the semaphore.
  */
 void FreeRTOS::Semaphore::give() {
     NIMBLE_LOGD(LOG_TAG, "Semaphore giving: %s", toString().c_str());

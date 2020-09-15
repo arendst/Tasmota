@@ -45,7 +45,7 @@ public:
     void                                      deleteCharacteristics();
     size_t                                    deleteCharacteristic(const NimBLEUUID &uuid);
     NimBLEClient*                             getClient(void);
-    uint16_t                                  getHandle();
+    //uint16_t                                  getHandle();
     NimBLEUUID                                getUUID(void);
     std::string                               getValue(const NimBLEUUID &characteristicUuid);
     bool                                      setValue(const NimBLEUUID &characteristicUuid,

@@ -30,6 +30,7 @@
 #include "esp_bt.h"
 #include "freertos/semphr.h"
 #include "esp_compiler.h"
+#include "esp_ipc.h"
 
 #define NIMBLE_VHCI_TIMEOUT_MS  2000
 
@@ -78,21 +79,29 @@ void ble_hci_trans_cfg_hs(ble_hci_trans_rx_cmd_fn *cmd_cb,
     ble_hci_rx_acl_hs_arg = acl_arg;
 }
 
+void ble_hci_trans_hs_cmd_tx_on_core_0(void *arg)
+{
+    uint8_t *cmd = arg;
+    uint16_t len = BLE_HCI_CMD_HDR_LEN + cmd[3] + 1;
+    esp_vhci_host_send_packet(cmd, len);
+}
 
 int ble_hci_trans_hs_cmd_tx(uint8_t *cmd)
 {
-    uint16_t len;
     uint8_t rc = 0;
 
     assert(cmd != NULL);
     *cmd = BLE_HCI_UART_H4_CMD;
-    len = BLE_HCI_CMD_HDR_LEN + cmd[3] + 1;
     if (!esp_vhci_host_check_send_available()) {
         ESP_LOGD(TAG, "Controller not ready to receive packets");
     }
 
     if (xSemaphoreTake(vhci_send_sem, NIMBLE_VHCI_TIMEOUT_MS / portTICK_PERIOD_MS) == pdTRUE) {
-        esp_vhci_host_send_packet(cmd, len);
+        if (xPortGetCoreID() != 0) {
+            esp_ipc_call_blocking(0, ble_hci_trans_hs_cmd_tx_on_core_0, cmd);
+        } else {
+            ble_hci_trans_hs_cmd_tx_on_core_0(cmd);
+        }
     } else {
         rc = BLE_HS_ETIMEOUT_HCI;
     }
@@ -111,27 +120,37 @@ int ble_hci_trans_ll_evt_tx(uint8_t *hci_ev)
     return rc;
 }
 
+void ble_hci_trans_hs_acl_tx_on_core_0(void *arg)
+{
+    uint8_t data[MYNEWT_VAL(BLE_ACL_BUF_SIZE) + 1];
+    struct os_mbuf *om = arg;
+    uint16_t len = 1 + OS_MBUF_PKTLEN(om);
+
+    data[0] = BLE_HCI_UART_H4_ACL;
+    os_mbuf_copydata(om, 0, OS_MBUF_PKTLEN(om), &data[1]);
+
+    esp_vhci_host_send_packet(data, len);
+}
+
 int ble_hci_trans_hs_acl_tx(struct os_mbuf *om)
 {
-    uint16_t len = 0;
-    uint8_t data[MYNEWT_VAL(BLE_ACL_BUF_SIZE) + 1], rc = 0;
+    uint8_t rc = 0;
     /* If this packet is zero length, just free it */
     if (OS_MBUF_PKTLEN(om) == 0) {
         os_mbuf_free_chain(om);
         return 0;
     }
-    data[0] = BLE_HCI_UART_H4_ACL;
-    len++;
 
     if (!esp_vhci_host_check_send_available()) {
         ESP_LOGD(TAG, "Controller not ready to receive packets");
     }
 
-    os_mbuf_copydata(om, 0, OS_MBUF_PKTLEN(om), &data[1]);
-    len += OS_MBUF_PKTLEN(om);
-
     if (xSemaphoreTake(vhci_send_sem, NIMBLE_VHCI_TIMEOUT_MS / portTICK_PERIOD_MS) == pdTRUE) {
-        esp_vhci_host_send_packet(data, len);
+        if (xPortGetCoreID() != 0) {
+            esp_ipc_call_blocking(0, ble_hci_trans_hs_acl_tx_on_core_0, om);
+        } else {
+            ble_hci_trans_hs_acl_tx_on_core_0(om);
+        }
     } else {
         rc = BLE_HS_ETIMEOUT_HCI;
     }
@@ -451,6 +470,7 @@ esp_err_t esp_nimble_hci_and_controller_init(void)
     esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+    bt_cfg.ble_max_conn = CONFIG_BT_NIMBLE_MAX_CONNECTIONS;
 
     if ((ret = esp_bt_controller_init(&bt_cfg)) != ESP_OK) {
         return ret;

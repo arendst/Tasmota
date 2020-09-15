@@ -22,6 +22,10 @@
 #include "NimBLEDevice.h"
 #include "NimBLELog.h"
 
+#include "services/gap/ble_svc_gap.h"
+#include "services/gatt/ble_svc_gatt.h"
+
+
 static const char* LOG_TAG = "NimBLEServer";
 static NimBLEServerCallbacks defaultCallbacks;
 
@@ -37,7 +41,23 @@ NimBLEServer::NimBLEServer() {
     m_pServerCallbacks      = &defaultCallbacks;
     m_gattsStarted          = false;
     m_advertiseOnDisconnect = true;
+    m_svcChanged            = false;
+    m_deleteCallbacks       = true;
 } // NimBLEServer
+
+
+/**
+ * @brief Destructor: frees all resources / attributes created.
+ */
+NimBLEServer::~NimBLEServer() {
+    for(auto &it : m_svcVec) {
+        delete it;
+    }
+
+    if(m_deleteCallbacks && m_pServerCallbacks != &defaultCallbacks) {
+        delete m_pServerCallbacks;
+    }
+}
 
 
 /**
@@ -70,6 +90,12 @@ NimBLEService* NimBLEServer::createService(const NimBLEUUID &uuid, uint32_t numH
 
     NimBLEService* pService = new NimBLEService(uuid, numHandles, this);
     m_svcVec.push_back(pService); // Save a reference to this service being on this server.
+
+    if(m_gattsStarted) {
+        ble_svc_gatt_changed(0x0001, 0xffff);
+        m_svcChanged = true;
+        resetGATT();
+    }
 
     NIMBLE_LOGD(LOG_TAG, "<< createService");
     return pService;
@@ -146,17 +172,21 @@ void NimBLEServer::start() {
 
     NIMBLE_LOGI(LOG_TAG, "Service changed characterisic handle: %d", m_svcChgChrHdl);
 */
-    // Build a vector of characteristics with Notify / Indicate capabilities for event handling
+    // Get the assigned service handles and build a vector of characteristics
+    // with Notify / Indicate capabilities for event handling
     for(auto &svc : m_svcVec) {
+        if(svc->m_removed == 0) {
+            rc = ble_gatts_find_svc(&svc->getUUID().getNative()->u, &svc->m_handle);
+            if(rc != 0) {
+                abort();
+            }
+        }
+
         for(auto &chr : svc->m_chrVec) {
             // if Notify / Indicate is enabled but we didn't create the descriptor
             // we do it now.
             if((chr->m_properties & BLE_GATT_CHR_F_INDICATE) ||
                 (chr->m_properties & BLE_GATT_CHR_F_NOTIFY)) {
-
-                if(nullptr == chr->getDescriptorByUUID(uint16_t(0x2902))) {
-                    chr->createDescriptor(uint16_t(0x2902));
-                }
                 m_notifyChrVec.push_back(chr);
             }
         }
@@ -168,8 +198,8 @@ void NimBLEServer::start() {
 
 /**
  * @brief Disconnect the specified client with optional reason.
- * @param [in] Connection Id of the client to disconnect.
- * @param [in] Reason code for disconnecting.
+ * @param [in] connId Connection Id of the client to disconnect.
+ * @param [in] reason code for disconnecting.
  * @return NimBLE host return code.
  */
 int NimBLEServer::disconnect(uint16_t connId, uint8_t reason) {
@@ -188,7 +218,7 @@ int NimBLEServer::disconnect(uint16_t connId, uint8_t reason) {
 
 /**
  * @brief Set the server to automatically start advertising when a client disconnects.
- * @param [in] bool true == advertise, false == don't advertise.
+ * @param [in] aod true == advertise, false == don't advertise.
  */
 void NimBLEServer::advertiseOnDisconnect(bool aod) {
     m_advertiseOnDisconnect = aod;
@@ -260,6 +290,11 @@ size_t NimBLEServer::getConnectedCount() {
                                                           server->m_connectedPeersVec.end(),
                                                           event->disconnect.conn.conn_handle),
                                                           server->m_connectedPeersVec.end());
+
+            if(server->m_svcChanged) {
+                server->resetGATT();
+            }
+
             server->m_pServerCallbacks->onDisconnect(server);
 
             if(server->m_advertiseOnDisconnect) {
@@ -269,9 +304,9 @@ size_t NimBLEServer::getConnectedCount() {
         } // BLE_GAP_EVENT_DISCONNECT
 
         case BLE_GAP_EVENT_SUBSCRIBE: {
-            NIMBLE_LOGI(LOG_TAG, "subscribe event; cur_notify=%d\n value handle; "
-                              "val_handle=%d\n",
-                        event->subscribe.cur_notify, event->subscribe.attr_handle);
+            NIMBLE_LOGI(LOG_TAG, "subscribe event; attr_handle=%d, subscribed: %s",
+                                 event->subscribe.attr_handle,
+                                 (event->subscribe.cur_notify ? "true":"false"));
 
             for(auto &it : server->m_notifyChrVec) {
                 if(it->getHandle() == event->subscribe.attr_handle) {
@@ -317,6 +352,12 @@ size_t NimBLEServer::getConnectedCount() {
 
             return 0;
         } // BLE_GAP_EVENT_NOTIFY_TX
+
+        case BLE_GAP_EVENT_ADV_COMPLETE: {
+            NIMBLE_LOGD(LOG_TAG, "Advertising Complete");
+            NimBLEDevice::getAdvertising()->advCompleteCB();
+            return 0;
+        }
 
         case BLE_GAP_EVENT_CONN_UPDATE: {
             NIMBLE_LOGD(LOG_TAG, "Connection parameters updated.");
@@ -435,14 +476,119 @@ size_t NimBLEServer::getConnectedCount() {
  * events are detected.
  *
  * @param [in] pCallbacks The callbacks to be invoked.
+ * @param [in] deleteCallbacks if true callback class will be deleted when server is destructed.
  */
-void NimBLEServer::setCallbacks(NimBLEServerCallbacks* pCallbacks) {
+void NimBLEServer::setCallbacks(NimBLEServerCallbacks* pCallbacks, bool deleteCallbacks) {
     if (pCallbacks != nullptr){
         m_pServerCallbacks = pCallbacks;
+        m_deleteCallbacks = deleteCallbacks;
     } else {
         m_pServerCallbacks = &defaultCallbacks;
     }
 } // setCallbacks
+
+
+/**
+ * @brief Remove a service from the server.
+ *
+ * @details Immediately removes access to the service by clients, sends a service changed indication,
+ * and removes the service (if applicable) from the advertisments.
+ * The service is not deleted unless the deleteSvc parameter is true, otherwise the service remains
+ * available and can be re-added in the future. If desired a removed but not deleted service can
+ * be deleted later by calling this method with deleteSvc set to true.
+ *
+ * @note The service will not be removed from the database until all open connections are closed
+ * as it requires resetting the GATT server. In the interim the service will have it's visibility disabled.
+ *
+ * @note Advertising will need to be restarted by the user after calling this as we must stop
+ * advertising in order to remove the service.
+ *
+ * @param [in] service The service object to remove.
+ * @param [in] deleteSvc true if the service should be deleted.
+ */
+void NimBLEServer::removeService(NimBLEService* service, bool deleteSvc) {
+    // Check if the service was already removed and if so check if this
+    // is being called to delete the object and do so if requested.
+    // Otherwise, ignore the call and return.
+    if(service->m_removed > 0) {
+        if(deleteSvc) {
+            for(auto it = m_svcVec.begin(); it != m_svcVec.end(); ++it) {
+                if ((*it)->getUUID() == service->getUUID()) {
+                    delete *it;
+                    m_svcVec.erase(it);
+                    break;
+                }
+            }
+        }
+
+        return;
+    }
+
+    int rc = ble_gatts_svc_set_visibility(service->getHandle(), 0);
+    if(rc !=0) {
+        return;
+    }
+
+    service->m_removed = deleteSvc ? 2 : 1;
+    m_svcChanged = true;
+
+    ble_svc_gatt_changed(0x0001, 0xffff);
+    resetGATT();
+    NimBLEDevice::getAdvertising()->removeServiceUUID(service->getUUID());
+}
+
+
+/**
+ * @brief Adds a service which was already created, but removed from availability.
+ * @param [in] service The service object to add.
+ * @note If it is desired to advertise the service it must be added by
+ * calling NimBLEAdvertising::addServiceUUID.
+ */
+void NimBLEServer::addService(NimBLEService* service) {
+    // If adding a service that was not removed just return.
+    if(service->m_removed == 0) {
+        return;
+    }
+
+    service->m_removed = 0;
+    m_svcChanged = true;
+
+    ble_svc_gatt_changed(0x0001, 0xffff);
+    resetGATT();
+}
+
+
+/**
+ * @brief Resets the GATT server, used when services are added/removed after initialization.
+ */
+void NimBLEServer::resetGATT() {
+    if(getConnectedCount() > 0) {
+        return;
+    }
+
+    NimBLEDevice::stopAdvertising();
+    ble_gatts_reset();
+    ble_svc_gap_init();
+    ble_svc_gatt_init();
+
+    for(auto it = m_svcVec.begin(); it != m_svcVec.end(); ) {
+        if ((*it)->m_removed > 0) {
+            if ((*it)->m_removed == 2) {
+                delete *it;
+                it = m_svcVec.erase(it);
+            } else {
+                ++it;
+            }
+            continue;
+        }
+
+        (*it)->start();
+        ++it;
+    }
+
+    m_svcChanged = false;
+    m_gattsStarted = false;
+}
 
 
 /**
@@ -516,7 +662,7 @@ uint32_t NimBLEServerCallbacks::onPassKeyRequest(){
     NIMBLE_LOGD("NimBLEServerCallbacks", "onPassKeyRequest: default: 123456");
     return 123456;
 }
-
+/*
 void NimBLEServerCallbacks::onPassKeyNotify(uint32_t pass_key){
     NIMBLE_LOGD("NimBLEServerCallbacks", "onPassKeyNotify: default: %d", pass_key);
 }
@@ -525,6 +671,7 @@ bool NimBLEServerCallbacks::onSecurityRequest(){
     NIMBLE_LOGD("NimBLEServerCallbacks", "onSecurityRequest: default: true");
     return true;
 }
+*/
 void NimBLEServerCallbacks::onAuthenticationComplete(ble_gap_conn_desc*){
     NIMBLE_LOGD("NimBLEServerCallbacks", "onAuthenticationComplete: default");
 }
