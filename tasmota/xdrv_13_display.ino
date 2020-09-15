@@ -624,12 +624,19 @@ void DisplayText(void)
               }
             }
             break;
-          case 'T':
+          case 'T': {
+            uint8_t param1 = RtcTime.day_of_month;
+            uint8_t param2 = RtcTime.month;
+            if (*cp=='U') {
+              cp++;
+              param1 = RtcTime.month;
+              param2 = RtcTime.day_of_month;
+            }
             if (dp < (linebuf + DISPLAY_BUFFER_COLS) -8) {
-              snprintf_P(dp, 9, PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%02d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year%2000);
+              snprintf_P(dp, 9, PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%02d"), param1, param2, RtcTime.year%2000);
               dp += 8;
             }
-            break;
+            break; }
           case 'd':
             // force draw grafics buffer
             if (renderer) renderer->Updateframe();
