@@ -36,6 +36,10 @@ public:
   char *                manufacturerId;
   char *                modelId;
   char *                friendlyName;
+  // _defer_last_time : what was the last time an outgoing message is scheduled
+  // this is designed for flow control and avoid messages to be lost or unanswered
+  uint32_t              defer_last_message_sent;
+
   uint8_t               endpoints[endpoints_max];   // static array to limit memory consumption, list of endpoints until 0x00 or end of array
   // Used for attribute reporting
   Z_attribute_list      attr_list;
@@ -78,6 +82,7 @@ public:
     manufacturerId(nullptr),
     modelId(nullptr),
     friendlyName(nullptr),
+    defer_last_message_sent(0),
     endpoints{ 0, 0, 0, 0, 0, 0, 0, 0 },
     attr_list(),
     shortaddr(_shortaddr),
@@ -145,21 +150,28 @@ public:
  * Structures for deferred callbacks
 \*********************************************************************************************/
 
-typedef int32_t (*Z_DeviceTimer)(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value);
+typedef void (*Z_DeviceTimer)(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value);
 
 // Category for Deferred actions, this allows to selectively remove active deferred or update them
 typedef enum Z_Def_Category {
-  Z_CAT_NONE = 0,             // no category, it will happen anyways
+  Z_CAT_ALWAYS = 0,           // no category, it will happen whatever new timers
+  // Below will clear any event in the same category for the same address (shortaddr / groupaddr)
+  Z_CLEAR_DEVICE = 0x01,
   Z_CAT_READ_ATTR,            // Attribute reporting, either READ_ATTRIBUTE or REPORT_ATTRIBUTE, we coalesce all attributes reported if we can
   Z_CAT_VIRTUAL_OCCUPANCY,    // Creation of a virtual attribute, typically after a time-out. Ex: Aqara presence sensor
   Z_CAT_REACHABILITY,         // timer set to measure reachability of device, i.e. if we don't get an answer after 1s, it is marked as unreachable (for Alexa)
-  Z_CAT_READ_0006,            // Read 0x0006 cluster
-  Z_CAT_READ_0008,            // Read 0x0008 cluster
-  Z_CAT_READ_0102,            // Read 0x0300 cluster
-  Z_CAT_READ_0300,            // Read 0x0300 cluster
+  // Below will clear based on device + cluster pair.
+  Z_CLEAR_DEVICE_CLUSTER,
+  Z_CAT_READ_CLUSTER,
+  // Below will clear based on device + cluster + endpoint
+  Z_CLEAR_DEVICE_CLUSTER_ENDPOINT,
+  Z_CAT_EP_DESC,              // read endpoint descriptor to gather clusters
+  Z_CAT_BIND,                 // send auto-binding to coordinator
+  Z_CAT_CONFIG_ATTR,          // send a config attribute reporting request
+  Z_CAT_READ_ATTRIBUTE,       // read a single attribute
 } Z_Def_Category;
 
-const uint32_t Z_CAT_REACHABILITY_TIMEOUT = 1000;     // 1000 ms or 1s
+const uint32_t Z_CAT_REACHABILITY_TIMEOUT = 2000;     // 1000 ms or 1s
 
 typedef struct Z_Deferred {
   // below are per device timers, used for example to query the new state of the device
@@ -258,8 +270,9 @@ public:
   bool isHueBulbHidden(uint16_t shortaddr) const ;
 
   // Timers
-  void resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category);
+  void resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category, uint16_t cluster = 0xFFFF, uint8_t endpoint = 0xFF);
   void setTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait_ms, uint16_t cluster, uint8_t endpoint, uint8_t category, uint32_t value, Z_DeviceTimer func);
+  void queueTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait_ms, uint16_t cluster, uint8_t endpoint, uint8_t category, uint32_t value, Z_DeviceTimer func);
   void runTimer(void);
 
   // Append or clear attributes Json structure
@@ -723,12 +736,17 @@ bool Z_Devices::isHueBulbHidden(uint16_t shortaddr) const {
 
 // Deferred actions
 // Parse for a specific category, of all deferred for a device if category == 0xFF
-void Z_Devices::resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category) {
+// Only with specific cluster number or for all clusters if cluster == 0xFFFF
+void Z_Devices::resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category, uint16_t cluster, uint8_t endpoint) {
   // iterate the list of deferred, and remove any linked to the shortaddr
   for (auto & defer : _deferred) {
     if ((defer.shortaddr == shortaddr) && (defer.groupaddr == groupaddr)) {
       if ((0xFF == category) || (defer.category == category)) {
-        _deferred.remove(&defer);
+        if ((0xFFFF == cluster) || (defer.cluster == cluster)) {
+          if ((0xFF == endpoint) || (defer.endpoint == endpoint)) {
+            _deferred.remove(&defer);
+          }
+        }
       }
     }
   }
@@ -737,8 +755,8 @@ void Z_Devices::resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uin
 // Set timer for a specific device
 void Z_Devices::setTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait_ms, uint16_t cluster, uint8_t endpoint, uint8_t category, uint32_t value, Z_DeviceTimer func) {
   // First we remove any existing timer for same device in same category, except for category=0x00 (they need to happen anyway)
-  if (category) {     // if category == 0, we leave all previous
-    resetTimersForDevice(shortaddr, groupaddr, category);    // remove any cluster
+  if (category >= Z_CLEAR_DEVICE) {     // if category == 0, we leave all previous timers
+    resetTimersForDevice(shortaddr, groupaddr, category, category >= Z_CLEAR_DEVICE_CLUSTER ? cluster : 0xFFFF, category >= Z_CLEAR_DEVICE_CLUSTER_ENDPOINT ? endpoint : 0xFF);    // remove any cluster
   }
 
   // Now create the new timer
@@ -751,6 +769,21 @@ void Z_Devices::setTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait_m
                           category,
                           value,
                           func };
+}
+
+// Set timer after the already queued events
+// I.e. the wait_ms is not counted from now, but from the last event queued, which is 'now' or in the future
+void Z_Devices::queueTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait_ms, uint16_t cluster, uint8_t endpoint, uint8_t category, uint32_t value, Z_DeviceTimer func) {
+  Z_Device & device = getShortAddr(shortaddr);
+  uint32_t now_millis = millis();
+  if (TimeReached(device.defer_last_message_sent)) {
+    device.defer_last_message_sent = now_millis;
+  }
+  // defer_last_message_sent equals now or a value in the future
+  device.defer_last_message_sent += wait_ms;
+
+  // for queueing we don't clear the backlog, so we force category to Z_CAT_ALWAYS
+  setTimer(shortaddr, groupaddr, (device.defer_last_message_sent - now_millis), cluster, endpoint, Z_CAT_ALWAYS, value, func);
 }
 
 // Run timer at each tick
@@ -918,44 +951,43 @@ uint16_t Z_Devices::parseDeviceParam(const char * param, bool short_must_be_know
 
 // Display the tracked status for a light
 String Z_Devices::dumpLightState(uint16_t shortaddr) const {
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject& json = jsonBuffer.createObject();
+  Z_attribute_list attr_list;
   char hex[8];
 
   const Z_Device & device = findShortAddr(shortaddr);
-  if (foundDevice(device)) {
-    const char * fname = getFriendlyName(shortaddr);
+  const char * fname = getFriendlyName(shortaddr);
+  bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
+  snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), shortaddr);
 
-    bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
-
-    snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), shortaddr);
-
-    JsonObject& dev = use_fname ? json.createNestedObject((char*) fname)   // casting (char*) forces a copy
-                                : json.createNestedObject(hex);
-    if (use_fname) {
-      dev[F(D_JSON_ZIGBEE_DEVICE)] = hex;
-    } else if (fname) {
-      dev[F(D_JSON_ZIGBEE_NAME)] = (char*) fname;
-    }
-
-    // expose the last known status of the bulb, for Hue integration
-    dev[F(D_JSON_ZIGBEE_LIGHT)] = getHueBulbtype(shortaddr);   // sign extend, 0xFF changed as -1
-    // dump all known values
-    dev[F("Reachable")] = device.getReachable();   // TODO TODO
-    if (device.validPower())        { dev[F("Power")]     = device.getPower(); }
-    if (device.validDimmer())       { dev[F("Dimmer")]    = device.dimmer; }
-    if (device.validColormode())    { dev[F("Colormode")] = device.colormode; }
-    if (device.validCT())           { dev[F("CT")]        = device.ct; }
-    if (device.validSat())          { dev[F("Sat")]       = device.sat; }
-    if (device.validHue())          { dev[F("Hue")]       = device.hue; }
-    if (device.validX())            { dev[F("X")]         = device.x; }
-    if (device.validY())            { dev[F("Y")]         = device.y; }
+  attr_list.addAttribute(F(D_JSON_ZIGBEE_DEVICE)).setStr(hex);
+  if (fname) {
+    attr_list.addAttribute(F(D_JSON_ZIGBEE_NAME)).setStr(fname);
   }
 
-  String payload = "";
-  payload.reserve(200);
-  json.printTo(payload);
-  return payload;
+  if (foundDevice(device)) {
+    // expose the last known status of the bulb, for Hue integration
+    attr_list.addAttribute(F(D_JSON_ZIGBEE_LIGHT)).setInt(getHueBulbtype(shortaddr));  // sign extend, 0xFF changed as -1
+    // dump all known values
+    attr_list.addAttribute(F("Reachable")).setBool(device.getReachable());
+    if (device.validPower())        { attr_list.addAttribute(F("Power")).setUInt(device.getPower()); }
+    if (device.validDimmer())       { attr_list.addAttribute(F("Dimmer")).setUInt(device.dimmer); }
+    if (device.validColormode())    { attr_list.addAttribute(F("Colormode")).setUInt(device.colormode); }
+    if (device.validCT())           { attr_list.addAttribute(F("CT")).setUInt(device.ct); }
+    if (device.validSat())          { attr_list.addAttribute(F("Sat")).setUInt(device.sat); }
+    if (device.validHue())          { attr_list.addAttribute(F("Hue")).setUInt(device.hue); }
+    if (device.validX())            { attr_list.addAttribute(F("X")).setUInt(device.x); }
+    if (device.validY())            { attr_list.addAttribute(F("Y")).setUInt(device.y); }
+  }
+  
+  Z_attribute_list attr_list_root;
+  Z_attribute * attr_root;
+  if (use_fname) {
+    attr_root = &attr_list_root.addAttribute(fname);
+  } else {
+    attr_root = &attr_list_root.addAttribute(hex);
+  }
+  attr_root->setStrRaw(attr_list.toString(true).c_str());
+  return attr_list_root.toString(true);
 }
 
 // Dump the internal memory of Zigbee devices

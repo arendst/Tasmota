@@ -90,7 +90,7 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune, uint32
   Buzzer.count = count * 2;  // Start buzzer
 
   // We can use PWM mode for buzzer output if enabled.
-  if (Settings.flag4.buzzer_freq_mode) {     // SetOption110 - Enable frequency output mode for buzzer
+  if (Settings.flag4.buzzer_freq_mode) {     // SetOption111 - Enable frequency output mode for buzzer
       Buzzer.freq_mode = 1;
   }
   else {

@@ -75,3 +75,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   50  | USE_VEML7700        | xsns_71 | VEML7700 | 0x10        | Ambient light intensity sensor
   51  | USE_MCP9808         | xsns_72 | MCP9808  | 0x18 - 0x1F | Temperature sensor
   52  | USE_HP303B          | xsns_73 | HP303B   | 0x76 - 0x77 | Pressure and temperature sensor
+  53  | USE_MLX90640        | xdrv_84 | MLX90640 | 0x33        | IR array temperature sensor

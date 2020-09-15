@@ -750,8 +750,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32
     - uses: actions/upload-artifact@v2
       with:
@@ -774,8 +773,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-minimal
     - uses: actions/upload-artifact@v2
       with:
@@ -798,8 +796,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-lite
     - uses: actions/upload-artifact@v2
       with:
@@ -822,8 +819,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-webcam
     - uses: actions/upload-artifact@v2
       with:
@@ -846,8 +842,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-knx
     - uses: actions/upload-artifact@v2
       with:
@@ -870,8 +865,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-sensors
     - uses: actions/upload-artifact@v2
       with:
@@ -894,8 +888,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-display
     - uses: actions/upload-artifact@v2
       with:
@@ -918,8 +911,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-ir
     - uses: actions/upload-artifact@v2
       with:
@@ -942,8 +934,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-ircustom
     - uses: actions/upload-artifact@v2
       with:
@@ -966,8 +957,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-BG
     - uses: actions/upload-artifact@v2
       with:
@@ -990,8 +980,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-BR
     - uses: actions/upload-artifact@v2
       with:
@@ -1014,8 +1003,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-CN
     - uses: actions/upload-artifact@v2
       with:
@@ -1038,8 +1026,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-CZ
     - uses: actions/upload-artifact@v2
       with:
@@ -1062,8 +1049,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-DE
     - uses: actions/upload-artifact@v2
       with:
@@ -1086,8 +1072,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-ES
     - uses: actions/upload-artifact@v2
       with:
@@ -1110,8 +1095,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-FR
     - uses: actions/upload-artifact@v2
       with:
@@ -1134,8 +1118,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-GR
     - uses: actions/upload-artifact@v2
       with:
@@ -1158,8 +1141,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-HE
     - uses: actions/upload-artifact@v2
       with:
@@ -1182,8 +1164,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-HU
     - uses: actions/upload-artifact@v2
       with:
@@ -1206,8 +1187,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-IT
     - uses: actions/upload-artifact@v2
       with:
@@ -1230,8 +1210,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-KO
     - uses: actions/upload-artifact@v2
       with:
@@ -1254,8 +1233,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-NL
     - uses: actions/upload-artifact@v2
       with:
@@ -1278,8 +1256,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-PL
     - uses: actions/upload-artifact@v2
       with:
@@ -1302,8 +1279,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-PT
     - uses: actions/upload-artifact@v2
       with:
@@ -1326,8 +1302,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-RO
     - uses: actions/upload-artifact@v2
       with:
@@ -1350,8 +1325,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-RU
     - uses: actions/upload-artifact@v2
       with:
@@ -1374,8 +1348,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-SE
     - uses: actions/upload-artifact@v2
       with:
@@ -1398,8 +1371,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-SK
     - uses: actions/upload-artifact@v2
       with:
@@ -1422,8 +1394,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-TR
     - uses: actions/upload-artifact@v2
       with:
@@ -1446,8 +1417,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-TW
     - uses: actions/upload-artifact@v2
       with:
@@ -1470,8 +1440,7 @@ jobs:
         platformio upgrade --dev
         platformio update
     - name: Run PlatformIO
-      run: | 
-        mv -f platformio_override_sample.ini platformio_override.ini
+      run: |
         platformio run -e tasmota32-UK
     - uses: actions/upload-artifact@v2
       with:
