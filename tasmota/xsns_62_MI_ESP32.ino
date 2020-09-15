@@ -333,13 +333,13 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
 
 class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
   void onResult(NimBLEAdvertisedDevice* advertisedDevice) {
-    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Advertised Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData().length());
-    if (advertisedDevice->getServiceData().length() == 0) {
-      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("No Xiaomi Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData().length());
+    // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Advertised Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData(0).length());
+    if (advertisedDevice->getServiceDataCount() == 0) {
+      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("No Xiaomi Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData(0).length());
       MI32Scan->erase(advertisedDevice->getAddress());
       return;
     }
-    uint16_t uuid = advertisedDevice->getServiceDataUUID().getNative()->u16.value;
+    uint16_t uuid = advertisedDevice->getServiceDataUUID(0).getNative()->u16.value;
     // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("UUID: %x"),uuid);
     uint8_t addr[6];
     memcpy(addr,advertisedDevice->getAddress().getNative(),6);
@@ -350,14 +350,14 @@ class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     }
     // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("RSSI: %d"),rssi); // actually i never got a 0xffff
     if(uuid==0xfe95) {
-      MI32ParseResponse((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr, rssi);
+      MI32ParseResponse((char*)advertisedDevice->getServiceData(0).data(),advertisedDevice->getServiceData(0).length(), addr, rssi);
     }
     else if(uuid==0xfdcd) {
-      MI32parseCGD1Packet((char*)advertisedDevice->getServiceData().data(),advertisedDevice->getServiceData().length(), addr, rssi);
+      MI32parseCGD1Packet((char*)advertisedDevice->getServiceData(0).data(),advertisedDevice->getServiceData(0).length(), addr, rssi);
     }
     else {
       MI32Scan->erase(advertisedDevice->getAddress());
-      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("No Xiaomi Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData().length());
+      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("No Xiaomi Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData(0).length());
     }
   };
 };
@@ -749,12 +749,12 @@ void MI32StartScanTask(){
 
 void MI32ScanTask(void *pvParameters){
   if (MI32Scan == nullptr) MI32Scan = NimBLEDevice::getScan();
-  DEBUG_SENSOR_LOG(PSTR("%s: Scan Cache Length: %u"),D_CMND_MI32, MI32Scan->getResults().getCount());
+  // DEBUG_SENSOR_LOG(PSTR("%s: Scan Cache Length: %u"),D_CMND_MI32, MI32Scan->getResults().getCount());
   MI32Scan->setInterval(70);
   MI32Scan->setWindow(50);
   MI32Scan->setAdvertisedDeviceCallbacks(&MI32ScanCallbacks,true);
   MI32Scan->setActiveScan(false);
-  MI32Scan->start(0, MI32scanEndedCB, true); // never stop scanning, will pause automaically while connecting
+  MI32Scan->start(0, MI32scanEndedCB, true); // never stop scanning, will pause automatically while connecting
 
   uint32_t timer = 0;
   for(;;){
@@ -841,7 +841,7 @@ bool MI32connectLYWSD03forNotification(){
   }
   if (pChr){
     if(pChr->canNotify()) {
-      if(pChr->subscribe(true,false,MI32notifyCB)) {
+      if(pChr->subscribe(true,MI32notifyCB,false)) {
         return true;
       }
     }
