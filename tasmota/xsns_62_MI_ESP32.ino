@@ -20,6 +20,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.1.3 20200916  changed - add ATC (custom FW for LYWSD03MMC), API adaption for NimBLE-Arduino 1.0.2
+  -------
   0.9.1.2 20200802  changed - add MHO-C303
   -------
   0.9.1.1 20200715  changed - add MHO-C401, refactoring
@@ -164,6 +166,15 @@ union mi_bindKey_t{
   uint8_t buf[22];
 };
 
+struct ATCPacket_t{
+  uint8_t MAC[6];
+  int16_t temp; //sadly this is in wrong endianess
+  uint8_t hum;
+  uint8_t batPer;
+  uint16_t batMV;
+  uint8_t frameCnt;
+};
+
 #pragma pack(0)
 
 struct mi_sensor_t{
@@ -253,8 +264,9 @@ const char kMI32_Commands[] PROGMEM             = "Period|Time|Page|Battery|Unit
 #define YEERC       9
 #define MHOC401     10
 #define MHOC303     11
+#define ATC         12
 
-#define MI32_TYPES    11 //count this manually
+#define MI32_TYPES    12 //count this manually
 
 const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
                                   0x01aa, // MJ_HT_V1
@@ -266,7 +278,8 @@ const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
                                   0x07f6, // MJYD2S
                                   0x0153, // yee-rc
                                   0x0387, // MHO-C401
-                                  0x06d3  // MHO-C303
+                                  0x06d3, // MHO-C303
+                                  0x0a1c  // ATC -> this is a fake ID
                                   };
 
 const char kMI32DeviceType1[] PROGMEM = "Flora";
@@ -280,7 +293,8 @@ const char kMI32DeviceType8[] PROGMEM = "MJYD2S";
 const char kMI32DeviceType9[] PROGMEM = "YEERC";
 const char kMI32DeviceType10[] PROGMEM ="MHOC401";
 const char kMI32DeviceType11[] PROGMEM ="MHOC303";
-const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11};
+const char kMI32DeviceType12[] PROGMEM ="ATC";
+const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12};
 
 /*********************************************************************************************\
  * enumerations
@@ -355,9 +369,12 @@ class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     else if(uuid==0xfdcd) {
       MI32parseCGD1Packet((char*)advertisedDevice->getServiceData(0).data(),advertisedDevice->getServiceData(0).length(), addr, rssi);
     }
+    else if(uuid==0x181a) { //ATC
+      MI32ParseATCPacket((char*)advertisedDevice->getServiceData(0).data(),advertisedDevice->getServiceData(0).length(), addr, rssi);
+    }
     else {
+      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("No Xiaomi Device: %x: %s Buffer: %u"), uuid, advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData(0).length());
       MI32Scan->erase(advertisedDevice->getAddress());
-      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("No Xiaomi Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData(0).length());
     }
   };
 };
@@ -1249,6 +1266,25 @@ if (MIBLEsensors[_slot].type==NLIGHT){
   if(MIBLEsensors[_slot].eventType.raw == 0) return;
   MIBLEsensors[_slot].shallSendMQTT = 1;
   MI32.mode.shallTriggerTele = 1;
+}
+
+void MI32ParseATCPacket(char * _buf, uint32_t length, uint8_t addr[6], int rssi){
+  ATCPacket_t *_packet = (ATCPacket_t*)_buf;
+  uint32_t _slot = MIBLEgetSensorSlot(_packet->MAC, 0x0a1c, _packet->frameCnt); // This must be a hard-coded fake ID
+  AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1],_slot);
+  if(_slot==0xff) return;
+
+  MIBLEsensors[_slot].rssi=rssi;
+
+  MIBLEsensors.at(_slot).temp = (float)(__builtin_bswap16(_packet->temp))/10.0f;
+  MIBLEsensors.at(_slot).hum = (float)_packet->hum;
+  MIBLEsensors[_slot].eventType.tempHum  = 1;
+  MIBLEsensors.at(_slot).bat = _packet->batPer;
+  MIBLEsensors[_slot].eventType.bat  = 1;
+
+  MIBLEsensors[_slot].shallSendMQTT = 1;
+  MI32.mode.shallTriggerTele = 1;
+
 }
 
 void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int rssi){ // no MiBeacon
