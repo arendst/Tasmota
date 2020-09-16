@@ -1460,39 +1460,36 @@ void HandleRoot(void)
           (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : (devices_present < 5) ? D_BUTTON_TOGGLE : "",
           (set_button) ? "" : (devices_present > 1) ? stemp : "");
       }
-#ifdef USE_TUYA_MCU
-   if (IsModuleTuya()) {
-      uint8_t modeset = 0;
-      if (AsModuleTuyaMS()) {
-        WSContentSend_P(HTTP_TABLE100);
-        WSContentSend_P(PSTR("<tr><div></div>"));
-        snprintf_P(stemp, sizeof(stemp), PSTR("" D_JSON_IRHVAC_MODE ""));
-        WSContentSend_P(HTTP_DEVICE_CONTROL, 26, devices_present + 1,
-          (strlen(SettingsText(SET_BUTTON1 + devices_present))) ? SettingsText(SET_BUTTON1 + devices_present) : stemp, "");
-        WSContentSend_P(PSTR("</tr></table>"));
-        modeset = 1;
-      }
-      if (IsTuyaFanCtrl()) {
-        uint8_t device = devices_present + modeset;
-        WSContentSend_P(HTTP_TABLE100);
-        WSContentSend_P(PSTR("<tr><div></div>"));
-        for (uint32_t i = device + 1; i <= (TuyaFanSpeeds() + device) + 1; i++) {
-          snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i - (device + 1));
-          WSContentSend_P(HTTP_DEVICE_CONTROL, 16, i,
-            (strlen(SettingsText(SET_BUTTON1 + i))) ? SettingsText(SET_BUTTON1 + i) : stemp, "");
-        }
-        WSContentSend_P(PSTR("</tr></table>"));
-      }
-    } else {
-#endif  // USE_TUYA_MCU
-      }
-      WSContentSend_P(PSTR("</tr></table>"));
 #ifdef USE_SONOFF_IFAN
     }
 #endif  // USE_SONOFF_IFAN
-
     WSContentSend_P(PSTR("</tr></table>"));
   }
+#ifdef USE_TUYA_MCU
+  if (IsModuleTuya()) {
+    uint8_t modeset = 0;
+    if (AsModuleTuyaMS()) {
+      WSContentSend_P(HTTP_TABLE100);
+      WSContentSend_P(PSTR("<tr><div></div>"));
+      snprintf_P(stemp, sizeof(stemp), PSTR("" D_JSON_IRHVAC_MODE ""));
+      WSContentSend_P(HTTP_DEVICE_CONTROL, 26, devices_present + 1,
+        (strlen(SettingsText(SET_BUTTON1 + devices_present))) ? SettingsText(SET_BUTTON1 + devices_present) : stemp, "");
+      WSContentSend_P(PSTR("</tr></table>"));
+      modeset = 1;
+    }
+    if (IsTuyaFanCtrl()) {
+      uint8_t device = devices_present + modeset;
+      WSContentSend_P(HTTP_TABLE100);
+      WSContentSend_P(PSTR("<tr><div></div>"));
+      for (uint32_t i = device + 1; i <= (TuyaFanSpeeds() + device) + 1; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i - (device + 1));
+        WSContentSend_P(HTTP_DEVICE_CONTROL, 16, i,
+          (strlen(SettingsText(SET_BUTTON1 + i))) ? SettingsText(SET_BUTTON1 + i) : stemp, "");
+      }
+      WSContentSend_P(PSTR("</tr></table>"));
+    }
+  }
+#endif  // USE_TUYA_MCU
 #ifdef USE_SONOFF_RF
   if (SONOFF_BRIDGE == my_module_type) {
     WSContentSend_P(HTTP_TABLE100);
