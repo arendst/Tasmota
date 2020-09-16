@@ -992,12 +992,9 @@ String Z_Devices::dumpLightState(uint16_t shortaddr) const {
 
 // Dump the internal memory of Zigbee devices
 // Mode = 1: simple dump of devices addresses
-// Mode = 2: simple dump of devices addresses and names
-// Mode = 3: Mode 2 + also dump the endpoints, profiles and clusters
+// Mode = 2: simple dump of devices addresses and names, endpoints, light
 String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
-  DynamicJsonBuffer jsonBuffer;
-  JsonArray& json = jsonBuffer.createArray();
-  JsonArray& devices = json;
+  Z_json_array json_arr;
 
   for (const auto & device : _devices) {
     uint16_t shortaddr = device.shortaddr;
@@ -1006,44 +1003,41 @@ String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
     // ignore non-current device, if device specified
     if ((BAD_SHORTADDR != status_shortaddr) && (status_shortaddr != shortaddr)) { continue; }
 
-    JsonObject& dev = devices.createNestedObject();
+    Z_attribute_list attr_list;
 
     snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), shortaddr);
-    dev[F(D_JSON_ZIGBEE_DEVICE)] = hex;
+    attr_list.addAttribute(F(D_JSON_ZIGBEE_DEVICE)).setStr(hex);
 
     if (device.friendlyName > 0) {
-      dev[F(D_JSON_ZIGBEE_NAME)] = (char*) device.friendlyName;
+      attr_list.addAttribute(F(D_JSON_ZIGBEE_NAME)).setStr(device.friendlyName);
     }
 
     if (2 <= dump_mode) {
       hex[0] = '0';   // prefix with '0x'
       hex[1] = 'x';
       Uint64toHex(device.longaddr, &hex[2], 64);
-      dev[F("IEEEAddr")] = hex;
+      attr_list.addAttribute(F("IEEEAddr")).setStr(hex);
       if (device.modelId) {
-        dev[F(D_JSON_MODEL D_JSON_ID)] = device.modelId;
+        attr_list.addAttribute(F(D_JSON_MODEL D_JSON_ID)).setStr(device.modelId);
       }
       int8_t bulbtype = getHueBulbtype(shortaddr);
       if (bulbtype >= 0) {
-        dev[F(D_JSON_ZIGBEE_LIGHT)] = bulbtype;   // sign extend, 0xFF changed as -1
+        attr_list.addAttribute(F(D_JSON_ZIGBEE_LIGHT)).setInt(bulbtype);   // sign extend, 0xFF changed as -1
       }
       if (device.manufacturerId) {
-        dev[F("Manufacturer")] = device.manufacturerId;
+        attr_list.addAttribute(F("Manufacturer")).setStr(device.manufacturerId);
       }
-      JsonArray& dev_endpoints = dev.createNestedArray(F("Endpoints"));
+      Z_json_array arr_ep;
       for (uint32_t i = 0; i < endpoints_max; i++) {
         uint8_t endpoint = device.endpoints[i];
         if (0x00 == endpoint) { break; }
-
-        snprintf_P(hex, sizeof(hex), PSTR("0x%02X"), endpoint);
-        dev_endpoints.add(hex);
+        arr_ep.add(endpoint);
       }
+      attr_list.addAttribute(F("Endpoints")).setStrRaw(arr_ep.toString().c_str());
     }
+    json_arr.addStrRaw(attr_list.toString(true).c_str());
   }
-  String payload = "";
-  payload.reserve(200);
-  json.printTo(payload);
-  return payload;
+  return json_arr.toString();
 }
 
 // Restore a single device configuration based on json export
