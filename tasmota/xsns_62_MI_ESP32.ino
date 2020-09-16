@@ -20,7 +20,7 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
-  0.9.1.3 20200916  changed - add ATC (custom FW for LYWS03MMC), API adaption for NimBLE-Arduino 1.0.2
+  0.9.1.3 20200916  changed - add ATC (custom FW for LYWSD03MMC), API adaption for NimBLE-Arduino 1.0.2
   -------
   0.9.1.2 20200802  changed - add MHO-C303
   -------
