@@ -1465,6 +1465,31 @@ void HandleRoot(void)
 #endif  // USE_SONOFF_IFAN
     WSContentSend_P(PSTR("</tr></table>"));
   }
+#ifdef USE_TUYA_MCU
+  if (IsModuleTuya()) {
+    uint8_t modeset = 0;
+    if (AsModuleTuyaMS()) {
+      WSContentSend_P(HTTP_TABLE100);
+      WSContentSend_P(PSTR("<tr><div></div>"));
+      snprintf_P(stemp, sizeof(stemp), PSTR("" D_JSON_IRHVAC_MODE ""));
+      WSContentSend_P(HTTP_DEVICE_CONTROL, 26, devices_present + 1,
+        (strlen(SettingsText(SET_BUTTON1 + devices_present))) ? SettingsText(SET_BUTTON1 + devices_present) : stemp, "");
+      WSContentSend_P(PSTR("</tr></table>"));
+      modeset = 1;
+    }
+    if (IsTuyaFanCtrl()) {
+      uint8_t device = devices_present + modeset;
+      WSContentSend_P(HTTP_TABLE100);
+      WSContentSend_P(PSTR("<tr><div></div>"));
+      for (uint32_t i = device + 1; i <= (TuyaFanSpeeds() + device) + 1; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i - (device + 1));
+        WSContentSend_P(HTTP_DEVICE_CONTROL, 16, i,
+          (strlen(SettingsText(SET_BUTTON1 + i))) ? SettingsText(SET_BUTTON1 + i) : stemp, "");
+      }
+      WSContentSend_P(PSTR("</tr></table>"));
+    }
+  }
+#endif  // USE_TUYA_MCU
 #ifdef USE_SONOFF_RF
   if (SONOFF_BRIDGE == my_module_type) {
     WSContentSend_P(HTTP_TABLE100);
@@ -1535,6 +1560,33 @@ bool HandleRootStatusRefresh(void)
       }
     } else {
 #endif  // USE_SONOFF_IFAN
+#ifdef USE_TUYA_MCU
+    if (IsModuleTuya()) {
+      uint8_t FuncIdx = 0;
+        if (device <= devices_present) {
+          ExecuteCommandPower(device, POWER_TOGGLE, SRC_IGNORE);
+        } else {
+          if (AsModuleTuyaMS() && device == devices_present + 1) {
+            uint8_t dpId = TuyaGetDpId(TUYA_MCU_FUNC_MODESET);
+            snprintf_P(svalue, sizeof(svalue), PSTR("Tuyasend4 %d,%d"), dpId, !TuyaModeSet());
+            ExecuteCommand(svalue, SRC_WEBGUI);
+          }
+          if (IsTuyaFanCtrl()) {
+            uint8_t dpId = 0;
+            for (uint32_t i = 0; i <= 3; i++) { // Tuya Function FAN3 to FAN6
+              if (TuyaGetDpId(TUYA_MCU_FUNC_FAN3 + i) != 0) {
+                dpId = TuyaGetDpId(TUYA_MCU_FUNC_FAN3 + i);
+              }
+            }
+            if ((AsModuleTuyaMS() && device != devices_present + 1) || !AsModuleTuyaMS()) {
+              if (AsModuleTuyaMS()) {FuncIdx = 1;}
+              snprintf_P(svalue, sizeof(svalue), PSTR("Tuyasend2 %d,%d"), dpId, (device - (devices_present + FuncIdx) - 1));
+              ExecuteCommand(svalue, SRC_WEBGUI);
+            }
+          }
+        }
+    } else {
+#endif  // USE_TUYA_MCU
 #ifdef USE_SHUTTER
       int32_t ShutterWebButton;
       if (ShutterWebButton = IsShutterWebButton(device)) {
@@ -1549,6 +1601,9 @@ bool HandleRootStatusRefresh(void)
 #ifdef USE_SONOFF_IFAN
     }
 #endif  // USE_SONOFF_IFAN
+#ifdef USE_TUYA_MCU
+    }
+#endif  // USE_TUYA_MCU
   }
 #ifdef USE_LIGHT
   WebGetArg("d0", tmp, sizeof(tmp));  // 0 - 100 Dimmer value
@@ -1629,8 +1684,22 @@ bool HandleRootStatusRefresh(void)
 #ifdef USE_SONOFF_IFAN
     }
 #endif  // USE_SONOFF_IFAN
+
     WSContentSend_P(PSTR("</tr></table>"));
   }
+#ifdef USE_TUYA_MCU
+  if (IsModuleTuya()) {
+    uint32_t fanspeed = TuyaFanState();
+    uint32_t modeset = TuyaModeSet();
+    if (IsTuyaFanCtrl() && !AsModuleTuyaMS()) {
+      WSContentSend_P(PSTR("<div style='text-align:center;font-size:25px;'>" D_JSON_IRHVAC_FANSPEED ": %d</div>"), fanspeed);
+    } else if (!IsTuyaFanCtrl() && AsModuleTuyaMS()) {
+      WSContentSend_P(PSTR("<div style='text-align:center;font-size:25px;'>" D_JSON_IRHVAC_MODE ": %d</div>"), modeset);
+    } else if (IsTuyaFanCtrl() && AsModuleTuyaMS()) {
+      WSContentSend_P(PSTR("<div style='text-align:center;font-size:25px;'>" D_JSON_IRHVAC_MODE ": %d - " D_JSON_IRHVAC_FANSPEED ": %d</div>"), modeset, fanspeed);
+    }
+  }
+#endif  // USE_TUYA_MCU
   WSContentEnd();
 
   return true;

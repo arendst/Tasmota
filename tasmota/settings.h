@@ -389,7 +389,7 @@ struct {
   uint8_t       display_font;              // 312
 
   char          ex_state_text[4][11];      // 313
-  uint8_t       ex_energy_power_delta;     // 33F - Free since 6.6.0.20
+  uint8_t       tuyamcu_topic;             // 33F Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
 
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
