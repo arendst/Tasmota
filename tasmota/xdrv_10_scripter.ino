@@ -79,6 +79,7 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #undef LITTLEFS_SCRIPT_SIZE
 #undef EEP_SCRIPT_SIZE
 #undef USE_SCRIPT_COMPRESSION
+
 #if USE_SCRIPT_FATFS==-1
 
 #ifdef ESP32
@@ -250,9 +251,9 @@ SDClass *fsp;
 #define FAT_SCRIPT_NAME "script.txt"
 #endif
 
-#if USE_STANDARD_SPI_LIBRARY==0
-#warning ("FATFS standard spi should be used");
-#endif
+//#if USE_STANDARD_SPI_LIBRARY==0
+//#warning ("FATFS standard spi should be used");
+//#endif
 
 #endif // USE_SCRIPT_FATFS
 
@@ -377,7 +378,11 @@ struct SCRIPT_MEM {
     struct T_INDEX *type; // type and index pointer
     struct M_FILT *mfilt;
     char *glob_vnp; // var name pointer
+#ifdef SCRIPT_LARGE_VNBUFF
+    uint16_t *vnp_offset;
+#else
     uint8_t *vnp_offset;
+#endif
     char *glob_snp; // string vars pointer
     char *scriptptr;
     char *section_ptr;
@@ -511,7 +516,7 @@ char *script;
     char **snp_p = snp;
     uint8_t numperm = 0;
     uint8_t numflt = 0;
-    uint8_t count;
+    uint16_t count;
 
     glob_script_mem.max_ssize = SCRIPT_SVARSIZE;
     glob_script_mem.scriptptr = 0;
@@ -592,7 +597,7 @@ char *script;
                 } else {
                     vtypes[vars].bits.is_filter = 0;
                 }
-                *vnp_p ++= vnames_p;
+                *vnp_p++ = vnames_p;
                 while (lp<op) {
                     *vnames_p++ = *lp++;
                 }
@@ -684,7 +689,11 @@ char *script;
     // var names
     (vnames_p-vnames) +
     // vars offsets
+#ifdef SCRIPT_LARGE_VNBUFF
+    (sizeof(uint16_t)*vars) +
+#else
     (sizeof(uint8_t)*vars) +
+#endif
     // strings
     (glob_script_mem.max_ssize*svars) +
     // type array
@@ -727,8 +736,14 @@ char *script;
     memcpy(script_mem, vnames, size);
     script_mem += size;
 
+#ifdef SCRIPT_LARGE_VNBUFF
+    glob_script_mem.vnp_offset = (uint16_t*)script_mem;
+    size = vars*sizeof(uint16_t);
+#else
     glob_script_mem.vnp_offset = (uint8_t*)script_mem;
     size = vars*sizeof(uint8_t);
+#endif
+
     script_mem += size;
 
     // strings
@@ -738,10 +753,20 @@ char *script;
     //memcpy(script_mem,strings,size);
     script_mem += size;
 
+
     // now must recalc memory offsets
     uint16_t index = 0;
+#ifdef SCRIPT_LARGE_VNBUFF
+#ifndef MAXVNSIZ
+#define MAXVNSIZ 4096
+#endif
+    uint16_t *cp = glob_script_mem.vnp_offset;
+#else
+#undef MAXVNSIZ
+#define MAXVNSIZ 255
     uint8_t *cp = glob_script_mem.vnp_offset;
-    for (count=0;count<vars;count++) {
+#endif
+    for (count = 0; count<vars; count++) {
         *cp++ = index;
         while (*namep) {
             index++;
@@ -749,7 +774,7 @@ char *script;
         }
         namep++;
         index++;
-        if (index>255) {
+        if (index > MAXVNSIZ) {
           free(glob_script_mem.script_mem);
           return -5;
         }
@@ -760,7 +785,7 @@ char *script;
     // copy string variables
     char *cp1 = glob_script_mem.glob_snp;
     char *sp = strings;
-    for (count = 0; count<svars;count++) {
+    for (count = 0; count<svars; count++) {
         strcpy(cp1,sp);
         sp += strlen(sp) + 1;
         cp1 += glob_script_mem.max_ssize;
@@ -875,19 +900,81 @@ char *script;
 
 }
 
+#ifdef USE_SCRIPT_FATFS
+uint32_t get_fsinfo(uint32_t sel) {
+uint32_t result = 0;
+#ifdef ESP32
+#if USE_SCRIPT_FATFS >=0
+  if (sel == 0) {
+    result = SD.totalBytes()/1000;
+  } else if (sel == 1) {
+    result = (SD.totalBytes() - SD.usedBytes())/1000;
+  }
+#else
+  if (sel == 0) {
+    result = FFat.totalBytes()/1000;
+  } else if (sel == 1) {
+    result = FFat.freeBytes()/1000;
+  }
+#endif // USE_SCRIPT_FATFS>=0
+#else
+  // ESP8266
+  FSInfo64 fsinfo;
+  fsp->info64(fsinfo);
+  if (sel == 0) {
+    result = fsinfo.totalBytes/1000;
+  } else if (sel == 1) {
+    result = (fsinfo.totalBytes - fsinfo.usedBytes)/1000;
+  }
+#endif // ESP32
+  return result;
+}
+
+// format number with thousand marker
+void form1000(uint32_t number, char *dp, char sc) {
+  char str[32];
+  sprintf(str, "%d", number);
+  char *sp = str;
+  uint32_t inum = strlen(sp)/3;
+  uint32_t fnum = strlen(sp)%3;
+  if (!fnum) inum--;
+  for (uint32_t count=0; count<=inum; count++) {
+    if (fnum){
+      memcpy(dp,sp,fnum);
+      dp+=fnum;
+      sp+=fnum;
+      fnum=0;
+    } else {
+      memcpy(dp,sp,3);
+      dp+=3;
+      sp+=3;
+    }
+    if (count!=inum) {
+      *dp++=sc;
+    }
+  }
+  *dp=0;
+}
+
+#endif //USE_SCRIPT_FATFS
+
 #ifdef USE_SCRIPT_GLOBVARS
 #define SCRIPT_UDP_BUFFER_SIZE 128
 #define SCRIPT_UDP_PORT 1999
 IPAddress script_udp_remote_ip;
 
 void Script_Stop_UDP(void) {
-  Script_PortUdp.flush();
-  Script_PortUdp.stop();
-  glob_script_mem.udp_flags.udp_connected  = 0;
+  if (!glob_script_mem.udp_flags.udp_used) return;
+  if (glob_script_mem.udp_flags.udp_connected) {
+    Script_PortUdp.flush();
+    Script_PortUdp.stop();
+    glob_script_mem.udp_flags.udp_connected  = 0;
+  }
 }
 
 void Script_Init_UDP() {
   if (global_state.network_down) return;
+  if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected) return;
 
   if (Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
@@ -898,6 +985,7 @@ void Script_Init_UDP() {
     glob_script_mem.udp_flags.udp_connected  = 0;
   }
 }
+
 void Script_PollUdp(void) {
   if (global_state.network_down) return;
   if (!glob_script_mem.udp_flags.udp_used) return;
@@ -1546,11 +1634,18 @@ chknext:
       case 'a':
 #ifdef USE_ANGLE_FUNC
         if (!strncmp(vname, "acos(", 5)) {
-            lp=GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
-            fvar = acosf(fvar);
-            lp++;
-            len = 0;
-            goto exit;
+          lp=GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
+          fvar = acosf(fvar);
+          lp++;
+          len = 0;
+          goto exit;
+        }
+        if (!strncmp(vname, "abs(", 4)) {
+          lp=GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          fvar = fabs(fvar);
+          lp++;
+          len = 0;
+          goto exit;
         }
 #endif
         if (!strncmp(vname, "asc(", 4)) {
@@ -1978,6 +2073,14 @@ chknext:
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           if (fsp->exists(str)) fvar = 1;
           else fvar = 0;
+          lp++;
+          len = 0;
+          goto exit;
+        }
+
+        if (!strncmp(vname, "fsi(", 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          fvar = get_fsinfo(fvar);
           lp++;
           len = 0;
           goto exit;
@@ -4358,14 +4461,17 @@ const char HTTP_FORM_FILE_UPLOAD[] PROGMEM =
 "<div id='f1' name='f1' style='display:block;'>"
 "<fieldset><legend><b>&nbsp;%s"  "&nbsp;</b></legend>";
 const char HTTP_FORM_FILE_UPG[] PROGMEM =
-"<form method='post' action='u3' enctype='multipart/form-data'>"
-"<br/><input type='file' name='u3'><br/>"
+"<form method='post' action='u13' enctype='multipart/form-data'>"
+"<br/><input type='file' name='u13'><br/>"
 "<br/><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>";
 
 const char HTTP_FORM_FILE_UPGb[] PROGMEM =
 "</fieldset>"
 "</div>"
 "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
+
+const char HTTP_FORM_FILE_UPGc[] PROGMEM =
+"<div style='text-align:left;color:green;'>total size: %s kB - free: %s kB</div>";
 
 const char HTTP_FORM_SDC_DIRa[] PROGMEM =
 "<div style='text-align:left'>";
@@ -4573,6 +4679,11 @@ void Script_FileUploadConfiguration(void) {
   WSContentSend_P(HTTP_FORM_FILE_UPLOAD,D_SDCARD_DIR);
   WSContentSend_P(HTTP_FORM_FILE_UPG, D_SCRIPT_UPLOAD);
 #ifdef SDCARD_DIR
+  char ts[16];
+  char fs[16];
+  form1000(get_fsinfo(0), ts, '.');
+  form1000(get_fsinfo(1), fs, '.');
+  WSContentSend_P(HTTP_FORM_FILE_UPGc, ts, fs);
   WSContentSend_P(HTTP_FORM_SDC_DIRa);
   if (glob_script_mem.script_sd_found) {
     ListDir(path, depth);
@@ -4837,6 +4948,11 @@ void ScriptSaveSettings(void) {
 }
 
 void SaveScriptEnd(void) {
+
+#ifdef USE_SCRIPT_GLOBVARS
+  Script_Stop_UDP();
+#endif //USE_SCRIPT_GLOBVARS
+
   if (glob_script_mem.script_mem) {
     Scripter_save_pvars();
     free(glob_script_mem.script_mem);
@@ -4856,6 +4972,9 @@ void SaveScriptEnd(void) {
 #endif // USE_SCRIPT_COMPRESSION
 
   if (bitRead(Settings.rule_enabled, 0)) {
+
+
+
     int16_t res = Init_Scripter();
     if (res) {
       AddLog_P2(LOG_LEVEL_INFO, PSTR("script init error: %d"), res);
@@ -7110,8 +7229,8 @@ bool Xdrv10(uint8_t function)
       Webserver->on("/exs", HTTP_GET, ScriptExecuteUploadSuccess);
 
 #ifdef USE_SCRIPT_FATFS
-      Webserver->on("/u3", HTTP_POST,[]() { Webserver->sendHeader("Location","/u3");Webserver->send(303);}, script_upload);
-      Webserver->on("/u3", HTTP_GET, ScriptFileUploadSuccess);
+      Webserver->on("/u13", HTTP_POST,[]() { Webserver->sendHeader("Location","/u13");Webserver->send(303);}, script_upload);
+      Webserver->on("/u13", HTTP_GET, ScriptFileUploadSuccess);
       Webserver->on("/upl", HTTP_GET, Script_FileUploadConfiguration);
 #endif //USE_SCRIPT_FATFS
       break;
