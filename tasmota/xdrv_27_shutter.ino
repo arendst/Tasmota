@@ -560,7 +560,7 @@ int32_t ShutterCalculatePosition(uint32_t i)
   if (Shutter[i].direction != 0) {
     switch (ShutterGlobal.position_mode) {
       case SHT_COUNTER:
-        return ((int32_t)RtcSettings.pulse_counter[i]*Shutter[i].direction*STEPS_PER_SECOND*RESOLUTION / ShutterGlobal.open_velocity_max)+Shutter[i].start_position;
+        return ((int32_t)RtcSettings.pulse_counter[i]*Shutter[i].direction*STEPS_PER_SECOND / ShutterGlobal.open_velocity_max * RESOLUTION)+Shutter[i].start_position;
         break;
       case SHT_TIME:
       case SHT_TIME_UP_DOWN:
