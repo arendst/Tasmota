@@ -20,7 +20,7 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
-  0.9.8.0 20200918  integrate - add MHOC303, ATC-custom FW, allow lower case commands
+  0.9.8.1 20200918  integrate - add MHOC303, ATC-custom FW, allow lower case commands
   ---
   0.9.8.0 20200705  integrate - add YEE-RC, NLIGHT and MJYD2S, add NRFUSE
   ---
