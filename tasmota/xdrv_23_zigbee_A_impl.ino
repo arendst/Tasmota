@@ -1350,8 +1350,37 @@ extern "C" {
       return 1;
     }
   }
-}
 
+
+// Convert seconds to a string representing days, hours or minutes present in the n-value.
+// The string will contain the most coarse time only, rounded down (61m == 01h, 01h37m == 01h).
+// Inputs:
+// - n: uint32_t representing some number of seconds
+// - result: a buffer of suitable size (7 bytes would represent the entire solution space
+//           for UINT32_MAX including the trailing null-byte, or "49710d")
+// - result_len: A numeric value representing the total length of the result buffer
+// Returns:
+// - The number of characters that would have been written were result sufficiently large
+// - negatve number on encoding error from snprintf
+//
+  int convert_seconds_to_dhm(uint32_t n,  char *result, size_t result_len){
+    char fmtstr[] = "%02dmhd"; // Don't want this in progmem, because we mutate it.
+    uint32_t conversions[3] = {24 * 3600, 3600, 60};
+    uint32_t value;
+    for(int i = 0; i < 3; ++i) {
+      value = n / conversions[i];
+      if(value > 0) {
+        fmtstr[4] = fmtstr[6-i];
+        break;
+      }
+      n = n % conversions[i];
+    }
+
+    // Null-terminate the string at the last "valid" index, removing any excess zero values.
+    fmtstr[5] = '\0';
+    return snprintf(result, result_len, fmtstr, value);
+  }
+}
 void ZigbeeShow(bool json)
 {
   if (json) {
@@ -1362,12 +1391,21 @@ void ZigbeeShow(bool json)
     if (!zigbee_num) { return; }
     if (zigbee_num > 255) { zigbee_num = 255; }
 
-    // Calculate fixed column width for best visual result (Theos opinion)
-    const uint8_t px_batt = 30;                         // Battery icon is 20px, add 10px as separator
-    const uint8_t px_lqi = (strlen(D_LQI) + 4) * 10;        // LQI 254   = 70px
-
     WSContentSend_P(PSTR("</table>{t}"));  // Terminate current two column table and open new table
-    WSContentSend_P(PSTR("<style>.bx{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}</style>"));
+    WSContentSend_P(PSTR(
+      "<style>"
+      // Table CSS
+      ".ztd td:not(:first-child){width:20px;font-size:70%%}"
+      ".ztd td:last-child{width:45px}"
+      ".ztd .bt{margin-right:10px;}" // Margin right should be half of the not-first width
+      // Lighting
+      ".bx{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
+      // Signal Strength Indicator
+      ".ssi{display:inline-flex;align-items:flex-end;height:15px;padding:0}"
+      ".ssi i{width:3px;margin-right:1px;border-radius:3px;background-color:#eee}"
+      ".ssi .b0{height:25%%}.ssi .b1{height:50%%}.ssi .b2{height:75%%}.ssi .b3{height:100%%}.o30{opacity:.3}"
+      "</style>"
+    ));
 
     // sort elements by name, then by id
     uint8_t sorted_idx[zigbee_num];
@@ -1376,44 +1414,69 @@ void ZigbeeShow(bool json)
     }
     qsort(sorted_idx, zigbee_num, sizeof(sorted_idx[0]), device_cmp);
 
+    uint32_t now = Rtc.utc_time;
+
     for (uint32_t i = 0; i < zigbee_num; i++) {
       const Z_Device &device = zigbee_devices.devicesAt(sorted_idx[i]);
       uint16_t shortaddr = device.shortaddr;
-      {   // exxplicit scope to free up stack allocated strings
-        char *name = (char*) device.friendlyName;
-        char sdevice[33];
-        if (nullptr == name) {
-          snprintf_P(sdevice, sizeof(sdevice), PSTR(D_DEVICE " 0x%04X"), shortaddr);
-          name = sdevice;
-        }
+      char *name = (char*) device.friendlyName;
 
-        char slqi[8];
-        snprintf_P(slqi, sizeof(slqi), PSTR("-"));
-        if (device.validLqi()) {
-          snprintf_P(slqi, sizeof(slqi), PSTR("%d"), device.lqi);
-        }
-
-        char sbatt[64];
-        snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
-        if (device.validBatteryPercent()) {
-          snprintf_P(sbatt, sizeof(sbatt), PSTR("<i class=\"bt\" title=\"%d%%\" style=\"--bl:%dpx\"></i>"), device.batterypercent, changeUIntScale(device.batterypercent, 0, 100, 0, 14));
-        }
-
-        if (!i) {  // First row needs style info
-          WSContentSend_PD(PSTR("<tr><td><b>%s</b></td><td style='width:%dpx'>%s</td><td style='width:%dpx'>" D_LQI " %s{e}"),
-            name, px_batt, sbatt, px_lqi, slqi);
-        } else {   // Following rows don't need style info so reducing ajax package
-          WSContentSend_PD(PSTR("<tr><td><b>%s</b></td><td>%s</td><td>" D_LQI " %s{e}"), name, sbatt, slqi);
-        }
+      char sdevice[33];
+      if (nullptr == name) {
+        snprintf_P(sdevice, sizeof(sdevice), PSTR(D_DEVICE " 0x%04X"), shortaddr);
+        name = sdevice;
       }
 
-      // Sensor
+      char sbatt[64];
+      snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
+      if (device.validBatteryPercent()) {
+        snprintf_P(sbatt, sizeof(sbatt),
+          PSTR("<i class=\"bt\" title=\"%d%%\" style=\"--bl:%dpx\"></i>"),
+          device.batterypercent, changeUIntScale(device.batterypercent, 0, 100, 0, 14)
+        );
+      }
+
+      uint32_t num_bars = 0;
+
+      char slqi[4];
+      slqi[0] = '-';
+      slqi[1] = '\0';
+      if (device.validLqi()){
+        num_bars = changeUIntScale(device.lqi, 0, 254, 0, 4);
+        snprintf_P(slqi, sizeof(slqi), PSTR("%d"), device.lqi);
+      }
+
+      WSContentSend_PD(PSTR(
+        "<tr class='ztd'>"
+          "<td><b>%s</b></td>" // name
+          "<td>%s</td>" // sbatt (Battery Indicator)
+          "<td><div title='" D_LQI " %s' class='ssi'>" // slqi
+      ), name, sbatt, slqi);
+
+      if(device.validLqi()) {
+          for(uint32_t j = 0; j < 4; ++j) {
+            WSContentSend_PD(PSTR("<i class='b%d%s'></i>"), j, (num_bars < j) ? PSTR(" o30") : PSTR(""));
+          }
+      }
+      char dhm[16]; // len("&#x1F557;" + "49710d" + '\0') == 16
+      snprintf_P(dhm, sizeof(dhm), PSTR("&nbsp;"));
+      if(device.validLastSeen()){
+        snprintf_P(dhm, sizeof(dhm), PSTR("&#x1F557;"));
+        convert_seconds_to_dhm(now - device.last_seen, &dhm[9], 7);
+      }
+
+      WSContentSend_PD(PSTR(
+        "</div></td>" // Close LQI
+        "<td>%s{e}" // dhm (Last Seen)
+      ), dhm );
+
+      // Sensors
       bool temperature_ok = device.validTemperature();
       bool humidity_ok    = device.validHumidity();
       bool pressure_ok    = device.validPressure();
 
       if (temperature_ok || humidity_ok || pressure_ok) {
-        WSContentSend_P(PSTR("<tr><td colspan=\"3\">&#9478;"));
+        WSContentSend_P(PSTR("<tr><td colspan=\"4\">&#9478;"));
         if (temperature_ok) {
           char buf[12];
           dtostrf(device.temperature / 10.0f, 3, 1, buf);
@@ -1425,6 +1488,7 @@ void ZigbeeShow(bool json)
         if (pressure_ok) {
           WSContentSend_P(PSTR(" &#x26C5; %d hPa"), device.pressure);
         }
+
         WSContentSend_P(PSTR("{e}"));
       }
 
@@ -1433,7 +1497,7 @@ void ZigbeeShow(bool json)
       if (power_ok) {
         uint8_t channels = device.getLightChannels();
         if (0xFF == channels) { channels = 5; }     // if number of channel is unknown, display all known attributes
-        WSContentSend_P(PSTR("<tr><td colspan=\"3\">&#9478; %s"), device.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
+        WSContentSend_P(PSTR("<tr><td colspan=\"4\">&#9478; %s"), device.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
         if (device.validDimmer() && (channels >= 1)) {
           WSContentSend_P(PSTR(" &#128261; %d%%"), changeUIntScale(device.dimmer,0,254,0,100));
         }
@@ -1460,6 +1524,7 @@ void ZigbeeShow(bool json)
             WSContentSend_P(PSTR(" %dW"), device.mains_power);
           }
         }
+        WSContentSend_P(PSTR("{e}"));
       }
     }
 

@@ -75,6 +75,7 @@ public:
   // powe plug data
   uint16_t              mains_voltage;  // AC voltage
   int16_t               mains_power;    // Active power
+  uint32_t              last_seen;      // Last seen time (epoch)
 
   // Constructor with all defaults
   Z_Device(uint16_t _shortaddr = BAD_SHORTADDR, uint64_t _longaddr = 0x00):
@@ -103,7 +104,8 @@ public:
     pressure(0xFFFF),
     humidity(0xFF),
     mains_voltage(0xFFFF),
-    mains_power(-0x8000)
+    mains_power(-0x8000),
+    last_seen(0)
     { };
 
   inline bool valid(void)               const { return BAD_SHORTADDR != shortaddr; }    // is the device known, valid and found?
@@ -128,6 +130,7 @@ public:
   inline bool validTemperature(void)    const { return -0x8000 != temperature; }
   inline bool validPressure(void)       const { return 0xFFFF != pressure; }
   inline bool validHumidity(void)       const { return 0xFF != humidity; }
+  inline bool validLastSeen(void)       const { return 0x0 != last_seen; }
 
   inline bool validMainsVoltage(void)   const { return 0xFFFF != mains_voltage; }
   inline bool validMainsPower(void)     const { return -0x8000 != mains_power; }
@@ -247,6 +250,7 @@ public:
 
   void setReachable(uint16_t shortaddr, bool reachable);
   void setLQI(uint16_t shortaddr, uint8_t lqi);
+  void setLastSeenNow(uint16_t shortaddr);
   // uint8_t getLQI(uint16_t shortaddr) const;
   void setBatteryPercent(uint16_t shortaddr, uint8_t bp);
   uint8_t getBatteryPercent(uint16_t shortaddr) const;
@@ -629,6 +633,12 @@ void Z_Devices::setLQI(uint16_t shortaddr, uint8_t lqi) {
   if (shortaddr == localShortAddr) { return; }
   getShortAddr(shortaddr).lqi = lqi;
 }
+
+void Z_Devices::setLastSeenNow(uint16_t shortaddr) {
+  if (shortaddr == localShortAddr) { return; }
+  getShortAddr(shortaddr).last_seen= Rtc.utc_time;
+}
+
 
 void Z_Devices::setBatteryPercent(uint16_t shortaddr, uint8_t bp) {
   getShortAddr(shortaddr).batterypercent = bp;
