@@ -898,7 +898,7 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
     if (Settings.flag4.zigbee_distinct_topics) {
       if (Settings.flag4.zb_topic_fname && fname) {
         char frtopic[13 + strlen(fname)];
-        snprintf_P(frtopic, sizeof(frtopic), PSTR("tele/%s/" D_RSLT_SENSOR), fname);
+        snprintf_P(frtopic, sizeof(frtopic), PSTR("%s/%s/" D_RSLT_SENSOR), SettingsText(SET_MQTTPREFIX3), fname);
         MqttPublish(frtopic, Settings.flag.mqtt_sensor_retain);
       } else {
         char subtopic[16];
