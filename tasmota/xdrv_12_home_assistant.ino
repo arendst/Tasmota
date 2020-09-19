@@ -174,6 +174,110 @@ uint8_t hass_init_step = 0;
 uint8_t hass_mode = 0;
 int hass_tele_period = 0;
 
+// NEW DISCOVERY
+
+const char HASS_DISCOVER_DEVICE[] PROGMEM =                         // Basic parameters for Discovery
+  "{\"ip\":\"%s\","                                                 // IP Address
+  "\"dn\":\"%s\","                                                  // Device Name
+  "\"fn\":[%s],"                                                    // Friendly Names
+  "\"hn\":\"%s\","                                                  // Host Name
+  "\"mac\":\"%s\","                                                 // Full MAC as Device id
+  "\"md\":\"%s\","                                                  // Module Name
+  "\"ofln\":\"" D_OFFLINE "\","                                     // Payload Offline
+  "\"onln\":\"" D_ONLINE "\","                                      // Payload Online
+  "\"state\":[\"%s\",\"%s\",\"%s\",\"%s\"],"                        // State text for "OFF","ON","TOGGLE","HOLD"
+  "\"sw\":\"%s\","                                                  // Software Version
+  "\"t\":\"%s\","                                                   // Topic
+  "\"ft\":\"%s\","                                                  // Ful Topic
+  "\"tp\":[\"%s\",\"%s\",\"%s\"],"                                  // Topics for command, stat and tele
+  "\"rl\":[%s],\"swc\":[%s],\"btn\":[%s],"                          // Inputs / Outputs
+  "\"so\":{\"11\":%d,\"13\":%d,\"17\":%d,\"20\":%d,"                // SetOptions
+  "\"30\":%d,\"37\":%d,\"68\":%d,\"73\":%d,\"80\":%d},"
+  "\"lt_st\":%d,\"ver\":1}";                                        // Light SubType, and Discovery version
+
+#define D_CMND_HADIS "HaDis"
+
+const char kHAssCommand[] PROGMEM = "|" // No prefix
+  D_CMND_HADIS;
+
+void (* const HAssCommand[])(void) PROGMEM = { &CmndHaDis };
+
+void CmndHaDis(void) { // New discovery manager. Stored on E98 in settings.h
+
+  uint8_t index = XdrvMailbox.index;
+  uint8_t payload1 = XdrvMailbox.payload;
+  if (XdrvMailbox.data_len > 0 && (XdrvMailbox.payload > 0 || XdrvMailbox.payload <= 2)) {
+    if (2 == XdrvMailbox.payload) { payload1 = 0; }
+    char scmnd[20];
+    if (Settings.flag.hass_discovery != payload1) {
+      snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_SETOPTION "19 %d"), payload1);
+      ExecuteCommand(scmnd, SRC_IGNORE);
+    }
+    Settings.hass_new_discovery = XdrvMailbox.payload;
+
+  }
+  Response_P(PSTR("{\"" D_CMND_HADIS "\":\"%d\"}"), Settings.hass_new_discovery);
+}
+
+void NewHAssDiscovery(void)
+{
+  char stopic[TOPSZ];
+  char stemp1[TOPSZ];
+  char stemp2[200];
+  char stemp3[TOPSZ];
+  char stemp4[TOPSZ];
+  char stemp5[TOPSZ];
+  char unique_id[30];
+  char *state_topic = stemp1;
+
+  stemp2[0] = '\0';
+  uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
+  for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
+    char fname[TOPSZ];
+    snprintf_P(fname, sizeof(fname), PSTR("\"%s\""), EscapeJSONString(SettingsText(SET_FRIENDLYNAME1 +i)).c_str());
+    snprintf_P(stemp2, sizeof(stemp2), PSTR("%s%s%s"), stemp2, (i > 0 ? "," : ""), (i < maxfn) ? fname : "null");
+  }
+
+  stemp3[0] = '\0';
+
+  uint32_t maxrl = (devices_present > MAX_RELAYS) ? MAX_RELAYS : (!devices_present) ? 1 : devices_present;
+
+  for (uint32_t i = 0; i < MAX_RELAYS; i++) {
+    snprintf_P(stemp3, sizeof(stemp3), PSTR("%s%s%d"), stemp3, (i > 0 ? "," : ""), (i < maxfn) ? (Settings.flag.hass_light ? 2 : 1) : 0);
+  }
+
+  stemp4[0] = '\0';
+  //stemp6[0] = '\0';
+  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
+    snprintf_P(stemp4, sizeof(stemp4), PSTR("%s%s%d"), stemp4, (i > 0 ? "," : ""), PinUsed(GPIO_SWT1, i) ? Settings.switchmode[i] : -1);
+  }
+  stemp5[0] = '\0';
+  for (uint32_t i = 0; i < MAX_KEYS; i++) {
+    snprintf_P(stemp5, sizeof(stemp5), PSTR("%s%s%d"), stemp5, (i > 0 ? "," : ""), PinUsed(GPIO_KEY1, i));
+  }
+
+  mqtt_data[0] = '\0'; // Clear retained message
+
+  // Full 12 chars MAC address as ID
+  String mac_address = WiFi.macAddress();
+  mac_address.replace(":", "");
+  String mac_part = mac_address.substring(0);
+  snprintf_P(unique_id, sizeof(unique_id), PSTR("%s"), mac_address.c_str());
+
+  snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/discovery/%s/config"), unique_id);
+  GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_HASS_STATE));
+
+  Response_P(HASS_DISCOVER_DEVICE, WiFi.localIP().toString().c_str(), SettingsText(SET_DEVICENAME),
+            stemp2, my_hostname, unique_id, ModuleName().c_str(), GetStateText(0), GetStateText(1), GetStateText(2), GetStateText(3),
+            my_version, mqtt_topic, MQTT_FULLTOPIC, SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2, stemp3, stemp4, stemp5, Settings.flag.button_swap,
+            Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked, Settings.flag.hass_light,
+            light_controller.isCTRGBLinked(), Settings.flag3.pwm_multi_channels, Settings.flag3.mqtt_buttons, Settings.flag3.shutter_mode, Light.subtype);
+  MqttPublish(stopic, true);
+
+}
+
+// NEW DISCOVERY
+
 void TryResponseAppend_P(const char *format, ...)
 {
   va_list args;
@@ -364,7 +468,7 @@ void HAssAnnounceRelayLight(void)
       }
     }
     MqttPublish(stopic, true);
-    masterlog_level = 4;
+    masterlog_level = 4; // Restore WebLog state
   }
 }
 
@@ -421,7 +525,7 @@ void HAssAnnouncerTriggers(uint8_t device, uint8_t present, uint8_t key, uint8_t
       }
     }
     MqttPublish(stopic, true);
-    masterlog_level = 4;
+    masterlog_level = 4; // Restore WebLog state
   }
 }
 
@@ -472,7 +576,7 @@ void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint
     }
   }
   MqttPublish(stopic, true);
-  masterlog_level = 4;
+  masterlog_level = 4; // Restore WebLog state
 }
 
 void HAssAnnounceSwitches(void)
@@ -784,7 +888,7 @@ void HAssAnnounceShutters(void)
     }
 
     MqttPublish(stopic, true);
-    masterlog_level = 4;
+    masterlog_level = 4; // Restore WebLog state
   }
 #endif
 }
@@ -823,7 +927,7 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
   MqttPublish(stopic, true);
   if (!Settings.flag.hass_discovery) {
     masterlog_level = 0;
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant Discovery disabled. "));
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant Classic Discovery disabled."));
   }
 }
 
@@ -842,19 +946,21 @@ void HAssPublishStatus(void)
 void HAssDiscovery(void)
 {
   // Configure Tasmota for default Home Assistant parameters to keep discovery message as short as possible
-  if (Settings.flag.hass_discovery)
-  {                                         // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
-    Settings.flag.mqtt_response = 0;        // SetOption4  - Switch between MQTT RESULT or COMMAND - Response always as RESULT and not as uppercase command
-    Settings.flag.decimal_text = 1;         // SetOption17 - Switch between decimal or hexadecimal output - Respond with decimal color values
-    Settings.flag3.hass_tele_on_power = 1;  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT - send tele/STATE message as stat/RESULT
-                                            // the purpose of that is so that if HA is restarted, state in HA will be correct within one teleperiod otherwise state
-                                            // will not be correct until the device state is changed this is why in the patterns for switch and light, we tell HA to trigger on STATE, not RESULT.
-    //Settings.light_scheme = 0;            // To just control color it needs to be Scheme 0 (on hold due to new light configuration)
+  if (Settings.flag.hass_discovery || Settings.hass_new_discovery > 0)
+  {                                           // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
+    Settings.flag.mqtt_response = 0;          // SetOption4  - Switch between MQTT RESULT or COMMAND - Response always as RESULT and not as uppercase command
+    Settings.flag.decimal_text = 1;           // SetOption17 - Switch between decimal or hexadecimal output - Respond with decimal color values
+    if (Settings.hass_new_discovery == 1) {   // Official Home Assistant Discovery doesn't need the /STATE topic.
+      Settings.flag3.hass_tele_on_power = 1;  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT - send tele/STATE message as stat/RESULT
+                                              // the purpose of that is so that if HA is restarted, state in HA will be correct within one teleperiod otherwise state
+                                              // will not be correct until the device state is changed this is why in the patterns for switch and light, we tell HA to trigger on STATE, not RESULT.
+    }
+    //Settings.light_scheme = 0;              // To just control color it needs to be Scheme 0 (on hold due to new light configuration)
   }
 
   if (Settings.flag.hass_discovery || (1 == hass_mode))
   { // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
-    masterlog_level = 4;
+    masterlog_level = 4; // Restore WebLog state
     // Send info about buttons
     HAssAnnounceButtons();
 
@@ -881,11 +987,12 @@ void HAssDiscover(void)
 {
   hass_mode = 1;      // Force discovery
   hass_init_step = 1; // Delayed discovery
+  Settings.hass_new_discovery = Settings.flag.hass_discovery;
 }
 
 void HAssAnyKey(void)
 {
-  if (!Settings.flag.hass_discovery)
+  if (!Settings.flag.hass_discovery || Settings.hass_new_discovery == 0)
   {
     return;
   } // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
@@ -940,7 +1047,7 @@ void HassLwtSubscribe(bool hasslwt)
 {
   char htopic[TOPSZ];
   snprintf_P(htopic, sizeof(htopic), PSTR(HOME_ASSISTANT_LWT_TOPIC));
-  if (hasslwt && Settings.flag.hass_discovery) {
+  if (hasslwt && (Settings.flag.hass_discovery || Settings.hass_new_discovery == 2)) {
     MqttSubscribe(htopic);
   } else { MqttUnsubscribe(htopic); }
 }
@@ -983,6 +1090,9 @@ bool Xdrv12(uint8_t function)
     case FUNC_MQTT_INIT:
       hass_mode = 0;      // Discovery only if Settings.flag.hass_discovery is set
       hass_init_step = 2; // Delayed discovery
+      if (!Settings.flag.hass_discovery && Settings.hass_new_discovery == 0) {
+        NewHAssDiscovery();
+      }
       break;
 
     case FUNC_MQTT_SUBSCRIBE:
@@ -991,6 +1101,9 @@ bool Xdrv12(uint8_t function)
     case FUNC_MQTT_DATA:
       result = HAssMqttLWT();
       break;
+    case FUNC_COMMAND:
+        result = DecodeCommand(kHAssCommand, HAssCommand);
+        break;
     }
   }
   return result;
