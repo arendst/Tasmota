@@ -902,7 +902,7 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
         strlcpy(stemp, (!strlen(fname)) ? MQTT_TOPIC : fname, sizeof(stemp));
         MakeValidMqtt(0, stemp);
         //Create topic with Prefix3 and cleaned up friendly name
-        char frtopic[13 + strlen(stemp)];
+        char frtopic[TOPSZ];
         snprintf_P(frtopic, sizeof(frtopic), PSTR("%s/%s/" D_RSLT_SENSOR), SettingsText(SET_MQTTPREFIX3), stemp);
         MqttPublish(frtopic, Settings.flag.mqtt_sensor_retain);
       } else {
