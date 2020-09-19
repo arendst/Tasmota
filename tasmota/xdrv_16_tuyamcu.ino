@@ -444,7 +444,6 @@ bool TuyaSetChannels(void)
 
     if (LT_RGB != light_type) {
       for (uint8_t i = 0; i <= idx; i++) {
-
         if (Tuya.Snapshot[i] != Tuya.Levels[i]) {
           if (i == 0 && LightMode && Tuya.ModeSet ) { noupd = true;}
           if (!noupd) {
@@ -457,6 +456,7 @@ bool TuyaSetChannels(void)
     }
 
     if (light_type >= LT_RGB) {
+
       light_state.getHSB(&hue, &sat, &bri);
       sat = changeUIntScale(sat, 0, 255, 0, 100);
       bri = changeUIntScale(bri, 0, 255, 0, 100);
@@ -1114,6 +1114,7 @@ bool Xdrv16(uint8_t function)
         result = TuyaButtonPressed();
         break;
       case FUNC_EVERY_SECOND:
+        TuyaSetChannels();
         if (TuyaSerial && Tuya.wifi_state != TuyaGetTuyaWifiState()) { TuyaSetWifiLed(); }
         if (!Tuya.low_power_mode) {
           Tuya.heartbeat_timer++;
@@ -1131,9 +1132,9 @@ bool Xdrv16(uint8_t function)
         }
         if (Tuya.ignore_topic_timeout < millis()) { Tuya.SuspendTopic = false; }
         break;
-      case FUNC_SET_CHANNELS:
-        result = TuyaSetChannels();
-        break;
+      // case FUNC_SET_CHANNELS:
+      //   result = TuyaSetChannels();
+      //   break;
       case FUNC_COMMAND:
         result = DecodeCommand(kTuyaCommand, TuyaCommand);
         break;
