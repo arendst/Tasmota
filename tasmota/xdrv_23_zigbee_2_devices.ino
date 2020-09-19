@@ -897,8 +897,13 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
 
     if (Settings.flag4.zigbee_distinct_topics) {
       if (Settings.flag4.zb_topic_fname && fname) {
-        char frtopic[13 + strlen(fname)];
-        snprintf_P(frtopic, sizeof(frtopic), PSTR("%s/%s/" D_RSLT_SENSOR), SettingsText(SET_MQTTPREFIX3), fname);
+        //Clean special characters and check size of friendly name
+        char stemp[TOPSZ];
+        strlcpy(stemp, (!strlen(fname)) ? MQTT_TOPIC : fname, sizeof(stemp));
+        MakeValidMqtt(0, stemp);
+        //Create topic with Prefix3 and cleaned up friendly name
+        char frtopic[13 + strlen(stemp)];
+        snprintf_P(frtopic, sizeof(frtopic), PSTR("%s/%s/" D_RSLT_SENSOR), SettingsText(SET_MQTTPREFIX3), stemp);
         MqttPublish(frtopic, Settings.flag.mqtt_sensor_retain);
       } else {
         char subtopic[16];
