@@ -896,9 +896,15 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
     attr_list.reset();    // clear the attributes
 
     if (Settings.flag4.zigbee_distinct_topics) {
-      char subtopic[16];
-      snprintf_P(subtopic, sizeof(subtopic), PSTR("%04X/" D_RSLT_SENSOR), shortaddr);
-      MqttPublishPrefixTopic_P(TELE, subtopic, Settings.flag.mqtt_sensor_retain);
+      if (Settings.flag4.zb_topic_fname && fname) {
+        char frtopic[13];
+        snprintf_P(frtopic, sizeof(frtopic) + strlen(fname), PSTR("tele/%s/" D_RSLT_SENSOR), fname);
+        MqttPublish(frtopic, Settings.flag.mqtt_sensor_retain);
+      } else {
+        char subtopic[16];
+        snprintf_P(subtopic, sizeof(subtopic), PSTR("%04X/" D_RSLT_SENSOR), shortaddr);
+        MqttPublishPrefixTopic_P(TELE, subtopic, Settings.flag.mqtt_sensor_retain);
+      }
     } else {
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
     }
