@@ -17,7 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define USE_IR_REMOTE_FULL // set for intellisense
 #ifdef USE_IR_REMOTE_FULL
 /*********************************************************************************************\
  * IR Remote send and receive using IRremoteESP8266 library
@@ -46,6 +45,10 @@ void (* const IrRemoteCommand[])(void) PROGMEM = {
 
 IRsend *irsend = nullptr;
 bool irsend_active = false;
+// some ACs send toggle messages rather than state. we need to help IRremoteESP8266 keep track of the state
+// have a flag that is a variable, can be later used to convert this functionality to an option (as in SetOptionXX)
+bool irhvac_stateful = true;
+stdAc::state_t irac_prev_state; // this implementations only keeps one state so if you use a single tasmota-ir device to command more than one AC it might not work
 
 void IrSendInit(void)
 {
@@ -189,11 +192,12 @@ String sendIRJsonState(const struct decode_results &results) {
   json += ",\"" D_JSON_IR_REPEAT "\":";
   json += results.repeat;
 
-  stdAc::state_t ac_result;
-  if (IRAcUtils::decodeToState(&results, &ac_result, nullptr)) {
+  stdAc::state_t new_state;
+  if (IRAcUtils::decodeToState(&results, &new_state, irhvac_stateful && irac_prev_state.protocol == results.decode_type ? &irac_prev_state : nullptr)) {
     // we have a decoded state
     json += ",\"" D_CMND_IRHVAC "\":";
-    json += sendACJsonState(ac_result);
+    json += sendACJsonState(new_state);
+    irac_prev_state = new_state; // store for next time
   }
 
   return json;
@@ -275,7 +279,7 @@ const stdAc::fanspeed_t IrHvacFanSpeed[] PROGMEM =  { stdAc::fanspeed_t::kAuto,
 
 uint32_t IrRemoteCmndIrHvacJson(void)
 {
-  stdAc::state_t state, prev;
+  stdAc::state_t state;
   char parm_uc[12];
 
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received %s"), XdrvMailbox.data);
@@ -365,8 +369,9 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
 
   IRac ac(Pin(GPIO_IRSEND));
-  bool success = ac.sendAc(state, &prev);
+  bool success = ac.sendAc(state, irhvac_stateful && irac_prev_state.protocol == state.protocol ? &irac_prev_state : nullptr);
   if (!success) { return IE_SYNTAX_IRHVAC; }
+  // don't store what we sent for next time, expect us to receive what we just sent back (loopback) and only update the state there. this will prevent double toggle.
 
   Response_P(PSTR("{\"" D_CMND_IRHVAC "\":%s}"), sendACJsonState(state).c_str());
   return IE_RESPONSE_PROVIDED;
