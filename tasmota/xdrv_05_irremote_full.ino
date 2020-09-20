@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define USE_IR_REMOTE_FULL // set for intellisense
 #ifdef USE_IR_REMOTE_FULL
 /*********************************************************************************************\
  * IR Remote send and receive using IRremoteESP8266 library
