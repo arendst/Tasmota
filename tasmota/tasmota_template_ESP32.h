@@ -137,6 +137,8 @@ enum UserSelectablePins {
   GPIO_IEM3000_TX, GPIO_IEM3000_RX,    // IEM3000 Serial interface
   GPIO_ZIGBEE_RST,                     // Zigbee reset
   GPIO_DYP_RX,
+  GPIO_WE517_TX,       // ORNO WE517 Serial interface
+  GPIO_WE517_RX,       // ORNO WE517 Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -236,7 +238,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LMT01_PULSE "|"
   D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX "|"
   D_SENSOR_ZIGBEE_RST "|"
-  D_SENSOR_DYP_RX
+  D_SENSOR_DYP_RX "|"
+  D_SENSOR_WE517_TX "|" D_SENSOR_WE517_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -438,6 +441,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_IEM3000
   AGPIO(GPIO_IEM3000_TX),    // IEM3000 Serial interface
   AGPIO(GPIO_IEM3000_RX),    // IEM3000 Serial interface
+#endif
+#ifdef USE_WE517
+  GPIO_WE517_TX,       // ORNO WE517 Serial interface
+  GPIO_WE517_RX,       // ORNO WE517 Serial interface
 #endif
 #endif  // USE_ENERGY_SENSOR
 
