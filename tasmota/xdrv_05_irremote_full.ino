@@ -311,8 +311,8 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   state.clean = false;  // Turn off any Cleaning options if we can.
   state.clock = -1;  // Don't set any current time if we can avoid it.
 
-  if (root[PSTR(D_JSON_IRHVAC_VENDOR)]) { state.protocol = strToDecodeType(root.getStr(PSTR(D_JSON_IRHVAC_VENDOR))); }
-  if (root[PSTR(D_JSON_IRHVAC_PROTOCOL)]) { state.protocol = strToDecodeType(root.getStr(PSTR(D_JSON_IRHVAC_PROTOCOL))); }
+  if (root[PSTR(D_JSON_IRHVAC_VENDOR)]) { state.protocol = strToDecodeType(root.getStr(PSTR(D_JSON_IRHVAC_VENDOR), "")); }
+  if (root[PSTR(D_JSON_IRHVAC_PROTOCOL)]) { state.protocol = strToDecodeType(root.getStr(PSTR(D_JSON_IRHVAC_PROTOCOL), "")); }
   // UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_VENDOR));
   // if (json.containsKey(parm_uc)) { state.protocol = strToDecodeType(json[parm_uc]); }
   // UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_PROTOCOL));
@@ -331,10 +331,10 @@ uint32_t IrRemoteCmndIrHvacJson(void)
     }
   }
 
-  if (root[PSTR(D_JSON_IRHVAC_MODEL)]) { state.model = IRac::strToModel(PSTR(D_JSON_IRHVAC_MODEL)]); }
-  if (root[PSTR(D_JSON_IRHVAC_MODE)]) { state.mode = IRac::strToOpmode(PSTR(D_JSON_IRHVAC_MODE)]); }
-  if (root[PSTR(D_JSON_IRHVAC_SWINGV)]) { state.swingv = IRac::strToSwingV(PSTR(D_JSON_IRHVAC_SWINGV)]); }
-  if (root[PSTR(D_JSON_IRHVAC_SWINGH)]) { state.swingh = IRac::strToSwingV(PSTR(D_JSON_IRHVAC_SWINGH)]); }
+  if (root[PSTR(D_JSON_IRHVAC_MODEL)]) { state.model = IRac::strToModel(PSTR(D_JSON_IRHVAC_MODEL)); }
+  if (root[PSTR(D_JSON_IRHVAC_MODE)]) { state.mode = IRac::strToOpmode(PSTR(D_JSON_IRHVAC_MODE)); }
+  if (root[PSTR(D_JSON_IRHVAC_SWINGV)]) { state.swingv = IRac::strToSwingV(PSTR(D_JSON_IRHVAC_SWINGV)); }
+  if (root[PSTR(D_JSON_IRHVAC_SWINGH)]) { state.swingh = IRac::strToSwingH(PSTR(D_JSON_IRHVAC_SWINGH)); }
   state.degrees = root.getFloat(PSTR(D_JSON_IRHVAC_TEMP), state.degrees);
   // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("model %d, mode %d, fanspeed %d, swingv %d, swingh %d"),
   //             state.model, state.mode, state.fanspeed, state.swingv, state.swingh);

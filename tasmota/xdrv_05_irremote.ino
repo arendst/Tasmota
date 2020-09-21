@@ -204,15 +204,15 @@ uint32_t IrRemoteCmndIrSendJson(void)
   uint16_t repeat = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_REPEAT))];
 #else
   RemoveSpace(XdrvMailbox.data);    // TODO is this really needed?
-  JsonParserObject root = JsonParser((chat*) XdrvMailbox.data).getRootObject();
+  JsonParserObject root = JsonParser((char*) XdrvMailbox.data).getRootObject();
   if (!root) { return IE_INVALID_JSON; }
 
   // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
   // IRsend { "protocol": "NEC", "bits": 32, "data":"0x02FDFE80", "repeat": 2 }
-  const char *protocol = root.getStr(PSTR(D_JSON_IR_PROTOCOL));
-  uint16_t bits = root.getUInt(PSTR(D_JSON_IR_BITS));
-  uint64_t data = root.getULong(PSTR(D_JSON_IR_DATA));
-  uint16_t repeat = root.getUInt(PSTR(D_JSON_IR_REPEAT));
+  const char *protocol = root.getStr(PSTR(D_JSON_IR_PROTOCOL), "");
+  uint16_t bits = root.getUInt(PSTR(D_JSON_IR_BITS), 0);
+  uint64_t data = root.getULong(PSTR(D_JSON_IR_DATA), 0);
+  uint16_t repeat = root.getUInt(PSTR(D_JSON_IR_REPEAT), 0);
 #endif
   // check if the IRSend<x> is great than repeat
   if (XdrvMailbox.index > repeat + 1) {

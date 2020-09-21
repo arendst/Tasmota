@@ -360,6 +360,9 @@ uint32_t JsonParserObject::getUInt(const char * needle, uint32_t val) const {
 uint64_t JsonParserObject::getULong(const char * needle, uint64_t val) const {
   return (*this)[needle].getULong(val);
 }
+float JsonParserObject::getFloat(const char * needle, float val) const {
+  return (*this)[needle].getFloat(val);
+}
 const char * JsonParserObject::getStr(const char * needle, const char * val) const {
   return (*this)[needle].getStr(val);
 }
