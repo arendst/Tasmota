@@ -18,7 +18,7 @@
 */
 
 #include "JsonParser.h"
-#include <WSTring.h>
+#include <Arduino.h>
 
 /*********************************************************************************************\
  * Utilities
