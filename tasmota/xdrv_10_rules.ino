@@ -719,9 +719,13 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       RulesVarReplace(commands, F("%UPTIME%"), String(MinutesUptime()));
       RulesVarReplace(commands, F("%TIMESTAMP%"), GetDateAndTime(DT_LOCAL));
       RulesVarReplace(commands, F("%TOPIC%"), mqtt_topic);
-      char unique_id[7];
-      snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X"), ESP_getChipId());
-      RulesVarReplace(commands, F("%DEVICEID%"), unique_id);
+      snprintf_P(stemp, sizeof(stemp), PSTR("%06X"), ESP_getChipId());
+      RulesVarReplace(commands, F("%DEVICEID%"), stemp);
+      char macaddr[13];
+      String mac_address = WiFi.macAddress();
+      mac_address.replace(":", "");
+      snprintf_P(macaddr, sizeof(macaddr), PSTR("%s"), mac_address.c_str());
+      RulesVarReplace(commands, F("%MACADDR%"), macaddr);
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));
