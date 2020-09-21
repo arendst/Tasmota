@@ -13,6 +13,7 @@
 - Add new shutter modes (#9244)
 - Add Zigbee auto-config when pairing
 - Add support for MLX90640 IR array temperature sensor by Christian Baars
+- Change replace ArduinoJson with JSMN for JSON parsing
 
 ### 8.5.0 20200907
 

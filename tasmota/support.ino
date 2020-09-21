@@ -29,6 +29,7 @@ extern struct rst_info resetInfo;
 \*********************************************************************************************/
 
 #include <Ticker.h>
+#include "JsonParser.h"
 
 Ticker tickerOSWatch;
 
@@ -1412,8 +1413,9 @@ bool GetUsedInModule(uint32_t val, uint16_t *arr)
   return false;
 }
 
-bool JsonTemplate(const char* dataBuf)
+bool JsonTemplate(char* dataBuf)
 {
+#if 0
   // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
@@ -1454,6 +1456,46 @@ bool JsonTemplate(const char* dataBuf)
     Settings.user_template_base = base -1;  // Default WEMOS
   }
   return true;
+#else
+  // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
+
+  if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
+
+  JsonParserObject root = JsonParser((char*) dataBuf).getRootObject();
+  if (!root) { return false; }
+
+  // All parameters are optional allowing for partial changes
+  JsonParserToken val = root[PSTR(D_JSON_NAME)];
+  if (val) {
+    SettingsUpdateText(SET_TEMPLATE_NAME, val.getStr());
+  }
+  JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
+  if (arr) {
+    for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
+#ifdef ESP8266
+      Settings.user_template.gp.io[i] = arr[i].getUInt();
+#else  // ESP32
+      uint16_t gpio = arr[i].getUInt();
+      if (gpio == (AGPIO(GPIO_NONE) +1)) {
+        gpio = AGPIO(GPIO_USER);
+      }
+      Settings.user_template.gp.io[i] = gpio;
+#endif
+    }
+  }
+  val = root[PSTR(D_JSON_FLAG)];
+  if (val) {
+    uint32_t flag = val.getUInt();
+    memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
+  }
+  val = root[PSTR(D_JSON_BASE)];
+  if (val) {
+    uint32_t base = val.getUInt();
+    if ((0 == base) || !ValidTemplateModule(base -1)) { base = 18; }
+    Settings.user_template_base = base -1;  // Default WEMOS
+  }
+  return true;
+#endif
 }
 
 void TemplateJson(void)
