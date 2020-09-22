@@ -531,9 +531,8 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   }
 #else
 
-  char buf[event.length()+1];
-  strcpy(buf, event.c_str());
-  JsonParser parser = JsonParser(buf);
+  String buf = event;   // copy the string into a new buffer that will be modified
+  JsonParser parser = JsonParser((char*)buf.c_str());
   JsonParserObject obj = parser.getRootObject();
   if (!obj) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event too long (%d)"), event.length());
@@ -1074,8 +1073,6 @@ bool RulesMqttData(void)
       } else {      //If specified Key, need to parse Key/Value from JSON data
         JsonParserObject jsonData = JsonParser((char*)sData.c_str()).getRootObject();
 
-        // StaticJsonBuffer<500> jsonBuf;
-        // JsonObject& jsonData = jsonBuf.parseObject(sData);
         String key1 = event_item.Key;
         String key2;
         if (!jsonData) break;       //Failed to parse JSON data, ignore this message.
