@@ -29,7 +29,6 @@
 #include <IRrecv.h>
 #include <IRutils.h>
 #include <IRac.h>
-#include "JsonParser.h"
 
 enum IrErrors { IE_RESPONSE_PROVIDED, IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_SYNTAX_IRHVAC,
                 IE_UNSUPPORTED_HVAC, IE_UNSUPPORTED_PROTOCOL };
@@ -288,7 +287,8 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   stdAc::state_t state, prev;
 
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received %s"), XdrvMailbox.data);
-  JsonParserObject root = JsonParser((char*) XdrvMailbox.data).getRootObject();
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserObject root = parser.getRootObject();
   if (!root) { return IE_INVALID_JSON; }
 
   // from: https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/CommonAcControl/CommonAcControl.ino

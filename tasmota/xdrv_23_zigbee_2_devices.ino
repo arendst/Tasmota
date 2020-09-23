@@ -19,8 +19,6 @@
 
 #ifdef USE_ZIGBEE
 
-#include "JsonParser.h"
-
 #ifndef ZIGBEE_SAVE_DELAY_SECONDS
 #define ZIGBEE_SAVE_DELAY_SECONDS 2               // wait for 2s before saving Zigbee info
 #endif

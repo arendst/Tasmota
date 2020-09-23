@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
   // char * json_str = test_complex;
   char * json_str = test_simple;
 
-  JsonParser parser(64);      // size for 64 tokens
+  // JsonParser parser(64);      // size for 64 tokens
 
   int r = parser.parse(json_str);
 

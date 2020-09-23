@@ -25,7 +25,6 @@
 #define XDRV_05             5
 
 #include <IRremoteESP8266.h>
-#include "JsonParser.h"
 
 enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND };
 
@@ -204,7 +203,8 @@ uint32_t IrRemoteCmndIrSendJson(void)
   uint16_t repeat = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_REPEAT))];
 #else
   RemoveSpace(XdrvMailbox.data);    // TODO is this really needed?
-  JsonParserObject root = JsonParser((char*) XdrvMailbox.data).getRootObject();
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserObject root = parser.getRootObject();
   if (!root) { return IE_INVALID_JSON; }
 
   // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }

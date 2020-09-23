@@ -27,8 +27,6 @@
 
 #define XDRV_01                               1
 
-#include "JsonParser.h"
-
 #ifndef WIFI_SOFT_AP_CHANNEL
 #define WIFI_SOFT_AP_CHANNEL                  1          // Soft Access Point Channel number between 1 and 11 as used by WifiManager web GUI
 #endif
@@ -3366,7 +3364,8 @@ bool JsonWebColor(const char* dataBuf)
     }
   }
 #else
-  JsonParserObject root = JsonParser((char*) dataBuf).getRootObject();
+  JsonParser parser((char*) dataBuf);
+  JsonParserObject root = parser.getRootObject();
   JsonParserArray arr = root[PSTR(D_CMND_WEBCOLOR)].getArray();
   if (arr) {  // if arr is valid, i.e. json is valid, the key D_CMND_WEBCOLOR was found and the token is an arra
     uint32_t i = 0;
