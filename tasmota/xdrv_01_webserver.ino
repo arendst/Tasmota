@@ -27,6 +27,8 @@
 
 #define XDRV_01                               1
 
+#include "JsonParser.h"
+
 #ifndef WIFI_SOFT_AP_CHANNEL
 #define WIFI_SOFT_AP_CHANNEL                  1          // Soft Access Point Channel number between 1 and 11 as used by WifiManager web GUI
 #endif
@@ -3344,6 +3346,7 @@ bool JsonWebColor(const char* dataBuf)
   // Default pre v7 (Light theme)
   // {"WebColor":["#000","#fff","#f2f2f2","#000","#fff","#000","#fff","#f00","#008000","#fff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#fff","#999","#000"]}	  // {"WebColor":["#000000","#ffffff","#f2f2f2","#000000","#ffffff","#000000","#ffffff","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999","#000000"]}
 
+#if 0
   char dataBufLc[strlen(dataBuf) +1];
   LowerCase(dataBufLc, dataBuf);
   RemoveSpace(dataBufLc);
@@ -3362,6 +3365,21 @@ bool JsonWebColor(const char* dataBuf)
       }
     }
   }
+#else
+  JsonParserObject root = JsonParser((char*) dataBuf).getRootObject();
+  JsonParserArray arr = root[PSTR(D_CMND_WEBCOLOR)].getArray();
+  if (arr) {  // if arr is valid, i.e. json is valid, the key D_CMND_WEBCOLOR was found and the token is an arra
+    uint32_t i = 0;
+    for (auto color : arr) {
+      if (i < COL_LAST) {
+        WebHexCode(i, color.getStr());
+      } else {
+        break;
+      }
+      i++;
+    }
+  }
+#endif
   return true;
 }
 

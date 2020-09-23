@@ -218,10 +218,12 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
   if (Webserver->args()) {
     response = "[";
 
-    StaticJsonBuffer<300> jsonBuffer;
-    JsonObject &hue_json = jsonBuffer.parseObject(Webserver->arg((Webserver->args())-1));
-    if (hue_json.containsKey("on")) {
-      on = hue_json["on"];
+    JsonParser parser = JsonParser((char*) Webserver->arg((Webserver->args())-1).c_str());
+    JsonParserObject root = parser.getRootObject();
+    
+    JsonParserToken hue_on = root[PSTR("on")];
+    if (hue_on) {
+      on = hue_on.getBool();
       snprintf_P(buf, buf_size,
                  PSTR("{\"success\":{\"/lights/%d/state/on\":%s}}"),
                  device_id, on ? "true" : "false");
@@ -235,8 +237,10 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       resp = true;
     }
 
-    if (hue_json.containsKey("bri")) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
-      bri = hue_json["bri"];
+    parser.setCurrent();
+    JsonParserToken hue_bri = root[PSTR("bri")];
+    if (hue_bri) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
+      bri = hue_bri.getUInt();
       prev_bri = bri;   // store command value
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
@@ -252,13 +256,16 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
     }
     // handle xy before Hue/Sat
     // If the request contains both XY and HS, we wan't to give priority to HS
-    if (hue_json.containsKey("xy")) {
-      float x = hue_json["xy"][0];
-      float y = hue_json["xy"][1];
-      const String &x_str = hue_json["xy"][0];
-      const String &y_str = hue_json["xy"][1];
-      x_str.toCharArray(prev_x_str, sizeof(prev_x_str));
-      y_str.toCharArray(prev_y_str, sizeof(prev_y_str));
+    parser.setCurrent();
+    JsonParserToken hue_xy = root[PSTR("xy")];
+    if (hue_xy) {
+      JsonParserArray arr_xy = JsonParserArray(hue_xy);
+      JsonParserToken tok_x = arr_xy[0];
+      JsonParserToken tok_y = arr_xy[1];
+      float x = tok_x.getFloat();
+      float y = tok_y.getFloat();
+      strlcpy(prev_x_str, tok_x.getStr(), sizeof(prev_x_str));
+      strlcpy(prev_y_str, tok_y.getStr(), sizeof(prev_y_str));
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
                  PSTR("{\"success\":{\"/lights/%d/state/xy\":[%s,%s]}}"),
@@ -270,8 +277,11 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       ZigbeeHueXY(shortaddr, xi, yi);
     }
     bool huesat_changed = false;
-    if (hue_json.containsKey("hue")) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
-      hue = hue_json["hue"];
+
+    parser.setCurrent();
+    JsonParserToken hue_hue = root[PSTR("hue")];
+    if (hue_hue) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
+      hue = hue_hue.getUInt();
       prev_hue = hue;
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
@@ -285,8 +295,11 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       }
       resp = true;
     }
-    if (hue_json.containsKey("sat")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
-      sat = hue_json["sat"];
+
+    parser.setCurrent();
+    JsonParserToken hue_sat = root[PSTR("sat")];
+    if (hue_sat) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
+      sat = hue_sat.getUInt();
       prev_sat = sat;   // store command value
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
@@ -303,8 +316,11 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
       }
       resp = true;
     }
-    if (hue_json.containsKey("ct")) {  // Color temperature 153 (Cold) to 500 (Warm)
-      ct = hue_json["ct"];
+
+    parser.setCurrent();
+    JsonParserToken hue_ct = root[PSTR("ct")];
+    if (hue_ct) {  // Color temperature 153 (Cold) to 500 (Warm)
+      ct = hue_ct.getUInt();
       prev_ct = ct;   // store commande value
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,

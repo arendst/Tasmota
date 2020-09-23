@@ -7,8 +7,11 @@
 - Fix energy total counters (#9263, #9266)
 - Fix crash in ``ZbRestore``
 - Fix reset BMP sensors when executing command ``SaveData`` and define USE_DEEPSLEEP enabled (#9300)
+- Fix ``status 0`` message when using define USE_MQTT_TLS due to small log buffer (#9305)
+- Change replace ArduinoJson with JSMN for JSON parsing
 - Add command ``SetOption110 1`` to disable Zigbee auto-config when pairing new devices
 - Add command ``SetOption111 1`` to enable frequency output for buzzer GPIO (#8994)
+- Add command ``SetOption112 1`` to enable friendly name in zigbee topic (use with SetOption89)
 - Add ``#define USE_MQTT_AWS_IOT_LIGHT`` for password based AWS IoT authentication
 - Add new shutter modes (#9244)
 - Add Zigbee auto-config when pairing

@@ -1348,7 +1348,8 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
   // log the packet details
   zcl_received.log();
 
-  zigbee_devices.setLQI(srcaddr, linkquality);       // EFR32 has a different scale for LQI
+  zigbee_devices.setLQI(srcaddr, linkquality != 0xFF ? linkquality : 0xFE);       // EFR32 has a different scale for LQI
+  zigbee_devices.setLastSeenNow(srcaddr);
 
   char shortaddr[8];
   snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
@@ -1492,6 +1493,7 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
     // ZDO request
     // Report LQI
     zigbee_devices.setLQI(srcaddr, linkquality);
+    zigbee_devices.setLastSeenNow(srcaddr);
     // Since ZDO messages start with a sequence number, we skip it
     // but we add the source address in the last 2 bytes
     SBuffer zdo_buf(buf.get8(20) - 1 + 2);
