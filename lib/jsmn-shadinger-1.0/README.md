@@ -1,8 +1,14 @@
 # JSMN lightweight JSON parser for Tasmota
 
-Intro:
+Intro: this library uses the JSMN in-place JSON parser.
+See https://github.com/zserge/jsmn and https://zserge.com/jsmn/
+
+It is proposed as a replacement for ArduinoJson. It has less features, does only parsing but does it in a very efficient way.
 
 ## Benefits
+
+First, the memory impact is very low: 4 bytes per token and no need to add an extra buffer for values.
+Second, the code is much smaller than ArduinoJson by 5-7KB.
 
 ## How to use
 
@@ -24,7 +30,8 @@ If what you need is to parse a JSON Object for values with default values:
 #include "JsonParser.h"
 
 char json_buffer[] = "{\"Device\":\"0x1234\",\"Power\":true,\"Temperature\":25.6}";
-JsonParserObject root = JsonParser(json_buffer).getRootObject();
+JsonParser parser(json_buffer);
+JsonParserObject root = parser.getRootObject();
 if (!root) { ResponseCmndChar_P(PSTR("Invalid JSON")); return; }
 
 uint16_t d = root.getUInt(PSTR("DEVICE"), 0xFFFF);   // case insensitive
@@ -37,7 +44,8 @@ Alternative pattern, if you want to test the existence of the attribute first:
 #include "JsonParser.h"
 
 char json_buffer[] = "{\"Device\":\"0x1234\",\"Power\":true,\"Temperature\":25.6}";
-JsonParserObject root = JsonParser(json_buffer).getRootObject();
+JsonParser parser(json_buffer);
+JsonParserObject root = parser.getRootObject();
 if (!root) { ResponseCmndChar_P(PSTR("Invalid JSON")); return; }
 
 JsonParserToken val = root[PSTR("DEVICE")];
@@ -53,6 +61,12 @@ if (val) {
     f = val.getFloat();
 }
 ```
+
+WARNING: never use the following form:
+```
+JsonParserObject root = JsonParser(json_buffer).getRootObject();
+```
+In this case, the `JsonParser` object is temporary and destroyed at the end of the expression. Setting the JsonParser to a local variable ensures that the lifetime of the object is extended to the end of the scope.
 
 ## Types and conversion
 

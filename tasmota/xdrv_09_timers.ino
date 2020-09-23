@@ -425,7 +425,8 @@ void CmndTimer(void)
 #if defined(USE_RULES)==0 && defined(USE_SCRIPT)==0
         if (devices_present) {
 #endif
-          JsonParserObject root = JsonParser(XdrvMailbox.data).getRootObject();
+          JsonParser parser(XdrvMailbox.data);
+          JsonParserObject root = parser.getRootObject();
           if (!root) {
             Response_P(PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
             error = 1;

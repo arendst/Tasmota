@@ -226,7 +226,8 @@ void TelegramAnalizeMessage(void) {
     Telegram.message[i][5] = "";
 
     String buf = Telegram.message[i][0];    // we need to keep a copy of the buffer
-    JsonParserObject root = JsonParser((char*)buf.c_str()).getRootObject();
+    JsonParser parser((char*)buf.c_str());
+    JsonParserObject root = parser.getRootObject();
     if (root) {
       Telegram.message[i][0] = root["update_id"].getStr();
       Telegram.message[i][1] = root["message"].getObject()["from"].getObject()["id"].getStr();

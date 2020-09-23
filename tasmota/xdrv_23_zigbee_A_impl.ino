@@ -21,8 +21,6 @@
 
 #define XDRV_23                    23
 
-#include "JsonParser.h"
-
 const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
 #ifdef USE_ZIGBEE_ZNP
   D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEEZNPRECEIVE "|"
@@ -626,7 +624,8 @@ void CmndZbSend(void) {
   // ZbSend { "device":"0x1234", "endpoint":"0x03", "send":{"Color":"1,2"} }
   // ZbSend { "device":"0x1234", "endpoint":"0x03", "send":{"Color":"0x1122,0xFFEE"} }
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  JsonParserObject root = JsonParser(XdrvMailbox.data).getRootObject();
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserObject root = parser.getRootObject();
   if (!root) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
 
   // params
@@ -748,7 +747,8 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
 
   // local endpoint is always 1, IEEE addresses are calculated
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  JsonParserObject root = JsonParser(XdrvMailbox.data).getRootObject();
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserObject root = parser.getRootObject();
   if (!root) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
 
   // params
@@ -1064,10 +1064,10 @@ void CmndZbSave(void) {
 //   ZbRestore {"Device":"0x5ADF","Name":"Petite_Lampe","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"]}
 void CmndZbRestore(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  JsonParser p(XdrvMailbox.data);
-  JsonParserToken root = p.getRoot();
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserToken root = parser.getRoot();
 
-  if (!p || !(root.isObject() || root.isArray())) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
+  if (!parser || !(root.isObject() || root.isArray())) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
 
   // Check is root contains `ZbStatus<x>` key, if so change the root
   JsonParserToken zbstatus = root.getObject().findStartsWith(PSTR("ZbStatus"));
@@ -1219,7 +1219,8 @@ void CmndZbConfig(void) {
   // if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
   RemoveAllSpaces(XdrvMailbox.data);
   if (strlen(XdrvMailbox.data) > 0) {
-    JsonParserObject root = JsonParser(XdrvMailbox.data).getRootObject();
+    JsonParser parser(XdrvMailbox.data);
+    JsonParserObject root = parser.getRootObject();
     if (!root) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
     // Channel
 

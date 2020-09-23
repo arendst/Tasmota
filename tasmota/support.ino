@@ -1473,7 +1473,8 @@ bool JsonTemplate(char* dataBuf)
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
 
-  JsonParserObject root = JsonParser((char*) dataBuf).getRootObject();
+  JsonParser parser((char*) dataBuf);
+  JsonParserObject root = parser.getRootObject();
   if (!root) { return false; }
 
   // All parameters are optional allowing for partial changes
