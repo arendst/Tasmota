@@ -117,7 +117,7 @@ String GetResetReason(void)
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
-
+/*
 String GetBinary(const void* ptr, size_t count) {
   uint32_t value = *(uint32_t*)ptr;
   value <<= (32 - count);
@@ -125,6 +125,18 @@ String GetBinary(const void* ptr, size_t count) {
   result.reserve(count + 1);
   for (uint32_t i = 0; i < count; i++) {
     result += (value &0x80000000) ? '1' : '0';
+    value <<= 1;
+  }
+  return result;
+}
+*/
+String GetBinary8(uint8_t value, size_t count) {
+  if (count > 8) { count = 8; }
+  value <<= (8 - count);
+  String result;
+  result.reserve(count + 1);
+  for (uint32_t i = 0; i < count; i++) {
+    result += (value &0x80) ? '1' : '0';
     value <<= 1;
   }
   return result;

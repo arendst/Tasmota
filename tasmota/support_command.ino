@@ -586,7 +586,7 @@ void CmndStatus(void)
                                     "\"Calib\":\"%d:%d:%d:%d:%d\","
                                     "\"Mode\":\"%d\"}}"),
                                     i, Settings.shutter_startrelay[i], Settings.shutter_startrelay[i] +1, Settings.shutter_opentime[i], Settings.shutter_closetime[i],
-                                    Settings.shutter_set50percent[i], Settings.shutter_motordelay[i], GetBinary(&Settings.shutter_options + (i * sizeof(Settings.shutter_options)), 4).c_str(),
+                                    Settings.shutter_set50percent[i], Settings.shutter_motordelay[i], GetBinary8(Settings.shutter_options[i], 4).c_str(),
                                     Settings.shuttercoeff[0][i], Settings.shuttercoeff[1][i], Settings.shuttercoeff[2][i], Settings.shuttercoeff[3][i], Settings.shuttercoeff[4][i],
                                     Settings.shutter_mode);
       }
