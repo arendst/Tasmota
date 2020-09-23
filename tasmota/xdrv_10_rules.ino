@@ -1078,7 +1078,7 @@ bool RulesMqttData(void)
         if ((dot = key1.indexOf('.')) > 0) {
           key2 = key1.substring(dot+1);
           key1 = key1.substring(0, dot);
-          JsonParserToken value_tok = jsonData[key1.c_str()][key2.c_str()];
+          JsonParserToken value_tok = jsonData[key1.c_str()].getObject()[key2.c_str()];
           if (!value_tok) break;   //Failed to get the key/value, ignore this message.
           value = value_tok.getStr();
           // if (!jsonData[key1][key2].success()) break;   //Failed to get the key/value, ignore this message.
