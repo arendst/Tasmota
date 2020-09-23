@@ -1067,7 +1067,7 @@ void CmndZbRestore(void) {
   JsonParser parser(XdrvMailbox.data);
   JsonParserToken root = parser.getRoot();
 
-  if (!p || !(root.isObject() || root.isArray())) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
+  if (!parser || !(root.isObject() || root.isArray())) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
 
   // Check is root contains `ZbStatus<x>` key, if so change the root
   JsonParserToken zbstatus = root.getObject().findStartsWith(PSTR("ZbStatus"));
