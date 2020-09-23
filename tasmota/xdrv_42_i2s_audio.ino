@@ -54,11 +54,6 @@ AudioFileSourceID3 *id3;
 AudioGeneratorMP3 *decoder = NULL;
 void *mp3ram = NULL;
 
-#ifdef USE_WEBRADIO
-AudioFileSourceICYStream *ifile = NULL;
-AudioFileSourceBuffer *buff = NULL;
-char wr_title[64];
-//char status[64];
 
 #ifdef ESP8266
 const int preallocateBufferSize = 5*1024;
@@ -68,6 +63,12 @@ const int preallocateBufferSize = 16*1024;
 const int preallocateCodecSize = 29192; // MP3 codec max mem needed
 //const int preallocateCodecSize = 85332; // AAC+SBR codec max mem needed
 #endif
+
+#ifdef USE_WEBRADIO
+AudioFileSourceICYStream *ifile = NULL;
+AudioFileSourceBuffer *buff = NULL;
+char wr_title[64];
+//char status[64];
 
 void *preallocateBuffer = NULL;
 void *preallocateCodec = NULL;

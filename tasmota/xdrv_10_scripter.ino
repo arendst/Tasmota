@@ -65,6 +65,7 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define SCRIPT_MAXPERM (PMEM_SIZE)-4/sizeof(float)
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
+#define MAX_SARRAY_NUM 32
 
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
@@ -395,14 +396,16 @@ struct SCRIPT_MEM {
     void *script_mem;
     uint16_t script_mem_size;
     uint8_t script_dprec;
+    uint8_t script_lzero;
     uint8_t var_not_found;
     uint8_t glob_error;
     uint8_t max_ssize;
     uint8_t script_loglevel;
     uint8_t flags;
-    uint8_t si_num;
-    uint8_t siro_num;
-    char *last_index_string;
+    uint8_t si_num[3];
+    uint8_t siro_num[3];
+    uint8_t sind_num;
+    char *last_index_string[3];
 
 #ifdef USE_SCRIPT_FATFS
     File files[SFS_MAX];
@@ -438,6 +441,30 @@ uint8_t fast_script=0;
 uint8_t glob_script=0;
 uint32_t script_lastmillis;
 
+void flt2char(float num, char *nbuff) {
+  dtostrfd(num, glob_script_mem.script_dprec, nbuff);
+}
+// convert float to char with leading zeros
+void f2char(float num, uint32_t dprec, uint32_t lzeros, char *nbuff) {
+  dtostrfd(num, dprec, nbuff);
+  if (lzeros>1) {
+    // check leading zeros
+    uint32_t nd = num;
+    nd/=10;
+    nd+=1;
+    if (lzeros>nd) {
+      // insert zeros
+      char cpbuf[24];
+      char *cp = cpbuf;
+      for (uint32_t cnt = 0; cnt < lzeros - nd; cnt++) {
+        *cp++='0';
+      }
+      *cp=0;
+      strcat(cpbuf,nbuff);
+      strcpy(nbuff,cpbuf);
+    }
+  }
+}
 
 #ifdef USE_BUTTON_EVENT
 int8_t script_button[MAX_KEYS];
@@ -801,6 +828,7 @@ char *script;
 
     glob_script_mem.numvars = vars;
     glob_script_mem.script_dprec = SCRIPT_FLOAT_PRECISION;
+    glob_script_mem.script_lzero = 0;
     glob_script_mem.script_loglevel = LOG_LEVEL_INFO;
 
 
@@ -811,7 +839,7 @@ char *script;
 
       } else {
         char string[32];
-        dtostrfd(glob_script_mem.fvars[dvtp[count].index], glob_script_mem.script_dprec, string);
+        f2char(glob_script_mem.fvars[dvtp[count].index], glob_script_mem.script_dprec, glob_script_mem.script_lzero, string);
         toLog(string);
       }
     }
@@ -1127,6 +1155,23 @@ float *Get_MFAddr(uint8_t index, uint16_t *len, uint16_t *ipos) {
   return 0;
 }
 
+char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonObject *jo);
+
+
+float *get_array_by_name(char *name, uint16_t *alen) {
+  struct T_INDEX ind;
+  uint8_t vtype;
+  isvar(name, &vtype, &ind, 0, 0, 0);
+  if (vtype==VAR_NV) return 0;
+  if (vtype&STYPE) return 0;
+  uint16_t index = glob_script_mem.type[ind.index].index;
+
+  if (glob_script_mem.type[ind.index].bits.is_filter) {
+    float *fa = Get_MFAddr(index, alen, 0);
+    return fa;
+  }
+  return 0;
+}
 
 float Get_MFVal(uint8_t index, int16_t bind) {
   uint8_t *mp = (uint8_t*)glob_script_mem.mfilt;
@@ -1392,6 +1437,81 @@ uint32_t match_vars(char *dvnam, float **fp, char **sp, uint32_t *ind) {
 }
 #endif //USE_SCRIPT_GLOBVARS
 
+char *isargs(char *lp, uint32_t isind) {
+  float fvar;
+  lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+  SCRIPT_SKIP_SPACES
+  if (*lp!='"') {
+    return lp;
+  }
+  lp++;
+
+  if (glob_script_mem.si_num[isind]>0 && glob_script_mem.last_index_string[isind]) {
+    free(glob_script_mem.last_index_string[isind]);
+  }
+  char *sstart = lp;
+  uint8_t slen = 0;
+  for (uint32_t cnt = 0; cnt<256; cnt++) {
+    if (*lp=='\n' || *lp=='"' || *lp==0) {
+      lp++;
+      if (cnt>0 && !slen) {
+        slen++;
+      }
+      glob_script_mem.siro_num[isind] = slen;
+      break;
+    }
+    if (*lp=='|') {
+      slen++;
+    }
+    lp++;
+  }
+
+  glob_script_mem.si_num[isind] = fvar;
+  if (glob_script_mem.si_num[isind]>0) {
+    if (glob_script_mem.si_num[isind]>MAX_SARRAY_NUM) {
+      glob_script_mem.si_num[isind] = MAX_SARRAY_NUM;
+    }
+
+    glob_script_mem.last_index_string[isind] = (char*)calloc(glob_script_mem.max_ssize*glob_script_mem.si_num[isind], 1);
+    for (uint32_t cnt = 0; cnt<glob_script_mem.siro_num[isind]; cnt++) {
+      char str[SCRIPT_MAXSSIZE];
+      GetTextIndexed(str, sizeof(str), cnt, sstart);
+      strlcpy(glob_script_mem.last_index_string[isind] + (cnt*glob_script_mem.max_ssize), str,glob_script_mem.max_ssize);
+    }
+  } else {
+    glob_script_mem.last_index_string[isind] = sstart;
+  }
+  lp++;
+  return lp;
+}
+
+char *isget(char *lp, char *sp, uint32_t isind) {
+float fvar;
+  lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+  SCRIPT_SKIP_SPACES
+  char str[SCRIPT_MAXSSIZE];
+  str[0] = 0;
+  uint8_t index = fvar;
+  if (index<1) index = 1;
+  index--;
+  last_sindex = index;
+  glob_script_mem.sind_num = isind;
+  if (glob_script_mem.last_index_string[isind]) {
+    if (!glob_script_mem.si_num[isind]) {
+      if (index<=glob_script_mem.siro_num[isind]) {
+        GetTextIndexed(str, sizeof(str), index , glob_script_mem.last_index_string[isind]);
+      }
+    } else {
+      if (index>glob_script_mem.si_num[isind]) {
+        index = glob_script_mem.si_num[isind];
+      }
+      strlcpy(str,glob_script_mem.last_index_string[isind] + (index * glob_script_mem.max_ssize), glob_script_mem.max_ssize);
+    }
+  }
+  lp++;
+  if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
+  return lp;
+}
 
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
@@ -2085,6 +2205,93 @@ chknext:
           len = 0;
           goto exit;
         }
+
+        if (!strncmp(vname, "fwa(", 4)) {
+          struct T_INDEX ind;
+          uint8_t vtype;
+          lp = isvar(lp + 4, &vtype, &ind, 0, 0, 0);
+          if (vtype!=VAR_NV && (vtype&STYPE)==0 && glob_script_mem.type[ind.index].bits.is_filter) {
+            // found array as result
+
+          } else {
+            // error
+            fvar = 0;
+            goto exit;
+          }
+
+          while (*lp==' ') lp++;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+          uint8_t index = fvar;
+          if (index>=SFS_MAX) index = SFS_MAX - 1;
+          if (glob_script_mem.file_flags[index].is_open) {
+            uint16_t len = 0;
+            float *fa = Get_MFAddr(glob_script_mem.type[ind.index].index, &len, 0);
+            char dstr[24];
+            for (uint32_t cnt = 0; cnt<len; cnt++) {
+              dtostrfd(*fa, glob_script_mem.script_dprec, dstr);
+              fa++;
+              if (cnt < (len - 1)) {
+                strcat(dstr,"\t");
+              } else {
+                strcat(dstr,"\n");
+              }
+              glob_script_mem.files[index].print(dstr);
+            }
+
+          } else {
+            fvar = 0;
+          }
+          lp++;
+          len = 0;
+          goto exit;
+        }
+        if (!strncmp(vname, "fra(", 4)) {
+          struct T_INDEX ind;
+          uint8_t vtype;
+          lp = isvar(lp + 4, &vtype, &ind, 0, 0, 0);
+          if (vtype!=VAR_NV && (vtype&STYPE)==0 && glob_script_mem.type[ind.index].bits.is_filter) {
+            // found array as result
+
+          } else {
+            // error
+            fvar = 0;
+            goto exit;
+          }
+
+          while (*lp==' ') lp++;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+          uint8_t find = fvar;
+          if (find>=SFS_MAX) find = SFS_MAX - 1;
+          char str[glob_script_mem.max_ssize + 1];
+          if (glob_script_mem.file_flags[find].is_open) {
+            uint16_t len = 0;
+            float *fa = Get_MFAddr(glob_script_mem.type[ind.index].index, &len, 0);
+            char dstr[24];
+            for (uint32_t cnt = 0; cnt<len; cnt++) {
+              uint8_t index = 0;
+              char *cp = str;
+              while (glob_script_mem.files[find].available()) {
+                uint8_t buf[1];
+                glob_script_mem.files[find].read(buf,1);
+                if (buf[0]=='\t' || buf[0]==',' || buf[0]=='\n' || buf[0]=='\r') {
+                  break;
+                } else {
+                  *cp++ = buf[0];
+                  index++;
+                  if (index>=glob_script_mem.max_ssize - 1) break;
+                }
+              }
+              *cp = 0;
+              *fa++=CharToFloat(str);
+            }
+          } else {
+            fvar = 0;
+          }
+          lp++;
+          len = 0;
+          goto exit;
+        }
+
 #endif // USE_SCRIPT_FATFS_EXT
         if (!strncmp(vname, "fl1(", 4) || !strncmp(vname, "fl2(", 4) )  {
           uint8_t lknum = *(lp+2)&3;
@@ -2202,7 +2409,6 @@ chknext:
         }
 #endif //USE_LIGHT
         break;
-#define MAX_SARRAY_NUM 32
       case 'i':
         if (!strncmp(vname, "int(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
@@ -2212,77 +2418,35 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "is(", 3)) {
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
-          SCRIPT_SKIP_SPACES
-          if (*lp!='"') {
-            break;
-          }
-          lp++;
-
-          if (glob_script_mem.si_num>0 && glob_script_mem.last_index_string) {
-            free(glob_script_mem.last_index_string);
-          }
-          char *sstart = lp;
-          uint8_t slen = 0;
-          for (uint32_t cnt = 0; cnt<256; cnt++) {
-              if (*lp=='\n' || *lp=='"' || *lp==0) {
-                lp++;
-                if (cnt>0 && !slen) {
-                  slen++;
-                }
-                glob_script_mem.siro_num = slen;
-                break;
-              }
-              if (*lp=='|') {
-                slen++;
-              }
-              lp++;
-          }
-
-          glob_script_mem.si_num = fvar;
-          if (glob_script_mem.si_num>0) {
-            if (glob_script_mem.si_num>MAX_SARRAY_NUM) {
-              glob_script_mem.si_num = MAX_SARRAY_NUM;
-            }
-
-            glob_script_mem.last_index_string = (char*)calloc(glob_script_mem.max_ssize*glob_script_mem.si_num, 1);
-            for (uint32_t cnt = 0; cnt<glob_script_mem.siro_num; cnt++) {
-              char str[SCRIPT_MAXSSIZE];
-              GetTextIndexed(str, sizeof(str), cnt, sstart);
-              strlcpy(glob_script_mem.last_index_string + (cnt*glob_script_mem.max_ssize), str,glob_script_mem.max_ssize);
-            }
-          } else {
-              glob_script_mem.last_index_string = sstart;
-          }
-
-          lp++;
+          lp = isargs(lp + 3, 0);
+          fvar = 0;
+          len = 0;
+          goto exit;
+        }
+        if (!strncmp(vname, "is1(", 4)) {
+          lp = isargs(lp + 4, 1);
+          fvar = 0;
+          len = 0;
+          goto exit;
+        }
+        if (!strncmp(vname, "is2(", 4)) {
+          lp = isargs(lp + 4, 2);
           fvar = 0;
           len = 0;
           goto exit;
         }
         if (!strncmp(vname, "is[", 3)) {
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
-          SCRIPT_SKIP_SPACES
-          char str[SCRIPT_MAXSSIZE];
-          str[0] = 0;
-          uint8_t index = fvar;
-          if (index<1) index = 1;
-          index--;
-          last_sindex = index;
-          if (glob_script_mem.last_index_string) {
-            if (!glob_script_mem.si_num) {
-              if (index<=glob_script_mem.siro_num) {
-                GetTextIndexed(str, sizeof(str), index , glob_script_mem.last_index_string);
-              }
-            } else {
-              if (index>glob_script_mem.si_num) {
-                index = glob_script_mem.si_num;
-              }
-              strlcpy(str,glob_script_mem.last_index_string + (index * glob_script_mem.max_ssize), glob_script_mem.max_ssize);
-            }
-          }
-          lp++;
-          if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
+          lp = isget(lp + 3, sp, 0);
+          len = 0;
+          goto strexit;
+        }
+        if (!strncmp(vname, "is1[", 4)) {
+          lp = isget(lp + 4, sp, 1);
+          len = 0;
+          goto strexit;
+        }
+        if (!strncmp(vname, "is2[", 4)) {
+          lp = isget(lp + 4, sp, 2);
           len = 0;
           goto strexit;
         }
@@ -2614,7 +2778,7 @@ chknext:
         if (!strncmp(vname, "s(", 2)) {
           lp = GetNumericArgument(lp + 2, OPER_EQU, &fvar, 0);
           char str[glob_script_mem.max_ssize + 1];
-          dtostrfd(fvar, glob_script_mem.script_dprec, str);
+          f2char(fvar, glob_script_mem.script_dprec, glob_script_mem.script_lzero, str);
           if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
           lp++;
           len = 0;
@@ -3260,6 +3424,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
     uint16_t count;
     uint8_t vtype;
     uint8_t dprec = glob_script_mem.script_dprec;
+    uint8_t lzero = glob_script_mem.script_lzero;
     float fvar;
     cp = srcbuf;
     struct T_INDEX ind;
@@ -3273,16 +3438,21 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
               dstbuf[count] = *cp++;
             } else {
               if (isdigit(*cp)) {
+                if (*(cp+1)=='.') {
+                  lzero = *cp & 0xf;
+                  cp+=2;
+                }
                 dprec = *cp & 0xf;
                 cp++;
               } else {
                 dprec = glob_script_mem.script_dprec;
+                lzero = glob_script_mem.script_lzero;
               }
               if (*cp=='(') {
                 // math expression
                 cp++;
                 cp = GetNumericArgument(cp, OPER_EQU, &fvar, 0);
-                dtostrfd(fvar, dprec, string);
+                f2char(fvar, dprec, lzero, string);
                 uint8_t slen = strlen(string);
                 if (count + slen<dstsize - 1) {
                   strcpy(&dstbuf[count], string);
@@ -3295,7 +3465,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
                   // found variable as result
                   if (vtype==NUM_RES || (vtype&STYPE)==0) {
                     // numeric result
-                    dtostrfd(fvar, dprec, string);
+                    f2char(fvar, dprec, lzero, string);
                   } else {
                     // string result
                   }
@@ -3806,6 +3976,10 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
             } else if (!strncmp(lp, "dp", 2) && isdigit(*(lp + 2))) {
               lp += 2;
               // number precision
+              if (*(lp + 1)== '.') {
+                glob_script_mem.script_lzero = atoi(lp);
+                lp+=2;
+              }
               glob_script_mem.script_dprec = atoi(lp);
               goto next_line;
             }
@@ -4153,9 +4327,9 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
 #endif //USE_SCRIPT_GLOBVARS
                       if (saindex>=0) {
                         if (lastop==OPER_EQU) {
-                          strlcpy(glob_script_mem.last_index_string + (saindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
+                          strlcpy(glob_script_mem.last_index_string[glob_script_mem.sind_num] + (saindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
                         } else if (lastop==OPER_PLSEQU) {
-                          strncat(glob_script_mem.last_index_string + (saindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
+                          strncat(glob_script_mem.last_index_string[glob_script_mem.sind_num] + (saindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
                         }
                         last_sindex = -1;
                       } else {
@@ -6182,6 +6356,7 @@ const char SCRIPT_MSG_GTE1[] PROGMEM = "'%s'";
 
 #define MAX_GARRAY 4
 
+
 char *gc_get_arrays(char *lp, float **arrays, uint8_t *ranum, uint16_t *rentries, uint16_t *ipos) {
 struct T_INDEX ind;
 uint8_t vtype;
@@ -6659,7 +6834,7 @@ exgc:
                   for (uint32_t ind = 0; ind < anum; ind++) {
                     char acbuff[32];
                     float *fp = arrays[ind];
-                    dtostrfd(fp[aind], glob_script_mem.script_dprec, acbuff);
+                    f2char(fp[aind], glob_script_mem.script_dprec, glob_script_mem.script_lzero, acbuff);
                     WSContentSend_PD("%s", acbuff);
                     if (ind<anum - 1) { WSContentSend_PD(","); }
                   }

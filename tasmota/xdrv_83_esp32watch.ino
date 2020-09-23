@@ -64,6 +64,7 @@ struct TTGO_globs {
   bool bma_double_click = false;
   bool bma_click = false;
   bool bma_button = false;
+  bool power_ok = false;
 } ttgo_globs;
 
 
@@ -115,15 +116,19 @@ void TTGO_Init(void) {
    ttgo_globs.bma->enableWakeupInterrupt(true);
    ttgo_globs.bma->enableAnyNoMotionInterrupt(true);
    ttgo_globs.bma->enableAccel();
-#endif
+#endif // USE_BMA423
 }
 
 void initPower(void) {
   int ret = ttgo_globs.ttgo_power->begin(axpReadBytes, axpWriteBytes);
   if (ret == AXP_FAIL) {
       //DBGX("AXP Power begin failed");
+    //  Serial.printf("AXP202 failed\n" );
   } else {
     I2cSetActiveFound(AXP202_SLAVE_ADDRESS, "AXP202");
+    ttgo_globs.power_ok = true;
+  //  Serial.printf("AXP202 OK\n" );
+
     //Change the button boot time to 4 seconds
     ttgo_globs.ttgo_power->setShutdownTime(AXP_POWER_OFF_TIME_4S);
     // Turn off the charging instructions, there should be no
@@ -162,6 +167,7 @@ void initPower(void) {
                 portYIELD_FROM_ISR ();
             }
     }, FALLING);
+
   }
 
 }
@@ -204,6 +210,8 @@ const char HTTP_TTGO_BMA[] PROGMEM =
 
 
 void TTGO_WebShow(uint32_t json) {
+
+  if (ttgo_globs.power_ok == false) return;
 
   TTGO_GetADC();
 
@@ -276,8 +284,9 @@ int32_t ttgo_sleeptime;
 
     ttgo_sleeptime = stime;
 
+#ifdef USE_DISPLAY
     DisplayOnOff(0);
-
+#endif
     if (ttgo_sleeptime>=0) {
       // ligh sleep mode
       WifiShutdown();
@@ -311,7 +320,9 @@ int32_t ttgo_sleeptime;
     if (ttgo_sleeptime) {
       ttgo_globs.lenergy = false;
       rtc_clk_cpu_freq_set(RTC_CPU_FREQ_240M);
+#ifdef USE_DISPLAY
       DisplayOnOff(1);
+#endif
     } else {
       while (ttgo_globs.lenergy == true) {
         TTGO_loop(0);
@@ -332,7 +343,9 @@ uint8_t data;
         if (ttgo_globs.lenergy) {
             ttgo_globs.lenergy = false;
             rtc_clk_cpu_freq_set(RTC_CPU_FREQ_240M);
+#ifdef USE_DISPLAY
             DisplayOnOff(1);
+#endif
         }
 
 #ifdef USE_BMA423
