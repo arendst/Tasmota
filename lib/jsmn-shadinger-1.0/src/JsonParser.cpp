@@ -1,5 +1,5 @@
 /*
-  JsonParser.h - lightweight JSON parser
+  JsonParser.cpp - lightweight JSON parser
 
   Copyright (C) 2020  Stephan Hadinger
 
@@ -365,6 +365,9 @@ float JsonParserObject::getFloat(const char * needle, float val) const {
 }
 const char * JsonParserObject::getStr(const char * needle, const char * val) const {
   return (*this)[needle].getStr(val);
+}
+const char * JsonParserObject::getStr(const char * needle) const {
+  return getStr(needle, "");
 }
 
 void JsonParser::parse(char * json_in) {

@@ -67,6 +67,7 @@ public:
   JsonParserToken(const jsmntok_t * token) : t(token) {
     if (nullptr == t) { t = &token_bad; }
   }
+  JsonParserToken() : t(&token_bad) { }
   // no explicit destructor (not needed)
 
   inline bool isValid(void) const   { return t->type != JSMN_INVALID; }
@@ -160,6 +161,7 @@ public:
   uint64_t getULong(const char *, uint64_t) const;
   float getFloat(const char *, float) const;
   const char * getStr(const char *, const char *) const;
+  const char * getStr(const char *) const;
 
   // get first element (key)
   JsonParserKey getFirstElement(void) const;
