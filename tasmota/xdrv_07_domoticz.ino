@@ -236,7 +236,7 @@ bool DomoticzMqttData(void) {
             return true;
           }
           uint8_t svalue = svalue_tok.getUInt();
-          svalue = (nvalue == 2) ? svalue / 10 : 0;
+          svalue = (2 == nvalue) ? svalue / 10 : 0;
           if (GetFanspeed() == svalue) {
             return true;  // Stop loop as already set
           }
@@ -249,14 +249,10 @@ bool DomoticzMqttData(void) {
         } else
 #endif  // USE_SONOFF_IFAN
 #ifdef USE_SHUTTER
-        if (isShutter)
-        {
-          // TODO this code seems redundant, nvalue is already retrieved from above
-          nvalue = domoticz.getUInt(PSTR("nvalue", -1));
-
+        if (isShutter) {
           uint8_t position = domoticz.getUInt(PSTR("svalue1"), 0);
           if (nvalue != 2) {
-            position = nvalue == 0 ? 0 : 100;
+            position = (0 == nvalue) ? 0 : 100;
           }
 
           snprintf_P(XdrvMailbox.topic, TOPSZ, PSTR("/" D_PRFX_SHUTTER D_CMND_SHUTTER_POSITION));
