@@ -337,90 +337,6 @@ void CmndTimer(void)
           Settings.timer[index -1].data = Settings.timer[XdrvMailbox.payload -1].data;  // Copy timer
         }
       } else {
-#if 0
-//#ifndef USE_RULES
-#if defined(USE_RULES)==0 && defined(USE_SCRIPT)==0
-        if (devices_present) {
-#endif
-          char dataBufUc[XdrvMailbox.data_len + 1];
-          UpperCase(dataBufUc, XdrvMailbox.data);
-          StaticJsonBuffer<256> jsonBuffer;
-          JsonObject& root = jsonBuffer.parseObject(dataBufUc);
-          if (!root.success()) {
-            Response_P(PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
-            error = 1;
-          }
-          else {
-            char parm_uc[10];
-            index--;
-            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_ARM))].success()) {
-              Settings.timer[index].arm = (root[parm_uc] != 0);
-            }
-#ifdef USE_SUNRISE
-            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_MODE))].success()) {
-              Settings.timer[index].mode = (uint8_t)root[parm_uc] & 0x03;
-            }
-#endif
-            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_TIME))].success()) {
-              uint16_t itime = 0;
-              int8_t value = 0;
-              uint8_t sign = 0;
-              char time_str[10];
-
-              strlcpy(time_str, root[parm_uc], sizeof(time_str));
-              const char *substr = strtok(time_str, ":");
-              if (substr != nullptr) {
-                if (strchr(substr, '-')) {
-                  sign = 1;
-                  substr++;
-                }
-                value = atoi(substr);
-                if (sign) { value += 12; }  // Allow entering timer offset from -11:59 to -00:01 converted to 12:01 to 23:59
-                if (value > 23) { value = 23; }
-                itime = value * 60;
-                substr = strtok(nullptr, ":");
-                if (substr != nullptr) {
-                  value = atoi(substr);
-                  if (value < 0) { value = 0; }
-                  if (value > 59) { value = 59; }
-                  itime += value;
-                }
-              }
-              Settings.timer[index].time = itime;
-            }
-            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_WINDOW))].success()) {
-              Settings.timer[index].window = (uint8_t)root[parm_uc] & 0x0F;
-              TimerSetRandomWindow(index);
-            }
-            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_DAYS))].success()) {
-              // SMTWTFS = 1234567 = 0011001 = 00TW00S = --TW--S
-              Settings.timer[index].days = 0;
-              const char *tday = root[parm_uc];
-              uint8_t i = 0;
-              char ch = *tday++;
-              while ((ch != '\0') && (i < 7)) {
-                if (ch == '-') { ch = '0'; }
-                uint8_t mask = 1 << i++;
-                Settings.timer[index].days |= (ch == '0') ? 0 : mask;
-                ch = *tday++;
-              }
-            }
-            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_REPEAT))].success()) {
-              Settings.timer[index].repeat = (root[parm_uc] != 0);
-            }
-            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_OUTPUT))].success()) {
-              uint8_t device = ((uint8_t)root[parm_uc] -1) & 0x0F;
-              Settings.timer[index].device = (device < devices_present) ? device : 0;
-            }
-            if (root[UpperCase_P(parm_uc, PSTR(D_JSON_TIMER_ACTION))].success()) {
-              uint8_t action = (uint8_t)root[parm_uc] & 0x03;
-              Settings.timer[index].power = (devices_present) ? action : 3;  // If no devices than only allow rules
-            }
-
-            index++;
-          }
-//#ifndef USE_RULES
-#else
 //#ifndef USE_RULES
 #if defined(USE_RULES)==0 && defined(USE_SCRIPT)==0
         if (devices_present) {
@@ -509,7 +425,6 @@ void CmndTimer(void)
             index++;
           }
 //#ifndef USE_RULES
-#endif
 #if defined(USE_RULES)==0 && defined(USE_SCRIPT)==0
         } else {
           Response_P(PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_TIMER_NO_DEVICE "\"}"), index);  // No outputs defined so nothing to control

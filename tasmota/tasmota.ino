@@ -50,6 +50,8 @@
 #include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
 #include <StreamString.h>                   // Webserver, Updater
+#include <JsonParser.h>
+#include <JsonGenerator.h>
 #include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
 #ifdef USE_ARDUINO_OTA
   #include <ArduinoOTA.h>                   // Arduino OTA

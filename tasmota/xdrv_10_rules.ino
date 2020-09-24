@@ -497,40 +497,6 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     rule_name = rule_name.substring(0, pos);           // "SUBTYPE1#CURRENT"
   }
 
-#if 0
-//  StaticJsonBuffer<1280> jsonBuf;                      // Was 1024 until 20200811
-  DynamicJsonBuffer jsonBuf;                           // Was static until 20200812
-  JsonObject &root = jsonBuf.parseObject(event);
-  if (!root.success()) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event too long (%d)"), event.length());
-    return false;
-  }               // No valid JSON data
-  JsonObject *obj = &root;
-  String subtype;
-  uint32_t i = 0;
-  while ((pos = rule_name.indexOf("#")) > 0) {         // "SUBTYPE1#SUBTYPE2#CURRENT"
-    subtype = rule_name.substring(0, pos);
-    const JsonVariant & val = GetCaseInsensitive(*obj, subtype.c_str());
-    if (nullptr == &val) { return false; }             // not found
-    obj = &(val.as<JsonObject>());
-    if (!obj->success()) { return false; }             // not a JsonObject
-
-    rule_name = rule_name.substring(pos +1);
-    if (i++ > 10) { return false; }                    // Abandon possible loop
-
-    yield();
-  }
-
-  const JsonVariant & val = GetCaseInsensitive(*obj, rule_name.c_str());
-  if (nullptr == &val) { return false; }               // last level not found
-  const char* str_value;
-  if (rule_name_idx) {
-    str_value = (*obj)[rule_name][rule_name_idx -1];   // "CURRENT[1]"
-  } else {
-    str_value = (*obj)[rule_name];                     // "CURRENT"
-  }
-#else
-
   String buf = event;   // copy the string into a new buffer that will be modified
   JsonParser parser((char*)buf.c_str());
   JsonParserObject obj = parser.getRootObject();
@@ -563,8 +529,6 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   } else {
     str_value = val.getStr();                     // "CURRENT"
   }
-#endif
-
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
 //  rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");

@@ -29,7 +29,6 @@ extern struct rst_info resetInfo;
 \*********************************************************************************************/
 
 #include <Ticker.h>
-#include "JsonParser.h"
 
 Ticker tickerOSWatch;
 
@@ -1427,48 +1426,6 @@ bool GetUsedInModule(uint32_t val, uint16_t *arr)
 
 bool JsonTemplate(char* dataBuf)
 {
-#if 0
-  // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
-
-  if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
-
-#ifdef ESP8266
-  StaticJsonBuffer<400> jb;  // 331 from https://arduinojson.org/v5/assistant/
-#else
-  StaticJsonBuffer<999> jb;  // 654 from https://arduinojson.org/v5/assistant/
-#endif
-  JsonObject& obj = jb.parseObject(dataBuf);
-  if (!obj.success()) { return false; }
-
-  // All parameters are optional allowing for partial changes
-  const char* name = obj[D_JSON_NAME];
-  if (name != nullptr) {
-    SettingsUpdateText(SET_TEMPLATE_NAME, name);
-  }
-  if (obj[D_JSON_GPIO].success()) {
-    for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
-#ifdef ESP8266
-      Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
-#else  // ESP32
-      uint16_t gpio = obj[D_JSON_GPIO][i] | 0;
-      if (gpio == (AGPIO(GPIO_NONE) +1)) {
-        gpio = AGPIO(GPIO_USER);
-      }
-      Settings.user_template.gp.io[i] = gpio;
-#endif
-    }
-  }
-  if (obj[D_JSON_FLAG].success()) {
-    uint32_t flag = obj[D_JSON_FLAG] | 0;
-    memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
-  }
-  if (obj[D_JSON_BASE].success()) {
-    uint32_t base = obj[D_JSON_BASE];
-    if ((0 == base) || !ValidTemplateModule(base -1)) { base = 18; }
-    Settings.user_template_base = base -1;  // Default WEMOS
-  }
-  return true;
-#else
   // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
@@ -1508,7 +1465,6 @@ bool JsonTemplate(char* dataBuf)
     Settings.user_template_base = base -1;  // Default WEMOS
   }
   return true;
-#endif
 }
 
 void TemplateJson(void)
