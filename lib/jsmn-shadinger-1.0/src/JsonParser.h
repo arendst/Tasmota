@@ -23,6 +23,7 @@
 #include "jsmn.h"
 #include <string.h>
 #include <stdlib.h>
+#include <Arduino.h>
 
 // #define strcmp_P(x, y) strcmp(x,y)
 // #define strcasecmp_P(x,y) strcasecmp(x,y)
@@ -146,10 +147,12 @@ public:
 class JsonParserObject : public JsonParserToken {
 public:
   JsonParserObject(const jsmntok_t * token);
-  explicit JsonParserObject(const JsonParserToken token);
+  JsonParserObject(const JsonParserToken token);
+  JsonParserObject() : JsonParserToken() { }
 
   // find key with name, case-insensitive, '?' matches any key. Returns Invalid Token if not found
   JsonParserToken operator[](const char * needle) const;
+  JsonParserToken operator[](const String & needle) const;
   // find a key starting with `needle`, case insensitive
   JsonParserToken findStartsWith(const char * needle) const;
   // find a key, case-insensitive, return nullptr if not found (instead of "")
@@ -190,6 +193,7 @@ class JsonParserArray : public JsonParserToken {
 public:
   JsonParserArray(const jsmntok_t * token);
   JsonParserArray(const JsonParserToken token);
+  JsonParserArray() : JsonParserToken() { }
 
   // get the element if index `i` from 0 to `size() - 1`
   JsonParserToken operator[](int32_t i) const;
