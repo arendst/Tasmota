@@ -166,20 +166,21 @@ int32_t EZ_RouteError(int32_t res, const class SBuffer &buf) {
 int32_t EZ_PermitJoinRsp(int32_t res, const class SBuffer &buf) {
   uint8_t  status = buf.get8(2);
   
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"Message\":\"%s"),
-                  (0 == status) ? ZIGBEE_STATUS_PERMITJOIN_OPEN_60 : ZIGBEE_STATUS_PERMITJOIN_CLOSE,
-                  (0 == status) ? PSTR("Pairing mode enabled") : PSTR("Pairing mode error")
-                  );
-  if (status)  {
-    ResponseAppend_P("0x%02X", status);
+  if (status) {     // only report if there is an error
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":23,\"Message\":\"Pairing mode error 0x%02X\"}}"), status);
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
   }
-  ResponseAppend_P(PSTR("\"}}"));
-
-  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
-
   return -1;
 }
+
+//
+// Special case: EZSP does not send an event for PermitJoin end, so we generate a synthetic one
+//
+void Z_PermitJoinDisable(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":20,\"Message\":\"Pairing mode disabled\"}}"));
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+}
+
 
 //
 // Received MessageSentHandler

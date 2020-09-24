@@ -1152,6 +1152,15 @@ void CmndZbPermitJoin(void) {
   buf.add8(duration);
   buf.add8(0x01);       // TC_Significance - This field shall always have a value of 1, indicating a request to change the Trust Center policy. If a frame is received with a value of 0, it shall be treated as having a value of 1.
   EZ_SendZDO(0xFFFC, ZDO_Mgmt_Permit_Joining_req, buf.buf(), buf.len());
+
+  // Set Timer after the end of the period, and reset a non-expired previous timer
+  if (duration > 0) {
+    // Log pairing mode enabled
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":21,\"Message\":\"Pairing mode enabled\"}}"));
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+  }
+  // always register timer for disable, might happen at next tick
+  zigbee_devices.setTimer(0x0000 /* coordinator */, 0 /* group addr*/, duration * 1000, 0, 0 /* endpoint */, Z_CAT_PERMIT_JOIN, 0 /* value */, &Z_PermitJoinDisable);
 #endif // USE_ZIGBEE_EZSP
 
   ResponseCmndDone();
