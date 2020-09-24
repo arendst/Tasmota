@@ -27,15 +27,15 @@ const char kHAssJsonSensorTypes[] PROGMEM =
   D_JSON_APPARENT_POWERUSAGE "|Battery|" D_JSON_CURRENT "|" D_JSON_DISTANCE "|" D_JSON_FREQUENCY "|" D_JSON_HUMIDITY "|" D_JSON_ILLUMINANCE "|"
   D_JSON_MOISTURE "|PB0.3|PB0.5|PB1|PB2.5|PB5|PB10|PM1|PM2.5|PM10|" D_JSON_POWERFACTOR "|" D_JSON_POWERUSAGE "|" D_JSON_TOTAL_START_TIME "|"
   D_JSON_REACTIVE_POWERUSAGE "|" D_JSON_TODAY "|" D_JSON_TOTAL "|" D_JSON_VOLTAGE "|" D_JSON_WEIGHT "|" D_JSON_YESTERDAY "|"
-  D_JSON_CO2 "|" D_JSON_ECO2 "|" D_JSON_TVOC "|" D_COLOR_RED "|" D_COLOR_GREEN "|" D_COLOR_BLUE"|" D_CCT "|" D_PROXIMITY "|Ambient|"
-  D_JSON_TOTAL D_CMND_TARIFF "|" D_JSON_EXPORT D_CMND_TARIFF "|";
+  D_JSON_CO2 "|" D_JSON_ECO2 "|" D_JSON_TVOC "|" D_COLOR_RED "|" D_COLOR_GREEN "|" D_COLOR_BLUE"|" D_CCT "|" D_PROXIMITY "|Ambient|";
+
 
 const char kHAssJsonSensorUnits[] PROGMEM =
   "||||"
   "VA|%|A|Cm|Hz|%|LX|"
   "%|ppd|ppd|ppd|ppd|ppd|ppd|µg/m³|µg/m³|µg/m³|Cos φ|W| |"
   "VAr|kWh|kWh|V|Kg|kWh|"
-  "ppm|ppm|ppb|R|G|B|" D_UNIT_KELVIN "| |LX| | |";
+  "ppm|ppm|ppb|R|G|B|" D_UNIT_KELVIN "| |LX|";
 
 const char kHAssJsonSensorDevCla[] PROGMEM =
   "dev_cla\":\"temperature|ic\":\"mdi:weather-rainy|dev_cla\":\"pressure|dev_cla\":\"pressure|"
@@ -44,8 +44,8 @@ const char kHAssJsonSensorDevCla[] PROGMEM =
   "ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:alpha-f-circle-outline|dev_cla\":\"power|ic\":\"mdi:progress-clock|"
   "dev_cla\":\"power|dev_cla\":\"power|dev_cla\":\"power|ic\":\"mdi:alpha-v-circle-outline|ic\":\"mdi:scale|dev_cla\":\"power|"
   "ic\":\"mdi:molecule-co2|ic\":\"mdi:molecule-co2|ic\":\"mdi:air-filter|"
-  "ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:temperature-kelvin|ic\":\"mdi:ruler|dev_cla\":\"illuminance|"
-  "ic\":\"mdi:cash|ic\":\"mdi:cash-plus|";
+  "ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:temperature-kelvin|ic\":\"mdi:ruler|dev_cla\":\"illuminance|";
+
 // List of sensors ready for discovery
 
 const char HASS_DISCOVER_BASE[] PROGMEM =
@@ -256,6 +256,7 @@ void NewHAssDiscovery(void)
               light_controller.isCTRGBLinked(), Settings.flag3.pwm_multi_channels, Settings.flag3.mqtt_buttons, Settings.flag3.shutter_mode, Light.subtype);
   }
   MqttPublish(stopic, true);
+
   if (!Settings.flag.hass_discovery) {
     snprintf_P(stopic, sizeof(stopic), PSTR("tasmota/discovery/%s/sensors"), unique_id);
     Response_P(PSTR("{"));
@@ -263,8 +264,7 @@ void NewHAssDiscovery(void)
     ResponseAppend_P(PSTR(",\"ver\":1}"));
     MqttPublish(stopic, true);
   }
-   masterlog_level =0; // Restore WebLog state
-
+  masterlog_level = 0; // Restore WebLog state
 }
 
 // NEW DISCOVERY
