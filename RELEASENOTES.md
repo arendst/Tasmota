@@ -61,6 +61,9 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Fix crash in ``ZbRestore``
 - Fix reset BMP sensors when executing command ``SaveData`` and define USE_DEEPSLEEP enabled (#9300)
 - Fix ``status 0`` message when using define USE_MQTT_TLS due to small log buffer (#9305)
+- Fix ``status 13`` exception 9 when more than one shutter is configured
+- Fix ``status 13`` json message
+- Fix Shelly 2.5 higher temperature regression from 8.2.0.1 (#7991)
 - Change replace ArduinoJson with JSMN for JSON parsing
 - Add command ``SetOption110 1`` to disable Zigbee auto-config when pairing new devices
 - Add command ``SetOption111 1`` to enable frequency output for buzzer GPIO (#8994)
