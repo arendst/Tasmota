@@ -28,6 +28,7 @@ const uint8_t  ZIGBEE_STATUS_STARTING = 3;              // Starting CC2530 as co
 const uint8_t  ZIGBEE_STATUS_PERMITJOIN_CLOSE = 20;     // Disable PermitJoin
 const uint8_t  ZIGBEE_STATUS_PERMITJOIN_OPEN_60 = 21;   // Enable PermitJoin for 60 seconds
 const uint8_t  ZIGBEE_STATUS_PERMITJOIN_OPEN_XX = 22;   // Enable PermitJoin until next boot
+const uint8_t  ZIGBEE_STATUS_PERMITJOIN_ERROR = 23;     // Enable PermitJoin until next boot
 const uint8_t  ZIGBEE_STATUS_DEVICE_ANNOUNCE = 30;      // Device announces its address
 const uint8_t  ZIGBEE_STATUS_NODE_DESC = 31;            // Node descriptor
 const uint8_t  ZIGBEE_STATUS_ACTIVE_EP = 32;            // Endpoints descriptor
