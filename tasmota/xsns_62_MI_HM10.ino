@@ -111,6 +111,7 @@ struct Flora_TLMF_t{
   uint32_t lux;
   uint8_t moist;
   uint16_t fert;
+  uint32_t ID;
 }; // temperature, lux, moisture, fertility
 
 struct mi_beacon_t{
@@ -830,20 +831,18 @@ void HM10readHT_MJ_HT_V1(char *_buf){
 }
 
 void HM10readTLMF(char *_buf){
-  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)_buf,10);
-  if(_buf[0]==0x4f && _buf[1]==0x4b) return; // "OK"
-  if(_buf[0] != 0 || _buf[1] != 0){ // this will lose 0.0 degree, but it is not possible to measure a successful reading
-    Flora_TLMF_t *_packet = (Flora_TLMF_t*)_buf;
+  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)_buf,16);
+  Flora_TLMF_t *_packet = (Flora_TLMF_t*)_buf;
+  if(_packet->ID==0xFB003C02){ // this is a magic word ... hopefully independent of FW version
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: T * 10: %u, L: %u, M: %u, F: %u"),D_CMND_HM10,_packet->temp,_packet->lux,_packet->moist,_packet->fert);
     uint32_t _slot = HM10.state.sensor;
-
     DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
+    MIBLEsensors[_slot].showedUp=255; // this sensor is real
+
     static float _tempFloat;
     _tempFloat=(float)(_packet->temp)/10.0f;
-    if(_tempFloat<60){
-        MIBLEsensors[_slot].temp=_tempFloat;
-        MIBLEsensors[_slot].showedUp=255; // this sensor is real
-    }
+    MIBLEsensors[_slot].temp=_tempFloat;
+
     MIBLEsensors[_slot].lux = _packet->lux;
     MIBLEsensors[_slot].moisture = _packet->moist;
     MIBLEsensors[_slot].fertility = _packet->fert;
