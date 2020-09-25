@@ -1476,11 +1476,13 @@ void GpioInit(void)
 
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
 
+#ifdef ESP8266
   if (Settings.user_template8.flag != 255) {
     // Convert 8-bit user template
     TemplateConvert((uint8_t*)&Settings.user_template8, (uint16_t*)&Settings.user_template);
     Settings.user_template8.flag = 255;
   }
+#endif  // ESP8266
 
   for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
     if ((Settings.user_template.gp.io[i] >= AGPIO(GPIO_SENSOR_END)) && (Settings.user_template.gp.io[i] < AGPIO(GPIO_USER))) {

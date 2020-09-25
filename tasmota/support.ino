@@ -1119,6 +1119,7 @@ int ResponseJsonEndEnd(void)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
+#ifdef ESP8266
 uint16_t GpioConvert(uint8_t gpio) {
   if (gpio > ARRAY_SIZE(kGpioConvert)) {
     return AGPIO(GPIO_USER);
@@ -1142,6 +1143,7 @@ void TemplateConvert(uint8_t template8[], uint16_t template16[]) {
   }
   template16[(sizeof(mytmplt) / 2) -2] = Adc0Convert(template8[sizeof(mytmplt8285) -1]);
 }
+#endif  // ESP8266
 
 uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
 uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
