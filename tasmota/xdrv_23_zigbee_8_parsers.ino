@@ -396,6 +396,10 @@ int32_t EZ_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
   if (0x08 == protocol_version) {
+    if ((stack_version & 0xFF00) == 0x6700) {
+      // If v6.7 there is a bug so we need to change the response
+      ZBW(ZBR_SET_OK2, 0x00, 0x00 /*high*/, 0x00 /*ok*/)
+    }
   	return 0;	  // protocol v8 is ok
   } else {
     return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
