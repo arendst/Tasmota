@@ -470,8 +470,8 @@ void f2char(float num, uint32_t dprec, uint32_t lzeros, char *nbuff) {
 int8_t script_button[MAX_KEYS];
 #endif //USE_BUTTON_EVENT
 
-char *GetNumericArgument(char *lp,uint8_t lastop,float *fp,JsonObject *jo);
-char *GetStringArgument(char *lp,uint8_t lastop,char *cp,JsonObject *jo);
+char *GetNumericArgument(char *lp,uint8_t lastop,float *fp, JsonParserObject *jo);
+char *GetStringArgument(char *lp,uint8_t lastop,char *cp, JsonParserObject *jo);
 char *ForceStringVar(char *lp,char *dstr);
 void send_download(void);
 uint8_t reject(char *name);
@@ -1155,7 +1155,7 @@ float *Get_MFAddr(uint8_t index, uint16_t *len, uint16_t *ipos) {
   return 0;
 }
 
-char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonObject *jo);
+char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonParserObject *jo);
 
 
 float *get_array_by_name(char *name, uint16_t *alen) {
@@ -1515,7 +1515,7 @@ float fvar;
 
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
-char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonObject *jo) {
+char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonParserObject *jo) {
     uint16_t count,len = 0;
     uint8_t nres = 0;
     char vname[32];
@@ -1664,7 +1664,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         if (aindex<1 || aindex>6) aindex = 1;
         aindex--;
       }
-      if (jo->success()) {
+      if (jo->isValid()) {
         char *subtype = strchr(jvname, '#');
         char *subtype2;
         if (subtype) {
@@ -1677,23 +1677,23 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
           }
         }
         vn = jvname;
-        str_value = (*jo)[vn];
-        if ((*jo)[vn].success()) {
+        str_value = (*jo)[vn].getStr();
+        if ((*jo)[vn].isValid()) {
           if (subtype) {
-            JsonObject &jobj1 = (*jo)[vn];
-            if (jobj1.success()) {
+            JsonParserObject jobj1 = (*jo)[vn];
+            if (jobj1.isValid()) {
               vn = subtype;
               jo = &jobj1;
-              str_value = (*jo)[vn];
-              if ((*jo)[vn].success()) {
+              str_value = (*jo)[vn].getStr();
+              if ((*jo)[vn].isValid()) {
                 // 2. stage
                 if (subtype2) {
-                  JsonObject &jobj2 = (*jo)[vn];
-                  if ((*jo)[vn].success()) {
+                  JsonParserObject jobj2 = (*jo)[vn];
+                  if ((*jo)[vn].isValid()) {
                     vn = subtype2;
                     jo = &jobj2;
-                    str_value = (*jo)[vn];
-                    if ((*jo)[vn].success()) {
+                    str_value = (*jo)[vn].getStr();
+                    if ((*jo)[vn].isValid()) {
                       goto skip;
                     } else {
                       goto chknext;
@@ -1712,10 +1712,10 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
           skip:
           if (ja) {
             // json array
-            str_value = (*jo)[vn][aindex];
+            str_value = (*jo)[vn].getArray()[aindex].getStr();
           }
           if (str_value && *str_value) {
-            if ((*jo).is<char*>(vn)) {
+            if ((*jo)[vn].isStr()) {
               if (!strncmp(str_value, "ON", 2)) {
                 if (fp) *fp = 1;
                 goto nexit;
@@ -3281,7 +3281,7 @@ uint16_t GetStack(void) {
 }
 #endif //ESP8266
 
-char *GetStringArgument(char *lp, uint8_t lastop, char *cp, JsonObject *jo) {
+char *GetStringArgument(char *lp, uint8_t lastop, char *cp, JsonParserObject *jo) {
   uint8_t operand = 0;
   uint8_t vtype;
   char *slp;
@@ -3327,7 +3327,7 @@ char *GetStringArgument(char *lp, uint8_t lastop, char *cp, JsonObject *jo) {
   return lp;
 }
 
-char *GetNumericArgument(char *lp, uint8_t lastop, float *fp, JsonObject *jo) {
+char *GetNumericArgument(char *lp, uint8_t lastop, float *fp, JsonParserObject *jo) {
 uint8_t operand = 0;
 float fvar1,fvar;
 char *slp;
@@ -3552,7 +3552,7 @@ void toSLog(const char *str) {
 #endif
 }
 
-char *Evaluate_expression(char *lp, uint8_t and_or, uint8_t *result,JsonObject  *jo) {
+char *Evaluate_expression(char *lp, uint8_t and_or, uint8_t *result, JsonParserObject *jo) {
   float fvar,*dfvar,fvar1;
   uint8_t numeric;
   struct T_INDEX ind;
@@ -3715,19 +3715,17 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
 
     if (tasm_cmd_activ && tlen>0) return 0;
 
-    JsonObject  *jo = 0;
-    DynamicJsonBuffer jsonBuffer; // on heap
-    JsonObject &jobj = jsonBuffer.parseObject(js);
+    JsonParserObject jo;
     if (js) {
-      jo = &jobj;
-    } else {
-      jo = 0;
+      String jss = js;    // copy the string to a new buffer, not sure we can change the original buffer
+      JsonParser parser((char*)jss.c_str());
+      jo = parser.getRootObject();
     }
 
-    return Run_script_sub(type, tlen, jo);
+    return Run_script_sub(type, tlen, &jo);
 }
 
-int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
+int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
     uint8_t vtype=0,sindex,xflg,floop=0,globvindex,fromscriptcmd=0;
     char *lp_next;
     int16_t globaindex,saindex;
@@ -5527,15 +5525,16 @@ void Script_Handle_Hue(String *path) {
   if (Webserver->args()) {
     response = "[";
 
-    StaticJsonBuffer<400> jsonBuffer;
-    JsonObject &hue_json = jsonBuffer.parseObject(Webserver->arg((Webserver->args()) - 1));
-    if (hue_json.containsKey("on")) {
+    JsonParser parser((char*) Webserver->arg((Webserver->args())-1).c_str());
+    JsonParserObject root = parser.getRootObject();
+    JsonParserToken hue_on = root[PSTR("on")];
+    if (hue_on) {
 
       response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
       response.replace("{id", String(EncodeLightId(device)));
       response.replace("{cm", "on");
 
-      bool on = hue_json["on"];
+      bool on = hue_on.getBool();
       if (on==false) {
         glob_script_mem.fvars[hue_script[index].index[0] - 1] = 0;
         response.replace("{re", "false");
@@ -5546,8 +5545,11 @@ void Script_Handle_Hue(String *path) {
       glob_script_mem.type[hue_script[index].vindex[0]].bits.changed = 1;
       resp = true;
     }
-    if (hue_json.containsKey("bri")) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
-      tmp = hue_json["bri"];
+
+    parser.setCurrent();
+    JsonParserToken hue_bri = root[PSTR("bri")];
+    if (hue_bri) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
+      tmp = hue_bri.getUInt();
       bri = tmp;
       if (254 <= bri) { bri = 255; }
       if (resp) { response += ","; }
@@ -5559,12 +5561,17 @@ void Script_Handle_Hue(String *path) {
       glob_script_mem.type[hue_script[index].vindex[1]].bits.changed = 1;
       resp = true;
     }
-    if (hue_json.containsKey("xy")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
+
+    JsonParserToken hue_xy = root[PSTR("xy")];
+    if (hue_xy) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
       float x, y;
-      x = hue_json["xy"][0];
-      y = hue_json["xy"][1];
-      const String &x_str = hue_json["xy"][0];
-      const String &y_str = hue_json["xy"][1];
+      JsonParserArray arr_xy = JsonParserArray(hue_xy);
+      JsonParserToken tok_x = arr_xy[0];
+      JsonParserToken tok_y = arr_xy[1];
+      x = tok_x.getFloat();
+      y = tok_y.getFloat();
+      String x_str = tok_x.getStr();
+      String y_str = tok_y.getStr();
       uint8_t rr,gg,bb;
       LightStateClass::XyToRgb(x, y, &rr, &gg, &bb);
       LightStateClass::RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
@@ -5580,8 +5587,9 @@ void Script_Handle_Hue(String *path) {
       resp = true;
     }
 
-    if (hue_json.containsKey("hue")) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
-      tmp = hue_json["hue"];
+    JsonParserToken hue_hue = root[PSTR("hue")];
+    if (hue_hue) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
+      tmp = hue_hue.getUInt();
       //hue = changeUIntScale(tmp, 0, 65535, 0, 359);
       //tmp = changeUIntScale(hue, 0, 359, 0, 65535);
       hue = tmp;
@@ -5594,8 +5602,10 @@ void Script_Handle_Hue(String *path) {
       glob_script_mem.type[hue_script[index].vindex[2]].bits.changed = 1;
       resp = true;
     }
-    if (hue_json.containsKey("sat")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
-      tmp = hue_json["sat"];
+
+    JsonParserToken hue_sat = root[PSTR("sat")];
+    if (hue_sat) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
+      tmp = hue_sat.getUInt();
       sat = tmp;
       if (254 <= sat) { sat = 255; }
       if (resp) { response += ","; }
@@ -5607,8 +5617,10 @@ void Script_Handle_Hue(String *path) {
       glob_script_mem.type[hue_script[index].vindex[3]].bits.changed = 1;
       resp = true;
     }
-    if (hue_json.containsKey("ct")) {  // Color temperature 153 (Cold) to 500 (Warm)
-      ct = hue_json["ct"];
+
+    JsonParserToken hue_ct = root[PSTR("ct")];
+    if (hue_ct) {  // Color temperature 153 (Cold) to 500 (Warm)
+      ct = hue_ct.getUInt();
       if (resp) { response += ","; }
       response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
       response.replace("{id", String(EncodeLightId(device)));
@@ -5826,21 +5838,23 @@ bool ScriptMqttData(void)
       if (event_item.Key.length() == 0) {   //If did not specify Key
         value = sData;
       } else {      //If specified Key, need to parse Key/Value from JSON data
-        StaticJsonBuffer<MQTT_EVENT_JSIZE> jsonBuf;
-        JsonObject& jsonData = jsonBuf.parseObject(sData);
+        JsonParser parser((char*)sData.c_str());
+        JsonParserObject jsonData = parser.getRootObject();
         String key1 = event_item.Key;
         String key2;
-        if (!jsonData.success()) break;       //Failed to parse JSON data, ignore this message.
+        if (!jsonData) break;       //Failed to parse JSON data, ignore this message.
         int dot;
         if ((dot = key1.indexOf('.')) > 0) {
           key2 = key1.substring(dot+1);
           key1 = key1.substring(0, dot);
           lkey = key2;
-          if (!jsonData[key1][key2].success()) break;   //Failed to get the key/value, ignore this message.
-          value = (const char *)jsonData[key1][key2];
+          JsonParserToken val = jsonData[key1.c_str()].getObject()[key2.c_str()];
+          if (!val) break;   //Failed to get the key/value, ignore this message.
+          value = val.getStr();
         } else {
-          if (!jsonData[key1].success()) break;
-          value = (const char *)jsonData[key1];
+          JsonParserToken val = jsonData[key1.c_str()];
+          if (!val) break;
+          value = val.getStr();
           lkey = key1;
         }
       }
