@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef ESP32
+//#ifdef ESP32
 #ifdef USE_ADC
 /*********************************************************************************************\
  * ADC support for up to 8 channels on GPIO32 to GPIO39
@@ -94,6 +94,14 @@ struct {
   uint8_t type = 0;
   uint8_t pin = 0;
 } Adc[MAX_ADCS];
+
+#ifdef ESP8266
+
+bool adcAttachPin(uint8_t pin) {
+  return true;
+}
+
+#endif
 
 void AdcSaveSettings(uint32_t idx) {
   char parameters[32];
@@ -186,9 +194,11 @@ void AdcInit(void) {
     }
   }
   if (Adcs.present) {
+#ifdef ESP32
     analogSetClockDiv(1);               // Default 1
     analogSetWidth(ANALOG_RESOLUTION);  // Default 12 bits (0 - 4095)
     analogSetAttenuation(ADC_11db);     // Default 11db
+#endif
     for (uint32_t idx = 0; idx < Adcs.present; idx++) {
       AdcGetSettings(idx);
       AdcInitParams(idx);
@@ -327,11 +337,15 @@ void AdcShowContinuation(bool *jsonflg) {
 
 void AdcShow(bool json) {
   bool domo_flag[ADC_END] = { false };
-  char adc_name[10];  // ANALOG8
+  char adc_name[10] = { 0 };  // ANALOG8
+  uint32_t offset = 0;
 
   bool jsonflg = false;
   for (uint32_t idx = 0; idx < Adcs.present; idx++) {
+#ifdef ESP32
     snprintf_P(adc_name, sizeof(adc_name), PSTR("Analog%d"), idx +1);
+    offset = 1;
+#endif
 
     switch (Adc[idx].type) {
       case ADC_INPUT: {
@@ -339,10 +353,10 @@ void AdcShow(bool json) {
 
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"A%d\":%d"), idx +1, analog);
+          ResponseAppend_P(PSTR("\"A%d\":%d"), idx + offset, analog);
 #ifdef USE_WEBSERVER
         } else {
-          WSContentSend_PD(HTTP_SNS_ANALOG, "", idx +1, analog);
+          WSContentSend_PD(HTTP_SNS_ANALOG, "", idx + offset, analog);
 #endif  // USE_WEBSERVER
         }
         break;
@@ -353,7 +367,7 @@ void AdcShow(bool json) {
 
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%d\":%s"), idx +1, temperature);
+          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%d\":%s"), idx + offset, temperature);
           if ((0 == tele_period) && (!domo_flag[ADC_TEMP])) {
 #ifdef USE_DOMOTICZ
             DomoticzSensor(DZ_TEMP, temperature);
@@ -375,7 +389,7 @@ void AdcShow(bool json) {
 
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"" D_JSON_ILLUMINANCE "%d\":%d"), idx +1, adc_light);
+          ResponseAppend_P(PSTR("\"" D_JSON_ILLUMINANCE "%d\":%d"), idx + offset, adc_light);
 #ifdef USE_DOMOTICZ
           if ((0 == tele_period) && (!domo_flag[ADC_LIGHT])) {
             DomoticzSensor(DZ_ILLUMINANCE, adc_light);
@@ -394,7 +408,7 @@ void AdcShow(bool json) {
 
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"" D_JSON_RANGE "%d\":%d"), idx +1, adc_range);
+          ResponseAppend_P(PSTR("\"" D_JSON_RANGE "%d\":%d"), idx + offset, adc_range);
 #ifdef USE_WEBSERVER
         } else {
           WSContentSend_PD(HTTP_SNS_RANGE, adc_name, adc_range);
@@ -442,7 +456,7 @@ void AdcShow(bool json) {
         uint16_t value = new_value / Adc[idx].param1;
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"Joy%d\":%d"), idx +1, value);
+          ResponseAppend_P(PSTR("\"Joy%d\":%d"), idx + offset, value);
         }
         break;
       }
@@ -570,4 +584,4 @@ bool Xsns02(uint8_t function) {
 }
 
 #endif  // USE_ADC
-#endif  // ESP32
+//#endif  // ESP32

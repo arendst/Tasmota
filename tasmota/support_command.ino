@@ -1119,19 +1119,19 @@ void CmndGpio(void)
     if (ValidGPIO(XdrvMailbox.index, cmodule.io[XdrvMailbox.index]) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < AGPIO(GPIO_SENSOR_END))) {
       bool present = false;
       for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
-#ifdef ESP8266
-        uint32_t midx = pgm_read_byte(kGpioNiceList + i);
-        if (midx == XdrvMailbox.payload) {
-          present = true;
-          break;
-        }
-#else  // ESP32
+//#ifdef ESP8266
+//        uint32_t midx = pgm_read_byte(kGpioNiceList + i);
+//        if (midx == XdrvMailbox.payload) {
+//          present = true;
+//          break;
+//        }
+//#else  // ESP32
         uint32_t midx = pgm_read_word(kGpioNiceList + i);
         if ((XdrvMailbox.payload >= (midx & 0xFFE0)) && (XdrvMailbox.payload < midx)) {
           present = true;
           break;
         }
-#endif  // ESP8266 - ESP32
+//#endif  // ESP8266 - ESP32
       }
       if (present) {
         for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
@@ -1158,7 +1158,7 @@ void CmndGpio(void)
         }
         char sindex[4] = { 0 };
         uint32_t sensor_name_idx = BGPIO(sensor_type);
-#ifdef ESP32
+//#ifdef ESP32
         uint32_t nice_list_search = sensor_type & 0xFFE0;
         for (uint32_t j = 0; j < ARRAY_SIZE(kGpioNiceList); j++) {
           uint32_t nls_idx = pgm_read_word(kGpioNiceList + j);
@@ -1167,7 +1167,7 @@ void CmndGpio(void)
             break;
           }
         }
-#endif  // ESP32
+//#endif  // ESP32
         const char *sensor_names = kSensorNames;
         if (sensor_name_idx > GPIO_FIX_START) {
           sensor_name_idx = sensor_name_idx - GPIO_FIX_START -1;
@@ -1193,13 +1193,13 @@ void CmndGpios(void)
   uint32_t lines = 1;
   bool jsflg = false;
   for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
-#ifdef ESP8266
-    uint32_t midx = pgm_read_byte(kGpioNiceList + i);
-    uint32_t ridx = midx;
-#else  // ESP32
+//#ifdef ESP8266
+//    uint32_t midx = pgm_read_byte(kGpioNiceList + i);
+//    uint32_t ridx = midx;
+//#else  // ESP32
     uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
     uint32_t midx = BGPIO(ridx);
-#endif  // ESP8266 - ESP32
+//#endif  // ESP8266 - ESP32
     if ((XdrvMailbox.payload != 255) && GetUsedInModule(midx, cmodule.io)) { continue; }
     if (!jsflg) {
       Response_P(PSTR("{\"" D_CMND_GPIOS "%d\":{"), lines);

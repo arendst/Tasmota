@@ -116,9 +116,9 @@ uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
 uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
 
-#ifdef ESP32
+//#ifdef ESP32
 uint16_t gpio_pin[MAX_GPIO_PIN] = { 0 };    // GPIO functions indexed by pin number
-#endif  // ESP32
+//#endif  // ESP32
 
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
 RulesBitfield rules_flag;                   // Rule state flags (16 bits)
@@ -129,9 +129,9 @@ uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
 uint8_t ssleep;                             // Current copy of Settings.sleep
 uint8_t blinkspeed = 1;                     // LED blink rate
 
-#ifdef ESP8266
-uint8_t gpio_pin[MAX_GPIO_PIN] = { 0 };     // GPIO functions indexed by pin number
-#endif  // ESP8266 - ESP32
+//#ifdef ESP8266
+//uint8_t gpio_pin[MAX_GPIO_PIN] = { 0 };     // GPIO functions indexed by pin number
+//#endif  // ESP8266 - ESP32
 
 uint8_t active_device = 1;                  // Active device in ExecuteCommandPower
 uint8_t leds_present = 0;                   // Max number of LED supported
@@ -171,7 +171,7 @@ bool is_8285 = false;                       // Hardware device ESP8266EX (0) or 
 bool skip_light_fade;                       // Temporarily skip light fading
 bool restart_halt = false;                  // Do not restart but stay in wait loop
 myio my_module;                             // Active copy of Module GPIOs (17 x 8 bits)
-gpio_flag my_module_flag;                   // Active copy of Template GPIO flags
+//gpio_flag my_module_flag;                   // Active copy of Template GPIO flags
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
 char my_version[33];                        // Composed version string
 char my_image[33];                          // Code image and/or commit
@@ -276,9 +276,9 @@ void setup(void) {
         for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
           Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
         }
-#ifdef ESP8266
-        Settings.my_adc0 = ADC0_NONE;               // Reset user defined ADC0 disabling sensors
-#endif
+//#ifdef ESP8266
+//        Settings.my_adc0 = ADC0_NONE;               // Reset user defined ADC0 disabling sensors
+//#endif
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +4) {  // Restarted 6 times
         Settings.module = Settings.fallback_module;  // Reset module to fallback module
