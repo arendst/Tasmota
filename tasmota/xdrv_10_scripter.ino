@@ -5570,8 +5570,8 @@ void Script_Handle_Hue(String *path) {
       JsonParserToken tok_y = arr_xy[1];
       x = tok_x.getFloat();
       y = tok_y.getFloat();
-      const char * x_str = tok_x.getStr();
-      const char * y_str = tok_y.getStr();
+      String x_str = tok_x.getStr();
+      String y_str = tok_y.getStr();
       uint8_t rr,gg,bb;
       LightStateClass::XyToRgb(x, y, &rr, &gg, &bb);
       LightStateClass::RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
