@@ -649,7 +649,9 @@ ZBM(ZBS_SET_NETWORKS,     EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG
 ZBM(ZBS_SET_PACKET_BUF,   EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_PACKET_BUFFER_COUNT, 0xFF, 0x00)             // 530001FF00
 
 ZBM(ZBR_SET_OK,  EZSP_setConfigurationValue, 0x00 /*high*/, 0x00 /*ok*/)   // 530000
-ZBM(ZBR_SET_OK2, 0x00, 0x00 /*high*/, 0x00 /*ok*/)   // 000000  - TODO why does setting EZSP_CONFIG_PACKET_BUFFER_COUNT has a different response?
+// There is a bug in v6.7 where the response if 000000 instead of 530000
+// If we detect the version to be v6.7, the first byte is changed to 00
+ZBR(ZBR_SET_OK2, EZSP_setConfigurationValue, 0x00 /*high*/, 0x00 /*ok*/)
 
 // Read some configuration values
 // ZBM(ZBS_GET_APS_UNI,      EZSP_getConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_APS_UNICAST_MESSAGE_COUNT)                   // 520003
