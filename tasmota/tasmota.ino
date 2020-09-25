@@ -52,7 +52,6 @@
 #include <StreamString.h>                   // Webserver, Updater
 #include <JsonParser.h>
 #include <JsonGenerator.h>
-#include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
 #ifdef USE_ARDUINO_OTA
   #include <ArduinoOTA.h>                   // Arduino OTA
   #ifndef USE_DISCOVERY
