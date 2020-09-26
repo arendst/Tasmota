@@ -55,7 +55,7 @@
 
 #ifdef SHELLY_FW_UPGRADE
 #include <stm32flash.h>
-#include <fw/shelly/dimmer/stm_v1.7.0.h>
+#include <fw/shelly/dimmer/stm_v50.1.h>
 #endif // SHELLY_FW_UPGRADE
 
 #include <TasmotaSerial.h>
@@ -123,8 +123,14 @@ int check_byte()
     if (index == 4 + data_length + 1)
     {
         uint16_t chksm = (Shd.buffer[index - 1] << 8 | Shd.buffer[index]);
-        if (chksm != checksum(&Shd.buffer[1], 3 + data_length))
+        uint16_t chksm_calc = checksum(&Shd.buffer[1], 3 + data_length);
+        if (chksm != chksm_calc)
+        {
+#ifdef SHELLY_DIMMER_DEBUG
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: checksum: %x calculated: %x"), chksm, chksm_calc);
+#endif // SHELLY_DIMMER_DEBUG
             return 0;
+        }
 
         return 1;
     }
@@ -363,21 +369,56 @@ bool ShdPacketProcess(void)
         case SHD_POLL_CMD:
             {
                 // 1 when returning fade_rate, 0 when returning wattage, brightness?
-                uint16_t unknown_0 = Shd.buffer[pos + 1] << 8 | Shd.buffer[pos + 0];
+                uint16_t unknown_0 = Shd.buffer[pos + 1] << 8 |
+                        Shd.buffer[pos + 0];
                 
-                uint16_t brightness = Shd.buffer[pos + 3] << 8 | Shd.buffer[pos + 2];
+                uint16_t brightness = Shd.buffer[pos + 3] << 8 |
+                        Shd.buffer[pos + 2];
 
                 uint32_t wattage_raw = Shd.buffer[pos + 7] << 24 | 
                         Shd.buffer[pos + 6] << 16 | 
                         Shd.buffer[pos + 5] << 8 | 
                         Shd.buffer[pos + 4];
+
+                uint32_t voltage_raw = Shd.buffer[pos + 11] << 24 | 
+                        Shd.buffer[pos + 10] << 16 | 
+                        Shd.buffer[pos + 9] << 8 | 
+                        Shd.buffer[pos + 8];
+
+                uint32_t current_raw = Shd.buffer[pos + 15] << 24 | 
+                        Shd.buffer[pos + 14] << 16 | 
+                        Shd.buffer[pos + 13] << 8 | 
+                        Shd.buffer[pos + 12];
+
+                uint32_t fade_rate = Shd.buffer[pos + 16];
+
                 float wattage = 0;
                 if (wattage_raw > 0)
-                    wattage = 1000000 / wattage_raw;
-                uint32_t fade_rate = Shd.buffer[pos + 8];
+                    wattage = 880373 / (float)wattage_raw;
 
+                float voltage = 0;
+                if (voltage_raw > 0)
+                    voltage = 347800 / (float)voltage_raw;
+
+                float current = 0;
+                if (current_raw > 0)
+                    current = 1448 / (float)current_raw;
+                
 #ifdef USE_ENERGY_SENSOR
                 Energy.active_power[0] = wattage;
+                Energy.voltage[0] = voltage;
+                Energy.current[0] = current;
+                Energy.apparent_power[0] = voltage * current;
+                if ((voltage * current) > wattage)
+                    Energy.reactive_power[0] = sqrt((voltage * current) * (voltage * current) - wattage * wattage);
+                else
+                    Energy.reactive_power[0] = 0;
+                if (wattage > (voltage * current))
+                    Energy.power_factor[0] = 1;
+                else if ((voltage * current) == 0)
+                    Energy.power_factor[0] = 0;
+                else
+                    Energy.power_factor[0] = wattage / (voltage * current);
                 
                 if (Shd.last_power_check > 10 && Energy.active_power[0] > 0)
                 {
@@ -392,7 +433,7 @@ bool ShdPacketProcess(void)
 #endif // USE_ENERGY_SENSOR
 
 #ifdef SHELLY_DIMMER_DEBUG
-                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: ShdPacketProcess: Brightness:%d Power:%d Fade:%d"), brightness, wattage_raw, fade_rate);
+                AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: ShdPacketProcess: Brightness:%d Power:%lu Voltage:%lu Current:%lu Fade:%d"), brightness, wattage_raw, voltage_raw, current_raw, fade_rate);
 #endif // SHELLY_DIMMER_DEBUG
                 Shd.dimmer.brightness = brightness;
                 Shd.dimmer.power = wattage_raw;
@@ -576,7 +617,7 @@ void ShdInit(void)
                 ShdSendVersion();
             }
 #endif // SHELLY_FW_UPGRADE
-            delay(100);
+            delay(200);
             ShdSendSettings();
             ShdSyncState();
         }
@@ -613,6 +654,11 @@ bool ShdSerialInput(void)
         {
             // wrong data
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Byte %i of received data frame is invalid"), Shd.byte_counter);
+            Shd.byte_counter++;
+            snprintf_P(log_data, sizeof(log_data), PSTR("SHD: RX Packet:"));
+            for (uint32_t i = 0; i < Shd.byte_counter; i++)
+                snprintf_P(log_data, sizeof(log_data), PSTR("%s %02x"), log_data, Shd.buffer[i]);
+            AddLog(LOG_LEVEL_DEBUG_MORE);
             Shd.byte_counter = 0;
         }
         else
@@ -732,8 +778,10 @@ bool Xnrg17(uint8_t function)
 
   if (SHELLY_DIMMER == my_module_type && FUNC_PRE_INIT == function)
   {
+#ifndef SHELLY_VOLTAGE_MON
         Energy.current_available = false;
         Energy.voltage_available = false;
+#endif // SHELLY_VOLTAGE_MON
         energy_flg = XNRG_17;
   }
   return result;

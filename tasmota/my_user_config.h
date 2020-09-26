@@ -476,6 +476,7 @@
 //#define USE_SHELLY_DIMMER                        // Add support for Shelly Dimmer (+2k2 code)
   //#define SHELLY_CMDS                            // Add command to send co-processor commands (+0k4 code)
   //#define SHELLY_FW_UPGRADE                      // Add firmware upgrade option for co-processor (+30k code, +5k mem)
+  //#define SHELLY_VOLTAGE_MON                     // Add support for reading voltage and current measurment (+?? code)
 
 // -- Optional light modules ----------------------
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
