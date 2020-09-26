@@ -19,7 +19,6 @@
 - Add new shutter modes (#9244)
 - Add Zigbee auto-config when pairing
 - Add support for MLX90640 IR array temperature sensor by Christian Baars
-- Change ``WakeUp`` uses 256 steps instead of 100 (#9241)
 
 ### 8.5.0 20200907
 
