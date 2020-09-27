@@ -106,16 +106,16 @@ enum Cx_cluster_short {
   Cx0000, Cx0001, Cx0002, Cx0003, Cx0004, Cx0005, Cx0006, Cx0007,
   Cx0008, Cx0009, Cx000A, Cx000B, Cx000C, Cx000D, Cx000E, Cx000F,
   Cx0010, Cx0011, Cx0012, Cx0013, Cx0014, Cx001A, Cx0020, Cx0100,
-  Cx0101, Cx0102, Cx0300, Cx0400, Cx0401, Cx0402, Cx0403, Cx0404,
-  Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
+  Cx0101, Cx0102, Cx0201, Cx0300, Cx0400, Cx0401, Cx0402, Cx0403,
+  Cx0404, Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
 };
 
 const uint16_t Cx_cluster[] PROGMEM = {
   0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
   0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
   0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x001A, 0x0020, 0x0100,
-  0x0101, 0x0102, 0x0300, 0x0400, 0x0401, 0x0402, 0x0403, 0x0404,
-  0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
+  0x0101, 0x0102, 0x0201, 0x0300, 0x0400, 0x0401, 0x0402, 0x0403,
+  0x0404, 0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
 };
 
 uint16_t CxToCluster(uint8_t cx) {
@@ -402,6 +402,29 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zmap8,    Cx0102, 0x0017,  Z_(Mode),                 1 },
   { Zoctstr,  Cx0102, 0x0018,  Z_(IntermediateSetpointsLift),1 },
   { Zoctstr,  Cx0102, 0x0019,  Z_(IntermediateSetpointsTilt),1 },
+
+  // Thermostat
+  { Zint16,   Cx0201, 0x0000,  Z_(LocalTemperature),  -100 },
+  { Zint16,   Cx0201, 0x0001,  Z_(OutdoorTemperature),-100 },
+  { Zuint8,   Cx0201, 0x0007,  Z_(PICoolingDemand),      1 },
+  { Zuint8,   Cx0201, 0x0008,  Z_(PIHeatingDemand),      1 },
+  { Zint8,    Cx0201, 0x0010,  Z_(LocalTemperatureCalibration), -10 },
+  { Zint16,   Cx0201, 0x0011,  Z_(OccupiedCoolingSetpoint), -100 },
+  { Zint16,   Cx0201, 0x0012,  Z_(OccupiedHeatingSetpoint), -100 },
+  { Zint16,   Cx0201, 0x0013,  Z_(UnoccupiedCoolingSetpoint), -100 },
+  { Zint16,   Cx0201, 0x0014,  Z_(UnoccupiedHeatingSetpoint), -100 },
+  { Zint16,   Cx0201, 0x0015,  Z_(MinHeatSetpointLimit), -100 },
+  { Zint16,   Cx0201, 0x0016,  Z_(MaxHeatSetpointLimit), -100 },
+  { Zint16,   Cx0201, 0x0017,  Z_(MinCoolSetpointLimit), -100 },
+  { Zint16,   Cx0201, 0x0018,  Z_(MaxCoolSetpointLimit), -100 },
+  { Zmap8,    Cx0201, 0x001A,  Z_(MaxCoolSetpointLimit), 1 },
+  { Zenum8,   Cx0201, 0x001B,  Z_(ControlSequenceOfOperation), 1 },
+  { Zenum8,   Cx0201, 0x001C,  Z_(SystemMode),           1 },
+  // below is Eurotronic specific
+  { Zenum8,   Cx0201, 0x4000, Z_(TRVMode),               1 },
+  { Zuint8,   Cx0201, 0x4001, Z_(SetValvePosition),      1 },
+  { Zuint8,   Cx0201, 0x4002, Z_(ThErrors),              1 },
+  { Zint16,   Cx0201, 0x4003, Z_(CurrentTemperatureSetPoint), -100 },
 
   // Color Control cluster
   { Zuint8,   Cx0300, 0x0000,  Z_(Hue),                  1 },
@@ -1641,6 +1664,7 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
         case 0x00060000:
         case 0x00068000: device.setPower(attr.getBool());                             break;
         case 0x00080000: device.dimmer = uval16;                                      break;
+        case 0x02010000: device.temperature = fval * 10 + 0.5f;                       break;
         case 0x03000000: device.hue = changeUIntScale(uval16, 0, 254, 0, 360);        break;
         case 0x03000001: device.sat = uval16;                                         break;
         case 0x03000003: device.x = uval16;                                           break;
