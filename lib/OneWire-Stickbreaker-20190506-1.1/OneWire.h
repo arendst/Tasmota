@@ -275,18 +275,18 @@ void directModeOutput(IO_REG_TYPE pin)
 #include "portable.h"
 #include "avr/pgmspace.h"
 
-#define GPIO_ID(pin)			(g_APinDescription[pin].ulGPIOId)
-#define GPIO_TYPE(pin)			(g_APinDescription[pin].ulGPIOType)
-#define GPIO_BASE(pin)			(g_APinDescription[pin].ulGPIOBase)
-#define DIR_OFFSET_SS			0x01
-#define DIR_OFFSET_SOC			0x04
-#define EXT_PORT_OFFSET_SS		0x0A
-#define EXT_PORT_OFFSET_SOC		0x50
+#define GPIO_ID(pin)      (g_APinDescription[pin].ulGPIOId)
+#define GPIO_TYPE(pin)      (g_APinDescription[pin].ulGPIOType)
+#define GPIO_BASE(pin)      (g_APinDescription[pin].ulGPIOBase)
+#define DIR_OFFSET_SS     0x01
+#define DIR_OFFSET_SOC      0x04
+#define EXT_PORT_OFFSET_SS    0x0A
+#define EXT_PORT_OFFSET_SOC   0x50
 
 /* GPIO registers base address */
-#define PIN_TO_BASEREG(pin)		((volatile uint32_t *)g_APinDescription[pin].ulGPIOBase)
-#define PIN_TO_BITMASK(pin)		pin
-#define IO_REG_TYPE			uint32_t
+#define PIN_TO_BASEREG(pin)   ((volatile uint32_t *)g_APinDescription[pin].ulGPIOBase)
+#define PIN_TO_BITMASK(pin)   pin
+#define IO_REG_TYPE     uint32_t
 #define IO_REG_BASE_ATTR
 #define IO_REG_MASK_ATTR
 
@@ -307,7 +307,7 @@ void directModeInput(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 {
     if (SS_GPIO == GPIO_TYPE(pin)) {
         WRITE_ARC_REG(READ_ARC_REG((((IO_REG_TYPE)base) + DIR_OFFSET_SS)) & ~(0x01 << GPIO_ID(pin)),
-			((IO_REG_TYPE)(base) + DIR_OFFSET_SS));
+      ((IO_REG_TYPE)(base) + DIR_OFFSET_SS));
     } else {
         MMIO_REG_VAL_FROM_BASE((IO_REG_TYPE)base, DIR_OFFSET_SOC) &= ~(0x01 << GPIO_ID(pin));
     }
@@ -318,7 +318,7 @@ void directModeOutput(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
 {
     if (SS_GPIO == GPIO_TYPE(pin)) {
         WRITE_ARC_REG(READ_ARC_REG(((IO_REG_TYPE)(base) + DIR_OFFSET_SS)) | (0x01 << GPIO_ID(pin)),
-			((IO_REG_TYPE)(base) + DIR_OFFSET_SS));
+      ((IO_REG_TYPE)(base) + DIR_OFFSET_SS));
     } else {
         MMIO_REG_VAL_FROM_BASE((IO_REG_TYPE)base, DIR_OFFSET_SOC) |= (0x01 << GPIO_ID(pin));
     }
@@ -344,11 +344,11 @@ void directWriteHigh(volatile IO_REG_TYPE *base, IO_REG_TYPE pin)
     }
 }
 
-#define DIRECT_READ(base, pin)		directRead(base, pin)
-#define DIRECT_MODE_INPUT(base, pin)	directModeInput(base, pin)
-#define DIRECT_MODE_OUTPUT(base, pin)	directModeOutput(base, pin)
-#define DIRECT_WRITE_LOW(base, pin)	directWriteLow(base, pin)
-#define DIRECT_WRITE_HIGH(base, pin)	directWriteHigh(base, pin)
+#define DIRECT_READ(base, pin)    directRead(base, pin)
+#define DIRECT_MODE_INPUT(base, pin)  directModeInput(base, pin)
+#define DIRECT_MODE_OUTPUT(base, pin) directModeOutput(base, pin)
+#define DIRECT_WRITE_LOW(base, pin) directWriteLow(base, pin)
+#define DIRECT_WRITE_HIGH(base, pin)  directWriteHigh(base, pin)
 
 #elif defined(__riscv)
 

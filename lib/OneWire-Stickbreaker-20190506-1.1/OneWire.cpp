@@ -32,6 +32,17 @@ private email about OneWire).
 OneWire is now very mature code.  No changes other than adding
 definitions for newer hardware support are anticipated.
 
+=======
+Version 2.3.3 ESP32 Stickbreaker 06MAY2019
+  Add a #ifdef to isolate ESP32 mods
+Version 2.3.1 ESP32 everslick 30APR2018
+  add IRAM_ATTR attribute to write_bit/read_bit to fix icache miss delay
+  https://github.com/espressif/arduino-esp32/issues/1335
+  
+Version 2.3 ESP32 stickbreaker 28DEC2017
+  adjust to use portENTER_CRITICAL(&mux) instead of noInterrupts();
+  adjust to use portEXIT_CRITICAL(&mux) instead of Interrupts();
+
 Version 2.3:
   Unknown chip fallback mode, Roger Clark
   Teensy-LC compatibility, Paul Stoffregen
@@ -141,14 +152,18 @@ sample code bearing this copyright.
 
 #include "OneWire.h"
 
+#ifdef ARDUINO_ARCH_ESP32
+#define noInterrupts() {portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;portENTER_CRITICAL(&mux)
+#define interrupts() portEXIT_CRITICAL(&mux);}
+#endif
 
 OneWire::OneWire(uint8_t pin)
 {
-	pinMode(pin, INPUT);
-	bitmask = PIN_TO_BITMASK(pin);
-	baseReg = PIN_TO_BASEREG(pin);
+    pinMode(pin, INPUT);
+    bitmask = PIN_TO_BITMASK(pin);
+    baseReg = PIN_TO_BASEREG(pin);
 #if ONEWIRE_SEARCH
-	reset_search();
+    reset_search();
 #endif
 }
 
@@ -159,60 +174,65 @@ OneWire::OneWire(uint8_t pin)
 //
 // Returns 1 if a device asserted a presence pulse, 0 otherwise.
 //
+#ifdef ARDUINO_ARCH_ESP32
+uint8_t IRAM_ATTR OneWire::reset(void)
+#else
 uint8_t OneWire::reset(void)
+#endif
 {
-	IO_REG_TYPE mask IO_REG_MASK_ATTR = bitmask;
-	volatile IO_REG_TYPE *reg IO_REG_BASE_ATTR = baseReg;
-	uint8_t r;
-	uint8_t retries = 125;
-
-	noInterrupts();
-	DIRECT_MODE_INPUT(reg, mask);
-	interrupts();
-	// wait until the wire is high... just in case
-	do {
-		if (--retries == 0) return 0;
-		delayMicroseconds(2);
-	} while ( !DIRECT_READ(reg, mask));
-
-	noInterrupts();
-	DIRECT_WRITE_LOW(reg, mask);
-	DIRECT_MODE_OUTPUT(reg, mask);	// drive output low
-	interrupts();
-	delayMicroseconds(480);
-	noInterrupts();
-	DIRECT_MODE_INPUT(reg, mask);	// allow it to float
-	delayMicroseconds(70);
-	r = !DIRECT_READ(reg, mask);
-	interrupts();
-	delayMicroseconds(410);
-	return r;
+    IO_REG_TYPE mask IO_REG_MASK_ATTR = bitmask;
+    volatile IO_REG_TYPE *reg IO_REG_BASE_ATTR = baseReg;
+    uint8_t r;
+    uint8_t retries = 125;
+    noInterrupts();
+    DIRECT_MODE_INPUT(reg, mask);
+    interrupts();
+    // wait until the wire is high... just in case
+    do {
+        if (--retries == 0) return 0;
+        delayMicroseconds(2);
+    } while ( !DIRECT_READ(reg, mask));
+ 
+    noInterrupts();
+    DIRECT_WRITE_LOW(reg, mask);
+    DIRECT_MODE_OUTPUT(reg, mask);  // drive output low
+    delayMicroseconds(480);
+    DIRECT_MODE_INPUT(reg, mask);   // allow it to float
+    delayMicroseconds(70);
+    r = !DIRECT_READ(reg, mask);
+    interrupts();
+    delayMicroseconds(410);
+  return r;
 }
 
 //
 // Write a bit. Port and bit is used to cut lookup time and provide
 // more certain timing.
 //
+#ifdef ARDUINO_ARCH_ESP32
+void IRAM_ATTR OneWire::write_bit(uint8_t v)
+#else
 void OneWire::write_bit(uint8_t v)
+#endif
 {
 	IO_REG_TYPE mask IO_REG_MASK_ATTR = bitmask;
 	volatile IO_REG_TYPE *reg IO_REG_BASE_ATTR = baseReg;
 
 	if (v & 1) {
-		noInterrupts();
+        noInterrupts();
 		DIRECT_WRITE_LOW(reg, mask);
 		DIRECT_MODE_OUTPUT(reg, mask);	// drive output low
 		delayMicroseconds(10);
 		DIRECT_WRITE_HIGH(reg, mask);	// drive output high
-		interrupts();
+        interrupts();
 		delayMicroseconds(55);
 	} else {
-		noInterrupts();
+        noInterrupts();
 		DIRECT_WRITE_LOW(reg, mask);
 		DIRECT_MODE_OUTPUT(reg, mask);	// drive output low
 		delayMicroseconds(65);
 		DIRECT_WRITE_HIGH(reg, mask);	// drive output high
-		interrupts();
+        interrupts();
 		delayMicroseconds(5);
 	}
 }
@@ -221,20 +241,24 @@ void OneWire::write_bit(uint8_t v)
 // Read a bit. Port and bit is used to cut lookup time and provide
 // more certain timing.
 //
+#ifdef ARDUINO_ARCH_ESP32
+uint8_t IRAM_ATTR OneWire::read_bit(void)
+#else
 uint8_t OneWire::read_bit(void)
+#endif
 {
 	IO_REG_TYPE mask IO_REG_MASK_ATTR = bitmask;
 	volatile IO_REG_TYPE *reg IO_REG_BASE_ATTR = baseReg;
 	uint8_t r;
 
-	noInterrupts();
+    noInterrupts();
 	DIRECT_MODE_OUTPUT(reg, mask);
 	DIRECT_WRITE_LOW(reg, mask);
 	delayMicroseconds(3);
 	DIRECT_MODE_INPUT(reg, mask);	// let pin float, pull up will raise
 	delayMicroseconds(10);
 	r = DIRECT_READ(reg, mask);
-	interrupts();
+    interrupts();
 	delayMicroseconds(53);
 	return r;
 }
@@ -247,17 +271,17 @@ uint8_t OneWire::read_bit(void)
 // other mishap.
 //
 void OneWire::write(uint8_t v, uint8_t power /* = 0 */) {
-    uint8_t bitMask;
+  uint8_t bitMask;
 
-    for (bitMask = 0x01; bitMask; bitMask <<= 1) {
-	OneWire::write_bit( (bitMask & v)?1:0);
-    }
-    if ( !power) {
-	noInterrupts();
-	DIRECT_MODE_INPUT(baseReg, bitmask);
-	DIRECT_WRITE_LOW(baseReg, bitmask);
-	interrupts();
-    }
+  for (bitMask = 0x01; bitMask; bitMask <<= 1) {
+    OneWire::write_bit( (bitMask & v)?1:0);
+  }
+  if ( !power) {
+      noInterrupts();
+      DIRECT_MODE_INPUT(baseReg, bitmask);
+      DIRECT_WRITE_LOW(baseReg, bitmask);
+      interrupts();
+  }
 }
 
 void OneWire::write_bytes(const uint8_t *buf, uint16_t count, bool power /* = 0 */) {
@@ -279,7 +303,7 @@ uint8_t OneWire::read() {
     uint8_t r = 0;
 
     for (bitMask = 0x01; bitMask; bitMask <<= 1) {
-	if ( OneWire::read_bit()) r |= bitMask;
+    if ( OneWire::read_bit()) r |= bitMask;
     }
     return r;
 }
@@ -311,9 +335,9 @@ void OneWire::skip()
 
 void OneWire::depower()
 {
-	noInterrupts();
-	DIRECT_MODE_INPUT(baseReg, bitmask);
-	interrupts();
+    noInterrupts();
+    DIRECT_MODE_INPUT(baseReg, bitmask);
+    interrupts();
 }
 
 #if ONEWIRE_SEARCH
@@ -391,13 +415,12 @@ uint8_t OneWire::search(uint8_t *newAddr, bool search_mode /* = true */)
          LastFamilyDiscrepancy = 0;
          return FALSE;
       }
-
       // issue the search command
       if (search_mode == true) {
         write(0xF0);   // NORMAL SEARCH
       } else {
         write(0xEC);   // CONDITIONAL SEARCH
-      }
+        }
 
       // loop to do the search
       do
@@ -405,7 +428,7 @@ uint8_t OneWire::search(uint8_t *newAddr, bool search_mode /* = true */)
          // read a bit and its complement
          id_bit = read_bit();
          cmp_id_bit = read_bit();
-
+ 
          // check for no devices on 1-wire
          if ((id_bit == 1) && (cmp_id_bit == 1))
             break;
@@ -459,7 +482,6 @@ uint8_t OneWire::search(uint8_t *newAddr, bool search_mode /* = true */)
          }
       }
       while(rom_byte_number < 8);  // loop until through all ROM bytes 0-7
-
       // if the search was successful then
       if (!(id_bit_number < 65))
       {
@@ -524,12 +546,12 @@ static const uint8_t PROGMEM dscrc_table[] = {
 //
 uint8_t OneWire::crc8(const uint8_t *addr, uint8_t len)
 {
-	uint8_t crc = 0;
+    uint8_t crc = 0;
 
-	while (len--) {
-		crc = pgm_read_byte(dscrc_table + (crc ^ *addr++));
-	}
-	return crc;
+    while (len--) {
+        crc = pgm_read_byte(dscrc_table + (crc ^ *addr++));
+    }
+    return crc;
 }
 #else
 //
@@ -538,22 +560,22 @@ uint8_t OneWire::crc8(const uint8_t *addr, uint8_t len)
 //
 uint8_t OneWire::crc8(const uint8_t *addr, uint8_t len)
 {
-	uint8_t crc = 0;
+    uint8_t crc = 0;
 
-	while (len--) {
+    while (len--) {
 #if defined(__AVR__)
-		crc = _crc_ibutton_update(crc, *addr++);
+        crc = _crc_ibutton_update(crc, *addr++);
 #else
-		uint8_t inbyte = *addr++;
-		for (uint8_t i = 8; i; i--) {
-			uint8_t mix = (crc ^ inbyte) & 0x01;
-			crc >>= 1;
-			if (mix) crc ^= 0x8C;
-			inbyte >>= 1;
-		}
+        uint8_t inbyte = *addr++;
+        for (uint8_t i = 8; i; i--) {
+            uint8_t mix = (crc ^ inbyte) & 0x01;
+            crc >>= 1;
+            if (mix) crc ^= 0x8C;
+            inbyte >>= 1;
+        }
 #endif
-	}
-	return crc;
+    }
+    return crc;
 }
 #endif
 
@@ -592,6 +614,12 @@ uint16_t OneWire::crc16(const uint8_t* input, uint16_t len, uint16_t crc)
 #endif
     return crc;
 }
+#endif
+
+
+#ifdef ARDUINO_ARCH_ESP32
+#undef noInterrupts()
+#undef interrupts()
 #endif
 
 #endif
