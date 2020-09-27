@@ -21,8 +21,6 @@
 
 #define XDRV_23                    23
 
-#include "JsonParser.h"
-
 const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
 #ifdef USE_ZIGBEE_ZNP
   D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEEZNPRECEIVE "|"
@@ -626,7 +624,8 @@ void CmndZbSend(void) {
   // ZbSend { "device":"0x1234", "endpoint":"0x03", "send":{"Color":"1,2"} }
   // ZbSend { "device":"0x1234", "endpoint":"0x03", "send":{"Color":"0x1122,0xFFEE"} }
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  JsonParserObject root = JsonParser(XdrvMailbox.data).getRootObject();
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserObject root = parser.getRootObject();
   if (!root) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
 
   // params
@@ -748,7 +747,8 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
 
   // local endpoint is always 1, IEEE addresses are calculated
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  JsonParserObject root = JsonParser(XdrvMailbox.data).getRootObject();
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserObject root = parser.getRootObject();
   if (!root) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
 
   // params
@@ -1064,10 +1064,10 @@ void CmndZbSave(void) {
 //   ZbRestore {"Device":"0x5ADF","Name":"Petite_Lampe","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"]}
 void CmndZbRestore(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  JsonParser p(XdrvMailbox.data);
-  JsonParserToken root = p.getRoot();
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserToken root = parser.getRoot();
 
-  if (!p || !(root.isObject() || root.isArray())) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
+  if (!parser || !(root.isObject() || root.isArray())) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
 
   // Check is root contains `ZbStatus<x>` key, if so change the root
   JsonParserToken zbstatus = root.getObject().findStartsWith(PSTR("ZbStatus"));
@@ -1152,6 +1152,15 @@ void CmndZbPermitJoin(void) {
   buf.add8(duration);
   buf.add8(0x01);       // TC_Significance - This field shall always have a value of 1, indicating a request to change the Trust Center policy. If a frame is received with a value of 0, it shall be treated as having a value of 1.
   EZ_SendZDO(0xFFFC, ZDO_Mgmt_Permit_Joining_req, buf.buf(), buf.len());
+
+  // Set Timer after the end of the period, and reset a non-expired previous timer
+  if (duration > 0) {
+    // Log pairing mode enabled
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":21,\"Message\":\"Pairing mode enabled\"}}"));
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+  }
+  // always register timer for disable, might happen at next tick
+  zigbee_devices.setTimer(0x0000 /* coordinator */, 0 /* group addr*/, duration * 1000, 0, 0 /* endpoint */, Z_CAT_PERMIT_JOIN, 0 /* value */, &Z_PermitJoinDisable);
 #endif // USE_ZIGBEE_EZSP
 
   ResponseCmndDone();
@@ -1219,7 +1228,8 @@ void CmndZbConfig(void) {
   // if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
   RemoveAllSpaces(XdrvMailbox.data);
   if (strlen(XdrvMailbox.data) > 0) {
-    JsonParserObject root = JsonParser(XdrvMailbox.data).getRootObject();
+    JsonParser parser(XdrvMailbox.data);
+    JsonParserObject root = parser.getRootObject();
     if (!root) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
     // Channel
 
@@ -1347,6 +1357,7 @@ void ZigbeeShow(bool json)
       ".ztd td:not(:first-child){width:20px;font-size:70%%}"
       ".ztd td:last-child{width:45px}"
       ".ztd .bt{margin-right:10px;}" // Margin right should be half of the not-first width
+      ".htr{line-height:20px}"
       // Lighting
       ".bx{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
       // Signal Strength Indicator
@@ -1396,7 +1407,7 @@ void ZigbeeShow(bool json)
       }
 
       WSContentSend_PD(PSTR(
-        "<tr class='ztd'>"
+        "<tr class='ztd htr'>"
           "<td><b>%s</b></td>" // name
           "<td>%s</td>" // sbatt (Battery Indicator)
           "<td><div title='" D_LQI " %s' class='ssi'>" // slqi
@@ -1425,7 +1436,7 @@ void ZigbeeShow(bool json)
       bool pressure_ok    = device.validPressure();
 
       if (temperature_ok || humidity_ok || pressure_ok) {
-        WSContentSend_P(PSTR("<tr><td colspan=\"4\">&#9478;"));
+        WSContentSend_P(PSTR("<tr class='htr'><td colspan=\"4\">&#9478;"));
         if (temperature_ok) {
           char buf[12];
           dtostrf(device.temperature / 10.0f, 3, 1, buf);
@@ -1446,7 +1457,7 @@ void ZigbeeShow(bool json)
       if (power_ok) {
         uint8_t channels = device.getLightChannels();
         if (0xFF == channels) { channels = 5; }     // if number of channel is unknown, display all known attributes
-        WSContentSend_P(PSTR("<tr><td colspan=\"4\">&#9478; %s"), device.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
+        WSContentSend_P(PSTR("<tr class='htr'><td colspan=\"4\">&#9478; %s"), device.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
         if (device.validDimmer() && (channels >= 1)) {
           WSContentSend_P(PSTR(" &#128261; %d%%"), changeUIntScale(device.dimmer,0,254,0,100));
         }

@@ -104,7 +104,8 @@ void CmndRfSend(void)
     int repeat = 10;
     int pulse = 350;
 
-    JsonParserObject root = JsonParser(XdrvMailbox.data).getRootObject();
+    JsonParser parser(XdrvMailbox.data);
+    JsonParserObject root = parser.getRootObject();
     if (root) {
       // RFsend {"data":0x501014,"bits":24,"protocol":1,"repeat":10,"pulse":350}
       char parm_uc[10];

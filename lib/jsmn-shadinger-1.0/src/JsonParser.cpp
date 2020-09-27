@@ -1,5 +1,5 @@
 /*
-  JsonParser.h - lightweight JSON parser
+  JsonParser.cpp - lightweight JSON parser
 
   Copyright (C) 2020  Stephan Hadinger
 
@@ -178,7 +178,7 @@ JsonParserArray::const_iterator::const_iterator(const JsonParserArray t): tok(t)
 }
 
 JsonParserArray::const_iterator JsonParserArray::const_iterator::const_iterator::operator++() {
-  if (remaining == 0) { tok.t = nullptr; }
+  if (remaining <= 1) { tok.t = nullptr; }
   else {
     remaining--;
     tok.skipToken();  // munch value
@@ -234,7 +234,7 @@ JsonParserObject::const_iterator::const_iterator(const JsonParserObject t): tok(
 }
 
 JsonParserObject::const_iterator JsonParserObject::const_iterator::operator++() {
-  if (remaining == 0) { tok.t = nullptr; }
+  if (remaining <= 1) { tok.t = nullptr; }
   else {
     remaining--;
     tok.nextOne();          // munch key
@@ -336,7 +336,7 @@ float JsonParserToken::getFloat(float val) const {
 const char * JsonParserToken::getStr(const char * val) const {
   if (t->type == JSMN_INVALID) { return val; }
   if (t->type == JSMN_NULL) return "";
-  return (t->type >= JSMN_STRING) ? &k_current_json_buffer[t->start] : "";
+  return (t->type >= JSMN_STRING) ? &k_current_json_buffer[t->start] : val;
 }
 
 
@@ -365,6 +365,9 @@ float JsonParserObject::getFloat(const char * needle, float val) const {
 }
 const char * JsonParserObject::getStr(const char * needle, const char * val) const {
   return (*this)[needle].getStr(val);
+}
+const char * JsonParserObject::getStr(const char * needle) const {
+  return getStr(needle, "");
 }
 
 void JsonParser::parse(char * json_in) {
@@ -464,6 +467,9 @@ JsonParserToken JsonParserObject::operator[](const char * needle) const {
   return JsonParserToken(&token_bad);
 }
 
+JsonParserToken JsonParserObject::operator[](const String & needle) const {
+  return (*this)[needle.c_str()];
+}
 
 JsonParserToken JsonParserObject::findStartsWith(const char * needle) const {
   // key can be in PROGMEM

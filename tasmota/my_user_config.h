@@ -369,8 +369,11 @@
 //#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA (+13k code)
 
 // -- MQTT ----------------------------------------
-#define MQTT_TELE_RETAIN     0                   // Tele messages may send retain flag (0 = off, 1 = on)
-#define MQTT_CLEAN_SESSION   1                   // Mqtt clean session connection (0 = No clean session, 1 = Clean session (default))
+#define MQTT_LWT_OFFLINE       "Offline"         // MQTT LWT offline topic message
+#define MQTT_LWT_ONLINE        "Online"          // MQTT LWT online topic message
+
+#define MQTT_TELE_RETAIN       0                 // Tele messages may send retain flag (0 = off, 1 = on)
+#define MQTT_CLEAN_SESSION     1                 // Mqtt clean session connection (0 = No clean session, 1 = Clean session (default))
 
 // -- MQTT - Domoticz -----------------------------
 #define USE_DOMOTICZ                             // Enable Domoticz (+6k code, +0.3k mem)

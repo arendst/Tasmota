@@ -1328,7 +1328,8 @@ void ThermostatDebug(uint8_t ctr_output)
 #endif // DEBUG_THERMOSTAT
 
 void ThermostatGetLocalSensor(uint8_t ctr_output) {
-  JsonParserObject root = JsonParser(mqtt_data).getRootObject();
+  JsonParser parser(mqtt_data);
+  JsonParserObject root = parser.getRootObject();
   if (root) {
     JsonParserToken value_token = root[PSTR(THERMOSTAT_SENSOR_NAME)].getObject()[PSTR("Temperature")]; 
     if (value_token.isNum()) {

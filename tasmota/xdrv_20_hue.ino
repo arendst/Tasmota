@@ -569,7 +569,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
   if (Webserver->args()) {
     response = "[";
 
-    JsonParser parser = JsonParser((char*) Webserver->arg((Webserver->args())-1).c_str());
+    JsonParser parser((char*) Webserver->arg((Webserver->args())-1).c_str());
     JsonParserObject root = parser.getRootObject();
 
     JsonParserToken hue_on = root[PSTR("on")];
