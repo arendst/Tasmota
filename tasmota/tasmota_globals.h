@@ -144,6 +144,12 @@ String EthernetMacAddress(void);
 #ifndef MQTT_CLEAN_SESSION
 #define MQTT_CLEAN_SESSION          1          // 0 = No clean session, 1 = Clean session (default)
 #endif
+#ifndef MQTT_LWT_OFFLINE
+#define MQTT_LWT_OFFLINE            "Offline"  // MQTT LWT offline topic message
+#endif
+#ifndef MQTT_LWT_ONLINE
+#define MQTT_LWT_ONLINE             "Online"   // MQTT LWT online topic message
+#endif
 
 #ifndef MESSZ
 //#define MESSZ                       1040     // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1200)
