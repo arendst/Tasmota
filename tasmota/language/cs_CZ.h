@@ -125,10 +125,10 @@
 #define D_NOISE "Hluk"
 #define D_NONE "Žádný"
 #define D_OFF "Vyp."
-#define D_OFFLINE "Neaktivní"
+#define D_OFFLINE "Offline"                  // Don't translate, LWT message! Nepředkládat, LWT zpráva!
 #define D_OK "OK"
 #define D_ON "Zap."
-#define D_ONLINE "Aktivní"
+#define D_ONLINE "Online"                  // Don't translate, LWT message! Nepředkládat, LWT zpráva!
 #define D_PASSWORD "Heslo"
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Účiník"
