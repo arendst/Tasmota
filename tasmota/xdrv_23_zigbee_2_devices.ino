@@ -645,7 +645,12 @@ void Z_Devices::setLQI(uint16_t shortaddr, uint8_t lqi) {
 
 void Z_Devices::setLastSeenNow(uint16_t shortaddr) {
   if (shortaddr == localShortAddr) { return; }
-  getShortAddr(shortaddr).last_seen= Rtc.utc_time;
+  // Only update time if after 2020-01-01 0000.
+  // Fixes issue where zigbee device pings before WiFi/NTP has set utc_time
+  // to the correct time, and "last seen" calculations are based on the
+  // pre-corrected last_seen time and the since-corrected utc_time.
+  if (Rtc.utc_time < 1577836800) { return; }
+  getShortAddr(shortaddr).last_seen = Rtc.utc_time;
 }
 
 
