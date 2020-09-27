@@ -413,17 +413,13 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zint16,   Cx0201, 0x0012,  Z_(OccupiedHeatingSetpoint), -100 },
   { Zint16,   Cx0201, 0x0013,  Z_(UnoccupiedCoolingSetpoint), -100 },
   { Zint16,   Cx0201, 0x0014,  Z_(UnoccupiedHeatingSetpoint), -100 },
-  { Zint16,   Cx0201, 0x0015,  Z_(MinHeatSetpointLimit), -100 },
-  { Zint16,   Cx0201, 0x0016,  Z_(MaxHeatSetpointLimit), -100 },
-  { Zint16,   Cx0201, 0x0017,  Z_(MinCoolSetpointLimit), -100 },
-  { Zint16,   Cx0201, 0x0018,  Z_(MaxCoolSetpointLimit), -100 },
-  { Zmap8,    Cx0201, 0x001A,  Z_(MaxCoolSetpointLimit), 1 },
+  { Zmap8,    Cx0201, 0x001A,  Z_(RemoteSensing),        1 },
   { Zenum8,   Cx0201, 0x001B,  Z_(ControlSequenceOfOperation), 1 },
   { Zenum8,   Cx0201, 0x001C,  Z_(SystemMode),           1 },
   // below is Eurotronic specific
   { Zenum8,   Cx0201, 0x4000, Z_(TRVMode),               1 },
   { Zuint8,   Cx0201, 0x4001, Z_(SetValvePosition),      1 },
-  { Zuint8,   Cx0201, 0x4002, Z_(ThErrors),              1 },
+  { Zuint8,   Cx0201, 0x4002, Z_(EurotronicErrors),      1 },
   { Zint16,   Cx0201, 0x4003, Z_(CurrentTemperatureSetPoint), -100 },
 
   // Color Control cluster
@@ -1142,11 +1138,26 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
           attr_list.addAttribute(0x0001, 0x0021).setUInt(toPercentageCR2032(mv) * 2);
         }
         break;
+      case 0x02010008:    // Pi Heating Demand - solve Eutotronic bug
+        {
+          const char * manufacturer_c = zigbee_devices.getManufacturerId(_srcaddr);  // null if unknown
+          String manufacturerId((char*) manufacturer_c);
+          if (manufacturerId.equals(F("Eurotronic"))) {
+            // Eurotronic does not report 0..100 but 0..255, including 255 which is normally an ivalid value
+            uint8_t valve = attr.getUInt();
+            if (attr.isNone()) { valve = 255; }
+            uint8_t valve_100 = changeUIntScale(valve, 0, 255, 0, 100);
+            attr.setUInt(valve_100);
+          }
+        }
+        break;
       case 0x04030000:    // Pressure
-        int16_t pressure = attr.getInt();
-        int16_t pressure_sealevel = (pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0f), 5.255f)) - 21.6f;
-        attr_list.addAttribute(0x0403, 0xFF00).setInt(pressure_sealevel);
-        // We create a synthetic attribute 0403/FF00 to indicate sea level
+        {
+          int16_t pressure = attr.getInt();
+          int16_t pressure_sealevel = (pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0f), 5.255f)) - 21.6f;
+          attr_list.addAttribute(0x0403, 0xFF00).setInt(pressure_sealevel);
+          // We create a synthetic attribute 0403/FF00 to indicate sea level
+        }
         break;
     }
   }
@@ -1692,6 +1703,10 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
         case 0x00068000: device.setPower(attr.getBool());                             break;
         case 0x00080000: device.dimmer = uval16;                                      break;
         case 0x02010000: device.temperature = fval * 10 + 0.5f;                       break;
+        case 0x02010008: device.th_setpoint = uval16;                                 break;
+        case 0x02010012: device.temperature_target = fval * 10 + 0.5f;                break;
+        case 0x02010007: device.th_setpoint = uval16;                                 break;
+        case 0x02010011: device.temperature_target = fval * 10 + 0.5f;                break;
         case 0x03000000: device.hue = changeUIntScale(uval16, 0, 254, 0, 360);        break;
         case 0x03000001: device.sat = uval16;                                         break;
         case 0x03000003: device.x = uval16;                                           break;
