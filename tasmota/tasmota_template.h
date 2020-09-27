@@ -1389,7 +1389,7 @@ enum SupportedTemplates8285 {
   TMP_SONOFF_POW_R2, TMP_BLITZWOLF_BWSHP, TMP_SHELLY1, TMP_SHELLY2, TMP_PHILIPS, TMP_NEO_COOLCAM, TMP_ESP_SWITCH, TMP_OBI,
   TMP_TECKIN, TMP_APLIC_WDP303075, TMP_TUYA_DIMMER, TMP_GOSUND, TMP_ARMTRONIX_DIMMERS, TMP_SK03_TUYA, TMP_PS_16_DZ,
   TMP_TECKIN_US, TMP_MANZOKU_EU_4, TMP_OBI2, TMP_YTF_IR_BRIDGE, TMP_DIGOO, TMP_KA10, TMP_ZX2820, TMP_MI_DESK_LAMP, TMP_SP10,
-  TMP_WAGA, TMP_SYF05, TMP_EXS_DIMMER, TMP_PWM_DIMMER, TMP_SONOFF_ZB_BRIDGE,
+  TMP_WAGA, TMP_SYF05, TMP_EXS_DIMMER, TMP_PWM_DIMMER, TMP_SONOFF_ZB_BRIDGE, TMP_SHELLY_DIMMER,
   TMP_MAXMODULE_8285 };
 
 enum SupportedTemplates8266 {
@@ -1472,6 +1472,7 @@ const uint8_t kModuleTemplateList[MAXMODULE] PROGMEM = {
   TMP_PWM_DIMMER,
   TMP_SONOFF_DUAL,      // SONOFF_D1
   TMP_SONOFF_ZB_BRIDGE,
+  TMP_SHELLY_DIMMER,
   };
 
 /*********************************************************************************************\
@@ -2539,6 +2540,26 @@ const mytmplt8266 kModules8266[TMP_MAXMODULE_8285] PROGMEM = {
     0,                  // GPIO15 connected to IO15 pad, also used for logging
     GPI8_KEY1,          // GPIO16 Button
     0
+  },
+  {                   // SHELLY_DIMMER Shelly WiFi Dimmer v1 (ESP8266 w/ separate MCU dimmer)
+                      // https://shelly.cloud/wifi-smart-home-automation-shelly-dimmer/
+    0,                // GPIO00
+    GPIO_TXD,         // GPIO01 Co-processor serial TX
+    0,                // GPIO02 LED Link
+    GPIO_RXD,         // GPIO03 Co-processor serial RX
+    GPIO_SHELLY_DIMMER_BOOT0,  // GPIO04 Co-processor Boot0 pin
+    GPIO_SHELLY_DIMMER_RST_INV,  // GPIO05 Co-processor reset inverted
+                      // GPIO06 (SD_CLK   Flash)
+                      // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                      // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+                      // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+                      // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                      // GPIO11 (SD_CMD   Flash)
+    GPIO_SWT1_NP,     // GPIO12 SW 1 pin
+    0,                // GPIO13
+    GPIO_SWT2_NP,     // GPIO14 SW 2 pin
+    GPIO_LEDLNK,      // GPIO15
+    0, 0
   }
 };
 
@@ -2654,26 +2675,6 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
     GPI8_LED1_INV,      // GPIO13 WIFI_CHK Blue Led on PCA (0 = On, 1 = Off) - Link and Power status
     GPI8_REL2,          // GPIO14 WIFI_O1 Relay 2 (0 = Off, 1 = On) controlling the fan
     GPI8_REL4,          // GPIO15 WIFI_O3 Relay 4 (0 = Off, 1 = On) controlling the fan
-    0, 0
-  },
-  {                   // SHELLY_DIMMER Shelly WiFi Dimmer v1 (ESP8266 w/ separate MCU dimmer)
-                      // https://shelly.cloud/wifi-smart-home-automation-shelly-dimmer/
-    0,                // GPIO00
-    GPIO_TXD,         // GPIO01 Co-processor serial TX
-    0,                // GPIO02 LED Link
-    GPIO_RXD,         // GPIO03 Co-processor serial RX
-    GPIO_SHELLY_DIMMER_BOOT0,  // GPIO04 Co-processor Boot0 pin
-    GPIO_SHELLY_DIMMER_RST_INV,  // GPIO05 Co-processor reset inverted
-                      // GPIO06 (SD_CLK   Flash)
-                      // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
-                      // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
-    0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
-    0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
-                      // GPIO11 (SD_CMD   Flash)
-    GPIO_SWT1_NP,     // GPIO12 SW 1 pin
-    0,                // GPIO13
-    GPIO_SWT2_NP,     // GPIO14 SW 2 pin
-    GPIO_LEDLNK,      // GPIO15
     0, 0
   }
 };
