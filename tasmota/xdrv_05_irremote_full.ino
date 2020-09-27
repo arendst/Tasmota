@@ -331,7 +331,15 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   }
 
   UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_MODEL));
-  if (json.containsKey(parm_uc)) { state.model = IRac::strToModel(json[parm_uc]); }
+  // extract "SendOnly" flag from "model" field. A better permanent way would be to add a separate field for this
+  const char * model = json[parm_uc];
+  bool stateOnly = false;
+  if (strncasecmp(model, "StateOnly", 9) == 0) {
+    stateOnly = true;
+    model += 9; // skip this prefix and parse the rest of the model
+  }
+  // parse model of the ac
+  if (json.containsKey(parm_uc)) { state.model = IRac::strToModel(model); }
   UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_MODE));
   if (json.containsKey(parm_uc)) { state.mode = IRac::strToOpmode(json[parm_uc]); }
   UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_SWINGV));
@@ -368,10 +376,15 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   if (json[parm_uc]) { state.sleep = json[parm_uc]; }
   //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
 
-  IRac ac(Pin(GPIO_IRSEND));
-  bool success = ac.sendAc(state, irhvac_stateful && irac_prev_state.protocol == state.protocol ? &irac_prev_state : nullptr);
-  if (!success) { return IE_SYNTAX_IRHVAC; }
-  // don't store what we sent for next time, expect us to receive what we just sent back (loopback) and only update the state there. this will prevent double toggle.
+  if (!stateOnly) {
+    IRac ac(Pin(GPIO_IRSEND));
+    bool success = ac.sendAc(state, irhvac_stateful && irac_prev_state.protocol == state.protocol ? &irac_prev_state : nullptr);
+    if (!success) { return IE_SYNTAX_IRHVAC; }
+    // don't store what we sent for next time, expect us to receive what we just sent back (loopback) and only update the state there. this will prevent double toggle.
+  }
+  if (stateOnly && irhvac_stateful) { // don't send anything, just update the state if we requested to sync state manually
+    irac_prev_state = state;
+  }
 
   Response_P(PSTR("{\"" D_CMND_IRHVAC "\":%s}"), sendACJsonState(state).c_str());
   return IE_RESPONSE_PROVIDED;
