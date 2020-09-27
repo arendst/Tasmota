@@ -27,7 +27,7 @@
 // #define SHELLY_HW_DIMMING
 
 #define XDRV_44                     44
-#define XNRG_17                     17
+#define XNRG_31                     31
 
 #define SHD_DRIVER_MAJOR_VERSION    0
 #define SHD_DRIVER_MINOR_VERSION    8
@@ -772,7 +772,7 @@ void CmndShdWarmupTime(void)
 \*********************************************************************************************/
 
 #ifdef USE_ENERGY_SENSOR
-bool Xnrg17(uint8_t function)
+bool Xnrg31(uint8_t function)
 {
   bool result = false;
 
@@ -782,7 +782,7 @@ bool Xnrg17(uint8_t function)
         Energy.current_available = false;
         Energy.voltage_available = false;
 #endif // SHELLY_VOLTAGE_MON
-        energy_flg = XNRG_17;
+        energy_flg = XNRG_31;
   }
   return result;
 }
