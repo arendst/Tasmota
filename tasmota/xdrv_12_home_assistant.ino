@@ -967,6 +967,7 @@ void HAssDiscovery(void)
 
   if (Settings.flag.hass_discovery || (1 == hass_mode))
   { // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
+    hass_mode = 2;
     // Send info about buttons
     HAssAnnounceButtons();
 
@@ -985,6 +986,7 @@ void HAssDiscovery(void)
     // Send info about status sensor
     HAssAnnounceDeviceInfoAndStatusSensor();
     masterlog_level = 0; // Restores weblog level
+    hass_mode = 3;
   }
 }
 
