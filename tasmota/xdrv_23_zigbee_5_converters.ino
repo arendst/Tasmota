@@ -489,6 +489,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zint16,   Cx0403, 0x0012,  Z_(PressureMaxScaledValue),       1 },    //
   { Zuint16,  Cx0403, 0x0013,  Z_(PressureScaledTolerance),      1 },    //
   { Zint8,    Cx0403, 0x0014,  Z_(PressureScale),                1 },    //
+  { Zint16,   Cx0403, 0xFF00,  Z_(SeaPressure),                  1 },     // Pressure at Sea Level, Tasmota specific
   { Zunk,     Cx0403, 0xFFFF,  Z_(),                    0 },     // Remove all other Pressure values
 
   // Flow Measurement cluster
@@ -665,6 +666,7 @@ public:
 
   void parseReportAttributes(Z_attribute_list& attr_list);
   void generateSyntheticAttributes(Z_attribute_list& attr_list);
+  void computeSyntheticAttributes(Z_attribute_list& attr_list);
   void generateCallBacks(Z_attribute_list& attr_list);
   void parseReadAttributes(Z_attribute_list& attr_list);
   void parseReadAttributesResponse(Z_attribute_list& attr_list);
@@ -1096,6 +1098,9 @@ void ZCLFrame::parseReportAttributes(Z_attribute_list& attr_list) {
   }
 }
 
+//
+// Extract attributes hidden in other compound attributes
+//
 void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
   // scan through attributes and apply specific converters
   for (auto &attr : attr_list) {
@@ -1103,11 +1108,6 @@ void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
     uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
 
     switch (ccccaaaa) {      // 0xccccaaaa . c=cluster, a=attribute
-      case 0x00010020:       // BatteryVoltage
-        if (attr_list.countAttribute(0x0001,0x0021) == 0) {   // if it does not already contain BatteryPercentage
-          uint32_t mv = attr.getUInt()*100;
-          attr_list.addAttribute(0x0001, 0x0021).setUInt(toPercentageCR2032(mv) * 2);
-        }
       case 0x0000FF01:
         syntheticAqaraSensor(attr_list, attr);
         break;
@@ -1120,6 +1120,33 @@ void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
       case 0x01010055:
       case 0x01010508:
         syntheticAqaraVibration(attr_list, attr);
+        break;
+    }
+  }
+}
+
+//
+// Compute new attributes based on the standard set
+// Note: both function are now split to compute on extracted attributes
+//
+void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
+  // scan through attributes and apply specific converters
+  for (auto &attr : attr_list) {
+    if (attr.key_is_str) { continue; }    // pass if key is a name
+    uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
+
+    switch (ccccaaaa) {      // 0xccccaaaa . c=cluster, a=attribute
+      case 0x00010020:       // BatteryVoltage
+        if (attr_list.countAttribute(0x0001,0x0021) == 0) {   // if it does not already contain BatteryPercentage
+          uint32_t mv = attr.getUInt()*100;
+          attr_list.addAttribute(0x0001, 0x0021).setUInt(toPercentageCR2032(mv) * 2);
+        }
+        break;
+      case 0x04030000:    // Pressure
+        int16_t pressure = attr.getInt();
+        int16_t pressure_sealevel = (pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0f), 5.255f)) - 21.6f;
+        attr_list.addAttribute(0x0403, 0xFF00).setInt(pressure_sealevel);
+        // We create a synthetic attribute 0403/FF00 to indicate sea level
         break;
     }
   }
@@ -1672,6 +1699,7 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
         case 0x03000007: device.ct = uval16;                                          break;
         case 0x03000008: device.colormode = uval16;                                   break;
         case 0x04020000: device.temperature = fval * 10 + 0.5f;                       break;
+        case 0x0403FF00: device.pressure = fval + 0.5f;                               break;  // give priority to sea level
         case 0x04030000: device.pressure = fval + 0.5f;                               break;
         case 0x04050000: device.humidity = fval + 0.5f;                               break;
         case 0x0B040505: device.mains_voltage = uval16;                               break;
