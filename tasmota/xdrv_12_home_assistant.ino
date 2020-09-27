@@ -59,8 +59,8 @@ const char HASS_DISCOVER_SENSOR[] PROGMEM =
 
 const char HASS_DISCOVER_SENSOR_LWT[] PROGMEM =
   ",\"avty_t\":\"%s\","                           // tele/dualr2/LWT
-  "\"pl_avail\":\"" D_ONLINE "\","                // Online
-  "\"pl_not_avail\":\"" D_OFFLINE "\"";           // Offline
+  "\"pl_avail\":\"" MQTT_LWT_ONLINE "\","         // Online
+  "\"pl_not_avail\":\"" MQTT_LWT_OFFLINE "\"";    // Offline
 
 const char HASS_DISCOVER_RELAY[] PROGMEM =
   ",\"cmd_t\":\"%s\","                            // cmnd/dualr2/POWER2
@@ -184,8 +184,8 @@ const char HASS_DISCOVER_DEVICE[] PROGMEM =                         // Basic par
   "\"hn\":\"%s\","                                                  // Host Name
   "\"mac\":\"%s\","                                                 // Full MAC as Device id
   "\"md\":\"%s\","                                                  // Module Name
-  "\"ofln\":\"" D_OFFLINE "\","                                     // Payload Offline
-  "\"onln\":\"" D_ONLINE "\","                                      // Payload Online
+  "\"ofln\":\"" MQTT_LWT_OFFLINE "\","                              // Payload Offline
+  "\"onln\":\"" MQTT_LWT_ONLINE "\","                               // Payload Online
   "\"state\":[\"%s\",\"%s\",\"%s\",\"%s\"],"                        // State text for "OFF","ON","TOGGLE","HOLD"
   "\"sw\":\"%s\","                                                  // Software Version
   "\"t\":\"%s\","                                                   // Topic
