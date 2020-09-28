@@ -65,10 +65,12 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Fix ``status 13`` json message
 - Fix Shelly 2.5 higher temperature regression from 8.2.0.1 (#7991)
 - Change replace ArduinoJson with JSMN for JSON parsing
+- Change ``WakeUp`` uses 256 steps instead of 100 (#9241)
 - Add command ``SetOption110 1`` to disable Zigbee auto-config when pairing new devices
 - Add command ``SetOption111 1`` to enable frequency output for buzzer GPIO (#8994)
 - Add command ``SetOption112 1`` to enable friendly name in zigbee topic (use with SetOption89)
 - Add ``#define USE_MQTT_AWS_IOT_LIGHT`` for password based AWS IoT authentication
+- Add ``#define MQTT_LWT_OFFLINE`` and ``#define MQTT_LWT_ONLINE`` to user_config.h (#9395)
 - Add new shutter modes (#9244)
 - Add Zigbee auto-config when pairing
 - Add support for MLX90640 IR array temperature sensor by Christian Baars

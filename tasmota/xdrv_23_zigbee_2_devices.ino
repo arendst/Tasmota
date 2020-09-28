@@ -72,10 +72,13 @@ public:
   int16_t               temperature;    // temperature in 1/10th of Celsius, 0x8000 if unknown
   uint16_t              pressure;       // air pressure in hPa, 0xFFFF if unknown
   uint8_t               humidity;       // humidity in percent, 0..100, 0xFF if unknown
-  // powe plug data
+  // power plug data
   uint16_t              mains_voltage;  // AC voltage
   int16_t               mains_power;    // Active power
   uint32_t              last_seen;      // Last seen time (epoch)
+  // thermostat
+  int16_t               temperature_target; // settings for the temparature
+  uint8_t               th_setpoint;    // percentage of heat/cool in percent
 
   // Constructor with all defaults
   Z_Device(uint16_t _shortaddr = BAD_SHORTADDR, uint64_t _longaddr = 0x00):
@@ -105,7 +108,9 @@ public:
     humidity(0xFF),
     mains_voltage(0xFFFF),
     mains_power(-0x8000),
-    last_seen(0)
+    last_seen(0),
+    temperature_target(-0x8000),
+    th_setpoint(0xFF)
     { };
 
   inline bool valid(void)               const { return BAD_SHORTADDR != shortaddr; }    // is the device known, valid and found?
@@ -131,6 +136,9 @@ public:
   inline bool validPressure(void)       const { return 0xFFFF != pressure; }
   inline bool validHumidity(void)       const { return 0xFF != humidity; }
   inline bool validLastSeen(void)       const { return 0x0 != last_seen; }
+
+  inline bool validTemperatureTarget(void) const { return -0x8000 != temperature_target; }
+  inline bool validThSetpoint(void)     const { return 0xFF != th_setpoint; }
 
   inline bool validMainsVoltage(void)   const { return 0xFFFF != mains_voltage; }
   inline bool validMainsPower(void)     const { return -0x8000 != mains_power; }
@@ -637,7 +645,12 @@ void Z_Devices::setLQI(uint16_t shortaddr, uint8_t lqi) {
 
 void Z_Devices::setLastSeenNow(uint16_t shortaddr) {
   if (shortaddr == localShortAddr) { return; }
-  getShortAddr(shortaddr).last_seen= Rtc.utc_time;
+  // Only update time if after 2020-01-01 0000.
+  // Fixes issue where zigbee device pings before WiFi/NTP has set utc_time
+  // to the correct time, and "last seen" calculations are based on the
+  // pre-corrected last_seen time and the since-corrected utc_time.
+  if (Rtc.utc_time < 1577836800) { return; }
+  getShortAddr(shortaddr).last_seen = Rtc.utc_time;
 }
 
 

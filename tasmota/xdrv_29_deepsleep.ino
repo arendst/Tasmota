@@ -130,7 +130,7 @@ void DeepSleepPrepare(void)
   Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%d}}"), (char*)dt.c_str(), RtcSettings.nextwakeup);
   MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_STATUS));
 
-//  Response_P(S_OFFLINE);
+//  Response_P(S_LWT_OFFLINE);
 //  MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
 }
 

@@ -1396,6 +1396,7 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
     }
 
     zcl_received.generateSyntheticAttributes(attr_list);
+    zcl_received.computeSyntheticAttributes(attr_list);
     zcl_received.generateCallBacks(attr_list);      // set deferred callbacks, ex: Occupancy
     zcl_received.postProcessAttributes(srcaddr, attr_list);
 

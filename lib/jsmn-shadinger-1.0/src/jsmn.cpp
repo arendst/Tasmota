@@ -300,6 +300,10 @@ JSMN_API int jsmn_parse(jsmn_parser *parser, const char *js, const size_t len,
     case 't':
     case 'f':
     case 'n':
+// Add uppercase variants
+    case 'T':
+    case 'F':
+    case 'N':
       /* And they must not be keys of the object */
       if (tokens != NULL && parser->toksuper != -1) {
         const jsmntok_t *t = &tokens[parser->toksuper];

@@ -321,7 +321,6 @@ void ShutterInit(void)
     }
     ShutterLimitRealAndTargetPositions(i);
     Settings.shutter_accuracy = 1;
-
   }
 }
 
@@ -350,9 +349,7 @@ void ShutterReportPosition(bool always, uint32_t index)
   if (always || (rules_flag.shutter_moving)) {
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));  // RulesProcess() now re-entry protected
   }
-
   //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
-
 }
 
 void ShutterLimitRealAndTargetPositions(uint32_t i) {
@@ -398,7 +395,7 @@ void ShutterDecellerateForStop(uint8_t i)
     case SHT_PWM_VALUE:
     case SHT_COUNTER:
       int16_t missing_steps;
-      Shutter[i].accelerator = -(ShutterGlobal.open_velocity_max / (Shutter[i].motordelay>0 ? Shutter[i].motordelay : 1) *11/10);
+      Shutter[i].accelerator = -(ShutterGlobal.open_velocity_max / (Shutter[i].motordelay>4 ? (Shutter[i].motordelay*11)/10 : 4) );
       while (Shutter[i].pwm_velocity > -2*Shutter[i].accelerator ) {
         AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: velocity: %ld, delta: %d"), Shutter[i].pwm_velocity, Shutter[i].accelerator );
         //Shutter[i].pwm_velocity = tmax(Shutter[i].pwm_velocity-Shutter[i].accelerator , 0);
@@ -430,7 +427,7 @@ void ShutterDecellerateForStop(uint8_t i)
 }
 
 void ShutterPowerOff(uint8_t i) {
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Stop Shutter %d .."), i);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Stop Shutter %d. Switchmode %d"), i,Shutter[i].switch_mode);
   ShutterDecellerateForStop(i);
   if (Shutter[i].direction !=0) {
     Shutter[i].direction = 0;
@@ -474,21 +471,15 @@ void ShutterUpdatePosition(void)
 
   char scommand[CMDSZ];
   char stopic[TOPSZ];
-
   for (uint32_t i = 0; i < shutters_present; i++) {
     if (Shutter[i].direction != 0) {
-
-      // Calculate position with counter. Much more accurate and no need for motordelay workaround
-      //                        adding some steps to stop early
-      //Shutter[i].real_position =  ShutterCalculatePosition(i);
       if (!ShutterGlobal.start_reported) {
         ShutterReportPosition(true, i);
         XdrvRulesProcess();
         ShutterGlobal.start_reported = 1;
       }
-      //ShutterCalculateAccelerator(i);
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: time: %d, toBeAcc %d, current_stop_way %d,vel_vur %d, vel_max %d, act_vel_change %d, min_runtime_ms %d, act.pos %d, next_stop %d, target: %d,  velocity_change_per_step_max %d"),Shutter[i].time,toBeAcc,current_stop_way,
-                                    Shutter[i].pwm_velocity,velocity_max, Shutter[i].accelerator,min_runtime_ms,Shutter[i].real_position, next_possible_stop_position,Shutter[i].target_position,velocity_change_per_step_max);
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: time: %d, toBeAcc %d, current_stop_way %d,vel_cur %d, vel_max %d, act_vel_change %d, min_runtime_ms %d, act.pos %d, next_stop %d, target: %d,  max_vel_change %d, dir: %d"),Shutter[i].time,toBeAcc,current_stop_way,
+                                    Shutter[i].pwm_velocity,velocity_max, Shutter[i].accelerator,min_runtime_ms,Shutter[i].real_position, next_possible_stop_position,Shutter[i].target_position,velocity_change_per_step_max,Shutter[i].direction);
 
 
       if ( Shutter[i].real_position * Shutter[i].direction >= Shutter[i].target_position * Shutter[i].direction || Shutter[i].pwm_velocity<velocity_change_per_step_max) {
@@ -972,12 +963,9 @@ void CmndShutterStop(void)
       if (Shutter[i].direction != 0) {
 
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Stop moving %d: dir: %d"), XdrvMailbox.index, Shutter[i].direction);
-        // set stop position 10 steps ahead (0.5sec to allow normal stop)
 
-        //ToDo: Replace with function
-        int32_t temp_realpos = Shutter[i].start_position + ( (Shutter[i].time+10) * (Shutter[i].direction > 0 ? 100 : -Shutter[i].close_velocity));
+        int32_t temp_realpos = ShutterCalculatePosition(i);
         XdrvMailbox.payload = ShutterRealToPercentPosition(temp_realpos, i);
-        //XdrvMailbox.payload = Settings.shuttercoeff[2][i] * 5 > temp_realpos ? temp_realpos / Settings.shuttercoeff[2][i] : (temp_realpos-Settings.shuttercoeff[0,i]) / Settings.shuttercoeff[1][i];
         last_source = SRC_WEBGUI;
         CmndShutterPosition();
       } else {
