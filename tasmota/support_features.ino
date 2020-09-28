@@ -749,7 +749,6 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_T67XX)
     feature8 |= 0x00000080;  // xsns_89_t67xx.ino
 #endif
-
 #if defined(USE_SPI) && defined(USE_MCP2515)
     feature8 |= 0x00000100;  // xsns_87_mcp2515.ino
 #endif
@@ -759,7 +758,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_WIFI_RANGE_EXTENDER
     feature8 |= 0x00000400;  // xdrv_58_range_extender.ino
 #endif
-//    feature8 |= 0x00000800;
+#ifdef USE_IRMP
+    feature8 |= 0x00000800;  // xdrv_59_irmp.ino
+#endif
 
 //    feature8 |= 0x00001000;
 //    feature8 |= 0x00002000;

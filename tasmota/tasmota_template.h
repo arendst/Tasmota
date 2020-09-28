@@ -595,9 +595,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
  * Transmission sensors
 \*-------------------------------------------------------------------------------------------*/
 
-#if defined(USE_IR_REMOTE) || defined(USE_IR_REMOTE_FULL)
+#if defined(USE_IR_REMOTE) || defined(USE_IR_REMOTE_FULL) || defined(USE_IRMP)
   AGPIO(GPIO_IRSEND),         // IR remote
-#if defined(USE_IR_RECEIVE) || defined(USE_IR_REMOTE_FULL)
+#if defined(USE_IR_RECEIVE) || defined(USE_IR_REMOTE_FULL) || defined(USE_IRMP)
   AGPIO(GPIO_IRRECV),         // IR receiver
 #endif
 #endif

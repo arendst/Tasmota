@@ -192,6 +192,7 @@ m = minimal, l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
 | USE_IR_REMOTE         | - | - | x / - | x | x | x | x |
 | USE_IR_RECEIVE        | - | - | x / - | x | x | x | x |
 | USE_IR_REMOTE_FULL    | - | - | - / - | - | - | x | - | Enable ALL protocols
+| USE_IRMP              | - | - | - / - | - | - | - | - | Alternative IR decode/encoder
 |                       |   |   |       |   |   |   |   |
 | USE_SR04              | - | - | - / - | - | x | - | - |
 | USE_DYP               | - | - | - / - | - | - | - | - |
