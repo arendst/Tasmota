@@ -6,7 +6,7 @@ import gzip
 OUTPUT_DIR = "build_output{}".format(os.path.sep)
 
 def bin_gzip(source, target, env):
-    variant = str(target[0]).split(os.path.sep)[1]
+    variant = str(target[0]).split(os.path.sep)[2]
     
     # create string with location and file names based on variant
     bin_file = "{}firmware{}{}.bin".format(OUTPUT_DIR, os.path.sep, variant)
@@ -17,7 +17,7 @@ def bin_gzip(source, target, env):
 
     # write gzip firmware file
     with open(bin_file,"rb") as fp:
-        with gzip.open(gzip_file, "wb") as f:
+        with gzip.open(gzip_file, "wb", compresslevel = 9) as f:
             shutil.copyfileobj(fp, f)
 
 env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [bin_gzip])

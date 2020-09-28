@@ -334,46 +334,62 @@ void SettingsSaveAll(void)
  * Quick power cycle monitoring
 \*********************************************************************************************/
 
-void UpdateQuickPowerCycle(bool update)
-{
+void UpdateQuickPowerCycle(bool update) {
 #ifndef FIRMWARE_MINIMAL
   if (Settings.flag3.fast_power_cycle_disable) { return; }  // SetOption65 - Disable fast power cycle detection for device reset
 
-  uint32_t pc_register;
-  uint32_t pc_location = SETTINGS_LOCATION - CFG_ROTATES;
+  const uint32_t QPC_COUNT = 7;  // Number of Power Cycles before Settings erase
+  const uint32_t QPC_SIGNATURE = 0xFFA55AFF;
 
 #ifdef ESP8266
-  ESP.flashRead(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
-#else  // ESP32
-  QPCRead(&pc_register, sizeof(pc_register));
-#endif  // ESP8266 - ESP32
-  if (update && ((pc_register & 0xFFFFFF80) == 0xFFA55A80)) {
-    uint32_t counter = ((pc_register & 0x7F) << 1) & 0x7F;
-    if (0 == counter) {  // 7 power cycles in a row
-      SettingsErase(3);  // Quickly reset all settings including QuickPowerCycle flag
-      EspRestart();      // And restart
+  const uint32_t qpc_sector = SETTINGS_LOCATION - CFG_ROTATES;
+  const uint32_t qpc_location = qpc_sector * SPI_FLASH_SEC_SIZE;
+
+  uint32_t qpc_buffer[QPC_COUNT +1];
+  ESP.flashRead(qpc_location, (uint32*)&qpc_buffer, sizeof(qpc_buffer));
+  if (update && (QPC_SIGNATURE == qpc_buffer[0])) {
+    uint32_t counter = 1;
+    while ((0 == qpc_buffer[counter]) && (counter <= QPC_COUNT)) { counter++; }
+    if (QPC_COUNT == counter) {  // 7 power cycles in a row
+      SettingsErase(3);          // Quickly reset all settings including QuickPowerCycle flag
+      EspRestart();              // And restart
     } else {
-      pc_register = 0xFFA55AB0 | counter;
-#ifdef ESP8266
-      ESP.flashWrite(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
-#else  // ESP32
-      QPCWrite(&pc_register, sizeof(pc_register));
-#endif  // ESP8266 - ESP32
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Flag %02X"), counter);
+      qpc_buffer[0] = 0;
+      ESP.flashWrite(qpc_location + (counter * 4), (uint32*)&qpc_buffer, 4);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("QPC: Count %d"), counter);
     }
   }
-  else if (pc_register != 0xFFA55AFF) {
-    pc_register = 0xFFA55AFF;
-#ifdef ESP8266
+  else if ((qpc_buffer[0] != QPC_SIGNATURE) || (0 == qpc_buffer[1])) {
+    qpc_buffer[0] = QPC_SIGNATURE;
     // Assume flash is default all ones and setting a bit to zero does not need an erase
-    if (ESP.flashEraseSector(pc_location)) {
-      ESP.flashWrite(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
+    if (ESP.flashEraseSector(qpc_sector)) {
+      ESP.flashWrite(qpc_location, (uint32*)&qpc_buffer, 4);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
     }
-#else  // ESP32
-    QPCWrite(&pc_register, sizeof(pc_register));
-#endif  // ESP8266 - ESP32
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Reset"));
   }
+#else // ESP32
+  uint32_t pc_register;
+  QPCRead(&pc_register, sizeof(pc_register));
+  if (update && ((pc_register & 0xFFFFFFF0) == 0xFFA55AF0)) {
+    uint32_t counter = pc_register & 0xF;  // Allow up to 15 cycles
+    if (0xF == counter) { counter = 0; }
+    counter++;
+    if (QPC_COUNT == counter) {  // 7 power cycles in a row
+      SettingsErase(3);          // Quickly reset all settings including QuickPowerCycle flag
+      EspRestart();              // And restart
+    } else {
+      pc_register = 0xFFA55AF0 | counter;
+      QPCWrite(&pc_register, sizeof(pc_register));
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("QPC: Count %d"), counter);
+    }
+  }
+  else if (pc_register != QPC_SIGNATURE) {
+    pc_register = QPC_SIGNATURE;
+    QPCWrite(&pc_register, sizeof(pc_register));
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
+  }
+#endif  // ESP8266 or ESP32
+
 #endif  // FIRMWARE_MINIMAL
 }
 
@@ -552,10 +568,11 @@ void SettingsSave(uint8_t rotate)
   RtcSettingsSave();
 }
 
-void SettingsLoad(void)
-{
+void SettingsLoad(void) {
 #ifdef ESP8266
   // Load configuration from eeprom or one of 7 slots below if first valid load does not stop_flash_rotate
+#ifdef CFG_LEGACY_LOAD
+  // Active until version 8.4.0.2
   struct {
     uint16_t cfg_holder;                     // 000
     uint16_t cfg_size;                       // 002
@@ -566,7 +583,7 @@ void SettingsLoad(void)
   settings_location = 0;
   uint32_t flash_location = SETTINGS_LOCATION +1;
   uint16_t cfg_holder = 0;
-  for (uint32_t i = 0; i < CFG_ROTATES; i++) {
+  for (uint32_t i = 0; i < CFG_ROTATES; i++) {              // Read all config pages in search of valid and latest
     flash_location--;
     ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     bool valid = false;
@@ -583,10 +600,10 @@ void SettingsLoad(void)
       valid = (Settings.cfg_holder == _SettingsH.cfg_holder);
     }
     if (valid) {
-      if (Settings.save_flag > save_flag) {
+      if (Settings.save_flag > save_flag) {                 // Find latest page based on incrementing save_flag
         save_flag = Settings.save_flag;
         settings_location = flash_location;
-        if (Settings.flag.stop_flash_rotate && (0 == i)) {  // Stop only if eeprom area should be used and it is valid
+        if (Settings.flag.stop_flash_rotate && (0 == i)) {  // Stop if only eeprom area should be used and it is valid
           break;
         }
       }
@@ -597,13 +614,37 @@ void SettingsLoad(void)
     ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
   }
+#else  // CFG_RESILIENT
+  // Activated with version 8.4.0.2 - Fails to read any config before version 6.6.0.11
+  settings_location = 0;
+  uint32_t save_flag = 0;
+  uint32_t flash_location = SETTINGS_LOCATION;
+  for (uint32_t i = 0; i < CFG_ROTATES; i++) {              // Read all config pages in search of valid and latest
+    ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
+    if ((Settings.cfg_crc32 != 0xFFFFFFFF) && (Settings.cfg_crc32 != 0x00000000) && (Settings.cfg_crc32 == GetSettingsCrc32())) {
+      if (Settings.save_flag > save_flag) {                 // Find latest page based on incrementing save_flag
+        save_flag = Settings.save_flag;
+        settings_location = flash_location;
+        if (Settings.flag.stop_flash_rotate && (0 == i)) {  // Stop if only eeprom area should be used and it is valid
+          break;
+        }
+      }
+    }
+    flash_location--;
+    delay(1);
+  }
+  if (settings_location > 0) {
+    ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
+    AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
+  }
+#endif  // CFG_RESILIENT
 #else  // ESP32
   SettingsRead(&Settings, sizeof(Settings));
   AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded, " D_COUNT " %lu"), Settings.save_flag);
 #endif  // ESP8266 - ESP32
 
 #ifndef FIRMWARE_MINIMAL
-  if (!settings_location || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
+  if ((0 == settings_location) || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
     SettingsDefault();
   }
   settings_crc32 = GetSettingsCrc32();
@@ -726,6 +767,7 @@ void SettingsDefaultSet2(void)
   SysBitfield2  flag2 = { 0 };
   SysBitfield3  flag3 = { 0 };
   SysBitfield4  flag4 = { 0 };
+  SysBitfield5  flag5 = { 0 };
 
 #ifdef ESP8266
 //  Settings.config_version = 0;  // ESP8266 (Has been 0 for long time)
@@ -821,6 +863,7 @@ void SettingsDefaultSet2(void)
 
   // Webserver
   flag2.emulation |= EMULATION;
+  flag4.alexa_gen_1 |= EMULATION_HUE_1ST_GEN;
   flag3.gui_hostname_ip |= GUI_SHOW_HOSTNAME;
   flag3.mdns_enabled |= MDNS_ENABLED;
   Settings.webserver = WEB_SERVER;
@@ -893,7 +936,9 @@ void SettingsDefaultSet2(void)
   flag3.dds2382_model |= ENERGY_DDS2382_MODE;
   flag3.hardware_energy_total |= ENERGY_HARDWARE_TOTALS;
   Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
-//  Settings.energy_power_delta = 0;
+//  Settings.energy_power_delta[0] = 0;
+//  Settings.energy_power_delta[1] = 0;
+//  Settings.energy_power_delta[2] = 0;
   Settings.energy_power_calibration = HLW_PREF_PULSE;
   Settings.energy_voltage_calibration = HLW_UREF_PULSE;
   Settings.energy_current_calibration = HLW_IREF_PULSE;
@@ -979,6 +1024,9 @@ void SettingsDefaultSet2(void)
   flag3.slider_dimmer_stay_on |= LIGHT_SLIDER_POWER;
   flag4.alexa_ct_range |= LIGHT_ALEXA_CT_RANGE;
   flag4.pwm_ct_mode |= LIGHT_PWM_CT_MODE;
+  flag4.white_blend_mode |= LIGHT_WHITE_BLEND_MODE;
+  flag4.virtual_ct |= LIGHT_VIRTUAL_CT;
+  flag4.virtual_ct_cw |= LIGHT_VIRTUAL_CT_CW;
 
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
@@ -1072,6 +1120,10 @@ void SettingsDefaultSet2(void)
   flag3.shutter_mode |= SHUTTER_SUPPORT;
   flag3.pcf8574_ports_inverted |= PCF8574_INVERT_PORTS;
   flag4.zigbee_use_names |= ZIGBEE_FRIENDLY_NAMES;
+  flag4.remove_zbreceived |= ZIGBEE_RMV_ZBRECEIVED;
+  flag4.zb_index_ep |= ZIGBEE_INDEX_EP;
+  flag4.mqtt_tls |= MQTT_TLS_ENABLED;
+  flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
 
 #ifdef USER_TEMPLATE
   JsonTemplate(USER_TEMPLATE);
@@ -1127,6 +1179,7 @@ void SettingsDelta(void)
   if (Settings.version != VERSION) {      // Fix version dependent changes
 
 #ifdef ESP8266
+#ifdef CFG_LEGACY_LOAD
     if (Settings.version < 0x06000000) {
       Settings.cfg_size = sizeof(Settings);
       Settings.cfg_crc = GetSettingsCrc();
@@ -1262,6 +1315,7 @@ void SettingsDelta(void)
         Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_CURRENT_ID];
       }
     }
+#endif  // CFG_LEGACY_LOAD
     if (Settings.version < 0x0606000C) {
       memset((char*)&Settings +0x1D6, 0x00, 16);
     }
@@ -1302,8 +1356,8 @@ void SettingsDelta(void)
       Settings.ex_sbaudrate = 0;
 */
       Settings.flag3.fast_power_cycle_disable = 0;
-      Settings.energy_power_delta = Settings.ex_energy_power_delta;
-      Settings.ex_energy_power_delta = 0;
+      Settings.hass_new_discovery = Settings.tuyamcu_topic; // replaced ex2_energy_power_delta on 8.5.0.1
+      Settings.tuyamcu_topic = 0; // replaced ex_energy_power_delta on 8.5.0.1
     }
     if (Settings.version < 0x06060015) {
       if ((EX_WIFI_SMARTCONFIG == Settings.ex_sta_config) || (EX_WIFI_WPSCONFIG == Settings.ex_sta_config)) {
@@ -1458,6 +1512,11 @@ void SettingsDelta(void)
 #endif
     if (Settings.version < 0x08030106) {
       Settings.fallback_module = FALLBACK_MODULE;
+    }
+    if (Settings.version < 0x08040003) {
+      Settings.energy_power_delta[0] = Settings.hass_new_discovery; // replaced ex2_energy_power_delta on 8.5.0.1
+      Settings.energy_power_delta[1] = 0;
+      Settings.energy_power_delta[2] = 0;
     }
 
     Settings.version = VERSION;

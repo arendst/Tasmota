@@ -1,0 +1,5 @@
+<map id="IRHaierACYRW02" name="IRHaierACYRW02">
+<area shape="rect" id="node1" title="Class for handling detailed Haier ACYRW02 A/C messages." alt="" coords="39,95,174,121"/>
+<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="5,5,72,32"/>
+<area shape="rect" id="node3" href="$unionHaierYRW02Protocol.html" title=" " alt="" coords="97,5,253,32"/>
+</map>

@@ -40,7 +40,7 @@
 
 enum ZbUploadSteps { ZBU_IDLE, ZBU_INIT,
                      ZBU_SOFTWARE_RESET, ZBU_SOFTWARE_SEND, ZBU_HARDWARE_RESET, ZBU_PROMPT,
-                     ZBU_SYNC, ZBU_UPLOAD, ZBU_EOT, ZBU_COMPLETE, ZBU_DONE, ZBU_FINISH };
+                     ZBU_SYNC, ZBU_UPLOAD, ZBU_EOT, ZBU_COMPLETE, ZBU_DONE, ZBU_ERROR, ZBU_FINISH };
 
 const uint8_t PIN_ZIGBEE_BOOTLOADER = 5;
 
@@ -52,6 +52,7 @@ struct ZBUPLOAD {
   char *buffer;
   uint8_t ota_step = ZBU_IDLE;
   uint8_t bootloader = 0;
+  uint8_t state = ZBU_IDLE;
 } ZbUpload;
 
 /*********************************************************************************************\
@@ -282,7 +283,7 @@ bool ZigbeeUploadXmodem(void) {
           ZbUpload.ota_step = ZBU_HARDWARE_RESET;
         } else {
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader hardware reset timeout"));
-          ZbUpload.ota_step = ZBU_DONE;
+          ZbUpload.ota_step = ZBU_ERROR;
         }
         return true;
       }
@@ -299,7 +300,7 @@ bool ZigbeeUploadXmodem(void) {
     case ZBU_PROMPT: {                   // *** Wait for prompt and select option upload ebl
       if (millis() > XModem.timeout) {
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader timeout"));
-        ZbUpload.ota_step = ZBU_DONE;
+        ZbUpload.ota_step = ZBU_ERROR;
         return true;
       }
 #endif  // ZIGBEE_BOOTLOADER_SOFTWARE_RESET_FIRST
@@ -333,7 +334,7 @@ bool ZigbeeUploadXmodem(void) {
     case ZBU_SYNC: {                     // *** Handle file upload using XModem - sync
       if (millis() > XModem.timeout) {
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: SYNC timeout"));
-        ZbUpload.ota_step = ZBU_DONE;
+        ZbUpload.ota_step = ZBU_ERROR;
         return true;
       }
       // Wait for either C or NACK as a sync packet. Determines protocol details, checksum algorithm.
@@ -354,7 +355,7 @@ bool ZigbeeUploadXmodem(void) {
       if (ZigbeeUploadAvailable()) {
         if (!XModemSendPacket(XModem.packetNo)) {
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Packet send failed"));
-          ZbUpload.ota_step = ZBU_DONE;
+          ZbUpload.ota_step = ZBU_ERROR;
           return true;
         }
         XModem.packetNo++;
@@ -376,7 +377,7 @@ bool ZigbeeUploadXmodem(void) {
       // to occur without timing out on the response just before the EOT is sent.
       if (millis() > XModem.timeout) {
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: EOT ACK timeout"));
-        ZbUpload.ota_step = ZBU_DONE;
+        ZbUpload.ota_step = ZBU_ERROR;
         return true;
       }
       if (ZigbeeSerial->available()) {
@@ -386,7 +387,6 @@ bool ZigbeeUploadXmodem(void) {
           XModem.timeout = millis() + (30 * 1000);  // Allow 30 seconds to receive EBL prompt
           ZbUpload.byte_counter = 0;
           ZbUpload.ota_step = ZBU_COMPLETE;
-//          ZbUpload.ota_step = ZBU_DONE;  // Skip prompt for now
         }
       }
       break;
@@ -394,7 +394,7 @@ bool ZigbeeUploadXmodem(void) {
     case ZBU_COMPLETE: {                 // *** Wait for Serial upload complete EBL prompt
       if (millis() > XModem.timeout) {
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader timeout"));
-        ZbUpload.ota_step = ZBU_DONE;
+        ZbUpload.ota_step = ZBU_ERROR;
         return true;
       } else {
         // After an image successfully uploads, the XModem transaction completes and the bootloader displays
@@ -406,18 +406,21 @@ bool ZigbeeUploadXmodem(void) {
         // 3. ebl info
         // BL >
         if (ZigbeeUploadBootloaderPrompt()) {
+          ZbUpload.state = ZBU_COMPLETE;
           ZbUpload.ota_step = ZBU_DONE;
         }
       }
       break;
     }
+    case ZBU_ERROR:
+      ZbUpload.state = ZBU_ERROR;
     case ZBU_DONE: {                     // *** Clean up and restart to disable bootloader and use new firmware
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: " D_RESTARTING));
       ZigbeeUploadSetBootloader(1);      // Disable bootloader and reset MCU - should happen at restart
       if (1 == ssleep) {
         ssleep = Settings.sleep;         // Restore loop sleep
       }
-      restart_flag = 2;                  // Restart to disable bootloader and use new firmware
+//      restart_flag = 2;                  // Restart to disable bootloader and use new firmware
       ZbUpload.ota_step = ZBU_FINISH;    // Never return to zero without a restart to get a sane Zigbee environment
       break;
     }
@@ -437,6 +440,10 @@ bool ZigbeeUploadOtaReady(void) {
   return (ZBU_INIT == ZbUpload.ota_step);
 }
 
+bool ZigbeeUploadFinish(void) {
+  return (ZBU_FINISH == ZbUpload.ota_step);
+}
+
 uint8_t ZigbeeUploadInit(void) {
   if (!PinUsed(GPIO_ZIGBEE_RST) && (ZigbeeSerial == nullptr)) { return 1; }  // Wrong pin configuration - No file selected
 
@@ -444,6 +451,7 @@ uint8_t ZigbeeUploadInit(void) {
   ZbUpload.sector_cursor = 0;
   ZbUpload.ota_size = 0;
   ZbUpload.ota_step = ZBU_IDLE;
+  ZbUpload.state = ZBU_IDLE;
   return 0;
 }
 
@@ -468,8 +476,56 @@ bool ZigbeeUploadWriteBuffer(uint8_t *buf, size_t size) {
 
 void ZigbeeUploadDone(void) {
   ZbUpload.ota_step = ZBU_INIT;
+  ZbUpload.state = ZBU_UPLOAD;
 }
 
-#endif // USE_ZIGBEE_EZSP
+#ifdef USE_WEBSERVER
 
-#endif // USE_ZIGBEE
+#define WEB_HANDLE_ZIGBEE_XFER "zx"
+
+const char HTTP_SCRIPT_XFER_STATE[] PROGMEM =
+  "function z9(){"
+    "if(x!=null){x.abort();}"       // Abort if no response within 2 seconds (happens on restart 1)
+    "x=new XMLHttpRequest();"
+    "x.onreadystatechange=function(){"
+      "if(x.readyState==4&&x.status==200){"
+        "var s=x.responseText;"
+        "if(s!=7){"                 // ZBU_UPLOAD
+          "location.href='/u3';"    // Load page HandleUploadDone()
+        "}"
+      "}"
+    "};"
+    "x.open('GET','" WEB_HANDLE_ZIGBEE_XFER "?z=1',true);"  // ?z related to Webserver->hasArg("z")
+    "x.send();"
+    "lt=setTimeout(z9,950);"        // Poll every 0.95 second
+  "}"
+  "wl(z9);";                        // Execute z9() on page load
+
+void HandleZigbeeXfer(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  if (Webserver->hasArg("z")) {     // Status refresh requested
+    WSContentBegin(200, CT_PLAIN);
+    WSContentSend_P(PSTR("%d"), ZbUpload.state);
+    WSContentEnd();
+    if (ZBU_ERROR == ZbUpload.state) {
+      Web.upload_error = 7;         // Upload aborted (xmodem transfer failed)
+    }
+    return;
+  }
+
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_UPLOAD_TRANSFER));
+
+  WSContentStart_P(S_INFORMATION);
+  WSContentSend_P(HTTP_SCRIPT_XFER_STATE);
+  WSContentSendStyle();
+  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD_TRANSFER " ...</b></div>"));
+  WSContentSpaceButton(BUTTON_MAIN);
+  WSContentStop();
+}
+
+#endif  // USE_WEBSERVER
+
+#endif  // USE_ZIGBEE_EZSP
+
+#endif  // USE_ZIGBEE

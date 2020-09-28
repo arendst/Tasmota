@@ -53,6 +53,7 @@ struct ble_hs_peer_sec {
  */
 struct ble_hs_dev_records {
     bool rec_used;
+    uint8_t rand_addr_type;
     uint8_t pseudo_addr[BLE_DEV_ADDR_LEN];
     uint8_t rand_addr[BLE_DEV_ADDR_LEN];
     uint8_t identity_addr[BLE_DEV_ADDR_LEN];

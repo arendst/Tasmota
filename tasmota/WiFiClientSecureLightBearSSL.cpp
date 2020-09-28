@@ -190,6 +190,7 @@ void WiFiClientSecure_light::_clear() {
 	_chain_P = nullptr;
 	_sk_ec_P = nullptr;
 	_ta_P = nullptr;
+  _ta_size = 0;
 	_max_thunkstack_use = 0;
 }
 
@@ -232,8 +233,9 @@ void WiFiClientSecure_light::setClientECCert(const br_x509_certificate *cert, co
   _cert_issuer_key_type = cert_issuer_key_type;
 }
 
-void WiFiClientSecure_light::setTrustAnchor(const br_x509_trust_anchor *ta) {
+void WiFiClientSecure_light::setTrustAnchor(const br_x509_trust_anchor *ta, size_t ta_size) {
 	_ta_P = ta;
+  _ta_size = ta_size;
 }
 
 void WiFiClientSecure_light::setBufferSizes(int recv, int xmit) {
@@ -870,21 +872,16 @@ extern "C" {
 
 #ifdef USE_MQTT_TLS_FORCE_EC_CIPHER
 		// we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
-		br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);
+		br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);    // TODO
 #endif
+    static const char * alpn_mqtt = "mqtt";
+    br_ssl_engine_set_protocol_names(&cc->eng, &alpn_mqtt, 1);
   }
 }
 
 // Called by connect() to do the actual SSL setup and handshake.
 // Returns if the SSL handshake succeeded.
 bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
-// #ifdef USE_MQTT_AWS_IOT
-// 	if ((!_chain_P) || (!_sk_ec_P)) {
-// 		setLastError(ERR_MISSING_EC_KEY);
-// 		return false;
-// 	}
-// #endif
-
 	// Validation context, either full CA validation or checking only fingerprints
 #ifdef USE_MQTT_TLS_CA_CERT
 	br_x509_minimal_context *x509_minimal;
@@ -916,7 +913,7 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 	#ifdef USE_MQTT_TLS_CA_CERT
 		x509_minimal = (br_x509_minimal_context*) malloc(sizeof(br_x509_minimal_context));
 		if (!x509_minimal) break;
-		br_x509_minimal_init(x509_minimal, &br_sha256_vtable, _ta_P, 1);
+		br_x509_minimal_init(x509_minimal, &br_sha256_vtable, _ta_P, _ta_size);
 		br_x509_minimal_set_rsa(x509_minimal, br_ssl_engine_get_rsavrfy(_eng));
 		br_x509_minimal_set_hash(x509_minimal, br_sha256_ID, &br_sha256_vtable);
 		br_ssl_engine_set_x509(_eng, &x509_minimal->vtable);

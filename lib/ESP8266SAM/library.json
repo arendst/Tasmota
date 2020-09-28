@@ -1,0 +1,23 @@
+{
+    "name": "ESP8266SAM",
+    "description": "Speech synthesizer SAM ported to ESP8266/ESP32",
+    "keywords": "ESP8266, ESP32, Speecn Synthesis, SAM",
+    "authors": [
+        {
+            "name": "Earle F. Philhower, III",
+            "email": "earlephilhower@yahoo.com",
+            "url": "https://github.com/earlephilhower/ESP8266SAM",
+            "maintainer": true
+        }
+    ],
+    "repository": {
+        "type": "git",
+         "url": "https://github.com/earlephilhower/ESP8266SAM"
+    },
+    "version": "1.0",
+    "homepage": "https://github.com/earlephilhower/ESP8266SAM",
+    "frameworks": "Arduino",
+    "examples": [
+        "examples/*/*.ino"
+    ]
+}

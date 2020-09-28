@@ -47,6 +47,29 @@ uint32_t ESP_getFreeHeap(void) {
   return ESP.getFreeHeap();
 }
 
+uint32_t ESP_getMaxAllocHeap(void) {
+/*
+  From libraries.rst
+  ESP.getMaxFreeBlockSize() returns the largest contiguous free RAM block in
+  the heap, useful for checking heap fragmentation.  **NOTE:** Maximum
+  ``malloc()``able block will be smaller due to memory manager overheads.
+
+  From HeapMetric.ino
+  ESP.getMaxFreeBlockSize() does not indicate the amount of memory that is
+  available for use in a single malloc call.  It indicates the size of a
+  contiguous block of (raw) memory before the umm_malloc overhead is removed.
+
+  It should also be pointed out that, if you allow for the needed overhead in
+  your malloc call, it could still fail in the general case. An IRQ handler
+  could have allocated memory between the time you call
+  ESP.getMaxFreeBlockSize() and your malloc call, reducing the available
+  memory.
+*/
+  uint32_t free_block_size = ESP.getMaxFreeBlockSize();
+  if (free_block_size > 100) { free_block_size -= 100; }
+  return free_block_size;
+}
+
 void ESP_Restart(void) {
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
@@ -266,6 +289,13 @@ uint32_t ESP_getSketchSize(void) {
 uint32_t ESP_getFreeHeap(void) {
 //  return ESP.getFreeHeap();
   return ESP.getMaxAllocHeap();
+}
+
+uint32_t ESP_getMaxAllocHeap(void) {
+  // largest block of heap that can be allocated at once
+  uint32_t free_block_size = ESP.getMaxAllocHeap();
+  if (free_block_size > 100) { free_block_size -= 100; }
+  return free_block_size;
 }
 
 void ESP_Restart(void) {

@@ -5,7 +5,7 @@ import shutil
 OUTPUT_DIR = "build_output{}".format(os.path.sep)
 
 def bin_map_copy(source, target, env):
-    variant = str(target[0]).split(os.path.sep)[1]
+    variant = str(target[0]).split(os.path.sep)[2]
     
     # check if output directories exist and create if necessary
     if not os.path.isdir(OUTPUT_DIR):

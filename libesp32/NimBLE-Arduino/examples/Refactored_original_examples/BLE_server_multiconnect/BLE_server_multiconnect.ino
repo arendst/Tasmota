@@ -105,16 +105,13 @@ void setup() {
 
   // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
   // Create a BLE Descriptor
-  /*********** New createDescriptor method ************   
-   NOTE: There is no need to create the 2902 descriptor 
-   as it will be created automatically if notifications 
+  /***************************************************   
+   NOTE: DO NOT create a 2902 descriptor 
+   it will be created automatically if notifications 
    or indications are enabled on a characteristic.
    
    pCharacteristic->addDescriptor(new BLE2902());
   ****************************************************/
-  /** Add properties the same way as characteristics now **/
-  
-  pCharacteristic->createDescriptor("2902" /** , NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE **/);
 
   // Start the service
   pService->start();
@@ -123,7 +120,9 @@ void setup() {
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
   pAdvertising->setScanResponse(false);
-  pAdvertising->setMinPreferred(0x0);  // set value to 0x00 to not advertise this parameter
+  /**This method is removed it was no longer useful and consumed advertising space
+   * pAdvertising->setMinPreferred(0x0);  // set value to 0x00 to not advertise this parameter
+   */
   BLEDevice::startAdvertising();
   Serial.println("Waiting a client connection to notify...");
 }

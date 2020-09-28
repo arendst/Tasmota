@@ -81,6 +81,7 @@
 #define D_JSON_GAS "Gas"
 #define D_JSON_GATEWAY "Gateway"
 #define D_JSON_GROUPS "Groups"
+#define D_JSON_HALTING "Halting"
 #define D_JSON_HEAPSIZE "Heap"
 #define D_JSON_HIGH "High"
 #define D_JSON_HOST_NOT_FOUND "Host not found"
@@ -223,6 +224,7 @@
   #define D_STATUS10_SENSOR "SNS"
   #define D_STATUS11_STATUS "STS"
   #define D_STATUS12_STATUS "STK"
+  #define D_STATUS13_SHUTTER "SHT"
 #define D_CMND_STATE "State"
 #define D_CMND_POWER "Power"
 #define D_CMND_FANSPEED "FanSpeed"
@@ -286,7 +288,7 @@
 #define D_CMND_INTERLOCK "Interlock"
 #define D_CMND_TELEPERIOD "TelePeriod"
 #define D_CMND_RESTART "Restart"
-  #define D_JSON_ONE_TO_RESTART "1 to restart"
+  #define D_JSON_ONE_TO_RESTART "1 to restart, 2 to halt"
 #define D_CMND_RESET "Reset"
   #define D_JSON_RESET_AND_RESTARTING "Reset and Restarting"
   #define D_JSON_ONE_TO_RESET "1 to reset"
@@ -541,6 +543,8 @@
 #define D_CMND_ZIGBEE_SEND "Send"
 #define D_CMND_ZIGBEE_WRITE "Write"
 #define D_CMND_ZIGBEE_REPORT "Report"
+#define D_CMND_ZIGBEE_READ_CONFIG "ReadConfig"
+#define D_CMND_ZIGBEE_CONFIG "Config"
 #define D_CMND_ZIGBEE_RESPONSE "Response"
   #define D_JSON_ZIGBEE_ZCL_SENT "ZbZCLSent"
 #define D_JSON_ZIGBEE_RECEIVED "ZbReceived"
@@ -581,6 +585,7 @@
 #define D_CMND_SHUTTER_TOGGLEDIR "ToggleDir"
 #define D_CMND_SHUTTER_UP "Up"
 #define D_CMND_SHUTTER_DOWN "Down"
+#define D_CMND_SHUTTER_MODE "Mode"
 #define D_CMND_SHUTTER_STOPOPEN "StopOpen"
 #define D_CMND_SHUTTER_STOPCLOSE "StopClose"
 #define D_CMND_SHUTTER_STOPTOGGLE "StopToggle"
@@ -602,6 +607,7 @@
 #define D_CMND_SHUTTER_LOCK "Lock"
 #define D_CMND_SHUTTER_ENABLEENDSTOPTIME "EnableEndStopTime"
 #define D_CMND_SHUTTER_INVERTWEBBUTTONS "InvertWebButtons"
+#define D_CMND_SHUTTER_PWMRANGE "PWMRange"
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"
@@ -718,7 +724,7 @@ const char S_RSLT_POWER[] PROGMEM = D_RSLT_POWER;
 const char S_RSLT_RESULT[] PROGMEM = D_RSLT_RESULT;
 const char S_RSLT_WARNING[] PROGMEM = D_RSLT_WARNING;
 const char S_LWT[] PROGMEM = D_LWT;
-const char S_OFFLINE[] PROGMEM = D_OFFLINE;
+const char S_LWT_OFFLINE[] PROGMEM = MQTT_LWT_OFFLINE;
 
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;

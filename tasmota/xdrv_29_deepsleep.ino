@@ -71,7 +71,12 @@ void DeepSleepReInit(void)
       AddLog_P2(LOG_LEVEL_ERROR, PSTR("DSL: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
       RtcSettingsSave();
       RtcRebootReset();
+#ifdef ESP8266
       ESP.deepSleep(100 * RtcSettings.deepsleep_slip * (DEEPSLEEP_MAX_CYCLE < RtcSettings.ultradeepsleep ? DEEPSLEEP_MAX_CYCLE : RtcSettings.ultradeepsleep), WAKE_RF_DEFAULT);
+#else  // ESP32
+      esp_sleep_enable_timer_wakeup(100 * RtcSettings.deepsleep_slip * (DEEPSLEEP_MAX_CYCLE < RtcSettings.ultradeepsleep ? DEEPSLEEP_MAX_CYCLE : RtcSettings.ultradeepsleep));
+      esp_deep_sleep_start();
+#endif  // ESP8266 or ESP32
       yield();
       // Sleeping
     }
@@ -125,7 +130,7 @@ void DeepSleepPrepare(void)
   Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%d}}"), (char*)dt.c_str(), RtcSettings.nextwakeup);
   MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_STATUS));
 
-//  Response_P(S_OFFLINE);
+//  Response_P(S_LWT_OFFLINE);
 //  MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
 }
 
@@ -136,8 +141,12 @@ void DeepSleepStart(void)
   WifiShutdown();
   RtcSettings.ultradeepsleep = RtcSettings.nextwakeup - UtcTime();
   RtcSettingsSave();
-
+#ifdef ESP8266
   ESP.deepSleep(100 * RtcSettings.deepsleep_slip * deepsleep_sleeptime);
+#else  // ESP32
+  esp_sleep_enable_timer_wakeup(100 * RtcSettings.deepsleep_slip * deepsleep_sleeptime);
+  esp_deep_sleep_start();
+#endif  // ESP8266 or ESP32
   yield();
 }
 

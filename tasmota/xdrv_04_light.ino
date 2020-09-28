@@ -263,8 +263,6 @@ struct LIGHT {
   uint32_t strip_timer_counter = 0;  // Bars and Gradient
   power_t power = 0;                      // Power<x> for each channel if SetOption68, or boolean if single light
 
-  uint16_t wakeup_counter = 0;
-
   uint8_t entry_color[LST_MAX];
   uint8_t current_color[LST_MAX];
   uint8_t new_color[LST_MAX];
@@ -276,14 +274,16 @@ struct LIGHT {
   uint8_t subtype = 0;                    // LST_ subtype
   uint8_t device = 0;
   uint8_t old_power = 1;
-  uint8_t wakeup_active = 0;
-  uint8_t wakeup_dimmer = 0;
+  uint8_t wakeup_active = 0;             // 0=inctive, 1=on-going, 2=about to start, 3=will be triggered next cycle
   uint8_t fixed_color_index = 1;
   uint8_t pwm_offset = 0;                 // Offset in color buffer
   uint8_t max_scheme = LS_MAX -1;
+  
+  uint32_t wakeup_start_time = 0;
 
   bool update = true;
   bool pwm_multi_channels = false;        // SetOption68, treat each PWM channel as an independant dimmer
+  bool virtual_ct = false;                // SetOption106, add a 5th virtual channel, only if SO106 = 1, SO68 = 0, Light is RGBW (4 channels), SO37 < 128
 
   bool     fade_initialized = false;      // dont't fade at startup
   bool     fade_running = false;
@@ -1281,13 +1281,16 @@ bool LightModuleInit(void)
   }
 
   // post-process for lights
+  uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
   if (Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
-    uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
     if (0 == pwm_channels) { pwm_channels = 1; }
     devices_present += pwm_channels - 1;    // add the pwm channels controls at the end
-  } else if ((Settings.param[P_RGB_REMAP] & 128) && (LST_RGBW <= (light_type & 7))) {
+  } else if ((Settings.param[P_RGB_REMAP] & 128) && (LST_RGBW <= pwm_channels)) {
     // if RGBW or RGBCW, and SetOption37 >= 128, we manage RGB and W separately, hence adding a device
     devices_present++;
+  } else if ((Settings.flag4.virtual_ct) && (LST_RGBW == pwm_channels)) {
+    Light.virtual_ct = true;    // enabled
+    light_type++;               // create an additional virtual 5th channel
   }
 
   return (light_type > LT_BASIC);
@@ -1314,6 +1317,12 @@ void LightCalcPWMRange(void) {
 
 void LightInit(void)
 {
+  // move white blend mode from deprecated `RGBWWTable` to `SetOption105`
+  if (0 == Settings.rgbwwTable[4]) {
+    Settings.flag4.white_blend_mode = true;
+    Settings.rgbwwTable[4] = 255;       // set RGBWWTable value to its default
+  }
+
   Light.device = devices_present;
   Light.subtype = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7); // Always 0 - LST_MAX (5)
   Light.pwm_multi_channels = Settings.flag3.pwm_multi_channels;  // SetOption68 - Enable multi-channels PWM instead of Color PWM
@@ -1856,29 +1865,27 @@ void LightAnimate(void)
         light_controller.calcLevels(Light.new_color);
         break;
       case LS_WAKEUP:
-        if (2 == Light.wakeup_active) {
-          Light.wakeup_active = 1;
-          for (uint32_t i = 0; i < Light.subtype; i++) {
-            Light.new_color[i] = 0;
+        {
+          if (2 == Light.wakeup_active) {
+            Light.wakeup_active = 1;
+            for (uint32_t i = 0; i < Light.subtype; i++) {
+              Light.new_color[i] = 0;
+            }
+            Light.wakeup_start_time = millis();
           }
-          Light.wakeup_counter = 0;
-          Light.wakeup_dimmer = 0;
-        }
-        Light.wakeup_counter++;
-        if (Light.wakeup_counter > ((Settings.light_wakeup * STATES) / Settings.light_dimmer)) {
-          Light.wakeup_counter = 0;
-          Light.wakeup_dimmer++;
-          if (Light.wakeup_dimmer <= Settings.light_dimmer) {
-            light_state.setDimmer(Light.wakeup_dimmer);
+          // which step are we in a range 0..1023
+          uint32_t step_10 = ((millis() - Light.wakeup_start_time) * 1023) / (Settings.light_wakeup * 1000);
+          if (step_10 > 1023) { step_10 = 1023; }   // sanity check
+          uint8_t wakeup_bri = changeUIntScale(step_10, 0, 1023, 0, LightStateClass::DimmerToBri(Settings.light_dimmer));
+
+          if (wakeup_bri != light_state.getBri()) {
+            light_state.setBri(wakeup_bri);
             light_controller.calcLevels();
             for (uint32_t i = 0; i < Light.subtype; i++) {
               Light.new_color[i] = Light.current_color[i];
             }
-          } else {
-/*
-            Response_P(PSTR("{\"" D_CMND_WAKEUP "\":\"" D_JSON_DONE "\"}"));
-            MqttPublishPrefixTopic_P(TELE, PSTR(D_CMND_WAKEUP));
-*/
+          }
+          if (1023 == step_10) {
             Response_P(PSTR("{\"" D_CMND_WAKEUP "\":\"" D_JSON_DONE "\""));
             ResponseLightState(1);
             ResponseJsonEnd();
@@ -1939,6 +1946,7 @@ void LightAnimate(void)
 
       uint16_t cur_col_10[LST_MAX];   // 10 bits resolution
       Light.update = false;
+      bool rgbwwtable_applied = false;      // did we already applied RGBWWTable (ex: in white_blend_mode or virtual_ct)
 
       // first set 8 and 10 bits channels
       for (uint32_t i = 0; i < LST_MAX; i++) {
@@ -1954,7 +1962,7 @@ void LightAnimate(void)
 
         // Now see if we need to mix RGB and True White
         // Valid only for LST_RGBW, LST_RGBCW, rgbwwTable[4] is zero, and white is zero (see doc)
-        if ((LST_RGBW <= Light.subtype) && (0 == Settings.rgbwwTable[4]) && (0 == cur_col_10[3]+cur_col_10[4])) {
+        if ((LST_RGBW <= Light.subtype) && (Settings.flag4.white_blend_mode) && (0 == cur_col_10[3]+cur_col_10[4])) {
           uint32_t min_rgb_10 = min3(cur_col_10[0], cur_col_10[1], cur_col_10[2]);
           for (uint32_t i=0; i<3; i++) {
             // substract white and adjust according to rgbwwTable
@@ -1974,18 +1982,34 @@ void LightAnimate(void)
             cur_col_10[4] = changeUIntScale(ct, 0, 1023, 0, white_10);
             cur_col_10[3] = white_10 - cur_col_10[4];
           }
+          rgbwwtable_applied = true;
+        } else if ((Light.virtual_ct) && (0 == cur_col_10[0]+cur_col_10[1]+cur_col_10[2])) {
+          // virtual_ct is on and we don't have any RGB set
+          uint16_t sw_white = Settings.flag4.virtual_ct_cw ? cur_col_10[4] : cur_col_10[3];   // white power for virtual RGB
+          uint16_t hw_white = Settings.flag4.virtual_ct_cw ? cur_col_10[3] : cur_col_10[4];   // white for hardware LED
+          uint32_t adjust_sw = change8to10(Settings.flag4.virtual_ct_cw ? Settings.rgbwwTable[4] : Settings.rgbwwTable[3]);
+          uint32_t adjust_hw = change8to10(Settings.flag4.virtual_ct_cw ? Settings.rgbwwTable[3] : Settings.rgbwwTable[4]);
+          // set the target channels. Note: Gamma correction was arleady applied
+          cur_col_10[3] = changeUIntScale(hw_white, 0, 1023, 0, adjust_hw);
+          cur_col_10[4] = 0;          // we don't actually have a 5the channel
+          sw_white = changeUIntScale(sw_white, 0, 1023, 0, adjust_sw);          // pre-adjust virtual channel
+          for (uint32_t i=0; i<3; i++) {
+            uint32_t adjust = change8to10(Settings.rgbwwTable[i]);
+            cur_col_10[i] = changeUIntScale(sw_white, 0, 1023, 0, adjust);
+          }
+          rgbwwtable_applied = true;
         }
       }
 
-      // Apply RGBWWTable only if Settings.rgbwwTable[4] != 0
-      if (0 != Settings.rgbwwTable[4]) {
+      // Apply RGBWWTable only if not Settings.flag4.white_blend_mode
+      if (!rgbwwtable_applied) {
         for (uint32_t i = 0; i<Light.subtype; i++) {
           uint32_t adjust = change8to10(Settings.rgbwwTable[i]);
           cur_col_10[i] = changeUIntScale(cur_col_10[i], 0, 1023, 0, adjust);
         }
       }
 
-      // final adjusments for PMW, post-gamma correction
+      // final adjusments for PMW ranges, post-gamma correction
       for (uint32_t i = 0; i < LST_MAX; i++) {
         // scale from 0..1023 to 0..pwm_range, but keep any non-zero value to at least 1
         cur_col_10[i] = (cur_col_10[i] > 0) ? changeUIntScale(cur_col_10[i], 1, 1023, 1, Settings.pwm_range) : 0;

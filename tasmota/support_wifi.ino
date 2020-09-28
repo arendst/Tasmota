@@ -640,7 +640,18 @@ void EspRestart(void)
   ResetPwm();
   WifiShutdown(true);
   CrashDumpClear();           // Clear the stack dump in RTC
-  ESP_Restart();
+
+  if (restart_halt) {
+    while (1) {
+      OsWatchLoop();          // Feed OsWatch timer to prevent restart
+      SetLedLink(1);          // Wifi led on
+      delay(200);             // Satisfy SDK
+      SetLedLink(0);          // Wifi led off
+      delay(800);             // Satisfy SDK
+    }
+  } else {
+    ESP_Restart();
+  }
 }
 
 //

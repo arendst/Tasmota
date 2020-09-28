@@ -21,43 +21,23 @@
 
 // contains some definitions for functions used before their declarations
 
-void ZigbeeZCLSend_Raw(uint16_t dtsAddr, uint16_t groupaddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool needResponse, uint8_t transacId);
+class ZigbeeZCLSendMessage {
+public:
+  uint16_t shortaddr;
+  uint16_t groupaddr;
+  uint16_t clusterId;
+  uint8_t endpoint;
+  uint8_t cmdId;
+  uint16_t manuf;
+  bool clusterSpecific;
+  bool needResponse;
+  uint8_t transacId;    // ZCL transaction number
+  const uint8_t *msg;
+  size_t len;
+};
 
-// get the result as a string (const char*) and nullptr if there is no field or the string is empty
-const char * getCaseInsensitiveConstCharNull(const JsonObject &json, const char *needle) {
-  const JsonVariant &val = GetCaseInsensitive(json, needle);
-  if (&val) {
-    const char *val_cs = val.as<const char*>();
-    if (strlen(val_cs)) {
-      return val_cs;
-    }
-  }
-  return nullptr;
-}
-
-// Get an JSON attribute, with case insensitive key search starting with *needle
-JsonVariant &startsWithCaseInsensitive(const JsonObject &json, const char *needle) {
-  // key can be in PROGMEM
-  if ((nullptr == &json) || (nullptr == needle) || (0 == pgm_read_byte(needle))) {
-    return *(JsonVariant*)nullptr;
-  }
-
-  String needle_s(needle);
-  needle_s.toLowerCase();
-
-  for (auto kv : json) {
-    String key_s(kv.key);
-    key_s.toLowerCase();
-    JsonVariant &value = kv.value;
-
-    if (key_s.startsWith(needle_s)) {
-      return value;
-    }
-  }
-  // if not found
-  return *(JsonVariant*)nullptr;
-}
-
+void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl);
+bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_status_ok = false);
 
 uint32_t parseHex(const char **data, size_t max_len = 8) {
   uint32_t ret = 0;

@@ -112,7 +112,6 @@ const uint8_t xdsp_present = sizeof(xdsp_func_ptr) / sizeof(xdsp_func_ptr[0]);  
  * FUNC_DISPLAY_FONT_SIZE
  * FUNC_DISPLAY_ROTATION
  * FUNC_DISPLAY_DRAW_STRING
- * FUNC_DISPLAY_ONOFF
 \*********************************************************************************************/
 
 uint8_t XdspPresent(void)

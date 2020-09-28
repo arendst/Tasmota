@@ -23,7 +23,6 @@
 #define XDRV_13       13
 
 #include <renderer.h>
-#include <FT6236.h>
 
 Renderer *renderer;
 
@@ -71,7 +70,7 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
                      FUNC_DISPLAY_DRAW_HLINE, FUNC_DISPLAY_DRAW_VLINE, FUNC_DISPLAY_DRAW_LINE,
                      FUNC_DISPLAY_DRAW_CIRCLE, FUNC_DISPLAY_FILL_CIRCLE,
                      FUNC_DISPLAY_DRAW_RECTANGLE, FUNC_DISPLAY_FILL_RECTANGLE,
-                     FUNC_DISPLAY_TEXT_SIZE, FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING, FUNC_DISPLAY_ONOFF };
+                     FUNC_DISPLAY_TEXT_SIZE, FUNC_DISPLAY_FONT_SIZE, FUNC_DISPLAY_ROTATION, FUNC_DISPLAY_DRAW_STRING };
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
@@ -241,8 +240,7 @@ void DisplayDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint
 
 void DisplayOnOff(uint8_t on)
 {
-  dsp_on = on;
-  XdspCall(FUNC_DISPLAY_ONOFF);
+  ExecuteCommandPower(disp_device, on, SRC_DISPLAY);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -435,18 +433,10 @@ void DisplayText(void)
             DisplayInit(DISPLAY_INIT_FULL);
             break;
           case 'o':
-            if (!renderer) {
-              DisplayOnOff(0);
-            } else {
-              renderer->DisplayOnff(0);
-            }
+            DisplayOnOff(0);
             break;
           case 'O':
-            if (!renderer) {
-              DisplayOnOff(1);
-            } else {
-              renderer->DisplayOnff(1);
-            }
+            DisplayOnOff(1);
             break;
           case 'x':
             // set disp_xpos
@@ -505,7 +495,7 @@ void DisplayText(void)
             cp += var;
             linebuf[fill] = 0;
             break;
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT) && USE_SCRIPT_FATFS>=0
+#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
           case 'P':
             { char *ep=strchr(cp,':');
              if (ep) {
@@ -516,7 +506,7 @@ void DisplayText(void)
              }
             }
             break;
-#endif
+#endif // USE_SCRIPT_FATFS
           case 'h':
             // hor line to
             var = atoiv(cp, &temp);
@@ -634,12 +624,19 @@ void DisplayText(void)
               }
             }
             break;
-          case 'T':
+          case 'T': {
+            uint8_t param1 = RtcTime.day_of_month;
+            uint8_t param2 = RtcTime.month;
+            if (*cp=='U') {
+              cp++;
+              param1 = RtcTime.month;
+              param2 = RtcTime.day_of_month;
+            }
             if (dp < (linebuf + DISPLAY_BUFFER_COLS) -8) {
-              snprintf_P(dp, 9, PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%02d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year%2000);
+              snprintf_P(dp, 9, PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%02d"), param1, param2, RtcTime.year%2000);
               dp += 8;
             }
-            break;
+            break; }
           case 'd':
             // force draw grafics buffer
             if (renderer) renderer->Updateframe();
@@ -706,7 +703,7 @@ void DisplayText(void)
               Restore_graph(temp,bbuff);
               break;
             }
-#endif
+#endif // USE_SCRIPT_FATFS
             { int16_t num,gxp,gyp,gxs,gys,dec,icol;
               float ymin,ymax;
               var=atoiv(cp,&num);
@@ -754,7 +751,7 @@ void DisplayText(void)
                 AddValue(num,temp);
               }
             break;
-#endif
+#endif // USE_GRAPH
 
 #ifdef USE_AWATCH
           case 'w':
@@ -762,11 +759,32 @@ void DisplayText(void)
               cp += var;
               DrawAClock(temp);
               break;
-#endif
+#endif // USE_AWATCH
 
 #ifdef USE_TOUCH_BUTTONS
           case 'b':
-          { int16_t num,gxp,gyp,gxs,gys,outline,fill,textcolor,textsize;
+          { int16_t num,gxp,gyp,gxs,gys,outline,fill,textcolor,textsize; uint8_t dflg=1;
+            if (*cp=='e' || *cp=='d') {
+              // enable disable
+              uint8_t dis=0;
+              if (*cp=='d') dis=1;
+              cp++;
+              var=atoiv(cp,&num);
+              num=num%MAXBUTTONS;
+              cp+=var;
+              if (buttons[num]) {
+                buttons[num]->vpower.disable=dis;
+                if (!dis) {
+                  if (buttons[num]->vpower.is_virtual) buttons[num]->xdrawButton(buttons[num]->vpower.on_off);
+                  else buttons[num]->xdrawButton(bitRead(power,num));
+                }
+              }
+              break;
+            }
+            if (*cp=='-') {
+              cp++;
+              dflg=0;
+            }
             var=atoiv(cp,&num);
             cp+=var;
             cp++;
@@ -806,22 +824,30 @@ void DisplayText(void)
             if (renderer) {
               buttons[num]= new VButton();
               if (buttons[num]) {
-                buttons[num]->vpower=bflags;
                 buttons[num]->initButtonUL(renderer,gxp,gyp,gxs,gys,renderer->GetColorFromIndex(outline),\
-                renderer->GetColorFromIndex(fill),renderer->GetColorFromIndex(textcolor),bbuff,textsize);
+                  renderer->GetColorFromIndex(fill),renderer->GetColorFromIndex(textcolor),bbuff,textsize);
                 if (!bflags) {
                   // power button
-                  buttons[num]->xdrawButton(bitRead(power,num));
+                  if (dflg) buttons[num]->xdrawButton(bitRead(power,num));
+                  buttons[num]->vpower.is_virtual=0;
                 } else {
                   // virtual button
-                  buttons[num]->vpower&=0x7f;
-                  buttons[num]->xdrawButton(buttons[num]->vpower&0x80);
+                  buttons[num]->vpower.is_virtual=1;
+                  if (bflags==2) {
+                    // push
+                    buttons[num]->vpower.is_pushbutton=1;
+                  } else {
+                    // toggle
+                    buttons[num]->vpower.is_pushbutton=0;
+                  }
+                  if (dflg) buttons[num]->xdrawButton(buttons[num]->vpower.on_off);
+                  buttons[num]->vpower.disable=!dflg;
                 }
               }
             }
           }
           break;
-#endif
+#endif // USE_TOUCH_BUTTONS
           default:
             // unknown escape
             Response_P(PSTR("Unknown Escape"));
@@ -1139,50 +1165,45 @@ void DisplayAnalyzeJson(char *topic, char *json)
 // tele/wemos5/SENSOR {"Time":"2017-09-20T11:53:53","SHT1X":{"Temperature":20.1,"Humidity":58.9},"HTU21":{"Temperature":20.7,"Humidity":58.5},"BMP280":{"Temperature":21.6,"Pressure":1020.3},"TempUnit":"C"}
 // tele/th1/SENSOR    {"Time":"2017-09-20T11:54:48","DS18B20":{"Temperature":49.7},"TempUnit":"C"}
 
-
-//  char jsonStr[MESSZ];
-//  strlcpy(jsonStr, json, sizeof(jsonStr));  // Save original before destruction by JsonObject
   String jsonStr = json;  // Move from stack to heap to fix watchdogs (20180626)
 
-  StaticJsonBuffer<1024> jsonBuf;
-  JsonObject &root = jsonBuf.parseObject(jsonStr);
-  if (root.success()) {
+  JsonParser parser((char*)jsonStr.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (root) {   // did JSON parsing went ok?
 
-    const char *unit;
-    unit = root[D_JSON_TEMPERATURE_UNIT];
+    const char *unit = root.getStr(PSTR(D_JSON_TEMPERATURE_UNIT), nullptr);   // nullptr if not found
     if (unit) {
       snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%s"), unit);  // C or F
     }
-    unit = root[D_JSON_PRESSURE_UNIT];
+    unit = root.getStr(PSTR(D_JSON_PRESSURE_UNIT), nullptr);   // nullptr if not found
     if (unit) {
       snprintf_P(disp_pres, sizeof(disp_pres), PSTR("%s"), unit);  // hPa or mmHg
     }
-
-    for (JsonObject::iterator it = root.begin(); it != root.end(); ++it) {
-      JsonVariant value = it->value;
-      if (value.is<JsonObject>()) {
-        JsonObject& Object2 = value;
-        for (JsonObject::iterator it2 = Object2.begin(); it2 != Object2.end(); ++it2) {
-          JsonVariant value2 = it2->value;
-          if (value2.is<JsonObject>()) {
-            JsonObject& Object3 = value2;
-            for (JsonObject::iterator it3 = Object3.begin(); it3 != Object3.end(); ++it3) {
-              const char* value = it3->value;
-              if (value != nullptr) {  // "DHT11":{"Temperature":null,"Humidity":null} - ignore null as it will raise exception 28
-                DisplayJsonValue(topic, it->key, it3->key, value);  // Sensor 56%
+    for (auto key1 : root) {
+      JsonParserToken value1 = key1.getValue();
+      if (value1.isObject()) {
+        JsonParserObject Object2 = value1.getObject();
+        for (auto key2 : Object2) {
+          JsonParserToken value2 = key2.getValue();
+          if (value2.isObject()) {
+            JsonParserObject Object3 = value2.getObject();
+            for (auto key3 : Object3) {
+              const char* value3 = key3.getValue().getStr(nullptr);
+              if (value3 != nullptr) {  // "DHT11":{"Temperature":null,"Humidity":null} - ignore null as it will raise exception 28
+                DisplayJsonValue(topic, key1.getStr(), key3.getStr(), value3);  // Sensor 56%
               }
             }
           } else {
-            const char* value = it2->value;
+            const char* value = value2.getStr(nullptr);
             if (value != nullptr) {
-              DisplayJsonValue(topic, it->key, it2->key, value);  // Sensor  56%
+              DisplayJsonValue(topic, key1.getStr(), key2.getStr(), value);  // Sensor  56%
             }
           }
         }
       } else {
-        const char* value = it->value;
+        const char* value = value1.getStr(nullptr);
         if (value != nullptr) {
-          DisplayJsonValue(topic, it->key, it->key, value);  // Topic  56%
+          DisplayJsonValue(topic, key1.getStr(), key1.getStr(), value);  // Topic  56%
         }
       }
     }
@@ -1268,8 +1289,11 @@ void DisplayInitDriver(void)
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
   if (Settings.display_model) {
-    if (!light_type) {
-      devices_present++;  // If no PWM channel for backlight then use "normal" power control
+    devices_present++;
+    if (!PinUsed(GPIO_BACKLIGHT)) {
+      if (light_type && (4 == Settings.display_model)) {
+        devices_present--;  // Assume PWM channel is used for backlight
+      }
     }
     disp_device = devices_present;
 
@@ -1509,16 +1533,11 @@ void CmndDisplayRows(void)
 bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t scale);
 char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *width, unsigned short *height);
 void rgb888_to_565(uint8_t *in, uint16_t *out, uint32_t len);
-#endif
-#endif
+#endif // JPEG_PICTS
+#endif // ESP32
 
-#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT) && USE_SCRIPT_FATFS>=0
-
-#ifdef ESP32
+#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
 extern FS *fsp;
-#else
-extern SDClass *fsp;
-#endif
 #define XBUFF_LEN 128
 void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
   if (!renderer) return;
@@ -1541,14 +1560,13 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
     uint16_t ysize;
     fp.read((uint8_t*)&ysize,2);
 #if 1
-    uint16_t xdiv=xsize/XBUFF_LEN;
     renderer->setAddrWindow(xp,yp,xp+xsize,yp+ysize);
-    for(int16_t j=0; j<ysize; j++) {
-      for(int16_t i=0; i<xsize; i+=XBUFF_LEN) {
-        uint16_t rgb[XBUFF_LEN];
-        uint16_t len=fp.read((uint8_t*)rgb,XBUFF_LEN*2);
-        if (len>=2) renderer->pushColors(rgb,len/2,true);
-      }
+    uint16_t rgb[xsize];
+    for (int16_t j=0; j<ysize; j++) {
+    //  for(int16_t i=0; i<xsize; i+=XBUFF_LEN) {
+        fp.read((uint8_t*)rgb,xsize*2);
+        renderer->pushColors(rgb,xsize,true);
+    //  }
       OsWatchLoop();
     }
     renderer->setAddrWindow(0,0,0,0);
@@ -1611,7 +1629,7 @@ void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
 #endif // ESP32
   }
 }
-#endif
+#endif // USE_SCRIPT_FATFS
 
 #ifdef USE_AWATCH
 #define MINUTE_REDUCT 4
@@ -1648,7 +1666,7 @@ void DrawAClock(uint16_t rad) {
     temp=((float)RtcTime.minute*(pi/30.0)-(pi/2.0));
     renderer->writeLine(disp_xpos, disp_ypos,disp_xpos+(frad-MINUTE_REDUCT)*cosf(temp),disp_ypos+(frad-MINUTE_REDUCT)*sinf(temp), fg_color);
 }
-#endif
+#endif // USE_AWATCH
 
 
 #ifdef USE_GRAPH
@@ -1923,7 +1941,7 @@ void Restore_graph(uint8_t num, char *path) {
   fp.close();
   RedrawGraph(num,1);
 }
-#endif
+#endif // USE_SCRIPT_FATFS
 
 void RedrawGraph(uint8_t num, uint8_t flags) {
   uint16_t index=num%NUM_GRAPHS;
@@ -2031,7 +2049,145 @@ void AddValue(uint8_t num,float fval) {
     }
   }
 }
-#endif
+#endif // USE_GRAPH
+
+#ifdef USE_FT5206
+
+#include <FT5206.h>
+// touch panel controller
+#undef FT5206_address
+#define FT5206_address 0x38
+
+FT5206_Class *touchp;
+TP_Point pLoc;
+bool FT5206_found;
+
+bool Touch_Init(TwoWire &i2c) {
+  FT5206_found = false;
+  touchp = new FT5206_Class();
+  if (touchp->begin(i2c, FT5206_address)) {
+    I2cSetActiveFound(FT5206_address, "FT5206");
+    FT5206_found = true;
+  }
+  return FT5206_found;
+}
+
+uint32_t Touch_Status(uint32_t sel) {
+  if (FT5206_found) {
+    switch (sel) {
+      case 0:
+        return  touchp->touched();
+      case 1:
+        return pLoc.x;
+      case 2:
+        return pLoc.y;
+    }
+    return 0;
+  } else {
+    return 0;
+  }
+}
+
+
+#ifdef USE_TOUCH_BUTTONS
+void Touch_MQTT(uint8_t index, const char *cp) {
+  ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index+1, buttons[index]->vpower.on_off);
+  MqttPublishTeleSensor();
+}
+
+void Touch_RDW_BUTT(uint32_t count, uint32_t pwr) {
+  buttons[count]->xdrawButton(pwr);
+  if (pwr) buttons[count]->vpower.on_off = 1;
+  else buttons[count]->vpower.on_off = 0;
+}
+
+// check digitizer hit
+void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
+uint16_t temp;
+uint8_t rbutt=0;
+uint8_t vbutt=0;
+
+
+  if (touchp->touched()) {
+    // did find a hit
+    pLoc = touchp->getPoint(0);
+
+    if (renderer) {
+
+      rotconvert(&pLoc.x, &pLoc.y);
+
+      //AddLog_P2(LOG_LEVEL_INFO, PSTR("touch %d - %d"), pLoc.x, pLoc.y);
+      // now must compare with defined buttons
+      for (uint8_t count=0; count<MAXBUTTONS; count++) {
+        if (buttons[count] && !buttons[count]->vpower.disable) {
+            if (buttons[count]->contains(pLoc.x, pLoc.y)) {
+                // did hit
+                buttons[count]->press(true);
+                if (buttons[count]->justPressed()) {
+                  if (!buttons[count]->vpower.is_virtual) {
+                    uint8_t pwr=bitRead(power, rbutt);
+                    if (!SendKey(KEY_BUTTON, rbutt+1, POWER_TOGGLE)) {
+                      ExecuteCommandPower(rbutt+1, POWER_TOGGLE, SRC_BUTTON);
+                      Touch_RDW_BUTT(count, !pwr);
+                    }
+                  } else {
+                    // virtual button
+                    const char *cp;
+                    if (!buttons[count]->vpower.is_pushbutton) {
+                      // toggle button
+                      buttons[count]->vpower.on_off ^= 1;
+                      cp="TBT";
+                    } else {
+                      // push button
+                      buttons[count]->vpower.on_off = 1;
+                      cp="PBT";
+                    }
+                    buttons[count]->xdrawButton(buttons[count]->vpower.on_off);
+                    Touch_MQTT(count,cp);
+                  }
+                }
+            }
+            if (!buttons[count]->vpower.is_virtual) {
+              rbutt++;
+            } else {
+              vbutt++;
+            }
+        }
+      }
+    }
+  } else {
+    // no hit
+    for (uint8_t count=0; count<MAXBUTTONS; count++) {
+      if (buttons[count]) {
+        buttons[count]->press(false);
+        if (buttons[count]->justReleased()) {
+          if (buttons[count]->vpower.is_virtual) {
+            if (buttons[count]->vpower.is_pushbutton) {
+              // push button
+              buttons[count]->vpower.on_off = 0;
+              Touch_MQTT(count,"PBT");
+              buttons[count]->xdrawButton(buttons[count]->vpower.on_off);
+            }
+          }
+        }
+        if (!buttons[count]->vpower.is_virtual) {
+          // check if power button stage changed
+          uint8_t pwr = bitRead(power, rbutt);
+          uint8_t vpwr = buttons[count]->vpower.on_off;
+          if (pwr != vpwr) {
+            Touch_RDW_BUTT(count, pwr);
+          }
+          rbutt++;
+        }
+      }
+    }
+    pLoc.x = 0;
+    pLoc.y = 0;
+  }
+}
+
+#endif // USE_TOUCH_BUTTONS
+#endif // USE_FT5206
 
 /*********************************************************************************************\
  * Interface

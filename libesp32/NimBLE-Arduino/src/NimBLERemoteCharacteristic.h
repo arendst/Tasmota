@@ -24,13 +24,14 @@
 #include "NimBLERemoteDescriptor.h"
 
 #include <vector>
+#include <functional>
 
 class NimBLERemoteService;
 class NimBLERemoteDescriptor;
 
 
-typedef void (*notify_callback)(NimBLERemoteCharacteristic* pBLERemoteCharacteristic,
-                                uint8_t* pData, size_t length, bool isNotify);
+typedef std::function<void (NimBLERemoteCharacteristic* pBLERemoteCharacteristic,
+                                uint8_t* pData, size_t length, bool isNotify)> notify_callback;
 
 typedef struct {
     const NimBLEUUID *uuid;
@@ -63,6 +64,15 @@ public:
     NimBLEUUID                                     getUUID();
     std::string                                    readValue(time_t *timestamp = nullptr);
 
+    /**
+     * @brief A template to convert the remote characteristic data to <type\>.
+     * @tparam T The type to convert the data to.
+     * @param [in] timestamp A pointer to a time_t struct to store the time the value was read.
+     * @param [in] skipSizeCheck If true it will skip checking if the data size is less than <tt>sizeof(<type\>)</tt>.
+     * @return The data converted to <type\> or NULL if skipSizeCheck is false and the data is
+     * less than <tt>sizeof(<type\>)</tt>.
+     * @details <b>Use:</b> <tt>readValue<type>(&timestamp, skipSizeCheck);</tt>
+     */
     template<typename T>
     T                                              readValue(time_t *timestamp = nullptr, bool skipSizeCheck = false) {
         std::string value = readValue(timestamp);
@@ -77,6 +87,15 @@ public:
     float                                          readFloat()  __attribute__ ((deprecated("Use template readValue<float>()")));
     std::string                                    getValue(time_t *timestamp = nullptr);
 
+    /**
+     * @brief A template to convert the remote characteristic data to <type\>.
+     * @tparam T The type to convert the data to.
+     * @param [in] timestamp A pointer to a time_t struct to store the time the value was read.
+     * @param [in] skipSizeCheck If true it will skip checking if the data size is less than <tt>sizeof(<type\>)</tt>.
+     * @return The data converted to <type\> or NULL if skipSizeCheck is false and the data is
+     * less than <tt>sizeof(<type\>)</tt>.
+     * @details <b>Use:</b> <tt>getValue<type>(&timestamp, skipSizeCheck);</tt>
+     */
     template<typename T>
     T                                              getValue(time_t *timestamp = nullptr, bool skipSizeCheck = false) {
         std::string value = getValue(timestamp);
@@ -86,9 +105,9 @@ public:
     }
 
     bool                                           subscribe(bool notifications = true,
-                                                             bool response = true,
-                                                             notify_callback notifyCallback = nullptr);
-    bool                                           unsubscribe(bool response = true);
+                                                             notify_callback notifyCallback = nullptr,
+                                                             bool response = false);
+    bool                                           unsubscribe(bool response = false);
     bool                                           registerForNotify(notify_callback notifyCallback,
                                                                      bool notifications = true,
                                                                      bool response = true)
@@ -98,6 +117,11 @@ public:
                                                               bool response = false);
     bool                                           writeValue(const std::string &newValue,
                                                               bool response = false);
+    /**
+     * @brief Convenience template to set the remote characteristic value to <type\>val.
+     * @param [in] s The value to write.
+     * @param [in] response True == request write response.
+     */
     template<typename T>
     bool writeValue(const T &s, bool response = false) {
         return writeValue((uint8_t*)&s, sizeof(T), response);
@@ -115,7 +139,7 @@ private:
     friend class      NimBLERemoteDescriptor;
 
     // Private member functions
-    bool              setNotify(uint16_t val, bool response = true, notify_callback notifyCallback = nullptr);
+    bool              setNotify(uint16_t val, notify_callback notifyCallback = nullptr, bool response = true);
     bool              retrieveDescriptors(const NimBLEUUID *uuid_filter = nullptr);
     static int        onReadCB(uint16_t conn_handle, const struct ble_gatt_error *error,
                                struct ble_gatt_attr *attr, void *arg);

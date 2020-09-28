@@ -505,29 +505,10 @@ uint32_t DecodeLightId(uint32_t hue_id, uint16_t * shortaddr = nullptr)
   return relay_id;
 }
 
-static const char * FIRST_GEN_UA[] = {  // list of User-Agents signature
-  "AEOBC",                              // Echo Dot 2ng Generation
-};
-
 // Check if the Echo device is of 1st generation, which triggers different results
-uint32_t findEchoGeneration(void) {
-  // result is 1 for 1st gen, 2 for 2nd gen and further
-  String user_agent = Webserver->header("User-Agent");
-  uint32_t gen = 2;
-
-  for (uint32_t i = 0; i < sizeof(FIRST_GEN_UA)/sizeof(char*); i++) {
-    if (user_agent.indexOf(FIRST_GEN_UA[i]) >= 0) {  // found
-      gen = 1;
-      break;
-    }
-  }
-  if (0 == user_agent.length()) {
-    gen = 1;        // if no user-agent, also revert to gen v1
-  }
-
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " User-Agent: %s, gen=%d"), user_agent.c_str(), gen);  // Header collection is set in xdrv_01_webserver.ino, in StartWebserver()
-
-  return gen;
+inline uint32_t findEchoGeneration(void) {
+  // don't try to guess from User-Agent anymore but use SetOption109
+  return Settings.flag4.alexa_gen_1 ? 1 : 2;
 }
 
 void HueGlobalConfig(String *path) {
@@ -588,10 +569,12 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
   if (Webserver->args()) {
     response = "[";
 
-    StaticJsonBuffer<300> jsonBuffer;
-    JsonObject &hue_json = jsonBuffer.parseObject(Webserver->arg((Webserver->args())-1));
-    if (hue_json.containsKey("on")) {
-      on = hue_json["on"];
+    JsonParser parser((char*) Webserver->arg((Webserver->args())-1).c_str());
+    JsonParserObject root = parser.getRootObject();
+
+    JsonParserToken hue_on = root[PSTR("on")];
+    if (hue_on) {
+      on = hue_on.getBool();
       snprintf_P(buf, buf_size,
                  PSTR("{\"success\":{\"/lights/%d/state/on\":%s}}"),
                  device_id, on ? "true" : "false");
@@ -606,15 +589,6 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
         }
       } else {
 #endif
-/*
-        switch(on)
-        {
-          case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
-                      break;
-          case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
-                      break;
-        }
-*/
         ExecuteCommandPower(device, (on) ? POWER_ON : POWER_OFF, SRC_HUE);
         response += buf;
         resp = true;
@@ -638,8 +612,10 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
     }
     prev_x_str[0] = prev_y_str[0] = 0;  // reset xy string
 
-    if (hue_json.containsKey("bri")) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
-      bri = hue_json["bri"];
+    parser.setCurrent();
+    JsonParserToken hue_bri = root[PSTR("bri")];
+    if (hue_bri) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
+      bri = hue_bri.getUInt();
       prev_bri = bri;   // store command value
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
@@ -653,15 +629,19 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       }
       resp = true;
     }
+
     // handle xy before Hue/Sat
     // If the request contains both XY and HS, we wan't to give priority to HS
-    if (hue_json.containsKey("xy")) {
-      float x = hue_json["xy"][0];
-      float y = hue_json["xy"][1];
-      const String &x_str = hue_json["xy"][0];
-      const String &y_str = hue_json["xy"][1];
-      x_str.toCharArray(prev_x_str, sizeof(prev_x_str));
-      y_str.toCharArray(prev_y_str, sizeof(prev_y_str));
+    parser.setCurrent();
+    JsonParserToken hue_xy = root[PSTR("xy")];
+    if (hue_xy) {
+      JsonParserArray arr_xy = JsonParserArray(hue_xy);
+      JsonParserToken tok_x = arr_xy[0];
+      JsonParserToken tok_y = arr_xy[1];
+      float x = tok_x.getFloat();
+      float y = tok_y.getFloat();
+      strlcpy(prev_x_str, tok_x.getStr(), sizeof(prev_x_str));
+      strlcpy(prev_y_str, tok_y.getStr(), sizeof(prev_y_str));
       uint8_t rr,gg,bb;
       LightStateClass::XyToRgb(x, y, &rr, &gg, &bb);
       LightStateClass::RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
@@ -677,8 +657,11 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       resp = true;
       change = true;
     }
-    if (hue_json.containsKey("hue")) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
-      hue = hue_json["hue"];
+
+    parser.setCurrent();
+    JsonParserToken hue_hue = root[PSTR("hue")];
+    if (hue_hue) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
+      hue = hue_hue.getUInt();
       prev_hue = hue;
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
@@ -693,8 +676,11 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       }
       resp = true;
     }
-    if (hue_json.containsKey("sat")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
-      sat = hue_json["sat"];
+
+    parser.setCurrent();
+    JsonParserToken hue_sat = root[PSTR("sat")];
+    if (hue_sat) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
+      sat = hue_sat.getUInt();
       prev_sat = sat;   // store command value
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
@@ -709,8 +695,11 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       }
       resp = true;
     }
-    if (hue_json.containsKey("ct")) {  // Color temperature 153 (Cold) to 500 (Warm)
-      ct = hue_json["ct"];
+
+    parser.setCurrent();
+    JsonParserToken hue_ct = root[PSTR("ct")];
+    if (hue_ct) {  // Color temperature 153 (Cold) to 500 (Warm)
+      ct = hue_ct.getUInt();
       prev_ct = ct;   // store commande value
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
@@ -723,6 +712,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       }
       resp = true;
     }
+    
     if (change) {
 #ifdef USE_SHUTTER
       if (ShutterState(device)) {
@@ -893,7 +883,7 @@ void HandleHueApi(String *path)
 
   path->remove(0, 4);                                // remove /api
   uint16_t apilen = path->length();
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_API " (%s)"), path->c_str());         // HTP: Hue API (//lights/1/state
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_API " (%s) from %s"), path->c_str(), Webserver->client().remoteIP().toString().c_str());         // HTP: Hue API (//lights/1/state) from 192.168.1.20
   for (args = 0; args < Webserver->args(); args++) {
     String json = Webserver->arg(args);
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_POST_ARGS " (%s)"), json.c_str());  // HTP: Hue POST args ({"on":false})

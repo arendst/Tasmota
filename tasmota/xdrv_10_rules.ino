@@ -497,30 +497,37 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     rule_name = rule_name.substring(0, pos);           // "SUBTYPE1#CURRENT"
   }
 
-  StaticJsonBuffer<1024> jsonBuf;
-  JsonObject &root = jsonBuf.parseObject(event);
-  if (!root.success()) { return false; }               // No valid JSON data
-  JsonObject *obj = &root;
+  String buf = event;   // copy the string into a new buffer that will be modified
+  JsonParser parser((char*)buf.c_str());
+  JsonParserObject obj = parser.getRootObject();
+  if (!obj) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event too long (%d)"), event.length());
+    return false; // No valid JSON data
+  }
   String subtype;
   uint32_t i = 0;
   while ((pos = rule_name.indexOf("#")) > 0) {         // "SUBTYPE1#SUBTYPE2#CURRENT"
     subtype = rule_name.substring(0, pos);
-    const JsonVariant & val = GetCaseInsensitive(*obj, subtype.c_str());
-    if (nullptr == &val) { return false; }            // not found
-    obj = &(val.as<JsonObject>());
-    if (!obj->success()) { return false; }            // not a JsonObject
+    obj = obj[subtype.c_str()].getObject();
+    if (!obj) { return false; }             // not found
 
     rule_name = rule_name.substring(pos +1);
     if (i++ > 10) { return false; }                    // Abandon possible loop
+
+    yield();
   }
 
-  const JsonVariant & val = GetCaseInsensitive(*obj, rule_name.c_str());
-  if (nullptr == &val) { return false; }              // last level not found
+  JsonParserToken val = obj[rule_name.c_str()];
+  if (!val) { return false; }               // last level not found
   const char* str_value;
   if (rule_name_idx) {
-    str_value = (*obj)[rule_name][rule_name_idx -1];   // "CURRENT[1]"
+    if (val.isArray()) {
+      str_value = (val.getArray())[rule_name_idx -1].getStr();
+    } else {
+      str_value = val.getStr();
+    }
   } else {
-    str_value = (*obj)[rule_name];                     // "CURRENT"
+    str_value = val.getStr();                     // "CURRENT"
   }
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
@@ -713,6 +720,11 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       RulesVarReplace(commands, F("%UPTIME%"), String(MinutesUptime()));
       RulesVarReplace(commands, F("%TIMESTAMP%"), GetDateAndTime(DT_LOCAL));
       RulesVarReplace(commands, F("%TOPIC%"), mqtt_topic);
+      snprintf_P(stemp, sizeof(stemp), PSTR("%06X"), ESP_getChipId());
+      RulesVarReplace(commands, F("%DEVICEID%"), stemp);
+      String mac_address = WiFi.macAddress();
+      mac_address.replace(":", "");
+      RulesVarReplace(commands, F("%MACADDR%"), mac_address);
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));
@@ -1021,20 +1033,27 @@ bool RulesMqttData(void)
       if (event_item.Key.length() == 0) {   //If did not specify Key
         value = sData;
       } else {      //If specified Key, need to parse Key/Value from JSON data
-        StaticJsonBuffer<500> jsonBuf;
-        JsonObject& jsonData = jsonBuf.parseObject(sData);
+        JsonParser parser((char*)sData.c_str());
+        JsonParserObject jsonData = parser.getRootObject();
+
         String key1 = event_item.Key;
         String key2;
-        if (!jsonData.success()) break;       //Failed to parse JSON data, ignore this message.
+        if (!jsonData) break;       //Failed to parse JSON data, ignore this message.
         int dot;
         if ((dot = key1.indexOf('.')) > 0) {
           key2 = key1.substring(dot+1);
           key1 = key1.substring(0, dot);
-          if (!jsonData[key1][key2].success()) break;   //Failed to get the key/value, ignore this message.
-          value = (const char *)jsonData[key1][key2];
+          JsonParserToken value_tok = jsonData[key1.c_str()].getObject()[key2.c_str()];
+          if (!value_tok) break;   //Failed to get the key/value, ignore this message.
+          value = value_tok.getStr();
+          // if (!jsonData[key1][key2].success()) break;   //Failed to get the key/value, ignore this message.
+          // value = (const char *)jsonData[key1][key2];
         } else {
-          if (!jsonData[key1].success()) break;
-          value = (const char *)jsonData[key1];
+          JsonParserToken value_tok = jsonData[key1.c_str()];
+          if (!value_tok) break;   //Failed to get the key/value, ignore this message.
+          value = value_tok.getStr();
+          // if (!jsonData[key1].success()) break;
+          // value = (const char *)jsonData[key1];
         }
       }
       value.trim();

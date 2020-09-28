@@ -18,12 +18,6 @@
 #include "NimBLESecurity.h"
 #include "NimBLEDevice.h"
 
-/**
- * @brief This class is for backward compatibility with the bluedroid based library.
- * Use the new security functions in NimBLEDevice instead.
- * New callback functions in NimBLEServer and NimBLEClient.
- */
-
 NimBLESecurity::NimBLESecurity() {
 }
 
@@ -33,6 +27,15 @@ NimBLESecurity::~NimBLESecurity() {
 
 /**
  * @brief Set requested authentication mode
+ * @param [in] auth_req A bitmask containing one or more of:
+ * * ESP_LE_AUTH_NO_BOND              0x00
+ * * ESP_LE_AUTH_BOND                 0x01
+ * * ESP_LE_AUTH_REQ_MITM             (1 << 2)
+ * * ESP_LE_AUTH_REQ_BOND_MITM        (ESP_LE_AUTH_BOND | ESP_LE_AUTH_REQ_MITM)
+ * * ESP_LE_AUTH_REQ_SC_ONLY          (1 << 3)
+ * * ESP_LE_AUTH_REQ_SC_BOND          (ESP_LE_AUTH_BOND | ESP_LE_AUTH_REQ_SC_ONLY)
+ * * ESP_LE_AUTH_REQ_SC_MITM          (ESP_LE_AUTH_REQ_MITM | ESP_LE_AUTH_REQ_SC_ONLY)
+ * * ESP_LE_AUTH_REQ_SC_MITM_BOND     (ESP_LE_AUTH_REQ_MITM | ESP_LE_AUTH_REQ_SC_ONLY | ESP_LE_AUTH_BOND)
  */
 void NimBLESecurity::setAuthenticationMode(esp_ble_auth_req_t auth_req) {
     NimBLEDevice::setSecurityAuth((auth_req & BLE_SM_PAIR_AUTHREQ_BOND)>0,
@@ -42,8 +45,15 @@ void NimBLESecurity::setAuthenticationMode(esp_ble_auth_req_t auth_req) {
 
 
 /**
- * @brief   Set our device IO capability to let end user perform authorization
- *          either by displaying or entering generated 6-digits pin code
+ * @brief Set our device IO capability to let end user perform authorization
+ * either by displaying or entering generated 6-digit pin code or use \"just works\".
+ * @param [in] iocap  The IO capabilites our device has.\n
+ * Can be set to one of:
+ * * ESP_IO_CAP_OUT                      0
+ * * ESP_IO_CAP_IO                       1
+ * * ESP_IO_CAP_IN                       2
+ * * ESP_IO_CAP_NONE                     3
+ * * ESP_IO_CAP_KBDISP                   4
  */
 void NimBLESecurity::setCapability(esp_ble_io_cap_t iocap) {
     NimBLEDevice::setSecurityIOCap(iocap);
@@ -51,8 +61,13 @@ void NimBLESecurity::setCapability(esp_ble_io_cap_t iocap) {
 
 
 /**
- * @brief Init encryption key by server
- * @param key_size is value between 7 and 16
+ * @brief Sets the keys we will distibute during encryption.
+ * @param [in] init_key A bitmask of the keys we will distibute.\n
+ * Can be one or more of:
+ * * ESP_BLE_ENC_KEY_MASK    (1 << 0)
+ * * ESP_BLE_ID_KEY_MASK     (1 << 1)
+ * * ESP_BLE_CSR_KEY_MASK    (1 << 2)
+ * * ESP_BLE_LINK_KEY_MASK   (1 << 3)
  */
 void NimBLESecurity::setInitEncryptionKey(uint8_t init_key) {
     NimBLEDevice::setSecurityInitKey(init_key);
@@ -60,8 +75,13 @@ void NimBLESecurity::setInitEncryptionKey(uint8_t init_key) {
 
 
 /**
- * @brief Init encryption key by client
- * @param key_size is value between 7 and 16
+ * @brief Sets the keys we will accept during encryption.
+ * @param [in] resp_key A bitmask of the keys we will accept.\n
+ * Can be one or more of:
+ * * ESP_BLE_ENC_KEY_MASK    (1 << 0)
+ * * ESP_BLE_ID_KEY_MASK     (1 << 1)
+ * * ESP_BLE_CSR_KEY_MASK    (1 << 2)
+ * * ESP_BLE_LINK_KEY_MASK   (1 << 3)
  */
 void NimBLESecurity::setRespEncryptionKey(uint8_t resp_key) {
     NimBLEDevice::setSecurityRespKey(resp_key);
@@ -70,7 +90,6 @@ void NimBLESecurity::setRespEncryptionKey(uint8_t resp_key) {
 
 /**
  *@todo  Requires implementation
- *
  */
 void NimBLESecurity::setKeySize(uint8_t key_size) {
 
@@ -80,7 +99,8 @@ void NimBLESecurity::setKeySize(uint8_t key_size) {
 
 
 /**
- * Setup for static PIN connection.
+ * @brief Sets a static PIN used to authenticate/encrypt the connection.
+ * @param [in] pin The 6 digit pin code to accept.
  */
 void NimBLESecurity::setStaticPIN(uint32_t pin){
     //uint32_t passkey = pin;

@@ -24,9 +24,8 @@
 #ifdef USE_MQTT_TLS
   #include "WiFiClientSecureLightBearSSL.h"
   BearSSL::WiFiClientSecure_light *tlsClient;
-#else
-  WiFiClient EspClient;                     // Wifi Client
 #endif
+WiFiClient EspClient;                     // Wifi Client - non-TLS
 
 const char kMqttCommands[] PROGMEM = "|"  // No prefix
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
@@ -58,10 +57,12 @@ struct MQTT {
   uint8_t initial_connection_state = 2;  // MQTT connection messages state
   bool connected = false;                // MQTT virtual connection status
   bool allowed = false;                  // MQTT enabled and parameters valid
+  bool mqtt_tls = false;                 // MQTT TLS is enabled
 } Mqtt;
 
 #ifdef USE_MQTT_TLS
 
+// This part of code is necessary to store Private Key and Cert in Flash
 #ifdef USE_MQTT_AWS_IOT
 #include <base64.hpp>
 
@@ -139,33 +140,45 @@ void MakeValidMqtt(uint32_t option, char* str)
   #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 1200"
 #endif
 
-#ifdef USE_MQTT_TLS
 PubSubClient MqttClient;
-#else
-PubSubClient MqttClient(EspClient);
-#endif
 
 void MqttInit(void)
 {
 #ifdef USE_MQTT_TLS
-  tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
+  if ((8883 == Settings.mqtt_port) || (8884 == Settings.mqtt_port)) {
+    // Turn on TLS for port 8883 (TLS) and 8884 (TLS, client certificate)
+    Settings.flag4.mqtt_tls = true;
+  }
+  Mqtt.mqtt_tls = Settings.flag4.mqtt_tls;   // this flag should not change even if we change the SetOption (until reboot)
+
+  // Detect AWS IoT and set default parameters
+  String host = String(SettingsText(SET_MQTT_HOST));
+  if (host.indexOf(".iot.") && host.endsWith(".amazonaws.com")) {  // look for ".iot." and ".amazonaws.com" in the domain name
+    Settings.flag4.mqtt_no_retain = true;
+  }
+
+  if (Mqtt.mqtt_tls) {
+    tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
 
 #ifdef USE_MQTT_AWS_IOT
-  loadTlsDir();   // load key and certificate data from Flash
-  tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
-                             AWS_IoT_Private_Key,
-                             0xFFFF /* all usages, don't care */, 0);
+    loadTlsDir();   // load key and certificate data from Flash
+    if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
+      tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
+                                AWS_IoT_Private_Key,
+                                0xFFFF /* all usages, don't care */, 0);
+    }
 #endif
 
 #ifdef USE_MQTT_TLS_CA_CERT
-#ifdef USE_MQTT_AWS_IOT
-  tlsClient->setTrustAnchor(&AmazonRootCA1_TA);
-#else
-  tlsClient->setTrustAnchor(&LetsEncryptX3CrossSigned_TA);
-#endif // USE_MQTT_AWS_IOT
+    tlsClient->setTrustAnchor(Tasmota_TA, ARRAY_SIZE(Tasmota_TA));
 #endif // USE_MQTT_TLS_CA_CERT
 
-  MqttClient.setClient(*tlsClient);
+    MqttClient.setClient(*tlsClient);
+  } else {
+    MqttClient.setClient(EspClient);    // non-TLS
+  }
+#else // USE_MQTT_TLS
+  MqttClient.setClient(EspClient);
 #endif // USE_MQTT_TLS
 }
 
@@ -286,12 +299,9 @@ void MqttPublish(const char* topic, bool retained)
   ShowFreeMem(PSTR("MqttPublish"));
 #endif
 
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT) || defined(MQTT_NO_RETAIN)
-//  if (retained) {
-//    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
-//  }
-  retained = false;   // AWS IoT does not support retained, it will disconnect if received
-#endif
+  if (Settings.flag4.mqtt_no_retain) {
+    retained = false;   // Some brokers don't support retained, they will disconnect if received
+  }
 
   char sretained[CMDSZ];
   sretained[0] = '\0';
@@ -345,7 +355,7 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
   GetTopic_P(stopic, prefix, mqtt_topic, romram);
   MqttPublish(stopic, retained);
 
-#ifdef USE_MQTT_AWS_IOT
+#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT)
   if ((prefix > 0) && (Settings.flag4.awsiot_shadow) && (Mqtt.connected)) {    // placeholder for SetOptionXX
     // compute the target topic
     char *topic = SettingsText(SET_MQTT_TOPIC);
@@ -484,7 +494,7 @@ void MqttConnected(void)
     Mqtt.connect_count++;
 
     GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
-    Response_P(PSTR(D_ONLINE));
+    Response_P(PSTR(MQTT_LWT_ONLINE));
     MqttPublish(stopic, true);
 
     if (!Settings.flag4.only_json_message) {  // SetOption90 - Disable non-json MQTT response
@@ -570,8 +580,10 @@ void MqttReconnect(void)
     }
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
     // don't enable MQTT for AWS IoT if Private Key or Certificate are not set
-    if (!AWS_IoT_Private_Key || !AWS_IoT_Client_Certificate) {
-      Mqtt.allowed = false;
+    if (Mqtt.mqtt_tls) {
+      if (0 == strlen(SettingsText(SET_MQTT_PWD))) {     // we anticipate that an empty password does not make sense with TLS. This avoids failed connections
+        Mqtt.allowed = false;
+      }
     }
 #endif
   }
@@ -600,11 +612,16 @@ void MqttReconnect(void)
   }
 
   GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
-  Response_P(S_OFFLINE);
+  Response_P(S_LWT_OFFLINE);
 
   if (MqttClient.connected()) { MqttClient.disconnect(); }
 #ifdef USE_MQTT_TLS
-  tlsClient->stop();
+  if (Mqtt.mqtt_tls) {
+    tlsClient->stop();
+  } else {
+    EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+    MqttClient.setClient(EspClient);
+  }
 #else
   EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
   MqttClient.setClient(EspClient);
@@ -617,35 +634,51 @@ void MqttReconnect(void)
   MqttClient.setCallback(MqttDataHandler);
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   // re-assign private keys in case it was updated in between
-  tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
-                             AWS_IoT_Private_Key,
-                             0xFFFF /* all usages, don't care */, 0);
+  if (Mqtt.mqtt_tls) {
+    if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
+      tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
+                                AWS_IoT_Private_Key,
+                                0xFFFF /* all usages, don't care */, 0);
+    }
+  }
 #endif
   MqttClient.setServer(SettingsText(SET_MQTT_HOST), Settings.mqtt_port);
 
   uint32_t mqtt_connect_time = millis();
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
-  bool allow_all_fingerprints = false;
-  bool learn_fingerprint1 = is_fingerprint_mono_value(Settings.mqtt_fingerprint[0], 0x00);
-  bool learn_fingerprint2 = is_fingerprint_mono_value(Settings.mqtt_fingerprint[1], 0x00);
-  allow_all_fingerprints |= is_fingerprint_mono_value(Settings.mqtt_fingerprint[0], 0xff);
-  allow_all_fingerprints |= is_fingerprint_mono_value(Settings.mqtt_fingerprint[1], 0xff);
-  allow_all_fingerprints |= learn_fingerprint1;
-  allow_all_fingerprints |= learn_fingerprint2;
-  tlsClient->setPubKeyFingerprint(Settings.mqtt_fingerprint[0], Settings.mqtt_fingerprint[1], allow_all_fingerprints);
+  bool allow_all_fingerprints;
+  bool learn_fingerprint1;
+  bool learn_fingerprint2;
+  if (Mqtt.mqtt_tls) {
+    allow_all_fingerprints = false;
+    learn_fingerprint1 = is_fingerprint_mono_value(Settings.mqtt_fingerprint[0], 0x00);
+    learn_fingerprint2 = is_fingerprint_mono_value(Settings.mqtt_fingerprint[1], 0x00);
+    allow_all_fingerprints |= is_fingerprint_mono_value(Settings.mqtt_fingerprint[0], 0xff);
+    allow_all_fingerprints |= is_fingerprint_mono_value(Settings.mqtt_fingerprint[1], 0xff);
+    allow_all_fingerprints |= learn_fingerprint1;
+    allow_all_fingerprints |= learn_fingerprint2;
+    tlsClient->setPubKeyFingerprint(Settings.mqtt_fingerprint[0], Settings.mqtt_fingerprint[1], allow_all_fingerprints);
+  }
 #endif
+  bool lwt_retain = Settings.flag4.mqtt_no_retain ? false : true;   // no retained last will if "no_retain"
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "AWS IoT endpoint: %s"), SettingsText(SET_MQTT_HOST));
-  if (MqttClient.connect(mqtt_client, nullptr, nullptr, stopic, 1, false, mqtt_data, MQTT_CLEAN_SESSION)) {
-#else
-  if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data, MQTT_CLEAN_SESSION)) {
-#endif
-#ifdef USE_MQTT_TLS
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connected in %d ms, max ThunkStack used %d"),
-      millis() - mqtt_connect_time, tlsClient->getMaxThunkStackUse());
-    if (!tlsClient->getMFLNStatus()) {
-      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("MFLN not supported by TLS server"));
+  if (Mqtt.mqtt_tls) {
+    if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
+      // if private key is there, we remove user/pwd
+      mqtt_user = nullptr;
+      mqtt_pwd  = nullptr;
     }
+  }
+#endif
+
+  if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, mqtt_data, MQTT_CLEAN_SESSION)) {
+#ifdef USE_MQTT_TLS
+    if (Mqtt.mqtt_tls) {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connected in %d ms, max ThunkStack used %d"),
+        millis() - mqtt_connect_time, tlsClient->getMaxThunkStackUse());
+      if (!tlsClient->getMFLNStatus()) {
+        AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("MFLN not supported by TLS server"));
+      }
 #ifndef USE_MQTT_TLS_CA_CERT  // don't bother with fingerprints if using CA validation
 // **** Start patch Castellucci
 /*
@@ -678,40 +711,43 @@ void MqttReconnect(void)
       }
     }
 */
-    const uint8_t *recv_fingerprint = tlsClient->getRecvPubKeyFingerprint();
-    // create a printable version of the fingerprint received
-    char buf_fingerprint[64];
-    ToHex_P(recv_fingerprint, 20, buf_fingerprint, sizeof(buf_fingerprint), ' ');
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Server fingerprint: %s"), buf_fingerprint);
+      const uint8_t *recv_fingerprint = tlsClient->getRecvPubKeyFingerprint();
+      // create a printable version of the fingerprint received
+      char buf_fingerprint[64];
+      ToHex_P(recv_fingerprint, 20, buf_fingerprint, sizeof(buf_fingerprint), ' ');
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Server fingerprint: %s"), buf_fingerprint);
 
-    bool learned = false;
+      bool learned = false;
 
-    // If the fingerprint slot is marked for update, we'll do so.
-    // Otherwise, if the fingerprint slot had the magic trust-on-first-use
-    // value, we will save the current fingerprint there, but only if the other fingerprint slot
-    // *didn't* match it.
-    if (recv_fingerprint[20] & 0x1 || (learn_fingerprint1 && 0 != memcmp(recv_fingerprint, Settings.mqtt_fingerprint[1], 20))) {
-      memcpy(Settings.mqtt_fingerprint[0], recv_fingerprint, 20);
-      learned = true;
-    }
-    // As above, but for the other slot.
-    if (recv_fingerprint[20] & 0x2 || (learn_fingerprint2 && 0 != memcmp(recv_fingerprint, Settings.mqtt_fingerprint[0], 20))) {
-      memcpy(Settings.mqtt_fingerprint[1], recv_fingerprint, 20);
-      learned = true;
-    }
+      // If the fingerprint slot is marked for update, we'll do so.
+      // Otherwise, if the fingerprint slot had the magic trust-on-first-use
+      // value, we will save the current fingerprint there, but only if the other fingerprint slot
+      // *didn't* match it.
+      if (recv_fingerprint[20] & 0x1 || (learn_fingerprint1 && 0 != memcmp(recv_fingerprint, Settings.mqtt_fingerprint[1], 20))) {
+        memcpy(Settings.mqtt_fingerprint[0], recv_fingerprint, 20);
+        learned = true;
+      }
+      // As above, but for the other slot.
+      if (recv_fingerprint[20] & 0x2 || (learn_fingerprint2 && 0 != memcmp(recv_fingerprint, Settings.mqtt_fingerprint[0], 20))) {
+        memcpy(Settings.mqtt_fingerprint[1], recv_fingerprint, 20);
+        learned = true;
+      }
 
-    if (learned) {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Fingerprint learned: %s"), buf_fingerprint);
+      if (learned) {
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Fingerprint learned: %s"), buf_fingerprint);
 
-      SettingsSaveAll();  // save settings
-    }
-// **** End patch Castellucci
+        SettingsSaveAll();  // save settings
+      }
+  // **** End patch Castellucci
 #endif // !USE_MQTT_TLS_CA_CERT
+    }
 #endif // USE_MQTT_TLS
     MqttConnected();
   } else {
 #ifdef USE_MQTT_TLS
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connection error: %d"), tlsClient->getLastError());
+    if (Mqtt.mqtt_tls) {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connection error: %d"), tlsClient->getLastError());
+    }
 #endif
     MqttDisconnected(MqttClient.state());  // status codes are documented here http://pubsubclient.knolleary.net/api.html#state
   }
@@ -859,8 +895,8 @@ void CmndFullTopic(void)
     char stemp1[TOPSZ];
     strlcpy(stemp1, (SC_DEFAULT == Shortcut()) ? MQTT_FULLTOPIC : XdrvMailbox.data, sizeof(stemp1));
     if (strcmp(stemp1, SettingsText(SET_MQTT_FULLTOPIC))) {
-      Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);          // Offline or remove previous retained topic
+      Response_P((Settings.flag.mqtt_offline) ? S_LWT_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
+      MqttPublishPrefixTopic_P(TELE, S_LWT, true);          // Offline or remove previous retained topic
       SettingsUpdateText(SET_MQTT_FULLTOPIC, stemp1);
       restart_flag = 2;
     }
@@ -963,8 +999,8 @@ void CmndTopic(void)
     char stemp1[TOPSZ];
     strlcpy(stemp1, (SC_DEFAULT == Shortcut()) ? MQTT_TOPIC : XdrvMailbox.data, sizeof(stemp1));
     if (strcmp(stemp1, SettingsText(SET_MQTT_TOPIC))) {
-      Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);          // Offline or remove previous retained topic
+      Response_P((Settings.flag.mqtt_offline) ? S_LWT_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
+      MqttPublishPrefixTopic_P(TELE, S_LWT, true);          // Offline or remove previous retained topic
       SettingsUpdateText(SET_MQTT_TOPIC, stemp1);
       restart_flag = 2;
     }
@@ -1251,6 +1287,9 @@ const char HTTP_FORM_MQTT1[] PROGMEM =
   "<form method='get' action='" WEB_HANDLE_MQTT "'>"
   "<p><b>" D_HOST "</b> (" MQTT_HOST ")<br><input id='mh' placeholder=\"" MQTT_HOST "\" value=\"%s\"></p>"
   "<p><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br><input id='ml' placeholder='" STR(MQTT_PORT) "' value='%d'></p>"
+#ifdef USE_MQTT_TLS
+  "<p><label><input id='b3' type='checkbox'%s><b>" D_MQTT_TLS_ENABLE "</b></label><br>"
+#endif // USE_MQTT_TLS
   "<p><b>" D_CLIENT "</b> (%s)<br><input id='mc' placeholder=\"%s\" value=\"%s\"></p>";
 const char HTTP_FORM_MQTT2[] PROGMEM =
   "<p><b>" D_USER "</b> (" MQTT_USER ")<br><input id='mu' placeholder=\"" MQTT_USER "\" value=\"%s\"></p>"
@@ -1277,6 +1316,9 @@ void HandleMqttConfiguration(void)
   WSContentSend_P(HTTP_FORM_MQTT1,
     SettingsText(SET_MQTT_HOST),
     Settings.mqtt_port,
+#ifdef USE_MQTT_TLS
+    Mqtt.mqtt_tls ? " checked" : "",      // SetOption102 - Enable MQTT TLS
+#endif // USE_MQTT_TLS
     Format(str, MQTT_CLIENT_ID, sizeof(str)), MQTT_CLIENT_ID, SettingsText(SET_MQTT_CLIENT));
   WSContentSend_P(HTTP_FORM_MQTT2,
     (!strlen(SettingsText(SET_MQTT_USER))) ? "0" : SettingsText(SET_MQTT_USER),
@@ -1300,7 +1342,7 @@ void MqttSaveSettings(void)
   strlcpy(stemp2, (!strlen(tmp)) ? MQTT_FULLTOPIC : tmp, sizeof(stemp2));
   MakeValidMqtt(1, stemp2);
   if ((strcmp(stemp, SettingsText(SET_MQTT_TOPIC))) || (strcmp(stemp2, SettingsText(SET_MQTT_FULLTOPIC)))) {
-    Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
+    Response_P((Settings.flag.mqtt_offline) ? S_LWT_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
     MqttPublishPrefixTopic_P(TELE, S_LWT, true);                // Offline or remove previous retained topic
   }
   SettingsUpdateText(SET_MQTT_TOPIC, stemp);
@@ -1309,9 +1351,12 @@ void MqttSaveSettings(void)
   SettingsUpdateText(SET_MQTT_HOST, (!strlen(tmp)) ? MQTT_HOST : (!strcmp(tmp,"0")) ? "" : tmp);
   WebGetArg("ml", tmp, sizeof(tmp));
   Settings.mqtt_port = (!strlen(tmp)) ? MQTT_PORT : atoi(tmp);
+#ifdef USE_MQTT_TLS
+  Mqtt.mqtt_tls = Webserver->hasArg("b3");  // SetOption102 - Enable MQTT TLS
+#endif
   WebGetArg("mc", tmp, sizeof(tmp));
   SettingsUpdateText(SET_MQTT_CLIENT, (!strlen(tmp)) ? MQTT_CLIENT_ID : tmp);
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+#if defined(USE_MQTT_TLS) && (defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT))
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
     SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_TOPIC), SettingsText(SET_MQTT_FULLTOPIC));
 #else // USE_MQTT_AWS_IOT

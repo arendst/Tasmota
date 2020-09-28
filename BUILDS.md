@@ -10,6 +10,7 @@
 | USE_MQTT_TLS_CA_CERT  | - | - | - | - | - | - | - |
 | USE_MQTT_AWS_IOT      | - | - | - | - | - | - | - |
 | USE_4K_RSA            | - | - | - | - | - | - | - |
+| USE_TELEGRAM          | - | - | - | - | - | - | - |
 | USE_KNX               | - | - | - | x | - | - | - |
 | USE_WEBSERVER         | x | x | x | x | x | x | x |
 | USE_JAVASCRIPT_ES6    | - | - | - | - | - | - | - |
@@ -27,6 +28,7 @@
 | USE_EXPRESSION        | - | - | - | - | - | - | - |
 | SUPPORT_IF_STATEMENT  | - | - | - | - | - | - | - |
 | USE_HOTPLUG           | - | - | - | - | - | - | - |
+| USE_PROMETHEUS        | - | - | - | - | - | - | - | Enables the `/metrics` endpoint
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | ROTARY_V1             | - | - | x | - | x | - | - |
@@ -68,7 +70,9 @@
 | USE_DDSU666           | - | - | - | - | x | - | - |
 | USE_SOLAX_X1          | - | - | - | - | - | - | - |
 | USE_LE01MR            | - | - | - | - | - | - | - |
+| USE_BL0940            | - | x | x | x | x | - | - |
 | USE_TELEINFO          | - | - | - | - | - | - | - |
+| USE_IEM3000           | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | USE_ADC_VCC           | x | x | - | - | - | x | - |
 | USE_COUNTER           | - | - | x | x | x | - | x |
@@ -125,6 +129,7 @@
 | USE_VEML6075          | - | - | - | - | - | - | - |
 | USE_VEML7700          | - | - | - | - | - | - | - |
 | USE_MCP9808           | - | - | - | - | - | - | - |
+| USE_HP303B            | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
@@ -142,8 +147,9 @@
 | USE_GPS               | - | - | - | - | - | - | - |
 | USE_HM10              | - | - | - | - | x | - | - |
 | USE_HRXL              | - | - | - | - | x | - | - |
-| USE_TASMOTA_SLAVE     | - | - | - | - | - | - | - |
+| USE_TASMOTA_CLIENT    | - | - | - | - | - | - | - |
 | USE_OPENTHERM         | - | - | - | - | - | - | - |
+| USE_TCP_BRIDGE        | - | - | - | - | - | - | - | zbbridge
 |                       |   |   |   |   |   |   |   |
 | USE_NRF24             | - | - | - | - | - | - | - |
 | USE_MIBLE             | - | - | - | - | - | - | - |
@@ -156,6 +162,7 @@
 | USE_IR_REMOTE_FULL    | - | - | - | - | - | x | - | Enable ALL protocols
 |                       |   |   |   |   |   |   |   |
 | USE_SR04              | - | - | - | - | x | - | - |
+| USE_DYP               | - | - | - | - | - | - | - |
 | USE_TM1638            | - | - | - | - | x | - | - |
 | USE_HX711             | - | - | - | - | x | - | - |
 | USE_TX2x_WIND_SENSOR  | - | - | - | - | - | - | - |
@@ -185,3 +192,5 @@
 | USE_MI_ESP32          | - | - | - | - | - | - | - | - |
 | USE_WEBCAM            | - | - | - | - | - | - | - | x |
 | USE_ETHERNET          | - | - | - | - | - | - | - | - |
+| USE_I2S_AUDIO         | - | - | - | - | - | - | - | - |
+| USE_TTGO_WATCH        | - | - | - | - | - | - | - | - |

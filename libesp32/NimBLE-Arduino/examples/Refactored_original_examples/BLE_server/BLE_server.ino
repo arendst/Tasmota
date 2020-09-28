@@ -44,8 +44,10 @@ void setup() {
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
   pAdvertising->setScanResponse(true);
-  pAdvertising->setMinPreferred(0x06);  // functions that help with iPhone connections issue
-  pAdvertising->setMinPreferred(0x12);
+  /**These methods are removed as they are no longer useful and consumed advertising space
+  * pAdvertising->setMinPreferred(0x06);  // functions that help with iPhone connections issue
+  * pAdvertising->setMinPreferred(0x12);
+  */
   BLEDevice::startAdvertising();
   Serial.println("Characteristic defined! Now you can read it in your phone!");
 }

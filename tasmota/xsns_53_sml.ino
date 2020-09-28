@@ -1205,11 +1205,17 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
   } else if (meter_desc_p[meters].type=='m' || meter_desc_p[meters].type=='M') {
     smltbuf[meters][meter_spos[meters]] = iob;
     meter_spos[meters]++;
-    uint32_t mlen=smltbuf[meters][2]+5;
-    if (meter_spos[meters]>=mlen) {
-      SML_Decode(meters);
-      sml_empty_receiver(meters);
+    if (meter_spos[meters]>=SML_BSIZ) {
       meter_spos[meters]=0;
+    }
+    if (meter_spos[meters]>=8) {
+      uint32_t mlen=smltbuf[meters][2]+5;
+      if (mlen>SML_BSIZ) mlen=SML_BSIZ;
+      if (meter_spos[meters]>=mlen) {
+        SML_Decode(meters);
+        sml_empty_receiver(meters);
+        meter_spos[meters]=0;
+      }
     }
   } else if (meter_desc_p[meters].type=='p') {
     smltbuf[meters][meter_spos[meters]] = iob;
@@ -1560,6 +1566,7 @@ void SML_Decode(uint8_t index) {
                 goto nextsect;
               }
               uint16_t pos = smltbuf[mindex][2]+3;
+              if (pos>32) pos=32;
               uint16_t crc = MBUS_calculateCRC(&smltbuf[mindex][0],pos);
               if (lowByte(crc)!=smltbuf[mindex][pos]) goto nextsect;
               if (highByte(crc)!=smltbuf[mindex][pos+1]) goto nextsect;
@@ -1651,9 +1658,10 @@ void SML_Show(boolean json) {
   char jname[24];
   int8_t index=0,mid=0;
   char *mp=(char*)meter_p;
-  char *cp;
+  char *cp,nojson=0;
   //char b_mqtt_data[MESSZ];
   //b_mqtt_data[0]=0;
+
 
     int8_t lastmind=((*mp)&7)-1;
     if (lastmind<0 || lastmind>=meters_used) lastmind=0;
@@ -1661,7 +1669,13 @@ void SML_Show(boolean json) {
         if (*mp==0) break;
         // setup sections
         mindex=((*mp)&7)-1;
+
         if (mindex<0 || mindex>=meters_used) mindex=0;
+        if (meter_desc_p[mindex].prefix[0]=='*' && meter_desc_p[mindex].prefix[1]==0) {
+          nojson=1;
+        } else {
+          nojson=0;
+        }
         mp+=2;
         if (*mp=='=' && *(mp+1)=='h') {
           mp+=2;
@@ -1739,23 +1753,24 @@ void SML_Show(boolean json) {
             if (json) {
               // json export
               if (index==0) {
-                //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s,\"%s\":{\"%s\":%s", b_mqtt_data,meter_desc_p[mindex].prefix,jname,tpowstr);
-                ResponseAppend_P(PSTR(",\"%s\":{\"%s\":%s"),meter_desc_p[mindex].prefix,jname,tpowstr);
+                  //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s,\"%s\":{\"%s\":%s", b_mqtt_data,meter_desc_p[mindex].prefix,jname,tpowstr);
+                  if (!nojson) ResponseAppend_P(PSTR(",\"%s\":{\"%s\":%s"),meter_desc_p[mindex].prefix,jname,tpowstr);
               }
               else {
                 if (lastmind!=mindex) {
                   // meter changed, close mqtt
                   //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s}", b_mqtt_data);
-                  ResponseAppend_P(PSTR("}"));
-                  // and open new
-                  //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s,\"%s\":{\"%s\":%s", b_mqtt_data,meter_desc_p[mindex].prefix,jname,tpowstr);
-                  ResponseAppend_P(PSTR(",\"%s\":{\"%s\":%s"),meter_desc_p[mindex].prefix,jname,tpowstr);
+                  if (!nojson) ResponseAppend_P(PSTR("}"));
+                    // and open new
+                    //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s,\"%s\":{\"%s\":%s", b_mqtt_data,meter_desc_p[mindex].prefix,jname,tpowstr);
+                  if (!nojson) ResponseAppend_P(PSTR(",\"%s\":{\"%s\":%s"),meter_desc_p[mindex].prefix,jname,tpowstr);
                   lastmind=mindex;
                 } else {
                   //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s,\"%s\":%s", b_mqtt_data,jname,tpowstr);
-                  ResponseAppend_P(PSTR(",\"%s\":%s"),jname,tpowstr);
+                  if (!nojson) ResponseAppend_P(PSTR(",\"%s\":%s"),jname,tpowstr);
                 }
               }
+
             } else {
               // web ui export
               //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s{s}%s %s: {m}%s %s{e}", b_mqtt_data,meter_desc[mindex].prefix,name,tpowstr,unit);
@@ -1773,7 +1788,7 @@ void SML_Show(boolean json) {
     if (json) {
      //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s}", b_mqtt_data);
      //ResponseAppend_P(PSTR("%s"),b_mqtt_data);
-     ResponseAppend_P(PSTR("}"));
+     if (!nojson) ResponseAppend_P(PSTR("}"));
    } else {
      //WSContentSend_PD(PSTR("%s"),b_mqtt_data);
    }
@@ -2378,6 +2393,7 @@ char *SML_Get_Sequence(char *cp,uint32_t index) {
       }
     }
   }
+  return cp;
 }
 
 void SML_Check_Send(void) {

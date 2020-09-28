@@ -64,15 +64,15 @@ void HandleMetrics(void)
 
 #ifdef USE_ENERGY_SENSOR
   dtostrfd(Energy.voltage[0], Settings.flag2.voltage_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE voltage gauge\nvoltage %s\n"), parameter);
+  WSContentSend_P(PSTR("# TYPE energy_voltage_volts gauge\nenergy_voltage_volts %s\n"), parameter);
   dtostrfd(Energy.current[0], Settings.flag2.current_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE current gauge\ncurrent %s\n"), parameter);
+  WSContentSend_P(PSTR("# TYPE energy_current_amperes gauge\nenergy_current_amperes %s\n"), parameter);
   dtostrfd(Energy.active_power[0], Settings.flag2.wattage_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE active_power gauge\nactive_power %s\n"), parameter);
+  WSContentSend_P(PSTR("# TYPE energy_power_active_watts gauge\nenergy_power_active_watts %s\n"), parameter);
   dtostrfd(Energy.daily, Settings.flag2.energy_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE energy_daily gauge\nenergy_daily %s\n"), parameter);
+  WSContentSend_P(PSTR("# TYPE energy_power_kilowatts_daily counter\nenergy_power_kilowatts_daily %s\n"), parameter);
   dtostrfd(Energy.total, Settings.flag2.energy_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE energy_total counter\nenergy_total %s\n"), parameter);
+  WSContentSend_P(PSTR("# TYPE energy_power_kilowatts_total counter\nenergy_power_kilowatts_total %s\n"), parameter);
 #endif
 
 /*

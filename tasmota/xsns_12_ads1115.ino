@@ -122,6 +122,7 @@ struct ADS1115 {
   uint8_t address;
   uint8_t addresses[4] = { ADS1115_ADDRESS_ADDR_GND, ADS1115_ADDRESS_ADDR_VDD, ADS1115_ADDRESS_ADDR_SDA, ADS1115_ADDRESS_ADDR_SCL };
   uint8_t found[4] = {false,false,false,false};
+  int16_t last_values[4][4] = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
 } Ads1115;
 
 //Ads1115StartComparator(channel, ADS1115_REG_CONFIG_MODE_SINGLE);
@@ -179,6 +180,66 @@ void Ads1115Detect(void)
   }
 }
 
+// Create the identifier of the the selected sensor
+void Ads1115Label(char* label, uint32_t maxsize, uint8_t address) {
+  if (1 == Ads1115.count) {
+    // "ADS1115":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
+    snprintf_P(label, maxsize, PSTR("ADS1115"));
+  } else {
+    // "ADS1115-48":{"A0":3240,"A1":3235,"A2":3269,"A3":3269},"ADS1115-49":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
+    snprintf_P(label, maxsize, PSTR("ADS1115%c%02x"), IndexSeparator(), address);
+  }
+}
+
+#ifdef USE_RULES
+// Check every 250ms if there are relevant changes in any of the analog inputs
+// and if so then trigger a message
+void AdsEvery250ms(void)
+{
+  int16_t value;
+
+  for (uint32_t t = 0; t < sizeof(Ads1115.addresses); t++) {
+    if (Ads1115.found[t]) {
+
+      uint8_t old_address = Ads1115.address;
+      Ads1115.address = Ads1115.addresses[t];
+
+      // collect first wich addresses have changed. We can save on rule processing this way
+      uint32_t changed = 0;
+      for (uint32_t i = 0; i < 4; i++) {
+        value = Ads1115GetConversion(i);
+
+        // Check if value has changed more than 1 percent from last stored value
+        // we assume that gain is set up correctly, and we could use the whole 16bit result space
+        if (value >= Ads1115.last_values[t][i] + 327 || value <= Ads1115.last_values[t][i] - 327) {
+          Ads1115.last_values[t][i] = value;
+          bitSet(changed, i);
+        }
+      }
+      Ads1115.address = old_address;
+      if (changed) {
+        char label[15];
+        Ads1115Label(label, sizeof(label), Ads1115.addresses[t]);
+
+        Response_P(PSTR("{\"%s\":{"), label);
+
+        bool first = true;
+        for (uint32_t i = 0; i < 4; i++) {
+          if (bitRead(changed, i)) {
+            ResponseAppend_P(PSTR("%s\"A%ddiv10\":%d"), (first) ? "" : ",", i, Ads1115.last_values[t][i]);
+            first = false;
+          }
+        }
+        ResponseJsonEndEnd();
+        
+        XdrvRulesProcess();
+      }
+      
+    }
+  }
+}
+#endif  // USE_RULES
+
 void Ads1115Show(bool json)
 {
   int16_t values[4];
@@ -191,18 +252,12 @@ void Ads1115Show(bool json)
       Ads1115.address = Ads1115.addresses[t];
       for (uint32_t i = 0; i < 4; i++) {
         values[i] = Ads1115GetConversion(i);
-        //AddLog_P2(LOG_LEVEL_INFO, "Logging ADS1115 %02x (%i) = %i", address, i, values[i] );
+        //AddLog_P2(LOG_LEVEL_INFO, "Logging ADS1115 %02x (%i) = %i", Ads1115.address, i, values[i] );
       }
       Ads1115.address = old_address;
 
       char label[15];
-      if (1 == Ads1115.count) {
-        // "ADS1115":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
-        snprintf_P(label, sizeof(label), PSTR("ADS1115"));
-      } else {
-        // "ADS1115-48":{"A0":3240,"A1":3235,"A2":3269,"A3":3269},"ADS1115-49":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
-        snprintf_P(label, sizeof(label), PSTR("ADS1115%c%02x"), IndexSeparator(), Ads1115.addresses[t]);
-      }
+      Ads1115Label(label, sizeof(label), Ads1115.addresses[t]);
 
       if (json) {
         ResponseAppend_P(PSTR(",\"%s\":{"), label);
@@ -237,6 +292,11 @@ bool Xsns12(uint8_t function)
   }
   else if (Ads1115.count) {
     switch (function) {
+#ifdef USE_RULES
+      case FUNC_EVERY_250_MSECOND:
+        AdsEvery250ms();
+        break;
+#endif  // USE_RULES
       case FUNC_JSON_APPEND:
         Ads1115Show(1);
         break;

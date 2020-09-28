@@ -145,19 +145,14 @@ void Ili9341DrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint
   tft->println(str);
 }
 
-void Ili9341DisplayOnOff(uint8_t on)
+void Ili9341DisplayOnOff()
 {
-//  tft->showDisplay(on);
-//  tft->invertDisplay(on);
+//  tft->showDisplay(disp_power);
+//  tft->invertDisplay(disp_power);
   if (PinUsed(GPIO_BACKLIGHT)) {
     pinMode(Pin(GPIO_BACKLIGHT), OUTPUT);
-    digitalWrite(Pin(GPIO_BACKLIGHT), on);
+    digitalWrite(Pin(GPIO_BACKLIGHT), disp_power);
   }
-}
-
-void Ili9341OnOff(void)
-{
-  Ili9341DisplayOnOff(disp_power);
 }
 
 /*********************************************************************************************/
@@ -277,7 +272,7 @@ bool Xdsp04(uint8_t function)
           Ili9341Init(dsp_init);
           break;
         case FUNC_DISPLAY_POWER:
-          Ili9341OnOff();
+          Ili9341DisplayOnOff();
           break;
         case FUNC_DISPLAY_CLEAR:
           Ili9341Clear();
@@ -314,9 +309,6 @@ bool Xdsp04(uint8_t function)
           break;
         case FUNC_DISPLAY_DRAW_STRING:
           Ili9341DrawStringAt(dsp_x, dsp_y, dsp_str, dsp_color, dsp_flag);
-          break;
-        case FUNC_DISPLAY_ONOFF:
-          Ili9341DisplayOnOff(dsp_on);
           break;
         case FUNC_DISPLAY_ROTATION:
           tft->setRotation(Settings.display_rotate);

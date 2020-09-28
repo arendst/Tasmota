@@ -76,7 +76,7 @@ bool TelegramInit(void) {
     if (!telegramClient) {
       telegramClient = new BearSSL::WiFiClientSecure_light(tls_rx_size, tls_tx_size);
 #ifdef USE_MQTT_TLS_CA_CERT
-      telegramClient->setTrustAnchor(&GoDaddyCAG2_TA);
+      telegramClient->setTrustAnchor(&GoDaddyCAG2_TA, 1);
 #else
       telegramClient->setPubKeyFingerprint(Telegram_Fingerprint, Telegram_Fingerprint, false); // check server fingerprint
 #endif
@@ -225,15 +225,22 @@ void TelegramAnalizeMessage(void) {
   for (uint32_t i = 1; i < Telegram.message[0][0].toInt() +1; i++) {
     Telegram.message[i][5] = "";
 
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject &root = jsonBuffer.parseObject(Telegram.message[i][0]);
-    if (root.success()) {
-      Telegram.message[i][0] = root["update_id"].as<String>();
-      Telegram.message[i][1] = root["message"]["from"]["id"].as<String>();
-      Telegram.message[i][2] = root["message"]["from"]["first_name"].as<String>();
-      Telegram.message[i][3] = root["message"]["from"]["last_name"].as<String>();
-      Telegram.message[i][4] = root["message"]["chat"]["id"].as<String>();
-      Telegram.message[i][5] = root["message"]["text"].as<String>();
+    String buf = Telegram.message[i][0];    // we need to keep a copy of the buffer
+    JsonParser parser((char*)buf.c_str());
+    JsonParserObject root = parser.getRootObject();
+    if (root) {
+      Telegram.message[i][0] = root["update_id"].getStr();
+      Telegram.message[i][1] = root["message"].getObject()["from"].getObject()["id"].getStr();
+      Telegram.message[i][2] = root["message"].getObject()["from"].getObject()["first_name"].getStr();
+      Telegram.message[i][3] = root["message"].getObject()["from"].getObject()["last_name"].getStr();
+      Telegram.message[i][4] = root["message"].getObject()["chat"].getObject()["id"].getStr();
+      Telegram.message[i][5] = root["message"].getObject()["text"].getStr();
+      // Telegram.message[i][0] = root["update_id"].as<String>();
+      // Telegram.message[i][1] = root["message"]["from"]["id"].as<String>();
+      // Telegram.message[i][2] = root["message"]["from"]["first_name"].as<String>();
+      // Telegram.message[i][3] = root["message"]["from"]["last_name"].as<String>();
+      // Telegram.message[i][4] = root["message"]["chat"]["id"].as<String>();
+      // Telegram.message[i][5] = root["message"]["text"].as<String>();
     }
 
     int id = Telegram.message[Telegram.message[0][0].toInt()][0].toInt() +1;

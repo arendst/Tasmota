@@ -1,10 +1,64 @@
+## Released
+
 ## Unreleased (development)
+
+### 8.5.0.1 20200907
+
+- Fix energy total counters (#9263, #9266)
+- Fix crash in ``ZbRestore``
+- Fix reset BMP sensors when executing command ``SaveData`` and define USE_DEEPSLEEP enabled (#9300)
+- Fix ``status 0`` message when using define USE_MQTT_TLS due to small log buffer (#9305)
+- Fix ``status 13`` exception 9 when more than one shutter is configured
+- Fix ``status 13`` json message
+- Fix Shelly 2.5 higher temperature regression from 8.2.0.1 (#7991)
+- Change replace ArduinoJson with JSMN for JSON parsing
+- Change ``WakeUp`` uses 256 steps instead of 100 (#9241)
+- Add command ``SetOption110 1`` to disable Zigbee auto-config when pairing new devices
+- Add command ``SetOption111 1`` to enable frequency output for buzzer GPIO (#8994)
+- Add command ``SetOption112 1`` to enable friendly name in zigbee topic (use with SetOption89)
+- Add ``#define USE_MQTT_AWS_IOT_LIGHT`` for password based AWS IoT authentication
+- Add ``#define MQTT_LWT_OFFLINE`` and ``#define MQTT_LWT_ONLINE`` to user_config.h (#9395)
+- Add new shutter modes (#9244)
+- Add Zigbee auto-config when pairing
+- Add support for MLX90640 IR array temperature sensor by Christian Baars
+
+### 8.5.0 20200907
+
+- Release Hannah
+
+### 8.4.0.3 20200823
+
+- Change references from http://thehackbox.org/tasmota/ to http://ota.tasmota.com/tasmota/
+- Add command ``PowerDelta1`` to ``PowerDelta3`` to trigger on up to three phases (#9134)
+- Add Zigbee web ui widget for Lights
+- Add ``SetOption109 1`` to force gen1 Alexa mode, for Echo Dot 2nd gen devices only
+- Add Zigbee web ui for power metering plugs
+- Add experimental support for ESP32 TTGO Watch and I2S Audio by Gerhard Mutz
+
+### 8.4.0.2 20200813
+
+- Remove support for direct upgrade from versions before 6.6.0.11 to versions after 8.4.0.1
+- Change White blend mode moved to using ``SetOption 105`` instead of ``RGBWWTable``
+- Fix display power control (#9114)
+- Add command ``SetOption103 0/1`` to set TLS mode when TLS is selected
+- Add command ``SetOption104 1`` to disable all MQTT retained messages
+- Add command ``SetOption106 1`` to create a virtual White ColorTemp for RGBW lights
+- Add command ``SetOption107 0/1`` to select virtual White as (0) Warm or (1) Cold
+- Add command ``SetOption108 0/1`` to enable Teleinfo telemetry into Tasmota Energy MQTT (0) or Teleinfo only (1) - Add better config corruption recovery (#9046)
+- Add virtual CT for 4 channels lights, emulating a 5th channel
+- Add support for DYP ME007 ultrasonic distance sensor by Janusz Kostorz (#9113)
+- Add Zigbee web gui widget for Temp/Humidity/Pressure sensors
+- Add Zigbee battery icon
 
 ### 8.4.0.1 20200730
 
 - Fix ESP32 PWM range
 - Add Zigbee better support for IKEA Motion Sensor
 - Add ESP32 Analog input support for GPIO32 to GPIO39
+- Add Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
+- Add command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)
+- Add command ``SetOption102 0/1`` to switch between Teleinfo French Metering mode, legacy 1200 bps (0) or Linky standard 9600 bps (1)
+- Change triple-mode TLS via configuration in a single firmware (TLS AWS IoT, Letsencrypt and No-TLS)
 
 ### 8.4.0 20200730
 
