@@ -1,0 +1,31 @@
+{
+  "name": "IRMP",
+  "keywords": "infrared, ir, remote",
+  "description": "Receive and Send infrared signals from your remote.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ukw100/IRMP"
+  },
+  "version": "3.4.0",
+  "exclude": "pictures",
+  "authors":  [
+    {
+      "name": "Armin Joachimsmeyer",
+      "email": "armin.joachimsmeyer@gmail.com"
+    },
+    {
+      "name": "Frank Meyer",
+      "email": "frank@fli4l.de"
+    }
+  ],
+  "license": "GPL-3.0-or-later",
+  "frameworks": "arduino",
+  "platforms": [
+    "atmelavr",
+    "atmelmegaavr",
+    "atmelsam",
+    "espressif8266",
+    "espressif32",
+    "ststm32"
+  ]
+}

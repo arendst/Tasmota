@@ -205,6 +205,8 @@
 //#define USE_MAX31865                             // Add support for MAX31865 RTD sensors using softSPI
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
   #define USE_IR_RECEIVE                         // Support for IR receiver (+5k5 code, 264 iram)
+#undef USE_IRMP					 // Add alternative IR decoder/encoder
+
 #define USE_LMT01                                // Add support for TI LMT01 temperature sensor, count pulses on single GPIO (+0k5 code)
 //#define USE_WIEGAND                              // Add support for 24/26/32/34 bit RFID Wiegand interface (D0/D1) (+1k7 code)
 #define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)

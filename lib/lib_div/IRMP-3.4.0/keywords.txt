@@ -1,0 +1,46 @@
+#######################################
+# Syntax Coloring Map For IRMP
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+irmp_protocol_names	KEYWORD1
+IRMP_DATA	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+irmp_init	KEYWORD2
+irmp_register_complete_callback_function	KEYWORD2
+irmp_IsBusy	KEYWORD2
+irmp_print_active_protocols	KEYWORD2
+irmp_get_data	KEYWORD2
+irmp_result_print	KEYWORD2
+irsnd_init	KEYWORD2
+irsnd_send_data	KEYWORD2
+irsnd_data_print	KEYWORD2
+irsnd_is_busy	KEYWORD2
+irmp_irsnd_LEDFeedback	KEYWORD2
+disableIRTimerInterrupt	KEYWORD2
+enableIRTimerInterrupt	KEYWORD2
+storeIRTimer	KEYWORD2
+restoreIRTimer	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+IRMP_FLAG_REPETITION	LITERAL1
+IRMP_FLAG_RELEASE	LITERAL1
+IRMP_PROTOCOL_NAMES	LITERAL1
+IRMP_USE_COMPLETE_CALLBACK	LITERAL1
+F_INTERRUPTS	LITERAL1
+IRSND_IR_FREQUENCY	LITERAL1
+IR_OUTPUT_IS_ACTIVE_LOW	LITERAL1
+IRMP_ENABLE_PIN_CHANGE_INTERRUPT	LITERAL1
+USE_ONE_TIMER_FOR_IRMP_AND_IRSND	LITERAL1
+IRMP_ENABLE_RELEASE_DETECTION	LITERAL1
+IRMP_HIGH_ACTIVE	LITERAL1

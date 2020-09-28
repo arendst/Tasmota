@@ -741,7 +741,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_DUMMY)
     feature8 |= 0x00000020;
 #endif
-//    feature8 |= 0x00000040;
+#ifdef USE_IRMP
+    feature8 |= 0x00000040;  // xdrv_45_irmp.ino
+#endif
 //    feature8 |= 0x00000080;
 
 //    feature8 |= 0x00000100;

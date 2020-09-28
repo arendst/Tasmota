@@ -1,0 +1,142 @@
+# LibraryBuild.yml
+# Github workflow script to test compile all examples of an Arduino library repository.
+#
+# Copyright (C) 2020  Armin Joachimsmeyer
+# https://github.com/ArminJo/Github-Actions
+#
+
+# This is the name of the workflow, visible on GitHub UI.
+name: LibraryBuild
+on:
+  push: # see: https://help.github.com/en/actions/reference/events-that-trigger-workflows#pull-request-event-pull_request
+    paths:
+    - '**.ino'
+    - '**.cpp'
+    - '**.h'
+    - '**LibraryBuild.yml'
+  pull_request:
+
+jobs:
+  build:
+    name: ${{ matrix.arduino-boards-fqbn }} - test compiling examples
+
+    runs-on: ubuntu-18.04 # I picked Ubuntu to use shell scripts.
+
+    strategy:
+      matrix:
+        # The matrix will produce one job for each configuration parameter of type `arduino-boards-fqbn`
+        # In the Arduino IDE, the fqbn is printed in the first line of the verbose output for compilation as parameter -fqbn=... for the "arduino-builder -dump-prefs" command
+        #
+        # Examples: arduino:avr:uno, arduino:avr:leonardo, arduino:avr:nano, arduino:avr:mega
+        # arduino:sam:arduino_due_x, arduino:samd:arduino_zero_native"
+        # ATTinyCore:avr:attinyx5:chip=85,clock=1internal, digistump:avr:digispark-tiny, digistump:avr:digispark-pro
+        # STM32:stm32:GenF1:pnum=BLUEPILL_F103C8
+        # esp8266:esp8266:huzzah:eesz=4M3M,xtal=80, esp32:esp32:featheresp32:FlashFreq=80
+        # You may add a suffix behind the fqbn with "|" to specify one board for e.g. different compile options like arduino:avr:uno|trace
+        #############################################################################################################
+        arduino-boards-fqbn:
+          - arduino:avr:uno
+          - arduino:avr:leonardo
+          - arduino:avr:mega
+          - arduino:megaavr:nona4809:mode=off
+          - arduino:samd:arduino_zero_native
+          - arduino:mbed:nano33ble
+          - digistump:avr:digispark-tiny:clock=clock16
+          - digistump:avr:digispark-pro
+          - ATTinyCore:avr:attinyx5:chip=85,clock=8internal
+          - TinyCore:avr:tiny32
+# Not yet supported by IRTimer.cpp.h
+#          - MiniCore:avr:8:bootloader=uart0,eeprom=keep,BOD=2v7,LTO=Os_flto,clock=16MHz_external # ATmega8
+#          - MegaCore:avr:128:bootloader=no_bootloader,eeprom=keep,BOD=2v7,LTO=Os,clock=8MHz_internal # ATmega128
+          - esp8266:esp8266:d1_mini:eesz=4M3M,xtal=80
+          - esp32:esp32:featheresp32:FlashFreq=80
+          - STM32:stm32:GenF1:pnum=BLUEPILL_F103C8
+          - STM32:stm32:GenL0:pnum=THUNDERPACK_L072
+          - stm32duino:STM32F1:genericSTM32F103C
+          - SparkFun:apollo3:amap3nano
+
+        # Specify parameters for each board.
+        # With sketches-exclude you may exclude specific examples for a board. Use a comma separated list.
+        #############################################################################################################
+        include:
+          - arduino-boards-fqbn: arduino:megaavr:nona4809:mode=off
+            sketches-exclude: MinimalReceiver,IRDispatcherDemo
+
+          - arduino-boards-fqbn: digistump:avr:digispark-tiny:clock=clock16
+            platform-url: https://raw.githubusercontent.com/ArminJo/DigistumpArduino/master/package_digistump_index.json
+            sketches-exclude: AllProtocols,SendAllProtocols,ReceiveAndSendDynamicPins,ReceiverTimingAnalysis # Does not fit in FLASH # Comma separated list of example names to exclude in build
+
+          - arduino-boards-fqbn: digistump:avr:digispark-pro
+            platform-url: https://raw.githubusercontent.com/ArminJo/DigistumpArduino/master/package_digistump_index.json
+            sketches-exclude: ReceiveAndSendDynamicPins # No Serial.available() function in ATtinySerialOut
+
+          - arduino-boards-fqbn: ATTinyCore:avr:attinyx5:chip=85,clock=8internal
+            platform-url: http://drazzy.com/package_drazzy.com_index.json
+            sketches-exclude: AllProtocols,ReceiveAndSendDynamicPins # Does not fit in FLASH
+
+          - arduino-boards-fqbn: TinyCore:avr:tiny32
+            platform-url: https://raw.githubusercontent.com/xukangmin/TinyCore/master/avr/package/package_tinycore_index.json
+#            sketches-exclude: MinimalReceiver,IRDispatcherDemo
+
+#          - arduino-boards-fqbn: MiniCore:avr:8:bootloader=uart0,eeprom=keep,BOD=2v7,LTO=Os_flto,clock=16MHz_external
+#            platform-url: https://mcudude.github.io/MiniCore/package_MCUdude_MiniCore_index.json
+#            arduino-platform: MiniCore:avr,arduino:avr # gcc is taken from arduino:avr
+#            sketches-exclude: AllProtocols,ReceiveAndSendDynamicPins # Does not fit in FLASH
+
+#          - arduino-boards-fqbn: MegaCore:avr:128:bootloader=no_bootloader,eeprom=keep,BOD=2v7,LTO=Os,clock=8MHz_internal
+#            platform-url: https://mcudude.github.io/MegaCore/package_MCUdude_MegaCore_index.json
+#            arduino-platform: MegaCore:avr,arduino:avr # gcc is taken from arduino:avr
+#            sketches-exclude: AllProtocols,ReceiveAndSendDynamicPins # Does not fit in FLASH
+
+          - arduino-boards-fqbn: esp8266:esp8266:d1_mini:eesz=4M3M,xtal=80
+            platform-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+            sketches-exclude: MinimalReceiver,AllProtocols # error ".text1' will not fit in region `iram1_0_seg'"
+
+          - arduino-boards-fqbn: esp32:esp32:featheresp32:FlashFreq=80
+            platform-url: https://dl.espressif.com/dl/package_esp32_index.json
+            sketches-exclude: MinimalReceiver
+
+          - arduino-boards-fqbn: STM32:stm32:GenF1:pnum=BLUEPILL_F103C8
+            platform-url: https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json
+            sketches-exclude: MinimalReceiver
+
+          - arduino-boards-fqbn: STM32:stm32:GenL0:pnum=THUNDERPACK_L072
+            platform-url: https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json
+            sketches-exclude: MinimalReceiver,IRDispatcherDemo
+
+          - arduino-boards-fqbn: stm32duino:STM32F1:genericSTM32F103C # Roger Clark version
+            platform-url: http://dan.drown.org/stm32duino/package_STM32duino_index.json
+            sketches-exclude: MinimalReceiver
+
+          # ALL examples give strange BFD assertions for 1.x version if empty .cpp files are included in the build
+          - arduino-boards-fqbn: SparkFun:apollo3:amap3nano
+            platform-url: https://raw.githubusercontent.com/sparkfun/Arduino_Boards/master/IDE_Board_Manager/package_sparkfun_index.json
+            sketches-exclude: MinimalReceiver
+
+# gives fatal error: opening dependency file /dev/null.d:
+#          - arduino-boards-fqbn: SparkFun:apollo3:sfe_artemis_nano
+#            platform-url: https://raw.githubusercontent.com/sparkfun/Arduino_Apollo3/master/package_sparkfun_apollo3_index.json
+#            sketches-exclude: MinimalReceiver
+
+      # Do not cancel all jobs / architectures if one job fails
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+# gives ERROR: library.properties includes field item(s) Arduino.h not found in library.
+#      - name: Arduino Lint
+#        uses: arduino/arduino-lint-action@v1
+#        with:
+#          library-manager: update
+
+      - name: Compile all examples
+        uses: ArminJo/arduino-test-compile@master
+        with:
+          arduino-board-fqbn: ${{ matrix.arduino-boards-fqbn }}
+          platform-url: ${{ matrix.platform-url }}
+#          arduino-platform: ${{ matrix.arduino-platform }}
+          required-libraries: ${{ matrix.required-libraries }}
+          sketches-exclude: ${{ matrix.sketches-exclude }}
+#          debug-install: true
