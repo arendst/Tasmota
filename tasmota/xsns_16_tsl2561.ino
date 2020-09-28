@@ -37,6 +37,8 @@ Tsl2561 Tsl(Wire);
 uint8_t tsl2561_type = 0;
 uint8_t tsl2561_valid = 0;
 uint32_t tsl2561_milliLux = 0;
+uint32_t tsl2561_full = 0;
+uint32_t tsl2561_ir = 0;
 char tsl2561_types[] = "TSL2561";
 
 bool Tsl2561Read(void)
@@ -47,15 +49,18 @@ bool Tsl2561Read(void)
   bool gain;
   Tsl2561::exposure_t exposure;
   uint16_t scaledFull, scaledIr;
-  uint32_t full, ir;
 
     if (Tsl.on()) {
       if (Tsl.id(id)
         && Tsl2561Util::autoGain(Tsl, gain, exposure, scaledFull, scaledIr)
-        && Tsl2561Util::normalizedLuminosity(gain, exposure, full = scaledFull, ir = scaledIr)
-        && Tsl2561Util::milliLux(full, ir, tsl2561_milliLux, Tsl2561::packageCS(id))) {
+        && Tsl2561Util::normalizedLuminosity(gain, exposure, tsl2561_full = scaledFull, tsl2561_ir = scaledIr)) {
+        if (! Tsl2561Util::milliLux(tsl2561_full, tsl2561_ir, tsl2561_milliLux, Tsl2561::packageCS(id))) {
+          tsl2561_milliLux = 0;
+        }
       } else{
         tsl2561_milliLux = 0;
+        tsl2561_full = 0;
+        tsl2561_ir = 0;
       }
     }
   tsl2561_valid = SENSOR_MAX_MISS;
@@ -94,8 +99,8 @@ void Tsl2561Show(bool json)
 {
   if (tsl2561_valid) {
     if (json) {
-      ResponseAppend_P(PSTR(",\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u}"),
-        tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
+      ResponseAppend_P(PSTR(",\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u,\"IR\":%u,\"Broadband\":%u}"),
+        tsl2561_milliLux / 1000, tsl2561_milliLux % 1000, tsl2561_ir, tsl2561_full);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) { DomoticzSensor(DZ_ILLUMINANCE, (tsl2561_milliLux + 500) / 1000); }
 #endif  // USE_DOMOTICZ
