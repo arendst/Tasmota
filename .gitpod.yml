@@ -1,5 +1,5 @@
 tasks:
-  - before: pip3 install -U platformio && brew install uncrustify
+  - before: brew install uncrustify
     command: platformio run -e tasmota
 
 image:
