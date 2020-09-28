@@ -2,7 +2,7 @@
 
 ## EmberZNet NCP UART EZSP firmware signed for Sonoff ZBBridge
 
-The ncp-uart-sw-6.8.0.1_115200.ota is the latest development version, only testing with for EZSP v8 compatible hosts.
+The ncp-uart-sw-6.8.0.1_115200.ota is the latest cutting-edge version, still untested and only for experimental testing with EZSP v8 compatible hosts.
 The ncp-uart-sw_6.7.6_115200.ota is the recommended stable version for EZSP v6, EZSP v7, and EZSP v8 compatible hosts.
 The ncp-uart-sw_6.5.5_115200.ota it the legacy version for EZSP v4, EZSP v5, EZSP v6, or EZSP v7 compatible hosts.
 
