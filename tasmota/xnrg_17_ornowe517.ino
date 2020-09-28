@@ -21,6 +21,10 @@
 #ifdef USE_WE517
 /*********************************************************************************************\
  * Orno WE517-Modbus energy meter
+ *
+ * [SetOption72: Set reference used for total energy]
+ * This driver supports SetOption72 = 1, which enables the use of Hardware Energy Totals,
+ * (as apposed to software energy totals kept in Tasmota flash memory)
 \*********************************************************************************************/
 
 #define XNRG_17             17
@@ -47,9 +51,9 @@ const uint16_t we517_start_addresses[] {
   /*  3  */ 0x0016,  //  +   +   +   A    Phase 1 current
   /*  4  */ 0x0018,  //  +   +   -   A    Phase 2 current
   /*  5  */ 0x001A,  //  +   +   -   A    Phase 3 current
-  /*  6  */ 0x001E,  //  +   -   +   W    Phase 1 power
-  /*  7  */ 0x0020,  //  +   -   +   W    Phase 2 power
-  /*  8  */ 0x0022,  //  +   -   -   W    Phase 3 power
+  /*  6  */ 0x001E,  //  +   -   +   kW   Phase 1 power
+  /*  7  */ 0x0020,  //  +   -   +   kW   Phase 2 power
+  /*  8  */ 0x0022,  //  +   -   -   kW   Phase 3 power
   /*  9  */ 0x0026,  //  +   -   +   VAr  Phase 1 volt amps reactive
   /* 10  */ 0x0026,  //  +   -   -   VAr  Phase 2 volt amps reactive
   /* 11  */ 0x002A,  //  +   -   -   VAr  Phase 3 volt amps reactive
@@ -119,15 +123,15 @@ void WE517Every250ms(void)
           break;
 
         case 6:
-          Energy.active_power[0] = value;
+          Energy.active_power[0] = value * 1000;
           break;
 
         case 7:
-          Energy.active_power[1] = value;
+          Energy.active_power[1] = value * 1000;
           break;
 
         case 8:
-          Energy.active_power[2] = value;
+          Energy.active_power[2] = value * 1000;
           break;
 
         case 9:
