@@ -111,38 +111,39 @@ void IrReceiveInit(void)
 }
 
 String sendACJsonState(const stdAc::state_t &state) {
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject& json = jsonBuffer.createObject();
-  json[D_JSON_IRHVAC_VENDOR] = typeToString(state.protocol);
-  json[D_JSON_IRHVAC_MODEL] = state.model;
-  json[D_JSON_IRHVAC_POWER] = IRac::boolToString(state.power);
-  json[D_JSON_IRHVAC_MODE] = IRac::opmodeToString(state.mode);
+  JsonGeneratorObject json;
+  json.add(PSTR(D_JSON_IRHVAC_VENDOR), typeToString(state.protocol));
+  json.add(PSTR(D_JSON_IRHVAC_MODEL), state.model);
+
   // Home Assistant wants mode to be off if power is also off & vice-versa.
   if (state.mode == stdAc::opmode_t::kOff || !state.power) {
-    json[D_JSON_IRHVAC_MODE] = IRac::opmodeToString(stdAc::opmode_t::kOff);
-    json[D_JSON_IRHVAC_POWER] = IRac::boolToString(false);
-  }
-  json[D_JSON_IRHVAC_CELSIUS] = IRac::boolToString(state.celsius);
-  if (floorf(state.degrees) == state.degrees) {
-    json[D_JSON_IRHVAC_TEMP] = floorf(state.degrees);       // integer
+    json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(stdAc::opmode_t::kOff));
+    json.add(PSTR(D_JSON_IRHVAC_POWER),  IRac::boolToString(false));
   } else {
-    json[D_JSON_IRHVAC_TEMP] = RawJson(String(state.degrees, 1));  // non-integer, limit to only 1 sub-digit
+    json.add(PSTR(D_JSON_IRHVAC_MODE), IRac::opmodeToString(state.mode));
+    json.add(PSTR(D_JSON_IRHVAC_POWER), IRac::boolToString(state.power));
   }
-  json[D_JSON_IRHVAC_FANSPEED] = IRac::fanspeedToString(state.fanspeed);
-  json[D_JSON_IRHVAC_SWINGV] = IRac::swingvToString(state.swingv);
-  json[D_JSON_IRHVAC_SWINGH] = IRac::swinghToString(state.swingh);
-  json[D_JSON_IRHVAC_QUIET] = IRac::boolToString(state.quiet);
-  json[D_JSON_IRHVAC_TURBO] = IRac::boolToString(state.turbo);
-  json[D_JSON_IRHVAC_ECONO] = IRac::boolToString(state.econo);
-  json[D_JSON_IRHVAC_LIGHT] = IRac::boolToString(state.light);
-  json[D_JSON_IRHVAC_FILTER] = IRac::boolToString(state.filter);
-  json[D_JSON_IRHVAC_CLEAN] = IRac::boolToString(state.clean);
-  json[D_JSON_IRHVAC_BEEP] = IRac::boolToString(state.beep);
-  json[D_JSON_IRHVAC_SLEEP] = state.sleep;
+  json.add(PSTR(D_JSON_IRHVAC_CELSIUS), IRac::boolToString(state.celsius));
+  if (floorf(state.degrees) == state.degrees) {
+    json.add(PSTR(D_JSON_IRHVAC_TEMP), (int32_t) floorf(state.degrees));       // integer
+  } else {
+    // TODO can do better here
+    json.addStrRaw(PSTR(D_JSON_IRHVAC_TEMP), String(state.degrees, 1).c_str());   // non-integer, limit to only 1 sub-digit
+  }
 
-  String payload = "";
-  payload.reserve(200);
-  json.printTo(payload);
+  json.add(PSTR(D_JSON_IRHVAC_FANSPEED), IRac::fanspeedToString(state.fanspeed));
+  json.add(PSTR(D_JSON_IRHVAC_SWINGV), IRac::swingvToString(state.swingv));
+  json.add(PSTR(D_JSON_IRHVAC_SWINGH), IRac::swinghToString(state.swingh));
+  json.add(PSTR(D_JSON_IRHVAC_QUIET), IRac::boolToString(state.quiet));
+  json.add(PSTR(D_JSON_IRHVAC_TURBO), IRac::boolToString(state.turbo));
+  json.add(PSTR(D_JSON_IRHVAC_ECONO), IRac::boolToString(state.econo));
+  json.add(PSTR(D_JSON_IRHVAC_LIGHT), IRac::boolToString(state.light));
+  json.add(PSTR(D_JSON_IRHVAC_FILTER), IRac::boolToString(state.filter));
+  json.add(PSTR(D_JSON_IRHVAC_CLEAN), IRac::boolToString(state.clean));
+  json.add(PSTR(D_JSON_IRHVAC_BEEP), IRac::boolToString(state.beep));
+  json.add(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
+
+  String payload = json.toString(); // copy string before returning, the original is on the stack
   return payload;
 }
 
@@ -267,6 +268,16 @@ String listSupportedProtocols(bool hvac) {
   return l;
 }
 
+bool strToBool(class JsonParserToken token, bool def) {
+  if (token.isBool() || token.isNum()) {
+    return token.getBool();
+  } else if (token.isStr()) {
+    return IRac::strToBool(token.getStr());
+  } else {
+    return def;
+  }
+}
+
 // used to convert values 0-5 to fanspeed_t
 const stdAc::fanspeed_t IrHvacFanSpeed[] PROGMEM =  { stdAc::fanspeed_t::kAuto,
                       stdAc::fanspeed_t::kMin, stdAc::fanspeed_t::kLow,stdAc::fanspeed_t::kMedium,
@@ -275,17 +286,11 @@ const stdAc::fanspeed_t IrHvacFanSpeed[] PROGMEM =  { stdAc::fanspeed_t::kAuto,
 uint32_t IrRemoteCmndIrHvacJson(void)
 {
   stdAc::state_t state, prev;
-  char parm_uc[12];
 
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received %s"), XdrvMailbox.data);
-  char dataBufUc[XdrvMailbox.data_len + 1];
-  UpperCase(dataBufUc, XdrvMailbox.data);
-  RemoveSpace(dataBufUc);
-  if (strlen(dataBufUc) < 8) { return IE_INVALID_JSON; }
-
-  DynamicJsonBuffer jsonBuf;
-  JsonObject &json = jsonBuf.parseObject(dataBufUc);
-  if (!json.success()) { return IE_INVALID_JSON; }
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return IE_INVALID_JSON; }
 
   // from: https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/CommonAcControl/CommonAcControl.ino
   state.protocol = decode_type_t::UNKNOWN;
@@ -307,60 +312,44 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   state.clean = false;  // Turn off any Cleaning options if we can.
   state.clock = -1;  // Don't set any current time if we can avoid it.
 
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_VENDOR));
-  if (json.containsKey(parm_uc)) { state.protocol = strToDecodeType(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_PROTOCOL));
-  if (json.containsKey(parm_uc)) { state.protocol = strToDecodeType(json[parm_uc]); }   // also support 'protocol'
+  JsonParserToken val;
+  if (val = root[PSTR(D_JSON_IRHVAC_VENDOR)]) { state.protocol = strToDecodeType(val.getStr()); }
+  if (val = root[PSTR(D_JSON_IRHVAC_PROTOCOL)]) { state.protocol = strToDecodeType(val.getStr()); }
   if (decode_type_t::UNKNOWN == state.protocol) { return IE_UNSUPPORTED_HVAC; }
   if (!IRac::isProtocolSupported(state.protocol)) { return IE_UNSUPPORTED_HVAC; }
 
   // for fan speed, we also support 1-5 values
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_FANSPEED));
-  if (json.containsKey(parm_uc)) {
-    uint32_t fan_speed = json[parm_uc];
+  JsonParserToken tok_fan_speed = root[PSTR(D_JSON_IRHVAC_FANSPEED)];
+  if (tok_fan_speed) {
+    uint32_t fan_speed = tok_fan_speed.getUInt();
     if ((fan_speed >= 1) && (fan_speed <= 5)) {
       state.fanspeed = (stdAc::fanspeed_t) pgm_read_byte(&IrHvacFanSpeed[fan_speed]);
     } else {
-      state.fanspeed = IRac::strToFanspeed(json[parm_uc]);
+      state.fanspeed = IRac::strToFanspeed(tok_fan_speed.getStr());
     }
   }
 
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_MODEL));
-  if (json.containsKey(parm_uc)) { state.model = IRac::strToModel(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_MODE));
-  if (json.containsKey(parm_uc)) { state.mode = IRac::strToOpmode(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_SWINGV));
-  if (json.containsKey(parm_uc)) { state.swingv = IRac::strToSwingV(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_SWINGH));
-  if (json.containsKey(parm_uc)) { state.swingh = IRac::strToSwingH(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_TEMP));
-  if (json.containsKey(parm_uc)) { state.degrees = json[parm_uc]; }
+  if (val = root[PSTR(D_JSON_IRHVAC_MODEL)]) { state.model = IRac::strToModel(val.getStr()); }
+  if (val = root[PSTR(D_JSON_IRHVAC_MODE)]) { state.mode = IRac::strToOpmode(val.getStr()); }
+  if (val = root[PSTR(D_JSON_IRHVAC_SWINGV)]) { state.swingv = IRac::strToSwingV(val.getStr()); }
+  if (val = root[PSTR(D_JSON_IRHVAC_SWINGH)]) { state.swingh = IRac::strToSwingH(val.getStr()); }
+  state.degrees = root.getFloat(PSTR(D_JSON_IRHVAC_TEMP), state.degrees);
   // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("model %d, mode %d, fanspeed %d, swingv %d, swingh %d"),
   //             state.model, state.mode, state.fanspeed, state.swingv, state.swingh);
 
   // decode booleans
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_POWER));
-  if (json.containsKey(parm_uc)) { state.power = IRac::strToBool(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_CELSIUS));
-  if (json.containsKey(parm_uc)) { state.celsius = IRac::strToBool(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_LIGHT));
-  if (json.containsKey(parm_uc)) { state.light = IRac::strToBool(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_BEEP));
-  if (json.containsKey(parm_uc)) { state.beep = IRac::strToBool(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_ECONO));
-  if (json.containsKey(parm_uc)) { state.econo = IRac::strToBool(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_FILTER));
-  if (json.containsKey(parm_uc)) { state.filter = IRac::strToBool(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_TURBO));
-  if (json.containsKey(parm_uc)) { state.turbo = IRac::strToBool(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_QUIET));
-  if (json.containsKey(parm_uc)) { state.quiet = IRac::strToBool(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_CLEAN));
-  if (json.containsKey(parm_uc)) { state.clean = IRac::strToBool(json[parm_uc]); }
+  state.power   = strToBool(root[PSTR(D_JSON_IRHVAC_POWER)], state.power);
+  state.celsius = strToBool(root[PSTR(D_JSON_IRHVAC_CELSIUS)], state.celsius);
+  state.light   = strToBool(root[PSTR(D_JSON_IRHVAC_LIGHT)], state.light);
+  state.beep    = strToBool(root[PSTR(D_JSON_IRHVAC_BEEP)], state.beep);
+  state.econo   = strToBool(root[PSTR(D_JSON_IRHVAC_ECONO)], state.econo);
+  state.filter  = strToBool(root[PSTR(D_JSON_IRHVAC_FILTER)], state.filter);
+  state.turbo   = strToBool(root[PSTR(D_JSON_IRHVAC_TURBO)], state.turbo);
+  state.quiet   = strToBool(root[PSTR(D_JSON_IRHVAC_QUIET)], state.quiet);
+  state.clean   = strToBool(root[PSTR(D_JSON_IRHVAC_CLEAN)], state.clean);
 
   // optional timer and clock
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_SLEEP));
-  if (json[parm_uc]) { state.sleep = json[parm_uc]; }
+  state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
   //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
 
   IRac ac(Pin(GPIO_IRSEND));
@@ -387,40 +376,32 @@ void CmndIrHvac(void)
 
 uint32_t IrRemoteCmndIrSendJson(void)
 {
-  char parm_uc[12];   // used to convert JSON keys to uppercase
-  // ArduinoJSON entry used to calculate jsonBuf: JSON_OBJECT_SIZE(3) + 40 = 96
   // IRsend { "protocol": "RC5", "bits": 12, "data":"0xC86" }
   // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
-  char dataBufUc[XdrvMailbox.data_len + 1];
-  UpperCase(dataBufUc, XdrvMailbox.data);
-  RemoveSpace(dataBufUc);
-  if (strlen(dataBufUc) < 8) { return IE_INVALID_JSON; }
-
-  DynamicJsonBuffer jsonBuf;
-  JsonObject &json = jsonBuf.parseObject(dataBufUc);
-  if (!json.success()) { return IE_INVALID_JSON; }
+  RemoveSpace(XdrvMailbox.data);    // TODO is this really needed?
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return IE_INVALID_JSON; }
 
   // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
   // IRsend { "protocol": "NEC", "bits": 32, "data":"0x02FDFE80", "repeat": 2 }
-  decode_type_t protocol = decode_type_t::UNKNOWN;
-  uint16_t bits = 0;
-  uint64_t data;
-  uint8_t  repeat = 0;
+  JsonParserToken value;
 
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_VENDOR));
-  if (json.containsKey(parm_uc)) { protocol = strToDecodeType(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_PROTOCOL));
-  if (json.containsKey(parm_uc)) { protocol = strToDecodeType(json[parm_uc]); }   // also support 'protocol'
+  decode_type_t protocol = decode_type_t::UNKNOWN;
+  value = root[PSTR(D_JSON_IRHVAC_VENDOR)];
+  if (root) { protocol = strToDecodeType(value.getStr()); }
+  value = root[PSTR(D_JSON_IRHVAC_PROTOCOL)];
+  if (root) { protocol = strToDecodeType(value.getStr()); }
   if (decode_type_t::UNKNOWN == protocol) { return IE_UNSUPPORTED_PROTOCOL; }
 
-  UpperCase_P(parm_uc, PSTR(D_JSON_IR_BITS));
-  if (json.containsKey(parm_uc)) { bits = json[parm_uc]; }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IR_REPEAT));
-  if (json.containsKey(parm_uc)) { repeat = json[parm_uc]; }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATALSB));    // accept LSB values
-  if (json.containsKey(parm_uc)) { data = reverseBitsInBytes64(strtoull(json[parm_uc], nullptr, 0)); }
-  UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATA));       // or classical MSB (takes priority)
-  if (json.containsKey(parm_uc)) { data = strtoull(json[parm_uc], nullptr, 0); }
+  uint16_t bits = root.getUInt(PSTR(D_JSON_IR_BITS), 0);
+  uint16_t repeat = root.getUInt(PSTR(D_JSON_IR_REPEAT), 0);
+
+  uint64_t data;
+  value = root[PSTR(D_JSON_IR_DATALSB)];
+  if (root) { data = reverseBitsInBytes64(value.getULong()); }    // accept LSB values
+  value = root[PSTR(D_JSON_IR_DATA)];
+  if (value) { data = value.getULong(); }       // or classical MSB (takes priority)
   if (0 == bits) { return IE_SYNTAX_IRSEND; }
 
   // check if the IRSend<x> is greater than repeat, but can be overriden with JSON

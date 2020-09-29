@@ -103,6 +103,13 @@ inline void C2D_enable(bool oe) {
 #define C2_INBUSY   0x02
 #define C2_OUTREADY 0x01
 
+// Device families (https://www.silabs.com/documents/public/application-notes/AN127.pdf)
+#define	C2_DEVID_UNKNOWN	0x00
+#define	C2_DEVID_EFM8BB1	0x30
+#define	C2_DEVID_EFM8BB2	0x32
+#define	C2_DEVID_EFM8BB3	0x34
+#define	C2_DEVID_EFM8LB1	0x34
+
 // Layer 1: C2 Programmig Interface (PI) Register access
 void c2_address_write(uint8_t address);
 uint8_t c2_address_read();
@@ -125,7 +132,7 @@ inline uint8_t c2_data_read(uint8_t &d, uint8_t bytes=1) {
 
 // Layer 2: Operations
 uint8_t c2_reset();
-uint8_t c2_programming_init();
+uint8_t c2_programming_init(uint8_t devid);
 uint8_t c2_block_write(uint32_t address, uint8_t *data, uint8_t len);
 uint8_t c2_block_read(uint32_t address, uint8_t *data, uint8_t len);
 uint8_t c2_eeprom_read(uint32_t address, uint8_t *data, uint8_t len);

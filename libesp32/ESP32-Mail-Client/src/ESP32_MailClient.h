@@ -48,6 +48,7 @@
 #include "RFC2047.h"
 #include "ESP32MailHTTPClient.h"
 #include "ESP32TimeHelper.h"
+#include <FFat.h>
 
 #define FORMAT_SPIFFS_IF_FAILED true
 
@@ -90,6 +91,7 @@ struct MailClientStorageType
 {
   static const uint8_t SPIFFS = 0;
   static const uint8_t SD = 1;
+  static const uint8_t FFat = 2;
 };
 
 static const char ESP32_MAIL_STR_1[] PROGMEM = "Content-Type: multipart/mixed; boundary=\"";
@@ -1302,6 +1304,7 @@ private:
   std::string _host = "";
   uint16_t _port = 993;
   uint8_t _storageType = 1;
+  FS *fsp = &SD;
   bool _unseen = false;
   std::string _loginEmail = "";
   std::string _loginPassword = "";
@@ -1859,7 +1862,7 @@ protected:
   string _host = "";
   uint16_t _port = 0;
   uint8_t _storageType = 1;
-
+  FS *fsp = &SD;
   string _fromName = "";
   string _senderEmail = "";
   string _subject = "";

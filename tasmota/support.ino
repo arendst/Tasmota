@@ -116,7 +116,7 @@ String GetResetReason(void)
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
-
+/*
 String GetBinary(const void* ptr, size_t count) {
   uint32_t value = *(uint32_t*)ptr;
   value <<= (32 - count);
@@ -124,6 +124,18 @@ String GetBinary(const void* ptr, size_t count) {
   result.reserve(count + 1);
   for (uint32_t i = 0; i < count; i++) {
     result += (value &0x80000000) ? '1' : '0';
+    value <<= 1;
+  }
+  return result;
+}
+*/
+String GetBinary8(uint8_t value, size_t count) {
+  if (count > 8) { count = 8; }
+  value <<= (8 - count);
+  String result;
+  result.reserve(count + 1);
+  for (uint32_t i = 0; i < count; i++) {
+    result += (value &0x80) ? '1' : '0';
     value <<= 1;
   }
   return result;
@@ -1412,31 +1424,28 @@ bool GetUsedInModule(uint32_t val, uint16_t *arr)
   return false;
 }
 
-bool JsonTemplate(const char* dataBuf)
+bool JsonTemplate(char* dataBuf)
 {
   // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
 
-#ifdef ESP8266
-  StaticJsonBuffer<400> jb;  // 331 from https://arduinojson.org/v5/assistant/
-#else
-  StaticJsonBuffer<999> jb;  // 654 from https://arduinojson.org/v5/assistant/
-#endif
-  JsonObject& obj = jb.parseObject(dataBuf);
-  if (!obj.success()) { return false; }
+  JsonParser parser((char*) dataBuf);
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return false; }
 
   // All parameters are optional allowing for partial changes
-  const char* name = obj[D_JSON_NAME];
-  if (name != nullptr) {
-    SettingsUpdateText(SET_TEMPLATE_NAME, name);
+  JsonParserToken val = root[PSTR(D_JSON_NAME)];
+  if (val) {
+    SettingsUpdateText(SET_TEMPLATE_NAME, val.getStr());
   }
-  if (obj[D_JSON_GPIO].success()) {
+  JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
+  if (arr) {
     for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
 #ifdef ESP8266
-      Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
+      Settings.user_template.gp.io[i] = arr[i].getUInt();
 #else  // ESP32
-      uint16_t gpio = obj[D_JSON_GPIO][i] | 0;
+      uint16_t gpio = arr[i].getUInt();
       if (gpio == (AGPIO(GPIO_NONE) +1)) {
         gpio = AGPIO(GPIO_USER);
       }
@@ -1444,12 +1453,14 @@ bool JsonTemplate(const char* dataBuf)
 #endif
     }
   }
-  if (obj[D_JSON_FLAG].success()) {
-    uint32_t flag = obj[D_JSON_FLAG] | 0;
+  val = root[PSTR(D_JSON_FLAG)];
+  if (val) {
+    uint32_t flag = val.getUInt();
     memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
   }
-  if (obj[D_JSON_BASE].success()) {
-    uint32_t base = obj[D_JSON_BASE];
+  val = root[PSTR(D_JSON_BASE)];
+  if (val) {
+    uint32_t base = val.getUInt();
     if ((0 == base) || !ValidTemplateModule(base -1)) { base = 18; }
     Settings.user_template_base = base -1;  // Default WEMOS
   }
@@ -2006,3 +2017,27 @@ String Decompress(const char * compressed, size_t uncompressed_size) {
 }
 
 #endif // USE_UNISHOX_COMPRESSION
+
+/*********************************************************************************************\
+ * High entropy hardware random generator
+ * Thanks to DigitalAlchemist
+\*********************************************************************************************/
+// Based on code from https://raw.githubusercontent.com/espressif/esp-idf/master/components/esp32/hw_random.c
+uint32_t HwRandom(void) {
+#if ESP8266
+  // https://web.archive.org/web/20160922031242/http://esp8266-re.foogod.com/wiki/Random_Number_Generator
+  #define _RAND_ADDR 0x3FF20E44UL
+#else // ESP32
+  #define _RAND_ADDR 0x3FF75144UL
+#endif
+  static uint32_t last_ccount = 0;
+  uint32_t ccount;
+  uint32_t result = 0;
+  do {
+    ccount = ESP.getCycleCount();
+    result ^= *(volatile uint32_t *)_RAND_ADDR;
+  } while (ccount - last_ccount < 64);
+  last_ccount = ccount;
+  return result ^ *(volatile uint32_t *)_RAND_ADDR;
+#undef _RAND_ADDR
+}

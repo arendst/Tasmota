@@ -1465,6 +1465,31 @@ void HandleRoot(void)
 #endif  // USE_SONOFF_IFAN
     WSContentSend_P(PSTR("</tr></table>"));
   }
+#ifdef USE_TUYA_MCU
+  if (IsModuleTuya()) {
+    uint8_t modeset = 0;
+    if (AsModuleTuyaMS()) {
+      WSContentSend_P(HTTP_TABLE100);
+      WSContentSend_P(PSTR("<tr><div></div>"));
+      snprintf_P(stemp, sizeof(stemp), PSTR("" D_JSON_IRHVAC_MODE ""));
+      WSContentSend_P(HTTP_DEVICE_CONTROL, 26, devices_present + 1,
+        (strlen(SettingsText(SET_BUTTON1 + devices_present))) ? SettingsText(SET_BUTTON1 + devices_present) : stemp, "");
+      WSContentSend_P(PSTR("</tr></table>"));
+      modeset = 1;
+    }
+    if (IsTuyaFanCtrl()) {
+      uint8_t device = devices_present + modeset;
+      WSContentSend_P(HTTP_TABLE100);
+      WSContentSend_P(PSTR("<tr><div></div>"));
+      for (uint32_t i = device + 1; i <= (TuyaFanSpeeds() + device) + 1; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i - (device + 1));
+        WSContentSend_P(HTTP_DEVICE_CONTROL, 16, i,
+          (strlen(SettingsText(SET_BUTTON1 + i))) ? SettingsText(SET_BUTTON1 + i) : stemp, "");
+      }
+      WSContentSend_P(PSTR("</tr></table>"));
+    }
+  }
+#endif  // USE_TUYA_MCU
 #ifdef USE_SONOFF_RF
   if (SONOFF_BRIDGE == my_module_type) {
     WSContentSend_P(HTTP_TABLE100);
@@ -1535,6 +1560,33 @@ bool HandleRootStatusRefresh(void)
       }
     } else {
 #endif  // USE_SONOFF_IFAN
+#ifdef USE_TUYA_MCU
+    if (IsModuleTuya()) {
+      uint8_t FuncIdx = 0;
+        if (device <= devices_present) {
+          ExecuteCommandPower(device, POWER_TOGGLE, SRC_IGNORE);
+        } else {
+          if (AsModuleTuyaMS() && device == devices_present + 1) {
+            uint8_t dpId = TuyaGetDpId(TUYA_MCU_FUNC_MODESET);
+            snprintf_P(svalue, sizeof(svalue), PSTR("Tuyasend4 %d,%d"), dpId, !TuyaModeSet());
+            ExecuteCommand(svalue, SRC_WEBGUI);
+          }
+          if (IsTuyaFanCtrl()) {
+            uint8_t dpId = 0;
+            for (uint32_t i = 0; i <= 3; i++) { // Tuya Function FAN3 to FAN6
+              if (TuyaGetDpId(TUYA_MCU_FUNC_FAN3 + i) != 0) {
+                dpId = TuyaGetDpId(TUYA_MCU_FUNC_FAN3 + i);
+              }
+            }
+            if ((AsModuleTuyaMS() && device != devices_present + 1) || !AsModuleTuyaMS()) {
+              if (AsModuleTuyaMS()) {FuncIdx = 1;}
+              snprintf_P(svalue, sizeof(svalue), PSTR("Tuyasend2 %d,%d"), dpId, (device - (devices_present + FuncIdx) - 1));
+              ExecuteCommand(svalue, SRC_WEBGUI);
+            }
+          }
+        }
+    } else {
+#endif  // USE_TUYA_MCU
 #ifdef USE_SHUTTER
       int32_t ShutterWebButton;
       if (ShutterWebButton = IsShutterWebButton(device)) {
@@ -1549,6 +1601,9 @@ bool HandleRootStatusRefresh(void)
 #ifdef USE_SONOFF_IFAN
     }
 #endif  // USE_SONOFF_IFAN
+#ifdef USE_TUYA_MCU
+    }
+#endif  // USE_TUYA_MCU
   }
 #ifdef USE_LIGHT
   WebGetArg("d0", tmp, sizeof(tmp));  // 0 - 100 Dimmer value
@@ -1629,8 +1684,22 @@ bool HandleRootStatusRefresh(void)
 #ifdef USE_SONOFF_IFAN
     }
 #endif  // USE_SONOFF_IFAN
+
     WSContentSend_P(PSTR("</tr></table>"));
   }
+#ifdef USE_TUYA_MCU
+  if (IsModuleTuya()) {
+    uint32_t fanspeed = TuyaFanState();
+    uint32_t modeset = TuyaModeSet();
+    if (IsTuyaFanCtrl() && !AsModuleTuyaMS()) {
+      WSContentSend_P(PSTR("<div style='text-align:center;font-size:25px;'>" D_JSON_IRHVAC_FANSPEED ": %d</div>"), fanspeed);
+    } else if (!IsTuyaFanCtrl() && AsModuleTuyaMS()) {
+      WSContentSend_P(PSTR("<div style='text-align:center;font-size:25px;'>" D_JSON_IRHVAC_MODE ": %d</div>"), modeset);
+    } else if (IsTuyaFanCtrl() && AsModuleTuyaMS()) {
+      WSContentSend_P(PSTR("<div style='text-align:center;font-size:25px;'>" D_JSON_IRHVAC_MODE ": %d - " D_JSON_IRHVAC_FANSPEED ": %d</div>"), modeset, fanspeed);
+    }
+  }
+#endif  // USE_TUYA_MCU
   WSContentEnd();
 
   return true;
@@ -3275,22 +3344,18 @@ bool JsonWebColor(const char* dataBuf)
   // Default pre v7 (Light theme)
   // {"WebColor":["#000","#fff","#f2f2f2","#000","#fff","#000","#fff","#f00","#008000","#fff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#fff","#999","#000"]}	  // {"WebColor":["#000000","#ffffff","#f2f2f2","#000000","#ffffff","#000000","#ffffff","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999","#000000"]}
 
-  char dataBufLc[strlen(dataBuf) +1];
-  LowerCase(dataBufLc, dataBuf);
-  RemoveSpace(dataBufLc);
-  if (strlen(dataBufLc) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
-
-  StaticJsonBuffer<450> jb;  // 421 from https://arduinojson.org/v5/assistant/
-  JsonObject& obj = jb.parseObject(dataBufLc);
-  if (!obj.success()) { return false; }
-
-  char parm_lc[10];
-  if (obj[LowerCase(parm_lc, D_CMND_WEBCOLOR)].success()) {
-    for (uint32_t i = 0; i < COL_LAST; i++) {
-      const char* color = obj[parm_lc][i];
-      if (color != nullptr) {
-        WebHexCode(i, color);
+  JsonParser parser((char*) dataBuf);
+  JsonParserObject root = parser.getRootObject();
+  JsonParserArray arr = root[PSTR(D_CMND_WEBCOLOR)].getArray();
+  if (arr) {  // if arr is valid, i.e. json is valid, the key D_CMND_WEBCOLOR was found and the token is an arra
+    uint32_t i = 0;
+    for (auto color : arr) {
+      if (i < COL_LAST) {
+        WebHexCode(i, color.getStr());
+      } else {
+        break;
       }
+      i++;
     }
   }
   return true;

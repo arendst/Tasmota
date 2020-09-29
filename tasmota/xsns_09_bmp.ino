@@ -613,15 +613,17 @@ void BmpShow(bool json)
 
 void BMP_EnterSleep(void)
 {
-  for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
-    switch (bmp_sensors[bmp_idx].bmp_type) {
-      case BMP180_CHIPID:
-      case BMP280_CHIPID:
-      case BME280_CHIPID:
-        I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP_REGISTER_RESET, BMP_CMND_RESET);
-        break;
-      default:
-        break;
+  if (DeepSleepEnabled()) {
+    for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
+      switch (bmp_sensors[bmp_idx].bmp_type) {
+        case BMP180_CHIPID:
+        case BMP280_CHIPID:
+        case BME280_CHIPID:
+          I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP_REGISTER_RESET, BMP_CMND_RESET);
+          break;
+        default:
+          break;
+      }
     }
   }
 }

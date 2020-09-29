@@ -24,7 +24,9 @@
 
 static const char LOG_TAG[] = "NimBLEEddystoneTLM";
 
-
+/**
+ * @brief Construct a default EddystoneTLM beacon object.
+ */
 NimBLEEddystoneTLM::NimBLEEddystoneTLM() {
     beaconUUID = 0xFEAA;
     m_eddystoneData.frameType = EDDYSTONE_TLM_FRAME_TYPE;
@@ -35,34 +37,73 @@ NimBLEEddystoneTLM::NimBLEEddystoneTLM() {
     m_eddystoneData.tmil = 0;
 } // NimBLEEddystoneTLM
 
+
+/**
+ * @brief Retrieve the data that is being advertised.
+ * @return The advertised data.
+ */
 std::string NimBLEEddystoneTLM::getData() {
     return std::string((char*) &m_eddystoneData, sizeof(m_eddystoneData));
 } // getData
 
+
+/**
+ * @brief Get the UUID being advertised.
+ * @return The UUID advertised.
+ */
 NimBLEUUID NimBLEEddystoneTLM::getUUID() {
     return NimBLEUUID(beaconUUID);
 } // getUUID
 
+
+/**
+ * @brief Get the version being advertised.
+ * @return The version number.
+ */
 uint8_t NimBLEEddystoneTLM::getVersion() {
     return m_eddystoneData.version;
 } // getVersion
 
+
+/**
+ * @brief Get the battery voltage.
+ * @return The battery voltage.
+ */
 uint16_t NimBLEEddystoneTLM::getVolt() {
     return ENDIAN_CHANGE_U16(m_eddystoneData.volt);
 } // getVolt
 
+
+/**
+ * @brief Get the temperature being advertised.
+ * @return The temperature value.
+ */
 float NimBLEEddystoneTLM::getTemp() {
     return ENDIAN_CHANGE_U16(m_eddystoneData.temp) / 256.0f;
 } // getTemp
 
+/**
+ * @brief Get the count of advertisments sent.
+ * @return The number of advertisments.
+ */
 uint32_t NimBLEEddystoneTLM::getCount() {
     return ENDIAN_CHANGE_U32(m_eddystoneData.advCount);
 } // getCount
 
+
+/**
+ * @brief Get the advertisment time.
+ * @return The advertisment time.
+ */
 uint32_t NimBLEEddystoneTLM::getTime() {
     return (ENDIAN_CHANGE_U32(m_eddystoneData.tmil)) / 10;
 } // getTime
 
+
+/**
+ * @brief Get a string representation of the beacon.
+ * @return The string representation.
+ */
 std::string NimBLEEddystoneTLM::toString() {
   std::string out = "";
   uint32_t rawsec = ENDIAN_CHANGE_U32(m_eddystoneData.tmil);
@@ -113,8 +154,10 @@ std::string NimBLEEddystoneTLM::toString() {
   return out;
 } // toString
 
+
 /**
- * Set the raw data for the beacon record.
+ * @brief Set the raw data for the beacon advertisment.
+ * @param [in] data The raw data to advertise.
  */
 void NimBLEEddystoneTLM::setData(const std::string &data) {
     if (data.length() != sizeof(m_eddystoneData)) {
@@ -125,26 +168,56 @@ void NimBLEEddystoneTLM::setData(const std::string &data) {
   memcpy(&m_eddystoneData, data.data(), data.length());
 } // setData
 
+
+/**
+ * @brief Set the UUID to advertise.
+ * @param [in] l_uuid The UUID.
+ */
 void NimBLEEddystoneTLM::setUUID(const NimBLEUUID &l_uuid) {
     beaconUUID = l_uuid.getNative()->u16.value;
 } // setUUID
 
+
+/**
+ * @brief Set the version to advertise.
+ * @param [in] version The version number.
+ */
 void NimBLEEddystoneTLM::setVersion(uint8_t version) {
     m_eddystoneData.version = version;
 } // setVersion
 
+
+/**
+ * @brief Set the battery voltage to advertise.
+ * @param [in] volt The voltage in millivolts.
+ */
 void NimBLEEddystoneTLM::setVolt(uint16_t volt) {
     m_eddystoneData.volt = volt;
 } // setVolt
 
+
+/**
+ * @brief Set the temperature to advertise.
+ * @param [in] temp The temperature value.
+ */
 void NimBLEEddystoneTLM::setTemp(float temp) {
     m_eddystoneData.temp = (uint16_t)temp;
 } // setTemp
 
+
+/**
+ * @brief Set the advertisment count.
+ * @param [in] advCount The advertisment number.
+ */
 void NimBLEEddystoneTLM::setCount(uint32_t advCount) {
     m_eddystoneData.advCount = advCount;
 } // setCount
 
+
+/**
+ * @brief Set the advertisment time.
+ * @param [in] tmil The advertisment time in milliseconds.
+ */
 void NimBLEEddystoneTLM::setTime(uint32_t tmil) {
     m_eddystoneData.tmil = tmil;
 } // setTime

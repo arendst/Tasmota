@@ -601,11 +601,12 @@ void GetFeatures(void)
 #ifdef USE_I2S_AUDIO
   feature6 |= 0x00800000;  // xdrv_42_i2s_audio.ino
 #endif
-#if defined(USE_I2C) && defined(USE_VL53L1X)
-  feature6 |= 0x01000000;  // xsns_77_vl53l1x.ino
+#ifdef USE_MLX90640
+  feature6 |= 0x01000000;  // xdrv_43_mlx90640.ino
 #endif
-
-//  feature6 |= 0x02000000;
+#if defined(USE_I2C) && defined(USE_VL53L1X)
+  feature6 |= 0x02000000;  // xsns_77_vl53l1x.ino
+#endif
 //  feature6 |= 0x04000000;
 //  feature6 |= 0x08000000;
 //  feature6 |= 0x10000000;

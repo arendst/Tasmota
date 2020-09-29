@@ -97,19 +97,6 @@ void ZigbeeInit(void)
  * Commands
 \*********************************************************************************************/
 
-uint32_t strToUInt(const JsonVariant &val) {
-  // if the string starts with 0x, it is considered Hex, otherwise it is an int
-  if (val.is<unsigned int>()) {
-    return val.as<unsigned int>();
-  } else {
-    if (val.is<const char*>()) {
-      String sval = val.as<String>();
-      return strtoull(sval.c_str(), nullptr, 0);
-    }
-  }
-  return 0;   // couldn't parse anything
-}
-
 #ifdef USE_ZIGBEE_ZNP
 // Do a factory reset of the CC2530
 const unsigned char ZIGBEE_FACTORY_RESET[] PROGMEM =
@@ -212,9 +199,37 @@ void ZbApplyMultiplier(double &val_d, int8_t multiplier) {
   }
 }
 
+//
+// Send Attribute Write, apply mutlipliers before
+//
+bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_status_ok) {
+  double val_d = attr.getFloat();
+  const char * val_str = attr.getStr();
+
+  if (attr.key_is_str) { return false; }
+  if (attr.isNum() && (1 != attr.attr_multiplier)) {
+    ZbApplyMultiplier(val_d, attr.attr_multiplier);
+  }
+
+  // push the value in the buffer
+  buf.add16(attr.key.id.attr_id);        // prepend with attribute identifier
+  if (prepend_status_ok) {
+    buf.add8(Z_SUCCESS);  // status OK = 0x00
+  }
+  buf.add8(attr.attr_type);     // prepend with attribute type
+  int32_t res = encodeSingleAttribute(buf, val_d, val_str, attr.attr_type);
+  if (res < 0) {
+    // remove the attribute type we just added
+    // buf.setLen(buf.len() - (operation == ZCL_READ_ATTRIBUTES_RESPONSE ? 4 : 3));
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Unsupported attribute type %04X/%04X '0x%02X'"), attr.key.id.cluster, attr.key.id.attr_id, attr.attr_type);
+    return false;
+  }
+  return true;
+}
+
 // Parse "Report", "Write", "Response" or "Condig" attribute
 // Operation is one of: ZCL_REPORT_ATTRIBUTES (0x0A), ZCL_WRITE_ATTRIBUTES (0x02) or ZCL_READ_ATTRIBUTES_RESPONSE (0x01)
-void ZbSendReportWrite(const JsonObject &val_pubwrite, uint16_t device, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint16_t manuf, uint8_t operation) {
+void ZbSendReportWrite(class JsonParserToken val_pubwrite, uint16_t device, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint16_t manuf, uint8_t operation) {
   SBuffer buf(200);       // buffer to store the binary output of attibutes
 
   if (nullptr == XdrvMailbox.command) {
@@ -222,158 +237,89 @@ void ZbSendReportWrite(const JsonObject &val_pubwrite, uint16_t device, uint16_t
   }
 
   // iterate on keys
-  for (JsonObject::const_iterator it=val_pubwrite.begin(); it!=val_pubwrite.end(); ++it) {
-    const char *key = it->key;
-    const JsonVariant &value = it->value;
+  for (auto key : val_pubwrite.getObject()) {
+    JsonParserToken value = key.getValue();
 
-    uint16_t attr_id = 0xFFFF;
-    uint16_t cluster_id = 0xFFFF;
-    uint8_t  type_id = Znodata;
-    int8_t   multiplier = 1;        // multiplier to adjust the key value
-    double   val_d = 0;             // I try to avoid `double` but this type capture both float and (u)int32_t without prevision loss
-    const char* val_str = "";       // variant as string
-
-    // check if the name has the format "XXXX/YYYY" where XXXX is the cluster, YYYY the attribute id
-    // alternative "XXXX/YYYY%ZZ" where ZZ is the type (for unregistered attributes)
-    char * delimiter = strchr(key, '/');
-    char * delimiter2 = strchr(key, '%');
-    if (delimiter) {
-      cluster_id = strtoul(key, &delimiter, 16);
-      if (!delimiter2) {
-        attr_id = strtoul(delimiter+1, nullptr, 16);
-      } else {
-        attr_id = strtoul(delimiter+1, &delimiter2, 16);
-        type_id = strtoul(delimiter2+1, nullptr, 16);
-      }
-    }
-    // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("cluster_id = 0x%04X, attr_id = 0x%04X"), cluster_id, attr_id);
-
-    // do we already know the type, i.e. attribute and cluster are also known
-    if (Znodata == type_id) {
-      // scan attributes to find by name, and retrieve type
-      for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
-        const Z_AttributeConverter *converter = &Z_PostProcess[i];
-        bool match = false;
-        uint16_t local_attr_id = pgm_read_word(&converter->attribute);
-        uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
-        uint8_t  local_type_id = pgm_read_byte(&converter->type);
-        int8_t   local_multiplier = pgm_read_byte(&converter->multiplier);
-        // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Try cluster = 0x%04X, attr = 0x%04X, type_id = 0x%02X"), local_cluster_id, local_attr_id, local_type_id);
-
-        if (delimiter) {
-          if ((cluster_id == local_cluster_id) && (attr_id == local_attr_id)) {
-            type_id = local_type_id;
-            break;
-          }
-        } else if (pgm_read_word(&converter->name_offset)) {
-          // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Comparing '%s' with '%s'"), attr_name, converter->name);
-          if (0 == strcasecmp_P(key, Z_strings + pgm_read_word(&converter->name_offset))) {
-            // match
-            cluster_id = local_cluster_id;
-            attr_id = local_attr_id;
-            type_id = local_type_id;
-            multiplier = local_multiplier;
-            break;
-          }
-        }
-      }
-    }
-
-    // Buffer ready, do some sanity checks
-    // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("cluster_id = 0x%04X, attr_id = 0x%04X, type_id = 0x%02X"), cluster_id, attr_id, type_id);
-    if ((0xFFFF == attr_id) || (0xFFFF == cluster_id)) {
-      Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR("Unknown attribute "), key);
-      return;
-    }
-    if (Znodata == type_id) {
-      Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR("Unknown attribute type for attribute "), key);
-      return;
-    }
-
-    if (0xFFFF == cluster) {
-      cluster = cluster_id;       // set the cluster for this packet
-    } else if (cluster != cluster_id) {
-      ResponseCmndChar_P(PSTR("No more than one cluster id per command"));
-      return;
-    }
-
-    // ////////////////////////////////////////////////////////////////////////////////
-    // Split encoding depending on message
-    if (operation != ZCL_CONFIGURE_REPORTING) {
-      // apply multiplier if needed
-      val_d = value.as<double>();
-      val_str = value.as<const char*>();
-      ZbApplyMultiplier(val_d, multiplier);
-
-      // push the value in the buffer
-      buf.add16(attr_id);        // prepend with attribute identifier
-      if (operation == ZCL_READ_ATTRIBUTES_RESPONSE) {
-        buf.add8(Z_SUCCESS);  // status OK = 0x00
-      }
-      buf.add8(type_id);     // prepend with attribute type
-      int32_t res = encodeSingleAttribute(buf, val_d, val_str, type_id);
-      if (res < 0) {
-        // remove the attribute type we just added
-        // buf.setLen(buf.len() - (operation == ZCL_READ_ATTRIBUTES_RESPONSE ? 4 : 3));
-        Response_P(PSTR("{\"%s\":\"%s'%s' 0x%02X\"}"), XdrvMailbox.command, PSTR("Unsupported attribute type "), key, type_id);
+    Z_attribute attr;
+    attr.setKeyName(key.getStr());
+    if (Z_parseAttributeKey(attr)) {
+      // Buffer ready, do some sanity checks
+      if (0xFFFF == cluster) {
+        cluster = attr.key.id.cluster;       // set the cluster for this packet
+      } else if (cluster != attr.key.id.cluster) {
+        ResponseCmndChar_P(PSTR("No more than one cluster id per command"));
         return;
       }
 
     } else {
+      if (attr.key_is_str) {
+        Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR("Unknown attribute "), key);
+        return;
+      }
+      if (Zunk == attr.attr_type) {
+        Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR("Unknown attribute type for attribute "), key);
+        return;
+      }
+    }
+
+    if (value.isStr()) {
+      attr.setStr(value.getStr());
+    } else if (value.isNum()) {
+      attr.setFloat(value.getFloat());
+    }
+
+    double   val_d = 0;             // I try to avoid `double` but this type capture both float and (u)int32_t without prevision loss
+    const char* val_str = "";       // variant as string
+    ////////////////////////////////////////////////////////////////////////////////
+    // Split encoding depending on message
+    if (operation != ZCL_CONFIGURE_REPORTING) {
+      if (!ZbAppendWriteBuf(buf, attr, operation == ZCL_READ_ATTRIBUTES_RESPONSE)) {
+        return;   // error
+      }
+    } else {
       // ////////////////////////////////////////////////////////////////////////////////
       // ZCL_CONFIGURE_REPORTING
-      if (!value.is<JsonObject>()) {
+      if (!value.isObject()) {
         ResponseCmndChar_P(PSTR("Config requires JSON objects"));
         return;
       }
-      JsonObject &attr_config = value.as<JsonObject>();
+      JsonParserObject attr_config = value.getObject();
       bool attr_direction = false;
 
-      const JsonVariant &val_attr_direction = GetCaseInsensitive(attr_config, PSTR("DirectionReceived"));
-      if (nullptr != &val_attr_direction) {
-        uint32_t dir = strToUInt(val_attr_direction);
-        if (dir) {
-          attr_direction = true;
-        }
-      }
+      uint32_t dir = attr_config.getUInt(PSTR("DirectionReceived"), 0);
+      if (dir) { attr_direction = true; }
 
       // read MinInterval and MaxInterval, default to 0xFFFF if not specified
-      uint16_t attr_min_interval = 0xFFFF;
-      uint16_t attr_max_interval = 0xFFFF;
-      const JsonVariant &val_attr_min = GetCaseInsensitive(attr_config, PSTR("MinInterval"));
-      if (nullptr != &val_attr_min) { attr_min_interval = strToUInt(val_attr_min); }
-      const JsonVariant &val_attr_max = GetCaseInsensitive(attr_config, PSTR("MaxInterval"));
-      if (nullptr != &val_attr_max) { attr_max_interval = strToUInt(val_attr_max); }
+      uint16_t attr_min_interval = attr_config.getUInt(PSTR("MinInterval"), 0xFFFF);
+      uint16_t attr_max_interval = attr_config.getUInt(PSTR("MaxInterval"), 0xFFFF);
 
       // read ReportableChange
-      const JsonVariant &val_attr_rc = GetCaseInsensitive(attr_config, PSTR("ReportableChange"));
-      if (nullptr != &val_attr_rc) {
-        val_d = val_attr_rc.as<double>();
-        val_str = val_attr_rc.as<const char*>();
-        ZbApplyMultiplier(val_d, multiplier);
+      JsonParserToken val_attr_rc = attr_config[PSTR("ReportableChange")];
+      if (val_attr_rc) {
+        val_d = val_attr_rc.getFloat();
+        val_str = val_attr_rc.getStr();
+        ZbApplyMultiplier(val_d, attr.attr_multiplier);
       }
 
       // read TimeoutPeriod
-      uint16_t attr_timeout = 0x0000;
-      const JsonVariant &val_attr_timeout = GetCaseInsensitive(attr_config, PSTR("TimeoutPeriod"));
-      if (nullptr != &val_attr_timeout) { attr_timeout = strToUInt(val_attr_timeout); }
+      uint16_t attr_timeout = attr_config.getUInt(PSTR("TimeoutPeriod"), 0x0000);
 
-      bool attr_discrete = Z_isDiscreteDataType(type_id);
+      bool attr_discrete = Z_isDiscreteDataType(attr.attr_type);
 
       // all fields are gathered, output the butes into the buffer, ZCL 2.5.7.1
       // common bytes
       buf.add8(attr_direction ? 0x01 : 0x00);
-      buf.add16(attr_id);
+      buf.add16(attr.key.id.attr_id);
       if (attr_direction) {
         buf.add16(attr_timeout);
       } else {
-        buf.add8(type_id);
+        buf.add8(attr.attr_type);
         buf.add16(attr_min_interval);
         buf.add16(attr_max_interval);
         if (!attr_discrete) {
-          int32_t res = encodeSingleAttribute(buf, val_d, val_str, type_id);
+          int32_t res = encodeSingleAttribute(buf, val_d, val_str, attr.attr_type);
           if (res < 0) {
-            Response_P(PSTR("{\"%s\":\"%s'%s' 0x%02X\"}"), XdrvMailbox.command, PSTR("Unsupported attribute type "), key, type_id);
+            Response_P(PSTR("{\"%s\":\"%s'%s' 0x%02X\"}"), XdrvMailbox.command, PSTR("Unsupported attribute type "), key, attr.attr_type);
             return;
           }
         }
@@ -405,37 +351,36 @@ void ZbSendReportWrite(const JsonObject &val_pubwrite, uint16_t device, uint16_t
 }
 
 // Parse the "Send" attribute and send the command
-void ZbSendSend(const JsonVariant &val_cmd, uint16_t device, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint16_t manuf) {
+void ZbSendSend(class JsonParserToken val_cmd, uint16_t device, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint16_t manuf) {
   uint8_t  cmd = 0;
   String   cmd_str = "";          // the actual low-level command, either specified or computed
-  const char *cmd_s;                 // pointer to payload string
+  const char *cmd_s = "";                 // pointer to payload string
   bool     clusterSpecific = true;
 
   static char delim[] = ", ";     // delimiters for parameters
   // probe the type of the argument
   // If JSON object, it's high level commands
   // If String, it's a low level command
-  if (val_cmd.is<JsonObject>()) {
+  if (val_cmd.isObject()) {
     // we have a high-level command
-    const JsonObject &cmd_obj = val_cmd.as<const JsonObject&>();
+    JsonParserObject cmd_obj = val_cmd.getObject();
     int32_t cmd_size = cmd_obj.size();
     if (cmd_size > 1) {
       Response_P(PSTR("Only 1 command allowed (%d)"), cmd_size);
       return;
     } else if (1 == cmd_size) {
       // We have exactly 1 command, parse it
-      JsonObject::const_iterator it = cmd_obj.begin();    // just get the first key/value
-      String key = it->key;
-      const JsonVariant& value = it->value;
+      JsonParserKey key = cmd_obj.getFirstElement();
+      JsonParserToken value = key.getValue();
       uint32_t x = 0, y = 0, z = 0;
       uint16_t cmd_var;
       uint16_t local_cluster_id;
 
-      const __FlashStringHelper* tasmota_cmd = zigbeeFindCommand(key.c_str(), &local_cluster_id, &cmd_var);
+      const __FlashStringHelper* tasmota_cmd = zigbeeFindCommand(key.getStr(), &local_cluster_id, &cmd_var);
       if (tasmota_cmd) {
         cmd_str = tasmota_cmd;
       } else {
-        Response_P(PSTR("Unrecognized zigbee command: %s"), key.c_str());
+        Response_P(PSTR("Unrecognized zigbee command: %s"), key.getStr());
         return;
       }
       // check cluster
@@ -447,13 +392,17 @@ void ZbSendSend(const JsonVariant &val_cmd, uint16_t device, uint16_t groupaddr,
       }
 
       // parse the JSON value, depending on its type fill in x,y,z
-      if (value.is<bool>()) {
-        x = value.as<bool>() ? 1 : 0;
-      } else if (value.is<unsigned int>()) {
-        x = value.as<unsigned int>();
+      if (value.isNum()) {
+        x = value.getUInt();    // automatic conversion to 0/1
+      // if (value.is<bool>()) {
+      // //   x = value.as<bool>() ? 1 : 0;
+      // } else if 
+      // } else if (value.is<unsigned int>()) {
+      //   x = value.as<unsigned int>();
       } else {
         // if non-bool or non-int, trying char*
-        const char *s_const = value.as<const char*>();
+        const char *s_const = value.getStr(nullptr);
+        // const char *s_const = value.as<const char*>();
         if (s_const != nullptr) {
           char s[strlen(s_const)+1];
           strcpy(s, s_const);
@@ -488,14 +437,13 @@ void ZbSendSend(const JsonVariant &val_cmd, uint16_t device, uint16_t groupaddr,
     } else {
       // we have zero command, pass through until last error for missing command
     }
-  } else if (val_cmd.is<const char*>()) {
+  } else if (val_cmd.isStr()) {
     // low-level command
-    cmd_str = val_cmd.as<String>();
     // Now parse the string to extract cluster, command, and payload
     // Parse 'cmd' in the form "AAAA_BB/CCCCCCCC" or "AAAA!BB/CCCCCCCC"
     // where AA is the cluster number, BBBB the command number, CCCC... the payload
     // First delimiter is '_' for a global command, or '!' for a cluster specific command
-    const char * data = cmd_str.c_str();
+    const char * data = val_cmd.getStr();
     uint16_t local_cluster_id = parseHex(&data, 4);
 
     // check cluster
@@ -534,7 +482,7 @@ void ZbSendSend(const JsonVariant &val_cmd, uint16_t device, uint16_t groupaddr,
 
 
 // Parse the "Send" attribute and send the command
-void ZbSendRead(const JsonVariant &val_attr, uint16_t device, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint16_t manuf, uint8_t operation) {
+void ZbSendRead(JsonParserToken val_attr, uint16_t device, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint16_t manuf, uint8_t operation) {
   // ZbSend {"Device":"0xF289","Cluster":0,"Endpoint":3,"Read":5}
   // ZbSend {"Device":"0xF289","Cluster":"0x0000","Endpoint":"0x0003","Read":"0x0005"}
   // ZbSend {"Device":"0xF289","Cluster":0,"Endpoint":3,"Read":[5,6,7,4]}
@@ -554,30 +502,30 @@ void ZbSendRead(const JsonVariant &val_attr, uint16_t device, uint16_t groupaddr
     attr_item_offset = 1;
   }
 
-  uint16_t val = strToUInt(val_attr);
-  if (val_attr.is<JsonArray>()) {
-    const JsonArray& attr_arr = val_attr.as<const JsonArray&>();
+  if (val_attr.isArray()) {
+    // value is an array []
+    JsonParserArray attr_arr = val_attr.getArray();
     attrs_len = attr_arr.size() * attr_item_len;
     attrs = (uint8_t*) calloc(attrs_len, 1);
 
     uint32_t i = 0;
     for (auto value : attr_arr) {
-      uint16_t val = strToUInt(value);
+      uint16_t val = value.getUInt();
       i += attr_item_offset;
       attrs[i++] = val & 0xFF;
       attrs[i++] = val >> 8;
       i += attr_item_len - 2 - attr_item_offset;    // normally 0
     }
-  } else if (val_attr.is<JsonObject>()) {
-    const JsonObject& attr_obj = val_attr.as<const JsonObject&>();
+  } else if (val_attr.isObject()) {
+    // value is an object {}
+    JsonParserObject attr_obj = val_attr.getObject();
     attrs_len = attr_obj.size() * attr_item_len;
     attrs = (uint8_t*) calloc(attrs_len, 1);
     uint32_t actual_attr_len = 0;
 
     // iterate on keys
-    for (JsonObject::const_iterator it=attr_obj.begin(); it!=attr_obj.end(); ++it) {
-      const char *key = it->key;
-      const JsonVariant &value = it->value;      // we don't need the value here, only keys are relevant
+    for (auto key : attr_obj) {
+      JsonParserToken value = key.getValue();
 
       bool found = false;
       // scan attributes to find by name, and retrieve type
@@ -588,11 +536,11 @@ void ZbSendRead(const JsonVariant &val_attr, uint16_t device, uint16_t groupaddr
         uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
         // uint8_t  local_type_id = pgm_read_byte(&converter->type);
 
-        if ((pgm_read_word(&converter->name_offset)) && (0 == strcasecmp_P(key, Z_strings + pgm_read_word(&converter->name_offset)))) {
+        if ((pgm_read_word(&converter->name_offset)) && (0 == strcasecmp_P(key.getStr(), Z_strings + pgm_read_word(&converter->name_offset)))) {
           // match name
           // check if there is a conflict with cluster
           // TODO
-          if (!value && attr_item_offset) {
+          if (!(value.getBool()) && attr_item_offset) {
             // If value is false (non-default) then set direction to 1 (for ReadConfig)
             attrs[actual_attr_len] = 0x01;
           }
@@ -619,10 +567,14 @@ void ZbSendRead(const JsonVariant &val_attr, uint16_t device, uint16_t groupaddr
 
     attrs_len = actual_attr_len;
   } else {
-    attrs_len = attr_item_len;
-    attrs = (uint8_t*) calloc(attrs_len, 1);
-    attrs[0 + attr_item_offset] = val & 0xFF;    // little endian
-    attrs[1 + attr_item_offset] = val >> 8;
+    // value is a literal
+    if (0xFFFF != cluster) {
+      uint16_t val = val_attr.getUInt();
+      attrs_len = attr_item_len;
+      attrs = (uint8_t*) calloc(attrs_len, 1);
+      attrs[0 + attr_item_offset] = val & 0xFF;    // little endian
+      attrs[1 + attr_item_offset] = val >> 8;
+    }
   }
 
   if (attrs_len > 0) {
@@ -672,9 +624,9 @@ void CmndZbSend(void) {
   // ZbSend { "device":"0x1234", "endpoint":"0x03", "send":{"Color":"1,2"} }
   // ZbSend { "device":"0x1234", "endpoint":"0x03", "send":{"Color":"0x1122,0xFFEE"} }
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  DynamicJsonBuffer jsonBuf;
-  const JsonObject &json = jsonBuf.parseObject((const char*) XdrvMailbox.data);
-  if (!json.success()) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
 
   // params
   uint16_t device = BAD_SHORTADDR;    // BAD_SHORTADDR is broadcast, so considered invalid
@@ -685,15 +637,15 @@ void CmndZbSend(void) {
 
 
   // parse "Device" and "Group"
-  const JsonVariant &val_device = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_DEVICE));
-  if (nullptr != &val_device) {
-    device = zigbee_devices.parseDeviceParam(val_device.as<char*>());
+  JsonParserToken val_device = root[PSTR(D_CMND_ZIGBEE_DEVICE)];
+  if (val_device) {
+    device = zigbee_devices.parseDeviceParam(val_device.getStr());
     if (BAD_SHORTADDR == device) { ResponseCmndChar_P(PSTR("Invalid parameter")); return; }
   }
   if (BAD_SHORTADDR == device) {     // if not found, check if we have a group
-    const JsonVariant &val_group = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_GROUP));
-    if (nullptr != &val_group) {
-      groupaddr = strToUInt(val_group);
+    JsonParserToken val_group = root[PSTR(D_CMND_ZIGBEE_GROUP)];
+    if (val_group) {
+      groupaddr = val_group.getUInt();
     } else {                  // no device nor group
       ResponseCmndChar_P(PSTR("Unknown device"));
       return;
@@ -703,12 +655,9 @@ void CmndZbSend(void) {
   // Note: groupaddr == 0 is valid
 
   // read other parameters
-  const JsonVariant &val_cluster = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_CLUSTER));
-  if (nullptr != &val_cluster) { cluster = strToUInt(val_cluster); }
-  const JsonVariant &val_endpoint = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_ENDPOINT));
-  if (nullptr != &val_endpoint) { endpoint = strToUInt(val_endpoint); }
-  const JsonVariant &val_manuf = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_MANUF));
-  if (nullptr != &val_manuf) { manuf = strToUInt(val_manuf); }
+  cluster = root.getUInt(PSTR(D_CMND_ZIGBEE_CLUSTER), cluster);
+  endpoint = root.getUInt(PSTR(D_CMND_ZIGBEE_ENDPOINT), endpoint);
+  manuf = root.getUInt(PSTR(D_CMND_ZIGBEE_MANUF), manuf);
 
   // infer endpoint
   if (BAD_SHORTADDR == device) {
@@ -724,61 +673,61 @@ void CmndZbSend(void) {
   // from here endpoint is valid and non-zero
   // cluster may be already specified or 0xFFFF
 
-  const JsonVariant &val_cmd = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_SEND));
-  const JsonVariant &val_read = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_READ));
-  const JsonVariant &val_write = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_WRITE));
-  const JsonVariant &val_publish = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_REPORT));
-  const JsonVariant &val_response = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_RESPONSE));
-  const JsonVariant &val_read_config = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_READ_CONFIG));
-  const JsonVariant &val_config = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_CONFIG));
-  uint32_t multi_cmd = (nullptr != &val_cmd) + (nullptr != &val_read) + (nullptr != &val_write) + (nullptr != &val_publish)
-                     + (nullptr != &val_response) + (nullptr != &val_read_config) + (nullptr != &val_config);
+  JsonParserToken val_cmd = root[PSTR(D_CMND_ZIGBEE_SEND)];
+  JsonParserToken val_read = root[PSTR(D_CMND_ZIGBEE_READ)];
+  JsonParserToken val_write = root[PSTR(D_CMND_ZIGBEE_WRITE)];
+  JsonParserToken val_publish = root[PSTR(D_CMND_ZIGBEE_REPORT)];
+  JsonParserToken val_response = root[PSTR(D_CMND_ZIGBEE_RESPONSE)];
+  JsonParserToken val_read_config = root[PSTR(D_CMND_ZIGBEE_READ_CONFIG)];
+  JsonParserToken val_config = root[PSTR(D_CMND_ZIGBEE_CONFIG)];
+  uint32_t multi_cmd = ((bool)val_cmd) + ((bool)val_read) + ((bool)val_write) + ((bool)val_publish)
+                     + ((bool)val_response) + ((bool)val_read_config) + ((bool)val_config);
   if (multi_cmd > 1) {
     ResponseCmndChar_P(PSTR("Can only have one of: 'Send', 'Read', 'Write', 'Report', 'Reponse', 'ReadConfig' or 'Config'"));
     return;
   }
   // from here we have one and only one command
 
-  if (nullptr != &val_cmd) {
+  if (val_cmd) {
     // "Send":{...commands...}
     // we accept either a string or a JSON object
     ZbSendSend(val_cmd, device, groupaddr, cluster, endpoint, manuf);
-  } else if (nullptr != &val_read) {
+  } else if (val_read) {
     // "Read":{...attributes...}, "Read":attribute or "Read":[...attributes...]
     // we accept eitehr a number, a string, an array of numbers/strings, or a JSON object
     ZbSendRead(val_read, device, groupaddr, cluster, endpoint, manuf, ZCL_READ_ATTRIBUTES);
-  } else if (nullptr != &val_write) {
+  } else if (val_write) {
     // only KSON object
-    if (!val_write.is<JsonObject>()) {
+    if (!val_write.isObject()) {
       ResponseCmndChar_P(PSTR("Missing parameters"));
       return;
     }
     // "Write":{...attributes...}
     ZbSendReportWrite(val_write, device, groupaddr, cluster, endpoint, manuf, ZCL_WRITE_ATTRIBUTES);
-  } else if (nullptr != &val_publish) {
+  } else if (val_publish) {
     // "Publish":{...attributes...}
     // only KSON object
-    if (!val_publish.is<JsonObject>()) {
+    if (!val_publish.isObject()) {
       ResponseCmndChar_P(PSTR("Missing parameters"));
       return;
     }
     ZbSendReportWrite(val_publish, device, groupaddr, cluster, endpoint, manuf, ZCL_REPORT_ATTRIBUTES);
-  } else if (nullptr != &val_response) {
+  } else if (val_response) {
     // "Report":{...attributes...}
     // only KSON object
-    if (!val_response.is<JsonObject>()) {
+    if (!val_response.isObject()) {
       ResponseCmndChar_P(PSTR("Missing parameters"));
       return;
     }
     ZbSendReportWrite(val_response, device, groupaddr, cluster, endpoint, manuf, ZCL_READ_ATTRIBUTES_RESPONSE);
-  } else if (nullptr != &val_read_config) {
+  } else if (val_read_config) {
     // "ReadConfg":{...attributes...}, "ReadConfg":attribute or "ReadConfg":[...attributes...]
     // we accept eitehr a number, a string, an array of numbers/strings, or a JSON object
     ZbSendRead(val_read_config, device, groupaddr, cluster, endpoint, manuf, ZCL_READ_REPORTING_CONFIGURATION);
-  } else if (nullptr != &val_config) {
+  } else if (val_config) {
     // "Config":{...attributes...}
     // only JSON object
-    if (!val_config.is<JsonObject>()) {
+    if (!val_config.isObject()) {
       ResponseCmndChar_P(PSTR("Missing parameters"));
       return;
     }
@@ -798,61 +747,57 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
 
   // local endpoint is always 1, IEEE addresses are calculated
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  DynamicJsonBuffer jsonBuf;
-  const JsonObject &json = jsonBuf.parseObject((const char*) XdrvMailbox.data);
-  if (!json.success()) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
 
   // params
-  uint16_t srcDevice = BAD_SHORTADDR;         // BAD_SHORTADDR is broadcast, so considered invalid
+  uint16_t srcDevice = BAD_SHORTADDR;      // BAD_SHORTADDR is broadcast, so considered invalid
   uint16_t dstDevice = BAD_SHORTADDR;      // BAD_SHORTADDR is broadcast, so considered invalid
   uint64_t dstLongAddr = 0;
   uint8_t  endpoint = 0x00;         // 0x00 is invalid for the src endpoint
-  uint8_t  toendpoint = 0x00;       // 0x00 is invalid for the dst endpoint
+  uint8_t  toendpoint = 0x01;       // default dest endpoint to 0x01
   uint16_t toGroup = 0x0000;        // group address
   uint16_t cluster  = 0;            // 0xFFFF is invalid
   uint32_t group = 0xFFFFFFFF;      // 16 bits values, otherwise 0xFFFFFFFF is unspecified
 
   // Information about source device: "Device", "Endpoint", "Cluster"
   //  - the source endpoint must have a known IEEE address
-  const JsonVariant &val_device = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_DEVICE));
-  if (nullptr != &val_device) {
-    srcDevice = zigbee_devices.parseDeviceParam(val_device.as<char*>());
-  }
-  if ((nullptr == &val_device) || (BAD_SHORTADDR == srcDevice)) { ResponseCmndChar_P(PSTR("Unknown source device")); return; }
+  srcDevice = zigbee_devices.parseDeviceParam(root.getStr(PSTR(D_CMND_ZIGBEE_DEVICE), nullptr));
+  if (BAD_SHORTADDR == srcDevice) { ResponseCmndChar_P(PSTR("Unknown source device")); return; }
   // check if IEEE address is known
   uint64_t srcLongAddr = zigbee_devices.getDeviceLongAddr(srcDevice);
   if (0 == srcLongAddr) { ResponseCmndChar_P(PSTR("Unknown source IEEE address")); return; }
   // look for source endpoint
-  const JsonVariant &val_endpoint = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_ENDPOINT));
-  if (nullptr != &val_endpoint) { endpoint = strToUInt(val_endpoint); }
-  else { endpoint = zigbee_devices.findFirstEndpoint(srcDevice); }
+  endpoint = root.getUInt(PSTR(D_CMND_ZIGBEE_ENDPOINT), endpoint);
+  if (0 == endpoint) { endpoint = zigbee_devices.findFirstEndpoint(srcDevice); }
   // look for source cluster
-  const JsonVariant &val_cluster = GetCaseInsensitive(json, PSTR(D_CMND_ZIGBEE_CLUSTER));
-  if (nullptr != &val_cluster) {
-    cluster = strToUInt(val_cluster);   // first convert as number
+  JsonParserToken val_cluster = root[PSTR(D_CMND_ZIGBEE_CLUSTER)];
+  if (val_cluster) {
+    cluster = val_cluster.getUInt(cluster);   // first convert as number
     if (0 == cluster) {
-      zigbeeFindAttributeByName(val_cluster.as<const char*>(), &cluster, nullptr, nullptr);
+      zigbeeFindAttributeByName(val_cluster.getStr(), &cluster, nullptr, nullptr);
     }
   }
 
   // Or Group Address - we don't need a dstEndpoint in this case
-  const JsonVariant &to_group = GetCaseInsensitive(json, PSTR("ToGroup"));
-  if (nullptr != &to_group) { toGroup = strToUInt(to_group); }
+  JsonParserToken to_group = root[PSTR("ToGroup")];
+  if (to_group) { toGroup = to_group.getUInt(toGroup); }
 
   // Either Device address
   // In this case the following parameters are mandatory
   //  - "ToDevice" and the device must have a known IEEE address
   //  - "ToEndpoint"
-  const JsonVariant &dst_device = GetCaseInsensitive(json, PSTR("ToDevice"));
+  JsonParserToken dst_device = root[PSTR("ToDevice")];
 
   // If no target is specified, we default to coordinator 0x0000
-  if ((nullptr == &to_group) && (nullptr == &dst_device)) {
+  if ((!to_group) && (!dst_device)) {
     dstDevice = 0x0000;
   }
 
-  if ((nullptr != &dst_device) || (BAD_SHORTADDR != dstDevice)) {
+  if ((dst_device) || (BAD_SHORTADDR != dstDevice)) {
     if (BAD_SHORTADDR == dstDevice) {
-      dstDevice = zigbee_devices.parseDeviceParam(dst_device.as<char*>());
+      dstDevice = zigbee_devices.parseDeviceParam(dst_device.getStr(nullptr));
       if (BAD_SHORTADDR == dstDevice) { ResponseCmndChar_P(PSTR("Invalid parameter")); return; }
     }
     if (0x0000 == dstDevice) {
@@ -862,14 +807,12 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
     }
     if (0 == dstLongAddr) { ResponseCmndChar_P(PSTR("Unknown dest IEEE address")); return; }
 
-    const JsonVariant &val_toendpoint = GetCaseInsensitive(json, PSTR("ToEndpoint"));
-    if (nullptr != &val_toendpoint) { toendpoint = strToUInt(val_toendpoint); }
-    else { toendpoint = 0x01; }   // default to endpoint 1
+    toendpoint = root.getUInt(PSTR("ToEndpoint"), toendpoint);
   }
 
   // make sure we don't have conflicting parameters
-  if (&to_group && dstLongAddr) { ResponseCmndChar_P(PSTR("Cannot have both \"ToDevice\" and \"ToGroup\"")); return; }
-  if (!&to_group && !dstLongAddr) { ResponseCmndChar_P(PSTR("Missing \"ToDevice\" or \"ToGroup\"")); return; }
+  if (to_group && dstLongAddr) { ResponseCmndChar_P(PSTR("Cannot have both \"ToDevice\" and \"ToGroup\"")); return; }
+  if (!to_group && !dstLongAddr) { ResponseCmndChar_P(PSTR("Missing \"ToDevice\" or \"ToGroup\"")); return; }
 
 #ifdef USE_ZIGBEE_ZNP
   SBuffer buf(34);
@@ -1121,38 +1064,32 @@ void CmndZbSave(void) {
 //   ZbRestore {"Device":"0x5ADF","Name":"Petite_Lampe","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"]}
 void CmndZbRestore(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  DynamicJsonBuffer jsonBuf;
-  const JsonVariant json_parsed = jsonBuf.parse((const char*) XdrvMailbox.data);   // const to force a copy of parameter
-  const JsonVariant * json = &json_parsed;    // root of restore, to be changed if needed
-  bool success = false;
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserToken root = parser.getRoot();
 
-  // check if parsing succeeded
-  if (json_parsed.is<JsonObject>()) {
-    success = json_parsed.as<const JsonObject&>().success();
-  } else if (json_parsed.is<JsonArray>()) {
-    success = json_parsed.as<const JsonArray&>().success();
-  }
-  if (!success) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
+  if (!parser || !(root.isObject() || root.isArray())) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
 
   // Check is root contains `ZbStatus<x>` key, if so change the root
-  const JsonVariant * zbstatus = &startsWithCaseInsensitive(*json, PSTR("ZbStatus"));
-  if (nullptr != zbstatus) {
-    json = zbstatus;
+  JsonParserToken zbstatus = root.getObject().findStartsWith(PSTR("ZbStatus"));
+  if (zbstatus) {
+    root = zbstatus;
   }
 
   // check if the root is an array
-  if (json->is<JsonArray>()) {
-    const JsonArray& arr = json->as<const JsonArray&>();
-    for (auto elt : arr) {
+  if (root.isArray()) {
+    JsonParserArray arr = JsonParserArray(root);
+    for (const auto elt : arr) {
       // call restore on each item
-      int32_t res = zigbee_devices.deviceRestore(elt);
-      if (res < 0) {
-        ResponseCmndChar_P(PSTR("Restore failed"));
-        return;
+      if (elt.isObject()) {
+        int32_t res = zigbee_devices.deviceRestore(JsonParserObject(elt));
+        if (res < 0) {
+          ResponseCmndChar_P(PSTR("Restore failed"));
+          return;
+        }
       }
     }
-  } else if (json->is<JsonObject>()) {
-    int32_t res = zigbee_devices.deviceRestore(*json);
+  } else if (root.isObject()) {
+    int32_t res = zigbee_devices.deviceRestore(JsonParserObject(root));
     if (res < 0) {
       ResponseCmndChar_P(PSTR("Restore failed"));
       return;
@@ -1215,6 +1152,15 @@ void CmndZbPermitJoin(void) {
   buf.add8(duration);
   buf.add8(0x01);       // TC_Significance - This field shall always have a value of 1, indicating a request to change the Trust Center policy. If a frame is received with a value of 0, it shall be treated as having a value of 1.
   EZ_SendZDO(0xFFFC, ZDO_Mgmt_Permit_Joining_req, buf.buf(), buf.len());
+
+  // Set Timer after the end of the period, and reset a non-expired previous timer
+  if (duration > 0) {
+    // Log pairing mode enabled
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":21,\"Message\":\"Pairing mode enabled\"}}"));
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+  }
+  // always register timer for disable, might happen at next tick
+  zigbee_devices.setTimer(0x0000 /* coordinator */, 0 /* group addr*/, duration * 1000, 0, 0 /* endpoint */, Z_CAT_PERMIT_JOIN, 0 /* value */, &Z_PermitJoinDisable);
 #endif // USE_ZIGBEE_EZSP
 
   ResponseCmndDone();
@@ -1282,30 +1228,26 @@ void CmndZbConfig(void) {
   // if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
   RemoveAllSpaces(XdrvMailbox.data);
   if (strlen(XdrvMailbox.data) > 0) {
-    DynamicJsonBuffer jsonBuf;
-    const JsonObject &json = jsonBuf.parseObject((const char*) XdrvMailbox.data);
-    if (!json.success()) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
-
+    JsonParser parser(XdrvMailbox.data);
+    JsonParserObject root = parser.getRootObject();
+    if (!root) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
     // Channel
-    const JsonVariant &val_channel = GetCaseInsensitive(json, PSTR("Channel"));
-    if (nullptr != &val_channel) { zb_channel = strToUInt(val_channel); }
+
+    zb_channel      = root.getUInt(PSTR("Channel"), zb_channel);
+    zb_pan_id       = root.getUInt(PSTR("PanID"), zb_pan_id);
+    zb_ext_panid    = root.getULong(PSTR("ExtPanID"), zb_ext_panid);
+    zb_precfgkey_l  = root.getULong(PSTR("KeyL"), zb_precfgkey_l);
+    zb_precfgkey_h  = root.getULong(PSTR("KeyH"), zb_precfgkey_h);
+    zb_txradio_dbm  = root.getUInt(PSTR("TxRadio"), zb_txradio_dbm);
+
     if (zb_channel < 11) { zb_channel = 11; }
     if (zb_channel > 26) { zb_channel = 26; }
-    // PanID
-    const JsonVariant &val_pan_id = GetCaseInsensitive(json, PSTR("PanID"));
-    if (nullptr != &val_pan_id) { zb_pan_id = strToUInt(val_pan_id); }
-    // ExtPanID
-    const JsonVariant &val_ext_pan_id = GetCaseInsensitive(json, PSTR("ExtPanID"));
-    if (nullptr != &val_ext_pan_id) { zb_ext_panid = strtoull(val_ext_pan_id.as<const char*>(), nullptr, 0); }
-    // KeyL
-    const JsonVariant &val_key_l = GetCaseInsensitive(json, PSTR("KeyL"));
-    if (nullptr != &val_key_l) { zb_precfgkey_l = strtoull(val_key_l.as<const char*>(), nullptr, 0); }
-    // KeyH
-    const JsonVariant &val_key_h = GetCaseInsensitive(json, PSTR("KeyH"));
-    if (nullptr != &val_key_h) { zb_precfgkey_h = strtoull(val_key_h.as<const char*>(), nullptr, 0); }
-    // TxRadio dBm
-    const JsonVariant &val_txradio = GetCaseInsensitive(json, PSTR("TxRadio"));
-    if (nullptr != &val_txradio) { zb_txradio_dbm = strToUInt(val_txradio); }
+    // if network key is zero, we generate a truly random key with a hardware generator from ESP
+    if ((0 == zb_precfgkey_l) && (0 == zb_precfgkey_h)) {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "generating random Zigbee network key"));
+      zb_precfgkey_l = (uint64_t)HwRandom() << 32 | HwRandom();
+      zb_precfgkey_h = (uint64_t)HwRandom() << 32 | HwRandom();
+    }
 
     // Check if a parameter was changed after all
     if ( (zb_channel      != Settings.zb_channel) ||
@@ -1367,8 +1309,37 @@ extern "C" {
       return 1;
     }
   }
-}
 
+
+// Convert seconds to a string representing days, hours or minutes present in the n-value.
+// The string will contain the most coarse time only, rounded down (61m == 01h, 01h37m == 01h).
+// Inputs:
+// - n: uint32_t representing some number of seconds
+// - result: a buffer of suitable size (7 bytes would represent the entire solution space
+//           for UINT32_MAX including the trailing null-byte, or "49710d")
+// - result_len: A numeric value representing the total length of the result buffer
+// Returns:
+// - The number of characters that would have been written were result sufficiently large
+// - negatve number on encoding error from snprintf
+//
+  int convert_seconds_to_dhm(uint32_t n,  char *result, size_t result_len){
+    char fmtstr[] = "%02dmhd"; // Don't want this in progmem, because we mutate it.
+    uint32_t conversions[3] = {24 * 3600, 3600, 60};
+    uint32_t value;
+    for(int i = 0; i < 3; ++i) {
+      value = n / conversions[i];
+      if(value > 0) {
+        fmtstr[4] = fmtstr[6-i];
+        break;
+      }
+      n = n % conversions[i];
+    }
+
+    // Null-terminate the string at the last "valid" index, removing any excess zero values.
+    fmtstr[5] = '\0';
+    return snprintf(result, result_len, fmtstr, value);
+  }
+}
 void ZigbeeShow(bool json)
 {
   if (json) {
@@ -1379,12 +1350,22 @@ void ZigbeeShow(bool json)
     if (!zigbee_num) { return; }
     if (zigbee_num > 255) { zigbee_num = 255; }
 
-    // Calculate fixed column width for best visual result (Theos opinion)
-    const uint8_t px_batt = 30;                         // Battery icon is 20px, add 10px as separator
-    const uint8_t px_lqi = (strlen(D_LQI) + 4) * 10;        // LQI 254   = 70px
-
     WSContentSend_P(PSTR("</table>{t}"));  // Terminate current two column table and open new table
-    WSContentSend_P(PSTR("<style>.bx{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}</style>"));
+    WSContentSend_P(PSTR(
+      "<style>"
+      // Table CSS
+      ".ztd td:not(:first-child){width:20px;font-size:70%%}"
+      ".ztd td:last-child{width:45px}"
+      ".ztd .bt{margin-right:10px;}" // Margin right should be half of the not-first width
+      ".htr{line-height:20px}"
+      // Lighting
+      ".bx{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
+      // Signal Strength Indicator
+      ".ssi{display:inline-flex;align-items:flex-end;height:15px;padding:0}"
+      ".ssi i{width:3px;margin-right:1px;border-radius:3px;background-color:#eee}"
+      ".ssi .b0{height:25%%}.ssi .b1{height:50%%}.ssi .b2{height:75%%}.ssi .b3{height:100%%}.o30{opacity:.3}"
+      "</style>"
+    ));
 
     // sort elements by name, then by id
     uint8_t sorted_idx[zigbee_num];
@@ -1393,44 +1374,69 @@ void ZigbeeShow(bool json)
     }
     qsort(sorted_idx, zigbee_num, sizeof(sorted_idx[0]), device_cmp);
 
+    uint32_t now = Rtc.utc_time;
+
     for (uint32_t i = 0; i < zigbee_num; i++) {
       const Z_Device &device = zigbee_devices.devicesAt(sorted_idx[i]);
       uint16_t shortaddr = device.shortaddr;
-      {   // exxplicit scope to free up stack allocated strings
-        char *name = (char*) device.friendlyName;
-        char sdevice[33];
-        if (nullptr == name) {
-          snprintf_P(sdevice, sizeof(sdevice), PSTR(D_DEVICE " 0x%04X"), shortaddr);
-          name = sdevice;
-        }
+      char *name = (char*) device.friendlyName;
 
-        char slqi[8];
-        snprintf_P(slqi, sizeof(slqi), PSTR("-"));
-        if (device.validLqi()) {
-          snprintf_P(slqi, sizeof(slqi), PSTR("%d"), device.lqi);
-        }
-
-        char sbatt[64];
-        snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
-        if (device.validBatteryPercent()) {
-          snprintf_P(sbatt, sizeof(sbatt), PSTR("<i class=\"bt\" title=\"%d%%\" style=\"--bl:%dpx\"></i>"), device.batterypercent, changeUIntScale(device.batterypercent, 0, 100, 0, 14));
-        }
-
-        if (!i) {  // First row needs style info
-          WSContentSend_PD(PSTR("<tr><td><b>%s</b></td><td style='width:%dpx'>%s</td><td style='width:%dpx'>" D_LQI " %s{e}"),
-            name, px_batt, sbatt, px_lqi, slqi);
-        } else {   // Following rows don't need style info so reducing ajax package
-          WSContentSend_PD(PSTR("<tr><td><b>%s</b></td><td>%s</td><td>" D_LQI " %s{e}"), name, sbatt, slqi);
-        }
+      char sdevice[33];
+      if (nullptr == name) {
+        snprintf_P(sdevice, sizeof(sdevice), PSTR(D_DEVICE " 0x%04X"), shortaddr);
+        name = sdevice;
       }
 
-      // Sensor
+      char sbatt[64];
+      snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
+      if (device.validBatteryPercent()) {
+        snprintf_P(sbatt, sizeof(sbatt),
+          PSTR("<i class=\"bt\" title=\"%d%%\" style=\"--bl:%dpx\"></i>"),
+          device.batterypercent, changeUIntScale(device.batterypercent, 0, 100, 0, 14)
+        );
+      }
+
+      uint32_t num_bars = 0;
+
+      char slqi[4];
+      slqi[0] = '-';
+      slqi[1] = '\0';
+      if (device.validLqi()){
+        num_bars = changeUIntScale(device.lqi, 0, 254, 0, 4);
+        snprintf_P(slqi, sizeof(slqi), PSTR("%d"), device.lqi);
+      }
+
+      WSContentSend_PD(PSTR(
+        "<tr class='ztd htr'>"
+          "<td><b>%s</b></td>" // name
+          "<td>%s</td>" // sbatt (Battery Indicator)
+          "<td><div title='" D_LQI " %s' class='ssi'>" // slqi
+      ), name, sbatt, slqi);
+
+      if(device.validLqi()) {
+          for(uint32_t j = 0; j < 4; ++j) {
+            WSContentSend_PD(PSTR("<i class='b%d%s'></i>"), j, (num_bars < j) ? PSTR(" o30") : PSTR(""));
+          }
+      }
+      char dhm[16]; // len("&#x1F557;" + "49710d" + '\0') == 16
+      snprintf_P(dhm, sizeof(dhm), PSTR("&nbsp;"));
+      if(device.validLastSeen()){
+        snprintf_P(dhm, sizeof(dhm), PSTR("&#x1F557;"));
+        convert_seconds_to_dhm(now - device.last_seen, &dhm[9], 7);
+      }
+
+      WSContentSend_PD(PSTR(
+        "</div></td>" // Close LQI
+        "<td>%s{e}" // dhm (Last Seen)
+      ), dhm );
+
+      // Sensors
       bool temperature_ok = device.validTemperature();
       bool humidity_ok    = device.validHumidity();
       bool pressure_ok    = device.validPressure();
 
       if (temperature_ok || humidity_ok || pressure_ok) {
-        WSContentSend_P(PSTR("<tr><td colspan=\"3\">&#9478;"));
+        WSContentSend_P(PSTR("<tr class='htr'><td colspan=\"4\">&#9478;"));
         if (temperature_ok) {
           char buf[12];
           dtostrf(device.temperature / 10.0f, 3, 1, buf);
@@ -1442,6 +1448,7 @@ void ZigbeeShow(bool json)
         if (pressure_ok) {
           WSContentSend_P(PSTR(" &#x26C5; %d hPa"), device.pressure);
         }
+
         WSContentSend_P(PSTR("{e}"));
       }
 
@@ -1450,7 +1457,7 @@ void ZigbeeShow(bool json)
       if (power_ok) {
         uint8_t channels = device.getLightChannels();
         if (0xFF == channels) { channels = 5; }     // if number of channel is unknown, display all known attributes
-        WSContentSend_P(PSTR("<tr><td colspan=\"3\">&#9478; %s"), device.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
+        WSContentSend_P(PSTR("<tr class='htr'><td colspan=\"4\">&#9478; %s"), device.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
         if (device.validDimmer() && (channels >= 1)) {
           WSContentSend_P(PSTR(" &#128261; %d%%"), changeUIntScale(device.dimmer,0,254,0,100));
         }
@@ -1477,6 +1484,7 @@ void ZigbeeShow(bool json)
             WSContentSend_P(PSTR(" %dW"), device.mains_power);
           }
         }
+        WSContentSend_P(PSTR("{e}"));
       }
     }
 

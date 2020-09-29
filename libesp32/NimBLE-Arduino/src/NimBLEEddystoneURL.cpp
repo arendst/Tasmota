@@ -21,6 +21,10 @@
 
 static const char LOG_TAG[] = "NimBLEEddystoneURL";
 
+
+/**
+ * @brief Construct a default EddystoneURL beacon object.
+ */
 NimBLEEddystoneURL::NimBLEEddystoneURL() {
     beaconUUID = 0xFEAA;
     lengthURL = 0;
@@ -29,22 +33,47 @@ NimBLEEddystoneURL::NimBLEEddystoneURL() {
     memset(m_eddystoneData.url, 0, sizeof(m_eddystoneData.url));
 } // BLEEddystoneURL
 
+
+/**
+ * @brief Retrieve the data that is being advertised.
+ * @return The advertised data.
+ */
 std::string NimBLEEddystoneURL::getData() {
     return std::string((char*) &m_eddystoneData, sizeof(m_eddystoneData));
 } // getData
 
+
+/**
+ * @brief Get the UUID being advertised.
+ * @return The UUID advertised.
+ */
 NimBLEUUID NimBLEEddystoneURL::getUUID() {
     return NimBLEUUID(beaconUUID);
 } // getUUID
 
+
+/**
+ * @brief Get the transmit power being advertised.
+ * @return The transmit power.
+ */
 int8_t NimBLEEddystoneURL::getPower() {
     return m_eddystoneData.advertisedTxPower;
 } // getPower
 
+
+/**
+ * @brief Get the raw URL being advertised.
+ * @return The raw URL.
+ */
 std::string NimBLEEddystoneURL::getURL() {
     return std::string((char*) &m_eddystoneData.url, sizeof(m_eddystoneData.url));
 } // getURL
 
+
+/**
+ * @brief Get the full URL being advertised.
+ * @return The full URL.
+ */
 std::string NimBLEEddystoneURL::getDecodedURL() {
     std::string decodedURL = "";
 
@@ -123,7 +152,8 @@ std::string NimBLEEddystoneURL::getDecodedURL() {
 
 
 /**
- * Set the raw data for the beacon record.
+ * @brief Set the raw data for the beacon advertisment.
+ * @param [in] data The raw data to advertise.
  */
 void NimBLEEddystoneURL::setData(const std::string &data) {
     if (data.length() > sizeof(m_eddystoneData)) {
@@ -136,14 +166,29 @@ void NimBLEEddystoneURL::setData(const std::string &data) {
     lengthURL = data.length() - (sizeof(m_eddystoneData) - sizeof(m_eddystoneData.url));
 } // setData
 
+
+/**
+ * @brief Set the UUID to advertise.
+ * @param [in] l_uuid The UUID.
+ */
 void NimBLEEddystoneURL::setUUID(const NimBLEUUID &l_uuid) {
     beaconUUID = l_uuid.getNative()->u16.value;
 } // setUUID
 
+
+/**
+ * @brief Set the transmit power to advertise.
+ * @param [in] advertisedTxPower The transmit power level.
+ */
 void NimBLEEddystoneURL::setPower(int8_t advertisedTxPower) {
     m_eddystoneData.advertisedTxPower = advertisedTxPower;
 } // setPower
 
+
+/**
+ * @brief Set the URL to advertise.
+ * @param [in] url The URL.
+ */
 void NimBLEEddystoneURL::setURL(const std::string &url) {
   if (url.length() > sizeof(m_eddystoneData.url)) {
     NIMBLE_LOGE(LOG_TAG, "Unable to set the url ... length passed in was %d and max expected %d",

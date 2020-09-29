@@ -204,13 +204,33 @@ uint8_t c2_reset() {
   return C2_SUCCESS;
 }
 
-uint8_t c2_programming_init() {
+uint8_t c2_programming_init(uint8_t devid) {
   c2_reset();
   c2_address_write(C2FPCTL);
   C2_DATA_WRITE_AND_CHECK(C2FPCTL_ENABLE0,   1);
   C2_DATA_WRITE_AND_CHECK(C2FPCTL_CORE_HALT, 1);
   C2_DATA_WRITE_AND_CHECK(C2FPCTL_ENABLE1,   1)
   C2_DELAY_MS(21);
+
+  // device specific initialization, see https://www.silabs.com/documents/public/application-notes/AN127.pdf
+  switch (devid) {
+  case C2_DEVID_UNKNOWN:
+    break;
+  case C2_DEVID_EFM8BB1:
+  case C2_DEVID_EFM8BB2:
+  case C2_DEVID_EFM8BB3:	// C2_DEVID_EFM8LB1 is the same
+    c2_address_write(0xFF);
+    C2_DATA_WRITE_AND_CHECK(0x80, 1);
+    C2_DELAY_US(5);
+    c2_address_write(0xEF);
+    C2_DATA_WRITE_AND_CHECK(0x02, 1);
+    c2_address_write(0xA9);
+    C2_DATA_WRITE_AND_CHECK(0x00, 1);
+    break;
+  default:
+    return C2_BROKEN_LINK;
+  }
+
   return C2_SUCCESS;
 }
 
