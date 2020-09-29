@@ -28,7 +28,7 @@
 \*********************************************************************************************/
 
 #define XSNS_77     77
-#define XI2C_53     53  // See I2CDEVICES.md
+#define XI2C_54     54  // See I2CDEVICES.md
 
 #include "VL53L1X.h"
 VL53L1X vl53l1x = VL53L1X(); // create object copy
@@ -95,7 +95,7 @@ void Vl53l1Show(boolean json) {
 
 bool Xsns77(byte function)
 {
-  if (!I2cEnabled(XI2C_53)) { return false; }
+  if (!I2cEnabled(XI2C_54)) { return false; }
   bool result = false;
 
   if (FUNC_INIT == function) {
