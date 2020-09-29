@@ -1804,7 +1804,7 @@ void HandleTemplateConfiguration(void)
 //#ifdef ESP8266
 //      WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>%s%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
 //        ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT),
-//        (17==i) ? PSTR(D_ADC) : PSTR(D_GPIO), (17==i) ? 0 : i,
+//        (ADC0_PIN==i) ? PSTR(D_ADC) : PSTR(D_GPIO), (ADC0_PIN==i) ? 0 : i,
 //        (0==i) ? " style='width:150px'" : "", i, i);
 //#else  // ESP32
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
@@ -1989,7 +1989,7 @@ void HandleModuleConfiguration(void)
 //#ifdef ESP8266
 //      WSContentSend_P(PSTR("<tr><td style='width:116px'>%s <b>%s%d</b></td><td style='width:150px'><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
 //        (WEMOS==my_module_type)?stemp:"",
-//        (17==i) ? PSTR(D_ADC) : PSTR(D_GPIO), (17==i) ? 0 : i,
+//        (ADC0_PIN==i) ? PSTR(D_ADC) : PSTR(D_GPIO), (ADC0_PIN==i) ? 0 : i,
 //        i, i);
 //#else // ESP32
       WSContentSend_P(PSTR("<tr><td style='width:116px'>%s <b>" D_GPIO "%d</b></td><td style='width:150px'><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),

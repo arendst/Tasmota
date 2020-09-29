@@ -95,11 +95,9 @@ struct {
 } Adc[MAX_ADCS];
 
 #ifdef ESP8266
-
 bool adcAttachPin(uint8_t pin) {
-  return true;
+  return (ADC0_PIN == pin);
 }
-
 #endif
 
 void AdcSaveSettings(uint32_t idx) {

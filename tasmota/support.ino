@@ -1390,7 +1390,7 @@ bool ValidGPIO(uint32_t pin, uint32_t gpio)
 {
 #ifdef ESP8266
 #ifdef USE_ADC_VCC
-  if (17 == pin) { return false; }  // ADC0 = GPIO17
+  if (ADC0_PIN == pin) { return false; }  // ADC0 = GPIO17
 #endif
 #endif
   return (GPIO_USER == ValidPin(pin, BGPIO(gpio)));  // Only allow GPIO_USER pins

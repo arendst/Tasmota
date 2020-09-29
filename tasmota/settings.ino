@@ -1259,7 +1259,7 @@ void SettingsDelta(void)
       Settings.ledmask = APP_LEDMASK;
     }
     if (Settings.version < 0x0605000A) {
-//      Settings.my_adc0 = ADC0_NONE;
+      Settings.my_adc0 = GPIO_NONE;
     }
     if (Settings.version < 0x0605000D) {
       Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
