@@ -70,8 +70,11 @@ void Sr04TModeDetect(void)
     if (SR04_Sensor[i].sr04_type < 2) {
       delete SR04_Sensor[i].sonar_serial;
       SR04_Sensor[i].sonar_serial = nullptr;
+
+#ifdef ESP32
       gpio_reset_pin((gpio_num_t)sr04_trig_pin);
       gpio_reset_pin((gpio_num_t)sr04_echo_pin);
+#endif
 
       if (-1 == sr04_trig_pin) {
         sr04_trig_pin = Pin(GPIO_SR04_ECHO, i);  // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
