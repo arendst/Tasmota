@@ -1499,19 +1499,6 @@ void GpioInit(void)
       my_module.io[i] = def_gp.io[i];               // Force Template override
     }
   }
-//#ifdef ESP8266
-//  if ((Settings.my_adc0 >= ADC0_END) && (Settings.my_adc0 < ADC0_USER)) {
-//    Settings.my_adc0 = ADC0_NONE;                   // Fix not supported sensor ids in module
-//  }
-//  else if (Settings.my_adc0 > ADC0_NONE) {
-//    my_adc0 = Settings.my_adc0;                     // Set User selected Module sensors
-//  }
-//  my_module_flag = ModuleFlag();
-//  uint32_t template_adc0 = my_module_flag.data &15;
-//  if ((template_adc0 > ADC0_NONE) && (template_adc0 < ADC0_USER)) {
-//    my_adc0 = template_adc0;                        // Force Template override
-//  }
-//#endif
 
   for (uint32_t i = 0; i < ARRAY_SIZE(my_module.io); i++) {
     uint32_t mpin = ValidPin(i, my_module.io[i]);

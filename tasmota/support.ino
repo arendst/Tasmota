@@ -1143,36 +1143,32 @@ void TemplateConvert(uint8_t template8[], uint16_t template16[]) {
   }
   template16[(sizeof(mytmplt) / 2) -2] = Adc0Convert(template8[sizeof(mytmplt8285) -1]);
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: TemplateConvert"));
-  AddLogBuffer(LOG_LEVEL_DEBUG, template8, sizeof(mytmplt8285));
-  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)template16, sizeof(mytmplt) / 2, 2);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: TemplateConvert"));
+//  AddLogBuffer(LOG_LEVEL_DEBUG, template8, sizeof(mytmplt8285));
+//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)template16, sizeof(mytmplt) / 2, 2);
 }
 
 void ConvertGpios(void) {
-  if (Settings.user_template8.flag != 255) {
+  if (Settings.gpio16_converted != 0xF5A0) {
     // Convert 8-bit user template
-    TemplateConvert((uint8_t*)&Settings.user_template8, (uint16_t*)&Settings.user_template);
-    Settings.user_template8.flag = 255;
+    TemplateConvert((uint8_t*)&Settings.ex_user_template8, (uint16_t*)&Settings.user_template);
 
-    for (uint32_t i = 0; i < sizeof(Settings.my_gp8.io); i++) {
-      Settings.my_gp.io[i] = GpioConvert(Settings.my_gp8.io[i]);
+    for (uint32_t i = 0; i < sizeof(Settings.ex_my_gp8.io); i++) {
+      Settings.my_gp.io[i] = GpioConvert(Settings.ex_my_gp8.io[i]);
     }
-    Settings.my_gp.io[(sizeof(myio) / 2) -1] = Adc0Convert(Settings.my_adc0);
+    Settings.my_gp.io[(sizeof(myio) / 2) -1] = Adc0Convert(Settings.ex_my_adc0);
+    Settings.gpio16_converted = 0xF5A0;
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: ConvertGpios"));
-    AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.my_gp8.io, sizeof(myio8));
-    AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.my_gp.io, sizeof(myio) / 2, 2);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: ConvertGpios"));
+//    AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.ex_my_gp8.io, sizeof(myio8));
+//    AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.my_gp.io, sizeof(myio) / 2, 2);
   }
 }
 #endif  // ESP8266
 
 uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
 uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
-//#ifdef ESP8266
-//  uint16_t real_gpio = gpio + index;
-//#else  // ESP32
   uint16_t real_gpio = (gpio << 5) + index;
-//#endif  // ESP8266 - ESP32
   for (uint32_t i = 0; i < ARRAY_SIZE(gpio_pin); i++) {
     if (gpio_pin[i] == real_gpio) {
       return i;              // Pin number configured for gpio
@@ -1289,20 +1285,15 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
   }
   memcpy(ptr, &template16[index], size);
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: GetInternalTemplate option %d"), option);
-  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)ptr, size / 2, 2);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: GetInternalTemplate option %d"), option);
+//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)ptr, size / 2, 2);
 }
 #endif  // ESP8266
 
 void ModuleGpios(myio *gp)
 {
-//#ifdef ESP8266
-//  uint8_t *dest = (uint8_t *)gp;
-//  uint8_t src[ARRAY_SIZE(Settings.user_template.gp.io)];
-//#else  // ESP32
   uint16_t *dest = (uint16_t *)gp;
   uint16_t src[ARRAY_SIZE(Settings.user_template.gp.io)];
-//#endif  // ESP8266 - ESP32
 
   memset(dest, GPIO_NONE, sizeof(myio));
   if (USER_MODULE == Settings.module) {
@@ -1396,19 +1387,7 @@ bool ValidGPIO(uint32_t pin, uint32_t gpio)
   return (GPIO_USER == ValidPin(pin, BGPIO(gpio)));  // Only allow GPIO_USER pins
 }
 
-//#ifdef ESP8266
-//bool ValidAdc(void) {
-//  gpio_flag flag = ModuleFlag();
-//  uint32_t template_adc0 = flag.data &15;
-//  return (ADC0_USER == template_adc0);
-//}
-//#endif  // ESP8266
-
-//#ifdef ESP8266
-//bool GetUsedInModule(uint32_t val, uint8_t *arr)
-//#else  // ESP32
 bool GetUsedInModule(uint32_t val, uint16_t *arr)
-//#endif  // ESP8266 - ESP32
 {
   int offset = 0;
 
@@ -1471,8 +1450,8 @@ bool GetUsedInModule(uint32_t val, uint16_t *arr)
 
 bool JsonTemplate(const char* dataBuf)
 {
-  // Old: {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
-  // New: {"NAME":"Generic16","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254,254],"FLAG":1,"BASE":255}
+  // Old: {"NAME":"Shelly 2.5","GPIO":[56,0,17,0,21,83,0,0,6,82,5,22,156],"FLAG":2,"BASE":18}
+  // New: {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
 
@@ -1507,15 +1486,11 @@ bool JsonTemplate(const char* dataBuf)
     } else {
 #endif
       for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
-//  #ifdef ESP8266
-//        Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
-//  #else  // ESP32
         uint16_t gpio = obj[D_JSON_GPIO][i] | 0;
         if (gpio == (AGPIO(GPIO_NONE) +1)) {
           gpio = AGPIO(GPIO_USER);
         }
         Settings.user_template.gp.io[i] = gpio;
-//  #endif
       }
       if (obj[D_JSON_FLAG].success()) {
         Settings.user_template.flag.data = obj[D_JSON_FLAG] | 0;
@@ -1524,10 +1499,6 @@ bool JsonTemplate(const char* dataBuf)
     }
 #endif
   }
-//  if (obj[D_JSON_FLAG].success()) {
-//    uint32_t flag = obj[D_JSON_FLAG] | 0;
-//    memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
-//  }
   if (obj[D_JSON_BASE].success()) {
     uint32_t base = obj[D_JSON_BASE];
     if ((0 == base) || !ValidTemplateModule(base -1)) { base = 18; }
@@ -1540,15 +1511,11 @@ void TemplateJson(void)
 {
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
   for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
-//#ifdef ESP8266
-//    ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings.user_template.gp.io[i]);
-//#else  // ESP32
     uint16_t gpio = Settings.user_template.gp.io[i];
     if (gpio == AGPIO(GPIO_USER)) {
       gpio = AGPIO(GPIO_NONE) +1;
     }
     ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", gpio);
-//#endif
   }
   ResponseAppend_P(PSTR("],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), Settings.user_template.flag, Settings.user_template_base +1);
 }

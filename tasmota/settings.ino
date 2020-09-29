@@ -1193,8 +1193,8 @@ void SettingsDelta(void)
         }
       }
       for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
-        if (Settings.my_gp8.io[i] >= GPI8_SWT5) {  // Move up from GPIO_SWT5 to GPIO_KEY1
-          Settings.my_gp8.io[i] += 4;
+        if (Settings.ex_my_gp8.io[i] >= GPI8_SWT5) {  // Move up from GPI8_SWT5 to GPI8_KEY1
+          Settings.ex_my_gp8.io[i] += 4;
         }
       }
     }
@@ -1259,7 +1259,7 @@ void SettingsDelta(void)
       Settings.ledmask = APP_LEDMASK;
     }
     if (Settings.version < 0x0605000A) {
-      Settings.my_adc0 = GPIO_NONE;
+      Settings.ex_my_adc0 = GPIO_NONE;
     }
     if (Settings.version < 0x0605000D) {
       Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;

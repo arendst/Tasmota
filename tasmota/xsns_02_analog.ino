@@ -222,13 +222,19 @@ uint16_t AdcRead(uint32_t pin, uint32_t factor) {
 
 #ifdef USE_RULES
 void AdcEvery250ms(void) {
+  char adc_idx[3] = { 0 };
+  uint32_t offset = 0;
   for (uint32_t idx = 0; idx < Adcs.present; idx++) {
+#ifdef ESP32
+    snprintf_P(adc_idx, sizeof(adc_idx), PSTR("%d"), idx +1);
+    offset = 1;
+#endif
     if (ADC_INPUT == Adc[idx].type) {
       uint16_t new_value = AdcRead(Adc[idx].pin, 5);
       if ((new_value < Adc[idx].last_value -10) || (new_value > Adc[idx].last_value +10)) {
         Adc[idx].last_value = new_value;
         uint16_t value = Adc[idx].last_value / 10;
-        Response_P(PSTR("{\"ANALOG\":{\"A%ddiv10\":%d}}"), idx +1, (value > 99) ? 100 : value);
+        Response_P(PSTR("{\"ANALOG\":{\"A%ddiv10\":%d}}"), idx + offset, (value > 99) ? 100 : value);
         XdrvRulesProcess();
       }
     }
@@ -237,7 +243,7 @@ void AdcEvery250ms(void) {
       if (new_value && (new_value != Adc[idx].last_value)) {
         Adc[idx].last_value = new_value;
         uint16_t value = new_value / Adc[idx].param1;
-        Response_P(PSTR("{\"ANALOG\":{\"Joy%d\":%d}}"), idx +1, value);
+        Response_P(PSTR("{\"ANALOG\":{\"Joy%s\":%d}}"), adc_idx, value);
         XdrvRulesProcess();
       } else {
         Adc[idx].last_value = 0;
@@ -348,12 +354,14 @@ void AdcShowContinuation(bool *jsonflg) {
 void AdcShow(bool json) {
   bool domo_flag[ADC_END] = { false };
   char adc_name[10] = { 0 };  // ANALOG8
+  char adc_idx[3] = { 0 };
   uint32_t offset = 0;
 
   bool jsonflg = false;
   for (uint32_t idx = 0; idx < Adcs.present; idx++) {
 #ifdef ESP32
     snprintf_P(adc_name, sizeof(adc_name), PSTR("Analog%d"), idx +1);
+    snprintf_P(adc_idx, sizeof(adc_idx), PSTR("%d"), idx +1);
     offset = 1;
 #endif
 
@@ -377,7 +385,7 @@ void AdcShow(bool json) {
 
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%d\":%s"), idx + offset, temperature);
+          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%s\":%s"), adc_idx, temperature);
           if ((0 == tele_period) && (!domo_flag[ADC_TEMP])) {
 #ifdef USE_DOMOTICZ
             DomoticzSensor(DZ_TEMP, temperature);
@@ -399,7 +407,7 @@ void AdcShow(bool json) {
 
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"" D_JSON_ILLUMINANCE "%d\":%d"), idx + offset, adc_light);
+          ResponseAppend_P(PSTR("\"" D_JSON_ILLUMINANCE "%s\":%d"), adc_idx, adc_light);
 #ifdef USE_DOMOTICZ
           if ((0 == tele_period) && (!domo_flag[ADC_LIGHT])) {
             DomoticzSensor(DZ_ILLUMINANCE, adc_light);
@@ -418,7 +426,7 @@ void AdcShow(bool json) {
 
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"" D_JSON_RANGE "%d\":%d"), idx + offset, adc_range);
+          ResponseAppend_P(PSTR("\"" D_JSON_RANGE "%s\":%d"), adc_idx, adc_range);
 #ifdef USE_WEBSERVER
         } else {
           WSContentSend_PD(HTTP_SNS_RANGE, adc_name, adc_range);
@@ -441,8 +449,8 @@ void AdcShow(bool json) {
 
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"CTEnergy%d\":{\"" D_JSON_ENERGY "\":%s,\"" D_JSON_POWERUSAGE "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
-            idx +1, energy_chr, power_chr, voltage_chr, current_chr);
+          ResponseAppend_P(PSTR("\"CTEnergy%s\":{\"" D_JSON_ENERGY "\":%s,\"" D_JSON_POWERUSAGE "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
+            adc_idx, energy_chr, power_chr, voltage_chr, current_chr);
 #ifdef USE_DOMOTICZ
           if ((0 == tele_period) && (!domo_flag[ADC_CT_POWER])) {
             DomoticzSensor(DZ_POWER_ENERGY, power_chr);
@@ -466,7 +474,7 @@ void AdcShow(bool json) {
         uint16_t value = new_value / Adc[idx].param1;
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"Joy%d\":%d"), idx + offset, value);
+          ResponseAppend_P(PSTR("\"Joy%s\":%d"), adc_idx, value);
         }
         break;
       }

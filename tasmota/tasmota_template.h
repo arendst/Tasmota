@@ -590,12 +590,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_WEBCAM_PSCLK),
   AGPIO(GPIO_WEBCAM_HSD) + MAX_WEBCAM_HSD,
   AGPIO(GPIO_WEBCAM_PSRCS),
-#endif
+#endif  // USE_WEBCAM
 #ifdef USE_ETHERNET
   AGPIO(GPIO_ETH_PHY_POWER),
   AGPIO(GPIO_ETH_PHY_MDC),
   AGPIO(GPIO_ETH_PHY_MDIO),  // Ethernet
-#endif
+#endif  // USE_ETHERNET
   AGPIO(GPIO_ADC_INPUT) + MAX_ADCS,       // Analog inputs
   AGPIO(GPIO_ADC_TEMP) + MAX_ADCS,        // Thermistor
   AGPIO(GPIO_ADC_LIGHT) + MAX_ADCS,       // Light sensor
@@ -621,10 +621,6 @@ const uint16_t kAdcNiceList[] PROGMEM = {
 };
 #endif  // ESP8266
 
-/*********************************************************************************************\
- * ATTENTION: No user changeable features beyond this point - do not add templates !!!
-\*********************************************************************************************/
-
 // User selectable ADC functionality
 enum UserSelectableAdc {
   ADC_NONE,           // Not used
@@ -640,13 +636,17 @@ enum UserSelectableAdc {
 //  ADC_SWITCH_INV,
   ADC_END };
 
+/*********************************************************************************************\
+ * ATTENTION: No user changeable features beyond this point - do not add templates !!!
+\*********************************************************************************************/
+
 #ifdef ESP8266
 
 #define MAX_GPI8_PIN       17   // Number of supported GPIO (0..16)
 #define FLASH_PINS         6    // Number of flash chip pins
-#define ADC0_PIN           17   // Pin number of ADC0
 
 #define MAX_GPIO_PIN       18   // Number of supported GPIO (0..16 + ADC0)
+#define ADC0_PIN           17   // Pin number of ADC0
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
 #define MAX_USER_PINS      14   // MAX_GPIO_PIN - MIN_FLASH_PINS
 #define WEMOS_MODULE       17   // Wemos module
@@ -731,8 +731,7 @@ typedef struct MYTMPLT {
 #ifdef ESP8266
 
 // User selectable GPIO functionality
-// ATTENTION: Only add at the end of this list just before GPI8_SENSOR_END
-//            Then add the same name(s) in a nice location in array kGpioNiceList
+// ATTENTION: No additions are supported
 enum LegacyUserSelectablePins {
   GPI8_NONE,           // Not used
   GPI8_DHT11,          // DHT11

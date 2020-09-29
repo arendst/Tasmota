@@ -83,7 +83,7 @@ const uint8_t MAX_BUTTON_TEXT = 16;         // Max number of GUI button labels
 const uint8_t MAX_GROUP_TOPICS = 4;         // Max number of Group Topics
 const uint8_t MAX_DEV_GROUP_NAMES = 4;      // Max number of Device Group names
 #ifdef ESP8266
-const uint8_t MAX_ADCS = 1;                 // Max number of ADC pins
+const uint8_t MAX_ADCS = 1;                 // Max number of ESP8266 ADC pins
 #else
 const uint8_t MAX_ADCS = 8;                 // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
 #endif
