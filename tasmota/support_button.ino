@@ -90,16 +90,14 @@ void ButtonInit(void)
       Button.present++;
       pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
     }
-/*
 #ifdef ESP8266
 #ifndef USE_ADC_VCC
-    else if ((99 == Button.adc) && ((ADC0_BUTTON == my_adc0) || (ADC0_BUTTON_INV == my_adc0))) {
+    else if ((99 == Button.adc) && AdcButtonPresent(0)) {
       Button.present++;
       Button.adc = i;
     }
 #endif  // USE_ADC_VCC
 #endif  // ESP8266
-*/
   }
 }
 
@@ -169,14 +167,7 @@ void ButtonHandler(void)
 #ifndef USE_ADC_VCC
     if (Button.adc == button_index) {
       button_present = 1;
-/*
-      if (ADC0_BUTTON_INV == my_adc0) {
-        button = (AdcRead(1) < 128);
-      }
-      else if (ADC0_BUTTON == my_adc0) {
-        button = (AdcRead(1) > 128);
-      }
-*/
+      button = AdcGetButton(0);
     }
 #endif  // USE_ADC_VCC
 #else  // ESP32

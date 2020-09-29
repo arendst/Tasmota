@@ -1,5 +1,5 @@
 /*
-  xsns_02_analog_esp32.ino - ESP32 ADC support for Tasmota
+  xsns_02_analog.ino - ADC support for Tasmota
 
   Copyright (C) 2020  Theo Arends
 
@@ -17,7 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#ifdef ESP32
 #ifdef USE_ADC
 /*********************************************************************************************\
  * ADC support for up to 8 channels on GPIO32 to GPIO39
@@ -249,6 +248,19 @@ void AdcEvery250ms(void) {
   }
 }
 #endif  // USE_RULES
+
+bool AdcButtonPresent(uint32_t idx) {
+  return ((ADC_BUTTON == Adc[idx].type) || (ADC_BUTTON_INV == Adc[idx].type));
+}
+
+uint8_t AdcGetButton(uint32_t idx) {
+  if (ADC_BUTTON_INV == Adc[idx].type) {
+    return (AdcRead(Adc[idx].pin, 1) < 128);
+  }
+  else if (ADC_BUTTON == Adc[idx].type) {
+    return (AdcRead(Adc[idx].pin, 1) > 128);
+  }
+}
 
 uint16_t AdcGetLux(uint32_t idx) {
   int adc = AdcRead(Adc[idx].pin, 2);
@@ -584,4 +596,3 @@ bool Xsns02(uint8_t function) {
 }
 
 #endif  // USE_ADC
-//#endif  // ESP32

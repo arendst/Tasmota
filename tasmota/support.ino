@@ -1142,6 +1142,27 @@ void TemplateConvert(uint8_t template8[], uint16_t template16[]) {
     template16[i] = GpioConvert(template8[i]);
   }
   template16[(sizeof(mytmplt) / 2) -2] = Adc0Convert(template8[sizeof(mytmplt8285) -1]);
+
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: TemplateConvert"));
+  AddLogBuffer(LOG_LEVEL_DEBUG, template8, sizeof(mytmplt8285));
+  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)template16, sizeof(mytmplt) / 2, 2);
+}
+
+void ConvertGpios(void) {
+  if (Settings.user_template8.flag != 255) {
+    // Convert 8-bit user template
+    TemplateConvert((uint8_t*)&Settings.user_template8, (uint16_t*)&Settings.user_template);
+    Settings.user_template8.flag = 255;
+
+    for (uint32_t i = 0; i < sizeof(Settings.my_gp8.io); i++) {
+      Settings.my_gp.io[i] = GpioConvert(Settings.my_gp8.io[i]);
+    }
+    Settings.my_gp.io[(sizeof(myio) / 2) -1] = Adc0Convert(Settings.my_adc0);
+
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: ConvertGpios"));
+    AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.my_gp8.io, sizeof(myio8));
+    AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.my_gp.io, sizeof(myio) / 2, 2);
+  }
 }
 #endif  // ESP8266
 
@@ -1247,28 +1268,29 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
     memcpy_P(&template8, &kModules8285[module_template - TMP_WEMOS], sizeof(template8));
   }
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&template8, sizeof(mytmplt));
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&template8, sizeof(mytmplt8285));
 
   // template16  = GPIO 0,1,2,3,4,5,9,10,12,13,14,15,16,Adc,Flg
   uint16_t template16[(sizeof(mytmplt) / 2)] = { GPIO_NONE };
   TemplateConvert(template8, template16);
 
   uint32_t index = 0;
-  uint32_t size = sizeof(mycfgio);    // template16[module_template].gp
+  uint32_t size = sizeof(mycfgio);      // template16[module_template].gp
   switch (option) {
     case 2: {
-      index = sizeof(template16) -2;  // template16[module_template].flag
+      index = (sizeof(mytmplt) / 2) -1; // template16[module_template].flag
       size = 2;
       break;
     }
     case 3: {
-      size = sizeof(template16);      // template16[module_template]
+      size = sizeof(mytmplt);           // template16[module_template]
       break;
     }
   }
   memcpy(ptr, &template16[index], size);
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)ptr, size);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: GetInternalTemplate option %d"), option);
+  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)ptr, size / 2, 2);
 }
 #endif  // ESP8266
 
@@ -1356,7 +1378,7 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio)
 
 //  if (!is_8285 && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
   if ((WEMOS == Settings.module) && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
-    if ((pin == 9) || (pin == 10)) {
+    if ((9 == pin) || (10 == pin)) {
       return GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
     }
   }
@@ -1366,6 +1388,11 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio)
 
 bool ValidGPIO(uint32_t pin, uint32_t gpio)
 {
+#ifdef ESP8266
+#ifdef USE_ADC_VCC
+  if (17 == pin) { return false; }  // ADC0 = GPIO17
+#endif
+#endif
   return (GPIO_USER == ValidPin(pin, BGPIO(gpio)));  // Only allow GPIO_USER pins
 }
 
@@ -1465,6 +1492,9 @@ bool JsonTemplate(const char* dataBuf)
   if (obj[D_JSON_GPIO].success()) {
 #ifdef ESP8266
     if (!obj[D_JSON_GPIO][13].success()) { // Old template
+
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TPL: Converting template ..."));
+
       uint8_t template8[sizeof(mytmplt8285)] = { GPIO_NONE };
       for (uint32_t i = 0; i < ARRAY_SIZE(template8) -1; i++) {
         template8[i] = obj[D_JSON_GPIO][i] | 0;
