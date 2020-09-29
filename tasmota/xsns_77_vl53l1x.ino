@@ -1,7 +1,7 @@
 /*
-  xsns_77_vl53l1x.ino - VL53L1X
+  xsns_77_vl53l1x.ino - VL53L1X sensor support for Tasmota
 
-  Copyright (C) 2018  Theo Arends, Rui Marinho and Johann Obermeier
+  Copyright (C) 2020  Theo Arends, Rui Marinho and Johann Obermeier
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -74,7 +74,7 @@ void Vl53l1Every_Second(void) {
 }
 #endif  // USE_DOMOTICZ
 
-void Vl53l1Show(boolean json) {
+void Vl53l1Show(bool json) {
   if (json) {
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) {
@@ -93,7 +93,7 @@ void Vl53l1Show(boolean json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns77(byte function)
+bool Xsns77(uint8_t function)
 {
   if (!I2cEnabled(XI2C_54)) { return false; }
   bool result = false;
