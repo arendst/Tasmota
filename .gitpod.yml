@@ -1,4 +1,4 @@
-  tasks:
+tasks:
   - command: platformio run -e tasmota
 
 image:
