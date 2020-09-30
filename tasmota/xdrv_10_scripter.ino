@@ -65,6 +65,7 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define SCRIPT_MAXPERM (PMEM_SIZE)-4/sizeof(float)
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
+#define MAX_SARRAY_NUM 32
 
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
@@ -79,6 +80,7 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #undef LITTLEFS_SCRIPT_SIZE
 #undef EEP_SCRIPT_SIZE
 #undef USE_SCRIPT_COMPRESSION
+
 #if USE_SCRIPT_FATFS==-1
 
 #ifdef ESP32
@@ -250,9 +252,9 @@ SDClass *fsp;
 #define FAT_SCRIPT_NAME "script.txt"
 #endif
 
-#if USE_STANDARD_SPI_LIBRARY==0
-#warning ("FATFS standard spi should be used");
-#endif
+//#if USE_STANDARD_SPI_LIBRARY==0
+//#warning ("FATFS standard spi should be used");
+//#endif
 
 #endif // USE_SCRIPT_FATFS
 
@@ -377,7 +379,11 @@ struct SCRIPT_MEM {
     struct T_INDEX *type; // type and index pointer
     struct M_FILT *mfilt;
     char *glob_vnp; // var name pointer
+#ifdef SCRIPT_LARGE_VNBUFF
+    uint16_t *vnp_offset;
+#else
     uint8_t *vnp_offset;
+#endif
     char *glob_snp; // string vars pointer
     char *scriptptr;
     char *section_ptr;
@@ -390,14 +396,16 @@ struct SCRIPT_MEM {
     void *script_mem;
     uint16_t script_mem_size;
     uint8_t script_dprec;
+    uint8_t script_lzero;
     uint8_t var_not_found;
     uint8_t glob_error;
     uint8_t max_ssize;
     uint8_t script_loglevel;
     uint8_t flags;
-    uint8_t si_num;
-    uint8_t siro_num;
-    char *last_index_string;
+    uint8_t si_num[3];
+    uint8_t siro_num[3];
+    uint8_t sind_num;
+    char *last_index_string[3];
 
 #ifdef USE_SCRIPT_FATFS
     File files[SFS_MAX];
@@ -433,13 +441,37 @@ uint8_t fast_script=0;
 uint8_t glob_script=0;
 uint32_t script_lastmillis;
 
+void flt2char(float num, char *nbuff) {
+  dtostrfd(num, glob_script_mem.script_dprec, nbuff);
+}
+// convert float to char with leading zeros
+void f2char(float num, uint32_t dprec, uint32_t lzeros, char *nbuff) {
+  dtostrfd(num, dprec, nbuff);
+  if (lzeros>1) {
+    // check leading zeros
+    uint32_t nd = num;
+    nd/=10;
+    nd+=1;
+    if (lzeros>nd) {
+      // insert zeros
+      char cpbuf[24];
+      char *cp = cpbuf;
+      for (uint32_t cnt = 0; cnt < lzeros - nd; cnt++) {
+        *cp++='0';
+      }
+      *cp=0;
+      strcat(cpbuf,nbuff);
+      strcpy(nbuff,cpbuf);
+    }
+  }
+}
 
 #ifdef USE_BUTTON_EVENT
 int8_t script_button[MAX_KEYS];
 #endif //USE_BUTTON_EVENT
 
-char *GetNumericArgument(char *lp,uint8_t lastop,float *fp,JsonObject *jo);
-char *GetStringArgument(char *lp,uint8_t lastop,char *cp,JsonObject *jo);
+char *GetNumericArgument(char *lp,uint8_t lastop,float *fp, JsonParserObject *jo);
+char *GetStringArgument(char *lp,uint8_t lastop,char *cp, JsonParserObject *jo);
 char *ForceStringVar(char *lp,char *dstr);
 void send_download(void);
 uint8_t reject(char *name);
@@ -511,7 +543,7 @@ char *script;
     char **snp_p = snp;
     uint8_t numperm = 0;
     uint8_t numflt = 0;
-    uint8_t count;
+    uint16_t count;
 
     glob_script_mem.max_ssize = SCRIPT_SVARSIZE;
     glob_script_mem.scriptptr = 0;
@@ -592,7 +624,7 @@ char *script;
                 } else {
                     vtypes[vars].bits.is_filter = 0;
                 }
-                *vnp_p ++= vnames_p;
+                *vnp_p++ = vnames_p;
                 while (lp<op) {
                     *vnames_p++ = *lp++;
                 }
@@ -684,7 +716,11 @@ char *script;
     // var names
     (vnames_p-vnames) +
     // vars offsets
+#ifdef SCRIPT_LARGE_VNBUFF
+    (sizeof(uint16_t)*vars) +
+#else
     (sizeof(uint8_t)*vars) +
+#endif
     // strings
     (glob_script_mem.max_ssize*svars) +
     // type array
@@ -727,8 +763,14 @@ char *script;
     memcpy(script_mem, vnames, size);
     script_mem += size;
 
+#ifdef SCRIPT_LARGE_VNBUFF
+    glob_script_mem.vnp_offset = (uint16_t*)script_mem;
+    size = vars*sizeof(uint16_t);
+#else
     glob_script_mem.vnp_offset = (uint8_t*)script_mem;
     size = vars*sizeof(uint8_t);
+#endif
+
     script_mem += size;
 
     // strings
@@ -738,10 +780,20 @@ char *script;
     //memcpy(script_mem,strings,size);
     script_mem += size;
 
+
     // now must recalc memory offsets
     uint16_t index = 0;
+#ifdef SCRIPT_LARGE_VNBUFF
+#ifndef MAXVNSIZ
+#define MAXVNSIZ 4096
+#endif
+    uint16_t *cp = glob_script_mem.vnp_offset;
+#else
+#undef MAXVNSIZ
+#define MAXVNSIZ 255
     uint8_t *cp = glob_script_mem.vnp_offset;
-    for (count=0;count<vars;count++) {
+#endif
+    for (count = 0; count<vars; count++) {
         *cp++ = index;
         while (*namep) {
             index++;
@@ -749,7 +801,7 @@ char *script;
         }
         namep++;
         index++;
-        if (index>255) {
+        if (index > MAXVNSIZ) {
           free(glob_script_mem.script_mem);
           return -5;
         }
@@ -760,7 +812,7 @@ char *script;
     // copy string variables
     char *cp1 = glob_script_mem.glob_snp;
     char *sp = strings;
-    for (count = 0; count<svars;count++) {
+    for (count = 0; count<svars; count++) {
         strcpy(cp1,sp);
         sp += strlen(sp) + 1;
         cp1 += glob_script_mem.max_ssize;
@@ -776,6 +828,7 @@ char *script;
 
     glob_script_mem.numvars = vars;
     glob_script_mem.script_dprec = SCRIPT_FLOAT_PRECISION;
+    glob_script_mem.script_lzero = 0;
     glob_script_mem.script_loglevel = LOG_LEVEL_INFO;
 
 
@@ -786,7 +839,7 @@ char *script;
 
       } else {
         char string[32];
-        dtostrfd(glob_script_mem.fvars[dvtp[count].index], glob_script_mem.script_dprec, string);
+        f2char(glob_script_mem.fvars[dvtp[count].index], glob_script_mem.script_dprec, glob_script_mem.script_lzero, string);
         toLog(string);
       }
     }
@@ -875,19 +928,81 @@ char *script;
 
 }
 
+#ifdef USE_SCRIPT_FATFS
+uint32_t get_fsinfo(uint32_t sel) {
+uint32_t result = 0;
+#ifdef ESP32
+#if USE_SCRIPT_FATFS >=0
+  if (sel == 0) {
+    result = SD.totalBytes()/1000;
+  } else if (sel == 1) {
+    result = (SD.totalBytes() - SD.usedBytes())/1000;
+  }
+#else
+  if (sel == 0) {
+    result = FFat.totalBytes()/1000;
+  } else if (sel == 1) {
+    result = FFat.freeBytes()/1000;
+  }
+#endif // USE_SCRIPT_FATFS>=0
+#else
+  // ESP8266
+  FSInfo64 fsinfo;
+  fsp->info64(fsinfo);
+  if (sel == 0) {
+    result = fsinfo.totalBytes/1000;
+  } else if (sel == 1) {
+    result = (fsinfo.totalBytes - fsinfo.usedBytes)/1000;
+  }
+#endif // ESP32
+  return result;
+}
+
+// format number with thousand marker
+void form1000(uint32_t number, char *dp, char sc) {
+  char str[32];
+  sprintf(str, "%d", number);
+  char *sp = str;
+  uint32_t inum = strlen(sp)/3;
+  uint32_t fnum = strlen(sp)%3;
+  if (!fnum) inum--;
+  for (uint32_t count=0; count<=inum; count++) {
+    if (fnum){
+      memcpy(dp,sp,fnum);
+      dp+=fnum;
+      sp+=fnum;
+      fnum=0;
+    } else {
+      memcpy(dp,sp,3);
+      dp+=3;
+      sp+=3;
+    }
+    if (count!=inum) {
+      *dp++=sc;
+    }
+  }
+  *dp=0;
+}
+
+#endif //USE_SCRIPT_FATFS
+
 #ifdef USE_SCRIPT_GLOBVARS
 #define SCRIPT_UDP_BUFFER_SIZE 128
 #define SCRIPT_UDP_PORT 1999
 IPAddress script_udp_remote_ip;
 
 void Script_Stop_UDP(void) {
-  Script_PortUdp.flush();
-  Script_PortUdp.stop();
-  glob_script_mem.udp_flags.udp_connected  = 0;
+  if (!glob_script_mem.udp_flags.udp_used) return;
+  if (glob_script_mem.udp_flags.udp_connected) {
+    Script_PortUdp.flush();
+    Script_PortUdp.stop();
+    glob_script_mem.udp_flags.udp_connected  = 0;
+  }
 }
 
 void Script_Init_UDP() {
   if (global_state.network_down) return;
+  if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected) return;
 
   if (Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
@@ -898,6 +1013,7 @@ void Script_Init_UDP() {
     glob_script_mem.udp_flags.udp_connected  = 0;
   }
 }
+
 void Script_PollUdp(void) {
   if (global_state.network_down) return;
   if (!glob_script_mem.udp_flags.udp_used) return;
@@ -1039,6 +1155,23 @@ float *Get_MFAddr(uint8_t index, uint16_t *len, uint16_t *ipos) {
   return 0;
 }
 
+char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonParserObject *jo);
+
+
+float *get_array_by_name(char *name, uint16_t *alen) {
+  struct T_INDEX ind;
+  uint8_t vtype;
+  isvar(name, &vtype, &ind, 0, 0, 0);
+  if (vtype==VAR_NV) return 0;
+  if (vtype&STYPE) return 0;
+  uint16_t index = glob_script_mem.type[ind.index].index;
+
+  if (glob_script_mem.type[ind.index].bits.is_filter) {
+    float *fa = Get_MFAddr(index, alen, 0);
+    return fa;
+  }
+  return 0;
+}
 
 float Get_MFVal(uint8_t index, int16_t bind) {
   uint8_t *mp = (uint8_t*)glob_script_mem.mfilt;
@@ -1304,10 +1437,85 @@ uint32_t match_vars(char *dvnam, float **fp, char **sp, uint32_t *ind) {
 }
 #endif //USE_SCRIPT_GLOBVARS
 
+char *isargs(char *lp, uint32_t isind) {
+  float fvar;
+  lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+  SCRIPT_SKIP_SPACES
+  if (*lp!='"') {
+    return lp;
+  }
+  lp++;
+
+  if (glob_script_mem.si_num[isind]>0 && glob_script_mem.last_index_string[isind]) {
+    free(glob_script_mem.last_index_string[isind]);
+  }
+  char *sstart = lp;
+  uint8_t slen = 0;
+  for (uint32_t cnt = 0; cnt<256; cnt++) {
+    if (*lp=='\n' || *lp=='"' || *lp==0) {
+      lp++;
+      if (cnt>0 && !slen) {
+        slen++;
+      }
+      glob_script_mem.siro_num[isind] = slen;
+      break;
+    }
+    if (*lp=='|') {
+      slen++;
+    }
+    lp++;
+  }
+
+  glob_script_mem.si_num[isind] = fvar;
+  if (glob_script_mem.si_num[isind]>0) {
+    if (glob_script_mem.si_num[isind]>MAX_SARRAY_NUM) {
+      glob_script_mem.si_num[isind] = MAX_SARRAY_NUM;
+    }
+
+    glob_script_mem.last_index_string[isind] = (char*)calloc(glob_script_mem.max_ssize*glob_script_mem.si_num[isind], 1);
+    for (uint32_t cnt = 0; cnt<glob_script_mem.siro_num[isind]; cnt++) {
+      char str[SCRIPT_MAXSSIZE];
+      GetTextIndexed(str, sizeof(str), cnt, sstart);
+      strlcpy(glob_script_mem.last_index_string[isind] + (cnt*glob_script_mem.max_ssize), str,glob_script_mem.max_ssize);
+    }
+  } else {
+    glob_script_mem.last_index_string[isind] = sstart;
+  }
+  lp++;
+  return lp;
+}
+
+char *isget(char *lp, char *sp, uint32_t isind) {
+float fvar;
+  lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+  SCRIPT_SKIP_SPACES
+  char str[SCRIPT_MAXSSIZE];
+  str[0] = 0;
+  uint8_t index = fvar;
+  if (index<1) index = 1;
+  index--;
+  last_sindex = index;
+  glob_script_mem.sind_num = isind;
+  if (glob_script_mem.last_index_string[isind]) {
+    if (!glob_script_mem.si_num[isind]) {
+      if (index<=glob_script_mem.siro_num[isind]) {
+        GetTextIndexed(str, sizeof(str), index , glob_script_mem.last_index_string[isind]);
+      }
+    } else {
+      if (index>glob_script_mem.si_num[isind]) {
+        index = glob_script_mem.si_num[isind];
+      }
+      strlcpy(str,glob_script_mem.last_index_string[isind] + (index * glob_script_mem.max_ssize), glob_script_mem.max_ssize);
+    }
+  }
+  lp++;
+  if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
+  return lp;
+}
 
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
-char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonObject *jo) {
+char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp, JsonParserObject *jo) {
     uint16_t count,len = 0;
     uint8_t nres = 0;
     char vname[32];
@@ -1456,7 +1664,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         if (aindex<1 || aindex>6) aindex = 1;
         aindex--;
       }
-      if (jo->success()) {
+      if (jo->isValid()) {
         char *subtype = strchr(jvname, '#');
         char *subtype2;
         if (subtype) {
@@ -1469,23 +1677,23 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
           }
         }
         vn = jvname;
-        str_value = (*jo)[vn];
-        if ((*jo)[vn].success()) {
+        str_value = (*jo)[vn].getStr();
+        if ((*jo)[vn].isValid()) {
           if (subtype) {
-            JsonObject &jobj1 = (*jo)[vn];
-            if (jobj1.success()) {
+            JsonParserObject jobj1 = (*jo)[vn];
+            if (jobj1.isValid()) {
               vn = subtype;
               jo = &jobj1;
-              str_value = (*jo)[vn];
-              if ((*jo)[vn].success()) {
+              str_value = (*jo)[vn].getStr();
+              if ((*jo)[vn].isValid()) {
                 // 2. stage
                 if (subtype2) {
-                  JsonObject &jobj2 = (*jo)[vn];
-                  if ((*jo)[vn].success()) {
+                  JsonParserObject jobj2 = (*jo)[vn];
+                  if ((*jo)[vn].isValid()) {
                     vn = subtype2;
                     jo = &jobj2;
-                    str_value = (*jo)[vn];
-                    if ((*jo)[vn].success()) {
+                    str_value = (*jo)[vn].getStr();
+                    if ((*jo)[vn].isValid()) {
                       goto skip;
                     } else {
                       goto chknext;
@@ -1504,10 +1712,10 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
           skip:
           if (ja) {
             // json array
-            str_value = (*jo)[vn][aindex];
+            str_value = (*jo)[vn].getArray()[aindex].getStr();
           }
           if (str_value && *str_value) {
-            if ((*jo).is<char*>(vn)) {
+            if ((*jo)[vn].isStr()) {
               if (!strncmp(str_value, "ON", 2)) {
                 if (fp) *fp = 1;
                 goto nexit;
@@ -1546,11 +1754,18 @@ chknext:
       case 'a':
 #ifdef USE_ANGLE_FUNC
         if (!strncmp(vname, "acos(", 5)) {
-            lp=GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
-            fvar = acosf(fvar);
-            lp++;
-            len = 0;
-            goto exit;
+          lp=GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
+          fvar = acosf(fvar);
+          lp++;
+          len = 0;
+          goto exit;
+        }
+        if (!strncmp(vname, "abs(", 4)) {
+          lp=GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          fvar = fabs(fvar);
+          lp++;
+          len = 0;
+          goto exit;
         }
 #endif
         if (!strncmp(vname, "asc(", 4)) {
@@ -1982,6 +2197,101 @@ chknext:
           len = 0;
           goto exit;
         }
+
+        if (!strncmp(vname, "fsi(", 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+          fvar = get_fsinfo(fvar);
+          lp++;
+          len = 0;
+          goto exit;
+        }
+
+        if (!strncmp(vname, "fwa(", 4)) {
+          struct T_INDEX ind;
+          uint8_t vtype;
+          lp = isvar(lp + 4, &vtype, &ind, 0, 0, 0);
+          if (vtype!=VAR_NV && (vtype&STYPE)==0 && glob_script_mem.type[ind.index].bits.is_filter) {
+            // found array as result
+
+          } else {
+            // error
+            fvar = 0;
+            goto exit;
+          }
+
+          while (*lp==' ') lp++;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+          uint8_t index = fvar;
+          if (index>=SFS_MAX) index = SFS_MAX - 1;
+          if (glob_script_mem.file_flags[index].is_open) {
+            uint16_t len = 0;
+            float *fa = Get_MFAddr(glob_script_mem.type[ind.index].index, &len, 0);
+            char dstr[24];
+            for (uint32_t cnt = 0; cnt<len; cnt++) {
+              dtostrfd(*fa, glob_script_mem.script_dprec, dstr);
+              fa++;
+              if (cnt < (len - 1)) {
+                strcat(dstr,"\t");
+              } else {
+                strcat(dstr,"\n");
+              }
+              glob_script_mem.files[index].print(dstr);
+            }
+
+          } else {
+            fvar = 0;
+          }
+          lp++;
+          len = 0;
+          goto exit;
+        }
+        if (!strncmp(vname, "fra(", 4)) {
+          struct T_INDEX ind;
+          uint8_t vtype;
+          lp = isvar(lp + 4, &vtype, &ind, 0, 0, 0);
+          if (vtype!=VAR_NV && (vtype&STYPE)==0 && glob_script_mem.type[ind.index].bits.is_filter) {
+            // found array as result
+
+          } else {
+            // error
+            fvar = 0;
+            goto exit;
+          }
+
+          while (*lp==' ') lp++;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+          uint8_t find = fvar;
+          if (find>=SFS_MAX) find = SFS_MAX - 1;
+          char str[glob_script_mem.max_ssize + 1];
+          if (glob_script_mem.file_flags[find].is_open) {
+            uint16_t len = 0;
+            float *fa = Get_MFAddr(glob_script_mem.type[ind.index].index, &len, 0);
+            char dstr[24];
+            for (uint32_t cnt = 0; cnt<len; cnt++) {
+              uint8_t index = 0;
+              char *cp = str;
+              while (glob_script_mem.files[find].available()) {
+                uint8_t buf[1];
+                glob_script_mem.files[find].read(buf,1);
+                if (buf[0]=='\t' || buf[0]==',' || buf[0]=='\n' || buf[0]=='\r') {
+                  break;
+                } else {
+                  *cp++ = buf[0];
+                  index++;
+                  if (index>=glob_script_mem.max_ssize - 1) break;
+                }
+              }
+              *cp = 0;
+              *fa++=CharToFloat(str);
+            }
+          } else {
+            fvar = 0;
+          }
+          lp++;
+          len = 0;
+          goto exit;
+        }
+
 #endif // USE_SCRIPT_FATFS_EXT
         if (!strncmp(vname, "fl1(", 4) || !strncmp(vname, "fl2(", 4) )  {
           uint8_t lknum = *(lp+2)&3;
@@ -2099,7 +2409,6 @@ chknext:
         }
 #endif //USE_LIGHT
         break;
-#define MAX_SARRAY_NUM 32
       case 'i':
         if (!strncmp(vname, "int(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
@@ -2109,77 +2418,35 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "is(", 3)) {
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
-          SCRIPT_SKIP_SPACES
-          if (*lp!='"') {
-            break;
-          }
-          lp++;
-
-          if (glob_script_mem.si_num>0 && glob_script_mem.last_index_string) {
-            free(glob_script_mem.last_index_string);
-          }
-          char *sstart = lp;
-          uint8_t slen = 0;
-          for (uint32_t cnt = 0; cnt<256; cnt++) {
-              if (*lp=='\n' || *lp=='"' || *lp==0) {
-                lp++;
-                if (cnt>0 && !slen) {
-                  slen++;
-                }
-                glob_script_mem.siro_num = slen;
-                break;
-              }
-              if (*lp=='|') {
-                slen++;
-              }
-              lp++;
-          }
-
-          glob_script_mem.si_num = fvar;
-          if (glob_script_mem.si_num>0) {
-            if (glob_script_mem.si_num>MAX_SARRAY_NUM) {
-              glob_script_mem.si_num = MAX_SARRAY_NUM;
-            }
-
-            glob_script_mem.last_index_string = (char*)calloc(glob_script_mem.max_ssize*glob_script_mem.si_num, 1);
-            for (uint32_t cnt = 0; cnt<glob_script_mem.siro_num; cnt++) {
-              char str[SCRIPT_MAXSSIZE];
-              GetTextIndexed(str, sizeof(str), cnt, sstart);
-              strlcpy(glob_script_mem.last_index_string + (cnt*glob_script_mem.max_ssize), str,glob_script_mem.max_ssize);
-            }
-          } else {
-              glob_script_mem.last_index_string = sstart;
-          }
-
-          lp++;
+          lp = isargs(lp + 3, 0);
+          fvar = 0;
+          len = 0;
+          goto exit;
+        }
+        if (!strncmp(vname, "is1(", 4)) {
+          lp = isargs(lp + 4, 1);
+          fvar = 0;
+          len = 0;
+          goto exit;
+        }
+        if (!strncmp(vname, "is2(", 4)) {
+          lp = isargs(lp + 4, 2);
           fvar = 0;
           len = 0;
           goto exit;
         }
         if (!strncmp(vname, "is[", 3)) {
-          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
-          SCRIPT_SKIP_SPACES
-          char str[SCRIPT_MAXSSIZE];
-          str[0] = 0;
-          uint8_t index = fvar;
-          if (index<1) index = 1;
-          index--;
-          last_sindex = index;
-          if (glob_script_mem.last_index_string) {
-            if (!glob_script_mem.si_num) {
-              if (index<=glob_script_mem.siro_num) {
-                GetTextIndexed(str, sizeof(str), index , glob_script_mem.last_index_string);
-              }
-            } else {
-              if (index>glob_script_mem.si_num) {
-                index = glob_script_mem.si_num;
-              }
-              strlcpy(str,glob_script_mem.last_index_string + (index * glob_script_mem.max_ssize), glob_script_mem.max_ssize);
-            }
-          }
-          lp++;
-          if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
+          lp = isget(lp + 3, sp, 0);
+          len = 0;
+          goto strexit;
+        }
+        if (!strncmp(vname, "is1[", 4)) {
+          lp = isget(lp + 4, sp, 1);
+          len = 0;
+          goto strexit;
+        }
+        if (!strncmp(vname, "is2[", 4)) {
+          lp = isget(lp + 4, sp, 2);
           len = 0;
           goto strexit;
         }
@@ -2511,7 +2778,7 @@ chknext:
         if (!strncmp(vname, "s(", 2)) {
           lp = GetNumericArgument(lp + 2, OPER_EQU, &fvar, 0);
           char str[glob_script_mem.max_ssize + 1];
-          dtostrfd(fvar, glob_script_mem.script_dprec, str);
+          f2char(fvar, glob_script_mem.script_dprec, glob_script_mem.script_lzero, str);
           if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
           lp++;
           len = 0;
@@ -3014,7 +3281,7 @@ uint16_t GetStack(void) {
 }
 #endif //ESP8266
 
-char *GetStringArgument(char *lp, uint8_t lastop, char *cp, JsonObject *jo) {
+char *GetStringArgument(char *lp, uint8_t lastop, char *cp, JsonParserObject *jo) {
   uint8_t operand = 0;
   uint8_t vtype;
   char *slp;
@@ -3060,7 +3327,7 @@ char *GetStringArgument(char *lp, uint8_t lastop, char *cp, JsonObject *jo) {
   return lp;
 }
 
-char *GetNumericArgument(char *lp, uint8_t lastop, float *fp, JsonObject *jo) {
+char *GetNumericArgument(char *lp, uint8_t lastop, float *fp, JsonParserObject *jo) {
 uint8_t operand = 0;
 float fvar1,fvar;
 char *slp;
@@ -3157,6 +3424,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
     uint16_t count;
     uint8_t vtype;
     uint8_t dprec = glob_script_mem.script_dprec;
+    uint8_t lzero = glob_script_mem.script_lzero;
     float fvar;
     cp = srcbuf;
     struct T_INDEX ind;
@@ -3170,16 +3438,21 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
               dstbuf[count] = *cp++;
             } else {
               if (isdigit(*cp)) {
+                if (*(cp+1)=='.') {
+                  lzero = *cp & 0xf;
+                  cp+=2;
+                }
                 dprec = *cp & 0xf;
                 cp++;
               } else {
                 dprec = glob_script_mem.script_dprec;
+                lzero = glob_script_mem.script_lzero;
               }
               if (*cp=='(') {
                 // math expression
                 cp++;
                 cp = GetNumericArgument(cp, OPER_EQU, &fvar, 0);
-                dtostrfd(fvar, dprec, string);
+                f2char(fvar, dprec, lzero, string);
                 uint8_t slen = strlen(string);
                 if (count + slen<dstsize - 1) {
                   strcpy(&dstbuf[count], string);
@@ -3192,7 +3465,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
                   // found variable as result
                   if (vtype==NUM_RES || (vtype&STYPE)==0) {
                     // numeric result
-                    dtostrfd(fvar, dprec, string);
+                    f2char(fvar, dprec, lzero, string);
                   } else {
                     // string result
                   }
@@ -3279,7 +3552,7 @@ void toSLog(const char *str) {
 #endif
 }
 
-char *Evaluate_expression(char *lp, uint8_t and_or, uint8_t *result,JsonObject  *jo) {
+char *Evaluate_expression(char *lp, uint8_t and_or, uint8_t *result, JsonParserObject *jo) {
   float fvar,*dfvar,fvar1;
   uint8_t numeric;
   struct T_INDEX ind;
@@ -3442,19 +3715,17 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
 
     if (tasm_cmd_activ && tlen>0) return 0;
 
-    JsonObject  *jo = 0;
-    DynamicJsonBuffer jsonBuffer; // on heap
-    JsonObject &jobj = jsonBuffer.parseObject(js);
+    JsonParserObject jo;
     if (js) {
-      jo = &jobj;
-    } else {
-      jo = 0;
+      String jss = js;    // copy the string to a new buffer, not sure we can change the original buffer
+      JsonParser parser((char*)jss.c_str());
+      jo = parser.getRootObject();
     }
 
-    return Run_script_sub(type, tlen, jo);
+    return Run_script_sub(type, tlen, &jo);
 }
 
-int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
+int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
     uint8_t vtype=0,sindex,xflg,floop=0,globvindex,fromscriptcmd=0;
     char *lp_next;
     int16_t globaindex,saindex;
@@ -3703,6 +3974,10 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
             } else if (!strncmp(lp, "dp", 2) && isdigit(*(lp + 2))) {
               lp += 2;
               // number precision
+              if (*(lp + 1)== '.') {
+                glob_script_mem.script_lzero = atoi(lp);
+                lp+=2;
+              }
               glob_script_mem.script_dprec = atoi(lp);
               goto next_line;
             }
@@ -4050,9 +4325,9 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonObject *jo) {
 #endif //USE_SCRIPT_GLOBVARS
                       if (saindex>=0) {
                         if (lastop==OPER_EQU) {
-                          strlcpy(glob_script_mem.last_index_string + (saindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
+                          strlcpy(glob_script_mem.last_index_string[glob_script_mem.sind_num] + (saindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
                         } else if (lastop==OPER_PLSEQU) {
-                          strncat(glob_script_mem.last_index_string + (saindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
+                          strncat(glob_script_mem.last_index_string[glob_script_mem.sind_num] + (saindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
                         }
                         last_sindex = -1;
                       } else {
@@ -4358,14 +4633,17 @@ const char HTTP_FORM_FILE_UPLOAD[] PROGMEM =
 "<div id='f1' name='f1' style='display:block;'>"
 "<fieldset><legend><b>&nbsp;%s"  "&nbsp;</b></legend>";
 const char HTTP_FORM_FILE_UPG[] PROGMEM =
-"<form method='post' action='u3' enctype='multipart/form-data'>"
-"<br/><input type='file' name='u3'><br/>"
+"<form method='post' action='u13' enctype='multipart/form-data'>"
+"<br/><input type='file' name='u13'><br/>"
 "<br/><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>";
 
 const char HTTP_FORM_FILE_UPGb[] PROGMEM =
 "</fieldset>"
 "</div>"
 "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
+
+const char HTTP_FORM_FILE_UPGc[] PROGMEM =
+"<div style='text-align:left;color:green;'>total size: %s kB - free: %s kB</div>";
 
 const char HTTP_FORM_SDC_DIRa[] PROGMEM =
 "<div style='text-align:left'>";
@@ -4573,6 +4851,11 @@ void Script_FileUploadConfiguration(void) {
   WSContentSend_P(HTTP_FORM_FILE_UPLOAD,D_SDCARD_DIR);
   WSContentSend_P(HTTP_FORM_FILE_UPG, D_SCRIPT_UPLOAD);
 #ifdef SDCARD_DIR
+  char ts[16];
+  char fs[16];
+  form1000(get_fsinfo(0), ts, '.');
+  form1000(get_fsinfo(1), fs, '.');
+  WSContentSend_P(HTTP_FORM_FILE_UPGc, ts, fs);
   WSContentSend_P(HTTP_FORM_SDC_DIRa);
   if (glob_script_mem.script_sd_found) {
     ListDir(path, depth);
@@ -4837,6 +5120,11 @@ void ScriptSaveSettings(void) {
 }
 
 void SaveScriptEnd(void) {
+
+#ifdef USE_SCRIPT_GLOBVARS
+  Script_Stop_UDP();
+#endif //USE_SCRIPT_GLOBVARS
+
   if (glob_script_mem.script_mem) {
     Scripter_save_pvars();
     free(glob_script_mem.script_mem);
@@ -4856,6 +5144,9 @@ void SaveScriptEnd(void) {
 #endif // USE_SCRIPT_COMPRESSION
 
   if (bitRead(Settings.rule_enabled, 0)) {
+
+
+
     int16_t res = Init_Scripter();
     if (res) {
       AddLog_P2(LOG_LEVEL_INFO, PSTR("script init error: %d"), res);
@@ -5234,15 +5525,16 @@ void Script_Handle_Hue(String *path) {
   if (Webserver->args()) {
     response = "[";
 
-    StaticJsonBuffer<400> jsonBuffer;
-    JsonObject &hue_json = jsonBuffer.parseObject(Webserver->arg((Webserver->args()) - 1));
-    if (hue_json.containsKey("on")) {
+    JsonParser parser((char*) Webserver->arg((Webserver->args())-1).c_str());
+    JsonParserObject root = parser.getRootObject();
+    JsonParserToken hue_on = root[PSTR("on")];
+    if (hue_on) {
 
       response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
       response.replace("{id", String(EncodeLightId(device)));
       response.replace("{cm", "on");
 
-      bool on = hue_json["on"];
+      bool on = hue_on.getBool();
       if (on==false) {
         glob_script_mem.fvars[hue_script[index].index[0] - 1] = 0;
         response.replace("{re", "false");
@@ -5253,8 +5545,11 @@ void Script_Handle_Hue(String *path) {
       glob_script_mem.type[hue_script[index].vindex[0]].bits.changed = 1;
       resp = true;
     }
-    if (hue_json.containsKey("bri")) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
-      tmp = hue_json["bri"];
+
+    parser.setCurrent();
+    JsonParserToken hue_bri = root[PSTR("bri")];
+    if (hue_bri) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
+      tmp = hue_bri.getUInt();
       bri = tmp;
       if (254 <= bri) { bri = 255; }
       if (resp) { response += ","; }
@@ -5266,12 +5561,17 @@ void Script_Handle_Hue(String *path) {
       glob_script_mem.type[hue_script[index].vindex[1]].bits.changed = 1;
       resp = true;
     }
-    if (hue_json.containsKey("xy")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
+
+    JsonParserToken hue_xy = root[PSTR("xy")];
+    if (hue_xy) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
       float x, y;
-      x = hue_json["xy"][0];
-      y = hue_json["xy"][1];
-      const String &x_str = hue_json["xy"][0];
-      const String &y_str = hue_json["xy"][1];
+      JsonParserArray arr_xy = JsonParserArray(hue_xy);
+      JsonParserToken tok_x = arr_xy[0];
+      JsonParserToken tok_y = arr_xy[1];
+      x = tok_x.getFloat();
+      y = tok_y.getFloat();
+      String x_str = tok_x.getStr();
+      String y_str = tok_y.getStr();
       uint8_t rr,gg,bb;
       LightStateClass::XyToRgb(x, y, &rr, &gg, &bb);
       LightStateClass::RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
@@ -5287,8 +5587,9 @@ void Script_Handle_Hue(String *path) {
       resp = true;
     }
 
-    if (hue_json.containsKey("hue")) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
-      tmp = hue_json["hue"];
+    JsonParserToken hue_hue = root[PSTR("hue")];
+    if (hue_hue) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
+      tmp = hue_hue.getUInt();
       //hue = changeUIntScale(tmp, 0, 65535, 0, 359);
       //tmp = changeUIntScale(hue, 0, 359, 0, 65535);
       hue = tmp;
@@ -5301,8 +5602,10 @@ void Script_Handle_Hue(String *path) {
       glob_script_mem.type[hue_script[index].vindex[2]].bits.changed = 1;
       resp = true;
     }
-    if (hue_json.containsKey("sat")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
-      tmp = hue_json["sat"];
+
+    JsonParserToken hue_sat = root[PSTR("sat")];
+    if (hue_sat) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
+      tmp = hue_sat.getUInt();
       sat = tmp;
       if (254 <= sat) { sat = 255; }
       if (resp) { response += ","; }
@@ -5314,8 +5617,10 @@ void Script_Handle_Hue(String *path) {
       glob_script_mem.type[hue_script[index].vindex[3]].bits.changed = 1;
       resp = true;
     }
-    if (hue_json.containsKey("ct")) {  // Color temperature 153 (Cold) to 500 (Warm)
-      ct = hue_json["ct"];
+
+    JsonParserToken hue_ct = root[PSTR("ct")];
+    if (hue_ct) {  // Color temperature 153 (Cold) to 500 (Warm)
+      ct = hue_ct.getUInt();
       if (resp) { response += ","; }
       response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
       response.replace("{id", String(EncodeLightId(device)));
@@ -5533,21 +5838,23 @@ bool ScriptMqttData(void)
       if (event_item.Key.length() == 0) {   //If did not specify Key
         value = sData;
       } else {      //If specified Key, need to parse Key/Value from JSON data
-        StaticJsonBuffer<MQTT_EVENT_JSIZE> jsonBuf;
-        JsonObject& jsonData = jsonBuf.parseObject(sData);
+        JsonParser parser((char*)sData.c_str());
+        JsonParserObject jsonData = parser.getRootObject();
         String key1 = event_item.Key;
         String key2;
-        if (!jsonData.success()) break;       //Failed to parse JSON data, ignore this message.
+        if (!jsonData) break;       //Failed to parse JSON data, ignore this message.
         int dot;
         if ((dot = key1.indexOf('.')) > 0) {
           key2 = key1.substring(dot+1);
           key1 = key1.substring(0, dot);
           lkey = key2;
-          if (!jsonData[key1][key2].success()) break;   //Failed to get the key/value, ignore this message.
-          value = (const char *)jsonData[key1][key2];
+          JsonParserToken val = jsonData[key1.c_str()].getObject()[key2.c_str()];
+          if (!val) break;   //Failed to get the key/value, ignore this message.
+          value = val.getStr();
         } else {
-          if (!jsonData[key1].success()) break;
-          value = (const char *)jsonData[key1];
+          JsonParserToken val = jsonData[key1.c_str()];
+          if (!val) break;
+          value = val.getStr();
           lkey = key1;
         }
       }
@@ -6063,6 +6370,7 @@ const char SCRIPT_MSG_GTE1[] PROGMEM = "'%s'";
 
 #define MAX_GARRAY 4
 
+
 char *gc_get_arrays(char *lp, float **arrays, uint8_t *ranum, uint16_t *rentries, uint16_t *ipos) {
 struct T_INDEX ind;
 uint8_t vtype;
@@ -6540,7 +6848,7 @@ exgc:
                   for (uint32_t ind = 0; ind < anum; ind++) {
                     char acbuff[32];
                     float *fp = arrays[ind];
-                    dtostrfd(fp[aind], glob_script_mem.script_dprec, acbuff);
+                    f2char(fp[aind], glob_script_mem.script_dprec, glob_script_mem.script_lzero, acbuff);
                     WSContentSend_PD("%s", acbuff);
                     if (ind<anum - 1) { WSContentSend_PD(","); }
                   }
@@ -7110,8 +7418,8 @@ bool Xdrv10(uint8_t function)
       Webserver->on("/exs", HTTP_GET, ScriptExecuteUploadSuccess);
 
 #ifdef USE_SCRIPT_FATFS
-      Webserver->on("/u3", HTTP_POST,[]() { Webserver->sendHeader("Location","/u3");Webserver->send(303);}, script_upload);
-      Webserver->on("/u3", HTTP_GET, ScriptFileUploadSuccess);
+      Webserver->on("/u13", HTTP_POST,[]() { Webserver->sendHeader("Location","/u13");Webserver->send(303);}, script_upload);
+      Webserver->on("/u13", HTTP_GET, ScriptFileUploadSuccess);
       Webserver->on("/upl", HTTP_GET, Script_FileUploadConfiguration);
 #endif //USE_SCRIPT_FATFS
       break;

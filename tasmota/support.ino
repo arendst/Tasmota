@@ -116,7 +116,7 @@ String GetResetReason(void)
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
-
+/*
 String GetBinary(const void* ptr, size_t count) {
   uint32_t value = *(uint32_t*)ptr;
   value <<= (32 - count);
@@ -124,6 +124,18 @@ String GetBinary(const void* ptr, size_t count) {
   result.reserve(count + 1);
   for (uint32_t i = 0; i < count; i++) {
     result += (value &0x80000000) ? '1' : '0';
+    value <<= 1;
+  }
+  return result;
+}
+*/
+String GetBinary8(uint8_t value, size_t count) {
+  if (count > 8) { count = 8; }
+  value <<= (8 - count);
+  String result;
+  result.reserve(count + 1);
+  for (uint32_t i = 0; i < count; i++) {
+    result += (value &0x80) ? '1' : '0';
     value <<= 1;
   }
   return result;
@@ -1486,59 +1498,44 @@ bool GetUsedInModule(uint32_t val, uint16_t *arr)
   return false;
 }
 
-bool JsonTemplate(const char* dataBuf)
+bool JsonTemplate(char* dataBuf)
 {
   // Old: {"NAME":"Shelly 2.5","GPIO":[56,0,17,0,21,83,0,0,6,82,5,22,156],"FLAG":2,"BASE":18}
   // New: {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
 
-#ifdef ESP8266
-  StaticJsonBuffer<400> jb;  // 331 from https://arduinojson.org/v5/assistant/
-#else
-  StaticJsonBuffer<999> jb;  // 654 from https://arduinojson.org/v5/assistant/
-#endif
-  JsonObject& obj = jb.parseObject(dataBuf);
-  if (!obj.success()) { return false; }
+  JsonParser parser((char*) dataBuf);
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return false; }
 
   // All parameters are optional allowing for partial changes
-  const char* name = obj[D_JSON_NAME];
-  if (name != nullptr) {
-    SettingsUpdateText(SET_TEMPLATE_NAME, name);
+  JsonParserToken val = root[PSTR(D_JSON_NAME)];
+  if (val) {
+    SettingsUpdateText(SET_TEMPLATE_NAME, val.getStr());
   }
-  if (obj[D_JSON_GPIO].success()) {
+  JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
+  if (arr) {
+    for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
 #ifdef ESP8266
-    if (!obj[D_JSON_GPIO][13].success()) { // Old template
-
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TPL: Converting template ..."));
-
-      uint8_t template8[sizeof(mytmplt8285)] = { GPIO_NONE };
-      for (uint32_t i = 0; i < ARRAY_SIZE(template8) -1; i++) {
-        template8[i] = obj[D_JSON_GPIO][i] | 0;
+      Settings.user_template.gp.io[i] = arr[i].getUInt();
+#else  // ESP32
+      uint16_t gpio = arr[i].getUInt();
+      if (gpio == (AGPIO(GPIO_NONE) +1)) {
+        gpio = AGPIO(GPIO_USER);
       }
-      if (obj[D_JSON_FLAG].success()) {
-        template8[ARRAY_SIZE(template8) -1] = (obj[D_JSON_FLAG] | 0) & 0x0F;
-      }
-      TemplateConvert(template8, Settings.user_template.gp.io);
-      Settings.user_template.flag.data = 0;
-    } else {
+      Settings.user_template.gp.io[i] = gpio;
 #endif
-      for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
-        uint16_t gpio = obj[D_JSON_GPIO][i] | 0;
-        if (gpio == (AGPIO(GPIO_NONE) +1)) {
-          gpio = AGPIO(GPIO_USER);
-        }
-        Settings.user_template.gp.io[i] = gpio;
-      }
-      if (obj[D_JSON_FLAG].success()) {
-        Settings.user_template.flag.data = obj[D_JSON_FLAG] | 0;
-      }
-#ifdef ESP8266
     }
-#endif
   }
-  if (obj[D_JSON_BASE].success()) {
-    uint32_t base = obj[D_JSON_BASE];
+  val = root[PSTR(D_JSON_FLAG)];
+  if (val) {
+    uint32_t flag = val.getUInt();
+    memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
+  }
+  val = root[PSTR(D_JSON_BASE)];
+  if (val) {
+    uint32_t base = val.getUInt();
     if ((0 == base) || !ValidTemplateModule(base -1)) { base = 18; }
     Settings.user_template_base = base -1;  // Default WEMOS
   }

@@ -166,20 +166,21 @@ int32_t EZ_RouteError(int32_t res, const class SBuffer &buf) {
 int32_t EZ_PermitJoinRsp(int32_t res, const class SBuffer &buf) {
   uint8_t  status = buf.get8(2);
   
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"Message\":\"%s"),
-                  (0 == status) ? ZIGBEE_STATUS_PERMITJOIN_OPEN_60 : ZIGBEE_STATUS_PERMITJOIN_CLOSE,
-                  (0 == status) ? PSTR("Pairing mode enabled") : PSTR("Pairing mode error")
-                  );
-  if (status)  {
-    ResponseAppend_P("0x%02X", status);
+  if (status) {     // only report if there is an error
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":23,\"Message\":\"Pairing mode error 0x%02X\"}}"), status);
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
   }
-  ResponseAppend_P(PSTR("\"}}"));
-
-  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
-
   return -1;
 }
+
+//
+// Special case: EZSP does not send an event for PermitJoin end, so we generate a synthetic one
+//
+void Z_PermitJoinDisable(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":20,\"Message\":\"Pairing mode disabled\"}}"));
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+}
+
 
 //
 // Received MessageSentHandler
@@ -395,6 +396,10 @@ int32_t EZ_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
   if (0x08 == protocol_version) {
+    if ((stack_version & 0xFF00) == 0x6700) {
+      // If v6.7 there is a bug so we need to change the response
+      ZBW(ZBR_SET_OK2, 0x00, 0x00 /*high*/, 0x00 /*ok*/)
+    }
   	return 0;	  // protocol v8 is ok
   } else {
     return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
@@ -1348,7 +1353,8 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
   // log the packet details
   zcl_received.log();
 
-  zigbee_devices.setLQI(srcaddr, linkquality);       // EFR32 has a different scale for LQI
+  zigbee_devices.setLQI(srcaddr, linkquality != 0xFF ? linkquality : 0xFE);       // EFR32 has a different scale for LQI
+  zigbee_devices.setLastSeenNow(srcaddr);
 
   char shortaddr[8];
   snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
@@ -1390,6 +1396,7 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
     }
 
     zcl_received.generateSyntheticAttributes(attr_list);
+    zcl_received.computeSyntheticAttributes(attr_list);
     zcl_received.generateCallBacks(attr_list);      // set deferred callbacks, ex: Occupancy
     zcl_received.postProcessAttributes(srcaddr, attr_list);
 
@@ -1492,6 +1499,7 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
     // ZDO request
     // Report LQI
     zigbee_devices.setLQI(srcaddr, linkquality);
+    zigbee_devices.setLastSeenNow(srcaddr);
     // Since ZDO messages start with a sequence number, we skip it
     // but we add the source address in the last 2 bytes
     SBuffer zdo_buf(buf.get8(20) - 1 + 2);

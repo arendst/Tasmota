@@ -127,7 +127,7 @@ ssize_t rf_decode_and_write(uint8_t *record, size_t size)
     uint16_t address = h->address_high * 0x100 + h->address_low;
 
     do {
-      err = c2_programming_init();
+      err = c2_programming_init(C2_DEVID_EFM8BB1);
       err = c2_block_write(address, h->data, h->len);
     } while (err != C2_SUCCESS && retries--);
   } else if (h->record_type == IHX_RT_END_OF_FILE) {
@@ -179,7 +179,7 @@ uint8_t rf_erase_flash(void)
   uint8_t err;
 
   for (uint32_t i = 0; i < 4; i++) {  // HACK: Try multiple times as the command sometimes fails (unclear why)
-    err = c2_programming_init();
+    err = c2_programming_init(C2_DEVID_EFM8BB1);
     if (err != C2_SUCCESS) {
       return 10;                 // Failed to init RF chip
     }

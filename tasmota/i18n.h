@@ -724,7 +724,7 @@ const char S_RSLT_POWER[] PROGMEM = D_RSLT_POWER;
 const char S_RSLT_RESULT[] PROGMEM = D_RSLT_RESULT;
 const char S_RSLT_WARNING[] PROGMEM = D_RSLT_WARNING;
 const char S_LWT[] PROGMEM = D_LWT;
-const char S_OFFLINE[] PROGMEM = D_OFFLINE;
+const char S_LWT_OFFLINE[] PROGMEM = MQTT_LWT_OFFLINE;
 
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;

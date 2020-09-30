@@ -104,18 +104,16 @@ void CmndRfSend(void)
     int repeat = 10;
     int pulse = 350;
 
-    char dataBufUc[XdrvMailbox.data_len + 1];
-    UpperCase(dataBufUc, XdrvMailbox.data);
-    StaticJsonBuffer<150> jsonBuf;  // ArduinoJSON entry used to calculate jsonBuf: JSON_OBJECT_SIZE(5) + 40 = 134
-    JsonObject &root = jsonBuf.parseObject(dataBufUc);
-    if (root.success()) {
+    JsonParser parser(XdrvMailbox.data);
+    JsonParserObject root = parser.getRootObject();
+    if (root) {
       // RFsend {"data":0x501014,"bits":24,"protocol":1,"repeat":10,"pulse":350}
       char parm_uc[10];
-      data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_DATA))], nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
-      bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_BITS))];
-      protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_PROTOCOL))];
-      repeat = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_REPEAT))];
-      pulse = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_PULSE))];
+      data = root.getUInt(PSTR(D_JSON_RF_DATA), data);
+      bits = root.getUInt(PSTR(D_JSON_RF_BITS), bits);
+      protocol = root.getInt(PSTR(D_JSON_RF_PROTOCOL), protocol);
+      repeat = root.getInt(PSTR(D_JSON_RF_REPEAT), repeat);
+      pulse = root.getInt(PSTR(D_JSON_RF_PULSE), pulse);
     } else {
       //  RFsend data, bits, protocol, repeat, pulse
       char *p;

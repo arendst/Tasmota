@@ -1356,8 +1356,8 @@ void SettingsDelta(void)
       Settings.ex_sbaudrate = 0;
 */
       Settings.flag3.fast_power_cycle_disable = 0;
-      Settings.ex2_energy_power_delta = Settings.ex_energy_power_delta;
-      Settings.ex_energy_power_delta = 0;
+      Settings.hass_new_discovery = Settings.tuyamcu_topic; // replaced ex2_energy_power_delta on 8.5.0.1
+      Settings.tuyamcu_topic = 0; // replaced ex_energy_power_delta on 8.5.0.1
     }
     if (Settings.version < 0x06060015) {
       if ((EX_WIFI_SMARTCONFIG == Settings.ex_sta_config) || (EX_WIFI_WPSCONFIG == Settings.ex_sta_config)) {
@@ -1514,7 +1514,7 @@ void SettingsDelta(void)
       Settings.fallback_module = FALLBACK_MODULE;
     }
     if (Settings.version < 0x08040003) {
-      Settings.energy_power_delta[0] = Settings.ex2_energy_power_delta;
+      Settings.energy_power_delta[0] = Settings.hass_new_discovery; // replaced ex2_energy_power_delta on 8.5.0.1
       Settings.energy_power_delta[1] = 0;
       Settings.energy_power_delta[2] = 0;
     }
