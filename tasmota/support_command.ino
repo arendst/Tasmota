@@ -1202,6 +1202,12 @@ void ShowGpios(const uint16_t *NiceList, uint32_t size, uint32_t offset, uint32_
 
 void CmndGpios(void)
 {
+/*
+  if (XdrvMailbox.payload == 17) {
+    DumpConvertTable();
+    return;
+  }
+*/
   uint32_t lines = 1;
   ShowGpios(kGpioNiceList, ARRAY_SIZE(kGpioNiceList), 0, lines);
 #ifdef ESP8266

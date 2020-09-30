@@ -378,13 +378,8 @@ const char kWebColors[] PROGMEM =
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
-//#ifdef ESP8266
-//#define AGPIO(x) (x)
-//#define BGPIO(x) (x)
-//#else  // ESP32
 #define AGPIO(x) (x<<5)
 #define BGPIO(x) (x>>5)
-//#endif  // ESP8266 - ESP32
 
 #ifdef USE_DEVICE_GROUPS
 #define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)

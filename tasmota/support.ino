@@ -1164,6 +1164,44 @@ void ConvertGpios(void) {
 //    AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.my_gp.io, sizeof(myio) / 2, 2);
   }
 }
+
+/*
+void DumpConvertTable(void) {
+  bool jsflg = false;
+  uint32_t lines = 1;
+  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioConvert); i++) {
+    uint32_t data = pgm_read_word(kGpioConvert + i);
+    if (!jsflg) {
+      Response_P(PSTR("{\"GPIOConversion%d\":{"), lines);
+    } else {
+      ResponseAppend_P(PSTR(","));
+    }
+    jsflg = true;
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kGpioConvert) -1)) {
+      ResponseJsonEndEnd();
+      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+      jsflg = false;
+      lines++;
+    }
+  }
+  for (uint32_t i = 0; i < ARRAY_SIZE(kAdcNiceList); i++) {
+    uint32_t data = pgm_read_word(kAdcNiceList + i);
+    if (!jsflg) {
+      Response_P(PSTR("{\"ADC0Conversion%d\":{"), lines);
+    } else {
+      ResponseAppend_P(PSTR(","));
+    }
+    jsflg = true;
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kAdcNiceList) -1)) {
+      ResponseJsonEndEnd();
+      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+      jsflg = false;
+      lines++;
+    }
+  }
+  mqtt_data[0] = '\0';
+}
+*/
 #endif  // ESP8266
 
 uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
