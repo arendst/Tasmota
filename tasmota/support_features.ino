@@ -604,10 +604,11 @@ void GetFeatures(void)
 #ifdef USE_MLX90640
   feature6 |= 0x01000000;  // xdrv_43_mlx90640.ino
 #endif
-//  feature6 |= 0x02000000;
+#if defined(USE_I2C) && defined(USE_VL53L1X)
+  feature6 |= 0x02000000;  // xsns_77_vl53l1x.ino
+#endif
 //  feature6 |= 0x04000000;
 //  feature6 |= 0x08000000;
-
 //  feature6 |= 0x10000000;
 #if defined(ESP32) && defined(USE_TTGO_WATCH)
   feature6 |= 0x20000000;  // xdrv_83_esp32watch.ino

@@ -21,6 +21,7 @@
 - Add new shutter modes (#9244)
 - Add Zigbee auto-config when pairing
 - Add support for MLX90640 IR array temperature sensor by Christian Baars
+- Add support for VL53L1X time of flight sensor by Johann Obermeier
 
 ### 8.5.0 20200907
 
