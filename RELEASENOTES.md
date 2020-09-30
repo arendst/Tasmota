@@ -17,7 +17,11 @@ See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) fo
 6. Migrate to **Tasmota 8.1**
 7. Migrate to **Tasmota 8.x**
 
-While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with release **v8.1.0 Doris** the Settings are re-allocated in such a way that fallback is only allowed and possible to release **v7.2.0 Constance**. Once at v7.2.0 you're on your own when downgrading even further.
+--- Major change in GPIO function representation ---
+
+8. Migrate to **Tasmota 9.x**
+
+While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with release **v9.1.0 Imogen** the internal GPIO function representation has changed in such a way that fallback is only possible to the latest GPIO configuration before installing **v9.1.0**.
 
 ## Supported Core versions
 
@@ -55,8 +59,12 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog
 
-### Version 8.5.0.1
+### Version 9.0.0.1
 
+- Remove auto config update for all Friendlynames and Switchtopic from versions before 8.x
+- Change redesigning ESP8266 GPIO internal representation in line with ESP32
+- Change replace ArduinoJson with JSMN for JSON parsing
+- Change ``WakeUp`` uses 256 steps instead of 100 (#9241)
 - Fix energy total counters (#9263, #9266)
 - Fix crash in ``ZbRestore``
 - Fix reset BMP sensors when executing command ``SaveData`` and define USE_DEEPSLEEP enabled (#9300)
@@ -64,8 +72,6 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Fix ``status 13`` exception 9 when more than one shutter is configured
 - Fix ``status 13`` json message
 - Fix Shelly 2.5 higher temperature regression from 8.2.0.1 (#7991)
-- Change replace ArduinoJson with JSMN for JSON parsing
-- Change ``WakeUp`` uses 256 steps instead of 100 (#9241)
 - Add command ``SetOption110 1`` to disable Zigbee auto-config when pairing new devices
 - Add command ``SetOption111 1`` to enable frequency output for buzzer GPIO (#8994)
 - Add command ``SetOption112 1`` to enable friendly name in zigbee topic (use with SetOption89)
@@ -74,4 +80,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Add new shutter modes (#9244)
 - Add Zigbee auto-config when pairing
 - Add support for MLX90640 IR array temperature sensor by Christian Baars
-- Add support for VL53L1X time of flight sensor by Johann Obermeier 
+- Add support for VL53L1X time of flight sensor by Johann Obermeier

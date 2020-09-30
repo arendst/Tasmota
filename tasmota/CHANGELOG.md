@@ -4,9 +4,8 @@
 
 ### 9.0.0.1 20200930
 
-- Change redesigning ESP8266 GPIO internal numbering in line with ESP32
 - Remove auto config update for all Friendlynames and Switchtopic from versions before 8.x
-  Valid migration path is from 7.x to 8.x to 9.x
+- Change redesigning ESP8266 GPIO internal representation in line with ESP32
 
 ### 8.5.0.1 20200907
 
