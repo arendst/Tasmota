@@ -1516,23 +1516,38 @@ bool JsonTemplate(char* dataBuf)
   }
   JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
   if (arr) {
-    for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
 #ifdef ESP8266
-      Settings.user_template.gp.io[i] = arr[i].getUInt();
-#else  // ESP32
-      uint16_t gpio = arr[i].getUInt();
-      if (gpio == (AGPIO(GPIO_NONE) +1)) {
-        gpio = AGPIO(GPIO_USER);
+    if (!arr[13].getUInt()) {  // Old template
+
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TPL: Converting template ..."));
+
+      uint8_t template8[sizeof(mytmplt8285)] = { GPIO_NONE };
+      for (uint32_t i = 0; i < ARRAY_SIZE(template8) -1; i++) {
+        template8[i] = arr[i].getUInt();
       }
-      Settings.user_template.gp.io[i] = gpio;
+      val = root[PSTR(D_JSON_FLAG)];
+      if (val) {
+        template8[ARRAY_SIZE(template8) -1] = val.getUInt() & 0x0F;
+      }
+      TemplateConvert(template8, Settings.user_template.gp.io);
+      Settings.user_template.flag.data = 0;
+    } else {
 #endif
+      for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
+        uint16_t gpio = arr[i].getUInt();
+        if (gpio == (AGPIO(GPIO_NONE) +1)) {
+          gpio = AGPIO(GPIO_USER);
+        }
+        Settings.user_template.gp.io[i] = gpio;
+      }
+      val = root[PSTR(D_JSON_FLAG)];
+      if (val) {
+        Settings.user_template.flag.data = val.getUInt();
+      }
     }
+#ifdef ESP8266
   }
-  val = root[PSTR(D_JSON_FLAG)];
-  if (val) {
-    uint32_t flag = val.getUInt();
-    memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
-  }
+#endif
   val = root[PSTR(D_JSON_BASE)];
   if (val) {
     uint32_t base = val.getUInt();
