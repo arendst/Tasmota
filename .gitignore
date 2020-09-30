@@ -4,6 +4,7 @@
 *.pyc
 
 ## Project files ######
+.platformio
 .pioenvs
 .piolibdeps
 .clang_complete
