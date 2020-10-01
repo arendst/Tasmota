@@ -27,15 +27,15 @@ const char kHAssJsonSensorTypes[] PROGMEM =
   D_JSON_APPARENT_POWERUSAGE "|Battery|" D_JSON_CURRENT "|" D_JSON_DISTANCE "|" D_JSON_FREQUENCY "|" D_JSON_HUMIDITY "|" D_JSON_ILLUMINANCE "|"
   D_JSON_MOISTURE "|PB0.3|PB0.5|PB1|PB2.5|PB5|PB10|PM1|PM2.5|PM10|" D_JSON_POWERFACTOR "|" D_JSON_POWERUSAGE "|" D_JSON_TOTAL_START_TIME "|"
   D_JSON_REACTIVE_POWERUSAGE "|" D_JSON_TODAY "|" D_JSON_TOTAL "|" D_JSON_VOLTAGE "|" D_JSON_WEIGHT "|" D_JSON_YESTERDAY "|"
-  D_JSON_CO2 "|" D_JSON_ECO2 "|" D_JSON_TVOC "|" D_COLOR_RED "|" D_COLOR_GREEN "|" D_COLOR_BLUE"|" D_CCT "|" D_PROXIMITY "|Ambient|";
+  D_JSON_CO2 "|" D_JSON_ECO2 "|" D_JSON_TVOC "|Red|Green|Blue|CCT|" D_PROXIMITY "|";
 
 
 const char kHAssJsonSensorUnits[] PROGMEM =
   "||||"
-  "VA|%|A|Cm|Hz|%|LX|"
+  "VA|%|A|cm|Hz|%|lux|"
   "%|ppd|ppd|ppd|ppd|ppd|ppd|µg/m³|µg/m³|µg/m³|Cos φ|W| |"
-  "VAr|kWh|kWh|V|Kg|kWh|"
-  "ppm|ppm|ppb|R|G|B|" D_UNIT_KELVIN "| |LX|";
+  "VAr|kWh|kWh|V|kg|kWh|"
+  "ppm|ppm|ppb|R|G|B|" D_UNIT_KELVIN "| |";
 
 const char kHAssJsonSensorDevCla[] PROGMEM =
   "dev_cla\":\"temperature|ic\":\"mdi:weather-rainy|dev_cla\":\"pressure|dev_cla\":\"pressure|"
@@ -193,8 +193,8 @@ const char HASS_DISCOVER_DEVICE[] PROGMEM =                         // Basic par
   "\"tp\":[\"%s\",\"%s\",\"%s\"],"                                  // Topics for command, stat and tele
   "\"rl\":[%s],\"swc\":[%s],\"btn\":[%s],"                          // Inputs / Outputs
   "\"so\":{\"11\":%d,\"13\":%d,\"17\":%d,\"20\":%d,"                // SetOptions
-  "\"30\":%d,\"37\":%d,\"68\":%d,\"73\":%d,\"80\":%d},"
-  "\"lt_st\":%d,\"ver\":1}";                                        // Light SubType, and Discovery version
+  "\"30\":%d,\"68\":%d,\"73\":%d,\"80\":%d},"
+  "\"lk\":%d,\"lt_st\":%d,\"ver\":1}";                              // Light SubType, and Discovery version
 
 void NewHAssDiscovery(void)
 {
@@ -239,10 +239,7 @@ void NewHAssDiscovery(void)
   // Full 12 chars MAC address as ID
   String mac_address = WiFi.macAddress();
   mac_address.replace(":", "");
-  //String mac_part = mac_address.substring(0);
   snprintf_P(unique_id, sizeof(unique_id), PSTR("%s"), mac_address.c_str());
-
-  //snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/discovery/%s/config"), unique_id);
   snprintf_P(stopic, sizeof(stopic), PSTR("tasmota/discovery/%s/config"), unique_id);
   GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_HASS_STATE));
 
@@ -253,13 +250,13 @@ void NewHAssDiscovery(void)
               stemp2, my_hostname, unique_id, ModuleName().c_str(), GetStateText(0), GetStateText(1), GetStateText(2), GetStateText(3),
               my_version, mqtt_topic, MQTT_FULLTOPIC, SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2, stemp3, stemp4, stemp5, Settings.flag.button_swap,
               Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked, Settings.flag.hass_light,
-              light_controller.isCTRGBLinked(), Settings.flag3.pwm_multi_channels, Settings.flag3.mqtt_buttons, Settings.flag3.shutter_mode, Light.subtype);
+              Settings.flag3.pwm_multi_channels, Settings.flag3.mqtt_buttons, Settings.flag3.shutter_mode, light_controller.isCTRGBLinked(), Light.subtype);
   }
   MqttPublish(stopic, true);
 
   if (!Settings.flag.hass_discovery) {
     snprintf_P(stopic, sizeof(stopic), PSTR("tasmota/discovery/%s/sensors"), unique_id);
-    Response_P(PSTR("{"));
+    Response_P(PSTR("{\"sn\":"));
     MqttShowSensor();
     ResponseAppend_P(PSTR(",\"ver\":1}"));
     MqttPublish(stopic, true);
@@ -967,7 +964,7 @@ void HAssDiscovery(void)
 
   if (Settings.flag.hass_discovery || (1 == hass_mode))
   { // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
-    hass_mode = 2;
+    hass_mode = 2; // Needed for generating bluetooth entities for MI_ESP32
     // Send info about buttons
     HAssAnnounceButtons();
 
@@ -986,7 +983,7 @@ void HAssDiscovery(void)
     // Send info about status sensor
     HAssAnnounceDeviceInfoAndStatusSensor();
     masterlog_level = 0; // Restores weblog level
-    hass_mode = 3;
+    hass_mode = 3; // Needed for generating bluetooth entities for MI_ESP32
   }
 }
 
@@ -1074,6 +1071,7 @@ bool Xdrv12(uint8_t function)
         if (!hass_init_step)
         {
           HAssDiscovery(); // Scheduled discovery using available resources
+          NewHAssDiscovery(); // Send the topics for Home Assistant Official Integration
         }
       }
       else if (Settings.flag.hass_discovery && Settings.tele_period)
@@ -1093,9 +1091,9 @@ bool Xdrv12(uint8_t function)
     case FUNC_MQTT_INIT:
       hass_mode = 0;      // Discovery only if Settings.flag.hass_discovery is set
       hass_init_step = 2; // Delayed discovery
-      if (!Settings.flag.hass_discovery) {
-        NewHAssDiscovery();
-      }
+      // if (!Settings.flag.hass_discovery) {
+      //   NewHAssDiscovery();
+      // }
       break;
 
     case FUNC_MQTT_SUBSCRIBE:
