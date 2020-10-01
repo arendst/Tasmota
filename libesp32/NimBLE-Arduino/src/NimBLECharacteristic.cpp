@@ -16,15 +16,17 @@
 #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
 #include "NimBLECharacteristic.h"
-#include "NimBLE2902.h"
 #include "NimBLE2904.h"
 #include "NimBLEDevice.h"
 #include "NimBLELog.h"
 
 #define NULL_HANDLE (0xffff)
+#define NIMBLE_SUB_NOTIFY   0x0001
+#define NIMBLE_SUB_INDICATE 0x0002
 
 static NimBLECharacteristicCallbacks defaultCallback;
 static const char* LOG_TAG = "NimBLECharacteristic";
+
 
 /**
  * @brief Construct a characteristic
@@ -58,6 +60,9 @@ NimBLECharacteristic::NimBLECharacteristic(const NimBLEUUID &uuid, uint16_t prop
  * @brief Destructor.
  */
 NimBLECharacteristic::~NimBLECharacteristic() {
+    for(auto &it : m_dscVec) {
+        delete it;
+    }
 } // ~NimBLECharacteristic
 
 
@@ -65,6 +70,7 @@ NimBLECharacteristic::~NimBLECharacteristic() {
  * @brief Create a new BLE Descriptor associated with this characteristic.
  * @param [in] uuid - The UUID of the descriptor.
  * @param [in] properties - The properties of the descriptor.
+ * @param [in] max_len - The max length in bytes of the descriptor value.
  * @return The new BLE descriptor.
  */
 NimBLEDescriptor* NimBLECharacteristic::createDescriptor(const char* uuid, uint32_t properties, uint16_t max_len) {
@@ -76,25 +82,15 @@ NimBLEDescriptor* NimBLECharacteristic::createDescriptor(const char* uuid, uint3
  * @brief Create a new BLE Descriptor associated with this characteristic.
  * @param [in] uuid - The UUID of the descriptor.
  * @param [in] properties - The properties of the descriptor.
+ * @param [in] max_len - The max length in bytes of the descriptor value.
  * @return The new BLE descriptor.
  */
 NimBLEDescriptor* NimBLECharacteristic::createDescriptor(const NimBLEUUID &uuid, uint32_t properties, uint16_t max_len) {
     NimBLEDescriptor* pDescriptor = nullptr;
     if(uuid == NimBLEUUID(uint16_t(0x2902))) {
-        if(!(m_properties & BLE_GATT_CHR_F_NOTIFY) && !(m_properties & BLE_GATT_CHR_F_INDICATE)) {
-            assert(0 && "Cannot create 2902 descriptior without characteristic notification or indication property set");
-        }
-        // We cannot have more than one 2902 descriptor, if it's already been created just return a pointer to it.
-        pDescriptor = getDescriptorByUUID(uuid);
-        if(pDescriptor == nullptr) {
-            pDescriptor = new NimBLE2902(this);
-        } else {
-            return pDescriptor;
-        }
-
+        assert(0 && "0x2902 descriptors cannot be manually created");
     } else if (uuid == NimBLEUUID(uint16_t(0x2904))) {
         pDescriptor = new NimBLE2904(this);
-
     } else {
         pDescriptor = new NimBLEDescriptor(uuid, properties, max_len, this);
     }
@@ -106,8 +102,8 @@ NimBLEDescriptor* NimBLECharacteristic::createDescriptor(const NimBLEUUID &uuid,
 
 /**
  * @brief Return the BLE Descriptor for the given UUID if associated with this characteristic.
- * @param [in] descriptorUUID The UUID of the descriptor that we wish to retrieve.
- * @return The BLE Descriptor.  If no such descriptor is associated with the characteristic, nullptr is returned.
+ * @param [in] uuid The UUID of the descriptor that we wish to retrieve.
+ * @return pointer to the NimBLEDescriptor. If no such descriptor is associated with the characteristic, nullptr is returned.
  */
 NimBLEDescriptor* NimBLECharacteristic::getDescriptorByUUID(const char* uuid) {
     return getDescriptorByUUID(NimBLEUUID(uuid));
@@ -116,8 +112,8 @@ NimBLEDescriptor* NimBLECharacteristic::getDescriptorByUUID(const char* uuid) {
 
 /**
  * @brief Return the BLE Descriptor for the given UUID if associated with this characteristic.
- * @param [in] descriptorUUID The UUID of the descriptor that we wish to retrieve.
- * @return The BLE Descriptor.  If no such descriptor is associated with the characteristic, nullptr is returned.
+ * @param [in] uuid The UUID of the descriptor that we wish to retrieve.
+ * @return pointer to the NimBLEDescriptor. If no such descriptor is associated with the characteristic, nullptr is returned.
  */
 NimBLEDescriptor* NimBLECharacteristic::getDescriptorByUUID(const NimBLEUUID &uuid) {
     for (auto &it : m_dscVec) {
@@ -138,6 +134,10 @@ uint16_t NimBLECharacteristic::getHandle() {
 } // getHandle
 
 
+/**
+ * @brief Get the properties of the characteristic.
+ * @return The properties of the characteristic.
+ */
 uint16_t NimBLECharacteristic::getProperties() {
     return m_properties;
 } // getProperties
@@ -162,7 +162,7 @@ NimBLEUUID NimBLECharacteristic::getUUID() {
 
 /**
  * @brief Retrieve the current value of the characteristic.
- * @return A pointer to storage containing the current characteristic value.
+ * @return A std::string containing the current characteristic value.
  */
 std::string NimBLECharacteristic::getValue(time_t *timestamp) {
     portENTER_CRITICAL(&m_valMux);
@@ -189,12 +189,16 @@ size_t NimBLECharacteristic::getDataLength() {
 }
 
 
+/**
+ * @brief STATIC callback to handle events from the NimBLE stack.
+ */
 int NimBLECharacteristic::handleGapEvent(uint16_t conn_handle, uint16_t attr_handle,
                              struct ble_gatt_access_ctxt *ctxt,
                              void *arg)
 {
     const ble_uuid_t *uuid;
     int rc;
+    struct ble_gap_conn_desc desc;
     NimBLECharacteristic* pCharacteristic = (NimBLECharacteristic*)arg;
 
     NIMBLE_LOGD(LOG_TAG, "Characteristic %s %s event", pCharacteristic->getUUID().toString().c_str(),
@@ -207,7 +211,10 @@ int NimBLECharacteristic::handleGapEvent(uint16_t conn_handle, uint16_t attr_han
                 // If the packet header is only 8 bytes this is a follow up of a long read
                 // so we don't want to call the onRead() callback again.
                 if(ctxt->om->om_pkthdr_len > 8) {
+                    rc = ble_gap_conn_find(conn_handle, &desc);
+                    assert(rc == 0);
                     pCharacteristic->m_pCallbacks->onRead(pCharacteristic);
+                    pCharacteristic->m_pCallbacks->onRead(pCharacteristic, &desc);
                 }
 
                 portENTER_CRITICAL(&pCharacteristic->m_valMux);
@@ -233,14 +240,15 @@ int NimBLECharacteristic::handleGapEvent(uint16_t conn_handle, uint16_t attr_han
                     if((len + next->om_len) > BLE_ATT_ATTR_MAX_LEN) {
                         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
                     }
-                    memcpy(&buf[len-1], next->om_data, next->om_len);
+                    memcpy(&buf[len], next->om_data, next->om_len);
                     len += next->om_len;
                     next = SLIST_NEXT(next, om_next);
                 }
-
+                rc = ble_gap_conn_find(conn_handle, &desc);
+                assert(rc == 0);
                 pCharacteristic->setValue(buf, len);
                 pCharacteristic->m_pCallbacks->onWrite(pCharacteristic);
-
+                pCharacteristic->m_pCallbacks->onWrite(pCharacteristic, &desc);
                 return 0;
             }
             default:
@@ -253,70 +261,70 @@ int NimBLECharacteristic::handleGapEvent(uint16_t conn_handle, uint16_t attr_han
 
 
 /**
- * @brief Set the subscribe status for this characteristic.
- * This will maintain a map of subscribed clients and their indicate/notify status.
- * @return N/A
+ * @brief Get the number of clients subscribed to the characteristic.
+ * @returns Number of clients subscribed to notifications / indications.
+ */
+size_t NimBLECharacteristic::getSubscribedCount() {
+    return m_subscribedVec.size();
+}
+
+
+/**
+ * @brief Set the subscribe status for this characteristic.\n
+ * This will maintain a vector of subscribed clients and their indicate/notify status.
  */
 void NimBLECharacteristic::setSubscribe(struct ble_gap_event *event) {
-    uint16_t subVal = 0;
-    if(event->subscribe.cur_notify) {
-        subVal |= NIMBLE_DESC_FLAG_NOTIFY;
-    }
-    if(event->subscribe.cur_indicate) {
-        subVal |= NIMBLE_DESC_FLAG_INDICATE;
-    }
-
-    if(m_pTaskData != nullptr) {
-        m_pTaskData->rc = (subVal & NIMBLE_DESC_FLAG_INDICATE) ? 0 :
-                          NimBLECharacteristicCallbacks::Status::ERROR_INDICATE_DISABLED;
-        xTaskNotifyGive(m_pTaskData->task);
-    }
-
-    NIMBLE_LOGI(LOG_TAG, "New subscribe value for conn: %d val: %d",
-                         event->subscribe.conn_handle, subVal);
-
-    NimBLE2902* p2902 = (NimBLE2902*)getDescriptorByUUID(uint16_t(0x2902));
-    if(p2902 == nullptr){
-        ESP_LOGE(LOG_TAG, "No 2902 descriptor found for %s",
-        std::string(getUUID()).c_str());
+    ble_gap_conn_desc desc;
+    if(ble_gap_conn_find(event->subscribe.conn_handle, &desc) != 0) {
         return;
     }
 
-    p2902->setNotifications(subVal & NIMBLE_DESC_FLAG_NOTIFY);
-    p2902->setIndications(subVal & NIMBLE_DESC_FLAG_INDICATE);
-    p2902->m_pCallbacks->onWrite(p2902);
+    uint16_t subVal = 0;
+    if(event->subscribe.cur_notify > 0 && (m_properties & NIMBLE_PROPERTY::NOTIFY)) {
+        subVal |= NIMBLE_SUB_NOTIFY;
+    }
+    if(event->subscribe.cur_indicate && (m_properties & NIMBLE_PROPERTY::INDICATE)) {
+        subVal |= NIMBLE_SUB_INDICATE;
+    }
 
+    if(m_pTaskData != nullptr) {
+        m_pTaskData->rc = (subVal & NIMBLE_SUB_INDICATE) ? 0 :
+                          NimBLECharacteristicCallbacks::Status::ERROR_INDICATE_DISABLED;
+        xTaskNotifyGive(m_pTaskData->task);
+    }
+    
+    NIMBLE_LOGI(LOG_TAG, "New subscribe value for conn: %d val: %d",
+                         event->subscribe.conn_handle, subVal);
 
-    auto it = p2902->m_subscribedVec.begin();
-    for(;it != p2902->m_subscribedVec.end(); ++it) {
-        if((*it).conn_id == event->subscribe.conn_handle) {
+    m_pCallbacks->onSubscribe(this, &desc, subVal);
+
+    auto it = m_subscribedVec.begin();
+    for(;it != m_subscribedVec.end(); ++it) {
+        if((*it).first == event->subscribe.conn_handle) {
             break;
         }
     }
 
     if(subVal > 0) {
-        if(it == p2902->m_subscribedVec.end()) {
-            chr_sub_status_t client_sub;
-            client_sub.conn_id = event->subscribe.conn_handle;
-            client_sub.sub_val = subVal;
-            p2902->m_subscribedVec.push_back(client_sub);
+        if(it == m_subscribedVec.end()) {
+            m_subscribedVec.push_back({event->subscribe.conn_handle, subVal});
             return;
         }
 
-        (*it).sub_val = subVal;
+        (*it).second = subVal;
 
-    } else if(it != p2902->m_subscribedVec.end()) {
-        p2902->m_subscribedVec.erase(it);
-        p2902->m_subscribedVec.shrink_to_fit();
+    } else if(it != m_subscribedVec.end()) {
+        m_subscribedVec.erase(it);
+        m_subscribedVec.shrink_to_fit();
     }
+    
 }
 
 
 /**
- * @brief Send an indication.
- * An indication is a transmission of up to the first 20 bytes of the characteristic value.  An indication
- * will block waiting a positive confirmation from the client.
- * @return N/A
+ * @brief Send an indication.\n
+ * An indication is a transmission of up to the first 20 bytes of the characteristic value.\n
+ * An indication will block waiting for a positive confirmation from the client.
  */
 void NimBLECharacteristic::indicate() {
     NIMBLE_LOGD(LOG_TAG, ">> indicate: length: %d", getDataLength());
@@ -325,23 +333,24 @@ void NimBLECharacteristic::indicate() {
 } // indicate
 
 /**
- * @brief Send a notify.
- * A notification is a transmission of up to the first 20 bytes of the characteristic value.  An notification
- * will not block; it is a fire and forget.
- * @return N/A.
+ * @brief Send a notification.\n
+ * A notification is a transmission of up to the first 20 bytes of the characteristic value.\n
+ * A notification will not block; it is a fire and forget.
+ * @param[in] is_notification if true sends a notification, false sends an indication.
  */
 void NimBLECharacteristic::notify(bool is_notification) {
     NIMBLE_LOGD(LOG_TAG, ">> notify: length: %d", getDataLength());
 
-    NimBLE2902* p2902 = (NimBLE2902*)getDescriptorByUUID(uint16_t(0x2902));
 
-    if(p2902 == nullptr) {
+    if(!(m_properties & NIMBLE_PROPERTY::NOTIFY) &&
+       !(m_properties & NIMBLE_PROPERTY::INDICATE))
+    {
         NIMBLE_LOGE(LOG_TAG,
                     "<< notify-Error; Notify/indicate not enabled for characterisitc: %s",
                     std::string(getUUID()).c_str());
     }
 
-    if (p2902->m_subscribedVec.size() == 0) {
+    if (m_subscribedVec.size() == 0) {
         NIMBLE_LOGD(LOG_TAG, "<< notify: No clients subscribed.");
         return;
     }
@@ -355,18 +364,18 @@ void NimBLECharacteristic::notify(bool is_notification) {
                   (m_properties & BLE_GATT_CHR_F_READ_ENC);
     int rc = 0;
 
-    for (auto &it : p2902->m_subscribedVec) {
-        uint16_t _mtu = getService()->getServer()->getPeerMTU(it.conn_id);
+    for (auto &it : m_subscribedVec) {
+        uint16_t _mtu = getService()->getServer()->getPeerMTU(it.first);
 
         // check if connected and subscribed
-        if(_mtu == 0 || it.sub_val == 0) {
+        if(_mtu == 0 || it.second == 0) {
             continue;
         }
 
         // check if security requirements are satisfied
         if(reqSec) {
             struct ble_gap_conn_desc desc;
-            rc = ble_gap_conn_find(it.conn_id, &desc);
+            rc = ble_gap_conn_find(it.first, &desc);
             if(rc != 0 || !desc.sec_state.encrypted) {
                 continue;
             }
@@ -376,13 +385,13 @@ void NimBLECharacteristic::notify(bool is_notification) {
             NIMBLE_LOGW(LOG_TAG, "- Truncating to %d bytes (maximum notify size)", _mtu - 3);
         }
 
-        if(is_notification && (!(it.sub_val & NIMBLE_DESC_FLAG_NOTIFY))) {
+        if(is_notification && (!(it.second & NIMBLE_SUB_NOTIFY))) {
             NIMBLE_LOGW(LOG_TAG,
             "Sending notification to client subscribed to indications, sending indication instead");
             is_notification = false;
         }
 
-        if(!is_notification && (!(it.sub_val & NIMBLE_DESC_FLAG_INDICATE))) {
+        if(!is_notification && (!(it.second & NIMBLE_SUB_INDICATE))) {
             NIMBLE_LOGW(LOG_TAG,
             "Sending indication to client subscribed to notification, sending notification instead");
             is_notification = true;
@@ -399,7 +408,7 @@ void NimBLECharacteristic::notify(bool is_notification) {
             ble_task_data_t taskData = {nullptr, xTaskGetCurrentTaskHandle(),0, nullptr};
             m_pTaskData = &taskData;
 
-            rc = ble_gattc_indicate_custom(it.conn_id, m_handle, om);
+            rc = ble_gattc_indicate_custom(it.first, m_handle, om);
             if(rc != 0){
                 statusRC = NimBLECharacteristicCallbacks::Status::ERROR_GATT;
             } else {
@@ -418,7 +427,7 @@ void NimBLECharacteristic::notify(bool is_notification) {
                 statusRC = NimBLECharacteristicCallbacks::Status::ERROR_INDICATE_FAILURE;
             }
         } else {
-            rc = ble_gattc_notify_custom(it.conn_id, m_handle, om);
+            rc = ble_gattc_notify_custom(it.first, m_handle, om);
             if(rc == 0) {
                 statusRC = NimBLECharacteristicCallbacks::Status::SUCCESS_NOTIFY;
             } else {
@@ -435,7 +444,8 @@ void NimBLECharacteristic::notify(bool is_notification) {
 
 /**
  * @brief Set the callback handlers for this characteristic.
- * @param [in] pCallbacks An instance of a callbacks structure used to define any callbacks for the characteristic.
+ * @param [in] pCallbacks An instance of a NimBLECharacteristicCallbacks class\n
+ * used to define any callbacks for the characteristic.
  */
 void NimBLECharacteristic::setCallbacks(NimBLECharacteristicCallbacks* pCallbacks) {
     if (pCallbacks != nullptr){
@@ -473,11 +483,9 @@ void NimBLECharacteristic::setValue(const uint8_t* data, size_t length) {
 
 
 /**
- * @brief Set the value of the characteristic from string data.
- * We set the value of the characteristic from the bytes contained in the
- * string.
- * @param [in] Set the value of the characteristic.
- * @return N/A.
+ * @brief Set the value of the characteristic from string data.\n
+ * We set the value of the characteristic from the bytes contained in the string.
+ * @param [in] value the std::string value of the characteristic.
  */
 void NimBLECharacteristic::setValue(const std::string &value) {
     setValue((uint8_t*)(value.data()), value.length());
@@ -515,6 +523,14 @@ void NimBLECharacteristicCallbacks::onRead(NimBLECharacteristic* pCharacteristic
     NIMBLE_LOGD("NimBLECharacteristicCallbacks", "onRead: default");
 } // onRead
 
+/**
+ * @brief Callback function to support a read request.
+ * @param [in] pCharacteristic The characteristic that is the source of the event.
+ * @param [in] desc The connection description struct that is associated with the peer that performed the read.
+ */
+void NimBLECharacteristicCallbacks::onRead(NimBLECharacteristic* pCharacteristic, ble_gap_conn_desc* desc) {
+    NIMBLE_LOGD("NimBLECharacteristicCallbacks", "onRead: default");
+} // onRead
 
 /**
  * @brief Callback function to support a write request.
@@ -524,6 +540,14 @@ void NimBLECharacteristicCallbacks::onWrite(NimBLECharacteristic* pCharacteristi
     NIMBLE_LOGD("NimBLECharacteristicCallbacks", "onWrite: default");
 } // onWrite
 
+/**
+ * @brief Callback function to support a write request.
+ * @param [in] pCharacteristic The characteristic that is the source of the event.
+ * @param [in] desc The connection description struct that is associated with the peer that performed the write.
+ */
+void NimBLECharacteristicCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, ble_gap_conn_desc* desc) {
+    NIMBLE_LOGD("NimBLECharacteristicCallbacks", "onWrite: default");
+} // onWrite
 
 /**
  * @brief Callback function to support a Notify request.
@@ -537,12 +561,31 @@ void NimBLECharacteristicCallbacks::onNotify(NimBLECharacteristic* pCharacterist
 /**
  * @brief Callback function to support a Notify/Indicate Status report.
  * @param [in] pCharacteristic The characteristic that is the source of the event.
- * @param [in] s Status of the notification/indication
- * @param [in] code Additional code of underlying errors
+ * @param [in] s Status of the notification/indication.
+ * @param [in] code Additional return code from the NimBLE stack.
  */
 void NimBLECharacteristicCallbacks::onStatus(NimBLECharacteristic* pCharacteristic, Status s, int code) {
     NIMBLE_LOGD("NimBLECharacteristicCallbacks", "onStatus: default");
 } // onStatus
+
+
+/**
+ * @brief Callback function called when a client changes subscription status.
+ * @param [in] pCharacteristic The characteristic that is the source of the event.
+ * @param [in] desc The connection description struct that is associated with the client.
+ * @param [in] subValue The subscription status:
+ * * 0 = Un-Subscribed
+ * * 1 = Notifications
+ * * 2 = Indications
+ * * 3 = Notifications and Indications
+ */
+void NimBLECharacteristicCallbacks::onSubscribe(NimBLECharacteristic* pCharacteristic,
+                                                ble_gap_conn_desc* desc,
+                                                uint16_t subValue)
+{
+    NIMBLE_LOGD("NimBLECharacteristicCallbacks", "onSubscribe: default");
+}
+
 
 #endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 #endif /* CONFIG_BT_ENABLED */

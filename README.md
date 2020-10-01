@@ -9,6 +9,7 @@ _Written for PlatformIO with limited support for Arduino IDE._
 [![Chat](https://img.shields.io/discord/479389167382691863.svg)](https://discord.gg/Ks2Kzd4)
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/arendst/Tasmota.svg)](http://isitmaintained.com/project/arendst/Tasmota "Average time to resolve an issue")
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/arendst/Tasmota.svg)](http://isitmaintained.com/project/arendst/Tasmota "Percentage of issues still open")
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/arendst/Tasmota)
 
 If you like **Tasmota**, give it a star, or fork it and contribute!
 

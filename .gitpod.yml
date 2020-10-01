@@ -1,3 +1,13 @@
 tasks:
-  - before: pip3 install -U platformio
-    command: platformio run -e tasmota
+  - command: platformio run -e tasmota
+
+image:
+  file: .gitpod.Dockerfile
+
+vscode:
+  extensions:
+    - ms-vscode.cpptools@0.26.3:u3GsZ5PK12Ddr79vh4TWgQ==
+    - eamodio.gitlens@10.2.1:e0IYyp0efFqVsrZwsIe8CA==
+    - LaurentTreguier.uncrustify@2.18.0:/k8Osjj/XSuz09F+pEu7wg==
+    - Atishay-Jain.All-Autocomplete@0.0.23:fbZNfSpnd8XkAHGfAPS2rA==
+    - 2gua.rainbow-brackets@0.0.6:Tbu8dTz0i+/bgcKQTQ5b8g==

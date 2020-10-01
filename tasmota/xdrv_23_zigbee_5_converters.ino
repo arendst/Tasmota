@@ -106,16 +106,16 @@ enum Cx_cluster_short {
   Cx0000, Cx0001, Cx0002, Cx0003, Cx0004, Cx0005, Cx0006, Cx0007,
   Cx0008, Cx0009, Cx000A, Cx000B, Cx000C, Cx000D, Cx000E, Cx000F,
   Cx0010, Cx0011, Cx0012, Cx0013, Cx0014, Cx001A, Cx0020, Cx0100,
-  Cx0101, Cx0102, Cx0300, Cx0400, Cx0401, Cx0402, Cx0403, Cx0404,
-  Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
+  Cx0101, Cx0102, Cx0201, Cx0300, Cx0400, Cx0401, Cx0402, Cx0403,
+  Cx0404, Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
 };
 
 const uint16_t Cx_cluster[] PROGMEM = {
   0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
   0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
   0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x001A, 0x0020, 0x0100,
-  0x0101, 0x0102, 0x0300, 0x0400, 0x0401, 0x0402, 0x0403, 0x0404,
-  0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
+  0x0101, 0x0102, 0x0201, 0x0300, 0x0400, 0x0401, 0x0402, 0x0403,
+  0x0404, 0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
 };
 
 uint16_t CxToCluster(uint8_t cx) {
@@ -124,6 +124,16 @@ uint16_t CxToCluster(uint8_t cx) {
   }
   return 0xFFFF;
 }
+
+uint8_t ClusterToCx(uint16_t cluster) {
+  for (uint8_t i=0; i<ARRAY_SIZE(Cx_cluster); i++) {
+    if (pgm_read_word(&Cx_cluster[i]) == cluster) {
+      return i;
+    }
+  }
+  return 0xFF;
+}
+
 // list of post-processing directives
 const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0000, 0x0000,  Z_(ZCLVersion),           1 },
@@ -393,6 +403,25 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zoctstr,  Cx0102, 0x0018,  Z_(IntermediateSetpointsLift),1 },
   { Zoctstr,  Cx0102, 0x0019,  Z_(IntermediateSetpointsTilt),1 },
 
+  // Thermostat
+  { Zint16,   Cx0201, 0x0000,  Z_(LocalTemperature),  -100 },
+  { Zint16,   Cx0201, 0x0001,  Z_(OutdoorTemperature),-100 },
+  { Zuint8,   Cx0201, 0x0007,  Z_(PICoolingDemand),      1 },
+  { Zuint8,   Cx0201, 0x0008,  Z_(PIHeatingDemand),      1 },
+  { Zint8,    Cx0201, 0x0010,  Z_(LocalTemperatureCalibration), -10 },
+  { Zint16,   Cx0201, 0x0011,  Z_(OccupiedCoolingSetpoint), -100 },
+  { Zint16,   Cx0201, 0x0012,  Z_(OccupiedHeatingSetpoint), -100 },
+  { Zint16,   Cx0201, 0x0013,  Z_(UnoccupiedCoolingSetpoint), -100 },
+  { Zint16,   Cx0201, 0x0014,  Z_(UnoccupiedHeatingSetpoint), -100 },
+  { Zmap8,    Cx0201, 0x001A,  Z_(RemoteSensing),        1 },
+  { Zenum8,   Cx0201, 0x001B,  Z_(ControlSequenceOfOperation), 1 },
+  { Zenum8,   Cx0201, 0x001C,  Z_(SystemMode),           1 },
+  // below is Eurotronic specific
+  { Zenum8,   Cx0201, 0x4000, Z_(TRVMode),               1 },
+  { Zuint8,   Cx0201, 0x4001, Z_(SetValvePosition),      1 },
+  { Zuint8,   Cx0201, 0x4002, Z_(EurotronicErrors),      1 },
+  { Zint16,   Cx0201, 0x4003, Z_(CurrentTemperatureSetPoint), -100 },
+
   // Color Control cluster
   { Zuint8,   Cx0300, 0x0000,  Z_(Hue),                  1 },
   { Zuint8,   Cx0300, 0x0001,  Z_(Sat),                  1 },
@@ -456,6 +485,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zint16,   Cx0403, 0x0012,  Z_(PressureMaxScaledValue),       1 },    //
   { Zuint16,  Cx0403, 0x0013,  Z_(PressureScaledTolerance),      1 },    //
   { Zint8,    Cx0403, 0x0014,  Z_(PressureScale),                1 },    //
+  { Zint16,   Cx0403, 0xFF00,  Z_(SeaPressure),                  1 },     // Pressure at Sea Level, Tasmota specific
   { Zunk,     Cx0403, 0xFFFF,  Z_(),                    0 },     // Remove all other Pressure values
 
   // Flow Measurement cluster
@@ -544,6 +574,25 @@ const __FlashStringHelper* zigbeeFindAttributeByName(const char *command,
   return nullptr;
 }
 
+//
+// Find attribute details: Name, Type, Multiplier by cuslter/attr_id
+//
+const __FlashStringHelper* zigbeeFindAttributeById(uint16_t cluster, uint16_t attr_id,
+                                      uint8_t *attr_type, int8_t *multiplier) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+    const Z_AttributeConverter *converter = &Z_PostProcess[i];
+    uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
+    uint16_t conv_attr_id = pgm_read_word(&converter->attribute);
+
+    if ((conv_cluster == cluster) && (conv_attr_id == attr_id)) {
+      if (multiplier)   { *multiplier = pgm_read_byte(&converter->multiplier); }
+      if (attr_type)    { *attr_type  = pgm_read_byte(&converter->type); }
+      return (const __FlashStringHelper*) (Z_strings + pgm_read_word(&converter->name_offset));
+    }
+  }
+  return nullptr;
+}
+
 class ZCLFrame {
 public:
 
@@ -613,6 +662,7 @@ public:
 
   void parseReportAttributes(Z_attribute_list& attr_list);
   void generateSyntheticAttributes(Z_attribute_list& attr_list);
+  void computeSyntheticAttributes(Z_attribute_list& attr_list);
   void generateCallBacks(Z_attribute_list& attr_list);
   void parseReadAttributes(Z_attribute_list& attr_list);
   void parseReadAttributesResponse(Z_attribute_list& attr_list);
@@ -1044,6 +1094,9 @@ void ZCLFrame::parseReportAttributes(Z_attribute_list& attr_list) {
   }
 }
 
+//
+// Extract attributes hidden in other compound attributes
+//
 void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
   // scan through attributes and apply specific converters
   for (auto &attr : attr_list) {
@@ -1063,6 +1116,48 @@ void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
       case 0x01010055:
       case 0x01010508:
         syntheticAqaraVibration(attr_list, attr);
+        break;
+    }
+  }
+}
+
+//
+// Compute new attributes based on the standard set
+// Note: both function are now split to compute on extracted attributes
+//
+void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
+  // scan through attributes and apply specific converters
+  for (auto &attr : attr_list) {
+    if (attr.key_is_str) { continue; }    // pass if key is a name
+    uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
+
+    switch (ccccaaaa) {      // 0xccccaaaa . c=cluster, a=attribute
+      case 0x00010020:       // BatteryVoltage
+        if (attr_list.countAttribute(0x0001,0x0021) == 0) {   // if it does not already contain BatteryPercentage
+          uint32_t mv = attr.getUInt()*100;
+          attr_list.addAttribute(0x0001, 0x0021).setUInt(toPercentageCR2032(mv) * 2);
+        }
+        break;
+      case 0x02010008:    // Pi Heating Demand - solve Eutotronic bug
+        {
+          const char * manufacturer_c = zigbee_devices.getManufacturerId(_srcaddr);  // null if unknown
+          String manufacturerId((char*) manufacturer_c);
+          if (manufacturerId.equals(F("Eurotronic"))) {
+            // Eurotronic does not report 0..100 but 0..255, including 255 which is normally an ivalid value
+            uint8_t valve = attr.getUInt();
+            if (attr.isNone()) { valve = 255; }
+            uint8_t valve_100 = changeUIntScale(valve, 0, 255, 0, 100);
+            attr.setUInt(valve_100);
+          }
+        }
+        break;
+      case 0x04030000:    // Pressure
+        {
+          int16_t pressure = attr.getInt();
+          int16_t pressure_sealevel = (pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0f), 5.255f)) - 21.6f;
+          attr_list.addAttribute(0x0403, 0xFF00).setInt(pressure_sealevel);
+          // We create a synthetic attribute 0403/FF00 to indicate sea level
+        }
         break;
     }
   }
@@ -1095,35 +1190,30 @@ void ZCLFrame::generateCallBacks(Z_attribute_list& attr_list) {
 // Set timers to read back values.
 // If it's a device address, also set a timer for reachability test
 void sendHueUpdate(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint = 0) {
-  int32_t z_cat = -1;
-  uint32_t wait_ms = 0;
+  uint32_t wait_ms = 0xFFFF;
 
   switch (cluster) {
     case 0x0006:
-      z_cat = Z_CAT_READ_0006;
       wait_ms = 200;    // wait 0.2 s
       break;
     case 0x0008:
-      z_cat = Z_CAT_READ_0008;
       wait_ms = 1050;   // wait 1.0 s
       break;
     case 0x0102:
-      z_cat = Z_CAT_READ_0102;
       wait_ms = 10000;   // wait 10.0 s
       break;
     case 0x0300:
-      z_cat = Z_CAT_READ_0300;
       wait_ms = 1050;   // wait 1.0 s
       break;
     default:
       break;
   }
-  if (z_cat >= 0) {
+  if (0xFFFF != wait_ms) {
     if ((BAD_SHORTADDR != shortaddr) && (0 == endpoint)) {
       endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
     }
     if ((BAD_SHORTADDR == shortaddr) || (endpoint)) {   // send if group address or endpoint is known
-      zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms, cluster, endpoint, z_cat, 0 /* value */, &Z_ReadAttrCallback);
+      zigbee_devices.queueTimer(shortaddr, groupaddr, wait_ms, cluster, endpoint, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
       if (BAD_SHORTADDR != shortaddr) {      // reachability test is not possible for group addresses, since we don't know the list of devices in the group
         zigbee_devices.setTimer(shortaddr, groupaddr, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, cluster, endpoint, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
       }
@@ -1170,16 +1260,27 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
 
 // ZCL_CONFIGURE_REPORTING_RESPONSE
 void ZCLFrame::parseConfigAttributes(Z_attribute_list& attr_list) {
-  uint32_t i = 0;
   uint32_t len = _payload.len();
-  uint8_t  status = _payload.get8(i);
 
-  Z_attribute_list attr_config_response;
-  attr_config_response.addAttribute(F("Status")).setUInt(status);
-  attr_config_response.addAttribute(F("StatusMsg")).setStr(getZigbeeStatusMessage(status).c_str());
+  Z_attribute_list attr_config_list;
+  for (uint32_t i=0; len >= i+4; i+=4) {
+    uint8_t  status = _payload.get8(i);
+    uint16_t attr_id = _payload.get8(i+2);
+
+    Z_attribute_list attr_config_response;
+    attr_config_response.addAttribute(F("Status")).setUInt(status);
+    attr_config_response.addAttribute(F("StatusMsg")).setStr(getZigbeeStatusMessage(status).c_str());
+
+    const __FlashStringHelper* attr_name = zigbeeFindAttributeById(_cluster_id, attr_id, nullptr, nullptr);
+    if (attr_name) {
+      attr_config_list.addAttribute(attr_name).setStrRaw(attr_config_response.toString(true).c_str());
+    } else {
+      attr_config_list.addAttribute(_cluster_id, attr_id).setStrRaw(attr_config_response.toString(true).c_str());
+    }
+  }
 
   Z_attribute &attr_1 = attr_list.addAttribute(F("ConfigResponse"));
-  attr_1.setStrRaw(attr_config_response.toString(true).c_str());
+  attr_1.setStrRaw(attr_config_list.toString(true).c_str());
 }
 
 // ZCL_READ_REPORTING_CONFIGURATION_RESPONSE
@@ -1459,7 +1560,7 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
     //     presentValue = x + 128 = 180º flip to side x on top
     //     presentValue = x + 256 = push/slide cube while side x is on top
     //     presentValue = x + 512 = double tap while side x is on top
-  } else if (modelId.startsWith(F("lumi.remote"))) {   // only for Aqara button
+  } else if (modelId.startsWith(F("lumi.remote")) || modelId.startsWith(F("lumi.sensor_switch"))) {   // only for Aqara buttons WXKG11LM & WXKG12LM
     int32_t val = attr.getInt();
     const __FlashStringHelper *aqara_click = F("click");
     const __FlashStringHelper *aqara_action = F("action");
@@ -1474,8 +1575,17 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
       case 2:
         attr_list.addAttribute(aqara_click).setStr(PSTR("double"));
         break;
+      case 16:
+        attr_list.addAttribute(aqara_action).setStr(PSTR("hold"));
+        break;
+      case 17:
+        attr_list.addAttribute(aqara_action).setStr(PSTR("release"));
+        break;
+      case 18:
+        attr_list.addAttribute(aqara_action).setStr(PSTR("shake"));
+        break;
       case 255:
-        attr_list.addAttribute(aqara_click).setStr(PSTR("release"));
+        attr_list.addAttribute(aqara_action).setStr(PSTR("release"));
         break;
       default:
         attr_list.addAttribute(aqara_click).setUInt(val);
@@ -1534,11 +1644,10 @@ void ZCLFrame::syntheticAqaraVibration(class Z_attribute_list &attr_list, class 
 }
 
 /// Publish a message for `"Occupancy":0` when the timer expired
-int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+void Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   Z_attribute_list attr_list;
   attr_list.addAttribute(F(OCCUPANCY)).setUInt(0);
   zigbee_devices.jsonPublishNow(shortaddr, attr_list);
-  return 0;  // Fix GCC 10.1 warning
 }
 
 // ======================================================================
@@ -1593,6 +1702,11 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
         case 0x00060000:
         case 0x00068000: device.setPower(attr.getBool());                             break;
         case 0x00080000: device.dimmer = uval16;                                      break;
+        case 0x02010000: device.temperature = fval * 10 + 0.5f;                       break;
+        case 0x02010008: device.th_setpoint = uval16;                                 break;
+        case 0x02010012: device.temperature_target = fval * 10 + 0.5f;                break;
+        case 0x02010007: device.th_setpoint = uval16;                                 break;
+        case 0x02010011: device.temperature_target = fval * 10 + 0.5f;                break;
         case 0x03000000: device.hue = changeUIntScale(uval16, 0, 254, 0, 360);        break;
         case 0x03000001: device.sat = uval16;                                         break;
         case 0x03000003: device.x = uval16;                                           break;
@@ -1600,6 +1714,7 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
         case 0x03000007: device.ct = uval16;                                          break;
         case 0x03000008: device.colormode = uval16;                                   break;
         case 0x04020000: device.temperature = fval * 10 + 0.5f;                       break;
+        case 0x0403FF00: device.pressure = fval + 0.5f;                               break;  // give priority to sea level
         case 0x04030000: device.pressure = fval + 0.5f;                               break;
         case 0x04050000: device.humidity = fval + 0.5f;                               break;
         case 0x0B040505: device.mains_voltage = uval16;                               break;
@@ -1614,6 +1729,80 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
       }
     }
   }
+}
+
+//
+// Given an attribute string, retrieve all attribute details.
+// Input: the attribute has a key name, either: <cluster>/<attr> or <cluster>/<attr>%<type> or "<attribute_name>"
+// Ex: "0008/0000", "0008/0000%20", "Dimmer"
+// Use:
+//    Z_attribute attr;
+//    attr.setKeyName("0008/0000%20")
+//    if (Z_parseAttributeKey(attr)) {
+//      // ok
+//    }
+//
+// Output:
+//   The `attr` attribute has the correct cluster, attr_id, attr_type, attr_multiplier
+//   Note: the attribute value is unchanged and unparsed
+//
+// Note: if the type is specified in the key, the multiplier is not applied, no conversion happens
+bool Z_parseAttributeKey(class Z_attribute & attr) {
+  // check if the name has the format "XXXX/YYYY" where XXXX is the cluster, YYYY the attribute id
+  // alternative "XXXX/YYYY%ZZ" where ZZ is the type (for unregistered attributes)
+  if (attr.key_is_str) {
+    const char * key = attr.key.key;
+    char * delimiter = strchr(key, '/');
+    char * delimiter2 = strchr(key, '%');
+    if (delimiter) {
+      uint16_t attr_id = 0xFFFF;
+      uint16_t cluster_id = 0xFFFF;
+      uint8_t  type_id = Zunk;
+
+      cluster_id = strtoul(key, &delimiter, 16);
+      if (!delimiter2) {
+        attr_id = strtoul(delimiter+1, nullptr, 16);
+      } else {
+        attr_id = strtoul(delimiter+1, &delimiter2, 16);
+        type_id = strtoul(delimiter2+1, nullptr, 16);
+      }
+      attr.setKeyId(cluster_id, attr_id);
+      attr.attr_type = type_id;
+    }
+  }
+  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("cluster_id = 0x%04X, attr_id = 0x%04X"), cluster_id, attr_id);
+
+  // do we already know the type, i.e. attribute and cluster are also known
+  if (Zunk == attr.attr_type) {
+    // scan attributes to find by name, and retrieve type
+    for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+      const Z_AttributeConverter *converter = &Z_PostProcess[i];
+      bool match = false;
+      uint16_t local_attr_id = pgm_read_word(&converter->attribute);
+      uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
+      uint8_t  local_type_id = pgm_read_byte(&converter->type);
+      int8_t   local_multiplier = pgm_read_byte(&converter->multiplier);
+      // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Try cluster = 0x%04X, attr = 0x%04X, type_id = 0x%02X"), local_cluster_id, local_attr_id, local_type_id);
+
+      if (!attr.key_is_str) {
+        if ((attr.key.id.cluster == local_cluster_id) && (attr.key.id.attr_id == local_attr_id)) {
+          attr.attr_type = local_type_id;
+          break;
+        }
+      } else if (pgm_read_word(&converter->name_offset)) {
+        const char * key = attr.key.key;
+        // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Comparing '%s' with '%s'"), attr_name, converter->name);
+        if (0 == strcasecmp_P(key, Z_strings + pgm_read_word(&converter->name_offset))) {
+          // match
+          attr.setKeyId(local_cluster_id, local_attr_id);
+          attr.attr_type = local_type_id;
+          attr.attr_multiplier = local_multiplier;
+          break;
+        }
+      }
+    }
+  }
+  return (Zunk != attr.attr_type) ? true : false;
 }
 
 #endif // USE_ZIGBEE

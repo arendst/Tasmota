@@ -33,13 +33,15 @@
  */
 class NimBLEAddress {
 public:
+    NimBLEAddress();
     NimBLEAddress(ble_addr_t address);
-    NimBLEAddress(uint8_t address[6]);
-    NimBLEAddress(const std::string &stringAddress);
-    NimBLEAddress(const uint64_t &address);
-    bool           equals(const NimBLEAddress &otherAddress) const;
-    const uint8_t*       getNative() const;
-    std::string    toString() const;
+    NimBLEAddress(uint8_t address[6], uint8_t type = BLE_ADDR_PUBLIC);
+    NimBLEAddress(const std::string &stringAddress, uint8_t type = BLE_ADDR_PUBLIC);
+    NimBLEAddress(const uint64_t &address, uint8_t type = BLE_ADDR_PUBLIC);
+    bool            equals(const NimBLEAddress &otherAddress) const;
+    const uint8_t*  getNative() const;
+    std::string     toString() const;
+    uint8_t         getType() const;
 
     bool operator   ==(const NimBLEAddress & rhs) const;
     bool operator   !=(const NimBLEAddress & rhs) const;
@@ -48,6 +50,7 @@ public:
 
 private:
     uint8_t        m_address[6];
+    uint8_t        m_addrType;
 };
 
 #endif /* CONFIG_BT_ENABLED */

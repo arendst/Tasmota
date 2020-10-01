@@ -1328,17 +1328,14 @@ void ThermostatDebug(uint8_t ctr_output)
 #endif // DEBUG_THERMOSTAT
 
 void ThermostatGetLocalSensor(uint8_t ctr_output) {
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject& root = jsonBuffer.parseObject((const char*)mqtt_data);
-  if (root.success()) {
-    const char* value_c = root[THERMOSTAT_SENSOR_NAME]["Temperature"];
-    if (value_c != NULL && strlen(value_c) > 0 && (isdigit(value_c[0]) || (value_c[0] == '-' && isdigit(value_c[1])) ) ) {
-      int16_t value;
+  JsonParser parser(mqtt_data);
+  JsonParserObject root = parser.getRootObject();
+  if (root) {
+    JsonParserToken value_token = root[PSTR(THERMOSTAT_SENSOR_NAME)].getObject()[PSTR("Temperature")]; 
+    if (value_token.isNum()) {
+      int16_t value = value_token.getFloat() * 10;
       if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
-        value = (int16_t)ThermostatFahrenheitToCelsius((int32_t)(CharToFloat(value_c) * 10), TEMP_CONV_ABSOLUTE);
-      }
-      else {
-        value = (int16_t)(CharToFloat(value_c) * 10);
+        value = ThermostatFahrenheitToCelsius(value, TEMP_CONV_ABSOLUTE);
       }
       if ( (value >= -1000) 
         && (value <= 1000)

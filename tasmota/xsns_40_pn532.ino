@@ -495,7 +495,7 @@ void PN532_ScanForTag(void)
 #endif // USE_PN532_DATA_FUNCTION
 
 #ifdef USE_PN532_DATA_FUNCTION
-      ResponseTime_P(PSTR(",\"PN532\":{\"UID\":\"%s\", \"DATA\":\"%s\"}}"), uids, card_datas);
+      ResponseTime_P(PSTR(",\"PN532\":{\"UID\":\"%s\", \"" D_JSON_DATA "\":\"%s\"}}"), uids, card_datas);
 #else
       ResponseTime_P(PSTR(",\"PN532\":{\"UID\":\"%s\"}}"), uids);
 #endif // USE_PN532_DATA_FUNCTION

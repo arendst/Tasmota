@@ -330,6 +330,12 @@ String buffer;
   if (!buffer.startsWith(F("354"))) {
     goto exit;
   }
+
+  buffer = F("MIME-Version: 1.0\r\n");
+  client->print(buffer);
+  buffer = F("Content-Type: Multipart/mixed; boundary=frontier\r\n");
+  client->print(buffer);
+
   buffer = F("From: ");
   buffer += from;
   client->println(buffer);
@@ -349,6 +355,7 @@ String buffer;
 #ifdef DEBUG_EMAIL_PORT
   AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
+
 
 #ifdef USE_SCRIPT
   if (*msg=='*' && *(msg+1)==0) {
@@ -378,9 +385,98 @@ exit:
 }
 
 void xsend_message_txt(char *msg) {
-  g_client->println(msg);
-}
+#ifdef DEBUG_EMAIL_PORT
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),msg);
+#endif
+#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+  if (*msg=='@') {
+    msg++;
+    attach_File(msg);
+  } else if (*msg=='&') {
+    msg++;
+    attach_Array(msg);
+  } else {
+    g_client->print(F("--frontier\r\n"));
+    g_client->print(F("Content-Type: text/plain\r\n\r\n"));
+    g_client->println(msg);
+    g_client->print(F("\r\n--frontier\r\n"));
+  }
 #else
+  g_client->print(F("--frontier\r\n"));
+  g_client->print(F("Content-Type: text/plain\r\n\r\n"));
+  g_client->println(msg);
+  g_client->print(F("\r\n--frontier\r\n"));
+#endif
+}
+
+#if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+#include <LittleFS.h>
+extern FS *fsp;
+
+void attach_File(char *path) {
+  g_client->print(F("--frontier\r\n"));
+  g_client->print(F("Content-Type: text/plain\r\n"));
+  char buff[64];
+  char *cp = path;
+  while (*cp=='/') cp++;
+  File file = fsp->open(path, "r");
+  if (file) {
+    sprintf_P(buff,PSTR("Content-Disposition: attachment; filename=\"%s\"\r\n\r\n"), cp);
+    g_client->write(buff);
+    uint16_t flen = file.size();
+    uint8_t fbuff[64];
+    uint16_t blen = sizeof(fbuff);
+    while (flen>0) {
+      file.read(fbuff, blen);
+      flen -= blen;
+      g_client->write(fbuff, blen);
+      if (flen<blen) blen = flen;
+    }
+    file.close();
+  } else {
+    g_client->print(F("\r\n\r\nfile not found!\r\n"));
+  }
+  g_client->print(F("\r\n--frontier\r\n"));
+}
+
+float *get_array_by_name(char *name, uint16_t *alen);
+void flt2char(float num, char *nbuff);
+
+void attach_Array(char *aname) {
+  float *array = 0;
+  uint16_t alen;
+  array = get_array_by_name(aname, &alen);
+  g_client->print(F("--frontier\r\n"));
+  g_client->print(F("Content-Type: text/plain\r\n"));
+  if (array && alen) {
+#ifdef DEBUG_EMAIL_PORT
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("array found %d"),alen);
+#endif
+    char buff[64];
+    sprintf_P(buff,PSTR("Content-Disposition: attachment; filename=\"%s.txt\"\r\n\r\n"), aname);
+    g_client->write(buff);
+    float *fp=array;
+    for (uint32_t cnt = 0; cnt<alen; cnt++) {
+      // export array as tab gelimited text
+      char nbuff[16];
+      flt2char(*fp++, nbuff);
+      if (cnt < (alen - 1)) {
+        strcat(nbuff,"\t");
+      } else {
+        strcat(nbuff,"\n");
+      }
+      g_client->write(nbuff, strlen(nbuff));
+    }
+  } else {
+    g_client->print(F("\r\n\r\narray not found!\r\n"));
+  }
+  g_client->print(F("\r\n--frontier\r\n"));
+}
+
+#endif // defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
+
+#else
+
 
 /*
  * Created by K. Suwatchai (Mobizt)
@@ -413,6 +509,9 @@ void script_send_email_body(void(*func)(char *));
 #define xPSTR(a) a
 //The Email Sending data object contains config and data to send
 SMTPData smtpData;
+#define MAX_ATTCHMENTS 8
+char *attachments[MAX_ATTCHMENTS];
+uint8_t num_attachments;
 
 //Callback function to get the Email sending status
 //void sendCallback(SendStatus info);
@@ -435,7 +534,7 @@ uint16_t SendMail(char *buffer) {
 
   // return if not enough memory
   uint32_t mem=ESP.getFreeHeap();
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("heap: %d"),mem);
+  //AddLog_P2(LOG_LEVEL_INFO, PSTR("heap: %d"),mem);
   if (mem<SEND_MAIL32_MINRAM) {
     return 4;
   }
@@ -462,6 +561,13 @@ uint16_t SendMail(char *buffer) {
   oparams[blen]=0;
 
   cmd=endcmd+1;
+
+
+  for (uint32_t cnt=0; cnt<MAX_ATTCHMENTS; cnt++) {
+    attachments[cnt]=0;
+  }
+  num_attachments=0;
+
 
   #ifdef DEBUG_EMAIL_PORT
     AddLog_P2(LOG_LEVEL_INFO, PSTR("mailsize: %d"),blen);
@@ -540,9 +646,10 @@ uint16_t SendMail(char *buffer) {
   }
   #endif
 
-  #ifdef DEBUG_EMAIL_PORT
+#ifdef DEBUG_EMAIL_PORT
   AddLog_P2(LOG_LEVEL_INFO, PSTR("%s - %s - %s - %s"),from,to,subject,cmd);
-  #endif
+#endif
+
 
   smtpData.setDebug(true);
 
@@ -598,9 +705,16 @@ uint16_t SendMail(char *buffer) {
 
   //Set the storage types to read the attach files (SD is default)
   //smtpData.setFileStorageType(MailClientStorageType::SPIFFS);
-#if defined (USE_SCRIPT) && defined(USE_SCRIPT_FATFS)
+
+#ifdef USE_SCRIPT_FATFS
+#if USE_SCRIPT_FATFS<0
+  smtpData.setFileStorageType(MailClientStorageType::FFat);
+#else
   smtpData.setFileStorageType(MailClientStorageType::SD);
 #endif
+#endif
+
+
   //smtpData.setSendCallback(sendCallback);
 
   //Start sending Email, can be set callback function to track the status
@@ -613,17 +727,59 @@ uint16_t SendMail(char *buffer) {
   }
   //Clear all data from Email object to free memory
   smtpData.empty();
-
+  for (uint32_t cnt=0; cnt<MAX_ATTCHMENTS; cnt++) {
+    if (attachments[cnt]) {
+      free(attachments[cnt]);
+      attachments[cnt]=0;
+    }
+  }
   exit:
   if (oparams) free(oparams);
   return status;
 }
 
+float *get_array_by_name(char *name, uint16_t *alen);
+void flt2char(float num, char *nbuff);
+
+void attach_Array(char *aname) {
+  float *array = 0;
+  uint16_t alen;
+  String ttstr = "";
+  array = get_array_by_name(aname, &alen);
+  if (array && alen) {
+    float *fp=array;
+    for (uint32_t cnt = 0; cnt<alen; cnt++) {
+      // export array as tab gelimited text
+      char nbuff[16];
+      flt2char(*fp++, nbuff);
+      if (cnt < (alen - 1)) {
+        strcat(nbuff,"\t");
+      } else {
+        strcat(nbuff,"\n");
+      }
+      ttstr += nbuff;
+    }
+
+    if (num_attachments<MAX_ATTCHMENTS) {
+      attachments[num_attachments] = (char*)malloc(ttstr.length()+1);
+      strcpy(attachments[num_attachments],ttstr.c_str());
+      char name[32];
+      sprintf(name,"%s.txt",aname);
+      smtpData.addAttachData(name, "text/plain",(uint8_t*)attachments[num_attachments],ttstr.length());
+      num_attachments++;
+    }
+  } else {
+    //g_client->print(F("\r\n\r\narray not found!\r\n"));
+  }
+}
 
 void send_message_txt(char *txt) {
-  if (*txt=='&') {
+  if (*txt=='@') {
     txt++;
     smtpData.addAttachFile(txt);
+  } else if (*txt=='&') {
+    txt++;
+    attach_Array(txt);
   } else if (*txt=='$') {
     txt++;
 #if defined(ESP32) && defined(USE_WEBCAM)

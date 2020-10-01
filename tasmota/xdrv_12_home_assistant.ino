@@ -29,6 +29,7 @@ const char kHAssJsonSensorTypes[] PROGMEM =
   D_JSON_REACTIVE_POWERUSAGE "|" D_JSON_TODAY "|" D_JSON_TOTAL "|" D_JSON_VOLTAGE "|" D_JSON_WEIGHT "|" D_JSON_YESTERDAY "|"
   D_JSON_CO2 "|" D_JSON_ECO2 "|" D_JSON_TVOC "|" D_COLOR_RED "|" D_COLOR_GREEN "|" D_COLOR_BLUE"|" D_CCT "|" D_PROXIMITY "|Ambient|";
 
+
 const char kHAssJsonSensorUnits[] PROGMEM =
   "||||"
   "VA|%|A|Cm|Hz|%|LX|"
@@ -44,7 +45,7 @@ const char kHAssJsonSensorDevCla[] PROGMEM =
   "dev_cla\":\"power|dev_cla\":\"power|dev_cla\":\"power|ic\":\"mdi:alpha-v-circle-outline|ic\":\"mdi:scale|dev_cla\":\"power|"
   "ic\":\"mdi:molecule-co2|ic\":\"mdi:molecule-co2|ic\":\"mdi:air-filter|"
   "ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:temperature-kelvin|ic\":\"mdi:ruler|dev_cla\":\"illuminance|";
-   //"ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|ic\":\"mdi:weather-windy|"
+
 // List of sensors ready for discovery
 
 const char HASS_DISCOVER_BASE[] PROGMEM =
@@ -58,8 +59,8 @@ const char HASS_DISCOVER_SENSOR[] PROGMEM =
 
 const char HASS_DISCOVER_SENSOR_LWT[] PROGMEM =
   ",\"avty_t\":\"%s\","                           // tele/dualr2/LWT
-  "\"pl_avail\":\"" D_ONLINE "\","                // Online
-  "\"pl_not_avail\":\"" D_OFFLINE "\"";           // Offline
+  "\"pl_avail\":\"" MQTT_LWT_ONLINE "\","         // Online
+  "\"pl_not_avail\":\"" MQTT_LWT_OFFLINE "\"";    // Offline
 
 const char HASS_DISCOVER_RELAY[] PROGMEM =
   ",\"cmd_t\":\"%s\","                            // cmnd/dualr2/POWER2
@@ -174,6 +175,100 @@ uint8_t hass_init_step = 0;
 uint8_t hass_mode = 0;
 int hass_tele_period = 0;
 
+// NEW DISCOVERY
+
+const char HASS_DISCOVER_DEVICE[] PROGMEM =                         // Basic parameters for Discovery
+  "{\"ip\":\"%s\","                                                 // IP Address
+  "\"dn\":\"%s\","                                                  // Device Name
+  "\"fn\":[%s],"                                                    // Friendly Names
+  "\"hn\":\"%s\","                                                  // Host Name
+  "\"mac\":\"%s\","                                                 // Full MAC as Device id
+  "\"md\":\"%s\","                                                  // Module Name
+  "\"ofln\":\"" MQTT_LWT_OFFLINE "\","                              // Payload Offline
+  "\"onln\":\"" MQTT_LWT_ONLINE "\","                               // Payload Online
+  "\"state\":[\"%s\",\"%s\",\"%s\",\"%s\"],"                        // State text for "OFF","ON","TOGGLE","HOLD"
+  "\"sw\":\"%s\","                                                  // Software Version
+  "\"t\":\"%s\","                                                   // Topic
+  "\"ft\":\"%s\","                                                  // Ful Topic
+  "\"tp\":[\"%s\",\"%s\",\"%s\"],"                                  // Topics for command, stat and tele
+  "\"rl\":[%s],\"swc\":[%s],\"btn\":[%s],"                          // Inputs / Outputs
+  "\"so\":{\"11\":%d,\"13\":%d,\"17\":%d,\"20\":%d,"                // SetOptions
+  "\"30\":%d,\"37\":%d,\"68\":%d,\"73\":%d,\"80\":%d},"
+  "\"lt_st\":%d,\"ver\":1}";                                        // Light SubType, and Discovery version
+
+void NewHAssDiscovery(void)
+{
+  char stopic[TOPSZ];
+  char stemp1[TOPSZ];
+  char stemp2[200];
+  char stemp3[TOPSZ];
+  char stemp4[TOPSZ];
+  char stemp5[TOPSZ];
+  char unique_id[30];
+  char *state_topic = stemp1;
+
+  stemp2[0] = '\0';
+  uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
+  for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
+    char fname[TOPSZ];
+    snprintf_P(fname, sizeof(fname), PSTR("\"%s\""), EscapeJSONString(SettingsText(SET_FRIENDLYNAME1 +i)).c_str());
+    snprintf_P(stemp2, sizeof(stemp2), PSTR("%s%s%s"), stemp2, (i > 0 ? "," : ""), (i < maxfn) ? fname : "null");
+  }
+
+  stemp3[0] = '\0';
+  uint32_t maxrl = (devices_present > MAX_RELAYS) ? MAX_RELAYS : (!devices_present) ? 1 : devices_present;
+  for (uint32_t i = 0; i < MAX_RELAYS; i++) {
+    snprintf_P(stemp3, sizeof(stemp3), PSTR("%s%s%d"), stemp3, (i > 0 ? "," : ""), (i < maxrl) ? (Settings.flag.hass_light ? 2 : 1) : 0);
+  }
+
+  stemp4[0] = '\0';
+  // Enable Discovery for Switches only if SwitchTopic is set to a custom name
+  auto discover_switches = (KeyTopicActive(1) && strcmp(SettingsText(SET_MQTT_SWITCH_TOPIC), mqtt_topic));
+  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
+    snprintf_P(stemp4, sizeof(stemp4), PSTR("%s%s%d"), stemp4, (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) & discover_switches) ? Settings.switchmode[i] : -1);
+  }
+
+  stemp5[0] = '\0';
+  // Enable Discovery for Buttons only if SetOption73 is enabled
+  for (uint32_t i = 0; i < MAX_KEYS; i++) {
+    snprintf_P(stemp5, sizeof(stemp5), PSTR("%s%s%d"), stemp5, (i > 0 ? "," : ""), (PinUsed(GPIO_KEY1, i) & Settings.flag3.mqtt_buttons));
+  }
+
+  mqtt_data[0] = '\0'; // Clear retained message
+
+  // Full 12 chars MAC address as ID
+  String mac_address = WiFi.macAddress();
+  mac_address.replace(":", "");
+  //String mac_part = mac_address.substring(0);
+  snprintf_P(unique_id, sizeof(unique_id), PSTR("%s"), mac_address.c_str());
+
+  //snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/discovery/%s/config"), unique_id);
+  snprintf_P(stopic, sizeof(stopic), PSTR("tasmota/discovery/%s/config"), unique_id);
+  GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_HASS_STATE));
+
+  // Send empty message if new discovery is disabled
+  masterlog_level = 4; // Hide topic on clean and remove use weblog 4 to see it
+  if (!Settings.flag.hass_discovery) {
+    Response_P(HASS_DISCOVER_DEVICE, WiFi.localIP().toString().c_str(), SettingsText(SET_DEVICENAME),
+              stemp2, my_hostname, unique_id, ModuleName().c_str(), GetStateText(0), GetStateText(1), GetStateText(2), GetStateText(3),
+              my_version, mqtt_topic, MQTT_FULLTOPIC, SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2, stemp3, stemp4, stemp5, Settings.flag.button_swap,
+              Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked, Settings.flag.hass_light,
+              light_controller.isCTRGBLinked(), Settings.flag3.pwm_multi_channels, Settings.flag3.mqtt_buttons, Settings.flag3.shutter_mode, Light.subtype);
+  }
+  MqttPublish(stopic, true);
+
+  if (!Settings.flag.hass_discovery) {
+    snprintf_P(stopic, sizeof(stopic), PSTR("tasmota/discovery/%s/sensors"), unique_id);
+    Response_P(PSTR("{"));
+    MqttShowSensor();
+    ResponseAppend_P(PSTR(",\"ver\":1}"));
+    MqttPublish(stopic, true);
+  }
+  masterlog_level = 0; // Restore WebLog state
+}
+
+// NEW DISCOVERY
+
 void TryResponseAppend_P(const char *format, ...)
 {
   va_list args;
@@ -216,6 +311,7 @@ void HAssAnnounceRelayLight(void)
   bool TuyaMod = false;                                 // Controls Tuya MCU modules
   bool PwmMod = false;                                  // Controls PWM_DIMMER module
   bool FanMod = false;                                  // Controls SONOFF_IFAN0X modules
+  uint8_t ShowTopic;                                    // Used to hide/unhide a topic during Discovery to spare some cpu load
 
   uint8_t dimmer = 1;
   uint8_t valid_relay = 0;
@@ -261,6 +357,8 @@ void HAssAnnounceRelayLight(void)
   TuyaDim = TuyaGetDpId((TUYA_MCU_FUNC_DIMMER) + active_device - 1);
 #endif //USE_TUYA_MCU
 
+    masterlog_level = ShowTopic = 4; // Hide topic on clean and remove use weblog 4 to see it
+
     bool RelayX = PinUsed(GPIO_REL1, i-1) || (valid_relay >= i) || (TuyaRel > 0 && TuyaMod) || (TuyaRelInv > 0 && TuyaMod); // Check if the gpio is configured as Relay or force it for Sonoff DUAL R1 with MCU and Tuya MCU
     is_topic_light = Settings.flag.hass_light && RelayX || light_type && !RelayX || PwmMod || (TuyaDim > 0 && TuyaMod); // SetOption30 - Enforce HAss autodiscovery as light
     mqtt_data[0] = '\0'; // Clear retained message
@@ -289,7 +387,9 @@ void HAssAnnounceRelayLight(void)
           char *command_topic = stemp1;
           char *state_topic = stemp2;
           char *availability_topic = stemp3;
-          masterlog_level = 0;
+
+          ShowTopic = 0;
+
           if (i > MAX_FRIENDLYNAMES) {
             snprintf_P(name, sizeof(name), PSTR("%s %d"), SettingsText(SET_FRIENDLYNAME1), i-1);
           } else {
@@ -363,8 +463,8 @@ void HAssAnnounceRelayLight(void)
         TryResponseAppend_P(PSTR("}"));
       }
     }
+    masterlog_level = ShowTopic;
     MqttPublish(stopic, true);
-    masterlog_level = 4;
   }
 }
 
@@ -377,13 +477,15 @@ void HAssAnnouncerTriggers(uint8_t device, uint8_t present, uint8_t key, uint8_t
   char stemp2[TOPSZ];
   char unique_id[30];
   char trigger2[8];
-
+  uint8_t ShowTopic; // Used to hide/unhide a topic during Discovery to spare some cpu load
   mqtt_data[0] = '\0'; // Clear retained message
 
   for (uint8_t i = trg_start; i <= trg_end; i++) {
     GetTextIndexed(trigger2, sizeof(trigger2), i, kHAssTriggerStringButtons);
     snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%d_%s"), ESP_getChipId(), key ? "SW" : "BTN", device + 1, key ? GetStateText(i) : trigger2);
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/device_automation/%s/config"), unique_id);
+
+    masterlog_level = ShowTopic = 4; // Hide topic on clean and remove use weblog 4 to see it
 
     if (Settings.flag.hass_discovery && present) {                // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
       char name[TOPSZ];        // friendlyname(33) + " " + "BTN" + " " + index
@@ -392,7 +494,7 @@ void HAssAnnouncerTriggers(uint8_t device, uint8_t present, uint8_t key, uint8_t
       char *state_topic = stemp1;
       char *availability_topic = stemp2;
       char jsoname[8];
-      masterlog_level = 0;
+      ShowTopic = 0; // Show the new generated topic
 
       GetPowerDevice(value_template, device + 1, sizeof(value_template), key + Settings.flag.device_index_enable);     // Force index for Switch 1, Index on Button1 is controlled by SetOption26 - Switch between POWER or POWER1
       snprintf_P(jsoname, sizeof(jsoname), PSTR("%s%d"), key ? "SWITCH" : "BUTTON", device + 1);
@@ -420,8 +522,8 @@ void HAssAnnouncerTriggers(uint8_t device, uint8_t present, uint8_t key, uint8_t
         }
       }
     }
+    masterlog_level = ShowTopic;
     MqttPublish(stopic, true);
-    masterlog_level = 4;
   }
 }
 
@@ -431,14 +533,18 @@ void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint
   char stemp1[TOPSZ];
   char stemp2[TOPSZ];
   char unique_id[30];
+  uint8_t ShowTopic; // Used to hide/unhide a topic during Discovery to spare some cpu load
+
   mqtt_data[0] = '\0'; // Clear retained message
+  masterlog_level = 4; // Hide topic on clean and remove use weblog 4 to see it
+
 
   snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_SW_%d"), ESP_getChipId(), device + 1);
   snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/binary_sensor/%s/config"), unique_id);
 
+  masterlog_level = ShowTopic = 4; // Hide topic on clean and remove use weblog 4 to see it
 
   if (Settings.flag.hass_discovery && present ) {    // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
-    masterlog_level = 0;
     if (!toggle || dual) {
       char name[TOPSZ];        // friendlyname(33) + " " + "BTN" + " " + index
       char value_template[33];
@@ -446,6 +552,8 @@ void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint
       char *state_topic = stemp1;
       char *availability_topic = stemp2;
       char jsoname[8];
+
+      ShowTopic = 0;
 
       GetPowerDevice(value_template, device + 1, sizeof(value_template), 1 + Settings.flag.device_index_enable); // Force index for Switch 1, Index on Button1 is controlled by SetOption26 - Switch between POWER or POWER1
       snprintf_P(jsoname, sizeof(jsoname), PSTR("SWITCH%d"), device + 1);
@@ -471,8 +579,9 @@ void HAssAnnouncerBinSensors(uint8_t device, uint8_t present, uint8_t dual, uint
       TryResponseAppend_P(PSTR("}"));
     }
   }
+  masterlog_level = ShowTopic;
   MqttPublish(stopic, true);
-  masterlog_level = 4;
+
 }
 
 void HAssAnnounceSwitches(void)
@@ -594,7 +703,7 @@ void HAssAnnounceButtons(void)
   }
 }
 
-void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const char *MultiSubName, uint8_t subqty, uint8_t subidx, uint8_t nested, const char* SubKey)
+void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const char *MultiSubName, uint8_t subqty, bool nested, const char* SubKey)
 {
   char stopic[TOPSZ];
   char stemp1[TOPSZ];
@@ -608,21 +717,20 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
   NoAlNumToUnderscore(subname, MultiSubName); //Replace all non alphaumeric characters to '_' to avoid topic name issues
   snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%s"), ESP_getChipId(), sensorname, subname);
   snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);
-
   if (Settings.flag.hass_discovery)
   {                     // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
     char name[TOPSZ]; // friendlyname(33) + " " + sensorname(20?) + " " + sensortype(20?)
     char prefix[TOPSZ];
     char *state_topic = stemp1;
     char *availability_topic = stemp2;
-    //bool LwtSensor = MQTT_LWT_DISCOVERY;
+     masterlog_level = 0; // Show the new generated topic
 
     GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_SENSOR));
     snprintf_P(name, sizeof(name), PSTR("%s %s %s"), SettingsText(SET_DEVICENAME), sensorname, MultiSubName);
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
 
     Response_P(HASS_DISCOVER_BASE, name, state_topic);
-    #ifdef DEEPSLEEP_LWT_HA_DISCOVERY
+#ifdef DEEPSLEEP_LWT_HA_DISCOVERY
     TryResponseAppend_P(HASS_DISCOVER_SENSOR_LWT, availability_topic);
 #else
     if (Settings.deepsleep == 0)
@@ -648,30 +756,19 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
         case 3:
           snprintf_P(param1, sizeof(param1), PSTR("%s"), PressureUnit().c_str());
           break;
-        // case 4:   // Speed. Default to km/h if not set to have a graph representation under HAss
-        // case 5:
-        // case 6:
-        // case 7:
-        //   if (Settings.flag2.speed_conversion == 0) {
-        //     snprintf_P(param1, sizeof(param1), PSTR("km/h"));
-        //   } else {
-        //     snprintf_P(param1, sizeof(param1), PSTR("%s"), SpeedUnit().c_str());
-        //   }
-        //   break;
        }
       char param2[50];
       GetTextIndexed(param2, sizeof(param2), sensor_index, kHAssJsonSensorDevCla);
       TryResponseAppend_P(HASS_DISCOVER_SENSOR, param1, param2, sensorname, subsensortype);
 
-      if (subidx) {
-        TryResponseAppend_P(PSTR("[%d]"), subqty -1);
-      }
     } else {
       TryResponseAppend_P(HASS_DISCOVER_SENSOR, " ", "ic\":\"mdi:eye", sensorname, subsensortype);
     }
-    if (nested) {
-      TryResponseAppend_P(PSTR("['%s']"), SubKey);
-    }
+
+    if (nested) { TryResponseAppend_P(PSTR("['%s']"), SubKey); }
+
+    if (subqty != 0) { TryResponseAppend_P(PSTR("[%d]"), subqty -1); }
+
     TryResponseAppend_P(PSTR("}}\"}"));
   }
   MqttPublish(stopic, true);
@@ -687,57 +784,66 @@ void HAssAnnounceSensors(void)
     tele_period = 2;                                 // Do not allow HA updates during next function call
     XsnsNextCall(FUNC_JSON_APPEND, hass_xsns_index); // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
     tele_period = tele_period_save;
+    size_t sensordata_len = strlen(mqtt_data);
+    char sensordata[sensordata_len+2];   // dynamically adjust the size
+    strcpy(sensordata, mqtt_data);    // we can use strcpy since the buffer has the right size
 
-    char sensordata[512]; // Copy because we need to write to mqtt_data
-    strlcpy(sensordata, mqtt_data, sizeof(sensordata));
+    // ******************* JSON TEST *******************
+    // char sensordata[512];
+    // snprintf_P(sensordata, sizeof(sensordata), PSTR("{\"ENERGY\":{\"TotalStartTime\":\"2018-11-23T15:33:47\",\"ExportTariff\":[0.000,0.017],\"Speed\":{\"Act\":\"NE\"}}}"));
+    // size_t sensordata_len = strlen(sensordata);
+    // ******************* JSON TEST *******************
 
-    if (strlen(sensordata))
+    if (sensordata_len > 0)
     {
+      // // We replace the leader ',' with '{'
       sensordata[0] = '{';
-      snprintf_P(sensordata, sizeof(sensordata), PSTR("%s}"), sensordata); // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
-      // USE THE FOLLOWING LINE TO TEST JSON
-      //snprintf_P(sensordata, sizeof(sensordata), PSTR("{\"APDS9960\":{\"Red\":282,\"Green\":252,\"Blue\":196,\"Ambient\":169,\"CCT\":4217,\"Proximity\":9}}"));
-      //snprintf_P(sensordata, sizeof(sensordata), PSTR("{\"ENERGY\":{\"TotalStartTime\":\"2018-11-23T15:33:47\",\"Total\":0.017,\"TotalTariff\":[0.000,0.017],\"Yesterday\":0.000,\"Today\":0.002,\"ExportActive\":0.000,\"ExportTariff\":[0.000,0.000],\"Period\":0.00,\"Power\":0.00,\"ApparentPower\":7.84,\"ReactivePower\":-7.21,\"Factor\":0.39,\"Frequency\":50.0,\"Voltage\":234.31,\"Current\":0.039,\"ImportActive\":12.580,\"ImportReactive\":0.002,\"ExportReactive\":39.131,\"PhaseAngle\":290.45}}"));
+      // // and we add a trailing '}' after the last '}'
+      sensordata[sensordata_len] = '}';
+      sensordata[sensordata_len+1] = '\0';
 
-      StaticJsonBuffer<500> jsonBuffer;
-      JsonObject &root = jsonBuffer.parseObject(sensordata);
-      if (!root.success())
+      JsonParser parser(sensordata);
+      JsonParserObject root = parser.getRootObject();
+      if (!root)
       {
-        AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s '%s'"), kHAssError3, sensordata);
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s '%s' (ERR1)"), kHAssError3, sensordata);
         continue;
       }
-      for (auto sensor : root)
+      for (auto sensor_key : root)
       {
-        const char *sensorname = sensor.key;
-        JsonObject &sensors = sensor.value.as<JsonObject>();
-        if (!sensors.success())
+        // sensor is of type JsonParserKey
+        const char *sensorname = sensor_key.getStr();
+        JsonParserObject sensors = sensor_key.getValue().getObject();
+
+        if (!sensors)
         {
-          AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s '%s'"), kHAssError3, sensordata);
+          AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s '%s' (ERR2)"), kHAssError3, sensorname);
           continue;
         }
 
-        for (auto subsensor : sensors)
+        for (auto subsensor_key_token : sensors)
         {
-          if (subsensor.value.is<JsonObject&>()) {
+          const char * subsensor_key = subsensor_key_token.getStr();
+          JsonParserToken subsensor = subsensor_key_token.getValue();
+          if (subsensor.isObject()) {
             // If there is a nested json on sensor data, second level entitites will be created
-            char NestedName[20];
+            JsonParserObject subsensors = subsensor.getObject();
             char NewSensorName[20];
-            snprintf_P(NestedName, sizeof(NestedName), PSTR("%s"), subsensor.key);
-            JsonObject& subsensors = subsensor.value.as<JsonObject>();
-            for (auto subsensor : subsensors) {
-              snprintf_P(NewSensorName, sizeof(NewSensorName), PSTR("%s %s"), NestedName, subsensor.key);
-              HAssAnnounceSensor(sensorname, NestedName, NewSensorName, 0, 0, 1, subsensor.key);
+            for (auto subsensor2_key : subsensors) {
+              snprintf_P(NewSensorName, sizeof(NewSensorName), PSTR("%s %s"), subsensor_key, subsensor2_key.getStr());
+              HAssAnnounceSensor(sensorname, subsensor_key, NewSensorName, 0, 1, subsensor2_key.getStr());
             }
-          } else if (subsensor.value.is<JsonArray&>()) {
+          } else if (subsensor.isArray()) {
             // If there is more than a value on sensor data, 'n' entitites will be created
-            JsonArray& subsensors = subsensor.value.as<JsonArray&>();
+            JsonParserArray subsensors = subsensor.getArray();
             uint8_t subqty = subsensors.size();
             char MultiSubName[20];
             for (int i = 1; i <= subqty; i++) {
-              snprintf_P(MultiSubName, sizeof(MultiSubName), PSTR("%s %d"), subsensor.key, i);
-              HAssAnnounceSensor(sensorname, subsensor.key, MultiSubName, i, 1, 0, subsensor.key);
+              snprintf_P(MultiSubName, sizeof(MultiSubName), PSTR("%s %d"), subsensor_key, i);
+              HAssAnnounceSensor(sensorname, subsensor_key, MultiSubName, i, 0, subsensor_key);
             }
-          } else { HAssAnnounceSensor(sensorname, subsensor.key, subsensor.key, 0, 0, 0, subsensor.key);}
+          } else {
+            HAssAnnounceSensor(sensorname, subsensor_key, subsensor_key, 0, 0, subsensor_key);}
         }
       }
     }
@@ -752,15 +858,18 @@ void HAssAnnounceShutters(void)
   char stemp1[TOPSZ];
   char stemp2[TOPSZ];
   char unique_id[30];
+  uint8_t ShowTopic; // Used to hide/unhide a topic during Discovery to spare some cpu load
 
   for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
     mqtt_data[0] = '\0'; // Clear retained message
+    masterlog_level = ShowTopic = 4; // Hide topic on clean and remove use weblog 4 to see it
+
 
     snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_SHT_%d"), ESP_getChipId(), i + 1);
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/cover/%s/config"), unique_id);
 
     if (Settings.flag.hass_discovery && Settings.flag3.shutter_mode && Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_RELAYS) {
-      masterlog_level = 0;
+       ShowTopic = 0; // Show the new generated topic
       if (i > MAX_FRIENDLYNAMES) {
         snprintf_P(stemp1, sizeof(stemp1), PSTR("%s Shutter %d"), SettingsText(SET_DEVICENAME), i + 1);
       } else {
@@ -783,8 +892,8 @@ void HAssAnnounceShutters(void)
       TryResponseAppend_P(PSTR("}"));
     }
 
+    masterlog_level = ShowTopic;
     MqttPublish(stopic, true);
-    masterlog_level = 4;
   }
 #endif
 }
@@ -795,9 +904,11 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
   char stemp1[TOPSZ];
   char stemp2[TOPSZ];
   char unique_id[30];
+  uint8_t ShowTopic; // Used to hide/unhide a topic during Discovery to spare some cpu load
+
   // Announce sensor
   mqtt_data[0] = '\0'; // Clear retained message
-
+  masterlog_level = ShowTopic = 4; // Hide topic on clean and remove use weblog 4 to see it
   // Clear or Set topic
   snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_status"), ESP_getChipId());
   snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);
@@ -808,7 +919,7 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
     char prefix[TOPSZ];
     char *state_topic = stemp1;
     char *availability_topic = stemp2;
-    masterlog_level = 0;
+    ShowTopic = 0; // Show the new generated topic
     snprintf_P(name, sizeof(name), PSTR("%s status"), SettingsText(SET_DEVICENAME));
     GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_HASS_STATE));
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
@@ -820,10 +931,12 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
                         ModuleName().c_str(), my_version, my_image);
     TryResponseAppend_P(PSTR("}"));
   }
+  masterlog_level = ShowTopic;
   MqttPublish(stopic, true);
+
   if (!Settings.flag.hass_discovery) {
     masterlog_level = 0;
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant Discovery disabled. "));
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant MQTT Discovery disabled."));
   }
 }
 
@@ -843,18 +956,18 @@ void HAssDiscovery(void)
 {
   // Configure Tasmota for default Home Assistant parameters to keep discovery message as short as possible
   if (Settings.flag.hass_discovery)
-  {                                         // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
-    Settings.flag.mqtt_response = 0;        // SetOption4  - Switch between MQTT RESULT or COMMAND - Response always as RESULT and not as uppercase command
-    Settings.flag.decimal_text = 1;         // SetOption17 - Switch between decimal or hexadecimal output - Respond with decimal color values
-    Settings.flag3.hass_tele_on_power = 1;  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT - send tele/STATE message as stat/RESULT
-                                            // the purpose of that is so that if HA is restarted, state in HA will be correct within one teleperiod otherwise state
-                                            // will not be correct until the device state is changed this is why in the patterns for switch and light, we tell HA to trigger on STATE, not RESULT.
-    //Settings.light_scheme = 0;            // To just control color it needs to be Scheme 0 (on hold due to new light configuration)
+  {                                           // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
+    Settings.flag.mqtt_response = 0;          // SetOption4  - Switch between MQTT RESULT or COMMAND - Response always as RESULT and not as uppercase command
+    Settings.flag.decimal_text = 1;           // SetOption17 - Switch between decimal or hexadecimal output - Respond with decimal color values
+    Settings.flag3.hass_tele_on_power = 1;    // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT - send tele/STATE message as stat/RESULT
+                                              // the purpose of that is so that if HA is restarted, state in HA will be correct within one teleperiod otherwise state
+                                              // will not be correct until the device state is changed this is why in the patterns for switch and light, we tell HA to trigger on STATE, not RESULT.
+    //Settings.light_scheme = 0;              // To just control color it needs to be Scheme 0 (on hold due to new light configuration)
   }
 
   if (Settings.flag.hass_discovery || (1 == hass_mode))
   { // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
-    masterlog_level = 4;
+    hass_mode = 2;
     // Send info about buttons
     HAssAnnounceButtons();
 
@@ -872,8 +985,8 @@ void HAssDiscovery(void)
 
     // Send info about status sensor
     HAssAnnounceDeviceInfoAndStatusSensor();
-
-    masterlog_level = Settings.weblog_level;
+    masterlog_level = 0; // Restores weblog level
+    hass_mode = 3;
   }
 }
 
@@ -885,10 +998,7 @@ void HAssDiscover(void)
 
 void HAssAnyKey(void)
 {
-  if (!Settings.flag.hass_discovery)
-  {
-    return;
-  } // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
+  if (!Settings.flag.hass_discovery) { return; } // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
 
   uint32_t key = (XdrvMailbox.payload >> 16) & 0xFF;   // 0 = Button, 1 = Switch
   uint32_t device = XdrvMailbox.payload & 0xFF;        // Device number or 1 if more Buttons than Devices
@@ -933,14 +1043,14 @@ bool HAssMqttLWT(void)
   if (Settings.flag.hass_discovery && (strncasecmp_P(XdrvMailbox.data, PSTR("online"), strlen("online")) == 0) && (XdrvMailbox.data_len == 6)) {
     MqttPublishTeleState();
     return true;
-  }
+  } else { return false; }
 }
 
 void HassLwtSubscribe(bool hasslwt)
 {
   char htopic[TOPSZ];
   snprintf_P(htopic, sizeof(htopic), PSTR(HOME_ASSISTANT_LWT_TOPIC));
-  if (hasslwt && Settings.flag.hass_discovery) {
+  if (hasslwt && (Settings.flag.hass_discovery)) {
     MqttSubscribe(htopic);
   } else { MqttUnsubscribe(htopic); }
 }
@@ -983,6 +1093,9 @@ bool Xdrv12(uint8_t function)
     case FUNC_MQTT_INIT:
       hass_mode = 0;      // Discovery only if Settings.flag.hass_discovery is set
       hass_init_step = 2; // Delayed discovery
+      if (!Settings.flag.hass_discovery) {
+        NewHAssDiscovery();
+      }
       break;
 
     case FUNC_MQTT_SUBSCRIBE:

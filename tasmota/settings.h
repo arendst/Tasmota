@@ -129,9 +129,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t virtual_ct_cw : 1;            // bit 25 (v8.4.0.1)  - SetOption107 - Virtual CT Channel - signals whether the hardware white is cold CW (true) or warm WW (false)
     uint32_t teleinfo_rawdata : 1;         // bit 26 (v8.4.0.2)  - SetOption108 - enable Teleinfo + Tasmota Energy device (0) or Teleinfo raw data only (1)
     uint32_t alexa_gen_1 : 1;              // bit 27 (v8.4.0.3)  - SetOption109 - Alexa gen1 mode - if you only have Echo Dot 2nd gen devices
-    uint32_t spare28 : 1;                  // bit 28
-    uint32_t spare29 : 1;                  // bit 29
-    uint32_t spare30 : 1;                  // bit 30
+    uint32_t zb_disable_autobind : 1;      // bit 28 (v8.5.0.1)  - SetOption110 - disable Zigbee auto-config when pairing new devices
+    uint32_t buzzer_freq_mode : 1;         // bit 29 (v8.5.0.1)  - SetOption111 - Use frequency output for buzzer pin instead of on/off signal
+    uint32_t zb_topic_fname : 1;           // bit 30 (v8.5.0.1)  - SetOption112 - Use friendly name in zigbee topic (use with SetOption89)
     uint32_t spare31 : 1;                  // bit 31
   };
 } SysBitfield4;
@@ -389,7 +389,7 @@ struct {
   uint8_t       display_font;              // 312
 
   char          ex_state_text[4][11];      // 313
-  uint8_t       ex_energy_power_delta;     // 33F - Free since 6.6.0.20
+  uint8_t       tuyamcu_topic;             // 33F Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
 
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
@@ -557,7 +557,7 @@ struct {
   uint16_t      dimmer_hw_min;             // E90
   uint16_t      dimmer_hw_max;             // E92
   uint32_t      deepsleep;                 // E94
-  uint16_t      ex2_energy_power_delta;    // E98 - Free since 8.4.0.3
+  uint16_t      hass_new_discovery;       // E98 - ex2_energy_power_delta on 8.4.0.3, replaced on 8.5.0.1
   uint8_t       shutter_motordelay[MAX_SHUTTERS];    // E9A
   int8_t        temp_comp;                 // E9E
   uint8_t       weight_change;             // E9F
@@ -609,12 +609,12 @@ struct {
   uint8_t       ledpwm_off;                // F40
   uint8_t       tcp_baudrate;              // F41
   uint8_t       fallback_module;           // F42
-
-  uint8_t       free_f43[1];               // F43
-
+  uint8_t       shutter_mode;              // F43
   uint16_t      energy_power_delta[3];     // F44
+  uint16_t      shutter_pwmrange[2][MAX_SHUTTERS];  // F4A
 
-  uint8_t       free_f4e[106];             // F4A - Decrement if adding new Setting variables just above and below
+  
+  uint8_t       free_f5a[89];             // F5A - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   SysBitfield5  flag5;                     // FB4

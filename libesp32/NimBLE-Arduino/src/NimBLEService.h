@@ -57,6 +57,7 @@ public:
 private:
     NimBLEService(const char* uuid, uint16_t numHandles, NimBLEServer* pServer);
     NimBLEService(const NimBLEUUID &uuid, uint16_t numHandles, NimBLEServer* pServer);
+    ~NimBLEService();
 
     friend class          NimBLEServer;
     friend class          NimBLEDevice;
@@ -65,7 +66,8 @@ private:
     NimBLEServer*         m_pServer;
     NimBLEUUID            m_uuid;
     uint16_t              m_numHandles;
-
+    ble_gatt_svc_def*     m_pSvcDef;
+    uint8_t               m_removed;
     std::vector<NimBLECharacteristic*> m_chrVec;
 
 }; // NimBLEService

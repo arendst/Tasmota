@@ -181,6 +181,44 @@ is_rpa_resolvable_by_peer_rec(struct ble_hs_dev_records *p_dev_rec, uint8_t *pee
     return false;
 }
 
+static void
+ble_rpa_replace_id_with_rand_addr(uint8_t *addr_type, uint8_t *peer_addr)
+{
+    struct ble_hs_dev_records *p_dev_rec;
+    ble_addr_t p_addr = {0};
+    struct ble_hs_conn *conn = NULL;
+
+    p_dev_rec = ble_rpa_find_peer_dev_rec(peer_addr);
+
+    if (p_dev_rec != NULL) {
+        if (memcmp(p_dev_rec->rand_addr, p_dev_rec->identity_addr, BLE_DEV_ADDR_LEN)) {
+            /* OTA address (before resolving) gets saved in RAND_ADDR when the peer
+             * record is fetched from resolving list. Replace peer address
+             * with rand_addr to maintain status quo for new pairing/encryption request. */
+            p_addr.type = *addr_type;
+            memcpy(&p_addr.val[0], peer_addr, BLE_DEV_ADDR_LEN);
+
+            ble_hs_lock();
+
+            conn = ble_hs_conn_find_by_addr(&p_addr);
+            /* Rewrite the peer address history in ble_hs_conn. Need to take
+             * this step to avoid taking wrong address during re-pairing
+             * process  */
+            if (conn != NULL) {
+                conn->bhc_peer_rpa_addr.type = p_dev_rec->rand_addr_type;
+                memcpy(&conn->bhc_peer_rpa_addr.val[0], p_dev_rec->rand_addr, BLE_DEV_ADDR_LEN);
+                conn->bhc_peer_addr.type = p_dev_rec->rand_addr_type;
+                memcpy(&conn->bhc_peer_addr.val[0], p_dev_rec->rand_addr, BLE_DEV_ADDR_LEN);
+                BLE_HS_LOG(DEBUG, "\n Replace Identity addr with random addr received at"
+                                  " start of the connection\n");
+            }
+
+            ble_hs_unlock();
+        }
+    }
+    return;
+}
+
 /* Add peer to peer device records.
  *
  * @return 0                    if added successfully,
@@ -227,6 +265,7 @@ ble_rpa_find_rl_from_peer_records(uint8_t *peer_addr, uint8_t *peer_addr_type)
 
         if (is_rpa_resolvable_by_peer_rec(p_dev_rec, peer_addr)) {
             memcpy(p_dev_rec->rand_addr, peer_addr, BLE_DEV_ADDR_LEN);
+            p_dev_rec->rand_addr_type = *peer_addr_type;
             rl = ble_hs_resolv_list_find(p_dev_rec->identity_addr);
             if (rl) {
                 memcpy(peer_addr, p_dev_rec->identity_addr, BLE_DEV_ADDR_LEN);
@@ -277,13 +316,10 @@ ble_rpa_replace_peer_params_with_rl(uint8_t *peer_addr, uint8_t *addr_type,
 
     if (is_rpa) {
         ble_hs_log_flat_buf(peer_addr, BLE_DEV_ADDR_LEN);
-        rl_tmp = ble_hs_resolv_list_find(peer_addr);
+        BLE_HS_LOG(DEBUG, "\n");
 
-        /* Try to find from your peer_device records, if RL doesn't
-         * exist */
-        if (rl_tmp == NULL) {
-            rl_tmp = ble_rpa_find_rl_from_peer_records(peer_addr, addr_type);
-        }
+        /* Try to find RL from your peer_device records */
+        rl_tmp = ble_rpa_find_rl_from_peer_records(peer_addr, addr_type);
     }
 
     if (rl != NULL) {
@@ -571,7 +607,7 @@ ble_hs_resolv_list_add(uint8_t *cmdbuf)
 int
 ble_hs_resolv_list_rmv(uint8_t addr_type, uint8_t *ident_addr)
 {
-    int position;
+    int position, rc = BLE_HS_ENOENT;
 
     /* Remove from IRK records */
     position = ble_hs_is_on_resolv_list(ident_addr, addr_type);
@@ -583,10 +619,15 @@ ble_hs_resolv_list_rmv(uint8_t addr_type, uint8_t *ident_addr)
                         ble_hs_resolv_entry));
         --g_ble_hs_resolv_data.rl_cnt;
 
-        return 0;
+        rc = 0;
     }
 
-    return BLE_HS_ENOENT;
+    /* As we are removing the RL record, it is needed to change
+     * peer_address to its latest received OTA address, this helps when existing bond at
+     * peer side is removed */
+    ble_rpa_replace_id_with_rand_addr(&addr_type, ident_addr);
+
+    return rc;
 }
 
 /**

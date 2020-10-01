@@ -66,6 +66,46 @@ uint8_t  Z_GetLastEndpoint(void) { return gZbLastMessage.endpoint; }
 
 /*********************************************************************************************\
  * 
+ * Class for attribute array of values
+ * This is a helper function to generate a clean list of unsigned ints
+ * 
+\*********************************************************************************************/
+
+class Z_json_array {
+public:
+
+  Z_json_array(): val("[]") {}     // start with empty array
+  void add(uint32_t uval32) {
+    // remove trailing ']'
+    val.remove(val.length()-1);
+    if (val.length() > 1) {      // if not empty, prefix with comma
+      val += ',';
+    }
+    val += uval32;
+    val += ']';
+  }
+  void addStrRaw(const char * sval) {
+    // remove trailing ']'
+    val.remove(val.length()-1);
+    if (val.length() > 1) {      // if not empty, prefix with comma
+      val += ',';
+    }
+    val += sval;
+    val += ']';
+  }
+  void addStr(const char * sval) {
+    addStrRaw(EscapeJSONString(sval).c_str());
+  }
+  String &toString(void) {
+    return val;
+  }
+
+private :
+  String val;
+};
+
+/*********************************************************************************************\
+ * 
  * Class for single attribute
  * 
 \*********************************************************************************************/
@@ -79,7 +119,10 @@ enum class Za_type : uint8_t {
   Za_float,    // float 32, uses fval
   // non-nummericals
   Za_raw,      // bytes buffer, uses bval
-  Za_str       // string, uses sval
+  Za_str,      // string, uses sval
+  // sub_objects
+  Za_obj,      // json sub-object
+  Za_arr,      // array sub-object (string add-only)
 };
 
 class Z_attribute {
@@ -90,22 +133,26 @@ public:
     struct {
       uint16_t cluster;
       uint16_t attr_id;
-    } id;
-    char * key;
+    }                   id;
+    char              * key;
   } key;
   // attribute value
   union {
-    uint32_t uval32;
-    int32_t  ival32;
-    float    fval;
-    SBuffer* bval;
-    char*    sval;
+    uint32_t            uval32;
+    int32_t             ival32;
+    float               fval;
+    SBuffer*            bval;
+    char*               sval;
+    class Z_attribute_list  * objval;
+    class Z_json_array      * arrval;
   } val;
-  Za_type       type;       // uint8_t in size, type of attribute, see above
-  bool          key_is_str;   // is the key a string?
-  bool          key_is_pmem;  // is the string in progmem, so we don't need to make a copy
-  bool          val_str_raw;  // if val is String, it is raw JSON and should not be escaped
-  uint8_t       key_suffix; // append a suffix to key (default is 1, explicitly output if >1)
+  Za_type       type;             // uint8_t in size, type of attribute, see above
+  bool          key_is_str;       // is the key a string?
+  bool          key_is_pmem;      // is the string in progmem, so we don't need to make a copy
+  bool          val_str_raw;      // if val is String, it is raw JSON and should not be escaped
+  uint8_t       key_suffix;       // append a suffix to key (default is 1, explicitly output if >1)
+  uint8_t       attr_type;        // [opt] type of the attribute, default to Zunk (0xFF)
+  uint8_t       attr_multiplier;  // [opt] multiplier for attribute, defaults to 0x01 (no change)
 
   // Constructor with all defaults
   Z_attribute():
@@ -115,7 +162,9 @@ public:
     key_is_str(false),
     key_is_pmem(false),
     val_str_raw(false),
-    key_suffix(1)
+    key_suffix(1),
+    attr_type(0xFF),
+    attr_multiplier(1)
     {};
   
   Z_attribute(const Z_attribute & rhs) {
@@ -135,386 +184,67 @@ public:
   }
 
   // free any allocated memoruy for values
-  void freeVal(void) {
-    switch (type) {
-      case Za_type::Za_raw:
-        if (val.bval) { delete val.bval; val.bval = nullptr; }
-        break;
-      case Za_type::Za_str:
-        if (val.sval) { delete[] val.sval; val.sval = nullptr; }
-        break;
-    }
-  }
+  void freeVal(void);
+
   // free any allocated memoruy for keys
-  void freeKey(void) {
-    if (key_is_str && key.key && !key_is_pmem) { delete[] key.key; }
-    key.key = nullptr;
-  }
+  void freeKey(void);
 
   // set key name
-  void setKeyName(const char * _key, bool pmem = false) {
-    freeKey();
-    key_is_str = true;
-    key_is_pmem = pmem;
-    if (pmem) {
-      key.key = (char*) _key;
-    } else {
-      setKeyName(_key, nullptr);
-    }
-  }
+  void setKeyName(const char * _key, bool pmem = false);
   // provide two entries and concat
-  void setKeyName(const char * _key, const char * _key2) {
-    freeKey();
-    key_is_str = true;
-    key_is_pmem = false;
-    if (_key) {
-      size_t key_len = strlen_P(_key);
-      if (_key2) {
-        key_len += strlen_P(_key2);
-      }
-      key.key = new char[key_len+1];
-      strcpy_P(key.key, _key);
-      if (_key2) {
-        strcat_P(key.key, _key2);
-      }
-    }
-  }
+  void setKeyName(const char * _key, const char * _key2);
 
-  void setKeyId(uint16_t cluster, uint16_t attr_id) {
-    freeKey();
-    key_is_str = false;
-    key.id.cluster = cluster;
-    key.id.attr_id = attr_id;
-  }
+  void setKeyId(uint16_t cluster, uint16_t attr_id);
 
   // Setters
-  void setNone(void) {
-    freeVal();     // free any previously allocated memory
-    val.uval32 = 0;
-    type = Za_type::Za_none;
-  }
-  void setUInt(uint32_t _val) {
-    freeVal();     // free any previously allocated memory
-    val.uval32 = _val;
-    type = Za_type::Za_uint;
-  }
-  void setBool(bool _val) {
-    freeVal();     // free any previously allocated memory
-    val.uval32 = _val;
-    type = Za_type::Za_bool;
-  }
-  void setInt(int32_t _val) {
-    freeVal();     // free any previously allocated memory
-    val.ival32 = _val;
-    type = Za_type::Za_int;
-  }
-  void setFloat(float _val) {
-    freeVal();     // free any previously allocated memory
-    val.fval = _val;
-    type = Za_type::Za_float;
-  }
+  void setNone(void);
+  void setUInt(uint32_t _val);
+  void setBool(bool _val);
+  void setInt(int32_t _val);
+  void setFloat(float _val);
 
-  void setBuf(const SBuffer &buf, size_t index, size_t len) {
-    freeVal();
-    if (len) {
-      val.bval = new SBuffer(len);
-      val.bval->addBuffer(buf.buf(index), len);
-    }
-    type = Za_type::Za_raw;
-  }
+  void setBuf(const SBuffer &buf, size_t index, size_t len);
 
   // set the string value
   // PMEM argument is allowed
   // string will be copied, so it can be changed later
   // nullptr is allowed and considered as empty string
   // Note: memory is allocated only if string is non-empty
-  void setStr(const char * _val) {
-    freeVal();     // free any previously allocated memory
-    val_str_raw = false;
-    // val.sval is always nullptr after freeVal()
-    if (_val) {
-      size_t len = strlen_P(_val);
-      if (len) {
-        val.sval = new char[len+1];
-        strcpy_P(val.sval, _val);
-      }
-    }
-    type = Za_type::Za_str;
-  }
+  void setStr(const char * _val);
   inline void setStrRaw(const char * _val) {
     setStr(_val);
     val_str_raw = true;
   }
 
+  Z_attribute_list & newAttrList(void);
+  Z_json_array & newJsonArray(void);
+
   inline bool isNum(void) const { return (type >= Za_type::Za_bool) && (type <= Za_type::Za_float); }
+  inline bool isNone(void) const { return (type == Za_type::Za_none);}
   // get num values
-  float getFloat(void) const {
-    switch (type) {
-      case Za_type::Za_bool:
-      case Za_type::Za_uint:    return (float) val.uval32;
-      case Za_type::Za_int:     return (float) val.ival32;
-      case Za_type::Za_float:   return val.fval;
-      default:                  return 0.0f;
-    }
-  }
-
-  int32_t getInt(void) const {
-    switch (type) {
-      case Za_type::Za_bool:
-      case Za_type::Za_uint:    return (int32_t) val.uval32;
-      case Za_type::Za_int:     return val.ival32;
-      case Za_type::Za_float:   return (int32_t) val.fval;
-      default:                  return 0;
-    }
-  }
-
-  uint32_t getUInt(void) const {
-    switch (type) {
-      case Za_type::Za_bool:
-      case Za_type::Za_uint:    return val.uval32;
-      case Za_type::Za_int:     return (uint32_t) val.ival32;
-      case Za_type::Za_float:   return (uint32_t) val.fval;
-      default:                  return 0;
-    }
-  }
-
-  bool getBool(void) const {
-    switch (type) {
-      case Za_type::Za_bool:
-      case Za_type::Za_uint:    return val.uval32 ? true : false;
-      case Za_type::Za_int:     return val.ival32 ? true : false;
-      case Za_type::Za_float:   return val.fval ? true : false;
-      default:                  return false;
-    }
-  }
-
-  const SBuffer * getRaw(void) const {
-    if (Za_type::Za_raw == type) { return val.bval; }
-    return nullptr;
-  }
+  float getFloat(void) const;
+  int32_t getInt(void) const;
+  uint32_t getUInt(void) const;
+  bool getBool(void) const;
+  const SBuffer * getRaw(void) const;
 
   // always return a point to a string, if not defined then empty string.
   // Never returns nullptr
-  const char * getStr(void) const {
-    if (Za_type::Za_str == type) { return val.sval; }
-    return "";
-  }
+  const char * getStr(void) const;
 
-  bool equalsKey(const Z_attribute & attr2, bool ignore_key_suffix = false) const {
-    // check if keys are equal
-    if (key_is_str != attr2.key_is_str) { return false; }
-    if (key_is_str) {
-      if (strcmp_PP(key.key, attr2.key.key)) { return false; }
-    } else {
-      if ((key.id.cluster != attr2.key.id.cluster) ||
-          (key.id.attr_id != attr2.key.id.attr_id)) { return false; }
-    }
-    if (!ignore_key_suffix) {
-      if (key_suffix != attr2.key_suffix) { return false; }
-    }
-    return true;
-  }
+  bool equalsKey(const Z_attribute & attr2, bool ignore_key_suffix = false) const;
+  bool equalsKey(uint16_t cluster, uint16_t attr_id, uint8_t suffix = 0) const;
+  bool equalsKey(const char * name, uint8_t suffix = 0) const;
+  bool equalsVal(const Z_attribute & attr2) const;
+  bool equals(const Z_attribute & attr2) const;
 
-  bool equalsKey(uint16_t cluster, uint16_t attr_id, uint8_t suffix = 0) const {
-    if (!key_is_str) {
-      if ((key.id.cluster == cluster) && (key.id.attr_id == attr_id)) {
-        if (suffix) {
-          if (key_suffix == suffix) { return true; }
-        } else {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  bool equalsKey(const char * name, uint8_t suffix = 0) const {
-    if (key_is_str) {
-      if (0 == strcmp_PP(key.key, name)) {
-        if (suffix) {
-          if (key_suffix == suffix) { return true; }
-        } else {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  bool equalsVal(const Z_attribute & attr2) const {
-    if (type != attr2.type) { return false; }
-    if ((type >= Za_type::Za_bool) && (type <= Za_type::Za_float)) {
-      // numerical value
-      if (val.uval32 != attr2.val.uval32) { return false; }
-    } else if (type == Za_type::Za_raw) {
-      // compare 2 Static buffers
-      return equalsSBuffer(val.bval, attr2.val.bval);
-    } else if (type == Za_type::Za_str) {
-      // if (val_str_raw != attr2.val_str_raw) { return false; }
-      if (strcmp_PP(val.sval, attr2.val.sval)) { return false; }
-    }
-    return true;
-  }
-
-  bool equals(const Z_attribute & attr2) const {
-    return equalsKey(attr2) && equalsVal(attr2);
-  }
-
-  String toString(bool prefix_comma = false) const {
-    String res("");
-    if (prefix_comma) { res += ','; }
-    res += '"';
-    // compute the attribute name
-    if (key_is_str) {
-      if (key.key) { res += EscapeJSONString(key.key); }
-      else         { res += F("null"); }   // shouldn't happen
-      if (key_suffix > 1) {
-        res += key_suffix;
-      }
-    } else {
-      char attr_name[12];
-      snprintf_P(attr_name, sizeof(attr_name), PSTR("%04X/%04X"), key.id.cluster, key.id.attr_id);
-      res += attr_name;
-      if (key_suffix > 1) {
-        res += '+';
-        res += key_suffix;
-      }
-    }
-    res += F("\":");
-    // value part
-    switch (type) {
-    case Za_type::Za_none:
-      res += "null";
-      break;
-    case Za_type::Za_bool:
-      res += val.uval32 ? F("true") : F("false");
-      break;
-    case Za_type::Za_uint:
-      res += val.uval32;
-      break;
-    case Za_type::Za_int:
-      res += val.ival32;
-      break;
-    case Za_type::Za_float:
-      {
-        String fstr(val.fval, 2);
-        size_t last = fstr.length() - 1;
-        // remove trailing zeros
-        while (fstr[last] == '0') {
-          fstr.remove(last--);
-        }
-        // remove trailing dot
-        if (fstr[last] == '.') {
-          fstr.remove(last);
-        }
-        res += fstr;
-      }
-      break;
-    case Za_type::Za_raw:
-      res += '"';
-      if (val.bval) {
-        size_t blen = val.bval->len();
-        // print as HEX
-        char hex[2*blen+1];
-        ToHex_P(val.bval->getBuffer(), blen, hex, sizeof(hex));
-        res += hex;
-      }
-      res += '"';
-      break;
-    case Za_type::Za_str:
-      if (val_str_raw) {
-        if (val.sval) { res += val.sval; }
-      } else {
-        res += '"';
-        if (val.sval) {
-          res += EscapeJSONString(val.sval);    // escape JSON chars
-        }
-        res += '"';
-      }
-      break;
-    }
-
-    return res;
-  }
+  String toString(bool prefix_comma = false) const;
 
   // copy value from one attribute to another, without changing its type
-  void copyVal(const Z_attribute & rhs) {
-    freeVal();
-    // copy value
-    val.uval32 = 0x00000000;
-    type = rhs.type;
-    if (rhs.isNum()) {
-      val.uval32 = rhs.val.uval32;
-    } else if (rhs.type == Za_type::Za_raw) {
-      if (rhs.val.bval) {
-        val.bval = new SBuffer(rhs.val.bval->len());
-        val.bval->addBuffer(*(rhs.val.bval));
-      }
-    } else if (rhs.type == Za_type::Za_str) {
-      if (rhs.val.sval) {
-        size_t s_len = strlen_P(rhs.val.sval);
-        val.sval = new char[s_len+1];
-        strcpy_P(val.sval, rhs.val.sval);
-      }
-    }
-    val_str_raw = rhs.val_str_raw;
-  }
+  void copyVal(const Z_attribute & rhs);
 
 protected:
-  void deepCopy(const Z_attribute & rhs) {
-    // copy key
-    if (!rhs.key_is_str) {
-      key.id.cluster = rhs.key.id.cluster;
-      key.id.attr_id = rhs.key.id.attr_id;
-    } else {
-      if (rhs.key_is_pmem) {
-        key.key = rhs.key.key;      // PMEM, don't copy
-      } else {
-        key.key = nullptr;
-        if (rhs.key.key) {
-          size_t key_len = strlen_P(rhs.key.key);
-          if (key_len) {
-            key.key = new char[key_len+1];
-            strcpy_P(key.key, rhs.key.key);
-          }
-        }
-      }
-    }
-    key_is_str = rhs.key_is_str;
-    key_is_pmem = rhs.key_is_pmem;
-    key_suffix = rhs.key_suffix;
-    // copy value
-    copyVal(rhs);
-    // don't touch next pointer
-  }
-};
-
-/*********************************************************************************************\
- * 
- * Class for attribute array of values
- * This is a helper function to generate a clean list of unsigned ints
- * 
-\*********************************************************************************************/
-
-class Z_json_array {
-public:
-
-  Z_json_array(): val("[]") {}     // start with empty array
-  void add(uint32_t uval32) {
-    // remove trailing ']'
-    val.remove(val.length()-1);
-    if (val.length() > 1) {      // if not empty, prefix with comma
-      val += ',';
-    }
-    val += uval32;
-    val += ']';
-  }
-  String &toString(void) {
-    return val;
-  }
-
-private :
-  String val;
+  void deepCopy(const Z_attribute & rhs);
 };
 
 /*********************************************************************************************\
@@ -606,6 +336,406 @@ public:
   bool mergeList(const Z_attribute_list &list2);
 };
 
+/*********************************************************************************************\
+ * 
+ * Implementation for Z_attribute
+ * 
+\*********************************************************************************************/
+
+// free any allocated memoruy for keys
+void Z_attribute::freeKey(void) {
+  if (key_is_str && key.key && !key_is_pmem) { delete[] key.key; }
+  key.key = nullptr;
+}
+
+// set key name
+void Z_attribute::setKeyName(const char * _key, bool pmem) {
+  freeKey();
+  key_is_str = true;
+  key_is_pmem = pmem;
+  if (pmem) {
+    key.key = (char*) _key;
+  } else {
+    setKeyName(_key, nullptr);
+  }
+}
+// provide two entries and concat
+void Z_attribute::setKeyName(const char * _key, const char * _key2) {
+  freeKey();
+  key_is_str = true;
+  key_is_pmem = false;
+  if (_key) {
+    size_t key_len = strlen_P(_key);
+    if (_key2) {
+      key_len += strlen_P(_key2);
+    }
+    key.key = new char[key_len+1];
+    strcpy_P(key.key, _key);
+    if (_key2) {
+      strcat_P(key.key, _key2);
+    }
+  }
+}
+
+void Z_attribute::setKeyId(uint16_t cluster, uint16_t attr_id) {
+  freeKey();
+  key_is_str = false;
+  key.id.cluster = cluster;
+  key.id.attr_id = attr_id;
+}
+
+// Setters
+void Z_attribute::setNone(void) {
+  freeVal();     // free any previously allocated memory
+  val.uval32 = 0;
+  type = Za_type::Za_none;
+}
+void Z_attribute::setUInt(uint32_t _val) {
+  freeVal();     // free any previously allocated memory
+  val.uval32 = _val;
+  type = Za_type::Za_uint;
+}
+void Z_attribute::setBool(bool _val) {
+  freeVal();     // free any previously allocated memory
+  val.uval32 = _val;
+  type = Za_type::Za_bool;
+}
+void Z_attribute::setInt(int32_t _val) {
+  freeVal();     // free any previously allocated memory
+  val.ival32 = _val;
+  type = Za_type::Za_int;
+}
+void Z_attribute::setFloat(float _val) {
+  freeVal();     // free any previously allocated memory
+  val.fval = _val;
+  type = Za_type::Za_float;
+}
+
+void Z_attribute::setBuf(const SBuffer &buf, size_t index, size_t len) {
+  freeVal();
+  if (len) {
+    val.bval = new SBuffer(len);
+    val.bval->addBuffer(buf.buf(index), len);
+  }
+  type = Za_type::Za_raw;
+}
+
+// set the string value
+// PMEM argument is allowed
+// string will be copied, so it can be changed later
+// nullptr is allowed and considered as empty string
+// Note: memory is allocated only if string is non-empty
+void Z_attribute::setStr(const char * _val) {
+  freeVal();     // free any previously allocated memory
+  val_str_raw = false;
+  // val.sval is always nullptr after freeVal()
+  if (_val) {
+    size_t len = strlen_P(_val);
+    if (len) {
+      val.sval = new char[len+1];
+      strcpy_P(val.sval, _val);
+    }
+  }
+  type = Za_type::Za_str;
+}
+
+Z_attribute_list & Z_attribute::newAttrList(void) {
+  freeVal();
+  val.objval = new Z_attribute_list();
+  type = Za_type::Za_obj;
+  return *val.objval;
+}
+
+Z_json_array & Z_attribute::newJsonArray(void) {
+  freeVal();
+  val.arrval = new Z_json_array();
+  type = Za_type::Za_arr;
+  return *val.arrval;
+}
+
+// get num values
+float Z_attribute::getFloat(void) const {
+  switch (type) {
+    case Za_type::Za_bool:
+    case Za_type::Za_uint:    return (float) val.uval32;
+    case Za_type::Za_int:     return (float) val.ival32;
+    case Za_type::Za_float:   return val.fval;
+    default:                  return 0.0f;
+  }
+}
+
+int32_t Z_attribute::getInt(void) const {
+  switch (type) {
+    case Za_type::Za_bool:
+    case Za_type::Za_uint:    return (int32_t) val.uval32;
+    case Za_type::Za_int:     return val.ival32;
+    case Za_type::Za_float:   return (int32_t) val.fval;
+    default:                  return 0;
+  }
+}
+
+uint32_t Z_attribute::getUInt(void) const {
+  switch (type) {
+    case Za_type::Za_bool:
+    case Za_type::Za_uint:    return val.uval32;
+    case Za_type::Za_int:     return (uint32_t) val.ival32;
+    case Za_type::Za_float:   return (uint32_t) val.fval;
+    default:                  return 0;
+  }
+}
+
+bool Z_attribute::getBool(void) const {
+  switch (type) {
+    case Za_type::Za_bool:
+    case Za_type::Za_uint:    return val.uval32 ? true : false;
+    case Za_type::Za_int:     return val.ival32 ? true : false;
+    case Za_type::Za_float:   return val.fval ? true : false;
+    default:                  return false;
+  }
+}
+
+const SBuffer * Z_attribute::getRaw(void) const {
+  if (Za_type::Za_raw == type) { return val.bval; }
+  return nullptr;
+}
+
+// always return a point to a string, if not defined then empty string.
+// Never returns nullptr
+const char * Z_attribute::getStr(void) const {
+  if (Za_type::Za_str == type) { return val.sval; }
+  return "";
+}
+
+bool Z_attribute::equalsKey(const Z_attribute & attr2, bool ignore_key_suffix) const {
+  // check if keys are equal
+  if (key_is_str != attr2.key_is_str) { return false; }
+  if (key_is_str) {
+    if (strcmp_PP(key.key, attr2.key.key)) { return false; }
+  } else {
+    if ((key.id.cluster != attr2.key.id.cluster) ||
+        (key.id.attr_id != attr2.key.id.attr_id)) { return false; }
+  }
+  if (!ignore_key_suffix) {
+    if (key_suffix != attr2.key_suffix) { return false; }
+  }
+  return true;
+}
+
+bool Z_attribute::equalsKey(uint16_t cluster, uint16_t attr_id, uint8_t suffix) const {
+  if (!key_is_str) {
+    if ((key.id.cluster == cluster) && (key.id.attr_id == attr_id)) {
+      if (suffix) {
+        if (key_suffix == suffix) { return true; }
+      } else {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool Z_attribute::equalsKey(const char * name, uint8_t suffix) const {
+  if (key_is_str) {
+    if (0 == strcmp_PP(key.key, name)) {
+      if (suffix) {
+        if (key_suffix == suffix) { return true; }
+      } else {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool Z_attribute::equalsVal(const Z_attribute & attr2) const {
+  if (type != attr2.type) { return false; }
+  if ((type >= Za_type::Za_bool) && (type <= Za_type::Za_float)) {
+    // numerical value
+    if (val.uval32 != attr2.val.uval32) { return false; }
+  } else if (type == Za_type::Za_raw) {
+    // compare 2 Static buffers
+    return equalsSBuffer(val.bval, attr2.val.bval);
+  } else if (type == Za_type::Za_str) {
+    // if (val_str_raw != attr2.val_str_raw) { return false; }
+    if (strcmp_PP(val.sval, attr2.val.sval)) { return false; }
+  } else if (type == Za_type::Za_obj) {
+    return false;   // TODO for now we'll assume sub-objects are always different
+  } else if (type == Za_type::Za_arr) {
+    return false;   // TODO for now we'll assume sub-objects are always different
+  }
+  return true;
+}
+
+bool Z_attribute::equals(const Z_attribute & attr2) const {
+  return equalsKey(attr2) && equalsVal(attr2);
+}
+
+String Z_attribute::toString(bool prefix_comma) const {
+  String res("");
+  if (prefix_comma) { res += ','; }
+  res += '"';
+  // compute the attribute name
+  if (key_is_str) {
+    if (key.key) { res += EscapeJSONString(key.key); }
+    else         { res += F("null"); }   // shouldn't happen
+    if (key_suffix > 1) {
+      res += key_suffix;
+    }
+  } else {
+    char attr_name[12];
+    snprintf_P(attr_name, sizeof(attr_name), PSTR("%04X/%04X"), key.id.cluster, key.id.attr_id);
+    res += attr_name;
+    if (key_suffix > 1) {
+      res += '+';
+      res += key_suffix;
+    }
+  }
+  res += F("\":");
+  // value part
+  switch (type) {
+  case Za_type::Za_none:
+    res += "null";
+    break;
+  case Za_type::Za_bool:
+    res += val.uval32 ? F("true") : F("false");
+    break;
+  case Za_type::Za_uint:
+    res += val.uval32;
+    break;
+  case Za_type::Za_int:
+    res += val.ival32;
+    break;
+  case Za_type::Za_float:
+    {
+      String fstr(val.fval, 2);
+      size_t last = fstr.length() - 1;
+      // remove trailing zeros
+      while (fstr[last] == '0') {
+        fstr.remove(last--);
+      }
+      // remove trailing dot
+      if (fstr[last] == '.') {
+        fstr.remove(last);
+      }
+      res += fstr;
+    }
+    break;
+  case Za_type::Za_raw:
+    res += '"';
+    if (val.bval) {
+      size_t blen = val.bval->len();
+      // print as HEX
+      char hex[2*blen+1];
+      ToHex_P(val.bval->getBuffer(), blen, hex, sizeof(hex));
+      res += hex;
+    }
+    res += '"';
+    break;
+  case Za_type::Za_str:
+    if (val_str_raw) {
+      if (val.sval) { res += val.sval; }
+    } else {
+      res += '"';
+      if (val.sval) {
+        res += EscapeJSONString(val.sval);    // escape JSON chars
+      }
+      res += '"';
+    }
+    break;
+  case Za_type::Za_obj:
+    res += '{';
+    if (val.objval) {
+      res += val.objval->toString();
+    }
+    res += '}';
+    break;
+  case Za_type::Za_arr:
+    if (val.arrval) {
+      res += val.arrval->toString();
+    } else {
+      res += "[]";
+    }
+    break;
+  }
+
+  return res;
+}
+
+// copy value from one attribute to another, without changing its type
+void Z_attribute::copyVal(const Z_attribute & rhs) {
+  freeVal();
+  // copy value
+  val.uval32 = 0x00000000;
+  type = rhs.type;
+  if (rhs.isNum()) {
+    val.uval32 = rhs.val.uval32;
+  } else if (rhs.type == Za_type::Za_raw) {
+    if (rhs.val.bval) {
+      val.bval = new SBuffer(rhs.val.bval->len());
+      val.bval->addBuffer(*(rhs.val.bval));
+    }
+  } else if (rhs.type == Za_type::Za_str) {
+    if (rhs.val.sval) {
+      size_t s_len = strlen_P(rhs.val.sval);
+      val.sval = new char[s_len+1];
+      strcpy_P(val.sval, rhs.val.sval);
+    }
+  }
+  val_str_raw = rhs.val_str_raw;
+}
+
+// free any allocated memoruy for values
+void Z_attribute::freeVal(void) {
+  switch (type) {
+    case Za_type::Za_raw:
+      if (val.bval) { delete val.bval; val.bval = nullptr; }
+      break;
+    case Za_type::Za_str:
+      if (val.sval) { delete[] val.sval; val.sval = nullptr; }
+      break;
+    case Za_type::Za_obj:
+      if (val.objval) { delete val.objval; val.objval = nullptr; }
+      break;
+    case Za_type::Za_arr:
+      if (val.arrval) { delete val.arrval; val.arrval = nullptr; }
+      break;
+  }
+}
+
+void Z_attribute::deepCopy(const Z_attribute & rhs) {
+  // copy key
+  if (!rhs.key_is_str) {
+    key.id.cluster = rhs.key.id.cluster;
+    key.id.attr_id = rhs.key.id.attr_id;
+  } else {
+    if (rhs.key_is_pmem) {
+      key.key = rhs.key.key;      // PMEM, don't copy
+    } else {
+      key.key = nullptr;
+      if (rhs.key.key) {
+        size_t key_len = strlen_P(rhs.key.key);
+        if (key_len) {
+          key.key = new char[key_len+1];
+          strcpy_P(key.key, rhs.key.key);
+        }
+      }
+    }
+  }
+  key_is_str = rhs.key_is_str;
+  key_is_pmem = rhs.key_is_pmem;
+  key_suffix = rhs.key_suffix;
+  attr_type = rhs.attr_type;
+  attr_multiplier = rhs.attr_multiplier;
+  // copy value
+  copyVal(rhs);
+  // don't touch next pointer
+}
+
+/*********************************************************************************************\
+ * 
+ * Implementation for Z_attribute_list
+ * 
+\*********************************************************************************************/
 // add a cluster/attr_id attribute at the end of the list
 Z_attribute & Z_attribute_list::addAttribute(uint16_t cluster, uint16_t attr_id, uint8_t suffix) {
   Z_attribute & attr = addToLast();
