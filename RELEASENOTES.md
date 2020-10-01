@@ -55,7 +55,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog
 
-### Version 8.5.0.1
+### Version 8.5.1 Hannah
 
 - Fix energy total counters (#9263, #9266)
 - Fix crash in ``ZbRestore``
