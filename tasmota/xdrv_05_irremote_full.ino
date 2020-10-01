@@ -17,6 +17,41 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+Below is the Pyhton3 code to decompress IR comact format.
+
+======================================================================
+import re
+
+def ir_expand(ir_compact):
+	count = ir_compact.count(',')		# number of occurence of comma
+
+	if count > 1:
+		return "Unsupported format"
+
+	if count == 1:
+		ir_compact = input.split(',')[1]	# if 1 comma, skip the frequency
+
+	arr = re.findall("(\d+|[A-Za-z])", ir_compact)
+
+	comp_table = []			# compression history table
+	arr2 = []				# output
+
+	for elt in arr:
+		if len(elt) == 1:
+			c = ord(elt.upper()) - ord('A')
+			if c >= len(arr): return "Error index undefined"
+			arr2.append(comp_table[c])
+		else:
+			comp_table.append(elt)
+			arr2.append(elt)
+
+	out = ",".join(arr2)
+
+	return out
+======================================================================
+ */
+
 #ifdef USE_IR_REMOTE_FULL
 /*********************************************************************************************\
  * IR Remote send and receive using IRremoteESP8266 library
@@ -31,13 +66,51 @@
 #include <IRac.h>
 
 enum IrErrors { IE_RESPONSE_PROVIDED, IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_SYNTAX_IRHVAC,
-                IE_UNSUPPORTED_HVAC, IE_UNSUPPORTED_PROTOCOL };
+                IE_UNSUPPORTED_HVAC, IE_UNSUPPORTED_PROTOCOL, IE_MEMORY };
 
 const char kIrRemoteCommands[] PROGMEM = "|"
   D_CMND_IRHVAC "|" D_CMND_IRSEND ; // No prefix
 
 void (* const IrRemoteCommand[])(void) PROGMEM = {
   &CmndIrHvac, &CmndIrSend };
+
+/*********************************************************************************************\
+ * Class used to make a compact IR Raw format.
+ * 
+ * We round timings to the closest 10ms value,
+ * and store up to last 26 values with seen.
+ * A value already seen is encoded with a letter indicating the position in the table.
+\*********************************************************************************************/
+
+class IRRawTable {
+public:
+  IRRawTable() : timings() {}   // zero initialize the array
+
+  int32_t getTimingForLetter(uint8_t l) const {
+    l = toupper(l);
+    if ((l < 'A') || (l > 'Z')) { return -1; }
+    return timings[l - 'A'];
+  }
+  uint8_t findOrAdd(uint16_t t) {
+    if (0 == t) { return 0; }
+
+    for (uint32_t i=0; i<26; i++) {
+      if (timings[i] == t) { return i + 'A'; }
+      if (timings[i] == 0) { timings[i] = t; break; }   // add new value
+    }
+    return 0;   // not found
+  }
+  void add(uint16_t t) {
+    if (0 == t) { return; }
+
+    for (uint32_t i=0; i<26; i++) {
+      if (timings[i] == 0) { timings[i] = t; break; }   // add new value
+    }
+  }
+
+protected:
+  uint16_t timings[26];
+};
 
 /*********************************************************************************************\
  * IR Send
@@ -211,25 +284,35 @@ void IrReceiveCheck(void)
       ir_lasttime = now;
       Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":%s"), sendIRJsonState(results).c_str());
 
+      IRRawTable raw_table;
+      bool prev_number = false;     // was the previous value a number, meaning we may need a comma prefix
+      bool ir_high = true;          // alternate high/low
+      // Add raw data in a compact format
       if (Settings.flag3.receive_raw) {  // SetOption58 - Add IR Raw data to JSON message
-        ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":["));
-        uint16_t i;
-        for (i = 1; i < results.rawlen; i++) {
-          if (i > 1) { ResponseAppend_P(PSTR(",")); }
-          uint32_t usecs;
-          for (usecs = results.rawbuf[i] * kRawTick; usecs > UINT16_MAX; usecs -= UINT16_MAX) {
-            ResponseAppend_P(PSTR("%d,0,"), UINT16_MAX);
+        ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":\""));
+        size_t rawlen = results.rawlen;
+        uint32_t i;
+        
+        for (i = 1; i < rawlen; i++) {
+          // round to closest 10ms
+          uint32_t raw_val_millis = results.rawbuf[i] * kRawTick;
+          uint16_t raw_dms = (raw_val_millis*2 + 5) / 10;   // in 5 micro sec steps
+          // look if the data is already seen
+          uint8_t  letter = raw_table.findOrAdd(raw_dms);
+          if (letter) {
+            if (!ir_high) { letter = tolower(letter); }
+            ResponseAppend_P(PSTR("%c"), letter);
+            prev_number = false;
+          } else {
+            // number
+            ResponseAppend_P(PSTR("%c%d"), ir_high ? '+' : '-', (uint32_t)raw_dms * 5);
+            prev_number = true;
           }
-          ResponseAppend_P(PSTR("%d"), usecs);
+          ir_high = !ir_high;
           if (strlen(mqtt_data) > sizeof(mqtt_data) - 40) { break; }  // Quit if char string becomes too long
         }
-        uint16_t extended_length = results.rawlen - 1;
-        for (uint32_t j = 0; j < results.rawlen - 1; j++) {
-          uint32_t usecs = results.rawbuf[j] * kRawTick;
-          // Add two extra entries for multiple larger than UINT16_MAX it is.
-          extended_length += (usecs / (UINT16_MAX + 1)) * 2;
-        }
-        ResponseAppend_P(PSTR("],\"" D_JSON_IR_RAWDATA "Info\":[%d,%d,%d]"), extended_length, i -1, results.overflow);
+        uint16_t extended_length = getCorrectedRawLength(&results);
+        ResponseAppend_P(PSTR("\",\"" D_JSON_IR_RAWDATA "Info\":[%d,%d,%d]"), extended_length, i -1, results.overflow);
       }
 
       ResponseJsonEndEnd();
@@ -409,8 +492,8 @@ uint32_t IrRemoteCmndIrSendJson(void)
 
   char dvalue[32];
   char hvalue[32];
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
-    protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat);
+  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
+  //   protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat);
 
   irsend_active = true;     // deactivate receive
   bool success = irsend->send(protocol, data, bits, repeat);
@@ -422,163 +505,266 @@ uint32_t IrRemoteCmndIrSendJson(void)
   return IE_NO_ERROR;
 }
 
+//
+// Send Global Cache commands
+//
+// Input:
+//   p: token for strtok_r()
+//   count: number of commas in parameters, i.e. it contains count+1 values
+//   repeat: number of repeats (0 means no repeat)
+//
+uint32_t IrRemoteSendGC(char ** pp, uint32_t count, uint32_t repeat) {
+  // IRsend gc,1000,2000,2000,1000
+  uint16_t GC[count+1];
+  for (uint32_t i = 0; i <= count; i++) {
+    GC[i] = strtol(strtok_r(nullptr, ",", pp), nullptr, 0);
+    if (!GC[i]) { return IE_INVALID_RAWDATA; }
+  }
+  irsend_active = true;
+  for (uint32_t r = 0; r <= repeat; r++) {
+    irsend->sendGC(GC, count+1);
+  }
+  return IE_NO_ERROR;
+}
+
+//
+// Send 'raw'
+//
+uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
+  if (count < 2) { return IE_INVALID_RAWDATA; }
+
+  // parse frequency
+  char * str = strtok_r(nullptr, ",", pp);
+  uint16_t freq = parsqeFreq(str);
+
+  // parse parameters from 1 to count-1
+  // i.e: IRsend raw,0,889,1778,000000100110000001001 => count = 3, [889,1778]
+  uint16_t parm[count-1];     // contains at least 1 value
+  for (uint32_t i = 0; i < count-1; i++) {
+    parm[i] = strtol(strtok_r(nullptr, ",", pp), nullptr, 0);
+    if (0 == parm[i]) { return IE_INVALID_RAWDATA; } // parameters may not be 0
+  }
+
+  uint16_t i = 0;
+  if (count < 4) {
+    // IRsend raw,0,889,000000100110000001001
+    // IRsend raw,0,889,2,000000100110000001001
+    // IRsend raw,0,889,1778,000000100110000001001
+    // IRsend raw,40,900,2000,000000100110000001001
+    uint16_t mark, space;
+    space = parm[0];
+    mark = space * 2;                            // Protocol where 0 = t, 1 = 2t (RC5)
+    if (3 == count) {
+      if (parm[1] <= 10) {
+        // IRsend raw,0,889,2,000000100110000001001
+        mark = parm[0] * parm[1];                 // Protocol where 0 = t1, 1 = t1*t2 (Could be RC5)
+      } else {
+        // IRsend raw,0,889,1778,000000100110000001001
+        mark = parm[1];                           // Protocol where 0 = t1, 1 = t2 (Could be RC5)
+      }
+    }
+
+    // p points to the last parameter
+    uint16_t raw_array[strlen(*pp)];                // Bits
+    for (; **pp; *(*pp)++) {
+      if (**pp == '0') {
+        raw_array[i++] = space;                 // Space
+      }
+      else if (**pp == '1') {
+        raw_array[i++] = mark;                    // Mark
+      }
+    }
+    irsend_active = true;
+    for (uint32_t r = 0; r <= repeat; r++) {
+      // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("sendRaw count=%d, space=%d, mark=%d, freq=%d"), count, space, mark, freq);
+      irsend->sendRaw(raw_array, i, freq);
+      if (r < repeat) {         // if it's not the last message
+        irsend->space(40000);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
+      }
+    }
+  } else if (6 == count) {                          // NEC Protocol
+    // IRsend raw,0,8620,4260,544,411,1496,010101101000111011001110000000001100110000000001100000000000000010001100
+    uint16_t raw_array[strlen(*pp)*2+3];            // Header + bits + end
+    raw_array[i++] = parm[0];                     // Header mark
+    raw_array[i++] = parm[1];                     // Header space
+    uint32_t inter_message_32 = (parm[0] + parm[1]) * 3;  // compute an inter-message gap (32 bits)
+    uint16_t inter_message = (inter_message_32 > 65000) ? 65000 : inter_message_32;  // avoid 16 bits overflow
+    for (; **pp; *(*pp)++) {
+      if (**pp == '0') {
+        raw_array[i++] = parm[2];                 // Bit mark
+        raw_array[i++] = parm[3];                 // Zero space
+      }
+      else if (**pp == '1') {
+        raw_array[i++] = parm[2];                 // Bit mark
+        raw_array[i++] = parm[4];                 // One space
+      }
+    }
+    raw_array[i++] = parm[2];                     // Trailing mark
+    irsend_active = true;
+    for (uint32_t r = 0; r <= repeat; r++) {
+      // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("sendRaw %d %d %d %d %d %d"), raw_array[0], raw_array[1], raw_array[2], raw_array[3], raw_array[4], raw_array[5]);
+      irsend->sendRaw(raw_array, i, freq);
+      if (r < repeat) {         // if it's not the last message
+        irsend->space(inter_message);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
+      }
+    }
+  }
+  else { return IE_INVALID_RAWDATA; }                   // Invalid number of parameters
+  return IE_NO_ERROR;
+}
+
+// 
+// Parse data as compact or standard form
+//
+// In:
+//   str: the raw format, null terminated string. Cannot be PROGMEM nor be nullptr
+//   arr: pointer to uint16_t array to populate, if nullptr then we just count items
+//   arr_len: length of destination array, to avoid corrupting data. If arr_len == 0, ignore
+uint32_t IrRemoteParseRawCompact(char * str, uint16_t * arr, size_t arr_len) {
+  char *p = str;
+  size_t i = 0;
+  IRRawTable raw_table;
+
+  for (char *p = str; *p; ) {
+    int32_t value = -1;
+    if ((arr_len > 0) && (i >= arr_len)) { return 0; }     // overflow
+
+    while ((*p == ',') || (*p == '+') || (*p == '-')) { p++; }     // skip ',' '-' '+'
+    if ((*p >= '0') && (*p <= '9')) {
+      // parse number
+      value = strtoul(p, &p, 10);
+      raw_table.add(value);
+    } else {
+      value = raw_table.getTimingForLetter(*p);
+      p++;
+    }
+    if (value < 0) { return 0; }    // invalid
+    if (nullptr != arr) {
+      arr[i] = value;
+    }
+    i++;
+  }
+  return i;
+}
+
+//
+// Send raw standard
+//
+// Input:
+//   p: token for strtok_r()
+//   count: number of commas in parameters, i.e. it contains count+1 values
+//   repeat: number of repeats (0 means no repeat)
+//
+uint32_t IrRemoteSendRawStandard(char ** pp, uint32_t count, uint32_t repeat) {
+  uint16_t freq = parsqeFreq(*pp);
+  // IRsend 0,896,876,900,888,894,876,1790,874,872,1810,1736,948,872,880,872,936,872,1792,900,888,1734
+  // IRsend 0,+8570-4240+550-1580C-510+565-1565F-505Fh+570gFhIdChIgFeFgFgIhFgIhF-525C-1560IhIkI-520ChFhFhFgFhIkIhIgIgIkIkI-25270A-4225IkIhIgIhIhIkFhIkFjCgIhIkIkI-500IkIhIhIkFhIgIl+545hIhIoIgIhIkFhFgIkIgFgI
+
+  uint16_t * arr = nullptr;
+  if (count == 0) {
+    // compact format, we need to parse in a first pass to know the number of frames
+    count = IrRemoteParseRawCompact(*pp, nullptr, 0);
+    if (0 == count) { return IE_INVALID_RAWDATA; }
+  } else {
+    count++;
+  }
+  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_1 = %d"), count);
+  arr = (uint16_t*) malloc(count * sizeof(uint16_t));
+  if (nullptr == arr) { return IE_MEMORY; }
+
+  count = IrRemoteParseRawCompact(*pp, arr, count);
+  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_2 = %d"), count);
+  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
+  if (0 == count) { return IE_INVALID_RAWDATA; }
+
+  irsend_active = true;
+  for (uint32_t r = 0; r <= repeat; r++) {
+    irsend->sendRaw(arr, count, freq);
+  }
+
+  if (nullptr != arr) {
+    free(arr);
+  }
+  return IE_NO_ERROR;
+
+
+
+  count++;
+  if (count < 200) {
+    uint16_t raw_array[count];  // It's safe to use stack for up to 200 packets (limited by mqtt_data length)
+    for (uint32_t i = 0; i < count; i++) {
+      raw_array[i] = strtol(strtok_r(nullptr, ", ", pp), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
+    }
+
+    irsend_active = true;
+    for (uint32_t r = 0; r <= repeat; r++) {
+      irsend->sendRaw(raw_array, count, freq);
+    }
+  } else {
+    uint16_t *raw_array = reinterpret_cast<uint16_t*>(malloc(count * sizeof(uint16_t)));
+    if (raw_array == nullptr) {
+      return IE_INVALID_RAWDATA;
+    }
+
+    for (uint32_t i = 0; i < count; i++) {
+      raw_array[i] = strtol(strtok_r(nullptr, ", ", pp), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
+    }
+
+    irsend_active = true;
+    for (uint32_t r = 0; r <= repeat; r++) {
+      irsend->sendRaw(raw_array, count, freq);
+    }
+    free(raw_array);
+  }
+}
+
+// parse the frequency value
+uint16_t parsqeFreq(char * str) {
+  uint16_t freq = atoi(str);
+  if (0 == freq) { freq = 38000; }
+  return freq;
+}
+
 uint32_t IrRemoteCmndIrSendRaw(void)
 {
   // IRsend <freq>,<rawdata>,<rawdata> ...
+  // IRsend <freq>,<compact_rawdata>
   // or
   // IRsend raw,<freq>,<zero space>,<bit stream> (one space = zero space *2)
   // IRsend raw,<freq>,<zero space>,<zero space multiplier becoming one space>,<bit stream>
   // IRsend raw,<freq>,<zero space>,<one space>,<bit stream>
   // IRsend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream>
 
+  // check that there is at least one comma in the parameters
   char *p;
-  char *str = strtok_r(XdrvMailbox.data, ", ", &p);
-  if (p == nullptr) {
-    return IE_INVALID_RAWDATA;
-  }
+  char *str = strtok_r(XdrvMailbox.data, ",", &p);
+  if (p == nullptr) { return IE_INVALID_RAWDATA; }
 
-  // repeat
+  // repeat is Index-1, so by default repeat = 0 (no repeat)
   uint16_t repeat = XdrvMailbox.index > 0 ? XdrvMailbox.index - 1 : 0;
 
-  uint16_t freq = atoi(str);
-  if (!freq && (*str != '0')) {                     // First parameter is any string
-    uint16_t count = 0;
-    char *q = p;
-    for (; *q; count += (*q++ == ','));
-    if (count < 2) {
-      return IE_INVALID_RAWDATA;
-    }   // Parameters must be at least 3
+  // count commas in parameters, after the first token skipped
+  uint16_t count = 0;
+  char *q = p;
+  for (; *q; count += (*q++ == ','));
 
-   if (strcasecmp(str, "gc") == 0) {  //if first parameter is gc then we process global cache data else it is raw
-	uint16_t GC[count+1];
-	for (uint32_t i = 0; i <= count; i++) {
-	  GC[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);
-      if (!GC[i]) {
-        return IE_INVALID_RAWDATA;
-      }
-    }
-	irsend_active = true;
-	for (uint32_t r = 0; r <= repeat; r++) {
-      irsend->sendGC(GC, count+1);
-    }
-	return IE_NO_ERROR;
-  }
-
-    uint16_t parm[count];
-    for (uint32_t i = 0; i < count; i++) {
-      parm[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);
-      if (!parm[i]) {
-        if (!i) {
-          parm[0] = 38000;                          // Frequency default to 38kHz
-        } else {
-          return IE_INVALID_RAWDATA;                // Other parameters may not be 0
-        }
-      }
-    }
-
-    uint16_t i = 0;
-    if (count < 4) {
-      // IRsend raw,0,889,000000100110000001001
-      uint16_t mark = parm[1] *2;                   // Protocol where 0 = t, 1 = 2t (RC5)
-      if (3 == count) {
-        if (parm[2] < parm[1]) {
-          // IRsend raw,0,889,2,000000100110000001001
-          mark = parm[1] * parm[2];                 // Protocol where 0 = t1, 1 = t1*t2 (Could be RC5)
-        } else {
-          // IRsend raw,0,889,1778,000000100110000001001
-          mark = parm[2];                           // Protocol where 0 = t1, 1 = t2 (Could be RC5)
-        }
-      }
-      uint16_t raw_array[strlen(p)];                // Bits
-      for (; *p; *p++) {
-        if (*p == '0') {
-          raw_array[i++] = parm[1];                 // Space
-        }
-        else if (*p == '1') {
-          raw_array[i++] = mark;                    // Mark
-        }
-      }
-      irsend_active = true;
-      for (uint32_t r = 0; r <= repeat; r++) {
-        irsend->sendRaw(raw_array, i, parm[0]);
-        if (r < repeat) {         // if it's not the last message
-          irsend->space(40000);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
-        }
-      }
-    }
-    else if (6 == count) {                          // NEC Protocol
-      // IRsend raw,0,8620,4260,544,411,1496,010101101000111011001110000000001100110000000001100000000000000010001100
-      uint16_t raw_array[strlen(p)*2+3];            // Header + bits + end
-      raw_array[i++] = parm[1];                     // Header mark
-      raw_array[i++] = parm[2];                     // Header space
-      uint32_t inter_message_32 = (parm[1] + parm[2]) * 3;  // compute an inter-message gap (32 bits)
-      uint16_t inter_message = (inter_message_32 > 65000) ? 65000 : inter_message_32;  // avoid 16 bits overflow
-      for (; *p; *p++) {
-        if (*p == '0') {
-          raw_array[i++] = parm[3];                 // Bit mark
-          raw_array[i++] = parm[4];                 // Zero space
-        }
-        else if (*p == '1') {
-          raw_array[i++] = parm[3];                 // Bit mark
-          raw_array[i++] = parm[5];                 // One space
-        }
-      }
-      raw_array[i++] = parm[3];                     // Trailing mark
-      irsend_active = true;
-      for (uint32_t r = 0; r <= repeat; r++) {
-        irsend->sendRaw(raw_array, i, parm[0]);
-        if (r < repeat) {         // if it's not the last message
-          irsend->space(inter_message);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
-        }
-      }
-    }
-    else {
-      return IE_INVALID_RAWDATA;                    // Invalid number of parameters
-    }
+  // analyze first parameter
+  if (strcasecmp(str, "gc") == 0) {
+    // Global Cache protocol
+    // IRsend gc,xxx,xxx,...
+    return IrRemoteSendGC(&p, count, repeat);
+  } else if (strcasecmp(str, "raw") == 0) {
+    // IRsend raw,<freq>,<zero space>,<bit stream> (one space = zero space *2)
+    // IRsend raw,<freq>,<zero space>,<zero space multiplier becoming one space>,<bit stream>
+    // IRsend raw,<freq>,<zero space>,<one space>,<bit stream>
+    // IRsend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream>
+    return IrRemoteSendRawFormatted(&p, count, repeat);
   } else {
-    if (!freq) { freq = 38000; }                    // Default to 38kHz
-    uint16_t count = 0;
-    char *q = p;
-    for (; *q; count += (*q++ == ','));
-    if (0 == count) {
-      return IE_INVALID_RAWDATA;
-    }
-
-    // IRsend 0,896,876,900,888,894,876,1790,874,872,1810,1736,948,872,880,872,936,872,1792,900,888,1734
-    count++;
-    if (count < 200) {
-      uint16_t raw_array[count];  // It's safe to use stack for up to 200 packets (limited by mqtt_data length)
-      for (uint32_t i = 0; i < count; i++) {
-        raw_array[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
-      }
-
-//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: stack count %d"), count);
-
-      irsend_active = true;
-      for (uint32_t r = 0; r <= repeat; r++) {
-        irsend->sendRaw(raw_array, count, freq);
-      }
-    } else {
-      uint16_t *raw_array = reinterpret_cast<uint16_t*>(malloc(count * sizeof(uint16_t)));
-      if (raw_array == nullptr) {
-        return IE_INVALID_RAWDATA;
-      }
-
-      for (uint32_t i = 0; i < count; i++) {
-        raw_array[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
-      }
-
-//     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: heap count %d"), count);
-
-      irsend_active = true;
-      for (uint32_t r = 0; r <= repeat; r++) {
-        irsend->sendRaw(raw_array, count, freq);
-      }
-      free(raw_array);
-    }
+    // standard raw
+    // IRsend <freq>,<rawdata>,<rawdata> ...
+    // IRsend <freq>,<compact_rawdata>
+    return IrRemoteSendRawStandard(&p, count, repeat);
   }
-
-  return IE_NO_ERROR;
 }
 
 void CmndIrSend(void)
@@ -615,6 +801,9 @@ void IrRemoteCmndResponse(uint32_t error)
       break;
     case IE_UNSUPPORTED_PROTOCOL:
       Response_P(PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_WRONG " " D_JSON_IRHVAC_PROTOCOL " (%s)\"}"), listSupportedProtocols(false).c_str());
+      break;
+    case IE_MEMORY:
+      ResponseCmndChar_P(PSTR(D_JSON_MEMORY_ERROR));
       break;
     default:  // IE_NO_ERROR
       ResponseCmndDone();
