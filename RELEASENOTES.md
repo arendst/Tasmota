@@ -66,3 +66,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Change new IR Raw compact format (#9444)
 - Change MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
 - Add optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
+- Add optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
