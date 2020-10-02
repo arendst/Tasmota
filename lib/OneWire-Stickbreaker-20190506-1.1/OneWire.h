@@ -243,7 +243,7 @@ void directModeOutput(IO_REG_TYPE pin)
 #define DIRECT_WRITE_HIGH(base, pin)    directWriteHigh(pin)
 #define DIRECT_MODE_INPUT(base, pin)    directModeInput(pin)
 #define DIRECT_MODE_OUTPUT(base, pin)   directModeOutput(pin)
-#warning "ESP32 OneWire testing"
+//#warning "ESP32 OneWire testing"
 
 #elif defined(__SAMD21G18A__)
 #define PIN_TO_BASEREG(pin)             portModeRegister(digitalPinToPort(pin))

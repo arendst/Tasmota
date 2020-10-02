@@ -424,12 +424,18 @@ struct {
   SysBitfield3  flag3;                     // 3A0
   uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
 
+//  char          ex_friendlyname[4][33];    // 3AC
+//  char          ex_switch_topic[33];       // 430
+
+  myio          my_gp;                     // 3AC - 2 x 18 bytes (ESP8266) / 2 x 40 bytes (ESP32)
 #ifdef ESP8266
-  char          ex_friendlyname[4][33];    // 3AC
-  char          ex_switch_topic[33];       // 430
+  uint16_t      gpio16_converted;          // 3D0
+  uint8_t       free_esp8266_3D2[42];      // 3D2
+#endif
+  mytmplt       user_template;             // 3FC - 2 x 15 bytes (ESP8266) / 2 x 37 bytes (ESP32)
+#ifdef ESP8266
+  uint8_t       free_esp8266_41A[55];      // 41A
 #else  // ESP32
-  myio          my_gp;                     // 3AC - 2 x 40 bytes (ESP32)
-  mytmplt       user_template;             // 3FC - 2 x 37 bytes (ESP32)
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
 
@@ -449,12 +455,12 @@ struct {
   uint8_t       ws_width[3];               // 481
 
 #ifdef ESP8266
-  myio          my_gp;                     // 484 - 17 bytes (ESP8266)
+  myio8         ex_my_gp8;                 // 484 - 17 bytes (ESP8266) - free once gpio16 is active
 #else  // ESP32
   uint8_t       free_esp32_484[17];        // 484
 #endif  // ESP8266 - ESP32
+  uint8_t       ex_my_adc0;                // 495 free once gpio16 is active
 
-  uint8_t       my_adc0;                   // 495
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
   uint8_t       light_correction;          // 49D
@@ -508,7 +514,7 @@ struct {
   char          user_template_name[15];    // 720  15 bytes - Backward compatibility since v8.2.0.3
 
 #ifdef ESP8266
-  mytmplt       user_template;             // 72F  14 bytes (ESP8266)
+  mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - free once gpio16 is active
 #else  // ESP32
   uint8_t       free_esp32_72f[14];        // 72F
 #endif  // ESP8266 - ESP32

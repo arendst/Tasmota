@@ -149,6 +149,7 @@
 | USE_HRXL              | - | - | - | - | x | - | - |
 | USE_TASMOTA_CLIENT    | - | - | - | - | - | - | - |
 | USE_OPENTHERM         | - | - | - | - | - | - | - |
+| USE_MIEL_HVAC         | - | - | - | - | - | - | - |
 | USE_TCP_BRIDGE        | - | - | - | - | - | - | - | zbbridge
 |                       |   |   |   |   |   |   |   |
 | USE_NRF24             | - | - | - | - | - | - | - |

@@ -1796,7 +1796,7 @@ chknext:
 #else
           // ESP8266
 #ifndef USE_ADC_VCC
-          fvar = AdcRead(fvar);
+          fvar = AdcRead(17, fvar);
 #else
           fvar = (float)ESP.getVcc() / 1000.0;
 #endif // USE_ADC_VCC
