@@ -2,6 +2,14 @@
 
 ## Unreleased (development)
 
+### 9.0.0.1 20201002
+
+- New dev release
+
+### 8.5.1 20201002
+
+- Release Hannah
+
 ### 8.5.0.1 20200907
 
 - Fix energy total counters (#9263, #9266)
