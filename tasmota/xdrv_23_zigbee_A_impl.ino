@@ -1432,15 +1432,25 @@ void ZigbeeShow(bool json)
 
       // Sensors
       bool temperature_ok = device.validTemperature();
+      bool tempareture_target_ok = device.validTemperatureTarget();
+      bool th_setpoint_ok = device.validThSetpoint();
       bool humidity_ok    = device.validHumidity();
       bool pressure_ok    = device.validPressure();
 
-      if (temperature_ok || humidity_ok || pressure_ok) {
+      if (temperature_ok || tempareture_target_ok || th_setpoint_ok || humidity_ok || pressure_ok) {
         WSContentSend_P(PSTR("<tr class='htr'><td colspan=\"4\">&#9478;"));
         if (temperature_ok) {
           char buf[12];
           dtostrf(device.temperature / 10.0f, 3, 1, buf);
           WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
+        }
+        if (tempareture_target_ok) {
+          char buf[12];
+          dtostrf(device.temperature_target / 10.0f, 3, 1, buf);
+          WSContentSend_PD(PSTR(" &#127919; %s°C"), buf);
+        }
+        if (th_setpoint_ok) {
+          WSContentSend_PD(PSTR(" &#9881;&#65039; %d%%"), device.th_setpoint);
         }
         if (humidity_ok) {
           WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), device.humidity);
