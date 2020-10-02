@@ -6,6 +6,7 @@
 
 - Remove auto config update for all Friendlynames and Switchtopic from versions before 8.x
 - Change redesigning ESP8266 GPIO internal representation in line with ESP32
+- Change new IR Raw compact format (#9444)
 
 ### 8.5.1 20201002
 
@@ -31,7 +32,6 @@
 - Add Zigbee auto-config when pairing
 - Add support for MLX90640 IR array temperature sensor by Christian Baars
 - Add support for VL53L1X time of flight sensor by Johann Obermeier
-- Change new IR Raw compact format
 
 ### 8.5.0 20200907
 

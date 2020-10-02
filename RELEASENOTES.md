@@ -63,3 +63,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 - Remove auto config update for all Friendlynames and Switchtopic from versions before 8.x
 - Change redesigning ESP8266 GPIO internal representation in line with ESP32
+- Change new IR Raw compact format (#9444)
