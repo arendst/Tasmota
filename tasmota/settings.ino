@@ -1193,8 +1193,8 @@ void SettingsDelta(void)
         }
       }
       for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
-        if (Settings.my_gp.io[i] >= GPIO_SWT5) {  // Move up from GPIO_SWT5 to GPIO_KEY1
-          Settings.my_gp.io[i] += 4;
+        if (Settings.ex_my_gp8.io[i] >= GPI8_SWT5) {  // Move up from GPI8_SWT5 to GPI8_KEY1
+          Settings.ex_my_gp8.io[i] += 4;
         }
       }
     }
@@ -1259,7 +1259,7 @@ void SettingsDelta(void)
       Settings.ledmask = APP_LEDMASK;
     }
     if (Settings.version < 0x0605000A) {
-      Settings.my_adc0 = ADC0_NONE;
+      Settings.ex_my_adc0 = GPIO_NONE;
     }
     if (Settings.version < 0x0605000D) {
       Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
@@ -1450,7 +1450,7 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_WEBPWD, Settings.ex_web_password);
       SettingsUpdateText(SET_CORS, Settings.ex_cors_domain);
       SettingsUpdateText(SET_MQTT_FULLTOPIC, Settings.ex_mqtt_fulltopic);
-      SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, Settings.ex_switch_topic);
+//      SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, Settings.ex_switch_topic);
       SettingsUpdateText(SET_STATE_TXT1, Settings.ex_state_text[0]);
       SettingsUpdateText(SET_STATE_TXT2, Settings.ex_state_text[1]);
       SettingsUpdateText(SET_STATE_TXT3, Settings.ex_state_text[2]);
@@ -1463,10 +1463,10 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_MEM3, Settings.script_pram[2]);
       SettingsUpdateText(SET_MEM4, Settings.script_pram[3]);
       SettingsUpdateText(SET_MEM5, Settings.script_pram[4]);
-      SettingsUpdateText(SET_FRIENDLYNAME1, Settings.ex_friendlyname[0]);
-      SettingsUpdateText(SET_FRIENDLYNAME2, Settings.ex_friendlyname[1]);
-      SettingsUpdateText(SET_FRIENDLYNAME3, Settings.ex_friendlyname[2]);
-      SettingsUpdateText(SET_FRIENDLYNAME4, Settings.ex_friendlyname[3]);
+//      SettingsUpdateText(SET_FRIENDLYNAME1, Settings.ex_friendlyname[0]);
+//      SettingsUpdateText(SET_FRIENDLYNAME2, Settings.ex_friendlyname[1]);
+//      SettingsUpdateText(SET_FRIENDLYNAME3, Settings.ex_friendlyname[2]);
+//      SettingsUpdateText(SET_FRIENDLYNAME4, Settings.ex_friendlyname[3]);
     }
     if (Settings.version < 0x08020003) {
       SettingsUpdateText(SET_TEMPLATE_NAME, Settings.user_template_name);

@@ -17,7 +17,11 @@ See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) fo
 6. Migrate to **Tasmota 8.1**
 7. Migrate to **Tasmota 8.x**
 
-While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with release **v8.1.0 Doris** the Settings are re-allocated in such a way that fallback is only allowed and possible to release **v7.2.0 Constance**. Once at v7.2.0 you're on your own when downgrading even further.
+--- Major change in GPIO function representation ---
+
+8. Migrate to **Tasmota 9.x**
+
+While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with release **v9.1.0 Imogen** the internal GPIO function representation has changed in such a way that fallback is only possible to the latest GPIO configuration before installing **v9.1.0**.
 
 ## Supported Core versions
 
@@ -57,4 +61,5 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ### Version 9.0.0.1
 
-- New dev release
+- Remove auto config update for all Friendlynames and Switchtopic from versions before 8.x
+- Change redesigning ESP8266 GPIO internal representation in line with ESP32

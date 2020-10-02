@@ -4,7 +4,8 @@
 
 ### 9.0.0.1 20201002
 
-- New dev release
+- Remove auto config update for all Friendlynames and Switchtopic from versions before 8.x
+- Change redesigning ESP8266 GPIO internal representation in line with ESP32
 
 ### 8.5.1 20201002
 
