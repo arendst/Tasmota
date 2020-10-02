@@ -280,6 +280,18 @@ typedef union {
 typedef union {
   uint8_t data;
   struct {
+  uint8_t pwm_count : 3;              // Number of PWMs to use for light
+  uint8_t spare3 : 1;
+  uint8_t spare4 : 1;
+  uint8_t spare5 : 1;
+  uint8_t spare6 : 1;
+  uint8_t spare7 : 1;
+  };
+} PWMDimmerCfg;
+
+typedef union {
+  uint8_t data;
+  struct {
   uint8_t nf_autotune : 1;            // Autotune the NF Noise Level
   uint8_t dist_autotune : 1;          // Autotune Disturber on/off
   uint8_t nf_autotune_both : 1;       // Autotune over both Areas: INDOORS/OUDOORS
@@ -589,7 +601,7 @@ struct {
   uint8_t       sps30_inuse_hours;         // F02
   uint8_t       hotplug_scan;              // F03
   uint8_t       bri_power_on;              // F04
-  uint8_t       bri_min;                   // F05
+  PWMDimmerCfg  pwm_dimmer_cfg;            // F05
   uint8_t       bri_preset_low;            // F06
   uint8_t       bri_preset_high;           // F07
   int8_t        hum_comp;                  // F08
