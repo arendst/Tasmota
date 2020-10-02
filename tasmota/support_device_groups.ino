@@ -312,6 +312,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
 
 #ifdef DEVICE_GROUPS_DEBUG
     switch (item) {
+      case DGR_ITEM_FLAGS:
       case DGR_ITEM_LIGHT_FADE:
       case DGR_ITEM_LIGHT_SPEED:
       case DGR_ITEM_LIGHT_BRI:
