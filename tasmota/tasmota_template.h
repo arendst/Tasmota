@@ -257,7 +257,7 @@ const char kSensorNames[] PROGMEM =
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
-#define MAX_MAX31865_CS  6
+#define MAX_MAX31865S    6
 #define MAX_WEBCAM_DATA  8
 #define MAX_WEBCAM_HSD   3
 
@@ -309,6 +309,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DISPLAY
   AGPIO(GPIO_BACKLIGHT),      // Display backlight control
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
+#endif
+#ifdef USE_MAX31865
+  AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865S,
 #endif
 
   AGPIO(GPIO_TXD),            // Serial interface
@@ -541,9 +544,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MAX31855CS),     // MAX31855 Serial interface
   AGPIO(GPIO_MAX31855CLK),    // MAX31855 Serial interface
   AGPIO(GPIO_MAX31855DO),     // MAX31855 Serial interface
-#endif
-#ifdef USE_MAX31855
-  AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865_CS,
 #endif
 #ifdef USE_HRE
   AGPIO(GPIO_HRE_CLOCK),

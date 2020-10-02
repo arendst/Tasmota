@@ -64,3 +64,5 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Remove auto config update for all Friendlynames and Switchtopic from versions before 8.x
 - Change redesigning ESP8266 GPIO internal representation in line with ESP32
 - Change new IR Raw compact format (#9444)
+- Change MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
+- Add optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
