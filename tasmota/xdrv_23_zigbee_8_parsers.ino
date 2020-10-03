@@ -562,7 +562,7 @@ int32_t Z_ReceiveActiveEp(int32_t res, const class SBuffer &buf) {
 
 // list of clusters that need bindings
 const uint8_t Z_bindings[] PROGMEM = {
-  Cx0001, Cx0006, Cx0008, Cx0300,
+  Cx0001, Cx0006, Cx0008, Cx0201, Cx0300,
   Cx0400, Cx0402, Cx0403, Cx0405, Cx0406,
   Cx0500,
 };
@@ -1216,6 +1216,9 @@ const Z_autoAttributeReporting_t Z_autoAttributeReporting[] PROGMEM = {
   { 0x0001, 0x0020,   15*60,    15*60,  0.1 },      // BatteryVoltage
   { 0x0001, 0x0021,   15*60,    15*60,    1 },      // BatteryPercentage
   { 0x0006, 0x0000,        1,   60*60,    0 },      // Power
+  { 0x0201, 0x0000,       60,   60*10,  0.5 },      // LocalTemperature
+  { 0x0201, 0x0008,       60,   60*10,   10 },      // PIHeatingDemand
+  { 0x0201, 0x0012,       60,   60*10,  0.5 },      // OccupiedHeatingSetpoint
   { 0x0008, 0x0000,        1,   60*60,    5 },      // Dimmer
   { 0x0300, 0x0000,        1,   60*60,    5 },      // Hue
   { 0x0300, 0x0001,        1,   60*60,    5 },      // Sat

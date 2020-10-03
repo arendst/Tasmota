@@ -1302,6 +1302,7 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
     }
 
     // find the attribute name
+    int8_t multiplier = 1;
     for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
       const Z_AttributeConverter *converter = &Z_PostProcess[i];
       uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
@@ -1310,6 +1311,7 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
       if ((conv_cluster == _cluster_id) && (conv_attribute == attrid)) {
         const char * attr_name = Z_strings + pgm_read_word(&converter->name_offset);
         attr_2.addAttribute(attr_name, true).setBool(true);
+        multiplier = pgm_read_byte(&converter->multiplier);
         break;
       }
     }
@@ -1337,6 +1339,12 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
           // decode Reportable Change
           Z_attribute &attr_change = attr_2.addAttribute(F("ReportableChange"));
           i += parseSingleAttribute(attr_change, _payload, i, attr_type);
+          if ((1 != multiplier) && (0 != multiplier)) {
+            float fval = attr_change.getFloat();
+            if (multiplier > 0) { fval =  fval * multiplier; }
+            else                { fval =  fval / (-multiplier); }
+            attr_change.setFloat(fval);
+          }
         }
       }
     }

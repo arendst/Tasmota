@@ -45,8 +45,8 @@ void A4988Init(void)
   A4988_stp_pin = Pin(GPIO_A4988_STP);
   A4988_ena_pin = Pin(GPIO_A4988_ENA);
   A4988_ms1_pin = Pin(GPIO_A4988_MS1);
-  A4988_ms2_pin = Pin(GPIO_A4988_MS2);
-  A4988_ms3_pin = Pin(GPIO_A4988_MS3);
+  A4988_ms2_pin = Pin(GPIO_A4988_MS1, 1);
+  A4988_ms3_pin = Pin(GPIO_A4988_MS1, 2);
   A4988_spr     = 200;
   A4988_rpm     = 30;
   A4988_mis     = 1;
@@ -93,7 +93,7 @@ void CmndDoTurn(void) {
 }
 
 void CmndSetMIS(void) {
-  if (PinUsed(GPIO_A4988_MS1) && PinUsed(GPIO_A4988_MS2) && PinUsed(GPIO_A4988_MS3) && (XdrvMailbox.data_len > 0)) {
+  if (PinUsed(GPIO_A4988_MS1) && PinUsed(GPIO_A4988_MS1, 1) && PinUsed(GPIO_A4988_MS1, 2) && (XdrvMailbox.data_len > 0)) {
     short newMIS = strtoul(XdrvMailbox.data,nullptr,10);
     myA4988->setMIS(newMIS);
     ResponseCmndDone();

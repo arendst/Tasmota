@@ -73,6 +73,7 @@
 | USE_BL0940            | - | x | x | x | x | - | - |
 | USE_TELEINFO          | - | - | - | - | - | - | - |
 | USE_IEM3000           | - | - | - | - | - | - | - |
+| USE_WE517             | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | USE_ADC_VCC           | x | x | - | - | - | x | - |
 | USE_COUNTER           | - | - | x | x | x | - | x |

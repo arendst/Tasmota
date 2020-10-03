@@ -17,7 +17,7 @@ See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) fo
 6. Migrate to **Tasmota 8.1**
 7. Migrate to **Tasmota 8.x**
 
---- Major change in GPIO function representation ---
+--- Major change in internal GPIO function representation ---
 
 8. Migrate to **Tasmota 9.x**
 
@@ -64,3 +64,9 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Remove auto config update for all Friendlynames and Switchtopic from versions before 8.x
 - Change redesigning ESP8266 GPIO internal representation in line with ESP32
 - Change new IR Raw compact format (#9444)
+- Change MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
+- Change A4988 optional microstep pin selection
+- Change pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
+- Add optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
+- Add optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
+- Add SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)

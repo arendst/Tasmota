@@ -333,8 +333,8 @@ void SetPowerOnState(void)
         bitWrite(power, i, digitalRead(Pin(GPIO_REL1, i)) ^ bitRead(rel_inverted, i));
       }
     }
-    if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate))) {
-      SetPulseTimer(i, Settings.pulse_timer[i]);
+    if (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate)) {
+      SetPulseTimer(i % MAX_PULSETIMERS, Settings.pulse_timer[i % MAX_PULSETIMERS]);
     }
   }
   blink_powersave = power;
@@ -531,9 +531,8 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
   }
   active_device = device;
 
-  if (device <= MAX_PULSETIMERS) {
-    SetPulseTimer(device -1, 0);
-  }
+  SetPulseTimer((device -1) % MAX_PULSETIMERS, 0);
+
   power_t mask = 1 << (device -1);        // Device to control
   if (state <= POWER_TOGGLE) {
     if ((blink_mask & mask)) {
@@ -589,9 +588,9 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
     if (publish_power && Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
       MqttPublishTeleState();
     }
-    if (device <= MAX_PULSETIMERS) {  // Restart PulseTime if powered On
-      SetPulseTimer(device -1, (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[device -1] : 0);
-    }
+
+    // Restart PulseTime if powered On
+    SetPulseTimer((device -1) % MAX_PULSETIMERS, (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[(device -1) % MAX_PULSETIMERS] : 0);
   }
   else if (POWER_BLINK == state) {
     if (!(blink_mask & mask)) {
@@ -887,7 +886,9 @@ void Every100mSeconds(void)
     if (pulse_timer[i] != 0L) {           // Timer active?
       if (TimeReached(pulse_timer[i])) {  // Timer finished?
         pulse_timer[i] = 0L;              // Turn off this timer
-        ExecuteCommandPower(i +1, (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? POWER_ON : POWER_OFF, SRC_PULSETIMER);
+        for (uint32_t j = 0; j < devices_present; j = j +MAX_PULSETIMERS) {
+          ExecuteCommandPower(i + j +1, (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? POWER_ON : POWER_OFF, SRC_PULSETIMER);
+        }
       }
     }
   }
@@ -1067,8 +1068,8 @@ void Every250mSeconds(void)
       if (save_data_counter <= 0) {
         if (Settings.flag.save_state) {                   // SetOption0 - Save power state and use after restart
           power_t mask = POWER_MASK;
-          for (uint32_t i = 0; i < MAX_PULSETIMERS; i++) {
-            if ((Settings.pulse_timer[i] > 0) && (Settings.pulse_timer[i] < 30)) {  // 3 seconds
+          for (uint32_t i = 0; i < devices_present; i++) {
+            if ((Settings.pulse_timer[i % MAX_PULSETIMERS] > 0) && (Settings.pulse_timer[i % MAX_PULSETIMERS] < 30)) {  // 3 seconds
               mask &= ~(1 << i);
             }
           }

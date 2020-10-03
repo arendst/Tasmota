@@ -80,7 +80,9 @@ struct ENERGY {
   float power_factor[3] = { NAN, NAN, NAN };    // 0.12
   float frequency[3] = { NAN, NAN, NAN };       // 123.1 Hz
 
-//  float import_active[3] = { NAN, NAN, NAN };   // 123.123 kWh
+#ifdef SDM630_IMPORT
+  float import_active[3] = { NAN, NAN, NAN };   // 123.123 kWh
+#endif  // SDM630_IMPORT
   float export_active[3] = { NAN, NAN, NAN };   // 123.123 kWh
 
   float start_energy = 0;                       // 12345.12345 kWh total previous
@@ -921,6 +923,11 @@ const char HTTP_ENERGY_SNS2[] PROGMEM =
 
 const char HTTP_ENERGY_SNS3[] PROGMEM =
   "{s}" D_EXPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
+
+#ifdef SDM630_IMPORT
+const char HTTP_ENERGY_SNS4[] PROGMEM =
+  "{s}" D_IMPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
+#endif  // SDM630_IMPORT
 #endif  // USE_WEBSERVER
 
 void EnergyShow(bool json)
@@ -985,11 +992,17 @@ void EnergyShow(bool json)
   char voltage_chr[Energy.phase_count][FLOATSZ];
   char current_chr[Energy.phase_count][FLOATSZ];
   char active_power_chr[Energy.phase_count][FLOATSZ];
+#ifdef SDM630_IMPORT
+  char import_active_chr[Energy.phase_count][FLOATSZ];
+#endif  // SDM630_IMPORT
   char export_active_chr[Energy.phase_count][FLOATSZ];
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
     dtostrfd(Energy.voltage[i], Settings.flag2.voltage_resolution, voltage_chr[i]);
     dtostrfd(Energy.current[i], Settings.flag2.current_resolution, current_chr[i]);
     dtostrfd(Energy.active_power[i], Settings.flag2.wattage_resolution, active_power_chr[i]);
+#ifdef SDM630_IMPORT
+    dtostrfd(Energy.import_active[i], Settings.flag2.energy_resolution, import_active_chr[i]);
+#endif  // SDM630_IMPORT
     dtostrfd(Energy.export_active[i], Settings.flag2.energy_resolution, export_active_chr[i]);
   }
 
@@ -1031,6 +1044,17 @@ void EnergyShow(bool json)
     ResponseAppend_P(PSTR(",\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s"),
       energy_yesterday_chr,
       energy_daily_chr);
+
+ #ifdef SDM630_IMPORT
+    if (!isnan(Energy.import_active[0])) {
+      ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_ACTIVE "\":%s"),
+        EnergyFormat(value_chr, import_active_chr[0], json));
+      if (energy_tariff) {
+        ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT D_CMND_TARIFF "\":%s"),
+          EnergyFormatIndex(value_chr, energy_return_chr[0], json, 2));
+      }
+    }
+#endif  // SDM630_IMPORT
 
     if (!isnan(Energy.export_active[0])) {
       ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE "\":%s"),
@@ -1136,6 +1160,11 @@ void EnergyShow(bool json)
     if (!isnan(Energy.export_active[0])) {
       WSContentSend_PD(HTTP_ENERGY_SNS3, EnergyFormat(value_chr, export_active_chr[0], json));
     }
+#ifdef SDM630_IMPORT
+    if (!isnan(Energy.import_active[0])) {
+      WSContentSend_PD(HTTP_ENERGY_SNS4, EnergyFormat(value_chr, import_active_chr[0], json));
+    }
+#endif  // SDM630_IMPORT
 
     XnrgCall(FUNC_WEB_SENSOR);
 #endif  // USE_WEBSERVER

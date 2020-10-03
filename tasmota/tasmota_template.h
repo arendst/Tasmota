@@ -100,8 +100,9 @@ enum UserSelectablePins {
   GPIO_ZIGBEE_TX, GPIO_ZIGBEE_RX,      // Zigbee Serial interface
   GPIO_RDM6300_RX,                     // RDM6300 RX
   GPIO_IBEACON_TX, GPIO_IBEACON_RX,    // HM17 IBEACON Serial interface
-  GPIO_A4988_DIR, GPIO_A4988_STP, GPIO_A4988_ENA,  // A4988 interface
-  GPIO_A4988_MS1, GPIO_A4988_MS2, GPIO_A4988_MS3,  // A4988 microstep
+  GPIO_A4988_DIR, GPIO_A4988_STP, GPIO_A4988_ENA, GPIO_A4988_MS1,  // A4988 interface
+  GPIO_SPARE1,                         // Do not use
+  GPIO_SPARE2,                         // Do not use
   GPIO_DDS2382_TX, GPIO_DDS2382_RX,    // DDS2382 Serial interface
   GPIO_DDSU666_TX, GPIO_DDSU666_RX,    // DDSU666 Serial interface
   GPIO_SM2135_CLK, GPIO_SM2135_DAT,    // SM2135 PWM controller
@@ -148,6 +149,8 @@ enum UserSelectablePins {
   GPIO_DYP_RX,
   GPIO_MIEL_HVAC_TX,                   // Mitsubishi Electric HVAC TX pin
   GPIO_MIEL_HVAC_RX,                   // Mitsubishi Electric HVAC RX pin
+  GPIO_WE517_TX,                       // ORNO WE517 Serial interface
+  GPIO_WE517_RX,                       // ORNO WE517 Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -210,7 +213,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ZIGBEE_TXD "|" D_SENSOR_ZIGBEE_RXD "|"
   D_SENSOR_RDM6300_RX "|"
   D_SENSOR_IBEACON_TX "|" D_SENSOR_IBEACON_RX "|"
-  D_SENSOR_A4988_DIR "|" D_SENSOR_A4988_STP "|" D_SENSOR_A4988_ENA "|" D_SENSOR_A4988_MS1 "|" D_SENSOR_A4988_MS2 "|" D_SENSOR_A4988_MS3 "|"
+  D_SENSOR_A4988_DIR "|" D_SENSOR_A4988_STP "|" D_SENSOR_A4988_ENA "|" D_SENSOR_A4988_MS1 "|"
+  "s1|"
+  "s2|"
   D_SENSOR_DDS2382_TX "|" D_SENSOR_DDS2382_RX "|"
   D_SENSOR_DDSU666_TX "|" D_SENSOR_DDSU666_RX "|"
   D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
@@ -251,13 +256,15 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX "|"
   D_SENSOR_ZIGBEE_RST "|"
   D_SENSOR_DYP_RX "|"
-  D_SENSOR_MIEL_HVAC_TX "|" D_SENSOR_MIEL_HVAC_RX
+  D_SENSOR_MIEL_HVAC_TX "|" D_SENSOR_MIEL_HVAC_RX "|"
+  D_SENSOR_WE517_TX "|" D_SENSOR_WE517_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
-#define MAX_MAX31865_CS  6
+#define MAX_MAX31865S    6
+#define MAX_A4988_MSS    3
 #define MAX_WEBCAM_DATA  8
 #define MAX_WEBCAM_HSD   3
 
@@ -290,10 +297,16 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
   AGPIO(GPIO_LEDLNK),                   // Link led
   AGPIO(GPIO_LEDLNK_INV),               // Inverted link led
+
+/*-------------------------------------------------------------------------------------------*\
+ * Protocol specifics
+\*-------------------------------------------------------------------------------------------*/
+
 #ifdef USE_I2C
   AGPIO(GPIO_I2C_SCL),                  // I2C SCL
   AGPIO(GPIO_I2C_SDA),                  // I2C SDA
 #endif
+
 #ifdef USE_SPI
   AGPIO(GPIO_SPI_MISO),       // SPI MISO
   AGPIO(GPIO_SPI_MOSI),       // SPI MOSI
@@ -310,9 +323,16 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_BACKLIGHT),      // Display backlight control
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
 #endif
+#ifdef USE_MAX31865
+  AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865S,
+#endif
 
   AGPIO(GPIO_TXD),            // Serial interface
   AGPIO(GPIO_RXD),            // Serial interface
+
+/*-------------------------------------------------------------------------------------------*\
+ * Single wire sensors
+\*-------------------------------------------------------------------------------------------*/
 
 #ifdef USE_DHT
   AGPIO(GPIO_DHT11),          // DHT11
@@ -328,7 +348,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_LMT01),          // LMT01, count pulses on GPIO
 #endif
 
-// Light
+/*-------------------------------------------------------------------------------------------*\
+ * Light
+\*-------------------------------------------------------------------------------------------*/
+
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
   AGPIO(GPIO_WS2812),         // WS2812 Led string
@@ -362,13 +385,16 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #endif  // USE_LIGHT
 
+/*-------------------------------------------------------------------------------------------*\
+ * Transmission sensors
+\*-------------------------------------------------------------------------------------------*/
+
 #if defined(USE_IR_REMOTE) || defined(USE_IR_REMOTE_FULL)
   AGPIO(GPIO_IRSEND),         // IR remote
 #if defined(USE_IR_RECEIVE) || defined(USE_IR_REMOTE_FULL)
   AGPIO(GPIO_IRRECV),         // IR receiver
 #endif
 #endif
-
 #ifdef USE_RC_SWITCH
   AGPIO(GPIO_RFSEND),         // RF transmitter
   AGPIO(GPIO_RFRECV),         // RF receiver
@@ -390,7 +416,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_HX711_DAT),      // HX711 Load Cell data
 #endif
 
-// Energy sensors
+/*-------------------------------------------------------------------------------------------*\
+ * Energy sensors
+\*-------------------------------------------------------------------------------------------*/
+
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_HLW8012
   AGPIO(GPIO_NRG_SEL),        // HLW8012/HLJ-01 Sel output (1 = Voltage)
@@ -454,9 +483,16 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_IEM3000_TX),    // IEM3000 Serial interface
   AGPIO(GPIO_IEM3000_RX),    // IEM3000 Serial interface
 #endif
+#ifdef USE_WE517
+  AGPIO(GPIO_WE517_TX),      // WE517 Serial interface
+  AGPIO(GPIO_WE517_RX),      // WE517 Serial interface
+#endif
 #endif  // USE_ENERGY_SENSOR
 
-// Serial
+/*-------------------------------------------------------------------------------------------*\
+ * Serial sensors
+\*-------------------------------------------------------------------------------------------*/
+
 #ifdef USE_SERIAL_BRIDGE
   AGPIO(GPIO_SBR_TX),         // Serial Bridge Serial interface
   AGPIO(GPIO_SBR_RX),         // Serial Bridge Serial interface
@@ -533,6 +569,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_BOILER_OT_RX),
 #endif
 
+/*-------------------------------------------------------------------------------------------*\
+ * Other sensors
+\*-------------------------------------------------------------------------------------------*/
+
 #ifdef USE_MGC3130
   AGPIO(GPIO_MGC3130_XFER),
   AGPIO(GPIO_MGC3130_RESET),
@@ -541,9 +581,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MAX31855CS),     // MAX31855 Serial interface
   AGPIO(GPIO_MAX31855CLK),    // MAX31855 Serial interface
   AGPIO(GPIO_MAX31855DO),     // MAX31855 Serial interface
-#endif
-#ifdef USE_MAX31855
-  AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865_CS,
 #endif
 #ifdef USE_HRE
   AGPIO(GPIO_HRE_CLOCK),
@@ -554,9 +591,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_A4988_STP),     // A4988 step pin
   // folowing are not mandatory
   AGPIO(GPIO_A4988_ENA),     // A4988 enabled pin
-  AGPIO(GPIO_A4988_MS1),     // A4988 microstep pin1
-  AGPIO(GPIO_A4988_MS2),     // A4988 microstep pin2
-  AGPIO(GPIO_A4988_MS3),     // A4988 microstep pin3
+  AGPIO(GPIO_A4988_MS1) + MAX_A4988_MSS,  // A4988 microstep pin1 to pin3
 #endif
 #ifdef USE_DEEPSLEEP
   AGPIO(GPIO_DEEPSLEEP),
@@ -583,6 +618,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MIEL_HVAC_RX),    // Mitsubishi Electric HVAC RX pin
 #endif
 
+/*-------------------------------------------------------------------------------------------*\
+ * ESP32 specifics
+\*-------------------------------------------------------------------------------------------*/
+
 #ifdef ESP32
 #ifdef USE_WEBCAM
   AGPIO(GPIO_WEBCAM_PWDN),
@@ -603,6 +642,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ETH_PHY_MDC),
   AGPIO(GPIO_ETH_PHY_MDIO),  // Ethernet
 #endif  // USE_ETHERNET
+
+/*-------------------------------------------------------------------------------------------*\
+ * ESP32 multiple Analog / Digital converter inputs
+\*-------------------------------------------------------------------------------------------*/
+
   AGPIO(GPIO_ADC_INPUT) + MAX_ADCS,       // Analog inputs
   AGPIO(GPIO_ADC_TEMP) + MAX_ADCS,        // Thermistor
   AGPIO(GPIO_ADC_LIGHT) + MAX_ADCS,       // Light sensor
@@ -613,6 +657,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_JOY) + MAX_ADCS,         // Joystick
 #endif  // ESP32
 };
+
+/*-------------------------------------------------------------------------------------------*\
+ * ESP8266 single Analog / Digital converter input
+\*-------------------------------------------------------------------------------------------*/
 
 #ifdef ESP8266
 const uint16_t kAdcNiceList[] PROGMEM = {
@@ -1144,8 +1192,8 @@ const uint16_t kGpioConvert[] PROGMEM = {
   AGPIO(GPIO_A4988_STP),      // A4988 step pin
   AGPIO(GPIO_A4988_ENA),      // A4988 enabled pin
   AGPIO(GPIO_A4988_MS1),      // A4988 microstep pin1
-  AGPIO(GPIO_A4988_MS2),      // A4988 microstep pin2
-  AGPIO(GPIO_A4988_MS3),      // A4988 microstep pin3
+  AGPIO(GPIO_A4988_MS1) +1,   // A4988 microstep pin2
+  AGPIO(GPIO_A4988_MS1) +2,   // A4988 microstep pin3
   AGPIO(GPIO_DDS2382_TX),     // DDS2382 Serial interface
   AGPIO(GPIO_DDS2382_RX),     // DDS2382 Serial interface
   AGPIO(GPIO_DDSU666_TX),     // DDSU666 Serial interface
