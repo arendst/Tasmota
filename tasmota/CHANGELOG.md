@@ -1,5 +1,3 @@
-## Released
-
 ## Unreleased (development)
 
 ### 9.0.0.1 20201002
@@ -12,6 +10,8 @@
 - Change pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
 - Add optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
 - Add optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
+
+## Released
 
 ### 8.5.1 20201002
 

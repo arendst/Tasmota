@@ -17,7 +17,7 @@ See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) fo
 6. Migrate to **Tasmota 8.1**
 7. Migrate to **Tasmota 8.x**
 
---- Major change in GPIO function representation ---
+--- Major change in internal GPIO function representation ---
 
 8. Migrate to **Tasmota 9.x**
 
