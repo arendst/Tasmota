@@ -1218,9 +1218,14 @@ void DumpConvertTable(void) {
 
 uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
 uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
-  uint16_t real_gpio = (gpio << 5) + index;
+  uint16_t real_gpio = gpio << 5;
+  uint16_t mask = 0xFFE0;
+  if (index < GPIO_ANY) {
+    real_gpio += index;
+    mask = 0xFFFF;
+  }
   for (uint32_t i = 0; i < ARRAY_SIZE(gpio_pin); i++) {
-    if (gpio_pin[i] == real_gpio) {
+    if ((gpio_pin[i] & mask) == real_gpio) {
       return i;              // Pin number configured for gpio
     }
   }
