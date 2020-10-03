@@ -33,10 +33,18 @@
 #define XDRV_35             35
 
 const char kPWMDimmerCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_BRI_PRESET;
+  D_CMND_BRI_PRESET
+#ifdef USE_DEVICE_GROUPS
+  "|" D_CMND_PWM_DIMMER_PWMS
+#endif  // USE_DEVICE_GROUPS
+  ;
 
 void (* const PWMDimmerCommand[])(void) PROGMEM = {
-  &CmndBriPreset };
+  &CmndBriPreset,
+#ifdef USE_DEVICE_GROUPS
+  &CmndPWMDimmerPWMs,
+#endif  // USE_DEVICE_GROUPS
+  };
 
 #ifdef USE_PWM_DIMMER_REMOTE
 struct remote_pwm_dimmer {
@@ -730,6 +738,17 @@ void CmndBriPreset(void)
   }
   Response_P(PSTR("{\"" D_CMND_BRI_PRESET "\":{\"Low\":%d,\"High\":%d}}"), Settings.bri_preset_low, Settings.bri_preset_high);
 }
+
+#ifdef USE_DEVICE_GROUPS
+void CmndPWMDimmerPWMs(void)
+{
+  if (XdrvMailbox.data_len > 0 && XdrvMailbox.payload <= 5) {
+    Settings.pwm_dimmer_cfg.pwm_count = XdrvMailbox.payload - 1;
+    restart_flag = 2;
+  }
+  Response_P(PSTR("{\"" D_CMND_PWM_DIMMER_PWMS "\":%u}"), Settings.pwm_dimmer_cfg.pwm_count + 1);
+}
+#endif  // USE_DEVICE_GROUPS
 
 /*********************************************************************************************\
  * Interface

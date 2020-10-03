@@ -564,9 +564,6 @@ class LightStateClass {
 #ifdef DEBUG_LIGHT
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setBri RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
 #endif
-#ifdef USE_PWM_DIMMER
-  if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(0);
-#endif  // USE_PWM_DIMMER
     }
 
     // changes the RGB brightness alone
@@ -574,6 +571,9 @@ class LightStateClass {
       uint8_t prev_bri = _briRGB;
       _briRGB = bri_rgb;
       if (bri_rgb > 0) { addRGBMode(); }
+#ifdef USE_PWM_DIMMER
+      if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(0);
+#endif  // USE_PWM_DIMMER
       return prev_bri;
     }
 
@@ -582,6 +582,9 @@ class LightStateClass {
       uint8_t prev_bri = _briCT;
       _briCT = bri_ct;
       if (bri_ct > 0) { addCTMode(); }
+#ifdef USE_PWM_DIMMER
+      if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(0);
+#endif  // USE_PWM_DIMMER
       return prev_bri;
     }
 
@@ -1275,6 +1278,13 @@ bool LightModuleInit(void)
     light_type = LT_PWM2;
   }
 #endif  // ESP8266
+#ifdef USE_PWM_DIMMER
+#ifdef USE_DEVICE_GROUPS
+  else if (PWM_DIMMER == my_module_type) {
+    light_type = Settings.pwm_dimmer_cfg.pwm_count + 1;
+  }
+#endif  // USE_DEVICE_GROUPS
+#endif  // USE_PWM_DIMMER
 
   if (light_type > LT_BASIC) {
     devices_present++;
