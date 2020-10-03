@@ -402,10 +402,15 @@ void xsend_message_txt(char *msg) {
     g_client->print(F("\r\n--frontier\r\n"));
   }
 #else
-  g_client->print(F("--frontier\r\n"));
-  g_client->print(F("Content-Type: text/plain\r\n\r\n"));
-  g_client->println(msg);
-  g_client->print(F("\r\n--frontier\r\n"));
+  if (*msg=='&') {
+    msg++;
+    attach_Array(msg);
+  } else {
+    g_client->print(F("--frontier\r\n"));
+    g_client->print(F("Content-Type: text/plain\r\n\r\n"));
+    g_client->println(msg);
+    g_client->print(F("\r\n--frontier\r\n"));
+  }
 #endif
 }
 
@@ -438,6 +443,8 @@ void attach_File(char *path) {
   }
   g_client->print(F("\r\n--frontier\r\n"));
 }
+
+#endif // defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
 
 float *get_array_by_name(char *name, uint16_t *alen);
 void flt2char(float num, char *nbuff);
@@ -472,8 +479,6 @@ void attach_Array(char *aname) {
   }
   g_client->print(F("\r\n--frontier\r\n"));
 }
-
-#endif // defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
 
 #else
 
