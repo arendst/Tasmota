@@ -921,10 +921,10 @@ void Every250mSeconds(void)
   state_250mS++;
   state_250mS &= 0x3;
 
-  global_state.network_down = (global_state.wifi_down && global_state.eth_down);
+  global_state.network_down = (global_state.wifi_down && global_state.eth_down) ? 1 : 0;
 
-  if (!Settings.flag.global_state && !global_state.network_down) {  // SetOption31 - Control link led blinking
-    if (global_state.data &0x03) {                        // Any problem
+  if (!Settings.flag.global_state) {                      // SetOption31 - Control link led blinking
+    if (global_state.data &0x03) {                        // Network or MQTT problem
       if (global_state.mqtt_down) { blinkinterval = 7; }  // MQTT problem so blink every 2 seconds (slowest)
       if (global_state.network_down) { blinkinterval = 3; }  // Network problem so blink every second (slow)
       blinks = 201;                                       // Allow only a single blink in case the problem is solved
