@@ -20,6 +20,11 @@
 
 // if using software spi this optimizes the code
 
+#ifdef ESP32
+#define ILI9488_DIMMER
+#undef ESP32_PWM_CHANNEL
+#define ESP32_PWM_CHANNEL 1
+#endif
 
 #define ILI9488_START start();
 #define ILI9488_STOP stop();
@@ -322,8 +327,13 @@ void ILI9488::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
 void ILI9488::DisplayOnff(int8_t on) {
   if (on) {
     writecommand(ILI9488_DISPON);    //Display on
+
     if (_bp>=0) {
+  #ifdef ILI9488_DIMMER
+        ledcWrite(ESP32_PWM_CHANNEL,dimmer);
+  #else
       digitalWrite(_bp,HIGH);
+  #endif
       /*
       writecommand(ILI9488_WRCTRLD);
     	writedata(0x0c);
@@ -332,15 +342,30 @@ void ILI9488::DisplayOnff(int8_t on) {
     }
   } else {
     writecommand(ILI9488_DISPOFF);
+
     if (_bp>=0) {
+#ifdef ILI9488_DIMMER
+      ledcWrite(ESP32_PWM_CHANNEL,0);
+#else
       digitalWrite(_bp,LOW);
+#endif
+    }
       //writecommand(ILI9488_WRCTRLD);
     	//writedata(0x04);
-    }
+
   }
   ILI9488_STOP
 }
 
+// dimmer 0-100
+void ILI9488::dim(uint8_t dim) {
+  dimmer = dim;
+  if (dimmer>15) dimmer=15;
+  dimmer=((float)dimmer/15.0)*255.0;
+#ifdef ESP32
+  ledcWrite(ESP32_PWM_CHANNEL,dimmer);
+#endif
+}
 
 void ILI9488::begin(void) {
   pinMode(_cs, OUTPUT);
@@ -348,8 +373,14 @@ void ILI9488::begin(void) {
   pinMode(_sclk, OUTPUT);
   pinMode(_mosi, OUTPUT);
   if (_bp>=0) {
-    pinMode(_bp, OUTPUT);
-    digitalWrite(_bp,HIGH);
+#ifdef ILI9488_DIMMER
+      ledcSetup(ESP32_PWM_CHANNEL,4000,8);
+      ledcAttachPin(_bp,ESP32_PWM_CHANNEL);
+      ledcWrite(ESP32_PWM_CHANNEL,128);
+#else
+      pinMode(_bp, OUTPUT);
+      digitalWrite(_bp,HIGH);
+#endif
   }
 
 #ifndef ESP32

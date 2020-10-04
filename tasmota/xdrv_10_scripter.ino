@@ -3708,6 +3708,7 @@ void esp32_beep(int32_t freq ,uint32_t len) {
 #define IF_NEST 8
 // execute section of scripter
 int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
+int16_t retval;
 
     if (!glob_script_mem.scriptptr) {
       return -99;
@@ -3717,12 +3718,15 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
 
     JsonParserObject jo;
     if (js) {
-      String jss = js;    // copy the string to a new buffer, not sure we can change the original buffer
-      JsonParser parser((char*)jss.c_str());
+      //String jss = js;    // copy the string to a new buffer, not sure we can change the original buffer
+      //JsonParser parser((char*)jss.c_str());
+      JsonParser parser(js);
       jo = parser.getRootObject();
+      retval = Run_script_sub(type, tlen, &jo);
+    } else {
+      retval = Run_script_sub(type, tlen, 0);
     }
-
-    return Run_script_sub(type, tlen, &jo);
+    return retval;
 }
 
 int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {

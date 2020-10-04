@@ -157,10 +157,11 @@ class ILI9488 : public Renderer {
   void write16BitColor(uint16_t color);
   void commandList(uint8_t *addr);
   void hw_spi_init();
-
+  void dim(uint8_t contrast);
 
  private:
   uint8_t  tabcolor;
+  uint8_t dimmer;
   void fastSPIwrite(uint8_t d,uint8_t dc);
   void spi_lcd_mode_init(void);
   void start(void);
