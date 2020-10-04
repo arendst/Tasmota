@@ -8,6 +8,7 @@
 - Change MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
 - Change A4988 optional microstep pin selection
 - Change pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
+- Fix template conversion when GPIO17 is 0
 - Add optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
 - Add optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
 - Add SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
