@@ -116,7 +116,7 @@ String GetResetReason(void)
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
-
+/*
 String GetBinary(const void* ptr, size_t count) {
   uint32_t value = *(uint32_t*)ptr;
   value <<= (32 - count);
@@ -124,6 +124,18 @@ String GetBinary(const void* ptr, size_t count) {
   result.reserve(count + 1);
   for (uint32_t i = 0; i < count; i++) {
     result += (value &0x80000000) ? '1' : '0';
+    value <<= 1;
+  }
+  return result;
+}
+*/
+String GetBinary8(uint8_t value, size_t count) {
+  if (count > 8) { count = 8; }
+  value <<= (8 - count);
+  String result;
+  result.reserve(count + 1);
+  for (uint32_t i = 0; i < count; i++) {
+    result += (value &0x80) ? '1' : '0';
     value <<= 1;
   }
   return result;
@@ -1119,15 +1131,101 @@ int ResponseJsonEndEnd(void)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
+#ifdef ESP8266
+uint16_t GpioConvert(uint8_t gpio) {
+  if (gpio > ARRAY_SIZE(kGpioConvert)) {
+    return AGPIO(GPIO_USER);
+  }
+  return pgm_read_word(kGpioConvert + gpio);
+}
+
+uint16_t Adc0Convert(uint8_t adc0) {
+  if (adc0 > 7) {
+    return AGPIO(GPIO_USER);
+  }
+  else if (0 == adc0) {
+    return GPIO_NONE;
+  }
+  return AGPIO(GPIO_ADC_INPUT + adc0 -1);
+}
+
+void TemplateConvert(uint8_t template8[], uint16_t template16[]) {
+  for (uint32_t i = 0; i < (sizeof(mytmplt) / 2) -2; i++) {
+    template16[i] = GpioConvert(template8[i]);
+  }
+  template16[(sizeof(mytmplt) / 2) -2] = Adc0Convert(template8[sizeof(mytmplt8285) -1]);
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: TemplateConvert"));
+//  AddLogBuffer(LOG_LEVEL_DEBUG, template8, sizeof(mytmplt8285));
+//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)template16, sizeof(mytmplt) / 2, 2);
+}
+
+void ConvertGpios(void) {
+  if (Settings.gpio16_converted != 0xF5A0) {
+    // Convert 8-bit user template
+    TemplateConvert((uint8_t*)&Settings.ex_user_template8, (uint16_t*)&Settings.user_template);
+
+    for (uint32_t i = 0; i < sizeof(Settings.ex_my_gp8.io); i++) {
+      Settings.my_gp.io[i] = GpioConvert(Settings.ex_my_gp8.io[i]);
+    }
+    Settings.my_gp.io[(sizeof(myio) / 2) -1] = Adc0Convert(Settings.ex_my_adc0);
+    Settings.gpio16_converted = 0xF5A0;
+
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: ConvertGpios"));
+//    AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.ex_my_gp8.io, sizeof(myio8));
+//    AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)&Settings.my_gp.io, sizeof(myio) / 2, 2);
+  }
+}
+
+/*
+void DumpConvertTable(void) {
+  bool jsflg = false;
+  uint32_t lines = 1;
+  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioConvert); i++) {
+    uint32_t data = pgm_read_word(kGpioConvert + i);
+    if (!jsflg) {
+      Response_P(PSTR("{\"GPIOConversion%d\":{"), lines);
+    } else {
+      ResponseAppend_P(PSTR(","));
+    }
+    jsflg = true;
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kGpioConvert) -1)) {
+      ResponseJsonEndEnd();
+      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+      jsflg = false;
+      lines++;
+    }
+  }
+  for (uint32_t i = 0; i < ARRAY_SIZE(kAdcNiceList); i++) {
+    uint32_t data = pgm_read_word(kAdcNiceList + i);
+    if (!jsflg) {
+      Response_P(PSTR("{\"ADC0Conversion%d\":{"), lines);
+    } else {
+      ResponseAppend_P(PSTR(","));
+    }
+    jsflg = true;
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%d\""), i, data) > (LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kAdcNiceList) -1)) {
+      ResponseJsonEndEnd();
+      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+      jsflg = false;
+      lines++;
+    }
+  }
+  mqtt_data[0] = '\0';
+}
+*/
+#endif  // ESP8266
+
 uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
 uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
-#ifdef ESP8266
-  uint16_t real_gpio = gpio + index;
-#else  // ESP32
-  uint16_t real_gpio = (gpio << 5) + index;
-#endif  // ESP8266 - ESP32
+  uint16_t real_gpio = gpio << 5;
+  uint16_t mask = 0xFFE0;
+  if (index < GPIO_ANY) {
+    real_gpio += index;
+    mask = 0xFFFF;
+  }
   for (uint32_t i = 0; i < ARRAY_SIZE(gpio_pin); i++) {
-    if (gpio_pin[i] == real_gpio) {
+    if ((gpio_pin[i] & mask) == real_gpio) {
       return i;              // Pin number configured for gpio
     }
   }
@@ -1212,44 +1310,45 @@ void GetInternalTemplate(void* ptr, uint32_t module, uint32_t option) {
 
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Template %d, Option %d"), module_template, option);
 
-  uint8_t internal_template[sizeof(mytmplt)] = { GPIO_NONE };
+  // template8 = GPIO 0,1,2,3,4,5,9,10,12,13,14,15,16,Adc
+  uint8_t template8[sizeof(mytmplt8285)] = { GPIO_NONE };
   if (module_template < TMP_WEMOS) {
-    memcpy_P(&internal_template, &kModules8266[module_template], 6);
-    memcpy_P(&internal_template[8], &kModules8266[module_template].gp.io[6], 6);
+    memcpy_P(&template8, &kModules8266[module_template], 6);
+    memcpy_P(&template8[8], &kModules8266[module_template].gp.io[6], 6);
   } else {
-    memcpy_P(&internal_template, &kModules8285[module_template - TMP_WEMOS], sizeof(mytmplt));
+    memcpy_P(&template8, &kModules8285[module_template - TMP_WEMOS], sizeof(template8));
   }
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&internal_template, sizeof(mytmplt));
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&template8, sizeof(mytmplt8285));
+
+  // template16  = GPIO 0,1,2,3,4,5,9,10,12,13,14,15,16,Adc,Flg
+  uint16_t template16[(sizeof(mytmplt) / 2)] = { GPIO_NONE };
+  TemplateConvert(template8, template16);
 
   uint32_t index = 0;
-  uint32_t size = sizeof(mycfgio);           // kmodules[module_template].gp
+  uint32_t size = sizeof(mycfgio);      // template16[module_template].gp
   switch (option) {
     case 2: {
-      index = sizeof(internal_template) -1;  // kModules[module_template].flag
-      size = 1;
+      index = (sizeof(mytmplt) / 2) -1; // template16[module_template].flag
+      size = 2;
       break;
     }
     case 3: {
-      size = sizeof(internal_template);      // kmodules[module_template]
+      size = sizeof(mytmplt);           // template16[module_template]
       break;
     }
   }
-  memcpy(ptr, &internal_template[index], size);
+  memcpy(ptr, &template16[index], size);
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)ptr, size);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FNC: GetInternalTemplate option %d"), option);
+//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t *)ptr, size / 2, 2);
 }
 #endif  // ESP8266
 
 void ModuleGpios(myio *gp)
 {
-#ifdef ESP8266
-  uint8_t *dest = (uint8_t *)gp;
-  uint8_t src[ARRAY_SIZE(Settings.user_template.gp.io)];
-#else  // ESP32
   uint16_t *dest = (uint16_t *)gp;
   uint16_t src[ARRAY_SIZE(Settings.user_template.gp.io)];
-#endif  // ESP8266 - ESP32
 
   memset(dest, GPIO_NONE, sizeof(myio));
   if (USER_MODULE == Settings.module) {
@@ -1325,7 +1424,7 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio)
 
 //  if (!is_8285 && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
   if ((WEMOS == Settings.module) && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
-    if ((pin == 9) || (pin == 10)) {
+    if ((9 == pin) || (10 == pin)) {
       return GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
     }
   }
@@ -1335,23 +1434,15 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio)
 
 bool ValidGPIO(uint32_t pin, uint32_t gpio)
 {
+#ifdef ESP8266
+#ifdef USE_ADC_VCC
+  if (ADC0_PIN == pin) { return false; }  // ADC0 = GPIO17
+#endif
+#endif
   return (GPIO_USER == ValidPin(pin, BGPIO(gpio)));  // Only allow GPIO_USER pins
 }
 
-#ifdef ESP8266
-bool ValidAdc(void)
-{
-  gpio_flag flag = ModuleFlag();
-  uint32_t template_adc0 = flag.data &15;
-  return (ADC0_USER == template_adc0);
-}
-#endif  // ESP8266
-
-#ifdef ESP8266
-bool GetUsedInModule(uint32_t val, uint8_t *arr)
-#else  // ESP32
 bool GetUsedInModule(uint32_t val, uint16_t *arr)
-#endif  // ESP8266 - ESP32
 {
   int offset = 0;
 
@@ -1412,44 +1503,70 @@ bool GetUsedInModule(uint32_t val, uint16_t *arr)
   return false;
 }
 
-bool JsonTemplate(const char* dataBuf)
+bool JsonTemplate(char* dataBuf)
 {
-  // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
+  // Old: {"NAME":"Shelly 2.5","GPIO":[56,0,17,0,21,83,0,0,6,82,5,22,156],"FLAG":2,"BASE":18}
+  // New: {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
 
   if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
 
-#ifdef ESP8266
-  StaticJsonBuffer<400> jb;  // 331 from https://arduinojson.org/v5/assistant/
-#else
-  StaticJsonBuffer<999> jb;  // 654 from https://arduinojson.org/v5/assistant/
-#endif
-  JsonObject& obj = jb.parseObject(dataBuf);
-  if (!obj.success()) { return false; }
+  JsonParser parser((char*) dataBuf);
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return false; }
 
   // All parameters are optional allowing for partial changes
-  const char* name = obj[D_JSON_NAME];
-  if (name != nullptr) {
-    SettingsUpdateText(SET_TEMPLATE_NAME, name);
+  JsonParserToken val = root[PSTR(D_JSON_NAME)];
+  if (val) {
+    SettingsUpdateText(SET_TEMPLATE_NAME, val.getStr());
   }
-  if (obj[D_JSON_GPIO].success()) {
-    for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
+  JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
+  if (arr) {
 #ifdef ESP8266
-      Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
-#else  // ESP32
-      uint16_t gpio = obj[D_JSON_GPIO][i] | 0;
-      if (gpio == (AGPIO(GPIO_NONE) +1)) {
-        gpio = AGPIO(GPIO_USER);
+    bool old_template = false;
+    uint8_t template8[sizeof(mytmplt8285)] = { GPIO_NONE };
+    if (13 == arr.size()) {  // Possible old template
+      uint32_t gpio = 0;
+      for (uint32_t i = 0; i < ARRAY_SIZE(template8) -1; i++) {
+        gpio = arr[i].getUInt();
+        if (gpio > 255) {    // New templates might have values above 255
+          break;
+        }
+        template8[i] = gpio;
       }
-      Settings.user_template.gp.io[i] = gpio;
-#endif
+      old_template = (gpio < 256);
     }
+    if (old_template) {
+
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TPL: Converting template ..."));
+
+      val = root[PSTR(D_JSON_FLAG)];
+      if (val) {
+        template8[ARRAY_SIZE(template8) -1] = val.getUInt() & 0x0F;
+      }
+      TemplateConvert(template8, Settings.user_template.gp.io);
+      Settings.user_template.flag.data = 0;
+    } else {
+#endif
+      for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
+        JsonParserToken val = arr[i];
+        if (!val) { break; }
+        uint16_t gpio = val.getUInt();
+        if (gpio == (AGPIO(GPIO_NONE) +1)) {
+          gpio = AGPIO(GPIO_USER);
+        }
+        Settings.user_template.gp.io[i] = gpio;
+      }
+      val = root[PSTR(D_JSON_FLAG)];
+      if (val) {
+        Settings.user_template.flag.data = val.getUInt();
+      }
+    }
+#ifdef ESP8266
   }
-  if (obj[D_JSON_FLAG].success()) {
-    uint32_t flag = obj[D_JSON_FLAG] | 0;
-    memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
-  }
-  if (obj[D_JSON_BASE].success()) {
-    uint32_t base = obj[D_JSON_BASE];
+#endif
+  val = root[PSTR(D_JSON_BASE)];
+  if (val) {
+    uint32_t base = val.getUInt();
     if ((0 == base) || !ValidTemplateModule(base -1)) { base = 18; }
     Settings.user_template_base = base -1;  // Default WEMOS
   }
@@ -1460,15 +1577,11 @@ void TemplateJson(void)
 {
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
   for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
-#ifdef ESP8266
-    ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings.user_template.gp.io[i]);
-#else  // ESP32
     uint16_t gpio = Settings.user_template.gp.io[i];
     if (gpio == AGPIO(GPIO_USER)) {
       gpio = AGPIO(GPIO_NONE) +1;
     }
     ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", gpio);
-#endif
   }
   ResponseAppend_P(PSTR("],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), Settings.user_template.flag, Settings.user_template_base +1);
 }

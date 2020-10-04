@@ -9,6 +9,7 @@ _Written for PlatformIO with limited support for Arduino IDE._
 [![Chat](https://img.shields.io/discord/479389167382691863.svg)](https://discord.gg/Ks2Kzd4)
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/arendst/Tasmota.svg)](http://isitmaintained.com/project/arendst/Tasmota "Average time to resolve an issue")
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/arendst/Tasmota.svg)](http://isitmaintained.com/project/arendst/Tasmota "Percentage of issues still open")
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/arendst/Tasmota)
 
 If you like **Tasmota**, give it a star, or fork it and contribute!
 
@@ -16,13 +17,13 @@ If you like **Tasmota**, give it a star, or fork it and contribute!
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Tasmota/network)
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
-See [RELEASENOTES.md](RELEASENOTES.md) for release information.
+See [RELEASENOTES.md](https://github.com/arendst/Tasmota/blob/master/RELEASENOTES.md) for release information.
 
 In addition to the [release webpage](https://github.com/arendst/Tasmota/releases/latest) the binaries can also be downloaded from http://ota.tasmota.com/tasmota/release/
 
 ## Development
 
-[![Dev Version](https://img.shields.io/badge/development%20version-v8.4.x.x-blue.svg)](https://github.com/arendst/Tasmota)
+[![Dev Version](https://img.shields.io/badge/development%20version-v9.0.x.x-blue.svg)](https://github.com/arendst/Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://ota.tasmota.com/tasmota/)
 [![Tasmota CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+CI%22)
 [![Tasmota ESP32 CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20ESP32%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+ESP32+CI%22)
@@ -76,6 +77,12 @@ See [wiki migration path](https://tasmota.github.io/docs/Upgrading#migration-pat
 
 6. Migrate to **Tasmota 8.1**
 7. Migrate to **Tasmota 8.x**
+
+--- Major change in internal GPIO function representation ---
+
+8. Migrate to **Tasmota 9.x**
+
+While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with version **v9.0.0.1** the internal GPIO function representation has changed in such a way that fallback is only possible to the latest GPIO configuration before installing **v9.0.0.1**.
 
 ## Support Information
 

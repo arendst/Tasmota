@@ -17,7 +17,11 @@ See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) fo
 6. Migrate to **Tasmota 8.1**
 7. Migrate to **Tasmota 8.x**
 
-While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with release **v8.1.0 Doris** the Settings are re-allocated in such a way that fallback is only allowed and possible to release **v7.2.0 Constance**. Once at v7.2.0 you're on your own when downgrading even further.
+--- Major change in internal GPIO function representation ---
+
+8. Migrate to **Tasmota 9.x**
+
+While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with release **v9.1.0 Imogen** the internal GPIO function representation has changed in such a way that fallback is only possible to the latest GPIO configuration before installing **v9.1.0**.
 
 ## Supported Core versions
 
@@ -55,14 +59,17 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog
 
-### Version 8.5.0.1
+### Version 9.0.0.1
 
-- Fix energy total counters (#9263, #9266)
-- Fix crash in ``ZbRestore``
-- Fix reset BMP sensors when executing command ``SaveData`` and define USE_DEEPSLEEP enabled (#9300)
-- Add command ``SetOption110 1`` to disable Zigbee auto-config when pairing new devices
-- Add command ``SetOption111 1`` to enable frequency output for buzzer GPIO (#8994)
-- Add ``#define USE_MQTT_AWS_IOT_LIGHT`` for password based AWS IoT authentication
-- Add new shutter modes (#9244)
-- Add Zigbee auto-config when pairing
-- Add support for MLX90640 IR array temperature sensor by Christian Baars
+- Remove auto config update for all Friendlynames and Switchtopic from versions before 8.x
+- Change redesigning ESP8266 GPIO internal representation in line with ESP32
+- Change new IR Raw compact format (#9444)
+- Change MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
+- Change A4988 optional microstep pin selection
+- Change pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
+- Fix template conversion when GPIO17 is 0
+- Fix ledlink blink when no network connected regression from 8.3.1.4 (#9292)
+- Fix exception 28 due to device group buffer overflow (#9459)
+- Add optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
+- Add optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
+- Add SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)

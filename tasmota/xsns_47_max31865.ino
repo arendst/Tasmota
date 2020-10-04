@@ -18,8 +18,9 @@
 */
 
 #ifdef USE_MAX31865
-
-#include "Adafruit_MAX31865.h"
+/*********************************************************************************************\
+ * MAX31865 - Thermocouple
+\*********************************************************************************************/
 
 #define XSNS_47              47
 
@@ -31,72 +32,89 @@
   #define PTD_WIRES MAX31865_2WIRE
 #endif
 
-int8_t init_status = 0;
+#include "Adafruit_MAX31865.h"
 
-Adafruit_MAX31865 max31865;
+int8_t max31865_init_status = 0;
+uint8_t max31865_pins_used = 0; //used as a bit array
+
+Adafruit_MAX31865 max31865[MAX_MAX31865S];
 
 struct MAX31865_Result_Struct {
-    uint8_t   ErrorCode;
-    uint16_t  Rtd;
-    float     PtdResistance;
-    float     PtdTemp;
-} MAX31865_Result;
+  uint8_t   ErrorCode;
+  uint16_t  Rtd;
+  float     PtdResistance;
+  float     PtdTemp;
+} MAX31865_Result[MAX_MAX31865S];
 
-void MAX31865_Init(void){
-    if(init_status)
-        return;
+void MAX31865_Init(void) {
+  if (max31865_init_status) { return; }
 
-  max31865.setPins(
-    Pin(GPIO_SSPI_CS),
-    Pin(GPIO_SSPI_MOSI),
-    Pin(GPIO_SSPI_MISO),
-    Pin(GPIO_SSPI_SCLK)
-  );
+  max31865_init_status = 1;
+  for (uint32_t i = 0; i < MAX_MAX31865S; i++) {
+    if (PinUsed(GPIO_SSPI_MAX31865_CS1, i)) {
+      max31865_pins_used |= 1 << i;  //set lowest bit
+      max31865[0].setPins(
+        Pin(GPIO_SSPI_MAX31865_CS1, i),
+        Pin(GPIO_SSPI_MOSI),
+        Pin(GPIO_SSPI_MISO),
+        Pin(GPIO_SSPI_SCLK)
+      );
 
-  if(max31865.begin(PTD_WIRES))
-    init_status = 1;
-  else
-    init_status = -1;
+      if (!max31865[i].begin(PTD_WIRES)) {
+        max31865_init_status = -1;
+      }
+    }
+  }
 }
 
 /*
 *   MAX31865_GetResult(void)
 *   Acquires the raw data via SPI, checks for MAX31865 errors and fills result structure
 */
-void MAX31865_GetResult(void){
-    uint16_t rtd;
+void MAX31865_GetResult(void) {
+  for (uint32_t i = 0; i < MAX_MAX31865S; i++) {
+    if (max31865_pins_used & (1 << i)) {
+      uint16_t rtd;
 
-    rtd = max31865.readRTD();
-    MAX31865_Result.Rtd = rtd;
-    MAX31865_Result.PtdResistance = max31865.rtd_to_resistance(rtd, MAX31865_REF_RES);
-    MAX31865_Result.PtdTemp = max31865.rtd_to_temperature(rtd, MAX31865_PTD_RES, MAX31865_REF_RES) + MAX31865_PTD_BIAS;
+      rtd = max31865[i].readRTD();
+      MAX31865_Result[i].Rtd = rtd;
+      MAX31865_Result[i].PtdResistance = max31865[i].rtd_to_resistance(rtd, MAX31865_REF_RES);
+      MAX31865_Result[i].PtdTemp = max31865[i].rtd_to_temperature(rtd, MAX31865_PTD_RES, MAX31865_REF_RES) + MAX31865_PTD_BIAS;
+    }
+  }
 }
 
-void MAX31865_Show(bool Json){
-    char temperature[33];
-    char resistance[33];
+void MAX31865_Show(bool Json) {
+  uint8_t report_once = 0;
+  for (uint32_t i = 0; i < MAX_MAX31865S; i++) {
+    if (max31865_pins_used & (1 << i)) {
+      char temperature[33];
+      char resistance[33];
 
-    dtostrfd(MAX31865_Result.PtdResistance, Settings.flag2.temperature_resolution, resistance);
-    dtostrfd(MAX31865_Result.PtdTemp, Settings.flag2.temperature_resolution, temperature);
+      dtostrfd(MAX31865_Result[i].PtdResistance, Settings.flag2.temperature_resolution, resistance);
+      dtostrfd(MAX31865_Result[i].PtdTemp, Settings.flag2.temperature_resolution, temperature);
 
-    if(Json){
-        ResponseAppend_P(PSTR(",\"MAX31865\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RESISTANCE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
-          temperature, resistance, MAX31865_Result.ErrorCode);
+      if (Json) {
+        ResponseAppend_P(PSTR(",\"MAX31865%c%d\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RESISTANCE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
+          IndexSeparator(), i, temperature, resistance, MAX31865_Result[i].ErrorCode);
+        if ((0 == tele_period) && (!report_once)) {
 #ifdef USE_DOMOTICZ
-        if (0 == tele_period) {
           DomoticzSensor(DZ_TEMP, temperature);
-        }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-        if (0 == tele_period) {
-          KnxSensor(KNX_TEMPERATURE, MAX31865_Result.PtdTemp);
-        }
+          KnxSensor(KNX_TEMPERATURE, MAX31865_Result[i].PtdTemp);
 #endif  // USE_KNX
-    } else {
+          report_once++;
+        }
 #ifdef USE_WEBSERVER
-        WSContentSend_PD(HTTP_SNS_TEMP, "MAX31865", temperature, TempUnit());
+      } else {
+        char sensorname[33];
+        sprintf(sensorname, "MAX31865%c%d", IndexSeparator(), i);
+        WSContentSend_PD(HTTP_SNS_TEMP, sensorname, temperature, TempUnit());
 #endif  // USE_WEBSERVER
+      }
     }
+  }
 }
 
 /*********************************************************************************************\
@@ -106,9 +124,8 @@ void MAX31865_Show(bool Json){
 bool Xsns47(uint8_t function)
 {
   bool result = false;
-  if (PinUsed(GPIO_SSPI_MISO) && PinUsed(GPIO_SSPI_MOSI) &&
-      PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_CS)) {
 
+  if (PinUsed(GPIO_SSPI_MAX31865_CS1, GPIO_ANY) && PinUsed(GPIO_SSPI_MISO) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK)) {
     switch (function) {
       case FUNC_INIT:
         MAX31865_Init();
@@ -119,12 +136,12 @@ bool Xsns47(uint8_t function)
         break;
 
       case FUNC_JSON_APPEND:
-        MAX31865_Show(true);
+        MAX31865_Show(1);
         break;
 
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
-        MAX31865_Show(false);
+        MAX31865_Show(0);
         break;
 #endif  // USE_WEBSERVER
     }

@@ -82,7 +82,11 @@ const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
 const uint8_t MAX_BUTTON_TEXT = 16;         // Max number of GUI button labels
 const uint8_t MAX_GROUP_TOPICS = 4;         // Max number of Group Topics
 const uint8_t MAX_DEV_GROUP_NAMES = 4;      // Max number of Device Group names
+#ifdef ESP8266
+const uint8_t MAX_ADCS = 1;                 // Max number of ESP8266 ADC pins
+#else
 const uint8_t MAX_ADCS = 8;                 // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
+#endif
 
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 const uint8_t MAX_ROTARIES = 2;             // Max number of Rotary Encoders
@@ -297,7 +301,9 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_DEV_GROUP_NAME1, SET_DEV_GROUP_NAME2, SET_DEV_GROUP_NAME3, SET_DEV_GROUP_NAME4,  // MAX_DEV_GROUP_NAMES
                          SET_DEVICENAME,
                          SET_TELEGRAM_TOKEN, SET_TELEGRAM_CHATID,
-#ifdef ESP32
+#ifdef ESP8266
+                         SET_ADC_PARAM1,
+#else  // ESP32
                          SET_ADC_PARAM1, SET_ADC_PARAM2, SET_ADC_PARAM3, SET_ADC_PARAM4, SET_ADC_PARAM5, SET_ADC_PARAM6, SET_ADC_PARAM7, SET_ADC_PARAM8,  // MAX_ADCS
 #endif
                          SET_MAX };

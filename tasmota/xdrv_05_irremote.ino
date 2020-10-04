@@ -17,6 +17,41 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+Below is the Pyhton3 code to decompress IR comact format.
+
+======================================================================
+import re
+
+def ir_expand(ir_compact):
+	count = ir_compact.count(',')		# number of occurence of comma
+
+	if count > 1:
+		return "Unsupported format"
+
+	if count == 1:
+		ir_compact = input.split(',')[1]	# if 1 comma, skip the frequency
+
+	arr = re.findall("(\d+|[A-Za-z])", ir_compact)
+
+	comp_table = []			# compression history table
+	arr2 = []				# output
+
+	for elt in arr:
+		if len(elt) == 1:
+			c = ord(elt.upper()) - ord('A')
+			if c >= len(arr): return "Error index undefined"
+			arr2.append(comp_table[c])
+		else:
+			comp_table.append(elt)
+			arr2.append(elt)
+
+	out = ",".join(arr2)
+
+	return out
+======================================================================
+ */
+
 #if defined(USE_IR_REMOTE) && !defined(USE_IR_REMOTE_FULL)
 /*********************************************************************************************\
  * IR Remote send and receive using IRremoteESP8266 library
@@ -25,6 +60,7 @@
 #define XDRV_05             5
 
 #include <IRremoteESP8266.h>
+#include <IRutils.h>
 
 enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND };
 
@@ -33,6 +69,44 @@ const char kIrRemoteCommands[] PROGMEM = "|" D_CMND_IRSEND ;
 // Keep below IrRemoteCommand lines exactly as below as otherwise Arduino IDE prototyping will fail (#6982)
 void (* const IrRemoteCommand[])(void) PROGMEM = {
   &CmndIrSend };
+
+/*********************************************************************************************\
+ * Class used to make a compact IR Raw format.
+ * 
+ * We round timings to the closest 10ms value,
+ * and store up to last 26 values with seen.
+ * A value already seen is encoded with a letter indicating the position in the table.
+\*********************************************************************************************/
+
+class IRRawTable {
+public:
+  IRRawTable() : timings() {}   // zero initialize the array
+
+  int32_t getTimingForLetter(uint8_t l) const {
+    l = toupper(l);
+    if ((l < 'A') || (l > 'Z')) { return -1; }
+    return timings[l - 'A'];
+  }
+  uint8_t findOrAdd(uint16_t t) {
+    if (0 == t) { return 0; }
+
+    for (uint32_t i=0; i<26; i++) {
+      if (timings[i] == t) { return i + 'A'; }
+      if (timings[i] == 0) { timings[i] = t; break; }   // add new value
+    }
+    return 0;   // not found
+  }
+  void add(uint16_t t) {
+    if (0 == t) { return; }
+
+    for (uint32_t i=0; i<26; i++) {
+      if (timings[i] == 0) { timings[i] = t; break; }   // add new value
+    }
+  }
+
+protected:
+  uint16_t timings[26];
+};
 
 // Based on IRremoteESP8266.h enum decode_type_t
 static const uint8_t MAX_STANDARD_IR = NEC;   // this is the last code mapped to decode_type_t
@@ -133,25 +207,35 @@ void IrReceiveCheck(void)
         ResponseAppend_P(PSTR(",\"" D_JSON_IR_HASH "\":%s"), svalue);
       }
 
+      IRRawTable raw_table;
+      bool prev_number = false;     // was the previous value a number, meaning we may need a comma prefix
+      bool ir_high = true;          // alternate high/low
+      // Add raw data in a compact format
       if (Settings.flag3.receive_raw) {  // SetOption58 - Add IR Raw data to JSON message
-        ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":["));
-        uint16_t i;
-        for (i = 1; i < results.rawlen; i++) {
-          if (i > 1) { ResponseAppend_P(PSTR(",")); }
-          uint32_t usecs;
-          for (usecs = results.rawbuf[i] * kRawTick; usecs > UINT16_MAX; usecs -= UINT16_MAX) {
-            ResponseAppend_P(PSTR("%d,0,"), UINT16_MAX);
+        ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":\""));
+        size_t rawlen = results.rawlen;
+        uint32_t i;
+        
+        for (i = 1; i < rawlen; i++) {
+          // round to closest 10ms
+          uint32_t raw_val_millis = results.rawbuf[i] * kRawTick;
+          uint16_t raw_dms = (raw_val_millis*2 + 5) / 10;   // in 5 micro sec steps
+          // look if the data is already seen
+          uint8_t  letter = raw_table.findOrAdd(raw_dms);
+          if (letter) {
+            if (!ir_high) { letter = tolower(letter); }
+            ResponseAppend_P(PSTR("%c"), letter);
+            prev_number = false;
+          } else {
+            // number
+            ResponseAppend_P(PSTR("%c%d"), ir_high ? '+' : '-', (uint32_t)raw_dms * 5);
+            prev_number = true;
           }
-          ResponseAppend_P(PSTR("%d"), usecs);
+          ir_high = !ir_high;
           if (strlen(mqtt_data) > sizeof(mqtt_data) - 40) { break; }  // Quit if char string becomes too long
         }
-        uint16_t extended_length = results.rawlen - 1;
-        for (uint32_t j = 0; j < results.rawlen - 1; j++) {
-          uint32_t usecs = results.rawbuf[j] * kRawTick;
-          // Add two extra entries for multiple larger than UINT16_MAX it is.
-          extended_length += (usecs / (UINT16_MAX + 1)) * 2;
-        }
-        ResponseAppend_P(PSTR("],\"" D_JSON_IR_RAWDATA "Info\":[%d,%d,%d]"), extended_length, i -1, results.overflow);
+        uint16_t extended_length = getCorrectedRawLength(&results);
+        ResponseAppend_P(PSTR("\",\"" D_JSON_IR_RAWDATA "Info\":[%d,%d,%d]"), extended_length, i -1, results.overflow);
       }
 
       ResponseJsonEndEnd();
@@ -176,30 +260,21 @@ void IrReceiveCheck(void)
 
 uint32_t IrRemoteCmndIrSendJson(void)
 {
-  // ArduinoJSON entry used to calculate jsonBuf: JSON_OBJECT_SIZE(3) + 40 = 96
   // IRsend { "protocol": "RC5", "bits": 12, "data":"0xC86" }
   // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
 
-  char dataBufUc[XdrvMailbox.data_len + 1];
-  UpperCase(dataBufUc, XdrvMailbox.data);
-  RemoveSpace(dataBufUc);
-  if (strlen(dataBufUc) < 8) {
-    return IE_INVALID_JSON;
-  }
-
-  StaticJsonBuffer<140> jsonBuf;
-  JsonObject &root = jsonBuf.parseObject(dataBufUc);
-  if (!root.success()) {
-    return IE_INVALID_JSON;
-  }
+  RemoveSpace(XdrvMailbox.data);    // TODO is this really needed?
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return IE_INVALID_JSON; }
 
   // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
   // IRsend { "protocol": "NEC", "bits": 32, "data":"0x02FDFE80", "repeat": 2 }
-  char parm_uc[10];
-  const char *protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_PROTOCOL))];
-  uint16_t bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_BITS))];
-  uint64_t data = strtoull(root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATA))], nullptr, 0);
-  uint16_t repeat = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_REPEAT))];
+  const char *protocol = root.getStr(PSTR(D_JSON_IR_PROTOCOL), "");
+  uint16_t bits = root.getUInt(PSTR(D_JSON_IR_BITS), 0);
+  uint64_t data = root.getULong(PSTR(D_JSON_IR_DATA), 0);
+  uint16_t repeat = root.getUInt(PSTR(D_JSON_IR_REPEAT), 0);
+  
   // check if the IRSend<x> is great than repeat
   if (XdrvMailbox.index > repeat + 1) {
     repeat = XdrvMailbox.index - 1;
@@ -243,7 +318,6 @@ void CmndIrSend(void)
   uint8_t error = IE_SYNTAX_IRSEND;
 
   if (XdrvMailbox.data_len) {
-//    error = (strstr(XdrvMailbox.data, "{") == nullptr) ? IrRemoteCmndIrSendRaw() : IrRemoteCmndIrSendJson();
     if (strstr(XdrvMailbox.data, "{") == nullptr) {
       error = IE_INVALID_JSON;
     } else {

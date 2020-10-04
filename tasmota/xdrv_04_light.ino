@@ -263,8 +263,6 @@ struct LIGHT {
   uint32_t strip_timer_counter = 0;  // Bars and Gradient
   power_t power = 0;                      // Power<x> for each channel if SetOption68, or boolean if single light
 
-  uint16_t wakeup_counter = 0;
-
   uint8_t entry_color[LST_MAX];
   uint8_t current_color[LST_MAX];
   uint8_t new_color[LST_MAX];
@@ -276,11 +274,12 @@ struct LIGHT {
   uint8_t subtype = 0;                    // LST_ subtype
   uint8_t device = 0;
   uint8_t old_power = 1;
-  uint8_t wakeup_active = 0;
-  uint8_t wakeup_dimmer = 0;
+  uint8_t wakeup_active = 0;             // 0=inctive, 1=on-going, 2=about to start, 3=will be triggered next cycle
   uint8_t fixed_color_index = 1;
   uint8_t pwm_offset = 0;                 // Offset in color buffer
   uint8_t max_scheme = LS_MAX -1;
+  
+  uint32_t wakeup_start_time = 0;
 
   bool update = true;
   bool pwm_multi_channels = false;        // SetOption68, treat each PWM channel as an independant dimmer
@@ -565,9 +564,6 @@ class LightStateClass {
 #ifdef DEBUG_LIGHT
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setBri RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
 #endif
-#ifdef USE_PWM_DIMMER
-  if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(0);
-#endif  // USE_PWM_DIMMER
     }
 
     // changes the RGB brightness alone
@@ -575,6 +571,9 @@ class LightStateClass {
       uint8_t prev_bri = _briRGB;
       _briRGB = bri_rgb;
       if (bri_rgb > 0) { addRGBMode(); }
+#ifdef USE_PWM_DIMMER
+      if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(0);
+#endif  // USE_PWM_DIMMER
       return prev_bri;
     }
 
@@ -583,6 +582,9 @@ class LightStateClass {
       uint8_t prev_bri = _briCT;
       _briCT = bri_ct;
       if (bri_ct > 0) { addCTMode(); }
+#ifdef USE_PWM_DIMMER
+      if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(0);
+#endif  // USE_PWM_DIMMER
       return prev_bri;
     }
 
@@ -1276,6 +1278,13 @@ bool LightModuleInit(void)
     light_type = LT_PWM2;
   }
 #endif  // ESP8266
+#ifdef USE_PWM_DIMMER
+#ifdef USE_DEVICE_GROUPS
+  else if (PWM_DIMMER == my_module_type) {
+    light_type = Settings.pwm_dimmer_cfg.pwm_count + 1;
+  }
+#endif  // USE_DEVICE_GROUPS
+#endif  // USE_PWM_DIMMER
 
   if (light_type > LT_BASIC) {
     devices_present++;
@@ -1866,25 +1875,27 @@ void LightAnimate(void)
         light_controller.calcLevels(Light.new_color);
         break;
       case LS_WAKEUP:
-        if (2 == Light.wakeup_active) {
-          Light.wakeup_active = 1;
-          for (uint32_t i = 0; i < Light.subtype; i++) {
-            Light.new_color[i] = 0;
+        {
+          if (2 == Light.wakeup_active) {
+            Light.wakeup_active = 1;
+            for (uint32_t i = 0; i < Light.subtype; i++) {
+              Light.new_color[i] = 0;
+            }
+            Light.wakeup_start_time = millis();
           }
-          Light.wakeup_counter = 0;
-          Light.wakeup_dimmer = 0;
-        }
-        Light.wakeup_counter++;
-        if (Light.wakeup_counter > ((Settings.light_wakeup * STATES) / Settings.light_dimmer)) {
-          Light.wakeup_counter = 0;
-          Light.wakeup_dimmer++;
-          if (Light.wakeup_dimmer <= Settings.light_dimmer) {
-            light_state.setDimmer(Light.wakeup_dimmer);
+          // which step are we in a range 0..1023
+          uint32_t step_10 = ((millis() - Light.wakeup_start_time) * 1023) / (Settings.light_wakeup * 1000);
+          if (step_10 > 1023) { step_10 = 1023; }   // sanity check
+          uint8_t wakeup_bri = changeUIntScale(step_10, 0, 1023, 0, LightStateClass::DimmerToBri(Settings.light_dimmer));
+
+          if (wakeup_bri != light_state.getBri()) {
+            light_state.setBri(wakeup_bri);
             light_controller.calcLevels();
             for (uint32_t i = 0; i < Light.subtype; i++) {
               Light.new_color[i] = Light.current_color[i];
             }
-          } else {
+          }
+          if (1023 == step_10) {
             Response_P(PSTR("{\"" D_CMND_WAKEUP "\":\"" D_JSON_DONE "\""));
             ResponseLightState(1);
             ResponseJsonEnd();

@@ -1165,50 +1165,45 @@ void DisplayAnalyzeJson(char *topic, char *json)
 // tele/wemos5/SENSOR {"Time":"2017-09-20T11:53:53","SHT1X":{"Temperature":20.1,"Humidity":58.9},"HTU21":{"Temperature":20.7,"Humidity":58.5},"BMP280":{"Temperature":21.6,"Pressure":1020.3},"TempUnit":"C"}
 // tele/th1/SENSOR    {"Time":"2017-09-20T11:54:48","DS18B20":{"Temperature":49.7},"TempUnit":"C"}
 
-
-//  char jsonStr[MESSZ];
-//  strlcpy(jsonStr, json, sizeof(jsonStr));  // Save original before destruction by JsonObject
   String jsonStr = json;  // Move from stack to heap to fix watchdogs (20180626)
 
-  StaticJsonBuffer<1024> jsonBuf;
-  JsonObject &root = jsonBuf.parseObject(jsonStr);
-  if (root.success()) {
+  JsonParser parser((char*)jsonStr.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (root) {   // did JSON parsing went ok?
 
-    const char *unit;
-    unit = root[D_JSON_TEMPERATURE_UNIT];
+    const char *unit = root.getStr(PSTR(D_JSON_TEMPERATURE_UNIT), nullptr);   // nullptr if not found
     if (unit) {
       snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%s"), unit);  // C or F
     }
-    unit = root[D_JSON_PRESSURE_UNIT];
+    unit = root.getStr(PSTR(D_JSON_PRESSURE_UNIT), nullptr);   // nullptr if not found
     if (unit) {
       snprintf_P(disp_pres, sizeof(disp_pres), PSTR("%s"), unit);  // hPa or mmHg
     }
-
-    for (JsonObject::iterator it = root.begin(); it != root.end(); ++it) {
-      JsonVariant value = it->value;
-      if (value.is<JsonObject>()) {
-        JsonObject& Object2 = value;
-        for (JsonObject::iterator it2 = Object2.begin(); it2 != Object2.end(); ++it2) {
-          JsonVariant value2 = it2->value;
-          if (value2.is<JsonObject>()) {
-            JsonObject& Object3 = value2;
-            for (JsonObject::iterator it3 = Object3.begin(); it3 != Object3.end(); ++it3) {
-              const char* value = it3->value;
-              if (value != nullptr) {  // "DHT11":{"Temperature":null,"Humidity":null} - ignore null as it will raise exception 28
-                DisplayJsonValue(topic, it->key, it3->key, value);  // Sensor 56%
+    for (auto key1 : root) {
+      JsonParserToken value1 = key1.getValue();
+      if (value1.isObject()) {
+        JsonParserObject Object2 = value1.getObject();
+        for (auto key2 : Object2) {
+          JsonParserToken value2 = key2.getValue();
+          if (value2.isObject()) {
+            JsonParserObject Object3 = value2.getObject();
+            for (auto key3 : Object3) {
+              const char* value3 = key3.getValue().getStr(nullptr);
+              if (value3 != nullptr) {  // "DHT11":{"Temperature":null,"Humidity":null} - ignore null as it will raise exception 28
+                DisplayJsonValue(topic, key1.getStr(), key3.getStr(), value3);  // Sensor 56%
               }
             }
           } else {
-            const char* value = it2->value;
+            const char* value = value2.getStr(nullptr);
             if (value != nullptr) {
-              DisplayJsonValue(topic, it->key, it2->key, value);  // Sensor  56%
+              DisplayJsonValue(topic, key1.getStr(), key2.getStr(), value);  // Sensor  56%
             }
           }
         }
       } else {
-        const char* value = it->value;
+        const char* value = value1.getStr(nullptr);
         if (value != nullptr) {
-          DisplayJsonValue(topic, it->key, it->key, value);  // Topic  56%
+          DisplayJsonValue(topic, key1.getStr(), key1.getStr(), value);  // Topic  56%
         }
       }
     }

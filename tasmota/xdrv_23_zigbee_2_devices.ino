@@ -72,10 +72,13 @@ public:
   int16_t               temperature;    // temperature in 1/10th of Celsius, 0x8000 if unknown
   uint16_t              pressure;       // air pressure in hPa, 0xFFFF if unknown
   uint8_t               humidity;       // humidity in percent, 0..100, 0xFF if unknown
-  // powe plug data
+  // power plug data
   uint16_t              mains_voltage;  // AC voltage
   int16_t               mains_power;    // Active power
   uint32_t              last_seen;      // Last seen time (epoch)
+  // thermostat
+  int16_t               temperature_target; // settings for the temparature
+  uint8_t               th_setpoint;    // percentage of heat/cool in percent
 
   // Constructor with all defaults
   Z_Device(uint16_t _shortaddr = BAD_SHORTADDR, uint64_t _longaddr = 0x00):
@@ -105,7 +108,9 @@ public:
     humidity(0xFF),
     mains_voltage(0xFFFF),
     mains_power(-0x8000),
-    last_seen(0)
+    last_seen(0),
+    temperature_target(-0x8000),
+    th_setpoint(0xFF)
     { };
 
   inline bool valid(void)               const { return BAD_SHORTADDR != shortaddr; }    // is the device known, valid and found?
@@ -131,6 +136,9 @@ public:
   inline bool validPressure(void)       const { return 0xFFFF != pressure; }
   inline bool validHumidity(void)       const { return 0xFF != humidity; }
   inline bool validLastSeen(void)       const { return 0x0 != last_seen; }
+
+  inline bool validTemperatureTarget(void) const { return -0x8000 != temperature_target; }
+  inline bool validThSetpoint(void)     const { return 0xFF != th_setpoint; }
 
   inline bool validMainsVoltage(void)   const { return 0xFFFF != mains_voltage; }
   inline bool validMainsPower(void)     const { return -0x8000 != mains_power; }
@@ -163,6 +171,7 @@ typedef enum Z_Def_Category {
   Z_CAT_READ_ATTR,            // Attribute reporting, either READ_ATTRIBUTE or REPORT_ATTRIBUTE, we coalesce all attributes reported if we can
   Z_CAT_VIRTUAL_OCCUPANCY,    // Creation of a virtual attribute, typically after a time-out. Ex: Aqara presence sensor
   Z_CAT_REACHABILITY,         // timer set to measure reachability of device, i.e. if we don't get an answer after 1s, it is marked as unreachable (for Alexa)
+  Z_CAT_PERMIT_JOIN,          // timer to signal the end of the PermitJoin period
   // Below will clear based on device + cluster pair.
   Z_CLEAR_DEVICE_CLUSTER,
   Z_CAT_READ_CLUSTER,
@@ -261,7 +270,7 @@ public:
   // Dump json
   String dumpLightState(uint16_t shortaddr) const;
   String dump(uint32_t dump_mode, uint16_t status_shortaddr = 0) const;
-  int32_t deviceRestore(const JsonObject &json);
+  int32_t deviceRestore(JsonParserObject json);
 
   // General Zigbee device profile support
   void setZbProfile(uint16_t shortaddr, uint8_t zb_profile);
@@ -636,7 +645,12 @@ void Z_Devices::setLQI(uint16_t shortaddr, uint8_t lqi) {
 
 void Z_Devices::setLastSeenNow(uint16_t shortaddr) {
   if (shortaddr == localShortAddr) { return; }
-  getShortAddr(shortaddr).last_seen= Rtc.utc_time;
+  // Only update time if after 2020-01-01 0000.
+  // Fixes issue where zigbee device pings before WiFi/NTP has set utc_time
+  // to the correct time, and "last seen" calculations are based on the
+  // pre-corrected last_seen time and the since-corrected utc_time.
+  if (Rtc.utc_time < 1577836800) { return; }
+  getShortAddr(shortaddr).last_seen = Rtc.utc_time;
 }
 
 
@@ -936,7 +950,7 @@ void Z_Devices::clean(void) {
 // - a number 0..99, the index number in ZigbeeStatus
 // - a friendly name, between quotes, example: "Room_Temp"
 uint16_t Z_Devices::parseDeviceParam(const char * param, bool short_must_be_known) const {
-  if (nullptr == param) { return 0; }
+  if (nullptr == param) { return BAD_SHORTADDR; }
   size_t param_len = strlen(param);
   char dataBuf[param_len + 1];
   strcpy(dataBuf, param);
@@ -1070,7 +1084,7 @@ String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
 // <0 : Error
 //
 // Ex: {"Device":"0x5ADF","Name":"IKEA_Light","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"]}
-int32_t Z_Devices::deviceRestore(const JsonObject &json) {
+int32_t Z_Devices::deviceRestore(JsonParserObject json) {
 
   // params
   uint16_t device = 0x0000;                 // 0x0000 is coordinator so considered invalid
@@ -1078,56 +1092,38 @@ int32_t Z_Devices::deviceRestore(const JsonObject &json) {
   const char * modelid = nullptr;
   const char * manufid = nullptr;
   const char * friendlyname = nullptr;
-  int8_t   bulbtype = 0xFF;
+  int8_t   bulbtype = -1;
   size_t   endpoints_len = 0;
 
   // read mandatory "Device"
-  const JsonVariant &val_device = GetCaseInsensitive(json, PSTR("Device"));
-  if (nullptr != &val_device) {
-    device = strToUInt(val_device);
+  JsonParserToken val_device = json[PSTR("Device")];
+  if (val_device) {
+    device = (uint32_t) val_device.getUInt(device);
   } else {
     return -1;        // missing "Device" attribute
   }
 
-  // read "IEEEAddr" 64 bits in format "0x0000000000000000"
-  const JsonVariant &val_ieeeaddr = GetCaseInsensitive(json, PSTR("IEEEAddr"));
-  if (nullptr != &val_ieeeaddr) {
-    ieeeaddr = strtoull(val_ieeeaddr.as<const char*>(), nullptr, 0);
-  }
-
-  // read "Name"
-  friendlyname = getCaseInsensitiveConstCharNull(json, PSTR("Name"));
-
-  // read "ModelId"
-  modelid = getCaseInsensitiveConstCharNull(json, PSTR("ModelId"));
-
-  // read "Manufacturer"
-  manufid = getCaseInsensitiveConstCharNull(json, PSTR("Manufacturer"));
-
-  // read "Light"
-  const JsonVariant &val_bulbtype = GetCaseInsensitive(json, PSTR(D_JSON_ZIGBEE_LIGHT));
-  if (nullptr != &val_bulbtype) { bulbtype = strToUInt(val_bulbtype);; }
+  ieeeaddr      = json.getULong(PSTR("IEEEAddr"), ieeeaddr); // read "IEEEAddr" 64 bits in format "0x0000000000000000"
+  friendlyname  = json.getStr(PSTR("Name"), nullptr);  // read "Name"
+  modelid       = json.getStr(PSTR("ModelId"), nullptr);
+  manufid       = json.getStr(PSTR("Manufacturer"), nullptr);
+  JsonParserToken tok_bulbtype = json[PSTR(D_JSON_ZIGBEE_LIGHT)];
 
   // update internal device information
   updateDevice(device, ieeeaddr);
   if (modelid) { setModelId(device, modelid); }
   if (manufid) { setManufId(device, manufid); }
   if (friendlyname) { setFriendlyName(device, friendlyname); }
-  if (&val_bulbtype) { setHueBulbtype(device, bulbtype); }
+  if (tok_bulbtype) { setHueBulbtype(device, tok_bulbtype.getInt()); }
 
   // read "Endpoints"
-  const JsonVariant &val_endpoints = GetCaseInsensitive(json, PSTR("Endpoints"));
-  if ((nullptr != &val_endpoints) && (val_endpoints.is<JsonArray>())) {
-    const JsonArray &arr_ep = val_endpoints.as<const JsonArray&>();
-    endpoints_len = arr_ep.size();
+  JsonParserToken val_endpoints = json[PSTR("Endpoints")];
+  if (val_endpoints.isArray()) {
+    JsonParserArray arr_ep = JsonParserArray(val_endpoints);
     clearEndpoints(device);     // clear even if array is empty
-    if (endpoints_len) {
-      for (auto ep_elt : arr_ep) {
-        uint8_t ep = strToUInt(ep_elt);
-        if (ep) {
-          addEndpoint(device, ep);
-        }
-      }
+    for (auto ep_elt : arr_ep) {
+      uint8_t ep = ep_elt.getUInt();
+      if (ep) { addEndpoint(device, ep); }
     }
   }
 

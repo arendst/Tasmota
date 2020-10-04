@@ -125,10 +125,10 @@
 #define D_NOISE "Hluk"
 #define D_NONE "Žádný"
 #define D_OFF "Vyp."
-#define D_OFFLINE "Neaktivní"
+#define D_OFFLINE "Offline"                  // Don't translate, LWT message! Nepředkládat, LWT zpráva!
 #define D_OK "OK"
 #define D_ON "Zap."
-#define D_ONLINE "Aktivní"
+#define D_ONLINE "Online"                  // Don't translate, LWT message! Nepředkládat, LWT zpráva!
 #define D_PASSWORD "Heslo"
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Účiník"
@@ -600,6 +600,8 @@
 #define D_SENSOR_SDM120_RX     "SDMx20 Rx"
 #define D_SENSOR_SDM630_TX     "SDM630 Tx"
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
+#define D_SENSOR_WE517_TX      "WE517 Tx"
+#define D_SENSOR_WE517_RX      "WE517 Rx"
 #define D_SENSOR_TM1638_CLK    "TM16 CLK"
 #define D_SENSOR_TM1638_DIO    "TM16 DIO"
 #define D_SENSOR_TM1638_STB    "TM16 STB"
@@ -719,6 +721,8 @@
 #define D_SENSOR_TCP_RXD       "TCP Rx"
 #define D_SENSOR_IEM3000_TX    "iEM3000 TX"
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
+#define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
+#define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"

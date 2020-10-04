@@ -113,6 +113,7 @@
 //#define USE_SPS30                                // Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
 #define USE_ADE7953                              // Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
 //#define USE_VL53L0X                              // Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
+//#define USE_VL53L1X                              // Enable support for VL53L1X sensor (I2C address 0x29) using Pololu VL53L1X library (+2k9 code)
 //#define USE_MLX90614                             // Enable MLX90614 ir temp sensor (I2C address 0x5a) (+0.6k code)
 //#define USE_CHIRP                                // Enable CHIRP soil moisture sensor (variable I2C address, default 0x20)
 //#define USE_PAJ7620                              // Enable PAJ7620 gesture sensor (I2C address 0x73) (+2.5k code)
@@ -157,6 +158,7 @@
 #define USE_HRXL                                 // Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
 //#define USE_TASMOTA_CLIENT                       // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 //#define USE_OPENTHERM                            // Add support for OpenTherm (+15k code)
+//#define USE_MIEL_HVAC                            // Add support for Mitsubishi Electric HVAC serial interface (+5k code)
 //#define USE_MCP9808                            // Add support for MCP9808 temperature sensor (+0k9 code)
 //#define USE_HP303B                             // Add support for HP303B temperature and pressure sensor (I2C address 0x76 or 0x77) (+6k2 code)
 
@@ -172,6 +174,7 @@
 //#define USE_SOLAX_X1                             // Add support for Solax X1 series Modbus log info (+3k1 code)
 //#define USE_LE01MR                               // Add support for F&F LE-01MR modbus energy meter (+2k code)
 //#define USE_TELEINFO                             // Add support for French Energy Provider metering telemetry (+5k2 code, +168 RAM + SmartMeter LinkedList Values RAM)
+//#define USE_WE517                                // Add support for Orno WE517-Modbus energy monitor (+1k code)
 
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
@@ -269,6 +272,8 @@
   #undef USE_SOLAX_X1                            // Disable support for Solax X1 series Modbus log info (+3k1 code)
   #undef USE_LE01MR                              // Disable support for F&F LE-01MR Modbus energy meter (+2k code)
   #undef USE_TELEINFO                            // Disable support for French Energy Provider metering telemetry
+  #undef USE_IEM3000                             // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
+  #undef USE_WE517                               // Disable support for Orno WE517-Modbus energy monitor (+1k code)
 
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
@@ -363,6 +368,8 @@
   #undef USE_SOLAX_X1                            // Disable support for Solax X1 series Modbus log info (+3k1 code)
   #undef USE_LE01MR                              // Disable support for F&F LE-01MR Modbus energy meter (+2k code)
   #undef USE_TELEINFO                            // Disable support for French Energy Provider metering telemetry
+  #undef USE_IEM3000                             // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
+  #undef USE_WE517                               // Disable support for Orno WE517-Modbus energy monitor (+1k code)
 
 //#undef USE_DS18x20                               // Disable support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
@@ -391,6 +398,7 @@
 #undef USE_HRXL                                  // Disable support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
 #undef USE_TASMOTA_CLIENT                        // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 #undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
+#undef USE_MIEL_HVAC                             // Disable support for Mitsubishi Electric HVAC serial interface (+5k code)
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -503,6 +511,7 @@
 #undef USE_HRXL                                  // Disable support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
 #undef USE_TASMOTA_CLIENT                        // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 #undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
+#undef USE_MIEL_HVAC                             // Disable support for Mitsubishi Electric HVAC serial interface (+5k code)
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
 #undef USE_ADE7953                               // Disable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
@@ -517,7 +526,8 @@
 #undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k1 code)
 #undef USE_LE01MR                                // Disable support for F&F LE-01MR Modbus energy meter (+2k code)
 #undef USE_TELEINFO                              // Disable support for French Energy Provider metering telemetry
-
+#undef USE_IEM3000                               // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
+#undef USE_WE517                                 // Disable support for Orno WE517-Modbus energy monitor (+1k code)
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -637,6 +647,7 @@
 #undef USE_HRXL                                  // Disable support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
 #undef USE_TASMOTA_CLIENT                        // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 #undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
+#undef USE_MIEL_HVAC                             // Disable support for Mitsubishi Electric HVAC serial interface (+5k code)
 
 //#undef USE_ENERGY_SENSOR                         // Disable energy sensors
 #undef USE_PZEM004T                              // Disable PZEM004T energy sensor
@@ -650,7 +661,8 @@
 #undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k1 code)
 #undef USE_LE01MR                                // Disable support for F&F LE-01MR Modbus energy meter (+2k code)
 #undef USE_TELEINFO                              // Disable support for French Energy Provider metering telemetry
-
+#undef USE_IEM3000                               // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
+#undef USE_WE517                                 // Disable support for Orno WE517-Modbus energy monitor (+1k code)
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -770,6 +782,7 @@
 #undef USE_HRXL                                  // Disable support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
 #undef USE_TASMOTA_CLIENT                        // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 #undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
+#undef USE_MIEL_HVAC                             // Disable support for Mitsubishi Electric HVAC serial interface (+5k code)
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
 #undef USE_PZEM004T                              // Disable PZEM004T energy sensor
@@ -785,6 +798,7 @@
 #undef USE_BL0940                                // Disable support for BL0940 Energy monitor as used in Blitzwolf SHP-10 (+1k6 code)
 #undef USE_TELEINFO                              // Disable support for French Energy Provider metering telemetry
 #undef USE_IEM3000                               // Disable support for Schneider Electric iEM3000-Modbus series energy monitor (+0k8 code)
+#undef USE_WE517                                 // Disable support for Orno WE517-Modbus energy monitor (+1k code)
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI

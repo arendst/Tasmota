@@ -20,6 +20,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.4.1 20200807  added   - add ATC, some optimizations and a bit more error handling
+  ---
   0.9.4.0 20200807  added   - multiple backports from the HM10-driver (NLIGHT,MJYD2S,YEERC,MHOC401,MHOC303),
                              fixing Flora values, adding realtime-bridge, better battery for LYWSD03 and MHOC401
   ---
@@ -52,7 +54,7 @@ TasmotaSerial *HM10Serial;
 #define  HM10_MAX_TASK_NUMBER      12
 uint8_t  HM10_TASK_LIST[HM10_MAX_TASK_NUMBER+1][2];   // first value: kind of task - second value: delay in x * 100ms
 
-#define  HM10_MAX_RX_BUF           64
+#define  HM10_MAX_RX_BUF           384
 
 struct {
   uint8_t current_task_delay;  // number of 100ms-cycles
@@ -75,8 +77,6 @@ struct {
     uint32_t autoScan:1;
     uint32_t shallTriggerTele:1;
     uint32_t triggeredTele:1;
-    // uint32_t shallClearResults:1; // BLE scan results
-    // TODO: more to come
   } mode;
   struct {
     uint8_t sensor;           // points to to the number 0...255
@@ -90,28 +90,29 @@ struct {
     uint32_t minimalSummary:1;
     uint32_t noRealTime:1;
   } option;
+  char *rxBuffer;
 } HM10;
 
 #pragma pack(1)  // byte-aligned structures to read the sensor data
 
-  struct {
-    uint16_t temp;
-    uint8_t hum;
-    uint16_t volt;
-  } LYWSD0x_HT;
-  struct {
-    uint8_t spare;
-    uint16_t temp;
-    uint16_t hum;
-  } CGD1_HT;
-  struct {
-    uint16_t temp;
-    uint8_t spare;
-    uint32_t lux;
-    uint8_t moist;
-    uint16_t fert;
-  } Flora_TLMF; // temperature, lux, moisture, fertility
-
+struct LYWSD0x_HT_t{
+  uint16_t temp;
+  uint8_t hum;
+  uint16_t volt;
+};
+struct CGD1_HT_t{
+  uint8_t spare;
+  uint16_t temp;
+  uint16_t hum;
+};
+struct Flora_TLMF_t{
+  uint16_t temp;
+  uint8_t spare;
+  uint32_t lux;
+  uint8_t moist;
+  uint16_t fert;
+  uint32_t ID;
+}; // temperature, lux, moisture, fertility
 
 struct mi_beacon_t{
   uint16_t frame;
@@ -141,6 +142,16 @@ struct mi_beacon_t{
   };
   uint8_t padding[12];
 };
+
+struct ATCPacket_t{
+  uint8_t MAC[6];
+  int16_t temp; //sadly this is in wrong endianess
+  uint8_t hum;
+  uint8_t batPer;
+  uint16_t batMV;
+  uint8_t frameCnt;
+};
+
 #pragma pack(0)
 
 struct mi_sensor_t{
@@ -229,8 +240,9 @@ const char kHM10_Commands[] PROGMEM             = "Scan|AT|Period|Baud|Time|Auto
 #define YEERC       9
 #define MHOC401     10
 #define MHOC303     11
+#define ATC         12
 
-#define HM10_TYPES    11 //count this manually
+#define HM10_TYPES    12 //count this manually
 
 const uint16_t kHM10SlaveID[HM10_TYPES]={ 
                                   0x0098, // Flora
@@ -243,7 +255,8 @@ const uint16_t kHM10SlaveID[HM10_TYPES]={
                                   0x07f6, // MJYD2S
                                   0x0153, // yee-rc
                                   0x0387, // MHO-C401
-                                  0x06d3  // MHO-C303
+                                  0x06d3, // MHO-C303
+                                  0x0a1c  // ATC -> this is a fake ID
                                   };
 
 const char kHM10DeviceType1[] PROGMEM = "Flora";
@@ -257,8 +270,9 @@ const char kHM10DeviceType8[] PROGMEM = "MJYD2S";
 const char kHM10DeviceType9[] PROGMEM = "YEERC";
 const char kHM10DeviceType10[] PROGMEM ="MHOC401";
 const char kHM10DeviceType11[] PROGMEM ="MHOC303";
+const char kHM10DeviceType12[] PROGMEM ="ATC";
 
-const char * kHM10DeviceType[] PROGMEM = {kHM10DeviceType1,kHM10DeviceType2,kHM10DeviceType3,kHM10DeviceType4,kHM10DeviceType5,kHM10DeviceType6,kHM10DeviceType7,kHM10DeviceType8,kHM10DeviceType9,kHM10DeviceType10,kHM10DeviceType11};
+const char * kHM10DeviceType[] PROGMEM = {kHM10DeviceType1,kHM10DeviceType2,kHM10DeviceType3,kHM10DeviceType4,kHM10DeviceType5,kHM10DeviceType6,kHM10DeviceType7,kHM10DeviceType8,kHM10DeviceType9,kHM10DeviceType10,kHM10DeviceType11,kHM10DeviceType12};
 
 /*********************************************************************************************\
  * enumerations
@@ -364,8 +378,8 @@ void HM10_Reset(void) {   HM10_Launchtask(TASK_HM10_DISCONN,0,1);       // disco
 
 void HM10_Discovery_Scan(void) {
                           HM10_Launchtask(TASK_HM10_DISCONN,0,1);       // disconnect
-                          HM10_Launchtask(TASK_HM10_DISC,1,5);          // discovery
-                          HM10_Launchtask(TASK_HM10_STATUS_EVENT,2,2);  // status
+                          HM10_Launchtask(TASK_HM10_DISC,1,1);          // discovery
+                          HM10_Launchtask(TASK_HM10_STATUS_EVENT,2,1);  // status
                           }
 
 void HM10_Read_LYWSD03(void) { //and MHO-C401
@@ -533,6 +547,8 @@ void HM10SerialInit(void) {
     HM10.option.ignoreBogusBattery = 1;
     HM10.option.noSummary = 0;
     HM10.option.minimalSummary = 0;
+
+    HM10.rxBuffer = new char[HM10_MAX_RX_BUF];
   }
   return;
 }
@@ -542,8 +558,6 @@ void HM10SerialInit(void) {
 \*********************************************************************************************/
 
 void HM10parseMiBeacon(char * _buf, uint32_t _slot){
-  // uint8_t _rssi;
-  // memcpy(&_rssi,_buf-1,1);
   float _tempFloat;
   mi_beacon_t _beacon;
   if (MIBLEsensors[_slot].type==MJ_HT_V1 || MIBLEsensors[_slot].type==CGG1){
@@ -648,76 +662,109 @@ void HM10parseMiBeacon(char * _buf, uint32_t _slot){
   HM10.mode.shallTriggerTele = 1;
 }
 
-void HM10ParseResponse(char *buf, uint16_t bufsize) {
-    if (!strncmp(buf,"OK",2)) {
-       DEBUG_SENSOR_LOG(PSTR("%s: got OK"),D_CMND_HM10);
-     }
+void HM10parseATC(char * _buf, uint32_t _slot){
+  ATCPacket_t *_packet = (ATCPacket_t*)_buf;
+  if(memcmp(_packet->MAC,MIBLEsensors.at(_slot).MAC,6)!=0) return; // data corruption
+  MIBLEsensors.at(_slot).temp = (float)(__builtin_bswap16(_packet->temp))/10.0f;
+  MIBLEsensors.at(_slot).hum = (float)_packet->hum;
+  MIBLEsensors.at(_slot).bat = _packet->batPer;
+  MIBLEsensors[_slot].shallSendMQTT = 1;
+}
+
+char* HM10ParseResponse(char *buf, uint16_t bufsize) {
     if (!strncmp(buf,"HMSoft",6)) { //8
       const char* _fw = "000";
       memcpy((void *)_fw,(void *)(buf+8),3);
       HM10.firmware = atoi(_fw);
       DEBUG_SENSOR_LOG(PSTR("%s: Firmware: %d"),D_CMND_HM10, HM10.firmware);
-      return;
+      return buf;
      }
-    char * _pos = strstr(buf, "ISA:");
+    char * _pos = nullptr;
+    uint32_t _idx = 0;
+    char _subStr[] = "SA:";
+    while(_pos = (char*) memchr(buf+_idx, 'I', 60)){ //strstr() does miss too much
+      _idx=_pos-buf;
+      if(memcmp(&_pos+1,_subStr,3)){
+        break; 
+      }
+    }
     if(_pos) {
       uint8_t _newMacArray[6] = {0};
       memcpy((void *)_newMacArray,(void *)(_pos+4),6);
       uint32_t _rssi = 255- (uint8_t)(_pos[11]);
-      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("rssi: %u"),(255- (uint8_t)(_pos[11])));
       HM10_ReverseMAC(_newMacArray);
       DEBUG_SENSOR_LOG(PSTR("%s:  MAC-array: %02x%02x%02x%02x%02x%02x"),D_CMND_HM10,_newMacArray[0],_newMacArray[1],_newMacArray[2],_newMacArray[3],_newMacArray[4],_newMacArray[5]);
       uint16_t _type=0xffff;
 
-      for (uint32_t idx =10;idx<bufsize;idx++){
-        if((uint8_t)buf[idx] == 0xfe){
-          if((uint8_t)buf[idx-2] == 0x16 && (uint8_t)buf[idx-1] == 0x95){
-            _type = _pos[idx]*256 + _pos[idx-1];
-            DEBUG_SENSOR_LOG(PSTR("%s: type %04x _ %02x %02x"),D_CMND_HM10,_type, _pos[idx-1],_pos[idx]);
-            _pos = _pos+idx-3;
+      for (_idx =10;_idx<32;_idx++){
+        if((uint8_t)_pos[_idx] == 0xfe){
+          if((uint8_t)_pos[_idx-2] == 0x16 && (uint8_t)_pos[_idx-1] == 0x95){
+            _pos = _pos+_idx+1;
+            _type = (uint8_t)_pos[3]*256 + (uint8_t)_pos[2];
+            DEBUG_SENSOR_LOG(PSTR("%s: type %04x _ %02x %02x"),D_CMND_HM10,_type, _pos[3],_pos[2]);
+            break;
+          }
+        }
+        else if ((uint8_t)_pos[_idx] == 0x1a){
+          if ((uint8_t)_pos[_idx+1] == 0x18){
+            if((uint8_t)_pos[_idx+4] == 0x95 && (uint8_t)_pos[_idx+3] == 0x16) continue; // LYWSD02 or MHO-C303
+            _type = 0xa1c;                      //ATC
+            _pos = _pos+_idx+2;
             break;
           }
         }
       }
       uint16_t _slot = MIBLEgetSensorSlot(_newMacArray, _type, _rssi);
-      if(_slot!=0xff) HM10parseMiBeacon(_pos,_slot);
+      if(_slot!=0xff){
+        if (_type==0xa1c) HM10parseATC(_pos,_slot);
+        else HM10parseMiBeacon(_pos,_slot);
+      }
+      if(bufsize>64) return _pos+12;
+      else return nullptr;
     }
     else if (strstr(buf, "LOST")){
+      HM10.current_task_delay = 0;
       HM10.mode.connected = false;
+    }
+    else if (strstr(buf, "CONNF")){
+      HM10.mode.connected = false;
+      HM10.current_task_delay = 0;
     }
     else if (strstr(buf, "CONN")){
       HM10.current_task_delay = 0;
     }
     else {
       DEBUG_SENSOR_LOG(PSTR("%s: empty response"),D_CMND_HM10);
+      return buf;
     }
+  return _pos;
 }
 
 void HM10readHT_LY(char *_buf){
-  // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: raw data: %x%x%x%x%x%x%x"),D_CMND_HM10,_buf[0],_buf[1],_buf[2],_buf[3],_buf[4],_buf[5],_buf[6]);
+  // AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)_buf,7);
   if(_buf[0]==0x4f && _buf[1]==0x4b) return; // "OK"
   if(_buf[0] != 0 && _buf[1] != 0){
-    memcpy(&LYWSD0x_HT,(void *)_buf,sizeof(LYWSD0x_HT));
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: T * 100: %u, H: %u"),D_CMND_HM10,LYWSD0x_HT.temp,LYWSD0x_HT.hum);
+    LYWSD0x_HT_t *packet = (LYWSD0x_HT_t*)_buf;
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: T * 100: %u, H: %u"),D_CMND_HM10,packet->temp,packet->hum);
     uint32_t _slot = HM10.state.sensor;
 
     DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
     static float _tempFloat;
-    _tempFloat=(float)(LYWSD0x_HT.temp)/100.0f;
+    _tempFloat=(float)(packet->temp)/100.0f;
     if(_tempFloat<60){
         MIBLEsensors[_slot].temp=_tempFloat;
         HM10.mode.awaiting = none;
         HM10.current_task_delay = 0;
         MIBLEsensors[_slot].showedUp=255; // this sensor is real
     }
-    _tempFloat=(float)LYWSD0x_HT.hum;
+    _tempFloat=(float)packet->hum;
     if(_tempFloat<100){
       MIBLEsensors[_slot].hum = _tempFloat;
       DEBUG_SENSOR_LOG(PSTR("LYWSD0x: hum updated"));
     }
     MIBLEsensors[_slot].eventType.tempHum = 1;
     if (MIBLEsensors[_slot].type == LYWSD03MMC || MIBLEsensors[_slot].type == MHOC401){
-      MIBLEsensors[_slot].bat = ((float)LYWSD0x_HT.volt-2100.0f)/12.0f;
+      MIBLEsensors[_slot].bat = ((float)packet->volt-2100.0f)/12.0f;
       MIBLEsensors[_slot].eventType.bat  = 1;
     }
   MIBLEsensors[_slot].shallSendMQTT = 1;
@@ -730,20 +777,20 @@ void HM10readHT_CGD1(char *_buf){
   if(_buf[0]==0x4f && _buf[1]==0x4b) return; // "OK"
   if(_buf[0] == 0){
     if(_buf[1]==0 && _buf[2]==0 && _buf[3]==0 && _buf[4]==0) return;
-    memcpy(&CGD1_HT,(void *)_buf,5);
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: T * 100: %u, H * 100: %u"),D_CMND_HM10,CGD1_HT.temp,CGD1_HT.hum);
+    CGD1_HT_t *_packet = (CGD1_HT_t*)_buf;
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: T * 100: %u, H * 100: %u"),D_CMND_HM10,_packet->temp,_packet->hum);
     uint32_t _slot = HM10.state.sensor;
 
     DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
     static float _tempFloat;
-    _tempFloat=(float)(CGD1_HT.temp)/100.0f;
+    _tempFloat=(float)(_packet->temp)/100.0f;
     if(_tempFloat<60){
         MIBLEsensors[_slot].temp=_tempFloat;
         HM10.mode.awaiting = none;
         HM10.current_task_delay = 0;
         MIBLEsensors[_slot].showedUp=255; // this sensor is real
     }
-    _tempFloat=(float)CGD1_HT.hum/100.0f;
+    _tempFloat=(float)_packet->hum/100.0f;
     if(_tempFloat<100){
       MIBLEsensors[_slot].hum = _tempFloat;
       DEBUG_SENSOR_LOG(PSTR("CGD1: hum updated"));
@@ -784,23 +831,21 @@ void HM10readHT_MJ_HT_V1(char *_buf){
 }
 
 void HM10readTLMF(char *_buf){
-  DEBUG_SENSOR_LOG(PSTR("%s: raw data: %x%x%x%x%x%x%x"),D_CMND_HM10,_buf[0],_buf[1],_buf[2],_buf[3],_buf[4],_buf[5],_buf[6]);
-  if(_buf[0]==0x4f && _buf[1]==0x4b) return; // "OK"
-  if(_buf[0] != 0 || _buf[1] != 0){ // this will lose 0.0 degree, but it is not possible to measure a successful reading
-    memcpy(&Flora_TLMF,(void *)_buf,10);
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: T * 10: %u, L: %u, M: %u, F: %u"),D_CMND_HM10,Flora_TLMF.temp,Flora_TLMF.lux,Flora_TLMF.moist,Flora_TLMF.fert);
+  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)_buf,16);
+  Flora_TLMF_t *_packet = (Flora_TLMF_t*)_buf;
+  if(_packet->ID==0xFB003C02){ // this is a magic word ... hopefully independent of FW version
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: T * 10: %u, L: %u, M: %u, F: %u"),D_CMND_HM10,_packet->temp,_packet->lux,_packet->moist,_packet->fert);
     uint32_t _slot = HM10.state.sensor;
-
     DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
+    MIBLEsensors[_slot].showedUp=255; // this sensor is real
+
     static float _tempFloat;
-    _tempFloat=(float)(Flora_TLMF.temp)/10.0f;
-    if(_tempFloat<60){
-        MIBLEsensors[_slot].temp=_tempFloat;
-        MIBLEsensors[_slot].showedUp=255; // this sensor is real
-    }
-    MIBLEsensors[_slot].lux = Flora_TLMF.lux;
-    MIBLEsensors[_slot].moisture = Flora_TLMF.moist;
-    MIBLEsensors[_slot].fertility = Flora_TLMF.fert;
+    _tempFloat=(float)(_packet->temp)/10.0f;
+    MIBLEsensors[_slot].temp=_tempFloat;
+
+    MIBLEsensors[_slot].lux = _packet->lux;
+    MIBLEsensors[_slot].moisture = _packet->moist;
+    MIBLEsensors[_slot].fertility = _packet->fert;
     MIBLEsensors[_slot].eventType.temp = 1;
     MIBLEsensors[_slot].eventType.lux = 1;
     MIBLEsensors[_slot].eventType.moist = 1;
@@ -842,12 +887,10 @@ bool HM10readBat(char *_buf){
 bool HM10SerialHandleFeedback(){                  // every 50 milliseconds
   bool success    = false;
   uint32_t i       = 0;
-  static char ret[HM10_MAX_RX_BUF] = {0};
 
   while(HM10Serial->available()) {
-    // delay(0);
     if(i<HM10_MAX_RX_BUF){
-      ret[i] = HM10Serial->read();
+      HM10.rxBuffer[i] = HM10Serial->read();
     }
     i++;
     success = true;
@@ -864,45 +907,48 @@ bool HM10SerialHandleFeedback(){                  // every 50 milliseconds
       HM10triggerTele();
     }
     return success;
-  } 
+  }
 
   switch (HM10.mode.awaiting){
     case bat:
       if (HM10.mode.connected) {
-        if (HM10readBat(ret)){
+        if (HM10readBat(HM10.rxBuffer)){
           HM10.mode.awaiting = none;
           HM10.current_task_delay = 0;
         }
       }
       break;
     case tempHumLY:
-      if (HM10.mode.connected) HM10readHT_LY(ret);
+      if (HM10.mode.connected) HM10readHT_LY(HM10.rxBuffer);
       break;
     case tempHumCGD1:
-      if (HM10.mode.connected) HM10readHT_CGD1(ret);
+      if (HM10.mode.connected) HM10readHT_CGD1(HM10.rxBuffer);
       break;
     case TLMF:
-      if (HM10.mode.connected) HM10readTLMF(ret);
+      if (HM10.mode.connected) HM10readTLMF(HM10.rxBuffer);
       break;
     case discScan:
       if(success) {
-        HM10ParseResponse(ret,i);
+        char *_src = HM10ParseResponse(HM10.rxBuffer,i);
+        if(_src){
+          HM10ParseResponse(_src,i-(_src-HM10.rxBuffer)); // try a second parse
+        }
       }
     break;
     case tempHumMJ:
-      if (HM10.mode.connected) HM10readHT_MJ_HT_V1(ret);
+      if (HM10.mode.connected) HM10readHT_MJ_HT_V1(HM10.rxBuffer);
       break;
     case none:
       if(success) {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: response: %s"),D_CMND_HM10, (char *)ret);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: response: %s"),D_CMND_HM10, (char *)HM10.rxBuffer);
         // for(uint32_t j = 0; j<i+1; j+=8){
         //   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%02x %02x %02x %02x %02x %02x %02x %02x"),(uint8_t)ret[j],(uint8_t)ret[j+1],(uint8_t)ret[j+2],(uint8_t)ret[j+3],(uint8_t)ret[j+4],(uint8_t)ret[j+5],(uint8_t)ret[j+6],(uint8_t)ret[j+7]);
         // }
-        HM10ParseResponse(ret,i);
+        HM10ParseResponse(HM10.rxBuffer,i);
       }
     break;
   }
-  memset(ret,0,i); // wipe away the recent bytes
+  memset(HM10.rxBuffer,0,i); // wipe away the recent bytes
   return success;
 }
 
@@ -932,7 +978,7 @@ void HM10_TaskEvery100ms(){
           break;
         case TASK_HM10_DISC:
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: start discovery"),D_CMND_HM10);
-          HM10.current_task_delay = 100;                    // set task delay
+          HM10.current_task_delay = 90;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           HM10.mode.awaiting = discScan;
@@ -1343,7 +1389,7 @@ void HM10triggerTele(void){
 \*********************************************************************************************/
 
 const char HTTP_HM10[] PROGMEM = "{s}HM10 V%u{m}%u%s / %u{e}";
-const char HTTP_HM10_MAC[] PROGMEM = "{s}%s %s{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
+const char HTTP_HM10_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u%%{e}";
 const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
 const char HTTP_HM10_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}";
@@ -1459,7 +1505,7 @@ void HM10Show(bool json)
       MIBLEsensors[i].eventType.raw = 0;
       if(MIBLEsensors[i].shallSendMQTT==1){
         MIBLEsensors[i].shallSendMQTT = 0;
-        break;
+        continue;
       }
     }
     HM10.mode.triggeredTele = 0;
@@ -1482,7 +1528,9 @@ void HM10Show(bool json)
       WSContentSend_PD(HTTP_HM10, HM10.firmware, i+1,stemp,MIBLEsensors.size());
       for (i; i<j; i++) {
         WSContentSend_PD(HTTP_HM10_HL);
-        WSContentSend_PD(HTTP_HM10_MAC, kHM10DeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].MAC[0], MIBLEsensors[i].MAC[1],MIBLEsensors[i].MAC[2],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[5]);
+        char _MAC[18];
+        ToHex_P(MIBLEsensors[i].MAC,6,_MAC,18,':');
+        WSContentSend_PD(HTTP_HM10_MAC, kHM10DeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, _MAC);
         if (MIBLEsensors[i].type==FLORA){
           if(!isnan(MIBLEsensors[i].temp)){
             char temperature[FLOATSZ];

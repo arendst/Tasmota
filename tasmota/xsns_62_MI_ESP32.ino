@@ -20,6 +20,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.1.3 20200926  changed - Improve HA discovery, make key+MAC case insensitive
+  -------
   0.9.1.3 20200916  changed - add ATC (custom FW for LYWSD03MMC), API adaption for NimBLE-Arduino 1.0.2
   -------
   0.9.1.2 20200802  changed - add MHO-C303
@@ -421,6 +423,7 @@ void MI32_ReverseMAC(uint8_t _mac[]){
 void MI32AddKey(char* payload){
   mi_bindKey_t keyMAC;
   memset(keyMAC.buf,0,sizeof(keyMAC));
+  UpperCase(payload,payload);
   MI32KeyMACStringToBytes(payload,keyMAC.buf);
   bool unknownKey = true;
   for(uint32_t i=0; i<MIBLEbindKeys.size(); i++){
@@ -1604,7 +1607,7 @@ bool MI32Cmd(void) {
 \*********************************************************************************************/
 
 const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 {m}%u%s / %u{e}";
-const char HTTP_MI32_SERIAL[] PROGMEM = "{s}%s %s{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
+const char HTTP_MI32_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
 const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
 const char HTTP_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%u {e}";
@@ -1616,6 +1619,15 @@ const char HTTP_MI32_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 void MI32Show(bool json)
 {
   if (json) {
+#ifdef USE_HOME_ASSISTANT
+    bool _noSummarySave = MI32.option.noSummary;
+    bool _minimalSummarySave = MI32.option.minimalSummary;
+    if(hass_mode==2){
+      MI32.option.noSummary = false;
+      MI32.option.minimalSummary = false;
+    }
+#endif //USE_HOME_ASSISTANT
+
     if(!MI32.mode.triggeredTele){
       MI32.mode.shallClearResults=1;
       if(MI32.option.noSummary) return; // no message at TELEPERIOD
@@ -1635,7 +1647,11 @@ void MI32Show(bool json)
         bool tempHumSended = false;
         if(MIBLEsensors[i].feature.tempHum){
           if(MIBLEsensors[i].eventType.tempHum || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-            if (!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)) {
+            if (!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)
+#ifdef USE_HOME_ASSISTANT
+              ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+            ) {
               ResponseAppend_P(PSTR(","));
               ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
               tempHumSended = true;
@@ -1644,7 +1660,11 @@ void MI32Show(bool json)
         }
         if(MIBLEsensors[i].feature.temp && !tempHumSended){
           if(MIBLEsensors[i].eventType.temp || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate) {
-            if (!isnan(MIBLEsensors[i].temp)) {
+            if (!isnan(MIBLEsensors[i].temp)
+#ifdef USE_HOME_ASSISTANT
+              ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+            ) {
               char temperature[FLOATSZ];
               dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
               ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"), temperature);
@@ -1653,7 +1673,11 @@ void MI32Show(bool json)
         }
         if(MIBLEsensors[i].feature.hum && !tempHumSended){
           if(MIBLEsensors[i].eventType.hum || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate) {
-            if (!isnan(MIBLEsensors[i].hum)) {
+            if (!isnan(MIBLEsensors[i].hum)
+#ifdef USE_HOME_ASSISTANT
+              ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+            ) {
               char hum[FLOATSZ];
               dtostrfd(MIBLEsensors[i].hum, Settings.flag2.humidity_resolution, hum);
               ResponseAppend_P(PSTR(",\"" D_JSON_HUMIDITY "\":%s"), hum);
@@ -1662,27 +1686,43 @@ void MI32Show(bool json)
         }
         if (MIBLEsensors[i].feature.lux){
           if(MIBLEsensors[i].eventType.lux || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-            if (MIBLEsensors[i].lux!=0x0ffffff) { // this is the error code -> no lux
+            if (MIBLEsensors[i].lux!=0x0ffffff
+#ifdef USE_HOME_ASSISTANT
+              ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+            ) { // this is the error code -> no lux
               ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
             }
           }
         }
         if (MIBLEsensors[i].feature.moist){
           if(MIBLEsensors[i].eventType.moist || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-            if (MIBLEsensors[i].moisture!=0xff) {
+            if (MIBLEsensors[i].moisture!=0xff
+#ifdef USE_HOME_ASSISTANT
+              ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+            ) {
               ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%u"), MIBLEsensors[i].moisture);
             }
           }
         }
         if (MIBLEsensors[i].feature.fert){
           if(MIBLEsensors[i].eventType.fert || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-            if (MIBLEsensors[i].fertility!=0xffff) {
+            if (MIBLEsensors[i].fertility!=0xffff
+#ifdef USE_HOME_ASSISTANT
+              ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+            ) {
               ResponseAppend_P(PSTR(",\"Fertility\":%u"), MIBLEsensors[i].fertility);
             }
           }
         }
         if (MIBLEsensors[i].feature.Btn){
-          if(MIBLEsensors[i].eventType.Btn){
+          if(MIBLEsensors[i].eventType.Btn
+#ifdef USE_HOME_ASSISTANT
+              ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+          ){
             ResponseAppend_P(PSTR(",\"Btn\":%u"),MIBLEsensors[i].Btn);
           }
         }
@@ -1710,7 +1750,11 @@ void MI32Show(bool json)
       }
       if (MIBLEsensors[i].feature.bat){
         if(MIBLEsensors[i].eventType.bat || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
-          if (MIBLEsensors[i].bat != 0x00) { // this is the error code -> no battery
+          if (MIBLEsensors[i].bat != 0x00
+#ifdef USE_HOME_ASSISTANT
+              ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+          ) { // this is the error code -> no battery
           ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
           }
         }
@@ -1724,11 +1768,16 @@ void MI32Show(bool json)
       MIBLEsensors[i].eventType.raw = 0;
       if(MIBLEsensors[i].shallSendMQTT==1){
         MIBLEsensors[i].shallSendMQTT = 0;
-        break;
+        continue;
       }
     }
     MI32.mode.triggeredTele = 0;
-    // ResponseAppend_P(PSTR("}"));
+#ifdef USE_HOME_ASSISTANT
+    if(hass_mode==2){
+      MI32.option.noSummary = _noSummarySave;
+      MI32.option.minimalSummary = _minimalSummarySave;
+    }
+#endif //USE_HOME_ASSISTANT
 #ifdef USE_WEBSERVER
     } else {
       static  uint16_t _page = 0;
@@ -1747,7 +1796,9 @@ void MI32Show(bool json)
       WSContentSend_PD(HTTP_MI32, i+1,stemp,MIBLEsensors.size());
       for (i; i<j; i++) {
         WSContentSend_PD(HTTP_MI32_HL);
-        WSContentSend_PD(HTTP_MI32_SERIAL, kMI32DeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].MAC[0], MIBLEsensors[i].MAC[1],MIBLEsensors[i].MAC[2],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[5]);
+        char _MAC[18];
+        ToHex_P(MIBLEsensors[i].MAC,6,_MAC,18,':');
+        WSContentSend_PD(HTTP_MI32_MAC, kMI32DeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, _MAC);
         WSContentSend_PD(HTTP_RSSI, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].rssi);
         if (MIBLEsensors[i].type==FLORA) {
           if (!isnan(MIBLEsensors[i].temp)) {

@@ -39,42 +39,6 @@ public:
 void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl);
 bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_status_ok = false);
 
-// get the result as a string (const char*) and nullptr if there is no field or the string is empty
-const char * getCaseInsensitiveConstCharNull(const JsonObject &json, const char *needle) {
-  const JsonVariant &val = GetCaseInsensitive(json, needle);
-  if (&val) {
-    const char *val_cs = val.as<const char*>();
-    if (strlen(val_cs)) {
-      return val_cs;
-    }
-  }
-  return nullptr;
-}
-
-// Get an JSON attribute, with case insensitive key search starting with *needle
-JsonVariant &startsWithCaseInsensitive(const JsonObject &json, const char *needle) {
-  // key can be in PROGMEM
-  if ((nullptr == &json) || (nullptr == needle) || (0 == pgm_read_byte(needle))) {
-    return *(JsonVariant*)nullptr;
-  }
-
-  String needle_s((const __FlashStringHelper *)needle);
-  needle_s.toLowerCase();
-
-  for (auto kv : json) {
-    String key_s(kv.key);
-    key_s.toLowerCase();
-    JsonVariant &value = kv.value;
-
-    if (key_s.startsWith(needle_s)) {
-      return value;
-    }
-  }
-  // if not found
-  return *(JsonVariant*)nullptr;
-}
-
-
 uint32_t parseHex(const char **data, size_t max_len = 8) {
   uint32_t ret = 0;
   for (uint32_t i = 0; i < max_len; i++) {

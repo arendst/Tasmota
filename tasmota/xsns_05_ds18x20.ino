@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef ESP8266
 #ifdef USE_DS18x20
 /*********************************************************************************************\
  * DS18B20 - Temperature - Multiple sensors
@@ -547,3 +548,4 @@ bool Xsns05(uint8_t function)
 }
 
 #endif  // USE_DS18x20
+#endif  // ESP8266

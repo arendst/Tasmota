@@ -584,11 +584,12 @@ void CmndStatus(void)
         ResponseAppend_P(PSTR("{\"" D_STATUS13_SHUTTER "%d\":{\"Relay1\":%d,\"Relay2\":%d,\"Open\":%d,\"Close\":%d,"
                                     "\"50perc\":%d,\"Delay\":%d,\"Opt\":\"%s\","
                                     "\"Calib\":\"%d:%d:%d:%d:%d\","
-                                    "\"Mode\":\"%d\"}"),
+                                    "\"Mode\":\"%d\"}}"),
                                     i, Settings.shutter_startrelay[i], Settings.shutter_startrelay[i] +1, Settings.shutter_opentime[i], Settings.shutter_closetime[i],
-                                    Settings.shutter_set50percent[i], Settings.shutter_motordelay[i], GetBinary(&Settings.shutter_options[i], 4).c_str(),
+                                    Settings.shutter_set50percent[i], Settings.shutter_motordelay[i], GetBinary8(Settings.shutter_options[i], 4).c_str(),
                                     Settings.shuttercoeff[0][i], Settings.shuttercoeff[1][i], Settings.shuttercoeff[2][i], Settings.shuttercoeff[3][i], Settings.shuttercoeff[4][i],
-                                    Settings.shutter_mode);      }
+                                    Settings.shutter_mode);
+      }
       ResponseJsonEnd();
       MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "13"));
     }
@@ -1119,19 +1120,11 @@ void CmndGpio(void)
     if (ValidGPIO(XdrvMailbox.index, cmodule.io[XdrvMailbox.index]) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < AGPIO(GPIO_SENSOR_END))) {
       bool present = false;
       for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
-#ifdef ESP8266
-        uint32_t midx = pgm_read_byte(kGpioNiceList + i);
-        if (midx == XdrvMailbox.payload) {
-          present = true;
-          break;
-        }
-#else  // ESP32
         uint32_t midx = pgm_read_word(kGpioNiceList + i);
         if ((XdrvMailbox.payload >= (midx & 0xFFE0)) && (XdrvMailbox.payload < midx)) {
           present = true;
           break;
         }
-#endif  // ESP8266 - ESP32
       }
       if (present) {
         for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
@@ -1146,7 +1139,7 @@ void CmndGpio(void)
     Response_P(PSTR("{"));
     bool jsflg = false;
     for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
-      if (ValidGPIO(i, cmodule.io[i]) || ((AGPIO(GPIO_USER) == XdrvMailbox.payload) && !FlashPin(i))) {
+      if (ValidGPIO(i, cmodule.io[i]) || ((255 == XdrvMailbox.payload) && !FlashPin(i))) {
         if (jsflg) { ResponseAppend_P(PSTR(",")); }
         jsflg = true;
         uint32_t sensor_type = Settings.my_gp.io[i];
@@ -1158,7 +1151,6 @@ void CmndGpio(void)
         }
         char sindex[4] = { 0 };
         uint32_t sensor_name_idx = BGPIO(sensor_type);
-#ifdef ESP32
         uint32_t nice_list_search = sensor_type & 0xFFE0;
         for (uint32_t j = 0; j < ARRAY_SIZE(kGpioNiceList); j++) {
           uint32_t nls_idx = pgm_read_word(kGpioNiceList + j);
@@ -1167,7 +1159,6 @@ void CmndGpio(void)
             break;
           }
         }
-#endif  // ESP32
         const char *sensor_names = kSensorNames;
         if (sensor_name_idx > GPIO_FIX_START) {
           sensor_name_idx = sensor_name_idx - GPIO_FIX_START -1;
@@ -1186,20 +1177,13 @@ void CmndGpio(void)
   }
 }
 
-void CmndGpios(void)
-{
+void ShowGpios(const uint16_t *NiceList, uint32_t size, uint32_t offset, uint32_t &lines) {
   myio cmodule;
   ModuleGpios(&cmodule);
-  uint32_t lines = 1;
   bool jsflg = false;
-  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
-#ifdef ESP8266
-    uint32_t midx = pgm_read_byte(kGpioNiceList + i);
-    uint32_t ridx = midx;
-#else  // ESP32
-    uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
+  for (uint32_t i = offset; i < size; i++) {  // Skip ADC_NONE
+    uint32_t ridx = pgm_read_word(NiceList + i) & 0xFFE0;
     uint32_t midx = BGPIO(ridx);
-#endif  // ESP8266 - ESP32
     if ((XdrvMailbox.payload != 255) && GetUsedInModule(midx, cmodule.io)) { continue; }
     if (!jsflg) {
       Response_P(PSTR("{\"" D_CMND_GPIOS "%d\":{"), lines);
@@ -1208,19 +1192,37 @@ void CmndGpios(void)
     }
     jsflg = true;
     char stemp1[TOPSZ];
-    if ((ResponseAppend_P(PSTR("\"%d\":\"%s\""), ridx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames)) > (LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(kGpioNiceList) -1)) {
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%s\""), ridx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames)) > (LOGSZ - TOPSZ)) || (i == size -1)) {
       ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
       jsflg = false;
       lines++;
     }
   }
+}
+
+void CmndGpios(void)
+{
+/*
+  if (XdrvMailbox.payload == 17) {
+    DumpConvertTable();
+    return;
+  }
+*/
+  uint32_t lines = 1;
+  ShowGpios(kGpioNiceList, ARRAY_SIZE(kGpioNiceList), 0, lines);
+#ifdef ESP8266
+#ifndef USE_ADC_VCC
+  ShowGpios(kAdcNiceList, ARRAY_SIZE(kAdcNiceList), 1, lines);
+#endif  // USE_ADC_VCC
+#endif  // ESP8266
   mqtt_data[0] = '\0';
 }
 
 void CmndTemplate(void)
 {
-  // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
+  // {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
+
   bool error = false;
 
   if (strstr(XdrvMailbox.data, "{") == nullptr) {  // If no JSON it must be parameter

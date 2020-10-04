@@ -1,18 +1,46 @@
+## Unreleased (development)
+
+### 9.0.0.1 20201002
+
+- Remove auto config update for all Friendlynames and Switchtopic from versions before 8.x
+- Change redesigning ESP8266 GPIO internal representation in line with ESP32
+- Change new IR Raw compact format (#9444)
+- Change MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
+- Change A4988 optional microstep pin selection
+- Change pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
+- Fix template conversion when GPIO17 is 0
+- Fix ledlink blink when no network connected regression from 8.3.1.4 (#9292)
+- Fix exception 28 due to device group buffer overflow (#9459)
+- Add optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
+- Add optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
+- Add SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
+
 ## Released
 
-## Unreleased (development)
+### 8.5.1 20201002
+
+- Release Hannah
 
 ### 8.5.0.1 20200907
 
 - Fix energy total counters (#9263, #9266)
 - Fix crash in ``ZbRestore``
 - Fix reset BMP sensors when executing command ``SaveData`` and define USE_DEEPSLEEP enabled (#9300)
+- Fix ``status 0`` message when using define USE_MQTT_TLS due to small log buffer (#9305)
+- Fix ``status 13`` exception 9 when more than one shutter is configured
+- Fix ``status 13`` json message
+- Fix Shelly 2.5 higher temperature regression from 8.2.0.1 (#7991)
+- Change replace ArduinoJson with JSMN for JSON parsing
+- Change ``WakeUp`` uses 256 steps instead of 100 (#9241)
 - Add command ``SetOption110 1`` to disable Zigbee auto-config when pairing new devices
 - Add command ``SetOption111 1`` to enable frequency output for buzzer GPIO (#8994)
+- Add command ``SetOption112 1`` to enable friendly name in zigbee topic (use with SetOption89)
 - Add ``#define USE_MQTT_AWS_IOT_LIGHT`` for password based AWS IoT authentication
+- Add ``#define MQTT_LWT_OFFLINE`` and ``#define MQTT_LWT_ONLINE`` to user_config.h (#9395)
 - Add new shutter modes (#9244)
 - Add Zigbee auto-config when pairing
 - Add support for MLX90640 IR array temperature sensor by Christian Baars
+- Add support for VL53L1X time of flight sensor by Johann Obermeier
 
 ### 8.5.0 20200907
 

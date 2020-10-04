@@ -189,33 +189,13 @@ void DomoticzMqttSubscribe(void) {
   }
 }
 
-/*
- * ArduinoJSON Domoticz Switch entry used to calculate jsonBuf: JSON_OBJECT_SIZE(11) + 129 = 313
-{
-   "Battery" : 255,
-   "RSSI" : 12,
-   "dtype" : "Light/Switch",
-   "id" : "000140E7",
-   "idx" : 159,
-   "name" : "Sonoff1",
-   "nvalue" : 1,
-   "stype" : "Switch",
-   "svalue1" : "0",
-   "switchType" : "Dimmer",
-   "unit" : 1
-}
- * Fail on this one
-{
-   "LastUpdate" : "2018-10-02 20:39:45",
-   "Name" : "Sfeerverlichting",
-   "Status" : "Off",
-   "Timers" : "true",
-   "Type" : "Group",
-   "idx" : "2"
-}
-*/
-
 bool DomoticzMqttData(void) {
+/*
+  XdrvMailbox.topic = topic;
+  XdrvMailbox.index = strlen(topic);
+  XdrvMailbox.data = (char*)data;
+  XdrvMailbox.data_len = data_len;
+*/
   domoticz_update_flag = true;
 
   if (strncasecmp_P(XdrvMailbox.topic, PSTR(DOMOTICZ_OUT_TOPIC), strlen(DOMOTICZ_OUT_TOPIC)) != 0) {
@@ -226,19 +206,16 @@ bool DomoticzMqttData(void) {
   if (XdrvMailbox.data_len < 20) {
     return true;  // No valid data
   }
-  StaticJsonBuffer<400> jsonBuf;
-  JsonObject& domoticz = jsonBuf.parseObject(XdrvMailbox.data);
-  if (!domoticz.success()) {
+  JsonParser parser(XdrvMailbox.data);
+  JsonParserObject domoticz = parser.getRootObject();
+  if (!domoticz) {
     return true;  // To much or invalid data
   }
 //    if (strcmp_P(domoticz["dtype"],PSTR("Light/Switch"))) {
 //      return true;
 //    }
-  uint32_t idx = domoticz["idx"];
-  int16_t nvalue = -1;
-  if (domoticz.containsKey("nvalue")) {
-    nvalue = domoticz["nvalue"];
-  }
+  uint32_t idx = domoticz.getUInt(PSTR("idx"), 0);
+  int16_t nvalue = domoticz.getInt(PSTR("nvalue"), -1);
 
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "idx %d, nvalue %d"), idx, nvalue);
 
@@ -247,20 +224,19 @@ bool DomoticzMqttData(void) {
     uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
     for (uint32_t i = 0; i < maxdev; i++) {
       if (idx == Settings.domoticz_relay_idx[i]) {
-        bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
-        bool isShutter = strcmp_P(domoticz["dtype"],PSTR("Light/Switch")) == 0 & strncmp_P(domoticz["switchType"],PSTR("Blinds"), 6) == 0;
+        bool iscolordimmer = strcmp_P(domoticz.getStr(PSTR("dtype")), PSTR("Color Switch")) == 0;
+        bool isShutter = strcmp_P(domoticz.getStr(PSTR("dtype")), PSTR("Light/Switch")) == 0 & strncmp_P(domoticz.getStr(PSTR("switchType")),PSTR("Blinds"), 6) == 0;
 
         char stemp1[10];
         snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
 #ifdef USE_SONOFF_IFAN
         if (IsModuleIfan() && (1 == i)) {  // Idx 2 is fanspeed
-          uint8_t svalue = 0;
-          if (domoticz.containsKey("svalue1")) {
-            svalue = domoticz["svalue1"];
-          } else {
-            return true;  // Invalid data
+          JsonParserToken svalue_tok = domoticz[PSTR("svalue1")];
+          if (!svalue_tok) {
+            return true;
           }
-          svalue = (nvalue == 2) ? svalue / 10 : 0;
+          uint8_t svalue = svalue_tok.getUInt();
+          svalue = (2 == nvalue) ? svalue / 10 : 0;
           if (GetFanspeed() == svalue) {
             return true;  // Stop loop as already set
           }
@@ -273,18 +249,10 @@ bool DomoticzMqttData(void) {
         } else
 #endif  // USE_SONOFF_IFAN
 #ifdef USE_SHUTTER
-        if (isShutter)
-        {
-          if (domoticz.containsKey("nvalue")) {
-            nvalue = domoticz["nvalue"];
-          }
-
-          uint8_t position = 0;
-          if (domoticz.containsKey("svalue1")) {
-            position = domoticz["svalue1"];
-          }
+        if (isShutter) {
+          uint8_t position = domoticz.getUInt(PSTR("svalue1"), 0);
           if (nvalue != 2) {
-            position = nvalue == 0 ? 0 : 100;
+            position = (0 == nvalue) ? 0 : 100;
           }
 
           snprintf_P(XdrvMailbox.topic, TOPSZ, PSTR("/" D_PRFX_SHUTTER D_CMND_SHUTTER_POSITION));
@@ -297,19 +265,16 @@ bool DomoticzMqttData(void) {
 #ifdef USE_LIGHT
         if (iscolordimmer && 10 == nvalue) {  // Color_SetColor
           // https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Set_a_light_to_a_certain_color_or_color_temperature
-          JsonObject& color = domoticz["Color"];
-          uint16_t level = nvalue = domoticz["svalue1"];
-          uint16_t r = color["r"]; r = r * level / 100;
-          uint16_t g = color["g"]; g = g * level / 100;
-          uint16_t b = color["b"]; b = b * level / 100;
-          uint16_t cw = color["cw"]; cw = cw * level / 100;
-          uint16_t ww = color["ww"]; ww = ww * level / 100;
-          uint16_t m = 0;
-          uint16_t t = 0;
-          if (color.containsKey("m")) {
-            m = color["m"];
-            t = color["t"];
-          }
+          JsonParserObject color = domoticz[PSTR("Color")].getObject();
+          // JsonObject& color = domoticz["Color"];
+          uint16_t level = nvalue = domoticz.getUInt(PSTR("svalue1"), 0);
+          uint16_t r = color.getUInt(PSTR("r"), 0) * level / 100;
+          uint16_t g = color.getUInt(PSTR("g"), 0) * level / 100;
+          uint16_t b = color.getUInt(PSTR("b"), 0) * level / 100;
+          uint16_t cw = color.getUInt(PSTR("cw"), 0) * level / 100;
+          uint16_t ww = color.getUInt(PSTR("ww"), 0) * level / 100;
+          uint16_t m = color.getUInt(PSTR("m"), 0);
+          uint16_t t = color.getUInt(PSTR("t"), 0);
           if (2 == m) {  // White with color temperature. Valid fields: t
             snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_BACKLOG));
             snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR(D_CMND_COLORTEMPERATURE " %d;" D_CMND_DIMMER " %d"), changeUIntScale(t, 0, 255, CT_MIN, CT_MAX), level);
@@ -321,8 +286,8 @@ bool DomoticzMqttData(void) {
         }
         else if ((!iscolordimmer && 2 == nvalue) ||  // gswitch_sSetLevel
                   (iscolordimmer && 15 == nvalue)) {  // Color_SetBrightnessLevel
-          if (domoticz.containsKey("svalue1")) {
-            nvalue = domoticz["svalue1"];
+          if (domoticz[PSTR("svalue1")]) {
+            nvalue = domoticz.getUInt(PSTR("svalue1"), 0);
           } else {
             return true;  // Invalid data
           }

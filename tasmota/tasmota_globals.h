@@ -122,11 +122,11 @@ String EthernetMacAddress(void);
 #define WS2812_LEDS                 30         // [Pixels] Number of LEDs
 #endif
 
-#ifdef USE_MQTT_TLS
-  const uint16_t WEB_LOG_SIZE = 2000;          // Max number of characters in weblog
-#else
+//#ifdef USE_MQTT_TLS                            // Set to 4000 on 20200922 per #9305
+//  const uint16_t WEB_LOG_SIZE = 2000;          // Max number of characters in weblog
+//#else
   const uint16_t WEB_LOG_SIZE = 4000;          // Max number of characters in weblog
-#endif
+//#endif
 
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
   #error "Arduino ESP8266 Core versions before 2.7.1 are not supported"
@@ -143,6 +143,12 @@ String EthernetMacAddress(void);
 #endif
 #ifndef MQTT_CLEAN_SESSION
 #define MQTT_CLEAN_SESSION          1          // 0 = No clean session, 1 = Clean session (default)
+#endif
+#ifndef MQTT_LWT_OFFLINE
+#define MQTT_LWT_OFFLINE            "Offline"  // MQTT LWT offline topic message
+#endif
+#ifndef MQTT_LWT_ONLINE
+#define MQTT_LWT_ONLINE             "Online"   // MQTT LWT online topic message
 #endif
 
 #ifndef MESSZ
@@ -327,6 +333,12 @@ const char kWebColors[] PROGMEM =
 #define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE
 #endif  // ARDUINO_ESP8266_RELEASE
 
+#ifndef USE_ADC_VCC
+#define USE_ADC
+#else
+#undef USE_ADC
+#endif
+
 #endif  // ESP8266
 
 #ifdef ESP32
@@ -372,13 +384,8 @@ const char kWebColors[] PROGMEM =
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
-#ifdef ESP8266
-#define AGPIO(x) (x)
-#define BGPIO(x) (x)
-#else  // ESP32
 #define AGPIO(x) (x<<5)
 #define BGPIO(x) (x>>5)
-#endif  // ESP8266 - ESP32
 
 #ifdef USE_DEVICE_GROUPS
 #define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)

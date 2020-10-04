@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 05.09.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 03.10.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -600,6 +600,8 @@
 #define D_SENSOR_SDM120_RX     "SDMx20 - RX"
 #define D_SENSOR_SDM630_TX     "SDM630 - TX"
 #define D_SENSOR_SDM630_RX     "SDM630 - RX"
+#define D_SENSOR_WE517_TX      "WE517 - TX"
+#define D_SENSOR_WE517_RX      "WE517 - RX"
 #define D_SENSOR_TM1638_CLK    "TM16 - CLK"
 #define D_SENSOR_TM1638_DIO    "TM16 - DIO"
 #define D_SENSOR_TM1638_STB    "TM16 - STB"
@@ -719,6 +721,8 @@
 #define D_SENSOR_TCP_RXD       "TCP - RX"
 #define D_SENSOR_IEM3000_TX    "iEM3000 - TX"
 #define D_SENSOR_IEM3000_RX    "iEM3000 - RX"
+#define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
+#define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"

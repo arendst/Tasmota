@@ -76,3 +76,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   51  | USE_MCP9808         | xsns_72 | MCP9808  | 0x18 - 0x1F | Temperature sensor
   52  | USE_HP303B          | xsns_73 | HP303B   | 0x76 - 0x77 | Pressure and temperature sensor
   53  | USE_MLX90640        | xdrv_84 | MLX90640 | 0x33        | IR array temperature sensor
+  54  | USE_VL53L1X         | xsns_77 | VL53L1X  | 0x29        | Time-of-flight (ToF) distance sensor

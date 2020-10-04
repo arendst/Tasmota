@@ -33,10 +33,18 @@
 #define XDRV_35             35
 
 const char kPWMDimmerCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_BRI_PRESET;
+  D_CMND_BRI_PRESET
+#ifdef USE_DEVICE_GROUPS
+  "|" D_CMND_PWM_DIMMER_PWMS
+#endif  // USE_DEVICE_GROUPS
+  ;
 
 void (* const PWMDimmerCommand[])(void) PROGMEM = {
-  &CmndBriPreset };
+  &CmndBriPreset,
+#ifdef USE_DEVICE_GROUPS
+  &CmndPWMDimmerPWMs,
+#endif  // USE_DEVICE_GROUPS
+  };
 
 #ifdef USE_PWM_DIMMER_REMOTE
 struct remote_pwm_dimmer {
@@ -279,7 +287,7 @@ void PWMDimmerHandleButton(void)
   int32_t bri_offset = 0;
   uint8_t power_on_bri = 0;
   uint8_t dgr_item = 0;
-  uint8_t dgr_value;
+  uint8_t dgr_value = 0;
   uint8_t dgr_more_to_come = false;
   uint32_t button_index = XdrvMailbox.index;
   uint32_t now = millis();
@@ -475,7 +483,7 @@ void PWMDimmerHandleButton(void)
 #endif  // USE_PWM_DIMMER_REMOTE
               power_button_increases_bri ^= 1;
 #ifdef USE_PWM_DIMMER_REMOTE
-            dgr_item = 255;
+            dgr_item = DGR_ITEM_FLAGS;
             state_updated = true;
 #endif  // USE_PWM_DIMMER_REMOTE
           }
@@ -510,7 +518,7 @@ void PWMDimmerHandleButton(void)
             // If the down button was tapped and held, we changed the fixed color. Send a final
             // update.
             else if (down_button_tapped) {
-              dgr_item = 255;
+              dgr_item = DGR_ITEM_FLAGS;
             }
           }
         }
@@ -551,7 +559,7 @@ void PWMDimmerHandleButton(void)
             // button is pressed. The new brightness will be calculated below.
             if (button_hold_time[button_index] >= now) {
               bri_offset = (is_down_button ? -1 : 1);
-              dgr_item = 255;
+              dgr_item = DGR_ITEM_FLAGS;
               state_updated = true;
             }
 
@@ -559,7 +567,7 @@ void PWMDimmerHandleButton(void)
             // brightness and sent updates with the more-to-come message type while the button was
             // held. Send a final update.
             else if (!button_hold_processed[button_index]) {
-              dgr_item = 255;
+              dgr_item = DGR_ITEM_FLAGS;
               state_updated = true;
             }
           }
@@ -666,7 +674,7 @@ void PWMDimmerHandleButton(void)
   // update.
   if (dgr_item) {
 #ifdef USE_DEVICE_GROUPS
-    if (dgr_item == 255) dgr_item = 0;
+AddLog_P2(LOG_LEVEL_ERROR, PSTR("PWMDimmer: sending DGR item %u"), dgr_item);
     SendDeviceGroupMessage(power_button_index, (dgr_more_to_come ? DGR_MSGTYP_UPDATE_MORE_TO_COME : DGR_MSGTYP_UPDATE_DIRECT), dgr_item, dgr_value);
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_PWM_DIMMER_REMOTE
@@ -730,6 +738,17 @@ void CmndBriPreset(void)
   }
   Response_P(PSTR("{\"" D_CMND_BRI_PRESET "\":{\"Low\":%d,\"High\":%d}}"), Settings.bri_preset_low, Settings.bri_preset_high);
 }
+
+#ifdef USE_DEVICE_GROUPS
+void CmndPWMDimmerPWMs(void)
+{
+  if (XdrvMailbox.data_len > 0 && XdrvMailbox.payload <= 5) {
+    Settings.pwm_dimmer_cfg.pwm_count = XdrvMailbox.payload - 1;
+    restart_flag = 2;
+  }
+  Response_P(PSTR("{\"" D_CMND_PWM_DIMMER_PWMS "\":%u}"), Settings.pwm_dimmer_cfg.pwm_count + 1);
+}
+#endif  // USE_DEVICE_GROUPS
 
 /*********************************************************************************************\
  * Interface

@@ -106,16 +106,16 @@ enum Cx_cluster_short {
   Cx0000, Cx0001, Cx0002, Cx0003, Cx0004, Cx0005, Cx0006, Cx0007,
   Cx0008, Cx0009, Cx000A, Cx000B, Cx000C, Cx000D, Cx000E, Cx000F,
   Cx0010, Cx0011, Cx0012, Cx0013, Cx0014, Cx001A, Cx0020, Cx0100,
-  Cx0101, Cx0102, Cx0300, Cx0400, Cx0401, Cx0402, Cx0403, Cx0404,
-  Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
+  Cx0101, Cx0102, Cx0201, Cx0300, Cx0400, Cx0401, Cx0402, Cx0403,
+  Cx0404, Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
 };
 
 const uint16_t Cx_cluster[] PROGMEM = {
   0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
   0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
   0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x001A, 0x0020, 0x0100,
-  0x0101, 0x0102, 0x0300, 0x0400, 0x0401, 0x0402, 0x0403, 0x0404,
-  0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
+  0x0101, 0x0102, 0x0201, 0x0300, 0x0400, 0x0401, 0x0402, 0x0403,
+  0x0404, 0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
 };
 
 uint16_t CxToCluster(uint8_t cx) {
@@ -403,6 +403,25 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zoctstr,  Cx0102, 0x0018,  Z_(IntermediateSetpointsLift),1 },
   { Zoctstr,  Cx0102, 0x0019,  Z_(IntermediateSetpointsTilt),1 },
 
+  // Thermostat
+  { Zint16,   Cx0201, 0x0000,  Z_(LocalTemperature),  -100 },
+  { Zint16,   Cx0201, 0x0001,  Z_(OutdoorTemperature),-100 },
+  { Zuint8,   Cx0201, 0x0007,  Z_(PICoolingDemand),      1 },
+  { Zuint8,   Cx0201, 0x0008,  Z_(PIHeatingDemand),      1 },
+  { Zint8,    Cx0201, 0x0010,  Z_(LocalTemperatureCalibration), -10 },
+  { Zint16,   Cx0201, 0x0011,  Z_(OccupiedCoolingSetpoint), -100 },
+  { Zint16,   Cx0201, 0x0012,  Z_(OccupiedHeatingSetpoint), -100 },
+  { Zint16,   Cx0201, 0x0013,  Z_(UnoccupiedCoolingSetpoint), -100 },
+  { Zint16,   Cx0201, 0x0014,  Z_(UnoccupiedHeatingSetpoint), -100 },
+  { Zmap8,    Cx0201, 0x001A,  Z_(RemoteSensing),        1 },
+  { Zenum8,   Cx0201, 0x001B,  Z_(ControlSequenceOfOperation), 1 },
+  { Zenum8,   Cx0201, 0x001C,  Z_(SystemMode),           1 },
+  // below is Eurotronic specific
+  { Zenum8,   Cx0201, 0x4000, Z_(TRVMode),               1 },
+  { Zuint8,   Cx0201, 0x4001, Z_(SetValvePosition),      1 },
+  { Zuint8,   Cx0201, 0x4002, Z_(EurotronicErrors),      1 },
+  { Zint16,   Cx0201, 0x4003, Z_(CurrentTemperatureSetPoint), -100 },
+
   // Color Control cluster
   { Zuint8,   Cx0300, 0x0000,  Z_(Hue),                  1 },
   { Zuint8,   Cx0300, 0x0001,  Z_(Sat),                  1 },
@@ -466,6 +485,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zint16,   Cx0403, 0x0012,  Z_(PressureMaxScaledValue),       1 },    //
   { Zuint16,  Cx0403, 0x0013,  Z_(PressureScaledTolerance),      1 },    //
   { Zint8,    Cx0403, 0x0014,  Z_(PressureScale),                1 },    //
+  { Zint16,   Cx0403, 0xFF00,  Z_(SeaPressure),                  1 },     // Pressure at Sea Level, Tasmota specific
   { Zunk,     Cx0403, 0xFFFF,  Z_(),                    0 },     // Remove all other Pressure values
 
   // Flow Measurement cluster
@@ -642,6 +662,7 @@ public:
 
   void parseReportAttributes(Z_attribute_list& attr_list);
   void generateSyntheticAttributes(Z_attribute_list& attr_list);
+  void computeSyntheticAttributes(Z_attribute_list& attr_list);
   void generateCallBacks(Z_attribute_list& attr_list);
   void parseReadAttributes(Z_attribute_list& attr_list);
   void parseReadAttributesResponse(Z_attribute_list& attr_list);
@@ -1073,6 +1094,9 @@ void ZCLFrame::parseReportAttributes(Z_attribute_list& attr_list) {
   }
 }
 
+//
+// Extract attributes hidden in other compound attributes
+//
 void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
   // scan through attributes and apply specific converters
   for (auto &attr : attr_list) {
@@ -1080,11 +1104,6 @@ void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
     uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
 
     switch (ccccaaaa) {      // 0xccccaaaa . c=cluster, a=attribute
-      case 0x00010020:       // BatteryVoltage
-        if (attr_list.countAttribute(0x0001,0x0021) == 0) {   // if it does not already contain BatteryPercentage
-          uint32_t mv = attr.getUInt()*100;
-          attr_list.addAttribute(0x0001, 0x0021).setUInt(toPercentageCR2032(mv) * 2);
-        }
       case 0x0000FF01:
         syntheticAqaraSensor(attr_list, attr);
         break;
@@ -1097,6 +1116,48 @@ void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
       case 0x01010055:
       case 0x01010508:
         syntheticAqaraVibration(attr_list, attr);
+        break;
+    }
+  }
+}
+
+//
+// Compute new attributes based on the standard set
+// Note: both function are now split to compute on extracted attributes
+//
+void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
+  // scan through attributes and apply specific converters
+  for (auto &attr : attr_list) {
+    if (attr.key_is_str) { continue; }    // pass if key is a name
+    uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
+
+    switch (ccccaaaa) {      // 0xccccaaaa . c=cluster, a=attribute
+      case 0x00010020:       // BatteryVoltage
+        if (attr_list.countAttribute(0x0001,0x0021) == 0) {   // if it does not already contain BatteryPercentage
+          uint32_t mv = attr.getUInt()*100;
+          attr_list.addAttribute(0x0001, 0x0021).setUInt(toPercentageCR2032(mv) * 2);
+        }
+        break;
+      case 0x02010008:    // Pi Heating Demand - solve Eutotronic bug
+        {
+          const char * manufacturer_c = zigbee_devices.getManufacturerId(_srcaddr);  // null if unknown
+          String manufacturerId((char*) manufacturer_c);
+          if (manufacturerId.equals(F("Eurotronic"))) {
+            // Eurotronic does not report 0..100 but 0..255, including 255 which is normally an ivalid value
+            uint8_t valve = attr.getUInt();
+            if (attr.isNone()) { valve = 255; }
+            uint8_t valve_100 = changeUIntScale(valve, 0, 255, 0, 100);
+            attr.setUInt(valve_100);
+          }
+        }
+        break;
+      case 0x04030000:    // Pressure
+        {
+          int16_t pressure = attr.getInt();
+          int16_t pressure_sealevel = (pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0f), 5.255f)) - 21.6f;
+          attr_list.addAttribute(0x0403, 0xFF00).setInt(pressure_sealevel);
+          // We create a synthetic attribute 0403/FF00 to indicate sea level
+        }
         break;
     }
   }
@@ -1241,6 +1302,7 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
     }
 
     // find the attribute name
+    int8_t multiplier = 1;
     for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
       const Z_AttributeConverter *converter = &Z_PostProcess[i];
       uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
@@ -1249,6 +1311,7 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
       if ((conv_cluster == _cluster_id) && (conv_attribute == attrid)) {
         const char * attr_name = Z_strings + pgm_read_word(&converter->name_offset);
         attr_2.addAttribute(attr_name, true).setBool(true);
+        multiplier = pgm_read_byte(&converter->multiplier);
         break;
       }
     }
@@ -1276,6 +1339,12 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
           // decode Reportable Change
           Z_attribute &attr_change = attr_2.addAttribute(F("ReportableChange"));
           i += parseSingleAttribute(attr_change, _payload, i, attr_type);
+          if ((1 != multiplier) && (0 != multiplier)) {
+            float fval = attr_change.getFloat();
+            if (multiplier > 0) { fval =  fval * multiplier; }
+            else                { fval =  fval / (-multiplier); }
+            attr_change.setFloat(fval);
+          }
         }
       }
     }
@@ -1641,6 +1710,11 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
         case 0x00060000:
         case 0x00068000: device.setPower(attr.getBool());                             break;
         case 0x00080000: device.dimmer = uval16;                                      break;
+        case 0x02010000: device.temperature = fval * 10 + 0.5f;                       break;
+        case 0x02010008: device.th_setpoint = uval16;                                 break;
+        case 0x02010012: device.temperature_target = fval * 10 + 0.5f;                break;
+        case 0x02010007: device.th_setpoint = uval16;                                 break;
+        case 0x02010011: device.temperature_target = fval * 10 + 0.5f;                break;
         case 0x03000000: device.hue = changeUIntScale(uval16, 0, 254, 0, 360);        break;
         case 0x03000001: device.sat = uval16;                                         break;
         case 0x03000003: device.x = uval16;                                           break;
@@ -1648,6 +1722,7 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
         case 0x03000007: device.ct = uval16;                                          break;
         case 0x03000008: device.colormode = uval16;                                   break;
         case 0x04020000: device.temperature = fval * 10 + 0.5f;                       break;
+        case 0x0403FF00: device.pressure = fval + 0.5f;                               break;  // give priority to sea level
         case 0x04030000: device.pressure = fval + 0.5f;                               break;
         case 0x04050000: device.humidity = fval + 0.5f;                               break;
         case 0x0B040505: device.mains_voltage = uval16;                               break;
