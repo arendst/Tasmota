@@ -1522,17 +1522,23 @@ bool JsonTemplate(char* dataBuf)
   JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
   if (arr) {
 #ifdef ESP8266
-    JsonParserToken gpio17 = arr[13];
-    if (!gpio17) {  // Old template
+    bool old_template = false;
+    uint8_t template8[sizeof(mytmplt8285)] = { GPIO_NONE };
+    if (13 == arr.size()) {  // Possible old template
+      uint32_t gpio = 0;
+      for (uint32_t i = 0; i < ARRAY_SIZE(template8) -1; i++) {
+        gpio = arr[i].getUInt();
+        if (gpio > 255) {    // New templates might have values above 255
+          break;
+        }
+        template8[i] = gpio;
+      }
+      old_template = (gpio < 256);
+    }
+    if (old_template) {
 
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("TPL: Converting template ..."));
 
-      uint8_t template8[sizeof(mytmplt8285)] = { GPIO_NONE };
-      for (uint32_t i = 0; i < ARRAY_SIZE(template8) -1; i++) {
-        JsonParserToken val = arr[i];
-        if (!val) { break; }
-        template8[i] = val.getUInt();
-      }
       val = root[PSTR(D_JSON_FLAG)];
       if (val) {
         template8[ARRAY_SIZE(template8) -1] = val.getUInt() & 0x0F;
