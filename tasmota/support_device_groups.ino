@@ -119,6 +119,7 @@ void DeviceGroupsInit(void)
       for (uint32_t relay_index = 0; relay_index < MAX_RELAYS; relay_index++) {
         if (PinUsed(GPIO_REL1, relay_index)) device_group_count = relay_index + 1;
       }
+      if (device_group_count > MAX_DEV_GROUP_NAMES) device_group_count = MAX_DEV_GROUP_NAMES;
     }
 
     // Otherwise, set the device group count to 1.
@@ -463,6 +464,9 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
 {
   // If device groups is not up, ignore this request.
   if (!device_groups_up) return 1;
+
+  // If the device group index is higher then the number of device groups, ignore this request.
+  if (device_group_index >= device_group_count) return 0;
 
   // If we're currently processing a remote device message, ignore this request.
   if (ignore_dgr_sends && message_type != DGR_MSGTYPE_UPDATE_COMMAND) return 0;
