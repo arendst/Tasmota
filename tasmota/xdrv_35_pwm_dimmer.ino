@@ -620,9 +620,13 @@ void PWMDimmerHandleButton(void)
     else {
 #endif  // USE_PWM_DIMMER_REMOTE
       light_state.setBri(power_on_bri);
+#ifdef USE_DEVICE_GROUPS
       Light.devgrp_no_channels_out = true;
+#endif // USE_DEVICE_GROUPS
       ExecuteCommandPower(1, POWER_TOGGLE, SRC_RETRY);
+#ifdef USE_DEVICE_GROUPS
       Light.devgrp_no_channels_out = false;
+#endif // USE_DEVICE_GROUPS
 #ifdef USE_PWM_DIMMER_REMOTE
     }
 #endif  // USE_PWM_DIMMER_REMOTE
