@@ -572,7 +572,7 @@ class LightStateClass {
       _briRGB = bri_rgb;
       if (bri_rgb > 0) { addRGBMode(); }
 #ifdef USE_PWM_DIMMER
-      if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(0);
+      if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(-1);
 #endif  // USE_PWM_DIMMER
       return prev_bri;
     }
@@ -583,7 +583,7 @@ class LightStateClass {
       _briCT = bri_ct;
       if (bri_ct > 0) { addCTMode(); }
 #ifdef USE_PWM_DIMMER
-      if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(0);
+      if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(-1);
 #endif  // USE_PWM_DIMMER
       return prev_bri;
     }
@@ -2409,7 +2409,7 @@ void LightHandleDevGroupItem(void)
           break;
         }
 #endif  // !USE_LIGHT_PALETTE
-        value = value % MAX_FIXED_COLOR;
+        value = value % MAX_FIXED_COLOR + 1;
         if (value) {
           bool save_decimal_text = Settings.flag.decimal_text;
           char str[16];
