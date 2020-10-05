@@ -71,6 +71,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Fix template conversion when GPIO17 is 0
 - Fix ledlink blink when no network connected regression from 8.3.1.4 (#9292)
 - Fix exception 28 due to device group buffer overflow (#9459)
+- Fix shutter timing problem due to buffer overflow in calibration matrix (#9458)
 - Add optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
 - Add optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
 - Add SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
