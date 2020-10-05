@@ -67,6 +67,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Change MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
 - Change A4988 optional microstep pin selection
 - Change pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
+- Change ``Status`` command output for disabled status types
 - Fix template conversion when GPIO17 is 0
 - Fix ledlink blink when no network connected regression from 8.3.1.4 (#9292)
 - Fix exception 28 due to device group buffer overflow (#9459)

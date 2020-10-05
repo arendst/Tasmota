@@ -378,21 +378,18 @@ void CmndPower(void)
 
 void CmndStatus(void)
 {
-  uint32_t payload = ((XdrvMailbox.payload < 0) || (XdrvMailbox.payload > MAX_STATUS)) ? 99 : XdrvMailbox.payload;
+  uint32_t payload = XdrvMailbox.payload;
 
-  uint32_t option = STAT;
+  if (payload > MAX_STATUS) { return; }  // {"Command":"Error"}
+  if (!Settings.flag.mqtt_enabled && (6 == payload)) { return; }  // SetOption3 - Enable MQTT
+  if (!energy_flg && (9 == payload)) { return; }
+  if (!CrashFlag() && (12 == payload)) { return; }
+  if (!Settings.flag3.shutter_mode && (13 == payload)) { return; }
+
   char stemp[200];
   char stemp2[TOPSZ];
 
-  // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
-  // Commented on 20200118 as it seems to be no longer needed
-//  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2)) && (!payload)) { option++; }  // TELE
-
-  if ((!Settings.flag.mqtt_enabled) && (6 == payload)) { payload = 99; }  // SetOption3 - Enable MQTT
-  if (!energy_flg && (9 == payload)) { payload = 99; }
-  if (!CrashFlag() && (12 == payload)) { payload = 99; }
-
-  if ((0 == payload) || (99 == payload)) {
+  if (0 == payload) {
     uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
 #ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) { maxfn = 1; }
@@ -419,7 +416,7 @@ void CmndStatus(void)
                           Settings.flag.mqtt_switch_retain,   // CMND_SWITCHRETAIN
                           Settings.flag.mqtt_sensor_retain,   // CMND_SENSORRETAIN
                           Settings.flag.mqtt_power_retain);   // CMND_POWERRETAIN
-    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS));
   }
 
   if ((0 == payload) || (1 == payload)) {
@@ -437,7 +434,7 @@ void CmndStatus(void)
                           , GetSettingsAddress()
 #endif
                           );
-    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "1"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "1"));
   }
 
   if ((0 == payload) || (2 == payload)) {
@@ -455,7 +452,7 @@ void CmndStatus(void)
                           , ESP.getSdkVersion(),
                           ESP.getCpuFreqMHz(), GetDeviceHardware().c_str(),
                           GetStatistics().c_str());
-    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "2"));
   }
 
   if ((0 == payload) || (3 == payload)) {
@@ -466,7 +463,7 @@ void CmndStatus(void)
                           SettingsText(SET_SYSLOG_HOST), Settings.syslog_port, EscapeJSONString(SettingsText(SET_STASSID1)).c_str(), EscapeJSONString(SettingsText(SET_STASSID2)).c_str(), Settings.tele_period,
                           Settings.flag2.data, Settings.flag.data, ToHex_P((unsigned char*)Settings.param, PARAM8_SIZE, stemp2, sizeof(stemp2)),
                           Settings.flag3.data, Settings.flag4.data, Settings.flag5.data);
-    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "3"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "3"));
   }
 
   if ((0 == payload) || (4 == payload)) {
@@ -494,7 +491,7 @@ void CmndStatus(void)
     ResponseAppend_P(PSTR(",\"Sensors\":"));
     XsnsSensorState();
     ResponseJsonEndEnd();
-    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "4"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "4"));
   }
 
   if ((0 == payload) || (5 == payload)) {
@@ -504,7 +501,7 @@ void CmndStatus(void)
                           NetworkHostname(), NetworkAddress().toString().c_str(), IPAddress(Settings.ip_address[1]).toString().c_str(),
                           IPAddress(Settings.ip_address[2]).toString().c_str(), IPAddress(Settings.ip_address[3]).toString().c_str(), NetworkMacAddress().c_str(),
                           Settings.webserver, Settings.sta_config, WifiGetOutputPower().c_str());
-    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "5"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "5"));
   }
 
   if (((0 == payload) || (6 == payload)) && Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
@@ -512,7 +509,7 @@ void CmndStatus(void)
                           D_CMND_MQTTCLIENT "\":\"%s\",\"" D_CMND_MQTTUSER "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d}}"),
                           SettingsText(SET_MQTT_HOST), Settings.mqtt_port, EscapeJSONString(SettingsText(SET_MQTT_CLIENT)).c_str(),
                           mqtt_client, EscapeJSONString(SettingsText(SET_MQTT_USER)).c_str(), MqttConnectCount(), MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
-    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "6"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "6"));
   }
 
   if ((0 == payload) || (7 == payload)) {
@@ -532,7 +529,7 @@ void CmndStatus(void)
                           GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_LOCALNOTZ).c_str(), GetDateAndTime(DT_DST).c_str(),
                           GetDateAndTime(DT_STD).c_str(), stemp);
 #endif  // USE_TIMERS and USE_SUNRISE
-    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "7"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "7"));
   }
 
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_MARGIN_DETECTION)
@@ -542,7 +539,7 @@ void CmndStatus(void)
                             D_CMND_VOLTAGELOW "\":%d,\"" D_CMND_VOLTAGEHIGH "\":%d,\"" D_CMND_CURRENTLOW "\":%d,\"" D_CMND_CURRENTHIGH "\":%d}}"),
                             Settings.energy_power_delta[0], Settings.energy_power_delta[1], Settings.energy_power_delta[2], Settings.energy_min_power, Settings.energy_max_power,
                             Settings.energy_min_voltage, Settings.energy_max_voltage, Settings.energy_min_current, Settings.energy_max_current);
-      MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "9"));
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "9"));
     }
   }
 #endif  // USE_ENERGY_MARGIN_DETECTION
@@ -552,9 +549,9 @@ void CmndStatus(void)
     MqttShowSensor();
     ResponseJsonEnd();
     if (8 == payload) {
-      MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "8"));
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "8"));
     } else {
-      MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "10"));
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "10"));
     }
   }
 
@@ -562,7 +559,7 @@ void CmndStatus(void)
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS11_STATUS "\":"));
     MqttShowState();
     ResponseJsonEnd();
-    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "11"));
+    MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "11"));
   }
 
   if (CrashFlag()) {
@@ -570,7 +567,7 @@ void CmndStatus(void)
       Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS12_STATUS "\":"));
       CrashDump();
       ResponseJsonEnd();
-      MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "12"));
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "12"));
     }
   }
 
@@ -583,7 +580,7 @@ void CmndStatus(void)
         if (i > 0) { ResponseAppend_P(PSTR(",")); }
         ResponseAppend_P(PSTR("{\"" D_STATUS13_SHUTTER "%d\":{\"Relay1\":%d,\"Relay2\":%d,\"Open\":%d,\"Close\":%d,"
                                     "\"50perc\":%d,\"Delay\":%d,\"Opt\":\"%s\","
-                                    "\"Calib\":\"%d:%d:%d:%d:%d\","
+                                    "\"Calib\":[%d,%d,%d,%d,%d],"
                                     "\"Mode\":\"%d\"}}"),
                                     i, Settings.shutter_startrelay[i], Settings.shutter_startrelay[i] +1, Settings.shutter_opentime[i], Settings.shutter_closetime[i],
                                     Settings.shutter_set50percent[i], Settings.shutter_motordelay[i], GetBinary8(Settings.shutter_options[i], 4).c_str(),
@@ -591,7 +588,7 @@ void CmndStatus(void)
                                     Settings.shutter_mode);
       }
       ResponseJsonEnd();
-      MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "13"));
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS "13"));
     }
   }
 #endif
