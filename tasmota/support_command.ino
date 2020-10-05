@@ -288,7 +288,19 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
   }
 
   if (mqtt_data[0] != '\0') {
-     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, type);
+/*
+    // Add "Command":"POWERONSTATE", like:
+    // 12:15:37 MQT: stat/wemos4/RESULT = {"Command":"POWERONSTATE","PowerOnState":3}
+    char json_command[TOPSZ];
+    snprintf_P(json_command, sizeof(json_command), PSTR("{\"" D_JSON_COMMAND "\":\"%s\","), type);
+    uint32_t jc_len = strlen(json_command);
+    uint32_t mq_len = strlen(mqtt_data) +1;
+    if (mq_len < sizeof(mqtt_data) - jc_len) {
+      memmove(mqtt_data +jc_len -1, mqtt_data, mq_len);
+      memmove(mqtt_data, json_command, jc_len);
+    }
+*/
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, type);
   }
   fallback_topic_flag = false;
 }
