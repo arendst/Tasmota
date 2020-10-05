@@ -9,6 +9,7 @@
 - Change A4988 optional microstep pin selection
 - Change pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
 - Change ``Status`` command output for disabled status types
+- Change NeoPixelBus library from v2.5.0.09 to v2.6.0
 - Fix template conversion when GPIO17 is 0
 - Fix ledlink blink when no network connected regression from 8.3.1.4 (#9292)
 - Fix exception 28 due to device group buffer overflow (#9459)
