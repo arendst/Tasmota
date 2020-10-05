@@ -2,13 +2,15 @@
 
 ### 9.0.0.1 20201002
 
-- Remove auto config update for all Friendlynames and Switchtopic from versions before 8.x
+- Remove support for direct upgrade from Tasmota versions before 7.0
+- Remove auto config update for all Friendlynames and Switchtopic from Tasmota versions before 8.0
 - Change redesigning ESP8266 GPIO internal representation in line with ESP32
 - Change new IR Raw compact format (#9444)
 - Change MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
 - Change A4988 optional microstep pin selection
 - Change pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
 - Change ``Status`` command output for disabled status types
+- Change IRremoteESP8266 library from v2.7.10 to v2.7.11
 - Change NeoPixelBus library from v2.5.0.09 to v2.6.0
 - Fix template conversion when GPIO17 is 0
 - Fix ledlink blink when no network connected regression from 8.3.1.4 (#9292)
