@@ -278,7 +278,7 @@ struct LIGHT {
   uint8_t fixed_color_index = 1;
   uint8_t pwm_offset = 0;                 // Offset in color buffer
   uint8_t max_scheme = LS_MAX -1;
-  
+
   uint32_t wakeup_start_time = 0;
 
   bool update = true;
@@ -1395,6 +1395,9 @@ void LightInit(void)
   Light.power = 0;
   Light.update = true;
   Light.wakeup_active = 0;
+  if (0 == Settings.light_wakeup) {
+    Settings.light_wakeup = 60;         // Fix divide by zero exception 0 in Animate
+  }
   if (Settings.flag4.fade_at_startup) {
     Light.fade_initialized = true;      // consider fade intialized starting from black
   }
