@@ -79,3 +79,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Add optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
 - Add optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
 - Add SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
+- Add support for inverted NeoPixelBus data line by enabling ``#define USE_WS2812_INVERTED`` (#8988)
