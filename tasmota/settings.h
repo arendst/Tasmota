@@ -467,11 +467,11 @@ struct {
   uint8_t       ws_width[3];               // 481
 
 #ifdef ESP8266
-  myio8         ex_my_gp8;                 // 484 - 17 bytes (ESP8266) - free once gpio16 is active
+  myio8         ex_my_gp8;                 // 484 - 17 bytes (ESP8266) - free since 9.0.0.1
 #else  // ESP32
   uint8_t       free_esp32_484[17];        // 484
 #endif  // ESP8266 - ESP32
-  uint8_t       ex_my_adc0;                // 495 free once gpio16 is active
+  uint8_t       ex_my_adc0;                // 495 free since 9.0.0.1
 
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
@@ -526,7 +526,7 @@ struct {
   char          user_template_name[15];    // 720  15 bytes - Backward compatibility since v8.2.0.3
 
 #ifdef ESP8266
-  mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - free once gpio16 is active
+  mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - free since 9.0.0.1
 #else  // ESP32
   uint8_t       free_esp32_72f[14];        // 72F
 #endif  // ESP8266 - ESP32
@@ -631,7 +631,7 @@ struct {
   uint16_t      energy_power_delta[3];     // F44
   uint16_t      shutter_pwmrange[2][MAX_SHUTTERS];  // F4A
 
-  
+
   uint8_t       free_f5a[89];             // F5A - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
