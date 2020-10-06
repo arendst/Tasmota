@@ -507,6 +507,7 @@ void PWMDimmerHandleButton(void)
             if (!button_was_held) {
               bri_offset = (is_down_button ? -1 : 1);
               dgr_more_to_come = false;
+              state_updated = true;
             }
 
             // If the button was held and the hold was not processed by a rule, we changed the
@@ -687,16 +688,17 @@ void PWMDimmerHandleButton(void)
     SendDeviceGroupMessage(power_button_index, message_type, dgr_item, dgr_value);
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_PWM_DIMMER_REMOTE
-    if (active_device_is_local) {
+    if (active_device_is_local)
 #endif  // USE_PWM_DIMMER_REMOTE
       light_controller.saveSettings();
-      if (state_updated && Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
-        MqttPublishTeleState();
-      }
-#ifdef USE_PWM_DIMMER_REMOTE
-    }
-#endif  // USE_PWM_DIMMER_REMOTE
   }
+
+  if (state_updated)
+#ifdef USE_PWM_DIMMER_REMOTE
+    if (active_device_is_local)
+#endif  // USE_PWM_DIMMER_REMOTE
+      if (Settings.flag3.hass_tele_on_power)  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+        MqttPublishTeleState();
 }
 
 /*********************************************************************************************\
