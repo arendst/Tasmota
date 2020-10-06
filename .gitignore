@@ -5,9 +5,7 @@
 
 ## Project files ######
 .platformio
-.pioenvs
-.piolibdeps
-.pio/libdeps
+.pio
 .clang_complete
 .gcc-flags.json
 .cache

@@ -1655,6 +1655,9 @@ void GpioInit(void)
 
   devices_present = 0;
   light_type = LT_BASIC;                     // Use basic PWM control if SetOption15 = 0
+
+  XsnsCall(FUNC_MODULE_INIT);
+
   if (XdrvCall(FUNC_MODULE_INIT)) {
     // Serviced
   }

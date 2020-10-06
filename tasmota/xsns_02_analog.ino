@@ -573,7 +573,7 @@ bool Xsns02(uint8_t function) {
     case FUNC_COMMAND:
       result = DecodeCommand(kAdcCommands, AdcCommand);
       break;
-    case FUNC_INIT:
+    case FUNC_MODULE_INIT:
       AdcInit();
       break;
     default:
