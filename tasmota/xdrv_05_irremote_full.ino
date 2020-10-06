@@ -123,6 +123,12 @@ bool irsend_active = false;
 bool irhvac_stateful = true;
 stdAc::state_t irac_prev_state; // this implementations only keeps one state so if you use a single tasmota-ir device to command more than one AC it might not work
 
+// different modes on how to handle state when sending HVAC commands. needed for ACs with a differential/toggle protocol.
+enum class StateModes { SEND_ONLY, // just send the IR signal, this is the default. expect the state to update when the IR receiver gets the command that IR transmitter sent.
+  STORE_ONLY, // just update the state to what is provided, this is when one needs to sync actual and stored states.
+  SEND_STORE }; // send IR signal but also update stored state. this is for use cases when there is just one transmitter and there is no receiver in the device.
+StateModes strToStateMode(class JsonParserToken token, StateModes def); // declate to prevent errors related to ino files
+
 void IrSendInit(void)
 {
   irsend = new IRsend(Pin(GPIO_IRSEND)); // an IR led is at GPIO_IRSEND
@@ -366,6 +372,19 @@ bool strToBool(class JsonParserToken token, bool def) {
   }
 }
 
+StateModes strToStateMode(class JsonParserToken token, StateModes def) {
+  if (token.isStr()) {
+    const char * str = token.getStr();
+    if (!strcasecmp_P(str, PSTR(D_JSON_IRHVAC_STATE_MODE_SEND_ONLY)))
+      return StateModes::SEND_ONLY;
+    else if (!strcasecmp_P(str, PSTR(D_JSON_IRHVAC_STATE_MODE_STORE_ONLY)))
+      return StateModes::STORE_ONLY;
+    else if (!strcasecmp_P(str, PSTR(D_JSON_IRHVAC_STATE_MODE_SEND_STORE)))
+      return StateModes::SEND_STORE;
+  }
+  return def;
+}
+
 // used to convert values 0-5 to fanspeed_t
 const stdAc::fanspeed_t IrHvacFanSpeed[] PROGMEM =  { stdAc::fanspeed_t::kAuto,
                       stdAc::fanspeed_t::kMin, stdAc::fanspeed_t::kLow,stdAc::fanspeed_t::kMedium,
@@ -417,23 +436,17 @@ uint32_t IrRemoteCmndIrHvacJson(void)
     }
   }
 
-  bool stateOnly = false; // flag that means to update the state of IRremote without sending actual IR command
-  // parse model of the ac
-  if (val = root[PSTR(D_JSON_IRHVAC_MODEL)]) {
-    // extract "SendOnly" flag from "model" field. A better permanent way would be to add a separate field for this, this is just a POC
-    const char * model = val.getStr();
-    if (strncasecmp(model, "StateOnly", 9) == 0) {
-      stateOnly = true;
-      model += 9; // skip this prefix and parse the rest of the model
-    }
-    state.model = IRac::strToModel(model);
-  }
+  if (val = root[PSTR(D_JSON_IRHVAC_MODEL)]) { state.model = IRac::strToModel(val.getStr()); }
   if (val = root[PSTR(D_JSON_IRHVAC_MODE)]) { state.mode = IRac::strToOpmode(val.getStr()); }
   if (val = root[PSTR(D_JSON_IRHVAC_SWINGV)]) { state.swingv = IRac::strToSwingV(val.getStr()); }
   if (val = root[PSTR(D_JSON_IRHVAC_SWINGH)]) { state.swingh = IRac::strToSwingH(val.getStr()); }
   state.degrees = root.getFloat(PSTR(D_JSON_IRHVAC_TEMP), state.degrees);
   // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("model %d, mode %d, fanspeed %d, swingv %d, swingh %d"),
   //             state.model, state.mode, state.fanspeed, state.swingv, state.swingh);
+
+  // if and how we should handle the state for IRremote
+  StateModes stateMode = StateModes::SEND_ONLY; // default
+  if (irhvac_stateful && (val = root[PSTR(D_JSON_IRHVAC_STATE_MODE)])) { stateMode = strToStateMode(val, stateMode); }
 
   // decode booleans
   state.power   = strToBool(root[PSTR(D_JSON_IRHVAC_POWER)], state.power);
@@ -450,13 +463,12 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
   //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
 
-  if (!stateOnly) {
+  if (stateMode == StateModes::SEND_ONLY || stateMode == StateModes::SEND_STORE) {
     IRac ac(Pin(GPIO_IRSEND));
     bool success = ac.sendAc(state, irhvac_stateful && irac_prev_state.protocol == state.protocol ? &irac_prev_state : nullptr);
     if (!success) { return IE_SYNTAX_IRHVAC; }
-    // don't store what we sent for next time, expect us to receive what we just sent back (loopback) and only update the state there. this will prevent double toggle.
   }
-  if (stateOnly && irhvac_stateful) { // don't send anything, just update the state if we requested to sync state manually
+  if (stateMode == StateModes::STORE_ONLY || stateMode == StateModes::SEND_STORE) { // store state in memory
     irac_prev_state = state;
   }
 
