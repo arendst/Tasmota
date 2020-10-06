@@ -468,6 +468,10 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
   // If the device group index is higher then the number of device groups, ignore this request.
   if (device_group_index >= device_group_count) return 0;
 
+  // Extract the flags from the message type.
+  bool with_local = ((message_type & DGR_MSGTYPFLAG_WITH_LOCAL) != 0);
+  message_type = (DevGroupMessageType)(message_type & 0x7F);
+
   // If we're currently processing a remote device message, ignore this request.
   if (ignore_dgr_sends && message_type != DGR_MSGTYPE_UPDATE_COMMAND) return 0;
 
@@ -723,8 +727,8 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
   SendReceiveDeviceGroupMessage(device_group, nullptr, device_group->message, device_group->message_length, false);
 
 #ifdef USE_DEVICE_GROUPS_SEND
-  // If this is the DevGroupSend command, also handle the update locally.
-  if (message_type == DGR_MSGTYPE_UPDATE_COMMAND) {
+  // If requested, handle this updated locally as well.
+  if (with_local) {
     struct XDRVMAILBOX save_XdrvMailbox = XdrvMailbox;
     SendReceiveDeviceGroupMessage(device_group, nullptr, device_group->message, device_group->message_length, true);
     XdrvMailbox = save_XdrvMailbox;
