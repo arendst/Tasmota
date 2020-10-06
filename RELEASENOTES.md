@@ -76,6 +76,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Fix exception 28 due to device group buffer overflow (#9459)
 - Fix shutter timing problem due to buffer overflow in calibration matrix (#9458)
 - Fix light wakeup exception 0 (divide by zero) when ``WakeupDuration`` is not initialised (#9466)
+- Fix ADC initalization sequence (#9473)
 - Add optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
 - Add optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
 - Add SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)

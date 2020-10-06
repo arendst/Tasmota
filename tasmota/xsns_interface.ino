@@ -924,6 +924,7 @@ bool XsnsCall(uint8_t Function)
 
       if (result && ((FUNC_COMMAND == Function) ||
                      (FUNC_PIN_STATE == Function) ||
+                     (FUNC_MODULE_INIT == Function) ||
                      (FUNC_COMMAND_SENSOR == Function)
                     )) {
         break;
