@@ -695,6 +695,8 @@ enum UserSelectableAdc {
  * ATTENTION: No user changeable features beyond this point - do not add templates !!!
 \*********************************************************************************************/
 
+#define GPIO_ANY           32   // Any GPIO
+
 #ifdef ESP8266
 
 #define MAX_GPI8_PIN       17   // Number of supported GPIO (0..16)

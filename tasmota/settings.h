@@ -280,6 +280,18 @@ typedef union {
 typedef union {
   uint8_t data;
   struct {
+  uint8_t pwm_count : 3;              // Number of PWMs to use for light
+  uint8_t spare3 : 1;
+  uint8_t spare4 : 1;
+  uint8_t spare5 : 1;
+  uint8_t spare6 : 1;
+  uint8_t spare7 : 1;
+  };
+} PWMDimmerCfg;
+
+typedef union {
+  uint8_t data;
+  struct {
   uint8_t nf_autotune : 1;            // Autotune the NF Noise Level
   uint8_t dist_autotune : 1;          // Autotune Disturber on/off
   uint8_t nf_autotune_both : 1;       // Autotune over both Areas: INDOORS/OUDOORS
@@ -455,11 +467,11 @@ struct {
   uint8_t       ws_width[3];               // 481
 
 #ifdef ESP8266
-  myio8         ex_my_gp8;                 // 484 - 17 bytes (ESP8266) - free once gpio16 is active
+  myio8         ex_my_gp8;                 // 484 - 17 bytes (ESP8266) - free since 9.0.0.1
 #else  // ESP32
   uint8_t       free_esp32_484[17];        // 484
 #endif  // ESP8266 - ESP32
-  uint8_t       ex_my_adc0;                // 495 free once gpio16 is active
+  uint8_t       ex_my_adc0;                // 495 free since 9.0.0.1
 
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
@@ -514,7 +526,7 @@ struct {
   char          user_template_name[15];    // 720  15 bytes - Backward compatibility since v8.2.0.3
 
 #ifdef ESP8266
-  mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - free once gpio16 is active
+  mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - free since 9.0.0.1
 #else  // ESP32
   uint8_t       free_esp32_72f[14];        // 72F
 #endif  // ESP8266 - ESP32
@@ -589,7 +601,7 @@ struct {
   uint8_t       sps30_inuse_hours;         // F02
   uint8_t       hotplug_scan;              // F03
   uint8_t       bri_power_on;              // F04
-  uint8_t       bri_min;                   // F05
+  PWMDimmerCfg  pwm_dimmer_cfg;            // F05
   uint8_t       bri_preset_low;            // F06
   uint8_t       bri_preset_high;           // F07
   int8_t        hum_comp;                  // F08
@@ -619,7 +631,7 @@ struct {
   uint16_t      energy_power_delta[3];     // F44
   uint16_t      shutter_pwmrange[2][MAX_SHUTTERS];  // F4A
 
-  
+
   uint8_t       free_f5a[89];             // F5A - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below

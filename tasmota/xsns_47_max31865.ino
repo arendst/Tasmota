@@ -125,10 +125,7 @@ bool Xsns47(uint8_t function)
 {
   bool result = false;
 
-  if (PinUsed(GPIO_SSPI_MISO) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK) &&
-      (PinUsed(GPIO_SSPI_MAX31865_CS1) || PinUsed(GPIO_SSPI_MAX31865_CS1, 1) || PinUsed(GPIO_SSPI_MAX31865_CS1, 2) ||
-       PinUsed(GPIO_SSPI_MAX31865_CS1, 3) || PinUsed(GPIO_SSPI_MAX31865_CS1, 4) || PinUsed(GPIO_SSPI_MAX31865_CS1, 5))) {
-
+  if (PinUsed(GPIO_SSPI_MAX31865_CS1, GPIO_ANY) && PinUsed(GPIO_SSPI_MISO) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK)) {
     switch (function) {
       case FUNC_INIT:
         MAX31865_Init();

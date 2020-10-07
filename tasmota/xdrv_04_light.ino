@@ -278,7 +278,7 @@ struct LIGHT {
   uint8_t fixed_color_index = 1;
   uint8_t pwm_offset = 0;                 // Offset in color buffer
   uint8_t max_scheme = LS_MAX -1;
-  
+
   uint32_t wakeup_start_time = 0;
 
   bool update = true;
@@ -564,9 +564,6 @@ class LightStateClass {
 #ifdef DEBUG_LIGHT
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setBri RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
 #endif
-#ifdef USE_PWM_DIMMER
-  if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(0);
-#endif  // USE_PWM_DIMMER
     }
 
     // changes the RGB brightness alone
@@ -574,6 +571,9 @@ class LightStateClass {
       uint8_t prev_bri = _briRGB;
       _briRGB = bri_rgb;
       if (bri_rgb > 0) { addRGBMode(); }
+#ifdef USE_PWM_DIMMER
+      if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(-1);
+#endif  // USE_PWM_DIMMER
       return prev_bri;
     }
 
@@ -582,6 +582,9 @@ class LightStateClass {
       uint8_t prev_bri = _briCT;
       _briCT = bri_ct;
       if (bri_ct > 0) { addCTMode(); }
+#ifdef USE_PWM_DIMMER
+      if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(-1);
+#endif  // USE_PWM_DIMMER
       return prev_bri;
     }
 
@@ -1275,6 +1278,13 @@ bool LightModuleInit(void)
     light_type = LT_PWM2;
   }
 #endif  // ESP8266
+#ifdef USE_PWM_DIMMER
+#ifdef USE_DEVICE_GROUPS
+  else if (PWM_DIMMER == my_module_type) {
+    light_type = Settings.pwm_dimmer_cfg.pwm_count + 1;
+  }
+#endif  // USE_DEVICE_GROUPS
+#endif  // USE_PWM_DIMMER
 
   if (light_type > LT_BASIC) {
     devices_present++;
@@ -1385,6 +1395,9 @@ void LightInit(void)
   Light.power = 0;
   Light.update = true;
   Light.wakeup_active = 0;
+  if (0 == Settings.light_wakeup) {
+    Settings.light_wakeup = 60;         // Fix divide by zero exception 0 in Animate
+  }
   if (Settings.flag4.fade_at_startup) {
     Light.fade_initialized = true;      // consider fade intialized starting from black
   }
@@ -2396,7 +2409,7 @@ void LightHandleDevGroupItem(void)
           break;
         }
 #endif  // !USE_LIGHT_PALETTE
-        value = value % MAX_FIXED_COLOR;
+        value = value % MAX_FIXED_COLOR + 1;
         if (value) {
           bool save_decimal_text = Settings.flag.decimal_text;
           char str[16];

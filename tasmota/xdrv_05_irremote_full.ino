@@ -118,6 +118,16 @@ protected:
 
 IRsend *irsend = nullptr;
 bool irsend_active = false;
+// some ACs send toggle messages rather than state. we need to help IRremoteESP8266 keep track of the state
+// have a flag that is a variable, can be later used to convert this functionality to an option (as in SetOptionXX)
+bool irhvac_stateful = true;
+stdAc::state_t irac_prev_state; // this implementations only keeps one state so if you use a single tasmota-ir device to command more than one AC it might not work
+
+// different modes on how to handle state when sending HVAC commands. needed for ACs with a differential/toggle protocol.
+enum class StateModes { SEND_ONLY, // just send the IR signal, this is the default. expect the state to update when the IR receiver gets the command that IR transmitter sent.
+  STORE_ONLY, // just update the state to what is provided, this is when one needs to sync actual and stored states.
+  SEND_STORE }; // send IR signal but also update stored state. this is for use cases when there is just one transmitter and there is no receiver in the device.
+StateModes strToStateMode(class JsonParserToken token, StateModes def); // declate to prevent errors related to ino files
 
 void IrSendInit(void)
 {
@@ -262,11 +272,12 @@ String sendIRJsonState(const struct decode_results &results) {
   json += ",\"" D_JSON_IR_REPEAT "\":";
   json += results.repeat;
 
-  stdAc::state_t ac_result;
-  if (IRAcUtils::decodeToState(&results, &ac_result, nullptr)) {
+  stdAc::state_t new_state;
+  if (IRAcUtils::decodeToState(&results, &new_state, irhvac_stateful && irac_prev_state.protocol == results.decode_type ? &irac_prev_state : nullptr)) {
     // we have a decoded state
     json += ",\"" D_CMND_IRHVAC "\":";
-    json += sendACJsonState(ac_result);
+    json += sendACJsonState(new_state);
+    irac_prev_state = new_state; // store for next time
   }
 
   return json;
@@ -361,6 +372,19 @@ bool strToBool(class JsonParserToken token, bool def) {
   }
 }
 
+StateModes strToStateMode(class JsonParserToken token, StateModes def) {
+  if (token.isStr()) {
+    const char * str = token.getStr();
+    if (!strcasecmp_P(str, PSTR(D_JSON_IRHVAC_STATE_MODE_SEND_ONLY)))
+      return StateModes::SEND_ONLY;
+    else if (!strcasecmp_P(str, PSTR(D_JSON_IRHVAC_STATE_MODE_STORE_ONLY)))
+      return StateModes::STORE_ONLY;
+    else if (!strcasecmp_P(str, PSTR(D_JSON_IRHVAC_STATE_MODE_SEND_STORE)))
+      return StateModes::SEND_STORE;
+  }
+  return def;
+}
+
 // used to convert values 0-5 to fanspeed_t
 const stdAc::fanspeed_t IrHvacFanSpeed[] PROGMEM =  { stdAc::fanspeed_t::kAuto,
                       stdAc::fanspeed_t::kMin, stdAc::fanspeed_t::kLow,stdAc::fanspeed_t::kMedium,
@@ -368,7 +392,7 @@ const stdAc::fanspeed_t IrHvacFanSpeed[] PROGMEM =  { stdAc::fanspeed_t::kAuto,
 
 uint32_t IrRemoteCmndIrHvacJson(void)
 {
-  stdAc::state_t state, prev;
+  stdAc::state_t state;
 
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received %s"), XdrvMailbox.data);
   JsonParser parser(XdrvMailbox.data);
@@ -420,6 +444,10 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("model %d, mode %d, fanspeed %d, swingv %d, swingh %d"),
   //             state.model, state.mode, state.fanspeed, state.swingv, state.swingh);
 
+  // if and how we should handle the state for IRremote
+  StateModes stateMode = StateModes::SEND_ONLY; // default
+  if (irhvac_stateful && (val = root[PSTR(D_JSON_IRHVAC_STATE_MODE)])) { stateMode = strToStateMode(val, stateMode); }
+
   // decode booleans
   state.power   = strToBool(root[PSTR(D_JSON_IRHVAC_POWER)], state.power);
   state.celsius = strToBool(root[PSTR(D_JSON_IRHVAC_CELSIUS)], state.celsius);
@@ -435,9 +463,14 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
   //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
 
-  IRac ac(Pin(GPIO_IRSEND));
-  bool success = ac.sendAc(state, &prev);
-  if (!success) { return IE_SYNTAX_IRHVAC; }
+  if (stateMode == StateModes::SEND_ONLY || stateMode == StateModes::SEND_STORE) {
+    IRac ac(Pin(GPIO_IRSEND));
+    bool success = ac.sendAc(state, irhvac_stateful && irac_prev_state.protocol == state.protocol ? &irac_prev_state : nullptr);
+    if (!success) { return IE_SYNTAX_IRHVAC; }
+  }
+  if (stateMode == StateModes::STORE_ONLY || stateMode == StateModes::SEND_STORE) { // store state in memory
+    irac_prev_state = state;
+  }
 
   Response_P(PSTR("{\"" D_CMND_IRHVAC "\":%s}"), sendACJsonState(state).c_str());
   return IE_RESPONSE_PROVIDED;

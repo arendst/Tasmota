@@ -158,7 +158,7 @@ void ShutterRtc50mS(void)
 int32_t ShutterPercentToRealPosition(uint32_t percent, uint32_t index)
 {
 	if (Settings.shutter_set50percent[index] != 50) {
-    return (percent <= 5) ? Settings.shuttercoeff[2][index] * percent : Settings.shuttercoeff[1][index] * percent + Settings.shuttercoeff[0][index];
+    return (percent <= 5) ? Settings.shuttercoeff[2][index] * percent*10 : (Settings.shuttercoeff[1][index] * percent + (Settings.shuttercoeff[0][index]*10))*10;
 	} else {
     uint32_t realpos;
     // check against DIV 0
@@ -192,7 +192,7 @@ int32_t ShutterPercentToRealPosition(uint32_t percent, uint32_t index)
 uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
 {
 	if (Settings.shutter_set50percent[index] != 50) {
-		return (Settings.shuttercoeff[2][index] * 5 > realpos) ? SHT_DIV_ROUND(realpos, Settings.shuttercoeff[2][index]) : SHT_DIV_ROUND(realpos-Settings.shuttercoeff[0][index], Settings.shuttercoeff[1][index]);
+		return (Settings.shuttercoeff[2][index] * 5 > realpos) ? SHT_DIV_ROUND(realpos/10, Settings.shuttercoeff[2][index]) : SHT_DIV_ROUND(realpos/10-Settings.shuttercoeff[0][index]*10, Settings.shuttercoeff[1][index]);
 	} else {
     uint16_t realpercent;
 
@@ -288,10 +288,11 @@ void ShutterInit(void)
 
       // calculate a ramp slope at the first 5 percent to compensate that shutters move with down part later than the upper part
       if (Settings.shutter_set50percent[i] != 50) {
-      	Settings.shuttercoeff[1][i] = Shutter[i].open_max * (100 - Settings.shutter_set50percent[i] ) / 5000;
-      	Settings.shuttercoeff[0][i] = Shutter[i].open_max - (Settings.shuttercoeff[1][i] * 100);
-      	Settings.shuttercoeff[2][i] = (Settings.shuttercoeff[0][i] + 5 * Settings.shuttercoeff[1][i]) / 5;
-      }
+       	Settings.shuttercoeff[1][i] = Shutter[i].open_max/10 * (100 - Settings.shutter_set50percent[i] ) / 5000 ;
+      	Settings.shuttercoeff[0][i] = Shutter[i].open_max/100 - (Settings.shuttercoeff[1][i] * 10);
+      	Settings.shuttercoeff[2][i] = (int32_t)(Settings.shuttercoeff[0][i]*10 + 5 * Settings.shuttercoeff[1][i]) / 5;
+        //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT%d: Shutter[i].open_max %d, 50perc:%d, 0:%d, 1:%d 2:%d"), i, Shutter[i].open_max, Settings.shutter_set50percent[i], Settings.shuttercoeff[0][i],Settings.shuttercoeff[1][i],Settings.shuttercoeff[2][i]);
+     }
       ShutterGlobal.RelayShutterMask |= 3 << (Settings.shutter_startrelay[i] -1);
 
       Shutter[i].real_position = ShutterPercentToRealPosition(Settings.shutter_position[i], i);
