@@ -458,6 +458,10 @@
   #define D_JSON_IRHVAC_CLEAN "Clean"
   #define D_JSON_IRHVAC_SLEEP "Sleep"
   #define D_JSON_IRHVAC_CLOCK "Clock"
+  #define D_JSON_IRHVAC_STATE_MODE "StateMode"
+    #define D_JSON_IRHVAC_STATE_MODE_SEND_ONLY "SendOnly"
+    #define D_JSON_IRHVAC_STATE_MODE_STORE_ONLY "StoreOnly"
+    #define D_JSON_IRHVAC_STATE_MODE_SEND_STORE "SendStore"
 #define D_JSON_IRRECEIVED "IrReceived"
 
 // Commands xdrv_06_snfbridge.ino
