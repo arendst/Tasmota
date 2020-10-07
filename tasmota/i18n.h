@@ -572,6 +572,7 @@
 #define D_CMND_ZIGBEE_RESTORE "Restore"
 #define D_CMND_ZIGBEE_CONFIG "Config"
   #define D_JSON_ZIGBEE_CONFIG "Config"
+#define D_CMND_ZIGBEE_DATA "Data"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"
