@@ -127,7 +127,7 @@ class SBuffer hibernateDevice(const struct Z_Device &device) {
   buf.add8(0x00);     // end of string marker
 
   // Zigbee Profile
-  buf.add8(device.zb_profile);
+  buf.add8(device.getLightChannels());
 
   // update overall length
   buf.set8(0, buf.len());
@@ -170,7 +170,6 @@ void hydrateDevices(const SBuffer &buf) {
 
   uint32_t k = 0;
   uint32_t num_devices = buf.get8(k++);
-//size_t before = 0;
   for (uint32_t i = 0; (i < num_devices) && (k < buf_len); i++) {
     uint32_t dev_record_len = buf.get8(k);
 
@@ -200,7 +199,6 @@ void hydrateDevices(const SBuffer &buf) {
         // ignore
       }
     }
-//AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device 0x%04X Memory3.shrink = %d"), shortaddr, ESP_getFreeHeap());
 
     // parse 3 strings
     char empty[] = "";
@@ -225,13 +223,12 @@ void hydrateDevices(const SBuffer &buf) {
 
     // Hue bulbtype - if present
     if (d < dev_record_len) {
-      zigbee_devices.setZbProfile(shortaddr, buf_d.get8(d));
+      zigbee_devices.setLightProfile(shortaddr, buf_d.get8(d));
       d++;
     }
 
     // next iteration
     k += dev_record_len;
-//AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Device %d After  Memory = %d"), i, ESP_getFreeHeap());
   }
 }
 
