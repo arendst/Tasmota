@@ -81,3 +81,5 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Add optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
 - Add SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
 - Add support for inverted NeoPixelBus data line by enabling ``#define USE_WS2812_INVERTED`` (#8988)
+- Add PWM dimmer color/trigger on tap, SO88 led, DGR WITH_LOCAL flag by Paul Diem (#9474)
+- Add support for stateful ACs using ``StateMode`` in tasmota-ir.bin by Arik Yavilevich (#9472)
