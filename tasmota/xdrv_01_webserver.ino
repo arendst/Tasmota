@@ -477,6 +477,7 @@ const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
 const char HTTP_SCRIPT_TEMPLATE3[] PROGMEM =
     "\";"
     "sk(g[13]," STR(ADC0_PIN) ");";       // Set ADC0
+
 const char HTTP_SCRIPT_TEMPLATE4[] PROGMEM =
     "g=o.shift();"                        // FLAG
     "for(i=0;i<" STR(GPIO_FLAG_USED) ";i++){"
@@ -1800,13 +1801,23 @@ void HandleTemplateConfiguration(void)
       first_done = true;
     }
   }
+#ifdef ESP8266
+  for (uint32_t i = 0; i < ARRAY_SIZE(kAdcNiceList); i++) {  // hs=[36,68,100,132,168,200,232,264,292,324,356,388,421,453];
+    uint32_t midx = pgm_read_word(kAdcNiceList + i);
+    if (midx & 0x001F) {
+      if (first_done) { WSContentSend_P(PSTR(",")); }
+      WSContentSend_P(PSTR("%d"), midx);
+      first_done = true;
+    }
+  }
+#endif
   WSContentSend_P(PSTR("];"));
 
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE2);
 
 #ifdef ESP8266
   WSContentSend_P(PSTR("os=\""));
-  for (uint32_t i = 0; i < ARRAY_SIZE(kAdcNiceList); i++) {                // FLAG: }2'0'>None}3}2'17'>Analog}3...
+  for (uint32_t i = 0; i < ARRAY_SIZE(kAdcNiceList); i++) {    // GPIO: }2'0'>None}3}2'17'>Analog}3...
     if (1 == i) {
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), D_SENSOR_USER);  // }2'15'>User}3
     }

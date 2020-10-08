@@ -650,8 +650,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_INPUT) + MAX_ADCS,       // Analog inputs
   AGPIO(GPIO_ADC_TEMP) + MAX_ADCS,        // Thermistor
   AGPIO(GPIO_ADC_LIGHT) + MAX_ADCS,       // Light sensor
-  AGPIO(GPIO_ADC_BUTTON) + MAX_ADCS,      // Button
-  AGPIO(GPIO_ADC_BUTTON_INV) + MAX_ADCS,
+  AGPIO(GPIO_ADC_BUTTON) + MAX_KEYS,      // Button
+  AGPIO(GPIO_ADC_BUTTON_INV) + MAX_KEYS,
   AGPIO(GPIO_ADC_RANGE) + MAX_ADCS,       // Range
   AGPIO(GPIO_ADC_CT_POWER) + MAX_ADCS,    // Current
   AGPIO(GPIO_ADC_JOY) + MAX_ADCS,         // Joystick
@@ -668,8 +668,8 @@ const uint16_t kAdcNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_INPUT),                  // Analog inputs
   AGPIO(GPIO_ADC_TEMP),                   // Thermistor
   AGPIO(GPIO_ADC_LIGHT),                  // Light sensor
-  AGPIO(GPIO_ADC_BUTTON),                 // Button
-  AGPIO(GPIO_ADC_BUTTON_INV),
+  AGPIO(GPIO_ADC_BUTTON) + MAX_KEYS,      // Button
+  AGPIO(GPIO_ADC_BUTTON_INV) + MAX_KEYS,
   AGPIO(GPIO_ADC_RANGE),                  // Range
   AGPIO(GPIO_ADC_CT_POWER),               // Current
   AGPIO(GPIO_ADC_JOY),                    // Joystick

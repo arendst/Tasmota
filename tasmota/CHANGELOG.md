@@ -25,6 +25,7 @@
 - Add PWM dimmer color/trigger on tap, SO88 led, DGR WITH_LOCAL flag by Paul Diem (#9474)
 - Add support for stateful ACs using ``StateMode`` in tasmota-ir.bin by Arik Yavilevich (#9472)
 - Add Zigbee ``ZbData`` command for better support of device specific data
+- Add support for analog buttons indexed within standard button range
 
 ## Released
 

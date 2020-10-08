@@ -24,8 +24,15 @@
 
 #define XSNS_02                       2
 
+#ifdef ESP8266
+#define ANALOG_RESOLUTION             10               // 12 = 4095, 11 = 2047, 10 = 1023
+#define ANALOG_RANGE                  1023             // 4095 = 12, 2047 = 11, 1023 = 10
+#else  // ESP32
+#undef ANALOG_RESOLUTION
 #define ANALOG_RESOLUTION             12               // 12 = 4095, 11 = 2047, 10 = 1023
+#undef ANALOG_RANGE
 #define ANALOG_RANGE                  4095             // 4095 = 12, 2047 = 11, 1023 = 10
+#endif  // ESP8266 or ESP32
 
 #define TO_CELSIUS(x) ((x) - 273.15)
 #define TO_KELVIN(x) ((x) + 273.15)
@@ -63,6 +70,17 @@
 #define ANALOG_CT_VOLTAGE             2300             // (int) Convert current in Amps to apparrent power in Watts using voltage in Volts*10. Value of 2200 corresponds to 220V
 
 #define CT_FLAG_ENERGY_RESET          (1 << 0)         // Reset energy total
+
+// Buttons
+//        ---- Inverted
+// 3V3 ---|  |----|
+//                |
+// 3V3 --- R1 ----|--- R1 --- Gnd
+//                |
+//                |---|  |--- Gnd
+//                |   ----
+//               ADC
+#define ANALOG_BUTTON                 128              // Add resistor tolerance
 
 // Odroid joysticks
 //        ---- Up
@@ -154,6 +172,7 @@ void AdcInitParams(uint8_t idx) {
 }
 
 void AdcAttach(uint8_t pin, uint8_t type) {
+  if (Adcs.present == MAX_ADCS) { return; }
   Adc[Adcs.present].pin = pin;
   if (adcAttachPin(Adc[Adcs.present].pin)) {
     Adc[Adcs.present].type = type;
@@ -174,12 +193,6 @@ void AdcInit(void) {
     if (PinUsed(GPIO_ADC_LIGHT, i)) {
       AdcAttach(Pin(GPIO_ADC_LIGHT, i), ADC_LIGHT);
     }
-    if (PinUsed(GPIO_ADC_BUTTON, i)) {
-      AdcAttach(Pin(GPIO_ADC_BUTTON, i), ADC_BUTTON);
-    }
-    if (PinUsed(GPIO_ADC_BUTTON_INV, i)) {
-      AdcAttach(Pin(GPIO_ADC_BUTTON_INV, i), ADC_BUTTON_INV);
-    }
     if (PinUsed(GPIO_ADC_RANGE, i)) {
       AdcAttach(Pin(GPIO_ADC_RANGE, i), ADC_RANGE);
     }
@@ -190,6 +203,15 @@ void AdcInit(void) {
       AdcAttach(Pin(GPIO_ADC_JOY, i), ADC_JOY);
     }
   }
+  for (uint32_t i = 0; i < MAX_KEYS; i++) {
+    if (PinUsed(GPIO_ADC_BUTTON, i)) {
+      AdcAttach(Pin(GPIO_ADC_BUTTON, i), ADC_BUTTON);
+    }
+    else if (PinUsed(GPIO_ADC_BUTTON_INV, i)) {
+      AdcAttach(Pin(GPIO_ADC_BUTTON_INV, i), ADC_BUTTON_INV);
+    }
+  }
+
   if (Adcs.present) {
 #ifdef ESP32
     analogSetClockDiv(1);               // Default 1
@@ -253,17 +275,18 @@ void AdcEvery250ms(void) {
 }
 #endif  // USE_RULES
 
-bool AdcButtonPresent(uint32_t idx) {
-  return ((ADC_BUTTON == Adc[idx].type) || (ADC_BUTTON_INV == Adc[idx].type));
-}
-
-uint8_t AdcGetButton(uint32_t idx) {
-  if (ADC_BUTTON_INV == Adc[idx].type) {
-    return (AdcRead(Adc[idx].pin, 1) < 128);
+uint8_t AdcGetButton(uint32_t pin) {
+  for (uint32_t idx = 0; idx < Adcs.present; idx++) {
+    if (Adc[idx].pin == pin) {
+      if (ADC_BUTTON_INV == Adc[idx].type) {
+        return (AdcRead(Adc[idx].pin, 1) < ANALOG_BUTTON);
+      }
+      else if (ADC_BUTTON == Adc[idx].type) {
+        return (AdcRead(Adc[idx].pin, 1) > ANALOG_BUTTON);
+      }
+    }
   }
-  else if (ADC_BUTTON == Adc[idx].type) {
-    return (AdcRead(Adc[idx].pin, 1) > 128);
-  }
+  return 0;
 }
 
 uint16_t AdcGetLux(uint32_t idx) {
