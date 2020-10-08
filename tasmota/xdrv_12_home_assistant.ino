@@ -159,6 +159,9 @@ const char kHAssTriggerTypeButtons[] PROGMEM =
 const char kHAssTriggerStringButtons[] PROGMEM =
   "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|HOLD|";
 
+const char kHAssRelayType[] PROGMEM =
+  "|RL|LI|SHT|FAN";
+
 const char kHAssError1[] PROGMEM =
   "HASS: MQTT discovery failed due to too long topic or device/friendly name. Please shorten topic and/or device/friendly name. Failed to format";
 
@@ -183,7 +186,8 @@ const char HASS_DISCOVER_DEVICE[] PROGMEM =                         // Basic par
   "\"fn\":[%s],"                                                    // Friendly Names
   "\"hn\":\"%s\","                                                  // Host Name
   "\"mac\":\"%s\","                                                 // Full MAC as Device id
-  "\"md\":\"%s\","                                                  // Module Name
+  "\"md\":\"%s\","                                                  // Module or Template Name
+  "\"ty\":%d,"                                                      // Flag for TuyaMCU devices
   "\"ofln\":\"" MQTT_LWT_OFFLINE "\","                              // Payload Offline
   "\"onln\":\"" MQTT_LWT_ONLINE "\","                               // Payload Online
   "\"state\":[\"%s\",\"%s\",\"%s\",\"%s\"],"                        // State text for "OFF","ON","TOGGLE","HOLD"
@@ -193,8 +197,73 @@ const char HASS_DISCOVER_DEVICE[] PROGMEM =                         // Basic par
   "\"tp\":[\"%s\",\"%s\",\"%s\"],"                                  // Topics for command, stat and tele
   "\"rl\":[%s],\"swc\":[%s],\"btn\":[%s],"                          // Inputs / Outputs
   "\"so\":{\"11\":%d,\"13\":%d,\"17\":%d,\"20\":%d,"                // SetOptions
-  "\"30\":%d,\"68\":%d,\"73\":%d,\"80\":%d},"
+  "\"30\":%d,\"68\":%d,\"73\":%d,\"80\":%d,\"82\":%d},"
   "\"lk\":%d,\"lt_st\":%d,\"ver\":1}";                              // Light SubType, and Discovery version
+
+typedef struct HASS {
+  uint16_t Relay[MAX_RELAYS]; // Base array to store the relay type
+  char RelLst[MAX_RELAYS*2];  // Relay as a char list, "0,0,0,0,0,0,0,0"
+  bool RelPst;                // Needed for Switches. If Power devices are not present entities will be created even when switchtopic in not set.
+} HASS;
+
+void HassDiscoveryRelays(struct HASS &Hass)
+{
+  Hass = {.Relay={0,0,0,0,0,0,0,0}, .RelLst={'\0'}};
+  uint16_t Shutter[8] = {0,0,0,0,0,0,0,0};  // Array to store a temp list for shutters
+  uint8_t lightidx = MAX_RELAYS + 1;        // Will store the starting position of the lights
+  bool iFan = false;
+
+  Hass.RelPst = devices_present > 0;
+
+#ifdef ESP8266
+    if (SONOFF_IFAN02 == my_module_type || SONOFF_IFAN03 == my_module_type) { iFan = true;}
+#endif // ESP8266
+
+  if (Light.subtype > LST_RGB) {
+    if (!light_controller.isCTRGBLinked()) { // One or two lights present
+      lightidx = devices_present - 2;
+    } else {
+      lightidx = devices_present - 1;
+    }
+  }
+
+  if (Light.device > 0 && Settings.flag3.pwm_multi_channels) { // How many relays are light devices?
+    lightidx = devices_present - Light.subtype;
+  }
+
+  for (uint32_t i = 0; i < MAX_RELAYS; i++) {
+
+    if (i < devices_present) {
+
+#ifdef USE_SHUTTER
+      if (Settings.flag3.shutter_mode) {
+        for (uint32_t k = 0; k < MAX_SHUTTERS; k++) {
+          if (0 == Settings.shutter_startrelay[k]) {
+            break;
+          } else {
+            if (Settings.shutter_startrelay[k] > 0 && Settings.shutter_startrelay[k] <= MAX_RELAYS) {
+              Shutter[Settings.shutter_startrelay[k]-1] = Shutter[Settings.shutter_startrelay[k]] = 1;
+            }
+          }
+        }
+      }
+#endif // USE_SHUTTER
+
+      if (Shutter[i] != 0) {    // Check if there are shutters present
+        Hass.Relay[i] = 3;      // Relay is a shutter
+      } else {
+        if (i >= lightidx || (iFan && i == 0)) { // First relay on Ifan controls the light
+          Hass.Relay[i] = 2;    // Relay is a light
+        } else {
+          if (!iFan) { // Relays 2-4 for ifan are controlled by FANSPEED and don't need to be present if my_module_type = SONOFF_IFAN02 or SONOFF_IFAN03
+            Hass.Relay[i] = 1;  // Simple Relay
+          }
+        }
+      }
+    }
+    snprintf_P(Hass.RelLst, sizeof(Hass.RelLst), PSTR("%s%s%d"), Hass.RelLst, (i > 0 ? "," : ""), Hass.Relay[i]); // Vector for the Official Integration
+  }
+}
 
 void NewHAssDiscovery(void)
 {
@@ -203,11 +272,16 @@ void NewHAssDiscovery(void)
   char stemp2[200];
   char stemp3[TOPSZ];
   char stemp4[TOPSZ];
-  char stemp5[TOPSZ];
   char unique_id[30];
+  char relays[TOPSZ];
   char *state_topic = stemp1;
+  bool SerialButton = false;
+  bool TuyaMod = false;
 
   stemp2[0] = '\0';
+  struct HASS Hass;
+  HassDiscoveryRelays(Hass);
+
   uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
   for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
     char fname[TOPSZ];
@@ -216,22 +290,23 @@ void NewHAssDiscovery(void)
   }
 
   stemp3[0] = '\0';
-  uint32_t maxrl = (devices_present > MAX_RELAYS) ? MAX_RELAYS : (!devices_present) ? 1 : devices_present;
-  for (uint32_t i = 0; i < MAX_RELAYS; i++) {
-    snprintf_P(stemp3, sizeof(stemp3), PSTR("%s%s%d"), stemp3, (i > 0 ? "," : ""), (i < maxrl) ? (Settings.flag.hass_light ? 2 : 1) : 0);
+  // Enable Discovery for Switches only if SwitchTopic is set to a custom name or if there is not a Power device
+  auto discover_switches = ((KeyTopicActive(1) && (strcmp(SettingsText(SET_MQTT_SWITCH_TOPIC), mqtt_topic))) || !Hass.RelPst);
+  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
+    snprintf_P(stemp3, sizeof(stemp3), PSTR("%s%s%d"), stemp3, (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) & discover_switches) ? Settings.switchmode[i] : -1);
   }
 
   stemp4[0] = '\0';
-  // Enable Discovery for Switches only if SwitchTopic is set to a custom name
-  auto discover_switches = (KeyTopicActive(1) && strcmp(SettingsText(SET_MQTT_SWITCH_TOPIC), mqtt_topic));
-  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-    snprintf_P(stemp4, sizeof(stemp4), PSTR("%s%s%d"), stemp4, (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) & discover_switches) ? Settings.switchmode[i] : -1);
-  }
-
-  stemp5[0] = '\0';
   // Enable Discovery for Buttons only if SetOption73 is enabled
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
-    snprintf_P(stemp5, sizeof(stemp5), PSTR("%s%s%d"), stemp5, (i > 0 ? "," : ""), (PinUsed(GPIO_KEY1, i) & Settings.flag3.mqtt_buttons));
+
+#ifdef ESP8266
+    if (i == 0 && (SONOFF_DUAL == my_module_type )) { SerialButton = true; }
+    if (TUYA_DIMMER == my_module_type || SK03_TUYA == my_module_type) { TuyaMod = true; }
+#endif // ESP8266
+
+    snprintf_P(stemp4, sizeof(stemp4), PSTR("%s%s%d"), stemp4, (i > 0 ? "," : ""), (SerialButton ? 1 : (PinUsed(GPIO_KEY1, i)) & Settings.flag3.mqtt_buttons));
+    SerialButton = false;
   }
 
   mqtt_data[0] = '\0'; // Clear retained message
@@ -245,12 +320,12 @@ void NewHAssDiscovery(void)
 
   // Send empty message if new discovery is disabled
   masterlog_level = 4; // Hide topic on clean and remove use weblog 4 to see it
-  if (!Settings.flag.hass_discovery) {
+  if (!Settings.flag.hass_discovery) { // HassDiscoveryRelays(relays)
     Response_P(HASS_DISCOVER_DEVICE, WiFi.localIP().toString().c_str(), SettingsText(SET_DEVICENAME),
-              stemp2, my_hostname, unique_id, ModuleName().c_str(), GetStateText(0), GetStateText(1), GetStateText(2), GetStateText(3),
-              my_version, mqtt_topic, MQTT_FULLTOPIC, SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2, stemp3, stemp4, stemp5, Settings.flag.button_swap,
-              Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked, Settings.flag.hass_light,
-              Settings.flag3.pwm_multi_channels, Settings.flag3.mqtt_buttons, Settings.flag3.shutter_mode, light_controller.isCTRGBLinked(), Light.subtype);
+              stemp2, my_hostname, unique_id, ModuleName().c_str(), TuyaMod, GetStateText(0), GetStateText(1), GetStateText(2), GetStateText(3),
+              my_version, mqtt_topic, MQTT_FULLTOPIC, SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2, Hass.RelLst, stemp3, stemp4, Settings.flag.button_swap,
+              Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked, Settings.flag.hass_light, Settings.flag3.pwm_multi_channels,
+              Settings.flag3.mqtt_buttons, Settings.flag3.shutter_mode, Settings.flag4.alexa_ct_range, light_controller.isCTRGBLinked(), Light.subtype);
   }
   MqttPublish(stopic, true);
 
