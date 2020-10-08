@@ -216,7 +216,7 @@ void HassDiscoveryRelays(struct HASS &Hass)
   Hass.RelPst = devices_present > 0;
 
 #ifdef ESP8266
-    if (IsModuleIfan()) { iFan = true;}
+    if (SONOFF_IFAN02 == my_module_type || SONOFF_IFAN03 == my_module_type) { iFan = true;}
 #endif // ESP8266
 
   if (Light.subtype > LST_RGB) {
