@@ -204,10 +204,15 @@ void PWMDimmerHandleDevGroupItem(void)
         remote_pwm_dimmer->power_button_increases_bri = (remote_pwm_dimmer->bri < 128);
       }
       break;
-    case DGR_ITEM_LIGHT_FIXED_COLOR:
-      if (!device_is_local) remote_pwm_dimmer->fixed_color_index = value;
-      break;
 #endif  // USE_PWM_DIMMER_REMOTE
+    case DGR_ITEM_LIGHT_FIXED_COLOR:
+#ifdef USE_PWM_DIMMER_REMOTE
+      if (!device_is_local)
+        remote_pwm_dimmer->fixed_color_index = value;
+      else
+#endif  // USE_PWM_DIMMER_REMOTE
+        local_fixed_color_index = value;
+      break;
     case DGR_ITEM_BRI_POWER_ON:
 #ifdef USE_PWM_DIMMER_REMOTE
       if (!device_is_local)

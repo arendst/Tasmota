@@ -251,14 +251,13 @@ void TimerEverySecond(void)
       uint8_t days = 1 << (RtcTime.day_of_week -1);
 
       for (uint32_t i = 0; i < MAX_TIMERS; i++) {
-//        if (Settings.timer[i].device >= devices_present) Settings.timer[i].data = 0;  // Reset timer due to change in devices present
         Timer xtimer = Settings.timer[i];
-#ifdef USE_SUNRISE
-        if ((1 == xtimer.mode) || (2 == xtimer.mode)) {      // Sunrise or Sunset
-          ApplyTimerOffsets(&xtimer);
-        }
-#endif
         if (xtimer.arm) {
+#ifdef USE_SUNRISE
+          if ((1 == xtimer.mode) || (2 == xtimer.mode)) {      // Sunrise or Sunset
+            ApplyTimerOffsets(&xtimer);
+          }
+#endif
           int32_t set_time = xtimer.time + timer_window[i];  // Add random time offset
           if (set_time < 0) {
             set_time = abs(timer_window[i]);                 // After midnight and within negative window so stay today but allow positive randomness;
@@ -861,7 +860,7 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_FORM_TIMER3);
 #endif  // USE_SUNRISE
 #ifdef USE_UNISHOX_COMPRESSION
-  WSContentSend_P(HTTP_FORM_TIMER4,D_HOUR_MINUTE_SEPARATOR); 
+  WSContentSend_P(HTTP_FORM_TIMER4,D_HOUR_MINUTE_SEPARATOR);
 #else
   WSContentSend_P(HTTP_FORM_TIMER4);
 #endif //USE_UNISHOX_COMPRESSION

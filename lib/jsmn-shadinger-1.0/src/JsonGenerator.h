@@ -58,6 +58,7 @@ public:
   void add(const char* key, uint32_t uval32);
   void add(const char* key, int32_t uval32);
   void add(const char* key, const String & str);
+  void addHex32(const char* key, uint32_t uval32);
   void addStrRaw(const char* key, const char * sval);
   void addStr(const char* key, const char * sval);
 

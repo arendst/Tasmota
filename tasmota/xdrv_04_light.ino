@@ -2400,7 +2400,7 @@ void LightHandleDevGroupItem(void)
       send_state = true;
       break;
     case DGR_ITEM_LIGHT_FIXED_COLOR:
-      if (Light.subtype >= LST_RGBW) {
+      if (Light.subtype >= LST_COLDWARM) {
         send_state = true;
 #ifdef USE_LIGHT_PALETTE
         if (Light.palette_count) {
@@ -2409,21 +2409,28 @@ void LightHandleDevGroupItem(void)
           break;
         }
 #endif  // !USE_LIGHT_PALETTE
-        value = value % MAX_FIXED_COLOR + 1;
-        if (value) {
-          bool save_decimal_text = Settings.flag.decimal_text;
-          char str[16];
-          LightColorEntry(str, sprintf_P(str, PSTR("%u"), value));
-          Settings.flag.decimal_text = save_decimal_text;
-          uint32_t old_bri = light_state.getBri();
-          light_controller.changeChannels(Light.entry_color);
-          light_controller.changeBri(old_bri);
-          Settings.light_scheme = 0;
-          Light.devgrp_no_channels_out = false;
+        if (Light.subtype <= LST_COLDWARM) {
+          value = value % (MAX_FIXED_COLD_WARM - 1) + 201;
         }
         else {
-          light_state.setColorMode(LCM_CT);
+          uint32_t max = MAX_FIXED_COLOR;
+          if (Light.subtype >= LST_RGB) {
+            max++;
+            if (Light.subtype >= LST_RGBCW) max += (MAX_FIXED_COLD_WARM - 2);
+          }
+          value = value % max + 1;
+          if (value > MAX_FIXED_COLOR) value += 200 - MAX_FIXED_COLOR;
         }
+        Light.fixed_color_index = value;
+        bool save_decimal_text = Settings.flag.decimal_text;
+        char str[16];
+        LightColorEntry(str, sprintf_P(str, PSTR("%u"), value));
+        Settings.flag.decimal_text = save_decimal_text;
+        uint32_t old_bri = light_state.getBri();
+        light_controller.changeChannels(Light.entry_color);
+        light_controller.changeBri(old_bri);
+        Settings.light_scheme = 0;
+        Light.devgrp_no_channels_out = false;
         if (!restore_power && !Light.power) {
           Light.old_power = Light.power;
           Light.power = 0xff;
