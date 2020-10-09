@@ -87,7 +87,11 @@ void ButtonInit(void)
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
     if (PinUsed(GPIO_KEY1, i)) {
       Button.present++;
+#ifdef ESP8266
       pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
+#else  // ESP32
+      pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
+#endif
     }
 #ifdef USE_ADC
     else if (PinUsed(GPIO_ADC_BUTTON, i) || PinUsed(GPIO_ADC_BUTTON_INV, i)) {
