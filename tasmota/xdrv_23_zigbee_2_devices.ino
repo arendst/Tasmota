@@ -49,6 +49,8 @@ public:
 
   inline uint8_t getEndpoint(void) const { return _endpoint; }
 
+  void toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const;
+
   static const Z_Data_Type type = Z_Data_Type::Z_Unknown;
 
   friend class Z_Data_Set;
@@ -73,12 +75,11 @@ public:
       _config = 1;         // at least 1 OnOff
     }
 
-
   inline bool validPower(uint32_t relay = 0) const { return (_config > relay); }      // power is declared
   inline bool getPower(uint32_t relay = 0)  const { return bitRead(_power, relay); }
          void setPower(bool val, uint32_t relay = 0);
 
-  static void toAttributes(Z_attribute_list & attr_list, const Z_Data_OnOff & light);
+  void toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const;
 
   static const Z_Data_Type type = Z_Data_Type::Z_OnOff;
 };
@@ -110,8 +111,6 @@ public:
 
   inline void setMainsVoltage(uint16_t _mains_voltage)  { mains_voltage = _mains_voltage; }
   inline void setMainsPower(int16_t _mains_power)       { mains_power = _mains_power; }
-
-  static void toAttributes(Z_attribute_list & attr_list, const Z_Data_Plug & light);
 
   static const Z_Data_Type type = Z_Data_Type::Z_Plug;
   // 4 bytes
@@ -159,8 +158,8 @@ public:
   inline void setX(uint16_t _x)                 { x = _x; }
   inline void setY(uint16_t _y)                 { y = _y; }
 
-  static void toAttributes(Z_attribute_list & attr_list, const Z_Data_Light & light);
-
+  void toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const;
+  
   static const Z_Data_Type type = Z_Data_Type::Z_Light;
   // 12 bytes
   uint8_t               colormode;      // 0x00: Hue/Sat, 0x01: XY, 0x02: CT | 0xFF not set, default 0x01
@@ -179,37 +178,35 @@ public:
   Z_Data_Thermo(uint8_t endpoint = 0) :
     Z_Data(Z_Data_Type::Z_Thermo, endpoint),
     temperature(-0x8000),
-    pressure(0xFFFF),
+    pressure(-0x8000),
     humidity(0xFFFF),
     th_setpoint(0xFF),
     temperature_target(-0x8000)
     {}
 
   inline bool validTemperature(void)    const { return -0x8000 != temperature; }
-  inline bool validPressure(void)       const { return 0xFFFF != pressure; }
+  inline bool validPressure(void)       const { return -0x8000 != pressure; }
   inline bool validHumidity(void)       const { return 0xFFFF != humidity; }
   inline bool validThSetpoint(void)     const { return 0xFF != th_setpoint; }
   inline bool validTempTarget(void)     const { return -0x8000 != temperature_target; }
 
   inline int16_t  getTemperature(void)  const { return temperature; }
-  inline uint16_t getPressure(void)     const { return pressure; }
+  inline int16_t getPressure(void)      const { return pressure; }
   inline uint16_t getHumidity(void)     const { return humidity; }
   inline uint8_t  getThSetpoint(void)   const { return th_setpoint; }
   inline int16_t  getTempTarget(void)   const { return temperature_target; }
 
   inline void setTemperature(int16_t _temperature)      { temperature = _temperature; }
-  inline void setPressure(uint16_t _pressure)           { pressure = _pressure; }
+  inline void setPressure(int16_t _pressure)            { pressure = _pressure; }
   inline void setHumidity(uint16_t _humidity)           { humidity = _humidity; }
   inline void setThSetpoint(uint8_t _th_setpoint)       { th_setpoint = _th_setpoint; }
   inline void setTempTarget(int16_t _temperature_target){ temperature_target = _temperature_target; }
-
-  static void toAttributes(Z_attribute_list & attr_list, const Z_Data_Thermo & thermo);
 
   static const Z_Data_Type type = Z_Data_Type::Z_Thermo;
   // 8 bytes
   // sensor data
   int16_t               temperature;    // temperature in 1/10th of Celsius, 0x8000 if unknown
-  uint16_t              pressure;       // air pressure in hPa, 0xFFFF if unknown
+  int16_t               pressure;       // air pressure in hPa, 0xFFFF if unknown
   uint16_t              humidity;       // humidity in percent, 0..100, 0xFF if unknown
   // thermostat
   uint8_t               th_setpoint;    // percentage of heat/cool in percent
@@ -233,8 +230,6 @@ public:
   inline uint16_t getZoneType(void) const { return zone_type; }
 
   inline void setZoneType(uint16_t _zone_type)  { zone_type = _zone_type; }
-
-  static void toAttributes(Z_attribute_list & attr_list, const Z_Data_Alarm & alarm);
 
   // 4 bytes
   uint16_t               zone_type;       // mapped to the Zigbee standard
@@ -335,49 +330,18 @@ const Z_Data & Z_Data_Set::find(Z_Data_Type type, uint8_t ep) const {
   return *(Z_Data*)nullptr;
 }
 
-
 // Low-level
 // Add light attributes, used by dumpLightState and by SbData
 //
-void Z_Data_Plug::toAttributes(Z_attribute_list & attr_list, const Z_Data_Plug & plug) {
-  if (&plug == nullptr) { return; }
-  // dump all known values
-  if (plug.validMainsVoltage())  { attr_list.addAttribute(PSTR("RMSVoltage")).setUInt(plug.getMainsVoltage()); }
-  if (plug.validMainsPower())    { attr_list.addAttribute(PSTR("ActivePower")).setInt(plug.getMainsPower()); }
+void Z_Data_Light::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const {
+  attr_list.addAttribute(PSTR(D_JSON_ZIGBEE_LIGHT)).setInt(getConfig());    // special case, since type is 0x00 we can assume getConfig() is good
+  Z_Data::toAttributes(attr_list, type);
 }
 
-void Z_Data_Light::toAttributes(Z_attribute_list & attr_list, const Z_Data_Light & light) {
-  if (&light == nullptr) { return; }
-  // expose the last known status of the bulb, for Hue integration
-  attr_list.addAttribute(PSTR(D_JSON_ZIGBEE_LIGHT)).setInt(light.getConfig());    // special case, since type is 0x00 we can assume getConfig() is good
-  // dump all known values
-  if (light.validDimmer())       { attr_list.addAttribute(PSTR("Dimmer")).setUInt(light.getDimmer()); }
-  if (light.validColormode())    { attr_list.addAttribute(PSTR("Colormode")).setUInt(light.getColorMode()); }
-  if (light.validCT())           { attr_list.addAttribute(PSTR("CT")).setUInt(light.getCT()); }
-  if (light.validSat())          { attr_list.addAttribute(PSTR("Sat")).setUInt(light.getSat()); }
-  if (light.validHue())          { attr_list.addAttribute(PSTR("Hue")).setUInt(light.getHue()); }
-  if (light.validX())            { attr_list.addAttribute(PSTR("X")).setUInt(light.getX()); }
-  if (light.validY())            { attr_list.addAttribute(PSTR("Y")).setUInt(light.getY()); }
+void Z_Data_OnOff::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const {
+  if (validPower())             { attr_list.addAttribute(PSTR("Power")).setUInt(getPower() ? 1 : 0); }
 }
 
-void Z_Data_OnOff::toAttributes(Z_attribute_list & attr_list, const Z_Data_OnOff & onoff) {
-  if (&onoff == nullptr) { return; }
-  if (onoff.validPower())       { attr_list.addAttribute(PSTR("Power")).setUInt(onoff.getPower() ? 1 : 0); }
-}
-
-void Z_Data_Thermo::toAttributes(Z_attribute_list & attr_list, const Z_Data_Thermo & thermo) {
-  if (&thermo == nullptr) { return; }
-  if (thermo.validTemperature())  { attr_list.addAttribute(PSTR("Temperature")).setInt(thermo.getTemperature()); }
-  if (thermo.validPressure())     { attr_list.addAttribute(PSTR("Pressure")).setUInt(thermo.getPressure()); }
-  if (thermo.validHumidity())     { attr_list.addAttribute(PSTR("Humidity")).setUInt(thermo.getHumidity()); }
-  if (thermo.validThSetpoint())   { attr_list.addAttribute(PSTR("ThSetpoint")).setUInt(thermo.getThSetpoint()); }
-  if (thermo.validTempTarget())   { attr_list.addAttribute(PSTR("TempTarget")).setInt(thermo.getTempTarget()); }
-}
-
-void Z_Data_Alarm::toAttributes(Z_attribute_list & attr_list, const Z_Data_Alarm & alarm) {
-  if (&alarm == nullptr) { return; }
-  if (alarm.validZoneType())     { attr_list.addAttribute(PSTR("ZoneType")).setUInt(alarm.getZoneType()); }
-}
 
 /*********************************************************************************************\
  * Structures for Rules variables related to the last received message
@@ -677,7 +641,5 @@ Z_Devices zigbee_devices = Z_Devices();
 // Local coordinator information
 uint64_t localIEEEAddr = 0;
 uint16_t localShortAddr = 0;
-
-
 
 #endif // USE_ZIGBEE
