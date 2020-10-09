@@ -114,52 +114,50 @@ void HueRespondToMSearch(void)
  * Hue web server additions
 \*********************************************************************************************/
 
-//<?xml version="1.0"?><root xmlns="urn:schemas-upnp-org:device-1-0"><specVersion><major>1</major><minor>0</minor></specVersion><URLBase>http://{x1:80/</URLBase><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>Amazon-Echo-HA-Bridge ({x1)</friendlyName><manufacturer>Royal Philips Electronics</manufacturer><manufacturerURL>http://www.philips.com</manufacturerURL><modelDescription>Philips hue Personal Wireless Lighting</modelDescription><modelName>Philips hue bridge 2012</modelName><modelNumber>929000226503</modelNumber><serialNumber>{x3</serialNumber><UDN>uuid:{x2</UDN></device></root>\r\n\r\n
-//Successfully compressed from 625 to 391 bytes (-37.4%)
-// const size_t HUE_DESCRIPTION_XML_size = 625;
-// const char HUE_DESCRIPTION_XML[] PROGMEM = "\x3D\x0E\xD1\xB0\x68\x48\xCD\xFF\xDB\x9C\x7C\x3D\x87\x21\xD1\x9E\xC3\xB4\x7E\x1E"
-//                              "\x85\xFC\xCA\x46\xC1\xA1\x77\x8F\x87\xB0\x5F\xF8\xF3\xF0\x62\x98\xDB\xF1\xD6\x2C"
-//                              "\x67\x0C\x3A\xF3\xE3\xC7\x98\x8C\xCF\x43\x67\x59\xC8\x75\xB3\xD8\x7E\x1E\x85\xE1"
-//                              "\x8C\x32\x33\x04\x1C\x78\xFC\x3D\x06\xD9\xAF\x3E\x7E\x1C\x87\xA1\xD8\x40\x83\x14"
-//                              "\xF4\x1B\xBD\x9F\x3F\x0E\x33\xD0\xEC\x20\x41\x8A\x7A\x1D\x80\x91\x85\x10\xB2\xF9"
-//                              "\x04\x43\xAF\xCC\xFC\x15\x54\x30\xF3\x3B\x0E\xC3\xDA\x6C\x39\x0F\x3F\xB3\xB0\xF4"
-//                              "\x3B\x08\x10\xEA\x1E\x80\x83\xA2\x82\x1C\x42\xA3\x21\x8C\xFC\x05\x6D\xB4\xF3\x21"
-//                              "\xD7\xED\x0C\xF3\x39\x0F\x43\xB0\x81\x1B\x0C\x3D\x0C\x7F\x5F\x08\x11\x91\x75\x8D"
-//                              "\x67\xE1\x58\xDB\x36\xE7\x1D\x64\xC3\x15\x87\x59\x0A\x2B\x3A\xC8\x77\xF4\x41\xE6"
-//                              "\x8E\xE9\xED\x36\x1C\x87\x78\xF4\x3B\x08\x12\x30\x63\xD0\x6D\xF0\xB3\x16\x1D\x0B"
-//                              "\xFB\xF9\xF8\x5F\xC3\x2B\x09\x10\xC1\x5A\x16\x8C\xF2\x26\x13\x0E\xBF\x9D\xA1\xF8"
-//                              "\xF4\x3B\x01\x23\x04\x04\x8C\x48\x85\x97\xC8\x20\x43\xE0\xDC\x7C\x7C\x7C\xE8\x30"
-//                              "\x10\x71\xA3\xA0\x78\x34\x12\x71\x22\x16\x5F\x20\x8F\xC3\xD0\x6E\x08\xC2\x21\x1F"
-//                              "\x83\xFE\x8C\xAD\xCE\x3F\x01\x0F\x49\x14\x2D\xA2\x18\xFF\xEC\xEB\x09\x10\xFE\xFD"
-//                              "\x84\xFD\xE4\x41\x68\xF0\xAA\xDE\x1E\x3D\x0E\xC0\x4C\xC5\x41\x07\x27\x2E\xB1\xAC"
-//                              "\x12\x32\x01\xC0\x83\xC2\x41\xCA\x72\x88\x10\xB1\x10\x42\xE1\x13\x04\x61\x17\x0B"
-//                              "\x1A\x39\xFC\xFC\x38\xA9\x36\xEA\xBB\x5D\x90\x21\xE0\x20\x83\x58\xF4\xF3\xFE\xD8"
-//                              "\x21\xCA\x3D\xA6\xC3\x96\x7A\x1D\x84\x09\x13\x8F\x42\x16\x42\x17\x1F\x82\xC5\xE8"
-//                              "\x87\x99\xED\x36\x1C\xA3\xD0\xEC\x22\x16\x42\x17\x1F\x80\x87\xC7\x19\xF8\x7A\x1D"
-//                              "\x9F\xCC\xA3\xF2\x70\xA4\x6E\x9C\x29\x1B\x8D";
-const char HUE_DESCRIPTION_XML[] PROGMEM =
-  "<?xml version=\"1.0\"?>"
-  "<root xmlns=\"urn:schemas-upnp-org:device-1-0\">"
-  "<specVersion>"
-    "<major>1</major>"
-    "<minor>0</minor>"
-  "</specVersion>"
-//  "<URLBase>http://{x1/</URLBase>"
-  "<URLBase>http://{x1:80/</URLBase>"
-  "<device>"
-    "<deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>"
-    "<friendlyName>Amazon-Echo-HA-Bridge ({x1)</friendlyName>"
-//    "<friendlyName>Philips hue ({x1)</friendlyName>"
-    "<manufacturer>Royal Philips Electronics</manufacturer>"
-    "<manufacturerURL>http://www.philips.com</manufacturerURL>"
-    "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>"
-    "<modelName>Philips hue bridge 2012</modelName>"
-    "<modelNumber>929000226503</modelNumber>"
-    "<serialNumber>{x3</serialNumber>"
-    "<UDN>uuid:{x2</UDN>"
-  "</device>"
-  "</root>\r\n"
-  "\r\n";
+//<?xml version="1.0"?><root xmlns="urn:schemas-upnp-org:device-1-0"><specVersion><major>1</major><minor>0</minor></specVersion>"<URLBase>http://{x1:80/</URLBase><device><deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType><friendlyName>Amazon-Echo-HA-Bridge ({x1)</friendlyName><manufacturer>Royal Philips Electronics</manufacturer><manufacturerURL>http://www.philips.com</manufacturerURL><modelDescription>Philips hue Personal Wireless Lighting</modelDescription><modelName>Philips hue bridge 2012</modelName><modelNumber>929000226503</modelNumber><serialNumber>{x3</serialNumber><UDN>uuid:{x2</UDN></device></root>\r\n\r\n
+//Successfully compressed from 626 to 394 bytes (-37.1%)
+const size_t HUE_DESCRIPTION_XML_SIZE = 626;
+const char HUE_DESCRIPTION_XML_COMPRESSED[] PROGMEM = "\x3D\x0E\xD1\xB0\x68\x48\xCD\xFF\xDB\x9C\x7C\x3D\x87\x21\xD1\x9E\xC3\xB4\x7E\x1E"
+                             "\x85\xFC\xCA\x46\xC1\xA1\x77\x8F\x87\xB0\x5F\xF8\xF3\xF0\x62\x98\xDB\xF1\xD6\x2C"
+                             "\x67\x0C\x3A\xF3\xE3\xC7\x98\x8C\xCF\x43\x67\x59\xC8\x75\xB3\xD8\x7E\x1E\x85\xE1"
+                             "\x8C\x32\x33\x04\x1C\x78\xFC\x3D\x06\xD9\xAF\x3E\x7E\x1C\x87\xA1\xD8\x40\x83\x14"
+                             "\xF4\x1B\xBD\x9F\x3F\x0E\x33\xD0\xEC\x20\x41\x8A\x7A\x1D\x80\x8F\x85\x1E\xC3\xD0"
+                             "\x85\x97\xC8\x22\x1D\x7E\x67\xE0\xAA\xA1\x87\x99\xD8\x76\x1E\xD3\x61\xC8\x79\xFD"
+                             "\x9D\x87\xA1\xD8\x40\x87\x50\xF4\x04\x1D\x18\x10\xE2\x15\x19\x0C\x67\xE0\x2B\x6D"
+                             "\xC7\x99\x0E\xBF\x68\x67\x99\xC8\x7A\x1D\x84\x08\xD8\x61\xE8\x63\xFA\xF8\x40\x8C"
+                             "\x8B\xAC\x6B\x3F\x0A\xC6\xD9\xB7\x38\xEB\x26\x18\xAC\x3A\xC8\x51\x59\xD6\x43\xBF"
+                             "\xA2\x0F\x34\x77\x4F\x69\xB0\xE4\x3B\xC7\xA1\xD8\x40\x91\x83\x1E\x83\x6F\x85\x98"
+                             "\xB0\xE8\x5F\xDF\xCF\xC2\xFE\x19\x58\x48\x86\x0A\xD0\xB4\x67\x91\x30\x98\x75\xFC"
+                             "\xED\x0F\xC7\xA1\xD8\x09\x18\x20\x24\x62\x44\x2C\xBE\x41\x02\x1F\x06\xE3\xE3\xE3"
+                             "\xE7\x41\x80\x83\x8D\x1D\x03\xC1\xA0\x93\x89\x10\xB2\xF9\x04\x7E\x1E\x83\x70\x46"
+                             "\x11\x08\xFC\x1F\xF4\x65\x6E\x71\xF8\x08\x7A\x48\xA1\x6D\x10\xC7\xFF\x67\x58\x48"
+                             "\x87\xF7\xEC\x27\xEF\x22\x0B\x47\x85\x56\xF0\xF1\xE8\x76\x02\x66\x2A\x2B\x08\x39"
+                             "\x39\x75\x8D\x60\x91\x90\x0E\x04\x1E\x12\x0E\x53\x94\x40\x85\x88\x82\x17\x08\x98"
+                             "\x23\x08\xB8\x58\xD1\xCF\xE7\xE1\xC5\x49\xB7\x55\xDA\xEC\x81\x0F\x01\x04\x1A\xC7"
+                             "\xA7\x9F\xF6\xC1\x0E\x51\xED\x36\x1C\xB3\xD0\xEC\x20\x48\x9C\x7A\x10\xB2\x10\xB8"
+                             "\xFC\x16\x2F\x44\x3C\xCF\x69\xB0\xE5\x1E\x87\x61\x10\xB2\x10\xB8\xFC\x04\x3E\x38"
+                             "\xCF\xC3\xD0\xEC\xFE\x65\x1F\x93\x85\x23\x74\xE1\x48\xDC";
+// const char HUE_DESCRIPTION_XML[] PROGMEM =
+//   "<?xml version=\"1.0\"?>"
+//   "<root xmlns=\"urn:schemas-upnp-org:device-1-0\">"
+//   "<specVersion>"
+//     "<major>1</major>"
+//     "<minor>0</minor>"
+//   "</specVersion>"
+//   "<URLBase>http://{x1:80/</URLBase>"
+//   "<device>"
+//     "<deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>"
+//     "<friendlyName>Amazon-Echo-HA-Bridge ({x1)</friendlyName>"
+//     "<manufacturer>Royal Philips Electronics</manufacturer>"
+//     "<manufacturerURL>http://www.philips.com</manufacturerURL>"
+//     "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>"
+//     "<modelName>Philips hue bridge 2012</modelName>"
+//     "<modelNumber>929000226503</modelNumber>"
+//     "<serialNumber>{x3</serialNumber>"
+//     "<UDN>uuid:{x2</UDN>"
+//   "</device>"
+//   "</root>\r\n"
+//   "\r\n";
 
 //%s"alert":"none","effect":"none","reachable":true}
 //Successfully compressed from 50 to 34 bytes (-32%)
@@ -259,7 +257,7 @@ String GetHueUserId(void)
 void HandleUpnpSetupHue(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_HUE_BRIDGE_SETUP));
-  String description_xml = FPSTR(HUE_DESCRIPTION_XML);
+  String description_xml = Decompress(HUE_DESCRIPTION_XML_COMPRESSED,HUE_DESCRIPTION_XML_SIZE);
   description_xml.replace("{x1", WiFi.localIP().toString());
   description_xml.replace("{x2", HueUuid());
   description_xml.replace("{x3", HueSerialnumber());
@@ -347,21 +345,10 @@ void HueLightStatus1(uint8_t device, String *response)
 
   if (light_type) {
     light_state.getHSB(&hue, &sat, nullptr);
-
-    if ((bri > prev_bri ? bri - prev_bri : prev_bri - bri) < 1)
-      bri = prev_bri;
-
     if (sat > 254)  sat = 254;  // Philips Hue only accepts 254 as max hue
-    if ((sat > prev_sat ? sat - prev_sat : prev_sat - sat) < 1) {
-      sat = prev_sat;
-    } else {  // if sat was changed outside of Alexa, reset xy
-      prev_x_str[0] = prev_y_str[0] = 0;
-    }
-
     hue = changeUIntScale(hue, 0, 360, 0, 65535);
-    if ((hue > prev_hue ? hue - prev_hue : prev_hue - hue) < 400) {
-      hue = prev_hue;
-    } else {  // if hue was changed outside of Alexa, reset xy
+
+    if ((sat != prev_sat) || (hue != prev_hue)) { // if sat or hue was changed outside of Alexa, reset xy
       prev_x_str[0] = prev_y_str[0] = 0;
     }
 
@@ -369,14 +356,6 @@ void HueLightStatus1(uint8_t device, String *response)
     ct = light_state.getCT();
     if (LCM_RGB == color_mode) { g_gotct = false; }
     if (LCM_CT  == color_mode) { g_gotct = true; }
-    // If LCM_BOTH == color_mode, leave g_gotct unchanged
-
-    // re-adjust ct if close to command value
-    if ((ct > prev_ct ? ct - prev_ct : prev_ct - ct) < 1)
-      ct = prev_ct;
-
-    //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("HueLightStatus1 HSB (%d, %d, %d) Prev_HSB (%d, %d, %d)"),
-    //  hue, sat, bri, prev_hue, prev_sat, prev_bri);
   }
 
   const size_t buf_size = 256;
