@@ -165,6 +165,11 @@ void AdcInitParams(uint8_t idx) {
       Adc[idx].param2 = ANALOG_CT_MULTIPLIER;    // (uint32_t) 100000
       Adc[idx].param3 = ANALOG_CT_VOLTAGE;       // (int)      10
     }
+  }
+  if ((Adcs.type != Adc[idx].type) || (0 == Adc[idx].param1) || (Adc[idx].param1 > ANALOG_RANGE)) {
+    if ((ADC_BUTTON == Adc[idx].type) || (ADC_BUTTON_INV == Adc[idx].type)) {
+      Adc[idx].param1 = ANALOG_BUTTON;
+    }
     else if (ADC_JOY == Adc[idx].type) {
       Adc[idx].param1 = ANALOG_JOYSTICK;
     }
@@ -279,10 +284,10 @@ uint8_t AdcGetButton(uint32_t pin) {
   for (uint32_t idx = 0; idx < Adcs.present; idx++) {
     if (Adc[idx].pin == pin) {
       if (ADC_BUTTON_INV == Adc[idx].type) {
-        return (AdcRead(Adc[idx].pin, 1) < ANALOG_BUTTON);
+        return (AdcRead(Adc[idx].pin, 1) < Adc[idx].param1);
       }
       else if (ADC_BUTTON == Adc[idx].type) {
-        return (AdcRead(Adc[idx].pin, 1) > ANALOG_BUTTON);
+        return (AdcRead(Adc[idx].pin, 1) > Adc[idx].param1);
       }
     }
   }
@@ -522,16 +527,14 @@ void CmndAdcParam(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_ADCS)) {
     uint8_t idx = XdrvMailbox.index -1;
     if (XdrvMailbox.data_len) {
-      if ((ADC_TEMP == XdrvMailbox.payload) ||
-          (ADC_LIGHT == XdrvMailbox.payload) ||
-          (ADC_RANGE == XdrvMailbox.payload) ||
-          (ADC_CT_POWER == XdrvMailbox.payload) ||
-          (ADC_JOY == XdrvMailbox.payload)) {
+      if (XdrvMailbox.payload > ADC_INPUT) {
         AdcGetSettings(idx);
         if (ChrCount(XdrvMailbox.data, ",") > 2) {  // Process parameter entry
           char sub_string[XdrvMailbox.data_len +1];
           // AdcParam 2, 32000, 10000, 3350
           // AdcParam 3, 10000, 12518931, -1.405
+          // AdcParam 4, 128, 0, 0
+          // AdcParam 5, 128, 0, 0
           // AdcParam 6, 0, ANALOG_RANGE, 0, 100
           // AdcParam 7, 0, 2146, 0.23
           // AdcParam 8, 1000, 0, 0
@@ -555,6 +558,8 @@ void CmndAdcParam(void) {
         } else {                                         // Set default values based on current adc type
           // AdcParam 2
           // AdcParam 3
+          // AdcParam 4
+          // AdcParam 5
           // AdcParam 6
           // AdcParam 7
           // AdcParam 8
