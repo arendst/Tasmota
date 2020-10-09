@@ -626,7 +626,15 @@ String Z_Devices::dumpLightState(uint16_t shortaddr) const {
     // dump all known values
     attr_list.addAttribute(F("Reachable")).setBool(device.getReachable());
     if (device.validPower())        { attr_list.addAttribute(F("Power")).setUInt(device.getPower()); }
-    Z_Data_Light::toAttributes(attr_list, device.data.find<Z_Data_Light>(0));
+    const Z_Data_Light & light = device.data.find<Z_Data_Light>(0);
+    if (&light != nullptr) {
+      light.toAttributes(attr_list, Z_Data_Light::type);
+      // Exception, we need to convert Hue to 0..360 instead of 0..254
+      if (light.validHue()) {
+        attr_list.findOrCreateAttribute(PSTR("Hue")).setUInt(light.getHue());
+      }
+    }
+    // Z_Data_Light::toAttributes(attr_list, device.data.find<Z_Data_Light>(0));
   }
   
   Z_attribute_list attr_list_root;
