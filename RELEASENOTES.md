@@ -25,7 +25,7 @@ While fallback or downgrading is common practice it was never supported due to S
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.7.4.1** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.4.3** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 Support of Core versions before 2.7.1 has been removed.
 
@@ -39,7 +39,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Provided Binary Downloads
 
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.1**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.3**.
 
 - **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
@@ -57,30 +57,35 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog
+## Changelog v9.0.0.1
+### Added
+- Optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
+- Optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
+- SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
+- Optional support for inverted NeoPixelBus data line by enabling ``#define USE_WS2812_INVERTED`` (#8988)
+- PWM dimmer color/trigger on tap, SO88 led, DGR WITH_LOCAL flag by Paul Diem (#9474)
+- Support for stateful ACs using ``StateMode`` in tasmota-ir.bin by Arik Yavilevich (#9472)
+- Zigbee ``ZbData`` command for better support of device specific data
+- Support for analog buttons indexed within standard button range
 
-### Version 9.0.0.1
+### Changed
+- Redesigning ESP8266 GPIO internal representation in line with ESP32
+- New IR Raw compact format (#9444)
+- MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
+- A4988 optional microstep pin selection
+- Pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
+- ``Status`` command output for disabled status types
+- IRremoteESP8266 library from v2.7.10 to v2.7.11
+- NeoPixelBus library from v2.5.0.09 to v2.6.0
 
-- Remove support for direct upgrade from Tasmota versions before 7.0
-- Remove auto config update for all Friendlynames and Switchtopic from Tasmota versions before 8.0
-- Change redesigning ESP8266 GPIO internal representation in line with ESP32
-- Change new IR Raw compact format (#9444)
-- Change MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
-- Change A4988 optional microstep pin selection
-- Change pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
-- Change ``Status`` command output for disabled status types
-- Change IRremoteESP8266 library from v2.7.10 to v2.7.11
-- Change NeoPixelBus library from v2.5.0.09 to v2.6.0
-- Fix template conversion when GPIO17 is 0
-- Fix ledlink blink when no network connected regression from 8.3.1.4 (#9292)
-- Fix exception 28 due to device group buffer overflow (#9459)
-- Fix shutter timing problem due to buffer overflow in calibration matrix (#9458)
-- Fix light wakeup exception 0 (divide by zero) when ``WakeupDuration`` is not initialised (#9466)
-- Fix ADC initalization sequence (#9473)
-- Add optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
-- Add optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
-- Add SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
-- Add support for inverted NeoPixelBus data line by enabling ``#define USE_WS2812_INVERTED`` (#8988)
-- Add PWM dimmer color/trigger on tap, SO88 led, DGR WITH_LOCAL flag by Paul Diem (#9474)
-- Add support for stateful ACs using ``StateMode`` in tasmota-ir.bin by Arik Yavilevich (#9472)
-- Add support for analog buttons indexed within standard button range
+### Fixed
+- Template conversion when GPIO17 is 0
+- Ledlink blink when no network connected regression from 8.3.1.4 (#9292)
+- Exception 28 due to device group buffer overflow (#9459)
+- Shutter timing problem due to buffer overflow in calibration matrix (#9458)
+- Light wakeup exception 0 (divide by zero) when ``WakeupDuration`` is not initialised (#9466)
+- ADC initalization sequence (#9473)
+
+### Removed
+- Support for direct upgrade from Tasmota versions before 7.0
+- Auto config update for all Friendlynames and Switchtopic from Tasmota versions before 8.0
