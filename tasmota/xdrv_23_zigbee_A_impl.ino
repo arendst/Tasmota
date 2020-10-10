@@ -84,6 +84,12 @@ void ZigbeeInit(void)
       Settings.zb_channel = USE_ZIGBEE_CHANNEL;
       Settings.zb_txradio_dbm = USE_ZIGBEE_TXRADIO_DBM;
     }
+
+    if (Settings.zb_txradio_dbm < 0) {
+      Settings.zb_txradio_dbm = -Settings.zb_txradio_dbm;
+      EZ_reset_config = true;         // force reconfigure of EZSP
+      SettingsSave(2);
+    }
   }
 
   // update commands with the current settings
@@ -116,11 +122,18 @@ void CmndZbReset(void) {
       ZigbeeZNPSend(ZIGBEE_FACTORY_RESET, sizeof(ZIGBEE_FACTORY_RESET));
 #endif // USE_ZIGBEE_ZNP
       eraseZigbeeDevices();
+    case 2:   // fall through
+      Settings.zb_txradio_dbm = - abs(Settings.zb_txradio_dbm);
       restart_flag = 2;
+#ifdef USE_ZIGBEE_ZNP
       ResponseCmndChar_P(PSTR(D_JSON_ZIGBEE_CC2530 " " D_JSON_RESET_AND_RESTARTING));
+#endif // USE_ZIGBEE_ZNP
+#ifdef USE_ZIGBEE_EZSP
+      ResponseCmndChar_P(PSTR(D_JSON_ZIGBEE_EZSP " " D_JSON_RESET_AND_RESTARTING));
+#endif // USE_ZIGBEE_EZSP
       break;
     default:
-      ResponseCmndChar_P(PSTR(D_JSON_ONE_TO_RESET));
+      ResponseCmndChar_P(PSTR("1 or 2 to reset"));
     }
   }
 }
@@ -1432,7 +1445,7 @@ void CmndZbConfig(void) {
   uint64_t    zb_ext_panid   = Settings.zb_ext_panid;
   uint64_t    zb_precfgkey_l = Settings.zb_precfgkey_l;
   uint64_t    zb_precfgkey_h = Settings.zb_precfgkey_h;
-  uint8_t     zb_txradio_dbm = Settings.zb_txradio_dbm;
+  int8_t      zb_txradio_dbm = Settings.zb_txradio_dbm;
 
   // if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
   RemoveAllSpaces(XdrvMailbox.data);
@@ -1447,7 +1460,7 @@ void CmndZbConfig(void) {
     zb_ext_panid    = root.getULong(PSTR("ExtPanID"), zb_ext_panid);
     zb_precfgkey_l  = root.getULong(PSTR("KeyL"), zb_precfgkey_l);
     zb_precfgkey_h  = root.getULong(PSTR("KeyH"), zb_precfgkey_h);
-    zb_txradio_dbm  = root.getUInt(PSTR("TxRadio"), zb_txradio_dbm);
+    zb_txradio_dbm  = root.getInt(PSTR("TxRadio"), zb_txradio_dbm);
 
     if (zb_channel < 11) { zb_channel = 11; }
     if (zb_channel > 26) { zb_channel = 26; }

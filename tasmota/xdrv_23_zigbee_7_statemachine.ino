@@ -183,6 +183,7 @@ const char kStarted[] PROGMEM = "Started";
 const char kZigbeeStarted[] PROGMEM = D_LOG_ZIGBEE "Zigbee started";
 const char kResetting[] PROGMEM = "Resetting configuration";
 const char kResettingDevice[] PROGMEM = D_LOG_ZIGBEE "Resetting EZSP device";
+const char kReconfiguringDevice[] PROGMEM = D_LOG_ZIGBEE "Factory reset EZSP device";
 const char kZNP12[] PROGMEM = "Only ZNP 1.2 is currently supported";
 const char kEZ8[] PROGMEM = "Only EZSP protocol v8 is currently supported";
 const char kAbort[] PROGMEM = "Abort";
@@ -767,10 +768,10 @@ ZBM(ZBR_GET_KEY_NWK,      EZSP_getKey, 0x00 /*high*/, 0x00 /*status*/)   // 6A00
 //
 uint64_t ezsp_key_low, ezsp_key_high;
 
-void EZ_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_panid, uint64_t zb_precfgkey_l, uint64_t zb_precfgkey_h, uint8_t zb_txradio_dbm) {
-  uint8_t txradio = zb_txradio_dbm;
+void EZ_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_panid, uint64_t zb_precfgkey_l, uint64_t zb_precfgkey_h, int8_t zb_txradio_dbm) {
+  int8_t txradio = zb_txradio_dbm;
   // restrict txradio to acceptable range, and use default otherwise
-  if (txradio == 0) { txradio = USE_ZIGBEE_TXRADIO_DBM; }
+  if (txradio < 0) { txradio = USE_ZIGBEE_TXRADIO_DBM; }
   if (txradio > 20) { txradio = USE_ZIGBEE_TXRADIO_DBM; }
   ezsp_key_low = zb_precfgkey_l;
   ezsp_key_high = zb_precfgkey_h;
@@ -792,7 +793,7 @@ void EZ_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_pan
                             Z_B0(zb_ext_panid), Z_B1(zb_ext_panid), Z_B2(zb_ext_panid), Z_B3(zb_ext_panid),
                             Z_B4(zb_ext_panid), Z_B5(zb_ext_panid), Z_B6(zb_ext_panid), Z_B7(zb_ext_panid),
                             Z_B0(zb_pan_id), Z_B1(zb_pan_id),
-                            txradio /*radioTxPower*/,
+                            (uint8_t)txradio /*radioTxPower*/,
                             zb_channel /*channel*/,
                             EMBER_USE_MAC_ASSOCIATION,
                             0xFF,0xFF, /*nwkManagerId, unused*/
@@ -806,7 +807,7 @@ void EZ_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_pan
                             Z_B0(zb_ext_panid), Z_B1(zb_ext_panid), Z_B2(zb_ext_panid), Z_B3(zb_ext_panid),
                             Z_B4(zb_ext_panid), Z_B5(zb_ext_panid), Z_B6(zb_ext_panid), Z_B7(zb_ext_panid),
                             Z_B0(zb_pan_id), Z_B1(zb_pan_id),
-                            txradio /*radioTxPower*/,
+                            (uint8_t)txradio /*radioTxPower*/,
                             zb_channel /*channel*/,
                             )   // 2800...
 }
@@ -814,14 +815,14 @@ void EZ_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_pan
 static const Zigbee_Instruction zb_prog[] PROGMEM = {
   ZI_LABEL(0)
     ZI_NOOP()
-    ZI_CALL(EZ_Set_ResetConfig, 0)           // for the firt pass, don't do a reset_config
+    // ZI_CALL(EZ_Set_ResetConfig, 0)           // for the firt pass, don't do a reset_config
   ZI_LABEL(ZIGBEE_LABEL_RESTART)
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_RECV_UNEXPECTED(&EZ_Recv_Default)
     ZI_WAIT(10500)                             // wait for 10 seconds for Tasmota to stabilize
 
-    // Hardware reset
+    // Hardware reset    
     ZI_LOG(LOG_LEVEL_INFO, kResettingDevice)     // Log Debug: resetting EZSP device
     ZI_CALL(&EZ_Reset_Device, 0)         // LOW = reset
     ZI_WAIT(100)                        // wait for .1 second
@@ -893,6 +894,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
 
   ZI_LABEL(ZIGBEE_LABEL_CONFIGURE_EZSP)
     // Set back normal error handlers
+    ZI_LOG(LOG_LEVEL_INFO, kReconfiguringDevice)     // Log Debug: reconfiguring EZSP device
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     // set encryption keys

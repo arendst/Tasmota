@@ -406,7 +406,7 @@ int32_t EZ_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
   }
 }
 
-static bool EZ_reset_config = false;
+bool EZ_reset_config = false;
 
 // Set or clear reset_config
 int32_t EZ_Set_ResetConfig(uint8_t value) {
