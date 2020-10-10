@@ -87,7 +87,9 @@ void ZigbeeInit(void)
 
     if (Settings.zb_txradio_dbm < 0) {
       Settings.zb_txradio_dbm = -Settings.zb_txradio_dbm;
+#ifdef USE_ZIGBEE_EZSP
       EZ_reset_config = true;         // force reconfigure of EZSP
+#endif
       SettingsSave(2);
     }
   }
