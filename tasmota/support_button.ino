@@ -49,7 +49,6 @@ struct BUTTON {
   uint8_t touch_hits[MAX_KEYS] = { 0 };      // Hits in a row to filter out noise
 #endif // ESP32
   uint8_t present = 0;                       // Number of buttons found flag
-  uint8_t adc = 99;                          // ADC0 button number
 } Button;
 
 #ifdef ESP32
@@ -88,16 +87,17 @@ void ButtonInit(void)
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
     if (PinUsed(GPIO_KEY1, i)) {
       Button.present++;
-      pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
-    }
 #ifdef ESP8266
-#ifndef USE_ADC_VCC
-    else if ((99 == Button.adc) && AdcButtonPresent(0)) {
-      Button.present++;
-      Button.adc = i;
+      pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
+#else  // ESP32
+      pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
+#endif
     }
-#endif  // USE_ADC_VCC
-#endif  // ESP8266
+#ifdef USE_ADC
+    else if (PinUsed(GPIO_ADC_BUTTON, i) || PinUsed(GPIO_ADC_BUTTON_INV, i)) {
+      Button.present++;
+    }
+#endif  // USE_ADC
   }
 }
 
@@ -157,22 +157,11 @@ void ButtonHandler(void)
         }
         Button.dual_code = 0;
       }
-    }
-    else {
-      if (PinUsed(GPIO_KEY1, button_index)) {
-        button_present = 1;
-        button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
-      }
-    }
-#ifndef USE_ADC_VCC
-    if (Button.adc == button_index) {
-      button_present = 1;
-      button = AdcGetButton(0);
-    }
-#endif  // USE_ADC_VCC
-#else  // ESP32
+    } else
+#endif  // ESP8266
     if (PinUsed(GPIO_KEY1, button_index)) {
       button_present = 1;
+#ifdef ESP32
       if (bitRead(Button.touch_mask, button_index)) {          // Touch
         uint32_t _value = touchRead(Pin(GPIO_KEY1, button_index));
         button = NOT_PRESSED;
@@ -192,11 +181,22 @@ void ButtonHandler(void)
         if (bitRead(TOUCH_BUTTON.calibration, button_index+1)) {
           AddLog_P2(LOG_LEVEL_INFO, PSTR("PLOT: %u, %u, %u,"), button_index+1, _value, Button.touch_hits[button_index]);  // Button number (1..4), value, continuous hits under threshold
         }
-      } else {                                                 // Normal button
+      } else
+#endif  // ESP32
+      {                                                 // Normal button
         button = (digitalRead(Pin(GPIO_KEY1, button_index)) != bitRead(Button.inverted_mask, button_index));
       }
     }
-#endif  // ESP8266 or ESP32
+#ifdef USE_ADC
+    else if (PinUsed(GPIO_ADC_BUTTON, button_index)) {
+      button_present = 1;
+      button = AdcGetButton(Pin(GPIO_ADC_BUTTON, button_index));
+    }
+    else if (PinUsed(GPIO_ADC_BUTTON_INV, button_index)) {
+      button_present = 1;
+      button = AdcGetButton(Pin(GPIO_ADC_BUTTON_INV, button_index));
+    }
+#endif  // USE_ADC
     if (button_present) {
       XdrvMailbox.index = button_index;
       XdrvMailbox.payload = button;

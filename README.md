@@ -29,7 +29,7 @@ In addition to the [release webpage](https://github.com/arendst/Tasmota/releases
 [![Tasmota ESP32 CI](https://github.com/arendst/Tasmota/workflows/Tasmota%20ESP32%20CI/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3A%22Tasmota+ESP32+CI%22)
 [![Build_firmware](https://github.com/arendst/Tasmota/workflows/Build_firmware/badge.svg)](https://github.com/arendst/Tasmota/actions?query=workflow%3ABuild_firmware)
 
-See [tasmota/CHANGELOG.md](tasmota/CHANGELOG.md) for detailed change information.
+See [CHANGELOG.md](CHANGELOG.md) for detailed change information.
 
 Unless your Tasmota powered device exhibits a problem or you need to make use of a feature that is not available in the Tasmota version currently installed on your device, leave your device alone - it works so don't make unnecessary changes! If the release version (i.e., the master branch) exhibits unexpected behaviour for your device and configuration, you should upgrade to the latest development version instead to see if your problem is resolved as some bugs in previous releases or development builds may already have been resolved.
 

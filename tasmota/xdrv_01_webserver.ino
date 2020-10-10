@@ -477,6 +477,7 @@ const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
 const char HTTP_SCRIPT_TEMPLATE3[] PROGMEM =
     "\";"
     "sk(g[13]," STR(ADC0_PIN) ");";       // Set ADC0
+
 const char HTTP_SCRIPT_TEMPLATE4[] PROGMEM =
     "g=o.shift();"                        // FLAG
     "for(i=0;i<" STR(GPIO_FLAG_USED) ";i++){"
@@ -1740,6 +1741,63 @@ void HandleConfiguration(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
+void WSContentSendNiceLists(uint32_t option) {
+  char stemp[30];                                             // Template number and Sensor name
+  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {  // GPIO: }2'0'>None (0)}3}2'17'>Button1 (17)}3...
+    if (option && (1 == i)) {
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), D_SENSOR_USER);  // }2'255'>User}3
+    }
+    uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
+    uint32_t midx = BGPIO(ridx);
+    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
+  }
+  WSContentSend_P(PSTR("\";"));
+
+  WSContentSend_P(PSTR("hs=["));
+  uint32_t midx;
+  bool first_done = false;
+  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {  // hs=[36,68,100,132,168,200,232,264,292,324,356,388,421,453];
+    midx = pgm_read_word(kGpioNiceList + i);
+    if (midx & 0x001F) {
+      if (first_done) { WSContentSend_P(PSTR(",")); }
+      WSContentSend_P(PSTR("%d"), midx);
+      first_done = true;
+    }
+  }
+#ifdef ESP8266
+#ifdef USE_ADC
+  for (uint32_t i = 0; i < ARRAY_SIZE(kAdcNiceList); i++) {   // hs=[36,68,100,132,168,200,232,264,292,324,356,388,421,453];
+    midx = pgm_read_word(kAdcNiceList + i);
+    if (midx & 0x001F) {
+      if (first_done) { WSContentSend_P(PSTR(",")); }
+      WSContentSend_P(PSTR("%d"), midx);
+      first_done = true;
+    }
+  }
+#endif  // USE_ADC
+#endif  // ESP8266
+  WSContentSend_P(PSTR("];"));
+}
+
+#ifdef ESP8266
+#ifdef USE_ADC
+void WSContentSendAdcNiceList(uint32_t option) {
+  char stemp[30];                                             // Template number and Sensor name
+  WSContentSend_P(PSTR("os=\""));
+  for (uint32_t i = 0; i < ARRAY_SIZE(kAdcNiceList); i++) {   // GPIO: }2'0'>None}3}2'17'>Analog}3...
+    if (option && (1 == i)) {
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), D_SENSOR_USER);  // }2'15'>User}3
+    }
+    uint32_t ridx = pgm_read_word(kAdcNiceList + i) & 0xFFE0;
+    uint32_t midx = BGPIO(ridx);
+    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
+  }
+}
+#endif  // USE_ADC
+#endif  // ESP8266
+
+/*-------------------------------------------------------------------------------------------*/
+
 void HandleTemplateConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
@@ -1780,41 +1838,16 @@ void HandleTemplateConfiguration(void)
   WSContentSend_P(HTTP_SCRIPT_MODULE_TEMPLATE);
 
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE);
-  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {   // GPIO: }2'0'>None (0)}3}2'17'>Button1 (17)}3...
-    if (1 == i) {
-      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), D_SENSOR_USER);  // }2'255'>User}3
-    }
-    uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
-    uint32_t midx = BGPIO(ridx);
-    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
-  }
-  WSContentSend_P(PSTR("\";"));
 
-  WSContentSend_P(PSTR("hs=["));
-  bool first_done = false;
-  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {  // hs=[36,68,100,132,168,200,232,264,292,324,356,388,421,453];
-    uint32_t midx = pgm_read_word(kGpioNiceList + i);
-    if (midx & 0x001F) {
-      if (first_done) { WSContentSend_P(PSTR(",")); }
-      WSContentSend_P(PSTR("%d"), midx);
-      first_done = true;
-    }
-  }
-  WSContentSend_P(PSTR("];"));
+  WSContentSendNiceLists(1);
 
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE2);
 
 #ifdef ESP8266
-  WSContentSend_P(PSTR("os=\""));
-  for (uint32_t i = 0; i < ARRAY_SIZE(kAdcNiceList); i++) {                // FLAG: }2'0'>None}3}2'17'>Analog}3...
-    if (1 == i) {
-      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), D_SENSOR_USER);  // }2'15'>User}3
-    }
-    uint32_t ridx = pgm_read_word(kAdcNiceList + i) & 0xFFE0;
-    uint32_t midx = BGPIO(ridx);
-    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
-  }
+#ifdef USE_ADC
+  WSContentSendAdcNiceList(1);
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE3);
+#endif  // USE_ADC
 #endif  // ESP8266
 
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE4);
@@ -1834,15 +1867,8 @@ void HandleTemplateConfiguration(void)
   WSContentSend_P(HTTP_TABLE100);
   for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
     if (!FlashPin(i)) {
-//#ifdef ESP8266
-//      WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>%s%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
-//        ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT),
-//        (ADC0_PIN==i) ? PSTR(D_ADC) : PSTR(D_GPIO), (ADC0_PIN==i) ? 0 : i,
-//        (0==i) ? " style='width:150px'" : "", i, i);
-//#else  // ESP32
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
         ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:150px'" : "", i, i);
-//#endif  // ESP8266
       WSContentSend_P(PSTR("<td style='width:50px'><select id='h%d'></select></td></tr>"), i);
     }
   }
@@ -1858,10 +1884,24 @@ void HandleTemplateConfiguration(void)
   WSContentStop();
 }
 
+uint16_t WebGetGpioArg(uint32_t i) {
+  char webindex[5];                                         // WebGetArg name
+  snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), i);
+  char tmp[8];                                              // WebGetArg numbers only
+  WebGetArg(webindex, tmp, sizeof(tmp));                    // GPIO
+  uint32_t gpio = (!strlen(tmp)) ? 0 : atoi(tmp);
+  char webindex2[5];                                        // WebGetArg name
+  snprintf_P(webindex2, sizeof(webindex2), PSTR("h%d"), i);
+  char tmp2[8];                                             // WebGetArg numbers only
+  WebGetArg(webindex2, tmp2, sizeof(tmp2));
+  uint32_t value2 = (!strlen(tmp2)) ? 0 : atoi(tmp2) -1;
+  gpio += value2;
+  return gpio;
+}
+
 void TemplateSaveSettings(void)
 {
   char tmp[TOPSZ];                                          // WebGetArg NAME and GPIO/BASE/FLAG byte value
-  char webindex[5];                                         // WebGetArg name
   char svalue[300];                                         // Template command string
 
   WebGetArg("s1", tmp, sizeof(tmp));                        // NAME
@@ -1871,20 +1911,12 @@ void TemplateSaveSettings(void)
   for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
-    snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), j);
-    WebGetArg(webindex, tmp, sizeof(tmp));                  // GPIO
-    uint32_t gpio = atoi(tmp);
-    char tmp2[8];         // WebGetArg numbers only
-    char webindex2[5];    // WebGetArg name
-    snprintf_P(webindex2, sizeof(webindex2), PSTR("h%d"), j);
-    WebGetArg(webindex2, tmp2, sizeof(tmp2));
-    uint32_t value2 = (!strlen(tmp2)) ? 0 : atoi(tmp2) -1;
-    gpio += value2;
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s%s%d"), svalue, (i>0)?",":"", gpio);
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s%s%d"), svalue, (i>0)?",":"", WebGetGpioArg(j));
     j++;
   }
 
   uint32_t flag = 0;
+  char webindex[5];                                         // WebGetArg name
   for (uint32_t i = 0; i < GPIO_FLAG_USED; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("c%d"), i);
     uint32_t state = Webserver->hasArg(webindex) << i;      // FLAG
@@ -1932,43 +1964,20 @@ void HandleModuleConfiguration(void)
     WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_INDEX, midx, AnyModuleName(midx).c_str(), vidx);
   }
   WSContentSend_P(PSTR("\";sk(%d,99);os=\""), Settings.module);
-  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
-    uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
-    midx = BGPIO(ridx);
-    if (!GetUsedInModule(midx, cmodule.io)) {
-      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
-    }
-  }
-  WSContentSend_P(PSTR("\";"));
 
-  WSContentSend_P(PSTR("hs=["));
-  bool first_done = false;
-  for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {  // hs=[36,68,100,132,168,200,232,264,292,324,356,388,421,453];
-    midx = pgm_read_word(kGpioNiceList + i);
-    if (midx & 0x001F) {
-      if (first_done) { WSContentSend_P(PSTR(",")); }
-      WSContentSend_P(PSTR("%d"), midx);
-      first_done = true;
-    }
-  }
-  WSContentSend_P(PSTR("];"));
+  WSContentSendNiceLists(0);
 
   for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {
     if (ValidGPIO(i, cmodule.io[i])) {
-      WSContentSend_P(PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g16
+      WSContentSend_P(PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g17
     }
   }
 
 #ifdef ESP8266
-#ifndef USE_ADC_VCC
-  WSContentSend_P(PSTR("os=\""));
-  for (uint32_t i = 0; i < ARRAY_SIZE(kAdcNiceList); i++) {                // FLAG: }2'0'>None}3}2'17'>Analog}3...
-    uint32_t ridx = pgm_read_word(kAdcNiceList + i) & 0xFFE0;
-    uint32_t midx = BGPIO(ridx);
-    WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
-  }
+#ifdef USE_ADC
+  WSContentSendAdcNiceList(0);
   WSContentSend_P(PSTR("\";sk(%d," STR(ADC0_PIN) ");"), Settings.my_gp.io[(sizeof(myio) / 2) -1]);
-#endif  // USE_ADC_VCC
+#endif  // USE_ADC
 #endif  // ESP8266
 
   WSContentSend_P(PSTR("}wl(sl);"));
@@ -1978,15 +1987,8 @@ void HandleModuleConfiguration(void)
   for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {
     if (ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
-//#ifdef ESP8266
-//      WSContentSend_P(PSTR("<tr><td style='width:116px'>%s <b>%s%d</b></td><td style='width:150px'><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
-//        (WEMOS==my_module_type)?stemp:"",
-//        (ADC0_PIN==i) ? PSTR(D_ADC) : PSTR(D_GPIO), (ADC0_PIN==i) ? 0 : i,
-//        i, i);
-//#else // ESP32
       WSContentSend_P(PSTR("<tr><td style='width:116px'>%s <b>" D_GPIO "%d</b></td><td style='width:150px'><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
         (WEMOS==my_module_type)?stemp:"", i, i, i);
-//#endif
       WSContentSend_P(PSTR("<td style='width:50px'><select id='h%d'></select></td></tr>"), i);
     }
   }
@@ -1999,7 +2001,6 @@ void HandleModuleConfiguration(void)
 void ModuleSaveSettings(void)
 {
   char tmp[8];         // WebGetArg numbers only
-  char webindex[5];    // WebGetArg name
 
   WebGetArg("g99", tmp, sizeof(tmp));
   uint32_t new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
@@ -2014,17 +2015,8 @@ void ModuleSaveSettings(void)
       Settings.my_gp.io[i] = GPIO_NONE;
     } else {
       if (ValidGPIO(i, cmodule.io[i])) {
-        snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), i);
-        WebGetArg(webindex, tmp, sizeof(tmp));
-        uint32_t value = (!strlen(tmp)) ? 0 : atoi(tmp);
-        char tmp2[8];         // WebGetArg numbers only
-        char webindex2[5];    // WebGetArg name
-        snprintf_P(webindex2, sizeof(webindex2), PSTR("h%d"), i);
-        WebGetArg(webindex2, tmp2, sizeof(tmp2));
-        uint32_t value2 = (!strlen(tmp2)) ? 0 : atoi(tmp2) -1;
-        value += value2;
-        Settings.my_gp.io[i] = value;
-        gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(value);
+        Settings.my_gp.io[i] = WebGetGpioArg(i);
+        gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
       }
     }
   }
