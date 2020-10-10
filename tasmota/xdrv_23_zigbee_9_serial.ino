@@ -589,6 +589,7 @@ int32_t ZigbeeProcessInputEZSP(class SBuffer &buf) {
       case EZSP_setConcentrator:          // 1000
       case EZSP_networkInit:              // 1700
       case EZSP_stackStatusHandler:       // 1900
+      case EZSP_formNetwork:              // 1E00
       case EZSP_permitJoining:            // 2200
       case EZSP_getEui64:                 // 2600
       case EZSP_getNodeId:                // 2700
