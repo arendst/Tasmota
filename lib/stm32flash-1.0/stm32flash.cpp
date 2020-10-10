@@ -22,7 +22,7 @@
 #include <Arduino.h>
 
 #include "stm32flash.h"
-#include "debug.h"
+#include "stm32_flash_debug.h"
 
 #include "dev_table.h"
 
