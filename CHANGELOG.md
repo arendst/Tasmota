@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Shutter timing problem due to buffer overflow in calibration matrix (#9458)
 - Light wakeup exception 0 (divide by zero) when ``WakeupDuration`` is not initialised (#9466)
 - ADC initalization sequence (#9473)
+- Thermostat sensor status corruption regression from 8.5.0.1 (#9449)
 
 ### Removed
 - Support for direct upgrade from Tasmota versions before 7.0
