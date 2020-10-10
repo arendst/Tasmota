@@ -730,6 +730,7 @@ void SettingsDefaultSet2(void)
   SysBitfield5  flag5 = { 0 };
 
 #ifdef ESP8266
+  Settings.gpio16_converted = 0xF5A0;
 //  Settings.config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
@@ -1088,7 +1089,6 @@ void SettingsDefaultSet2(void)
 #ifdef USER_TEMPLATE
   JsonTemplate((char *)USER_TEMPLATE);
 #endif
-  Settings.gpio16_converted = 0xF5A0;
 
   Settings.flag = flag;
   Settings.flag2 = flag2;
