@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Template conversion when GPIO17 is 0
+- Template using ``#define USER_TEMPLATE`` (#9506)
 - Ledlink blink when no network connected regression from 8.3.1.4 (#9292)
 - Exception 28 due to device group buffer overflow (#9459)
 - Shutter timing problem due to buffer overflow in calibration matrix (#9458)
