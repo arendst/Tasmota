@@ -375,6 +375,22 @@ char* RemoveSpace(char* p)
   return p;
 }
 
+char* RemoveControlCharacter(char* p)
+{
+  char* write = p;
+  char* read = p;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    if (!iscntrl(ch)) {
+      *write++ = ch;
+    }
+  }
+  if (write != p) { *write-- = '\0'; }
+  return p;
+}
+
 char* ReplaceCommaWithDot(char* p)
 {
   char* write = (char*)p;
