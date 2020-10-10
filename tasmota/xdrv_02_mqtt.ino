@@ -1174,7 +1174,7 @@ void CmndTlsKey(void) {
       memcpy_P(spi_buffer, tls_spi_start, tls_spi_len);
 
       // remove any white space from the base64
-      RemoveAllSpaces(XdrvMailbox.data);
+      RemoveSpace(XdrvMailbox.data);
 
       // allocate buffer for decoded base64
       uint32_t bin_len = decode_base64_length((unsigned char*)XdrvMailbox.data);

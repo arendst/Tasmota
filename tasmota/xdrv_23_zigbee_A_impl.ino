@@ -413,7 +413,7 @@ void ZbSendSend(class JsonParserToken val_cmd, uint16_t device, uint16_t groupad
         x = value.getUInt();    // automatic conversion to 0/1
       // if (value.is<bool>()) {
       // //   x = value.as<bool>() ? 1 : 0;
-      // } else if 
+      // } else if
       // } else if (value.is<unsigned int>()) {
       //   x = value.as<unsigned int>();
       } else {
@@ -1263,13 +1263,13 @@ bool parseDeviceInnerData(class Z_Device & device, JsonParserObject root) {
 
     // Import generic attributes first
     Z_Data & data = device.data.getByType(data_type, endpoint);
-    
+
     // scan through attributes
     for (auto attr : data_values) {
       JsonParserToken attr_value = attr.getValue();
       uint8_t     conv_zigbee_type;
       Z_Data_Type conv_data_type;
-      uint8_t     conv_map_offset; 
+      uint8_t     conv_map_offset;
       if (zigbeeFindAttributeByName(attr.getStr(), nullptr, nullptr, nullptr, &conv_zigbee_type, &conv_data_type, &conv_map_offset) != nullptr) {
         // found an attribute matching the name, does is fit the type?
         if (conv_data_type == data_type) {
@@ -1340,7 +1340,7 @@ bool parseDeviceInnerData(class Z_Device & device, JsonParserObject root) {
 //
 void CmndZbData(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  RemoveAllSpaces(XdrvMailbox.data);
+  RemoveSpace(XdrvMailbox.data);
   if (XdrvMailbox.data[0] == '{') {
     // JSON input, enter saved data into memory -- essentially for debugging
     JsonParser parser(XdrvMailbox.data);
@@ -1448,7 +1448,7 @@ void CmndZbConfig(void) {
   int8_t      zb_txradio_dbm = Settings.zb_txradio_dbm;
 
   // if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  RemoveAllSpaces(XdrvMailbox.data);
+  RemoveSpace(XdrvMailbox.data);
   if (strlen(XdrvMailbox.data) > 0) {
     JsonParser parser(XdrvMailbox.data);
     JsonParserObject root = parser.getRootObject();

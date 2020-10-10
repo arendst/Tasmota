@@ -359,8 +359,8 @@ char* Unescape(char* buffer, uint32_t* size)
   return buffer;
 }
 
-char* RemoveSpace(char* p)
-{
+char* RemoveSpace(char* p) {
+  // Remove white-space character (' ','\t','\n','\v','\f','\r')
   char* write = p;
   char* read = p;
   char ch = '.';
@@ -371,12 +371,11 @@ char* RemoveSpace(char* p)
       *write++ = ch;
     }
   }
-//  *write = '\0';  // Removed 20190223 as it buffer overflows on no isspace found - no need either
   return p;
 }
 
-char* RemoveControlCharacter(char* p)
-{
+char* RemoveControlCharacter(char* p) {
+  // Remove control character (0x00 .. 0x1F and 0x7F)
   char* write = p;
   char* read = p;
   char ch = '.';
@@ -391,8 +390,8 @@ char* RemoveControlCharacter(char* p)
   return p;
 }
 
-char* ReplaceCommaWithDot(char* p)
-{
+char* ReplaceCommaWithDot(char* p) {
+  // Replace character ',' with '.'
   char* write = (char*)p;
   char* read = (char*)p;
   char ch = '.';
@@ -458,6 +457,7 @@ char* Trim(char* p)
   return p;
 }
 
+/*
 char* RemoveAllSpaces(char* p)
 {
   // remove any white space from the base64
@@ -474,6 +474,7 @@ char* RemoveAllSpaces(char* p)
   }
   return p;
 }
+*/
 
 char* NoAlNumToUnderscore(char* dest, const char* source)
 {
