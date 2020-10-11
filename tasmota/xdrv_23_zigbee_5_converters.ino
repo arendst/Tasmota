@@ -120,6 +120,7 @@ enum Cx_cluster_short {
   Cx0010, Cx0011, Cx0012, Cx0013, Cx0014, Cx001A, Cx0020, Cx0100,
   Cx0101, Cx0102, Cx0201, Cx0300, Cx0400, Cx0401, Cx0402, Cx0403,
   Cx0404, Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
+  CxEF00,
 };
 
 const uint16_t Cx_cluster[] PROGMEM = {
@@ -128,6 +129,7 @@ const uint16_t Cx_cluster[] PROGMEM = {
   0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x001A, 0x0020, 0x0100,
   0x0101, 0x0102, 0x0201, 0x0300, 0x0400, 0x0401, 0x0402, 0x0403,
   0x0404, 0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
+  0xEF00, 
 };
 
 uint16_t CxToCluster(uint8_t cx) {
@@ -453,7 +455,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zenum8,   Cx0201, 0x001C,  Z_(SystemMode),           Cm1, 0 },
   // below is Eurotronic specific
   { Zenum8,   Cx0201, 0x4000, Z_(TRVMode),               Cm1, 0 },
-  { Zuint8,   Cx0201, 0x4001, Z_(SetValvePosition),      Cm1, 0 },
+  { Zuint8,   Cx0201, 0x4001, Z_(ValvePosition),         Cm1, 0 },
   { Zuint8,   Cx0201, 0x4002, Z_(EurotronicErrors),      Cm1, 0 },
   { Zint16,   Cx0201, 0x4003, Z_(CurrentTemperatureSetPoint), Cm_100, 0 },
   // below are virtual attributes to simplify ZbData import/export
@@ -578,6 +580,28 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0B05, 0x011C,  Z_(LastMessageLQI),       Cm1, 0 },
   { Zuint8,   Cx0B05, 0x011D,  Z_(LastMessageRSSI),      Cm1, 0 },
 
+  // Tuya Moes specific - 0xEF00
+  { Zoctstr,  CxEF00, 0x0070,  Z_(TuyaScheduleWorkdays), Cm1, 0 },
+  { Zoctstr,  CxEF00, 0x0071,  Z_(TuyaScheduleHolidays), Cm1, 0 },
+  { Zuint8,   CxEF00, 0x0107,  Z_(TuyaChildLock),        Cm1, 0 },
+  { Zuint8,   CxEF00, 0x0112,  Z_(TuyaWindowDetection),  Cm1, 0 },
+  { Zuint8,   CxEF00, 0x0114,  Z_(TuyaValveDetection),   Cm1, 0 },
+  { Zuint8,   CxEF00, 0x0174,  Z_(TuyaAutoLock),         Cm1, 0 },
+  { Zint16,   CxEF00, 0x0202,  Z_(TuyaTempTarget),       Cm_10, 0 },
+  { Zint16,   CxEF00, 0x0203,  Z_(LocalTemperature),     Cm_10, 0 },  // will be overwritten by actual LocalTemperature
+  { Zuint8,   CxEF00, 0x0215,  Z_(TuyaBattery),          Cm1, 0 },   // TODO check equivalent?
+  { Zint32,   CxEF00, 0x0266,  Z_(TuyaMinTemp),          Cm1, 0 },
+  { Zint32,   CxEF00, 0x0267,  Z_(TuyaMaxTemp),          Cm1, 0 },
+  { Zint32,   CxEF00, 0x0269,  Z_(TuyaBoostTime),        Cm1, 0 },
+  { Zint32,   CxEF00, 0x026B,  Z_(TuyaComfortTemp),      Cm1, 0 },
+  { Zint32,   CxEF00, 0x026C,  Z_(TuyaEcoTemp),          Cm1, 0 },
+  { Zuint8,   CxEF00, 0x026D,  Z_(TuyaValvePosition),    Cm1, 0 },
+  { Zint32,   CxEF00, 0x0272,  Z_(TuyaAwayTemp),         Cm1, 0 },
+  { Zint32,   CxEF00, 0x0275,  Z_(TuyaAwayDays),         Cm1, 0 },
+  { Zuint8,   CxEF00, 0x0404,  Z_(TuyaPreset),           Cm1, 0 },
+  { Zuint8,   CxEF00, 0x0405,  Z_(TuyaFanMode),          Cm1, 0 },
+  { Zuint8,   CxEF00, 0x046A,  Z_(TuyaForceMode),        Cm1, 0 },
+  { Zuint8,   CxEF00, 0x046F,  Z_(TuyaWeekSelect),       Cm1, 0 },
 };
 #pragma GCC diagnostic pop
 
