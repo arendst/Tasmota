@@ -1478,12 +1478,12 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
       Z_attribute attr;     // temporary attribute
       i += parseSingleAttribute(attr, buf2, i);
       int32_t ival32 = attr.getInt();
-      float fval = attr.getFloat();
+      uint32_t uval32 = attr.getUInt();
       bool translated = false;    // were we able to translate to a known format?
       if (0x01 == attrid) {
-        float batteryvoltage = fval / 100;
+        float batteryvoltage = attr.getFloat() / 100;
         attr_list.addAttribute(0x0001, 0x0020).setFloat(batteryvoltage);
-        uint8_t batterypercentage = toPercentageCR2032(fval);
+        uint8_t batterypercentage = toPercentageCR2032(uval32);
         attr_list.addAttribute(0x0001, 0x0021).setUInt(batterypercentage * 2);
       } else if ((nullptr != modelId) && (0 == getManufCode())) {
         translated = true;
@@ -1495,7 +1495,7 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
           if (0x64 == attrid) {
             attr_list.addAttribute(0x0402, 0x0000).setInt(ival32);   // Temperature
           } else if (0x65 == attrid) {
-            attr_list.addAttribute(0x0405, 0x0000).setFloat(fval);         // Humidity * 100
+            attr_list.addAttribute(0x0405, 0x0000).setUInt(uval32);         // Humidity * 100
           } else if (0x66 == attrid) {
             attr_list.addAttribute(0x0403, 0x0000).setUInt((ival32 + 50) / 100);  // Pressure
           }
@@ -1718,6 +1718,7 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
       Z_Data_Type map_type;
       uint8_t map_offset;
       uint8_t zigbee_type;
+      int8_t conv_multiplier;
       for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
         const Z_AttributeConverter *converter = &Z_PostProcess[i];
         uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
@@ -1725,6 +1726,7 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
 
         if ((conv_cluster == cluster) &&
             ((conv_attribute == attribute) || (conv_attribute == 0xFFFF)) ) {
+          conv_multiplier = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
           zigbee_type = pgm_read_byte(&converter->type);
           uint8_t mapping = pgm_read_byte(&converter->mapping);
           map_type = (Z_Data_Type) ((mapping & 0xF0)>>4);
@@ -1735,7 +1737,6 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
         }
       }
 
-      // apply multiplier if needed
       float    fval   = attr.getFloat();
       if (found && (map_type != Z_Data_Type::Z_Unknown)) {
         // We apply an automatic mapping to Z_Data_XXX object
@@ -1770,6 +1771,16 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
         case 0x00010021: zigbee_devices.setBatteryPercent(shortaddr, uval16);         break;
         case 0x00060000:
         case 0x00068000: device.setPower(attr.getBool(), src_ep);                     break;
+      }
+
+      // now apply the multiplier to make it human readable
+      if (found) {
+        if (0 == conv_multiplier)  { attr_list.removeAttribute(&attr); continue; }      // remove attribute if multiplier is zero
+        if (1 != conv_multiplier) {
+          if (conv_multiplier > 0) { fval =  fval * conv_multiplier; }
+          else                     { fval =  fval / (-conv_multiplier); }
+          attr.setFloat(fval);
+        }
       }
 
       // Replace cluster/attribute with name
