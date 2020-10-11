@@ -1081,6 +1081,7 @@ void SettingsDefaultSet2(void)
   flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
 
 #ifdef USER_TEMPLATE
+  Settings.gpio16_converted = 0xF5A0;
   JsonTemplate(USER_TEMPLATE);
 #endif
 

@@ -1525,15 +1525,16 @@ bool JsonTemplate(char* dataBuf)
     bool old_template = false;
     uint8_t template8[sizeof(mytmplt8285)] = { GPIO_NONE };
     if (13 == arr.size()) {  // Possible old template
+      old_template = true;
       uint32_t gpio = 0;
       for (uint32_t i = 0; i < ARRAY_SIZE(template8) -1; i++) {
         gpio = arr[i].getUInt();
         if (gpio > 255) {    // New templates might have values above 255
+          old_template = false;
           break;
         }
         template8[i] = gpio;
       }
-      old_template = (gpio < 256);
     }
     if (old_template) {
 
