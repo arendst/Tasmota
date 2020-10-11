@@ -148,10 +148,23 @@ public:
     }
     return 0;
   }
+  uint16_t get16BigEndian(const size_t offset) const {
+    if (offset < len() - 1) {
+      return _buf->buf[offset+1] | (_buf->buf[offset] << 8);
+    }
+    return 0;
+  }
   uint32_t get32(const size_t offset) const {
     if (offset < len() - 3) {
       return _buf->buf[offset] | (_buf->buf[offset+1] << 8) |
             (_buf->buf[offset+2] << 16) | (_buf->buf[offset+3] << 24);
+    }
+    return 0;
+  }
+  int32_t get32IBigEndian(const size_t offset) const {
+    if (offset < len() - 3) {
+      return _buf->buf[offset+3] | (_buf->buf[offset+2] << 8) |
+            (_buf->buf[offset+1] << 16) | (_buf->buf[offset] << 24);
     }
     return 0;
   }

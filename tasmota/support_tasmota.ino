@@ -1079,7 +1079,7 @@ void Every250mSeconds(void)
         } else {
           Settings.power = 0;
         }
-        SettingsSave(0);
+        if (!restart_flag) { SettingsSave(0); }
         save_data_counter = Settings.save_data;
       }
     }

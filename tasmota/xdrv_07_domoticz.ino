@@ -206,7 +206,9 @@ bool DomoticzMqttData(void) {
   if (XdrvMailbox.data_len < 20) {
     return true;  // No valid data
   }
-  JsonParser parser(XdrvMailbox.data);
+
+  String domoticz_data = XdrvMailbox.data;  // Copy the string into a new buffer that will be modified
+  JsonParser parser((char*)domoticz_data.c_str());
   JsonParserObject domoticz = parser.getRootObject();
   if (!domoticz) {
     return true;  // To much or invalid data
