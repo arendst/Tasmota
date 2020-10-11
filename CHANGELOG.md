@@ -3,7 +3,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.0.0.1]
+## [9.0.0.2]
+### Changed
+- Command ``Gpio17`` replaces command ``Adc``
+- Command ``Gpios`` replaces command ``Adcs``
+
+### Fixed
+- Convert AdcParam parameters from versions before v9.0.0.2
+
+## [9.0.0.1] - 20201010
 ### Added
 - Optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
 - Optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
@@ -15,7 +23,7 @@ All notable changes to this project will be documented in this file.
 - Support for analog buttons indexed within standard button range
 
 ### Changed
-- Redesigning ESP8266 GPIO internal representation in line with ESP32
+- Redesigning ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too
 - New IR Raw compact format (#9444)
 - MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
 - A4988 optional microstep pin selection
@@ -27,16 +35,16 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Template conversion when GPIO17 is 0
 - Template using ``#define USER_TEMPLATE`` (#9506)
-- Ledlink blink when no network connected regression from 8.3.1.4 (#9292)
+- Ledlink blink when no network connected regression from v8.3.1.4 (#9292)
 - Exception 28 due to device group buffer overflow (#9459)
 - Shutter timing problem due to buffer overflow in calibration matrix (#9458)
 - Light wakeup exception 0 (divide by zero) when ``WakeupDuration`` is not initialised (#9466)
 - ADC initalization sequence (#9473)
-- Thermostat sensor status corruption regression from 8.5.0.1 (#9449)
+- Thermostat sensor status corruption regression from v8.5.0.1 (#9449)
 
 ### Removed
-- Support for direct upgrade from Tasmota versions before 7.0
-- Auto config update for all Friendlynames and Switchtopic from Tasmota versions before 8.0
+- Support for direct upgrade from Tasmota versions before v7.0
+- Auto config update for all Friendlynames and Switchtopic from Tasmota versions before v8.0
 
 ## [Released]
 

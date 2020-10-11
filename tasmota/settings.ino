@@ -1284,7 +1284,7 @@ void SettingsDelta(void)
       Settings.eth_clk_mode = ETH_CLKMODE;
       Settings.eth_address = ETH_ADDR;
     }
-#endif
+#endif  // ESP32
     if (Settings.version < 0x08030106) {
       Settings.fallback_module = FALLBACK_MODULE;
     }
@@ -1293,6 +1293,14 @@ void SettingsDelta(void)
       Settings.energy_power_delta[1] = 0;
       Settings.energy_power_delta[2] = 0;
     }
+#ifdef ESP8266
+    if (Settings.version < 0x09000002) {
+      char parameters[32];
+      snprintf_P(parameters, sizeof(parameters), PSTR("%d,%d,%d,%d,%d"),
+        Settings.ex_adc_param_type, Settings.ex_adc_param1, Settings.ex_adc_param2, Settings.ex_adc_param3, Settings.ex_adc_param4);
+      SettingsUpdateText(SET_ADC_PARAM1, parameters);
+    }
+#endif  // ESP8266
 
     Settings.version = VERSION;
     SettingsSave(1);
