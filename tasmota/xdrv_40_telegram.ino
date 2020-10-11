@@ -199,9 +199,24 @@ void TelegramGetUpdates(String offset) {
       }
     }
     if (1 == i) {
-      Telegram.message[i][0] = a.substring(0, ch_count);   //Assign of parsed message into message matrix if only 1 message)
+      Telegram.message[i][0] = a.substring(0, ch_count -2);   //Assign of parsed message into message matrix if only 1 message)
     }
     if (i > 1) { i = i -1; }
+/*
+    String buf = response;    // we need to keep a copy of the buffer
+    JsonParser parser((char*)buf.c_str());
+    JsonParserObject root = parser.getRootObject();
+    if (root) {
+      JsonParserArray arr = root["result"];
+      if (arr) {
+        i++;
+        Telegram.message[i][0] = arr[0].getStr();
+//        Telegram.message[0][0] = arr[0].getObject()["update_id"].getStr();
+
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Msg %s"), Telegram.message[i][0].c_str());
+      }
+    }
+*/
   }
   //check result of parsing process
   if (response == "") {
@@ -229,18 +244,18 @@ void TelegramAnalizeMessage(void) {
     JsonParser parser((char*)buf.c_str());
     JsonParserObject root = parser.getRootObject();
     if (root) {
+      // {"update_id":14354450,
+      //  "message":{"message_id":141,
+      //             "from":{"id":139920293,"is_bot":false,"first_name":"Theo","last_name":"Arends","username":"tjatja","language_code":"nl"},
+      //             "chat":{"id":139920293,"first_name":"Theo","last_name":"Arends","username":"tjatja","type":"private"},
+      //             "date":1602346120,
+      //             "text":"Status 1"}}
       Telegram.message[i][0] = root["update_id"].getStr();
       Telegram.message[i][1] = root["message"].getObject()["from"].getObject()["id"].getStr();
       Telegram.message[i][2] = root["message"].getObject()["from"].getObject()["first_name"].getStr();
       Telegram.message[i][3] = root["message"].getObject()["from"].getObject()["last_name"].getStr();
       Telegram.message[i][4] = root["message"].getObject()["chat"].getObject()["id"].getStr();
       Telegram.message[i][5] = root["message"].getObject()["text"].getStr();
-      // Telegram.message[i][0] = root["update_id"].as<String>();
-      // Telegram.message[i][1] = root["message"]["from"]["id"].as<String>();
-      // Telegram.message[i][2] = root["message"]["from"]["first_name"].as<String>();
-      // Telegram.message[i][3] = root["message"]["from"]["last_name"].as<String>();
-      // Telegram.message[i][4] = root["message"]["chat"]["id"].as<String>();
-      // Telegram.message[i][5] = root["message"]["text"].as<String>();
     }
 
     int id = Telegram.message[Telegram.message[0][0].toInt()][0].toInt() +1;

@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Convert AdcParam parameters from versions before v9.0.0.2
+- Telegram message decoding error regression from v8.5.0.1
 
 ## [9.0.0.1] - 20201010
 ### Added
