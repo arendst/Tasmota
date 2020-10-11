@@ -134,6 +134,8 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z_(RemoveAllScenes),0x0005, 0x03, 0x82,   Z_(xxyyyy) },     // xx = status, yyyy = group id
   { Z_(StoreScene),     0x0005, 0x04, 0x82,   Z_(xxyyyyzz) },     // xx = status, yyyy = group id, zz = scene id
   { Z_(GetSceneMembership),0x0005, 0x06, 0x82,Z_(xxyyzzzz) },     // specific
+  // Tuya - Moes specific
+  { Z_(),               0xEF00, 0xFF, 0x83,   Z_() },             // capture any command in 0xEF00 cluster
 };
 
 /*********************************************************************************************\
@@ -330,7 +332,8 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
   // Format: "0004<00": "00" = "<cluster><<cmd>": "<payload>" for commands to devices
   char attrid_str[12];
   snprintf_P(attrid_str, sizeof(attrid_str), PSTR("%04X%c%02X"), cluster, direction ? '<' : '!', cmd);
-  attr_list.addAttribute(attrid_str).setBuf(payload, 0, payload.len());
+  Z_attribute & attr_raw = attr_list.addAttribute(attrid_str);
+  attr_raw.setBuf(payload, 0, payload.len());
 
   if (command_name) {
     // Now try to transform into a human readable format
@@ -410,6 +413,11 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
         attr_list.addAttribute(PSTR("PowerOnTime"), true).setFloat(xyz.y / 10.0f);
         attr_list.addAttribute(PSTR("PowerOffWait"), true).setFloat(xyz.z / 10.0f);
         break;
+      case 0xEF000000 ... 0xEF0000FF: // any Tuya - Moes command
+        if (convertTuyaSpecificCluster(attr_list, cluster, cmd, direction, shortaddr, srcendpoint, payload)) {
+          attr_list.removeAttribute(&attr_raw);   // remove raw command
+        }
+        break;
       }
     } else {  // general case
       // do we send command with endpoint suffix
@@ -436,6 +444,54 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
       }
     }
   }
+}
+
+//
+// Tuya - MOES specifc cluster 0xEF00
+// See https://medium.com/@dzegarra/zigbee2mqtt-how-to-add-support-for-a-new-tuya-based-device-part-2-5492707e882d
+// and https://github.com/Koenkk/zigbee-herdsman-converters/blob/9f503d47d3df6a99d133b78d2b52aa5c701ddddf/converters/fromZigbee.js#L339
+//
+bool convertTuyaSpecificCluster(class Z_attribute_list &attr_list, uint16_t cluster, uint8_t cmd, bool direction, uint16_t shortaddr, uint8_t srcendpoint, const SBuffer &buf) {
+  // uint8_t status = buf.get8(0);
+  // uint8_t transid = buf.get8(1);
+  uint16_t dp = buf.get16(2);   // decode dp as 16 bits little endian - which is not big endian as mentioned in documentation
+  // uint8_t fn = buf.get8(4);
+  uint8_t  len = buf.get8(5);   // len of payload
+
+  if ((1 == cmd) || (2 == cmd)) {   // attribute report or attribute response
+    // create a synthetic attribute with id 'dp'
+    Z_attribute & attr = attr_list.addAttribute(cluster, dp);
+    int32_t ival32 = -0x80000000;
+    if (1 == len) {
+      // 1 byte, convert as uint8_t
+      ival32 = buf.get8(6);
+    } else if (2 == len) {
+      ival32 = buf.get16BigEndian(6);
+    } else if (4 == len) {
+      // 4 bytes, convert as int32_t
+      ival32 = buf.get32IBigEndian(6);
+    }
+    if (ival32 != -0x80000000) {
+      // fix temperature coefficient
+      switch (dp) {
+        case 0x0202:
+          attr_list.addAttribute(0x0201, 0x0012).setInt(ival32 * 10);   // OccupiedHeatingSetpoint
+          break;
+        case 0x0203:
+          attr_list.addAttribute(0x0201, 0x0000).setInt(ival32 * 10);   // LocalTemperature
+          break;
+        case 0x026D:
+          attr_list.addAttribute(0x0201, 0x0008).setUInt(ival32);   // PIHeatingDemand
+          break;
+      }
+      attr.setInt(ival32);
+    } else {
+      // add as raw buffer
+      attr.setBuf(buf, 6, len);
+    }
+    return true;    // true = remove the original Tuya attribute
+  }
+  return false;
 }
 
 // Find the command details by command name
