@@ -27,7 +27,7 @@
 uint8_t ZNP_RSSI2Lqi(int8_t rssi) {
   if (rssi < -87)  { rssi = -87; }
   if (rssi > 10)   { rssi = 10; }
-  return changeUIntScale(rssi + 87, 0, 87+10, 0, 255);
+  return changeUIntScale(rssi + 87, 0, 87+10, 0, 254);
 }
 
 /*********************************************************************************************\
