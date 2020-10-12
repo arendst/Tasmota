@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.0.0.2]
+### Added
+- Support for Vietnamese language translations by Tâm.NT
+
 ### Changed
 - Command ``Gpio17`` replaces command ``Adc``
 - Command ``Gpios`` replaces command ``Adcs``

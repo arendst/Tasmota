@@ -67,6 +67,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for stateful ACs using ``StateMode`` in tasmota-ir.bin by Arik Yavilevich (#9472)
 - Zigbee ``ZbData`` command for better support of device specific data
 - Support for analog buttons indexed within standard button range
+- Support for Vietnamese language translations by Tâm.NT
 
 ### Changed
 - Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too
