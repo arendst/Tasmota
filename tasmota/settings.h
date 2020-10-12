@@ -673,7 +673,7 @@ typedef struct {
   uint8_t       ota_loader;                // 293
   unsigned long energy_kWhtoday;              // 294
   unsigned long energy_kWhtotal;              // 298
-  unsigned long pulse_counter[MAX_COUNTERS];  // 29C
+  volatile unsigned long pulse_counter[MAX_COUNTERS];  // 29C
   power_t       power;                     // 2AC
   EnergyUsage   energy_usage;              // 2B0
   unsigned long nextwakeup;                // 2C8
