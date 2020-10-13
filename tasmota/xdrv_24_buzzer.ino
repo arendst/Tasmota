@@ -104,7 +104,7 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune, uint32
     if (Settings.sleep > PWM_MAX_SLEEP) { 
       ssleep = PWM_MAX_SLEEP;      // set a maxumum value of 10 milliseconds to ensure that buzzer periods are a bit more accurate 
     } else { 
-      ssleep = Settings.sleep;     // or keep the current sleep if it's lower than 50 
+      ssleep = Settings.sleep;     // or keep the current sleep if it's lower than 10 
     } 
   }
   else {
