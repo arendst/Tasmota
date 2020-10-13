@@ -461,34 +461,14 @@ bool convertTuyaSpecificCluster(class Z_attribute_list &attr_list, uint16_t clus
   if ((1 == cmd) || (2 == cmd)) {   // attribute report or attribute response
     // create a synthetic attribute with id 'dp'
     Z_attribute & attr = attr_list.addAttribute(cluster, dp);
-    int32_t ival32 = -0x80000000;
-    if (1 == len) {
-      // 1 byte, convert as uint8_t
-      ival32 = buf.get8(6);
-    } else if (2 == len) {
-      ival32 = buf.get16BigEndian(6);
-    } else if (4 == len) {
-      // 4 bytes, convert as int32_t
-      ival32 = buf.get32IBigEndian(6);
+    uint8_t attr_type;
+    switch (len) {
+      case 1:  attr_type = Ztuya1;   break;
+      case 2:  attr_type = Ztuya2;   break;
+      case 4:  attr_type = Ztuya4;   break;
+      default: attr_type = Zoctstr;  break;
     }
-    if (ival32 != -0x80000000) {
-      // fix temperature coefficient
-      switch (dp) {
-        case 0x0202:
-          attr_list.addAttribute(0x0201, 0x0012).setInt(ival32 * 10);   // OccupiedHeatingSetpoint
-          break;
-        case 0x0203:
-          attr_list.addAttribute(0x0201, 0x0000).setInt(ival32 * 10);   // LocalTemperature
-          break;
-        case 0x026D:
-          attr_list.addAttribute(0x0201, 0x0008).setUInt(ival32);   // PIHeatingDemand
-          break;
-      }
-      attr.setInt(ival32);
-    } else {
-      // add as raw buffer
-      attr.setBuf(buf, 6, len);
-    }
+    parseSingleAttribute(attr, buf, 5, attr_type);
     return true;    // true = remove the original Tuya attribute
   }
   return false;

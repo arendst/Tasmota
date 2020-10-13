@@ -79,12 +79,28 @@ public:
     }
     return _buf->len;
   }
+  size_t add16BigEndian(const uint16_t data) {           // append 16 bits value
+    if (_buf->len < _buf->size - 1) {    // do we have room for 2 bytes
+      _buf->buf[_buf->len++] = data >> 8;
+      _buf->buf[_buf->len++] = data;
+    }
+    return _buf->len;
+  }
   size_t add32(const uint32_t data) {           // append 32 bits value
     if (_buf->len < _buf->size - 3) {     // do we have room for 4 bytes
       _buf->buf[_buf->len++] = data;
       _buf->buf[_buf->len++] = data >> 8;
       _buf->buf[_buf->len++] = data >> 16;
       _buf->buf[_buf->len++] = data >> 24;
+    }
+    return _buf->len;
+  }
+  size_t add32BigEndian(const uint32_t data) {           // append 32 bits value
+    if (_buf->len < _buf->size - 3) {     // do we have room for 4 bytes
+      _buf->buf[_buf->len++] = data >> 24;
+      _buf->buf[_buf->len++] = data >> 16;
+      _buf->buf[_buf->len++] = data >> 8;
+      _buf->buf[_buf->len++] = data;
     }
     return _buf->len;
   }
