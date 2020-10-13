@@ -761,7 +761,7 @@ void CmndZbEZSPSend(void)
 // - groupaddr: 16-bits group address, or 0x0000 if unicast using shortaddr
 // - clusterIf: 16-bits cluster number
 // - endpoint:  8-bits target endpoint (source is always 0x01), unused for group addresses. Should not be 0x00 except when sending to group address.
-// - cmdId:     8-bits ZCL command number
+// - cmd:     8-bits ZCL command number
 // - clusterSpecific: boolean, is the message general cluster or cluster specific, used to create the FC byte of ZCL
 // - msg:       pointer to byte array, payload of ZCL message (len is following), ignored if nullptr
 // - len:       length of the 'msg' payload
@@ -786,7 +786,7 @@ void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
   }
   buf.add16(0x0000);                // dest Pan ID, 0x0000 = intra-pan
   buf.add8(0x01);                   // source endpoint
-  buf.add16(zcl.clusterId);
+  buf.add16(zcl.cluster);
   buf.add8(zcl.transacId);              // transacId
   buf.add8(0x30);                   // 30 options
   buf.add8(0x1E);                   // 1E radius
@@ -797,7 +797,7 @@ void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
     buf.add16(zcl.manuf);               // add Manuf Id if not null
   }
   buf.add8(zcl.transacId);              // Transaction Sequence Number
-  buf.add8(zcl.cmdId);
+  buf.add8(zcl.cmd);
   if (zcl.len > 0) {
     buf.addBuffer(zcl.msg, zcl.len);        // add the payload
   }
@@ -815,7 +815,7 @@ void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
     buf.add16(zcl.shortaddr);               // dest addr
     // ApsFrame
     buf.add16(Z_PROF_HA);               // Home Automation profile
-    buf.add16(zcl.clusterId);               // cluster
+    buf.add16(zcl.cluster);               // cluster
     buf.add8(0x01);                     // srcEp
     buf.add8(zcl.endpoint);                 // dstEp
     buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
@@ -830,7 +830,7 @@ void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
       buf.add16(zcl.manuf);               // add Manuf Id if not null
     }
     buf.add8(zcl.transacId);              // Transaction Sequance Number
-    buf.add8(zcl.cmdId);
+    buf.add8(zcl.cmd);
     if (zcl.len > 0) {
       buf.addBuffer(zcl.msg, zcl.len);        // add the payload
     }
@@ -839,7 +839,7 @@ void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
     buf.add16(EZSP_sendMulticast);      // 3800
     // ApsFrame
     buf.add16(Z_PROF_HA);               // Home Automation profile
-    buf.add16(zcl.clusterId);               // cluster
+    buf.add16(zcl.cluster);               // cluster
     buf.add8(0x01);                     // srcEp
     buf.add8(zcl.endpoint);                 // broadcast endpoint for groupcast
     buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
@@ -856,7 +856,7 @@ void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
       buf.add16(zcl.manuf);               // add Manuf Id if not null
     }
     buf.add8(zcl.transacId);              // Transaction Sequance Number
-    buf.add8(zcl.cmdId);
+    buf.add8(zcl.cmd);
     if (zcl.len > 0) {
       buf.addBuffer(zcl.msg, zcl.len);        // add the payload
     }
