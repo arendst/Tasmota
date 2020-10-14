@@ -311,6 +311,7 @@ void CmndBacklog(void)
 {
   if (XdrvMailbox.data_len) {
 
+    bool firstcommand = true;
 #ifdef SUPPORT_IF_STATEMENT
     char *blcommand = strtok(XdrvMailbox.data, ";");
     while ((blcommand != nullptr) && (backlog.size() < MAX_BACKLOG))
@@ -329,6 +330,15 @@ void CmndBacklog(void)
           break;
         }
       }
+      // If the first command in backlog sequence is NoDelay, set flag to skip delay before executing the next command
+      if (firstcommand) {
+        if (!strncasecmp_P(blcommand, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
+          blcommand += strlen(D_CMND_NODELAY);
+          backlog_no_delay = true;
+        }
+        firstcommand = false;
+      }
+
       if (*blcommand != '\0') {
 #ifdef SUPPORT_IF_STATEMENT
         if (backlog.size() < MAX_BACKLOG) {

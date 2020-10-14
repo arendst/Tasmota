@@ -149,6 +149,7 @@ bool serial_local = false;                  // Handle serial locally
 bool serial_buffer_overrun = false;         // Serial buffer overrun
 bool fallback_topic_flag = false;           // Use Topic or FallbackTopic
 bool backlog_mutex = false;                 // Command backlog pending
+bool backlog_no_delay = false;              // Execute next backlog command without delay
 bool interlock_mutex = false;               // Interlock power command pending
 bool stop_flash_rotate = false;             // Allow flash configuration rotation
 bool blinkstate = false;                    // LED state
@@ -315,20 +316,44 @@ void setup(void) {
   rules_flag.system_init = 1;
 }
 
+bool BacklogNoDelay(void) {
+  bool nodelay = false;
+  if (!BACKLOG_EMPTY) {
+#ifdef SUPPORT_IF_STATEMENT
+    String next_cmd = backlog.get(0);
+    nodelay = !strncasecmp_P(next_cmd.c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
+    if (nodelay) {
+      backlog.shift();
+    }
+#else
+    nodelay = !strncasecmp_P(backlog[backlog_pointer].c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
+    if (nodelay) {
+      backlog[backlog_pointer] = (const char*) nullptr;   // force deallocation of the String internal memory
+      backlog_pointer++;
+      if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
+    }
+#endif
+  }
+  return nodelay;
+}
+
 void BacklogLoop(void) {
-  if (TimeReached(backlog_delay)) {
+  if (TimeReached(backlog_delay) || backlog_no_delay) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {
 #ifdef SUPPORT_IF_STATEMENT
       backlog_mutex = true;
       String cmd = backlog.shift();
+      backlog_no_delay = BacklogNoDelay();
       backlog_mutex = false;
       ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
 #else
       backlog_mutex = true;
-      ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
+      String cmd = backlog[backlog_pointer];
       backlog[backlog_pointer] = (const char*) nullptr;   // force deallocation of the String internal memory
       backlog_pointer++;
       if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
+      backlog_no_delay = BacklogNoDelay();
+      ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
       backlog_mutex = false;
 #endif
     }
