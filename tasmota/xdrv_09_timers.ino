@@ -267,6 +267,7 @@ void TimerEverySecond(void)
 #ifdef USE_SUNRISE
           if ((1 == xtimer.mode) || (2 == xtimer.mode)) {      // Sunrise or Sunset
             ApplyTimerOffsets(&xtimer);
+            if (xtimer.time>=2046) { continue; } 
           }
 #endif
           int32_t set_time = xtimer.time + timer_window[i];  // Add random time offset
