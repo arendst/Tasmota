@@ -174,6 +174,17 @@ void ApplyTimerOffsets(Timer *duskdawn)
   uint8_t mode = (duskdawn->mode -1) &1;
   duskdawn->time = (hour[mode] *60) + minute[mode];
 
+  if (hour[mode]==255) {
+    // Permanent day/night sets the unreachable limit values
+    if ((Settings.latitude > 0) != (RtcTime.month>=4 && RtcTime.month<=9)) {
+      duskdawn->time=2046; // permanent night 
+    } else {
+      duskdawn->time=2047; // permanent day
+    }
+    // So skip the offset/underflow/overflow/day-shift
+    return;
+  }
+
   // apply offsets, check for over- and underflows
   uint16_t timeBuffer;
   if ((uint16_t)stored.time > 719) {
@@ -191,7 +202,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
     // positive offset
     timeBuffer = (uint16_t)duskdawn->time + (uint16_t)stored.time;
     // check for overflow
-    if (timeBuffer > 1440) {
+    if (timeBuffer >= 1440) {
       timeBuffer -= 1440;
       duskdawn->days = duskdawn->days << 1;
       duskdawn->days |= (stored.days >> 6);
@@ -256,6 +267,7 @@ void TimerEverySecond(void)
 #ifdef USE_SUNRISE
           if ((1 == xtimer.mode) || (2 == xtimer.mode)) {      // Sunrise or Sunset
             ApplyTimerOffsets(&xtimer);
+            if (xtimer.time>=2046) { continue; }
           }
 #endif
           int32_t set_time = xtimer.time + timer_window[i];  // Add random time offset
