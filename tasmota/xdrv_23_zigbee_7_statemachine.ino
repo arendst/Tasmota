@@ -814,7 +814,8 @@ void EZ_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_pan
 
 static const Zigbee_Instruction zb_prog[] PROGMEM = {
   ZI_LABEL(0)
-    ZI_NOOP()
+    ZI_CALL(&EZ_Reset_Device, 0)         // immediately drive reset low
+    ZI_LOG(LOG_LEVEL_INFO, kResettingDevice)     // Log Debug: resetting EZSP device
     // ZI_CALL(EZ_Set_ResetConfig, 0)           // for the firt pass, don't do a reset_config
   ZI_LABEL(ZIGBEE_LABEL_RESTART)
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)

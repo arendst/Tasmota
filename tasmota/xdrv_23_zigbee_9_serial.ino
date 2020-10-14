@@ -672,6 +672,7 @@ int32_t ZigbeeProcessInputRaw(class SBuffer &buf) {
       // ERROR
       EZ_ERROR(buf.get8(2));
       zigbee.active = false;           // stop all zigbee activities
+      restart_flag = 2;                // there is nothing more we can do except restart
     } else {
 
       // Unknown
