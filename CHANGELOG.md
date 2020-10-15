@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 ## [9.0.0.2]
 ### Added
 - Support for Vietnamese language translations by Tâm.NT
+- Support for timers in case of no-sunset permanent day by cybermaus (#9543)
+- Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
 
 ### Changed
 - Command ``Gpio17`` replaces command ``Adc``
@@ -14,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Convert AdcParam parameters from versions before v9.0.0.2
 - Telegram message decoding error regression from v8.5.0.1
+- Correct Energy period display shortly after midnight by gominoa (#9536)
 
 ## [9.0.0.1] - 20201010
 ### Added

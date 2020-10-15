@@ -212,6 +212,7 @@
 // Commands tasmota.ino
 #define D_CMND_BACKLOG "Backlog"
 #define D_CMND_DELAY "Delay"
+#define D_CMND_NODELAY "NoDelay"
 #define D_CMND_STATUS "Status"
   #define D_STATUS1_PARAMETER "PRM"
   #define D_STATUS2_FIRMWARE "FWR"

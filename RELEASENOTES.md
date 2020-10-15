@@ -59,6 +59,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog v9.0.0.2
 ### Added
+- Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
 - Optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
 - Optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
 - SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
@@ -68,6 +69,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Zigbee ``ZbData`` command for better support of device specific data
 - Support for analog buttons indexed within standard button range
 - Support for Vietnamese language translations by Tâm.NT
+- Support for timers in case of no-sunset permanent day by cybermaus (#9543)
 
 ### Changed
 - Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too
@@ -88,6 +90,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Light wakeup exception 0 (divide by zero) when ``WakeupDuration`` is not initialised (#9466)
 - Thermostat sensor status corruption regression from v8.5.0.1 (#9449)
 - Telegram message decoding error regression from v8.5.0.1
+- Correct Energy period display shortly after midnight by gominoa (#9536)
 
 ### Removed
 - Support for direct upgrade from Tasmota versions before v7.0

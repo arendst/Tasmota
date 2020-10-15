@@ -318,19 +318,25 @@ void setup(void) {
 void BacklogLoop(void) {
   if (TimeReached(backlog_delay)) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {
+      backlog_mutex = true;
+      bool nodelay = false;
+      bool nodelay_detected = false;
+      String cmd;
+      do {
 #ifdef SUPPORT_IF_STATEMENT
-      backlog_mutex = true;
-      String cmd = backlog.shift();
-      backlog_mutex = false;
-      ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
+        cmd = backlog.shift();
 #else
-      backlog_mutex = true;
-      ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
-      backlog[backlog_pointer] = (const char*) nullptr;   // force deallocation of the String internal memory
-      backlog_pointer++;
-      if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
-      backlog_mutex = false;
+        cmd = backlog[backlog_pointer];
+        backlog[backlog_pointer] = (const char*) nullptr;  // Force deallocation of the String internal memory
+        backlog_pointer++;
+        if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
 #endif
+        nodelay_detected = !strncasecmp_P(cmd.c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
+        if (nodelay_detected) { nodelay = true; }
+      } while (nodelay_detected);
+      ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
+      if (nodelay) { backlog_delay = 0; }  // Reset backlog_delay which has been set by ExecuteCommand (CommandHandler)
+      backlog_mutex = false;
     }
   }
 }
