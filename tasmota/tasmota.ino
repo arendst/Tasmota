@@ -333,8 +333,8 @@ void BacklogLoop(void) {
 #endif
         nodelay_detected = !strncasecmp_P(cmd.c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
         if (nodelay_detected) { nodelay = true; }
-      } while (nodelay_detected);
-      ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
+      } while (!BACKLOG_EMPTY && nodelay_detected);
+      if (!nodelay_detected) { ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG); }
       if (nodelay) { backlog_delay = 0; }  // Reset backlog_delay which has been set by ExecuteCommand (CommandHandler)
       backlog_mutex = false;
     }

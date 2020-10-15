@@ -344,6 +344,7 @@ void CmndBacklog(void)
     }
 //    ResponseCmndChar(D_JSON_APPENDED);
     mqtt_data[0] = '\0';
+    backlog_delay = 0;
   } else {
     bool blflag = BACKLOG_EMPTY;
 #ifdef SUPPORT_IF_STATEMENT
