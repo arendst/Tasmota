@@ -154,7 +154,6 @@ bool PmsReadData(void)
 #else
   memcpy((void *)&pms_data, (void *)buffer_u16, 30);
 #endif  // PMS_MODEL_PMS3003
-  Pms.valid = 10;
 
   return true;
 }
@@ -204,10 +203,13 @@ void PmsSecond(void)                 // Every second
     if ((Settings.pms_wake_interval - Pms.time <= WARMUP_PERIOD) && !Pms.wake_mode) {
       // wakeup sensor WARMUP_PERIOD before read interval
       Pms.wake_mode = 1;
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("PMS: PmsSendCmd(CMD_WAKEUP)"));
       PmsSendCmd(CMD_WAKEUP);
     }
     if (Pms.time >= Settings.pms_wake_interval) {
       // sensor is awake and warmed up, set up for reading
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("PMS: PmsSendCmd(CMD_READ_DATA)"));
+      while(PmsSerial->read() >= 0){}
       PmsSendCmd(CMD_READ_DATA);
       Pms.ready = 1;
       Pms.time = 0;
@@ -225,9 +227,21 @@ void PmsSecond(void)                 // Every second
     } else {
       if (Pms.valid) {
         Pms.valid--;
-        if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+      }
+
+      if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+        // Passive Mode
+        if (Pms.valid) {
+          // Try to read again
           PmsSendCmd(CMD_READ_DATA);
-          Pms.ready = 1;
+        } else {
+          if (Pms.time == 5) {
+            // Timeout, reset
+            AddLog_P(LOG_LEVEL_DEBUG, PSTR("PMS: Timeout"));
+            Pms.ready = 0;
+            Pms.wake_mode = 0;
+            Pms.time = Settings.pms_wake_interval - WARMUP_PERIOD - 1;
+          }
         }
       }
     }
@@ -247,6 +261,11 @@ void PmsInit(void)
       if (!PinUsed(GPIO_PMS5003_TX)) {  // setting interval not supported if TX pin not connected
         Settings.pms_wake_interval = 0;
         Pms.ready = 1;
+      } else {
+        if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+          // Passive Mode
+          PmsSendCmd(CMD_MODE_PASSIVE);
+        }
       }
 
       Pms.type = 1;
