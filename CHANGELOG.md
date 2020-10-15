@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Convert AdcParam parameters from versions before v9.0.0.2
 - Telegram message decoding error regression from v8.5.0.1
 - Correct Energy period display shortly after midnight by gominoa (#9536)
+- Rule handling of Var or Mem using text regression from v8.5.0.1 (#9540)
 
 ## [9.0.0.1] - 20201010
 ### Added
