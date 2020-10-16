@@ -1473,6 +1473,7 @@ void GpioInit(void)
   if (Settings.module != Settings.last_module) {
     Settings.baudrate = APP_BAUDRATE / 300;
     Settings.serial_config = TS_SERIAL_8N1;
+    SetSerialBegin();
   }
 
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);

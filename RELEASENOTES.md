@@ -82,6 +82,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ``Status`` command output for disabled status types
 - IRremoteESP8266 library from v2.7.10 to v2.7.11
 - NeoPixelBus library from v2.5.0.09 to v2.6.0
+- Management of serial baudrate (#9554)
 
 ### Fixed
 - Ledlink blink when no network connected regression from v8.3.1.4 (#9292)

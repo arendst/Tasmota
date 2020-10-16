@@ -109,6 +109,7 @@ uint32_t uptime = 0;                        // Counting every second until 42949
 uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
 uint32_t web_log_index = 1;                 // Index in Web log buffer (should never be 0)
+uint32_t baudrate = APP_BAUDRATE;           // Current Serial baudrate
 float global_temperature_celsius = NAN;     // Provide a global temperature to be used by some sensors
 float global_humidity = 0.0f;               // Provide a global humidity to be used by some sensors
 float global_pressure_hpa = 0.0f;           // Provide a global pressure to be used by some sensors
@@ -207,7 +208,7 @@ void setup(void) {
 #endif
   RtcRebootSave();
 
-  Serial.begin(APP_BAUDRATE);
+  Serial.begin(baudrate);
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 

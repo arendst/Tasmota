@@ -440,7 +440,7 @@ void CmndStatus(void)
                           ",\"" D_JSON_SAVEADDRESS "\":\"%X\""
 #endif
                           "}}"),
-                          Settings.baudrate * 300, GetSerialConfig().c_str(), SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
+                          baudrate, GetSerialConfig().c_str(), SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
                           GetResetReason().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
                           Settings.cfg_holder, Settings.bootcount, GetDateAndTime(DT_BOOTCOUNT).c_str(), Settings.save_flag
 #ifdef ESP8266
@@ -1341,10 +1341,10 @@ void CmndBaudrate(void)
 {
   if (XdrvMailbox.payload >= 300) {
     XdrvMailbox.payload /= 300;  // Make it a valid baudrate
-    uint32_t baudrate = (XdrvMailbox.payload & 0xFFFF) * 300;
+    baudrate = (XdrvMailbox.payload & 0xFFFF) * 300;
     SetSerialBaudrate(baudrate);
   }
-  ResponseCmndNumber(Settings.baudrate * 300);
+  ResponseCmndNumber(baudrate);
 }
 
 void CmndSerialConfig(void)
