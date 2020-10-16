@@ -219,7 +219,7 @@ void HassDiscoveryRelays(struct HASS &Hass)
     if (SONOFF_IFAN02 == my_module_type || SONOFF_IFAN03 == my_module_type) { iFan = true;}
 #endif // ESP8266
 
-  if (Light.subtype > LST_RGB) {
+  if (Light.subtype > LST_NONE) {
     if (!light_controller.isCTRGBLinked()) { // One or two lights present
       lightidx = devices_present - 2;
     } else {
