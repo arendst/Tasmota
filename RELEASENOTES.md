@@ -93,6 +93,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Telegram message decoding error regression from v8.5.0.1
 - Rule handling of Var or Mem using text regression from v8.5.0.1 (#9540)
 - Correct Energy period display shortly after midnight by gominoa (#9536)
+- TuyaMcu energy display regression from v8.5.0.1 (#9547)
 
 ### Removed
 - Support for direct upgrade from Tasmota versions before v7.0

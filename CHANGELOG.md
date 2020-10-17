@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Telegram message decoding error regression from v8.5.0.1
 - Correct Energy period display shortly after midnight by gominoa (#9536)
 - Rule handling of Var or Mem using text regression from v8.5.0.1 (#9540)
+- TuyaMcu energy display regression from v8.5.0.1 (#9547)
 
 ## [9.0.0.1] - 20201010
 ### Added
@@ -75,6 +76,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Replace ArduinoJson with JSMN for JSON parsing
 - ``WakeUp`` uses 256 steps instead of 100 (#9241)
+- Major redesign of TuyaMcu adding shutter, light and multiple dimmer support by Federico Leoni (#9330)
 
 ### Fixed
 - Energy total counters (#9263, #9266)
