@@ -393,8 +393,12 @@ void SwitchHandler(uint8_t mode)
             switchflag = POWER_ON;       // Power ON with releasing pushbutton from Gnd
           }
           break;
+        case PUSHBUTTON_IGNORE:
+          break;
         }
         Switch.last_state[i] = button;
+        mqtt_data[0] = '\0';
+        if (MqttShowSensor()) { MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain); }
       }
       if (switchflag <= POWER_TOGGLE) {
         if (!SendKey(KEY_SWITCH, i +1, switchflag)) {  // Execute command via MQTT
