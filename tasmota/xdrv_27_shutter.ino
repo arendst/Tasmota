@@ -517,6 +517,7 @@ bool ShutterState(uint32_t device)
 
 void ShutterAllowPreStartProcedure(uint8_t i)
 {
+#ifdef USE_RULES
   uint32_t uptime_Local=0;
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. var%d <99>=<%s>, max10s?"),i+i, rules_vars[i]);
   rules_flag.shutter_moving = 1;
@@ -526,6 +527,7 @@ void ShutterAllowPreStartProcedure(uint8_t i)
     loop();
   }
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. Done"));
+#endif  // USE_RULES
 }
 
 void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)

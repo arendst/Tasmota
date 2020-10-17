@@ -79,12 +79,28 @@ public:
     }
     return _buf->len;
   }
+  size_t add16BigEndian(const uint16_t data) {           // append 16 bits value
+    if (_buf->len < _buf->size - 1) {    // do we have room for 2 bytes
+      _buf->buf[_buf->len++] = data >> 8;
+      _buf->buf[_buf->len++] = data;
+    }
+    return _buf->len;
+  }
   size_t add32(const uint32_t data) {           // append 32 bits value
     if (_buf->len < _buf->size - 3) {     // do we have room for 4 bytes
       _buf->buf[_buf->len++] = data;
       _buf->buf[_buf->len++] = data >> 8;
       _buf->buf[_buf->len++] = data >> 16;
       _buf->buf[_buf->len++] = data >> 24;
+    }
+    return _buf->len;
+  }
+  size_t add32BigEndian(const uint32_t data) {           // append 32 bits value
+    if (_buf->len < _buf->size - 3) {     // do we have room for 4 bytes
+      _buf->buf[_buf->len++] = data >> 24;
+      _buf->buf[_buf->len++] = data >> 16;
+      _buf->buf[_buf->len++] = data >> 8;
+      _buf->buf[_buf->len++] = data;
     }
     return _buf->len;
   }
@@ -148,10 +164,23 @@ public:
     }
     return 0;
   }
+  uint16_t get16BigEndian(const size_t offset) const {
+    if (offset < len() - 1) {
+      return _buf->buf[offset+1] | (_buf->buf[offset] << 8);
+    }
+    return 0;
+  }
   uint32_t get32(const size_t offset) const {
     if (offset < len() - 3) {
       return _buf->buf[offset] | (_buf->buf[offset+1] << 8) |
             (_buf->buf[offset+2] << 16) | (_buf->buf[offset+3] << 24);
+    }
+    return 0;
+  }
+  int32_t get32IBigEndian(const size_t offset) const {
+    if (offset < len() - 3) {
+      return _buf->buf[offset+3] | (_buf->buf[offset+2] << 8) |
+            (_buf->buf[offset+1] << 16) | (_buf->buf[offset] << 24);
     }
     return 0;
   }

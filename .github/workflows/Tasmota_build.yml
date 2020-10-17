@@ -736,6 +736,29 @@ jobs:
         path: ./build_output/firmware
 
 
+  tasmota-VN:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -U platformio
+        platformio upgrade --dev
+        platformio update
+    - name: Run PlatformIO
+      run: | 
+        platformio run -e tasmota-VN
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output/firmware
+
+
   tasmota32:
     needs: tasmota_pull
     runs-on: ubuntu-latest
@@ -1449,8 +1472,31 @@ jobs:
         path: ./build_output/firmware
 
 
+  tasmota32-VN:
+    needs: tasmota_pull
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -U platformio
+        platformio upgrade --dev
+        platformio update
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-VN
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output/firmware
+
+
   Upload:
-    needs: [tasmota-UK, tasmota32-ircustom, tasmota32-UK, tasmota32-TW, tasmota32-TR]    
+    needs: [tasmota-VN, tasmota32-ircustom, tasmota32-VN, tasmota32-TW, tasmota32-TR]    
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:

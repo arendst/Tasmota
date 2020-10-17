@@ -322,7 +322,6 @@ typedef struct {
   uint32_t last_usage_kWhtotal;
 } EnergyUsage;
 
-
 typedef struct {
   uint8_t fnid = 0;
   uint8_t dpid = 0;
@@ -332,7 +331,7 @@ const uint32_t settings_text_size = 699;   // Settings.text_pool[size] = Setting
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
 struct {
-  uint16_t      cfg_holder;                // 000 v6 header
+  uint16_t      cfg_holder;                // 000  v6 header
   uint16_t      cfg_size;                  // 002
   unsigned long save_flag;                 // 004
   unsigned long version;                   // 008
@@ -344,9 +343,9 @@ struct {
 
   // Start of char array storing all parameter strings ********
 
-  char          text_pool[101];            // 017 - was ota_url[101] - size is settings_text_size
+  char          text_pool[101];            // 017  Was ota_url[101] - size is settings_text_size
 
-  char          ex_mqtt_prefix[3][11];     // 07C
+  char          ex_mqtt_prefix[3][11];     // 07C  Free since 8.0.0.1
   uint8_t       ex_baudrate;               // 09D
   uint8_t       ex_seriallog_level;        // 09E
   uint8_t       ex_sta_config;             // 09F
@@ -361,7 +360,7 @@ struct {
   uint8_t       ex_webserver;              // 1AB
   uint8_t       ex_weblog_level;           // 1AC
   uint8_t       ex_mqtt_fingerprint[2][20];  // 1AD
-  uint8_t       ex_adc_param_type;         // 1D5
+  uint8_t       ex_ex_adc_param_type;      // 1D5
   uint8_t       ex_free_1d6[10];           // 1D6
   SysBitfield4  ex_flag4;                  // 1E0
   uint8_t       ex_serial_config;          // 1E4
@@ -400,14 +399,14 @@ struct {
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
 
-  char          ex_state_text[4][11];      // 313
-  uint8_t       tuyamcu_topic;             // 33F Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
+  char          ex_state_text[4][11];      // 313  Free since 8.0.0.1
 
+  uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
   unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
   unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];    // 354
-  unsigned long energy_power_calibration;  // 364
+  unsigned long energy_power_calibration;    // 364
   unsigned long energy_voltage_calibration;  // 368
   unsigned long energy_current_calibration;  // 36C
   unsigned long energy_kWhtoday;           // 370
@@ -419,14 +418,14 @@ struct {
   uint16_t      energy_max_voltage;        // 380
   uint16_t      energy_min_current;        // 382
   uint16_t      energy_max_current;        // 384
-  uint16_t      energy_max_power_limit;    // 386 MaxPowerLimit
-  uint16_t      energy_max_power_limit_hold;         // 388 MaxPowerLimitHold
-  uint16_t      energy_max_power_limit_window;       // 38A MaxPowerLimitWindow
-  uint16_t      energy_max_power_safe_limit;         // 38C MaxSafePowerLimit
-  uint16_t      energy_max_power_safe_limit_hold;    // 38E MaxSafePowerLimitHold
-  uint16_t      energy_max_power_safe_limit_window;  // 390 MaxSafePowerLimitWindow
-  uint16_t      energy_max_energy;         // 392 MaxEnergy
-  uint16_t      energy_max_energy_start;   // 394 MaxEnergyStart
+  uint16_t      energy_max_power_limit;              // 386  MaxPowerLimit
+  uint16_t      energy_max_power_limit_hold;         // 388  MaxPowerLimitHold
+  uint16_t      energy_max_power_limit_window;       // 38A  MaxPowerLimitWindow
+  uint16_t      energy_max_power_safe_limit;         // 38C  MaxSafePowerLimit
+  uint16_t      energy_max_power_safe_limit_hold;    // 38E  MaxSafePowerLimitHold
+  uint16_t      energy_max_power_safe_limit_window;  // 390  MaxSafePowerLimitWindow
+  uint16_t      energy_max_energy;         // 392  MaxEnergy
+  uint16_t      energy_max_energy_start;   // 394  MaxEnergyStart
   uint16_t      mqtt_retry;                // 396
   uint8_t       poweronstate;              // 398
   uint8_t       last_module;               // 399
@@ -434,19 +433,17 @@ struct {
   uint16_t      blinkcount;                // 39C
   uint16_t      light_rotation;            // 39E
   SysBitfield3  flag3;                     // 3A0
-  uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
-
-//  char          ex_friendlyname[4][33];    // 3AC
-//  char          ex_switch_topic[33];       // 430
-
-  myio          my_gp;                     // 3AC - 2 x 18 bytes (ESP8266) / 2 x 40 bytes (ESP32)
+  uint8_t       switchmode[MAX_SWITCHES];  // 3A4
+  myio          my_gp;                     // 3AC  2 x 18 bytes (ESP8266) / 2 x 40 bytes (ESP32)
 #ifdef ESP8266
   uint16_t      gpio16_converted;          // 3D0
   uint8_t       free_esp8266_3D2[42];      // 3D2
 #endif
-  mytmplt       user_template;             // 3FC - 2 x 15 bytes (ESP8266) / 2 x 37 bytes (ESP32)
+  mytmplt       user_template;             // 3FC  2 x 15 bytes (ESP8266) / 2 x 37 bytes (ESP32)
 #ifdef ESP8266
+
   uint8_t       free_esp8266_41A[55];      // 41A
+
 #else  // ESP32
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
@@ -456,7 +453,6 @@ struct {
   WebCamCfg     webcam_config;             // 44C
   uint8_t       eth_address;               // 450
 #endif  // ESP8266 - ESP32
-
   char          serial_delimiter;          // 451
   uint8_t       seriallog_level;           // 452
   uint8_t       sleep;                     // 453
@@ -467,18 +463,21 @@ struct {
   uint8_t       ws_width[3];               // 481
 
 #ifdef ESP8266
-  myio8         ex_my_gp8;                 // 484 - 17 bytes (ESP8266) - free since 9.0.0.1
+  myio8         ex_my_gp8;                 // 484 17 bytes (ESP8266) - Free since 9.0.0.1
 #else  // ESP32
+
   uint8_t       free_esp32_484[17];        // 484
+
 #endif  // ESP8266 - ESP32
-  uint8_t       ex_my_adc0;                // 495 free since 9.0.0.1
+
+  uint8_t       ex_my_adc0;                // 495  Free since 9.0.0.1
 
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
   uint8_t       light_correction;          // 49D
   uint8_t       light_dimmer;              // 49E
   uint8_t       rule_enabled;              // 49F
-  uint8_t       rule_once;                 // 4A0  bit 6+7 used by xdrv_10_scripter
+  uint8_t       rule_once;                 // 4A0  Bit 6+7 used by xdrv_10_scripter
   uint8_t       light_fade;                // 4A1
   uint8_t       light_speed;               // 4A2
   uint8_t       light_scheme;              // 4A3
@@ -487,19 +486,19 @@ struct {
   uint16_t      light_wakeup;              // 4A6
   uint8_t       knx_CB_registered;         // 4A8  Number of Group Address to write
 
-  char          ex_web_password[33];       // 4A9
+  char          ex_web_password[33];       // 4A9  Free since 8.0.0.1
 
   uint8_t       interlock[MAX_INTERLOCKS]; // 4CA
 
-  char          ex_ntp_server[3][33];      // 4CE
+  char          ex_ntp_server[3][33];      // 4CE  Free since 8.0.0.1
 
   uint8_t       ina219_mode;               // 531
-  uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
+  uint16_t      pulse_timer[MAX_PULSETIMERS];  // 532
   uint16_t      button_debounce;           // 542
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;           // 554
 
-  char          ex_mqtt_fulltopic[100];    // 558
+  char          ex_mqtt_fulltopic[100];    // 558  Free since 8.0.0.1
 
   SysBitfield2  flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
@@ -522,13 +521,14 @@ struct {
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
   uint8_t       user_template_base;        // 71F
-
   char          user_template_name[15];    // 720  15 bytes - Backward compatibility since v8.2.0.3
 
 #ifdef ESP8266
-  mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - free since 9.0.0.1
+  mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - Free since 9.0.0.1
 #else  // ESP32
+
   uint8_t       free_esp32_72f[14];        // 72F
+
 #endif  // ESP8266 - ESP32
 
   uint8_t       novasds_startingoffset;    // 73D
@@ -538,32 +538,34 @@ struct {
   uint16_t      baudrate;                  // 778
   uint16_t      sbaudrate;                 // 77A
   EnergyUsage   energy_usage;              // 77C
-  uint32_t      adc_param1;                // 794
-  uint32_t      adc_param2;                // 798
-  int           adc_param3;                // 79C
+
+  uint32_t      ex_adc_param1;             // 794  Free since 9.0.0.1
+  uint32_t      ex_adc_param2;             // 798  Free since 9.0.0.1
+  int           ex_adc_param3;             // 79C  Free since 9.0.0.1
+
   uint32_t      monitors;                  // 7A0
-  uint32_t      sensors[3];                // 7A4 Normal WebSensor, Debug SetSensor
+  uint32_t      sensors[3];                // 7A4  Normal WebSensor, Debug SetSensor
   uint32_t      displays;                  // 7B0
   uint32_t      energy_kWhtotal_time;      // 7B4
-  unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
+  unsigned long weight_item;               // 7B8  Weight of one item in gram * 10
   uint16_t      ledmask;                   // 7BC
-  uint16_t      weight_max;                // 7BE Total max weight in kilogram
-  unsigned long weight_reference;          // 7C0 Reference weight in gram
+  uint16_t      weight_max;                // 7BE  Total max weight in kilogram
+  unsigned long weight_reference;          // 7C0  Reference weight in gram
   unsigned long weight_calibration;        // 7C4
-  unsigned long energy_frequency_calibration;  // 7C8 also used by HX711 to save last weight
+  unsigned long energy_frequency_calibration;  // 7C8  Also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
   char          script_pram[5][10];        // 7CE
 
-  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
+  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800  Uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
 
-  TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00    32 bytes
+  TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00  32 bytes
   uint16_t      ina226_r_shunt[4];         // E20
   uint16_t      ina226_i_fs[4];            // E28
   uint16_t      tariff[4][2];              // E30
   uint16_t      shutter_opentime[MAX_SHUTTERS];      // E40
   uint16_t      shutter_closetime[MAX_SHUTTERS];     // E48
   int16_t       shuttercoeff[5][MAX_SHUTTERS];       // E50
-  uint8_t       shutter_options[MAX_SHUTTERS];        // E78
+  uint8_t       shutter_options[MAX_SHUTTERS];       // E78
   uint8_t       shutter_set50percent[MAX_SHUTTERS];  // E7C
   uint8_t       shutter_position[MAX_SHUTTERS];      // E80
   uint8_t       shutter_startrelay[MAX_SHUTTERS];    // E84
@@ -575,13 +577,13 @@ struct {
   uint16_t      dimmer_hw_min;             // E90
   uint16_t      dimmer_hw_max;             // E92
   uint32_t      deepsleep;                 // E94
-  uint16_t      hass_new_discovery;       // E98 - ex2_energy_power_delta on 8.4.0.3, replaced on 8.5.0.1
+  uint16_t      hass_new_discovery;        // E98  ex2_energy_power_delta on 8.4.0.3, replaced on 8.5.0.1
   uint8_t       shutter_motordelay[MAX_SHUTTERS];    // E9A
   int8_t        temp_comp;                 // E9E
   uint8_t       weight_change;             // E9F
-  uint8_t       web_color2[2][3];          // EA0 - Needs to be on integer / 3 distance from web_color
+  uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
 
-  char          ex_cors_domain[33];        // EA6
+  char          ex_cors_domain[33];        // EA6  Free since 8.0.0.1
 
   uint8_t       sta_config;                // EC7
   uint8_t       sta_active;                // EC8
@@ -591,7 +593,9 @@ struct {
   uint8_t       webserver;                 // ECD
   uint8_t       weblog_level;              // ECE
   uint8_t       mqtt_fingerprint[2][20];   // ECF
-  uint8_t       adc_param_type;            // EF7
+
+  uint8_t       ex_adc_param_type;         // EF7  Free since 9.0.0.1
+
   SysBitfield4  flag4;                     // EF8
   uint16_t      mqtt_port;                 // EFC
   uint8_t       serial_config;             // EFE
@@ -615,7 +619,7 @@ struct {
   uint64_t      zb_precfgkey_h;            // F28
   uint16_t      zb_pan_id;                 // F30
   uint8_t       zb_channel;                // F32
-  uint8_t       zb_txradio_dbm;            // F33
+  int8_t        zb_txradio_dbm;            // F33
   uint16_t      pms_wake_interval;         // F34
   uint8_t       config_version;            // F36
   uint8_t       windmeter_pulses_x_rot;    // F37
@@ -631,29 +635,30 @@ struct {
   uint16_t      energy_power_delta[3];     // F44
   uint16_t      shutter_pwmrange[2][MAX_SHUTTERS];  // F4A
 
-
-  uint8_t       free_f5a[89];             // F5A - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f5a[89];             // F5A  Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   SysBitfield5  flag5;                     // FB4
-  uint16_t      pulse_counter_debounce_low;  // FB8
-  uint16_t      pulse_counter_debounce_high; // FBA
+  uint16_t      pulse_counter_debounce_low;   // FB8
+  uint16_t      pulse_counter_debounce_high;  // FBA
   uint32_t      keeloq_master_msb;         // FBC
   uint32_t      keeloq_master_lsb;         // FC0
   uint32_t      keeloq_serial;             // FC4
   uint32_t      keeloq_count;              // FC8
-  uint32_t      device_group_share_in;     // FCC - Bitmask of device group items imported
-  uint32_t      device_group_share_out;    // FD0 - Bitmask of device group items exported
+  uint32_t      device_group_share_in;     // FCC  Bitmask of device group items imported
+  uint32_t      device_group_share_out;    // FD0  Bitmask of device group items exported
   uint32_t      bootcount_reset_time;      // FD4
-  int           adc_param4;                // FD8
+
+  int           ex_adc_param4;             // FD8  Free since 9.0.0.1
+
   uint32_t      shutter_button[MAX_KEYS];  // FDC
-  uint32_t      i2c_drivers[3];            // FEC I2cDriver
+  uint32_t      i2c_drivers[3];            // FEC  I2cDriver
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC
 } Settings;
 
 typedef struct {
-  uint16_t      valid;                     // 280 (RTC memory offset 100 - sizeof(RTCRBT))
+  uint16_t      valid;                     // 280  (RTC memory offset 100 - sizeof(RTCRBT))
   uint8_t       fast_reboot_count;         // 282
   uint8_t       free_003[1];               // 283
 } TRtcReboot;
@@ -663,12 +668,12 @@ RTC_NOINIT_ATTR TRtcReboot RtcDataReboot;
 #endif
 
 typedef struct {
-  uint16_t      valid;                     // 290 (RTC memory offset 100)
+  uint16_t      valid;                     // 290  (RTC memory offset 100)
   uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
   unsigned long energy_kWhtoday;              // 294
   unsigned long energy_kWhtotal;              // 298
-  unsigned long pulse_counter[MAX_COUNTERS];  // 29C
+  volatile unsigned long pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
   power_t       power;                     // 2AC
   EnergyUsage   energy_usage;              // 2B0
   unsigned long nextwakeup;                // 2C8

@@ -25,9 +25,9 @@ class ZigbeeZCLSendMessage {
 public:
   uint16_t shortaddr;
   uint16_t groupaddr;
-  uint16_t clusterId;
+  uint16_t cluster;
   uint8_t endpoint;
-  uint8_t cmdId;
+  uint8_t cmd;
   uint16_t manuf;
   bool clusterSpecific;
   bool needResponse;

@@ -42,7 +42,7 @@ const uint8_t rotary_dimmer_increment = 100 / ROTARY_MAX_STEPS;  // Dimmer 1..10
 const uint8_t rotary_ct_increment = 350 / ROTARY_MAX_STEPS;      // Ct 153..500 = 347
 const uint8_t rotary_color_increment = 360 / ROTARY_MAX_STEPS;   // Hue 0..359 = 360
 
-const uint8_t ROTARY_TIMEOUT = 10;             // 10 * RotaryHandler() call which is usually 10 * 0.05 seconds
+const uint8_t ROTARY_TIMEOUT = 5;              // 5 * RotaryHandler() call which is usually 5 * 0.05 seconds
 const uint8_t ROTARY_DEBOUNCE = 10;            // Debounce time in milliseconds
 
 struct ROTARY {
@@ -50,15 +50,15 @@ struct ROTARY {
 } Rotary;
 
 struct tEncoder {
-  uint32_t debounce = 0;
+  volatile uint32_t debounce = 0;
   int8_t abs_position[2] = { 0 };
-  int8_t direction = 0;                        // Control consistent direction
-  int8_t pin = -1;
-  uint8_t position = 128;
+  volatile int8_t direction = 0;               // Control consistent direction
+  volatile int8_t pin = -1;
+  volatile uint8_t position = 128;
   uint8_t last_position = 128;
   uint8_t timeout = 0;                         // Disallow direction change within 0.5 second
   bool changed = false;
-  bool busy = false;
+  volatile bool busy = false;
 };
 tEncoder Encoder[MAX_ROTARIES];
 

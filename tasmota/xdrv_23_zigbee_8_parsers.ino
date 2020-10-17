@@ -27,7 +27,7 @@
 uint8_t ZNP_RSSI2Lqi(int8_t rssi) {
   if (rssi < -87)  { rssi = -87; }
   if (rssi > 10)   { rssi = 10; }
-  return changeUIntScale(rssi + 87, 0, 87+10, 0, 255);
+  return changeUIntScale(rssi + 87, 0, 87+10, 0, 254);
 }
 
 /*********************************************************************************************\
@@ -406,7 +406,7 @@ int32_t EZ_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
   }
 }
 
-static bool EZ_reset_config = false;
+bool EZ_reset_config = false;
 
 // Set or clear reset_config
 int32_t EZ_Set_ResetConfig(uint8_t value) {

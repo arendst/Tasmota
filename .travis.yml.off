@@ -39,6 +39,7 @@ env:
   - ENV=tasmota-TR
   - ENV=tasmota-TW
   - ENV=tasmota-UK
+  - ENV=tasmota-VN
 
 script:
   - platformio run -e $ENV
