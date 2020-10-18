@@ -71,7 +71,7 @@ struct EZOStruct {
     // Figure out if we're trying to address a specific device
     // PS: This should ideally be done through the Tasmota mailbox
     if (at[0] == '-') {
-      uint32_t idx = atoi(&at[1]);
+      uint32_t idx = atoi(&at[1]) - 1;
       at = strchr(at, ' ');
 
       if (!at++) {
