@@ -131,6 +131,8 @@
 | USE_VEML7700          | - | - | - | - | - | - | - |
 | USE_MCP9808           | - | - | - | - | - | - | - |
 | USE_HP303B            | - | - | - | - | - | - | - |
+| USE_EZOPH             | - | - | - | - | - | - | - |
+| USE_EZOORP            | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
@@ -186,10 +188,6 @@
 | USE_DISPLAY_ILI9488   | - | - | - | - | - | - | - |
 | USE_DISPLAY_SSD1351   | - | - | - | - | - | - | - |
 | USE_DISPLAY_RA8876    | - | - | - | - | - | - | - |
-|                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
-| USE_EZOPH             | - | - | - | - | - | - | - |
-| USE_EZOORP            | - | - | - | - | - | - | - |
 
 ## Additional Features and Sensors on ESP32
 

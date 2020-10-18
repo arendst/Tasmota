@@ -71,6 +71,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for analog buttons indexed within standard button range
 - Support for Vietnamese language translations by Tâm.NT
 - Support for timers in case of no-sunset permanent day by cybermaus (#9543)
+- Support for EZO Ph and ORP sensors by Christopher Tremblay (#9567)
 
 ### Changed
 - Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too

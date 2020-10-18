@@ -631,7 +631,7 @@ void GetFeatures(void)
   feature7 = 0x00000000;
 
 #if defined(USE_I2C) && defined(USE_EZOORP)
-  feature7 |= 0x00000001; // xsns_79_ezoorp.ino
+  feature7 |= 0x00000001;  // xsns_79_ezoorp.ino
 #endif
 //  feature7 |= 0x00000002;
 //  feature7 |= 0x00000004;
