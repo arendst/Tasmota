@@ -723,6 +723,8 @@
 #define D_SENSOR_IEM3000_RX    "iEM3000 - RX"
 #define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
+#define D_SENSOR_AS608_TX      "AS608 TX"
+#define D_SENSOR_AS608_RX      "AS608 RX"
 
 // Units
 #define D_UNIT_AMPERE "A"

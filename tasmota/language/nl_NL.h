@@ -650,6 +650,8 @@
 #define D_SENSOR_HRE_CLOCK     "HRE Clock"
 #define D_SENSOR_HRE_DATA      "HRE Data"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
+#define D_SENSOR_AS608_TX      "AS608 TX"
+#define D_SENSOR_AS608_RX      "AS608 RX"
 #define D_SENSOR_BUZZER        "Zoemer"
 #define D_SENSOR_OLED_RESET    "OLED Reset"
 #define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
