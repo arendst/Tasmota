@@ -42,9 +42,6 @@ const uint8_t  ZIGBEE_STATUS_EZ_INFO = 56;              // Status: EFR32 EZ Devi
 const uint8_t  ZIGBEE_STATUS_UNSUPPORTED_VERSION = 98;  // Unsupported ZNP version
 const uint8_t  ZIGBEE_STATUS_ABORT = 99;                // Fatal error, Zigbee not working
 
-typedef int32_t (*ZB_Func)(uint8_t value);
-typedef int32_t (*ZB_RecvMsgFunc)(int32_t res, const class SBuffer &buf);
-
 typedef union Zigbee_Instruction {
   struct {
     uint8_t  i;      // instruction
@@ -105,55 +102,6 @@ enum Zigbee_StateMachine_Instruction_Set {
 #define ZI_WAIT_UNTIL(x, m) { .i = { ZGB_INSTR_WAIT_UNTIL, sizeof(m), (x)} }, { .p = (const void*)(m) },
 #define ZI_WAIT_UNTIL_FUNC(x, m, f) { .i = { ZGB_INSTR_WAIT_UNTIL_CALL, sizeof(m), (x)} }, { .p = (const void*)(m) }, { .p = (const void*)(f) },
 #define ZI_WAIT_RECV_FUNC(x, m, f)  { .i = { ZGB_INSTR_WAIT_RECV_CALL, sizeof(m), (x)} },  { .p = (const void*)(m) }, { .p = (const void*)(f) },
-
-// Labels used in the State Machine -- internal only
-const uint8_t  ZIGBEE_LABEL_RESTART = 1;     // Restart the state_machine in a different mode
-const uint8_t  ZIGBEE_LABEL_INIT_COORD = 10;     // Start ZNP as coordinator
-const uint8_t  ZIGBEE_LABEL_START_COORD = 11;     // Start ZNP as coordinator
-const uint8_t  ZIGBEE_LABEL_INIT_ROUTER = 12;    // Init ZNP as router
-const uint8_t  ZIGBEE_LABEL_START_ROUTER = 13;    // Start ZNP as router
-const uint8_t  ZIGBEE_LABEL_INIT_DEVICE = 14;    // Init ZNP as end-device
-const uint8_t  ZIGBEE_LABEL_START_DEVICE = 15;    // Start ZNP as end-device
-const uint8_t  ZIGBEE_LABEL_START_ROUTER_DEVICE = 16;    // Start common to router and device
-const uint8_t  ZIGBEE_LABEL_FACT_RESET_ROUTER_DEVICE_POST = 19;   // common post configuration for router and device
-const uint8_t  ZIGBEE_LABEL_READY = 20;   // goto label 20 for main loop
-const uint8_t  ZIGBEE_LABEL_MAIN_LOOP = 21;   // main loop
-const uint8_t  ZIGBEE_LABEL_NETWORK_CONFIGURED = 22;   // main loop
-const uint8_t  ZIGBEE_LABEL_BAD_CONFIG = 23;          // EZSP configuration is not the right one
-const uint8_t  ZIGBEE_LABEL_PERMIT_JOIN_CLOSE = 30;   // disable permit join
-const uint8_t  ZIGBEE_LABEL_PERMIT_JOIN_OPEN_60 = 31;    // enable permit join for 60 seconds
-const uint8_t  ZIGBEE_LABEL_PERMIT_JOIN_OPEN_XX = 32;    // enable permit join for 60 seconds
-// factory reset or reconfiguration
-const uint8_t  ZIGBEE_LABEL_FACT_RESET_COORD = 50;   // main loop
-const uint8_t  ZIGBEE_LABEL_FACT_RESET_ROUTER = 51;   // main loop
-const uint8_t  ZIGBEE_LABEL_FACT_RESET_DEVICE = 52;   // main loop
-const uint8_t  ZIGBEE_LABEL_CONFIGURE_EZSP = 53;   // main loop
-// errors
-const uint8_t  ZIGBEE_LABEL_ABORT = 99;   // goto label 99 in case of fatal error
-const uint8_t  ZIGBEE_LABEL_UNSUPPORTED_VERSION = 98;  // Unsupported ZNP version
-
-struct ZigbeeStatus {
-  bool active = true;                 // is Zigbee active for this device, i.e. GPIOs configured
-  bool state_machine = false;		      // the state machine is running
-  bool state_waiting = false;         // the state machine is waiting for external event or timeout
-  bool state_no_timeout = false;      // the current wait loop does not generate a timeout but only continues running
-  bool ready = false;								  // cc2530 initialization is complet, ready to operate
-  uint8_t on_error_goto = ZIGBEE_LABEL_ABORT;         // on error goto label, 99 default to abort
-  uint8_t on_timeout_goto = ZIGBEE_LABEL_ABORT;       // on timeout goto label, 99 default to abort
-  int16_t pc = 0;                     // program counter, -1 means abort
-  uint32_t next_timeout = 0;          // millis for the next timeout
-
-  uint8_t        *recv_filter = nullptr;        // receive filter message
-  bool            recv_until = false;           // ignore all messages until the received frame fully matches
-  size_t          recv_filter_len = 0;
-  ZB_RecvMsgFunc recv_func = nullptr;          // function to call when message is expected
-  ZB_RecvMsgFunc recv_unexpected = nullptr;    // function called when unexpected message is received
-
-  bool init_phase = true;             // initialization phase, before accepting zigbee traffic
-};
-struct ZigbeeStatus zigbee;
-
-SBuffer *zigbee_buffer = nullptr;
 
 /*********************************************************************************************\
  * State Machine
