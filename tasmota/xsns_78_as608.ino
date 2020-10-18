@@ -12,8 +12,6 @@ bool as608selected = false;
 static uint8_t enrollstep = 0;
 static uint8_t ModellNumber = 0;
 
-//Adafruit_Fingerprint finger;
-//Adafruit_Fingerprint finger = NULL;
 Adafruit_Fingerprint *finger = NULL;
 TasmotaSerial *serial = NULL;
 
