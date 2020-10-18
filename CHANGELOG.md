@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for Vietnamese language translations by Tâm.NT
 - Support for timers in case of no-sunset permanent day by cybermaus (#9543)
 - Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
+- Command ``SwitchMode 15`` sending only MQTT message on switch change (#9596)
 
 ### Changed
 - Command ``Gpio17`` replaces command ``Adc``
@@ -29,7 +30,7 @@ All notable changes to this project will be documented in this file.
 - Optional support for inverted NeoPixelBus data line by enabling ``#define USE_WS2812_INVERTED`` (#8988)
 - PWM dimmer color/trigger on tap, SO88 led, DGR WITH_LOCAL flag by Paul Diem (#9474)
 - Support for stateful ACs using ``StateMode`` in tasmota-ir.bin by Arik Yavilevich (#9472)
-- Zigbee ``ZbData`` command for better support of device specific data
+- Zigbee command ``ZbData`` for better support of device specific data
 - Support for analog buttons indexed within standard button range
 
 ### Changed

@@ -393,6 +393,9 @@ void SwitchHandler(uint8_t mode)
             switchflag = POWER_ON;       // Power ON with releasing pushbutton from Gnd
           }
           break;
+        case PUSH_IGNORE:
+          MqttPublishSensor();
+          break;
         }
         Switch.last_state[i] = button;
       }
