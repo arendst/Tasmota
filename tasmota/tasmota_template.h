@@ -151,6 +151,8 @@ enum UserSelectablePins {
   GPIO_MIEL_HVAC_RX,                   // Mitsubishi Electric HVAC RX pin
   GPIO_WE517_TX,                       // ORNO WE517 Serial interface
   GPIO_WE517_RX,                       // ORNO WE517 Serial interface
+  GPIO_AS608_TX,                       // Serial interface AS608
+  GPIO_AS608_RX,                       // Serial interface AS608
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -257,6 +259,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ZIGBEE_RST "|"
   D_SENSOR_DYP_RX "|"
   D_SENSOR_MIEL_HVAC_TX "|" D_SENSOR_MIEL_HVAC_RX "|"
+  D_SENSOR_AS608_TX "|" D_SENSOR_AS608_RX "|"
   D_SENSOR_WE517_TX "|" D_SENSOR_WE517_RX
   ;
 
@@ -568,7 +571,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_BOILER_OT_TX),
   AGPIO(GPIO_BOILER_OT_RX),
 #endif
-
+#ifdef USE_AS608
+  AGPIO(GPIO_AS608_TX),
+  AGPIO(GPIO_AS608_RX),
+#endif
 /*-------------------------------------------------------------------------------------------*\
  * Other sensors
 \*-------------------------------------------------------------------------------------------*/
@@ -1236,7 +1242,9 @@ const uint16_t kGpioConvert[] PROGMEM = {
   AGPIO(GPIO_IEM3000_TX),     // IEM3000 Serial interface
   AGPIO(GPIO_IEM3000_RX),     // IEM3000 Serial interface
   AGPIO(GPIO_ZIGBEE_RST),     // Zigbee reset
-  AGPIO(GPIO_DYP_RX)
+  AGPIO(GPIO_DYP_RX),
+  AGPIO(GPIO_AS608_TX),
+  AGPIO(GPIO_AS608_RX)
 };
 
 /********************************************************************************************/
