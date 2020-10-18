@@ -125,7 +125,9 @@
 #define D_OK "Ok"
 #define D_ON "Marche"
 #define D_ONLINE "Connecté"
+#define D_ORP "ORP"
 #define D_PASSWORD "Mot de passe"
+#define D_PH "pH"
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Fact de puiss"
 #define D_POWERUSAGE "Puissance"
@@ -745,6 +747,7 @@
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
+#define D_UNIT_MILLIVOLT "mV"
 #define D_UNIT_MINUTE "min"  // https://fr.wikipedia.org/wiki/Minute_(temps)#Symbole%20et%20d%C3%A9finition
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"

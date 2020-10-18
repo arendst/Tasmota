@@ -111,7 +111,9 @@
 #define D_JSON_NOISE "Noise"
 #define D_JSON_NONE "None"
 #define D_JSON_OR "or"
+#define D_JSON_ORP "ORP"
 #define D_JSON_PERIOD "Period"
+#define D_JSON_PH "pH"
 #define D_JSON_PHASE_ANGLE "PhaseAngle"
 #define D_JSON_POWERFACTOR "Factor"
 #define D_JSON_POWERUSAGE "Power"
@@ -768,6 +770,8 @@ const char HTTP_SNS_VOLTAGE[]       PROGMEM = "{s}"     D_VOLTAGE             "{
 const char HTTP_SNS_CURRENT[]       PROGMEM = "{s}"     D_CURRENT             "{m}%s " D_UNIT_AMPERE              "{e}";
 const char HTTP_SNS_POWER[]         PROGMEM = "{s}"     D_POWERUSAGE          "{m}%s " D_UNIT_WATT                "{e}";
 const char HTTP_SNS_ENERGY_TOTAL[]  PROGMEM = "{s}"     D_ENERGY_TOTAL        "{m}%s " D_UNIT_KILOWATTHOUR        "{e}";
+const char HTTP_SNS_PH[]            PROGMEM = "{s}%s "  D_PH                  "{m}%s "                            "{e}";
+const char HTTP_SNS_ORP[]           PROGMEM = "{s}%s "  D_ORP                 "{m}%s " D_UNIT_MILLIVOLT           "{e}";
 
 const char S_MAIN_MENU[]              PROGMEM = D_MAIN_MENU;
 const char S_CONFIGURATION[]          PROGMEM = D_CONFIGURATION;

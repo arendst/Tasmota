@@ -796,6 +796,9 @@
 //#define USE_WEBCAM                               // Add support for webcam
 
 #endif
+                                                 // Shared EZO code required for any EZO device (+1k0 code)
+//  #define USE_EZOPH                              // Add support for EZO's pH sensor (+0k6 code)
+//  #define USE_EZOORP                             // Add support for EZO's ORP sensor (+0k6 code)
 
 /*********************************************************************************************\
  * Debug features
