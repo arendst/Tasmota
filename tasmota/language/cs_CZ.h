@@ -129,7 +129,9 @@
 #define D_OK "OK"
 #define D_ON "Zap."
 #define D_ONLINE "Online"                  // Don't translate, LWT message! Nepředkládat, LWT zpráva!
+#define D_ORP "ORP"
 #define D_PASSWORD "Heslo"
+#define D_PH "pH"
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Účiník"
 #define D_POWERUSAGE "Příkon"
