@@ -751,6 +751,7 @@
 #define D_UNIT_MILLIMETER "毫米"
 #define D_UNIT_MILLIMETER_MERCURY "毫米汞柱"
 #define D_UNIT_MILLISECOND "毫秒"
+#define D_UNIT_MILLIVOLT "mV"
 #define D_UNIT_MINUTE "分"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "每分升"

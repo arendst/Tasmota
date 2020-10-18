@@ -751,6 +751,7 @@
 #define D_UNIT_MILLIMETER                "мм"
 #define D_UNIT_MILLIMETER_MERCURY        "ммHg"
 #define D_UNIT_MILLISECOND               "мС"
+#define D_UNIT_MILLIVOLT                 "mV"
 #define D_UNIT_MINUTE                    "хв"
 #define D_UNIT_PARTS_PER_BILLION         "млрд⁻¹"
 #define D_UNIT_PARTS_PER_DECILITER       "децилітр⁻¹"

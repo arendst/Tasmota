@@ -751,6 +751,7 @@
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "밀리초"
+#define D_UNIT_MILLIVOLT "mV"
 #define D_UNIT_MINUTE "분"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
