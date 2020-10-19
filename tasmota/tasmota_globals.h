@@ -112,10 +112,10 @@ String EthernetMacAddress(void);
 
 #ifndef MQTT_FINGERPRINT1
 // Set an all-zeros default fingerprint to activate auto-learning on first connection (AWS IoT)
-#define MQTT_FINGERPRINT1           "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+#define MQTT_FINGERPRINT1      0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  // [MqttFingerprint1] (auto-learn)
 #endif
 #ifndef MQTT_FINGERPRINT2           // SHA1('')
-#define MQTT_FINGERPRINT2           "DA 39 A3 EE 5E 6B 4B 0D 32 55 BF EF 95 60 18 90 AF D8 07 09"
+#define MQTT_FINGERPRINT2      0xDA,0x39,0xA3,0xEE,0x5E,0x6B,0x4B,0x0D,0x32,0x55,0xBF,0xEF,0x95,0x60,0x18,0x90,0xAF,0xD8,0x07,0x09  // [MqttFingerprint2] (invalid)
 #endif
 
 #ifndef WS2812_LEDS

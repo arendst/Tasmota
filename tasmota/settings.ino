@@ -874,17 +874,10 @@ void SettingsDefaultSet2(void)
   SettingsUpdateText(SET_STATE_TXT2, MQTT_STATUS_ON);
   SettingsUpdateText(SET_STATE_TXT3, MQTT_CMND_TOGGLE);
   SettingsUpdateText(SET_STATE_TXT4, MQTT_CMND_HOLD);
-  char fingerprint[64];
-  strncpy_P(fingerprint, PSTR(MQTT_FINGERPRINT1), sizeof(fingerprint));
-  char *p = fingerprint;
-  for (uint32_t i = 0; i < 20; i++) {
-    Settings.mqtt_fingerprint[0][i] = strtol(p, &p, 16);
-  }
-  strncpy_P(fingerprint, PSTR(MQTT_FINGERPRINT2), sizeof(fingerprint));
-  p = fingerprint;
-  for (uint32_t i = 0; i < 20; i++) {
-    Settings.mqtt_fingerprint[1][i] = strtol(p, &p, 16);
-  }
+  static const uint8_t fingerprint1[] PROGMEM = { MQTT_FINGERPRINT1 };
+  static const uint8_t fingerprint2[] PROGMEM = { MQTT_FINGERPRINT2 };
+  memcpy_P(Settings.mqtt_fingerprint[0], fingerprint1, sizeof(fingerprint1));
+  memcpy_P(Settings.mqtt_fingerprint[1], fingerprint2, sizeof(fingerprint2));
   Settings.tele_period = TELE_PERIOD;
   Settings.mqttlog_level = MQTT_LOG_LEVEL;
 
