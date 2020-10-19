@@ -386,7 +386,7 @@ char* RemoveControlCharacter(char* p) {
       *write++ = ch;
     }
   }
-  if (write != p) { *write-- = '\0'; }
+  *write++ = '\0';
   return p;
 }
 

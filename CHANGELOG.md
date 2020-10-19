@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Correct Energy period display shortly after midnight by gominoa (#9536)
 - Rule handling of Var or Mem using text regression from v8.5.0.1 (#9540)
 - TuyaMcu energy display regression from v8.5.0.1 (#9547)
+- MQTT data corruption on ``MQTTLog 4`` (#9571)
 
 ## [9.0.0.1] - 20201010
 ### Added
