@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Command ``Gpio17`` replaces command ``Adc``
 - Command ``Gpios`` replaces command ``Adcs``
 - Management of serial baudrate (#9554)
+- ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
 
 ### Fixed
 - Convert AdcParam parameters from versions before v9.0.0.2

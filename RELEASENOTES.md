@@ -77,6 +77,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too
 - Command ``Gpio17`` replaces command ``Adc``
 - Command ``Gpios`` replaces command ``Adcs``
+- ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
 - New IR Raw compact format (#9444)
 - MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
 - A4988 optional microstep pin selection
