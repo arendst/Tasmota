@@ -34,6 +34,7 @@ public:
   uint16_t manuf;
   bool clusterSpecific;
   bool needResponse;
+  bool direct;          // true if direct, false if discover router
   uint8_t transacId;    // ZCL transaction number
   const uint8_t *msg;
   size_t len;
@@ -86,6 +87,8 @@ struct ZigbeeStatus {
 
   ZB_RecvMsgFunc recv_func = nullptr;          // function to call when message is expected
   ZB_RecvMsgFunc recv_unexpected = nullptr;    // function called when unexpected message is received
+
+  uint32_t permit_end_time = 0;       // timestamp when permit join ends
 };
 struct ZigbeeStatus zigbee;
 SBuffer *zigbee_buffer = nullptr;

@@ -819,7 +819,11 @@ void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
     buf.add16(zcl.cluster);               // cluster
     buf.add8(0x01);                     // srcEp
     buf.add8(zcl.endpoint);                 // dstEp
-    buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
+    if (zcl.direct) {
+      buf.add16(0x0000);      // APS frame
+    } else {
+      buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
+    }
     buf.add16(zcl.groupaddr);               // groupId
     buf.add8(zcl.transacId);
     // end of ApsFrame
@@ -843,7 +847,11 @@ void ZigbeeZCLSend_Raw(const ZigbeeZCLSendMessage &zcl) {
     buf.add16(zcl.cluster);               // cluster
     buf.add8(0x01);                     // srcEp
     buf.add8(zcl.endpoint);                 // broadcast endpoint for groupcast
-    buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
+    if (zcl.direct) {
+      buf.add16(0x0000);      // APS frame
+    } else {
+      buf.add16(EMBER_APS_OPTION_ENABLE_ROUTE_DISCOVERY | EMBER_APS_OPTION_RETRY);      // APS frame
+    }
     buf.add16(zcl.groupaddr);               // groupId
     buf.add8(zcl.transacId);
     // end of ApsFrame

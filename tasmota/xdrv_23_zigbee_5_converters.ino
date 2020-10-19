@@ -753,6 +753,8 @@ public:
   void syntheticAqaraCubeOrButton(Z_attribute_list &attr_list, class Z_attribute &attr);
   void syntheticAqaraVibration(Z_attribute_list &attr_list, class Z_attribute &attr);
 
+  // handle read attributes auto-responder
+  void autoResponder(const uint16_t *attr_list_ids, size_t attr_len);
 
   inline void setGroupId(uint16_t groupid) {
     _groupaddr = groupid;
@@ -1182,6 +1184,7 @@ void ZCLFrame::parseReportAttributes(Z_attribute_list& attr_list) {
       _manuf_code,
       false /* not cluster specific */,
       false /* noresponse */,
+      true /* direct no retry */,
       _transact_seq,  /* zcl transaction id */
       buf.getBuffer(), buf.len()
     }));
@@ -1349,7 +1352,7 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
   attr_list.addAttribute(F("ReadNames")).setStrRaw(attr_names.toString(true).c_str());
  
   // call auto-responder
-  Z_AutoResponder(_srcaddr, _cluster_id, _srcendpoint, read_attr_ids, len/2);
+  autoResponder(read_attr_ids, len/2);
 }
 
 // ZCL_CONFIGURE_REPORTING_RESPONSE
