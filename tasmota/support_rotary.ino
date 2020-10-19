@@ -37,25 +37,56 @@
 #define ROTARY_MAX_STEPS     10                // Rotary step boundary
 #endif
 
-// 1 pulse per step
-const uint8_t rotary_dimmer_increment = 100 / ROTARY_MAX_STEPS;  // Dimmer 1..100 = 100
-const uint8_t rotary_ct_increment = 350 / ROTARY_MAX_STEPS;      // Ct 153..500 = 347
-const uint8_t rotary_color_increment = 360 / ROTARY_MAX_STEPS;   // Hue 0..359 = 360
+#define ROTARY_OPTION1                         // Up to 4 interrupts and pulses per step
+//#define ROTARY_OPTION2                         // Up to 4 interrupts but 1 pulse per step
+//#define ROTARY_OPTION3                         // 1 interrupt and pulse per step
 
-const uint8_t ROTARY_TIMEOUT = 5;              // 5 * RotaryHandler() call which is usually 5 * 0.05 seconds
-const uint8_t ROTARY_DEBOUNCE = 10;            // Debounce time in milliseconds
+#ifdef ROTARY_OPTION1
+// up to 4 pulses per step
+const uint8_t rotary_dimmer_increment = 100 / (ROTARY_MAX_STEPS * 3);  // Dimmer 1..100 = 100
+const uint8_t rotary_ct_increment = 350 / (ROTARY_MAX_STEPS * 3);      // Ct 153..500 = 347
+const uint8_t rotary_color_increment = 360 / (ROTARY_MAX_STEPS * 3);   // Hue 0..359 = 360
+#endif  // ROTARY_OPTION1
+
+#ifdef ROTARY_OPTION2
+// 1 pulse per step
+const uint8_t rotary_dimmer_increment = 100 / ROTARY_MAX_STEPS;        // Dimmer 1..100 = 100
+const uint8_t rotary_ct_increment = 350 / ROTARY_MAX_STEPS;            // Ct 153..500 = 347
+const uint8_t rotary_color_increment = 360 / ROTARY_MAX_STEPS;         // Hue 0..359 = 360
+#endif  // ROTARY_OPTION2
+
+#ifdef ROTARY_OPTION3
+// 1 pulse per step
+const uint8_t rotary_dimmer_increment = 100 / ROTARY_MAX_STEPS;        // Dimmer 1..100 = 100
+const uint8_t rotary_ct_increment = 350 / ROTARY_MAX_STEPS;            // Ct 153..500 = 347
+const uint8_t rotary_color_increment = 360 / ROTARY_MAX_STEPS;         // Hue 0..359 = 360
+const uint8_t ROTARY_DEBOUNCE = 10;                                    // Debounce time in milliseconds
+#endif  // ROTARY_OPTION3
+
+const uint8_t ROTARY_TIMEOUT = 10;                                     // 10 * RotaryHandler() call which is usually 10 * 0.05 seconds
 
 struct ROTARY {
   bool present = false;
 } Rotary;
 
 struct tEncoder {
+#ifdef ROTARY_OPTION1
+  volatile uint8_t state = 0;
+  volatile int8_t pina = -1;
+#endif  // ROTARY_OPTION1
+#ifdef ROTARY_OPTION2
+  volatile uint16_t store;
+  volatile uint8_t prev_next_code;
+  volatile int8_t pina = -1;
+#endif  // ROTARY_OPTION2
+#ifdef ROTARY_OPTION3
   volatile uint32_t debounce = 0;
-  int8_t abs_position[2] = { 0 };
+#endif  // ROTARY_OPTION3
   volatile int8_t direction = 0;               // Control consistent direction
-  volatile int8_t pin = -1;
+  volatile int8_t pinb = -1;
   volatile uint8_t position = 128;
   uint8_t last_position = 128;
+  int8_t abs_position[2] = { 0 };
   uint8_t timeout = 0;                         // Disallow direction change within 0.5 second
   bool changed = false;
   volatile bool busy = false;
@@ -68,7 +99,7 @@ bool RotaryButtonPressed(uint32_t button_index) {
   if (!Rotary.present) { return false; }
 
   for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
-    if (-1 == Encoder[index].pin) { continue; }
+    if (-1 == Encoder[index].pinb) { continue; }
     if (index != button_index) { continue; }
 
     bool powered_on = (power);
@@ -91,32 +122,158 @@ void ICACHE_RAM_ATTR RotaryIsrArg(void *arg) {
 
   if (encoder->busy) { return; }
 
+#ifdef ROTARY_OPTION1
+  // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
+/*
+  uint8_t p1val = digitalRead(encoder->pina);
+  uint8_t p2val = digitalRead(encoder->pinb);
+  uint8_t state = encoder->state & 3;
+  if (p1val) { state |= 4; }
+  if (p2val) { state |= 8; }
+  encoder->state = (state >> 2);
+  switch (state) {
+    case 1: case 7: case 8: case 14:
+      encoder->position++;
+      return;
+    case 2: case 4: case 11: case 13:
+      encoder->position--;
+      return;
+    case 3: case 12:
+      encoder->position += 2;
+      return;
+    case 6: case 9:
+      encoder->position -= 2;
+      return;
+  }
+*/
+
+/*
+  uint8_t p1val = digitalRead(encoder->pina);
+  uint8_t p2val = digitalRead(encoder->pinb);
+  uint8_t state = encoder->state & 3;
+  if (p1val) { state |= 4; }
+  if (p2val) { state |= 8; }
+  encoder->state = (state >> 2);
+  int direction = 0;
+  int multiply = 1;
+  switch (state) {
+    case 3: case 12:
+      multiply = 2;
+    case 1: case 7: case 8: case 14:
+      direction = 1;
+      break;
+    case 6: case 9:
+      multiply = 2;
+    case 2: case 4: case 11: case 13:
+      direction = -1;
+      break;
+  }
+  if ((0 == encoder->direction) || (direction == encoder->direction)) {
+    encoder->position += (direction * multiply);
+    encoder->direction = direction;
+  }
+*/
+
+  uint8_t state = encoder->state & 3;
+  if (digitalRead(encoder->pina)) { state |= 4; }
+  if (digitalRead(encoder->pinb)) { state |= 8; }
+  encoder->state = (state >> 2);
+  switch (state) {
+    case 1: case 7: case 8: case 14:
+      encoder->position++;
+      return;
+    case 2: case 4: case 11: case 13:
+      encoder->position--;
+      return;
+    case 3: case 12:
+      encoder->position += 2;
+      return;
+    case 6: case 9:
+      encoder->position -= 2;
+      return;
+  }
+#endif  // ROTARY_OPTION1
+
+#ifdef ROTARY_OPTION2
+  // https://github.com/FrankBoesing/EncoderBounce/blob/master/EncoderBounce.h
+/*
+  const uint16_t rot_enc = 0b0110100110010110;
+
+  uint8_t p1val = digitalRead(encoder->pinb);
+  uint8_t p2val = digitalRead(encoder->pina);
+  uint8_t t = encoder->prev_next_code;
+  t <<= 2;
+  if (p1val) { t |= 0x02; }
+  if (p2val) { t |= 0x01; }
+  t &= 0x0f;
+  encoder->prev_next_code = t;
+
+  // If valid then store as 16 bit data.
+  if (rot_enc & (1 << t)) {
+    encoder->store = (encoder->store << 4) | encoder->prev_next_code;
+    if (encoder->store == 0xd42b) { encoder->position++; }
+    else if (encoder->store == 0xe817) { encoder->position--; }
+    else if ((encoder->store & 0xff) == 0x2b) { encoder->position--; }
+    else if ((encoder->store & 0xff) == 0x17) { encoder->position++; }
+  }
+*/
+  const uint16_t rot_enc = 0b0110100110010110;
+
+  uint8_t p1val = digitalRead(encoder->pinb);
+  uint8_t p2val = digitalRead(encoder->pina);
+  uint8_t t = encoder->prev_next_code;
+  t <<= 2;
+  if (p1val) { t |= 0x02; }
+  if (p2val) { t |= 0x01; }
+  t &= 0x0f;
+  encoder->prev_next_code = t;
+
+  // If valid then store as 16 bit data.
+  if (rot_enc & (1 << t)) {
+    encoder->store = (encoder->store << 4) | encoder->prev_next_code;
+    int direction = 0;
+    if (encoder->store == 0xd42b) { direction = 1; }
+    else if (encoder->store == 0xe817) { direction = -1; }
+    else if ((encoder->store & 0xff) == 0x2b) { direction = -1; }
+    else if ((encoder->store & 0xff) == 0x17) { direction = 1; }
+    if ((0 == encoder->direction) || (direction == encoder->direction)) {
+      encoder->position += direction;
+      encoder->direction = direction;
+    }
+  }
+#endif  // ROTARY_OPTION2
+
+#ifdef ROTARY_OPTION3
+  // Theo Arends
   uint32_t time = millis();
   if ((encoder->debounce < time) || (encoder->debounce > time + ROTARY_DEBOUNCE)) {
-    int direction = (digitalRead(encoder->pin)) ? -1 : 1;
+    int direction = (digitalRead(encoder->pinb)) ? -1 : 1;
     if ((0 == encoder->direction) || (direction == encoder->direction)) {
       encoder->position += direction;
       encoder->direction = direction;
     }
     encoder->debounce = time + ROTARY_DEBOUNCE;  // Experimental debounce
   }
+#endif  // ROTARY_OPTION3
 }
 
 void RotaryInit(void) {
   Rotary.present = false;
   for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
-#ifdef ESP8266
-    uint32_t idx = index *2;
-#else  // ESP32
-    uint32_t idx = index;
-#endif  // ESP8266 or ESP32
-    if (PinUsed(GPIO_ROT1A, idx) && PinUsed(GPIO_ROT1B, idx)) {
-      Encoder[index].pin = Pin(GPIO_ROT1B, idx);
-      pinMode(Encoder[index].pin, INPUT_PULLUP);
-      pinMode(Pin(GPIO_ROT1A, idx), INPUT_PULLUP);
-      attachInterruptArg(Pin(GPIO_ROT1A, idx), RotaryIsrArg, &Encoder[index], FALLING);
+    if (PinUsed(GPIO_ROT1A, index) && PinUsed(GPIO_ROT1B, index)) {
+      Encoder[index].pinb = Pin(GPIO_ROT1B, index);
+      pinMode(Encoder[index].pinb, INPUT_PULLUP);
+#ifdef ROTARY_OPTION3
+      pinMode(Pin(GPIO_ROT1A, index), INPUT_PULLUP);
+      attachInterruptArg(Pin(GPIO_ROT1A, index), RotaryIsrArg, &Encoder[index], FALLING);
+#else
+      Encoder[index].pina = Pin(GPIO_ROT1A, index);
+      pinMode(Encoder[index].pina, INPUT_PULLUP);
+      attachInterruptArg(Pin(GPIO_ROT1A, index), RotaryIsrArg, &Encoder[index], CHANGE);
+      attachInterruptArg(Pin(GPIO_ROT1B, index), RotaryIsrArg, &Encoder[index], CHANGE);
+#endif
     }
-    Rotary.present |= (Encoder[index].pin > -1);
+    Rotary.present |= (Encoder[index].pinb > -1);
   }
 }
 
@@ -128,7 +285,7 @@ void RotaryHandler(void) {
   if (!Rotary.present) { return; }
 
   for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
-    if (-1 == Encoder[index].pin) { continue; }
+    if (-1 == Encoder[index].pinb) { continue; }
 
     if (Encoder[index].timeout) {
       Encoder[index].timeout--;
@@ -159,7 +316,7 @@ void RotaryHandler(void) {
 
 #ifdef USE_LIGHT
     if (!Settings.flag4.rotary_uses_rules) {   // SetOption98 - Use rules instead of light control
-      bool second_rotary = (Encoder[1].pin > -1);
+      bool second_rotary = (Encoder[1].pinb > -1);
       if (0 == index) {                        // Rotary1
         if (button_pressed) {
           if (second_rotary) {                 // Color RGB
