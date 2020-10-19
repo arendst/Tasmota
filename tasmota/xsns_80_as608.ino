@@ -2,7 +2,7 @@
 #ifdef USE_AS608
 
 // Define driver ID
-#define XSNS_78  78
+#define XSNS_80 80
 
 #include <TasmotaSerial.h>
 #include <Adafruit_Fingerprint.h>
@@ -54,24 +54,19 @@ int deleteFingerprint(uint8_t id) {
   p = finger->deleteModel(id);
 
   if (p == FINGERPRINT_OK) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Delete ok"));
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Delete ok"));
     return true;
   } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Comm error"));
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Comm error"));
     return false;
   } else if (p == FINGERPRINT_BADLOCATION) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Could not delete in that location"));
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Could not delete in that location"));
     return false;
   } else if (p == FINGERPRINT_FLASHERR) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Error writing to flash"));
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Error writing to flash"));
     return false;
   } else {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "any error"));
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "any error"));
     return false;
   }
 }
@@ -80,22 +75,18 @@ int getFingerImage(){
   int p = finger->getImage();
   switch (p) {
     case FINGERPRINT_OK:
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Image taken"));
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Image taken"));
       break;
     case FINGERPRINT_NOFINGER:
       break;
     case FINGERPRINT_PACKETRECIEVEERR:
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Comm error"));
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Comm error"));
       break;
     case FINGERPRINT_IMAGEFAIL:
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Imaging error"));
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Imaging error"));
       break;
     default:
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "any error"));
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "any error"));
       break;
     }
 
@@ -107,28 +98,22 @@ int convertFingerImage(uint8_t slot){
     p = finger->image2Tz(slot);
     switch (p) {
       case FINGERPRINT_OK:
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Image converted"));
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Image converted"));
         break;
       case FINGERPRINT_IMAGEMESS:
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Image too messy"));
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Image too messy"));
         break;
       case FINGERPRINT_PACKETRECIEVEERR:
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Comm error"));
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Comm error"));
         break;
       case FINGERPRINT_FEATUREFAIL:
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Could not find fingerprint features"));
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Could not find fingerprint features"));
         break;
       case FINGERPRINT_INVALIDIMAGE:
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Image invalid"));
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Image invalid"));
         break;
       default:
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "any error"));
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "any error"));
         break;
     }
 
@@ -152,13 +137,12 @@ void as608Main(){
 
         p = finger->fingerFastSearch();
         if (p != FINGERPRINT_OK){
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "no matching finger!"));
-            AddLog(LOG_LEVEL_INFO);
+            AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "no matching finger!"));
             return;
         }
 
         // found a match!
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "finger #%i found with confidence of %i"), finger->fingerID, finger->confidence);
+        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Finger #%i found with confidence of %i"), finger->fingerID, finger->confidence);
         AddLog(LOG_LEVEL_INFO);
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"AS680_Finger\":%i, AS608_Confidence\":%i}"), finger->fingerID, finger->confidence);
         MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
@@ -167,8 +151,7 @@ void as608Main(){
         // enroll is active
         switch (enrollstep){
         case 1:
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "place finger and wait"));
-            AddLog(LOG_LEVEL_INFO);
+            AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "place finger and wait"));
             enrollstep++;
             break;
         case 2:
@@ -188,8 +171,7 @@ void as608Main(){
             }
             break;
         case 4:
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "remove finger and wait"));
-            AddLog(LOG_LEVEL_INFO);
+            AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "remove finger and wait"));
             enrollstep++;
             break;
         case 5:
@@ -200,8 +182,7 @@ void as608Main(){
             }
             break;
         case 6:
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "place same finger again and wait"));
-            AddLog(LOG_LEVEL_INFO);
+            AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "place same finger again and wait"));
             enrollstep++;
             break;
         case 7:
@@ -213,31 +194,25 @@ void as608Main(){
         case 8:
         // convert second image
             if(convertFingerImage(2) != FINGERPRINT_OK)  {
-                snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Not Ok. Try again."));
-                AddLog(LOG_LEVEL_INFO);
+                AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Not Ok. Try again."));
                 enrollstep -= 2;
             }
 
         // create modell
 
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "creating model"));
-            AddLog(LOG_LEVEL_INFO);
+            AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "creating model"));
 
             p = finger->createModel();
             if (p == FINGERPRINT_OK) {
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Prints matched"));
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Prints matched"));
             } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Communication error"));
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Communication error"));
               enrollstep = 99;
             } else if (p == FINGERPRINT_ENROLLMISMATCH) {
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Fingerprints did not match"));
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Fingerprints did not match"));
               enrollstep = 99;
             } else {
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "any error"));
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "any error"));
               enrollstep = 99;
             }
 
@@ -245,38 +220,31 @@ void as608Main(){
 
             p = finger->storeModel(ModellNumber);
             if (p == FINGERPRINT_OK) {
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Stored!"));
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Stored!"));
               enrollstep = 0;
               ModellNumber = 0;
             } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Communication error"));
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Communication error"));
               enrollstep = 99;
             } else if (p == FINGERPRINT_BADLOCATION) {
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Could not store in that location"));
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Could not store in that location"));
               enrollstep = 99;
             } else if (p == FINGERPRINT_FLASHERR) {
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Error writing to flash"));
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Error writing to flash"));
               enrollstep = 99;
             } else {
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "any error"));
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "any error"));
               enrollstep = 99;
             }
             break;
         case 99:
             enrollstep = 1;
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "enroll starts again!"));
-            AddLog(LOG_LEVEL_INFO);
+            AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "enroll starts again!"));
             break;
         default:
             enrollstep = 0;
             ModellNumber = 0;
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "oops sth went wrong"));
-            AddLog(LOG_LEVEL_INFO);
+            AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "oops sth went wrong"));
             break;
         }
     }
@@ -284,7 +252,7 @@ void as608Main(){
 
 
 bool as608Command(void){
-    if (XSNS_78 == XdrvMailbox.index) {
+    if (XSNS_80 == XdrvMailbox.index) {
 
         // convert space or = to , to get mor compatibility
         for (uint8_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
@@ -302,8 +270,7 @@ bool as608Command(void){
                 as608Enroll(ModellNumber);
                 return false;
           }else{
-                snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "AS60x Enroll active! Cancel with: enrollReset"));
-                AddLog(LOG_LEVEL_INFO);
+                AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "AS60x Enroll active! Cancel with: enrollReset"));
                 return true;
           }
         }
@@ -324,12 +291,10 @@ bool as608Command(void){
           finger->emptyDatabase();
           finger->getTemplateCount();
           if(!finger->templateCount){
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Empty database Ok!"));
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Empty database Ok!"));
               return false;
           }else{
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Empty database Error!"));
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Empty database Error!"));
               return true;
           }
         }
@@ -343,8 +308,7 @@ bool as608Command(void){
         }
 
         if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"help")) { // Note 1 used for param number
-          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Commands: enroll x, enrollReset, delete x, deleteAll, getNumber"));
-          AddLog(LOG_LEVEL_INFO);
+          AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Commands: enroll x, enrollReset, delete x, deleteAll, getNumber"));
           return false;
         }
     }
@@ -355,7 +319,7 @@ bool as608Command(void){
   * Interface
  \*********************************************************************************************/
 
- bool Xsns78(uint8_t function)
+ bool Xsns80(uint8_t function)
  {
    bool result = false;
 
