@@ -566,7 +566,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
   } else if (chan->type == KNX_SCENE) {
     // VALUE
     uint8_t tempvar = knx.data_to_1byte_uint(msg.data);    
-    dtostrfd(tempvar,2,tempchar);
+    dtostrfd(tempvar,0,tempchar);
   } else {
     // VALUE
     float tempvar = knx.data_to_2byte_float(msg.data);
