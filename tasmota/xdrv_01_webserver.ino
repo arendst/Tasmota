@@ -844,33 +844,56 @@ void ExecuteWebCommand(char* svalue, uint32_t source)
   ExecuteCommand(svalue, SRC_IGNORE);
 }
 
+// replace the series of `Webserver->on()` with a table in PROGMEM
+typedef struct WebServerDispatch_t {
+  char uri[3];   // the prefix "/" is added automatically
+  uint8_t method;
+  void (*handler)(void);
+} WebServerDispatch_t;
+
+const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
+  { "",   HTTP_ANY, HandleRoot },
+  { "up", HTTP_ANY, HandleUpgradeFirmware },
+  { "u1", HTTP_ANY, HandleUpgradeFirmwareStart },   // OTA
+  { "u2", HTTP_OPTIONS, HandlePreflightRequest },
+  { "u3", HTTP_ANY, HandleUploadDone },
+  { "cs", HTTP_GET, HandleConsole },
+  { "cs", HTTP_OPTIONS, HandlePreflightRequest },
+  { "cm", HTTP_ANY, HandleHttpCommand },
+#ifndef FIRMWARE_MINIMAL
+  { "cn", HTTP_ANY, HandleConfiguration },
+  { "md", HTTP_ANY, HandleModuleConfiguration },
+  { "wi", HTTP_ANY, HandleWifiConfiguration },
+  { "lg", HTTP_ANY, HandleLoggingConfiguration },
+  { "tp", HTTP_ANY, HandleTemplateConfiguration },
+  { "co", HTTP_ANY, HandleOtherConfiguration },
+  { "dl", HTTP_ANY, HandleBackupConfiguration },
+  { "rs", HTTP_ANY, HandleRestoreConfiguration },
+  { "rt", HTTP_ANY, HandleResetConfiguration },
+  { "in", HTTP_ANY, HandleInformation },
+#endif  // Not FIRMWARE_MINIMAL
+};
+
 void StartWebserver(int type, IPAddress ipweb)
 {
   if (!Settings.web_refresh) { Settings.web_refresh = HTTP_REFRESH_TIME; }
   if (!Web.state) {
     if (!Webserver) {
       Webserver = new ESP8266WebServer((HTTP_MANAGER == type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
-      Webserver->on("/", HandleRoot);
+      // call `Webserver->on()` on each entry
+      for (uint32_t i=0; i<ARRAY_SIZE(WebServerDispatch); i++) {
+        const WebServerDispatch_t & line = WebServerDispatch[i];
+        uint8_t method = pgm_read_byte(&line.method);
+        // copy uri in RAM and prefix with '/'
+        char uri[4];
+        uri[0] = '/';
+        strcpy_P(&uri[1], line.uri);
+        // register
+        Webserver->on(uri, (HTTPMethod) method, line.handler);
+      }
       Webserver->onNotFound(HandleNotFound);
-      Webserver->on("/up", HandleUpgradeFirmware);
-      Webserver->on("/u1", HandleUpgradeFirmwareStart);  // OTA
-      Webserver->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
-      Webserver->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
-      Webserver->on("/u3", HandleUploadDone);
-      Webserver->on("/cs", HTTP_GET, HandleConsole);
-      Webserver->on("/cs", HTTP_OPTIONS, HandlePreflightRequest);
-      Webserver->on("/cm", HandleHttpCommand);
+      Webserver->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);  // this call requires 2 functions so we keep a direct call
 #ifndef FIRMWARE_MINIMAL
-      Webserver->on("/cn", HandleConfiguration);
-      Webserver->on("/md", HandleModuleConfiguration);
-      Webserver->on("/wi", HandleWifiConfiguration);
-      Webserver->on("/lg", HandleLoggingConfiguration);
-      Webserver->on("/tp", HandleTemplateConfiguration);
-      Webserver->on("/co", HandleOtherConfiguration);
-      Webserver->on("/dl", HandleBackupConfiguration);
-      Webserver->on("/rs", HandleRestoreConfiguration);
-      Webserver->on("/rt", HandleResetConfiguration);
-      Webserver->on("/in", HandleInformation);
       XdrvCall(FUNC_WEB_ADD_HANDLER);
       XsnsCall(FUNC_WEB_ADD_HANDLER);
 #endif  // Not FIRMWARE_MINIMAL
