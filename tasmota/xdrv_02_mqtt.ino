@@ -222,7 +222,7 @@ bool MqttPublishLib(const char* topic, bool retained)
 
 void MqttDumpData(char* topic, char* data, uint32_t data_len) {
   char dump_data[data_len +1];
-  memcpy(dump_data, mqtt_data, sizeof(dump_data));  // Make another copy for removing optional control characters
+  memcpy(dump_data, data, sizeof(dump_data));  // Make another copy for removing optional control characters
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_DATA_SIZE " %d, \"%s %s\""), data_len, topic, RemoveControlCharacter(dump_data));
 }
 
