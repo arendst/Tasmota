@@ -268,17 +268,17 @@ bool as608Command(void){
                 snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "AS60x Enroll called #%i"), ModellNumber);
                 AddLog(LOG_LEVEL_INFO);
                 as608Enroll(ModellNumber);
-                return false;
+                return true;
           }else{
                 AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "AS60x Enroll active! Cancel with: enrollReset"));
-                return true;
+                return false;
           }
         }
 
         // reset running enroll
         if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"enrollReset")) { // Note 1 used for param number
           enrollstep = 0;
-          return false;
+          return true;
         }
 
         // delete one Fingerprint
@@ -292,7 +292,7 @@ bool as608Command(void){
           finger->getTemplateCount();
           if(!finger->templateCount){
               AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Empty database Ok!"));
-              return false;
+              return true;
           }else{
               AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Empty database Error!"));
               return true;
@@ -304,12 +304,12 @@ bool as608Command(void){
           finger->getTemplateCount();
           snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "%i fingerprints stored."), finger->templateCount);
           AddLog(LOG_LEVEL_INFO);
-          return false;
+          return true;
         }
 
         if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"help")) { // Note 1 used for param number
           AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Commands: enroll x, enrollReset, delete x, deleteAll, getNumber"));
-          return false;
+          return true;
         }
     }
 
