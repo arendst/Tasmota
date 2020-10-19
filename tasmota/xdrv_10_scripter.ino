@@ -129,6 +129,10 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #endif
 #endif // USE_SCRIPT_COMPRESSION
 
+#ifndef STASK_PRIO
+#define STASK_PRIO 1
+#endif
+
 #ifdef USE_SCRIPT_TIMER
 #include <Ticker.h>
 Ticker Script_ticker1;
@@ -990,6 +994,11 @@ void form1000(uint32_t number, char *dp, char sc) {
 #define SCRIPT_UDP_BUFFER_SIZE 128
 #define SCRIPT_UDP_PORT 1999
 IPAddress script_udp_remote_ip;
+
+void Restart_globvars(void) {
+  Script_Stop_UDP();
+  Script_Init_UDP();
+}
 
 void Script_Stop_UDP(void) {
   if (!glob_script_mem.udp_flags.udp_used) return;
@@ -1862,8 +1871,12 @@ chknext:
           while (*lp==' ') lp++;
           float fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+          float prio = STASK_PRIO;
+          if (*lp!=')') {
+            lp = GetNumericArgument(lp, OPER_EQU, &prio, 0);
+          }
           lp++;
-          fvar = scripter_create_task(fvar, fvar1, fvar2);
+          fvar = scripter_create_task(fvar, fvar1, fvar2, prio);
           len = 0;
           goto exit;
         }
@@ -4042,12 +4055,20 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
               int8_t mode = fvar;
               digitalWrite(pinnr, mode & 1);
               goto next_line;
-            } else if (!strncmp(lp, "svars(", 5)) {
+            } else if (!strncmp(lp, "svars", 5)) {
               lp += 5;
               // save vars
               Scripter_save_pvars();
               goto next_line;
             }
+#ifdef USE_SCRIPT_GLOBVARS
+            else if (!strncmp(lp, "gvr", 3)) {
+              lp += 3;
+              // reset global vars udp server
+              Restart_globvars();
+              goto next_line;
+            }
+#endif
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
             else if (!strncmp(lp, "ws2812(", 7)) {
@@ -4712,7 +4733,6 @@ void script_upload_start(void) {
 
     //if (upload_file) upload_file.write(upload.buf,upload.currentSize);
   } else if(upload.status == UPLOAD_FILE_END) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload close"));
     //if (upload_file) upload_file.close();
     if (Web.upload_error) {
       AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
@@ -4721,6 +4741,7 @@ void script_upload_start(void) {
       bitWrite(Settings.rule_enabled, 0, sc_state);
       SaveScript();
       SaveScriptEnd();
+      //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload success"));
     }
   } else {
     Web.upload_error = 1;
@@ -6476,6 +6497,10 @@ void ScriptWebShow(char mc) {
         lp++;
       }
     }
+    char *cv_ptr;
+    float cv_max=0;
+    float cv_inc=0;
+    float *cv_count=0;
     while (lp) {
       while (*lp==SCRIPT_EOL) {
        lp++;
@@ -6485,6 +6510,41 @@ void ScriptWebShow(char mc) {
       }
       if (*lp!=';') {
         // send this line to web
+        SCRIPT_SKIP_SPACES
+        if (!strncmp(lp, "%for ", 5)) {
+          // for next loop
+          struct T_INDEX ind;
+          uint8_t vtype;
+          lp = isvar(lp + 5, &vtype, &ind, 0, 0, 0);
+          if ((vtype!=VAR_NV) && (vtype&STYPE)==0) {
+            uint16_t index = glob_script_mem.type[ind.index].index;
+            cv_count = &glob_script_mem.fvars[index];
+            SCRIPT_SKIP_SPACES
+            lp = GetNumericArgument(lp , OPER_EQU, cv_count, 0);
+            SCRIPT_SKIP_SPACES
+            lp = GetNumericArgument(lp , OPER_EQU, &cv_max, 0);
+            SCRIPT_SKIP_SPACES
+            lp = GetNumericArgument(lp , OPER_EQU, &cv_inc, 0);
+            cv_ptr = lp;
+            goto nextwebline;
+          } else {
+            continue;
+          }
+        } else if (!strncmp(lp, "%next", 5)) {
+          if (cv_count) {
+            // for next loop
+            *cv_count += cv_inc;
+            if (*cv_count<=cv_max) {
+              lp = cv_ptr;
+            } else {
+              cv_count = 0;
+              goto nextwebline;
+            }
+          } else {
+            goto nextwebline;
+          }
+        }
+
         Replace_Cmd_Vars(lp, 1, tmp, sizeof(tmp));
         char *lin = tmp;
         if ((!mc && (*lin!='$')) || (mc=='w' && (*lin!='$'))) {
@@ -7030,10 +7090,6 @@ bool RulesProcessEvent(char *json_event) {
 #define STASK_STACK 8192
 #endif
 
-#ifndef STASK_PRIO
-#define STASK_PRIO 1
-#endif //ESP32
-
 #if 1
 
 struct ESP32_Task {
@@ -7073,17 +7129,17 @@ void script_task2(void *arg) {
     }
   }
 }
-uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core) {
+uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, uint32_t prio) {
   //return 0;
   BaseType_t res = 0;
   if (core > 1) { core = 1; }
   if (num == 1) {
     if (esp32_tasks[0].task_t) { vTaskDelete(esp32_tasks[0].task_t); }
-    res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, STASK_PRIO, &esp32_tasks[0].task_t, core);
+    res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, prio, &esp32_tasks[0].task_t, core);
     esp32_tasks[0].task_timer = time;
   } else {
     if (esp32_tasks[1].task_t) { vTaskDelete(esp32_tasks[1].task_t); }
-    res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, STASK_PRIO, &esp32_tasks[1].task_t, core);
+    res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, prio, &esp32_tasks[1].task_t, core);
     esp32_tasks[1].task_timer = time;
   }
   return res;
@@ -7109,17 +7165,17 @@ void script_task2(void *arg) {
   }
 }
 
-uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core) {
+uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, uint32_t prio) {
   //return 0;
   BaseType_t res = 0;
   if (core > 1) { core = 1; }
   if (num == 1) {
     if (task_t1) { vTaskDelete(task_t1); }
-    res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, STASK_PRIO, &task_t1, core);
+    res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, prio, &task_t1, core);
     task_timer1 = time;
   } else {
     if (task_t2) { vTaskDelete(task_t2); }
-    res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, STASK_PRIO, &task_t2, core);
+    res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, prio, &task_t2, core);
     task_timer2 = time;
   }
   return res;
