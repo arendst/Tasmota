@@ -14,6 +14,7 @@
 extern "C" {
 #endif
 
+#ifndef ESP32
 #ifndef ICACHE_RODATA_ATTR
   #define ICACHE_RODATA_ATTR __attribute__((section(".irom.text")))
 #endif
@@ -29,6 +30,7 @@ extern "C" {
   // Place each progmem object into its own named section, avoiding conflicts
   #define PROGMEM __attribute__((section( "\".irom.text." __FILE__ "." __STRINGIZE(__LINE__) "."  __STRINGIZE(__COUNTER__) "\"")))
 #endif
+#endif //ESP32
 #ifndef PGM_P
   #define PGM_P              const char *
 #endif
