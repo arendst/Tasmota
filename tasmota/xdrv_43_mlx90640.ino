@@ -611,7 +611,7 @@ bool Xdrv43(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_MLX90640);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/mlx", MLX90640HandleWebGui);
+        WebServer_on(PSTR("/mlx"), MLX90640HandleWebGui);
         break;
 #endif  // USE_WEBSERVER
       case FUNC_COMMAND:

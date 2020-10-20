@@ -593,7 +593,7 @@ bool Xsns34(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_HX711);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/" WEB_HANDLE_HX711, HandleHxAction);
+        WebServer_on(PSTR("/" WEB_HANDLE_HX711), HandleHxAction);
         break;
 #endif  // USE_HX711_GUI
 #endif  // USE_WEBSERVER

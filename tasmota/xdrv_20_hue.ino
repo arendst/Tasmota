@@ -897,7 +897,7 @@ bool Xdrv20(uint8_t function)
 #endif
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on(F("/description.xml"), HandleUpnpSetupHue);
+        WebServer_on(PSTR("/description.xml"), HandleUpnpSetupHue);
         break;
     }
   }
