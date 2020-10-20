@@ -108,7 +108,7 @@ void PWMModulePreInit(void)
   PWMDimmerSetPoweredOffLed();
 
   // The relay initializes to on. If the power is supposed to be off, turn the relay off.
-  if (!power && PinUsed(GPIO_REL1)) digitalWrite(Pin(GPIO_REL1), bitRead(rel_inverted, 0) ? 1 : 0);
+//  if (!power && PinUsed(GPIO_REL1)) digitalWrite(Pin(GPIO_REL1), bitRead(rel_inverted, 0) ? 1 : 0);
 
 #ifdef USE_PWM_DIMMER_REMOTE
   // If remote device mode is enabled, set the device group count to the number of buttons
@@ -546,7 +546,6 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     else
       SendDeviceGroupMessage(power_button_index, DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, new_power);
 #endif  // USE_DEVICE_GROUPS
-
 #ifdef USE_PWM_DIMMER_REMOTE
     if (active_remote_pwm_dimmer)
       active_remote_pwm_dimmer->power_button_increases_bri = (power_on_bri < 128);
