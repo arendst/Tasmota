@@ -1885,7 +1885,13 @@ void CmndLedState(void) {
 
 void CmndLedMask(void) {
   if (XdrvMailbox.data_len > 0) {
+#ifdef USE_PWM_DIMMER
+    PWMDimmerSetBrightnessLeds(0);
+#endif  // USE_PWM_DIMMER
     Settings.ledmask = XdrvMailbox.payload;
+#ifdef USE_PWM_DIMMER
+    PWMDimmerSetBrightnessLeds(-1);
+#endif  // USE_PWM_DIMMER
   }
   char stemp1[TOPSZ];
   snprintf_P(stemp1, sizeof(stemp1), PSTR("%d (0x%04X)"), Settings.ledmask, Settings.ledmask);

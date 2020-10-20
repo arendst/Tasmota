@@ -465,8 +465,8 @@
   #define DEVICE_GROUPS_ADDRESS 239,255,250,250  // Device groups multicast address
   #define DEVICE_GROUPS_PORT 4447                // Device groups multicast port
   #define USE_DEVICE_GROUPS_SEND                 // Add support for the DevGroupSend command (+0k6 code)
-#define USE_PWM_DIMMER                           // Add support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+2k2 code, DGR=0k4)
-  #define USE_PWM_DIMMER_REMOTE                  // Add support for remote switches to PWM Dimmer (requires USE_DEVICE_GROUPS) (+0k9 code)
+#define USE_PWM_DIMMER                           // Add support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+2k3 code, DGR=0k7)
+  #define USE_PWM_DIMMER_REMOTE                  // Add support for remote switches to PWM Dimmer (requires USE_DEVICE_GROUPS) (+0k6 code)
 //#define USE_KEELOQ                               // Add support for Jarolift rollers by Keeloq algorithm (+4k5 code)
 #define USE_SONOFF_D1                            // Add support for Sonoff D1 Dimmer (+0k7 code)
 
