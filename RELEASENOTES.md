@@ -66,23 +66,25 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
 - SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
 - Optional support for inverted NeoPixelBus data line by enabling ``#define USE_WS2812_INVERTED`` (#8988)
-- PWM dimmer color/trigger on tap, SO88 led, DGR WITH_LOCAL flag by Paul Diem (#9474)
+- Support for PWM dimmer color/trigger on tap, SO88 led, DGR WITH_LOCAL flag, multi-press and ledmask by Paul Diem (#9474, #9584)
 - Support for stateful ACs using ``StateMode`` in tasmota-ir.bin by Arik Yavilevich (#9472)
 - Support for analog buttons indexed within standard button range
 - Support for Vietnamese language translations by Tâm.NT
 - Support for timers in case of no-sunset permanent day by cybermaus (#9543)
-- Support for EZO Ph and ORP sensors by Christopher Tremblay (#9567)
+- Support for EZO Ph, ORP and RTD sensors by Christopher Tremblay (#9567, #9585)
+
+### Breaking Changed
+- Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too
+- ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
+- Command ``Status`` output for disabled status types now returns {"Command":"Error"}
+- MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
 
 ### Changed
-- Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too
 - Command ``Gpio17`` replaces command ``Adc``
 - Command ``Gpios`` replaces command ``Adcs``
-- ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
 - New IR Raw compact format (#9444)
-- MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
 - A4988 optional microstep pin selection
 - Pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
-- ``Status`` command output for disabled status types
 - IRremoteESP8266 library from v2.7.10 to v2.7.11
 - NeoPixelBus library from v2.5.0.09 to v2.6.0
 - Management of serial baudrate (#9554)
@@ -101,3 +103,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ### Removed
 - Support for direct upgrade from Tasmota versions before v7.0
 - Auto config update for all Friendlynames and Switchtopic from Tasmota versions before v8.0
+- Support for downgrade to versions before 9.0 keeping current GPIO configuration

@@ -10,6 +10,9 @@ All notable changes to this project will be documented in this file.
 - Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
 - Command ``SwitchMode 15`` sending only MQTT message on switch change (#9596)
 - Support for EZO Ph and ORP sensors by Christopher Tremblay (#9567)
+- Support for EZO RTD sensors by Christopher Tremblay (#9585)
+- On ZigbeeBridge support for glowing led when permit join is active (#9581)
+- Support for PWM Dimmer multi-press and ledmask (#9584)
 
 ### Changed
 - Command ``Gpio17`` replaces command ``Adc``

@@ -129,6 +129,7 @@
 //#define USE_MLX90640                           // [I2cDriver53] Enable MLX90640 IR array temperature sensor (I2C address 0x33) (+20k code)
 //#define USE_EZOPH                              // [I2cDriver55] Enable support for EZO's pH sensor (+0k6 code) - Shared EZO code required for any EZO device (+1k0 code)
 //#define USE_EZOORP                             // [I2cDriver55] Enable support for EZO's ORP sensor (+0k6 code) - Shared EZO code required for any EZO device (+1k0 code)
+//#define USE_EZORTD                             // [I2cDriver55] Enable support for EZO's RTD sensor (+0k6 code) - Shared EZO code required for any EZO device (+1k0 code)
 
 #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
