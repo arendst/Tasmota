@@ -88,6 +88,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - IRremoteESP8266 library from v2.7.10 to v2.7.11
 - NeoPixelBus library from v2.5.0.09 to v2.6.0
 - Management of serial baudrate (#9554)
+- Rotary driver adjusted accordingly if Mi Desk Lamp module is selected (#9399)
 
 ### Fixed
 - Ledlink blink when no network connected regression from v8.3.1.4 (#9292)
