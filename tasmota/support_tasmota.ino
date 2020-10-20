@@ -492,6 +492,9 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
   XdrvMailbox.payload = device_save << 24 | key << 16 | state << 8 | device;
   XdrvCall(FUNC_ANY_KEY);
   XdrvMailbox.payload = payload_save;
+#ifdef USE_PWM_DIMMER
+  if (PWM_DIMMER == my_module_type) result = true;
+#endif  // USE_PWM_DIMMER
   return result;
 }
 
