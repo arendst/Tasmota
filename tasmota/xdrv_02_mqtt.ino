@@ -214,13 +214,6 @@ bool MqttPublishLib(const char* topic, bool retained)
       mqtt_cmnd_blocked++;
     }
   }
-#ifdef USE_TASMESH
-if(MESH.role == ROLE_NODE_SMALL){
-  MESHredirectMQTT(topic, mqtt_data, retained);
-  yield();
-  return true;
-}
-#endif //USE_TASMESH
 
   bool result = MqttClient.publish(topic, mqtt_data, retained);
   yield();  // #3313
@@ -251,14 +244,6 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   mqtt_data[data_len] = 0;
   char data[data_len +1];
   memcpy(data, mqtt_data, sizeof(data));
-
-#ifdef USE_TASMESH
-#ifdef ESP32
-if(MESH.role == ROLE_BROKER){
-  if (MESHinterceptMQTT(topic, (uint8_t*)data, data_len+1)) return;
-}
-#endif //ESP32
-#endif //USE_TASMESH
 
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_RECEIVED_TOPIC " \"%s\", " D_DATA_SIZE " %d, " D_DATA " \"%s\""), topic, data_len, data);
 //  if (LOG_LEVEL_DEBUG_MORE <= seriallog_level) { Serial.println(data); }
