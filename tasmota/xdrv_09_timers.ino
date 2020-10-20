@@ -928,7 +928,7 @@ bool Xdrv09(uint8_t function)
 #endif  // USE_RULES
       break;
     case FUNC_WEB_ADD_HANDLER:
-      Webserver->on("/" WEB_HANDLE_TIMER, HandleTimerConfiguration);
+      WebServer_on(PSTR("/" WEB_HANDLE_TIMER), HandleTimerConfiguration);
       break;
 #endif  // USE_TIMERS_WEB
 #endif  // USE_WEBSERVER

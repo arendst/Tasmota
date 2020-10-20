@@ -874,6 +874,10 @@ const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
 #endif  // Not FIRMWARE_MINIMAL
 };
 
+void WebServer_on(const char * prefix, void (*func)(void), uint8_t method = HTTP_ANY) {
+  Webserver->on((const __FlashStringHelper *) prefix, (HTTPMethod) method, func);
+}
+
 void StartWebserver(int type, IPAddress ipweb)
 {
   if (!Settings.web_refresh) { Settings.web_refresh = HTTP_REFRESH_TIME; }
@@ -883,13 +887,14 @@ void StartWebserver(int type, IPAddress ipweb)
       // call `Webserver->on()` on each entry
       for (uint32_t i=0; i<ARRAY_SIZE(WebServerDispatch); i++) {
         const WebServerDispatch_t & line = WebServerDispatch[i];
-        uint8_t method = pgm_read_byte(&line.method);
         // copy uri in RAM and prefix with '/'
         char uri[4];
         uri[0] = '/';
-        strcpy_P(&uri[1], line.uri);
+        uri[1] = pgm_read_byte(&line.uri[0]);
+        uri[2] = pgm_read_byte(&line.uri[1]);
+        uri[3] = '\0';
         // register
-        Webserver->on(uri, (HTTPMethod) method, line.handler);
+        WebServer_on(uri, line.handler, pgm_read_byte(&line.method));
       }
       Webserver->onNotFound(HandleNotFound);
       Webserver->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);  // this call requires 2 functions so we keep a direct call

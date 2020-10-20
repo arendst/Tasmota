@@ -1848,7 +1848,7 @@ bool Xdrv23(uint8_t function)
 #ifdef USE_ZIGBEE_EZSP
       // GUI xmodem
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/" WEB_HANDLE_ZIGBEE_XFER, HandleZigbeeXfer);
+        WebServer_on(PSTR("/" WEB_HANDLE_ZIGBEE_XFER), HandleZigbeeXfer);
         break;
 #endif  // USE_ZIGBEE_EZSP
 #endif  // USE_WEBSERVER

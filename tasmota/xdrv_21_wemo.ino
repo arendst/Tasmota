@@ -353,10 +353,10 @@ bool Xdrv21(uint8_t function)
   if (devices_present && (EMUL_WEMO == Settings.flag2.emulation)) {
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on(F("/upnp/control/basicevent1"), HTTP_POST, HandleUpnpEvent);
-        Webserver->on(F("/eventservice.xml"), HandleUpnpService);
-        Webserver->on(F("/metainfoservice.xml"), HandleUpnpMetaService);
-        Webserver->on(F("/setup.xml"), HandleUpnpSetupWemo);
+        WebServer_on(PSTR("/upnp/control/basicevent1"), HandleUpnpEvent, HTTP_POST);
+        WebServer_on(PSTR("/eventservice.xml"), HandleUpnpService);
+        WebServer_on(PSTR("/metainfoservice.xml"), HandleUpnpMetaService);
+        WebServer_on(PSTR("/setup.xml"), HandleUpnpSetupWemo);
         break;
     }
   }

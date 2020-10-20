@@ -1271,7 +1271,7 @@ bool Xdrv11(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_KNX);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/kn", HandleKNXConfiguration);
+        WebServer_on(PSTR("/kn"), HandleKNXConfiguration);
         break;
 #endif // USE_KNX_WEB_MENU
 #endif  // USE_WEBSERVER
