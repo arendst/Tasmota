@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifdef USE_I2C
-#if defined(USE_EZOPH) || defined(USE_EZOORP)
+#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD)
 
 #define D_EZO_DELAY   300   // Minimum delay for any instruction
 #define D_EZO_MAX_BUF 40    // Maximum response

@@ -79,3 +79,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   54  | USE_VL53L1X         | xsns_77 | VL53L1X  | 0x29        | Time-of-flight (ToF) distance sensor
   55  | USE_EZO_PH          | xsns_78 | EZOPH    | 0x61 - 0x70 | pH Sensor
   55  | USE_EZO_ORP         | xsns_79 | EZOORP   | 0x61 - 0x70 | ORP Sensor
+  55  | USE_EZO_RTD         | xsns_80 | EZORTD   | 0x61 - 0x70 | Temperature Sensor

@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifdef USE_I2C
-#if defined(USE_EZOPH) || defined(USE_EZOORP)
+#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD)
 
 #define XI2C_55     55    // See I2CDEVICES.md
 
@@ -54,7 +54,9 @@ const char EZO_ORP_NAME[] PROGMEM = "ORP";
 const char EZO_PH_NAME[]  PROGMEM = "pH";
 #endif
 //const char EZO_EC_NAME[]  PROGMEM = "EC";
-//const char EZO_RTD_NAME[] PROGMEM = "RTD";
+#ifdef USE_EZORTD
+const char EZO_RTD_NAME[] PROGMEM = "RTD";
+#endif
 //const char EZO_PMP_NAME[] PROGMEM = "PMP";
 //const char EZO_FLO_NAME[] PROGMEM = "FLO";
 //const char EZO_CO2_NAME[] PROGMEM = "CO2";
@@ -80,7 +82,13 @@ const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
 
   EZO_EMPTY,
   EZO_EMPTY,
+
+#ifdef USE_EZORTD
+  EZO_RTD_NAME,
+#else
   EZO_EMPTY,
+#endif
+
   EZO_EMPTY,
   EZO_EMPTY,
   EZO_EMPTY,
@@ -181,7 +189,7 @@ private:
                 data[0] = 'E';
                 data[1] = 'Z';
                 data[2] = 'O';
-                I2cSetActiveFound(addr, data);
+                I2cSetActiveFound(addr + EZO_ADDR_0, data);
                 devices[addr >> 3] |= j << ((addr & 7) * 4);
               }
             }
