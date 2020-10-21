@@ -600,6 +600,7 @@
 #define D_CMND_SHUTTER_STOPCLOSE "StopClose"
 #define D_CMND_SHUTTER_STOPTOGGLE "StopToggle"
 #define D_CMND_SHUTTER_STOPTOGGLEDIR "StopToggleDir"
+#define D_CMND_SHUTTER_INCDEC "Change"
 #define D_CMND_SHUTTER_STOPPOSITION "StopPosition"
 #define D_CMND_SHUTTER_STOP "Stop"
 #define D_CMND_SHUTTER_POSITION "Position"
