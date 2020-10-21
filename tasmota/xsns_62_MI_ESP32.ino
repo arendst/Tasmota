@@ -20,6 +20,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.1.5 20201021  changed - HASS related ('null', hold back discovery), number of found sensors for RULES
+  -------
   0.9.1.4 20201020  changed - use BearSSL for decryption, revert to old TELEPERIOD-cycle as default
   -------
   0.9.1.3 20200926  changed - Improve HA discovery, make key+MAC case insensitive
@@ -59,25 +61,29 @@ void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pD
 struct {
   uint16_t perPage = 4;
   uint32_t period;             // set manually in addition to TELE-period, is set to TELE-period after start
-  struct {
-    uint32_t init:1;
-    uint32_t connected:1;
-    uint32_t autoScan:1;
-    uint32_t canScan:1;
-    uint32_t runningScan:1;
-    uint32_t canConnect:1;
-    uint32_t willConnect:1;
-    uint32_t readingDone:1;
-    uint32_t shallSetTime:1;
-    uint32_t willSetTime:1;
-    uint32_t shallReadBatt:1;
-    uint32_t willReadBatt:1;
-    uint32_t shallSetUnit:1;
-    uint32_t willSetUnit:1;
-    uint32_t shallTriggerTele:1;
-    uint32_t triggeredTele:1;
-    uint32_t shallClearResults:1; // BLE scan results
-
+  union {
+    struct {
+      uint32_t init:1;
+      uint32_t connected:1;
+      uint32_t autoScan:1;
+      uint32_t canScan:1;
+      uint32_t runningScan:1;
+      uint32_t canConnect:1;
+      uint32_t willConnect:1;
+      uint32_t readingDone:1;
+      uint32_t shallSetTime:1;
+      uint32_t willSetTime:1;
+      uint32_t shallReadBatt:1;
+      uint32_t willReadBatt:1;
+      uint32_t shallSetUnit:1;
+      uint32_t willSetUnit:1;
+      uint32_t shallTriggerTele:1;
+      uint32_t triggeredTele:1;
+      uint32_t shallClearResults:1; // BLE scan results
+      uint32_t shallShowStatusInfo:1; // react to amount of found sensors via RULES
+      uint32_t firstAutodiscoveryDone:1;
+    };
+    uint32_t all = 0;
   } mode;
   struct {
     uint8_t sensor;           // points to to the number 0...255
@@ -85,10 +91,11 @@ struct {
   struct {
     uint32_t allwaysAggregate:1; // always show all known values of one sensor in brdigemode
     uint32_t noSummary:1;        // no sensor values at TELE-period
-    uint32_t minimalSummary:1;   // DEPRECATED!!
     uint32_t directBridgeMode:1; // send every received BLE-packet as a MQTT-message in real-time
+    uint32_t holdBackFirstAutodiscovery:1; // allows to trigger it later
     uint32_t showRSSI:1;
     uint32_t ignoreBogusBattery:1;
+    uint32_t minimalSummary:1;   // DEPRECATED!!
   } option;
 } MI32;
 
@@ -536,6 +543,24 @@ int MI32_decryptPacket(char *_buf, uint16_t _bufSize, uint32_t _type){
 }
 #endif // USE_MI_DECRYPTION
 
+#ifdef USE_HOME_ASSISTANT
+/**
+ * @brief For HASS only, changes last entry of JSON in mqtt_data to 'null'
+ */
+
+void MI32nullifyEndOfMQTT_DATA(){
+  char *p = mqtt_data + strlen(mqtt_data);
+  while(true){
+    *p--;
+    if(p[0]==':'){
+      p[1] = 0;
+      break;
+    }
+  }
+  ResponseAppend_P(PSTR("null"));
+}
+#endif // USE_HOME_ASSISTANT
+
 /*********************************************************************************************\
  * common functions
 \*********************************************************************************************/
@@ -626,6 +651,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
     }
   MIBLEsensors.push_back(_newSensor);
   AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: new %s at slot: %u"),D_CMND_MI32, kMI32DeviceType[_type-1],MIBLEsensors.size()-1);
+  MI32.mode.shallShowStatusInfo = 1;
   return MIBLEsensors.size()-1;
 };
 
@@ -643,6 +669,13 @@ void MI32triggerTele(void){
   #endif  // USE_RULES
     }
 }
+
+void MI32StatusInfo() {
+  MI32.mode.shallShowStatusInfo = 0;
+  Response_P(PSTR("{\"%s\":{\"found\":%u}}"), D_CMND_MI32, MIBLEsensors.size());
+  XdrvRulesProcess();
+}
+
 /*********************************************************************************************\
  * init NimBLE
 \*********************************************************************************************/
@@ -666,6 +699,7 @@ MIBLEbindKeys.reserve(10);
     MI32.option.directBridgeMode = 0;
     MI32.option.showRSSI = 1;
     MI32.option.ignoreBogusBattery = 1; // from advertisements
+    MI32.option.holdBackFirstAutodiscovery = 1;
 
     MI32StartScanTask(); // Let's get started !!
   }
@@ -1439,6 +1473,10 @@ void MI32EverySecond(bool restart){
     }
   }
 
+  if(MI32.mode.shallShowStatusInfo == 1){
+    MI32StatusInfo();
+  }
+
   if(restart){
     _counter = 0;
     MI32.mode.canScan = 0;
@@ -1616,7 +1654,7 @@ bool MI32Cmd(void) {
  * Presentation
 \*********************************************************************************************/
 
-const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 {m}%u%s / %u{e}";
+const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 v0.9.1.5{m}%u%s / %u{e}";
 const char HTTP_MI32_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
 const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
@@ -1633,6 +1671,12 @@ void MI32Show(bool json)
     bool _noSummarySave = MI32.option.noSummary;
     bool _minimalSummarySave = MI32.option.minimalSummary;
     if(hass_mode==2){
+      if(MI32.option.holdBackFirstAutodiscovery){
+        if(!MI32.mode.firstAutodiscoveryDone){
+          MI32.mode.firstAutodiscoveryDone = 1;
+          return;
+        }
+      }
       MI32.option.noSummary = false;
       MI32.option.minimalSummary = false;
     }
@@ -1659,7 +1703,7 @@ void MI32Show(bool json)
           if(MIBLEsensors[i].eventType.tempHum || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
             if (!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode==2)
+              ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) {
               ResponseAppend_P(PSTR(","));
@@ -1672,7 +1716,7 @@ void MI32Show(bool json)
           if(MIBLEsensors[i].eventType.temp || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate) {
             if (!isnan(MIBLEsensors[i].temp)
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode==2)
+              ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) {
               char temperature[FLOATSZ];
@@ -1685,7 +1729,7 @@ void MI32Show(bool json)
           if(MIBLEsensors[i].eventType.hum || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate) {
             if (!isnan(MIBLEsensors[i].hum)
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode==2)
+              ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) {
               char hum[FLOATSZ];
@@ -1698,10 +1742,13 @@ void MI32Show(bool json)
           if(MIBLEsensors[i].eventType.lux || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
             if (MIBLEsensors[i].lux!=0x0ffffff
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode==2)
+              ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) { // this is the error code -> no lux
               ResponseAppend_P(PSTR(",\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
+#ifdef USE_HOME_ASSISTANT
+              if (MIBLEsensors[i].lux==0x0ffffff) MI32nullifyEndOfMQTT_DATA();
+#endif //USE_HOME_ASSISTANT
             }
           }
         }
@@ -1709,10 +1756,13 @@ void MI32Show(bool json)
           if(MIBLEsensors[i].eventType.moist || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
             if (MIBLEsensors[i].moisture!=0xff
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode==2)
+              ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) {
               ResponseAppend_P(PSTR(",\"" D_JSON_MOISTURE "\":%u"), MIBLEsensors[i].moisture);
+#ifdef USE_HOME_ASSISTANT
+              if (MIBLEsensors[i].moisture==0xff) MI32nullifyEndOfMQTT_DATA();
+#endif //USE_HOME_ASSISTANT
             }
           }
         }
@@ -1720,10 +1770,13 @@ void MI32Show(bool json)
           if(MIBLEsensors[i].eventType.fert || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
             if (MIBLEsensors[i].fertility!=0xffff
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode==2)
+              ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) {
               ResponseAppend_P(PSTR(",\"Fertility\":%u"), MIBLEsensors[i].fertility);
+#ifdef USE_HOME_ASSISTANT
+              if (MIBLEsensors[i].fertility==0xffff) MI32nullifyEndOfMQTT_DATA();
+#endif //USE_HOME_ASSISTANT
             }
           }
         }
@@ -1762,10 +1815,13 @@ void MI32Show(bool json)
         if(MIBLEsensors[i].eventType.bat || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
           if (MIBLEsensors[i].bat != 0x00
 #ifdef USE_HOME_ASSISTANT
-              ||(hass_mode==2)
+              ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
           ) { // this is the error code -> no battery
           ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors[i].bat);
+#ifdef USE_HOME_ASSISTANT
+              if (MIBLEsensors[i].bat == 0x00) MI32nullifyEndOfMQTT_DATA();
+#endif //USE_HOME_ASSISTANT
           }
         }
       }
