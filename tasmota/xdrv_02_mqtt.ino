@@ -801,10 +801,14 @@ void CmndMqttFingerprint(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
     char fingerprint[60];
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(fingerprint))) {
-      strlcpy(fingerprint, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? MQTT_FINGERPRINT1 : MQTT_FINGERPRINT2 : XdrvMailbox.data, sizeof(fingerprint));
-      char *p = fingerprint;
-      for (uint32_t i = 0; i < 20; i++) {
-        Settings.mqtt_fingerprint[XdrvMailbox.index -1][i] = strtol(p, &p, 16);
+      if (SC_DEFAULT == Shortcut()) {
+        memcpy_P(Settings.mqtt_fingerprint[XdrvMailbox.index -1], (1 == XdrvMailbox.index) ? default_fingerprint1 : default_fingerprint2, sizeof(default_fingerprint1));
+      } else {
+        strlcpy(fingerprint, (SC_CLEAR == Shortcut()) ? "" : XdrvMailbox.data, sizeof(fingerprint));
+        char *p = fingerprint;
+        for (uint32_t i = 0; i < 20; i++) {
+          Settings.mqtt_fingerprint[XdrvMailbox.index -1][i] = strtol(p, &p, 16);
+        }
       }
       restart_flag = 2;
     }

@@ -718,6 +718,10 @@ void SettingsDefaultSet1(void)
 //  Settings.cfg_crc = 0;
 }
 
+// default Fingerprints in PROGMEM
+const uint8_t default_fingerprint1[] PROGMEM = { MQTT_FINGERPRINT1 };
+const uint8_t default_fingerprint2[] PROGMEM = { MQTT_FINGERPRINT2 };
+
 void SettingsDefaultSet2(void)
 {
   memset((char*)&Settings +16, 0x00, sizeof(Settings) -16);
@@ -874,10 +878,8 @@ void SettingsDefaultSet2(void)
   SettingsUpdateText(SET_STATE_TXT2, MQTT_STATUS_ON);
   SettingsUpdateText(SET_STATE_TXT3, MQTT_CMND_TOGGLE);
   SettingsUpdateText(SET_STATE_TXT4, MQTT_CMND_HOLD);
-  static const uint8_t fingerprint1[] PROGMEM = { MQTT_FINGERPRINT1 };
-  static const uint8_t fingerprint2[] PROGMEM = { MQTT_FINGERPRINT2 };
-  memcpy_P(Settings.mqtt_fingerprint[0], fingerprint1, sizeof(fingerprint1));
-  memcpy_P(Settings.mqtt_fingerprint[1], fingerprint2, sizeof(fingerprint2));
+  memcpy_P(Settings.mqtt_fingerprint[0], default_fingerprint1, sizeof(default_fingerprint1));
+  memcpy_P(Settings.mqtt_fingerprint[1], default_fingerprint2, sizeof(default_fingerprint2));
   Settings.tele_period = TELE_PERIOD;
   Settings.mqttlog_level = MQTT_LOG_LEVEL;
 
