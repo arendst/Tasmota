@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Management of serial baudrate (#9554)
 - ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
 - Rotary driver adjusted accordingly if Mi Desk Lamp module is selected (#9399)
+- Tasmota Arduino Core v2.7.4.5 allowing webpassword over 47 characters (#9687)
 
 ### Fixed
 - Convert AdcParam parameters from versions before v9.0.0.2

@@ -89,6 +89,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - NeoPixelBus library from v2.5.0.09 to v2.6.0
 - Management of serial baudrate (#9554)
 - Rotary driver adjusted accordingly if Mi Desk Lamp module is selected (#9399)
+- Tasmota Arduino Core v2.7.4.5 allowing webpassword over 47 characters (#9687)
 
 ### Fixed
 - Ledlink blink when no network connected regression from v8.3.1.4 (#9292)
