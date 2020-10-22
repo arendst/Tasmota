@@ -1,0 +1,12 @@
+sdkconfig*
+.cproject
+.project
+.settings/*
+build/*
+doxygen_sqlite3.db
+docs/_build
+docs/man
+docs/xml
+docs/doxygen-warning-log.txt
+docs/sphinx-warning-log.txt
+*.pyc

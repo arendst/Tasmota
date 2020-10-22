@@ -1,0 +1,15 @@
+These files provide Arduino code for ATTiny85 battery powered sensor hardware.
+
+Tasmota can receive and decode them when defines USE_RF_SENSOR and USE_THEO_V2 are enabled
+
+
+TheoV2Sensor1 - Light and Temperature
+Uses BH1750 and DS18B20
+Uses 1 x 3.6V Lithium battery lasting at least 3 years
+See https://sidweb.nl/cms3/en/projects/mcs51/attiny85-lichtsensor
+
+
+TheoV2Sensor2 - Temperature and Humidity
+Uses DHT22
+Uses 3 x AAA battery lasting at least 3 years
+See https://sidweb.nl/cms3/en/projects/mcs51/vocht-en-tempsensor

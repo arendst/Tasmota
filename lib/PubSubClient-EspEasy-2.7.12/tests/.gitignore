@@ -1,0 +1,4 @@
+.build
+tmpbin
+logs
+*.pyc
