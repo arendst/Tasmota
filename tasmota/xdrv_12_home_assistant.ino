@@ -316,7 +316,6 @@ void NewHAssDiscovery(void)
   mac_address.replace(":", "");
   snprintf_P(unique_id, sizeof(unique_id), PSTR("%s"), mac_address.c_str());
   snprintf_P(stopic, sizeof(stopic), PSTR("tasmota/discovery/%s/config"), unique_id);
-  GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_HASS_STATE));
 
   // Send empty message if new discovery is disabled
   masterlog_level = 4; // Hide topic on clean and remove use weblog 4 to see it
@@ -1071,8 +1070,7 @@ void HAssDiscover(void)
 void HAssAnyKey(void)
 {
   if (!Settings.flag.hass_discovery) { return; } // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
-
-  uint32_t key = (XdrvMailbox.payload >> 16) & 0xFF;   // 0 = Button, 1 = Switch
+  uint32_t key = (XdrvMailbox.payload >> 16) & 0xFF;   // 0 = KEY_BUTTON, 1 = KEY_SWITCH
   uint32_t device = XdrvMailbox.payload & 0xFF;        // Device number or 1 if more Buttons than Devices
   uint32_t state = (XdrvMailbox.payload >> 8) & 0xFF;  // 0 = Off, 1 = On, 2 = Toggle, 3 = Hold, 10,11,12,13 and 14 for Button Multipress
 
@@ -1095,11 +1093,13 @@ void HAssAnyKey(void)
 
   char stopic[TOPSZ];
 
-  if (state == 3) {
-    snprintf_P(trg_state, sizeof(trg_state), GetStateText(3));
-  } else {
-    if (state == 2) { state = 10; }
-    GetTextIndexed(trg_state, sizeof(trg_state), state -9, kHAssTriggerStringButtons);
+  if (!key) {
+    if (state == 3) {
+      snprintf_P(trg_state, sizeof(trg_state), GetStateText(3));
+    } else {
+      if (state == 2) { state = 10; }
+      GetTextIndexed(trg_state, sizeof(trg_state), state -9, kHAssTriggerStringButtons);
+    }
   }
 
   GetTopic_P(stopic, STAT, mqtt_topic, scommand);
