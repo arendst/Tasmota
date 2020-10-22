@@ -32,7 +32,7 @@ const uint32_t ARILUX_RF_SEPARATION_LIMIT = 4300;      // Microseconds
 const uint32_t ARILUX_RF_RECEIVE_TOLERANCE = 60;       // Percentage
 
 struct ARILUX {
-  unsigned int rf_timings[ARILUX_RF_MAX_CHANGES];
+  int rf_timings[ARILUX_RF_MAX_CHANGES];
 
   unsigned long rf_received_value = 0;
   unsigned long rf_last_received_value = 0;
@@ -52,15 +52,15 @@ void AriluxRfInterrupt(void) ICACHE_RAM_ATTR;  // As iram is tight and it works 
 void AriluxRfInterrupt(void)
 {
   unsigned long time = micros();
-  unsigned int duration = time - Arilux.rf_lasttime;
+  int duration = time - Arilux.rf_lasttime;
 
   if (duration > ARILUX_RF_SEPARATION_LIMIT) {
     if (abs(duration - Arilux.rf_timings[0]) < 200) {
       Arilux.rf_repeat_count++;
       if (Arilux.rf_repeat_count == 2) {
         unsigned long code = 0;
-        const unsigned int delay = Arilux.rf_timings[0] / 31;
-        const unsigned int delayTolerance = delay * ARILUX_RF_RECEIVE_TOLERANCE / 100;
+        const int delay = Arilux.rf_timings[0] / 31;
+        const int delayTolerance = delay * ARILUX_RF_RECEIVE_TOLERANCE / 100;
         for (unsigned int i = 1; i < Arilux.rf_change_count -1; i += 2) {
           code <<= 1;
           if (abs(Arilux.rf_timings[i] - (delay *3)) < delayTolerance && abs(Arilux.rf_timings[i +1] - delay) < delayTolerance) {
