@@ -36,33 +36,36 @@
 #ifndef ROTARY_MAX_STEPS
 #define ROTARY_MAX_STEPS     10                // Rotary step boundary
 #endif
+#ifndef ROTARY_TIMEOUT
+#define ROTARY_TIMEOUT       2                 // 2 * RotaryHandler() call which is usually 2 * 0.05 seconds
+#endif
+#ifndef ROTARY_DEBOUNCE
+#define ROTARY_DEBOUNCE      10                // Debounce time in milliseconds
+#endif
 
 //                                           (0) = Mi Desk lamp            (1) = Normal rotary
 //                                           ----------------------------  ----------------------
 const uint8_t rotary_dimmer_increment[2] = { 100 / (ROTARY_MAX_STEPS * 3), 100 / ROTARY_MAX_STEPS };  // Dimmer 1..100 = 100
 const uint8_t rotary_ct_increment[2] =     { 350 / (ROTARY_MAX_STEPS * 3), 350 / ROTARY_MAX_STEPS };  // Ct 153..500 = 347
 const uint8_t rotary_color_increment[2] =  { 360 / (ROTARY_MAX_STEPS * 3), 360 / ROTARY_MAX_STEPS };  // Hue 0..359 = 360
-
-const uint8_t ROTARY_TIMEOUT = 10;             // 10 * RotaryHandler() call which is usually 10 * 0.05 seconds
-const uint8_t ROTARY_DEBOUNCE = 10;            // Debounce time in milliseconds
+const uint8_t rotary_offset = 128;
+const int8_t rotary_state_pos[16] = { 0, 1, -1, 2, -1, 0, -2, 1, 1, -2, 0, -1, 2, -1, 1, 0 };
 
 struct ROTARY {
-  uint8_t model = 1;
-  bool present = false;
+  uint8_t model;
+  bool present;
 } Rotary;
 
 struct tEncoder {
   volatile uint32_t debounce = 0;
-  volatile int8_t direction = 0;               // Control consistent direction
   volatile uint8_t state = 0;
-  volatile uint8_t position = 128;
-  uint8_t last_position = 128;
+  volatile uint8_t position;
+  volatile int8_t direction = 0;               // Control consistent direction
+  volatile int8_t pina;
+  volatile int8_t pinb;
   uint8_t timeout = 0;                         // Disallow direction change within 0.5 second
   int8_t abs_position[2] = { 0 };
-  int8_t pina = -1;
-  int8_t pinb = -1;
   bool changed = false;
-  volatile bool busy = false;
 };
 tEncoder Encoder[MAX_ROTARIES];
 
@@ -93,33 +96,16 @@ bool RotaryButtonPressed(uint32_t button_index) {
 void ICACHE_RAM_ATTR RotaryIsrArgMiDesk(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
-  if (encoder->busy) { return; }
-
   // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
-  uint8_t state = encoder->state & 3;
+  uint32_t state = encoder->state & 3;
   if (digitalRead(encoder->pina)) { state |= 4; }
   if (digitalRead(encoder->pinb)) { state |= 8; }
+  encoder->position += rotary_state_pos[state];
   encoder->state = (state >> 2);
-  switch (state) {
-    case 1: case 7: case 8: case 14:
-      encoder->position++;
-      return;
-    case 2: case 4: case 11: case 13:
-      encoder->position--;
-      return;
-    case 3: case 12:
-      encoder->position += 2;
-      return;
-    case 6: case 9:
-      encoder->position -= 2;
-      return;
-  }
 }
 
 void ICACHE_RAM_ATTR RotaryIsrArg(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
-
-  if (encoder->busy) { return; }
 
   // Theo Arends
   uint32_t time = millis();
@@ -144,9 +130,10 @@ void RotaryInit(void) {
   for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
     Encoder[index].pinb = -1;
     if (PinUsed(GPIO_ROT1A, index) && PinUsed(GPIO_ROT1B, index)) {
+      Encoder[index].position = rotary_offset;
       Encoder[index].pina = Pin(GPIO_ROT1A, index);
-      pinMode(Encoder[index].pina, INPUT_PULLUP);
       Encoder[index].pinb = Pin(GPIO_ROT1B, index);
+      pinMode(Encoder[index].pina, INPUT_PULLUP);
       pinMode(Encoder[index].pinb, INPUT_PULLUP);
       if (0 == Rotary.model) {
         attachInterruptArg(Encoder[index].pina, RotaryIsrArgMiDesk, &Encoder[index], CHANGE);
@@ -181,12 +168,14 @@ void RotaryHandler(void) {
         Encoder[index].direction = 0;
       }
     }
-    if (Encoder[index].last_position == Encoder[index].position) { continue; }
-    Encoder[index].busy = true;
+    if (rotary_offset == Encoder[index].position) { continue; }
 
     Encoder[index].timeout = ROTARY_TIMEOUT;   // Prevent fast direction changes within 0.5 second
 
-    int rotary_position = Encoder[index].position - Encoder[index].last_position;
+    noInterrupts();
+    int rotary_position = Encoder[index].position - rotary_offset;
+    Encoder[index].position = rotary_offset;
+    interrupts();
 
     if (Settings.save_data && (save_data_counter < 2)) {
       save_data_counter = 3;                   // Postpone flash writes while rotary is turned
@@ -232,10 +221,6 @@ void RotaryHandler(void) {
 #ifdef USE_LIGHT
     }
 #endif  // USE_LIGHT
-
-    Encoder[index].last_position = 128;
-    Encoder[index].position = 128;
-    Encoder[index].busy = false;
   }
 }
 
