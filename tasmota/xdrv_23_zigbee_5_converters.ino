@@ -1824,7 +1824,7 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
       switch (ccccaaaa) {
         case 0x00000004: zigbee_devices.setManufId(shortaddr, attr.getStr());         break;
         case 0x00000005: zigbee_devices.setModelId(shortaddr, attr.getStr());         break;
-        case 0x00010021: zigbee_devices.setBatteryPercent(shortaddr, uval16);         break;
+        case 0x00010021: zigbee_devices.setBatteryPercent(shortaddr, uval16 / 2);     break;
         case 0x00060000:
         case 0x00068000: device.setPower(attr.getBool(), src_ep);                     break;
       }
