@@ -37,26 +37,30 @@
 #define ROTARY_MAX_STEPS     10                // Rotary step boundary
 #endif
 
-// 1 pulse per step
-const uint8_t rotary_dimmer_increment = 100 / ROTARY_MAX_STEPS;  // Dimmer 1..100 = 100
-const uint8_t rotary_ct_increment = 350 / ROTARY_MAX_STEPS;      // Ct 153..500 = 347
-const uint8_t rotary_color_increment = 360 / ROTARY_MAX_STEPS;   // Hue 0..359 = 360
+//                                           (0) = Mi Desk lamp            (1) = Normal rotary
+//                                           ----------------------------  ----------------------
+const uint8_t rotary_dimmer_increment[2] = { 100 / (ROTARY_MAX_STEPS * 3), 100 / ROTARY_MAX_STEPS };  // Dimmer 1..100 = 100
+const uint8_t rotary_ct_increment[2] =     { 350 / (ROTARY_MAX_STEPS * 3), 350 / ROTARY_MAX_STEPS };  // Ct 153..500 = 347
+const uint8_t rotary_color_increment[2] =  { 360 / (ROTARY_MAX_STEPS * 3), 360 / ROTARY_MAX_STEPS };  // Hue 0..359 = 360
 
-const uint8_t ROTARY_TIMEOUT = 5;              // 5 * RotaryHandler() call which is usually 5 * 0.05 seconds
+const uint8_t ROTARY_TIMEOUT = 10;             // 10 * RotaryHandler() call which is usually 10 * 0.05 seconds
 const uint8_t ROTARY_DEBOUNCE = 10;            // Debounce time in milliseconds
 
 struct ROTARY {
+  uint8_t model = 1;
   bool present = false;
 } Rotary;
 
 struct tEncoder {
   volatile uint32_t debounce = 0;
-  int8_t abs_position[2] = { 0 };
   volatile int8_t direction = 0;               // Control consistent direction
-  volatile int8_t pin = -1;
+  volatile uint8_t state = 0;
   volatile uint8_t position = 128;
   uint8_t last_position = 128;
   uint8_t timeout = 0;                         // Disallow direction change within 0.5 second
+  int8_t abs_position[2] = { 0 };
+  int8_t pina = -1;
+  int8_t pinb = -1;
   bool changed = false;
   volatile bool busy = false;
 };
@@ -68,7 +72,7 @@ bool RotaryButtonPressed(uint32_t button_index) {
   if (!Rotary.present) { return false; }
 
   for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
-    if (-1 == Encoder[index].pin) { continue; }
+    if (-1 == Encoder[index].pinb) { continue; }
     if (index != button_index) { continue; }
 
     bool powered_on = (power);
@@ -86,14 +90,41 @@ bool RotaryButtonPressed(uint32_t button_index) {
   return false;
 }
 
+void ICACHE_RAM_ATTR RotaryIsrArgMiDesk(void *arg) {
+  tEncoder* encoder = static_cast<tEncoder*>(arg);
+
+  if (encoder->busy) { return; }
+
+  // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
+  uint8_t state = encoder->state & 3;
+  if (digitalRead(encoder->pina)) { state |= 4; }
+  if (digitalRead(encoder->pinb)) { state |= 8; }
+  encoder->state = (state >> 2);
+  switch (state) {
+    case 1: case 7: case 8: case 14:
+      encoder->position++;
+      return;
+    case 2: case 4: case 11: case 13:
+      encoder->position--;
+      return;
+    case 3: case 12:
+      encoder->position += 2;
+      return;
+    case 6: case 9:
+      encoder->position -= 2;
+      return;
+  }
+}
+
 void ICACHE_RAM_ATTR RotaryIsrArg(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   if (encoder->busy) { return; }
 
+  // Theo Arends
   uint32_t time = millis();
   if ((encoder->debounce < time) || (encoder->debounce > time + ROTARY_DEBOUNCE)) {
-    int direction = (digitalRead(encoder->pin)) ? -1 : 1;
+    int direction = (digitalRead(encoder->pinb)) ? -1 : 1;
     if ((0 == encoder->direction) || (direction == encoder->direction)) {
       encoder->position += direction;
       encoder->direction = direction;
@@ -104,19 +135,27 @@ void ICACHE_RAM_ATTR RotaryIsrArg(void *arg) {
 
 void RotaryInit(void) {
   Rotary.present = false;
-  for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
+  Rotary.model = 1;
 #ifdef ESP8266
-    uint32_t idx = index *2;
-#else  // ESP32
-    uint32_t idx = index;
-#endif  // ESP8266 or ESP32
-    if (PinUsed(GPIO_ROT1A, idx) && PinUsed(GPIO_ROT1B, idx)) {
-      Encoder[index].pin = Pin(GPIO_ROT1B, idx);
-      pinMode(Encoder[index].pin, INPUT_PULLUP);
-      pinMode(Pin(GPIO_ROT1A, idx), INPUT_PULLUP);
-      attachInterruptArg(Pin(GPIO_ROT1A, idx), RotaryIsrArg, &Encoder[index], FALLING);
+  if (MI_DESK_LAMP == my_module_type) {
+    Rotary.model = 0;
+  }
+#endif  // ESP8266
+  for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
+    Encoder[index].pinb = -1;
+    if (PinUsed(GPIO_ROT1A, index) && PinUsed(GPIO_ROT1B, index)) {
+      Encoder[index].pina = Pin(GPIO_ROT1A, index);
+      pinMode(Encoder[index].pina, INPUT_PULLUP);
+      Encoder[index].pinb = Pin(GPIO_ROT1B, index);
+      pinMode(Encoder[index].pinb, INPUT_PULLUP);
+      if (0 == Rotary.model) {
+        attachInterruptArg(Encoder[index].pina, RotaryIsrArgMiDesk, &Encoder[index], CHANGE);
+        attachInterruptArg(Encoder[index].pinb, RotaryIsrArgMiDesk, &Encoder[index], CHANGE);
+      } else {
+        attachInterruptArg(Encoder[index].pina, RotaryIsrArg, &Encoder[index], FALLING);
+      }
     }
-    Rotary.present |= (Encoder[index].pin > -1);
+    Rotary.present |= (Encoder[index].pinb > -1);
   }
 }
 
@@ -128,7 +167,7 @@ void RotaryHandler(void) {
   if (!Rotary.present) { return; }
 
   for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
-    if (-1 == Encoder[index].pin) { continue; }
+    if (-1 == Encoder[index].pinb) { continue; }
 
     if (Encoder[index].timeout) {
       Encoder[index].timeout--;
@@ -159,24 +198,24 @@ void RotaryHandler(void) {
 
 #ifdef USE_LIGHT
     if (!Settings.flag4.rotary_uses_rules) {   // SetOption98 - Use rules instead of light control
-      bool second_rotary = (Encoder[1].pin > -1);
+      bool second_rotary = (Encoder[1].pinb > -1);
       if (0 == index) {                        // Rotary1
         if (button_pressed) {
           if (second_rotary) {                 // Color RGB
-            LightColorOffset(rotary_position * rotary_color_increment);
+            LightColorOffset(rotary_position * rotary_color_increment[Rotary.model]);
           } else {                             // Color Temperature or Color RGB
-            if (!LightColorTempOffset(rotary_position * rotary_ct_increment)) {
-              LightColorOffset(rotary_position * rotary_color_increment);
+            if (!LightColorTempOffset(rotary_position * rotary_ct_increment[Rotary.model])) {
+              LightColorOffset(rotary_position * rotary_color_increment[Rotary.model]);
             }
           }
         } else {                               // Dimmer RGBCW or RGB only if second rotary
-          LightDimmerOffset(second_rotary ? 1 : 0, rotary_position * rotary_dimmer_increment);
+          LightDimmerOffset(second_rotary ? 1 : 0, rotary_position * rotary_dimmer_increment[Rotary.model]);
         }
       } else {                                 // Rotary2
         if (button_pressed) {                  // Color Temperature
-          LightColorTempOffset(rotary_position * rotary_ct_increment);
+          LightColorTempOffset(rotary_position * rotary_ct_increment[Rotary.model]);
         } else {                               // Dimmer CW
-          LightDimmerOffset(2, rotary_position * rotary_dimmer_increment);
+          LightDimmerOffset(2, rotary_position * rotary_dimmer_increment[Rotary.model]);
         }
       }
     } else {

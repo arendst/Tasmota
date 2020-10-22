@@ -109,6 +109,7 @@ uint32_t uptime = 0;                        // Counting every second until 42949
 uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
 uint32_t web_log_index = 1;                 // Index in Web log buffer (should never be 0)
+uint32_t baudrate = APP_BAUDRATE;           // Current Serial baudrate
 float global_temperature_celsius = NAN;     // Provide a global temperature to be used by some sensors
 float global_humidity = 0.0f;               // Provide a global humidity to be used by some sensors
 float global_pressure_hpa = 0.0f;           // Provide a global pressure to be used by some sensors
@@ -207,7 +208,7 @@ void setup(void) {
 #endif
   RtcRebootSave();
 
-  Serial.begin(APP_BAUDRATE);
+  Serial.begin(baudrate);
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
@@ -318,19 +319,25 @@ void setup(void) {
 void BacklogLoop(void) {
   if (TimeReached(backlog_delay)) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {
+      backlog_mutex = true;
+      bool nodelay = false;
+      bool nodelay_detected = false;
+      String cmd;
+      do {
 #ifdef SUPPORT_IF_STATEMENT
-      backlog_mutex = true;
-      String cmd = backlog.shift();
-      backlog_mutex = false;
-      ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
+        cmd = backlog.shift();
 #else
-      backlog_mutex = true;
-      ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
-      backlog[backlog_pointer] = (const char*) nullptr;   // force deallocation of the String internal memory
-      backlog_pointer++;
-      if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
-      backlog_mutex = false;
+        cmd = backlog[backlog_pointer];
+        backlog[backlog_pointer] = (const char*) nullptr;  // Force deallocation of the String internal memory
+        backlog_pointer++;
+        if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
 #endif
+        nodelay_detected = !strncasecmp_P(cmd.c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
+        if (nodelay_detected) { nodelay = true; }
+      } while (!BACKLOG_EMPTY && nodelay_detected);
+      if (!nodelay_detected) { ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG); }
+      if (nodelay) { backlog_delay = 0; }  // Reset backlog_delay which has been set by ExecuteCommand (CommandHandler)
+      backlog_mutex = false;
     }
   }
 }

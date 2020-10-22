@@ -132,7 +132,7 @@
  * Set BR_LOMUL on platforms where it makes sense.
  */
 #ifndef BR_LOMUL
-#if BR_ARMEL_CORTEXM_GCC || (defined(ESP8266) && !defined(ESP8266M32))
+#if BR_ARMEL_CORTEXM_GCC || ((defined(ESP8266) || defined(ESP32)) && !defined(ESP8266M32))
 #define BR_LOMUL   1
 #endif
 #endif
@@ -315,7 +315,7 @@
  * Use ESP8266 hardware random generator when possible.
  */
 #ifndef BR_USE_ESP8266_RAND
-#if defined(ESP8266)
+#if (defined(ESP8266) || defined(ESP32))
 #define BR_USE_ESP8266_RAND 1
 #endif
 #endif
@@ -433,7 +433,7 @@
  */
 
 #ifndef BR_USE_UNIX_TIME
-#if defined __unix__ || defined __linux__ || defined ESP8266 \
+#if defined __unix__ || defined __linux__ || defined ESP8266 || defined ESP32\
 	|| defined _POSIX_SOURCE || defined _POSIX_C_SOURCE \
 	|| (defined __APPLE__ && defined __MACH__)
 #define BR_USE_UNIX_TIME   1
@@ -2568,7 +2568,7 @@ br_cpuid(uint32_t mask_eax, uint32_t mask_ebx,
 
 #endif
 
-#ifdef ESP8266
+#if (defined(ESP8266)|| defined(ESP32))
 
   #ifdef __cplusplus
   extern "C" {

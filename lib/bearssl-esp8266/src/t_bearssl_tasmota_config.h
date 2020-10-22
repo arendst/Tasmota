@@ -7,13 +7,19 @@
 #define __ets__
 #endif
 
+#ifndef ESP32
 #ifndef ICACHE_FLASH
 #define ICACHE_FLASH
 #endif
-
-#ifndef ESP8266
-#define ESP8266
+#else
+#ifndef PROGMEM
+#define PROGMEM
 #endif
+#endif
+
+// #ifndef ESP8266
+// #define ESP8266
+// #endif
 
 #ifndef BR_SLOW_MUL15
 #define BR_SLOW_MUL15 1         // shrinks EC code by 8.5k

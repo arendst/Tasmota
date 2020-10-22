@@ -192,6 +192,7 @@ void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, 
     manuf,  /* manuf */
     clusterSpecific /* not cluster specific */,
     true /* response */,
+    false /* discover route */,
     seq,  /* zcl transaction id */
     buf.getBuffer(), buf.len()
   }));
@@ -739,6 +740,7 @@ void CmndZbSend(void) {
     manuf,  /* manuf */
     false /* not cluster specific */,
     false /* no response */,
+    false /* discover route */,
     0,  /* zcl transaction id */
     nullptr, 0
   });
@@ -1219,9 +1221,11 @@ void CmndZbPermitJoin(void) {
     // Log pairing mode enabled
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":21,\"Message\":\"Pairing mode enabled\"}}"));
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+    zigbee.permit_end_time = millis() + duration * 1000;
+    AddLog_P2(LOG_LEVEL_INFO, "zigbee.permit_end_time = %d", zigbee.permit_end_time);
+  } else {
+    zigbee.permit_end_time = millis();
   }
-  // always register timer for disable, might happen at next tick
-  zigbee_devices.setTimer(0x0000 /* coordinator */, 0 /* group addr*/, duration * 1000, 0, 0 /* endpoint */, Z_CAT_PERMIT_JOIN, 0 /* value */, &Z_PermitJoinDisable);
 #endif // USE_ZIGBEE_EZSP
 
   ResponseCmndDone();
@@ -1254,6 +1258,34 @@ void CmndZbEZSPListen(void) {
   ZigbeeEZSPSendCmd(buf.getBuffer(), buf.len());
 
   ResponseCmndDone();
+}
+
+void ZigbeeGlowPermitJoinLight(void) {
+  static const uint16_t cycle_time = 1000;    // cycle up and down in 1000 ms
+  static const uint16_t half_cycle_time = cycle_time / 2;    // cycle up and down in 1000 ms
+  if (zigbee.permit_end_time) {
+    uint16_t led_power = 0;         // turn led off
+    // permit join is ongoing
+    if (TimeReached(zigbee.permit_end_time)) {
+      zigbee.permit_end_time = 0;   // disable timer
+      Z_PermitJoinDisable();
+    } else {
+      uint32_t millis_to_go = millis() - zigbee.permit_end_time;
+      uint32_t sub_second = millis_to_go % cycle_time;
+      if (sub_second <= half_cycle_time) {
+        led_power = changeUIntScale(sub_second, 0, half_cycle_time, 0, 1023);
+      } else {
+        led_power = changeUIntScale(sub_second, half_cycle_time, cycle_time, 1023, 0);
+      }
+      led_power = ledGamma10_10(led_power);
+    }
+
+    // change the led state
+    uint32_t led_pin = Pin(GPIO_LEDLNK);
+    if (led_pin < 99) {
+      analogWrite(led_pin, ledlnk_inverted ? 1023 - led_power : led_power);
+    }
+  }
 }
 #endif // USE_ZIGBEE_EZSP
 
@@ -1801,6 +1833,9 @@ bool Xdrv23(uint8_t function)
         if (ZigbeeSerial) {
           ZigbeeInputLoop();
           ZigbeeOutputLoop();   // send any outstanding data
+#ifdef USE_ZIGBEE_EZSP
+          ZigbeeGlowPermitJoinLight();
+#endif // USE_ZIGBEE_EZSP
         }
         if (zigbee.state_machine) {
           ZigbeeStateMachine_Run();
@@ -1813,7 +1848,7 @@ bool Xdrv23(uint8_t function)
 #ifdef USE_ZIGBEE_EZSP
       // GUI xmodem
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/" WEB_HANDLE_ZIGBEE_XFER, HandleZigbeeXfer);
+        WebServer_on(PSTR("/" WEB_HANDLE_ZIGBEE_XFER), HandleZigbeeXfer);
         break;
 #endif  // USE_ZIGBEE_EZSP
 #endif  // USE_WEBSERVER

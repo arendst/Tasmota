@@ -186,6 +186,7 @@ void Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster
       0,  /* manuf */
       false /* not cluster specific */,
       true /* response */,
+      false /* discover route */,
       seq,  /* zcl transaction id */
       attrs, attrs_len
     }));

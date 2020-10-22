@@ -599,7 +599,7 @@ void TuyaProcessStatePacket(void) {
           dimIndex = 0;
         }
 
-        if (fnId == TUYA_MCU_FUNC_DIMMER2 || fnId == TUYA_MCU_FUNC_REPORT2 || fnId == TUYA_MCU_FUNC_CT) {
+        if ((fnId == TUYA_MCU_FUNC_DIMMER2) || (fnId == TUYA_MCU_FUNC_REPORT2) || (fnId == TUYA_MCU_FUNC_CT)) {
           dimIndex = 1;
           if (Settings.flag3.pwm_multi_channels) {
             Tuya.Levels[dimIndex] = changeUIntScale(packetValue, 0, Settings.dimmer_hw_max, 0, 100);
@@ -610,36 +610,39 @@ void TuyaProcessStatePacket(void) {
 
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX value %d from dpId %d "), packetValue, Tuya.buffer[dpidStart]);
 
-        if (Tuya.ignore_dimmer_cmd_timeout < millis()) {
+        if ((fnId == TUYA_MCU_FUNC_DIMMER) || (fnId == TUYA_MCU_FUNC_REPORT1) ||
+            (fnId == TUYA_MCU_FUNC_DIMMER2) || (fnId == TUYA_MCU_FUNC_REPORT2) ||
+            (fnId == TUYA_MCU_FUNC_CT) || (fnId == TUYA_MCU_FUNC_WHITE)) {
 
-          if ((power || Settings.flag3.tuya_apply_o20) && ((Tuya.Levels[dimIndex] > 0) && (Tuya.Levels[dimIndex] != Tuya.Snapshot[dimIndex]))) { // SetOption54 - Apply SetOption20 settings to Tuya device
+          if (Tuya.ignore_dimmer_cmd_timeout < millis()) {
 
-            Tuya.ignore_dim = true;
-            skip_light_fade = true;
+            if ((power || Settings.flag3.tuya_apply_o20) && ((Tuya.Levels[dimIndex] > 0) && (Tuya.Levels[dimIndex] != Tuya.Snapshot[dimIndex]))) { // SetOption54 - Apply SetOption20 settings to Tuya device
 
-            if ((fnId == TUYA_MCU_FUNC_DIMMER) || (fnId == TUYA_MCU_FUNC_REPORT1)) {
-              if (Settings.flag3.pwm_multi_channels && (abs(Tuya.Levels[0] - changeUIntScale(Light.current_color[0], 0, 255, 0, 100))) > 1) {
-                snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_CHANNEL "1 %d"), Tuya.Levels[0]);
-              } else {
-                if ((abs(Tuya.Levels[0] - light_state.getDimmer())) > 1) { snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER "3 %d"), Tuya.Levels[0]); }
+              Tuya.ignore_dim = true;
+              skip_light_fade = true;
+
+              scmnd[0] = '\0';
+              if ((fnId == TUYA_MCU_FUNC_DIMMER) || (fnId == TUYA_MCU_FUNC_REPORT1)) {
+                if (Settings.flag3.pwm_multi_channels && (abs(Tuya.Levels[0] - changeUIntScale(Light.current_color[0], 0, 255, 0, 100))) > 1) {
+                  snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_CHANNEL "1 %d"), Tuya.Levels[0]);
+                }
+                else if ((abs(Tuya.Levels[0] - light_state.getDimmer())) > 1) {
+                  snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER "3 %d"), Tuya.Levels[0]);
+                }
               }
-              ExecuteCommand(scmnd, SRC_SWITCH);
-            }
-
-            if (((fnId == TUYA_MCU_FUNC_DIMMER2) || (fnId == TUYA_MCU_FUNC_REPORT2)) &&
-                  Settings.flag3.pwm_multi_channels && (abs(Tuya.Levels[1] - changeUIntScale(Light.current_color[1], 0, 255, 0, 100))) > 1) {
-              snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_CHANNEL "2 %d"), Tuya.Levels[1]);
-              ExecuteCommand(scmnd, SRC_SWITCH);
-            }
-
-            if ((fnId == TUYA_MCU_FUNC_CT) && (abs(Tuya.Levels[1] - light_state.getCT())) > 1) {
-              snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_COLORTEMPERATURE " %d"), Tuya.Levels[1]);
-              ExecuteCommand(scmnd, SRC_SWITCH);
-            }
-
-            if ((fnId == TUYA_MCU_FUNC_WHITE) && (abs(Tuya.Levels[1] - light_state.getDimmer(2))) > 1) {
-              snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_WHITE " %d"), Tuya.Levels[1]);
-              ExecuteCommand(scmnd, SRC_SWITCH);
+              if (((fnId == TUYA_MCU_FUNC_DIMMER2) || (fnId == TUYA_MCU_FUNC_REPORT2)) &&
+                    Settings.flag3.pwm_multi_channels && (abs(Tuya.Levels[1] - changeUIntScale(Light.current_color[1], 0, 255, 0, 100))) > 1) {
+                snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_CHANNEL "2 %d"), Tuya.Levels[1]);
+              }
+              if ((fnId == TUYA_MCU_FUNC_CT) && (abs(Tuya.Levels[1] - light_state.getCT())) > 1) {
+                snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_COLORTEMPERATURE " %d"), Tuya.Levels[1]);
+              }
+              if ((fnId == TUYA_MCU_FUNC_WHITE) && (abs(Tuya.Levels[1] - light_state.getDimmer(2))) > 1) {
+                snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_WHITE " %d"), Tuya.Levels[1]);
+              }
+              if (scmnd[0] != '\0') {
+                ExecuteCommand(scmnd, SRC_SWITCH);
+              }
             }
           }
         }

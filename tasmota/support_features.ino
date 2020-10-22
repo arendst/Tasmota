@@ -613,9 +613,9 @@ void GetFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_WE517)
   feature6 |= 0x08000000;  // xnrg_17_ornowe517.ino
 #endif
-
-//  feature6 |= 0x10000000;
-
+#if defined(USE_I2C) && defined(USE_EZOPH)
+  feature6 |= 0x10000000;  // xsns_78_ezoph.ino
+#endif
 #if defined(ESP32) && defined(USE_TTGO_WATCH)
   feature6 |= 0x20000000;  // xdrv_83_esp32watch.ino
 #endif
@@ -630,8 +630,12 @@ void GetFeatures(void)
 
   feature7 = 0x00000000;
 
-//  feature7 |= 0x00000001;
-//  feature7 |= 0x00000002;
+#if defined(USE_I2C) && defined(USE_EZOORP)
+  feature7 |= 0x00000001;  // xsns_79_ezoorp.ino
+#endif
+#if defined(USE_I2C) && defined(USE_EZORTD)
+  feature7 |= 0x00000002; // xsns_80_ezortd.ino
+#endif
 //  feature7 |= 0x00000004;
 //  feature7 |= 0x00000008;
 

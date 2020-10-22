@@ -2336,11 +2336,12 @@ void LightHandleDevGroupItem(void)
 {
   static bool send_state = false;
   static bool restore_power = false;
+
+#ifdef USE_PWM_DIMMER_REMOTE
+  if (!(XdrvMailbox.index & DGR_FLAG_LOCAL)) return;
+#endif  // USE_PWM_DIMMER_REMOTE
   bool more_to_come;
   uint32_t value = XdrvMailbox.payload;
-#ifdef USE_PWM_DIMMER_REMOTE
-  if (*XdrvMailbox.topic) return; // Ignore updates from other device groups
-#endif  // USE_PWM_DIMMER_REMOTE
   switch (XdrvMailbox.command_code) {
     case DGR_ITEM_EOL:
       more_to_come = (XdrvMailbox.index & DGR_FLAG_MORE_TO_COME);

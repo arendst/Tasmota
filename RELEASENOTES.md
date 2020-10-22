@@ -59,27 +59,37 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog v9.0.0.2
 ### Added
+- Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
+- Command ``SwitchMode 15`` sending only MQTT message on switch change (#9593)
+- Zigbee command ``ZbData`` for better support of device specific data
 - Optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
 - Optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
 - SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
 - Optional support for inverted NeoPixelBus data line by enabling ``#define USE_WS2812_INVERTED`` (#8988)
-- PWM dimmer color/trigger on tap, SO88 led, DGR WITH_LOCAL flag by Paul Diem (#9474)
+- Support for PWM dimmer color/trigger on tap, SO88 led, DGR WITH_LOCAL flag, multi-press and ledmask by Paul Diem (#9474, #9584)
 - Support for stateful ACs using ``StateMode`` in tasmota-ir.bin by Arik Yavilevich (#9472)
-- Zigbee ``ZbData`` command for better support of device specific data
 - Support for analog buttons indexed within standard button range
 - Support for Vietnamese language translations by Tâm.NT
+- Support for timers in case of no-sunset permanent day by cybermaus (#9543)
+- Support for EZO Ph, ORP and RTD sensors by Christopher Tremblay (#9567, #9585)
+
+### Breaking Changed
+- Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too
+- ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
+- Command ``Status`` output for disabled status types now returns {"Command":"Error"}
+- MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
 
 ### Changed
-- Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too
 - Command ``Gpio17`` replaces command ``Adc``
 - Command ``Gpios`` replaces command ``Adcs``
 - New IR Raw compact format (#9444)
-- MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
 - A4988 optional microstep pin selection
 - Pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
-- ``Status`` command output for disabled status types
 - IRremoteESP8266 library from v2.7.10 to v2.7.11
 - NeoPixelBus library from v2.5.0.09 to v2.6.0
+- Management of serial baudrate (#9554)
+- Rotary driver adjusted accordingly if Mi Desk Lamp module is selected (#9399)
+- Tasmota Arduino Core v2.7.4.5 allowing webpassword over 47 characters (#9687)
 
 ### Fixed
 - Ledlink blink when no network connected regression from v8.3.1.4 (#9292)
@@ -88,7 +98,11 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Light wakeup exception 0 (divide by zero) when ``WakeupDuration`` is not initialised (#9466)
 - Thermostat sensor status corruption regression from v8.5.0.1 (#9449)
 - Telegram message decoding error regression from v8.5.0.1
+- Rule handling of Var or Mem using text regression from v8.5.0.1 (#9540)
+- Correct Energy period display shortly after midnight by gominoa (#9536)
+- TuyaMcu energy display regression from v8.5.0.1 (#9547)
 
 ### Removed
 - Support for direct upgrade from Tasmota versions before v7.0
 - Auto config update for all Friendlynames and Switchtopic from Tasmota versions before v8.0
+- Support for downgrade to versions before 9.0 keeping current GPIO configuration

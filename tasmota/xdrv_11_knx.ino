@@ -566,7 +566,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
   } else if (chan->type == KNX_SCENE) {
     // VALUE
     uint8_t tempvar = knx.data_to_1byte_uint(msg.data);    
-    dtostrfd(tempvar,2,tempchar);
+    dtostrfd(tempvar,0,tempchar);
   } else {
     // VALUE
     float tempvar = knx.data_to_2byte_float(msg.data);
@@ -1271,7 +1271,7 @@ bool Xdrv11(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_KNX);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/kn", HandleKNXConfiguration);
+        WebServer_on(PSTR("/kn"), HandleKNXConfiguration);
         break;
 #endif // USE_KNX_WEB_MENU
 #endif  // USE_WEBSERVER

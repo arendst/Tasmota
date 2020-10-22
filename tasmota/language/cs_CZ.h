@@ -129,7 +129,9 @@
 #define D_OK "OK"
 #define D_ON "Zap."
 #define D_ONLINE "Online"                  // Don't translate, LWT message! Nepředkládat, LWT zpráva!
+#define D_ORP "ORP"
 #define D_PASSWORD "Heslo"
+#define D_PH "pH"
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Účiník"
 #define D_POWERUSAGE "Příkon"
@@ -749,6 +751,7 @@
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
+#define D_UNIT_MILLIVOLT "mV"
 #define D_UNIT_MINUTE "min"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"

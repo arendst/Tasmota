@@ -105,6 +105,19 @@ struct {
 #endif
 } Wc;
 
+#ifdef ENABLE_RTSPSERVER
+#include <OV2640.h>
+#include <SimStreamer.h>
+#include <OV2640Streamer.h>
+#include <CRtspSession.h>
+WiFiServer rtspServer(8554);
+CStreamer *rtsp_streamer;
+CRtspSession *rtsp_session;
+WiFiClient rtsp_client;
+uint8_t rtsp_start;
+OV2640 cam;
+#endif
+
 /*********************************************************************************************/
 
 bool WcPinUsed(void) {
@@ -199,7 +212,6 @@ uint32_t WcSetup(int32_t fsiz) {
 
   //esp_log_level_set("*", ESP_LOG_INFO);
 
-
   // if PSRAM IC present, init with UXGA resolution and higher JPEG quality
   //                      for larger pre-allocated frame buffer.
 
@@ -216,11 +228,12 @@ uint32_t WcSetup(int32_t fsiz) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: PSRAM not found"));
   }
 
+//  AddLog_P2(LOG_LEVEL_INFO, PSTR("CAM: heap check 1: %d"),ESP_getFreeHeap());
+
   // stupid workaround camera diver eats up static ram should prefer PSRAM
   // so we steal static ram to force driver to alloc PSRAM
-  //ESP.getMaxAllocHeap()
-
-//  void *x=malloc(70000);
+//  uint32_t maxfram = ESP.getMaxAllocHeap();
+//  void *x=malloc(maxfram-4096);
   void *x = 0;
   esp_err_t err = esp_camera_init(&config);
   if (x) { free(x); }
@@ -229,6 +242,8 @@ uint32_t WcSetup(int32_t fsiz) {
     AddLog_P2(LOG_LEVEL_INFO, PSTR("CAM: Init failed with error 0x%x"), err);
     return 0;
   }
+
+//  AddLog_P2(LOG_LEVEL_INFO, PSTR("CAM: heap check 2: %d"),ESP_getFreeHeap());
 
   sensor_t * wc_s = esp_camera_sensor_get();
 
@@ -799,10 +814,10 @@ uint32_t WcSetStreamserver(uint32_t flag) {
   if (flag) {
     if (!CamServer) {
       CamServer = new ESP8266WebServer(81);
-      CamServer->on("/", HandleWebcamRoot);
-      CamServer->on("/cam.mjpeg", HandleWebcamMjpeg);
-      CamServer->on("/cam.jpg", HandleWebcamMjpeg);
-      CamServer->on("/stream", HandleWebcamMjpeg);
+      WebServer_on(PSTR("/"), HandleWebcamRoot);
+      WebServer_on(PSTR("/cam.mjpeg"), HandleWebcamMjpeg);
+      WebServer_on(PSTR("/cam.jpg"), HandleWebcamMjpeg);
+      WebServer_on(PSTR("/stream"), HandleWebcamMjpeg);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Stream init"));
       CamServer->begin();
     }
@@ -819,11 +834,16 @@ uint32_t WcSetStreamserver(uint32_t flag) {
 
 void WcStreamControl() {
   WcSetStreamserver(Settings.webcam_config.stream);
-  int resolution = (!Settings.webcam_config.stream) ? -1 : Settings.webcam_config.resolution;
-  WcSetup(resolution);
+  WcSetup(Settings.webcam_config.resolution);
 }
 
 /*********************************************************************************************/
+#ifdef ENABLE_RTSPSERVER
+static uint32_t rtsp_lastframe_time;
+#ifndef RTSP_FRAME_TIME
+#define RTSP_FRAME_TIME 100
+#endif
+#endif
 
 void WcLoop(void) {
   if (CamServer) {
@@ -834,12 +854,51 @@ void WcLoop(void) {
 #ifdef USE_FACE_DETECT
   if (Wc.face_detect_time) { WcDetectFace(); }
 #endif
+
+#ifdef ENABLE_RTSPSERVER
+
+    if (!rtsp_start && !global_state.wifi_down && Wc.up) {
+      rtspServer.begin();
+      rtsp_start = 1;
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("CAM: RTSP init"));
+      rtsp_lastframe_time = millis();
+    }
+
+    // If we have an active client connection, just service that until gone
+    if (rtsp_session) {
+        rtsp_session->handleRequests(0); // we don't use a timeout here,
+        // instead we send only if we have new enough frames
+
+        uint32_t now = millis();
+        if ((now-rtsp_lastframe_time) > RTSP_FRAME_TIME) {
+            rtsp_session->broadcastCurrentFrame(now);
+            rtsp_lastframe_time = now;
+          //  AddLog_P2(LOG_LEVEL_INFO, PSTR("CAM: RTSP session frame"));
+        }
+
+        if (rtsp_session->m_stopped) {
+            delete rtsp_session;
+            delete rtsp_streamer;
+            rtsp_session = NULL;
+            rtsp_streamer = NULL;
+            AddLog_P2(LOG_LEVEL_INFO, PSTR("CAM: RTSP stopped"));
+        }
+    }
+    else {
+        rtsp_client = rtspServer.accept();
+        if (rtsp_client) {
+            rtsp_streamer = new OV2640Streamer(&rtsp_client, cam);        // our streamer for UDP/TCP based RTP transport
+            rtsp_session = new CRtspSession(&rtsp_client, rtsp_streamer); // our threads RTSP session and state
+            AddLog_P2(LOG_LEVEL_INFO, PSTR("CAM: RTSP stream created"));
+        }
+    }
+#endif
 }
 
 void WcPicSetup(void) {
-  Webserver->on("/wc.jpg", HandleImage);
-  Webserver->on("/wc.mjpeg", HandleImage);
-  Webserver->on("/snapshot.jpg", HandleImageBasic);
+  WebServer_on(PSTR("/wc.jpg"), HandleImage);
+  WebServer_on(PSTR("/wc.mjpeg"), HandleImage);
+  WebServer_on(PSTR("/snapshot.jpg"), HandleImage);
 }
 
 void WcShowStream(void) {
@@ -880,15 +939,16 @@ void WcInit(void) {
 #define D_CMND_WC_SATURATION "Saturation"
 #define D_CMND_WC_BRIGHTNESS "Brightness"
 #define D_CMND_WC_CONTRAST "Contrast"
+#define D_CMND_WC_INIT "Init"
 
 const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
   "|" D_CMND_WC_STREAM "|" D_CMND_WC_RESOLUTION "|" D_CMND_WC_MIRROR "|" D_CMND_WC_FLIP "|"
-  D_CMND_WC_SATURATION "|" D_CMND_WC_BRIGHTNESS "|" D_CMND_WC_CONTRAST
+  D_CMND_WC_SATURATION "|" D_CMND_WC_BRIGHTNESS "|" D_CMND_WC_CONTRAST "|" D_CMND_WC_INIT
   ;
 
 void (* const WCCommand[])(void) PROGMEM = {
   &CmndWebcam, &CmndWebcamStream, &CmndWebcamResolution, &CmndWebcamMirror, &CmndWebcamFlip,
-  &CmndWebcamSaturation, &CmndWebcamBrightness, &CmndWebcamContrast
+  &CmndWebcamSaturation, &CmndWebcamBrightness, &CmndWebcamContrast, &CmndWebcamInit
   };
 
 void CmndWebcam(void) {
@@ -954,6 +1014,11 @@ void CmndWebcamContrast(void) {
     WcSetOptions(4, Settings.webcam_config.contrast -2);
   }
   ResponseCmndNumber(Settings.webcam_config.contrast -2);
+}
+
+void CmndWebcamInit(void) {
+  WcStreamControl();
+  ResponseCmndDone();
 }
 
 /*********************************************************************************************\

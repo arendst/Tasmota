@@ -248,7 +248,7 @@ bool Xdrv28(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_PCF8574);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/" WEB_HANDLE_PCF8574, HandlePcf8574);
+        WebServer_on(PSTR("/" WEB_HANDLE_PCF8574), HandlePcf8574);
         break;
 #endif  // USE_WEBSERVER
     }

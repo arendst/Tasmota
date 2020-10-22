@@ -273,13 +273,14 @@ void Energy200ms(void)
 
         RtcSettings.energy_kWhtotal += RtcSettings.energy_kWhtoday;
         Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
+
+        Energy.period -= RtcSettings.energy_kWhtoday;                // this becomes a large unsigned, effectively a negative for EnergyShow calculation
         Energy.kWhtoday = 0;
         Energy.kWhtoday_offset = 0;
         RtcSettings.energy_kWhtoday = 0;
         Energy.start_energy = 0;
+//        Energy.kWhtoday_delta = 0;                                 // dont zero this, we need to carry the remainder over to tomorrow
 
-        Energy.kWhtoday_delta = 0;
-        Energy.period = Energy.kWhtoday;
         EnergyUpdateToday();
 #if defined(USE_ENERGY_MARGIN_DETECTION) && defined(USE_ENERGY_POWER_LIMIT)
         Energy.max_energy_state  = 3;
@@ -1066,10 +1067,7 @@ void EnergyShow(bool json)
     }
 
     if (show_energy_period) {
-      float energy = 0;
-      if (Energy.period) {
-        energy = (float)(RtcSettings.energy_kWhtoday - Energy.period) / 100;
-      }
+      float energy = (float)(RtcSettings.energy_kWhtoday - Energy.period) / 100;
       Energy.period = RtcSettings.energy_kWhtoday;
       char energy_period_chr[FLOATSZ];
       dtostrfd(energy, Settings.flag2.wattage_resolution, energy_period_chr);

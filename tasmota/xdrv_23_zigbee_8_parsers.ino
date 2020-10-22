@@ -176,7 +176,7 @@ int32_t EZ_PermitJoinRsp(int32_t res, const class SBuffer &buf) {
 //
 // Special case: EZSP does not send an event for PermitJoin end, so we generate a synthetic one
 //
-void Z_PermitJoinDisable(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+void Z_PermitJoinDisable(void) {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":20,\"Message\":\"Pairing mode disabled\"}}"));
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 }
@@ -1134,6 +1134,7 @@ void Z_SendDeviceInfoRequest(uint16_t shortaddr) {
     0x0000,  /* manuf */
     false /* not cluster specific */,
     true /* response */,
+      false /* discover route */,
     transacid,  /* zcl transaction id */
     InfoReq, sizeof(InfoReq)
   }));
@@ -1155,6 +1156,7 @@ void Z_SendSingleAttributeRead(uint16_t shortaddr, uint16_t groupaddr, uint16_t 
     0x0000,  /* manuf */
     false /* not cluster specific */,
     true /* response */,
+      false /* discover route */,
     transacid,  /* zcl transaction id */
     InfoReq, sizeof(InfoReq)
   }));
@@ -1301,6 +1303,7 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
       0x0000,  /* manuf */
       false /* not cluster specific */,
       false /* no response */,
+      false /* discover route */,
       zigbee_devices.getNextSeqNumber(shortaddr),  /* zcl transaction id */
       buf.buf(), buf.len()
     }));
@@ -1779,14 +1782,14 @@ int32_t Z_State_Ready(uint8_t value) {
 //
 // Mostly used for routers/end-devices
 // json: holds the attributes in JSON format
-void Z_AutoResponder(uint16_t srcaddr, uint16_t cluster, uint8_t endpoint, const uint16_t *attr_list_ids, size_t attr_len) {
+void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
   Z_attribute_list attr_list;
 
   for (uint32_t i=0; i<attr_len; i++) {
     uint16_t attr_id = attr_list_ids[i];
-    uint32_t ccccaaaa = (cluster << 16) | attr_id;
+    uint32_t ccccaaaa = (_cluster_id << 16) | attr_id;
     Z_attribute attr;
-    attr.setKeyId(cluster, attr_id);
+    attr.setKeyId(_cluster_id, attr_id);
 
     switch (ccccaaaa) {
       case 0x00000004: attr.setStr(PSTR(USE_ZIGBEE_MANUFACTURER));                break;    // Manufacturer
@@ -1837,7 +1840,7 @@ void Z_AutoResponder(uint16_t srcaddr, uint16_t cluster, uint8_t endpoint, const
     }
     if (!attr.isNone()) {
       Z_parseAttributeKey(attr);
-      attr_list.addAttribute(cluster, attr_id) = attr;
+      attr_list.addAttribute(_cluster_id, attr_id) = attr;
     }
   }
 
@@ -1857,22 +1860,22 @@ void Z_AutoResponder(uint16_t srcaddr, uint16_t cluster, uint8_t endpoint, const
                                           ",\"Endpoint\":%d"
                                           ",\"Response\":%s}"
                                           ),
-                                          srcaddr, cluster, endpoint,
+                                          _srcaddr, _cluster_id, _srcendpoint,
                                           attr_list.toString().c_str());
 
     // send
     // all good, send the packet
-    uint8_t seq = zigbee_devices.getNextSeqNumber(srcaddr);
     ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
-      srcaddr,
+      _srcaddr,
       0x0000,
-      cluster /*cluster*/,
-      endpoint,
+      _cluster_id /*cluster*/,
+      _srcendpoint,
       ZCL_READ_ATTRIBUTES_RESPONSE,
       0x0000,  /* manuf */
       false /* not cluster specific */,
       false /* no response */,
-      seq,  /* zcl transaction id */
+      true /* direct response */,
+      _transact_seq,  /* zcl transaction id */
       buf.getBuffer(), buf.len()
     }));
   }

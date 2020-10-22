@@ -102,7 +102,7 @@ bool Xsns75(uint8_t function)
 
   switch (function) {
     case FUNC_WEB_ADD_HANDLER:
-      Webserver->on("/metrics", HandleMetrics);
+      WebServer_on(PSTR("/metrics"), HandleMetrics);
       break;
   }
   return result;
