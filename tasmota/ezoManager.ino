@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifdef USE_I2C
-#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD)
+#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD) || defined(USE_EZOHUM)
 
 #define XI2C_55     55    // See I2CDEVICES.md
 
@@ -62,7 +62,9 @@ const char EZO_RTD_NAME[] PROGMEM = "RTD";
 //const char EZO_CO2_NAME[] PROGMEM = "CO2";
 //const char EZO_PRS_NAME[] PROGMEM = "PRS";
 //const char EZO_O2_NAME[]  PROGMEM = "O2";
-//const char EZO_HUM_NAME[] PROGMEM = "HUM";
+#ifdef USE_EZOHUM
+const char EZO_HUM_NAME[] PROGMEM = "HUM";
+#endif
 //const char EZO_RGB_NAME[] PROGMEM = "RGB";
 
 const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
@@ -97,7 +99,13 @@ const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
   EZO_EMPTY,
   EZO_EMPTY,
   EZO_EMPTY,
+
+#ifdef USE_EZOHUM
+  EZO_HUM_NAME,
+#else
   EZO_EMPTY,
+#endif
+
   EZO_EMPTY,
 };
 
