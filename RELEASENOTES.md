@@ -60,7 +60,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ## Changelog v9.0.0.2
 ### Added
 - Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
-- Command ``SwitchMode 15`` sending only MQTT message on switch change (#9596)
+- Command ``SwitchMode 15`` sending only MQTT message on switch change (#9593)
 - Zigbee command ``ZbData`` for better support of device specific data
 - Optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
 - Optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
