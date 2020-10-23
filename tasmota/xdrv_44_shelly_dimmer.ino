@@ -55,7 +55,7 @@
 
 #ifdef SHELLY_FW_UPGRADE
 #include <stm32flash.h>
-#include <fw/shelly/dimmer/stm_v50.1.h>
+#include <fw/shelly/dimmer/stm_v50.2.h>
 #endif // SHELLY_FW_UPGRADE
 
 #include <TasmotaSerial.h>
@@ -161,7 +161,6 @@ bool ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
         ShdSerial->write(data, len);
         ShdSerial->flush();
 
-
         // wait for any response
         uint32_t snd_time = millis();
         while (TimePassedSince(snd_time) < SHD_ACK_TIMEOUT)
@@ -172,10 +171,8 @@ bool ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
             delay(1);
         }
 
-#ifdef SHELLY_DIMMER_DEBUG
         // timeout
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHD: serial send timeout"));
-#endif // SHELLY_DIMMER_DEBUG
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("SHD: serial send timeout"));
     }
     return false;
 }
@@ -511,46 +508,49 @@ void ShdResetToDFUMode()
 
 bool ShdUpdateFirmware(const uint8_t data[], unsigned int size)
 {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Update firmware"));
     bool ret = true;
     stm32_t *stm = stm32_init(&Serial, STREAM_SERIAL, 1); 
     if (stm)
     {
-      off_t   offset = 0;
-      uint8_t   buffer[256];
-      unsigned int  len;
-      const uint8_t *p_st = data;
-      uint32_t  addr, start, end;
-      stm32_err_t s_err;
+        off_t   offset = 0;
+        uint8_t   buffer[256];
+        unsigned int  len;
+        const uint8_t *p_st = data;
+        uint32_t  addr, start, end;
+        stm32_err_t s_err;
 
-      stm32_erase_memory(stm, 0, STM32_MASS_ERASE);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: STM32 erase memory"));
 
-      addr = stm->dev->fl_start;
-      end = addr + size;
-      while(addr < end && offset < size) 
-      {
-          uint32_t left = end - addr;
-          len   = sizeof(buffer) > left ? left : sizeof(buffer);
-          len   = len > size - offset ? size - offset : len;
+        stm32_erase_memory(stm, 0, STM32_MASS_ERASE);
 
-          if (len == 0) 
-          {
-              break;
-          }
+        addr = stm->dev->fl_start;
+        end = addr + size;
+        while(addr < end && offset < size) 
+        {
+            uint32_t left = end - addr;
+            len   = sizeof(buffer) > left ? left : sizeof(buffer);
+            len   = len > size - offset ? size - offset : len;
+
+            if (len == 0) 
+            {
+                break;
+            }
+            
+            memcpy(buffer, p_st, len);
+            p_st += len;
         
-          memcpy(buffer, p_st, len);
-          p_st += len;
-      
-          s_err = stm32_write_memory(stm, addr, buffer, len);
-          if (s_err != STM32_ERR_OK) 
-          {
-              ret = false;
-              break;
-          }
+            s_err = stm32_write_memory(stm, addr, buffer, len);
+            if (s_err != STM32_ERR_OK) 
+            {
+                ret = false;
+                break;
+            }
 
-          addr  += len;
-          offset  += len;
-      }
-      stm32_close(stm);
+            addr  += len;
+            offset  += len;
+        }
+        stm32_close(stm);
     }
     return ret;
 }
@@ -578,9 +578,38 @@ bool ShdSendVersion(void)
     return ShdSendCmd(SHD_VERSION_CMD, 0, 0);
 }
 
+void ShdGetSettings(void)
+{
+    char parameters[32];
+    Shd.req_brightness      = 0;
+    Shd.leading_edge        = 0;
+    Shd.req_fade_rate       = 0;
+    Shd.warmup_brightness   = 0;
+    Shd.warmup_time         = 0;
+    if (strstr(SettingsText(SET_SHD_PARAM), ",") != nullptr)
+    {
+#ifdef SHELLY_DIMMER_DEBUG
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Loading params: %s"), SettingsText(SET_SHD_PARAM));
+#endif // SHELLY_DIMMER_DEBUG
+        Shd.req_brightness      = atoi(subStr(parameters, SettingsText(SET_SHD_PARAM), ",", 1));
+        Shd.leading_edge        = atoi(subStr(parameters, SettingsText(SET_SHD_PARAM), ",", 2));
+        Shd.req_fade_rate       = atoi(subStr(parameters, SettingsText(SET_SHD_PARAM), ",", 3));
+        Shd.warmup_brightness   = atoi(subStr(parameters, SettingsText(SET_SHD_PARAM), ",", 4));
+        Shd.warmup_time         = atoi(subStr(parameters, SettingsText(SET_SHD_PARAM), ",", 5));
+    }
+}
+
+void ShdSaveSettings(void)
+{
+    char parameters[32];
+    snprintf_P(parameters, sizeof(parameters), PSTR("%d,%d,%d,%d,%d"),
+               Shd.req_brightness, Shd.leading_edge, Shd.req_fade_rate, Shd.warmup_brightness, Shd.warmup_time);
+    SettingsUpdateText(SET_SHD_PARAM, parameters);
+}
+
 void ShdInit(void)
 {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Shelly Dimmer Driver v%u.%u"), SHD_DRIVER_MAJOR_VERSION, SHD_DRIVER_MINOR_VERSION);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Shelly Dimmer Driver v%u.%u"), SHD_DRIVER_MAJOR_VERSION, SHD_DRIVER_MINOR_VERSION);
 #ifdef SHELLY_DIMMER_DEBUG
     AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Starting Tx %d Rx %d"), Pin(GPIO_TXD), Pin(GPIO_RXD));
 #endif // SHELLY_DIMMER_DEBUG
@@ -598,12 +627,13 @@ void ShdInit(void)
 
             ShdResetToAppMode();
             bool got_version = ShdSendVersion();
+            AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Shelly Dimmer Co-processor Version v%u.%u"), Shd.dimmer.version_major, Shd.dimmer.version_minor);
 #ifdef SHELLY_FW_UPGRADE
             if (!got_version || (got_version && 
                     (Shd.dimmer.version_minor != SHD_FIRMWARE_MINOR_VERSION || 
                      Shd.dimmer.version_major != SHD_FIRMWARE_MAJOR_VERSION))) 
             {
-                AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Updating firmware from v%u.%u to v%u.%u"), Shd.dimmer.version_major, Shd.dimmer.version_minor, SHD_FIRMWARE_MAJOR_VERSION, SHD_FIRMWARE_MINOR_VERSION);
+                AddLog_P2(LOG_LEVEL_INFO, PSTR("SHD: Updating firmware from v%u.%u to v%u.%u with %u bytes"), Shd.dimmer.version_major, Shd.dimmer.version_minor, SHD_FIRMWARE_MAJOR_VERSION, SHD_FIRMWARE_MINOR_VERSION, sizeof(stm_firmware));
                 
                 Serial.end();
                 Serial.begin(115200, SERIAL_8E1);
@@ -613,11 +643,13 @@ void ShdInit(void)
 
                 ShdResetToAppMode();
                 Serial.begin(115200, SERIAL_8N1);
-                
+
                 ShdSendVersion();
             }
 #endif // SHELLY_FW_UPGRADE
-            delay(200);
+            ShdGetSettings();
+            ShdSaveSettings();
+
             ShdSendSettings();
             ShdSyncState();
         }
@@ -738,6 +770,7 @@ void CmndShdLeadingEdge(void)
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set to leading edge"));
         ShdSendSettings();
     }
+    ShdSaveSettings();
     ResponseCmndNumber(Settings.shd_leading_edge);
 }
 
@@ -750,6 +783,7 @@ void CmndShdWarmupBrightness(void)
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set warmup brightness to %d%%"), XdrvMailbox.payload);
         ShdSendSettings();
     }
+    ShdSaveSettings();
     ResponseCmndNumber(Settings.shd_warmup_brightness);
 }
 
@@ -762,6 +796,7 @@ void CmndShdWarmupTime(void)
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHD: Set warmup time to %dms"), XdrvMailbox.payload);
         ShdSendSettings();
     }
+    ShdSaveSettings();
     ResponseCmndNumber(Settings.shd_warmup_time);
 }
 
