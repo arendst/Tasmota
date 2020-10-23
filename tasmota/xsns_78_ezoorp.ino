@@ -1,5 +1,5 @@
 /*
-  xsns_78_ezoph.ino - EZO pH I2C pH sensor support for Tasmota
+  xsns_78_ezoorp.ino - EZO ORP I2C ORP sensor support for Tasmota
 
   Copyright (C) 2020  Christopher Tremblay
 
@@ -18,39 +18,41 @@
 */
 
 #ifdef USE_I2C
-#ifdef USE_EZOPH
+#ifdef USE_EZOORP
 
-#define EZO_PH_READ_LATENCY   900
+#define EZO_ORP_READ_LATENCY   900
 
-struct EZOpH : public EZOStruct {
-  EZOpH(uint32_t addr) : EZOStruct(addr), pH(NAN) {}
+struct EZOORP : public EZOStruct {
+  EZOORP(uint32_t addr) : EZOStruct(addr), ORP(NAN) {}
 
   virtual void ProcessMeasurement(void)
   {
     char data[D_EZO_MAX_BUF];
 
-    EZOStruct::ProcessMeasurement(data, sizeof(data), EZO_PH_READ_LATENCY);
-    pH    = CharToFloat(data);
+    EZOStruct::ProcessMeasurement(data, sizeof(data), EZO_ORP_READ_LATENCY);
+    ORP = CharToFloat(data);
   }
 
   virtual void Show(bool json, const char *name)
   {
     char str[6];
-    dtostrfd(pH, 2, str);
+    dtostrfd(ORP, 0, str);
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_PH "\":%s}" ), name, str);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ORP "\":%s}" ), name, str);
     }
 #ifdef USE_WEBSERVER  
     else {
-      WSContentSend_PD(HTTP_SNS_PH, name, str);
+      WSContentSend_PD(HTTP_SNS_ORP, name, str);
 #endif  // USE_WEBSERVER
     }
   }
 
 private:
-  float     pH;
+  float     ORP;
 };
 
-#endif  // USE_EZOPH
+
+
+#endif  // USE_EZOORP
 #endif  // USE_I2C

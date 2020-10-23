@@ -1,5 +1,5 @@
 /*
-  ezo.ino - EZO modules base class
+  xsns_78_ezo.ino - EZO modules base class
 
   Copyright (C) 2020  Christopher Tremblay
 
@@ -17,15 +17,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifdef USE_I2C
-#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD)
+#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD) || defined(USE_EZOHUM)
 
 #define D_EZO_DELAY   300   // Minimum delay for any instruction
 #define D_EZO_MAX_BUF 40    // Maximum response
+
+const char D_EZO_NAME[] PROGMEM = "EZO";
 
 
 
 // This baseclass provides common functionality for all EZO devices
 struct EZOStruct {
+  EZOStruct(uint32_t addr) : valid(0), addr(addr), lastRead(-2000) {}
+
   void MeasureRequest(void)
   {
     const uint8_t EZOMeasureCmd[2] = {'R', 0};
@@ -41,6 +45,38 @@ struct EZOStruct {
     lastRead = millis();
   }
 
+  void HandleCommand(char *cmd, uint32_t len) const
+  {
+    // Transmit our command verbatim
+    Wire.beginTransmission(addr);
+    Wire.write(cmd, len);
+    if (Wire.endTransmission() != 0) {
+      return;
+    }
+
+    // Attempt to read the results
+    char data[D_EZO_MAX_BUF];
+    for (uint32_t code = 254; code == 254; code = Wire.read()) {
+      delay(D_EZO_DELAY);
+      Wire.requestFrom(addr, sizeof(data));
+    }
+
+    for (uint32_t i = 0; Wire.available() > 0; i++) {
+      data[i] = Wire.read();
+    }
+
+    ResponseCmndChar((char *)data);
+  }
+
+  bool isValid(void)
+  {
+    return valid;
+  }
+
+  virtual void ProcessMeasurement(void);
+  virtual void Show(bool json, const char *name);
+
+protected:
   void ProcessMeasurement(char *const data, const uint32_t len, const uint32_t latency)
   {
     // Wait for the data to arrive first
@@ -63,55 +99,9 @@ struct EZOStruct {
     }
   }
 
-  void HandleCommand(uint32_t index) const
-  {
-    char *at      = XdrvMailbox.data;
-    uint32_t len  = XdrvMailbox.data_len;
-
-    // Figure out if we're trying to address a specific device
-    // PS: This should ideally be done through the Tasmota mailbox
-    if (at[0] == '-') {
-      uint32_t idx = atoi(&at[1]) - 1;
-      at = strchr(at, ' ');
-
-      if (!at++) {
-        return;
-      }
-
-      len -= (at - XdrvMailbox.data);
-
-      if (idx != index) {
-        return;
-      }
-    }
-
-    // Transmit our command verbatim
-    Wire.beginTransmission(addr);
-    Wire.write(at, len);
-    if (Wire.endTransmission() != 0) {
-      return;
-    }
-
-    // Attempt to read the results
-    char data[D_EZO_MAX_BUF];
-    for (uint32_t code = 254; code == 254; code = Wire.read()) {
-      delay(D_EZO_DELAY);
-      Wire.requestFrom(addr, sizeof(data));
-    }
-
-    for (uint32_t i = 0; Wire.available() > 0; i++) {
-      data[i] = Wire.read();
-    }
-
-    ResponseCmndChar((char *)data);
-  }
-
-public:
-  uint8_t   valid     = 0;
+  uint8_t   valid;
   uint8_t   addr; 
-
-private:
-  uint32_t  lastRead  = -2000;
+  uint32_t  lastRead;
 };
 
 

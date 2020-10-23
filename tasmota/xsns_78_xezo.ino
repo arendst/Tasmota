@@ -1,5 +1,5 @@
 /*
-  ezoManager.ino - EZO device manager
+  xsns_78_xezo.ino - EZO family I2C driver support for Tasmota
 
   Copyright (C) 2020  Christopher Tremblay
 
@@ -16,17 +16,20 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifdef USE_I2C
-#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD)
 
-#define XI2C_55     55    // See I2CDEVICES.md
+#ifdef USE_I2C
+#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD) || defined(USE_EZOHUM)
+
+#define XSNS_78 78
+#define XI2C_55 55    // See I2CDEVICES.md
 
 #define EZO_ADDR_0  0x61  // First EZO address
 #define EZO_ADDR_n  16    // Number of ports for use with EZO devices
 
 
 // List of known EZO devices and their default address
-enum EZOType {
+
+enum {
   EZO_DO  = 0x61, // D.O.
   EZO_ORP = 0x62, // ORP
   EZO_PH  = 0x63, // pH
@@ -45,6 +48,7 @@ enum EZOType {
   EZO_RGB = 0x70, // RGB
 };
 
+
 const char EZO_EMPTY[]    PROGMEM = "";
 //const char EZO_DO_NAME[]  PROGMEM = "DO";
 #ifdef USE_EZOORP
@@ -62,7 +66,9 @@ const char EZO_RTD_NAME[] PROGMEM = "RTD";
 //const char EZO_CO2_NAME[] PROGMEM = "CO2";
 //const char EZO_PRS_NAME[] PROGMEM = "PRS";
 //const char EZO_O2_NAME[]  PROGMEM = "O2";
-//const char EZO_HUM_NAME[] PROGMEM = "HUM";
+#ifdef USE_EZOHUM
+const char EZO_HUM_NAME[] PROGMEM = "HUM";
+#endif
 //const char EZO_RGB_NAME[] PROGMEM = "RGB";
 
 const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
@@ -97,42 +103,85 @@ const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
   EZO_EMPTY,
   EZO_EMPTY,
   EZO_EMPTY,
+
+#ifdef USE_EZOHUM
+  EZO_HUM_NAME,
+#else
   EZO_EMPTY,
+#endif
+
   EZO_EMPTY,
 };
 
 
 
 struct EZOManager {
-  // Returns the count of devices of the specified type or -1 if the driver isn't ready yet
-  // list must be a client-allocated array of atleast 16 elements
-  int getDevice(const EZOType type, uint32_t *list)
+  void Command()
   {
-    // EZO devices take 2s to boot
-    if (uptime >= next) {
-      if (stage == 0) {
-        DetectRequest();
-        next = uptime + 1;
-      } else if (stage == 1) {
-        ProcessDetection();
+    char *at      = XdrvMailbox.data;
+    uint32_t len  = XdrvMailbox.data_len;
+
+    // Figure out if we're trying to address a specific device
+    // PS: This should ideally be done through the Tasmota mailbox
+    if (at[0] == '-') {
+      int32_t idx = atoi(&at[1]) - 1;
+      at = strchr(at, ' ');
+
+      if (!at++) {
+        return;
       }
 
-      stage++;
+      len -= (at - XdrvMailbox.data);
+
+      if ((idx >= 0) && (idx < count)) {
+        sensor[idx]->ProcessMeasurement();
+        sensor[idx]->HandleCommand(at, len);
+      }
+    } else {
+      for (uint32_t i = 0; i < count; i++) {
+        sensor[i]->ProcessMeasurement();
+        sensor[i]->HandleCommand(at, len);
+      }
     }
+  }
 
-    if (stage >= 2) {
-      int count = 0;
+  void EverySecond()
+  {
+    // Do we have to deal with the 2 stage booting process?
+    if (count < 0) {
+      // EZO devices take 2s to boot
+      if (uptime >= next) {
+        count++;
 
-      for (uint32_t i = 0; i < EZO_ADDR_n; i++) {
-        if ((alive & (1 << i)) && (((devices[i >> 3] >> ((i & 7) << 2)) & 0xF) == (type - EZO_ADDR_0))) {
-          list[count++] = i + EZO_ADDR_0;
+        if (count == -1) {
+          DetectRequest();
+          next = uptime + 1;
+        } else if (count == 0) {
+          ProcessDetection();
         }
       }
-
-      return count;
     }
 
-    return -1;
+    for (int32_t i = 0; i < count; i++) {
+      sensor[i]->ProcessMeasurement();
+      sensor[i]->MeasureRequest();
+    }
+  }
+
+  void Show(bool json)
+  {
+    for (int32_t i = 0; i < count; i++) {
+      if (sensor[i]->isValid()) {
+        char name[7];
+        snprintf_P(name, sizeof(name), PSTR("%s%c%X"), D_EZO_NAME, IndexSeparator(), i + 1);
+
+        if (count == 1) {
+          name[sizeof(D_EZO_NAME) - 1] = 0;
+        }
+
+        sensor[i]->Show(json, name);
+      }
+    }
   }
 
 private:
@@ -161,15 +210,11 @@ private:
 
   void ProcessDetection(void)
   {
-    uint32_t mask = alive;
-
-    devices[0] = devices[1] = 0;
-
     // Check every address that we sent a request to
-    for (uint8_t addr = 0; addr < EZO_ADDR_n; addr++) {
-      if (mask & 1) {
+    for (uint8_t addr = EZO_ADDR_0; addr < EZO_ADDR_0 + EZO_ADDR_n; addr++) {
+      if (alive & 1) {
         char data[D_EZO_MAX_BUF];
-        Wire.requestFrom(addr + EZO_ADDR_0, sizeof(data));
+        Wire.requestFrom(addr, sizeof(data));
         char code = Wire.read();
 
         if (code == 1) {
@@ -189,77 +234,79 @@ private:
                 data[0] = 'E';
                 data[1] = 'Z';
                 data[2] = 'O';
-                I2cSetActiveFound(addr + EZO_ADDR_0, data);
-                devices[addr >> 3] |= j << ((addr & 7) * 4);
+                I2cSetActiveFound(addr, data);
+
+                // We use switch intead of virtual function to save RAM
+                switch (j + EZO_ADDR_0) {
+#ifdef USE_EZOORP
+                  case EZO_ORP:
+                    sensor[count] = new EZOORP(addr);
+                    break;
+#endif
+#ifdef USE_EZOPH
+                  case EZO_PH:
+                    sensor[count] = new EZOpH(addr);
+                    break;
+#endif
+#ifdef USE_EZORTD
+                  case EZO_RTD:
+                    sensor[count] = new EZORTD(addr);
+                    break;
+#endif
+#ifdef USE_EZOHUM
+                  case EZO_HUM:
+                    sensor[count] = new EZOHUM(addr);
+                    break;
+#endif
+                }
+
+                count++;
               }
             }
           }
         }
       }
 
-      mask >>= 1;
+      alive >>= 1;
     }
   }
 
   uint32_t  next  = 2;
-  uint8_t   stage = 0;
+  int8_t    count = -2;
 
-// Following 2 members are harcoded to allow a maximum of 16 entries
-  uint16_t  alive;
-  uint32_t  devices[2];
+  // Following variables are harcoded to allow a maximum of 16 entries
+  uint16_t    alive;
+  EZOStruct  *sensor[EZO_ADDR_n];
 } EZOManager;
 
 
 
 // The main driver is the same for all devices.
 // What changes is the implementation of the class itself
-template <class T, EZOType type> bool XsnsEZO(uint8_t function)
+bool Xsns78(uint8_t function)
 {
   if (!I2cEnabled(XI2C_55)) {
     return false;
   }
 
-  // Initialization: Gather the list of devices for this class
-  if ((T::count < 0) && (function == FUNC_EVERY_SECOND)) {
-    uint32_t addr[EZO_ADDR_n];
-    T::count = EZOManager.getDevice(type, &addr[0]);
+  switch (function) {
+    case FUNC_COMMAND_SENSOR:
+      EZOManager.Command();
+      break;
 
-    if (T::count > 0) {
-      T::list  = new T[T::count];
+    case FUNC_EVERY_SECOND:
+      EZOManager.EverySecond();
+      break;
 
-      for (uint32_t i = 0; i < T::count; i++) {
-        T::list[i].addr = addr[i];
-      }
-    }
-  }
-
-  // Process the function on each of them
-  T *cur = &T::list[0];
-  for (int32_t i = 0; i < T::count; i++) {
-    switch (function) {
-      case FUNC_COMMAND_SENSOR:
-        cur->ProcessMeasurement();
-        cur->HandleCommand(i);
-        break;
-
-      case FUNC_EVERY_SECOND:
-        if (uptime & 1) {
-          cur->ProcessMeasurement();
-          cur->MeasureRequest();
-        }
-        break;
-
-      case FUNC_JSON_APPEND:
-        cur->Show(1, i);
-        break;
+    case FUNC_JSON_APPEND:
+      EZOManager.Show(1);
+      break;
 
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        cur->Show(0, i);
-        break;
-    }
-#endif  // USE_WEBSERVER
-    cur++;
+    case FUNC_WEB_SENSOR:
+      EZOManager.Show(0);
+      break;
+#endif
   }
 
   return false;
