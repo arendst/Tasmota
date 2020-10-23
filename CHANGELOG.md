@@ -9,20 +9,24 @@ All notable changes to this project will be documented in this file.
 - Support for timers in case of no-sunset permanent day by cybermaus (#9543)
 - Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
 - Command ``SwitchMode 15`` sending only MQTT message on switch change (#9593)
+- Command ``ShutterChange`` to increment change position (#9594)
 - Support for EZO Ph and ORP sensors by Christopher Tremblay (#9567)
 - Support for EZO RTD sensors by Christopher Tremblay (#9585)
+- Support for EZO HUM sensors by Christopher Tremblay (#9599)
 - On ZigbeeBridge support for glowing led when permit join is active (#9581)
 - Support for PWM Dimmer multi-press and ledmask (#9584)
-- Support for fixed output Hi or Lo GPIO
-- Support for ESP32 based Wireless-Tag WT32-ETH01 (#9496)
+- Support for fixed output Hi or Lo GPIO selection
+- ESP32 support for Wireless-Tag WT32-ETH01 (#9496)
+- ESP32 MI32 Beacon support, RSSI at TELEPERIOD, refactoring (#9609)
 
 ### Changed
 - Command ``Gpio17`` replaces command ``Adc``
 - Command ``Gpios`` replaces command ``Adcs``
 - Management of serial baudrate (#9554)
-- ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
+- TLS fingerprint ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
 - Rotary driver adjusted accordingly if Mi Desk Lamp module is selected (#9399)
 - Tasmota Arduino Core v2.7.4.5 allowing webpassword over 47 characters (#9687)
+- Webserver code optimizations (#9580, #9590)
 
 ### Fixed
 - Convert AdcParam parameters from versions before v9.0.0.2
@@ -30,7 +34,11 @@ All notable changes to this project will be documented in this file.
 - Correct Energy period display shortly after midnight by gominoa (#9536)
 - Rule handling of Var or Mem using text regression from v8.5.0.1 (#9540)
 - TuyaMcu energy display regression from v8.5.0.1 (#9547)
+- Tuyamcu dimmers MQTT topic (#9606)
 - MQTT data corruption on ``MQTTLog 4`` (#9571)
+- Scripter memory alignment (#9608)
+- Zigbee battery percentage (#9607)
+- HassAnyKey anomaly (#9601)
 
 ## [9.0.0.1] - 20201010
 ### Added
