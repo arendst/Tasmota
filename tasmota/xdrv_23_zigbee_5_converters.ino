@@ -613,8 +613,8 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Ztuya1,   CxEF00, 0x046F,  Z_(TuyaWeekSelect),       Cm1, 0 },
 
   // Terncy specific - 0xFCCC
+  { Zint16,  CxFCCC, 0x001A,  Z_(TerncyDuration),        Cm1, 0 },
   { Zint16,  CxFCCC, 0x001B,  Z_(TerncyRotate),          Cm1, 0 },
-  { Zint16,  CxFCCC, 0x001C,  Z_(TerncyDuration),        Cm1, 0 },
 };
 #pragma GCC diagnostic pop
 
