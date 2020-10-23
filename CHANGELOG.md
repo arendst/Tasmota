@@ -39,6 +39,7 @@ All notable changes to this project will be documented in this file.
 - Scripter memory alignment (#9608)
 - Zigbee battery percentage (#9607)
 - HassAnyKey anomaly (#9601)
+- ESP32 Webcam broken regression from #9590
 
 ## [9.0.0.1] - 20201010
 ### Added
