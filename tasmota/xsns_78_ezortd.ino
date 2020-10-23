@@ -1,5 +1,5 @@
 /*
-  xsns_78_ezoph.ino - EZO pH I2C pH sensor support for Tasmota
+  xsns_78_ezortd.ino - EZO RTD I2C RTD sensor support for Tasmota
 
   Copyright (C) 2020  Christopher Tremblay
 
@@ -18,39 +18,39 @@
 */
 
 #ifdef USE_I2C
-#ifdef USE_EZOPH
+#ifdef USE_EZORTD
 
-#define EZO_PH_READ_LATENCY   900
+#define EZO_RTD_READ_LATENCY   600
 
-struct EZOpH : public EZOStruct {
-  EZOpH(uint32_t addr) : EZOStruct(addr), pH(NAN) {}
+struct EZORTD : public EZOStruct {
+  EZORTD(uint32_t addr) : EZOStruct(addr), temperature(NAN) {}
 
   virtual void ProcessMeasurement(void)
   {
     char data[D_EZO_MAX_BUF];
 
-    EZOStruct::ProcessMeasurement(data, sizeof(data), EZO_PH_READ_LATENCY);
-    pH    = CharToFloat(data);
+    EZOStruct::ProcessMeasurement(data, sizeof(data), EZO_RTD_READ_LATENCY);
+    temperature = CharToFloat(data);
   }
 
   virtual void Show(bool json, const char *name)
-  {
-    char str[6];
-    dtostrfd(pH, 2, str);
+{
+    char str[10];
+    dtostrfd(ConvertTemp(temperature), Settings.flag2.temperature_resolution, str);
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_PH "\":%s}" ), name, str);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), name, str);
     }
 #ifdef USE_WEBSERVER  
     else {
-      WSContentSend_PD(HTTP_SNS_PH, name, str);
+      WSContentSend_PD(HTTP_SNS_TEMP, name, str, TempUnit());
 #endif  // USE_WEBSERVER
     }
-  }
+}
 
 private:
-  float     pH;
+  float     temperature;
 };
 
-#endif  // USE_EZOPH
+#endif  // USE_EZORTD
 #endif  // USE_I2C
