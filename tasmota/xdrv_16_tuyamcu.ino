@@ -595,17 +595,14 @@ void TuyaProcessStatePacket(void) {
           Tuya.FanState = packetValue;
         }
 
-        if ((fnId == TUYA_MCU_FUNC_DIMMER) || (fnId == TUYA_MCU_FUNC_REPORT1)) {
-          dimIndex = 0;
-        }
+        if (fnId == TUYA_MCU_FUNC_DIMMER || fnId == TUYA_MCU_FUNC_REPORT1) { dimIndex = 0; }
 
-        if ((fnId == TUYA_MCU_FUNC_DIMMER2) || (fnId == TUYA_MCU_FUNC_REPORT2) || (fnId == TUYA_MCU_FUNC_CT)) {
-          dimIndex = 1;
-          if (Settings.flag3.pwm_multi_channels) {
-            Tuya.Levels[dimIndex] = changeUIntScale(packetValue, 0, Settings.dimmer_hw_max, 0, 100);
-          } else {
-            Tuya.Levels[dimIndex] = changeUIntScale(packetValue, 0, Settings.dimmer_hw_max, Tuya.CTMax, Tuya.CTMin);
-          }
+        if (fnId == TUYA_MCU_FUNC_DIMMER2 || fnId == TUYA_MCU_FUNC_REPORT2 || fnId == TUYA_MCU_FUNC_CT) { dimIndex = 1; }
+
+        if (dimIndex == 1 && !Settings.flag3.pwm_multi_channels) {
+          Tuya.Levels[dimIndex] = changeUIntScale(packetValue, 0, Settings.dimmer_hw_max, Tuya.CTMax, Tuya.CTMin);
+        } else {
+          Tuya.Levels[dimIndex] = changeUIntScale(packetValue, 0, Settings.dimmer_hw_max, 0, 100);
         }
 
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX value %d from dpId %d "), packetValue, Tuya.buffer[dpidStart]);
