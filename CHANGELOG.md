@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 - Support for EZO RTD sensors by Christopher Tremblay (#9585)
 - On ZigbeeBridge support for glowing led when permit join is active (#9581)
 - Support for PWM Dimmer multi-press and ledmask (#9584)
+- Support for fixed output Hi or Lo GPIO
+- Support for ESP32 based Wireless-Tag WT32-ETH01 (#9496)
 
 ### Changed
 - Command ``Gpio17`` replaces command ``Adc``

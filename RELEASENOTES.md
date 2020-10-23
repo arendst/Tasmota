@@ -72,6 +72,8 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for Vietnamese language translations by Tâm.NT
 - Support for timers in case of no-sunset permanent day by cybermaus (#9543)
 - Support for EZO Ph, ORP and RTD sensors by Christopher Tremblay (#9567, #9585)
+- Support for fixed output Hi or Lo GPIO
+- Support for ESP32 based Wireless-Tag WT32-ETH01 (#9496)
 
 ### Breaking Changed
 - Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too

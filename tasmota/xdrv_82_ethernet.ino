@@ -32,7 +32,28 @@
  * GPIO27 - EMAC_RX_CRS_DV
  *
  * {"NAME":"Olimex ESP32-PoE","GPIO":[1,1,1,1,1,1,0,0,5536,1,1,1,1,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+ * GPIO12 = ETH POWER
+ * GPIO18 = ETH MDIO
+ * GPIO23 = ETH MDC
+ * #define ETH_TYPE          ETH_PHY_LAN8720
+ * #define ETH_CLKMODE       ETH_CLOCK_GPIO17_OUT
+ * #define ETH_ADDR          0
+ *
  * {"NAME":"wESP32","GPIO":[0,0,1,0,1,1,0,0,1,1,1,1,5568,5600,1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+ * GPIO16 = ETH MDC
+ * GPIO17 = ETH MDIO
+ * #define ETH_TYPE          ETH_PHY_LAN8720
+ * #define ETH_CLKMODE       ETH_CLOCK_GPIO0_IN
+ * #define ETH_ADDR          0
+ *
+ * {"NAME":"WT32-ETH01","GPIO":[1,1,1,1,1,1,0,0,1,0,1,1,3840,576,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,1],"FLAG":0,"BASE":1}
+ * GPIO16 = Force Hi
+ * GPIO18 = ETH MDIO
+ * GPIO23 = ETH MDC
+ * #define ETH_TYPE          ETH_PHY_LAN8720
+ * #define ETH_CLKMODE       ETH_CLOCK_GPIO0_IN
+ * #define ETH_ADDR          1
+ *
 \*********************************************************************************************/
 
 #define XDRV_82           82
@@ -68,19 +89,12 @@ void EthernetEvent(WiFiEvent_t event) {
       ETH.setHostname(eth_hostname);
       break;
     case SYSTEM_EVENT_ETH_CONNECTED:
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("ETH: " D_CONNECTED));
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("ETH: " D_CONNECTED " at %dMbps%s"),
+        ETH.linkSpeed(), (ETH.fullDuplex()) ? " Full Duplex" : "");
       break;
     case SYSTEM_EVENT_ETH_GOT_IP:
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %s, Hostname %s"),
         ETH.macAddress().c_str(), ETH.localIP().toString().c_str(), eth_hostname);
-/*
-      if (ETH.fullDuplex()) {
-        Serial.print(", FULL_DUPLEX");
-      }
-      Serial.print(", ");
-      Serial.print(ETH.linkSpeed());
-      Serial.println("Mbps");
-*/
       Settings.ip_address[1] = (uint32_t)ETH.gatewayIP();
       Settings.ip_address[2] = (uint32_t)ETH.subnetMask();
       Settings.ip_address[3] = (uint32_t)ETH.dnsIP();
