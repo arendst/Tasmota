@@ -30,7 +30,7 @@
 #define XNRG_31                     31
 
 #define SHD_DRIVER_MAJOR_VERSION    0
-#define SHD_DRIVER_MINOR_VERSION    8
+#define SHD_DRIVER_MINOR_VERSION    9
 
 #define SHD_SWITCH_CMD              0x01
 #define SHD_SWITCH_FADE_CMD         0x02
