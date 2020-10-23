@@ -48,7 +48,7 @@ bool knx_started = false;
 void OsWatchTicker(void)
 {
   uint32_t t = millis();
-  uint32_t last_run = abs(t - oswatch_last_loop_time);
+  uint32_t last_run = t - oswatch_last_loop_time;
 
 #ifdef DEBUG_THEO
   int32_t rssi = WiFi.RSSI();

@@ -40,7 +40,7 @@ bool AudioFileSourceHTTPStream::open(const char *url)
   http.begin(client, url);
   http.setReuse(true);
 #ifndef ESP32
-  http.setFollowRedirects(true);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
 #endif
   int code = http.GET();
   if (code != HTTP_CODE_OK) {

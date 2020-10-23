@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for Vietnamese language translations by Tâm.NT
 - Support for timers in case of no-sunset permanent day by cybermaus (#9543)
 - Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
-- Command ``SwitchMode 15`` sending only MQTT message on switch change (#9596)
+- Command ``SwitchMode 15`` sending only MQTT message on switch change (#9593)
 - Support for EZO Ph and ORP sensors by Christopher Tremblay (#9567)
 - Support for EZO RTD sensors by Christopher Tremblay (#9585)
 - On ZigbeeBridge support for glowing led when permit join is active (#9581)
@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Management of serial baudrate (#9554)
 - ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
 - Rotary driver adjusted accordingly if Mi Desk Lamp module is selected (#9399)
+- Tasmota Arduino Core v2.7.4.5 allowing webpassword over 47 characters (#9687)
 
 ### Fixed
 - Convert AdcParam parameters from versions before v9.0.0.2
