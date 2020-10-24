@@ -818,11 +818,6 @@ uint32_t WcSetStreamserver(uint32_t flag) {
       CamServer->on("/cam.mjpeg", HandleWebcamMjpeg);
       CamServer->on("/cam.jpg", HandleWebcamMjpeg);
       CamServer->on("/stream", HandleWebcamMjpeg);
-
-//      WebServer_on(PSTR("/"), HandleWebcamRoot);
-//      WebServer_on(PSTR("/cam.mjpeg"), HandleWebcamMjpeg);
-//      WebServer_on(PSTR("/cam.jpg"), HandleWebcamMjpeg);
-//      WebServer_on(PSTR("/stream"), HandleWebcamMjpeg);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CAM: Stream init"));
       CamServer->begin();
     }

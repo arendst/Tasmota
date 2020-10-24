@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Support for EZO Ph and ORP sensors by Christopher Tremblay (#9567)
 - Support for EZO RTD sensors by Christopher Tremblay (#9585)
 - Support for EZO HUM sensors by Christopher Tremblay (#9599)
+- Support for EZO EC sensors by Christopher Tremblay (#9613)
 - On ZigbeeBridge support for glowing led when permit join is active (#9581)
 - Support for PWM Dimmer multi-press and ledmask (#9584)
 - Support for fixed output Hi or Lo GPIO selection

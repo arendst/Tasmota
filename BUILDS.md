@@ -131,10 +131,11 @@
 | USE_VEML7700          | - | - | - | - | - | - | - |
 | USE_MCP9808           | - | - | - | - | - | - | - |
 | USE_HP303B            | - | - | - | - | - | - | - |
-| USE_EZOPH             | - | - | - | - | - | - | - |
-| USE_EZOORP            | - | - | - | - | - | - | - |
-| USE_EZORTD            | - | - | - | - | - | - | - |
+| USE_EZOEC             | - | - | - | - | - | - | - |
 | USE_EZOHUM            | - | - | - | - | - | - | - |
+| USE_EZOORP            | - | - | - | - | - | - | - |
+| USE_EZOPH             | - | - | - | - | - | - | - |
+| USE_EZORTD            | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
