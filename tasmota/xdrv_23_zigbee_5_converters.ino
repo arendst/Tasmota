@@ -129,7 +129,7 @@ enum Cx_cluster_short {
   Cx0010, Cx0011, Cx0012, Cx0013, Cx0014, Cx001A, Cx0020, Cx0100,
   Cx0101, Cx0102, Cx0201, Cx0300, Cx0400, Cx0401, Cx0402, Cx0403,
   Cx0404, Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
-  CxEF00,
+  CxEF00, CxFCCC,
 };
 
 const uint16_t Cx_cluster[] PROGMEM = {
@@ -138,7 +138,7 @@ const uint16_t Cx_cluster[] PROGMEM = {
   0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x001A, 0x0020, 0x0100,
   0x0101, 0x0102, 0x0201, 0x0300, 0x0400, 0x0401, 0x0402, 0x0403,
   0x0404, 0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
-  0xEF00, 
+  0xEF00, 0xFCCC,
 };
 
 uint16_t CxToCluster(uint8_t cx) {
@@ -611,6 +611,10 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Ztuya1,   CxEF00, 0x0405,  Z_(TuyaFanMode),          Cm1, 0 },
   { Ztuya1,   CxEF00, 0x046A,  Z_(TuyaForceMode),        Cm1, 0 },
   { Ztuya1,   CxEF00, 0x046F,  Z_(TuyaWeekSelect),       Cm1, 0 },
+
+  // Terncy specific - 0xFCCC
+  { Zuint16, CxFCCC, 0x001A,  Z_(TerncyDuration),        Cm1, 0 },
+  { Zint16,  CxFCCC, 0x001B,  Z_(TerncyRotate),          Cm1, 0 },
 };
 #pragma GCC diagnostic pop
 

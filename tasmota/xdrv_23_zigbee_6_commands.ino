@@ -136,6 +136,8 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z_(GetSceneMembership),0x0005, 0x06, 0x82,Z_(xxyyzzzz) },     // specific
   // Tuya - Moes specific
   { Z_(),               0xEF00, 0xFF, 0x83,   Z_() },             // capture any command in 0xEF00 cluster
+  // Terncy specific
+  { Z_(),               0xFCCC, 0x00, 0x82,   Z_(xxyy) },         // Terncy button (multi-)press
 };
 
 /*********************************************************************************************\
@@ -418,6 +420,10 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
         if (convertTuyaSpecificCluster(attr_list, cluster, cmd, direction, shortaddr, srcendpoint, payload)) {
           attr_list.removeAttribute(&attr_raw);   // remove raw command
         }
+        break;
+      case 0xFCCC0000:      // Terncy button (multi-)press
+        attr_list.addAttribute(PSTR("TerncyPress"), true).setUInt(xyz.y);
+        attr_list.addAttribute(PSTR("TerncyCount"), true).setUInt(xyz.x);
         break;
       }
     } else {  // general case
