@@ -18,10 +18,10 @@
 */
 
 #ifdef USE_I2C
-#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD) || defined(USE_EZOHUM)
+#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD) || defined(USE_EZOHUM) || defined(USE_EZOEC)
 
 #define XSNS_78 78
-#define XI2C_55 55    // See I2CDEVICES.md
+#define XI2C_55 55        // See I2CDEVICES.md
 
 #define EZO_ADDR_0  0x61  // First EZO address
 #define EZO_ADDR_n  16    // Number of ports for use with EZO devices
@@ -57,7 +57,9 @@ const char EZO_ORP_NAME[] PROGMEM = "ORP";
 #ifdef USE_EZOPH
 const char EZO_PH_NAME[]  PROGMEM = "pH";
 #endif
-//const char EZO_EC_NAME[]  PROGMEM = "EC";
+#ifdef USE_EZOEC
+const char EZO_EC_NAME[]  PROGMEM = "EC";
+#endif
 #ifdef USE_EZORTD
 const char EZO_RTD_NAME[] PROGMEM = "RTD";
 #endif
@@ -86,7 +88,12 @@ const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
   EZO_EMPTY,
 #endif
 
+#ifdef USE_EZOEC
+  EZO_EC_NAME,
+#else
   EZO_EMPTY,
+#endif
+
   EZO_EMPTY,
 
 #ifdef USE_EZORTD
@@ -246,6 +253,11 @@ private:
 #ifdef USE_EZOPH
                   case EZO_PH:
                     sensor[count] = new EZOpH(addr);
+                    break;
+#endif
+#ifdef USE_EZOEC
+                  case EZO_EC:
+                    sensor[count] = new EZOEC(addr);
                     break;
 #endif
 #ifdef USE_EZORTD
