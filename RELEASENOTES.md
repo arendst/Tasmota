@@ -19,13 +19,13 @@ See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) fo
 
 --- Major change in internal GPIO function representation ---
 
-8. Migrate to **Tasmota 9.x**
+8. Migrate to **Tasmota 9.1**
 
 While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with release **v9.1.0 Imogen** the internal GPIO function representation has changed in such a way that fallback is only possible to the latest GPIO configuration before installing **v9.1.0**.
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.7.4.3** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.4.5** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 Support of Core versions before 2.7.1 has been removed.
 
@@ -39,7 +39,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Provided Binary Downloads
 
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.3**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.5**.
 
 - **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
@@ -112,6 +112,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Scripter memory alignment (#9608)
 - Zigbee battery percentage (#9607)
 - HassAnyKey anomaly (#9601)
+- Rule Break not working as expected when ONCE is enabled (#9245)
 
 ### Removed
 - Support for direct upgrade from Tasmota versions before v7.0

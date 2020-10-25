@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - TLS in binary tasmota-zbbridge (#9620)
 
+### Fixed
+- Rule Break not working as expected when ONCE is enabled (#9245)
+
 ## [9.0.0.2] - 20201025
 ### Added
 - Support for Vietnamese language translations by Tâm.NT

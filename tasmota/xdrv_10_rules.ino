@@ -401,7 +401,7 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
 
 /*******************************************************************************************/
 
-bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
+bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all_rules)
 {
   // event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
   // event = {"System":{"Boot":1}}
@@ -575,7 +575,9 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     }
   } else match = true;
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match 1 %d"), match);
+  if (stop_all_rules) { match = false; }
+
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match 1 %d, Triggers %08X, TriggerCount %d"), match, Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
 
   if (bitRead(Settings.rule_once, rule_set)) {
     if (match) {                                       // Only allow match state changes
@@ -589,7 +591,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     }
   }
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match 2 %d"), match);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match 2 %d, Triggers %08X, TriggerCount %d"), match, Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
 
   return match;
 }
@@ -696,8 +698,8 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
 
-    if (RulesRuleMatch(rule_set, event, event_trigger)) {
-      if (plen == plen2) { stop_all_rules = true; }         // If BREAK was used on a triggered rule, Stop execution of this rule set
+    if (RulesRuleMatch(rule_set, event, event_trigger, stop_all_rules)) {
+      if (plen == plen2) { stop_all_rules = true; }       // If BREAK was used on a triggered rule, Stop execution of this rule set
       commands.trim();
       String ucommand = commands;
       ucommand.toUpperCase();
@@ -754,7 +756,6 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 #endif
       ExecuteCommand(command, SRC_RULE);
       serviced = true;
-      if (stop_all_rules) { return serviced; }            // If BREAK was used, Stop execution of this rule set
     }
     plen += 6;
     Rules.trigger_count[rule_set]++;
