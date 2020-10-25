@@ -77,7 +77,9 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   52  | USE_HP303B          | xsns_73 | HP303B   | 0x76 - 0x77 | Pressure and temperature sensor
   53  | USE_MLX90640        | xdrv_84 | MLX90640 | 0x33        | IR array temperature sensor
   54  | USE_VL53L1X         | xsns_77 | VL53L1X  | 0x29        | Time-of-flight (ToF) distance sensor
-  55  | USE_EZOPH           | xsns_78 | EZOPH    | 0x61 - 0x70 | pH Sensor
-  55  | USE_EZOORP          | xsns_78 | EZOORP   | 0x61 - 0x70 | ORP Sensor
-  55  | USE_EZORTD          | xsns_78 | EZORTD   | 0x61 - 0x70 | Temperature Sensor
-  55  | USE_EZOHUM          | xsns_78 | EZORTD   | 0x61 - 0x70 | Humidity Sensor
+  55  | USE_EZOPH           | xsns_78 | EZOPH    | 0x61 - 0x70 | pH sensor
+  55  | USE_EZOORP          | xsns_78 | EZOORP   | 0x61 - 0x70 | ORP sensor
+  55  | USE_EZORTD          | xsns_78 | EZORTD   | 0x61 - 0x70 | Temperature sensor
+  55  | USE_EZOHUM          | xsns_78 | EZOHUM   | 0x61 - 0x70 | Humidity sensor
+  55  | USE_EZOEC           | xsns_78 | EZOEC    | 0x61 - 0x70 | Electric conductivity sensor
+  55  | USE_EZOCO2          | xsns_78 | EZOCO2   | 0x61 - 0x70 | CO2 sensor
