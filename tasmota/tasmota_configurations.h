@@ -134,8 +134,7 @@
 //#define USE_EZOEC                              // [I2cDriver55] Enable support for EZO's EC sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
 //#define USE_EZOCO2                             // [I2cDriver55] Enable support for EZO's CO2 sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
 
-  #if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD) || defined(USE_EZOHUM) || defined(USE_EZOEC) \
-      defined(USE_EZOCO2)
+  #if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD) || defined(USE_EZOHUM) || defined(USE_EZOEC) || defined(USE_EZOCO2)
     #define USE_EZO
   #endif
 
