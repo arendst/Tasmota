@@ -278,7 +278,7 @@ struct LIGHT {
   uint8_t fixed_color_index = 1;
   uint8_t pwm_offset = 0;                 // Offset in color buffer
   uint8_t max_scheme = LS_MAX -1;
-  
+
   uint32_t wakeup_start_time = 0;
 
   bool update = true;
@@ -564,9 +564,6 @@ class LightStateClass {
 #ifdef DEBUG_LIGHT
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setBri RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
 #endif
-#ifdef USE_PWM_DIMMER
-  if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(0);
-#endif  // USE_PWM_DIMMER
     }
 
     // changes the RGB brightness alone
@@ -574,6 +571,9 @@ class LightStateClass {
       uint8_t prev_bri = _briRGB;
       _briRGB = bri_rgb;
       if (bri_rgb > 0) { addRGBMode(); }
+#ifdef USE_PWM_DIMMER
+      if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(-1);
+#endif  // USE_PWM_DIMMER
       return prev_bri;
     }
 
@@ -582,6 +582,9 @@ class LightStateClass {
       uint8_t prev_bri = _briCT;
       _briCT = bri_ct;
       if (bri_ct > 0) { addCTMode(); }
+#ifdef USE_PWM_DIMMER
+      if (PWM_DIMMER == my_module_type) PWMDimmerSetBrightnessLeds(-1);
+#endif  // USE_PWM_DIMMER
       return prev_bri;
     }
 
@@ -1275,6 +1278,13 @@ bool LightModuleInit(void)
     light_type = LT_PWM2;
   }
 #endif  // ESP8266
+#ifdef USE_PWM_DIMMER
+#ifdef USE_DEVICE_GROUPS
+  else if (PWM_DIMMER == my_module_type) {
+    light_type = Settings.pwm_dimmer_cfg.pwm_count + 1;
+  }
+#endif  // USE_DEVICE_GROUPS
+#endif  // USE_PWM_DIMMER
 
   if (light_type > LT_BASIC) {
     devices_present++;
@@ -1385,6 +1395,9 @@ void LightInit(void)
   Light.power = 0;
   Light.update = true;
   Light.wakeup_active = 0;
+  if (0 == Settings.light_wakeup) {
+    Settings.light_wakeup = 60;         // Fix divide by zero exception 0 in Animate
+  }
   if (Settings.flag4.fade_at_startup) {
     Light.fade_initialized = true;      // consider fade intialized starting from black
   }
@@ -1846,7 +1859,7 @@ void LightAnimate(void)
   // or set a maximum of PWM_MAX_SLEEP if light is on or Fade is running
   if (Light.power || Light.fade_running) {
     if (Settings.sleep > PWM_MAX_SLEEP) {
-      ssleep = PWM_MAX_SLEEP;      // set a maxumum value of 50 milliseconds to ensure that animations are smooth
+      ssleep = PWM_MAX_SLEEP;      // set a maxumum value of 10 milliseconds to ensure that animations are smooth
     } else {
       ssleep = Settings.sleep;     // or keep the current sleep if it's lower than 50
     }
@@ -2323,11 +2336,12 @@ void LightHandleDevGroupItem(void)
 {
   static bool send_state = false;
   static bool restore_power = false;
+
+#ifdef USE_PWM_DIMMER_REMOTE
+  if (!(XdrvMailbox.index & DGR_FLAG_LOCAL)) return;
+#endif  // USE_PWM_DIMMER_REMOTE
   bool more_to_come;
   uint32_t value = XdrvMailbox.payload;
-#ifdef USE_PWM_DIMMER_REMOTE
-  if (*XdrvMailbox.topic) return; // Ignore updates from other device groups
-#endif  // USE_PWM_DIMMER_REMOTE
   switch (XdrvMailbox.command_code) {
     case DGR_ITEM_EOL:
       more_to_come = (XdrvMailbox.index & DGR_FLAG_MORE_TO_COME);
@@ -2387,7 +2401,7 @@ void LightHandleDevGroupItem(void)
       send_state = true;
       break;
     case DGR_ITEM_LIGHT_FIXED_COLOR:
-      if (Light.subtype >= LST_RGBW) {
+      if (Light.subtype >= LST_COLDWARM) {
         send_state = true;
 #ifdef USE_LIGHT_PALETTE
         if (Light.palette_count) {
@@ -2396,21 +2410,28 @@ void LightHandleDevGroupItem(void)
           break;
         }
 #endif  // !USE_LIGHT_PALETTE
-        value = value % MAX_FIXED_COLOR;
-        if (value) {
-          bool save_decimal_text = Settings.flag.decimal_text;
-          char str[16];
-          LightColorEntry(str, sprintf_P(str, PSTR("%u"), value));
-          Settings.flag.decimal_text = save_decimal_text;
-          uint32_t old_bri = light_state.getBri();
-          light_controller.changeChannels(Light.entry_color);
-          light_controller.changeBri(old_bri);
-          Settings.light_scheme = 0;
-          Light.devgrp_no_channels_out = false;
+        if (Light.subtype <= LST_COLDWARM) {
+          value = value % (MAX_FIXED_COLD_WARM - 1) + 201;
         }
         else {
-          light_state.setColorMode(LCM_CT);
+          uint32_t max = MAX_FIXED_COLOR;
+          if (Light.subtype >= LST_RGB) {
+            max++;
+            if (Light.subtype >= LST_RGBCW) max += (MAX_FIXED_COLD_WARM - 2);
+          }
+          value = value % max + 1;
+          if (value > MAX_FIXED_COLOR) value += 200 - MAX_FIXED_COLOR;
         }
+        Light.fixed_color_index = value;
+        bool save_decimal_text = Settings.flag.decimal_text;
+        char str[16];
+        LightColorEntry(str, sprintf_P(str, PSTR("%u"), value));
+        Settings.flag.decimal_text = save_decimal_text;
+        uint32_t old_bri = light_state.getBri();
+        light_controller.changeChannels(Light.entry_color);
+        light_controller.changeBri(old_bri);
+        Settings.light_scheme = 0;
+        Light.devgrp_no_channels_out = false;
         if (!restore_power && !Light.power) {
           Light.old_power = Light.power;
           Light.power = 0xff;

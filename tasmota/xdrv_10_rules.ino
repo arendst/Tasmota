@@ -498,10 +498,14 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   }
 
   String buf = event;   // copy the string into a new buffer that will be modified
+
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: RulesRuleMatch |%s|"), buf.c_str());
+
   JsonParser parser((char*)buf.c_str());
   JsonParserObject obj = parser.getRootObject();
   if (!obj) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event too long (%d)"), event.length());
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event too long (%d)"), event.length());
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: No valid JSON (%s)"), buf.c_str());
     return false; // No valid JSON data
   }
   String subtype;
@@ -771,6 +775,8 @@ bool RulesProcessEvent(char *json_event)
   ShowFreeMem(PSTR("RulesProcessEvent"));
 #endif
 
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: ProcessEvent |%s|"), json_event);
+
   String event_saved = json_event;
   // json_event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
   // json_event = {"System":{"Boot":1}}
@@ -783,7 +789,7 @@ bool RulesProcessEvent(char *json_event)
   }
   event_saved.toUpperCase();
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event %s"), event_saved.c_str());
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|"), event_saved.c_str());
 
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (GetRuleLen(i) && bitRead(Settings.rule_enabled, i)) {
@@ -887,7 +893,7 @@ void RulesEvery50ms(void)
         for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
           if (bitRead(Rules.vars_event, i)) {
             bitClear(Rules.vars_event, i);
-            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, rules_vars[i]);
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":\"%s\"}}"), i+1, rules_vars[i]);
             RulesProcessEvent(json_event);
             break;
           }
@@ -897,7 +903,7 @@ void RulesEvery50ms(void)
         for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
           if (bitRead(Rules.mems_event, i)) {
             bitClear(Rules.mems_event, i);
-            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, SettingsText(SET_MEM1 +i));
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":\"%s\"}}"), i+1, SettingsText(SET_MEM1 +i));
             RulesProcessEvent(json_event);
             break;
           }

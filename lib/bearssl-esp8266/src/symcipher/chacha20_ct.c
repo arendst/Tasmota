@@ -33,7 +33,11 @@ br_chacha20_ct_run(const void *key,
 	uint32_t kw[8], ivw[3];
 	size_t u;
 
+#ifdef ESP32
+	static const uint32_t CW[] = {
+#else
 	static const uint32_t CW[] PROGMEM = {
+#endif
 		0x61707865, 0x3320646e, 0x79622d32, 0x6b206574
 	};
 

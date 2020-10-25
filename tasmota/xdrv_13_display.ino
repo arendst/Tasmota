@@ -1166,7 +1166,6 @@ void DisplayAnalyzeJson(char *topic, char *json)
 // tele/th1/SENSOR    {"Time":"2017-09-20T11:54:48","DS18B20":{"Temperature":49.7},"TempUnit":"C"}
 
   String jsonStr = json;  // Move from stack to heap to fix watchdogs (20180626)
-
   JsonParser parser((char*)jsonStr.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) {   // did JSON parsing went ok?

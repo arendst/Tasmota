@@ -17,11 +17,15 @@ See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) fo
 6. Migrate to **Tasmota 8.1**
 7. Migrate to **Tasmota 8.x**
 
-While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with release **v8.1.0 Doris** the Settings are re-allocated in such a way that fallback is only allowed and possible to release **v7.2.0 Constance**. Once at v7.2.0 you're on your own when downgrading even further.
+--- Major change in internal GPIO function representation ---
+
+8. Migrate to **Tasmota 9.x**
+
+While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with release **v9.1.0 Imogen** the internal GPIO function representation has changed in such a way that fallback is only possible to the latest GPIO configuration before installing **v9.1.0**.
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.7.4.1** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.4.3** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 Support of Core versions before 2.7.1 has been removed.
 
@@ -35,7 +39,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Provided Binary Downloads
 
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.1**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.3**.
 
 - **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
@@ -53,25 +57,63 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog
+## Changelog v9.1.0 Imogen
+### Added
+- Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
+- Command ``SwitchMode 15`` sending only MQTT message on switch change (#9593)
+- Command ``ShutterChange`` to increment change position (#9594)
+- Command ``SetOption113 1`` to set dimmer low on rotary dial after power off
+- Zigbee command ``ZbData`` for better support of device specific data
+- Optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
+- Optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
+- SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
+- Optional support for inverted NeoPixelBus data line by enabling ``#define USE_WS2812_INVERTED`` (#8988)
+- Support for PWM dimmer color/trigger on tap, SO88 led, DGR WITH_LOCAL flag, multi-press and ledmask by Paul Diem (#9474, #9584)
+- Support for stateful ACs using ``StateMode`` in tasmota-ir.bin by Arik Yavilevich (#9472)
+- Support for analog buttons indexed within standard button range
+- Support for Vietnamese language translations by Tâm.NT
+- Support for timers in case of no-sunset permanent day by cybermaus (#9543)
+- Support for EZO CO2, EC, HUM, ORP, Ph and RTD sensors by Christopher Tremblay
+- Support for fixed output Hi or Lo GPIO selection
+- TLS in binary tasmota-zbbridge (#9620)
+- ESP32 support for Wireless-Tag WT32-ETH01 (#9496)
+- ESP32 MI32 Beacon support, RSSI at TELEPERIOD, refactoring (#9609)
 
-### Version 8.5.1 Hannah
+### Breaking Changed
+- Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too
+- TLS fingerprint ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
+- Command ``Status`` output for disabled status types now returns {"Command":"Error"}
+- MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
 
-- Fix energy total counters (#9263, #9266)
-- Fix crash in ``ZbRestore``
-- Fix reset BMP sensors when executing command ``SaveData`` and define USE_DEEPSLEEP enabled (#9300)
-- Fix ``status 0`` message when using define USE_MQTT_TLS due to small log buffer (#9305)
-- Fix ``status 13`` exception 9 when more than one shutter is configured
-- Fix ``status 13`` json message
-- Fix Shelly 2.5 higher temperature regression from 8.2.0.1 (#7991)
-- Change replace ArduinoJson with JSMN for JSON parsing
-- Change ``WakeUp`` uses 256 steps instead of 100 (#9241)
-- Add command ``SetOption110 1`` to disable Zigbee auto-config when pairing new devices
-- Add command ``SetOption111 1`` to enable frequency output for buzzer GPIO (#8994)
-- Add command ``SetOption112 1`` to enable friendly name in zigbee topic (use with SetOption89)
-- Add ``#define USE_MQTT_AWS_IOT_LIGHT`` for password based AWS IoT authentication
-- Add ``#define MQTT_LWT_OFFLINE`` and ``#define MQTT_LWT_ONLINE`` to user_config.h (#9395)
-- Add new shutter modes (#9244)
-- Add Zigbee auto-config when pairing
-- Add support for MLX90640 IR array temperature sensor by Christian Baars
-- Add support for VL53L1X time of flight sensor by Johann Obermeier
+### Changed
+- Command ``Gpio17`` replaces command ``Adc``
+- Command ``Gpios`` replaces command ``Adcs``
+- New IR Raw compact format (#9444)
+- A4988 optional microstep pin selection
+- Pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
+- IRremoteESP8266 library from v2.7.10 to v2.7.11
+- NeoPixelBus library from v2.5.0.09 to v2.6.0
+- Management of serial baudrate (#9554)
+- Rotary driver adjusted accordingly if Mi Desk Lamp module is selected (#9399)
+- Tasmota Arduino Core v2.7.4.5 allowing webpassword over 47 characters (#9687)
+- Webserver code optimizations (#9580, #9590)
+
+### Fixed
+- Ledlink blink when no network connected regression from v8.3.1.4 (#9292)
+- Exception 28 due to device group buffer overflow (#9459)
+- Shutter timing problem due to buffer overflow in calibration matrix (#9458)
+- Light wakeup exception 0 (divide by zero) when ``WakeupDuration`` is not initialised (#9466)
+- Thermostat sensor status corruption regression from v8.5.0.1 (#9449)
+- Telegram message decoding error regression from v8.5.0.1
+- Rule handling of Var or Mem using text regression from v8.5.0.1 (#9540)
+- Correct Energy period display shortly after midnight by gominoa (#9536)
+- TuyaMcu energy display regression from v8.5.0.1 (#9547)
+- Tuyamcu dimmers MQTT topic (#9606)
+- Scripter memory alignment (#9608)
+- Zigbee battery percentage (#9607)
+- HassAnyKey anomaly (#9601)
+
+### Removed
+- Support for direct upgrade from Tasmota versions before v7.0
+- Auto config update for all Friendlynames and Switchtopic from Tasmota versions before v8.0
+- Support for downgrade to versions before 9.0 keeping current GPIO configuration

@@ -607,9 +607,15 @@ void GetFeatures(void)
 #if defined(USE_I2C) && defined(USE_VL53L1X)
   feature6 |= 0x02000000;  // xsns_77_vl53l1x.ino
 #endif
-//  feature6 |= 0x04000000;
-//  feature6 |= 0x08000000;
-//  feature6 |= 0x10000000;
+#ifdef USE_MIEL_HVAC
+  feature6 |= 0x04000000;  // xdrv_44_miel_hvac.ino
+#endif
+#if defined(USE_ENERGY_SENSOR) && defined(USE_WE517)
+  feature6 |= 0x08000000;  // xnrg_17_ornowe517.ino
+#endif
+#if defined(USE_I2C) && defined(USE_EZOPH)
+  feature6 |= 0x10000000;  // xsns_78_ezoph.ino
+#endif
 #if defined(ESP32) && defined(USE_TTGO_WATCH)
   feature6 |= 0x20000000;  // xdrv_83_esp32watch.ino
 #endif
@@ -624,12 +630,21 @@ void GetFeatures(void)
 
   feature7 = 0x00000000;
 
-//  feature7 |= 0x00000001;
-//  feature7 |= 0x00000002;
-//  feature7 |= 0x00000004;
-//  feature7 |= 0x00000008;
-
-//  feature7 |= 0x00000010;
+#if defined(USE_I2C) && defined(USE_EZOORP)
+  feature7 |= 0x00000001;  // xsns_78_ezoorp.ino
+#endif
+#if defined(USE_I2C) && defined(USE_EZORTD)
+  feature7 |= 0x00000002;  // xsns_78_ezortd.ino
+#endif
+#if defined(USE_I2C) && defined(USE_EZOHUM)
+  feature7 |= 0x00000004;  // xsns_78_ezohum.ino
+#endif
+#if defined(USE_I2C) && defined(USE_EZOEC)
+  feature7 |= 0x00000008;  // xsns_78_ezoec.ino
+#endif
+#if defined(USE_I2C) && defined(USE_EZOCO2)
+  feature7 |= 0x00000010;
+#endif
 //  feature7 |= 0x00000020;
 //  feature7 |= 0x00000040;
 //  feature7 |= 0x00000080;

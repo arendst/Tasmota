@@ -56,14 +56,14 @@ const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_OPENTIME "|" D_CMND_SHUTTER_CLOSETIME "|" D_CMND_SHUTTER_RELAY "|" D_CMND_SHUTTER_MODE "|"  D_CMND_SHUTTER_PWMRANGE "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_SETOPEN "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
   D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
-  D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPTOGGLEDIR "|" D_CMND_SHUTTER_STOPPOSITION;
+  D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPTOGGLEDIR "|" D_CMND_SHUTTER_STOPPOSITION "|" D_CMND_SHUTTER_INCDEC;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterToggleDir, &CmndShutterStop, &CmndShutterPosition,
   &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay, &CmndShutterMode, &CmndShutterPwmRange,
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
   &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
-  &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition};
+  &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition, &CmndShutterIncDec};
 
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d}";
   const char JSON_SHUTTER_BUTTON[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Button%d\":%d}";
@@ -158,7 +158,7 @@ void ShutterRtc50mS(void)
 int32_t ShutterPercentToRealPosition(uint32_t percent, uint32_t index)
 {
 	if (Settings.shutter_set50percent[index] != 50) {
-    return (percent <= 5) ? Settings.shuttercoeff[2][index] * percent : Settings.shuttercoeff[1][index] * percent + Settings.shuttercoeff[0][index];
+    return (percent <= 5) ? Settings.shuttercoeff[2][index] * percent*10 : (Settings.shuttercoeff[1][index] * percent + (Settings.shuttercoeff[0][index]*10))*10;
 	} else {
     uint32_t realpos;
     // check against DIV 0
@@ -192,7 +192,7 @@ int32_t ShutterPercentToRealPosition(uint32_t percent, uint32_t index)
 uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
 {
 	if (Settings.shutter_set50percent[index] != 50) {
-		return (Settings.shuttercoeff[2][index] * 5 > realpos) ? SHT_DIV_ROUND(realpos, Settings.shuttercoeff[2][index]) : SHT_DIV_ROUND(realpos-Settings.shuttercoeff[0][index], Settings.shuttercoeff[1][index]);
+		return (Settings.shuttercoeff[2][index] * 5 > realpos/10) ? SHT_DIV_ROUND(realpos/10, Settings.shuttercoeff[2][index]) : SHT_DIV_ROUND(realpos/10-Settings.shuttercoeff[0][index]*10, Settings.shuttercoeff[1][index]);
 	} else {
     uint16_t realpercent;
 
@@ -288,10 +288,11 @@ void ShutterInit(void)
 
       // calculate a ramp slope at the first 5 percent to compensate that shutters move with down part later than the upper part
       if (Settings.shutter_set50percent[i] != 50) {
-      	Settings.shuttercoeff[1][i] = Shutter[i].open_max * (100 - Settings.shutter_set50percent[i] ) / 5000;
-      	Settings.shuttercoeff[0][i] = Shutter[i].open_max - (Settings.shuttercoeff[1][i] * 100);
-      	Settings.shuttercoeff[2][i] = (Settings.shuttercoeff[0][i] + 5 * Settings.shuttercoeff[1][i]) / 5;
-      }
+       	Settings.shuttercoeff[1][i] = Shutter[i].open_max/10 * (100 - Settings.shutter_set50percent[i] ) / 5000 ;
+      	Settings.shuttercoeff[0][i] = Shutter[i].open_max/100 - (Settings.shuttercoeff[1][i] * 10);
+      	Settings.shuttercoeff[2][i] = (int32_t)(Settings.shuttercoeff[0][i]*10 + 5 * Settings.shuttercoeff[1][i]) / 5;
+        //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT%d: Shutter[i].open_max %d, 50perc:%d, 0:%d, 1:%d 2:%d"), i, Shutter[i].open_max, Settings.shutter_set50percent[i], Settings.shuttercoeff[0][i],Settings.shuttercoeff[1][i],Settings.shuttercoeff[2][i]);
+     }
       ShutterGlobal.RelayShutterMask |= 3 << (Settings.shutter_startrelay[i] -1);
 
       Shutter[i].real_position = ShutterPercentToRealPosition(Settings.shutter_position[i], i);
@@ -514,6 +515,21 @@ bool ShutterState(uint32_t device)
           (ShutterGlobal.RelayShutterMask & (1 << (Settings.shutter_startrelay[device]-1))) );
 }
 
+void ShutterAllowPreStartProcedure(uint8_t i)
+{
+#ifdef USE_RULES
+  uint32_t uptime_Local=0;
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. var%d <99>=<%s>, max10s?"),i+i, rules_vars[i]);
+  rules_flag.shutter_moving = 1;
+  XdrvRulesProcess();
+  uptime_Local = uptime;
+  while (uptime_Local+10 > uptime && (String)rules_vars[i] == "99") {
+    loop();
+  }
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. Done"));
+#endif  // USE_RULES
+}
+
 void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
 {
   //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: dir %d, delta1 %d, delta2 %d, grant %d"),direction, (Shutter[i].open_max - Shutter[i].real_position) / Shutter[i].close_velocity, Shutter[i].real_position / Shutter[i].close_velocity, 2+Shutter[i].motordelay);
@@ -534,10 +550,11 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     Shutter[i].accelerator = ShutterGlobal.open_velocity_max / (Shutter[i].motordelay>0 ? Shutter[i].motordelay : 1);
     Shutter[i].target_position = target_pos;
     Shutter[i].start_position = Shutter[i].real_position;
-    Shutter[i].time = 0;
-    ShutterGlobal.skip_relay_change = 0;
-    Shutter[i].direction = direction;
     rules_flag.shutter_moving = 1;
+    ShutterAllowPreStartProcedure(i);
+    Shutter[i].time = 0;
+    Shutter[i].direction = direction;
+    ShutterGlobal.skip_relay_change = 0;
     rules_flag.shutter_moved  = 0;
     ShutterGlobal.start_reported = 0;
     //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: real %d, start %d, counter %d,freq_max %d, dir %d, freq %d"),Shutter[i].real_position, Shutter[i].start_position ,RtcSettings.pulse_counter[i],ShutterGlobal.open_velocity_max , Shutter[i].direction ,ShutterGlobal.open_velocity_max );
@@ -978,6 +995,20 @@ void CmndShutterStop(void)
     }
   }
 }
+
+void CmndShutterIncDec(void)
+{
+  //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Change in: payload %s (%d), payload %d, idx %d, src %d"), XdrvMailbox.data , XdrvMailbox.data_len, XdrvMailbox.payload , XdrvMailbox.index, last_source );
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    if (XdrvMailbox.data_len > 0) {
+      XdrvMailbox.payload =  ShutterRealToPercentPosition(Shutter[XdrvMailbox.index-1].target_position, XdrvMailbox.index-1)+XdrvMailbox.payload;
+      // limit position to boundaries
+      XdrvMailbox.payload = XdrvMailbox.payload < 0 ? 0 : (XdrvMailbox.payload > 100 ? 100 : XdrvMailbox.payload);
+      CmndShutterPosition();
+    }
+  }
+}
+
 
 void CmndShutterPosition(void)
 {

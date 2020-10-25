@@ -109,6 +109,7 @@ uint32_t uptime = 0;                        // Counting every second until 42949
 uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
 uint32_t web_log_index = 1;                 // Index in Web log buffer (should never be 0)
+uint32_t baudrate = APP_BAUDRATE;           // Current Serial baudrate
 float global_temperature_celsius = NAN;     // Provide a global temperature to be used by some sensors
 float global_humidity = 0.0f;               // Provide a global humidity to be used by some sensors
 float global_pressure_hpa = 0.0f;           // Provide a global pressure to be used by some sensors
@@ -116,11 +117,7 @@ uint16_t tele_period = 9999;                // Tele period timer
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
 uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
-
-#ifdef ESP32
 uint16_t gpio_pin[MAX_GPIO_PIN] = { 0 };    // GPIO functions indexed by pin number
-#endif  // ESP32
-
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
 RulesBitfield rules_flag;                   // Rule state flags (16 bits)
 uint8_t mqtt_cmnd_blocked = 0;              // Ignore flag for publish command
@@ -129,11 +126,6 @@ uint8_t state_250mS = 0;                    // State 250msecond per second flag
 uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
 uint8_t ssleep;                             // Current copy of Settings.sleep
 uint8_t blinkspeed = 1;                     // LED blink rate
-
-#ifdef ESP8266
-uint8_t gpio_pin[MAX_GPIO_PIN] = { 0 };     // GPIO functions indexed by pin number
-#endif  // ESP8266 - ESP32
-
 uint8_t active_device = 1;                  // Active device in ExecuteCommandPower
 uint8_t leds_present = 0;                   // Max number of LED supported
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
@@ -150,7 +142,6 @@ uint8_t masterlog_level = 0;                // Master log level used to override
 uint8_t seriallog_level;                    // Current copy of Settings.seriallog_level
 uint8_t syslog_level;                       // Current copy of Settings.syslog_level
 uint8_t my_module_type;                     // Current copy of Settings.module or user template type
-uint8_t my_adc0 = 0;                        // Active copy of Module ADC0
 uint8_t last_source = 0;                    // Last command source
 uint8_t shutters_present = 0;               // Number of actual define shutters
 uint8_t prepped_loglevel = 0;               // Delayed log level message
@@ -172,7 +163,6 @@ bool is_8285 = false;                       // Hardware device ESP8266EX (0) or 
 bool skip_light_fade;                       // Temporarily skip light fading
 bool restart_halt = false;                  // Do not restart but stay in wait loop
 myio my_module;                             // Active copy of Module GPIOs (17 x 8 bits)
-gpio_flag my_module_flag;                   // Active copy of Template GPIO flags
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
 char my_version[33];                        // Composed version string
 char my_image[33];                          // Code image and/or commit
@@ -218,7 +208,7 @@ void setup(void) {
 #endif
   RtcRebootSave();
 
-  Serial.begin(APP_BAUDRATE);
+  Serial.begin(baudrate);
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
@@ -277,9 +267,6 @@ void setup(void) {
         for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
           Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
         }
-#ifdef ESP8266
-        Settings.my_adc0 = ADC0_NONE;               // Reset user defined ADC0 disabling sensors
-#endif
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +4) {  // Restarted 6 times
         Settings.module = Settings.fallback_module;  // Reset module to fallback module
@@ -332,19 +319,25 @@ void setup(void) {
 void BacklogLoop(void) {
   if (TimeReached(backlog_delay)) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {
+      backlog_mutex = true;
+      bool nodelay = false;
+      bool nodelay_detected = false;
+      String cmd;
+      do {
 #ifdef SUPPORT_IF_STATEMENT
-      backlog_mutex = true;
-      String cmd = backlog.shift();
-      backlog_mutex = false;
-      ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
+        cmd = backlog.shift();
 #else
-      backlog_mutex = true;
-      ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
-      backlog[backlog_pointer] = (const char*) nullptr;   // force deallocation of the String internal memory
-      backlog_pointer++;
-      if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
-      backlog_mutex = false;
+        cmd = backlog[backlog_pointer];
+        backlog[backlog_pointer] = (const char*) nullptr;  // Force deallocation of the String internal memory
+        backlog_pointer++;
+        if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
 #endif
+        nodelay_detected = !strncasecmp_P(cmd.c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
+        if (nodelay_detected) { nodelay = true; }
+      } while (!BACKLOG_EMPTY && nodelay_detected);
+      if (!nodelay_detected) { ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG); }
+      if (nodelay) { backlog_delay = 0; }  // Reset backlog_delay which has been set by ExecuteCommand (CommandHandler)
+      backlog_mutex = false;
     }
   }
 }

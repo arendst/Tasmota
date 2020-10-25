@@ -48,7 +48,6 @@ struct device_group {
   uint16_t ack_check_interval;
   uint8_t message_header_length;
   uint8_t initial_status_requests_remaining;
-  bool local;
   char group_name[TOPSZ];
   uint8_t message[128];
   struct device_group_member * device_group_members;
@@ -119,6 +118,7 @@ void DeviceGroupsInit(void)
       for (uint32_t relay_index = 0; relay_index < MAX_RELAYS; relay_index++) {
         if (PinUsed(GPIO_REL1, relay_index)) device_group_count = relay_index + 1;
       }
+      if (device_group_count > MAX_DEV_GROUP_NAMES) device_group_count = MAX_DEV_GROUP_NAMES;
     }
 
     // Otherwise, set the device group count to 1.
@@ -155,8 +155,6 @@ void DeviceGroupsInit(void)
     device_group->message_header_length = sprintf_P((char *)device_group->message, PSTR("%s%s"), kDeviceGroupMessage, device_group->group_name) + 1;
     device_group->last_full_status_sequence = -1;
   }
-
-  device_groups[0].local = true;
 
   // If both in and out shared items masks are 0, assume they're unitialized and initialize them.
   if (!Settings.device_group_share_in && !Settings.device_group_share_out) {
@@ -295,6 +293,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
     */
     XdrvMailbox.command = nullptr;  // Indicates the source is a device group update
     XdrvMailbox.index = flags | message_sequence << 16;
+    if (device_group_index == 0 && first_device_group_is_local) XdrvMailbox.index |= DGR_FLAG_LOCAL;
     XdrvMailbox.topic = (char *)&device_group_index;
     if (flags & (DGR_FLAG_MORE_TO_COME | DGR_FLAG_DIRECT)) skip_light_fade = true;
 
@@ -387,10 +386,12 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
       switch (item) {
         case DGR_ITEM_POWER:
           if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
-            bool on = (value & 1);
-            if (on != (power & (1 << device_group_index))) ExecuteCommandPower(device_group_index + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
+            if (device_group_index < devices_present) {
+              bool on = (value & 1);
+              if (on != (power & (1 << device_group_index))) ExecuteCommandPower(device_group_index + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
+            }
           }
-          else if (device_group->local) {
+          else if (XdrvMailbox.index & DGR_FLAG_LOCAL) {
             uint8_t mask_devices = value >> 24;
             if (mask_devices > devices_present) mask_devices = devices_present;
             for (uint32_t i = 0; i < mask_devices; i++) {
@@ -464,6 +465,13 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
   // If device groups is not up, ignore this request.
   if (!device_groups_up) return 1;
 
+  // If the device group index is higher then the number of device groups, ignore this request.
+  if (device_group_index >= device_group_count) return 0;
+
+  // Extract the flags from the message type.
+  bool with_local = ((message_type & DGR_MSGTYPFLAG_WITH_LOCAL) != 0);
+  message_type = (DevGroupMessageType)(message_type & 0x7F);
+
   // If we're currently processing a remote device message, ignore this request.
   if (ignore_dgr_sends && message_type != DGR_MSGTYPE_UPDATE_COMMAND) return 0;
 
@@ -497,10 +505,9 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
     building_status_message = true;
 
     // Call the drivers to build the status update.
-    if (device_group->local || Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
-      SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_POWER, power);
-    }
-    XdrvMailbox.index = device_group_index << 16;
+    SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_POWER, power);
+    XdrvMailbox.index = 0;
+    if (device_group_index == 0 && first_device_group_is_local) XdrvMailbox.index = DGR_FLAG_LOCAL;
     XdrvMailbox.command_code = DGR_ITEM_STATUS;
     XdrvMailbox.topic = (char *)&device_group_index;
     XdrvCall(FUNC_DEVICE_GROUP_ITEM);
@@ -672,7 +679,7 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
               *message_ptr++ = value & 0xff;
               value >>= 8;
               // For the power item, the device count is overlayed onto the highest 8 bits.
-              if (item == DGR_ITEM_POWER && !value) value = (device_group_index == 0 ? devices_present : 1);
+              if (item == DGR_ITEM_POWER && !value) value = (device_group_index == 0 && first_device_group_is_local ? devices_present : 1);
               *message_ptr++ = value;
             }
           }
@@ -719,8 +726,8 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
   SendReceiveDeviceGroupMessage(device_group, nullptr, device_group->message, device_group->message_length, false);
 
 #ifdef USE_DEVICE_GROUPS_SEND
-  // If this is the DevGroupSend command, also handle the update locally.
-  if (message_type == DGR_MSGTYPE_UPDATE_COMMAND) {
+  // If requested, handle this updated locally as well.
+  if (with_local) {
     struct XDRVMAILBOX save_XdrvMailbox = XdrvMailbox;
     SendReceiveDeviceGroupMessage(device_group, nullptr, device_group->message, device_group->message_length, true);
     XdrvMailbox = save_XdrvMailbox;

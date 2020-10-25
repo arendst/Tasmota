@@ -220,6 +220,12 @@ bool MqttPublishLib(const char* topic, bool retained)
   return result;
 }
 
+void MqttDumpData(char* topic, char* data, uint32_t data_len) {
+  char dump_data[data_len +1];
+  memcpy(dump_data, data, sizeof(dump_data));  // Make another copy for removing optional control characters
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_DATA_SIZE " %d, \"%s %s\""), data_len, topic, RemoveControlCharacter(dump_data));
+}
+
 void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len)
 {
 #ifdef USE_DEBUG_DRIVER
@@ -245,8 +251,9 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   char data[data_len +1];
   memcpy(data, mqtt_data, sizeof(data));
 
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_RECEIVED_TOPIC " \"%s\", " D_DATA_SIZE " %d, " D_DATA " \"%s\""), topic, data_len, data);
+//  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_DATA_SIZE " %d, \"%s %s\""), data_len, topic, data);
 //  if (LOG_LEVEL_DEBUG_MORE <= seriallog_level) { Serial.println(data); }
+  MqttDumpData(topic, data, data_len);  // Use a function to save stack space used by dump_data
 
   // MQTT pre-processing
   XdrvMailbox.index = strlen(topic);
@@ -794,10 +801,14 @@ void CmndMqttFingerprint(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
     char fingerprint[60];
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(fingerprint))) {
-      strlcpy(fingerprint, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? MQTT_FINGERPRINT1 : MQTT_FINGERPRINT2 : XdrvMailbox.data, sizeof(fingerprint));
-      char *p = fingerprint;
-      for (uint32_t i = 0; i < 20; i++) {
-        Settings.mqtt_fingerprint[XdrvMailbox.index -1][i] = strtol(p, &p, 16);
+      if (SC_DEFAULT == Shortcut()) {
+        memcpy_P(Settings.mqtt_fingerprint[XdrvMailbox.index -1], (1 == XdrvMailbox.index) ? default_fingerprint1 : default_fingerprint2, sizeof(default_fingerprint1));
+      } else {
+        strlcpy(fingerprint, (SC_CLEAR == Shortcut()) ? "" : XdrvMailbox.data, sizeof(fingerprint));
+        char *p = fingerprint;
+        for (uint32_t i = 0; i < 20; i++) {
+          Settings.mqtt_fingerprint[XdrvMailbox.index -1][i] = strtol(p, &p, 16);
+        }
       }
       restart_flag = 2;
     }
@@ -1171,7 +1182,7 @@ void CmndTlsKey(void) {
       memcpy_P(spi_buffer, tls_spi_start, tls_spi_len);
 
       // remove any white space from the base64
-      RemoveAllSpaces(XdrvMailbox.data);
+      RemoveSpace(XdrvMailbox.data);
 
       // allocate buffer for decoded base64
       uint32_t bin_len = decode_base64_length((unsigned char*)XdrvMailbox.data);
@@ -1391,7 +1402,7 @@ bool Xdrv02(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_MQTT);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/" WEB_HANDLE_MQTT, HandleMqttConfiguration);
+        WebServer_on(PSTR("/" WEB_HANDLE_MQTT), HandleMqttConfiguration);
         break;
 #endif  // USE_WEBSERVER
       case FUNC_COMMAND:

@@ -106,6 +106,13 @@ void JsonGeneratorObject::add(const char* key, const String & str) {
   post();
 }
 
+// Add up to 32 bits hex value
+void JsonGeneratorObject::addHex32(const char* key, uint32_t uval32) {
+  char hex[16];
+  snprintf_P(hex, sizeof(hex), PSTR("\"0x%8X\""), uval32);
+  addStrRaw(key, hex);
+}
+
 // Add a raw string, that will not be escaped.
 // Can be used to add a sub-array, sub-object or 'null', 'true', 'false' values
 void JsonGeneratorObject::addStrRaw(const char* key, const char * sval) {

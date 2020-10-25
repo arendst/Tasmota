@@ -427,6 +427,7 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
   uint32_t replace_len = strlen_P(replace_me);
   char replace[replace_len +1];
   memcpy_P(replace, replace_me, sizeof(replace));
+  uint32_t index_save = index;
 
   uint32_t start_pos = 0;
   uint32_t end_pos = 0;
@@ -472,7 +473,11 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
     settings_text_mutex = false;
   }
 
+#ifdef DEBUG_FUNC_SETTINGSUPDATETEXT
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id %02d = \"%s\""), GetSettingsTextLen(), settings_text_size, settings_text_busy_count, index_save, replace);
+#else
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count);
+#endif
 
   return true;
 }
@@ -571,50 +576,6 @@ void SettingsSave(uint8_t rotate)
 void SettingsLoad(void) {
 #ifdef ESP8266
   // Load configuration from eeprom or one of 7 slots below if first valid load does not stop_flash_rotate
-#ifdef CFG_LEGACY_LOAD
-  // Active until version 8.4.0.2
-  struct {
-    uint16_t cfg_holder;                     // 000
-    uint16_t cfg_size;                       // 002
-    unsigned long save_flag;                 // 004
-  } _SettingsH;
-  unsigned long save_flag = 0;
-
-  settings_location = 0;
-  uint32_t flash_location = SETTINGS_LOCATION +1;
-  uint16_t cfg_holder = 0;
-  for (uint32_t i = 0; i < CFG_ROTATES; i++) {              // Read all config pages in search of valid and latest
-    flash_location--;
-    ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
-    bool valid = false;
-    if (Settings.version > 0x06000000) {
-      bool almost_valid = (Settings.cfg_crc32 == GetSettingsCrc32());
-      if (Settings.version < 0x0606000B) {
-        almost_valid = (Settings.cfg_crc == GetSettingsCrc());
-      }
-      // Sometimes CRC on pages below FB, overwritten by OTA, is fine but Settings are still invalid. So check cfg_holder too
-      if (almost_valid && (0 == cfg_holder)) { cfg_holder = Settings.cfg_holder; }  // At FB always active cfg_holder
-      valid = (cfg_holder == Settings.cfg_holder);
-    } else {
-      ESP.flashRead((flash_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(_SettingsH));
-      valid = (Settings.cfg_holder == _SettingsH.cfg_holder);
-    }
-    if (valid) {
-      if (Settings.save_flag > save_flag) {                 // Find latest page based on incrementing save_flag
-        save_flag = Settings.save_flag;
-        settings_location = flash_location;
-        if (Settings.flag.stop_flash_rotate && (0 == i)) {  // Stop if only eeprom area should be used and it is valid
-          break;
-        }
-      }
-    }
-    delay(1);
-  }
-  if (settings_location > 0) {
-    ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
-    AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
-  }
-#else  // CFG_RESILIENT
   // Activated with version 8.4.0.2 - Fails to read any config before version 6.6.0.11
   settings_location = 0;
   uint32_t save_flag = 0;
@@ -637,7 +598,6 @@ void SettingsLoad(void) {
     ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
   }
-#endif  // CFG_RESILIENT
 #else  // ESP32
   SettingsRead(&Settings, sizeof(Settings));
   AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded, " D_COUNT " %lu"), Settings.save_flag);
@@ -758,6 +718,10 @@ void SettingsDefaultSet1(void)
 //  Settings.cfg_crc = 0;
 }
 
+// default Fingerprints in PROGMEM
+const uint8_t default_fingerprint1[] PROGMEM = { MQTT_FINGERPRINT1 };
+const uint8_t default_fingerprint2[] PROGMEM = { MQTT_FINGERPRINT2 };
+
 void SettingsDefaultSet2(void)
 {
   memset((char*)&Settings +16, 0x00, sizeof(Settings) -16);
@@ -770,6 +734,7 @@ void SettingsDefaultSet2(void)
   SysBitfield5  flag5 = { 0 };
 
 #ifdef ESP8266
+  Settings.gpio16_converted = 0xF5A0;
 //  Settings.config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
@@ -913,17 +878,8 @@ void SettingsDefaultSet2(void)
   SettingsUpdateText(SET_STATE_TXT2, MQTT_STATUS_ON);
   SettingsUpdateText(SET_STATE_TXT3, MQTT_CMND_TOGGLE);
   SettingsUpdateText(SET_STATE_TXT4, MQTT_CMND_HOLD);
-  char fingerprint[64];
-  strncpy_P(fingerprint, PSTR(MQTT_FINGERPRINT1), sizeof(fingerprint));
-  char *p = fingerprint;
-  for (uint32_t i = 0; i < 20; i++) {
-    Settings.mqtt_fingerprint[0][i] = strtol(p, &p, 16);
-  }
-  strncpy_P(fingerprint, PSTR(MQTT_FINGERPRINT2), sizeof(fingerprint));
-  p = fingerprint;
-  for (uint32_t i = 0; i < 20; i++) {
-    Settings.mqtt_fingerprint[1][i] = strtol(p, &p, 16);
-  }
+  memcpy_P(Settings.mqtt_fingerprint[0], default_fingerprint1, sizeof(default_fingerprint1));
+  memcpy_P(Settings.mqtt_fingerprint[1], default_fingerprint2, sizeof(default_fingerprint2));
   Settings.tele_period = TELE_PERIOD;
   Settings.mqttlog_level = MQTT_LOG_LEVEL;
 
@@ -1126,7 +1082,7 @@ void SettingsDefaultSet2(void)
   flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
 
 #ifdef USER_TEMPLATE
-  JsonTemplate(USER_TEMPLATE);
+  JsonTemplate((char *)USER_TEMPLATE);
 #endif
 
   Settings.flag = flag;
@@ -1179,192 +1135,6 @@ void SettingsDelta(void)
   if (Settings.version != VERSION) {      // Fix version dependent changes
 
 #ifdef ESP8266
-#ifdef CFG_LEGACY_LOAD
-    if (Settings.version < 0x06000000) {
-      Settings.cfg_size = sizeof(Settings);
-      Settings.cfg_crc = GetSettingsCrc();
-    }
-    if (Settings.version < 0x06000002) {
-      for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-        if (i < 4) {
-          Settings.switchmode[i] = Settings.interlock[i];
-        } else {
-          Settings.switchmode[i] = SWITCH_MODE;
-        }
-      }
-      for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
-        if (Settings.my_gp.io[i] >= GPIO_SWT5) {  // Move up from GPIO_SWT5 to GPIO_KEY1
-          Settings.my_gp.io[i] += 4;
-        }
-      }
-    }
-    if (Settings.version < 0x06000003) {
-      Settings.flag.mqtt_serial_raw = 0;      // Was rules_enabled until 5.14.0b
-      Settings.flag.pressure_conversion = 0;  // Was rules_once until 5.14.0b
-      Settings.flag3.data = 0;
-    }
-    if (Settings.version < 0x06010103) {
-      Settings.flag3.timers_enable = 1;
-    }
-    if (Settings.version < 0x0601010C) {
-      Settings.button_debounce = KEY_DEBOUNCE_TIME;
-      Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
-    }
-    if (Settings.version < 0x0602010A) {
-      for (uint32_t j = 0; j < 5; j++) {
-        Settings.rgbwwTable[j] = 255;
-      }
-    }
-    if (Settings.version < 0x06030002) {
-      Settings.timezone_minutes = 0;
-    }
-    if (Settings.version < 0x06030004) {
-      memset(&Settings.monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
-    }
-    if (Settings.version < 0x0603000E) {
-      Settings.flag2.calc_resolution = CALC_RESOLUTION;
-    }
-    if (Settings.version < 0x0603000F) {
-      if (Settings.sleep < 50) {
-        Settings.sleep = 50;                // Default to 50 for sleep, for now
-      }
-    }
-    if (Settings.version < 0x06040105) {
-      Settings.flag3.mdns_enabled = MDNS_ENABLED;
-      Settings.param[P_MDNS_DELAYED_START] = 0;
-    }
-    if (Settings.version < 0x0604010B) {
-      Settings.flag.interlock = APP_INTERLOCK_MODE;
-      Settings.interlock[0] = APP_INTERLOCK_GROUP_1;
-      Settings.interlock[1] = APP_INTERLOCK_GROUP_2;
-      Settings.interlock[2] = APP_INTERLOCK_GROUP_3;
-      Settings.interlock[3] = APP_INTERLOCK_GROUP_4;
-    }
-    if (Settings.version < 0x0604010D) {
-      Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
-    }
-    if (Settings.version < 0x06040110) {
-      ModuleDefault(WEMOS);
-    }
-    if (Settings.version < 0x06040113) {
-      Settings.param[P_RGB_REMAP] = RGB_REMAP_RGBW;
-    }
-    if (Settings.version < 0x06050003) {
-      Settings.novasds_startingoffset = STARTING_OFFSET;
-    }
-    if (Settings.version < 0x06050006) {
-      SettingsDefaultWebColor();
-    }
-    if (Settings.version < 0x06050007) {
-      Settings.ledmask = APP_LEDMASK;
-    }
-    if (Settings.version < 0x0605000A) {
-      Settings.my_adc0 = ADC0_NONE;
-    }
-    if (Settings.version < 0x0605000D) {
-      Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
-    }
-    if (Settings.version < 0x06060001) {
-      Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
-    }
-    if (Settings.version < 0x06060007) {
-      memset((char*)&Settings +0xE00, 0x00, sizeof(Settings) -0xE00);
-    }
-    if (Settings.version < 0x06060008) {
-      // Move current tuya dimmer range to the new param.
-      if (Settings.flag3.tuya_serial_mqtt_publish) { // ex Settings.flag3.ex_tuya_dimmer_range_255 SetOption
-        Settings.param[P_ex_DIMMER_MAX] = 100;
-      } else {
-        Settings.param[P_ex_DIMMER_MAX] = 255;
-      }
-    }
-    if (Settings.version < 0x06060009) {
-      Settings.baudrate = APP_BAUDRATE / 300;
-      Settings.sbaudrate = SOFT_BAUDRATE / 300;
-    }
-    if (Settings.version < 0x0606000A) {
-      uint8_t tuyaindex = 0;
-      if (Settings.param[P_BACKLOG_DELAY] > 0) {             // ex SetOption34
-        Settings.tuya_fnid_map[tuyaindex].fnid = 21;         // TUYA_MCU_FUNC_DIMMER - Move Tuya Dimmer Id to Map
-        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_BACKLOG_DELAY];
-        tuyaindex++;
-      } else if (Settings.flag3.fast_power_cycle_disable == 1) {  // ex SetOption65
-        Settings.tuya_fnid_map[tuyaindex].fnid = 11;         // TUYA_MCU_FUNC_REL1 - Create FnID for Switches
-        Settings.tuya_fnid_map[tuyaindex].dpid = 1;
-        tuyaindex++;
-      }
-      if (Settings.param[P_ARP_GRATUITOUS] > 0) {            // Was P_ex_TUYA_RELAYS
-        for (uint8_t i = 0 ; i < Settings.param[P_ARP_GRATUITOUS]; i++) {  // ex SetOption41
-          Settings.tuya_fnid_map[tuyaindex].fnid = 12 + i;   // TUYA_MCU_FUNC_REL2 -  Create FnID for Switches
-          Settings.tuya_fnid_map[tuyaindex].dpid = i + 2;
-          tuyaindex++;
-        }
-      }
-      if (Settings.param[P_ex_TUYA_POWER_ID] > 0) {          // ex SetOption46
-        Settings.tuya_fnid_map[tuyaindex].fnid = 31;         // TUYA_MCU_FUNC_POWER -  Move Tuya Power Id to Map
-        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_POWER_ID];
-        tuyaindex++;
-      }
-      if (Settings.param[P_ex_TUYA_VOLTAGE_ID] > 0) {        // ex SetOption44
-        Settings.tuya_fnid_map[tuyaindex].fnid = 33;         // TUYA_MCU_FUNC_VOLTAGE - Move Tuya Voltage Id to Map
-        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_VOLTAGE_ID];
-        tuyaindex++;
-      }
-      if (Settings.param[P_ex_TUYA_CURRENT_ID] > 0) {        // ex SetOption45
-        Settings.tuya_fnid_map[tuyaindex].fnid = 32;         // TUYA_MCU_FUNC_CURRENT - Move Tuya Current Id to Map
-        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_CURRENT_ID];
-      }
-    }
-#endif  // CFG_LEGACY_LOAD
-    if (Settings.version < 0x0606000C) {
-      memset((char*)&Settings +0x1D6, 0x00, 16);
-    }
-    if (Settings.version < 0x0606000F) {
-      Settings.ex_shutter_accuracy = 0;
-      Settings.ex_mqttlog_level = MQTT_LOG_LEVEL;
-    }
-    if (Settings.version < 0x06060011) {
-      Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
-    }
-    if (Settings.version < 0x06060012) {
-      Settings.dimmer_hw_min = DEFAULT_DIMMER_MIN;
-      Settings.dimmer_hw_max = DEFAULT_DIMMER_MAX;
-      if (TUYA_DIMMER == Settings.module) {
-        if (Settings.flag3.ex_tuya_dimmer_min_limit) {
-          Settings.dimmer_hw_min = 25;
-        } else {
-          Settings.dimmer_hw_min = 1;
-        }
-        Settings.dimmer_hw_max = Settings.param[P_ex_DIMMER_MAX];
-      }
-      else if (PS_16_DZ == Settings.module) {
-        Settings.dimmer_hw_min = 10;
-        Settings.dimmer_hw_max = Settings.param[P_ex_DIMMER_MAX];
-      }
-    }
-    if (Settings.version < 0x06060014) {
-      // Clear unused parameters for future use
-/*
-      Settings.flag3.tuya_serial_mqtt_publish = 0;  // ex Settings.flag3.ex_tuya_dimmer_range_255
-      Settings.flag3.ex_tuya_dimmer_min_limit = 0;
-      Settings.param[P_ex_TUYA_RELAYS] = 0;
-      Settings.param[P_ex_DIMMER_MAX] = 0;
-      Settings.param[P_ex_TUYA_VOLTAGE_ID] = 0;
-      Settings.param[P_ex_TUYA_CURRENT_ID] = 0;
-      Settings.param[P_ex_TUYA_POWER_ID] = 0;
-      Settings.ex_baudrate = 0;
-      Settings.ex_sbaudrate = 0;
-*/
-      Settings.flag3.fast_power_cycle_disable = 0;
-      Settings.hass_new_discovery = Settings.tuyamcu_topic; // replaced ex2_energy_power_delta on 8.5.0.1
-      Settings.tuyamcu_topic = 0; // replaced ex_energy_power_delta on 8.5.0.1
-    }
-    if (Settings.version < 0x06060015) {
-      if ((EX_WIFI_SMARTCONFIG == Settings.ex_sta_config) || (EX_WIFI_WPSCONFIG == Settings.ex_sta_config)) {
-        Settings.ex_sta_config = WIFI_MANAGER;
-      }
-    }
-
     if (Settings.version < 0x07000002) {
       Settings.web_color2[0][0] = Settings.web_color[0][0];
       Settings.web_color2[0][1] = Settings.web_color[0][1];
@@ -1450,7 +1220,7 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_WEBPWD, Settings.ex_web_password);
       SettingsUpdateText(SET_CORS, Settings.ex_cors_domain);
       SettingsUpdateText(SET_MQTT_FULLTOPIC, Settings.ex_mqtt_fulltopic);
-      SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, Settings.ex_switch_topic);
+//      SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, Settings.ex_switch_topic);
       SettingsUpdateText(SET_STATE_TXT1, Settings.ex_state_text[0]);
       SettingsUpdateText(SET_STATE_TXT2, Settings.ex_state_text[1]);
       SettingsUpdateText(SET_STATE_TXT3, Settings.ex_state_text[2]);
@@ -1463,10 +1233,10 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_MEM3, Settings.script_pram[2]);
       SettingsUpdateText(SET_MEM4, Settings.script_pram[3]);
       SettingsUpdateText(SET_MEM5, Settings.script_pram[4]);
-      SettingsUpdateText(SET_FRIENDLYNAME1, Settings.ex_friendlyname[0]);
-      SettingsUpdateText(SET_FRIENDLYNAME2, Settings.ex_friendlyname[1]);
-      SettingsUpdateText(SET_FRIENDLYNAME3, Settings.ex_friendlyname[2]);
-      SettingsUpdateText(SET_FRIENDLYNAME4, Settings.ex_friendlyname[3]);
+//      SettingsUpdateText(SET_FRIENDLYNAME1, Settings.ex_friendlyname[0]);
+//      SettingsUpdateText(SET_FRIENDLYNAME2, Settings.ex_friendlyname[1]);
+//      SettingsUpdateText(SET_FRIENDLYNAME3, Settings.ex_friendlyname[2]);
+//      SettingsUpdateText(SET_FRIENDLYNAME4, Settings.ex_friendlyname[3]);
     }
     if (Settings.version < 0x08020003) {
       SettingsUpdateText(SET_TEMPLATE_NAME, Settings.user_template_name);
@@ -1509,7 +1279,7 @@ void SettingsDelta(void)
       Settings.eth_clk_mode = ETH_CLKMODE;
       Settings.eth_address = ETH_ADDR;
     }
-#endif
+#endif  // ESP32
     if (Settings.version < 0x08030106) {
       Settings.fallback_module = FALLBACK_MODULE;
     }
@@ -1518,6 +1288,14 @@ void SettingsDelta(void)
       Settings.energy_power_delta[1] = 0;
       Settings.energy_power_delta[2] = 0;
     }
+#ifdef ESP8266
+    if (Settings.version < 0x09000002) {
+      char parameters[32];
+      snprintf_P(parameters, sizeof(parameters), PSTR("%d,%d,%d,%d,%d"),
+        Settings.ex_adc_param_type, Settings.ex_adc_param1, Settings.ex_adc_param2, Settings.ex_adc_param3, Settings.ex_adc_param4);
+      SettingsUpdateText(SET_ADC_PARAM1, parameters);
+    }
+#endif  // ESP8266
 
     Settings.version = VERSION;
     SettingsSave(1);

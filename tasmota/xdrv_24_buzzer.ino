@@ -100,7 +100,15 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune, uint32
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BUZ: %d(%d),%d,%d,0x%08X(0x%08X),%d"), count, Buzzer.count, on, off, tune, Buzzer.tune, Buzzer.freq_mode);
 
   Buzzer.enable = (Buzzer.count > 0);
-  if (!Buzzer.enable) {
+  if (Buzzer.enable) {
+    if (Settings.sleep > PWM_MAX_SLEEP) { 
+      ssleep = PWM_MAX_SLEEP;      // set a maxumum value of 10 milliseconds to ensure that buzzer periods are a bit more accurate 
+    } else { 
+      ssleep = Settings.sleep;     // or keep the current sleep if it's lower than 10 
+    } 
+  }
+  else {
+    ssleep = Settings.sleep;       // restore original sleep 
     BuzzerSet(0);
   }
 }

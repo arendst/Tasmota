@@ -912,7 +912,7 @@ bool Xsns60(uint8_t function)
         break;
 #ifdef USE_FLOG
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/UBX", UBXsendFile);
+        WebServer_on(PSTR("/UBX"), UBXsendFile);
         break;
 #endif //USE_FLOG
       case FUNC_JSON_APPEND:

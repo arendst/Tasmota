@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 05.09.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 03.10.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -86,6 +86,7 @@
 #define D_DNS_SERVER "Server DNS"
 #define D_DONE "Completato"
 #define D_DST_TIME "DST"
+#define D_EC "EC"
 #define D_ECO2 "eCO₂"
 #define D_EMULATION "Tipo emulazione"
 #define D_ENABLED "Abilitato"
@@ -129,7 +130,9 @@
 #define D_OK "OK"
 #define D_ON "ON"
 #define D_ONLINE "Online"
+#define D_ORP "ORP"
 #define D_PASSWORD "Password"
+#define D_PH "pH"
 #define D_PORT "Porta"
 #define D_POWER_FACTOR "Fattore di potenza"
 #define D_POWERUSAGE "Potenza"
@@ -600,6 +603,8 @@
 #define D_SENSOR_SDM120_RX     "SDMx20 - RX"
 #define D_SENSOR_SDM630_TX     "SDM630 - TX"
 #define D_SENSOR_SDM630_RX     "SDM630 - RX"
+#define D_SENSOR_WE517_TX      "WE517 - TX"
+#define D_SENSOR_WE517_RX      "WE517 - RX"
 #define D_SENSOR_TM1638_CLK    "TM16 - CLK"
 #define D_SENSOR_TM1638_DIO    "TM16 - DIO"
 #define D_SENSOR_TM1638_STB    "TM16 - STB"
@@ -663,8 +668,8 @@
 #define D_SENSOR_A4988_STP     "A4988 - STP"
 #define D_SENSOR_A4988_ENA     "A4988 - ENA"
 #define D_SENSOR_A4988_MS1     "A4988 - MS1"
-#define D_SENSOR_A4988_MS2     "A4988 - MS2"
-#define D_SENSOR_A4988_MS3     "A4988 - MS3"
+#define D_SENSOR_OUTPUT_HI     "Output - Hi"
+#define D_SENSOR_OUTPUT_LO     "Output - Lo"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 - TX"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 - RX"
 #define D_SENSOR_DDSU666_TX    "DDSU666 - TX"
@@ -719,6 +724,8 @@
 #define D_SENSOR_TCP_RXD       "TCP - RX"
 #define D_SENSOR_IEM3000_TX    "iEM3000 - TX"
 #define D_SENSOR_IEM3000_RX    "iEM3000 - RX"
+#define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
+#define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -741,10 +748,12 @@
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
+#define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
+#define D_UNIT_MILLIVOLT "mV"
 #define D_UNIT_MINUTE "Min"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"

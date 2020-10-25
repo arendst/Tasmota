@@ -60,9 +60,11 @@ const uint16_t sdm630_start_addresses[] {
   0x0160,  //  +   +   +   kWh  Phase 1 export active energy
   0x0162,  //  +   +   +   kWh  Phase 2 export active energy
   0x0164,  //  +   +   +   kWh  Phase 3 export active energy
-//  0x015A,  //  +   +   +   kWh  Phase 1 import active energy
-//  0x015C,  //  +   +   +   kWh  Phase 2 import active energy
-//  0x015E,  //  +   +   +   kWh  Phase 3 import active energy
+#ifdef SDM630_IMPORT
+  0x015A,  //  +   +   +   kWh  Phase 1 import active energy
+  0x015C,  //  +   +   +   kWh  Phase 2 import active energy
+  0x015E,  //  +   +   +   kWh  Phase 3 import active energy
+#endif  // SDM630_IMPORT
   0x0156   //  +   +   +   kWh  Total active energy
 };
 
@@ -177,6 +179,20 @@ void SDM630Every250ms(void)
           break;
 
         case 19:
+#ifdef SDM630_IMPORT
+          Energy.import_active[0] = value;
+          break;
+
+        case 20:
+          Energy.import_active[1] = value;
+          break;
+
+        case 21:
+          Energy.import_active[2] = value;
+          break;
+
+        case 22:
+#endif  // SDM630_IMPORT
           EnergyUpdateTotal(value, true);
           break;
       }

@@ -57,6 +57,7 @@
 #define D_JSON_DNSSERVER "DNSServer"
 #define D_JSON_DONE "Done"
 #define D_JSON_DOWNTIME "Downtime"
+#define D_JSON_EC "EC"
 #define D_JSON_ECO2 "eCO2"
 #define D_JSON_EMPTY "Empty"
 #define D_JSON_ENDDST "EndDST"           // End Daylight Savings Time
@@ -111,7 +112,9 @@
 #define D_JSON_NOISE "Noise"
 #define D_JSON_NONE "None"
 #define D_JSON_OR "or"
+#define D_JSON_ORP "ORP"
 #define D_JSON_PERIOD "Period"
+#define D_JSON_PH "pH"
 #define D_JSON_PHASE_ANGLE "PhaseAngle"
 #define D_JSON_POWERFACTOR "Factor"
 #define D_JSON_POWERUSAGE "Power"
@@ -192,6 +195,7 @@
 #define D_JSON_PV2_POWER "Pv2Power"
 #define D_JSON_SOLAR_POWER "SolarPower"
 #define D_JSON_USAGE "Usage"
+#define D_JSON_IMPORT "Import"
 #define D_JSON_EXPORT "Export"
 #define D_JSON_TOTAL_ACTIVE "TotalActive"
 
@@ -211,6 +215,7 @@
 // Commands tasmota.ino
 #define D_CMND_BACKLOG "Backlog"
 #define D_CMND_DELAY "Delay"
+#define D_CMND_NODELAY "NoDelay"
 #define D_CMND_STATUS "Status"
   #define D_STATUS1_PARAMETER "PRM"
   #define D_STATUS2_FIRMWARE "FWR"
@@ -457,6 +462,10 @@
   #define D_JSON_IRHVAC_CLEAN "Clean"
   #define D_JSON_IRHVAC_SLEEP "Sleep"
   #define D_JSON_IRHVAC_CLOCK "Clock"
+  #define D_JSON_IRHVAC_STATE_MODE "StateMode"
+    #define D_JSON_IRHVAC_STATE_MODE_SEND_ONLY "SendOnly"
+    #define D_JSON_IRHVAC_STATE_MODE_STORE_ONLY "StoreOnly"
+    #define D_JSON_IRHVAC_STATE_MODE_SEND_STORE "SendStore"
 #define D_JSON_IRRECEIVED "IrReceived"
 
 // Commands xdrv_06_snfbridge.ino
@@ -508,6 +517,7 @@
 #define D_CMND_ZIGBEE_STATUS "Status"
 #define D_CMND_ZIGBEE_RESET "Reset"
   #define D_JSON_ZIGBEE_CC2530 "CC2530"
+  #define D_JSON_ZIGBEE_EZSP "EZSP"
 #define D_CMND_ZIGBEEZNPRECEIVE "ZNPReceive"      // only for debug
 #define D_CMND_ZIGBEE_EZSP_RECEIVE "EZSPReceive"      // only for debug
 #define D_CMND_ZIGBEE_EZSP_RECEIVE_RAW "EZSPReceiveRaw"      // only for debug
@@ -567,6 +577,7 @@
 #define D_CMND_ZIGBEE_RESTORE "Restore"
 #define D_CMND_ZIGBEE_CONFIG "Config"
   #define D_JSON_ZIGBEE_CONFIG "Config"
+#define D_CMND_ZIGBEE_DATA "Data"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"
@@ -590,6 +601,7 @@
 #define D_CMND_SHUTTER_STOPCLOSE "StopClose"
 #define D_CMND_SHUTTER_STOPTOGGLE "StopToggle"
 #define D_CMND_SHUTTER_STOPTOGGLEDIR "StopToggleDir"
+#define D_CMND_SHUTTER_INCDEC "Change"
 #define D_CMND_SHUTTER_STOPPOSITION "StopPosition"
 #define D_CMND_SHUTTER_STOP "Stop"
 #define D_CMND_SHUTTER_POSITION "Position"
@@ -615,6 +627,7 @@
 // Commands xdrv_34_pwm_dimmer.ino
 #ifdef USE_PWM_DIMMER
 #define D_CMND_BRI_PRESET "BriPreset"
+#define D_CMND_PWM_DIMMER_PWMS "PWMDimmerPWMs"
 #endif
 
 // Commands xdrv_38_ping.ino
@@ -759,6 +772,9 @@ const char HTTP_SNS_VOLTAGE[]       PROGMEM = "{s}"     D_VOLTAGE             "{
 const char HTTP_SNS_CURRENT[]       PROGMEM = "{s}"     D_CURRENT             "{m}%s " D_UNIT_AMPERE              "{e}";
 const char HTTP_SNS_POWER[]         PROGMEM = "{s}"     D_POWERUSAGE          "{m}%s " D_UNIT_WATT                "{e}";
 const char HTTP_SNS_ENERGY_TOTAL[]  PROGMEM = "{s}"     D_ENERGY_TOTAL        "{m}%s " D_UNIT_KILOWATTHOUR        "{e}";
+const char HTTP_SNS_PH[]            PROGMEM = "{s}%s "  D_PH                  "{m}%s "                            "{e}";
+const char HTTP_SNS_ORP[]           PROGMEM = "{s}%s "  D_ORP                 "{m}%s " D_UNIT_MILLIVOLT           "{e}";
+const char HTTP_SNS_EC[]            PROGMEM = "{s}%s "  D_EC                  "{m}%s " D_UNIT_MICROSIEMENS_PER_CM "{e}";
 
 const char S_MAIN_MENU[]              PROGMEM = D_MAIN_MENU;
 const char S_CONFIGURATION[]          PROGMEM = D_CONFIGURATION;

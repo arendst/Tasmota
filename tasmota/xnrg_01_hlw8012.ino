@@ -44,31 +44,31 @@
 
 struct HLW {
 #ifdef HLW_DEBUG
-  unsigned long debug[HLW_SAMPLE_COUNT];
+  uint32_t debug[HLW_SAMPLE_COUNT];
 #endif
-  unsigned long cf_pulse_length = 0;
-  unsigned long cf_pulse_last_time = 0;
-  unsigned long cf_power_pulse_length  = 0;
+  volatile uint32_t cf_pulse_length = 0;
+  volatile uint32_t cf_pulse_last_time = 0;
+  uint32_t cf_power_pulse_length  = 0;
 
-  unsigned long cf1_pulse_length = 0;
-  unsigned long cf1_pulse_last_time = 0;
-  unsigned long cf1_summed_pulse_length = 0;
-  unsigned long cf1_pulse_counter = 0;
-  unsigned long cf1_voltage_pulse_length  = 0;
-  unsigned long cf1_current_pulse_length = 0;
+  volatile uint32_t cf1_pulse_length = 0;
+  volatile uint32_t cf1_pulse_last_time = 0;
+  volatile uint32_t cf1_summed_pulse_length = 0;
+  volatile uint32_t cf1_pulse_counter = 0;
+  uint32_t cf1_voltage_pulse_length  = 0;
+  uint32_t cf1_current_pulse_length = 0;
 
-  unsigned long energy_period_counter = 0;
+  volatile uint32_t energy_period_counter = 0;
 
-  unsigned long power_ratio = 0;
-  unsigned long voltage_ratio = 0;
-  unsigned long current_ratio = 0;
+  uint32_t power_ratio = 0;
+  uint32_t voltage_ratio = 0;
+  uint32_t current_ratio = 0;
 
   uint8_t model_type = 0;
-  uint8_t cf1_timer = 0;
+  volatile uint8_t cf1_timer = 0;
   uint8_t power_retry = 0;
   bool select_ui_flag = false;
   bool ui_flag = true;
-  bool load_off = true;
+  volatile bool load_off = true;
 } Hlw;
 
 // Fix core 2.5.x ISR not in IRAM Exception
@@ -79,7 +79,7 @@ void HlwCf1Interrupt(void) ICACHE_RAM_ATTR;
 
 void HlwCfInterrupt(void)  // Service Power
 {
-  unsigned long us = micros();
+  uint32_t us = micros();
 
   if (Hlw.load_off) {  // Restart plen measurement
     Hlw.cf_pulse_last_time = us;
@@ -94,7 +94,7 @@ void HlwCfInterrupt(void)  // Service Power
 
 void HlwCf1Interrupt(void)  // Service Voltage and Current
 {
-  unsigned long us = micros();
+  uint32_t us = micros();
 
   Hlw.cf1_pulse_length = us - Hlw.cf1_pulse_last_time;
   Hlw.cf1_pulse_last_time = us;
@@ -115,10 +115,10 @@ void HlwCf1Interrupt(void)  // Service Voltage and Current
 
 void HlwEvery200ms(void)
 {
-  unsigned long cf1_pulse_length = 0;
-  unsigned long hlw_w = 0;
-  unsigned long hlw_u = 0;
-  unsigned long hlw_i = 0;
+  uint32_t cf1_pulse_length = 0;
+  uint32_t hlw_w = 0;
+  uint32_t hlw_u = 0;
+  uint32_t hlw_i = 0;
 
   if (micros() - Hlw.cf_pulse_last_time > (HLW_POWER_PROBE_TIME * 1000000)) {
     Hlw.cf_pulse_length = 0;    // No load for some time
@@ -163,7 +163,7 @@ void HlwEvery200ms(void)
           }
         }
       }
-      unsigned long median = Hlw.debug[(Hlw.cf1_pulse_counter +1) / 2];
+      uint32_t median = Hlw.debug[(Hlw.cf1_pulse_counter +1) / 2];
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: power %d, ui %d, cnt %d, smpl%s, sum %d, mean %d, median %d"),
         Hlw.cf_power_pulse_length , Hlw.select_ui_flag, Hlw.cf1_pulse_counter, stemp, Hlw.cf1_summed_pulse_length, cf1_pulse_length, median);
 #endif
@@ -202,7 +202,7 @@ void HlwEverySecond(void)
     Hlw.cf1_current_pulse_length = 0;
     Hlw.cf_power_pulse_length  = 0;
   } else {
-    unsigned long hlw_len;
+    uint32_t hlw_len;
 
     if (Hlw.energy_period_counter) {
       hlw_len = 10000 * 100 / Hlw.energy_period_counter;  // Add *100 to fix rounding on loads at 3.6kW (#9160)
@@ -283,17 +283,17 @@ bool HlwCommand(void)
   }
   else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Hlw.cf_power_pulse_length ) {
-      Settings.energy_power_calibration = ((unsigned long)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf_power_pulse_length ) / Hlw.power_ratio;
+      Settings.energy_power_calibration = ((uint32_t)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf_power_pulse_length ) / Hlw.power_ratio;
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len && Hlw.cf1_voltage_pulse_length ) {
-      Settings.energy_voltage_calibration = ((unsigned long)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf1_voltage_pulse_length ) / Hlw.voltage_ratio;
+      Settings.energy_voltage_calibration = ((uint32_t)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf1_voltage_pulse_length ) / Hlw.voltage_ratio;
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Hlw.cf1_current_pulse_length) {
-      Settings.energy_current_calibration = ((unsigned long)(CharToFloat(XdrvMailbox.data)) * Hlw.cf1_current_pulse_length) / Hlw.current_ratio;
+      Settings.energy_current_calibration = ((uint32_t)(CharToFloat(XdrvMailbox.data)) * Hlw.cf1_current_pulse_length) / Hlw.current_ratio;
     }
   }
   else serviced = false;  // Unknown command

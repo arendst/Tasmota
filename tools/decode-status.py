@@ -165,7 +165,8 @@ a_setoption = [[
     "Force gen1 Alexa mode",
     "Disable Zigbee auto-config when pairing new devices",
     "Use frequency output for buzzer pin instead of on/off signal",
-    "",""
+    "Use friendly name in zigbee topic (use with SetOption89)",
+    "Set dimmer low on rotary dial after power off"
     ],[
     "","","","",
     "","","","",
@@ -229,10 +230,10 @@ a_features = [[
     "USE_VEML7700","USE_MCP9808","USE_BL0940","USE_TELEGRAM",
     "USE_HP303B","USE_TCP_BRIDGE","USE_TELEINFO","USE_LMT01",
     "USE_PROMETHEUS","USE_IEM3000","USE_DYP","USE_I2S_AUDIO",
-    "USE_MLX90640","USE_VL53L1X","","",
-    "","USE_TTGO_WATCH","USE_ETHERNET","USE_WEBCAM"
+    "USE_MLX90640","USE_VL53L1X","USE_MIEL_HVAC","USE_WE517",
+    "USE_EZOPH","USE_TTGO_WATCH","USE_ETHERNET","USE_WEBCAM"
     ],[
-    "","","","",
+    "USE_EZOORP","USE_EZORTD","USE_EZOHUM","USE_EZOEC",
     "","","","",
     "","","","",
     "","","","",
@@ -267,7 +268,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20200915 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20201025 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

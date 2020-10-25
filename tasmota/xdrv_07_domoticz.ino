@@ -206,7 +206,9 @@ bool DomoticzMqttData(void) {
   if (XdrvMailbox.data_len < 20) {
     return true;  // No valid data
   }
-  JsonParser parser(XdrvMailbox.data);
+
+  String domoticz_data = XdrvMailbox.data;  // Copy the string into a new buffer that will be modified
+  JsonParser parser((char*)domoticz_data.c_str());
   JsonParserObject domoticz = parser.getRootObject();
   if (!domoticz) {
     return true;  // To much or invalid data
@@ -636,7 +638,7 @@ bool Xdrv07(uint8_t function) {
         WSContentSend_P(HTTP_BTN_MENU_DOMOTICZ);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/" WEB_HANDLE_DOMOTICZ, HandleDomoticzConfiguration);
+        WebServer_on(PSTR("/" WEB_HANDLE_DOMOTICZ), HandleDomoticzConfiguration);
         break;
 #endif  // USE_WEBSERVER
       case FUNC_MQTT_SUBSCRIBE:

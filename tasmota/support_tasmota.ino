@@ -333,8 +333,8 @@ void SetPowerOnState(void)
         bitWrite(power, i, digitalRead(Pin(GPIO_REL1, i)) ^ bitRead(rel_inverted, i));
       }
     }
-    if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate))) {
-      SetPulseTimer(i, Settings.pulse_timer[i]);
+    if (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate)) {
+      SetPulseTimer(i % MAX_PULSETIMERS, Settings.pulse_timer[i % MAX_PULSETIMERS]);
     }
   }
   blink_powersave = power;
@@ -488,10 +488,17 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
     Response_P(PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? "Switch" : "Button", device, state);
     result = XdrvRulesProcess();
   }
+#ifdef USE_PWM_DIMMER
+  if (PWM_DIMMER == my_module_type && !result) {
+#endif  // USE_PWM_DIMMER
   int32_t payload_save = XdrvMailbox.payload;
   XdrvMailbox.payload = device_save << 24 | key << 16 | state << 8 | device;
   XdrvCall(FUNC_ANY_KEY);
   XdrvMailbox.payload = payload_save;
+#ifdef USE_PWM_DIMMER
+    result = true;
+  }
+#endif  // USE_PWM_DIMMER
   return result;
 }
 
@@ -531,9 +538,8 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
   }
   active_device = device;
 
-  if (device <= MAX_PULSETIMERS) {
-    SetPulseTimer(device -1, 0);
-  }
+  SetPulseTimer((device -1) % MAX_PULSETIMERS, 0);
+
   power_t mask = 1 << (device -1);        // Device to control
   if (state <= POWER_TOGGLE) {
     if ((blink_mask & mask)) {
@@ -589,9 +595,9 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
     if (publish_power && Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
       MqttPublishTeleState();
     }
-    if (device <= MAX_PULSETIMERS) {  // Restart PulseTime if powered On
-      SetPulseTimer(device -1, (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[device -1] : 0);
-    }
+
+    // Restart PulseTime if powered On
+    SetPulseTimer((device -1) % MAX_PULSETIMERS, (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[(device -1) % MAX_PULSETIMERS] : 0);
   }
   else if (POWER_BLINK == state) {
     if (!(blink_mask & mask)) {
@@ -887,7 +893,9 @@ void Every100mSeconds(void)
     if (pulse_timer[i] != 0L) {           // Timer active?
       if (TimeReached(pulse_timer[i])) {  // Timer finished?
         pulse_timer[i] = 0L;              // Turn off this timer
-        ExecuteCommandPower(i +1, (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? POWER_ON : POWER_OFF, SRC_PULSETIMER);
+        for (uint32_t j = 0; j < devices_present; j = j +MAX_PULSETIMERS) {
+          ExecuteCommandPower(i + j +1, (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? POWER_ON : POWER_OFF, SRC_PULSETIMER);
+        }
       }
     }
   }
@@ -920,10 +928,10 @@ void Every250mSeconds(void)
   state_250mS++;
   state_250mS &= 0x3;
 
-  global_state.network_down = (global_state.wifi_down && global_state.eth_down);
+  global_state.network_down = (global_state.wifi_down && global_state.eth_down) ? 1 : 0;
 
-  if (!Settings.flag.global_state && !global_state.network_down) {  // SetOption31 - Control link led blinking
-    if (global_state.data &0x03) {                        // Any problem
+  if (!Settings.flag.global_state) {                      // SetOption31 - Control link led blinking
+    if (global_state.data &0x03) {                        // Network or MQTT problem
       if (global_state.mqtt_down) { blinkinterval = 7; }  // MQTT problem so blink every 2 seconds (slowest)
       if (global_state.network_down) { blinkinterval = 3; }  // Network problem so blink every second (slow)
       blinks = 201;                                       // Allow only a single blink in case the problem is solved
@@ -1067,8 +1075,8 @@ void Every250mSeconds(void)
       if (save_data_counter <= 0) {
         if (Settings.flag.save_state) {                   // SetOption0 - Save power state and use after restart
           power_t mask = POWER_MASK;
-          for (uint32_t i = 0; i < MAX_PULSETIMERS; i++) {
-            if ((Settings.pulse_timer[i] > 0) && (Settings.pulse_timer[i] < 30)) {  // 3 seconds
+          for (uint32_t i = 0; i < devices_present; i++) {
+            if ((Settings.pulse_timer[i % MAX_PULSETIMERS] > 0) && (Settings.pulse_timer[i % MAX_PULSETIMERS] < 30)) {  // 3 seconds
               mask &= ~(1 << i);
             }
           }
@@ -1078,7 +1086,7 @@ void Every250mSeconds(void)
         } else {
           Settings.power = 0;
         }
-        SettingsSave(0);
+        if (!restart_flag) { SettingsSave(0); }
         save_data_counter = Settings.save_data;
       }
     }
@@ -1472,9 +1480,14 @@ void GpioInit(void)
   if (Settings.module != Settings.last_module) {
     Settings.baudrate = APP_BAUDRATE / 300;
     Settings.serial_config = TS_SERIAL_8N1;
+    SetSerialBegin();
   }
 
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
+
+#ifdef ESP8266
+  ConvertGpios();
+#endif  // ESP8266
 
   for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
     if ((Settings.user_template.gp.io[i] >= AGPIO(GPIO_SENSOR_END)) && (Settings.user_template.gp.io[i] < AGPIO(GPIO_USER))) {
@@ -1495,19 +1508,6 @@ void GpioInit(void)
       my_module.io[i] = def_gp.io[i];               // Force Template override
     }
   }
-#ifdef ESP8266
-  if ((Settings.my_adc0 >= ADC0_END) && (Settings.my_adc0 < ADC0_USER)) {
-    Settings.my_adc0 = ADC0_NONE;                   // Fix not supported sensor ids in module
-  }
-  else if (Settings.my_adc0 > ADC0_NONE) {
-    my_adc0 = Settings.my_adc0;                     // Set User selected Module sensors
-  }
-  my_module_flag = ModuleFlag();
-  uint32_t template_adc0 = my_module_flag.data &15;
-  if ((template_adc0 > ADC0_NONE) && (template_adc0 < ADC0_USER)) {
-    my_adc0 = template_adc0;                        // Force Template override
-  }
-#endif
 
   for (uint32_t i = 0; i < ARRAY_SIZE(my_module.io); i++) {
     uint32_t mpin = ValidPin(i, my_module.io[i]);
@@ -1642,12 +1642,20 @@ void GpioInit(void)
 #endif  // ESP8266 - ESP32
   soft_spi_flg = (PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
 
-  // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
-  // Doing it here solves relay toggles at restart.
   for (uint32_t i = 0; i < ARRAY_SIZE(my_module.io); i++) {
     uint32_t mpin = ValidPin(i, my_module.io[i]);
 //    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
-    if (((i < 6) || (i > 11)) && (0 == mpin)) {  // Skip SPI flash interface
+    if (AGPIO(GPIO_OUTPUT_HI) == mpin) {
+      pinMode(i, OUTPUT);
+      digitalWrite(i, 1);
+    }
+    else if (AGPIO(GPIO_OUTPUT_LO) == mpin) {
+      pinMode(i, OUTPUT);
+      digitalWrite(i, 0);
+    }
+    // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
+    // Doing it here solves relay toggles at restart.
+    else if (((i < 6) || (i > 11)) && (GPIO_NONE == mpin)) {  // Skip SPI flash interface
       if (!((1 == i) || (3 == i))) {             // Skip serial
         pinMode(i, INPUT);
       }
@@ -1663,6 +1671,9 @@ void GpioInit(void)
 
   devices_present = 0;
   light_type = LT_BASIC;                     // Use basic PWM control if SetOption15 = 0
+
+  XsnsCall(FUNC_MODULE_INIT);
+
   if (XdrvCall(FUNC_MODULE_INIT)) {
     // Serviced
   }
