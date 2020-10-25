@@ -29,8 +29,8 @@
 #define XDRV_44                     44
 #define XNRG_31                     31
 
-#define SHD_DRIVER_MAJOR_VERSION    0
-#define SHD_DRIVER_MINOR_VERSION    9
+#define SHD_DRIVER_MAJOR_VERSION    1
+#define SHD_DRIVER_MINOR_VERSION    0
 
 #define SHD_SWITCH_CMD              0x01
 #define SHD_SWITCH_FADE_CMD         0x02
@@ -55,7 +55,7 @@
 
 #ifdef SHELLY_FW_UPGRADE
 #include <stm32flash.h>
-#include <fw/shelly/dimmer/stm_v50.2.h>
+#include <fw/shelly/dimmer/stm_v51.0.h>
 #endif // SHELLY_FW_UPGRADE
 
 #include <TasmotaSerial.h>
