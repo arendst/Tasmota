@@ -36,6 +36,9 @@
 #ifndef ROTARY_MAX_STEPS
 #define ROTARY_MAX_STEPS     10                // Rotary step boundary
 #endif
+#ifndef ROTARY_START_DIM
+#define ROTARY_START_DIM     1                 // Minimal dimmer value after power on with SetOption113 1
+#endif
 #ifndef ROTARY_TIMEOUT
 #define ROTARY_TIMEOUT       2                 // 2 * RotaryHandler() call which is usually 2 * 0.05 seconds
 #endif
@@ -203,7 +206,7 @@ void RotaryHandler(void) {
             LightDimmerOffset(dimmer_index, rotary_position * rotary_dimmer_increment[Rotary.model]);
           } else {
             if (rotary_position > 0) {         // Only power on if rotary increase
-              LightDimmerOffset(dimmer_index, -LightGetDimmer(dimmer_index) +1);
+              LightDimmerOffset(dimmer_index, -LightGetDimmer(dimmer_index) + ROTARY_START_DIM);
             }
           }
         }
