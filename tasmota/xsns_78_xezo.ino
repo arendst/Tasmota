@@ -65,7 +65,7 @@ const char EZO_RTD_NAME[] PROGMEM = "RTD";
 #endif
 //const char EZO_PMP_NAME[] PROGMEM = "PMP";
 //const char EZO_FLO_NAME[] PROGMEM = "FLO";
-const char EZO_CO2_NAME[] PROGMEM = "pH";
+const char EZO_CO2_NAME[] PROGMEM = "CO2";
 //const char EZO_PRS_NAME[] PROGMEM = "PRS";
 //const char EZO_O2_NAME[]  PROGMEM = "O2";
 #ifdef USE_EZOHUM
