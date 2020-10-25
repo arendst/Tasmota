@@ -322,7 +322,7 @@ void NewHAssDiscovery(void)
   if (!Settings.flag.hass_discovery) { // HassDiscoveryRelays(relays)
     Response_P(HASS_DISCOVER_DEVICE, WiFi.localIP().toString().c_str(), SettingsText(SET_DEVICENAME),
               stemp2, my_hostname, unique_id, ModuleName().c_str(), TuyaMod, GetStateText(0), GetStateText(1), GetStateText(2), GetStateText(3),
-              my_version, mqtt_topic, MQTT_FULLTOPIC, SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2, Hass.RelLst, stemp3, stemp4, Settings.flag.button_swap,
+              my_version, mqtt_topic, SettingsText(SET_MQTT_FULLTOPIC), SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2, Hass.RelLst, stemp3, stemp4, Settings.flag.button_swap,
               Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked, Settings.flag.hass_light, Settings.flag3.pwm_multi_channels,
               Settings.flag3.mqtt_buttons, Settings.flag3.shutter_mode, Settings.flag4.alexa_ct_range, light_controller.isCTRGBLinked(), Light.subtype);
   }
