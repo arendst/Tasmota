@@ -17,7 +17,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifdef USE_I2C
-#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD) || defined(USE_EZOHUM) || defined(USE_EZOEC)
+
+#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD) || defined(USE_EZOHUM) || defined(USE_EZOEC) || defined(USE_EZOCO2)
+  #define USE_EZO
+#endif
+#if defined(USE_EZO)
 
 #define D_EZO_DELAY   300   // Minimum delay for any instruction
 #define D_EZO_MAX_BUF 40    // Maximum response
@@ -100,11 +104,11 @@ protected:
   }
 
   uint8_t   valid;
-  uint8_t   addr; 
+  uint8_t   addr;
   uint32_t  lastRead;
 };
 
 
 
-#endif  // USE_EZO*
+#endif  // USE_EZO
 #endif  // USE_I2C

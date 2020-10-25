@@ -18,7 +18,7 @@
 */
 
 #ifdef USE_I2C
-#if defined(USE_EZOPH) || defined(USE_EZOORP) || defined(USE_EZORTD) || defined(USE_EZOHUM) || defined(USE_EZOEC)
+#if defined(USE_EZO)
 
 #define XSNS_78 78
 #define XI2C_55 55        // See I2CDEVICES.md
@@ -65,7 +65,7 @@ const char EZO_RTD_NAME[] PROGMEM = "RTD";
 #endif
 //const char EZO_PMP_NAME[] PROGMEM = "PMP";
 //const char EZO_FLO_NAME[] PROGMEM = "FLO";
-//const char EZO_CO2_NAME[] PROGMEM = "CO2";
+const char EZO_CO2_NAME[] PROGMEM = "CO2";
 //const char EZO_PRS_NAME[] PROGMEM = "PRS";
 //const char EZO_O2_NAME[]  PROGMEM = "O2";
 #ifdef USE_EZOHUM
@@ -104,7 +104,13 @@ const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
 
   EZO_EMPTY,
   EZO_EMPTY,
+
+#ifdef USE_EZOCO2
+  EZO_CO2_NAME,
+#else
   EZO_EMPTY,
+#endif
+
   EZO_EMPTY,
   EZO_EMPTY,
   EZO_EMPTY,
@@ -265,6 +271,11 @@ private:
                     sensor[count] = new EZORTD(addr);
                     break;
 #endif
+#ifdef USE_EZOCO2
+                  case EZO_CO2:
+                    sensor[count] = new EZOCO2(addr);
+                    break;
+#endif
 #ifdef USE_EZOHUM
                   case EZO_HUM:
                     sensor[count] = new EZOHUM(addr);
@@ -324,5 +335,5 @@ bool Xsns78(uint8_t function)
   return false;
 }
 
-#endif  // USE_EZO*
+#endif  // USE_EZO
 #endif  // USE_I2C

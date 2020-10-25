@@ -165,7 +165,8 @@ a_setoption = [[
     "Force gen1 Alexa mode",
     "Disable Zigbee auto-config when pairing new devices",
     "Use frequency output for buzzer pin instead of on/off signal",
-    "",""
+    "Use friendly name in zigbee topic (use with SetOption89)",
+    "Set dimmer low on rotary dial after power off"
     ],[
     "","","","",
     "","","","",
@@ -267,7 +268,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20201024 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20201025 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
