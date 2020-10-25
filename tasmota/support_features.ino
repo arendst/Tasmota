@@ -642,8 +642,9 @@ void GetFeatures(void)
 #if defined(USE_I2C) && defined(USE_EZOEC)
   feature7 |= 0x00000008;  // xsns_78_ezoec.ino
 #endif
-
-//  feature7 |= 0x00000010;
+#if defined(USE_I2C) && defined(USE_EZOCO2)
+  feature7 |= 0x00000010;
+#endif
 //  feature7 |= 0x00000020;
 //  feature7 |= 0x00000040;
 //  feature7 |= 0x00000080;
