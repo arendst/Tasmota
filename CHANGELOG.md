@@ -3,7 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.0.0.2]
+## [9.0.0.3]
+### Added
+- TLS in binary tasmota-zbbridge (#9620)
+
+## [9.0.0.2] - 20201025
 ### Added
 - Support for Vietnamese language translations by Tâm.NT
 - Support for timers in case of no-sunset permanent day by cybermaus (#9543)
@@ -15,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Support for EZO RTD sensors by Christopher Tremblay (#9585)
 - Support for EZO HUM sensors by Christopher Tremblay (#9599)
 - Support for EZO EC sensors by Christopher Tremblay (#9613)
+- Support for EZO CO2 sensors by Christopher Tremblay (#9619)
 - On ZigbeeBridge support for glowing led when permit join is active (#9581)
 - Support for PWM Dimmer multi-press and ledmask (#9584)
 - Support for fixed output Hi or Lo GPIO selection
