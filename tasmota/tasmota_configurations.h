@@ -446,7 +446,7 @@
 //#undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
 #define USE_EMULATION                             // Disable Wemo or Hue emulation
 #define USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
-//#undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
+#undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
 #undef USE_CUSTOM                                // Disable Custom features
 #undef USE_DISCOVERY                             // Disable Discovery services for both MQTT and web server
 //#undef USE_TIMERS                                // Disable support for up to 16 timers
