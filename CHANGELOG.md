@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
 - Command ``SwitchMode 15`` sending only MQTT message on switch change (#9593)
 - Command ``ShutterChange`` to increment change position (#9594)
+- Command ``SetOption113 1`` to set dimmer low on rotary dial after power off
 - Support for EZO Ph and ORP sensors by Christopher Tremblay (#9567)
 - Support for EZO RTD sensors by Christopher Tremblay (#9585)
 - Support for EZO HUM sensors by Christopher Tremblay (#9599)

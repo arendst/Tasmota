@@ -62,6 +62,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
 - Command ``SwitchMode 15`` sending only MQTT message on switch change (#9593)
 - Command ``ShutterChange`` to increment change position (#9594)
+- Command ``SetOption113 1`` to set dimmer low on rotary dial after power off
 - Zigbee command ``ZbData`` for better support of device specific data
 - Optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
 - Optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)

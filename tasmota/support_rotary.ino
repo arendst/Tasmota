@@ -198,7 +198,14 @@ void RotaryHandler(void) {
             }
           }
         } else {                               // Dimmer RGBCW or RGB only if second rotary
-          LightDimmerOffset(second_rotary ? 1 : 0, rotary_position * rotary_dimmer_increment[Rotary.model]);
+          uint32_t dimmer_index = second_rotary ? 1 : 0;
+          if (!Settings.flag4.rotary_poweron_dimlow || power) {  // SetOption113 - On rotary dial after power off set dimmer low
+            LightDimmerOffset(dimmer_index, rotary_position * rotary_dimmer_increment[Rotary.model]);
+          } else {
+            if (rotary_position > 0) {         // Only power on if rotary increase
+              LightDimmerOffset(dimmer_index, -LightGetDimmer(dimmer_index) +1);
+            }
+          }
         }
       } else {                                 // Rotary2
         if (button_pressed) {                  // Color Temperature
