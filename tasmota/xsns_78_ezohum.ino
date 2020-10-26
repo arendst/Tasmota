@@ -52,10 +52,14 @@ struct EZOHUM : public EZOStruct {
     }
   }
 
+  static const char id[] PROGMEM;
+
 private:
   float     humidity;
   float     temperature;
 };
+
+const char EZOHUM::id[] PROGMEM = "HUM";
 
 #endif  // USE_EZOHUM
 #endif  // USE_I2C
