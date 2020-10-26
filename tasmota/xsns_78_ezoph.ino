@@ -20,12 +20,12 @@
 #ifdef USE_I2C
 #ifdef USE_EZOPH
 
-#define XSNS_78 78
-
 #define EZO_PH_READ_LATENCY   900
 
-struct EZOpH : public EZOStruct {
-  void ProcessMeasurement(void)
+struct EZOPH : public EZOStruct {
+  EZOPH(uint32_t addr) : EZOStruct(addr), pH(NAN) {}
+
+  virtual void ProcessMeasurement(void)
   {
     char data[D_EZO_MAX_BUF];
 
@@ -33,47 +33,28 @@ struct EZOpH : public EZOStruct {
     pH    = CharToFloat(data);
   }
 
-  void Show(bool json, uint32_t index)
+  virtual void Show(bool json, const char *name)
   {
-    if (valid) {
-      char str[6];
-      dtostrfd(pH, 2, str);
+    char str[6];
+    dtostrfd(pH, 2, str);
 
-      char name[10];
-      snprintf_P(name, sizeof(name), PSTR("%s%c%X"), EZOpH::name, IndexSeparator(), index + 1);
-
-      if (count == 1) {
-        name[sizeof("EZOpH") - 1] = 0;
-      }
-
-      if (json) {
-        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_PH "\":%s}" ), name, str);
-      }
+    if (json) {
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_PH "\":%s}" ), name, str);
+    }
 #ifdef USE_WEBSERVER  
-      else {
-        WSContentSend_PD(HTTP_SNS_PH, name, str);
+    else {
+      WSContentSend_PD(HTTP_SNS_PH, name, str);
 #endif  // USE_WEBSERVER
-      }
     }
   }
 
-  static int8_t     count;
-  static EZOpH     *list;
-  static const char name[];
+  static const char id[] PROGMEM;
 
 private:
-  float     pH = NAN;
+  float     pH;
 };
 
-int8_t      EZOpH::count          = -1;
-EZOpH      *EZOpH::list           = NULL;
-const char  EZOpH::name[] PROGMEM = "EZOpH";
-
-
-/*********************************************************************************************\
- * Interface
-\*********************************************************************************************/
-#define Xsns78 XsnsEZO<EZOpH, EZO_PH>
+const char EZOPH::id[]  PROGMEM = "pH";
 
 #endif  // USE_EZOPH
 #endif  // USE_I2C

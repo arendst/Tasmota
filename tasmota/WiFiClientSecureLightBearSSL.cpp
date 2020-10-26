@@ -21,6 +21,7 @@
 */
 
 #include "my_user_config.h"
+#include "tasmota_configurations.h"
 #if defined(ESP8266) && defined(USE_TLS)
 
 // #define DEBUG_TLS

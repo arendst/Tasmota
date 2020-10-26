@@ -631,15 +631,20 @@ void GetFeatures(void)
   feature7 = 0x00000000;
 
 #if defined(USE_I2C) && defined(USE_EZOORP)
-  feature7 |= 0x00000001;  // xsns_79_ezoorp.ino
+  feature7 |= 0x00000001;  // xsns_78_ezoorp.ino
 #endif
 #if defined(USE_I2C) && defined(USE_EZORTD)
-  feature7 |= 0x00000002; // xsns_80_ezortd.ino
+  feature7 |= 0x00000002;  // xsns_78_ezortd.ino
 #endif
-//  feature7 |= 0x00000004;
-//  feature7 |= 0x00000008;
-
-//  feature7 |= 0x00000010;
+#if defined(USE_I2C) && defined(USE_EZOHUM)
+  feature7 |= 0x00000004;  // xsns_78_ezohum.ino
+#endif
+#if defined(USE_I2C) && defined(USE_EZOEC)
+  feature7 |= 0x00000008;  // xsns_78_ezoec.ino
+#endif
+#if defined(USE_I2C) && defined(USE_EZOCO2)
+  feature7 |= 0x00000010;
+#endif
 //  feature7 |= 0x00000020;
 //  feature7 |= 0x00000040;
 //  feature7 |= 0x00000080;
