@@ -1,5 +1,5 @@
 /*
-  xsns_78_ezoph.ino - EZO EC I2C EC sensor support for Tasmota
+  xsns_78_ezoec.ino - EZO EC I2C EC sensor support for Tasmota
 
   Copyright (C) 2020  Christopher Tremblay
 
@@ -35,8 +35,8 @@ struct EZOEC : public EZOStruct {
 
   virtual void Show(bool json, const char *name)
   {
-    char str[6];
-    dtostrfd(EC, 2, str);
+    char str[10];
+    dtostrfd(EC, 3, str);
 
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_EC "\":%s}" ), name, str);
@@ -48,9 +48,13 @@ struct EZOEC : public EZOStruct {
     }
   }
 
+  static const char id[] PROGMEM;
+
 private:
   float     EC;
 };
+
+const char EZOEC::id[]  PROGMEM = "EC";
 
 #endif  // USE_EZOEC
 #endif  // USE_I2C

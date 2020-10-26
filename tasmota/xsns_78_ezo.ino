@@ -80,6 +80,8 @@ struct EZOStruct {
   virtual void ProcessMeasurement(void);
   virtual void Show(bool json, const char *name);
 
+  static const char id[] PROGMEM;
+
 protected:
   void ProcessMeasurement(char *const data, const uint32_t len, const uint32_t latency)
   {
@@ -108,7 +110,7 @@ protected:
   uint32_t  lastRead;
 };
 
-
+const char EZOStruct::id[] PROGMEM = "";
 
 #endif  // USE_EZO
 #endif  // USE_I2C

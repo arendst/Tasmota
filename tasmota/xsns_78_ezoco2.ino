@@ -49,9 +49,13 @@ struct EZOCO2 : public EZOStruct {
     }
   }
 
+  static const char id[] PROGMEM;
+
 private:
   uint16_t  CO2;
 };
+
+const char EZOCO2::id[] PROGMEM = "CO2";
 
 #endif  // USE_EZOCO2
 #endif  // USE_I2C

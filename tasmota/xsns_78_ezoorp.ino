@@ -35,8 +35,8 @@ struct EZOORP : public EZOStruct {
 
   virtual void Show(bool json, const char *name)
   {
-    char str[6];
-    dtostrfd(ORP, 0, str);
+    char str[8];
+    dtostrfd(ORP, 2, str);
 
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ORP "\":%s}" ), name, str);
@@ -48,11 +48,13 @@ struct EZOORP : public EZOStruct {
     }
   }
 
+  static const char id[] PROGMEM;
+
 private:
   float     ORP;
 };
 
-
+const char EZOORP::id[] PROGMEM = "ORP";
 
 #endif  // USE_EZOORP
 #endif  // USE_I2C

@@ -22,8 +22,8 @@
 
 #define EZO_PH_READ_LATENCY   900
 
-struct EZOpH : public EZOStruct {
-  EZOpH(uint32_t addr) : EZOStruct(addr), pH(NAN) {}
+struct EZOPH : public EZOStruct {
+  EZOPH(uint32_t addr) : EZOStruct(addr), pH(NAN) {}
 
   virtual void ProcessMeasurement(void)
   {
@@ -48,9 +48,13 @@ struct EZOpH : public EZOStruct {
     }
   }
 
+  static const char id[] PROGMEM;
+
 private:
   float     pH;
 };
+
+const char EZOPH::id[]  PROGMEM = "pH";
 
 #endif  // USE_EZOPH
 #endif  // USE_I2C

@@ -34,7 +34,7 @@ struct EZORTD : public EZOStruct {
   }
 
   virtual void Show(bool json, const char *name)
-{
+  {
     char str[10];
     dtostrfd(ConvertTemp(temperature), Settings.flag2.temperature_resolution, str);
 
@@ -46,11 +46,15 @@ struct EZORTD : public EZOStruct {
       WSContentSend_PD(HTTP_SNS_TEMP, name, str, TempUnit());
 #endif  // USE_WEBSERVER
     }
-}
+  }
+
+  static const char id[] PROGMEM;
 
 private:
   float     temperature;
 };
+
+const char EZORTD::id[] PROGMEM = "RTD";
 
 #endif  // USE_EZORTD
 #endif  // USE_I2C
