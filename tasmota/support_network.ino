@@ -72,6 +72,7 @@ void MdnsAddServiceHttp(void) {
   if (1 == Mdns.begun) {
     Mdns.begun = 2;
     MDNS.addService("http", "tcp", WEB_PORT);
+    MDNS.addServiceTxt("http", "tcp", "devicetype", "tasmota");
   }
 }
 
