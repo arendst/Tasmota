@@ -97,6 +97,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Rotary driver adjusted accordingly if Mi Desk Lamp module is selected (#9399)
 - Tasmota Arduino Core v2.7.4.5 allowing webpassword over 47 characters (#9687)
 - Webserver code optimizations (#9580, #9590)
+- PlatformIO library structure redesigned for compilation speed by Jason2866
 
 ### Fixed
 - Ledlink blink when no network connected regression from v8.3.1.4 (#9292)
@@ -113,6 +114,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Zigbee battery percentage (#9607)
 - HassAnyKey anomaly (#9601)
 - Rule Break not working as expected when ONCE is enabled (#9245)
+- Rule expressions using mems corrupts character pool (#9301)
 
 ### Removed
 - Support for direct upgrade from Tasmota versions before v7.0

@@ -2176,7 +2176,10 @@ void CmndMemory(void)
       if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
         if (XdrvMailbox.data[0] == '=') {  // Spaces already been skipped in data
-          dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings.flag2.calc_resolution, SettingsText(SET_MEM1 + XdrvMailbox.index -1));
+          char rules_mem[FLOATSZ];
+          dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings.flag2.calc_resolution, rules_mem);
+          SettingsUpdateText(SET_MEM1 + XdrvMailbox.index -1, rules_mem);
+
         } else {
           SettingsUpdateText(SET_MEM1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data);
         }
