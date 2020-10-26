@@ -28,7 +28,6 @@
 
 
 // List of known EZO devices and their default address
-
 enum {
   EZO_DO  = 0x61, // D.O.
   EZO_ORP = 0x62, // ORP
@@ -49,83 +48,37 @@ enum {
 };
 
 
-const char EZO_EMPTY[]    PROGMEM = "";
-//const char EZO_DO_NAME[]  PROGMEM = "DO";
-#ifdef USE_EZOORP
-const char EZO_ORP_NAME[] PROGMEM = "ORP";
-#endif
-#ifdef USE_EZOPH
-const char EZO_PH_NAME[]  PROGMEM = "pH";
-#endif
-#ifdef USE_EZOEC
-const char EZO_EC_NAME[]  PROGMEM = "EC";
-#endif
-#ifdef USE_EZORTD
-const char EZO_RTD_NAME[] PROGMEM = "RTD";
-#endif
-//const char EZO_PMP_NAME[] PROGMEM = "PMP";
-//const char EZO_FLO_NAME[] PROGMEM = "FLO";
-const char EZO_CO2_NAME[] PROGMEM = "CO2";
-//const char EZO_PRS_NAME[] PROGMEM = "PRS";
-//const char EZO_O2_NAME[]  PROGMEM = "O2";
-#ifdef USE_EZOHUM
-const char EZO_HUM_NAME[] PROGMEM = "HUM";
-#endif
-//const char EZO_RGB_NAME[] PROGMEM = "RGB";
 
+// Creates a complex preprocessor macro to fetch a specified class OR EZOStruct if it wasn't defined
+template <class T, class = void>  struct IsComplete : std::false_type {};
+template <class T>                struct IsComplete< T, decltype(void(sizeof(T))) > : std::true_type {};
+
+#define GET_EZO_CLASS(CLASS) std::conditional<IsComplete<CLASS>::value, CLASS, EZOStruct>::type
+
+// The order of the EZO devices must map with the enum declared above
 const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
-  EZO_EMPTY,
-
-#ifdef USE_EZOORP
-  EZO_ORP_NAME,
-#else
-  EZO_EMPTY,
-#endif
-
-#ifdef USE_EZOPH
-  EZO_PH_NAME,
-#else
-  EZO_EMPTY,
-#endif
-
-#ifdef USE_EZOEC
-  EZO_EC_NAME,
-#else
-  EZO_EMPTY,
-#endif
-
-  EZO_EMPTY,
-
-#ifdef USE_EZORTD
-  EZO_RTD_NAME,
-#else
-  EZO_EMPTY,
-#endif
-
-  EZO_EMPTY,
-  EZO_EMPTY,
-
-#ifdef USE_EZOCO2
-  EZO_CO2_NAME,
-#else
-  EZO_EMPTY,
-#endif
-
-  EZO_EMPTY,
-  EZO_EMPTY,
-  EZO_EMPTY,
-  EZO_EMPTY,
-  EZO_EMPTY,
-
-#ifdef USE_EZOHUM
-  EZO_HUM_NAME,
-#else
-  EZO_EMPTY,
-#endif
-
-  EZO_EMPTY,
+  EZOStruct::id,  // "DO"
+  GET_EZO_CLASS(EZOORP)::id,
+  GET_EZO_CLASS(EZOPH)::id,
+  GET_EZO_CLASS(EZOEC)::id,
+  EZOStruct::id,
+  GET_EZO_CLASS(EZORTD)::id,
+  EZOStruct::id,  // "PMP"
+  EZOStruct::id,  // "FLO"
+  GET_EZO_CLASS(EZOCO2)::id,
+  EZOStruct::id,  // "PRS"
+  EZOStruct::id,
+  EZOStruct::id,  // "O2"
+  EZOStruct::id,
+  EZOStruct::id,
+  GET_EZO_CLASS(EZOHUM)::id,
+  EZOStruct::id,  // "RGB"
 };
 
+#define CREATE_EZO_CLASS(CLASS)             \
+  case EZO_ ## CLASS:                       \
+    sensor[count] = new EZO ## CLASS(addr); \
+    break;
 
 
 struct EZOManager {
@@ -252,34 +205,22 @@ private:
                 // We use switch intead of virtual function to save RAM
                 switch (j + EZO_ADDR_0) {
 #ifdef USE_EZOORP
-                  case EZO_ORP:
-                    sensor[count] = new EZOORP(addr);
-                    break;
+                  CREATE_EZO_CLASS(ORP)
 #endif
 #ifdef USE_EZOPH
-                  case EZO_PH:
-                    sensor[count] = new EZOpH(addr);
-                    break;
+                  CREATE_EZO_CLASS(PH)
 #endif
 #ifdef USE_EZOEC
-                  case EZO_EC:
-                    sensor[count] = new EZOEC(addr);
-                    break;
+                  CREATE_EZO_CLASS(EC)
 #endif
 #ifdef USE_EZORTD
-                  case EZO_RTD:
-                    sensor[count] = new EZORTD(addr);
-                    break;
+                  CREATE_EZO_CLASS(RTD)
 #endif
 #ifdef USE_EZOCO2
-                  case EZO_CO2:
-                    sensor[count] = new EZOCO2(addr);
-                    break;
+                  CREATE_EZO_CLASS(CO2)
 #endif
 #ifdef USE_EZOHUM
-                  case EZO_HUM:
-                    sensor[count] = new EZOHUM(addr);
-                    break;
+                  CREATE_EZO_CLASS(HUM)
 #endif
                 }
 
