@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "לחיצה מרובה"
 #define D_NOISE "רעש"
 #define D_NONE "כלום"
+#define D_O2 "Oxygen"
 #define D_OFF "כבוי"
 #define D_OFFLINE "מנותק"
 #define D_OK "אוקיי"

@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "několikeré-stisknutí"
 #define D_NOISE "Hluk"
 #define D_NONE "Žádný"
+#define D_O2 "Oxygen"
 #define D_OFF "Vyp."
 #define D_OFFLINE "Offline"                  // Don't translate, LWT message! Nepředkládat, LWT zpráva!
 #define D_OK "OK"

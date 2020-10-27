@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "多重點擊"
 #define D_NOISE "雜訊"
 #define D_NONE "無"
+#define D_O2 "Oxygen"
 #define D_OFF "關閉"
 #define D_OFFLINE "離線"
 #define D_OK "好"

@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "multi-stlačenie"
 #define D_NOISE "Hluk"
 #define D_NONE "Žiadny"
+#define D_O2 "Oxygen"
 #define D_OFF "Vyp."
 #define D_OFFLINE "Neaktívny"
 #define D_OK "OK"
