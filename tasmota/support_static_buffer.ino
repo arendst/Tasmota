@@ -194,14 +194,10 @@ public:
     return 0;
   }
 
-  // if no NULL is found, returns length until the end of the buffer
-  inline size_t strlen(const size_t offset) const {
-    return strnlen((const char*) &_buf->buf[offset], len() - offset);
-  }
-
-  size_t strlen_s(const size_t offset) const {
-    size_t slen = this->strlen(offset);
-    if (slen == len() - offset) {
+  size_t strlen(const size_t offset) const {
+    if (offset >= len()) { return 0; }
+    size_t slen = strnlen((const char*) &_buf->buf[offset], len() - offset);
+    if (slen == (len() - offset)) {
       return 0;   // we didn't find a NULL char
     } else {
       return slen;

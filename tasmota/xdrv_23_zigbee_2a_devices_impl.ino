@@ -29,10 +29,12 @@
 //
 Z_Device & Z_Devices::createDeviceEntry(uint16_t shortaddr, uint64_t longaddr) {
   if ((BAD_SHORTADDR == shortaddr) && !longaddr) { return (Z_Device&) device_unk; }      // it is not legal to create this entry
-  Z_Device device(shortaddr, longaddr);
+  Z_Device & device = _devices.addToLast();
+  device.shortaddr = shortaddr;
+  device.longaddr = longaddr;
 
   dirty();
-  return _devices.addHead(device);
+  return device;
 }
 
 void Z_Devices::freeDeviceEntry(Z_Device *device) {
@@ -178,7 +180,7 @@ bool Z_Devices::removeDevice(uint16_t shortaddr) {
 // In:
 //    shortaddr
 //    longaddr (both can't be null at the same time)
-void Z_Devices::updateDevice(uint16_t shortaddr, uint64_t longaddr) {
+Z_Device & Z_Devices::updateDevice(uint16_t shortaddr, uint64_t longaddr) {
   Z_Device * s_found = &findShortAddr(shortaddr); // is there already a shortaddr entry
   Z_Device * l_found = &findLongAddr(longaddr);      // is there already a longaddr entry
 
@@ -191,21 +193,25 @@ void Z_Devices::updateDevice(uint16_t shortaddr, uint64_t longaddr) {
       freeDeviceEntry(s_found);
       _devices.remove(s_found);
       dirty();
+      return *l_found;
     }
   } else if (foundDevice(*s_found)) {
     // shortaddr already exists but longaddr not
     // add the longaddr to the entry
     s_found->longaddr = longaddr;
     dirty();
+    return *s_found;
   } else if (foundDevice(*l_found)) {
     // longaddr entry exists, update shortaddr
     l_found->shortaddr = shortaddr;
     dirty();
+    return *l_found;
   } else {
     // neither short/lonf addr are found.
     if ((BAD_SHORTADDR != shortaddr) || longaddr) {
-      createDeviceEntry(shortaddr, longaddr);
+      return createDeviceEntry(shortaddr, longaddr);
     }
+    return (Z_Device&) device_unk;
   }
 }
 
@@ -224,7 +230,7 @@ void Z_Devices::clearEndpoints(uint16_t shortaddr) {
 // Add an endpoint to a shortaddr
 //
 void Z_Devices::addEndpoint(uint16_t shortaddr, uint8_t endpoint) {
-  if (0x00 == endpoint) { return; }
+  if ((0x00 == endpoint) || (endpoint > 240)) { return; }
   Z_Device &device = getShortAddr(shortaddr);
 
   for (uint32_t i = 0; i < endpoints_max; i++) {
@@ -278,6 +284,7 @@ void Z_Devices::setStringAttribute(char*& attr, const char * str) {
     }
   }
   if (str_len) {
+    if (str_len > 31) { str_len = 31; }
     attr = (char*) malloc(str_len + 1);
     strlcpy(attr, str, str_len + 1);
   }
@@ -652,7 +659,7 @@ String Z_Devices::dumpLightState(uint16_t shortaddr) const {
 // Mode = 1: simple dump of devices addresses
 // Mode = 2: simple dump of devices addresses and names, endpoints, light
 String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
-  Z_json_array json_arr;
+  JsonGeneratorArray json_arr;
 
   for (const auto & device : _devices) {
     uint16_t shortaddr = device.shortaddr;
@@ -678,20 +685,30 @@ String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
       if (device.modelId) {
         attr_list.addAttribute(F(D_JSON_MODEL D_JSON_ID)).setStr(device.modelId);
       }
-      int8_t bulbtype = getHueBulbtype(shortaddr);
-      if (bulbtype >= 0) {
-        attr_list.addAttribute(F(D_JSON_ZIGBEE_LIGHT)).setInt(bulbtype);   // sign extend, 0xFF changed as -1
-      }
       if (device.manufacturerId) {
         attr_list.addAttribute(F("Manufacturer")).setStr(device.manufacturerId);
       }
-      Z_json_array arr_ep;
+
+      JsonGeneratorArray arr_ep;
       for (uint32_t i = 0; i < endpoints_max; i++) {
         uint8_t endpoint = device.endpoints[i];
         if (0x00 == endpoint) { break; }
         arr_ep.add(endpoint);
       }
       attr_list.addAttribute(F("Endpoints")).setStrRaw(arr_ep.toString().c_str());
+
+      JsonGeneratorArray arr_data;
+      for (auto & data_elt : device.data) {
+        char key[8];
+        if (data_elt.validConfig()) {
+          snprintf_P(key, sizeof(key), "?%02X.%1X", data_elt.getEndpoint(), data_elt.getConfig());
+        } else {
+          snprintf_P(key, sizeof(key), "?%02X", data_elt.getEndpoint());
+        }
+        key[0] = Z_Data::DataTypeToChar(data_elt.getType());
+        arr_data.addStr(key);
+      }
+      attr_list.addAttribute(F("Config")).setStrRaw(arr_data.toString().c_str());
     }
     json_arr.addStrRaw(attr_list.toString(true).c_str());
   }
@@ -710,18 +727,17 @@ String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
 int32_t Z_Devices::deviceRestore(JsonParserObject json) {
 
   // params
-  uint16_t device = 0x0000;                 // 0x0000 is coordinator so considered invalid
+  uint16_t shortaddr = 0x0000;                 // 0x0000 is coordinator so considered invalid
   uint64_t ieeeaddr = 0x0000000000000000LL; // 0 means unknown
   const char * modelid = nullptr;
   const char * manufid = nullptr;
   const char * friendlyname = nullptr;
-  int8_t   bulbtype = -1;
   size_t   endpoints_len = 0;
 
   // read mandatory "Device"
   JsonParserToken val_device = json[PSTR("Device")];
   if (val_device) {
-    device = (uint32_t) val_device.getUInt(device);
+    shortaddr = (uint32_t) val_device.getUInt(shortaddr);
   } else {
     return -1;        // missing "Device" attribute
   }
@@ -730,23 +746,41 @@ int32_t Z_Devices::deviceRestore(JsonParserObject json) {
   friendlyname  = json.getStr(PSTR("Name"), nullptr);  // read "Name"
   modelid       = json.getStr(PSTR("ModelId"), nullptr);
   manufid       = json.getStr(PSTR("Manufacturer"), nullptr);
-  JsonParserToken tok_bulbtype = json[PSTR(D_JSON_ZIGBEE_LIGHT)];
 
   // update internal device information
-  updateDevice(device, ieeeaddr);
-  if (modelid) { setModelId(device, modelid); }
-  if (manufid) { setManufId(device, manufid); }
-  if (friendlyname) { setFriendlyName(device, friendlyname); }
-  if (tok_bulbtype) { setLightProfile(device, tok_bulbtype.getInt()); }
+  updateDevice(shortaddr, ieeeaddr);
+  if (modelid) { setModelId(shortaddr, modelid); }
+  if (manufid) { setManufId(shortaddr, manufid); }
+  if (friendlyname) { setFriendlyName(shortaddr, friendlyname); }
 
   // read "Endpoints"
   JsonParserToken val_endpoints = json[PSTR("Endpoints")];
   if (val_endpoints.isArray()) {
     JsonParserArray arr_ep = JsonParserArray(val_endpoints);
-    clearEndpoints(device);     // clear even if array is empty
+    clearEndpoints(shortaddr);     // clear even if array is empty
     for (auto ep_elt : arr_ep) {
       uint8_t ep = ep_elt.getUInt();
-      if (ep) { addEndpoint(device, ep); }
+      if (ep) { addEndpoint(shortaddr, ep); }
+    }
+  }
+
+  // read "Config"
+  JsonParserToken val_config = json[PSTR("Config")];
+  Z_Device & device = getShortAddr(shortaddr);
+  if (val_config.isArray()) {
+    JsonParserArray arr_config = JsonParserArray(val_config);
+    device.data.reset();  // remove existing configuration
+    for (auto config_elt : arr_config) {
+      const char * conf_str = config_elt.getStr();
+      Z_Data_Type data_type;
+      uint8_t ep, config;
+
+      if (Z_Data::ConfigToZData(conf_str, &data_type, &ep, &config)) {
+        Z_Data & data = device.data.getByType(data_type, ep);
+        if (&data != nullptr) {
+          data.setConfig(config);
+        }
+      }
     }
   }
 

@@ -1332,7 +1332,7 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
 
   attr_list.addAttribute(F(D_CMND_ZIGBEE_CLUSTER)).setUInt(_cluster_id);
 
-  Z_json_array attr_numbers;
+  JsonGeneratorArray attr_numbers;
   Z_attribute_list attr_names;
   while (len >= 2 + i) {
     uint16_t attrid = _payload.get16(i);
@@ -1803,6 +1803,8 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
         // First we find or instantiate the correct Z_Data_XXX accorfing to the endpoint
         // Then store the attribute at the attribute addres (via offset) and according to size 8/16/32 bits
 
+        // add the endpoint if it was not already known
+        zigbee_devices.addEndpoint(shortaddr, src_ep);
         // we don't apply the multiplier, but instead store in Z_Data_XXX object
         Z_Data & data = device.data.getByType(map_type, src_ep);
         uint8_t *attr_address = ((uint8_t*)&data) + sizeof(Z_Data) + map_offset;
