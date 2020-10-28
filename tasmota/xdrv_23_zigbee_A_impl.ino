@@ -1494,6 +1494,9 @@ void CmndZbData(void) {
         case Z_Data_Type::Z_Alarm:
           ((Z_Data_Alarm&)data_elt).toAttributes(inner_attr, data_type);
           break;
+        case Z_Data_Type::Z_PIR:
+          ((Z_Data_PIR&)data_elt).toAttributes(inner_attr, data_type);
+          break;
       }
       if ((key[0] != '\0') && (key[0] != '?')) {
         attr_data.addAttribute(key).setStrRaw(inner_attr.toString(true).c_str());
