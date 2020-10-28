@@ -1731,28 +1731,36 @@ void ZigbeeShow(bool json)
       const Z_Data_Thermo & thermo = device.data.find<Z_Data_Thermo>();
 
       if (&thermo != nullptr) {
-        WSContentSend_P(PSTR("<tr class='htr'><td colspan=\"4\">&#9478;"));
-        if (thermo.validTemperature()) {
-          char buf[12];
-          dtostrf(thermo.getTemperature() / 100.0f, 3, 1, buf);
-          WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
-        }
-        if (thermo.validTempTarget()) {
-          char buf[12];
-          dtostrf(thermo.getTempTarget() / 100.0f, 3, 1, buf);
-          WSContentSend_PD(PSTR(" &#127919; %s°C"), buf);
-        }
-        if (thermo.validThSetpoint()) {
-          WSContentSend_PD(PSTR(" &#9881;&#65039; %d%%"), thermo.getThSetpoint());
-        }
-        if (thermo.validHumidity()) {
-          WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), (uint16_t)(thermo.getHumidity() / 100.0f + 0.5f));
-        }
-        if (thermo.validPressure()) {
-          WSContentSend_P(PSTR(" &#x26C5; %d hPa"), thermo.getPressure());
-        }
+        bool validTemp = thermo.validTemperature();
+        bool validTempTarget = thermo.validTempTarget();
+        bool validThSetpoint = thermo.validThSetpoint();
+        bool validHumidity = thermo.validHumidity();
+        bool validPressure = thermo.validPressure();
 
-        WSContentSend_P(PSTR("{e}"));
+        if (validTemp || validTempTarget || validThSetpoint || validHumidity || validPressure) {
+          WSContentSend_P(PSTR("<tr class='htr'><td colspan=\"4\">&#9478;"));
+          if (validTemp) {
+            char buf[12];
+            dtostrf(thermo.getTemperature() / 100.0f, 3, 1, buf);
+            WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
+          }
+          if (validTempTarget) {
+            char buf[12];
+            dtostrf(thermo.getTempTarget() / 100.0f, 3, 1, buf);
+            WSContentSend_PD(PSTR(" &#127919; %s°C"), buf);
+          }
+          if (validThSetpoint) {
+            WSContentSend_PD(PSTR(" &#9881;&#65039; %d%%"), thermo.getThSetpoint());
+          }
+          if (validHumidity) {
+            WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), (uint16_t)(thermo.getHumidity() / 100.0f + 0.5f));
+          }
+          if (validPressure) {
+            WSContentSend_P(PSTR(" &#x26C5; %d hPa"), thermo.getPressure());
+          }
+
+          WSContentSend_P(PSTR("{e}"));
+        }
       }
 
       // Light, switches and plugs
@@ -1787,12 +1795,16 @@ void ZigbeeShow(bool json)
           }
         }
         if (&plug != nullptr) {
-          WSContentSend_P(PSTR(" &#9889; "));
-          if (plug.validMainsVoltage()) {
-            WSContentSend_P(PSTR(" %dV"), plug.getMainsVoltage());
-          }
-          if (plug.validMainsPower()) {
-            WSContentSend_P(PSTR(" %dW"), plug.getMainsPower());
+          bool validMainsVoltage = plug.validMainsVoltage();
+          bool validMainsPower = plug.validMainsPower();
+          if (validMainsVoltage || validMainsPower) {
+            WSContentSend_P(PSTR(" &#9889; "));
+            if (validMainsVoltage) {
+              WSContentSend_P(PSTR(" %dV"), plug.getMainsVoltage());
+            }
+            if (validMainsPower) {
+              WSContentSend_P(PSTR(" %dW"), plug.getMainsPower());
+            }
           }
         }
         WSContentSend_P(PSTR("{e}"));
