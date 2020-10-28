@@ -1763,14 +1763,23 @@ void Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluste
 void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_list) {
   // source endpoint
   uint8_t src_ep = _srcendpoint;
+  uint8_t count_ep = zigbee_devices.countEndpoints(shortaddr);
+  Z_Device & device = zigbee_devices.getShortAddr(shortaddr);
   
   for (auto &attr : attr_list) {
+    // add endpoint suffix if needed
+    if ((Settings.flag4.zb_index_ep) && (src_ep != 1) && (count_ep > 1)) {
+      // we need to add suffix if the suffix is not already different from 1
+      if (attr.key_suffix == 1) {
+        attr.key_suffix = src_ep;
+      }
+    }
+
     // attr is Z_attribute&
     if (!attr.key_is_str) {
       uint16_t cluster = attr.key.id.cluster;
       uint16_t attribute = attr.key.id.attr_id;
       uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
-      Z_Device & device = zigbee_devices.getShortAddr(shortaddr);
 
       // Look for an entry in the converter table
       bool found = false;
