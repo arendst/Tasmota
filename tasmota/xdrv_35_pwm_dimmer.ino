@@ -108,7 +108,7 @@ void PWMModulePreInit(void)
   PWMDimmerSetPoweredOffLed();
 
   // The relay initializes to on. If the power is supposed to be off, turn the relay off.
-//  if (!power && PinUsed(GPIO_REL1)) digitalWrite(Pin(GPIO_REL1), bitRead(rel_inverted, 0) ? 1 : 0);
+//  if (!TasmotaGlobal.power && PinUsed(GPIO_REL1)) digitalWrite(Pin(GPIO_REL1), bitRead(TasmotaGlobal.rel_inverted, 0) ? 1 : 0);
 
 #ifdef USE_PWM_DIMMER_REMOTE
   // If remote device mode is enabled, set the device group count to the number of buttons
@@ -184,7 +184,7 @@ void PWMDimmerSetPoweredOffLed(void)
 {
   // Set the powered-off LED state.
   if (PinUsed(GPIO_LEDLNK)) {
-    bool power_off_led_on = !power && Settings.flag4.powered_off_led;
+    bool power_off_led_on = !TasmotaGlobal.power && Settings.flag4.powered_off_led;
     if (ledlnk_inverted) power_off_led_on ^= 1;
     digitalWrite(Pin(GPIO_LEDLNK), power_off_led_on);
   }
@@ -192,7 +192,7 @@ void PWMDimmerSetPoweredOffLed(void)
 
 void PWMDimmerSetPower(void)
 {
-  DigitalWrite(GPIO_REL1, 0, bitRead(rel_inverted, 0) ? !power : power);
+  DigitalWrite(GPIO_REL1, 0, bitRead(TasmotaGlobal.rel_inverted, 0) ? !TasmotaGlobal.power : TasmotaGlobal.power);
   PWMDimmerSetBrightnessLeds(-1);
   PWMDimmerSetPoweredOffLed();
 }
@@ -272,11 +272,11 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
 
   // Initialize some variables.
 #ifdef USE_PWM_DIMMER_REMOTE
-  bool power_is_on = (active_remote_pwm_dimmer ? active_remote_pwm_dimmer->power_on : power);
+  bool power_is_on = (active_remote_pwm_dimmer ? active_remote_pwm_dimmer->power_on : TasmotaGlobal.power);
   bool is_power_button = (button_index == power_button_index);
   bool is_down_button = (button_index == down_button_index);
 #else // USE_PWM_DIMMER_REMOTE
-  bool power_is_on = power;
+  bool power_is_on = TasmotaGlobal.power;
   bool is_power_button = !button_index;
   bool is_down_button = (button_index == (power_button_index ? 0 : 1));
 #endif  // USE_PWM_DIMMER_REMOTE
@@ -537,7 +537,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     }
     else {
 #endif  // USE_PWM_DIMMER_REMOTE
-      new_power = power ^ 1;
+      new_power = TasmotaGlobal.power ^ 1;
 #ifdef USE_PWM_DIMMER_REMOTE
     }
 #endif  // USE_PWM_DIMMER_REMOTE
@@ -615,9 +615,9 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
 #ifdef USE_DEVICE_GROUPS
     DevGroupMessageType message_type = DGR_MSGTYP_UPDATE_DIRECT;
 #ifdef USE_PWM_DIMMER_REMOTE
-    if (handle_tap && !active_remote_pwm_dimmer) 
+    if (handle_tap && !active_remote_pwm_dimmer)
 #else // USE_PWM_DIMMER_REMOTE
-    if (handle_tap) 
+    if (handle_tap)
 #endif  // USE_PWM_DIMMER_REMOTE
       message_type = (DevGroupMessageType)(message_type + DGR_MSGTYPFLAG_WITH_LOCAL);
     SendDeviceGroupMessage(power_button_index, message_type, dgr_item, dgr_value);

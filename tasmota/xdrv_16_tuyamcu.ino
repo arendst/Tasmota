@@ -270,9 +270,9 @@ void UpdateDevices() {
     if (fnId > TUYA_MCU_FUNC_NONE && Settings.tuya_fnid_map[i].dpid > 0) {
 
       if (fnId >= TUYA_MCU_FUNC_REL1 && fnId <= TUYA_MCU_FUNC_REL8) { //Relay
-        bitClear(rel_inverted, fnId - TUYA_MCU_FUNC_REL1);
+        bitClear(TasmotaGlobal.rel_inverted, fnId - TUYA_MCU_FUNC_REL1);
       } else if (fnId >= TUYA_MCU_FUNC_REL1_INV && fnId <= TUYA_MCU_FUNC_REL8_INV) { // Inverted Relay
-        bitSet(rel_inverted, fnId - TUYA_MCU_FUNC_REL1_INV);
+        bitSet(TasmotaGlobal.rel_inverted, fnId - TUYA_MCU_FUNC_REL1_INV);
       }
 
     }
@@ -401,7 +401,7 @@ bool TuyaSetPower(void)
   if (dpid == 0) dpid = TuyaGetDpId(TUYA_MCU_FUNC_REL1_INV + active_device - 1);
 
   if (source != SRC_SWITCH && TuyaSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
-    TuyaSendBool(dpid, bitRead(rpower, active_device-1) ^ bitRead(rel_inverted, active_device-1));
+    TuyaSendBool(dpid, bitRead(rpower, active_device-1) ^ bitRead(TasmotaGlobal.rel_inverted, active_device-1));
     delay(20); // Hack when power is off and dimmer is set then both commands go too soon to Serial out.
     status = true;
   }
@@ -568,13 +568,13 @@ void TuyaProcessStatePacket(void) {
       if (Tuya.buffer[dpidStart + 1] == 1) {  // Data Type 1
 
         if (fnId >= TUYA_MCU_FUNC_REL1 && fnId <= TUYA_MCU_FUNC_REL8) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Relay-%d --> MCU State: %s Current State:%s"), fnId - TUYA_MCU_FUNC_REL1 + 1, Tuya.buffer[dpidStart + 4]?"On":"Off",bitRead(power, fnId - TUYA_MCU_FUNC_REL1)?"On":"Off");
-          if ((power || Settings.light_dimmer > 0) && (Tuya.buffer[dpidStart + 4] != bitRead(power, fnId - TUYA_MCU_FUNC_REL1))) {
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Relay-%d --> MCU State: %s Current State:%s"), fnId - TUYA_MCU_FUNC_REL1 + 1, Tuya.buffer[dpidStart + 4]?"On":"Off",bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1)?"On":"Off");
+          if ((TasmotaGlobal.power || Settings.light_dimmer > 0) && (Tuya.buffer[dpidStart + 4] != bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1))) {
             ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1 + 1, Tuya.buffer[dpidStart + 4], SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
           }
         } else if (fnId >= TUYA_MCU_FUNC_REL1_INV && fnId <= TUYA_MCU_FUNC_REL8_INV) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Relay-%d-Inverted --> MCU State: %s Current State:%s"), fnId - TUYA_MCU_FUNC_REL1_INV + 1, Tuya.buffer[dpidStart + 4]?"Off":"On",bitRead(power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1?"Off":"On");
-          if (Tuya.buffer[dpidStart + 4] != bitRead(power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1) {
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Relay-%d-Inverted --> MCU State: %s Current State:%s"), fnId - TUYA_MCU_FUNC_REL1_INV + 1, Tuya.buffer[dpidStart + 4]?"Off":"On",bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1?"Off":"On");
+          if (Tuya.buffer[dpidStart + 4] != bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1) {
             ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1_INV + 1, Tuya.buffer[dpidStart + 4] ^ 1, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
           }
         } else if (fnId >= TUYA_MCU_FUNC_SWT1 && fnId <= TUYA_MCU_FUNC_SWT4) {
@@ -613,7 +613,7 @@ void TuyaProcessStatePacket(void) {
 
           if (Tuya.ignore_dimmer_cmd_timeout < millis()) {
 
-            if ((power || Settings.flag3.tuya_apply_o20) && ((Tuya.Levels[dimIndex] > 0) && (Tuya.Levels[dimIndex] != Tuya.Snapshot[dimIndex]))) { // SetOption54 - Apply SetOption20 settings to Tuya device
+            if ((TasmotaGlobal.power || Settings.flag3.tuya_apply_o20) && ((Tuya.Levels[dimIndex] > 0) && (Tuya.Levels[dimIndex] != Tuya.Snapshot[dimIndex]))) { // SetOption54 - Apply SetOption20 settings to Tuya device
 
               Tuya.ignore_dim = true;
               skip_light_fade = true;

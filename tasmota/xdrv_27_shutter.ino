@@ -221,7 +221,7 @@ void ShutterInit(void)
   shutters_present = 0;
   ShutterGlobal.RelayShutterMask = 0;
   //Initialize to get relay that changed
-  ShutterGlobal.RelayOldMask = power;
+  ShutterGlobal.RelayOldMask = TasmotaGlobal.power;
 
 
   // if shutter 4 is unused
@@ -436,10 +436,10 @@ void ShutterPowerOff(uint8_t i) {
   }
   switch (Shutter[i].switch_mode) {
     case SHT_SWITCH:
-      if ((1 << (Settings.shutter_startrelay[i]-1)) & power) {
+      if ((1 << (Settings.shutter_startrelay[i]-1)) & TasmotaGlobal.power) {
         ExecuteCommandPowerShutter(Settings.shutter_startrelay[i], 0, SRC_SHUTTER);
       }
-      if ((1 << (Settings.shutter_startrelay[i])) & power) {
+      if ((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power) {
         ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
       }
     break;
@@ -449,7 +449,7 @@ void ShutterPowerOff(uint8_t i) {
       if ((SRC_PULSETIMER == last_source || SRC_SHUTTER == last_source || SRC_WEBGUI == last_source)) {
         ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
         // switch off direction relay to make it power less
-        if ((1 << (Settings.shutter_startrelay[i])) & power) {
+        if ((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power) {
           ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
         }
       } else {
@@ -597,7 +597,7 @@ void ShutterRelayChanged(void)
   char stemp1[10];
 
 	for (uint32_t i = 0; i < shutters_present; i++) {
-		power_t powerstate_local = (power >> (Settings.shutter_startrelay[i] -1)) & 3;
+		power_t powerstate_local = (TasmotaGlobal.power >> (Settings.shutter_startrelay[i] -1)) & 3;
     // SRC_IGNORE added because INTERLOCK function bite causes this as last source for changing the relay.
 		//uint8   manual_relays_changed = ((ShutterGlobal.RelayCurrentMask >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_IGNORE != last_source && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
     uint8   manual_relays_changed = ((ShutterGlobal.RelayCurrentMask >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
@@ -1081,7 +1081,7 @@ void CmndShutterPosition(void)
             break;
             case SHT_TIME:
               if (!ShutterGlobal.skip_relay_change) {
-                if ( (power >> (Settings.shutter_startrelay[index] -1)) & 3 > 0 ) {
+                if ( (TasmotaGlobal.power >> (Settings.shutter_startrelay[index] -1)) & 3 > 0 ) {
                   ExecuteCommandPowerShutter(Settings.shutter_startrelay[index] + (new_shutterdirection == 1 ? 1 : 0), Shutter[index].switch_mode == SHT_SWITCH ? 0 : 1, SRC_SHUTTER);
                 }
                 ExecuteCommandPowerShutter(Settings.shutter_startrelay[index] + (new_shutterdirection == 1 ? 0 : 1), 1, SRC_SHUTTER);

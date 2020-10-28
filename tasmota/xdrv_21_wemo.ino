@@ -298,9 +298,9 @@ void HandleUpnpEvent(void)
   }
 
 #ifdef USE_UNISHOX_COMPRESSION
-  snprintf_P(event, sizeof(event), Decompress(WEMO_RESPONSE_STATE_SOAP, WEMO_RESPONSE_STATE_SOAP_SIZE).c_str(), state, bitRead(power, devices_present -1), state);
+  snprintf_P(event, sizeof(event), Decompress(WEMO_RESPONSE_STATE_SOAP, WEMO_RESPONSE_STATE_SOAP_SIZE).c_str(), state, bitRead(TasmotaGlobal.power, devices_present -1), state);
 #else
-  snprintf_P(event, sizeof(event), WEMO_RESPONSE_STATE_SOAP, state, bitRead(power, devices_present -1), state);
+  snprintf_P(event, sizeof(event), WEMO_RESPONSE_STATE_SOAP, state, bitRead(TasmotaGlobal.power, devices_present -1), state);
 #endif
   WSSend(200, CT_XML, event);
 }

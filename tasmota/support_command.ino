@@ -420,7 +420,7 @@ void CmndStatus(void)
                           D_CMND_LEDMASK "\":\"%04X\",\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\""
                           D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d}}"),
                           ModuleNr(), EscapeJSONString(SettingsText(SET_DEVICENAME)).c_str(), stemp, mqtt_topic,
-                          SettingsText(SET_MQTT_BUTTON_TOPIC), power, Settings.poweronstate, Settings.ledstate,
+                          SettingsText(SET_MQTT_BUTTON_TOPIC), TasmotaGlobal.power, Settings.poweronstate, Settings.ledstate,
                           Settings.ledmask, Settings.save_data,
                           Settings.flag.save_state,           // SetOption0 - Save power state and use after restart
                           SettingsText(SET_MQTT_SWITCH_TOPIC),
@@ -664,7 +664,7 @@ void CmndGlobalTemp(void)
       TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
     }
   }
-  ResponseCmndFloat(global_temperature_celsius, 1);
+  ResponseCmndFloat(TasmotaGlobal.temperature_celsius, 1);
 }
 
 void CmndGlobalHum(void)
@@ -676,7 +676,7 @@ void CmndGlobalHum(void)
       TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
     }
   }
-  ResponseCmndFloat(global_humidity, 1);
+  ResponseCmndFloat(TasmotaGlobal.humidity, 1);
 }
 
 void CmndSleep(void)
@@ -1654,7 +1654,7 @@ void CmndInterlock(void)
       } else {
         Settings.flag.interlock = XdrvMailbox.payload &1;       // CMND_INTERLOCK - Enable/disable interlock
         if (Settings.flag.interlock) {
-          SetDevicePower(power, SRC_IGNORE);                    // Remove multiple relays if set
+          SetDevicePower(TasmotaGlobal.power, SRC_IGNORE);                    // Remove multiple relays if set
         }
       }
 #ifdef USE_SHUTTER

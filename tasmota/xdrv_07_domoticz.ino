@@ -127,7 +127,7 @@ void MqttPublishDomoticzPowerState(uint8_t device) {
         char svalue[8];  // Dimmer value
 
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), Settings.light_dimmer);
-        Response_P(DOMOTICZ_MESSAGE, (int)Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
+        Response_P(DOMOTICZ_MESSAGE, (int)Settings.domoticz_relay_idx[device -1], (TasmotaGlobal.power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
         MqttPublish(domoticz_in_topic);
 #ifdef USE_SONOFF_IFAN
       }
@@ -293,7 +293,7 @@ bool DomoticzMqttData(void) {
           } else {
             return true;  // Invalid data
           }
-          if (light_type && (Settings.light_dimmer == nvalue) && ((power >> i) &1)) {
+          if (light_type && (Settings.light_dimmer == nvalue) && ((TasmotaGlobal.power >> i) &1)) {
             return true;  // State already set
           }
           snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_DIMMER));
@@ -302,7 +302,7 @@ bool DomoticzMqttData(void) {
         } else
 #endif  // USE_LIGHT
         if (1 == nvalue || 0 == nvalue) {
-          if (((power >> i) &1) == (power_t)nvalue) {
+          if (((TasmotaGlobal.power >> i) &1) == (power_t)nvalue) {
             return true;  // Stop loop
           }
           snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_POWER "%s"), (devices_present > 1) ? stemp1 : "");

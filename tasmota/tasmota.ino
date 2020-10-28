@@ -87,22 +87,24 @@ struct {
   uint32_t web_log_index;                   // Index in Web log buffer
   uint32_t uptime;                          // Counting every second until 4294967295 = 130 year
 
+  power_t power;                            // Current copy of Settings.power
+  power_t rel_inverted;                     // Relay inverted flag (1 = (0 = On, 1 = Off))
+  power_t last_power;                       // Last power set state
+  power_t blink_power;                      // Blink power state
+  power_t blink_powersave;                  // Blink start power save state
+  power_t blink_mask;                       // Blink relay active mask
+
+  float temperature_celsius;                // Provide a global temperature to be used by some sensors
+  float humidity;                           // Provide a global humidity to be used by some sensors
+  float pressure_hpa;                       // Provide a global pressure to be used by some sensors
+
 } TasmotaGlobal;
 
-power_t power = 0;                          // Current copy of Settings.power
-power_t last_power = 0;                     // Last power set state
-power_t blink_power;                        // Blink power state
-power_t blink_mask = 0;                     // Blink relay active mask
-power_t blink_powersave;                    // Blink start power save state
-power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
 int serial_in_byte_counter = 0;             // Index in receive buffer
 int ota_state_flag = 0;                     // OTA state flag
 int restart_flag = 0;                       // Tasmota restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 int blinks = 201;                           // Number of LED blinks
-float global_temperature_celsius = NAN;     // Provide a global temperature to be used by some sensors
-float global_humidity = 0.0f;               // Provide a global humidity to be used by some sensors
-float global_pressure_hpa = 0.0f;           // Provide a global pressure to be used by some sensors
 uint16_t tele_period = 9999;                // Tele period timer
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
@@ -183,6 +185,7 @@ void setup(void) {
 
   memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
+  TasmotaGlobal.temperature_celsius = NAN;
 
   global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 

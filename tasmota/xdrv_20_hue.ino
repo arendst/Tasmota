@@ -361,7 +361,7 @@ void HueLightStatus1(uint8_t device, String *response)
   const size_t buf_size = 256;
   char * buf = (char*) malloc(buf_size);     // temp buffer for strings, avoid stack
 
-  snprintf_P(buf, buf_size, PSTR("{\"on\":%s,"), (power & (1 << (device-1))) ? "true" : "false");
+  snprintf_P(buf, buf_size, PSTR("{\"on\":%s,"), (TasmotaGlobal.power & (1 << (device-1))) ? "true" : "false");
   // Brightness for all devices with PWM
   if ((1 == echo_gen) || (LST_SINGLE <= local_light_subtype)) { // force dimmer for 1st gen Echo
     snprintf_P(buf, buf_size, PSTR("%s\"bri\":%d,"), buf, bri);
@@ -691,7 +691,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       }
       resp = true;
     }
-    
+
     if (change) {
 #ifdef USE_SHUTTER
       if (ShutterState(device)) {

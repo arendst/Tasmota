@@ -2343,15 +2343,15 @@ chknext:
         break;
       case 'g':
         if (!strncmp(vname, "gtmp", 4)) {
-          fvar = global_temperature_celsius;
+          fvar = TasmotaGlobal.temperature_celsius;
           goto exit;
         }
         if (!strncmp(vname, "ghum", 4)) {
-          fvar = global_humidity;
+          fvar = TasmotaGlobal.humidity;
           goto exit;
         }
         if (!strncmp(vname, "gprs", 4)) {
-          fvar = global_pressure_hpa;
+          fvar = TasmotaGlobal.pressure_hpa;
           goto exit;
         }
         if (!strncmp(vname, "gtopic", 6)) {
@@ -2681,7 +2681,7 @@ chknext:
           GetNumericArgument(vname + 4, OPER_EQU, &fvar, 0);
           uint8_t index = fvar;
           if (index<=devices_present) {
-            fvar = bitRead(power, index - 1);
+            fvar = bitRead(TasmotaGlobal.power, index - 1);
           } else {
             fvar = -1;
           }

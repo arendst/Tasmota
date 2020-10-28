@@ -321,7 +321,7 @@ uint32_t GetSettingsCrc32(void)
 void SettingsSaveAll(void)
 {
   if (Settings.flag.save_state) {
-    Settings.power = power;
+    Settings.power = TasmotaGlobal.power;
   } else {
     Settings.power = 0;
   }

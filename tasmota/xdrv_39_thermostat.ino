@@ -323,7 +323,7 @@ uint8_t ThermostatInputStatus(uint8_t input_switch)
 
 uint8_t ThermostatOutputStatus(uint8_t output_switch)
 {
-  return (uint8_t)bitRead(power, (output_switch - 1));
+  return (uint8_t)bitRead(TasmotaGlobal.power, (output_switch - 1));
 }
 
 int16_t ThermostatCelsiusToFahrenheit(const int32_t deg, uint8_t conv_type) {
@@ -1320,7 +1320,7 @@ void ThermostatDebug(uint8_t ctr_output)
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_ctr_checkpoint: %s"), result_chr);
   dtostrfd(TasmotaGlobal.uptime, 0, result_chr);
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("uptime: %s"), result_chr);
-  dtostrfd(power, 0, result_chr);
+  dtostrfd(TasmotaGlobal.power, 0, result_chr);
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("power: %s"), result_chr);
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Thermostat End ------"));
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));

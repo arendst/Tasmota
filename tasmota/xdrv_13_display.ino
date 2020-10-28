@@ -776,7 +776,7 @@ void DisplayText(void)
                 buttons[num]->vpower.disable=dis;
                 if (!dis) {
                   if (buttons[num]->vpower.is_virtual) buttons[num]->xdrawButton(buttons[num]->vpower.on_off);
-                  else buttons[num]->xdrawButton(bitRead(power,num));
+                  else buttons[num]->xdrawButton(bitRead(TasmotaGlobal.power,num));
                 }
               }
               break;
@@ -828,7 +828,7 @@ void DisplayText(void)
                   renderer->GetColorFromIndex(fill),renderer->GetColorFromIndex(textcolor),bbuff,textsize);
                 if (!bflags) {
                   // power button
-                  if (dflg) buttons[num]->xdrawButton(bitRead(power,num));
+                  if (dflg) buttons[num]->xdrawButton(bitRead(TasmotaGlobal.power,num));
                   buttons[num]->vpower.is_virtual=0;
                 } else {
                   // virtual button
@@ -2124,7 +2124,7 @@ uint8_t vbutt=0;
                 buttons[count]->press(true);
                 if (buttons[count]->justPressed()) {
                   if (!buttons[count]->vpower.is_virtual) {
-                    uint8_t pwr=bitRead(power, rbutt);
+                    uint8_t pwr=bitRead(TasmotaGlobal.power, rbutt);
                     if (!SendKey(KEY_BUTTON, rbutt+1, POWER_TOGGLE)) {
                       ExecuteCommandPower(rbutt+1, POWER_TOGGLE, SRC_BUTTON);
                       Touch_RDW_BUTT(count, !pwr);
@@ -2171,7 +2171,7 @@ uint8_t vbutt=0;
         }
         if (!buttons[count]->vpower.is_virtual) {
           // check if power button stage changed
-          uint8_t pwr = bitRead(power, rbutt);
+          uint8_t pwr = bitRead(TasmotaGlobal.power, rbutt);
           uint8_t vpwr = buttons[count]->vpower.on_off;
           if (pwr != vpwr) {
             Touch_RDW_BUTT(count, pwr);

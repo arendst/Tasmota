@@ -1668,7 +1668,7 @@ void ResponseLightState(uint8_t append)
 
 void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = only CT, 3 = both RGB and CT
 #ifdef DEBUG_LIGHT
-  AddLog_P2(LOG_LEVEL_DEBUG, "LightPreparePower power=%d Light.power=%d", power, Light.power);
+  AddLog_P2(LOG_LEVEL_DEBUG, "LightPreparePower power=%d Light.power=%d", TasmotaGlobal.power, Light.power);
 #endif
   // If multi-channels, then we only switch off channels with a value of zero
   if (Light.pwm_multi_channels) {
@@ -1731,9 +1731,9 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
   }
 
 #ifdef DEBUG_LIGHT
-  AddLog_P2(LOG_LEVEL_DEBUG, "LightPreparePower End power=%d Light.power=%d", power, Light.power);
+  AddLog_P2(LOG_LEVEL_DEBUG, "LightPreparePower End power=%d Light.power=%d", TasmotaGlobal.power, Light.power);
 #endif
-  Light.power = power >> (Light.device - 1);  // reset next state, works also with unlinked RGB/CT
+  Light.power = TasmotaGlobal.power >> (Light.device - 1);  // reset next state, works also with unlinked RGB/CT
   ResponseLightState(0);
 }
 

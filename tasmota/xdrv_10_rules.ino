@@ -830,7 +830,7 @@ void RulesEvery50ms(void)
   if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
     char json_event[120];
 
-    if (-1 == Rules.new_power) { Rules.new_power = power; }
+    if (-1 == Rules.new_power) { Rules.new_power = TasmotaGlobal.power; }
     if (Rules.new_power != Rules.old_power) {
       if (Rules.old_power != -1) {
         for (uint32_t i = 0; i < devices_present; i++) {

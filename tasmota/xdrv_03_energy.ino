@@ -253,7 +253,7 @@ void EnergyUpdateTotal(float value, bool kwh)
 
 void Energy200ms(void)
 {
-  Energy.power_on = (power != 0) | Settings.flag.no_power_on_check;  // SetOption21 - Show voltage even if powered off
+  Energy.power_on = (TasmotaGlobal.power != 0) | Settings.flag.no_power_on_check;  // SetOption21 - Show voltage even if powered off
 
   Energy.fifth_second++;
   if (5 == Energy.fifth_second) {
@@ -439,12 +439,12 @@ void EnergyMarginCheck(void)
         }
       }
     }
-    else if (power && (energy_power_u <= Settings.energy_max_power_limit)) {
+    else if (TasmotaGlobal.power && (energy_power_u <= Settings.energy_max_power_limit)) {
       Energy.mplh_counter = 0;
       Energy.mplr_counter = 0;
       Energy.mplw_counter = 0;
     }
-    if (!power) {
+    if (!TasmotaGlobal.power) {
       if (Energy.mplw_counter) {
         Energy.mplw_counter--;
       } else {
@@ -505,10 +505,10 @@ void EnergyEverySecond(void)
 {
   // Overtemp check
   if (TasmotaGlobal.global_update) {
-    if (power && !isnan(global_temperature_celsius) && (global_temperature_celsius > (float)Settings.param[P_OVER_TEMP])) {  // Device overtemp, turn off relays
+    if (TasmotaGlobal.power && !isnan(TasmotaGlobal.temperature_celsius) && (TasmotaGlobal.temperature_celsius > (float)Settings.param[P_OVER_TEMP])) {  // Device overtemp, turn off relays
 
       char temperature[33];
-      dtostrfd(global_temperature_celsius, 1, temperature);
+      dtostrfd(TasmotaGlobal.temperature_celsius, 1, temperature);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: GlobTemp %s"), temperature);
 
       SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);

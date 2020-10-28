@@ -658,7 +658,7 @@ float ConvertTemp(float c)
   float result = c;
 
   TasmotaGlobal.global_update = TasmotaGlobal.uptime;
-  global_temperature_celsius = c;
+  TasmotaGlobal.temperature_celsius = c;
 
   if (!isnan(c) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
     result = c * 1.8 + 32;                                    // Fahrenheit
@@ -689,7 +689,7 @@ float ConvertHumidity(float h)
   float result = h;
 
   TasmotaGlobal.global_update = TasmotaGlobal.uptime;
-  global_humidity = h;
+  TasmotaGlobal.humidity = h;
 
   result = result + (0.1 * Settings.hum_comp);
 
@@ -718,7 +718,7 @@ float ConvertPressure(float p)
   float result = p;
 
   TasmotaGlobal.global_update = TasmotaGlobal.uptime;
-  global_pressure_hpa = p;
+  TasmotaGlobal.pressure_hpa = p;
 
   if (!isnan(p) && Settings.flag.pressure_conversion) {  // SetOption24 - Switch between hPa or mmHg pressure unit
     result = p * 0.75006375541921;                       // mmHg
@@ -747,9 +747,9 @@ void ResetGlobalValues(void)
 {
   if ((TasmotaGlobal.uptime - TasmotaGlobal.global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
     TasmotaGlobal.global_update = 0;
-    global_temperature_celsius = NAN;
-    global_humidity = 0.0f;
-    global_pressure_hpa = 0.0f;
+    TasmotaGlobal.temperature_celsius = NAN;
+    TasmotaGlobal.humidity = 0.0f;
+    TasmotaGlobal.pressure_hpa = 0.0f;
   }
 }
 

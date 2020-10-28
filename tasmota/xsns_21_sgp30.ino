@@ -83,9 +83,9 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
   if (!sgp.IAQmeasure()) {
     return;  // Measurement failed
   }
-  if (TasmotaGlobal.global_update && (global_humidity > 0) && !isnan(global_temperature_celsius)) {
+  if (TasmotaGlobal.global_update && (TasmotaGlobal.humidity > 0) && !isnan(TasmotaGlobal.temperature_celsius)) {
     // abs hum in mg/m3
-    sgp30_abshum = sgp30_AbsoluteHumidity(global_temperature_celsius, global_humidity);
+    sgp30_abshum = sgp30_AbsoluteHumidity(TasmotaGlobal.temperature_celsius, TasmotaGlobal.humidity);
     sgp.setHumidity(sgp30_abshum*1000);
   }
   sgp30_ready = true;
@@ -115,13 +115,13 @@ void Sgp30Show(bool json)
   if (sgp30_ready) {
     char abs_hum[33];
 
-    if (TasmotaGlobal.global_update && (global_humidity > 0) && !isnan(global_temperature_celsius)) {
+    if (TasmotaGlobal.global_update && (TasmotaGlobal.humidity > 0) && !isnan(TasmotaGlobal.temperature_celsius)) {
         // has humidity + temperature
         dtostrfd(sgp30_abshum,4,abs_hum);
     }
     if (json) {
       ResponseAppend_P(PSTR(",\"SGP30\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d"), sgp.eCO2, sgp.TVOC);
-      if (TasmotaGlobal.global_update && global_humidity>0 && !isnan(global_temperature_celsius)) {
+      if (TasmotaGlobal.global_update && TasmotaGlobal.humidity>0 && !isnan(TasmotaGlobal.temperature_celsius)) {
         ResponseAppend_P(PSTR(",\"" D_JSON_AHUM "\":%s"),abs_hum);
       }
       ResponseJsonEnd();

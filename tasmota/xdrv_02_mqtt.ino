@@ -436,12 +436,12 @@ void MqttPublishPowerState(uint32_t device)
 #endif  // USE_SONOFF_IFAN
     GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable);           // SetOption26 - Switch between POWER or POWER1
     GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);  // SetOption4 - Switch between MQTT RESULT or COMMAND
-    Response_P(S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(power, device -1)));
+    Response_P(S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(TasmotaGlobal.power, device -1)));
     MqttPublish(stopic);
 
     if (!Settings.flag4.only_json_message) {  // SetOption90 - Disable non-json MQTT response
       GetTopic_P(stopic, STAT, mqtt_topic, scommand);
-      Response_P(GetStateText(bitRead(power, device -1)));
+      Response_P(GetStateText(bitRead(TasmotaGlobal.power, device -1)));
       MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
     }
 #ifdef USE_SONOFF_IFAN
@@ -467,7 +467,7 @@ void MqttPublishPowerBlinkState(uint32_t device)
     device = 1;
   }
   Response_P(PSTR("{\"%s\":\"" D_JSON_BLINK " %s\"}"),
-    GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable), GetStateText(bitRead(blink_mask, device -1)));  // SetOption26 - Switch between POWER or POWER1
+    GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable), GetStateText(bitRead(TasmotaGlobal.blink_mask, device -1)));  // SetOption26 - Switch between POWER or POWER1
 
   MqttPublishPrefixTopic_P(RESULT_OR_STAT, S_RSLT_POWER);
 }

@@ -81,7 +81,7 @@ bool RotaryButtonPressed(uint32_t button_index) {
     if (-1 == Encoder[index].pinb) { continue; }
     if (index != button_index) { continue; }
 
-    bool powered_on = (power);
+    bool powered_on = (TasmotaGlobal.power);
 #ifdef USE_LIGHT
     if (!Settings.flag4.rotary_uses_rules) {   // SetOption98 - Use rules instead of light control
       powered_on = LightPower();
@@ -202,7 +202,7 @@ void RotaryHandler(void) {
           }
         } else {                               // Dimmer RGBCW or RGB only if second rotary
           uint32_t dimmer_index = second_rotary ? 1 : 0;
-          if (!Settings.flag4.rotary_poweron_dimlow || power) {  // SetOption113 - On rotary dial after power off set dimmer low
+          if (!Settings.flag4.rotary_poweron_dimlow || TasmotaGlobal.power) {  // SetOption113 - On rotary dial after power off set dimmer low
             LightDimmerOffset(dimmer_index, rotary_position * rotary_dimmer_increment[Rotary.model]);
           } else {
             if (rotary_position > 0) {         // Only power on if rotary increase

@@ -157,10 +157,10 @@ char* GetStateText(uint32_t state)
 
 void SetLatchingRelay(power_t lpower, uint32_t state)
 {
-  // power xx00 - toggle REL1 (Off) and REL3 (Off) - device 1 Off, device 2 Off
-  // power xx01 - toggle REL2 (On)  and REL3 (Off) - device 1 On,  device 2 Off
-  // power xx10 - toggle REL1 (Off) and REL4 (On)  - device 1 Off, device 2 On
-  // power xx11 - toggle REL2 (On)  and REL4 (On)  - device 1 On,  device 2 On
+  // TasmotaGlobal.power xx00 - toggle REL1 (Off) and REL3 (Off) - device 1 Off, device 2 Off
+  // TasmotaGlobal.power xx01 - toggle REL2 (On)  and REL3 (Off) - device 1 On,  device 2 Off
+  // TasmotaGlobal.power xx10 - toggle REL1 (Off) and REL4 (On)  - device 1 Off, device 2 On
+  // TasmotaGlobal.power xx11 - toggle REL2 (On)  and REL4 (On)  - device 1 On,  device 2 On
   static power_t latching_power = 0;     // Power state at latching start
 
   if (state && !latching_relay_pulse) {  // Set latching relay to power if previous pulse has finished
@@ -170,7 +170,7 @@ void SetLatchingRelay(power_t lpower, uint32_t state)
 
   for (uint32_t i = 0; i < devices_present; i++) {
     uint32_t port = (i << 1) + ((latching_power >> i) &1);
-    DigitalWrite(GPIO_REL1, port, bitRead(rel_inverted, port) ? !state : state);
+    DigitalWrite(GPIO_REL1, port, bitRead(TasmotaGlobal.rel_inverted, port) ? !state : state);
   }
 }
 
@@ -180,8 +180,8 @@ void SetDevicePower(power_t rpower, uint32_t source)
   last_source = source;
 
   if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {  // All on and stay on
-    power = (1 << devices_present) -1;
-    rpower = power;
+    TasmotaGlobal.power = (1 << devices_present) -1;
+    rpower = TasmotaGlobal.power;
   }
 
   if (Settings.flag.interlock) {          // Allow only one or no relay set - CMND_INTERLOCK - Enable/disable interlock
@@ -196,14 +196,14 @@ void SetDevicePower(power_t rpower, uint32_t source)
       }
       if (count > 1) {
         mask = ~Settings.interlock[i];    // Turn interlocked group off as there would be multiple relays on
-        power &= mask;
+        TasmotaGlobal.power &= mask;
         rpower &= mask;
       }
     }
   }
 
   if (rpower) {                           // Any power set
-    last_power = rpower;
+    TasmotaGlobal.last_power = rpower;
   }
 
   XdrvMailbox.index = rpower;
@@ -233,7 +233,7 @@ void SetDevicePower(power_t rpower, uint32_t source)
     for (uint32_t i = 0; i < devices_present; i++) {
       power_t state = rpower &1;
       if (i < MAX_RELAYS) {
-        DigitalWrite(GPIO_REL1, i, bitRead(rel_inverted, i) ? !state : state);
+        DigitalWrite(GPIO_REL1, i, bitRead(TasmotaGlobal.rel_inverted, i) ? !state : state);
       }
       rpower >>= 1;
     }
@@ -242,9 +242,9 @@ void SetDevicePower(power_t rpower, uint32_t source)
 
 void RestorePower(bool publish_power, uint32_t source)
 {
-  if (power != last_power) {
-    power = last_power;
-    SetDevicePower(power, source);
+  if (TasmotaGlobal.power != TasmotaGlobal.last_power) {
+    TasmotaGlobal.power = TasmotaGlobal.last_power;
+    SetDevicePower(TasmotaGlobal.power, source);
     if (publish_power) {
       MqttPublishAllPowerState();
     }
@@ -270,15 +270,15 @@ void SetAllPower(uint32_t state, uint32_t source)
     power_t all_on = (1 << devices_present) -1;
     switch (state) {
     case POWER_OFF:
-      power = 0;
+      TasmotaGlobal.power = 0;
       break;
     case POWER_ON:
-      power = all_on;
+      TasmotaGlobal.power = all_on;
       break;
     case POWER_TOGGLE:
-      power ^= all_on;                    // Complement current state
+      TasmotaGlobal.power ^= all_on;                    // Complement current state
     }
-    SetDevicePower(power, source);
+    SetDevicePower(TasmotaGlobal.power, source);
   }
   if (publish_power) {
     MqttPublishAllPowerState();
@@ -299,30 +299,30 @@ void SetPowerOnState(void)
       switch (Settings.poweronstate) {
       case POWER_ALL_OFF:
       case POWER_ALL_OFF_PULSETIME_ON:
-        power = 0;
-        SetDevicePower(power, SRC_RESTART);
+        TasmotaGlobal.power = 0;
+        SetDevicePower(TasmotaGlobal.power, SRC_RESTART);
         break;
       case POWER_ALL_ON:  // All on
-        power = (1 << devices_present) -1;
-        SetDevicePower(power, SRC_RESTART);
+        TasmotaGlobal.power = (1 << devices_present) -1;
+        SetDevicePower(TasmotaGlobal.power, SRC_RESTART);
         break;
       case POWER_ALL_SAVED_TOGGLE:
-        power = (Settings.power & ((1 << devices_present) -1)) ^ POWER_MASK;
+        TasmotaGlobal.power = (Settings.power & ((1 << devices_present) -1)) ^ POWER_MASK;
         if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart
-          SetDevicePower(power, SRC_RESTART);
+          SetDevicePower(TasmotaGlobal.power, SRC_RESTART);
         }
         break;
       case POWER_ALL_SAVED:
-        power = Settings.power & ((1 << devices_present) -1);
+        TasmotaGlobal.power = Settings.power & ((1 << devices_present) -1);
         if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart
-          SetDevicePower(power, SRC_RESTART);
+          SetDevicePower(TasmotaGlobal.power, SRC_RESTART);
         }
         break;
       }
     } else {
-      power = Settings.power & ((1 << devices_present) -1);
+      TasmotaGlobal.power = Settings.power & ((1 << devices_present) -1);
       if (Settings.flag.save_state) {    // SetOption0 - Save power state and use after restart
-        SetDevicePower(power, SRC_RESTART);
+        SetDevicePower(TasmotaGlobal.power, SRC_RESTART);
       }
     }
   }
@@ -331,14 +331,14 @@ void SetPowerOnState(void)
   for (uint32_t i = 0; i < devices_present; i++) {
     if (!Settings.flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
       if ((i < MAX_RELAYS) && PinUsed(GPIO_REL1, i)) {
-        bitWrite(power, i, digitalRead(Pin(GPIO_REL1, i)) ^ bitRead(rel_inverted, i));
+        bitWrite(TasmotaGlobal.power, i, digitalRead(Pin(GPIO_REL1, i)) ^ bitRead(TasmotaGlobal.rel_inverted, i));
       }
     }
-    if (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate)) {
+    if (bitRead(TasmotaGlobal.power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate)) {
       SetPulseTimer(i % MAX_PULSETIMERS, Settings.pulse_timer[i % MAX_PULSETIMERS]);
     }
   }
-  blink_powersave = power;
+  TasmotaGlobal.blink_powersave = TasmotaGlobal.power;
 }
 
 void UpdateLedPowerAll()
@@ -389,7 +389,7 @@ void SetLedPower(uint32_t state)
   } else {
     power_t mask = 1;
     for (uint32_t i = 0; i < leds_present; i++) {  // Map leds to power
-      bool tstate = (power & mask);
+      bool tstate = (TasmotaGlobal.power & mask);
       SetLedPowerIdx(i, tstate);
       mask <<= 1;
     }
@@ -471,7 +471,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
            !strcmp(mqtt_topic, key_topic) ||
            !strcmp(SettingsText(SET_MQTT_GRP_TOPIC), key_topic)) &&
           (POWER_TOGGLE == state)) {
-        state = ~(power >> (device -1)) &1;                 // POWER_OFF or POWER_ON
+        state = ~(TasmotaGlobal.power >> (device -1)) &1;                 // POWER_OFF or POWER_ON
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), GetStateText(state));
     }
@@ -520,7 +520,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 
 #ifdef USE_SONOFF_IFAN
   if (IsModuleIfan()) {
-    blink_mask &= 1;                 // No blinking on the fan relays
+    TasmotaGlobal.blink_mask &= 1;                 // No blinking on the fan relays
     Settings.flag.interlock = 0;     // No interlock mode as it is already done by the microcontroller - CMND_INTERLOCK - Enable/disable interlock
     Settings.pulse_timer[1] = 0;     // No pulsetimers on the fan relays
     Settings.pulse_timer[2] = 0;
@@ -544,21 +544,21 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
   static bool interlock_mutex = false;    // Interlock power command pending
   power_t mask = 1 << (device -1);        // Device to control
   if (state <= POWER_TOGGLE) {
-    if ((blink_mask & mask)) {
-      blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
+    if ((TasmotaGlobal.blink_mask & mask)) {
+      TasmotaGlobal.blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
       MqttPublishPowerBlinkState(device);
     }
 
     if (Settings.flag.interlock &&        // CMND_INTERLOCK - Enable/disable interlock
         !interlock_mutex &&
-        ((POWER_ON == state) || ((POWER_TOGGLE == state) && !(power & mask)))
+        ((POWER_ON == state) || ((POWER_TOGGLE == state) && !(TasmotaGlobal.power & mask)))
        ) {
       interlock_mutex = true;                           // Clear all but masked relay in interlock group if new set requested
       for (uint32_t i = 0; i < MAX_INTERLOCKS; i++) {
         if (Settings.interlock[i] & mask) {             // Find interlock group
           for (uint32_t j = 0; j < devices_present; j++) {
             power_t imask = 1 << j;
-            if ((Settings.interlock[i] & imask) && (power & imask) && (mask != imask)) {
+            if ((Settings.interlock[i] & imask) && (TasmotaGlobal.power & imask) && (mask != imask)) {
               ExecuteCommandPower(j +1, POWER_OFF, SRC_IGNORE);
               delay(50);                                // Add some delay to make sure never have more than one relay on
             }
@@ -571,53 +571,53 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 
     switch (state) {
     case POWER_OFF: {
-      power &= (POWER_MASK ^ mask);
+      TasmotaGlobal.power &= (POWER_MASK ^ mask);
       break; }
     case POWER_ON:
-      power |= mask;
+      TasmotaGlobal.power |= mask;
       break;
     case POWER_TOGGLE:
-      power ^= mask;
+      TasmotaGlobal.power ^= mask;
     }
 #ifdef USE_DEVICE_GROUPS
     if (SRC_REMOTE != source && SRC_RETRY != source) {
       if (Settings.flag4.multiple_device_groups)  // SetOption88 - Enable relays in separate device groups
-        SendDeviceGroupMessage(device - 1, DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, (power >> (device - 1)) & 1 | 0x01000000);  // Explicitly set number of relays to one
+        SendDeviceGroupMessage(device - 1, DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, (TasmotaGlobal.power >> (device - 1)) & 1 | 0x01000000);  // Explicitly set number of relays to one
       else
-        SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, power);
+        SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, TasmotaGlobal.power);
     }
 #endif  // USE_DEVICE_GROUPS
-    SetDevicePower(power, source);
+    SetDevicePower(TasmotaGlobal.power, source);
 #ifdef USE_DOMOTICZ
     DomoticzUpdatePowerState(device);
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-    KnxUpdatePowerState(device, power);
+    KnxUpdatePowerState(device, TasmotaGlobal.power);
 #endif  // USE_KNX
     if (publish_power && Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
       MqttPublishTeleState();
     }
 
     // Restart PulseTime if powered On
-    SetPulseTimer((device -1) % MAX_PULSETIMERS, (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[(device -1) % MAX_PULSETIMERS] : 0);
+    SetPulseTimer((device -1) % MAX_PULSETIMERS, (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~TasmotaGlobal.power : TasmotaGlobal.power) & mask) ? Settings.pulse_timer[(device -1) % MAX_PULSETIMERS] : 0);
   }
   else if (POWER_BLINK == state) {
-    if (!(blink_mask & mask)) {
-      blink_powersave = (blink_powersave & (POWER_MASK ^ mask)) | (power & mask);  // Save state
-      blink_power = (power >> (device -1))&1;  // Prep to Toggle
+    if (!(TasmotaGlobal.blink_mask & mask)) {
+      TasmotaGlobal.blink_powersave = (TasmotaGlobal.blink_powersave & (POWER_MASK ^ mask)) | (TasmotaGlobal.power & mask);  // Save state
+      TasmotaGlobal.blink_power = (TasmotaGlobal.power >> (device -1))&1;  // Prep to Toggle
     }
     TasmotaGlobal.blink_timer = millis() + 100;
     blink_counter = ((!Settings.blinkcount) ? 64000 : (Settings.blinkcount *2)) +1;
-    blink_mask |= mask;  // Set device mask
+    TasmotaGlobal.blink_mask |= mask;  // Set device mask
     MqttPublishPowerBlinkState(device);
     return;
   }
   else if (POWER_BLINK_STOP == state) {
-    bool flag = (blink_mask & mask);
-    blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
+    bool flag = (TasmotaGlobal.blink_mask & mask);
+    TasmotaGlobal.blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
     MqttPublishPowerBlinkState(device);
     if (flag) {
-      ExecuteCommandPower(device, (blink_powersave >> (device -1))&1, SRC_IGNORE);  // Restore state
+      ExecuteCommandPower(device, (TasmotaGlobal.blink_powersave >> (device -1))&1, SRC_IGNORE);  // Restore state
     }
     return;
   }
@@ -632,10 +632,10 @@ void StopAllPowerBlink(void)
 
   for (uint32_t i = 1; i <= devices_present; i++) {
     mask = 1 << (i -1);
-    if (blink_mask & mask) {
-      blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
+    if (TasmotaGlobal.blink_mask & mask) {
+      TasmotaGlobal.blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
       MqttPublishPowerBlinkState(i);
-      ExecuteCommandPower(i, (blink_powersave >> (i -1))&1, SRC_IGNORE);  // Restore state
+      ExecuteCommandPower(i, (TasmotaGlobal.blink_powersave >> (i -1))&1, SRC_IGNORE);  // Restore state
     }
   }
 }
@@ -678,7 +678,7 @@ void MqttShowState(void)
     } else {
 #endif
       ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetPowerDevice(stemp1, i, sizeof(stemp1), Settings.flag.device_index_enable),  // SetOption26 - Switch between POWER or POWER1
-                                               GetStateText(bitRead(power, i-1)));
+                                               GetStateText(bitRead(TasmotaGlobal.power, i-1)));
 #ifdef USE_SONOFF_IFAN
       if (IsModuleIfan()) {
         ResponseAppend_P(PSTR(",\"" D_CMND_FANSPEED "\":%d"), GetFanspeed());
@@ -902,15 +902,15 @@ void Every100mSeconds(void)
     }
   }
 
-  if (blink_mask) {
+  if (TasmotaGlobal.blink_mask) {
     if (TimeReached(TasmotaGlobal.blink_timer)) {
       SetNextTimeInterval(TasmotaGlobal.blink_timer, 100 * Settings.blinktime);
       blink_counter--;
       if (!blink_counter) {
         StopAllPowerBlink();
       } else {
-        blink_power ^= 1;
-        power_now = (power & (POWER_MASK ^ blink_mask)) | ((blink_power) ? blink_mask : 0);
+        TasmotaGlobal.blink_power ^= 1;
+        power_now = (TasmotaGlobal.power & (POWER_MASK ^ TasmotaGlobal.blink_mask)) | ((TasmotaGlobal.blink_power) ? TasmotaGlobal.blink_mask : 0);
         SetDevicePower(power_now, SRC_IGNORE);
       }
     }
@@ -959,10 +959,10 @@ void Every250mSeconds(void)
     }
   }
   if (Settings.ledstate &1 && (PinUsed(GPIO_LEDLNK) || !(blinks || restart_flag || ota_state_flag)) ) {
-    bool tstate = power & Settings.ledmask;
+    bool tstate = TasmotaGlobal.power & Settings.ledmask;
 #ifdef ESP8266
     if ((SONOFF_TOUCH == my_module_type) || (SONOFF_T11 == my_module_type) || (SONOFF_T12 == my_module_type) || (SONOFF_T13 == my_module_type)) {
-      tstate = (!power) ? 1 : 0;                          // As requested invert signal for Touch devices to find them in the dark
+      tstate = (!TasmotaGlobal.power) ? 1 : 0;                          // As requested invert signal for Touch devices to find them in the dark
     }
 #endif  // ESP8266
     SetLedPower(tstate);
@@ -1086,8 +1086,8 @@ void Every250mSeconds(void)
               mask &= ~(1 << i);
             }
           }
-          if (!((Settings.power &mask) == (power &mask))) {
-            Settings.power = power;
+          if (!((Settings.power &mask) == (TasmotaGlobal.power &mask))) {
+            Settings.power = TasmotaGlobal.power;
           }
         } else {
           Settings.power = 0;
@@ -1551,7 +1551,7 @@ void GpioInit(void)
       }
 #endif //ESP32
       else if ((mpin >= AGPIO(GPIO_REL1_INV)) && (mpin < (AGPIO(GPIO_REL1_INV) + MAX_RELAYS))) {
-        bitSet(rel_inverted, mpin - AGPIO(GPIO_REL1_INV));
+        bitSet(TasmotaGlobal.rel_inverted, mpin - AGPIO(GPIO_REL1_INV));
         mpin -= (AGPIO(GPIO_REL1_INV) - AGPIO(GPIO_REL1));
       }
       else if ((mpin >= AGPIO(GPIO_LED1_INV)) && (mpin < (AGPIO(GPIO_LED1_INV) + MAX_LEDS))) {
@@ -1729,7 +1729,7 @@ void GpioInit(void)
       devices_present++;
 #ifdef ESP8266
       if (EXS_RELAY == my_module_type) {
-        digitalWrite(Pin(GPIO_REL1, i), bitRead(rel_inverted, i) ? 1 : 0);
+        digitalWrite(Pin(GPIO_REL1, i), bitRead(TasmotaGlobal.rel_inverted, i) ? 1 : 0);
         if (i &1) { devices_present--; }
       }
 #endif  // ESP8266

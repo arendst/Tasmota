@@ -64,7 +64,7 @@ uint8_t GetFanspeed(void)
       011x = 2
       101x = 3 (ifan02) or 100x = 3 (ifan03)
     */
-    uint8_t fanspeed = (uint8_t)(power &0xF) >> 1;
+    uint8_t fanspeed = (uint8_t)(TasmotaGlobal.power &0xF) >> 1;
     if (fanspeed) { fanspeed = (fanspeed >> 1) +1; }  // 0, 1, 2, 3
     return fanspeed;
   }
@@ -236,7 +236,7 @@ void SonoffIfanUpdate(void)
   if (ifan_restart_flag && (4 == TasmotaGlobal.uptime) && (SONOFF_IFAN02 == my_module_type)) {  // Microcontroller needs 3 seconds before accepting commands
     ifan_restart_flag = false;
     SetDevicePower(1, SRC_RETRY);      // Sync with default power on state microcontroller being Light ON and Fan OFF
-    SetDevicePower(power, SRC_RETRY);  // Set required power on state
+    SetDevicePower(TasmotaGlobal.power, SRC_RETRY);  // Set required power on state
   }
 }
 
