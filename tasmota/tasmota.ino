@@ -77,14 +77,20 @@
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
-unsigned long serial_polling_window = 0;    // Serial polling window
-unsigned long state_second = 0;             // State second timer
-unsigned long state_50msecond = 0;          // State 50msecond timer
-unsigned long state_100msecond = 0;         // State 100msecond timer
-unsigned long state_250msecond = 0;         // State 250msecond timer
-unsigned long pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
-unsigned long blink_timer = 0;              // Power cycle timer
-unsigned long backlog_delay = 0;            // Command backlog delay
+uint32_t serial_polling_window = 0;         // Serial polling window
+uint32_t state_second = 0;                  // State second timer
+uint32_t state_50msecond = 0;               // State 50msecond timer
+uint32_t state_100msecond = 0;              // State 100msecond timer
+uint32_t state_250msecond = 0;              // State 250msecond timer
+uint32_t pulse_timer[MAX_PULSETIMERS] = { 0 };  // Power off timer
+uint32_t wifi_timer = 0;                    // Wifi keepalive timer
+uint32_t blink_timer = 0;                   // Power cycle timer
+uint32_t backlog_delay = 0;                 // Command backlog delay
+uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
+uint32_t loop_load_avg = 0;                 // Indicative loop load average
+uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
+uint32_t web_log_index = 1;                 // Index in Web log buffer (should never be 0)
+uint32_t baudrate = APP_BAUDRATE;           // Current Serial baudrate
 power_t power = 0;                          // Current copy of Settings.power
 power_t last_power = 0;                     // Last power set state
 power_t blink_power;                        // Blink power state
@@ -98,11 +104,6 @@ int ota_result = 0;                         // OTA result
 int restart_flag = 0;                       // Tasmota restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 int blinks = 201;                           // Number of LED blinks
-uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
-uint32_t loop_load_avg = 0;                 // Indicative loop load average
-uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
-uint32_t web_log_index = 1;                 // Index in Web log buffer (should never be 0)
-uint32_t baudrate = APP_BAUDRATE;           // Current Serial baudrate
 float global_temperature_celsius = NAN;     // Provide a global temperature to be used by some sensors
 float global_humidity = 0.0f;               // Provide a global humidity to be used by some sensors
 float global_pressure_hpa = 0.0f;           // Provide a global pressure to be used by some sensors

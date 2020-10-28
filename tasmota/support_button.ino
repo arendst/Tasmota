@@ -33,7 +33,7 @@ const char kMultiPress[] PROGMEM =
   "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|";
 
 struct BUTTON {
-  unsigned long debounce = 0;                // Button debounce timer
+  uint32_t debounce = 0;                     // Button debounce timer
   uint16_t hold_timer[MAX_KEYS] = { 0 };     // Timer for button hold
   uint16_t dual_code = 0;                    // Sonoff dual received code
 

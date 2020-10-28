@@ -40,7 +40,7 @@ const uint8_t AC_PERIOD = (20 + SWITCH_FAST_PROBE_INTERVAL - 1) / SWITCH_FAST_PR
 Ticker TickerSwitch;
 
 struct SWITCH {
-  unsigned long debounce = 0;                // Switch debounce timer
+  uint32_t debounce = 0;                     // Switch debounce timer
   uint16_t no_pullup_mask = 0;               // Switch pull-up bitmask flags
   uint8_t state[MAX_SWITCHES] = { 0 };
   uint8_t last_state[MAX_SWITCHES];          // Last wall switch states

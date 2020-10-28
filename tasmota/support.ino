@@ -1632,7 +1632,7 @@ bool TimeReached(uint32_t timer)
   return (passed >= 0);
 }
 
-void SetNextTimeInterval(unsigned long& timer, const unsigned long step)
+void SetNextTimeInterval(uint32_t& timer, const uint32_t step)
 {
   timer += step;
   const long passed = TimePassedSince(timer);
