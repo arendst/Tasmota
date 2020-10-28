@@ -508,10 +508,12 @@ public:
         light.setConfig(channels);
         dirty = true;
       }
+      Z_Data_OnOff & onoff = data.get<Z_Data_OnOff>(0);
     } else {
-      // remove light object if any
+      // remove light / onoff object if any
       for (auto & data_elt : data) {
-        if (data_elt.getType() == Z_Data_Type::Z_Light) {
+        if ((data_elt.getType() == Z_Data_Type::Z_Light) ||
+            (data_elt.getType() == Z_Data_Type::Z_OnOff)) {
           // remove light object
           data.remove(&data_elt);
           dirty = true;
