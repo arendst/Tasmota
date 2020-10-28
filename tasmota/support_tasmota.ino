@@ -161,6 +161,7 @@ void SetLatchingRelay(power_t lpower, uint32_t state)
   // power xx01 - toggle REL2 (On)  and REL3 (Off) - device 1 On,  device 2 Off
   // power xx10 - toggle REL1 (Off) and REL4 (On)  - device 1 Off, device 2 On
   // power xx11 - toggle REL2 (On)  and REL4 (On)  - device 1 On,  device 2 On
+  static power_t latching_power = 0;     // Power state at latching start
 
   if (state && !latching_relay_pulse) {  // Set latching relay to power if previous pulse has finished
     latching_power = lpower;
@@ -540,6 +541,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 
   SetPulseTimer((device -1) % MAX_PULSETIMERS, 0);
 
+  static bool interlock_mutex = false;    // Interlock power command pending
   power_t mask = 1 << (device -1);        // Device to control
   if (state <= POWER_TOGGLE) {
     if ((blink_mask & mask)) {
@@ -923,6 +925,7 @@ void Every250mSeconds(void)
 {
 // As the max amount of sleep = 250 mSec this loop should always be taken...
 
+  static uint8_t blinkspeed = 1;                          // LED blink rate
   uint32_t blinkinterval = 1;
 
   state_250mS++;
@@ -968,6 +971,9 @@ void Every250mSeconds(void)
 /*-------------------------------------------------------------------------------------------*\
  * Every second at 0.25 second interval
 \*-------------------------------------------------------------------------------------------*/
+
+  static int ota_result = 0;
+  static uint8_t ota_retry_counter = OTA_ATTEMPTS;
 
   switch (state_250mS) {
   case 0:                                                 // Every x.0 second
@@ -1320,6 +1326,9 @@ void ArduinoOtaLoop(void)
 
 void SerialInput(void)
 {
+  static uint32_t serial_polling_window = 0;
+  static bool serial_buffer_overrun = false;
+
   while (Serial.available()) {
 //    yield();
     delay(0);

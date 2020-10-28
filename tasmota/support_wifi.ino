@@ -687,14 +687,16 @@ void stationKeepAliveNow(void) {
 }
 
 void wifiKeepAlive(void) {
-  uint32_t wifiTimerSec = Settings.param[P_ARP_GRATUITOUS];   // 8-bits number of seconds, or minutes if > 100
+  static uint32_t wifi_timer = 0;                            // Wifi keepalive timer
+
+  uint32_t wifiTimerSec = Settings.param[P_ARP_GRATUITOUS];  // 8-bits number of seconds, or minutes if > 100
 
   if ((WL_CONNECTED != Wifi.status) || (0 == wifiTimerSec)) { return; }   // quick exit if wifi not connected or feature disabled
 
   if (TimeReached(wifi_timer)) {
     stationKeepAliveNow();
     if (wifiTimerSec > 100) {
-      wifiTimerSec = (wifiTimerSec - 100) * 60;                 // convert >100 as minutes, ex: 105 = 5 minutes, 110 = 10 minutes
+      wifiTimerSec = (wifiTimerSec - 100) * 60;              // convert >100 as minutes, ex: 105 = 5 minutes, 110 = 10 minutes
     }
     SetNextTimeInterval(wifi_timer, wifiTimerSec * 1000);
   }

@@ -77,13 +77,7 @@
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
-uint32_t serial_polling_window = 0;         // Serial polling window
-uint32_t state_second = 0;                  // State second timer
-uint32_t state_50msecond = 0;               // State 50msecond timer
-uint32_t state_100msecond = 0;              // State 100msecond timer
-uint32_t state_250msecond = 0;              // State 250msecond timer
 uint32_t pulse_timer[MAX_PULSETIMERS] = { 0 };  // Power off timer
-uint32_t wifi_timer = 0;                    // Wifi keepalive timer
 uint32_t blink_timer = 0;                   // Power cycle timer
 uint32_t backlog_delay = 0;                 // Command backlog delay
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
@@ -96,11 +90,9 @@ power_t last_power = 0;                     // Last power set state
 power_t blink_power;                        // Blink power state
 power_t blink_mask = 0;                     // Blink relay active mask
 power_t blink_powersave;                    // Blink start power save state
-power_t latching_power = 0;                 // Power state at latching start
 power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
 int serial_in_byte_counter = 0;             // Index in receive buffer
 int ota_state_flag = 0;                     // OTA state flag
-int ota_result = 0;                         // OTA result
 int restart_flag = 0;                       // Tasmota restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 int blinks = 201;                           // Number of LED blinks
@@ -119,7 +111,6 @@ uint8_t mqtt_cmnd_blocked_reset = 0;        // Count down to reset if needed
 uint8_t state_250mS = 0;                    // State 250msecond per second flag
 uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
 uint8_t ssleep;                             // Current copy of Settings.sleep
-uint8_t blinkspeed = 1;                     // LED blink rate
 uint8_t active_device = 1;                  // Active device in ExecuteCommandPower
 uint8_t leds_present = 0;                   // Max number of LED supported
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
@@ -130,7 +121,6 @@ uint8_t energy_flg = 0;                     // Energy monitor configured
 uint8_t light_flg = 0;                      // Light module configured
 uint8_t light_type = 0;                     // Light types
 uint8_t serial_in_byte;                     // Received byte
-uint8_t ota_retry_counter = OTA_ATTEMPTS;   // OTA retry counter
 uint8_t devices_present = 0;                // Max number of devices supported
 uint8_t masterlog_level = 0;                // Master log level used to override set log level
 uint8_t seriallog_level;                    // Current copy of Settings.seriallog_level
@@ -141,10 +131,8 @@ uint8_t shutters_present = 0;               // Number of actual define shutters
 uint8_t prepped_loglevel = 0;               // Delayed log level message
 //uint8_t mdns_delayed_start = 0;             // mDNS delayed start
 bool serial_local = false;                  // Handle serial locally
-bool serial_buffer_overrun = false;         // Serial buffer overrun
 bool fallback_topic_flag = false;           // Use Topic or FallbackTopic
 bool backlog_mutex = false;                 // Command backlog pending
-bool interlock_mutex = false;               // Interlock power command pending
 bool stop_flash_rotate = false;             // Allow flash configuration rotation
 bool blinkstate = false;                    // LED state
 //bool latest_uptime_flag = true;             // Signal latest uptime
@@ -360,6 +348,7 @@ void loop(void) {
 #endif  // USE_DEVICE_GROUPS
   BacklogLoop();
 
+  static uint32_t state_50msecond = 0;               // State 50msecond timer
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
 #ifdef ROTARY_V1
@@ -368,18 +357,24 @@ void loop(void) {
     XdrvCall(FUNC_EVERY_50_MSECOND);
     XsnsCall(FUNC_EVERY_50_MSECOND);
   }
+
+  static uint32_t state_100msecond = 0;              // State 100msecond timer
   if (TimeReached(state_100msecond)) {
     SetNextTimeInterval(state_100msecond, 100);
     Every100mSeconds();
     XdrvCall(FUNC_EVERY_100_MSECOND);
     XsnsCall(FUNC_EVERY_100_MSECOND);
   }
+
+  static uint32_t state_250msecond = 0;              // State 250msecond timer
   if (TimeReached(state_250msecond)) {
     SetNextTimeInterval(state_250msecond, 250);
     Every250mSeconds();
     XdrvCall(FUNC_EVERY_250_MSECOND);
     XsnsCall(FUNC_EVERY_250_MSECOND);
   }
+
+  static uint32_t state_second = 0;                  // State second timer
   if (TimeReached(state_second)) {
     SetNextTimeInterval(state_second, 1000);
     PerformEverySecond();
