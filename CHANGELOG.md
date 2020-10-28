@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - TLS in binary tasmota-zbbridge (#9635)
 - Support for EZO O2 sensors by Christopher Tremblay (#9619)
 - Zigbee reduce battery drain (#9642)
+- Zigbee added ``ZbMap`` command to describe Zigbee topology (#9651)
 
 ### Changed
 - PlatformIO library structure redesigned for compilation speed by Jason2866

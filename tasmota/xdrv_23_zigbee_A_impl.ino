@@ -32,7 +32,7 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND "|" D_CMND_ZIGBEE_PROBE "|"
   D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|"
   D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_UNBIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID "|"
-  D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|"
+  D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|"
   D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA
   ;
 
@@ -47,7 +47,7 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbStatus, &CmndZbReset, &CmndZbSend, &CmndZbProbe,
   &CmndZbForget, &CmndZbSave, &CmndZbName,
   &CmndZbBind, &CmndZbUnbind, &CmndZbPing, &CmndZbModelId,
-  &CmndZbLight, &CmndZbRestore, &CmndZbBindState,
+  &CmndZbLight, &CmndZbRestore, &CmndZbBindState, &CmndZbMap,
   &CmndZbConfig, CmndZbData,
   };
 
@@ -937,11 +937,7 @@ void CmndZbUnbind(void) {
   ZbBindUnbind(true);
 }
 
-//
-// Command `ZbBindState`
-// `ZbBindState<x>` as index if it does not fit. If default, `1` starts at the beginning
-//
-void CmndZbBindState(void) {
+void CmndZbBindState_or_Map(uint16_t zdo_cmd) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
   uint16_t shortaddr = zigbee_devices.parseDeviceParam(XdrvMailbox.data);
   if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
@@ -950,7 +946,7 @@ void CmndZbBindState(void) {
 #ifdef USE_ZIGBEE_ZNP
   SBuffer buf(10);
   buf.add8(Z_SREQ | Z_ZDO);             // 25
-  buf.add8(ZDO_MGMT_BIND_REQ);          // 33
+  buf.add8(zdo_cmd);                    // 33
   buf.add16(shortaddr);                 // shortaddr
   buf.add8(index);                      // StartIndex = 0
 
@@ -962,10 +958,26 @@ void CmndZbBindState(void) {
   // ZDO message payload (see Zigbee spec 2.4.3.3.4)
   uint8_t buf[] = { index };           // index = 0
 
-  EZ_SendZDO(shortaddr, ZDO_Mgmt_Bind_req, buf, sizeof(buf));
+  EZ_SendZDO(shortaddr, zdo_cmd, buf, sizeof(buf));
 #endif // USE_ZIGBEE_EZSP
 
   ResponseCmndDone();
+}
+
+//
+// Command `ZbBindState`
+// `ZbBindState<x>` as index if it does not fit. If default, `1` starts at the beginning
+//
+void CmndZbBindState(void) {
+  CmndZbBindState_or_Map(ZDO_Mgmt_Bind_req);
+}
+
+//
+// Command `ZbMap`
+// `ZbMap<x>` as index if it does not fit. If default, `1` starts at the beginning
+//
+void CmndZbMap(void) {
+  CmndZbBindState_or_Map(ZDO_Mgmt_Lqi_req);
 }
 
 // Probe a specific device to get its endpoints and supported clusters
