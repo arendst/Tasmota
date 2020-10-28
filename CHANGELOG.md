@@ -5,10 +5,13 @@ All notable changes to this project will be documented in this file.
 
 ## [9.0.0.3]
 ### Added
-- TLS in binary tasmota-zbbridge (#9620)
+- TLS in binary tasmota-zbbridge (#9635)
+- Support for EZO O2 sensors by Christopher Tremblay (#9619)
+- Zigbee reduce battery drain (#9642)
 
 ### Changed
 - PlatformIO library structure redesigned for compilation speed by Jason2866
+- Zigbee flash storage refactor adding commands ``ZbProbe``, ``ZbStatus2`` and ``ZbRestore`` (#9641)
 
 ### Fixed
 - Rule Break not working as expected when ONCE is enabled (#9245)

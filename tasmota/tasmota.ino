@@ -77,13 +77,6 @@
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
-unsigned long feature_drv1;                 // Compiled driver feature map
-unsigned long feature_drv2;                 // Compiled driver feature map
-unsigned long feature_sns1;                 // Compiled sensor feature map
-unsigned long feature_sns2;                 // Compiled sensor feature map
-unsigned long feature5;                     // Compiled feature map
-unsigned long feature6;                     // Compiled feature map
-unsigned long feature7;                     // Compiled feature map
 unsigned long serial_polling_window = 0;    // Serial polling window
 unsigned long state_second = 0;             // State second timer
 unsigned long state_50msecond = 0;          // State 50msecond timer
@@ -223,8 +216,6 @@ void setup(void) {
   SettingsDelta();
 
   OsWatchInit();
-
-  GetFeatures();
 
   if (1 == RtcReboot.fast_reboot_count) {  // Allow setting override only when all is well
     UpdateQuickPowerCycle(true);
