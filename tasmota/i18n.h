@@ -565,6 +565,8 @@
   #define D_JSON_ZIGBEE_UNBIND "ZbUnbind"
 #define D_CMND_ZIGBEE_BIND_STATE "BindState"
   #define D_JSON_ZIGBEE_BIND_STATE "ZbBindState"
+#define D_CMND_ZIGBEE_MAP "Map"
+  #define D_JSON_ZIGBEE_MAP "ZbMap"
 #define D_JSON_ZIGBEE_PARENT "ZbParent"
 #define D_CMND_ZIGBEE_PING "Ping"
   #define D_JSON_ZIGBEE_PING "ZbPing"
