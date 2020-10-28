@@ -1515,7 +1515,7 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
     zcl_received.generateSyntheticAttributes(attr_list);
     zcl_received.computeSyntheticAttributes(attr_list);
     zcl_received.generateCallBacks(attr_list);      // set deferred callbacks, ex: Occupancy
-    zcl_received.postProcessAttributes(srcaddr, attr_list);
+    Z_postProcessAttributes(srcaddr, zcl_received.getSrcEndpoint(), attr_list);
 
     // since we just receveived data from the device, it is reachable
     zigbee_devices.resetTimersForDevice(srcaddr, 0 /* groupaddr */, Z_CAT_REACHABILITY);    // remove any reachability timer already there

@@ -248,6 +248,32 @@ public:
 };
 
 /*********************************************************************************************\
+ * Device specific: PIR
+\*********************************************************************************************/
+class Z_Data_PIR : public Z_Data {
+public:
+  Z_Data_PIR(uint8_t endpoint = 0) :
+    Z_Data(Z_Data_Type::Z_PIR, endpoint),
+    occupancy(0xFF),
+    illuminance(0xFFFF)
+    {}
+
+  inline bool validOccupancy(void)      const { return 0xFF != occupancy; }
+  inline bool validIlluminance(void)    const { return 0xFFFF != illuminance; }
+
+  inline uint8_t  getOccupancy(void)    const { return occupancy; }
+  inline uint16_t getIlluminance(void)  const { return illuminance; }
+  
+  inline void setOccupancy(uint8_t _occupancy)          { occupancy = _occupancy; }
+  inline void setilluminance(uint16_t _illuminance)     { illuminance = _illuminance; }
+
+  static const Z_Data_Type type = Z_Data_Type::Z_PIR;
+  // PIR
+  uint8_t               occupancy;      // map8
+  uint16_t              illuminance;    // illuminance
+};
+
+/*********************************************************************************************\
  * Device specific: Sensors: temp, humidity, pressure...
 \*********************************************************************************************/
 class Z_Data_Thermo : public Z_Data {
@@ -363,6 +389,8 @@ Z_Data & Z_Data_Set::getByType(Z_Data_Type type, uint8_t ep) {
       return get<Z_Data_Thermo>(ep);
     case Z_Data_Type::Z_OnOff:
       return get<Z_Data_OnOff>(ep);
+    case Z_Data_Type::Z_PIR:
+      return get<Z_Data_PIR>(ep);
     default:
       return *(Z_Data*)nullptr;
   }
