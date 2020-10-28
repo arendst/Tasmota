@@ -809,11 +809,10 @@ Z_attribute & Z_attribute_list::findOrCreateAttribute(const char * name, uint8_t
 
 // same but passing a Z_attribute as key
 Z_attribute & Z_attribute_list::findOrCreateAttribute(const Z_attribute &attr) {
-  if (attr.key_is_str) {
-    return findOrCreateAttribute(attr.key.key, attr.key_suffix);
-  } else {
-    return findOrCreateAttribute(attr.key.id.cluster, attr.key.id.attr_id, attr.key_suffix);
-  }
+  Z_attribute & ret = attr.key_is_str ? findOrCreateAttribute(attr.key.key, attr.key_suffix)
+                                      : findOrCreateAttribute(attr.key.id.cluster, attr.key.id.attr_id, attr.key_suffix);
+  ret.key_suffix = attr.key_suffix;
+  return ret;
 }
 // replace the entire content with new attribute or create
 Z_attribute & Z_attribute_list::replaceOrCreate(const Z_attribute &attr) {
