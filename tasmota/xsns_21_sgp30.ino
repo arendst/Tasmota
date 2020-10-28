@@ -83,7 +83,7 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
   if (!sgp.IAQmeasure()) {
     return;  // Measurement failed
   }
-  if (global_update && (global_humidity > 0) && !isnan(global_temperature_celsius)) {
+  if (TasmotaGlobal.global_update && (global_humidity > 0) && !isnan(global_temperature_celsius)) {
     // abs hum in mg/m3
     sgp30_abshum = sgp30_AbsoluteHumidity(global_temperature_celsius, global_humidity);
     sgp.setHumidity(sgp30_abshum*1000);
@@ -91,7 +91,7 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
   sgp30_ready = true;
 
   // these should normally be stored permanently and used for fast restart
-  if (!(uptime%SAVE_PERIOD)) {
+  if (!(TasmotaGlobal.uptime%SAVE_PERIOD)) {
     // store settings every N seconds
     uint16_t TVOC_base;
     uint16_t eCO2_base;
@@ -115,13 +115,13 @@ void Sgp30Show(bool json)
   if (sgp30_ready) {
     char abs_hum[33];
 
-    if (global_update && (global_humidity > 0) && !isnan(global_temperature_celsius)) {
+    if (TasmotaGlobal.global_update && (global_humidity > 0) && !isnan(global_temperature_celsius)) {
         // has humidity + temperature
         dtostrfd(sgp30_abshum,4,abs_hum);
     }
     if (json) {
       ResponseAppend_P(PSTR(",\"SGP30\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d"), sgp.eCO2, sgp.TVOC);
-      if (global_update && global_humidity>0 && !isnan(global_temperature_celsius)) {
+      if (TasmotaGlobal.global_update && global_humidity>0 && !isnan(global_temperature_celsius)) {
         ResponseAppend_P(PSTR(",\"" D_JSON_AHUM "\":%s"),abs_hum);
       }
       ResponseJsonEnd();
@@ -131,7 +131,7 @@ void Sgp30Show(bool json)
 #ifdef USE_WEBSERVER
     } else {
       WSContentSend_PD(HTTP_SNS_SGP30, sgp.eCO2, sgp.TVOC);
-      if (global_update) {
+      if (TasmotaGlobal.global_update) {
         WSContentSend_PD(HTTP_SNS_AHUM, abs_hum);
       }
 #endif

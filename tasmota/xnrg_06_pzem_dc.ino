@@ -78,7 +78,7 @@ void PzemDcEverySecond(void)
         PzemDc.energy += (float)((buffer[13] << 24) + (buffer[14] << 16) + (buffer[11] << 8) + buffer[12]);             // 4294967295 Wh
         if (PzemDc.channel == Energy.phase_count -1) {
           if (PzemDc.energy > PzemDc.last_energy) {  // Handle missed channel
-            if (uptime > PZEM_DC_STABILIZE) {
+            if (TasmotaGlobal.uptime > PZEM_DC_STABILIZE) {
               EnergyUpdateTotal(PzemDc.energy, false);
             }
             PzemDc.last_energy = PzemDc.energy;
@@ -105,7 +105,7 @@ void PzemDcEverySecond(void)
   }
   else {
     PzemDc.send_retry--;
-    if ((Energy.phase_count > 1) && (0 == PzemDc.send_retry) && (uptime < PZEM_DC_STABILIZE)) {
+    if ((Energy.phase_count > 1) && (0 == PzemDc.send_retry) && (TasmotaGlobal.uptime < PZEM_DC_STABILIZE)) {
       Energy.phase_count--;  // Decrement channels if no response after retry within 30 seconds after restart
     }
   }
@@ -155,7 +155,7 @@ bool Xnrg06(uint8_t function)
 
   switch (function) {
     case FUNC_ENERGY_EVERY_SECOND:
-      if (uptime > 4) { PzemDcEverySecond(); }  // Fix start up issue #5875
+      if (TasmotaGlobal.uptime > 4) { PzemDcEverySecond(); }  // Fix start up issue #5875
       break;
     case FUNC_COMMAND:
       result = PzemDcCommand();

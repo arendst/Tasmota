@@ -225,7 +225,7 @@ uint32_t UpTime(void)
   if (Rtc.restart_time) {
     return Rtc.utc_time - Rtc.restart_time;
   } else {
-    return uptime;
+    return TasmotaGlobal.uptime;
   }
 }
 
@@ -380,11 +380,11 @@ void RtcSecond(void)
 
   if (!Rtc.user_time_entry) {
     if (!global_state.network_down) {
-      uint8_t uptime_minute = (uptime / 60) % 60;  // 0 .. 59
+      uint8_t uptime_minute = (TasmotaGlobal.uptime / 60) % 60;  // 0 .. 59
       if ((Rtc.ntp_sync_minute > 59) && (uptime_minute > 2)) {
         Rtc.ntp_sync_minute = 1;                   // If sync prepare for a new cycle
       }
-      uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP_getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
+      uint8_t offset = (TasmotaGlobal.uptime < 30) ? RtcTime.second : (((ESP_getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
       if ( (((offset == RtcTime.second) && ( (RtcTime.year < 2016) ||                          // Never synced
                                             (Rtc.ntp_sync_minute == uptime_minute))) ||       // Re-sync every hour
                                               ntp_force_sync ) ) {                             // Forced sync
@@ -395,7 +395,7 @@ void RtcSecond(void)
           Rtc.last_sync = Rtc.ntp_time;
           Rtc.ntp_sync_minute = 60;  // Sync so block further requests
           if (Rtc.restart_time == 0) {
-            Rtc.restart_time = Rtc.utc_time - uptime;  // save first ntp time as restart time
+            Rtc.restart_time = Rtc.utc_time - TasmotaGlobal.uptime;  // save first ntp time as restart time
           }
           BreakTime(Rtc.utc_time, tmpTime);
           RtcTime.year = tmpTime.year + 1970;

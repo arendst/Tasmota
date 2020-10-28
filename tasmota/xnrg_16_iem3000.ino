@@ -192,7 +192,7 @@ bool Xnrg16(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (uptime > 4) { IEM3000Every250ms(); }
+      if (TasmotaGlobal.uptime > 4) { IEM3000Every250ms(); }
       break;
     case FUNC_INIT:
       Iem3000SnsInit();

@@ -65,7 +65,7 @@ void CCS811Update(void)  // Perform every n second
         TVOC = ccs.getTVOC();
         eCO2 = ccs.geteCO2();
         CCS811_ready = 1;
-        if (global_update && (global_humidity > 0) && !isnan(global_temperature_celsius)) {
+        if (TasmotaGlobal.global_update && (global_humidity > 0) && !isnan(global_temperature_celsius)) {
           ccs.setEnvironmentalData((uint8_t)global_humidity, global_temperature_celsius);
         }
         ecnt = 0;

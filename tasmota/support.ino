@@ -657,7 +657,7 @@ float ConvertTemp(float c)
 {
   float result = c;
 
-  global_update = uptime;
+  TasmotaGlobal.global_update = TasmotaGlobal.uptime;
   global_temperature_celsius = c;
 
   if (!isnan(c) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
@@ -688,7 +688,7 @@ float ConvertHumidity(float h)
 {
   float result = h;
 
-  global_update = uptime;
+  TasmotaGlobal.global_update = TasmotaGlobal.uptime;
   global_humidity = h;
 
   result = result + (0.1 * Settings.hum_comp);
@@ -717,7 +717,7 @@ float ConvertPressure(float p)
 {
   float result = p;
 
-  global_update = uptime;
+  TasmotaGlobal.global_update = TasmotaGlobal.uptime;
   global_pressure_hpa = p;
 
   if (!isnan(p) && Settings.flag.pressure_conversion) {  // SetOption24 - Switch between hPa or mmHg pressure unit
@@ -745,8 +745,8 @@ String SpeedUnit(void)
 
 void ResetGlobalValues(void)
 {
-  if ((uptime - global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
-    global_update = 0;
+  if ((TasmotaGlobal.uptime - TasmotaGlobal.global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
+    TasmotaGlobal.global_update = 0;
     global_temperature_celsius = NAN;
     global_humidity = 0.0f;
     global_pressure_hpa = 0.0f;
@@ -902,10 +902,10 @@ String GetSerialConfig(void) {
 }
 
 void SetSerialBegin(void) {
-  baudrate = Settings.baudrate * 300;
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), baudrate);
+  TasmotaGlobal.baudrate = Settings.baudrate * 300;
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
   Serial.flush();
-  Serial.begin(baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings.serial_config));
+  Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings.serial_config));
 }
 
 void SetSerialConfig(uint32_t serial_config) {
@@ -918,19 +918,19 @@ void SetSerialConfig(uint32_t serial_config) {
   }
 }
 
-void SetSerialBaudrate(uint32_t ubaudrate) {
-  baudrate = ubaudrate;
-  Settings.baudrate = baudrate / 300;
-  if (Serial.baudRate() != baudrate) {
+void SetSerialBaudrate(uint32_t baudrate) {
+  TasmotaGlobal.baudrate = baudrate;
+  Settings.baudrate = TasmotaGlobal.baudrate / 300;
+  if (Serial.baudRate() != TasmotaGlobal.baudrate) {
     SetSerialBegin();
   }
 }
 
-void SetSerial(uint32_t ubaudrate, uint32_t serial_config) {
+void SetSerial(uint32_t baudrate, uint32_t serial_config) {
   Settings.flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
   Settings.serial_config = serial_config;
-  baudrate = ubaudrate;
-  Settings.baudrate = baudrate / 300;
+  TasmotaGlobal.baudrate = baudrate;
+  Settings.baudrate = TasmotaGlobal.baudrate / 300;
   SetSeriallog(LOG_LEVEL_NONE);
   SetSerialBegin();
 }
@@ -939,8 +939,8 @@ void ClaimSerial(void) {
   serial_local = true;
   AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
-  baudrate = Serial.baudRate();
-  Settings.baudrate = baudrate / 300;
+  TasmotaGlobal.baudrate = Serial.baudRate();
+  Settings.baudrate = TasmotaGlobal.baudrate / 300;
 }
 
 void SerialSendRaw(char *codes)
@@ -1996,9 +1996,11 @@ void AddLog(uint32_t loglevel)
      (masterlog_level <= Settings.weblog_level)) {
     // Delimited, zero-terminated buffer of log lines.
     // Each entry has this format: [index][log data]['\1']
-    web_log_index &= 0xFF;
-    if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
-    while (web_log_index == web_log[0] ||  // If log already holds the next index, remove it
+    TasmotaGlobal.web_log_index &= 0xFF;
+    if (!TasmotaGlobal.web_log_index) {
+      TasmotaGlobal.web_log_index++;       // Index 0 is not allowed as it is the end of char string
+    }
+    while (TasmotaGlobal.web_log_index == web_log[0] ||  // If log already holds the next index, remove it
            strlen(web_log) + strlen(log_data) + 13 > WEB_LOG_SIZE)  // 13 = web_log_index + mxtime + '\1' + '\0'
     {
       char* it = web_log;
@@ -2007,9 +2009,11 @@ void AddLog(uint32_t loglevel)
       it++;                                // Skip delimiting "\1"
       memmove(web_log, it, WEB_LOG_SIZE -(it-web_log));  // Move buffer forward to remove oldest log line
     }
-    snprintf_P(web_log, sizeof(web_log), PSTR("%s%c%s%s\1"), web_log, web_log_index++, mxtime, log_data);
-    web_log_index &= 0xFF;
-    if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
+    snprintf_P(web_log, sizeof(web_log), PSTR("%s%c%s%s\1"), web_log, TasmotaGlobal.web_log_index++, mxtime, log_data);
+    TasmotaGlobal.web_log_index &= 0xFF;
+    if (!TasmotaGlobal.web_log_index) {
+      TasmotaGlobal.web_log_index++;       // Index 0 is not allowed as it is the end of char string
+    }
   }
 #endif  // USE_WEBSERVER
   if (Settings.flag.mqtt_enabled &&        // SetOption3 - Enable MQTT

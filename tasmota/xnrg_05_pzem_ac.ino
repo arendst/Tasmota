@@ -81,7 +81,7 @@ void PzemAcEverySecond(void)
         PzemAc.energy += (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);                           // 4294967295 Wh
         if (PzemAc.phase == Energy.phase_count -1) {
           if (PzemAc.energy > PzemAc.last_energy) {  // Handle missed phase
-            if (uptime > PZEM_AC_STABILIZE) {
+            if (TasmotaGlobal.uptime > PZEM_AC_STABILIZE) {
               EnergyUpdateTotal(PzemAc.energy, false);
             }
             PzemAc.last_energy = PzemAc.energy;
@@ -109,7 +109,7 @@ void PzemAcEverySecond(void)
   }
   else {
     PzemAc.send_retry--;
-    if ((Energy.phase_count > 1) && (0 == PzemAc.send_retry) && (uptime < PZEM_AC_STABILIZE)) {
+    if ((Energy.phase_count > 1) && (0 == PzemAc.send_retry) && (TasmotaGlobal.uptime < PZEM_AC_STABILIZE)) {
       Energy.phase_count--;  // Decrement phases if no response after retry within 30 seconds after restart
     }
   }
@@ -158,7 +158,7 @@ bool Xnrg05(uint8_t function)
 
   switch (function) {
     case FUNC_ENERGY_EVERY_SECOND:
-      if (uptime > 4) { PzemAcEverySecond(); }  // Fix start up issue #5875
+      if (TasmotaGlobal.uptime > 4) { PzemAcEverySecond(); }  // Fix start up issue #5875
       break;
     case FUNC_COMMAND:
       result = PzemAcCommand();

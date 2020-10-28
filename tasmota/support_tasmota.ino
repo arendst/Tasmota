@@ -421,12 +421,12 @@ void SetLedLink(uint32_t state)
 
 void SetPulseTimer(uint32_t index, uint32_t time)
 {
-  pulse_timer[index] = (time > 111) ? millis() + (1000 * (time - 100)) : (time > 0) ? millis() + (100 * time) : 0L;
+  TasmotaGlobal.pulse_timer[index] = (time > 111) ? millis() + (1000 * (time - 100)) : (time > 0) ? millis() + (100 * time) : 0L;
 }
 
 uint32_t GetPulseTimer(uint32_t index)
 {
-  long time = TimePassedSince(pulse_timer[index]);
+  long time = TimePassedSince(TasmotaGlobal.pulse_timer[index]);
   if (time < 0) {
     time *= -1;
     return (time > 11100) ? (time / 1000) + 100 : (time > 0) ? time / 100 : 0;
@@ -606,7 +606,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
       blink_powersave = (blink_powersave & (POWER_MASK ^ mask)) | (power & mask);  // Save state
       blink_power = (power >> (device -1))&1;  // Prep to Toggle
     }
-    blink_timer = millis() + 100;
+    TasmotaGlobal.blink_timer = millis() + 100;
     blink_counter = ((!Settings.blinkcount) ? 64000 : (Settings.blinkcount *2)) +1;
     blink_mask |= mask;  // Set device mask
     MqttPublishPowerBlinkState(device);
@@ -669,7 +669,7 @@ void MqttShowState(void)
 
   ResponseAppend_P(PSTR(",\"" D_JSON_HEAPSIZE "\":%d,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u,\"MqttCount\":%u"),
     ESP_getFreeHeap()/1024, GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode),  // SetOption60 - Enable normal sleep instead of dynamic sleep
-    ssleep, loop_load_avg, MqttConnectCount());
+    ssleep, TasmotaGlobal.loop_load_avg, MqttConnectCount());
 
   for (uint32_t i = 1; i <= devices_present; i++) {
 #ifdef USE_LIGHT
@@ -789,13 +789,13 @@ void MqttPublishSensor(void)
 
 void PerformEverySecond(void)
 {
-  uptime++;
+  TasmotaGlobal.uptime++;
 
-  if (POWER_CYCLE_TIME == uptime) {
+  if (POWER_CYCLE_TIME == TasmotaGlobal.uptime) {
     UpdateQuickPowerCycle(false);
   }
 
-  if (BOOT_LOOP_TIME == uptime) {
+  if (BOOT_LOOP_TIME == TasmotaGlobal.uptime) {
     RtcRebootReset();
 
 #ifdef USE_DEEPSLEEP
@@ -867,8 +867,8 @@ void PerformEverySecond(void)
   wifiKeepAlive();
 
 #ifdef ESP32
-  if (11 == uptime) {      // Perform one-time ESP32 houskeeping
-    ESP_getSketchSize();   // Init sketchsize as it can take up to 2 seconds
+  if (11 == TasmotaGlobal.uptime) {  // Perform one-time ESP32 houskeeping
+    ESP_getSketchSize();             // Init sketchsize as it can take up to 2 seconds
   }
 #endif
 }
@@ -892,9 +892,9 @@ void Every100mSeconds(void)
   }
 
   for (uint32_t i = 0; i < MAX_PULSETIMERS; i++) {
-    if (pulse_timer[i] != 0L) {           // Timer active?
-      if (TimeReached(pulse_timer[i])) {  // Timer finished?
-        pulse_timer[i] = 0L;              // Turn off this timer
+    if (TasmotaGlobal.pulse_timer[i] != 0L) {           // Timer active?
+      if (TimeReached(TasmotaGlobal.pulse_timer[i])) {  // Timer finished?
+        TasmotaGlobal.pulse_timer[i] = 0L;              // Turn off this timer
         for (uint32_t j = 0; j < devices_present; j = j +MAX_PULSETIMERS) {
           ExecuteCommandPower(i + j +1, (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? POWER_ON : POWER_OFF, SRC_PULSETIMER);
         }
@@ -903,8 +903,8 @@ void Every100mSeconds(void)
   }
 
   if (blink_mask) {
-    if (TimeReached(blink_timer)) {
-      SetNextTimeInterval(blink_timer, 100 * Settings.blinktime);
+    if (TimeReached(TasmotaGlobal.blink_timer)) {
+      SetNextTimeInterval(TasmotaGlobal.blink_timer, 100 * Settings.blinktime);
       blink_counter--;
       if (!blink_counter) {
         StopAllPowerBlink();

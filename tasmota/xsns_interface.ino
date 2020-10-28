@@ -917,7 +917,7 @@ bool XsnsCall(uint8_t Function)
       uint32_t profile_millis = millis() - profile_start_millis;
       if (profile_millis) {
         if (FUNC_EVERY_SECOND == Function) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PRF: At %08u XsnsCall %d to Sensor %d took %u mS"), uptime, Function, x, profile_millis);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PRF: At %08u XsnsCall %d to Sensor %d took %u mS"), TasmotaGlobal.uptime, Function, x, profile_millis);
         }
       }
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
@@ -937,7 +937,7 @@ bool XsnsCall(uint8_t Function)
   uint32_t profile_millis = millis() - profile_start_millis;
   if (profile_millis) {
     if (FUNC_EVERY_SECOND == Function) {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PRF: At %08u XsnsCall %d took %u mS"), uptime, Function, profile_millis);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PRF: At %08u XsnsCall %d took %u mS"), TasmotaGlobal.uptime, Function, profile_millis);
     }
   }
 #endif  // PROFILE_XSNS_EVERY_SECOND

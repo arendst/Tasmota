@@ -269,7 +269,7 @@ bool Xnrg13(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (uptime > 4) {
+      if (TasmotaGlobal.uptime > 4) {
           FifLEEvery250ms();
       }
       break;

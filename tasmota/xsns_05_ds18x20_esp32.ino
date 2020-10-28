@@ -167,7 +167,7 @@ void Ds18x20EverySecond(void)
 {
   if (!ds18x20_sensors) { return; }
 
-  if (uptime & 1) {
+  if (TasmotaGlobal.uptime & 1) {
     // 2mS
 //    Ds18x20Search();      // Check for changes in sensors number
     Ds18x20Convert();     // Start Conversion, takes up to one second

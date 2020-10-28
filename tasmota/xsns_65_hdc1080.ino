@@ -259,7 +259,7 @@ void HdcDetect(void) {
  *
  */
 void HdcEverySecond(void) {
-  if (uptime &1) {  // Every 2 seconds
+  if (TasmotaGlobal.uptime &1) {  // Every 2 seconds
     if (!HdcTriggerRead()) {
       AddLogMissed((char*) hdc_type_name, hdc_valid);
     }

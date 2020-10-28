@@ -158,7 +158,7 @@ const char HTTP_SNS_SPS30_c[] PROGMEM ="{s}SPS30 " "TYPSIZ" "{m}%s " "um" "{e}";
 void SPS30_Every_Second() {
   if (!sps30_running) return;
 
-  if (uptime%10==0) {
+  if (TasmotaGlobal.uptime%10==0) {
     uint8_t vars[sizeof(float)*10];
     sps30_get_data(SPS_CMD_READ_MEASUREMENT,vars,sizeof(vars));
     float *fp=&sps30_result.PM1_0;
@@ -178,7 +178,7 @@ void SPS30_Every_Second() {
     }
   }
 
-  if (uptime%3600==0 && uptime>60) {
+  if (TasmotaGlobal.uptime%3600==0 && TasmotaGlobal.uptime>60) {
     // should auto clean once per week runtime
     // so count hours, should be in Settings
     SPS30_HOURS++;

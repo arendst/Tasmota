@@ -77,14 +77,18 @@
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
-uint32_t pulse_timer[MAX_PULSETIMERS] = { 0 };  // Power off timer
-uint32_t blink_timer = 0;                   // Power cycle timer
-uint32_t backlog_delay = 0;                 // Command backlog delay
-uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
-uint32_t loop_load_avg = 0;                 // Indicative loop load average
-uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
-uint32_t web_log_index = 1;                 // Index in Web log buffer (should never be 0)
-uint32_t baudrate = APP_BAUDRATE;           // Current Serial baudrate
+struct {
+  uint32_t baudrate;                        // Current Serial baudrate
+  uint32_t pulse_timer[MAX_PULSETIMERS];    // Power off timer
+  uint32_t blink_timer;                     // Power cycle timer
+  uint32_t backlog_delay;                   // Command backlog delay
+  uint32_t loop_load_avg;                   // Indicative loop load average
+  uint32_t global_update;                   // Timestamp of last global temperature and humidity update
+  uint32_t web_log_index;                   // Index in Web log buffer
+  uint32_t uptime;                          // Counting every second until 4294967295 = 130 year
+
+} TasmotaGlobal;
+
 power_t power = 0;                          // Current copy of Settings.power
 power_t last_power = 0;                     // Last power set state
 power_t blink_power;                        // Blink power state
@@ -177,6 +181,9 @@ void setup(void) {
 #endif
 #endif
 
+  memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
+  TasmotaGlobal.baudrate = APP_BAUDRATE;
+
   global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 
   RtcRebootLoad();
@@ -190,7 +197,7 @@ void setup(void) {
 #endif
   RtcRebootSave();
 
-  Serial.begin(baudrate);
+  Serial.begin(TasmotaGlobal.baudrate);
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
@@ -228,6 +235,8 @@ void setup(void) {
   if (EMUL_HUE == Settings.flag2.emulation) { Settings.flag2.emulation = 0; }
 #endif
 #endif  // USE_EMULATION
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&TasmotaGlobal, sizeof(TasmotaGlobal));
 
   if (Settings.param[P_BOOT_LOOP_OFFSET]) {         // SetOption36
     // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
@@ -297,7 +306,7 @@ void setup(void) {
 }
 
 void BacklogLoop(void) {
-  if (TimeReached(backlog_delay)) {
+  if (TimeReached(TasmotaGlobal.backlog_delay)) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {
       backlog_mutex = true;
       bool nodelay = false;
@@ -315,8 +324,12 @@ void BacklogLoop(void) {
         nodelay_detected = !strncasecmp_P(cmd.c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
         if (nodelay_detected) { nodelay = true; }
       } while (!BACKLOG_EMPTY && nodelay_detected);
-      if (!nodelay_detected) { ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG); }
-      if (nodelay) { backlog_delay = 0; }  // Reset backlog_delay which has been set by ExecuteCommand (CommandHandler)
+      if (!nodelay_detected) {
+        ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
+      }
+      if (nodelay) {
+        TasmotaGlobal.backlog_delay = 0;  // Reset backlog_delay which has been set by ExecuteCommand (CommandHandler)
+      }
       backlog_mutex = false;
     }
   }
@@ -408,5 +421,5 @@ void loop(void) {
   if (!loop_delay) { loop_delay++; }               // We cannot divide by 0
   uint32_t loops_per_second = 1000 / loop_delay;   // We need to keep track of this many loops per second
   uint32_t this_cycle_ratio = 100 * my_activity / loop_delay;
-  loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + (this_cycle_ratio / loops_per_second); // Take away one loop average away and add the new one
+  TasmotaGlobal.loop_load_avg = TasmotaGlobal.loop_load_avg - (TasmotaGlobal.loop_load_avg / loops_per_second) + (this_cycle_ratio / loops_per_second); // Take away one loop average away and add the new one
 }

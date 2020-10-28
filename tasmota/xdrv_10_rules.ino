@@ -947,7 +947,7 @@ uint8_t rules_xsns_index = 0;
 
 void RulesEvery100ms(void)
 {
-  if (Settings.rule_enabled && !Rules.busy && (uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
+  if (Settings.rule_enabled && !Rules.busy && (TasmotaGlobal.uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
     mqtt_data[0] = '\0';
     int tele_period_save = tele_period;
     tele_period = 2;                                   // Do not allow HA updates during next function call
@@ -967,7 +967,7 @@ void RulesEverySecond(void)
     char json_event[120];
 
     if (RtcTime.valid) {
-      if ((uptime > 60) && (RtcTime.minute != Rules.last_minute)) {  // Execute from one minute after restart every minute only once
+      if ((TasmotaGlobal.uptime > 60) && (RtcTime.minute != Rules.last_minute)) {  // Execute from one minute after restart every minute only once
         Rules.last_minute = RtcTime.minute;
         snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Minute\":%d}}"), MinutesPastMidnight());
         RulesProcessEvent(json_event);

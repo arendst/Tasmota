@@ -79,7 +79,7 @@ void Dht12Detect(void)
 
 void Dht12EverySecond(void)
 {
-  if (uptime &1) {
+  if (TasmotaGlobal.uptime &1) {
     // DHT12: 55mS
     if (!Dht12Read()) {
       AddLogMissed(Dht12.name, Dht12.valid);

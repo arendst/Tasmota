@@ -194,7 +194,7 @@ void PzemEvery250ms(void)
           Pzem.energy += value;
           if (Pzem.phase == Energy.phase_count -1) {
             if (Pzem.energy > Pzem.last_energy) {  // Handle missed phase
-              if (uptime > PZEM_STABILIZE) {
+              if (TasmotaGlobal.uptime > PZEM_STABILIZE) {
                 EnergyUpdateTotal(Pzem.energy, false);
               }
               Pzem.last_energy = Pzem.energy;
@@ -232,7 +232,7 @@ void PzemEvery250ms(void)
   }
   else {
     Pzem.send_retry--;
-    if ((Energy.phase_count > 1) && (0 == Pzem.send_retry) && (uptime < PZEM_STABILIZE)) {
+    if ((Energy.phase_count > 1) && (0 == Pzem.send_retry) && (TasmotaGlobal.uptime < PZEM_STABILIZE)) {
       Energy.phase_count--;  // Decrement phases if no response after retry within 30 seconds after restart
     }
   }
@@ -285,7 +285,7 @@ bool Xnrg03(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (PzemSerial && (uptime > 4)) { PzemEvery250ms(); }
+      if (PzemSerial && (TasmotaGlobal.uptime > 4)) { PzemEvery250ms(); }
       break;
     case FUNC_COMMAND:
       result = PzemCommand();

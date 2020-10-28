@@ -182,7 +182,7 @@ bool Xdrv18(uint8_t function)
       case FUNC_EVERY_SECOND:
         if (ArmtronixSerial) {
           if (Armtronix.wifi_state!=WifiState()) { ArmtronixSetWifiLed(); }
-          if (uptime &1) {
+          if (TasmotaGlobal.uptime &1) {
             ArmtronixSerial->println("Status");
           }
         }

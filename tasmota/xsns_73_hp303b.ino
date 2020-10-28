@@ -88,7 +88,7 @@ void HP303B_Detect(void) {
 
 void HP303B_EverySecond(void) {
   for (uint32_t i = 0; i < hp303b_cfg.count; i++) {
-    if (uptime &1) {
+    if (TasmotaGlobal.uptime &1) {
       if (!HP303B_Read(i)) {
         AddLogMissed(hp303b_cfg.types, hp303b_sensor[i].valid);
       }

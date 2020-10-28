@@ -457,7 +457,7 @@ void Ds18x20EverySecond(void)
   if (now < w1_power_until)
     return;
 #endif
-  if (uptime & 1
+  if (TasmotaGlobal.uptime & 1
 #ifdef W1_PARASITE_POWER
       // if more than 1 sensor and only parasite power: convert every cycle
       || ds18x20_sensors >= 2

@@ -338,6 +338,8 @@ void EnergyMarginCheck(void)
   for (uint32_t phase = 0; phase < Energy.phase_count; phase++) {
     uint16_t active_power = (uint16_t)(Energy.active_power[phase]);
 
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: APower %d, HPower0 %d, HPower1 %d, HPower2 %d"), active_power, Energy.power_history[phase][0], Energy.power_history[phase][1], Energy.power_history[phase][2]);
+
     if (Settings.energy_power_delta[phase]) {
       power_diff[phase] = active_power - Energy.power_history[phase][0];
       uint16_t delta = abs(power_diff[phase]);
@@ -502,7 +504,7 @@ void EnergyMqttShow(void)
 void EnergyEverySecond(void)
 {
   // Overtemp check
-  if (global_update) {
+  if (TasmotaGlobal.global_update) {
     if (power && !isnan(global_temperature_celsius) && (global_temperature_celsius > (float)Settings.param[P_OVER_TEMP])) {  // Device overtemp, turn off relays
 
       char temperature[33];

@@ -138,12 +138,12 @@ struct EZOManager {
     // Do we have to deal with the 2 stage booting process?
     if (count < 0) {
       // EZO devices take 2s to boot
-      if (uptime >= next) {
+      if (TasmotaGlobal.uptime >= next) {
         count++;
 
         if (count == -1) {
           DetectRequest();
-          next = uptime + 1;
+          next = TasmotaGlobal.uptime + 1;
         } else if (count == 0) {
           ProcessDetection();
         }

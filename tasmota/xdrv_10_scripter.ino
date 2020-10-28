@@ -3012,7 +3012,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "upsecs", 6)) {
-          fvar = uptime;
+          fvar = TasmotaGlobal.uptime;
           goto exit;
         }
         if (!strncmp(vname, "upd[", 4)) {
@@ -4495,7 +4495,7 @@ uint8_t script_xsns_index = 0;
 
 void ScripterEvery100ms(void) {
 
-  if (Settings.rule_enabled && (uptime > 4)) {
+  if (Settings.rule_enabled && (TasmotaGlobal.uptime > 4)) {
     mqtt_data[0] = '\0';
     uint16_t script_tele_period_save = tele_period;
     tele_period = 2;

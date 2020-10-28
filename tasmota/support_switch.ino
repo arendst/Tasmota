@@ -88,7 +88,7 @@ bool SwitchState(uint32_t index)
 
 void SwitchProbe(void)
 {
-  if (uptime < 4) { return; }                           // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
+  if (TasmotaGlobal.uptime < 4) { return; }                 // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
   uint8_t state_filter;
   uint8_t debounce_flags = Settings.switch_debounce % 10;
@@ -232,7 +232,7 @@ void SwitchInit(void)
 
 void SwitchHandler(uint8_t mode)
 {
-  if (uptime < 4) { return; }                                  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
+  if (TasmotaGlobal.uptime < 4) { return; }                 // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
   uint16_t loops_per_second = 1000 / Settings.switch_debounce;
 

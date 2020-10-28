@@ -82,7 +82,7 @@ void Tsl2561Detect(void)
 
 void Tsl2561EverySecond(void)
 {
-  if (!(uptime %2)) {  // Every 2 seconds
+  if (!(TasmotaGlobal.uptime %2)) {  // Every 2 seconds
     // ?mS - 4Sec
     if (!Tsl2561Read()) {
       AddLogMissed(tsl2561_types, tsl2561_valid);

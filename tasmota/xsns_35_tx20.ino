@@ -238,7 +238,7 @@ void ICACHE_RAM_ATTR TX2xStartRead(void)
 #else
       if ((chk == tx2x_sd) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511)) {
 #endif
-        tx2x_last_available = uptime;
+        tx2x_last_available = TasmotaGlobal.uptime;
         // Wind speed spec: 0 to 180 km/h (0 to 50 m/s)
         tx2x_wind_speed = tx2x_sc;
         tx2x_wind_direction = tx2x_sb;
@@ -264,7 +264,7 @@ void ICACHE_RAM_ATTR TX2xStartRead(void)
 
 bool Tx2xAvailable(void)
 {
-  return ((uptime - tx2x_last_available) < TX2X_TIMEOUT);
+  return ((TasmotaGlobal.uptime - tx2x_last_available) < TX2X_TIMEOUT);
 }
 
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
@@ -306,7 +306,7 @@ void Tx2xCheckSampleCount(void)
 void Tx2xResetStat(void)
 {
   DEBUG_SENSOR_LOG(PSTR(D_TX2x_NAME ": reset statistics"));
-  tx2x_last_uptime = uptime;
+  tx2x_last_uptime = TasmotaGlobal.uptime;
   Tx2xResetStatData();
 }
 
@@ -330,13 +330,13 @@ void Tx2xRead(void)
   //
   // note: TX23 speed calculation is unstable when conversion starts
   //       less than 2 seconds after last request
-  if ((uptime % TX23_READ_INTERVAL)==0) {
+  if ((TasmotaGlobal.uptime % TX23_READ_INTERVAL)==0) {
     // TX23 start transmission by pulling down TxD line for at minimum 500ms
     // so we pull TxD signal to low every 3 seconds
     tx23_stage = 0;
     pinMode(Pin(GPIO_TX2X_TXD_BLACK), OUTPUT);
     digitalWrite(Pin(GPIO_TX2X_TXD_BLACK), LOW);
-  } else if ((uptime % TX23_READ_INTERVAL)==1) {
+  } else if ((TasmotaGlobal.uptime % TX23_READ_INTERVAL)==1) {
     // after pulling down TxD: pull-up TxD every x+1 seconds
     // to trigger TX23 start transmission
     tx23_stage = 1; // first rising signal is invalid
@@ -419,7 +419,7 @@ void Tx2xRead(void)
     char siny[FLOATSZ];
     dtostrfd(tx2x_wind_direction_avg_y, 1, siny);
     DEBUG_SENSOR_LOG(PSTR(D_TX2x_NAME ": dir stat - counter=%ld, actint=%ld, avgint=%ld, avg=%s (cosx=%s, siny=%s), min %d, max %d"),
-      (uptime-tx2x_last_uptime),
+      (TasmotaGlobal.uptime-tx2x_last_uptime),
       tx2x_wind_direction,
       tx2x_wind_direction_avg_int,
       diravg,
@@ -443,7 +443,7 @@ void Tx2xRead(void)
 
 #ifndef USE_TX2X_WIND_SENSOR_NOSTATISTICS
   Tx2xCheckSampleCount();
-  if (0==Settings.tele_period && (uptime-tx2x_last_uptime)>=tx2x_avg_samples) {
+  if (0==Settings.tele_period && (TasmotaGlobal.uptime-tx2x_last_uptime)>=tx2x_avg_samples) {
     Tx2xResetStat();
   }
 #endif  // USE_TX2X_WIND_SENSOR_NOSTATISTICS

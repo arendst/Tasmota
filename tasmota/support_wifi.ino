@@ -520,7 +520,7 @@ void WifiCheck(uint8_t param)
 #endif  // LWIP_IPV6=1
         WifiSetState(1);
         if (Settings.flag3.use_wifi_rescan) {  // SetOption57 - Scan wifi network every 44 minutes for configured AP's
-          if (!(uptime % (60 * WIFI_RESCAN_MINUTES))) {
+          if (!(TasmotaGlobal.uptime % (60 * WIFI_RESCAN_MINUTES))) {
             Wifi.scan_state = 2;
           }
         }

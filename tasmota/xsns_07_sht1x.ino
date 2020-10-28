@@ -172,7 +172,7 @@ void ShtDetect(void)
 
 void ShtEverySecond(void)
 {
-  if (!(uptime %4)) {  // Every 4 seconds
+  if (!(TasmotaGlobal.uptime %4)) {  // Every 4 seconds
     // 344mS
     if (!ShtRead()) {
       AddLogMissed(sht_types, sht_valid);

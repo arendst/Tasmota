@@ -1123,7 +1123,7 @@ bool Xdrv16(uint8_t function)
             TuyaSendCmd(TUYA_CMD_HEARTBEAT);
           }
 #ifdef USE_TUYA_TIME
-          if (!(uptime % 60)) {
+          if (!(TasmotaGlobal.uptime % 60)) {
             TuyaSetTime();
           }
 #endif  //USE_TUYA_TIME

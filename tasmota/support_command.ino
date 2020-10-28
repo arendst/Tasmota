@@ -244,8 +244,8 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 
     DEBUG_CORE_LOG(PSTR("CMD: Payload %d"), payload);
 
-//    backlog_delay = millis() + (100 * MIN_BACKLOG_DELAY);
-    backlog_delay = millis() + Settings.param[P_BACKLOG_DELAY];
+//    TasmotaGlobal.backlog_delay = millis() + (100 * MIN_BACKLOG_DELAY);
+    TasmotaGlobal.backlog_delay = millis() + Settings.param[P_BACKLOG_DELAY];
 
     char command[CMDSZ] = { 0 };
     XdrvMailbox.command = command;
@@ -344,7 +344,7 @@ void CmndBacklog(void)
     }
 //    ResponseCmndChar(D_JSON_APPENDED);
     mqtt_data[0] = '\0';
-    backlog_delay = 0;
+    TasmotaGlobal.backlog_delay = 0;
   } else {
     bool blflag = BACKLOG_EMPTY;
 #ifdef SUPPORT_IF_STATEMENT
@@ -359,10 +359,10 @@ void CmndBacklog(void)
 void CmndDelay(void)
 {
   if ((XdrvMailbox.payload >= (MIN_BACKLOG_DELAY / 100)) && (XdrvMailbox.payload <= 3600)) {
-    backlog_delay = millis() + (100 * XdrvMailbox.payload);
+    TasmotaGlobal.backlog_delay = millis() + (100 * XdrvMailbox.payload);
   }
   uint32_t bl_delay = 0;
-  long bl_delta = TimePassedSince(backlog_delay);
+  long bl_delta = TimePassedSince(TasmotaGlobal.backlog_delay);
   if (bl_delta < 0) { bl_delay = (bl_delta *-1) / 100; }
   ResponseCmndNumber(bl_delay);
 }
@@ -440,7 +440,7 @@ void CmndStatus(void)
                           ",\"" D_JSON_SAVEADDRESS "\":\"%X\""
 #endif
                           "}}"),
-                          baudrate, GetSerialConfig().c_str(), SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
+                          TasmotaGlobal.baudrate, GetSerialConfig().c_str(), SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
                           GetResetReason().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
                           Settings.cfg_holder, Settings.bootcount, GetDateAndTime(DT_BOOTCOUNT).c_str(), Settings.save_flag
 #ifdef ESP8266
@@ -661,7 +661,7 @@ void CmndGlobalTemp(void)
     }
     if ((temperature >= -50.0f) && (temperature <= 100.0f)) {
       ConvertTemp(temperature);
-      global_update = 1;  // Keep global values just entered valid
+      TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
     }
   }
   ResponseCmndFloat(global_temperature_celsius, 1);
@@ -673,7 +673,7 @@ void CmndGlobalHum(void)
     float humidity = CharToFloat(XdrvMailbox.data);
     if ((humidity >= 0.0) && (humidity <= 100.0)) {
       ConvertHumidity(humidity);
-      global_update = 1;  // Keep global values just entered valid
+      TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
     }
   }
   ResponseCmndFloat(global_humidity, 1);
@@ -805,7 +805,9 @@ void CmndBlinktime(void)
 {
   if ((XdrvMailbox.payload > 1) && (XdrvMailbox.payload <= 3600)) {
     Settings.blinktime = XdrvMailbox.payload;
-    if (blink_timer > 0) { blink_timer = millis() + (100 * XdrvMailbox.payload); }
+    if (TasmotaGlobal.blink_timer > 0) {
+      TasmotaGlobal.blink_timer = millis() + (100 * XdrvMailbox.payload);
+    }
   }
   ResponseCmndNumber(Settings.blinktime);
 }
@@ -1340,10 +1342,10 @@ void CmndBaudrate(void)
 {
   if (XdrvMailbox.payload >= 300) {
     XdrvMailbox.payload /= 300;  // Make it a valid baudrate
-    baudrate = (XdrvMailbox.payload & 0xFFFF) * 300;
-    SetSerialBaudrate(baudrate);
+    TasmotaGlobal.baudrate = (XdrvMailbox.payload & 0xFFFF) * 300;
+    SetSerialBaudrate(TasmotaGlobal.baudrate);
   }
-  ResponseCmndNumber(baudrate);
+  ResponseCmndNumber(TasmotaGlobal.baudrate);
 }
 
 void CmndSerialConfig(void)
