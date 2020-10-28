@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - PlatformIO library structure redesigned for compilation speed by Jason2866
 - Zigbee flash storage refactor adding commands ``ZbProbe``, ``ZbStatus2`` and ``ZbRestore`` (#9641)
+- Default otaurl in my_user_config.h to http://ota.tasmota.com/tasmota/release/tasmota.bin.gz
 
 ### Fixed
 - Rule Break not working as expected when ONCE is enabled (#9245)
@@ -163,7 +164,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Zigbee better support for IKEA Motion Sensor
 - ESP32 Analog input support for GPIO32 to GPIO39
-- Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
+- Zigbee options to ``ZbSend`` ``Config`` and ``ReadConfig``
 - Command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)
 - Command ``SetOption102 0/1`` to switch between Teleinfo French Metering mode, legacy 1200 bps (0) or Linky standard 9600 bps (1)
 

@@ -100,6 +100,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Webserver code optimizations (#9580, #9590)
 - PlatformIO library structure redesigned for compilation speed by Jason2866
 - Zigbee flash storage refactor adding commands ``ZbProbe``, ``ZbStatus2`` and ``ZbRestore`` (#9641)
+- Default otaurl in my_user_config.h to http://ota.tasmota.com/tasmota/release/tasmota.bin.gz
 
 ### Fixed
 - Ledlink blink when no network connected regression from v8.3.1.4 (#9292)
