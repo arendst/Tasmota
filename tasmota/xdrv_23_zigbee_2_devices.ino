@@ -36,30 +36,109 @@ enum class Z_Data_Type : uint8_t {
   Z_Device = 0xFF           // special value when parsing Device level attributes
 };
 
+const uint8_t Z_Data_Type_char[] PROGMEM = {
+  '?',      // 0x00 Z_Data_Type::Z_Unknown
+  'L',      // 0x01 Z_Data_Type::Z_Light
+  'P',      // 0x02 Z_Data_Type::Z_Plug
+  'I',      // 0x03 Z_Data_Type::Z_PIR
+  'A',      // 0x04 Z_Data_Type::Z_Alarm
+  'T',      // 0x05 Z_Data_Type::Z_Thermo
+  'O',      // 0x05 Z_Data_Type::Z_OnOff
+  '\0',     // 0x06
+  '\0',     // 0x07
+  '\0',     // 0x08
+  '\0',     // 0x09
+  '\0',     // 0x0A
+  '\0',     // 0x0B
+  '\0',     // 0x0C
+  '\0',     // 0x0D
+  '\0',     // 0x0E
+  'E',      // 0x05 Z_Data_Type::Z_Ext
+  // '_' maps to 0xFF Z_Data_Type::Z_Device
+};
+
 class Z_Data_Set;
 /*********************************************************************************************\
  * Device specific data, sensors...
 \*********************************************************************************************/
 class Z_Data {
 public:
-  Z_Data(Z_Data_Type type = Z_Data_Type::Z_Unknown, uint8_t endpoint = 0) : _type(type), _endpoint(endpoint), _config(-1), _power(0) {}
+  Z_Data(Z_Data_Type type = Z_Data_Type::Z_Unknown, uint8_t endpoint = 0) : _type(type), _endpoint(endpoint), _config(0xF), _power(0) {}
   inline Z_Data_Type getType(void) const { return _type; }
   inline int8_t getConfig(void) const { return _config; }
+  inline bool validConfig(void) const { return _config != 0xF; }
   inline void setConfig(int8_t config) { _config = config; }
+  uint8_t getConfigByte(void) const { return ( ((uint8_t)_type) << 4) | ((_config & 0xF) & 0x0F); }
 
   inline uint8_t getEndpoint(void) const { return _endpoint; }
 
   void toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const;
 
   static const Z_Data_Type type = Z_Data_Type::Z_Unknown;
+  static bool ConfigToZData(const char * config_str, Z_Data_Type * type, uint8_t * ep, uint8_t * config);
+
+  static Z_Data_Type CharToDataType(char c);
+  static char DataTypeToChar(Z_Data_Type t);
 
   friend class Z_Data_Set;
 protected:
   Z_Data_Type _type;        // encoded on 4 bits, type of the device
   uint8_t _endpoint;    // source endpoint, or 0x00 if any endpoint
-  int8_t  _config;      // encoded on 4 bits, customize behavior
+  uint8_t _config : 4;      // encoded on 4 bits, customize behavior
   uint8_t _power;       // power state if the type supports it
 };
+
+Z_Data_Type Z_Data::CharToDataType(char c) {
+  if (c) {
+    if (c == '_') {
+      return Z_Data_Type::Z_Device;
+    } else {
+      for (uint32_t i=0; i<ARRAY_SIZE(Z_Data_Type_char); i++) {
+        if (pgm_read_byte(&Z_Data_Type_char[i]) == c) {
+          return (Z_Data_Type) i;
+        }
+      }
+    }
+  }
+  return Z_Data_Type::Z_Unknown;
+}
+
+char Z_Data::DataTypeToChar(Z_Data_Type t) {
+  if (t == Z_Data_Type::Z_Device) {
+    return '_';
+  } else {
+    uint8_t tt = (uint8_t) t;
+    if (tt < ARRAY_SIZE(Z_Data_Type_char)) {
+      return pgm_read_byte(&Z_Data_Type_char[tt]);
+    }
+  }
+  return '\0';
+}
+
+// Parse configuration
+// Either '_'
+// or 'T01' or 'L01.2'
+// result: true if parsing ok
+bool Z_Data::ConfigToZData(const char * config_str, Z_Data_Type * type, uint8_t * ep, uint8_t * config) {
+  if (config_str == nullptr) { return false; }
+
+  Z_Data_Type data_type = Z_Data::CharToDataType(config_str[0]);
+  if (data_type == Z_Data_Type::Z_Unknown) {
+    return false;
+  }
+
+  if (type != nullptr) {
+    *type = data_type;
+  }
+  if (ep != nullptr) {
+    *ep = strtoul(&config_str[1], nullptr, 16);   // hex base 16
+  }
+  if ((config != nullptr) && (config_str[3] == '.')) {
+    // we have a config attribute
+    *config = strtoul(&config_str[4], nullptr, 16) & 0x0F;   // hex base 16
+  }
+  return true;
+}
 
 /*********************************************************************************************\
  * Device specific: On/Off, power up to 8 relays
@@ -157,8 +236,6 @@ public:
   inline void setCT(uint16_t _ct)               { ct = _ct; }
   inline void setX(uint16_t _x)                 { x = _x; }
   inline void setY(uint16_t _y)                 { y = _y; }
-
-  void toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const;
   
   static const Z_Data_Type type = Z_Data_Type::Z_Light;
   // 12 bytes
@@ -330,14 +407,6 @@ const Z_Data & Z_Data_Set::find(Z_Data_Type type, uint8_t ep) const {
   return *(Z_Data*)nullptr;
 }
 
-// Low-level
-// Add light attributes, used by dumpLightState and by SbData
-//
-void Z_Data_Light::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const {
-  attr_list.addAttribute(PSTR(D_JSON_ZIGBEE_LIGHT)).setInt(getConfig());    // special case, since type is 0x00 we can assume getConfig() is good
-  Z_Data::toAttributes(attr_list, type);
-}
-
 void Z_Data_OnOff::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const {
   if (validPower())             { attr_list.addAttribute(PSTR("Power")).setUInt(getPower() ? 1 : 0); }
 }
@@ -370,7 +439,7 @@ public:
   // Light information for Hue integration integration, last known values
 
   // New version of device data handling
-  Z_Data_Set           data;            // Linkedlist of device data per endpoint
+  Z_Data_Set            data;            // Linkedlist of device data per endpoint
   // other status
   uint8_t               lqi;            // lqi from last message, 0xFF means unknown
   uint8_t               batterypercent; // battery percentage (0..100), 0xFF means unknwon
@@ -390,7 +459,7 @@ public:
     seqNumber(0),
     hidden(false),
     reachable(false),
-    // Hue support
+    data(),
     lqi(0xFF),
     batterypercent(0xFF),
     last_seen(0)
@@ -533,7 +602,7 @@ public:
 
   // Add new device, provide ShortAddr and optional longAddr
   // If it is already registered, update information, otherwise create the entry
-  void updateDevice(uint16_t shortaddr, uint64_t longaddr = 0);
+  Z_Device &  updateDevice(uint16_t shortaddr, uint64_t longaddr = 0);
 
   // Add an endpoint to a device
   void addEndpoint(uint16_t shortaddr, uint8_t endpoint);

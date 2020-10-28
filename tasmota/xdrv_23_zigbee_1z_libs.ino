@@ -66,46 +66,6 @@ uint8_t  Z_GetLastEndpoint(void) { return gZbLastMessage.endpoint; }
 
 /*********************************************************************************************\
  * 
- * Class for attribute array of values
- * This is a helper function to generate a clean list of unsigned ints
- * 
-\*********************************************************************************************/
-
-class Z_json_array {
-public:
-
-  Z_json_array(): val("[]") {}     // start with empty array
-  void add(uint32_t uval32) {
-    // remove trailing ']'
-    val.remove(val.length()-1);
-    if (val.length() > 1) {      // if not empty, prefix with comma
-      val += ',';
-    }
-    val += uval32;
-    val += ']';
-  }
-  void addStrRaw(const char * sval) {
-    // remove trailing ']'
-    val.remove(val.length()-1);
-    if (val.length() > 1) {      // if not empty, prefix with comma
-      val += ',';
-    }
-    val += sval;
-    val += ']';
-  }
-  void addStr(const char * sval) {
-    addStrRaw(EscapeJSONString(sval).c_str());
-  }
-  String &toString(void) {
-    return val;
-  }
-
-private :
-  String val;
-};
-
-/*********************************************************************************************\
- * 
  * Class for single attribute
  * 
 \*********************************************************************************************/
@@ -143,8 +103,8 @@ public:
     float               fval;
     SBuffer*            bval;
     char*               sval;
-    class Z_attribute_list  * objval;
-    class Z_json_array      * arrval;
+    class Z_attribute_list   * objval;
+    class JsonGeneratorArray * arrval;
   } val;
   Za_type       type;             // uint8_t in size, type of attribute, see above
   bool          key_is_str;       // is the key a string?
@@ -217,7 +177,7 @@ public:
   }
 
   Z_attribute_list & newAttrList(void);
-  Z_json_array & newJsonArray(void);
+  JsonGeneratorArray & newJsonArray(void);
 
   inline bool isNum(void) const { return (type >= Za_type::Za_bool) && (type <= Za_type::Za_float); }
   inline bool isNone(void) const { return (type == Za_type::Za_none);}
@@ -446,9 +406,9 @@ Z_attribute_list & Z_attribute::newAttrList(void) {
   return *val.objval;
 }
 
-Z_json_array & Z_attribute::newJsonArray(void) {
+JsonGeneratorArray & Z_attribute::newJsonArray(void) {
   freeVal();
-  val.arrval = new Z_json_array();
+  val.arrval = new JsonGeneratorArray();
   type = Za_type::Za_arr;
   return *val.arrval;
 }
