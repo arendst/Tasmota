@@ -1215,8 +1215,8 @@ typedef struct Z_autoAttributeReporting_t {
 
 // Note the attribute must be registered in the converter list, used to retrieve the type of the attribute
 const Z_autoAttributeReporting_t Z_autoAttributeReporting[] PROGMEM = {
-  { 0x0001, 0x0020,   15*60,    15*60,  0.1 },      // BatteryVoltage
-  { 0x0001, 0x0021,   15*60,    15*60,    1 },      // BatteryPercentage
+  { 0x0001, 0x0020,    60*60, 4*60*60,  0.1 },      // BatteryVoltage
+  { 0x0001, 0x0021,    60*60, 4*60*60,    1 },      // BatteryPercentage
   { 0x0006, 0x0000,        1,   60*60,    0 },      // Power
   { 0x0201, 0x0000,       60,   60*10,  0.5 },      // LocalTemperature
   { 0x0201, 0x0008,       60,   60*10,   10 },      // PIHeatingDemand
