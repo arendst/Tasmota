@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "több lenyomás"
 #define D_NOISE "Zaj"
 #define D_NONE "nincs"
+#define D_O2 "Oxygen"
 #define D_OFF "Ki"
 #define D_OFFLINE "Offline"
 #define D_OK "OK"

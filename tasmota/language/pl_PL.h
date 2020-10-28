@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "Wielokrotne naciśnięcie"
 #define D_NOISE "Szum"
 #define D_NONE "Brak"
+#define D_O2 "Oxygen"
 #define D_OFF "Wyłączony"
 #define D_OFFLINE "Nieaktywny"
 #define D_OK "Ok"

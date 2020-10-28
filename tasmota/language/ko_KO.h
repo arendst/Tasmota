@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "multi-press"
 #define D_NOISE "소음"
 #define D_NONE "없음"
+#define D_O2 "Oxygen"
 #define D_OFF "꺼짐"
 #define D_OFFLINE "오프라인"
 #define D_OK "Ok"

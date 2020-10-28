@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "selectare multiplă"
 #define D_NOISE "Zgomot"
 #define D_NONE "Lipsă"
+#define D_O2 "Oxygen"
 #define D_OFF "Închis"
 #define D_OFFLINE "Offline"
 #define D_OK "Ok"
