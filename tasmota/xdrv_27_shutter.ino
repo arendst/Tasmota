@@ -1342,7 +1342,7 @@ void CmndShutterSetHalfway(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
       Settings.shutter_set50percent[XdrvMailbox.index -1] = (Settings.shutter_options[XdrvMailbox.index -1] & 1) ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
-      Settings.shuttercoeff[0][0] = 0;
+      Settings.shuttercoeff[XdrvMailbox.index -1][0] = 0;
       ShutterInit();
     }
   ResponseCmndIdxNumber((Settings.shutter_options[XdrvMailbox.index -1] & 1) ? 100 - Settings.shutter_set50percent[XdrvMailbox.index -1] : Settings.shutter_set50percent[XdrvMailbox.index -1]);
