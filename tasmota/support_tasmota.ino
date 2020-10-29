@@ -276,7 +276,7 @@ void SetAllPower(uint32_t state, uint32_t source)
       TasmotaGlobal.power = all_on;
       break;
     case POWER_TOGGLE:
-      TasmotaGlobal.power ^= all_on;                    // Complement current state
+      TasmotaGlobal.power ^= all_on;      // Complement current state
     }
     SetDevicePower(TasmotaGlobal.power, source);
   }
@@ -471,7 +471,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
            !strcmp(mqtt_topic, key_topic) ||
            !strcmp(SettingsText(SET_MQTT_GRP_TOPIC), key_topic)) &&
           (POWER_TOGGLE == state)) {
-        state = ~(TasmotaGlobal.power >> (device -1)) &1;                 // POWER_OFF or POWER_ON
+        state = ~(TasmotaGlobal.power >> (device -1)) &1;   // POWER_OFF or POWER_ON
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), GetStateText(state));
     }
@@ -520,7 +520,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 
 #ifdef USE_SONOFF_IFAN
   if (IsModuleIfan()) {
-    TasmotaGlobal.blink_mask &= 1;                 // No blinking on the fan relays
+    TasmotaGlobal.blink_mask &= 1;   // No blinking on the fan relays
     Settings.flag.interlock = 0;     // No interlock mode as it is already done by the microcontroller - CMND_INTERLOCK - Enable/disable interlock
     Settings.pulse_timer[1] = 0;     // No pulsetimers on the fan relays
     Settings.pulse_timer[2] = 0;
@@ -937,11 +937,11 @@ void Every250mSeconds(void)
     if (global_state.data &0x03) {                        // Network or MQTT problem
       if (global_state.mqtt_down) { blinkinterval = 7; }  // MQTT problem so blink every 2 seconds (slowest)
       if (global_state.network_down) { blinkinterval = 3; }  // Network problem so blink every second (slow)
-      TasmotaGlobal.blinks = 201;                                       // Allow only a single blink in case the problem is solved
+      TasmotaGlobal.blinks = 201;                         // Allow only a single blink in case the problem is solved
     }
   }
   if (TasmotaGlobal.blinks || TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag) {
-    if (TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag) {                 // Overrule blinks and keep led lit
+    if (TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag) {  // Overrule blinks and keep led lit
       blinkstate = true;                                  // Stay lit
     } else {
       blinkspeed--;
@@ -955,14 +955,14 @@ void Every250mSeconds(void)
     }
     if (!blinkstate) {
       TasmotaGlobal.blinks--;
-      if (200 == TasmotaGlobal.blinks) TasmotaGlobal.blinks = 0;                      // Disable blink
+      if (200 == TasmotaGlobal.blinks) { TasmotaGlobal.blinks = 0; }  // Disable blink
     }
   }
   if (Settings.ledstate &1 && (PinUsed(GPIO_LEDLNK) || !(TasmotaGlobal.blinks || TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag)) ) {
     bool tstate = TasmotaGlobal.power & Settings.ledmask;
 #ifdef ESP8266
     if ((SONOFF_TOUCH == my_module_type) || (SONOFF_T11 == my_module_type) || (SONOFF_T12 == my_module_type) || (SONOFF_T13 == my_module_type)) {
-      tstate = (!TasmotaGlobal.power) ? 1 : 0;                          // As requested invert signal for Touch devices to find them in the dark
+      tstate = (!TasmotaGlobal.power) ? 1 : 0;           // As requested invert signal for Touch devices to find them in the dark
     }
 #endif  // ESP8266
     SetLedPower(tstate);

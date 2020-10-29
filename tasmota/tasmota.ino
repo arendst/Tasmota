@@ -95,7 +95,6 @@ struct {
   power_t blink_mask;                       // Blink relay active mask
 
   int serial_in_byte_counter;               // Index in receive buffer
-  int ota_state_flag;                       // OTA state flag
 
   float temperature_celsius;                // Provide a global temperature to be used by some sensors
   float humidity;                           // Provide a global humidity to be used by some sensors
@@ -103,6 +102,7 @@ struct {
 
   uint8_t blinks;                           // Number of LED blinks
   uint8_t restart_flag;                     // Tasmota restart flag
+  uint8_t ota_state_flag;                   // OTA state flag
   uint8_t wifi_state_flag;                  // Wifi state flag
 
 } TasmotaGlobal;

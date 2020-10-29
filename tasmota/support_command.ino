@@ -879,7 +879,7 @@ void CmndSetoption(void)
 #ifdef USE_LIGHT
           if (P_RGB_REMAP == pindex) {
             LightUpdateColorMapping();
-            TasmotaGlobal.restart_flag = 2;              // SetOption37 needs a reboot in most cases
+            TasmotaGlobal.restart_flag = 2;  // SetOption37 needs a reboot in most cases
           }
 #endif
 #if (defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)) || defined(USE_IR_REMOTE_FULL)
@@ -926,7 +926,7 @@ void CmndSetoption(void)
             switch (pindex) {
               case 5:                      // SetOption55
                 if (0 == XdrvMailbox.payload) {
-                  TasmotaGlobal.restart_flag = 2;        // Disable mDNS needs restart
+                  TasmotaGlobal.restart_flag = 2;  // Disable mDNS needs restart
                 }
                 break;
               case 10:                     // SetOption60 enable or disable traditional sleep
