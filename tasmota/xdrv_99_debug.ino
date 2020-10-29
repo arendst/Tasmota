@@ -487,7 +487,7 @@ void CmndSetSensor(void)
     if (XdrvMailbox.payload >= 0) {
       bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
       if (1 == XdrvMailbox.payload) {
-        restart_flag = 2;  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
+        TasmotaGlobal.restart_flag = 2;  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
       }
     }
     Response_P(PSTR("{\"" D_CMND_SETSENSOR "\":"));

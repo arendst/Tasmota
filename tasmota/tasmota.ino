@@ -78,12 +78,12 @@
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
 struct {
+  uint32_t global_update;                   // Timestamp of last global temperature and humidity update
   uint32_t baudrate;                        // Current Serial baudrate
   uint32_t pulse_timer[MAX_PULSETIMERS];    // Power off timer
   uint32_t blink_timer;                     // Power cycle timer
   uint32_t backlog_delay;                   // Command backlog delay
   uint32_t loop_load_avg;                   // Indicative loop load average
-  uint32_t global_update;                   // Timestamp of last global temperature and humidity update
   uint32_t web_log_index;                   // Index in Web log buffer
   uint32_t uptime;                          // Counting every second until 4294967295 = 130 year
 
@@ -94,15 +94,17 @@ struct {
   power_t blink_powersave;                  // Blink start power save state
   power_t blink_mask;                       // Blink relay active mask
 
+  int serial_in_byte_counter;               // Index in receive buffer
+  int ota_state_flag;                       // OTA state flag
+  int restart_flag;                         // Tasmota restart flag
+
   float temperature_celsius;                // Provide a global temperature to be used by some sensors
   float humidity;                           // Provide a global humidity to be used by some sensors
   float pressure_hpa;                       // Provide a global pressure to be used by some sensors
 
+
 } TasmotaGlobal;
 
-int serial_in_byte_counter = 0;             // Index in receive buffer
-int ota_state_flag = 0;                     // OTA state flag
-int restart_flag = 0;                       // Tasmota restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 int blinks = 201;                           // Number of LED blinks
 uint16_t tele_period = 9999;                // Tele period timer

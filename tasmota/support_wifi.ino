@@ -99,7 +99,7 @@ void WifiConfig(uint8_t type)
     Wifi.counter = Wifi.config_counter +5;
     blinks = 1999;
     if (WIFI_RESTART == Wifi.config_type) {
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
     }
     else if (WIFI_SERIAL == Wifi.config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_6_SERIAL " " D_ACTIVE_FOR_3_MINUTES));
@@ -503,7 +503,7 @@ void WifiCheck(uint8_t param)
       }
       if (!Wifi.config_counter) {
 //        SettingsSdkErase();  //  Disabled v6.1.0b due to possible bad wifi connects
-        restart_flag = 2;
+        TasmotaGlobal.restart_flag = 2;
       }
     } else {
       if (Wifi.scan_state) { WifiBeginAfterScan(); }

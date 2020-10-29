@@ -2102,7 +2102,7 @@ void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count)
 
 void AddLogSerial(uint32_t loglevel)
 {
-  AddLogBuffer(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
+  AddLogBuffer(loglevel, (uint8_t*)serial_in_buffer, TasmotaGlobal.serial_in_byte_counter);
 }
 
 void AddLogMissed(const char *sensor, uint32_t misses)

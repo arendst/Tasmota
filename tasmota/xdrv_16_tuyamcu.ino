@@ -195,7 +195,7 @@ void CmndTuyaMcu(void) {
 
     if (TuyaFuncIdValid(parm[0])) {
     //   TuyaAddMcuFunc(parm[0], parm[1]);
-    //   restart_flag = 2;
+    //   TasmotaGlobal.restart_flag = 2;
     // } else {
     //   AddLog_P2(LOG_LEVEL_ERROR, PSTR("TYA: TuyaMcu Invalid function id=%d"), parm[0]);
     // }
@@ -212,7 +212,7 @@ void CmndTuyaMcu(void) {
         Settings.flag3.pwm_multi_channels = 1;
       } else { Settings.flag3.pwm_multi_channels = 0; }
       TuyaAddMcuFunc(parm[0], parm[1]);
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
     } else {
       AddLog_P2(LOG_LEVEL_ERROR, PSTR("TYA: TuyaMcu Invalid function id=%d"), parm[0]);
     }
@@ -770,11 +770,11 @@ void TuyaNormalPowerModePacketProcess(void)
         }
         if (!Settings.my_gp.io[led1_gpio] && !led1_set) {
           Settings.my_gp.io[led1_gpio] = AGPIO(GPIO_LED1);
-          restart_flag = 2;
+          TasmotaGlobal.restart_flag = 2;
         }
         if (!Settings.my_gp.io[key1_gpio] && !key1_set) {
           Settings.my_gp.io[key1_gpio] = AGPIO(GPIO_KEY1);
-          restart_flag = 2;
+          TasmotaGlobal.restart_flag = 2;
         }
       }
       TuyaRequestState(0);
@@ -796,7 +796,7 @@ bool TuyaModuleSelected(void)
     SetPin(3, AGPIO(GPIO_TUYA_RX));
     Settings.my_gp.io[1] = AGPIO(GPIO_TUYA_TX);
     Settings.my_gp.io[3] = AGPIO(GPIO_TUYA_RX);
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
 
   if (TuyaGetDpId(TUYA_MCU_FUNC_DIMMER) == 0 && TUYA_DIMMER_ID > 0) {

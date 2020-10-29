@@ -697,7 +697,7 @@ void CmndUpgrade(void)
   // Check if the version we have been asked to upgrade to is higher than our current version.
   //   We also need at least 3 chars to make a valid version number string.
   if (((1 == XdrvMailbox.data_len) && (1 == XdrvMailbox.payload)) || ((XdrvMailbox.data_len >= 3) && NewerVersion(XdrvMailbox.data))) {
-    ota_state_flag = 3;
+    TasmotaGlobal.ota_state_flag = 3;
     char stemp1[TOPSZ];
     Response_P(PSTR("{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}"), XdrvMailbox.command, my_version, GetOtaUrl(stemp1, sizeof(stemp1)));
   } else {
@@ -726,11 +726,11 @@ void CmndRestart(void)
 {
   switch (XdrvMailbox.payload) {
   case 1:
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
     ResponseCmndChar(D_JSON_RESTARTING);
     break;
   case 2:
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
     restart_halt = true;
     ResponseCmndChar(D_JSON_HALTING);
     break;
@@ -879,7 +879,7 @@ void CmndSetoption(void)
 #ifdef USE_LIGHT
           if (P_RGB_REMAP == pindex) {
             LightUpdateColorMapping();
-            restart_flag = 2;              // SetOption37 needs a reboot in most cases
+            TasmotaGlobal.restart_flag = 2;              // SetOption37 needs a reboot in most cases
           }
 #endif
 #if (defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)) || defined(USE_IR_REMOTE_FULL)
@@ -907,7 +907,7 @@ void CmndSetoption(void)
                 break;                     // Ignore command SetOption
               case 3:                      // mqtt
               case 15:                     // pwm_control
-                restart_flag = 2;
+                TasmotaGlobal.restart_flag = 2;
               default:
                 bitWrite(Settings.flag.data, pindex, XdrvMailbox.payload);
             }
@@ -926,7 +926,7 @@ void CmndSetoption(void)
             switch (pindex) {
               case 5:                      // SetOption55
                 if (0 == XdrvMailbox.payload) {
-                  restart_flag = 2;        // Disable mDNS needs restart
+                  TasmotaGlobal.restart_flag = 2;        // Disable mDNS needs restart
                 }
                 break;
               case 10:                     // SetOption60 enable or disable traditional sleep
@@ -934,7 +934,7 @@ void CmndSetoption(void)
                 break;
               case 18:                     // SetOption68 for multi-channel PWM, requires a reboot
               case 25:                     // SetOption75 grouptopic change
-                restart_flag = 2;
+                TasmotaGlobal.restart_flag = 2;
                 break;
             }
           }
@@ -949,7 +949,7 @@ void CmndSetoption(void)
               case 22:                     // SetOption104 - No Retain - disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
               case 24:                     // SetOption106 - Virtual CT - Creates a virtual White ColorTemp for RGBW lights
               case 25:                     // SetOption107 - Virtual CT Channel - signals whether the hardware white is cold CW (true) or warm WW (false)
-                restart_flag = 2;
+                TasmotaGlobal.restart_flag = 2;
                 break;
             }
           }
@@ -1085,7 +1085,7 @@ void CmndModule(void)
             Settings.my_gp.io[i] = GPIO_NONE;
           }
         }
-        restart_flag = 2;
+        TasmotaGlobal.restart_flag = 2;
       }
     }
   }
@@ -1144,7 +1144,7 @@ void CmndGpio(void)
           }
         }
         Settings.my_gp.io[XdrvMailbox.index] = XdrvMailbox.payload;
-        restart_flag = 2;
+        TasmotaGlobal.restart_flag = 2;
       }
     }
     Response_P(PSTR("{"));
@@ -1241,7 +1241,7 @@ void CmndTemplate(void)
       XdrvMailbox.payload--;
       if (ValidTemplateModule(XdrvMailbox.payload)) {
         ModuleDefault(XdrvMailbox.payload);     // Copy template module
-        if (USER_MODULE == Settings.module) { restart_flag = 2; }
+        if (USER_MODULE == Settings.module) { TasmotaGlobal.restart_flag = 2; }
       }
     }
     else if (0 == XdrvMailbox.payload) {        // Copy current template to user template
@@ -1267,7 +1267,7 @@ void CmndTemplate(void)
   }
   else {
     if (JsonTemplate(XdrvMailbox.data)) {    // Free 336 bytes StaticJsonBuffer stack space by moving code to function
-      if (USER_MODULE == Settings.module) { restart_flag = 2; }
+      if (USER_MODULE == Settings.module) { TasmotaGlobal.restart_flag = 2; }
     } else {
       ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON));
       error = true;
@@ -1464,7 +1464,7 @@ void CmndIpAddress(void)
     uint32_t address;
     if (ParseIp(&address, XdrvMailbox.data)) {
       Settings.ip_address[XdrvMailbox.index -1] = address;
-//        restart_flag = 2;
+//        TasmotaGlobal.restart_flag = 2;
     }
     char stemp1[TOPSZ];
     snprintf_P(stemp1, sizeof(stemp1), PSTR(" (%s)"), WiFi.localIP().toString().c_str());
@@ -1483,7 +1483,7 @@ void CmndNtpServer(void)
         SettingsUpdateText(ntp_server,
           (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? PSTR(NTP_SERVER1) : (2 == XdrvMailbox.index) ? PSTR(NTP_SERVER2) : PSTR(NTP_SERVER3) : XdrvMailbox.data);
         SettingsUpdateText(ntp_server, ReplaceCommaWithDot(SettingsText(ntp_server)));
-  //        restart_flag = 2;  // Issue #3890
+  //        TasmotaGlobal.restart_flag = 2;  // Issue #3890
         ntp_force_sync = true;
       }
       ResponseCmndIdxChar(SettingsText(ntp_server));
@@ -1503,7 +1503,7 @@ void CmndAp(void)
       Settings.sta_active = XdrvMailbox.payload -1;
     }
     Settings.wifi_channel = 0;  // Disable stored AP
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, Settings.sta_active +1, EscapeJSONString(SettingsText(SET_STASSID1 + Settings.sta_active)).c_str());
 }
@@ -1518,7 +1518,7 @@ void CmndSsid(void)
         SettingsUpdateText(SET_STASSID1 + XdrvMailbox.index -1,
                 (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_SSID1 : STA_SSID2 : XdrvMailbox.data);
         Settings.sta_active = XdrvMailbox.index -1;
-        restart_flag = 2;
+        TasmotaGlobal.restart_flag = 2;
       }
       ResponseCmndIdxChar(SettingsText(SET_STASSID1 + XdrvMailbox.index -1));
     }
@@ -1532,7 +1532,7 @@ void CmndPassword(void)
       SettingsUpdateText(SET_STAPWD1 + XdrvMailbox.index -1,
               (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_PASS1 : STA_PASS2 : XdrvMailbox.data);
       Settings.sta_active = XdrvMailbox.index -1;
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
       ResponseCmndIdxChar(SettingsText(SET_STAPWD1 + XdrvMailbox.index -1));
     } else {
       Response_P(S_JSON_COMMAND_INDEX_ASTERISK, XdrvMailbox.command, XdrvMailbox.index);
@@ -1547,7 +1547,7 @@ void CmndHostname(void)
     if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
       SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
     }
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndChar(SettingsText(SET_HOSTNAME));
 }
@@ -1561,7 +1561,7 @@ void CmndWifiConfig(void)
     Settings.sta_config = XdrvMailbox.payload;
     wifi_state_flag = Settings.sta_config;
     if (WifiState() > WIFI_RESTART) {
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
     }
   }
   char stemp1[TOPSZ];
@@ -1572,7 +1572,7 @@ void CmndWifi(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     Settings.flag4.network_wifi = XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndStateText(Settings.flag4.network_wifi);
 }
@@ -1708,11 +1708,11 @@ void CmndReset(void)
 {
   switch (XdrvMailbox.payload) {
   case 1:
-    restart_flag = 211;
+    TasmotaGlobal.restart_flag = 211;
     ResponseCmndChar(PSTR(D_JSON_RESET_AND_RESTARTING));
     break;
   case 2 ... 6:
-    restart_flag = 210 + XdrvMailbox.payload;
+    TasmotaGlobal.restart_flag = 210 + XdrvMailbox.payload;
     Response_P(PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
     break;
   case 99:
@@ -1977,7 +1977,7 @@ void CmndI2cDriver(void)
   if (XdrvMailbox.index < MAX_I2C_DRIVERS) {
     if (XdrvMailbox.payload >= 0) {
       bitWrite(Settings.i2c_drivers[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
     }
   }
   Response_P(PSTR("{\"" D_CMND_I2CDRIVER "\":"));
@@ -1996,7 +1996,7 @@ void CmndDevGroupName(void)
       else if (1 == XdrvMailbox.data_len && ('"' == XdrvMailbox.data[0] || '0' == XdrvMailbox.data[0]))
         XdrvMailbox.data[0] = 0;
       SettingsUpdateText(SET_DEV_GROUP_NAME1 + XdrvMailbox.index - 1, XdrvMailbox.data);
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
     }
     ResponseCmndAll(SET_DEV_GROUP_NAME1, MAX_DEV_GROUP_NAMES);
   }

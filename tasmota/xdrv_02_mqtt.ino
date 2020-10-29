@@ -810,7 +810,7 @@ void CmndMqttFingerprint(void)
           Settings.mqtt_fingerprint[XdrvMailbox.index -1][i] = strtol(p, &p, 16);
         }
       }
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
     }
     ResponseCmndIdxChar(ToHex_P((unsigned char *)Settings.mqtt_fingerprint[XdrvMailbox.index -1], 20, fingerprint, sizeof(fingerprint), ' '));
   }
@@ -821,7 +821,7 @@ void CmndMqttUser(void)
 {
   if (XdrvMailbox.data_len > 0) {
     SettingsUpdateText(SET_MQTT_USER, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_USER : XdrvMailbox.data);
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndChar(SettingsText(SET_MQTT_USER));
 }
@@ -831,7 +831,7 @@ void CmndMqttPassword(void)
   if (XdrvMailbox.data_len > 0) {
     SettingsUpdateText(SET_MQTT_PWD, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_PASS : XdrvMailbox.data);
     ResponseCmndChar(SettingsText(SET_MQTT_PWD));
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   } else {
     Response_P(S_JSON_COMMAND_ASTERISK, XdrvMailbox.command);
   }
@@ -849,7 +849,7 @@ void CmndMqttHost(void)
 {
   if (XdrvMailbox.data_len > 0) {
     SettingsUpdateText(SET_MQTT_HOST, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_HOST : XdrvMailbox.data);
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndChar(SettingsText(SET_MQTT_HOST));
 }
@@ -858,7 +858,7 @@ void CmndMqttPort(void)
 {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 65536)) {
     Settings.mqtt_port = (1 == XdrvMailbox.payload) ? MQTT_PORT : XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndNumber(Settings.mqtt_port);
 }
@@ -893,7 +893,7 @@ void CmndMqttClient(void)
 {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     SettingsUpdateText(SET_MQTT_CLIENT, (SC_DEFAULT == Shortcut()) ? MQTT_CLIENT_ID : XdrvMailbox.data);
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndChar(SettingsText(SET_MQTT_CLIENT));
 }
@@ -909,7 +909,7 @@ void CmndFullTopic(void)
       Response_P((Settings.flag.mqtt_offline) ? S_LWT_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
       MqttPublishPrefixTopic_P(TELE, S_LWT, true);          // Offline or remove previous retained topic
       SettingsUpdateText(SET_MQTT_FULLTOPIC, stemp1);
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
     }
   }
   ResponseCmndChar(SettingsText(SET_MQTT_FULLTOPIC));
@@ -925,7 +925,7 @@ void CmndPrefix(void)
         MakeValidMqtt(0, XdrvMailbox.data);
         SettingsUpdateText(SET_MQTTPREFIX1 + XdrvMailbox.index -1,
           (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index) ? SUB_PREFIX : (2==XdrvMailbox.index) ? PUB_PREFIX : PUB_PREFIX2 : XdrvMailbox.data);
-        restart_flag = 2;
+        TasmotaGlobal.restart_flag = 2;
       }
       ResponseCmndIdxChar(SettingsText(SET_MQTTPREFIX1 + XdrvMailbox.index -1));
     }
@@ -996,7 +996,7 @@ void CmndGroupTopic(void)
         }
       }
 
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
     }
     ResponseCmndAll(SET_MQTT_GRP_TOPIC, MAX_GROUP_TOPICS);
   }
@@ -1013,7 +1013,7 @@ void CmndTopic(void)
       Response_P((Settings.flag.mqtt_offline) ? S_LWT_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
       MqttPublishPrefixTopic_P(TELE, S_LWT, true);          // Offline or remove previous retained topic
       SettingsUpdateText(SET_MQTT_TOPIC, stemp1);
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
     }
   }
   ResponseCmndChar(SettingsText(SET_MQTT_TOPIC));

@@ -747,7 +747,7 @@ void ShutterButtonHandler(void)
     if (Button.window_timer[button_index]) {
       Button.window_timer[button_index]--;
     } else {
-      if (!restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0)) {
+      if (!TasmotaGlobal.restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0)) {
         if (Button.press_counter[button_index]<99) {
           // check for simultaneous shutter button press
           uint32 min_shutterbutton_press_counter = -1; // -1 == max(uint32)

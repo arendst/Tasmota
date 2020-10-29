@@ -44,7 +44,7 @@ struct SONOFFD1 {
 
 void SonoffD1Received(void)
 {
-  if (serial_in_byte_counter < 8) { return; }  // Received ack from Rf chip (aa 55 01 04 00 00 05)
+  if (TasmotaGlobal.serial_in_byte_counter < 8) { return; }  // Received ack from Rf chip (aa 55 01 04 00 00 05)
 
   uint8_t action = serial_in_buffer[6] & 1;
   if (action != SnfD1.power) {
@@ -81,15 +81,15 @@ void SonoffD1Received(void)
 bool SonoffD1SerialInput(void)
 {
   if (0xAA == serial_in_byte) {               // 0xAA - Start of text
-    serial_in_byte_counter = 0;
+    TasmotaGlobal.serial_in_byte_counter = 0;
     SnfD1.receive_len = 7;
   }
   if (SnfD1.receive_len) {
-    serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-    if (6 == serial_in_byte_counter) {
+    serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = serial_in_byte;
+    if (6 == TasmotaGlobal.serial_in_byte_counter) {
       SnfD1.receive_len += serial_in_byte;  // 8 or 17
     }
-    if (serial_in_byte_counter == SnfD1.receive_len) {
+    if (TasmotaGlobal.serial_in_byte_counter == SnfD1.receive_len) {
 
       // Sonoff D1 codes
       // aa 55 01 04 00 0a 01 01 ff ff ff ff ff ff ff ff 09 - Power On, Dimmer 1%

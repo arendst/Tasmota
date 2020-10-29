@@ -126,7 +126,7 @@ void CmndZbReset(void) {
       eraseZigbeeDevices();
     case 2:   // fall through
       Settings.zb_txradio_dbm = - abs(Settings.zb_txradio_dbm);
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
 #ifdef USE_ZIGBEE_ZNP
       ResponseCmndChar_P(PSTR(D_JSON_ZIGBEE_CC2530 " " D_JSON_RESET_AND_RESTARTING));
 #endif // USE_ZIGBEE_ZNP
@@ -1475,7 +1475,7 @@ void CmndZbData(void) {
       } else {
         snprintf_P(key, sizeof(key), "?%02X", data_elt.getEndpoint());
       }
-      
+
       Z_Data_Type data_type = data_elt.getType();
       key[0] = Z_Data::DataTypeToChar(data_type);
       switch (data_type) {
@@ -1559,7 +1559,7 @@ void CmndZbConfig(void) {
       Settings.zb_precfgkey_l  = zb_precfgkey_l;
       Settings.zb_precfgkey_h  = zb_precfgkey_h;
       Settings.zb_txradio_dbm  = zb_txradio_dbm;
-      restart_flag = 2;    // save and reboot
+      TasmotaGlobal.restart_flag = 2;    // save and reboot
     }
   }
 

@@ -164,7 +164,7 @@ void CmndEthernet(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     Settings.flag4.network_ethernet = XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndStateText(Settings.flag4.network_ethernet);
 }
@@ -173,7 +173,7 @@ void CmndEthAddress(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 31)) {
     Settings.eth_address = XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndNumber(Settings.eth_address);
 }
@@ -182,7 +182,7 @@ void CmndEthType(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
     Settings.eth_type = XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndNumber(Settings.eth_type);
 }
@@ -191,7 +191,7 @@ void CmndEthClockMode(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
     Settings.eth_clk_mode = XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndNumber(Settings.eth_clk_mode);
 }

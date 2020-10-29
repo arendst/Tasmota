@@ -417,8 +417,8 @@ bool Ina226CommandSensor()
         break;
 
       case 2: // Save and restart
-        restart_flag = 2;
-        Response_P(PSTR("{\"Sensor54-Command-Result\":{\"Restart_flag\":%d}}"),restart_flag);
+        TasmotaGlobal.restart_flag = 2;
+        Response_P(PSTR("{\"Sensor54-Command-Result\":{\"Restart_flag\":%d}}"),TasmotaGlobal.restart_flag);
         break;
 
       default:

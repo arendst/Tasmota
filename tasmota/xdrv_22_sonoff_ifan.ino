@@ -159,12 +159,12 @@ bool SonoffIfanSerialInput(void)
   if (SONOFF_IFAN03 != my_module_type) { return false; }
 
   if (0xAA == serial_in_byte) {               // 0xAA - Start of text
-    serial_in_byte_counter = 0;
+    TasmotaGlobal.serial_in_byte_counter = 0;
     ifan_receive_flag = true;
   }
   if (ifan_receive_flag) {
-    serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-    if (serial_in_byte_counter == 8) {
+    serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = serial_in_byte;
+    if (TasmotaGlobal.serial_in_byte_counter == 8) {
       // AA 55 01 01 00 01 01 04 - Wifi long press - start wifi setup
       // AA 55 01 01 00 01 02 05 - Rf and Wifi short press
       // AA 55 01 04 00 01 00 06 - Fan 0

@@ -940,8 +940,8 @@ void Every250mSeconds(void)
       blinks = 201;                                       // Allow only a single blink in case the problem is solved
     }
   }
-  if (blinks || restart_flag || ota_state_flag) {
-    if (restart_flag || ota_state_flag) {                 // Overrule blinks and keep led lit
+  if (blinks || TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag) {
+    if (TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag) {                 // Overrule blinks and keep led lit
       blinkstate = true;                                  // Stay lit
     } else {
       blinkspeed--;
@@ -958,7 +958,7 @@ void Every250mSeconds(void)
       if (200 == blinks) blinks = 0;                      // Disable blink
     }
   }
-  if (Settings.ledstate &1 && (PinUsed(GPIO_LEDLNK) || !(blinks || restart_flag || ota_state_flag)) ) {
+  if (Settings.ledstate &1 && (PinUsed(GPIO_LEDLNK) || !(blinks || TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag)) ) {
     bool tstate = TasmotaGlobal.power & Settings.ledmask;
 #ifdef ESP8266
     if ((SONOFF_TOUCH == my_module_type) || (SONOFF_T11 == my_module_type) || (SONOFF_T12 == my_module_type) || (SONOFF_T13 == my_module_type)) {
@@ -977,15 +977,15 @@ void Every250mSeconds(void)
 
   switch (state_250mS) {
   case 0:                                                 // Every x.0 second
-    if (ota_state_flag && BACKLOG_EMPTY) {
-      ota_state_flag--;
-      if (2 == ota_state_flag) {
+    if (TasmotaGlobal.ota_state_flag && BACKLOG_EMPTY) {
+      TasmotaGlobal.ota_state_flag--;
+      if (2 == TasmotaGlobal.ota_state_flag) {
         RtcSettings.ota_loader = 0;  // Try requested image first
         ota_retry_counter = OTA_ATTEMPTS;
         ESPhttpUpdate.rebootOnUpdate(false);
         SettingsSave(1);  // Free flash for OTA update
       }
-      if (ota_state_flag <= 0) {
+      if (TasmotaGlobal.ota_state_flag <= 0) {
 #ifdef USE_COUNTER
         CounterInterruptDisable(true);  // Prevent OTA failures on 100Hz counter interrupts
 #endif  // USE_COUNTER
@@ -995,7 +995,7 @@ void Every250mSeconds(void)
 #ifdef USE_ARILUX_RF
         AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
 #endif  // USE_ARILUX_RF
-        ota_state_flag = 92;
+        TasmotaGlobal.ota_state_flag = 92;
         ota_result = 0;
         ota_retry_counter--;
         if (ota_retry_counter) {
@@ -1045,12 +1045,12 @@ void Every250mSeconds(void)
               RtcSettings.ota_loader = 1;  // Try minimal image next
             }
 #endif  // FIRMWARE_MINIMAL
-            ota_state_flag = 2;    // Upgrade failed - retry
+            TasmotaGlobal.ota_state_flag = 2;    // Upgrade failed - retry
           }
         }
       }
-      if (90 == ota_state_flag) {  // Allow MQTT to reconnect
-        ota_state_flag = 0;
+      if (90 == TasmotaGlobal.ota_state_flag) {  // Allow MQTT to reconnect
+        TasmotaGlobal.ota_state_flag = 0;
         Response_P(PSTR("{\"" D_CMND_UPGRADE "\":\""));
         if (ota_result) {
 //          SetFlashModeDout();      // Force DOUT for both ESP8266 and ESP8285
@@ -1058,13 +1058,13 @@ void Every250mSeconds(void)
             ResponseAppend_P(PSTR(D_JSON_FAILED " " D_UPLOAD_ERR_14));
           } else {
             ResponseAppend_P(PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
-            restart_flag = 2;
+            TasmotaGlobal.restart_flag = 2;
           }
         } else {
           ResponseAppend_P(PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
         }
         ResponseAppend_P(PSTR("\"}"));
-//        restart_flag = 2;          // Restart anyway to keep memory clean webserver
+//        TasmotaGlobal.restart_flag = 2;          // Restart anyway to keep memory clean webserver
         MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_UPGRADE));
 #ifdef USE_COUNTER
         CounterInterruptDisable(false);
@@ -1092,12 +1092,12 @@ void Every250mSeconds(void)
         } else {
           Settings.power = 0;
         }
-        if (!restart_flag) { SettingsSave(0); }
+        if (!TasmotaGlobal.restart_flag) { SettingsSave(0); }
         save_data_counter = Settings.save_data;
       }
     }
-    if (restart_flag && BACKLOG_EMPTY) {
-      if ((214 == restart_flag) || (215 == restart_flag) || (216 == restart_flag)) {
+    if (TasmotaGlobal.restart_flag && BACKLOG_EMPTY) {
+      if ((214 == TasmotaGlobal.restart_flag) || (215 == TasmotaGlobal.restart_flag) || (216 == TasmotaGlobal.restart_flag)) {
         // Backup current SSIDs and Passwords
         char storage_ssid1[strlen(SettingsText(SET_STASSID1)) +1];
         strncpy(storage_ssid1, SettingsText(SET_STASSID1), sizeof(storage_ssid1));
@@ -1118,10 +1118,10 @@ void Every250mSeconds(void)
         strncpy(storage_mqtttopic, SettingsText(SET_MQTT_TOPIC), sizeof(storage_mqtttopic));
         uint16_t mqtt_port = Settings.mqtt_port;
 
-//        if (216 == restart_flag) {
+//        if (216 == TasmotaGlobal.restart_flag) {
           // Backup mqtt host, port, client, username and password
 //        }
-        if ((215 == restart_flag) || (216 == restart_flag)) {
+        if ((215 == TasmotaGlobal.restart_flag) || (216 == TasmotaGlobal.restart_flag)) {
           SettingsErase(0);  // Erase all flash from program end to end of physical flash
         }
         SettingsDefault();
@@ -1130,7 +1130,7 @@ void Every250mSeconds(void)
         SettingsUpdateText(SET_STASSID2, storage_ssid2);
         SettingsUpdateText(SET_STAPWD1, storage_pass1);
         SettingsUpdateText(SET_STAPWD2, storage_pass2);
-        if (216 == restart_flag) {
+        if (216 == TasmotaGlobal.restart_flag) {
           // Restore the mqtt host, port, client, username and password
           SettingsUpdateText(SET_MQTT_HOST, storage_mqtthost);
           SettingsUpdateText(SET_MQTT_USER, storage_mqttuser);
@@ -1138,25 +1138,25 @@ void Every250mSeconds(void)
           SettingsUpdateText(SET_MQTT_TOPIC, storage_mqtttopic);
           Settings.mqtt_port = mqtt_port;
         }
-        restart_flag = 2;
+        TasmotaGlobal.restart_flag = 2;
       }
-      else if (213 == restart_flag) {
+      else if (213 == TasmotaGlobal.restart_flag) {
         SettingsSdkErase();  // Erase flash SDK parameters
-        restart_flag = 2;
+        TasmotaGlobal.restart_flag = 2;
       }
-      else if (212 == restart_flag) {
+      else if (212 == TasmotaGlobal.restart_flag) {
         SettingsErase(0);    // Erase all flash from program end to end of physical flash
-        restart_flag = 211;
+        TasmotaGlobal.restart_flag = 211;
       }
-      if (211 == restart_flag) {
+      if (211 == TasmotaGlobal.restart_flag) {
         SettingsDefault();
-        restart_flag = 2;
+        TasmotaGlobal.restart_flag = 2;
       }
-      if (2 == restart_flag) {
+      if (2 == TasmotaGlobal.restart_flag) {
         SettingsSaveAll();
       }
-      restart_flag--;
-      if (restart_flag <= 0) {
+      TasmotaGlobal.restart_flag--;
+      if (TasmotaGlobal.restart_flag <= 0) {
         AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "%s"), (restart_halt) ? "Halted" : D_RESTARTING);
         EspRestart();
       }
@@ -1173,7 +1173,7 @@ void Every250mSeconds(void)
 #ifdef FIRMWARE_MINIMAL
       if (1 == RtcSettings.ota_loader) {
         RtcSettings.ota_loader = 0;
-        ota_state_flag = 3;
+        TasmotaGlobal.ota_state_flag = 3;
       }
 #endif  // FIRMWARE_MINIMAL
 
@@ -1334,10 +1334,10 @@ void SerialInput(void)
     delay(0);
     serial_in_byte = Serial.read();
 
-    if (0 == serial_in_byte_counter) {
+    if (0 == TasmotaGlobal.serial_in_byte_counter) {
       serial_buffer_overrun = false;
     }
-    else if ((serial_in_byte_counter == INPUT_BUFFER_SIZE)
+    else if ((TasmotaGlobal.serial_in_byte_counter == INPUT_BUFFER_SIZE)
 #ifdef ESP8266
              || Serial.hasOverrun()
 #endif
@@ -1356,7 +1356,7 @@ void SerialInput(void)
 /*-------------------------------------------------------------------------------------------*/
 
     if (XdrvCall(FUNC_SERIAL)) {
-      serial_in_byte_counter = 0;
+      TasmotaGlobal.serial_in_byte_counter = 0;
       Serial.flush();
       return;
     }
@@ -1364,14 +1364,14 @@ void SerialInput(void)
 /*-------------------------------------------------------------------------------------------*/
 
     if (serial_in_byte > 127 && !Settings.flag.mqtt_serial_raw) {                // Discard binary data above 127 if no raw reception allowed - CMND_SERIALSEND3
-      serial_in_byte_counter = 0;
+      TasmotaGlobal.serial_in_byte_counter = 0;
       Serial.flush();
       return;
     }
     if (!Settings.flag.mqtt_serial) {                                            // SerialSend active - CMND_SERIALSEND and CMND_SERIALLOG
       if (isprint(serial_in_byte)) {                                             // Any char between 32 and 127
-        if (serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {                     // Add char to string if it still fits
-          serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
+        if (TasmotaGlobal.serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {       // Add char to string if it still fits
+          serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = serial_in_byte;
         } else {
           serial_buffer_overrun = true;                                          // Signal overrun but continue reading input to flush until '\n' (EOL)
         }
@@ -1383,12 +1383,12 @@ void SerialInput(void)
           ((Settings.serial_delimiter == 128) && !isprint(serial_in_byte))) &&   // Any char not between 32 and 127
           !Settings.flag.mqtt_serial_raw;                                        // In raw mode (CMND_SERIALSEND3) there is never a delimiter
 
-        if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&                   // Add char to string if it still fits and ...
+        if ((TasmotaGlobal.serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&     // Add char to string if it still fits and ...
             !in_byte_is_delimiter) {                                             // Char is not a delimiter
-          serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
+          serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = serial_in_byte;
         }
 
-        if ((serial_in_byte_counter >= INPUT_BUFFER_SIZE -1) ||                  // Send message when buffer is full or ...
+        if ((TasmotaGlobal.serial_in_byte_counter >= INPUT_BUFFER_SIZE -1) ||    // Send message when buffer is full or ...
             in_byte_is_delimiter) {                                              // Char is delimiter
           serial_polling_window = 0;                                             // Reception done - send mqtt
           break;
@@ -1404,9 +1404,9 @@ void SerialInput(void)
 \*-------------------------------------------------------------------------------------------*/
     if (SONOFF_SC == my_module_type) {
       if (serial_in_byte == '\x1B') {                                            // Sonoff SC status from ATMEGA328P
-        serial_in_buffer[serial_in_byte_counter] = 0;                            // Serial data completed
+        serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;              // Serial data completed
         SonoffScSerialInput(serial_in_buffer);
-        serial_in_byte_counter = 0;
+        TasmotaGlobal.serial_in_byte_counter = 0;
         Serial.flush();
         return;
       }
@@ -1415,7 +1415,7 @@ void SerialInput(void)
 /*-------------------------------------------------------------------------------------------*/
 
     if (!Settings.flag.mqtt_serial && (serial_in_byte == '\n')) {                // CMND_SERIALSEND and CMND_SERIALLOG
-      serial_in_buffer[serial_in_byte_counter] = 0;                              // Serial data completed
+      serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;                // Serial data completed
       seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings.seriallog_level;
       if (serial_buffer_overrun) {
         AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Serial buffer overrun"));
@@ -1423,15 +1423,15 @@ void SerialInput(void)
         AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), serial_in_buffer);
         ExecuteCommand(serial_in_buffer, SRC_SERIAL);
       }
-      serial_in_byte_counter = 0;
+      TasmotaGlobal.serial_in_byte_counter = 0;
       serial_polling_window = 0;
       Serial.flush();
       return;
     }
   }
 
-  if (Settings.flag.mqtt_serial && serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {  // CMND_SERIALSEND and CMND_SERIALLOG
-    serial_in_buffer[serial_in_byte_counter] = 0;                                // Serial data completed
+  if (Settings.flag.mqtt_serial && TasmotaGlobal.serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {  // CMND_SERIALSEND and CMND_SERIALLOG
+    serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;                  // Serial data completed
     bool assume_json = (!Settings.flag.mqtt_serial_raw && (serial_in_buffer[0] == '{'));
 
     Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":"));
@@ -1440,8 +1440,8 @@ void SerialInput(void)
     } else {
       ResponseAppend_P(PSTR("\""));
       if (Settings.flag.mqtt_serial_raw) {
-        char hex_char[(serial_in_byte_counter * 2) + 2];
-        ResponseAppend_P(ToHex_P((unsigned char*)serial_in_buffer, serial_in_byte_counter, hex_char, sizeof(hex_char)));
+        char hex_char[(TasmotaGlobal.serial_in_byte_counter * 2) + 2];
+        ResponseAppend_P(ToHex_P((unsigned char*)serial_in_buffer, TasmotaGlobal.serial_in_byte_counter, hex_char, sizeof(hex_char)));
       } else {
         ResponseAppend_P(EscapeJSONString(serial_in_buffer).c_str());
       }
@@ -1450,7 +1450,7 @@ void SerialInput(void)
     ResponseJsonEnd();
 
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
-    serial_in_byte_counter = 0;
+    TasmotaGlobal.serial_in_byte_counter = 0;
   }
 }
 

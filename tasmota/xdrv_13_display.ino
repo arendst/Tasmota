@@ -1339,7 +1339,7 @@ void CmndDisplayModel(void)
     uint32_t last_display_model = Settings.display_model;
     Settings.display_model = XdrvMailbox.payload;
     if (XdspCall(FUNC_DISPLAY_MODEL)) {
-      restart_flag = 2;  // Restart to re-init interface and add/Remove MQTT subscribe
+      TasmotaGlobal.restart_flag = 2;  // Restart to re-init interface and add/Remove MQTT subscribe
     } else {
       Settings.display_model = last_display_model;
     }
@@ -1352,7 +1352,7 @@ void CmndDisplayWidth(void)
   if (XdrvMailbox.payload > 0) {
     if (XdrvMailbox.payload != Settings.display_width) {
       Settings.display_width = XdrvMailbox.payload;
-      restart_flag = 2;  // Restart to re-init width
+      TasmotaGlobal.restart_flag = 2;  // Restart to re-init width
     }
   }
   ResponseCmndNumber(Settings.display_width);
@@ -1363,7 +1363,7 @@ void CmndDisplayHeight(void)
   if (XdrvMailbox.payload > 0) {
     if (XdrvMailbox.payload != Settings.display_height) {
       Settings.display_height = XdrvMailbox.payload;
-      restart_flag = 2;  // Restart to re-init height
+      TasmotaGlobal.restart_flag = 2;  // Restart to re-init height
     }
   }
   ResponseCmndNumber(Settings.display_height);
@@ -1384,7 +1384,7 @@ void CmndDisplayMode(void)
     Settings.display_mode = XdrvMailbox.payload;
 
     if (disp_subscribed != (Settings.display_mode &0x04)) {
-      restart_flag = 2;  // Restart to Add/Remove MQTT subscribe
+      TasmotaGlobal.restart_flag = 2;  // Restart to Add/Remove MQTT subscribe
     } else {
       if (last_display_mode && !Settings.display_mode) {  // Switch to mode 0
         DisplayInit(DISPLAY_INIT_MODE);

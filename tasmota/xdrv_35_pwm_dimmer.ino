@@ -690,7 +690,7 @@ void CmndPWMDimmerPWMs(void)
 {
   if (XdrvMailbox.data_len > 0 && XdrvMailbox.payload <= 5) {
     Settings.pwm_dimmer_cfg.pwm_count = XdrvMailbox.payload - 1;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   Response_P(PSTR("{\"" D_CMND_PWM_DIMMER_PWMS "\":%u}"), Settings.pwm_dimmer_cfg.pwm_count + 1);
 }

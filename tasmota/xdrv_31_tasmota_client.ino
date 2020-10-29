@@ -347,7 +347,7 @@ void TasmotaClient_Flash(void) {
   if (!TasmotaClient_SetupFlash()) {
     AddLog_P2(LOG_LEVEL_INFO, PSTR("TCL: Flashing aborted!"));
     TClient.flashing  = false;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
     return;
   }
 
@@ -385,7 +385,7 @@ void TasmotaClient_Flash(void) {
   TasmotaClient_exitProgMode();
   AddLog_P2(LOG_LEVEL_INFO, PSTR("TCL: Flash done!"));
   TClient.flashing  = false;
-  restart_flag = 2;
+  TasmotaGlobal.restart_flag = 2;
 }
 
 void TasmotaClient_SetFlagFlashing(bool value) {

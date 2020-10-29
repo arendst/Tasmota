@@ -448,7 +448,7 @@ void CmndDomoticzIdx(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DOMOTICZ_IDX)) {
     if (XdrvMailbox.payload >= 0) {
       Settings.domoticz_relay_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
     }
     ResponseCmndIdxNumber(Settings.domoticz_relay_idx[XdrvMailbox.index -1]);
   }

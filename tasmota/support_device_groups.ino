@@ -166,7 +166,7 @@ void DeviceGroupsInit(void)
 
 void DeviceGroupsStart()
 {
-  if (Settings.flag4.device_groups_enabled && !device_groups_up && !restart_flag) {
+  if (Settings.flag4.device_groups_enabled && !device_groups_up && !TasmotaGlobal.restart_flag) {
 
     // If we haven't successfuly initialized device groups yet, attempt to do it now.
     if (!device_groups_initialized) {
@@ -806,7 +806,7 @@ void DeviceGroupStatus(uint8_t device_group_index)
 
 void DeviceGroupsLoop(void)
 {
-  if (!device_groups_up || restart_flag) return;
+  if (!device_groups_up || TasmotaGlobal.restart_flag) return;
 
   while (device_groups_udp.parsePacket()) {
     uint8_t packet_buffer[512];

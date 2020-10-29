@@ -1282,7 +1282,7 @@ void WebRestart(uint32_t type)
   WSContentStop();
 
   ShowWebSource(SRC_WEBGUI);
-  restart_flag = 2;
+  TasmotaGlobal.restart_flag = 2;
 }
 
 /*********************************************************************************************/
@@ -2662,7 +2662,7 @@ void HandleUploadDone(void)
   char error[100];
 
   WifiConfigCounter();
-  restart_flag = 0;
+  TasmotaGlobal.restart_flag = 0;
   MqttRetryCounter(0);
 #ifdef USE_COUNTER
   CounterInterruptDisable(false);
@@ -2697,14 +2697,14 @@ void HandleUploadDone(void)
     stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
-    restart_flag = 2;  // Always restart to re-enable disabled features during update
+    TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
 #ifdef USE_TASMOTA_CLIENT
     if (TasmotaClient_GetFlagFlashing()) {
       WSContentSend_P(PSTR("<br><div style='text-align:center;'><b>" D_TRANSFER_STARTED " ...</b></div>"));
-      restart_flag = 0;  // Hold restart as code still needs to be transferred to Atmega
+      TasmotaGlobal.restart_flag = 0;  // Hold restart as code still needs to be transferred to Atmega
     }
 #endif  // USE_TASMOTA_CLIENT
-    if (restart_flag) {
+    if (TasmotaGlobal.restart_flag) {
       WSContentSend_P(HTTP_MSG_RSTRT);
       ShowWebSource(SRC_WEBGUI);
     }
@@ -2736,7 +2736,7 @@ void HandleUploadLoop(void)
 
   // ***** Step1: Start upload file
   if (UPLOAD_FILE_START == upload.status) {
-    restart_flag = 60;
+    TasmotaGlobal.restart_flag = 60;
     if (0 == upload.filename.c_str()[0]) {
       Web.upload_error = 1;  // No file selected
       return;
@@ -2986,7 +2986,7 @@ void HandleUploadLoop(void)
 
   // ***** Step4: Abort upload file
   else if (UPLOAD_FILE_ABORTED == upload.status) {
-    restart_flag = 0;
+    TasmotaGlobal.restart_flag = 0;
     MqttRetryCounter(0);
 #ifdef USE_COUNTER
     CounterInterruptDisable(false);
@@ -3355,7 +3355,7 @@ void CmndEmulation(void)
 #endif
 #endif
     Settings.flag2.emulation = XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
 #endif
   ResponseCmndNumber(Settings.flag2.emulation);
