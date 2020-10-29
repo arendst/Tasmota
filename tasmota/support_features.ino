@@ -638,12 +638,14 @@ void ResponseAppendFeatures(void)
     feature7 |= 0x00000008;  // xsns_78_ezoec.ino
 #endif
 #if defined(USE_I2C) && defined(USE_EZOCO2)
-    feature7 |= 0x00000010;
+    feature7 |= 0x00000010;  // xsns_78_ezoco2.ino
 #endif
 #if defined(USE_I2C) && defined(USE_EZOO2)
-    feature7 |= 0x00000020;
+    feature7 |= 0x00000020;  // xsns_78_ezoo2.ino
 #endif
-//    feature7 |= 0x00000040;
+#if defined(USE_I2C) && defined(USE_EZOPRS)
+    feature7 |= 0x00000040;  // xsns_78_ezoprs.ino
+#endif
 //    feature7 |= 0x00000080;
 
 //    feature7 |= 0x00000100;

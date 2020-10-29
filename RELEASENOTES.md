@@ -73,7 +73,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for analog buttons indexed within standard button range
 - Support for Vietnamese language translations by Tâm.NT
 - Support for timers in case of no-sunset permanent day by cybermaus (#9543)
-- Support for EZO CO2, EC, HUM, O2, ORP, Ph and RTD sensors by Christopher Tremblay
+- Support for EZO sensors by Christopher Tremblay
 - Support for fixed output Hi or Lo GPIO selection
 - TLS in binary tasmota-zbbridge (#9620)
 - Zigbee reduce battery drain (#9642)
