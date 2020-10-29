@@ -900,7 +900,7 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
 
         // Calculate temperature for switching off the output
         // y = (((y2-y1)/(x2-x1))*(x-x1)) + y1
-        Thermostat[ctr_output].temp_rampup_output_off = (int16_t)(((int32_t)temp_delta_rampup * (int32_t)(Thermostat[ctr_output].time_ctr_changepoint - (uptime - (time_total_rampup)))) / (int32_t)(time_total_rampup * Thermostat[ctr_output].counter_rampup_cycles)) + Thermostat[ctr_output].temp_rampup_cycle;
+        Thermostat[ctr_output].temp_rampup_output_off = (int16_t)(((int32_t)temp_delta_rampup * (int32_t)(Thermostat[ctr_output].time_ctr_changepoint - (TasmotaGlobal.uptime - (time_total_rampup)))) / (int32_t)(time_total_rampup * Thermostat[ctr_output].counter_rampup_cycles)) + Thermostat[ctr_output].temp_rampup_cycle;
         // Set auxiliary variables
         Thermostat[ctr_output].time_rampup_nextcycle = TasmotaGlobal.uptime + ((uint32_t)Thermostat[ctr_output].time_rampup_cycle * 60);
         Thermostat[ctr_output].temp_rampup_cycle = Thermostat[ctr_output].temp_measured;
