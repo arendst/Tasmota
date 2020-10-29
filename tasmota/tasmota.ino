@@ -118,10 +118,10 @@ struct {
   uint8_t state_250mS;                      // State 250msecond per second flag
   uint8_t latching_relay_pulse;             // Latching relay pulse timer
   uint8_t active_device;                    // Active device in ExecuteCommandPower
+  uint8_t sleep;                            // Current copy of Settings.sleep
 
 } TasmotaGlobal;
 
-uint8_t ssleep;                             // Current copy of Settings.sleep
 uint8_t leds_present = 0;                   // Max number of LED supported
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t led_power = 0;                      // LED power state
@@ -235,7 +235,7 @@ void setup(void) {
   syslog_level = Settings.syslog_level;
   stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   TasmotaGlobal.save_data_counter = Settings.save_data;
-  ssleep = Settings.sleep;
+  TasmotaGlobal.sleep = Settings.sleep;
 #ifndef USE_EMULATION
   Settings.flag2.emulation = 0;
 #else
@@ -416,10 +416,10 @@ void loop(void) {
 
   if (Settings.flag3.sleep_normal) {               // SetOption60 - Enable normal sleep instead of dynamic sleep
     //  yield();                                   // yield == delay(0), delay contains yield, auto yield in loop
-    SleepDelay(ssleep);                            // https://github.com/esp8266/Arduino/issues/2021
+    SleepDelay(TasmotaGlobal.sleep);                            // https://github.com/esp8266/Arduino/issues/2021
   } else {
-    if (my_activity < (uint32_t)ssleep) {
-      SleepDelay((uint32_t)ssleep - my_activity);  // Provide time for background tasks like wifi
+    if (my_activity < (uint32_t)TasmotaGlobal.sleep) {
+      SleepDelay((uint32_t)TasmotaGlobal.sleep - my_activity);  // Provide time for background tasks like wifi
     } else {
       if (global_state.network_down) {
         SleepDelay(my_activity /2);                // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
@@ -428,7 +428,7 @@ void loop(void) {
   }
 
   if (!my_activity) { my_activity++; }             // We cannot divide by 0
-  uint32_t loop_delay = ssleep;
+  uint32_t loop_delay = TasmotaGlobal.sleep;
   if (!loop_delay) { loop_delay++; }               // We cannot divide by 0
   uint32_t loops_per_second = 1000 / loop_delay;   // We need to keep track of this many loops per second
   uint32_t this_cycle_ratio = 100 * my_activity / loop_delay;

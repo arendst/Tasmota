@@ -1859,12 +1859,12 @@ void LightAnimate(void)
   // or set a maximum of PWM_MAX_SLEEP if light is on or Fade is running
   if (Light.power || Light.fade_running) {
     if (Settings.sleep > PWM_MAX_SLEEP) {
-      ssleep = PWM_MAX_SLEEP;      // set a maxumum value of 10 milliseconds to ensure that animations are smooth
+      TasmotaGlobal.sleep = PWM_MAX_SLEEP;      // set a maxumum value of 10 milliseconds to ensure that animations are smooth
     } else {
-      ssleep = Settings.sleep;     // or keep the current sleep if it's lower than 50
+      TasmotaGlobal.sleep = Settings.sleep;     // or keep the current sleep if it's lower than 50
     }
   } else {
-    ssleep = Settings.sleep;
+    TasmotaGlobal.sleep = Settings.sleep;
   }
 
   if (!Light.power) {                   // All channels powered off

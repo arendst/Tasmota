@@ -669,7 +669,7 @@ void MqttShowState(void)
 
   ResponseAppend_P(PSTR(",\"" D_JSON_HEAPSIZE "\":%d,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u,\"MqttCount\":%u"),
     ESP_getFreeHeap()/1024, GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode),  // SetOption60 - Enable normal sleep instead of dynamic sleep
-    ssleep, TasmotaGlobal.loop_load_avg, MqttConnectCount());
+    TasmotaGlobal.sleep, TasmotaGlobal.loop_load_avg, MqttConnectCount());
 
   for (uint32_t i = 1; i <= devices_present; i++) {
 #ifdef USE_LIGHT

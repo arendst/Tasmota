@@ -683,10 +683,10 @@ void CmndSleep(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 251)) {
     Settings.sleep = XdrvMailbox.payload;
-    ssleep = XdrvMailbox.payload;
+    TasmotaGlobal.sleep = XdrvMailbox.payload;
     WiFiSetSleepMode();
   }
-  Response_P(S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, XdrvMailbox.command, Settings.sleep, ssleep);
+  Response_P(S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, XdrvMailbox.command, Settings.sleep, TasmotaGlobal.sleep);
 
 }
 

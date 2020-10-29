@@ -172,11 +172,11 @@ void CpuLoadLoop(void)
     CPU_loops ++;
     if ((CPU_last_millis + (CPU_load_check *1000)) <= CPU_last_loop_time) {
 #if defined(F_CPU) && (F_CPU == 160000000L)
-      int CPU_load = 100 - ( (CPU_loops*(1 + 30*ssleep)) / (CPU_load_check *800) );
+      int CPU_load = 100 - ( (CPU_loops*(1 + 30*TasmotaGlobal.sleep)) / (CPU_load_check *800) );
       CPU_loops = CPU_loops / CPU_load_check;
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(160MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
 #else
-      int CPU_load = 100 - ( (CPU_loops*(1 + 30*ssleep)) / (CPU_load_check *400) );
+      int CPU_load = 100 - ( (CPU_loops*(1 + 30*TasmotaGlobal.sleep)) / (CPU_load_check *400) );
       CPU_loops = CPU_loops / CPU_load_check;
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(80MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
 #endif
