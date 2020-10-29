@@ -726,6 +726,14 @@ float ConvertPressure(float p)
   return result;
 }
 
+float ConvertPressureForSeaLevel(float pressure)
+{
+  if (pressure == 0.0f)
+    return pressure;
+
+  return ConvertPressure((pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0f), 5.255f)) - 21.6f);
+}
+
 String PressureUnit(void)
 {
   return (Settings.flag.pressure_conversion) ? String(D_UNIT_MILLIMETER_MERCURY) : String(D_UNIT_PRESSURE);

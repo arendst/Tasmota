@@ -517,11 +517,7 @@ void BmpShow(bool json)
 {
   for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
     if (bmp_sensors[bmp_idx].bmp_type) {
-      float bmp_sealevel = 0.0;
-      if (bmp_sensors[bmp_idx].bmp_pressure != 0.0) {
-        bmp_sealevel = (bmp_sensors[bmp_idx].bmp_pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0), 5.255)) - 21.6;
-        bmp_sealevel = ConvertPressure(bmp_sealevel);
-      }
+      float bmp_sealevel = ConvertPressureForSeaLevel(bmp_sensors[bmp_idx].bmp_pressure);
       float bmp_temperature = ConvertTemp(bmp_sensors[bmp_idx].bmp_temperature);
       float bmp_pressure = ConvertPressure(bmp_sensors[bmp_idx].bmp_pressure);
 
