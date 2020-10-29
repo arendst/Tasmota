@@ -969,7 +969,12 @@ void CmndZbBindState_or_Map(uint16_t zdo_cmd) {
 // `ZbBindState<x>` as index if it does not fit. If default, `1` starts at the beginning
 //
 void CmndZbBindState(void) {
+#ifdef USE_ZIGBEE_ZNP
+  CmndZbBindState_or_Map(ZDO_MGMT_BIND_REQ);
+#endif // USE_ZIGBEE_ZNP
+#ifdef USE_ZIGBEE_EZSP
   CmndZbBindState_or_Map(ZDO_Mgmt_Bind_req);
+#endif // USE_ZIGBEE_EZSP
 }
 
 //
@@ -977,7 +982,12 @@ void CmndZbBindState(void) {
 // `ZbMap<x>` as index if it does not fit. If default, `1` starts at the beginning
 //
 void CmndZbMap(void) {
+#ifdef USE_ZIGBEE_ZNP
+  CmndZbBindState_or_Map(ZDO_MGMT_LQI_REQ);
+#endif // USE_ZIGBEE_ZNP
+#ifdef USE_ZIGBEE_EZSP
   CmndZbBindState_or_Map(ZDO_Mgmt_Lqi_req);
+#endif // USE_ZIGBEE_EZSP
 }
 
 // Probe a specific device to get its endpoints and supported clusters
