@@ -97,7 +97,7 @@ void WifiConfig(uint8_t type)
 
     Wifi.config_counter = WIFI_CONFIG_SEC;   // Allow up to WIFI_CONFIG_SECS seconds for phone to provide ssid/pswd
     Wifi.counter = Wifi.config_counter +5;
-    blinks = 1999;
+    TasmotaGlobal.blinks = 255;
     if (WIFI_RESTART == Wifi.config_type) {
       TasmotaGlobal.restart_flag = 2;
     }

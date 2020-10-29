@@ -96,17 +96,17 @@ struct {
 
   int serial_in_byte_counter;               // Index in receive buffer
   int ota_state_flag;                       // OTA state flag
-  int restart_flag;                         // Tasmota restart flag
 
   float temperature_celsius;                // Provide a global temperature to be used by some sensors
   float humidity;                           // Provide a global humidity to be used by some sensors
   float pressure_hpa;                       // Provide a global pressure to be used by some sensors
 
+  uint8_t blinks;                           // Number of LED blinks
+  uint8_t restart_flag;                     // Tasmota restart flag
+  uint8_t wifi_state_flag;                  // Wifi state flag
 
 } TasmotaGlobal;
 
-int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
-int blinks = 201;                           // Number of LED blinks
 uint16_t tele_period = 9999;                // Tele period timer
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
@@ -188,6 +188,8 @@ void setup(void) {
   memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
   TasmotaGlobal.temperature_celsius = NAN;
+  TasmotaGlobal.blinks = 201;
+  TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
 
   global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 

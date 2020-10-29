@@ -937,10 +937,10 @@ void Every250mSeconds(void)
     if (global_state.data &0x03) {                        // Network or MQTT problem
       if (global_state.mqtt_down) { blinkinterval = 7; }  // MQTT problem so blink every 2 seconds (slowest)
       if (global_state.network_down) { blinkinterval = 3; }  // Network problem so blink every second (slow)
-      blinks = 201;                                       // Allow only a single blink in case the problem is solved
+      TasmotaGlobal.blinks = 201;                                       // Allow only a single blink in case the problem is solved
     }
   }
-  if (blinks || TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag) {
+  if (TasmotaGlobal.blinks || TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag) {
     if (TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag) {                 // Overrule blinks and keep led lit
       blinkstate = true;                                  // Stay lit
     } else {
@@ -950,15 +950,15 @@ void Every250mSeconds(void)
         blinkstate ^= 1;                                  // Blink
       }
     }
-    if ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) {
+    if ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (TasmotaGlobal.blinks > 200) || (blinkstate))) {
       SetLedLink(blinkstate);                            // Set led on or off
     }
     if (!blinkstate) {
-      blinks--;
-      if (200 == blinks) blinks = 0;                      // Disable blink
+      TasmotaGlobal.blinks--;
+      if (200 == TasmotaGlobal.blinks) TasmotaGlobal.blinks = 0;                      // Disable blink
     }
   }
-  if (Settings.ledstate &1 && (PinUsed(GPIO_LEDLNK) || !(blinks || TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag)) ) {
+  if (Settings.ledstate &1 && (PinUsed(GPIO_LEDLNK) || !(TasmotaGlobal.blinks || TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag)) ) {
     bool tstate = TasmotaGlobal.power & Settings.ledmask;
 #ifdef ESP8266
     if ((SONOFF_TOUCH == my_module_type) || (SONOFF_T11 == my_module_type) || (SONOFF_T12 == my_module_type) || (SONOFF_T13 == my_module_type)) {
@@ -1164,8 +1164,8 @@ void Every250mSeconds(void)
     break;
   case 2:                                                 // Every x.5 second
     if (Settings.flag4.network_wifi) {
-      WifiCheck(wifi_state_flag);
-      wifi_state_flag = WIFI_RESTART;
+      WifiCheck(TasmotaGlobal.wifi_state_flag);
+      TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
     }
     break;
   case 3:                                                 // Every x.75 second

@@ -333,7 +333,7 @@ void MqttPublish(const char* topic, bool retained)
   AddLog(LOG_LEVEL_INFO);
 
   if (Settings.ledstate &0x04) {
-    blinks++;
+    TasmotaGlobal.blinks++;
   }
 }
 

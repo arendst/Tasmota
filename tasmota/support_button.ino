@@ -245,7 +245,7 @@ void ButtonHandler(void)
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_MULTI_PRESS " %d"), button_index +1, Button.press_counter[button_index]);
             Button.window_timer[button_index] = loops_per_second / 2;  // 0.5 second multi press window
           }
-          blinks = 201;
+          TasmotaGlobal.blinks = 201;
         }
 
         if (NOT_PRESSED == button) {

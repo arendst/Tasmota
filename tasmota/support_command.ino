@@ -232,7 +232,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
   if (type != nullptr) {
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
 
-    if (Settings.ledstate &0x02) { blinks++; }
+    if (Settings.ledstate &0x02) { TasmotaGlobal.blinks++; }
 
     if (!strcmp(dataBuf,"?")) { data_len = 0; }
 
@@ -281,7 +281,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
   }
 
   if (type == nullptr) {
-    blinks = 201;
+    TasmotaGlobal.blinks = 201;
     snprintf_P(stemp1, sizeof(stemp1), PSTR(D_JSON_COMMAND));
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_UNKNOWN "\"}"));
     type = (char*)stemp1;
@@ -1559,7 +1559,7 @@ void CmndWifiConfig(void)
       XdrvMailbox.payload = WIFI_MANAGER;
     }
     Settings.sta_config = XdrvMailbox.payload;
-    wifi_state_flag = Settings.sta_config;
+    TasmotaGlobal.wifi_state_flag = Settings.sta_config;
     if (WifiState() > WIFI_RESTART) {
       TasmotaGlobal.restart_flag = 2;
     }
@@ -1858,7 +1858,7 @@ void CmndLedPower(void) {
         Settings.ledstate ^= 8;
         break;
       }
-      blinks = 0;
+      TasmotaGlobal.blinks = 0;
       if (!PinUsed(GPIO_LEDLNK)) {
         SetLedPower(Settings.ledstate &8);
       } else {

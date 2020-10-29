@@ -700,7 +700,7 @@ void ShutterButtonHandler(void)
         Button.window_timer[button_index] = (loops_per_second >> 2) * 3; // 0.75 second multi press window
       }
     }
-    blinks = 201;
+    TasmotaGlobal.blinks = 201;
   }
 
   if (NOT_PRESSED == button) {
