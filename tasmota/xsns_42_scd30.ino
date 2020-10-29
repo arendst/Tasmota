@@ -372,7 +372,7 @@ void Scd30Show(bool json)
       ResponseAppendTHD(t, h);
       ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_AIRQUALITY, scd30_CO2);
         DomoticzTempHumPressureSensor(t, h);
       }

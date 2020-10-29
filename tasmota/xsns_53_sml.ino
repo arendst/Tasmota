@@ -1796,7 +1796,7 @@ void SML_Show(boolean json) {
 
 /*
 #ifdef USE_DOMOTICZ
-  if (json && !tele_period) {
+  if (json && !TasmotaGlobal.tele_period) {
     char str[16];
     dtostrfd(meter_vars[0], 1, str);
     DomoticzSensorPowerEnergy(meter_vars[1], str);  // PowerUsage, EnergyToday

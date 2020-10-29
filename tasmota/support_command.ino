@@ -816,7 +816,7 @@ void CmndBlinkcount(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 65536)) {
     Settings.blinkcount = XdrvMailbox.payload;  // 0 - 65535
-    if (blink_counter) { blink_counter = Settings.blinkcount *2; }
+    if (TasmotaGlobal.blink_counter) { TasmotaGlobal.blink_counter = Settings.blinkcount *2; }
   }
   ResponseCmndNumber(Settings.blinkcount);
 }
@@ -1698,9 +1698,9 @@ void CmndTeleperiod(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
     Settings.tele_period = (1 == XdrvMailbox.payload) ? TELE_PERIOD : XdrvMailbox.payload;
     if ((Settings.tele_period > 0) && (Settings.tele_period < 10)) Settings.tele_period = 10;   // Do not allow periods < 10 seconds
-//    tele_period = Settings.tele_period;
+//    TasmotaGlobal.tele_period = Settings.tele_period;
   }
-  tele_period = Settings.tele_period;        // Show teleperiod data also on empty command
+  TasmotaGlobal.tele_period = Settings.tele_period;        // Show teleperiod data also on empty command
   ResponseCmndNumber(Settings.tele_period);
 }
 

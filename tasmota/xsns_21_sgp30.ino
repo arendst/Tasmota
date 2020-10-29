@@ -126,7 +126,7 @@ void Sgp30Show(bool json)
       }
       ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, sgp.eCO2);
+      if (0 == TasmotaGlobal.tele_period) DomoticzSensor(DZ_AIRQUALITY, sgp.eCO2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {

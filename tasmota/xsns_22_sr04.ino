@@ -170,7 +170,7 @@ void Sr04Show(bool json)
     if(json) {
       ResponseAppend_P(PSTR(",\"SR04\":{\"" D_JSON_DISTANCE "\":%s}"), distance_chr);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_COUNT, distance_chr);  // Send distance as Domoticz Counter value
       }
 #endif  // USE_DOMOTICZ

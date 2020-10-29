@@ -1504,7 +1504,7 @@ bool Xdrv27(uint8_t function)
           ResponseAppend_P(",");
           ResponseAppend_P(JSON_SHUTTER_POS, i+1, position, Shutter[i].direction,target);
 #ifdef USE_DOMOTICZ
-          if ((0 == tele_period) && (0 == i)) {
+          if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
              DomoticzSensor(DZ_SHUTTER, position);
           }
 #endif  // USE_DOMOTICZ

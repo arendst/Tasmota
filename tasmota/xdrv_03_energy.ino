@@ -490,12 +490,12 @@ void EnergyMarginCheck(void)
 void EnergyMqttShow(void)
 {
 // {"Time":"2017-12-16T11:48:55","ENERGY":{"Total":0.212,"Yesterday":0.000,"Today":0.014,"Period":2.0,"Power":22.0,"Factor":1.00,"Voltage":213.6,"Current":0.100}}
-  int tele_period_save = tele_period;
-  tele_period = 2;
+  int tele_period_save = TasmotaGlobal.tele_period;
+  TasmotaGlobal.tele_period = 2;
   mqtt_data[0] = '\0';
   ResponseAppendTime();
   EnergyShow(true);
-  tele_period = tele_period_save;
+  TasmotaGlobal.tele_period = tele_period_save;
   ResponseJsonEnd();
   MqttPublishTeleSensor();
 }
@@ -1033,7 +1033,7 @@ void EnergyShow(bool json)
   char value3_chr[FLOATSZ *3];
 
   if (json) {
-    bool show_energy_period = (0 == tele_period);
+    bool show_energy_period = (0 == TasmotaGlobal.tele_period);
 
     ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL_START_TIME "\":\"%s\",\"" D_JSON_TOTAL "\":%s"),
       GetDateAndTime(DT_ENERGY).c_str(),

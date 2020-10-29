@@ -183,7 +183,7 @@ void ShtEverySecond(void)
 void ShtShow(bool json)
 {
   if (sht_valid) {
-    TempHumDewShow(json, (0 == tele_period), sht_types, sht_temperature, sht_humidity);
+    TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), sht_types, sht_temperature, sht_humidity);
   }
 }
 

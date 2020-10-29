@@ -119,7 +119,7 @@ void Vl53l0Show(boolean json) {
   if (json) {
     ResponseAppend_P(PSTR(",\"VL53L0X\":{\"" D_JSON_DISTANCE "\":%d}"), Vl53l0x.distance);
 #ifdef USE_DOMOTICZ
-    if (0 == tele_period) {
+    if (0 == TasmotaGlobal.tele_period) {
       DomoticzSensor(DZ_ILLUMINANCE, Vl53l0x.distance);
     }
 #endif  // USE_DOMOTICZ

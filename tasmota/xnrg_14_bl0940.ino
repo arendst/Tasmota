@@ -273,7 +273,7 @@ void Bl0940Show(bool json) {
 
   if (json) {
     ResponseAppend_P(JSON_SNS_TEMP, "BL0940", temperature);
-    if (0 == tele_period) {
+    if (0 == TasmotaGlobal.tele_period) {
 #ifdef USE_DOMOTICZ
       DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ

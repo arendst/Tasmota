@@ -120,7 +120,7 @@ void SonoffScShow(bool json)
       ResponseAppendTHD(t, h);
       ResponseAppend_P(PSTR(",\"" D_JSON_LIGHT "\":%d,\"" D_JSON_NOISE "\":%d,\"" D_JSON_AIRQUALITY "\":%d}"), sc_value[2], sc_value[3], sc_value[4]);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzTempHumPressureSensor(t, h);
         DomoticzSensor(DZ_ILLUMINANCE, sc_value[2]);
         DomoticzSensor(DZ_COUNT, sc_value[3]);
@@ -129,7 +129,7 @@ void SonoffScShow(bool json)
 #endif  // USE_DOMOTICZ
 
 #ifdef USE_KNX
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         KnxSensor(KNX_TEMPERATURE, t);
         KnxSensor(KNX_HUMIDITY, h);
       }

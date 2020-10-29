@@ -4497,10 +4497,10 @@ void ScripterEvery100ms(void) {
 
   if (Settings.rule_enabled && (TasmotaGlobal.uptime > 4)) {
     mqtt_data[0] = '\0';
-    uint16_t script_tele_period_save = tele_period;
-    tele_period = 2;
+    uint16_t script_tele_period_save = TasmotaGlobal.tele_period;
+    TasmotaGlobal.tele_period = 2;
     XsnsNextCall(FUNC_JSON_APPEND, script_xsns_index);
-    tele_period = script_tele_period_save;
+    TasmotaGlobal.tele_period = script_tele_period_save;
     if (strlen(mqtt_data)) {
       mqtt_data[0] = '{';
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);

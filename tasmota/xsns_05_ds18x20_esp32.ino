@@ -203,12 +203,12 @@ void Ds18x20Show(bool json)
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"), ds18x20_types, address, temperature);
         dsxflg++;
 #ifdef USE_DOMOTICZ
-        if ((0 == tele_period) && (1 == dsxflg)) {
+        if ((0 == TasmotaGlobal.tele_period) && (1 == dsxflg)) {
           DomoticzSensor(DZ_TEMP, temperature);
         }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-        if ((0 == tele_period) && (1 == dsxflg)) {
+        if ((0 == TasmotaGlobal.tele_period) && (1 == dsxflg)) {
           KnxSensor(KNX_TEMPERATURE, t);
         }
 #endif  // USE_KNX

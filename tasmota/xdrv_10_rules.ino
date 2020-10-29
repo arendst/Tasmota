@@ -949,10 +949,10 @@ void RulesEvery100ms(void)
 {
   if (Settings.rule_enabled && !Rules.busy && (TasmotaGlobal.uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
     mqtt_data[0] = '\0';
-    int tele_period_save = tele_period;
-    tele_period = 2;                                   // Do not allow HA updates during next function call
+    int tele_period_save = TasmotaGlobal.tele_period;
+    TasmotaGlobal.tele_period = 2;                                   // Do not allow HA updates during next function call
     XsnsNextCall(FUNC_JSON_APPEND, rules_xsns_index);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-    tele_period = tele_period_save;
+    TasmotaGlobal.tele_period = tele_period_save;
     if (strlen(mqtt_data)) {
       mqtt_data[0] = '{';                              // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
       ResponseJsonEnd();

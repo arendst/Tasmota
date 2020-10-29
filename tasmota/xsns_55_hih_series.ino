@@ -96,7 +96,7 @@ void Hih6EverySecond(void)
 void Hih6Show(bool json)
 {
   if (Hih6.valid) {
-    TempHumDewShow(json, (0 == tele_period), Hih6.types, Hih6.temperature, Hih6.humidity);
+    TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), Hih6.types, Hih6.temperature, Hih6.humidity);
   }
 }
 

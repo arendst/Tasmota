@@ -607,7 +607,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
       TasmotaGlobal.blink_power = (TasmotaGlobal.power >> (device -1))&1;  // Prep to Toggle
     }
     TasmotaGlobal.blink_timer = millis() + 100;
-    blink_counter = ((!Settings.blinkcount) ? 64000 : (Settings.blinkcount *2)) +1;
+    TasmotaGlobal.blink_counter = ((!Settings.blinkcount) ? 64000 : (Settings.blinkcount *2)) +1;
     TasmotaGlobal.blink_mask |= mask;  // Set device mask
     MqttPublishPowerBlinkState(device);
     return;
@@ -815,9 +815,9 @@ void PerformEverySecond(void)
     }
   }
 
-  if (seriallog_timer) {
-    seriallog_timer--;
-    if (!seriallog_timer) {
+  if (TasmotaGlobal.seriallog_timer) {
+    TasmotaGlobal.seriallog_timer--;
+    if (!TasmotaGlobal.seriallog_timer) {
       if (seriallog_level) {
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SERIAL_LOGGING_DISABLED));
       }
@@ -825,9 +825,9 @@ void PerformEverySecond(void)
     }
   }
 
-  if (syslog_timer) {  // Restore syslog level
-    syslog_timer--;
-    if (!syslog_timer) {
+  if (TasmotaGlobal.syslog_timer) {  // Restore syslog level
+    TasmotaGlobal.syslog_timer--;
+    if (!TasmotaGlobal.syslog_timer) {
       syslog_level = Settings.syslog_level;
       if (Settings.syslog_level) {
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_LOGGING_REENABLED));  // Might trigger disable again (on purpose)
@@ -838,14 +838,14 @@ void PerformEverySecond(void)
   ResetGlobalValues();
 
   if (Settings.tele_period) {
-    if (tele_period >= 9999) {
+    if (TasmotaGlobal.tele_period >= 9999) {
       if (!global_state.network_down) {
-        tele_period = 0;  // Allow teleperiod once wifi is connected
+        TasmotaGlobal.tele_period = 0;  // Allow teleperiod once wifi is connected
       }
     } else {
-      tele_period++;
-      if (tele_period >= Settings.tele_period) {
-        tele_period = 0;
+      TasmotaGlobal.tele_period++;
+      if (TasmotaGlobal.tele_period >= Settings.tele_period) {
+        TasmotaGlobal.tele_period = 0;
 
         MqttPublishTeleState();
 
@@ -905,8 +905,8 @@ void Every100mSeconds(void)
   if (TasmotaGlobal.blink_mask) {
     if (TimeReached(TasmotaGlobal.blink_timer)) {
       SetNextTimeInterval(TasmotaGlobal.blink_timer, 100 * Settings.blinktime);
-      blink_counter--;
-      if (!blink_counter) {
+      TasmotaGlobal.blink_counter--;
+      if (!TasmotaGlobal.blink_counter) {
         StopAllPowerBlink();
       } else {
         TasmotaGlobal.blink_power ^= 1;

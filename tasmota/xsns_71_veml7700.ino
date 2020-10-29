@@ -107,7 +107,7 @@ void VEML7700Show(bool json)
     ResponseAppend_P(JSON_SNS_VEML7700, D_NAME_VEML7700, veml7700_sensor.lux_normalized, veml7700_sensor.white_normalized);
 
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, veml7700_sensor.lux_normalized);
+      if (0 == TasmotaGlobal.tele_period) DomoticzSensor(DZ_ILLUMINANCE, veml7700_sensor.lux_normalized);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
@@ -157,7 +157,7 @@ bool VEML7700Cmd(void) {
          }
        }
        Response_P(S_JSON_VEML7700_COMMAND_NVALUE, command, veml7700.getPersistence());
-       break;    
+       break;
     default:
       return false;
     }

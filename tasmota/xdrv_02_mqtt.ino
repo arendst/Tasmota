@@ -558,7 +558,7 @@ void MqttConnected(void)
 
     MqttPublishAllPowerState();
     if (Settings.tele_period) {
-      tele_period = Settings.tele_period -5;  // Enable TelePeriod in 5 seconds
+      TasmotaGlobal.tele_period = Settings.tele_period -5;  // Enable TelePeriod in 5 seconds
     }
     rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);

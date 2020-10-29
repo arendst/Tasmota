@@ -90,7 +90,7 @@ void Dht12EverySecond(void)
 void Dht12Show(bool json)
 {
   if (Dht12.valid) {
-    TempHumDewShow(json, (0 == tele_period), Dht12.name, Dht12.temperature, Dht12.humidity);
+    TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), Dht12.name, Dht12.temperature, Dht12.humidity);
   }
 }
 

@@ -100,6 +100,11 @@ struct {
   float humidity;                           // Provide a global humidity to be used by some sensors
   float pressure_hpa;                       // Provide a global pressure to be used by some sensors
 
+  uint16_t blink_counter;                   // Number of blink cycles
+  uint16_t seriallog_timer;                 // Timer to disable Seriallog
+  uint16_t syslog_timer;                    // Timer to re-enable syslog_level
+  uint16_t tele_period;                     // Tele period timer
+
   uint8_t blinks;                           // Number of LED blinks
   uint8_t restart_flag;                     // Tasmota restart flag
   uint8_t ota_state_flag;                   // OTA state flag
@@ -107,10 +112,6 @@ struct {
 
 } TasmotaGlobal;
 
-uint16_t tele_period = 9999;                // Tele period timer
-uint16_t blink_counter = 0;                 // Number of blink cycles
-uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
-uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
 uint16_t gpio_pin[MAX_GPIO_PIN] = { 0 };    // GPIO functions indexed by pin number
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
 RulesBitfield rules_flag;                   // Rule state flags (16 bits)
@@ -190,6 +191,7 @@ void setup(void) {
   TasmotaGlobal.temperature_celsius = NAN;
   TasmotaGlobal.blinks = 201;
   TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
+  TasmotaGlobal.tele_period = 9999;
 
   global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 
@@ -227,7 +229,7 @@ void setup(void) {
 
 //  mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
   seriallog_level = Settings.seriallog_level;
-  seriallog_timer = SERIALLOG_TIMER;
+  TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
   syslog_level = Settings.syslog_level;
   stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   save_data_counter = Settings.save_data;

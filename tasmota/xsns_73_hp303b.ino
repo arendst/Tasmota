@@ -122,7 +122,7 @@ void HP303B_Show(bool json) {
         ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
         // Domoticz and knx only support one temp sensor
-        if ((0 == tele_period) && (0 == i)) {
+        if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
           DomoticzSensor(DZ_TEMP, hp303b_sensor[i].temperature);
         }
 #endif // USE_DOMOTICZ

@@ -273,7 +273,7 @@ void HdcEverySecond(void) {
  */
 void HdcShow(bool json) {
   if (hdc_valid) {
-    TempHumDewShow(json, (0 == tele_period), hdc_type_name, hdc_temperature, hdc_humidity);
+    TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), hdc_type_name, hdc_temperature, hdc_humidity);
   }
 }
 

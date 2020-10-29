@@ -1262,7 +1262,7 @@ bool DisplayMqttData(void)
 
 void DisplayLocalSensor(void)
 {
-  if ((Settings.display_mode &0x02) && (0 == tele_period)) {
+  if ((Settings.display_mode &0x02) && (0 == TasmotaGlobal.tele_period)) {
     char no_topic[1] = { 0 };
 //    DisplayAnalyzeJson(mqtt_topic, mqtt_data);  // Add local topic
     DisplayAnalyzeJson(no_topic, mqtt_data);    // Discard any topic

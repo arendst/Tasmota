@@ -567,7 +567,7 @@ void BmpShow(bool json)
 #endif  // USE_BME680
 
 #ifdef USE_DOMOTICZ
-        if ((0 == tele_period) && (0 == bmp_idx)) {  // We want the same first sensor to report to Domoticz in case a read is missed
+        if ((0 == TasmotaGlobal.tele_period) && (0 == bmp_idx)) {  // We want the same first sensor to report to Domoticz in case a read is missed
           DomoticzTempHumPressureSensor(bmp_temperature, bmp_humidity, bmp_pressure);
 #ifdef USE_BME680
           if (bmp_sensors[bmp_idx].bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)bmp_sensors[bmp_idx].bmp_gas_resistance); }
@@ -576,7 +576,7 @@ void BmpShow(bool json)
 #endif  // USE_DOMOTICZ
 
 #ifdef USE_KNX
-        if (0 == tele_period) {
+        if (0 == TasmotaGlobal.tele_period) {
           KnxSensor(KNX_TEMPERATURE, bmp_temperature);
           KnxSensor(KNX_HUMIDITY, bmp_humidity);
         }
