@@ -1342,6 +1342,7 @@ void CmndShutterSetHalfway(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
       Settings.shutter_set50percent[XdrvMailbox.index -1] = (Settings.shutter_options[XdrvMailbox.index -1] & 1) ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
+      Settings.shuttercoeff[0][XdrvMailbox.index -1] = 0;
       ShutterInit();
     }
   ResponseCmndIdxNumber((Settings.shutter_options[XdrvMailbox.index -1] & 1) ? 100 - Settings.shutter_set50percent[XdrvMailbox.index -1] : Settings.shutter_set50percent[XdrvMailbox.index -1]);
@@ -1429,6 +1430,7 @@ void CmndShutterCalibration(void)
         }
         messwerte[i] = field;
       }
+      Settings.shutter_set50percent[XdrvMailbox.index -1] = 50;
       for (i = 0; i < 5; i++) {
         Settings.shuttercoeff[i][XdrvMailbox.index -1] = SHT_DIV_ROUND((uint32_t)messwerte[i] * 1000, messwerte[4]);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shuttercoeff: %d, i: %d, value: %d, messwert %d"), i,XdrvMailbox.index -1,Settings.shuttercoeff[i][XdrvMailbox.index -1], messwerte[i]);
