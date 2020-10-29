@@ -105,11 +105,7 @@ void HP303B_Show(bool json) {
         snprintf_P(sensor_name, sizeof(sensor_name), PSTR("%s%c%02X"), sensor_name, IndexSeparator(), hp303b_sensor[i].address); // HP303B-76, HP303B-77
       }
 
-      float sealevel = 0.0;
-      if (hp303b_sensor[i].pressure != 0.0) {
-        sealevel = (hp303b_sensor[i].pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0), 5.255)) - 21.6;
-        sealevel = ConvertPressure(sealevel);
-      }
+      float sealevel = ConvertPressureForSeaLevel(hp303b_sensor[i].pressure);
 
       char str_temperature[33];
       dtostrfd(hp303b_sensor[i].temperature, Settings.flag2.temperature_resolution, str_temperature);

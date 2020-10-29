@@ -80,7 +80,11 @@ const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
 #else
   EZOStruct::id,
 #endif
-  EZOStruct::id,  // "PRS"
+#ifdef USE_EZOPRS
+  EZOPRS::id,
+#else
+  EZOStruct::id,
+#endif
   EZOStruct::id,
 #ifdef USE_EZOO2
   EZOO2::id,
@@ -240,6 +244,9 @@ private:
 #endif
 #ifdef USE_EZOCO2
                   CREATE_EZO_CLASS(CO2)
+#endif
+#ifdef USE_EZOPRS
+                  CREATE_EZO_CLASS(PRS)
 #endif
 #ifdef USE_EZOO2
                   CREATE_EZO_CLASS(O2)
