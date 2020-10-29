@@ -1246,8 +1246,8 @@ uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
     real_gpio += index;
     mask = 0xFFFF;
   }
-  for (uint32_t i = 0; i < ARRAY_SIZE(gpio_pin); i++) {
-    if ((gpio_pin[i] & mask) == real_gpio) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(TasmotaGlobal.gpio_pin); i++) {
+    if ((TasmotaGlobal.gpio_pin[i] & mask) == real_gpio) {
       return i;              // Pin number configured for gpio
     }
   }
@@ -1260,15 +1260,15 @@ bool PinUsed(uint32_t gpio, uint32_t index) {
 }
 
 uint32_t GetPin(uint32_t lpin) {
-  if (lpin < ARRAY_SIZE(gpio_pin)) {
-    return gpio_pin[lpin];
+  if (lpin < ARRAY_SIZE(TasmotaGlobal.gpio_pin)) {
+    return TasmotaGlobal.gpio_pin[lpin];
   } else {
     return GPIO_NONE;
   }
 }
 
 void SetPin(uint32_t lpin, uint32_t gpio) {
-  gpio_pin[lpin] = gpio;
+  TasmotaGlobal.gpio_pin[lpin] = gpio;
 }
 
 void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state)

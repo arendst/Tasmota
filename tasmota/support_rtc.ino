@@ -407,9 +407,9 @@ void RtcSecond(void)
             GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
 
           if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
-            rules_flag.time_init = 1;
+            TasmotaGlobal.rules_flag.time_init = 1;
           } else {
-            rules_flag.time_set = 1;
+            TasmotaGlobal.rules_flag.time_set = 1;
           }
         } else {
           Rtc.ntp_sync_minute++;  // Try again in next minute

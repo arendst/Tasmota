@@ -921,7 +921,7 @@ void StartWebserver(int type, IPAddress ipweb)
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
       NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str());
 #endif // LWIP_IPV6 = 1
-    rules_flag.http_init = 1;
+    TasmotaGlobal.rules_flag.http_init = 1;
   }
   if (type) { Web.state = type; }
 }

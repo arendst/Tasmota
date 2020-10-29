@@ -328,7 +328,7 @@ void ShutterInit(void)
 void ShutterReportPosition(bool always, uint32_t index)
 {
   Response_P(PSTR("{"));
-  rules_flag.shutter_moving = 0;
+  TasmotaGlobal.rules_flag.shutter_moving = 0;
   uint32_t i = 0;
   uint32_t n = shutters_present;
   if( index != MAX_SHUTTERS) {
@@ -339,7 +339,7 @@ void ShutterReportPosition(bool always, uint32_t index)
     //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter %d: Real Pos: %d"), i+1,Shutter[i].real_position);
     uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
     if (Shutter[i].direction != 0) {
-      rules_flag.shutter_moving = 1;
+      TasmotaGlobal.rules_flag.shutter_moving = 1;
       ShutterLogPos(i);
     }
     if (i && index == MAX_SHUTTERS) { ResponseAppend_P(PSTR(",")); }
@@ -347,10 +347,10 @@ void ShutterReportPosition(bool always, uint32_t index)
     ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings.shutter_options[i] & 1) ? 100-position : position, Shutter[i].direction,(Settings.shutter_options[i] & 1) ? 100-target : target );
   }
   ResponseJsonEnd();
-  if (always || (rules_flag.shutter_moving)) {
+  if (always || (TasmotaGlobal.rules_flag.shutter_moving)) {
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));  // RulesProcess() now re-entry protected
   }
-  //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
+  //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: TasmotaGlobal.rules_flag.shutter_moving: %d, moved %d"), TasmotaGlobal.rules_flag.shutter_moving, TasmotaGlobal.rules_flag.shutter_moved);
 }
 
 void ShutterLimitRealAndTargetPositions(uint32_t i) {
@@ -500,7 +500,7 @@ void ShutterUpdatePosition(void)
         Response_P("%d", (Settings.shutter_options[i] & 1) ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i]);
         MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
         ShutterReportPosition(true, i);
-        rules_flag.shutter_moved = 1;
+        TasmotaGlobal.rules_flag.shutter_moved = 1;
         XdrvRulesProcess();
       }
     }
@@ -520,7 +520,7 @@ void ShutterAllowPreStartProcedure(uint8_t i)
 #ifdef USE_RULES
   uint32_t uptime_Local=0;
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. var%d <99>=<%s>, max10s?"),i+i, rules_vars[i]);
-  rules_flag.shutter_moving = 1;
+  TasmotaGlobal.rules_flag.shutter_moving = 1;
   XdrvRulesProcess();
   uptime_Local = TasmotaGlobal.uptime;
   while (uptime_Local+10 > TasmotaGlobal.uptime && (String)rules_vars[i] == "99") {
@@ -550,12 +550,12 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     Shutter[i].accelerator = ShutterGlobal.open_velocity_max / (Shutter[i].motordelay>0 ? Shutter[i].motordelay : 1);
     Shutter[i].target_position = target_pos;
     Shutter[i].start_position = Shutter[i].real_position;
-    rules_flag.shutter_moving = 1;
+    TasmotaGlobal.rules_flag.shutter_moving = 1;
     ShutterAllowPreStartProcedure(i);
     Shutter[i].time = 0;
     Shutter[i].direction = direction;
     ShutterGlobal.skip_relay_change = 0;
-    rules_flag.shutter_moved  = 0;
+    TasmotaGlobal.rules_flag.shutter_moved  = 0;
     ShutterGlobal.start_reported = 0;
     //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: real %d, start %d, counter %d,freq_max %d, dir %d, freq %d"),Shutter[i].real_position, Shutter[i].start_position ,RtcSettings.pulse_counter[i],ShutterGlobal.open_velocity_max , Shutter[i].direction ,ShutterGlobal.open_velocity_max );
   }

@@ -333,11 +333,11 @@ void WifiSetState(uint8_t state)
 {
   if (state == global_state.wifi_down) {
     if (state) {
-      rules_flag.wifi_connected = 1;
+      TasmotaGlobal.rules_flag.wifi_connected = 1;
       Wifi.link_count++;
       Wifi.downtime += UpTime() - Wifi.last_event;
     } else {
-      rules_flag.wifi_disconnected = 1;
+      TasmotaGlobal.rules_flag.wifi_disconnected = 1;
       Wifi.last_event = UpTime();
     }
   }

@@ -758,7 +758,7 @@ bool Xdrv35(uint8_t function)
             // Bottom      15          3    15     1
             if (buttons_pressed == 1 && Settings.flag4.multiple_device_groups) {
               power_button_index = button_index;
-              down_button_index = (Pin(GPIO_KEY1, power_button_index) == 15 ? gpio_pin[1] : gpio_pin[15]) - 32;
+              down_button_index = (Pin(GPIO_KEY1, power_button_index) == 15 ? TasmotaGlobal.gpio_pin[1] : TasmotaGlobal.gpio_pin[15]) - 32;
               active_remote_pwm_dimmer = nullptr;
               if (power_button_index || !first_device_group_is_local)
                 active_remote_pwm_dimmer = &remote_pwm_dimmers[power_button_index];

@@ -397,11 +397,11 @@ bool TuyaSetPower(void)
   uint8_t rpower = XdrvMailbox.index;
   int16_t source = XdrvMailbox.payload;
 
-  uint8_t dpid = TuyaGetDpId(TUYA_MCU_FUNC_REL1 + active_device - 1);
-  if (dpid == 0) dpid = TuyaGetDpId(TUYA_MCU_FUNC_REL1_INV + active_device - 1);
+  uint8_t dpid = TuyaGetDpId(TUYA_MCU_FUNC_REL1 + TasmotaGlobal.active_device - 1);
+  if (dpid == 0) dpid = TuyaGetDpId(TUYA_MCU_FUNC_REL1_INV + TasmotaGlobal.active_device - 1);
 
   if (source != SRC_SWITCH && TuyaSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
-    TuyaSendBool(dpid, bitRead(rpower, active_device-1) ^ bitRead(TasmotaGlobal.rel_inverted, active_device-1));
+    TuyaSendBool(dpid, bitRead(rpower, TasmotaGlobal.active_device-1) ^ bitRead(TasmotaGlobal.rel_inverted, TasmotaGlobal.active_device-1));
     delay(20); // Hack when power is off and dimmer is set then both commands go too soon to Serial out.
     status = true;
   }

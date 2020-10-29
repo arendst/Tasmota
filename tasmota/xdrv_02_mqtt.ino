@@ -210,8 +210,8 @@ bool MqttPublishLib(const char* topic, bool retained)
   if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
     char *str = strstr(topic, SettingsText(SET_MQTTPREFIX1));
     if (str == topic) {
-      mqtt_cmnd_blocked_reset = 4;  // Allow up to four seconds before resetting residual cmnd blocks
-      mqtt_cmnd_blocked++;
+      TasmotaGlobal.mqtt_cmnd_blocked_reset = 4;  // Allow up to four seconds before resetting residual cmnd blocks
+      TasmotaGlobal.mqtt_cmnd_blocked++;
     }
   }
 
@@ -238,8 +238,8 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   // Do not execute multiple times if Prefix1 equals Prefix2
   if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
     char *str = strstr(mqtt_topic, SettingsText(SET_MQTTPREFIX1));
-    if ((str == mqtt_topic) && mqtt_cmnd_blocked) {
-      mqtt_cmnd_blocked--;
+    if ((str == mqtt_topic) && TasmotaGlobal.mqtt_cmnd_blocked) {
+      TasmotaGlobal.mqtt_cmnd_blocked--;
       return;
     }
   }
@@ -487,7 +487,7 @@ void MqttDisconnected(int state)
   MqttClient.disconnect();
 
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), SettingsText(SET_MQTT_HOST), Settings.mqtt_port, state, Mqtt.retry_counter);
-  rules_flag.mqtt_disconnected = 1;
+  TasmotaGlobal.rules_flag.mqtt_disconnected = 1;
 }
 
 void MqttConnected(void)
@@ -560,14 +560,14 @@ void MqttConnected(void)
     if (Settings.tele_period) {
       TasmotaGlobal.tele_period = Settings.tele_period -5;  // Enable TelePeriod in 5 seconds
     }
-    rules_flag.system_boot = 1;
+    TasmotaGlobal.rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);
   }
   Mqtt.initial_connection_state = 0;
 
   global_state.mqtt_down = 0;
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    rules_flag.mqtt_connected = 1;
+    TasmotaGlobal.rules_flag.mqtt_connected = 1;
   }
 }
 

@@ -163,9 +163,9 @@ void SetLatchingRelay(power_t lpower, uint32_t state)
   // TasmotaGlobal.power xx11 - toggle REL2 (On)  and REL4 (On)  - device 1 On,  device 2 On
   static power_t latching_power = 0;     // Power state at latching start
 
-  if (state && !latching_relay_pulse) {  // Set latching relay to power if previous pulse has finished
+  if (state && !TasmotaGlobal.latching_relay_pulse) {  // Set latching relay to power if previous pulse has finished
     latching_power = lpower;
-    latching_relay_pulse = 2;            // max 200mS (initiated by stateloop())
+    TasmotaGlobal.latching_relay_pulse = 2;            // max 200mS (initiated by stateloop())
   }
 
   for (uint32_t i = 0; i < devices_present; i++) {
@@ -537,7 +537,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
   if ((device < 1) || (device > devices_present)) {
     device = 1;
   }
-  active_device = device;
+  TasmotaGlobal.active_device = device;
 
   SetPulseTimer((device -1) % MAX_PULSETIMERS, 0);
 
@@ -808,10 +808,10 @@ void PerformEverySecond(void)
 #endif
   }
 
-  if (mqtt_cmnd_blocked_reset) {
-    mqtt_cmnd_blocked_reset--;
-    if (!mqtt_cmnd_blocked_reset) {
-      mqtt_cmnd_blocked = 0;             // Clean up MQTT cmnd loop block
+  if (TasmotaGlobal.mqtt_cmnd_blocked_reset) {
+    TasmotaGlobal.mqtt_cmnd_blocked_reset--;
+    if (!TasmotaGlobal.mqtt_cmnd_blocked_reset) {
+      TasmotaGlobal.mqtt_cmnd_blocked = 0;             // Clean up MQTT cmnd loop block
     }
   }
 
@@ -886,9 +886,9 @@ void Every100mSeconds(void)
     AddLog(prepped_loglevel);
   }
 
-  if (latching_relay_pulse) {
-    latching_relay_pulse--;
-    if (!latching_relay_pulse) SetLatchingRelay(0, 0);
+  if (TasmotaGlobal.latching_relay_pulse) {
+    TasmotaGlobal.latching_relay_pulse--;
+    if (!TasmotaGlobal.latching_relay_pulse) SetLatchingRelay(0, 0);
   }
 
   for (uint32_t i = 0; i < MAX_PULSETIMERS; i++) {
@@ -928,8 +928,8 @@ void Every250mSeconds(void)
   static uint8_t blinkspeed = 1;                          // LED blink rate
   uint32_t blinkinterval = 1;
 
-  state_250mS++;
-  state_250mS &= 0x3;
+  TasmotaGlobal.state_250mS++;
+  TasmotaGlobal.state_250mS &= 0x3;
 
   global_state.network_down = (global_state.wifi_down && global_state.eth_down) ? 1 : 0;
 
@@ -975,7 +975,7 @@ void Every250mSeconds(void)
   static int ota_result = 0;
   static uint8_t ota_retry_counter = OTA_ATTEMPTS;
 
-  switch (state_250mS) {
+  switch (TasmotaGlobal.state_250mS) {
   case 0:                                                 // Every x.0 second
     if (TasmotaGlobal.ota_state_flag && BACKLOG_EMPTY) {
       TasmotaGlobal.ota_state_flag--;
@@ -1076,9 +1076,9 @@ void Every250mSeconds(void)
     if (MidnightNow()) {
       XsnsCall(FUNC_SAVE_AT_MIDNIGHT);
     }
-    if (save_data_counter && BACKLOG_EMPTY) {
-      save_data_counter--;
-      if (save_data_counter <= 0) {
+    if (TasmotaGlobal.save_data_counter && BACKLOG_EMPTY) {
+      TasmotaGlobal.save_data_counter--;
+      if (TasmotaGlobal.save_data_counter <= 0) {
         if (Settings.flag.save_state) {                   // SetOption0 - Save power state and use after restart
           power_t mask = POWER_MASK;
           for (uint32_t i = 0; i < devices_present; i++) {
@@ -1093,7 +1093,7 @@ void Every250mSeconds(void)
           Settings.power = 0;
         }
         if (!TasmotaGlobal.restart_flag) { SettingsSave(0); }
-        save_data_counter = Settings.save_data;
+        TasmotaGlobal.save_data_counter = Settings.save_data;
       }
     }
     if (TasmotaGlobal.restart_flag && BACKLOG_EMPTY) {
@@ -1576,7 +1576,7 @@ void GpioInit(void)
     if (mpin) { SetPin(i, mpin); }                  // Anything above GPIO_NONE and below GPIO_SENSOR_END
   }
 
-//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)gpio_pin, ARRAY_SIZE(gpio_pin), sizeof(gpio_pin[0]));
+//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)TasmotaGlobal.gpio_pin, ARRAY_SIZE(TasmotaGlobal.gpio_pin), sizeof(TasmotaGlobal.gpio_pin[0]));
 
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)

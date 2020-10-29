@@ -815,7 +815,7 @@ void RulesInit(void)
   // and indicates scripter do not use compress
   bitWrite(Settings.rule_once, 6, 0);
 
-  rules_flag.data = 0;
+  TasmotaGlobal.rules_flag.data = 0;
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (0 == GetRuleLen(i)) {
       bitWrite(Settings.rule_enabled, i, 0);
@@ -911,11 +911,11 @@ void RulesEvery50ms(void)
         }
       }
     }
-    else if (rules_flag.data) {
+    else if (TasmotaGlobal.rules_flag.data) {
       uint16_t mask = 1;
       for (uint32_t i = 0; i < MAX_RULES_FLAG; i++) {
-        if (rules_flag.data & mask) {
-          rules_flag.data ^= mask;
+        if (TasmotaGlobal.rules_flag.data & mask) {
+          TasmotaGlobal.rules_flag.data ^= mask;
           json_event[0] = '\0';
           switch (i) {
             case 0: strncpy_P(json_event, PSTR("{\"System\":{\"Init\":1}}"), sizeof(json_event)); break;

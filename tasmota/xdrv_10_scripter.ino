@@ -1826,8 +1826,8 @@ chknext:
 
       case 'b':
         if (!strncmp(vname, "boot", 4)) {
-          if (rules_flag.system_boot) {
-            rules_flag.system_boot = 0;
+          if (TasmotaGlobal.rules_flag.system_boot) {
+            TasmotaGlobal.rules_flag.system_boot = 0;
             fvar = 1;
           }
           goto exit;
@@ -2534,15 +2534,15 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "mqttc", 5)) {
-          if (rules_flag.mqtt_connected) {
-            rules_flag.mqtt_connected = 0;
+          if (TasmotaGlobal.rules_flag.mqtt_connected) {
+            TasmotaGlobal.rules_flag.mqtt_connected = 0;
             fvar = 1;
           }
           goto exit;
         }
         if (!strncmp(vname, "mqttd", 5)) {
-          if (rules_flag.mqtt_disconnected) {
-            rules_flag.mqtt_disconnected = 0;
+          if (TasmotaGlobal.rules_flag.mqtt_disconnected) {
+            TasmotaGlobal.rules_flag.mqtt_disconnected = 0;
             fvar = 1;
           }
           goto exit;
@@ -2637,8 +2637,8 @@ chknext:
             }
           }
 */
-          if ((gpiopin < ARRAY_SIZE(gpio_pin)) && (gpio_pin[gpiopin] > 0)) {
-            fvar = gpio_pin[gpiopin];
+          if ((gpiopin < ARRAY_SIZE(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
+            fvar = TasmotaGlobal.gpio_pin[gpiopin];
             // skip ] bracket
             len++;
             goto exit;
@@ -2937,11 +2937,11 @@ chknext:
           goto exit_settable;
         }
         if (!strncmp(vname, "tinit", 5)) {
-          fvar = rules_flag.time_init;
+          fvar = TasmotaGlobal.rules_flag.time_init;
           goto exit;
         }
         if (!strncmp(vname, "tset", 4)) {
-          fvar = rules_flag.time_set;
+          fvar = TasmotaGlobal.rules_flag.time_set;
           goto exit;
         }
         if (!strncmp(vname, "tstamp", 6)) {
@@ -3125,15 +3125,15 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "wific", 5)) {
-          if (rules_flag.wifi_connected) {
-            rules_flag.wifi_connected = 0;
+          if (TasmotaGlobal.rules_flag.wifi_connected) {
+            TasmotaGlobal.rules_flag.wifi_connected = 0;
             fvar = 1;
           }
           goto exit;
         }
         if (!strncmp(vname, "wifid", 5)) {
-          if (rules_flag.wifi_disconnected) {
-            rules_flag.wifi_disconnected = 0;
+          if (TasmotaGlobal.rules_flag.wifi_disconnected) {
+            TasmotaGlobal.rules_flag.wifi_disconnected = 0;
             fvar = 1;
           }
           goto exit;

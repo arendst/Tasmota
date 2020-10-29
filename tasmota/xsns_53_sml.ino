@@ -1924,7 +1924,7 @@ bool Gpio_used(uint8_t gpiopin) {
     }
   }
 */
-  if ((gpiopin < ARRAY_SIZE(gpio_pin)) && (gpio_pin[gpiopin] > 0)) {
+  if ((gpiopin < ARRAY_SIZE(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
     return true;
   }
   return false;

@@ -385,7 +385,7 @@ bool ExsSetChannels(void)
 bool ExsSetPower(void)
 {
   AddLog_P2(LOG_LEVEL_INFO, PSTR("EXS: Set Power, Device %d, Power 0x%02x"),
-            active_device, XdrvMailbox.index);
+            TasmotaGlobal.active_device, XdrvMailbox.index);
 
   Exs.power = XdrvMailbox.index;
   return ExsSyncState();

@@ -825,7 +825,7 @@ void CmndSavedata(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3600)) {
     Settings.save_data = XdrvMailbox.payload;
-    save_data_counter = Settings.save_data;
+    TasmotaGlobal.save_data_counter = Settings.save_data;
   }
   SettingsSaveAll();
   char stemp1[TOPSZ];

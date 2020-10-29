@@ -423,9 +423,9 @@ void HAssAnnounceRelayLight(void)
   {
 
 #ifdef USE_TUYA_MCU
-  TuyaRel = TuyaGetDpId((TUYA_MCU_FUNC_REL1+ i-1) + active_device - 1);
-  TuyaRelInv = TuyaGetDpId((TUYA_MCU_FUNC_REL1_INV+ i-1) + active_device - 1);
-  TuyaDim = TuyaGetDpId((TUYA_MCU_FUNC_DIMMER) + active_device - 1);
+  TuyaRel = TuyaGetDpId((TUYA_MCU_FUNC_REL1+ i-1) + TasmotaGlobal.active_device - 1);
+  TuyaRelInv = TuyaGetDpId((TUYA_MCU_FUNC_REL1_INV+ i-1) + TasmotaGlobal.active_device - 1);
+  TuyaDim = TuyaGetDpId((TUYA_MCU_FUNC_DIMMER) + TasmotaGlobal.active_device - 1);
 #endif //USE_TUYA_MCU
 
     masterlog_level = ShowTopic = 4; // Hide topic on clean and remove use weblog 4 to see it

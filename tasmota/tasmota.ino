@@ -100,27 +100,28 @@ struct {
   float humidity;                           // Provide a global humidity to be used by some sensors
   float pressure_hpa;                       // Provide a global pressure to be used by some sensors
 
+  uint16_t gpio_pin[MAX_GPIO_PIN];          // GPIO functions indexed by pin number
   uint16_t blink_counter;                   // Number of blink cycles
   uint16_t seriallog_timer;                 // Timer to disable Seriallog
   uint16_t syslog_timer;                    // Timer to re-enable syslog_level
   uint16_t tele_period;                     // Tele period timer
+  int16_t save_data_counter;                // Counter and flag for config save to Flash
+
+  RulesBitfield rules_flag;                 // Rule state flags (16 bits)
 
   uint8_t blinks;                           // Number of LED blinks
   uint8_t restart_flag;                     // Tasmota restart flag
   uint8_t ota_state_flag;                   // OTA state flag
   uint8_t wifi_state_flag;                  // Wifi state flag
+  uint8_t mqtt_cmnd_blocked;                // Ignore flag for publish command
+  uint8_t mqtt_cmnd_blocked_reset;          // Count down to reset if needed
+  uint8_t state_250mS;                      // State 250msecond per second flag
+  uint8_t latching_relay_pulse;             // Latching relay pulse timer
+  uint8_t active_device;                    // Active device in ExecuteCommandPower
 
 } TasmotaGlobal;
 
-uint16_t gpio_pin[MAX_GPIO_PIN] = { 0 };    // GPIO functions indexed by pin number
-int16_t save_data_counter;                  // Counter and flag for config save to Flash
-RulesBitfield rules_flag;                   // Rule state flags (16 bits)
-uint8_t mqtt_cmnd_blocked = 0;              // Ignore flag for publish command
-uint8_t mqtt_cmnd_blocked_reset = 0;        // Count down to reset if needed
-uint8_t state_250mS = 0;                    // State 250msecond per second flag
-uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
 uint8_t ssleep;                             // Current copy of Settings.sleep
-uint8_t active_device = 1;                  // Active device in ExecuteCommandPower
 uint8_t leds_present = 0;                   // Max number of LED supported
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t led_power = 0;                      // LED power state
@@ -192,6 +193,7 @@ void setup(void) {
   TasmotaGlobal.blinks = 201;
   TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
   TasmotaGlobal.tele_period = 9999;
+  TasmotaGlobal.active_device = 1;
 
   global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 
@@ -232,7 +234,7 @@ void setup(void) {
   TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
   syslog_level = Settings.syslog_level;
   stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
-  save_data_counter = Settings.save_data;
+  TasmotaGlobal.save_data_counter = Settings.save_data;
   ssleep = Settings.sleep;
 #ifndef USE_EMULATION
   Settings.flag2.emulation = 0;
@@ -311,7 +313,7 @@ void setup(void) {
   if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">BS",3,0);
 #endif
 
-  rules_flag.system_init = 1;
+  TasmotaGlobal.rules_flag.system_init = 1;
 }
 
 void BacklogLoop(void) {

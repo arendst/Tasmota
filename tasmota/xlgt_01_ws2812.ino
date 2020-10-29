@@ -461,7 +461,7 @@ void Ws2812ShowScheme(void)
 
   switch (scheme) {
     case 0:  // Clock
-      if ((1 == state_250mS) || (Ws2812.show_next)) {
+      if ((1 == TasmotaGlobal.state_250mS) || (Ws2812.show_next)) {
         Ws2812Clock();
         Ws2812.show_next = 0;
       }
