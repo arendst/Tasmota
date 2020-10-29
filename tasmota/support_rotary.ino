@@ -180,8 +180,8 @@ void RotaryHandler(void) {
     Encoder[index].position = rotary_offset;
     interrupts();
 
-    if (Settings.save_data && (save_data_counter < 2)) {
-      save_data_counter = 3;                   // Postpone flash writes while rotary is turned
+    if (Settings.save_data && (TasmotaGlobal.save_data_counter < 2)) {
+      TasmotaGlobal.save_data_counter = 3;                   // Postpone flash writes while rotary is turned
     }
 
     bool button_pressed = (Button.hold_timer[index]);  // Button is pressed: set color temperature

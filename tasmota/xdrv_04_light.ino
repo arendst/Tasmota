@@ -2134,9 +2134,9 @@ bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
       if (Settings.save_data) {
         // Also postpone the save_data for the duration of the Fade (in seconds)
         uint32_t delay_seconds = 1 + (Light.fade_duration + 999) / 1000;   // add one more second
-        // AddLog_P2(LOG_LEVEL_INFO, PSTR("delay_seconds %d, save_data_counter %d"), delay_seconds, save_data_counter);
-        if (save_data_counter < delay_seconds) {
-          save_data_counter = delay_seconds;      // pospone
+        // AddLog_P2(LOG_LEVEL_INFO, PSTR("delay_seconds %d, save_data_counter %d"), delay_seconds, TasmotaGlobal.save_data_counter);
+        if (TasmotaGlobal.save_data_counter < delay_seconds) {
+          TasmotaGlobal.save_data_counter = delay_seconds;      // pospone
         }
       }
     } else {
