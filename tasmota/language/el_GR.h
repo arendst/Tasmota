@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "ανίχνευση για πολλαπλά πατήματα"
 #define D_NOISE "Θόρυβος"
 #define D_NONE "Κανένα"
+#define D_O2 "Oxygen"
 #define D_OFF "Off"
 #define D_OFFLINE "Offline"
 #define D_OK "Ok"

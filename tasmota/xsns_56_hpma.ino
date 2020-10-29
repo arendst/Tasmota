@@ -96,7 +96,7 @@ void HpmaShow(bool json)
     if (json) {
       ResponseAppend_P(PSTR(",\"HPMA\":{\"PM2.5\":%d,\"PM10\":%d}"), hpma_data.pm2_5, hpma_data.pm10);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_VOLTAGE, pm2_5);  // PM2.5
         DomoticzSensor(DZ_CURRENT, pm10);   // PM10
       }

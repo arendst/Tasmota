@@ -64,7 +64,7 @@ uint8_t GetFanspeed(void)
       011x = 2
       101x = 3 (ifan02) or 100x = 3 (ifan03)
     */
-    uint8_t fanspeed = (uint8_t)(power &0xF) >> 1;
+    uint8_t fanspeed = (uint8_t)(TasmotaGlobal.power &0xF) >> 1;
     if (fanspeed) { fanspeed = (fanspeed >> 1) +1; }  // 0, 1, 2, 3
     return fanspeed;
   }
@@ -159,12 +159,12 @@ bool SonoffIfanSerialInput(void)
   if (SONOFF_IFAN03 != my_module_type) { return false; }
 
   if (0xAA == serial_in_byte) {               // 0xAA - Start of text
-    serial_in_byte_counter = 0;
+    TasmotaGlobal.serial_in_byte_counter = 0;
     ifan_receive_flag = true;
   }
   if (ifan_receive_flag) {
-    serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-    if (serial_in_byte_counter == 8) {
+    serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = serial_in_byte;
+    if (TasmotaGlobal.serial_in_byte_counter == 8) {
       // AA 55 01 01 00 01 01 04 - Wifi long press - start wifi setup
       // AA 55 01 01 00 01 02 05 - Rf and Wifi short press
       // AA 55 01 04 00 01 00 06 - Fan 0
@@ -233,10 +233,10 @@ void SonoffIfanUpdate(void)
     }
   }
 
-  if (ifan_restart_flag && (4 == uptime) && (SONOFF_IFAN02 == my_module_type)) {  // Microcontroller needs 3 seconds before accepting commands
+  if (ifan_restart_flag && (4 == TasmotaGlobal.uptime) && (SONOFF_IFAN02 == my_module_type)) {  // Microcontroller needs 3 seconds before accepting commands
     ifan_restart_flag = false;
     SetDevicePower(1, SRC_RETRY);      // Sync with default power on state microcontroller being Light ON and Fan OFF
-    SetDevicePower(power, SRC_RETRY);  // Set required power on state
+    SetDevicePower(TasmotaGlobal.power, SRC_RETRY);  // Set required power on state
   }
 }
 

@@ -1826,8 +1826,8 @@ chknext:
 
       case 'b':
         if (!strncmp(vname, "boot", 4)) {
-          if (rules_flag.system_boot) {
-            rules_flag.system_boot = 0;
+          if (TasmotaGlobal.rules_flag.system_boot) {
+            TasmotaGlobal.rules_flag.system_boot = 0;
             fvar = 1;
           }
           goto exit;
@@ -2343,15 +2343,15 @@ chknext:
         break;
       case 'g':
         if (!strncmp(vname, "gtmp", 4)) {
-          fvar = global_temperature_celsius;
+          fvar = TasmotaGlobal.temperature_celsius;
           goto exit;
         }
         if (!strncmp(vname, "ghum", 4)) {
-          fvar = global_humidity;
+          fvar = TasmotaGlobal.humidity;
           goto exit;
         }
         if (!strncmp(vname, "gprs", 4)) {
-          fvar = global_pressure_hpa;
+          fvar = TasmotaGlobal.pressure_hpa;
           goto exit;
         }
         if (!strncmp(vname, "gtopic", 6)) {
@@ -2534,15 +2534,15 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "mqttc", 5)) {
-          if (rules_flag.mqtt_connected) {
-            rules_flag.mqtt_connected = 0;
+          if (TasmotaGlobal.rules_flag.mqtt_connected) {
+            TasmotaGlobal.rules_flag.mqtt_connected = 0;
             fvar = 1;
           }
           goto exit;
         }
         if (!strncmp(vname, "mqttd", 5)) {
-          if (rules_flag.mqtt_disconnected) {
-            rules_flag.mqtt_disconnected = 0;
+          if (TasmotaGlobal.rules_flag.mqtt_disconnected) {
+            TasmotaGlobal.rules_flag.mqtt_disconnected = 0;
             fvar = 1;
           }
           goto exit;
@@ -2637,8 +2637,8 @@ chknext:
             }
           }
 */
-          if ((gpiopin < ARRAY_SIZE(gpio_pin)) && (gpio_pin[gpiopin] > 0)) {
-            fvar = gpio_pin[gpiopin];
+          if ((gpiopin < ARRAY_SIZE(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
+            fvar = TasmotaGlobal.gpio_pin[gpiopin];
             // skip ] bracket
             len++;
             goto exit;
@@ -2681,7 +2681,7 @@ chknext:
           GetNumericArgument(vname + 4, OPER_EQU, &fvar, 0);
           uint8_t index = fvar;
           if (index<=devices_present) {
-            fvar = bitRead(power, index - 1);
+            fvar = bitRead(TasmotaGlobal.power, index - 1);
           } else {
             fvar = -1;
           }
@@ -2937,11 +2937,11 @@ chknext:
           goto exit_settable;
         }
         if (!strncmp(vname, "tinit", 5)) {
-          fvar = rules_flag.time_init;
+          fvar = TasmotaGlobal.rules_flag.time_init;
           goto exit;
         }
         if (!strncmp(vname, "tset", 4)) {
-          fvar = rules_flag.time_set;
+          fvar = TasmotaGlobal.rules_flag.time_set;
           goto exit;
         }
         if (!strncmp(vname, "tstamp", 6)) {
@@ -3012,7 +3012,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "upsecs", 6)) {
-          fvar = uptime;
+          fvar = TasmotaGlobal.uptime;
           goto exit;
         }
         if (!strncmp(vname, "upd[", 4)) {
@@ -3125,15 +3125,15 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "wific", 5)) {
-          if (rules_flag.wifi_connected) {
-            rules_flag.wifi_connected = 0;
+          if (TasmotaGlobal.rules_flag.wifi_connected) {
+            TasmotaGlobal.rules_flag.wifi_connected = 0;
             fvar = 1;
           }
           goto exit;
         }
         if (!strncmp(vname, "wifid", 5)) {
-          if (rules_flag.wifi_disconnected) {
-            rules_flag.wifi_disconnected = 0;
+          if (TasmotaGlobal.rules_flag.wifi_disconnected) {
+            TasmotaGlobal.rules_flag.wifi_disconnected = 0;
             fvar = 1;
           }
           goto exit;
@@ -4495,12 +4495,12 @@ uint8_t script_xsns_index = 0;
 
 void ScripterEvery100ms(void) {
 
-  if (Settings.rule_enabled && (uptime > 4)) {
+  if (Settings.rule_enabled && (TasmotaGlobal.uptime > 4)) {
     mqtt_data[0] = '\0';
-    uint16_t script_tele_period_save = tele_period;
-    tele_period = 2;
+    uint16_t script_tele_period_save = TasmotaGlobal.tele_period;
+    TasmotaGlobal.tele_period = 2;
     XsnsNextCall(FUNC_JSON_APPEND, script_xsns_index);
-    tele_period = script_tele_period_save;
+    TasmotaGlobal.tele_period = script_tele_period_save;
     if (strlen(mqtt_data)) {
       mqtt_data[0] = '{';
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);

@@ -51,7 +51,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - **tasmota-zbbridge.bin** = The dedicated Sonoff Zigbee Bridge version.
 - **tasmota-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
 
-The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota/release for ESP8266 or http://ota.tasmota.com/tasmota32/release for ESP32. The links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin``
+The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota/release for ESP8266 or http://ota.tasmota.com/tasmota32/release for ESP32. The links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 [List](MODULES.md) of embedded modules.
 
@@ -73,9 +73,10 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for analog buttons indexed within standard button range
 - Support for Vietnamese language translations by Tâm.NT
 - Support for timers in case of no-sunset permanent day by cybermaus (#9543)
-- Support for EZO CO2, EC, HUM, ORP, Ph and RTD sensors by Christopher Tremblay
+- Support for EZO sensors by Christopher Tremblay
 - Support for fixed output Hi or Lo GPIO selection
 - TLS in binary tasmota-zbbridge (#9620)
+- Zigbee reduce battery drain (#9642)
 - ESP32 support for Wireless-Tag WT32-ETH01 (#9496)
 - ESP32 MI32 Beacon support, RSSI at TELEPERIOD, refactoring (#9609)
 
@@ -97,6 +98,9 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Rotary driver adjusted accordingly if Mi Desk Lamp module is selected (#9399)
 - Tasmota Arduino Core v2.7.4.5 allowing webpassword over 47 characters (#9687)
 - Webserver code optimizations (#9580, #9590)
+- PlatformIO library structure redesigned for compilation speed by Jason2866
+- Zigbee flash storage refactor adding commands ``ZbProbe``, ``ZbStatus2`` and ``ZbRestore`` (#9641)
+- Default otaurl in my_user_config.h to http://ota.tasmota.com/tasmota/release/tasmota.bin.gz
 
 ### Fixed
 - Ledlink blink when no network connected regression from v8.3.1.4 (#9292)
@@ -113,6 +117,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Zigbee battery percentage (#9607)
 - HassAnyKey anomaly (#9601)
 - Rule Break not working as expected when ONCE is enabled (#9245)
+- Rule expressions using mems corrupts character pool (#9301)
 
 ### Removed
 - Support for direct upgrade from Tasmota versions before v7.0

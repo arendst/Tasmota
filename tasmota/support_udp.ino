@@ -79,7 +79,7 @@ bool UdpDisconnect(void)
 
 bool UdpConnect(void)
 {
-  if (!udp_connected && !restart_flag) {
+  if (!udp_connected && !TasmotaGlobal.restart_flag) {
     // Simple Service Discovery Protocol (SSDP)
 #ifdef ESP8266
     UdpCtx.reset();

@@ -5,10 +5,20 @@ All notable changes to this project will be documented in this file.
 
 ## [9.0.0.3]
 ### Added
-- TLS in binary tasmota-zbbridge (#9620)
+- TLS in binary tasmota-zbbridge (#9635)
+- Support for EZO O2 sensors by Christopher Tremblay (#9619)
+- Support for EZO PRS sensors by Christopher Tremblay (#9659)
+- Zigbee reduce battery drain (#9642)
+- Zigbee added ``ZbMap`` command to describe Zigbee topology (#9651)
+
+### Changed
+- PlatformIO library structure redesigned for compilation speed by Jason2866
+- Zigbee flash storage refactor adding commands ``ZbProbe``, ``ZbStatus2`` and ``ZbRestore`` (#9641)
+- Default otaurl in my_user_config.h to http://ota.tasmota.com/tasmota/release/tasmota.bin.gz
 
 ### Fixed
 - Rule Break not working as expected when ONCE is enabled (#9245)
+- Rule expressions using mems corrupts character pool (#9301)
 
 ## [9.0.0.2] - 20201025
 ### Added
@@ -156,7 +166,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Zigbee better support for IKEA Motion Sensor
 - ESP32 Analog input support for GPIO32 to GPIO39
-- Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
+- Zigbee options to ``ZbSend`` ``Config`` and ``ReadConfig``
 - Command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)
 - Command ``SetOption102 0/1`` to switch between Teleinfo French Metering mode, legacy 1200 bps (0) or Linky standard 9600 bps (1)
 

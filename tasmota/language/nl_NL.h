@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "meervoudig"
 #define D_NOISE "Lawaai"
 #define D_NONE "Geen"
+#define D_O2 "Oxygen"
 #define D_OFF "Uit"
 #define D_OFFLINE "Offline"
 #define D_OK "Ok"

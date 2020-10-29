@@ -921,7 +921,7 @@ void StartWebserver(int type, IPAddress ipweb)
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
       NetworkHostname(), (Mdns.begun) ? ".local" : "", ipweb.toString().c_str());
 #endif // LWIP_IPV6 = 1
-    rules_flag.http_init = 1;
+    TasmotaGlobal.rules_flag.http_init = 1;
   }
   if (type) { Web.state = type; }
 }
@@ -1282,7 +1282,7 @@ void WebRestart(uint32_t type)
   WSContentStop();
 
   ShowWebSource(SRC_WEBGUI);
-  restart_flag = 2;
+  TasmotaGlobal.restart_flag = 2;
 }
 
 /*********************************************************************************************/
@@ -1686,15 +1686,15 @@ bool HandleRootStatusRefresh(void)
     uint32_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
 #ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) {
-      WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(power, 0)) ? "bold" : "normal", 54, GetStateText(bitRead(power, 0)));
+      WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(TasmotaGlobal.power, 0)) ? "bold" : "normal", 54, GetStateText(bitRead(TasmotaGlobal.power, 0)));
       uint32_t fanspeed = GetFanspeed();
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fanspeed);
       WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? "bold" : "normal", 54, (fanspeed) ? svalue : GetStateText(0));
     } else {
 #endif  // USE_SONOFF_IFAN
       for (uint32_t idx = 1; idx <= devices_present; idx++) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
-        WSContentSend_P(HTTP_DEVICE_STATE, 100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(TasmotaGlobal.power, idx -1));
+        WSContentSend_P(HTTP_DEVICE_STATE, 100 / devices_present, (bitRead(TasmotaGlobal.power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(TasmotaGlobal.power, idx -1)) : svalue);
       }
 #ifdef USE_SONOFF_IFAN
     }
@@ -2662,7 +2662,7 @@ void HandleUploadDone(void)
   char error[100];
 
   WifiConfigCounter();
-  restart_flag = 0;
+  TasmotaGlobal.restart_flag = 0;
   MqttRetryCounter(0);
 #ifdef USE_COUNTER
   CounterInterruptDisable(false);
@@ -2697,14 +2697,14 @@ void HandleUploadDone(void)
     stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
-    restart_flag = 2;  // Always restart to re-enable disabled features during update
+    TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
 #ifdef USE_TASMOTA_CLIENT
     if (TasmotaClient_GetFlagFlashing()) {
       WSContentSend_P(PSTR("<br><div style='text-align:center;'><b>" D_TRANSFER_STARTED " ...</b></div>"));
-      restart_flag = 0;  // Hold restart as code still needs to be transferred to Atmega
+      TasmotaGlobal.restart_flag = 0;  // Hold restart as code still needs to be transferred to Atmega
     }
 #endif  // USE_TASMOTA_CLIENT
-    if (restart_flag) {
+    if (TasmotaGlobal.restart_flag) {
       WSContentSend_P(HTTP_MSG_RSTRT);
       ShowWebSource(SRC_WEBGUI);
     }
@@ -2736,7 +2736,7 @@ void HandleUploadLoop(void)
 
   // ***** Step1: Start upload file
   if (UPLOAD_FILE_START == upload.status) {
-    restart_flag = 60;
+    TasmotaGlobal.restart_flag = 60;
     if (0 == upload.filename.c_str()[0]) {
       Web.upload_error = 1;  // No file selected
       return;
@@ -2986,7 +2986,7 @@ void HandleUploadLoop(void)
 
   // ***** Step4: Abort upload file
   else if (UPLOAD_FILE_ABORTED == upload.status) {
-    restart_flag = 0;
+    TasmotaGlobal.restart_flag = 0;
     MqttRetryCounter(0);
 #ifdef USE_COUNTER
     CounterInterruptDisable(false);
@@ -3029,11 +3029,11 @@ void HandleHttpCommand(void)
   }
 
   WSContentBegin(200, CT_JSON);
-  uint32_t curridx = web_log_index;
+  uint32_t curridx = TasmotaGlobal.web_log_index;
   String svalue = Webserver->arg("cmnd");
   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
     ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCOMMAND);
-    if (web_log_index != curridx) {
+    if (TasmotaGlobal.web_log_index != curridx) {
       uint32_t counter = curridx;
       WSContentSend_P(PSTR("{"));
       bool cflg = false;
@@ -3056,7 +3056,7 @@ void HandleHttpCommand(void)
         counter++;
         counter &= 0xFF;
         if (!counter) counter++;  // Skip 0 as it is not allowed
-      } while (counter != web_log_index);
+      } while (counter != TasmotaGlobal.web_log_index);
       WSContentSend_P(PSTR("}"));
     } else {
       WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}"));
@@ -3104,14 +3104,14 @@ void HandleConsoleRefresh(void)
   if (strlen(stmp)) { counter = atoi(stmp); }
 
   WSContentBegin(200, CT_PLAIN);
-  WSContentSend_P(PSTR("%d}1%d}1"), web_log_index, Web.reset_web_log_flag);
+  WSContentSend_P(PSTR("%d}1%d}1"), TasmotaGlobal.web_log_index, Web.reset_web_log_flag);
   if (!Web.reset_web_log_flag) {
     counter = 0;
     Web.reset_web_log_flag = true;
   }
-  if (counter != web_log_index) {
+  if (counter != TasmotaGlobal.web_log_index) {
     if (!counter) {
-      counter = web_log_index;
+      counter = TasmotaGlobal.web_log_index;
       cflg = false;
     }
     do {
@@ -3128,7 +3128,7 @@ void HandleConsoleRefresh(void)
       counter++;
       counter &= 0xFF;
       if (!counter) { counter++; }  // Skip log index 0 as it is not allowed
-    } while (counter != web_log_index);
+    } while (counter != TasmotaGlobal.web_log_index);
   }
   WSContentSend_P(PSTR("}1"));
   WSContentEnd();
@@ -3355,7 +3355,7 @@ void CmndEmulation(void)
 #endif
 #endif
     Settings.flag2.emulation = XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
 #endif
   ResponseCmndNumber(Settings.flag2.emulation);

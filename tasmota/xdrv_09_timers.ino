@@ -177,7 +177,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
   if (hour[mode]==255) {
     // Permanent day/night sets the unreachable limit values
     if ((Settings.latitude > 0) != (RtcTime.month>=4 && RtcTime.month<=9)) {
-      duskdawn->time=2046; // permanent night 
+      duskdawn->time=2046; // permanent night
     } else {
       duskdawn->time=2047; // permanent day
     }
@@ -256,7 +256,7 @@ void TimerEverySecond(void)
   if (RtcTime.valid) {
     if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second) { TimerSetRandomWindows(); }  // Midnight
     if (Settings.flag3.timers_enable &&                            // CMND_TIMERS
-        (uptime > 60) && (RtcTime.minute != timer_last_minute)) {  // Execute from one minute after restart every minute only once
+        (TasmotaGlobal.uptime > 60) && (RtcTime.minute != timer_last_minute)) {  // Execute from one minute after restart every minute only once
       timer_last_minute = RtcTime.minute;
       int32_t time = (RtcTime.hour *60) + RtcTime.minute;
       uint8_t days = 1 << (RtcTime.day_of_week -1);

@@ -117,7 +117,7 @@ bool Xnrg09(uint8_t function)
 
   switch (function) {
     case FUNC_ENERGY_EVERY_SECOND:
-      if (uptime > 4) { Dds2382EverySecond(); }
+      if (TasmotaGlobal.uptime > 4) { Dds2382EverySecond(); }
       break;
     case FUNC_INIT:
       Dds2382SnsInit();

@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "bấm nhiều lần"
 #define D_NOISE "Nhiễu"
 #define D_NONE "Không"
+#define D_O2 "Oxygen"
 #define D_OFF "Tắt"
 #define D_OFFLINE "Ngoại tuyến"
 #define D_OK "Ok"

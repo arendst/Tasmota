@@ -221,7 +221,7 @@ void ShutterInit(void)
   shutters_present = 0;
   ShutterGlobal.RelayShutterMask = 0;
   //Initialize to get relay that changed
-  ShutterGlobal.RelayOldMask = power;
+  ShutterGlobal.RelayOldMask = TasmotaGlobal.power;
 
 
   // if shutter 4 is unused
@@ -328,7 +328,7 @@ void ShutterInit(void)
 void ShutterReportPosition(bool always, uint32_t index)
 {
   Response_P(PSTR("{"));
-  rules_flag.shutter_moving = 0;
+  TasmotaGlobal.rules_flag.shutter_moving = 0;
   uint32_t i = 0;
   uint32_t n = shutters_present;
   if( index != MAX_SHUTTERS) {
@@ -339,7 +339,7 @@ void ShutterReportPosition(bool always, uint32_t index)
     //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter %d: Real Pos: %d"), i+1,Shutter[i].real_position);
     uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
     if (Shutter[i].direction != 0) {
-      rules_flag.shutter_moving = 1;
+      TasmotaGlobal.rules_flag.shutter_moving = 1;
       ShutterLogPos(i);
     }
     if (i && index == MAX_SHUTTERS) { ResponseAppend_P(PSTR(",")); }
@@ -347,10 +347,10 @@ void ShutterReportPosition(bool always, uint32_t index)
     ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings.shutter_options[i] & 1) ? 100-position : position, Shutter[i].direction,(Settings.shutter_options[i] & 1) ? 100-target : target );
   }
   ResponseJsonEnd();
-  if (always || (rules_flag.shutter_moving)) {
+  if (always || (TasmotaGlobal.rules_flag.shutter_moving)) {
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));  // RulesProcess() now re-entry protected
   }
-  //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
+  //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: TasmotaGlobal.rules_flag.shutter_moving: %d, moved %d"), TasmotaGlobal.rules_flag.shutter_moving, TasmotaGlobal.rules_flag.shutter_moved);
 }
 
 void ShutterLimitRealAndTargetPositions(uint32_t i) {
@@ -436,10 +436,10 @@ void ShutterPowerOff(uint8_t i) {
   }
   switch (Shutter[i].switch_mode) {
     case SHT_SWITCH:
-      if ((1 << (Settings.shutter_startrelay[i]-1)) & power) {
+      if ((1 << (Settings.shutter_startrelay[i]-1)) & TasmotaGlobal.power) {
         ExecuteCommandPowerShutter(Settings.shutter_startrelay[i], 0, SRC_SHUTTER);
       }
-      if ((1 << (Settings.shutter_startrelay[i])) & power) {
+      if ((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power) {
         ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
       }
     break;
@@ -449,7 +449,7 @@ void ShutterPowerOff(uint8_t i) {
       if ((SRC_PULSETIMER == last_source || SRC_SHUTTER == last_source || SRC_WEBGUI == last_source)) {
         ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
         // switch off direction relay to make it power less
-        if ((1 << (Settings.shutter_startrelay[i])) & power) {
+        if ((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power) {
           ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
         }
       } else {
@@ -500,7 +500,7 @@ void ShutterUpdatePosition(void)
         Response_P("%d", (Settings.shutter_options[i] & 1) ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i]);
         MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
         ShutterReportPosition(true, i);
-        rules_flag.shutter_moved = 1;
+        TasmotaGlobal.rules_flag.shutter_moved = 1;
         XdrvRulesProcess();
       }
     }
@@ -520,10 +520,10 @@ void ShutterAllowPreStartProcedure(uint8_t i)
 #ifdef USE_RULES
   uint32_t uptime_Local=0;
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. var%d <99>=<%s>, max10s?"),i+i, rules_vars[i]);
-  rules_flag.shutter_moving = 1;
+  TasmotaGlobal.rules_flag.shutter_moving = 1;
   XdrvRulesProcess();
-  uptime_Local = uptime;
-  while (uptime_Local+10 > uptime && (String)rules_vars[i] == "99") {
+  uptime_Local = TasmotaGlobal.uptime;
+  while (uptime_Local+10 > TasmotaGlobal.uptime && (String)rules_vars[i] == "99") {
     loop();
   }
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. Done"));
@@ -550,12 +550,12 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     Shutter[i].accelerator = ShutterGlobal.open_velocity_max / (Shutter[i].motordelay>0 ? Shutter[i].motordelay : 1);
     Shutter[i].target_position = target_pos;
     Shutter[i].start_position = Shutter[i].real_position;
-    rules_flag.shutter_moving = 1;
+    TasmotaGlobal.rules_flag.shutter_moving = 1;
     ShutterAllowPreStartProcedure(i);
     Shutter[i].time = 0;
     Shutter[i].direction = direction;
     ShutterGlobal.skip_relay_change = 0;
-    rules_flag.shutter_moved  = 0;
+    TasmotaGlobal.rules_flag.shutter_moved  = 0;
     ShutterGlobal.start_reported = 0;
     //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: real %d, start %d, counter %d,freq_max %d, dir %d, freq %d"),Shutter[i].real_position, Shutter[i].start_position ,RtcSettings.pulse_counter[i],ShutterGlobal.open_velocity_max , Shutter[i].direction ,ShutterGlobal.open_velocity_max );
   }
@@ -597,7 +597,7 @@ void ShutterRelayChanged(void)
   char stemp1[10];
 
 	for (uint32_t i = 0; i < shutters_present; i++) {
-		power_t powerstate_local = (power >> (Settings.shutter_startrelay[i] -1)) & 3;
+		power_t powerstate_local = (TasmotaGlobal.power >> (Settings.shutter_startrelay[i] -1)) & 3;
     // SRC_IGNORE added because INTERLOCK function bite causes this as last source for changing the relay.
 		//uint8   manual_relays_changed = ((ShutterGlobal.RelayCurrentMask >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_IGNORE != last_source && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
     uint8   manual_relays_changed = ((ShutterGlobal.RelayCurrentMask >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
@@ -700,7 +700,7 @@ void ShutterButtonHandler(void)
         Button.window_timer[button_index] = (loops_per_second >> 2) * 3; // 0.75 second multi press window
       }
     }
-    blinks = 201;
+    TasmotaGlobal.blinks = 201;
   }
 
   if (NOT_PRESSED == button) {
@@ -747,7 +747,7 @@ void ShutterButtonHandler(void)
     if (Button.window_timer[button_index]) {
       Button.window_timer[button_index]--;
     } else {
-      if (!restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0)) {
+      if (!TasmotaGlobal.restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0)) {
         if (Button.press_counter[button_index]<99) {
           // check for simultaneous shutter button press
           uint32 min_shutterbutton_press_counter = -1; // -1 == max(uint32)
@@ -1081,7 +1081,7 @@ void CmndShutterPosition(void)
             break;
             case SHT_TIME:
               if (!ShutterGlobal.skip_relay_change) {
-                if ( (power >> (Settings.shutter_startrelay[index] -1)) & 3 > 0 ) {
+                if ( (TasmotaGlobal.power >> (Settings.shutter_startrelay[index] -1)) & 3 > 0 ) {
                   ExecuteCommandPowerShutter(Settings.shutter_startrelay[index] + (new_shutterdirection == 1 ? 1 : 0), Shutter[index].switch_mode == SHT_SWITCH ? 0 : 1, SRC_SHUTTER);
                 }
                 ExecuteCommandPowerShutter(Settings.shutter_startrelay[index] + (new_shutterdirection == 1 ? 0 : 1), 1, SRC_SHUTTER);
@@ -1342,6 +1342,7 @@ void CmndShutterSetHalfway(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
       Settings.shutter_set50percent[XdrvMailbox.index -1] = (Settings.shutter_options[XdrvMailbox.index -1] & 1) ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
+      Settings.shuttercoeff[0][XdrvMailbox.index -1] = 0;
       ShutterInit();
     }
   ResponseCmndIdxNumber((Settings.shutter_options[XdrvMailbox.index -1] & 1) ? 100 - Settings.shutter_set50percent[XdrvMailbox.index -1] : Settings.shutter_set50percent[XdrvMailbox.index -1]);
@@ -1429,6 +1430,7 @@ void CmndShutterCalibration(void)
         }
         messwerte[i] = field;
       }
+      Settings.shutter_set50percent[XdrvMailbox.index -1] = 50;
       for (i = 0; i < 5; i++) {
         Settings.shuttercoeff[i][XdrvMailbox.index -1] = SHT_DIV_ROUND((uint32_t)messwerte[i] * 1000, messwerte[4]);
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shuttercoeff: %d, i: %d, value: %d, messwert %d"), i,XdrvMailbox.index -1,Settings.shuttercoeff[i][XdrvMailbox.index -1], messwerte[i]);
@@ -1502,7 +1504,7 @@ bool Xdrv27(uint8_t function)
           ResponseAppend_P(",");
           ResponseAppend_P(JSON_SHUTTER_POS, i+1, position, Shutter[i].direction,target);
 #ifdef USE_DOMOTICZ
-          if ((0 == tele_period) && (0 == i)) {
+          if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
              DomoticzSensor(DZ_SHUTTER, position);
           }
 #endif  // USE_DOMOTICZ

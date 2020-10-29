@@ -926,7 +926,7 @@ miel_hvac_input_settings(struct miel_hvac_softc *sc,
 		return;
 	}
 
-	if (bitRead(power, sc->sc_device) != !!state)
+	if (bitRead(TasmotaGlobal.power, sc->sc_device) != !!state)
 		ExecuteCommandPower(sc->sc_device, state, SRC_SWITCH);
 
 	publish = (sc->sc_settings_set == 0) ||

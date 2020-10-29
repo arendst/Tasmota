@@ -14,6 +14,7 @@ build
 build_output
 firmware.map
 firmware.asm
+tasmota.ino.cpp
 tasmota*.bin
 tasmota*.bin.gz
 tasmota*.map

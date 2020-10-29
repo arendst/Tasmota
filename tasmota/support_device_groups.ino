@@ -166,7 +166,7 @@ void DeviceGroupsInit(void)
 
 void DeviceGroupsStart()
 {
-  if (Settings.flag4.device_groups_enabled && !device_groups_up && !restart_flag) {
+  if (Settings.flag4.device_groups_enabled && !device_groups_up && !TasmotaGlobal.restart_flag) {
 
     // If we haven't successfuly initialized device groups yet, attempt to do it now.
     if (!device_groups_initialized) {
@@ -388,7 +388,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
           if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
             if (device_group_index < devices_present) {
               bool on = (value & 1);
-              if (on != (power & (1 << device_group_index))) ExecuteCommandPower(device_group_index + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
+              if (on != (TasmotaGlobal.power & (1 << device_group_index))) ExecuteCommandPower(device_group_index + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
             }
           }
           else if (XdrvMailbox.index & DGR_FLAG_LOCAL) {
@@ -397,7 +397,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
             for (uint32_t i = 0; i < mask_devices; i++) {
               uint32_t mask = 1 << i;
               bool on = (value & mask);
-              if (on != (power & mask)) ExecuteCommandPower(i + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
+              if (on != (TasmotaGlobal.power & mask)) ExecuteCommandPower(i + 1, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
             }
           }
           break;
@@ -505,7 +505,7 @@ bool _SendDeviceGroupMessage(uint8_t device_group_index, DevGroupMessageType mes
     building_status_message = true;
 
     // Call the drivers to build the status update.
-    SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_POWER, power);
+    SendDeviceGroupMessage(device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_POWER, TasmotaGlobal.power);
     XdrvMailbox.index = 0;
     if (device_group_index == 0 && first_device_group_is_local) XdrvMailbox.index = DGR_FLAG_LOCAL;
     XdrvMailbox.command_code = DGR_ITEM_STATUS;
@@ -806,7 +806,7 @@ void DeviceGroupStatus(uint8_t device_group_index)
 
 void DeviceGroupsLoop(void)
 {
-  if (!device_groups_up || restart_flag) return;
+  if (!device_groups_up || TasmotaGlobal.restart_flag) return;
 
   while (device_groups_udp.parsePacket()) {
     uint8_t packet_buffer[512];

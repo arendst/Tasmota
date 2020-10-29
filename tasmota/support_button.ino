@@ -33,7 +33,7 @@ const char kMultiPress[] PROGMEM =
   "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|";
 
 struct BUTTON {
-  unsigned long debounce = 0;                // Button debounce timer
+  uint32_t debounce = 0;                     // Button debounce timer
   uint16_t hold_timer[MAX_KEYS] = { 0 };     // Timer for button hold
   uint16_t dual_code = 0;                    // Sonoff dual received code
 
@@ -135,7 +135,7 @@ uint8_t ButtonSerial(uint8_t serial_in_byte)
 
 void ButtonHandler(void)
 {
-  if (uptime < 4) { return; }                                   // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
+  if (TasmotaGlobal.uptime < 4) { return; }                     // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
   uint8_t hold_time_extent = IMMINENT_RESET_FACTOR;             // Extent hold time factor in case of iminnent Reset command
   uint16_t loops_per_second = 1000 / Settings.button_debounce;  // ButtonDebounce (50)
@@ -245,7 +245,7 @@ void ButtonHandler(void)
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_MULTI_PRESS " %d"), button_index +1, Button.press_counter[button_index]);
             Button.window_timer[button_index] = loops_per_second / 2;  // 0.5 second multi press window
           }
-          blinks = 201;
+          TasmotaGlobal.blinks = 201;
         }
 
         if (NOT_PRESSED == button) {
@@ -281,7 +281,7 @@ void ButtonHandler(void)
           if (Button.window_timer[button_index]) {
             Button.window_timer[button_index]--;
           } else {
-            if (!restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0) && (Button.press_counter[button_index] < 7)) {
+            if (!TasmotaGlobal.restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0) && (Button.press_counter[button_index] < 7)) {
 
               bool single_press = false;
               if (Button.press_counter[button_index] < 3) {  // Single or Double press
@@ -307,7 +307,7 @@ void ButtonHandler(void)
                 } else {
                   if (Button.press_counter[button_index] < 6) { // Single to Penta press
                     if (WifiState() > WIFI_RESTART) {           // Wifimanager active
-                      restart_flag = 1;
+                      TasmotaGlobal.restart_flag = 1;
                     }
                     if (!Settings.flag3.mqtt_buttons) {         // SetOption73 - Detach buttons from relays and enable MQTT action state for multipress
                       if (Button.press_counter[button_index] == 1) {  // By default first press always send a TOGGLE (2)

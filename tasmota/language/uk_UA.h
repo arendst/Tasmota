@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "Багаторазове натискання"
 #define D_NOISE "Шум"
 #define D_NONE "Нічого"
+#define D_O2 "Oxygen"
 #define D_OFF "Вимкнено"
 #define D_OFFLINE "Неактивний"
 #define D_OK "Ок"

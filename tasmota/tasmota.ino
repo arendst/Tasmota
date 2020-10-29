@@ -77,56 +77,51 @@
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
-unsigned long feature_drv1;                 // Compiled driver feature map
-unsigned long feature_drv2;                 // Compiled driver feature map
-unsigned long feature_sns1;                 // Compiled sensor feature map
-unsigned long feature_sns2;                 // Compiled sensor feature map
-unsigned long feature5;                     // Compiled feature map
-unsigned long feature6;                     // Compiled feature map
-unsigned long feature7;                     // Compiled feature map
-unsigned long serial_polling_window = 0;    // Serial polling window
-unsigned long state_second = 0;             // State second timer
-unsigned long state_50msecond = 0;          // State 50msecond timer
-unsigned long state_100msecond = 0;         // State 100msecond timer
-unsigned long state_250msecond = 0;         // State 250msecond timer
-unsigned long pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
-unsigned long blink_timer = 0;              // Power cycle timer
-unsigned long backlog_delay = 0;            // Command backlog delay
-power_t power = 0;                          // Current copy of Settings.power
-power_t last_power = 0;                     // Last power set state
-power_t blink_power;                        // Blink power state
-power_t blink_mask = 0;                     // Blink relay active mask
-power_t blink_powersave;                    // Blink start power save state
-power_t latching_power = 0;                 // Power state at latching start
-power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
-int serial_in_byte_counter = 0;             // Index in receive buffer
-int ota_state_flag = 0;                     // OTA state flag
-int ota_result = 0;                         // OTA result
-int restart_flag = 0;                       // Tasmota restart flag
-int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
-int blinks = 201;                           // Number of LED blinks
-uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
-uint32_t loop_load_avg = 0;                 // Indicative loop load average
-uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
-uint32_t web_log_index = 1;                 // Index in Web log buffer (should never be 0)
-uint32_t baudrate = APP_BAUDRATE;           // Current Serial baudrate
-float global_temperature_celsius = NAN;     // Provide a global temperature to be used by some sensors
-float global_humidity = 0.0f;               // Provide a global humidity to be used by some sensors
-float global_pressure_hpa = 0.0f;           // Provide a global pressure to be used by some sensors
-uint16_t tele_period = 9999;                // Tele period timer
-uint16_t blink_counter = 0;                 // Number of blink cycles
-uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
-uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
-uint16_t gpio_pin[MAX_GPIO_PIN] = { 0 };    // GPIO functions indexed by pin number
-int16_t save_data_counter;                  // Counter and flag for config save to Flash
-RulesBitfield rules_flag;                   // Rule state flags (16 bits)
-uint8_t mqtt_cmnd_blocked = 0;              // Ignore flag for publish command
-uint8_t mqtt_cmnd_blocked_reset = 0;        // Count down to reset if needed
-uint8_t state_250mS = 0;                    // State 250msecond per second flag
-uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
+struct {
+  uint32_t global_update;                   // Timestamp of last global temperature and humidity update
+  uint32_t baudrate;                        // Current Serial baudrate
+  uint32_t pulse_timer[MAX_PULSETIMERS];    // Power off timer
+  uint32_t blink_timer;                     // Power cycle timer
+  uint32_t backlog_delay;                   // Command backlog delay
+  uint32_t loop_load_avg;                   // Indicative loop load average
+  uint32_t web_log_index;                   // Index in Web log buffer
+  uint32_t uptime;                          // Counting every second until 4294967295 = 130 year
+
+  power_t power;                            // Current copy of Settings.power
+  power_t rel_inverted;                     // Relay inverted flag (1 = (0 = On, 1 = Off))
+  power_t last_power;                       // Last power set state
+  power_t blink_power;                      // Blink power state
+  power_t blink_powersave;                  // Blink start power save state
+  power_t blink_mask;                       // Blink relay active mask
+
+  int serial_in_byte_counter;               // Index in receive buffer
+
+  float temperature_celsius;                // Provide a global temperature to be used by some sensors
+  float humidity;                           // Provide a global humidity to be used by some sensors
+  float pressure_hpa;                       // Provide a global pressure to be used by some sensors
+
+  uint16_t gpio_pin[MAX_GPIO_PIN];          // GPIO functions indexed by pin number
+  uint16_t blink_counter;                   // Number of blink cycles
+  uint16_t seriallog_timer;                 // Timer to disable Seriallog
+  uint16_t syslog_timer;                    // Timer to re-enable syslog_level
+  uint16_t tele_period;                     // Tele period timer
+  int16_t save_data_counter;                // Counter and flag for config save to Flash
+
+  RulesBitfield rules_flag;                 // Rule state flags (16 bits)
+
+  uint8_t blinks;                           // Number of LED blinks
+  uint8_t restart_flag;                     // Tasmota restart flag
+  uint8_t ota_state_flag;                   // OTA state flag
+  uint8_t wifi_state_flag;                  // Wifi state flag
+  uint8_t mqtt_cmnd_blocked;                // Ignore flag for publish command
+  uint8_t mqtt_cmnd_blocked_reset;          // Count down to reset if needed
+  uint8_t state_250mS;                      // State 250msecond per second flag
+  uint8_t latching_relay_pulse;             // Latching relay pulse timer
+  uint8_t active_device;                    // Active device in ExecuteCommandPower
+
+} TasmotaGlobal;
+
 uint8_t ssleep;                             // Current copy of Settings.sleep
-uint8_t blinkspeed = 1;                     // LED blink rate
-uint8_t active_device = 1;                  // Active device in ExecuteCommandPower
 uint8_t leds_present = 0;                   // Max number of LED supported
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t led_power = 0;                      // LED power state
@@ -136,7 +131,6 @@ uint8_t energy_flg = 0;                     // Energy monitor configured
 uint8_t light_flg = 0;                      // Light module configured
 uint8_t light_type = 0;                     // Light types
 uint8_t serial_in_byte;                     // Received byte
-uint8_t ota_retry_counter = OTA_ATTEMPTS;   // OTA retry counter
 uint8_t devices_present = 0;                // Max number of devices supported
 uint8_t masterlog_level = 0;                // Master log level used to override set log level
 uint8_t seriallog_level;                    // Current copy of Settings.seriallog_level
@@ -147,10 +141,8 @@ uint8_t shutters_present = 0;               // Number of actual define shutters
 uint8_t prepped_loglevel = 0;               // Delayed log level message
 //uint8_t mdns_delayed_start = 0;             // mDNS delayed start
 bool serial_local = false;                  // Handle serial locally
-bool serial_buffer_overrun = false;         // Serial buffer overrun
 bool fallback_topic_flag = false;           // Use Topic or FallbackTopic
 bool backlog_mutex = false;                 // Command backlog pending
-bool interlock_mutex = false;               // Interlock power command pending
 bool stop_flash_rotate = false;             // Allow flash configuration rotation
 bool blinkstate = false;                    // LED state
 //bool latest_uptime_flag = true;             // Signal latest uptime
@@ -195,6 +187,14 @@ void setup(void) {
 #endif
 #endif
 
+  memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
+  TasmotaGlobal.baudrate = APP_BAUDRATE;
+  TasmotaGlobal.temperature_celsius = NAN;
+  TasmotaGlobal.blinks = 201;
+  TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
+  TasmotaGlobal.tele_period = 9999;
+  TasmotaGlobal.active_device = 1;
+
   global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 
   RtcRebootLoad();
@@ -208,7 +208,7 @@ void setup(void) {
 #endif
   RtcRebootSave();
 
-  Serial.begin(baudrate);
+  Serial.begin(TasmotaGlobal.baudrate);
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
@@ -224,8 +224,6 @@ void setup(void) {
 
   OsWatchInit();
 
-  GetFeatures();
-
   if (1 == RtcReboot.fast_reboot_count) {  // Allow setting override only when all is well
     UpdateQuickPowerCycle(true);
     XdrvCall(FUNC_SETTINGS_OVERRIDE);
@@ -233,10 +231,10 @@ void setup(void) {
 
 //  mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
   seriallog_level = Settings.seriallog_level;
-  seriallog_timer = SERIALLOG_TIMER;
+  TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
   syslog_level = Settings.syslog_level;
   stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
-  save_data_counter = Settings.save_data;
+  TasmotaGlobal.save_data_counter = Settings.save_data;
   ssleep = Settings.sleep;
 #ifndef USE_EMULATION
   Settings.flag2.emulation = 0;
@@ -248,6 +246,8 @@ void setup(void) {
   if (EMUL_HUE == Settings.flag2.emulation) { Settings.flag2.emulation = 0; }
 #endif
 #endif  // USE_EMULATION
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&TasmotaGlobal, sizeof(TasmotaGlobal));
 
   if (Settings.param[P_BOOT_LOOP_OFFSET]) {         // SetOption36
     // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
@@ -313,11 +313,11 @@ void setup(void) {
   if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">BS",3,0);
 #endif
 
-  rules_flag.system_init = 1;
+  TasmotaGlobal.rules_flag.system_init = 1;
 }
 
 void BacklogLoop(void) {
-  if (TimeReached(backlog_delay)) {
+  if (TimeReached(TasmotaGlobal.backlog_delay)) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {
       backlog_mutex = true;
       bool nodelay = false;
@@ -335,8 +335,12 @@ void BacklogLoop(void) {
         nodelay_detected = !strncasecmp_P(cmd.c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
         if (nodelay_detected) { nodelay = true; }
       } while (!BACKLOG_EMPTY && nodelay_detected);
-      if (!nodelay_detected) { ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG); }
-      if (nodelay) { backlog_delay = 0; }  // Reset backlog_delay which has been set by ExecuteCommand (CommandHandler)
+      if (!nodelay_detected) {
+        ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
+      }
+      if (nodelay) {
+        TasmotaGlobal.backlog_delay = 0;  // Reset backlog_delay which has been set by ExecuteCommand (CommandHandler)
+      }
       backlog_mutex = false;
     }
   }
@@ -368,6 +372,7 @@ void loop(void) {
 #endif  // USE_DEVICE_GROUPS
   BacklogLoop();
 
+  static uint32_t state_50msecond = 0;               // State 50msecond timer
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
 #ifdef ROTARY_V1
@@ -376,18 +381,24 @@ void loop(void) {
     XdrvCall(FUNC_EVERY_50_MSECOND);
     XsnsCall(FUNC_EVERY_50_MSECOND);
   }
+
+  static uint32_t state_100msecond = 0;              // State 100msecond timer
   if (TimeReached(state_100msecond)) {
     SetNextTimeInterval(state_100msecond, 100);
     Every100mSeconds();
     XdrvCall(FUNC_EVERY_100_MSECOND);
     XsnsCall(FUNC_EVERY_100_MSECOND);
   }
+
+  static uint32_t state_250msecond = 0;              // State 250msecond timer
   if (TimeReached(state_250msecond)) {
     SetNextTimeInterval(state_250msecond, 250);
     Every250mSeconds();
     XdrvCall(FUNC_EVERY_250_MSECOND);
     XsnsCall(FUNC_EVERY_250_MSECOND);
   }
+
+  static uint32_t state_second = 0;                  // State second timer
   if (TimeReached(state_second)) {
     SetNextTimeInterval(state_second, 1000);
     PerformEverySecond();
@@ -421,5 +432,5 @@ void loop(void) {
   if (!loop_delay) { loop_delay++; }               // We cannot divide by 0
   uint32_t loops_per_second = 1000 / loop_delay;   // We need to keep track of this many loops per second
   uint32_t this_cycle_ratio = 100 * my_activity / loop_delay;
-  loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + (this_cycle_ratio / loops_per_second); // Take away one loop average away and add the new one
+  TasmotaGlobal.loop_load_avg = TasmotaGlobal.loop_load_avg - (TasmotaGlobal.loop_load_avg / loops_per_second) + (this_cycle_ratio / loops_per_second); // Take away one loop average away and add the new one
 }

@@ -88,7 +88,7 @@ void HP303B_Detect(void) {
 
 void HP303B_EverySecond(void) {
   for (uint32_t i = 0; i < hp303b_cfg.count; i++) {
-    if (uptime &1) {
+    if (TasmotaGlobal.uptime &1) {
       if (!HP303B_Read(i)) {
         AddLogMissed(hp303b_cfg.types, hp303b_sensor[i].valid);
       }
@@ -105,11 +105,7 @@ void HP303B_Show(bool json) {
         snprintf_P(sensor_name, sizeof(sensor_name), PSTR("%s%c%02X"), sensor_name, IndexSeparator(), hp303b_sensor[i].address); // HP303B-76, HP303B-77
       }
 
-      float sealevel = 0.0;
-      if (hp303b_sensor[i].pressure != 0.0) {
-        sealevel = (hp303b_sensor[i].pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0), 5.255)) - 21.6;
-        sealevel = ConvertPressure(sealevel);
-      }
+      float sealevel = ConvertPressureForSeaLevel(hp303b_sensor[i].pressure);
 
       char str_temperature[33];
       dtostrfd(hp303b_sensor[i].temperature, Settings.flag2.temperature_resolution, str_temperature);
@@ -126,7 +122,7 @@ void HP303B_Show(bool json) {
         ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
         // Domoticz and knx only support one temp sensor
-        if ((0 == tele_period) && (0 == i)) {
+        if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
           DomoticzSensor(DZ_TEMP, hp303b_sensor[i].temperature);
         }
 #endif // USE_DOMOTICZ

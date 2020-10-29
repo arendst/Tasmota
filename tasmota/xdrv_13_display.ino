@@ -776,7 +776,7 @@ void DisplayText(void)
                 buttons[num]->vpower.disable=dis;
                 if (!dis) {
                   if (buttons[num]->vpower.is_virtual) buttons[num]->xdrawButton(buttons[num]->vpower.on_off);
-                  else buttons[num]->xdrawButton(bitRead(power,num));
+                  else buttons[num]->xdrawButton(bitRead(TasmotaGlobal.power,num));
                 }
               }
               break;
@@ -828,7 +828,7 @@ void DisplayText(void)
                   renderer->GetColorFromIndex(fill),renderer->GetColorFromIndex(textcolor),bbuff,textsize);
                 if (!bflags) {
                   // power button
-                  if (dflg) buttons[num]->xdrawButton(bitRead(power,num));
+                  if (dflg) buttons[num]->xdrawButton(bitRead(TasmotaGlobal.power,num));
                   buttons[num]->vpower.is_virtual=0;
                 } else {
                   // virtual button
@@ -1262,7 +1262,7 @@ bool DisplayMqttData(void)
 
 void DisplayLocalSensor(void)
 {
-  if ((Settings.display_mode &0x02) && (0 == tele_period)) {
+  if ((Settings.display_mode &0x02) && (0 == TasmotaGlobal.tele_period)) {
     char no_topic[1] = { 0 };
 //    DisplayAnalyzeJson(mqtt_topic, mqtt_data);  // Add local topic
     DisplayAnalyzeJson(no_topic, mqtt_data);    // Discard any topic
@@ -1339,7 +1339,7 @@ void CmndDisplayModel(void)
     uint32_t last_display_model = Settings.display_model;
     Settings.display_model = XdrvMailbox.payload;
     if (XdspCall(FUNC_DISPLAY_MODEL)) {
-      restart_flag = 2;  // Restart to re-init interface and add/Remove MQTT subscribe
+      TasmotaGlobal.restart_flag = 2;  // Restart to re-init interface and add/Remove MQTT subscribe
     } else {
       Settings.display_model = last_display_model;
     }
@@ -1352,7 +1352,7 @@ void CmndDisplayWidth(void)
   if (XdrvMailbox.payload > 0) {
     if (XdrvMailbox.payload != Settings.display_width) {
       Settings.display_width = XdrvMailbox.payload;
-      restart_flag = 2;  // Restart to re-init width
+      TasmotaGlobal.restart_flag = 2;  // Restart to re-init width
     }
   }
   ResponseCmndNumber(Settings.display_width);
@@ -1363,7 +1363,7 @@ void CmndDisplayHeight(void)
   if (XdrvMailbox.payload > 0) {
     if (XdrvMailbox.payload != Settings.display_height) {
       Settings.display_height = XdrvMailbox.payload;
-      restart_flag = 2;  // Restart to re-init height
+      TasmotaGlobal.restart_flag = 2;  // Restart to re-init height
     }
   }
   ResponseCmndNumber(Settings.display_height);
@@ -1384,7 +1384,7 @@ void CmndDisplayMode(void)
     Settings.display_mode = XdrvMailbox.payload;
 
     if (disp_subscribed != (Settings.display_mode &0x04)) {
-      restart_flag = 2;  // Restart to Add/Remove MQTT subscribe
+      TasmotaGlobal.restart_flag = 2;  // Restart to Add/Remove MQTT subscribe
     } else {
       if (last_display_mode && !Settings.display_mode) {  // Switch to mode 0
         DisplayInit(DISPLAY_INIT_MODE);
@@ -2124,7 +2124,7 @@ uint8_t vbutt=0;
                 buttons[count]->press(true);
                 if (buttons[count]->justPressed()) {
                   if (!buttons[count]->vpower.is_virtual) {
-                    uint8_t pwr=bitRead(power, rbutt);
+                    uint8_t pwr=bitRead(TasmotaGlobal.power, rbutt);
                     if (!SendKey(KEY_BUTTON, rbutt+1, POWER_TOGGLE)) {
                       ExecuteCommandPower(rbutt+1, POWER_TOGGLE, SRC_BUTTON);
                       Touch_RDW_BUTT(count, !pwr);
@@ -2171,7 +2171,7 @@ uint8_t vbutt=0;
         }
         if (!buttons[count]->vpower.is_virtual) {
           // check if power button stage changed
-          uint8_t pwr = bitRead(power, rbutt);
+          uint8_t pwr = bitRead(TasmotaGlobal.power, rbutt);
           uint8_t vpwr = buttons[count]->vpower.on_off;
           if (pwr != vpwr) {
             Touch_RDW_BUTT(count, pwr);

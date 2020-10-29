@@ -423,9 +423,9 @@ void HAssAnnounceRelayLight(void)
   {
 
 #ifdef USE_TUYA_MCU
-  TuyaRel = TuyaGetDpId((TUYA_MCU_FUNC_REL1+ i-1) + active_device - 1);
-  TuyaRelInv = TuyaGetDpId((TUYA_MCU_FUNC_REL1_INV+ i-1) + active_device - 1);
-  TuyaDim = TuyaGetDpId((TUYA_MCU_FUNC_DIMMER) + active_device - 1);
+  TuyaRel = TuyaGetDpId((TUYA_MCU_FUNC_REL1+ i-1) + TasmotaGlobal.active_device - 1);
+  TuyaRelInv = TuyaGetDpId((TUYA_MCU_FUNC_REL1_INV+ i-1) + TasmotaGlobal.active_device - 1);
+  TuyaDim = TuyaGetDpId((TUYA_MCU_FUNC_DIMMER) + TasmotaGlobal.active_device - 1);
 #endif //USE_TUYA_MCU
 
     masterlog_level = ShowTopic = 4; // Hide topic on clean and remove use weblog 4 to see it
@@ -851,10 +851,10 @@ void HAssAnnounceSensors(void)
   do
   {
     mqtt_data[0] = '\0';
-    int tele_period_save = tele_period;
-    tele_period = 2;                                 // Do not allow HA updates during next function call
+    int tele_period_save = TasmotaGlobal.tele_period;
+    TasmotaGlobal.tele_period = 2;                                 // Do not allow HA updates during next function call
     XsnsNextCall(FUNC_JSON_APPEND, hass_xsns_index); // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-    tele_period = tele_period_save;
+    TasmotaGlobal.tele_period = tele_period_save;
     size_t sensordata_len = strlen(mqtt_data);
     char sensordata[sensordata_len+2];   // dynamically adjust the size
     strcpy(sensordata, mqtt_data);    // we can use strcpy since the buffer has the right size
@@ -1019,7 +1019,7 @@ void HAssPublishStatus(void)
                   "\"WiFi " D_JSON_LINK_COUNT "\":%d,\"WiFi " D_JSON_DOWNTIME "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"LoadAvg\":%lu}"),
              my_version, my_image, GetBuildDateAndTime().c_str(), ModuleName().c_str(), GetResetReason().c_str(),
              GetUptime().c_str(), my_hostname, WiFi.localIP().toString().c_str(), WifiGetRssiAsQuality(WiFi.RSSI()),
-             WiFi.RSSI(), WifiLinkCount(), WifiDowntime().c_str(), MqttConnectCount(), loop_load_avg);
+             WiFi.RSSI(), WifiLinkCount(), WifiDowntime().c_str(), MqttConnectCount(), TasmotaGlobal.loop_load_avg);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_HASS_STATE));
 }
 

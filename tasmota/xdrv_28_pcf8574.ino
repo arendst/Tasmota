@@ -53,7 +53,7 @@ void Pcf8574SwitchRelay(void)
     if (Pcf8574.max_devices > 0 && Pcf8574.pin[i] < 99) {
       uint8_t board = Pcf8574.pin[i]>>3;
       uint8_t oldpinmask = Pcf8574.pin_mask[board];
-      uint8_t _val = bitRead(rel_inverted, i) ? !relay_state : relay_state;
+      uint8_t _val = bitRead(TasmotaGlobal.rel_inverted, i) ? !relay_state : relay_state;
 
       //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PCF: Pcf8574SwitchRelay %d on pin %d"), i,state);
 
@@ -67,7 +67,7 @@ void Pcf8574SwitchRelay(void)
         Wire.write(Pcf8574.pin_mask[board]);
         Pcf8574.error = Wire.endTransmission();
       }
-      //pcf8574.write(Pcf8574.pin[i]&0x7, rel_inverted[i] ? !state : state);
+      //pcf8574.write(Pcf8574.pin[i]&0x7, TasmotaGlobal.rel_inverted[i] ? !state : state);
     }
   }
 }
@@ -122,7 +122,7 @@ void Pcf8574Init(void)
         //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PCF: I2C shift i %d: %d. Powerstate: %d, devices_present: %d"), i,_result, Settings.power>>i&1, devices_present);
         if (_result > 0) {
           Pcf8574.pin[devices_present] = i + 8 * idx;
-          bitWrite(rel_inverted, devices_present, Settings.flag3.pcf8574_ports_inverted);  // SetOption81 - Invert all ports on PCF8574 devices
+          bitWrite(TasmotaGlobal.rel_inverted, devices_present, Settings.flag3.pcf8574_ports_inverted);  // SetOption81 - Invert all ports on PCF8574 devices
           devices_present++;
           Pcf8574.max_connected_ports++;
         }

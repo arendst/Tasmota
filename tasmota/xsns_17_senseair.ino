@@ -154,7 +154,7 @@ void SenseairShow(bool json)
     }
     ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
-    if (0 == tele_period) {
+    if (0 == TasmotaGlobal.tele_period) {
       DomoticzSensor(DZ_AIRQUALITY, senseair_co2);
     }
 #endif  // USE_DOMOTICZ

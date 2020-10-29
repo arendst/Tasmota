@@ -283,7 +283,7 @@ void AzShow(bool json)
     ResponseAppendTHD(az_temperature, az_humidity);
     ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
-    if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, az_co2);
+    if (0 == TasmotaGlobal.tele_period) DomoticzSensor(DZ_AIRQUALITY, az_co2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {

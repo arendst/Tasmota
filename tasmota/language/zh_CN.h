@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "多次按键"
 #define D_NOISE "嘈杂"
 #define D_NONE "无"
+#define D_O2 "Oxygen"
 #define D_OFF "关"
 #define D_OFFLINE "离线"
 #define D_OK "好"

@@ -151,12 +151,12 @@ void MAX31855_Show(bool Json) {
     ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_PROBETEMPERATURE "\":%s,\"" D_JSON_REFERENCETEMPERATURE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
       sensor_name, probetemp, referencetemp, MAX31855_Result.ErrorCode);
 #ifdef USE_DOMOTICZ
-    if (0 == tele_period) {
+    if (0 == TasmotaGlobal.tele_period) {
       DomoticzSensor(DZ_TEMP, probetemp);
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-    if (0 == tele_period) {
+    if (0 == TasmotaGlobal.tele_period) {
       KnxSensor(KNX_TEMPERATURE, MAX31855_Result.ProbeTemperature);
     }
 #endif  // USE_KNX

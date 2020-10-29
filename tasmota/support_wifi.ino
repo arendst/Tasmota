@@ -97,9 +97,9 @@ void WifiConfig(uint8_t type)
 
     Wifi.config_counter = WIFI_CONFIG_SEC;   // Allow up to WIFI_CONFIG_SECS seconds for phone to provide ssid/pswd
     Wifi.counter = Wifi.config_counter +5;
-    blinks = 1999;
+    TasmotaGlobal.blinks = 255;
     if (WIFI_RESTART == Wifi.config_type) {
-      restart_flag = 2;
+      TasmotaGlobal.restart_flag = 2;
     }
     else if (WIFI_SERIAL == Wifi.config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_6_SERIAL " " D_ACTIVE_FOR_3_MINUTES));
@@ -333,11 +333,11 @@ void WifiSetState(uint8_t state)
 {
   if (state == global_state.wifi_down) {
     if (state) {
-      rules_flag.wifi_connected = 1;
+      TasmotaGlobal.rules_flag.wifi_connected = 1;
       Wifi.link_count++;
       Wifi.downtime += UpTime() - Wifi.last_event;
     } else {
-      rules_flag.wifi_disconnected = 1;
+      TasmotaGlobal.rules_flag.wifi_disconnected = 1;
       Wifi.last_event = UpTime();
     }
   }
@@ -503,7 +503,7 @@ void WifiCheck(uint8_t param)
       }
       if (!Wifi.config_counter) {
 //        SettingsSdkErase();  //  Disabled v6.1.0b due to possible bad wifi connects
-        restart_flag = 2;
+        TasmotaGlobal.restart_flag = 2;
       }
     } else {
       if (Wifi.scan_state) { WifiBeginAfterScan(); }
@@ -520,7 +520,7 @@ void WifiCheck(uint8_t param)
 #endif  // LWIP_IPV6=1
         WifiSetState(1);
         if (Settings.flag3.use_wifi_rescan) {  // SetOption57 - Scan wifi network every 44 minutes for configured AP's
-          if (!(uptime % (60 * WIFI_RESCAN_MINUTES))) {
+          if (!(TasmotaGlobal.uptime % (60 * WIFI_RESCAN_MINUTES))) {
             Wifi.scan_state = 2;
           }
         }
@@ -666,8 +666,6 @@ extern "C" {
 #endif
 }
 
-unsigned long wifiTimer = 0;
-
 void stationKeepAliveNow(void) {
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI "Sending Gratuitous ARP"));
   for (netif* interface = netif_list; interface != nullptr; interface = interface->next)
@@ -689,15 +687,17 @@ void stationKeepAliveNow(void) {
 }
 
 void wifiKeepAlive(void) {
-  uint32_t wifiTimerSec = Settings.param[P_ARP_GRATUITOUS];   // 8-bits number of seconds, or minutes if > 100
+  static uint32_t wifi_timer = 0;                            // Wifi keepalive timer
+
+  uint32_t wifiTimerSec = Settings.param[P_ARP_GRATUITOUS];  // 8-bits number of seconds, or minutes if > 100
 
   if ((WL_CONNECTED != Wifi.status) || (0 == wifiTimerSec)) { return; }   // quick exit if wifi not connected or feature disabled
 
-  if (TimeReached(wifiTimer)) {
+  if (TimeReached(wifi_timer)) {
     stationKeepAliveNow();
     if (wifiTimerSec > 100) {
-      wifiTimerSec = (wifiTimerSec - 100) * 60;                 // convert >100 as minutes, ex: 105 = 5 minutes, 110 = 10 minutes
+      wifiTimerSec = (wifiTimerSec - 100) * 60;              // convert >100 as minutes, ex: 105 = 5 minutes, 110 = 10 minutes
     }
-    SetNextTimeInterval(wifiTimer, wifiTimerSec * 1000);
+    SetNextTimeInterval(wifi_timer, wifiTimerSec * 1000);
   }
 }

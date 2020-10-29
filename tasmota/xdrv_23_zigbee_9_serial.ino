@@ -545,7 +545,7 @@ void ZigbeeEZSPSendDATA(const uint8_t *msg, size_t len) {
   }
   EZSP_Serial.to_packets[to_frm] = buf;
   EZSP_Serial.to_end = (to_frm + 1) & 0x07;   // move cursor
-  
+
   // ZigbeeEZSPSendDATA_frm(send_cancel, to_frm, EZSP_Serial.from_ack);
 
   // increment to_frame
@@ -672,14 +672,14 @@ int32_t ZigbeeProcessInputRaw(class SBuffer &buf) {
       // ERROR
       EZ_ERROR(buf.get8(2));
       zigbee.active = false;           // stop all zigbee activities
-      restart_flag = 2;                // there is nothing more we can do except restart
+      TasmotaGlobal.restart_flag = 2;  // there is nothing more we can do except restart
     } else {
 
       // Unknown
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZIG: Received unknown control byte 0x%02X"), control_byte);
     }
   } else {    // DATA Frame
-    
+
     // adjust to latest acked packet
     uint8_t new_ack = control_byte & 0x07;
     EZSP_HandleAck(new_ack);

@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "Mehrfachdruck"
 #define D_NOISE "Lautstärke"
 #define D_NONE "keine"
+#define D_O2 "Oxygen"
 #define D_OFF "aus"
 #define D_OFFLINE "Offline"
 #define D_OK "OK"

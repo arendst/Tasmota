@@ -67,14 +67,14 @@ void SnfL1SerialSendOk(void)
 bool SnfL1SerialInput(void)
 {
   if (serial_in_byte != 0x1B) {
-    if (serial_in_byte_counter >= 140) {
-      serial_in_byte_counter = 0;
+    if (TasmotaGlobal.serial_in_byte_counter >= 140) {
+      TasmotaGlobal.serial_in_byte_counter = 0;
     }
-    if (serial_in_byte_counter || (!serial_in_byte_counter && ('A' == serial_in_byte))) {  // A from AT
-      serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
+    if (TasmotaGlobal.serial_in_byte_counter || (!TasmotaGlobal.serial_in_byte_counter && ('A' == serial_in_byte))) {  // A from AT
+      serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = serial_in_byte;
     }
   } else {
-    serial_in_buffer[serial_in_byte_counter++] = 0x00;
+    serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = 0x00;
 
     // AT+RESULT="sequence":"1554682835320"
     // AT+UPDATE="sequence":"34906","switch":"on","light_type":1,"colorR":0,"colorG":16,"colorB":0,"bright":6,"mode":1

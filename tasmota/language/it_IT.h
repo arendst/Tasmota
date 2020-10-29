@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "multi-pressione"
 #define D_NOISE "Rumore"
 #define D_NONE "Nessuno"
+#define D_O2 "Oxygen"
 #define D_OFF "OFF"
 #define D_OFFLINE "Offline"
 #define D_OK "OK"

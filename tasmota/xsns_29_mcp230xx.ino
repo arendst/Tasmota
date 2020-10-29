@@ -845,7 +845,7 @@ bool Xsns29(uint8_t function)
             MCP230xx_Interrupt_Counter_Report();
           }
         }
-        if (tele_period == 0) {
+        if (TasmotaGlobal.tele_period == 0) {
           if (mcp230xx_int_retainer_en) { // We have pins configured for interrupt retain reporting
             MCP230xx_Interrupt_Retain_Report();
           }

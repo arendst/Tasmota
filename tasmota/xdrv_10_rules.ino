@@ -815,7 +815,7 @@ void RulesInit(void)
   // and indicates scripter do not use compress
   bitWrite(Settings.rule_once, 6, 0);
 
-  rules_flag.data = 0;
+  TasmotaGlobal.rules_flag.data = 0;
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (0 == GetRuleLen(i)) {
       bitWrite(Settings.rule_enabled, i, 0);
@@ -830,7 +830,7 @@ void RulesEvery50ms(void)
   if (Settings.rule_enabled && !Rules.busy) {  // Any rule enabled
     char json_event[120];
 
-    if (-1 == Rules.new_power) { Rules.new_power = power; }
+    if (-1 == Rules.new_power) { Rules.new_power = TasmotaGlobal.power; }
     if (Rules.new_power != Rules.old_power) {
       if (Rules.old_power != -1) {
         for (uint32_t i = 0; i < devices_present; i++) {
@@ -911,11 +911,11 @@ void RulesEvery50ms(void)
         }
       }
     }
-    else if (rules_flag.data) {
+    else if (TasmotaGlobal.rules_flag.data) {
       uint16_t mask = 1;
       for (uint32_t i = 0; i < MAX_RULES_FLAG; i++) {
-        if (rules_flag.data & mask) {
-          rules_flag.data ^= mask;
+        if (TasmotaGlobal.rules_flag.data & mask) {
+          TasmotaGlobal.rules_flag.data ^= mask;
           json_event[0] = '\0';
           switch (i) {
             case 0: strncpy_P(json_event, PSTR("{\"System\":{\"Init\":1}}"), sizeof(json_event)); break;
@@ -947,12 +947,12 @@ uint8_t rules_xsns_index = 0;
 
 void RulesEvery100ms(void)
 {
-  if (Settings.rule_enabled && !Rules.busy && (uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
+  if (Settings.rule_enabled && !Rules.busy && (TasmotaGlobal.uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
     mqtt_data[0] = '\0';
-    int tele_period_save = tele_period;
-    tele_period = 2;                                   // Do not allow HA updates during next function call
+    int tele_period_save = TasmotaGlobal.tele_period;
+    TasmotaGlobal.tele_period = 2;                                   // Do not allow HA updates during next function call
     XsnsNextCall(FUNC_JSON_APPEND, rules_xsns_index);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-    tele_period = tele_period_save;
+    TasmotaGlobal.tele_period = tele_period_save;
     if (strlen(mqtt_data)) {
       mqtt_data[0] = '{';                              // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
       ResponseJsonEnd();
@@ -967,7 +967,7 @@ void RulesEverySecond(void)
     char json_event[120];
 
     if (RtcTime.valid) {
-      if ((uptime > 60) && (RtcTime.minute != Rules.last_minute)) {  // Execute from one minute after restart every minute only once
+      if ((TasmotaGlobal.uptime > 60) && (RtcTime.minute != Rules.last_minute)) {  // Execute from one minute after restart every minute only once
         Rules.last_minute = RtcTime.minute;
         snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Minute\":%d}}"), MinutesPastMidnight());
         RulesProcessEvent(json_event);
@@ -2176,7 +2176,9 @@ void CmndMemory(void)
       if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
         if (XdrvMailbox.data[0] == '=') {  // Spaces already been skipped in data
-          dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings.flag2.calc_resolution, SettingsText(SET_MEM1 + XdrvMailbox.index -1));
+          char rules_mem[FLOATSZ];
+          dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings.flag2.calc_resolution, rules_mem);
+          SettingsUpdateText(SET_MEM1 + XdrvMailbox.index -1, rules_mem);
         } else {
           SettingsUpdateText(SET_MEM1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data);
         }

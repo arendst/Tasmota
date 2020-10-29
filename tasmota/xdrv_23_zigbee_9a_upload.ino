@@ -445,7 +445,7 @@ bool ZigbeeUploadXmodem(void) {
       if (1 == ssleep) {
         ssleep = Settings.sleep;         // Restore loop sleep
       }
-//      restart_flag = 2;                  // Restart to disable bootloader and use new firmware
+//      TasmotaGlobal.restart_flag = 2;    // Restart to disable bootloader and use new firmware
       ZbUpload.ota_step = ZBU_FINISH;    // Never return to zero without a restart to get a sane Zigbee environment
       break;
     }
