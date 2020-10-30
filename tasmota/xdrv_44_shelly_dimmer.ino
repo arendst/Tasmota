@@ -811,7 +811,7 @@ bool Xnrg31(uint8_t function)
 {
   bool result = false;
 
-  if (SHELLY_DIMMER == my_module_type && FUNC_PRE_INIT == function)
+  if ((SHELLY_DIMMER_1 == my_module_type || SHELLY_DIMMER_2 == my_module_type) && FUNC_PRE_INIT == function)
   {
 #ifndef SHELLY_VOLTAGE_MON
         Energy.current_available = false;
@@ -831,7 +831,7 @@ bool Xdrv44(uint8_t function)
 {
     bool result = false;
 
-    if (SHELLY_DIMMER == my_module_type)
+    if (SHELLY_DIMMER_1 == my_module_type || SHELLY_DIMMER_2 == my_module_type)
     {
         switch (function)
         {
