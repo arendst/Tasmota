@@ -159,7 +159,7 @@ bool Xnrg11(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (TasmotaGlobal.uptime > 4) { DDSU666Every250ms(); }
+      DDSU666Every250ms();
       break;
     case FUNC_INIT:
       Ddsu666SnsInit();

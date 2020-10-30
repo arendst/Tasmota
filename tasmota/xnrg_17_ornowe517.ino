@@ -216,7 +216,7 @@ bool Xnrg17(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (TasmotaGlobal.uptime > 4) { WE517Every250ms(); }
+      WE517Every250ms();
       break;
     case FUNC_INIT:
       We517SnsInit();

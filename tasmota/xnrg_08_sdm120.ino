@@ -242,7 +242,7 @@ bool Xnrg08(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (TasmotaGlobal.uptime > 4) { SDM120Every250ms(); }
+      SDM120Every250ms();
       break;
     case FUNC_JSON_APPEND:
       Sdm220Show(1);

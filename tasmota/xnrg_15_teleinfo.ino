@@ -640,7 +640,7 @@ bool Xnrg15(uint8_t function)
     switch (function)
     {
         case FUNC_EVERY_250_MSECOND:
-            if (TasmotaGlobal.uptime > 4) { TInfoEvery250ms(); }
+            TInfoEvery250ms();
             break;
         case FUNC_JSON_APPEND:
             TInfoShow(1);

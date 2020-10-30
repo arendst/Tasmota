@@ -285,7 +285,7 @@ bool Xnrg03(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (PzemSerial && (TasmotaGlobal.uptime > 4)) { PzemEvery250ms(); }
+      if (PzemSerial) { PzemEvery250ms(); }
       break;
     case FUNC_COMMAND:
       result = PzemCommand();

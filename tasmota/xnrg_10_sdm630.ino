@@ -242,7 +242,7 @@ bool Xnrg10(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (TasmotaGlobal.uptime > 4) { SDM630Every250ms(); }
+      SDM630Every250ms();
       break;
     case FUNC_INIT:
       Sdm630SnsInit();
