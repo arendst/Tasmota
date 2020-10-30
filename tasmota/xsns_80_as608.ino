@@ -267,11 +267,12 @@ bool as608Command(void){
                 uint8_t ModellNumber = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));  // Note 2 used for param number
                 snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "AS60x Enroll called #%i"), ModellNumber);
                 AddLog(LOG_LEVEL_INFO);
+                mqtt_data[0] = '\0';
                 as608Enroll(ModellNumber);
                 return true;
           }else{
                 AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "AS60x Enroll active! Cancel with: enrollReset"));
-                return false;
+                return true;
           }
         }
 
@@ -283,7 +284,8 @@ bool as608Command(void){
 
         // delete one Fingerprint
         if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"delete")) { // Note 1 used for param number
-          return deleteFingerprint(atoi(subStr(sub_string, XdrvMailbox.data, ",", 2)));  // Note 2 used for param number
+          deleteFingerprint(atoi(subStr(sub_string, XdrvMailbox.data, ",", 2)));  // Note 2 used for param number
+          return true;
         }
 
         // delete all Fingerprints
@@ -311,6 +313,9 @@ bool as608Command(void){
           AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Commands: enroll x, enrollReset, delete x, deleteAll, getNumber"));
           return true;
         }
+
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Command excepted. But not supported!"));
+        return true;
     }
 
 }
