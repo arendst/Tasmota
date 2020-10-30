@@ -603,11 +603,18 @@ void MqttReconnect(void)
   UdpDisconnect();
 #endif  // USE_EMULATION
 
-  AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_ATTEMPTING_CONNECTION));
-
   Mqtt.connected = false;
   Mqtt.retry_counter = Settings.mqtt_retry;
   global_state.mqtt_down = 1;
+
+#ifdef FIRMWARE_MINIMAL
+  // Don't try to connect if MQTT requires TLS but TLS is not supported
+  if (Settings.flag4.mqtt_tls) {
+    return;
+  }
+#endif
+
+  AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_ATTEMPTING_CONNECTION));
 
   char *mqtt_user = nullptr;
   char *mqtt_pwd = nullptr;
