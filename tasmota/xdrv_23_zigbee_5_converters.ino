@@ -1238,6 +1238,15 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
           attr_list.addAttribute(0x0001, 0x0021).setUInt(toPercentageCR2032(mv) * 2);
         }
         break;
+      case 0x00010021:       // BatteryPercentage
+        {
+          const char * model_c = zigbee_devices.getModelId(_srcaddr);  // null if unknown
+          String modelId((char*) model_c);
+          if (modelId.startsWith(F("TRADFRI"))) {
+            attr.setUInt(attr.getUInt() * 2);   // bug in TRADFRI battery, need to double the value
+          }
+        }
+        break;
       case 0x02010008:    // Pi Heating Demand - solve Eutotronic bug
         {
           const char * manufacturer_c = zigbee_devices.getManufacturerId(_srcaddr);  // null if unknown
