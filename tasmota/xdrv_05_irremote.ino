@@ -62,7 +62,7 @@ def ir_expand(ir_compact):
 #include <IRremoteESP8266.h>
 #include <IRutils.h>
 
-enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND };
+enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_PROTO_UNSUPPORTED };
 
 const char kIrRemoteCommands[] PROGMEM = "|" D_CMND_IRSEND ;
 
@@ -307,7 +307,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
 #endif
     default:
       irsend_active = false;
-      ResponseCmndChar(D_JSON_PROTOCOL_NOT_SUPPORTED);
+      return IE_PROTO_UNSUPPORTED;
   }
 
   return IE_NO_ERROR;
@@ -335,6 +335,9 @@ void IrRemoteCmndResponse(uint32_t error)
       break;
     case IE_INVALID_JSON:
       ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON));
+      break;
+    case IE_PROTO_UNSUPPORTED:
+      ResponseCmndChar(D_JSON_PROTOCOL_NOT_SUPPORTED);
       break;
     case IE_SYNTAX_IRSEND:
       Response_P(PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_NO " " D_JSON_IR_PROTOCOL ", " D_JSON_IR_BITS " " D_JSON_OR " " D_JSON_IR_DATA "\"}"));
