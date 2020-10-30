@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v8.4.0.3
+ * Updated until v9.0.0.3
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -125,7 +125,7 @@
 #define D_MULTI_PRESS "Mehrfachdruck"
 #define D_NOISE "Lautstärke"
 #define D_NONE "keine"
-#define D_O2 "Oxygen"
+#define D_O2 "Sauerstoff"
 #define D_OFF "aus"
 #define D_OFFLINE "Offline"
 #define D_OK "OK"
