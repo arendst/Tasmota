@@ -1189,13 +1189,20 @@ void CmndGpio(void)
 }
 
 void ShowGpios(const uint16_t *NiceList, uint32_t size, uint32_t offset, uint32_t &lines) {
+  uint32_t ridx;
+  uint32_t midx;
   myio cmodule;
   ModuleGpios(&cmodule);
   bool jsflg = false;
   for (uint32_t i = offset; i < size; i++) {  // Skip ADC_NONE
-    uint32_t ridx = pgm_read_word(NiceList + i) & 0xFFE0;
-    uint32_t midx = BGPIO(ridx);
-    if ((XdrvMailbox.payload != 255) && GetUsedInModule(midx, cmodule.io)) { continue; }
+    if (NiceList == nullptr) {
+      ridx = AGPIO(i);
+      midx = i;
+    } else {
+      ridx = pgm_read_word(NiceList + i) & 0xFFE0;
+      midx = BGPIO(ridx);
+      if ((XdrvMailbox.payload != 255) && GetUsedInModule(midx, cmodule.io)) { continue; }
+    }
     if (!jsflg) {
       Response_P(PSTR("{\"" D_CMND_GPIOS "%d\":{"), lines);
     } else {
@@ -1214,19 +1221,18 @@ void ShowGpios(const uint16_t *NiceList, uint32_t size, uint32_t offset, uint32_
 
 void CmndGpios(void)
 {
-/*
-  if (XdrvMailbox.payload == 17) {
-    DumpConvertTable();
-    return;
-  }
-*/
   uint32_t lines = 1;
-  ShowGpios(kGpioNiceList, ARRAY_SIZE(kGpioNiceList), 0, lines);
+  if (XdrvMailbox.payload == 255) {
+//    DumpConvertTable();
+    ShowGpios(nullptr, GPIO_SENSOR_END, 0, lines);
+  } else {
+    ShowGpios(kGpioNiceList, ARRAY_SIZE(kGpioNiceList), 0, lines);
 #ifdef ESP8266
 #ifndef USE_ADC_VCC
-  ShowGpios(kAdcNiceList, ARRAY_SIZE(kAdcNiceList), 1, lines);
+    ShowGpios(kAdcNiceList, ARRAY_SIZE(kAdcNiceList), 1, lines);
 #endif  // USE_ADC_VCC
 #endif  // ESP8266
+  }
   ResponseClear();
 }
 
