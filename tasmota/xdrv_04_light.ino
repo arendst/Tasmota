@@ -129,7 +129,7 @@ enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_M
 const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 
 const char kLightCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
+  D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_DIMMER_STEP "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
   D_CMND_RGBWWTABLE "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
   D_CMND_WHITE "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR
 #ifdef USE_LIGHT_PALETTE
@@ -141,7 +141,7 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
    "|UNDOCA" ;
 
 void (* const LightCommand[])(void) PROGMEM = {
-  &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndDimmerRange, &CmndLedTable, &CmndFade,
+  &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndDimmerRange, &CmndDimmerStep, &CmndLedTable, &CmndFade,
   &CmndRgbwwTable, &CmndScheme, &CmndSpeed, &CmndWakeup, &CmndWakeupDuration,
   &CmndWhite, &CmndChannel, &CmndHsbColor,
 #ifdef USE_LIGHT_PALETTE
@@ -2829,8 +2829,8 @@ void CmndDimmer(void)
   // Dimmer1 0..100 - Change RGB Dimmer
   // Dimmer2 0..100 - Change W(W) Dimmer
   // Dimmer3 0..100 - Change both RGB and W(W) Dimmers with no fading
-  // Dimmer<x> +    - Incerement Dimmer in steps of 10
-  // Dimmer<x> -    - Decrement Dimmer in steps of 10
+  // Dimmer<x> +    - Incerement Dimmer in steps of DimmerStep
+  // Dimmer<x> -    - Decrement Dimmer in steps of DimmerStep
   uint32_t dimmer;
   if (XdrvMailbox.index == 3) {
     TasmotaGlobal.skip_light_fade = true;
@@ -2848,9 +2848,9 @@ void CmndDimmer(void)
   // Handle +/- special command
   if (1 == XdrvMailbox.data_len) {
     if ('+' == XdrvMailbox.data[0]) {
-      XdrvMailbox.payload = (dimmer > 89) ? 100 : dimmer + 10;
+      XdrvMailbox.payload = (dimmer > (100 - Settings.dimmer_step - 1)) ? 100 : dimmer + Settings.dimmer_step;
     } else if ('-' == XdrvMailbox.data[0]) {
-      XdrvMailbox.payload = (dimmer < 11) ? 1 : dimmer - 10;
+      XdrvMailbox.payload = (dimmer < (Settings.dimmer_step + 1)) ? 1 : dimmer - Settings.dimmer_step;
     }
   }
   // If value is ok, change it, otherwise report old value
@@ -2906,6 +2906,25 @@ void CmndDimmerRange(void)
   }
   Response_P(PSTR("{\"" D_CMND_DIMMER_RANGE "\":{\"Min\":%d,\"Max\":%d}}"), Settings.dimmer_hw_min, Settings.dimmer_hw_max);
 }
+
+void CmndDimmerStep(void)
+{
+  // DimmerStep       - Show current dimmer step as used by Dimmer +/-
+  // DimmerStep       - Set dimmer step
+  if (XdrvMailbox.data_len > 0) {
+    uint32_t parm[1];
+    parm[0] = Settings.dimmer_step;
+    ParseParameters(1, parm);
+    if (parm[0] < 1) {
+         Settings.dimmer_step = 1;
+    } else if (parm[0] > 10) {
+        Settings.dimmer_step = 10;
+    } else {
+        Settings.dimmer_step = parm[0];
+    }
+  }
+  Response_P(PSTR("{\"" D_CMND_DIMMER_STEP "\":%d}"), Settings.dimmer_step);
+
 
 void CmndLedTable(void)
 {

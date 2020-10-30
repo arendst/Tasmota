@@ -219,6 +219,9 @@ String EthernetMacAddress(void);
 #ifndef DEFAULT_DIMMER_MIN
 #define DEFAULT_DIMMER_MIN          0
 #endif
+#ifndef DEFAULT_DIMMER_STEP
+#define DEFAULT_DIMMER_STEP         10
+#endif
 #ifndef DEFAULT_LIGHT_DIMMER
 #define DEFAULT_LIGHT_DIMMER        10
 #endif
