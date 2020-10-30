@@ -526,12 +526,12 @@ void SettingsSave(uint8_t rotate)
   UpdateBackwardCompatibility();
   if ((GetSettingsCrc32() != settings_crc32) || rotate) {
     if (1 == rotate) {   // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
-      stop_flash_rotate = 1;
+      TasmotaGlobal.stop_flash_rotate = 1;
     }
     if (2 == rotate) {   // Use eeprom flash slot and erase next flash slots if stop_flash_rotate is off (default)
       settings_location = SETTINGS_LOCATION +1;
     }
-    if (stop_flash_rotate) {
+    if (TasmotaGlobal.stop_flash_rotate) {
       settings_location = SETTINGS_LOCATION;
     } else {
       settings_location--;
@@ -555,7 +555,7 @@ void SettingsSave(uint8_t rotate)
       ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     }
 
-    if (!stop_flash_rotate && rotate) {
+    if (!TasmotaGlobal.stop_flash_rotate && rotate) {
       for (uint32_t i = 1; i < CFG_ROTATES; i++) {
         ESP.flashEraseSector(settings_location -i);  // Delete previous configurations by resetting to 0xFF
         delay(1);
@@ -615,7 +615,7 @@ void SettingsLoad(void) {
 
 void EspErase(uint32_t start_sector, uint32_t end_sector)
 {
-  bool serial_output = (LOG_LEVEL_DEBUG_MORE <= seriallog_level);
+  bool serial_output = (LOG_LEVEL_DEBUG_MORE <= TasmotaGlobal.seriallog_level);
   for (uint32_t sector = start_sector; sector < end_sector; sector++) {
 
     bool result = ESP.flashEraseSector(sector);  // Arduino core - erases flash as seen by SDK

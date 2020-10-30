@@ -607,7 +607,7 @@ bool NewerVersion(char* version_str)
 char* GetPowerDevice(char* dest, uint32_t idx, size_t size, uint32_t option)
 {
   strncpy_P(dest, S_RSLT_POWER, size);                // POWER
-  if ((devices_present + option) > 1) {
+  if ((TasmotaGlobal.devices_present + option) > 1) {
     char sidx[8];
     snprintf_P(sidx, sizeof(sidx), PSTR("%d"), idx);  // x
     strncat(dest, sidx, size - strlen(dest) -1);      // POWERx
@@ -629,12 +629,12 @@ void GetEspHardwareType(void)
 //  uint32_t efuse3 = *(uint32_t*)(0x3FF00058);
 //  uint32_t efuse4 = *(uint32_t*)(0x3FF0005C);
 
-  is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
-  if (is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
-    is_8285 = false;  // ESP8285 can only have 1M flash
+  TasmotaGlobal.is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
+  if (TasmotaGlobal.is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
+    TasmotaGlobal.is_8285 = false;  // ESP8285 can only have 1M flash
   }
 #else
-  is_8285 = false;    // ESP8285 can only have 1M flash
+  TasmotaGlobal.is_8285 = false;    // ESP8285 can only have 1M flash
 #endif
 }
 
@@ -642,7 +642,7 @@ String GetDeviceHardware(void)
 {
   char buff[10];
 #ifdef ESP8266
-  if (is_8285) {
+  if (TasmotaGlobal.is_8285) {
     strcpy_P(buff, PSTR("ESP8285"));
   } else {
     strcpy_P(buff, PSTR("ESP8266EX"));
@@ -944,7 +944,7 @@ void SetSerial(uint32_t baudrate, uint32_t serial_config) {
 }
 
 void ClaimSerial(void) {
-  serial_local = true;
+  TasmotaGlobal.serial_local = true;
   AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
   TasmotaGlobal.baudrate = Serial.baudRate();
@@ -1081,12 +1081,16 @@ char* ResponseGetTime(uint32_t format, char* time_str)
   return time_str;
 }
 
+void ResponseClear(void) {
+  TasmotaGlobal.mqtt_data[0] = '\0';
+}
+
 int Response_P(const char* format, ...)        // Content send snprintf_P char data
 {
   // This uses char strings. Be aware of sending %% if % is needed
   va_list args;
   va_start(args, format);
-  int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), format, args);
+  int len = vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), format, args);
   va_end(args);
   return len;
 }
@@ -1097,10 +1101,10 @@ int ResponseTime_P(const char* format, ...)    // Content send snprintf_P char d
   va_list args;
   va_start(args, format);
 
-  ResponseGetTime(Settings.flag2.time_format, mqtt_data);
+  ResponseGetTime(Settings.flag2.time_format, TasmotaGlobal.mqtt_data);
 
-  int mlen = strlen(mqtt_data);
-  int len = vsnprintf_P(mqtt_data + mlen, sizeof(mqtt_data) - mlen, format, args);
+  int mlen = strlen(TasmotaGlobal.mqtt_data);
+  int len = vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
   va_end(args);
   return len + mlen;
 }
@@ -1110,8 +1114,8 @@ int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char d
   // This uses char strings. Be aware of sending %% if % is needed
   va_list args;
   va_start(args, format);
-  int mlen = strlen(mqtt_data);
-  int len = vsnprintf_P(mqtt_data + mlen, sizeof(mqtt_data) - mlen, format, args);
+  int mlen = strlen(TasmotaGlobal.mqtt_data);
+  int len = vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, sizeof(TasmotaGlobal.mqtt_data) - mlen, format, args);
   va_end(args);
   return len + mlen;
 }
@@ -1233,7 +1237,7 @@ void DumpConvertTable(void) {
       lines++;
     }
   }
-  mqtt_data[0] = '\0';
+  ResponseClear();
 }
 */
 #endif  // ESP8266
@@ -1430,7 +1434,7 @@ void ModuleDefault(uint32_t module)
 
 void SetModuleType(void)
 {
-  my_module_type = (USER_MODULE == Settings.module) ? Settings.user_template_base : Settings.module;
+  TasmotaGlobal.module_type = (USER_MODULE == Settings.module) ? Settings.user_template_base : Settings.module;
 }
 
 bool FlashPin(uint32_t pin)
@@ -1444,7 +1448,7 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio)
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
 
-//  if (!is_8285 && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
+//  if (!TasmotaGlobal.is_8285 && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
   if ((WEMOS == Settings.module) && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
     if ((9 == pin) || (10 == pin)) {
       return GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
@@ -1927,14 +1931,14 @@ bool I2cSetDevice(uint32_t addr)
 void SetSeriallog(uint32_t loglevel)
 {
   Settings.seriallog_level = loglevel;
-  seriallog_level = loglevel;
+  TasmotaGlobal.seriallog_level = loglevel;
   TasmotaGlobal.seriallog_timer = 0;
 }
 
 void SetSyslog(uint32_t loglevel)
 {
   Settings.syslog_level = loglevel;
-  syslog_level = loglevel;
+  TasmotaGlobal.syslog_level = loglevel;
   TasmotaGlobal.syslog_timer = 0;
 }
 
@@ -1945,7 +1949,7 @@ void GetLog(uint32_t idx, char** entry_pp, size_t* len_p)
   size_t len = 0;
 
   if (idx) {
-    char* it = web_log;
+    char* it = TasmotaGlobal.web_log;
     do {
       uint32_t cur_idx = *it;
       it++;
@@ -1957,7 +1961,7 @@ void GetLog(uint32_t idx, char** entry_pp, size_t* len_p)
         break;
       }
       it += tmp;
-    } while (it < web_log + WEB_LOG_SIZE && *it != '\0');
+    } while (it < TasmotaGlobal.web_log + WEB_LOG_SIZE && *it != '\0');
   }
   *entry_pp = entry_p;
   *len_p = len;
@@ -1966,7 +1970,7 @@ void GetLog(uint32_t idx, char** entry_pp, size_t* len_p)
 
 void Syslog(void)
 {
-  // Destroys log_data
+  // Destroys TasmotaGlobal.log_data
 
   uint32_t current_hash = GetHash(SettingsText(SET_SYSLOG_HOST), strlen(SettingsText(SET_SYSLOG_HOST)));
   if (syslog_host_hash != current_hash) {
@@ -1976,14 +1980,14 @@ void Syslog(void)
   if (PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
     char syslog_preamble[64];  // Hostname + Id
     snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), NetworkHostname());
-    memmove(log_data + strlen(syslog_preamble), log_data, sizeof(log_data) - strlen(syslog_preamble));
-    log_data[sizeof(log_data) -1] = '\0';
-    memcpy(log_data, syslog_preamble, strlen(syslog_preamble));
-    PortUdp_write(log_data, strlen(log_data));
+    memmove(TasmotaGlobal.log_data + strlen(syslog_preamble), TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data) - strlen(syslog_preamble));
+    TasmotaGlobal.log_data[sizeof(TasmotaGlobal.log_data) -1] = '\0';
+    memcpy(TasmotaGlobal.log_data, syslog_preamble, strlen(syslog_preamble));
+    PortUdp_write(TasmotaGlobal.log_data, strlen(TasmotaGlobal.log_data));
     PortUdp.endPacket();
     delay(1);  // Add time for UDP handling (#5512)
   } else {
-    syslog_level = 0;
+    TasmotaGlobal.syslog_level = 0;
     TasmotaGlobal.syslog_timer = SYSLOG_TIMER;
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
   }
@@ -1994,30 +1998,30 @@ void AddLog(uint32_t loglevel)
   char mxtime[10];  // "13:45:21 "
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
 
-  if ((loglevel <= seriallog_level) &&
-      (masterlog_level <= seriallog_level)) {
-    Serial.printf("%s%s\r\n", mxtime, log_data);
+  if ((loglevel <= TasmotaGlobal.seriallog_level) &&
+      (TasmotaGlobal.masterlog_level <= TasmotaGlobal.seriallog_level)) {
+    Serial.printf("%s%s\r\n", mxtime, TasmotaGlobal.log_data);
   }
 #ifdef USE_WEBSERVER
   if (Settings.webserver &&
      (loglevel <= Settings.weblog_level) &&
-     (masterlog_level <= Settings.weblog_level)) {
+     (TasmotaGlobal.masterlog_level <= Settings.weblog_level)) {
     // Delimited, zero-terminated buffer of log lines.
     // Each entry has this format: [index][log data]['\1']
     TasmotaGlobal.web_log_index &= 0xFF;
     if (!TasmotaGlobal.web_log_index) {
       TasmotaGlobal.web_log_index++;       // Index 0 is not allowed as it is the end of char string
     }
-    while (TasmotaGlobal.web_log_index == web_log[0] ||  // If log already holds the next index, remove it
-           strlen(web_log) + strlen(log_data) + 13 > WEB_LOG_SIZE)  // 13 = web_log_index + mxtime + '\1' + '\0'
+    while (TasmotaGlobal.web_log_index == TasmotaGlobal.web_log[0] ||  // If log already holds the next index, remove it
+           strlen(TasmotaGlobal.web_log) + strlen(TasmotaGlobal.log_data) + 13 > WEB_LOG_SIZE)  // 13 = web_log_index + mxtime + '\1' + '\0'
     {
-      char* it = web_log;
+      char* it = TasmotaGlobal.web_log;
       it++;                                // Skip web_log_index
       it += strchrspn(it, '\1');           // Skip log line
       it++;                                // Skip delimiting "\1"
-      memmove(web_log, it, WEB_LOG_SIZE -(it-web_log));  // Move buffer forward to remove oldest log line
+      memmove(TasmotaGlobal.web_log, it, WEB_LOG_SIZE -(it-TasmotaGlobal.web_log));  // Move buffer forward to remove oldest log line
     }
-    snprintf_P(web_log, sizeof(web_log), PSTR("%s%c%s%s\1"), web_log, TasmotaGlobal.web_log_index++, mxtime, log_data);
+    snprintf_P(TasmotaGlobal.web_log, sizeof(TasmotaGlobal.web_log), PSTR("%s%c%s%s\1"), TasmotaGlobal.web_log, TasmotaGlobal.web_log_index++, mxtime, TasmotaGlobal.log_data);
     TasmotaGlobal.web_log_index &= 0xFF;
     if (!TasmotaGlobal.web_log_index) {
       TasmotaGlobal.web_log_index++;       // Index 0 is not allowed as it is the end of char string
@@ -2025,30 +2029,30 @@ void AddLog(uint32_t loglevel)
   }
 #endif  // USE_WEBSERVER
   if (Settings.flag.mqtt_enabled &&        // SetOption3 - Enable MQTT
-      !global_state.mqtt_down &&
+      !TasmotaGlobal.global_state.mqtt_down &&
       (loglevel <= Settings.mqttlog_level) &&
-      (masterlog_level <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
+      (TasmotaGlobal.masterlog_level <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
 
-  if (!global_state.network_down &&
-      (loglevel <= syslog_level) &&
-      (masterlog_level <= syslog_level)) { Syslog(); }
+  if (!TasmotaGlobal.global_state.network_down &&
+      (loglevel <= TasmotaGlobal.syslog_level) &&
+      (TasmotaGlobal.masterlog_level <= TasmotaGlobal.syslog_level)) { Syslog(); }
 
-  prepped_loglevel = 0;
+  TasmotaGlobal.prepped_loglevel = 0;
 }
 
 void AddLog_P(uint32_t loglevel, const char *formatP)
 {
-  snprintf_P(log_data, sizeof(log_data), formatP);
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), formatP);
   AddLog(loglevel);
 }
 
 void AddLog_P(uint32_t loglevel, const char *formatP, const char *formatP2)
 {
-  char message[sizeof(log_data)];
+  char message[sizeof(TasmotaGlobal.log_data)];
 
-  snprintf_P(log_data, sizeof(log_data), formatP);
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), formatP);
   snprintf_P(message, sizeof(message), formatP2);
-  strncat(log_data, message, sizeof(log_data) - strlen(log_data) -1);
+  strncat(TasmotaGlobal.log_data, message, sizeof(TasmotaGlobal.log_data) - strlen(TasmotaGlobal.log_data) -1);
   AddLog(loglevel);
 }
 
@@ -2056,17 +2060,17 @@ void PrepLog_P2(uint32_t loglevel, PGM_P formatP, ...)
 {
   va_list arg;
   va_start(arg, formatP);
-  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  vsnprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), formatP, arg);
   va_end(arg);
 
-  prepped_loglevel = loglevel;
+  TasmotaGlobal.prepped_loglevel = loglevel;
 }
 
 void AddLog_P2(uint32_t loglevel, PGM_P formatP, ...)
 {
   va_list arg;
   va_start(arg, formatP);
-  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  vsnprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), formatP, arg);
   va_end(arg);
 
   AddLog(loglevel);
@@ -2076,7 +2080,7 @@ void AddLog_Debug(PGM_P formatP, ...)
 {
   va_list arg;
   va_start(arg, formatP);
-  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  vsnprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), formatP, arg);
   va_end(arg);
 
   AddLog(LOG_LEVEL_DEBUG);
@@ -2085,15 +2089,15 @@ void AddLog_Debug(PGM_P formatP, ...)
 void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count)
 {
 /*
-  snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("DMP:"));
   for (uint32_t i = 0; i < count; i++) {
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer++));
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s %02X"), TasmotaGlobal.log_data, *(buffer++));
   }
   AddLog(loglevel);
 */
 /*
-  strcpy_P(log_data, PSTR("DMP: "));
-  ToHex_P(buffer, count, log_data + strlen(log_data), sizeof(log_data) - strlen(log_data), ' ');
+  strcpy_P(TasmotaGlobal.log_data, PSTR("DMP: "));
+  ToHex_P(buffer, count, TasmotaGlobal.log_data + strlen(TasmotaGlobal.log_data), sizeof(TasmotaGlobal.log_data) - strlen(TasmotaGlobal.log_data), ' ');
   AddLog(loglevel);
 */
   char hex_char[(count * 3) + 2];
@@ -2102,7 +2106,7 @@ void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count)
 
 void AddLogSerial(uint32_t loglevel)
 {
-  AddLogBuffer(loglevel, (uint8_t*)serial_in_buffer, TasmotaGlobal.serial_in_byte_counter);
+  AddLogBuffer(loglevel, (uint8_t*)TasmotaGlobal.serial_in_buffer, TasmotaGlobal.serial_in_byte_counter);
 }
 
 void AddLogMissed(const char *sensor, uint32_t misses)
@@ -2111,12 +2115,12 @@ void AddLogMissed(const char *sensor, uint32_t misses)
 }
 
 void AddLogBufferSize(uint32_t loglevel, uint8_t *buffer, uint32_t count, uint32_t size) {
-  snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("DMP:"));
   for (uint32_t i = 0; i < count; i++) {
     if (1 ==  size) {  // uint8_t
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer));
+      snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s %02X"), TasmotaGlobal.log_data, *(buffer));
     } else {           // uint16_t
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X%02X"), log_data, *(buffer +1), *(buffer));
+      snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s %02X%02X"), TasmotaGlobal.log_data, *(buffer +1), *(buffer));
     }
     buffer += size;
   }

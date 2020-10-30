@@ -395,7 +395,7 @@ void HxEvery100mSecond(void)
           Hx.weight_changed = true;
         }
         else if (Hx.weight_changed && (Hx.weight == Hx.weight_diff)) {
-          mqtt_data[0] = '\0';
+          ResponseClear();
           ResponseAppendTime();
           HxShow(true);
           ResponseJsonEnd();

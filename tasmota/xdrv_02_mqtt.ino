@@ -215,7 +215,7 @@ bool MqttPublishLib(const char* topic, bool retained)
     }
   }
 
-  bool result = MqttClient.publish(topic, mqtt_data, retained);
+  bool result = MqttClient.publish(topic, TasmotaGlobal.mqtt_data, retained);
   yield();  // #3313
   return result;
 }
@@ -252,7 +252,7 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   memcpy(data, mqtt_data, sizeof(data));
 
 //  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_DATA_SIZE " %d, \"%s %s\""), data_len, topic, data);
-//  if (LOG_LEVEL_DEBUG_MORE <= seriallog_level) { Serial.println(data); }
+//  if (LOG_LEVEL_DEBUG_MORE <= TasmotaGlobal.seriallog_level) { Serial.println(data); }
   MqttDumpData(topic, data, data_len);  // Use a function to save stack space used by dump_data
 
   // MQTT pre-processing
@@ -288,16 +288,16 @@ void MqttUnsubscribe(const char *topic)
 
 void MqttPublishLogging(const char *mxtime)
 {
-  char saved_mqtt_data[strlen(mqtt_data) +1];
-  memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
+  char saved_mqtt_data[strlen(TasmotaGlobal.mqtt_data) +1];
+  memcpy(saved_mqtt_data, TasmotaGlobal.mqtt_data, sizeof(saved_mqtt_data));
 
-//    ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), log_data);  // Will fail as some messages contain JSON
-  Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
+//    ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), TasmotaGlobal.log_data);  // Will fail as some messages contain JSON
+  Response_P(PSTR("%s%s"), mxtime, TasmotaGlobal.log_data);            // No JSON and ugly!!
   char stopic[TOPSZ];
-  GetTopic_P(stopic, STAT, mqtt_topic, PSTR("LOGGING"));
+  GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR("LOGGING"));
   MqttPublishLib(stopic, false);
 
-  memcpy(mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
+  memcpy(TasmotaGlobal.mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
 }
 
 void MqttPublish(const char* topic, bool retained)
@@ -324,12 +324,12 @@ void MqttPublish(const char* topic, bool retained)
     }
   }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s%s = %s"), slog_type, (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1, mqtt_data);  // SetOption3 - Enable MQTT
-  if (strlen(log_data) >= (sizeof(log_data) - strlen(sretained) -1)) {
-    log_data[sizeof(log_data) - strlen(sretained) -5] = '\0';
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s ..."), log_data);
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%s = %s"), slog_type, (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1, TasmotaGlobal.mqtt_data);  // SetOption3 - Enable MQTT
+  if (strlen(TasmotaGlobal.log_data) >= (sizeof(TasmotaGlobal.log_data) - strlen(sretained) -1)) {
+    TasmotaGlobal.log_data[sizeof(TasmotaGlobal.log_data) - strlen(sretained) -5] = '\0';
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s ..."), TasmotaGlobal.log_data);
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s%s"), log_data, sretained);
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%s"), TasmotaGlobal.log_data, sretained);
   AddLog(LOG_LEVEL_INFO);
 
   if (Settings.ledstate &0x04) {
@@ -359,7 +359,7 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
     romram[i] = toupper(romram[i]);
   }
   prefix &= 3;
-  GetTopic_P(stopic, prefix, mqtt_topic, romram);
+  GetTopic_P(stopic, prefix, TasmotaGlobal.mqtt_topic, romram);
   MqttPublish(stopic, retained);
 
 #if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT)
@@ -380,13 +380,13 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
     snprintf_P(romram, sizeof(romram), PSTR("$aws/things/%s/shadow/update"), topic2);
 
     // copy buffer
-    char *mqtt_save = (char*) malloc(strlen(mqtt_data)+1);
+    char *mqtt_save = (char*) malloc(strlen(TasmotaGlobal.mqtt_data)+1);
     if (!mqtt_save) { return; }    // abort
-    strcpy(mqtt_save, mqtt_data);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"state\":{\"reported\":%s}}"), mqtt_save);
+    strcpy(mqtt_save, TasmotaGlobal.mqtt_data);
+    snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"state\":{\"reported\":%s}}"), mqtt_save);
     free(mqtt_save);
 
-    bool result = MqttClient.publish(romram, mqtt_data, false);
+    bool result = MqttClient.publish(romram, TasmotaGlobal.mqtt_data, false);
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Updated shadow: %s"), romram);
     yield();  // #3313
   }
@@ -419,7 +419,7 @@ void MqttPublishPowerState(uint32_t device)
   char stopic[TOPSZ];
   char scommand[33];
 
-  if ((device < 1) || (device > devices_present)) { device = 1; }
+  if ((device < 1) || (device > TasmotaGlobal.devices_present)) { device = 1; }
 
 #ifdef USE_SONOFF_IFAN
   if (IsModuleIfan() && (device > 1)) {
@@ -428,19 +428,19 @@ void MqttPublishPowerState(uint32_t device)
       DomoticzUpdateFanState();  // RC Button feedback
 #endif  // USE_DOMOTICZ
       snprintf_P(scommand, sizeof(scommand), PSTR(D_CMND_FANSPEED));
-      GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);  // SetOption4 - Switch between MQTT RESULT or COMMAND
+      GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);  // SetOption4 - Switch between MQTT RESULT or COMMAND
       Response_P(S_JSON_COMMAND_NVALUE, scommand, GetFanspeed());
       MqttPublish(stopic);
     }
   } else {
 #endif  // USE_SONOFF_IFAN
     GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable);           // SetOption26 - Switch between POWER or POWER1
-    GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);  // SetOption4 - Switch between MQTT RESULT or COMMAND
+    GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);  // SetOption4 - Switch between MQTT RESULT or COMMAND
     Response_P(S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(TasmotaGlobal.power, device -1)));
     MqttPublish(stopic);
 
     if (!Settings.flag4.only_json_message) {  // SetOption90 - Disable non-json MQTT response
-      GetTopic_P(stopic, STAT, mqtt_topic, scommand);
+      GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
       Response_P(GetStateText(bitRead(TasmotaGlobal.power, device -1)));
       MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
     }
@@ -451,7 +451,7 @@ void MqttPublishPowerState(uint32_t device)
 
 void MqttPublishAllPowerState(void)
 {
-  for (uint32_t i = 1; i <= devices_present; i++) {
+  for (uint32_t i = 1; i <= TasmotaGlobal.devices_present; i++) {
     MqttPublishPowerState(i);
 #ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) { break; }  // Report status of light relay only
@@ -463,7 +463,7 @@ void MqttPublishPowerBlinkState(uint32_t device)
 {
   char scommand[33];
 
-  if ((device < 1) || (device > devices_present)) {
+  if ((device < 1) || (device > TasmotaGlobal.devices_present)) {
     device = 1;
   }
   Response_P(PSTR("{\"%s\":\"" D_JSON_BLINK " %s\"}"),
@@ -500,17 +500,17 @@ void MqttConnected(void)
     Mqtt.retry_counter = 0;
     Mqtt.connect_count++;
 
-    GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
+    GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
     Response_P(PSTR(MQTT_LWT_ONLINE));
     MqttPublish(stopic, true);
 
     if (!Settings.flag4.only_json_message) {  // SetOption90 - Disable non-json MQTT response
       // Satisfy iobroker (#299)
-      mqtt_data[0] = '\0';
+      ResponseClear();
       MqttPublishPrefixTopic_P(CMND, S_RSLT_POWER);
     }
 
-    GetTopic_P(stopic, CMND, mqtt_topic, PSTR("#"));
+    GetTopic_P(stopic, CMND, TasmotaGlobal.mqtt_topic, PSTR("#"));
     MqttSubscribe(stopic);
     if (strstr_P(SettingsText(SET_MQTT_FULLTOPIC), MQTT_TOKEN_TOPIC) != nullptr) {
       uint32_t real_index = SET_MQTT_GRP_TOPIC;
@@ -532,7 +532,7 @@ void MqttConnected(void)
     if (ResetReason() != REASON_DEEP_SLEEP_AWAKE) {
       char stopic2[TOPSZ];
       Response_P(PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
-        ModuleName().c_str(), my_version, my_image, GetFallbackTopic_P(stopic, ""), GetGroupTopic_P(stopic2, "", SET_MQTT_GRP_TOPIC));
+        ModuleName().c_str(), TasmotaGlobal.version, TasmotaGlobal.image_name, GetFallbackTopic_P(stopic, ""), GetGroupTopic_P(stopic2, "", SET_MQTT_GRP_TOPIC));
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
       if (Settings.webserver) {
@@ -565,7 +565,7 @@ void MqttConnected(void)
   }
   Mqtt.initial_connection_state = 0;
 
-  global_state.mqtt_down = 0;
+  TasmotaGlobal.global_state.mqtt_down = 0;
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     TasmotaGlobal.rules_flag.mqtt_connected = 1;
   }
@@ -607,7 +607,7 @@ void MqttReconnect(void)
 
   Mqtt.connected = false;
   Mqtt.retry_counter = Settings.mqtt_retry;
-  global_state.mqtt_down = 1;
+  TasmotaGlobal.global_state.mqtt_down = 1;
 
   char *mqtt_user = nullptr;
   char *mqtt_pwd = nullptr;
@@ -618,7 +618,7 @@ void MqttReconnect(void)
     mqtt_pwd = SettingsText(SET_MQTT_PWD);
   }
 
-  GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
+  GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
   Response_P(S_LWT_OFFLINE);
 
   if (MqttClient.connected()) { MqttClient.disconnect(); }
@@ -678,7 +678,7 @@ void MqttReconnect(void)
   }
 #endif
 
-  if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, mqtt_data, MQTT_CLEAN_SESSION)) {
+  if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
 #ifdef USE_MQTT_TLS
     if (Mqtt.mqtt_tls) {
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connected in %d ms, max ThunkStack used %d"),
@@ -764,17 +764,17 @@ void MqttCheck(void)
 {
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     if (!MqttIsConnected()) {
-      global_state.mqtt_down = 1;
+      TasmotaGlobal.global_state.mqtt_down = 1;
       if (!Mqtt.retry_counter) {
         MqttReconnect();
       } else {
         Mqtt.retry_counter--;
       }
     } else {
-      global_state.mqtt_down = 0;
+      TasmotaGlobal.global_state.mqtt_down = 0;
     }
   } else {
-    global_state.mqtt_down = 0;
+    TasmotaGlobal.global_state.mqtt_down = 0;
     if (Mqtt.initial_connection_state) {
       MqttReconnect();
     }
@@ -902,7 +902,7 @@ void CmndFullTopic(void)
 {
   if (XdrvMailbox.data_len > 0) {
     MakeValidMqtt(1, XdrvMailbox.data);
-    if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
+    if (!strcmp(XdrvMailbox.data, TasmotaGlobal.mqtt_client)) { SetShortcutDefault(); }
     char stemp1[TOPSZ];
     strlcpy(stemp1, (SC_DEFAULT == Shortcut()) ? MQTT_FULLTOPIC : XdrvMailbox.data, sizeof(stemp1));
     if (strcmp(stemp1, SettingsText(SET_MQTT_FULLTOPIC))) {
@@ -941,13 +941,13 @@ void CmndPublish(void)
       char stemp1[TOPSZ];
       strlcpy(stemp1, mqtt_part, sizeof(stemp1));
       if ((payload_part != nullptr) && strlen(payload_part)) {
-        strlcpy(mqtt_data, payload_part, sizeof(mqtt_data));
+        strlcpy(TasmotaGlobal.mqtt_data, payload_part, sizeof(TasmotaGlobal.mqtt_data));
       } else {
-        mqtt_data[0] = '\0';
+        ResponseClear();
       }
       MqttPublish(stemp1, (XdrvMailbox.index == 2));
 //      ResponseCmndDone();
-      mqtt_data[0] = '\0';
+      ResponseClear();
     }
   }
 }
@@ -958,7 +958,7 @@ void CmndGroupTopic(void)
     if (XdrvMailbox.data_len > 0) {
       uint32_t settings_text_index = (1 == XdrvMailbox.index) ? SET_MQTT_GRP_TOPIC : SET_MQTT_GRP_TOPIC2 + XdrvMailbox.index - 2;
       MakeValidMqtt(0, XdrvMailbox.data);
-      if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
+      if (!strcmp(XdrvMailbox.data, TasmotaGlobal.mqtt_client)) { SetShortcutDefault(); }
       SettingsUpdateText(settings_text_index, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data);
 
       // Eliminate duplicates, have at least one and fill from index 1
@@ -1006,7 +1006,7 @@ void CmndTopic(void)
 {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     MakeValidMqtt(0, XdrvMailbox.data);
-    if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
+    if (!strcmp(XdrvMailbox.data, TasmotaGlobal.mqtt_client)) { SetShortcutDefault(); }
     char stemp1[TOPSZ];
     strlcpy(stemp1, (SC_DEFAULT == Shortcut()) ? MQTT_TOPIC : XdrvMailbox.data, sizeof(stemp1));
     if (strcmp(stemp1, SettingsText(SET_MQTT_TOPIC))) {
@@ -1023,10 +1023,10 @@ void CmndButtonTopic(void)
 {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     MakeValidMqtt(0, XdrvMailbox.data);
-    if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
+    if (!strcmp(XdrvMailbox.data, TasmotaGlobal.mqtt_client)) { SetShortcutDefault(); }
     switch (Shortcut()) {
       case SC_CLEAR: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, ""); break;
-      case SC_DEFAULT: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, mqtt_topic); break;
+      case SC_DEFAULT: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, TasmotaGlobal.mqtt_topic); break;
       case SC_USER: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, MQTT_BUTTON_TOPIC); break;
       default: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, XdrvMailbox.data);
     }
@@ -1038,10 +1038,10 @@ void CmndSwitchTopic(void)
 {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     MakeValidMqtt(0, XdrvMailbox.data);
-    if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
+    if (!strcmp(XdrvMailbox.data, TasmotaGlobal.mqtt_client)) { SetShortcutDefault(); }
     switch (Shortcut()) {
       case SC_CLEAR: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, ""); break;
-      case SC_DEFAULT: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, mqtt_topic); break;
+      case SC_DEFAULT: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, TasmotaGlobal.mqtt_topic); break;
       case SC_USER: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, MQTT_SWITCH_TOPIC); break;
       default: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, XdrvMailbox.data);
     }
@@ -1081,9 +1081,9 @@ void CmndPowerRetain(void)
     if (!XdrvMailbox.payload) {
       char stemp1[TOPSZ];
       char scommand[CMDSZ];
-      for (uint32_t i = 1; i <= devices_present; i++) {  // Clear MQTT retain in broker
-        GetTopic_P(stemp1, STAT, mqtt_topic, GetPowerDevice(scommand, i, sizeof(scommand), Settings.flag.device_index_enable));  // SetOption26 - Switch between POWER or POWER1
-        mqtt_data[0] = '\0';
+      for (uint32_t i = 1; i <= TasmotaGlobal.devices_present; i++) {  // Clear MQTT retain in broker
+        GetTopic_P(stemp1, STAT, TasmotaGlobal.mqtt_topic, GetPowerDevice(scommand, i, sizeof(scommand), Settings.flag.device_index_enable));  // SetOption26 - Switch between POWER or POWER1
+        ResponseClear();
         MqttPublish(stemp1, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
       }
     }
@@ -1099,7 +1099,7 @@ void CmndSensorRetain(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
-      mqtt_data[0] = '\0';
+      ResponseClear();
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_ENERGY), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
     }

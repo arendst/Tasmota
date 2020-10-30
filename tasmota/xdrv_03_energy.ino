@@ -492,7 +492,7 @@ void EnergyMqttShow(void)
 // {"Time":"2017-12-16T11:48:55","ENERGY":{"Total":0.212,"Yesterday":0.000,"Today":0.014,"Period":2.0,"Power":22.0,"Factor":1.00,"Voltage":213.6,"Current":0.100}}
   int tele_period_save = TasmotaGlobal.tele_period;
   TasmotaGlobal.tele_period = 2;
-  mqtt_data[0] = '\0';
+  ResponseClear();
   ResponseAppendTime();
   EnergyShow(true);
   TasmotaGlobal.tele_period = tele_period_save;
@@ -898,7 +898,7 @@ void EnergySnsInit(void)
 {
   XnrgCall(FUNC_INIT);
 
-  if (energy_flg) {
+  if (TasmotaGlobal.energy_driver) {
     Energy.kWhtoday_offset = 0;
     // Do not use at Power On as Rtc was invalid (but has been restored from Settings already)
     if ((ResetReason() != REASON_DEFAULT_RST) && RtcSettingsValid()) {
@@ -1180,10 +1180,10 @@ bool Xdrv03(uint8_t function)
   bool result = false;
 
   if (FUNC_PRE_INIT == function) {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
     XnrgCall(FUNC_PRE_INIT);  // Find first energy driver
   }
-  else if (energy_flg) {
+  else if (TasmotaGlobal.energy_driver) {
     switch (function) {
       case FUNC_LOOP:
         XnrgCall(FUNC_LOOP);
@@ -1214,7 +1214,7 @@ bool Xsns03(uint8_t function)
 {
   bool result = false;
 
-  if (energy_flg) {
+  if (TasmotaGlobal.energy_driver) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         EnergyEverySecond();

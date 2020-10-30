@@ -480,7 +480,7 @@ bool Z_Devices::jsonIsConflict(uint16_t shortaddr, const Z_attribute_list &attr_
   if (device.attr_list.isValidSrcEp() && attr_list.isValidSrcEp()) {
     if (device.attr_list.src_ep != attr_list.src_ep) { return true; }
   }
-  
+
   // LQI does not count as conflicting
 
   // parse all other parameters
@@ -514,28 +514,28 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
     gZbLastMessage.groupaddr = attr_list.group_id;      // %zbgroup%
     gZbLastMessage.endpoint = attr_list.src_ep;    // %zbendpoint%
 
-    mqtt_data[0] = 0; // clear string
+    TasmotaGlobal.mqtt_data[0] = 0; // clear string
     // Do we prefix with `ZbReceived`?
     if (!Settings.flag4.remove_zbreceived) {
       Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":"));
     }
     // What key do we use, shortaddr or name?
     if (use_fname) {
-      Response_P(PSTR("%s{\"%s\":{"), mqtt_data, fname);
+      Response_P(PSTR("%s{\"%s\":{"), TasmotaGlobal.mqtt_data, fname);
     } else {
-      Response_P(PSTR("%s{\"0x%04X\":{"), mqtt_data, shortaddr);
+      Response_P(PSTR("%s{\"0x%04X\":{"), TasmotaGlobal.mqtt_data, shortaddr);
     }
     // Add "Device":"0x...."
-    Response_P(PSTR("%s\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\","), mqtt_data, shortaddr);
+    ResponseAppend_P(PSTR("\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\","), shortaddr);
     // Add "Name":"xxx" if name is present
     if (fname) {
-      Response_P(PSTR("%s\"" D_JSON_ZIGBEE_NAME "\":\"%s\","), mqtt_data, EscapeJSONString(fname).c_str());
+      ResponseAppend_P(PSTR("\"" D_JSON_ZIGBEE_NAME "\":\"%s\","), EscapeJSONString(fname).c_str());
     }
     // Add all other attributes
-    Response_P(PSTR("%s%s}}"), mqtt_data, attr_list.toString().c_str());
-    
+    ResponseAppend_P(PSTR("%s}}"), attr_list.toString().c_str());
+
     if (!Settings.flag4.remove_zbreceived) {
-      Response_P(PSTR("%s}"), mqtt_data);
+      ResponseAppend_P(PSTR("}"));
     }
     attr_list.reset();    // clear the attributes
 
@@ -643,7 +643,7 @@ String Z_Devices::dumpLightState(uint16_t shortaddr) const {
     }
     // Z_Data_Light::toAttributes(attr_list, device.data.find<Z_Data_Light>(0));
   }
-  
+
   Z_attribute_list attr_list_root;
   Z_attribute * attr_root;
   if (use_fname) {

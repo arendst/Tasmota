@@ -80,7 +80,7 @@
 
 #include <ETH.h>
 
-char eth_hostname[sizeof(my_hostname)];
+char eth_hostname[sizeof(TasmotaGlobal.hostname)];
 
 void EthernetEvent(WiFiEvent_t event) {
   switch (event) {
@@ -98,15 +98,15 @@ void EthernetEvent(WiFiEvent_t event) {
       Settings.ip_address[1] = (uint32_t)ETH.gatewayIP();
       Settings.ip_address[2] = (uint32_t)ETH.subnetMask();
       Settings.ip_address[3] = (uint32_t)ETH.dnsIP();
-      global_state.eth_down = 0;
+      TasmotaGlobal.global_state.eth_down = 0;
       break;
     case SYSTEM_EVENT_ETH_DISCONNECTED:
       AddLog_P2(LOG_LEVEL_INFO, PSTR("ETH: Disconnected"));
-      global_state.eth_down = 1;
+      TasmotaGlobal.global_state.eth_down = 1;
       break;
     case SYSTEM_EVENT_ETH_STOP:
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ETH: Stopped"));
-      global_state.eth_down = 1;
+      TasmotaGlobal.global_state.eth_down = 1;
       break;
     default:
       break;
@@ -120,8 +120,8 @@ void EthernetInit(void) {
     return;
   }
 
-//  snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s_eth"), my_hostname);
-  strlcpy(eth_hostname, my_hostname, sizeof(eth_hostname) -5);  // Make sure there is room for "_eth"
+//  snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s_eth"), TasmotaGlobal.hostname);
+  strlcpy(eth_hostname, TasmotaGlobal.hostname, sizeof(eth_hostname) -5);  // Make sure there is room for "_eth"
   strcat(eth_hostname, "_eth");
 
   WiFi.onEvent(EthernetEvent);

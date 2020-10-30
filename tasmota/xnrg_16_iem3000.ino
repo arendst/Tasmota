@@ -171,14 +171,14 @@ void Iem3000SnsInit(void)
     Energy.phase_count = 3;
     Energy.frequency_common = true;             // Use common frequency
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void Iem3000DrvInit(void)
 {
   if (PinUsed(GPIO_IEM3000_RX) && PinUsed(GPIO_IEM3000_TX)) {
-    energy_flg = XNRG_16;
+    TasmotaGlobal.energy_driver = XNRG_16;
   }
 }
 

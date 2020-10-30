@@ -101,14 +101,29 @@ struct {
   float pressure_hpa;                       // Provide a global pressure to be used by some sensors
 
   uint16_t gpio_pin[MAX_GPIO_PIN];          // GPIO functions indexed by pin number
+  myio my_module;                           // Active copy of Module GPIOs (17 x 16 bits)
   uint16_t blink_counter;                   // Number of blink cycles
   uint16_t seriallog_timer;                 // Timer to disable Seriallog
   uint16_t syslog_timer;                    // Timer to re-enable syslog_level
   uint16_t tele_period;                     // Tele period timer
   int16_t save_data_counter;                // Counter and flag for config save to Flash
-
   RulesBitfield rules_flag;                 // Rule state flags (16 bits)
 
+  bool serial_local;                        // Handle serial locally
+  bool fallback_topic_flag;                 // Use Topic or FallbackTopic
+  bool backlog_mutex;                       // Command backlog pending
+  bool stop_flash_rotate;                   // Allow flash configuration rotation
+  bool blinkstate;                          // LED state
+  bool pwm_present;                         // Any PWM channel configured with SetOption15 0
+  bool i2c_enabled;                         // I2C configured
+  bool spi_enabled;                         // SPI configured
+  bool soft_spi_enabled;                    // Software SPI configured
+  bool ntp_force_sync;                      // Force NTP sync
+  bool is_8285;                             // Hardware device ESP8266EX (0) or ESP8285 (1)
+  bool skip_light_fade;                     // Temporarily skip light fading
+  bool restart_halt;                        // Do not restart but stay in wait loop
+
+  StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
   uint8_t blinks;                           // Number of LED blinks
   uint8_t restart_flag;                     // Tasmota restart flag
   uint8_t ota_state_flag;                   // OTA state flag
@@ -119,61 +134,47 @@ struct {
   uint8_t latching_relay_pulse;             // Latching relay pulse timer
   uint8_t active_device;                    // Active device in ExecuteCommandPower
   uint8_t sleep;                            // Current copy of Settings.sleep
+  uint8_t leds_present;                     // Max number of LED supported
+  uint8_t led_inverted;                     // LED inverted flag (1 = (0 = On, 1 = Off))
+  uint8_t led_power;                        // LED power state
+  uint8_t ledlnk_inverted;                  // Link LED inverted flag (1 = (0 = On, 1 = Off))
+  uint8_t pwm_inverted;                     // PWM inverted flag (1 = inverted)
+  uint8_t energy_driver;                    // Energy monitor configured
+  uint8_t light_driver;                     // Light module configured
+  uint8_t light_type;                       // Light types
+  uint8_t serial_in_byte;                   // Received byte
+  uint8_t devices_present;                  // Max number of devices supported
+  uint8_t masterlog_level;                  // Master log level used to override set log level
+  uint8_t seriallog_level;                  // Current copy of Settings.seriallog_level
+  uint8_t syslog_level;                     // Current copy of Settings.syslog_level
+  uint8_t module_type;                      // Current copy of Settings.module or user template type
+  uint8_t last_source;                      // Last command source
+  uint8_t shutters_present;                 // Number of actual define shutters
+  uint8_t prepped_loglevel;                 // Delayed log level message
 
+#ifndef SUPPORT_IF_STATEMENT
+  uint8_t backlog_index;                    // Command backlog index
+  uint8_t backlog_pointer;                  // Command backlog pointer
+  String backlog[MAX_BACKLOG];              // Command backlog buffer
+#endif
+
+  char version[16];                         // Composed version string like 255.255.255.255
+  char image_name[33];                      // Code image and/or commit
+  char hostname[33];                        // Composed Wifi hostname
+  char serial_in_buffer[INPUT_BUFFER_SIZE];  // Receive buffer
+  char mqtt_client[99];                     // Composed MQTT Clientname
+  char mqtt_topic[TOPSZ];                   // Composed MQTT topic
+  char mqtt_data[MESSZ];                    // MQTT publish buffer and web page ajax buffer
+  char log_data[LOGSZ];                     // Logging
+  char web_log[WEB_LOG_SIZE];               // Web log buffer
 } TasmotaGlobal;
 
-uint8_t leds_present = 0;                   // Max number of LED supported
-uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
-uint8_t led_power = 0;                      // LED power state
-uint8_t ledlnk_inverted = 0;                // Link LED inverted flag (1 = (0 = On, 1 = Off))
-uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
-uint8_t energy_flg = 0;                     // Energy monitor configured
-uint8_t light_flg = 0;                      // Light module configured
-uint8_t light_type = 0;                     // Light types
-uint8_t serial_in_byte;                     // Received byte
-uint8_t devices_present = 0;                // Max number of devices supported
-uint8_t masterlog_level = 0;                // Master log level used to override set log level
-uint8_t seriallog_level;                    // Current copy of Settings.seriallog_level
-uint8_t syslog_level;                       // Current copy of Settings.syslog_level
-uint8_t my_module_type;                     // Current copy of Settings.module or user template type
-uint8_t last_source = 0;                    // Last command source
-uint8_t shutters_present = 0;               // Number of actual define shutters
-uint8_t prepped_loglevel = 0;               // Delayed log level message
-//uint8_t mdns_delayed_start = 0;             // mDNS delayed start
-bool serial_local = false;                  // Handle serial locally
-bool fallback_topic_flag = false;           // Use Topic or FallbackTopic
-bool backlog_mutex = false;                 // Command backlog pending
-bool stop_flash_rotate = false;             // Allow flash configuration rotation
-bool blinkstate = false;                    // LED state
-//bool latest_uptime_flag = true;             // Signal latest uptime
-bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
-bool i2c_flg = false;                       // I2C configured
-bool spi_flg = false;                       // SPI configured
-bool soft_spi_flg = false;                  // Software SPI configured
-bool ntp_force_sync = false;                // Force NTP sync
-bool is_8285 = false;                       // Hardware device ESP8266EX (0) or ESP8285 (1)
-bool skip_light_fade;                       // Temporarily skip light fading
-bool restart_halt = false;                  // Do not restart but stay in wait loop
-myio my_module;                             // Active copy of Module GPIOs (17 x 8 bits)
-StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
-char my_version[33];                        // Composed version string
-char my_image[33];                          // Code image and/or commit
-char my_hostname[33];                       // Composed Wifi hostname
-char mqtt_client[TOPSZ];                    // Composed MQTT Clientname
-char mqtt_topic[TOPSZ];                     // Composed MQTT topic
-char serial_in_buffer[INPUT_BUFFER_SIZE];   // Receive buffer
-char mqtt_data[MESSZ];                      // MQTT publish buffer and web page ajax buffer
-char log_data[LOGSZ];                       // Logging
-char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
 #ifdef SUPPORT_IF_STATEMENT
   #include <LinkedList.h>
   LinkedList<String> backlog;               // Command backlog implemented with LinkedList
   #define BACKLOG_EMPTY (backlog.size() == 0)
 #else
-  uint8_t backlog_index = 0;                // Command backlog index
-  uint8_t backlog_pointer = 0;              // Command backlog pointer
-  String backlog[MAX_BACKLOG];              // Command backlog buffer
-  #define BACKLOG_EMPTY (backlog_pointer == backlog_index)
+  #define BACKLOG_EMPTY (TasmotaGlobal.backlog_pointer == TasmotaGlobal.backlog_index)
 #endif
 
 /*********************************************************************************************\
@@ -194,8 +195,7 @@ void setup(void) {
   TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
   TasmotaGlobal.tele_period = 9999;
   TasmotaGlobal.active_device = 1;
-
-  global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
+  TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 
   RtcRebootLoad();
   if (!RtcRebootValid()) {
@@ -210,14 +210,14 @@ void setup(void) {
 
   Serial.begin(TasmotaGlobal.baudrate);
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
-  seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
+  TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
-  snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
+  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
   if (VERSION & 0xff) {  // Development or patched version 6.3.0.10
-    snprintf_P(my_version, sizeof(my_version), PSTR("%s.%d"), my_version, VERSION & 0xff);
+    snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, VERSION & 0xff);
   }
   // Thehackbox inserts "release" or "commit number" before compiling using sed -i -e 's/PSTR("(%s)")/PSTR("(85cff52-%s)")/g' tasmota.ino
-  snprintf_P(my_image, sizeof(my_image), PSTR("(%s)"), CODE_IMAGE_STR);  // Results in (85cff52-tasmota) or (release-tasmota)
+  snprintf_P(TasmotaGlobal.image_name, sizeof(TasmotaGlobal.image_name), PSTR("(%s)"), CODE_IMAGE_STR);  // Results in (85cff52-tasmota) or (release-tasmota)
 
   SettingsLoad();
   SettingsDelta();
@@ -229,11 +229,10 @@ void setup(void) {
     XdrvCall(FUNC_SETTINGS_OVERRIDE);
   }
 
-//  mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
-  seriallog_level = Settings.seriallog_level;
+  TasmotaGlobal.seriallog_level = Settings.seriallog_level;
   TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
-  syslog_level = Settings.syslog_level;
-  stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
+  TasmotaGlobal.syslog_level = Settings.syslog_level;
+  TasmotaGlobal.stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   TasmotaGlobal.save_data_counter = Settings.save_data;
   TasmotaGlobal.sleep = Settings.sleep;
 #ifndef USE_EMULATION
@@ -276,13 +275,13 @@ void setup(void) {
     }
   }
 
-  Format(mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(mqtt_client));
-  Format(mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(mqtt_topic));
+  Format(TasmotaGlobal.mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(TasmotaGlobal.mqtt_client));
+  Format(TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(TasmotaGlobal.mqtt_topic));
   if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
     SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
-    snprintf_P(my_hostname, sizeof(my_hostname)-1, SettingsText(SET_HOSTNAME), mqtt_topic, ESP_getChipId() & 0x1FFF);
+    snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME), TasmotaGlobal.mqtt_topic, ESP_getChipId() & 0x1FFF);
   } else {
-    snprintf_P(my_hostname, sizeof(my_hostname)-1, SettingsText(SET_HOSTNAME));
+    snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME));
   }
 
   GetEspHardwareType();
@@ -294,12 +293,12 @@ void setup(void) {
 
   SetPowerOnState();
 
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE), PROJECT, SettingsText(SET_DEVICENAME), my_version, my_image);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE), PROJECT, SettingsText(SET_DEVICENAME), TasmotaGlobal.version, TasmotaGlobal.image_name);
 #ifdef FIRMWARE_MINIMAL
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
 
-  memcpy_P(log_data, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
+  memcpy_P(TasmotaGlobal.log_data, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
 
   RtcInit();
 
@@ -318,8 +317,8 @@ void setup(void) {
 
 void BacklogLoop(void) {
   if (TimeReached(TasmotaGlobal.backlog_delay)) {
-    if (!BACKLOG_EMPTY && !backlog_mutex) {
-      backlog_mutex = true;
+    if (!BACKLOG_EMPTY && !TasmotaGlobal.backlog_mutex) {
+      TasmotaGlobal.backlog_mutex = true;
       bool nodelay = false;
       bool nodelay_detected = false;
       String cmd;
@@ -327,10 +326,10 @@ void BacklogLoop(void) {
 #ifdef SUPPORT_IF_STATEMENT
         cmd = backlog.shift();
 #else
-        cmd = backlog[backlog_pointer];
-        backlog[backlog_pointer] = (const char*) nullptr;  // Force deallocation of the String internal memory
-        backlog_pointer++;
-        if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
+        cmd = TasmotaGlobal.backlog[TasmotaGlobal.backlog_pointer];
+        TasmotaGlobal.backlog[TasmotaGlobal.backlog_pointer] = (const char*) nullptr;  // Force deallocation of the String internal memory
+        TasmotaGlobal.backlog_pointer++;
+        if (TasmotaGlobal.backlog_pointer >= MAX_BACKLOG) { TasmotaGlobal.backlog_pointer = 0; }
 #endif
         nodelay_detected = !strncasecmp_P(cmd.c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
         if (nodelay_detected) { nodelay = true; }
@@ -341,7 +340,7 @@ void BacklogLoop(void) {
       if (nodelay) {
         TasmotaGlobal.backlog_delay = 0;  // Reset backlog_delay which has been set by ExecuteCommand (CommandHandler)
       }
-      backlog_mutex = false;
+      TasmotaGlobal.backlog_mutex = false;
     }
   }
 }
@@ -406,7 +405,7 @@ void loop(void) {
     XsnsCall(FUNC_EVERY_SECOND);
   }
 
-  if (!serial_local) { SerialInput(); }
+  if (!TasmotaGlobal.serial_local) { SerialInput(); }
 
 #ifdef USE_ARDUINO_OTA
   ArduinoOtaLoop();
@@ -421,7 +420,7 @@ void loop(void) {
     if (my_activity < (uint32_t)TasmotaGlobal.sleep) {
       SleepDelay((uint32_t)TasmotaGlobal.sleep - my_activity);  // Provide time for background tasks like wifi
     } else {
-      if (global_state.network_down) {
+      if (TasmotaGlobal.global_state.network_down) {
         SleepDelay(my_activity /2);                // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
       }
     }

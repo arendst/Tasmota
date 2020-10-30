@@ -401,7 +401,7 @@ void SwitchHandler(uint8_t mode)
       }
       if (switchflag <= POWER_TOGGLE) {
         if (!SendKey(KEY_SWITCH, i +1, switchflag)) {  // Execute command via MQTT
-          ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < devices_present)
+          ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < TasmotaGlobal.devices_present)
         }
       }
     }

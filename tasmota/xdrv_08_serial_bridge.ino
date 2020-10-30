@@ -109,7 +109,7 @@ void SerialBridgeInit(void)
     if (SerialBridgeSerial->begin(Settings.sbaudrate * 300)) {  // Baud rate is stored div 300 so it fits into 16 bits
       if (SerialBridgeSerial->hardwareSerial()) {
         ClaimSerial();
-        serial_bridge_buffer = serial_in_buffer;  // Use idle serial buffer to save RAM
+        serial_bridge_buffer = TasmotaGlobal.serial_in_buffer;  // Use idle serial buffer to save RAM
       } else {
         serial_bridge_buffer = (char*)(malloc(SERIAL_BRIDGE_BUFFER_SIZE));
       }

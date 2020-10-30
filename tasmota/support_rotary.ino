@@ -126,7 +126,7 @@ void RotaryInit(void) {
   Rotary.present = false;
   Rotary.model = 1;
 #ifdef ESP8266
-  if (MI_DESK_LAMP == my_module_type) {
+  if (MI_DESK_LAMP == TasmotaGlobal.module_type) {
     Rotary.model = 0;
   }
 #endif  // ESP8266

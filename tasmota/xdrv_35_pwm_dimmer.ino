@@ -126,8 +126,8 @@ void PWMModulePreInit(void)
       first_device_group_is_local = false;
 
       // Back out the changes made in the light module under the assumtion we have a relay or PWM.
-      devices_present--;
-      light_type = 0;
+      TasmotaGlobal.devices_present--;
+      TasmotaGlobal.light_type = 0;
     }
 
     for (uint8_t i = 0; i < MAX_PWM_DIMMER_KEYS; i++) {
@@ -148,7 +148,7 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
   uint32_t leds = 0;
   uint32_t mask = 1;
   int32_t led;
-  for (led = 0; led < leds_present; led++) {
+  for (led = 0; led < TasmotaGlobal.leds_present; led++) {
     if (Settings.ledmask & mask) leds++;
     mask <<= 1;
   }
@@ -185,7 +185,7 @@ void PWMDimmerSetPoweredOffLed(void)
   // Set the powered-off LED state.
   if (PinUsed(GPIO_LEDLNK)) {
     bool power_off_led_on = !TasmotaGlobal.power && Settings.flag4.powered_off_led;
-    if (ledlnk_inverted) power_off_led_on ^= 1;
+    if (TasmotaGlobal.ledlnk_inverted) power_off_led_on ^= 1;
     digitalWrite(Pin(GPIO_LEDLNK), power_off_led_on);
   }
 }
@@ -502,13 +502,13 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
       }
       else {
 #endif  // USE_PWM_DIMMER_REMOTE
-        skip_light_fade = true;
+        TasmotaGlobal.skip_light_fade = true;
 #ifdef USE_DEVICE_GROUPS
         ignore_dgr_sends = true;
 #endif  // USE_DEVICE_GROUPS
         light_state.setBri(new_bri);
         LightAnimate();
-        skip_light_fade = false;
+        TasmotaGlobal.skip_light_fade = false;
 #ifdef USE_DEVICE_GROUPS
         ignore_dgr_sends = false;
 #endif  // USE_DEVICE_GROUPS
@@ -599,7 +599,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
   // If we need to publish an MQTT trigger, do it.
   if (mqtt_trigger) {
     char topic[TOPSZ];
-    sprintf_P(mqtt_data, PSTR("Trigger%u"), mqtt_trigger);
+    sprintf_P(TasmotaGlobal.mqtt_data, PSTR("Trigger%u"), mqtt_trigger);
 #ifdef USE_PWM_DIMMER_REMOTE
     if (active_remote_pwm_dimmer) {
       snprintf_P(topic, sizeof(topic), PSTR("cmnd/%s/EVENT"), device_groups[power_button_index].group_name);
@@ -704,7 +704,7 @@ bool Xdrv35(uint8_t function)
 {
   bool result = false;
 
-  if (PWM_DIMMER != my_module_type) return result;
+  if (PWM_DIMMER != TasmotaGlobal.module_type) return result;
 
   switch (function) {
     case FUNC_EVERY_SECOND:
@@ -717,7 +717,7 @@ bool Xdrv35(uint8_t function)
       // the LED will be set to a blinking state and will be turned off when the connection is
       // restored. If the state is blinking now, set a flag so we know that we need to restore it
       // when it stops blinking.
-      if (global_state.data)
+      if (TasmotaGlobal.global_state.data)
         restore_powered_off_led_counter = 5;
       else if (restore_powered_off_led_counter) {
         PWMDimmerSetPoweredOffLed();

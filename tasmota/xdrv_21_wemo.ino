@@ -292,15 +292,15 @@ void HandleUpnpEvent(void)
       power = POWER_OFF;
     }
     if (power != POWER_TOGGLE) {
-      uint8_t device = (light_type) ? devices_present : 1;  // Select either a configured light or relay1
+      uint8_t device = (TasmotaGlobal.light_type) ? TasmotaGlobal.devices_present : 1;  // Select either a configured light or relay1
       ExecuteCommandPower(device, power, SRC_WEMO);
     }
   }
 
 #ifdef USE_UNISHOX_COMPRESSION
-  snprintf_P(event, sizeof(event), Decompress(WEMO_RESPONSE_STATE_SOAP, WEMO_RESPONSE_STATE_SOAP_SIZE).c_str(), state, bitRead(TasmotaGlobal.power, devices_present -1), state);
+  snprintf_P(event, sizeof(event), Decompress(WEMO_RESPONSE_STATE_SOAP, WEMO_RESPONSE_STATE_SOAP_SIZE).c_str(), state, bitRead(TasmotaGlobal.power, TasmotaGlobal.devices_present -1), state);
 #else
-  snprintf_P(event, sizeof(event), WEMO_RESPONSE_STATE_SOAP, state, bitRead(TasmotaGlobal.power, devices_present -1), state);
+  snprintf_P(event, sizeof(event), WEMO_RESPONSE_STATE_SOAP, state, bitRead(TasmotaGlobal.power, TasmotaGlobal.devices_present -1), state);
 #endif
   WSSend(200, CT_XML, event);
 }
@@ -350,7 +350,7 @@ bool Xdrv21(uint8_t function)
 {
   bool result = false;
 
-  if (devices_present && (EMUL_WEMO == Settings.flag2.emulation)) {
+  if (TasmotaGlobal.devices_present && (EMUL_WEMO == Settings.flag2.emulation)) {
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/upnp/control/basicevent1"), HandleUpnpEvent, HTTP_POST);

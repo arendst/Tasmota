@@ -131,7 +131,7 @@ void DS3231EverySecond(void)
 {
   TIME_T tmpTime;
   if (!ds3231ReadStatus && Rtc.utc_time < START_VALID_TIME ) { // We still did not sync with NTP (time not valid) , so, read time  from DS3231
-    ntp_force_sync = true; //force to sync with ntp
+    TasmotaGlobal.ntp_force_sync = true; //force to sync with ntp
     Rtc.utc_time = ReadFromDS3231(); //we read UTC TIME from DS3231
     // from this line, we just copy the function from "void RtcSecond()" at the support.ino ,line 2143 and above
     // We need it to set rules etc.
