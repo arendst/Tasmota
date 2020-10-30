@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 03.10.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 30.10.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -125,7 +125,7 @@
 #define D_MULTI_PRESS "multi-pressione"
 #define D_NOISE "Rumore"
 #define D_NONE "Nessuno"
-#define D_O2 "Oxygen"
+#define D_O2 "Ossigeno"
 #define D_OFF "OFF"
 #define D_OFFLINE "Offline"
 #define D_OK "OK"
