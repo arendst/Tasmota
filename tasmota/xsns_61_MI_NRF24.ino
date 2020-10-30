@@ -186,8 +186,8 @@ struct mi_beacon_t{
     uint16_t fert; //09
     struct{ //01
       uint16_t num;
-      uint8_t longPress; 
-    }Btn; 
+      uint8_t longPress;
+    }Btn;
   };
 };
 
@@ -493,13 +493,13 @@ bool MINRFreceivePacket(void)
 
     // AddLog_P2(LOG_LEVEL_INFO,PSTR("NRF: _lsfrlist: %x, chan: %u, mode: %u"),_lsfrlist[MINRF.currentChan],MINRF.currentChan, MINRF.packetMode);
     switch (MINRF.packetMode) {
-      case 0: case NLIGHT: case MJYD2S: 
+      case 0: case NLIGHT: case MJYD2S:
       MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  MINRF.channel[MINRF.currentChan] | 0x40); // "BEACON" mode, "NLIGHT" mode, "MJYD2S" mode
       break;
       case FLORA: case LYWSD02: case MHOC303:
       MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_A[MINRF.currentChan]); // "flora" mode, "LYWSD02" mode
       break;
-      case MJ_HT_V1: case LYWSD03: case CGG1: case CGD1: case MHOC401: 
+      case MJ_HT_V1: case LYWSD03: case CGG1: case CGD1: case MHOC401:
       MINRFwhiten((uint8_t *)&MINRF.buffer, sizeof(MINRF.buffer),  kMINRFlsfrList_B[MINRF.currentChan]); // "MJ_HT_V1" mode, LYWSD03" mode, "CGG1" mode, "CGD1" mode
       break;
       case YEERC:
@@ -977,7 +977,7 @@ void MINRFcomputefirstUsedPacketMode(void){
 /**
  * @brief Recalculates the receive buffer with an offset in relation to a standard BLE advertisement.
  *        Used for custom PDU, typically based on a MAC
- * 
+ *
  * @param _buf - The receive buffer
  * @param offset - in bytes
  */
@@ -1026,7 +1026,7 @@ void MINRFchangePacketModeTo(uint8_t _mode) {
       NRF24radio.openReadingPipe(0,MIBLElights[MINRF.activeLight].PDU[_nextchannel]); // computed from MAC -> NLIGHT and MJYSD2S
       MINRF.activeLight++;
     break;
-    case YEERC: // YEE-RC packet 
+    case YEERC: // YEE-RC packet
       NRF24radio.openReadingPipe(0,kMINRFYRCPDU[_nextchannel]);// 95 fe 50 30 -> YEE-RC
     break;
     case ATC:
@@ -1095,7 +1095,7 @@ uint32_t MINRFgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type){
       _newSensor.feature.lux=1;
       _newSensor.feature.bat=0;
       break;
-    case NLIGHT: 
+    case NLIGHT:
       _newSensor.events=0x00;
       _newSensor.feature.PIR=1;
       _newSensor.feature.NMT=1;
@@ -1155,11 +1155,11 @@ void MINRFconfirmSensors(void){
 
 /**
  * @brief trigger real-time message for PIR or RC
- * 
+ *
  */
 void MINRFtriggerTele(void){
     MINRF.mode.triggeredTele= true;
-    mqtt_data[0] = '\0';
+    ResponseClear();
     if (MqttShowSensor()) {
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   #ifdef USE_RULES
@@ -1506,7 +1506,7 @@ void MINRF_EVERY_50_MSECOND() { // Every 50mseconds
     }
     else MINRF.packetMode+=2;
   }
-  else{  
+  else{
     MINRF.packetMode = (MINRF.packetMode+1>MI_TYPES) ? MINRF.firstUsedPacketMode : MINRF.packetMode+1;
     for (uint32_t i = MINRF.packetMode; i<MI_TYPES+1; i++){
       if (bitRead(MINRF.ignore,i)) {
@@ -1630,7 +1630,7 @@ bool NRFCmd(void) {
             if (XdrvMailbox.data_len==12){  // a MAC-string
               uint8_t _MAC[6] = {0};
               MINRFMACStringToBytes(XdrvMailbox.data, _MAC);
-              Response_P(S_JSON_NRF_COMMAND, command, XdrvMailbox.data);         
+              Response_P(S_JSON_NRF_COMMAND, command, XdrvMailbox.data);
               MINRFaddLight(_MAC, 7);
             }
           }
@@ -1705,12 +1705,12 @@ void MINRFShow(bool json)
 
       if(MIBLEsensors[i].showedUp < 3){
         DEBUG_SENSOR_LOG(PSTR("NRF: sensor not fully registered yet"));
-        if(MIBLEsensors[i].type != YEERC) break; // send every RC code, even if there is a potentially false MAC 
+        if(MIBLEsensors[i].type != YEERC) break; // send every RC code, even if there is a potentially false MAC
         }
 
       ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":"),kMINRFDeviceType[MIBLEsensors[i].type-1],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[5]);
-      
-      uint32_t _positionCurlyBracket = strlen(mqtt_data); // ... this will be a ',' first, but later be replaced
+
+      uint32_t _positionCurlyBracket = strlen(TasmotaGlobal.mqtt_data); // ... this will be a ',' first, but later be replaced
 
       if((!MINRF.mode.triggeredTele && !MINRF.option.minimalSummary)||MINRF.mode.triggeredTele){
         bool tempHumSended = false;
@@ -1814,9 +1814,9 @@ void MINRFShow(bool json)
           }
         }
       }
-      if(_positionCurlyBracket==strlen(mqtt_data)) ResponseAppend_P(PSTR(",")); // write some random char, to be overwritten in the next step
+      if(_positionCurlyBracket==strlen(TasmotaGlobal.mqtt_data)) ResponseAppend_P(PSTR(",")); // write some random char, to be overwritten in the next step
       ResponseAppend_P(PSTR("}"));
-      mqtt_data[_positionCurlyBracket] = '{';
+      TasmotaGlobal.mqtt_data[_positionCurlyBracket] = '{';
       MIBLEsensors[i].eventType.raw = 0;
       if(MIBLEsensors[i].shallSendMQTT==1){
         MIBLEsensors[i].shallSendMQTT = 0;

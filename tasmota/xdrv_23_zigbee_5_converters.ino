@@ -706,7 +706,7 @@ public:
     if (Settings.flag3.tuya_serial_mqtt_publish) {
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
     }
   }
 
@@ -1279,7 +1279,7 @@ void ZCLFrame::generateCallBacks(Z_attribute_list& attr_list) {
           zigbee_devices.setTimer(_srcaddr, 0 /* groupaddr */, OCCUPANCY_TIMEOUT, _cluster_id, _srcendpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
         } else {
           zigbee_devices.resetTimersForDevice(_srcaddr, 0 /* groupaddr */, Z_CAT_VIRTUAL_OCCUPANCY);
-        }        
+        }
         break;
     }
   }
@@ -1353,7 +1353,7 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
   }
   attr_list.addAttribute(F("Read")).setStrRaw(attr_numbers.toString().c_str());
   attr_list.addAttribute(F("ReadNames")).setStrRaw(attr_names.toString(true).c_str());
- 
+
   // call auto-responder
   autoResponder(read_attr_ids, len/2);
 }
@@ -1763,7 +1763,7 @@ void Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluste
 void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attribute_list& attr_list) {
   uint8_t count_ep = zigbee_devices.countEndpoints(shortaddr);
   Z_Device & device = zigbee_devices.getShortAddr(shortaddr);
-  
+
   for (auto &attr : attr_list) {
     // add endpoint suffix if needed
     if ((Settings.flag4.zb_index_ep) && (src_ep != 1) && (count_ep > 1)) {
@@ -1976,7 +1976,7 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const 
       if (data_size != 0) {
         Z_attribute & attr = attr_list.addAttribute(conv_name);
 
-        if (data_size > 0) { attr.setUInt(uval32); } 
+        if (data_size > 0) { attr.setUInt(uval32); }
         else { attr.setInt(ival32); }
       }
     }

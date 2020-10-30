@@ -152,7 +152,7 @@ void ADPSCallback(uint8_t phase)
     }
 
     Response_P(PSTR("{"));
-    ResponseAppend_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"ADPS\":%i}}"), serialNumber, phase );
+    ResponseAppend_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":{\"ADPS\":%i}}"), serialNumber, phase );
     ResponseJsonEnd();
 
     // Publish adding ADCO serial number into the topic
@@ -422,7 +422,7 @@ Comments: -
 ====================================================================== */
 void TInfoDrvInit(void) {
   if (PinUsed(GPIO_TELEINFO_RX)) {
-    energy_flg = XNRG_15;
+    TasmotaGlobal.energy_driver = XNRG_15;
     Energy.voltage_available = false;
   }
 }

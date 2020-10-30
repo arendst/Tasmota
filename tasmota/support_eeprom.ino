@@ -39,7 +39,7 @@ void eeprom_readBytes(uint32_t addr, uint32_t len, uint8_t *buff) {
 }
 
 uint32_t eeprom_init(uint32_t size) {
-  if (i2c_flg) {
+  if (TasmotaGlobal.i2c_enabled) {
     if (I2cActive(EEPROM_ADDRESS) || I2cSetDevice(EEPROM_ADDRESS)) {
       // eeprom is present
       I2cSetActiveFound(EEPROM_ADDRESS, "24C256");

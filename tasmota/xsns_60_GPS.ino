@@ -340,7 +340,7 @@ void UBXsendCFGLine(uint8_t _line)
 
 void UBXTriggerTele(void)
 {
-  mqtt_data[0] = '\0';
+  ResponseClear();
   if (MqttShowSensor()) {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
 #ifdef USE_RULES

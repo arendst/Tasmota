@@ -840,7 +840,7 @@ void ShowWebSource(uint32_t source)
 void ExecuteWebCommand(char* svalue, uint32_t source)
 {
   ShowWebSource(source);
-  last_source = source;
+  TasmotaGlobal.last_source = source;
   ExecuteCommand(svalue, SRC_IGNORE);
 }
 
@@ -938,7 +938,7 @@ void StopWebserver(void)
 void WifiManagerBegin(bool reset_only)
 {
   // setup AP
-  if (!global_state.wifi_down) {
+  if (!TasmotaGlobal.global_state.wifi_down) {
 //    WiFi.mode(WIFI_AP_STA);
     WifiSetMode(WIFI_AP_STA);
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION));
@@ -956,7 +956,7 @@ void WifiManagerBegin(bool reset_only)
   if ((channel < 1) || (channel > 13)) { channel = 1; }
 
   // bool softAP(const char* ssid, const char* passphrase = NULL, int channel = 1, int ssid_hidden = 0, int max_connection = 4);
-  WiFi.softAP(my_hostname, WIFI_AP_PASSPHRASE, channel, 0, 1);
+  WiFi.softAP(TasmotaGlobal.hostname, WIFI_AP_PASSPHRASE, channel, 0, 1);
   delay(500); // Without delay I've seen the IP address blank
   /* Setup the DNS server redirecting all the domains to the apIP */
   DnsServer->setErrorReplyCode(DNSReplyCode::NoError);
@@ -1041,7 +1041,7 @@ void _WSContentSend(const String& content)        // Low level sendContent for a
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("WSContentSend"));
 #endif
-  DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d/%d"), len, sizeof(mqtt_data));
+  DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d/%d"), len, sizeof(TasmotaGlobal.mqtt_data));
 }
 
 void WSContentFlush(void)
@@ -1054,24 +1054,24 @@ void WSContentFlush(void)
 
 void _WSContentSendBuffer(void)
 {
-  int len = strlen(mqtt_data);
+  int len = strlen(TasmotaGlobal.mqtt_data);
 
   if (0 == len) {                                  // No content
     return;
   }
-  else if (len == sizeof(mqtt_data)) {
+  else if (len == sizeof(TasmotaGlobal.mqtt_data)) {
     AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: Content too large"));
   }
   else if (len < CHUNKED_BUFFER_SIZE) {            // Append chunk buffer with small content
-    Web.chunk_buffer += mqtt_data;
+    Web.chunk_buffer += TasmotaGlobal.mqtt_data;
     len = Web.chunk_buffer.length();
   }
 
   if (len >= CHUNKED_BUFFER_SIZE) {                // Either content or chunk buffer is oversize
     WSContentFlush();                              // Send chunk buffer before possible content oversize
   }
-  if (strlen(mqtt_data) >= CHUNKED_BUFFER_SIZE) {  // Content is oversize
-    _WSContentSend(mqtt_data);                     // Send content
+  if (strlen(TasmotaGlobal.mqtt_data) >= CHUNKED_BUFFER_SIZE) {  // Content is oversize
+    _WSContentSend(TasmotaGlobal.mqtt_data);                     // Send content
   }
 }
 
@@ -1080,13 +1080,13 @@ void WSContentSend_P(const char* formatP, ...)     // Content send snprintf_P ch
   // This uses char strings. Be aware of sending %% if % is needed
   va_list arg;
   va_start(arg, formatP);
-  int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
+  int len = vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), formatP, arg);
   va_end(arg);
 
 #ifdef DEBUG_TASMOTA_CORE
-  if (len > (sizeof(mqtt_data) -1)) {
-    mqtt_data[33] = '\0';
-    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSend_P size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(mqtt_data), mqtt_data);
+  if (len > (sizeof(TasmotaGlobal.mqtt_data) -1)) {
+    TasmotaGlobal.mqtt_data[33] = '\0';
+    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSend_P size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(TasmotaGlobal.mqtt_data), TasmotaGlobal.mqtt_data);
   }
 #endif
 
@@ -1098,20 +1098,20 @@ void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P ch
   // This uses char strings. Be aware of sending %% if % is needed
   va_list arg;
   va_start(arg, formatP);
-  int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
+  int len = vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), formatP, arg);
   va_end(arg);
 
 #ifdef DEBUG_TASMOTA_CORE
-  if (len > (sizeof(mqtt_data) -1)) {
-    mqtt_data[33] = '\0';
-    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSend_PD size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(mqtt_data), mqtt_data);
+  if (len > (sizeof(TasmotaGlobal.mqtt_data) -1)) {
+    TasmotaGlobal.mqtt_data[33] = '\0';
+    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSend_PD size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(TasmotaGlobal.mqtt_data), TasmotaGlobal.mqtt_data);
   }
 #endif
 
   if (D_DECIMAL_SEPARATOR[0] != '.') {
     for (uint32_t i = 0; i < len; i++) {
-      if ('.' == mqtt_data[i]) {
-        mqtt_data[i] = D_DECIMAL_SEPARATOR[0];
+      if ('.' == TasmotaGlobal.mqtt_data[i]) {
+        TasmotaGlobal.mqtt_data[i] = D_DECIMAL_SEPARATOR[0];
       }
     }
   }
@@ -1162,13 +1162,13 @@ void WSContentSendStyle_P(const char* formatP, ...)
     // This uses char strings. Be aware of sending %% if % is needed
     va_list arg;
     va_start(arg, formatP);
-    int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
+    int len = vsnprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), formatP, arg);
     va_end(arg);
 
 #ifdef DEBUG_TASMOTA_CORE
-  if (len > (sizeof(mqtt_data) -1)) {
-    mqtt_data[33] = '\0';
-    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSendStyle_P size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(mqtt_data), mqtt_data);
+  if (len > (sizeof(TasmotaGlobal.mqtt_data) -1)) {
+    TasmotaGlobal.mqtt_data[33] = '\0';
+    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSendStyle_P size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(TasmotaGlobal.mqtt_data), TasmotaGlobal.mqtt_data);
   }
 #endif
 
@@ -1248,7 +1248,7 @@ void WSContentStop(void)
       WSContentSend_P(HTTP_COUNTER);
     }
   }
-  WSContentSend_P(HTTP_END, my_version);
+  WSContentSend_P(HTTP_END, TasmotaGlobal.version);
   WSContentEnd();
 }
 
@@ -1360,12 +1360,12 @@ void HandleRoot(void)
   WSContentSendStyle();
 
   WSContentSend_P(PSTR("<div id='l1' name='l1'></div>"));
-  if (devices_present) {
+  if (TasmotaGlobal.devices_present) {
 #ifdef USE_LIGHT
-    if (light_type) {
-      uint8_t light_subtype = light_type &7;
+    if (TasmotaGlobal.light_type) {
+      uint8_t light_subtype = TasmotaGlobal.light_type &7;
       if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
-        bool split_white = ((LST_RGBW <= light_subtype) && (devices_present > 1));  // Only on RGBW or RGBCW and SetOption37 128
+        bool split_white = ((LST_RGBW <= light_subtype) && (TasmotaGlobal.devices_present > 1));  // Only on RGBW or RGBCW and SetOption37 128
 
         if ((LST_COLDWARM == light_subtype) || ((LST_RGBCW == light_subtype) && !split_white)) {
           WebSliderColdWarm();
@@ -1439,7 +1439,7 @@ void HandleRoot(void)
 #endif // USE_LIGHT
 #ifdef USE_SHUTTER
     if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
-      for (uint32_t i = 0; i < shutters_present; i++) {
+      for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
         WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER, Settings.shutter_position[i], i+1);
       }
     }
@@ -1459,21 +1459,21 @@ void HandleRoot(void)
       }
     } else {
 #endif  // USE_SONOFF_IFAN
-      for (uint32_t idx = 1; idx <= devices_present; idx++) {
+      for (uint32_t idx = 1; idx <= TasmotaGlobal.devices_present; idx++) {
         bool set_button = ((idx <= MAX_BUTTON_TEXT) && strlen(SettingsText(SET_BUTTON1 + idx -1)));
 #ifdef USE_SHUTTER
         int32_t ShutterWebButton;
         if (ShutterWebButton = IsShutterWebButton(idx)) {
-          WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx,
+          WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / TasmotaGlobal.devices_present, idx,
             (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : ((Settings.shutter_options[abs(ShutterWebButton)-1] & 2) /* is locked */ ? "-" : ((Settings.shutter_options[abs(ShutterWebButton)-1] & 8) /* invert web buttons */ ? ((ShutterWebButton>0) ? "&#9660;" : "&#9650;") : ((ShutterWebButton>0) ? "&#9650;" : "&#9660;"))),
             "");
           continue;
         }
 #endif  // USE_SHUTTER
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx,
-          (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : (devices_present < 5) ? D_BUTTON_TOGGLE : "",
-          (set_button) ? "" : (devices_present > 1) ? stemp : "");
+        WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / TasmotaGlobal.devices_present, idx,
+          (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : (TasmotaGlobal.devices_present < 5) ? D_BUTTON_TOGGLE : "",
+          (set_button) ? "" : (TasmotaGlobal.devices_present > 1) ? stemp : "");
       }
 #ifdef USE_SONOFF_IFAN
     }
@@ -1487,13 +1487,13 @@ void HandleRoot(void)
       WSContentSend_P(HTTP_TABLE100);
       WSContentSend_P(PSTR("<tr><div></div>"));
       snprintf_P(stemp, sizeof(stemp), PSTR("" D_JSON_IRHVAC_MODE ""));
-      WSContentSend_P(HTTP_DEVICE_CONTROL, 26, devices_present + 1,
-        (strlen(SettingsText(SET_BUTTON1 + devices_present))) ? SettingsText(SET_BUTTON1 + devices_present) : stemp, "");
+      WSContentSend_P(HTTP_DEVICE_CONTROL, 26, TasmotaGlobal.devices_present + 1,
+        (strlen(SettingsText(SET_BUTTON1 + TasmotaGlobal.devices_present))) ? SettingsText(SET_BUTTON1 + TasmotaGlobal.devices_present) : stemp, "");
       WSContentSend_P(PSTR("</tr></table>"));
       modeset = 1;
     }
     if (IsTuyaFanCtrl()) {
-      uint8_t device = devices_present + modeset;
+      uint8_t device = TasmotaGlobal.devices_present + modeset;
       WSContentSend_P(HTTP_TABLE100);
       WSContentSend_P(PSTR("<tr><div></div>"));
       for (uint32_t i = device + 1; i <= (TuyaFanSpeeds() + device) + 1; i++) {
@@ -1506,7 +1506,7 @@ void HandleRoot(void)
   }
 #endif  // USE_TUYA_MCU
 #ifdef USE_SONOFF_RF
-  if (SONOFF_BRIDGE == my_module_type) {
+  if (SONOFF_BRIDGE == TasmotaGlobal.module_type) {
     WSContentSend_P(HTTP_TABLE100);
     WSContentSend_P(PSTR("<tr>"));
     uint32_t idx = 0;
@@ -1578,10 +1578,10 @@ bool HandleRootStatusRefresh(void)
 #ifdef USE_TUYA_MCU
     if (IsModuleTuya()) {
       uint8_t FuncIdx = 0;
-        if (device <= devices_present) {
+        if (device <= TasmotaGlobal.devices_present) {
           ExecuteCommandPower(device, POWER_TOGGLE, SRC_IGNORE);
         } else {
-          if (AsModuleTuyaMS() && device == devices_present + 1) {
+          if (AsModuleTuyaMS() && device == TasmotaGlobal.devices_present + 1) {
             uint8_t dpId = TuyaGetDpId(TUYA_MCU_FUNC_MODESET);
             snprintf_P(svalue, sizeof(svalue), PSTR("Tuyasend4 %d,%d"), dpId, !TuyaModeSet());
             ExecuteCommand(svalue, SRC_WEBGUI);
@@ -1593,9 +1593,9 @@ bool HandleRootStatusRefresh(void)
                 dpId = TuyaGetDpId(TUYA_MCU_FUNC_FAN3 + i);
               }
             }
-            if ((AsModuleTuyaMS() && device != devices_present + 1) || !AsModuleTuyaMS()) {
+            if ((AsModuleTuyaMS() && device != TasmotaGlobal.devices_present + 1) || !AsModuleTuyaMS()) {
               if (AsModuleTuyaMS()) {FuncIdx = 1;}
-              snprintf_P(svalue, sizeof(svalue), PSTR("Tuyasend2 %d,%d"), dpId, (device - (devices_present + FuncIdx) - 1));
+              snprintf_P(svalue, sizeof(svalue), PSTR("Tuyasend2 %d,%d"), dpId, (device - (TasmotaGlobal.devices_present + FuncIdx) - 1));
               ExecuteCommand(svalue, SRC_WEBGUI);
             }
           }
@@ -1632,7 +1632,7 @@ bool HandleRootStatusRefresh(void)
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
   uint32_t light_device = LightDevice();  // Channel number offset
-  uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
+  uint32_t pwm_channels = (TasmotaGlobal.light_type & 7) > LST_MAX ? LST_MAX : (TasmotaGlobal.light_type & 7);
   for (uint32_t j = 0; j < pwm_channels; j++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("e%d"), j +1);
     WebGetArg(webindex, tmp, sizeof(tmp));  // 0 - 100 percent
@@ -1658,7 +1658,7 @@ bool HandleRootStatusRefresh(void)
   }
 #endif  // USE_LIGHT
 #ifdef USE_SHUTTER
-  for (uint32_t j = 1; j <= shutters_present; j++) {
+  for (uint32_t j = 1; j <= TasmotaGlobal.shutters_present; j++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("u%d"), j);
     WebGetArg(webindex, tmp, sizeof(tmp));  // 0 - 100 percent
     if (strlen(tmp)) {
@@ -1681,9 +1681,9 @@ bool HandleRootStatusRefresh(void)
 
   WSContentSend_P(PSTR("</table>"));
 
-  if (devices_present) {
+  if (TasmotaGlobal.devices_present) {
     WSContentSend_P(PSTR("{t}<tr>"));
-    uint32_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
+    uint32_t fsize = (TasmotaGlobal.devices_present < 5) ? 70 - (TasmotaGlobal.devices_present * 8) : 32;
 #ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) {
       WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(TasmotaGlobal.power, 0)) ? "bold" : "normal", 54, GetStateText(bitRead(TasmotaGlobal.power, 0)));
@@ -1692,9 +1692,9 @@ bool HandleRootStatusRefresh(void)
       WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? "bold" : "normal", 54, (fanspeed) ? svalue : GetStateText(0));
     } else {
 #endif  // USE_SONOFF_IFAN
-      for (uint32_t idx = 1; idx <= devices_present; idx++) {
+      for (uint32_t idx = 1; idx <= TasmotaGlobal.devices_present; idx++) {
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(TasmotaGlobal.power, idx -1));
-        WSContentSend_P(HTTP_DEVICE_STATE, 100 / devices_present, (bitRead(TasmotaGlobal.power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(TasmotaGlobal.power, idx -1)) : svalue);
+        WSContentSend_P(HTTP_DEVICE_STATE, 100 / TasmotaGlobal.devices_present, (bitRead(TasmotaGlobal.power, idx -1)) ? "bold" : "normal", fsize, (TasmotaGlobal.devices_present < 5) ? GetStateText(bitRead(TasmotaGlobal.power, idx -1)) : svalue);
       }
 #ifdef USE_SONOFF_IFAN
     }
@@ -1997,7 +1997,7 @@ void HandleModuleConfiguration(void)
 
   for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {
     if (ValidGPIO(i, cmodule.io[i])) {
-      WSContentSend_P(PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g17
+      WSContentSend_P(PSTR("sk(%d,%d);"), TasmotaGlobal.my_module.io[i], i);  // g0 - g17
     }
   }
 
@@ -2016,7 +2016,7 @@ void HandleModuleConfiguration(void)
     if (ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       WSContentSend_P(PSTR("<tr><td style='width:116px'>%s <b>" D_GPIO "%d</b></td><td style='width:150px'><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
-        (WEMOS==my_module_type)?stemp:"", i, i, i);
+        (WEMOS==TasmotaGlobal.module_type)?stemp:"", i, i, i);
       WSContentSend_P(PSTR("<td style='width:50px'><select id='h%d'></select></td></tr>"), i);
     }
   }
@@ -2281,13 +2281,13 @@ void HandleOtherConfiguration(void)
   WSContentSendStyle();
 
   TemplateJson();
-  char stemp[strlen(mqtt_data) +1];
-  strlcpy(stemp, mqtt_data, sizeof(stemp));  // Get JSON template
+  char stemp[strlen(TasmotaGlobal.mqtt_data) +1];
+  strlcpy(stemp, TasmotaGlobal.mqtt_data, sizeof(stemp));  // Get JSON template
   WSContentSend_P(HTTP_FORM_OTHER, stemp, (USER_MODULE == Settings.module) ? " checked disabled" : "",
     (Settings.flag.mqtt_enabled) ? " checked" : "",   // SetOption3 - Enable MQTT
     SettingsText(SET_FRIENDLYNAME1), SettingsText(SET_DEVICENAME));
 
-  uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
+  uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!TasmotaGlobal.devices_present) ? 1 : TasmotaGlobal.devices_present;
 #ifdef USE_SONOFF_IFAN
   if (IsModuleIfan()) { maxfn = 1; }
 #endif  // USE_SONOFF_IFAN
@@ -2382,10 +2382,10 @@ void HandleBackupConfiguration(void)
   char attachment[TOPSZ];
 
 //  char friendlyname[TOPSZ];
-//  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, SettingsText(SET_FRIENDLYNAME1)), my_version);
+//  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, SettingsText(SET_FRIENDLYNAME1)), TasmotaGlobal.version);
 
-  char hostname[sizeof(my_hostname)];
-  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(hostname, my_hostname), my_version);
+  char hostname[sizeof(TasmotaGlobal.hostname)];
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(hostname, TasmotaGlobal.hostname), TasmotaGlobal.version);
 
   Webserver->sendHeader(F("Content-Disposition"), attachment);
 
@@ -2467,7 +2467,7 @@ void HandleInformation(void)
   // }2 = </th><td>
   WSContentSend_P(HTTP_SCRIPT_INFO_BEGIN);
   WSContentSend_P(PSTR("<table style='width:100%%'><tr><th>"));
-  WSContentSend_P(PSTR(D_PROGRAM_VERSION "}2%s%s"), my_version, my_image);
+  WSContentSend_P(PSTR(D_PROGRAM_VERSION "}2%s%s"), TasmotaGlobal.version, TasmotaGlobal.image_name);
   WSContentSend_P(PSTR("}1" D_BUILD_DATE_AND_TIME "}2%s"), GetBuildDateAndTime().c_str());
   WSContentSend_P(PSTR("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_CORE_RELEASE "/%s"), ESP.getSdkVersion());
   WSContentSend_P(PSTR("}1" D_UPTIME "}2%s"), GetUptime().c_str());
@@ -2478,7 +2478,7 @@ void HandleInformation(void)
 #endif
   WSContentSend_P(PSTR("}1" D_BOOT_COUNT "}2%d"), Settings.bootcount);
   WSContentSend_P(PSTR("}1" D_RESTART_REASON "}2%s"), GetResetReason().c_str());
-  uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+  uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : TasmotaGlobal.devices_present;
 #ifdef USE_SONOFF_IFAN
   if (IsModuleIfan()) { maxfn = 1; }
 #endif  // USE_SONOFF_IFAN
@@ -2499,7 +2499,7 @@ void HandleInformation(void)
   if (Settings.flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
     WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings.sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi);
-    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Mdns.begun) ? ".local" : "");
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), TasmotaGlobal.hostname, (Mdns.begun) ? ".local" : "");
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
     if (ipv6_addr != "") {
@@ -2512,7 +2512,7 @@ void HandleInformation(void)
       WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
     }
   }
-  if (!global_state.network_down) {
+  if (!TasmotaGlobal.global_state.network_down) {
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), IPAddress(Settings.ip_address[1]).toString().c_str());
     WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%s"), IPAddress(Settings.ip_address[2]).toString().c_str());
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "}2%s"), IPAddress(Settings.ip_address[3]).toString().c_str());
@@ -2531,7 +2531,7 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_MQTT_TLS_ENABLE "}2%s"), Settings.flag4.mqtt_tls ? PSTR(D_ENABLED) : PSTR(D_DISABLED));
 #endif // USE_MQTT_TLS
     WSContentSend_P(PSTR("}1" D_MQTT_USER "}2%s"), SettingsText(SET_MQTT_USER));
-    WSContentSend_P(PSTR("}1" D_MQTT_CLIENT "}2%s"), mqtt_client);
+    WSContentSend_P(PSTR("}1" D_MQTT_CLIENT "}2%s"), TasmotaGlobal.mqtt_client);
     WSContentSend_P(PSTR("}1" D_MQTT_TOPIC "}2%s"), SettingsText(SET_MQTT_TOPIC));
     uint32_t real_index = SET_MQTT_GRP_TOPIC;
     for (uint32_t i = 0; i < MAX_GROUP_TOPICS; i++) {
@@ -2540,7 +2540,7 @@ void HandleInformation(void)
         WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC " %d}2%s"), 1 +i, GetGroupTopic_P(stopic, "", real_index +i));
       }
     }
-    WSContentSend_P(PSTR("}1" D_MQTT_FULL_TOPIC "}2%s"), GetTopic_P(stopic, CMND, mqtt_topic, ""));
+    WSContentSend_P(PSTR("}1" D_MQTT_FULL_TOPIC "}2%s"), GetTopic_P(stopic, CMND, TasmotaGlobal.mqtt_topic, ""));
     WSContentSend_P(PSTR("}1" D_MQTT " " D_FALLBACK_TOPIC "}2%s"), GetFallbackTopic_P(stopic, ""));
     WSContentSend_P(PSTR("}1" D_MQTT_NO_RETAIN "}2%s"), Settings.flag4.mqtt_no_retain ? PSTR(D_ENABLED) : PSTR(D_DISABLED));
   } else {
@@ -2694,7 +2694,7 @@ void HandleUploadDone(void)
     }
     WSContentSend_P(error);
     DEBUG_CORE_LOG(PSTR("UPL: %s"), error);
-    stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
+    TasmotaGlobal.stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
@@ -2724,7 +2724,7 @@ void HandleUploadDone(void)
 void HandleUploadLoop(void)
 {
   // Based on ESP8266HTTPUpdateServer.cpp uses ESP8266WebServer Parsing.cpp and Cores Updater.cpp (Update)
-  bool _serialoutput = (LOG_LEVEL_DEBUG <= seriallog_level);
+  bool _serialoutput = (LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level);
 
   if (HTTP_USER == Web.state) { return; }
   if (Web.upload_error) {
@@ -2786,7 +2786,7 @@ void HandleUploadLoop(void)
       else {
 #if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
 #ifdef ESP8266
-        if ((SONOFF_ZB_BRIDGE == my_module_type) && (upload.buf[0] == 0xEB)) {  // Check if this is a Zigbee bridge FW file
+        if ((SONOFF_ZB_BRIDGE == TasmotaGlobal.module_type) && (upload.buf[0] == 0xEB)) {  // Check if this is a Zigbee bridge FW file
 #else  // ESP32
         if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX) && (upload.buf[0] == 0xEB)) {  // Check if this is a Zigbee bridge FW file
 #endif  // ESP8266 or ESP32
@@ -2798,7 +2798,7 @@ void HandleUploadLoop(void)
         } else
 #endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_RF_FLASH
-        if ((SONOFF_BRIDGE == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a RF bridge FW file
+        if ((SONOFF_BRIDGE == TasmotaGlobal.module_type) && (upload.buf[0] == ':')) {  // Check if this is a RF bridge FW file
           Update.end();              // End esp8266 update session
           Web.upload_file_type = UPL_EFM8BB1;
 
@@ -3046,7 +3046,7 @@ void HandleHttpCommand(void)
           char* JSON = (char*)memchr(tmp, '{', len);
           if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
             size_t JSONlen = len - (JSON - tmp);
-            if (JSONlen > sizeof(mqtt_data)) { JSONlen = sizeof(mqtt_data); }
+            if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
             char stemp[JSONlen];
             strlcpy(stemp, JSON +1, JSONlen -2);
             WSContentSend_P(PSTR("%s%s"), (cflg) ? "," : "", stemp);
@@ -3119,7 +3119,7 @@ void HandleConsoleRefresh(void)
       size_t len;
       GetLog(counter, &tmp, &len);
       if (len) {
-        if (len > sizeof(mqtt_data) -2) { len = sizeof(mqtt_data); }
+        if (len > sizeof(TasmotaGlobal.mqtt_data) -2) { len = sizeof(TasmotaGlobal.mqtt_data); }
         char stemp[len +1];
         strlcpy(stemp, tmp, len);
         WSContentSend_P(PSTR("%s%s"), (cflg) ? "\n" : "", stemp);
@@ -3264,11 +3264,11 @@ int WebSend(char *buffer)
           while (text != '\0') {
             text = *read++;
             if (text > 31) {                  // Remove control characters like linefeed
-              mqtt_data[j++] = text;
-              if (j == sizeof(mqtt_data) -2) { break; }
+              TasmotaGlobal.mqtt_data[j++] = text;
+              if (j == sizeof(TasmotaGlobal.mqtt_data) -2) { break; }
             }
           }
-          mqtt_data[j] = '\0';
+          TasmotaGlobal.mqtt_data[j] = '\0';
           MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_WEBSEND));
 #ifdef USE_SCRIPT
 extern uint8_t tasm_cmd_activ;

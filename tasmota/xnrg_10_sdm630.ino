@@ -221,14 +221,14 @@ void Sdm630SnsInit(void)
     Energy.phase_count = 3;
     Energy.frequency_common = true;             // Use common frequency
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void Sdm630DrvInit(void)
 {
   if (PinUsed(GPIO_SDM630_RX) && PinUsed(GPIO_SDM630_TX)) {
-    energy_flg = XNRG_10;
+    TasmotaGlobal.energy_driver = XNRG_10;
   }
 }
 

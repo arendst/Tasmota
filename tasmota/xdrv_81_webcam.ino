@@ -807,7 +807,7 @@ void HandleWebcamRoot(void) {
 /*********************************************************************************************/
 
 uint32_t WcSetStreamserver(uint32_t flag) {
-  if (global_state.network_down) { return 0; }
+  if (TasmotaGlobal.global_state.network_down) { return 0; }
 
   Wc.stream_active = 0;
 
@@ -857,7 +857,7 @@ void WcLoop(void) {
 
 #ifdef ENABLE_RTSPSERVER
 
-    if (!rtsp_start && !global_state.wifi_down && Wc.up) {
+    if (!rtsp_start && !TasmotaGlobal.global_state.wifi_down && Wc.up) {
       rtspServer.begin();
       rtsp_start = 1;
       AddLog_P2(LOG_LEVEL_INFO, PSTR("CAM: RTSP init"));

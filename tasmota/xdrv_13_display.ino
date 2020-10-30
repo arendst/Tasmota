@@ -1034,7 +1034,7 @@ void DisplayLogBufferInit(void)
     DisplayReAllocLogBuffer();
 
     char buffer[40];
-    snprintf_P(buffer, sizeof(buffer), PSTR(D_VERSION " %s%s"), my_version, my_image);
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_VERSION " %s%s"), TasmotaGlobal.version, TasmotaGlobal.image_name);
     DisplayLogBufferAdd(buffer);
     snprintf_P(buffer, sizeof(buffer), PSTR("Display mode %d"), Settings.display_mode);
     DisplayLogBufferAdd(buffer);
@@ -1045,7 +1045,7 @@ void DisplayLogBufferInit(void)
     DisplayLogBufferAdd(buffer);
     snprintf_P(buffer, sizeof(buffer), PSTR("IP %s"), NetworkAddress().toString().c_str());
     DisplayLogBufferAdd(buffer);
-    if (!global_state.wifi_down) {
+    if (!TasmotaGlobal.global_state.wifi_down) {
       snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), SettingsText(SET_STASSID1 + Settings.sta_active));
       DisplayLogBufferAdd(buffer);
       snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_RSSI " %d%%"), WifiGetRssiAsQuality(WiFi.RSSI()));
@@ -1264,8 +1264,8 @@ void DisplayLocalSensor(void)
 {
   if ((Settings.display_mode &0x02) && (0 == TasmotaGlobal.tele_period)) {
     char no_topic[1] = { 0 };
-//    DisplayAnalyzeJson(mqtt_topic, mqtt_data);  // Add local topic
-    DisplayAnalyzeJson(no_topic, mqtt_data);    // Discard any topic
+//    DisplayAnalyzeJson(TasmotaGlobal.mqtt_topic, TasmotaGlobal.mqtt_data);  // Add local topic
+    DisplayAnalyzeJson(no_topic, TasmotaGlobal.mqtt_data);    // Discard any topic
   }
 }
 
@@ -1288,13 +1288,13 @@ void DisplayInitDriver(void)
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
   if (Settings.display_model) {
-    devices_present++;
+    TasmotaGlobal.devices_present++;
     if (!PinUsed(GPIO_BACKLIGHT)) {
-      if (light_type && (4 == Settings.display_model)) {
-        devices_present--;  // Assume PWM channel is used for backlight
+      if (TasmotaGlobal.light_type && (4 == Settings.display_model)) {
+        TasmotaGlobal.devices_present--;  // Assume PWM channel is used for backlight
       }
     }
-    disp_device = devices_present;
+    disp_device = TasmotaGlobal.devices_present;
 
 #ifndef USE_DISPLAY_MODES1TO5
     Settings.display_mode = 0;
@@ -2196,7 +2196,7 @@ bool Xdrv13(uint8_t function)
 {
   bool result = false;
 
-  if ((i2c_flg || spi_flg || soft_spi_flg) && XdspPresent()) {
+  if ((TasmotaGlobal.i2c_enabled || TasmotaGlobal.spi_enabled || TasmotaGlobal.soft_spi_enabled) && XdspPresent()) {
     switch (function) {
       case FUNC_PRE_INIT:
         DisplayInitDriver();

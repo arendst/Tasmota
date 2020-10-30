@@ -124,14 +124,14 @@ void PzemAcSnsInit(void)
     Energy.phase_count = 3;  // Start off with three phases
     PzemAc.phase = 0;
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void PzemAcDrvInit(void)
 {
   if (PinUsed(GPIO_PZEM016_RX) && PinUsed(GPIO_PZEM0XX_TX)) {
-    energy_flg = XNRG_05;
+    TasmotaGlobal.energy_driver = XNRG_05;
   }
 }
 

@@ -193,7 +193,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   if (Settings.ip_address[0]) {
     WiFi.config(Settings.ip_address[0], Settings.ip_address[1], Settings.ip_address[2], Settings.ip_address[3]);  // Set static IP
   }
-  WiFi.hostname(my_hostname);
+  WiFi.hostname(TasmotaGlobal.hostname);
 
   char stemp[40] = { 0 };
   if (channel) {
@@ -205,7 +205,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
     WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active));
   }
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s..."),
-    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), stemp, kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
+    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), stemp, kWifiPhyMode[WiFi.getPhyMode() & 0x3], TasmotaGlobal.hostname);
 
 #if LWIP_IPV6
   for (bool configured = false; !configured;) {
@@ -331,7 +331,7 @@ String WifiDowntime(void)
 
 void WifiSetState(uint8_t state)
 {
-  if (state == global_state.wifi_down) {
+  if (state == TasmotaGlobal.global_state.wifi_down) {
     if (state) {
       TasmotaGlobal.rules_flag.wifi_connected = 1;
       Wifi.link_count++;
@@ -341,9 +341,9 @@ void WifiSetState(uint8_t state)
       Wifi.last_event = UpTime();
     }
   }
-  global_state.wifi_down = state ^1;
-  if (!global_state.wifi_down) {
-    global_state.network_down = 0;
+  TasmotaGlobal.global_state.wifi_down = state ^1;
+  if (!TasmotaGlobal.global_state.wifi_down) {
+    TasmotaGlobal.global_state.network_down = 0;
   }
 }
 
@@ -536,7 +536,7 @@ int WifiState(void)
 {
   int state = -1;
 
-  if (!global_state.wifi_down) { state = WIFI_RESTART; }
+  if (!TasmotaGlobal.global_state.wifi_down) { state = WIFI_RESTART; }
   if (Wifi.config_type) { state = Wifi.config_type; }
   return state;
 }
@@ -641,7 +641,7 @@ void EspRestart(void)
   WifiShutdown(true);
   CrashDumpClear();           // Clear the stack dump in RTC
 
-  if (restart_halt) {
+  if (TasmotaGlobal.restart_halt) {
     while (1) {
       OsWatchLoop();          // Feed OsWatch timer to prevent restart
       SetLedLink(1);          // Wifi led on

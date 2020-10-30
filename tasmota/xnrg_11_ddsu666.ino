@@ -138,14 +138,14 @@ void Ddsu666SnsInit(void)
   if (result) {
     if (2 == result) { ClaimSerial(); }
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void Ddsu666DrvInit(void)
 {
   if (PinUsed(GPIO_DDSU666_RX) && PinUsed(GPIO_DDSU666_TX)) {
-    energy_flg = XNRG_11;
+    TasmotaGlobal.energy_driver = XNRG_11;
   }
 }
 

@@ -1305,7 +1305,7 @@ void ZigbeeGlowPermitJoinLight(void) {
     // change the led state
     uint32_t led_pin = Pin(GPIO_LEDLNK);
     if (led_pin < 99) {
-      analogWrite(led_pin, ledlnk_inverted ? 1023 - led_power : led_power);
+      analogWrite(led_pin, TasmotaGlobal.ledlnk_inverted ? 1023 - led_power : led_power);
     }
   }
 }

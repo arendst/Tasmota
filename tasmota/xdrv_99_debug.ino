@@ -259,21 +259,21 @@ void DebugRtcDump(char* parms)
 
   for (row = srow; row < maxrow; row++) {
     idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%03X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
       if (!(col%4)) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s "), TasmotaGlobal.log_data);
       }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[idx + col]);
+      snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s %02X"), TasmotaGlobal.log_data, buffer[idx + col]);
     }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s |"), TasmotaGlobal.log_data);
     for (col = 0; col < CFG_COLS; col++) {
 //      if (!(col%4)) {
-//        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
+//        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s "), TasmotaGlobal.log_data);
 //      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
+      snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%c"), TasmotaGlobal.log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
     }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s|"), TasmotaGlobal.log_data);
     AddLog(LOG_LEVEL_INFO);
   }
 #endif  // ESP8266
@@ -311,21 +311,21 @@ void DebugCfgDump(char* parms)
 
   for (row = srow; row < maxrow; row++) {
     idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%03X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
       if (!(col%4)) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s "), TasmotaGlobal.log_data);
       }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[idx + col]);
+      snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s %02X"), TasmotaGlobal.log_data, buffer[idx + col]);
     }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s |"), TasmotaGlobal.log_data);
     for (col = 0; col < CFG_COLS; col++) {
 //      if (!(col%4)) {
-//        snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
+//        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s "), TasmotaGlobal.log_data);
 //      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
+      snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%c"), TasmotaGlobal.log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
     }
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s|"), log_data);
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s|"), TasmotaGlobal.log_data);
     AddLog(LOG_LEVEL_INFO);
     delay(1);
   }
@@ -344,15 +344,15 @@ void DebugCfgPeek(char* parms)
   uint16_t data16 = (buffer[address +1] << 8) + buffer[address];
   uint32_t data32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + data16;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), address);
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%03X:"), address);
   for (uint32_t i = 0; i < 4; i++) {
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[address +i]);
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s %02X"), TasmotaGlobal.log_data, buffer[address +i]);
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s |"), TasmotaGlobal.log_data);
   for (uint32_t i = 0; i < 4; i++) {
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[address +i] > 0x20) && (buffer[address +i] < 0x7F)) ? (char)buffer[address +i] : ' ');
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%c"), TasmotaGlobal.log_data, ((buffer[address +i] > 0x20) && (buffer[address +i] < 0x7F)) ? (char)buffer[address +i] : ' ');
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s| 0x%02X (%d), 0x%04X (%d), 0x%0LX (%lu)"), log_data, data8, data8, data16, data16, data32, data32);
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s| 0x%02X (%d), 0x%04X (%d), 0x%0LX (%lu)"), TasmotaGlobal.log_data, data8, data8, data16, data16, data32, data32);
   AddLog(LOG_LEVEL_INFO);
 }
 
@@ -551,7 +551,7 @@ void CmndFlashDump(void)
 void CmndI2cWrite(void)
 {
   // I2cWrite <address>,<data>..
-  if (i2c_flg) {
+  if (TasmotaGlobal.i2c_enabled) {
     char* parms = XdrvMailbox.data;
     uint8_t buffer[100];
     uint32_t index = 0;
@@ -580,7 +580,7 @@ void CmndI2cWrite(void)
 void CmndI2cRead(void)
 {
   // I2cRead <address>,<size>
-  if (i2c_flg) {
+  if (TasmotaGlobal.i2c_enabled) {
     char* parms = XdrvMailbox.data;
     uint8_t buffer[100];
     uint32_t index = 0;
@@ -613,7 +613,7 @@ void CmndI2cRead(void)
 void CmndI2cStretch(void)
 {
 #ifdef ESP8266
-  if (i2c_flg && (XdrvMailbox.payload > 0)) {
+  if (TasmotaGlobal.i2c_enabled && (XdrvMailbox.payload > 0)) {
     Wire.setClockStretchLimit(XdrvMailbox.payload);
   }
   ResponseCmndDone();
@@ -622,7 +622,7 @@ void CmndI2cStretch(void)
 
 void CmndI2cClock(void)
 {
-  if (i2c_flg && (XdrvMailbox.payload > 0)) {
+  if (TasmotaGlobal.i2c_enabled && (XdrvMailbox.payload > 0)) {
     Wire.setClock(XdrvMailbox.payload);
   }
   ResponseCmndDone();

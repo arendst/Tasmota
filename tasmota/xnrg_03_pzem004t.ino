@@ -250,14 +250,14 @@ void PzemSnsInit(void)
     Pzem.phase = 0;
     Pzem.read_state = 1;
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void PzemDrvInit(void)
 {
   if (PinUsed(GPIO_PZEM004_RX) && PinUsed(GPIO_PZEM0XX_TX)) {  // Any device with a Pzem004T
-    energy_flg = XNRG_03;
+    TasmotaGlobal.energy_driver = XNRG_03;
   }
 }
 
