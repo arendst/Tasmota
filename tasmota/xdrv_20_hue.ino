@@ -475,6 +475,7 @@ uint32_t DecodeLightId(uint32_t hue_id, uint16_t * shortaddr = nullptr)
     relay_id = 32;
   }
 #ifdef USE_ZIGBEE
+  if (shortaddr) { *shortaddr = 0x0000; }
   if (hue_id & (1 << 29)) {
     // this is actually a Zigbee ID
     if (shortaddr) { *shortaddr = hue_id & 0xFFFF; }
