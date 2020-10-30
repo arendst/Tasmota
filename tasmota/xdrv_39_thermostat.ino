@@ -323,7 +323,7 @@ uint8_t ThermostatInputStatus(uint8_t input_switch)
 
 uint8_t ThermostatOutputStatus(uint8_t output_switch)
 {
-  return (uint8_t)bitRead(power, (output_switch - 1));
+  return (uint8_t)bitRead(TasmotaGlobal.power, (output_switch - 1));
 }
 
 int16_t ThermostatCelsiusToFahrenheit(const int32_t deg, uint8_t conv_type) {
@@ -367,7 +367,7 @@ int16_t ThermostatFahrenheitToCelsius(const int32_t deg, uint8_t conv_type) {
 void ThermostatSignalPreProcessingSlow(uint8_t ctr_output)
 {
   // Update input sensor status
-  if ((uptime - Thermostat[ctr_output].timestamp_temp_measured_update) > ((uint32_t)Thermostat[ctr_output].time_sens_lost * 60)) {
+  if ((TasmotaGlobal.uptime - Thermostat[ctr_output].timestamp_temp_measured_update) > ((uint32_t)Thermostat[ctr_output].time_sens_lost * 60)) {
     Thermostat[ctr_output].status.sensor_alive = IFACE_OFF;
     Thermostat[ctr_output].temp_measured_gradient = 0;
     Thermostat[ctr_output].temp_measured = 0;
@@ -392,7 +392,7 @@ void ThermostatSignalProcessingFast(uint8_t ctr_output)
   Thermostat[ctr_output].status.status_input = (uint32_t)ThermostatInputStatus(Thermostat[ctr_output].status.input_switch_number);
   // Update timestamp of last input
   if (Thermostat[ctr_output].status.status_input == IFACE_ON) {
-    Thermostat[ctr_output].timestamp_input_on = uptime;
+    Thermostat[ctr_output].timestamp_input_on = TasmotaGlobal.uptime;
   }
   // Update real status of the output
   Thermostat[ctr_output].status.status_output = (uint32_t)ThermostatOutputStatus(Thermostat[ctr_output].status.output_relay_number);
@@ -453,7 +453,7 @@ void ThermostatHybridCtrPhase(uint8_t ctr_output)
           // If ramp-up offtime counter has been initalized
           // AND ramp-up offtime counter value reached
           if((Thermostat[ctr_output].time_ctr_checkpoint != 0)
-            && (uptime >= Thermostat[ctr_output].time_ctr_checkpoint)) {
+            && (TasmotaGlobal.uptime >= Thermostat[ctr_output].time_ctr_checkpoint)) {
             // Reset pause period
             Thermostat[ctr_output].time_ctr_checkpoint = 0;
             // Reset timers
@@ -468,13 +468,13 @@ void ThermostatHybridCtrPhase(uint8_t ctr_output)
           // AND temp target has changed
           // AND value of temp target - actual temperature bigger than threshold for heating and lower for cooling
           // then go to ramp-up
-          if (((uptime - Thermostat[ctr_output].timestamp_output_off) > (60 * (uint32_t)Thermostat[ctr_output].time_allow_rampup))
+          if (((TasmotaGlobal.uptime - Thermostat[ctr_output].timestamp_output_off) > (60 * (uint32_t)Thermostat[ctr_output].time_allow_rampup))
             && (Thermostat[ctr_output].temp_target_level != Thermostat[ctr_output].temp_target_level_ctr)
             && ( ( (Thermostat[ctr_output].temp_target_level - Thermostat[ctr_output].temp_measured > Thermostat[ctr_output].temp_rampup_delta_in)
                 && (flag_heating))
               || ( (Thermostat[ctr_output].temp_measured - Thermostat[ctr_output].temp_target_level > Thermostat[ctr_output].temp_rampup_delta_in)
                 && (!flag_heating)))) {
-              Thermostat[ctr_output].timestamp_rampup_start = uptime;
+              Thermostat[ctr_output].timestamp_rampup_start = TasmotaGlobal.uptime;
               Thermostat[ctr_output].temp_rampup_start = Thermostat[ctr_output].temp_measured;
               Thermostat[ctr_output].temp_rampup_meas_gradient = 0;
               Thermostat[ctr_output].time_rampup_deadtime = 0;
@@ -541,7 +541,7 @@ bool ThermostatStateManualToAuto(uint8_t ctr_output)
   // then go to automatic
   if ((Thermostat[ctr_output].status.status_input == IFACE_OFF)
     &&(Thermostat[ctr_output].status.sensor_alive ==  IFACE_ON)
-    && ((uptime - Thermostat[ctr_output].timestamp_input_on) > ((uint32_t)Thermostat[ctr_output].time_manual_to_auto * 60))) {
+    && ((TasmotaGlobal.uptime - Thermostat[ctr_output].timestamp_input_on) > ((uint32_t)Thermostat[ctr_output].time_manual_to_auto * 60))) {
     change_state = true;
   }
   return change_state;
@@ -608,7 +608,7 @@ void ThermostatOutputRelay(uint8_t ctr_output, uint32_t command)
       ExecuteCommandPower(Thermostat[ctr_output].status.output_relay_number, POWER_OFF, SRC_THERMOSTAT);
     }
 //#endif // DEBUG_THERMOSTAT
-    Thermostat[ctr_output].timestamp_output_off = uptime;
+    Thermostat[ctr_output].timestamp_output_off = TasmotaGlobal.uptime;
     Thermostat[ctr_output].status.status_output = IFACE_OFF;
 #ifdef DEBUG_THERMOSTAT
     ThermostatVirtualSwitch(ctr_output);
@@ -793,15 +793,15 @@ void ThermostatCalculatePI(uint8_t ctr_output)
   }
 
   // Adjust output switch point
-  Thermostat[ctr_output].time_ctr_changepoint = uptime + (uint32_t)Thermostat[ctr_output].time_total_pi;
+  Thermostat[ctr_output].time_ctr_changepoint = TasmotaGlobal.uptime + (uint32_t)Thermostat[ctr_output].time_total_pi;
   // Adjust next cycle point
-  Thermostat[ctr_output].time_ctr_checkpoint = uptime + ((uint32_t)Thermostat[ctr_output].time_pi_cycle * 60);
+  Thermostat[ctr_output].time_ctr_checkpoint = TasmotaGlobal.uptime + ((uint32_t)Thermostat[ctr_output].time_pi_cycle * 60);
 }
 
 void ThermostatWorkAutomaticPI(uint8_t ctr_output)
 {
   bool flag_heating = (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING);
-  if ( (uptime >= Thermostat[ctr_output].time_ctr_checkpoint)
+  if ( (TasmotaGlobal.uptime >= Thermostat[ctr_output].time_ctr_checkpoint)
     || (Thermostat[ctr_output].temp_target_level != Thermostat[ctr_output].temp_target_level_ctr)
     || (  (( (Thermostat[ctr_output].temp_measured < Thermostat[ctr_output].temp_target_level)
           && (Thermostat[ctr_output].temp_measured_gradient < 0)
@@ -815,7 +815,7 @@ void ThermostatWorkAutomaticPI(uint8_t ctr_output)
     // Reset cycle active
     Thermostat[ctr_output].status.status_cycle_active = CYCLE_OFF;
   }
-  if (uptime < Thermostat[ctr_output].time_ctr_changepoint) {
+  if (TasmotaGlobal.uptime < Thermostat[ctr_output].time_ctr_changepoint) {
     Thermostat[ctr_output].status.status_cycle_active = CYCLE_ON;
     Thermostat[ctr_output].status.command_output = IFACE_ON;
   }
@@ -842,7 +842,7 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
   }
 
   // Update time in ramp-up as well as delta temp
-  time_in_rampup = uptime - Thermostat[ctr_output].timestamp_rampup_start;
+  time_in_rampup = TasmotaGlobal.uptime - Thermostat[ctr_output].timestamp_rampup_start;
   temp_delta_rampup = Thermostat[ctr_output].temp_measured - Thermostat[ctr_output].temp_rampup_start;
   // Init command output status to true
   Thermostat[ctr_output].status.command_output = IFACE_ON;
@@ -873,14 +873,14 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
       }
       // Calculate absolute gradient since start of ramp-up (considering deadtime) in thousandths of º/hour
       Thermostat[ctr_output].temp_rampup_meas_gradient = (int32_t)((360000 * (int32_t)temp_delta_rampup) / (int32_t)time_in_rampup);
-      Thermostat[ctr_output].time_rampup_nextcycle = uptime + ((uint32_t)Thermostat[ctr_output].time_rampup_cycle * 60);
+      Thermostat[ctr_output].time_rampup_nextcycle = TasmotaGlobal.uptime + ((uint32_t)Thermostat[ctr_output].time_rampup_cycle * 60);
       // Set auxiliary variables
       Thermostat[ctr_output].temp_rampup_cycle = Thermostat[ctr_output].temp_measured;
-      Thermostat[ctr_output].time_ctr_changepoint = uptime + (60 * (uint32_t)Thermostat[ctr_output].time_rampup_max);
+      Thermostat[ctr_output].time_ctr_changepoint = TasmotaGlobal.uptime + (60 * (uint32_t)Thermostat[ctr_output].time_rampup_max);
       Thermostat[ctr_output].temp_rampup_output_off =  Thermostat[ctr_output].temp_target_level_ctr;
     }
     // Gradient calculation every time_rampup_cycle
-    else if ((Thermostat[ctr_output].time_rampup_deadtime > 0) && (uptime >= Thermostat[ctr_output].time_rampup_nextcycle)) {
+    else if ((Thermostat[ctr_output].time_rampup_deadtime > 0) && (TasmotaGlobal.uptime >= Thermostat[ctr_output].time_rampup_nextcycle)) {
       // Calculate temp. gradient in º/hour and set again time_rampup_nextcycle and temp_rampup_cycle
       // temp_rampup_meas_gradient = ((3600 * temp_delta_rampup) / (os.time() - time_rampup_nextcycle))
       temp_delta_rampup = Thermostat[ctr_output].temp_measured - Thermostat[ctr_output].temp_rampup_cycle;
@@ -900,9 +900,9 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
 
         // Calculate temperature for switching off the output
         // y = (((y2-y1)/(x2-x1))*(x-x1)) + y1
-        Thermostat[ctr_output].temp_rampup_output_off = (int16_t)(((int32_t)temp_delta_rampup * (int32_t)(Thermostat[ctr_output].time_ctr_changepoint - (uptime - (time_total_rampup)))) / (int32_t)(time_total_rampup * Thermostat[ctr_output].counter_rampup_cycles)) + Thermostat[ctr_output].temp_rampup_cycle;
+        Thermostat[ctr_output].temp_rampup_output_off = (int16_t)(((int32_t)temp_delta_rampup * (int32_t)(Thermostat[ctr_output].time_ctr_changepoint - (TasmotaGlobal.uptime - (time_total_rampup)))) / (int32_t)(time_total_rampup * Thermostat[ctr_output].counter_rampup_cycles)) + Thermostat[ctr_output].temp_rampup_cycle;
         // Set auxiliary variables
-        Thermostat[ctr_output].time_rampup_nextcycle = uptime + ((uint32_t)Thermostat[ctr_output].time_rampup_cycle * 60);
+        Thermostat[ctr_output].time_rampup_nextcycle = TasmotaGlobal.uptime + ((uint32_t)Thermostat[ctr_output].time_rampup_cycle * 60);
         Thermostat[ctr_output].temp_rampup_cycle = Thermostat[ctr_output].temp_measured;
         // Reset period counter
         Thermostat[ctr_output].counter_rampup_cycles = 1;
@@ -911,9 +911,9 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
         // Increase the period counter
         Thermostat[ctr_output].counter_rampup_cycles++;
         // Set another period
-        Thermostat[ctr_output].time_rampup_nextcycle = uptime + ((uint32_t)Thermostat[ctr_output].time_rampup_cycle * 60);
+        Thermostat[ctr_output].time_rampup_nextcycle = TasmotaGlobal.uptime + ((uint32_t)Thermostat[ctr_output].time_rampup_cycle * 60);
         // Reset time_ctr_changepoint and temp_rampup_output_off
-        Thermostat[ctr_output].time_ctr_changepoint = uptime + (60 * (uint32_t)Thermostat[ctr_output].time_rampup_max) - time_in_rampup;
+        Thermostat[ctr_output].time_ctr_changepoint = TasmotaGlobal.uptime + (60 * (uint32_t)Thermostat[ctr_output].time_rampup_max) - time_in_rampup;
         Thermostat[ctr_output].temp_rampup_output_off =  Thermostat[ctr_output].temp_target_level_ctr;
       }
       // Set time to get out of ramp-up
@@ -927,7 +927,7 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
     // or gradient is <= 0 for heating of >= 0 for cooling
     if ((Thermostat[ctr_output].time_rampup_deadtime == 0)
       || (Thermostat[ctr_output].time_ctr_checkpoint == 0)
-      || (uptime < Thermostat[ctr_output].time_ctr_changepoint)
+      || (TasmotaGlobal.uptime < Thermostat[ctr_output].time_ctr_changepoint)
       || (  ((Thermostat[ctr_output].temp_measured < Thermostat[ctr_output].temp_rampup_output_off)
           && (flag_heating))
         ||  ((Thermostat[ctr_output].temp_measured > Thermostat[ctr_output].temp_rampup_output_off)
@@ -951,7 +951,7 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
       Thermostat[ctr_output].temp_pi_accum_error = Thermostat[ctr_output].temp_rampup_pi_acc_error;
     }
     // Set to now time to get out of ramp-up
-    Thermostat[ctr_output].time_ctr_checkpoint = uptime;
+    Thermostat[ctr_output].time_ctr_checkpoint = TasmotaGlobal.uptime;
     // Switch Off output
     Thermostat[ctr_output].status.command_output = IFACE_OFF;
   }
@@ -971,7 +971,7 @@ void ThermostatPeakDetectorInit(uint8_t ctr_output)
   Thermostat[ctr_output].peak_ctr = 0;
   Thermostat[ctr_output].temp_abs_max_atune = 0;
   Thermostat[ctr_output].temp_abs_min_atune = 100;
-  Thermostat[ctr_output].time_ctr_checkpoint = uptime + THERMOSTAT_TIME_MAX_AUTOTUNE;
+  Thermostat[ctr_output].time_ctr_checkpoint = TasmotaGlobal.uptime + THERMOSTAT_TIME_MAX_AUTOTUNE;
 }
 
 void ThermostatPeakDetector(uint8_t ctr_output)
@@ -1020,7 +1020,7 @@ void ThermostatPeakDetector(uint8_t ctr_output)
       if ( (cond_peak_2)
         && (abs(Thermostat[ctr_output].temp_measured - Thermostat[ctr_output].temp_peaks_atune[peak_num]) > Thermostat[ctr_output].temp_band_no_peak_det)) {
         // Register peak timestamp;
-        Thermostat[ctr_output].time_peak_timestamps_atune[peak_num] = (uptime / 60);
+        Thermostat[ctr_output].time_peak_timestamps_atune[peak_num] = (TasmotaGlobal.uptime / 60);
         Thermostat[ctr_output].peak_ctr++;
         peak_transition = true;
       }
@@ -1040,7 +1040,7 @@ void ThermostatPeakDetector(uint8_t ctr_output)
         && (abs(Thermostat[ctr_output].temp_measured - Thermostat[ctr_output].temp_peaks_atune[peak_num]) > Thermostat[ctr_output].temp_band_no_peak_det)) {
         // Calculate period
         // Register peak timestamp;
-        Thermostat[ctr_output].time_peak_timestamps_atune[peak_num] = (uptime / 60);
+        Thermostat[ctr_output].time_peak_timestamps_atune[peak_num] = (TasmotaGlobal.uptime / 60);
         Thermostat[ctr_output].peak_ctr++;
         peak_transition = true;
       }
@@ -1117,17 +1117,17 @@ void ThermostatWorkAutomaticPIAutotune(uint8_t ctr_output)
   bool flag_heating = (Thermostat[ctr_output].status.climate_mode == CLIMATE_HEATING);
   // If no timeout of the PI Autotune function
   // AND no change in setpoint
-  if ((uptime < Thermostat[ctr_output].time_ctr_checkpoint)
+  if ((TasmotaGlobal.uptime < Thermostat[ctr_output].time_ctr_checkpoint)
     &&(Thermostat[ctr_output].temp_target_level_ctr == Thermostat[ctr_output].temp_target_level)) {
-    if (uptime >= Thermostat[ctr_output].time_ctr_checkpoint) {
+    if (TasmotaGlobal.uptime >= Thermostat[ctr_output].time_ctr_checkpoint) {
       Thermostat[ctr_output].temp_target_level_ctr = Thermostat[ctr_output].temp_target_level;
       // Calculate time_ctr_changepoint
-      Thermostat[ctr_output].time_ctr_changepoint = uptime + (((uint32_t)Thermostat[ctr_output].time_pi_cycle * (uint32_t)Thermostat[ctr_output].dutycycle_step_autotune) / (uint32_t)100);
+      Thermostat[ctr_output].time_ctr_changepoint = TasmotaGlobal.uptime + (((uint32_t)Thermostat[ctr_output].time_pi_cycle * (uint32_t)Thermostat[ctr_output].dutycycle_step_autotune) / (uint32_t)100);
       // Reset cycle active
       Thermostat[ctr_output].status.status_cycle_active = CYCLE_OFF;
     }
     // Set Output On/Off depending on the changepoint
-    if (uptime < Thermostat[ctr_output].time_ctr_changepoint) {
+    if (TasmotaGlobal.uptime < Thermostat[ctr_output].time_ctr_changepoint) {
       Thermostat[ctr_output].status.status_cycle_active = CYCLE_ON;
       Thermostat[ctr_output].status.command_output = IFACE_ON;
     }
@@ -1318,9 +1318,9 @@ void ThermostatDebug(uint8_t ctr_output)
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].temp_rampup_output_off: %s"), result_chr);
   dtostrfd(Thermostat[ctr_output].time_ctr_checkpoint, 0, result_chr);
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Thermostat[ctr_output].time_ctr_checkpoint: %s"), result_chr);
-  dtostrfd(uptime, 0, result_chr);
+  dtostrfd(TasmotaGlobal.uptime, 0, result_chr);
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("uptime: %s"), result_chr);
-  dtostrfd(power, 0, result_chr);
+  dtostrfd(TasmotaGlobal.power, 0, result_chr);
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("power: %s"), result_chr);
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("------ Thermostat End ------"));
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(""));
@@ -1328,7 +1328,7 @@ void ThermostatDebug(uint8_t ctr_output)
 #endif // DEBUG_THERMOSTAT
 
 void ThermostatGetLocalSensor(uint8_t ctr_output) {
-  String buf = mqtt_data;   // copy the string into a new buffer that will be modified
+  String buf = TasmotaGlobal.mqtt_data;   // copy the string into a new buffer that will be modified
   JsonParser parser((char*)buf.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) {
@@ -1341,7 +1341,7 @@ void ThermostatGetLocalSensor(uint8_t ctr_output) {
       if ( (value >= -1000)
         && (value <= 1000)
         && (Thermostat[ctr_output].status.sensor_type == SENSOR_LOCAL)) {
-        uint32_t timestamp = uptime;
+        uint32_t timestamp = TasmotaGlobal.uptime;
         // Calculate temperature gradient if temperature value has changed
         if (value != Thermostat[ctr_output].temp_measured) {
           int32_t temp_delta = (value - Thermostat[ctr_output].temp_measured); // in tenths of degrees
@@ -1385,7 +1385,7 @@ void CmndClimateModeSet(void)
       if ((value >= CLIMATE_HEATING) && (value < CLIMATE_MODES_MAX)) {
         Thermostat[ctr_output].status.climate_mode = value;
         // Trigger a restart of the controller
-        Thermostat[ctr_output].time_ctr_checkpoint = uptime;
+        Thermostat[ctr_output].time_ctr_checkpoint = TasmotaGlobal.uptime;
       }
     }
     ResponseCmndNumber((int)Thermostat[ctr_output].status.climate_mode);
@@ -1428,7 +1428,7 @@ void CmndControllerModeSet(void)
       if ((value >= CTR_HYBRID) && (value < CTR_MODES_MAX)) {
         Thermostat[ctr_output].status.controller_mode = value;
         // Reset controller variables
-        Thermostat[ctr_output].timestamp_rampup_start = uptime;
+        Thermostat[ctr_output].timestamp_rampup_start = TasmotaGlobal.uptime;
         Thermostat[ctr_output].temp_rampup_start = Thermostat[ctr_output].temp_measured;
         Thermostat[ctr_output].temp_rampup_meas_gradient = 0;
         Thermostat[ctr_output].time_rampup_deadtime = 0;
@@ -1449,7 +1449,7 @@ void CmndInputSwitchSet(void)
       uint8_t value = (uint8_t)(XdrvMailbox.payload);
       if (ThermostatSwitchIdValid(value)) {
         Thermostat[ctr_output].status.input_switch_number = value;
-        Thermostat[ctr_output].timestamp_input_on = uptime;
+        Thermostat[ctr_output].timestamp_input_on = TasmotaGlobal.uptime;
       }
     }
     ResponseCmndNumber((int)Thermostat[ctr_output].status.input_switch_number);
@@ -1538,7 +1538,7 @@ void CmndTempMeasuredSet(void)
       if ( (value >= -1000)
         && (value <= 1000)
         && (Thermostat[ctr_output].status.sensor_type == SENSOR_MQTT)) {
-        uint32_t timestamp = uptime;
+        uint32_t timestamp = TasmotaGlobal.uptime;
         // Calculate temperature gradient if temperature value has changed
         if (value != Thermostat[ctr_output].temp_measured) {
           int32_t temp_delta = (value - Thermostat[ctr_output].temp_measured); // in tenths of degrees

@@ -119,6 +119,8 @@
 | USE_CHIRP             | - | - | - | - | - | - | - |
 | USE_PAJ7620           | - | - | - | - | - | - | - |
 | USE_PCF8574           | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_HIH6              | - | - | - | - | x | - | - |
 | USE_DHT12             | - | - | - | - | x | - | - |
 | USE_DS1624            | - | - | - | - | x | - | - |
@@ -131,8 +133,14 @@
 | USE_VEML7700          | - | - | - | - | - | - | - |
 | USE_MCP9808           | - | - | - | - | - | - | - |
 | USE_HP303B            | - | - | - | - | - | - | - |
-| USE_EZOPH             | - | - | - | - | - | - | - |
+| USE_EZOCO2            | - | - | - | - | - | - | - |
+| USE_EZOEC             | - | - | - | - | - | - | - |
+| USE_EZOHUM            | - | - | - | - | - | - | - |
+| USE_EZOO2             | - | - | - | - | - | - | - |
 | USE_EZOORP            | - | - | - | - | - | - | - |
+| USE_EZOPH             | - | - | - | - | - | - | - |
+| USE_EZOPRS            | - | - | - | - | - | - | - |
+| USE_EZORTD            | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |

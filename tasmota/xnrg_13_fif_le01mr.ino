@@ -218,14 +218,14 @@ void FifLESnsInit(void)
   if (result) {
     if (2 == result) { ClaimSerial(); }
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void FifLEDrvInit(void)
 {
   if (PinUsed(GPIO_LE01MR_RX) && PinUsed(GPIO_LE01MR_TX)) {
-    energy_flg = XNRG_13;
+    TasmotaGlobal.energy_driver = XNRG_13;
   }
 }
 
@@ -269,9 +269,7 @@ bool Xnrg13(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (uptime > 4) {
-          FifLEEvery250ms();
-      }
+      FifLEEvery250ms();
       break;
     case FUNC_JSON_APPEND:
       FifLEShow(1);

@@ -27,16 +27,18 @@ struct {
 
 #ifdef USE_DISCOVERY
 void StartMdns(void) {
+//  static uint8_t mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
+
   if (Settings.flag3.mdns_enabled) {  // SetOption55 - Control mDNS service
     if (!Mdns.begun) {
-//            if (mdns_delayed_start) {
-//              AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_ATTEMPTING_CONNECTION));
-//              mdns_delayed_start--;
-//            } else {
-//              mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
-        Mdns.begun = (uint8_t)MDNS.begin(my_hostname);
+//      if (mdns_delayed_start) {
+//        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_ATTEMPTING_CONNECTION));
+//        mdns_delayed_start--;
+//      } else {
+//        mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
+        Mdns.begun = (uint8_t)MDNS.begin(TasmotaGlobal.hostname);
         AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s"), (Mdns.begun) ? D_INITIALIZED : D_FAILED);
-//            }
+//      }
     }
   }
 }
@@ -72,6 +74,7 @@ void MdnsAddServiceHttp(void) {
   if (1 == Mdns.begun) {
     Mdns.begun = 2;
     MDNS.addService("http", "tcp", WEB_PORT);
+    MDNS.addServiceTxt("http", "tcp", "devicetype", "tasmota");
   }
 }
 
@@ -91,18 +94,18 @@ void MdnsUpdate(void) {
 char* NetworkHostname(void) {
 #ifdef ESP32
 #ifdef USE_ETHERNET
-  if (!global_state.eth_down) {
+  if (!TasmotaGlobal.global_state.eth_down) {
     return EthernetHostname();
   }
 #endif
 #endif
-  return my_hostname;
+  return TasmotaGlobal.hostname;
 }
 
 IPAddress NetworkAddress(void) {
 #ifdef ESP32
 #ifdef USE_ETHERNET
-  if (!global_state.eth_down) {
+  if (!TasmotaGlobal.global_state.eth_down) {
     return EthernetLocalIP();
   }
 #endif
@@ -113,7 +116,7 @@ IPAddress NetworkAddress(void) {
 String NetworkMacAddress(void) {
 #ifdef ESP32
 #ifdef USE_ETHERNET
-  if (!global_state.eth_down) {
+  if (!TasmotaGlobal.global_state.eth_down) {
     return EthernetMacAddress();
   }
 #endif

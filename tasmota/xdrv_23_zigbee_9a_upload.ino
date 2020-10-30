@@ -347,8 +347,8 @@ bool ZigbeeUploadXmodem(void) {
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Init sync"));
           ZigbeeSerial->flush();
           ZigbeeSerial->write('1');      // upload ebl
-          if (ssleep > 0) {
-            ssleep = 1;                  // Speed up loop used for xmodem upload
+          if (TasmotaGlobal.sleep > 0) {
+            TasmotaGlobal.sleep = 1;                  // Speed up loop used for xmodem upload
           }
           XModem.timeout = millis() + (XMODEM_SYNC_TIMEOUT * 1000);
           ZbUpload.ota_step = ZBU_SYNC;
@@ -442,10 +442,10 @@ bool ZigbeeUploadXmodem(void) {
     case ZBU_DONE: {                     // *** Clean up and restart to disable bootloader and use new firmware
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: " D_RESTARTING));
       ZigbeeUploadSetBootloader(1);      // Disable bootloader and reset MCU - should happen at restart
-      if (1 == ssleep) {
-        ssleep = Settings.sleep;         // Restore loop sleep
+      if (1 == TasmotaGlobal.sleep) {
+        TasmotaGlobal.sleep = Settings.sleep;         // Restore loop sleep
       }
-//      restart_flag = 2;                  // Restart to disable bootloader and use new firmware
+//      TasmotaGlobal.restart_flag = 2;    // Restart to disable bootloader and use new firmware
       ZbUpload.ota_step = ZBU_FINISH;    // Never return to zero without a restart to get a sane Zigbee environment
       break;
     }

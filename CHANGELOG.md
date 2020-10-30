@@ -3,18 +3,50 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.0.0.2]
+## [9.0.0.3]
+### Added
+- TLS in binary tasmota-zbbridge (#9635)
+- Support for EZO O2 sensors by Christopher Tremblay (#9619)
+- Support for EZO PRS sensors by Christopher Tremblay (#9659)
+- Zigbee reduce battery drain (#9642)
+- Zigbee added ``ZbMap`` command to describe Zigbee topology (#9651)
+
+### Changed
+- PlatformIO library structure redesigned for compilation speed by Jason2866
+- Zigbee flash storage refactor adding commands ``ZbProbe``, ``ZbStatus2`` and ``ZbRestore`` (#9641)
+- Default otaurl in my_user_config.h to http://ota.tasmota.com/tasmota/release/tasmota.bin.gz
+
+### Fixed
+- Rule Break not working as expected when ONCE is enabled (#9245)
+- Rule expressions using mems corrupts character pool (#9301)
+
+## [9.0.0.2] - 20201025
 ### Added
 - Support for Vietnamese language translations by Tâm.NT
 - Support for timers in case of no-sunset permanent day by cybermaus (#9543)
 - Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
-- Command ``SwitchMode 15`` sending only MQTT message on switch change (#9596)
+- Command ``SwitchMode 15`` sending only MQTT message on switch change (#9593)
+- Command ``ShutterChange`` to increment change position (#9594)
+- Command ``SetOption113 1`` to set dimmer low on rotary dial after power off
 - Support for EZO Ph and ORP sensors by Christopher Tremblay (#9567)
+- Support for EZO RTD sensors by Christopher Tremblay (#9585)
+- Support for EZO HUM sensors by Christopher Tremblay (#9599)
+- Support for EZO EC sensors by Christopher Tremblay (#9613)
+- Support for EZO CO2 sensors by Christopher Tremblay (#9619)
+- On ZigbeeBridge support for glowing led when permit join is active (#9581)
+- Support for PWM Dimmer multi-press and ledmask (#9584)
+- Support for fixed output Hi or Lo GPIO selection
+- ESP32 support for Wireless-Tag WT32-ETH01 (#9496)
+- ESP32 MI32 Beacon support, RSSI at TELEPERIOD, refactoring (#9609)
 
 ### Changed
 - Command ``Gpio17`` replaces command ``Adc``
 - Command ``Gpios`` replaces command ``Adcs``
 - Management of serial baudrate (#9554)
+- TLS fingerprint ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
+- Rotary driver adjusted accordingly if Mi Desk Lamp module is selected (#9399)
+- Tasmota Arduino Core v2.7.4.5 allowing webpassword over 47 characters (#9687)
+- Webserver code optimizations (#9580, #9590)
 
 ### Fixed
 - Convert AdcParam parameters from versions before v9.0.0.2
@@ -22,6 +54,12 @@ All notable changes to this project will be documented in this file.
 - Correct Energy period display shortly after midnight by gominoa (#9536)
 - Rule handling of Var or Mem using text regression from v8.5.0.1 (#9540)
 - TuyaMcu energy display regression from v8.5.0.1 (#9547)
+- Tuyamcu dimmers MQTT topic (#9606)
+- MQTT data corruption on ``MQTTLog 4`` (#9571)
+- Scripter memory alignment (#9608)
+- Zigbee battery percentage (#9607)
+- HassAnyKey anomaly (#9601)
+- ESP32 Webcam broken regression from #9590
 
 ## [9.0.0.1] - 20201010
 ### Added
@@ -128,7 +166,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Zigbee better support for IKEA Motion Sensor
 - ESP32 Analog input support for GPIO32 to GPIO39
-- Zigbee options to ``ZbSend`` ``Config`` and ``ReadCondig``
+- Zigbee options to ``ZbSend`` ``Config`` and ``ReadConfig``
 - Command ``Restart 2`` to halt system. Needs hardware reset or power cycle to restart (#9046)
 - Command ``SetOption102 0/1`` to switch between Teleinfo French Metering mode, legacy 1200 bps (0) or Linky standard 9600 bps (1)
 

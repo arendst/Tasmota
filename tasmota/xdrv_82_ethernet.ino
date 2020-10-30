@@ -32,7 +32,28 @@
  * GPIO27 - EMAC_RX_CRS_DV
  *
  * {"NAME":"Olimex ESP32-PoE","GPIO":[1,1,1,1,1,1,0,0,5536,1,1,1,1,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+ * GPIO12 = ETH POWER
+ * GPIO18 = ETH MDIO
+ * GPIO23 = ETH MDC
+ * #define ETH_TYPE          ETH_PHY_LAN8720
+ * #define ETH_CLKMODE       ETH_CLOCK_GPIO17_OUT
+ * #define ETH_ADDR          0
+ *
  * {"NAME":"wESP32","GPIO":[0,0,1,0,1,1,0,0,1,1,1,1,5568,5600,1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+ * GPIO16 = ETH MDC
+ * GPIO17 = ETH MDIO
+ * #define ETH_TYPE          ETH_PHY_LAN8720
+ * #define ETH_CLKMODE       ETH_CLOCK_GPIO0_IN
+ * #define ETH_ADDR          0
+ *
+ * {"NAME":"WT32-ETH01","GPIO":[1,1,1,1,1,1,0,0,1,0,1,1,3840,576,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,1],"FLAG":0,"BASE":1}
+ * GPIO16 = Force Hi
+ * GPIO18 = ETH MDIO
+ * GPIO23 = ETH MDC
+ * #define ETH_TYPE          ETH_PHY_LAN8720
+ * #define ETH_CLKMODE       ETH_CLOCK_GPIO0_IN
+ * #define ETH_ADDR          1
+ *
 \*********************************************************************************************/
 
 #define XDRV_82           82
@@ -59,7 +80,7 @@
 
 #include <ETH.h>
 
-char eth_hostname[sizeof(my_hostname)];
+char eth_hostname[sizeof(TasmotaGlobal.hostname)];
 
 void EthernetEvent(WiFiEvent_t event) {
   switch (event) {
@@ -68,31 +89,24 @@ void EthernetEvent(WiFiEvent_t event) {
       ETH.setHostname(eth_hostname);
       break;
     case SYSTEM_EVENT_ETH_CONNECTED:
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("ETH: " D_CONNECTED));
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("ETH: " D_CONNECTED " at %dMbps%s"),
+        ETH.linkSpeed(), (ETH.fullDuplex()) ? " Full Duplex" : "");
       break;
     case SYSTEM_EVENT_ETH_GOT_IP:
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %s, Hostname %s"),
         ETH.macAddress().c_str(), ETH.localIP().toString().c_str(), eth_hostname);
-/*
-      if (ETH.fullDuplex()) {
-        Serial.print(", FULL_DUPLEX");
-      }
-      Serial.print(", ");
-      Serial.print(ETH.linkSpeed());
-      Serial.println("Mbps");
-*/
       Settings.ip_address[1] = (uint32_t)ETH.gatewayIP();
       Settings.ip_address[2] = (uint32_t)ETH.subnetMask();
       Settings.ip_address[3] = (uint32_t)ETH.dnsIP();
-      global_state.eth_down = 0;
+      TasmotaGlobal.global_state.eth_down = 0;
       break;
     case SYSTEM_EVENT_ETH_DISCONNECTED:
       AddLog_P2(LOG_LEVEL_INFO, PSTR("ETH: Disconnected"));
-      global_state.eth_down = 1;
+      TasmotaGlobal.global_state.eth_down = 1;
       break;
     case SYSTEM_EVENT_ETH_STOP:
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ETH: Stopped"));
-      global_state.eth_down = 1;
+      TasmotaGlobal.global_state.eth_down = 1;
       break;
     default:
       break;
@@ -106,8 +120,8 @@ void EthernetInit(void) {
     return;
   }
 
-//  snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s_eth"), my_hostname);
-  strlcpy(eth_hostname, my_hostname, sizeof(eth_hostname) -5);  // Make sure there is room for "_eth"
+//  snprintf_P(Eth.hostname, sizeof(Eth.hostname), PSTR("%s_eth"), TasmotaGlobal.hostname);
+  strlcpy(eth_hostname, TasmotaGlobal.hostname, sizeof(eth_hostname) -5);  // Make sure there is room for "_eth"
   strcat(eth_hostname, "_eth");
 
   WiFi.onEvent(EthernetEvent);
@@ -150,7 +164,7 @@ void CmndEthernet(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     Settings.flag4.network_ethernet = XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndStateText(Settings.flag4.network_ethernet);
 }
@@ -159,7 +173,7 @@ void CmndEthAddress(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 31)) {
     Settings.eth_address = XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndNumber(Settings.eth_address);
 }
@@ -168,7 +182,7 @@ void CmndEthType(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
     Settings.eth_type = XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndNumber(Settings.eth_type);
 }
@@ -177,7 +191,7 @@ void CmndEthClockMode(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
     Settings.eth_clk_mode = XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   ResponseCmndNumber(Settings.eth_clk_mode);
 }

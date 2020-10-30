@@ -76,7 +76,7 @@ void Hih6Detect(void)
 {
   if (I2cActive(HIH6_ADDR)) { return; }
 
-  if (uptime < 2) { delay(20); } // Skip entering power on comand mode
+  if (TasmotaGlobal.uptime < 2) { delay(20); } // Skip entering power on comand mode
   Hih6.type = Hih6Read();
   if (Hih6.type) {
     I2cSetActiveFound(HIH6_ADDR, Hih6.types);
@@ -85,7 +85,7 @@ void Hih6Detect(void)
 
 void Hih6EverySecond(void)
 {
-  if (uptime &1) {
+  if (TasmotaGlobal.uptime &1) {
     // HIH6130: 30mS
     if (!Hih6Read()) {
       AddLogMissed(Hih6.types, Hih6.valid);
@@ -96,7 +96,7 @@ void Hih6EverySecond(void)
 void Hih6Show(bool json)
 {
   if (Hih6.valid) {
-    TempHumDewShow(json, (0 == tele_period), Hih6.types, Hih6.temperature, Hih6.humidity);
+    TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), Hih6.types, Hih6.temperature, Hih6.humidity);
   }
 }
 

@@ -69,7 +69,7 @@ void PS16DZSerialSendUpdateCommand(void)
 
   char tx_buffer[80];
   snprintf_P(tx_buffer, sizeof(tx_buffer), PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"bright\":%d"),
-    LocalTime(), millis()%1000, power?"on":"off", light_state_dimmer);
+    LocalTime(), millis()%1000, TasmotaGlobal.power?"on":"off", light_state_dimmer);
 
   PS16DZSerialSend(tx_buffer);
 }
@@ -120,7 +120,7 @@ void PS16DZSerialInput(void)
 
 //            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Switch %d"), switch_state);
 
-            is_switch_change = (switch_state != power);
+            is_switch_change = (switch_state != TasmotaGlobal.power);
             if (is_switch_change) {
               ExecuteCommandPower(1, switch_state, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
             }
@@ -131,7 +131,7 @@ void PS16DZSerialInput(void)
 //            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Brightness %d"), Ps16dz.dimmer);
 
             is_brightness_change = Ps16dz.dimmer != Settings.light_dimmer;
-            if (power && (Ps16dz.dimmer > 0) && is_brightness_change) {
+            if (TasmotaGlobal.power && (Ps16dz.dimmer > 0) && is_brightness_change) {
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), Ps16dz.dimmer);
               ExecuteCommand(scmnd, SRC_SWITCH);
             }
@@ -196,8 +196,8 @@ void PS16DZInit(void)
 
 bool PS16DZModuleSelected(void)
 {
-  devices_present++;
-  light_type = LT_SERIAL1;
+  TasmotaGlobal.devices_present++;
+  TasmotaGlobal.light_type = LT_SERIAL1;
 
   return true;
 }
@@ -210,7 +210,7 @@ bool Xdrv19(uint8_t function)
 {
   bool result = false;
 
-  if (PS_16_DZ == my_module_type) {
+  if (PS_16_DZ == TasmotaGlobal.module_type) {
     switch (function) {
       case FUNC_LOOP:
         if (PS16DZSerial) { PS16DZSerialInput(); }

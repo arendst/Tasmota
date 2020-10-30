@@ -82,7 +82,7 @@ void Tsl2561Detect(void)
 
 void Tsl2561EverySecond(void)
 {
-  if (!(uptime %2)) {  // Every 2 seconds
+  if (!(TasmotaGlobal.uptime %2)) {  // Every 2 seconds
     // ?mS - 4Sec
     if (!Tsl2561Read()) {
       AddLogMissed(tsl2561_types, tsl2561_valid);
@@ -102,7 +102,7 @@ void Tsl2561Show(bool json)
       ResponseAppend_P(PSTR(",\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u,\"IR\":%u,\"Broadband\":%u}"),
         tsl2561_milliLux / 1000, tsl2561_milliLux % 1000, tsl2561_ir, tsl2561_full);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) { DomoticzSensor(DZ_ILLUMINANCE, (tsl2561_milliLux + 500) / 1000); }
+      if (0 == TasmotaGlobal.tele_period) { DomoticzSensor(DZ_ILLUMINANCE, (tsl2561_milliLux + 500) / 1000); }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {

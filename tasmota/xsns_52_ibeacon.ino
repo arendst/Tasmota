@@ -119,7 +119,7 @@ void hm17_every_second(void) {
   if (!IBEACON_Serial) return;
 
   if (hm17_found) {
-    if (IB_UPDATE_TIME && (uptime%IB_UPDATE_TIME==0)) {
+    if (IB_UPDATE_TIME && (TasmotaGlobal.uptime%IB_UPDATE_TIME==0)) {
       if (hm17_cmd!=99) {
         if (hm17_flag&2) {
           ib_sendbeep();
@@ -140,7 +140,7 @@ void hm17_every_second(void) {
       }
     }
   } else {
-    if (uptime%20==0) {
+    if (TasmotaGlobal.uptime%20==0) {
       hm17_sendcmd(HM17_TEST);
     }
   }

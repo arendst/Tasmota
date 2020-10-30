@@ -195,14 +195,14 @@ void We517SnsInit(void)
       Energy.phase_count = 3;
       Energy.frequency_common = true; // Use common frequency
   } else {
-      energy_flg = ENERGY_NONE;
+      TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void We517DrvInit(void)
 {
   if (PinUsed(GPIO_WE517_RX) && PinUsed(GPIO_WE517_TX)) {
-    energy_flg = XNRG_17;
+    TasmotaGlobal.energy_driver = XNRG_17;
   }
 }
 
@@ -216,7 +216,7 @@ bool Xnrg17(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (uptime > 4) { WE517Every250ms(); }
+      WE517Every250ms();
       break;
     case FUNC_INIT:
       We517SnsInit();

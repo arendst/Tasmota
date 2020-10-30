@@ -124,12 +124,12 @@ void ExsSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
   char rc;
 
 #ifdef EXS_DEBUG
-  snprintf_P(log_data, sizeof(log_data), PSTR("EXS: Tx Packet: \""));
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("EXS: Tx Packet: \""));
   for (uint32_t i = 0; i < len; i++)
   {
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, data[i]);
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%02x"), TasmotaGlobal.log_data, data[i]);
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s\""), TasmotaGlobal.log_data);
   AddLog(LOG_LEVEL_DEBUG_MORE);
 #endif
 
@@ -360,20 +360,20 @@ bool ExsModuleSelected(void)
   Settings.flag3.pwm_multi_channels = 1;  // SetOption68 - Enable multi-channels PWM instead of Color PWM
   SetSeriallog(LOG_LEVEL_NONE);
 
-  devices_present = +2;
-  light_type = LT_SERIAL2;
+  TasmotaGlobal.devices_present = +2;
+  TasmotaGlobal.light_type = LT_SERIAL2;
   return true;
 }
 
 bool ExsSetChannels(void)
 {
 #ifdef EXS_DEBUG
-  snprintf_P(log_data, sizeof(log_data), PSTR("EXS: SetChannels: \""));
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("EXS: SetChannels: \""));
   for (int i = 0; i < XdrvMailbox.data_len; i++)
   {
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, ((uint8_t *)XdrvMailbox.data)[i]);
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%02x"), TasmotaGlobal.log_data, ((uint8_t *)XdrvMailbox.data)[i]);
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
+  snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s\""), TasmotaGlobal.log_data);
   AddLog(LOG_LEVEL_DEBUG_MORE);
 #endif
 
@@ -385,7 +385,7 @@ bool ExsSetChannels(void)
 bool ExsSetPower(void)
 {
   AddLog_P2(LOG_LEVEL_INFO, PSTR("EXS: Set Power, Device %d, Power 0x%02x"),
-            active_device, XdrvMailbox.index);
+            TasmotaGlobal.active_device, XdrvMailbox.index);
 
   Exs.power = XdrvMailbox.index;
   return ExsSyncState();
@@ -466,12 +466,12 @@ void ExsSerialInput(void)
         Exs.cmd_status = 0;
 
 #ifdef EXS_DEBUG
-        snprintf_P(log_data, sizeof(log_data), PSTR("EXS: RX Packet: \""));
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("EXS: RX Packet: \""));
         for (uint32_t i = 0; i < Exs.byte_counter; i++)
         {
-          snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, Exs.buffer[i]);
+          snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%02x"), TasmotaGlobal.log_data, Exs.buffer[i]);
         }
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s\", CRC: 0x%02x"), log_data, crc);
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s\", CRC: 0x%02x"), TasmotaGlobal.log_data, crc);
         AddLog(LOG_LEVEL_DEBUG_MORE);
 #endif
 
@@ -604,7 +604,7 @@ bool Xdrv30(uint8_t function)
 {
   bool result = false;
 
-  if (EXS_DIMMER == my_module_type)
+  if (EXS_DIMMER == TasmotaGlobal.module_type)
   {
     switch (function)
     {

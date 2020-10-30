@@ -79,7 +79,7 @@ void Dht12Detect(void)
 
 void Dht12EverySecond(void)
 {
-  if (uptime &1) {
+  if (TasmotaGlobal.uptime &1) {
     // DHT12: 55mS
     if (!Dht12Read()) {
       AddLogMissed(Dht12.name, Dht12.valid);
@@ -90,7 +90,7 @@ void Dht12EverySecond(void)
 void Dht12Show(bool json)
 {
   if (Dht12.valid) {
-    TempHumDewShow(json, (0 == tele_period), Dht12.name, Dht12.temperature, Dht12.humidity);
+    TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), Dht12.name, Dht12.temperature, Dht12.humidity);
   }
 }
 

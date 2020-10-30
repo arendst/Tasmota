@@ -108,7 +108,8 @@ void ST7789_InitDriver()
 #endif
 
     // init renderer, may use hardware spi
-    if (PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SPI_CLK)==HW_SPI_CLK) && PinUsed(GPIO_SPI_DC)) {
+    //if (PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SPI_CLK)==HW_SPI_CLK) && PinUsed(GPIO_SPI_DC)) {
+    if ((Pin(GPIO_SPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SPI_CLK)==HW_SPI_CLK) && PinUsed(GPIO_SPI_DC)) {
         st7789  = new Arduino_ST7789(Pin(GPIO_SPI_DC), reset, cs, bppin);
     } else {
       if ((PinUsed(GPIO_SSPI_CS) || PinUsed(GPIO_OLED_RESET)) && PinUsed(GPIO_SSPI_MOSI) && PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_DC)) {

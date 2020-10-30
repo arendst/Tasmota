@@ -96,14 +96,14 @@ void Dds2382SnsInit(void)
   if (result) {
     if (2 == result) { ClaimSerial(); }
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void Dds2382DrvInit(void)
 {
   if (PinUsed(GPIO_DDS2382_RX) && PinUsed(GPIO_DDS2382_TX)) {
-    energy_flg = XNRG_09;
+    TasmotaGlobal.energy_driver = XNRG_09;
   }
 }
 
@@ -117,7 +117,7 @@ bool Xnrg09(uint8_t function)
 
   switch (function) {
     case FUNC_ENERGY_EVERY_SECOND:
-      if (uptime > 4) { Dds2382EverySecond(); }
+      if (TasmotaGlobal.uptime > 4) { Dds2382EverySecond(); }
       break;
     case FUNC_INIT:
       Dds2382SnsInit();

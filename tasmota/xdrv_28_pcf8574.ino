@@ -45,7 +45,7 @@ struct PCF8574 {
 
 void Pcf8574SwitchRelay(void)
 {
-  for (uint32_t i = 0; i < devices_present; i++) {
+  for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
     uint8_t relay_state = bitRead(XdrvMailbox.index, i);
 
     //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PCF: Pcf8574.max_devices %d requested pin %d"), Pcf8574.max_devices,Pcf8574.pin[i]);
@@ -53,7 +53,7 @@ void Pcf8574SwitchRelay(void)
     if (Pcf8574.max_devices > 0 && Pcf8574.pin[i] < 99) {
       uint8_t board = Pcf8574.pin[i]>>3;
       uint8_t oldpinmask = Pcf8574.pin_mask[board];
-      uint8_t _val = bitRead(rel_inverted, i) ? !relay_state : relay_state;
+      uint8_t _val = bitRead(TasmotaGlobal.rel_inverted, i) ? !relay_state : relay_state;
 
       //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PCF: Pcf8574SwitchRelay %d on pin %d"), i,state);
 
@@ -67,7 +67,7 @@ void Pcf8574SwitchRelay(void)
         Wire.write(Pcf8574.pin_mask[board]);
         Pcf8574.error = Wire.endTransmission();
       }
-      //pcf8574.write(Pcf8574.pin[i]&0x7, rel_inverted[i] ? !state : state);
+      //pcf8574.write(Pcf8574.pin[i]&0x7, TasmotaGlobal.rel_inverted[i] ? !state : state);
     }
   }
 }
@@ -111,7 +111,7 @@ void Pcf8574Init(void)
     for (uint32_t i = 0; i < sizeof(Pcf8574.pin); i++) {
       Pcf8574.pin[i] = 99;
     }
-    devices_present = devices_present - Pcf8574.max_connected_ports; // reset no of devices to avoid duplicate ports on duplicate init.
+    TasmotaGlobal.devices_present = TasmotaGlobal.devices_present - Pcf8574.max_connected_ports; // reset no of devices to avoid duplicate ports on duplicate init.
     Pcf8574.max_connected_ports = 0;  // reset no of devices to avoid duplicate ports on duplicate init.
     for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) { // suport up to 8 boards PCF8574
 
@@ -119,11 +119,11 @@ void Pcf8574Init(void)
 
       for (uint32_t i = 0; i < 8; i++) {
         uint8_t _result = Settings.pcf8574_config[idx] >> i &1;
-        //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PCF: I2C shift i %d: %d. Powerstate: %d, devices_present: %d"), i,_result, Settings.power>>i&1, devices_present);
+        //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PCF: I2C shift i %d: %d. Powerstate: %d, TasmotaGlobal.devices_present: %d"), i,_result, Settings.power>>i&1, TasmotaGlobal.devices_present);
         if (_result > 0) {
-          Pcf8574.pin[devices_present] = i + 8 * idx;
-          bitWrite(rel_inverted, devices_present, Settings.flag3.pcf8574_ports_inverted);  // SetOption81 - Invert all ports on PCF8574 devices
-          devices_present++;
+          Pcf8574.pin[TasmotaGlobal.devices_present] = i + 8 * idx;
+          bitWrite(TasmotaGlobal.rel_inverted, TasmotaGlobal.devices_present, Settings.flag3.pcf8574_ports_inverted);  // SetOption81 - Invert all ports on PCF8574 devices
+          TasmotaGlobal.devices_present++;
           Pcf8574.max_connected_ports++;
         }
       }
@@ -203,8 +203,8 @@ void Pcf8574SaveSettings(void)
       n = n&(n-1);
       count++;
     }
-    if (count <= devices_present) {
-      devices_present = devices_present - count;
+    if (count <= TasmotaGlobal.devices_present) {
+      TasmotaGlobal.devices_present = TasmotaGlobal.devices_present - count;
     }
     for (byte i = 0; i < 8; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("i2cs%d"), i+8*idx);
@@ -212,7 +212,7 @@ void Pcf8574SaveSettings(void)
       byte _value = (!strlen(tmp)) ?  0 : atoi(tmp);
       if (_value) {
         Settings.pcf8574_config[idx] = Settings.pcf8574_config[idx] | 1 << i;
-        devices_present++;
+        TasmotaGlobal.devices_present++;
         Pcf8574.max_connected_ports++;
       } else {
         Settings.pcf8574_config[idx] = Settings.pcf8574_config[idx] & ~(1 << i );
@@ -248,7 +248,7 @@ bool Xdrv28(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_PCF8574);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/" WEB_HANDLE_PCF8574, HandlePcf8574);
+        WebServer_on(PSTR("/" WEB_HANDLE_PCF8574), HandlePcf8574);
         break;
 #endif  // USE_WEBSERVER
     }

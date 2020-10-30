@@ -229,7 +229,7 @@ void Bl0940SnsInit(void) {
     }
 
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
@@ -237,7 +237,7 @@ void Bl0940DrvInit(void) {
   if (PinUsed(GPIO_BL0940_RX) && PinUsed(GPIO_TXD)) {
     Bl0940.rx_buffer = (uint8_t*)(malloc(BL0940_BUFFER_SIZE));
     if (Bl0940.rx_buffer != nullptr) {
-      energy_flg = XNRG_14;
+      TasmotaGlobal.energy_driver = XNRG_14;
     }
   }
 }
@@ -273,7 +273,7 @@ void Bl0940Show(bool json) {
 
   if (json) {
     ResponseAppend_P(JSON_SNS_TEMP, "BL0940", temperature);
-    if (0 == tele_period) {
+    if (0 == TasmotaGlobal.tele_period) {
 #ifdef USE_DOMOTICZ
       DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ

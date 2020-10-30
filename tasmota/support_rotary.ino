@@ -36,29 +36,39 @@
 #ifndef ROTARY_MAX_STEPS
 #define ROTARY_MAX_STEPS     10                // Rotary step boundary
 #endif
+#ifndef ROTARY_START_DIM
+#define ROTARY_START_DIM     1                 // Minimal dimmer value after power on with SetOption113 1
+#endif
+#ifndef ROTARY_TIMEOUT
+#define ROTARY_TIMEOUT       2                 // 2 * RotaryHandler() call which is usually 2 * 0.05 seconds
+#endif
+#ifndef ROTARY_DEBOUNCE
+#define ROTARY_DEBOUNCE      10                // Debounce time in milliseconds
+#endif
 
-// 1 pulse per step
-const uint8_t rotary_dimmer_increment = 100 / ROTARY_MAX_STEPS;  // Dimmer 1..100 = 100
-const uint8_t rotary_ct_increment = 350 / ROTARY_MAX_STEPS;      // Ct 153..500 = 347
-const uint8_t rotary_color_increment = 360 / ROTARY_MAX_STEPS;   // Hue 0..359 = 360
-
-const uint8_t ROTARY_TIMEOUT = 5;              // 5 * RotaryHandler() call which is usually 5 * 0.05 seconds
-const uint8_t ROTARY_DEBOUNCE = 10;            // Debounce time in milliseconds
+//                                           (0) = Mi Desk lamp            (1) = Normal rotary
+//                                           ----------------------------  ----------------------
+const uint8_t rotary_dimmer_increment[2] = { 100 / (ROTARY_MAX_STEPS * 3), 100 / ROTARY_MAX_STEPS };  // Dimmer 1..100 = 100
+const uint8_t rotary_ct_increment[2] =     { 350 / (ROTARY_MAX_STEPS * 3), 350 / ROTARY_MAX_STEPS };  // Ct 153..500 = 347
+const uint8_t rotary_color_increment[2] =  { 360 / (ROTARY_MAX_STEPS * 3), 360 / ROTARY_MAX_STEPS };  // Hue 0..359 = 360
+const uint8_t rotary_offset = 128;
+const int8_t rotary_state_pos[16] = { 0, 1, -1, 2, -1, 0, -2, 1, 1, -2, 0, -1, 2, -1, 1, 0 };
 
 struct ROTARY {
-  bool present = false;
+  uint8_t model;
+  bool present;
 } Rotary;
 
 struct tEncoder {
   volatile uint32_t debounce = 0;
-  int8_t abs_position[2] = { 0 };
+  volatile uint8_t state = 0;
+  volatile uint8_t position;
   volatile int8_t direction = 0;               // Control consistent direction
-  volatile int8_t pin = -1;
-  volatile uint8_t position = 128;
-  uint8_t last_position = 128;
+  volatile int8_t pina;
+  volatile int8_t pinb;
   uint8_t timeout = 0;                         // Disallow direction change within 0.5 second
+  int8_t abs_position[2] = { 0 };
   bool changed = false;
-  volatile bool busy = false;
 };
 tEncoder Encoder[MAX_ROTARIES];
 
@@ -68,10 +78,10 @@ bool RotaryButtonPressed(uint32_t button_index) {
   if (!Rotary.present) { return false; }
 
   for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
-    if (-1 == Encoder[index].pin) { continue; }
+    if (-1 == Encoder[index].pinb) { continue; }
     if (index != button_index) { continue; }
 
-    bool powered_on = (power);
+    bool powered_on = (TasmotaGlobal.power);
 #ifdef USE_LIGHT
     if (!Settings.flag4.rotary_uses_rules) {   // SetOption98 - Use rules instead of light control
       powered_on = LightPower();
@@ -86,14 +96,24 @@ bool RotaryButtonPressed(uint32_t button_index) {
   return false;
 }
 
+void ICACHE_RAM_ATTR RotaryIsrArgMiDesk(void *arg) {
+  tEncoder* encoder = static_cast<tEncoder*>(arg);
+
+  // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
+  uint32_t state = encoder->state & 3;
+  if (digitalRead(encoder->pina)) { state |= 4; }
+  if (digitalRead(encoder->pinb)) { state |= 8; }
+  encoder->position += rotary_state_pos[state];
+  encoder->state = (state >> 2);
+}
+
 void ICACHE_RAM_ATTR RotaryIsrArg(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
-  if (encoder->busy) { return; }
-
+  // Theo Arends
   uint32_t time = millis();
   if ((encoder->debounce < time) || (encoder->debounce > time + ROTARY_DEBOUNCE)) {
-    int direction = (digitalRead(encoder->pin)) ? -1 : 1;
+    int direction = (digitalRead(encoder->pinb)) ? -1 : 1;
     if ((0 == encoder->direction) || (direction == encoder->direction)) {
       encoder->position += direction;
       encoder->direction = direction;
@@ -104,19 +124,28 @@ void ICACHE_RAM_ATTR RotaryIsrArg(void *arg) {
 
 void RotaryInit(void) {
   Rotary.present = false;
-  for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
+  Rotary.model = 1;
 #ifdef ESP8266
-    uint32_t idx = index *2;
-#else  // ESP32
-    uint32_t idx = index;
-#endif  // ESP8266 or ESP32
-    if (PinUsed(GPIO_ROT1A, idx) && PinUsed(GPIO_ROT1B, idx)) {
-      Encoder[index].pin = Pin(GPIO_ROT1B, idx);
-      pinMode(Encoder[index].pin, INPUT_PULLUP);
-      pinMode(Pin(GPIO_ROT1A, idx), INPUT_PULLUP);
-      attachInterruptArg(Pin(GPIO_ROT1A, idx), RotaryIsrArg, &Encoder[index], FALLING);
+  if (MI_DESK_LAMP == TasmotaGlobal.module_type) {
+    Rotary.model = 0;
+  }
+#endif  // ESP8266
+  for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
+    Encoder[index].pinb = -1;
+    if (PinUsed(GPIO_ROT1A, index) && PinUsed(GPIO_ROT1B, index)) {
+      Encoder[index].position = rotary_offset;
+      Encoder[index].pina = Pin(GPIO_ROT1A, index);
+      Encoder[index].pinb = Pin(GPIO_ROT1B, index);
+      pinMode(Encoder[index].pina, INPUT_PULLUP);
+      pinMode(Encoder[index].pinb, INPUT_PULLUP);
+      if (0 == Rotary.model) {
+        attachInterruptArg(Encoder[index].pina, RotaryIsrArgMiDesk, &Encoder[index], CHANGE);
+        attachInterruptArg(Encoder[index].pinb, RotaryIsrArgMiDesk, &Encoder[index], CHANGE);
+      } else {
+        attachInterruptArg(Encoder[index].pina, RotaryIsrArg, &Encoder[index], FALLING);
+      }
     }
-    Rotary.present |= (Encoder[index].pin > -1);
+    Rotary.present |= (Encoder[index].pinb > -1);
   }
 }
 
@@ -128,7 +157,7 @@ void RotaryHandler(void) {
   if (!Rotary.present) { return; }
 
   for (uint32_t index = 0; index < MAX_ROTARIES; index++) {
-    if (-1 == Encoder[index].pin) { continue; }
+    if (-1 == Encoder[index].pinb) { continue; }
 
     if (Encoder[index].timeout) {
       Encoder[index].timeout--;
@@ -142,15 +171,17 @@ void RotaryHandler(void) {
         Encoder[index].direction = 0;
       }
     }
-    if (Encoder[index].last_position == Encoder[index].position) { continue; }
-    Encoder[index].busy = true;
+    if (rotary_offset == Encoder[index].position) { continue; }
 
     Encoder[index].timeout = ROTARY_TIMEOUT;   // Prevent fast direction changes within 0.5 second
 
-    int rotary_position = Encoder[index].position - Encoder[index].last_position;
+    noInterrupts();
+    int rotary_position = Encoder[index].position - rotary_offset;
+    Encoder[index].position = rotary_offset;
+    interrupts();
 
-    if (Settings.save_data && (save_data_counter < 2)) {
-      save_data_counter = 3;                   // Postpone flash writes while rotary is turned
+    if (Settings.save_data && (TasmotaGlobal.save_data_counter < 2)) {
+      TasmotaGlobal.save_data_counter = 3;                   // Postpone flash writes while rotary is turned
     }
 
     bool button_pressed = (Button.hold_timer[index]);  // Button is pressed: set color temperature
@@ -159,24 +190,31 @@ void RotaryHandler(void) {
 
 #ifdef USE_LIGHT
     if (!Settings.flag4.rotary_uses_rules) {   // SetOption98 - Use rules instead of light control
-      bool second_rotary = (Encoder[1].pin > -1);
+      bool second_rotary = (Encoder[1].pinb > -1);
       if (0 == index) {                        // Rotary1
         if (button_pressed) {
           if (second_rotary) {                 // Color RGB
-            LightColorOffset(rotary_position * rotary_color_increment);
+            LightColorOffset(rotary_position * rotary_color_increment[Rotary.model]);
           } else {                             // Color Temperature or Color RGB
-            if (!LightColorTempOffset(rotary_position * rotary_ct_increment)) {
-              LightColorOffset(rotary_position * rotary_color_increment);
+            if (!LightColorTempOffset(rotary_position * rotary_ct_increment[Rotary.model])) {
+              LightColorOffset(rotary_position * rotary_color_increment[Rotary.model]);
             }
           }
         } else {                               // Dimmer RGBCW or RGB only if second rotary
-          LightDimmerOffset(second_rotary ? 1 : 0, rotary_position * rotary_dimmer_increment);
+          uint32_t dimmer_index = second_rotary ? 1 : 0;
+          if (!Settings.flag4.rotary_poweron_dimlow || TasmotaGlobal.power) {  // SetOption113 - On rotary dial after power off set dimmer low
+            LightDimmerOffset(dimmer_index, rotary_position * rotary_dimmer_increment[Rotary.model]);
+          } else {
+            if (rotary_position > 0) {         // Only power on if rotary increase
+              LightDimmerOffset(dimmer_index, -LightGetDimmer(dimmer_index) + ROTARY_START_DIM);
+            }
+          }
         }
       } else {                                 // Rotary2
         if (button_pressed) {                  // Color Temperature
-          LightColorTempOffset(rotary_position * rotary_ct_increment);
+          LightColorTempOffset(rotary_position * rotary_ct_increment[Rotary.model]);
         } else {                               // Dimmer CW
-          LightDimmerOffset(2, rotary_position * rotary_dimmer_increment);
+          LightDimmerOffset(2, rotary_position * rotary_dimmer_increment[Rotary.model]);
         }
       }
     } else {
@@ -193,10 +231,6 @@ void RotaryHandler(void) {
 #ifdef USE_LIGHT
     }
 #endif  // USE_LIGHT
-
-    Encoder[index].last_position = 128;
-    Encoder[index].position = 128;
-    Encoder[index].busy = false;
   }
 }
 

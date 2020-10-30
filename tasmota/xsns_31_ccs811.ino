@@ -65,8 +65,8 @@ void CCS811Update(void)  // Perform every n second
         TVOC = ccs.getTVOC();
         eCO2 = ccs.geteCO2();
         CCS811_ready = 1;
-        if (global_update && (global_humidity > 0) && !isnan(global_temperature_celsius)) {
-          ccs.setEnvironmentalData((uint8_t)global_humidity, global_temperature_celsius);
+        if (TasmotaGlobal.global_update && (TasmotaGlobal.humidity > 0) && !isnan(TasmotaGlobal.temperature_celsius)) {
+          ccs.setEnvironmentalData((uint8_t)TasmotaGlobal.humidity, TasmotaGlobal.temperature_celsius);
         }
         ecnt = 0;
       }
@@ -91,7 +91,7 @@ void CCS811Show(bool json)
     if (json) {
       ResponseAppend_P(PSTR(",\"CCS811\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), eCO2,TVOC);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, eCO2);
+      if (0 == TasmotaGlobal.tele_period) DomoticzSensor(DZ_AIRQUALITY, eCO2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {

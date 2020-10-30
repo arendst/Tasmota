@@ -231,7 +231,7 @@ void CseSnsInit(void) {
     }
     Cse.power_invalid = Settings.param[P_CSE7766_INVALID_POWER];
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
@@ -240,7 +240,7 @@ void CseDrvInit(void) {
   if (PinUsed(GPIO_CSE7766_RX)) {
     Cse.rx_buffer = (uint8_t*)(malloc(CSE_BUFFER_SIZE));
     if (Cse.rx_buffer != nullptr) {
-      energy_flg = XNRG_02;
+      TasmotaGlobal.energy_driver = XNRG_02;
     }
   }
 }

@@ -270,7 +270,7 @@ void HlwDrvInit(void)
       Energy.voltage_available = false;
     }
 
-    energy_flg = XNRG_01;
+    TasmotaGlobal.energy_driver = XNRG_01;
   }
 }
 

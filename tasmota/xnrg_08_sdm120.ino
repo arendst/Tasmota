@@ -181,14 +181,14 @@ void Sdm120SnsInit(void)
   if (result) {
     if (2 == result) { ClaimSerial(); }
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void Sdm120DrvInit(void)
 {
   if (PinUsed(GPIO_SDM120_RX) && PinUsed(GPIO_SDM120_TX)) {
-    energy_flg = XNRG_08;
+    TasmotaGlobal.energy_driver = XNRG_08;
   }
 }
 
@@ -242,7 +242,7 @@ bool Xnrg08(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (uptime > 4) { SDM120Every250ms(); }
+      SDM120Every250ms();
       break;
     case FUNC_JSON_APPEND:
       Sdm220Show(1);

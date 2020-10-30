@@ -57,6 +57,7 @@
 #define D_JSON_DNSSERVER "DNSServer"
 #define D_JSON_DONE "Done"
 #define D_JSON_DOWNTIME "Downtime"
+#define D_JSON_EC "EC"
 #define D_JSON_ECO2 "eCO2"
 #define D_JSON_EMPTY "Empty"
 #define D_JSON_ENDDST "EndDST"           // End Daylight Savings Time
@@ -112,6 +113,7 @@
 #define D_JSON_NONE "None"
 #define D_JSON_OR "or"
 #define D_JSON_ORP "ORP"
+#define D_JSON_O2 "Oxygen"
 #define D_JSON_PERIOD "Period"
 #define D_JSON_PH "pH"
 #define D_JSON_PHASE_ANGLE "PhaseAngle"
@@ -563,6 +565,8 @@
   #define D_JSON_ZIGBEE_UNBIND "ZbUnbind"
 #define D_CMND_ZIGBEE_BIND_STATE "BindState"
   #define D_JSON_ZIGBEE_BIND_STATE "ZbBindState"
+#define D_CMND_ZIGBEE_MAP "Map"
+  #define D_JSON_ZIGBEE_MAP "ZbMap"
 #define D_JSON_ZIGBEE_PARENT "ZbParent"
 #define D_CMND_ZIGBEE_PING "Ping"
   #define D_JSON_ZIGBEE_PING "ZbPing"
@@ -600,6 +604,7 @@
 #define D_CMND_SHUTTER_STOPCLOSE "StopClose"
 #define D_CMND_SHUTTER_STOPTOGGLE "StopToggle"
 #define D_CMND_SHUTTER_STOPTOGGLEDIR "StopToggleDir"
+#define D_CMND_SHUTTER_INCDEC "Change"
 #define D_CMND_SHUTTER_STOPPOSITION "StopPosition"
 #define D_CMND_SHUTTER_STOP "Stop"
 #define D_CMND_SHUTTER_POSITION "Position"
@@ -772,6 +777,8 @@ const char HTTP_SNS_POWER[]         PROGMEM = "{s}"     D_POWERUSAGE          "{
 const char HTTP_SNS_ENERGY_TOTAL[]  PROGMEM = "{s}"     D_ENERGY_TOTAL        "{m}%s " D_UNIT_KILOWATTHOUR        "{e}";
 const char HTTP_SNS_PH[]            PROGMEM = "{s}%s "  D_PH                  "{m}%s "                            "{e}";
 const char HTTP_SNS_ORP[]           PROGMEM = "{s}%s "  D_ORP                 "{m}%s " D_UNIT_MILLIVOLT           "{e}";
+const char HTTP_SNS_EC[]            PROGMEM = "{s}%s "  D_EC                  "{m}%s " D_UNIT_MICROSIEMENS_PER_CM "{e}";
+const char HTTP_SNS_O2[]            PROGMEM = "{s}%s "  D_O2                  "{m}%s " D_UNIT_PERCENT             "{e}";
 
 const char S_MAIN_MENU[]              PROGMEM = D_MAIN_MENU;
 const char S_CONFIGURATION[]          PROGMEM = D_CONFIGURATION;

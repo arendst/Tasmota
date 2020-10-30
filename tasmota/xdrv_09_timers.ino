@@ -177,7 +177,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
   if (hour[mode]==255) {
     // Permanent day/night sets the unreachable limit values
     if ((Settings.latitude > 0) != (RtcTime.month>=4 && RtcTime.month<=9)) {
-      duskdawn->time=2046; // permanent night 
+      duskdawn->time=2046; // permanent night
     } else {
       duskdawn->time=2047; // permanent day
     }
@@ -256,7 +256,7 @@ void TimerEverySecond(void)
   if (RtcTime.valid) {
     if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second) { TimerSetRandomWindows(); }  // Midnight
     if (Settings.flag3.timers_enable &&                            // CMND_TIMERS
-        (uptime > 60) && (RtcTime.minute != timer_last_minute)) {  // Execute from one minute after restart every minute only once
+        (TasmotaGlobal.uptime > 60) && (RtcTime.minute != timer_last_minute)) {  // Execute from one minute after restart every minute only once
       timer_last_minute = RtcTime.minute;
       int32_t time = (RtcTime.hour *60) + RtcTime.minute;
       uint8_t days = 1 << (RtcTime.day_of_week -1);
@@ -290,7 +290,7 @@ void TimerEverySecond(void)
                 XdrvRulesProcess();
               } else
 #endif  // USE_RULES
-                if (devices_present) { ExecuteCommandPower(xtimer.device +1, xtimer.power, SRC_TIMER); }
+                if (TasmotaGlobal.devices_present) { ExecuteCommandPower(xtimer.device +1, xtimer.power, SRC_TIMER); }
             }
           }
         }
@@ -311,7 +311,7 @@ void PrepShowTimer(uint32_t index)
 
   char soutput[80];
   soutput[0] = '\0';
-  if (devices_present) {
+  if (TasmotaGlobal.devices_present) {
     snprintf_P(soutput, sizeof(soutput), PSTR(",\"" D_JSON_TIMER_OUTPUT "\":%d"), xtimer.device +1);
   }
 #ifdef USE_SUNRISE
@@ -350,7 +350,7 @@ void CmndTimer(void)
       } else {
 //#ifndef USE_RULES
 #if defined(USE_RULES)==0 && defined(USE_SCRIPT)==0
-        if (devices_present) {
+        if (TasmotaGlobal.devices_present) {
 #endif
           JsonParser parser(XdrvMailbox.data);
           JsonParserObject root = parser.getRootObject();
@@ -425,12 +425,12 @@ void CmndTimer(void)
             val = root[PSTR(D_JSON_TIMER_OUTPUT)];
             if (val) {
               uint8_t device = (val.getUInt() -1) & 0x0F;
-              Settings.timer[index].device = (device < devices_present) ? device : 0;
+              Settings.timer[index].device = (device < TasmotaGlobal.devices_present) ? device : 0;
             }
             val = root[PSTR(D_JSON_TIMER_ACTION)];
             if (val) {
               uint8_t action = val.getUInt() & 0x03;
-              Settings.timer[index].power = (devices_present) ? action : 3;  // If no devices than only allow rules
+              Settings.timer[index].power = (TasmotaGlobal.devices_present) ? action : 3;  // If no devices than only allow rules
             }
 
             index++;
@@ -482,7 +482,7 @@ void CmndTimers(void)
       jsflg = 0;
     }
   }
-  mqtt_data[0] = '\0';
+  ResponseClear();
 }
 
 #ifdef USE_SUNRISE
@@ -856,10 +856,10 @@ void HandleTimerConfiguration(void)
 #ifdef USE_SUNRISE
   WSContentSend_P(HTTP_TIMER_SCRIPT2);
 #endif  // USE_SUNRISE
-  WSContentSend_P(HTTP_TIMER_SCRIPT3, devices_present);
-  WSContentSend_P(HTTP_TIMER_SCRIPT4, WebColor(COL_TIMER_TAB_BACKGROUND), WebColor(COL_TIMER_TAB_TEXT), WebColor(COL_FORM), WebColor(COL_TEXT), devices_present);
-  WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, devices_present);
-  WSContentSend_P(HTTP_TIMER_SCRIPT6, devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT3, TasmotaGlobal.devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT4, WebColor(COL_TIMER_TAB_BACKGROUND), WebColor(COL_TIMER_TAB_TEXT), WebColor(COL_FORM), WebColor(COL_TEXT), TasmotaGlobal.devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, TasmotaGlobal.devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT6, TasmotaGlobal.devices_present);
   WSContentSendStyle_P(HTTP_TIMER_STYLE, WebColor(COL_FORM));
   WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? " checked" : "");  // CMND_TIMERS
   for (uint32_t i = 0; i < MAX_TIMERS; i++) {
@@ -924,11 +924,11 @@ bool Xdrv09(uint8_t function)
 #if defined(USE_RULES) || defined(USE_SCRIPT)
       WSContentSend_P(HTTP_BTN_MENU_TIMER);
 #else
-      if (devices_present) { WSContentSend_P(HTTP_BTN_MENU_TIMER); }
+      if (TasmotaGlobal.devices_present) { WSContentSend_P(HTTP_BTN_MENU_TIMER); }
 #endif  // USE_RULES
       break;
     case FUNC_WEB_ADD_HANDLER:
-      Webserver->on("/" WEB_HANDLE_TIMER, HandleTimerConfiguration);
+      WebServer_on(PSTR("/" WEB_HANDLE_TIMER), HandleTimerConfiguration);
       break;
 #endif  // USE_TIMERS_WEB
 #endif  // USE_WEBSERVER

@@ -176,8 +176,8 @@ void Sm2135ModuleSelected(void)
 
     Sm2135Init();
 
-    light_type = LT_RGBWC;
-    light_flg = XLGT_04;
+    TasmotaGlobal.light_type = LT_RGBWC;
+    TasmotaGlobal.light_driver = XLGT_04;
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: SM2135 (%s) Found"), (SM2135_WCBGR == Sm2135.model) ? PSTR("BGR") : PSTR("GRB"));
   }
 }

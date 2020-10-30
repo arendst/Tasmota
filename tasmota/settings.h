@@ -132,7 +132,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t zb_disable_autobind : 1;      // bit 28 (v8.5.0.1)  - SetOption110 - disable Zigbee auto-config when pairing new devices
     uint32_t buzzer_freq_mode : 1;         // bit 29 (v8.5.0.1)  - SetOption111 - Use frequency output for buzzer pin instead of on/off signal
     uint32_t zb_topic_fname : 1;           // bit 30 (v8.5.0.1)  - SetOption112 - Use friendly name in zigbee topic (use with SetOption89)
-    uint32_t spare31 : 1;                  // bit 31
+    uint32_t rotary_poweron_dimlow : 1;    // bit 31 (v9.0.0.2)  - SetOption113 - Set dimmer low on rotary dial after power off
   };
 } SysBitfield4;
 

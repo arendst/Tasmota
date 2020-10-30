@@ -279,7 +279,7 @@ void RfSnsTheoV2Show(bool json)
           ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_VOLTAGE "\":%s}"),
             sensor, temperature, rfsns_theo_v2_t1[i].lux, voltage);
 #ifdef USE_DOMOTICZ
-          if ((0 == tele_period) && !sensor_once) {
+          if ((0 == TasmotaGlobal.tele_period) && !sensor_once) {
             DomoticzSensor(DZ_TEMP, temperature);
             DomoticzSensor(DZ_ILLUMINANCE, rfsns_theo_v2_t1[i].lux);
             sensor_once = true;
@@ -317,7 +317,7 @@ void RfSnsTheoV2Show(bool json)
           ResponseAppendTHD(temp, humi);
           ResponseAppend_P(PSTR(",\"" D_JSON_VOLTAGE "\":%s}"), voltage);
 
-          if ((0 == tele_period) && !sensor_once) {
+          if ((0 == TasmotaGlobal.tele_period) && !sensor_once) {
 #ifdef USE_DOMOTICZ
             DomoticzTempHumPressureSensor(temp, humi);  //
 #endif  // USE_DOMOTICZ
@@ -573,7 +573,7 @@ void RfSnsAlectoV2Show(bool json)
         ResponseAppendTHD(temp, humi);
         ResponseAppend_P(PSTR(",\"Rain\":%s,\"Wind\":%s,\"Gust\":%s%s}"), rain, wind, gust, (rfsns_alecto_v2->type) ? direction : "");
 
-        if (0 == tele_period) {
+        if (0 == TasmotaGlobal.tele_period) {
 #ifdef USE_DOMOTICZ
         // Use a rules to send data to Domoticz where also a local BMP280 is connected:
         // on tele-alectov2#temperature do var1 %value% endon on tele-alectov2#humidity do var2 %value% endon on tele-bmp280#pressure do publish domoticz/in {"idx":68,"svalue":"%var1%;%var2%;0;%value%;0"} endon
@@ -665,7 +665,7 @@ bool Xsns37(uint8_t function)
             RfSnsAnalyzeRawSignal();
           }
         }
-        ssleep = 0;
+        TasmotaGlobal.sleep = 0;
         break;
       case FUNC_EVERY_SECOND:
         RfSnsEverySecond();

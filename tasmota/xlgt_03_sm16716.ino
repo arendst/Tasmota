@@ -124,7 +124,7 @@ bool Sm16716SetChannels(void)
   for (uint32_t i = 3; i < Light.subtype; i++) {
     if (PinUsed(GPIO_PWM1, i-3)) {
       //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
-      analogWrite(Pin(GPIO_PWM1, i-3), bitRead(pwm_inverted, i-3) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
+      analogWrite(Pin(GPIO_PWM1, i-3), bitRead(TasmotaGlobal.pwm_inverted, i-3) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
     }
   }
 */
@@ -174,8 +174,8 @@ void Sm16716ModuleSelected(void)
     }
 
     LightPwmOffset(LST_RGB);  // Handle any PWM pins, skipping the first 3 color values for sm16716
-    light_type += LST_RGB;    // Add RGB to be controlled by sm16716
-    light_flg = XLGT_03;
+    TasmotaGlobal.light_type += LST_RGB;    // Add RGB to be controlled by sm16716
+    TasmotaGlobal.light_driver = XLGT_03;
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: SM16716 Found"));
   }
 }

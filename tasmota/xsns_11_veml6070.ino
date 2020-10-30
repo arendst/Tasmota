@@ -277,7 +277,7 @@ void Veml6070Show(bool json)
       veml6070_name, str_uvrisk, str_uvrisk_text, str_uvpower);
 #endif  // USE_VEML6070_SHOW_RAW
 #ifdef USE_DOMOTICZ
-  if (0 == tele_period) { DomoticzSensor(DZ_ILLUMINANCE, uvlevel); }
+  if (0 == TasmotaGlobal.tele_period) { DomoticzSensor(DZ_ILLUMINANCE, uvlevel); }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {

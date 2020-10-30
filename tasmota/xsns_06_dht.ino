@@ -228,7 +228,7 @@ void DhtInit(void)
 
 void DhtEverySecond(void)
 {
-  if (uptime &1) {  // Every 2 seconds
+  if (TasmotaGlobal.uptime &1) {  // Every 2 seconds
     for (uint32_t sensor = 0; sensor < dht_sensors; sensor++) {
       // DHT11 and AM2301 25mS per sensor, SI7021 5mS per sensor
       if (!DhtRead(sensor)) {
@@ -245,7 +245,7 @@ void DhtEverySecond(void)
 void DhtShow(bool json)
 {
   for (uint32_t i = 0; i < dht_sensors; i++) {
-    TempHumDewShow(json, ((0 == tele_period) && (0 == i)), Dht[i].stype, Dht[i].t, Dht[i].h);
+    TempHumDewShow(json, ((0 == TasmotaGlobal.tele_period) && (0 == i)), Dht[i].stype, Dht[i].t, Dht[i].h);
   }
 }
 

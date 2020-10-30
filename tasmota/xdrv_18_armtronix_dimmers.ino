@@ -86,8 +86,8 @@ void ArmtronixRequestState(void)
 
 bool ArmtronixModuleSelected(void)
 {
-  devices_present++;
-  light_type = LT_SERIAL2;
+  TasmotaGlobal.devices_present++;
+  TasmotaGlobal.light_type = LT_SERIAL2;
   return true;
 }
 
@@ -168,7 +168,7 @@ bool Xdrv18(uint8_t function)
 {
   bool result = false;
 
-  if (ARMTRONIX_DIMMERS == my_module_type) {
+  if (ARMTRONIX_DIMMERS == TasmotaGlobal.module_type) {
     switch (function) {
       case FUNC_LOOP:
         if (ArmtronixSerial) { ArmtronixSerialInput(); }
@@ -182,7 +182,7 @@ bool Xdrv18(uint8_t function)
       case FUNC_EVERY_SECOND:
         if (ArmtronixSerial) {
           if (Armtronix.wifi_state!=WifiState()) { ArmtronixSetWifiLed(); }
-          if (uptime &1) {
+          if (TasmotaGlobal.uptime &1) {
             ArmtronixSerial->println("Status");
           }
         }

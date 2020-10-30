@@ -127,8 +127,14 @@
 //#define USE_MCP9808                            // [I2cDriver51] Enable MCP9808 temperature sensor (I2C addresses 0x18 - 0x1F) (+0k9 code)
 //#define USE_HP303B                             // [I2cDriver52] Enable HP303B temperature and pressure sensor (I2C address 0x76 or 0x77) (+6k2 code)
 //#define USE_MLX90640                           // [I2cDriver53] Enable MLX90640 IR array temperature sensor (I2C address 0x33) (+20k code)
-//#define USE_EZOPH                              // [I2cDriver55] Enable support for EZO's pH sensor (+0k6 code) - Shared EZO code required for any EZO device (+1k0 code)
-//#define USE_EZOORP                             // [I2cDriver55] Enable support for EZO's ORP sensor (+0k6 code) - Shared EZO code required for any EZO device (+1k0 code)
+//#define USE_EZOPH                              // [I2cDriver55] Enable support for EZO's pH sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
+//#define USE_EZOORP                             // [I2cDriver55] Enable support for EZO's ORP sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
+//#define USE_EZORTD                             // [I2cDriver55] Enable support for EZO's RTD sensor (+0k2 code) - Shared EZO code required for any EZO device (+1k2 code)
+//#define USE_EZOHUM                             // [I2cDriver55] Enable support for EZO's HUM sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
+//#define USE_EZOEC                              // [I2cDriver55] Enable support for EZO's EC sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
+//#define USE_EZOCO2                             // [I2cDriver55] Enable support for EZO's CO2 sensor (+0k2 code) - Shared EZO code required for any EZO device (+1k2 code)
+//#define USE_EZOO2                              // [I2cDriver55] Enable support for EZO's O2 sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
+//#define USE_EZOPRS                             // [I2cDriver55] Enable support for EZO's PRS sensor (+0k7 code) - Shared EZO code required for any EZO device (+1k2 code)
 
 #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
@@ -435,15 +441,25 @@
 #define SERIAL_LOG_LEVEL       LOG_LEVEL_NONE    // [SerialLog] (LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE)
 
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
-#define USE_DOMOTICZ                              // Disable Domoticz
+#define USE_DOMOTICZ                             // Enable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
-#undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
+
+// -- MQTT - TLS - AWS IoT ------------------------
+#ifdef USE_ZBBRIDGE_TLS                            // Enable TLS for ZbBridge 
+  #define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
+    #define USE_MQTT_TLS_CA_CERT                   // Force full CA validation instead of fingerprints, slower, but simpler to use.  (+2.2k code, +1.9k mem during connection handshake)
+                                                   // This includes the LetsEncrypt CA in tasmota_ca.ino for verifying server certificates
+    #define USE_MQTT_TLS_FORCE_EC_CIPHER           // Force Elliptic Curve cipher (higher security) required by some servers (automatically enabled with USE_MQTT_AWS_IOT) (+11.4k code, +0.4k mem)
+    #define USE_MQTT_AWS_IOT_LIGHT                 // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
+  #define USE_TLS                                  // flag indicates we need to include TLS code
+#endif                                             // USE_ZBBRIDGE_TLS
+
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
 //#undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
-#define USE_EMULATION                             // Disable Wemo or Hue emulation
-#define USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
-//#undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
+#define USE_EMULATION                            // Enable Hue emulation
+#define USE_EMULATION_HUE                        // Enable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
+#undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
 #undef USE_CUSTOM                                // Disable Custom features
 #undef USE_DISCOVERY                             // Disable Discovery services for both MQTT and web server
 //#undef USE_TIMERS                                // Disable support for up to 16 timers
@@ -549,12 +565,10 @@
 #undef USE_ZIGBEE_ZNP
 #define USE_ZIGBEE_EZSP
 #define USE_TCP_BRIDGE
-  #define USE_ZIGBEE_CHANNEL  11                  // Zigbee Channel (11-26)
+  #define USE_ZIGBEE_CHANNEL  11                 // Zigbee Channel (11-26)
   #define USE_ZIGBEE_COALESCE_ATTR_TIMER 350     // timer to coalesce attribute values (in ms)
 
-
 #endif  // SONOFF_ZIGBEEBRIDGE ******************************************************************
-
 
 
 /*********************************************************************************************\

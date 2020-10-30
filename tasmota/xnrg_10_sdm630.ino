@@ -221,14 +221,14 @@ void Sdm630SnsInit(void)
     Energy.phase_count = 3;
     Energy.frequency_common = true;             // Use common frequency
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void Sdm630DrvInit(void)
 {
   if (PinUsed(GPIO_SDM630_RX) && PinUsed(GPIO_SDM630_TX)) {
-    energy_flg = XNRG_10;
+    TasmotaGlobal.energy_driver = XNRG_10;
   }
 }
 
@@ -242,7 +242,7 @@ bool Xnrg10(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-      if (uptime > 4) { SDM630Every250ms(); }
+      SDM630Every250ms();
       break;
     case FUNC_INIT:
       Sdm630SnsInit();

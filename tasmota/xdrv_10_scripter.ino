@@ -129,6 +129,10 @@ uint32_t DecodeLightId(uint32_t hue_id);
 #endif
 #endif // USE_SCRIPT_COMPRESSION
 
+#ifndef STASK_PRIO
+#define STASK_PRIO 1
+#endif
+
 #ifdef USE_SCRIPT_TIMER
 #include <Ticker.h>
 Ticker Script_ticker1;
@@ -416,7 +420,10 @@ struct SCRIPT_MEM {
 #ifdef USE_SCRIPT_GLOBVARS
     UDP_FLAGS udp_flags;
 #endif
+    char web_mode;
 } glob_script_mem;
+
+
 
 bool event_handeled = false;
 
@@ -505,7 +512,7 @@ void ScriptEverySecond(void) {
 }
 
 void RulesTeleperiod(void) {
-  if (bitRead(Settings.rule_enabled, 0) && mqtt_data[0]) Run_Scripter(">T", 2, mqtt_data);
+  if (bitRead(Settings.rule_enabled, 0) && TasmotaGlobal.mqtt_data[0]) Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
 }
 
 // EEPROM MACROS
@@ -764,8 +771,14 @@ char *script;
     script_mem += size;
 
 #ifdef SCRIPT_LARGE_VNBUFF
-    glob_script_mem.vnp_offset = (uint16_t*)script_mem;
-    size = vars*sizeof(uint16_t);
+    uint32_t alignedmem = (uint32_t)script_mem;
+    if (alignedmem&1) {
+      alignedmem++;
+      size = vars*sizeof(uint16_t)+1;
+    } else {
+      size = vars*sizeof(uint16_t);
+    }
+    glob_script_mem.vnp_offset = (uint16_t*)alignedmem;
 #else
     glob_script_mem.vnp_offset = (uint8_t*)script_mem;
     size = vars*sizeof(uint8_t);
@@ -991,6 +1004,11 @@ void form1000(uint32_t number, char *dp, char sc) {
 #define SCRIPT_UDP_PORT 1999
 IPAddress script_udp_remote_ip;
 
+void Restart_globvars(void) {
+  Script_Stop_UDP();
+  Script_Init_UDP();
+}
+
 void Script_Stop_UDP(void) {
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected) {
@@ -1001,7 +1019,7 @@ void Script_Stop_UDP(void) {
 }
 
 void Script_Init_UDP() {
-  if (global_state.network_down) return;
+  if (TasmotaGlobal.global_state.network_down) return;
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected) return;
 
@@ -1015,7 +1033,7 @@ void Script_Init_UDP() {
 }
 
 void Script_PollUdp(void) {
-  if (global_state.network_down) return;
+  if (TasmotaGlobal.global_state.network_down) return;
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected ) {
     while (Script_PortUdp.parsePacket()) {
@@ -1808,8 +1826,8 @@ chknext:
 
       case 'b':
         if (!strncmp(vname, "boot", 4)) {
-          if (rules_flag.system_boot) {
-            rules_flag.system_boot = 0;
+          if (TasmotaGlobal.rules_flag.system_boot) {
+            TasmotaGlobal.rules_flag.system_boot = 0;
             fvar = 1;
           }
           goto exit;
@@ -1862,8 +1880,12 @@ chknext:
           while (*lp==' ') lp++;
           float fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, 0);
+          float prio = STASK_PRIO;
+          if (*lp!=')') {
+            lp = GetNumericArgument(lp, OPER_EQU, &prio, 0);
+          }
           lp++;
-          fvar = scripter_create_task(fvar, fvar1, fvar2);
+          fvar = scripter_create_task(fvar, fvar1, fvar2, prio);
           len = 0;
           goto exit;
         }
@@ -2321,15 +2343,15 @@ chknext:
         break;
       case 'g':
         if (!strncmp(vname, "gtmp", 4)) {
-          fvar = global_temperature_celsius;
+          fvar = TasmotaGlobal.temperature_celsius;
           goto exit;
         }
         if (!strncmp(vname, "ghum", 4)) {
-          fvar = global_humidity;
+          fvar = TasmotaGlobal.humidity;
           goto exit;
         }
         if (!strncmp(vname, "gprs", 4)) {
-          fvar = global_pressure_hpa;
+          fvar = TasmotaGlobal.pressure_hpa;
           goto exit;
         }
         if (!strncmp(vname, "gtopic", 6)) {
@@ -2512,21 +2534,21 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "mqttc", 5)) {
-          if (rules_flag.mqtt_connected) {
-            rules_flag.mqtt_connected = 0;
+          if (TasmotaGlobal.rules_flag.mqtt_connected) {
+            TasmotaGlobal.rules_flag.mqtt_connected = 0;
             fvar = 1;
           }
           goto exit;
         }
         if (!strncmp(vname, "mqttd", 5)) {
-          if (rules_flag.mqtt_disconnected) {
-            rules_flag.mqtt_disconnected = 0;
+          if (TasmotaGlobal.rules_flag.mqtt_disconnected) {
+            TasmotaGlobal.rules_flag.mqtt_disconnected = 0;
             fvar = 1;
           }
           goto exit;
         }
         if (!strncmp(vname, "mqtts", 5)) {
-          fvar = !global_state.mqtt_down;
+          fvar = !TasmotaGlobal.global_state.mqtt_down;
           goto exit;
         }
         if (!strncmp(vname, "mp(", 3)) {
@@ -2615,8 +2637,8 @@ chknext:
             }
           }
 */
-          if ((gpiopin < ARRAY_SIZE(gpio_pin)) && (gpio_pin[gpiopin] > 0)) {
-            fvar = gpio_pin[gpiopin];
+          if ((gpiopin < ARRAY_SIZE(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
+            fvar = TasmotaGlobal.gpio_pin[gpiopin];
             // skip ] bracket
             len++;
             goto exit;
@@ -2658,8 +2680,8 @@ chknext:
         if (!strncmp(vname, "pwr[", 4)) {
           GetNumericArgument(vname + 4, OPER_EQU, &fvar, 0);
           uint8_t index = fvar;
-          if (index<=devices_present) {
-            fvar = bitRead(power, index - 1);
+          if (index<=TasmotaGlobal.devices_present) {
+            fvar = bitRead(TasmotaGlobal.power, index - 1);
           } else {
             fvar = -1;
           }
@@ -2832,7 +2854,7 @@ chknext:
         if (!strncmp(vname, "sht[", 4)) {
           GetNumericArgument(vname + 4, OPER_EQU, &fvar, 0);
           uint8_t index = fvar;
-          if (index<=shutters_present) {
+          if (index<=TasmotaGlobal.shutters_present) {
             fvar = Settings.shutter_position[index - 1];
           } else {
             fvar = -1;
@@ -2915,11 +2937,11 @@ chknext:
           goto exit_settable;
         }
         if (!strncmp(vname, "tinit", 5)) {
-          fvar = rules_flag.time_init;
+          fvar = TasmotaGlobal.rules_flag.time_init;
           goto exit;
         }
         if (!strncmp(vname, "tset", 4)) {
-          fvar = rules_flag.time_set;
+          fvar = TasmotaGlobal.rules_flag.time_set;
           goto exit;
         }
         if (!strncmp(vname, "tstamp", 6)) {
@@ -2990,7 +3012,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname, "upsecs", 6)) {
-          fvar = uptime;
+          fvar = TasmotaGlobal.uptime;
           goto exit;
         }
         if (!strncmp(vname, "upd[", 4)) {
@@ -3094,27 +3116,30 @@ chknext:
           goto exit;
         }
 #endif // USE_FT5206
-
+        if (!strncmp(vname, "wm", 2)) {
+          fvar = glob_script_mem.web_mode;
+          goto exit;
+        }
         if (!strncmp(vname, "wday", 4)) {
           fvar = RtcTime.day_of_week;
           goto exit;
         }
         if (!strncmp(vname, "wific", 5)) {
-          if (rules_flag.wifi_connected) {
-            rules_flag.wifi_connected = 0;
+          if (TasmotaGlobal.rules_flag.wifi_connected) {
+            TasmotaGlobal.rules_flag.wifi_connected = 0;
             fvar = 1;
           }
           goto exit;
         }
         if (!strncmp(vname, "wifid", 5)) {
-          if (rules_flag.wifi_disconnected) {
-            rules_flag.wifi_disconnected = 0;
+          if (TasmotaGlobal.rules_flag.wifi_disconnected) {
+            TasmotaGlobal.rules_flag.wifi_disconnected = 0;
             fvar = 1;
           }
           goto exit;
         }
         if (!strncmp(vname, "wifis", 5)) {
-          fvar = !global_state.wifi_down;
+          fvar = !TasmotaGlobal.global_state.wifi_down;
           goto exit;
         }
         break;
@@ -3530,7 +3555,7 @@ void toLogN(const char *cp, uint8_t len) {
 void toLogEOL(const char *s1,const char *str) {
   if (!str) return;
   uint8_t index = 0;
-  char *cp = log_data;
+  char *cp = TasmotaGlobal.log_data;
   strcpy(cp, s1);
   cp += strlen(s1);
   while (*str) {
@@ -3704,6 +3729,29 @@ void esp32_beep(int32_t freq ,uint32_t len) {
 #endif // ESP32
 
 //#define IFTHEN_DEBUG
+
+char *scripter_sub(char *lp, uint8_t fromscriptcmd) {
+  lp += 1;
+  char *slp = lp;
+  uint8_t plen = 0;
+  while (*lp) {
+    if (*lp=='\n'|| *lp=='\r'|| *lp=='(') {
+      break;
+    }
+    lp++;
+    plen++;
+  }
+  if (fromscriptcmd) {
+    char *sp = glob_script_mem.scriptptr;
+    glob_script_mem.scriptptr = glob_script_mem.scriptptr_bu;
+    Run_Scripter(slp, plen, 0);
+    glob_script_mem.scriptptr = sp;
+  } else {
+    Run_Scripter(slp, plen, 0);
+  }
+  lp = slp;
+  return lp;
+}
 
 #define IF_NEST 8
 // execute section of scripter
@@ -4042,12 +4090,20 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
               int8_t mode = fvar;
               digitalWrite(pinnr, mode & 1);
               goto next_line;
-            } else if (!strncmp(lp, "svars(", 5)) {
+            } else if (!strncmp(lp, "svars", 5)) {
               lp += 5;
               // save vars
               Scripter_save_pvars();
               goto next_line;
             }
+#ifdef USE_SCRIPT_GLOBVARS
+            else if (!strncmp(lp, "gvr", 3)) {
+              lp += 3;
+              // reset global vars udp server
+              Restart_globvars();
+              goto next_line;
+            }
+#endif
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
             else if (!strncmp(lp, "ws2812(", 7)) {
@@ -4086,7 +4142,16 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
               goto next_line;
             }
 #endif //ESP32
-
+            else if (!strncmp(lp, "wcs", 3)) {
+              lp+=4;
+              // skip one space after cmd
+              char tmp[256];
+              Replace_Cmd_Vars(lp ,1 , tmp, sizeof(tmp));
+              WSContentFlush();
+              WSContentSend_P(PSTR("%s"),tmp);
+              WSContentFlush();
+              goto next_line;
+            }
             else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2) || !strncmp(lp,"+>",2) || !strncmp(lp,"print",5)) {
                 // execute cmd
                 uint8_t sflag = 0,pflg = 0,svmqtt,swll;
@@ -4149,25 +4214,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
                 goto next_line;
             } else if (!strncmp(lp, "=#", 2)) {
                 // subroutine
-                lp += 1;
-                char *slp = lp;
-                uint8_t plen = 0;
-                while (*lp) {
-                  if (*lp=='\n'|| *lp=='\r'|| *lp=='(') {
-                    break;
-                  }
-                  lp++;
-                  plen++;
-                }
-                if (fromscriptcmd) {
-                  char *sp = glob_script_mem.scriptptr;
-                  glob_script_mem.scriptptr = glob_script_mem.scriptptr_bu;
-                  Run_Scripter(slp, plen, 0);
-                  glob_script_mem.scriptptr = sp;
-                } else {
-                  Run_Scripter(slp, plen, 0);
-                }
-                lp = slp;
+                lp = scripter_sub(lp, fromscriptcmd);
                 goto next_line;
             } else if (!strncmp(lp, "=(", 2)) {
                 lp += 2;
@@ -4448,16 +4495,16 @@ uint8_t script_xsns_index = 0;
 
 void ScripterEvery100ms(void) {
 
-  if (Settings.rule_enabled && (uptime > 4)) {
-    mqtt_data[0] = '\0';
-    uint16_t script_tele_period_save = tele_period;
-    tele_period = 2;
+  if (Settings.rule_enabled && (TasmotaGlobal.uptime > 4)) {
+    ResponseClear();
+    uint16_t script_tele_period_save = TasmotaGlobal.tele_period;
+    TasmotaGlobal.tele_period = 2;
     XsnsNextCall(FUNC_JSON_APPEND, script_xsns_index);
-    tele_period = script_tele_period_save;
-    if (strlen(mqtt_data)) {
-      mqtt_data[0] = '{';
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-      Run_Scripter(">T", 2, mqtt_data);
+    TasmotaGlobal.tele_period = script_tele_period_save;
+    if (strlen(TasmotaGlobal.mqtt_data)) {
+      TasmotaGlobal.mqtt_data[0] = '{';
+      snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s}"), TasmotaGlobal.mqtt_data);
+      Run_Scripter(">T", 2, TasmotaGlobal.mqtt_data);
     }
   }
   if (Settings.rule_enabled) {
@@ -4712,7 +4759,6 @@ void script_upload_start(void) {
 
     //if (upload_file) upload_file.write(upload.buf,upload.currentSize);
   } else if(upload.status == UPLOAD_FILE_END) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload close"));
     //if (upload_file) upload_file.close();
     if (Web.upload_error) {
       AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
@@ -4721,6 +4767,7 @@ void script_upload_start(void) {
       bitWrite(Settings.rule_enabled, 0, sc_state);
       SaveScript();
       SaveScriptEnd();
+      //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload success"));
     }
   } else {
     Web.upload_error = 1;
@@ -5470,14 +5517,14 @@ void Script_Check_Hue(String *response) {
       }
       // append response
       if (response) {
-        if (devices_present) {
+        if (TasmotaGlobal.devices_present) {
           *response += ",\"";
         }
         else {
           if (hue_devs>0) *response += ",\"";
           else *response += "\"";
         }
-        *response += String(EncodeLightId(hue_devs + devices_present + 1))+"\":";
+        *response += String(EncodeLightId(hue_devs + TasmotaGlobal.devices_present + 1))+"\":";
         Script_HueStatus(response, hue_devs);
         //AddLog_P2(LOG_LEVEL_INFO, PSTR("Hue: %s - %d "),response->c_str(), hue_devs);
       }
@@ -5524,7 +5571,7 @@ void Script_Handle_Hue(String *path) {
   bool resp = false;
 
   uint8_t device = DecodeLightId(atoi(path->c_str()));
-  uint8_t index = device - devices_present - 1;
+  uint8_t index = device - TasmotaGlobal.devices_present - 1;
 
   if (Webserver->args()) {
     response = "[";
@@ -5737,7 +5784,7 @@ bool ScriptCommand(void) {
     } else {
       if ('>' == XdrvMailbox.data[0]) {
         // execute script
-        snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\"}"), command,XdrvMailbox.data);
+        snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\"}"), command,XdrvMailbox.data);
         if (bitRead(Settings.rule_enabled, 0)) {
           for (uint8_t count = 0; count<XdrvMailbox.data_len; count++) {
             if (XdrvMailbox.data[count]==';') XdrvMailbox.data[count] = '\n';
@@ -5756,15 +5803,15 @@ bool ScriptCommand(void) {
         if (glob_script_mem.glob_error==1) {
           // was string, not number
           GetStringArgument(lp, OPER_EQU, str, 0);
-          snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"script\":{\"%s\":\"%s\"}}"), lp, str);
+          snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"script\":{\"%s\":\"%s\"}}"), lp, str);
         } else {
           dtostrfd(fvar, 6, str);
-          snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"script\":{\"%s\":%s}}"), lp, str);
+          snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"script\":{\"%s\":%s}}"), lp, str);
         }
       }
       return serviced;
     }
-    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"Free\":%d}"),command, GetStateText(bitRead(Settings.rule_enabled, 0)), glob_script_mem.script_size - strlen(glob_script_mem.script_ram));
+    snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":\"%s\",\"Free\":%d}"),command, GetStateText(bitRead(Settings.rule_enabled, 0)), glob_script_mem.script_size - strlen(glob_script_mem.script_ram));
 #ifdef SUPPORT_MQTT_EVENT
   } else if (CMND_SUBSCRIBE == command_code) {			//MQTT Subscribe command. Subscribe <Event>, <Topic> [, <Key>]
       String result = ScriptSubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
@@ -6453,10 +6500,10 @@ uint32_t cnt;
 }
 
 void ScriptWebShow(char mc) {
-  uint8_t web_script,xflg = 0;
+  uint8_t web_script;
+  glob_script_mem.web_mode = mc;
   if (mc=='w' || mc=='x') {
     if (mc=='x') {
-      xflg = 1;
       mc='$';
     }
     web_script = Run_Scripter(">w", -2, 0);
@@ -6476,6 +6523,10 @@ void ScriptWebShow(char mc) {
         lp++;
       }
     }
+    char *cv_ptr;
+    float cv_max=0;
+    float cv_inc=0;
+    float *cv_count=0;
     while (lp) {
       while (*lp==SCRIPT_EOL) {
        lp++;
@@ -6485,9 +6536,55 @@ void ScriptWebShow(char mc) {
       }
       if (*lp!=';') {
         // send this line to web
+        SCRIPT_SKIP_SPACES
+        if (!strncmp(lp, "%for ", 5)) {
+          // for next loop
+          struct T_INDEX ind;
+          uint8_t vtype;
+          lp = isvar(lp + 5, &vtype, &ind, 0, 0, 0);
+          if ((vtype!=VAR_NV) && (vtype&STYPE)==0) {
+            uint16_t index = glob_script_mem.type[ind.index].index;
+            cv_count = &glob_script_mem.fvars[index];
+            SCRIPT_SKIP_SPACES
+            lp = GetNumericArgument(lp , OPER_EQU, cv_count, 0);
+            SCRIPT_SKIP_SPACES
+            lp = GetNumericArgument(lp , OPER_EQU, &cv_max, 0);
+            SCRIPT_SKIP_SPACES
+            lp = GetNumericArgument(lp , OPER_EQU, &cv_inc, 0);
+            cv_ptr = lp;
+            goto nextwebline;
+          } else {
+            continue;
+          }
+        } else if (!strncmp(lp, "%next", 5)) {
+          if (cv_count) {
+            // for next loop
+            *cv_count += cv_inc;
+            if (*cv_count<=cv_max) {
+              lp = cv_ptr;
+            } else {
+              cv_count = 0;
+              goto nextwebline;
+            }
+          } else {
+            goto nextwebline;
+          }
+        } else if (!strncmp(lp, "%=#", 3)) {
+          // subroutine
+          lp = scripter_sub(lp + 1, 0);
+          goto nextwebline;
+        }
+
         Replace_Cmd_Vars(lp, 1, tmp, sizeof(tmp));
         char *lin = tmp;
         if ((!mc && (*lin!='$')) || (mc=='w' && (*lin!='$'))) {
+        /*if (!mc || mc=='w') {
+          if (*lin=='$') {
+            lin++;
+            if (!strncmp(lin,"gc(", 3)) {
+              goto exgc;
+            }
+          }*/
           // normal web section
           if (*lin=='@') {
             lin++;
@@ -7030,10 +7127,6 @@ bool RulesProcessEvent(char *json_event) {
 #define STASK_STACK 8192
 #endif
 
-#ifndef STASK_PRIO
-#define STASK_PRIO 1
-#endif //ESP32
-
 #if 1
 
 struct ESP32_Task {
@@ -7073,17 +7166,17 @@ void script_task2(void *arg) {
     }
   }
 }
-uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core) {
+uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, uint32_t prio) {
   //return 0;
   BaseType_t res = 0;
   if (core > 1) { core = 1; }
   if (num == 1) {
     if (esp32_tasks[0].task_t) { vTaskDelete(esp32_tasks[0].task_t); }
-    res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, STASK_PRIO, &esp32_tasks[0].task_t, core);
+    res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, prio, &esp32_tasks[0].task_t, core);
     esp32_tasks[0].task_timer = time;
   } else {
     if (esp32_tasks[1].task_t) { vTaskDelete(esp32_tasks[1].task_t); }
-    res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, STASK_PRIO, &esp32_tasks[1].task_t, core);
+    res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, prio, &esp32_tasks[1].task_t, core);
     esp32_tasks[1].task_timer = time;
   }
   return res;
@@ -7109,17 +7202,17 @@ void script_task2(void *arg) {
   }
 }
 
-uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core) {
+uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, uint32_t prio) {
   //return 0;
   BaseType_t res = 0;
   if (core > 1) { core = 1; }
   if (num == 1) {
     if (task_t1) { vTaskDelete(task_t1); }
-    res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, STASK_PRIO, &task_t1, core);
+    res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, prio, &task_t1, core);
     task_timer1 = time;
   } else {
     if (task_t2) { vTaskDelete(task_t2); }
-    res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, STASK_PRIO, &task_t2, core);
+    res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, prio, &task_t2, core);
     task_timer2 = time;
   }
   return res;
@@ -7138,7 +7231,7 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core) {
 
 // get tesla powerwall info page json string
 uint32_t call2https(const char *host, const char *path) {
-  if (global_state.wifi_down) return 1;
+  if (TasmotaGlobal.global_state.wifi_down) return 1;
   uint32_t status = 0;
 #ifdef ESP32
   WiFiClientSecure *httpsClient;
@@ -7388,7 +7481,7 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_RULES_PROCESS:
       if (bitRead(Settings.rule_enabled, 0)) {
-        Run_Scripter(">E", 2, mqtt_data);
+        Run_Scripter(">E", 2, TasmotaGlobal.mqtt_data);
         result = event_handeled;
       }
       break;

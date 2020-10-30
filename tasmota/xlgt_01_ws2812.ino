@@ -461,7 +461,7 @@ void Ws2812ShowScheme(void)
 
   switch (scheme) {
     case 0:  // Clock
-      if ((1 == state_250mS) || (Ws2812.show_next)) {
+      if ((1 == TasmotaGlobal.state_250mS) || (Ws2812.show_next)) {
         Ws2812Clock();
         Ws2812.show_next = 0;
       }
@@ -491,11 +491,11 @@ void Ws2812ModuleSelected(void)
     Light.max_scheme += WS2812_SCHEMES;
 
 #if (USE_WS2812_CTYPE > NEO_3LED)
-    light_type = LT_RGBW;
+    TasmotaGlobal.light_type = LT_RGBW;
 #else
-    light_type = LT_RGB;
+    TasmotaGlobal.light_type = LT_RGB;
 #endif
-    light_flg = XLGT_01;
+    TasmotaGlobal.light_driver = XLGT_01;
   }
 }
 

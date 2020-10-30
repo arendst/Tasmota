@@ -213,14 +213,14 @@ void SonoffBridgeReceivedRaw(void)
   // Decoding according to https://github.com/Portisch/RF-Bridge-EFM8BB1
   uint8_t buckets = 0;
 
-  if (0xB1 == serial_in_buffer[1]) { buckets = serial_in_buffer[2] << 1; }  // Bucket sniffing
+  if (0xB1 == TasmotaGlobal.serial_in_buffer[1]) { buckets = TasmotaGlobal.serial_in_buffer[2] << 1; }  // Bucket sniffing
 
   ResponseTime_P(PSTR(",\"" D_CMND_RFRAW "\":{\"" D_JSON_DATA "\":\""));
-  for (uint32_t i = 0; i < serial_in_byte_counter; i++) {
-    ResponseAppend_P(PSTR("%02X"), serial_in_buffer[i]);
-    if (0xB1 == serial_in_buffer[1]) {
+  for (uint32_t i = 0; i < TasmotaGlobal.serial_in_byte_counter; i++) {
+    ResponseAppend_P(PSTR("%02X"), TasmotaGlobal.serial_in_buffer[i]);
+    if (0xB1 == TasmotaGlobal.serial_in_buffer[1]) {
       if ((i > 3) && buckets) { buckets--; }
-      if ((i < 3) || (buckets % 2) || (i == serial_in_byte_counter -2)) {
+      if ((i < 3) || (buckets % 2) || (i == TasmotaGlobal.serial_in_byte_counter -2)) {
         ResponseAppend_P(PSTR(" "));
       }
     }
@@ -249,16 +249,16 @@ void SonoffBridgeReceived(void)
 
   AddLogSerial(LOG_LEVEL_DEBUG);
 
-  if (0xA2 == serial_in_buffer[0]) {       // Learn timeout
+  if (0xA2 == TasmotaGlobal.serial_in_buffer[0]) {       // Learn timeout
     SonoffBridgeLearnFailed();
   }
-  else if (0xA3 == serial_in_buffer[0]) {  // Learned A3 20 F8 01 18 03 3E 2E 1A 22 55
+  else if (0xA3 == TasmotaGlobal.serial_in_buffer[0]) {  // Learned A3 20 F8 01 18 03 3E 2E 1A 22 55
     SnfBridge.learn_active = 0;
-    low_time = serial_in_buffer[3] << 8 | serial_in_buffer[4];   // Low time in uSec
-    high_time = serial_in_buffer[5] << 8 | serial_in_buffer[6];  // High time in uSec
+    low_time = TasmotaGlobal.serial_in_buffer[3] << 8 | TasmotaGlobal.serial_in_buffer[4];   // Low time in uSec
+    high_time = TasmotaGlobal.serial_in_buffer[5] << 8 | TasmotaGlobal.serial_in_buffer[6];  // High time in uSec
     if (low_time && high_time) {
       for (uint32_t i = 0; i < 9; i++) {
-        Settings.rf_code[SnfBridge.learn_key][i] = serial_in_buffer[i +1];
+        Settings.rf_code[SnfBridge.learn_key][i] = TasmotaGlobal.serial_in_buffer[i +1];
       }
       Response_P(S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, SnfBridge.learn_key, D_JSON_LEARNED);
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RFKEY));
@@ -266,14 +266,14 @@ void SonoffBridgeReceived(void)
       SonoffBridgeLearnFailed();
     }
   }
-  else if (0xA4 == serial_in_buffer[0]) {  // Received RF data A4 20 EE 01 18 03 3E 2E 1A 22 55
+  else if (0xA4 == TasmotaGlobal.serial_in_buffer[0]) {  // Received RF data A4 20 EE 01 18 03 3E 2E 1A 22 55
     if (SnfBridge.learn_active) {
       SonoffBridgeLearnFailed();
     } else {
-      sync_time = serial_in_buffer[1] << 8 | serial_in_buffer[2];  // Sync time in uSec
-      low_time = serial_in_buffer[3] << 8 | serial_in_buffer[4];   // Low time in uSec
-      high_time = serial_in_buffer[5] << 8 | serial_in_buffer[6];  // High time in uSec
-      received_id = serial_in_buffer[7] << 16 | serial_in_buffer[8] << 8 | serial_in_buffer[9];
+      sync_time = TasmotaGlobal.serial_in_buffer[1] << 8 | TasmotaGlobal.serial_in_buffer[2];  // Sync time in uSec
+      low_time = TasmotaGlobal.serial_in_buffer[3] << 8 | TasmotaGlobal.serial_in_buffer[4];   // Low time in uSec
+      high_time = TasmotaGlobal.serial_in_buffer[5] << 8 | TasmotaGlobal.serial_in_buffer[6];  // High time in uSec
+      received_id = TasmotaGlobal.serial_in_buffer[7] << 16 | TasmotaGlobal.serial_in_buffer[8] << 8 | TasmotaGlobal.serial_in_buffer[9];
 
       unsigned long now = millis();
       if (!((received_id == SnfBridge.last_received_id) && (now - SnfBridge.last_time < SFB_TIME_AVOID_DUPLICATE))) {
@@ -312,45 +312,45 @@ bool SonoffBridgeSerialInput(void)
 
   if (SnfBridge.receive_flag) {
     if (SnfBridge.receive_raw_flag) {
-      if (!serial_in_byte_counter) {
-        serial_in_buffer[serial_in_byte_counter++] = 0xAA;
+      if (!TasmotaGlobal.serial_in_byte_counter) {
+        TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = 0xAA;
       }
-      serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-      if (serial_in_byte_counter == 3) {
-        if ((0xA6 == serial_in_buffer[1]) || (0xAB == serial_in_buffer[1])) {  // AA A6 06 023908010155 55 - 06 is receive_len
-          receive_len = serial_in_buffer[2] + 4;  // Get at least receive_len bytes
+      TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = TasmotaGlobal.serial_in_byte;
+      if (TasmotaGlobal.serial_in_byte_counter == 3) {
+        if ((0xA6 == TasmotaGlobal.serial_in_buffer[1]) || (0xAB == TasmotaGlobal.serial_in_buffer[1])) {  // AA A6 06 023908010155 55 - 06 is receive_len
+          receive_len = TasmotaGlobal.serial_in_buffer[2] + 4;  // Get at least receive_len bytes
         }
       }
-      if ((!receive_len && (0x55 == serial_in_byte)) || (receive_len && (serial_in_byte_counter == receive_len))) {  // 0x55 - End of text
+      if ((!receive_len && (0x55 == TasmotaGlobal.serial_in_byte)) || (receive_len && (TasmotaGlobal.serial_in_byte_counter == receive_len))) {  // 0x55 - End of text
         SonoffBridgeReceivedRaw();
         SnfBridge.receive_flag = 0;
         return 1;
       }
     }
-    else if (!((0 == serial_in_byte_counter) && (0 == serial_in_byte))) {  // Skip leading 0
-      if (0 == serial_in_byte_counter) {
+    else if (!((0 == TasmotaGlobal.serial_in_byte_counter) && (0 == TasmotaGlobal.serial_in_byte))) {  // Skip leading 0
+      if (0 == TasmotaGlobal.serial_in_byte_counter) {
         SnfBridge.expected_bytes = 2;     // 0xA0, 0xA1, 0xA2
-        if (serial_in_byte >= 0xA3) {
+        if (TasmotaGlobal.serial_in_byte >= 0xA3) {
           SnfBridge.expected_bytes = 11;  // 0xA3, 0xA4, 0xA5
         }
-        if (serial_in_byte == 0xA6) {
+        if (TasmotaGlobal.serial_in_byte == 0xA6) {
           SnfBridge.expected_bytes = 0;   // 0xA6 and up supported by Portisch firmware only
-          serial_in_buffer[serial_in_byte_counter++] = 0xAA;
+          TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = 0xAA;
           SnfBridge.receive_raw_flag = 1;
         }
       }
-      serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-      if ((SnfBridge.expected_bytes == serial_in_byte_counter) && (0x55 == serial_in_byte)) {  // 0x55 - End of text
+      TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = TasmotaGlobal.serial_in_byte;
+      if ((SnfBridge.expected_bytes == TasmotaGlobal.serial_in_byte_counter) && (0x55 == TasmotaGlobal.serial_in_byte)) {  // 0x55 - End of text
         SonoffBridgeReceived();
         SnfBridge.receive_flag = 0;
         return 1;
       }
     }
-    serial_in_byte = 0;
+    TasmotaGlobal.serial_in_byte = 0;
   }
-  if (0xAA == serial_in_byte) {               // 0xAA - Start of text
-    serial_in_byte_counter = 0;
-    serial_in_byte = 0;
+  if (0xAA == TasmotaGlobal.serial_in_byte) {               // 0xAA - Start of text
+    TasmotaGlobal.serial_in_byte_counter = 0;
+    TasmotaGlobal.serial_in_byte = 0;
     SnfBridge.receive_flag = 1;
     receive_len = 0;
   }
@@ -563,7 +563,7 @@ bool Xdrv06(uint8_t function)
   bool result = false;
 
 #ifdef ESP8266
-  if (SONOFF_BRIDGE == my_module_type) {
+  if (SONOFF_BRIDGE == TasmotaGlobal.module_type) {
     switch (function) {
       case FUNC_SERIAL:
         result = SonoffBridgeSerialInput();

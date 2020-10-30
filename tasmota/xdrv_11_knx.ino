@@ -468,45 +468,45 @@ void KNX_INIT(void)
   //   and activate options according to the hardware
   /*for (uint32_t i = GPIO_REL1; i < GPIO_REL8 + 1; ++i)
   {
-    if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_REL1].show = true; }
+    if (GetUsedInModule(i, TasmotaGlobal.my_module.io)) { device_param[i - GPIO_REL1].show = true; }
   }
   for (uint32_t i = GPIO_REL1_INV; i < GPIO_REL8_INV + 1; ++i)
   {
-    if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_REL1_INV].show = true; }
+    if (GetUsedInModule(i, TasmotaGlobal.my_module.io)) { device_param[i - GPIO_REL1_INV].show = true; }
   }*/
-  for (uint32_t i = 0; i < devices_present; ++i)
+  for (uint32_t i = 0; i < TasmotaGlobal.devices_present; ++i)
   {
     device_param[i].show = true;
   }
   for (uint32_t i = GPIO_SWT1; i < GPIO_SWT1 + 4; ++i)
   {
-    if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_SWT1 + 8].show = true; }
+    if (GetUsedInModule(i, TasmotaGlobal.my_module.io)) { device_param[i - GPIO_SWT1 + 8].show = true; }
   }
   for (uint32_t i = GPIO_KEY1; i < GPIO_KEY1 + 4; ++i)
   {
-    if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_KEY1 + 8].show = true; }
+    if (GetUsedInModule(i, TasmotaGlobal.my_module.io)) { device_param[i - GPIO_KEY1 + 8].show = true; }
   }
   for (uint32_t i = GPIO_SWT1_NP; i < GPIO_SWT1_NP + 4; ++i)
   {
-    if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_SWT1_NP + 8].show = true; }
+    if (GetUsedInModule(i, TasmotaGlobal.my_module.io)) { device_param[i - GPIO_SWT1_NP + 8].show = true; }
   }
   for (uint32_t i = GPIO_KEY1_NP; i < GPIO_KEY1_NP + 4; ++i)
   {
-    if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_KEY1_NP + 8].show = true; }
+    if (GetUsedInModule(i, TasmotaGlobal.my_module.io)) { device_param[i - GPIO_KEY1_NP + 8].show = true; }
   }
-  if (GetUsedInModule(GPIO_DHT11, my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
-  if (GetUsedInModule(GPIO_DHT22, my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
-  if (GetUsedInModule(GPIO_SI7021, my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+  if (GetUsedInModule(GPIO_DHT11, TasmotaGlobal.my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+  if (GetUsedInModule(GPIO_DHT22, TasmotaGlobal.my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+  if (GetUsedInModule(GPIO_SI7021, TasmotaGlobal.my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
 #ifdef USE_DS18x20
-  if (GetUsedInModule(GPIO_DSB, my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+  if (GetUsedInModule(GPIO_DSB, TasmotaGlobal.my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
 #endif
-  if (GetUsedInModule(GPIO_DHT11, my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
-  if (GetUsedInModule(GPIO_DHT22, my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
-  if (GetUsedInModule(GPIO_SI7021, my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
+  if (GetUsedInModule(GPIO_DHT11, TasmotaGlobal.my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
+  if (GetUsedInModule(GPIO_DHT22, TasmotaGlobal.my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
+  if (GetUsedInModule(GPIO_SI7021, TasmotaGlobal.my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
 
 #if defined(USE_ENERGY_SENSOR)
   // Any device with a Power Monitoring
-  if ( energy_flg != ENERGY_NONE ) {
+  if ( TasmotaGlobal.energy_driver != ENERGY_NONE ) {
     device_param[KNX_ENERGY_POWER-1].show = true;
     device_param[KNX_ENERGY_DAILY-1].show = true;
     device_param[KNX_ENERGY_START-1].show = true;
@@ -565,8 +565,8 @@ void KNX_CB_Action(message_t const &msg, void *arg)
     sprintf(tempchar,"%d",msg.data[0]);
   } else if (chan->type == KNX_SCENE) {
     // VALUE
-    uint8_t tempvar = knx.data_to_1byte_uint(msg.data);    
-    dtostrfd(tempvar,2,tempchar);
+    uint8_t tempvar = knx.data_to_1byte_uint(msg.data);
+    dtostrfd(tempvar,0,tempchar);
   } else {
     // VALUE
     float tempvar = knx.data_to_2byte_float(msg.data);
@@ -623,7 +623,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
         }
-      }      
+      }
 #endif
       break;
 
@@ -1097,7 +1097,7 @@ void CmndKnxTxScene(void)
        device_param_ga[KNX_SCENE-1], XdrvMailbox.data,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
       ResponseCmndIdxChar (XdrvMailbox.data);
-    }    
+    }
   }
 }
 
@@ -1255,7 +1255,7 @@ bool Xdrv11(uint8_t function)
   bool result = false;
     switch (function) {
       case FUNC_LOOP:
-        if (!global_state.network_down) { knx.loop(); }  // Process knx events
+        if (!TasmotaGlobal.global_state.network_down) { knx.loop(); }  // Process knx events
         break;
       case FUNC_EVERY_50_MSECOND:
         if (toggle_inhibit) {
@@ -1271,7 +1271,7 @@ bool Xdrv11(uint8_t function)
         WSContentSend_P(HTTP_BTN_MENU_KNX);
         break;
       case FUNC_WEB_ADD_HANDLER:
-        Webserver->on("/kn", HandleKNXConfiguration);
+        WebServer_on(PSTR("/kn"), HandleKNXConfiguration);
         break;
 #endif // USE_KNX_WEB_MENU
 #endif  // USE_WEBSERVER

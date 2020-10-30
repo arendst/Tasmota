@@ -233,7 +233,7 @@ bool Ina219CommandSensor(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
     Settings.ina219_mode = XdrvMailbox.payload;
-    restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;
   }
   Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_13, Settings.ina219_mode);
 
@@ -297,7 +297,7 @@ void Ina219Show(bool json)
       ResponseAppend_P(PSTR(",\"%s\":{\"Id\":%02x,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
                        name, ina219_addresses[i], voltage, current, power);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_VOLTAGE, voltage);
         DomoticzSensor(DZ_CURRENT, current);
       }

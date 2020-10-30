@@ -236,7 +236,7 @@ void HtuDetect(void)
 
 void HtuEverySecond(void)
 {
-  if (uptime &1) {  // Every 2 seconds
+  if (TasmotaGlobal.uptime &1) {  // Every 2 seconds
     // HTU21: 68mS, SI70xx: 37mS
     if (!HtuRead()) {
       AddLogMissed(Htu.types, Htu.valid);
@@ -247,7 +247,7 @@ void HtuEverySecond(void)
 void HtuShow(bool json)
 {
   if (Htu.valid) {
-    TempHumDewShow(json, (0 == tele_period), Htu.types, Htu.temperature, Htu.humidity);
+    TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), Htu.types, Htu.temperature, Htu.humidity);
   }
 }
 

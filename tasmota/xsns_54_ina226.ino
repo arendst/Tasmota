@@ -206,7 +206,7 @@ void Ina226Init()
   //AddLog_P2( LOG_LEVEL_NONE, "Ina226Init");
 //  AddLog_P2( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
 
-//  if (!i2c_flg)
+//  if (!TasmotaGlobal.i2c_enabled)
 //    AddLog_P2(LOG_LEVEL_DEBUG, "INA226: Initialization failed: No I2C support");
 
 
@@ -417,8 +417,8 @@ bool Ina226CommandSensor()
         break;
 
       case 2: // Save and restart
-        restart_flag = 2;
-        Response_P(PSTR("{\"Sensor54-Command-Result\":{\"Restart_flag\":%d}}"),restart_flag);
+        TasmotaGlobal.restart_flag = 2;
+        Response_P(PSTR("{\"Sensor54-Command-Result\":{\"Restart_flag\":%d}}"),TasmotaGlobal.restart_flag);
         break;
 
       default:
@@ -516,7 +516,7 @@ void Ina226Show(bool json)
       ResponseAppend_P(PSTR(",\"%s\":{\"Id\":%d,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
                        name, i, voltage, current, power);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_VOLTAGE, voltage);
         DomoticzSensor(DZ_CURRENT, current);
       }

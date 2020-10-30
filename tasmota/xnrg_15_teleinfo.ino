@@ -20,73 +20,73 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_TELEINFO
 /*********************************************************************************************\
- * Teleinfo : French energy provider metering telemety data 
+ * Teleinfo : French energy provider metering telemety data
  * Source: http://hallard.me/category/tinfo/
  *
  * Denky ESP32 Teleinfo Template
  * {"NAME":"Denky (Teleinfo)","GPIO":[1,1,1,1,5664,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1376,1,1,0,0,0,0,1,5632,1,1,1,0,0,1],"FLAG":0,"BASE":1}
- * 
+ *
  * Denky (aka WifInfo) ESP8266 Teleinfo Template
  * {"NAME":"WifInfo v1.0a","GPIO":[17,255,255,255,6,5,255,255,7,210,255,255,255],"FLAG":15,"BASE":18}
  * {"NAME":"WifInfo","GPIO":[7,255,255,210,6,5,255,255,255,255,255,255,255],"FLAG":15,"BASE":18}
- * 
+ *
 \*********************************************************************************************/
-#define XNRG_15            15 
+#define XNRG_15            15
 
 #include "LibTeleinfo.h"
 #include <TasmotaSerial.h>
 
-#define TINFO_READ_TIMEOUT 400 
+#define TINFO_READ_TIMEOUT 400
 
 // All contract type for legacy, standard mode has in clear text
 enum TInfoContrat{
-    CONTRAT_BAS = 1,  // BASE => Option Base. 
-    CONTRAT_HC,       // HC.. => Option Heures Creuses. 
-    CONTRAT_EJP,      // EJP. => Option EJP. 
+    CONTRAT_BAS = 1,  // BASE => Option Base.
+    CONTRAT_HC,       // HC.. => Option Heures Creuses.
+    CONTRAT_EJP,      // EJP. => Option EJP.
     CONTRAT_BBR,      // BBRx => Option Tempo
     CONTRAT_END
 };
 
 // contract displayed name for legacy, standard mode has in clear text
-const char kContratName[] PROGMEM = 
+const char kContratName[] PROGMEM =
     "|Base|Heures Creuses|EJP|Bleu Blanc Rouge"
     ;
 
 // Received current contract value for legacy, standard mode has in clear text
-const char kContratValue[] PROGMEM = 
+const char kContratValue[] PROGMEM =
     "|BASE|HC..|EJP.|BBR"
     ;
 
 // all tariff type for legacy, standard mode has in clear text
 enum TInfoTarif{
-    TARIF_TH = 1,   
-    TARIF_HC,  TARIF_HP, 
+    TARIF_TH = 1,
+    TARIF_HC,  TARIF_HP,
     TARIF_HN,  TARIF_PM,
     TARIF_CB,  TARIF_CW, TARIF_CR,
     TARIF_PB,  TARIF_PW, TARIF_PR,
     TARIF_END
 };
 
-// Received current tariff values 
+// Received current tariff values
 // for legacy, standard mode has in clear text
-const char kTarifValue[] PROGMEM = 
-    "|TH..|HC..|HP.." 
-    "|HN..|PM.." 
-    "|HCJB|HCJW|HCJR" 
-    "|HPJB|HPJW|HPJR" 
+const char kTarifValue[] PROGMEM =
+    "|TH..|HC..|HP.."
+    "|HN..|PM.."
+    "|HCJB|HCJW|HCJR"
+    "|HPJB|HPJW|HPJR"
     ;
 
 // tariff displayed name (for legacy, standard mode has in clear text)
-const char kTarifName[] PROGMEM = 
-    "|Toutes|Creuses|Pleines" 
-    "|Normales|Pointe Mobile" 
-    "|Creuses Bleu|Creuses Blanc|Creuse Rouges" 
-    "|Pleines Bleu|Pleines Blanc|Pleines Rouges" 
+const char kTarifName[] PROGMEM =
+    "|Toutes|Creuses|Pleines"
+    "|Normales|Pointe Mobile"
+    "|Creuses Bleu|Creuses Blanc|Creuse Rouges"
+    "|Pleines Bleu|Pleines Blanc|Pleines Rouges"
     ;
 
 // Label used to do some post processing and/or calculation
 enum TInfoLabel{
-    LABEL_BASE = 1, 
+    LABEL_BASE = 1,
     LABEL_ADCO, LABEL_ADSC,
     LABEL_HCHC, LABEL_HCHP, LABEL_EAST, LABEL_EASF01, LABEL_EASF02,
     LABEL_OPTARIF, LABEL_NGTF, LABEL_ISOUSC, LABEL_PREF, LABEL_PTEC, LABEL_LTARF, LABEL_NTARF,
@@ -96,7 +96,7 @@ enum TInfoLabel{
     LABEL_END
 };
 
-const char kLabel[] PROGMEM = 
+const char kLabel[] PROGMEM =
     "|BASE|ADCO|ADSC"
     "|HCHC|HCHP|EAST|EASF01|EASF02"
     "|OPTARIF|NGTF|ISOUSC|PREF|PTEC|LTARF|NTARF"
@@ -117,7 +117,7 @@ int isousc;
 /*********************************************************************************************/
 
 /* ======================================================================
-Function: getValueFromLabelIndex 
+Function: getValueFromLabelIndex
 Purpose : return label value from label index
 Input   : label index to search for
 Output  : value filled
@@ -133,14 +133,14 @@ char * getValueFromLabelIndex(int labelIndex, char * value)
 }
 
 /* ======================================================================
-Function: ADPSCallback 
+Function: ADPSCallback
 Purpose : called by library when we detected a ADPS on any phased
-Input   : phase number 
+Input   : phase number
             0 for ADPS (monophase)
             1 for ADIR1 triphase
             2 for ADIR2 triphase
             3 for ADIR3 triphase
-Output  : - 
+Output  : -
 Comments: should have been initialised with a
           tinfo.attachADPSCallback(ADPSCallback())
 ====================================================================== */
@@ -152,7 +152,7 @@ void ADPSCallback(uint8_t phase)
     }
 
     Response_P(PSTR("{"));
-    ResponseAppend_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"ADPS\":%i}}"), serialNumber, phase );
+    ResponseAppend_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":{\"ADPS\":%i}}"), serialNumber, phase );
     ResponseJsonEnd();
 
     // Publish adding ADCO serial number into the topic
@@ -162,11 +162,11 @@ void ADPSCallback(uint8_t phase)
 }
 
 /* ======================================================================
-Function: DataCallback 
+Function: DataCallback
 Purpose : callback when we detected new or modified data received
 Input   : linked list pointer on the concerned data
           current flags value
-Output  : - 
+Output  : -
 Comments: -
 ====================================================================== */
 void DataCallback(struct _ValueList * me, uint8_t  flags)
@@ -180,7 +180,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
         // Find the label index
         for ( ilabel = 1 ; ilabel < LABEL_END ; ilabel++) {
             GetTextIndexed(labelName, sizeof(labelName), ilabel, kLabel);
-            if (!strcmp(labelName, me->name)) { 
+            if (!strcmp(labelName, me->name)) {
                 break;
             }
         }
@@ -198,24 +198,24 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 // Find the tariff index
                 for (tarif = TARIF_TH ; tarif < TARIF_END ; tarif++) {
                     GetTextIndexed(tarif_value, sizeof(tarif_value), tarif-1, kTarifValue);
-                    if (!strcmp(tarif_value, me->value)) { 
+                    if (!strcmp(tarif_value, me->value)) {
                         break;
                     }
                 }
                 AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif changed, now '%s' (%d)"), me->value, tarif);
-            } 
+            }
 
             // Current tariff (standard is in clear text in value)
             else if (ilabel == LABEL_LTARF)
             {
                 AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif name changed, now '%s'"), me->value);
-            } 
+            }
             // Current tariff (standard index is is in clear text in value)
             else if (ilabel == LABEL_NTARF)
             {
                 tarif = atoi(me->value);
                 AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Tarif index changed, now '%d'"), tarif);
-            } 
+            }
 
 
             // Voltage V (not present on all Smart Meter)
@@ -257,14 +257,14 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                     // Heures creuses get heures pleines
                     if (ilabel == LABEL_HCHC) {
                         hc = atoi(me->value);
-                        if ( getValueFromLabelIndex(LABEL_HCHP, value) ) { 
+                        if ( getValueFromLabelIndex(LABEL_HCHP, value) ) {
                             hp = atoi(value);
                         }
-                    
+
                     // Heures pleines, get heures creuses
                     } else if (ilabel == LABEL_HCHP) {
                         hp = atoi(me->value);
-                        if ( getValueFromLabelIndex(LABEL_HCHC, value) ) { 
+                        if ( getValueFromLabelIndex(LABEL_HCHC, value) ) {
                             hc = atoi(value);
                         }
                     }
@@ -272,17 +272,17 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: HC:%u  HP:%u  Total:%u"), hc, hp, total);
                 }
 
-                if (!Settings.flag4.teleinfo_rawdata) { 
-                    EnergyUpdateTotal(total/1000.0f, true);  
+                if (!Settings.flag4.teleinfo_rawdata) {
+                    EnergyUpdateTotal(total/1000.0f, true);
                 }
             }
 
-            // Wh total index (standard) 
+            // Wh total index (standard)
             else if ( ilabel == LABEL_EAST)
             {
                 uint32_t total = atoi(me->value);
-                if (!Settings.flag4.teleinfo_rawdata) { 
-                    EnergyUpdateTotal(total/1000.0f, true);  
+                if (!Settings.flag4.teleinfo_rawdata) {
+                    EnergyUpdateTotal(total/1000.0f, true);
                 }
                 AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%uWh"), total);
             }
@@ -304,45 +304,45 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 // Find the contract index
                 for (contrat = CONTRAT_BAS ; contrat < CONTRAT_END ; contrat++) {
                     GetTextIndexed(contrat_value, sizeof(contrat_value), contrat, kContratValue);
-                    if (!strcmp(contrat_value, me->value)) { 
+                    if (!strcmp(contrat_value, me->value)) {
                         break;
                     }
                 }
                 AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s' (%d)"), me->value, contrat);
-            } 
+            }
             // Contract subscribed (standard is in clear text in value)
             else if (ilabel == LABEL_NGTF)
             {
                 AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s'"), me->value);
-            } 
+            }
 
             // Contract subscribed (Power)
             else if (ilabel == LABEL_ISOUSC || ilabel == LABEL_PREF)
             {
                 isousc = atoi( me->value);
                 AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
-            } 
+            }
 
             // Serial Number of device
             else if (ilabel == LABEL_ADCO || ilabel == LABEL_ADSC)
             {
                 strcpy(serialNumber, me->value);
                 AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: %s set to %s"), me->name, serialNumber);
-            } 
+            }
 
         }
     }
 
- 
+
 
 
 }
 
 /* ======================================================================
-Function: responseDumpTInfo 
+Function: responseDumpTInfo
 Purpose : add teleinfo values into JSON response
 Input   : 1st separator space if begining of JSON, else comma
-Output  : - 
+Output  : -
 Comments: -
 ====================================================================== */
 void ResponseAppendTInfo(char sep)
@@ -383,17 +383,17 @@ void ResponseAppendTInfo(char sep)
                 ResponseAppend_P( PSTR("%d"), atoi(me->value));
             }
 
-            // Now JSON separator is needed 
+            // Now JSON separator is needed
             sep =',';
         }
     }
 }
 
 /* ======================================================================
-Function: NewFrameCallback 
+Function: NewFrameCallback
 Purpose : callback when we received a complete Teleinfo frama
 Input   : linked list pointer on the concerned data
-Output  : - 
+Output  : -
 Comments: -
 ====================================================================== */
 void NewFrameCallback(struct _ValueList * me)
@@ -403,7 +403,7 @@ void NewFrameCallback(struct _ValueList * me)
 
     // send teleinfo full frame only if setup like that
     // see setOption108
-    if (Settings.flag4.teleinfo_rawdata) { 
+    if (Settings.flag4.teleinfo_rawdata) {
         Response_P(PSTR("{"));
         ResponseAppendTInfo(' ');
         ResponseJsonEnd();
@@ -414,24 +414,24 @@ void NewFrameCallback(struct _ValueList * me)
 }
 
 /* ======================================================================
-Function: TInfoDrvInit 
-Purpose : Tasmota core driver init 
+Function: TInfoDrvInit
+Purpose : Tasmota core driver init
 Input   : -
-Output  : - 
+Output  : -
 Comments: -
 ====================================================================== */
 void TInfoDrvInit(void) {
   if (PinUsed(GPIO_TELEINFO_RX)) {
-    energy_flg = XNRG_15;
+    TasmotaGlobal.energy_driver = XNRG_15;
     Energy.voltage_available = false;
   }
 }
 
 /* ======================================================================
-Function: TInfoInit 
-Purpose : Tasmota core device init 
+Function: TInfoInit
+Purpose : Tasmota core device init
 Input   : -
-Output  : - 
+Output  : -
 Comments: -
 ====================================================================== */
 void TInfoInit(void)
@@ -439,16 +439,16 @@ void TInfoInit(void)
     int baudrate;
 
     // SetOption102 - Set Baud rate for Teleinfo serial communication (0 = 1200 or 1 = 9600)
-    if (Settings.flag4.teleinfo_baudrate) { 
-        baudrate = 9600; 
+    if (Settings.flag4.teleinfo_baudrate) {
+        baudrate = 9600;
         tinfo_mode = TINFO_MODE_STANDARD;
     }  else {
-        baudrate = 1200; 
+        baudrate = 1200;
         tinfo_mode = TINFO_MODE_HISTORIQUE;
     }
 
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TIC: inferface speed %d bps"),baudrate);
-    
+
     if (PinUsed(GPIO_TELEINFO_RX)) {
          uint8_t rx_pin = Pin(GPIO_TELEINFO_RX);
          AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: RX on GPIO%d"), rx_pin);
@@ -456,7 +456,7 @@ void TInfoInit(void)
         // Enable Teleinfo pin used, control it
         if (PinUsed(GPIO_TELEINFO_ENABLE)) {
             uint8_t en_pin = Pin(GPIO_TELEINFO_ENABLE);
-            pinMode(en_pin, OUTPUT);     
+            pinMode(en_pin, OUTPUT);
             digitalWrite(en_pin, HIGH);
             AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: Enable with GPIO%d"), en_pin);
         } else  {
@@ -472,7 +472,7 @@ void TInfoInit(void)
 #endif
 
         // Trick here even using SERIAL_7E1 or TS_SERIAL_7E1
-        // this is not working, need to call SetSerialConfig after  
+        // this is not working, need to call SetSerialConfig after
         if (TInfoSerial->begin(baudrate)) {
 
 
@@ -481,9 +481,9 @@ void TInfoInit(void)
                 ClaimSerial();
 
                 // This is a hack, looks like begin does not take into account
-                // the TS_SERIAL_7E1 configuration so on ESP8266 this is 
+                // the TS_SERIAL_7E1 configuration so on ESP8266 this is
                 // working only on Serial RX pin (Hardware Serial) for now
-                
+
                 //SetSerialConfig(TS_SERIAL_7E1);
                 //TInfoSerial->setTimeout(TINFO_READ_TIMEOUT);
 
@@ -499,8 +499,8 @@ void TInfoInit(void)
             tinfo.init(tinfo_mode);
             // Attach needed callbacks
             tinfo.attachADPS(ADPSCallback);
-            tinfo.attachData(DataCallback); 
-            tinfo.attachNewFrame(NewFrameCallback); 
+            tinfo.attachData(DataCallback);
+            tinfo.attachNewFrame(NewFrameCallback);
             tinfo_found = true;
 
             AddLog_P2(LOG_LEVEL_INFO, PSTR("TIC: Ready"));
@@ -509,10 +509,10 @@ void TInfoInit(void)
 }
 
 /* ======================================================================
-Function: TInfoEvery250ms 
+Function: TInfoEvery250ms
 Purpose : Tasmota callback executed every 250ms
 Input   : -
-Output  : - 
+Output  : -
 Comments: -
 ====================================================================== */
 void TInfoEvery250ms(void)
@@ -536,10 +536,10 @@ void TInfoEvery250ms(void)
 }
 
 /* ======================================================================
-Function: TInfoShow 
+Function: TInfoShow
 Purpose : Tasmota callback executed to send telemetry or WEB display
 Input   : -
-Output  : - 
+Output  : -
 Comments: -
 ====================================================================== */
 #ifdef USE_WEBSERVER
@@ -556,7 +556,7 @@ const char HTTP_ENERGY_PMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_POWER "{m}%d" D_UN
 
 void TInfoShow(bool json)
 {
-    // Since it's an Energy device , current, voltage and power are 
+    // Since it's an Energy device , current, voltage and power are
     // already present on the telemetry frame. No need to add here
     // Just add the raw label/values of the teleinfo frame
     if (json)
@@ -567,7 +567,7 @@ void TInfoShow(bool json)
         }
 
         // add teleinfo full frame only if no teleinfo raw data setup
-        if (!Settings.flag4.teleinfo_rawdata) { 
+        if (!Settings.flag4.teleinfo_rawdata) {
             ResponseAppendTInfo(',');
         }
 
@@ -640,7 +640,7 @@ bool Xnrg15(uint8_t function)
     switch (function)
     {
         case FUNC_EVERY_250_MSECOND:
-            if (uptime > 4) { TInfoEvery250ms(); }
+            TInfoEvery250ms();
             break;
         case FUNC_JSON_APPEND:
             TInfoShow(1);

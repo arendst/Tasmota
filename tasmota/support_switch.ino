@@ -40,7 +40,7 @@ const uint8_t AC_PERIOD = (20 + SWITCH_FAST_PROBE_INTERVAL - 1) / SWITCH_FAST_PR
 Ticker TickerSwitch;
 
 struct SWITCH {
-  unsigned long debounce = 0;                // Switch debounce timer
+  uint32_t debounce = 0;                     // Switch debounce timer
   uint16_t no_pullup_mask = 0;               // Switch pull-up bitmask flags
   uint8_t state[MAX_SWITCHES] = { 0 };
   uint8_t last_state[MAX_SWITCHES];          // Last wall switch states
@@ -88,7 +88,7 @@ bool SwitchState(uint32_t index)
 
 void SwitchProbe(void)
 {
-  if (uptime < 4) { return; }                           // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
+  if (TasmotaGlobal.uptime < 4) { return; }                 // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
   uint8_t state_filter;
   uint8_t debounce_flags = Settings.switch_debounce % 10;
@@ -232,7 +232,7 @@ void SwitchInit(void)
 
 void SwitchHandler(uint8_t mode)
 {
-  if (uptime < 4) { return; }                                  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
+  if (TasmotaGlobal.uptime < 4) { return; }                 // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
   uint16_t loops_per_second = 1000 / Settings.switch_debounce;
 
@@ -401,7 +401,7 @@ void SwitchHandler(uint8_t mode)
       }
       if (switchflag <= POWER_TOGGLE) {
         if (!SendKey(KEY_SWITCH, i +1, switchflag)) {  // Execute command via MQTT
-          ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < devices_present)
+          ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < TasmotaGlobal.devices_present)
         }
       }
     }
