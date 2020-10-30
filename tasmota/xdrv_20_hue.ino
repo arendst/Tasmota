@@ -724,7 +724,7 @@ void HueLights(String *path)
     device_id = atoi(path->c_str());
     device = DecodeLightId(device_id);
 #ifdef USE_ZIGBEE
-    uint16_t shortaddr;
+    uint16_t shortaddr = 0x0000;
     device = DecodeLightId(device_id, &shortaddr);
     if (shortaddr) {
       return ZigbeeHandleHue(shortaddr, device_id, response);
@@ -747,7 +747,7 @@ void HueLights(String *path)
     device_id = atoi(path->c_str());
     device = DecodeLightId(device_id);
 #ifdef USE_ZIGBEE
-    uint16_t shortaddr;
+    uint16_t shortaddr = 0x0000;
     device = DecodeLightId(device_id, &shortaddr);
     if (shortaddr) {
       ZigbeeHueStatus(&response, shortaddr);
