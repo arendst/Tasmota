@@ -32,7 +32,8 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND "|" D_CMND_ZIGBEE_PROBE "|"
   D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|"
   D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_UNBIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID "|"
-  D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|"
+  D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_OCCUPANCY "|" 
+  D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|"
   D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA
   ;
 
@@ -47,7 +48,8 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbStatus, &CmndZbReset, &CmndZbSend, &CmndZbProbe,
   &CmndZbForget, &CmndZbSave, &CmndZbName,
   &CmndZbBind, &CmndZbUnbind, &CmndZbPing, &CmndZbModelId,
-  &CmndZbLight, &CmndZbRestore, &CmndZbBindState, &CmndZbMap,
+  &CmndZbLight, &CmndZbOccupancy, 
+  &CmndZbRestore, &CmndZbBindState, &CmndZbMap,
   &CmndZbConfig, CmndZbData,
   };
 
@@ -1111,6 +1113,56 @@ void CmndZbLight(void) {
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_LIGHT));
   ResponseCmndDone();
 }
+//
+// Command `ZbOccupancy`
+// Specify, read or erase the Occupancy detector configuration
+void CmndZbOccupancy(void) {
+  // Syntax is:
+  //  ZbOccupancy <device_id>,<x>            - set the occupancy time-out
+  //  ZbOccupancy <device_id>                - display the configuration
+  //
+  // List of occupancy time-outs:
+  // 0xF = default (90 s)
+  // 0x0 = no time-out
+  // 0x1 = 15 s
+  // 0x2 = 30 s
+  // 0x3 = 45 s
+  // 0x4 = 60 s
+  // 0x5 = 75 s
+  // 0x6 = 90 s -- default
+  // 0x7 = 105 s
+  // 0x8 = 120 s
+  // Where <device_id> can be: short_addr, long_addr, device_index, friendly_name
+
+  if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+
+  // check if parameters contain a comma ','
+  char *p;
+  char *str = strtok_r(XdrvMailbox.data, ", ", &p);
+
+  // parse first part, <device_id>
+  uint16_t shortaddr = zigbee_devices.parseDeviceParam(XdrvMailbox.data, true);  // in case of short_addr, it must be already registered
+  if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
+  
+  Z_Device & device = zigbee_devices.getShortAddr(shortaddr);
+  
+  int8_t occupancy_time = -1;
+  if (p) {
+    Z_Data_PIR & pir = (Z_Data_PIR&) device.data.getByType(Z_Data_Type::Z_PIR);
+    occupancy_time = strtol(p, nullptr, 10);
+    pir.setTimeoutSeconds(occupancy_time);
+    zigbee_devices.dirty();
+  } else {
+    const Z_Data_PIR & pir_found = (const Z_Data_PIR&) device.data.find(Z_Data_Type::Z_PIR);
+    if (&pir_found != nullptr) {
+      occupancy_time = pir_found.getTimeoutSeconds();
+    }
+  }
+  Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_OCCUPANCY "\":%d}"), occupancy_time);
+
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_LIGHT));
+  ResponseCmndDone();
+}
 
 //
 // Command `ZbForget`
@@ -1357,6 +1409,7 @@ bool parseDeviceInnerData(class Z_Device & device, JsonParserObject root) {
       if (val = data_values[PSTR("LastSeen")])                { device.last_seen = val.getUInt(); }
     } else {
       // Import generic attributes first
+      device.addEndpoint(endpoint);
       Z_Data & data = device.data.getByType(data_type, endpoint);
 
       // scan through attributes
@@ -1459,6 +1512,7 @@ void CmndZbData(void) {
         }
       }
     }
+    zigbee_devices.dirty();     // save to flash
     ResponseCmndDone();
   } else {
     // non-JSON, export current data

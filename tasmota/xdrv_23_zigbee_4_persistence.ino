@@ -265,7 +265,7 @@ void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version) {
       uint8_t ep = buf_d.get8(d++);
       if (0xFF == ep) { break; }        // ep 0xFF marks the end of the endpoints
       if (ep > 240) { ep = 0xFF; }      // ep == 0xFF means ignore
-      if ((ep > 0) && (ep != 0xFF)) { zigbee_devices.addEndpoint(shortaddr, ep); }     // don't add endpoint if it is 0x00
+      device.addEndpoint(ep);           // it will ignore invalid endpoints
       while (d < buf_len) {
         uint8_t config_type = buf_d.get8(d++);
         if (0xFF == config_type) { break; }                                // 0xFF marks the end of congiguration

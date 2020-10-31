@@ -577,6 +577,8 @@
   #define D_JSON_ZIGBEE_STATUS_MSG "StatusMessage"
 #define D_CMND_ZIGBEE_LIGHT "Light"
   #define D_JSON_ZIGBEE_LIGHT "Light"
+#define D_CMND_ZIGBEE_OCCUPANCY "Occupancy"
+  #define D_JSON_ZIGBEE_OCCUPANCY "Occupancy"
 #define D_CMND_ZIGBEE_RESTORE "Restore"
 #define D_CMND_ZIGBEE_CONFIG "Config"
   #define D_JSON_ZIGBEE_CONFIG "Config"

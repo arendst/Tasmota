@@ -1285,7 +1285,12 @@ void ZCLFrame::generateCallBacks(Z_attribute_list& attr_list) {
       case 0x04060000:        // Occupancy
         uint32_t occupancy = attr.getUInt();
         if (occupancy) {
-          zigbee_devices.setTimer(_srcaddr, 0 /* groupaddr */, OCCUPANCY_TIMEOUT, _cluster_id, _srcendpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
+          uint32_t pir_timer = OCCUPANCY_TIMEOUT;
+          const Z_Data_PIR & pir_found = (const Z_Data_PIR&) zigbee_devices.getShortAddr(_srcaddr).data.find(Z_Data_Type::Z_PIR, _srcendpoint);
+          if (&pir_found != nullptr) {
+            pir_timer = pir_found.getTimeoutSeconds() * 1000;
+          }
+          zigbee_devices.setTimer(_srcaddr, 0 /* groupaddr */, pir_timer, _cluster_id, _srcendpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
         } else {
           zigbee_devices.resetTimersForDevice(_srcaddr, 0 /* groupaddr */, Z_CAT_VIRTUAL_OCCUPANCY);
         }
