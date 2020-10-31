@@ -256,7 +256,7 @@ bool Xdsp04(uint8_t function)
 {
   bool result = false;
 
-  if (spi_flg) {
+  if (TasmotaGlobal.spi_enabled) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {
       Ili9341InitDriver();
     }

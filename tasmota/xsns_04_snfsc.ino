@@ -152,7 +152,7 @@ bool Xsns04(uint8_t function)
 {
   bool result = false;
 
-  if (SONOFF_SC == my_module_type) {
+  if (SONOFF_SC == TasmotaGlobal.module_type) {
     switch (function) {
       case FUNC_JSON_APPEND:
         SonoffScShow(1);

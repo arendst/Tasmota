@@ -1044,7 +1044,7 @@ miel_hvac_pre_init(void)
 		SetSerial(baudrate, TS_SERIAL_8E1);
 	}
 
-	sc->sc_device = devices_present++; /* claim a POWER device slot */
+	sc->sc_device = TasmotaGlobal.devices_present++; /* claim a POWER device slot */
 
 	miel_hvac_sc = sc;
 	return;

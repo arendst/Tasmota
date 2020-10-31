@@ -37,7 +37,7 @@ void HandleMetrics(void)
 
   // Pseudo-metric providing metadata about the running firmware version.
   WSContentSend_P(PSTR("# TYPE tasmota_info gauge\ntasmota_info{version=\"%s\",image=\"%s\",build_timestamp=\"%s\"} 1\n"),
-                  my_version, my_image, GetBuildDateAndTime().c_str());
+                  TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
   WSContentSend_P(PSTR("# TYPE tasmota_uptime_seconds gauge\ntasmota_uptime_seconds %d\n"), TasmotaGlobal.uptime);
   WSContentSend_P(PSTR("# TYPE tasmota_boot_count counter\ntasmota_boot_count %d\n"), Settings.bootcount);
   WSContentSend_P(PSTR("# TYPE tasmota_flash_writes_total counter\ntasmota_flash_writes_total %d\n"), Settings.save_flag);
@@ -78,10 +78,10 @@ void HandleMetrics(void)
 /*
   // Alternative method using the complete sensor JSON data
   // For prometheus it may need to be decoded to # TYPE messages
-  mqtt_data[0] = '\0';
+  ResponseClear();
   MqttShowSensor();
-  char json[strlen(mqtt_data) +1];
-  snprintf_P(json, sizeof(json), mqtt_data);
+  char json[strlen(TasmotaGlobal.mqtt_data) +1];
+  snprintf_P(json, sizeof(json), TasmotaGlobal.mqtt_data);
 
   // Do your Prometheus specific processing here.
   // Look at function DisplayAnalyzeJson() in file xdrv_13_display.ino as an example how to decode the JSON message

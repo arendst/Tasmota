@@ -137,8 +137,8 @@ struct mi_beacon_t{
     uint32_t NMT; //17
     struct{ //01
       uint16_t num;
-      uint8_t longPress; 
-    }Btn; 
+      uint8_t longPress;
+    }Btn;
   };
   uint8_t padding[12];
 };
@@ -191,7 +191,7 @@ struct mi_sensor_t{
     };
     uint32_t raw;
   } eventType;
- 
+
   int rssi;
   uint32_t lastTime;
   uint32_t lux;
@@ -244,7 +244,7 @@ const char kHM10_Commands[] PROGMEM             = "Scan|AT|Period|Baud|Time|Auto
 
 #define HM10_TYPES    12 //count this manually
 
-const uint16_t kHM10SlaveID[HM10_TYPES]={ 
+const uint16_t kHM10SlaveID[HM10_TYPES]={
                                   0x0098, // Flora
                                   0x01aa, // MJ_HT_V1
                                   0x045b, // LYWSD02
@@ -490,7 +490,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint32_t _rssi){
       _newSensor.feature.lux=1;
       _newSensor.feature.bat=1;
       break;
-    case NLIGHT: 
+    case NLIGHT:
       _newSensor.events=0x00;
       _newSensor.feature.PIR=1;
       _newSensor.feature.NMT=1;
@@ -685,7 +685,7 @@ char* HM10ParseResponse(char *buf, uint16_t bufsize) {
     while(_pos = (char*) memchr(buf+_idx, 'I', 60)){ //strstr() does miss too much
       _idx=_pos-buf;
       if(memcmp(&_pos+1,_subStr,3)){
-        break; 
+        break;
       }
     }
     if(_pos) {
@@ -1371,11 +1371,11 @@ bool HM10Cmd(void) {
 
 /**
  * @brief trigger real-time message
- * 
+ *
  */
 void HM10triggerTele(void){
     HM10.mode.triggeredTele = 1;
-    mqtt_data[0] = '\0';
+    ResponseClear();
     if (MqttShowSensor()) {
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   #ifdef USE_RULES
@@ -1405,12 +1405,12 @@ void HM10Show(bool json)
     for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
       if(HM10.mode.triggeredTele && MIBLEsensors[i].eventType.raw == 0) continue;
       if(HM10.mode.triggeredTele && MIBLEsensors[i].shallSendMQTT==0) continue;
-      
+
       ResponseAppend_P(PSTR(",\"%s-%02x%02x%02x\":"), // do not add the '{' now ...
         kHM10DeviceType[MIBLEsensors[i].type-1],
         MIBLEsensors[i].MAC[3], MIBLEsensors[i].MAC[4], MIBLEsensors[i].MAC[5]);
 
-      uint32_t _positionCurlyBracket = strlen(mqtt_data); // ... this will be a ',' first, but later be replaced
+      uint32_t _positionCurlyBracket = strlen(TasmotaGlobal.mqtt_data); // ... this will be a ',' first, but later be replaced
 
       if((!HM10.mode.triggeredTele && !HM10.option.minimalSummary)||HM10.mode.triggeredTele){
         bool tempHumSended = false;
@@ -1499,9 +1499,9 @@ void HM10Show(bool json)
       if (HM10.option.showRSSI && HM10.mode.triggeredTele) ResponseAppend_P(PSTR(",\"RSSI\":%d"), MIBLEsensors[i].rssi);
 
 
-      if(_positionCurlyBracket==strlen(mqtt_data)) ResponseAppend_P(PSTR(",")); // write some random char, to be overwritten in the next step
+      if(_positionCurlyBracket==strlen(TasmotaGlobal.mqtt_data)) ResponseAppend_P(PSTR(",")); // write some random char, to be overwritten in the next step
       ResponseAppend_P(PSTR("}"));
-      mqtt_data[_positionCurlyBracket] = '{';
+      TasmotaGlobal.mqtt_data[_positionCurlyBracket] = '{';
       MIBLEsensors[i].eventType.raw = 0;
       if(MIBLEsensors[i].shallSendMQTT==1){
         MIBLEsensors[i].shallSendMQTT = 0;

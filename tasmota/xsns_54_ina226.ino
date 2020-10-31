@@ -206,7 +206,7 @@ void Ina226Init()
   //AddLog_P2( LOG_LEVEL_NONE, "Ina226Init");
 //  AddLog_P2( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
 
-//  if (!i2c_flg)
+//  if (!TasmotaGlobal.i2c_enabled)
 //    AddLog_P2(LOG_LEVEL_DEBUG, "INA226: Initialization failed: No I2C support");
 
 

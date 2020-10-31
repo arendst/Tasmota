@@ -829,9 +829,17 @@ bool Z_attribute_list::mergeList(const Z_attribute_list &attr_list) {
   } else if (0xFF != attr_list.src_ep) {
     if (src_ep != attr_list.src_ep) { return false; }
   }
+  // Check group address
+  if (0xFFFF == group_id) {
+    group_id = attr_list.group_id;
+  } else if (0xFFFF != attr_list.group_id) {
+    if (group_id != attr_list.group_id) { return false; }
+  }
+  // copy LQI
   if (0xFF != attr_list.lqi) {
     lqi = attr_list.lqi;
   }
+  // merge attributes
   for (auto & attr : attr_list) {
     replaceOrCreate(attr);
   }

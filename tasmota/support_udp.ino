@@ -133,7 +133,7 @@ void PollUdp(void)
 #if defined(USE_SCRIPT_HUE) || defined(USE_ZIGBEE)
         if (!udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
 #else
-        if (devices_present && !udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
+        if (TasmotaGlobal.devices_present && !udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
 #endif
           udp_response_mutex = true;
 

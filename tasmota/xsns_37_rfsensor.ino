@@ -665,7 +665,7 @@ bool Xsns37(uint8_t function)
             RfSnsAnalyzeRawSignal();
           }
         }
-        ssleep = 0;
+        TasmotaGlobal.sleep = 0;
         break;
       case FUNC_EVERY_SECOND:
         RfSnsEverySecond();

@@ -96,14 +96,14 @@ void Dds2382SnsInit(void)
   if (result) {
     if (2 == result) { ClaimSerial(); }
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
 void Dds2382DrvInit(void)
 {
   if (PinUsed(GPIO_DDS2382_RX) && PinUsed(GPIO_DDS2382_TX)) {
-    energy_flg = XNRG_09;
+    TasmotaGlobal.energy_driver = XNRG_09;
   }
 }
 

@@ -62,7 +62,7 @@ def ir_expand(ir_compact):
 #include <IRremoteESP8266.h>
 #include <IRutils.h>
 
-enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND };
+enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_PROTO_UNSUPPORTED };
 
 const char kIrRemoteCommands[] PROGMEM = "|" D_CMND_IRSEND ;
 
@@ -72,7 +72,7 @@ void (* const IrRemoteCommand[])(void) PROGMEM = {
 
 /*********************************************************************************************\
  * Class used to make a compact IR Raw format.
- * 
+ *
  * We round timings to the closest 10ms value,
  * and store up to last 26 values with seen.
  * A value already seen is encoded with a letter indicating the position in the table.
@@ -215,7 +215,7 @@ void IrReceiveCheck(void)
         ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":\""));
         size_t rawlen = results.rawlen;
         uint32_t i;
-        
+
         for (i = 1; i < rawlen; i++) {
           // round to closest 10ms
           uint32_t raw_val_millis = results.rawbuf[i] * kRawTick;
@@ -232,7 +232,7 @@ void IrReceiveCheck(void)
             prev_number = true;
           }
           ir_high = !ir_high;
-          if (strlen(mqtt_data) > sizeof(mqtt_data) - 40) { break; }  // Quit if char string becomes too long
+          if (strlen(TasmotaGlobal.mqtt_data) > sizeof(TasmotaGlobal.mqtt_data) - 40) { break; }  // Quit if char string becomes too long
         }
         uint16_t extended_length = getCorrectedRawLength(&results);
         ResponseAppend_P(PSTR("\",\"" D_JSON_IR_RAWDATA "Info\":[%d,%d,%d]"), extended_length, i -1, results.overflow);
@@ -274,7 +274,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
   uint16_t bits = root.getUInt(PSTR(D_JSON_IR_BITS), 0);
   uint64_t data = root.getULong(PSTR(D_JSON_IR_DATA), 0);
   uint16_t repeat = root.getUInt(PSTR(D_JSON_IR_REPEAT), 0);
-  
+
   // check if the IRSend<x> is great than repeat
   if (XdrvMailbox.index > repeat + 1) {
     repeat = XdrvMailbox.index - 1;
@@ -307,7 +307,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
 #endif
     default:
       irsend_active = false;
-      ResponseCmndChar(D_JSON_PROTOCOL_NOT_SUPPORTED);
+      return IE_PROTO_UNSUPPORTED;
   }
 
   return IE_NO_ERROR;
@@ -335,6 +335,9 @@ void IrRemoteCmndResponse(uint32_t error)
       break;
     case IE_INVALID_JSON:
       ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON));
+      break;
+    case IE_PROTO_UNSUPPORTED:
+      ResponseCmndChar(D_JSON_PROTOCOL_NOT_SUPPORTED);
       break;
     case IE_SYNTAX_IRSEND:
       Response_P(PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_NO " " D_JSON_IR_PROTOCOL ", " D_JSON_IR_BITS " " D_JSON_OR " " D_JSON_IR_DATA "\"}"));

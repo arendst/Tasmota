@@ -397,7 +397,7 @@ void FLOG::stopRecording(void){
       if(k%128 == 0){  // give control to the system every x iteration, TODO: This will fail, when record/entry-size is not 8
         // DEBUG_SENSOR_LOG(PSTR("FLOG: now loop(), %u bytes left"), Flog->bytes_left);
         OsWatchLoop();
-        delay(ssleep);
+        delay(TasmotaGlobal.sleep);
         }
       k+=size;
       if(bytes_left>7){
@@ -416,7 +416,7 @@ void FLOG::stopRecording(void){
     _readSector(next_sector);
     bytes_left = sector.header.buf_pointer - sizeof(sector.header);
     OsWatchLoop();
-    delay(ssleep);
+    delay(TasmotaGlobal.sleep);
   }
   running_download = false;
   // Callback 3: create a footer or simply finish the download with an empty payload

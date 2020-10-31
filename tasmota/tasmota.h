@@ -124,6 +124,7 @@ const uint8_t MAX_POWER_RETRY = 5;          // Retry count allowing agreed power
 
 const uint8_t STATES = 20;                  // Number of states per second using 50 mSec interval
 const uint8_t IMMINENT_RESET_FACTOR = 10;   // Factor to extent button hold time for imminent Reset to default 40 seconds using KEY_HOLD_TIME of 40
+const uint32_t LAST_MODULE_SET_TIME = 12;   // Number of seconds to set last module to current module
 const uint32_t BOOT_LOOP_TIME = 10;         // Number of seconds to stop detecting boot loops
 const uint32_t POWER_CYCLE_TIME = 8;        // Number of seconds to reset power cycle boot loops
 const uint16_t SYSLOG_TIMER = 600;          // Seconds to restore syslog_level
@@ -348,6 +349,7 @@ enum TasmotaSerialConfig {
   TS_SERIAL_5O1, TS_SERIAL_6O1, TS_SERIAL_7O1, TS_SERIAL_8O1,
   TS_SERIAL_5O2, TS_SERIAL_6O2, TS_SERIAL_7O2, TS_SERIAL_8O2 };
 
+#ifdef ESP8266
 const SerConfu8 kTasmotaSerialConfig[] PROGMEM = {
   SERIAL_5N1, SERIAL_6N1, SERIAL_7N1, SERIAL_8N1,
   SERIAL_5N2, SERIAL_6N2, SERIAL_7N2, SERIAL_8N2,
@@ -356,6 +358,16 @@ const SerConfu8 kTasmotaSerialConfig[] PROGMEM = {
   SERIAL_5O1, SERIAL_6O1, SERIAL_7O1, SERIAL_8O1,
   SERIAL_5O2, SERIAL_6O2, SERIAL_7O2, SERIAL_8O2
 };
+#else  // ESP32
+const uint32_t kTasmotaSerialConfig[] PROGMEM = {
+  SERIAL_5N1, SERIAL_6N1, SERIAL_7N1, SERIAL_8N1,
+  SERIAL_5N2, SERIAL_6N2, SERIAL_7N2, SERIAL_8N2,
+  SERIAL_5E1, SERIAL_6E1, SERIAL_7E1, SERIAL_8E1,
+  SERIAL_5E2, SERIAL_6E2, SERIAL_7E2, SERIAL_8E2,
+  SERIAL_5O1, SERIAL_6O1, SERIAL_7O1, SERIAL_8O1,
+  SERIAL_5O2, SERIAL_6O2, SERIAL_7O2, SERIAL_8O2
+};
+#endif
 
 enum TuyaSupportedFunctions { TUYA_MCU_FUNC_NONE,
                               TUYA_MCU_FUNC_SWT1 = 1, TUYA_MCU_FUNC_SWT2, TUYA_MCU_FUNC_SWT3, TUYA_MCU_FUNC_SWT4,
