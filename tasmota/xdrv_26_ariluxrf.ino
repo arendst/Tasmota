@@ -149,7 +149,7 @@ void AriluxRfInit(void)
     if (Settings.last_module != Settings.module) {
       Settings.rf_code[1][6] = 0;
       Settings.rf_code[1][7] = 0;
-      Settings.last_module = Settings.module;
+//      Settings.last_module = Settings.module;  // Will be done at LAST_MODULE_SET_TIME after restart as other drivers also test for module change
     }
     Arilux.rf_received_value = 0;
 
@@ -179,7 +179,7 @@ bool Xdrv26(uint8_t function)
       if (PinUsed(GPIO_ARIRFRCV)) { AriluxRfHandler(); }
       break;
     case FUNC_EVERY_SECOND:
-      if (10 == TasmotaGlobal.uptime) { AriluxRfInit(); }  // Needs rest before enabling RF interrupts
+      if (LAST_MODULE_SET_TIME -2 == TasmotaGlobal.uptime) { AriluxRfInit(); }  // Needs rest before enabling RF interrupts
       break;
   }
   return result;

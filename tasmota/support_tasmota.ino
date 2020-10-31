@@ -791,6 +791,10 @@ void PerformEverySecond(void)
 {
   TasmotaGlobal.uptime++;
 
+  if (LAST_MODULE_SET_TIME == TasmotaGlobal.uptime) {
+    Settings.last_module = Settings.module;  // Needs to be done after AriluxRfInit() and PWMModulePreInit()
+  }
+
   if (POWER_CYCLE_TIME == TasmotaGlobal.uptime) {
     UpdateQuickPowerCycle(false);
   }
