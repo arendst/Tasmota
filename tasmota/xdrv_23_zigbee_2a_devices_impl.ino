@@ -228,20 +228,26 @@ void Z_Devices::clearEndpoints(uint16_t shortaddr) {
 
 //
 // Add an endpoint to a shortaddr
+// return true if a change was made
 //
-void Z_Devices::addEndpoint(uint16_t shortaddr, uint8_t endpoint) {
-  if ((0x00 == endpoint) || (endpoint > 240)) { return; }
-  Z_Device &device = getShortAddr(shortaddr);
+bool Z_Device::addEndpoint(uint8_t endpoint) {
+  if ((0x00 == endpoint) || (endpoint > 240)) { return false; }
 
   for (uint32_t i = 0; i < endpoints_max; i++) {
-    if (endpoint == device.endpoints[i]) {
-      return;     // endpoint already there
+    if (endpoint == endpoints[i]) {
+      return false;     // endpoint already there
     }
-    if (0 == device.endpoints[i]) {
-      device.endpoints[i] = endpoint;
-      dirty();
-      return;
+    if (0 == endpoints[i]) {
+      endpoints[i] = endpoint;
+      return true;
     }
+  }
+  return false;
+}
+
+void Z_Devices::addEndpoint(uint16_t shortaddr, uint8_t endpoint) {
+  if (getShortAddr(shortaddr).addEndpoint(endpoint)) {
+    dirty();
   }
 }
 
