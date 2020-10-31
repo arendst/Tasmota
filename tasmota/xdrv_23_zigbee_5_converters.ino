@@ -1775,8 +1775,8 @@ void Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluste
 
 // ======================================================================
 void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attribute_list& attr_list) {
-  uint8_t count_ep = zigbee_devices.countEndpoints(shortaddr);
   Z_Device & device = zigbee_devices.getShortAddr(shortaddr);
+  uint8_t count_ep = device.countEndpoints();
 
   for (auto &attr : attr_list) {
     // add endpoint suffix if needed
@@ -1825,7 +1825,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
         // Then store the attribute at the attribute addres (via offset) and according to size 8/16/32 bits
 
         // add the endpoint if it was not already known
-        zigbee_devices.addEndpoint(shortaddr, src_ep);
+        device.addEndpoint(src_ep);
         // we don't apply the multiplier, but instead store in Z_Data_XXX object
         Z_Data & data = device.data.getByType(map_type, src_ep);
         uint8_t *attr_address = ((uint8_t*)&data) + sizeof(Z_Data) + map_offset;
@@ -1851,8 +1851,8 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
       Z_Data_Set & data = device.data;
       // update any internal structure
       switch (ccccaaaa) {
-        case 0x00000004: zigbee_devices.setManufId(shortaddr, attr.getStr());         break;
-        case 0x00000005: zigbee_devices.setModelId(shortaddr, attr.getStr());         break;
+        case 0x00000004: device.setManufId(attr.getStr());                            break;
+        case 0x00000005: device.setModelId(attr.getStr());                            break;
         case 0x00010021: zigbee_devices.setBatteryPercent(shortaddr, uval16 / 2);     break;
         case 0x00060000:
         case 0x00068000: device.setPower(attr.getBool(), src_ep);                     break;
