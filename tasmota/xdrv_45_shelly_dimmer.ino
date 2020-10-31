@@ -31,7 +31,7 @@
 #define XNRG_31                     31
 
 #define SHD_DRIVER_MAJOR_VERSION    1
-#define SHD_DRIVER_MINOR_VERSION    0
+#define SHD_DRIVER_MINOR_VERSION    1
 
 #define SHD_LOGNAME                 "SHD"
 
