@@ -916,6 +916,7 @@ void SetSerialBegin(void) {
 #ifdef ESP8266
   Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings.serial_config));
 #else  // ESP32
+  delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   Serial.end();
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   uint32_t config = pgm_read_dword(kTasmotaSerialConfig + Settings.serial_config);
