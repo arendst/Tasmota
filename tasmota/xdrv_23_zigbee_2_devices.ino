@@ -543,7 +543,15 @@ public:
   inline bool getReachable(void)        const { return reachable; }
   inline bool getPower(uint8_t ep =0)   const;
 
+  // Add an endpoint to a device
   bool addEndpoint(uint8_t endpoint);
+  void clearEndpoints(void);
+  uint32_t countEndpoints(void) const;    // return the number of known endpoints (0 if unknown)
+
+  void setManufId(const char * str);
+  void setModelId(const char * str);
+  void setFriendlyName(const char * str);
+
   // dump device attributes to ZbData
   void toAttributes(Z_attribute_list & attr_list) const;
 
@@ -584,6 +592,9 @@ public:
     }
     return dirty;
   }
+protected:
+
+  static void setStringAttribute(char*& attr, const char * str);
 };
 
 /*********************************************************************************************\
@@ -668,14 +679,6 @@ public:
   // If it is already registered, update information, otherwise create the entry
   Z_Device &  updateDevice(uint16_t shortaddr, uint64_t longaddr = 0);
 
-  // Add an endpoint to a device
-  void addEndpoint(uint16_t shortaddr, uint8_t endpoint);
-  void clearEndpoints(uint16_t shortaddr);
-  uint32_t countEndpoints(uint16_t shortaddr) const;    // return the number of known endpoints (0 if unknown)
-
-  void setManufId(uint16_t shortaddr, const char * str);
-  void setModelId(uint16_t shortaddr, const char * str);
-  void setFriendlyName(uint16_t shortaddr, const char * str);
   inline const char * getFriendlyName(uint16_t shortaddr) const {
     return findShortAddr(shortaddr).friendlyName;
   }
@@ -762,8 +765,6 @@ private:
   // Create a new entry in the devices list - must be called if it is sure it does not already exist
   Z_Device & createDeviceEntry(uint16_t shortaddr, uint64_t longaddr = 0);
   void freeDeviceEntry(Z_Device *device);
-
-  void setStringAttribute(char*& attr, const char * str);
 };
 
 /*********************************************************************************************\

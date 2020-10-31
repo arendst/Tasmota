@@ -227,7 +227,7 @@ void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version) {
     for (uint32_t j = 0; j < endpoints; j++) {
       uint8_t ep = buf_d.get8(d++);
       uint16_t ep_profile = buf_d.get16(d);  d += 2;
-      zigbee_devices.addEndpoint(shortaddr, ep);
+      device.addEndpoint(ep);
 
       // in clusters
       while (d < buf_len) {      // safe guard against overflow
@@ -245,13 +245,13 @@ void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version) {
   }
 
   // ModelId
-  zigbee_devices.setModelId(shortaddr, hydrateSingleString(buf_d, &d));
+  device.setModelId(hydrateSingleString(buf_d, &d));
 
   // ManufID
-  zigbee_devices.setManufId(shortaddr, hydrateSingleString(buf_d, &d));
+  device.setManufId(hydrateSingleString(buf_d, &d));
 
   // FriendlyName
-  zigbee_devices.setFriendlyName(shortaddr, hydrateSingleString(buf_d, &d));
+  device.setFriendlyName(hydrateSingleString(buf_d, &d));
 
   if (d >= buf_len) { return; }
 

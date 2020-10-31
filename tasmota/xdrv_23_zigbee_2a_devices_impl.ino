@@ -218,10 +218,9 @@ Z_Device & Z_Devices::updateDevice(uint16_t shortaddr, uint64_t longaddr) {
 //
 // Clear all endpoints
 //
-void Z_Devices::clearEndpoints(uint16_t shortaddr) {
-  Z_Device &device = getShortAddr(shortaddr);
+void Z_Device::clearEndpoints(void) {
   for (uint32_t i = 0; i < endpoints_max; i++) {
-    device.endpoints[i] = 0;
+    endpoints[i] = 0;
     // no dirty here because it doesn't make sense to store it, does it?
   }
 }
@@ -245,22 +244,13 @@ bool Z_Device::addEndpoint(uint8_t endpoint) {
   return false;
 }
 
-void Z_Devices::addEndpoint(uint16_t shortaddr, uint8_t endpoint) {
-  if (getShortAddr(shortaddr).addEndpoint(endpoint)) {
-    dirty();
-  }
-}
-
 //
 // Count the number of known endpoints
 //
-uint32_t Z_Devices::countEndpoints(uint16_t shortaddr) const {
+uint32_t Z_Device::countEndpoints(void) const {
   uint32_t count_ep = 0;
-  const Z_Device & device =findShortAddr(shortaddr);
-  if (!foundDevice(device)) return 0;
-
   for (uint32_t i = 0; i < endpoints_max; i++) {
-    if (0 != device.endpoints[i]) {
+    if (0 != endpoints[i]) {
       count_ep++;
     }
   }
@@ -274,7 +264,7 @@ uint8_t Z_Devices::findFirstEndpoint(uint16_t shortaddr) const {
   return findShortAddr(shortaddr).endpoints[0];   // returns 0x00 if no endpoint
 }
 
-void Z_Devices::setStringAttribute(char*& attr, const char * str) {
+void Z_Device::setStringAttribute(char*& attr, const char * str) {
   if (nullptr == str)  { return; }                    // ignore a null parameter
   size_t str_len = strlen(str);
 
@@ -294,7 +284,7 @@ void Z_Devices::setStringAttribute(char*& attr, const char * str) {
     attr = (char*) malloc(str_len + 1);
     strlcpy(attr, str, str_len + 1);
   }
-  dirty();
+  zigbee_devices.dirty();
 }
 
 //
@@ -306,16 +296,16 @@ void Z_Devices::setStringAttribute(char*& attr, const char * str) {
 // Impact:
 // - Any actual change in ManufId (i.e. setting a different value) triggers a `dirty()` and saving to Flash
 //
-void Z_Devices::setManufId(uint16_t shortaddr, const char * str) {
-  setStringAttribute(getShortAddr(shortaddr).manufacturerId, str);
+void Z_Device::setManufId(const char * str) {
+  setStringAttribute(manufacturerId, str);
 }
 
-void Z_Devices::setModelId(uint16_t shortaddr, const char * str) {
-  setStringAttribute(getShortAddr(shortaddr).modelId, str);
+void Z_Device::setModelId(const char * str) {
+  setStringAttribute(modelId, str);
 }
 
-void Z_Devices::setFriendlyName(uint16_t shortaddr, const char * str) {
-  setStringAttribute(getShortAddr(shortaddr).friendlyName, str);
+void Z_Device::setFriendlyName(const char * str) {
+  setStringAttribute(friendlyName, str);
 }
 
 
@@ -755,24 +745,24 @@ int32_t Z_Devices::deviceRestore(JsonParserObject json) {
 
   // update internal device information
   updateDevice(shortaddr, ieeeaddr);
-  if (modelid) { setModelId(shortaddr, modelid); }
-  if (manufid) { setManufId(shortaddr, manufid); }
-  if (friendlyname) { setFriendlyName(shortaddr, friendlyname); }
+  Z_Device & device = getShortAddr(shortaddr);
+  if (modelid) { device.setModelId(modelid); }
+  if (manufid) { device.setManufId(manufid); }
+  if (friendlyname) { device.setFriendlyName(friendlyname); }
 
   // read "Endpoints"
   JsonParserToken val_endpoints = json[PSTR("Endpoints")];
   if (val_endpoints.isArray()) {
     JsonParserArray arr_ep = JsonParserArray(val_endpoints);
-    clearEndpoints(shortaddr);     // clear even if array is empty
+    device.clearEndpoints();     // clear even if array is empty
     for (auto ep_elt : arr_ep) {
       uint8_t ep = ep_elt.getUInt();
-      if (ep) { addEndpoint(shortaddr, ep); }
+      if (ep) { device.addEndpoint(ep); }
     }
   }
 
   // read "Config"
   JsonParserToken val_config = json[PSTR("Config")];
-  Z_Device & device = getShortAddr(shortaddr);
   if (val_config.isArray()) {
     JsonParserArray arr_config = JsonParserArray(val_config);
     device.data.reset();  // remove existing configuration

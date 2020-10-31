@@ -539,7 +539,7 @@ int32_t Z_ReceiveActiveEp(int32_t res, const class SBuffer &buf) {
 
   for (uint32_t i = 0; i < activeEpCount; i++) {
     uint8_t ep = activeEpList[i];
-    zigbee_devices.addEndpoint(nwkAddr, ep);
+    zigbee_devices.getShortAddr(nwkAddr).addEndpoint(ep);
     if ((i < 4) && (ep < 0x10)) {
       zigbee_devices.queueTimer(nwkAddr, 0 /* groupaddr */, 1500, ep /* fake cluster as ep */, ep, Z_CAT_EP_DESC, 0 /* value */, &Z_SendSimpleDescReq);
     }
