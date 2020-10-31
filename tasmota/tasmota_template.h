@@ -1469,7 +1469,7 @@ const uint8_t kModuleTemplateList[MAXMODULE] PROGMEM = {
   TMP_EXS_DIMMER,
   TMP_PWM_DIMMER,
   TMP_SONOFF_DUAL,      // SONOFF_D1
-  TMP_SONOFF_ZB_BRIDGE
+  TMP_SONOFF_ZB_BRIDGE,
   };
 
 /*********************************************************************************************\
