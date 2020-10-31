@@ -153,6 +153,16 @@ char* GetStateText(uint32_t state)
   return SettingsText(SET_STATE_TXT1 + state);
 }
 
+#ifdef USE_SWITCHTEXT
+char* GetSwitchText(uint32_t sw_no)
+{
+  if (sw_no >= MAX_SWITCHES) {
+    sw_no = 0;
+  }
+  return SettingsText(SET_SWITCH_TXT1 + sw_no);
+}
+#endif
+
 /********************************************************************************************/
 
 void SetLatchingRelay(power_t lpower, uint32_t state)
@@ -750,7 +760,15 @@ bool MqttShowSensor(void)
 #else
     if (PinUsed(GPIO_SWT1, i)) {
 #endif  // USE_TM1638
-      ResponseAppend_P(PSTR(",\"" D_JSON_SWITCH "%d\":\"%s\""), i +1, GetStateText(SwitchState(i)));
+#ifdef USE_SWITCHTEXT
+      char* switch_text = GetSwitchText(i);
+      if ('\0' == switch_text[0])
+#endif
+        ResponseAppend_P(PSTR(",\"" D_JSON_SWITCH "%d\":\"%s\""), i +1, GetStateText(SwitchState(i)));
+#ifdef USE_SWITCHTEXT
+      else
+        ResponseAppend_P(PSTR(",\"%s\":\"%s\""), switch_text, GetStateText(SwitchState(i)));
+#endif
     }
   }
   XsnsCall(FUNC_JSON_APPEND);

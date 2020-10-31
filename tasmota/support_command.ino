@@ -108,6 +108,13 @@ void ResponseCmndStateText(uint32_t value)
   ResponseCmndChar(GetStateText(value));
 }
 
+#ifdef USE_SWITCHTEXT
+void ResponseCmndSwitchText(uint32_t value)
+{
+  ResponseCmndChar(GetStateText(value));
+}
+#endif
+
 void ResponseCmndDone(void)
 {
   ResponseCmndChar(D_JSON_DONE);
