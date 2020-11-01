@@ -64,6 +64,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Command ``SwitchMode 15`` sending only MQTT message on switch change (#9593)
 - Command ``ShutterChange`` to increment change position (#9594)
 - Command ``SetOption113 1`` to set dimmer low on rotary dial after power off
+- Command ``SwitchText`` to change JSON switch names by barbudor (#9691)
 - Zigbee command ``ZbData`` for better support of device specific data
 - Zigbee command ``ZbOccupancy`` to configure the time-out for PIR
 - Optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)

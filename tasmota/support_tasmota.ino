@@ -739,6 +739,14 @@ void TempHumDewShow(bool json, bool pass_on, const char *types, float f_temperat
   }
 }
 
+String GetSwitchText(uint32_t i) {
+  String switch_text = SettingsText(SET_SWITCH_TXT1 + i);
+  if ('\0' == switch_text[0]) {
+    switch_text = D_JSON_SWITCH + String(i +1);
+  }
+  return switch_text;
+}
+
 bool MqttShowSensor(void)
 {
   ResponseAppendTime();
@@ -750,7 +758,7 @@ bool MqttShowSensor(void)
 #else
     if (PinUsed(GPIO_SWT1, i)) {
 #endif  // USE_TM1638
-      ResponseAppend_P(PSTR(",\"" D_JSON_SWITCH "%d\":\"%s\""), i +1, GetStateText(SwitchState(i)));
+      ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetSwitchText(i).c_str(), GetStateText(SwitchState(i)));
     }
   }
   XsnsCall(FUNC_JSON_APPEND);

@@ -9,9 +9,10 @@ All notable changes to this project will be documented in this file.
 - Support for EZO O2 sensors by Christopher Tremblay (#9619)
 - Support for EZO PRS sensors by Christopher Tremblay (#9659)
 - Zigbee reduce battery drain (#9642)
-- Zigbee added ``ZbMap`` command to describe Zigbee topology (#9651)
-- Command ``Gpios 255`` to show all possible GPIO configurations
+- Zigbee command ``ZbMap`` to describe Zigbee topology (#9651)
 - Zigbee command ``ZbOccupancy`` to configure the time-out for PIR
+- Command ``Gpios 255`` to show all possible GPIO configurations
+- Command ``SwitchText`` to change JSON switch names by barbudor (#9691)
 
 ### Changed
 - PlatformIO library structure redesigned for compilation speed by Jason2866
