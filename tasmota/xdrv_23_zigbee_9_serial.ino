@@ -156,7 +156,7 @@ void ZigbeeInputLoop(void) {
       if (Settings.flag3.tuya_serial_mqtt_publish) {
         MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
       } else {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
       }
 			// now process the message
       ZigbeeProcessInput(znp_buffer);
@@ -293,13 +293,13 @@ void ZigbeeInitSerial(void)
   zigbee.active = false;
   if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX)) {
 		AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "GPIOs Rx:%d Tx:%d"), Pin(GPIO_ZIGBEE_RX), Pin(GPIO_ZIGBEE_TX));
-    // if seriallog_level is 0, we allow GPIO 13/15 to switch to Hardware Serial
-    ZigbeeSerial = new TasmotaSerial(Pin(GPIO_ZIGBEE_RX), Pin(GPIO_ZIGBEE_TX), seriallog_level ? 1 : 2, 0, 256);   // set a receive buffer of 256 bytes
+    // if TasmotaGlobal.seriallog_level is 0, we allow GPIO 13/15 to switch to Hardware Serial
+    ZigbeeSerial = new TasmotaSerial(Pin(GPIO_ZIGBEE_RX), Pin(GPIO_ZIGBEE_TX), TasmotaGlobal.seriallog_level ? 1 : 2, 0, 256);   // set a receive buffer of 256 bytes
     ZigbeeSerial->begin(115200);
     if (ZigbeeSerial->hardwareSerial()) {
       ClaimSerial();
-      uint32_t aligned_buffer = ((uint32_t)serial_in_buffer + 3) & ~3;
-			zigbee_buffer = new PreAllocatedSBuffer(sizeof(serial_in_buffer) - 3, (char*) aligned_buffer);
+      uint32_t aligned_buffer = ((uint32_t)TasmotaGlobal.serial_in_buffer + 3) & ~3;
+			zigbee_buffer = new PreAllocatedSBuffer(sizeof(TasmotaGlobal.serial_in_buffer) - 3, (char*) aligned_buffer);
 		} else {
 // AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInit Mem2 = %d"), ESP_getFreeHeap());
 			zigbee_buffer = new SBuffer(ZIGBEE_BUFFER_SIZE);
@@ -545,7 +545,7 @@ void ZigbeeEZSPSendDATA(const uint8_t *msg, size_t len) {
   }
   EZSP_Serial.to_packets[to_frm] = buf;
   EZSP_Serial.to_end = (to_frm + 1) & 0x07;   // move cursor
-  
+
   // ZigbeeEZSPSendDATA_frm(send_cancel, to_frm, EZSP_Serial.from_ack);
 
   // increment to_frame
@@ -609,7 +609,7 @@ int32_t ZigbeeProcessInputEZSP(class SBuffer &buf) {
         log_level = LOG_LEVEL_DEBUG;
         break;
     }
-    AddLog_P2(log_level, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);    // TODO move to LOG_LEVEL_DEBUG when stable
+    AddLog_P2(log_level, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);    // TODO move to LOG_LEVEL_DEBUG when stable
   }
 
   // Pass message to state machine
@@ -672,14 +672,14 @@ int32_t ZigbeeProcessInputRaw(class SBuffer &buf) {
       // ERROR
       EZ_ERROR(buf.get8(2));
       zigbee.active = false;           // stop all zigbee activities
-      restart_flag = 2;                // there is nothing more we can do except restart
+      TasmotaGlobal.restart_flag = 2;  // there is nothing more we can do except restart
     } else {
 
       // Unknown
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZIG: Received unknown control byte 0x%02X"), control_byte);
     }
   } else {    // DATA Frame
-    
+
     // adjust to latest acked packet
     uint8_t new_ack = control_byte & 0x07;
     EZSP_HandleAck(new_ack);

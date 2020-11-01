@@ -81,7 +81,7 @@ bool RotaryButtonPressed(uint32_t button_index) {
     if (-1 == Encoder[index].pinb) { continue; }
     if (index != button_index) { continue; }
 
-    bool powered_on = (power);
+    bool powered_on = (TasmotaGlobal.power);
 #ifdef USE_LIGHT
     if (!Settings.flag4.rotary_uses_rules) {   // SetOption98 - Use rules instead of light control
       powered_on = LightPower();
@@ -126,7 +126,7 @@ void RotaryInit(void) {
   Rotary.present = false;
   Rotary.model = 1;
 #ifdef ESP8266
-  if (MI_DESK_LAMP == my_module_type) {
+  if (MI_DESK_LAMP == TasmotaGlobal.module_type) {
     Rotary.model = 0;
   }
 #endif  // ESP8266
@@ -180,8 +180,8 @@ void RotaryHandler(void) {
     Encoder[index].position = rotary_offset;
     interrupts();
 
-    if (Settings.save_data && (save_data_counter < 2)) {
-      save_data_counter = 3;                   // Postpone flash writes while rotary is turned
+    if (Settings.save_data && (TasmotaGlobal.save_data_counter < 2)) {
+      TasmotaGlobal.save_data_counter = 3;                   // Postpone flash writes while rotary is turned
     }
 
     bool button_pressed = (Button.hold_timer[index]);  // Button is pressed: set color temperature
@@ -202,7 +202,7 @@ void RotaryHandler(void) {
           }
         } else {                               // Dimmer RGBCW or RGB only if second rotary
           uint32_t dimmer_index = second_rotary ? 1 : 0;
-          if (!Settings.flag4.rotary_poweron_dimlow || power) {  // SetOption113 - On rotary dial after power off set dimmer low
+          if (!Settings.flag4.rotary_poweron_dimlow || TasmotaGlobal.power) {  // SetOption113 - On rotary dial after power off set dimmer low
             LightDimmerOffset(dimmer_index, rotary_position * rotary_dimmer_increment[Rotary.model]);
           } else {
             if (rotary_position > 0) {         // Only power on if rotary increase

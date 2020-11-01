@@ -346,7 +346,7 @@ void MhzShow(bool json)
   if (json) {
     ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), types, model, mhz_last_ppm, temperature);
 #ifdef USE_DOMOTICZ
-    if (0 == tele_period) {
+    if (0 == TasmotaGlobal.tele_period) {
       DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
       DomoticzSensor(DZ_TEMP, temperature);
     }

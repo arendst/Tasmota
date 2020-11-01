@@ -53,7 +53,7 @@ void BuzzerSet(uint8_t state)
         analogWrite(Pin(GPIO_BUZZER, 0), Settings.pwm_range / 2);  // set 50% duty cycle for frequency output
       }
       else {
-        analogWrite(Pin(GPIO_BUZZER, 0), 0); // set 0% (or 100% for inverted PWM) duty cycle which turns off frequency output either way 
+        analogWrite(Pin(GPIO_BUZZER, 0), 0); // set 0% (or 100% for inverted PWM) duty cycle which turns off frequency output either way
       }
       last_state = state;
     }
@@ -61,7 +61,7 @@ void BuzzerSet(uint8_t state)
   else {
     DigitalWrite(GPIO_BUZZER, 0, state);  // Buzzer On/Off
   }
-  
+
 }
 
 //void BuzzerBeep(uint32_t count = 1, uint32_t on = 1, uint32_t off = 1, uint32_t tune = 0, uint32_t mode = 0);
@@ -101,14 +101,14 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune, uint32
 
   Buzzer.enable = (Buzzer.count > 0);
   if (Buzzer.enable) {
-    if (Settings.sleep > PWM_MAX_SLEEP) { 
-      ssleep = PWM_MAX_SLEEP;      // set a maxumum value of 10 milliseconds to ensure that buzzer periods are a bit more accurate 
-    } else { 
-      ssleep = Settings.sleep;     // or keep the current sleep if it's lower than 10 
-    } 
+    if (Settings.sleep > PWM_MAX_SLEEP) {
+      TasmotaGlobal.sleep = PWM_MAX_SLEEP;      // set a maxumum value of 10 milliseconds to ensure that buzzer periods are a bit more accurate
+    } else {
+      TasmotaGlobal.sleep = Settings.sleep;     // or keep the current sleep if it's lower than 10
+    }
   }
   else {
-    ssleep = Settings.sleep;       // restore original sleep 
+    TasmotaGlobal.sleep = Settings.sleep;       // restore original sleep
     BuzzerSet(0);
   }
 }

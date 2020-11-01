@@ -370,7 +370,7 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
         attr_list.addAttribute(command_name, PSTR("Count")).setUInt(xyz.y);
         {
 
-          Z_json_array group_list;
+          JsonGeneratorArray group_list;
           for (uint32_t i = 0; i < xyz.y; i++) {
             group_list.add(payload.get16(2 + 2*i));
           }
@@ -431,7 +431,7 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
       char command_suffix[4] = { 0x00 };  // empty string by default
       // if SO101 and multiple endpoints, append endpoint number
       if (Settings.flag4.zb_index_ep) {
-        if (zigbee_devices.countEndpoints(shortaddr) > 0) {
+        if (zigbee_devices.getShortAddr(shortaddr).countEndpoints() > 0) {
           snprintf_P(command_suffix, sizeof(command_suffix), PSTR("%d"), srcendpoint);
         }
       }
@@ -441,7 +441,7 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
         attr_list.addAttribute(command_name, command_suffix).setUInt(xyz.x);
       } else {
         // multiple answers, create an array
-        Z_json_array arr;
+        JsonGeneratorArray arr;
         arr.add(xyz.x);
         arr.add(xyz.y);
         if (xyz.z_type) {

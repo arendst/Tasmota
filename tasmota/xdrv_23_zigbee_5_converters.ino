@@ -504,7 +504,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0300, 0x003C,  Z_(ColorPointBIntensity), Cm1, 0 },
 
   // Illuminance Measurement cluster
-  { Zuint16,  Cx0400, 0x0000,  Z_(Illuminance),          Cm1, 0 },    // Illuminance (in Lux)
+  { Zuint16,  Cx0400, 0x0000,  Z_(Illuminance),          Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_PIR, illuminance) }, // Illuminance (in Lux)
   { Zuint16,  Cx0400, 0x0001,  Z_(IlluminanceMinMeasuredValue),     Cm1, 0 },    //
   { Zuint16,  Cx0400, 0x0002,  Z_(IlluminanceMaxMeasuredValue),     Cm1, 0 },    //
   { Zuint16,  Cx0400, 0x0003,  Z_(IlluminanceTolerance),            Cm1, 0 },    //
@@ -552,7 +552,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zunk,     Cx0405, 0xFFFF,  Z_(),                    Cm0, 0 },     // Remove all other values
 
   // Occupancy Sensing cluster
-  { Zmap8,    Cx0406, 0x0000,  Z_(Occupancy),            Cm1, 0 },    // Occupancy (map8)
+  { Zmap8,    Cx0406, 0x0000,  Z_(Occupancy),            Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_PIR, occupancy) }, // Occupancy (map8)
   { Zenum8,   Cx0406, 0x0001,  Z_(OccupancySensorType),  Cm1, 0 },    // OccupancySensorType
   { Zunk,     Cx0406, 0xFFFF,  Z_(),                    Cm0, 0 },    // Remove all other values
 
@@ -706,7 +706,7 @@ public:
     if (Settings.flag3.tuya_serial_mqtt_publish) {
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), mqtt_data);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
     }
   }
 
@@ -749,7 +749,6 @@ public:
   void parseResponse(void);
   void parseResponseOld(void);
   void parseClusterSpecificCommand(Z_attribute_list& attr_list);
-  void postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_list);
 
   // synthetic attributes converters
   void syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribute &attr);
@@ -1239,6 +1238,15 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
           attr_list.addAttribute(0x0001, 0x0021).setUInt(toPercentageCR2032(mv) * 2);
         }
         break;
+      case 0x00010021:       // BatteryPercentage
+        {
+          const char * model_c = zigbee_devices.getModelId(_srcaddr);  // null if unknown
+          String modelId((char*) model_c);
+          if (modelId.startsWith(F("TRADFRI"))) {
+            attr.setUInt(attr.getUInt() * 2);   // bug in TRADFRI battery, need to double the value
+          }
+        }
+        break;
       case 0x02010008:    // Pi Heating Demand - solve Eutotronic bug
         {
           const char * manufacturer_c = zigbee_devices.getManufacturerId(_srcaddr);  // null if unknown
@@ -1277,10 +1285,15 @@ void ZCLFrame::generateCallBacks(Z_attribute_list& attr_list) {
       case 0x04060000:        // Occupancy
         uint32_t occupancy = attr.getUInt();
         if (occupancy) {
-          zigbee_devices.setTimer(_srcaddr, 0 /* groupaddr */, OCCUPANCY_TIMEOUT, _cluster_id, _srcendpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
+          uint32_t pir_timer = OCCUPANCY_TIMEOUT;
+          const Z_Data_PIR & pir_found = (const Z_Data_PIR&) zigbee_devices.getShortAddr(_srcaddr).data.find(Z_Data_Type::Z_PIR, _srcendpoint);
+          if (&pir_found != nullptr) {
+            pir_timer = pir_found.getTimeoutSeconds() * 1000;
+          }
+          zigbee_devices.setTimer(_srcaddr, 0 /* groupaddr */, pir_timer, _cluster_id, _srcendpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
         } else {
           zigbee_devices.resetTimersForDevice(_srcaddr, 0 /* groupaddr */, Z_CAT_VIRTUAL_OCCUPANCY);
-        }        
+        }
         break;
     }
   }
@@ -1332,7 +1345,7 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
 
   attr_list.addAttribute(F(D_CMND_ZIGBEE_CLUSTER)).setUInt(_cluster_id);
 
-  Z_json_array attr_numbers;
+  JsonGeneratorArray attr_numbers;
   Z_attribute_list attr_names;
   while (len >= 2 + i) {
     uint16_t attrid = _payload.get16(i);
@@ -1354,7 +1367,7 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
   }
   attr_list.addAttribute(F("Read")).setStrRaw(attr_numbers.toString().c_str());
   attr_list.addAttribute(F("ReadNames")).setStrRaw(attr_names.toString(true).c_str());
- 
+
   // call auto-responder
   autoResponder(read_attr_ids, len/2);
 }
@@ -1755,22 +1768,30 @@ void ZCLFrame::syntheticAqaraVibration(class Z_attribute_list &attr_list, class 
 /// Publish a message for `"Occupancy":0` when the timer expired
 void Z_OccupancyCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   Z_attribute_list attr_list;
-  attr_list.addAttribute(F(OCCUPANCY)).setUInt(0);
+  attr_list.addAttribute(0x0406, 0x0000).setUInt(0);        // Occupancy
+  Z_postProcessAttributes(shortaddr, endpoint, attr_list);  // make sure all is updated accordingly
   zigbee_devices.jsonPublishNow(shortaddr, attr_list);
 }
 
 // ======================================================================
-void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_list) {
-  // source endpoint
-  uint8_t src_ep = _srcendpoint;
-  
+void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attribute_list& attr_list) {
+  Z_Device & device = zigbee_devices.getShortAddr(shortaddr);
+  uint8_t count_ep = device.countEndpoints();
+
   for (auto &attr : attr_list) {
+    // add endpoint suffix if needed
+    if ((Settings.flag4.zb_index_ep) && (src_ep != 1) && (count_ep > 1)) {
+      // we need to add suffix if the suffix is not already different from 1
+      if (attr.key_suffix == 1) {
+        attr.key_suffix = src_ep;
+      }
+    }
+
     // attr is Z_attribute&
     if (!attr.key_is_str) {
       uint16_t cluster = attr.key.id.cluster;
       uint16_t attribute = attr.key.id.attr_id;
       uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
-      Z_Device & device = zigbee_devices.getShortAddr(shortaddr);
 
       // Look for an entry in the converter table
       bool found = false;
@@ -1803,6 +1824,8 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
         // First we find or instantiate the correct Z_Data_XXX accorfing to the endpoint
         // Then store the attribute at the attribute addres (via offset) and according to size 8/16/32 bits
 
+        // add the endpoint if it was not already known
+        device.addEndpoint(src_ep);
         // we don't apply the multiplier, but instead store in Z_Data_XXX object
         Z_Data & data = device.data.getByType(map_type, src_ep);
         uint8_t *attr_address = ((uint8_t*)&data) + sizeof(Z_Data) + map_offset;
@@ -1811,8 +1834,10 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
         // AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) map_type, map_offset, zigbee_type, ival32);
         switch (zigbee_type) {
           case Zenum8:
+          case Zmap8:
           case Zuint8:  *(uint8_t*)attr_address  = uval32;          break;
           case Zenum16:
+          case Zmap16:
           case Zuint16: *(uint16_t*)attr_address = uval32;          break;
           case Zuint32: *(uint32_t*)attr_address = uval32;          break;
           case Zint8:   *(int8_t*)attr_address   = ival32;           break;
@@ -1826,8 +1851,8 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, Z_attribute_list& attr_
       Z_Data_Set & data = device.data;
       // update any internal structure
       switch (ccccaaaa) {
-        case 0x00000004: zigbee_devices.setManufId(shortaddr, attr.getStr());         break;
-        case 0x00000005: zigbee_devices.setModelId(shortaddr, attr.getStr());         break;
+        case 0x00000004: device.setManufId(attr.getStr());                            break;
+        case 0x00000005: device.setModelId(attr.getStr());                            break;
         case 0x00010021: zigbee_devices.setBatteryPercent(shortaddr, uval16 / 2);     break;
         case 0x00060000:
         case 0x00068000: device.setPower(attr.getBool(), src_ep);                     break;
@@ -1952,7 +1977,9 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const 
       uint32_t uval32;
       switch (zigbee_type) {
         case Zenum8:
+        case Zmap8:
         case Zuint8:  uval32 = *(uint8_t*)attr_address;   if (uval32 != 0xFF)        data_size = 8;   break;
+        case Zmap16:
         case Zenum16:
         case Zuint16: uval32 = *(uint16_t*)attr_address;  if (uval32 != 0xFFFF)      data_size = 16;  break;
         case Zuint32: uval32 = *(uint32_t*)attr_address;  if (uval32 != 0xFFFFFFFF)  data_size = 32;  break;
@@ -1963,7 +1990,7 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const 
       if (data_size != 0) {
         Z_attribute & attr = attr_list.addAttribute(conv_name);
 
-        if (data_size > 0) { attr.setUInt(uval32); } 
+        if (data_size > 0) { attr.setUInt(uval32); }
         else { attr.setInt(ival32); }
       }
     }

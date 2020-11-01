@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 03.10.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 30.10.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -125,6 +125,7 @@
 #define D_MULTI_PRESS "multi-pressione"
 #define D_NOISE "Rumore"
 #define D_NONE "Nessuno"
+#define D_O2 "Ossigeno"
 #define D_OFF "OFF"
 #define D_OFFLINE "Offline"
 #define D_OK "OK"
@@ -190,6 +191,7 @@
 #define D_UV_POWER "Intensità UV"
 #define D_VERSION "Versione"
 #define D_VOLTAGE "Tensione"
+#define D_VOLUME "Volume"
 #define D_WEIGHT "Peso"
 #define D_WARMLIGHT "Calda"
 #define D_WEB_SERVER "Server web"
@@ -744,6 +746,8 @@
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
 #define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
+#define D_UNIT_LITERS "L"
+#define D_UNIT_LITERS_PER_MIN "L/m"
 #define D_UNIT_LUX "lx"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
 #define D_UNIT_MICROMETER "µm"

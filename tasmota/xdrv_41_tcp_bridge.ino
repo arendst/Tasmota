@@ -130,7 +130,7 @@ void TCPInit(void) {
     if (!tcp_buf) { AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_TCP "could not allocate buffer")); return; }
 
     if (!Settings.tcp_baudrate)  { Settings.tcp_baudrate = 115200 / 1200; }
-    TCPSerial = new TasmotaSerial(Pin(GPIO_TCP_RX), Pin(GPIO_TCP_TX), seriallog_level ? 1 : 2, 0, TCP_BRIDGE_BUF_SIZE);   // set a receive buffer of 256 bytes
+    TCPSerial = new TasmotaSerial(Pin(GPIO_TCP_RX), Pin(GPIO_TCP_TX), TasmotaGlobal.seriallog_level ? 1 : 2, 0, TCP_BRIDGE_BUF_SIZE);   // set a receive buffer of 256 bytes
     TCPSerial->begin(Settings.tcp_baudrate * 1200);
     if (TCPSerial->hardwareSerial()) {
       ClaimSerial();
@@ -168,7 +168,7 @@ void CmndTCPStart(void) {
     server_tcp->setNoDelay(true);
   }
 
-  ResponseCmndDone();  
+  ResponseCmndDone();
 }
 
 void CmndTCPBaudrate(void) {

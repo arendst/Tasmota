@@ -176,7 +176,7 @@ void Bh1750Show(bool json) {
       if (json) {
         ResponseAppend_P(JSON_SNS_ILLUMINANCE, sensor_name, Bh1750_sensors[sensor_index].illuminance);
 #ifdef USE_DOMOTICZ
-        if ((0 == tele_period) && (0 == sensor_index)) {
+        if ((0 == TasmotaGlobal.tele_period) && (0 == sensor_index)) {
           DomoticzSensor(DZ_ILLUMINANCE, Bh1750_sensors[sensor_index].illuminance);
         }
 #endif  // USE_DOMOTICZ

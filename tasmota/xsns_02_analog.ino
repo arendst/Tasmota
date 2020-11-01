@@ -414,7 +414,7 @@ void AdcShow(bool json) {
         if (json) {
           AdcShowContinuation(&jsonflg);
           ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%s\":%s"), adc_idx, temperature);
-          if ((0 == tele_period) && (!domo_flag[ADC_TEMP])) {
+          if ((0 == TasmotaGlobal.tele_period) && (!domo_flag[ADC_TEMP])) {
 #ifdef USE_DOMOTICZ
             DomoticzSensor(DZ_TEMP, temperature);
             domo_flag[ADC_TEMP] = true;
@@ -437,7 +437,7 @@ void AdcShow(bool json) {
           AdcShowContinuation(&jsonflg);
           ResponseAppend_P(PSTR("\"" D_JSON_ILLUMINANCE "%s\":%d"), adc_idx, adc_light);
 #ifdef USE_DOMOTICZ
-          if ((0 == tele_period) && (!domo_flag[ADC_LIGHT])) {
+          if ((0 == TasmotaGlobal.tele_period) && (!domo_flag[ADC_LIGHT])) {
             DomoticzSensor(DZ_ILLUMINANCE, adc_light);
             domo_flag[ADC_LIGHT] = true;
           }
@@ -480,7 +480,7 @@ void AdcShow(bool json) {
           ResponseAppend_P(PSTR("\"CTEnergy%s\":{\"" D_JSON_ENERGY "\":%s,\"" D_JSON_POWERUSAGE "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
             adc_idx, energy_chr, power_chr, voltage_chr, current_chr);
 #ifdef USE_DOMOTICZ
-          if ((0 == tele_period) && (!domo_flag[ADC_CT_POWER])) {
+          if ((0 == TasmotaGlobal.tele_period) && (!domo_flag[ADC_CT_POWER])) {
             DomoticzSensor(DZ_POWER_ENERGY, power_chr);
             DomoticzSensor(DZ_VOLTAGE, voltage_chr);
             DomoticzSensor(DZ_CURRENT, current_chr);

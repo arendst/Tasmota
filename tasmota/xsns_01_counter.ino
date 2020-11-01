@@ -210,12 +210,12 @@ void CounterShow(bool json)
         ResponseAppend_P(PSTR("%s\"C%d\":%s"), (header)?",":"", i +1, counter);
         header = true;
 #ifdef USE_DOMOTICZ
-        if ((0 == tele_period) && (1 == dsxflg)) {
+        if ((0 == TasmotaGlobal.tele_period) && (1 == dsxflg)) {
           DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
           dsxflg++;
         }
 #endif  // USE_DOMOTICZ
-        if ((0 == tele_period ) && (Settings.flag3.counter_reset_on_tele)) {
+        if ((0 == TasmotaGlobal.tele_period ) && (Settings.flag3.counter_reset_on_tele)) {
           RtcSettings.pulse_counter[i] = 0;
         }
 #ifdef USE_WEBSERVER

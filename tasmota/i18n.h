@@ -113,6 +113,7 @@
 #define D_JSON_NONE "None"
 #define D_JSON_OR "or"
 #define D_JSON_ORP "ORP"
+#define D_JSON_O2 "Oxygen"
 #define D_JSON_PERIOD "Period"
 #define D_JSON_PH "pH"
 #define D_JSON_PHASE_ANGLE "PhaseAngle"
@@ -181,6 +182,7 @@
 #define D_JSON_VCC "Vcc"
 #define D_JSON_VERSION "Version"
 #define D_JSON_VOLTAGE "Voltage"
+#define D_JSON_VOLUME "Volume"
 #define D_JSON_WEIGHT "Weight"
 #define D_JSON_WIFI "Wifi"
 #define D_JSON_WRONG "Wrong"
@@ -263,6 +265,7 @@
 #define D_CMND_PWMRANGE "PWMRange"
 #define D_CMND_BUTTONDEBOUNCE "ButtonDebounce"
 #define D_CMND_SWITCHDEBOUNCE "SwitchDebounce"
+#define D_CMND_SWITCHTEXT "SwitchText"
 #define D_CMND_SLEEP "Sleep"
 #define D_CMND_UPLOAD "Upload"
 #define D_CMND_UPGRADE "Upgrade"
@@ -564,6 +567,8 @@
   #define D_JSON_ZIGBEE_UNBIND "ZbUnbind"
 #define D_CMND_ZIGBEE_BIND_STATE "BindState"
   #define D_JSON_ZIGBEE_BIND_STATE "ZbBindState"
+#define D_CMND_ZIGBEE_MAP "Map"
+  #define D_JSON_ZIGBEE_MAP "ZbMap"
 #define D_JSON_ZIGBEE_PARENT "ZbParent"
 #define D_CMND_ZIGBEE_PING "Ping"
   #define D_JSON_ZIGBEE_PING "ZbPing"
@@ -574,6 +579,8 @@
   #define D_JSON_ZIGBEE_STATUS_MSG "StatusMessage"
 #define D_CMND_ZIGBEE_LIGHT "Light"
   #define D_JSON_ZIGBEE_LIGHT "Light"
+#define D_CMND_ZIGBEE_OCCUPANCY "Occupancy"
+  #define D_JSON_ZIGBEE_OCCUPANCY "Occupancy"
 #define D_CMND_ZIGBEE_RESTORE "Restore"
 #define D_CMND_ZIGBEE_CONFIG "Config"
   #define D_JSON_ZIGBEE_CONFIG "Config"
@@ -775,6 +782,9 @@ const char HTTP_SNS_ENERGY_TOTAL[]  PROGMEM = "{s}"     D_ENERGY_TOTAL        "{
 const char HTTP_SNS_PH[]            PROGMEM = "{s}%s "  D_PH                  "{m}%s "                            "{e}";
 const char HTTP_SNS_ORP[]           PROGMEM = "{s}%s "  D_ORP                 "{m}%s " D_UNIT_MILLIVOLT           "{e}";
 const char HTTP_SNS_EC[]            PROGMEM = "{s}%s "  D_EC                  "{m}%s " D_UNIT_MICROSIEMENS_PER_CM "{e}";
+const char HTTP_SNS_O2[]            PROGMEM = "{s}%s "  D_O2                  "{m}%s " D_UNIT_PERCENT             "{e}";
+const char HTTP_SNS_LITERS[]        PROGMEM = "{s}%s "  D_VOLUME              "{m}%s " D_UNIT_LITERS              "{e}";
+const char HTTP_SNS_LPM[]           PROGMEM = "{s}%s "  D_FLOW_RATE           "{m}%s " D_UNIT_LITERS_PER_MIN      "{e}";
 
 const char S_MAIN_MENU[]              PROGMEM = D_MAIN_MENU;
 const char S_CONFIGURATION[]          PROGMEM = D_CONFIGURATION;

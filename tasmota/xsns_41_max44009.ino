@@ -122,7 +122,7 @@ void Max4409Show(bool json)
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s}"), max44009_types, illum_str);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_ILLUMINANCE, illum_str);
       }
 #endif  // USE_DOMOTICZ

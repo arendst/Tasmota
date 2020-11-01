@@ -305,7 +305,7 @@ char     prev_x_str[24] = "\0"; // store previously set xy by Alexa app
 char     prev_y_str[24] = "\0";
 
 uint8_t getLocalLightSubtype(uint8_t device) {
-  if (light_type) {
+  if (TasmotaGlobal.light_type) {
     if (device >= Light.device) {
       if (Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
         return LST_SINGLE;     // If SetOption68, each channel acts like a dimmer
@@ -343,7 +343,7 @@ void HueLightStatus1(uint8_t device, String *response)
   }
 #endif
 
-  if (light_type) {
+  if (TasmotaGlobal.light_type) {
     light_state.getHSB(&hue, &sat, nullptr);
     if (sat > 254)  sat = 254;  // Philips Hue only accepts 254 as max hue
     hue = changeUIntScale(hue, 0, 360, 0, 65535);
@@ -361,7 +361,7 @@ void HueLightStatus1(uint8_t device, String *response)
   const size_t buf_size = 256;
   char * buf = (char*) malloc(buf_size);     // temp buffer for strings, avoid stack
 
-  snprintf_P(buf, buf_size, PSTR("{\"on\":%s,"), (power & (1 << (device-1))) ? "true" : "false");
+  snprintf_P(buf, buf_size, PSTR("{\"on\":%s,"), (TasmotaGlobal.power & (1 << (device-1))) ? "true" : "false");
   // Brightness for all devices with PWM
   if ((1 == echo_gen) || (LST_SINGLE <= local_light_subtype)) { // force dimmer for 1st gen Echo
     snprintf_P(buf, buf_size, PSTR("%s\"bri\":%d,"), buf, bri);
@@ -475,6 +475,7 @@ uint32_t DecodeLightId(uint32_t hue_id, uint16_t * shortaddr = nullptr)
     relay_id = 32;
   }
 #ifdef USE_ZIGBEE
+  if (shortaddr) { *shortaddr = 0x0000; }
   if (hue_id & (1 << 29)) {
     // this is actually a Zigbee ID
     if (shortaddr) { *shortaddr = hue_id & 0xFFFF; }
@@ -517,7 +518,7 @@ void HueAuthentication(String *path)
 
 // refactored to remove code duplicates
 void CheckHue(String * response, bool &appending) {
-  uint8_t maxhue = (devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : devices_present;
+  uint8_t maxhue = (TasmotaGlobal.devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : TasmotaGlobal.devices_present;
   for (uint32_t i = 1; i <= maxhue; i++) {
     if (HueActive(i)) {
       if (appending) { *response += ","; }
@@ -576,7 +577,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
 #endif  // USE_SHUTTER
     }
 
-    if (light_type && (local_light_subtype >= LST_SINGLE)) {
+    if (TasmotaGlobal.light_type && (local_light_subtype >= LST_SINGLE)) {
       if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
         light_state.getHSB(&hue, &sat, nullptr);
         bri = light_state.getBri();   // get the combined bri for CT and RGB, not only the RGB one
@@ -691,7 +692,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       }
       resp = true;
     }
-    
+
     if (change) {
 #ifdef USE_SHUTTER
       if (ShutterState(device)) {
@@ -699,7 +700,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
         ShutterSetPosition(device, bri * 100.0f );
       } else
 #endif
-      if (light_type && (local_light_subtype > LST_NONE)) {   // not relay
+      if (TasmotaGlobal.light_type && (local_light_subtype > LST_NONE)) {   // not relay
         if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
           if (g_gotct) {
             light_controller.changeCTB(ct, bri);
@@ -739,7 +740,7 @@ void HueLights(String *path)
   int code = 200;
   uint8_t device = 1;
   uint32_t device_id;   // the raw device_id used by Hue emulation
-  uint8_t maxhue = (devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : devices_present;
+  uint8_t maxhue = (TasmotaGlobal.devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : TasmotaGlobal.devices_present;
 
   path->remove(0,path->indexOf(F("/lights")));          // Remove until /lights
   if (path->endsWith(F("/lights"))) {                   // Got /lights
@@ -768,7 +769,7 @@ void HueLights(String *path)
 #endif // USE_ZIGBEE
 
 #ifdef USE_SCRIPT_HUE
-    if (device > devices_present) {
+    if (device > TasmotaGlobal.devices_present) {
       return Script_Handle_Hue(path);
     }
 #endif
@@ -792,8 +793,8 @@ void HueLights(String *path)
 #endif // USE_ZIGBEE
 
 #ifdef USE_SCRIPT_HUE
-    if (device > devices_present) {
-      Script_HueStatus(&response, device-devices_present - 1);
+    if (device > TasmotaGlobal.devices_present) {
+      Script_HueStatus(&response, device-TasmotaGlobal.devices_present - 1);
       goto exit;
     }
 #endif
@@ -820,7 +821,7 @@ void HueGroups(String *path)
  * http://tasmota/api/username/groups?1={"name":"Woonkamer","lights":[],"type":"Room","class":"Living room"})
  */
   String response = "{}";
-  uint8_t maxhue = (devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : devices_present;
+  uint8_t maxhue = (TasmotaGlobal.devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : TasmotaGlobal.devices_present;
   //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups (%s)"), path->c_str());
 
   if (path->endsWith("/0")) {
@@ -893,7 +894,7 @@ bool Xdrv20(uint8_t function)
 #if defined(USE_SCRIPT_HUE) || defined(USE_ZIGBEE)
   if ((EMUL_HUE == Settings.flag2.emulation)) {
 #else
-  if (devices_present && (EMUL_HUE == Settings.flag2.emulation)) {
+  if (TasmotaGlobal.devices_present && (EMUL_HUE == Settings.flag2.emulation)) {
 #endif
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:

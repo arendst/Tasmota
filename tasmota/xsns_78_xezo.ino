@@ -49,29 +49,59 @@ enum {
 
 
 
-// Creates a complex preprocessor macro to fetch a specified class OR EZOStruct if it wasn't defined
-template <class T, class = void>  struct IsComplete : std::false_type {};
-template <class T>                struct IsComplete< T, decltype(void(sizeof(T))) > : std::true_type {};
-
-#define GET_EZO_CLASS(CLASS) std::conditional<IsComplete<CLASS>::value, CLASS, EZOStruct>::type
-
 // The order of the EZO devices must map with the enum declared above
 const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
   EZOStruct::id,  // "DO"
-  GET_EZO_CLASS(EZOORP)::id,
-  GET_EZO_CLASS(EZOPH)::id,
-  GET_EZO_CLASS(EZOEC)::id,
+#ifdef USE_EZOORP
+  EZOORP::id,
+#else
   EZOStruct::id,
-  GET_EZO_CLASS(EZORTD)::id,
+#endif
+#ifdef USE_EZOPH
+  EZOPH::id,
+#else
+  EZOStruct::id,
+#endif
+#ifdef USE_EZOEC
+  EZOEC::id,
+#else
+  EZOStruct::id,
+#endif
+  EZOStruct::id,
+#ifdef USE_EZORTD
+  EZORTD::id,
+#else
+  EZOStruct::id,
+#endif
   EZOStruct::id,  // "PMP"
-  EZOStruct::id,  // "FLO"
-  GET_EZO_CLASS(EZOCO2)::id,
-  EZOStruct::id,  // "PRS"
+#ifdef USE_EZOFLO
+  EZOFLO::id,
+#else
   EZOStruct::id,
-  EZOStruct::id,  // "O2"
+#endif
+#ifdef USE_EZOCO2
+  EZOCO2::id,
+#else
+  EZOStruct::id,
+#endif
+#ifdef USE_EZOPRS
+  EZOPRS::id,
+#else
+  EZOStruct::id,
+#endif
+  EZOStruct::id,
+#ifdef USE_EZOO2
+  EZOO2::id,
+#else
+  EZOStruct::id,
+#endif
   EZOStruct::id,
   EZOStruct::id,
-  GET_EZO_CLASS(EZOHUM)::id,
+#ifdef USE_EZOHUM
+  EZOHUM::id,
+#else
+  EZOStruct::id,
+#endif
   EZOStruct::id,  // "RGB"
 };
 
@@ -116,12 +146,12 @@ struct EZOManager {
     // Do we have to deal with the 2 stage booting process?
     if (count < 0) {
       // EZO devices take 2s to boot
-      if (uptime >= next) {
+      if (TasmotaGlobal.uptime >= next) {
         count++;
 
         if (count == -1) {
           DetectRequest();
-          next = uptime + 1;
+          next = TasmotaGlobal.uptime + 1;
         } else if (count == 0) {
           ProcessDetection();
         }
@@ -216,14 +246,22 @@ private:
 #ifdef USE_EZORTD
                   CREATE_EZO_CLASS(RTD)
 #endif
+#ifdef USE_EZOFLO
+                  CREATE_EZO_CLASS(FLO)
+#endif
 #ifdef USE_EZOCO2
                   CREATE_EZO_CLASS(CO2)
+#endif
+#ifdef USE_EZOPRS
+                  CREATE_EZO_CLASS(PRS)
+#endif
+#ifdef USE_EZOO2
+                  CREATE_EZO_CLASS(O2)
 #endif
 #ifdef USE_EZOHUM
                   CREATE_EZO_CLASS(HUM)
 #endif
                 }
-
                 count++;
               }
             }

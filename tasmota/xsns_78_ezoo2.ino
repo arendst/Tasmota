@@ -1,5 +1,5 @@
 /*
-  xsns_78_ezohum.ino - EZO HUM I2C HUM sensor support for Tasmota
+  xsns_78_ezoo2.ino - EZO O2 I2C O2 sensor support for Tasmota
 
   Copyright (C) 2020  Christopher Tremblay
 
@@ -18,48 +18,43 @@
 */
 
 #ifdef USE_I2C
-#ifdef USE_EZOHUM
+#ifdef USE_EZOO2
 
-#define EZO_HUM_READ_LATENCY   300
+#define EZO_O2_READ_LATENCY   900
 
-struct EZOHUM : public EZOStruct {
-  EZOHUM(uint32_t addr) : EZOStruct(addr), humidity(NAN), temperature(NAN) {}
+struct EZOO2 : public EZOStruct {
+  EZOO2(uint32_t addr) : EZOStruct(addr), O2(0) {}
 
   virtual void ProcessMeasurement(void)
   {
     char data[D_EZO_MAX_BUF];
-    // Hum, Temp, Dew
 
-    EZOStruct::ProcessMeasurement(data, sizeof(data), EZO_HUM_READ_LATENCY);
-
-    humidity = CharToFloat(data);
-
-    char *next = strchr(data, ',');
-    if (next) {
-      temperature = CharToFloat(next + 1);
-    }
+    EZOStruct::ProcessMeasurement(data, sizeof(data), EZO_O2_READ_LATENCY);
+    O2 = CharToFloat(data);
   }
 
   virtual void Show(bool json, const char *name)
   {
-    if (isnan(temperature)) {
-      char parameter[FLOATSZ];
+    char str[8];
+    dtostrfd(O2, 2, str);
 
-      dtostrfd(humidity, Settings.flag2.humidity_resolution, parameter);
-      WSContentSend_PD(HTTP_SNS_HUM, name, parameter);
-    } else {
-      TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), name, temperature, humidity);
+    if (json) {
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_O2 "\":%d}" ), name, str);
+    }
+#ifdef USE_WEBSERVER  
+    else {
+      WSContentSend_PD(HTTP_SNS_O2, name, str);
+#endif  // USE_WEBSERVER
     }
   }
 
   static const char id[] PROGMEM;
 
 private:
-  float     humidity;
-  float     temperature;
+  float O2;
 };
 
-const char EZOHUM::id[] PROGMEM = "HUM";
+const char EZOO2::id[] PROGMEM = "O2";
 
-#endif  // USE_EZOHUM
+#endif  // USE_EZOO2
 #endif  // USE_I2C

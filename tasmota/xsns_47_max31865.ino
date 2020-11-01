@@ -97,7 +97,7 @@ void MAX31865_Show(bool Json) {
       if (Json) {
         ResponseAppend_P(PSTR(",\"MAX31865%c%d\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RESISTANCE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
           IndexSeparator(), i, temperature, resistance, MAX31865_Result[i].ErrorCode);
-        if ((0 == tele_period) && (!report_once)) {
+        if ((0 == TasmotaGlobal.tele_period) && (!report_once)) {
 #ifdef USE_DOMOTICZ
           DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ

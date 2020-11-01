@@ -295,7 +295,7 @@ void PmsShow(bool json)
         pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, pms_data.particles_50um, pms_data.particles_100um);
 #endif  // PMS_MODEL_PMS3003
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_COUNT, pms_data.pm10_env);     // PM1
         DomoticzSensor(DZ_VOLTAGE, pms_data.pm25_env);   // PM2.5
         DomoticzSensor(DZ_CURRENT, pms_data.pm100_env);  // PM10

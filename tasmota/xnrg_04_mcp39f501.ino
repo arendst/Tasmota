@@ -566,13 +566,13 @@ void McpSnsInit(void)
   if (McpSerial->begin(MCP_BAUDRATE)) {
     if (McpSerial->hardwareSerial()) {
       ClaimSerial();
-      mcp_buffer = serial_in_buffer;  // Use idle serial buffer to save RAM
+      mcp_buffer = TasmotaGlobal.serial_in_buffer;  // Use idle serial buffer to save RAM
     } else {
       mcp_buffer = (char*)(malloc(MCP_BUFFER_SIZE));
     }
     DigitalWrite(GPIO_MCP39F5_RST, 0, 1);  // MCP enable
   } else {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
 }
 
@@ -586,7 +586,7 @@ void McpDrvInit(void)
     mcp_calibrate = 0;
     mcp_timeout = 2;               // Initial wait
     mcp_init = 2;                  // Initial setup steps
-    energy_flg = XNRG_04;
+    TasmotaGlobal.energy_driver = XNRG_04;
   }
 }
 

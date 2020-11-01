@@ -253,7 +253,7 @@ void EnergyUpdateTotal(float value, bool kwh)
 
 void Energy200ms(void)
 {
-  Energy.power_on = (power != 0) | Settings.flag.no_power_on_check;  // SetOption21 - Show voltage even if powered off
+  Energy.power_on = (TasmotaGlobal.power != 0) | Settings.flag.no_power_on_check;  // SetOption21 - Show voltage even if powered off
 
   Energy.fifth_second++;
   if (5 == Energy.fifth_second) {
@@ -337,6 +337,8 @@ void EnergyMarginCheck(void)
   int16_t power_diff[3] = { 0 };
   for (uint32_t phase = 0; phase < Energy.phase_count; phase++) {
     uint16_t active_power = (uint16_t)(Energy.active_power[phase]);
+
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: APower %d, HPower0 %d, HPower1 %d, HPower2 %d"), active_power, Energy.power_history[phase][0], Energy.power_history[phase][1], Energy.power_history[phase][2]);
 
     if (Settings.energy_power_delta[phase]) {
       power_diff[phase] = active_power - Energy.power_history[phase][0];
@@ -437,12 +439,12 @@ void EnergyMarginCheck(void)
         }
       }
     }
-    else if (power && (energy_power_u <= Settings.energy_max_power_limit)) {
+    else if (TasmotaGlobal.power && (energy_power_u <= Settings.energy_max_power_limit)) {
       Energy.mplh_counter = 0;
       Energy.mplr_counter = 0;
       Energy.mplw_counter = 0;
     }
-    if (!power) {
+    if (!TasmotaGlobal.power) {
       if (Energy.mplw_counter) {
         Energy.mplw_counter--;
       } else {
@@ -488,12 +490,12 @@ void EnergyMarginCheck(void)
 void EnergyMqttShow(void)
 {
 // {"Time":"2017-12-16T11:48:55","ENERGY":{"Total":0.212,"Yesterday":0.000,"Today":0.014,"Period":2.0,"Power":22.0,"Factor":1.00,"Voltage":213.6,"Current":0.100}}
-  int tele_period_save = tele_period;
-  tele_period = 2;
-  mqtt_data[0] = '\0';
+  int tele_period_save = TasmotaGlobal.tele_period;
+  TasmotaGlobal.tele_period = 2;
+  ResponseClear();
   ResponseAppendTime();
   EnergyShow(true);
-  tele_period = tele_period_save;
+  TasmotaGlobal.tele_period = tele_period_save;
   ResponseJsonEnd();
   MqttPublishTeleSensor();
 }
@@ -502,11 +504,11 @@ void EnergyMqttShow(void)
 void EnergyEverySecond(void)
 {
   // Overtemp check
-  if (global_update) {
-    if (power && !isnan(global_temperature_celsius) && (global_temperature_celsius > (float)Settings.param[P_OVER_TEMP])) {  // Device overtemp, turn off relays
+  if (TasmotaGlobal.global_update) {
+    if (TasmotaGlobal.power && !isnan(TasmotaGlobal.temperature_celsius) && (TasmotaGlobal.temperature_celsius > (float)Settings.param[P_OVER_TEMP])) {  // Device overtemp, turn off relays
 
       char temperature[33];
-      dtostrfd(global_temperature_celsius, 1, temperature);
+      dtostrfd(TasmotaGlobal.temperature_celsius, 1, temperature);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: GlobTemp %s"), temperature);
 
       SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
@@ -896,7 +898,7 @@ void EnergySnsInit(void)
 {
   XnrgCall(FUNC_INIT);
 
-  if (energy_flg) {
+  if (TasmotaGlobal.energy_driver) {
     Energy.kWhtoday_offset = 0;
     // Do not use at Power On as Rtc was invalid (but has been restored from Settings already)
     if ((ResetReason() != REASON_DEFAULT_RST) && RtcSettingsValid()) {
@@ -1031,7 +1033,7 @@ void EnergyShow(bool json)
   char value3_chr[FLOATSZ *3];
 
   if (json) {
-    bool show_energy_period = (0 == tele_period);
+    bool show_energy_period = (0 == TasmotaGlobal.tele_period);
 
     ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL_START_TIME "\":\"%s\",\"" D_JSON_TOTAL "\":%s"),
       GetDateAndTime(DT_ENERGY).c_str(),
@@ -1178,16 +1180,18 @@ bool Xdrv03(uint8_t function)
   bool result = false;
 
   if (FUNC_PRE_INIT == function) {
-    energy_flg = ENERGY_NONE;
+    TasmotaGlobal.energy_driver = ENERGY_NONE;
     XnrgCall(FUNC_PRE_INIT);  // Find first energy driver
   }
-  else if (energy_flg) {
+  else if (TasmotaGlobal.energy_driver) {
     switch (function) {
       case FUNC_LOOP:
         XnrgCall(FUNC_LOOP);
         break;
       case FUNC_EVERY_250_MSECOND:
-        XnrgCall(FUNC_EVERY_250_MSECOND);
+        if (TasmotaGlobal.uptime > 4) {
+          XnrgCall(FUNC_EVERY_250_MSECOND);
+        }
         break;
       case FUNC_EVERY_SECOND:
         XnrgCall(FUNC_EVERY_SECOND);
@@ -1212,7 +1216,7 @@ bool Xsns03(uint8_t function)
 {
   bool result = false;
 
-  if (energy_flg) {
+  if (TasmotaGlobal.energy_driver) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         EnergyEverySecond();

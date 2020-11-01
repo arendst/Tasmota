@@ -131,7 +131,7 @@ void DS3231EverySecond(void)
 {
   TIME_T tmpTime;
   if (!ds3231ReadStatus && Rtc.utc_time < START_VALID_TIME ) { // We still did not sync with NTP (time not valid) , so, read time  from DS3231
-    ntp_force_sync = true; //force to sync with ntp
+    TasmotaGlobal.ntp_force_sync = true; //force to sync with ntp
     Rtc.utc_time = ReadFromDS3231(); //we read UTC TIME from DS3231
     // from this line, we just copy the function from "void RtcSecond()" at the support.ino ,line 2143 and above
     // We need it to set rules etc.
@@ -145,9 +145,9 @@ void DS3231EverySecond(void)
     AddLog_P2(LOG_LEVEL_INFO, PSTR("Set time from DS3231 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                 GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
     if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
-      rules_flag.time_init = 1;
+      TasmotaGlobal.rules_flag.time_init = 1;
     } else {
-      rules_flag.time_set = 1;
+      TasmotaGlobal.rules_flag.time_set = 1;
     }
   }
   else if (!ds3231WriteStatus && Rtc.utc_time > START_VALID_TIME && abs(Rtc.utc_time - ReadFromDS3231()) > 60) {//if time is valid and is drift from RTC in more that 60 second

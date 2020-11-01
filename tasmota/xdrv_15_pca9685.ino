@@ -196,7 +196,7 @@ bool Xdrv15(uint8_t function)
   else if (pca9685_detected) {
     switch (function) {
       case FUNC_EVERY_SECOND:
-        if (tele_period == 0) {
+        if (TasmotaGlobal.tele_period == 0) {
           PCA9685_OutputTelemetry(true);
         }
         break;

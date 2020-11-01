@@ -83,3 +83,6 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   55  | USE_EZOHUM          | xsns_78 | EZOHUM   | 0x61 - 0x70 | Humidity sensor
   55  | USE_EZOEC           | xsns_78 | EZOEC    | 0x61 - 0x70 | Electric conductivity sensor
   55  | USE_EZOCO2          | xsns_78 | EZOCO2   | 0x61 - 0x70 | CO2 sensor
+  55  | USE_EZOO2           | xsns_78 | EZOO2    | 0x61 - 0x70 | O2 sensor
+  55  | USE_EZOPRS          | xsns_78 | EZOPRS   | 0x61 - 0x70 | Pressure sensor
+  55  | USE_EZOFLO          | xsns_78 | EZOFLO   | 0x61 - 0x70 | Flow meter sensor

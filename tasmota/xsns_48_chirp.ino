@@ -443,7 +443,7 @@ void ChirpShow(bool json)
           ResponseAppend_P(PSTR(",\"%s%u\":{\"sleeping\"}"),chirp_name, i);
         }
   #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
+      if (0 == TasmotaGlobal.tele_period) {
         DomoticzTempHumPressureSensor(t_temperature, chirp_sensor[i].moisture);
         DomoticzSensor(DZ_ILLUMINANCE,chirp_sensor[i].light); // this is not LUX!!
       }

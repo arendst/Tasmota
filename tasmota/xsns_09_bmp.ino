@@ -517,11 +517,7 @@ void BmpShow(bool json)
 {
   for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
     if (bmp_sensors[bmp_idx].bmp_type) {
-      float bmp_sealevel = 0.0;
-      if (bmp_sensors[bmp_idx].bmp_pressure != 0.0) {
-        bmp_sealevel = (bmp_sensors[bmp_idx].bmp_pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0), 5.255)) - 21.6;
-        bmp_sealevel = ConvertPressure(bmp_sealevel);
-      }
+      float bmp_sealevel = ConvertPressureForSeaLevel(bmp_sensors[bmp_idx].bmp_pressure);
       float bmp_temperature = ConvertTemp(bmp_sensors[bmp_idx].bmp_temperature);
       float bmp_pressure = ConvertPressure(bmp_sensors[bmp_idx].bmp_pressure);
 
@@ -571,7 +567,7 @@ void BmpShow(bool json)
 #endif  // USE_BME680
 
 #ifdef USE_DOMOTICZ
-        if ((0 == tele_period) && (0 == bmp_idx)) {  // We want the same first sensor to report to Domoticz in case a read is missed
+        if ((0 == TasmotaGlobal.tele_period) && (0 == bmp_idx)) {  // We want the same first sensor to report to Domoticz in case a read is missed
           DomoticzTempHumPressureSensor(bmp_temperature, bmp_humidity, bmp_pressure);
 #ifdef USE_BME680
           if (bmp_sensors[bmp_idx].bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)bmp_sensors[bmp_idx].bmp_gas_resistance); }
@@ -580,7 +576,7 @@ void BmpShow(bool json)
 #endif  // USE_DOMOTICZ
 
 #ifdef USE_KNX
-        if (0 == tele_period) {
+        if (0 == TasmotaGlobal.tele_period) {
           KnxSensor(KNX_TEMPERATURE, bmp_temperature);
           KnxSensor(KNX_HUMIDITY, bmp_humidity);
         }

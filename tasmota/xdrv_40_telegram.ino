@@ -289,9 +289,9 @@ void TelegramSendGetMe(void) {
 String TelegramExecuteCommand(const char *svalue) {
   String response = "";
 
-  uint32_t curridx = web_log_index;
+  uint32_t curridx = TasmotaGlobal.web_log_index;
   ExecuteCommand(svalue, SRC_CHAT);
-  if (web_log_index != curridx) {
+  if (TasmotaGlobal.web_log_index != curridx) {
     uint32_t counter = curridx;
     response = F("{");
     bool cflg = false;
@@ -304,7 +304,7 @@ String TelegramExecuteCommand(const char *svalue) {
         char* JSON = (char*)memchr(tmp, '{', len);
         if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
           size_t JSONlen = len - (JSON - tmp);
-          if (JSONlen > sizeof(mqtt_data)) { JSONlen = sizeof(mqtt_data); }
+          if (JSONlen > sizeof(TasmotaGlobal.mqtt_data)) { JSONlen = sizeof(TasmotaGlobal.mqtt_data); }
           char stemp[JSONlen];
           strlcpy(stemp, JSON +1, JSONlen -2);
           if (cflg) { response += F(","); }
@@ -315,7 +315,7 @@ String TelegramExecuteCommand(const char *svalue) {
       counter++;
       counter &= 0xFF;
       if (!counter) counter++;  // Skip 0 as it is not allowed
-    } while (counter != web_log_index);
+    } while (counter != TasmotaGlobal.web_log_index);
     response += F("}");
   } else {
     response = F("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
@@ -325,7 +325,7 @@ String TelegramExecuteCommand(const char *svalue) {
 }
 
 void TelegramLoop(void) {
-  if (!global_state.network_down && (Telegram.recv_enable || Telegram.echo_enable)) {
+  if (!TasmotaGlobal.global_state.network_down && (Telegram.recv_enable || Telegram.echo_enable)) {
     switch (Telegram.state) {
       case 0:
         TelegramInit();
@@ -412,7 +412,7 @@ void CmndTmState(void) {
       }
     }
   }
-  snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"Send\":\"%s\",\"Receive\":\"%s\",\"Echo\":\"%s\"}}"),
+  snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s\":{\"Send\":\"%s\",\"Receive\":\"%s\",\"Echo\":\"%s\"}}"),
     XdrvMailbox.command, GetStateText(Telegram.send_enable), GetStateText(Telegram.recv_enable), GetStateText(Telegram.echo_enable));
 }
 

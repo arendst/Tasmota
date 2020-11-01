@@ -498,7 +498,7 @@ void sns_opentherm_flags_cmd(void)
         sns_opentherm_init_boiler_status();
     }
     bool addComma = false;
-    mqtt_data[0] = 0;
+    TasmotaGlobal.mqtt_data[0] = 0;
     for (int pos = 0; pos < OT_FLAGS_COUNT; ++pos)
     {
         int mask = 1 << pos;
@@ -507,9 +507,9 @@ void sns_opentherm_flags_cmd(void)
         {
             if (addComma)
             {
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
+                snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s,"), TasmotaGlobal.mqtt_data);
             }
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s"), mqtt_data, sns_opentherm_flag_text(mode));
+            snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s%s"), TasmotaGlobal.mqtt_data, sns_opentherm_flag_text(mode));
             addComma = true;
         }
     }

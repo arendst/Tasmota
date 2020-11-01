@@ -51,7 +51,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - **tasmota-zbbridge.bin** = The dedicated Sonoff Zigbee Bridge version.
 - **tasmota-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
 
-The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota/release for ESP8266 or http://ota.tasmota.com/tasmota32/release for ESP32. The links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin``
+The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota/release for ESP8266 or http://ota.tasmota.com/tasmota32/release for ESP32. The links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 [List](MODULES.md) of embedded modules.
 
@@ -59,11 +59,14 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog v9.1.0 Imogen
 ### Added
+- Command ``Gpios 255`` to show all possible GPIO configurations
 - Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
 - Command ``SwitchMode 15`` sending only MQTT message on switch change (#9593)
 - Command ``ShutterChange`` to increment change position (#9594)
 - Command ``SetOption113 1`` to set dimmer low on rotary dial after power off
+- Command ``SwitchText`` to change JSON switch names by barbudor (#9691)
 - Zigbee command ``ZbData`` for better support of device specific data
+- Zigbee command ``ZbOccupancy`` to configure the time-out for PIR
 - Optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
 - Optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
 - SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
@@ -73,9 +76,10 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for analog buttons indexed within standard button range
 - Support for Vietnamese language translations by Tâm.NT
 - Support for timers in case of no-sunset permanent day by cybermaus (#9543)
-- Support for EZO CO2, EC, HUM, ORP, Ph and RTD sensors by Christopher Tremblay
+- Support for EZO sensors by Christopher Tremblay
 - Support for fixed output Hi or Lo GPIO selection
 - TLS in binary tasmota-zbbridge (#9620)
+- Zigbee reduce battery drain (#9642)
 - ESP32 support for Wireless-Tag WT32-ETH01 (#9496)
 - ESP32 MI32 Beacon support, RSSI at TELEPERIOD, refactoring (#9609)
 
@@ -98,6 +102,8 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Tasmota Arduino Core v2.7.4.5 allowing webpassword over 47 characters (#9687)
 - Webserver code optimizations (#9580, #9590)
 - PlatformIO library structure redesigned for compilation speed by Jason2866
+- Zigbee flash storage refactor adding commands ``ZbProbe``, ``ZbStatus2`` and ``ZbRestore`` (#9641)
+- Default otaurl in my_user_config.h to http://ota.tasmota.com/tasmota/release/tasmota.bin.gz
 
 ### Fixed
 - Ledlink blink when no network connected regression from v8.3.1.4 (#9292)

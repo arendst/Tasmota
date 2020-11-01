@@ -79,7 +79,7 @@ void Vl53l1Every_Second(void) {
 void Vl53l1Show(bool json) {
   if (json) {
 #ifdef USE_DOMOTICZ
-    if (0 == tele_period) {
+    if (0 == TasmotaGlobal.tele_period) {
       Vl53l1Every_Second();
     }
 #endif  // USE_DOMOTICZ

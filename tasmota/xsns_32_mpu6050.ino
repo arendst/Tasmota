@@ -262,7 +262,7 @@ bool Xsns32(uint8_t function)
   else if (MPU_6050_found) {
     switch (function) {
       case FUNC_EVERY_SECOND:
-        if (tele_period == Settings.tele_period -3) {
+        if (TasmotaGlobal.tele_period == Settings.tele_period -3) {
           MPU_6050PerformReading();
         }
         break;

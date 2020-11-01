@@ -926,7 +926,7 @@ miel_hvac_input_settings(struct miel_hvac_softc *sc,
 		return;
 	}
 
-	if (bitRead(power, sc->sc_device) != !!state)
+	if (bitRead(TasmotaGlobal.power, sc->sc_device) != !!state)
 		ExecuteCommandPower(sc->sc_device, state, SRC_SWITCH);
 
 	publish = (sc->sc_settings_set == 0) ||
@@ -1044,7 +1044,7 @@ miel_hvac_pre_init(void)
 		SetSerial(baudrate, TS_SERIAL_8E1);
 	}
 
-	sc->sc_device = devices_present++; /* claim a POWER device slot */
+	sc->sc_device = TasmotaGlobal.devices_present++; /* claim a POWER device slot */
 
 	miel_hvac_sc = sc;
 	return;
