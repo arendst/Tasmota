@@ -182,6 +182,7 @@
 #define D_JSON_VCC "Vcc"
 #define D_JSON_VERSION "Version"
 #define D_JSON_VOLTAGE "Voltage"
+#define D_JSON_VOLUME "Volume"
 #define D_JSON_WEIGHT "Weight"
 #define D_JSON_WIFI "Wifi"
 #define D_JSON_WRONG "Wrong"
@@ -782,6 +783,8 @@ const char HTTP_SNS_PH[]            PROGMEM = "{s}%s "  D_PH                  "{
 const char HTTP_SNS_ORP[]           PROGMEM = "{s}%s "  D_ORP                 "{m}%s " D_UNIT_MILLIVOLT           "{e}";
 const char HTTP_SNS_EC[]            PROGMEM = "{s}%s "  D_EC                  "{m}%s " D_UNIT_MICROSIEMENS_PER_CM "{e}";
 const char HTTP_SNS_O2[]            PROGMEM = "{s}%s "  D_O2                  "{m}%s " D_UNIT_PERCENT             "{e}";
+const char HTTP_SNS_LITERS[]        PROGMEM = "{s}%s "  D_VOLUME              "{m}%s " D_UNIT_LITERS              "{e}";
+const char HTTP_SNS_LPM[]           PROGMEM = "{s}%s "  D_FLOW_RATE           "{m}%s " D_UNIT_LITERS_PER_MIN      "{e}";
 
 const char S_MAIN_MENU[]              PROGMEM = D_MAIN_MENU;
 const char S_CONFIGURATION[]          PROGMEM = D_CONFIGURATION;

@@ -74,7 +74,11 @@ const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
   EZOStruct::id,
 #endif
   EZOStruct::id,  // "PMP"
-  EZOStruct::id,  // "FLO"
+#ifdef USE_EZOFLO
+  EZOFLO::id,
+#else
+  EZOStruct::id,
+#endif
 #ifdef USE_EZOCO2
   EZOCO2::id,
 #else
@@ -241,6 +245,9 @@ private:
 #endif
 #ifdef USE_EZORTD
                   CREATE_EZO_CLASS(RTD)
+#endif
+#ifdef USE_EZOFLO
+                  CREATE_EZO_CLASS(FLO)
 #endif
 #ifdef USE_EZOCO2
                   CREATE_EZO_CLASS(CO2)
