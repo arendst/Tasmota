@@ -646,7 +646,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_EZOPRS)
     feature7 |= 0x00000040;  // xsns_78_ezoprs.ino
 #endif
-//    feature7 |= 0x00000080;
+#if defined(USE_I2C) && defined(USE_EZOFLO)
+    feature7 |= 0x00000080;
+#endif
 
 //    feature7 |= 0x00000100;
 //    feature7 |= 0x00000200;

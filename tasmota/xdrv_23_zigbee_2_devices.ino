@@ -172,7 +172,7 @@ void Z_Data_OnOff::setPower(bool val, uint32_t relay) {
 }
 
 /*********************************************************************************************\
- * Device specific: Light device
+ * Device specific: Plug device
 \*********************************************************************************************/
 class Z_Data_Plug : public Z_Data {
 public:
@@ -249,6 +249,18 @@ public:
 
 /*********************************************************************************************\
  * Device specific: PIR
+ * 
+  // List of occupancy time-outs:
+  // 0xF = default (90 s)
+  // 0x0 = no time-out
+  // 0x1 = 15 s
+  // 0x2 = 30 s
+  // 0x3 = 45 s
+  // 0x4 = 60 s
+  // 0x5 = 75 s
+  // 0x6 = 90 s -- default
+  // 0x7 = 105 s
+  // 0x8 = 120 s
 \*********************************************************************************************/
 class Z_Data_PIR : public Z_Data {
 public:
@@ -265,13 +277,34 @@ public:
   inline uint16_t getIlluminance(void)  const { return illuminance; }
   
   inline void setOccupancy(uint8_t _occupancy)          { occupancy = _occupancy; }
-  inline void setilluminance(uint16_t _illuminance)     { illuminance = _illuminance; }
+  inline void setIlluminance(uint16_t _illuminance)     { illuminance = _illuminance; }
+
+  uint32_t getTimeoutSeconds(void) const;
+  void setTimeoutSeconds(int32_t value);
 
   static const Z_Data_Type type = Z_Data_Type::Z_PIR;
   // PIR
   uint8_t               occupancy;      // map8
   uint16_t              illuminance;    // illuminance
 };
+
+uint32_t Z_Data_PIR::getTimeoutSeconds(void) const {
+  if (_config != 0xF) {
+    return _config * 15;
+  } else {
+    return 90;
+  }
+}
+
+void Z_Data_PIR::setTimeoutSeconds(int32_t value) {
+  if (value < 0) {
+    _config = 0xF;
+  } else {
+    uint32_t val_15 = (value + 14)/ 15;   // always round up
+    if (val_15 > 8) { val_15 = 8; }
+    _config = val_15;
+  }
+}
 
 /*********************************************************************************************\
  * Device specific: Sensors: temp, humidity, pressure...
@@ -510,6 +543,15 @@ public:
   inline bool getReachable(void)        const { return reachable; }
   inline bool getPower(uint8_t ep =0)   const;
 
+  // Add an endpoint to a device
+  bool addEndpoint(uint8_t endpoint);
+  void clearEndpoints(void);
+  uint32_t countEndpoints(void) const;    // return the number of known endpoints (0 if unknown)
+
+  void setManufId(const char * str);
+  void setModelId(const char * str);
+  void setFriendlyName(const char * str);
+
   // dump device attributes to ZbData
   void toAttributes(Z_attribute_list & attr_list) const;
 
@@ -550,6 +592,9 @@ public:
     }
     return dirty;
   }
+protected:
+
+  static void setStringAttribute(char*& attr, const char * str);
 };
 
 /*********************************************************************************************\
@@ -634,14 +679,6 @@ public:
   // If it is already registered, update information, otherwise create the entry
   Z_Device &  updateDevice(uint16_t shortaddr, uint64_t longaddr = 0);
 
-  // Add an endpoint to a device
-  void addEndpoint(uint16_t shortaddr, uint8_t endpoint);
-  void clearEndpoints(uint16_t shortaddr);
-  uint32_t countEndpoints(uint16_t shortaddr) const;    // return the number of known endpoints (0 if unknown)
-
-  void setManufId(uint16_t shortaddr, const char * str);
-  void setModelId(uint16_t shortaddr, const char * str);
-  void setFriendlyName(uint16_t shortaddr, const char * str);
   inline const char * getFriendlyName(uint16_t shortaddr) const {
     return findShortAddr(shortaddr).friendlyName;
   }
@@ -728,8 +765,6 @@ private:
   // Create a new entry in the devices list - must be called if it is sure it does not already exist
   Z_Device & createDeviceEntry(uint16_t shortaddr, uint64_t longaddr = 0);
   void freeDeviceEntry(Z_Device *device);
-
-  void setStringAttribute(char*& attr, const char * str);
 };
 
 /*********************************************************************************************\

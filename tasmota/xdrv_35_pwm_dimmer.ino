@@ -88,10 +88,9 @@ void PWMModulePreInit(void)
   Settings.ledstate = 0;          // Disable LED usage
 
   // If the module was just changed to PWM Dimmer, set the defaults.
-  if (Settings.last_module != Settings.module) {
+if (TasmotaGlobal.module_changed) {
     Settings.flag.pwm_control = true;     // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
     Settings.bri_power_on = Settings.bri_preset_low = Settings.bri_preset_high = 0;
-//    Settings.last_module = Settings.module;  // Will be done at LAST_MODULE_SET_TIME after restart as other drivers also test for module change
 
     // Previous versions of PWM Dimmer used SetOption32 - Button held for factor times longer as the
     // hold time. The hold time is now fixed and SetOption32 is used as normal including to

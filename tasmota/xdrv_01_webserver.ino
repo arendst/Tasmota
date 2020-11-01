@@ -875,7 +875,11 @@ const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
 };
 
 void WebServer_on(const char * prefix, void (*func)(void), uint8_t method = HTTP_ANY) {
+#ifdef ESP8266
   Webserver->on((const __FlashStringHelper *) prefix, (HTTPMethod) method, func);
+#else
+  Webserver->on(prefix, (HTTPMethod) method, func);
+#endif
 }
 
 void StartWebserver(int type, IPAddress ipweb)

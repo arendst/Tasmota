@@ -854,7 +854,7 @@ void RulesEvery50ms(void)
 #else
           if (PinUsed(GPIO_SWT1, i)) {
 #endif  // USE_TM1638
-            snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (SwitchState(i)));
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"%s\":{\"Boot\":%d}}"), GetSwitchText(i).c_str(), (SwitchState(i)));
             RulesProcessEvent(json_event);
           }
         }

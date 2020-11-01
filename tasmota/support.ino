@@ -913,11 +913,12 @@ void SetSerialBegin(void) {
   TasmotaGlobal.baudrate = Settings.baudrate * 300;
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
   Serial.flush();
-  Serial.end();
-  delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
 #ifdef ESP8266
   Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings.serial_config));
 #else  // ESP32
+  delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
+  Serial.end();
+  delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   uint32_t config = pgm_read_dword(kTasmotaSerialConfig + Settings.serial_config);
   Serial.begin(TasmotaGlobal.baudrate, config);
 #endif

@@ -490,7 +490,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
     result = XdrvRulesProcess();
   }
 #ifdef USE_PWM_DIMMER
-  if (PWM_DIMMER == TasmotaGlobal.module_type && !result) {
+  if (PWM_DIMMER != TasmotaGlobal.module_type || !result) {
 #endif  // USE_PWM_DIMMER
   int32_t payload_save = XdrvMailbox.payload;
   XdrvMailbox.payload = device_save << 24 | key << 16 | state << 8 | device;
@@ -739,6 +739,14 @@ void TempHumDewShow(bool json, bool pass_on, const char *types, float f_temperat
   }
 }
 
+String GetSwitchText(uint32_t i) {
+  String switch_text = SettingsText(SET_SWITCH_TXT1 + i);
+  if ('\0' == switch_text[0]) {
+    switch_text = D_JSON_SWITCH + String(i +1);
+  }
+  return switch_text;
+}
+
 bool MqttShowSensor(void)
 {
   ResponseAppendTime();
@@ -750,7 +758,7 @@ bool MqttShowSensor(void)
 #else
     if (PinUsed(GPIO_SWT1, i)) {
 #endif  // USE_TM1638
-      ResponseAppend_P(PSTR(",\"" D_JSON_SWITCH "%d\":\"%s\""), i +1, GetStateText(SwitchState(i)));
+      ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetSwitchText(i).c_str(), GetStateText(SwitchState(i)));
     }
   }
   XsnsCall(FUNC_JSON_APPEND);
@@ -791,16 +799,14 @@ void PerformEverySecond(void)
 {
   TasmotaGlobal.uptime++;
 
-  if (LAST_MODULE_SET_TIME == TasmotaGlobal.uptime) {
-    Settings.last_module = Settings.module;  // Needs to be done after AriluxRfInit() and PWMModulePreInit()
-  }
-
   if (POWER_CYCLE_TIME == TasmotaGlobal.uptime) {
     UpdateQuickPowerCycle(false);
   }
 
   if (BOOT_LOOP_TIME == TasmotaGlobal.uptime) {
     RtcRebootReset();
+
+    Settings.last_module = Settings.module;
 
 #ifdef USE_DEEPSLEEP
     if (!(DeepSleepEnabled() && !Settings.flag3.bootcount_update)) {
@@ -1490,7 +1496,8 @@ void GpioInit(void)
   }
   SetModuleType();
 
-  if (Settings.module != Settings.last_module) {
+  TasmotaGlobal.module_changed = (Settings.module != Settings.last_module);
+  if (TasmotaGlobal.module_changed) {
     Settings.baudrate = APP_BAUDRATE / 300;
     Settings.serial_config = TS_SERIAL_8N1;
     SetSerialBegin();
