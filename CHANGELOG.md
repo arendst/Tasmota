@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Rule Break not working as expected when ONCE is enabled (#9245)
 - Rule expressions using mems corrupts character pool (#9301)
+- Button press rules regression introduced by #9589 (#9700)
 
 ## [9.0.0.2] - 20201025
 ### Added
@@ -39,6 +40,7 @@ All notable changes to this project will be documented in this file.
 - Support for EZO CO2 sensors by Christopher Tremblay (#9619)
 - On ZigbeeBridge support for glowing led when permit join is active (#9581)
 - Support for PWM Dimmer multi-press and ledmask (#9584)
+- Make button press rules override PWM Dimmer functions (#9589)
 - Support for fixed output Hi or Lo GPIO selection
 - ESP32 support for Wireless-Tag WT32-ETH01 (#9496)
 - ESP32 MI32 Beacon support, RSSI at TELEPERIOD, refactoring (#9609)
