@@ -607,21 +607,20 @@ Z_Device & Z_Devices::parseDeviceFromName(const char * param, bool short_must_be
 }
 
 // Display the tracked status for a light
-String Z_Devices::dumpLightState(uint16_t shortaddr) const {
+String Z_Devices::dumpLightState(const Z_Device & device) {
   Z_attribute_list attr_list;
   char hex[8];
 
-  const Z_Device & device = findShortAddr(shortaddr);
-  const char * fname = getFriendlyName(shortaddr);
+  const char * fname = device.friendlyName;
   bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
-  snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), shortaddr);
+  snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), device.shortaddr);
 
   attr_list.addAttribute(F(D_JSON_ZIGBEE_DEVICE)).setStr(hex);
   if (fname) {
     attr_list.addAttribute(F(D_JSON_ZIGBEE_NAME)).setStr(fname);
   }
 
-  if (foundDevice(device)) {
+  if (device.valid()) {
     // dump all known values
     attr_list.addAttribute(F("Reachable")).setBool(device.getReachable());
     if (device.validPower())        { attr_list.addAttribute(F("Power")).setUInt(device.getPower()); }

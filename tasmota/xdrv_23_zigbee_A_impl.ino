@@ -683,7 +683,7 @@ void CmndZbSend(void) {
   // parse "Device" and "Group"
   JsonParserToken val_device = root[PSTR(D_CMND_ZIGBEE_DEVICE)];
   if (val_device) {
-    device = zigbee_devices.parseDeviceFromName(val_device.getStr()).shortaddr;
+    device = zigbee_devices.parseDeviceFromName(val_device.getStr(), true).shortaddr;
     if (BAD_SHORTADDR == device) { ResponseCmndChar_P(PSTR("Invalid parameter")); return; }
   }
   if (BAD_SHORTADDR == device) {     // if not found, check if we have a group
@@ -823,19 +823,19 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
   uint8_t  endpoint = 0x00;         // 0x00 is invalid for the src endpoint
   uint8_t  toendpoint = 0x01;       // default dest endpoint to 0x01
   uint16_t toGroup = 0x0000;        // group address
-  uint16_t cluster  = 0;            // 0xFFFF is invalid
+  uint16_t cluster  = 0;            // cluster 0 is default
   uint32_t group = 0xFFFFFFFF;      // 16 bits values, otherwise 0xFFFFFFFF is unspecified
 
   // Information about source device: "Device", "Endpoint", "Cluster"
   //  - the source endpoint must have a known IEEE address
-  srcDevice = zigbee_devices.parseDeviceFromName(root.getStr(PSTR(D_CMND_ZIGBEE_DEVICE), nullptr)).shortaddr;
-  if (BAD_SHORTADDR == srcDevice) { ResponseCmndChar_P(PSTR("Unknown source device")); return; }
+  const Z_Device & src_device = zigbee_devices.parseDeviceFromName(root.getStr(PSTR(D_CMND_ZIGBEE_DEVICE), nullptr), true);
+  if (!src_device.valid()) { ResponseCmndChar_P(PSTR("Unknown source device")); return; }
   // check if IEEE address is known
-  uint64_t srcLongAddr = zigbee_devices.getDeviceLongAddr(srcDevice);
+  uint64_t srcLongAddr = src_device.longaddr;
   if (0 == srcLongAddr) { ResponseCmndChar_P(PSTR("Unknown source IEEE address")); return; }
   // look for source endpoint
   endpoint = root.getUInt(PSTR(D_CMND_ZIGBEE_ENDPOINT), endpoint);
-  if (0 == endpoint) { endpoint = zigbee_devices.findFirstEndpoint(srcDevice); }
+  if (0 == endpoint) { endpoint = zigbee_devices.findFirstEndpoint(src_device.shortaddr); }
   // look for source cluster
   JsonParserToken val_cluster = root[PSTR(D_CMND_ZIGBEE_CLUSTER)];
   if (val_cluster) {
@@ -858,26 +858,23 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
   // If no target is specified, we default to coordinator 0x0000
   if ((!to_group) && (!dst_device)) {
     dstDevice = 0x0000;
+    dstLongAddr = localIEEEAddr;
+    toendpoint = 1;
   }
 
-  if ((dst_device) || (BAD_SHORTADDR != dstDevice)) {
-    if (BAD_SHORTADDR == dstDevice) {
-      dstDevice = zigbee_devices.parseDeviceFromName(dst_device.getStr(nullptr)).shortaddr;
-      if (BAD_SHORTADDR == dstDevice) { ResponseCmndChar_P(PSTR("Invalid parameter")); return; }
-    }
-    if (0x0000 == dstDevice) {
-      dstLongAddr = localIEEEAddr;
-    } else {
-      dstLongAddr = zigbee_devices.getDeviceLongAddr(dstDevice);
-    }
-    if (0 == dstLongAddr) { ResponseCmndChar_P(PSTR("Unknown dest IEEE address")); return; }
+  if (dst_device) {
+    const Z_Device & dstDevice = zigbee_devices.parseDeviceFromName(dst_device.getStr(nullptr), true);
+    if (!dstDevice.valid()) { ResponseCmndChar_P(PSTR("Unknown dest device")); return; }
+    dstLongAddr = dstDevice.longaddr;
+  }
 
+  if (!to_group) {
+    if (0 == dstLongAddr) { ResponseCmndChar_P(PSTR("Unknown dest IEEE address")); return; }
     toendpoint = root.getUInt(PSTR("ToEndpoint"), toendpoint);
   }
 
   // make sure we don't have conflicting parameters
-  if (to_group && dstLongAddr) { ResponseCmndChar_P(PSTR("Cannot have both \"ToDevice\" and \"ToGroup\"")); return; }
-  if (!to_group && !dstLongAddr) { ResponseCmndChar_P(PSTR("Missing \"ToDevice\" or \"ToGroup\"")); return; }
+  if (to_group && dst_device) { ResponseCmndChar_P(PSTR("Cannot have both \"ToDevice\" and \"ToGroup\"")); return; }
 
 #ifdef USE_ZIGBEE_ZNP
   SBuffer buf(34);
@@ -891,7 +888,7 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
   buf.add64(srcLongAddr);
   buf.add8(endpoint);
   buf.add16(cluster);
-  if (dstLongAddr) {
+  if (!to_group) {
     buf.add8(Z_Addr_IEEEAddress);         // DstAddrMode - 0x03 = ADDRESS_64_BIT
     buf.add64(dstLongAddr);
     buf.add8(toendpoint);
@@ -910,7 +907,7 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
   buf.add64(srcLongAddr);
   buf.add8(endpoint);
   buf.add16(cluster);
-  if (dstLongAddr) {
+  if (!to_group) {
     buf.add8(Z_Addr_IEEEAddress);         // DstAddrMode - 0x03 = ADDRESS_64_BIT
     buf.add64(dstLongAddr);
     buf.add8(toendpoint);
@@ -941,7 +938,7 @@ void CmndZbUnbind(void) {
 
 void CmndZbBindState_or_Map(uint16_t zdo_cmd) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data).shortaddr;
+  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true).shortaddr;
   if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
   uint8_t index = XdrvMailbox.index - 1;   // change default 1 to 0
 
@@ -1002,7 +999,7 @@ void CmndZbProbe(void) {
 //
 void CmndZbProbeOrPing(boolean probe) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data).shortaddr;
+  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true).shortaddr;
   if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
 
   // everything is good, we can send the command
@@ -1037,7 +1034,7 @@ void CmndZbName(void) {
   char *str = strtok_r(XdrvMailbox.data, ",", &p);
 
   // parse first part, <device_id>
-  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true);  // in case of short_addr, it must be already registered
+  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, false);  // it's the only case where we create a new device
   if (!device.valid()) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
 
   if (p == nullptr) {
@@ -1107,7 +1104,7 @@ void CmndZbLight(void) {
     if (bulbtype < -1) { bulbtype = -1; }
     device.setLightChannels(bulbtype);
   }
-  String dump = zigbee_devices.dumpLightState(device.shortaddr);
+  String dump = zigbee_devices.dumpLightState(device);
   Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_LIGHT "\":%s}"), dump.c_str());
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_LIGHT));
@@ -1369,7 +1366,7 @@ void CmndZbStatus(void) {
     if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
     String dump;
 
-    Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data);
+    Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true);
     if (XdrvMailbox.data_len > 0) {
       if (!device.valid()) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
       dump = zigbee_devices.dumpDevice(XdrvMailbox.index, device);
@@ -1505,7 +1502,7 @@ void CmndZbData(void) {
     }
 
     for (auto device_name : root) {
-      Z_Device & device = zigbee_devices.parseDeviceFromName(device_name.getStr());
+      Z_Device & device = zigbee_devices.parseDeviceFromName(device_name.getStr(), true);
       if (!device.valid()) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
       JsonParserObject inner_data = device_name.getValue().getObject();
       if (inner_data) {
@@ -1520,7 +1517,7 @@ void CmndZbData(void) {
     // non-JSON, export current data
     // ZbData 0x1234
     // ZbData Device_Name
-    Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data);
+    Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true);
     if (!device.valid()) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
 
     Z_attribute_list attr_data;
