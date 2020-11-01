@@ -122,6 +122,7 @@ struct {
   bool is_8285;                             // Hardware device ESP8266EX (0) or ESP8285 (1)
   bool skip_light_fade;                     // Temporarily skip light fading
   bool restart_halt;                        // Do not restart but stay in wait loop
+  bool module_changed;                      // Indicate module changed since last restart
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
   uint8_t blinks;                           // Number of LED blinks

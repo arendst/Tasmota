@@ -791,16 +791,14 @@ void PerformEverySecond(void)
 {
   TasmotaGlobal.uptime++;
 
-  if (LAST_MODULE_SET_TIME == TasmotaGlobal.uptime) {
-    Settings.last_module = Settings.module;  // Needs to be done after AriluxRfInit() and PWMModulePreInit()
-  }
-
   if (POWER_CYCLE_TIME == TasmotaGlobal.uptime) {
     UpdateQuickPowerCycle(false);
   }
 
   if (BOOT_LOOP_TIME == TasmotaGlobal.uptime) {
     RtcRebootReset();
+
+    Settings.last_module = Settings.module;
 
 #ifdef USE_DEEPSLEEP
     if (!(DeepSleepEnabled() && !Settings.flag3.bootcount_update)) {
@@ -1490,7 +1488,8 @@ void GpioInit(void)
   }
   SetModuleType();
 
-  if (Settings.module != Settings.last_module) {
+  TasmotaGlobal.module_changed = (Settings.module != Settings.last_module);
+  if (TasmotaGlobal.module_changed) {
     Settings.baudrate = APP_BAUDRATE / 300;
     Settings.serial_config = TS_SERIAL_8N1;
     SetSerialBegin();
