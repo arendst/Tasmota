@@ -674,7 +674,7 @@ public:
   uint8_t getNextSeqNumber(uint16_t shortaddr);
 
   // Dump json
-  String dumpLightState(uint16_t shortaddr) const;
+  static String dumpLightState(const Z_Device & device);
   String dumpDevice(uint32_t dump_mode, const Z_Device & device) const;
   static String dumpSingleDevice(uint32_t dump_mode, const Z_Device & device);
   int32_t deviceRestore(JsonParserObject json);
