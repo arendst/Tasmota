@@ -23,12 +23,21 @@
  * Implementation
 \*********************************************************************************************/
 
+Z_Device & Z_Devices::devicesAt(size_t i) const {
+  Z_Device * devp = (Z_Device*) _devices.at(i);
+  if (devp) {
+    return *devp;
+  } else {
+    return device_unk;
+  }
+}
+
 //
 // Create a new Z_Device entry in _devices. Only to be called if you are sure that no
 // entry with same shortaddr or longaddr exists.
 //
 Z_Device & Z_Devices::createDeviceEntry(uint16_t shortaddr, uint64_t longaddr) {
-  if ((BAD_SHORTADDR == shortaddr) && !longaddr) { return (Z_Device&) device_unk; }      // it is not legal to create this entry
+  if ((BAD_SHORTADDR == shortaddr) && !longaddr) { return device_unk; }      // it is not legal to create this entry
   Z_Device & device = _devices.addToLast();
   device.shortaddr = shortaddr;
   device.longaddr = longaddr;
@@ -56,7 +65,7 @@ Z_Device & Z_Devices::findShortAddr(uint16_t shortaddr) {
   for (auto & elem : _devices) {
     if (elem.shortaddr == shortaddr) { return elem; }
   }
-  return (Z_Device&) device_unk;
+  return device_unk;
 }
 const Z_Device & Z_Devices::findShortAddr(uint16_t shortaddr) const {
   for (const auto & elem : _devices) {
@@ -73,11 +82,11 @@ const Z_Device & Z_Devices::findShortAddr(uint16_t shortaddr) const {
 //    index in _devices of entry, -1 if not found
 //
 Z_Device & Z_Devices::findLongAddr(uint64_t longaddr) {
-  if (!longaddr) { return (Z_Device&) device_unk; }
+  if (!longaddr) { return device_unk; }
   for (auto &elem : _devices) {
     if (elem.longaddr == longaddr) { return elem; }
   }
-  return (Z_Device&) device_unk;
+  return device_unk;
 }
 const Z_Device & Z_Devices::findLongAddr(uint64_t longaddr) const {
   if (!longaddr) { return device_unk; }
@@ -109,32 +118,25 @@ int32_t Z_Devices::findFriendlyName(const char * name) const {
   return -1;
 }
 
-uint16_t Z_Devices::isKnownLongAddr(uint64_t longaddr) const {
-  const Z_Device & device = findLongAddr(longaddr);
-  if (foundDevice(device)) {
-    return device.shortaddr;    // can be zero, if not yet registered
-  } else {
-    return BAD_SHORTADDR;
-  }
+Z_Device & Z_Devices::isKnownLongAddrDevice(uint64_t longaddr) const {
+  return (Z_Device &) findLongAddr(longaddr);
 }
 
-uint16_t Z_Devices::isKnownIndex(uint32_t index) const {
+Z_Device & Z_Devices::isKnownIndexDevice(uint32_t index) const {
   if (index < devicesSize()) {
-    const Z_Device & device = devicesAt(index);
-    return device.shortaddr;
+    return devicesAt(index);
   } else {
-    return BAD_SHORTADDR;
+    return device_unk;
   }
 }
 
-uint16_t Z_Devices::isKnownFriendlyName(const char * name) const {
-  if ((!name) || (0 == strlen(name))) { return BAD_SHORTADDR; }         // Error
+Z_Device & Z_Devices::isKnownFriendlyNameDevice(const char * name) const {
+  if ((!name) || (0 == strlen(name))) { return device_unk; }         // Error
   int32_t found = findFriendlyName(name);
   if (found >= 0) {
-    const Z_Device & device = devicesAt(found);
-    return device.shortaddr;    // can be zero, if not yet registered
+    return devicesAt(found);
   } else {
-    return BAD_SHORTADDR;
+    return device_unk;
   }
 }
 
@@ -146,7 +148,7 @@ uint64_t Z_Devices::getDeviceLongAddr(uint16_t shortaddr) const {
 // We have a seen a shortaddr on the network, get the corresponding device object
 //
 Z_Device & Z_Devices::getShortAddr(uint16_t shortaddr) {
-  if (BAD_SHORTADDR == shortaddr) { return (Z_Device&) device_unk; }   // this is not legal
+  if (BAD_SHORTADDR == shortaddr) { return device_unk; }   // this is not legal
   Z_Device & device = findShortAddr(shortaddr);
   if (foundDevice(device)) {
     return device;
@@ -156,7 +158,7 @@ Z_Device & Z_Devices::getShortAddr(uint16_t shortaddr) {
 
 // find the Device object by its longaddr (unique key if not null)
 Z_Device & Z_Devices::getLongAddr(uint64_t longaddr) {
-  if (!longaddr) { return (Z_Device&) device_unk; }
+  if (!longaddr) { return device_unk; }
   Z_Device & device = findLongAddr(longaddr);
   if (foundDevice(device)) {
     return device;
@@ -211,7 +213,7 @@ Z_Device & Z_Devices::updateDevice(uint16_t shortaddr, uint64_t longaddr) {
     if ((BAD_SHORTADDR != shortaddr) || longaddr) {
       return createDeviceEntry(shortaddr, longaddr);
     }
-    return (Z_Device&) device_unk;
+    return device_unk;
   }
 }
 
@@ -308,29 +310,13 @@ void Z_Device::setFriendlyName(const char * str) {
   setStringAttribute(friendlyName, str);
 }
 
-
-void Z_Devices::setReachable(uint16_t shortaddr, bool reachable) {
-  getShortAddr(shortaddr).setReachable(reachable);
-}
-
-void Z_Devices::setLQI(uint16_t shortaddr, uint8_t lqi) {
-  if (shortaddr == localShortAddr) { return; }
-  getShortAddr(shortaddr).lqi = lqi;
-}
-
-void Z_Devices::setLastSeenNow(uint16_t shortaddr) {
-  if (shortaddr == localShortAddr) { return; }
+void Z_Device::setLastSeenNow(void) {
   // Only update time if after 2020-01-01 0000.
   // Fixes issue where zigbee device pings before WiFi/NTP has set utc_time
   // to the correct time, and "last seen" calculations are based on the
   // pre-corrected last_seen time and the since-corrected utc_time.
   if (Rtc.utc_time < 1577836800) { return; }
-  getShortAddr(shortaddr).last_seen = Rtc.utc_time;
-}
-
-
-void Z_Devices::setBatteryPercent(uint16_t shortaddr, uint8_t bp) {
-  getShortAddr(shortaddr).batterypercent = bp;
+  last_seen = Rtc.utc_time;
 }
 
 // get the next sequance number for the device, or use the global seq number if device is unknown
@@ -345,22 +331,32 @@ uint8_t Z_Devices::getNextSeqNumber(uint16_t shortaddr) {
   }
 }
 
-// General Zigbee device profile support
-void Z_Devices::setLightProfile(uint16_t shortaddr, uint8_t light_profile) {
-  Z_Device &device = getShortAddr(shortaddr);
-  if (device.setLightChannels(light_profile)) {
-    dirty();
+// returns: dirty flag, did we change the value of the object
+void Z_Device::setLightChannels(int8_t channels) {
+  if (channels >= 0) {
+    // retrieve of create light object
+    Z_Data_Light & light = data.get<Z_Data_Light>(0);
+    if (channels != light.getConfig()) {
+      light.setConfig(channels);
+      zigbee_devices.dirty();
+    }
+    Z_Data_OnOff & onoff = data.get<Z_Data_OnOff>(0);
+  } else {
+    // remove light / onoff object if any
+    for (auto & data_elt : data) {
+      if ((data_elt.getType() == Z_Data_Type::Z_Light) ||
+          (data_elt.getType() == Z_Data_Type::Z_OnOff)) {
+        // remove light object
+        data.remove(&data_elt);
+      zigbee_devices.dirty();
+      }
+    }
   }
 }
 
-// Returns the device profile or 0xFF if the device or profile is unknown
-uint8_t Z_Devices::getLightProfile(uint16_t shortaddr) const {
-  const Z_Device &device = findShortAddr(shortaddr);
-  return device.getLightChannels();
-}
-
 int8_t Z_Devices::getHueBulbtype(uint16_t shortaddr) const {
-  int8_t light_profile = getLightProfile(shortaddr);
+  const Z_Device &device = findShortAddr(shortaddr);
+  int8_t light_profile = device.getLightChannels();
   if (0x00 == (light_profile & 0xF0)) {
     return (light_profile & 0x07);
   } else {
@@ -575,39 +571,39 @@ void Z_Devices::clean(void) {
 // - a long address starting with "0x", example: 0x7CB03EBB0A0292DD
 // - a number 0..99, the index number in ZigbeeStatus
 // - a friendly name, between quotes, example: "Room_Temp"
-uint16_t Z_Devices::parseDeviceParam(const char * param, bool short_must_be_known) const {
-  if (nullptr == param) { return BAD_SHORTADDR; }
+Z_Device & Z_Devices::parseDeviceFromName(const char * param, bool short_must_be_known) {
+  if (nullptr == param) { return device_unk; }
   size_t param_len = strlen(param);
   char dataBuf[param_len + 1];
   strcpy(dataBuf, param);
   RemoveSpace(dataBuf);
-  uint16_t shortaddr = BAD_SHORTADDR;    // start with unknown
 
-  if (strlen(dataBuf) < 4) {
+  if ((dataBuf[0] >= '0') && (dataBuf[0] <= '9') && (strlen(dataBuf) < 4)) {
     // simple number 0..99
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 99)) {
-      shortaddr = zigbee_devices.isKnownIndex(XdrvMailbox.payload - 1);
+      return isKnownIndexDevice(XdrvMailbox.payload - 1);
+    } else {
+      return device_unk;
     }
   } else if ((dataBuf[0] == '0') && ((dataBuf[1] == 'x') || (dataBuf[1] == 'X'))) {
     // starts with 0x
     if (strlen(dataBuf) < 18) {
       // expect a short address
-      shortaddr = strtoull(dataBuf, nullptr, 0);
+      uint16_t shortaddr = strtoull(dataBuf, nullptr, 0);
       if (short_must_be_known) {
-        shortaddr = zigbee_devices.findShortAddr(shortaddr).shortaddr;   // if not found, it reverts to the unknown_device with address BAD_SHORTADDR
+        return (Z_Device&) findShortAddr(shortaddr);   // if not found, it reverts to the unknown_device with address BAD_SHORTADDR
+      } else {
+        return getShortAddr(shortaddr);   // create it if not registered
       }
-      // else we don't check if it's already registered to force unregistered devices
     } else {
       // expect a long address
       uint64_t longaddr = strtoull(dataBuf, nullptr, 0);
-      shortaddr = zigbee_devices.isKnownLongAddr(longaddr);
+      return isKnownLongAddrDevice(longaddr);
     }
   } else {
     // expect a Friendly Name
-    shortaddr = zigbee_devices.isKnownFriendlyName(dataBuf);
+    return isKnownFriendlyNameDevice(dataBuf);
   }
-
-  return shortaddr;
 }
 
 // Display the tracked status for a light
@@ -654,60 +650,70 @@ String Z_Devices::dumpLightState(uint16_t shortaddr) const {
 // Dump the internal memory of Zigbee devices
 // Mode = 1: simple dump of devices addresses
 // Mode = 2: simple dump of devices addresses and names, endpoints, light
-String Z_Devices::dump(uint32_t dump_mode, uint16_t status_shortaddr) const {
+String Z_Devices::dumpSingleDevice(uint32_t dump_mode, const class Z_Device & device) {
+  uint16_t shortaddr = device.shortaddr;
+  char hex[22];
+
+  Z_attribute_list attr_list;
+
+  snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), shortaddr);
+  attr_list.addAttribute(F(D_JSON_ZIGBEE_DEVICE)).setStr(hex);
+
+  if (device.friendlyName > 0) {
+    attr_list.addAttribute(F(D_JSON_ZIGBEE_NAME)).setStr(device.friendlyName);
+  }
+
+  if (2 <= dump_mode) {
+    hex[0] = '0';   // prefix with '0x'
+    hex[1] = 'x';
+    Uint64toHex(device.longaddr, &hex[2], 64);
+    attr_list.addAttribute(F("IEEEAddr")).setStr(hex);
+    if (device.modelId) {
+      attr_list.addAttribute(F(D_JSON_MODEL D_JSON_ID)).setStr(device.modelId);
+    }
+    if (device.manufacturerId) {
+      attr_list.addAttribute(F("Manufacturer")).setStr(device.manufacturerId);
+    }
+
+    JsonGeneratorArray arr_ep;
+    for (uint32_t i = 0; i < endpoints_max; i++) {
+      uint8_t endpoint = device.endpoints[i];
+      if (0x00 == endpoint) { break; }
+      arr_ep.add(endpoint);
+    }
+    attr_list.addAttribute(F("Endpoints")).setStrRaw(arr_ep.toString().c_str());
+
+    JsonGeneratorArray arr_data;
+    for (auto & data_elt : device.data) {
+      char key[8];
+      if (data_elt.validConfig()) {
+        snprintf_P(key, sizeof(key), "?%02X.%1X", data_elt.getEndpoint(), data_elt.getConfig());
+      } else {
+        snprintf_P(key, sizeof(key), "?%02X", data_elt.getEndpoint());
+      }
+      key[0] = Z_Data::DataTypeToChar(data_elt.getType());
+      arr_data.addStr(key);
+    }
+    attr_list.addAttribute(F("Config")).setStrRaw(arr_data.toString().c_str());
+  }
+  return attr_list.toString(true);
+}
+
+// If &device == nullptr, then dump all
+String Z_Devices::dumpDevice(uint32_t dump_mode, const Z_Device & device) const {
   JsonGeneratorArray json_arr;
 
-  for (const auto & device : _devices) {
-    uint16_t shortaddr = device.shortaddr;
-    char hex[22];
-
-    // ignore non-current device, if device specified
-    if ((BAD_SHORTADDR != status_shortaddr) && (status_shortaddr != shortaddr)) { continue; }
-
-    Z_attribute_list attr_list;
-
-    snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), shortaddr);
-    attr_list.addAttribute(F(D_JSON_ZIGBEE_DEVICE)).setStr(hex);
-
-    if (device.friendlyName > 0) {
-      attr_list.addAttribute(F(D_JSON_ZIGBEE_NAME)).setStr(device.friendlyName);
+  if (&device == nullptr) {
+    if (dump_mode < 2) {
+      // dump light mode for all devices
+      for (const auto & device2 : _devices) {
+        json_arr.addStrRaw(dumpSingleDevice(dump_mode, device2).c_str());
+      }
     }
-
-    if (2 <= dump_mode) {
-      hex[0] = '0';   // prefix with '0x'
-      hex[1] = 'x';
-      Uint64toHex(device.longaddr, &hex[2], 64);
-      attr_list.addAttribute(F("IEEEAddr")).setStr(hex);
-      if (device.modelId) {
-        attr_list.addAttribute(F(D_JSON_MODEL D_JSON_ID)).setStr(device.modelId);
-      }
-      if (device.manufacturerId) {
-        attr_list.addAttribute(F("Manufacturer")).setStr(device.manufacturerId);
-      }
-
-      JsonGeneratorArray arr_ep;
-      for (uint32_t i = 0; i < endpoints_max; i++) {
-        uint8_t endpoint = device.endpoints[i];
-        if (0x00 == endpoint) { break; }
-        arr_ep.add(endpoint);
-      }
-      attr_list.addAttribute(F("Endpoints")).setStrRaw(arr_ep.toString().c_str());
-
-      JsonGeneratorArray arr_data;
-      for (auto & data_elt : device.data) {
-        char key[8];
-        if (data_elt.validConfig()) {
-          snprintf_P(key, sizeof(key), "?%02X.%1X", data_elt.getEndpoint(), data_elt.getConfig());
-        } else {
-          snprintf_P(key, sizeof(key), "?%02X", data_elt.getEndpoint());
-        }
-        key[0] = Z_Data::DataTypeToChar(data_elt.getType());
-        arr_data.addStr(key);
-      }
-      attr_list.addAttribute(F("Config")).setStrRaw(arr_data.toString().c_str());
-    }
-    json_arr.addStrRaw(attr_list.toString(true).c_str());
+  } else {
+    json_arr.addStrRaw(dumpSingleDevice(dump_mode, device).c_str());
   }
+
   return json_arr.toString();
 }
 

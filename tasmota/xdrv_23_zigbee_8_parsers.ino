@@ -1470,8 +1470,11 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
   // log the packet details
   zcl_received.log();
 
-  zigbee_devices.setLQI(srcaddr, linkquality != 0xFF ? linkquality : 0xFE);       // EFR32 has a different scale for LQI
-  zigbee_devices.setLastSeenNow(srcaddr);
+  Z_Device & device = zigbee_devices.getShortAddr(srcaddr);
+  if (srcaddr != localShortAddr) {
+    device.setLQI(linkquality != 0xFF ? linkquality : 0xFE);       // EFR32 has a different scale for LQI
+    device.setLastSeenNow();
+  }
 
   char shortaddr[8];
   snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
@@ -1519,7 +1522,7 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
 
     // since we just receveived data from the device, it is reachable
     zigbee_devices.resetTimersForDevice(srcaddr, 0 /* groupaddr */, Z_CAT_REACHABILITY);    // remove any reachability timer already there
-    zigbee_devices.setReachable(srcaddr, true);     // mark device as reachable
+    device.setReachable(true);     // mark device as reachable
 
     if (defer_attributes) {
       // Prepare for publish
@@ -1615,8 +1618,11 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
   if ((0x0000 == profileid) && (0x00 == srcendpoint))  {
     // ZDO request
     // Report LQI
-    zigbee_devices.setLQI(srcaddr, linkquality);
-    zigbee_devices.setLastSeenNow(srcaddr);
+    Z_Device & device = zigbee_devices.getShortAddr(srcaddr);
+    if (srcaddr != localShortAddr) {
+      device.setLQI(linkquality);
+      device.setLastSeenNow();
+    }
     // Since ZDO messages start with a sequence number, we skip it
     // but we add the source address in the last 2 bytes
     SBuffer zdo_buf(buf.get8(20) - 1 + 2);
