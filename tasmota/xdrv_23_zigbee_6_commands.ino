@@ -199,7 +199,7 @@ void Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster
 // This callback is registered after a an attribute read command was made to a light, and fires if we don't get any response after 1000 ms
 void Z_Unreachable(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   if (BAD_SHORTADDR != shortaddr) {
-    zigbee_devices.setReachable(shortaddr, false);     // mark device as reachable
+    zigbee_devices.getShortAddr(shortaddr).setReachable(false);     // mark device as reachable
   }
 }
 

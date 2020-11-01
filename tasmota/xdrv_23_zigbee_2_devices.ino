@@ -543,6 +543,9 @@ public:
   inline bool getReachable(void)        const { return reachable; }
   inline bool getPower(uint8_t ep =0)   const;
 
+  inline void setLQI(uint8_t _lqi)            { lqi = _lqi; }
+  inline void setBatteryPercent(uint8_t bp)   { batterypercent = bp; }
+
   // Add an endpoint to a device
   bool addEndpoint(uint8_t endpoint);
   void clearEndpoints(void);
@@ -551,6 +554,8 @@ public:
   void setManufId(const char * str);
   void setModelId(const char * str);
   void setFriendlyName(const char * str);
+
+  void setLastSeenNow(void);
 
   // dump device attributes to ZbData
   void toAttributes(Z_attribute_list & attr_list) const;
@@ -568,30 +573,8 @@ public:
     }
   }
 
-  // returns: dirty flag, did we change the value of the object
-  bool setLightChannels(int8_t channels) {
-    bool dirty = false;
-    if (channels >= 0) {
-      // retrieve of create light object
-      Z_Data_Light & light = data.get<Z_Data_Light>(0);
-      if (channels != light.getConfig()) {
-        light.setConfig(channels);
-        dirty = true;
-      }
-      Z_Data_OnOff & onoff = data.get<Z_Data_OnOff>(0);
-    } else {
-      // remove light / onoff object if any
-      for (auto & data_elt : data) {
-        if ((data_elt.getType() == Z_Data_Type::Z_Light) ||
-            (data_elt.getType() == Z_Data_Type::Z_OnOff)) {
-          // remove light object
-          data.remove(&data_elt);
-          dirty = true;
-        }
-      }
-    }
-    return dirty;
-  }
+  void setLightChannels(int8_t channels);
+
 protected:
 
   static void setStringAttribute(char*& attr, const char * str);
@@ -655,9 +638,9 @@ public:
   // - 0x0000 = not found
   // - BAD_SHORTADDR = bad parameter
   // - 0x<shortaddr> = the device's short address
-  uint16_t isKnownLongAddr(uint64_t  longaddr) const;
-  uint16_t isKnownIndex(uint32_t index) const;
-  uint16_t isKnownFriendlyName(const char * name) const;
+  Z_Device & isKnownLongAddrDevice(uint64_t  longaddr) const;
+  Z_Device & isKnownIndexDevice(uint32_t index) const;
+  Z_Device & isKnownFriendlyNameDevice(const char * name) const;
   
   Z_Device & findShortAddr(uint16_t shortaddr);
   const Z_Device & findShortAddr(uint16_t shortaddr) const;
@@ -666,9 +649,7 @@ public:
   Z_Device & getShortAddr(uint16_t shortaddr);   // find Device from shortAddr, creates it if does not exist
   Z_Device & getLongAddr(uint64_t longaddr);     // find Device from shortAddr, creates it if does not exist
   // check if a device was found or if it's the fallback device
-  inline bool foundDevice(const Z_Device & device) const {
-    return (&device != &device_unk);
-  }
+  inline bool foundDevice(const Z_Device & device) const { return device.valid(); }
 
   int32_t findFriendlyName(const char * name) const;
   uint64_t getDeviceLongAddr(uint16_t shortaddr) const;
@@ -689,25 +670,14 @@ public:
     return findShortAddr(shortaddr).manufacturerId;
   }
 
-  void setReachable(uint16_t shortaddr, bool reachable);
-  void setLQI(uint16_t shortaddr, uint8_t lqi);
-  void setLastSeenNow(uint16_t shortaddr);
-  // uint8_t getLQI(uint16_t shortaddr) const;
-  void setBatteryPercent(uint16_t shortaddr, uint8_t bp);
-  uint8_t getBatteryPercent(uint16_t shortaddr) const;
-
   // get next sequence number for (increment at each all)
   uint8_t getNextSeqNumber(uint16_t shortaddr);
 
   // Dump json
-  static void addLightState(Z_attribute_list & attr_list, const Z_Data_Light & light);
   String dumpLightState(uint16_t shortaddr) const;
-  String dump(uint32_t dump_mode, uint16_t status_shortaddr = 0) const;
+  String dumpDevice(uint32_t dump_mode, const Z_Device & device) const;
+  static String dumpSingleDevice(uint32_t dump_mode, const Z_Device & device);
   int32_t deviceRestore(JsonParserObject json);
-
-  // General Zigbee device profile support
-  void setLightProfile(uint16_t shortaddr, uint8_t light_profile);
-  uint8_t getLightProfile(uint16_t shortaddr) const ;
 
   // Hue support
   int8_t getHueBulbtype(uint16_t shortaddr) const ;
@@ -731,14 +701,7 @@ public:
   size_t devicesSize(void) const {
     return _devices.length();
   }
-  const Z_Device & devicesAt(size_t i) const {
-    const Z_Device * devp = _devices.at(i);
-    if (devp) {
-      return *devp;
-    } else {
-      return device_unk;
-    }
-  }
+  Z_Device & devicesAt(size_t i) const;
 
   // Remove device from list
   bool removeDevice(uint16_t shortaddr);
@@ -746,20 +709,16 @@ public:
   // Mark data as 'dirty' and requiring to save in Flash
   void dirty(void);
   void clean(void);   // avoid writing to flash the last changes
-  void shrinkToFit(uint16_t shortaddr);
 
   // Find device by name, can be short_addr, long_addr, number_in_array or name
-  uint16_t parseDeviceParam(const char * param, bool short_must_be_known = false) const;
+  Z_Device & parseDeviceFromName(const char * param, bool short_must_be_known = false);
+
 
 private:
   LList<Z_Device>           _devices;     // list of devices
   LList<Z_Deferred>         _deferred;    // list of deferred calls
   uint32_t                  _saveTimer = 0;
   uint8_t                   _seqNumber = 0;     // global seqNumber if device is unknown
-
-  // Following device is used represent the unknown device, with all defaults
-  // Any find() function will not return Null, instead it will return this instance
-  const Z_Device device_unk = Z_Device(BAD_SHORTADDR);
 
   //int32_t findShortAddrIdx(uint16_t shortaddr) const;
   // Create a new entry in the devices list - must be called if it is sure it does not already exist
@@ -771,6 +730,10 @@ private:
  * Singleton variable
 \*********************************************************************************************/
 Z_Devices zigbee_devices = Z_Devices();
+
+// Following device is used represent the unknown device, with all defaults
+// Any find() function will not return Null, instead it will return this instance
+Z_Device device_unk = Z_Device(BAD_SHORTADDR);
 
 // Local coordinator information
 uint64_t localIEEEAddr = 0;
