@@ -65,6 +65,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Command ``ShutterChange`` to increment change position (#9594)
 - Command ``SetOption113 1`` to set dimmer low on rotary dial after power off
 - Zigbee command ``ZbData`` for better support of device specific data
+- Zigbee command ``ZbOccupancy`` to configure the time-out for PIR
 - Optional support for Mitsubishi Electric HVAC by David Gwynne (#9237)
 - Optional support for Orno WE517-Modbus energy meter by Maxime Vincent (#9353)
 - SDM630 three phase ImportActive Energy display when ``#define SDM630_IMPORT`` is enabled by Janusz Kostorz (#9124)
