@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - TLS in binary tasmota-zbbridge (#9635)
 - Support for EZO O2 sensors by Christopher Tremblay (#9619)
 - Support for EZO PRS sensors by Christopher Tremblay (#9659)
+- Support for EZO FLO sensors by Christopher Tremblay (#9697)
 - Zigbee reduce battery drain (#9642)
 - Zigbee command ``ZbMap`` to describe Zigbee topology (#9651)
 - Zigbee command ``ZbOccupancy`` to configure the time-out for PIR
