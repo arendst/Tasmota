@@ -86,3 +86,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   55  | USE_EZOO2           | xsns_78 | EZOO2    | 0x61 - 0x70 | O2 sensor
   55  | USE_EZOPRS          | xsns_78 | EZOPRS   | 0x61 - 0x70 | Pressure sensor
   55  | USE_EZOFLO          | xsns_78 | EZOFLO   | 0x61 - 0x70 | Flow meter sensor
+  55  | USE_EZODO           | xsns_78 | EZODO    | 0x61 - 0x70 | Disolved Oxygen sensor
