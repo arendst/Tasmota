@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 30.10.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 02.11.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -84,7 +84,7 @@
 #define D_DISABLED "Disabilitato/a"
 #define D_DISTANCE "Distanza"
 #define D_DNS_SERVER "Server DNS"
-#define D_DO "Disolved Oxygen"
+#define D_DO "Ossigeno dissolto"
 #define D_DONE "Completato"
 #define D_DST_TIME "DST"
 #define D_EC "EC"
