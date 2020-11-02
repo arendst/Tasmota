@@ -497,7 +497,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
   XdrvCall(FUNC_ANY_KEY);
   XdrvMailbox.payload = payload_save;
 #ifdef USE_PWM_DIMMER
-    result = true;
+    if (PWM_DIMMER == TasmotaGlobal.module_type) result = true;
   }
 #endif  // USE_PWM_DIMMER
   return result;
