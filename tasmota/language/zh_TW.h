@@ -84,6 +84,7 @@
 #define D_DISABLED "已停用"
 #define D_DISTANCE "距離"
 #define D_DNS_SERVER "DNS伺服器"
+#define D_DO "Disolved Oxygen"
 #define D_DONE "完成"
 #define D_DST_TIME "DST"
 #define D_EC "EC"

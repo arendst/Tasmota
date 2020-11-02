@@ -84,6 +84,7 @@
 #define D_DISABLED "Ανενεργό"
 #define D_DISTANCE "Απόσταση"
 #define D_DNS_SERVER "Διακομιστής DNS"
+#define D_DO "Disolved Oxygen"
 #define D_DONE "Ολοκληρώθηκε"
 #define D_DST_TIME "DST"
 #define D_EC "EC"

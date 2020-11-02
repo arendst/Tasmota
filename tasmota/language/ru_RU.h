@@ -84,6 +84,7 @@
 #define D_DISABLED "Блокирован"
 #define D_DISTANCE "Distance"
 #define D_DNS_SERVER "DNS Сервер"
+#define D_DO "Disolved Oxygen"
 #define D_DONE "Выполнено"
 #define D_DST_TIME "DST"
 #define D_EC "EC"
