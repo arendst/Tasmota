@@ -84,6 +84,7 @@
 #define D_DISABLED "Letiltva"
 #define D_DISTANCE "Távolság"
 #define D_DNS_SERVER "DNS szerver"
+#define D_DO "Disolved Oxygen"
 #define D_DONE "Kész"
 #define D_DST_TIME "nyári idő"
 #define D_EC "EC"

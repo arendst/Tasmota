@@ -257,7 +257,7 @@ void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version) {
 
   // Hue bulbtype - if present
   if (1 == version) {
-    zigbee_devices.setLightProfile(shortaddr, buf_d.get8(d));
+    device.setLightChannels(buf_d.get8(d));
     d++;
   } else if (2 == version) {
     // v2 parser

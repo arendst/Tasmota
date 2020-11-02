@@ -84,6 +84,7 @@
 #define D_DISABLED "Вимкнено"
 #define D_DISTANCE "Відстань"
 #define D_DNS_SERVER "Сервер DNS"
+#define D_DO "Disolved Oxygen"
 #define D_DONE "Виконано"
 #define D_DST_TIME "Літній час"
 #define D_EC "EC"

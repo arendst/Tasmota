@@ -84,6 +84,7 @@
 #define D_DISABLED "Disabilitato/a"
 #define D_DISTANCE "Distanza"
 #define D_DNS_SERVER "Server DNS"
+#define D_DO "Disolved Oxygen"
 #define D_DONE "Completato"
 #define D_DST_TIME "DST"
 #define D_EC "EC"

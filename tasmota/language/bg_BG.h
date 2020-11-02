@@ -84,6 +84,7 @@
 #define D_DISABLED "Забранен"
 #define D_DISTANCE "Разстояние"
 #define D_DNS_SERVER "DNS Сървър"
+#define D_DO "Disolved Oxygen"
 #define D_DONE "Изпълнено"
 #define D_DST_TIME "Лятно време"
 #define D_EC "EC"

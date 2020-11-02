@@ -84,6 +84,7 @@
 #define D_DISABLED "Vô hiệu hóa"
 #define D_DISTANCE "Khoảng cách"
 #define D_DNS_SERVER "Máy chủ DNS"
+#define D_DO "Disolved Oxygen"
 #define D_DONE "Hoàn thành"
 #define D_DST_TIME "DST"
 #define D_EC "EC"
