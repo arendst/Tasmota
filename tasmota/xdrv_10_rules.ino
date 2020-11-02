@@ -67,6 +67,8 @@
 
 #define XDRV_10             10
 
+//#define DEBUG_RULES
+
 #include <unishox.h>
 
 #define D_CMND_RULE "Rule"
@@ -424,7 +426,9 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   // rule_name  = "INA219#CURRENT"
   // rule_param = "0.100" or "%VAR1%"
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: expr %s, name %s, param %s"), rule_expr.c_str(), rule_name.c_str(), rule_param.c_str());
+#ifdef DEBUG_RULES
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL-RM1: expr %s, name %s, param %s"), rule_expr.c_str(), rule_name.c_str(), rule_param.c_str());
+#endif
 
   char rule_svalue[80] = { 0 };
   float rule_value = 0;
@@ -499,7 +503,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 
   String buf = event;   // copy the string into a new buffer that will be modified
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: RulesRuleMatch |%s|"), buf.c_str());
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL-RM2: RulesRuleMatch |%s|"), buf.c_str());
 
   JsonParser parser((char*)buf.c_str());
   JsonParserObject obj = parser.getRootObject();
@@ -513,7 +517,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   while ((pos = rule_name.indexOf("#")) > 0) {         // "SUBTYPE1#SUBTYPE2#CURRENT"
     subtype = rule_name.substring(0, pos);
     obj = obj[subtype.c_str()].getObject();
-    if (!obj) { return false; }             // not found
+    if (!obj) { return false; }                        // not found
 
     rule_name = rule_name.substring(pos +1);
     if (i++ > 10) { return false; }                    // Abandon possible loop
@@ -522,7 +526,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   }
 
   JsonParserToken val = obj[rule_name.c_str()];
-  if (!val) { return false; }               // last level not found
+  if (!val) { return false; }                          // last level not found
   const char* str_value;
   if (rule_name_idx) {
     if (val.isArray()) {
@@ -531,11 +535,14 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
       str_value = val.getStr();
     }
   } else {
-    str_value = val.getStr();                     // "CURRENT"
+    str_value = val.getStr();                          // "CURRENT"
   }
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
-//  rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
+#ifdef DEBUG_RULES
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL-RM3: Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json |%s|"),
+    rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set],
+    Rules.trigger_count[rule_set]), event.c_str(), (str_value[0] != '\0') ? str_value : "none");
+#endif
 
   Rules.event_value = str_value;                       // Prepare %value%
 
@@ -577,7 +584,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 
   if (stop_all_rules) { match = false; }
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match 1 %d, Triggers %08X, TriggerCount %d"), match, Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL-RM4: Match 1 %d, Triggers %08X, TriggerCount %d"), match, Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
 
   if (bitRead(Settings.rule_once, rule_set)) {
     if (match) {                                       // Only allow match state changes
@@ -591,7 +598,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
     }
   }
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match 2 %d, Triggers %08X, TriggerCount %d"), match, Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL-RM5: Match 2 %d, Triggers %08X, TriggerCount %d"), match, Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
 
   return match;
 }
@@ -663,7 +670,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
   delay(0);                                               // Prohibit possible loop software watchdog
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL-RP1: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
 
   String rules = GetRule(rule_set);
 
@@ -696,7 +703,9 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     Rules.event_value = "";
     String event = event_saved;
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
+#ifdef DEBUG_RULES
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL-RP2: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
+#endif
 
     if (RulesRuleMatch(rule_set, event, event_trigger, stop_all_rules)) {
       if (plen == plen2) { stop_all_rules = true; }       // If BREAK was used on a triggered rule, Stop execution of this rule set

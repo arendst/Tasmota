@@ -28,7 +28,7 @@ const char * k_current_json_buffer = "";
 
 /*********************************************************************************************\
  * Lightweight String to Float, because atof() or strtof() takes 10KB
- * 
+ *
  * To remove code, exponents are not parsed
  * (commented out below, just in case we need them after all)
 \*********************************************************************************************/
@@ -51,7 +51,7 @@ float json_strtof(const char* s) {
   }
 
   while ((unsigned int)(*p - '0') < 10u) {
-    value = value*10 + (*p++ - '0');  
+    value = value*10 + (*p++ - '0');
   }
 
   if (*p == '.' ) {
@@ -335,7 +335,7 @@ float JsonParserToken::getFloat(float val) const {
 }
 const char * JsonParserToken::getStr(const char * val) const {
   if (t->type == JSMN_INVALID) { return val; }
-  if (t->type == JSMN_NULL) return "";
+  if (t->type == JSMN_NULL) return "null";
   return (t->type >= JSMN_STRING) ? &k_current_json_buffer[t->start] : val;
 }
 
@@ -476,7 +476,7 @@ JsonParserToken JsonParserObject::findStartsWith(const char * needle) const {
   if ((!this->isValid()) || (nullptr == needle) || (0 == pgm_read_byte(needle))) {
     return JsonParserToken(&token_bad);
   }
-  
+
   String needle_s((const __FlashStringHelper *)needle);
   needle_s.toLowerCase();
 

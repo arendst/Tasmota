@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Rule Break not working as expected when ONCE is enabled (#9245)
 - Rule expressions using mems corrupts character pool (#9301)
 - Button press rules regression introduced by #9589 (#9700)
+- Rule handling of JSON ``null`` regression from v8.5.0.1 (#9685)
 
 ## [9.0.0.2] - 20201025
 ### Added

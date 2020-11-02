@@ -114,6 +114,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Thermostat sensor status corruption regression from v8.5.0.1 (#9449)
 - Telegram message decoding error regression from v8.5.0.1
 - Rule handling of Var or Mem using text regression from v8.5.0.1 (#9540)
+- Rule handling of JSON ``null`` regression from v8.5.0.1 (#9685)
 - Correct Energy period display shortly after midnight by gominoa (#9536)
 - TuyaMcu energy display regression from v8.5.0.1 (#9547)
 - Tuyamcu dimmers MQTT topic (#9606)
