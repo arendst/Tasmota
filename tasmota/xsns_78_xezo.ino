@@ -51,7 +51,11 @@ enum {
 
 // The order of the EZO devices must map with the enum declared above
 const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
-  EZOStruct::id,  // "DO"
+#ifdef USE_EZODO
+  EZODO::id,
+#else
+  EZOStruct::id,
+#endif
 #ifdef USE_EZOORP
   EZOORP::id,
 #else
@@ -67,7 +71,7 @@ const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
 #else
   EZOStruct::id,
 #endif
-  EZOStruct::id,
+  EZOStruct::id,  // <unnamed>
 #ifdef USE_EZORTD
   EZORTD::id,
 #else
@@ -89,14 +93,14 @@ const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
 #else
   EZOStruct::id,
 #endif
-  EZOStruct::id,
+  EZOStruct::id,  // <unnamed>
 #ifdef USE_EZOO2
   EZOO2::id,
 #else
   EZOStruct::id,
 #endif
-  EZOStruct::id,
-  EZOStruct::id,
+  EZOStruct::id,  // <unnamed>
+  EZOStruct::id,  // <unnamed>
 #ifdef USE_EZOHUM
   EZOHUM::id,
 #else
@@ -234,6 +238,9 @@ private:
 
                 // We use switch intead of virtual function to save RAM
                 switch (j + EZO_ADDR_0) {
+#ifdef USE_EZODO
+                  CREATE_EZO_CLASS(DO)
+#endif
 #ifdef USE_EZOORP
                   CREATE_EZO_CLASS(ORP)
 #endif

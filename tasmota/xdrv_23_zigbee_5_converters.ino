@@ -1853,7 +1853,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
       switch (ccccaaaa) {
         case 0x00000004: device.setManufId(attr.getStr());                            break;
         case 0x00000005: device.setModelId(attr.getStr());                            break;
-        case 0x00010021: zigbee_devices.setBatteryPercent(shortaddr, uval16 / 2);     break;
+        case 0x00010021: device.setBatteryPercent(uval16 / 2);                        break;
         case 0x00060000:
         case 0x00068000: device.setPower(attr.getBool(), src_ep);                     break;
       }

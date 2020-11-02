@@ -84,6 +84,7 @@
 #define D_DISABLED "Etkin Değil"
 #define D_DISTANCE "Mesage"
 #define D_DNS_SERVER "DNS Sunucu"
+#define D_DO "Disolved Oxygen"
 #define D_DONE "Tamam"
 #define D_DST_TIME "DST"
 #define D_EC "EC"

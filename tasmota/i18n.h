@@ -53,6 +53,7 @@
 #define D_JSON_DARKNESS "Darkness"
 #define D_JSON_DATA "Data"
 #define D_JSON_DEWPOINT "DewPoint"
+#define D_JSON_DO "DisolvedOxygen"
 #define D_JSON_DISTANCE "Distance"
 #define D_JSON_DNSSERVER "DNSServer"
 #define D_JSON_DONE "Done"
@@ -785,6 +786,7 @@ const char HTTP_SNS_EC[]            PROGMEM = "{s}%s "  D_EC                  "{
 const char HTTP_SNS_O2[]            PROGMEM = "{s}%s "  D_O2                  "{m}%s " D_UNIT_PERCENT             "{e}";
 const char HTTP_SNS_LITERS[]        PROGMEM = "{s}%s "  D_VOLUME              "{m}%s " D_UNIT_LITERS              "{e}";
 const char HTTP_SNS_LPM[]           PROGMEM = "{s}%s "  D_FLOW_RATE           "{m}%s " D_UNIT_LITERS_PER_MIN      "{e}";
+const char HTTP_SNS_DO[]            PROGMEM = "{s}%s "  D_DO                  "{m}%s " D_UNIT_PARTS_PER_MILLION   "{e}";
 
 const char S_MAIN_MENU[]              PROGMEM = D_MAIN_MENU;
 const char S_CONFIGURATION[]          PROGMEM = D_CONFIGURATION;

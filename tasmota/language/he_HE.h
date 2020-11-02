@@ -84,6 +84,7 @@
 #define D_DISABLED "מבוטל"
 #define D_DISTANCE "מרחק"
 #define D_DNS_SERVER "DNS שרת"
+#define D_DO "Disolved Oxygen"
 #define D_DONE "סיים"
 #define D_DST_TIME "DST"
 #define D_EC "EC"
