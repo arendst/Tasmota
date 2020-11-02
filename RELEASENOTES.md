@@ -81,7 +81,8 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - TLS in binary tasmota-zbbridge (#9620)
 - Zigbee reduce battery drain (#9642)
 - ESP32 support for Wireless-Tag WT32-ETH01 (#9496)
-- ESP32 MI32 Beacon support, RSSI at TELEPERIOD, refactoring (#9609)
+- ESP32 MI32 Beacon support, RSSI at TELEPERIOD, refactoring by Christian Baars (#9609)
+- HM10 Beacon support and refactoring by Christian Baars (#9702)
 
 ### Breaking Changed
 - Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too
