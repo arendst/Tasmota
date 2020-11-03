@@ -106,7 +106,11 @@ const char *const EZOSupport[EZO_ADDR_n] PROGMEM = {
 #else
   EZOStruct::id,
 #endif
-  EZOStruct::id,  // "RGB"
+#ifdef USE_EZORGB
+  EZORGB::id,
+#else
+  EZOStruct::id,
+#endif
 };
 
 #define CREATE_EZO_CLASS(CLASS)             \
@@ -267,6 +271,9 @@ private:
 #endif
 #ifdef USE_EZOHUM
                   CREATE_EZO_CLASS(HUM)
+#endif
+#ifdef USE_EZORGB
+                  CREATE_EZO_CLASS(RGB)
 #endif
                 }
                 count++;
