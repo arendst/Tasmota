@@ -197,7 +197,7 @@ const char HASS_DISCOVER_DEVICE[] PROGMEM =                         // Basic par
   "\"tp\":[\"%s\",\"%s\",\"%s\"],"                                  // Topics for command, stat and tele
   "\"rl\":[%s],\"swc\":[%s],\"swn\":[%s],\"btn\":[%s],"             // Inputs / Outputs
   "\"so\":{\"4\":%d,\"11\":%d,\"13\":%d,\"17\":%d,\"20\":%d,"       // SetOptions
-  "\"30\":%d,\"68\":%d,\"73\":%d,\"82\":%d\"114\":%d,},"
+  "\"30\":%d,\"68\":%d,\"73\":%d,\"82\":%d,\"114\":%d},"
   "\"lk\":%d,\"lt_st\":%d,\"ver\":1}";                              // Light SubType, and Discovery version
 
 typedef struct HASS {
