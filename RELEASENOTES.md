@@ -90,6 +90,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - TLS fingerprint ``#define MQTT_FINGERPRINT`` from string to hexnumbers (#9570)
 - Command ``Status`` output for disabled status types now returns {"Command":"Error"}
 - MAX31865 driver to support up to 6 thermocouples selected by ``MX31865 CS`` instead of ``SSPI CS`` (#9103)
+- When ``SetOption73 1`` JSON result from `{"ACTION":"SINGLE"}` to `{"Button1":{"Action":"SINGLE"}}`
 
 ### Changed
 - Command ``Gpio17`` replaces command ``Adc``

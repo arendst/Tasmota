@@ -41,6 +41,7 @@
 #define D_JSON_BOOTVERSION "Boot"
 #define D_JSON_BOOTCOUNT "BootCount"
 #define D_JSON_BSSID "BSSId"
+#define D_JSON_BUTTON "Button"
 #define D_JSON_BUILDDATETIME "BuildDateTime"
 #define D_JSON_CHANNEL "Channel"
 #define D_JSON_CO2 "CarbonDioxide"
