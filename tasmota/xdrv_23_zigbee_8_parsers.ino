@@ -1618,8 +1618,8 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
   if ((0x0000 == profileid) && (0x00 == srcendpoint))  {
     // ZDO request
     // Report LQI
-    Z_Device & device = zigbee_devices.getShortAddr(srcaddr);
     if (srcaddr != localShortAddr) {
+      Z_Device & device = zigbee_devices.getShortAddr(srcaddr);
       device.setLQI(linkquality);
       device.setLastSeenNow();
     }
