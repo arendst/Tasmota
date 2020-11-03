@@ -37,6 +37,7 @@
 #define D_JSON_BAUDRATE "Baudrate"
 #define D_JSON_BLINK "Blink"
 #define D_JSON_BLOCKED_LOOP "Blocked Loop"
+#define D_JSON_BLUE "Blue"
 #define D_JSON_BOOTVERSION "Boot"
 #define D_JSON_BOOTCOUNT "BootCount"
 #define D_JSON_BSSID "BSSId"
@@ -82,6 +83,7 @@
 #define D_JSON_FROM "from"
 #define D_JSON_GAS "Gas"
 #define D_JSON_GATEWAY "Gateway"
+#define D_JSON_GREEN "Green"
 #define D_JSON_GROUPS "Groups"
 #define D_JSON_HALTING "Halting"
 #define D_JSON_HEAPSIZE "Heap"
@@ -132,6 +134,7 @@
 #define D_JSON_PROGRAMSIZE "ProgramSize"
 #define D_JSON_PSRMAXMEMORY "PsrMax"
 #define D_JSON_PSRFREEMEMORY "PsrFree"
+#define D_JSON_RED "Red"
 #define D_JSON_REFERENCETEMPERATURE "ReferenceTemperature"
 #define D_JSON_REMAINING "Remaining"
 #define D_JSON_RESET "Reset"
@@ -787,6 +790,9 @@ const char HTTP_SNS_O2[]            PROGMEM = "{s}%s "  D_O2                  "{
 const char HTTP_SNS_LITERS[]        PROGMEM = "{s}%s "  D_VOLUME              "{m}%s " D_UNIT_LITERS              "{e}";
 const char HTTP_SNS_LPM[]           PROGMEM = "{s}%s "  D_FLOW_RATE           "{m}%s " D_UNIT_LITERS_PER_MIN      "{e}";
 const char HTTP_SNS_DO[]            PROGMEM = "{s}%s "  D_DO                  "{m}%s " D_UNIT_PARTS_PER_MILLION   "{e}";
+const char HTTP_SNS_COLOR_RED[]     PROGMEM = "{s}%s "  D_COLOR_RED           "{m}%u "                            "{e}";
+const char HTTP_SNS_COLOR_GREEN[]   PROGMEM = "{s}%s "  D_COLOR_GREEN         "{m}%u "                            "{e}";
+const char HTTP_SNS_COLOR_BLUE[]    PROGMEM = "{s}%s "  D_COLOR_BLUE          "{m}%u "                            "{e}";
 
 const char S_MAIN_MENU[]              PROGMEM = D_MAIN_MENU;
 const char S_CONFIGURATION[]          PROGMEM = D_CONFIGURATION;
