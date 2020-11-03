@@ -443,7 +443,7 @@ void MqttSwitchTopic(uint32_t switch_id, uint32_t MqttAction) {
       GetTextIndexed(mqttstate_str, sizeof(mqttstate_str), MqttAction, kSwitchPressStates);
     }
     Response_P(PSTR("{\"%s\":{\"Action\":\"%s\"}}"), GetSwitchText(switch_id -1).c_str(), mqttstate);
-    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SWITCH));
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_SWITCH));
   }
 }
 
