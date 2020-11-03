@@ -238,13 +238,13 @@ void SwitchHandler(uint8_t mode)
 {
   if (TasmotaGlobal.uptime < 4) { return; }                 // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
-  uint16_t loops_per_second = 1000 / Settings.switch_debounce;
+  uint32_t loops_per_second = 1000 / Settings.switch_debounce;
 
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     if (PinUsed(GPIO_SWT1, i) || (mode)) {
-      uint8_t button = Switch.virtual_state[i];
-      uint8_t switchflag = POWER_TOGGLE +1;
-      uint8_t MqttAction = POWER_NONE;
+      uint32_t button = Switch.virtual_state[i];
+      uint32_t switchflag = POWER_TOGGLE +1;
+      uint32_t MqttAction = POWER_NONE;
 
       if (Switch.hold_timer[i] & (((Settings.switchmode[i] == PUSHHOLDMULTI) | (Settings.switchmode[i] == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK)) {
         Switch.hold_timer[i]--;
@@ -418,14 +418,14 @@ void SwitchHandler(uint8_t mode)
         Switch.last_state[i] = button;
       }
       if (switchflag <= POWER_TOGGLE) {
-        if (!Settings.flag5.mqtt_switches) { // SetOption114 (0) - Detach Swiches from relays and enable MQTT action state for all the SwitchModes
+        if (!Settings.flag5.mqtt_switches) {  // SetOption114 (0) - Detach Swiches from relays and enable MQTT action state for all the SwitchModes
           if (!SendKey(KEY_SWITCH, i +1, switchflag)) {  // Execute command via MQTT
             ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < TasmotaGlobal.devices_present)
           }
         } else { MqttAction = switchflag; }
       }
-      if (MqttAction != POWER_NONE && Settings.flag5.mqtt_switches) {
-        MqttSwitchTopic(i +1, MqttAction); // SetOption114 (0) - Detach Swiches from relays and enable MQTT action state for all the SwitchModes
+      if ((MqttAction != POWER_NONE) && Settings.flag5.mqtt_switches) {
+        MqttSwitchTopic(i +1, MqttAction);  // SetOption114 (0) - Detach Swiches from relays and enable MQTT action state for all the SwitchModes
         MqttAction = POWER_NONE;
       }
     }
@@ -433,7 +433,7 @@ void SwitchHandler(uint8_t mode)
 }
 
 void MqttSwitchTopic(uint32_t switch_id, uint32_t MqttAction) {
-  if (!Settings.flag.hass_discovery) {  // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
+  if (!Settings.flag.hass_discovery) {  // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
     char mqttstate_str[16];
     char *mqttstate = mqttstate_str;
     if (MqttAction <= 3) {
@@ -447,8 +447,7 @@ void MqttSwitchTopic(uint32_t switch_id, uint32_t MqttAction) {
   }
 }
 
-void SwitchLoop(void)
-{
+void SwitchLoop(void) {
   if (Switch.present) {
     if (TimeReached(Switch.debounce)) {
       SetNextTimeInterval(Switch.debounce, Settings.switch_debounce);

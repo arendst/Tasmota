@@ -10,11 +10,13 @@ All notable changes to this project will be documented in this file.
 - Support for EZO PRS sensors by Christopher Tremblay (#9659)
 - Support for EZO FLO sensors by Christopher Tremblay (#9697)
 - Support for EZO DO sensors by Christopher Tremblay (#9707)
+- Support for EZO RGB sensors by Christopher Tremblay (#9723)
 - Zigbee reduce battery drain (#9642)
 - Zigbee command ``ZbMap`` to describe Zigbee topology (#9651)
 - Zigbee command ``ZbOccupancy`` to configure the time-out for PIR
 - Command ``Gpios 255`` to show all possible GPIO configurations
 - Command ``SwitchText`` to change JSON switch names by barbudor (#9691)
+- Command ``SetOption114 1`` to detach Swiches from Relays and enable MQTT action state for all the SwitchModes
 - HM10 Beacon support and refactoring by Christian Baars (#9702)
 
 ### Changed

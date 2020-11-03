@@ -142,6 +142,7 @@
 | USE_EZOORP            | - | - | - | - | - | - | - |
 | USE_EZOPH             | - | - | - | - | - | - | - |
 | USE_EZOPRS            | - | - | - | - | - | - | - |
+| USE_EZORGB            | - | - | - | - | - | - | - |
 | USE_EZORTD            | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks

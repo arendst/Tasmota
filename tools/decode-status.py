@@ -168,7 +168,8 @@ a_setoption = [[
     "Use friendly name in zigbee topic (use with SetOption89)",
     "Set dimmer low on rotary dial after power off"
     ],[
-    "","","","",
+    "Detach Swiches from Relays and enable MQTT action state for all the SwitchModes",
+    "","","",
     "","","","",
     "","","","",
     "","","","",
@@ -235,7 +236,7 @@ a_features = [[
     ],[
     "USE_EZOORP","USE_EZORTD","USE_EZOHUM","USE_EZOEC",
     "USE_EZOCO2","USE_EZOO2","USE_EZOPRS","USE_EZOFLO",
-    "USE_EZODO","","","",
+    "USE_EZODO","USE_EZORGB","","",
     "","","","",
     "","","","",
     "","","","",
