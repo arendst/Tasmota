@@ -285,7 +285,6 @@ void NewHAssDiscovery(void)
   HassDiscoveryRelays(Hass);
 
 #ifdef ESP8266
-    if (i == 0 && (SONOFF_DUAL == TasmotaGlobal.module_type )) { SerialButton = true; }
     if (TUYA_DIMMER == TasmotaGlobal.module_type || SK03_TUYA == TasmotaGlobal.module_type) { TuyaMod = true; }
     if (SONOFF_IFAN02 == TasmotaGlobal.module_type || SONOFF_IFAN03 == TasmotaGlobal.module_type) { iFanMod = true; }
 #endif // ESP8266
@@ -309,6 +308,9 @@ void NewHAssDiscovery(void)
   stemp5[0] = '\0';
   // Enable Discovery for Buttons only if SetOption73 is enabled
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
+#ifdef ESP8266
+    if (i == 0 && (SONOFF_DUAL == TasmotaGlobal.module_type )) { SerialButton = true; }
+#endif // ESP8266
     snprintf_P(stemp5, sizeof(stemp5), PSTR("%s%s%d"), stemp5, (i > 0 ? "," : ""), (SerialButton ? 1 : (PinUsed(GPIO_KEY1, i)) & Settings.flag3.mqtt_buttons));
     SerialButton = false;
   }
