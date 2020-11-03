@@ -732,6 +732,8 @@ const char S_JSON_SENSOR_INDEX_SVALUE[] PROGMEM =             "{\"" D_CMND_SENSO
 const char S_JSON_DRIVER_INDEX_NVALUE[] PROGMEM =             "{\"" D_CMND_DRIVER "%d\":%d}";
 const char S_JSON_DRIVER_INDEX_SVALUE[] PROGMEM =             "{\"" D_CMND_DRIVER "%d\":\"%s\"}";
 
+const char S_JSON_SVALUE_ACTION_SVALUE[] PROGMEM =            "{\"%s\":{\"Action\":\"%s\"}}";
+
 const char JSON_SNS_TEMP[] PROGMEM = ",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}";
 
 const char JSON_SNS_ILLUMINANCE[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}";

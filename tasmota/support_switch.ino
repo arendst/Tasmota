@@ -426,9 +426,9 @@ void SwitchHandler(uint32_t mode) {
           } else {
             GetTextIndexed(mqtt_state_str, sizeof(mqtt_state_str), mqtt_action, kSwitchPressStates);
           }
-          Response_P(PSTR("{\"%s\":{\"Action\":\"%s\"}}"), GetSwitchText(i).c_str(), mqtt_state);
+          Response_P(S_JSON_SVALUE_ACTION_SVALUE, GetSwitchText(i).c_str(), mqtt_state);
           char scommand[10];
-          snprintf_P(scommand, sizeof(scommand), PSTR("SWITCH%d"), i +1);
+          snprintf_P(scommand, sizeof(scommand), PSTR(D_JSON_SWITCH "%d"), i +1);
           MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, scommand);
         }
         mqtt_action = POWER_NONE;

@@ -373,10 +373,10 @@ void MqttButtonTopic(uint32_t button_id, uint32_t action, uint32_t hold) {
   SendKey(KEY_BUTTON, button_id, (hold) ? 3 : action +9);
 
   if (!Settings.flag.hass_discovery) {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
-    char mqttstate[7];
-    Response_P(PSTR("{\"" D_JSON_BUTTON "%d\":{\"Action\":\"%s\"}}"), button_id, (hold) ? SettingsText(SET_STATE_TXT4) : GetTextIndexed(mqttstate, sizeof(mqttstate), action, kMultiPress));
     char scommand[10];
-    snprintf_P(scommand, sizeof(scommand), PSTR("BUTTON%d"), button_id);
+    snprintf_P(scommand, sizeof(scommand), PSTR(D_JSON_BUTTON "%d"), button_id);
+    char mqttstate[7];
+    Response_P(S_JSON_SVALUE_ACTION_SVALUE, scommand, (hold) ? SettingsText(SET_STATE_TXT4) : GetTextIndexed(mqttstate, sizeof(mqttstate), action, kMultiPress));
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, scommand);
   }
 }

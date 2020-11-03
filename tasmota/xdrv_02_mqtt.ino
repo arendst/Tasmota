@@ -352,13 +352,11 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
  * prefix 6 = tele using subtopic or RESULT
  */
   char romram[64];
-  char stopic[TOPSZ];
-
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !Settings.flag.mqtt_response) ? S_RSLT_RESULT : subtopic);  // SetOption4 - Switch between MQTT RESULT or COMMAND
-  for (uint32_t i = 0; i < strlen(romram); i++) {
-    romram[i] = toupper(romram[i]);
-  }
+  UpperCase(romram, romram);
+
   prefix &= 3;
+  char stopic[TOPSZ];
   GetTopic_P(stopic, prefix, TasmotaGlobal.mqtt_topic, romram);
   MqttPublish(stopic, retained);
 
