@@ -34,6 +34,10 @@ const uint8_t AC_PERIOD = (20 + SWITCH_FAST_PROBE_INTERVAL - 1) / SWITCH_FAST_PR
 #define SM_NO_TIMER_MASK      0xFF
 #define SM_FIRST_PRESS        0x40
 #define SM_SECOND_PRESS       0x80
+#define POWER_NONE            99
+
+const char kSwitchPressStates[] PROGMEM =
+  "||||POWER_INCREMENT|POWER_INV|POWER_CLEAR|POWER_RELEASE|POWER_100|";
 
 #include <Ticker.h>
 
@@ -240,6 +244,7 @@ void SwitchHandler(uint8_t mode)
     if (PinUsed(GPIO_SWT1, i) || (mode)) {
       uint8_t button = Switch.virtual_state[i];
       uint8_t switchflag = POWER_TOGGLE +1;
+      uint8_t MqttAction = POWER_NONE;
 
       if (Switch.hold_timer[i] & (((Settings.switchmode[i] == PUSHHOLDMULTI) | (Settings.switchmode[i] == PUSHHOLDMULTI_INV)) ? SM_TIMER_MASK: SM_NO_TIMER_MASK)) {
         Switch.hold_timer[i]--;
@@ -266,22 +271,28 @@ void SwitchHandler(uint8_t mode)
               if (NOT_PRESSED == button) {
                 Switch.hold_timer[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 25;
                 SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);  // Execute command via MQTT
+                MqttAction = POWER_INCREMENT;
               } else {
                 Switch.hold_timer[i]= 0;
                 SendKey(KEY_SWITCH, i +1, POWER_CLEAR);  // Execute command via MQTT
+                MqttAction = POWER_CLEAR;
               }
               break;
             case PUSHHOLDMULTI_INV:
               if (PRESSED == button) {
                 Switch.hold_timer[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 25;
                 SendKey(KEY_SWITCH, i +1, POWER_INCREMENT);  // Execute command via MQTT
+                MqttAction = POWER_INCREMENT;
+
               } else {
                 Switch.hold_timer[i]= 0;
                 SendKey(KEY_SWITCH, i +1, POWER_CLEAR);  // Execute command via MQTT
+                MqttAction = POWER_CLEAR;
               }
               break;
           default:
             SendKey(KEY_SWITCH, i +1, POWER_HOLD);  // Execute command via MQTT
+            MqttAction = POWER_HOLD;
             break;
           }
         }
@@ -333,6 +344,7 @@ void SwitchHandler(uint8_t mode)
           if (Switch.hold_timer[i]) {
             Switch.hold_timer[i] = 0;
             SendKey(KEY_SWITCH, i +1, POWER_HOLD);  // Execute command via MQTT
+            MqttAction = POWER_HOLD;
           } else {
             Switch.hold_timer[i] = loops_per_second / 2;  // 0.5 second multi press window
           }
@@ -342,6 +354,7 @@ void SwitchHandler(uint8_t mode)
             if ((Switch.hold_timer[i] & SM_TIMER_MASK) != 0) {
               Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;
               SendKey(KEY_SWITCH, i +1, POWER_INV);  // Execute command via MQTT
+              MqttAction = POWER_INV;
             }
           } else {
             if ((Switch.hold_timer[i] & SM_TIMER_MASK) > loops_per_second * Settings.param[P_HOLD_TIME] / 25) {
@@ -351,11 +364,13 @@ void SwitchHandler(uint8_t mode)
               }
               else{
                 SendKey(KEY_SWITCH, i +1, POWER_100);  // Execute command via MQTT
+                MqttAction = POWER_100;
                 Switch.hold_timer[i]= 0;
               }
             } else {
               Switch.hold_timer[i]= 0;
               SendKey(KEY_SWITCH, i +1, POWER_RELEASE);  // Execute command via MQTT
+              MqttAction = POWER_RELEASE;
             }
           }
           Switch.hold_timer[i] = (Switch.hold_timer[i] & ~SM_TIMER_MASK) | loops_per_second * Settings.param[P_HOLD_TIME] / 10;
@@ -365,6 +380,7 @@ void SwitchHandler(uint8_t mode)
             if ((Switch.hold_timer[i] & SM_TIMER_MASK) != 0) {
               Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;
               SendKey(KEY_SWITCH, i +1, POWER_INV);  // Execute command via MQTT
+              MqttAction = POWER_INV;
             }
           } else {
             if ((Switch.hold_timer[i] & SM_TIMER_MASK)> loops_per_second * Settings.param[P_HOLD_TIME] / 25) {
@@ -374,11 +390,13 @@ void SwitchHandler(uint8_t mode)
               }
               else{
                 SendKey(KEY_SWITCH, i +1, POWER_100);  // Execute command via MQTT
+                MqttAction = POWER_100;
                 Switch.hold_timer[i]= 0;
               }
             } else {
               Switch.hold_timer[i]= 0;
               SendKey(KEY_SWITCH, i +1, POWER_RELEASE);  // Execute command via MQTT
+              MqttAction = POWER_RELEASE;
             }
           }
           Switch.hold_timer[i] = (Switch.hold_timer[i] & ~SM_TIMER_MASK) | loops_per_second * Settings.param[P_HOLD_TIME] / 10;
@@ -400,11 +418,37 @@ void SwitchHandler(uint8_t mode)
         Switch.last_state[i] = button;
       }
       if (switchflag <= POWER_TOGGLE) {
-        if (!SendKey(KEY_SWITCH, i +1, switchflag)) {  // Execute command via MQTT
-          ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < TasmotaGlobal.devices_present)
-        }
+        if (!Settings.flag5.mqtt_switches) { // SetOption114 (0) - Detach Swiches from relays and enable MQTT action state for all the SwitchModes
+          if (!SendKey(KEY_SWITCH, i +1, switchflag)) {  // Execute command via MQTT
+            ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < TasmotaGlobal.devices_present)
+          }
+        } else { MqttAction = switchflag; }
+      }
+      if (MqttAction != POWER_NONE && Settings.flag5.mqtt_switches) {
+        MqttSwitchTopic(i +1, MqttAction); // SetOption114 (0) - Detach Swiches from relays and enable MQTT action state for all the SwitchModes
+        MqttAction = POWER_NONE;
       }
     }
+  }
+}
+
+void MqttSwitchTopic(uint8_t switch_id, uint8_t MqttAction)
+{
+  char scommand[CMDSZ];
+  char stopic[TOPSZ];
+  char mqttstate[16];
+
+  if (!Settings.flag.hass_discovery) {
+    if (MqttAction <= 3) {
+      if (MqttAction != 3) { SendKey(KEY_SWITCH, switch_id, MqttAction); }
+      snprintf_P(mqttstate, sizeof(mqttstate), PSTR("%s"), SettingsText(SET_STATE_TXT1 + MqttAction));
+    } else {
+      GetTextIndexed(mqttstate, sizeof(mqttstate), MqttAction, kSwitchPressStates);
+    }
+    snprintf_P(scommand, sizeof(scommand), PSTR("SWITCH%d"), switch_id);
+    GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
+    Response_P(S_JSON_COMMAND_SVALUE, "ACTION", mqttstate);
+    MqttPublish(stopic);
   }
 }
 

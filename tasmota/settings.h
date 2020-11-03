@@ -139,7 +139,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption114 .. SetOption145
-    uint32_t spare00 : 1;                  // bit 0
+    uint32_t mqtt_switches : 1;            // bit 0 (V9.0.0.3)  - SetOption114 - Detach Swiches from relays and enable MQTT action state for all the SwitchModes
+    //uint32_t spare00 : 1;                  // bit 0
     uint32_t spare01 : 1;                  // bit 1
     uint32_t spare02 : 1;                  // bit 2
     uint32_t spare03 : 1;                  // bit 3
