@@ -432,23 +432,18 @@ void SwitchHandler(uint8_t mode)
   }
 }
 
-void MqttSwitchTopic(uint8_t switch_id, uint8_t MqttAction)
-{
-  char scommand[CMDSZ];
-  char stopic[TOPSZ];
-  char mqttstate[16];
-
-  if (!Settings.flag.hass_discovery) {
+void MqttSwitchTopic(uint32_t switch_id, uint32_t MqttAction) {
+  if (!Settings.flag.hass_discovery) {  // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
+    char mqttstate_str[16];
+    char *mqttstate = mqttstate_str;
     if (MqttAction <= 3) {
       if (MqttAction != 3) { SendKey(KEY_SWITCH, switch_id, MqttAction); }
-      snprintf_P(mqttstate, sizeof(mqttstate), PSTR("%s"), SettingsText(SET_STATE_TXT1 + MqttAction));
+      mqttstate = SettingsText(SET_STATE_TXT1 + MqttAction);
     } else {
-      GetTextIndexed(mqttstate, sizeof(mqttstate), MqttAction, kSwitchPressStates);
+      GetTextIndexed(mqttstate_str, sizeof(mqttstate_str), MqttAction, kSwitchPressStates);
     }
-    snprintf_P(scommand, sizeof(scommand), PSTR("SWITCH%d"), switch_id);
-    GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
-    Response_P(S_JSON_COMMAND_SVALUE, "ACTION", mqttstate);
-    MqttPublish(stopic);
+    Response_P(PSTR("{\"%s\":{\"Action\":\"%s\"}}"), GetSwitchText(switch_id -1).c_str(), mqttstate);
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_SWITCH));
   }
 }
 
