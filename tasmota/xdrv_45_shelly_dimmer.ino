@@ -31,7 +31,7 @@
 #define XNRG_31                     31
 
 #define SHD_DRIVER_MAJOR_VERSION    1
-#define SHD_DRIVER_MINOR_VERSION    1
+#define SHD_DRIVER_MINOR_VERSION    2
 
 #define SHD_LOGNAME                 "SHD"
 
@@ -65,7 +65,7 @@
 
 #ifdef SHELLY_FW_UPGRADE
 #include <stm32flash.h>
-#include <fw/shelly/dimmer/stm_v51.1.h>
+#include <fw/shelly/dimmer/stm_v51.2.h>
 #endif // SHELLY_FW_UPGRADE
 
 #include <TasmotaSerial.h>
@@ -735,7 +735,9 @@ bool ShdSetChannels(void)
 #endif // SHELLY_DIMMER_DEBUG
 
     uint16_t brightness = ((uint32_t *)XdrvMailbox.data)[0];
-    brightness = changeUIntScale(brightness, 0, 255, 0, 1000);
+    // Use dimmer_hw_min and dimmer_hw_max to constrain our values if the light should be on
+    if (brightness > 0)
+        brightness = changeUIntScale(brightness, 0, 255, Settings.dimmer_hw_min * 10, Settings.dimmer_hw_max * 10);
     Shd.req_brightness = brightness;
 
     ShdDebugState();
