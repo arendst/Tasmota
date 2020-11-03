@@ -61,23 +61,21 @@ struct TOUCH_BUTTON {
 
 /********************************************************************************************/
 
-void ButtonPullupFlag(uint8 button_bit)
-{
+void ButtonPullupFlag(uint32_t button_bit) {
   bitSet(Button.no_pullup_mask, button_bit);
 }
 
-void ButtonInvertFlag(uint8 button_bit)
-{
+void ButtonInvertFlag(uint32_t button_bit) {
   bitSet(Button.inverted_mask, button_bit);
 }
+
 #ifdef ESP32
-void ButtonTouchFlag(uint8 button_bit)
-{
+void ButtonTouchFlag(uint32_t button_bit) {
   bitSet(Button.touch_mask, button_bit);
 }
 #endif // ESP32
-void ButtonInit(void)
-{
+
+void ButtonInit(void) {
   Button.present = 0;
 #ifdef ESP8266
   if ((SONOFF_DUAL == TasmotaGlobal.module_type) || (CH4 == TasmotaGlobal.module_type)) {
@@ -101,8 +99,7 @@ void ButtonInit(void)
   }
 }
 
-uint8_t ButtonSerial(uint8_t serial_in_byte)
-{
+uint8_t ButtonSerial(uint8_t serial_in_byte) {
   if (Button.dual_receive_count) {
     Button.dual_receive_count--;
     if (Button.dual_receive_count) {
@@ -133,8 +130,7 @@ uint8_t ButtonSerial(uint8_t serial_in_byte)
  * SetOption73 (0)     - Decouple button from relay and send just mqtt topic
 \*********************************************************************************************/
 
-void ButtonHandler(void)
-{
+void ButtonHandler(void) {
   if (TasmotaGlobal.uptime < 4) { return; }                     // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
   uint8_t hold_time_extent = IMMINENT_RESET_FACTOR;             // Extent hold time factor in case of iminnent Reset command
@@ -355,8 +351,8 @@ void ButtonHandler(void)
   }
 }
 
-void MqttButtonTopic(uint8_t button_id, uint8_t action, uint8_t hold)
-{
+/*
+void MqttButtonTopic(uint8_t button_id, uint8_t action, uint8_t hold) {
   char scommand[CMDSZ];
   char stopic[TOPSZ];
   char mqttstate[7];
@@ -371,9 +367,21 @@ void MqttButtonTopic(uint8_t button_id, uint8_t action, uint8_t hold)
     MqttPublish(stopic);
   }
 }
+*/
 
-void ButtonLoop(void)
-{
+void MqttButtonTopic(uint32_t button_id, uint32_t action, uint32_t hold) {
+  SendKey(KEY_BUTTON, button_id, (hold) ? 3 : action +9);
+
+  if (!Settings.flag.hass_discovery) {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
+    char scommand[10];
+    snprintf_P(scommand, sizeof(scommand), PSTR(D_JSON_BUTTON "%d"), button_id);
+    char mqttstate[7];
+    Response_P(S_JSON_SVALUE_ACTION_SVALUE, scommand, (hold) ? SettingsText(SET_STATE_TXT4) : GetTextIndexed(mqttstate, sizeof(mqttstate), action, kMultiPress));
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, scommand);
+  }
+}
+
+void ButtonLoop(void) {
   if (Button.present) {
     if (TimeReached(Button.debounce)) {
       SetNextTimeInterval(Button.debounce, Settings.button_debounce);  // ButtonDebounce (50)

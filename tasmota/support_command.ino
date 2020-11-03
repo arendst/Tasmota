@@ -391,7 +391,7 @@ void CmndPower(void)
 
 void CmndStatus(void)
 {
-  uint32_t payload = XdrvMailbox.payload;
+  int32_t payload = XdrvMailbox.payload;
 
   if (payload > MAX_STATUS) { return; }  // {"Command":"Error"}
   if (!Settings.flag.mqtt_enabled && (6 == payload)) { return; }  // SetOption3 - Enable MQTT
@@ -402,7 +402,7 @@ void CmndStatus(void)
   char stemp[200];
   char stemp2[TOPSZ];
 
-  if (0 == payload) {
+  if ((0 == payload) || (-99 == payload)) {
     uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!TasmotaGlobal.devices_present) ? 1 : TasmotaGlobal.devices_present;
 #ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) { maxfn = 1; }

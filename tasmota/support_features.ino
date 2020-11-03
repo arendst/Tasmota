@@ -652,7 +652,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_EZODO)
     feature7 |= 0x00000100;
 #endif
-//    feature7 |= 0x00000200;
+#if defined(USE_I2C) && defined(USE_EZORGB)
+    feature7 |= 0x00000200;
+#endif
 //    feature7 |= 0x00000400;
 //    feature7 |= 0x00000800;
 

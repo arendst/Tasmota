@@ -44,7 +44,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)    - SetOption16 - Switch between clockwise or counter-clockwise
     uint32_t decimal_text : 1;             // bit 17 (v5.8.1)    - SetOption17 - Switch between decimal or hexadecimal output (0 = hexadecimal, 1 = decimal)
     uint32_t light_signal : 1;             // bit 18 (v5.10.0c)  - SetOption18 - Pair light signal with CO2 sensor
-    uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)  - SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
+    uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)  - SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
     uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)  - SetOption20 - Control power in relation to Dimmer/Color/Ct changes
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)  - SetOption21 - Show voltage even if powered off
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)  - CMND_SERIALSEND and CMND_SERIALLOG
@@ -139,7 +139,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption114 .. SetOption145
-    uint32_t spare00 : 1;                  // bit 0
+    uint32_t mqtt_switches : 1;            // bit 0 (V9.0.0.3)  - SetOption114 - Detach Swiches from relays and enable MQTT action state for all the SwitchModes
+    //uint32_t spare00 : 1;                  // bit 0
     uint32_t spare01 : 1;                  // bit 1
     uint32_t spare02 : 1;                  // bit 2
     uint32_t spare03 : 1;                  // bit 3

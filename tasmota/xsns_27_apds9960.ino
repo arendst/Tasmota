@@ -86,9 +86,6 @@ const char HTTP_SNS_GESTURE[]     PROGMEM = "{s}%s " D_GESTURE "{m}%s{e}";
 #endif  // USE_APDS9960_GESTURE
 
 #ifdef USE_APDS9960_COLOR
-const char HTTP_SNS_COLOR_RED[]   PROGMEM = "{s}%s " D_COLOR_RED "{m}%u{e}";
-const char HTTP_SNS_COLOR_GREEN[] PROGMEM = "{s}%s " D_COLOR_GREEN "{m}%u{e}";
-const char HTTP_SNS_COLOR_BLUE[]  PROGMEM = "{s}%s " D_COLOR_BLUE "{m}%u{e}";
 const char HTTP_SNS_CCT[]         PROGMEM = "{s}%s " D_CCT "{m}%u " D_UNIT_KELVIN  "{e}";
 #endif  // USE_APDS9960_COLOR
 
