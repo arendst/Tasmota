@@ -273,6 +273,7 @@ void IBEACON_Init() {
 
     IB_UPDATE_TIME=IB_UPDATE_TIME_INTERVAL;
     IB_TIMEOUT_TIME=IB_TIMEOUT_INTERVAL;
+
   }
 
 #else
@@ -855,6 +856,7 @@ bool Xsns52(byte function)
       case FUNC_LOOP:
         IBEACON_loop();
         break;
+#ifndef USE_IBEACON_ESP32
       case FUNC_EVERY_SECOND:
 #ifdef USE_IBEACON_ESP32
         esp32_every_second();
@@ -862,6 +864,7 @@ bool Xsns52(byte function)
         hm17_every_second();
 #endif
         break;
+#endif
       case FUNC_COMMAND_SENSOR:
         if (XSNS_52 == XdrvMailbox.index) {
           result = xsns52_cmd();
