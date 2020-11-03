@@ -373,6 +373,7 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
   }
   void onDisconnect(NimBLEClient* pclient) {
     MI32.mode.connected = 0;
+    MI32.mode.willReadBatt = 0;
     AddLog_P2(LOG_LEVEL_DEBUG,PSTR("disconnected %s"), kMI32DeviceType[(MIBLEsensors[MI32.state.sensor].type)-1]);
   }
   bool onConnParamsUpdateRequest(NimBLEClient* MI32Client, const ble_gap_upd_params* params) {
@@ -859,7 +860,7 @@ void MI32StartScanTask(){
     xTaskCreatePinnedToCore(
     MI32ScanTask,    /* Function to implement the task */
     "MI32ScanTask",  /* Name of the task */
-    4096,             /* Stack size in words */
+    2048,             /* Stack size in words */
     NULL,             /* Task input parameter */
     0,                /* Priority of the task */
     NULL,             /* Task handle. */
@@ -1660,7 +1661,7 @@ void MI32EverySecond(bool restart){
     if(_beacon.active == false) continue;
     _activeBeacons++;
     _beacon.time++;
-    Response_P(PSTR("{\"Beacon%u\":{\"Time\":%u}}"), _beacon.time);
+    Response_P(PSTR("{\"Beacon%u\":{\"Time\":%u}}"), _idx, _beacon.time);
     XdrvRulesProcess();
   }
   if(_activeBeacons==0) MI32.mode.activeBeacon = 0;
@@ -1843,7 +1844,7 @@ bool MI32Cmd(void) {
             switch(XdrvMailbox.index){
               case 0:
               MI32.state.beaconScanCounter = 8;
-              Response_P(S_JSON_MI32_BCOMMAND_SVALUE, command, XdrvMailbox.index,PSTR("\"scanning\""));
+              Response_P(S_JSON_MI32_BCOMMAND_SVALUE, command, XdrvMailbox.index,PSTR("scanning"));
               break;
               case 1: case 2: case 3: case 4:
               char _MAC[18];
@@ -1880,7 +1881,7 @@ bool MI32Cmd(void) {
  * Presentation
 \*********************************************************************************************/
 
-const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 v0916{m}%u%s / %u{e}";
+const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 v0916a{m}%u%s / %u{e}";
 const char HTTP_MI32_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
 const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
