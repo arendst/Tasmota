@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 - Command ``SwitchText`` to change JSON switch names by barbudor (#9691)
 - Command ``SetOption114 1`` to detach Swiches from Relays and enable MQTT action state for all the SwitchModes returning `{"Switch1":{"Action":"ON"}}`
 - HM10 Beacon support and refactoring by Christian Baars (#9702)
+- Support for Hass discovery of TuyaMcu and Sonoff Ifan by Federico Leoni (#9727)
+- Initial support for iBeacons (Sensor52) on ESP32 using internal BLE by rvbglas (#9732)
 
 ### Changed
 - PlatformIO library structure redesigned for compilation speed by Jason2866
@@ -30,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Rule expressions using mems corrupts character pool (#9301)
 - Button press rules regression introduced by #9589 (#9700)
 - Rule handling of JSON ``null`` regression from v8.5.0.1 (#9685)
+- Arilux RF remote detection regression from v8.3.0
 
 ## [9.0.0.2] - 20201025
 ### Added

@@ -9,13 +9,13 @@ See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) fo
 1. Migrate to **Sonoff-Tasmota 3.9.x**
 2. Migrate to **Sonoff-Tasmota 4.x**
 3. Migrate to **Sonoff-Tasmota 5.14**
-4. Migrate to **Sonoff-Tasmota 6.x**
-5. Migrate to **Tasmota 7.x**
+4. Migrate to **Sonoff-Tasmota 6.7.1**
+5. Migrate to **Tasmota 7.2.0**
 
 --- Major change in parameter storage layout ---
 
 6. Migrate to **Tasmota 8.1**
-7. Migrate to **Tasmota 8.x**
+7. Migrate to **Tasmota 8.5.1**
 
 --- Major change in internal GPIO function representation ---
 
@@ -79,11 +79,13 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for timers in case of no-sunset permanent day by cybermaus (#9543)
 - Support for EZO sensors by Christopher Tremblay
 - Support for fixed output Hi or Lo GPIO selection
+- Support for Hass discovery of TuyaMcu and Sonoff Ifan by Federico Leoni (#9727)
 - TLS in binary tasmota-zbbridge (#9620)
 - Zigbee reduce battery drain (#9642)
 - ESP32 support for Wireless-Tag WT32-ETH01 (#9496)
 - ESP32 MI32 Beacon support, RSSI at TELEPERIOD, refactoring by Christian Baars (#9609)
 - HM10 Beacon support and refactoring by Christian Baars (#9702)
+- Initial support for iBeacons (Sensor52) on ESP32 using internal BLE by rvbglas (#9732)
 
 ### Breaking Changed
 - Redesigned ESP8266 GPIO internal representation in line with ESP32 changing ``Template`` layout too
@@ -98,8 +100,6 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - New IR Raw compact format (#9444)
 - A4988 optional microstep pin selection
 - Pulsetime to allow use for all relays with 8 interleaved so ``Pulsetime1`` is valid for Relay1, Relay9, Relay17 etc. (#9279)
-- IRremoteESP8266 library from v2.7.10 to v2.7.11
-- NeoPixelBus library from v2.5.0.09 to v2.6.0
 - Management of serial baudrate (#9554)
 - Rotary driver adjusted accordingly if Mi Desk Lamp module is selected (#9399)
 - Tasmota Arduino Core v2.7.4.5 allowing webpassword over 47 characters (#9687)
@@ -107,26 +107,29 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - PlatformIO library structure redesigned for compilation speed by Jason2866
 - Zigbee flash storage refactor adding commands ``ZbProbe``, ``ZbStatus2`` and ``ZbRestore`` (#9641)
 - Default otaurl in my_user_config.h to http://ota.tasmota.com/tasmota/release/tasmota.bin.gz
+- IRremoteESP8266 library from v2.7.10 to v2.7.11
+- NeoPixelBus library from v2.5.0.09 to v2.6.0
 
 ### Fixed
-- Ledlink blink when no network connected regression from v8.3.1.4 (#9292)
+- Light wakeup Exception 0 (divide by zero) when ``WakeupDuration`` is not initialised (#9466)
 - Exception 28 due to device group buffer overflow (#9459)
-- Shutter timing problem due to buffer overflow in calibration matrix (#9458)
-- Light wakeup exception 0 (divide by zero) when ``WakeupDuration`` is not initialised (#9466)
+- Arilux RF remote detection regression from v8.3.0
+- Ledlink blink when no network connected regression from v8.3.1.4 (#9292)
+- TuyaMcu energy display regression from v8.5.0.1 (#9547)
 - Thermostat sensor status corruption regression from v8.5.0.1 (#9449)
 - Telegram message decoding error regression from v8.5.0.1
 - Rule handling of Var or Mem using text regression from v8.5.0.1 (#9540)
 - Rule handling of JSON ``null`` regression from v8.5.0.1 (#9685)
+- Rule Break not working as expected when ONCE is enabled (#9245)
+- Rule expressions using mems corrupts character pool (#9301)
+- Shutter timing problem due to buffer overflow in calibration matrix (#9458)
 - Correct Energy period display shortly after midnight by gominoa (#9536)
-- TuyaMcu energy display regression from v8.5.0.1 (#9547)
 - Tuyamcu dimmers MQTT topic (#9606)
 - Scripter memory alignment (#9608)
 - Zigbee battery percentage (#9607)
 - HassAnyKey anomaly (#9601)
-- Rule Break not working as expected when ONCE is enabled (#9245)
-- Rule expressions using mems corrupts character pool (#9301)
 
 ### Removed
 - Support for direct upgrade from Tasmota versions before v7.0
-- Auto config update for all Friendlynames and Switchtopic from Tasmota versions before v8.0
 - Support for downgrade to versions before 9.0 keeping current GPIO configuration
+- Auto config update for all Friendlynames and Switchtopic from Tasmota versions before v8.0
