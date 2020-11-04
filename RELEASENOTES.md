@@ -64,7 +64,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Command ``ShutterChange`` to increment change position (#9594)
 - Command ``SwitchMode 15`` sending only MQTT message on switch change (#9593)
 - Command ``SetOption113 1`` to set dimmer low on rotary dial after power off
-- Command ``SetOption114 1`` to detach Swiches from Relays and enable MQTT action state for all the SwitchModes
+- Command ``SetOption114 1`` to detach Switches from Relays and enable MQTT action state for all the SwitchModes
 - Command ``SwitchText`` to change JSON switch names by barbudor (#9691)
 - Zigbee command ``ZbData`` for better support of device specific data
 - Zigbee command ``ZbOccupancy`` to configure the time-out for PIR

@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee command ``ZbOccupancy`` to configure the time-out for PIR
 - Command ``Gpios 255`` to show all possible GPIO configurations
 - Command ``SwitchText`` to change JSON switch names by barbudor (#9691)
-- Command ``SetOption114 1`` to detach Swiches from Relays and enable MQTT action state for all the SwitchModes returning `{"Switch1":{"Action":"ON"}}`
+- Command ``SetOption114 1`` to detach Switches from Relays and enable MQTT action state for all the SwitchModes returning `{"Switch1":{"Action":"ON"}}`
 - HM10 Beacon support and refactoring by Christian Baars (#9702)
 - Support for Hass discovery of TuyaMcu and Sonoff Ifan by Federico Leoni (#9727)
 - Initial support for iBeacons (Sensor52) on ESP32 using internal BLE by rvbglas (#9732)
