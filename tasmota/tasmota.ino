@@ -280,7 +280,7 @@ void setup(void) {
 
   Format(TasmotaGlobal.mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(TasmotaGlobal.mqtt_client));
   Format(TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(TasmotaGlobal.mqtt_topic));
-  if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
+  if (strchr(SettingsText(SET_HOSTNAME), '%') != nullptr) {
     SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
     snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME), TasmotaGlobal.mqtt_topic, ESP_getChipId() & 0x1FFF);
   } else {
