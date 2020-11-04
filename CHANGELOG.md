@@ -34,6 +34,9 @@ All notable changes to this project will be documented in this file.
 - Rule handling of JSON ``null`` regression from v8.5.0.1 (#9685)
 - Arilux RF remote detection regression from v8.3.0
 
+### Removed
+- Auto output selection of decimal or hexadecimal data based on user input. Now only based on ``SetOption17``
+
 ## [9.0.0.2] - 20201025
 ### Added
 - Support for Vietnamese language translations by Tâm.NT

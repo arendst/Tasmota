@@ -133,3 +133,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for direct upgrade from Tasmota versions before v7.0
 - Support for downgrade to versions before 9.0 keeping current GPIO configuration
 - Auto config update for all Friendlynames and Switchtopic from Tasmota versions before v8.0
+- Auto output selection of decimal or hexadecimal data based on user input. Now only based on ``SetOption17``

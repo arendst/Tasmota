@@ -2556,9 +2556,12 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
       entry_type = 1;                               // Hexadecimal
     }
   }
-  if (entry_type) {
-    Settings.flag.decimal_text = entry_type -1;     // SetOption17 - Switch between decimal or hexadecimal output
-  }
+
+//  Too much magic so removed since 9.0.0.3
+//  if (entry_type) {
+//    Settings.flag.decimal_text = entry_type -1;     // SetOption17 - Switch between decimal or hexadecimal output
+//  }
+
   return (entry_type);
 }
 
