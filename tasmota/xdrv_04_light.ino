@@ -2910,21 +2910,21 @@ void CmndDimmerRange(void)
 void CmndDimmerStep(void)
 {
   // DimmerStep       - Show current dimmer step as used by Dimmer +/-
-  // DimmerStep       - Set dimmer step
+  // DimmerStep 1..50 - Set dimmer step
   if (XdrvMailbox.data_len > 0) {
     uint32_t parm[1];
     parm[0] = Settings.dimmer_step;
     ParseParameters(1, parm);
     if (parm[0] < 1) {
          Settings.dimmer_step = 1;
-    } else if (parm[0] > 10) {
-        Settings.dimmer_step = 10;
+    } else if (parm[0] > 50) {
+        Settings.dimmer_step = 50;
     } else {
         Settings.dimmer_step = parm[0];
     }
   }
   Response_P(PSTR("{\"" D_CMND_DIMMER_STEP "\":%d}"), Settings.dimmer_step);
-
+}
 
 void CmndLedTable(void)
 {
