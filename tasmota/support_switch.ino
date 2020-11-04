@@ -410,13 +410,13 @@ void SwitchHandler(uint32_t mode) {
         Switch.last_state[i] = button;
       }
       if (switchflag <= POWER_TOGGLE) {
-        if (!Settings.flag5.mqtt_switches) {                    // SetOption114 (0) - Detach Swiches from relays and enable MQTT action state for all the SwitchModes
+        if (!Settings.flag5.mqtt_switches) {                    // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
           if (!SendKey(KEY_SWITCH, i +1, switchflag)) {         // Execute command via MQTT
             ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < TasmotaGlobal.devices_present)
           }
         } else { mqtt_action = switchflag; }
       }
-      if ((mqtt_action != POWER_NONE) && Settings.flag5.mqtt_switches) {  // SetOption114 (0) - Detach Swiches from relays and enable MQTT action state for all the SwitchModes
+      if ((mqtt_action != POWER_NONE) && Settings.flag5.mqtt_switches) {  // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
         if (!Settings.flag.hass_discovery) {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
           char mqtt_state_str[16];
           char *mqtt_state = mqtt_state_str;

@@ -88,7 +88,7 @@ void PWMModulePreInit(void)
   Settings.ledstate = 0;          // Disable LED usage
 
   // If the module was just changed to PWM Dimmer, set the defaults.
-if (TasmotaGlobal.module_changed) {
+  if (TasmotaGlobal.module_changed) {
     Settings.flag.pwm_control = true;     // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
     Settings.bri_power_on = Settings.bri_preset_low = Settings.bri_preset_high = 0;
 
