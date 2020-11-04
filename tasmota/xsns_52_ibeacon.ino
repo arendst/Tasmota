@@ -127,6 +127,9 @@ struct IBEACON_UID {
   char MINOR[4];
   uint8_t FLAGS;
   uint8_t TIME;
+#ifdef USE_IBEACON_ESP32
+  uint8_t REPTIME;
+#endif
 } ibeacons[MAX_IBEACONS];
 
 #ifdef USE_IBEACON_ESP32
@@ -202,7 +205,7 @@ class ESP32BLEScanCallback : public BLEAdvertisedDeviceCallbacks
           DumpHex((const unsigned char*)&MAC,6,ib.MAC);
           memcpy(ib.RSSI,sRSSI,4);
 
-          if (ibeacon_add(&ib)) {
+          if (ibeacon_add(&ib)==2) {
             ibeacon_mqtt(ib.MAC,ib.RSSI,ib.UID,ib.MAJOR,ib.MINOR);
           }
 
@@ -215,7 +218,7 @@ class ESP32BLEScanCallback : public BLEAdvertisedDeviceCallbacks
           DumpHex((const unsigned char*)&MAC,6,ib.MAC);
           memcpy(ib.RSSI,sRSSI,4);
 
-          if (ibeacon_add(&ib)) {
+          if (ibeacon_add(&ib)==2) {
             ibeacon_mqtt(ib.MAC,ib.RSSI,ib.UID,ib.MAJOR,ib.MINOR);
           }
         }
@@ -304,6 +307,7 @@ void esp32_every_second(void) {
   for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
     if (ibeacons[cnt].FLAGS) {
       ibeacons[cnt].TIME++;
+      ibeacons[cnt].REPTIME++;
       if (ibeacons[cnt].TIME>IB_TIMEOUT_TIME) {
         ibeacons[cnt].FLAGS=0;
         ibeacon_mqtt(ibeacons[cnt].MAC,"0000",ibeacons[cnt].UID,ibeacons[cnt].MAJOR,ibeacons[cnt].MINOR);
@@ -415,6 +419,12 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
             // exists
             memcpy(ibeacons[cnt].RSSI,ib->RSSI,4);
             ibeacons[cnt].TIME=0;
+#ifdef USE_IBEACON_ESP32
+            if (ibeacons[cnt].REPTIME >= IB_UPDATE_TIME) {
+              ibeacons[cnt].REPTIME = 0;
+              return 2;
+            }            
+#endif          
             return 1;
           }
         } else {
@@ -422,6 +432,12 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
             // exists
             memcpy(ibeacons[cnt].RSSI,ib->RSSI,4);
             ibeacons[cnt].TIME=0;
+#ifdef USE_IBEACON_ESP32
+            if (ibeacons[cnt].REPTIME >= IB_UPDATE_TIME) {
+              ibeacons[cnt].REPTIME = 0;
+              return 2;
+            }            
+#endif          
             return 1;
           }
         }
@@ -436,6 +452,9 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
         memcpy(ibeacons[cnt].MINOR,ib->MINOR,4);
         ibeacons[cnt].FLAGS=1;
         ibeacons[cnt].TIME=0;
+#ifdef USE_IBEACON_ESP32
+        ibeacons[cnt].REPTIME = 0;
+#endif          
         return 1;
       }
     }
