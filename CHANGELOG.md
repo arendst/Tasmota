@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.0.0.3]
+## [9.0.0.3] - 20201105
 ### Added
 - TLS in binary tasmota-zbbridge (#9635)
 - Support for EZO O2 sensors by Christopher Tremblay (#9619)
@@ -16,8 +16,11 @@ All notable changes to this project will be documented in this file.
 - Zigbee command ``ZbOccupancy`` to configure the time-out for PIR
 - Command ``Gpios 255`` to show all possible GPIO configurations
 - Command ``SwitchText`` to change JSON switch names by barbudor (#9691)
-- Command ``SetOption114 1`` to detach Swiches from Relays and enable MQTT action state for all the SwitchModes returning `{"Switch1":{"Action":"ON"}}`
+- Command ``SetOption114 1`` to detach Switches from Relays and enable MQTT action state for all the SwitchModes returning `{"Switch1":{"Action":"ON"}}`
+- Command ``DimmerStep 1..50`` to change default dimmer up and down step of 10% by James Turton (#9733)
 - HM10 Beacon support and refactoring by Christian Baars (#9702)
+- Support for Hass discovery of TuyaMcu and Sonoff Ifan by Federico Leoni (#9727)
+- Initial support for iBeacons (Sensor52) on ESP32 using internal BLE by rvbglas (#9732)
 
 ### Changed
 - PlatformIO library structure redesigned for compilation speed by Jason2866
@@ -30,6 +33,10 @@ All notable changes to this project will be documented in this file.
 - Rule expressions using mems corrupts character pool (#9301)
 - Button press rules regression introduced by #9589 (#9700)
 - Rule handling of JSON ``null`` regression from v8.5.0.1 (#9685)
+- Arilux RF remote detection regression from v8.3.0
+
+### Removed
+- Auto output selection of decimal or hexadecimal data based on user input. Now only based on ``SetOption17``
 
 ## [9.0.0.2] - 20201025
 ### Added

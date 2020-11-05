@@ -497,7 +497,7 @@ void CmndDomoticzSend(void) {
 
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
     if (XdrvMailbox.data_len > 0) {
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {  // Process parameter entry
         char *data;
         uint32_t index = strtoul(strtok_r(XdrvMailbox.data, ",", &data), nullptr, 10);
         if ((index > 0) && (data != nullptr)) {

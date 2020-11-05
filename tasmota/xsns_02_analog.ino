@@ -132,7 +132,7 @@ void AdcGetSettings(uint32_t idx) {
   Adc[idx].param2 = 0;
   Adc[idx].param3 = 0;
   Adc[idx].param4 = 0;
-  if (strstr(SettingsText(SET_ADC_PARAM1 + idx), ",") != nullptr) {
+  if (strchr(SettingsText(SET_ADC_PARAM1 + idx), ',') != nullptr) {
     Adcs.type = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + idx), ",", 1));
     Adc[idx].param1 = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + idx), ",", 2));
     Adc[idx].param2 = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + idx), ",", 3));

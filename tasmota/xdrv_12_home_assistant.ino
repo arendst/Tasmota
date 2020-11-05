@@ -187,17 +187,17 @@ const char HASS_DISCOVER_DEVICE[] PROGMEM =                         // Basic par
   "\"hn\":\"%s\","                                                  // Host Name
   "\"mac\":\"%s\","                                                 // Full MAC as Device id
   "\"md\":\"%s\","                                                  // Module or Template Name
-  "\"ty\":%d,"                                                      // Flag for TuyaMCU devices
+  "\"ty\":%d,\"if\":%d,"                                            // Flag for TuyaMCU and Ifan devices
   "\"ofln\":\"" MQTT_LWT_OFFLINE "\","                              // Payload Offline
   "\"onln\":\"" MQTT_LWT_ONLINE "\","                               // Payload Online
   "\"state\":[\"%s\",\"%s\",\"%s\",\"%s\"],"                        // State text for "OFF","ON","TOGGLE","HOLD"
   "\"sw\":\"%s\","                                                  // Software Version
   "\"t\":\"%s\","                                                   // Topic
-  "\"ft\":\"%s\","                                                  // Ful Topic
+  "\"ft\":\"%s\","                                                  // Full Topic
   "\"tp\":[\"%s\",\"%s\",\"%s\"],"                                  // Topics for command, stat and tele
-  "\"rl\":[%s],\"swc\":[%s],\"btn\":[%s],"                          // Inputs / Outputs
-  "\"so\":{\"11\":%d,\"13\":%d,\"17\":%d,\"20\":%d,"                // SetOptions
-  "\"30\":%d,\"68\":%d,\"73\":%d,\"80\":%d,\"82\":%d},"
+  "\"rl\":[%s],\"swc\":[%s],\"swn\":[%s],\"btn\":[%s],"             // Inputs / Outputs
+  "\"so\":{\"4\":%d,\"11\":%d,\"13\":%d,\"17\":%d,\"20\":%d,"       // SetOptions
+  "\"30\":%d,\"68\":%d,\"73\":%d,\"82\":%d,\"114\":%d},"
   "\"lk\":%d,\"lt_st\":%d,\"ver\":1}";                              // Light SubType, and Discovery version
 
 typedef struct HASS {
@@ -272,15 +272,22 @@ void NewHAssDiscovery(void)
   char stemp2[200];
   char stemp3[TOPSZ];
   char stemp4[TOPSZ];
+  char stemp5[TOPSZ];
   char unique_id[30];
   char relays[TOPSZ];
   char *state_topic = stemp1;
   bool SerialButton = false;
   bool TuyaMod = false;
+  bool iFanMod = false;
 
   stemp2[0] = '\0';
   struct HASS Hass;
   HassDiscoveryRelays(Hass);
+
+#ifdef ESP8266
+    if (TUYA_DIMMER == TasmotaGlobal.module_type || SK03_TUYA == TasmotaGlobal.module_type) { TuyaMod = true; }
+    if (SONOFF_IFAN02 == TasmotaGlobal.module_type || SONOFF_IFAN03 == TasmotaGlobal.module_type) { iFanMod = true; }
+#endif // ESP8266
 
   uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!TasmotaGlobal.devices_present) ? 1 : TasmotaGlobal.devices_present;
   for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
@@ -290,22 +297,21 @@ void NewHAssDiscovery(void)
   }
 
   stemp3[0] = '\0';
-  // Enable Discovery for Switches only if SwitchTopic is set to a custom name or if there is not a Power device
-  auto discover_switches = ((KeyTopicActive(1) && (strcmp(SettingsText(SET_MQTT_SWITCH_TOPIC), TasmotaGlobal.mqtt_topic))) || !Hass.RelPst);
+  // Enable Discovery for Switches only if SetOption114 is enabled
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-    snprintf_P(stemp3, sizeof(stemp3), PSTR("%s%s%d"), stemp3, (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) & discover_switches) ? Settings.switchmode[i] : -1);
+    char sname[TOPSZ];
+    snprintf_P(sname, sizeof(sname), PSTR("\"%s\""), GetSwitchText(i).c_str());
+    snprintf_P(stemp3, sizeof(stemp3), PSTR("%s%s%d"), stemp3, (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) & Settings.flag5.mqtt_switches) ? Settings.switchmode[i] : -1);
+    snprintf_P(stemp4, sizeof(stemp4), PSTR("%s%s%s"), stemp4, (i > 0 ? "," : ""), (PinUsed(GPIO_SWT1, i) & Settings.flag5.mqtt_switches) ? sname : "null");
   }
 
-  stemp4[0] = '\0';
+  stemp5[0] = '\0';
   // Enable Discovery for Buttons only if SetOption73 is enabled
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
-
 #ifdef ESP8266
     if (i == 0 && (SONOFF_DUAL == TasmotaGlobal.module_type )) { SerialButton = true; }
-    if (TUYA_DIMMER == TasmotaGlobal.module_type || SK03_TUYA == TasmotaGlobal.module_type) { TuyaMod = true; }
 #endif // ESP8266
-
-    snprintf_P(stemp4, sizeof(stemp4), PSTR("%s%s%d"), stemp4, (i > 0 ? "," : ""), (SerialButton ? 1 : (PinUsed(GPIO_KEY1, i)) & Settings.flag3.mqtt_buttons));
+    snprintf_P(stemp5, sizeof(stemp5), PSTR("%s%s%d"), stemp5, (i > 0 ? "," : ""), (SerialButton ? 1 : (PinUsed(GPIO_KEY1, i)) & Settings.flag3.mqtt_buttons));
     SerialButton = false;
   }
 
@@ -318,13 +324,14 @@ void NewHAssDiscovery(void)
   snprintf_P(stopic, sizeof(stopic), PSTR("tasmota/discovery/%s/config"), unique_id);
 
   // Send empty message if new discovery is disabled
-  TasmotaGlobal.masterlog_level = 4; // Hide topic on clean and remove use weblog 4 to see it
+  TasmotaGlobal.masterlog_level = 4;   // Hide topic on clean and remove use weblog 4 to show it
   if (!Settings.flag.hass_discovery) { // HassDiscoveryRelays(relays)
     Response_P(HASS_DISCOVER_DEVICE, WiFi.localIP().toString().c_str(), SettingsText(SET_DEVICENAME),
-              stemp2, TasmotaGlobal.hostname, unique_id, ModuleName().c_str(), TuyaMod, GetStateText(0), GetStateText(1), GetStateText(2), GetStateText(3),
-              TasmotaGlobal.version, TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_FULLTOPIC), SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2, Hass.RelLst, stemp3, stemp4, Settings.flag.button_swap,
-              Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked, Settings.flag.hass_light, Settings.flag3.pwm_multi_channels,
-              Settings.flag3.mqtt_buttons, Settings.flag3.shutter_mode, Settings.flag4.alexa_ct_range, light_controller.isCTRGBLinked(), Light.subtype);
+              stemp2, TasmotaGlobal.hostname, unique_id, ModuleName().c_str(), TuyaMod, iFanMod, GetStateText(0), GetStateText(1), GetStateText(2), GetStateText(3),
+              TasmotaGlobal.version, TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_FULLTOPIC), SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2, Hass.RelLst, stemp3, stemp4,
+              stemp5, Settings.flag.mqtt_response, Settings.flag.button_swap, Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked,
+              Settings.flag.hass_light, Settings.flag3.pwm_multi_channels, Settings.flag3.mqtt_buttons, Settings.flag4.alexa_ct_range, Settings.flag5.mqtt_switches,
+              light_controller.isCTRGBLinked(), Light.subtype);
   }
   MqttPublish(stopic, true);
 

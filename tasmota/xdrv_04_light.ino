@@ -129,7 +129,7 @@ enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_M
 const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 
 const char kLightCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
+  D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_DIMMER_STEP "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
   D_CMND_RGBWWTABLE "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
   D_CMND_WHITE "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR
 #ifdef USE_LIGHT_PALETTE
@@ -141,7 +141,7 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
    "|UNDOCA" ;
 
 void (* const LightCommand[])(void) PROGMEM = {
-  &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndDimmerRange, &CmndLedTable, &CmndFade,
+  &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndDimmerRange, &CmndDimmerStep, &CmndLedTable, &CmndFade,
   &CmndRgbwwTable, &CmndScheme, &CmndSpeed, &CmndWakeup, &CmndWakeupDuration,
   &CmndWhite, &CmndChannel, &CmndHsbColor,
 #ifdef USE_LIGHT_PALETTE
@@ -2513,7 +2513,7 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
     buffer_length--;  // remove all trailing '='
     memcpy(&Light.entry_color, &Light.current_color, sizeof(Light.entry_color));
   }
-  if (strstr(buffer, ",") != nullptr) {             // Decimal entry
+  if (strchr(buffer, ',') != nullptr) {             // Decimal entry
     int8_t i = 0;
     for (str = strtok_r(buffer, ",", &p); str && i < 6; str = strtok_r(nullptr, ",", &p)) {
       if (i < LST_MAX) {
@@ -2556,9 +2556,12 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
       entry_type = 1;                               // Hexadecimal
     }
   }
-  if (entry_type) {
-    Settings.flag.decimal_text = entry_type -1;     // SetOption17 - Switch between decimal or hexadecimal output
-  }
+
+//  Too much magic so removed since 9.0.0.3
+//  if (entry_type) {
+//    Settings.flag.decimal_text = entry_type -1;     // SetOption17 - Switch between decimal or hexadecimal output
+//  }
+
   return (entry_type);
 }
 
@@ -2829,8 +2832,8 @@ void CmndDimmer(void)
   // Dimmer1 0..100 - Change RGB Dimmer
   // Dimmer2 0..100 - Change W(W) Dimmer
   // Dimmer3 0..100 - Change both RGB and W(W) Dimmers with no fading
-  // Dimmer<x> +    - Incerement Dimmer in steps of 10
-  // Dimmer<x> -    - Decrement Dimmer in steps of 10
+  // Dimmer<x> +    - Incerement Dimmer in steps of DimmerStep
+  // Dimmer<x> -    - Decrement Dimmer in steps of DimmerStep
   uint32_t dimmer;
   if (XdrvMailbox.index == 3) {
     TasmotaGlobal.skip_light_fade = true;
@@ -2848,9 +2851,9 @@ void CmndDimmer(void)
   // Handle +/- special command
   if (1 == XdrvMailbox.data_len) {
     if ('+' == XdrvMailbox.data[0]) {
-      XdrvMailbox.payload = (dimmer > 89) ? 100 : dimmer + 10;
+      XdrvMailbox.payload = (dimmer > (100 - Settings.dimmer_step - 1)) ? 100 : dimmer + Settings.dimmer_step;
     } else if ('-' == XdrvMailbox.data[0]) {
-      XdrvMailbox.payload = (dimmer < 11) ? 1 : dimmer - 10;
+      XdrvMailbox.payload = (dimmer < (Settings.dimmer_step + 1)) ? 1 : dimmer - Settings.dimmer_step;
     }
   }
   // If value is ok, change it, otherwise report old value
@@ -2905,6 +2908,22 @@ void CmndDimmerRange(void)
     Light.update = true;
   }
   Response_P(PSTR("{\"" D_CMND_DIMMER_RANGE "\":{\"Min\":%d,\"Max\":%d}}"), Settings.dimmer_hw_min, Settings.dimmer_hw_max);
+}
+
+void CmndDimmerStep(void)
+{
+  // DimmerStep       - Show current dimmer step as used by Dimmer +/-
+  // DimmerStep 1..50 - Set dimmer step
+  if (XdrvMailbox.data_len > 0) {
+    if (XdrvMailbox.payload < 1) {
+       Settings.dimmer_step = 1;
+    } else if (XdrvMailbox.payload > 50) {
+      Settings.dimmer_step = 50;
+    } else {
+      Settings.dimmer_step = XdrvMailbox.payload;
+    }
+  }
+  ResponseCmndNumber(Settings.dimmer_step);
 }
 
 void CmndLedTable(void)
