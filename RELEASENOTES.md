@@ -57,5 +57,5 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.1.0.0
-- Version bump
+## Changelog v9.1.0.1
+- platformio compiler option `no target align` enabled for stage

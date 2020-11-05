@@ -3,9 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.1.0.0]
-
-- Version bump
+## [9.1.0.1]
+### Changed
+- platformio compiler option `no target align` enabled for stage
 
 ## [Released]
 
