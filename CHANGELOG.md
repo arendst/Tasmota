@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Command ``Gpios 255`` to show all possible GPIO configurations
 - Command ``SwitchText`` to change JSON switch names by barbudor (#9691)
 - Command ``SetOption114 1`` to detach Switches from Relays and enable MQTT action state for all the SwitchModes returning `{"Switch1":{"Action":"ON"}}`
+- Command ``DimmerStep 1..50`` to change default dimmer up and down step of 10% by James Turton (#9733)
 - HM10 Beacon support and refactoring by Christian Baars (#9702)
 - Support for Hass discovery of TuyaMcu and Sonoff Ifan by Federico Leoni (#9727)
 - Initial support for iBeacons (Sensor52) on ESP32 using internal BLE by rvbglas (#9732)
