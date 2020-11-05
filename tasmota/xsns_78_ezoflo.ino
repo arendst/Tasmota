@@ -53,7 +53,7 @@ struct EZOFLO : public EZOStruct {
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_VOLUME "\":%s"), name, volume);
       if (hasFlow) {
-        ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATE "\":%s"), name, rate);
+        ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATE "\":%s"), rate);
       }
       ResponseJsonEnd();
 
