@@ -1015,6 +1015,8 @@ void SettingsDefaultSet2(void)
   Settings.dimmer_hw_max = DEFAULT_DIMMER_MAX;
   Settings.dimmer_hw_min = DEFAULT_DIMMER_MIN;
 
+  Settings.dimmer_step = DEFAULT_DIMMER_STEP;
+
   // Display
 //  Settings.display_model = 0;
   Settings.display_mode = 1;

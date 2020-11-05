@@ -59,6 +59,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog v9.1.0 Imogen
 ### Added
+- Command ``DimmerStep 1..50`` to change default dimmer up and down step of 10% by James Turton (#9733)
 - Command ``Gpios 255`` to show all possible GPIO configurations
 - Command ``NoDelay`` for immediate backlog command execution by Erik Montnemery (#9544)
 - Command ``ShutterChange`` to increment change position (#9594)
@@ -133,3 +134,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for direct upgrade from Tasmota versions before v7.0
 - Support for downgrade to versions before 9.0 keeping current GPIO configuration
 - Auto config update for all Friendlynames and Switchtopic from Tasmota versions before v8.0
+- Auto output selection of decimal or hexadecimal data based on user input. Now only based on ``SetOption17``
