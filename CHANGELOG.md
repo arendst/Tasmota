@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [9.1.0.0]
+
+- Version bump
+
+## [Released]
+
+### 9.1.0 20201105
+
+- Release Imogen
+
 ## [9.0.0.3] - 20201105
 ### Added
 - TLS in binary tasmota-zbbridge (#9635)
@@ -114,8 +124,6 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Support for direct upgrade from Tasmota versions before v7.0
 - Auto config update for all Friendlynames and Switchtopic from Tasmota versions before v8.0
-
-## [Released]
 
 ## [8.5.1] - 20201002
 - Release Hannah
