@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.0.0.3]
+## [9.0.0.3] - 20201105
 ### Added
 - TLS in binary tasmota-zbbridge (#9635)
 - Support for EZO O2 sensors by Christopher Tremblay (#9619)
