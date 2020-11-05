@@ -688,8 +688,7 @@ uint32_t IrRemoteParseRawCompact(char * str, uint16_t * arr, size_t arr_len) {
 //   count: number of commas in parameters, i.e. it contains count+1 values
 //   repeat: number of repeats (0 means no repeat)
 //
-uint32_t IrRemoteSendRawStandard(char ** pp, uint32_t count, uint32_t repeat) {
-  uint16_t freq = parsqeFreq(*pp);
+uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint32_t repeat) {
   // IRsend 0,896,876,900,888,894,876,1790,874,872,1810,1736,948,872,880,872,936,872,1792,900,888,1734
   // IRsend 0,+8570-4240+550-1580C-510+565-1565F-505Fh+570gFhIdChIgFeFgFgIhFgIhF-525C-1560IhIkI-520ChFhFhFgFhIkIhIgIgIkIkI-25270A-4225IkIhIgIhIhIkFhIkFjCgIhIkIkI-500IkIhIhIkFhIgIl+545hIhIoIgIhIkFhFgIkIgFgI
 
@@ -766,7 +765,7 @@ uint32_t IrRemoteCmndIrSendRaw(void)
     // standard raw
     // IRsend <freq>,<rawdata>,<rawdata> ...
     // IRsend <freq>,<compact_rawdata>
-    return IrRemoteSendRawStandard(&p, count, repeat);
+    return IrRemoteSendRawStandard(&p, parsqeFreq(str), count, repeat);
   }
 }
 
