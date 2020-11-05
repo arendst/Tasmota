@@ -719,36 +719,6 @@ uint32_t IrRemoteSendRawStandard(char ** pp, uint32_t count, uint32_t repeat) {
     free(arr);
   }
   return IE_NO_ERROR;
-
-
-
-  count++;
-  if (count < 200) {
-    uint16_t raw_array[count];  // It's safe to use stack for up to 200 packets (limited by mqtt_data length)
-    for (uint32_t i = 0; i < count; i++) {
-      raw_array[i] = strtol(strtok_r(nullptr, ", ", pp), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
-    }
-
-    irsend_active = true;
-    for (uint32_t r = 0; r <= repeat; r++) {
-      irsend->sendRaw(raw_array, count, freq);
-    }
-  } else {
-    uint16_t *raw_array = reinterpret_cast<uint16_t*>(malloc(count * sizeof(uint16_t)));
-    if (raw_array == nullptr) {
-      return IE_INVALID_RAWDATA;
-    }
-
-    for (uint32_t i = 0; i < count; i++) {
-      raw_array[i] = strtol(strtok_r(nullptr, ", ", pp), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
-    }
-
-    irsend_active = true;
-    for (uint32_t r = 0; r <= repeat; r++) {
-      irsend->sendRaw(raw_array, count, freq);
-    }
-    free(raw_array);
-  }
 }
 
 // parse the frequency value
