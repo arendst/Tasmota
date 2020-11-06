@@ -69,10 +69,10 @@ bool NRF24Detect(void)
   if (PinUsed(GPIO_SPI_CS) && PinUsed(GPIO_SPI_DC)) {
     if(NRF24initRadio()){
       NRF24.chipType = 32; // SPACE
-     AddLog_P2(LOG_LEVEL_INFO,PSTR("NRF24L01 initialized"));
+     AddLog_P(LOG_LEVEL_INFO,PSTR("NRF24L01 initialized"));
       if(NRF24radio.isPVariant()){
         NRF24.chipType = 43; // +
-        AddLog_P2(LOG_LEVEL_INFO,PSTR("NRF24L01+ detected"));
+        AddLog_P(LOG_LEVEL_INFO,PSTR("NRF24L01+ detected"));
       }
       return true;
     }

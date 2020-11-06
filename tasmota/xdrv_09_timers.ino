@@ -512,8 +512,6 @@ void CmndLatitude(void)
 
 #define WEB_HANDLE_TIMER "tm"
 
-const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
-
 const char HTTP_BTN_MENU_TIMER[] PROGMEM =
   "<p><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form></p>";
 
@@ -843,7 +841,7 @@ void HandleTimerConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMER);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_TIMER));
 
   if (Webserver->hasArg("save")) {
     TimerSaveSettings();
@@ -851,7 +849,7 @@ void HandleTimerConfiguration(void)
     return;
   }
 
-  WSContentStart_P(S_CONFIGURE_TIMER);
+  WSContentStart_P(PSTR(D_CONFIGURE_TIMER));
   WSContentSend_P(HTTP_TIMER_SCRIPT1);
 #ifdef USE_SUNRISE
   WSContentSend_P(HTTP_TIMER_SCRIPT2);

@@ -99,7 +99,7 @@ bool TelegramInit(void) {
       Telegram.next_update_id = 0;    // Code of last read Message
       Telegram.message[0].text = "";
 
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("TGM: Started"));
+      AddLog_P(LOG_LEVEL_INFO, PSTR("TGM: Started"));
     }
     init_done = true;
   }
@@ -107,7 +107,7 @@ bool TelegramInit(void) {
 }
 
 String TelegramConnectToTelegram(String command) {
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Cmnd %s"), command.c_str());
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Cmnd %s"), command.c_str());
 
   if (!TelegramInit()) { return ""; }
 
@@ -115,7 +115,7 @@ String TelegramConnectToTelegram(String command) {
   uint32_t tls_connect_time = millis();
   if (telegramClient->connect("api.telegram.org", 443)) {
 
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
 
     telegramClient->println("GET /"+command);
 
@@ -144,7 +144,7 @@ String TelegramConnectToTelegram(String command) {
 }
 
 void TelegramGetUpdates(uint32_t offset) {
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getUpdates"));
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getUpdates"));
 
   if (!TelegramInit()) { return; }
 
@@ -204,13 +204,13 @@ void TelegramGetUpdates(uint32_t offset) {
   //  }
   // ]}
 
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 
   JsonParser parser((char*)response.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) {
 
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Sent Update request messages up to %s"), offset.c_str());
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Sent Update request messages up to %s"), offset.c_str());
 
     JsonParserArray arr = root[PSTR("result")];
     uint32_t max_updates = arr.size();
@@ -238,18 +238,18 @@ void TelegramGetUpdates(uint32_t offset) {
         }
         Telegram.next_update_id = Telegram.message[i].update_id +1;  // Write id of last read message
 
-        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %d, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id, Telegram.message[i].text.c_str());
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %d, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id, Telegram.message[i].text.c_str());
       }
     } else {
-//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
     }
   } else {
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Failed to update"));
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Failed to update"));
   }
 }
 
 bool TelegramSendMessage(uint32_t chat_id, String text) {
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: sendMessage"));
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: sendMessage"));
 
   if (!TelegramInit()) { return false; }
 
@@ -259,10 +259,10 @@ bool TelegramSendMessage(uint32_t chat_id, String text) {
     String command = "bot" + _token + "/sendMessage?chat_id=" + String(chat_id) + "&text=" + text;
     String response = TelegramConnectToTelegram(command);
 
-//    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+//    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 
     if (response.startsWith("{\"ok\":true")) {
-//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TGM: Message sent"));
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TGM: Message sent"));
       sent = true;
     }
   }
@@ -272,7 +272,7 @@ bool TelegramSendMessage(uint32_t chat_id, String text) {
 
 /*
 void TelegramSendGetMe(void) {
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getMe"));
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getMe"));
 
   if (!TelegramInit()) { return; }
 
@@ -282,7 +282,7 @@ void TelegramSendGetMe(void) {
 
   // {"ok":true,"result":{"id":1179906608,"is_bot":true,"first_name":"Tasmota","username":"tasmota_bot","can_join_groups":true,"can_read_all_group_messages":false,"supports_inline_queries":false}}
 
-//  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
+//  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Response %s"), response.c_str());
 }
 */
 

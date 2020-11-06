@@ -706,7 +706,7 @@ public:
     if (Settings.flag3.tuya_serial_mqtt_publish) {
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
     }
   }
 
@@ -1831,7 +1831,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
         uint8_t *attr_address = ((uint8_t*)&data) + sizeof(Z_Data) + map_offset;
         uint32_t uval32 = attr.getUInt();     // call converter to uint only once
         int32_t  ival32 = attr.getInt();     // call converter to int only once
-        // AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) map_type, map_offset, zigbee_type, ival32);
+        // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) map_type, map_offset, zigbee_type, ival32);
         switch (zigbee_type) {
           case Zenum8:
           case Zmap8:
@@ -1917,7 +1917,7 @@ bool Z_parseAttributeKey(class Z_attribute & attr) {
       attr.attr_type = type_id;
     }
   }
-  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("cluster_id = 0x%04X, attr_id = 0x%04X"), cluster_id, attr_id);
+  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("cluster_id = 0x%04X, attr_id = 0x%04X"), cluster_id, attr_id);
 
   // do we already know the type, i.e. attribute and cluster are also known
   if (Zunk == attr.attr_type) {
@@ -1929,7 +1929,7 @@ bool Z_parseAttributeKey(class Z_attribute & attr) {
       uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
       uint8_t  local_type_id = pgm_read_byte(&converter->type);
       int8_t   local_multiplier = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
-      // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Try cluster = 0x%04X, attr = 0x%04X, type_id = 0x%02X"), local_cluster_id, local_attr_id, local_type_id);
+      // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Try cluster = 0x%04X, attr = 0x%04X, type_id = 0x%02X"), local_cluster_id, local_attr_id, local_type_id);
 
       if (!attr.key_is_str) {
         if ((attr.key.id.cluster == local_cluster_id) && (attr.key.id.attr_id == local_attr_id)) {
@@ -1938,7 +1938,7 @@ bool Z_parseAttributeKey(class Z_attribute & attr) {
         }
       } else if (pgm_read_word(&converter->name_offset)) {
         const char * key = attr.key.key;
-        // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Comparing '%s' with '%s'"), attr_name, converter->name);
+        // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Comparing '%s' with '%s'"), attr_name, converter->name);
         if (0 == strcasecmp_P(key, Z_strings + pgm_read_word(&converter->name_offset))) {
           // match
           attr.setKeyId(local_cluster_id, local_attr_id);

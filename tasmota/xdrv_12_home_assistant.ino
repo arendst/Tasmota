@@ -358,7 +358,7 @@ void TryResponseAppend_P(const char *format, ...)
   int slen = sizeof(TasmotaGlobal.mqtt_data) - 1 - mlen;
   if (dlen >= slen)
   {
-    AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s (%u/%u):"), kHAssError1, dlen, slen);
+    AddLog_P(LOG_LEVEL_ERROR, PSTR("%s (%u/%u):"), kHAssError1, dlen, slen);
     va_start(args, format);
     vsnprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), format, args);
     AddLog(LOG_LEVEL_ERROR);
@@ -455,7 +455,7 @@ void HAssAnnounceRelayLight(void)
       // suppress shutter relays
     } else if ((i < Light.device) && !RelayX) {
       err_flag = true;
-      AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s"), kHAssError2);
+      AddLog_P(LOG_LEVEL_ERROR, PSTR("%s"), kHAssError2);
     } else {
       if (Settings.flag.hass_discovery && (RelayX || (Light.device > 0) && (max_lights > 0)) && !err_flag )
       {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
@@ -884,7 +884,7 @@ void HAssAnnounceSensors(void)
       JsonParserObject root = parser.getRootObject();
       if (!root)
       {
-        AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s '%s' (ERR1)"), kHAssError3, sensordata);
+        AddLog_P(LOG_LEVEL_ERROR, PSTR("%s '%s' (ERR1)"), kHAssError3, sensordata);
         continue;
       }
       for (auto sensor_key : root)
@@ -895,7 +895,7 @@ void HAssAnnounceSensors(void)
 
         if (!sensors)
         {
-          AddLog_P2(LOG_LEVEL_ERROR, PSTR("%s '%s' (ERR2)"), kHAssError3, sensorname);
+          AddLog_P(LOG_LEVEL_ERROR, PSTR("%s '%s' (ERR2)"), kHAssError3, sensorname);
           continue;
         }
 
@@ -1014,7 +1014,7 @@ void HAssAnnounceDeviceInfoAndStatusSensor(void)
 
   if (!Settings.flag.hass_discovery) {
     TasmotaGlobal.masterlog_level = 0;
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant MQTT Discovery disabled."));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Home Assistant MQTT Discovery disabled."));
   }
 }
 

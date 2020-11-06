@@ -287,30 +287,30 @@ uint8_t TasmotaClient_SetupFlash(void) {
     delay(1);
   }
   if (no_error) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("TCL: Found bootloader"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Found bootloader"));
   } else {
     no_error = 0;
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("TCL: Bootloader could not be found"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Bootloader could not be found"));
   }
   if (no_error) {
     if (TasmotaClient_execParam(CMND_STK_SET_DEVICE, ProgParams, sizeof(ProgParams))) {
     } else {
       no_error = 0;
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("TCL: Could not configure device for programming (1)"));
+      AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Could not configure device for programming (1)"));
     }
   }
   if (no_error) {
     if (TasmotaClient_execParam(CMND_STK_SET_DEVICE_EXT, ExtProgParams, sizeof(ExtProgParams))) {
     } else {
       no_error = 0;
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("TCL: Could not configure device for programming (2)"));
+      AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Could not configure device for programming (2)"));
     }
   }
   if (no_error) {
     if (TasmotaClient_execCmd(CMND_STK_ENTER_PROGMODE)) {
     } else {
       no_error = 0;
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("TCL: Failed to put bootloader into programming mode"));
+      AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Failed to put bootloader into programming mode"));
     }
   }
   return no_error;
@@ -345,7 +345,7 @@ void TasmotaClient_Flash(void) {
   SimpleHexParse hexParse = SimpleHexParse();
 
   if (!TasmotaClient_SetupFlash()) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("TCL: Flashing aborted!"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Flashing aborted!"));
     TClient.flashing  = false;
     TasmotaGlobal.restart_flag = 2;
     return;
@@ -383,7 +383,7 @@ void TasmotaClient_Flash(void) {
     }
   }
   TasmotaClient_exitProgMode();
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("TCL: Flash done!"));
+  AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Flash done!"));
   TClient.flashing  = false;
   TasmotaGlobal.restart_flag = 2;
 }
@@ -433,7 +433,7 @@ void TasmotaClient_Init(void) {
         pinMode(Pin(GPIO_TASMOTACLIENT_RST), OUTPUT);
         TClient.SerialEnabled = true;
         TasmotaClient_Reset();
-        AddLog_P2(LOG_LEVEL_INFO, PSTR("TCL: Enabled"));
+        AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Enabled"));
       }
     }
   }
@@ -448,10 +448,10 @@ void TasmotaClient_Init(void) {
     memcpy(&TClientSettings, &buffer, sizeof(TClientSettings));
     if (20191129 == TClientSettings.features_version) {
       TClient.type = true;
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("TCL: Version %u"), TClientSettings.features_version);
+      AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Version %u"), TClientSettings.features_version);
     } else {
       if ((!TClient.unsupported) && (TClientSettings.features_version > 0)) {
-        AddLog_P2(LOG_LEVEL_INFO, PSTR("TCL: Version %u not supported!"), TClientSettings.features_version);
+        AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Version %u not supported!"), TClientSettings.features_version);
         TClient.unsupported = true;
       }
     }

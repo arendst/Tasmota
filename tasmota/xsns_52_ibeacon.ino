@@ -187,10 +187,10 @@ class ESP32BLEScanCallback : public BLEAdvertisedDeviceCallbacks
 
           uint8_t     PWR   = oBeacon.getSignalPower();
 
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: MAC: %s Major: %d Minor: %d UUID: %s Power: %d RSSI: %d"),
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: MAC: %s Major: %d Minor: %d UUID: %s Power: %d RSSI: %d"),
             "BLE",
             advertisedDevice->getAddress().toString().c_str(),
-            Major, Minor, 
+            Major, Minor,
             oBeacon.getProximityUUID().toString().c_str(),
             PWR, RSSI);
 
@@ -239,7 +239,7 @@ void ESP32StartScanTask(){
     0,                /* Priority of the task */
     NULL,             /* Task handle. */
     0);               /* Core where the task should run */
-    AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: Start scanning"),"BLE");
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Start scanning"),"BLE");
 }
 
 void ESP32scanEndedCB(NimBLEScanResults results);
@@ -257,25 +257,25 @@ void ESP32ScanTask(void *pvParameters){
   for (;;) {
     vTaskDelay(10000/ portTICK_PERIOD_MS);
     ESP32BLEScan->clearResults();
-    AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: Clear scanning results"),"BLE");
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Clear scanning results"),"BLE");
   }
 
 }
 
 void ESP32scanEndedCB(NimBLEScanResults results) {
   ESP32BLE.mode.runningScan = 0;
-  AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: Stop scanning"),"BLE");
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Stop scanning"),"BLE");
 }
 
 void ESP32StopScanTask() {
-  ESP32BLEScan->stop();  
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: Pausing scanner task"),"BLE");
+  ESP32BLEScan->stop();
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: Pausing scanner task"),"BLE");
 }
 
 void ESP32ResumeScanTask() {
   ESP32BLE.mode.runningScan = 1;
   ESP32BLEScan->start(0, ESP32scanEndedCB, false);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: Resumed scanner task"),"BLE");
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: Resumed scanner task"),"BLE");
 }
 
 #endif
@@ -325,12 +325,12 @@ void esp32_every_second(void) {
 
   if (TasmotaGlobal.ota_state_flag) {
     if (ESP32BLE.mode.runningScan) {
-      AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: Upgrade procedure started"),"BLE");
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Upgrade procedure started"),"BLE");
       ESP32StopScanTask();
     }
   } else {
     if (!ESP32BLE.mode.runningScan) {
-      AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: Resuming scan"),"BLE");
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Resuming scan"),"BLE");
       ESP32ResumeScanTask();
     }
   }
@@ -390,7 +390,7 @@ void hm17_sendcmd(uint8_t cmd) {
   hm17_sbclr();
   hm17_cmd=cmd;
 #ifdef IBEACON_DEBUG
-  if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("hm17cmd %d"),cmd);
+  if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("hm17cmd %d"),cmd);
 #endif
   switch (cmd) {
     case HM17_TEST:
@@ -454,8 +454,8 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
             if (ibeacons[cnt].REPTIME >= IB_UPDATE_TIME) {
               ibeacons[cnt].REPTIME = 0;
               return 2;
-            }            
-#endif          
+            }
+#endif
             return 1;
           }
         } else {
@@ -467,8 +467,8 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
             if (ibeacons[cnt].REPTIME >= IB_UPDATE_TIME) {
               ibeacons[cnt].REPTIME = 0;
               return 2;
-            }            
-#endif          
+            }
+#endif
             return 1;
           }
         }
@@ -486,7 +486,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
 #ifdef USE_IBEACON_ESP32
         memcpy(ibeacons[cnt].NAME,ib->NAME,16);
         ibeacons[cnt].REPTIME = 0;
-#endif          
+#endif
         return 1;
       }
     }
@@ -502,7 +502,7 @@ void hm17_decode(void) {
     case HM17_TEST:
       if (!strncmp(hm17_sbuffer,"OK",2)) {
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("AT OK"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("AT OK"));
 #endif
         hm17_sbclr();
         hm17_result=HM17_SUCESS;
@@ -512,7 +512,7 @@ void hm17_decode(void) {
     case HM17_ROLE:
       if (!strncmp(hm17_sbuffer,"OK+Set:1",8)) {
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("ROLE OK"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("ROLE OK"));
 #endif
         hm17_sbclr();
         hm17_result=HM17_SUCESS;
@@ -521,7 +521,7 @@ void hm17_decode(void) {
     case HM17_IMME:
       if (!strncmp(hm17_sbuffer,"OK+Set:1",8)) {
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("IMME OK"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("IMME OK"));
 #endif
         hm17_sbclr();
         hm17_result=HM17_SUCESS;
@@ -530,7 +530,7 @@ void hm17_decode(void) {
     case HM17_IBEA:
       if (!strncmp(hm17_sbuffer,"OK+Set:1",8)) {
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("IBEA OK"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("IBEA OK"));
 #endif
         hm17_sbclr();
         hm17_result=HM17_SUCESS;
@@ -539,7 +539,7 @@ void hm17_decode(void) {
     case HM17_SCAN:
         if (!strncmp(hm17_sbuffer,"OK+Set:5",8)) {
 #ifdef IBEACON_DEBUG
-          if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("SCAN OK"));
+          if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("SCAN OK"));
 #endif
           hm17_sbclr();
           hm17_result=HM17_SUCESS;
@@ -548,7 +548,7 @@ void hm17_decode(void) {
     case HM17_RESET:
       if (!strncmp(hm17_sbuffer,"OK+RESET",8)) {
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("RESET OK"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("RESET OK"));
 #endif
         hm17_sbclr();
         hm17_result=HM17_SUCESS;
@@ -557,7 +557,7 @@ void hm17_decode(void) {
     case HM17_RENEW:
       if (!strncmp(hm17_sbuffer,"OK+RENEW",8)) {
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("RENEW OK"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("RENEW OK"));
 #endif
         hm17_sbclr();
         hm17_result=HM17_SUCESS;
@@ -567,7 +567,7 @@ void hm17_decode(void) {
       if (!strncmp(hm17_sbuffer,"OK+CONNA",8)) {
         hm17_sbclr();
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("CONNA OK"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("CONNA OK"));
 #endif
         hm17_connecting=2;
         break;
@@ -575,21 +575,21 @@ void hm17_decode(void) {
       if (!strncmp(hm17_sbuffer,"OK+CONNE",8)) {
         hm17_sbclr();
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("CONNE ERROR"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("CONNE ERROR"));
 #endif
         break;
       }
       if (!strncmp(hm17_sbuffer,"OK+CONNF",8)) {
         hm17_sbclr();
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("CONNF ERROR"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("CONNF ERROR"));
 #endif
         break;
       }
       if (hm17_connecting==2 && !strncmp(hm17_sbuffer,"OK+CONN",7)) {
         hm17_sbclr();
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("CONN OK"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("CONN OK"));
 #endif
         hm17_connecting=3;
         hm17_sendcmd(HM17_TEST);
@@ -604,7 +604,7 @@ void hm17_decode(void) {
         hm17_sbclr();
         hm17_result=1;
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("DISCS OK"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("DISCS OK"));
 #endif
         break;
       }
@@ -612,7 +612,7 @@ void hm17_decode(void) {
         hm17_sbclr();
         hm17_result=1;
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("DISIS OK"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("DISIS OK"));
 #endif
         break;
       }
@@ -620,7 +620,7 @@ void hm17_decode(void) {
         hm17_sbclr();
         hm17_result=HM17_SUCESS;
 #ifdef IBEACON_DEBUG
-        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("DISCE OK"));
+        if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR("DISCE OK"));
 #endif
         hm17_scanning=0;
         break;
@@ -630,8 +630,8 @@ void hm17_decode(void) {
           hm17_result=HM17_SUCESS;
 #ifdef IBEACON_DEBUG
           if (hm17_debug) {
-            AddLog_P2(LOG_LEVEL_INFO, PSTR("NAME OK"));
-            AddLog_P2(LOG_LEVEL_INFO, PSTR(">>%s"),&hm17_sbuffer[8]);
+            AddLog_P(LOG_LEVEL_INFO, PSTR("NAME OK"));
+            AddLog_P(LOG_LEVEL_INFO, PSTR(">>%s"),&hm17_sbuffer[8]);
           }
 #endif
           hm17_sbclr();
@@ -648,8 +648,8 @@ void hm17_decode(void) {
             hm17_result=HM17_SUCESS;
 #ifdef IBEACON_DEBUG
             if (hm17_debug) {
-              AddLog_P2(LOG_LEVEL_INFO, PSTR("DIS0 OK"));
-              AddLog_P2(LOG_LEVEL_INFO, PSTR(">>%s"),&hm17_sbuffer[8]);
+              AddLog_P(LOG_LEVEL_INFO, PSTR("DIS0 OK"));
+              AddLog_P(LOG_LEVEL_INFO, PSTR(">>%s"),&hm17_sbuffer[8]);
             }
 #endif
             hm17_sbclr();
@@ -663,9 +663,9 @@ hm17_v110:
           if (hm17_sindex==78) {
 #ifdef IBEACON_DEBUG
             if (hm17_debug) {
-              AddLog_P2(LOG_LEVEL_INFO, PSTR("DISC: OK"));
+              AddLog_P(LOG_LEVEL_INFO, PSTR("DISC: OK"));
               //OK+DISC:4C 000C0E:003 A9144081A8 3B16849611 862EC1005: 0B1CE7485D :4DB4E940F C0E:-078
-              AddLog_P2(LOG_LEVEL_INFO, PSTR(">>%s"),&hm17_sbuffer[8]);
+              AddLog_P(LOG_LEVEL_INFO, PSTR(">>%s"),&hm17_sbuffer[8]);
             }
 #endif
             memcpy(ib.FACID,&hm17_sbuffer[8],8);
@@ -684,7 +684,7 @@ hm17_v110:
           }
         } else {
 #ifdef IBEACON_DEBUG
-          if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR(">->%s"),&hm17_sbuffer[8]);
+          if (hm17_debug) AddLog_P(LOG_LEVEL_INFO, PSTR(">->%s"),&hm17_sbuffer[8]);
 #endif
         }
         break;
@@ -721,7 +721,7 @@ uint32_t difftime=millis()-hm17_lastms;
 
   if (hm17_cmd==99) {
    if (hm17_sindex>=HM17_BSIZ-2 || (hm17_sindex && (difftime>100))) {
-     AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),hm17_sbuffer);
+     AddLog_P(LOG_LEVEL_INFO, PSTR("%s"),hm17_sbuffer);
      hm17_sbclr();
    }
   }
@@ -816,7 +816,7 @@ bool xsns52_cmd(void) {
       } else if (*cp=='c') {
         for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) ibeacons[cnt].FLAGS=0;
         Response_P(S_JSON_IBEACON1, XSNS_52,"clr list","");
-      } 
+      }
 #ifndef USE_IBEACON_ESP32
       else if (*cp>='0' && *cp<='8') {
         hm17_sendcmd(*cp&7);

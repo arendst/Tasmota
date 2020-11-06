@@ -174,11 +174,11 @@ void CpuLoadLoop(void)
 #if defined(F_CPU) && (F_CPU == 160000000L)
       int CPU_load = 100 - ( (CPU_loops*(1 + 30*TasmotaGlobal.sleep)) / (CPU_load_check *800) );
       CPU_loops = CPU_loops / CPU_load_check;
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(160MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(160MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
 #else
       int CPU_load = 100 - ( (CPU_loops*(1 + 30*TasmotaGlobal.sleep)) / (CPU_load_check *400) );
       CPU_loops = CPU_loops / CPU_load_check;
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(80MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(80MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
 #endif
       CPU_last_millis = CPU_last_loop_time;
       CPU_loops = 0;
@@ -202,7 +202,7 @@ void DebugFreeMem(void)
 {
   register uint32_t *sp asm("a1");
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), 4 * (sp - g_pcont->stack), XdrvMailbox.data);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), 4 * (sp - g_pcont->stack), XdrvMailbox.data);
 }
 
 #else  // ESP32
@@ -211,7 +211,7 @@ void DebugFreeMem(void)
 {
   register uint8_t *sp asm("a1");
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), sp - pxTaskGetStackStart(NULL), XdrvMailbox.data);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), sp - pxTaskGetStackStart(NULL), XdrvMailbox.data);
 }
 
 #endif  // ESP8266 - ESP32
@@ -245,7 +245,7 @@ void DebugRtcDump(char* parms)
   uint16_t srow = strtol(parms, &p, 16) / CFG_COLS;
   uint16_t mrow = strtol(p, &p, 10);
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
 
   if (0 == mrow) {  // Default only 8 lines
     mrow = 8;
@@ -297,7 +297,7 @@ void DebugCfgDump(char* parms)
   uint16_t srow = strtol(parms, &p, 16) / CFG_COLS;
   uint16_t mrow = strtol(p, &p, 10);
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
 
   if (0 == mrow) {  // Default only 8 lines
     mrow = 8;
@@ -374,7 +374,7 @@ void DebugCfgPoke(char* parms)
 
   uint32_t ndata32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + (buffer[address +1] << 8) + buffer[address];
 
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: 0x%0LX (%lu) poked to 0x%0LX (%lu)"), address, data32, data32, ndata32, ndata32);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("%03X: 0x%0LX (%lu) poked to 0x%0LX (%lu)"), address, data32, data32, ndata32, ndata32);
 }
 
 void SetFlashMode(uint8_t mode)
@@ -404,7 +404,7 @@ void SetFlashMode(uint8_t mode)
 
 void CmndHelp(void)
 {
-  AddLog_P(LOG_LEVEL_INFO, PSTR("HLP: "), kDebugCommands);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("HLP: %s"), kDebugCommands);
   ResponseCmndDone();
 }
 
@@ -539,7 +539,7 @@ void CmndFlashDump(void)
 
   for (uint32_t pos = start; pos < end; pos += bytes_per_cols) {
     uint32_t* values = (uint32_t*)(pos);
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("%06X:  %08X %08X %08X %08X  %08X %08X %08X %08X"), pos - flash_start,
+    AddLog_P(LOG_LEVEL_INFO, PSTR("%06X:  %08X %08X %08X %08X  %08X %08X %08X %08X"), pos - flash_start,
       DebugSwap32(values[0]), DebugSwap32(values[1]), DebugSwap32(values[2]), DebugSwap32(values[3]),
       DebugSwap32(values[4]), DebugSwap32(values[5]), DebugSwap32(values[6]), DebugSwap32(values[7]));
   }
@@ -571,7 +571,7 @@ void CmndI2cWrite(void)
         Wire.write(buffer[i]);
       }
       int result = Wire.endTransmission();
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("I2C: Result %d"), result);
+      AddLog_P(LOG_LEVEL_INFO, PSTR("I2C: Result %d"), result);
     }
   }
   ResponseCmndDone();

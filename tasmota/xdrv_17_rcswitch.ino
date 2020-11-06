@@ -55,7 +55,7 @@ void RfReceiveCheck(void)
     int protocol = mySwitch.getReceivedProtocol();
     int delay = mySwitch.getReceivedDelay();
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RFR: Data 0x%lX (%u), Bits %d, Protocol %d, Delay %d"), data, data, bits, protocol, delay);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RFR: Data 0x%lX (%u), Bits %d, Protocol %d, Delay %d"), data, data, bits, protocol, delay);
 
     uint32_t now = millis();
     if ((now - rf_lasttime > RF_TIME_AVOID_DUPLICATE) && (data > 0)) {

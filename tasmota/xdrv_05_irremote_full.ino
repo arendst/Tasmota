@@ -238,7 +238,7 @@ String sendIRJsonState(const struct decode_results &results) {
   json += results.bits;
 
   if (hasACState(results.decode_type)) {
-    json += ",\"" D_JSON_IR_DATA "\":\"0x";
+    json += ",\"" D_JSON_IR_DATA "\":\"";
     json += resultToHexidecimal(&results);
     json += "\"";
   } else {
@@ -394,7 +394,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
 {
   stdAc::state_t state;
 
-  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received %s"), XdrvMailbox.data);
+  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received %s"), XdrvMailbox.data);
   JsonParser parser(XdrvMailbox.data);
   JsonParserObject root = parser.getRootObject();
   if (!root) { return IE_INVALID_JSON; }
@@ -441,7 +441,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   if (val = root[PSTR(D_JSON_IRHVAC_SWINGV)]) { state.swingv = IRac::strToSwingV(val.getStr()); }
   if (val = root[PSTR(D_JSON_IRHVAC_SWINGH)]) { state.swingh = IRac::strToSwingH(val.getStr()); }
   state.degrees = root.getFloat(PSTR(D_JSON_IRHVAC_TEMP), state.degrees);
-  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("model %d, mode %d, fanspeed %d, swingv %d, swingh %d"),
+  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("model %d, mode %d, fanspeed %d, swingv %d, swingh %d"),
   //             state.model, state.mode, state.fanspeed, state.swingv, state.swingh);
 
   // if and how we should handle the state for IRremote
@@ -525,7 +525,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
 
   char dvalue[32];
   char hvalue[32];
-  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
+  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
   //   protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat);
 
   irsend_active = true;     // deactivate receive
@@ -609,7 +609,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
     }
     irsend_active = true;
     for (uint32_t r = 0; r <= repeat; r++) {
-      // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("sendRaw count=%d, space=%d, mark=%d, freq=%d"), count, space, mark, freq);
+      // AddLog_P(LOG_LEVEL_DEBUG, PSTR("sendRaw count=%d, space=%d, mark=%d, freq=%d"), count, space, mark, freq);
       irsend->sendRaw(raw_array, i, freq);
       if (r < repeat) {         // if it's not the last message
         irsend->space(40000);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
@@ -635,7 +635,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
     raw_array[i++] = parm[2];                     // Trailing mark
     irsend_active = true;
     for (uint32_t r = 0; r <= repeat; r++) {
-      // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("sendRaw %d %d %d %d %d %d"), raw_array[0], raw_array[1], raw_array[2], raw_array[3], raw_array[4], raw_array[5]);
+      // AddLog_P(LOG_LEVEL_DEBUG, PSTR("sendRaw %d %d %d %d %d %d"), raw_array[0], raw_array[1], raw_array[2], raw_array[3], raw_array[4], raw_array[5]);
       irsend->sendRaw(raw_array, i, freq);
       if (r < repeat) {         // if it's not the last message
         irsend->space(inter_message);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
@@ -688,8 +688,7 @@ uint32_t IrRemoteParseRawCompact(char * str, uint16_t * arr, size_t arr_len) {
 //   count: number of commas in parameters, i.e. it contains count+1 values
 //   repeat: number of repeats (0 means no repeat)
 //
-uint32_t IrRemoteSendRawStandard(char ** pp, uint32_t count, uint32_t repeat) {
-  uint16_t freq = parsqeFreq(*pp);
+uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint32_t repeat) {
   // IRsend 0,896,876,900,888,894,876,1790,874,872,1810,1736,948,872,880,872,936,872,1792,900,888,1734
   // IRsend 0,+8570-4240+550-1580C-510+565-1565F-505Fh+570gFhIdChIgFeFgFgIhFgIhF-525C-1560IhIkI-520ChFhFhFgFhIkIhIgIgIkIkI-25270A-4225IkIhIgIhIhIkFhIkFjCgIhIkIkI-500IkIhIhIkFhIgIl+545hIhIoIgIhIkFhFgIkIgFgI
 
@@ -701,13 +700,13 @@ uint32_t IrRemoteSendRawStandard(char ** pp, uint32_t count, uint32_t repeat) {
   } else {
     count++;
   }
-  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_1 = %d"), count);
+  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_1 = %d"), count);
   arr = (uint16_t*) malloc(count * sizeof(uint16_t));
   if (nullptr == arr) { return IE_MEMORY; }
 
   count = IrRemoteParseRawCompact(*pp, arr, count);
-  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_2 = %d"), count);
-  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
+  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_2 = %d"), count);
+  // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
   if (0 == count) { return IE_INVALID_RAWDATA; }
 
   irsend_active = true;
@@ -719,36 +718,6 @@ uint32_t IrRemoteSendRawStandard(char ** pp, uint32_t count, uint32_t repeat) {
     free(arr);
   }
   return IE_NO_ERROR;
-
-
-
-  count++;
-  if (count < 200) {
-    uint16_t raw_array[count];  // It's safe to use stack for up to 200 packets (limited by mqtt_data length)
-    for (uint32_t i = 0; i < count; i++) {
-      raw_array[i] = strtol(strtok_r(nullptr, ", ", pp), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
-    }
-
-    irsend_active = true;
-    for (uint32_t r = 0; r <= repeat; r++) {
-      irsend->sendRaw(raw_array, count, freq);
-    }
-  } else {
-    uint16_t *raw_array = reinterpret_cast<uint16_t*>(malloc(count * sizeof(uint16_t)));
-    if (raw_array == nullptr) {
-      return IE_INVALID_RAWDATA;
-    }
-
-    for (uint32_t i = 0; i < count; i++) {
-      raw_array[i] = strtol(strtok_r(nullptr, ", ", pp), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
-    }
-
-    irsend_active = true;
-    for (uint32_t r = 0; r <= repeat; r++) {
-      irsend->sendRaw(raw_array, count, freq);
-    }
-    free(raw_array);
-  }
 }
 
 // parse the frequency value
@@ -796,7 +765,7 @@ uint32_t IrRemoteCmndIrSendRaw(void)
     // standard raw
     // IRsend <freq>,<rawdata>,<rawdata> ...
     // IRsend <freq>,<compact_rawdata>
-    return IrRemoteSendRawStandard(&p, count, repeat);
+    return IrRemoteSendRawStandard(&p, parsqeFreq(str), count, repeat);
   }
 }
 

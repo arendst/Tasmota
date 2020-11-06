@@ -251,7 +251,7 @@ bool VersionCompatible(void)
 
   if (!found) { version[1] = 0; }
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("OTA: Version 0x%08X, Compatible 0x%08X"), version[1], VERSION_COMPATIBLE);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("OTA: Version 0x%08X, Compatible 0x%08X"), version[1], VERSION_COMPATIBLE);
 
   if (version[1] < VERSION_COMPATIBLE) {
     uint32_t eboot_magic = 0;  // Abandon OTA result
@@ -356,7 +356,7 @@ void UpdateQuickPowerCycle(bool update) {
     } else {
       qpc_buffer[0] = 0;
       ESP.flashWrite(qpc_location + (counter * 4), (uint32*)&qpc_buffer, 4);
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("QPC: Count %d"), counter);
+      AddLog_P(LOG_LEVEL_INFO, PSTR("QPC: Count %d"), counter);
     }
   }
   else if ((qpc_buffer[0] != QPC_SIGNATURE) || (0 == qpc_buffer[1])) {
@@ -364,7 +364,7 @@ void UpdateQuickPowerCycle(bool update) {
     // Assume flash is default all ones and setting a bit to zero does not need an erase
     if (ESP.flashEraseSector(qpc_sector)) {
       ESP.flashWrite(qpc_location, (uint32*)&qpc_buffer, 4);
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
+      AddLog_P(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
     }
   }
 #else // ESP32
@@ -380,13 +380,13 @@ void UpdateQuickPowerCycle(bool update) {
     } else {
       pc_register = 0xFFA55AF0 | counter;
       QPCWrite(&pc_register, sizeof(pc_register));
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("QPC: Count %d"), counter);
+      AddLog_P(LOG_LEVEL_INFO, PSTR("QPC: Count %d"), counter);
     }
   }
   else if (pc_register != QPC_SIGNATURE) {
     pc_register = QPC_SIGNATURE;
     QPCWrite(&pc_register, sizeof(pc_register));
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
   }
 #endif  // ESP8266 or ESP32
 
@@ -447,12 +447,12 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
   uint32_t current_len = end_pos - start_pos;
   int diff = replace_len - current_len;
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TST: start %d, end %d, len %d, current %d, replace %d, diff %d"),
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TST: start %d, end %d, len %d, current %d, replace %d, diff %d"),
 //    start_pos, end_pos, char_len, current_len, replace_len, diff);
 
   int too_long = (char_len + diff) - settings_text_size;
   if (too_long > 0) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Text overflow by %d char(s)"), too_long);
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Text overflow by %d char(s)"), too_long);
     return false;  // Replace text too long
   }
 
@@ -474,9 +474,9 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
   }
 
 #ifdef DEBUG_FUNC_SETTINGSUPDATETEXT
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id %02d = \"%s\""), GetSettingsTextLen(), settings_text_size, settings_text_busy_count, index_save, replace);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id %02d = \"%s\""), GetSettingsTextLen(), settings_text_size, settings_text_busy_count, index_save, replace);
 #else
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count);
 #endif
 
   return true;
@@ -561,10 +561,10 @@ void SettingsSave(uint8_t rotate)
         delay(1);
       }
     }
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(Settings));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(Settings));
 #else  // ESP32
     SettingsWrite(&Settings, sizeof(Settings));
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "Saved, " D_COUNT " %d, " D_BYTES " %d"), Settings.save_flag, sizeof(Settings));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "Saved, " D_COUNT " %d, " D_BYTES " %d"), Settings.save_flag, sizeof(Settings));
 #endif  // ESP8266
 
     settings_crc32 = Settings.cfg_crc32;
@@ -596,11 +596,11 @@ void SettingsLoad(void) {
   }
   if (settings_location > 0) {
     ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
-    AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
+    AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
   }
 #else  // ESP32
   SettingsRead(&Settings, sizeof(Settings));
-  AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded, " D_COUNT " %lu"), Settings.save_flag);
+  AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded, " D_COUNT " %lu"), Settings.save_flag);
 #endif  // ESP8266 - ESP32
 
 #ifndef FIRMWARE_MINIMAL
@@ -681,7 +681,7 @@ void SettingsErase(uint8_t type)
     return;
   }
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " from 0x%08X to 0x%08X"), _sectorStart * SPI_FLASH_SEC_SIZE, (_sectorEnd * SPI_FLASH_SEC_SIZE) -1);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " from 0x%08X to 0x%08X"), _sectorStart * SPI_FLASH_SEC_SIZE, (_sectorEnd * SPI_FLASH_SEC_SIZE) -1);
 
 //  EspErase(_sectorStart, _sectorEnd);                                     // Arduino core and SDK - erases flash as seen by SDK
   EsptoolErase(_sectorStart, _sectorEnd);                                 // Esptool - erases flash completely

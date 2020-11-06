@@ -812,7 +812,7 @@ void PerformEverySecond(void)
     if (!(DeepSleepEnabled() && !Settings.flag3.bootcount_update)) {
 #endif
       Settings.bootcount++;              // Moved to here to stop flash writes during start-up
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
 #ifdef USE_DEEPSLEEP
     }
 #endif
@@ -875,6 +875,8 @@ void PerformEverySecond(void)
 
   // Wifi keep alive to send Gratuitous ARP
   wifiKeepAlive();
+
+  WifiPollNtp();
 
 #ifdef ESP32
   if (11 == TasmotaGlobal.uptime) {  // Perform one-time ESP32 houskeeping
@@ -1033,7 +1035,7 @@ void Every250mSeconds(void)
             char *ech = strchr(bch, '.');                              // Find file type in filename (none, .ino.bin, .ino.bin.gz, .bin, .bin.gz or .gz)
             if (ech == nullptr) { ech = TasmotaGlobal.mqtt_data + strlen(TasmotaGlobal.mqtt_data); }  // Point to '/0' at end of mqtt_data becoming an empty string
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("OTA: File type [%s]"), ech);
+//AddLog_P(LOG_LEVEL_DEBUG, PSTR("OTA: File type [%s]"), ech);
 
             char ota_url_type[strlen(ech) +1];
             strncpy(ota_url_type, ech, sizeof(ota_url_type));          // Either empty, .ino.bin, .ino.bin.gz, .bin, .bin.gz or .gz
@@ -1044,7 +1046,7 @@ void Every250mSeconds(void)
             snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), TasmotaGlobal.mqtt_data, ota_url_type);  // Minimal filename must be filename-minimal
           }
 #endif  // FIRMWARE_MINIMAL
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s"), TasmotaGlobal.mqtt_data);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s"), TasmotaGlobal.mqtt_data);
           WiFiClient OTAclient;
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, TasmotaGlobal.mqtt_data));
           if (!ota_result) {
@@ -1167,7 +1169,7 @@ void Every250mSeconds(void)
       }
       TasmotaGlobal.restart_flag--;
       if (TasmotaGlobal.restart_flag <= 0) {
-        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "%s"), (TasmotaGlobal.restart_halt) ? "Halted" : D_RESTARTING);
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "%s"), (TasmotaGlobal.restart_halt) ? "Halted" : D_RESTARTING);
         EspRestart();
       }
     }
@@ -1277,7 +1279,7 @@ void ArduinoOTAInit(void)
     if (Settings.flag.mqtt_enabled) {
       MqttDisconnect();      // SetOption3  - Enable MQTT
     }
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_UPLOAD_STARTED));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_UPLOAD_STARTED));
     arduino_ota_triggered = true;
     arduino_ota_progress_dot_count = 0;
     delay(100);              // Allow time for message xfer
@@ -1308,19 +1310,19 @@ void ArduinoOTAInit(void)
       default:
         snprintf_P(error_str, sizeof(error_str), PSTR(D_UPLOAD_ERROR_CODE " %d"), error);
     }
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA  %s. " D_RESTARTING), error_str);
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA  %s. " D_RESTARTING), error_str);
     EspRestart();
   });
 
   ArduinoOTA.onEnd([]()
   {
     if ((LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level)) { Serial.println(); }
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_SUCCESSFUL ". " D_RESTARTING));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_SUCCESSFUL ". " D_RESTARTING));
     EspRestart();
 	});
 
   ArduinoOTA.begin();
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_ENABLED " " D_PORT " 8266"));
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_ENABLED " " D_PORT " 8266"));
 }
 
 void ArduinoOtaLoop(void)
@@ -1428,9 +1430,9 @@ void SerialInput(void)
       TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;                // Serial data completed
       TasmotaGlobal.seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings.seriallog_level;
       if (serial_buffer_overrun) {
-        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Serial buffer overrun"));
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Serial buffer overrun"));
       } else {
-        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), TasmotaGlobal.serial_in_buffer);
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), TasmotaGlobal.serial_in_buffer);
         ExecuteCommand(TasmotaGlobal.serial_in_buffer, SRC_SERIAL);
       }
       TasmotaGlobal.serial_in_byte_counter = 0;
@@ -1503,7 +1505,7 @@ void GpioInit(void)
     SetSerialBegin();
   }
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
 
 #ifdef ESP8266
   ConvertGpios();
@@ -1604,7 +1606,7 @@ void GpioInit(void)
     SetPin(13, GPIO_SPI_MOSI);
     TasmotaGlobal.my_module.io[14] = GPIO_SPI_CLK;
     SetPin(14, GPIO_SPI_CLK);
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK)"));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK)"));
   }
 #endif  // USE_SPI
 #else // ESP32
@@ -1645,15 +1647,15 @@ void GpioInit(void)
     TasmotaGlobal.spi_enabled = (PinUsed(GPIO_SPI_CLK) && (PinUsed(GPIO_SPI_MOSI) || PinUsed(GPIO_SPI_MISO)));
     if (TasmotaGlobal.spi_enabled) {
       if (PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_MISO)) {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MISO), GPIO%02d(MOSI) and GPIO%02d(CLK)"),
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MISO), GPIO%02d(MOSI) and GPIO%02d(CLK)"),
           Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
       }
       else if (PinUsed(GPIO_SPI_MOSI)) {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MOSI) and GPIO%02d(CLK)"),
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MOSI) and GPIO%02d(CLK)"),
           Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK));
       }
       else if (PinUsed(GPIO_SPI_MISO)) {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MISO) and GPIO%02d(CLK)"),
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO%02d(MISO) and GPIO%02d(CLK)"),
           Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_CLK));
       }
     }
@@ -1664,7 +1666,7 @@ void GpioInit(void)
 
   for (uint32_t i = 0; i < ARRAY_SIZE(TasmotaGlobal.my_module.io); i++) {
     uint32_t mpin = ValidPin(i, TasmotaGlobal.my_module.io[i]);
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
+//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
     if (AGPIO(GPIO_OUTPUT_HI) == mpin) {
       pinMode(i, OUTPUT);
       digitalWrite(i, 1);

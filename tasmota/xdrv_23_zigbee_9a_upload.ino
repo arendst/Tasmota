@@ -251,7 +251,7 @@ bool ZigbeeUploadBootloaderPrompt(void) {
   if (buf_len) {
     char hex_char[256];
     ToHex_P(serial_buffer, buf_len, hex_char, 256);
-    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("XMD: Rcvd %s"), hex_char);
+    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("XMD: Rcvd %s"), hex_char);
   }
 
   return ((4 == ZbUpload.byte_counter) && (millis() > XModem.flush_delay));
@@ -264,7 +264,7 @@ bool ZigbeeUploadXmodem(void) {
     }
 #ifdef ZIGBEE_BOOTLOADER_SOFTWARE_RESET_FIRST
     case ZBU_INIT: {                     // *** Init ESF32 bootloader
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Init bootloader"));
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: Init bootloader"));
       ZbUpload.ota_step = ZBU_SOFTWARE_RESET;
       return false;  // Keep Zigbee serial active
     }
@@ -279,7 +279,7 @@ bool ZigbeeUploadXmodem(void) {
     }
     case ZBU_SOFTWARE_SEND: {
       if (millis() > XModem.timeout) {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader software reset send timeout"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader software reset send timeout"));
         ZbUpload.ota_step = ZBU_HARDWARE_RESET;
         return true;
       }
@@ -304,17 +304,17 @@ bool ZigbeeUploadXmodem(void) {
     case ZBU_PROMPT: {                   // *** Wait for prompt and select option upload ebl
       if (millis() > XModem.timeout) {
         if (ZBU_SOFTWARE_RESET == ZbUpload.bootloader) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader software reset timeout"));
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader software reset timeout"));
           ZbUpload.ota_step = ZBU_HARDWARE_RESET;
         } else {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader hardware reset timeout"));
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader hardware reset timeout"));
           ZbUpload.ota_step = ZBU_ERROR;
         }
         return true;
       }
 #else  // No ZIGBEE_BOOTLOADER_SOFTWARE_RESET_FIRST
     case ZBU_INIT: {                     // *** Init ESF32 bootloader
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Init bootloader"));
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: Init bootloader"));
       ZigbeeUploadSetBootloader(0);      // Reboot MCU EFR32 which returns below text
       XModem.timeout = millis() + (30 * 1000);  // Allow 30 seconds to receive EBL prompt
       XModem.delay = millis() + (2 * XMODEM_FLUSH_DELAY);
@@ -324,7 +324,7 @@ bool ZigbeeUploadXmodem(void) {
     }
     case ZBU_PROMPT: {                   // *** Wait for prompt and select option upload ebl
       if (millis() > XModem.timeout) {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader timeout"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader timeout"));
         ZbUpload.ota_step = ZBU_ERROR;
         return true;
       }
@@ -344,7 +344,7 @@ bool ZigbeeUploadXmodem(void) {
         // 3. ebl info
         // BL >
         if (ZigbeeUploadBootloaderPrompt()) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Init sync"));
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: Init sync"));
           ZigbeeSerial->flush();
           ZigbeeSerial->write('1');      // upload ebl
           if (TasmotaGlobal.sleep > 0) {
@@ -358,7 +358,7 @@ bool ZigbeeUploadXmodem(void) {
     }
     case ZBU_SYNC: {                     // *** Handle file upload using XModem - sync
       if (millis() > XModem.timeout) {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: SYNC timeout"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: SYNC timeout"));
         ZbUpload.ota_step = ZBU_ERROR;
         return true;
       }
@@ -371,7 +371,7 @@ bool ZigbeeUploadXmodem(void) {
           XModem.packetNo = 1;
           ZbUpload.byte_counter = 0;
           ZbUpload.ota_step = ZBU_UPLOAD;
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Init packet send"));
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: Init packet send"));
         }
       }
       break;
@@ -379,7 +379,7 @@ bool ZigbeeUploadXmodem(void) {
     case ZBU_UPLOAD: {                   // *** Handle file upload using XModem - upload
       if (ZigbeeUploadAvailable()) {
         if (!XModemSendPacket(XModem.packetNo)) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Packet send failed"));
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: Packet send failed"));
           ZbUpload.ota_step = ZBU_ERROR;
           return true;
         }
@@ -401,14 +401,14 @@ bool ZigbeeUploadXmodem(void) {
       // its XModem state machine waits a sufficient amount of time to allow this checksum process
       // to occur without timing out on the response just before the EOT is sent.
       if (millis() > XModem.timeout) {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: EOT ACK timeout"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: EOT ACK timeout"));
         ZbUpload.ota_step = ZBU_ERROR;
         return true;
       }
       if (ZigbeeSerial->available()) {
         char xmodem_ack = XModemWaitACK();
         if (XM_ACK == xmodem_ack) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: " D_SUCCESSFUL));
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: " D_SUCCESSFUL));
           XModem.timeout = millis() + (30 * 1000);  // Allow 30 seconds to receive EBL prompt
           ZbUpload.byte_counter = 0;
           ZbUpload.ota_step = ZBU_COMPLETE;
@@ -418,7 +418,7 @@ bool ZigbeeUploadXmodem(void) {
     }
     case ZBU_COMPLETE: {                 // *** Wait for Serial upload complete EBL prompt
       if (millis() > XModem.timeout) {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader timeout"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: Bootloader timeout"));
         ZbUpload.ota_step = ZBU_ERROR;
         return true;
       } else {
@@ -440,7 +440,7 @@ bool ZigbeeUploadXmodem(void) {
     case ZBU_ERROR:
       ZbUpload.state = ZBU_ERROR;
     case ZBU_DONE: {                     // *** Clean up and restart to disable bootloader and use new firmware
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("XMD: " D_RESTARTING));
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("XMD: " D_RESTARTING));
       ZigbeeUploadSetBootloader(1);      // Disable bootloader and reset MCU - should happen at restart
       if (1 == TasmotaGlobal.sleep) {
         TasmotaGlobal.sleep = Settings.sleep;         // Restore loop sleep
@@ -539,9 +539,9 @@ void HandleZigbeeXfer(void) {
     return;
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_UPLOAD_TRANSFER));
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_TRANSFER));
 
-  WSContentStart_P(S_INFORMATION);
+  WSContentStart_P(PSTR(D_INFORMATION));
   WSContentSend_P(HTTP_SCRIPT_XFER_STATE);
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD_TRANSFER " ...</b></div>"));

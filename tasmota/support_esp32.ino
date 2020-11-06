@@ -126,7 +126,7 @@ void SettingsErase(uint8_t type) {
 
   NvmErase("main");
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " t=%d"), type);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " t=%d"), type);
 }
 
 void SettingsRead(void *data, size_t size) {
@@ -155,29 +155,6 @@ void ZigbeeRead(void *pSettings, unsigned nSettingsLen) {
 
 void ZigbeeWrite(const void *pSettings, unsigned nSettingsLen) {
   NvmSave("zb", "zigbee", pSettings, nSettingsLen);
-}
-
-//
-// sntp emulation
-//
-static bool bNetIsTimeSync = false;
-//
-void SntpInit() {
-  bNetIsTimeSync = true;
-}
-
-uint32_t SntpGetCurrentTimestamp(void) {
-  time_t now = 0;
-  if (bNetIsTimeSync || TasmotaGlobal.ntp_force_sync)
-  {
-    //Serial_DebugX(("timesync configTime %d\n", TasmotaGlobal.ntp_force_sync, bNetIsTimeSync));
-    // init to UTC Time
-    configTime(0, 0, SettingsText(SET_NTPSERVER1), SettingsText(SET_NTPSERVER2), SettingsText(SET_NTPSERVER3));
-    bNetIsTimeSync = false;
-    TasmotaGlobal.ntp_force_sync = false;
-  }
-  time(&now);
-  return now;
 }
 
 //

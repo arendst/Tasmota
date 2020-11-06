@@ -76,7 +76,7 @@ void PN532_Init(void)
         PN532_setPassiveActivationRetries(0xFF);
         PN532_SAMConfig();
         pn532_model = 1;
-        AddLog_P2(LOG_LEVEL_INFO,"NFC: PN532 NFC Reader detected (V%u.%u)",(ver>>16) & 0xFF, (ver>>8) & 0xFF);
+        AddLog_P(LOG_LEVEL_INFO,"NFC: PN532 NFC Reader detected (V%u.%u)",(ver>>16) & 0xFF, (ver>>8) & 0xFF);
       }
     }
   }
@@ -554,7 +554,7 @@ bool PN532_Command(void)
       memcpy(&pn532_newdata,&sub_string_tmp,pn532_newdata_len);
       pn532_newdata[pn532_newdata_len] = 0x00; // Null terminate the string
       pn532_function = 2;
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), pn532_newdata);
+      AddLog_P(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), pn532_newdata);
       ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"S\"}}"));
       return serviced;
     }

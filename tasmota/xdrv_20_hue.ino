@@ -103,8 +103,8 @@ void HueRespondToMSearch(void)
   } else {
     snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
-  // Do not use AddLog_P2 here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
-  PrepLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_HUE " %s " D_TO " %s:%d"),
+  // Do not use AddLog_P( here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
+  PrepLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_HUE " %s " D_TO " %s:%d"),
     message, udp_remote_ip.toString().c_str(), udp_remote_port);
 
   udp_response_mutex = false;
@@ -256,7 +256,7 @@ String GetHueUserId(void)
 
 void HandleUpnpSetupHue(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_HUE_BRIDGE_SETUP));
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_HUE_BRIDGE_SETUP));
   String description_xml = Decompress(HUE_DESCRIPTION_XML_COMPRESSED,HUE_DESCRIPTION_XML_SIZE);
   description_xml.replace("{x1", WiFi.localIP().toString());
   description_xml.replace("{x2", HueUuid());
@@ -266,7 +266,7 @@ void HandleUpnpSetupHue(void)
 
 void HueNotImplemented(String *path)
 {
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_API_NOT_IMPLEMENTED " (%s)"), path->c_str());
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_API_NOT_IMPLEMENTED " (%s)"), path->c_str());
 
   WSSend(200, CT_JSON, "{}");
 }
@@ -513,7 +513,7 @@ void HueAuthentication(String *path)
 
   snprintf_P(response, sizeof(response), PSTR("[{\"success\":{\"username\":\"%s\"}}]"), GetHueUserId().c_str());
   WSSend(200, CT_JSON, response);
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Authentication Result (%s)"), response);
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Authentication Result (%s)"), response);
 }
 
 // refactored to remove code duplicates
@@ -627,7 +627,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       LightStateClass::RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
       prev_hue = changeUIntScale(hue, 0, 360, 0, 65535);  // calculate back prev_hue
       prev_sat = (sat > 254 ? 254 : sat);
-      //AddLog_P2(LOG_LEVEL_DEBUG_MORE, "XY RGB (%d %d %d) HS (%d %d)", rr,gg,bb,hue,sat);
+      //AddLog_P(LOG_LEVEL_DEBUG_MORE, "XY RGB (%d %d %d) HS (%d %d)", rr,gg,bb,hue,sat);
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
                  PSTR("{\"success\":{\"/lights/%d/state/xy\":[%s,%s]}}"),
@@ -696,7 +696,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
     if (change) {
 #ifdef USE_SHUTTER
       if (ShutterState(device)) {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"), Settings.shutter_options[device-1] & 1);
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"), Settings.shutter_options[device-1] & 1);
         ShutterSetPosition(device, bri * 100.0f );
       } else
 #endif
@@ -779,7 +779,7 @@ void HueLights(String *path)
 
   }
   else if(path->indexOf(F("/lights/")) >= 0) {          // Got /lights/ID
-    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("/lights path=%s"), path->c_str());
+    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("/lights path=%s"), path->c_str());
     path->remove(0,8);                               // Remove /lights/
     device_id = atoi(path->c_str());
     device = DecodeLightId(device_id);
@@ -811,7 +811,7 @@ void HueLights(String *path)
     code = 406;
   }
   exit:
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_JSON, response);
 }
 
@@ -822,7 +822,7 @@ void HueGroups(String *path)
  */
   String response = "{}";
   uint8_t maxhue = (TasmotaGlobal.devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : TasmotaGlobal.devices_present;
-  //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups (%s)"), path->c_str());
+  //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups (%s)"), path->c_str());
 
   if (path->endsWith("/0")) {
     response = FPSTR(HUE_GROUP0_STATUS_JSON);
@@ -841,7 +841,7 @@ void HueGroups(String *path)
     response += F("}");
   }
 
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups Result (%s)"), path->c_str());
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups Result (%s)"), path->c_str());
   WSSend(200, CT_JSON, response);
 }
 
@@ -863,10 +863,10 @@ void HandleHueApi(String *path)
 
   path->remove(0, 4);                                // remove /api
   uint16_t apilen = path->length();
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_API " (%s) from %s"), path->c_str(), Webserver->client().remoteIP().toString().c_str());         // HTP: Hue API (//lights/1/state) from 192.168.1.20
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_API " (%s) from %s"), path->c_str(), Webserver->client().remoteIP().toString().c_str());         // HTP: Hue API (//lights/1/state) from 192.168.1.20
   for (args = 0; args < Webserver->args(); args++) {
     String json = Webserver->arg(args);
-    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_POST_ARGS " (%s)"), json.c_str());  // HTP: Hue POST args ({"on":false})
+    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_POST_ARGS " (%s)"), json.c_str());  // HTP: Hue POST args ({"on":false})
   }
 
   if (path->endsWith(F("/invalid/"))) {}                // Just ignore

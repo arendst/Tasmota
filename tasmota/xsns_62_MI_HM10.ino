@@ -622,7 +622,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, int _rssi){
       break;
     }
   MIBLEsensors.push_back(_newSensor);
-  AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: new %s at slot: %u"),D_CMND_HM10, kHM10DeviceType[_type-1],MIBLEsensors.size()-1);
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: new %s at slot: %u"),D_CMND_HM10, kHM10DeviceType[_type-1],MIBLEsensors.size()-1);
   return MIBLEsensors.size()-1;
 };
 
@@ -636,7 +636,7 @@ void HM10SerialInit(void) {
   HM10.serialSpeed = HM10_BAUDRATE;
   HM10Serial = new TasmotaSerial(Pin(GPIO_HM10_RX), Pin(GPIO_HM10_TX), 1, 0, HM10_MAX_RX_BUF);
   if (HM10Serial->begin(HM10.serialSpeed)) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s start serial communication fixed to 115200 baud"),D_CMND_HM10);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s start serial communication fixed to 115200 baud"),D_CMND_HM10);
     if (HM10Serial->hardwareSerial()) {
       ClaimSerial();
       DEBUG_SENSOR_LOG(PSTR("%s: claim HW"),D_CMND_HM10);
@@ -679,7 +679,7 @@ void HM10parseMiBeacon(char * _buf, uint32_t _slot){
   HM10_ReverseMAC(_beacon.MAC);
   // if(memcmp(_beacon.MAC,MIBLEsensors[_slot].MAC,sizeof(_beacon.MAC))!=0){
   //   if (MIBLEsensors[_slot].showedUp>3) return; // probably false alarm from a damaged packet
-  //   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: remove garbage sensor"),D_CMND_HM10);
+  //   AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: remove garbage sensor"),D_CMND_HM10);
   //   DEBUG_SENSOR_LOG(PSTR("%s i: %x %x %x %x %x %x"),D_CMND_HM10, MIBLEsensors[_slot].MAC[5], MIBLEsensors[_slot].MAC[4],MIBLEsensors[_slot].MAC[3],MIBLEsensors[_slot].MAC[2],MIBLEsensors[_slot].MAC[1],MIBLEsensors[_slot].MAC[0]);
   //   DEBUG_SENSOR_LOG(PSTR("%s n: %x %x %x %x %x %x"),D_CMND_HM10, _beacon.MAC[5], _beacon.MAC[4], _beacon.MAC[3],_beacon.MAC[2],_beacon.MAC[1],_beacon.MAC[0]);
   //   MIBLEsensors.erase(MIBLEsensors.begin()+_slot);
@@ -695,14 +695,14 @@ void HM10parseMiBeacon(char * _buf, uint32_t _slot){
     DEBUG_SENSOR_LOG(PSTR("LYWSD03 and CGD1 no support for MiBeacon, type %u"),MIBLEsensors[_slot].type);
     return;
   }
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: %s mibeacon type: %x"),D_CMND_HM10, kHM10DeviceType[MIBLEsensors[_slot].type-1], _beacon.type);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: %s mibeacon type: %x"),D_CMND_HM10, kHM10DeviceType[MIBLEsensors[_slot].type-1], _beacon.type);
 
   DEBUG_SENSOR_LOG(PSTR("%s at slot %u"), kHM10DeviceType[MIBLEsensors[_slot].type-1],_slot);
   switch(_beacon.type){
     case 0x01:
       MIBLEsensors[_slot].Btn=_beacon.Btn.num + (_beacon.Btn.longPress/2)*6;
       MIBLEsensors[_slot].eventType.Btn = 1;
-      // AddLog_P2(LOG_LEVEL_DEBUG,PSTR("Mode 1: U16:  %u Button"), MIBLEsensors[_slot].Btn );
+      // AddLog_P(LOG_LEVEL_DEBUG,PSTR("Mode 1: U16:  %u Button"), MIBLEsensors[_slot].Btn );
     break;
     case 0x04:
     _tempFloat=(float)(_beacon.temp)/10.0f;
@@ -845,7 +845,7 @@ void HM10readHT_LY(char *_buf){
   if(_buf[0]==0x4f && _buf[1]==0x4b) return; // "OK"
   if(_buf[0] != 0 && _buf[1] != 0){
     LYWSD0x_HT_t *packet = (LYWSD0x_HT_t*)_buf;
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: T * 100: %u, H: %u"),D_CMND_HM10,packet->temp,packet->hum);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: T * 100: %u, H: %u"),D_CMND_HM10,packet->temp,packet->hum);
     uint32_t _slot = HM10.state.sensor;
 
     DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
@@ -878,7 +878,7 @@ void HM10readHT_CGD1(char *_buf){
   if(_buf[0] == 0){
     if(_buf[1]==0 && _buf[2]==0 && _buf[3]==0 && _buf[4]==0) return;
     CGD1_HT_t *_packet = (CGD1_HT_t*)_buf;
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: T * 100: %u, H * 100: %u"),D_CMND_HM10,_packet->temp,_packet->hum);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: T * 100: %u, H * 100: %u"),D_CMND_HM10,_packet->temp,_packet->hum);
     uint32_t _slot = HM10.state.sensor;
 
     DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
@@ -908,7 +908,7 @@ void HM10readHT_MJ_HT_V1(char *_buf){
   // 0123456789012
   uint32_t _temp = (atoi(_buf+2) * 10) + atoi(_buf+5);
   uint32_t _hum = (atoi(_buf+9) * 10) + atoi(_buf+12);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: T * 10: %u, H * 10: %u"),D_CMND_HM10,_temp,_hum);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: T * 10: %u, H * 10: %u"),D_CMND_HM10,_temp,_hum);
   uint32_t _slot = HM10.state.sensor;
 
   DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
@@ -934,7 +934,7 @@ void HM10readTLMF(char *_buf){
   AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)_buf,16);
   Flora_TLMF_t *_packet = (Flora_TLMF_t*)_buf;
   if(_packet->ID==0xFB003C02){ // this is a magic word ... hopefully independent of FW version
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: T * 10: %u, L: %u, M: %u, F: %u"),D_CMND_HM10,_packet->temp,_packet->lux,_packet->moist,_packet->fert);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: T * 10: %u, L: %u, M: %u, F: %u"),D_CMND_HM10,_packet->temp,_packet->lux,_packet->moist,_packet->fert);
     uint32_t _slot = HM10.state.sensor;
     DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
     MIBLEsensors[_slot].showedUp=255; // this sensor is real
@@ -965,7 +965,7 @@ bool HM10readBat(char *_buf){
   //   if (MIBLEsensors[_slot].type == LYWSD03MMC || MIBLEsensors[_slot].type == MHOC401) return true;
   // }
   if(_buf[0] != 0){
-    AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s: Battery: %u"),D_CMND_HM10,_buf[0]);
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Battery: %u"),D_CMND_HM10,_buf[0]);
     DEBUG_SENSOR_LOG(PSTR("MIBLE: Sensor slot: %u"), _slot);
     if(_buf[0]<101){
         MIBLEsensors[_slot].bat=_buf[0];
@@ -1005,13 +1005,13 @@ void HM10HandleGenericBeacon(void){
   }
   // else handle scan
   if(MINBLEscanResult.size()>19) {
-    AddLog_P2(LOG_LEVEL_INFO,PSTR("HM10: Scan buffer full"));
+    AddLog_P(LOG_LEVEL_INFO,PSTR("HM10: Scan buffer full"));
     HM10.state.beaconScanCounter = 1;
     return;
   }
   for(auto _scanResult : MINBLEscanResult){
     if(memcmp(HM10.rxAdvertisement.MAC,_scanResult.MAC,6)==0){
-      // AddLog_P2(LOG_LEVEL_INFO,PSTR("HM10: known device"));
+      // AddLog_P(LOG_LEVEL_INFO,PSTR("HM10: known device"));
       return;
     }
   }
@@ -1034,12 +1034,12 @@ void HM10addBeacon(uint8_t index, char* data){
   _new.time = 0;
   if(memcmp(_empty,_new.MAC,6) == 0){
     _new.active = false;
-    AddLog_P2(LOG_LEVEL_INFO,PSTR("HM10: beacon%u deactivated"), index);
+    AddLog_P(LOG_LEVEL_INFO,PSTR("HM10: beacon%u deactivated"), index);
   }
   else{
     _new.active = true;
     HM10.mode.activeBeacon = 1;
-    AddLog_P2(LOG_LEVEL_INFO,PSTR("HM10: beacon added with MAC: %s"), _MAC);
+    AddLog_P(LOG_LEVEL_INFO,PSTR("HM10: beacon added with MAC: %s"), _MAC);
   }
 }
 
@@ -1048,11 +1048,11 @@ void HM10addBeacon(uint8_t index, char* data){
  *
  */
 void HM10showScanResults(){
-  AddLog_P2(LOG_LEVEL_INFO,PSTR("HM10: found %u devices in scan:"), MINBLEscanResult.size());
+  AddLog_P(LOG_LEVEL_INFO,PSTR("HM10: found %u devices in scan:"), MINBLEscanResult.size());
   for(auto _scanResult : MINBLEscanResult){
     char _MAC[18];
     ToHex_P(_scanResult.MAC,6,_MAC,18,':');
-    AddLog_P2(LOG_LEVEL_INFO,PSTR("MAC: %s _ CID: %04x _ SVC: %04x _ UUID: %04x _ TX: %02u _ RSSI: %d"), _MAC, _scanResult.CID, _scanResult.SVC, _scanResult.UUID, _scanResult.TX, _scanResult.RSSI);
+    AddLog_P(LOG_LEVEL_INFO,PSTR("MAC: %s _ CID: %04x _ SVC: %04x _ UUID: %04x _ TX: %02u _ RSSI: %d"), _MAC, _scanResult.CID, _scanResult.SVC, _scanResult.UUID, _scanResult.TX, _scanResult.RSSI);
   }
   MINBLEscanResult.clear();
 }
@@ -1073,7 +1073,7 @@ bool HM10SerialHandleFeedback(){                  // every 50 milliseconds
     *_rx= HM10Serial->read();
     if(i==18){
       if(memcmp(HM10.rxBuffer+4,"ISA:",4)==0){ //last 4 bytes of "OK+DISA:" should be safe enough
-        // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s packet size: %u"),D_CMND_HM10,HM10.rxBuffer[16]);
+        // AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s packet size: %u"),D_CMND_HM10,HM10.rxBuffer[16]);
         _targetsize = HM10.rxBuffer[16] + 19; // this is the size byte according to HM-10 docs
         if(_targetsize>64) _targetsize=64;
         memcpy(HM10.rxAdvertisement.MAC,HM10.rxBuffer+8,6);
@@ -1153,7 +1153,7 @@ bool HM10SerialHandleFeedback(){                  // every 50 milliseconds
             HM10HandleGenericBeacon();
           }
           uint16_t _type = (uint8_t)HM10.rxAdvertisement.svcData[5]*256 + (uint8_t)HM10.rxAdvertisement.svcData[4];
-          // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%04x %02x %04x %04x %04x"),HM10.rxAdvertisement.UUID,HM10.rxAdvertisement.TX,HM10.rxAdvertisement.CID,HM10.rxAdvertisement.SVC, _type);
+          // AddLog_P(LOG_LEVEL_DEBUG, PSTR("%04x %02x %04x %04x %04x"),HM10.rxAdvertisement.UUID,HM10.rxAdvertisement.TX,HM10.rxAdvertisement.CID,HM10.rxAdvertisement.SVC, _type);
           if(HM10.rxAdvertisement.SVC==0x181a) _type = 0xa1c;
           else if(HM10.rxAdvertisement.SVC==0xfdcd) _type = 0x0576;
           uint16_t _slot = MIBLEgetSensorSlot(HM10.rxAdvertisement.MAC, _type, HM10.rxAdvertisement.RSSI);
@@ -1172,9 +1172,9 @@ bool HM10SerialHandleFeedback(){                  // every 50 milliseconds
       break;
     case none:
       if(success) {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: response: %s"),D_CMND_HM10, (char *)HM10.rxBuffer);
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: response: %s"),D_CMND_HM10, (char *)HM10.rxBuffer);
         // for(uint32_t j = 0; j<i+1; j+=8){
-        //   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%02x %02x %02x %02x %02x %02x %02x %02x"),(uint8_t)ret[j],(uint8_t)ret[j+1],(uint8_t)ret[j+2],(uint8_t)ret[j+3],(uint8_t)ret[j+4],(uint8_t)ret[j+5],(uint8_t)ret[j+6],(uint8_t)ret[j+7]);
+        //   AddLog_P(LOG_LEVEL_DEBUG, PSTR("%02x %02x %02x %02x %02x %02x %02x %02x"),(uint8_t)ret[j],(uint8_t)ret[j+1],(uint8_t)ret[j+2],(uint8_t)ret[j+3],(uint8_t)ret[j+4],(uint8_t)ret[j+5],(uint8_t)ret[j+6],(uint8_t)ret[j+7]);
         // }
         HM10ParseResponse(HM10.rxBuffer,i);
       }
@@ -1198,21 +1198,21 @@ void HM10_TaskEvery100ms(){
     while (runningTaskLoop) {                                        // always iterate through the whole task list
       switch(HM10_TASK_LIST[i][0]) {                                 // handle the kind of task
         case TASK_HM10_ROLE1:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: set role to 1"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: set role to 1"),D_CMND_HM10);
           HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           HM10Serial->write("AT+ROLE1");
           break;
         case TASK_HM10_IMME1:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: set imme to 1"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: set imme to 1"),D_CMND_HM10);
           HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           HM10Serial->write("AT+IMME1");
           break;
         case TASK_HM10_DISC:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: start discovery"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: start discovery"),D_CMND_HM10);
           HM10.current_task_delay = 90;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1220,14 +1220,14 @@ void HM10_TaskEvery100ms(){
           HM10Serial->write("AT+DISA?");
           break;
         case TASK_HM10_VERSION:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: read version"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: read version"),D_CMND_HM10);
           HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           HM10Serial->write("AT+VERR?");
           break;
         case TASK_HM10_NAME:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: read name"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: read name"),D_CMND_HM10);
           HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1236,7 +1236,7 @@ void HM10_TaskEvery100ms(){
         case TASK_HM10_CONN:
           char _con[20];
           sprintf_P(_con,"AT+CON%02x%02x%02x%02x%02x%02x",MIBLEsensors[HM10.state.sensor].MAC[0],MIBLEsensors[HM10.state.sensor].MAC[1],MIBLEsensors[HM10.state.sensor].MAC[2],MIBLEsensors[HM10.state.sensor].MAC[3],MIBLEsensors[HM10.state.sensor].MAC[4],MIBLEsensors[HM10.state.sensor].MAC[5]);
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: %s connect %s"),D_CMND_HM10,kHM10DeviceType[MIBLEsensors[HM10.state.sensor].type-1],_con);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: %s connect %s"),D_CMND_HM10,kHM10DeviceType[MIBLEsensors[HM10.state.sensor].type-1],_con);
           HM10.current_task_delay = 2;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1245,21 +1245,21 @@ void HM10_TaskEvery100ms(){
           HM10.mode.connected = true;
           break;
         case TASK_HM10_DISCONN:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: disconnect"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: disconnect"),D_CMND_HM10);
           HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           HM10Serial->write("AT");
           break;
         case TASK_HM10_RESET:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: Reset Device"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: Reset Device"),D_CMND_HM10);
           HM10Serial->write("AT+RESET");
           HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           break;
         case TASK_HM10_SUB_L3:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: subscribe"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: subscribe"),D_CMND_HM10);
           HM10.current_task_delay = 25;                   // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           HM10.mode.awaiting = tempHumLY;
@@ -1267,7 +1267,7 @@ void HM10_TaskEvery100ms(){
           HM10Serial->write("AT+NOTIFY_ON0037");
           break;
         case TASK_HM10_UN_L3:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: un-subscribe"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: un-subscribe"),D_CMND_HM10);
           HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1275,7 +1275,7 @@ void HM10_TaskEvery100ms(){
           HM10Serial->write("AT+NOTIFYOFF0037");
           break;
         case TASK_HM10_SUB_L2:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: subscribe"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: subscribe"),D_CMND_HM10);
           HM10.current_task_delay = 85;                   // set task delay
           HM10.mode.awaiting = tempHumLY;
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
@@ -1284,7 +1284,7 @@ void HM10_TaskEvery100ms(){
           else HM10Serial->write("AT+NOTIFY_ON004B"); //MHO-C303
           break;
         case TASK_HM10_UN_L2:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: un-subscribe"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: un-subscribe"),D_CMND_HM10);
           HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1293,7 +1293,7 @@ void HM10_TaskEvery100ms(){
           else HM10Serial->write("AT+NOTIFY_OFF004B"); //MHO-C303
           break;
         case TASK_HM10_TIME_L2:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: set time"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: set time"),D_CMND_HM10);
           HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1301,10 +1301,10 @@ void HM10_TaskEvery100ms(){
           HM10Serial->write("AT+SEND_DATAWR002F");
           HM10Serial->write(HM10.timebuf,4);
           HM10Serial->write(Rtc.time_timezone / 60);
-          AddLog_P2(LOG_LEVEL_DEBUG,PSTR("%s Time-string: %x%x%x%x%x"),D_CMND_HM10, HM10.timebuf[0],HM10.timebuf[1],HM10.timebuf[2],HM10.timebuf[3],(Rtc.time_timezone /60));
+          AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s Time-string: %x%x%x%x%x"),D_CMND_HM10, HM10.timebuf[0],HM10.timebuf[1],HM10.timebuf[2],HM10.timebuf[3],(Rtc.time_timezone /60));
           break;
         // case TASK_HM10_READ_BT_L3:
-        //   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: read handle 003A"),D_CMND_HM10);
+        //   AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: read handle 003A"),D_CMND_HM10);
         //   HM10.current_task_delay = 2;                    // set task delay
         //   HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
         //   runningTaskLoop = false;
@@ -1312,7 +1312,7 @@ void HM10_TaskEvery100ms(){
         //   HM10.mode.awaiting = bat;
         //   break;
         case TASK_HM10_READ_BT_L2:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: read handle 0043"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: read handle 0043"),D_CMND_HM10);
           HM10.current_task_delay = 2;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1321,7 +1321,7 @@ void HM10_TaskEvery100ms(){
           HM10.mode.awaiting = bat;
           break;
         case TASK_HM10_READ_BF_FL:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: read handle 0038"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: read handle 0038"),D_CMND_HM10);
           HM10.current_task_delay = 2;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1329,7 +1329,7 @@ void HM10_TaskEvery100ms(){
           HM10.mode.awaiting = bat;
           break;
         case TASK_HM10_CALL_TLMF_FL:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: write to handle 0033"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: write to handle 0033"),D_CMND_HM10);
           HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_READ_TLMF_FL,i);
           runningTaskLoop = false;
@@ -1339,7 +1339,7 @@ void HM10_TaskEvery100ms(){
           HM10.mode.awaiting = none;
           break;
         case TASK_HM10_READ_TLMF_FL:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: read handle 0035"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: read handle 0035"),D_CMND_HM10);
           HM10.current_task_delay = 2;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1347,7 +1347,7 @@ void HM10_TaskEvery100ms(){
           HM10.mode.awaiting = TLMF;
           break;
         case TASK_HM10_READ_B_CGD1:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: read handle 0011"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: read handle 0011"),D_CMND_HM10);
           HM10.current_task_delay = 2;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1355,7 +1355,7 @@ void HM10_TaskEvery100ms(){
           HM10.mode.awaiting = bat;
           break;
         case TASK_HM10_SUB_HT_CGD1:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: subscribe 4b"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: subscribe 4b"),D_CMND_HM10);
           HM10.current_task_delay = 5;                   // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1363,7 +1363,7 @@ void HM10_TaskEvery100ms(){
           HM10Serial->write("AT+NOTIFY_ON004b");
           break;
         case TASK_HM10_UN_HT_CGD1:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: un-subscribe 4b"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: un-subscribe 4b"),D_CMND_HM10);
           HM10.current_task_delay = 5;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1371,14 +1371,14 @@ void HM10_TaskEvery100ms(){
           HM10Serial->write("AT+NOTIFYOFF004b");
           break;
         case TASK_HM10_SCAN9:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: scan time to 9"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: scan time to 9"),D_CMND_HM10);
           HM10.current_task_delay = 2;                  // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           HM10Serial->write("AT+SCAN9");
           break;
         case TASK_HM10_READ_B_MJ:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: read handle 0x18"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: read handle 0x18"),D_CMND_HM10);
           HM10.current_task_delay = 2;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1386,7 +1386,7 @@ void HM10_TaskEvery100ms(){
           HM10.mode.awaiting = bat;
           break;
         case TASK_HM10_SUB_HT_MJ:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: subscribe to 0x0f"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: subscribe to 0x0f"),D_CMND_HM10);
           HM10.current_task_delay = 10;                   // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
@@ -1394,22 +1394,22 @@ void HM10_TaskEvery100ms(){
           HM10.mode.awaiting = tempHumMJ;
           break;
         case TASK_HM10_FEEDBACK:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: get response"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: get response"),D_CMND_HM10);
           HM10SerialHandleFeedback();
           HM10.current_task_delay = HM10_TASK_LIST[i+1][1];;     // set task delay
           HM10_TASK_LIST[i][0] = TASK_HM10_DONE;                 // no feedback for reset
           runningTaskLoop = false;
           break;
         case TASK_HM10_STATUS_EVENT:
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%s: show status"),D_CMND_HM10);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: show status"),D_CMND_HM10);
           HM10StatusInfo();
           HM10.current_task_delay = HM10_TASK_LIST[i+1][1];;     // set task delay
           HM10_TASK_LIST[i][0] = TASK_HM10_DONE;                 // no feedback for reset
           runningTaskLoop = false;
           break;
         case TASK_HM10_DONE:                                    // this entry was already handled
-          // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%sFound done HM10_TASK"),D_CMND_HM10);
-          // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%snext slot:%u, i: %u"),D_CMND_HM10, HM10_TASK_LIST[i+1][0],i);
+          // AddLog_P(LOG_LEVEL_DEBUG, PSTR("%sFound done HM10_TASK"),D_CMND_HM10);
+          // AddLog_P(LOG_LEVEL_DEBUG, PSTR("%snext slot:%u, i: %u"),D_CMND_HM10, HM10_TASK_LIST[i+1][0],i);
           if(HM10_TASK_LIST[i+1][0] == TASK_HM10_NOTASK) {             // check the next entry and if there is none
             DEBUG_SENSOR_LOG(PSTR("%sno Tasks left"),D_CMND_HM10);
             DEBUG_SENSOR_LOG(PSTR("%sHM10_TASK_DONE current slot %u"),D_CMND_HM10, i);
@@ -1435,7 +1435,7 @@ void HM10StatusInfo() {
 /*
   char stemp[20];
   snprintf_P(stemp, sizeof(stemp),PSTR("{%s:{\"found\": %u}}"),D_CMND_HM10, MIBLEsensors.size());
-  AddLog_P2(LOG_LEVEL_INFO, stemp);
+  AddLog_P(LOG_LEVEL_INFO, stemp);
   RulesProcessEvent(stemp);
 */
   Response_P(PSTR("{\"%s\":{\"found\":%u}}"), D_CMND_HM10, MIBLEsensors.size());

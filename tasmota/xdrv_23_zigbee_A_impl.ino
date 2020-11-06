@@ -32,7 +32,7 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND "|" D_CMND_ZIGBEE_PROBE "|"
   D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|"
   D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_UNBIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID "|"
-  D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_OCCUPANCY "|" 
+  D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_OCCUPANCY "|"
   D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|"
   D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA
   ;
@@ -48,7 +48,7 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbStatus, &CmndZbReset, &CmndZbSend, &CmndZbProbe,
   &CmndZbForget, &CmndZbSave, &CmndZbName,
   &CmndZbBind, &CmndZbUnbind, &CmndZbPing, &CmndZbModelId,
-  &CmndZbLight, &CmndZbOccupancy, 
+  &CmndZbLight, &CmndZbOccupancy,
   &CmndZbRestore, &CmndZbBindState, &CmndZbMap,
   &CmndZbConfig, CmndZbData,
   };
@@ -65,7 +65,7 @@ void ZigbeeInit(void)
   // Check if settings in Flash are set
   if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX)) {
     if (0 == Settings.zb_channel) {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Randomizing Zigbee parameters, please check with 'ZbConfig'"));
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Randomizing Zigbee parameters, please check with 'ZbConfig'"));
       uint64_t mac64 = 0;     // stuff mac address into 64 bits
       WiFi.macAddress((uint8_t*) &mac64);
       uint32_t esp_id = ESP_getChipId();
@@ -172,13 +172,13 @@ void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, 
   if ((0 == endpoint) && (BAD_SHORTADDR != shortaddr)) {
     // endpoint is not specified, let's try to find it from shortAddr, unless it's a group address
     endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
-    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZbSend: guessing endpoint 0x%02X"), endpoint);
+    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: guessing endpoint 0x%02X"), endpoint);
   }
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZbSend: shortaddr 0x%04X, groupaddr 0x%04X, cluster 0x%04X, endpoint 0x%02X, cmd 0x%02X, data %s"),
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: shortaddr 0x%04X, groupaddr 0x%04X, cluster 0x%04X, endpoint 0x%02X, cmd 0x%02X, data %s"),
     shortaddr, groupaddr, cluster, endpoint, cmd, param);
 
   if ((0 == endpoint) && (BAD_SHORTADDR != shortaddr)) {     // endpoint null is ok for group address
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("ZbSend: unspecified endpoint"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("ZbSend: unspecified endpoint"));
     return;
   }
 
@@ -238,7 +238,7 @@ bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr, uint8_t transid) {
   buf.add8(0);                      // fn
   int32_t res = encodeSingleAttribute(buf, val_d, val_str, attr.attr_type);
   if (res < 0) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Error for Tuya attribute type %04X/%04X '0x%02X'"), attr.key.id.cluster, attr.key.id.attr_id, attr.attr_type);
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Error for Tuya attribute type %04X/%04X '0x%02X'"), attr.key.id.cluster, attr.key.id.attr_id, attr.attr_type);
     return false;
   }
   return true;
@@ -266,7 +266,7 @@ bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_stat
   if (res < 0) {
     // remove the attribute type we just added
     // buf.setLen(buf.len() - (operation == ZCL_READ_ATTRIBUTES_RESPONSE ? 4 : 3));
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Unsupported attribute type %04X/%04X '0x%02X'"), attr.key.id.cluster, attr.key.id.attr_id, attr.attr_type);
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Unsupported attribute type %04X/%04X '0x%02X'"), attr.key.id.cluster, attr.key.id.attr_id, attr.attr_type);
     return false;
   }
   return true;
@@ -326,7 +326,7 @@ void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZigbeeZCLSendMe
       if ((packet.cluster == 0XEF00) && (packet.cmd == ZCL_WRITE_ATTRIBUTES)) {
         // special case of Tuya / Moes attributes
         if (buf.len() > 0) {
-          AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Only 1 attribute allowed for Tuya"));
+          AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Only 1 attribute allowed for Tuya"));
           return;
         }
         packet.clusterSpecific = true;
@@ -475,7 +475,7 @@ void ZbSendSend(class JsonParserToken val_cmd, uint16_t device, uint16_t groupad
         }
       }
 
-      //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZbSend: command_template = %s"), cmd_str.c_str());
+      //AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: command_template = %s"), cmd_str.c_str());
       if (0xFF == cmd_var) {      // if command number is a variable, replace it with x
         cmd = x;
         x = y;                  // and shift other variables
@@ -484,7 +484,7 @@ void ZbSendSend(class JsonParserToken val_cmd, uint16_t device, uint16_t groupad
         cmd = cmd_var;          // or simply copy the cmd number
       }
       cmd_str = zigbeeCmdAddParams(cmd_str.c_str(), x, y, z);   // fill in parameters
-      //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZbSend: command_final    = %s"), cmd_str.c_str());
+      //AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZbSend: command_final    = %s"), cmd_str.c_str());
       cmd_s = cmd_str.c_str();
     } else {
       // we have zero command, pass through until last error for missing command
@@ -526,7 +526,7 @@ void ZbSendSend(class JsonParserToken val_cmd, uint16_t device, uint16_t groupad
     // we have an unsupported command type, just ignore it and fallback to missing command
   }
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZigbeeZCLSend device: 0x%04X, group: 0x%04X, endpoint:%d, cluster:0x%04X, cmd:0x%02X, send:\"%s\""),
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZigbeeZCLSend device: 0x%04X, group: 0x%04X, endpoint:%d, cluster:0x%04X, cmd:0x%02X, send:\"%s\""),
             device, groupaddr, endpoint, cluster, cmd, cmd_s);
   zigbeeZCLSendStr(device, groupaddr, endpoint, clusterSpecific, manuf, cluster, cmd, cmd_s);
   ResponseCmndDone();
@@ -613,7 +613,7 @@ void ZbSendRead(JsonParserToken val_attr, ZigbeeZCLSendMessage & packet) {
         }
       }
       if (!found) {
-        AddLog_P2(LOG_LEVEL_INFO, PSTR("ZIG: Unknown attribute name (ignored): %s"), key);
+        AddLog_P(LOG_LEVEL_INFO, PSTR("ZIG: Unknown attribute name (ignored): %s"), key);
       }
     }
 
@@ -708,7 +708,7 @@ void CmndZbSend(void) {
     endpoint = 0xFF;                  // endpoint not used for group addresses, so use a dummy broadcast endpoint
   } else if (0 == endpoint) {         // if it was not already specified, try to guess it
     endpoint = zigbee_devices.findFirstEndpoint(device);
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZIG: guessing endpoint %d"), endpoint);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("ZIG: guessing endpoint %d"), endpoint);
   }
   if (0 == endpoint) {                // after this, if it is still zero, then it's an error
       ResponseCmndChar_P(PSTR("Missing endpoint"));
@@ -1140,7 +1140,7 @@ void CmndZbOccupancy(void) {
   // parse first part, <device_id>
   Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true);  // in case of short_addr, it must be already registered
   if (!device.valid()) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
-  
+
   int8_t occupancy_time = -1;
   if (p) {
     Z_Data_PIR & pir = (Z_Data_PIR&) device.data.getByType(Z_Data_Type::Z_PIR);
@@ -1291,7 +1291,7 @@ void CmndZbPermitJoin(void) {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":21,\"Message\":\"Pairing mode enabled\"}}"));
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
     zigbee.permit_end_time = millis() + duration * 1000;
-    AddLog_P2(LOG_LEVEL_INFO, "zigbee.permit_end_time = %d", zigbee.permit_end_time);
+    AddLog_P(LOG_LEVEL_INFO, "zigbee.permit_end_time = %d", zigbee.permit_end_time);
   } else {
     zigbee.permit_end_time = millis();
   }
@@ -1442,7 +1442,7 @@ bool parseDeviceInnerData(class Z_Device & device, JsonParserObject root) {
                 case Zint32:  *(int32_t*)attr_address  = ival32;          break;
               }
             } else if (conv_data_type != Z_Data_Type::Z_Unknown) {
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "attribute %s is wrong type %d (expected %d)"), attr.getStr(), (uint8_t)data_type, (uint8_t)conv_data_type);
+              AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "attribute %s is wrong type %d (expected %d)"), attr.getStr(), (uint8_t)data_type, (uint8_t)conv_data_type);
             }
           }
         }
@@ -1603,7 +1603,7 @@ void CmndZbConfig(void) {
     if (zb_channel > 26) { zb_channel = 26; }
     // if network key is zero, we generate a truly random key with a hardware generator from ESP
     if ((0 == zb_precfgkey_l) && (0 == zb_precfgkey_h)) {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "generating random Zigbee network key"));
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "generating random Zigbee network key"));
       zb_precfgkey_l = (uint64_t)HwRandom() << 32 | HwRandom();
       zb_precfgkey_h = (uint64_t)HwRandom() << 32 | HwRandom();
     }
@@ -1770,9 +1770,9 @@ void ZigbeeShow(bool json)
           "<td><b title='0x%04X %s - %s'>%s</b></td>" // name
           "<td>%s</td>" // sbatt (Battery Indicator)
           "<td><div title='" D_LQI " %s' class='ssi'>" // slqi
-      ), shortaddr, 
-      device.modelId ? device.modelId : "", 
-      device.manufacturerId ? device.manufacturerId : "", 
+      ), shortaddr,
+      device.modelId ? device.modelId : "",
+      device.manufacturerId ? device.manufacturerId : "",
       name, sbatt, slqi);
 
       if(device.validLqi()) {

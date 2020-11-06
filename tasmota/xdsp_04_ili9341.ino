@@ -120,7 +120,7 @@ void Ili9341InitDriver(void)
 
     Ili9341InitMode();
 
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("DSP: ILI9341"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR("DSP: ILI9341"));
   }
 }
 
@@ -201,7 +201,7 @@ void Ili9341PrintLog(void)
         DisplayFillScreen(last_row);
         tft->print(disp_screen_buffer[last_row]);
       }
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), txt);
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), txt);
     }
   }
 }
