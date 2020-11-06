@@ -558,8 +558,9 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
 
   // IAS Cluster (Intruder Alarm System)
   { Zenum8,   Cx0500, 0x0000,  Z_(ZoneState),            Cm1, 0 },    // Occupancy (map8)
-  { Zenum16,  Cx0500, 0x0001,  Z_(ZoneType),             Cm1, 0 },    // Occupancy (map8)
-  { Zmap16,   Cx0500, 0x0002,  Z_(ZoneStatus),           Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Alarm, zone_type) },    // Occupancy (map8)
+  { Zenum16,  Cx0500, 0x0001,  Z_(ZoneType),             Cm1, Z_MAPPING(Z_Data_Alarm, zone_type) },    // Zone type for sensor
+  { Zmap16,   Cx0500, 0x0002,  Z_(ZoneStatus),           Cm1, Z_MAPPING(Z_Data_Alarm, zone_status) },    // Zone status for sensor
+  { Zbool,    Cx0500, 0xFFF0,  Z_(Contact),              Cm1, Z_MAPPING(Z_Data_Alarm, zone_status) },    // We fit the first bit in the LSB
 
   // Metering (Smart Energy) cluster
   { Zuint48,  Cx0702, 0x0000,  Z_(CurrentSummDelivered), Cm1, 0 },
@@ -1226,6 +1227,8 @@ void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
 // Note: both function are now split to compute on extracted attributes
 //
 void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
+  const char * model_c = zigbee_devices.getModelId(_srcaddr);  // null if unknown
+  String modelId((char*) model_c);
   // scan through attributes and apply specific converters
   for (auto &attr : attr_list) {
     if (attr.key_is_str) { continue; }    // pass if key is a name
@@ -1239,12 +1242,13 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
         }
         break;
       case 0x00010021:       // BatteryPercentage
-        {
-          const char * model_c = zigbee_devices.getModelId(_srcaddr);  // null if unknown
-          String modelId((char*) model_c);
-          if (modelId.startsWith(F("TRADFRI"))) {
-            attr.setUInt(attr.getUInt() * 2);   // bug in TRADFRI battery, need to double the value
-          }
+        if (modelId.startsWith(F("TRADFRI"))) {
+          attr.setUInt(attr.getUInt() * 2);   // bug in TRADFRI battery, need to double the value
+        }
+        break;
+      case 0x00060000:    // "Power" for lumi Door/Window is converted to "Contact"
+        if (modelId.startsWith(F("lumi.sensor_magnet"))) {
+          attr.setKeyId(0x0500, 0xFFF0);    // change cluster and attribute to 0500/FFF0
         }
         break;
       case 0x02010008:    // Pi Heating Demand - solve Eutotronic bug
@@ -1558,9 +1562,21 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
         attr_list.addAttribute(0x0001, 0x0020).setFloat(batteryvoltage);
         uint8_t batterypercentage = toPercentageCR2032(uval32);
         attr_list.addAttribute(0x0001, 0x0021).setUInt(batterypercentage * 2);
-      } else if ((nullptr != modelId) && (0 == getManufCode())) {
+      } else if ((nullptr != modelId) && ((0 == getManufCode()) || (0x115F == getManufCode()))) {
         translated = true;
-        if (modelId.startsWith(F("lumi.sensor_ht")) ||
+        if (modelId.startsWith(F("lumi.sensor_magnet"))) {   // door / window sensor
+          if (0x64 == attrid) {
+            attr_list.addAttribute(0x0500, 0xFFF0).copyVal(attr);   // Contact
+          }
+        } else if (modelId.startsWith(F("lumi.sensor_smoke"))) {   // gas leak
+          if (0x64 == attrid) {
+            attr_list.addAttribute(F("SmokeDensity")).copyVal(attr);
+          }
+        } else if (modelId.startsWith(F("lumi.sensor_natgas"))) {   // gas leak
+          if (0x64 == attrid) {
+            attr_list.addAttribute(F("GasDensity")).copyVal(attr);
+          }
+        } else if (modelId.startsWith(F("lumi.sensor_ht")) ||
             modelId.equals(F("lumi.sens")) ||
             modelId.startsWith(F("lumi.weather"))) {     // Temp sensor
           // Filter according to prefix of model name
@@ -1572,18 +1588,9 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
           } else if (0x66 == attrid) {
             attr_list.addAttribute(0x0403, 0x0000).setUInt((ival32 + 50) / 100);  // Pressure
           }
-        } else if (modelId.startsWith(F("lumi.sensor_smoke"))) {   // gas leak
-          if (0x64 == attrid) {
-            attr_list.addAttribute(F("SmokeDensity")).copyVal(attr);
-          }
-        } else if (modelId.startsWith(F("lumi.sensor_natgas"))) {   // gas leak
-          if (0x64 == attrid) {
-            attr_list.addAttribute(F("GasDensity")).copyVal(attr);
-          }
         } else {
           translated = false;     // we didn't find a match
         }
-  //   } else if (0x115F == zcl->getManufCode()) {      // Aqara Motion Sensor, still unknown field
       }
       if (!translated) {
         if (attrid >= 100) {    // payload is always above 0x64 or 100

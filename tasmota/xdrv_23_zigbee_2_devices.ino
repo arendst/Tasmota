@@ -364,11 +364,14 @@ public:
   inline bool validZoneType(void)   const { return 0xFFFF != zone_type; }
 
   inline uint16_t getZoneType(void) const { return zone_type; }
+  inline bool isPIR(void) const { return 0x000d == zone_type; }
+  inline bool isContact(void) const { return 0x0015 == zone_type; }
 
   inline void setZoneType(uint16_t _zone_type)  { zone_type = _zone_type; }
 
   // 4 bytes
-  uint16_t               zone_type;       // mapped to the Zigbee standard
+  uint16_t              zone_status;      // last known state for sensor 1 & 2
+  uint16_t              zone_type;        // mapped to the Zigbee standard
     // 0x0000  Standard CIE
     // 0x000d  Motion sensor
     // 0x0015  Contact switch
