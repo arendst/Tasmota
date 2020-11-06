@@ -126,7 +126,7 @@ void SettingsErase(uint8_t type) {
 
   NvmErase("main");
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " t=%d"), type);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " t=%d"), type);
 }
 
 void SettingsRead(void *data, size_t size) {

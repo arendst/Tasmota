@@ -74,8 +74,8 @@ void WemoRespondToMSearch(int echo_type)
   } else {
     snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
-  // Do not use AddLog_P2 here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
-  PrepLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_WEMO " " D_JSON_TYPE " %d, %s " D_TO " %s:%d"),
+  // Do not use AddLog_P( here (interrupt routine) if syslog or mqttlog is enabled. UDP/TCP will force exception 9
+  PrepLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_WEMO " " D_JSON_TYPE " %d, %s " D_TO " %s:%d"),
     echo_type, message, udp_remote_ip.toString().c_str(), udp_remote_port);
 
   udp_response_mutex = false;
@@ -268,7 +268,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
 /********************************************************************************************/
 
 void LogUpnpWithClient(const char *msg) {
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "%s from %s"), msg, Webserver->client().remoteIP().toString().c_str());
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "%s from %s"), msg, Webserver->client().remoteIP().toString().c_str());
 }
 
 void HandleUpnpEvent(void)
@@ -278,7 +278,7 @@ void HandleUpnpEvent(void)
   char event[500];
   strlcpy(event, Webserver->arg(0).c_str(), sizeof(event));
 
-//  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), event);
+//  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), event);
 
   //differentiate get and set state
   char state = 'G';

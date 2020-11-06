@@ -468,8 +468,6 @@ void HxShow(bool json)
 
 #define WEB_HANDLE_HX711 "s34"
 
-const char S_CONFIGURE_HX711[] PROGMEM = D_CONFIGURE_HX711;
-
 const char HTTP_BTN_MENU_MAIN_HX711[] PROGMEM =
   "<p><form action='" WEB_HANDLE_HX711 "' method='get'><button name='reset'>" D_RESET_HX711 "</button></form></p>";
 
@@ -492,7 +490,7 @@ void HandleHxAction(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_HX711);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_HX711));
 
   if (Webserver->hasArg("save")) {
     HxSaveSettings();
@@ -523,7 +521,7 @@ void HandleHxAction(void)
     return;
   }
 
-  WSContentStart_P(S_CONFIGURE_HX711);
+  WSContentStart_P(PSTR(D_CONFIGURE_HX711));
   WSContentSendStyle();
   dtostrfd((float)Settings.weight_reference / 1000, 3, stemp1);
   char stemp2[20];
@@ -551,7 +549,7 @@ void HxLogUpdates(void)
   char weigth_item_chr[33];
   dtostrfd((float)Settings.weight_item / 10000, 4, weigth_item_chr);
 
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_JSON_WEIGHT_REF " %s, " D_JSON_WEIGHT_ITEM " %s"), weigth_ref_chr, weigth_item_chr);
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_JSON_WEIGHT_REF " %s, " D_JSON_WEIGHT_ITEM " %s"), weigth_ref_chr, weigth_item_chr);
 }
 
 #endif  // USE_HX711_GUI

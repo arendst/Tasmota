@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Core library from v2.7.4.5 to v2.7.4.7
 - Platformio compiler option `no target align` enabled (#9749)
+- Consolidate `AddLog_P` into `AddLog_P2` and rename to `AddLog_P`
 
 ### Fixed
 - NTP fallback server functionality (#9739)

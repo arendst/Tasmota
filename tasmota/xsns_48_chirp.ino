@@ -216,13 +216,13 @@ bool ChirpSet(uint8_t addr) {
       chirp_timeout_count = 10;
       chirp_next_job = 0;
       if(chirp_sensor[chirp_current].version == 255){ // this should be Chirp! and it seems to need a power cycle (or RESET to GND)
-          AddLog_P2(LOG_LEVEL_INFO, PSTR("CHIRP: wrote new address %u, please power off device"), addr);
+          AddLog_P(LOG_LEVEL_INFO, PSTR("CHIRP: wrote new address %u, please power off device"), addr);
           chirp_sensor[chirp_current].version == 0; // make it "invisible"
       }
       return true;
     }
   }
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("CHIRP: address %u incorrect and not used"), addr);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("CHIRP: address %u incorrect and not used"), addr);
   return false;
 }
 
@@ -241,13 +241,13 @@ bool ChirpScan()
       I2cSetActiveFound(address, "CHIRP");
       if (chirp_found_sensors<CHIRP_MAX_SENSOR_COUNT) {
         chirp_sensor[chirp_found_sensors].address = address; // push next sensor, as long as there is space in the array
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: fw %x"), chirp_sensor[chirp_found_sensors].version);
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("CHIRP: fw %x"), chirp_sensor[chirp_found_sensors].version);
       }
       chirp_found_sensors++;
     }
   }
   // chirp_timeout_count = 11; // wait a second to read the real fw-version in the next step
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Found %u CHIRP sensor(s)."), chirp_found_sensors);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Found %u CHIRP sensor(s)."), chirp_found_sensors);
   return (chirp_found_sensors > 0);
 }
 
@@ -387,7 +387,7 @@ void ChirpEvery100MSecond(void)
               DEBUG_SENSOR_LOG(PSTR("CHIRP: timeout 1/10 sec: %u, tele: %u"), chirp_timeout_count, Settings.tele_period);
             }
           else{
-            AddLog_P2(LOG_LEVEL_INFO, PSTR("CHIRP: TELEPERIOD must be > 16 seconds !"));
+            AddLog_P(LOG_LEVEL_INFO, PSTR("CHIRP: TELEPERIOD must be > 16 seconds !"));
             // we could overwrite it to i.e. 20 seconds here
           }
           chirp_next_job = 1;                                 // back to step 1

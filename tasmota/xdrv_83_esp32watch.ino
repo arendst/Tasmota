@@ -378,11 +378,11 @@ uint8_t data;
 
           if (ttgo_globs.bma->isDoubleClick()) {
             ttgo_globs.bma_double_click = true;
-            //AddLog_P2(LOG_LEVEL_INFO, PSTR("double click"));
+            //AddLog_P(LOG_LEVEL_INFO, PSTR("double click"));
           }
           if (ttgo_globs.bma->isAnyNoMotion()) {
             ttgo_globs.bma_click = true;
-            //AddLog_P2(LOG_LEVEL_INFO, PSTR("click"));
+            //AddLog_P(LOG_LEVEL_INFO, PSTR("click"));
           }
 
           //! setp counter
@@ -408,7 +408,7 @@ uint8_t data;
           }
           if (ttgo_globs.ttgo_power->isPEKShortPressIRQ()) {
             ttgo_globs.bma_button = true;
-            //AddLog_P2(LOG_LEVEL_INFO, PSTR("button press"));
+            //AddLog_P(LOG_LEVEL_INFO, PSTR("button press"));
           }
           ttgo_globs.ttgo_power->clearIRQ();
           break;

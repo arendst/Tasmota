@@ -745,9 +745,6 @@ const char JSON_SNS_GNGPM[] PROGMEM = ",\"%s\":{\"" D_JSON_TOTAL_USAGE "\":%s,\"
 
 const char S_LOG_I2C_FOUND_AT[] PROGMEM = D_LOG_I2C "%s " D_FOUND_AT " 0x%x";
 
-const char S_LOG_HTTP[] PROGMEM = D_LOG_HTTP;
-const char S_LOG_WIFI[] PROGMEM = D_LOG_WIFI;
-const char S_LOG_MQTT[] PROGMEM = D_LOG_MQTT;
 const char S_RSLT_POWER[] PROGMEM = D_RSLT_POWER;
 const char S_RSLT_RESULT[] PROGMEM = D_RSLT_RESULT;
 const char S_RSLT_WARNING[] PROGMEM = D_RSLT_WARNING;
@@ -797,22 +794,6 @@ const char HTTP_SNS_DO[]            PROGMEM = "{s}%s "  D_DO                  "{
 const char HTTP_SNS_COLOR_RED[]     PROGMEM = "{s}%s "  D_COLOR_RED           "{m}%u "                            "{e}";
 const char HTTP_SNS_COLOR_GREEN[]   PROGMEM = "{s}%s "  D_COLOR_GREEN         "{m}%u "                            "{e}";
 const char HTTP_SNS_COLOR_BLUE[]    PROGMEM = "{s}%s "  D_COLOR_BLUE          "{m}%u "                            "{e}";
-
-const char S_MAIN_MENU[]              PROGMEM = D_MAIN_MENU;
-const char S_CONFIGURATION[]          PROGMEM = D_CONFIGURATION;
-const char S_CONFIGURE_TEMPLATE[]     PROGMEM = D_CONFIGURE_TEMPLATE;
-const char S_CONFIGURE_MODULE[]       PROGMEM = D_CONFIGURE_MODULE;
-const char S_CONFIGURE_WIFI[]         PROGMEM = D_CONFIGURE_WIFI;
-const char S_NO_NETWORKS_FOUND[]      PROGMEM = D_NO_NETWORKS_FOUND;
-const char S_CONFIGURE_LOGGING[]      PROGMEM = D_CONFIGURE_LOGGING;
-const char S_CONFIGURE_OTHER[]        PROGMEM = D_CONFIGURE_OTHER;
-const char S_SAVE_CONFIGURATION[]     PROGMEM = D_SAVE_CONFIGURATION;
-const char S_RESET_CONFIGURATION[]    PROGMEM = D_RESET_CONFIGURATION;
-const char S_RESTORE_CONFIGURATION[]  PROGMEM = D_RESTORE_CONFIGURATION;
-const char S_FIRMWARE_UPGRADE[]       PROGMEM = D_FIRMWARE_UPGRADE;
-const char S_CONSOLE[]                PROGMEM = D_CONSOLE;
-const char S_INFORMATION[]            PROGMEM = D_INFORMATION;
-const char S_RESTART[]                PROGMEM = D_RESTART;
 #endif  // USE_WEBSERVER
 
 const uint32_t MARKER_START = 0x5AA55AA5;

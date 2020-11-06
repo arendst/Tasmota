@@ -161,7 +161,7 @@ void ICACHE_RAM_ATTR sns_opentherm_handleInterrupt()
 void sns_opentherm_processResponseCallback(unsigned long response, int st)
 {
     OpenThermResponseStatus status = (OpenThermResponseStatus)st;
-    AddLog_P2(LOG_LEVEL_DEBUG_MORE,
+    AddLog_P(LOG_LEVEL_DEBUG_MORE,
               PSTR("[OTH]: Processing response. Status=%s, Response=0x%lX"),
               sns_ot_master->statusToString(status), response);
 
@@ -298,7 +298,7 @@ void sns_ot_start_handshake()
         return;
     }
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("[OTH]: perform handshake"));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("[OTH]: perform handshake"));
 
     sns_ot_master->sendRequestAync(
         OpenTherm::buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0));
@@ -312,14 +312,14 @@ void sns_ot_process_handshake(unsigned long response, int st)
 
     if (status != OpenThermResponseStatus::SUCCESS || !sns_ot_master->isValidResponse(response))
     {
-        AddLog_P2(LOG_LEVEL_ERROR,
+        AddLog_P(LOG_LEVEL_ERROR,
                   PSTR("[OTH]: getSlaveConfiguration failed. Status=%s"),
                   sns_ot_master->statusToString(status));
         sns_ot_connection_status = OpenThermConnectionStatus::OTC_DISCONNECTED;
         return;
     }
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("[OTH]: getLastResponseStatus SUCCESS. Slave Cfg: %lX"), response);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("[OTH]: getLastResponseStatus SUCCESS. Slave Cfg: %lX"), response);
 
     sns_ot_boiler_status.m_slave_flags = (response & 0xFF00) >> 8;
 
