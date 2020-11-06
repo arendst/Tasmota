@@ -346,17 +346,24 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
       // IAS
       switch (cccc00mm) {
       case 0x05000000:        // "ZoneStatusChange"
-        attr_list.addAttribute(command_name, true).setUInt(xyz.x);
-        if (0 != xyz.y) {
-          attr_list.addAttribute(command_name, PSTR("Ext")).setUInt(xyz.y);
+        {
+          attr_list.addAttribute(command_name, true).setUInt(xyz.x);
+          if (0 != xyz.y) {
+            attr_list.addAttribute(command_name, PSTR("Ext")).setUInt(xyz.y);
+          }
+          if ((0 != xyz.z) && (0xFF != xyz.z)) {
+            attr_list.addAttribute(command_name, PSTR("Zone")).setUInt(xyz.z);
+          }
+          // Convert to "Occupancy" or to "Contact" if the device is PIR or Contact sensor
+          const Z_Data_Alarm & alarm = (const Z_Data_Alarm&) zigbee_devices.getShortAddr(shortaddr).data.find(Z_Data_Type::Z_Alarm, srcendpoint);
+          if (&alarm != nullptr) {
+            if (alarm.isPIR()) {                  // set Occupancy
+              attr_list.addAttribute(0x0406, 0x0000).setUInt((xyz.x) & 0x01 ? 1 : 0);
+            } else if (alarm.isContact()) {       // set Contact
+              attr_list.addAttribute(0x0500, 0xFFF0).setUInt((xyz.x) & 0x01 ? 1 : 0);
+            }
+          }
         }
-        if ((0 != xyz.z) && (0xFF != xyz.z)) {
-          attr_list.addAttribute(command_name, PSTR("Zone")).setUInt(xyz.z);
-        }
-        // for now convert alamrs 1 and 2 to Occupancy
-        // TODO we may only do this conversion to ZoneType == 0x000D 'Motion Sensor'
-        // Occupancy is 0406/0000 of type Zmap8
-        attr_list.addAttribute(0x0406, 0x0000).setUInt((xyz.x) & 0x01 ? 1 : 0);
         break;
       case 0x00040000:
       case 0x00040001:
