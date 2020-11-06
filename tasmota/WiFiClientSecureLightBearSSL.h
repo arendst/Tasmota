@@ -112,7 +112,6 @@ class WiFiClientSecure_light : public WiFiClient {
     br_ssl_engine_context *_eng; // &_sc->eng, to allow for client or server contexts
     std::shared_ptr<unsigned char> _iobuf_in;
     std::shared_ptr<unsigned char> _iobuf_out;
-    time_t _now;
     int _iobuf_in_size;
     int _iobuf_out_size;
     bool _handshake_done;
