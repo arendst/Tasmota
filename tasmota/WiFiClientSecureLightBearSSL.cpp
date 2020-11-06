@@ -69,6 +69,7 @@ void _Log_heap_size(const char *msg) {
 
 // get UTC time from Tasmota
 extern uint32_t UtcTime(void);
+extern uint32_t CfgTime(void);
 
 // Stack thunked versions of calls
 // Initially in BearSSLHelpers.h
@@ -921,6 +922,8 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 		br_x509_minimal_set_hash(x509_minimal, br_sha256_ID, &br_sha256_vtable);
 		br_ssl_engine_set_x509(_eng, &x509_minimal->vtable);
     uint32_t now = UtcTime();
+    uint32_t cfg_time = CfgTime();
+    if (cfg_time > now) { now = cfg_time; }
     br_x509_minimal_set_time(x509_minimal, now / 86400 + 719528, now % 86400);
 
 	#else
