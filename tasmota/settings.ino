@@ -613,6 +613,11 @@ void SettingsLoad(void) {
   RtcSettingsLoad();
 }
 
+// Used in TLS - returns the timestamp of the last Flash settings write
+uint32_t CfgTime(void) {
+  return Settings.cfg_timestamp;
+}
+
 void EspErase(uint32_t start_sector, uint32_t end_sector)
 {
   bool serial_output = (LOG_LEVEL_DEBUG_MORE <= TasmotaGlobal.seriallog_level);
