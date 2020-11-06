@@ -433,7 +433,9 @@
  */
 
 #ifndef BR_USE_UNIX_TIME
-#if defined __unix__ || defined __linux__ || defined ESP8266 || defined ESP32\
+/*#if defined __unix__ || defined __linux__ || defined ESP8266 || defined ESP32\*/
+// Tasmota now uses its own NTP client so we need to pass explicitly the current time
+#if defined __unix__ || defined __linux__ || defined ESP32\
 	|| defined _POSIX_SOURCE || defined _POSIX_C_SOURCE \
 	|| (defined __APPLE__ && defined __MACH__)
 #define BR_USE_UNIX_TIME   1
