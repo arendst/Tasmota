@@ -158,29 +158,6 @@ void ZigbeeWrite(const void *pSettings, unsigned nSettingsLen) {
 }
 
 //
-// sntp emulation
-//
-static bool bNetIsTimeSync = false;
-//
-void SntpInit() {
-  bNetIsTimeSync = true;
-}
-
-uint32_t SntpGetCurrentTimestamp(void) {
-  time_t now = 0;
-  if (bNetIsTimeSync || TasmotaGlobal.ntp_force_sync)
-  {
-    //Serial_DebugX(("timesync configTime %d\n", TasmotaGlobal.ntp_force_sync, bNetIsTimeSync));
-    // init to UTC Time
-    configTime(0, 0, SettingsText(SET_NTPSERVER1), SettingsText(SET_NTPSERVER2), SettingsText(SET_NTPSERVER3));
-    bNetIsTimeSync = false;
-    TasmotaGlobal.ntp_force_sync = false;
-  }
-  time(&now);
-  return now;
-}
-
-//
 // Crash stuff
 //
 

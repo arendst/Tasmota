@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 
 ## [9.1.0.1]
 ### Changed
-- platformio compiler option `no target align` enabled for stage
+- Core library from v2.7.4.5 to v2.7.4.7
+- Platformio compiler option `no target align` enabled (#9749)
+
+### Fixed
+- NTP fallback server functionality (#9739)
 
 ## [Released]
 

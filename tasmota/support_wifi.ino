@@ -701,3 +701,131 @@ void wifiKeepAlive(void) {
     SetNextTimeInterval(wifi_timer, wifiTimerSec * 1000);
   }
 }
+
+void WifiPollNtp() {
+  static uint8_t ntp_sync_minute = 0;
+
+  if (TasmotaGlobal.global_state.network_down) { return; }
+
+  uint8_t uptime_minute = (TasmotaGlobal.uptime / 60) % 60;  // 0 .. 59
+  if ((ntp_sync_minute > 59) && (uptime_minute > 2)) {
+    ntp_sync_minute = 1;                 // If sync prepare for a new cycle
+  }
+  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
+  uint8_t offset = (TasmotaGlobal.uptime < 30) ? RtcTime.second : (((ESP_getChipId() & 0xF) * 3) + 3) ;
+  if ( (((offset == RtcTime.second) && ( (RtcTime.year < 2016) ||                  // Never synced
+                                         (ntp_sync_minute == uptime_minute))) ||   // Re-sync every hour
+       TasmotaGlobal.ntp_force_sync ) ) {                                          // Forced sync
+
+    TasmotaGlobal.ntp_force_sync = false;
+    uint32_t ntp_time = WifiGetNtp();
+    if (ntp_time > START_VALID_TIME) {
+      Rtc.utc_time = ntp_time;
+      ntp_sync_minute = 60;             // Sync so block further requests
+      Rtc.time_synced = true;
+      RtcSecond();
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: Synced"));
+    } else {
+      ntp_sync_minute++;                // Try again in next minute
+    }
+  }
+}
+
+uint32_t WifiGetNtp(void) {
+  static uint8_t ntp_server_id = 0;
+
+  IPAddress time_server_ip;
+
+  char* ntp_server;
+  bool resolved_ip = false;
+  for (uint32_t i = 0; i < MAX_NTP_SERVERS; i++) {
+    ntp_server = SettingsText(SET_NTPSERVER1 + ntp_server_id);
+    if (strlen(ntp_server)) {
+      resolved_ip = (WiFi.hostByName(ntp_server, time_server_ip) == 1);
+      if (255 == time_server_ip[0]) { resolved_ip = false; }
+      yield();
+      if (resolved_ip) { break; }
+    }
+    ntp_server_id++;
+    if (ntp_server_id > 2) { ntp_server_id = 0; }
+  }
+  if (!resolved_ip) {
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: No server found"));
+    return 0;
+  }
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: Name %s, IP %s"), ntp_server, time_server_ip.toString().c_str());
+
+  WiFiUDP udp;
+
+  uint32_t attempts = 3;
+  while (attempts > 0) {
+    uint32_t port = random(1025, 65535);   // Create a random port for the UDP connection.
+    if (udp.begin(port) != 0) {
+      break;
+    }
+    attempts--;
+  }
+  if (0 == attempts) { return 0; }
+
+  while (udp.parsePacket() > 0) {          // Discard any previously received packets
+    yield();
+  }
+
+  const uint32_t NTP_PACKET_SIZE = 48;     // NTP time is in the first 48 bytes of message
+  uint8_t packet_buffer[NTP_PACKET_SIZE];  // Buffer to hold incoming & outgoing packets
+  memset(packet_buffer, 0, NTP_PACKET_SIZE);
+  packet_buffer[0]  = 0b11100011;          // LI, Version, Mode
+  packet_buffer[1]  = 0;                   // Stratum, or type of clock
+  packet_buffer[2]  = 6;                   // Polling Interval
+  packet_buffer[3]  = 0xEC;                // Peer Clock Precision
+  packet_buffer[12] = 49;
+  packet_buffer[13] = 0x4E;
+  packet_buffer[14] = 49;
+  packet_buffer[15] = 52;
+
+  if (udp.beginPacket(time_server_ip, 123) == 0) {  // NTP requests are to port 123
+    ntp_server_id++;
+    if (ntp_server_id > 2) { ntp_server_id = 0; }   // Next server next time
+    udp.stop();
+    return 0;
+  }
+  udp.write(packet_buffer, NTP_PACKET_SIZE);
+  udp.endPacket();
+
+  uint32_t begin_wait = millis();
+  while (!TimeReached(begin_wait + 1000)) {         // Wait up to one second
+    uint32_t size        = udp.parsePacket();
+    uint32_t remote_port = udp.remotePort();
+
+    if ((size >= NTP_PACKET_SIZE) && (remote_port == 123)) {
+      udp.read(packet_buffer, NTP_PACKET_SIZE);     // Read packet into the buffer
+      udp.stop();
+
+      if ((packet_buffer[0] & 0b11000000) == 0b11000000) {
+        // Leap-Indicator: unknown (clock unsynchronized)
+        // See: https://github.com/letscontrolit/ESPEasy/issues/2886#issuecomment-586656384
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: IP %s unsynched"), time_server_ip.toString().c_str());
+        return 0;
+      }
+
+      // convert four bytes starting at location 40 to a long integer
+      // TX time is used here.
+      uint32_t secs_since_1900 = (uint32_t)packet_buffer[40] << 24;
+      secs_since_1900 |= (uint32_t)packet_buffer[41] << 16;
+      secs_since_1900 |= (uint32_t)packet_buffer[42] << 8;
+      secs_since_1900 |= (uint32_t)packet_buffer[43];
+      if (0 == secs_since_1900) {                   // No time stamp received
+        return 0;
+      }
+      return secs_since_1900 - 2208988800UL;
+    }
+    delay(10);
+  }
+  // Timeout.
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: No reply"));
+  udp.stop();
+  return 0;
+}
+
+

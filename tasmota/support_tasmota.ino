@@ -876,6 +876,8 @@ void PerformEverySecond(void)
   // Wifi keep alive to send Gratuitous ARP
   wifiKeepAlive();
 
+  WifiPollNtp();
+
 #ifdef ESP32
   if (11 == TasmotaGlobal.uptime) {  // Perform one-time ESP32 houskeeping
     ESP_getSketchSize();             // Init sketchsize as it can take up to 2 seconds

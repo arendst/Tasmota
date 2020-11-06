@@ -2076,6 +2076,10 @@ void PrepLog_P2(uint32_t loglevel, PGM_P formatP, ...)
 
 void AddLog_P2(uint32_t loglevel, PGM_P formatP, ...)
 {
+  if (TasmotaGlobal.prepped_loglevel) {
+    AddLog(TasmotaGlobal.prepped_loglevel);
+  }
+
   va_list arg;
   va_start(arg, formatP);
   vsnprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), formatP, arg);
