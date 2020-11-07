@@ -91,14 +91,14 @@ void PWMModulePreInit(void)
   if (TasmotaGlobal.module_changed) {
     Settings.flag.pwm_control = true;     // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
     Settings.bri_power_on = Settings.bri_preset_low = Settings.bri_preset_high = 0;
+ }
 
-    // Previous versions of PWM Dimmer used SetOption32 - Button held for factor times longer as the
-    // hold time. The hold time is now fixed and SetOption32 is used as normal including to
-    // determine how long a button is held before a reset command is executed. If SetOption32 is
-    // still 5, change it to 40 (the default).
-    if (Settings.param[P_HOLD_TIME] == 5) Settings.param[P_HOLD_TIME] = 40;
-  }
-
+  // Previous versions of PWM Dimmer used SetOption32 - Button held for factor times longer as the
+  // hold time. The hold time is now fixed and SetOption32 is used as normal including to
+  // determine how long a button is held before a reset command is executed. If SetOption32 is
+  // still 5, change it to 40 (the default).
+  if (Settings.param[P_HOLD_TIME] == 5) Settings.param[P_HOLD_TIME] = 40;
+ 
   // Make sure the brightness level settings are sensible.
   if (!Settings.bri_power_on) Settings.bri_power_on = 128;
   if (!Settings.bri_preset_low) Settings.bri_preset_low = 10;
@@ -482,7 +482,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     else
 #endif  // USE_PWM_DIMMER_REMOTE
       bri = light_state.getBri();
-    int32_t new_bri = bri + bri_offset * ((dgr_item ? 16 : Settings.light_correction ? 4 : bri / 16 + 1));
+    int32_t new_bri = bri + bri_offset * (Settings.light_correction ? 4 : bri / 16 + 1);
 
     if (bri_offset > 0) {
       if (new_bri > 255) new_bri = 255;
@@ -492,7 +492,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     }
     if (new_bri != bri) {
 #ifdef USE_DEVICE_GROUPS
-      SendDeviceGroupMessage(power_button_index, (dgr_more_to_come ? DGR_MSGTYP_UPDATE_MORE_TO_COME : DGR_MSGTYP_UPDATE), DGR_ITEM_LIGHT_BRI, new_bri);
+      SendDeviceGroupMessage(power_button_index, (dgr_more_to_come ? DGR_MSGTYP_UPDATE_MORE_TO_COME : DGR_MSGTYP_UPDATE_DIRECT), DGR_ITEM_LIGHT_BRI, new_bri);
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_PWM_DIMMER_REMOTE
       if (active_remote_pwm_dimmer) {
@@ -506,6 +506,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
         ignore_dgr_sends = true;
 #endif  // USE_DEVICE_GROUPS
         light_state.setBri(new_bri);
+        Settings.light_dimmer = light_state.BriToDimmer(new_bri);
         LightAnimate();
         TasmotaGlobal.skip_light_fade = false;
 #ifdef USE_DEVICE_GROUPS
@@ -551,6 +552,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     else {
 #endif  // USE_PWM_DIMMER_REMOTE
       light_state.setBri(power_on_bri);
+      Settings.light_dimmer = light_state.BriToDimmer(power_on_bri);
 #ifdef USE_DEVICE_GROUPS
       Light.devgrp_no_channels_out = true;
 #endif // USE_DEVICE_GROUPS
