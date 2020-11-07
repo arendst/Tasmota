@@ -141,6 +141,7 @@
 | USE_EZOO2             | - | - | - | - | - | - | - |
 | USE_EZOORP            | - | - | - | - | - | - | - |
 | USE_EZOPH             | - | - | - | - | - | - | - |
+| USE_EZOPMP            | - | - | - | - | - | - | - |
 | USE_EZOPRS            | - | - | - | - | - | - | - |
 | USE_EZORGB            | - | - | - | - | - | - | - |
 | USE_EZORTD            | - | - | - | - | - | - | - |
