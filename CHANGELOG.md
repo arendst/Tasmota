@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.1.0.1]
+### Added
+- Zigbee support for Mi Door and Contact (#9759)
+- Support for EZO PMP sensors by Christopher Tremblay (#9760)
+
 ### Changed
 - Core library from v2.7.4.5 to v2.7.4.7
 - Platformio compiler option `no target align` enabled (#9749)

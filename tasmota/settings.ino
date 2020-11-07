@@ -613,6 +613,11 @@ void SettingsLoad(void) {
   RtcSettingsLoad();
 }
 
+// Used in TLS - returns the timestamp of the last Flash settings write
+uint32_t CfgTime(void) {
+  return Settings.cfg_timestamp;
+}
+
 void EspErase(uint32_t start_sector, uint32_t end_sector)
 {
   bool serial_output = (LOG_LEVEL_DEBUG_MORE <= TasmotaGlobal.seriallog_level);
@@ -1298,6 +1303,9 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_ADC_PARAM1, parameters);
     }
 #endif  // ESP8266
+    if (Settings.version < 0x09010000) {
+      Settings.dimmer_step = DEFAULT_DIMMER_STEP;
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);

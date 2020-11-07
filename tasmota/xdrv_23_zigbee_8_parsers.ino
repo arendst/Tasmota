@@ -1470,8 +1470,10 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
   // log the packet details
   zcl_received.log();
 
-  Z_Device & device = zigbee_devices.getShortAddr(srcaddr);
-  if (srcaddr != localShortAddr) {
+  // create the device entry if it does not exist and if it's not the local device
+  Z_Device & device = (srcaddr != localShortAddr) ? zigbee_devices.getShortAddr(srcaddr) :
+                                                    device_unk;
+  if (device.valid()) {
     device.setLQI(linkquality != 0xFF ? linkquality : 0xFE);       // EFR32 has a different scale for LQI
     device.setLastSeenNow();
   }
@@ -1522,7 +1524,9 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
 
     // since we just receveived data from the device, it is reachable
     zigbee_devices.resetTimersForDevice(srcaddr, 0 /* groupaddr */, Z_CAT_REACHABILITY);    // remove any reachability timer already there
-    device.setReachable(true);     // mark device as reachable
+    if (device.valid()) {
+      device.setReachable(true);     // mark device as reachable
+    }
 
     if (defer_attributes) {
       // Prepare for publish
