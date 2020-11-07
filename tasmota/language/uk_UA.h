@@ -755,6 +755,7 @@
 #define D_UNIT_MICROSECOND               "µС"
 #define D_UNIT_MICROSIEMENS_PER_CM       "µS/cm"
 #define D_UNIT_MILLIAMPERE               "мА"
+#define D_UNIT_MILLILITERS               "ml"
 #define D_UNIT_MILLIMETER                "мм"
 #define D_UNIT_MILLIMETER_MERCURY        "ммHg"
 #define D_UNIT_MILLISECOND               "мС"
