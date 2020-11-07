@@ -796,7 +796,6 @@ const char kUploadErrors[] PROGMEM =
 #ifdef USE_RF_FLASH
   "|" D_UPLOAD_ERR_10 "|" D_UPLOAD_ERR_11 "|" D_UPLOAD_ERR_12 "|" D_UPLOAD_ERR_13
 #endif
-  "|" D_UPLOAD_ERR_14
   ;
 
 const uint16_t DNS_PORT = 53;
@@ -2689,8 +2688,7 @@ void HandleUploadDone(void)
 #ifdef USE_RF_FLASH
     if (Web.upload_error < 15) {
 #else
-    if ((Web.upload_error < 10) || (14 == Web.upload_error)) {
-      if (14 == Web.upload_error) { Web.upload_error = 10; }
+    if (Web.upload_error < 10) {
 #endif
       GetTextIndexed(error, sizeof(error), Web.upload_error -1, kUploadErrors);
     } else {
@@ -2976,10 +2974,6 @@ void HandleUploadLoop(void)
       if (!Update.end(true)) { // true to set the size to the current progress
         if (_serialoutput) { Update.printError(Serial); }
         Web.upload_error = 6;  // Upload failed. Enable logging 3
-        return;
-      }
-      if (!VersionCompatible()) {
-        Web.upload_error = 14;  // Not compatible
         return;
       }
     }

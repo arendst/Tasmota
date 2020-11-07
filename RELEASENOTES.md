@@ -68,3 +68,6 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ### Fixed
 - NTP fallback server functionality (#9739)
+
+### Removed
+- Version compatibility check
