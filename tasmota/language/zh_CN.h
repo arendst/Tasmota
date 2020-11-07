@@ -755,6 +755,7 @@
 #define D_UNIT_MICROSECOND "微秒"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
 #define D_UNIT_MILLIAMPERE "毫安"
+#define D_UNIT_MILLILITERS "ml"
 #define D_UNIT_MILLIMETER "毫米"
 #define D_UNIT_MILLIMETER_MERCURY "毫米汞柱"
 #define D_UNIT_MILLISECOND "毫秒"
