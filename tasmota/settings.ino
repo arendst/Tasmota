@@ -1303,6 +1303,9 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_ADC_PARAM1, parameters);
     }
 #endif  // ESP8266
+    if (Settings.version < 0x09010000) {
+      Settings.dimmer_step = DEFAULT_DIMMER_STEP;
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);
