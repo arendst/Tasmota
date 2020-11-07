@@ -705,7 +705,7 @@ void wifiKeepAlive(void) {
 void WifiPollNtp() {
   static uint8_t ntp_sync_minute = 0;
 
-  if (TasmotaGlobal.global_state.network_down) { return; }
+  if (TasmotaGlobal.global_state.network_down || Rtc.user_time_entry) { return; }
 
   uint8_t uptime_minute = (TasmotaGlobal.uptime / 60) % 60;  // 0 .. 59
   if ((ntp_sync_minute > 59) && (uptime_minute > 2)) {
@@ -722,9 +722,7 @@ void WifiPollNtp() {
     if (ntp_time > START_VALID_TIME) {
       Rtc.utc_time = ntp_time;
       ntp_sync_minute = 60;             // Sync so block further requests
-      Rtc.time_synced = true;
-      RtcSecond();
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("NTP: Synced"));
+      RtcSync();
     } else {
       ntp_sync_minute++;                // Try again in next minute
     }
