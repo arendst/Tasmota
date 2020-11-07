@@ -251,18 +251,18 @@ void CmndEnum(void) { // Command to control up to four type 4 Enum
       Response_P(PSTR("{\"" D_CMND_ENUM "%d\":%d}"), EnumIdx, Tuya.EnumState[EnumIdx-1]);
     }
   } else {
-    Response_P(PSTR("{\"" D_CMND_ENUM "\":"));
+    Response_P(PSTR("{\"" D_CMND_ENUM "\":{"));
     bool added = false;
     for (uint8_t i = 0; i <= 3; i++) {
       if (TuyaGetDpId(TUYA_MCU_FUNC_ENUM1 + i) != 0) {
         if (added) {
           ResponseAppend_P(PSTR(","));
         }
-        ResponseAppend_P(PSTR("{\"Enum%d\":%d}"), i + 1, Tuya.EnumState[i]); // Returns the avtual values of Enum as list
+        ResponseAppend_P(PSTR("\"Enum%d\":%d"), i + 1, Tuya.EnumState[i]); // Returns the avtual values of Enum as list
         added = true;
       }
     }
-    ResponseAppend_P(PSTR("}"));
+    ResponseAppend_P(PSTR("}}"));
   }
 }
 
@@ -284,7 +284,7 @@ void CmndEnumList(void) { // Command to declare the number of items in list for 
   }
   if ((TuyaGetDpId(TUYA_MCU_FUNC_ENUM1) != 0) || (TuyaGetDpId(TUYA_MCU_FUNC_ENUM3) != 0) ||
       (TuyaGetDpId(TUYA_MCU_FUNC_ENUM3) != 0) || (TuyaGetDpId(TUYA_MCU_FUNC_ENUM4) != 0)) {
-    Response_P(PSTR("{\"" D_CMND_ENUM_LIST "\":"));
+    Response_P(PSTR("{\"" D_CMND_ENUM_LIST "\":{"));
     bool added = false;
     for (uint8_t i = 0; i <= 3; i++) {
       if (TuyaGetDpId(TUYA_MCU_FUNC_ENUM1 + i) != 0) {
@@ -292,11 +292,11 @@ void CmndEnumList(void) { // Command to declare the number of items in list for 
           ResponseAppend_P(PSTR(","));
           if ( Settings.tuya_fnid_map[i + 231].dpid > 9 ) { Settings.tuya_fnid_map[i + 231].dpid = 1; } // default to 1 it the value exceed the range
         }
-        ResponseAppend_P(PSTR("{\"Enum%d\":%d}"), i + 1, Settings.tuya_fnid_map[i + 231].dpid); // fnid 231, 232, 233 and 234 are reserved for Enum
+        ResponseAppend_P(PSTR("\"Enum%d\":%d"), i + 1, Settings.tuya_fnid_map[i + 231].dpid); // fnid 231, 232, 233 and 234 are reserved for Enum
         added = true;
       }
     }
-    ResponseAppend_P(PSTR("}"));
+    ResponseAppend_P(PSTR("}}"));
   } else { return; }
 }
 
