@@ -614,6 +614,7 @@ void Z_AutoBindDefer(uint16_t shortaddr, uint8_t endpoint, const SBuffer &buf,
   for (uint32_t i=0; i<ARRAY_SIZE(Z_bindings); i++) {
     if (bitRead(cluster_map, i)) {
       uint16_t cluster = CxToCluster(pgm_read_byte(&Z_bindings[i]));
+      if ((cluster == 0x0001) && (!Z_BatteryReportingDeviceSpecific(shortaddr))) { continue; }
       zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, cluster, endpoint, Z_CAT_BIND, 0 /* value */, &Z_AutoBind);
     }
   }
@@ -622,6 +623,7 @@ void Z_AutoBindDefer(uint16_t shortaddr, uint8_t endpoint, const SBuffer &buf,
   for (uint32_t i=0; i<ARRAY_SIZE(Z_bindings); i++) {
     if (bitRead(cluster_in_map, i)) {
       uint16_t cluster = CxToCluster(pgm_read_byte(&Z_bindings[i]));
+      if ((cluster == 0x0001) && (!Z_BatteryReportingDeviceSpecific(shortaddr))) { continue; }
       zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, cluster, endpoint, Z_CAT_CONFIG_ATTR, 0 /* value */, &Z_AutoConfigReportingForCluster);
     }
   }
