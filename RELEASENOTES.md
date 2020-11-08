@@ -61,6 +61,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ### Added
 - Zigbee support for Mi Door and Contact (#9759)
 - Support for additional EZO sensors by Christopher Tremblay
+- Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
 
 ### Changed
 - Core library from v2.7.4.5 to v2.7.4.7

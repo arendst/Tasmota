@@ -515,11 +515,6 @@
 #define D_CMND_LATITUDE "Latitude"
 #define D_CMND_LONGITUDE "Longitude"
 
-// Commands xdrv_16_tuyadimmer.ino
-#define D_CMND_TUYA_MCU "TuyaMCU"
-#define D_CMND_TUYA_MCU_SEND_STATE "TuyaSend"
-#define D_JSON_TUYA_MCU_RECEIVED "TuyaReceived"
-
 // Commands xdrv_23_zigbee.ino
 #define D_PRFX_ZB "Zb"
 #define D_ZIGBEE_NOT_STARTED "Zigbee not started"
