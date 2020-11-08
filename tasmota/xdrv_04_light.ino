@@ -3096,10 +3096,22 @@ void CmndPalette(void)
 #ifdef USE_DGR_LIGHT_SEQUENCE
 void CmndSequenceOffset(void)
 {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
-    if (XdrvMailbox.payload != Light.sequence_offset) {
+  // SequenceOffset<x> <offset>, x: 0=offset, 1=Friendly name 1 ending digits + offset [-1]
+  // 2=MQTT topic ending digits + offset [-1]
+  int32_t offset = XdrvMailbox.payload;
+  if (XdrvMailbox.usridx && XdrvMailbox.index > 0) {
+    uint32_t index = SET_FRIENDLYNAME1;
+    if (XdrvMailbox.index == 2) index = SET_MQTT_TOPIC;
+    char * name = SettingsText(index);
+    char * ptr = name + strlen(name);
+    while (--ptr >= name && isdigit(*ptr));
+    if (!XdrvMailbox.data_len) offset = -1;
+    offset += atoi(ptr + 1);
+  }
+  if (offset >= 0 && offset <= 255) {
+    if (offset != Light.sequence_offset) {
       if (Light.sequence_offset) free(Light.channels_fifo);
-      Light.sequence_offset = XdrvMailbox.payload;
+      Light.sequence_offset = offset;
       if (Light.sequence_offset) Light.channels_fifo = (uint8_t *)calloc(Light.sequence_offset, LST_MAX);
     }
   }
