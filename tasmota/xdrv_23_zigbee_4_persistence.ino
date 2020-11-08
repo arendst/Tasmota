@@ -276,6 +276,7 @@ void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version) {
           Z_Data & z_data = device.data.getByType(type, ep);
           if (&z_data != nullptr) {
             z_data.setConfig(config);
+            Z_Data_Set::updateData(z_data);
           }
         }
       }
