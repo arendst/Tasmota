@@ -204,8 +204,13 @@ IPAddress ETHClass::gatewayIP()
 
 IPAddress ETHClass::dnsIP(uint8_t dns_no)
 {
+#ifdef ESP_IDF_VERSION_VAL //idf_version.h header file is only available in ESP-IDF v4.0 -> this is equal to: #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 0, 0)
+    const ip_addr_t *dns_ip = dns_getserver(dns_no);
+    return IPAddress(dns_ip->u_addr.ip4.addr);
+#else
     ip_addr_t dns_ip = dns_getserver(dns_no);
     return IPAddress(dns_ip.u_addr.ip4.addr);
+#endif
 }
 
 IPAddress ETHClass::broadcastIP()
