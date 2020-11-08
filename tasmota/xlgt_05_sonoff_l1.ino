@@ -42,6 +42,9 @@
 
 struct SNFL1 {
   uint32_t unlock = 0;
+  uint8_t color[3];
+  uint8_t dimmer;
+  uint8_t power;
   bool receive_ready = true;
 } Snfl1;
 
@@ -135,6 +138,7 @@ bool SnfL1SerialInput(void)
           int color_value = atoi(token3);
           current_color[color_index] = color_value;
           color_updated[color_index] = true;
+          Snfl1.color[color_index] = color_value;
 
           bool all_color_channels_updated = color_updated[0] && color_updated[1] && color_updated[2];
           if (all_color_channels_updated) {
@@ -181,6 +185,11 @@ bool SnfL1SerialInput(void)
             snprintf_P(cmnd_fade, sizeof(cmnd_fade), PSTR(D_CMND_FADE " 0"));
             ExecuteCommand(cmnd_fade, SRC_SWITCH);
           }
+          if (Settings.light_correction) {  // Disable ledtable as RC button colors overrule and are immediate supressing ghost colors
+            char cmnd_fade[20];
+            snprintf_P(cmnd_fade, sizeof(cmnd_fade), PSTR(D_CMND_LEDTABLE " 0"));
+            ExecuteCommand(cmnd_fade, SRC_SWITCH);
+          }
           ExecuteCommand(cmnd_color, SRC_SWITCH);
         }
       }
@@ -198,15 +207,34 @@ bool SnfL1SerialInput(void)
 
 bool SnfL1SetChannels(void)
 {
-  if (Snfl1.receive_ready || TimeReached(Snfl1.unlock)) {
+//  if (Snfl1.receive_ready || TimeReached(Snfl1.unlock)) {
 
+    uint8_t power = Light.power;
+    uint8_t dimmer = light_state.getDimmer();
     uint8_t *scale_col = (uint8_t*)XdrvMailbox.topic;
+
+    bool power_changed = (Snfl1.power != power);
+    Snfl1.power = power;
+
+    bool dimmer_changed = (Snfl1.dimmer != dimmer);
+    Snfl1.dimmer = dimmer;
+
+    bool color_changed = false;
+    if (!power_changed) {
+      for (uint32_t i = 0; i < 3; i++) {
+        if ((Snfl1.color[i] < scale_col[i] -5) || (Snfl1.color[i] > scale_col[i] +5)) {
+          color_changed = true;
+        }
+        Snfl1.color[i] = scale_col[i];
+      }
+    }
+    if (!power_changed && !dimmer_changed && !color_changed) { return true; }
 
     char buffer[140];
     snprintf_P(buffer, sizeof(buffer), PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"light_type\":1,\"colorR\":%d,\"colorG\":%d,\"colorB\":%d,\"bright\":%d,\"mode\":%d"),
       LocalTime(), millis()%1000,
       Light.power ? "on" : "off",
-      scale_col[0], scale_col[1], scale_col[2],
+      Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
       light_state.getDimmer(),
       SONOFF_L1_MODE_COLORFUL);
 
@@ -214,21 +242,26 @@ bool SnfL1SetChannels(void)
 
     Snfl1.unlock = millis() + 500;  // Allow time for the RC
     Snfl1.receive_ready = false;
-  }
+//  }
   return true;
 }
 
-void SnfL1ModuleSelected(void)
+bool SnfL1ModuleSelected(void)
 {
   if (SONOFF_L1 == TasmotaGlobal.module_type) {
     if (PinUsed(GPIO_RXD) && PinUsed(GPIO_TXD)) {
       SetSerial(19200, TS_SERIAL_8N1);
 
+      Snfl1.power = !Light.power;
+      Snfl1.dimmer = !light_state.getDimmer();
+
       TasmotaGlobal.light_type = LT_RGB;
       TasmotaGlobal.light_driver = XLGT_05;
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: Sonoff L1 Found"));
+      return true;
     }
   }
+  return false;
 }
 
 /*********************************************************************************************\
@@ -247,7 +280,7 @@ bool Xlgt05(uint8_t function)
       result = SnfL1SetChannels();
       break;
     case FUNC_MODULE_INIT:
-      SnfL1ModuleSelected();
+      result = SnfL1ModuleSelected();
       break;
   }
   return result;
