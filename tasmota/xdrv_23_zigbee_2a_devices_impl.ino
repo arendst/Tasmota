@@ -315,7 +315,7 @@ void Z_Device::setLastSeenNow(void) {
   // Fixes issue where zigbee device pings before WiFi/NTP has set utc_time
   // to the correct time, and "last seen" calculations are based on the
   // pre-corrected last_seen time and the since-corrected utc_time.
-  if (Rtc.utc_time < 1577836800) { return; }
+  if (Rtc.utc_time < START_VALID_TIME) { return; }
   last_seen = Rtc.utc_time;
 }
 
