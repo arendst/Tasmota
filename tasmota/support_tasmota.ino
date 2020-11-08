@@ -1066,12 +1066,8 @@ void Every250mSeconds(void)
         Response_P(PSTR("{\"" D_CMND_UPGRADE "\":\""));
         if (ota_result) {
 //          SetFlashModeDout();      // Force DOUT for both ESP8266 and ESP8285
-          if (!VersionCompatible()) {
-            ResponseAppend_P(PSTR(D_JSON_FAILED " " D_UPLOAD_ERR_14));
-          } else {
-            ResponseAppend_P(PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
-            TasmotaGlobal.restart_flag = 2;
-          }
+          ResponseAppend_P(PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
+          TasmotaGlobal.restart_flag = 2;
         } else {
           ResponseAppend_P(PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
         }

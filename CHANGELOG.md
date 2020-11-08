@@ -16,6 +16,9 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - NTP fallback server functionality (#9739)
 
+### Removed
+- Version compatibility check
+
 ## [Released]
 
 ### 9.1.0 20201105

@@ -817,7 +817,6 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
   if (!root) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
 
   // params
-  uint16_t srcDevice = BAD_SHORTADDR;      // BAD_SHORTADDR is broadcast, so considered invalid
   uint16_t dstDevice = BAD_SHORTADDR;      // BAD_SHORTADDR is broadcast, so considered invalid
   uint64_t dstLongAddr = 0;
   uint8_t  endpoint = 0x00;         // 0x00 is invalid for the src endpoint
@@ -884,7 +883,7 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
   } else {
     buf.add8(ZDO_BIND_REQ);
   }
-  buf.add16(srcDevice);
+  buf.add16(src_device.shortaddr);
   buf.add64(srcLongAddr);
   buf.add8(endpoint);
   buf.add16(cluster);
@@ -916,7 +915,7 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
     buf.add16(toGroup);
   }
 
-  EZ_SendZDO(srcDevice, unbind ? ZDO_UNBIND_REQ : ZDO_BIND_REQ, buf.buf(), buf.len());
+  EZ_SendZDO(src_device.shortaddr, unbind ? ZDO_UNBIND_REQ : ZDO_BIND_REQ, buf.buf(), buf.len());
 #endif // USE_ZIGBEE_EZSP
 
   ResponseCmndDone();

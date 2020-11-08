@@ -213,57 +213,6 @@ void SetFlashModeDout(void)
 #endif  // ESP8266
 }
 
-bool VersionCompatible(void)
-{
-#ifdef ESP8266
-
-  if (Settings.flag3.compatibility_check) {
-    return true;
-  }
-
-  eboot_command ebcmd;
-  eboot_command_read(&ebcmd);
-  uint32_t start_address = ebcmd.args[0];
-  uint32_t end_address = start_address + (ebcmd.args[2] & 0xFFFFF000) + FLASH_SECTOR_SIZE;
-  uint32_t* buffer = new uint32_t[FLASH_SECTOR_SIZE / 4];
-
-  uint32_t version[3] = { 0 };
-  bool found = false;
-  for (uint32_t address = start_address; address < end_address; address = address + FLASH_SECTOR_SIZE) {
-    ESP.flashRead(address, (uint32_t*)buffer, FLASH_SECTOR_SIZE);
-    if ((address == start_address) && (0x1F == (buffer[0] & 0xFF))) {
-      version[1] = 0xFFFFFFFF;  // Ota file is gzipped and can not be checked for compatibility
-      found = true;
-    } else {
-      for (uint32_t i = 0; i < (FLASH_SECTOR_SIZE / 4); i++) {
-        version[0] = version[1];
-        version[1] = version[2];
-        version[2] = buffer[i];
-        if ((MARKER_START == version[0]) && (MARKER_END == version[2])) {
-          found = true;
-          break;
-        }
-      }
-    }
-    if (found) { break; }
-  }
-  delete[] buffer;
-
-  if (!found) { version[1] = 0; }
-
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("OTA: Version 0x%08X, Compatible 0x%08X"), version[1], VERSION_COMPATIBLE);
-
-  if (version[1] < VERSION_COMPATIBLE) {
-    uint32_t eboot_magic = 0;  // Abandon OTA result
-    ESP.rtcUserMemoryWrite(0, (uint32_t*)&eboot_magic, sizeof(eboot_magic));
-    return false;
-  }
-
-#endif  // ESP8266
-
-  return true;
-}
-
 void SettingsBufferFree(void)
 {
   if (settings_buffer != nullptr) {

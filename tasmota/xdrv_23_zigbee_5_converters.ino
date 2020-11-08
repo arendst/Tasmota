@@ -2004,4 +2004,19 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const 
   }
 }
 
+//
+// Check if this device needs Battery reporting
+// This is usefule for IKEA device that tend to drain battery quickly when Battery reporting is set
+//
+bool Z_BatteryReportingDeviceSpecific(uint16_t shortaddr) {
+  const Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
+  if (device.manufacturerId) {
+    String manuf_c(device.manufacturerId);
+    if (manuf_c.startsWith(F("IKEA"))) {
+      return false;
+    }
+  }
+  return true;
+}
+
 #endif // USE_ZIGBEE
