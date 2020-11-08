@@ -1954,7 +1954,7 @@ void LightAnimate(void)
     }
     if (Light.update) {
 #ifdef USE_DEVICE_GROUPS
-      if (Light.power) LightSendDeviceGroupStatus(false);
+      if (Light.power && !Light.devgrp_no_channels_out) LightSendDeviceGroupStatus(false);
 #endif  // USE_DEVICE_GROUPS
 
       uint16_t cur_col_10[LST_MAX];   // 10 bits resolution
@@ -2315,7 +2315,7 @@ void LightSendDeviceGroupStatus(bool status)
   static uint8_t last_bri;
   uint8_t bri = light_state.getBri();
   bool send_bri_update = (status || bri != last_bri);
-  if (Light.subtype > LST_SINGLE && !Light.devgrp_no_channels_out) {
+  if (Light.subtype > LST_SINGLE) {
     static uint8_t channels[LST_MAX + 1] = { 0, 0, 0, 0, 0, 0 };
     if (status) {
       light_state.getChannels(channels);
@@ -2345,13 +2345,17 @@ void LightHandleDevGroupItem(void)
   switch (XdrvMailbox.command_code) {
     case DGR_ITEM_EOL:
       more_to_come = (XdrvMailbox.index & DGR_FLAG_MORE_TO_COME);
-      if (restore_power && !more_to_come) {
+      if (more_to_come) {
+        TasmotaGlobal.skip_light_fade = true;
+      }
+      else if (restore_power) {
         restore_power = false;
         Light.power = Light.old_power;
       }
 
       LightAnimate();
 
+      TasmotaGlobal.skip_light_fade = true;
       if (send_state && !more_to_come) {
         light_controller.saveSettings();
         if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
@@ -2363,6 +2367,7 @@ void LightHandleDevGroupItem(void)
     case DGR_ITEM_LIGHT_BRI:
       if (light_state.getBri() != value) {
         light_state.setBri(value);
+        Settings.light_dimmer = light_state.BriToDimmer(value);
         send_state = true;
       }
       break;
@@ -2431,7 +2436,6 @@ void LightHandleDevGroupItem(void)
         light_controller.changeChannels(Light.entry_color);
         light_controller.changeBri(old_bri);
         Settings.light_scheme = 0;
-        Light.devgrp_no_channels_out = false;
         if (!restore_power && !Light.power) {
           Light.old_power = Light.power;
           Light.power = 0xff;
