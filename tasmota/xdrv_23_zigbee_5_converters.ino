@@ -1851,7 +1851,9 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
           case Zint16:  *(int16_t*)attr_address  = ival32;           break;
           case Zint32:  *(int32_t*)attr_address  = ival32;           break;
         }
-        Z_Data_Set::updateData(data);
+        if (Z_Data_Set::updateData(data)) {
+          zigbee_devices.dirty();
+        }
       }
 
       uint16_t uval16 = attr.getUInt();     // call converter to uint only once

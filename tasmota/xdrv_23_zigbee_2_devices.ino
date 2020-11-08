@@ -75,7 +75,8 @@ public:
   void toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const;
 
   // update internal structures after an attribut update
-  inline void update(void) { }
+  // True if a configuration was changed
+  inline bool update(void) { return false; }
 
   static const Z_Data_Type type = Z_Data_Type::Z_Unknown;
   static bool ConfigToZData(const char * config_str, Z_Data_Type * type, uint8_t * ep, uint8_t * config);
@@ -355,6 +356,30 @@ public:
 /*********************************************************************************************\
  * Device specific: Alarm
 \*********************************************************************************************/
+// We're lucky that alarm type fits in 12 bits, so we can have a total entry of 16 bits
+typedef union Z_Alarm_Types_t {
+  struct {
+    uint16_t    zcl_type : 12;
+    uint8_t     config : 4;
+  } t;
+  uint16_t i;
+} Z_Alarm_Types_t;
+
+static const Z_Alarm_Types_t Z_Alarm_Types[] PROGMEM = {
+  { .t = { 0x000, 0x0 }},      // 0x0 : Standard CIE
+  { .t = { 0x00d, 0x1 }},      // 0x1 : PIR
+  { .t = { 0x015, 0x2 }},      // 0x2 : Contact
+  { .t = { 0x028, 0x3 }},      // 0x3 : Fire
+  { .t = { 0x02a, 0x4 }},      // 0x4 : Leak
+  { .t = { 0x02b, 0x5 }},      // 0x5 : CO
+  { .t = { 0x02c, 0x6 }},      // 0x6 : Personal
+  { .t = { 0x02d, 0x7 }},      // 0x7 : Movement
+  { .t = { 0x10f, 0x8 }},      // 0x8 : Panic
+  { .t = { 0x115, 0x8 }},      // 0x8 : Panic
+  { .t = { 0x21d, 0x8 }},      // 0x8 : Panic
+  { .t = { 0x226, 0x9 }},      // 0x9 : Glass break
+};
+
 class Z_Data_Alarm : public Z_Data {
 public:
   Z_Data_Alarm(uint8_t endpoint = 0) :
@@ -372,20 +397,18 @@ public:
 
   inline void setZoneType(uint16_t _zone_type)  { zone_type = _zone_type; }
 
-  void update(void) {
-    switch (zone_type) {
-      case 0x0000:  _config = 0x0; break;   // 0x0 : Standard CIE
-      case 0x000d:  _config = 0x1; break;   // 0x1 : PIR
-      case 0x0015:  _config = 0x2; break;   // 0x2 : Contact
-      case 0x0028:  _config = 0x3; break;   // 0x3 : Fire
-      case 0x002a:  _config = 0x4; break;   // 0x4 : Leak
-      case 0x002b:  _config = 0x5; break;   // 0x5 : CO
-      case 0x002c:  _config = 0x6; break;   // 0x6 : Personal
-      case 0x002d:  _config = 0x7; break;   // 0x7 : Movement
-      case 0x010f:
-      case 0x0115:
-      case 0x021d:  _config = 0x8; break;   // 0x8 : Panic
-      case 0x0226:  _config = 0x9; break;   // 0x9 : Glass break
+  bool update(void) {
+    for (uint32_t i=0; i<ARRAY_SIZE(Z_Alarm_Types); i++) {
+      Z_Alarm_Types_t conv_type;
+      conv_type.i = pgm_read_word(&Z_Alarm_Types[i].i);
+      if (zone_type == conv_type.t.zcl_type) {
+        if (_config == conv_type.t.config) {
+          return false;     // no change
+        } else {
+          _config = conv_type.t.config;
+          return true;
+        }
+      }
     }
   }
   
@@ -422,7 +445,7 @@ public:
   // find() does not create an object if it does not exist, and returns *(X*)nullptr
 
   // Emulate a virtuel update method for Z_Data
-  static void updateData(Z_Data & elt);
+  static bool updateData(Z_Data & elt);
 
   template <class M>
   M & get(uint8_t ep = 0);
@@ -435,14 +458,15 @@ public:
   M & addIfNull(M & cur, uint8_t ep = 0);
 };
 
-void Z_Data_Set::updateData(Z_Data & elt) {
+bool Z_Data_Set::updateData(Z_Data & elt) {
   switch (elt._type) {
-    case Z_Data_Type::Z_Light:  ((Z_Data_Light&) elt).update();       break;
-    case Z_Data_Type::Z_Plug:   ((Z_Data_Plug&) elt).update();        break;
-    case Z_Data_Type::Z_Alarm:  ((Z_Data_Alarm&) elt).update();       break;
-    case Z_Data_Type::Z_Thermo: ((Z_Data_Thermo&) elt).update();      break;
-    case Z_Data_Type::Z_OnOff:  ((Z_Data_OnOff&) elt).update();       break;
-    case Z_Data_Type::Z_PIR:    ((Z_Data_PIR&) elt).update();         break;
+    case Z_Data_Type::Z_Light:  return ((Z_Data_Light&) elt).update();       break;
+    case Z_Data_Type::Z_Plug:   return ((Z_Data_Plug&) elt).update();        break;
+    case Z_Data_Type::Z_Alarm:  return ((Z_Data_Alarm&) elt).update();       break;
+    case Z_Data_Type::Z_Thermo: return ((Z_Data_Thermo&) elt).update();      break;
+    case Z_Data_Type::Z_OnOff:  return ((Z_Data_OnOff&) elt).update();       break;
+    case Z_Data_Type::Z_PIR:    return ((Z_Data_PIR&) elt).update();         break;
+    default: return false;
   }
 }
 
