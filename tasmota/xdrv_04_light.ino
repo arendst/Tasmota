@@ -1741,8 +1741,8 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
 void LightSetPaletteEntry(void)
 {
   uint8_t bri = light_state.getBri();
-  uint8_t * palette_entry = &Light.palette[Light.wheel * LST_MAX];
-  for (int i = 0; i < LST_MAX; i++) {
+  uint8_t * palette_entry = &Light.palette[Light.wheel * Light.subtype];
+  for (int i = 0; i < Light.subtype; i++) {
     Light.new_color[i] = changeUIntScale(palette_entry[i], 0, 255, 0, bri);
   }
   light_state.setChannelsRaw(Light.new_color);
@@ -2535,9 +2535,8 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
   }
 #ifdef USE_LIGHT_PALETTE
   else if (Light.palette_count) {
-    value--;
     Light.wheel = value;
-    memcpy_P(&Light.entry_color, &Light.palette[value * LST_MAX], LST_MAX);
+    memcpy_P(&Light.entry_color, &Light.palette[value * Light.subtype], Light.subtype);
     entry_type = 1;                                 // Hexadecimal
   }
 #endif  // USE_LIGHT_PALETTE
