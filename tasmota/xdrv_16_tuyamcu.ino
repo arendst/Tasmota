@@ -56,8 +56,9 @@ TasmotaSerial *TuyaSerial = nullptr;
 
 struct TUYA {
   uint16_t Levels[5] = {0,0,0,0,0};       // Array to store the values of TuyaMCU channels
-  uint16_t Snapshot[5] = {0,0,0,0,0};     // Array to store a snapshot of Tasmota actual values for channels
-  char HSBColor[13];                      // Stores HSB Color string in Hex format
+  uint16_t Snapshot[5] = {0,0,0,0,0};     // Array to store a snapshot of Tasmota actual channel values
+  uint16_t EnumState[4] = {0,0,0,0};      // Array to store up to four Enum type 4 values
+  char RGBColor[7] = "000000";            // Stores RGB Color string in Hex format
   uint16_t CTMin = 153;                   // Minimum CT level allowed - When SetOption82 is enabled will default to 200
   uint16_t CTMax = 500;                   // Maximum CT level allowed - When SetOption82 is enabled will default to 380
   bool ModeSet = false;                   // Controls 0 - Single Tone light, 1 - RGB Light
@@ -81,11 +82,15 @@ struct TUYA {
   bool ignore_tuyareceived = false;       // When a modeset changes ignore stat
 } Tuya;
 
+#define D_CMND_TUYARGB "TuyaRGB"
+#define D_CMND_ENUM "Enum"
+#define D_CMND_ENUM_LIST "EnumList"
+
 const char kTuyaCommand[] PROGMEM = "|"  // No prefix
-  D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE;
+  D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE "|" D_CMND_TUYARGB "|" D_CMND_ENUM "|" D_CMND_ENUM_LIST;
 
 void (* const TuyaCommand[])(void) PROGMEM = {
-  &CmndTuyaMcu, &CmndTuyaSend
+  &CmndTuyaMcu, &CmndTuyaSend, &CmndTuyaRgb, &CmndEnum, &CmndEnumList
 };
 
 /*********************************************************************************************\
@@ -101,33 +106,10 @@ bool AsModuleTuyaMS(void) // ModeSet Layout
   return ((TasmotaGlobal.light_type > LT_RGB) && TuyaGetDpId(TUYA_MCU_FUNC_MODESET) != 0);
 }
 
-bool IsTuyaFanCtrl(void) // Fan Speed Controller Layout
-{
-  return ((TuyaGetDpId(TUYA_MCU_FUNC_FAN3) != 0) || (TuyaGetDpId(TUYA_MCU_FUNC_FAN4) != 0) ||
-          (TuyaGetDpId(TUYA_MCU_FUNC_FAN5) != 0) || (TuyaGetDpId(TUYA_MCU_FUNC_FAN6) != 0));
-}
-
 bool TuyaModeSet(void) // ModeSet Status
 {
   return Tuya.ModeSet;
 }
-
-uint8_t TuyaFanSpeeds(void) // Number of Fan Speeds for WebUI
-{
-  uint8_t FanSpeeds = 0;
-  for (uint32_t i = 0; i <= 3; i++) {
-    if (TuyaGetDpId(TUYA_MCU_FUNC_FAN3 + i) != 0) {
-      FanSpeeds = i + 2;
-    }
-  }
-  return FanSpeeds;
-}
-
-uint8_t TuyaFanState(void) // Fan Speed Status
-{
-  return Tuya.FanState;
-}
-// Web Interface
 
 /*
 TuyaSend<x> dpId,data
@@ -137,7 +119,7 @@ TuyaSend1 11,1 -> Sends boolean (Type 1) data 0/1 to dpId 11 (Max data length 1 
 TuyaSend2 11,100 -> Sends integer (Type 2) data 100 to dpId 11 (Max data length 4 bytes)
 TuyaSend2 11,0xAABBCCDD -> Sends 4 bytes (Type 2) data to dpId 11 (Max data length 4 bytes)
 TuyaSend3 11,ThisIsTheData -> Sends the supplied string (Type 3) to dpId 11 ( Max data length not-known)
-TuyaSend4 11,1 -> Sends enum (Type 4) data 0/1/2/3/4/5 to dpId 11 (Max data length 1 bytes)
+TuyaSend4 11,1 -> Sends enum (Type 4) data 0/1/2/3/4/5/6/7/8/9 to dpId 11 (Max data length 1 bytes)
 */
 
 void CmndTuyaSend(void) {
@@ -149,7 +131,7 @@ void CmndTuyaSend(void) {
   } else if (XdrvMailbox.index == 8) {
     TuyaRequestState(8);
   } else if (XdrvMailbox.index == 9) { // TuyaSend Topic Toggle
-    if (Settings.tuyamcu_topic) { Settings.tuyamcu_topic = 0; } else { Settings.tuyamcu_topic = 1; }
+    Settings.tuyamcu_topic = !Settings.tuyamcu_topic;
     AddLog_P(LOG_LEVEL_INFO, PSTR("TYA: TuyaMCU Stat Topic %s"), (Settings.tuyamcu_topic ? PSTR("enabled") : PSTR("disabled")));
 
   } else {
@@ -194,25 +176,26 @@ void CmndTuyaMcu(void) {
     }
 
     if (TuyaFuncIdValid(parm[0])) {
-    //   TuyaAddMcuFunc(parm[0], parm[1]);
-    //   TasmotaGlobal.restart_flag = 2;
-    // } else {
-    //   AddLog_P(LOG_LEVEL_ERROR, PSTR("TYA: TuyaMcu Invalid function id=%d"), parm[0]);
-    // }
       bool DualDim;
       if (TUYA_MCU_FUNC_DIMMER2 == parm[0] && parm[1] != 0) {
         if (TuyaGetDpId(TUYA_MCU_FUNC_DIMMER) != 0) { DualDim = true; }
       } else if (TUYA_MCU_FUNC_DIMMER == parm[0] && parm[1] != 0) {
         if (TuyaGetDpId(TUYA_MCU_FUNC_DIMMER2) != 0) { DualDim = true; }
       } else if ((TUYA_MCU_FUNC_DIMMER == parm[0] && parm[1] == 0) || (TUYA_MCU_FUNC_DIMMER2 == parm[0] && parm[1] == 0)) { DualDim = false; };
-      if (DualDim) {
-        if (TuyaGetDpId(TUYA_MCU_FUNC_CT) != 0) { TuyaAddMcuFunc(TUYA_MCU_FUNC_CT, 0); } // If the second dimmer is enabled CT, RGB or WHITE function must be removed
+      if (DualDim) { // If the second dimmer is enabled CT, RGB or WHITE function must be removed
+        if (TuyaGetDpId(TUYA_MCU_FUNC_CT) != 0) { TuyaAddMcuFunc(TUYA_MCU_FUNC_CT, 0); }
         if (TuyaGetDpId(TUYA_MCU_FUNC_RGB) != 0) { TuyaAddMcuFunc(TUYA_MCU_FUNC_RGB, 0); }
         if (TuyaGetDpId(TUYA_MCU_FUNC_WHITE) != 0) { TuyaAddMcuFunc(TUYA_MCU_FUNC_WHITE, 0); }
         Settings.flag3.pwm_multi_channels = 1;
       } else { Settings.flag3.pwm_multi_channels = 0; }
       TuyaAddMcuFunc(parm[0], parm[1]);
       TasmotaGlobal.restart_flag = 2;
+      if (TUYA_MCU_FUNC_RGB == parm[0] && parm[1] != 0) {
+        // if (Settings.tuya_fnid_map[235].dpid > 3) {
+        //   Settings.tuya_fnid_map[235].fnid = 235;
+        //   Settings.tuya_fnid_map[235].dpid = 0;
+        // }
+      }
     } else {
       AddLog_P(LOG_LEVEL_ERROR, PSTR("TYA: TuyaMcu Invalid function id=%d"), parm[0]);
     }
@@ -230,6 +213,99 @@ void CmndTuyaMcu(void) {
     }
   }
   ResponseAppend_P(PSTR("]}"));
+}
+
+void CmndTuyaRgb(void) { // Command to control the RGB format
+
+  uint16_t payload = XdrvMailbox.payload;
+
+  if (XdrvMailbox.data_len > 0) {
+    if (payload < 0 || payload > 3 || TuyaGetDpId(TUYA_MCU_FUNC_RGB) == 0) {
+      return;
+    } else {
+      if (payload != Settings.tuya_fnid_map[230].dpid) { // fnid 230 reserved for RGB
+        Settings.tuya_fnid_map[230].fnid = 230;
+        Settings.tuya_fnid_map[230].dpid = payload;
+      }
+    }
+  }
+  Response_P(PSTR("{\"" D_CMND_TUYARGB "\":%d}"), Settings.tuya_fnid_map[230].dpid);
+}
+
+void CmndEnum(void) { // Command to control up to four type 4 Enum
+  uint16_t EnumIdx = XdrvMailbox.index;
+  int32_t payload = XdrvMailbox.payload;
+
+  if (EnumIdx > 4 || TuyaGetDpId(TUYA_MCU_FUNC_ENUM1 + (EnumIdx-1)) == 0) {
+    return;
+  }
+
+  if (XdrvMailbox.data_len > 0) {
+    if (payload < 0 || payload > Settings.tuya_fnid_map[EnumIdx + 230].dpid ) {
+      return;
+    } else {
+      if (payload != Tuya.EnumState[EnumIdx-1]) {
+        Tuya.EnumState[EnumIdx-1] = payload;
+        TuyaSendEnum(TuyaGetDpId(TUYA_MCU_FUNC_ENUM1 + (EnumIdx-1)), payload);
+      }
+      Response_P(PSTR("{\"" D_CMND_ENUM "%d\":%d}"), EnumIdx, Tuya.EnumState[EnumIdx-1]);
+    }
+  } else {
+    Response_P(PSTR("{\"" D_CMND_ENUM "\":{"));
+    bool added = false;
+    for (uint8_t i = 0; i <= 3; i++) {
+      if (TuyaGetDpId(TUYA_MCU_FUNC_ENUM1 + i) != 0) {
+        if (added) {
+          ResponseAppend_P(PSTR(","));
+        }
+        ResponseAppend_P(PSTR("\"Enum%d\":%d"), i + 1, Tuya.EnumState[i]); // Returns the avtual values of Enum as list
+        added = true;
+      }
+    }
+    ResponseAppend_P(PSTR("}}"));
+  }
+}
+
+void CmndEnumList(void) { // Command to declare the number of items in list for up to four type 4 enum. Min = 0, Max = 9, Default = 1
+
+  if (XdrvMailbox.data_len > 0) {
+    char *p;
+    uint8_t i = 0;
+    uint8_t parm[3] = { 0 };
+    for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 2; str = strtok_r(nullptr, ", ", &p)) {
+      parm[i] = strtoul(str, nullptr, 0);
+      i++;
+    }
+    if ((parm[0] >= 1 && parm[0] <= 4) && (parm[1] >= 1 && parm[1] <= 9)) {
+      uint16_t idx = parm[0] + 230; // fnid 231, 232, 233 and 234 are reserved for enum
+      Settings.tuya_fnid_map[idx].fnid = idx;
+      Settings.tuya_fnid_map[idx].dpid = parm[1];
+    }
+  }
+  if ((TuyaGetDpId(TUYA_MCU_FUNC_ENUM1) != 0) || (TuyaGetDpId(TUYA_MCU_FUNC_ENUM3) != 0) ||
+      (TuyaGetDpId(TUYA_MCU_FUNC_ENUM3) != 0) || (TuyaGetDpId(TUYA_MCU_FUNC_ENUM4) != 0)) {
+    Response_P(PSTR("{\"" D_CMND_ENUM_LIST "\":{"));
+    bool added = false;
+    for (uint8_t i = 0; i <= 3; i++) {
+      if (TuyaGetDpId(TUYA_MCU_FUNC_ENUM1 + i) != 0) {
+        if (added) {
+          ResponseAppend_P(PSTR(","));
+          if ( Settings.tuya_fnid_map[i + 231].dpid > 9 ) { Settings.tuya_fnid_map[i + 231].dpid = 1; } // default to 1 it the value exceed the range
+        }
+        ResponseAppend_P(PSTR("\"Enum%d\":%d"), i + 1, Settings.tuya_fnid_map[i + 231].dpid); // fnid 231, 232, 233 and 234 are reserved for Enum
+        added = true;
+      }
+    }
+    ResponseAppend_P(PSTR("}}"));
+  } else { return; }
+}
+
+int StrCmpNoCase(char const *Str1, char const *Str2) // Compare RGB case sensistive strings
+{
+  for (;; Str1++, Str2++) {
+    int StrCmp = tolower((unsigned char)*Str1) - tolower((unsigned char)*Str2);
+    if (StrCmp != 0 || !*Str1) { return StrCmp; }
+  }
 }
 
 /*********************************************************************************************\
@@ -274,7 +350,6 @@ void UpdateDevices() {
       } else if (fnId >= TUYA_MCU_FUNC_REL1_INV && fnId <= TUYA_MCU_FUNC_REL8_INV) { // Inverted Relay
         bitSet(TasmotaGlobal.rel_inverted, fnId - TUYA_MCU_FUNC_REL1_INV);
       }
-
     }
   }
 }
@@ -285,11 +360,10 @@ inline bool TuyaFuncIdValid(uint8_t fnId) {
           (fnId >= TUYA_MCU_FUNC_DIMMER && fnId <= TUYA_MCU_FUNC_REPORT2) ||
           (fnId >= TUYA_MCU_FUNC_POWER && fnId <= TUYA_MCU_FUNC_BATTERY_PERCENTAGE) ||
           (fnId >= TUYA_MCU_FUNC_REL1_INV && fnId <= TUYA_MCU_FUNC_REL8_INV) ||
-          (fnId >= TUYA_MCU_FUNC_FAN3 && fnId <= TUYA_MCU_FUNC_FAN6) ||
+          (fnId >= TUYA_MCU_FUNC_ENUM1 && fnId <= TUYA_MCU_FUNC_ENUM4) ||
           (fnId >= TUYA_MCU_FUNC_MOTOR_DIR && fnId <= TUYA_MCU_FUNC_DUMMY) ||
           (fnId == TUYA_MCU_FUNC_LOWPOWER_MODE);
 }
-
 uint8_t TuyaGetFuncId(uint8_t dpid) {
   for (uint8_t i = 0; i < MAX_TUYA_FUNCTIONS; i++) {
     if (Settings.tuya_fnid_map[i].dpid == dpid) {
@@ -413,7 +487,7 @@ bool TuyaSetChannels(void)
   uint16_t hue, TuyaData;
   uint8_t sat, bri;
   uint8_t TuyaIdx = 0;
-  char hex_char[13];
+  char hex_char[15];
   bool noupd = false;
   bool LightMode = TuyaGetDpId(TUYA_MCU_FUNC_MODESET) != 0;
   uint8_t idx = 0;
@@ -457,17 +531,45 @@ bool TuyaSetChannels(void)
 
     if (TasmotaGlobal.light_type >= LT_RGB) {
 
+      // There are two types of rgb format, configure the correct one using TuyaRGB command.
+      // The most common is 0HUE0SAT0BRI0 and the less common is RRGGBBFFFF6464 and sometimes both are case sensitive:
+      // 0  type 1 Uppercase - 00DF00DC0244
+      // 1  Type 1 Lowercase - 008003e8037a
+      // 2  Type 2 Uppercase - 00FF00FFFF6464
+      // 3  Type 2 Lowercase - 00e420ffff6464
+
+      uint8_t RGBType = Settings.tuya_fnid_map[230].dpid; // Select the type of RGB payload
+      char scolor[7];
+      LightGetColor(scolor, 1); // Always get the color in hex format
       light_state.getHSB(&hue, &sat, &bri);
       sat = changeUIntScale(sat, 0, 255, 0, 100);
       bri = changeUIntScale(bri, 0, 255, 0, 100);
-      if (hue != Tuya.Snapshot[2] || sat != Tuya.Snapshot[3] || bri != Tuya.Snapshot[4]) {
+
+      if ((RGBType > 1 && (StrCmpNoCase(scolor, Tuya.RGBColor) != 0)) || (RGBType <= 1 && ((hue != Tuya.Snapshot[2]) ||
+          (sat != Tuya.Snapshot[3]) || (bri != Tuya.Snapshot[4])))) {
+
         if ((LightMode && Tuya.ModeSet) || LT_RGB == TasmotaGlobal.light_type) {
-          snprintf_P(hex_char, sizeof(hex_char), PSTR("%04X%04X%04X"), hue, sat * 10, bri * 10); // Create a TuyaMCU readable RGB payload
+          if (TuyaGetDpId(TUYA_MCU_FUNC_RGB) != 0) {
+            switch (RGBType) {
+            case 0: // Uppercase Type 1 payload
+              snprintf_P(hex_char, sizeof(hex_char), PSTR("%04X%04X%04X"), hue, sat * 10, bri * 10);
+              break;
+            case 1: // Lowercase Type 1 payload
+              snprintf_P(hex_char, sizeof(hex_char), PSTR("%04x%04x%04x"), hue, sat * 10, bri * 10);
+              break;
+            case 2: // Uppercase Type 2 payload
+              snprintf_P(hex_char, sizeof(hex_char), PSTR("%sFFFF6464"), scolor);
+              break;
+            case 3: // Lowercase Type 2 payload
+              snprintf_P(hex_char, sizeof(hex_char), PSTR("%sffff6464"), LowerCase(scolor, scolor));
+              break;
+            }
+            memcpy_P(Tuya.RGBColor, scolor, strlen(scolor));
+            Tuya.Snapshot[2] = hue;
+            Tuya.Snapshot[3] = sat;
+            Tuya.Snapshot[4] = bri;
+          }
           LightSerialDuty(0, &hex_char[0], 3);
-          memcpy_P(Tuya.HSBColor, hex_char, strlen(hex_char));
-          Tuya.Snapshot[2] = hue;
-          Tuya.Snapshot[3] = sat;
-          Tuya.Snapshot[4] = bri;
         }
       }
     }
@@ -512,7 +614,7 @@ void LightSerialDuty(uint16_t duty, char *hex_char, uint8_t TuyaIdx)
       }
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Send dim skipped value %d for dpid %d"), duty, dpid);  // due to 0 or already set
     } else {
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Cannot set dimmer. Dimmer Id unknown"));  //
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Cannot set dimmer. Dimmer Id unknown"));
     }
   }
 
@@ -564,7 +666,6 @@ void TuyaProcessStatePacket(void) {
     fnId = TuyaGetFuncId(Tuya.buffer[dpidStart]);
 
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: fnId=%d is set for dpId=%d"), fnId, Tuya.buffer[dpidStart]);
-    // if (TuyaFuncIdValid(fnId)) {
       if (Tuya.buffer[dpidStart + 1] == 1) {  // Data Type 1
 
         if (fnId >= TUYA_MCU_FUNC_REL1 && fnId <= TUYA_MCU_FUNC_REL8) {
@@ -590,10 +691,6 @@ void TuyaProcessStatePacket(void) {
         bool tuya_energy_enabled = (XNRG_32 == TasmotaGlobal.energy_driver);
         uint16_t packetValue = Tuya.buffer[dpidStart + 6] << 8 | Tuya.buffer[dpidStart + 7];
         uint8_t dimIndex;
-        if ((fnId == TUYA_MCU_FUNC_FAN3) || (fnId == TUYA_MCU_FUNC_FAN4) ||
-            (fnId == TUYA_MCU_FUNC_FAN5) || (fnId == TUYA_MCU_FUNC_FAN6)) {
-          Tuya.FanState = packetValue;
-        }
 
         if (fnId == TUYA_MCU_FUNC_DIMMER || fnId == TUYA_MCU_FUNC_REPORT1) { dimIndex = 0; }
 
@@ -664,32 +761,61 @@ void TuyaProcessStatePacket(void) {
       }
       else if (Tuya.buffer[dpidStart + 1] == 3) {  // Data Type 3
         const unsigned char *dpData = (unsigned char*)&Tuya.buffer[dpidStart + 4];
-        if ((TuyaGetDpId(TUYA_MCU_FUNC_RGB) != 0) && dpDataLen == 12) { //Decode the RGB hex and transmit HSBCOLOR command
+        if ((TuyaGetDpId(TUYA_MCU_FUNC_RGB) != 0)) {
 
-          //Tuya.ignore_dim = true;
-          char RgbData[13];
-          snprintf_P(RgbData, sizeof(RgbData), PSTR("%.*s"), dpDataLen, dpData);
+          uint8_t RGBType = Settings.tuya_fnid_map[230].dpid; // Select the type of hex configured
+          char RgbData[15];
+          char RGB[7];
           char HSB1[5], HSB2[5], HSB3[5];
-          snprintf_P(HSB1, sizeof(HSB1), PSTR("%.4s\n"), &RgbData[0]);
-          snprintf_P(HSB2, sizeof(HSB2), PSTR("%.4s\n"), &RgbData[4]);
-          snprintf_P(HSB3, sizeof(HSB3), PSTR("%.4s\n"), &RgbData[8]);
+          scmnd[0] = '\0';
+          snprintf_P(RgbData, sizeof(RgbData), PSTR("%.*s"), dpDataLen, dpData);
 
-          if ((Tuya.Snapshot[2] != ((int)strtol(HSB1, NULL, 16)) ||
-               Tuya.Snapshot[3] != ((int)strtol(HSB2, NULL, 16)) / 10 || Tuya.Snapshot[4] !=((int)strtol(HSB3, NULL, 16)) / 10)) {
-
+          if (RGBType <= 1 && dpDataLen == 12) {
+            snprintf_P(HSB1, sizeof(HSB1), PSTR("%.4s\n"), &RgbData[0]);
+            snprintf_P(HSB2, sizeof(HSB2), PSTR("%.4s\n"), &RgbData[4]);
+            snprintf_P(HSB3, sizeof(HSB3), PSTR("%.4s\n"), &RgbData[8]);
+            if ((Tuya.Snapshot[2] != ((int)strtol(HSB1, NULL, 16)) ||
+              Tuya.Snapshot[3] != ((int)strtol(HSB2, NULL, 16)) / 10 || Tuya.Snapshot[4] !=((int)strtol(HSB3, NULL, 16)) / 10)) {
+            Tuya.Snapshot[2] = ((int)strtol(HSB1, NULL, 16));
+            Tuya.Snapshot[3] = ((int)strtol(HSB2, NULL, 16)) / 10;
+            Tuya.Snapshot[4] = ((int)strtol(HSB3, NULL, 16)) / 10;
             snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_HSBCOLOR " %d,%d,%d"), ((int)strtol(HSB1, NULL, 16)),
                       ((int)strtol(HSB2, NULL, 16)) / 10, ((int)strtol(HSB3, NULL, 16)) / 10);
-            ExecuteCommand(scmnd, SRC_SWITCH);
+            }
+          }
+          if (RGBType > 1 && dpDataLen == 14) {
+            snprintf_P(RGB, sizeof(RGB), PSTR("%.6s\n"), &RgbData[0]);
+            if (StrCmpNoCase(RGB, Tuya.RGBColor) != 0) {
+              snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_COLOR " %s"), RGB);
+              memcpy_P(Tuya.RGBColor, RGB, strlen(RGB));
+            }
 
-            memcpy_P(Tuya.HSBColor, RgbData, strlen(RgbData));
+          }
+          if (scmnd[0] != '\0') {
+            ExecuteCommand(scmnd, SRC_SWITCH);
           }
         }
       }
       else if (Tuya.buffer[dpidStart + 1] == 4) {  // Data Type 4
         const unsigned char *dpData = (unsigned char*)&Tuya.buffer[dpidStart + 4];
-        if (fnId == TUYA_MCU_FUNC_MODESET) { // toggle light type
+
+        if ((fnId == TUYA_MCU_FUNC_MODESET)) { // Toggle light type
           Tuya.ModeSet = dpData[0];
           Tuya.Levels[3] = dpData[0];
+        }
+        if ((fnId >= TUYA_MCU_FUNC_ENUM1) && (fnId <= TUYA_MCU_FUNC_ENUM4)) {
+        // if ((fnId == TUYA_MCU_FUNC_ENUM1) || (fnId == TUYA_MCU_FUNC_ENUM2) ||
+        //     (fnId == TUYA_MCU_FUNC_ENUM3) || (fnId == TUYA_MCU_FUNC_ENUM4)) {
+          for (uint8_t i = 0; i <= 3; i++) {
+            bool noupdate = false;
+            if ((TUYA_MCU_FUNC_ENUM1 + i) == fnId) {
+              if (Tuya.EnumState[i] != dpData[0]) {
+                Tuya.EnumState[i] = dpData[0];
+                snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_ENUM "%d %d"), i+1, dpData[0]);
+                ExecuteCommand(scmnd, SRC_SWITCH);
+              }
+            }
+          }
         }
       }
       dpidStart += dpDataLen + 4;
@@ -912,7 +1038,7 @@ void TuyaSerialInput(void)
       uint16_t DataVal = 0;
       uint8_t dpId = 0;
       uint8_t dpDataType = 0;
-      char DataStr[13];
+      char DataStr[15];
 
       if (len > 0) {
         ResponseAppend_P(PSTR(",\"CmndData\":\"%s\""), ToHex_P((unsigned char*)&Tuya.buffer[6], len, hex_char, sizeof(hex_char)));
@@ -920,7 +1046,6 @@ void TuyaSerialInput(void)
           //55 AA 03 07 00 0D 01 04 00 01 02 02 02 00 04 00 00 00 1A 40
           // 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19
           uint8_t dpidStart = 6;
-          //snprintf_P(DataStr, sizeof(DataStr), PSTR("000000000000"));
           while (dpidStart + 4 < Tuya.byte_counter) {
             dpId = Tuya.buffer[dpidStart];
             dpDataType = Tuya.buffer[dpidStart + 1];
@@ -969,12 +1094,11 @@ void TuyaSerialInput(void)
 
       if (dpId != 0 && Settings.tuyamcu_topic) { // Publish a /STAT Topic ready to use for any home automation system
         if (!Tuya.SuspendTopic) {
-          char scommand[10];
-          snprintf_P(scommand, sizeof(scommand), PSTR("TuyaSend%d"), dpDataType);
-
-          if (dpDataType != 3 && dpDataType != 5) {  Response_P(PSTR("%d,%u"), dpId, DataVal); }
-          else { Response_P(PSTR("%d,%s"), dpId, DataStr); }
-          MqttPublishPrefixTopic_P(STAT, (PSTR("%s"), scommand));
+          char scommand[13];
+          snprintf_P(scommand, sizeof(scommand), PSTR("DpType%uId%u"), dpDataType, dpId);
+          if (dpDataType != 3 && dpDataType != 5) { Response_P(PSTR("%u"), DataVal); }
+          else { Response_P(PSTR("%s"), DataStr); }
+          MqttPublishPrefixTopic_P(STAT, scommand);
         }
       }
 

@@ -379,11 +379,12 @@ enum TuyaSupportedFunctions { TUYA_MCU_FUNC_NONE,
                               TUYA_MCU_FUNC_REL1_INV = 41, TUYA_MCU_FUNC_REL2_INV, TUYA_MCU_FUNC_REL3_INV, TUYA_MCU_FUNC_REL4_INV, TUYA_MCU_FUNC_REL5_INV,
                                 TUYA_MCU_FUNC_REL6_INV, TUYA_MCU_FUNC_REL7_INV, TUYA_MCU_FUNC_REL8_INV,
                               TUYA_MCU_FUNC_LOWPOWER_MODE = 51,
-                              TUYA_MCU_FUNC_FAN3 = 61, TUYA_MCU_FUNC_FAN4, TUYA_MCU_FUNC_FAN5, TUYA_MCU_FUNC_FAN6,
+                              TUYA_MCU_FUNC_ENUM1 = 61, TUYA_MCU_FUNC_ENUM2, TUYA_MCU_FUNC_ENUM3, TUYA_MCU_FUNC_ENUM4,
                               TUYA_MCU_FUNC_MOTOR_DIR = 97,
                               TUYA_MCU_FUNC_ERROR = 98,
                               TUYA_MCU_FUNC_DUMMY = 99,
                               TUYA_MCU_FUNC_LAST = 255
+                              // IDs from 230 to 234 are reserved for internal use
 };
 
 #endif  // _TASMOTA_H_
