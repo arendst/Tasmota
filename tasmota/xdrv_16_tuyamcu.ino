@@ -82,15 +82,20 @@ struct TUYA {
   bool ignore_tuyareceived = false;       // When a modeset changes ignore stat
 } Tuya;
 
-#define D_CMND_TUYARGB "TuyaRGB"
-#define D_CMND_ENUM "Enum"
-#define D_CMND_ENUM_LIST "EnumList"
+#define D_JSON_TUYA_MCU_RECEIVED "TuyaReceived"
 
-const char kTuyaCommand[] PROGMEM = "|"  // No prefix
-  D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE "|" D_CMND_TUYARGB "|" D_CMND_ENUM "|" D_CMND_ENUM_LIST;
+#define D_PRFX_TUYA "Tuya"
+#define D_CMND_TUYA_MCU "MCU"
+#define D_CMND_TUYA_MCU_SEND_STATE "Send"
+#define D_CMND_TUYARGB "RGB"
+#define D_CMND_TUYA_ENUM "Enum"
+#define D_CMND_TUYA_ENUM_LIST "EnumList"
+
+const char kTuyaCommand[] PROGMEM = D_PRFX_TUYA "|"  // Prefix
+  D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE "|" D_CMND_TUYARGB "|" D_CMND_TUYA_ENUM "|" D_CMND_TUYA_ENUM_LIST;
 
 void (* const TuyaCommand[])(void) PROGMEM = {
-  &CmndTuyaMcu, &CmndTuyaSend, &CmndTuyaRgb, &CmndEnum, &CmndEnumList
+  &CmndTuyaMcu, &CmndTuyaSend, &CmndTuyaRgb, &CmndTuyaEnum, &CmndTuyaEnumList
 };
 
 /*********************************************************************************************\
@@ -201,7 +206,7 @@ void CmndTuyaMcu(void) {
     }
   }
 
-  Response_P(PSTR("{\"" D_CMND_TUYA_MCU "\":["));
+  Response_P(PSTR("{\"%s\":["), XdrvMailbox.command);  // Builds TuyaMCU
   bool added = false;
   for (uint8_t i = 0; i < MAX_TUYA_FUNCTIONS; i++) {
     if (Settings.tuya_fnid_map[i].fnid != 0) {
@@ -229,10 +234,10 @@ void CmndTuyaRgb(void) { // Command to control the RGB format
       }
     }
   }
-  Response_P(PSTR("{\"" D_CMND_TUYARGB "\":%d}"), Settings.tuya_fnid_map[230].dpid);
+  ResponseCmndNumber(Settings.tuya_fnid_map[230].dpid);
 }
 
-void CmndEnum(void) { // Command to control up to four type 4 Enum
+void CmndTuyaEnum(void) { // Command to control up to four type 4 Enum
   uint16_t EnumIdx = XdrvMailbox.index;
   int32_t payload = XdrvMailbox.payload;
 
@@ -248,10 +253,10 @@ void CmndEnum(void) { // Command to control up to four type 4 Enum
         Tuya.EnumState[EnumIdx-1] = payload;
         TuyaSendEnum(TuyaGetDpId(TUYA_MCU_FUNC_ENUM1 + (EnumIdx-1)), payload);
       }
-      Response_P(PSTR("{\"" D_CMND_ENUM "%d\":%d}"), EnumIdx, Tuya.EnumState[EnumIdx-1]);
+      ResponseCmndIdxNumber(Tuya.EnumState[EnumIdx-1]);
     }
   } else {
-    Response_P(PSTR("{\"" D_CMND_ENUM "\":{"));
+    Response_P(PSTR("{\"%s\":{"), XdrvMailbox.command);  // Builds TuyaEnum
     bool added = false;
     for (uint8_t i = 0; i <= 3; i++) {
       if (TuyaGetDpId(TUYA_MCU_FUNC_ENUM1 + i) != 0) {
@@ -266,7 +271,7 @@ void CmndEnum(void) { // Command to control up to four type 4 Enum
   }
 }
 
-void CmndEnumList(void) { // Command to declare the number of items in list for up to four type 4 enum. Min = 0, Max = 9, Default = 1
+void CmndTuyaEnumList(void) { // Command to declare the number of items in list for up to four type 4 enum. Min = 0, Max = 9, Default = 1
 
   if (XdrvMailbox.data_len > 0) {
     char *p;
@@ -284,7 +289,7 @@ void CmndEnumList(void) { // Command to declare the number of items in list for 
   }
   if ((TuyaGetDpId(TUYA_MCU_FUNC_ENUM1) != 0) || (TuyaGetDpId(TUYA_MCU_FUNC_ENUM3) != 0) ||
       (TuyaGetDpId(TUYA_MCU_FUNC_ENUM3) != 0) || (TuyaGetDpId(TUYA_MCU_FUNC_ENUM4) != 0)) {
-    Response_P(PSTR("{\"" D_CMND_ENUM_LIST "\":{"));
+    Response_P(PSTR("{\"%s\":{"), XdrvMailbox.command);  // Builds TuyaEnumList
     bool added = false;
     for (uint8_t i = 0; i <= 3; i++) {
       if (TuyaGetDpId(TUYA_MCU_FUNC_ENUM1 + i) != 0) {
@@ -811,7 +816,7 @@ void TuyaProcessStatePacket(void) {
             if ((TUYA_MCU_FUNC_ENUM1 + i) == fnId) {
               if (Tuya.EnumState[i] != dpData[0]) {
                 Tuya.EnumState[i] = dpData[0];
-                snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_ENUM "%d %d"), i+1, dpData[0]);
+                snprintf_P(scmnd, sizeof(scmnd), PSTR(D_PRFX_TUYA D_CMND_TUYA_ENUM "%d %d"), i+1, dpData[0]);
                 ExecuteCommand(scmnd, SRC_SWITCH);
               }
             }

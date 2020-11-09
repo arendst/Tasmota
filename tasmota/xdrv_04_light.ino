@@ -1741,8 +1741,8 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
 void LightSetPaletteEntry(void)
 {
   uint8_t bri = light_state.getBri();
-  uint8_t * palette_entry = &Light.palette[Light.wheel * LST_MAX];
-  for (int i = 0; i < LST_MAX; i++) {
+  uint8_t * palette_entry = &Light.palette[Light.wheel * Light.subtype];
+  for (int i = 0; i < Light.subtype; i++) {
     Light.new_color[i] = changeUIntScale(palette_entry[i], 0, 255, 0, bri);
   }
   light_state.setChannelsRaw(Light.new_color);
@@ -1954,7 +1954,7 @@ void LightAnimate(void)
     }
     if (Light.update) {
 #ifdef USE_DEVICE_GROUPS
-      if (Light.power) LightSendDeviceGroupStatus(false);
+      if (Light.power && !Light.devgrp_no_channels_out) LightSendDeviceGroupStatus(false);
 #endif  // USE_DEVICE_GROUPS
 
       uint16_t cur_col_10[LST_MAX];   // 10 bits resolution
@@ -2221,20 +2221,21 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
       }
     }
   }
-
 //  char msg[24];
 //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: Channels %s"), ToHex_P((const unsigned char *)cur_col_10, 10, msg, sizeof(msg)));
+
+  // Some devices need scaled RGB like Sonoff L1
+  uint32_t max = (cur_col_10[0] > cur_col_10[1] && cur_col_10[0] > cur_col_10[2]) ? cur_col_10[0] : (cur_col_10[1] > cur_col_10[2]) ? cur_col_10[1] : cur_col_10[2];   // 0..1023
+  uint8_t scale_col[3];
+  for (uint32_t i = 0; i < 3; i++) {
+    scale_col[i] = (0 == max) ? 255 : changeUIntScale(cur_col_10[i], 0, max, 0, 255);
+  }
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: CurCol %03X %03X %03X, ScaleCol %02X %02X %02X, Max %02X"),
+//    cur_col_10[0], cur_col_10[1], cur_col_10[2], scale_col[0], scale_col[1], scale_col[2], max);
 
   uint8_t cur_col[LST_MAX];
   for (uint32_t i = 0; i < LST_MAX; i++) {
     cur_col[i] = change10to8(cur_col_10[i]);
-  }
-  // Some devices need scaled RGB like Sonoff L1
-  // TODO, should be probably moved to the Sonoff L1 support code
-  uint8_t scale_col[3];
-  uint32_t max = (cur_col[0] > cur_col[1] && cur_col[0] > cur_col[2]) ? cur_col[0] : (cur_col[1] > cur_col[2]) ? cur_col[1] : cur_col[2];   // 0..255
-  for (uint32_t i = 0; i < 3; i++) {
-    scale_col[i] = (0 == max) ? 255 : (255 > max) ? changeUIntScale(cur_col[i], 0, max, 0, 255) : cur_col[i];
   }
 
   char *tmp_data = XdrvMailbox.data;
@@ -2315,7 +2316,7 @@ void LightSendDeviceGroupStatus(bool status)
   static uint8_t last_bri;
   uint8_t bri = light_state.getBri();
   bool send_bri_update = (status || bri != last_bri);
-  if (Light.subtype > LST_SINGLE && !Light.devgrp_no_channels_out) {
+  if (Light.subtype > LST_SINGLE) {
     static uint8_t channels[LST_MAX + 1] = { 0, 0, 0, 0, 0, 0 };
     if (status) {
       light_state.getChannels(channels);
@@ -2345,13 +2346,17 @@ void LightHandleDevGroupItem(void)
   switch (XdrvMailbox.command_code) {
     case DGR_ITEM_EOL:
       more_to_come = (XdrvMailbox.index & DGR_FLAG_MORE_TO_COME);
-      if (restore_power && !more_to_come) {
+      if (more_to_come) {
+        TasmotaGlobal.skip_light_fade = true;
+      }
+      else if (restore_power) {
         restore_power = false;
         Light.power = Light.old_power;
       }
 
       LightAnimate();
 
+      TasmotaGlobal.skip_light_fade = true;
       if (send_state && !more_to_come) {
         light_controller.saveSettings();
         if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
@@ -2363,6 +2368,7 @@ void LightHandleDevGroupItem(void)
     case DGR_ITEM_LIGHT_BRI:
       if (light_state.getBri() != value) {
         light_state.setBri(value);
+        Settings.light_dimmer = light_state.BriToDimmer(value);
         send_state = true;
       }
       break;
@@ -2431,7 +2437,6 @@ void LightHandleDevGroupItem(void)
         light_controller.changeChannels(Light.entry_color);
         light_controller.changeBri(old_bri);
         Settings.light_scheme = 0;
-        Light.devgrp_no_channels_out = false;
         if (!restore_power && !Light.power) {
           Light.old_power = Light.power;
           Light.power = 0xff;
@@ -2531,9 +2536,8 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
   }
 #ifdef USE_LIGHT_PALETTE
   else if (Light.palette_count) {
-    value--;
     Light.wheel = value;
-    memcpy_P(&Light.entry_color, &Light.palette[value * LST_MAX], LST_MAX);
+    memcpy_P(&Light.entry_color, &Light.palette[value * Light.subtype], Light.subtype);
     entry_type = 1;                                 // Hexadecimal
   }
 #endif  // USE_LIGHT_PALETTE
@@ -3093,10 +3097,22 @@ void CmndPalette(void)
 #ifdef USE_DGR_LIGHT_SEQUENCE
 void CmndSequenceOffset(void)
 {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
-    if (XdrvMailbox.payload != Light.sequence_offset) {
+  // SequenceOffset<x> <offset>, x: 0=offset, 1=Friendly name 1 ending digits + offset [-1]
+  // 2=MQTT topic ending digits + offset [-1]
+  int32_t offset = XdrvMailbox.payload;
+  if (XdrvMailbox.usridx && XdrvMailbox.index > 0) {
+    uint32_t index = SET_FRIENDLYNAME1;
+    if (XdrvMailbox.index == 2) index = SET_MQTT_TOPIC;
+    char * name = SettingsText(index);
+    char * ptr = name + strlen(name);
+    while (--ptr >= name && isdigit(*ptr));
+    if (!XdrvMailbox.data_len) offset = -1;
+    offset += atoi(ptr + 1);
+  }
+  if (offset >= 0 && offset <= 255) {
+    if (offset != Light.sequence_offset) {
       if (Light.sequence_offset) free(Light.channels_fifo);
-      Light.sequence_offset = XdrvMailbox.payload;
+      Light.sequence_offset = offset;
       if (Light.sequence_offset) Light.channels_fifo = (uint8_t *)calloc(Light.sequence_offset, LST_MAX);
     }
   }

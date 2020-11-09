@@ -122,6 +122,7 @@ struct IBEACON_UID {
   uint8_t FLAGS;
   uint8_t TIME;
 #ifdef USE_IBEACON_ESP32
+  uint8_t REPORTED;
   uint8_t REPTIME;
   char NAME[16];
 #endif
@@ -202,9 +203,7 @@ class ESP32BLEScanCallback : public BLEAdvertisedDeviceCallbacks
           memcpy(ib.RSSI,sRSSI,4);
           memset(ib.NAME,0x0,16);
 
-          if (ibeacon_add(&ib)==2) {
-            ibeacon_mqtt(ib.MAC,ib.RSSI,ib.UID,ib.MAJOR,ib.MINOR,ib.NAME);
-          }
+          ibeacon_add(&ib);
 
         } else {
 
@@ -221,9 +220,7 @@ class ESP32BLEScanCallback : public BLEAdvertisedDeviceCallbacks
             memset(ib.NAME,0x0,16);
           }
 
-          if (ibeacon_add(&ib)==2) {
-            ibeacon_mqtt(ib.MAC,ib.RSSI,ib.UID,ib.MAJOR,ib.MINOR,ib.NAME);
-          }
+          ibeacon_add(&ib);
         }
       }
     }
@@ -453,7 +450,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
 #ifdef USE_IBEACON_ESP32
             if (ibeacons[cnt].REPTIME >= IB_UPDATE_TIME) {
               ibeacons[cnt].REPTIME = 0;
-              return 2;
+              ibeacons[cnt].REPORTED = 0;
             }
 #endif
             return 1;
@@ -466,7 +463,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
 #ifdef USE_IBEACON_ESP32
             if (ibeacons[cnt].REPTIME >= IB_UPDATE_TIME) {
               ibeacons[cnt].REPTIME = 0;
-              return 2;
+              ibeacons[cnt].REPORTED = 0;
             }
 #endif
             return 1;
@@ -486,6 +483,7 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
 #ifdef USE_IBEACON_ESP32
         memcpy(ibeacons[cnt].NAME,ib->NAME,16);
         ibeacons[cnt].REPTIME = 0;
+        ibeacons[cnt].REPORTED = 0;
 #endif
         return 1;
       }
@@ -698,7 +696,12 @@ void IBEACON_loop() {
 
 #ifdef USE_IBEACON_ESP32
 
-  return;
+  for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
+    if (ibeacons[cnt].FLAGS && ! ibeacons[cnt].REPORTED) {
+      ibeacon_mqtt(ibeacons[cnt].MAC,ibeacons[cnt].RSSI,ibeacons[cnt].UID,ibeacons[cnt].MAJOR,ibeacons[cnt].MINOR,ibeacons[cnt].NAME);
+      ibeacons[cnt].REPORTED=1;
+    }
+  }
 
 #else
 

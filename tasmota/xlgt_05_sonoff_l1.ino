@@ -25,6 +25,10 @@
 
 #define XLGT_05                           5
 
+//#define SONOFF_L1_START_DELAY                // Sync Nuvotron power state with Tasmota on power up
+//#define SONOFF_L1_ALLOW_REMOTE_INTERRUPT     // During schemes 2..4
+#define SONOFF_L1_DEBUG1                     // Add send and receive logging
+
 #define SONOFF_L1_BUFFER_SIZE           140
 
 #define SONOFF_L1_MODE_COLORFUL           1  // [Color key] Colorful (static color)
@@ -41,16 +45,51 @@
 #define SONOFF_L1_MODE_SYNC_TO_MUSIC     12  // Sync to music [Speed 1- 100, sensitivity 1 - 10]
 
 struct SNFL1 {
+#ifdef SONOFF_L1_ALLOW_REMOTE_INTERRUPT
   uint32_t unlock = 0;
   bool receive_ready = true;
+#endif
+#ifdef SONOFF_L1_START_DELAY
+  char buffer[SONOFF_L1_BUFFER_SIZE];
+#endif
+  uint8_t color[3];
+  uint8_t dimmer;
+  uint8_t power;
 } Snfl1;
 
 /********************************************************************************************/
 
+#ifdef SONOFF_L1_START_DELAY
+#include <Ticker.h>
+Ticker SnfL1StartDelay;
+
+void SnfL1SendDelayed(void) {
+  SnfL1StartDelay.detach();
+  SnfL1Send();
+}
+
+void SnfL1Send(void)
+{
+#ifdef SONOFF_L1_DEBUG1
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), Snfl1.buffer);
+#endif
+  Serial.print(Snfl1.buffer);
+  Serial.write(0x1B);
+  Serial.flush();
+}
+
+void SnfL1SerialSendOk(void)
+{
+  snprintf_P(Snfl1.buffer, sizeof(Snfl1.buffer), PSTR("AT+SEND=ok"));
+
+  SnfL1Send();
+}
+#else
 void SnfL1Send(const char *buffer)
 {
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), buffer);
-
+#ifdef SONOFF_L1_DEBUG1
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), buffer);
+#endif
   Serial.print(buffer);
   Serial.write(0x1B);
   Serial.flush();
@@ -63,11 +102,12 @@ void SnfL1SerialSendOk(void)
 
   SnfL1Send(buffer);
 }
+#endif  // SONOFF_L1_START_DELAY
 
 bool SnfL1SerialInput(void)
 {
   if (TasmotaGlobal.serial_in_byte != 0x1B) {
-    if (TasmotaGlobal.serial_in_byte_counter >= 140) {
+    if (TasmotaGlobal.serial_in_byte_counter >= SONOFF_L1_BUFFER_SIZE) {
       TasmotaGlobal.serial_in_byte_counter = 0;
     }
     if (TasmotaGlobal.serial_in_byte_counter || (!TasmotaGlobal.serial_in_byte_counter && ('A' == TasmotaGlobal.serial_in_byte))) {  // A from AT
@@ -79,10 +119,13 @@ bool SnfL1SerialInput(void)
     // AT+RESULT="sequence":"1554682835320"
     // AT+UPDATE="sequence":"34906","switch":"on","light_type":1,"colorR":0,"colorG":16,"colorB":0,"bright":6,"mode":1
     // AT+UPDATE="switch":"on","light_type":1,"colorR":255,"colorG":0,"colorB":0,"bright":6,"mode":1,"speed":100,"sensitive":10
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd %s"), TasmotaGlobal.serial_in_buffer);
-
+#ifdef SONOFF_L1_DEBUG1
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd %s"), TasmotaGlobal.serial_in_buffer);
+#endif
     if (!strncmp(TasmotaGlobal.serial_in_buffer +3, "RESULT", 6)) {
+#ifdef SONOFF_L1_ALLOW_REMOTE_INTERRUPT
       Snfl1.receive_ready = true;
+#endif
     }
     else if (!strncmp(TasmotaGlobal.serial_in_buffer +3, "UPDATE", 6)) {
       char cmnd_dimmer[20];
@@ -92,8 +135,6 @@ bool SnfL1SerialInput(void)
       char *token = strtok_r(string, ",", &end_str);
 
       bool color_updated[3] = { false, false, false };
-      uint8_t current_color[3];
-      memcpy(current_color, Settings.light_color, 3);
 
       bool switch_state = false;
       bool is_power_change = false;
@@ -123,8 +164,7 @@ bool SnfL1SerialInput(void)
         else if (!strncmp(token2, "\"color", 6)) {
           char color_channel_name = token2[6];
           int color_index;
-          switch(color_channel_name)
-          {
+          switch(color_channel_name) {
             case 'R': color_index = 0;
               break;
             case 'G': color_index = 1;
@@ -133,19 +173,19 @@ bool SnfL1SerialInput(void)
               break;
           }
           int color_value = atoi(token3);
-          current_color[color_index] = color_value;
+          Snfl1.color[color_index] = color_value;
           color_updated[color_index] = true;
 
           bool all_color_channels_updated = color_updated[0] && color_updated[1] && color_updated[2];
           if (all_color_channels_updated) {
 
 //            AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd color R%d G%d B%d (R%d G%d B%d)"),
-//              current_color[0], current_color[1], current_color[2],
+//              Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
 //              Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
 
-            is_color_change = (Light.power && (memcmp(current_color, Settings.light_color, 3) != 0));
+            is_color_change = (Light.power && (memcmp(Snfl1.color, Settings.light_color, 3) != 0));
           }
-          snprintf_P(cmnd_color, sizeof(cmnd_color), PSTR(D_CMND_COLOR "2 %02x%02x%02x"), current_color[0], current_color[1], current_color[2]);
+          snprintf_P(cmnd_color, sizeof(cmnd_color), PSTR(D_CMND_COLOR "2 %02x%02x%02x"), Snfl1.color[0], Snfl1.color[1], Snfl1.color[2]);
         }
 
         else if (!strncmp(token2, "\"bright\"", 8)) {
@@ -165,23 +205,28 @@ bool SnfL1SerialInput(void)
           if (!switch_state) {  // If power off RC button pressed stop schemes
             char cmnd_scheme[20];
             snprintf_P(cmnd_scheme, sizeof(cmnd_scheme), PSTR(D_CMND_SCHEME " 0"));
-            ExecuteCommand(cmnd_scheme, SRC_SWITCH);
+            ExecuteCommand(cmnd_scheme, SRC_REMOTE);
           }
         } else {
-          ExecuteCommandPower(1, switch_state, SRC_SWITCH);
+          ExecuteCommandPower(1, switch_state, SRC_REMOTE);
         }
       }
       else if (is_brightness_change) {
-        ExecuteCommand(cmnd_dimmer, SRC_SWITCH);
+        ExecuteCommand(cmnd_dimmer, SRC_REMOTE);
       }
       else if (Light.power && is_color_change) {
         if (0 == Settings.light_scheme) {  // Fix spurious color receptions when scheme > 0
           if (Settings.light_fade) {  // Disable fade as RC button colors overrule and are immediate supressing ghost colors
             char cmnd_fade[20];
             snprintf_P(cmnd_fade, sizeof(cmnd_fade), PSTR(D_CMND_FADE " 0"));
-            ExecuteCommand(cmnd_fade, SRC_SWITCH);
+            ExecuteCommand(cmnd_fade, SRC_REMOTE);
           }
-          ExecuteCommand(cmnd_color, SRC_SWITCH);
+          if (Settings.light_correction) {  // Disable ledtable as RC button colors overrule and are immediate supressing ghost colors
+            char cmnd_fade[20];
+            snprintf_P(cmnd_fade, sizeof(cmnd_fade), PSTR(D_CMND_LEDTABLE " 0"));
+            ExecuteCommand(cmnd_fade, SRC_REMOTE);
+          }
+          ExecuteCommand(cmnd_color, SRC_REMOTE);
         }
       }
     }
@@ -198,37 +243,80 @@ bool SnfL1SerialInput(void)
 
 bool SnfL1SetChannels(void)
 {
+#ifdef SONOFF_L1_ALLOW_REMOTE_INTERRUPT
   if (Snfl1.receive_ready || TimeReached(Snfl1.unlock)) {
+#endif
+    uint8_t power = Light.power;
+    bool power_changed = (Snfl1.power != power);
+    Snfl1.power = power;
+
+    uint8_t dimmer = light_state.getDimmer();
+    bool dimmer_changed = (Snfl1.dimmer != dimmer);
+    Snfl1.dimmer = dimmer;
 
     uint8_t *scale_col = (uint8_t*)XdrvMailbox.topic;
+    bool color_changed = false;
+    if (!power_changed) {
+      for (uint32_t i = 0; i < 3; i++) {
+        if ((Snfl1.color[i] < scale_col[i] -5) || (Snfl1.color[i] > scale_col[i] +5)) {
+          color_changed = true;     // Allow scale-up margins of +/-5
+        }
+        Snfl1.color[i] = scale_col[i];
+      }
+    }
+    if (!power_changed && !dimmer_changed && !color_changed) { return true; }
 
-    char buffer[140];
+#ifdef SONOFF_L1_START_DELAY
+    snprintf_P(Snfl1.buffer, sizeof(Snfl1.buffer), PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"light_type\":1,\"colorR\":%d,\"colorG\":%d,\"colorB\":%d,\"bright\":%d,\"mode\":%d"),
+      LocalTime(), millis()%1000,
+      Snfl1.power ? "on" : "off",
+      Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
+      Snfl1.dimmer,
+      SONOFF_L1_MODE_COLORFUL);
+
+    static bool first_call = true;
+    if (first_call) {
+      SnfL1StartDelay.attach_ms(900, SnfL1SendDelayed);  // Allow startup time for Nuvotron microcontroller
+      first_call = false;
+    } else {
+      SnfL1Send();
+    }
+#else
+    char buffer[SONOFF_L1_BUFFER_SIZE];
     snprintf_P(buffer, sizeof(buffer), PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"light_type\":1,\"colorR\":%d,\"colorG\":%d,\"colorB\":%d,\"bright\":%d,\"mode\":%d"),
       LocalTime(), millis()%1000,
-      Light.power ? "on" : "off",
-      scale_col[0], scale_col[1], scale_col[2],
-      light_state.getDimmer(),
+      Snfl1.power ? "on" : "off",
+      Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
+      Snfl1.dimmer,
       SONOFF_L1_MODE_COLORFUL);
 
     SnfL1Send(buffer);
+#endif  // SONOFF_L1_START_DELAY
 
+#ifdef SONOFF_L1_ALLOW_REMOTE_INTERRUPT
     Snfl1.unlock = millis() + 500;  // Allow time for the RC
     Snfl1.receive_ready = false;
   }
+#endif
   return true;
 }
 
-void SnfL1ModuleSelected(void)
+bool SnfL1ModuleSelected(void)
 {
   if (SONOFF_L1 == TasmotaGlobal.module_type) {
     if (PinUsed(GPIO_RXD) && PinUsed(GPIO_TXD)) {
       SetSerial(19200, TS_SERIAL_8N1);
 
+      Snfl1.power = !Light.power;
+      Snfl1.dimmer = !light_state.getDimmer();
+
       TasmotaGlobal.light_type = LT_RGB;
       TasmotaGlobal.light_driver = XLGT_05;
       AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: Sonoff L1 Found"));
+      return true;
     }
   }
+  return false;
 }
 
 /*********************************************************************************************\
@@ -247,7 +335,7 @@ bool Xlgt05(uint8_t function)
       result = SnfL1SetChannels();
       break;
     case FUNC_MODULE_INIT:
-      SnfL1ModuleSelected();
+      result = SnfL1ModuleSelected();
       break;
   }
   return result;

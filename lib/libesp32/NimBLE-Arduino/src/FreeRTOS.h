@@ -68,7 +68,7 @@ public:
  */
 class Ringbuffer {
 public:
-#ifdef ESP_IDF_VERSION //Quick hack to detect if using IDF version that replaced ringbuf_type_t
+#if defined(ESP_IDF_VERSION) && !defined(ESP_IDF_VERSION_VAL) //Quick hack to detect if using IDF version that replaced ringbuf_type_t, ESP_IDF_VERSION_VAL is for IDF>4.0.0
     Ringbuffer(size_t length, RingbufferType_t type = RINGBUF_TYPE_NOSPLIT);
 #else
     Ringbuffer(size_t length, ringbuf_type_t type = RINGBUF_TYPE_NOSPLIT);
