@@ -745,27 +745,33 @@ void MI32StatusInfo() {
  * init NimBLE
 \*********************************************************************************************/
 
-void MI32Init(void) {
-
-MIBLEsensors.reserve(10);
-MIBLEbindKeys.reserve(10);
-MINBLEscanResult.reserve(20);
+void MI32PreInit(void) {
+  MIBLEsensors.reserve(10);
+  MIBLEbindKeys.reserve(10);
+  MINBLEscanResult.reserve(20);
   MI32.mode.init = false;
+
+  //test section for options
+  MI32.option.allwaysAggregate = 1;
+  MI32.option.noSummary = 0;
+  MI32.option.minimalSummary = 0;
+  MI32.option.directBridgeMode = 0;
+  MI32.option.showRSSI = 1;
+  MI32.option.ignoreBogusBattery = 1; // from advertisements
+  MI32.option.holdBackFirstAutodiscovery = 1;
+  AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: pre-init"));
+}
+
+void MI32Init(void) {
+  if (MI32.mode.init) return;
+  if (Wifi.status == 0) return;
+
   if (!MI32.mode.init) {
     NimBLEDevice::init("");
-
+    AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: init BLE device"));
     MI32.mode.canScan = 1;
     MI32.mode.init = 1;
     MI32.period = Settings.tele_period;
-
-    //test section for options
-    MI32.option.allwaysAggregate = 1;
-    MI32.option.noSummary = 0;
-    MI32.option.minimalSummary = 0;
-    MI32.option.directBridgeMode = 0;
-    MI32.option.showRSSI = 1;
-    MI32.option.ignoreBogusBattery = 1; // from advertisements
-    MI32.option.holdBackFirstAutodiscovery = 1;
 
     MI32StartScanTask(); // Let's get started !!
   }
@@ -2179,30 +2185,34 @@ bool Xsns62(uint8_t function)
 {
   bool result = false;
   if (FUNC_INIT == function){
-    MI32Init();
+    MI32PreInit();
   }
 
-  if (MI32.mode.init) {
-    switch (function) {
-      case FUNC_EVERY_50_MSECOND:
-        MI32Every50mSecond();
-        break;
-      case FUNC_EVERY_SECOND:
-        MI32EverySecond(false);
-        break;
-      case FUNC_COMMAND:
-        result = MI32Cmd();
-        break;
-      case FUNC_JSON_APPEND:
-        MI32Show(1);
-        break;
-#ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        MI32Show(0);
-        break;
-#endif  // USE_WEBSERVER
-      }
+  if(!MI32.mode.init){
+    if(function==FUNC_EVERY_250_MSECOND){
+      MI32Init();
+    }
+    return result;
   }
+  switch (function) {
+    case FUNC_EVERY_50_MSECOND:
+      MI32Every50mSecond();
+      break;
+    case FUNC_EVERY_SECOND:
+      MI32EverySecond(false);
+      break;
+    case FUNC_COMMAND:
+      result = MI32Cmd();
+      break;
+    case FUNC_JSON_APPEND:
+      MI32Show(1);
+      break;
+#ifdef USE_WEBSERVER
+    case FUNC_WEB_SENSOR:
+      MI32Show(0);
+      break;
+#endif  // USE_WEBSERVER
+    }
   return result;
 }
 #endif  // USE_MI_ESP32
