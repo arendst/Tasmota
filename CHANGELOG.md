@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.1.0.1]
 ### Added
 - Zigbee support for Mi Door and Contact (#9759)
+- Zigbee alarm persistence (#9785)
 - Support for EZO PMP sensors by Christopher Tremblay (#9760)
 - Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
 
@@ -13,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Core library from v2.7.4.5 to v2.7.4.7
 - Platformio compiler option `no target align` enabled (#9749)
 - Consolidate `AddLog_P` into `AddLog_P2` and rename to `AddLog_P`
+- Sonoff L1 color up scaling and color margin detection (#9545)
 
 ### Fixed
 - NTP fallback server functionality (#9739)

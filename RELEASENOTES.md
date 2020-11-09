@@ -60,12 +60,14 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ## Changelog v9.1.0.1
 ### Added
 - Zigbee support for Mi Door and Contact (#9759)
+- Zigbee alarm persistence (#9785)
 - Support for additional EZO sensors by Christopher Tremblay
 - Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
 
 ### Changed
 - Core library from v2.7.4.5 to v2.7.4.7
 - Platformio compiler option `no target align` enabled (#9749)
+- Sonoff L1 color up scaling and color margin detection (#9545)
 
 ### Fixed
 - NTP fallback server functionality (#9739)
