@@ -205,28 +205,28 @@ bool SnfL1SerialInput(void)
           if (!switch_state) {  // If power off RC button pressed stop schemes
             char cmnd_scheme[20];
             snprintf_P(cmnd_scheme, sizeof(cmnd_scheme), PSTR(D_CMND_SCHEME " 0"));
-            ExecuteCommand(cmnd_scheme, SRC_SWITCH);
+            ExecuteCommand(cmnd_scheme, SRC_REMOTE);
           }
         } else {
-          ExecuteCommandPower(1, switch_state, SRC_SWITCH);
+          ExecuteCommandPower(1, switch_state, SRC_REMOTE);
         }
       }
       else if (is_brightness_change) {
-        ExecuteCommand(cmnd_dimmer, SRC_SWITCH);
+        ExecuteCommand(cmnd_dimmer, SRC_REMOTE);
       }
       else if (Light.power && is_color_change) {
         if (0 == Settings.light_scheme) {  // Fix spurious color receptions when scheme > 0
           if (Settings.light_fade) {  // Disable fade as RC button colors overrule and are immediate supressing ghost colors
             char cmnd_fade[20];
             snprintf_P(cmnd_fade, sizeof(cmnd_fade), PSTR(D_CMND_FADE " 0"));
-            ExecuteCommand(cmnd_fade, SRC_SWITCH);
+            ExecuteCommand(cmnd_fade, SRC_REMOTE);
           }
           if (Settings.light_correction) {  // Disable ledtable as RC button colors overrule and are immediate supressing ghost colors
             char cmnd_fade[20];
             snprintf_P(cmnd_fade, sizeof(cmnd_fade), PSTR(D_CMND_LEDTABLE " 0"));
-            ExecuteCommand(cmnd_fade, SRC_SWITCH);
+            ExecuteCommand(cmnd_fade, SRC_REMOTE);
           }
-          ExecuteCommand(cmnd_color, SRC_SWITCH);
+          ExecuteCommand(cmnd_color, SRC_REMOTE);
         }
       }
     }
