@@ -1294,7 +1294,9 @@ void ZCLFrame::generateCallBacks(Z_attribute_list& attr_list) {
           if (&pir_found != nullptr) {
             pir_timer = pir_found.getTimeoutSeconds() * 1000;
           }
-          zigbee_devices.setTimer(_srcaddr, 0 /* groupaddr */, pir_timer, _cluster_id, _srcendpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
+          if (pir_timer > 0) {
+            zigbee_devices.setTimer(_srcaddr, 0 /* groupaddr */, pir_timer, _cluster_id, _srcendpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
+          }
         } else {
           zigbee_devices.resetTimersForDevice(_srcaddr, 0 /* groupaddr */, Z_CAT_VIRTUAL_OCCUPANCY);
         }
