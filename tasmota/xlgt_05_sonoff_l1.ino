@@ -52,7 +52,7 @@ struct SNFL1 {
 
 void SnfL1Send(const char *buffer)
 {
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), buffer);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Send %s"), buffer);
 
   Serial.print(buffer);
   Serial.write(0x1B);
@@ -82,7 +82,7 @@ bool SnfL1SerialInput(void)
     // AT+RESULT="sequence":"1554682835320"
     // AT+UPDATE="sequence":"34906","switch":"on","light_type":1,"colorR":0,"colorG":16,"colorB":0,"bright":6,"mode":1
     // AT+UPDATE="switch":"on","light_type":1,"colorR":255,"colorG":0,"colorB":0,"bright":6,"mode":1,"speed":100,"sensitive":10
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd %s"), TasmotaGlobal.serial_in_buffer);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd %s"), TasmotaGlobal.serial_in_buffer);
 
     if (!strncmp(TasmotaGlobal.serial_in_buffer +3, "RESULT", 6)) {
       Snfl1.receive_ready = true;
@@ -95,8 +95,6 @@ bool SnfL1SerialInput(void)
       char *token = strtok_r(string, ",", &end_str);
 
       bool color_updated[3] = { false, false, false };
-      uint8_t current_color[3];
-      memcpy(current_color, Settings.light_color, 3);
 
       bool switch_state = false;
       bool is_power_change = false;
@@ -126,8 +124,7 @@ bool SnfL1SerialInput(void)
         else if (!strncmp(token2, "\"color", 6)) {
           char color_channel_name = token2[6];
           int color_index;
-          switch(color_channel_name)
-          {
+          switch(color_channel_name) {
             case 'R': color_index = 0;
               break;
             case 'G': color_index = 1;
@@ -136,20 +133,19 @@ bool SnfL1SerialInput(void)
               break;
           }
           int color_value = atoi(token3);
-          current_color[color_index] = color_value;
-          color_updated[color_index] = true;
           Snfl1.color[color_index] = color_value;
+          color_updated[color_index] = true;
 
           bool all_color_channels_updated = color_updated[0] && color_updated[1] && color_updated[2];
           if (all_color_channels_updated) {
 
 //            AddLog_P(LOG_LEVEL_DEBUG, PSTR("SL1: Rcvd color R%d G%d B%d (R%d G%d B%d)"),
-//              current_color[0], current_color[1], current_color[2],
+//              Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
 //              Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
 
-            is_color_change = (Light.power && (memcmp(current_color, Settings.light_color, 3) != 0));
+            is_color_change = (Light.power && (memcmp(Snfl1.color, Settings.light_color, 3) != 0));
           }
-          snprintf_P(cmnd_color, sizeof(cmnd_color), PSTR(D_CMND_COLOR "2 %02x%02x%02x"), current_color[0], current_color[1], current_color[2]);
+          snprintf_P(cmnd_color, sizeof(cmnd_color), PSTR(D_CMND_COLOR "2 %02x%02x%02x"), Snfl1.color[0], Snfl1.color[1], Snfl1.color[2]);
         }
 
         else if (!strncmp(token2, "\"bright\"", 8)) {
@@ -208,22 +204,20 @@ bool SnfL1SerialInput(void)
 bool SnfL1SetChannels(void)
 {
 //  if (Snfl1.receive_ready || TimeReached(Snfl1.unlock)) {
-
     uint8_t power = Light.power;
-    uint8_t dimmer = light_state.getDimmer();
-    uint8_t *scale_col = (uint8_t*)XdrvMailbox.topic;
-
     bool power_changed = (Snfl1.power != power);
     Snfl1.power = power;
 
+    uint8_t dimmer = light_state.getDimmer();
     bool dimmer_changed = (Snfl1.dimmer != dimmer);
     Snfl1.dimmer = dimmer;
 
+    uint8_t *scale_col = (uint8_t*)XdrvMailbox.topic;
     bool color_changed = false;
     if (!power_changed) {
       for (uint32_t i = 0; i < 3; i++) {
         if ((Snfl1.color[i] < scale_col[i] -5) || (Snfl1.color[i] > scale_col[i] +5)) {
-          color_changed = true;
+          color_changed = true;     // Allow scale-up margins of +/-5
         }
         Snfl1.color[i] = scale_col[i];
       }
@@ -233,9 +227,9 @@ bool SnfL1SetChannels(void)
     char buffer[140];
     snprintf_P(buffer, sizeof(buffer), PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"light_type\":1,\"colorR\":%d,\"colorG\":%d,\"colorB\":%d,\"bright\":%d,\"mode\":%d"),
       LocalTime(), millis()%1000,
-      Light.power ? "on" : "off",
+      Snfl1.power ? "on" : "off",
       Snfl1.color[0], Snfl1.color[1], Snfl1.color[2],
-      light_state.getDimmer(),
+      Snfl1.dimmer,
       SONOFF_L1_MODE_COLORFUL);
 
     SnfL1Send(buffer);
