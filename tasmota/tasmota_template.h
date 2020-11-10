@@ -148,6 +148,7 @@ enum UserSelectablePins {
   GPIO_DYP_RX,
   GPIO_MIEL_HVAC_TX, GPIO_MIEL_HVAC_RX,  // Mitsubishi Electric HVAC
   GPIO_WE517_TX, GPIO_WE517_RX,        // ORNO WE517 Serial interface
+  GPIO_AS608_TX, GPIO_AS608_RX,        // Serial interface AS608 / R503
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -253,7 +254,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ZIGBEE_RST "|"
   D_SENSOR_DYP_RX "|"
   D_SENSOR_MIEL_HVAC_TX "|" D_SENSOR_MIEL_HVAC_RX "|"
-  D_SENSOR_WE517_TX "|" D_SENSOR_WE517_RX
+  D_SENSOR_WE517_TX "|" D_SENSOR_WE517_RX "|"
+  D_SENSOR_AS608_TX "|" D_SENSOR_AS608_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -565,6 +567,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_OPENTHERM
   AGPIO(GPIO_BOILER_OT_TX),
   AGPIO(GPIO_BOILER_OT_RX),
+#endif
+#ifdef USE_AS608
+  AGPIO(GPIO_AS608_TX),
+  AGPIO(GPIO_AS608_RX),
 #endif
 
 /*-------------------------------------------------------------------------------------------*\

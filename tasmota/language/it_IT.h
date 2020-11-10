@@ -673,6 +673,8 @@
 #define D_SENSOR_A4988_MS1     "A4988 - MS1"
 #define D_SENSOR_OUTPUT_HI     "Output - Hi"
 #define D_SENSOR_OUTPUT_LO     "Output - Lo"
+#define D_SENSOR_AS608_TX      "AS608 - TX"
+#define D_SENSOR_AS608_RX      "AS608 - RX"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 - TX"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 - RX"
 #define D_SENSOR_DDSU666_TX    "DDSU666 - TX"
