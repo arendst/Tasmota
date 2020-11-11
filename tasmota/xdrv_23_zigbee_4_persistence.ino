@@ -194,14 +194,6 @@ class SBuffer hibernateDevices(void) {
     AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Devices list too big to fit in Flash (%d)"), buf_len);
   }
 
-  // Log
-  char *hex_char = (char*) malloc((buf_len * 2) + 2);
-  if (hex_char) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZbFlashStore %s"),
-                                    ToHex_P(buf.getBuffer(), buf_len, hex_char, (buf_len * 2) + 2));
-    free(hex_char);
-  }
-
   return buf;
 }
 
@@ -301,8 +293,8 @@ void hydrateDevices(const SBuffer &buf, uint32_t version) {
   }
 }
 
-
-void loadZigbeeDevices(void) {
+// dump = true, only dump to logs, don't actually load
+void loadZigbeeDevices(bool dump_only = false) {
 #ifdef ESP32
   // first copy SPI buffer into ram
   uint8_t *spi_buffer = (uint8_t*) malloc(z_spi_len);
@@ -316,7 +308,7 @@ void loadZigbeeDevices(void) {
   Z_Flashentry flashdata;
   memcpy_P(&flashdata, z_dev_start, sizeof(Z_Flashentry));
 //  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP_getFreeHeap());
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Zigbee signature in Flash: %08X - %d"), flashdata.name, flashdata.len);
+  // AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Zigbee signature in Flash: %08X - %d"), flashdata.name, flashdata.len);
 
   // Check the signature
   if ( ((flashdata.name == ZIGB_NAME1) || (flashdata.name == ZIGB_NAME2))
@@ -327,15 +319,21 @@ void loadZigbeeDevices(void) {
     SBuffer buf(buf_len);
     buf.addBuffer(z_dev_start + sizeof(Z_Flashentry), buf_len);
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee devices data in Flash v%d (%d bytes)"), version, buf_len);
-    // Serial.printf(">> Buffer=");
-    // for (uint32_t i=0; i<buf.len(); i++) Serial.printf("%02X ", buf.get8(i));
-    // Serial.printf("\n");
-    hydrateDevices(buf, version);
-    zigbee_devices.clean();   // don't write back to Flash what we just loaded
+
+    if (dump_only) {
+      size_t buf_len = buf.len();
+      if (buf_len > 192) { buf_len = 192; }
+      AddLogBuffer(LOG_LEVEL_INFO, buf.getBuffer(), buf_len);
+      // Serial.printf(">> Buffer=");
+      // for (uint32_t i=0; i<buf.len(); i++) Serial.printf("%02X ", buf.get8(i));
+      // Serial.printf("\n");
+    } else {
+      hydrateDevices(buf, version);
+      zigbee_devices.clean();   // don't write back to Flash what we just loaded
+    }
   } else {
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No zigbee devices data in Flash"));
   }
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Memory %d"), ESP_getFreeHeap());
 #ifdef ESP32
   free(spi_buffer);
 #endif  // ESP32

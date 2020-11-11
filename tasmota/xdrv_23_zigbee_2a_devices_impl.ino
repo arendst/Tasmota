@@ -492,64 +492,71 @@ void Z_Devices::jsonAppend(uint16_t shortaddr, const Z_attribute_list &attr_list
   device.attr_list.mergeList(attr_list);
 }
 
+//
+// internal function to publish device information with respect to all `SetOption`s
+//
+void Z_Devices::jsonPublishFlushAttrList(const Z_Device & device, const String & attr_list_string) {
+  const char * fname = zigbee_devices.getFriendlyName(device.shortaddr);
+  bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
+
+  TasmotaGlobal.mqtt_data[0] = 0; // clear string
+  // Do we prefix with `ZbReceived`?
+  if (!Settings.flag4.remove_zbreceived) {
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":"));
+  }
+  // What key do we use, shortaddr or name?
+  if (use_fname) {
+    Response_P(PSTR("%s{\"%s\":{"), TasmotaGlobal.mqtt_data, fname);
+  } else {
+    Response_P(PSTR("%s{\"0x%04X\":{"), TasmotaGlobal.mqtt_data, device.shortaddr);
+  }
+  // Add "Device":"0x...."
+  ResponseAppend_P(PSTR("\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\","), device.shortaddr);
+  // Add "Name":"xxx" if name is present
+  if (fname) {
+    ResponseAppend_P(PSTR("\"" D_JSON_ZIGBEE_NAME "\":\"%s\","), EscapeJSONString(fname).c_str());
+  }
+  // Add all other attributes
+  ResponseAppend_P(PSTR("%s}}"), attr_list_string.c_str());
+
+  if (!Settings.flag4.remove_zbreceived) {
+    ResponseAppend_P(PSTR("}"));
+  }
+
+  if (Settings.flag4.zigbee_distinct_topics) {
+    if (Settings.flag4.zb_topic_fname && fname) {
+      //Clean special characters and check size of friendly name
+      char stemp[TOPSZ];
+      strlcpy(stemp, (!strlen(fname)) ? MQTT_TOPIC : fname, sizeof(stemp));
+      MakeValidMqtt(0, stemp);
+      //Create topic with Prefix3 and cleaned up friendly name
+      char frtopic[TOPSZ];
+      snprintf_P(frtopic, sizeof(frtopic), PSTR("%s/%s/" D_RSLT_SENSOR), SettingsText(SET_MQTTPREFIX3), stemp);
+      MqttPublish(frtopic, Settings.flag.mqtt_sensor_retain);
+    } else {
+      char subtopic[16];
+      snprintf_P(subtopic, sizeof(subtopic), PSTR("%04X/" D_RSLT_SENSOR), device.shortaddr);
+      MqttPublishPrefixTopic_P(TELE, subtopic, Settings.flag.mqtt_sensor_retain);
+    }
+  } else {
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  }
+  XdrvRulesProcess();     // apply rules
+}
+
 void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
   Z_Device & device = getShortAddr(shortaddr);
   if (!device.valid()) { return; }                 // safeguard
   Z_attribute_list &attr_list = device.attr_list;
 
   if (!attr_list.isEmpty()) {
-    const char * fname = zigbee_devices.getFriendlyName(shortaddr);
-    bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
-
     // save parameters is global variables to be used by Rules
     gZbLastMessage.device = shortaddr;                // %zbdevice%
     gZbLastMessage.groupaddr = attr_list.group_id;      // %zbgroup%
     gZbLastMessage.endpoint = attr_list.src_ep;    // %zbendpoint%
 
-    TasmotaGlobal.mqtt_data[0] = 0; // clear string
-    // Do we prefix with `ZbReceived`?
-    if (!Settings.flag4.remove_zbreceived) {
-      Response_P(PSTR("{\"" D_JSON_ZIGBEE_RECEIVED "\":"));
-    }
-    // What key do we use, shortaddr or name?
-    if (use_fname) {
-      Response_P(PSTR("%s{\"%s\":{"), TasmotaGlobal.mqtt_data, fname);
-    } else {
-      Response_P(PSTR("%s{\"0x%04X\":{"), TasmotaGlobal.mqtt_data, shortaddr);
-    }
-    // Add "Device":"0x...."
-    ResponseAppend_P(PSTR("\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\","), shortaddr);
-    // Add "Name":"xxx" if name is present
-    if (fname) {
-      ResponseAppend_P(PSTR("\"" D_JSON_ZIGBEE_NAME "\":\"%s\","), EscapeJSONString(fname).c_str());
-    }
-    // Add all other attributes
-    ResponseAppend_P(PSTR("%s}}"), attr_list.toString().c_str());
-
-    if (!Settings.flag4.remove_zbreceived) {
-      ResponseAppend_P(PSTR("}"));
-    }
+    jsonPublishFlushAttrList(device, attr_list.toString());
     attr_list.reset();    // clear the attributes
-
-    if (Settings.flag4.zigbee_distinct_topics) {
-      if (Settings.flag4.zb_topic_fname && fname) {
-        //Clean special characters and check size of friendly name
-        char stemp[TOPSZ];
-        strlcpy(stemp, (!strlen(fname)) ? MQTT_TOPIC : fname, sizeof(stemp));
-        MakeValidMqtt(0, stemp);
-        //Create topic with Prefix3 and cleaned up friendly name
-        char frtopic[TOPSZ];
-        snprintf_P(frtopic, sizeof(frtopic), PSTR("%s/%s/" D_RSLT_SENSOR), SettingsText(SET_MQTTPREFIX3), stemp);
-        MqttPublish(frtopic, Settings.flag.mqtt_sensor_retain);
-      } else {
-        char subtopic[16];
-        snprintf_P(subtopic, sizeof(subtopic), PSTR("%04X/" D_RSLT_SENSOR), shortaddr);
-        MqttPublishPrefixTopic_P(TELE, subtopic, Settings.flag.mqtt_sensor_retain);
-      }
-    } else {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-    }
-    XdrvRulesProcess();     // apply rules
   }
 }
 
@@ -649,20 +656,24 @@ String Z_Devices::dumpLightState(const Z_Device & device) {
 // Dump the internal memory of Zigbee devices
 // Mode = 1: simple dump of devices addresses
 // Mode = 2: simple dump of devices addresses and names, endpoints, light
-String Z_Devices::dumpSingleDevice(uint32_t dump_mode, const class Z_Device & device) {
+// Mode = 3: dump last known data attributes
+// add_device_name : do we add shortaddr/name ?
+String Z_Devices::dumpSingleDevice(uint32_t dump_mode, const class Z_Device & device, bool add_device_name, bool add_brackets) {
   uint16_t shortaddr = device.shortaddr;
   char hex[22];
 
   Z_attribute_list attr_list;
 
-  snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), shortaddr);
-  attr_list.addAttribute(F(D_JSON_ZIGBEE_DEVICE)).setStr(hex);
+  if (add_device_name) {
+    snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), shortaddr);
+    attr_list.addAttribute(F(D_JSON_ZIGBEE_DEVICE)).setStr(hex);
 
-  if (device.friendlyName > 0) {
-    attr_list.addAttribute(F(D_JSON_ZIGBEE_NAME)).setStr(device.friendlyName);
+    if (device.friendlyName > 0) {
+      attr_list.addAttribute(F(D_JSON_ZIGBEE_NAME)).setStr(device.friendlyName);
+    }
   }
 
-  if (2 <= dump_mode) {
+  if (dump_mode >= 2) {
     hex[0] = '0';   // prefix with '0x'
     hex[1] = 'x';
     Uint64toHex(device.longaddr, &hex[2], 64);
@@ -695,7 +706,17 @@ String Z_Devices::dumpSingleDevice(uint32_t dump_mode, const class Z_Device & de
     }
     attr_list.addAttribute(F("Config")).setStrRaw(arr_data.toString().c_str());
   }
-  return attr_list.toString(true);
+  if (dump_mode >= 3) {
+    // show internal data - mostly last known values
+    for (auto & data_elt : device.data) {
+      Z_Data_Type data_type = data_elt.getType();
+
+      data_elt.toAttributes(attr_list, data_type);
+    }
+    // add device wide attributes
+    device.toAttributes(attr_list);
+  }
+  return attr_list.toString(add_brackets);
 }
 
 // If &device == nullptr, then dump all
@@ -796,9 +817,14 @@ Z_Data_Light & Z_Devices::getLight(uint16_t shortaddr) {
  * Export device specific attributes to ZbData
 \*********************************************************************************************/
 void Z_Device::toAttributes(Z_attribute_list & attr_list) const {
-  if (validLqi())             { attr_list.addAttribute(PSTR(D_CMND_ZIGBEE_LINKQUALITY)).setUInt(lqi); }
   if (validBatteryPercent())  { attr_list.addAttribute(PSTR("BatteryPercentage")).setUInt(batterypercent); }
-  if (validLastSeen())        { attr_list.addAttribute(PSTR("LastSeen")).setUInt(last_seen); }
+  if (validLastSeen())        {
+    if (Rtc.utc_time >= last_seen) {
+      attr_list.addAttribute(PSTR("LastSeen")).setUInt(Rtc.utc_time - last_seen);
+    }
+    attr_list.addAttribute(PSTR("LastSeenEpoch")).setUInt(last_seen);
+  }
+  if (validLqi())             { attr_list.addAttribute(PSTR(D_CMND_ZIGBEE_LINKQUALITY)).setUInt(lqi); }
 }
 
 /*********************************************************************************************\

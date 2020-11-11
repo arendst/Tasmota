@@ -227,7 +227,9 @@ Eeprom24C512::readBytes
 
     byte remainingBytes = length % EEPROM__RD_BUFFER_SIZE;
     word offset = length - remainingBytes;
-    readBuffer(address + offset, remainingBytes, p_data + offset);
+    if (remainingBytes > 0) {
+        readBuffer(address + offset, remainingBytes, p_data + offset);
+    }
 }
 
 /******************************************************************************
