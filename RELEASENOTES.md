@@ -58,10 +58,12 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog v9.1.0.1
 ### Added
+- Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
+- Zigbee command ``ZbInfo`` and prepare support for EEPROM
 - Zigbee support for Mi Door and Contact (#9759)
 - Zigbee alarm persistence (#9785)
 - Support for additional EZO sensors by Christopher Tremblay
-- Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
+- Support for AS608 optical and R503 capacitive fingerprint sensor
 
 ### Changed
 - Core library from v2.7.4.5 to v2.7.4.7
