@@ -21,8 +21,7 @@
 /*********************************************************************************************\
  * AS608 optical and R503 capacitive Fingerprint sensor
  *
- * Currently supports:
- * - English only as there are no tanslations supported
+ * Uses Adafruit-Fingerprint-sensor-library with TasmotaSerial
 \*********************************************************************************************/
 
 #define XSNS_79               79
@@ -39,9 +38,10 @@ const char kAs608Commands[] PROGMEM = D_PRFX_FP "|" D_CMND_FP_ENROLL "|" D_CMND_
 void (*const As608Commands[])(void) PROGMEM = { &CmndFpEnroll, &CmndFpDelete, &CmndFpCount };
 
 const char kAs608Messages[] PROGMEM =
-  "Done|Comms error||Imaging error|Unknown error|Image too messy|Could not find fingerprint features|No match|Did not find a match|Fingerprint did not match|"
-  "Bad location|DB range error|Upload feature error|Packet response error|Upload error|Delete error|DB Clear error|Password error|Image invalid|"
-  "Error writing to flash|Invalid reg|Address code|Password verify";
+  D_DONE "|" D_FP_PACKETRECIEVEERR "|" D_FP_NOFINGER "|" D_FP_IMAGEFAIL "|" D_FP_UNKNOWNERROR "|" D_FP_IMAGEMESS "|" D_FP_FEATUREFAIL "|" D_FP_NOMATCH "|"
+  D_FP_NOTFOUND "|" D_FP_ENROLLMISMATCH "|" D_FP_BADLOCATION "|" D_FP_DBRANGEFAIL "|" D_FP_UPLOADFEATUREFAIL "|" D_FP_PACKETRESPONSEFAIL "|"
+  D_FP_UPLOADFAIL "|" D_FP_DELETEFAIL "|" D_FP_DBCLEARFAIL "|" D_FP_PASSFAIL "|" D_FP_INVALIDIMAGE "|" D_FP_FLASHERR "|" D_FP_INVALIDREG "|"
+  D_FP_ADDRCODE "|" D_FP_PASSVERIFY;
 
 const uint8_t As608Reference[] PROGMEM = { 0, 1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 4, 17, 4, 18, 4, 4, 19, 4, 20, 4, 4, 4, 4, 4, 21, 22 };
 
@@ -137,14 +137,14 @@ void As608Loop(void) {
     }
 
     // Found a match
-    Response_P(PSTR("{\"" D_JSON_FPRINT "\":{\"Id\":%d,\"Confidence\":%d}}"), As608Finger->fingerID, As608Finger->confidence);
+    Response_P(PSTR("{\"" D_JSON_FPRINT "\":{\"" D_JSON_ID "\":%d,\"" D_JSON_CONFIDENCE "\":%d}}"), As608Finger->fingerID, As608Finger->confidence);
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_FPRINT));
     return;
   } else {
     // enroll is active
     switch (As608.enroll_step) {
       case 1:
-        As608PublishMessage(PSTR("Place finger"));
+        As608PublishMessage(PSTR(D_FP_ENROLL_PLACEFINGER));
 //        As608Finger->LEDcontrol(FINGERPRINT_LED_ON, 0, FINGERPRINT_LED_BLUE);
         As608.enroll_step++;
         break;
@@ -163,7 +163,7 @@ void As608Loop(void) {
         }
         break;
       case 4:
-        As608PublishMessage(PSTR("Remove finger"));
+        As608PublishMessage(PSTR(D_FP_ENROLL_REMOVEFINGER));
         As608.enroll_step++;
         break;
       case 5:
@@ -174,7 +174,7 @@ void As608Loop(void) {
         }
         break;
       case 6:
-        As608PublishMessage(PSTR("Place same finger again"));
+        As608PublishMessage(PSTR(D_FP_ENROLL_PLACESAMEFINGER));
 //        As608Finger->LEDcontrol(FINGERPRINT_LED_OFF, 0, FINGERPRINT_LED_PURPLE);
         As608.enroll_step++;
         break;
@@ -187,7 +187,7 @@ void As608Loop(void) {
       case 8:
         // convert second image
         if (As608ConvertFingerImage(2) != FINGERPRINT_OK) {
-          As608PublishMessage(PSTR("Not Ok so try again"));
+          As608PublishMessage(PSTR(D_FP_ENROLL_RETRY));
           As608.enroll_step -= 2;
           break;
         }
@@ -211,11 +211,11 @@ void As608Loop(void) {
         }
         break;
       case 99:
-        As608PublishMessage(PSTR("Restart"));
+        As608PublishMessage(PSTR(D_FP_ENROLL_RESTART));
         As608.enroll_step = 1;
         break;
       default:
-        As608PublishMessage(PSTR("Error"));
+        As608PublishMessage(PSTR(D_FP_ENROLL_ERROR));
         As608.enroll_step = 0;
         As608.model_number = 0;
         break;
@@ -232,10 +232,10 @@ void CmndFpEnroll(void) {
     if (0 == XdrvMailbox.payload) {
       // FpEnroll 0 - Stop enrollement
       As608.enroll_step = 0;
-      ResponseCmndChar_P(PSTR("Reset"));
+      ResponseCmndChar_P(PSTR(D_FP_ENROLL_RESET));
     } else {
       // FpEnroll - Enrollement state
-      ResponseCmndChar_P(PSTR("Active"));
+      ResponseCmndChar_P(PSTR(D_FP_ENROLL_ACTIVE));
     }
   } else {
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 128)) {
@@ -245,7 +245,7 @@ void CmndFpEnroll(void) {
       ResponseClear();  // Will use loop start message
     } else {
       // FpEnroll - Enrollement state
-      ResponseCmndChar_P(PSTR("Inactive"));
+      ResponseCmndChar_P(PSTR(D_FP_ENROLL_INACTIVE));
     }
   }
 }
@@ -256,7 +256,7 @@ void CmndFpDelete(void) {
     As608Finger->emptyDatabase();
     As608Finger->getTemplateCount();
     if (As608Finger->templateCount) {
-      ResponseCmndChar_P(PSTR("Error"));
+      ResponseCmndChar_P(PSTR(D_FP_DBCLEARFAIL));
     } else {
       ResponseCmndDone();
     }
