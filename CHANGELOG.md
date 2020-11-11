@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee alarm persistence (#9785)
 - Support for EZO PMP sensors by Christopher Tremblay (#9760)
 - Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
+- Zigbee command ``ZbInfo`` and prepare support for EEPROM
 
 ### Changed
 - Core library from v2.7.4.5 to v2.7.4.7

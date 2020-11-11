@@ -547,6 +547,7 @@
   #define D_JSON_ZIGBEE_MODELID "ModelId"
 #define D_CMND_ZIGBEE_PROBE "Probe"
 #define D_CMND_ZIGBEE_FORGET "Forget"
+#define D_CMND_ZIGBEE_INFO "Info"
 #define D_CMND_ZIGBEE_SAVE "Save"
   #define D_CMND_ZIGBEE_LINKQUALITY "LinkQuality"
   #define D_CMND_ZIGBEE_CLUSTER "Cluster"

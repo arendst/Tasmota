@@ -19,6 +19,10 @@
 
 #ifdef USE_ZIGBEE
 
+#ifdef USE_ZIGBEE_EZSP
+#include "Eeprom24C512.h"
+#endif // USE_ZIGBEE_EZSP
+
 // contains some definitions for functions used before their declarations
 
 //
@@ -69,7 +73,14 @@ const uint8_t  ZIGBEE_LABEL_CONFIGURE_EZSP = 53;   // main loop
 const uint8_t  ZIGBEE_LABEL_ABORT = 99;   // goto label 99 in case of fatal error
 const uint8_t  ZIGBEE_LABEL_UNSUPPORTED_VERSION = 98;  // Unsupported ZNP version
 
-struct ZigbeeStatus {
+class ZigbeeStatus {
+public:
+  ZigbeeStatus()
+#ifdef USE_ZIGBEE_EZSP
+    : eeprom(USE_ZIGBEE_ZBBRIDGE_EEPROM)
+#endif // USE_ZIGBEE_EZSP
+  {}
+
   bool active = true;                 // is Zigbee active for this device, i.e. GPIOs configured
   bool state_machine = false;		      // the state machine is running
   bool state_waiting = false;         // the state machine is waiting for external event or timeout
@@ -77,6 +88,7 @@ struct ZigbeeStatus {
   bool ready = false;								  // cc2530 initialization is complet, ready to operate
   bool init_phase = true;             // initialization phase, before accepting zigbee traffic
   bool recv_until = false;            // ignore all messages until the received frame fully matches
+  bool eeprom_present = false;        // is the ZBBridge EEPROM present?
 
   uint8_t on_error_goto = ZIGBEE_LABEL_ABORT;         // on error goto label, 99 default to abort
   uint8_t on_timeout_goto = ZIGBEE_LABEL_ABORT;       // on timeout goto label, 99 default to abort
@@ -89,6 +101,10 @@ struct ZigbeeStatus {
   ZB_RecvMsgFunc recv_unexpected = nullptr;    // function called when unexpected message is received
 
   uint32_t permit_end_time = 0;       // timestamp when permit join ends
+
+#ifdef USE_ZIGBEE_EZSP
+  Eeprom24C512 eeprom;     // takes only 1 bytes of RAM
+#endif // USE_ZIGBEE_EZSP
 };
 struct ZigbeeStatus zigbee;
 SBuffer *zigbee_buffer = nullptr;

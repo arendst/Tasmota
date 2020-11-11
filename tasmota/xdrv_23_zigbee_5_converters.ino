@@ -231,7 +231,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   //{ Zmap8,    Cx0005, 0x0004,  (NameSupport),           Cm1, 0 },
 
   // On/off cluster
-  { Zbool,    Cx0006,    0x0000,  Z_(Power),             Cm1, 0 },
+  { Zbool,    Cx0006,    0x0000,  Z_(Power),             Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_OnOff, power) },
   { Zenum8,   Cx0006,    0x4003,  Z_(StartUpOnOff),      Cm1, 0 },
   { Zbool,    Cx0006,    0x8000,  Z_(Power),             Cm1, 0 },   // See 7280
 
@@ -558,8 +558,8 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
 
   // IAS Cluster (Intruder Alarm System)
   { Zenum8,   Cx0500, 0x0000,  Z_(ZoneState),            Cm1, 0 },    // Occupancy (map8)
-  { Zenum16,  Cx0500, 0x0001,  Z_(ZoneType),             Cm1, Z_MAPPING(Z_Data_Alarm, zone_type) },    // Zone type for sensor
-  { Zmap16,   Cx0500, 0x0002,  Z_(ZoneStatus),           Cm1, Z_MAPPING(Z_Data_Alarm, zone_status) },    // Zone status for sensor
+  { Zenum16,  Cx0500, 0x0001,  Z_(ZoneType),             Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Alarm, zone_type) },    // Zone type for sensor
+  { Zmap16,   Cx0500, 0x0002,  Z_(ZoneStatus),           Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Alarm, zone_status) },    // Zone status for sensor
   { Zbool,    Cx0500, 0xFFF0,  Z_(Contact),              Cm1, Z_MAPPING(Z_Data_Alarm, zone_status) },    // We fit the first bit in the LSB
 
   // Metering (Smart Energy) cluster
@@ -1844,6 +1844,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
         switch (zigbee_type) {
           case Zenum8:
           case Zmap8:
+          case Zbool:
           case Zuint8:  *(uint8_t*)attr_address  = uval32;          break;
           case Zenum16:
           case Zmap16:
@@ -1975,6 +1976,7 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const 
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     uint8_t conv_export = pgm_read_byte(&converter->multiplier_idx) & Z_EXPORT_DATA;
     uint8_t conv_mapping = pgm_read_byte(&converter->mapping);
+    int8_t  multiplier = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
     Z_Data_Type map_type = (Z_Data_Type) ((conv_mapping & 0xF0)>>4);
     uint8_t map_offset = (conv_mapping & 0x0F);
 
@@ -1982,7 +1984,7 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const 
       // we need to export this attribute
       const char * conv_name = Z_strings + pgm_read_word(&converter->name_offset);
       uint8_t zigbee_type = pgm_read_byte(&converter->type);                    // zigbee type to select right size 8/16/32 bits
-      uint8_t *attr_address = ((uint8_t*)this) + sizeof(Z_Data) + map_offset;   // address of attribute in memory
+      uint8_t * attr_address = ((uint8_t*)this) + sizeof(Z_Data) + map_offset;   // address of attribute in memory
 
       int32_t data_size = 0;
       int32_t ival32;
@@ -1990,6 +1992,7 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const 
       switch (zigbee_type) {
         case Zenum8:
         case Zmap8:
+        case Zbool:
         case Zuint8:  uval32 = *(uint8_t*)attr_address;   if (uval32 != 0xFF)        data_size = 8;   break;
         case Zmap16:
         case Zenum16:
@@ -2002,8 +2005,12 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const 
       if (data_size != 0) {
         Z_attribute & attr = attr_list.addAttribute(conv_name);
 
-        if (data_size > 0) { attr.setUInt(uval32); }
-        else { attr.setInt(ival32); }
+        float fval = (data_size > 0) ? uval32 : ival32;
+        if ((1 != multiplier) && (0 != multiplier)) {
+          if (multiplier > 0) { fval =  fval * multiplier; }
+          else                { fval =  fval / (-multiplier); }
+        }
+        attr.setFloat(fval);
       }
     }
   }
