@@ -53,7 +53,7 @@ const uint8_t Z_Data_Type_char[] PROGMEM = {
   '\0',     // 0x0C
   '\0',     // 0x0D
   '\0',     // 0x0E
-  'E',      // 0x05 Z_Data_Type::Z_Ext
+  'E',      // 0x0F Z_Data_Type::Z_Ext
   // '_' maps to 0xFF Z_Data_Type::Z_Device
 };
 
@@ -63,12 +63,13 @@ class Z_Data_Set;
 \*********************************************************************************************/
 class Z_Data {
 public:
-  Z_Data(Z_Data_Type type = Z_Data_Type::Z_Unknown, uint8_t endpoint = 0) : _type(type), _endpoint(endpoint), _config(0xF), _power(0) {}
+  Z_Data(Z_Data_Type type = Z_Data_Type::Z_Unknown, uint8_t endpoint = 0) : _type(type), _endpoint(endpoint), _config(0xF), _align_1(0), _reserved(0) {}
   inline Z_Data_Type getType(void) const { return _type; }
   inline int8_t getConfig(void) const { return _config; }
   inline bool validConfig(void) const { return _config != 0xF; }
   inline void setConfig(int8_t config) { _config = config; }
   uint8_t getConfigByte(void) const { return ( ((uint8_t)_type) << 4) | ((_config & 0xF) & 0x0F); }
+  uint8_t getReserved(void) const { return _reserved; }
 
   inline uint8_t getEndpoint(void) const { return _endpoint; }
 
@@ -79,6 +80,7 @@ public:
   inline bool update(void) { return false; }
 
   static const Z_Data_Type type = Z_Data_Type::Z_Unknown;
+  static size_t DataTypeToLength(Z_Data_Type t);
   static bool ConfigToZData(const char * config_str, Z_Data_Type * type, uint8_t * ep, uint8_t * config);
 
   static Z_Data_Type CharToDataType(char c);
@@ -87,9 +89,10 @@ public:
   friend class Z_Data_Set;
 protected:
   Z_Data_Type _type;        // encoded on 4 bits, type of the device
-  uint8_t _endpoint;    // source endpoint, or 0x00 if any endpoint
+  uint8_t _endpoint;        // source endpoint, or 0x00 if any endpoint
   uint8_t _config : 4;      // encoded on 4 bits, customize behavior
-  uint8_t _power;       // power state if the type supports it
+  uint8_t _align_1 : 4;     // force aligned to bytes, and fill with zero
+  uint8_t _reserved;           // power state if the type supports it
 };
 
 Z_Data_Type Z_Data::CharToDataType(char c) {
@@ -153,27 +156,19 @@ bool Z_Data::ConfigToZData(const char * config_str, Z_Data_Type * type, uint8_t 
 class Z_Data_OnOff : public Z_Data {
 public:
   Z_Data_OnOff(uint8_t endpoint = 0) :
-    Z_Data(Z_Data_Type::Z_OnOff, endpoint)
-    {
-      _config = 1;         // at least 1 OnOff
-    }
+    Z_Data(Z_Data_Type::Z_OnOff, endpoint),
+    power(0xFF)
+    {}
 
-  inline bool validPower(uint32_t relay = 0) const { return (_config > relay); }      // power is declared
-  inline bool getPower(uint32_t relay = 0)  const { return bitRead(_power, relay); }
-         void setPower(bool val, uint32_t relay = 0);
-
-  void toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const;
+  inline bool validPower(void) const { return 0xFF != power; }      // power is declared
+  inline bool getPower(void)   const { return validPower() ? (power != 0) : false; }   // default to false if undefined
+  inline void setPower(bool val)     { power = val ? 1 : 0; }
 
   static const Z_Data_Type type = Z_Data_Type::Z_OnOff;
+
+  // 1 byte
+  uint8_t           power;
 };
-
-
-void Z_Data_OnOff::setPower(bool val, uint32_t relay) {
-  if (relay < 8) {
-    if (_config < relay) { _config = relay; }     // we update the number of valid relays
-    bitWrite(_power, relay, val);
-  }
-}
 
 /*********************************************************************************************\
  * Device specific: Plug device
@@ -430,6 +425,37 @@ public:
     // 0x0226  Glass break sensor
     // 0x0229  Security repeater*
 };
+
+const uint8_t Z_Data_Type_len[] PROGMEM = {
+  0,                        // 0x00 Z_Data_Type::Z_Unknown
+  sizeof(Z_Data_Light),     // 0x01 Z_Data_Type::Z_Light
+  sizeof(Z_Data_Plug),      // 0x02 Z_Data_Type::Z_Plug
+  sizeof(Z_Data_PIR),       // 0x03 Z_Data_Type::Z_PIR
+  sizeof(Z_Data_Alarm),     // 0x04 Z_Data_Type::Z_Alarm
+  sizeof(Z_Data_Thermo),    // 0x05 Z_Data_Type::Z_Thermo
+  sizeof(Z_Data_OnOff),     // 0x05 Z_Data_Type::Z_OnOff
+  0,     // 0x06
+  0,     // 0x07
+  0,     // 0x08
+  0,     // 0x09
+  0,     // 0x0A
+  0,     // 0x0B
+  0,     // 0x0C
+  0,     // 0x0D
+  0,     // 0x0E
+  0,      // 0x0F Z_Data_Type::Z_Ext
+  // '_' maps to 0xFF Z_Data_Type::Z_Device
+};
+
+size_t Z_Data::DataTypeToLength(Z_Data_Type t) {
+  uint32_t tt = (uint32_t) t;
+  if (tt < ARRAY_SIZE(Z_Data_Type_len)) {
+    return pgm_read_byte(&Z_Data_Type_len[tt]);
+  }
+  return 0;
+}
+
+
 /*********************************************************************************************\
  * 
  * Device specific Linked List
@@ -453,7 +479,10 @@ public:
   template <class M>
   const M & find(uint8_t ep = 0) const;
 
-  // check if the point is null, if so create a new object with the right sub-class
+  // create a new data object from a 4 bytes buffer
+  Z_Data & createFromBuffer(const SBuffer & buf, uint32_t start, uint32_t len);
+
+  // check if the pointer is null, if so create a new object with the right sub-class
   template <class M>
   M & addIfNull(M & cur, uint8_t ep = 0);
 };
@@ -487,6 +516,35 @@ Z_Data & Z_Data_Set::getByType(Z_Data_Type type, uint8_t ep) {
     default:
       return *(Z_Data*)nullptr;
   }
+}
+
+// Instanciate with either:
+// (04)04010100          - without data except minimal Z_Data
+// (08)04010100.B06DFFFF - with complete data - in this case must not exceed the structure len
+//
+// Byte 0: type
+// Byte 1: endpoint
+// Byte 2: config
+// Byte 3: Power
+Z_Data & Z_Data_Set::createFromBuffer(const SBuffer & buf, uint32_t start, uint32_t len) {
+  if (len < sizeof(Z_Data)) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Invalid len (<4) %d"), len);
+    return *(Z_Data*)nullptr;
+  }
+
+  Z_Data_Type data_type = (Z_Data_Type) buf.get8(start);
+  uint8_t expected_len = Z_Data::DataTypeToLength(data_type);
+  uint8_t endpoint = buf.get8(start + 1);
+
+  Z_Data & elt = getByType(data_type, endpoint);
+  if (&elt == nullptr) { return *(Z_Data*)nullptr; }
+  if (len <= expected_len) {
+    memcpy(&elt, buf.buf(start), len);
+  } else {
+    memcpy(&elt, buf.buf(start), sizeof(Z_Data));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "buffer len overflow %d > %d"), len, expected_len);
+  }
+  return elt;
 }
 
 template <class M>
@@ -528,11 +586,6 @@ const Z_Data & Z_Data_Set::find(Z_Data_Type type, uint8_t ep) const {
   return *(Z_Data*)nullptr;
 }
 
-void Z_Data_OnOff::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const {
-  if (validPower())             { attr_list.addAttribute(PSTR("Power")).setUInt(getPower() ? 1 : 0); }
-}
-
-
 /*********************************************************************************************\
  * Structures for Rules variables related to the last received message
 \*********************************************************************************************/
@@ -561,11 +614,13 @@ public:
 
   // New version of device data handling
   Z_Data_Set            data;            // Linkedlist of device data per endpoint
-  // other status
+  // other status - device wide data is 8 bytes
+  // START OF DEVICE WIDE DATA
+  uint32_t              last_seen;      // Last seen time (epoch)
   uint8_t               lqi;            // lqi from last message, 0xFF means unknown
   uint8_t               batterypercent; // battery percentage (0..100), 0xFF means unknwon
-  // power plug data-
-  uint32_t              last_seen;      // Last seen time (epoch)
+  uint16_t              reserved_for_alignment;
+  // END OF DEVICE WIDE DATA
 
   // Constructor with all defaults
   Z_Device(uint16_t _shortaddr = BAD_SHORTADDR, uint64_t _longaddr = 0x00):
@@ -736,7 +791,7 @@ public:
   // Dump json
   static String dumpLightState(const Z_Device & device);
   String dumpDevice(uint32_t dump_mode, const Z_Device & device) const;
-  static String dumpSingleDevice(uint32_t dump_mode, const Z_Device & device);
+  static String dumpSingleDevice(uint32_t dump_mode, const class Z_Device & device, bool add_device_name = true, bool add_brackets = true);
   int32_t deviceRestore(JsonParserObject json);
 
   // Hue support
@@ -753,11 +808,13 @@ public:
 
   // Append or clear attributes Json structure
   void jsonAppend(uint16_t shortaddr, const Z_attribute_list &attr_list);
+  static void jsonPublishFlushAttrList(const Z_Device & device, const String & attr_list_string);
   void jsonPublishFlush(uint16_t shortaddr);    // publish the json message and clear buffer
   bool jsonIsConflict(uint16_t shortaddr, const Z_attribute_list &attr_list) const;
   void jsonPublishNow(uint16_t shortaddr, Z_attribute_list &attr_list);
 
   // Iterator
+  inline const LList<Z_Device> & getDevices(void) const { return _devices; }
   size_t devicesSize(void) const {
     return _devices.length();
   }
