@@ -23,7 +23,6 @@
  *
  * Currently supports:
  * - English only as there are no tanslations supported
- * - AS608 only as R503 fails to read stored fingerprints
 \*********************************************************************************************/
 
 #define XSNS_79               79
@@ -130,7 +129,8 @@ void As608Loop(void) {
     p = As608Finger->image2Tz();          // Convert image
     if (p != FINGERPRINT_OK) { return; }
 
-    p = As608Finger->fingerFastSearch();  // Match found
+//    p = As608Finger->fingerFastSearch();  // Match found - fails on R503
+    p = As608Finger->fingerSearch();      // Match found
     if (p != FINGERPRINT_OK) {
 //      AddLog_P(LOG_LEVEL_DEBUG, PSTR("AS6: No matching finger"));
       return;
