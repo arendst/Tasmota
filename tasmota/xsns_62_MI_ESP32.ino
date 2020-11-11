@@ -764,8 +764,10 @@ void MI32PreInit(void) {
 
 void MI32Init(void) {
   if (MI32.mode.init) return;
-  if (Wifi.status == 0) return;
-
+  if(WiFi.getSleep() == false){
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("MI32: WiFi modem not in sleep mode, BLE cannot start yet"));
+    return;
+  }
   if (!MI32.mode.init) {
     NimBLEDevice::init("");
     AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: init BLE device"));
