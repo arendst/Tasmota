@@ -636,9 +636,10 @@ public:
     hidden(false),
     reachable(false),
     data(),
+    last_seen(0),
     lqi(0xFF),
     batterypercent(0xFF),
-    last_seen(0)
+    reserved_for_alignment(0xFFFF)
     { };
 
   inline bool valid(void)               const { return BAD_SHORTADDR != shortaddr; }    // is the device known, valid and found?
