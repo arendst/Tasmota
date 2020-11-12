@@ -87,6 +87,7 @@ void ESP_Restart(void) {
 
 #include <nvs.h>
 #include <rom/rtc.h>
+#include <esp_phy_init.h>
 
 void NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen) {
   nvs_handle handle;
@@ -121,20 +122,20 @@ esp_err_t NvmErase(const char *sNvsName) {
 
 void SettingsErase(uint8_t type) {
   // All SDK and Tasmota data is held in default NVS partition
-  //
-
+  // cal_data - SDK PHY calibration data as documented in esp_phy_init.h
+  // qpc      - Tasmota Quick Power Cycle state
+  // main     - Tasmota Settings data
   esp_err_t r1, r2, r3;
   switch (type) {
     case 0:               // Reset 2, 5, 6 = Erase all flash from program end to end of physical flash
 //      nvs_flash_erase();  // Erase RTC, PHY, sta.mac, ap.sndchan, ap.mac, Tasmota etc.
       r1 = NvmErase("qpc");
       r2 = NvmErase("main");
-//      NvmErase("cal_data");
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " Tasmota data (%d,%d)"), r1, r2);
       break;
     case 1: case 4:       // Reset 3 or WIFI_FORCE_RF_CAL_ERASE = SDK parameter area
-//      r1 = esp_phy_erase_cal_data_in_nvs();
-      r1 = NvmErase("cal_data");
+      r1 = esp_phy_erase_cal_data_in_nvs();
+//      r1 = NvmErase("cal_data");
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " PHY data (%d)"), r1);
       break;
     case 2:               // Not used = QPC and Tasmota parameter area (0x0F3xxx - 0x0FBFFF)
