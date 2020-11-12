@@ -22,9 +22,15 @@
  * AS608 optical and R503 capacitive Fingerprint sensor
  *
  * Uses Adafruit-Fingerprint-sensor-library with TasmotaSerial
+ *
+ * Changes made to Adafruit_Fingerprint.h and Adafruit_Fingerprint.cpp:
+ * - Replace SoftwareSerial with TasmotaSerial
+ * - Add defined(ESP32) where also defined(ESP8266)
 \*********************************************************************************************/
 
 #define XSNS_79               79
+
+//#define USE_AS608_MESSAGES
 
 #define D_JSON_FPRINT "FPrint"
 
@@ -37,6 +43,7 @@ const char kAs608Commands[] PROGMEM = D_PRFX_FP "|" D_CMND_FP_ENROLL "|" D_CMND_
 
 void (*const As608Commands[])(void) PROGMEM = { &CmndFpEnroll, &CmndFpDelete, &CmndFpCount };
 
+#ifdef USE_AS608_MESSAGES
 const char kAs608Messages[] PROGMEM =
   D_DONE "|" D_FP_PACKETRECIEVEERR "|" D_FP_NOFINGER "|" D_FP_IMAGEFAIL "|" D_FP_UNKNOWNERROR "|" D_FP_IMAGEMESS "|" D_FP_FEATUREFAIL "|" D_FP_NOMATCH "|"
   D_FP_NOTFOUND "|" D_FP_ENROLLMISMATCH "|" D_FP_BADLOCATION "|" D_FP_DBRANGEFAIL "|" D_FP_UPLOADFEATUREFAIL "|" D_FP_PACKETRESPONSEFAIL "|"
@@ -44,6 +51,9 @@ const char kAs608Messages[] PROGMEM =
   D_FP_ADDRCODE "|" D_FP_PASSVERIFY;
 
 const uint8_t As608Reference[] PROGMEM = { 0, 1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 4, 17, 4, 18, 4, 4, 19, 4, 20, 4, 4, 4, 4, 4, 21, 22 };
+#else
+const char kAs608Messages[] PROGMEM = D_DONE "|" D_FP_UNKNOWNERROR "|" D_FP_NOFINGER;
+#endif
 
 #include <TasmotaSerial.h>
 #include <Adafruit_Fingerprint.h>
@@ -58,8 +68,13 @@ struct AS608 {
 } As608;
 
 char* As608Message(char* response, uint32_t index) {
+#ifdef USE_AS608_MESSAGES
   if (index > sizeof(As608Reference)) { index = 4; }
   uint32_t i = pgm_read_byte(&As608Reference[index]);
+#else
+  if (index > 2) { index = 1; }
+  uint32_t i = index;
+#endif
   return GetTextIndexed(response, TOPSZ, i, kAs608Messages);
 }
 
