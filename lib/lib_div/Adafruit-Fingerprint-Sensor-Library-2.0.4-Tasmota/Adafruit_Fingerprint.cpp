@@ -54,7 +54,7 @@
  PUBLIC FUNCTIONS
  ***************************************************************************/
 
-#if defined(__AVR__) || defined(ESP8266) || defined(FREEDOM_E300_HIFIVE1)
+#if defined(__AVR__) || defined(ESP8266) || defined(ESP32) || defined(FREEDOM_E300_HIFIVE1)
 /**************************************************************************/
 /*!
     @brief  Instantiates sensor with Software Serial
@@ -87,7 +87,7 @@ Adafruit_Fingerprint::Adafruit_Fingerprint(HardwareSerial *hs,
   thePassword = password;
   theAddress = 0xFFFFFFFF;
 
-#if defined(__AVR__) || defined(ESP8266) || defined(FREEDOM_E300_HIFIVE1)
+#if defined(__AVR__) || defined(ESP8266) || defined(ESP32) || defined(FREEDOM_E300_HIFIVE1)
   swSerial = NULL;
 #endif
   hwSerial = hs;
@@ -109,7 +109,7 @@ Adafruit_Fingerprint::Adafruit_Fingerprint(Stream *serial, uint32_t password) {
   theAddress = 0xFFFFFFFF;
 
   hwSerial = NULL;
-#if defined(__AVR__) || defined(ESP8266) || defined(FREEDOM_E300_HIFIVE1)
+#if defined(__AVR__) || defined(ESP8266) || defined(ESP32) || defined(FREEDOM_E300_HIFIVE1)
   swSerial = NULL;
 #endif
   mySerial = serial;
@@ -126,7 +126,7 @@ void Adafruit_Fingerprint::begin(uint32_t baudrate) {
 
   if (hwSerial)
     hwSerial->begin(baudrate);
-#if defined(__AVR__) || defined(ESP8266) || defined(FREEDOM_E300_HIFIVE1)
+#if defined(__AVR__) || defined(ESP8266) || defined(ESP32) || defined(FREEDOM_E300_HIFIVE1)
   if (swSerial)
     swSerial->begin(baudrate);
 #endif
