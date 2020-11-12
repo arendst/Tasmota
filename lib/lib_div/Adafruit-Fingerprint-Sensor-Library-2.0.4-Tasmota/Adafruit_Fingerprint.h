@@ -6,7 +6,7 @@
  */
 
 #include "Arduino.h"
-#if defined(__AVR__) || defined(ESP8266)
+#if defined(__AVR__) || defined(ESP8266) || defined(ESP32)
 //#include <SoftwareSerial.h>
 #include <TasmotaSerial.h>
 #elif defined(FREEDOM_E300_HIFIVE1)
@@ -129,7 +129,7 @@ struct Adafruit_Fingerprint_Packet {
 ///! Helper class to communicate with and keep state for fingerprint sensors
 class Adafruit_Fingerprint {
 public:
-#if defined(__AVR__) || defined(ESP8266) || defined(FREEDOM_E300_HIFIVE1)
+#if defined(__AVR__) || defined(ESP8266) || defined(ESP32) || defined(FREEDOM_E300_HIFIVE1)
 //  Adafruit_Fingerprint(SoftwareSerial *ss, uint32_t password = 0x0);
   Adafruit_Fingerprint(TasmotaSerial *ss, uint32_t password = 0x0);
 #endif
@@ -186,7 +186,7 @@ private:
   uint8_t recvPacket[20];
 
   Stream *mySerial;
-#if defined(__AVR__) || defined(ESP8266) || defined(FREEDOM_E300_HIFIVE1)
+#if defined(__AVR__) || defined(ESP8266) || defined(ESP32) || defined(FREEDOM_E300_HIFIVE1)
 //  SoftwareSerial *swSerial;
   TasmotaSerial *swSerial;
 #endif
