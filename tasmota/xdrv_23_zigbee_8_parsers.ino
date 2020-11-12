@@ -35,7 +35,7 @@ uint8_t ZNP_RSSI2Lqi(int8_t rssi) {
 \*********************************************************************************************/
 
 // EZSP: received ASH "RSTACK" frame, indicating that the MCU finished boot
-int32_t EZ_RSTACK(uint8_t reset_code) {
+void EZ_RSTACK(uint8_t reset_code) {
   const char *reason_str;
 
   switch (reset_code) {
@@ -57,7 +57,7 @@ int32_t EZ_RSTACK(uint8_t reset_code) {
 }
 
 // EZSP: received ASH "ERROR" frame, indicating that the MCU finished boot
-int32_t EZ_ERROR(uint8_t error_code) {
+void EZ_ERROR(uint8_t error_code) {
   const char *reason_str;
 
   switch (error_code) {
@@ -75,7 +75,7 @@ int32_t EZ_ERROR(uint8_t error_code) {
 int32_t EZ_ReadAPSUnicastMessage(int32_t res, class SBuffer &buf) {
   // Called when receiving a response from getConfigurationValue
   // Value is in bytes 2+3
-  uint16_t value = buf.get16(2);
+  // uint16_t value = buf.get16(2);
   return res;
 }
 
@@ -129,8 +129,8 @@ int32_t EZ_NetworkParameters(int32_t res, class SBuffer &buf) {
 // Analyze response to "getKey" and check NWK key
 //
 int32_t EZ_CheckKeyNWK(int32_t res, class SBuffer &buf) {
-  uint8_t  status = buf.get8(2);
-  uint16_t bitmask = buf.get16(3);
+  // uint8_t  status = buf.get8(2);
+  // uint16_t bitmask = buf.get16(3);
   uint8_t  key_type = buf.get8(5);
   uint64_t key_low  = buf.get64(6);
   uint64_t key_high = buf.get64(14);
@@ -314,11 +314,11 @@ int32_t ZNP_Reboot(int32_t res, class SBuffer &buf) {
   // 4180.02.02.00.02.06.03
   //
   uint8_t reason = buf.get8(2);
-  uint8_t transport_rev = buf.get8(3);
-  uint8_t product_id = buf.get8(4);
+  // uint8_t transport_rev = buf.get8(3);
+  // uint8_t product_id = buf.get8(4);
   uint8_t major_rel = buf.get8(5);
   uint8_t minor_rel = buf.get8(6);
-  uint8_t hw_rev = buf.get8(7);
+  // uint8_t hw_rev = buf.get8(7);
   const char *reason_str;
 
   switch (reason) {
@@ -481,18 +481,18 @@ int32_t ZNP_ReceivePermitJoinStatus(int32_t res, const class SBuffer &buf) {
 //
 int32_t ZNP_ReceiveNodeDesc(int32_t res, const class SBuffer &buf) {
   // Received ZDO_NODE_DESC_RSP
-  Z_ShortAddress    srcAddr = buf.get16(2);
+  // Z_ShortAddress    srcAddr = buf.get16(2);
   uint8_t           status  = buf.get8(4);
-  Z_ShortAddress    nwkAddr = buf.get16(5);
+  // Z_ShortAddress    nwkAddr = buf.get16(5);
   uint8_t           logicalType = buf.get8(7);
-  uint8_t           apsFlags = buf.get8(8);
-  uint8_t           MACCapabilityFlags = buf.get8(9);
-  uint16_t          manufacturerCapabilities = buf.get16(10);
-  uint8_t           maxBufferSize = buf.get8(12);
-  uint16_t          maxInTransferSize = buf.get16(13);
-  uint16_t          serverMask = buf.get16(15);
-  uint16_t          maxOutTransferSize = buf.get16(17);
-  uint8_t           descriptorCapabilities = buf.get8(19);
+  // uint8_t           apsFlags = buf.get8(8);
+  // uint8_t           MACCapabilityFlags = buf.get8(9);
+  // uint16_t          manufacturerCapabilities = buf.get16(10);
+  // uint8_t           maxBufferSize = buf.get8(12);
+  // uint16_t          maxInTransferSize = buf.get16(13);
+  // uint16_t          serverMask = buf.get16(15);
+  // uint16_t          maxOutTransferSize = buf.get16(17);
+  // uint8_t           descriptorCapabilities = buf.get8(19);
 
 
   if (0 == status) {
@@ -525,13 +525,13 @@ int32_t Z_ReceiveActiveEp(int32_t res, const class SBuffer &buf) {
   // Received ZDO_ACTIVE_EP_RSP
 #ifdef USE_ZIGBEE_ZNP
   // Z_ShortAddress    srcAddr = buf.get16(2);
-  uint8_t           status  = buf.get8(4);
+  // uint8_t           status  = buf.get8(4);
   Z_ShortAddress    nwkAddr = buf.get16(5);
   uint8_t           activeEpCount = buf.get8(7);
   uint8_t*          activeEpList = (uint8_t*) buf.charptr(8);
 #endif
 #ifdef USE_ZIGBEE_EZSP
-  uint8_t           status  = buf.get8(0);
+  // uint8_t           status  = buf.get8(0);
   Z_ShortAddress    nwkAddr = buf.get16(1);
   uint8_t           activeEpCount = buf.get8(3);
   uint8_t*          activeEpList = (uint8_t*) buf.charptr(4);
@@ -635,7 +635,7 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
   // Z_ShortAddress    srcAddr = buf.get16(2);
   uint8_t           status  = buf.get8(4);
   Z_ShortAddress    nwkAddr = buf.get16(5);
-  uint8_t           lenDescriptor = buf.get8(7);
+  // uint8_t           lenDescriptor = buf.get8(7);
   uint8_t           endpoint = buf.get8(8);
   uint16_t          profileId = buf.get16(9);  // The profile Id for this endpoint.
   uint16_t          deviceId = buf.get16(11);   // The Device Description Id for this endpoint.
@@ -648,7 +648,7 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
 #ifdef USE_ZIGBEE_EZSP
   uint8_t           status = buf.get8(0);
   Z_ShortAddress    nwkAddr = buf.get16(1);
-  uint8_t           lenDescriptor = buf.get8(3);
+  // uint8_t           lenDescriptor = buf.get8(3);
   uint8_t           endpoint = buf.get8(4);
   uint16_t          profileId = buf.get16(5);  // The profile Id for this endpoint.
   uint16_t          deviceId = buf.get16(7);   // The Device Description Id for this endpoint.
@@ -1661,7 +1661,6 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
         break;
     }
   } else {
-    bool            defer_attributes = false;     // do we defer attributes reporting to coalesce
     ZCLFrame zcl_received = ZCLFrame::parseRawFrame(buf, 21, buf.get8(20), clusterid, groupid,
                                 srcaddr,
                                 srcendpoint, dstendpoint, wasbroadcast,

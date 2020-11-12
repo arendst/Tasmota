@@ -533,7 +533,6 @@ void CheckHue(String * response, bool &appending) {
 }
 
 void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
-  uint16_t tmp = 0;
   uint16_t hue = 0;
   uint8_t  sat = 0;
   uint8_t  bri = 254;

@@ -74,6 +74,7 @@ bool hydrateDeviceData(class Z_Device & device, const SBuffer & buf, size_t star
   while (offset + 5 <= len) {    // each entry is at least 5 bytes
     uint8_t data_len = buf.get8(start + offset);
     Z_Data & data_elt = device.data.createFromBuffer(buf, offset + 1, data_len);
+    (void)data_elt;   // avoid compiler warning
     offset += data_len + 1;
   }
   return true;
@@ -124,6 +125,7 @@ bool hydrateDevicesDataBlob(const class SBuffer & buf, size_t start, size_t len)
     if (segment_len <= 0) { return false; }
     offset += segment_len;
   }
+  return true;
 }
 
 class SBuffer hibernateDeviceData(const struct Z_Device & device, bool log = false) {

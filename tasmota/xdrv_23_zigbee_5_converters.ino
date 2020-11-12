@@ -883,7 +883,6 @@ int32_t encodeSingleAttribute(class SBuffer &buf, double val_d, const char *val_
       break;
 
     case Zsingle:      // float
-      uint32_t *f_ptr;
       buf.add32( *((uint32_t*)&f32) );    // cast float as uint32_t
       break;
 
@@ -1023,7 +1022,7 @@ uint32_t parseSingleAttribute(Z_attribute & attr, const SBuffer &buf,
       {
         int32_t int32_val = buf.get32(i);
         // i += 4;
-        if (0x80000000 != int32_val) {
+        if (-0x80000000 != int32_val) {
           attr.setInt(int32_val);
         }
       }
@@ -1805,9 +1804,9 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
       // Look for an entry in the converter table
       bool found = false;
       const char * conv_name;
-      Z_Data_Type map_type;
-      uint8_t map_offset;
-      uint8_t zigbee_type;
+      Z_Data_Type map_type = Z_Data_Type::Z_Unknown;
+      uint8_t map_offset = 0;
+      uint8_t zigbee_type = Znodata;
       int8_t conv_multiplier;
       for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
         const Z_AttributeConverter *converter = &Z_PostProcess[i];
@@ -1861,7 +1860,6 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
 
       uint16_t uval16 = attr.getUInt();     // call converter to uint only once
       int16_t  ival16 = attr.getInt();     // call converter to int only once
-      Z_Data_Set & data = device.data;
       // update any internal structure
       switch (ccccaaaa) {
         case 0x00000004: device.setManufId(attr.getStr());                            break;
@@ -1937,7 +1935,6 @@ bool Z_parseAttributeKey(class Z_attribute & attr) {
     // scan attributes to find by name, and retrieve type
     for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
       const Z_AttributeConverter *converter = &Z_PostProcess[i];
-      bool match = false;
       uint16_t local_attr_id = pgm_read_word(&converter->attribute);
       uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
       uint8_t  local_type_id = pgm_read_byte(&converter->type);

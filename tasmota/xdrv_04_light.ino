@@ -1848,7 +1848,6 @@ void LightSetPower(void)
 // Light.power tells which lights or channels (SetOption68) are on/off
 void LightAnimate(void)
 {
-  uint16_t light_still_on = 0;
   bool power_off = false;
 
   // make sure we update CT range in case SetOption82 was changed
@@ -2727,7 +2726,7 @@ void CmndHsbColor(void)
         uint32_t paramcount = ParseParameters(3, HSB);
         if (HSB[0] > 360) { HSB[0] = 360; }
         for (uint32_t i = 1; i < paramcount; i++) {
-          if (HSB[i] > 100) { HSB[i] == 100; }
+          if (HSB[i] > 100) { HSB[i] = 100; }
           HSB[i] = changeUIntScale(HSB[i], 0, 100, 0, 255); // change sat and bri to 0..255
         }
       }

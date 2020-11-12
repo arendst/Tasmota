@@ -902,7 +902,6 @@ uint8_t ZigbeeGetInstructionSize(uint8_t instr) {   // in Zigbee_Instruction lin
 
 void ZigbeeGotoLabel(uint8_t label) {
   // look for the label scanning entire code
-  uint16_t goto_pc = 0xFFFF;    // 0xFFFF means not found
   uint8_t  cur_instr = 0;
   uint8_t  cur_d8 = 0;
   uint8_t  cur_instr_len = 1;       // size of current instruction in words
