@@ -262,9 +262,7 @@
 #define APP_BLINKTIME          10                // [BlinkTime] Time in 0.1 Sec to blink/toggle power for relay 1
 #define APP_BLINKCOUNT         10                // [BlinkCount] Number of blinks (0 = 32000)
 
-#ifndef APP_NORMAL_SLEEP                         // ESP32 with BT needs API sleep! Platformio "-DAPP_NORMAL_SLEEP=true"
-  #define APP_NORMAL_SLEEP     false             // [SetOption60] Enable normal sleep instead of dynamic sleep
-#endif
+#define APP_NORMAL_SLEEP       false             // [SetOption60] Enable normal sleep instead of dynamic sleep
 #define APP_SLEEP              0                 // [Sleep] Sleep time to lower energy consumption (0 = Off, 1 - 250 mSec),
 #define PWM_MAX_SLEEP          10                // Sleep will be lowered to this value when light is on, to avoid flickering, and when buzzer is on for better on/off period accuracy
 

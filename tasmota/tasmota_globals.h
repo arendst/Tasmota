@@ -34,7 +34,7 @@ extern "C" {
 #endif
 
 #include <esp-knx-ip.h> // KNX Header files have to be global else compile fails -> lib/headers
-#ifdef USE_KNX 
+#ifdef USE_KNX
 void KNX_CB_Action(message_t const &msg, void *arg);
 #endif  // USE_KNX
 
@@ -318,7 +318,7 @@ const char kWebColors[] PROGMEM =
   COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND "|" COLOR_TITLE_TEXT;
 
 /*********************************************************************************************\
- * ESP8266 vs ESP32 related parameters
+ * ESP8266 specific parameters
 \*********************************************************************************************/
 
 #ifdef ESP8266
@@ -344,6 +344,10 @@ const char kWebColors[] PROGMEM =
 
 #endif  // ESP8266
 
+/*********************************************************************************************\
+ * ESP32 specific parameters
+\*********************************************************************************************/
+
 #ifdef ESP32
 
 #ifndef MODULE
@@ -352,6 +356,9 @@ const char kWebColors[] PROGMEM =
 #ifndef FALLBACK_MODULE
 #define FALLBACK_MODULE             WEMOS          // [Module2] Select default module on fast reboot where USER_MODULE is user template
 #endif
+
+#undef APP_NORMAL_SLEEP                            // ESP32 with BT needs API sleep! Platformio "-DAPP_NORMAL_SLEEP=true"
+#define APP_NORMAL_SLEEP            false          // [SetOption60] Enable normal sleep instead of dynamic sleep
 
 #ifndef ARDUINO_ESP32_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
