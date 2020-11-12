@@ -65,6 +65,7 @@ void OsWatchTicker(void)
     // Force an exception to get a stackdump
     volatile uint32_t dummy;
     dummy = *((uint32_t*) 0x00000000);
+    (void)dummy;    // avoid compiler warning
   }
 }
 

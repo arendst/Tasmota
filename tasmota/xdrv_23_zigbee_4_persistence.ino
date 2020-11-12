@@ -218,7 +218,7 @@ void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version) {
     uint32_t endpoints = buf_d.get8(d++);
     for (uint32_t j = 0; j < endpoints; j++) {
       uint8_t ep = buf_d.get8(d++);
-      uint16_t ep_profile = buf_d.get16(d);  d += 2;
+      // uint16_t ep_profile = buf_d.get16(d);  d += 2;
       device.addEndpoint(ep);
 
       // in clusters

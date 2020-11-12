@@ -101,7 +101,6 @@ float TimeFormula(float *DK, uint32_t Tdays) {
   float M = InPi( (pi2 * 0.993133f) + (pi2 * 99.997361f / 36525.0f) * Tdays);
   float L = InPi( (pi2 * 0.7859453f) + M + (6893.0f * sinf(M) + 72.0f * sinf(M+M) + (6191.2f / 36525.0f) * Tdays) * (pi2 / 1296.0e3f));
 
-  float eps = 0.40904f;         // we take this angle as constant over the next decade
   float cos_eps = 0.91750f;     // precompute cos(eps)
   float sin_eps = 0.39773f;     // precompute sin(eps)
 
@@ -359,7 +358,6 @@ void CmndTimer(void)
             error = 1;
           }
           else {
-            char parm_uc[10];
             index--;
             JsonParserToken val = root[PSTR(D_JSON_TIMER_ARM)];
             if (val) {
