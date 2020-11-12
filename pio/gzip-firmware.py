@@ -19,5 +19,10 @@ def bin_gzip(source, target, env):
     with open(bin_file,"rb") as fp:
         with gzip.open(gzip_file, "wb", compresslevel = 9) as f:
             shutil.copyfileobj(fp, f)
+    
+    ORG_FIRMWARE_SIZE = os.stat(bin_file).st_size
+    GZ_FIRMWARE_SIZE = os.stat(gzip_file).st_size
+
+    print("Compression reduced firmware size by {:.0f}% (was {} bytes, now {} bytes)".format((GZ_FIRMWARE_SIZE / ORG_FIRMWARE_SIZE) * 100, ORG_FIRMWARE_SIZE, GZ_FIRMWARE_SIZE))
 
 env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [bin_gzip])
