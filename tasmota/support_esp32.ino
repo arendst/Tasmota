@@ -109,10 +109,10 @@ void NvmSave(const char *sNvsName, const char *sName, const void *pSettings, uns
   interrupts();
 }
 
-esp_err_t NvmErase(const char *sNvsName) {
+int32_t NvmErase(const char *sNvsName) {
   nvs_handle handle;
   noInterrupts();
-  esp_err_t result = nvs_open(sNvsName, NVS_READWRITE, &handle);
+  int32_t result = nvs_open(sNvsName, NVS_READWRITE, &handle);
   if (ESP_OK == result) { result = nvs_erase_all(handle); }
   if (ESP_OK == result) { result = nvs_commit(handle); }
   nvs_close(handle);
@@ -125,7 +125,7 @@ void SettingsErase(uint8_t type) {
   // cal_data - SDK PHY calibration data as documented in esp_phy_init.h
   // qpc      - Tasmota Quick Power Cycle state
   // main     - Tasmota Settings data
-  esp_err_t r1, r2, r3;
+  int32_t r1, r2, r3;
   switch (type) {
     case 0:               // Reset 2, 5, 6 = Erase all flash from program end to end of physical flash
 //      nvs_flash_erase();  // Erase RTC, PHY, sta.mac, ap.sndchan, ap.mac, Tasmota etc.
