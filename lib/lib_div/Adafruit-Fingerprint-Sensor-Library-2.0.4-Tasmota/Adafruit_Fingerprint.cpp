@@ -368,8 +368,8 @@ uint8_t Adafruit_Fingerprint::LEDcontrol(uint8_t control, uint8_t speed,
 /**************************************************************************/
 uint8_t Adafruit_Fingerprint::fingerSearch(uint8_t slot) {
   // search of slot starting thru the capacity
-  GET_CMD_PACKET(FINGERPRINT_SEARCH, slot, 0x00, 0x00, capacity >> 8,
-                 capacity & 0xFF);
+  GET_CMD_PACKET(FINGERPRINT_SEARCH, slot, 0x00, 0x00, (uint8_t)(capacity >> 8),
+                 (uint8_t)(capacity & 0xFF));
 
   fingerID = 0xFFFF;
   confidence = 0xFFFF;
@@ -413,8 +413,8 @@ uint8_t Adafruit_Fingerprint::getTemplateCount(void) {
 */
 /**************************************************************************/
 uint8_t Adafruit_Fingerprint::setPassword(uint32_t password) {
-  SEND_CMD_PACKET(FINGERPRINT_SETPASSWORD, (password >> 24), (password >> 16),
-                  (password >> 8), password);
+  SEND_CMD_PACKET(FINGERPRINT_SETPASSWORD, (uint8_t)(password >> 24), (uint8_t)(password >> 16),
+                  (uint8_t)(password >> 8), (uint8_t)password);
 }
 
 /**************************************************************************/
