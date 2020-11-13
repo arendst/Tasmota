@@ -169,7 +169,8 @@ a_setoption = [[
     "Set dimmer low on rotary dial after power off"
     ],[
     "Detach Switches from Relays and enable MQTT action state for all the SwitchModes",
-    "","","",
+    "Enable ESP32 MI32 BLE",
+    "","",
     "","","","",
     "","","","",
     "","","","",
@@ -269,7 +270,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20201110 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20201113 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

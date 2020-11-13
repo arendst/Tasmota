@@ -58,6 +58,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog v9.1.0.1
 ### Added
+- Command ``SetOption115 1`` to enable ESP32 MiBle
 - Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
 - Zigbee command ``ZbInfo`` and prepare support for EEPROM
 - Zigbee support for Mi Door and Contact (#9759)
