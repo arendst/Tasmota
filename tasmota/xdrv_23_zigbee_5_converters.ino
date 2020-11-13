@@ -563,7 +563,8 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0500, 0xFFF0 + ZA_CIE, Z_(CIE),           Cm1, 0 },
   { Zuint8,   Cx0500, 0xFFF0 + ZA_PIR, Z_(Occupancy),     Cm1, 0 },    // normally converted to the actual Occupancy 0406/0000
   { Zuint8,   Cx0500, 0xFFF0 + ZA_Contact, Z_(Contact),   Cm1, Z_MAPPING(Z_Data_Alarm, zone_status) },    // We fit the first bit in the LSB
-  { Zuint8,   Cx0500, 0xFFF0 + ZA_Leak, Z_(Leak),         Cm1, 0 },
+  { Zuint8,   Cx0500, 0xFFF0 + ZA_Fire, Z_(Fire),         Cm1, 0 },
+  { Zuint8,   Cx0500, 0xFFF0 + ZA_Water, Z_(Water),        Cm1, 0 },
   { Zuint8,   Cx0500, 0xFFF0 + ZA_CO, Z_(CO),             Cm1, 0 },
   { Zuint8,   Cx0500, 0xFFF0 + ZA_Personal, Z_(PersonalAlarm),Cm1, 0 },
   { Zuint8,   Cx0500, 0xFFF0 + ZA_Movement, Z_(Movement), Cm1, 0 },

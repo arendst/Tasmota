@@ -313,7 +313,7 @@ enum Z_Alarm_Type {
   ZA_PIR =       0x1,
   ZA_Contact =   0x2,
   ZA_Fire =      0x3,
-  ZA_Leak =      0x4,
+  ZA_Water =      0x4,
   ZA_CO =        0x5,
   ZA_Personal =  0x6,
   ZA_Movement =  0x7,
@@ -378,7 +378,7 @@ static const Z_Alarm_Types_t Z_Alarm_Types[] PROGMEM = {
   { .t = { 0x00d, ZA_PIR }},        // 0x1 : PIR
   { .t = { 0x015, ZA_Contact }},    // 0x2 : Contact
   { .t = { 0x028, ZA_Fire }},       // 0x3 : Fire
-  { .t = { 0x02a, ZA_Leak }},       // 0x4 : Leak
+  { .t = { 0x02a, ZA_Water }},       // 0x4 : Leak
   { .t = { 0x02b, ZA_CO }},         // 0x5 : CO
   { .t = { 0x02c, ZA_Personal }},   // 0x6 : Personal
   { .t = { 0x02d, ZA_Movement }},   // 0x7 : Movement
@@ -403,7 +403,7 @@ public:
   inline bool isPIR(void)             const { return ZA_PIR         == _config; }
   inline bool isContact(void)         const { return ZA_Contact     == _config; }
   inline bool isFire(void)            const { return ZA_Fire        == _config; }
-  inline bool isLeak(void)            const { return ZA_Leak        == _config; }
+  inline bool isWater(void)            const { return ZA_Water        == _config; }
   inline bool isCO(void)              const { return ZA_CO          == _config; }
   inline bool isPersonalAlarm(void)   const { return ZA_Personal    == _config; }
   inline bool isMovement(void)        const { return ZA_Movement    == _config; }
