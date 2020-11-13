@@ -76,7 +76,7 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
     } else {
       float x_f = x / 65536.0f;
       float y_f = y / 65536.0f;
-      snprintf_P(buf, buf_size, PSTR("%s\"xy\":[%s,%s],"), buf, String(x, 5).c_str(), String(y, 5).c_str());
+      snprintf_P(buf, buf_size, PSTR("%s\"xy\":[%s,%s],"), buf, String(x_f, 5).c_str(), String(y_f, 5).c_str());
     }
     snprintf_P(buf, buf_size, PSTR("%s\"hue\":%d,\"sat\":%d,"), buf, hue16, sat);
   }
@@ -208,9 +208,8 @@ void ZigbeeHueHS(uint16_t shortaddr, uint16_t hue, uint8_t sat) {
 }
 
 void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
-  uint8_t  power, colormode, bri, sat;
+  uint8_t  bri, sat;
   uint16_t ct, hue;
-  float    x, y;
   int code = 200;
 
   bool resp = false;  // is the response non null (add comma between parameters)

@@ -135,6 +135,7 @@ public:
     freeKey();
     freeVal();
     deepCopy(rhs);
+    return *this;
   }
 
   // Destructor, free memory that was allocated
@@ -658,6 +659,8 @@ void Z_attribute::freeVal(void) {
       break;
     case Za_type::Za_arr:
       if (val.arrval) { delete val.arrval; val.arrval = nullptr; }
+      break;
+    default:
       break;
   }
 }

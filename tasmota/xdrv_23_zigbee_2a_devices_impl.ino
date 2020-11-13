@@ -215,6 +215,7 @@ Z_Device & Z_Devices::updateDevice(uint16_t shortaddr, uint64_t longaddr) {
     }
     return device_unk;
   }
+  return device_unk;
 }
 
 //
@@ -341,6 +342,7 @@ void Z_Device::setLightChannels(int8_t channels) {
       zigbee_devices.dirty();
     }
     Z_Data_OnOff & onoff = data.get<Z_Data_OnOff>(0);
+    (void)onoff;
   } else {
     // remove light / onoff object if any
     for (auto & data_elt : data) {
@@ -754,7 +756,6 @@ int32_t Z_Devices::deviceRestore(JsonParserObject json) {
   const char * modelid = nullptr;
   const char * manufid = nullptr;
   const char * friendlyname = nullptr;
-  size_t   endpoints_len = 0;
 
   // read mandatory "Device"
   JsonParserToken val_device = json[PSTR("Device")];

@@ -297,7 +297,7 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
           bool match = true;
           for (uint8_t i = 0; i < payload.len(); i++) {
             const char c1 = pgm_read_byte(p);
-            const char c2 = pgm_read_byte(p+1);
+            // const char c2 = pgm_read_byte(p+1);
   //AddLog_P(LOG_LEVEL_INFO, PSTR(">>>++2 c1 = %c, c2 = %c"), c1, c2);
             if ((0x00 == c1) || isXYZ(c1)) {
               break;
@@ -524,7 +524,7 @@ String zigbeeCmdAddParams(const char *zcl_cmd_P, uint32_t x, uint32_t y, uint32_
   char *p = zcl_cmd;
   while (*p) {
     if (isXYZ(*p) && (*p == *(p+1))) {    // if char is [x-z] and followed by same char
-      uint8_t val;
+      uint8_t val = 0;
       switch (*p) {
         case 'x':
           val = x & 0xFF;

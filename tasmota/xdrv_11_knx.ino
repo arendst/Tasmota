@@ -466,43 +466,35 @@ void KNX_INIT(void)
   // Read Configuration
   //   Check which relays, buttons and sensors where configured for this device
   //   and activate options according to the hardware
-  /*for (uint32_t i = GPIO_REL1; i < GPIO_REL8 + 1; ++i)
-  {
-    if (GetUsedInModule(i, TasmotaGlobal.my_module.io)) { device_param[i - GPIO_REL1].show = true; }
+  /*
+  for (uint32_t i = 0; i < 8; i++) {
+    if (PinUsed(GPIO_REL1, i)) {
+      device_param[i].show = true;
+    }
   }
-  for (uint32_t i = GPIO_REL1_INV; i < GPIO_REL8_INV + 1; ++i)
-  {
-    if (GetUsedInModule(i, TasmotaGlobal.my_module.io)) { device_param[i - GPIO_REL1_INV].show = true; }
-  }*/
-  for (uint32_t i = 0; i < TasmotaGlobal.devices_present; ++i)
-  {
+  */
+  for (uint32_t i = 0; i < TasmotaGlobal.devices_present; ++i) {
     device_param[i].show = true;
   }
-  for (uint32_t i = GPIO_SWT1; i < GPIO_SWT1 + 4; ++i)
-  {
-    if (GetUsedInModule(i, TasmotaGlobal.my_module.io)) { device_param[i - GPIO_SWT1 + 8].show = true; }
+  for (uint32_t i = 0; i < 4; i++) {
+    if (PinUsed(GPIO_KEY1, i)) {
+      device_param[8 + i].show = true;
+    }
   }
-  for (uint32_t i = GPIO_KEY1; i < GPIO_KEY1 + 4; ++i)
-  {
-    if (GetUsedInModule(i, TasmotaGlobal.my_module.io)) { device_param[i - GPIO_KEY1 + 8].show = true; }
+  for (uint32_t i = 0; i < 8; i++) {
+    if (PinUsed(GPIO_SWT1, i)) {
+      device_param[8 + i].show = true;
+    }
   }
-  for (uint32_t i = GPIO_SWT1_NP; i < GPIO_SWT1_NP + 4; ++i)
-  {
-    if (GetUsedInModule(i, TasmotaGlobal.my_module.io)) { device_param[i - GPIO_SWT1_NP + 8].show = true; }
+  if (PinUsed(GPIO_DHT11) || PinUsed(GPIO_DHT22) || PinUsed(GPIO_SI7021)) {
+    device_param[KNX_TEMPERATURE-1].show = true;
+    device_param[KNX_HUMIDITY-1].show = true;
   }
-  for (uint32_t i = GPIO_KEY1_NP; i < GPIO_KEY1_NP + 4; ++i)
-  {
-    if (GetUsedInModule(i, TasmotaGlobal.my_module.io)) { device_param[i - GPIO_KEY1_NP + 8].show = true; }
-  }
-  if (GetUsedInModule(GPIO_DHT11, TasmotaGlobal.my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
-  if (GetUsedInModule(GPIO_DHT22, TasmotaGlobal.my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
-  if (GetUsedInModule(GPIO_SI7021, TasmotaGlobal.my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
 #ifdef USE_DS18x20
-  if (GetUsedInModule(GPIO_DSB, TasmotaGlobal.my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+  if (PinUsed(GPIO_DSB)) {
+    device_param[KNX_TEMPERATURE-1].show = true;
+  }
 #endif
-  if (GetUsedInModule(GPIO_DHT11, TasmotaGlobal.my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
-  if (GetUsedInModule(GPIO_DHT22, TasmotaGlobal.my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
-  if (GetUsedInModule(GPIO_SI7021, TasmotaGlobal.my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
 
 #if defined(USE_ENERGY_SENSOR)
   // Any device with a Power Monitoring

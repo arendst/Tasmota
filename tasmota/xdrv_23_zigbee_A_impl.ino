@@ -593,7 +593,6 @@ void ZbSendRead(JsonParserToken val_attr, ZigbeeZCLSendMessage & packet) {
       // scan attributes to find by name, and retrieve type
       for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
         const Z_AttributeConverter *converter = &Z_PostProcess[i];
-        bool match = false;
         uint16_t local_attr_id = pgm_read_word(&converter->attribute);
         uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
         // uint8_t  local_type_id = pgm_read_byte(&converter->type);
@@ -833,7 +832,6 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
   uint8_t  toendpoint = 0x01;       // default dest endpoint to 0x01
   uint16_t toGroup = 0x0000;        // group address
   uint16_t cluster  = 0;            // cluster 0 is default
-  uint32_t group = 0xFFFFFFFF;      // 16 bits values, otherwise 0xFFFFFFFF is unspecified
 
   // Information about source device: "Device", "Endpoint", "Cluster"
   //  - the source endpoint must have a known IEEE address
@@ -1040,7 +1038,7 @@ void CmndZbName(void) {
 
   // check if parameters contain a comma ','
   char *p;
-  char *str = strtok_r(XdrvMailbox.data, ",", &p);
+  strtok_r(XdrvMailbox.data, ",", &p);
 
   // parse first part, <device_id>
   Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, false);  // it's the only case where we create a new device
@@ -1072,7 +1070,7 @@ void CmndZbModelId(void) {
 
   // check if parameters contain a comma ','
   char *p;
-  char *str = strtok_r(XdrvMailbox.data, ",", &p);
+  strtok_r(XdrvMailbox.data, ",", &p);
 
   // parse first part, <device_id>
   Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true);  // in case of short_addr, it must be already registered
@@ -1101,7 +1099,7 @@ void CmndZbLight(void) {
 
   // check if parameters contain a comma ','
   char *p;
-  char *str = strtok_r(XdrvMailbox.data, ", ", &p);
+  strtok_r(XdrvMailbox.data, ", ", &p);
 
   // parse first part, <device_id>
   Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true);  // in case of short_addr, it must be already registered
@@ -1144,7 +1142,7 @@ void CmndZbOccupancy(void) {
 
   // check if parameters contain a comma ','
   char *p;
-  char *str = strtok_r(XdrvMailbox.data, ", ", &p);
+  strtok_r(XdrvMailbox.data, ", ", &p);
 
   // parse first part, <device_id>
   Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true);  // in case of short_addr, it must be already registered
@@ -1293,8 +1291,6 @@ void CmndZbPermitJoin(void) {
     duration = 0xFF;                    // unlimited time
   }
 
-  uint16_t dstAddr = 0xFFFC;            // default addr
-
   SBuffer buf(34);
   buf.add8(Z_SREQ | Z_ZDO);             // 25
   buf.add8(ZDO_MGMT_PERMIT_JOIN_REQ);   // 36
@@ -1426,7 +1422,7 @@ void CmndZbData(void) {
 
   // check if parameters contain a comma ','
   char *p;
-  char *str = strtok_r(XdrvMailbox.data, ",", &p);
+  strtok_r(XdrvMailbox.data, ",", &p);
 
   // parse first part, <device_id>
   Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true);  // in case of short_addr, it must be already registered
