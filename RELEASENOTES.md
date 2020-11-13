@@ -73,6 +73,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ### Fixed
 - NTP fallback server functionality (#9739)
 - Telegram group chatid not supported (#9831)
+- KNX buttons, switches and sensors detection regression from v9.1.0 (#9811)
 
 ### Removed
 - Version compatibility check
