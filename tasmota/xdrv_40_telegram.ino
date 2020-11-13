@@ -66,7 +66,7 @@ typedef struct {
 //  String from_last_name;
 //  uint32_t from_id = 0;
   uint32_t update_id = 0;
-  uint32_t chat_id = 0;
+  int32_t chat_id = 0;
 } TelegramMessage;
 
 struct {
@@ -248,7 +248,7 @@ void TelegramGetUpdates(uint32_t offset) {
   }
 }
 
-bool TelegramSendMessage(uint32_t chat_id, String text) {
+bool TelegramSendMessage(int32_t chat_id, String text) {
   AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: sendMessage"));
 
   if (!TelegramInit()) { return false; }

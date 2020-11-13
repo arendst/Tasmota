@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - NTP fallback server functionality (#9739)
+- Telegram group chatid not supported (#9831)
 
 ### Removed
 - Version compatibility check
