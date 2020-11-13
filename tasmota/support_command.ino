@@ -1191,8 +1191,6 @@ void CmndGpio(void)
 void ShowGpios(const uint16_t *NiceList, uint32_t size, uint32_t offset, uint32_t &lines) {
   uint32_t ridx;
   uint32_t midx;
-  myio cmodule;
-  ModuleGpios(&cmodule);
   bool jsflg = false;
   for (uint32_t i = offset; i < size; i++) {  // Skip ADC_NONE
     if (NiceList == nullptr) {
@@ -1201,7 +1199,6 @@ void ShowGpios(const uint16_t *NiceList, uint32_t size, uint32_t offset, uint32_
     } else {
       ridx = pgm_read_word(NiceList + i) & 0xFFE0;
       midx = BGPIO(ridx);
-      if ((XdrvMailbox.payload != 255) && GetUsedInModule(midx, cmodule.io)) { continue; }
     }
     if (!jsflg) {
       Response_P(PSTR("{\"" D_CMND_GPIOS "%d\":{"), lines);
