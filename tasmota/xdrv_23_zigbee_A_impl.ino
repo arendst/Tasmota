@@ -1111,10 +1111,11 @@ void CmndZbLight(void) {
     if (bulbtype < -1) { bulbtype = -1; }
     device.setLightChannels(bulbtype);
   }
-  String dump = zigbee_devices.dumpLightState(device);
-  Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_LIGHT "\":%s}"), dump.c_str());
+  Z_attribute_list attr_list;
+  device.jsonLightState(attr_list);
+  
+  device.jsonPublishAttrList(PSTR(D_PRFX_ZB D_CMND_ZIGBEE_LIGHT), attr_list);         // publish as ZbReceived
 
-  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_LIGHT));
   ResponseCmndDone();
 }
 //
@@ -1194,8 +1195,9 @@ void CmndZbInfo(void) {
 
   // everything is good, we can send the command
 
-  String device_info = Z_Devices::dumpSingleDevice(3, device, false, false);
-  Z_Devices::jsonPublishFlushAttrList(device, device_info);
+  Z_attribute_list attr_list;
+  device.jsonDumpSingleDevice(attr_list, 3, false);   // don't add Device/Name
+  device.jsonPublishAttrList(PSTR(D_JSON_ZIGBEE_INFO), attr_list);         // publish as ZbReceived
 
   ResponseCmndDone();
 }
