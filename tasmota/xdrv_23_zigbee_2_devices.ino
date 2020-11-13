@@ -308,6 +308,19 @@ void Z_Data_PIR::setTimeoutSeconds(int32_t value) {
 /*********************************************************************************************\
  * Device specific: Sensors: temp, humidity, pressure...
 \*********************************************************************************************/
+enum Z_Alarm_Type {
+  ZA_CIE =       0x0,
+  ZA_PIR =       0x1,
+  ZA_Contact =   0x2,
+  ZA_Fire =      0x3,
+  ZA_Water =      0x4,
+  ZA_CO =        0x5,
+  ZA_Personal =  0x6,
+  ZA_Movement =  0x7,
+  ZA_Panic =     0x8,
+  ZA_GlassBreak =0x9,
+};
+
 class Z_Data_Thermo : public Z_Data {
 public:
   Z_Data_Thermo(uint8_t endpoint = 0) :
@@ -361,18 +374,18 @@ typedef union Z_Alarm_Types_t {
 } Z_Alarm_Types_t;
 
 static const Z_Alarm_Types_t Z_Alarm_Types[] PROGMEM = {
-  { .t = { 0x000, 0x0 }},      // 0x0 : Standard CIE
-  { .t = { 0x00d, 0x1 }},      // 0x1 : PIR
-  { .t = { 0x015, 0x2 }},      // 0x2 : Contact
-  { .t = { 0x028, 0x3 }},      // 0x3 : Fire
-  { .t = { 0x02a, 0x4 }},      // 0x4 : Leak
-  { .t = { 0x02b, 0x5 }},      // 0x5 : CO
-  { .t = { 0x02c, 0x6 }},      // 0x6 : Personal
-  { .t = { 0x02d, 0x7 }},      // 0x7 : Movement
-  { .t = { 0x10f, 0x8 }},      // 0x8 : Panic
-  { .t = { 0x115, 0x8 }},      // 0x8 : Panic
-  { .t = { 0x21d, 0x8 }},      // 0x8 : Panic
-  { .t = { 0x226, 0x9 }},      // 0x9 : Glass break
+  { .t = { 0x000, ZA_CIE }},        // 0x0 : Standard CIE
+  { .t = { 0x00d, ZA_PIR }},        // 0x1 : PIR
+  { .t = { 0x015, ZA_Contact }},    // 0x2 : Contact
+  { .t = { 0x028, ZA_Fire }},       // 0x3 : Fire
+  { .t = { 0x02a, ZA_Water }},       // 0x4 : Leak
+  { .t = { 0x02b, ZA_CO }},         // 0x5 : CO
+  { .t = { 0x02c, ZA_Personal }},   // 0x6 : Personal
+  { .t = { 0x02d, ZA_Movement }},   // 0x7 : Movement
+  { .t = { 0x10f, ZA_Panic }},      // 0x8 : Panic
+  { .t = { 0x115, ZA_Panic }},      // 0x8 : Panic
+  { .t = { 0x21d, ZA_Panic }},      // 0x8 : Panic
+  { .t = { 0x226, ZA_GlassBreak }}, // 0x9 : Glass break
 };
 
 class Z_Data_Alarm : public Z_Data {
@@ -387,8 +400,15 @@ public:
   inline bool validZoneType(void)   const { return 0xFFFF != zone_type; }
 
   inline uint16_t getZoneType(void) const { return zone_type; }
-  inline bool isPIR(void) const { return 0x1 == _config; }
-  inline bool isContact(void) const { return 0x2 == _config; }
+  inline bool isPIR(void)             const { return ZA_PIR         == _config; }
+  inline bool isContact(void)         const { return ZA_Contact     == _config; }
+  inline bool isFire(void)            const { return ZA_Fire        == _config; }
+  inline bool isWater(void)            const { return ZA_Water        == _config; }
+  inline bool isCO(void)              const { return ZA_CO          == _config; }
+  inline bool isPersonalAlarm(void)   const { return ZA_Personal    == _config; }
+  inline bool isMovement(void)        const { return ZA_Movement    == _config; }
+  inline bool isPanic(void)           const { return ZA_Panic       == _config; }
+  inline bool isGlassBreak(void)      const { return ZA_GlassBreak  == _config; }
 
   inline void setZoneType(uint16_t _zone_type)  { zone_type = _zone_type; }
 

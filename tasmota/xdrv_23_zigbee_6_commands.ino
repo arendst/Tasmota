@@ -356,11 +356,11 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
           }
           // Convert to "Occupancy" or to "Contact" if the device is PIR or Contact sensor
           const Z_Data_Alarm & alarm = (const Z_Data_Alarm&) zigbee_devices.getShortAddr(shortaddr).data.find(Z_Data_Type::Z_Alarm, srcendpoint);
-          if (&alarm != nullptr) {
+          if ((&alarm != nullptr) && (alarm.validConfig())) {
             if (alarm.isPIR()) {                  // set Occupancy
               attr_list.addAttribute(0x0406, 0x0000).setUInt((xyz.x) & 0x01 ? 1 : 0);
-            } else if (alarm.isContact()) {       // set Contact
-              attr_list.addAttribute(0x0500, 0xFFF0).setUInt((xyz.x) & 0x01 ? 1 : 0);
+            } else {                              // all other cases
+              attr_list.addAttribute(0x0500, 0xFFF0 + alarm.getConfig()).setUInt(xyz.x);
             }
           }
         }
