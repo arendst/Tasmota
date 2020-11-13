@@ -357,9 +357,6 @@ const char kWebColors[] PROGMEM =
 #define FALLBACK_MODULE             WEMOS          // [Module2] Select default module on fast reboot where USER_MODULE is user template
 #endif
 
-#undef APP_NORMAL_SLEEP                            // ESP32 with BT needs API sleep!
-#define APP_NORMAL_SLEEP            true           // [SetOption60] Enable normal sleep instead of dynamic sleep
-
 #ifndef ARDUINO_ESP32_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
 #else
