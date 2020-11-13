@@ -1374,17 +1374,12 @@ void MqttSaveSettings(void)
 #endif
   WebGetArg("mc", tmp, sizeof(tmp));
   SettingsUpdateText(SET_MQTT_CLIENT, (!strlen(tmp)) ? MQTT_CLIENT_ID : tmp);
-#if defined(USE_MQTT_TLS) && (defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT))
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
-    SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_TOPIC), SettingsText(SET_MQTT_FULLTOPIC));
-#else // USE_MQTT_AWS_IOT
   WebGetArg("mu", tmp, sizeof(tmp));
   SettingsUpdateText(SET_MQTT_USER, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp,"0")) ? "" : tmp);
   WebGetArg("mp", tmp, sizeof(tmp));
   SettingsUpdateText(SET_MQTT_PWD, (!strlen(tmp)) ? "" : (!strcmp(tmp, D_ASTERISK_PWD)) ? SettingsText(SET_MQTT_PWD) : tmp);
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
     SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_USER), SettingsText(SET_MQTT_TOPIC), SettingsText(SET_MQTT_FULLTOPIC));
-#endif
 }
 #endif  // USE_WEBSERVER
 

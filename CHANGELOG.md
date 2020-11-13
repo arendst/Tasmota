@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - NTP fallback server functionality (#9739)
 - Telegram group chatid not supported (#9831)
 - KNX buttons, switches and sensors detection regression from v9.1.0 (#9811)
+- GUI MqttUser and MqttPassword updates when TLS is compiled in (#9825)
 
 ### Removed
 - Version compatibility check
