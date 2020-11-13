@@ -33,7 +33,7 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_INFO "|" D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|"
   D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_UNBIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID "|"
   D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_OCCUPANCY "|"
-  D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|"
+  D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|" D_CMND_ZIGBEE_LEAVE "|"
   D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA
   ;
 
@@ -49,7 +49,7 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbInfo, &CmndZbForget, &CmndZbSave, &CmndZbName,
   &CmndZbBind, &CmndZbUnbind, &CmndZbPing, &CmndZbModelId,
   &CmndZbLight, &CmndZbOccupancy,
-  &CmndZbRestore, &CmndZbBindState, &CmndZbMap,
+  &CmndZbRestore, &CmndZbBindState, &CmndZbMap, CmndZbLeave,
   &CmndZbConfig, CmndZbData,
   };
 
@@ -942,6 +942,40 @@ void CmndZbBind(void) {
 void CmndZbUnbind(void) {
   ZbBindUnbind(true);
 }
+
+//
+// ZbLeave - ask for a device to leave the network
+//
+void CmndZbLeave(void) {
+  if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true).shortaddr;
+  if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
+
+#ifdef USE_ZIGBEE_ZNP
+  SBuffer buf(14);
+  buf.add8(Z_SREQ | Z_ZDO);             // 25
+  buf.add8(ZDO_MGMT_LEAVE_REQ);         // 34
+  buf.add16(shortaddr);                 // shortaddr
+  buf.add64(0);                         // remove self
+  buf.add8(0x00);                       // don't rejoin and don't remove children
+
+  ZigbeeZNPSend(buf.getBuffer(), buf.len());
+#endif // USE_ZIGBEE_ZNP
+
+
+#ifdef USE_ZIGBEE_EZSP
+  // ZDO message payload (see Zigbee spec 2.4.3.3.4)
+  SBuffer buf(10);
+  buf.add64(0);                         // remove self
+  buf.add8(0x00);                       // don't rejoin and don't remove children
+
+  EZ_SendZDO(shortaddr, ZDO_MGMT_LEAVE_REQ, buf.getBuffer(), buf.len());
+#endif // USE_ZIGBEE_EZSP
+
+  ResponseCmndDone();
+}
+
+
 
 void CmndZbBindState_or_Map(uint16_t zdo_cmd) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
