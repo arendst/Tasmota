@@ -73,7 +73,7 @@ public:
 
   inline uint8_t getEndpoint(void) const { return _endpoint; }
 
-  void toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const;
+  void toAttributes(Z_attribute_list & attr_list) const;
 
   // update internal structures after an attribut update
   // True if a configuration was changed
@@ -215,7 +215,7 @@ public:
   inline bool validColormode(void)      const { return 0xFF != colormode; }
   inline bool validDimmer(void)         const { return 0xFF != dimmer; }
   inline bool validSat(void)            const { return 0xFF != sat; }
-  inline bool validHue(void)            const { return 0xFFFF != hue; }
+  inline bool validHue(void)            const { return 0xFF != hue; }
   inline bool validCT(void)             const { return 0xFFFF != ct; }
   inline bool validX(void)              const { return 0xFFFF != x; }
   inline bool validY(void)              const { return 0xFFFF != y; }
@@ -674,6 +674,18 @@ public:
 
   void setLastSeenNow(void);
 
+  // multiple function to dump part of the Device state into JSON
+  void jsonAddDeviceNamme(Z_attribute_list & attr_list) const;
+  void jsonAddIEEE(Z_attribute_list & attr_list) const;
+  void jsonAddModelManuf(Z_attribute_list & attr_list) const;
+  void jsonAddEndpoints(Z_attribute_list & attr_list) const;
+  void jsonAddConfig(Z_attribute_list & attr_list) const;
+  void jsonAddDataAttributes(Z_attribute_list & attr_list) const;
+  void jsonAddDeviceAttributes(Z_attribute_list & attr_list) const;
+  void jsonDumpSingleDevice(Z_attribute_list & attr_list, uint32_t dump_mode, bool add_name) const;
+  void jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list) const;
+  void jsonLightState(Z_attribute_list & attr_list) const;
+
   // dump device attributes to ZbData
   void toAttributes(Z_attribute_list & attr_list) const;
 
@@ -791,9 +803,7 @@ public:
   uint8_t getNextSeqNumber(uint16_t shortaddr);
 
   // Dump json
-  static String dumpLightState(const Z_Device & device);
   String dumpDevice(uint32_t dump_mode, const Z_Device & device) const;
-  static String dumpSingleDevice(uint32_t dump_mode, const class Z_Device & device, bool add_device_name = true, bool add_brackets = true);
   int32_t deviceRestore(JsonParserObject json);
 
   // Hue support
@@ -810,7 +820,6 @@ public:
 
   // Append or clear attributes Json structure
   void jsonAppend(uint16_t shortaddr, const Z_attribute_list &attr_list);
-  static void jsonPublishFlushAttrList(const Z_Device & device, const String & attr_list_string);
   void jsonPublishFlush(uint16_t shortaddr);    // publish the json message and clear buffer
   bool jsonIsConflict(uint16_t shortaddr, const Z_attribute_list &attr_list) const;
   void jsonPublishNow(uint16_t shortaddr, Z_attribute_list &attr_list);

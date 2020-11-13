@@ -1967,7 +1967,8 @@ bool Z_parseAttributeKey(class Z_attribute & attr) {
 // Input:
 //  the Json object to add attributes to
 //  the type of object (necessary since the type system is unaware of the actual sub-type)
-void Z_Data::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const {
+void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
+  Z_Data_Type type = getType();
   // iterate through attributes to see which ones need to be exported
   for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
