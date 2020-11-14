@@ -117,10 +117,8 @@ struct METER_DESC {
 #if METER==SML_NO_OP
 #undef METERS_USED
 #define METERS_USED 0
-struct METER_DESC const meter_desc[1]={
-  [0]={3,'o',0,SML_BAUDRATE,"OBIS",-1,1,0}};
-const uint8_t meter[]=
-"1,1-0:1.8.0*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|";
+struct METER_DESC const meter_desc[]={};
+const uint8_t meter[]="";
 #endif
 
 
