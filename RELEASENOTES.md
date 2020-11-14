@@ -59,8 +59,10 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ## Changelog v9.1.0.1
 ### Added
 - Command ``SetOption115 1`` to enable ESP32 MiBle
+- Command ``SetOption116 1`` to disable auto-query of zigbee light devices (avoids network storms with large groups)
 - Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
 - Zigbee command ``ZbInfo`` and prepare support for EEPROM
+- Zigbee command ``ZbLeave`` to unpair a device
 - Zigbee support for Mi Door and Contact (#9759)
 - Zigbee alarm persistence (#9785)
 - Support for additional EZO sensors by Christopher Tremblay
