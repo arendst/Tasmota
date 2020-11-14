@@ -662,8 +662,8 @@ void ResponseAppendFeatures(void)
     feature7 |= 0x00000800;  // xsns_79_as608.ino
 #endif
 
-#ifdef USE_SHELLY_DIMMER
-    feature7 |= 0x00001000;  // xdrv_44_shelly_dimmer.ino
+#if defined(USE_SHELLY_DIMMER)
+    feature7 |= 0x00001000;  // xdrv_45_shelly_dimmer.ino
 #endif
 //    feature7 |= 0x00002000;
 //    feature7 |= 0x00004000;
