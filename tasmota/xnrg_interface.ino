@@ -145,7 +145,7 @@ bool (* const xnrg_func_ptr[])(uint8_t) = {   // Energy driver Function Pointers
   &Xnrg30,
 #endif
 
-#ifdef XNRG_31
+#ifdef XNRG_31  // Reserved for use by xdrv_45_shelly_dimmer.ino
   &Xnrg31,
 #endif
 

@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption115 1`` to enable ESP32 MiBle
 - Zigbee command ``ZbLeave`` to unpair a device
 - Command ``SetOption116 1`` to disable auto-query of zigbee light devices (avoids network storms with large groups)
+- Support for Shelly Dimmer 1 and 2 by James Turton (#9854)
 
 ### Changed
 - Core library from v2.7.4.5 to v2.7.4.7

@@ -67,6 +67,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Zigbee alarm persistence (#9785)
 - Support for additional EZO sensors by Christopher Tremblay
 - Support for AS608 optical and R503 capacitive fingerprint sensor
+- Support for Shelly Dimmer 1 and 2 by James Turton (#9854)
 
 ### Changed
 - Core library from v2.7.4.5 to v2.7.4.7

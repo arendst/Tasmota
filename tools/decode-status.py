@@ -170,7 +170,8 @@ a_setoption = [[
     ],[
     "Detach Switches from Relays and enable MQTT action state for all the SwitchModes",
     "Enable ESP32 MI32 BLE",
-    "","",
+    "Disable auto-query of zigbee lights and devices",
+    "",
     "","","","",
     "","","","",
     "","","","",
@@ -238,7 +239,7 @@ a_features = [[
     "USE_EZOORP","USE_EZORTD","USE_EZOHUM","USE_EZOEC",
     "USE_EZOCO2","USE_EZOO2","USE_EZOPRS","USE_EZOFLO",
     "USE_EZODO","USE_EZORGB","USE_EZOPMP","USE_AS608",
-    "","","","",
+    "USE_SHELLY_DIMMER","","","",
     "","","","",
     "","","","",
     "","","","",
@@ -270,7 +271,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20201113 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20201114 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

@@ -731,6 +731,8 @@
 #define D_SENSOR_IEM3000_RX    "iEM3000 - RX"
 #define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC - TX"
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC - RX"
+#define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
+#define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD Reset"
 
 // Units
 #define D_UNIT_AMPERE "A"
