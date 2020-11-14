@@ -1,0 +1,5 @@
+<map id="IRDaikin160" name="IRDaikin160">
+<area shape="rect" id="node1" title="Class for handling detailed Daikin 160&#45;bit A/C messages." alt="" coords="52,95,153,121"/>
+<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="5,5,72,32"/>
+<area shape="rect" id="node3" href="$unionDaikin160Protocol.html" title="Native representation of a Daikin160 A/C message." alt="" coords="96,5,237,32"/>
+</map>
