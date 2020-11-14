@@ -1538,13 +1538,14 @@ void ZCLFrame::parseResponse(void) {
 // Parse non-normalized attributes
 void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
   convertClusterSpecific(attr_list, _cluster_id, _cmd_id, _frame_control.b.direction, _srcaddr, _srcendpoint, _payload);
-#ifndef USE_ZIGBEE_NO_READ_ATTRIBUTES   // read attributes unless disabled
-  if (!_frame_control.b.direction) {    // only handle server->client (i.e. device->coordinator)
-    if (_wasbroadcast) {                // only update for broadcast messages since we don't see unicast from device to device and we wouldn't know the target
-      sendHueUpdate(BAD_SHORTADDR, _groupaddr, _cluster_id);
+  if (!Settings.flag5.zb_disable_autoquery) {
+  // read attributes unless disabled
+    if (!_frame_control.b.direction) {    // only handle server->client (i.e. device->coordinator)
+      if (_wasbroadcast) {                // only update for broadcast messages since we don't see unicast from device to device and we wouldn't know the target
+        sendHueUpdate(BAD_SHORTADDR, _groupaddr, _cluster_id);
+      }
     }
   }
-#endif
 }
 
 // ======================================================================

@@ -141,7 +141,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   struct {                                 // SetOption114 .. SetOption145
     uint32_t mqtt_switches : 1;            // bit 0 (v9.0.0.3)  - SetOption114 - Detach Switches from relays and enable MQTT action state for all the SwitchModes
     uint32_t mi32_enable : 1;              // bit 1 (v9.1.0.1)  - SetOption115 - Enable ESP32 MI32 BLE
-    uint32_t spare02 : 1;                  // bit 2
+    uint32_t zb_disable_autoquery : 1;     // bit 2 (v9.1.0.1)  - SetOption116 - Disable auto-query of lights and devices
     uint32_t spare03 : 1;                  // bit 3
     uint32_t spare04 : 1;                  // bit 4
     uint32_t spare05 : 1;                  // bit 5

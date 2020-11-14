@@ -210,9 +210,10 @@ void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, 
   }));
   // now set the timer, if any, to read back the state later
   if (clusterSpecific) {
-#ifndef USE_ZIGBEE_NO_READ_ATTRIBUTES   // read back attribute value unless it is disabled
-    sendHueUpdate(shortaddr, groupaddr, cluster, endpoint);
-#endif
+    if (!Settings.flag5.zb_disable_autoquery) {
+      // read back attribute value unless it is disabled
+      sendHueUpdate(shortaddr, groupaddr, cluster, endpoint);
+    }
   }
 }
 
