@@ -275,13 +275,21 @@ void ESP32ResumeScanTask() {
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: Resumed scanner task"),"BLE");
 }
 
-#endif
+void ESP32Init() {
 
-void IBEACON_Init() {
+  if (TasmotaGlobal.global_state.wifi_down) { return; }
 
-#ifdef USE_IBEACON_ESP32
+  if (WiFi.getSleep() == false) {
+    if (0 == Settings.flag3.sleep_normal) {
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: About to restart to put WiFi modem in sleep mode"),"BLE");
+      Settings.flag3.sleep_normal = 1;  // SetOption60 - Enable normal sleep instead of dynamic sleep
+      TasmotaGlobal.restart_flag = 2;
+    }
+    return;
+  }
 
-  ESP32BLE.mode.init = false;
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Initializing Blueetooth..."),"BLE");
+
   if (!ESP32BLE.mode.init) {
     NimBLEDevice::init("");
 
@@ -292,6 +300,17 @@ void IBEACON_Init() {
     IB_UPDATE_TIME=IB_UPDATE_TIME_INTERVAL;
     IB_TIMEOUT_TIME=IB_TIMEOUT_INTERVAL;
   }
+
+}
+
+#endif
+
+void IBEACON_Init() {
+
+#ifdef USE_IBEACON_ESP32
+
+  ESP32BLE.mode.init = false;
+  ESP32BLE.mode.runningScan = false;
 
 #else
 
@@ -319,6 +338,8 @@ void IBEACON_Init() {
 #ifdef USE_IBEACON_ESP32
 
 void esp32_every_second(void) {
+
+  if (!ESP32BLE.mode.init) { return; }
 
   if (TasmotaGlobal.ota_state_flag) {
     if (ESP32BLE.mode.runningScan) {
@@ -953,6 +974,13 @@ bool Xsns52(byte function)
       case FUNC_INIT:
         IBEACON_Init();
         break;
+#ifdef USE_IBEACON_ESP32
+      case FUNC_EVERY_250_MSECOND:
+        if (!ESP32BLE.mode.init) {
+          ESP32Init();
+        }
+        break;
+#endif
       case FUNC_LOOP:
         IBEACON_loop();
         break;
