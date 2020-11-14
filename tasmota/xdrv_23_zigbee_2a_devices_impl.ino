@@ -702,14 +702,19 @@ void Z_Device::jsonLightState(Z_attribute_list & attr_list) const {
     // dump all known values
     attr_list.addAttribute(F("Reachable")).setBool(getReachable());
     if (validPower())        { attr_list.addAttribute(F("Power")).setUInt(getPower()); }
+    int32_t light_mode = -1;
     const Z_Data_Light & light = data.find<Z_Data_Light>(0);
     if (&light != nullptr) {
+      if (light.validConfig()) {
+        light_mode = light.getConfig();
+      }
       light.toAttributes(attr_list);
       // Exception, we need to convert Hue to 0..360 instead of 0..254
       if (light.validHue()) {
         attr_list.findOrCreateAttribute(PSTR("Hue")).setUInt(light.getHue());
       }
     }
+    attr_list.addAttribute(F("Light")).setInt(light_mode);
   }
 }
 
