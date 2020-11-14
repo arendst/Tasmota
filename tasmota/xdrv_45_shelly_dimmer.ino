@@ -31,7 +31,7 @@
 #define XNRG_31                     31
 
 #define SHD_DRIVER_MAJOR_VERSION    1
-#define SHD_DRIVER_MINOR_VERSION    3
+#define SHD_DRIVER_MINOR_VERSION    4
 
 #define SHD_LOGNAME                 "SHD"
 
@@ -65,7 +65,7 @@
 
 #ifdef SHELLY_FW_UPGRADE
 #include <stm32flash.h>
-#include <fw/shelly/dimmer/stm_v51.3.h>
+#include <fw/shelly/dimmer/stm_v51.4.h>
 #endif // SHELLY_FW_UPGRADE
 
 #include <TasmotaSerial.h>
