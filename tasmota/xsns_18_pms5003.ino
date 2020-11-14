@@ -247,6 +247,14 @@ void PmsInit(void)
       if (!PinUsed(GPIO_PMS5003_TX)) {  // setting interval not supported if TX pin not connected
         Settings.pms_wake_interval = 0;
         Pms.ready = 1;
+      } else {
+        if (Settings.pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+          // Passive Mode
+          PmsSendCmd(CMD_MODE_PASSIVE);
+          Pms.wake_mode = 0;
+          Pms.ready = 0;
+          Pms.time = Settings.pms_wake_interval - WARMUP_PERIOD; // Let it wake up in the next second
+        }
       }
 
       Pms.type = 1;
