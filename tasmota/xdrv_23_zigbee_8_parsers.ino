@@ -1885,11 +1885,13 @@ void Z_Query_Bulb(uint16_t shortaddr, uint32_t &wait_ms) {
 // Send messages to query the state of each Hue emulated light
 //
 int32_t Z_Query_Bulbs(uint8_t value) {
-  // Scan all devices and send deferred requests to know the state of bulbs
-  uint32_t wait_ms = 1000;                  // start with 1.0 s delay
-  for (uint32_t i = 0; i < zigbee_devices.devicesSize(); i++) {
-    const Z_Device &device = zigbee_devices.devicesAt(i);
-    Z_Query_Bulb(device.shortaddr, wait_ms);
+  if (!Settings.flag5.zb_disable_autoquery) {
+    // Scan all devices and send deferred requests to know the state of bulbs
+    uint32_t wait_ms = 1000;                  // start with 1.0 s delay
+    for (uint32_t i = 0; i < zigbee_devices.devicesSize(); i++) {
+      const Z_Device &device = zigbee_devices.devicesAt(i);
+      Z_Query_Bulb(device.shortaddr, wait_ms);
+    }
   }
   return 0;                              // continue
 }
