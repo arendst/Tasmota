@@ -819,17 +819,17 @@ void CmndShdWarmupTime(void)
 \*********************************************************************************************/
 
 #ifdef USE_ENERGY_SENSOR
-bool Xnrg31(uint8_t function)
-{
+bool Xnrg31(uint8_t function) {
   bool result = false;
 
-  if (function == FUNC_PRE_INIT)
-  {
+  if (Shd.present) {
+    if (FUNC_PRE_INIT == function) {
 #ifndef SHELLY_VOLTAGE_MON
-        Energy.current_available = false;
-        Energy.voltage_available = false;
+      Energy.current_available = false;
+      Energy.voltage_available = false;
 #endif // SHELLY_VOLTAGE_MON
-        TasmotaGlobal.energy_driver = XNRG_31;
+      TasmotaGlobal.energy_driver = XNRG_31;
+    }
   }
   return result;
 }
