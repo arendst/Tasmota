@@ -139,10 +139,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption114 .. SetOption145
-    uint32_t mqtt_switches : 1;            // bit 0 (V9.0.0.3)  - SetOption114 - Detach Switches from relays and enable MQTT action state for all the SwitchModes
-    //uint32_t spare00 : 1;                  // bit 0
-    uint32_t spare01 : 1;                  // bit 1
-    uint32_t spare02 : 1;                  // bit 2
+    uint32_t mqtt_switches : 1;            // bit 0 (v9.0.0.3)   - SetOption114 - Detach Switches from relays and enable MQTT action state for all the SwitchModes
+    uint32_t mi32_enable : 1;              // bit 1 (v9.1.0.1)   - SetOption115 - Enable ESP32 MI32 BLE
+    uint32_t zb_disable_autoquery : 1;     // bit 2 (v9.1.0.1)   - SetOption116 - Disable auto-query of zigbee lights and devices
     uint32_t spare03 : 1;                  // bit 3
     uint32_t spare04 : 1;                  // bit 4
     uint32_t spare05 : 1;                  // bit 5
@@ -636,8 +635,11 @@ struct {
   uint16_t      energy_power_delta[3];     // F44
   uint16_t      shutter_pwmrange[2][MAX_SHUTTERS];  // F4A
   uint8_t       dimmer_step;               // F5A
+  uint8_t       shd_leading_edge;          // F5B
+  uint16_t      shd_warmup_brightness;     // F5C
+  uint8_t       shd_warmup_time;           // F5E
   
-  uint8_t       free_f5b[88];              // F5B - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f5e[84];              // F5E - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   SysBitfield5  flag5;                     // FB4

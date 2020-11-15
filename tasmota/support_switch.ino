@@ -404,6 +404,7 @@ void SwitchHandler(uint32_t mode) {
           }
           break;
         case PUSH_IGNORE:
+          Switch.last_state[i] = button;                        // Update switch state before publishing
           MqttPublishSensor();
           break;
         }

@@ -557,10 +557,19 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zunk,     Cx0406, 0xFFFF,  Z_(),                    Cm0, 0 },    // Remove all other values
 
   // IAS Cluster (Intruder Alarm System)
-  { Zenum8,   Cx0500, 0x0000,  Z_(ZoneState),            Cm1, 0 },    // Occupancy (map8)
-  { Zenum16,  Cx0500, 0x0001,  Z_(ZoneType),             Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Alarm, zone_type) },    // Zone type for sensor
-  { Zmap16,   Cx0500, 0x0002,  Z_(ZoneStatus),           Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Alarm, zone_status) },    // Zone status for sensor
-  { Zbool,    Cx0500, 0xFFF0,  Z_(Contact),              Cm1, Z_MAPPING(Z_Data_Alarm, zone_status) },    // We fit the first bit in the LSB
+  { Zenum8,   Cx0500, 0x0000,  Z_(ZoneState),             Cm1, 0 },    // Occupancy (map8)
+  { Zenum16,  Cx0500, 0x0001,  Z_(ZoneType),              Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Alarm, zone_type) },    // Zone type for sensor
+  { Zmap16,   Cx0500, 0x0002,  Z_(ZoneStatus),            Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Alarm, zone_status) },    // Zone status for sensor
+  { Zuint8,   Cx0500, 0xFFF0 + ZA_CIE, Z_(CIE),           Cm1, 0 },
+  { Zuint8,   Cx0500, 0xFFF0 + ZA_PIR, Z_(Occupancy),     Cm1, 0 },    // normally converted to the actual Occupancy 0406/0000
+  { Zuint8,   Cx0500, 0xFFF0 + ZA_Contact, Z_(Contact),   Cm1, Z_MAPPING(Z_Data_Alarm, zone_status) },    // We fit the first bit in the LSB
+  { Zuint8,   Cx0500, 0xFFF0 + ZA_Fire, Z_(Fire),         Cm1, 0 },
+  { Zuint8,   Cx0500, 0xFFF0 + ZA_Water, Z_(Water),        Cm1, 0 },
+  { Zuint8,   Cx0500, 0xFFF0 + ZA_CO, Z_(CO),             Cm1, 0 },
+  { Zuint8,   Cx0500, 0xFFF0 + ZA_Personal, Z_(PersonalAlarm),Cm1, 0 },
+  { Zuint8,   Cx0500, 0xFFF0 + ZA_Movement, Z_(Movement), Cm1, 0 },
+  { Zuint8,   Cx0500, 0xFFF0 + ZA_Panic, Z_(Panic),       Cm1, 0 },
+  { Zuint8,   Cx0500, 0xFFF0 + ZA_GlassBreak, Z_(GlassBreak),Cm1, 0 },
 
   // Metering (Smart Energy) cluster
   { Zuint48,  Cx0702, 0x0000,  Z_(CurrentSummDelivered), Cm1, 0 },
@@ -1247,7 +1256,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
         break;
       case 0x00060000:    // "Power" for lumi Door/Window is converted to "Contact"
         if (modelId.startsWith(F("lumi.sensor_magnet"))) {
-          attr.setKeyId(0x0500, 0xFFF0);    // change cluster and attribute to 0500/FFF0
+          attr.setKeyId(0x0500, 0xFFF0 + ZA_Contact);    // change cluster and attribute to 0500/FFF0
         }
         break;
       case 0x02010008:    // Pi Heating Demand - solve Eutotronic bug
@@ -1529,13 +1538,14 @@ void ZCLFrame::parseResponse(void) {
 // Parse non-normalized attributes
 void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
   convertClusterSpecific(attr_list, _cluster_id, _cmd_id, _frame_control.b.direction, _srcaddr, _srcendpoint, _payload);
-#ifndef USE_ZIGBEE_NO_READ_ATTRIBUTES   // read attributes unless disabled
-  if (!_frame_control.b.direction) {    // only handle server->client (i.e. device->coordinator)
-    if (_wasbroadcast) {                // only update for broadcast messages since we don't see unicast from device to device and we wouldn't know the target
-      sendHueUpdate(BAD_SHORTADDR, _groupaddr, _cluster_id);
+  if (!Settings.flag5.zb_disable_autoquery) {
+  // read attributes unless disabled
+    if (!_frame_control.b.direction) {    // only handle server->client (i.e. device->coordinator)
+      if (_wasbroadcast) {                // only update for broadcast messages since we don't see unicast from device to device and we wouldn't know the target
+        sendHueUpdate(BAD_SHORTADDR, _groupaddr, _cluster_id);
+      }
     }
   }
-#endif
 }
 
 // ======================================================================
@@ -1567,7 +1577,7 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
         translated = true;
         if (modelId.startsWith(F("lumi.sensor_magnet"))) {   // door / window sensor
           if (0x64 == attrid) {
-            attr_list.addAttribute(0x0500, 0xFFF0).copyVal(attr);   // Contact
+            attr_list.addAttribute(0x0500, 0xFFF0 + ZA_Contact).copyVal(attr);   // Contact
           }
         } else if (modelId.startsWith(F("lumi.sensor_smoke"))) {   // gas leak
           if (0x64 == attrid) {
@@ -1967,7 +1977,8 @@ bool Z_parseAttributeKey(class Z_attribute & attr) {
 // Input:
 //  the Json object to add attributes to
 //  the type of object (necessary since the type system is unaware of the actual sub-type)
-void Z_Data::toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const {
+void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
+  Z_Data_Type type = getType();
   // iterate through attributes to see which ones need to be exported
   for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];

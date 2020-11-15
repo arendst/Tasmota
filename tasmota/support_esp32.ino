@@ -247,7 +247,7 @@ void DisableBrownout(void) {
 
 String ESP32GetResetReason(uint32_t cpu_no) {
 	// tools\sdk\include\esp32\rom\rtc.h
-  switch (rtc_get_reset_reason( (RESET_REASON) cpu_no)) {
+  switch (rtc_get_reset_reason(cpu_no)) {
     case POWERON_RESET          : return F("Vbat power on reset");                              // 1
     case SW_RESET               : return F("Software reset digital core");                      // 3
     case OWDT_RESET             : return F("Legacy watch dog reset digital core");              // 4
@@ -262,9 +262,9 @@ String ESP32GetResetReason(uint32_t cpu_no) {
     case RTCWDT_CPU_RESET       : return F("RTC Watch dog Reset CPU");                          // 13
     case EXT_CPU_RESET          : return F("or APP CPU, reseted by PRO CPU");                   // 14
     case RTCWDT_BROWN_OUT_RESET : return F("Reset when the vdd voltage is not stable");         // 15
-    case RTCWDT_RTC_RESET       : return F("RTC Watch dog reset digital core and rtc module");  // 16
-    default                     : return F("NO_MEAN");                                          // 0
+    case RTCWDT_RTC_RESET       : return F("RTC Watch dog reset digital core and rtc module");  // 16            
   }
+  return F("No meaning");                                                                       // 0 and undefined
 }
 
 String ESP_getResetReason(void) {
@@ -277,6 +277,7 @@ uint32_t ESP_ResetInfoReason(void) {
   if (SW_CPU_RESET == reason) { return REASON_SOFT_RESTART; }
   if (DEEPSLEEP_RESET == reason)  { return REASON_DEEP_SLEEP_AWAKE; }
   if (SW_RESET == reason) { return REASON_EXT_SYS_RST; }
+  return -1; //no "official error code", but should work with the current code base
 }
 
 uint32_t ESP_getChipId(void) {

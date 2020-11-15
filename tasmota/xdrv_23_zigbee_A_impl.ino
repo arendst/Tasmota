@@ -33,7 +33,7 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_INFO "|" D_CMND_ZIGBEE_FORGET "|" D_CMND_ZIGBEE_SAVE "|" D_CMND_ZIGBEE_NAME "|"
   D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_UNBIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID "|"
   D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_OCCUPANCY "|"
-  D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|"
+  D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|" D_CMND_ZIGBEE_LEAVE "|"
   D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA
   ;
 
@@ -49,7 +49,7 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbInfo, &CmndZbForget, &CmndZbSave, &CmndZbName,
   &CmndZbBind, &CmndZbUnbind, &CmndZbPing, &CmndZbModelId,
   &CmndZbLight, &CmndZbOccupancy,
-  &CmndZbRestore, &CmndZbBindState, &CmndZbMap,
+  &CmndZbRestore, &CmndZbBindState, &CmndZbMap, CmndZbLeave,
   &CmndZbConfig, CmndZbData,
   };
 
@@ -210,9 +210,10 @@ void zigbeeZCLSendStr(uint16_t shortaddr, uint16_t groupaddr, uint8_t endpoint, 
   }));
   // now set the timer, if any, to read back the state later
   if (clusterSpecific) {
-#ifndef USE_ZIGBEE_NO_READ_ATTRIBUTES   // read back attribute value unless it is disabled
-    sendHueUpdate(shortaddr, groupaddr, cluster, endpoint);
-#endif
+    if (!Settings.flag5.zb_disable_autoquery) {
+      // read back attribute value unless it is disabled
+      sendHueUpdate(shortaddr, groupaddr, cluster, endpoint);
+    }
   }
 }
 
@@ -943,6 +944,40 @@ void CmndZbUnbind(void) {
   ZbBindUnbind(true);
 }
 
+//
+// ZbLeave - ask for a device to leave the network
+//
+void CmndZbLeave(void) {
+  if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true).shortaddr;
+  if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
+
+#ifdef USE_ZIGBEE_ZNP
+  SBuffer buf(14);
+  buf.add8(Z_SREQ | Z_ZDO);             // 25
+  buf.add8(ZDO_MGMT_LEAVE_REQ);         // 34
+  buf.add16(shortaddr);                 // shortaddr
+  buf.add64(0);                         // remove self
+  buf.add8(0x00);                       // don't rejoin and don't remove children
+
+  ZigbeeZNPSend(buf.getBuffer(), buf.len());
+#endif // USE_ZIGBEE_ZNP
+
+
+#ifdef USE_ZIGBEE_EZSP
+  // ZDO message payload (see Zigbee spec 2.4.3.3.4)
+  SBuffer buf(10);
+  buf.add64(0);                         // remove self
+  buf.add8(0x00);                       // don't rejoin and don't remove children
+
+  EZ_SendZDO(shortaddr, ZDO_MGMT_LEAVE_REQ, buf.getBuffer(), buf.len());
+#endif // USE_ZIGBEE_EZSP
+
+  ResponseCmndDone();
+}
+
+
+
 void CmndZbBindState_or_Map(uint16_t zdo_cmd) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
   uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true).shortaddr;
@@ -1111,10 +1146,11 @@ void CmndZbLight(void) {
     if (bulbtype < -1) { bulbtype = -1; }
     device.setLightChannels(bulbtype);
   }
-  String dump = zigbee_devices.dumpLightState(device);
-  Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_LIGHT "\":%s}"), dump.c_str());
+  Z_attribute_list attr_list;
+  device.jsonLightState(attr_list);
+  
+  device.jsonPublishAttrList(PSTR(D_PRFX_ZB D_CMND_ZIGBEE_LIGHT), attr_list);         // publish as ZbReceived
 
-  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_LIGHT));
   ResponseCmndDone();
 }
 //
@@ -1194,8 +1230,9 @@ void CmndZbInfo(void) {
 
   // everything is good, we can send the command
 
-  String device_info = Z_Devices::dumpSingleDevice(3, device, false, false);
-  Z_Devices::jsonPublishFlushAttrList(device, device_info);
+  Z_attribute_list attr_list;
+  device.jsonDumpSingleDevice(attr_list, 3, false);   // don't add Device/Name
+  device.jsonPublishAttrList(PSTR(D_JSON_ZIGBEE_INFO), attr_list);         // publish as ZbReceived
 
   ResponseCmndDone();
 }

@@ -58,12 +58,16 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog v9.1.0.1
 ### Added
+- Command ``SetOption115 1`` to enable ESP32 MiBle
+- Command ``SetOption116 1`` to disable auto-query of zigbee light devices (avoids network storms with large groups)
 - Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
 - Zigbee command ``ZbInfo`` and prepare support for EEPROM
+- Zigbee command ``ZbLeave`` to unpair a device
 - Zigbee support for Mi Door and Contact (#9759)
 - Zigbee alarm persistence (#9785)
 - Support for additional EZO sensors by Christopher Tremblay
 - Support for AS608 optical and R503 capacitive fingerprint sensor
+- Support for Shelly Dimmer 1 and 2 by James Turton (#9854)
 
 ### Changed
 - Core library from v2.7.4.5 to v2.7.4.7
@@ -74,6 +78,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - NTP fallback server functionality (#9739)
 - Telegram group chatid not supported (#9831)
 - KNX buttons, switches and sensors detection regression from v9.1.0 (#9811)
+- GUI MqttUser and MqttPassword updates when TLS is compiled in (#9825)
 
 ### Removed
 - Version compatibility check

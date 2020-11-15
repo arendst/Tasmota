@@ -564,7 +564,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
 
 int32_t ShutterCalculatePosition(uint32_t i)
 {
-    // No Logging allowed. Part of RTC Timer
+  // No Logging allowed. Part of RTC Timer
   if (Shutter[i].direction != 0) {
     switch (ShutterGlobal.position_mode) {
       case SHT_COUNTER:
@@ -582,10 +582,11 @@ int32_t ShutterCalculatePosition(uint32_t i)
       break;
       default:
         break;
-      }
-    } else {
-      return Shutter[i].real_position;
     }
+  } else {
+    return Shutter[i].real_position;
+  }
+  return 0;  // Never reaches here, Satisfy compiler
 }
 
 void ShutterRelayChanged(void)

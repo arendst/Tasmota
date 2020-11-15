@@ -73,7 +73,7 @@ public:
 
   inline uint8_t getEndpoint(void) const { return _endpoint; }
 
-  void toAttributes(Z_attribute_list & attr_list, Z_Data_Type type) const;
+  void toAttributes(Z_attribute_list & attr_list) const;
 
   // update internal structures after an attribut update
   // True if a configuration was changed
@@ -215,7 +215,7 @@ public:
   inline bool validColormode(void)      const { return 0xFF != colormode; }
   inline bool validDimmer(void)         const { return 0xFF != dimmer; }
   inline bool validSat(void)            const { return 0xFF != sat; }
-  inline bool validHue(void)            const { return 0xFFFF != hue; }
+  inline bool validHue(void)            const { return 0xFF != hue; }
   inline bool validCT(void)             const { return 0xFFFF != ct; }
   inline bool validX(void)              const { return 0xFFFF != x; }
   inline bool validY(void)              const { return 0xFFFF != y; }
@@ -308,6 +308,19 @@ void Z_Data_PIR::setTimeoutSeconds(int32_t value) {
 /*********************************************************************************************\
  * Device specific: Sensors: temp, humidity, pressure...
 \*********************************************************************************************/
+enum Z_Alarm_Type {
+  ZA_CIE =       0x0,
+  ZA_PIR =       0x1,
+  ZA_Contact =   0x2,
+  ZA_Fire =      0x3,
+  ZA_Water =      0x4,
+  ZA_CO =        0x5,
+  ZA_Personal =  0x6,
+  ZA_Movement =  0x7,
+  ZA_Panic =     0x8,
+  ZA_GlassBreak =0x9,
+};
+
 class Z_Data_Thermo : public Z_Data {
 public:
   Z_Data_Thermo(uint8_t endpoint = 0) :
@@ -361,18 +374,18 @@ typedef union Z_Alarm_Types_t {
 } Z_Alarm_Types_t;
 
 static const Z_Alarm_Types_t Z_Alarm_Types[] PROGMEM = {
-  { .t = { 0x000, 0x0 }},      // 0x0 : Standard CIE
-  { .t = { 0x00d, 0x1 }},      // 0x1 : PIR
-  { .t = { 0x015, 0x2 }},      // 0x2 : Contact
-  { .t = { 0x028, 0x3 }},      // 0x3 : Fire
-  { .t = { 0x02a, 0x4 }},      // 0x4 : Leak
-  { .t = { 0x02b, 0x5 }},      // 0x5 : CO
-  { .t = { 0x02c, 0x6 }},      // 0x6 : Personal
-  { .t = { 0x02d, 0x7 }},      // 0x7 : Movement
-  { .t = { 0x10f, 0x8 }},      // 0x8 : Panic
-  { .t = { 0x115, 0x8 }},      // 0x8 : Panic
-  { .t = { 0x21d, 0x8 }},      // 0x8 : Panic
-  { .t = { 0x226, 0x9 }},      // 0x9 : Glass break
+  { .t = { 0x000, ZA_CIE }},        // 0x0 : Standard CIE
+  { .t = { 0x00d, ZA_PIR }},        // 0x1 : PIR
+  { .t = { 0x015, ZA_Contact }},    // 0x2 : Contact
+  { .t = { 0x028, ZA_Fire }},       // 0x3 : Fire
+  { .t = { 0x02a, ZA_Water }},       // 0x4 : Leak
+  { .t = { 0x02b, ZA_CO }},         // 0x5 : CO
+  { .t = { 0x02c, ZA_Personal }},   // 0x6 : Personal
+  { .t = { 0x02d, ZA_Movement }},   // 0x7 : Movement
+  { .t = { 0x10f, ZA_Panic }},      // 0x8 : Panic
+  { .t = { 0x115, ZA_Panic }},      // 0x8 : Panic
+  { .t = { 0x21d, ZA_Panic }},      // 0x8 : Panic
+  { .t = { 0x226, ZA_GlassBreak }}, // 0x9 : Glass break
 };
 
 class Z_Data_Alarm : public Z_Data {
@@ -387,8 +400,15 @@ public:
   inline bool validZoneType(void)   const { return 0xFFFF != zone_type; }
 
   inline uint16_t getZoneType(void) const { return zone_type; }
-  inline bool isPIR(void) const { return 0x1 == _config; }
-  inline bool isContact(void) const { return 0x2 == _config; }
+  inline bool isPIR(void)             const { return ZA_PIR         == _config; }
+  inline bool isContact(void)         const { return ZA_Contact     == _config; }
+  inline bool isFire(void)            const { return ZA_Fire        == _config; }
+  inline bool isWater(void)            const { return ZA_Water        == _config; }
+  inline bool isCO(void)              const { return ZA_CO          == _config; }
+  inline bool isPersonalAlarm(void)   const { return ZA_Personal    == _config; }
+  inline bool isMovement(void)        const { return ZA_Movement    == _config; }
+  inline bool isPanic(void)           const { return ZA_Panic       == _config; }
+  inline bool isGlassBreak(void)      const { return ZA_GlassBreak  == _config; }
 
   inline void setZoneType(uint16_t _zone_type)  { zone_type = _zone_type; }
 
@@ -674,6 +694,18 @@ public:
 
   void setLastSeenNow(void);
 
+  // multiple function to dump part of the Device state into JSON
+  void jsonAddDeviceNamme(Z_attribute_list & attr_list) const;
+  void jsonAddIEEE(Z_attribute_list & attr_list) const;
+  void jsonAddModelManuf(Z_attribute_list & attr_list) const;
+  void jsonAddEndpoints(Z_attribute_list & attr_list) const;
+  void jsonAddConfig(Z_attribute_list & attr_list) const;
+  void jsonAddDataAttributes(Z_attribute_list & attr_list) const;
+  void jsonAddDeviceAttributes(Z_attribute_list & attr_list) const;
+  void jsonDumpSingleDevice(Z_attribute_list & attr_list, uint32_t dump_mode, bool add_name) const;
+  void jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list) const;
+  void jsonLightState(Z_attribute_list & attr_list) const;
+
   // dump device attributes to ZbData
   void toAttributes(Z_attribute_list & attr_list) const;
 
@@ -791,9 +823,7 @@ public:
   uint8_t getNextSeqNumber(uint16_t shortaddr);
 
   // Dump json
-  static String dumpLightState(const Z_Device & device);
   String dumpDevice(uint32_t dump_mode, const Z_Device & device) const;
-  static String dumpSingleDevice(uint32_t dump_mode, const class Z_Device & device, bool add_device_name = true, bool add_brackets = true);
   int32_t deviceRestore(JsonParserObject json);
 
   // Hue support
@@ -810,7 +840,6 @@ public:
 
   // Append or clear attributes Json structure
   void jsonAppend(uint16_t shortaddr, const Z_attribute_list &attr_list);
-  static void jsonPublishFlushAttrList(const Z_Device & device, const String & attr_list_string);
   void jsonPublishFlush(uint16_t shortaddr);    // publish the json message and clear buffer
   bool jsonIsConflict(uint16_t shortaddr, const Z_attribute_list &attr_list) const;
   void jsonPublishNow(uint16_t shortaddr, Z_attribute_list &attr_list);

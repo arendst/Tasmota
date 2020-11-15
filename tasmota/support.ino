@@ -1477,67 +1477,6 @@ bool ValidGPIO(uint32_t pin, uint32_t gpio)
   return (GPIO_USER == ValidPin(pin, BGPIO(gpio)));  // Only allow GPIO_USER pins
 }
 
-bool GetUsedInModule(uint32_t val, uint16_t *arr)
-{
-  int offset = 0;
-
-  if (!val) { return false; }  // None
-
-  if ((val >= GPIO_KEY1) && (val < GPIO_KEY1 + MAX_KEYS)) {
-    offset = (GPIO_KEY1_NP - GPIO_KEY1);
-  }
-  if ((val >= GPIO_KEY1_NP) && (val < GPIO_KEY1_NP + MAX_KEYS)) {
-    offset = -(GPIO_KEY1_NP - GPIO_KEY1);
-  }
-  if ((val >= GPIO_KEY1_INV) && (val < GPIO_KEY1_INV + MAX_KEYS)) {
-    offset = -(GPIO_KEY1_INV - GPIO_KEY1);
-  }
-  if ((val >= GPIO_KEY1_INV_NP) && (val < GPIO_KEY1_INV_NP + MAX_KEYS)) {
-    offset = -(GPIO_KEY1_INV_NP - GPIO_KEY1);
-  }
-
-  if ((val >= GPIO_SWT1) && (val < GPIO_SWT1 + MAX_SWITCHES)) {
-    offset = (GPIO_SWT1_NP - GPIO_SWT1);
-  }
-  if ((val >= GPIO_SWT1_NP) && (val < GPIO_SWT1_NP + MAX_SWITCHES)) {
-    offset = -(GPIO_SWT1_NP - GPIO_SWT1);
-  }
-
-  if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
-    offset = (GPIO_REL1_INV - GPIO_REL1);
-  }
-  if ((val >= GPIO_REL1_INV) && (val < GPIO_REL1_INV + MAX_RELAYS)) {
-    offset = -(GPIO_REL1_INV - GPIO_REL1);
-  }
-
-  if ((val >= GPIO_LED1) && (val < GPIO_LED1 + MAX_LEDS)) {
-    offset = (GPIO_LED1_INV - GPIO_LED1);
-  }
-  if ((val >= GPIO_LED1_INV) && (val < GPIO_LED1_INV + MAX_LEDS)) {
-    offset = -(GPIO_LED1_INV - GPIO_LED1);
-  }
-
-  if ((val >= GPIO_PWM1) && (val < GPIO_PWM1 + MAX_PWMS)) {
-    offset = (GPIO_PWM1_INV - GPIO_PWM1);
-  }
-  if ((val >= GPIO_PWM1_INV) && (val < GPIO_PWM1_INV + MAX_PWMS)) {
-    offset = -(GPIO_PWM1_INV - GPIO_PWM1);
-  }
-
-  if ((val >= GPIO_CNTR1) && (val < GPIO_CNTR1 + MAX_COUNTERS)) {
-    offset = (GPIO_CNTR1_NP - GPIO_CNTR1);
-  }
-  if ((val >= GPIO_CNTR1_NP) && (val < GPIO_CNTR1_NP + MAX_COUNTERS)) {
-    offset = -(GPIO_CNTR1_NP - GPIO_CNTR1);
-  }
-
-  for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
-    if (arr[i] == val) { return true; }
-    if (arr[i] == val + offset) { return true; }
-  }
-  return false;
-}
-
 bool JsonTemplate(char* dataBuf)
 {
   // Old: {"NAME":"Shelly 2.5","GPIO":[56,0,17,0,21,83,0,0,6,82,5,22,156],"FLAG":2,"BASE":18}

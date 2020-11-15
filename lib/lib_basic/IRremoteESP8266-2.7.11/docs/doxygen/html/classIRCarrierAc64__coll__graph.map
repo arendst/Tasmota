@@ -1,5 +1,0 @@
-<map id="IRCarrierAc64" name="IRCarrierAc64">
-<area shape="rect" id="node1" title="Class for handling detailed Carrier 64 bit A/C messages." alt="" coords="42,95,153,121"/>
-<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="5,5,72,32"/>
-<area shape="rect" id="node3" href="$unionCarrierProtocol.html" title=" " alt="" coords="97,5,215,32"/>
-</map>

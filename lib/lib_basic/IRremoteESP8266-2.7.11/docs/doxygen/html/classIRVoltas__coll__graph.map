@@ -1,5 +1,0 @@
-<map id="IRVoltas" name="IRVoltas">
-<area shape="rect" id="node1" title="Class for handling detailed Voltas A/C messages." alt="" coords="83,95,157,121"/>
-<area shape="rect" id="node2" href="$unionVoltasProtocol.html" title=" " alt="" coords="5,5,120,32"/>
-<area shape="rect" id="node3" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="144,5,211,32"/>
-</map>

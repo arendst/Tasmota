@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 02.11.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 15.11.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -652,7 +652,7 @@
 #define D_SENSOR_ARIRFSEL      "IR ALux - SEL"
 #define D_SENSOR_TXD           "Seriale - TX"
 #define D_SENSOR_RXD           "Seriale - RX"
-#define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_ROTARY        "Rotativo"     // Suffix "1A"
 #define D_SENSOR_HRE_CLOCK     "HRE - Clock"
 #define D_SENSOR_HRE_DATA      "HRE - Dati"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 - IRQ"
@@ -681,7 +681,7 @@
 #define D_SENSOR_DDSU666_RX    "DDSU666 - RX"
 #define D_SENSOR_SM2135_CLK    "SM2135 - CLK"
 #define D_SENSOR_SM2135_DAT    "SM2135 - DATI"
-#define D_SENSOR_DEEPSLEEP     "Deep sleep"
+#define D_SENSOR_DEEPSLEEP     "Sleep profondo"
 #define D_SENSOR_EXS_ENABLE    "EXS - Abilita"
 #define D_SENSOR_CLIENT_TX     "Client - TX"
 #define D_SENSOR_CLIENT_RX     "Client - RX"
@@ -701,36 +701,38 @@
 #define D_SENSOR_AS3935         "AS3935"
 #define D_SENSOR_WINDMETER_SPEED "Velocità vento"
 #define D_SENSOR_TELEINFO_RX    "TInfo - RX"
-#define D_SENSOR_TELEINFO_ENABLE "TInfo - EN"
-#define D_SENSOR_LMT01_PULSE   "LMT01 Pulse"
-#define D_SENSOR_ADC_INPUT     "ADC Input"
-#define D_SENSOR_ADC_TEMP      "ADC Temp"
-#define D_SENSOR_ADC_LIGHT     "ADC Light"
-#define D_SENSOR_ADC_BUTTON    "ADC Button"
-#define D_SENSOR_ADC_RANGE     "ADC Range"
-#define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
-#define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
-#define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
-#define D_GPIO_WEBCAM_RESET    "CAM_RESET"
-#define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
-#define D_GPIO_WEBCAM_SIOD     "CAM_SIOD"
-#define D_GPIO_WEBCAM_SIOC     "CAM_SIOC"
-#define D_GPIO_WEBCAM_DATA     "CAM_DATA"
-#define D_GPIO_WEBCAM_VSYNC    "CAM_VSYNC"
-#define D_GPIO_WEBCAM_HREF     "CAM_HREF"
-#define D_GPIO_WEBCAM_PCLK     "CAM_PCLK"
-#define D_GPIO_WEBCAM_PSCLK    "CAM_PSCLK"
-#define D_GPIO_WEBCAM_HSD      "CAM_HSD"
-#define D_GPIO_WEBCAM_PSRCS    "CAM_PSRCS"
-#define D_SENSOR_ETH_PHY_POWER "ETH POWER"
-#define D_SENSOR_ETH_PHY_MDC   "ETH MDC"
-#define D_SENSOR_ETH_PHY_MDIO  "ETH MDIO"
+#define D_SENSOR_TELEINFO_ENABLE "TInfo - Enable"
+#define D_SENSOR_LMT01_PULSE   "LMT01 - Impulso"
+#define D_SENSOR_ADC_INPUT     "ADC - Input"
+#define D_SENSOR_ADC_TEMP      "ADC - Temperatura"
+#define D_SENSOR_ADC_LIGHT     "ADC - Luce"
+#define D_SENSOR_ADC_BUTTON    "ADC - Pulsante"
+#define D_SENSOR_ADC_RANGE     "ADC - Intervallo"
+#define D_SENSOR_ADC_CT_POWER  "ADC - CTR alimentazione"
+#define D_SENSOR_ADC_JOYSTICK  "ADC - Joystick"
+#define D_GPIO_WEBCAM_PWDN     "Webcam - PWDN"
+#define D_GPIO_WEBCAM_RESET    "Webcam - RESET"
+#define D_GPIO_WEBCAM_XCLK     "Webcam - XCLK"
+#define D_GPIO_WEBCAM_SIOD     "Webcam - SIOD"
+#define D_GPIO_WEBCAM_SIOC     "Webcam - SIOC"
+#define D_GPIO_WEBCAM_DATA     "Webcam - DATA"
+#define D_GPIO_WEBCAM_VSYNC    "Webcam - VSYNC"
+#define D_GPIO_WEBCAM_HREF     "Webcam - HREF"
+#define D_GPIO_WEBCAM_PCLK     "Webcam - PCLK"
+#define D_GPIO_WEBCAM_PSCLK    "Webcam - PSCLK"
+#define D_GPIO_WEBCAM_HSD      "Webcam - HSD"
+#define D_GPIO_WEBCAM_PSRCS    "Webcam - PSRCS"
+#define D_SENSOR_ETH_PHY_POWER "ETH - ALIMENTAZIONE"
+#define D_SENSOR_ETH_PHY_MDC   "ETH - MDC"
+#define D_SENSOR_ETH_PHY_MDIO  "ETH - MDIO"
 #define D_SENSOR_TCP_TXD       "TCP - TX"
 #define D_SENSOR_TCP_RXD       "TCP - RX"
 #define D_SENSOR_IEM3000_TX    "iEM3000 - TX"
 #define D_SENSOR_IEM3000_RX    "iEM3000 - RX"
-#define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
-#define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
+#define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC - TX"
+#define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC - RX"
+#define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD - Boot 0"
+#define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD - Reset"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -796,7 +798,7 @@
 #define D_PV2_CURRENT     "PV2 - Corrente"
 #define D_PV2_POWER       "PV2 - Energia"
 #define D_SOLAR_POWER     "Energia solare"
-#define D_INVERTER_POWER  "Energia inverter"
+#define D_INVERTER_POWER  "Potenza inverter"
 #define D_STATUS          "Stato"
 #define D_WAITING         "In attesa"
 #define D_CHECKING        "Controllo"
@@ -864,37 +866,37 @@
 #define D_MAX_CURRENT     "Corrente max"
 
 // xsns_79_as608.ino
-#define D_FP_ENROLL_PLACEFINGER "Place finger"
-#define D_FP_ENROLL_REMOVEFINGER "Remove finger"
-#define D_FP_ENROLL_PLACESAMEFINGER "Place same finger again"
-#define D_FP_ENROLL_RETRY "Error so retry"
-#define D_FP_ENROLL_RESTART "Restart"
-#define D_FP_ENROLL_ERROR "Error"
-#define D_FP_ENROLL_RESET "Reset"
-#define D_FP_ENROLL_ACTIVE "Active"
-#define D_FP_ENROLL_INACTIVE "Inactive"
+#define D_FP_ENROLL_PLACEFINGER "Appoggia impronta"
+#define D_FP_ENROLL_REMOVEFINGER "Rimuovi impronta"
+#define D_FP_ENROLL_PLACESAMEFINGER "Appoggia di nuovo stessa impronta"
+#define D_FP_ENROLL_RETRY "Errore quindi riprova"
+#define D_FP_ENROLL_RESTART "Riavvia"
+#define D_FP_ENROLL_ERROR "Errore"
+#define D_FP_ENROLL_RESET "Ripristina"
+#define D_FP_ENROLL_ACTIVE "Attivo"
+#define D_FP_ENROLL_INACTIVE "Non attivo"
 // Indexed by Adafruit_Fingerprint.h defines
-#define D_FP_PACKETRECIEVEERR "Comms error"    // 0x01 Error when receiving data package
-#define D_FP_NOFINGER ""                       // 0x02 No finger on the sensor
-#define D_FP_IMAGEFAIL "Imaging error"         // 0x03 Failed to enroll the finger
-#define D_FP_IMAGEMESS "Image too messy"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
-#define D_FP_FEATUREFAIL "Fingerprint too small" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH "No match"                // 0x08 Finger doesn't match
-#define D_FP_NOTFOUND "Did not find a match"   // 0x09 Failed to find matching finger
-#define D_FP_ENROLLMISMATCH "Fingerprint did not match" // 0x0A Failed to combine the character files
-#define D_FP_BADLOCATION "Bad location"        // 0x0B Addressed PageID is beyond the finger library
-#define D_FP_DBRANGEFAIL "DB range error"      // 0x0C Error when reading template from library or invalid template
-#define D_FP_UPLOADFEATUREFAIL "Upload feature error" // 0x0D Error when uploading template
-#define D_FP_PACKETRESPONSEFAIL "Packet response error" // 0x0E Module failed to receive the following data packages
-#define D_FP_UPLOADFAIL "Upload error"         // 0x0F Error when uploading image
-#define D_FP_DELETEFAIL "Delete error"         // 0x10 Failed to delete the template
-#define D_FP_DBCLEARFAIL "DB Clear error"      // 0x11 Failed to clear finger library
-#define D_FP_PASSFAIL "Password error"         // 0x13 Find whether the fingerprint passed or failed
-#define D_FP_INVALIDIMAGE "Image invalid"      // 0x15 Failed to generate image because of lac of valid primary image
-#define D_FP_FLASHERR "Flash write error"      // 0x18 Error when writing flash
-#define D_FP_INVALIDREG "Invalid number"       // 0x1A Invalid register number
-#define D_FP_ADDRCODE "Address code"           // 0x20 Address code
-#define D_FP_PASSVERIFY "Password verified"    // 0x21 Verify the fingerprint passed
-#define D_FP_UNKNOWNERROR "Error"              // Any other error
+#define D_FP_PACKETRECIEVEERR "Errore comunicazione"        // 0x01 Error when receiving data package
+#define D_FP_NOFINGER ""                                    // 0x02 No finger on the sensor
+#define D_FP_IMAGEFAIL "Errore immagine"                    // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS "Immmagine troppo danneggiata"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL "Impronta troppo piccola"          // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH "Nessuna corrispondenza"               // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND "Corrispondenza non trovata"          // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH "L'impronta non corrisponde"    // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION "Locazione errata"                 // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL "Errore intervallo DB"             // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL "Errore funzione upload"     // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL "Errore risposta pacchetto" // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL "Errore upload"                     // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL "Errore eliminazione"               // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL "Errore azzeramento DB"            // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL "Errore password"                     // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE "Immagine non valida"             // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR "Errore scrittura flash"              // 0x18 Error when writing flash
+#define D_FP_INVALIDREG "Numero non valido"                 // 0x1A Invalid register number
+#define D_FP_ADDRCODE "Codice indirizzo"                    // 0x20 Address code
+#define D_FP_PASSVERIFY "Password verificata"               // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR "Errore"                          // Any other error
 
 #endif  // _LANGUAGE_IT_IT_H_

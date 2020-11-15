@@ -284,11 +284,17 @@ static BLEScan* MI32Scan;
 
 #define D_CMND_MI32 "MI32"
 
-const char S_JSON_MI32_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_MI32 "%s\":%d}";
-const char S_JSON_MI32_COMMAND[] PROGMEM        = "{\"" D_CMND_MI32 "%s%s\"}";
-// const char S_JSON_MI32_BCOMMAND_SVALUE[] PROGMEM = "{\"" D_CMND_MI32 "%s\":%s}";
-const char S_JSON_MI32_BCOMMAND_SVALUE[] PROGMEM = "{\"" D_CMND_MI32 "%s%u\":\"%s\"}";
-const char kMI32_Commands[] PROGMEM             = "Period|Time|Page|Battery|Unit|Key|Beacon";
+const char kMI32_Commands[] PROGMEM = D_CMND_MI32 "|"
+#ifdef USE_MI_DECRYPTION
+  "Key|"
+#endif  // USE_MI_DECRYPTION
+  "Period|Time|Page|Battery|Unit|Beacon";
+
+void (*const MI32_Commands[])(void) PROGMEM = {
+#ifdef USE_MI_DECRYPTION
+  &CmndMi32Key,
+#endif  // USE_MI_DECRYPTION
+  &CmndMi32Period, &CmndMi32Time, &CmndMi32Page, &CmndMi32Battery, &CmndMi32Unit, &CmndMi32Beacon };
 
 #define FLORA       1
 #define MJ_HT_V1    2
@@ -763,11 +769,19 @@ void MI32PreInit(void) {
 }
 
 void MI32Init(void) {
-  if (MI32.mode.init) return;
-  if(WiFi.getSleep() == false){
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("MI32: WiFi modem not in sleep mode, BLE cannot start yet"));
+  if (MI32.mode.init) { return; }
+
+  if (TasmotaGlobal.global_state.wifi_down) { return; }
+  if (WiFi.getSleep() == false) {
+//    AddLog_P(LOG_LEVEL_DEBUG,PSTR("MI32: WiFi modem not in sleep mode, BLE cannot start yet"));
+    if (0 == Settings.flag3.sleep_normal) {
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("MI32: About to restart to put WiFi modem in sleep mode"));
+      Settings.flag3.sleep_normal = 1;  // SetOption60 - Enable normal sleep instead of dynamic sleep
+      TasmotaGlobal.restart_flag = 2;
+    }
     return;
   }
+
   if (!MI32.mode.init) {
     NimBLEDevice::init("");
     AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: init BLE device"));
@@ -1771,119 +1785,95 @@ void MI32EverySecond(bool restart){
  * Commands
 \*********************************************************************************************/
 
-bool MI32Cmd(void) {
-  char command[CMDSZ];
-  bool serviced = true;
-  uint8_t disp_len = strlen(D_CMND_MI32);
-
-  if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_MI32), disp_len)) {  // prefix
-    uint32_t command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + disp_len, kMI32_Commands);
-    switch (command_code) {
-      case CMND_MI32_PERIOD:
-        if (XdrvMailbox.data_len > 0) {
-          if (XdrvMailbox.payload==1) {
-            MI32EverySecond(true);
-            XdrvMailbox.payload = MI32.period;
-            }
-          else {
-            MI32.period = XdrvMailbox.payload;
-          }
-        }
-        else {
-          XdrvMailbox.payload = MI32.period;
-        }
-        Response_P(S_JSON_MI32_COMMAND_NVALUE, command, XdrvMailbox.payload);
-        break;
-      case CMND_MI32_TIME:
-        if (XdrvMailbox.data_len > 0) {
-          if(MIBLEsensors.size()>XdrvMailbox.payload){
-            if(MIBLEsensors[XdrvMailbox.payload].type == LYWSD02 || MIBLEsensors[XdrvMailbox.payload].type == MHOC303){
-              AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: will set Time"),D_CMND_MI32);
-              MI32.state.sensor = XdrvMailbox.payload;
-              MI32.mode.canScan = 0;
-              MI32.mode.canConnect = 0;
-              MI32.mode.shallSetTime = 1;
-              MI32.mode.willSetTime = 0;
-              }
-            }
-          }
-        Response_P(S_JSON_MI32_COMMAND_NVALUE, command, XdrvMailbox.payload);
-        break;
-      case CMND_MI32_UNIT:
-        if (XdrvMailbox.data_len > 0) {
-          if(MIBLEsensors.size()>XdrvMailbox.payload){
-            if(MIBLEsensors[XdrvMailbox.payload].type == LYWSD02 || MIBLEsensors[XdrvMailbox.payload].type == MHOC303){
-              AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: will set Unit"),D_CMND_MI32);
-              MI32.state.sensor = XdrvMailbox.payload;
-              MI32.mode.canScan = 0;
-              MI32.mode.canConnect = 0;
-              MI32.mode.shallSetUnit = 1;
-              MI32.mode.willSetUnit = 0;
-              }
-            }
-          }
-        Response_P(S_JSON_MI32_COMMAND_NVALUE, command, XdrvMailbox.payload);
-        break;
-      case CMND_MI32_PAGE:
-        if (XdrvMailbox.data_len > 0) {
-            if (XdrvMailbox.payload == 0) XdrvMailbox.payload = MI32.perPage; // ignore 0
-            MI32.perPage = XdrvMailbox.payload;
-          }
-        else XdrvMailbox.payload = MI32.perPage;
-        Response_P(S_JSON_MI32_COMMAND_NVALUE, command, XdrvMailbox.payload);
-        break;
-      case CMND_MI32_BATTERY:
-        MI32EverySecond(true);
-        MI32.mode.shallReadBatt = 1;
-        MI32.mode.canConnect = 1;
-        XdrvMailbox.payload = MI32.period;
-        Response_P(S_JSON_MI32_COMMAND, command, "");
-        break;
-#ifdef USE_MI_DECRYPTION
-      case CMND_MI32_KEY:
-        if (XdrvMailbox.data_len==44){  // a KEY-MAC-string
-          MI32AddKey(XdrvMailbox.data);
-          Response_P(S_JSON_MI32_COMMAND, command, XdrvMailbox.data);
-        }
-        break;
-#endif //USE_MI_DECRYPTION
-      case CMND_MI32_BEACON:
-        if (XdrvMailbox.data_len == 0) {
-            switch(XdrvMailbox.index){
-              case 0:
-              MI32.state.beaconScanCounter = 8;
-              Response_P(S_JSON_MI32_BCOMMAND_SVALUE, command, XdrvMailbox.index,PSTR("scanning"));
-              break;
-              case 1: case 2: case 3: case 4:
-              char _MAC[18];
-              ToHex_P(MIBLEbeacons[XdrvMailbox.index-1].MAC,6,_MAC,18,':');
-              Response_P(S_JSON_MI32_BCOMMAND_SVALUE, command, XdrvMailbox.index,_MAC);
-              break;
-            }
-          }
-        else {
-            if(XdrvMailbox.data_len == 12 || XdrvMailbox.data_len == 17){ // MAC-string without or with colons
-              switch(XdrvMailbox.index){
-                case 1: case 2: case 3: case 4:
-                MI32addBeacon(XdrvMailbox.index,XdrvMailbox.data);
-                break;
-              }
-            }
-            Response_P(S_JSON_MI32_BCOMMAND_SVALUE, command, XdrvMailbox.index,XdrvMailbox.data);
-        }
-        break;
-
-      default:
-        // else for Unknown command
-        serviced = false;
-      break;
+void CmndMi32Period(void) {
+  if (XdrvMailbox.data_len > 0) {
+    if (1 == XdrvMailbox.payload) {
+      MI32EverySecond(true);
+    } else {
+      MI32.period = XdrvMailbox.payload;
     }
-  } else {
-    return false;
   }
-  return serviced;
+  ResponseCmndNumber(MI32.period);
 }
 
+void CmndMi32Time(void) {
+  if (XdrvMailbox.data_len > 0) {
+    if (MIBLEsensors.size() > XdrvMailbox.payload) {
+      if ((LYWSD02 == MIBLEsensors[XdrvMailbox.payload].type) || (MHOC303 == MIBLEsensors[XdrvMailbox.payload].type)) {
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("MI32: will set Time"));
+        MI32.state.sensor = XdrvMailbox.payload;
+        MI32.mode.canScan = 0;
+        MI32.mode.canConnect = 0;
+        MI32.mode.shallSetTime = 1;
+        MI32.mode.willSetTime = 0;
+        ResponseCmndNumber(XdrvMailbox.payload);
+      }
+    }
+  }
+}
+
+void CmndMi32Page(void) {
+  if (XdrvMailbox.payload > 0) {
+    MI32.perPage = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(MI32.perPage);
+}
+
+void CmndMi32Battery(void) {
+  MI32EverySecond(true);
+  MI32.mode.shallReadBatt = 1;
+  MI32.mode.canConnect = 1;
+  ResponseCmndDone();
+}
+
+void CmndMi32Unit(void) {
+  if (XdrvMailbox.data_len > 0) {
+    if (MIBLEsensors.size() > XdrvMailbox.payload) {
+      if ((LYWSD02 == MIBLEsensors[XdrvMailbox.payload].type) || (MHOC303 == MIBLEsensors[XdrvMailbox.payload].type)) {
+        AddLog_P(LOG_LEVEL_DEBUG,PSTR("MI32: will set Unit"));
+        MI32.state.sensor = XdrvMailbox.payload;
+        MI32.mode.canScan = 0;
+        MI32.mode.canConnect = 0;
+        MI32.mode.shallSetUnit = 1;
+        MI32.mode.willSetUnit = 0;
+        ResponseCmndNumber(XdrvMailbox.payload);
+      }
+    }
+  }
+}
+
+#ifdef USE_MI_DECRYPTION
+void CmndMi32Key(void) {
+  if (44 == XdrvMailbox.data_len) {  // a KEY-MAC-string
+    MI32AddKey(XdrvMailbox.data);
+    ResponseCmndDone();
+  }
+}
+#endif  // USE_MI_DECRYPTION
+
+void CmndMi32Beacon(void) {
+  if (XdrvMailbox.data_len == 0) {
+    switch (XdrvMailbox.index) {
+      case 0:
+        MI32.state.beaconScanCounter = 8;
+        ResponseCmndIdxChar(PSTR("Scanning..."));
+        break;
+      case 1: case 2: case 3: case 4:
+        char _MAC[18];
+        ResponseCmndIdxChar(ToHex_P(MIBLEbeacons[XdrvMailbox.index-1].MAC, 6, _MAC, 18, ':'));
+        break;
+    }
+  } else {
+    if ((12 == XdrvMailbox.data_len) || (17 == XdrvMailbox.data_len)) { // MAC-string without or with colons
+      switch (XdrvMailbox.index) {
+        case 1: case 2: case 3: case 4:
+          MI32addBeacon(XdrvMailbox.index, XdrvMailbox.data);
+          break;
+      }
+    }
+    ResponseCmndIdxChar(XdrvMailbox.data);
+  }
+}
 
 /*********************************************************************************************\
  * Presentation
@@ -2185,13 +2175,16 @@ void MI32Show(bool json)
 
 bool Xsns62(uint8_t function)
 {
+  if (!Settings.flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 MI32 BLE
+
   bool result = false;
+
   if (FUNC_INIT == function){
     MI32PreInit();
   }
 
-  if(!MI32.mode.init){
-    if(function==FUNC_EVERY_250_MSECOND){
+  if (!MI32.mode.init) {
+    if (function == FUNC_EVERY_250_MSECOND) {
       MI32Init();
     }
     return result;
@@ -2204,7 +2197,7 @@ bool Xsns62(uint8_t function)
       MI32EverySecond(false);
       break;
     case FUNC_COMMAND:
-      result = MI32Cmd();
+      result = DecodeCommand(kMI32_Commands, MI32_Commands);
       break;
     case FUNC_JSON_APPEND:
       MI32Show(1);
