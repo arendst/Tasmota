@@ -86,6 +86,7 @@ struct METER_DESC {
   char *txmem;
   uint8_t index;
   uint8_t max_index;
+  uint8_t sopt;
 };
 
 // this descriptor method is no longer supported
@@ -2012,7 +2013,14 @@ dddef_exit:
           if (*lp!=',') goto next_line;
           lp++;
           script_meter_desc[index].type=*lp;
-          lp+=2;
+          lp++;
+          if (*lp!=',') {
+            script_meter_desc[index].sopt=*lp&7;
+            lp++;
+          } else {
+            script_meter_desc[index].sopt=0;
+          }
+          lp++;
           script_meter_desc[index].flag=strtol(lp,&lp,10);
           if (*lp!=',') goto next_line;
           lp++;
@@ -2180,20 +2188,24 @@ init10:
 #endif
 #endif
 
-#ifdef ESP32
-        if (meter_desc_p[meters].type=='M') {
-          meter_ss[meters]->begin(meter_desc_p[meters].params, SERIAL_8E1,meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin);
-        } else {
-          meter_ss[meters]->begin(meter_desc_p[meters].params,SERIAL_8N1,meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin);
+        SerialConfig smode = SERIAL_8N1;
+        if (meter_desc_p[meters].sopt == 2) {
+          smode = SERIAL_8N2;
         }
+        if (meter_desc_p[meters].type=='M') {
+          smode = SERIAL_8E1;
+          if (meter_desc_p[meters].sopt == 2) {
+            smode = SERIAL_8E2;
+          }
+        }
+#ifdef ESP32
+        meter_ss[meters]->begin(meter_desc_p[meters].params, smode, meter_desc_p[meters].srcpin, meter_desc_p[meters].trxpin);
 #else
         if (meter_ss[meters]->begin(meter_desc_p[meters].params)) {
           meter_ss[meters]->flush();
         }
         if (meter_ss[meters]->hardwareSerial()) {
-          if (meter_desc_p[meters].type=='M') {
-            Serial.begin(meter_desc_p[meters].params, SERIAL_8E1);
-          }
+          Serial.begin(meter_desc_p[meters].params, smode);
           ClaimSerial();
           //Serial.setRxBufferSize(512);
         }
