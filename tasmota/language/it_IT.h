@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 13.11.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 15.11.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -652,7 +652,7 @@
 #define D_SENSOR_ARIRFSEL      "IR ALux - SEL"
 #define D_SENSOR_TXD           "Seriale - TX"
 #define D_SENSOR_RXD           "Seriale - RX"
-#define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_ROTARY        "Rotativo"     // Suffix "1A"
 #define D_SENSOR_HRE_CLOCK     "HRE - Clock"
 #define D_SENSOR_HRE_DATA      "HRE - Dati"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 - IRQ"
@@ -681,7 +681,7 @@
 #define D_SENSOR_DDSU666_RX    "DDSU666 - RX"
 #define D_SENSOR_SM2135_CLK    "SM2135 - CLK"
 #define D_SENSOR_SM2135_DAT    "SM2135 - DATI"
-#define D_SENSOR_DEEPSLEEP     "Deep sleep"
+#define D_SENSOR_DEEPSLEEP     "Sleep profondo"
 #define D_SENSOR_EXS_ENABLE    "EXS - Abilita"
 #define D_SENSOR_CLIENT_TX     "Client - TX"
 #define D_SENSOR_CLIENT_RX     "Client - RX"
@@ -703,13 +703,13 @@
 #define D_SENSOR_TELEINFO_RX    "TInfo - RX"
 #define D_SENSOR_TELEINFO_ENABLE "TInfo - EN"
 #define D_SENSOR_LMT01_PULSE   "LMT01 Pulse"
-#define D_SENSOR_ADC_INPUT     "ADC Input"
-#define D_SENSOR_ADC_TEMP      "ADC Temp"
-#define D_SENSOR_ADC_LIGHT     "ADC Light"
-#define D_SENSOR_ADC_BUTTON    "ADC Button"
-#define D_SENSOR_ADC_RANGE     "ADC Range"
-#define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
-#define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
+#define D_SENSOR_ADC_INPUT     "ADC - Input"
+#define D_SENSOR_ADC_TEMP      "ADC - Temperatura"
+#define D_SENSOR_ADC_LIGHT     "ADC - Luce"
+#define D_SENSOR_ADC_BUTTON    "ADC - Pulsante"
+#define D_SENSOR_ADC_RANGE     "ADC - Intervallo"
+#define D_SENSOR_ADC_CT_POWER  "ADC - CTR alimentazione"
+#define D_SENSOR_ADC_JOYSTICK  "ADC - Joystick"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -722,17 +722,17 @@
 #define D_GPIO_WEBCAM_PSCLK    "CAM_PSCLK"
 #define D_GPIO_WEBCAM_HSD      "CAM_HSD"
 #define D_GPIO_WEBCAM_PSRCS    "CAM_PSRCS"
-#define D_SENSOR_ETH_PHY_POWER "ETH POWER"
-#define D_SENSOR_ETH_PHY_MDC   "ETH MDC"
-#define D_SENSOR_ETH_PHY_MDIO  "ETH MDIO"
+#define D_SENSOR_ETH_PHY_POWER "ETH - ALIMENTAZIONE"
+#define D_SENSOR_ETH_PHY_MDC   "ETH - MDC"
+#define D_SENSOR_ETH_PHY_MDIO  "ETH - MDIO"
 #define D_SENSOR_TCP_TXD       "TCP - TX"
 #define D_SENSOR_TCP_RXD       "TCP - RX"
 #define D_SENSOR_IEM3000_TX    "iEM3000 - TX"
 #define D_SENSOR_IEM3000_RX    "iEM3000 - RX"
 #define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC - TX"
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC - RX"
-#define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
-#define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD Reset"
+#define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD - Boot 0"
+#define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD - Reset"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -798,7 +798,7 @@
 #define D_PV2_CURRENT     "PV2 - Corrente"
 #define D_PV2_POWER       "PV2 - Energia"
 #define D_SOLAR_POWER     "Energia solare"
-#define D_INVERTER_POWER  "Energia inverter"
+#define D_INVERTER_POWER  "Potenza inverter"
 #define D_STATUS          "Stato"
 #define D_WAITING         "In attesa"
 #define D_CHECKING        "Controllo"
