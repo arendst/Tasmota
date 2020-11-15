@@ -21,6 +21,10 @@
 #ifdef USE_SHELLY_DIMMER
 /*********************************************************************************************\
  * Shelly WiFi Dimmer v1 and v2 (ESP8266 w/ separate co-processor dimmer)
+ *
+ * {"NAME":"Shelly Dimmer 1","GPIO":[0,3200,0,3232,5568,5600,0,0,192,0,193,288,0,4736],"FLAG":0,"BASE":18}
+ * {"NAME":"Shelly Dimmer 2","GPIO":[0,3200,0,3232,5568,5600,0,0,193,0,192,0,320,4736],"FLAG":0,"BASE":18}
+ *
  * https://shelly.cloud/wifi-smart-home-automation-shelly-dimmer/
  * https://shelly.cloud/products/shelly-dimmer-2-smart-home-light-controller/
 \*********************************************************************************************/
