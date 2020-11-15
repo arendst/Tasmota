@@ -1,7 +1,7 @@
 /*
   xlgt_04_sm2135.ino - sm2135 five channel led support for Tasmota
 
-  Copyright (C) 2020  Theo Arends, CrudelisPL and Maciej Suminski
+  Copyright (C) 2020  Theo Arends and CrudelisPL
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -53,9 +53,6 @@
 #define SM2135_55MA         0x09
 #define SM2135_60MA         0x0A
 
-// Number of color channels (RGBCW)
-#define CHANNEL_COUNT       5
-
 enum Sm2135Color { SM2135_WCGRB, SM2135_WCBGR };
 
 //                              RGB current         CW current
@@ -65,8 +62,6 @@ struct SM2135 {
   uint8_t clk = 0;
   uint8_t data = 0;
   uint8_t model = SM2135_WCGRB;
-  uint8_t colors[CHANNEL_COUNT] = {0,};
-  uint8_t power = 0;
 } Sm2135;
 
 /*********************************************************************************************\
@@ -134,74 +129,34 @@ void Sm2135Stop(void) {
   delayMicroseconds(SM2135_DELAY);
 }
 
-void Sm2135SetCW(uint8_t c, uint8_t w) {
-  Sm2135Start(SM2135_ADDR_MC);
-  Sm2135Write(SM2135_CURRENT);
-  Sm2135Write(SM2135_CW);
-  Sm2135Stop();
-  delay(1);
-  Sm2135Start(SM2135_ADDR_C);
-  Sm2135Write(w);  // Warm
-  Sm2135Write(c);  // Cold
-  Sm2135Stop();
-}
-
-void Sm2135SetRGB(uint8_t r, uint8_t g, uint8_t b) {
-  Sm2135Start(SM2135_ADDR_MC);
-  Sm2135Write(SM2135_CURRENT);
-  Sm2135Write(SM2135_RGB);
-  if (SM2135_WCBGR == Sm2135.model) {
-    Sm2135Write(b);  // Blue
-    Sm2135Write(g);  // Green
-    Sm2135Write(r);  // Red
-  } else {
-    Sm2135Write(g);  // Green
-    Sm2135Write(r);  // Red
-    Sm2135Write(b);  // Blue
-  }
-  Sm2135Stop();
-}
-
 /********************************************************************************************/
 
 bool Sm2135SetChannels(void) {
-  const uint8_t *cur_col = (const uint8_t*)XdrvMailbox.data;
+  uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
+  uint8_t data[6];
 
-  if (LightPower()) {
-    if ((0 == cur_col[0]) && (0 == cur_col[1]) && (0 == cur_col[2])) {
-      // RGB channel updated
-      Sm2135SetCW(cur_col[3], cur_col[4]);
-
-      Sm2135.colors[3] = cur_col[3];
-      Sm2135.colors[4] = cur_col[4];
-
-      // Restore RGB settings, if the light was turned off earlier
-      if (!Sm2135.power) {
-        Sm2135SetRGB(Sm2135.colors[0], Sm2135.colors[1], Sm2135.colors[2]);
-      }
-    } else {
-      // CW channel updated
-      Sm2135SetRGB(cur_col[0], cur_col[1], cur_col[2]);
-
-      Sm2135.colors[0] = cur_col[0];
-      Sm2135.colors[1] = cur_col[1];
-      Sm2135.colors[2] = cur_col[2];
-
-      // Restore CW settings, if the light was turned off earlier
-      if (!Sm2135.power) {
-        Sm2135SetCW(Sm2135.colors[3], Sm2135.colors[4]);
-      }
-    }
-
-    Sm2135.power = 1;
-  } else {
-    // Turn off all channels
-    Sm2135SetCW(0, 0);
+  Sm2135Start(SM2135_ADDR_MC);
+  Sm2135Write(SM2135_CURRENT);
+  if ((0 == cur_col[0]) && (0 == cur_col[1]) && (0 == cur_col[2])) {
+    Sm2135Write(SM2135_CW);
+    Sm2135Stop();
     delay(1);
-    Sm2135SetRGB(0, 0, 0);
-
-    Sm2135.power = 0;
+    Sm2135Start(SM2135_ADDR_C);
+    Sm2135Write(cur_col[4]);  // Warm
+    Sm2135Write(cur_col[3]);  // Cold
+  } else {
+    Sm2135Write(SM2135_RGB);
+    if (SM2135_WCBGR == Sm2135.model) {
+      Sm2135Write(cur_col[2]);  // Blue
+      Sm2135Write(cur_col[1]);  // Green
+      Sm2135Write(cur_col[0]);  // Red
+    } else {
+      Sm2135Write(cur_col[1]);  // Green
+      Sm2135Write(cur_col[0]);  // Red
+      Sm2135Write(cur_col[2]);  // Blue
+    }
   }
+  Sm2135Stop();
 
   return true;
 }
