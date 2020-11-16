@@ -602,6 +602,10 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   // Tuya Moes specific - 0xEF00
   { Zoctstr,  CxEF00, 0x0070,  Z_(TuyaScheduleWorkdays), Cm1, 0 },
   { Zoctstr,  CxEF00, 0x0071,  Z_(TuyaScheduleHolidays), Cm1, 0 },
+  { Ztuya1,   CxEF00, 0x0101,  Z_(Power),                Cm1, 0 },
+  { Ztuya1,   CxEF00, 0x0102,  Z_(Power2),               Cm1, 0 },
+  { Ztuya1,   CxEF00, 0x0103,  Z_(Power3),               Cm1, 0 },
+  { Ztuya1,   CxEF00, 0x0104,  Z_(Power4),               Cm1, 0 },
   { Ztuya1,   CxEF00, 0x0107,  Z_(TuyaChildLock),        Cm1, 0 },
   { Ztuya1,   CxEF00, 0x0112,  Z_(TuyaWindowDetection),  Cm1, 0 },
   { Ztuya1,   CxEF00, 0x0114,  Z_(TuyaValveDetection),   Cm1, 0 },
