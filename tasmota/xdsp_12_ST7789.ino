@@ -121,6 +121,7 @@ void ST7789_InitDriver()
     st7789->init(Settings.display_width,Settings.display_height);
     renderer = st7789;
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    renderer->dim(Settings.display_dimmer);
 
 #ifdef SHOW_SPLASH
     // Welcome text

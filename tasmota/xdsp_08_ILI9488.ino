@@ -102,6 +102,7 @@ void ILI9488_InitDriver()
     ili9488->begin();
     renderer = ili9488;
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    renderer->dim(Settings.display_dimmer);
 
 #ifdef SHOW_SPLASH
     // Welcome text
