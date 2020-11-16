@@ -561,7 +561,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
     dtostrfd(tempvar,0,tempchar);
   } else {
     // VALUE
-    float tempvar = knx.data_to_2byte_float(msg.data);
+    float tempvar = knx.data_to_4byte_float(msg.data);
     dtostrfd(tempvar,2,tempchar);
   }
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_KNX D_RECEIVED_FROM " %d.%d.%d " D_COMMAND " %s: %s " D_TO " %s"),
@@ -630,18 +630,18 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       }
       else if (chan->type == KNX_TEMPERATURE) // Reply Temperature
       {
-        knx.answer_2byte_float(msg.received_on, last_temp);
+        knx.answer_4byte_float(msg.received_on, last_temp);
         if (Settings.flag.knx_enable_enhancement) {
-          knx.answer_2byte_float(msg.received_on, last_temp);
-          knx.answer_2byte_float(msg.received_on, last_temp);
+          knx.answer_4byte_float(msg.received_on, last_temp);
+          knx.answer_4byte_float(msg.received_on, last_temp);
         }
       }
       else if (chan->type == KNX_HUMIDITY) // Reply Humidity
       {
-        knx.answer_2byte_float(msg.received_on, last_hum);
+        knx.answer_4byte_float(msg.received_on, last_hum);
         if (Settings.flag.knx_enable_enhancement) {
-          knx.answer_2byte_float(msg.received_on, last_hum);
-          knx.answer_2byte_float(msg.received_on, last_hum);
+          knx.answer_4byte_float(msg.received_on, last_hum);
+          knx.answer_4byte_float(msg.received_on, last_hum);
         }
       }
 #ifdef USE_RULES
@@ -737,10 +737,10 @@ void KnxSensor(uint8_t sensor_type, float value)
   uint8_t i = KNX_GA_Search(sensor_type);
   while ( i != KNX_Empty ) {
     KNX_addr.value = Settings.knx_GA_addr[i];
-    knx.write_2byte_float(KNX_addr, value);
+    knx.write_4byte_float(KNX_addr, value);
     if (Settings.flag.knx_enable_enhancement) {
-      knx.write_2byte_float(KNX_addr, value);
-      knx.write_2byte_float(KNX_addr, value);
+      knx.write_4byte_float(KNX_addr, value);
+      knx.write_4byte_float(KNX_addr, value);
     }
 
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s " D_SENT_TO " %d.%d.%d "),
@@ -1050,10 +1050,10 @@ void CmndKnxTxVal(void)
       float tempvar = CharToFloat(XdrvMailbox.data);
       dtostrfd(tempvar,2,XdrvMailbox.data);
 
-      knx.write_2byte_float(KNX_addr, tempvar);
+      knx.write_4byte_float(KNX_addr, tempvar);
       if (Settings.flag.knx_enable_enhancement) {
-        knx.write_2byte_float(KNX_addr, tempvar);
-        knx.write_2byte_float(KNX_addr, tempvar);
+        knx.write_4byte_float(KNX_addr, tempvar);
+        knx.write_4byte_float(KNX_addr, tempvar);
       }
 
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d.%d.%d"),
