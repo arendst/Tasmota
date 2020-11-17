@@ -2590,7 +2590,7 @@ uint8_t BUploadInit(void) {
   return 0;
 }
 
-void BUploadWriteBuffer(uint8_t *buf, size_t size) {
+uint32_t BUploadWriteBuffer(uint8_t *buf, size_t size) {
   if (0 == BUpload.spi_sector_cursor) { // Starting a new sector write so we need to erase it first
     ESP.flashEraseSector(BUpload.spi_sector_counter);
   }
@@ -2600,7 +2600,11 @@ void BUploadWriteBuffer(uint8_t *buf, size_t size) {
   if (2 == BUpload.spi_sector_cursor) {  // The web upload sends 2048 bytes at a time so keep track of the cursor position to reset it for the next flash sector erase
     BUpload.spi_sector_cursor = 0;
     BUpload.spi_sector_counter++;
+    if (BUpload.spi_sector_counter > (SPIFFS_END -2)) {
+      return 9;  // File too large - Not enough free space
+    }
   }
+  return 0;
 }
 
 #endif  // USE_TASMOTA_CLIENT or SHELLY_FW_UPGRADE
@@ -2918,7 +2922,8 @@ void HandleUploadLoop(void)
 #ifdef SHELLY_FW_UPGRADE
     else if (UPL_SHD == Web.upload_file_type) {
       // Write a block
-      BUploadWriteBuffer(upload.buf, upload.currentSize);
+      Web.upload_error = BUploadWriteBuffer(upload.buf, upload.currentSize);
+      if (Web.upload_error != 0) { return; }
     }
 #endif  // SHELLY_FW_UPGRADE
 #ifdef USE_TASMOTA_CLIENT

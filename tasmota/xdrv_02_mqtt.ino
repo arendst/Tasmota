@@ -17,7 +17,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define XDRV_02                2
+#define XDRV_02                    2
+
+#ifndef MQTT_WIFI_CLIENT_TIMEOUT
+#define MQTT_WIFI_CLIENT_TIMEOUT   200    // Wifi TCP connection timeout (default is 5000 mSec)
+#endif
 
 // #define DEBUG_DUMP_TLS    // allow dumping of TLS Flash keys
 
@@ -635,7 +639,7 @@ void MqttReconnect(void)
   Response_P(S_LWT_OFFLINE);
 
   if (MqttClient.connected()) { MqttClient.disconnect(); }
-  EspClient.setTimeout(200);
+  EspClient.setTimeout(MQTT_WIFI_CLIENT_TIMEOUT);
 #ifdef USE_MQTT_TLS
   if (Mqtt.mqtt_tls) {
     tlsClient->stop();
