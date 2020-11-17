@@ -77,6 +77,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Core library from v2.7.4.5 to v2.7.4.7
 - Platformio compiler option `no target align` enabled (#9749)
 - Sonoff L1 color up scaling and color margin detection (#9545)
+- MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
 
 ### Fixed
 - NTP fallback server functionality (#9739)

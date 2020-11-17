@@ -54,6 +54,7 @@ void (* const MqttCommand[])(void) PROGMEM = {
 struct MQTT {
   uint16_t connect_count = 0;            // MQTT re-connect count
   uint16_t retry_counter = 1;            // MQTT connection retry counter
+  uint16_t retry_counter_delay = 0;      // MQTT retry counter multiplier
   uint8_t initial_connection_state = 2;  // MQTT connection messages state
   bool connected = false;                // MQTT virtual connection status
   bool allowed = false;                  // MQTT enabled and parameters valid
@@ -480,7 +481,11 @@ uint16_t MqttConnectCount(void)
 void MqttDisconnected(int state)
 {
   Mqtt.connected = false;
-  Mqtt.retry_counter = Settings.mqtt_retry;
+
+  if ((Settings.mqtt_retry * Mqtt.retry_counter_delay) < 120) {
+    Mqtt.retry_counter_delay++;
+  }
+  Mqtt.retry_counter = Settings.mqtt_retry * Mqtt.retry_counter_delay;
 
   MqttClient.disconnect();
 
@@ -496,6 +501,7 @@ void MqttConnected(void)
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECTED));
     Mqtt.connected = true;
     Mqtt.retry_counter = 0;
+    Mqtt.retry_counter_delay = 0;
     Mqtt.connect_count++;
 
     GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
@@ -602,7 +608,7 @@ void MqttReconnect(void)
 #endif  // USE_EMULATION
 
   Mqtt.connected = false;
-  Mqtt.retry_counter = Settings.mqtt_retry;
+  Mqtt.retry_counter = Settings.mqtt_retry * Mqtt.retry_counter_delay;
   TasmotaGlobal.global_state.mqtt_down = 1;
 
 #ifdef FIRMWARE_MINIMAL
@@ -629,15 +635,16 @@ void MqttReconnect(void)
   Response_P(S_LWT_OFFLINE);
 
   if (MqttClient.connected()) { MqttClient.disconnect(); }
+  EspClient.setTimeout(200);
 #ifdef USE_MQTT_TLS
   if (Mqtt.mqtt_tls) {
     tlsClient->stop();
   } else {
-    EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+//    EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
     MqttClient.setClient(EspClient);
   }
 #else
-  EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+//  EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
   MqttClient.setClient(EspClient);
 #endif
 
