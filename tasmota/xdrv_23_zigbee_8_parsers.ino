@@ -719,7 +719,7 @@ int32_t Z_ReceiveIEEEAddr(int32_t res, const class SBuffer &buf) {
     if (friendlyName) {
       ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_NAME "\":\"%s\""), friendlyName);
     }
-    ResponseAppend_P(PSTR("\"}}"));
+    ResponseAppend_P(PSTR("}}"));
 
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   }
