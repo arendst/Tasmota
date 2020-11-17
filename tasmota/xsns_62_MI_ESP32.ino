@@ -20,6 +20,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.1.7 20201116  changed - small bugfixes, add BLOCK and OPTION command, send BLE scan via MQTT
+  -------
   0.9.1.6 20201022  changed - Beacon support, RSSI at TELEPERIOD, refactoring
   -------
   0.9.1.5 20201021  changed - HASS related ('null', hold back discovery), number of found sensors for RULES
@@ -80,10 +82,12 @@ struct {
       uint32_t willSetUnit:1;
       uint32_t shallTriggerTele:1;
       uint32_t triggeredTele:1;
-      uint32_t shallClearResults:1; // BLE scan results
+      uint32_t shallClearResults:1;   // BLE scan results
       uint32_t shallShowStatusInfo:1; // react to amount of found sensors via RULES
       uint32_t firstAutodiscoveryDone:1;
-      uint32_t activeBeacon;
+      uint32_t activeBeacon:1;
+      uint32_t shallShowScanResult:1;
+      uint32_t shallShowBlockList:1;
     };
     uint32_t all = 0;
   } mode;
@@ -271,10 +275,15 @@ struct generic_beacon_t {
   bool active = false;
 };
 
+struct MAC_t {
+  uint8_t buf[6];
+};
+
 std::vector<mi_sensor_t> MIBLEsensors;
 std::vector<mi_bindKey_t> MIBLEbindKeys;
 std::array<generic_beacon_t,4> MIBLEbeacons; // we support a fixed number
-std::vector<scan_entry_t> MINBLEscanResult;
+std::vector<scan_entry_t> MIBLEscanResult;
+std::vector<MAC_t> MIBLEBlockList;
 
 static BLEScan* MI32Scan;
 
@@ -288,13 +297,13 @@ const char kMI32_Commands[] PROGMEM = D_CMND_MI32 "|"
 #ifdef USE_MI_DECRYPTION
   "Key|"
 #endif  // USE_MI_DECRYPTION
-  "Period|Time|Page|Battery|Unit|Beacon";
+  "Period|Time|Page|Battery|Unit|Beacon|Block|Option";
 
 void (*const MI32_Commands[])(void) PROGMEM = {
 #ifdef USE_MI_DECRYPTION
   &CmndMi32Key,
 #endif  // USE_MI_DECRYPTION
-  &CmndMi32Period, &CmndMi32Time, &CmndMi32Page, &CmndMi32Battery, &CmndMi32Unit, &CmndMi32Beacon };
+  &CmndMi32Period, &CmndMi32Time, &CmndMi32Page, &CmndMi32Battery, &CmndMi32Unit, &CmndMi32Beacon, &CmndMi32Block, &CmndMi32Option };
 
 #define FLORA       1
 #define MJ_HT_V1    2
@@ -350,7 +359,9 @@ enum MI32_Commands {          // commands useable in console or rules
   CMND_MI32_BATTERY,          // read all battery levels
   CMND_MI32_UNIT,             // toggles the displayed unit between C/F (LYWSD02)
   CMND_MI32_KEY,              // add bind key to a mac for packet decryption
-  CMND_MI32_BEACON            // add up to 4 beacons defined by their MAC addresses
+  CMND_MI32_BEACON,           // add up to 4 beacons defined by their MAC addresses
+  CMND_MI32_BLOCK,            // block BLE sensors defined by their MAC addresses
+  CMND_MI32_OPTION            // change driver options at runtime
   };
 
 enum MI32_TASK {
@@ -420,12 +431,15 @@ class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
 
     size_t ServiceDataLength = advertisedDevice->getServiceData(0).length();
     if(UUID==0xfe95) {
+      if(MI32isInBlockList(addr) == true) return;
       MI32ParseResponse((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI);
     }
     else if(UUID==0xfdcd) {
+      if(MI32isInBlockList(addr) == true) return;
       MI32parseCGD1Packet((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI);
     }
     else if(UUID==0x181a) { //ATC
+      if(MI32isInBlockList(addr) == true) return;
       MI32ParseATCPacket((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI);
     }
     else {
@@ -754,7 +768,7 @@ void MI32StatusInfo() {
 void MI32PreInit(void) {
   MIBLEsensors.reserve(10);
   MIBLEbindKeys.reserve(10);
-  MINBLEscanResult.reserve(20);
+  MIBLEscanResult.reserve(20);
   MI32.mode.init = false;
 
   //test section for options
@@ -1534,12 +1548,12 @@ void MI32HandleGenericBeacon(uint8_t* payload, size_t payloadLength, int RSSI, u
     return;
   }
   // else handle scan
-  if(MINBLEscanResult.size()>19) {
+  if(MIBLEscanResult.size()>19) {
     AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: Scan buffer full"));
     MI32.state.beaconScanCounter = 1;
     return;
   }
-  for(auto _scanResult : MINBLEscanResult){
+  for(auto _scanResult : MIBLEscanResult){
     if(memcmp(addr,_scanResult.MAC,6)==0){
       // AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: known device"));
       return;
@@ -1552,7 +1566,7 @@ void MI32HandleGenericBeacon(uint8_t* payload, size_t payloadLength, int RSSI, u
   _new.UUID = 0;
   memcpy(_new.MAC,addr,sizeof(_new.MAC));
   MI32ParseGenericBeacon(payload,payloadLength,&_new.CID,&_new.SVC,&_new.UUID);
-  MINBLEscanResult.push_back(_new);
+  MIBLEscanResult.push_back(_new);
 }
 
 
@@ -1585,13 +1599,43 @@ void MI32addBeacon(uint8_t index, char* data){
  *
  */
 void MI32showScanResults(){
-  AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: found %u devices in scan:"), MINBLEscanResult.size());
-  for(auto _scanResult : MINBLEscanResult){
+  size_t _size = MIBLEscanResult.size();
+  ResponseAppend_P(PSTR(",\"BLEScan\":{\"Found\":%u,\"Devices\":["), _size);
+  for(auto _scanResult : MIBLEscanResult){
     char _MAC[18];
     ToHex_P(_scanResult.MAC,6,_MAC,18,':');
-    AddLog_P(LOG_LEVEL_INFO,PSTR("MAC: %s _ CID: %04x _ SVC: %04x _ UUID: %04x _ RSSI: %d"), _MAC, _scanResult.CID, _scanResult.SVC, _scanResult.UUID, _scanResult.RSSI);
+    ResponseAppend_P(PSTR("{\"MAC\":\"%s\",\"CID\":\"0x%04x\",\"SVC\":\"0x%04x\",\"UUID\":\"0x%04x\",\"RSSI\":%d},"), _MAC, _scanResult.CID, _scanResult.SVC, _scanResult.UUID, _scanResult.RSSI);
   }
-  MINBLEscanResult.clear();
+  if(_size != 0)TasmotaGlobal.mqtt_data[strlen(TasmotaGlobal.mqtt_data)-1] = 0; // delete last comma
+  ResponseAppend_P(PSTR("]}"));
+  MIBLEscanResult.clear();
+  MI32.mode.shallShowScanResult = 0;
+}
+
+void MI32showBlockList(){
+  ResponseAppend_P(PSTR(",\"Block\":["));
+  for(auto _scanResult : MIBLEBlockList){
+    char _MAC[18];
+    ToHex_P(_scanResult.buf,6,_MAC,18,':');
+    ResponseAppend_P(PSTR("\"%s\","), _MAC);
+  }
+  if(MIBLEBlockList.size()!=0) TasmotaGlobal.mqtt_data[strlen(TasmotaGlobal.mqtt_data)-1] = 0; // delete last comma
+  ResponseAppend_P(PSTR("]"));
+  MI32.mode.shallShowBlockList = 0;
+}
+
+bool MI32isInBlockList(uint8_t* MAC){
+  bool isBlocked = false;
+  for(auto &_blockedMAC : MIBLEBlockList){
+    if(memcmp(_blockedMAC.buf,MAC,6) == 0) isBlocked = true;
+  }
+  return isBlocked;
+}
+
+void MI32removeMIBLEsensor(uint8_t* MAC){
+  MIBLEsensors.erase( std::remove_if( MIBLEsensors.begin() , MIBLEsensors.end(), [MAC]( mi_sensor_t _sensor )->bool
+  { return (memcmp(_sensor.MAC,MAC,6) == 0); } 
+  ), end( MIBLEsensors ) );
 }
 /***********************************************************************\
  * Read data from connections
@@ -1691,7 +1735,8 @@ void MI32EverySecond(bool restart){
   if(MI32.state.beaconScanCounter!=0){
     MI32.state.beaconScanCounter--;
     if(MI32.state.beaconScanCounter==0){
-      MI32showScanResults();
+      MI32.mode.shallShowScanResult = 1;
+      MI32triggerTele();
     }
   }
 
@@ -1875,11 +1920,70 @@ void CmndMi32Beacon(void) {
   }
 }
 
+void CmndMi32Block(void){
+  if (XdrvMailbox.data_len == 0) {
+    switch (XdrvMailbox.index) {
+      case 0:
+        MIBLEBlockList.clear();
+        // AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: size of ilist: %u"), MIBLEBlockList.size());
+        ResponseCmndIdxChar(PSTR("block list cleared"));
+        break;
+      case 1:
+        ResponseCmndIdxChar(PSTR("show block list"));
+        break;  
+    }
+  }
+  else {
+    MAC_t _MACasBytes;
+    MI32HexStringToBytes(XdrvMailbox.data,_MACasBytes.buf);
+    switch (XdrvMailbox.index) {
+      case 0:
+        MIBLEBlockList.erase( std::remove_if( begin( MIBLEBlockList ), end( MIBLEBlockList ), [_MACasBytes]( MAC_t& _entry )->bool
+          { return (memcmp(_entry.buf,_MACasBytes.buf,6) == 0); } 
+          ), end( MIBLEBlockList ) );
+        ResponseCmndIdxChar(PSTR("MAC not blocked anymore"));
+        break;
+      case 1:
+        bool _notYetInList = true;
+        for (auto &_entry : MIBLEBlockList) {
+          if (memcmp(_entry.buf,_MACasBytes.buf,6) == 0){
+            _notYetInList = false;
+          }
+        }
+        if (_notYetInList) {
+          MIBLEBlockList.push_back(_MACasBytes);
+          ResponseCmndIdxChar(XdrvMailbox.data);
+          MI32removeMIBLEsensor(_MACasBytes.buf);
+        }
+        // AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: size of ilist: %u"), MIBLEBlockList.size());
+        break;  
+    }
+  }
+  MI32.mode.shallShowBlockList = 1;
+  MI32triggerTele();
+}
+
+void CmndMi32Option(void){
+  bool onOff = atoi(XdrvMailbox.data);
+  switch(XdrvMailbox.index) {
+    case 0:
+      MI32.option.allwaysAggregate = onOff;
+      break;
+    case 1:
+      MI32.option.noSummary = onOff;
+      break;
+    case 2:
+      MI32.option.directBridgeMode = onOff;
+      break;
+  }
+  ResponseCmndDone();
+}
+
 /*********************************************************************************************\
  * Presentation
 \*********************************************************************************************/
 
-const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 v0916a{m}%u%s / %u{e}";
+const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 v0917{m}%u%s / %u{e}";
 const char HTTP_MI32_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
 const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
@@ -1892,6 +1996,12 @@ const char HTTP_MI32_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 void MI32Show(bool json)
 {
   if (json) {
+    if(MI32.mode.shallShowScanResult) {
+      return MI32showScanResults();
+    }
+    else if(MI32.mode.shallShowBlockList) {
+      return MI32showBlockList();
+    }
 #ifdef USE_HOME_ASSISTANT
     bool _noSummarySave = MI32.option.noSummary;
     bool _minimalSummarySave = MI32.option.minimalSummary;
