@@ -82,6 +82,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - NTP fallback server functionality (#9739)
 - Telegram group chatid not supported (#9831)
 - KNX buttons, switches and sensors detection regression from v9.1.0 (#9811)
+- KNX ESP32 UDP mulicastpackage (#9811)
 - GUI MqttUser and MqttPassword updates when TLS is compiled in (#9825)
 
 ### Removed

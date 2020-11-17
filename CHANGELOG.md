@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Shelly Dimmer fw upgrade using WebGUI Firmware Upgrade and file from folder `tools/fw_shd_stm32/`
 
 ### Fixed
+- KNX ESP32 UDP mulicastpackage (#9811)
 
 ### Removed
 
