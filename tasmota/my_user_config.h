@@ -473,10 +473,10 @@
   #define USE_PWM_DIMMER_REMOTE                  // Add support for remote switches to PWM Dimmer (requires USE_DEVICE_GROUPS) (+0k6 code)
 //#define USE_KEELOQ                               // Add support for Jarolift rollers by Keeloq algorithm (+4k5 code)
 #define USE_SONOFF_D1                            // Add support for Sonoff D1 Dimmer (+0k7 code)
-//#define USE_SHELLY_DIMMER                        // Add support for Shelly Dimmer (+2k2 code)
-//  #define SHELLY_CMDS                            // Add command to send co-processor commands (+0k4 code)
-//  #define SHELLY_FW_UPGRADE                      // Add firmware upgrade option for co-processor (+30k code, +5k mem)
-//  #define SHELLY_VOLTAGE_MON                     // Add support for reading voltage and current measurment (+?? code)
+#define USE_SHELLY_DIMMER                        // Add support for Shelly Dimmer (+3k code)
+  #define SHELLY_CMDS                            // Add command to send co-processor commands (+0k3 code)
+  #define SHELLY_FW_UPGRADE                      // Add firmware upgrade option for co-processor (+3k4 code)
+  #define SHELLY_VOLTAGE_MON                     // Add support for reading voltage and current measurment (-0k0 code)
 
 // -- Optional light modules ----------------------
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //

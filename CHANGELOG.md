@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
 
 ### Changed
+- Shelly Dimmer fw upgrade using WebGUI Firmware Upgrade and file from folder `tools/fw_shd_stm32/`
 
 ### Fixed
 

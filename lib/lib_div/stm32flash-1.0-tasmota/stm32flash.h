@@ -29,8 +29,8 @@
 #define STREAM_OPT_GVR_ETX	(1 << 1)	/* cmd GVR returns protection status */
 #define STREAM_OPT_CMD_INIT	(1 << 2)	/* use INIT cmd to autodetect speed */
 #define STREAM_OPT_RETRY	(1 << 3)	/* allowed read() retry after timeout */
-#define STREAM_OPT_I2C	(1 << 4)	/* i2c */ 
-#define STREAM_OPT_STRETCH_W	(1 << 5)	/* warning for no-stretching commands */ 
+#define STREAM_OPT_I2C	(1 << 4)	/* i2c */
+#define STREAM_OPT_STRETCH_W	(1 << 5)	/* warning for no-stretching commands */
 
 #define STREAM_SERIAL (STREAM_OPT_BYTE | STREAM_OPT_GVR_ETX | STREAM_OPT_CMD_INIT | STREAM_OPT_RETRY)
 #define STREAM_I2C (STREAM_OPT_I2C | STREAM_OPT_STRETCH_W)
@@ -67,12 +67,12 @@ typedef struct stm32_dev	stm32_dev_t;
 struct varlen_cmd {
 	uint8_t version;
 	uint8_t length;
-}; 
+};
 
 struct stm32 {
 	Stream	*stream;
 	uint8_t     flags;
-	struct varlen_cmd *cmd_get_reply; 
+	struct varlen_cmd *cmd_get_reply;
 	uint8_t			bl_version;
 	uint8_t			version;
 	uint8_t			option1, option2;
@@ -83,7 +83,7 @@ struct stm32 {
 
 struct stm32_dev {
 	uint16_t	id;
-	const char	*name;
+//	const char	*name;
 	uint32_t	ram_start, ram_end;
 	uint32_t	fl_start, fl_end;
 	uint16_t	fl_pps; // pages per sector

@@ -90,6 +90,13 @@ String EthernetMacAddress(void);
 #undef USE_RF_FLASH                            // Disable RF firmware flash when Sonoff Rf is disabled
 #endif
 
+#ifndef USE_LIGHT
+#undef SHELLY_FW_UPGRADE                       // Disable Shelly Dimmer firmware flash when lights are disabled
+#endif
+#ifndef USE_SHELLY_DIMMER
+#undef SHELLY_FW_UPGRADE                       // Disable Shelly Dimmer firmware flash when Shelly Dimmer is disabled
+#endif
+
 #ifndef APP_INTERLOCK_MODE
 #define APP_INTERLOCK_MODE     false           // [Interlock] Relay interlock mode
 #endif
