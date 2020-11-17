@@ -881,7 +881,7 @@
 #define D_FP_IMAGEFAIL "Abbildungsfehler"               // 0x03 Failed to enroll the finger
 #define D_FP_IMAGEMESS "schlechtes Abbild"              // 0x06 Failed to generate character file due to overly disorderly fingerprint image
 #define D_FP_FEATUREFAIL "Fingerabdruck zu klein"       // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH "keine Übereinstimmung "           // 0x08 Finger doesn't match
+#define D_FP_NOMATCH "keine Übereinstimmung"           // 0x08 Finger doesn't match
 #define D_FP_NOTFOUND "keinen Eintrag gefunden"         // 0x09 Failed to find matching finger
 #define D_FP_ENROLLMISMATCH "Fingerabdruck fehlerhaft"  // 0x0A Failed to combine the character files
 #define D_FP_BADLOCATION "Eintrag Fehler"               // 0x0B Addressed PageID is beyond the finger library
