@@ -20,29 +20,6 @@
 #ifndef _TASMOTA_TEMPLATE_H_
 #define _TASMOTA_TEMPLATE_H_
 
-#ifdef ESP32
-
-// Hardware has no ESP32
-#undef USE_TUYA_DIMMER
-#undef USE_PWM_DIMMER
-#undef USE_EXS_DIMMER
-#undef USE_ARMTRONIX_DIMMERS
-#undef USE_SONOFF_RF
-#undef USE_SONOFF_SC
-#undef USE_SONOFF_IFAN
-#undef USE_SONOFF_L1
-#undef USE_SONOFF_D1
-#undef USE_SHELLY_DIMMER
-#undef USE_RF_FLASH
-
-// Not ported (yet)
-#undef USE_DISCOVERY
-#undef USE_MY92X1
-#undef USE_TUYA_MCU
-#undef USE_PS_16_DZ
-
-#endif  // ESP32
-
 // User selectable GPIO functionality
 // ATTENTION: Only add at the end of this list just before GPIO_SENSOR_END
 //            Then add the same name(s) in a nice location in array kGpioNiceList

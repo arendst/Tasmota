@@ -2569,7 +2569,7 @@ void HandleInformation(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-#if defined(SHELLY_FW_UPGRADE2)
+#if defined(SHELLY_FW_UPGRADE)
 
 struct {
   size_t spi_hex_size;
@@ -2590,7 +2590,7 @@ uint8_t BUploadInit(void) {
   return 0;
 }
 
-void BUploadWriteBuffer(uint8_t *buf, size_t size) {
+uint32_t BUploadWriteBuffer(uint8_t *buf, size_t size) {
   if (0 == BUpload.spi_sector_cursor) { // Starting a new sector write so we need to erase it first
     ESP.flashEraseSector(BUpload.spi_sector_counter);
   }
@@ -2600,10 +2600,14 @@ void BUploadWriteBuffer(uint8_t *buf, size_t size) {
   if (2 == BUpload.spi_sector_cursor) {  // The web upload sends 2048 bytes at a time so keep track of the cursor position to reset it for the next flash sector erase
     BUpload.spi_sector_cursor = 0;
     BUpload.spi_sector_counter++;
+    if (BUpload.spi_sector_counter > (SPIFFS_END -2)) {
+      return 9;  // File too large - Not enough free space
+    }
   }
+  return 0;
 }
 
-#endif  // USE_TASMOTA_CLIENT or SHELLY_FW_UPGRADE2
+#endif  // USE_TASMOTA_CLIENT or SHELLY_FW_UPGRADE
 
 void HandleUpgradeFirmware(void)
 {
@@ -2705,12 +2709,12 @@ void HandleUploadDone(void)
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
 
-#ifdef SHELLY_FW_UPGRADE2
+#ifdef SHELLY_FW_UPGRADE
     if (BUpload.ready) {
       WSContentSend_P(PSTR("<br><div style='text-align:center;'><b>" D_TRANSFER_STARTED " ...</b></div>"));
       TasmotaGlobal.restart_flag = 0;  // Hold restart as code still needs to be transferred to STM
     }
-#endif  // SHELLY_FW_UPGRADE2
+#endif  // SHELLY_FW_UPGRADE
 
 #ifdef USE_TASMOTA_CLIENT
     if (TasmotaClient_GetFlagFlashing()) {
@@ -2729,11 +2733,11 @@ void HandleUploadDone(void)
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 
-#ifdef SHELLY_FW_UPGRADE2
+#ifdef SHELLY_FW_UPGRADE
   if (BUpload.ready) {
     ShdFlash(BUploadStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
   }
-#endif  // SHELLY_FW_UPGRADE2
+#endif  // SHELLY_FW_UPGRADE
 
 #ifdef USE_TASMOTA_CLIENT
   if (TasmotaClient_GetFlagFlashing()) {
@@ -2827,7 +2831,7 @@ void HandleUploadLoop(void)
           if (Web.upload_error != 0) { return; }
         } else
 #endif  // USE_RF_FLASH
-#ifdef SHELLY_FW_UPGRADE2
+#ifdef SHELLY_FW_UPGRADE
         if (ShdPresent() && (0x00 == upload.buf[0]) && (0x10 == upload.buf[1])) {
           Update.end();              // End esp8266 update session
           Web.upload_file_type = UPL_SHD;
@@ -2835,7 +2839,7 @@ void HandleUploadLoop(void)
           Web.upload_error = BUploadInit();
           if (Web.upload_error != 0) { return; }
         } else
-#endif  // SHELLY_FW_UPGRADE2
+#endif  // SHELLY_FW_UPGRADE
 #ifdef USE_TASMOTA_CLIENT
         if (TasmotaClient_Available() && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO CLIENT hex file
           Update.end();              // End esp8266 update session
@@ -2915,12 +2919,13 @@ void HandleUploadLoop(void)
       }
     }
 #endif  // USE_RF_FLASH
-#ifdef SHELLY_FW_UPGRADE2
+#ifdef SHELLY_FW_UPGRADE
     else if (UPL_SHD == Web.upload_file_type) {
       // Write a block
-      BUploadWriteBuffer(upload.buf, upload.currentSize);
+      Web.upload_error = BUploadWriteBuffer(upload.buf, upload.currentSize);
+      if (Web.upload_error != 0) { return; }
     }
-#endif  // SHELLY_FW_UPGRADE2
+#endif  // SHELLY_FW_UPGRADE
 #ifdef USE_TASMOTA_CLIENT
     else if (UPL_TASMOTACLIENT == Web.upload_file_type) {
       TasmotaClient_WriteBuffer(upload.buf, upload.currentSize);
@@ -2997,13 +3002,13 @@ void HandleUploadLoop(void)
       Web.upload_file_type = UPL_TASMOTA;
     }
 #endif  // USE_RF_FLASH
-#ifdef SHELLY_FW_UPGRADE2
+#ifdef SHELLY_FW_UPGRADE
     else if (UPL_SHD == Web.upload_file_type) {
       // Done writing the hex to SPI flash
       BUpload.ready = true; // So we know on upload success page if it needs to flash hex or do a normal restart
       Web.upload_file_type = UPL_TASMOTA;
     }
-#endif  // SHELLY_FW_UPGRADE2
+#endif  // SHELLY_FW_UPGRADE
 #ifdef USE_TASMOTA_CLIENT
     else if (UPL_TASMOTACLIENT == Web.upload_file_type) {
       // Done writing the hex to SPI flash

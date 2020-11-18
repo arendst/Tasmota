@@ -78,7 +78,10 @@ class WiFiUDP32 : public WiFiUDP
         }
         void beginPacketMulticast(IPAddress multicast, uint16_t port, IPAddress interfaceAddr)
         {
-
+            if (0 == WiFiUDP::beginMulticastPacket()) {
+              WiFiUDP::beginMulticast(multicast, port);
+            }
+            WiFiUDP::beginMulticastPacket();
         }
 };
 

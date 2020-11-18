@@ -3,7 +3,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.1.0.1]
+## [9.1.0.2]
+### Added
+- KNX read reply for Power (#9236, #9891)
+
+### Breaking Changed
+- KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
+
+### Changed
+- Shelly Dimmer fw upgrade using WebGUI Firmware Upgrade and file from folder `tools/fw_shd_stm32/`
+- MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
+
+### Fixed
+- KNX ESP32 UDP mulicastpackage (#9811)
+
+### Removed
+
+## [9.1.0.1] - 20201116
 ### Added
 - Zigbee support for Mi Door and Contact (#9759)
 - Zigbee alarm persistence (#9785)

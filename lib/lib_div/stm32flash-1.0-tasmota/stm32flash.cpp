@@ -119,7 +119,7 @@ static struct varlen_cmd i2c_cmd_get_reply[] = {
 	{0x11, 17},
 	{0x12, 18},
 	{ /* sentinel */ }
-}; 
+};
 
 extern const stm32_dev_t devices[];
 
@@ -143,7 +143,7 @@ int flash_addr_to_page_ceil(const stm32_t *stm, uint32_t addr)
 	}
 
 	return addr ? page + 1 : page;
-} 
+}
 
 static void stm32_warn_stretching(const char *f)
 {
@@ -386,7 +386,7 @@ stm32_t *stm32_init(Stream *stream, const uint8_t flags, const char init)
 	stm->flags = flags;
 	if (stm->flags & STREAM_OPT_I2C)
     stm->cmd_get_reply = i2c_cmd_get_reply;
-    
+
 	if ((stm->flags & STREAM_OPT_CMD_INIT) && init)
 		if (stm32_send_init_seq(stm) != STM32_ERR_OK)
 			return NULL;
@@ -930,7 +930,7 @@ uint32_t le_u32(const uint32_t v) {
                         ((v & 0x0000FF00) <<  8) |
                         ((v & 0x000000FF) << 24);
         return v;
-} 
+}
 
 static stm32_err_t stm32_run_raw_code(const stm32_t *stm,
 				      uint32_t target_address,
@@ -1132,7 +1132,7 @@ stm32_err_t stm32_crc_wrapper(const stm32_t *stm, uint32_t address,
 		length -= len;
 		address += len;
 
-		DEBUG_MSG("\rCRC address 0x%08x (%.2f%%) ", 
+		DEBUG_MSG("\rCRC address 0x%08x (%.2f%%) ",
 			address,
 			(100.0f / (float)total_len) * (float)(address - start)
 		);

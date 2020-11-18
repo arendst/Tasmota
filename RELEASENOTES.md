@@ -56,7 +56,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v9.1.0.1
+## Changelog v9.1.0.2
 ### Added
 - Command ``SetOption115 1`` to enable ESP32 MiBle
 - Command ``SetOption116 1`` to disable auto-query of zigbee light devices (avoids network storms with large groups)
@@ -68,16 +68,22 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for additional EZO sensors by Christopher Tremblay
 - Support for AS608 optical and R503 capacitive fingerprint sensor
 - Support for Shelly Dimmer 1 and 2 by James Turton (#9854)
+- KNX read reply for Power (#9236, #9891)
+
+### Breaking Changed
+- KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
 
 ### Changed
 - Core library from v2.7.4.5 to v2.7.4.7
 - Platformio compiler option `no target align` enabled (#9749)
 - Sonoff L1 color up scaling and color margin detection (#9545)
+- MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
 
 ### Fixed
 - NTP fallback server functionality (#9739)
 - Telegram group chatid not supported (#9831)
 - KNX buttons, switches and sensors detection regression from v9.1.0 (#9811)
+- KNX ESP32 UDP mulicastpackage (#9811)
 - GUI MqttUser and MqttPassword updates when TLS is compiled in (#9825)
 
 ### Removed
