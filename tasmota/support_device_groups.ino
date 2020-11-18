@@ -94,7 +94,7 @@ bool DeviceGroupItemShared(bool incoming, uint8_t item)
     mask = DGR_SHARE_POWER;
   else if (item == DGR_ITEM_LIGHT_SCHEME)
     mask = DGR_SHARE_LIGHT_SCHEME;
-  else if (item == DGR_ITEM_LIGHT_FIXED_COLOR || DGR_ITEM_LIGHT_CHANNELS)
+  else if (item == DGR_ITEM_LIGHT_FIXED_COLOR || item == DGR_ITEM_LIGHT_CHANNELS)
     mask = DGR_SHARE_LIGHT_COLOR;
   else if (item == DGR_ITEM_LIGHT_FADE || item == DGR_ITEM_LIGHT_SPEED)
     mask = DGR_SHARE_LIGHT_FADE;
@@ -908,7 +908,7 @@ AddLog_P(LOG_LEVEL_DEBUG, PSTR("DGR: Checking next_check_time=%u, now=%u"), next
       }
 
       // If it's time to send a multicast announcement for this group, send it. This is to
-      // announcement ourself to any members that have somehow not heard about us. We send it at the
+      // announce ourself to any members that have somehow not heard about us. We send it at the
       // announcement interval plus a random number of milliseconds so that even if all the devices
       // booted at the same time, they don't all multicast their announcements at the same time.
 #ifdef DEVICE_GROUPS_DEBUG
