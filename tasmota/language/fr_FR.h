@@ -357,7 +357,7 @@
 #define D_TRANSFER_STARTED "Transfert lancé"
 #define D_UPLOAD_ERR_1 "Aucun fichier sélectionné"
 #define D_UPLOAD_ERR_2 "Espace insuffisant"
-#define D_UPLOAD_ERR_3 "L'octet magique n'est pas 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "La taille du programme à flasher est plus grande que la taille réelle de la mémoire flash"
 #define D_UPLOAD_ERR_5 "Erreur de comparaison du buffer de téléchargement"
 #define D_UPLOAD_ERR_6 "Téléchargement échoué. Activer WebLog 3"

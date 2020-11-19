@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Файл не выбран"
 #define D_UPLOAD_ERR_2 "Недостаточно места"
-#define D_UPLOAD_ERR_3 "Magic байт не 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "Размер прошивки больше, чем реальный размер флеш памяти"
 #define D_UPLOAD_ERR_5 "Ошибка загрузки буфера"
 #define D_UPLOAD_ERR_6 "Ошибка загрузки. Включено лог уровня 3"

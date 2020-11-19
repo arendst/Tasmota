@@ -128,8 +128,6 @@ String EthernetMacAddress(void);
 
 #undef USE_HM10                     // Disable support for HM-10 as a BLE-bridge as an alternative is using the internal ESP32 BLE
 #undef USE_KEELOQ                   // Disable support for Jarolift rollers by Keeloq algorithm as it's library cc1101 is not compatible with ESP32
-//#undef USE_DISPLAY_ILI9488          // Disable as it's library JaretBurkett_ILI9488-gemu-1.0 is not compatible with ESP32
-//#undef USE_DISPLAY_SSD1351          // Disable as it's library Adafruit_SSD1351_gemu-1.0 is not compatible with ESP32
 
 #endif  // ESP32
 
@@ -160,6 +158,10 @@ String EthernetMacAddress(void);
 
 #ifndef USE_SONOFF_RF
 #undef USE_RF_FLASH                            // Disable RF firmware flash when Sonoff Rf is disabled
+#endif
+
+#ifndef USE_ZIGBEE
+#undef USE_ZIGBEE_EZSP                         // Disable Zigbee EZSP firmware flash
 #endif
 
 #ifndef USE_LIGHT

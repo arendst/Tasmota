@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Не е избран файл"
 #define D_UPLOAD_ERR_2 "Недостатъчно свободно място"
-#define D_UPLOAD_ERR_3 "Magic байтът не е 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "Размерът на програмата е по-голям от реалния размер на флаш паметта"
 #define D_UPLOAD_ERR_5 "Грешка при зареждането в буфера"
 #define D_UPLOAD_ERR_6 "Грешка при зареждането. Включено е ниво 3 на лога"

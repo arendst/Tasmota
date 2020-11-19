@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nici un fișier selectat"
 #define D_UPLOAD_ERR_2 "Spațiu insuficient"
-#define D_UPLOAD_ERR_3 "Magic byte nu este 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "Dimensiunea programului este mai mare decât mărimea memoriei"
 #define D_UPLOAD_ERR_5 "Încărcare buffer necomparabil"
 #define D_UPLOAD_ERR_6 "Încărcare eșuată. Activează logging 3"

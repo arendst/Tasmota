@@ -2569,7 +2569,7 @@ void HandleInformation(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-#if defined(SHELLY_FW_UPGRADE)
+#if defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE)
 
 struct {
   size_t spi_hex_size;
@@ -2658,15 +2658,15 @@ void HandleUploadDone(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
-  if (!Web.upload_error) {
+#if defined(USE_ZIGBEE_EZSP)
+  if ((UPL_EFR32 == Web.upload_file_type) && !Web.upload_error && BUpload.ready) {
+    BUpload.ready = false;  //  Make sure not to follow thru again
     // GUI xmodem
-    if (ZigbeeUploadOtaReady()) {
-      HandleZigbeeXfer();
-      return;
-    }
+    ZigbeeUploadStep1Done(BUploadStartSector(), BUpload.spi_hex_size);
+    HandleZigbeeXfer();
+    return;
   }
-#endif
+#endif  // USE_ZIGBEE_EZSP
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 
@@ -2682,11 +2682,11 @@ void HandleUploadDone(void)
   WSContentStart_P(PSTR(D_INFORMATION));
   if (!Web.upload_error) {
     uint32_t javascript_settimeout = HTTP_OTA_RESTART_RECONNECT_TIME;
-#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
+#if defined(USE_ZIGBEE_EZSP)
     if (ZigbeeUploadFinish()) {
       javascript_settimeout = 10000;                                  // Refesh main web ui after transfer upgrade
     }
-#endif
+#endif  // USE_ZIGBEE_EZSP
     WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, javascript_settimeout);  // Refesh main web ui after OTA upgrade
   }
   WSContentSendStyle();
@@ -2709,19 +2709,12 @@ void HandleUploadDone(void)
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
 
-#ifdef SHELLY_FW_UPGRADE
+#if defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE)
     if (BUpload.ready) {
       WSContentSend_P(PSTR("<br><div style='text-align:center;'><b>" D_TRANSFER_STARTED " ...</b></div>"));
       TasmotaGlobal.restart_flag = 0;  // Hold restart as code still needs to be transferred to STM
     }
-#endif  // SHELLY_FW_UPGRADE
-
-#ifdef USE_TASMOTA_CLIENT
-    if (TasmotaClient_GetFlagFlashing()) {
-      WSContentSend_P(PSTR("<br><div style='text-align:center;'><b>" D_TRANSFER_STARTED " ...</b></div>"));
-      TasmotaGlobal.restart_flag = 0;  // Hold restart as code still needs to be transferred to Atmega
-    }
-#endif  // USE_TASMOTA_CLIENT
+#endif  // USE_TASMOTA_CLIENT or SHELLY_FW_UPGRADE
 
     if (TasmotaGlobal.restart_flag) {
       WSContentSend_P(HTTP_MSG_RSTRT);
@@ -2733,17 +2726,21 @@ void HandleUploadDone(void)
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 
-#ifdef SHELLY_FW_UPGRADE
+#if defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE)
   if (BUpload.ready) {
-    ShdFlash(BUploadStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
-  }
-#endif  // SHELLY_FW_UPGRADE
-
+#ifdef SHELLY_FW_UPGRADE
+    if (UPL_SHD == Web.upload_file_type) {
+      ShdFlash(BUploadStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
+    }
+#endif
 #ifdef USE_TASMOTA_CLIENT
-  if (TasmotaClient_GetFlagFlashing()) {
-    TasmotaClient_Flash();
+    if (UPL_TASMOTACLIENT == Web.upload_file_type) {
+      TasmotaClient_Flash(BUploadStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
+    }
+#endif
   }
-#endif  // USE_TASMOTA_CLIENT
+#endif  // USE_TASMOTA_CLIENT or SHELLY_FW_UPGRADE
+  Web.upload_file_type = UPL_TASMOTA;
 }
 
 void HandleUploadLoop(void)
@@ -2809,21 +2806,8 @@ void HandleUploadLoop(void)
         Web.config_block_count = 0;
       }
       else {
-#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
-#ifdef ESP8266
-        if ((SONOFF_ZB_BRIDGE == TasmotaGlobal.module_type) && (upload.buf[0] == 0xEB)) {  // Check if this is a Zigbee bridge FW file
-#else  // ESP32
-        if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX) && (upload.buf[0] == 0xEB)) {  // Check if this is a Zigbee bridge FW file
-#endif  // ESP8266 or ESP32
-          Update.end();              // End esp8266 update session
-          Web.upload_file_type = UPL_EFR32;
-
-          Web.upload_error = ZigbeeUploadInit();  // 15
-          if (Web.upload_error != 0) { return; }
-        } else
-#endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_RF_FLASH
-        if ((SONOFF_BRIDGE == TasmotaGlobal.module_type) && (upload.buf[0] == ':')) {  // Check if this is a RF bridge FW file
+        if ((SONOFF_BRIDGE == TasmotaGlobal.module_type) && (':' == upload.buf[0])) {  // Check if this is a RF bridge FW file
           Update.end();              // End esp8266 update session
           Web.upload_file_type = UPL_EFM8BB1;
 
@@ -2831,24 +2815,41 @@ void HandleUploadLoop(void)
           if (Web.upload_error != 0) { return; }
         } else
 #endif  // USE_RF_FLASH
-#ifdef SHELLY_FW_UPGRADE
+#if defined(USE_ZIGBEE_EZSP) || defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE)
+#if defined(USE_ZIGBEE_EZSP)
+#ifdef ESP8266
+        if ((SONOFF_ZB_BRIDGE == TasmotaGlobal.module_type) && (0xEB == upload.buf[0])) {  // Check if this is a Zigbee bridge FW file
+#else  // ESP32
+        if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX) && (0xEB == upload.buf[0])) {  // Check if this is a Zigbee bridge FW file
+#endif  // ESP8266 or ESP32
+          // Read complete file into ESP8266 flash
+          // Current files are about 200k
+          Web.upload_file_type = UPL_EFR32;
+
+          Web.upload_error = ZigbeeUploadStep1Init();  // 1
+          if (Web.upload_error != 0) {
+            Update.end();              // End esp8266 update session
+            return;
+          }
+        }
+#endif
+#if defined(USE_TASMOTA_CLIENT)
+        if (TasmotaClient_Available() && (':' == upload.buf[0])) {  // Check if this is a ARDUINO CLIENT hex file
+          Web.upload_file_type = UPL_TASMOTACLIENT;
+        }
+#endif
+#if defined(SHELLY_FW_UPGRADE)
         if (ShdPresent() && (0x00 == upload.buf[0]) && (0x10 == upload.buf[1])) {
-          Update.end();              // End esp8266 update session
           Web.upload_file_type = UPL_SHD;
+        }
+#endif
+        if ((UPL_TASMOTACLIENT == Web.upload_file_type) || (UPL_SHD == Web.upload_file_type) || (UPL_EFR32 == Web.upload_file_type)) {
+          Update.end();              // End esp8266 update session
 
           Web.upload_error = BUploadInit();
           if (Web.upload_error != 0) { return; }
         } else
-#endif  // SHELLY_FW_UPGRADE
-#ifdef USE_TASMOTA_CLIENT
-        if (TasmotaClient_Available() && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO CLIENT hex file
-          Update.end();              // End esp8266 update session
-          Web.upload_file_type = UPL_TASMOTACLIENT;
-
-          Web.upload_error = TasmotaClient_UpdateInit();  // 0
-          if (Web.upload_error != 0) { return; }
-        } else
-#endif
+#endif  // USE_ZIGBEE_EZSP or USE_TASMOTA_CLIENT or SHELLY_FW_UPGRADE
         {
           if ((upload.buf[0] != 0xE9) && (upload.buf[0] != 0x1F)) {  // 0x1F is gzipped 0xE9
             Web.upload_error = 3;  // Magic byte is not 0xE9
@@ -2876,15 +2877,6 @@ void HandleUploadLoop(void)
         Web.config_block_count++;
       }
     }
-#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
-    else if (UPL_EFR32 == Web.upload_file_type) {
-      // Write buffers to MCU EFR32
-      if (!ZigbeeUploadWriteBuffer(upload.buf, upload.currentSize)) {
-        Web.upload_error = 9;  // File too large
-        return;
-      }
-    }
-#endif  // USE_ZIGBEE and USE_ZIGBEE_EZSP
 #ifdef USE_RF_FLASH
     else if (UPL_EFM8BB1 == Web.upload_file_type) {
       if (efm8bb1_update != nullptr) {    // We have carry over data since last write, i. e. a start but not an end
@@ -2919,18 +2911,13 @@ void HandleUploadLoop(void)
       }
     }
 #endif  // USE_RF_FLASH
-#ifdef SHELLY_FW_UPGRADE
-    else if (UPL_SHD == Web.upload_file_type) {
+#if defined(USE_ZIGBEE_EZSP) || defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE)
+    else if ((UPL_EFR32 == Web.upload_file_type) || (UPL_TASMOTACLIENT == Web.upload_file_type) || (UPL_SHD == Web.upload_file_type)) {
       // Write a block
       Web.upload_error = BUploadWriteBuffer(upload.buf, upload.currentSize);
       if (Web.upload_error != 0) { return; }
     }
-#endif  // SHELLY_FW_UPGRADE
-#ifdef USE_TASMOTA_CLIENT
-    else if (UPL_TASMOTACLIENT == Web.upload_file_type) {
-      TasmotaClient_WriteBuffer(upload.buf, upload.currentSize);
-    }
-#endif
+#endif  // USE_ZIGBEE_EZSP or USE_TASMOTA_CLIENT or SHELLY_FW_UPGRADE
     else {  // firmware
       if (!Web.upload_error && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
         Web.upload_error = 5;  // Upload buffer miscompare
@@ -2989,33 +2976,19 @@ void HandleUploadLoop(void)
         return;
       }
     }
-#if defined(USE_ZIGBEE) && defined(USE_ZIGBEE_EZSP)
-    else if (UPL_EFR32 == Web.upload_file_type) {
-      // Zigbee FW upload to ESP8266 flash is done
-      ZigbeeUploadDone();  // Signal upload done and ready for delayed upload to MCU EFR32
-      Web.upload_file_type = UPL_TASMOTA;
-    }
-#endif
 #ifdef USE_RF_FLASH
     else if (UPL_EFM8BB1 == Web.upload_file_type) {
       // RF FW flash done
-      Web.upload_file_type = UPL_TASMOTA;
+//      Web.upload_file_type = UPL_TASMOTA;
     }
 #endif  // USE_RF_FLASH
-#ifdef SHELLY_FW_UPGRADE
-    else if (UPL_SHD == Web.upload_file_type) {
+#if defined(USE_ZIGBEE_EZSP) || defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE)
+    else if ((UPL_EFR32 == Web.upload_file_type) || (UPL_TASMOTACLIENT == Web.upload_file_type) || (UPL_SHD == Web.upload_file_type)) {
       // Done writing the hex to SPI flash
       BUpload.ready = true; // So we know on upload success page if it needs to flash hex or do a normal restart
-      Web.upload_file_type = UPL_TASMOTA;
+//      Web.upload_file_type = UPL_TASMOTA;
     }
-#endif  // SHELLY_FW_UPGRADE
-#ifdef USE_TASMOTA_CLIENT
-    else if (UPL_TASMOTACLIENT == Web.upload_file_type) {
-      // Done writing the hex to SPI flash
-      TasmotaClient_SetFlagFlashing(true); // So we know on upload success page if it needs to flash hex or do a normal restart
-      Web.upload_file_type = UPL_TASMOTA;
-    }
-#endif
+#endif  // USE_ZIGBEE_EZSP or USE_TASMOTA_CLIENT or SHELLY_FW_UPGRADE
     else {
       if (!Update.end(true)) { // true to set the size to the current progress
         if (_serialoutput) { Update.printError(Serial); }

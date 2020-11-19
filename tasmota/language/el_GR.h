@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Δεν έχει επιλεγεί αρχείο"
 #define D_UPLOAD_ERR_2 "Δεν υπάρχει επαρκής χώρος"
-#define D_UPLOAD_ERR_3 "Magic byte is not 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "Το μέγεθος προγράμματος είναι μεγαλύτερο από την πραγματική μνήμη Flash"
 #define D_UPLOAD_ERR_5 "Upload buffer miscompare"
 #define D_UPLOAD_ERR_6 "Η μεταφόρτωση απέτυχε. Επιλέξτε επίπεδο καταγραφής 3"

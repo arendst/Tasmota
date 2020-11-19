@@ -132,9 +132,6 @@ uint8_t SimpleHexParse::getByte(char* hexline, uint8_t idx) {
  */
 
 struct TCLIENT {
-  uint32_t spi_hex_size = 0;
-  uint32_t spi_sector_counter = 0;
-  uint8_t spi_sector_cursor = 0;
   uint8_t inverted = LOW;
   bool type = false;
   bool flashing  = false;
@@ -199,17 +196,6 @@ struct TCLIENT_COMMAND {
 } TClientCommand;
 
 TasmotaSerial *TasmotaClient_Serial;
-
-uint32_t TasmotaClient_FlashStart(void) {
-  return (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 2;  // Stay on the safe side
-}
-
-uint8_t TasmotaClient_UpdateInit(void) {
-  TClient.spi_hex_size = 0;
-  TClient.spi_sector_counter = TasmotaClient_FlashStart();  // Reset the pre-defined write address where firmware will temporarily be stored
-  TClient.spi_sector_cursor = 0;
-  return 0;
-}
 
 void TasmotaClient_Reset(void) {
   if (TClient.SerialEnabled) {
@@ -334,7 +320,7 @@ void TasmotaClient_FlashPage(uint8_t addr_h, uint8_t addr_l, uint8_t* data) {
   TasmotaClient_Serial->read();
 }
 
-void TasmotaClient_Flash(void) {
+void TasmotaClient_Flash(uint32_t data, size_t size) {
   bool reading = true;
   uint32_t read = 0;
   uint32_t processed = 0;
@@ -352,16 +338,16 @@ void TasmotaClient_Flash(void) {
   }
 
   flash_buffer = new char[SPI_FLASH_SEC_SIZE];
-  uint32_t flash_start = TasmotaClient_FlashStart() * SPI_FLASH_SEC_SIZE;
+  uint32_t flash_start = data;
   while (reading) {
     ESP.flashRead(flash_start + read, (uint32_t*)flash_buffer, SPI_FLASH_SEC_SIZE);
     read = read + SPI_FLASH_SEC_SIZE;
-    if (read >= TClient.spi_hex_size) {
+    if (read >= size) {
       reading = false;
     }
     for (uint32_t ca = 0; ca < SPI_FLASH_SEC_SIZE; ca++) {
       processed++;
-      if ((processed <= TClient.spi_hex_size) && (!hexParse.EndOfFile)) {
+      if ((processed <= size) && (!hexParse.EndOfFile)) {
         if (':' == flash_buffer[ca]) {
           position = 0;
         }
@@ -394,19 +380,6 @@ void TasmotaClient_SetFlagFlashing(bool value) {
 
 bool TasmotaClient_GetFlagFlashing(void) {
   return TClient.flashing;
-}
-
-void TasmotaClient_WriteBuffer(uint8_t *buf, size_t size) {
-  if (0 == TClient.spi_sector_cursor) { // Starting a new sector write so we need to erase it first
-    ESP.flashEraseSector(TClient.spi_sector_counter);
-  }
-  TClient.spi_sector_cursor++;
-  ESP.flashWrite((TClient.spi_sector_counter * SPI_FLASH_SEC_SIZE) + ((TClient.spi_sector_cursor-1)*2048), (uint32_t*)buf, size);
-  TClient.spi_hex_size = TClient.spi_hex_size + size;
-  if (2 == TClient.spi_sector_cursor) {  // The web upload sends 2048 bytes at a time so keep track of the cursor position to reset it for the next flash sector erase
-    TClient.spi_sector_cursor = 0;
-    TClient.spi_sector_counter++;
-  }
 }
 
 void TasmotaClient_Init(void) {

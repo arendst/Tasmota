@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nenhum ficheiro selecionado"
 #define D_UPLOAD_ERR_2 "Não existe espaço disponível"
-#define D_UPLOAD_ERR_3 "O Byte mágico não é 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "O tamanho do programa e maior do que o tamanho real da flash"
 #define D_UPLOAD_ERR_5 "Comparação incorreta do buffer de upload"
 #define D_UPLOAD_ERR_6 "Falha no envio. Habilitar registro 3"

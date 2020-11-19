@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Файл не вибраний"
 #define D_UPLOAD_ERR_2 "Недостатньо місця"
-#define D_UPLOAD_ERR_3 "Магічний байт не 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "Размір прошивки більший, ніж размір Flash пам'яті"
 #define D_UPLOAD_ERR_5 "Помилка завантаження буферу"
 #define D_UPLOAD_ERR_6 "Помилка завантаження. Увімкнено лог рівень 3"

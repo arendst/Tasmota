@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "没有选择任何文件"
 #define D_UPLOAD_ERR_2 "没有足够空间"
-#define D_UPLOAD_ERR_3 "固件头不是 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "固件大小超过 flash 容量"
 #define D_UPLOAD_ERR_5 "上传缓冲区不足，请先刷入精简固件再升级"
 #define D_UPLOAD_ERR_6 "上传失败。 启用日志级别 3 调试"

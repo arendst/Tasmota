@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Ningún archivo seleccionado"
 #define D_UPLOAD_ERR_2 "Espacio insuficiente"
-#define D_UPLOAD_ERR_3 "Magic byte no corresponde a 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "El tamaño de la memoria de programa es mayor que la de la flash"
 #define D_UPLOAD_ERR_5 "Error de comparación del buffer de carga"
 #define D_UPLOAD_ERR_6 "Carga fallida. Habilitar logging 3"
