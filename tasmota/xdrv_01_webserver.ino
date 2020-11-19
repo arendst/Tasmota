@@ -2569,7 +2569,7 @@ void HandleInformation(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-#if defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE)
+#if defined(USE_ZIGBEE_EZSP) || defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE)
 
 struct {
   size_t spi_hex_size;
@@ -2607,7 +2607,7 @@ uint32_t BUploadWriteBuffer(uint8_t *buf, size_t size) {
   return 0;
 }
 
-#endif  // USE_TASMOTA_CLIENT or SHELLY_FW_UPGRADE
+#endif  // USE_ZIGBEE_EZSP or USE_TASMOTA_CLIENT or SHELLY_FW_UPGRADE
 
 void HandleUpgradeFirmware(void)
 {
