@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "파일이 선택되지 않았습니다"
 #define D_UPLOAD_ERR_2 "용량이 충분하지 않습니다"
-#define D_UPLOAD_ERR_3 "Magic 바이트가 0xE9가 아닙니다"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "플래시 프로그램이 실제 플래시 용량보다 큽니다"
 #define D_UPLOAD_ERR_5 "업로드 버퍼가 일치하지 않습니다"
 #define D_UPLOAD_ERR_6 "업로드 실패. 로그 3 사용"

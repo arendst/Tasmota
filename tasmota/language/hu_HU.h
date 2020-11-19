@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nincs fájl kijelölve"
 #define D_UPLOAD_ERR_2 "Nincs elég memória"
-#define D_UPLOAD_ERR_3 "A \"magic byte\" nem 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "A program flashméret nagyobb a valós flashméretnél"
 #define D_UPLOAD_ERR_5 "Feltöltési buffer hiba"
 #define D_UPLOAD_ERR_6 "Feltöltés sikertelen. Endegélyezd a 3. szintű naplózást"

@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Geen bestand gekozen"
 #define D_UPLOAD_ERR_2 "Onvoldoende geheugen ruimte"
-#define D_UPLOAD_ERR_3 "Magische byte is niet 0xE9"
+#define D_UPLOAD_ERR_3 "Ongeldig bestandssoort"
 #define D_UPLOAD_ERR_4 "Programma flash grootte is groter dan werkelijke flash grootte"
 #define D_UPLOAD_ERR_5 "Opwaardeer buffer verschil"
 #define D_UPLOAD_ERR_6 "Opwaarderen mislukt. Schakel logging 3 in"

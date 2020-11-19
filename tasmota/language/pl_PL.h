@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nie wybrano pliku"
 #define D_UPLOAD_ERR_2 "Niewystarczająca ilość miejsca"
-#define D_UPLOAD_ERR_3 "Magiczny bajt jest inny niz 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "Rozmiar programu jest większy niż rzeczywisty rozmiar pamięci flash"
 #define D_UPLOAD_ERR_5 "Wgrywanie, bufor niezgodności stanu porównywanych bitow"
 #define D_UPLOAD_ERR_6 "Błąd wgrywania. Uruchomiono zapis do dziennika na poziomie 3"

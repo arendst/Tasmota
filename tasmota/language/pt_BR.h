@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Nenhum arquivo selecionado"
 #define D_UPLOAD_ERR_2 "Não existe memória disponível"
-#define D_UPLOAD_ERR_3 "Byte mágico não é 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "O tamanho do programa é maior do que o tamanho da memória"
 #define D_UPLOAD_ERR_5 "Buffer de envio insuficiente"
 #define D_UPLOAD_ERR_6 "Falha no envio. Habilitar logging 3"

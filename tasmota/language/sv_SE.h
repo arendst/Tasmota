@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Ingen fil vald"
 #define D_UPLOAD_ERR_2 "Inte tillräckligt med ledigt utrymme"
-#define D_UPLOAD_ERR_3 "Magisk byte är inte 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "Programmets flashstorlek är större än den verkliga flashstorleken"
 #define D_UPLOAD_ERR_5 "Uppladdningbuffert stämmer inte överens"
 #define D_UPLOAD_ERR_6 "Uppladdning misslyckad. Aktivera loggning 3"

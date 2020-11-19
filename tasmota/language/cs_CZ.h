@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Soubor nebyl vybrán"
 #define D_UPLOAD_ERR_2 "Málo místa"
-#define D_UPLOAD_ERR_3 "Magický byte má hodnotu jinou než 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "Velikost programu je větší než skutečná velikost paměti flash"
 #define D_UPLOAD_ERR_5 "Chyba nahrávání, nesouhlasí porovnávané bity"
 #define D_UPLOAD_ERR_6 "Chyba nahrávání. Spuštěn zápis do logu na úrovni 3"

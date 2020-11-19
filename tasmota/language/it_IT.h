@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Trasferimento avviato"
 #define D_UPLOAD_ERR_1 "Nessun file selezionato"
 #define D_UPLOAD_ERR_2 "Spazio insufficiente"
-#define D_UPLOAD_ERR_3 "Magic byte non corrispondente a 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "Dimensione memoria programma maggiore della dimensione reale della flash"
 #define D_UPLOAD_ERR_5 "Errore comparazione buffer upload"
 #define D_UPLOAD_ERR_6 "Invio fallito. Abilita registrazione logging 3"

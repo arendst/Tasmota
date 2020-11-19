@@ -46,7 +46,6 @@ const uint8_t PIN_ZIGBEE_BOOTLOADER = 5;
 
 struct ZBUPLOAD {
   uint32_t ota_size = 0;
-  uint32_t sector_cursor = 0;
   uint32_t sector_counter = 0;
   uint32_t byte_counter = 0;
   char *buffer;
@@ -56,12 +55,8 @@ struct ZBUPLOAD {
 } ZbUpload;
 
 /*********************************************************************************************\
- * Flash
+ * Flash from ESP8266 to EZSP
 \*********************************************************************************************/
-
-uint32_t ZigbeeUploadFlashStart(void) {
-  return (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 2;
-}
 
 uint32_t ZigbeeUploadAvailable(void) {
   int available = ZbUpload.ota_size - ZbUpload.byte_counter;
@@ -74,7 +69,6 @@ char ZigbeeUploadFlashRead(void) {
     if (!(ZbUpload.buffer = (char *)malloc(SPI_FLASH_SEC_SIZE))) {
       return (-1);  // Not enough (memory) space
     }
-    ZbUpload.sector_counter = ZigbeeUploadFlashStart();
   }
 
   uint32_t index = ZbUpload.byte_counter % SPI_FLASH_SEC_SIZE;
@@ -461,50 +455,26 @@ bool ZigbeeUploadXmodem(void) {
  * Step 1 - Upload MCU firmware in ESP8266 flash free space (current size is about 200k)
 \*********************************************************************************************/
 
-bool ZigbeeUploadOtaReady(void) {
-  return (ZBU_INIT == ZbUpload.ota_step);
-}
+#ifdef USE_WEBSERVER
 
-bool ZigbeeUploadFinish(void) {
-  return (ZBU_FINISH == ZbUpload.ota_step);
-}
-
-uint8_t ZigbeeUploadInit(void) {
+uint8_t ZigbeeUploadStep1Init(void) {
   if (!PinUsed(GPIO_ZIGBEE_RST) && (ZigbeeSerial == nullptr)) { return 1; }  // Wrong pin configuration - No file selected
 
-  ZbUpload.sector_counter = ZigbeeUploadFlashStart();
-  ZbUpload.sector_cursor = 0;
-  ZbUpload.ota_size = 0;
   ZbUpload.ota_step = ZBU_IDLE;
   ZbUpload.state = ZBU_IDLE;
   return 0;
 }
 
-bool ZigbeeUploadWriteBuffer(uint8_t *buf, size_t size) {
-  // Read complete file into ESP8266 flash
-  // Current files are about 200k
-  if (0 == ZbUpload.sector_cursor) {  // Starting a new sector write so we need to erase it first
-    ESP.flashEraseSector(ZbUpload.sector_counter);
-  }
-  ZbUpload.sector_cursor++;
-  ESP.flashWrite((ZbUpload.sector_counter * SPI_FLASH_SEC_SIZE) + ((ZbUpload.sector_cursor-1) * 2048), (uint32_t*)buf, size);
-  ZbUpload.ota_size += size;
-  if (2 == ZbUpload.sector_cursor) {  // The web upload sends 2048 bytes at a time so keep track of the cursor position to reset it for the next flash sector erase
-    ZbUpload.sector_cursor = 0;
-    ZbUpload.sector_counter++;
-    if (ZbUpload.sector_counter > (SPIFFS_END -2)) {
-      return false;  // File too large - Not enough free space
-    }
-  }
-  return true;
-}
-
-void ZigbeeUploadDone(void) {
+void ZigbeeUploadStep1Done(uint32_t data, size_t size) {
+  ZbUpload.sector_counter = data;
+  ZbUpload.ota_size = size;
   ZbUpload.ota_step = ZBU_INIT;
-  ZbUpload.state = ZBU_UPLOAD;
+  ZbUpload.state = ZBU_UPLOAD;      // Signal upload done and ready for delayed upload to MCU EFR32
 }
 
-#ifdef USE_WEBSERVER
+bool ZigbeeUploadFinish(void) {
+  return (ZBU_FINISH == ZbUpload.ota_step);
+}
 
 #define WEB_HANDLE_ZIGBEE_XFER "zx"
 

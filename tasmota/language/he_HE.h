@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "לא נבחר קובץ"
 #define D_UPLOAD_ERR_2 "אין מספיק מקום"
-#define D_UPLOAD_ERR_3 "Magic byte is not 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "גודל קובץ השדרוג גדול מנפח האחסון של הפלאש"
 #define D_UPLOAD_ERR_5 "מאגר העלאה לא תקין"
 #define D_UPLOAD_ERR_6 "העלאה נכשלה. אפשר רישום 3"

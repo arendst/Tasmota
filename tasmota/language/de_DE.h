@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer gestartet"
 #define D_UPLOAD_ERR_1 "Keine Datei ausgewählt"
 #define D_UPLOAD_ERR_2 "Ungenügend Speicherplatz"
-#define D_UPLOAD_ERR_3 "Magic Byte ist nicht 0xE9"
+#define D_UPLOAD_ERR_3 "Falsche Dateisignatur"
 #define D_UPLOAD_ERR_4 "Datei überschreitet vorhdn. Flashspeicher"
 #define D_UPLOAD_ERR_5 "Upload Buffer Vergleich weicht ab"
 #define D_UPLOAD_ERR_6 "Upload fehlgeschlagen. Aktiviere logging 3"

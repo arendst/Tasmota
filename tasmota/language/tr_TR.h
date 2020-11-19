@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Dosya seçilmedi"
 #define D_UPLOAD_ERR_2 "Boş yer yok"
-#define D_UPLOAD_ERR_3 "Magic byte is not 0xE9"
+#define D_UPLOAD_ERR_3 "Invalid file signature"
 #define D_UPLOAD_ERR_4 "Yazılımın boyutu gerçek boyutundan fazla"
 #define D_UPLOAD_ERR_5 "Upload buffer miscompare"
 #define D_UPLOAD_ERR_6 "Yükleme başarısız. Enable logging 3"
