@@ -1168,7 +1168,7 @@ int ResponseJsonEndEnd(void)
 
 #ifdef ESP8266
 uint16_t GpioConvert(uint8_t gpio) {
-  if (gpio > ARRAY_SIZE(kGpioConvert)) {
+  if (gpio >= ARRAY_SIZE(kGpioConvert)) {
     return AGPIO(GPIO_USER);
   }
   return pgm_read_word(kGpioConvert + gpio);
