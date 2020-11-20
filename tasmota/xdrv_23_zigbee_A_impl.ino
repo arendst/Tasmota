@@ -1744,7 +1744,9 @@ void ZigbeeShow(bool json)
       const Z_Data_Light & light = device.data.find<Z_Data_Light>();
       bool light_display = (&light != nullptr) ? light.validDimmer() : false;
       const Z_Data_Plug & plug = device.data.find<Z_Data_Plug>();
-      if (onoff_display || light_display || (&plug != nullptr)) {
+      bool plug_voltage = (&plug != nullptr) ? plug.validMainsVoltage() : false;
+      bool plug_power = (&plug != nullptr) ? plug.validMainsPower() : false;
+      if (onoff_display || light_display || plug_voltage || plug_power) {
         int8_t channels = device.getLightChannels();
         if (channels < 0) { channels = 5; }     // if number of channel is unknown, display all known attributes
         WSContentSend_P(PSTR("<tr class='htr'><td colspan=\"4\">&#9478;"));
@@ -1770,17 +1772,13 @@ void ZigbeeShow(bool json)
             WSContentSend_P(PSTR(" <i class=\"bx\" style=\"--cl:#%02X%02X%02X\"></i> #%02X%02X%02X"), r,g,b,r,g,b);
           }
         }
-        if (&plug != nullptr) {
-          bool validMainsVoltage = plug.validMainsVoltage();
-          bool validMainsPower = plug.validMainsPower();
-          if (validMainsVoltage || validMainsPower) {
-            WSContentSend_P(PSTR(" &#9889; "));
-            if (validMainsVoltage) {
-              WSContentSend_P(PSTR(" %dV"), plug.getMainsVoltage());
-            }
-            if (validMainsPower) {
-              WSContentSend_P(PSTR(" %dW"), plug.getMainsPower());
-            }
+        if (plug_voltage || plug_power) {
+          WSContentSend_P(PSTR(" &#9889; "));
+          if (plug_voltage) {
+            WSContentSend_P(PSTR(" %dV"), plug.getMainsVoltage());
+          }
+          if (plug_power) {
+            WSContentSend_P(PSTR(" %dW"), plug.getMainsPower());
           }
         }
         WSContentSend_P(PSTR("{e}"));
