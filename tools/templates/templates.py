@@ -20,7 +20,6 @@
 
 Requirements:
    - Python
-   - pip pycurl certifi
 
 Instructions:
     Execute command to produce file TEMPLATE.md as found in the Tasmota root folder
@@ -324,7 +323,7 @@ def get_templates_list():
   return response.text.split('\n')
 
 def main():
-  print ("\n*** templates.py v20200514 by Theo Arends ***")
+  print ("\n*** templates.py v20201121 by Theo Arends and Barbudor ***")
 
   now = datetime.now()
   month = now.strftime('%B')
@@ -368,7 +367,7 @@ def main():
         except json.decoder.JSONDecodeError as ex:
           template = "Not available"
 
-        fout.write(f"{name:<{COLUMN}}  {json.dumps(template)}\n")
+        fout.write(f"{name:<{COLUMN}}  {json.dumps(template, separators=(',', ':'))}\n")
 
   fout.write('```\n')
 
