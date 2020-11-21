@@ -1704,7 +1704,7 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
     //     presentValue = x + 128 = 180º flip to side x on top
     //     presentValue = x + 256 = push/slide cube while side x is on top
     //     presentValue = x + 512 = double tap while side x is on top
-  } else if (modelId.startsWith(F("lumi.remote")) || modelId.startsWith(F("lumi.sensor_switch"))) {   // only for Aqara buttons WXKG11LM & WXKG12LM
+  } else if (modelId.startsWith(F("lumi.remote")) || modelId.startsWith(F("lumi.sensor_swit"))) {   // only for Aqara buttons WXKG11LM & WXKG12LM, 'swit' because of #9923
     int32_t val = attr.getInt();
     const __FlashStringHelper *aqara_click = F("click");
     const __FlashStringHelper *aqara_action = F("action");
