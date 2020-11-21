@@ -24,10 +24,7 @@
 // ZbData v1
 // File structure:
 //
-// uint8 - number of devices, 0=none, 0xFF=invalid entry (probably Flash was erased)
-//
 // [Array of devices]
-// [Offset = 2]
 // uint8  - length of device record (excluding the length byte)
 // uint16 - short address
 //
@@ -39,17 +36,6 @@
 // uint8  - length of structure
 // uint8[] - list of data
 //
-
-void dumpZigbeeDevicesData(void) {
-#ifdef USE_ZIGBEE_EZSP
-  if (zigbee.eeprom_present) {
-    SBuffer buf(192);
-
-    zigbee.eeprom.readBytes(64, 192, buf.getBuffer());
-    AddLogBuffer(LOG_LEVEL_INFO, buf.getBuffer(), 192);
-  }
-#endif // USE_ZIGBEE_EZSP
-}
 
 // returns the lenght of consumed buffer, or -1 if error
 int32_t hydrateDeviceWideData(class Z_Device & device, const SBuffer & buf, size_t start, size_t len) {
@@ -70,10 +56,16 @@ bool hydrateDeviceData(class Z_Device & device, const SBuffer & buf, size_t star
   int32_t ret = hydrateDeviceWideData(device, buf, start, len);
   if (ret < 0) { return false; }
 
-  size_t offset = 0 + ret;
+  size_t offset = ret;
   while (offset + 5 <= len) {    // each entry is at least 5 bytes
     uint8_t data_len = buf.get8(start + offset);
-    Z_Data & data_elt = device.data.createFromBuffer(buf, offset + 1, data_len);
+// #ifdef Z_EEPROM_DEBUG
+//   {
+//     char hex_char[((data_len+1) * 2) + 2];
+//     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "hydrateDeviceData data_len=%d contains %s"), data_len, ToHex_P(buf.buf(start+offset+1), data_len, hex_char, sizeof(hex_char)));
+//   }
+// #endif
+    Z_Data & data_elt = device.data.createFromBuffer(buf, start + offset + 1, data_len);
     (void)data_elt;   // avoid compiler warning
     offset += data_len + 1;
   }
@@ -94,7 +86,14 @@ int32_t hydrateSingleDevice(const class SBuffer & buf, size_t start, size_t len)
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "invalid shortaddr=0x%04X"), shortaddr);
     return -1;
   }
-
+#ifdef Z_EEPROM_DEBUG
+  {
+    if (segment_len > 3) {
+      char hex_char[((segment_len+1) * 2) + 2];
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData 0x%04X,%s"), shortaddr, ToHex_P(buf.buf(start+3), segment_len+1-3, hex_char, sizeof(hex_char)));
+    }
+  }
+#endif
   // check if the device exists, if not skip the record
   Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
   if (&device != nullptr) {
@@ -107,28 +106,53 @@ int32_t hydrateSingleDevice(const class SBuffer & buf, size_t start, size_t len)
   return segment_len + 1;
 }
 
+/*********************************************************************************************\
+ * 
+ * Hydrate data from the EEPROM
+ * 
+\*********************************************************************************************/
 // Parse the entire blob
 // return true if ok
-bool hydrateDevicesDataBlob(const class SBuffer & buf, size_t start, size_t len) {
-  // read number of devices
-  uint8_t num_devices = buf.get8(start);
-  if (num_devices > 0x80) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "wrong number of devices=%d"), num_devices);
+bool hydrateDevicesDataFromEEPROM(void) {
+  if (!zigbee.eeprom_ready) { return false; }
+
+  int32_t file_length = ZFS::getLength(ZIGB_DATA2);
+  if (file_length > 0) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee device data in EEPROM (%d bytes)"), file_length);
+  } else {
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No Zigbee device data in EEPROM"));
     return false;
   }
 
-  size_t offset = 0;
-  for (uint32_t cur_dev_num = 0; (cur_dev_num < num_devices) && (offset + 4 <= len); cur_dev_num++) {
-    int32_t segment_len = hydrateSingleDevice(buf, offset, len);
+  const uint16_t READ_BUFFER = 192;
+  uint16_t cursor = 0x0000;         // cursor in the file
+  bool read_more = true;
 
-    // advance buffer
-    if (segment_len <= 0) { return false; }
-    offset += segment_len;
+  SBuffer buf(READ_BUFFER);
+  while (read_more) {
+    buf.setLen(buf.size());         // set to max size and fill with zeros
+    int32_t bytes_read = ZFS::readBytes(ZIGB_DATA2, buf.getBuffer(), buf.size(), cursor, READ_BUFFER);
+// #ifdef Z_EEPROM_DEBUG
+//     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "readBytes buffer_len=%d, read_start=%d, read_len=%d, actual_read=%d"), buf.size(), cursor, length, bytes_read);
+// #endif
+    if (bytes_read > 0) {
+      buf.setLen(bytes_read);       // adjust to actual size
+      int32_t segment_len = hydrateSingleDevice(buf, 0, buf.len());
+// #ifdef Z_EEPROM_DEBUG
+//       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "hydrateSingleDevice segment_len=%d"), segment_len);
+// #endif
+      if (segment_len <= 0) { return false; }
+
+      cursor += segment_len;
+    } else {
+      read_more = false;
+    }
   }
+
   return true;
 }
 
-class SBuffer hibernateDeviceData(const struct Z_Device & device, bool log = false) {
+class SBuffer hibernateDeviceData(const struct Z_Device & device, bool mqtt = false) {
   SBuffer buf(192);
 
   // If we have zero information about the device, just skip ir
@@ -155,33 +179,48 @@ class SBuffer hibernateDeviceData(const struct Z_Device & device, bool log = fal
     // update overall length
     buf.set8(0, buf.len() - 1);
 
-    if (log) {
+    {
       size_t buf_len = buf.len() - 3;
       char hex[2*buf_len + 1];
       // skip first 3 bytes
       ToHex_P(buf.buf(3), buf_len, hex, sizeof(hex));
 
-      Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_DATA "\":\"ZbData 0x%04X,%s\"}"), device.shortaddr, hex);
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_DATA));
+      if (mqtt) {
+        Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_DATA "\":\"ZbData 0x%04X,%s\"}"), device.shortaddr, hex);
+        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_DATA));
+      } else {
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData 0x%04X,%s"), device.shortaddr, hex);
+      }
     }
   }
 
   return buf;
 }
 
+/*********************************************************************************************\
+ * 
+ * Hibernate data to the EEPROM
+ * 
+\*********************************************************************************************/
 void hibernateAllData(void) {
 
+  if (!zigbee.eeprom_ready) { return; }
+
+  ZFS_Write_File write_data(ZIGB_DATA2);
   // first prefix is number of devices
   uint8_t device_num = zigbee_devices.devicesSize();
 
   for (const auto & device : zigbee_devices.getDevices()) {
     // allocte a buffer for a single device
-    SBuffer buf = hibernateDeviceData(device, true);    // log
+    SBuffer buf = hibernateDeviceData(device, false);    // simple log, no mqtt
     if (buf.len() > 0) {
-      // TODO store in EEPROM
+      write_data.addBytes(buf.getBuffer(), buf.len());
     }
   }
-
+  int32_t ret = write_data.close();
+#ifdef Z_EEPROM_DEBUG
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData - %d bytes written to EEPROM"), ret);
+#endif
 }
 
 #endif // USE_ZIGBEE

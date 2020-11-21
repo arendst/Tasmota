@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 15.11.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 20.11.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -361,7 +361,7 @@
 #define D_TRANSFER_STARTED "Trasferimento avviato"
 #define D_UPLOAD_ERR_1 "Nessun file selezionato"
 #define D_UPLOAD_ERR_2 "Spazio insufficiente"
-#define D_UPLOAD_ERR_3 "Invalid file signature"
+#define D_UPLOAD_ERR_3 "Firma file non valida"
 #define D_UPLOAD_ERR_4 "Dimensione memoria programma maggiore della dimensione reale della flash"
 #define D_UPLOAD_ERR_5 "Errore comparazione buffer upload"
 #define D_UPLOAD_ERR_6 "Invio fallito. Abilita registrazione logging 3"
@@ -701,7 +701,7 @@
 #define D_SENSOR_AS3935         "AS3935"
 #define D_SENSOR_WINDMETER_SPEED "Velocità vento"
 #define D_SENSOR_TELEINFO_RX    "TInfo - RX"
-#define D_SENSOR_TELEINFO_ENABLE "TInfo - Enable"
+#define D_SENSOR_TELEINFO_ENABLE "TInfo - Abilita"
 #define D_SENSOR_LMT01_PULSE   "LMT01 - Impulso"
 #define D_SENSOR_ADC_INPUT     "ADC - Input"
 #define D_SENSOR_ADC_TEMP      "ADC - Temperatura"
