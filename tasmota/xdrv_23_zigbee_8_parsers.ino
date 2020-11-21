@@ -1853,10 +1853,12 @@ int32_t ZNP_Recv_Default(int32_t res, const class SBuffer &buf) {
 //
 // Callback for loading preparing EEPROM, called by the state machine
 //
+#ifdef USE_ZIGBEE_EZSP
 int32_t Z_Prepare_EEPROM(uint8_t value) {
   ZFS::initOrFormat();
   return 0;                              // continue
 }
+#endif // USE_ZIGBEE_EZSP
 
 //
 // Callback for loading Zigbee configuration from Flash, called by the state machine

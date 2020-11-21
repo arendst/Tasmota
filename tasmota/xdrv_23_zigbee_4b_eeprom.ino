@@ -114,8 +114,8 @@ int32_t hydrateSingleDevice(const class SBuffer & buf, size_t start, size_t len)
 // Parse the entire blob
 // return true if ok
 bool hydrateDevicesDataFromEEPROM(void) {
+#ifdef USE_ZIGBEE_EZSP
   if (!zigbee.eeprom_ready) { return false; }
-
   int32_t file_length = ZFS::getLength(ZIGB_DATA2);
   if (file_length > 0) {
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee device data in EEPROM (%d bytes)"), file_length);
@@ -148,8 +148,10 @@ bool hydrateDevicesDataFromEEPROM(void) {
       read_more = false;
     }
   }
-
   return true;
+#else // USE_ZIGBEE_EZSP
+  return false;
+#endif // USE_ZIGBEE_EZSP
 }
 
 class SBuffer hibernateDeviceData(const struct Z_Device & device, bool mqtt = false) {
@@ -203,6 +205,7 @@ class SBuffer hibernateDeviceData(const struct Z_Device & device, bool mqtt = fa
  * 
 \*********************************************************************************************/
 void hibernateAllData(void) {
+#ifdef USE_ZIGBEE_EZSP
   if (Rtc.utc_time < START_VALID_TIME) { return; }
   if (!zigbee.eeprom_ready) { return; }
 
@@ -221,6 +224,7 @@ void hibernateAllData(void) {
 #ifdef Z_EEPROM_DEBUG
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData - %d bytes written to EEPROM"), ret);
 #endif
+#endif // USE_ZIGBEE_EZSP
 }
 
 #endif // USE_ZIGBEE
