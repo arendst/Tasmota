@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_ZIGBEE
+#ifdef USE_ZIGBEE_EZSP
 
 #include <memory>
 #define Z_EEPROM_DEBUG
@@ -453,4 +454,5 @@ int32_t ZFS_Write_File::close(void) {
   return length;
 }
 
+#endif // USE_ZIGBEE_EZSP
 #endif // USE_ZIGBEE
