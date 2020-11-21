@@ -206,6 +206,7 @@ class SBuffer hibernateDeviceData(const struct Z_Device & device, bool mqtt = fa
 \*********************************************************************************************/
 void hibernateAllData(void) {
 #ifdef USE_ZIGBEE_EZSP
+  if (Rtc.utc_time < START_VALID_TIME) { return; }
   if (!zigbee.eeprom_ready) { return; }
 
   ZFS_Write_File write_data(ZIGB_DATA2);
