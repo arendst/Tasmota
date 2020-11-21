@@ -328,8 +328,7 @@ void TasmotaClient_FlashPage(uint8_t addr_h, uint8_t addr_l, uint8_t* data) {
 
 uint32_t TasmotaClient_Flash(uint32_t data, size_t size) {
   if (!TasmotaClient_SetupFlash()) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Flashing aborted!"));
-    TasmotaGlobal.restart_flag = 2;
+//    AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Flashing aborted!"));
     return 1;
   }
 
@@ -372,8 +371,7 @@ uint32_t TasmotaClient_Flash(uint32_t data, size_t size) {
     }
   }
   TasmotaClient_exitProgMode();
-  AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Flash done!"));
-  TasmotaGlobal.restart_flag = 2;
+//  AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Flash done!"));
   return 0;
 }
 
