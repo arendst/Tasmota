@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.1.0.2]
 ### Added
 - KNX read reply for Power (#9236, #9891)
+- Zigbee persistence of device/sensir data in EEPROM (only ZBBridge)
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)

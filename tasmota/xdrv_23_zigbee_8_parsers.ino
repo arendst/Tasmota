@@ -1851,11 +1851,27 @@ int32_t ZNP_Recv_Default(int32_t res, const class SBuffer &buf) {
 \*********************************************************************************************/
 
 //
+// Callback for loading preparing EEPROM, called by the state machine
+//
+int32_t Z_Prepare_EEPROM(uint8_t value) {
+  ZFS::initOrFormat();
+  return 0;                              // continue
+}
+
+//
 // Callback for loading Zigbee configuration from Flash, called by the state machine
 //
 int32_t Z_Load_Devices(uint8_t value) {
   // try to hidrate from known devices
   loadZigbeeDevices();
+  return 0;                              // continue
+}
+
+//
+// Callback for loading Zigbee data from EEPROM, called by the state machine
+//
+int32_t Z_Load_Data(uint8_t value) {
+  hydrateDevicesDataFromEEPROM();
   return 0;                              // continue
 }
 
