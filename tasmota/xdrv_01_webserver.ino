@@ -2898,17 +2898,17 @@ void HandleUploadLoop(void)
       }
 #endif  // USE_RF_FLASH
 #ifdef USE_TASMOTA_CLIENT
-      else if (UPL_TASMOTACLIENT == Web.upload_file_type) {
+      if (UPL_TASMOTACLIENT == Web.upload_file_type) {
         error = TasmotaClient_Flash(BUploadStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
       }
 #endif  // USE_TASMOTA_CLIENT
 #ifdef SHELLY_FW_UPGRADE
-      else if (UPL_SHD == Web.upload_file_type) {
+      if (UPL_SHD == Web.upload_file_type) {
         error = ShdFlash(data, BUpload.spi_hex_size);
       }
 #endif  // SHELLY_FW_UPGRADE
 #ifdef USE_ZIGBEE_EZSP
-      else if (UPL_EFR32 == Web.upload_file_type) {
+      if (UPL_EFR32 == Web.upload_file_type) {
         BUpload.ready = true;  // So we know on upload success page if it needs to flash hex or do a normal restart
       }
 #endif  // USE_ZIGBEE_EZSP
