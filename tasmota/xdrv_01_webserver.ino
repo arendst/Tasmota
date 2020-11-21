@@ -2709,7 +2709,7 @@ void HandleUploadDone(void)
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
 
-#if defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE) || defined(USE_RF_FLASH)
+#ifdef USE_TASMOTA_CLIENT
     if (BUpload.ready) {
       WSContentSend_P(PSTR("<br><div style='text-align:center;'><b>" D_TRANSFER_STARTED " ...</b></div>"));
       TasmotaGlobal.restart_flag = 0;  // Hold restart as code still needs to be transferred to STM
@@ -2728,16 +2728,6 @@ void HandleUploadDone(void)
 
 #ifdef USE_WEB_FW_UPGRADE
   if (BUpload.ready) {
-#ifdef USE_RF_FLASH
-    if (UPL_EFM8BB1 == Web.upload_file_type) {
-      SnfBrFlash(BUploadStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
-    }
-#endif  // USE_RF_FLASH
-#ifdef SHELLY_FW_UPGRADE
-    if (UPL_SHD == Web.upload_file_type) {
-      ShdFlash(BUploadStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
-    }
-#endif
 #ifdef USE_TASMOTA_CLIENT
     if (UPL_TASMOTACLIENT == Web.upload_file_type) {
       TasmotaClient_Flash(BUploadStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
@@ -2925,7 +2915,32 @@ void HandleUploadLoop(void)
 #ifdef USE_WEB_FW_UPGRADE
     else if (BUpload.active) {
       // Done writing the hex to SPI flash
-      BUpload.ready = true; // So we know on upload success page if it needs to flash hex or do a normal restart
+      BUpload.ready = true;  // So we know on upload success page if it needs to flash hex or do a normal restart
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Transfer %u bytes"), upload.totalSize);
+
+      uint8_t* data = (uint8_t*)(0x40200000 + (BUploadStartSector() * SPI_FLASH_SEC_SIZE));
+
+//      uint32_t* values = (uint32_t*)(data);  // Only 4-byte access allowed
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Head 0x%08X"), values[0]);
+
+      uint32_t error = 0;
+#ifdef USE_RF_FLASH
+      if (UPL_EFM8BB1 == Web.upload_file_type) {
+        error = SnfBrUpdateFirmware(data, BUpload.spi_hex_size);
+        BUploadDone();
+      }
+#endif  // USE_RF_FLASH
+#ifdef SHELLY_FW_UPGRADE
+      else if (UPL_SHD == Web.upload_file_type) {
+        error = ShdFlash(data, BUpload.spi_hex_size);
+        BUploadDone();
+      }
+#endif
+      if (error != 0) {
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Transfer error %d"), error);
+        Web.upload_error = 8;  // File invalid
+        return;
+      }
     }
 #endif  // USE_WEB_FW_UPGRADE
     else if (!Update.end(true)) { // true to set the size to the current progress

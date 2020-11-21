@@ -130,7 +130,7 @@ void ShdResetToDFUMode()
     delay(50); // wait 50ms fot the co-processor to come online
 }
 
-bool ShdUpdateFirmware(const uint8_t data[], unsigned int size)
+bool ShdUpdateFirmware(uint8_t* data, uint32_t size)
 {
 #ifdef SHELLY_DIMMER_DEBUG
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Update firmware"));
@@ -188,7 +188,7 @@ bool ShdPresent(void) {
   return Shd.present;
 }
 
-void ShdFlash(uint32_t data, size_t size) {
+uint32_t ShdFlash(uint8_t* data, size_t size) {
 #ifdef SHELLY_DIMMER_DEBUG
   AddLog_P(LOG_LEVEL_INFO, PSTR(SHD_LOGNAME "Updating firmware v%u.%u with %u bytes"), Shd.dimmer.version_major, Shd.dimmer.version_minor, size);
 #endif  // SHELLY_DIMMER_DEBUG
@@ -196,17 +196,13 @@ void ShdFlash(uint32_t data, size_t size) {
   Serial.end();
   Serial.begin(115200, SERIAL_8E1);
   ShdResetToDFUMode();
-//  uint32_t* values = (uint32_t*)(0x40200000 + data);
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR(SHD_LOGNAME "Flash 0x%08X"), values[0]);
-  ShdUpdateFirmware((uint8_t*)(0x40200000 + data), size);  // Allow flash access without ESP.flashRead
+  bool error = !ShdUpdateFirmware(data, size);  // Allow flash access without ESP.flashRead
   Serial.end();
-
   ShdResetToAppMode();
   Serial.begin(115200, SERIAL_8N1);
-
   ShdSendVersion();
 
-  TasmotaGlobal.restart_flag = 2;  // Restart to re-init stopped services
+  return error;
 }
 
 #endif // SHELLY_FW_UPGRADE

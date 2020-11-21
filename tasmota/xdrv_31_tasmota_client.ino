@@ -24,6 +24,13 @@
 
 #define XDRV_31                    31
 
+#ifndef USE_TASMOTA_CLIENT_FLASH_SPEED
+#define USE_TASMOTA_CLIENT_FLASH_SPEED  57600  // Usually 57600 for 3.3V variants and 115200 for 5V variants
+#endif
+#ifndef USE_TASMOTA_CLIENT_SERIAL_SPEED
+#define USE_TASMOTA_CLIENT_SERIAL_SPEED 57600  // Depends on the sketch that is running on the Uno/Pro Mini
+#endif
+
 #define CONST_STK_CRC_EOP          0x20
 
 #define CMND_STK_GET_SYNC          0x30
@@ -134,7 +141,6 @@ uint8_t SimpleHexParse::getByte(char* hexline, uint8_t idx) {
 struct TCLIENT {
   uint8_t inverted = LOW;
   bool type = false;
-  bool flashing  = false;
   bool SerialEnabled = false;
   uint8_t waitstate = 0;            // We use this so that features detection does not slow down other stuff on startup
   bool unsupported = false;
@@ -320,25 +326,22 @@ void TasmotaClient_FlashPage(uint8_t addr_h, uint8_t addr_l, uint8_t* data) {
   TasmotaClient_Serial->read();
 }
 
-void TasmotaClient_Flash(uint32_t data, size_t size) {
-  bool reading = true;
+uint32_t TasmotaClient_Flash(uint32_t data, size_t size) {
+  if (!TasmotaClient_SetupFlash()) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Flashing aborted!"));
+    TasmotaGlobal.restart_flag = 2;
+    return 1;
+  }
+
   uint32_t read = 0;
   uint32_t processed = 0;
   char thishexline[50];
   uint8_t position = 0;
-  char* flash_buffer;
 
   SimpleHexParse hexParse = SimpleHexParse();
-
-  if (!TasmotaClient_SetupFlash()) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Flashing aborted!"));
-    TClient.flashing  = false;
-    TasmotaGlobal.restart_flag = 2;
-    return;
-  }
-
-  flash_buffer = new char[SPI_FLASH_SEC_SIZE];
+  char* flash_buffer = new char[SPI_FLASH_SEC_SIZE];
   uint32_t flash_start = data;
+  bool reading = true;
   while (reading) {
     ESP.flashRead(flash_start + read, (uint32_t*)flash_buffer, SPI_FLASH_SEC_SIZE);
     read = read + SPI_FLASH_SEC_SIZE;
@@ -370,16 +373,8 @@ void TasmotaClient_Flash(uint32_t data, size_t size) {
   }
   TasmotaClient_exitProgMode();
   AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Flash done!"));
-  TClient.flashing  = false;
   TasmotaGlobal.restart_flag = 2;
-}
-
-void TasmotaClient_SetFlagFlashing(bool value) {
-  TClient.flashing  = value;
-}
-
-bool TasmotaClient_GetFlagFlashing(void) {
-  return TClient.flashing;
+  return 0;
 }
 
 void TasmotaClient_Init(void) {

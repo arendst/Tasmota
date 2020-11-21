@@ -140,7 +140,7 @@ uint8_t rf_erase_flash(void) {
   return 0;
 }
 
-uint32_t SnfBrUpdateFirmware(uint8_t* data, unsigned int size) {
+uint32_t SnfBrUpdateFirmware(uint8_t* data, uint32_t size) {
   pinMode(PIN_C2CK, OUTPUT);
   pinMode(PIN_C2D, INPUT);
 
@@ -150,17 +150,6 @@ uint32_t SnfBrUpdateFirmware(uint8_t* data, unsigned int size) {
 //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RFB: Erased"));
 
   return rf_search_and_write(data, size);
-}
-
-void SnfBrFlash(uint32_t data, size_t size) {
-//  uint32_t* values = (uint32_t*)(0x40200000 + data);
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RFB: Flash 0x%08X"), values[0]);
-
-  uint32_t error = SnfBrUpdateFirmware((uint8_t*)(0x40200000 + data), size);  // Allow flash access without ESP.flashRead
-
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RFB: FW flash state %d"), error);
-
-  TasmotaGlobal.restart_flag = 2;  // Restart to re-init stopped services
 }
 #endif  // USE_RF_FLASH
 
