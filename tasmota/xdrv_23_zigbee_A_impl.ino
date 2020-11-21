@@ -1250,9 +1250,16 @@ void CmndZbSave(void) {
     case -1:      // dump configuration
       loadZigbeeDevices(true);    // dump only
       break;
-    case -2:      // dump data
-      dumpZigbeeDevicesData();
+    case -2:
+      hydrateDevicesDataFromEEPROM();
       break;
+#ifdef Z_EEPROM_DEBUG
+    case -10:
+      { // reinit EEPROM
+      ZFS::erase();
+      break;
+      }
+#endif
     default:
       saveZigbeeDevices();
       break;
@@ -1456,24 +1463,32 @@ void CmndZbStatus(void) {
 //
 void CmndZbData(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+  RemoveSpace(XdrvMailbox.data);
 
-  // check if parameters contain a comma ','
-  char *p;
-  strtok_r(XdrvMailbox.data, ",", &p);
-
-  // parse first part, <device_id>
-  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true);  // in case of short_addr, it must be already registered
-  if (!device.valid()) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
-
-  if (p) {
-    // set ZbData
-    const SBuffer buf = SBuffer::SBufferFromHex(p, strlen(p));
-    hydrateDeviceData(device, buf, 0, buf.len());
+  if (strlen(XdrvMailbox.data) == 0) {
+    // if empty, log values for all devices
+    for (const auto & device : zigbee_devices.getDevices()) {
+      hibernateDeviceData(device, true);    // simple log, no mqtt
+    }
   } else {
-    // non-JSON, export current data
-    // ZbData 0x1234
-    // ZbData Device_Name
-    hibernateDeviceData(device, true);    // log
+    // check if parameters contain a comma ','
+    char *p;
+    strtok_r(XdrvMailbox.data, ",", &p);
+
+    // parse first part, <device_id>
+    Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true);  // in case of short_addr, it must be already registered
+    if (!device.valid()) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
+
+    if (p) {
+      // set ZbData
+      const SBuffer buf = SBuffer::SBufferFromHex(p, strlen(p));
+      hydrateDeviceData(device, buf, 0, buf.len());
+    } else {
+      // non-JSON, export current data
+      // ZbData 0x1234
+      // ZbData Device_Name
+      hibernateDeviceData(device, true);    // mqtt
+    }
   }
 
   ResponseCmndDone();
@@ -1839,6 +1854,11 @@ bool Xdrv23(uint8_t function)
       case FUNC_COMMAND:
         result = DecodeCommand(kZbCommands, ZigbeeCommand);
         break;
+#ifdef USE_ZIGBEE_EZSP
+      case FUNC_SAVE_BEFORE_RESTART:
+        hibernateAllData();
+        break;
+#endif  // USE_ZIGBEE_EZSP
     }
   }
   return result;

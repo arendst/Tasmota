@@ -121,6 +121,7 @@ public:
 
 const static uint32_t ZIGB_NAME1 = 0x3167697A; // 'zig1' little endian
 const static uint32_t ZIGB_NAME2 = 0x3267697A; // 'zig2' little endian, v2
+const static uint32_t ZIGB_DATA2 = 0x32746164; // 'dat2' little endian, v2
 const static size_t   Z_MAX_FLASH = z_block_len - sizeof(Z_Flashentry);  // 2040
 
 bool hibernateDeviceConfiguration(SBuffer & buf, const class Z_Data_Set & data, uint8_t endpoint) {
@@ -318,7 +319,7 @@ void loadZigbeeDevices(bool dump_only = false) {
     // parse what seems to be a valid entry
     SBuffer buf(buf_len);
     buf.addBuffer(z_dev_start + sizeof(Z_Flashentry), buf_len);
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee devices data in Flash v%d (%d bytes)"), version, buf_len);
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee device information in Flash (%d bytes)"), buf_len);
 
     if (dump_only) {
       size_t buf_len = buf.len();
@@ -332,7 +333,7 @@ void loadZigbeeDevices(bool dump_only = false) {
       zigbee_devices.clean();   // don't write back to Flash what we just loaded
     }
   } else {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No zigbee devices data in Flash"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No Zigbee device information in Flash"));
   }
 #ifdef ESP32
   free(spi_buffer);
