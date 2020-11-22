@@ -227,4 +227,22 @@ void hibernateAllData(void) {
 #endif // USE_ZIGBEE_EZSP
 }
 
+/*********************************************************************************************\
+ * Timer to save every 60 minutes
+\*********************************************************************************************/
+const uint32_t Z_SAVE_DATA_TIMER = 60 * 60 * 1000;       // save data every 60 minutes (in ms)
+
+//
+// Callback for setting the timer to save Zigbee Data in x seconds
+//
+int32_t Z_Set_Save_Data_Timer(uint8_t value) {
+  zigbee_devices.setTimer(0x0000, 0, Z_SAVE_DATA_TIMER, 0, 0, Z_CAT_ALWAYS, 0 /* value */, &Z_SaveDataTimer);
+  return 0;                              // continue
+}
+
+void Z_SaveDataTimer(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+  hibernateAllData();
+  Z_Set_Save_Data_Timer(0);     // set a new timer
+}
+
 #endif // USE_ZIGBEE
