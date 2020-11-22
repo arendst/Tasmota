@@ -537,6 +537,8 @@ int32_t Z_ReceiveActiveEp(int32_t res, const class SBuffer &buf) {
   uint8_t*          activeEpList = (uint8_t*) buf.charptr(4);
 #endif
 
+  // device is reachable
+  zigbee_devices.deviceWasReached(nwkAddr);
   for (uint32_t i = 0; i < activeEpCount; i++) {
     uint8_t ep = activeEpList[i];
     zigbee_devices.getShortAddr(nwkAddr).addEndpoint(ep);
@@ -660,6 +662,9 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
 #endif
 
   if (0 == status) {
+    // device is reachable
+    zigbee_devices.deviceWasReached(nwkAddr);
+
     if (!Settings.flag4.zb_disable_autobind) {
       Z_AutoBindDefer(nwkAddr, endpoint, buf, numInIndex, numInCluster, numOutIndex, numOutCluster);
     }
@@ -709,6 +714,7 @@ int32_t Z_ReceiveIEEEAddr(int32_t res, const class SBuffer &buf) {
 
   if (0 == status) {    // SUCCESS
     zigbee_devices.updateDevice(nwkAddr, ieeeAddr);
+    zigbee_devices.deviceWasReached(nwkAddr);
     char hex[20];
     Uint64toHex(ieeeAddr, hex, 64);
     // Ping response
@@ -825,6 +831,8 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
 #endif
 
   zigbee_devices.updateDevice(nwkAddr, ieeeAddr);
+  // device is reachable
+  zigbee_devices.deviceWasReached(nwkAddr);
 
   char hex[20];
   Uint64toHex(ieeeAddr, hex, 64);
@@ -855,6 +863,8 @@ int32_t ZNP_ReceiveTCDevInd(int32_t res, const class SBuffer &buf) {
   Z_ShortAddress    parentNw = buf.get16(12);
 
   zigbee_devices.updateDevice(srcAddr, ieeeAddr);
+  // device is reachable
+  zigbee_devices.deviceWasReached(srcAddr);
 
   char hex[20];
   Uint64toHex(ieeeAddr, hex, 64);
@@ -882,6 +892,9 @@ int32_t Z_BindRsp(int32_t res, const class SBuffer &buf) {
   Z_ShortAddress    nwkAddr = buf.get16(buf.len()-2);   // last 2 bytes
   String            msg = getZDPStatusMessage(status);
 #endif // USE_ZIGBEE_EZSP
+
+  // device is reachable
+  zigbee_devices.deviceWasReached(nwkAddr);
 
   const char * friendlyName = zigbee_devices.getFriendlyName(nwkAddr);
 
@@ -912,6 +925,9 @@ int32_t Z_UnbindRsp(int32_t res, const class SBuffer &buf) {
   Z_ShortAddress    nwkAddr = buf.get16(buf.len()-2);   // last 2 bytes
   String            msg = getZDPStatusMessage(status);
 #endif // USE_ZIGBEE_EZSP
+
+  // device is reachable
+  zigbee_devices.deviceWasReached(nwkAddr);
 
   const char * friendlyName = zigbee_devices.getFriendlyName(nwkAddr);
 
@@ -948,6 +964,9 @@ int32_t Z_MgmtBindRsp(int32_t res, const class SBuffer &buf) {
   uint8_t     bind_len    = buf.get8(3);
   const size_t prefix_len = 4;
 #endif // USE_ZIGBEE_EZSP
+
+  // device is reachable
+  zigbee_devices.deviceWasReached(shortaddr);
 
   const char * friendlyName = zigbee_devices.getFriendlyName(shortaddr);
 
@@ -1057,6 +1076,9 @@ int32_t Z_MgmtLqiRsp(int32_t res, const class SBuffer &buf) {
   const size_t prefix_len = 4;
 #endif // USE_ZIGBEE_EZSP
 
+  // device is reachable
+  zigbee_devices.deviceWasReached(shortaddr);
+
   const char * friendlyName = zigbee_devices.getFriendlyName(shortaddr);
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_MAP "\":{\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""), shortaddr);
@@ -1134,6 +1156,9 @@ int32_t EZ_ParentAnnceRsp(int32_t res, const class SBuffer &buf, bool rsp) {
     num_children = buf.get8(0);
     prefix_len = 1;
   }
+
+  // device is reachable
+  zigbee_devices.deviceWasReached(shortaddr);
 
   const char * friendlyName = zigbee_devices.getFriendlyName(shortaddr);
 
@@ -1478,6 +1503,7 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
   if (device.valid()) {
     device.setLQI(linkquality != 0xFF ? linkquality : 0xFE);       // EFR32 has a different scale for LQI
     device.setLastSeenNow();
+    zigbee_devices.deviceWasReached(srcaddr);
   }
 
   char shortaddr[8];
@@ -1524,12 +1550,6 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
     zcl_received.generateCallBacks(attr_list);      // set deferred callbacks, ex: Occupancy
     Z_postProcessAttributes(srcaddr, zcl_received.getSrcEndpoint(), attr_list);
 
-    // since we just receveived data from the device, it is reachable
-    zigbee_devices.resetTimersForDevice(srcaddr, 0 /* groupaddr */, Z_CAT_REACHABILITY);    // remove any reachability timer already there
-    if (device.valid()) {
-      device.setReachable(true);     // mark device as reachable
-    }
-
     if (defer_attributes) {
       // Prepare for publish
       if (zigbee_devices.jsonIsConflict(srcaddr, attr_list)) {
@@ -1544,7 +1564,6 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
     }
   }
 }
-
 
 #ifdef USE_ZIGBEE_EZSP
 

@@ -200,6 +200,10 @@ void Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster
 void Z_Unreachable(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   if (BAD_SHORTADDR != shortaddr) {
     zigbee_devices.getShortAddr(shortaddr).setReachable(false);     // mark device as reachable
+    Z_attribute_list attr_list;
+    attr_list.addAttribute(F("Reachable")).setBool(false);        // "Reachable":false
+    // Z_postProcessAttributes(shortaddr, endpoint, attr_list);  // make sure all is updated accordingly
+    zigbee_devices.jsonPublishNow(shortaddr, attr_list);
   }
 }
 
