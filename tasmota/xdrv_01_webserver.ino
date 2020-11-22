@@ -2575,14 +2575,10 @@ struct {
   bool ready;
 } BUpload;
 
-uint32_t BUploadStartSector(void) {
-  return (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 2;  // Stay on the safe side
-}
-
 void BUploadInit(uint32_t file_type) {
   Web.upload_file_type = file_type;
   BUpload.spi_hex_size = 0;
-  BUpload.spi_sector_counter = BUploadStartSector();
+  BUpload.spi_sector_counter = FlashWriteStartSector();
   BUpload.spi_sector_cursor = 0;
   BUpload.active = true;
   BUpload.ready = false;
@@ -2590,15 +2586,19 @@ void BUploadInit(uint32_t file_type) {
 
 uint32_t BUploadWriteBuffer(uint8_t *buf, size_t size) {
   if (0 == BUpload.spi_sector_cursor) { // Starting a new sector write so we need to erase it first
-    ESP.flashEraseSector(BUpload.spi_sector_counter);
+    if (!ESP.flashEraseSector(BUpload.spi_sector_counter)) {
+      return 7;  // Upload aborted - flash failed
+    }
   }
   BUpload.spi_sector_cursor++;
-  ESP.flashWrite((BUpload.spi_sector_counter * SPI_FLASH_SEC_SIZE) + ((BUpload.spi_sector_cursor -1) * 2048), (uint32_t*)buf, size);
+  if (!ESP.flashWrite((BUpload.spi_sector_counter * SPI_FLASH_SEC_SIZE) + ((BUpload.spi_sector_cursor -1) * 2048), (uint32_t*)buf, size)) {
+    return 7;  // Upload aborted - flash failed
+  }
   BUpload.spi_hex_size += size;
   if (2 == BUpload.spi_sector_cursor) {  // The web upload sends 2048 bytes at a time so keep track of the cursor position to reset it for the next flash sector erase
     BUpload.spi_sector_cursor = 0;
     BUpload.spi_sector_counter++;
-    if (BUpload.spi_sector_counter > (SPIFFS_END -2)) {
+    if (BUpload.spi_sector_counter > FlashWriteMaxSector()) {
       return 9;  // File too large - Not enough free space
     }
   }
@@ -2660,7 +2660,7 @@ void HandleUploadDone(void)
   if ((UPL_EFR32 == Web.upload_file_type) && !Web.upload_error && BUpload.ready) {
     BUpload.ready = false;  //  Make sure not to follow thru again
     // GUI xmodem
-    ZigbeeUploadStep1Done(BUploadStartSector(), BUpload.spi_hex_size);
+    ZigbeeUploadStep1Done(FlashWriteStartSector(), BUpload.spi_hex_size);
     HandleZigbeeXfer();
     return;
   }
@@ -2886,7 +2886,8 @@ void HandleUploadLoop(void)
 
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Transfer %u bytes"), upload.totalSize);
 
-      uint8_t* data = (uint8_t*)(0x40200000 + (BUploadStartSector() * SPI_FLASH_SEC_SIZE));
+//      uint8_t* data = (uint8_t*)(0x40200000 + (FlashWriteStartSector() * SPI_FLASH_SEC_SIZE));
+        uint8_t* data = FlashDirectAccess();
 
 //      uint32_t* values = (uint32_t*)(data);  // Only 4-byte access allowed
 //      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Head 0x%08X"), values[0]);
@@ -2899,7 +2900,7 @@ void HandleUploadLoop(void)
 #endif  // USE_RF_FLASH
 #ifdef USE_TASMOTA_CLIENT
       if (UPL_TASMOTACLIENT == Web.upload_file_type) {
-        error = TasmotaClient_Flash(BUploadStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
+        error = TasmotaClient_Flash(FlashWriteStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
       }
 #endif  // USE_TASMOTA_CLIENT
 #ifdef SHELLY_FW_UPGRADE
