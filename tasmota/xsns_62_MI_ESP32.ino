@@ -109,17 +109,17 @@ struct {
 #pragma pack(1)  // byte-aligned structures to read the sensor data
 
   struct {
-    uint16_t temp;
+    int16_t temp;
     uint8_t hum;
     uint16_t volt; // LYWSD03 only
   } LYWSD0x_HT;
   struct {
     uint8_t spare;
-    uint16_t temp;
+    int16_t temp;
     uint16_t hum;
   } CGD1_HT;
   struct {
-    uint16_t temp;
+    int16_t temp;
     uint8_t spare;
     uint32_t lux;
     uint8_t moist;
@@ -138,11 +138,11 @@ struct mi_beacon_t{
   uint8_t size;
   union {
     struct{ //0d
-      uint16_t temp;
+      int16_t temp;
       uint16_t hum;
     }HT;
     uint8_t bat; //0a
-    uint16_t temp; //04
+    int16_t temp; //04
     uint16_t hum; //06
     uint32_t lux; //07
     uint8_t moist; //08
@@ -187,7 +187,7 @@ union mi_bindKey_t{
 
 struct ATCPacket_t{
   uint8_t MAC[6];
-  int16_t temp; //sadly this is in wrong endianess
+  uint16_t temp; //sadly this is in wrong endianess
   uint8_t hum;
   uint8_t batPer;
   uint16_t batMV;
@@ -1414,7 +1414,7 @@ void MI32ParseATCPacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI)
 
   MIBLEsensors[_slot].RSSI=RSSI;
 
-  MIBLEsensors.at(_slot).temp = (float)(__builtin_bswap16(_packet->temp))/10.0f;
+  MIBLEsensors.at(_slot).temp = (float)(int16_t(__builtin_bswap16(_packet->temp)))/10.0f;
   MIBLEsensors.at(_slot).hum = (float)_packet->hum;
   MIBLEsensors[_slot].eventType.tempHum  = 1;
   MIBLEsensors.at(_slot).bat = _packet->batPer;
@@ -1983,7 +1983,7 @@ void CmndMi32Option(void){
  * Presentation
 \*********************************************************************************************/
 
-const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 v0917{m}%u%s / %u{e}";
+const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 v0917a{m}%u%s / %u{e}";
 const char HTTP_MI32_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
 const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u %%{e}";
