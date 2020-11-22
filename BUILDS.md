@@ -28,7 +28,8 @@
 | USE_EXPRESSION        | - | - | - | - | - | - | - |
 | SUPPORT_IF_STATEMENT  | - | - | - | - | - | - | - |
 | USE_HOTPLUG           | - | - | - | - | - | - | - |
-| USE_PROMETHEUS        | - | - | - | - | - | - | - | Enables the `/metrics` endpoint
+| USE_PROMETHEUS        | - | - | - | - | - | - | - |
+| USE_PING              | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | ROTARY_V1             | - | - | x | - | x | - | - |
