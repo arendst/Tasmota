@@ -1044,6 +1044,9 @@ void CmndZbProbeOrPing(boolean probe) {
   uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, true).shortaddr;
   if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
 
+  // set a timer for Reachable - 2s default value
+  zigbee_devices.setTimer(shortaddr, 0, Z_CAT_REACHABILITY_TIMEOUT, 0, 0, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
+
   // everything is good, we can send the command
   Z_SendIEEEAddrReq(shortaddr);
   if (probe) {

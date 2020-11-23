@@ -34,7 +34,7 @@
 const uint16_t CHUNKED_BUFFER_SIZE = (MESSZ / 2) - 100;  // Chunk buffer size (should be smaller than half mqtt_data size = MESSZ)
 
 const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
-const uint16_t HTTP_RESTART_RECONNECT_TIME = 9000;       // milliseconds - Allow time for restart and wifi reconnect
+const uint16_t HTTP_RESTART_RECONNECT_TIME = 10000;      // milliseconds - Allow time for restart and wifi reconnect
 const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 24000;  // milliseconds - Allow time for uploading binary, unzip/write to final destination and wifi reconnect
 
 #include <ESP8266WebServer.h>
@@ -2575,14 +2575,10 @@ struct {
   bool ready;
 } BUpload;
 
-uint32_t BUploadStartSector(void) {
-  return (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 2;  // Stay on the safe side
-}
-
 void BUploadInit(uint32_t file_type) {
   Web.upload_file_type = file_type;
   BUpload.spi_hex_size = 0;
-  BUpload.spi_sector_counter = BUploadStartSector();
+  BUpload.spi_sector_counter = FlashWriteStartSector();
   BUpload.spi_sector_cursor = 0;
   BUpload.active = true;
   BUpload.ready = false;
@@ -2590,25 +2586,23 @@ void BUploadInit(uint32_t file_type) {
 
 uint32_t BUploadWriteBuffer(uint8_t *buf, size_t size) {
   if (0 == BUpload.spi_sector_cursor) { // Starting a new sector write so we need to erase it first
-    ESP.flashEraseSector(BUpload.spi_sector_counter);
+    if (!ESP.flashEraseSector(BUpload.spi_sector_counter)) {
+      return 7;  // Upload aborted - flash failed
+    }
   }
   BUpload.spi_sector_cursor++;
-  ESP.flashWrite((BUpload.spi_sector_counter * SPI_FLASH_SEC_SIZE) + ((BUpload.spi_sector_cursor -1) * 2048), (uint32_t*)buf, size);
+  if (!ESP.flashWrite((BUpload.spi_sector_counter * SPI_FLASH_SEC_SIZE) + ((BUpload.spi_sector_cursor -1) * 2048), (uint32_t*)buf, size)) {
+    return 7;  // Upload aborted - flash failed
+  }
   BUpload.spi_hex_size += size;
   if (2 == BUpload.spi_sector_cursor) {  // The web upload sends 2048 bytes at a time so keep track of the cursor position to reset it for the next flash sector erase
     BUpload.spi_sector_cursor = 0;
     BUpload.spi_sector_counter++;
-    if (BUpload.spi_sector_counter > (SPIFFS_END -2)) {
+    if (BUpload.spi_sector_counter > FlashWriteMaxSector()) {
       return 9;  // File too large - Not enough free space
     }
   }
   return 0;
-}
-
-void BUploadDone(void) {
-  Web.upload_file_type = UPL_TASMOTA;
-  BUpload.active = false;
-  BUpload.ready = false;
 }
 
 #endif  // USE_WEB_FW_UPGRADE
@@ -2664,9 +2658,9 @@ void HandleUploadDone(void)
 
 #if defined(USE_ZIGBEE_EZSP)
   if ((UPL_EFR32 == Web.upload_file_type) && !Web.upload_error && BUpload.ready) {
-    BUploadDone();  //  Make sure not to follow thru again
+    BUpload.ready = false;  //  Make sure not to follow thru again
     // GUI xmodem
-    ZigbeeUploadStep1Done(BUploadStartSector(), BUpload.spi_hex_size);
+    ZigbeeUploadStep1Done(FlashWriteStartSector(), BUpload.spi_hex_size);
     HandleZigbeeXfer();
     return;
   }
@@ -2685,13 +2679,7 @@ void HandleUploadDone(void)
 
   WSContentStart_P(PSTR(D_INFORMATION));
   if (!Web.upload_error) {
-    uint32_t javascript_settimeout = HTTP_OTA_RESTART_RECONNECT_TIME;
-#if defined(USE_ZIGBEE_EZSP)
-    if (ZigbeeUploadFinish()) {
-      javascript_settimeout = 10000;                                  // Refesh main web ui after transfer upgrade
-    }
-#endif  // USE_ZIGBEE_EZSP
-    WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, javascript_settimeout);  // Refesh main web ui after OTA upgrade
+    WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, (UPL_TASMOTA == Web.upload_file_type) ? HTTP_OTA_RESTART_RECONNECT_TIME : HTTP_RESTART_RECONNECT_TIME);  // Refesh main web ui after OTA upgrade
   }
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
@@ -2708,34 +2696,13 @@ void HandleUploadDone(void)
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
-
-#ifdef USE_TASMOTA_CLIENT
-    if (BUpload.ready) {
-      WSContentSend_P(PSTR("<br><div style='text-align:center;'><b>" D_TRANSFER_STARTED " ...</b></div>"));
-      TasmotaGlobal.restart_flag = 0;  // Hold restart as code still needs to be transferred to STM
-    }
-#endif  // USE_TASMOTA_CLIENT or SHELLY_FW_UPGRADE
-
-    if (TasmotaGlobal.restart_flag) {
-      WSContentSend_P(HTTP_MSG_RSTRT);
-      ShowWebSource(SRC_WEBGUI);
-    }
+    WSContentSend_P(HTTP_MSG_RSTRT);
+    ShowWebSource(SRC_WEBGUI);
   }
   SettingsBufferFree();
   WSContentSend_P(PSTR("</div><br>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
-
-#ifdef USE_WEB_FW_UPGRADE
-  if (BUpload.ready) {
-#ifdef USE_TASMOTA_CLIENT
-    if (UPL_TASMOTACLIENT == Web.upload_file_type) {
-      TasmotaClient_Flash(BUploadStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
-    }
-#endif
-    BUploadDone();
-  }
-#endif  // USE_WEB_FW_UPGRADE
 }
 
 void HandleUploadLoop(void)
@@ -2795,6 +2762,16 @@ void HandleUploadLoop(void)
         BUploadInit(UPL_EFM8BB1);
       }
 #endif  // USE_RF_FLASH
+#ifdef USE_TASMOTA_CLIENT
+      else if (TasmotaClient_Available() && (':' == upload.buf[0])) {  // Check if this is a ARDUINO CLIENT hex file
+        BUploadInit(UPL_TASMOTACLIENT);
+      }
+#endif  // USE_TASMOTA_CLIENT
+#ifdef SHELLY_FW_UPGRADE
+      else if (ShdPresent() && (0x00 == upload.buf[0]) && (0x10 == upload.buf[1])) {
+        BUploadInit(UPL_SHD);
+      }
+#endif  // SHELLY_FW_UPGRADE
 #ifdef USE_ZIGBEE_EZSP
 #ifdef ESP8266
       else if ((SONOFF_ZB_BRIDGE == TasmotaGlobal.module_type) && (0xEB == upload.buf[0])) {  // Check if this is a Zigbee bridge FW file
@@ -2807,17 +2784,7 @@ void HandleUploadLoop(void)
         if (Web.upload_error != 0) { return; }
         BUploadInit(UPL_EFR32);
       }
-#endif
-#ifdef USE_TASMOTA_CLIENT
-      else if (TasmotaClient_Available() && (':' == upload.buf[0])) {  // Check if this is a ARDUINO CLIENT hex file
-        BUploadInit(UPL_TASMOTACLIENT);
-      }
-#endif
-#ifdef SHELLY_FW_UPGRADE
-      else if (ShdPresent() && (0x00 == upload.buf[0]) && (0x10 == upload.buf[1])) {
-        BUploadInit(UPL_SHD);
-      }
-#endif
+#endif  // USE_ZIGBEE_EZSP
 #endif  // USE_WEB_FW_UPGRADE
       else if ((upload.buf[0] != 0xE9) && (upload.buf[0] != 0x1F)) {  // 0x1F is gzipped 0xE9
         Web.upload_error = 3;      // Invalid file signature - Magic byte is not 0xE9
@@ -2914,11 +2881,13 @@ void HandleUploadLoop(void)
     }
 #ifdef USE_WEB_FW_UPGRADE
     else if (BUpload.active) {
-      // Done writing the hex to SPI flash
-      BUpload.ready = true;  // So we know on upload success page if it needs to flash hex or do a normal restart
+      // Done writing the data to SPI flash
+      BUpload.active = false;
+
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Transfer %u bytes"), upload.totalSize);
 
-      uint8_t* data = (uint8_t*)(0x40200000 + (BUploadStartSector() * SPI_FLASH_SEC_SIZE));
+//      uint8_t* data = (uint8_t*)(0x40200000 + (FlashWriteStartSector() * SPI_FLASH_SEC_SIZE));
+        uint8_t* data = FlashDirectAccess();
 
 //      uint32_t* values = (uint32_t*)(data);  // Only 4-byte access allowed
 //      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Head 0x%08X"), values[0]);
@@ -2927,15 +2896,23 @@ void HandleUploadLoop(void)
 #ifdef USE_RF_FLASH
       if (UPL_EFM8BB1 == Web.upload_file_type) {
         error = SnfBrUpdateFirmware(data, BUpload.spi_hex_size);
-        BUploadDone();
       }
 #endif  // USE_RF_FLASH
-#ifdef SHELLY_FW_UPGRADE
-      else if (UPL_SHD == Web.upload_file_type) {
-        error = ShdFlash(data, BUpload.spi_hex_size);
-        BUploadDone();
+#ifdef USE_TASMOTA_CLIENT
+      if (UPL_TASMOTACLIENT == Web.upload_file_type) {
+        error = TasmotaClient_Flash(FlashWriteStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
       }
-#endif
+#endif  // USE_TASMOTA_CLIENT
+#ifdef SHELLY_FW_UPGRADE
+      if (UPL_SHD == Web.upload_file_type) {
+        error = ShdFlash(data, BUpload.spi_hex_size);
+      }
+#endif  // SHELLY_FW_UPGRADE
+#ifdef USE_ZIGBEE_EZSP
+      if (UPL_EFR32 == Web.upload_file_type) {
+        BUpload.ready = true;  // So we know on upload success page if it needs to flash hex or do a normal restart
+      }
+#endif  // USE_ZIGBEE_EZSP
       if (error != 0) {
         AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Transfer error %d"), error);
         Web.upload_error = 8;  // File invalid

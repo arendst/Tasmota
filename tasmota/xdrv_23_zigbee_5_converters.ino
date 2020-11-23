@@ -278,7 +278,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zsingle,  Cx000C, 0x0041,  Z_(AnalogInMaxValue),     Cm1, 0 },
   { Zsingle,  Cx000C, 0x0045,  Z_(AnalogInMinValue),     Cm1, 0 },
   { Zbool,    Cx000C, 0x0051,  Z_(AnalogInOutOfService), Cm1, 0 },
-  { Zsingle,  Cx000C, 0x0055,  Z_(AqaraRotate),          Cm1, 0 },
+  { Zsingle,  Cx000C, 0x0055,  Z_(AnalogValue),          Cm1, 0 },
   // { 0xFF, Cx000C, 0x0057,  (AnalogInPriorityArray),Cm1, 0 },
   { Zenum8,   Cx000C, 0x0067,  Z_(AnalogInReliability),  Cm1, 0 },
   // { 0xFF, Cx000C, 0x0068,  (AnalogInRelinquishDefault),Cm1, 0 },
@@ -286,6 +286,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zmap8,    Cx000C, 0x006F,  Z_(AnalogInStatusFlags),  Cm1, 0 },
   { Zenum16,  Cx000C, 0x0075,  Z_(AnalogInEngineeringUnits),Cm1, 0 },
   { Zuint32,  Cx000C, 0x0100,  Z_(AnalogInApplicationType),Cm1, 0 },
+  { Zuint16,  Cx000C, 0xFF55,  Z_(AqaraRotate),          Cm1, 0 },
   { Zuint16,  Cx000C, 0xFF05,  Z_(Aqara_FF05),           Cm1, 0 },
 
   // Analog Output cluster
@@ -572,7 +573,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0500, 0xFFF0 + ZA_GlassBreak, Z_(GlassBreak),Cm1, 0 },
 
   // Metering (Smart Energy) cluster
-  { Zuint48,  Cx0702, 0x0000,  Z_(CurrentSummDelivered), Cm1, 0 },
+  { Zuint48,  Cx0702, 0x0000,  Z_(EnergyTotal),          Cm1, 0 },
 
   // Meter Identification cluster
   { Zstring,  Cx0B01, 0x0000,  Z_(CompanyName),          Cm1, 0 },
@@ -592,6 +593,8 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint16,  Cx0B04, 0x0505,  Z_(RMSVoltage),            Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Plug, mains_voltage) },
   { Zuint16,  Cx0B04, 0x0508,  Z_(RMSCurrent),            Cm1, 0 },
   { Zint16,   Cx0B04, 0x050B,  Z_(ActivePower),           Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Plug, mains_power) },
+  { Zint16,   Cx0B04, 0x050E,  Z_(ReactivePower),         Cm1, 0 },
+  { Zint16,   Cx0B04, 0x050F,  Z_(ApparentPower),         Cm1, 0 },
 
   // Diagnostics cluster
   { Zuint16,  Cx0B05, 0x0000,  Z_(NumberOfResets),       Cm1, 0 },
@@ -769,6 +772,7 @@ public:
   void syntheticAqaraSensor2(Z_attribute_list &attr_list, class Z_attribute &attr);
   void syntheticAqaraCubeOrButton(Z_attribute_list &attr_list, class Z_attribute &attr);
   void syntheticAqaraVibration(Z_attribute_list &attr_list, class Z_attribute &attr);
+  void syntheticAnalogValue(Z_attribute_list &attr_list, class Z_attribute &attr);
 
   // handle read attributes auto-responder
   void autoResponder(const uint16_t *attr_list_ids, size_t attr_len);
@@ -1230,6 +1234,9 @@ void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
       case 0x01010508:
         syntheticAqaraVibration(attr_list, attr);
         break;
+      case 0x000C0055:    // Analog Value
+        syntheticAnalogValue(attr_list, attr);
+        break;
     }
   }
 }
@@ -1553,6 +1560,21 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
 }
 
 // ======================================================================
+// Convert AnalogValue according to the device type
+void ZCLFrame::syntheticAnalogValue(Z_attribute_list &attr_list, class Z_attribute &attr) {
+  const char * modelId_c = zigbee_devices.getModelId(_srcaddr);  // null if unknown
+  String modelId((char*) modelId_c);
+  
+  if (modelId.startsWith(F("lumi.sensor_cube"))) {
+    attr.setKeyId(0x000C, 0xFF55);    // change to AqaraRotate
+  }
+  if (modelId.startsWith(F("lumi.plug"))) {
+    attr.setKeyId(0x0702, 0x0000);    // change to EnergyTotal
+  }
+}
+
+
+// ======================================================================
 // New version of synthetic attribute generation
 void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribute &attr) {
   const SBuffer * buf = attr.getRaw();
@@ -1602,6 +1624,14 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
             attr_list.addAttribute(0x0405, 0x0000).setUInt(uval32);         // Humidity * 100
           } else if (0x66 == attrid) {
             attr_list.addAttribute(0x0403, 0x0000).setUInt((ival32 + 50) / 100);  // Pressure
+          }
+        } else if (modelId.startsWith(F("lumi.plug"))) {
+          if (0x64 == attrid) {
+            attr_list.addAttribute(0x0600, 0x0000).setInt(uval32);          // Power (on/off)
+          } else if (0x98 == attrid) {
+            attr_list.addAttribute(0x0B04, 0x050B).setInt(ival32);          // Active Power
+          } else if (0x95 == attrid) {
+            attr_list.addAttribute(0x0702, 0x0000).setUInt(uval32);         // EnergyDelivered
           }
         } else {
           translated = false;     // we didn't find a match
@@ -1704,7 +1734,7 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
     //     presentValue = x + 128 = 180º flip to side x on top
     //     presentValue = x + 256 = push/slide cube while side x is on top
     //     presentValue = x + 512 = double tap while side x is on top
-  } else if (modelId.startsWith(F("lumi.remote")) || modelId.startsWith(F("lumi.sensor_switch"))) {   // only for Aqara buttons WXKG11LM & WXKG12LM
+  } else if (modelId.startsWith(F("lumi.remote")) || modelId.startsWith(F("lumi.sensor_swit"))) {   // only for Aqara buttons WXKG11LM & WXKG12LM, 'swit' because of #9923
     int32_t val = attr.getInt();
     const __FlashStringHelper *aqara_click = F("click");
     const __FlashStringHelper *aqara_action = F("action");

@@ -58,7 +58,7 @@ void (* const MqttCommand[])(void) PROGMEM = {
 struct MQTT {
   uint16_t connect_count = 0;            // MQTT re-connect count
   uint16_t retry_counter = 1;            // MQTT connection retry counter
-  uint16_t retry_counter_delay = 0;      // MQTT retry counter multiplier
+  uint16_t retry_counter_delay = 1;      // MQTT retry counter multiplier
   uint8_t initial_connection_state = 2;  // MQTT connection messages state
   bool connected = false;                // MQTT virtual connection status
   bool allowed = false;                  // MQTT enabled and parameters valid
@@ -486,10 +486,10 @@ void MqttDisconnected(int state)
 {
   Mqtt.connected = false;
 
+  Mqtt.retry_counter = Settings.mqtt_retry * Mqtt.retry_counter_delay;
   if ((Settings.mqtt_retry * Mqtt.retry_counter_delay) < 120) {
     Mqtt.retry_counter_delay++;
   }
-  Mqtt.retry_counter = Settings.mqtt_retry * Mqtt.retry_counter_delay;
 
   MqttClient.disconnect();
 
@@ -505,7 +505,7 @@ void MqttConnected(void)
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECTED));
     Mqtt.connected = true;
     Mqtt.retry_counter = 0;
-    Mqtt.retry_counter_delay = 0;
+    Mqtt.retry_counter_delay = 1;
     Mqtt.connect_count++;
 
     GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);

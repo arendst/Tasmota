@@ -832,6 +832,9 @@ public:
   bool isHueBulbHidden(uint16_t shortaddr) const ;
   Z_Data_Light & getLight(uint16_t shortaddr);
 
+  // device is reachable
+  void deviceWasReached(uint16_t shortaddr);
+
   // Timers
   void resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category, uint16_t cluster = 0xFFFF, uint8_t endpoint = 0xFF);
   void setTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait_ms, uint16_t cluster, uint8_t endpoint, uint8_t category, uint32_t value, Z_DeviceTimer func);

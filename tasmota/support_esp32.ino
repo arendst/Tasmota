@@ -75,6 +75,17 @@ void ESP_Restart(void) {
   ESP.reset();
 }
 
+uint32_t FlashWriteStartSector(void) {
+  return (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 2;  // Stay on the safe side
+}
+
+uint32_t FlashWriteMaxSector(void) {
+  return (((uint32_t)&_FS_end - 0x40200000) / SPI_FLASH_SEC_SIZE) - 2;
+}
+
+uint8_t* FlashDirectAccess(void) {
+  return (uint8_t*)(0x40200000 + (FlashWriteStartSector() * SPI_FLASH_SEC_SIZE));
+}
 #endif
 
 /*********************************************************************************************\
@@ -191,6 +202,76 @@ void NvsInfo(void) {
 }
 
 //
+// Flash memory mapping
+//
+
+#include "Esp.h"
+#include "rom/spi_flash.h"
+#include "esp_spi_flash.h"
+#include <memory>
+#include <soc/soc.h>
+#include <soc/efuse_reg.h>
+#include <esp_partition.h>
+extern "C" {
+#include "esp_ota_ops.h"
+#include "esp_image_format.h"
+}
+
+uint32_t EspFlashBaseAddress(void) {
+  const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+  if (!partition) { return 0; }
+
+  return partition->address;  // For tasmota 0x00010000 or 0x00200000
+}
+
+uint32_t EspFlashBaseEndAddress(void) {
+  const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+  if (!partition) { return 0; }
+
+  return partition->address + partition->size;  // For tasmota 0x00200000 or 0x003F0000
+}
+
+uint8_t* EspFlashMmap(uint32_t address) {
+  static spi_flash_mmap_handle_t handle = 0;
+
+  if (handle) {
+    spi_flash_munmap(handle);
+    handle = 0;
+  }
+
+  const uint8_t* data;
+  int32_t err = spi_flash_mmap(address, 5 * SPI_FLASH_MMU_PAGE_SIZE, SPI_FLASH_MMAP_DATA, (const void **)&data, &handle);
+
+/*
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Spi_flash_map %d"), err);
+
+  spi_flash_mmap_dump();
+*/
+  return (uint8_t*)data;
+}
+
+/*
+int32_t EspPartitionMmap(uint32_t action) {
+  static spi_flash_mmap_handle_t handle;
+
+  int32_t err = 0;
+  if (1 == action) {
+    const esp_partition_t *partition = esp_ota_get_running_partition();
+//    const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+    if (!partition) { return 0; }
+    err = esp_partition_mmap(partition, 0, 4 * SPI_FLASH_MMU_PAGE_SIZE, SPI_FLASH_MMAP_DATA, (const void **)&TasmotaGlobal_mmap_data, &handle);
+
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Partition start 0x%08X, Partition end 0x%08X, Mmap data 0x%08X"), partition->address, partition->size, TasmotaGlobal_mmap_data);
+
+  } else {
+    spi_flash_munmap(handle);
+    handle = 0;
+  }
+  return err;
+}
+
+*/
+//
 // Crash stuff
 //
 
@@ -262,7 +343,7 @@ String ESP32GetResetReason(uint32_t cpu_no) {
     case RTCWDT_CPU_RESET       : return F("RTC Watch dog Reset CPU");                          // 13
     case EXT_CPU_RESET          : return F("or APP CPU, reseted by PRO CPU");                   // 14
     case RTCWDT_BROWN_OUT_RESET : return F("Reset when the vdd voltage is not stable");         // 15
-    case RTCWDT_RTC_RESET       : return F("RTC Watch dog reset digital core and rtc module");  // 16            
+    case RTCWDT_RTC_RESET       : return F("RTC Watch dog reset digital core and rtc module");  // 16
   }
   return F("No meaning");                                                                       // 0 and undefined
 }
@@ -313,4 +394,33 @@ void ESP_Restart(void) {
   ESP.restart();
 }
 
+uint32_t FlashWriteStartSector(void) {
+  // Needs to be on SPI_FLASH_MMU_PAGE_SIZE (= 0x10000) alignment for mmap usage
+  uint32_t aligned_address = ((EspFlashBaseAddress() + (2 * SPI_FLASH_MMU_PAGE_SIZE)) / SPI_FLASH_MMU_PAGE_SIZE) * SPI_FLASH_MMU_PAGE_SIZE;
+  return aligned_address / SPI_FLASH_SEC_SIZE;
+}
+
+uint32_t FlashWriteMaxSector(void) {
+  // Needs to be on SPI_FLASH_MMU_PAGE_SIZE (= 0x10000) alignment for mmap usage
+  uint32_t aligned_end_address = (EspFlashBaseEndAddress() / SPI_FLASH_MMU_PAGE_SIZE) * SPI_FLASH_MMU_PAGE_SIZE;
+  return aligned_end_address / SPI_FLASH_SEC_SIZE;
+}
+
+uint8_t* FlashDirectAccess(void) {
+  uint32_t address = FlashWriteStartSector() * SPI_FLASH_SEC_SIZE;
+  uint8_t* data = EspFlashMmap(address);
+
+/*
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Flash start address 0x%08X, Mmap address 0x%08X"), address, data);
+
+  uint8_t buf[32];
+  memcpy(buf, data, sizeof(buf));
+  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buf, 32);
+
+  memcpy(buf, data, sizeof(buf));
+  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buf + , 32);
+*/
+
+  return data;
+}
 #endif  // ESP32
