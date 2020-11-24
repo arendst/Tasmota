@@ -32,18 +32,19 @@
  *  5            yes     no         no          Kwanzaa
  *  6            yes     no         no          Rainbow
  *  7            yes     no         no          Fire
+ *  8                                           Dragon
  *
 \*********************************************************************************************/
 
 #define XLGT_01             1
 
-const uint8_t WS2812_SCHEMES = 8;      // Number of WS2812 schemes
+const uint8_t WS2812_SCHEMES = 9;      // Number of WS2812 schemes
 
 const char kWs2812Commands[] PROGMEM = "|"  // No prefix
-  D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH ;
+  D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH "|" D_CMND_DRAGON;
 
 void (* const Ws2812Command[])(void) PROGMEM = {
-  &CmndLed, &CmndPixels, &CmndRotation, &CmndWidth };
+  &CmndLed, &CmndPixels, &CmndRotation, &CmndWidth, &CmndDragon };
 
 #include <NeoPixelBus.h>
 
@@ -135,7 +136,7 @@ WsColor kHanukkah[2] = { 0,0,255, 255,255,255 };
 WsColor kwanzaa[3] = { 255,0,0, 0,0,0, 0,255,0 };
 WsColor kRainbow[7] = { 255,0,0, 255,128,0, 255,255,0, 0,255,0, 0,0,255, 128,0,255, 255,0,255 };
 WsColor kFire[3] = { 255,0,0, 255,102,0, 255,192,0 };
-ColorScheme kSchemes[WS2812_SCHEMES -1] = {  // Skip clock scheme
+ColorScheme kSchemes[WS2812_SCHEMES -2] = {  // Skip clock+dragon schemes
   kIncandescent, 2,
   kRgb, 3,
   kChristmas, 2,
@@ -370,6 +371,104 @@ void Ws2812Bars(uint32_t schemenr)
   Ws2812StripShow();
 }
 
+// note: when using Settings.dimmer, scale it: changeUIntScale(dimmer, 0, 100, 0, 255)
+long dragonOffset_current;
+void Ws2812Dragon(void)
+{
+  dragonOffset_current = (Settings.light_speed > 0) ? ((u_int64_t) millis()) * 360 / 500 / Settings.light_speed / Settings.light_speed : 0;
+
+  uint8_t a = 0;
+  uint8_t b = Settings.dragon_len1;
+  Ws2812Dragon_Fx(a, b, Light.power & 1 ? Settings.dragon_fx1 : 0, Settings.light_color[0]);
+  a = b; b += Settings.dragon_len2;
+  Ws2812Dragon_Fx(a, b, Light.power & 2 ? Settings.dragon_fx2 : 0, Settings.light_color[1]);
+  a = b; b += Settings.dragon_len3;
+  Ws2812Dragon_Fx(a, b, Light.power & 2 ? Settings.dragon_fx3 : 0, Settings.light_color[1]);
+  Ws2812StripShow();
+}
+
+void Ws2812Dragon_Fx(uint16_t firstLed, uint16_t lastLed, uint8_t fx, uint8_t dimmer)
+{
+#if (USE_WS2812_CTYPE > NEO_3LED)
+  RgbwColor c;
+  c.W = 0;
+#else
+  RgbColor c;
+#endif
+  switch(fx) {
+    case 0:
+      c.R = 0; c.G = 0; c.B = 0;
+      for (uint32_t i = firstLed; i < lastLed; i++) { strip->SetPixelColor(i, c); }
+      break;
+    case 1:
+#if (USE_WS2812_CTYPE > NEO_3LED)
+      c.R = (Light.power & 4) && Settings.light_color[2] < 128 ? changeUIntScale(128-Settings.light_color[2], 0, 127, 0, dimmer) : 0;
+      c.G = 0;
+      c.B = (Light.power & 4) && Settings.light_color[2] > 128 ? changeUIntScale(Settings.light_color[2]-128, 0, 127, 0, dimmer) : 0;
+      c.W = changeUIntScale(255, 0, 255, 0, dimmer);
+#else
+      c.R = dimmer; c.G = c.R; c.B = c.R;
+#endif
+      for (uint32_t i = firstLed; i < lastLed; i++) { strip->SetPixelColor(i, c); }
+      break;
+    case 2:
+      DragonFx_Rainbow(firstLed, lastLed, 0, dimmer);
+      break;
+    case 3:
+      DragonFx_Rainbow(firstLed, lastLed, Settings.dragon_offset, dimmer);
+      break;
+    case 4:
+      DragonFx_Rainbow(firstLed, lastLed, -Settings.dragon_offset, dimmer);
+      break;
+    case 5:
+      DragonFx_Blink(firstLed, lastLed, dimmer);
+      break;
+  }
+}
+
+void DragonFx_Rainbow(uint16_t firstLed, uint16_t lastLed, int16_t speed, uint8_t dimmer) {
+#if (USE_WS2812_CTYPE > NEO_3LED)
+  RgbwColor c;
+  c.W = 0;
+#else
+  RgbColor c;
+#endif
+  for (uint32_t i = firstLed; i < lastLed; i++) {
+      uint8_t r, g, b, sat;
+      uint16_t hue;
+      sat = 255;
+      dragonOffset_current = (dragonOffset_current + speed);
+      hue = dragonOffset_current / 10;
+      light_state.HsToRgb(hue, sat, &r, &g, &b);
+      c.R = changeUIntScale(r, 0, 255, 0, dimmer);
+      c.G = changeUIntScale(g, 0, 255, 0, dimmer);
+      c.B = changeUIntScale(b, 0, 255, 0, dimmer);
+      strip->SetPixelColor(i, c);
+  }
+}
+
+void DragonFx_Blink(uint16_t firstLed, uint16_t lastLed, uint8_t dimmer) {
+#if (USE_WS2812_CTYPE > NEO_3LED)
+  RgbwColor c;
+  c.W = 0;
+#else
+  RgbColor c;
+#endif
+  uint32_t now = millis();
+  uint8_t i = Settings.light_speed;
+  while (i) {
+    now /= 10;
+    i--;
+  }
+  c.G = (now & 1) ? 255 : 0;
+  c.R = changeUIntScale(c.R, 0, 255, 0, dimmer);
+  c.G = changeUIntScale(c.G, 0, 255, 0, dimmer);
+  c.B = changeUIntScale(c.B, 0, 255, 0, dimmer);
+  for (uint32_t i = firstLed; i < lastLed; i++) {
+      strip->SetPixelColor(i, c);
+  }
+}
+
 void Ws2812Clear(void)
 {
   strip->ClearTo(0);
@@ -466,6 +565,10 @@ void Ws2812ShowScheme(void)
         Ws2812.show_next = 0;
       }
       break;
+    case 8: // Dragon
+      Ws2812Dragon();
+      Ws2812.show_next = 1;
+      break;
     default:
       if (1 == Settings.light_fade) {
         Ws2812Gradient(scheme -1);
@@ -557,6 +660,75 @@ void CmndWidth(void)
       }
       ResponseCmndIdxNumber(Settings.ws_width[XdrvMailbox.index -2]);
     }
+  }
+}
+
+/* Dragon Command: index vs payload
+ * > Index is 1 by default (not given or out of range)
+ * 1 - set hue-offset-per-led in rainbow mode. Use 'speed' for cycle speed (1-40)
+ * 2 - length (LEDs) of first segment
+ * 3 - length (LEDs) of second segment
+ * 4 - length (LEDs) of third segment
+ * 5 - effect for segment 1
+ * 6 - effect for segment 2
+ * 7 - effect for segment 3
+ * 
+ * magic value for "no parameter given" is -99
+ * 
+ * Effects
+ * 0 - all black (off)
+ * 1 - all white
+ * 2 - rainbow (all same color)
+ * 3 - rainbow (use Dragon1 <x> to give hue offset per pixel)
+ * 4 - rainbow (like 4, but different direction)
+ */
+void CmndDragon(void)
+{
+  switch(XdrvMailbox.index) {
+    case 2:
+      if (-99 != XdrvMailbox.payload) {
+        Settings.dragon_len1 = XdrvMailbox.payload;
+      }
+      ResponseCmndIdxNumber(Settings.dragon_len1);
+      strip->ClearTo(0);
+      break;
+    case 3:
+      if (-99 != XdrvMailbox.payload) {
+        Settings.dragon_len2 = XdrvMailbox.payload;
+      }
+      ResponseCmndIdxNumber(Settings.dragon_len2);
+      strip->ClearTo(0);
+      break;
+    case 4:
+      if (-99 != XdrvMailbox.payload) {
+        Settings.dragon_len3 = XdrvMailbox.payload;
+      }
+      ResponseCmndIdxNumber(Settings.dragon_len3);
+      strip->ClearTo(0);
+      break;
+    case 5:
+      if (-99 != XdrvMailbox.payload) {
+        Settings.dragon_fx1 = XdrvMailbox.payload;
+      }
+      ResponseCmndIdxNumber(Settings.dragon_fx1);
+      break;
+    case 6:
+      if (-99 != XdrvMailbox.payload) {
+        Settings.dragon_fx2 = XdrvMailbox.payload;
+      }
+      ResponseCmndIdxNumber(Settings.dragon_fx2);
+      break;
+    case 7:
+      if (-99 != XdrvMailbox.payload) {
+        Settings.dragon_fx3 = XdrvMailbox.payload;
+      }
+      ResponseCmndIdxNumber(Settings.dragon_fx3);
+      break;
+    default: // set hue-offset-per-led in rainbow mode
+      if (-99 != XdrvMailbox.payload) {
+        Settings.dragon_offset = XdrvMailbox.payload;
+      }
+      ResponseCmndIdxNumber(Settings.dragon_offset);
   }
 }
 

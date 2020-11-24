@@ -439,6 +439,7 @@
 #define D_CMND_WAKEUPDURATION "WakeUpDuration"
 #define D_CMND_WHITE "White"
 #define D_CMND_WIDTH "Width"
+#define D_CMND_DRAGON "Dragon"
 
 // Commands xdrv_05_irremote.ino
 #define D_CMND_IRSEND "IRSend"

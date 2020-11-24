@@ -639,7 +639,16 @@ struct {
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
   
-  uint8_t       free_f5e[84];              // F5E - Decrement if adding new Setting variables just above and below
+  // DRAGON settings
+  uint16_t dragon_offset;
+  uint16_t dragon_len1;
+  uint16_t dragon_len2;
+  uint16_t dragon_len3;
+  uint8_t dragon_fx1;
+  uint8_t dragon_fx2;
+  uint8_t dragon_fx3;
+
+  uint8_t       free_f5e[84-11];              // F5E - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   SysBitfield5  flag5;                     // FB4
