@@ -1806,16 +1806,16 @@ void HandleTemplateConfiguration(void)
     uint32_t module = atoi(stemp);
     uint32_t module_save = Settings.module;
     Settings.module = module;
-    myio cmodule;
-    ModuleGpios(&cmodule);
+    myio template_gp;
+    TemplateGpios(&template_gp);
     gpio_flag flag = ModuleFlag();
     Settings.module = module_save;
 
     WSContentBegin(200, CT_PLAIN);
     WSContentSend_P(PSTR("%s}1"), AnyModuleName(module).c_str());  // NAME: Generic
-    for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {        // 17,148,29,149,7,255,255,255,138,255,139,255,255
+    for (uint32_t i = 0; i < ARRAY_SIZE(template_gp.io); i++) {        // 17,148,29,149,7,255,255,255,138,255,139,255,255
       if (!FlashPin(i)) {
-        WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", cmodule.io[i]);
+        WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
       }
     }
     WSContentSend_P(PSTR("}1%d}1%d"), flag, Settings.user_template_base);  // FLAG: 1  BASE: 17
@@ -1936,8 +1936,8 @@ void HandleModuleConfiguration(void)
 
   char stemp[30];  // Sensor name
   uint32_t midx;
-  myio cmodule;
-  ModuleGpios(&cmodule);
+  myio template_gp;
+  TemplateGpios(&template_gp);
 
   WSContentStart_P(PSTR(D_CONFIGURE_MODULE));
   WSContentSend_P(HTTP_SCRIPT_MODULE_TEMPLATE);
@@ -1958,8 +1958,8 @@ void HandleModuleConfiguration(void)
 
   WSContentSendNiceLists(0);
 
-  for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {
-    if (ValidGPIO(i, cmodule.io[i])) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(template_gp.io); i++) {
+    if (ValidGPIO(i, template_gp.io[i])) {
       WSContentSend_P(PSTR("sk(%d,%d);"), TasmotaGlobal.my_module.io[i], i);  // g0 - g17
     }
   }
@@ -1975,8 +1975,8 @@ void HandleModuleConfiguration(void)
 
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_MODULE, AnyModuleName(MODULE).c_str());
-  for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {
-    if (ValidGPIO(i, cmodule.io[i])) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(template_gp.io); i++) {
+    if (ValidGPIO(i, template_gp.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       WSContentSend_P(PSTR("<tr><td style='width:116px'>%s <b>" D_GPIO "%d</b></td><td style='width:150px'><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
         (WEMOS==TasmotaGlobal.module_type)?stemp:"", i, i, i);
@@ -1998,14 +1998,14 @@ void ModuleSaveSettings(void)
   Settings.last_module = Settings.module;
   Settings.module = new_module;
   SetModuleType();
-  myio cmodule;
-  ModuleGpios(&cmodule);
+  myio template_gp;
+  TemplateGpios(&template_gp);
   String gpios = "";
-  for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(template_gp.io); i++) {
     if (Settings.last_module != new_module) {
       Settings.my_gp.io[i] = GPIO_NONE;
     } else {
-      if (ValidGPIO(i, cmodule.io[i])) {
+      if (ValidGPIO(i, template_gp.io[i])) {
         Settings.my_gp.io[i] = WebGetGpioArg(i);
         gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
       }

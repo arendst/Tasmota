@@ -65,6 +65,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Zigbee command ``ZbLeave`` to unpair a device
 - Zigbee support for Mi Door and Contact (#9759)
 - Zigbee alarm persistence (#9785)
+- Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
 - Support for additional EZO sensors by Christopher Tremblay
 - Support for AS608 optical and R503 capacitive fingerprint sensor
 - Support for Shelly Dimmer 1 and 2 by James Turton (#9854)
@@ -80,6 +81,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
 
 ### Fixed
+- Command ``gpio`` using non-indexed functions regression from v9.1.0 (#9962)
 - NTP fallback server functionality (#9739)
 - Telegram group chatid not supported (#9831)
 - KNX buttons, switches and sensors detection regression from v9.1.0 (#9811)

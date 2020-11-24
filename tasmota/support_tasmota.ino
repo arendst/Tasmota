@@ -1513,8 +1513,8 @@ void GpioInit(void)
     }
   }
 
-  myio def_gp;
-  ModuleGpios(&def_gp);
+  myio template_gp;
+  TemplateGpios(&template_gp);
   for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
     if ((Settings.my_gp.io[i] >= AGPIO(GPIO_SENSOR_END)) && (Settings.my_gp.io[i] < AGPIO(GPIO_USER))) {
       Settings.my_gp.io[i] = GPIO_NONE;             // Fix not supported sensor ids in module
@@ -1522,8 +1522,8 @@ void GpioInit(void)
     else if (Settings.my_gp.io[i] > GPIO_NONE) {
       TasmotaGlobal.my_module.io[i] = Settings.my_gp.io[i];       // Set User selected Module sensors
     }
-    if ((def_gp.io[i] > GPIO_NONE) && (def_gp.io[i] < AGPIO(GPIO_USER))) {
-      TasmotaGlobal.my_module.io[i] = def_gp.io[i];               // Force Template override
+    if ((template_gp.io[i] > GPIO_NONE) && (template_gp.io[i] < AGPIO(GPIO_USER))) {
+      TasmotaGlobal.my_module.io[i] = template_gp.io[i];               // Force Template override
     }
   }
 
