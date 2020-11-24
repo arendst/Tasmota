@@ -1891,7 +1891,7 @@ int32_t Z_Load_Devices(uint8_t value) {
 //
 // Callback for loading Zigbee data from EEPROM, called by the state machine
 //
-int32_t Z_Load_Data(uint8_t value) {
+int32_t Z_Load_Data_EEPROM(uint8_t value) {
   hydrateDevicesDataFromEEPROM();
   return 0;                              // continue
 }

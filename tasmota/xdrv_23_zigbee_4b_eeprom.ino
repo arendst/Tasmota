@@ -235,14 +235,83 @@ const uint32_t Z_SAVE_DATA_TIMER = 60 * 60 * 1000;       // save data every 60 m
 //
 // Callback for setting the timer to save Zigbee Data in x seconds
 //
-int32_t Z_Set_Save_Data_Timer(uint8_t value) {
+int32_t Z_Set_Save_Data_Timer_EEPROM(uint8_t value) {
   zigbee_devices.setTimer(0x0000, 0, Z_SAVE_DATA_TIMER, 0, 0, Z_CAT_ALWAYS, 0 /* value */, &Z_SaveDataTimer);
   return 0;                              // continue
 }
 
 void Z_SaveDataTimer(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   hibernateAllData();
-  Z_Set_Save_Data_Timer(0);     // set a new timer
+  Z_Set_Save_Data_Timer_EEPROM(0);     // set a new timer
+}
+
+/*********************************************************************************************\
+ * Write Devices in EEPROM
+\*********************************************************************************************/
+// EEPROM variant that writes one item at a time and is not limited to 2KB
+bool hibernateDevicesInEEPROM(void) {
+  if (Rtc.utc_time < START_VALID_TIME) { return false; }
+  if (!zigbee.eeprom_ready) { return false; }
+
+  ZFS_Write_File write_data(ZIGB_NAME2);
+  
+  // first prefix is number of devices
+  uint8_t devices_size = zigbee_devices.devicesSize();
+  if (devices_size > 64) { devices_size = 64; }         // arbitrarily limit to 64 devices in EEPROM instead of 32 in Flash
+  write_data.addBytes(&devices_size, sizeof(devices_size));
+
+  for (const auto & device : zigbee_devices.getDevices()) {
+    const SBuffer buf = hibernateDevicev2(device);
+    if (buf.len() > 0) {
+      write_data.addBytes(buf.getBuffer(), buf.len());
+    }
+  }
+  int32_t ret = write_data.close();
+
+  if (ret < 0) {
+    AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Error writing Devices to EEPROM"));
+    return false;
+  } else {
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data saved in %s (%d bytes)"), PSTR("EEPROM"), ret);
+  }
+  return true;
+}
+
+
+// dump = true, only dump to logs, don't actually load
+bool loadZigbeeDevicesFromEEPROM(void) {
+  if (!zigbee.eeprom_ready) { return false; }
+  uint16_t file_len = ZFS::getLength(ZIGB_NAME2);
+
+  uint8_t num_devices = 0;
+  ZFS::readBytes(ZIGB_NAME2, &num_devices, sizeof(num_devices), 0, sizeof(num_devices));
+
+  if ((file_len < 10) || (num_devices == 0x00) || (num_devices == 0xFF)) {             // No data
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No Zigbee device information in %s"), PSTR("EEPROM"));
+    return false;
+  }
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee device information in %s (%d bytes)"), PSTR("EEPROM"), file_len);
+
+  uint32_t k = 1;   // byte index in global buffer
+  for (uint32_t i = 0; (i < num_devices) && (k < file_len); i++) {
+    uint8_t dev_record_len = 0;
+    int32_t ret = ZFS::readBytes(ZIGB_NAME2, &dev_record_len, 1, k, 1);
+    SBuffer buf(dev_record_len);
+    buf.setLen(dev_record_len);
+    ret = ZFS::readBytes(ZIGB_NAME2, buf.getBuffer(), dev_record_len, k, dev_record_len);
+    if (ret != dev_record_len) {
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "File too short when reading EEPROM"));
+      return false;
+    }
+
+    hydrateSingleDevice(buf, 2);
+
+    // next iteration
+    k += dev_record_len;
+  }
+
+  zigbee_devices.clean();   // don't write back to Flash what we just loaded
+  return true;
 }
 
 #endif // USE_ZIGBEE
