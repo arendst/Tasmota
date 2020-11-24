@@ -369,7 +369,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_RECV_UNEXPECTED(&ZNP_Recv_Default)
-    ZI_WAIT(10500)                             // wait for 10 seconds for Tasmota to stabilize
+    ZI_WAIT(15500)                             // wait for 15 seconds for Tasmota to stabilize
 
     //ZI_MQTT_STATE(ZIGBEE_STATUS_BOOT, "Booting")
     ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "rebooting CC2530 device")
@@ -769,7 +769,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_RECV_UNEXPECTED(&EZ_Recv_Default)
-    ZI_WAIT(10500)                             // wait for 10 seconds for Tasmota to stabilize
+    ZI_WAIT(15500)                             // wait for 15 seconds for Tasmota to stabilize
 
     // Hardware reset
     ZI_LOG(LOG_LEVEL_INFO, kResettingDevice)     // Log Debug: resetting EZSP device
@@ -869,8 +869,8 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
     ZI_CALL(&Z_Prepare_EEPROM, 0)
     ZI_CALL(&Z_Load_Devices, 0)
-    ZI_CALL(&Z_Load_Data, 0)
-    ZI_CALL(&Z_Set_Save_Data_Timer, 0)
+    ZI_CALL(&Z_Load_Data_EEPROM, 0)
+    ZI_CALL(&Z_Set_Save_Data_Timer_EEPROM, 0)
     ZI_CALL(&Z_Query_Bulbs, 0)
 
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)

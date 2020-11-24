@@ -190,11 +190,6 @@ class SBuffer hibernateDevices(void) {
     buf.addBuffer(buf_device);
   }
 
-  size_t buf_len = buf.len();
-  if (buf_len > 2040) {
-    AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Devices list too big to fit in Flash (%d)"), buf_len);
-  }
-
   return buf;
 }
 
@@ -296,6 +291,11 @@ void hydrateDevices(const SBuffer &buf, uint32_t version) {
 
 // dump = true, only dump to logs, don't actually load
 void loadZigbeeDevices(bool dump_only = false) {
+#ifdef USE_ZIGBEE_EZSP
+  if (loadZigbeeDevicesFromEEPROM()) {
+    return;       // we succesfully loaded from EEPROM, skip the read from Flash
+  }
+#endif
 #ifdef ESP32
   // first copy SPI buffer into ram
   uint8_t *spi_buffer = (uint8_t*) malloc(z_spi_len);
@@ -319,7 +319,7 @@ void loadZigbeeDevices(bool dump_only = false) {
     // parse what seems to be a valid entry
     SBuffer buf(buf_len);
     buf.addBuffer(z_dev_start + sizeof(Z_Flashentry), buf_len);
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee device information in Flash (%d bytes)"), buf_len);
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee device information in %s (%d bytes)"), PSTR("Flash"), buf_len);
 
     if (dump_only) {
       size_t buf_len = buf.len();
@@ -333,7 +333,7 @@ void loadZigbeeDevices(bool dump_only = false) {
       zigbee_devices.clean();   // don't write back to Flash what we just loaded
     }
   } else {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No Zigbee device information in Flash"));
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No Zigbee device information in %s"), PSTR("Flash"));
   }
 #ifdef ESP32
   free(spi_buffer);
@@ -341,9 +341,16 @@ void loadZigbeeDevices(bool dump_only = false) {
 }
 
 void saveZigbeeDevices(void) {
+#ifdef USE_ZIGBEE_EZSP
+  if (zigbee.eeprom_ready) {
+    if (hibernateDevicesInEEPROM()) {
+      return;   // saved in EEPROM successful, non need to write in Flash
+    }
+  }
+#endif
   SBuffer buf = hibernateDevices();
   size_t buf_len = buf.len();
-  if (buf_len > Z_MAX_FLASH) {
+  if (buf_len > 2040) {
     AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Buffer too big to fit in Flash (%d bytes)"), buf_len);
     return;
   }
@@ -376,7 +383,7 @@ void saveZigbeeDevices(void) {
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data store in Flash (0x%08X - %d bytes)"), z_dev_start, buf_len);
 #else  // ESP32
   ZigbeeWrite(&spi_buffer, z_spi_len);
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data saved (%d bytes)"), buf_len);
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data saved in %s (%d bytes)"), PSTR("Flash"), buf_len);
 #endif  // ESP8266 - ESP32
   free(spi_buffer);
 }
