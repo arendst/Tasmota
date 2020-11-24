@@ -40,7 +40,7 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 24000;  // milliseconds - Allow
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
 
-enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32, UPL_SHD };
+enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32, UPL_SHD, UPL_CCL };
 
 #ifdef USE_UNISHOX_COMPRESSION
 #ifdef USE_JAVASCRIPT_ES6
@@ -2561,7 +2561,7 @@ void HandleInformation(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-#if defined(USE_ZIGBEE_EZSP) || defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE) || defined(USE_RF_FLASH)
+#if defined(USE_ZIGBEE_EZSP) || defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE) || defined(USE_RF_FLASH) || defined(USE_CCLOADER)
 #define USE_WEB_FW_UPGRADE
 #endif
 
@@ -2772,6 +2772,11 @@ void HandleUploadLoop(void)
         BUploadInit(UPL_SHD);
       }
 #endif  // SHELLY_FW_UPGRADE
+#ifdef USE_CCLOADER
+      else if (CCLChipFound() && 0x02 == upload.buf[0]) { // the 0x02 is only an assumption!!
+        BUploadInit(UPL_CCL);
+      }
+#endif  // USE_CCLOADER
 #ifdef USE_ZIGBEE_EZSP
 #ifdef ESP8266
       else if ((SONOFF_ZB_BRIDGE == TasmotaGlobal.module_type) && (0xEB == upload.buf[0])) {  // Check if this is a Zigbee bridge FW file
@@ -2906,6 +2911,11 @@ void HandleUploadLoop(void)
 #ifdef SHELLY_FW_UPGRADE
       if (UPL_SHD == Web.upload_file_type) {
         error = ShdFlash(data, BUpload.spi_hex_size);
+      }
+#endif  // SHELLY_FW_UPGRADE
+#ifdef USE_CCLOADER
+      if (UPL_CCL == Web.upload_file_type) {
+        error = CLLFlashFirmware(data, BUpload.spi_hex_size);
       }
 #endif  // SHELLY_FW_UPGRADE
 #ifdef USE_ZIGBEE_EZSP
