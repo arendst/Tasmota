@@ -1132,20 +1132,21 @@ void CmndModules(void)
 void CmndGpio(void)
 {
   if (XdrvMailbox.index < ARRAY_SIZE(Settings.my_gp.io)) {
-    myio cmodule;
-    ModuleGpios(&cmodule);
-    if (ValidGPIO(XdrvMailbox.index, cmodule.io[XdrvMailbox.index]) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < AGPIO(GPIO_SENSOR_END))) {
+    myio template_gp;
+    TemplateGpios(&template_gp);
+    if (ValidGPIO(XdrvMailbox.index, template_gp.io[XdrvMailbox.index]) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < AGPIO(GPIO_SENSOR_END))) {
       bool present = false;
       for (uint32_t i = 0; i < ARRAY_SIZE(kGpioNiceList); i++) {
         uint32_t midx = pgm_read_word(kGpioNiceList + i);
-        if ((XdrvMailbox.payload >= (midx & 0xFFE0)) && (XdrvMailbox.payload < midx)) {
+        uint32_t max_midx = ((midx & 0x001F) > 0) ? midx : midx +1;
+        if ((XdrvMailbox.payload >= (midx & 0xFFE0)) && (XdrvMailbox.payload < max_midx)) {
           present = true;
           break;
         }
       }
       if (present) {
         for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
-          if (ValidGPIO(i, cmodule.io[i]) && (Settings.my_gp.io[i] == XdrvMailbox.payload)) {
+          if (ValidGPIO(i, template_gp.io[i]) && (Settings.my_gp.io[i] == XdrvMailbox.payload)) {
             Settings.my_gp.io[i] = GPIO_NONE;
           }
         }
@@ -1156,12 +1157,12 @@ void CmndGpio(void)
     Response_P(PSTR("{"));
     bool jsflg = false;
     for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
-      if (ValidGPIO(i, cmodule.io[i]) || ((255 == XdrvMailbox.payload) && !FlashPin(i))) {
+      if (ValidGPIO(i, template_gp.io[i]) || ((255 == XdrvMailbox.payload) && !FlashPin(i))) {
         if (jsflg) { ResponseAppend_P(PSTR(",")); }
         jsflg = true;
         uint32_t sensor_type = Settings.my_gp.io[i];
-        if (!ValidGPIO(i, cmodule.io[i])) {
-          sensor_type = cmodule.io[i];
+        if (!ValidGPIO(i, template_gp.io[i])) {
+          sensor_type = template_gp.io[i];
           if (AGPIO(GPIO_USER) == sensor_type) {  // A user GPIO equals a not connected (=GPIO_NONE) GPIO here
             sensor_type = GPIO_NONE;
           }

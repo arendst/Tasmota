@@ -52,7 +52,7 @@ void Tsl2591Init(void)
   }
 }
 
-bool Tsl2591Read(void)
+void Tsl2591Read(void)
 {
   uint32_t lum = tsl.getFullLuminosity();
   uint16_t ir, full;

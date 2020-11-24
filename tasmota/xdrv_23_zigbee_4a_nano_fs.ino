@@ -20,7 +20,6 @@
 #ifdef USE_ZIGBEE
 #ifdef USE_ZIGBEE_EZSP
 
-#include <memory>
 #define Z_EEPROM_DEBUG
 
 // The EEPROM is 64KB in size with individually writable bytes.
@@ -274,7 +273,7 @@ public:
   static void erase(void);              // erase EEPROM
 
   // read file
-  static int32_t readBytes(uint32_t name, uint8_t* buffer, size_t buffer_len, uint16_t start, uint16_t len);
+  static int32_t readBytes(uint32_t name, void* buffer, size_t buffer_len, uint16_t start, uint16_t len);
 };
 
 /*********************************************************************************************\
@@ -322,7 +321,7 @@ void ZFS::erase(void) {
  * Reading a file
  * 
 \*********************************************************************************************/
-int32_t ZFS::readBytes(uint32_t name, uint8_t* buffer, size_t buffer_len, uint16_t read_start, uint16_t read_len) {
+int32_t ZFS::readBytes(uint32_t name, void* buffer, size_t buffer_len, uint16_t read_start, uint16_t read_len) {
   if (!zigbee.eeprom_ready) { return -1; }
 #ifdef Z_EEPROM_DEBUG
     // AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "readBytes name=%08X, buffer_len=%d, read_start=0x%04X, read_len=%d"), name, buffer_len, read_start, read_len);
@@ -365,9 +364,9 @@ void ZFS::initOrFormat(void) {
     char hex_char[(256 * 2) + 2];
     zigbee.eeprom.readBytes(0x0000, 256, map);
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 00 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
-    zigbee.eeprom.readBytes(0x0100, 256, map);
+    // zigbee.eeprom.readBytes(0x0100, 256, map);
     // AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 01 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
-    // zigbee.eeprom.readBytes(0x0200, 256, map);
+    zigbee.eeprom.readBytes(0x0200, 256, map);
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 02 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));
     zigbee.eeprom.readBytes(0x2100, 256, map);
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "BLK 21 %s"), ToHex_P(map, sizeof(map), hex_char, sizeof(hex_char)));

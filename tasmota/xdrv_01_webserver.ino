@@ -40,7 +40,7 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 24000;  // milliseconds - Allow
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
 
-enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32, UPL_SHD };
+enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32, UPL_SHD, UPL_CCL };
 
 #ifdef USE_UNISHOX_COMPRESSION
 #ifdef USE_JAVASCRIPT_ES6
@@ -1806,16 +1806,16 @@ void HandleTemplateConfiguration(void)
     uint32_t module = atoi(stemp);
     uint32_t module_save = Settings.module;
     Settings.module = module;
-    myio cmodule;
-    ModuleGpios(&cmodule);
+    myio template_gp;
+    TemplateGpios(&template_gp);
     gpio_flag flag = ModuleFlag();
     Settings.module = module_save;
 
     WSContentBegin(200, CT_PLAIN);
     WSContentSend_P(PSTR("%s}1"), AnyModuleName(module).c_str());  // NAME: Generic
-    for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {        // 17,148,29,149,7,255,255,255,138,255,139,255,255
+    for (uint32_t i = 0; i < ARRAY_SIZE(template_gp.io); i++) {        // 17,148,29,149,7,255,255,255,138,255,139,255,255
       if (!FlashPin(i)) {
-        WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", cmodule.io[i]);
+        WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
       }
     }
     WSContentSend_P(PSTR("}1%d}1%d"), flag, Settings.user_template_base);  // FLAG: 1  BASE: 17
@@ -1936,8 +1936,8 @@ void HandleModuleConfiguration(void)
 
   char stemp[30];  // Sensor name
   uint32_t midx;
-  myio cmodule;
-  ModuleGpios(&cmodule);
+  myio template_gp;
+  TemplateGpios(&template_gp);
 
   WSContentStart_P(PSTR(D_CONFIGURE_MODULE));
   WSContentSend_P(HTTP_SCRIPT_MODULE_TEMPLATE);
@@ -1958,8 +1958,8 @@ void HandleModuleConfiguration(void)
 
   WSContentSendNiceLists(0);
 
-  for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {
-    if (ValidGPIO(i, cmodule.io[i])) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(template_gp.io); i++) {
+    if (ValidGPIO(i, template_gp.io[i])) {
       WSContentSend_P(PSTR("sk(%d,%d);"), TasmotaGlobal.my_module.io[i], i);  // g0 - g17
     }
   }
@@ -1975,8 +1975,8 @@ void HandleModuleConfiguration(void)
 
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_MODULE, AnyModuleName(MODULE).c_str());
-  for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {
-    if (ValidGPIO(i, cmodule.io[i])) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(template_gp.io); i++) {
+    if (ValidGPIO(i, template_gp.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       WSContentSend_P(PSTR("<tr><td style='width:116px'>%s <b>" D_GPIO "%d</b></td><td style='width:150px'><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
         (WEMOS==TasmotaGlobal.module_type)?stemp:"", i, i, i);
@@ -1998,14 +1998,14 @@ void ModuleSaveSettings(void)
   Settings.last_module = Settings.module;
   Settings.module = new_module;
   SetModuleType();
-  myio cmodule;
-  ModuleGpios(&cmodule);
+  myio template_gp;
+  TemplateGpios(&template_gp);
   String gpios = "";
-  for (uint32_t i = 0; i < ARRAY_SIZE(cmodule.io); i++) {
+  for (uint32_t i = 0; i < ARRAY_SIZE(template_gp.io); i++) {
     if (Settings.last_module != new_module) {
       Settings.my_gp.io[i] = GPIO_NONE;
     } else {
-      if (ValidGPIO(i, cmodule.io[i])) {
+      if (ValidGPIO(i, template_gp.io[i])) {
         Settings.my_gp.io[i] = WebGetGpioArg(i);
         gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
       }
@@ -2561,7 +2561,7 @@ void HandleInformation(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-#if defined(USE_ZIGBEE_EZSP) || defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE) || defined(USE_RF_FLASH)
+#if defined(USE_ZIGBEE_EZSP) || defined(USE_TASMOTA_CLIENT) || defined(SHELLY_FW_UPGRADE) || defined(USE_RF_FLASH) || defined(USE_CCLOADER)
 #define USE_WEB_FW_UPGRADE
 #endif
 
@@ -2772,6 +2772,11 @@ void HandleUploadLoop(void)
         BUploadInit(UPL_SHD);
       }
 #endif  // SHELLY_FW_UPGRADE
+#ifdef USE_CCLOADER
+      else if (CCLChipFound() && 0x02 == upload.buf[0]) { // the 0x02 is only an assumption!!
+        BUploadInit(UPL_CCL);
+      }
+#endif  // USE_CCLOADER
 #ifdef USE_ZIGBEE_EZSP
 #ifdef ESP8266
       else if ((SONOFF_ZB_BRIDGE == TasmotaGlobal.module_type) && (0xEB == upload.buf[0])) {  // Check if this is a Zigbee bridge FW file
@@ -2906,6 +2911,11 @@ void HandleUploadLoop(void)
 #ifdef SHELLY_FW_UPGRADE
       if (UPL_SHD == Web.upload_file_type) {
         error = ShdFlash(data, BUpload.spi_hex_size);
+      }
+#endif  // SHELLY_FW_UPGRADE
+#ifdef USE_CCLOADER
+      if (UPL_CCL == Web.upload_file_type) {
+        error = CLLFlashFirmware(data, BUpload.spi_hex_size);
       }
 #endif  // SHELLY_FW_UPGRADE
 #ifdef USE_ZIGBEE_EZSP
