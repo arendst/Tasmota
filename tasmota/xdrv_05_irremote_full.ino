@@ -162,7 +162,7 @@ uint64_t reverseBitsInBytes64(uint64_t b) {
 \*********************************************************************************************/
 
 const bool IR_FULL_RCV_SAVE_BUFFER = false;         // false = do not use buffer, true = use buffer for decoding
-const uint32_t IR_TIME_AVOID_DUPLICATE = 500;  // Milliseconds
+const uint32_t IR_TIME_AVOID_DUPLICATE = 50;  // Milliseconds
 
 // Below is from IRrecvDumpV2.ino
 // As this program is a special purpose capture/decoder, let us use a larger
@@ -463,6 +463,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
   //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
 
+  if (irrecv != nullptr) { irrecv->disableIRIn(); }
   if (stateMode == StateModes::SEND_ONLY || stateMode == StateModes::SEND_STORE) {
     IRac ac(Pin(GPIO_IRSEND));
     bool success = ac.sendAc(state, irhvac_stateful && irac_prev_state.protocol == state.protocol ? &irac_prev_state : nullptr);
@@ -471,6 +472,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   if (stateMode == StateModes::STORE_ONLY || stateMode == StateModes::SEND_STORE) { // store state in memory
     irac_prev_state = state;
   }
+  if (irrecv != nullptr) { irrecv->enableIRIn(); }
 
   Response_P(PSTR("{\"" D_CMND_IRHVAC "\":%s}"), sendACJsonState(state).c_str());
   return IE_RESPONSE_PROVIDED;
