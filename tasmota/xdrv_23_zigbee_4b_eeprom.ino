@@ -245,6 +245,7 @@ void Z_SaveDataTimer(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, u
   Z_Set_Save_Data_Timer_EEPROM(0);     // set a new timer
 }
 
+#ifdef USE_ZIGBEE_EZSP
 /*********************************************************************************************\
  * Write Devices in EEPROM
 \*********************************************************************************************/
@@ -313,5 +314,6 @@ bool loadZigbeeDevicesFromEEPROM(void) {
   zigbee_devices.clean();   // don't write back to Flash what we just loaded
   return true;
 }
+#endif // USE_ZIGBEE_EZSP
 
 #endif // USE_ZIGBEE
