@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - KNX read reply for Power (#9236, #9891)
 - Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
 - Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
+- Support for multiple WeMo devices by Magic73 (#9208)
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
@@ -15,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Shelly Dimmer fw upgrade using WebGUI Firmware Upgrade and file from folder `tools/fw_shd_stm32/`
 - MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
+- Platformio compiler option `-free -fipa-pta` enabled (#9875)
 
 ### Fixed
 - KNX ESP32 UDP mulicastpackage (#9811)

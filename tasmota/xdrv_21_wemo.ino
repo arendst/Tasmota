@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined (USE_EMULATION_WEMO)
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined (USE_EMULATION_WEMO_SINGLE)
 /*********************************************************************************************\
  * Belkin WeMo emulation
 \*********************************************************************************************/
