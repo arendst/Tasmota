@@ -1355,7 +1355,10 @@ void LightInit(void)
   }
   LightCalcPWMRange();
 #ifdef USE_DEVICE_GROUPS
-  Light.device_group_index = Light.device - 1;
+  Light.device_group_index = 0;
+  if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
+    Light.device_group_index = Light.device - 1;
+  }
 #endif  // USE_DEVICE_GROUPS
 #ifdef DEBUG_LIGHT
   AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightInit Light.pwm_multi_channels=%d Light.subtype=%d Light.device=%d TasmotaGlobal.devices_present=%d",
