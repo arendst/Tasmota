@@ -70,6 +70,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for AS608 optical and R503 capacitive fingerprint sensor
 - Support for Shelly Dimmer 1 and 2 by James Turton (#9854)
 - Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
+- Support for multiple WeMo devices by Magic73 (#9208)
 - KNX read reply for Power (#9236, #9891)
 
 ### Breaking Changed
