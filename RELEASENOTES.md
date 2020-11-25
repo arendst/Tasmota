@@ -87,6 +87,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - KNX buttons, switches and sensors detection regression from v9.1.0 (#9811)
 - KNX ESP32 UDP mulicastpackage (#9811)
 - GUI MqttUser and MqttPassword updates when TLS is compiled in (#9825)
+- ESP32 TasmotaClient firmware upgrade (#9218)
 
 ### Removed
 - Version compatibility check

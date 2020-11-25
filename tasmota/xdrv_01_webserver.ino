@@ -2893,8 +2893,7 @@ void HandleUploadLoop(void)
 
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Transfer %u bytes"), upload.totalSize);
 
-//      uint8_t* data = (uint8_t*)(0x40200000 + (FlashWriteStartSector() * SPI_FLASH_SEC_SIZE));
-        uint8_t* data = FlashDirectAccess();
+      uint8_t* data = FlashDirectAccess();
 
 //      uint32_t* values = (uint32_t*)(data);  // Only 4-byte access allowed
 //      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Head 0x%08X"), values[0]);

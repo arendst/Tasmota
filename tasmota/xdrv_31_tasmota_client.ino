@@ -97,8 +97,8 @@ uint32_t SimpleHexParseLine(char *hexline) {
 
 //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Hexline |%s|, Len %d, Address 0x%02X%02X, RecType %d"), hexline, len, addr_h, addr_l, rectype);
 
-  if (len > 16) { return 4; }                        // Error 4: Line too long
-  if (rectype > 1) { return 5; }                     // Error 5: Invalid record type
+  if (len > 16) { return 5; }                // Error: Line too long
+  if (rectype > 1) { return 6; }             // Error: Invalid record type
 
   for (uint8_t idx = 0; idx < len; idx++) {
     if (SHParse.FlashPageIdx < sizeof(SHParse.FlashPage)) {
@@ -238,8 +238,8 @@ uint8_t TasmotaClient_receiveData(char* buffer, int size) {
   }
   if (255 == index) { index = 0; }
 
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TCL: ReceiveData"));
-  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, index);
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TCL: ReceiveData"));
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, index);
 
   return index;
 }
@@ -279,62 +279,6 @@ uint8_t TasmotaClient_exitProgMode(void) {
   return TasmotaClient_execCmd(CMND_STK_LEAVE_PROGMODE); // Exit programming mode
 }
 
-uint8_t TasmotaClient_SetupFlash(void) {
-  uint8_t ProgParams[] = {0x86, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x03, 0xff, 0xff, 0xff, 0xff, 0x00, 0x80, 0x04, 0x00, 0x00, 0x00, 0x80, 0x00};
-  uint8_t ExtProgParams[] = {0x05, 0x04, 0xd7, 0xc2, 0x00};
-
-/*
-  TasmotaClient_Serial->end();
-  delay(10);
-
-  TasmotaClient_Serial->begin(USE_TASMOTA_CLIENT_FLASH_SPEED);
-  if (TasmotaClient_Serial->hardwareSerial()) {
-    ClaimSerial();
-  }
-*/
-
-  TasmotaClient_Reset();
-
-  uint8_t timeout = 0;
-  uint8_t no_error = 0;
-  while (50 > timeout) {
-    if (TasmotaClient_execCmd(CMND_STK_GET_SYNC)) {
-      timeout = 200;
-      no_error = 1;
-    }
-    timeout++;
-    delay(1);
-  }
-  if (no_error) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Found bootloader"));
-  } else {
-    no_error = 0;
-    AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Bootloader could not be found"));
-  }
-  if (no_error) {
-    if (TasmotaClient_execParam(CMND_STK_SET_DEVICE, ProgParams, sizeof(ProgParams))) {
-    } else {
-      no_error = 0;
-      AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Could not configure device for programming (1)"));
-    }
-  }
-  if (no_error) {
-    if (TasmotaClient_execParam(CMND_STK_SET_DEVICE_EXT, ExtProgParams, sizeof(ExtProgParams))) {
-    } else {
-      no_error = 0;
-      AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Could not configure device for programming (2)"));
-    }
-  }
-  if (no_error) {
-    if (TasmotaClient_execCmd(CMND_STK_ENTER_PROGMODE)) {
-    } else {
-      no_error = 0;
-      AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Failed to put bootloader into programming mode"));
-    }
-  }
-  return no_error;
-}
-
 uint8_t TasmotaClient_loadAddress(uint8_t adrHi, uint8_t adrLo) {
   uint8_t params[] = { adrLo, adrHi };
   return TasmotaClient_execParam(CMND_STK_LOAD_ADDRESS, params, sizeof(params));
@@ -354,9 +298,42 @@ void TasmotaClient_flashPage(uint8_t addr_h, uint8_t addr_l, uint8_t* data) {
 }
 
 uint32_t TasmotaClient_Flash(uint8_t* data, size_t size) {
-  if (!TasmotaClient_SetupFlash()) {
-//    AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Flashing aborted!"));
-    return 1;                                        // Error 1: Flashing aborted
+/*
+  // Don't do this as there is no re-init configured
+  TasmotaClient_Serial->end();
+  delay(10);
+
+  TasmotaClient_Serial->begin(USE_TASMOTA_CLIENT_FLASH_SPEED);
+  if (TasmotaClient_Serial->hardwareSerial()) {
+    ClaimSerial();
+  }
+*/
+  TasmotaClient_Reset();
+
+  uint8_t timeout = 0;
+  while (timeout <= 50) {
+    if (TasmotaClient_execCmd(CMND_STK_GET_SYNC)) {
+      break;
+    }
+    timeout++;
+    delay(1);
+  }
+  if (timeout > 50) { return 1; }            // Error: Bootloader could not be found
+
+  AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Found bootloader"));
+
+  uint8_t ProgParams[] = {0x86, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x03, 0xff, 0xff, 0xff, 0xff, 0x00, 0x80, 0x04, 0x00, 0x00, 0x00, 0x80, 0x00};
+  if (!TasmotaClient_execParam(CMND_STK_SET_DEVICE, ProgParams, sizeof(ProgParams))) {
+    return 2;                                // Error: Could not configure device for programming (1)
+  }
+
+  uint8_t ExtProgParams[] = {0x05, 0x04, 0xd7, 0xc2, 0x00};
+  if (!TasmotaClient_execParam(CMND_STK_SET_DEVICE_EXT, ExtProgParams, sizeof(ExtProgParams))) {
+    return 3;                                // Error: Could not configure device for programming (2)
+  }
+
+  if (!TasmotaClient_execCmd(CMND_STK_ENTER_PROGMODE)) {
+    return 4;                                // Error: Failed to put bootloader into programming mode
   }
 
   SHParse.FlashPageIdx = 0;
@@ -371,14 +348,14 @@ uint32_t TasmotaClient_Flash(uint8_t* data, size_t size) {
   uint32_t read = 0;
   uint32_t processed = 0;
   uint32_t position = 0;
-
   uint32_t error = 0;
+
   while (read < size) {
     memcpy(flash_buffer, data + read, sizeof(flash_buffer));
+    read = read + sizeof(flash_buffer);
 
 //    AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)flash_buffer, 32);
 
-    read = read + sizeof(flash_buffer);
     for (uint32_t ca = 0; ca < sizeof(flash_buffer); ca++) {
       processed++;
       if ((processed <= size) && (!SHParse.EndOfFile)) {
@@ -386,23 +363,22 @@ uint32_t TasmotaClient_Flash(uint8_t* data, size_t size) {
         if (':' == flash_buffer[ca]) {
           position = 0;
         }
-        else if (0xFF == (uint8_t)flash_buffer[ca]) {
-//          AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Size %d, Processed %d"), size, processed);
-//          AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&flash_buffer[ca], 8);
-          error = 3;                                 // Error 3: Invalid data
-          break;
-        }
         else if (0x0D == flash_buffer[ca]) {
           // 100000000C945D000C9485000C9485000C94850084
           thishexline[position] = 0;
           error = SimpleHexParseLine(thishexline);
-          if (error) { break; }                      // Error 4 and 5
+          if (error) { break; }              // Error 5 and 6
           if (SHParse.FlashPageIdx == sizeof(SHParse.FlashPage)) {
             TasmotaClient_flashPage(SHParse.ptr_h, SHParse.ptr_l, SHParse.FlashPage);
             SHParse.FlashPageIdx = 0;
           }
         }
         else if (0x0A != flash_buffer[ca]) {
+          if (!isalnum(flash_buffer[ca])) {
+//            AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Size %d, Processed %d"), size, processed);
+            error = 7;                       // Error: Invalid data
+            break;
+          }
           if (position < sizeof(thishexline) -2) {
             thishexline[position++] = flash_buffer[ca];
           }
@@ -413,8 +389,8 @@ uint32_t TasmotaClient_Flash(uint8_t* data, size_t size) {
   }
 
   TasmotaClient_exitProgMode();
-//  AddLog_P(LOG_LEVEL_INFO, PSTR("TCL: Flash done!"));
-  return error;
+
+  return error;                              // Error or Flash done!
 }
 
 void TasmotaClient_Init(void) {
