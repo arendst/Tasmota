@@ -69,6 +69,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for additional EZO sensors by Christopher Tremblay
 - Support for AS608 optical and R503 capacitive fingerprint sensor
 - Support for Shelly Dimmer 1 and 2 by James Turton (#9854)
+- Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
 - KNX read reply for Power (#9236, #9891)
 
 ### Breaking Changed
@@ -87,6 +88,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - KNX buttons, switches and sensors detection regression from v9.1.0 (#9811)
 - KNX ESP32 UDP mulicastpackage (#9811)
 - GUI MqttUser and MqttPassword updates when TLS is compiled in (#9825)
+- ESP32 TasmotaClient firmware upgrade (#9218)
 
 ### Removed
 - Version compatibility check

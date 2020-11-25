@@ -2591,7 +2591,7 @@ uint32_t BUploadWriteBuffer(uint8_t *buf, size_t size) {
     }
   }
   BUpload.spi_sector_cursor++;
-  if (!ESP.flashWrite((BUpload.spi_sector_counter * SPI_FLASH_SEC_SIZE) + ((BUpload.spi_sector_cursor -1) * 2048), (uint32_t*)buf, size)) {
+  if (!ESP.flashWrite((BUpload.spi_sector_counter * SPI_FLASH_SEC_SIZE) + ((BUpload.spi_sector_cursor -1) * HTTP_UPLOAD_BUFLEN), (uint32_t*)buf, size)) {
     return 7;  // Upload aborted - flash failed
   }
   BUpload.spi_hex_size += size;
@@ -2824,6 +2824,8 @@ void HandleUploadLoop(void)
 #ifdef USE_WEB_FW_UPGRADE
     else if (BUpload.active) {
       // Write a block
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Size %d"), upload.currentSize);
+//      AddLogBuffer(LOG_LEVEL_DEBUG, upload.buf, 32);
       Web.upload_error = BUploadWriteBuffer(upload.buf, upload.currentSize);
       if (Web.upload_error != 0) { return; }
     }
@@ -2891,8 +2893,7 @@ void HandleUploadLoop(void)
 
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Transfer %u bytes"), upload.totalSize);
 
-//      uint8_t* data = (uint8_t*)(0x40200000 + (FlashWriteStartSector() * SPI_FLASH_SEC_SIZE));
-        uint8_t* data = FlashDirectAccess();
+      uint8_t* data = FlashDirectAccess();
 
 //      uint32_t* values = (uint32_t*)(data);  // Only 4-byte access allowed
 //      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Head 0x%08X"), values[0]);
@@ -2905,7 +2906,7 @@ void HandleUploadLoop(void)
 #endif  // USE_RF_FLASH
 #ifdef USE_TASMOTA_CLIENT
       if (UPL_TASMOTACLIENT == Web.upload_file_type) {
-        error = TasmotaClient_Flash(FlashWriteStartSector() * SPI_FLASH_SEC_SIZE, BUpload.spi_hex_size);
+        error = TasmotaClient_Flash(data, BUpload.spi_hex_size);
       }
 #endif  // USE_TASMOTA_CLIENT
 #ifdef SHELLY_FW_UPGRADE

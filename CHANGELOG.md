@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - KNX read reply for Power (#9236, #9891)
 - Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
+- Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
@@ -18,6 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - KNX ESP32 UDP mulicastpackage (#9811)
 - Command ``gpio`` using non-indexed functions regression from v9.1.0 (#9962)
+- ESP32 TasmotaClient firmware upgrade (#9218)
 
 ### Removed
 
