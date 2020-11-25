@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Shelly Dimmer fw upgrade using WebGUI Firmware Upgrade and file from folder `tools/fw_shd_stm32/`
 - MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
+- Platformio compiler option `-free -fipa-pta` enabled (#9875)
 
 ### Fixed
 - KNX ESP32 UDP mulicastpackage (#9811)
