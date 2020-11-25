@@ -100,7 +100,7 @@ uint32_t SimpleHexParseLine(char *hexline) {
   if (len > 16) { return 5; }                // Error: Line too long
   if (rectype > 1) { return 6; }             // Error: Invalid record type
 
-  for (uint8_t idx = 0; idx < len; idx++) {
+  for (uint32_t idx = 0; idx < len; idx++) {
     if (SHParse.FlashPageIdx < sizeof(SHParse.FlashPage)) {
       SHParse.FlashPage[SHParse.FlashPageIdx] = SimpleHexParseGetByte(hexline, idx+5);
       SHParse.FlashPageIdx++;
@@ -275,28 +275,6 @@ uint8_t TasmotaClient_execParam(uint8_t cmd, uint8_t* params, int count) {
   return TasmotaClient_sendBytes(bytes, i + 2);
 }
 
-uint8_t TasmotaClient_exitProgMode(void) {
-  return TasmotaClient_execCmd(CMND_STK_LEAVE_PROGMODE); // Exit programming mode
-}
-
-uint8_t TasmotaClient_loadAddress(uint8_t adrHi, uint8_t adrLo) {
-  uint8_t params[] = { adrLo, adrHi };
-  return TasmotaClient_execParam(CMND_STK_LOAD_ADDRESS, params, sizeof(params));
-}
-
-void TasmotaClient_flashPage(uint8_t addr_h, uint8_t addr_l, uint8_t* data) {
-  uint8_t Header[] = {CMND_STK_PROG_PAGE, 0x00, 0x80, 0x46};
-  TasmotaClient_loadAddress(addr_h, addr_l);
-  TasmotaClient_Serial->write(Header, 4);
-  for (int i = 0; i < 128; i++) {
-    TasmotaClient_Serial->write(data[i]);
-  }
-  TasmotaClient_Serial->write(CONST_STK_CRC_EOP);
-  TasmotaClient_waitForSerialData(2, TASMOTA_CLIENT_TIMEOUT);
-  TasmotaClient_Serial->read();
-  TasmotaClient_Serial->read();
-}
-
 uint32_t TasmotaClient_Flash(uint8_t* data, size_t size) {
 /*
   // Don't do this as there is no re-init configured
@@ -336,6 +314,8 @@ uint32_t TasmotaClient_Flash(uint8_t* data, size_t size) {
     return 4;                                // Error: Failed to put bootloader into programming mode
   }
 
+  uint8_t header[] = {CMND_STK_PROG_PAGE, 0x00, 0x80, 0x46};
+
   SHParse.FlashPageIdx = 0;
   SHParse.layoverIdx = 0;
   SHParse.ptr_l = 0;
@@ -345,11 +325,11 @@ uint32_t TasmotaClient_Flash(uint8_t* data, size_t size) {
 
   char flash_buffer[512];
   char thishexline[50];
-  uint32_t read = 0;
   uint32_t processed = 0;
   uint32_t position = 0;
   uint32_t error = 0;
 
+  uint32_t read = 0;
   while (read < size) {
     memcpy(flash_buffer, data + read, sizeof(flash_buffer));
     read = read + sizeof(flash_buffer);
@@ -369,7 +349,20 @@ uint32_t TasmotaClient_Flash(uint8_t* data, size_t size) {
           error = SimpleHexParseLine(thishexline);
           if (error) { break; }              // Error 5 and 6
           if (SHParse.FlashPageIdx == sizeof(SHParse.FlashPage)) {
-            TasmotaClient_flashPage(SHParse.ptr_h, SHParse.ptr_l, SHParse.FlashPage);
+            uint8_t params[] = {SHParse.ptr_l, SHParse.ptr_h};
+            TasmotaClient_execParam(CMND_STK_LOAD_ADDRESS, params, sizeof(params));
+
+            TasmotaClient_Serial->write(header, sizeof(header));
+
+            for (uint32_t i = 0; i < sizeof(SHParse.FlashPage); i++) {
+              TasmotaClient_Serial->write(SHParse.FlashPage[i]);
+            }
+            TasmotaClient_Serial->write(CONST_STK_CRC_EOP);
+
+            TasmotaClient_waitForSerialData(2, TASMOTA_CLIENT_TIMEOUT);
+            TasmotaClient_Serial->read();
+            TasmotaClient_Serial->read();
+
             SHParse.FlashPageIdx = 0;
           }
         }
@@ -387,8 +380,7 @@ uint32_t TasmotaClient_Flash(uint8_t* data, size_t size) {
     }
     if (error) { break; }
   }
-
-  TasmotaClient_exitProgMode();
+  TasmotaClient_execCmd(CMND_STK_LEAVE_PROGMODE);
 
   return error;                              // Error or Flash done!
 }
@@ -467,7 +459,7 @@ void TasmotaClient_sendCmnd(uint8_t cmnd, uint8_t param) {
 //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TCL: SendCmnd"));
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buffer, sizeof(buffer));
 
-  for (uint8_t ca = 0; ca < sizeof(buffer); ca++) {
+  for (uint32_t ca = 0; ca < sizeof(buffer); ca++) {
     TasmotaClient_Serial->write(buffer[ca]);
   }
 }
@@ -495,7 +487,7 @@ void CmndClientSend(void) {
     if (0 < XdrvMailbox.data_len) {
       TasmotaClient_sendCmnd(CMND_CLIENT_SEND, XdrvMailbox.data_len);
       TasmotaClient_Serial->write(char(PARAM_DATA_START));
-      for (uint8_t idx = 0; idx < XdrvMailbox.data_len; idx++) {
+      for (uint32_t idx = 0; idx < XdrvMailbox.data_len; idx++) {
         TasmotaClient_Serial->write(XdrvMailbox.data[idx]);
       }
       TasmotaClient_Serial->write(char(PARAM_DATA_END));
@@ -507,9 +499,9 @@ void CmndClientSend(void) {
 void TasmotaClient_ProcessIn(void) {
   uint8_t cmnd = TasmotaClient_Serial->read();
   if (CMND_START == cmnd) {
-    TasmotaClient_waitForSerialData(sizeof(TClientCommand),50);
+    TasmotaClient_waitForSerialData(sizeof(TClientCommand), 50);
     uint8_t buffer[sizeof(TClientCommand)];
-    for (uint8_t idx = 0; idx < sizeof(TClientCommand); idx++) {
+    for (uint32_t idx = 0; idx < sizeof(TClientCommand); idx++) {
       buffer[idx] = TasmotaClient_Serial->read();
     }
     TasmotaClient_Serial->read(); // read trailing byte of command
@@ -517,7 +509,7 @@ void TasmotaClient_ProcessIn(void) {
     char inbuf[TClientCommand.parameter+1];
     TasmotaClient_waitForSerialData(TClientCommand.parameter, 50);
     TasmotaClient_Serial->read(); // Read leading byte
-    for (uint8_t idx = 0; idx < TClientCommand.parameter; idx++) {
+    for (uint32_t idx = 0; idx < TClientCommand.parameter; idx++) {
       inbuf[idx] = TasmotaClient_Serial->read();
     }
     TasmotaClient_Serial->read(); // Read trailing byte
@@ -527,10 +519,10 @@ void TasmotaClient_ProcessIn(void) {
       Response_P(PSTR("{\"TasmotaClient\":"));
       ResponseAppend_P("%s", inbuf);
       ResponseJsonEnd();
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, TasmotaGlobal.mqtt_data);
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR("TasmotaClient"));
     }
     if (CMND_EXECUTE_CMND == TClientCommand.command) { // We need to execute the incoming command
-      ExecuteCommand(inbuf, SRC_IGNORE);
+      ExecuteCommand(inbuf, SRC_TCL);
     }
   }
 }
