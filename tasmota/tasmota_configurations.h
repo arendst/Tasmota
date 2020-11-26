@@ -708,11 +708,13 @@
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_LITE
 
+
 /*********************************************************************************************\
  * [tasmota-minimal.bin]
  * Provide the smallest image possible while still enabling a webserver for intermediate image load
 \*********************************************************************************************/
 
+#ifndef FIRMWARE_MINICUSTOM
 #ifdef FIRMWARE_MINIMAL
 
 #undef CODE_IMAGE_STR
@@ -845,10 +847,35 @@
 #undef USE_PROMETHEUS                            // Disable support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
+
 #endif  // FIRMWARE_MINIMAL
+#endif  // ifndef FIRMWARE_MINICUSTOM
+
+
+/*********************************************************************************************\
+ * [tasmota-minicustom.bin]
+ * Make a small minimal custom image possible
+\*********************************************************************************************/
+
+#ifdef FIRMWARE_MINICUSTOM
+#define FIRMWARE_MINIMAL
+
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "mini-custom"
+
+#undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
+#undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
+#undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
+#undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
+#undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
+#undef FIRMWARE_IR_CUSTOM                       // Disable tasmota customizable with special marker to add all IR protocols
+
+#endif  // FIRMWARE_MINICUSTOM
+
 
 #ifdef ESP32
 #include "tasmota_configurations_ESP32.h"
 #endif  // ESP32
+
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_
