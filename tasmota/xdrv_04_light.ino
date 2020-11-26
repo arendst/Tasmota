@@ -288,6 +288,7 @@ struct LIGHT {
   bool     fade_initialized = false;      // dont't fade at startup
   bool     fade_running = false;
 #ifdef USE_DEVICE_GROUPS
+  uint8_t  device_group_index;
   uint8_t  last_scheme = 0;
   bool     devgrp_no_channels_out = false; // don't share channels with device group (e.g. if scheme set by other device)
 #ifdef USE_DGR_LIGHT_SEQUENCE
@@ -1353,6 +1354,12 @@ void LightInit(void)
     Light.device--;   // we take the last two devices as lights
   }
   LightCalcPWMRange();
+#ifdef USE_DEVICE_GROUPS
+  Light.device_group_index = 0;
+  if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
+    Light.device_group_index = Light.device - 1;
+  }
+#endif  // USE_DEVICE_GROUPS
 #ifdef DEBUG_LIGHT
   AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightInit Light.pwm_multi_channels=%d Light.subtype=%d Light.device=%d TasmotaGlobal.devices_present=%d",
     Light.pwm_multi_channels, Light.subtype, Light.device, TasmotaGlobal.devices_present);
@@ -1931,7 +1938,7 @@ void LightAnimate(void)
 #ifdef USE_DEVICE_GROUPS
     if (Settings.light_scheme != Light.last_scheme) {
       Light.last_scheme = Settings.light_scheme;
-      SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
+      SendDeviceGroupMessage(Light.device_group_index, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
       Light.devgrp_no_channels_out = false;
     }
 #endif  // USE_DEVICE_GROUPS
@@ -2324,11 +2331,11 @@ void LightSendDeviceGroupStatus(bool status)
       memcpy(channels, Light.new_color, LST_MAX);
       channels[LST_MAX]++;
     }
-    SendLocalDeviceGroupMessage((send_bri_update ? DGR_MSGTYP_PARTIAL_UPDATE : DGR_MSGTYP_UPDATE), DGR_ITEM_LIGHT_CHANNELS, channels);
+    SendDeviceGroupMessage(Light.device_group_index, (send_bri_update ? DGR_MSGTYP_PARTIAL_UPDATE : DGR_MSGTYP_UPDATE), DGR_ITEM_LIGHT_CHANNELS, channels);
   }
   if (send_bri_update) {
     last_bri = bri;
-    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_BRI, light_state.getBri());
+    SendDeviceGroupMessage(Light.device_group_index, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_BRI, light_state.getBri());
   }
 }
 
@@ -2337,9 +2344,10 @@ void LightHandleDevGroupItem(void)
   static bool send_state = false;
   static bool restore_power = false;
 
-#ifdef USE_PWM_DIMMER_REMOTE
-  if (!(XdrvMailbox.index & DGR_FLAG_LOCAL)) return;
-#endif  // USE_PWM_DIMMER_REMOTE
+//#ifdef USE_PWM_DIMMER_REMOTE
+//  if (!(XdrvMailbox.index & DGR_FLAG_LOCAL)) return;
+//#endif  // USE_PWM_DIMMER_REMOTE
+  if (*XdrvMailbox.topic != Light.device_group_index) return;
   bool more_to_come;
   uint32_t value = XdrvMailbox.payload;
   switch (XdrvMailbox.command_code) {
@@ -2880,7 +2888,7 @@ void CmndDimmer(void)
     uint8_t bri = light_state.getBri();
     if (bri != Settings.bri_power_on) {
       Settings.bri_power_on = bri;
-      SendLocalDeviceGroupMessage(DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
+      SendDeviceGroupMessage(Light.device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
     }
 #endif  // USE_PWM_DIMMER && USE_DEVICE_GROUPS
     Light.update = true;
@@ -2987,7 +2995,7 @@ void CmndFade(void)
     break;
   }
 #ifdef USE_DEVICE_GROUPS
-  if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
+  if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendDeviceGroupMessage(Light.device_group_index, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_LIGHT
   if (!Settings.light_fade) { Light.fade_running = false; }
@@ -3012,7 +3020,7 @@ void CmndSpeed(void)
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 40)) {
     Settings.light_speed = XdrvMailbox.payload;
 #ifdef USE_DEVICE_GROUPS
-    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
+    SendDeviceGroupMessage(Light.device_group_index, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
 #endif  // USE_DEVICE_GROUPS
   }
   ResponseCmndNumber(Settings.light_speed);
