@@ -1601,32 +1601,26 @@ extern "C" {
 // Convert seconds to a string representing days, hours or minutes present in the n-value.
 // The string will contain the most coarse time only, rounded down (61m == 01h, 01h37m == 01h).
 // Inputs:
-// - n: uint32_t representing some number of seconds
-// - result: a buffer of suitable size (7 bytes would represent the entire solution space
-//           for UINT32_MAX including the trailing null-byte, or "49710d")
-// - result_len: A numeric value representing the total length of the result buffer
-// Returns:
-// - The number of characters that would have been written were result sufficiently large
-// - negatve number on encoding error from snprintf
+// - seconds: uint32_t representing some number of seconds
+// Outputs:
+// - char for unit (d for day, h for hour, m for minute)
+// - the hex color to be used to display the text
 //
-  int convert_seconds_to_dhm(uint32_t n,  char *result, size_t result_len){
-    char fmtstr[] = "%02dmhd"; // Don't want this in progmem, because we mutate it.
-    uint32_t conversions[3] = {24 * 3600, 3600, 60};
-    uint32_t value;
+  uint32_t convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint8_t *color){
+    static uint32_t conversions[3] = {24 * 3600, 3600, 60};
+    static char     units[3] = { 'd', 'h', 'm'};   // day, hour, minute
+    static uint8_t  colors[3] = { 0x60, 0xA0, 0xEA};
     for(int i = 0; i < 3; ++i) {
-      value = n / conversions[i];
-      if(value > 0) {
-        fmtstr[4] = fmtstr[6-i];
-        break;
+      *color = colors[i];
+      *unit = units[i];
+      if (seconds > conversions[i]) {    // always pass even if 00m
+        return seconds / conversions[i];
       }
-      n = n % conversions[i];
     }
-
-    // Null-terminate the string at the last "valid" index, removing any excess zero values.
-    fmtstr[5] = '\0';
-    return snprintf(result, result_len, fmtstr, value);
+    return 0;
   }
-}
+} // extern "C"
+
 void ZigbeeShow(bool json)
 {
   if (json) {
@@ -1708,16 +1702,21 @@ void ZigbeeShow(bool json)
             WSContentSend_PD(PSTR("<i class='b%d%s'></i>"), j, (num_bars < j) ? PSTR(" o30") : PSTR(""));
           }
       }
-      char dhm[16]; // len("&#x1F557;" + "49710d" + '\0') == 16
-      snprintf_P(dhm, sizeof(dhm), PSTR("&nbsp;"));
-      if(device.validLastSeen()){
-        snprintf_P(dhm, sizeof(dhm), PSTR("&#x1F557;"));
-        convert_seconds_to_dhm(now - device.last_seen, &dhm[9], 7);
+      char dhm[48];
+      snprintf_P(dhm, sizeof(dhm), PSTR("<td>&nbsp;"));
+      if (device.validLastSeen()) {
+        char unit;
+        uint8_t color;
+        uint16_t val = convert_seconds_to_dhm(now - device.last_seen, &unit, &color);
+        if (val < 100) {
+          snprintf_P(dhm, sizeof(dhm), PSTR("<td style=\"color:#%02x%02x%02x\">&#x1F557;%02d%c"),
+                                      color, color, color, val, unit);
+        }
       }
 
       WSContentSend_PD(PSTR(
         "</div></td>" // Close LQI
-        "<td>%s{e}" // dhm (Last Seen)
+        "%s{e}" // dhm (Last Seen)
       ), dhm );
 
       // Sensors

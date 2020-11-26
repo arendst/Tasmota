@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v8.4.0.3
+ * Updated until v9.1.0.2
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -84,7 +84,7 @@
 #define D_DISABLED "Deshabilitado"
 #define D_DISTANCE "Distancia"
 #define D_DNS_SERVER "Servidor DNS"
-#define D_DO "Disolved Oxygen"
+#define D_DO "Oxígeno Disuelto"
 #define D_DONE "Listo"
 #define D_DST_TIME "DST"
 #define D_EC "EC"
@@ -413,16 +413,16 @@
 #define D_DOMOTICZ_KEY_IDX "Key idx"
 #define D_DOMOTICZ_SWITCH_IDX "Switch idx"
 #define D_DOMOTICZ_SENSOR_IDX "Sensor idx"
-  #define D_DOMOTICZ_TEMP "Temp"
-  #define D_DOMOTICZ_TEMP_HUM "Temp,Hum"
-  #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
-  #define D_DOMOTICZ_POWER_ENERGY "Potencia,Energía"
-  #define D_DOMOTICZ_ILLUMINANCE "Luminancia"
-  #define D_DOMOTICZ_COUNT "Contador/PM1"
-  #define D_DOMOTICZ_VOLTAGE "Voltaje/PM2,5"
-  #define D_DOMOTICZ_CURRENT "Corriente/PM10"
-  #define D_DOMOTICZ_AIRQUALITY "Calidad del Aire"
-  #define D_DOMOTICZ_P1_SMART_METER "Medidor Inteligente P1"
+#define D_DOMOTICZ_TEMP "Temp"
+#define D_DOMOTICZ_TEMP_HUM "Temp,Hum"
+#define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
+#define D_DOMOTICZ_POWER_ENERGY "Potencia,Energía"
+#define D_DOMOTICZ_ILLUMINANCE "Luminancia"
+#define D_DOMOTICZ_COUNT "Contador/PM1"
+#define D_DOMOTICZ_VOLTAGE "Voltaje/PM2,5"
+#define D_DOMOTICZ_CURRENT "Corriente/PM10"
+#define D_DOMOTICZ_AIRQUALITY "Calidad del Aire"
+#define D_DOMOTICZ_P1_SMART_METER "Medidor Inteligente P1"
 #define D_DOMOTICZ_UPDATE_TIMER "Intervalo de refresco"
 
 // xdrv_09_timers.ino
@@ -866,37 +866,37 @@
 #define D_MAX_CURRENT     "Corriente Máxima"
 
 // xsns_79_as608.ino
-#define D_FP_ENROLL_PLACEFINGER "Place finger"
-#define D_FP_ENROLL_REMOVEFINGER "Remove finger"
-#define D_FP_ENROLL_PLACESAMEFINGER "Place same finger again"
-#define D_FP_ENROLL_RETRY "Error so retry"
-#define D_FP_ENROLL_RESTART "Restart"
+#define D_FP_ENROLL_PLACEFINGER "Colocar dedo"
+#define D_FP_ENROLL_REMOVEFINGER "Retirar dedo"
+#define D_FP_ENROLL_PLACESAMEFINGER "Colocar de nuevo el mismo dedo"
+#define D_FP_ENROLL_RETRY "Error, reintentar"
+#define D_FP_ENROLL_RESTART "Reiniciar"
 #define D_FP_ENROLL_ERROR "Error"
-#define D_FP_ENROLL_RESET "Reset"
-#define D_FP_ENROLL_ACTIVE "Active"
-#define D_FP_ENROLL_INACTIVE "Inactive"
+#define D_FP_ENROLL_RESET "Resetear"
+#define D_FP_ENROLL_ACTIVE "Activo"
+#define D_FP_ENROLL_INACTIVE "Inactivo"
 // Indexed by Adafruit_Fingerprint.h defines
-#define D_FP_PACKETRECIEVEERR "Comms error"    // 0x01 Error when receiving data package
+#define D_FP_PACKETRECIEVEERR "Error de Comms"    // 0x01 Error when receiving data package
 #define D_FP_NOFINGER ""                       // 0x02 No finger on the sensor
-#define D_FP_IMAGEFAIL "Imaging error"         // 0x03 Failed to enroll the finger
-#define D_FP_IMAGEMESS "Image too messy"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
-#define D_FP_FEATUREFAIL "Fingerprint too small" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH "No match"                // 0x08 Finger doesn't match
-#define D_FP_NOTFOUND "Did not find a match"   // 0x09 Failed to find matching finger
-#define D_FP_ENROLLMISMATCH "Fingerprint did not match" // 0x0A Failed to combine the character files
-#define D_FP_BADLOCATION "Bad location"        // 0x0B Addressed PageID is beyond the finger library
-#define D_FP_DBRANGEFAIL "DB range error"      // 0x0C Error when reading template from library or invalid template
-#define D_FP_UPLOADFEATUREFAIL "Upload feature error" // 0x0D Error when uploading template
-#define D_FP_PACKETRESPONSEFAIL "Packet response error" // 0x0E Module failed to receive the following data packages
-#define D_FP_UPLOADFAIL "Upload error"         // 0x0F Error when uploading image
-#define D_FP_DELETEFAIL "Delete error"         // 0x10 Failed to delete the template
-#define D_FP_DBCLEARFAIL "DB Clear error"      // 0x11 Failed to clear finger library
-#define D_FP_PASSFAIL "Password error"         // 0x13 Find whether the fingerprint passed or failed
-#define D_FP_INVALIDIMAGE "Image invalid"      // 0x15 Failed to generate image because of lac of valid primary image
-#define D_FP_FLASHERR "Flash write error"      // 0x18 Error when writing flash
-#define D_FP_INVALIDREG "Invalid number"       // 0x1A Invalid register number
-#define D_FP_ADDRCODE "Address code"           // 0x20 Address code
-#define D_FP_PASSVERIFY "Password verified"    // 0x21 Verify the fingerprint passed
+#define D_FP_IMAGEFAIL "Error de Imagen"         // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS "Imagen Ilegible"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL "Huella muy pequeña" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH "Sin coincidencias"                // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND "Sin coincidencias"   // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH "Sin coincidencias" // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION "Localización Incorrecta"        // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL "Error de DB"      // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL "Error de grabado" // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL "Error de paquete" // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL "Error de subida"         // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL "No se pudo borrar"         // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL "No se pudo borra la DB"      // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL "Error de Clave"         // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE "Imágen inválida"      // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR "Error escribiendo en Flash"      // 0x18 Error when writing flash
+#define D_FP_INVALIDREG "Número inválido"       // 0x1A Invalid register number
+#define D_FP_ADDRCODE "Código de Dirección"           // 0x20 Address code
+#define D_FP_PASSVERIFY "Clave Correcta"    // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Error"              // Any other error
 
 #endif  // _LANGUAGE_ES_ES_H_
