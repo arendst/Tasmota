@@ -171,6 +171,7 @@ struct RULES {
   uint16_t mems_event = 0;   // Bitmask supporting MAX_RULE_MEMS bits
   bool teleperiod = false;
   bool busy = false;
+  bool no_execute = false;   // Don't actually execute rule commands
 
   char event_data[100];
 } Rules;
@@ -708,6 +709,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 #endif
 
     if (RulesRuleMatch(rule_set, event, event_trigger, stop_all_rules)) {
+      if (Rules.no_execute) return true;
       if (plen == plen2) { stop_all_rules = true; }       // If BREAK was used on a triggered rule, Stop execution of this rule set
       commands.trim();
       String ucommand = commands;
