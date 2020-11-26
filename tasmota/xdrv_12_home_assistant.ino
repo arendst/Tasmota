@@ -1172,7 +1172,7 @@ bool Xdrv12(uint8_t function)
       break;
     case FUNC_MQTT_INIT:
       hass_mode = 0;      // Discovery only if Settings.flag.hass_discovery is set
-      hass_init_step = 2; // Delayed discovery
+      hass_init_step = 10; // Delayed discovery
       // if (!Settings.flag.hass_discovery) {
       //   NewHAssDiscovery();
       // }

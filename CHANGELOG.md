@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
 - Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
 - Support for multiple WeMo devices by Magic73 (#9208)
+- IRremoteESP8266 library from v2.7.12 to v2.7.13
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
