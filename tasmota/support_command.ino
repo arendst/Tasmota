@@ -244,8 +244,8 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 
     DEBUG_CORE_LOG(PSTR("CMD: Payload %d"), payload);
 
-//    TasmotaGlobal.backlog_delay = millis() + (100 * MIN_BACKLOG_DELAY);
-    TasmotaGlobal.backlog_delay = millis() + Settings.param[P_BACKLOG_DELAY];
+//    TasmotaGlobal.backlog_timer = millis() + (100 * MIN_BACKLOG_DELAY);
+    TasmotaGlobal.backlog_timer = millis() + Settings.param[P_BACKLOG_DELAY];
 
     char command[CMDSZ] = { 0 };
     XdrvMailbox.command = command;
@@ -344,7 +344,7 @@ void CmndBacklog(void)
     }
 //    ResponseCmndChar(D_JSON_APPENDED);
     ResponseClear();
-    TasmotaGlobal.backlog_delay = 0;
+    TasmotaGlobal.backlog_timer = millis();
   } else {
     bool blflag = BACKLOG_EMPTY;
 #ifdef SUPPORT_IF_STATEMENT
@@ -359,10 +359,10 @@ void CmndBacklog(void)
 void CmndDelay(void)
 {
   if ((XdrvMailbox.payload >= (MIN_BACKLOG_DELAY / 100)) && (XdrvMailbox.payload <= 3600)) {
-    TasmotaGlobal.backlog_delay = millis() + (100 * XdrvMailbox.payload);
+    TasmotaGlobal.backlog_timer = millis() + (100 * XdrvMailbox.payload);
   }
   uint32_t bl_delay = 0;
-  long bl_delta = TimePassedSince(TasmotaGlobal.backlog_delay);
+  long bl_delta = TimePassedSince(TasmotaGlobal.backlog_timer);
   if (bl_delta < 0) { bl_delay = (bl_delta *-1) / 100; }
   ResponseCmndNumber(bl_delay);
 }
