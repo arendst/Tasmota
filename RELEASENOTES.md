@@ -72,6 +72,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
 - Support for multiple WeMo devices by Magic73 (#9208)
 - KNX read reply for Power (#9236, #9891)
+- Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
