@@ -314,6 +314,14 @@ bool loadZigbeeDevicesFromEEPROM(void) {
   zigbee_devices.clean();   // don't write back to Flash what we just loaded
   return true;
 }
+
+void ZFS_Erase(void) {
+  if (zigbee.eeprom_present) {
+    ZFS::erase();
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased in %s"), PSTR("EEPROM"));
+  }
+}
+
 #endif // USE_ZIGBEE_EZSP
 
 #endif // USE_ZIGBEE
