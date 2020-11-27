@@ -198,7 +198,7 @@ const char HASS_DISCOVER_DEVICE[] PROGMEM =                         // Basic par
   "\"rl\":[%s],\"swc\":[%s],\"swn\":[%s],\"btn\":[%s],"             // Inputs / Outputs
   "\"so\":{\"4\":%d,\"11\":%d,\"13\":%d,\"17\":%d,\"20\":%d,"       // SetOptions
   "\"30\":%d,\"68\":%d,\"73\":%d,\"82\":%d,\"114\":%d},"
-  "\"lk\":%d,\"lt_st\":%d,\"ver\":1}";                              // Light SubType, and Discovery version
+  "\"lk\":%d,\"lt_st\":%d,\"sho\":[%s],\"ver\":1}";                 // Light SubType, Shutter Options and Discovery version
 
 typedef struct HASS {
   uint16_t Relay[MAX_RELAYS]; // Base array to store the relay type
@@ -255,7 +255,7 @@ void HassDiscoveryRelays(struct HASS &Hass)
         if (i >= lightidx || (iFan && i == 0)) { // First relay on Ifan controls the light
           Hass.Relay[i] = 2;    // Relay is a light
         } else {
-          if (!iFan) { // Relays 2-4 for ifan are controlled by FANSPEED and don't need to be present if TasmotaGlobal.module_type = SONOFF_IFAN02 or SONOFF_IFAN03
+          if (!iFan) {          // Relays 2-4 for ifan are controlled by FANSPEED and don't need to be present if TasmotaGlobal.module_type = SONOFF_IFAN02 or SONOFF_IFAN03
             Hass.Relay[i] = 1;  // Simple Relay
           }
         }
@@ -273,6 +273,7 @@ void NewHAssDiscovery(void)
   char stemp3[TOPSZ];
   char stemp4[TOPSZ];
   char stemp5[TOPSZ];
+  char stemp6[TOPSZ];
   char unique_id[30];
   char relays[TOPSZ];
   char *state_topic = stemp1;
@@ -315,6 +316,13 @@ void NewHAssDiscovery(void)
     SerialButton = false;
   }
 
+#ifdef USE_SHUTTER
+  stemp6[0] = '\0';
+  for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
+    snprintf_P(stemp6, sizeof(stemp6), PSTR("%s%s%d"), stemp6, (i > 0 ? "," : ""), Settings.shutter_options[i]);
+  }
+#endif // USE_SHUTTER
+
   ResponseClear(); // Clear retained message
 
   // Full 12 chars MAC address as ID
@@ -331,7 +339,7 @@ void NewHAssDiscovery(void)
               TasmotaGlobal.version, TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_FULLTOPIC), SUB_PREFIX, PUB_PREFIX, PUB_PREFIX2, Hass.RelLst, stemp3, stemp4,
               stemp5, Settings.flag.mqtt_response, Settings.flag.button_swap, Settings.flag.button_single, Settings.flag.decimal_text, Settings.flag.not_power_linked,
               Settings.flag.hass_light, Settings.flag3.pwm_multi_channels, Settings.flag3.mqtt_buttons, Settings.flag4.alexa_ct_range, Settings.flag5.mqtt_switches,
-              light_controller.isCTRGBLinked(), Light.subtype);
+              light_controller.isCTRGBLinked(), Light.subtype, stemp6);
   }
   MqttPublish(stopic, true);
 
