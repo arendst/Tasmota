@@ -287,8 +287,6 @@ void UpdateQuickPowerCycle(bool update) {
 #ifndef FIRMWARE_MINIMAL
   if (Settings.flag3.fast_power_cycle_disable) { return; }  // SetOption65 - Disable fast power cycle detection for device reset
 
-
-
   const uint32_t QPC_COUNT = 7;  // Number of Power Cycles before Settings erase
   const uint32_t QPC_SIGNATURE = 0xFFA55AFF;
 
