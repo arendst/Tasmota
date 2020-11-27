@@ -1520,6 +1520,10 @@ void HM10EverySecond(bool restart){
   }
 
   if(_counter==0) {
+    if(MIBLEsensors.size() == 0){
+      _counter++;
+      return;
+    }
     HM10.state.sensor = _nextSensorSlot;
     _nextSensorSlot++;
     HM10.mode.pending_task = 1;
