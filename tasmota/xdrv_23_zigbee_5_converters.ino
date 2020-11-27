@@ -757,6 +757,7 @@ public:
 
   void parseReportAttributes(Z_attribute_list& attr_list);
   void generateSyntheticAttributes(Z_attribute_list& attr_list);
+  void removeInvalidAttributes(Z_attribute_list& attr_list);
   void computeSyntheticAttributes(Z_attribute_list& attr_list);
   void generateCallBacks(Z_attribute_list& attr_list);
   void parseReadAttributes(Z_attribute_list& attr_list);
@@ -1236,6 +1237,26 @@ void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
         break;
       case 0x000C0055:    // Analog Value
         syntheticAnalogValue(attr_list, attr);
+        break;
+    }
+  }
+}
+
+//
+// Remove invalid values
+//
+void ZCLFrame::removeInvalidAttributes(Z_attribute_list& attr_list) {
+  // scan through attributes and apply specific converters
+  for (auto &attr : attr_list) {
+    if (attr.key_is_str) { continue; }    // pass if key is a name
+    uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
+
+    switch (ccccaaaa) {      // 0xccccaaaa . c=cluster, a=attribute
+      case 0x04020000:       // Temperature
+        if (attr.getInt() <= -10000) {
+          // #9978, remove temperature of -100.00°C sent by lumi.weather
+          attr_list.removeAttribute(&attr);
+        }
         break;
     }
   }
@@ -2035,19 +2056,21 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
         case Zenum8:
         case Zmap8:
         case Zbool:
-        case Zuint8:  uval32 = *(uint8_t*)attr_address;   if (uval32 != 0xFF)        data_size = 8;   break;
+        case Zuint8:  uval32 = *(uint8_t*)attr_address;   if (uval32 !=  0x000000FF) data_size = 8;   break;
         case Zmap16:
         case Zenum16:
-        case Zuint16: uval32 = *(uint16_t*)attr_address;  if (uval32 != 0xFFFF)      data_size = 16;  break;
-        case Zuint32: uval32 = *(uint32_t*)attr_address;  if (uval32 != 0xFFFFFFFF)  data_size = 32;  break;
-        case Zint8:   ival32 = *(int8_t*)attr_address;    if (ival32 != -0x80)       data_size = -8;  break;
-        case Zint16:  ival32 = *(int16_t*)attr_address;   if (ival32 != -0x8000)     data_size = -16; break;
+        case Zuint16: uval32 = *(uint16_t*)attr_address;  if (uval32 !=  0x0000FFFF) data_size = 16;  break;
+        case Zuint32: uval32 = *(uint32_t*)attr_address;  if (uval32 !=  0xFFFFFFFF) data_size = 32;  break;
+        case Zint8:   ival32 = *(int8_t*)attr_address;    if (ival32 != -0xFFFFFF80) data_size = -8;  break;
+        case Zint16:  ival32 = *(int16_t*)attr_address;   if (ival32 != -0xFFFF8000) data_size = -16; break;
         case Zint32:  ival32 = *(int32_t*)attr_address;   if (ival32 != -0x80000000) data_size = -32; break;
       }
       if (data_size != 0) {
         Z_attribute & attr = attr_list.addAttribute(conv_name);
 
-        float fval = (data_size > 0) ? uval32 : ival32;
+        float fval;
+        if (data_size > 0) { fval = uval32; }
+        else               { fval = ival32; }
         if ((1 != multiplier) && (0 != multiplier)) {
           if (multiplier > 0) { fval =  fval * multiplier; }
           else                { fval =  fval / (-multiplier); }
