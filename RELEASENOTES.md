@@ -72,6 +72,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
 - Support for multiple WeMo devices by Magic73 (#9208)
 - KNX read reply for Power (#9236, #9891)
+- Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
@@ -90,6 +91,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - KNX ESP32 UDP mulicastpackage (#9811)
 - GUI MqttUser and MqttPassword updates when TLS is compiled in (#9825)
 - ESP32 TasmotaClient firmware upgrade (#9218)
+- Reset to defaults after 6 hours of DeepSleep (#9993)
 
 ### Removed
 - Version compatibility check
