@@ -687,7 +687,7 @@ void stationKeepAliveNow(void) {
 }
 
 void wifiKeepAlive(void) {
-  static uint32_t wifi_timer = 0;                            // Wifi keepalive timer
+  static uint32_t wifi_timer = millis();                     // Wifi keepalive timer
 
   uint32_t wifiTimerSec = Settings.param[P_ARP_GRATUITOUS];  // 8-bits number of seconds, or minutes if > 100
 
