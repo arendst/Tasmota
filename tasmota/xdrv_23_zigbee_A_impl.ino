@@ -136,6 +136,7 @@ void CmndZbReset(void) {
       ZigbeeZNPSend(ZIGBEE_FACTORY_RESET, sizeof(ZIGBEE_FACTORY_RESET));
 #endif // USE_ZIGBEE_ZNP
       eraseZigbeeDevices();
+      // no break - this is intended
     case 2:   // fall through
       Settings.zb_txradio_dbm = - abs(Settings.zb_txradio_dbm);
       TasmotaGlobal.restart_flag = 2;
