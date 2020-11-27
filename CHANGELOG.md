@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - KNX ESP32 UDP mulicastpackage (#9811)
 - Command ``gpio`` using non-indexed functions regression from v9.1.0 (#9962)
 - ESP32 TasmotaClient firmware upgrade (#9218)
+- Reset to defaults after 6 hours of DeepSleep (#9993)
 
 ### Removed
 

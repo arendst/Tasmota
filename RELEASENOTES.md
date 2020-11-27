@@ -90,6 +90,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - KNX ESP32 UDP mulicastpackage (#9811)
 - GUI MqttUser and MqttPassword updates when TLS is compiled in (#9825)
 - ESP32 TasmotaClient firmware upgrade (#9218)
+- Reset to defaults after 6 hours of DeepSleep (#9993)
 
 ### Removed
 - Version compatibility check

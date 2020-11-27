@@ -205,9 +205,13 @@ void setup(void) {
     RtcReboot.fast_reboot_count = 0;
   }
 #ifdef FIRMWARE_MINIMAL
-  RtcReboot.fast_reboot_count = 0;  // Disable fast reboot and quick power cycle detection
+  RtcReboot.fast_reboot_count = 0;    // Disable fast reboot and quick power cycle detection
 #else
-  RtcReboot.fast_reboot_count++;
+  if (ResetReason() == REASON_DEEP_SLEEP_AWAKE) {
+    RtcReboot.fast_reboot_count = 0;  // Disable fast reboot and quick power cycle detection
+  } else {
+    RtcReboot.fast_reboot_count++;
+  }
 #endif
   RtcRebootSave();
 
@@ -229,7 +233,6 @@ void setup(void) {
 
   if (1 == RtcReboot.fast_reboot_count) {  // Allow setting override only when all is well
     UpdateQuickPowerCycle(true);
-    XdrvCall(FUNC_SETTINGS_OVERRIDE);
   }
 
   TasmotaGlobal.seriallog_level = Settings.seriallog_level;
