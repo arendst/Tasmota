@@ -66,6 +66,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Zigbee support for Mi Door and Contact (#9759)
 - Zigbee alarm persistence (#9785)
 - Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
+- TyuaMcu update 2/3 by Federico Leoni (#10004)
 - Support for additional EZO sensors by Christopher Tremblay
 - Support for AS608 optical and R503 capacitive fingerprint sensor
 - Support for Shelly Dimmer 1 and 2 by James Turton (#9854)
@@ -79,6 +80,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ### Changed
 - Core library from v2.7.4.5 to v2.7.4.7
+- IRremoteESP8266 library from v2.7.12 to v2.7.13
 - Platformio compiler option `no target align` enabled (#9749)
 - Sonoff L1 color up scaling and color margin detection (#9545)
 - MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
