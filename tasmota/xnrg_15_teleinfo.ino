@@ -463,20 +463,21 @@ void TInfoInit(void)
             AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: always enabled"));
         }
 
-#if defined (ESP8266)
+#ifdef ESP8266
         // Allow GPIO3 AND GPIO13 with hardware fallback to 2
         TInfoSerial = new TasmotaSerial(rx_pin, -1, 2);
         //pinMode(rx_pin, INPUT_PULLUP);
-#else
+#endif  // ESP8266
+#ifdef ESP32
         TInfoSerial = new TasmotaSerial(rx_pin, -1, 1);
-#endif
+#endif  // ESP32
 
         // Trick here even using SERIAL_7E1 or TS_SERIAL_7E1
         // this is not working, need to call SetSerialConfig after
         if (TInfoSerial->begin(baudrate)) {
 
 
-#if defined (ESP8266)
+#ifdef ESP8266
             if (TInfoSerial->hardwareSerial() ) {
                 ClaimSerial();
 
@@ -491,10 +492,10 @@ void TInfoInit(void)
             } else {
                 AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: using software serial"));
             }
-
-#elif defined (ESP32)
+#endif  // ESP8266
+#ifdef ESP32
             AddLog_P(LOG_LEVEL_INFO, PSTR("TIC: using ESP32 hardware serial"));
-#endif
+#endif  // ESP32
             // Init teleinfo
             tinfo.init(tinfo_mode);
             // Attach needed callbacks
