@@ -391,6 +391,9 @@ void saveZigbeeDevices(void) {
 // Erase the flash area containing the ZigbeeData
 void eraseZigbeeDevices(void) {
   zigbee_devices.clean();     // avoid writing data to flash after erase
+#ifdef USE_ZIGBEE_EZSP
+  ZFS_Erase();
+#endif // USE_ZIGBEE_EZSP
 #ifdef ESP8266
   // first copy SPI buffer into ram
   uint8_t *spi_buffer = (uint8_t*) malloc(z_spi_len);
@@ -410,7 +413,7 @@ void eraseZigbeeDevices(void) {
   }
 
   free(spi_buffer);
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (0x%08X - %d bytes)"), z_dev_start, z_block_len);
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased in %s"), PSTR("Flash"));
 #else  // ESP32
   ZigbeeErase();
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (%d bytes)"), z_block_len);

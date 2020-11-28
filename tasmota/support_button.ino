@@ -27,7 +27,7 @@
 #ifdef ESP32
 #define TOUCH_PIN_THRESHOLD     12 // Smaller value will treated as button press
 #define TOUCH_HIT_THRESHOLD     3  // successful hits to filter out noise
-#endif // ESP32
+#endif  // ESP32
 
 const char kMultiPress[] PROGMEM =
   "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|";
@@ -47,7 +47,7 @@ struct BUTTON {
 #ifdef ESP32
   uint8_t touch_mask = 0;                    // Touch flag (1 = inverted)
   uint8_t touch_hits[MAX_KEYS] = { 0 };      // Hits in a row to filter out noise
-#endif // ESP32
+#endif  // ESP32
   uint8_t present = 0;                       // Number of buttons found flag
 } Button;
 
@@ -57,7 +57,7 @@ struct TOUCH_BUTTON {
   uint8_t hit_threshold = TOUCH_HIT_THRESHOLD;
   uint8_t calibration = 0; // Bitfield
 } TOUCH_BUTTON;
-#endif // ESP32
+#endif  // ESP32
 
 /********************************************************************************************/
 
@@ -73,7 +73,7 @@ void ButtonInvertFlag(uint32_t button_bit) {
 void ButtonTouchFlag(uint32_t button_bit) {
   bitSet(Button.touch_mask, button_bit);
 }
-#endif // ESP32
+#endif  // ESP32
 
 void ButtonInit(void) {
   Button.present = 0;
@@ -87,9 +87,10 @@ void ButtonInit(void) {
       Button.present++;
 #ifdef ESP8266
       pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
       pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
-#endif
+#endif  // ESP32
     }
 #ifdef USE_ADC
     else if (PinUsed(GPIO_ADC_BUTTON, i) || PinUsed(GPIO_ADC_BUTTON_INV, i)) {
