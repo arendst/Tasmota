@@ -444,7 +444,8 @@ struct {
 
   uint8_t       free_esp8266_41A[55];      // 41A
 
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
 
@@ -452,7 +453,7 @@ struct {
 
   WebCamCfg     webcam_config;             // 44C
   uint8_t       eth_address;               // 450
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
   char          serial_delimiter;          // 451
   uint8_t       seriallog_level;           // 452
   uint8_t       sleep;                     // 453
@@ -464,11 +465,12 @@ struct {
 
 #ifdef ESP8266
   myio8         ex_my_gp8;                 // 484 17 bytes (ESP8266) - Free since 9.0.0.1
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
 
   uint8_t       free_esp32_484[17];        // 484
 
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
 
   uint8_t       ex_my_adc0;                // 495  Free since 9.0.0.1
 
@@ -525,11 +527,12 @@ struct {
 
 #ifdef ESP8266
   mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - Free since 9.0.0.1
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
 
   uint8_t       free_esp32_72f[14];        // 72F
 
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
 
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E
@@ -638,7 +641,7 @@ struct {
   uint8_t       shd_leading_edge;          // F5B
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
-  
+
   uint8_t       free_f5e[84];              // F5E - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
@@ -669,7 +672,7 @@ typedef struct {
 TRtcReboot RtcReboot;
 #ifdef ESP32
 RTC_NOINIT_ATTR TRtcReboot RtcDataReboot;
-#endif
+#endif  // ESP32
 
 typedef struct {
   uint16_t      valid;                     // 290  (RTC memory offset 100)
@@ -691,7 +694,7 @@ typedef struct {
 TRtcSettings RtcSettings;
 #ifdef ESP32
 RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
-#endif
+#endif  // ESP32
 
 struct TIME_T {
   uint8_t       second;

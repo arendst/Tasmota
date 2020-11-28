@@ -42,9 +42,10 @@ void RtcSettingsSave(void)
     RtcSettings.valid = RTC_MEM_VALID;
 #ifdef ESP8266
     ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));
-#else
+#endif  // ESP8266
+#ifdef ESP32
     RtcDataSettings = RtcSettings;
-#endif
+#endif  // ESP32
     rtc_settings_crc = GetRtcSettingsCrc();
   }
 }
@@ -53,9 +54,10 @@ void RtcSettingsLoad(void)
 {
 #ifdef ESP8266
   ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));  // 0x290
-#else
+#endif  // ESP8266
+#ifdef ESP32
   RtcSettings = RtcDataSettings;
-#endif
+#endif  // ESP32
   if (RtcSettings.valid != RTC_MEM_VALID) {
     memset(&RtcSettings, 0, sizeof(RtcSettings));
     RtcSettings.valid = RTC_MEM_VALID;
@@ -97,9 +99,10 @@ void RtcRebootSave(void)
     RtcReboot.valid = RTC_MEM_VALID;
 #ifdef ESP8266
     ESP.rtcUserMemoryWrite(100 - sizeof(RtcReboot), (uint32_t*)&RtcReboot, sizeof(RtcReboot));
-#else
+#endif  // ESP8266
+#ifdef ESP32
     RtcDataReboot = RtcReboot;
-#endif
+#endif  // ESP32
     rtc_reboot_crc = GetRtcRebootCrc();
   }
 }
@@ -114,9 +117,10 @@ void RtcRebootLoad(void)
 {
 #ifdef ESP8266
   ESP.rtcUserMemoryRead(100 - sizeof(RtcReboot), (uint32_t*)&RtcReboot, sizeof(RtcReboot));  // 0x280
-#else
+#endif  // ESP8266
+#ifdef ESP32
   RtcReboot = RtcDataReboot;
-#endif
+#endif  // ESP32
   if (RtcReboot.valid != RTC_MEM_VALID) {
     memset(&RtcReboot, 0, sizeof(RtcReboot));
     RtcReboot.valid = RTC_MEM_VALID;
@@ -316,7 +320,8 @@ void UpdateQuickPowerCycle(bool update) {
       AddLog_P(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
     }
   }
-#else // ESP32
+#endif  // ESP8266
+#ifdef ESP32
   uint32_t pc_register;
   QPCRead(&pc_register, sizeof(pc_register));
   if (update && ((pc_register & 0xFFFFFFF0) == 0xFFA55AF0)) {
@@ -337,7 +342,7 @@ void UpdateQuickPowerCycle(bool update) {
     QPCWrite(&pc_register, sizeof(pc_register));
     AddLog_P(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
   }
-#endif  // ESP8266 or ESP32
+#endif  // ESP32
 
 #endif  // FIRMWARE_MINIMAL
 }
@@ -511,10 +516,11 @@ void SettingsSave(uint8_t rotate)
       }
     }
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(Settings));
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
     SettingsWrite(&Settings, sizeof(Settings));
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "Saved, " D_COUNT " %d, " D_BYTES " %d"), Settings.save_flag, sizeof(Settings));
-#endif  // ESP8266
+#endif  // ESP32
 
     settings_crc32 = Settings.cfg_crc32;
   }
@@ -547,10 +553,11 @@ void SettingsLoad(void) {
     ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(Settings));
     AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
   }
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
   SettingsRead(&Settings, sizeof(Settings));
   AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded, " D_COUNT " %lu"), Settings.save_flag);
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
 
 #ifndef FIRMWARE_MINIMAL
   if ((0 == settings_location) || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
@@ -755,7 +762,7 @@ void SettingsDefaultSet2(void)
   Settings.eth_type = ETH_TYPE;
   Settings.eth_clk_mode = ETH_CLKMODE;
   Settings.eth_address = ETH_ADDR;
-#endif
+#endif  // ESP32
 
   // Wifi
   flag4.network_wifi |= 1;

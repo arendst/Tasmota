@@ -1194,13 +1194,14 @@ void Every250mSeconds(void)
 
 #ifdef ESP8266
         StartWebserver(Settings.webserver, WiFi.localIP());
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
 #ifdef USE_ETHERNET
         StartWebserver(Settings.webserver, (EthernetLocalIP()) ? EthernetLocalIP() : WiFi.localIP());
 #else
         StartWebserver(Settings.webserver, WiFi.localIP());
 #endif
-#endif
+#endif  // ESP32
 
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
@@ -1605,7 +1606,8 @@ void GpioInit(void)
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK)"));
   }
 #endif  // USE_SPI
-#else // ESP32
+#endif  // ESP8266
+#ifdef ESP32
 #ifdef USE_SPI
   if (PinUsed(GPIO_SPI_CS) || PinUsed(GPIO_SPI_DC)) {
     if ((15 == Pin(GPIO_SPI_CS)) && (!GetPin(12) && !GetPin(13) && !GetPin(14))) {  // HSPI
@@ -1657,7 +1659,7 @@ void GpioInit(void)
     }
   }
 #endif  // USE_SPI
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
   TasmotaGlobal.soft_spi_enabled = (PinUsed(GPIO_SSPI_SCLK) && (PinUsed(GPIO_SSPI_MOSI) || PinUsed(GPIO_SSPI_MISO)));
 
   for (uint32_t i = 0; i < ARRAY_SIZE(TasmotaGlobal.my_module.io); i++) {
@@ -1719,9 +1721,10 @@ void GpioInit(void)
     if (PinUsed(GPIO_PWM1, i)) {
 #ifdef ESP8266
       pinMode(Pin(GPIO_PWM1, i), OUTPUT);
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
       analogAttach(Pin(GPIO_PWM1, i), i);
-#endif
+#endif  // ESP32
       if (TasmotaGlobal.light_type) {
         // force PWM GPIOs to low or high mode, see #7165
         analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings.pwm_range : 0);

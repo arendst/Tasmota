@@ -51,21 +51,7 @@ uint32_t eeprom_init(uint32_t size) {
 
 #else // USE_24C256
 
-#ifdef ESP32
-
-// esp32 uses eeprom section
-uint32_t eeprom_init(uint32_t size) {
-  return EEPROM.begin(size);
-}
-void eeprom_writeBytes(uint32_t addr, uint32_t len, uint8_t *buff) {
-  EEPROM.writeBytes(addr, buff, len);
-  EEPROM.commit();
-}
-void eeprom_readBytes(uint32_t addr, uint32_t len, uint8_t *buff) {
-  EEPROM.readBytes(addr, buff, len);
-}
-
-#else
+#ifdef ESP8266
 // esp8266 uses eeprom section
 uint32_t eeprom_init(uint32_t size) {
   EEPROM.begin(size);
@@ -83,7 +69,20 @@ void eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
     *buf++ = EEPROM.read(adr++);
   }
 }
+#endif  // ESP8266
+#ifdef ESP32
+// esp32 uses eeprom section
+uint32_t eeprom_init(uint32_t size) {
+  return EEPROM.begin(size);
+}
+void eeprom_writeBytes(uint32_t addr, uint32_t len, uint8_t *buff) {
+  EEPROM.writeBytes(addr, buff, len);
+  EEPROM.commit();
+}
+void eeprom_readBytes(uint32_t addr, uint32_t len, uint8_t *buff) {
+  EEPROM.readBytes(addr, buff, len);
+}
+#endif  // ESP32
 
-#endif
-#endif // USE_24C256
-#endif // USE_EEPROM
+#endif  // USE_24C256
+#endif  // USE_EEPROM

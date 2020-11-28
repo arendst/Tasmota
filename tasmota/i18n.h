@@ -345,7 +345,7 @@
 #define D_CMND_TOUCH_THRES "TouchThres"
 #define D_CMND_TOUCH_NUM "TouchNum"
 #define D_CMND_CPU_FREQUENCY "CpuFrequency"
-#endif //ESP32
+#endif  // ESP32
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTLOG "MqttLog"

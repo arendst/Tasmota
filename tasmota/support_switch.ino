@@ -201,9 +201,10 @@ void SwitchInit(void) {
       Switch.present++;
 #ifdef ESP8266
       pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_SWT1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
       pinMode(Pin(GPIO_SWT1, i), bitRead(Switch.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
-#endif
+#endif  // ESP32
       if (ac_detect) {
         Switch.state[i] = 0x80 + 2 * AC_PERIOD;
         Switch.last_state[i] = 0;				// Will set later in the debouncing code
