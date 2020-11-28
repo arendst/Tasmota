@@ -95,7 +95,7 @@
 #define OTA_URL                "http://ota.tasmota.com/tasmota/release/tasmota.bin.gz"  // [OtaUrl]
 #endif  // ESP8266
 #ifdef ESP32
-#define OTA_URL                "http://ota.tasmota.com/tasmota32/release/tasmota.bin"  // [OtaUrl]
+#define OTA_URL                "http://ota.tasmota.com/tasmota32/release/tasmota32.bin"  // [OtaUrl]
 #endif  // ESP32
 #define OTA_COMPATIBILITY      false             // [SetOption78] Disable OTA compatibility check
 
