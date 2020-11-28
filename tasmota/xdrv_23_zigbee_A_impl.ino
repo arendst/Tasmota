@@ -1374,7 +1374,6 @@ void CmndZbPermitJoin(void) {
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":21,\"Message\":\"Pairing mode enabled\"}}"));
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
     zigbee.permit_end_time = millis() + duration * 1000;
-    AddLog_P(LOG_LEVEL_INFO, "zigbee.permit_end_time = %d", zigbee.permit_end_time);
   } else {
     zigbee.permit_end_time = millis();
   }
