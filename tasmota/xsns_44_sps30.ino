@@ -99,9 +99,10 @@ uint8_t twi_buff[64];
 
 #ifdef ESP8266
   twi_readFrom(SPS30_ADDR,twi_buff,dlen,1);
-#else
+#endif  // ESP8266
+#ifdef ESP32
   Wire.readTransmission(SPS30_ADDR,twi_buff,dlen,1, NULL);
-#endif
+#endif  // ESP32
 
   uint8_t bind=0;
   while (bind<dlen) {

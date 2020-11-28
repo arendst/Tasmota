@@ -95,17 +95,18 @@ void ST7789_InitDriver()
       cs=Pin(GPIO_SPI_CS);
     }
 
+#ifdef ESP8266
+#undef HW_SPI_MOSI
+#define HW_SPI_MOSI 13
+#undef HW_SPI_CLK
+#define HW_SPI_CLK 14
+#endif  // ESP8266
 #ifdef ESP32
 #undef HW_SPI_MOSI
 #define HW_SPI_MOSI 23
 #undef HW_SPI_CLK
 #define HW_SPI_CLK 18
-#else
-#undef HW_SPI_MOSI
-#define HW_SPI_MOSI 13
-#undef HW_SPI_CLK
-#define HW_SPI_CLK 14
-#endif
+#endif  // ESP32
 
     // init renderer, may use hardware spi
     //if (PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_MOSI)==HW_SPI_MOSI) && (Pin(GPIO_SPI_CLK)==HW_SPI_CLK) && PinUsed(GPIO_SPI_DC)) {
@@ -121,7 +122,6 @@ void ST7789_InitDriver()
     st7789->init(Settings.display_width,Settings.display_height);
     renderer = st7789;
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
-    renderer->dim(Settings.display_dimmer);
 
 #ifdef SHOW_SPLASH
     // Welcome text

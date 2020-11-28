@@ -58,11 +58,12 @@ void *mp3ram = NULL;
 #ifdef ESP8266
 const int preallocateBufferSize = 5*1024;
 const int preallocateCodecSize = 29192; // MP3 codec max mem needed
-#else
+#endif  // ESP8266
+#ifdef ESP32
 const int preallocateBufferSize = 16*1024;
 const int preallocateCodecSize = 29192; // MP3 codec max mem needed
 //const int preallocateCodecSize = 85332; // AAC+SBR codec max mem needed
-#endif
+#endif  // ESP32
 
 #ifdef USE_WEBRADIO
 AudioFileSourceICYStream *ifile = NULL;
@@ -80,6 +81,14 @@ AudioGeneratorTalkie *talkie = nullptr;
 #endif
 
 //! MAX98357A + INMP441 DOUBLE I2S BOARD
+#ifdef ESP8266
+#undef TWATCH_DAC_IIS_BCK
+#undef TWATCH_DAC_IIS_WS
+#undef TWATCH_DAC_IIS_DOUT
+#define TWATCH_DAC_IIS_BCK       15
+#define TWATCH_DAC_IIS_WS        2
+#define TWATCH_DAC_IIS_DOUT      3
+#endif  // ESP8266
 #ifdef ESP32
 #undef TWATCH_DAC_IIS_BCK
 #undef TWATCH_DAC_IIS_WS
@@ -87,15 +96,7 @@ AudioGeneratorTalkie *talkie = nullptr;
 #define TWATCH_DAC_IIS_BCK       26
 #define TWATCH_DAC_IIS_WS        25
 #define TWATCH_DAC_IIS_DOUT      33
-#else
-#undef TWATCH_DAC_IIS_BCK
-#undef TWATCH_DAC_IIS_WS
-#undef TWATCH_DAC_IIS_DOUT
-#define TWATCH_DAC_IIS_BCK       15
-#define TWATCH_DAC_IIS_WS        2
-#define TWATCH_DAC_IIS_DOUT      3
-#endif
-
+#endif  // ESP32
 
 #ifdef SAY_TIME
 long timezone = 2;
@@ -203,7 +204,7 @@ void I2S_Init(void) {
     out = new AudioOutputI2S();
 #ifdef ESP32
     out->SetPinout(TWATCH_DAC_IIS_BCK, TWATCH_DAC_IIS_WS, TWATCH_DAC_IIS_DOUT);
-#endif
+#endif  // ESP32
 #else
     out = new AudioOutputI2S(0, 1);
 #endif

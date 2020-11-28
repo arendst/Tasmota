@@ -205,7 +205,8 @@ void DebugFreeMem(void)
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), 4 * (sp - g_pcont->stack), XdrvMailbox.data);
 }
 
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
 
 void DebugFreeMem(void)
 {
@@ -280,6 +281,58 @@ void DebugRtcDump(char* parms)
 }
 
 /*******************************************************************************************/
+
+void DebugDump(uint32_t start, uint32_t size) {
+  uint32_t CFG_COLS = 32;
+
+  uint32_t idx;
+  uint32_t maxrow;
+  uint32_t row;
+  uint32_t col;
+  char *p;
+
+  uint8_t *buffer = (uint8_t *)&start;
+  maxrow = ((start + size + CFG_COLS) / CFG_COLS);
+
+  uint32_t srow = 0;
+  uint32_t mrow = maxrow;
+
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
+
+  if (0 == mrow) {  // Default only 8 lines
+    mrow = 8;
+  }
+  if (srow > maxrow) {
+    srow = maxrow - mrow;
+  }
+  if (mrow < (maxrow - srow)) {
+    maxrow = srow + mrow;
+  }
+
+  for (row = srow; row < maxrow; row++) {
+    idx = row * CFG_COLS;
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%03X:"), idx);
+    for (col = 0; col < CFG_COLS; col++) {
+      if (!(col%4)) {
+        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s "), TasmotaGlobal.log_data);
+      }
+      snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s %02X"), TasmotaGlobal.log_data, buffer[idx + col]);
+    }
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s |"), TasmotaGlobal.log_data);
+    for (col = 0; col < CFG_COLS; col++) {
+//      if (!(col%4)) {
+//        snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s "), TasmotaGlobal.log_data);
+//      }
+      snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s%c"), TasmotaGlobal.log_data, ((buffer[idx + col] > 0x20) && (buffer[idx + col] < 0x7F)) ? (char)buffer[idx + col] : ' ');
+    }
+    snprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), PSTR("%s|"), TasmotaGlobal.log_data);
+    AddLog(LOG_LEVEL_INFO);
+    delay(1);
+  }
+}
+
+
+
 
 void DebugCfgDump(char* parms)
 {
@@ -468,9 +521,10 @@ void CmndSerBufSize(void)
   }
 #ifdef ESP8266
   ResponseCmndNumber(Serial.getRxBufferSize());
-#else
+#endif  // ESP8266
+#ifdef ESP32
   ResponseCmndDone();
-#endif
+#endif  // ESP32
 }
 
 void CmndFreemem(void)
