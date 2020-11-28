@@ -35,7 +35,12 @@ const uint16_t CHUNKED_BUFFER_SIZE = (MESSZ / 2) - 100;  // Chunk buffer size (s
 
 const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
 const uint16_t HTTP_RESTART_RECONNECT_TIME = 10000;      // milliseconds - Allow time for restart and wifi reconnect
+#ifdef ESP8266
 const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 24000;  // milliseconds - Allow time for uploading binary, unzip/write to final destination and wifi reconnect
+#endif  // ESP8266
+#ifdef ESP32
+const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 10000;  // milliseconds - Allow time for restart and wifi reconnect
+#endif  // ESP32
 
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
@@ -798,14 +803,14 @@ ESP8266WebServer *Webserver;
 
 struct WEB {
   String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
-  bool reset_web_log_flag = false;                  // Reset web console log
+  uint16_t upload_progress_dot_count;
   uint8_t state = HTTP_OFF;
   uint8_t upload_error = 0;
   uint8_t upload_file_type;
-  uint8_t upload_progress_dot_count;
   uint8_t config_block_count = 0;
   uint8_t config_xor_on = 0;
   uint8_t config_xor_on_set = CONFIG_FILE_XOR;
+  bool reset_web_log_flag = false;                  // Reset web console log
 } Web;
 
 // Helper function to avoid code duplication (saves 4k Flash)
