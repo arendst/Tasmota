@@ -1471,14 +1471,24 @@ void CmndLogport(void)
 void CmndIpAddress(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
-    uint32_t address;
-    if (ParseIp(&address, XdrvMailbox.data)) {
-      Settings.ip_address[XdrvMailbox.index -1] = address;
+    if (!XdrvMailbox.usridx) {
+      char stemp1[TOPSZ];
+      snprintf_P(stemp1, sizeof(stemp1), PSTR(" %s"), NetworkAddress().toString().c_str());
+      ResponseClear();
+      for (uint32_t i = 0; i < 4; i++) {
+        ResponseAppend_P(PSTR("%c\"%s%d\":\"%s%s\""), (i) ? ',' : '{', XdrvMailbox.command, i +1, IPAddress(Settings.ip_address[i]).toString().c_str(), (0 == i) ? stemp1:"");
+      }
+      ResponseJsonEnd();
+    } else {
+      uint32_t address;
+      if (ParseIp(&address, XdrvMailbox.data)) {
+        Settings.ip_address[XdrvMailbox.index -1] = address;
 //        TasmotaGlobal.restart_flag = 2;
+      }
+      char stemp1[TOPSZ];
+      snprintf_P(stemp1, sizeof(stemp1), PSTR(" %s"), NetworkAddress().toString().c_str());
+      Response_P(S_JSON_COMMAND_INDEX_SVALUE_SVALUE, XdrvMailbox.command, XdrvMailbox.index, IPAddress(Settings.ip_address[XdrvMailbox.index -1]).toString().c_str(), (1 == XdrvMailbox.index) ? stemp1:"");
     }
-    char stemp1[TOPSZ];
-    snprintf_P(stemp1, sizeof(stemp1), PSTR(" (%s)"), WiFi.localIP().toString().c_str());
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE_SVALUE, XdrvMailbox.command, XdrvMailbox.index, IPAddress(Settings.ip_address[XdrvMailbox.index -1]).toString().c_str(), (1 == XdrvMailbox.index) ? stemp1:"");
   }
 }
 
