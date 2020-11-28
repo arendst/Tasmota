@@ -868,9 +868,10 @@ const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
 void WebServer_on(const char * prefix, void (*func)(void), uint8_t method = HTTP_ANY) {
 #ifdef ESP8266
   Webserver->on((const __FlashStringHelper *) prefix, (HTTPMethod) method, func);
-#else
+#endif  // ESP8266
+#ifdef ESP32
   Webserver->on(prefix, (HTTPMethod) method, func);
-#endif
+#endif  // ESP32
 }
 
 void StartWebserver(int type, IPAddress ipweb)
@@ -2436,9 +2437,10 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1" D_UPTIME "}2%s"), GetUptime().c_str());
 #ifdef ESP8266
   WSContentSend_P(PSTR("}1" D_FLASH_WRITE_COUNT "}2%d at 0x%X"), Settings.save_flag, GetSettingsAddress());
-#else
+#endif  // ESP8266
+#ifdef ESP32
   WSContentSend_P(PSTR("}1" D_FLASH_WRITE_COUNT "}2%d"), Settings.save_flag);
-#endif
+#endif  // ESP32
   WSContentSend_P(PSTR("}1" D_BOOT_COUNT "}2%d"), Settings.bootcount);
   WSContentSend_P(PSTR("}1" D_RESTART_REASON "}2%s"), GetResetReason().c_str());
   uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : TasmotaGlobal.devices_present;
@@ -2780,9 +2782,10 @@ void HandleUploadLoop(void)
 #ifdef USE_ZIGBEE_EZSP
 #ifdef ESP8266
       else if ((SONOFF_ZB_BRIDGE == TasmotaGlobal.module_type) && (0xEB == upload.buf[0])) {  // Check if this is a Zigbee bridge FW file
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
       else if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX) && (0xEB == upload.buf[0])) {  // Check if this is a Zigbee bridge FW file
-#endif  // ESP8266 or ESP32
+#endif  // ESP32
         // Read complete file into ESP8266 flash
         // Current files are about 200k
         Web.upload_error = ZigbeeUploadStep1Init();  // 1

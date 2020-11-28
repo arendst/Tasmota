@@ -1379,9 +1379,10 @@ void LightInit(void)
       if (PinUsed(GPIO_PWM1, i)) {
 #ifdef ESP8266
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
         analogAttach(Pin(GPIO_PWM1, i), i);
-#endif
+#endif  // ESP32
       }
     }
     if (PinUsed(GPIO_ARIRFRCV)) {

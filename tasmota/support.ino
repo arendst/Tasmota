@@ -648,9 +648,10 @@ String GetDeviceHardware(void)
   } else {
     strcpy_P(buff, PSTR("ESP8266EX"));
   }
-#else
+#endif  // ESP8266
+#ifdef ESP32
   strcpy_P(buff, PSTR("ESP32"));
-#endif
+#endif  // ESP32
   return String(buff);
 }
 
@@ -916,13 +917,14 @@ void SetSerialBegin(void) {
   Serial.flush();
 #ifdef ESP8266
   Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings.serial_config));
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   Serial.end();
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   uint32_t config = pgm_read_dword(kTasmotaSerialConfig + Settings.serial_config);
   Serial.begin(TasmotaGlobal.baudrate, config);
-#endif
+#endif  // ESP32
 }
 
 void SetSerialConfig(uint32_t serial_config) {
@@ -1391,9 +1393,10 @@ void TemplateGpios(myio *gp)
   } else {
 #ifdef ESP8266
     GetInternalTemplate(&src, Settings.module, 1);
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
     memcpy_P(&src, &kModules.gp, sizeof(mycfgio));
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
   }
   // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
 
@@ -1420,9 +1423,10 @@ gpio_flag ModuleFlag(void)
   } else {
 #ifdef ESP8266
     GetInternalTemplate(&flag, Settings.module, 2);
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
     memcpy_P(&flag, &kModules.flag, sizeof(gpio_flag));
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
   }
 
   return flag;
@@ -1436,9 +1440,10 @@ void ModuleDefault(uint32_t module)
   SettingsUpdateText(SET_TEMPLATE_NAME, GetTextIndexed(name, sizeof(name), module, kModuleNames));
 #ifdef ESP8266
   GetInternalTemplate(&Settings.user_template, module, 3);
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
   memcpy_P(&Settings.user_template, &kModules, sizeof(mytmplt));
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
 }
 
 void SetModuleType(void)
@@ -2104,9 +2109,10 @@ uint32_t HwRandom(void) {
 #if ESP8266
   // https://web.archive.org/web/20160922031242/http://esp8266-re.foogod.com/wiki/Random_Number_Generator
   #define _RAND_ADDR 0x3FF20E44UL
-#else // ESP32
+#endif  // ESP8266
+#ifdef ESP32
   #define _RAND_ADDR 0x3FF75144UL
-#endif
+#endif  // ESP32
   static uint32_t last_ccount = 0;
   uint32_t ccount;
   uint32_t result = 0;

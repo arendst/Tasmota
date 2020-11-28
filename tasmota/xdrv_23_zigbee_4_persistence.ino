@@ -87,12 +87,13 @@ const static uint8_t* z_dev_start    = z_spi_start + 0x0800;   // 0x402FF800 - 2
 const static size_t   z_spi_len      = 0x1000;   // 4kb blocks
 const static size_t   z_block_offset = 0x0800;
 const static size_t   z_block_len    = 0x0800;   // 2kb
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
 uint8_t* z_dev_start;
 const static size_t   z_spi_len      = 0x1000;   // 4kb blocks
 const static size_t   z_block_offset = 0x0000;   // No offset needed
 const static size_t   z_block_len    = 0x1000;   // 4kb
-#endif
+#endif  // ESP32
 
 // Each entry consumes 8 bytes
 class Z_Flashentry {
@@ -364,9 +365,10 @@ void saveZigbeeDevices(void) {
   // copy the flash into RAM to make local change, and write back the whole buffer
 #ifdef ESP8266
   ESP.flashRead(z_spi_start_sector * SPI_FLASH_SEC_SIZE, (uint32_t*) spi_buffer, SPI_FLASH_SEC_SIZE);
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
   ZigbeeRead(&spi_buffer, z_spi_len);
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
 
   Z_Flashentry *flashdata = (Z_Flashentry*)(spi_buffer + z_block_offset);
   flashdata->name = ZIGB_NAME2;     // v2
@@ -381,10 +383,11 @@ void saveZigbeeDevices(void) {
     ESP.flashWrite(z_spi_start_sector * SPI_FLASH_SEC_SIZE, (uint32_t*) spi_buffer, SPI_FLASH_SEC_SIZE);
   }
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data store in Flash (0x%08X - %d bytes)"), z_dev_start, buf_len);
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
   ZigbeeWrite(&spi_buffer, z_spi_len);
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data saved in %s (%d bytes)"), PSTR("Flash"), buf_len);
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
   free(spi_buffer);
 }
 
@@ -414,10 +417,11 @@ void eraseZigbeeDevices(void) {
 
   free(spi_buffer);
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased in %s"), PSTR("Flash"));
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
   ZigbeeErase();
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (%d bytes)"), z_block_len);
-#endif  // ESP8266 - ESP32
+#endif  // ESP32
 }
 
 #endif // USE_ZIGBEE

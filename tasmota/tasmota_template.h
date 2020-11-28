@@ -720,7 +720,8 @@ typedef struct MYTMPLT8266 {
   uint8_t      flag;
 } mytmplt8266;                  // 12 bytes
 
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
 
 #define MAX_GPIO_PIN       40   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
@@ -730,7 +731,7 @@ typedef struct MYTMPLT8266 {
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839
 const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOflashcFLFLolIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOIAIAIAIAIAIA";
 
-#endif  // ESP8266 or ESP32
+#endif  // ESP32
 
 //********************************************************************************************
 
@@ -2633,7 +2634,8 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
   }
 };
 
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
 
 /********************************************************************************************/
 // Supported hardware modules

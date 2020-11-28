@@ -133,9 +133,10 @@ extern "C" {
       struct icmp_echo_hdr *iecho;
 #ifdef ESP8266
       ping_target.addr = ping->ip;
-#else
+#endif  // ESP8266
+#ifdef ESP32
       ping_target.u_addr.ip4.addr = ping->ip;
-#endif
+#endif  // ESP32
       iecho = (struct icmp_echo_hdr *) p->payload;
 
       t_ping_prepare_echo(iecho, ping_size, ping);
@@ -172,9 +173,10 @@ extern "C" {
   static uint8_t ICACHE_FLASH_ATTR t_ping_recv(void *arg, struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *addr) {
 #ifdef ESP8266
     Ping_t *ping = t_ping_find(addr->addr);
-#else
+#endif  // ESP8266
+#ifdef ESP32
     Ping_t *ping = t_ping_find(addr->u_addr.ip4.addr);
-#endif
+#endif  // ESP32
 
     if (nullptr == ping) {    // unknown source address
       return 0;               // don't eat the packet and ignore it
@@ -249,7 +251,7 @@ extern "C" {
 
     uint32_t ip = ipfull;
     if (0xFFFFFFFF == ip) { return -2; }    // invalid address
-    
+
     // check if pings are already ongoing for this IP
     if (t_ping_find(ip)) {
       return -1;
