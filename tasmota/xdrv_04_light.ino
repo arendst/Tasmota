@@ -93,8 +93,8 @@
  *     1 channel  - 0:Brightness
  *     2 channels - 0:Coldwhite 1:Warmwhite
  *     3 channels - 0:Red 1:Green 2:Blue
- *     4 chennels - 0:Red 1:Green 2:Blue 3:White
- *     5 chennels - 0:Red 1:Green 2:Blue 3:ColdWhite 4:Warmwhite
+ *     4 channels - 0:Red 1:Green 2:Blue 3:White
+ *     5 channels - 0:Red 1:Green 2:Blue 3:ColdWhite 4:Warmwhite
  *
  * 3.  In LightAnimate(), final PWM values are computed at next tick.
  *  .a If color did not change since last tick - ignore.
@@ -358,7 +358,7 @@ static uint32_t min3(uint32_t a, uint32_t b, uint32_t c) {
 //
 // Note:  If you want the actual RGB, you need to multiply with Bri, or use getActualRGBCW()
 // Note: all values are stored as unsigned integer, no floats.
-// Note: you can query vaules from this singleton. But to change values,
+// Note: you can query values from this singleton. But to change values,
 //   use the LightController - changing this object will have no effect on actual light.
 //
 class LightStateClass {
@@ -1181,7 +1181,7 @@ LightControllerClass light_controller = LightControllerClass(light_state);
 /*********************************************************************************************\
  * Change scales from 8 bits to 10 bits and vice versa
 \*********************************************************************************************/
-// 8 to 10 to 8 is garanteed to give the same result
+// 8 to 10 to 8 is guaranteed to give the same result
 uint16_t change8to10(uint8_t v) {
   return changeUIntScale(v, 0, 255, 0, 1023);
 }
@@ -1866,9 +1866,9 @@ void LightAnimate(void)
   // or set a maximum of PWM_MAX_SLEEP if light is on or Fade is running
   if (Light.power || Light.fade_running) {
     if (Settings.sleep > PWM_MAX_SLEEP) {
-      TasmotaGlobal.sleep = PWM_MAX_SLEEP;      // set a maxumum value of 10 milliseconds to ensure that animations are smooth
+      TasmotaGlobal.sleep = PWM_MAX_SLEEP;      // set a maximum value (in milliseconds) to sleep to ensure that animations are smooth
     } else {
-      TasmotaGlobal.sleep = Settings.sleep;     // or keep the current sleep if it's lower than 50
+      TasmotaGlobal.sleep = Settings.sleep;     // or keep the current sleep if it's low enough
     }
   } else {
     TasmotaGlobal.sleep = Settings.sleep;
