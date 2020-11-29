@@ -708,7 +708,6 @@ void SettingsDefaultSet2(void)
   flag3.no_power_feedback |= APP_NO_RELAY_SCAN;
   flag3.fast_power_cycle_disable |= APP_DISABLE_POWERCYCLE;
   flag3.bootcount_update |= DEEPSLEEP_BOOTCOUNT;
-  flag3.compatibility_check |= OTA_COMPATIBILITY;
   Settings.save_data = SAVE_DATA;
   Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
   Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
