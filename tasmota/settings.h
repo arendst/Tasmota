@@ -27,7 +27,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   struct {                                 // SetOption0 .. SetOption31
     uint32_t save_state : 1;               // bit 0              - SetOption0   - (Settings) Save power state (1) and use after restart
     uint32_t button_restrict : 1;          // bit 1              - SetOption1   - (Button) Control button single press (1) or multipress (0)
-    uint32_t ex_value_units : 1;           // bit 2              - SetOption2   - (Not used) Add units to JSON status messages - removed 6.6.0.21
+    uint32_t ex_value_units : 1;           // bit 2              - SetOption2   - (not used) Add units to JSON status messages - removed 6.6.0.21
     uint32_t mqtt_enabled : 1;             // bit 3              - SetOption3   - (MQTT) Enable (1)
     uint32_t mqtt_response : 1;            // bit 4              - SetOption4   - (MQTT) Switch between RESULT (0) or COMMAND (1)
     uint32_t mqtt_power_retain : 1;        // bit 5              - CMND_POWERRETAIN
@@ -82,7 +82,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t tuya_serial_mqtt_publish : 1; // bit 16 (v6.6.0.21) - SetOption66  - (Tuya) Enable (1) TuyaMcuReceived messages over Mqtt
     uint32_t buzzer_enable : 1;            // bit 17 (v6.6.0.1)  - SetOption67  - (Buzzer) Enable (1) buzzer when available
     uint32_t pwm_multi_channels : 1;       // bit 18 (v6.6.0.3)  - SetOption68  - (Light) Enable multi-channels PWM (1) instead of Color PWM (0)
-    uint32_t ex_tuya_dimmer_min_limit : 1; // bit 19 (v6.6.0.5)  - SetOption69  - (Obsolete) Limits Tuya dimmers to minimum of 10% (25) when enabled.
+    uint32_t ex_tuya_dimmer_min_limit : 1; // bit 19 (v6.6.0.5)  - SetOption69  - (not used) Limits Tuya dimmers to minimum of 10% (25) when enabled
     uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
     uint32_t dds2382_model : 1;            // bit 21 (v6.6.0.14) - SetOption71  - (DDS2382) Select different Modbus registers (1) for Active Energy (#6531)
     uint32_t hardware_energy_total : 1;    // bit 22 (v6.6.0.15) - SetOption72  - (Energy) Enable (1) hardware energy total counter as reference (#6561)
@@ -91,7 +91,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t grouptopic_mode : 1;          // bit 25 (v7.0.0.1)  - SetOption75  - (MQTT) GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
     uint32_t bootcount_update : 1;         // bit 26 (v7.0.0.4)  - SetOption76  - (Deepsleep) Enable incrementing bootcount (1) when deepsleep is enabled
     uint32_t slider_dimmer_stay_on : 1;    // bit 27 (v7.0.0.6)  - SetOption77  - (Light) Do not power off (1) if slider moved to far left
-    uint32_t ex_compatibility_check : 1;   // bit 28 (v7.1.2.6)  - SetOption78  - (Obsolete) Disable OTA compatibility check
+    uint32_t ex_compatibility_check : 1;   // bit 28 (v7.1.2.6)  - SetOption78  - (not used) Disable OTA compatibility check
     uint32_t counter_reset_on_tele : 1;    // bit 29 (v8.1.0.1)  - SetOption79  - (Counter) Enable resetting of counters (1) after telemetry was sent
     uint32_t shutter_mode : 1;             // bit 30 (v6.6.0.14) - SetOption80  - (Shutter) Enable shutter support (1)
     uint32_t pcf8574_ports_inverted : 1;   // bit 31 (v6.6.0.14) - SetOption81  - (PCF8574) Invert all ports on PCF8574 devices (1)
@@ -121,7 +121,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t zerocross_dimmer : 1;         // bit 17 (v8.3.1.4)  - SetOption99  - (PWM Dimmer) Enable zerocross dimmer (1)
     uint32_t remove_zbreceived : 1;        // bit 18 (v8.3.1.7)  - SetOption100 - (Zigbee) Remove ZbReceived form JSON message (1)
     uint32_t zb_index_ep : 1;              // bit 19 (v8.3.1.7)  - SetOption101 - (Zigbee) Add the source endpoint as suffix to attributes, ex `Power3` (1) instead of `Power` (0) if sent from endpoint 3
-    uint32_t teleinfo_baudrate : 1;        // bit 20 (v8.4.0.1)  - SetOption102 - (Teleinfo) Set Baud rate for Teleinfo communication to 1200 (0) or 9600 (1))
+    uint32_t teleinfo_baudrate : 1;        // bit 20 (v8.4.0.1)  - SetOption102 - (Teleinfo) Set Baud rate for Teleinfo communication to 1200 (0) or 9600 (1)
     uint32_t mqtt_tls : 1;                 // bit 21 (v8.4.0.1)  - SetOption103 - (MQTT TLS) Enable TLS mode (1) (requires TLS version)
     uint32_t mqtt_no_retain : 1;           // bit 22 (v8.4.0.1)  - SetOption104 - (MQTT) No Retain (1) - disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
     uint32_t white_blend_mode : 1;         // bit 23 (v8.4.0.1)  - SetOption105 - (Light) White Blend Mode (1) - used to be `RGBWWTable` last value `0`, now deprecated in favor of this option
