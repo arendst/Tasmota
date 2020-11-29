@@ -794,11 +794,13 @@ void TuyaProcessStatePacket(void) {
           Energy.active_power[0] = (float)packetValue / 10;
           AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Rx ID=%d Active_Power=%d"), Tuya.buffer[dpidStart], packetValue);
 
-          if (Tuya.lastPowerCheckTime != 0 && Energy.active_power[0] > 0) {
-            Energy.kWhtoday += (float)Energy.active_power[0] * (Rtc.utc_time - Tuya.lastPowerCheckTime) / 36;
-            EnergyUpdateToday();
+          if (RtcTime.valid) {
+            if (Tuya.lastPowerCheckTime != 0 && Energy.active_power[0] > 0) {
+              Energy.kWhtoday += (float)Energy.active_power[0] * (Rtc.utc_time - Tuya.lastPowerCheckTime) / 36;
+              EnergyUpdateToday();
+            }
+            Tuya.lastPowerCheckTime = Rtc.utc_time;
           }
-          Tuya.lastPowerCheckTime = Rtc.utc_time;
         }
   #endif // USE_ENERGY_SENSOR
       }
