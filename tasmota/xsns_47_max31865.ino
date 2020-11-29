@@ -53,7 +53,7 @@ void MAX31865_Init(void) {
   for (uint32_t i = 0; i < MAX_MAX31865S; i++) {
     if (PinUsed(GPIO_SSPI_MAX31865_CS1, i)) {
       max31865_pins_used |= 1 << i;  //set lowest bit
-      max31865[0].setPins(
+      max31865[i].setPins(
         Pin(GPIO_SSPI_MAX31865_CS1, i),
         Pin(GPIO_SSPI_MOSI),
         Pin(GPIO_SSPI_MISO),
