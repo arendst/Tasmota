@@ -1282,40 +1282,57 @@ void CmndZbSave(void) {
 //   ZbRestore {"Device":"0x5ADF","Name":"Petite_Lampe","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"]}
 void CmndZbRestore(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  JsonParser parser(XdrvMailbox.data);
-  JsonParserToken root = parser.getRoot();
+  RemoveSpace(XdrvMailbox.data);
 
-  if (!parser || !(root.isObject() || root.isArray())) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
+  if (strlen(XdrvMailbox.data) == 0) {
+    // if empty, log values for all devices
+    restoreDumpAllDevices();
+  } else if (XdrvMailbox.data[0] == '{') {    // try JSON
+    JsonParser parser(XdrvMailbox.data);
+    JsonParserToken root = parser.getRoot();
 
-  // Check is root contains `ZbStatus<x>` key, if so change the root
-  JsonParserToken zbstatus = root.getObject().findStartsWith(PSTR("ZbStatus"));
-  if (zbstatus) {
-    root = zbstatus;
-  }
+    if (!parser || !(root.isObject() || root.isArray())) { ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON)); return; }
 
-  // check if the root is an array
-  if (root.isArray()) {
-    JsonParserArray arr = JsonParserArray(root);
-    for (const auto elt : arr) {
-      // call restore on each item
-      if (elt.isObject()) {
-        int32_t res = zigbee_devices.deviceRestore(JsonParserObject(elt));
-        if (res < 0) {
-          ResponseCmndChar_P(PSTR("Restore failed"));
-          return;
+    // Check is root contains `ZbStatus<x>` key, if so change the root
+    JsonParserToken zbstatus = root.getObject().findStartsWith(PSTR("ZbStatus"));
+    if (zbstatus) {
+      root = zbstatus;
+    }
+
+    // check if the root is an array
+    if (root.isArray()) {
+      JsonParserArray arr = JsonParserArray(root);
+      for (const auto elt : arr) {
+        // call restore on each item
+        if (elt.isObject()) {
+          int32_t res = zigbee_devices.deviceRestore(JsonParserObject(elt));
+          if (res < 0) {
+            ResponseCmndChar_P(PSTR("Restore failed"));
+            return;
+          }
         }
       }
+    } else if (root.isObject()) {
+      int32_t res = zigbee_devices.deviceRestore(JsonParserObject(root));
+      if (res < 0) {
+        ResponseCmndChar_P(PSTR("Restore failed"));
+        return;
+      }
+      // call restore on a single object
+    } else {
+      ResponseCmndChar_P(PSTR("Missing parameters"));
+      return;
     }
-  } else if (root.isObject()) {
-    int32_t res = zigbee_devices.deviceRestore(JsonParserObject(root));
-    if (res < 0) {
+  } else {  // try hex
+    SBuffer buf = SBuffer::SBufferFromHex(XdrvMailbox.data, strlen(XdrvMailbox.data));
+    // do a sanity check, the first byte must equal the length of the buffer
+    if (buf.get8(0) == buf.len()) {
+      // good, we can hydrate
+      hydrateSingleDevice(buf);
+    } else {
       ResponseCmndChar_P(PSTR("Restore failed"));
       return;
     }
-    // call restore on a single object
-  } else {
-    ResponseCmndChar_P(PSTR("Missing parameters"));
-    return;
   }
   ResponseCmndDone();
 }
@@ -1857,11 +1874,12 @@ bool Xdrv23(uint8_t function)
       case FUNC_COMMAND:
         result = DecodeCommand(kZbCommands, ZigbeeCommand);
         break;
-#ifdef USE_ZIGBEE_EZSP
       case FUNC_SAVE_BEFORE_RESTART:
+#ifdef USE_ZIGBEE_EZSP
         hibernateAllData();
-        break;
 #endif  // USE_ZIGBEE_EZSP
+        restoreDumpAllDevices();
+        break;
     }
   }
   return result;

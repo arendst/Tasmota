@@ -1676,8 +1676,6 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
       case ZDO_Parent_annce_rsp:
         return EZ_ParentAnnceRsp(res, zdo_buf, true);
       default:
-        // TODO move later to LOG_LEVEL_DEBUG
-        AddLog_P(LOG_LEVEL_INFO, PSTR("ZIG: Internal ZDO message 0x%04X sent from 0x%04X %s"), clusterid, srcaddr, wasbroadcast ? PSTR("(broadcast)") : "");
         break;
     }
   } else {
