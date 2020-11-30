@@ -22,8 +22,10 @@
   --------------------------------------------------------------------------------------------
 
 */
+#define ESP32
 #ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
 
+#define USE_BLE_ESP32
 #ifdef USE_BLE_ESP32
 
 #define XSNS_99                    99
@@ -39,11 +41,8 @@
 
 namespace BLE99 {
 
-static void BLEscanEndedCB(NimBLEScanResults results);
-static void BLEnotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
-static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
-void runCurrentOperation();
 
+SemaphoreHandle_t  BLEOperationsMutex;
 
 struct {
   uint16_t perPage = 4;
@@ -102,13 +101,16 @@ struct {
 // only one operation will happen at a time 
 struct generic_sensor_t {
   uint8_t state;
+  uint32_t opid; // incrementing id so we can find them
+  
   uint8_t cancel; 
   uint8_t requestType; 
   char MAC[13];
   char serviceStr[100];
   char characteristicStr[100];
+  char notificationCharacteristicStr[100];
   int RSSI;
-  uint32_t time;
+  uint64_t time;
   uint8_t dataToWrite[100];
   uint8_t writelen;
   uint8_t dataRead[100];
@@ -119,10 +121,22 @@ struct generic_sensor_t {
   uint8_t notifytruncated;
 
   NimBLEClient *pClient;
-  NimBLERemoteCharacteristic *pCharacteristic;
 
 
 };
+
+
+void doneOperation(generic_sensor_t** op);
+void addOperation(std::deque<generic_sensor_t*> *ops, generic_sensor_t** op);
+generic_sensor_t* nextOperation(std::deque<generic_sensor_t*> *ops);
+std::string BLETriggerResponse(generic_sensor_t *toSend);
+static void BLEscanEndedCB(NimBLEScanResults results);
+static void BLEnotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
+static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
+static void runCurrentOperation(generic_sensor_t** pCurrentOperation);
+static void BLEShow(bool json);
+static void BLEPostMQTT(bool json);
+static void BLEStartOperationTask();
 
 
 #define GEN_STATE_IDLE 0
@@ -131,6 +145,7 @@ struct generic_sensor_t {
 #define GEN_STATE_READWRITEDONE 8
 #define GEN_STATE_WAITNOTIFY 9
 #define GEN_STATE_NOTIFIED 10
+#define GEN_STATE_CANTNOTIFY 11
 
 #define GEN_STATE_FAILED 99
 
@@ -147,12 +162,36 @@ struct MAC_t {
 };
 
 
-static BLEScan* BLEScan;
+static BLEScan* BLEScan = nullptr;
+// time we last started a scan in uS using esp_timer_get_time();
+// used to setect a scan which did not call back?
+uint64_t BLEScanStartetdAt = 0; 
+int BLEScanTimeS = 20; // scan duraiton in S
+int BLEMaxTimeBetweenAdverts = 40; // we expect an advert at least this frequently, else restart BLE (in S)
+uint64_t BLEScanLastAdvertismentAt = 0;
+int sendMQTT = 0;
 
-std::deque<generic_sensor_t*> currentOperations;
 generic_sensor_t* currentOperation = nullptr;
+// operation being prepared through commands
 generic_sensor_t* prepOperation = nullptr;
 
+// operations which have been queued
+std::deque<generic_sensor_t*> queuedOperations;
+// operations in progress (at the moment, only one)
+std::deque<generic_sensor_t*> currentOperations;
+// operaitons which have completed or failed, ready to send to MQTT
+std::deque<generic_sensor_t*> completedOperations;
+
+uint32_t lastopid = 0;
+
+enum {
+  BLEModeDisabled = 0, // BLE is disabled
+  BLEModeByCommand = 1, // BLE is activeated by commands only
+  BLEModeActive = 2, // BLE is scanning all the time 
+};
+
+uint8_t BLEMode = 2;
+uint8_t BLENextMode = 2;
 
 /*********************************************************************************************\
  * constants
@@ -161,14 +200,15 @@ generic_sensor_t* prepOperation = nullptr;
 #define D_CMND_BLE "BLE"
 
 const char kBLE_Commands[] PROGMEM = D_CMND_BLE "|"
-  "Period|Option|Op";
+  "Period|Option|Op|Mode";
 
 static void CmndBLEPeriod(void);
 static void CmndBLEOption(void);
 static void CmndBLEOperation(void);
+static void CmndBLEMode(void);
 
 void (*const BLE_Commands[])(void) PROGMEM = {
-  &BLE99::CmndBLEPeriod, &BLE99::CmndBLEOption, &BLE99::CmndBLEOperation };
+  &BLE99::CmndBLEPeriod, &BLE99::CmndBLEOption, &BLE99::CmndBLEOperation, &BLE99::CmndBLEMode };
 
 /*********************************************************************************************\
  * enumerations
@@ -218,14 +258,17 @@ char * dump(char *dest, int maxchars, uint8_t *src, int len){
 
 class BLESensorCallback : public NimBLEClientCallbacks {
   void onConnect(NimBLEClient* pclient) {
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnect"));
     BLE.mode.willConnect = 0;
     BLE.mode.connected = 1;
   }
   void onDisconnect(NimBLEClient* pclient) {
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("onDisconnect"));
     BLE.mode.connected = 0;
     BLE.mode.willReadBatt = 0;
   }
   bool onConnParamsUpdateRequest(NimBLEClient* BLEClient, const ble_gap_upd_params* params) {
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnParamsUpdateRequest"));
     if(params->itvl_min < 24) { /** 1.25ms units */
       return false;
     } else if(params->itvl_max > 40) { /** 1.25ms units */
@@ -239,9 +282,14 @@ class BLESensorCallback : public NimBLEClientCallbacks {
   }
 };
 
+static BLESensorCallback clientCB;
+
 class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
   void onResult(NimBLEAdvertisedDevice* advertisedDevice) {
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("Advertised Device"));
+    uint64_t now = esp_timer_get_time();
+    BLEScanLastAdvertismentAt = now; // note the time of the last advertisment
+
     int RSSI = advertisedDevice->getRSSI();
     uint8_t addr[6];
     memcpy(addr,advertisedDevice->getAddress().getNative(),6);
@@ -314,7 +362,6 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
 
 static BLEAdvCallbacks BLEScanCallbacks;
 static BLESensorCallback BLESensorCB;
-static NimBLEClient* BLEClient;
 
 /*********************************************************************************************\
  * BLE callback functions
@@ -327,22 +374,48 @@ static void BLEscanEndedCB(NimBLEScanResults results){
 
 
 static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
+    NimBLEClient *pRClient;
+
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("Notified length: %u"),length);
+
+    // find the operation this is associated with
+    NimBLERemoteService *pSvc = pRemoteCharacteristic->getRemoteService();
+
+    pRClient = pSvc->getClient();
+    NimBLEAddress devaddr = pRClient->getPeerAddress();
+    uint8_t addr[6];
+
+    memcpy(addr,devaddr.getNative(),6);
+    MI32_ReverseMAC(addr);
+    char addrstr[20];
+    dump(addrstr, 20, addr, 6);
+
+    generic_sensor_t *thisop = nullptr; 
+    for (int i = 0; i < currentOperations.size(); i++){
+      generic_sensor_t *op = currentOperations[i];
+      if (!strcasecmp(op->MAC, addrstr)){
+        thisop = op;
+        break;
+      }
+    }
+
     pRemoteCharacteristic->unsubscribe();
 
-    if (!currentOperation) {
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("Notify: no current op"));
+    if (!thisop){
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("no op for notify"));
       return;
     }
+
     for (int i = 0; i < length && i < sizeof(currentOperation->dataNotify); i++){
-      currentOperation->dataNotify[i] = pData[i];
+      thisop->dataNotify[i] = pData[i];
     }
-    if (length > sizeof(currentOperation->dataNotify)){
-      currentOperation->notifytruncated = 1;
+    thisop->notifylen = length;
+    if (length > sizeof(thisop->dataNotify)){
+      thisop->notifytruncated = 1;
     } else {
-      currentOperation->notifytruncated = 0;
+      thisop->notifytruncated = 0;
     }
-    currentOperation->state = GEN_STATE_NOTIFIED;
+    thisop->state = GEN_STATE_NOTIFIED;
 }
 
 
@@ -422,11 +495,30 @@ static void BLEPreInit(void) {
   BLE.mode.init = false;
   currentOperation = nullptr;
   prepOperation = nullptr;
+  BLEOperationsMutex = xSemaphoreCreateMutex();
 
-  //currentOperations.reserve(10);
+  BLE99::BLEStartOperationTask();
 }
 
+static void StartBLE(void) {
+  BLE.mode.init = 0;
+}
+
+static void StopBLE(void){
+  if (BLEScan){
+    BLEScan->stop();
+    BLEScan->clearResults();
+    BLEScan = NULL;
+  }
+
+  // need to ensure we have nothing left BEFORE we do this
+  //NimBLEDevice::deinit(true);
+}	
+
+
 static void BLEInit(void) {
+  if (BLEMode == BLEModeDisabled) return;
+
   if (BLE.mode.init) { return; }
 
   if (TasmotaGlobal.global_state.wifi_down) { return; }
@@ -441,6 +533,9 @@ static void BLEInit(void) {
   }
 
   if (!BLE.mode.init) {
+    uint64_t now = esp_timer_get_time();
+    BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
+
     NimBLEDevice::init("");
     AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: init BLE device"));
     BLE.mode.canScan = 1;
@@ -463,178 +558,53 @@ static void BLEStartScanTask(){
 
     BLE99::BLEScanTask(NULL);
     return;
-
-    //if (BLE.mode.connected) return;
-    xTaskCreatePinnedToCore(
-    BLE99::BLEScanTask,    /* Function to implement the task */
-    "BLEScanTask",  /* Name of the task */
-    4096,//2048,             /* Stack size in words */
-    NULL,             /* Task input parameter */
-    0,                /* Priority of the task */
-    NULL,             /* Task handle. */
-    0);               /* Core where the task should run */
 }
 
 static void BLEScanTask(void *pvParameters){
+  if (BLEMode == BLEModeDisabled) return;
   AddLog_P(LOG_LEVEL_DEBUG,PSTR("BLEScanTask"));
   if (BLEScan == nullptr) BLEScan = NimBLEDevice::getScan();
   // DEBUG_SENSOR_LOG(PSTR("%s: Scan Cache Length: %u"),D_CMND_BLE, BLEScan->getResults().getCount());
   BLEScan->setInterval(120);
   BLEScan->setWindow(100);
   BLEScan->setAdvertisedDeviceCallbacks(&BLEScanCallbacks,true);
-  BLEScan->setActiveScan(true);
+  BLEScan->setActiveScan(false);
   AddLog_P(LOG_LEVEL_DEBUG,PSTR("Startscan from BLEScanTaskStart"));
   BLEScan->start(20, BLEscanEndedCB, false); // never stop scanning, will pause automatically while connecting
   BLE.mode.runningScan = 1;
+}
 
-/*  uint32_t timer = 0;
+static void BLEOperationTask(void *pvParameters);
+
+static void BLEStartOperationTask(){
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Start operations"),D_CMND_BLE);
+
+    //if (BLE.mode.connected) return;
+    xTaskCreatePinnedToCore(
+      BLE99::BLEOperationTask,    /* Function to implement the task */
+      "BLEOperationTask",  /* Name of the task */
+      4096,//2048,             /* Stack size in words */
+      NULL,             /* Task input parameter */
+      0,                /* Priority of the task */
+      NULL,             /* Task handle. */
+      0);               /* Core where the task should run */
+}
+
+static void BLEOperationTask(void *pvParameters){
+  uint32_t timer = 0;
   for(;;){
-    if(BLE.mode.shallClearResults){
-      BLEScan->clearResults();
-      BLE.mode.shallClearResults=0;
+    if (BLEScan){
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("Operation loop"));
+
+      BLE99::runCurrentOperation(&currentOperation);
     }
-    vTaskDelay(10000/ portTICK_PERIOD_MS);
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("Scan loop"));
-    BLEScan->clearResults();
-    if (!BLE.mode.runningScan){
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("Startscan from loop"));
-      BLEScan->start(20, BLEscanEndedCB, false); // never stop scanning, will pause automatically while connecting
-      BLE.mode.runningScan = 1;
-    }
+    vTaskDelay(1000/ portTICK_PERIOD_MS);
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("Leave scan task"));
-
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("Leave operation task"));
   vTaskDelete( NULL );
-  */
 }
 
-
-bool BLERequestNotification(char *serviceUUIDstr, char *charUUIDstr){
-  NimBLEUUID serviceUUID = NimBLEUUID(serviceUUIDstr);
-  NimBLEUUID charUUID = NimBLEUUID(charUUIDstr);
-  NimBLERemoteService* pSvc = nullptr;
-  NimBLERemoteCharacteristic* pChr = nullptr;
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("get notification from S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-  pSvc = BLEClient->getService(serviceUUID);
-  if(pSvc) {
-      pChr = pSvc->getCharacteristic(charUUID);
-  } else {
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("noservice S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-    return false;
-  }
-  if (pChr){
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("got service from S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-    if(pChr->canNotify()) {
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribing to notify S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-      if(pChr->subscribe(true, BLEGenNotifyCB, false)) {
-        AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribed to notify S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-        return true;
-      }
-    }
-  }
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("no characteristc S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-  return false;
-}
-
-
-bool BLERequestReadAndNotification(char *serviceUUIDstr, char *charUUIDstr, char *dest, int *maxlen){
-  NimBLEUUID serviceUUID = NimBLEUUID(serviceUUIDstr);
-  NimBLEUUID charUUID = NimBLEUUID(charUUIDstr);
-  NimBLERemoteService* pSvc = nullptr;
-  NimBLERemoteCharacteristic* pChr = nullptr;
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("get read and notification from S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-  pSvc = BLEClient->getService(serviceUUID);
-  if(pSvc) {
-      pChr = pSvc->getCharacteristic(charUUID);
-  } else {
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("noservice S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-    return false;
-  }
-  if (pChr){
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("got characteristic from S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-
-    if(pChr->canRead()){
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("read from S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-      uint8_t curUnit;
-      std::string res = pChr->readValue();
-      int len = res.length();
-      const char *buf = pChr->readValue().data();
-
-      char x[21];
-      int lenmax = *maxlen;
-      int actuallen = 0;
-      for (actuallen = 0; actuallen < lenmax && actuallen < len; actuallen++){
-        *dest++ = buf[actuallen];
-        if (actuallen < 10){
-          hex(x+actuallen*2, buf[actuallen]);
-        }
-      }
-      *maxlen = actuallen;
-
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("len:%d v:%s"), len, x);
-    }
-
-    if(pChr->canNotify()) {
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribing to notify S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-      if(pChr->subscribe(true, BLEGenNotifyCB, false)) {
-        AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribed to notify S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-        return true;
-      }
-    }
-  }
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("no characteristc S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-  return false;
-}
-
-
-bool BLERequestWriteAndNotification(char *serviceUUIDstr, char *charUUIDstr, uint8_t *data, int len){
-  NimBLEUUID serviceUUID = NimBLEUUID(serviceUUIDstr);
-  NimBLEUUID charUUID = NimBLEUUID(charUUIDstr);
-  NimBLERemoteService* pSvc = nullptr;
-  NimBLERemoteCharacteristic* pChr = nullptr;
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("write and notification from S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-  pSvc = BLEClient->getService(serviceUUID);
-  if(pSvc) {
-      pChr = pSvc->getCharacteristic(charUUID);
-  } else {
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("noservice S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-    return false;
-  }
-  if (pChr){
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("got characteristic from S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-
-    if(pChr->canWrite()){
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("write to S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-      char x[21];
-
-      for (int i = 0; i < len && i < 10; i++){
-        hex(x+i*2, data[i]);
-      }
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("write data len:%d v:%s"), len, x);
-      if(!pChr->writeValue(data, len, true)) { // true is important !
-        BLE.mode.willConnect = 0;
-        BLEClient->disconnect();
-        AddLog_P(LOG_LEVEL_DEBUG,PSTR("write fail S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-        return false;
-      } else {
-        BLE.mode.shallSetTime = 0;
-        BLE.mode.willSetTime = 0;
-        AddLog_P(LOG_LEVEL_DEBUG,PSTR("write success S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-      }
-    }
-
-    if(pChr->canNotify()) {
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribing to notify S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-      if(pChr->subscribe(true, BLEGenNotifyCB, false)) {
-        AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribed to notify S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-        return true;
-      }
-    }
-  }
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("no characteristc S:%s C:%s"), serviceUUIDstr, charUUIDstr);
-  return false;
-}
 
 
 
@@ -676,18 +646,46 @@ static void BLEEvery50mSecond(){
 
 static void BLEEverySecond(bool restart){
   //BLEStartScanTask();
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("one sec"));
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("one sec scnning %d"),BLE.mode.runningScan);
 
   // one op per second for now;
-  BLE99::runCurrentOperation();
+  //BLE99::runCurrentOperation(&currentOperation);
+
+  if (completedOperations.size()){
+    BLE99::BLEPostMQTT(true);
+  }
+
 
   if (BLEScan){
-    if (!BLE.mode.runningScan){
+    if (!BLE.mode.runningScan && (!currentOperations.size())){
       //BLEScan->clearResults();
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("Startscan from onesec"));
-      BLEScan->start(20, BLEscanEndedCB, true); // 20s scans, restarted when theyn finish
-      BLE.mode.runningScan = 1;
+      if ((BLEMode != BLEModeDisabled) && (BLEMode != BLEModeByCommand)){
+        AddLog_P(LOG_LEVEL_DEBUG,PSTR("Startscan from onesec"));
+        BLEScan->start(BLEScanTimeS, BLEscanEndedCB, true); // 20s scans, restarted when theyn finish
+        BLE.mode.runningScan = 1;
+        BLEScanStartetdAt = esp_timer_get_time();
+      }
+    } else {
+      uint64_t now = esp_timer_get_time();
+      if (BLEScanTimeS){
+        uint64_t diff = now - BLEScanStartetdAt;
+        diff = diff / 1000; // convert to ms;
+        if (diff > (BLEScanTimeS + 5) * 1000){
+          AddLog_P(LOG_LEVEL_ERROR,PSTR("Scan did not end on t1me"));
+          BLEScan->stop();
+          BLE.mode.runningScan = 0;
+        }
+      }
+      uint64_t diff = now - BLEScanLastAdvertismentAt;
+      diff = diff / 1000; // convert to ms;
+      if (diff > (BLEMaxTimeBetweenAdverts) * 1000){
+        BLEScanLastAdvertismentAt = now;
+        AddLog_P(LOG_LEVEL_ERROR,PSTR("Long time between Advertisments - restarting BLE"));
+        StopBLE();
+        StartBLE();
+      }
     }
+   
   }
 }
 
@@ -743,65 +741,109 @@ int fromHex(uint8_t *dest, char *src, int maxlen){
   return srclen;
 }
 
+void doneOperation(generic_sensor_t** op){
+  if ((*op)->pClient){
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in done"));
+    try {
+      (*op)->pClient->disconnect();
+    } catch(const std::exception& e){
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("except in disconnect"));
+    }
+    try {
+      NimBLEDevice::deleteClient((*op)->pClient);
+    } catch(const std::exception& e){
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("except in delete"));
+    }
+    (*op)->pClient = NULL;
+  }
 
-void runCurrentOperation(){
-  if (!currentOperation) {
-    if (currentOperations.size()){
-      currentOperation = currentOperations[0]; 
-      currentOperations.pop_front();
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("new currentOperation"));
-    } else {
-      return;
+  xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+  // find this operation in currentOperations, and remove it.
+  for (int i = 0; i < currentOperations.size(); i++){
+    if (currentOperations[i]->opid == (*op)->opid){
+      currentOperations.erase(currentOperations.begin() + i);
+      break;
     }
   }
+  xSemaphoreGive(BLEOperationsMutex); // release mutex
+
+  addOperation(&completedOperations, op);
+  return;
+}
+
+
+generic_sensor_t* nextOperation(std::deque<generic_sensor_t*> *ops){
+  generic_sensor_t* op = nullptr;
+  if (ops->size()){
+    xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+    op = (*ops)[0]; 
+    ops->pop_front();
+    xSemaphoreGive(BLEOperationsMutex); // release mutex
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("new currentOperation"));
+  }
+  return op;
+}
+
+void addOperation(std::deque<generic_sensor_t*> *ops, generic_sensor_t** op){
+  xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+  if (ops->size() < 10){
+    ops->push_back(*op);
+    *op = nullptr;
+  }     
+  xSemaphoreGive(BLEOperationsMutex); // release mutex
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("added operation"));
+  return;
+}
+
+
+
+
+
+static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
+  if (!pCurrentOperation) return;
   if (!BLEScan) return;
 
-  switch(currentOperation->state){
-    case GEN_STATE_WAITNOTIFY:
+  if (!*pCurrentOperation) {
+    *pCurrentOperation = nextOperation(&queuedOperations);
+    if (*pCurrentOperation){
+      generic_sensor_t* temp = *pCurrentOperation;
+      //this will null it out, so ave and restore.
+      addOperation(&currentOperations, pCurrentOperation); 
+      *pCurrentOperation = temp;
+    }
+  }
+  if (!*pCurrentOperation) return;
+
+  switch((*pCurrentOperation)->state){
+    case GEN_STATE_CANTNOTIFY:
       // if it took too long, then disconnect
-      if (currentOperation->time + 1000 < Rtc.utc_time){
-        if (currentOperation->pCharacteristic){
-          currentOperation->pCharacteristic->unsubscribe();
-          delete currentOperation->pCharacteristic;
-          currentOperation->pCharacteristic = NULL;
-        }
-        if (currentOperation->pClient){
-          currentOperation->pClient->disconnect();
-          NimBLEDevice::deleteClient(currentOperation->pClient);
-          currentOperation->pClient = NULL;
-        }
-        AddLog_P(LOG_LEVEL_DEBUG,PSTR("notify timeout"));
-        currentOperation->state = GEN_STATE_FAILED;
-        return;
-      }
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("notify timeout"));
+      (*pCurrentOperation)->state = GEN_STATE_FAILED;
+      doneOperation(pCurrentOperation);
       break;
+
+    case GEN_STATE_WAITNOTIFY:{
+      // if it took too long, then disconnect
+      uint64_t now = esp_timer_get_time();
+      uint64_t diff = now - (*pCurrentOperation)->time;
+      diff = diff/1000;
+      if (diff > 20000){
+        AddLog_P(LOG_LEVEL_DEBUG,PSTR("notify timeout"));
+        (*pCurrentOperation)->state = GEN_STATE_FAILED;
+        doneOperation(pCurrentOperation);
+      }
+    } break;
 
     case GEN_STATE_READWRITEDONE:
       // post result data
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("readwrite done"));
-      if (!currentOperation) break;
-      delete currentOperation;
-      currentOperation = NULL;
-      return;
+      doneOperation(pCurrentOperation);
       break;
 
     case GEN_STATE_NOTIFIED:
-      if (!currentOperation) break;
-      if (currentOperation->pCharacteristic){
-        currentOperation->pCharacteristic->unsubscribe();
-        delete currentOperation->pCharacteristic;
-        currentOperation->pCharacteristic = NULL;
-      }
-      if (currentOperation->pClient){
-        currentOperation->pClient->disconnect();
-        NimBLEDevice::deleteClient(currentOperation->pClient);
-        currentOperation->pClient = NULL;
-      }
+      doneOperation(pCurrentOperation);
       // post result data
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("notify done"));
-      if (!currentOperation) break;
-      delete currentOperation;
-      currentOperation = NULL;
       break;
 
     case GEN_STATE_START:
@@ -811,10 +853,7 @@ void runCurrentOperation(){
     case GEN_STATE_FAILED:
       // post fail data
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("operation failed"));
-      if (!currentOperation) break;
-      delete currentOperation;
-      currentOperation = NULL;
-      return;
+      doneOperation(pCurrentOperation);
       break;
 
     default:
@@ -822,12 +861,14 @@ void runCurrentOperation(){
       break;
   }
 
-  if (!currentOperation) return;
-  if (currentOperation->state != GEN_STATE_START){
+  if (!*pCurrentOperation) return;
+  if ((*pCurrentOperation)->state != GEN_STATE_START){
     return;
   }
 
+
   if (BLEScan){
+    generic_sensor_t* op = *pCurrentOperation;
     NimBLEScanResults results = BLEScan->getResults();
     int deviceCount = results.getCount();
     int i = 0;
@@ -839,83 +880,122 @@ void runCurrentOperation(){
         MI32_ReverseMAC(addr);
         char addrstr[20];
         dump(addrstr, 20, addr, 6);
-        if (!strcasecmp(currentOperation->MAC, addrstr)){
-          NimBLEUUID serviceUuid(currentOperation->serviceStr);
+        if (!strcasecmp(op->MAC, addrstr)){
+          NimBLEUUID serviceUuid(op->serviceStr);
           if (device.isAdvertisingService(serviceUuid)) {
             // create a client and connect
-            currentOperation->pClient = 
+            op->pClient = 
               NimBLEDevice::createClient();
-        
-            if (currentOperation->pClient->connect(&device)) {
-                NimBLERemoteService *pService = currentOperation->pClient->getService(serviceUuid);
-                AddLog_P(LOG_LEVEL_DEBUG,PSTR("got service"));
+            op->pClient->setClientCallbacks(&clientCB, false);
+            /** Set initial connection parameters: These settings are 15ms interval, 0 latency, 120ms timout. 
+             *  These settings are safe for 3 clients to connect reliably, can go faster if you have less 
+             *  connections. Timeout should be a multiple of the interval, minimum is 100ms.
+             *  Min interval: 12 * 1.25ms = 15, Max interval: 12 * 1.25ms = 15, 0 latency, 51 * 10ms = 510ms timeout 
+             */
+            op->pClient->setConnectionParams(12,12,0,51);
+            /** Set how long we are willing to wait for the connection to complete (seconds), default is 30. */
+            op->pClient->setConnectTimeout(5);
+                
+            if (op->pClient->connect(&device)) {
+                NimBLERemoteService *pService = op->pClient->getService(serviceUuid);
                 
                 if (pService != nullptr) {
-                    NimBLERemoteCharacteristic *pCharacteristic = 
-                      pService->getCharacteristic(currentOperation->characteristicStr);
-                    AddLog_P(LOG_LEVEL_DEBUG,PSTR("got service"));
-                    
-                    if (pCharacteristic != nullptr) {
-                        AddLog_P(LOG_LEVEL_DEBUG,PSTR("got characteristic"));
-                        if (currentOperation->readlen){
-                          std::string value = pCharacteristic->readValue();
-                          currentOperation->readlen = value.length();
-                          memcpy(currentOperation->dataRead, value.data(), 
-                            (currentOperation->readlen>sizeof(currentOperation->dataRead))?
-                              sizeof(currentOperation->dataRead): 
-                              currentOperation->readlen);
-                          if (currentOperation->readlen>sizeof(currentOperation->dataRead)){
-                            currentOperation->readtruncated = 1;
-                          } else {
-                            currentOperation->readtruncated = 0;
-                          }
-                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic"));
-                        }
-                        if (currentOperation->writelen){
-                          if (!pCharacteristic->writeValue(currentOperation->dataToWrite, currentOperation->writelen, true)){
-                            currentOperation->state = GEN_STATE_FAILED;
-                            AddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic write fail"));
-                          } else {
-                            AddLog_P(LOG_LEVEL_DEBUG,PSTR("write characteristic"));
-                          }
-                        }
-                        // print or do whatever you need with the value
-                        if (currentOperation->notifylen){
-                          if(pCharacteristic->canNotify()) {
-                            if(pCharacteristic->subscribe(true, BLE99::BLEGenNotifyCB, false)) {
-                              AddLog_P(LOG_LEVEL_DEBUG,PSTR("got characteristic"));
-                              currentOperation->pCharacteristic = pCharacteristic;
-                              currentOperation->state = GEN_STATE_WAITNOTIFY;
-                              currentOperation->time = Rtc.utc_time;
-                            } else {
-                              currentOperation->state = GEN_STATE_FAILED;
-                            }
-                          }
+                  NimBLERemoteCharacteristic *pCharacteristic = 
+                    pService->getCharacteristic(op->characteristicStr);
+                  AddLog_P(LOG_LEVEL_DEBUG,PSTR("got service"));
+                  op->state = GEN_STATE_READWRITEDONE;
+
+                  if (op->notificationCharacteristicStr){
+                    NimBLERemoteCharacteristic *pNCharacteristic = 
+                      pService->getCharacteristic(op->notificationCharacteristicStr);
+                    if (pNCharacteristic != nullptr) {
+                      op->notifylen = 0;
+                      if(pNCharacteristic->canNotify()) {
+                        if(pNCharacteristic->subscribe(true, BLE99::BLEGenNotifyCB)) {
+                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for notify"));
+                          op->state = GEN_STATE_WAITNOTIFY;
+                          uint64_t now = esp_timer_get_time();
+                          op->time = now;
                         } else {
-                          currentOperation->state = GEN_STATE_READWRITEDONE;
+                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for notify"));
+                          op->state = GEN_STATE_FAILED;
                         }
-                    } else {
-                      currentOperation->state = GEN_STATE_FAILED;
-                      AddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic not in service"));
+                      } else {
+                        if(pNCharacteristic->canIndicate()) {
+                          if(pNCharacteristic->subscribe(false, BLE99::BLEGenNotifyCB)) {
+                            AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for indicate"));
+                            op->state = GEN_STATE_WAITNOTIFY;
+                            uint64_t now = esp_timer_get_time();
+
+                            op->time = now;
+                          } else {
+                            AddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for indicate"));
+                            op->state = GEN_STATE_FAILED;
+                          }
+                        }
+                      }
                     }
+                  }
+
+                  if (pCharacteristic != nullptr) {
+                    AddLog_P(LOG_LEVEL_DEBUG,PSTR("got characteristic"));
+
+                    if (op->readlen){
+                      std::string value = pCharacteristic->readValue();
+                      op->readlen = value.length();
+                      memcpy(op->dataRead, value.data(), 
+                        (op->readlen>sizeof(op->dataRead))?
+                          sizeof(op->dataRead): 
+                          op->readlen);
+                      if (op->readlen>sizeof(op->dataRead)){
+                        op->readtruncated = 1;
+                      } else {
+                        op->readtruncated = 0;
+                      }
+                      AddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic"));
+                    }
+                    if (op->writelen){
+                      if (!pCharacteristic->writeValue(op->dataToWrite, op->writelen, true)){
+                        op->state = GEN_STATE_FAILED;
+                        AddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic write fail"));
+                      } else {
+                        AddLog_P(LOG_LEVEL_DEBUG,PSTR("write characteristic"));
+                      }
+                    }
+                    // print or do whatever you need with the value
+                    
+                  } else {
+                    op->state = GEN_STATE_FAILED;
+                    AddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic not in service"));
+                  }
                 }
 
-                switch (currentOperation->state){
+                switch (op->state){
                   case GEN_STATE_WAITNOTIFY:
                     break;
                   default:
-                    currentOperation->pClient->disconnect();
-                    NimBLEDevice::deleteClient(currentOperation->pClient);
-                    currentOperation->pClient = NULL;
+                    AddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in runoperation"));
+                    try {
+                      op->pClient->disconnect();
+                    } catch(const std::exception& e){
+                      AddLog_P(LOG_LEVEL_DEBUG,PSTR("except in disconnect"));
+                    }
+                    try {
+                      NimBLEDevice::deleteClient(op->pClient);
+                    } catch(const std::exception& e){
+                      AddLog_P(LOG_LEVEL_DEBUG,PSTR("except in delete"));
+                    }
+                    op->pClient = NULL;
+
                     break;
                 } 
             } else {
-              currentOperation->state = GEN_STATE_FAILED;
+              op->state = GEN_STATE_FAILED;
               // failed to connect
               AddLog_P(LOG_LEVEL_DEBUG,PSTR("fauled to connect to device"));
             }            
           } else {
-            currentOperation->state = GEN_STATE_FAILED;
+            op->state = GEN_STATE_FAILED;
             AddLog_P(LOG_LEVEL_DEBUG,PSTR("service not in device"));
           }
           break;
@@ -924,10 +1004,40 @@ void runCurrentOperation(){
     }
     if (i == deviceCount){
       // device not present
-      currentOperation->state = GEN_STATE_FAILED;
+      op->state = GEN_STATE_FAILED;
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("device not present"));
     }
   }
+}
+
+
+void CmndBLEMode(void){
+  switch(XdrvMailbox.index){
+    case BLEModeDisabled:
+      BLENextMode = BLEModeDisabled;
+      if (BLEMode != BLEModeDisabled){
+        StopBLE();
+        BLEMode = BLEModeDisabled;
+      }
+      break;
+    case BLEModeByCommand:
+      BLENextMode = BLEModeByCommand;
+      if (BLEMode == BLEModeDisabled){
+        StartBLE();
+        BLEMode = BLEModeByCommand;
+      }
+      break;
+    case BLEModeActive:
+      BLENextMode = BLEModeActive;
+      if (BLEMode == BLEModeDisabled){
+        StartBLE();
+        BLEMode = BLEModeByCommand;
+      }
+      break;
+    default:
+      break;
+  }
+  ResponseCmndDone();
 }
 
 
@@ -999,8 +1109,13 @@ void CmndBLEOperation(void){
         ResponseCmndNumber(res);
         return;      
       }
-      prepOperation->notifylen = 1;
-      AddLog_P(LOG_LEVEL_INFO,PSTR("readlen Set %d"),prepOperation->notifylen);
+      strncpy(prepOperation->notificationCharacteristicStr, XdrvMailbox.data, sizeof(prepOperation->notificationCharacteristicStr)-1);
+      AddLog_P(LOG_LEVEL_INFO,PSTR("notififcationCharacteristicStr Set %s"),prepOperation->notificationCharacteristicStr);
+      break;
+
+    case 9:
+      AddLog_P(LOG_LEVEL_INFO,PSTR("preview"));
+      BLE99::BLEPostMQTT(true);
       break;
     case 10:
       if (!prepOperation) {
@@ -1009,15 +1124,13 @@ void CmndBLEOperation(void){
       }
       //prepOperation->requestType = atoi(XdrvMailbox.data);
       prepOperation->state = GEN_STATE_START; // trigger request later
+      prepOperation->opid = lastopid++;
 
-      AddLog_P(LOG_LEVEL_INFO,PSTR("State Set %d -> %d"), prepOperation->state, currentOperations.size());
+      AddLog_P(LOG_LEVEL_INFO,PSTR("State Set %d -> %d"), prepOperation->state, queuedOperations.size());
 
-      if (currentOperations.size() < 10){
-        currentOperations.push_back(prepOperation);
-        AddLog_P(LOG_LEVEL_INFO,PSTR("added -> %d"), prepOperation->state, currentOperations.size());
-        prepOperation = NULL;
-      }     
-      prepOperation = NULL;
+      // this will set prepOperaiton to null
+      addOperation(&queuedOperations, &prepOperation);
+      BLE99::BLEPostMQTT(true);
       break;
     case 11:
       if (!currentOperation) {
@@ -1045,16 +1158,147 @@ void CmndBLEOperation(void){
 const char HTTP_BLE[] PROGMEM = "{s}MI ESP32 v0917a{m}%u%s / %u{e}";
 const char HTTP_BLE_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
 
-static void BLEShow(bool json)
-{
-  if (json) {
-    if(BLE.mode.shallShowScanResult) {
-      return BLEshowScanResults();
+static void BLEPostMQTT(bool json) {
+
+  if (prepOperation || completedOperations.size() || queuedOperations.size() || currentOperations.size()){
+    AddLog_P(LOG_LEVEL_INFO,PSTR("some to show"));
+    xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+    if (prepOperation){
+      std::string out = BLETriggerResponse(prepOperation);
+      xSemaphoreGive(BLEOperationsMutex); // release mutex
+      snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+      AddLog_P(LOG_LEVEL_INFO,PSTR("prep sent %s"), out.c_str());
+    } else {
+      xSemaphoreGive(BLEOperationsMutex); // release mutex
     }
+
+    if (currentOperations.size()){
+      AddLog_P(LOG_LEVEL_INFO,PSTR("current %d"), currentOperations.size());
+      for (int i = 0; i < currentOperations.size(); i++){
+        xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+        generic_sensor_t *toSend = currentOperations[i];
+        if (!toSend) {
+          xSemaphoreGive(BLEOperationsMutex); // release mutex
+          break;
+        } else {
+          std::string out = BLETriggerResponse(toSend);
+          xSemaphoreGive(BLEOperationsMutex); // release mutex
+          snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
+          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+          AddLog_P(LOG_LEVEL_INFO,PSTR("curr %d sent %s"), i, out.c_str());
+          //break;
+        }
+      }
+    }
+
+    if (queuedOperations.size()){
+      AddLog_P(LOG_LEVEL_INFO,PSTR("queued %d"), queuedOperations.size());
+      for (int i = 0; i < queuedOperations.size(); i++){
+        xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+        generic_sensor_t *toSend = queuedOperations[i];
+        if (!toSend) {
+          xSemaphoreGive(BLEOperationsMutex); // release mutex
+          break;
+        } else {
+          std::string out = BLETriggerResponse(toSend);
+          xSemaphoreGive(BLEOperationsMutex); // release mutex
+          snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
+          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+          AddLog_P(LOG_LEVEL_INFO,PSTR("queued %d sent %s"), i, out.c_str());
+          //break;
+        }
+      }
+    }
+    
+    if (completedOperations.size()){
+      AddLog_P(LOG_LEVEL_INFO,PSTR("completed %d"), completedOperations.size());
+      do {
+        generic_sensor_t *toSend = nextOperation(&completedOperations);
+        if (!toSend) {
+          break;
+        } else {
+          std::string out = BLETriggerResponse(toSend);
+          snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
+          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+          delete toSend;
+          //break;
+        }
+        //break;
+      } while (1);
+    }
+  } else {
+    snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"opcount\":%d}"), 0);
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   }
 
-  BLE.mode.triggeredTele = 0;
 }
+
+static void BLEShow(bool json)
+{
+
+  AddLog_P(LOG_LEVEL_INFO,PSTR("show json %d"),json);
+
+  return;
+  if (json){
+
+  }
+#ifdef USE_WEBSERVER
+  else {
+  //WSContentSend_PD(HTTP_MI32, i+1,stemp,MIBLEsensors.size());
+  }
+#endif  // USE_WEBSERVER
+    
+}
+
+
+/**
+ * @brief trigger real-time message for PIR or RC
+ *
+ */
+std::string BLETriggerResponse(generic_sensor_t *toSend){
+  char temp[100];
+  char t[10];
+  if (!toSend) return "";
+  ResponseClear();
+  std::string out = "{\"opid\":\"";
+  sprintf(t, "%d", toSend->opid);
+  out = out + t;
+  out = out + ",\"state\":\"";
+  sprintf(t, "%d", toSend->state);
+  out = out + t;
+  out = out + ",\"MAC\":\"";
+  out = out + toSend->MAC;
+  out = out + "\",\"svc\":\"";
+  out = out + toSend->serviceStr;
+  out = out + "\",\"char\":\"";
+  out = out + toSend->characteristicStr;
+  if (toSend->readlen){
+    dump(temp, 99, toSend->dataRead, toSend->readlen);
+    if (toSend->readtruncated){
+      strcat(temp, "+");
+    }
+    out = out + "\",\"read\":\"";
+    out = out + temp;
+  }
+  if (toSend->writelen){
+    dump(temp, 99, toSend->dataToWrite, toSend->writelen);
+    out = out + "\",\"wrote\":\"";
+    out = out + temp;
+  }
+  if (toSend->notifylen){
+    dump(temp, 99, toSend->dataNotify, toSend->notifylen);
+    if (toSend->notifytruncated){
+      strcat(temp, "+");
+    }
+    out = out + "\",\"notify\":\"";
+    out = out + temp;
+  }
+  out = out + "}";
+  return out;
+}
+
+
 
 }
 
