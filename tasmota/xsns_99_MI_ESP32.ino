@@ -20,12 +20,76 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+*/
+
+/*
+  xsns_99:
+  This driver uses the ESP32 BLE functionality to hopefully provide enough
+  BLE functionality to implement specific drivers on top of it.
+
+  As a generic driver, it can:
+    Be asked to 
+      connect/write to a MAC/Service/Characteristic
+      connect/read from a MAC/Service/Characteristic
+      connect/write/awaitnotify from a MAC/Service/Characteristic/NotifyCharacteristic
+      connect/read/awaitnotify from a MAC/Service/Characteristic/NotifyCharacteristic
+
+    Cmnds:
+      BLEOp0 - requests status of operations
+      BLEOp1 MAC - create an operation in preparation, and populate it's MAC address
+      BLEOp2 Service - add a serviceUUID to the operation in preparation
+      BLEOp3 Characteristic - add a CharacteristicUUID to the operation in preparation for read/write
+      BLEOp4 writedata - optional:add data to write to the operation in preparation - hex string
+      BLEOp5 - optional:signify that a read should be done
+      BLEOp6 NotifyCharacteristic - optional:add a NotifyCharacteristicUUID to the operation in preparation to wait for a notify
+      BLEOp9 - publish the 'operation in preparation' to MQTT.
+      BLEOp10 - add the 'operation in preparation' to the queue of operations to perform.
+
+       
+
+Example:
+Write and request next notify:
+backlog BLEOp1 001A22092EE0; BLEOp2 3e135142-654f-9090-134a-a6ff5bb77046; BLEOp3 3fa4585a-ce4a-3bad-db4b-b8df8179ea09; BLEOp4 03; BLEOp6 d0e8434d-cd29-0996-af41-6c90f4e0eb2a;
+BLEOp10 -> 
+19:25:08 RSL: tele/tasmota_E89E98/SENSOR = {"BLEOperation":{"opid":"3,"state":"1,"MAC":"001A22092EE0","svc":"3e135142-654f-9090-134a-a6ff5bb77046","char":"3fa4585a-ce4a-3bad-db4b-b8df8179ea09","wrote":"03}}
+19:25:08 queued 0 sent {"BLEOperation":{"opid":"3,"state":"1,"MAC":"001A22092EE0","svc":"3e135142-654f-9090-134a-a6ff5bb77046","char":"3fa4585a-ce4a-3bad-db4b-b8df8179ea09","wrote":"03}}
+19:25:08 RSL: stat/tasmota_E89E98/RESULT = {"BLEOp":"Done"}
+.....
+19:25:11 RSL: tele/tasmota_E89E98/SENSOR = {"BLEOperation":{"opid":"3,"state":"11,"MAC":"001A22092EE0","svc":"3e135142-654f-9090-134a-a6ff5bb77046","char":"3fa4585a-ce4a-3bad-db4b-b8df8179ea09","wrote":"03","notify":"020109000428}}
+
+state: 1 -> starting, 
+7 -> read complete
+8 -> write complete 
+11 -> notify complete
+0x100 + -> failure (see GEN_STATE_FAILED_XXXX constants below.)
+
+
+The driver can also be used by other drivers, using the functions:
+
+void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFn);
+void registerForOpCallbacks(OPCOMPLETE_CALLBACK* pFn);
+bool extQueueOperation(generic_sensor_t** op);
+
+These allow other code to
+  receive advertisments
+  receive operation callbacks.
+  create and start an operation, and get a callback when done/failed.
+
+i.e. the Bluetooth of the ESP can be shared without conflict.
 
 */
+
+
+
+// TEMPORARILY define ESP32 and USE_BLE_ESP32 so VSCODE shows highlighting....
+#define VSCODE_DEV
+#ifdef VSCODE_DEV
 #define ESP32
+#define USE_BLE_ESP32
+#endif
+
 #ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
 
-#define USE_BLE_ESP32
 #ifdef USE_BLE_ESP32
 
 #define XSNS_99                    99
@@ -39,59 +103,19 @@
 #include <t_bearssl.h>
 #endif //USE_MI_DECRYPTION
 
+
+void installExamples();
+void sendExample();
+
+
 namespace BLE99 {
 
 
+// this protects our queues, which can be accessed by multiple tasks 
 SemaphoreHandle_t  BLEOperationsMutex;
 
-struct {
-  uint16_t perPage = 4;
-  uint32_t period;             // set manually in addition to TELE-period, is set to TELE-period after start
-  union {
-    struct {
-      uint32_t init:1;
-      uint32_t connected:1;
-      uint32_t autoScan:1;
-      uint32_t canScan:1;
-      uint32_t runningScan:1;
-      uint32_t canConnect:1;
-      uint32_t willConnect:1;
-      uint32_t readingDone:1;
-      uint32_t shallSetTime:1;
-      uint32_t willSetTime:1;
-      uint32_t shallReadBatt:1;
-      uint32_t willReadBatt:1;
-      uint32_t shallSetUnit:1;
-      uint32_t willSetUnit:1;
-      uint32_t shallTriggerTele:1;
-      uint32_t triggeredTele:1;
-      uint32_t shallClearResults:1;   // BLE scan results
-      uint32_t shallShowStatusInfo:1; // react to amount of found sensors via RULES
-      uint32_t firstAutodiscoveryDone:1;
-      uint32_t activeBeacon:1;
-      uint32_t shallShowScanResult:1;
-      uint32_t shallShowBlockList:1;
-    };
-    uint32_t all = 0;
-  } mode;
-  struct {
-    uint8_t sensor;             // points to to the number 0...255
-    uint8_t beaconScanCounter;  // countdown timer in seconds
-  } state;
-  struct {
-    uint32_t allwaysAggregate:1; // always show all known values of one sensor in brdigemode
-    uint32_t noSummary:1;        // no sensor values at TELE-period
-    uint32_t directBridgeMode:1; // send every received BLE-packet as a MQTT-message in real-time
-    uint32_t holdBackFirstAutodiscovery:1; // allows to trigger it later
-    uint32_t showRSSI:1;
-    uint32_t ignoreBogusBattery:1;
-    uint32_t minimalSummary:1;   // DEPRECATED!!
-  } option;
-} BLE;
 
 #pragma pack(1)  // byte-aligned structures to read the sensor data
-
-
 
 #pragma pack(0)
 
@@ -126,6 +150,8 @@ struct generic_sensor_t {
 };
 
 
+////////////////////////////////////////////////////////////////
+// structure for callbacks from other drivers from advertisments.
 struct ble_advertisment_t {
   const uint8_t *addr;
   int RSSI;
@@ -150,12 +176,9 @@ struct ble_advertisment_t {
     char serviceUUIDStr[40]; // longest UUID 36 chars?
   } services[5];
 };
+////////////////////////////////////////////////////////////////
 
-// callback types to be used by external drivers
-typedef bool ADVERTISMENT_CALLBACK(ble_advertisment_t *pStruct);
-typedef bool OPCOMPLETE_CALLBACK(generic_sensor_t *pStruct);
 
-static ble_advertisment_t BLEAdvertisment;
 
 
 // only run from main thread, becaus eit deletes things that were newed there...
@@ -189,12 +212,28 @@ bool myOpCallback2(generic_sensor_t *pStruct);
 #endif
 
 
+///////////////////////////////////////////////////////////////////////
+// External interface to this driver for use by others.
+//
+// callback types to be used by external drivers
+//
+typedef bool ADVERTISMENT_CALLBACK(ble_advertisment_t *pStruct);
+typedef bool OPCOMPLETE_CALLBACK(generic_sensor_t *pStruct);
+
 void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFn);
 void registerForOpCallbacks(OPCOMPLETE_CALLBACK* pFn);
 
 bool extQueueOperation(generic_sensor_t** op);
+//
+///////////////////////////////////////////////////////////////////////
 
 
+// single storage for advert callbacks....
+static ble_advertisment_t BLEAdvertisment;
+
+
+/////////////////////////////////////////////////////
+// states for runTaskDoneOperation
 #define GEN_STATE_IDLE 0
 #define GEN_STATE_START 1
 
@@ -205,10 +244,8 @@ bool extQueueOperation(generic_sensor_t** op);
 
 #define GEN_STATE_NOTIFIED 11
 
-#define GEN_STATE_TODELETE 12
 
-
-
+// Errors are all base on 0x100
 #define GEN_STATE_FAILED 0x100
 #define GEN_STATE_FAILED_CANTNOTIFYORINDICATE 0x101
 #define GEN_STATE_FAILED_CANTREAD 0x102
@@ -225,20 +262,15 @@ bool extQueueOperation(generic_sensor_t** op);
 #define GEN_STATE_FAILED_NODEVICE 0x10D
 #define GEN_STATE_FAILED_NOREADWRITE 0x110
 #define GEN_STATE_FAILED_CANCEL 0x111
-
-struct scan_entry_t {
-  uint8_t MAC[6];
-  uint16_t CID;
-  uint16_t SVC;
-  uint16_t UUID;
-  int32_t RSSI;
-};
-
-struct MAC_t {
-  uint8_t buf[6];
-};
+//
+/////////////////////////////////////////////////////
 
 
+
+//////////////////////////////////////////////////
+// general variables for running the driver
+static int BLEInitState = 0;
+static int BLERunningScan = 0;
 static BLEScan* BLEScan = nullptr;
 // time we last started a scan in uS using esp_timer_get_time();
 // used to setect a scan which did not call back?
@@ -246,7 +278,9 @@ uint64_t BLEScanStartetdAt = 0;
 int BLEScanTimeS = 20; // scan duraiton in S
 int BLEMaxTimeBetweenAdverts = 40; // we expect an advert at least this frequently, else restart BLE (in S)
 uint64_t BLEScanLastAdvertismentAt = 0;
-int sendMQTT = 0;
+uint32_t lastopid = 0; // incrementing uinique opid
+//////////////////////////////////////////////////
+
 
 // operation being prepared through commands
 generic_sensor_t* prepOperation = nullptr;
@@ -264,7 +298,6 @@ std::deque<ADVERTISMENT_CALLBACK*> advertismentCallbacks;
 
 std::deque<OPCOMPLETE_CALLBACK*> operationsCallbacks;
 
-uint32_t lastopid = 0;
 
 /*********************************************************************************************\
  * constants
@@ -375,115 +408,6 @@ static void BLE_ReverseMAC(uint8_t _mac[]){
 
 
 /*********************************************************************************************\
- * Example Advertisment callback
-\*********************************************************************************************/
-
-#ifdef EXAMPLE_ADVERTISMENT_CALLBACK
-
-#define FLORA       1
-#define MJ_HT_V1    2
-#define LYWSD02     3
-#define LYWSD03MMC  4
-#define CGG1        5
-#define CGD1        6
-#define NLIGHT      7
-#define MJYD2S      8
-#define YEERC       9
-#define MHOC401     10
-#define MHOC303     11
-#define ATC         12
-
-// match ADVERTISMENT_CALLBACK
-bool myAdvertCallback(ble_advertisment_t *pStruct){
-
-/*
-struct ble_advertisment_t {
-  uint8_t *addr;
-  int RSSI;
-  char *name;
-
-  uint8_t *payload;
-  uint8_t payloadLen;
-
-  uint8_t svcdataCount;
-  struct {
-    ble_uuid_any_t* serviceUUID;
-    char serviceUUIDStr[40]; // longest UUID 36 chars?
-    uint8_t serviceData;
-    uint8_t serviceDataLen;
-  } svcdata[5];
-  uint8_t serviceCount;
-  struct {
-    ble_uuid_any_t* serviceUUID;
-    char serviceUUIDStr[40]; // longest UUID 36 chars?
-  } services[5];
-};
-*/
-
-  if (pStruct->svcdataCount){
-    if (pStruct->svcdata[0].serviceUUID->u.type == 16){
-      int UUID = pStruct->svcdata[0].serviceUUID->u16.value;
-      switch(UUID){
-        case 0xfe95:{
-          if (pStruct->svcdata[0].serviceDataLen < 9){
-            // skip NLIGHT
-          } else {
-            int type = (pStruct->svcdata[0].serviceData[3]<<8) | pStruct->svcdata[0].serviceData[2];
-            AddLog_P(LOG_LEVEL_DEBUG,PSTR("BLE: Sensor type %x"), type);
-            switch(type){
-              case MJ_HT_V1:
-              case CGG1:
-              case YEERC:
-                return true; // eat this, no further callbacks will be called.
-                break;
-            }
-          }
-        }break;
-        case 0xfdcd:
-          break;
-        case 0x181a:
-          break;
-        default:
-          break;
-      }
-    }
-  }
-
-  // indicate others can also hear this
-  // to say 'I want this exclusively', return true.
-  return false;
-
-}
-#endif
-/*********************************************************************************************\
- * End of Example Advertisment callback
-\*********************************************************************************************/
-
-
-/*********************************************************************************************\
- * Example Operations callbacks
-\*********************************************************************************************/
-#ifdef EXAMPLE_OPERATION_CALLBACK
-
-// this one is used to demonstrate processing ALL operations
-bool myOpCallback(generic_sensor_t *pStruct){
-  AddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback"));
-  return false; // return true to block MQTT broadcast
-}
-
-// this one is used to demonstrate processing of ONE specific operation
-bool myOpCallback2(generic_sensor_t *pStruct){
-  AddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback2"));
-  return true; // return true to block MQTT broadcast
-}
-#endif
-/*********************************************************************************************\
- * End of Example Operations callbacks
-\*********************************************************************************************/
-
-
-
-/*********************************************************************************************\
  * Classes
 \*********************************************************************************************/
 
@@ -491,11 +415,9 @@ bool myOpCallback2(generic_sensor_t *pStruct){
 class BLESensorCallback : public NimBLEClientCallbacks {
   void onConnect(NimBLEClient* pclient) {
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnect"));
-    BLE.mode.connected = 1;
   }
   void onDisconnect(NimBLEClient* pclient) {
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("onDisconnect"));
-    BLE.mode.connected = 0;
   }
   bool onConnParamsUpdateRequest(NimBLEClient* BLEClient, const ble_gap_upd_params* params) {
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnParamsUpdateRequest"));
@@ -517,7 +439,6 @@ static BLESensorCallback clientCB;
 
 class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
   void onResult(NimBLEAdvertisedDevice* advertisedDevice) {
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("Advertised Device"));
     uint64_t now = esp_timer_get_time();
     BLEScanLastAdvertismentAt = now; // note the time of the last advertisment
 
@@ -546,31 +467,29 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     dump(payloadhex, 100, payload, payloadlen);
 
     // this mjust survive the scope of the callbacks
-    std::string name;
+    std::string name = "";
+    const char *namestr = name.c_str();
     if (advertisedDevice->haveName()){
       name = advertisedDevice->getName();
-      const char *n = name.c_str();
-      BLEAdvertisment.name = n;
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("Name: %s"), n);
+      namestr = name.c_str();
+      BLEAdvertisment.name = namestr;
     }
 
+    char mfgstr[100];
+    mfgstr[0] = 0;
     if (advertisedDevice->haveManufacturerData()){
       std::string data = advertisedDevice->getManufacturerData();
-      char mfgstr[100];
       int len = data.length();
 
       BLEAdvertisment.manufacturerData = (const uint8_t *)data.data();
       BLEAdvertisment.manufacturerDataLen = len;
-
       dump(mfgstr, 100, (uint8_t*)data.data(), len);
-
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("Mfg: %s"), mfgstr);
     }
 
     if (svcDataCount == 0) {
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s RSSI:%d payloadonly %s"), addrstr, RSSI, payloadhex);
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("ADV:%s (%s) RSSI:%d pld:%s Mfg:%s"), addrstr, namestr, RSSI, payloadhex, mfgstr);
     } else {
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s RSSI:%d payload %s service data:"), addrstr, RSSI, payloadhex);
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("ADV:%s (%s) RSSI:%d pld:%s Mfg:%s svcdata:"), addrstr, namestr, RSSI, payloadhex, mfgstr);
       for (int i = 0; i < svcDataCount; i++){
         NimBLEUUID UUID = advertisedDevice->getServiceDataUUID(i);//.getNative()->u16.value;
         std::string ServiceData = advertisedDevice->getServiceData(i);
@@ -611,7 +530,7 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
           strncpy(BLEAdvertisment.services[i].serviceUUIDStr, strUUID.c_str(), sizeof(BLEAdvertisment.services[i].serviceUUIDStr));
           BLEAdvertisment.serviceCount = i+1;
         }
-        AddLog_P(LOG_LEVEL_DEBUG,PSTR("Service UUID:%s"), strUUID.c_str());
+        AddLog_P(LOG_LEVEL_DEBUG,PSTR("Svc UUID:%s"), strUUID.c_str());
       }
     }
 
@@ -638,8 +557,8 @@ static BLESensorCallback BLESensorCB;
 \*********************************************************************************************/
 
 static void BLEscanEndedCB(NimBLEScanResults results){
+  BLERunningScan = 0;
   AddLog_P(LOG_LEVEL_DEBUG,PSTR("Scan ended"));
-  BLE.mode.runningScan = 0;
 }
 
 static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
@@ -700,8 +619,6 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
 /*********************************************************************************************\
  * init NimBLE
 \*********************************************************************************************/
-static void BLEStartScanTask();
-
 void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFn){
   advertismentCallbacks.push_back(pFn);
 }
@@ -713,24 +630,18 @@ void registerForOpCallbacks(OPCOMPLETE_CALLBACK* pFn){
 
 
 static void BLEPreInit(void) {
-  BLE.mode.init = false;
+  BLEInitState = 0;
   prepOperation = nullptr;
   BLEOperationsMutex = xSemaphoreCreateMutex();
 
-#ifdef EXAMPLE_ADVERTISMENT_CALLBACK
-  BLE99::registerForAdvertismentCallbacks(&BLE99::myAdvertCallback);
-#endif
-
-#ifdef EXAMPLE_OPERATION_CALLBACK
-  BLE99:registerForOpCallbacks(&BLE99::myOpCallback);
-#endif
-
+  // this is only for testing, does nothin if examples are undefed
+  installExamples();
 
   BLE99::BLEStartOperationTask();
 }
 
 static void StartBLE(void) {
-  BLE.mode.init = 0;
+  BLEInitState = 0;
 }
 
 static void StopBLE(void){
@@ -748,7 +659,7 @@ static void StopBLE(void){
 static void BLEInit(void) {
   if (BLEMode == BLEModeDisabled) return;
 
-  if (BLE.mode.init) { return; }
+  if (BLEInitState) { return; }
 
   if (TasmotaGlobal.global_state.wifi_down) { return; }
   if (WiFi.getSleep() == false) {
@@ -761,17 +672,16 @@ static void BLEInit(void) {
     return;
   }
 
-  if (!BLE.mode.init) {
+  if (!BLEInitState) {
     uint64_t now = esp_timer_get_time();
     BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
 
     NimBLEDevice::init("");
-    AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: init BLE device"));
-    BLE.mode.canScan = 1;
-    BLE.mode.init = 1;
-    BLE.period = Settings.tele_period;
+    
+    if (BLEScan == nullptr) BLEScan = NimBLEDevice::getScan();
 
-    BLE99::BLEStartScanTask(); // Let's get started !!
+    AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: init BLE device"));
+    BLEInitState = 1;
   }
   return;
 }
@@ -780,36 +690,11 @@ static void BLEInit(void) {
  * Task section
 \*********************************************************************************************/
 
-static void BLEScanTask(void *pvParameters);
-
-static void BLEStartScanTask(){
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Start scanning"),D_CMND_BLE);
-
-    BLE99::BLEScanTask(NULL);
-    return;
-}
-
-// this is actually NOT a task - it just starts a scan in the main thread
-static void BLEScanTask(void *pvParameters){
-  if (BLEMode == BLEModeDisabled) return;
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("BLEScanTask"));
-  if (BLEScan == nullptr) BLEScan = NimBLEDevice::getScan();
-  // DEBUG_SENSOR_LOG(PSTR("%s: Scan Cache Length: %u"),D_CMND_BLE, BLEScan->getResults().getCount());
-  BLEScan->setInterval(120);
-  BLEScan->setWindow(100);
-  BLEScan->setAdvertisedDeviceCallbacks(&BLEScanCallbacks,true);
-  BLEScan->setActiveScan(false);
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("Startscan from BLEScanTaskStart"));
-  BLEScan->start(20, BLEscanEndedCB, false); // never stop scanning, will pause automatically while connecting
-  BLE.mode.runningScan = 1;
-}
-
 static void BLEOperationTask(void *pvParameters);
 
 static void BLEStartOperationTask(){
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Start operations"),D_CMND_BLE);
 
-    //if (BLE.mode.connected) return;
     xTaskCreatePinnedToCore(
       BLE99::BLEOperationTask,    /* Function to implement the task */
       "BLEOperationTask",  /* Name of the task */
@@ -868,10 +753,6 @@ static void BLEshowScanResults(){
  */
 
 static void BLEEvery50mSecond(){
-  if(BLE.mode.shallTriggerTele){
-      BLE.mode.shallTriggerTele = 0;
-      //BLEtriggerTele();
-  }
 }
 
 /**
@@ -881,7 +762,7 @@ static void BLEEvery50mSecond(){
 
 static void BLEEverySecond(bool restart){
   //BLEStartScanTask();
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("one sec (scanning %d)"),BLE.mode.runningScan);
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("one sec (scanning %d)"), BLERunningScan);
 
   // check for application callbacks here.
   // this may remove complete items.
@@ -894,12 +775,17 @@ static void BLEEverySecond(bool restart){
 
   if (BLEScan){
     // restart scanning if it ended and we don;t have any current operations in progress.
-    if (!BLE.mode.runningScan && (!currentOperations.size())){
+    if (!BLERunningScan && (!currentOperations.size())){
       //BLEScan->clearResults();
       if ((BLEMode != BLEModeDisabled) && (BLEMode != BLEModeByCommand)){
         AddLog_P(LOG_LEVEL_DEBUG,PSTR("Startscan from onesec"));
-        BLEScan->start(BLEScanTimeS, BLEscanEndedCB, true); // 20s scans, restarted when theyn finish
-        BLE.mode.runningScan = 1;
+        BLEScan->setInterval(70);
+        BLEScan->setWindow(50);
+        BLEScan->setAdvertisedDeviceCallbacks(&BLEScanCallbacks,true);
+        BLEScan->setActiveScan(true);
+
+        BLEScan->start(BLEScanTimeS, BLEscanEndedCB, true); // 20s scans, restarted when then finish
+        BLERunningScan = 1;
         BLEScanStartetdAt = esp_timer_get_time();
       }
     } else {
@@ -912,7 +798,7 @@ static void BLEEverySecond(bool restart){
         if (diff > (BLEScanTimeS + 5) * 1000){
           AddLog_P(LOG_LEVEL_ERROR,PSTR("Scan did not end on time"));
           BLEScan->stop();
-          BLE.mode.runningScan = 0;
+          BLERunningScan = 0;
         }
       }
       uint64_t diff = now - BLEScanLastAdvertismentAt;
@@ -933,14 +819,8 @@ static void BLEEverySecond(bool restart){
 \*********************************************************************************************/
 
 static void CmndBLEPeriod(void) {
-  if (XdrvMailbox.data_len > 0) {
-    if (1 == XdrvMailbox.payload) {
-      BLEEverySecond(true);
-    } else {
-      BLE.period = XdrvMailbox.payload;
-    }
-  }
-  ResponseCmndNumber(BLE.period);
+  //ResponseCmndNumber(BLE.period);
+  ResponseCmndDone();
 }
 
 
@@ -1402,15 +1282,7 @@ void CmndBLEOperation(void){
       break;*/
 
       case 99: { // test programatically added operation
-        generic_sensor_t *op = new generic_sensor_t;
-        memset(op, 0, sizeof(generic_sensor_t));
-        strncpy(op->MAC, "001A22092EE0", sizeof(op->MAC)-1);
-        strncpy(op->serviceStr, "3e135142-654f-9090-134a-a6ff5bb77046", sizeof(op->serviceStr)-1);
-        strncpy(op->characteristicStr, "3fa4585a-ce4a-3bad-db4b-b8df8179ea09", sizeof(op->characteristicStr)-1);
-        strncpy(op->notificationCharacteristicStr, "d0e8434d-cd29-0996-af41-6c90f4e0eb2a", sizeof(op->notificationCharacteristicStr)-1);
-        op->writelen = fromHex(op->dataToWrite, (char *)"4040", sizeof(op->dataToWrite));
-        op->callback = (void *)myOpCallback2;
-        BLE99::extQueueOperation(&op);
+        sendExample();
 
         // dump what we have as diags
         BLE99::BLEPostMQTT(false); // show all operations, not just completed
@@ -1485,14 +1357,13 @@ static void BLEPostMQTT(bool onlycompleted) {
       do {
         generic_sensor_t *toSend = nextOperation(&completedOperations);
         if (!toSend) {
-          break;
+          break; // break from while loop
         } else {
-          if (toSend->state != GEN_STATE_TODELETE){
-            std::string out = BLETriggerResponse(toSend);
-            snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
-            MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-            toSend->state = GEN_STATE_TODELETE;
-          }
+          std::string out = BLETriggerResponse(toSend);
+          snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
+          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+          // we alreayd removed this from the queues, so now delete
+          delete toSend; 
           //break;
         }
         //break;
@@ -1635,7 +1506,7 @@ bool Xsns99(uint8_t function)
     BLE99::BLEPreInit();
   }
 
-  if (!BLE99::BLE.mode.init) {
+  if (!BLE99::BLEInitState) {
     if (function == FUNC_EVERY_250_MSECOND) {
       BLE99::BLEInit();
     }
@@ -1662,5 +1533,143 @@ bool Xsns99(uint8_t function)
     }
   return result;
 }
-#endif  // USE_MI_ESP32
+
+
+
+/*********************************************************************************************\
+ * Example Advertisment callback
+\*********************************************************************************************/
+
+#ifdef EXAMPLE_ADVERTISMENT_CALLBACK
+
+#define FLORA       1
+#define MJ_HT_V1    2
+#define LYWSD02     3
+#define LYWSD03MMC  4
+#define CGG1        5
+#define CGD1        6
+#define NLIGHT      7
+#define MJYD2S      8
+#define YEERC       9
+#define MHOC401     10
+#define MHOC303     11
+#define ATC         12
+
+// match ADVERTISMENT_CALLBACK
+bool myAdvertCallback(BLE99::ble_advertisment_t *pStruct) {
+
+/*
+struct ble_advertisment_t {
+  uint8_t *addr;
+  int RSSI;
+  char *name;
+
+  uint8_t *payload;
+  uint8_t payloadLen;
+
+  uint8_t svcdataCount;
+  struct {
+    ble_uuid_any_t* serviceUUID;
+    char serviceUUIDStr[40]; // longest UUID 36 chars?
+    uint8_t serviceData;
+    uint8_t serviceDataLen;
+  } svcdata[5];
+  uint8_t serviceCount;
+  struct {
+    ble_uuid_any_t* serviceUUID;
+    char serviceUUIDStr[40]; // longest UUID 36 chars?
+  } services[5];
+};
+*/
+
+  if (pStruct->svcdataCount){
+    if (pStruct->svcdata[0].serviceUUID->u.type == 16){
+      int UUID = pStruct->svcdata[0].serviceUUID->u16.value;
+      switch(UUID){
+        case 0xfe95:{
+          if (pStruct->svcdata[0].serviceDataLen < 9){
+            // skip NLIGHT
+          } else {
+            int type = (pStruct->svcdata[0].serviceData[3]<<8) | pStruct->svcdata[0].serviceData[2];
+            AddLog_P(LOG_LEVEL_DEBUG,PSTR("BLE: Sensor type %x"), type);
+            switch(type){
+              case MJ_HT_V1:
+              case CGG1:
+              case YEERC:
+                return true; // eat this, no further callbacks will be called.
+                break;
+            }
+          }
+        }break;
+        case 0xfdcd:
+          break;
+        case 0x181a:
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  // indicate others can also hear this
+  // to say 'I want this exclusively', return true.
+  return false;
+
+}
+#endif
+/*********************************************************************************************\
+ * End of Example Advertisment callback
+\*********************************************************************************************/
+
+
+/*********************************************************************************************\
+ * Example Operations callbacks
+\*********************************************************************************************/
+#ifdef EXAMPLE_OPERATION_CALLBACK
+
+// this one is used to demonstrate processing ALL operations
+bool myOpCallback(BLE99::generic_sensor_t *pStruct){
+  AddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback"));
+  return false; // return true to block MQTT broadcast
+}
+
+// this one is used to demonstrate processing of ONE specific operation
+bool myOpCallback2(BLE99::generic_sensor_t *pStruct){
+  AddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback2"));
+  return true; // return true to block MQTT broadcast
+}
+#endif
+/*********************************************************************************************\
+ * End of Example Operations callbacks
+\*********************************************************************************************/
+
+void installExamples(){
+#ifdef EXAMPLE_ADVERTISMENT_CALLBACK
+  BLE99::registerForAdvertismentCallbacks(&myAdvertCallback);
+#endif
+
+#ifdef EXAMPLE_OPERATION_CALLBACK
+  BLE99:registerForOpCallbacks(&myOpCallback);
+#endif
+}
+
+void sendExample(){
+#ifdef EXAMPLE_OPERATION_CALLBACK
+  BLE99::generic_sensor_t *op = new BLE99::generic_sensor_t;
+  memset(op, 0, sizeof(BLE99::generic_sensor_t));
+  strncpy(op->MAC, "001A22092EE0", sizeof(op->MAC));
+  strncpy(op->serviceStr, "3e135142-654f-9090-134a-a6ff5bb77046", sizeof(op->serviceStr));
+  strncpy(op->characteristicStr, "3fa4585a-ce4a-3bad-db4b-b8df8179ea09", sizeof(op->characteristicStr));
+  strncpy(op->notificationCharacteristicStr, "d0e8434d-cd29-0996-af41-6c90f4e0eb2a", sizeof(op->notificationCharacteristicStr));
+  op->writelen = BLE99::fromHex(op->dataToWrite, (char *)"4040", sizeof(op->dataToWrite));
+
+  // this op will call us back on complete or failure.
+  op->callback = (void *)myOpCallback2;
+  BLE99::extQueueOperation(&op);
+#endif
+}
+
+
+
+#endif  
 #endif  // ESP32
