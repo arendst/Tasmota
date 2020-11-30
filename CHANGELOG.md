@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Support for multiple WeMo devices by Magic73 (#9208)
 - Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
 - TyuaMcu update 2/3 by Federico Leoni (#10004)
+- Add option `#define UPGRADE_V8_MIN` to drop support for upgrading before v8.0 (saves 1.3kb)
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)

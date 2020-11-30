@@ -1097,6 +1097,7 @@ void SettingsDelta(void)
   if (Settings.version != VERSION) {      // Fix version dependent changes
 
 #ifdef ESP8266
+#ifndef UPGRADE_V8_MIN
     if (Settings.version < 0x07000002) {
       Settings.web_color2[0][0] = Settings.web_color[0][0];
       Settings.web_color2[0][1] = Settings.web_color[0][1];
@@ -1200,6 +1201,7 @@ void SettingsDelta(void)
 //      SettingsUpdateText(SET_FRIENDLYNAME3, Settings.ex_friendlyname[2]);
 //      SettingsUpdateText(SET_FRIENDLYNAME4, Settings.ex_friendlyname[3]);
     }
+#endif // UPGRADE_V8_MIN
     if (Settings.version < 0x08020003) {
       SettingsUpdateText(SET_TEMPLATE_NAME, Settings.user_template_name);
       Settings.zb_channel = 0;      // set channel to zero to force reinit of zigbee parameters
