@@ -158,16 +158,24 @@ typedef bool OPCOMPLETE_CALLBACK(generic_sensor_t *pStruct);
 static ble_advertisment_t BLEAdvertisment;
 
 
-void doneOperation(generic_sensor_t** op);
+// only run from main thread, becaus eit deletes things that were newed there...
+static void mainThreadOpCallbacks();
 void addOperation(std::deque<generic_sensor_t*> *ops, generic_sensor_t** op);
 generic_sensor_t* nextOperation(std::deque<generic_sensor_t*> *ops);
 std::string BLETriggerResponse(generic_sensor_t *toSend);
 static void BLEscanEndedCB(NimBLEScanResults results);
 static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
-static void runCurrentOperation(generic_sensor_t** pCurrentOperation);
+
+
 static void BLEShow(bool json);
 static void BLEPostMQTT(bool json);
 static void BLEStartOperationTask();
+
+// these are only run from the run task
+static void runCurrentOperation(generic_sensor_t** pCurrentOperation);
+static void runTaskDoneOperation(generic_sensor_t** op);
+
+
 
 #define EXAMPLE_ADVERTISMENT_CALLBACK
 #define EXAMPLE_OPERATION_CALLBACK
@@ -195,7 +203,10 @@ bool extQueueOperation(generic_sensor_t** op);
 #define GEN_STATE_WAITNOTIFY 9
 #define GEN_STATE_WAITINDICATE 10
 
-#define GEN_STATE_NOTIFIED 0x40
+#define GEN_STATE_NOTIFIED 11
+
+#define GEN_STATE_TODELETE 12
+
 
 
 #define GEN_STATE_FAILED 0x100
@@ -456,13 +467,13 @@ struct ble_advertisment_t {
 
 // this one is used to demonstrate processing ALL operations
 bool myOpCallback(generic_sensor_t *pStruct){
-
+  AddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback"));
   return false; // return true to block MQTT broadcast
 }
 
-// this one is used to demonstrate process ONE specific operation
+// this one is used to demonstrate processing of ONE specific operation
 bool myOpCallback2(generic_sensor_t *pStruct){
-
+  AddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback2"));
   return true; // return true to block MQTT broadcast
 }
 #endif
@@ -872,38 +883,13 @@ static void BLEEverySecond(bool restart){
   //BLEStartScanTask();
   AddLog_P(LOG_LEVEL_DEBUG,PSTR("one sec (scanning %d)"),BLE.mode.runningScan);
 
-  // check for completed currentOperations
-  // moved this into main thread because it (may) call other drivers
-  // who have supplied callbacks.
-  if (currentOperations.size()){
-    for (int i = 0; i < currentOperations.size(); i++){
-      xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
-      generic_sensor_t *toSend = currentOperations[i];
-      if (!toSend) {
-        xSemaphoreGive(BLEOperationsMutex); // release mutex
-        break;
-      } else {
-        // mutex must be released before doneoperation can be called.
-        xSemaphoreGive(BLEOperationsMutex); // release mutex
-
-        switch(toSend->state){
-          case GEN_STATE_READDONE:
-          case GEN_STATE_WRITEDONE:
-          case GEN_STATE_NOTIFIED:
-            // post result data
-            AddLog_P(LOG_LEVEL_DEBUG,PSTR("op done"));
-            // this sets the pointer to null.
-            doneOperation(&toSend);
-            break;
-        }
-      }
-    }
-  }
-
+  // check for application callbacks here.
+  // this may remove complete items.
+  BLE99::mainThreadOpCallbacks();
 
   // post any MQTT data if we completed anything in the last second
   if (completedOperations.size()){
-    BLE99::BLEPostMQTT(true);
+    BLE99::BLEPostMQTT(true); // send only completed
   }
 
   if (BLEScan){
@@ -966,19 +952,21 @@ void CmndBLEOption(void){
 
 
 // this disconnects from a device if necessary, and then
-// moves the oepration from 'currentOperations' to 'completedOperations'.
-void doneOperation(generic_sensor_t** op){
+// moves the operation from 'currentOperations' to 'completedOperations'.
+
+// for safety's sake, only call from the run task
+static void runTaskDoneOperation(generic_sensor_t** op){
   if ((*op)->pClient){
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in done"));
     try {
       (*op)->pClient->disconnect();
     } catch(const std::exception& e){
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("except in disconnect"));
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in disconnect"));
     }
     try {
       NimBLEDevice::deleteClient((*op)->pClient);
     } catch(const std::exception& e){
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("except in delete"));
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in delete"));
     }
     (*op)->pClient = NULL;
   }
@@ -993,36 +981,9 @@ void doneOperation(generic_sensor_t** op){
   }
   xSemaphoreGive(BLEOperationsMutex); // release mutex
 
-  bool callbackres = false;
-
-  if ((*op)->callback){
-    try {
-      OPCOMPLETE_CALLBACK *pFn = (OPCOMPLETE_CALLBACK *)((*op)->callback);
-      callbackres = pFn(*op);
-    } catch(const std::exception& e){
-      AddLog_P(LOG_LEVEL_ERROR,PSTR("exception in op->callback"));
-    }
-  }
-
-  if (!callbackres){
-    for (int i = 0; i < operationsCallbacks.size(); i++){
-      try {
-        OPCOMPLETE_CALLBACK *pFn = operationsCallbacks[i];
-        callbackres = pFn(*op);
-        if (callbackres){
-          break; // this callback ate the op.
-        }
-      } catch(const std::exception& e){
-        AddLog_P(LOG_LEVEL_ERROR,PSTR("exception in operationsCallbacks"));
-      }
-    }
-  }
-
-
-  // if some callback told us not to send on MQTT, then don't send
-  if (!callbackres){
-    addOperation(&completedOperations, op);
-  }
+  // by adding it to this list, this will cause it to be sent to MQTT
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("add to completedOperations in done"));
+  addOperation(&completedOperations, op);
   return;
 }
 
@@ -1090,6 +1051,8 @@ static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
   }
   if (!*pCurrentOperation) return;
 
+
+
   // if awaiting notification
   if ((*pCurrentOperation)->notifytimer){
     // if it took too long, then disconnect
@@ -1110,6 +1073,8 @@ static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
     case GEN_STATE_WRITEDONE:
     case GEN_STATE_NOTIFIED:
       // just stay here until this is removed by the main thread
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("operation complete"));
+      BLE99::runTaskDoneOperation(pCurrentOperation);
       return;
       break;
 
@@ -1125,9 +1090,8 @@ static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
   if (!*pCurrentOperation) return;
 
   if ((*pCurrentOperation)->state & GEN_STATE_FAILED){
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("operation failed %x"), (*pCurrentOperation)->state);
-    // this sets the pointer to null.
-    doneOperation(pCurrentOperation);
+    AddLog_P(LOG_LEVEL_ERROR,PSTR("operation failed"));
+    BLE99::runTaskDoneOperation(pCurrentOperation);
     return;
   }
 
@@ -1297,6 +1261,7 @@ static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
 }
 
 
+
 void CmndBLEMode(void){
   switch(XdrvMailbox.index){
     case BLEModeDisabled:
@@ -1356,7 +1321,7 @@ void CmndBLEOperation(void){
   switch(op) {
     case 0:
       AddLog_P(LOG_LEVEL_INFO,PSTR("preview"));
-      BLE99::BLEPostMQTT(true);
+      BLE99::BLEPostMQTT(false); // show all operations, not just completed
       break;
     case 1:
       if (prepOperation){
@@ -1410,7 +1375,7 @@ void CmndBLEOperation(void){
 
     case 9:
       AddLog_P(LOG_LEVEL_INFO,PSTR("preview"));
-      BLE99::BLEPostMQTT(true);
+      BLE99::BLEPostMQTT(false); // show all operations, not just completed
       break;
     case 10:
       if (!prepOperation) {
@@ -1421,11 +1386,11 @@ void CmndBLEOperation(void){
       prepOperation->state = GEN_STATE_START; // trigger request later
       prepOperation->opid = lastopid++;
 
-      AddLog_P(LOG_LEVEL_INFO,PSTR("State Set %d -> %d"), prepOperation->state, queuedOperations.size());
+      AddLog_P(LOG_LEVEL_INFO,PSTR("State:%d -> queued:%d"), prepOperation->state, queuedOperations.size());
 
       // this will set prepOperaiton to null
       addOperation(&queuedOperations, &prepOperation);
-      BLE99::BLEPostMQTT(true);
+      BLE99::BLEPostMQTT(false);
       break;
     /*case 11:
       if (!currentOperation) {
@@ -1443,12 +1408,12 @@ void CmndBLEOperation(void){
         strncpy(op->serviceStr, "3e135142-654f-9090-134a-a6ff5bb77046", sizeof(op->serviceStr)-1);
         strncpy(op->characteristicStr, "3fa4585a-ce4a-3bad-db4b-b8df8179ea09", sizeof(op->characteristicStr)-1);
         strncpy(op->notificationCharacteristicStr, "d0e8434d-cd29-0996-af41-6c90f4e0eb2a", sizeof(op->notificationCharacteristicStr)-1);
-        op->writelen = fromHex(op->dataToWrite, "4040", sizeof(op->dataToWrite));
+        op->writelen = fromHex(op->dataToWrite, (char *)"4040", sizeof(op->dataToWrite));
         op->callback = (void *)myOpCallback2;
         BLE99::extQueueOperation(&op);
 
         // dump what we have as diags
-        BLE99::BLEPostMQTT(true);
+        BLE99::BLEPostMQTT(false); // show all operations, not just completed
       } break;
   }
 
@@ -1462,11 +1427,11 @@ void CmndBLEOperation(void){
  * Presentation
 \*********************************************************************************************/
 
-static void BLEPostMQTT(bool json) {
+static void BLEPostMQTT(bool onlycompleted) {
   if (prepOperation || completedOperations.size() || queuedOperations.size() || currentOperations.size()){
     AddLog_P(LOG_LEVEL_INFO,PSTR("some to show"));
     xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
-    if (prepOperation){
+    if (prepOperation && !onlycompleted){
       std::string out = BLETriggerResponse(prepOperation);
       xSemaphoreGive(BLEOperationsMutex); // release mutex
       snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
@@ -1475,8 +1440,28 @@ static void BLEPostMQTT(bool json) {
     } else {
       xSemaphoreGive(BLEOperationsMutex); // release mutex
     }
+  
 
-    if (currentOperations.size()){
+    if (queuedOperations.size() && !onlycompleted){
+      AddLog_P(LOG_LEVEL_INFO,PSTR("queued %d"), queuedOperations.size());
+      for (int i = 0; i < queuedOperations.size(); i++){
+        xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+        generic_sensor_t *toSend = queuedOperations[i];
+        if (!toSend) {
+          xSemaphoreGive(BLEOperationsMutex); // release mutex
+          break;
+        } else {
+          std::string out = BLETriggerResponse(toSend);
+          xSemaphoreGive(BLEOperationsMutex); // release mutex
+          snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
+          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+          AddLog_P(LOG_LEVEL_INFO,PSTR("queued %d sent %s"), i, out.c_str());
+          //break;
+        }
+      }
+    }
+
+    if (currentOperations.size() && !onlycompleted){
       AddLog_P(LOG_LEVEL_INFO,PSTR("current %d"), currentOperations.size());
       for (int i = 0; i < currentOperations.size(); i++){
         xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
@@ -1495,25 +1480,6 @@ static void BLEPostMQTT(bool json) {
       }
     }
 
-    if (queuedOperations.size()){
-      AddLog_P(LOG_LEVEL_INFO,PSTR("queued %d"), queuedOperations.size());
-      for (int i = 0; i < queuedOperations.size(); i++){
-        xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
-        generic_sensor_t *toSend = queuedOperations[i];
-        if (!toSend) {
-          xSemaphoreGive(BLEOperationsMutex); // release mutex
-          break;
-        } else {
-          std::string out = BLETriggerResponse(toSend);
-          xSemaphoreGive(BLEOperationsMutex); // release mutex
-          snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
-          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-          AddLog_P(LOG_LEVEL_INFO,PSTR("queued %d sent %s"), i, out.c_str());
-          //break;
-        }
-      }
-    }
-    
     if (completedOperations.size()){
       AddLog_P(LOG_LEVEL_INFO,PSTR("completed %d"), completedOperations.size());
       do {
@@ -1521,21 +1487,71 @@ static void BLEPostMQTT(bool json) {
         if (!toSend) {
           break;
         } else {
-          std::string out = BLETriggerResponse(toSend);
-          snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
-          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-          delete toSend;
+          if (toSend->state != GEN_STATE_TODELETE){
+            std::string out = BLETriggerResponse(toSend);
+            snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
+            MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+            toSend->state = GEN_STATE_TODELETE;
+          }
           //break;
         }
         //break;
       } while (1);
     }
   } else {
-    snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"BLEOp\":{}}"));
+    snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"BLEOperation\":{}}"));
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   }
-
 }
+
+static void mainThreadOpCallbacks() {
+  if (completedOperations.size()){
+    //AddLog_P(LOG_LEVEL_INFO,PSTR("completed %d"), completedOperations.size());
+
+    xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+    // find this operation in currentOperations, and remove it.
+    // in reverse so we can erase them safely.
+    for (int i = completedOperations.size()-1; i >= 0 ; i--){
+      generic_sensor_t *op = completedOperations[i];
+
+      bool callbackres = false;
+
+      if (op->callback){
+        try {
+          OPCOMPLETE_CALLBACK *pFn = (OPCOMPLETE_CALLBACK *)(op->callback);
+          callbackres = pFn(op);
+          AddLog_P(LOG_LEVEL_DEBUG,PSTR("op->callback %d"), callbackres);
+        } catch(const std::exception& e){
+          AddLog_P(LOG_LEVEL_ERROR,PSTR("exception in op->callback"));
+        }
+      }
+
+      if (!callbackres){
+        for (int i = 0; i < operationsCallbacks.size(); i++){
+          try {
+            OPCOMPLETE_CALLBACK *pFn = operationsCallbacks[i];
+            callbackres = pFn(op);
+            AddLog_P(LOG_LEVEL_DEBUG,PSTR("operationsCallbacks %d %d"), i, callbackres);
+            if (callbackres){
+              break; // this callback ate the op.
+            }
+          } catch(const std::exception& e){
+            AddLog_P(LOG_LEVEL_ERROR,PSTR("exception in operationsCallbacks"));
+          }
+        }
+      }
+
+      // if some callback told us not to send on MQTT, then remove from completed and delete the data
+      if (callbackres){
+        AddLog_P(LOG_LEVEL_DEBUG,PSTR("callbackres true -> delete op"));
+        completedOperations.erase(completedOperations.begin() + i);
+        delete op;
+      }
+    }
+    xSemaphoreGive(BLEOperationsMutex); // release mutex
+  }
+}
+
 
 static void BLEShow(bool json)
 {
@@ -1564,7 +1580,7 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
   char t[10];
   if (!toSend) return "";
   ResponseClear();
-  std::string out = "{\"BLEOp\":{\"opid\":\"";
+  std::string out = "{\"BLEOperation\":{\"opid\":\"";
   sprintf(t, "%d", toSend->opid);
   out = out + t;
   out = out + ",\"state\":\"";
