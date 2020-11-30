@@ -860,7 +860,7 @@ void SettingsDefaultSet2(void)
   Settings.energy_current_calibration = HLW_IREF_PULSE;
 //  Settings.energy_kWhtoday = 0;
 //  Settings.energy_kWhyesterday = 0;
-//  Settings.energy_kWhdoy = 0;
+//  Settings.energy_kWhday = 0;
 //  Settings.energy_min_power = 0;
 //  Settings.energy_max_power = 0;
 //  Settings.energy_min_voltage = 0;

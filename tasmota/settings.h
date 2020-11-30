@@ -411,7 +411,7 @@ struct {
   unsigned long energy_current_calibration;  // 36C
   unsigned long energy_kWhtoday;           // 370
   unsigned long energy_kWhyesterday;       // 374
-  uint16_t      energy_kWhdoy;             // 378
+  uint16_t      energy_kWhday;             // 378
   uint16_t      energy_min_power;          // 37A
   uint16_t      energy_max_power;          // 37C
   uint16_t      energy_min_voltage;        // 37E

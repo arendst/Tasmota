@@ -263,7 +263,7 @@ void Energy200ms(void)
 
     if (RtcTime.valid) {
 
-      if (!Energy.kWhtoday_offset_init && (RtcTime.day_of_year == Settings.energy_kWhdoy)) {
+      if (!Energy.kWhtoday_offset_init && (RtcTime.day_of_year == Settings.energy_kWhday)) {
         Energy.kWhtoday_offset = Settings.energy_kWhtoday;
         Energy.kWhtoday_offset_init = true;
       }
@@ -300,7 +300,7 @@ void Energy200ms(void)
 
 void EnergySaveState(void)
 {
-  Settings.energy_kWhdoy = (RtcTime.valid) ? RtcTime.day_of_year : 0;
+  Settings.energy_kWhday = (RtcTime.valid) ? RtcTime.day_of_year : 0;
 
   Settings.energy_kWhtoday = RtcSettings.energy_kWhtoday;
   Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
