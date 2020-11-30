@@ -100,17 +100,17 @@ struct {
 // connect/read/wrtie/notify operations
 // only one operation will happen at a time 
 struct generic_sensor_t {
-  uint8_t state;
+  uint16_t state;
   uint32_t opid; // incrementing id so we can find them
   
-  uint8_t cancel; 
-  uint8_t requestType; 
+  // uint8_t cancel; 
+  // uint8_t requestType; 
   char MAC[13];
   char serviceStr[100];
   char characteristicStr[100];
   char notificationCharacteristicStr[100];
   int RSSI;
-  uint64_t time;
+  uint64_t notifytimer;
   uint8_t dataToWrite[100];
   uint8_t writelen;
   uint8_t dataRead[100];
@@ -122,8 +122,40 @@ struct generic_sensor_t {
 
   NimBLEClient *pClient;
 
-
+  void *callback; // OPCOMPLETE_CALLBACK function, used by external drivers
 };
+
+
+struct ble_advertisment_t {
+  const uint8_t *addr;
+  int RSSI;
+  const char *name;
+
+  const uint8_t *payload;
+  uint8_t payloadLen;
+
+  const uint8_t *manufacturerData;
+  uint8_t manufacturerDataLen;
+
+  uint8_t svcdataCount;
+  struct {
+    const ble_uuid_any_t* serviceUUID;
+    char serviceUUIDStr[40]; // longest UUID 36 chars?
+    const uint8_t* serviceData;
+    uint8_t serviceDataLen;
+  } svcdata[5];
+  uint8_t serviceCount;
+  struct {
+    const ble_uuid_any_t* serviceUUID;
+    char serviceUUIDStr[40]; // longest UUID 36 chars?
+  } services[5];
+};
+
+// callback types to be used by external drivers
+typedef bool ADVERTISMENT_CALLBACK(ble_advertisment_t *pStruct);
+typedef bool OPCOMPLETE_CALLBACK(generic_sensor_t *pStruct);
+
+static ble_advertisment_t BLEAdvertisment;
 
 
 void doneOperation(generic_sensor_t** op);
@@ -131,23 +163,57 @@ void addOperation(std::deque<generic_sensor_t*> *ops, generic_sensor_t** op);
 generic_sensor_t* nextOperation(std::deque<generic_sensor_t*> *ops);
 std::string BLETriggerResponse(generic_sensor_t *toSend);
 static void BLEscanEndedCB(NimBLEScanResults results);
-static void BLEnotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
 static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
 static void runCurrentOperation(generic_sensor_t** pCurrentOperation);
 static void BLEShow(bool json);
 static void BLEPostMQTT(bool json);
 static void BLEStartOperationTask();
 
+#define EXAMPLE_ADVERTISMENT_CALLBACK
+#define EXAMPLE_OPERATION_CALLBACK
+
+#ifdef EXAMPLE_ADVERTISMENT_CALLBACK
+bool myAdvertCallback(ble_advertisment_t *pStruct);
+#endif
+#ifdef EXAMPLE_OPERATION_CALLBACK
+bool myOpCallback(generic_sensor_t *pStruct);
+bool myOpCallback2(generic_sensor_t *pStruct);
+#endif
+
+
+void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFn);
+void registerForOpCallbacks(OPCOMPLETE_CALLBACK* pFn);
+
+bool extQueueOperation(generic_sensor_t** op);
+
 
 #define GEN_STATE_IDLE 0
 #define GEN_STATE_START 1
 
-#define GEN_STATE_READWRITEDONE 8
+#define GEN_STATE_READDONE 7
+#define GEN_STATE_WRITEDONE 8
 #define GEN_STATE_WAITNOTIFY 9
-#define GEN_STATE_NOTIFIED 10
-#define GEN_STATE_CANTNOTIFY 11
+#define GEN_STATE_WAITINDICATE 10
 
-#define GEN_STATE_FAILED 99
+#define GEN_STATE_NOTIFIED 0x40
+
+
+#define GEN_STATE_FAILED 0x100
+#define GEN_STATE_FAILED_CANTNOTIFYORINDICATE 0x101
+#define GEN_STATE_FAILED_CANTREAD 0x102
+#define GEN_STATE_FAILED_CANTWRITE 0x103
+#define GEN_STATE_FAILED_NOSERVICE 0x104
+#define GEN_STATE_FAILED_NO_RW_CHAR 0x105
+#define GEN_STATE_FAILED_NONOTIFYCHAR 0x106
+#define GEN_STATE_FAILED_NOTIFYTIMEOUT 0x107
+#define GEN_STATE_FAILED_READ 0x108
+#define GEN_STATE_FAILED_WRITE 0x109
+#define GEN_STATE_FAILED_CONNECT 0x10A
+#define GEN_STATE_FAILED_NOTIFY 0x10B
+#define GEN_STATE_FAILED_INDICATE 0x10C
+#define GEN_STATE_FAILED_NODEVICE 0x10D
+#define GEN_STATE_FAILED_NOREADWRITE 0x110
+#define GEN_STATE_FAILED_CANCEL 0x111
 
 struct scan_entry_t {
   uint8_t MAC[6];
@@ -171,7 +237,6 @@ int BLEMaxTimeBetweenAdverts = 40; // we expect an advert at least this frequent
 uint64_t BLEScanLastAdvertismentAt = 0;
 int sendMQTT = 0;
 
-generic_sensor_t* currentOperation = nullptr;
 // operation being prepared through commands
 generic_sensor_t* prepOperation = nullptr;
 
@@ -182,16 +247,13 @@ std::deque<generic_sensor_t*> currentOperations;
 // operaitons which have completed or failed, ready to send to MQTT
 std::deque<generic_sensor_t*> completedOperations;
 
+// list of registered callbacks for advertisments
+// register using void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFN);
+std::deque<ADVERTISMENT_CALLBACK*> advertismentCallbacks;
+
+std::deque<OPCOMPLETE_CALLBACK*> operationsCallbacks;
+
 uint32_t lastopid = 0;
-
-enum {
-  BLEModeDisabled = 0, // BLE is disabled
-  BLEModeByCommand = 1, // BLE is activeated by commands only
-  BLEModeActive = 2, // BLE is scanning all the time 
-};
-
-uint8_t BLEMode = 2;
-uint8_t BLENextMode = 2;
 
 /*********************************************************************************************\
  * constants
@@ -217,18 +279,30 @@ void (*const BLE_Commands[])(void) PROGMEM = {
 enum BLE_Commands {          // commands useable in console or rules
   CMND_BLE_PERIOD,           // set period like TELE-period in seconds between read-cycles
   CMND_BLE_OPTION,           // change driver options at runtime
-  CMND_BLE_OP                // connect/read/write/notify operations
+  CMND_BLE_OP,                // connect/read/write/notify operations
+  CMND_BLE_MODE              // change mode of ble - BLE_MODES 
   };
 
-enum BLE_TASK {
-       BLE_TASK_SCAN = 0,
-       BLE_TASK_CONN = 1,
-       BLE_TASK_TIME = 2,
-       BLE_TASK_BATT = 3,
-       BLE_TASK_UNIT = 4,
-};
+enum {
+  BLEModeDisabled = 0, // BLE is disabled
+  BLEModeByCommand = 1, // BLE is activeated by commands only
+  BLEModeActive = 2, // BLE is scanning all the time 
+} BLE_MODES;
 
 
+uint8_t BLEMode = BLEModeActive;
+uint8_t BLENextMode = BLEModeActive;
+
+
+/*********************************************************************************************\
+ * Helper functions
+\*********************************************************************************************/
+
+
+/**
+ * @brief Simple pair of functions to dump to a hex string.
+ *
+ */
 static const char h[] PROGMEM = "0123456789ABCDEF";
 void hex(char *dest, uint8_t v){
   *(dest++) = h[(v>>4)&0xf];
@@ -236,6 +310,8 @@ void hex(char *dest, uint8_t v){
   *(dest) = 0;
 }
 
+// convert from binary to hex.
+// add a '+' on the end if not enough room.
 char * dump(char *dest, int maxchars, uint8_t *src, int len){
   int lenmax = maxchars/2-2;
   int actuallen = 0;
@@ -251,21 +327,164 @@ char * dump(char *dest, int maxchars, uint8_t *src, int len){
   return dest;
 }
 
+// convert from a hex string to binary
+int fromHex(uint8_t *dest, char *src, int maxlen){
+  int srclen = strlen(src)/2; 
+  if (srclen > maxlen){
+    return 0;
+  }
+
+  for (int i = 0; i < srclen; i++){
+    char t[3];
+    t[0] = src[i*2];
+    t[1] = src[i*2 + 1];
+    t[2] = 0;
+
+    int byte = strtol(t, NULL, 16);
+    *dest++ = byte;
+  }
+  return srclen;
+}
+
+
+/**
+ * @brief Reverse an array of 6 bytes
+ *
+ * @param _mac a byte array of size 6 (typicalliy representing a MAC address)
+ */
+static void BLE_ReverseMAC(uint8_t _mac[]){
+  uint8_t _reversedMAC[6];
+  for (uint8_t i=0; i<6; i++){
+    _reversedMAC[5-i] = _mac[i];
+  }
+  memcpy(_mac,_reversedMAC, sizeof(_reversedMAC));
+}
+
+
+
+
+/*********************************************************************************************\
+ * Example Advertisment callback
+\*********************************************************************************************/
+
+#ifdef EXAMPLE_ADVERTISMENT_CALLBACK
+
+#define FLORA       1
+#define MJ_HT_V1    2
+#define LYWSD02     3
+#define LYWSD03MMC  4
+#define CGG1        5
+#define CGD1        6
+#define NLIGHT      7
+#define MJYD2S      8
+#define YEERC       9
+#define MHOC401     10
+#define MHOC303     11
+#define ATC         12
+
+// match ADVERTISMENT_CALLBACK
+bool myAdvertCallback(ble_advertisment_t *pStruct){
+
+/*
+struct ble_advertisment_t {
+  uint8_t *addr;
+  int RSSI;
+  char *name;
+
+  uint8_t *payload;
+  uint8_t payloadLen;
+
+  uint8_t svcdataCount;
+  struct {
+    ble_uuid_any_t* serviceUUID;
+    char serviceUUIDStr[40]; // longest UUID 36 chars?
+    uint8_t serviceData;
+    uint8_t serviceDataLen;
+  } svcdata[5];
+  uint8_t serviceCount;
+  struct {
+    ble_uuid_any_t* serviceUUID;
+    char serviceUUIDStr[40]; // longest UUID 36 chars?
+  } services[5];
+};
+*/
+
+  if (pStruct->svcdataCount){
+    if (pStruct->svcdata[0].serviceUUID->u.type == 16){
+      int UUID = pStruct->svcdata[0].serviceUUID->u16.value;
+      switch(UUID){
+        case 0xfe95:{
+          if (pStruct->svcdata[0].serviceDataLen < 9){
+            // skip NLIGHT
+          } else {
+            int type = (pStruct->svcdata[0].serviceData[3]<<8) | pStruct->svcdata[0].serviceData[2];
+            AddLog_P(LOG_LEVEL_DEBUG,PSTR("BLE: Sensor type %x"), type);
+            switch(type){
+              case MJ_HT_V1:
+              case CGG1:
+              case YEERC:
+                return true; // eat this, no further callbacks will be called.
+                break;
+            }
+          }
+        }break;
+        case 0xfdcd:
+          break;
+        case 0x181a:
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  // indicate others can also hear this
+  // to say 'I want this exclusively', return true.
+  return false;
+
+}
+#endif
+/*********************************************************************************************\
+ * End of Example Advertisment callback
+\*********************************************************************************************/
+
+
+/*********************************************************************************************\
+ * Example Operations callbacks
+\*********************************************************************************************/
+#ifdef EXAMPLE_OPERATION_CALLBACK
+
+// this one is used to demonstrate processing ALL operations
+bool myOpCallback(generic_sensor_t *pStruct){
+
+  return false; // return true to block MQTT broadcast
+}
+
+// this one is used to demonstrate process ONE specific operation
+bool myOpCallback2(generic_sensor_t *pStruct){
+
+  return true; // return true to block MQTT broadcast
+}
+#endif
+/*********************************************************************************************\
+ * End of Example Operations callbacks
+\*********************************************************************************************/
+
+
 
 /*********************************************************************************************\
  * Classes
 \*********************************************************************************************/
 
+// does not reallt take any action
 class BLESensorCallback : public NimBLEClientCallbacks {
   void onConnect(NimBLEClient* pclient) {
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnect"));
-    BLE.mode.willConnect = 0;
     BLE.mode.connected = 1;
   }
   void onDisconnect(NimBLEClient* pclient) {
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("onDisconnect"));
     BLE.mode.connected = 0;
-    BLE.mode.willReadBatt = 0;
   }
   bool onConnParamsUpdateRequest(NimBLEClient* BLEClient, const ble_gap_upd_params* params) {
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnParamsUpdateRequest"));
@@ -284,16 +503,22 @@ class BLESensorCallback : public NimBLEClientCallbacks {
 
 static BLESensorCallback clientCB;
 
+
 class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
   void onResult(NimBLEAdvertisedDevice* advertisedDevice) {
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("Advertised Device"));
     uint64_t now = esp_timer_get_time();
     BLEScanLastAdvertismentAt = now; // note the time of the last advertisment
 
+    memset(&BLEAdvertisment, 0, sizeof(BLEAdvertisment));
+
     int RSSI = advertisedDevice->getRSSI();
     uint8_t addr[6];
     memcpy(addr,advertisedDevice->getAddress().getNative(),6);
     MI32_ReverseMAC(addr);
+    BLEAdvertisment.addr = addr;
+    BLEAdvertisment.RSSI = RSSI;
+
     char addrstr[20];
     dump(addrstr, 20, addr, 6);
 
@@ -302,60 +527,94 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
 
     uint8_t* payload = advertisedDevice->getPayload();
     size_t payloadlen = advertisedDevice->getPayloadLength();
+
+    BLEAdvertisment.payload = payload;
+    BLEAdvertisment.payloadLen = payloadlen;
+
     char payloadhex[100];
     dump(payloadhex, 100, payload, payloadlen);
 
+    // this mjust survive the scope of the callbacks
+    std::string name;
     if (advertisedDevice->haveName()){
-      std::string name = advertisedDevice->getName();
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("Name: %s"), name.c_str());
+      name = advertisedDevice->getName();
+      const char *n = name.c_str();
+      BLEAdvertisment.name = n;
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("Name: %s"), n);
     }
 
     if (advertisedDevice->haveManufacturerData()){
       std::string data = advertisedDevice->getManufacturerData();
       char mfgstr[100];
       int len = data.length();
-      dump(mfgstr, 100, (uint8_t*)data.c_str(), len);
+
+      BLEAdvertisment.manufacturerData = (const uint8_t *)data.data();
+      BLEAdvertisment.manufacturerDataLen = len;
+
+      dump(mfgstr, 100, (uint8_t*)data.data(), len);
 
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("Mfg: %s"), mfgstr);
     }
 
     if (svcDataCount == 0) {
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s RSSI:%d payloadonly %s"), addrstr, RSSI, payloadhex);
-      return;
+    } else {
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s RSSI:%d payload %s service data:"), addrstr, RSSI, payloadhex);
+      for (int i = 0; i < svcDataCount; i++){
+        NimBLEUUID UUID = advertisedDevice->getServiceDataUUID(i);//.getNative()->u16.value;
+        std::string ServiceData = advertisedDevice->getServiceData(i);
+        
+        size_t ServiceDataLength = ServiceData.length();
+        const uint8_t *serviceData = (const uint8_t *)ServiceData.data();
+
+
+        char svcdatastr[80];
+        dump(svcdatastr, 80, (uint8_t*)serviceData, ServiceDataLength);
+        //char svcuuidstr[20];
+        std::string strUUID = UUID;
+        //int uuidLen = strUUID.length();
+        //dump(svcuuidstr, 20, (uint8_t*)strUUID.c_str(), uuidLen);
+      
+        const ble_uuid_any_t* native = UUID.getNative();
+        if (i < 5){
+          BLEAdvertisment.svcdata[i].serviceData = serviceData;
+          BLEAdvertisment.svcdata[i].serviceDataLen = ServiceDataLength;
+          BLEAdvertisment.svcdata[i].serviceUUID = native;
+          strncpy(BLEAdvertisment.svcdata[i].serviceUUIDStr, strUUID.c_str(), sizeof(BLEAdvertisment.svcdata[i].serviceUUIDStr));
+          BLEAdvertisment.svcdataCount = i+1;
+        }
+        uint16_t UUID16 = native->u16.value;
+      // AddLog_P(LOG_LEVEL_DEBUG,PSTR("UUID: %x"),UUID);
+        AddLog_P(LOG_LEVEL_DEBUG,PSTR("UUIDType:%d UUID16:%x UUID:%s svcdata:%s"), native->u.type, UUID16, strUUID.c_str(), svcdatastr);
+      }
+
+      for (int i = 0; i < svcUUIDCount; i++){
+        NimBLEUUID UUID = advertisedDevice->getServiceUUID(i);//.getNative()->u16.value;
+        //char svcuuidstr[20];
+        std::string strUUID = UUID;
+        //int uuidLen = strUUID.length();
+        //dump(svcuuidstr, 20, (uint8_t*)strUUID.c_str(), uuidLen);
+        const ble_uuid_any_t* native = UUID.getNative();
+        if (i < 5){
+          BLEAdvertisment.services[i].serviceUUID = native;
+          strncpy(BLEAdvertisment.services[i].serviceUUIDStr, strUUID.c_str(), sizeof(BLEAdvertisment.services[i].serviceUUIDStr));
+          BLEAdvertisment.serviceCount = i+1;
+        }
+        AddLog_P(LOG_LEVEL_DEBUG,PSTR("Service UUID:%s"), strUUID.c_str());
+      }
     }
 
-
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s RSSI:%d payload %s service data:"), addrstr, RSSI, payloadhex);
-    for (int i = 0; i < svcDataCount; i++){
-      NimBLEUUID UUID = advertisedDevice->getServiceDataUUID(i);//.getNative()->u16.value;
-      std::string ServiceData = advertisedDevice->getServiceData(i);
-      
-      size_t ServiceDataLength = ServiceData.length();
-      const char *serviceData = ServiceData.data();
-      char svcdatastr[80];
-      dump(svcdatastr, 80, (uint8_t*)serviceData, ServiceDataLength);
-      //char svcuuidstr[20];
-      std::string strUUID = UUID;
-      //int uuidLen = strUUID.length();
-      //dump(svcuuidstr, 20, (uint8_t*)strUUID.c_str(), uuidLen);
-     
-      const ble_uuid_any_t* native = advertisedDevice->getServiceDataUUID(i).getNative();
-      uint16_t UUID16 = native->u16.value;
-    // AddLog_P(LOG_LEVEL_DEBUG,PSTR("UUID: %x"),UUID);
-
-      
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("UUIDType:%d UUID16:%x UUID:%s svcdata:%s"), native->u.type, UUID16, strUUID.c_str(), svcdatastr);
+    // call anyone who asked about advertisments
+    for (int i = 0; i < advertismentCallbacks.size(); i++) {
+      try {
+        ADVERTISMENT_CALLBACK* pFN;
+        pFN = advertismentCallbacks[i];
+        pFN(&BLEAdvertisment);
+      } catch(const std::exception& e){
+        AddLog_P(LOG_LEVEL_ERROR,PSTR("exception in advertismentCallbacks"));
+      }
     }
 
-    for (int i = 0; i < svcUUIDCount; i++){
-      NimBLEUUID UUID = advertisedDevice->getServiceUUID(i);//.getNative()->u16.value;
-      //char svcuuidstr[20];
-      std::string strUUID = UUID;
-      //int uuidLen = strUUID.length();
-      //dump(svcuuidstr, 20, (uint8_t*)strUUID.c_str(), uuidLen);
-      
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("Service UUID:%s"), strUUID.c_str());
-    }
  }
 };
 
@@ -371,7 +630,6 @@ static void BLEscanEndedCB(NimBLEScanResults results){
   AddLog_P(LOG_LEVEL_DEBUG,PSTR("Scan ended"));
   BLE.mode.runningScan = 0;
 }
-
 
 static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
     NimBLEClient *pRClient;
@@ -406,7 +664,7 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
       return;
     }
 
-    for (int i = 0; i < length && i < sizeof(currentOperation->dataNotify); i++){
+    for (int i = 0; i < length && i < sizeof(thisop->dataNotify); i++){
       thisop->dataNotify[i] = pData[i];
     }
     thisop->notifylen = length;
@@ -416,68 +674,10 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
       thisop->notifytruncated = 0;
     }
     thisop->state = GEN_STATE_NOTIFIED;
+    thisop->notifytimer = 0;
+
 }
 
-
-/*********************************************************************************************\
- * Helper functions
-\*********************************************************************************************/
-
-/**
- * @brief Remove all colons from null terminated char array
- *
- * @param _string Typically representing a MAC-address like AA:BB:CC:DD:EE:FF
- */
-static void BLEstripColon(char* _string){
-  uint32_t _length = strlen(_string);
-  uint32_t _index = 0;
-  while (_index < _length) {
-    char c = _string[_index];
-    if(c==':'){
-      memmove(_string+_index,_string+_index+1,_length-_index);
-    }
-    _index++;
-  }
-  _string[_index] = 0;
-}
-
-/**
- * @brief Convert string that repesents a hexadecimal number to a byte array
- *
- * @param _string input string in format: AABBCCDDEEFF or AA:BB:CC:DD:EE:FF, caseinsensitive
- * @param _mac  target byte array must match the correct size (i.e. AA:BB -> uint8_t bytes[2])
- */
-
-static void BLEHexStringToBytes(char* _string, uint8_t* _byteArray) {
-  BLEstripColon(_string);
-  UpperCase(_string,_string);
-  uint32_t index = 0;
-  uint32_t _end = strlen(_string);
-  memset(_byteArray,0,_end/2);
-  while (index < _end) {
-      char c = _string[index];
-      uint8_t value = 0;
-      if(c >= '0' && c <= '9')
-        value = (c - '0');
-      else if (c >= 'A' && c <= 'F')
-        value = (10 + (c - 'A'));
-      _byteArray[(index/2)] += value << (((index + 1) % 2) * 4);
-      index++;
-  }
-}
-
-/**
- * @brief Reverse an array of 6 bytes
- *
- * @param _mac a byte array of size 6 (typicalliy representing a MAC address)
- */
-static void BLE_ReverseMAC(uint8_t _mac[]){
-  uint8_t _reversedMAC[6];
-  for (uint8_t i=0; i<6; i++){
-    _reversedMAC[5-i] = _mac[i];
-  }
-  memcpy(_mac,_reversedMAC, sizeof(_reversedMAC));
-}
 
 
 
@@ -491,11 +691,29 @@ static void BLE_ReverseMAC(uint8_t _mac[]){
 \*********************************************************************************************/
 static void BLEStartScanTask();
 
+void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFn){
+  advertismentCallbacks.push_back(pFn);
+}
+
+void registerForOpCallbacks(OPCOMPLETE_CALLBACK* pFn){
+  operationsCallbacks.push_back(pFn);
+}
+
+
+
 static void BLEPreInit(void) {
   BLE.mode.init = false;
-  currentOperation = nullptr;
   prepOperation = nullptr;
   BLEOperationsMutex = xSemaphoreCreateMutex();
+
+#ifdef EXAMPLE_ADVERTISMENT_CALLBACK
+  BLE99::registerForAdvertismentCallbacks(&BLE99::myAdvertCallback);
+#endif
+
+#ifdef EXAMPLE_OPERATION_CALLBACK
+  BLE99:registerForOpCallbacks(&BLE99::myOpCallback);
+#endif
+
 
   BLE99::BLEStartOperationTask();
 }
@@ -560,6 +778,7 @@ static void BLEStartScanTask(){
     return;
 }
 
+// this is actually NOT a task - it just starts a scan in the main thread
 static void BLEScanTask(void *pvParameters){
   if (BLEMode == BLEModeDisabled) return;
   AddLog_P(LOG_LEVEL_DEBUG,PSTR("BLEScanTask"));
@@ -590,14 +809,22 @@ static void BLEStartOperationTask(){
       0);               /* Core where the task should run */
 }
 
+
+// this IS as task.
+// we MAY be able to run a few of these simultaneously, but this is not yet tested.
+// and probably not required.  But everything is there to do so....
 static void BLEOperationTask(void *pvParameters){
   uint32_t timer = 0;
+  // operation which is currently in progress in THIS TASK
+  generic_sensor_t* currentOperation = nullptr;
+
   for(;;){
     if (BLEScan){
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("Operation loop"));
 
       BLE99::runCurrentOperation(&currentOperation);
     }
+    // come around every second
     vTaskDelay(1000/ portTICK_PERIOD_MS);
   }
 
@@ -611,9 +838,6 @@ static void BLEOperationTask(void *pvParameters){
 /*********************************************************************************************\
  * parse the response from advertisements
 \*********************************************************************************************/
-
-
-
 
 /**
  * @brief Present BLE scan in the console, after that deleting the scan data
@@ -646,17 +870,44 @@ static void BLEEvery50mSecond(){
 
 static void BLEEverySecond(bool restart){
   //BLEStartScanTask();
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("one sec scnning %d"),BLE.mode.runningScan);
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("one sec (scanning %d)"),BLE.mode.runningScan);
 
-  // one op per second for now;
-  //BLE99::runCurrentOperation(&currentOperation);
+  // check for completed currentOperations
+  // moved this into main thread because it (may) call other drivers
+  // who have supplied callbacks.
+  if (currentOperations.size()){
+    for (int i = 0; i < currentOperations.size(); i++){
+      xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+      generic_sensor_t *toSend = currentOperations[i];
+      if (!toSend) {
+        xSemaphoreGive(BLEOperationsMutex); // release mutex
+        break;
+      } else {
+        // mutex must be released before doneoperation can be called.
+        xSemaphoreGive(BLEOperationsMutex); // release mutex
 
+        switch(toSend->state){
+          case GEN_STATE_READDONE:
+          case GEN_STATE_WRITEDONE:
+          case GEN_STATE_NOTIFIED:
+            // post result data
+            AddLog_P(LOG_LEVEL_DEBUG,PSTR("op done"));
+            // this sets the pointer to null.
+            doneOperation(&toSend);
+            break;
+        }
+      }
+    }
+  }
+
+
+  // post any MQTT data if we completed anything in the last second
   if (completedOperations.size()){
     BLE99::BLEPostMQTT(true);
   }
 
-
   if (BLEScan){
+    // restart scanning if it ended and we don;t have any current operations in progress.
     if (!BLE.mode.runningScan && (!currentOperations.size())){
       //BLEScan->clearResults();
       if ((BLEMode != BLEModeDisabled) && (BLEMode != BLEModeByCommand)){
@@ -666,12 +917,14 @@ static void BLEEverySecond(bool restart){
         BLEScanStartetdAt = esp_timer_get_time();
       }
     } else {
+
+      // check for a couple of possible failure modes.
       uint64_t now = esp_timer_get_time();
       if (BLEScanTimeS){
         uint64_t diff = now - BLEScanStartetdAt;
         diff = diff / 1000; // convert to ms;
         if (diff > (BLEScanTimeS + 5) * 1000){
-          AddLog_P(LOG_LEVEL_ERROR,PSTR("Scan did not end on t1me"));
+          AddLog_P(LOG_LEVEL_ERROR,PSTR("Scan did not end on time"));
           BLEScan->stop();
           BLE.mode.runningScan = 0;
         }
@@ -706,41 +959,14 @@ static void CmndBLEPeriod(void) {
 
 
 void CmndBLEOption(void){
-  bool onOff = atoi(XdrvMailbox.data);
-  switch(XdrvMailbox.index) {
-    case 0:
-      BLE.option.allwaysAggregate = onOff;
-      break;
-    case 1:
-      BLE.option.noSummary = onOff;
-      break;
-    case 2:
-      BLE.option.directBridgeMode = onOff;
-      break;
-  }
   ResponseCmndDone();
 }
 
 
-int fromHex(uint8_t *dest, char *src, int maxlen){
-  int srclen = strlen(src)/2; 
-  if (srclen > maxlen){
-    return 0;
-  }
 
-  for (int i = 0; i < srclen; i++){
-    char t[3];
-    t[0] = src[i*2];
-    t[1] = src[i*2 + 1];
-    t[2] = 0;
 
-    int byte = strtol(t, NULL, 16);
-    *dest++ = byte;
-  }
-
-  return srclen;
-}
-
+// this disconnects from a device if necessary, and then
+// moves the oepration from 'currentOperations' to 'completedOperations'.
 void doneOperation(generic_sensor_t** op){
   if ((*op)->pClient){
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in done"));
@@ -767,11 +993,41 @@ void doneOperation(generic_sensor_t** op){
   }
   xSemaphoreGive(BLEOperationsMutex); // release mutex
 
-  addOperation(&completedOperations, op);
+  bool callbackres = false;
+
+  if ((*op)->callback){
+    try {
+      OPCOMPLETE_CALLBACK *pFn = (OPCOMPLETE_CALLBACK *)((*op)->callback);
+      callbackres = pFn(*op);
+    } catch(const std::exception& e){
+      AddLog_P(LOG_LEVEL_ERROR,PSTR("exception in op->callback"));
+    }
+  }
+
+  if (!callbackres){
+    for (int i = 0; i < operationsCallbacks.size(); i++){
+      try {
+        OPCOMPLETE_CALLBACK *pFn = operationsCallbacks[i];
+        callbackres = pFn(*op);
+        if (callbackres){
+          break; // this callback ate the op.
+        }
+      } catch(const std::exception& e){
+        AddLog_P(LOG_LEVEL_ERROR,PSTR("exception in operationsCallbacks"));
+      }
+    }
+  }
+
+
+  // if some callback told us not to send on MQTT, then don't send
+  if (!callbackres){
+    addOperation(&completedOperations, op);
+  }
   return;
 }
 
-
+// this retrievs the next operation from the passed list, and removes it from the list.
+// or returns null if none.
 generic_sensor_t* nextOperation(std::deque<generic_sensor_t*> *ops){
   generic_sensor_t* op = nullptr;
   if (ops->size()){
@@ -784,6 +1040,8 @@ generic_sensor_t* nextOperation(std::deque<generic_sensor_t*> *ops){
   return op;
 }
 
+// this adds an operation to the end of passed list.
+// it also sets the op pointer passed to null.
 void addOperation(std::deque<generic_sensor_t*> *ops, generic_sensor_t** op){
   xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
   if (ops->size() < 10){
@@ -796,9 +1054,27 @@ void addOperation(std::deque<generic_sensor_t*> *ops, generic_sensor_t** op){
 }
 
 
+bool extQueueOperation(generic_sensor_t** op){
+  if (!op) {
+    AddLog_P(LOG_LEVEL_ERROR,PSTR("op invalid in extQueueOperation"));
+    return false;
+  }
+  if (!(*op)){
+    AddLog_P(LOG_LEVEL_ERROR,PSTR("*op invalid in extQueueOperation"));
+    return false;
+  }
+  (*op)->state = GEN_STATE_START; // trigger request later
+  (*op)->opid = lastopid++;
+
+  addOperation(&queuedOperations, op);
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("op added id %d in extQueueOperation"), (lastopid-1));
+  return true;
+}
 
 
 
+// this runs one operation
+// if the passed pointer is empty, it tries to get a next one.
 static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
   if (!pCurrentOperation) return;
   if (!BLEScan) return;
@@ -807,61 +1083,54 @@ static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
     *pCurrentOperation = nextOperation(&queuedOperations);
     if (*pCurrentOperation){
       generic_sensor_t* temp = *pCurrentOperation;
-      //this will null it out, so ave and restore.
+      //this will null it out, so save and restore.
       addOperation(&currentOperations, pCurrentOperation); 
       *pCurrentOperation = temp;
     }
   }
   if (!*pCurrentOperation) return;
 
-  switch((*pCurrentOperation)->state){
-    case GEN_STATE_CANTNOTIFY:
-      // if it took too long, then disconnect
+  // if awaiting notification
+  if ((*pCurrentOperation)->notifytimer){
+    // if it took too long, then disconnect
+    uint64_t now = esp_timer_get_time();
+    uint64_t diff = now - (*pCurrentOperation)->notifytimer;
+    diff = diff/1000;
+    if (diff > 20000){
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("notify timeout"));
-      (*pCurrentOperation)->state = GEN_STATE_FAILED;
-      doneOperation(pCurrentOperation);
-      break;
+      (*pCurrentOperation)->state = GEN_STATE_FAILED_NOTIFYTIMEOUT;
+      (*pCurrentOperation)->notifytimer = 0;
+    }
+    // we can't process any further, because op will be at state readdone or writedone
+    return;
+  }
 
-    case GEN_STATE_WAITNOTIFY:{
-      // if it took too long, then disconnect
-      uint64_t now = esp_timer_get_time();
-      uint64_t diff = now - (*pCurrentOperation)->time;
-      diff = diff/1000;
-      if (diff > 20000){
-        AddLog_P(LOG_LEVEL_DEBUG,PSTR("notify timeout"));
-        (*pCurrentOperation)->state = GEN_STATE_FAILED;
-        doneOperation(pCurrentOperation);
-      }
-    } break;
-
-    case GEN_STATE_READWRITEDONE:
-      // post result data
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("readwrite done"));
-      doneOperation(pCurrentOperation);
-      break;
-
+  switch((*pCurrentOperation)->state){
+    case GEN_STATE_READDONE:
+    case GEN_STATE_WRITEDONE:
     case GEN_STATE_NOTIFIED:
-      doneOperation(pCurrentOperation);
-      // post result data
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("notify done"));
+      // just stay here until this is removed by the main thread
+      return;
       break;
 
     case GEN_STATE_START:
       // continue to start the process here.
       break;
 
-    case GEN_STATE_FAILED:
-      // post fail data
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("operation failed"));
-      doneOperation(pCurrentOperation);
-      break;
-
     default:
-      return;
       break;
   }
 
+
   if (!*pCurrentOperation) return;
+
+  if ((*pCurrentOperation)->state & GEN_STATE_FAILED){
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("operation failed %x"), (*pCurrentOperation)->state);
+    // this sets the pointer to null.
+    doneOperation(pCurrentOperation);
+    return;
+  }
+
   if ((*pCurrentOperation)->state != GEN_STATE_START){
     return;
   }
@@ -897,50 +1166,61 @@ static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
             op->pClient->setConnectTimeout(5);
                 
             if (op->pClient->connect(&device)) {
-                NimBLERemoteService *pService = op->pClient->getService(serviceUuid);
-                
-                if (pService != nullptr) {
-                  NimBLERemoteCharacteristic *pCharacteristic = 
-                    pService->getCharacteristic(op->characteristicStr);
-                  AddLog_P(LOG_LEVEL_DEBUG,PSTR("got service"));
-                  op->state = GEN_STATE_READWRITEDONE;
+              NimBLERemoteService *pService = op->pClient->getService(serviceUuid);
+              
+              if (pService != nullptr) {
+                // read or write characteristic - we always need this?
+                NimBLERemoteCharacteristic *pCharacteristic = 
+                  pService->getCharacteristic(op->characteristicStr);
+                AddLog_P(LOG_LEVEL_DEBUG,PSTR("got service"));
 
-                  if (op->notificationCharacteristicStr){
-                    NimBLERemoteCharacteristic *pNCharacteristic = 
-                      pService->getCharacteristic(op->notificationCharacteristicStr);
-                    if (pNCharacteristic != nullptr) {
-                      op->notifylen = 0;
-                      if(pNCharacteristic->canNotify()) {
-                        if(pNCharacteristic->subscribe(true, BLE99::BLEGenNotifyCB)) {
-                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for notify"));
-                          op->state = GEN_STATE_WAITNOTIFY;
+                // pre-set to fail if no operations requested
+                op->state = GEN_STATE_FAILED_NOREADWRITE;
+
+                // if we have been asked to get a notification
+                if (op->notificationCharacteristicStr){
+                  NimBLERemoteCharacteristic *pNCharacteristic = 
+                    pService->getCharacteristic(op->notificationCharacteristicStr);
+                  if (pNCharacteristic != nullptr) {
+                    op->notifylen = 0;
+                    if(pNCharacteristic->canNotify()) {
+                      if(pNCharacteristic->subscribe(true, BLE99::BLEGenNotifyCB)) {
+                        AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for notify"));
+                        uint64_t now = esp_timer_get_time();
+                        op->notifytimer = now;
+                        // this will get changed to read or write,
+                        // but here in case it's notify only (can that happen?)
+                        op->state = GEN_STATE_WAITNOTIFY;
+                      } else {
+                        AddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for notify"));
+                        op->state = GEN_STATE_FAILED_NOTIFY;
+                      }
+                    } else {
+                      if(pNCharacteristic->canIndicate()) {
+                        if(pNCharacteristic->subscribe(false, BLE99::BLEGenNotifyCB)) {
+                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for indicate"));
+                          op->state = GEN_STATE_WAITINDICATE;
                           uint64_t now = esp_timer_get_time();
-                          op->time = now;
+                          op->notifytimer = now;
                         } else {
-                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for notify"));
-                          op->state = GEN_STATE_FAILED;
+                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for indicate"));
+                          op->state = GEN_STATE_FAILED_INDICATE;
                         }
                       } else {
-                        if(pNCharacteristic->canIndicate()) {
-                          if(pNCharacteristic->subscribe(false, BLE99::BLEGenNotifyCB)) {
-                            AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for indicate"));
-                            op->state = GEN_STATE_WAITNOTIFY;
-                            uint64_t now = esp_timer_get_time();
-
-                            op->time = now;
-                          } else {
-                            AddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for indicate"));
-                            op->state = GEN_STATE_FAILED;
-                          }
-                        }
+                        op->state = GEN_STATE_FAILED_CANTNOTIFYORINDICATE;
                       }
                     }
+                  } else {
+                    op->state = GEN_STATE_FAILED_NONOTIFYCHAR;
                   }
+                } // no supplied notify char is ok
 
-                  if (pCharacteristic != nullptr) {
-                    AddLog_P(LOG_LEVEL_DEBUG,PSTR("got characteristic"));
+                if (pCharacteristic != nullptr) {
+                  AddLog_P(LOG_LEVEL_DEBUG,PSTR("got characteristic"));
+                  op->state = GEN_STATE_FAILED_NOREADWRITE; // overwritten on failure
 
-                    if (op->readlen){
+                  if (op->readlen){
+                    if(pCharacteristic->canRead()) {
                       std::string value = pCharacteristic->readValue();
                       op->readlen = value.length();
                       memcpy(op->dataRead, value.data(), 
@@ -952,50 +1232,56 @@ static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
                       } else {
                         op->readtruncated = 0;
                       }
+                      op->state = GEN_STATE_READDONE;
                       AddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic"));
+                    } else {
+                      op->state = GEN_STATE_FAILED_CANTREAD;
                     }
-                    if (op->writelen){
+                  }
+                  if (op->writelen){
+                    if(pCharacteristic->canRead()) {
                       if (!pCharacteristic->writeValue(op->dataToWrite, op->writelen, true)){
-                        op->state = GEN_STATE_FAILED;
+                        op->state = GEN_STATE_FAILED_WRITE;
                         AddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic write fail"));
                       } else {
+                        op->state = GEN_STATE_WRITEDONE; // overwritten on failure
                         AddLog_P(LOG_LEVEL_DEBUG,PSTR("write characteristic"));
                       }
+                    } else {
+                      op->state = GEN_STATE_FAILED_CANTWRITE;
                     }
-                    // print or do whatever you need with the value
-                    
-                  } else {
-                    op->state = GEN_STATE_FAILED;
-                    AddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic not in service"));
                   }
+                  // print or do whatever you need with the value
+                  
+                } else {
+                  op->state = GEN_STATE_FAILED_NO_RW_CHAR;
+                  AddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic not in service"));
                 }
+              }
 
-                switch (op->state){
-                  case GEN_STATE_WAITNOTIFY:
-                    break;
-                  default:
-                    AddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in runoperation"));
-                    try {
-                      op->pClient->disconnect();
-                    } catch(const std::exception& e){
-                      AddLog_P(LOG_LEVEL_DEBUG,PSTR("except in disconnect"));
-                    }
-                    try {
-                      NimBLEDevice::deleteClient(op->pClient);
-                    } catch(const std::exception& e){
-                      AddLog_P(LOG_LEVEL_DEBUG,PSTR("except in delete"));
-                    }
-                    op->pClient = NULL;
+              // disconnect if not waiting for notify, 
+              if (!op->notifytimer){
+                AddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in runoperation"));
+                try {
+                  op->pClient->disconnect();
+                } catch(const std::exception& e){
+                  AddLog_P(LOG_LEVEL_DEBUG,PSTR("except in disconnect"));
+                }
+                try {
+                  NimBLEDevice::deleteClient(op->pClient);
+                } catch(const std::exception& e){
+                  AddLog_P(LOG_LEVEL_DEBUG,PSTR("except in delete"));
+                }
+                op->pClient = NULL;
+              }    
 
-                    break;
-                } 
             } else {
-              op->state = GEN_STATE_FAILED;
+              op->state = GEN_STATE_FAILED_CONNECT;
               // failed to connect
               AddLog_P(LOG_LEVEL_DEBUG,PSTR("fauled to connect to device"));
             }            
           } else {
-            op->state = GEN_STATE_FAILED;
+            op->state = GEN_STATE_FAILED_NOSERVICE;
             AddLog_P(LOG_LEVEL_DEBUG,PSTR("service not in device"));
           }
           break;
@@ -1004,7 +1290,7 @@ static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
     }
     if (i == deviceCount){
       // device not present
-      op->state = GEN_STATE_FAILED;
+      op->state = GEN_STATE_FAILED_NODEVICE;
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("device not present"));
     }
   }
@@ -1031,7 +1317,7 @@ void CmndBLEMode(void){
       BLENextMode = BLEModeActive;
       if (BLEMode == BLEModeDisabled){
         StartBLE();
-        BLEMode = BLEModeByCommand;
+        BLEMode = BLEModeActive;
       }
       break;
     default:
@@ -1042,11 +1328,18 @@ void CmndBLEMode(void){
 
 
 
+
+//////////////////////////////////////////////////////////////////////////
+// Command to cause BLE read/write/notify operations to be run.
+//////////////////////////////////////////////////////////////////////////
+
 // we expect BLEOp0 - poll state
 // we expect BLEOp1 <mac>
 // we expect BLEOp2 <service>
 // we expect BLEOp3 <characteristic>
 // we expect BLEOp4 <hex data to write>
+// we expect BLEOp5 - request a read
+// we expect BLEOp6 <notifycharacteristic> - if specified, then it waits for a notify
 // we expect BLEOp10 1|2|3 - trigger start by setting state to this.
 // we expect BLEOp11 1 - cancel op
 
@@ -1062,6 +1355,8 @@ void CmndBLEOperation(void){
   // if in progress, only op 0 or 11 are allowed
   switch(op) {
     case 0:
+      AddLog_P(LOG_LEVEL_INFO,PSTR("preview"));
+      BLE99::BLEPostMQTT(true);
       break;
     case 1:
       if (prepOperation){
@@ -1132,20 +1427,32 @@ void CmndBLEOperation(void){
       addOperation(&queuedOperations, &prepOperation);
       BLE99::BLEPostMQTT(true);
       break;
-    case 11:
+    /*case 11:
       if (!currentOperation) {
         ResponseCmndNumber(res);
         return;      
       }
       currentOperation->cancel = atoi(XdrvMailbox.data);
       AddLog_P(LOG_LEVEL_INFO,PSTR("cancel Set"));
-      break;
+      break;*/
+
+      case 99: { // test programatically added operation
+        generic_sensor_t *op = new generic_sensor_t;
+        memset(op, 0, sizeof(generic_sensor_t));
+        strncpy(op->MAC, "001A22092EE0", sizeof(op->MAC)-1);
+        strncpy(op->serviceStr, "3e135142-654f-9090-134a-a6ff5bb77046", sizeof(op->serviceStr)-1);
+        strncpy(op->characteristicStr, "3fa4585a-ce4a-3bad-db4b-b8df8179ea09", sizeof(op->characteristicStr)-1);
+        strncpy(op->notificationCharacteristicStr, "d0e8434d-cd29-0996-af41-6c90f4e0eb2a", sizeof(op->notificationCharacteristicStr)-1);
+        op->writelen = fromHex(op->dataToWrite, "4040", sizeof(op->dataToWrite));
+        op->callback = (void *)myOpCallback2;
+        BLE99::extQueueOperation(&op);
+
+        // dump what we have as diags
+        BLE99::BLEPostMQTT(true);
+      } break;
   }
 
   res = 100;
-  if (currentOperation){
-    res = currentOperation->state;
-  }
   ResponseCmndDone();
   return;
 }
@@ -1155,11 +1462,7 @@ void CmndBLEOperation(void){
  * Presentation
 \*********************************************************************************************/
 
-const char HTTP_BLE[] PROGMEM = "{s}MI ESP32 v0917a{m}%u%s / %u{e}";
-const char HTTP_BLE_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
-
 static void BLEPostMQTT(bool json) {
-
   if (prepOperation || completedOperations.size() || queuedOperations.size() || currentOperations.size()){
     AddLog_P(LOG_LEVEL_INFO,PSTR("some to show"));
     xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
@@ -1228,7 +1531,7 @@ static void BLEPostMQTT(bool json) {
       } while (1);
     }
   } else {
-    snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"opcount\":%d}"), 0);
+    snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"BLEOp\":{}}"));
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   }
 
@@ -1253,7 +1556,7 @@ static void BLEShow(bool json)
 
 
 /**
- * @brief trigger real-time message for PIR or RC
+ * @brief creates a JSON representing a single operation.
  *
  */
 std::string BLETriggerResponse(generic_sensor_t *toSend){
@@ -1261,7 +1564,7 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
   char t[10];
   if (!toSend) return "";
   ResponseClear();
-  std::string out = "{\"opid\":\"";
+  std::string out = "{\"BLEOp\":{\"opid\":\"";
   sprintf(t, "%d", toSend->opid);
   out = out + t;
   out = out + ",\"state\":\"";
@@ -1294,7 +1597,7 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
     out = out + "\",\"notify\":\"";
     out = out + temp;
   }
-  out = out + "}";
+  out = out + "}}";
   return out;
 }
 
