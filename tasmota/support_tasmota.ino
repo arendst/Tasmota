@@ -1597,12 +1597,12 @@ void GpioInit(void)
 #ifdef USE_SPI
   TasmotaGlobal.spi_enabled = (((PinUsed(GPIO_SPI_CS) && (Pin(GPIO_SPI_CS) > 14)) || (Pin(GPIO_SPI_CS) < 12)) || ((PinUsed(GPIO_SPI_DC) && (Pin(GPIO_SPI_DC) > 14)) || (Pin(GPIO_SPI_DC) < 12)));
   if (TasmotaGlobal.spi_enabled) {
-    TasmotaGlobal.my_module.io[12] = GPIO_SPI_MISO;
-    SetPin(12, GPIO_SPI_MISO);
-    TasmotaGlobal.my_module.io[13] = GPIO_SPI_MOSI;
-    SetPin(13, GPIO_SPI_MOSI);
-    TasmotaGlobal.my_module.io[14] = GPIO_SPI_CLK;
-    SetPin(14, GPIO_SPI_CLK);
+    TasmotaGlobal.my_module.io[12] = AGPIO(GPIO_SPI_MISO);
+    SetPin(12, AGPIO(GPIO_SPI_MISO));
+    TasmotaGlobal.my_module.io[13] = AGPIO(GPIO_SPI_MOSI);
+    SetPin(13, AGPIO(GPIO_SPI_MOSI));
+    TasmotaGlobal.my_module.io[14] = AGPIO(GPIO_SPI_CLK);
+    SetPin(14, AGPIO(GPIO_SPI_CLK));
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("SPI: Using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK)"));
   }
 #endif  // USE_SPI
