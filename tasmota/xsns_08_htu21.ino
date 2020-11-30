@@ -20,7 +20,7 @@
 #ifdef USE_I2C
 #ifdef USE_HTU
 /*********************************************************************************************\
- * HTU21 - Temperature and Humidy
+ * HTU21 - Temperature and Humidity
  *
  * Source: Heiko Krupp
  *

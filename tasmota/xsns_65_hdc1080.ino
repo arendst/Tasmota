@@ -21,7 +21,7 @@
 #ifdef USE_HDC1080
 
 /*********************************************************************************************\
- * HDC1080 - Temperature and Humidy sensor
+ * HDC1080 - Temperature and Humidity sensor
  *
  * Source: Luis Teixeira
  *

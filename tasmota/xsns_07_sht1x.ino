@@ -20,7 +20,7 @@
 #ifdef USE_I2C
 #ifdef USE_SHT
 /*********************************************************************************************\
- * SHT1x - Temperature and Humidy
+ * SHT1x - Temperature and Humidity
  *
  * Reading temperature and humidity takes about 320 milliseconds!
  * Source: Marinus vd Broek https://github.com/ESP8266nu/ESPEasy
