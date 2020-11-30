@@ -204,7 +204,7 @@ const char * hydrateSingleString(const SBuffer & buf, uint32_t *d) {
   return ptr;
 }
 
-void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version) {
+void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version = 2) {
   uint32_t d = 1;   // index in device buffer
   uint16_t shortaddr = buf_d.get16(d);  d += 2;
   uint64_t longaddr  = buf_d.get64(d);  d += 8;
@@ -422,6 +422,18 @@ void eraseZigbeeDevices(void) {
   ZigbeeErase();
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (%d bytes)"), z_block_len);
 #endif  // ESP32
+}
+
+void restoreDumpAllDevices(void) {
+  for (const auto & device : zigbee_devices.getDevices()) {
+    const SBuffer buf = hibernateDevicev2(device);
+    if (buf.len() > 0) {
+      char hex_char[buf.len()*2+2];
+      Response_P(PSTR("{\"" D_PRFX_ZB D_CMND_ZIGBEE_RESTORE "\":\"ZbRestore %s\"}"),
+                      ToHex_P(buf.buf(0), buf.len(), hex_char, sizeof(hex_char)));
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_ZB D_CMND_ZIGBEE_DATA));
+    }
+  }
 }
 
 #endif // USE_ZIGBEE

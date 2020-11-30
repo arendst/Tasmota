@@ -1247,9 +1247,9 @@ void LightPwmOffset(uint32_t offset)
 
 bool LightModuleInit(void)
 {
-  TasmotaGlobal.light_type = LT_BASIC;                    // Use basic PWM control if SetOption15 = 0
+  TasmotaGlobal.light_type = LT_BASIC;                 // Use basic PWM control if SetOption15 = 0
 
-  if (Settings.flag.pwm_control) {          // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
+  if (Settings.flag.pwm_control) {                     // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
     for (uint32_t i = 0; i < MAX_PWMS; i++) {
       if (PinUsed(GPIO_PWM1, i)) { TasmotaGlobal.light_type++; }  // Use Dimmer/Color control for all PWM as SetOption15 = 1
     }
@@ -1264,16 +1264,16 @@ bool LightModuleInit(void)
     TasmotaGlobal.light_type = LT_PWM1;
   }
   else if (SONOFF_LED == TasmotaGlobal.module_type) {  // PWM Dual color led (White warm and cold)
-    if (!TasmotaGlobal.my_module.io[4]) {                 // Fix Sonoff Led instabilities
-      pinMode(4, OUTPUT);                   // Stop floating outputs
+    if (!TasmotaGlobal.my_module.io[4]) {              // Fix Sonoff Led instabilities
+      pinMode(4, OUTPUT);                              // Stop floating outputs
       digitalWrite(4, LOW);
     }
     if (!TasmotaGlobal.my_module.io[5]) {
-      pinMode(5, OUTPUT);                   // Stop floating outputs
+      pinMode(5, OUTPUT);                              // Stop floating outputs
       digitalWrite(5, LOW);
     }
     if (!TasmotaGlobal.my_module.io[14]) {
-      pinMode(14, OUTPUT);                  // Stop floating outputs
+      pinMode(14, OUTPUT);                             // Stop floating outputs
       digitalWrite(14, LOW);
     }
     TasmotaGlobal.light_type = LT_PWM2;
@@ -1296,7 +1296,7 @@ bool LightModuleInit(void)
   if (Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
     if (0 == pwm_channels) { pwm_channels = 1; }
     TasmotaGlobal.devices_present += pwm_channels - 1;    // add the pwm channels controls at the end
-  } else if ((Settings.param[P_RGB_REMAP] & 128) && (LST_RGBW <= pwm_channels)) {
+  } else if ((Settings.param[P_RGB_REMAP] & 128) && (LST_RGBW <= pwm_channels)) {  // SetOption37
     // if RGBW or RGBCW, and SetOption37 >= 128, we manage RGB and W separately, hence adding a device
     TasmotaGlobal.devices_present++;
   } else if ((Settings.flag4.virtual_ct) && (LST_RGBW == pwm_channels)) {
@@ -1341,7 +1341,7 @@ void LightInit(void)
   if (LST_RGBW <= Light.subtype) {
     // only change if RGBW or RGBCW
     // do not allow independant RGB and WC colors
-    bool ct_rgb_linked = !(Settings.param[P_RGB_REMAP] & 128);
+    bool ct_rgb_linked = !(Settings.param[P_RGB_REMAP] & 128);  // SetOption37
     light_controller.setCTRGBLinked(ct_rgb_linked);
   }
 
@@ -1415,7 +1415,7 @@ void LightInit(void)
 
 void LightUpdateColorMapping(void)
 {
-  uint8_t param = Settings.param[P_RGB_REMAP] & 127;
+  uint8_t param = Settings.param[P_RGB_REMAP] & 127;  // SetOption37
   if (param > 119){ param = 0; }
 
   uint8_t tmp[] = {0,1,2,3,4};
