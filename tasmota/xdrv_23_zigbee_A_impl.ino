@@ -986,24 +986,7 @@ void CmndZbBindState_or_Map(uint16_t zdo_cmd) {
   if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR("Unknown device")); return; }
   uint8_t index = XdrvMailbox.index - 1;   // change default 1 to 0
 
-#ifdef USE_ZIGBEE_ZNP
-  SBuffer buf(10);
-  buf.add8(Z_SREQ | Z_ZDO);             // 25
-  buf.add8(zdo_cmd);                    // 33
-  buf.add16(shortaddr);                 // shortaddr
-  buf.add8(index);                      // StartIndex = 0
-
-  ZigbeeZNPSend(buf.getBuffer(), buf.len());
-#endif // USE_ZIGBEE_ZNP
-
-
-#ifdef USE_ZIGBEE_EZSP
-  // ZDO message payload (see Zigbee spec 2.4.3.3.4)
-  uint8_t buf[] = { index };           // index = 0
-
-  EZ_SendZDO(shortaddr, zdo_cmd, buf, sizeof(buf));
-#endif // USE_ZIGBEE_EZSP
-
+  Z_Send_State_or_Map(shortaddr, index, zdo_cmd);
   ResponseCmndDone();
 }
 
@@ -1025,12 +1008,28 @@ void CmndZbBindState(void) {
 // `ZbMap<x>` as index if it does not fit. If default, `1` starts at the beginning
 //
 void CmndZbMap(void) {
+  if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+  RemoveSpace(XdrvMailbox.data);
+
+  if (strlen(XdrvMailbox.data) == 0) {
+    // defer sending ZbMap to each device
+    const static uint32_t DELAY_ZBMAP = 2000;   // wait for 1s between commands
+    uint32_t wait_ms = DELAY_ZBMAP;
+    zigbee_devices.setTimer(0x0000, 0, 0 /*wait_ms*/, 0, 0, Z_CAT_ALWAYS, 0 /* value = index */, &Z_Map);
+    for (const auto & device : zigbee_devices.getDevices()) {
+      zigbee_devices.setTimer(device.shortaddr, 0, wait_ms, 0, 0, Z_CAT_ALWAYS, 0 /* value = index */, &Z_Map);
+      wait_ms += DELAY_ZBMAP;
+    }
+    zigbee_devices.setTimer(BAD_SHORTADDR, 0, wait_ms, 0, 0, Z_CAT_ALWAYS, 0 /* value = index */, &Z_Map);
+    ResponseCmndDone();
+  } else {
 #ifdef USE_ZIGBEE_ZNP
-  CmndZbBindState_or_Map(ZDO_MGMT_LQI_REQ);
+    CmndZbBindState_or_Map(ZDO_MGMT_LQI_REQ);
 #endif // USE_ZIGBEE_ZNP
 #ifdef USE_ZIGBEE_EZSP
-  CmndZbBindState_or_Map(ZDO_Mgmt_Lqi_req);
+    CmndZbBindState_or_Map(ZDO_Mgmt_Lqi_req);
 #endif // USE_ZIGBEE_EZSP
+  }
 }
 
 // Probe a specific device to get its endpoints and supported clusters
