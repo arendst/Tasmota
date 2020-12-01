@@ -219,6 +219,7 @@ std::deque<BLE_ESP32::ADVERTISMENT_CALLBACK*> advertismentCallbacks;
 
 std::deque<BLE_ESP32::OPCOMPLETE_CALLBACK*> operationsCallbacks;
 
+std::deque<BLE_ESP32::SCANCOMPLETE_CALLBACK*> scancompleteCallbacks;
 
 /*********************************************************************************************\
  * constants
@@ -491,6 +492,16 @@ static BLESensorCallback BLESensorCB;
 static void BLEscanEndedCB(NimBLEScanResults results){
   BLERunningScan = 0;
   AddLog_P(LOG_LEVEL_DEBUG,PSTR("Scan ended"));
+
+  for (int i = 0; i < scancompleteCallbacks.size(); i++){
+    try {
+      SCANCOMPLETE_CALLBACK *pFn = scancompleteCallbacks[i];
+      int callbackres = pFn(results);
+      AddLog_P(LOG_LEVEL_DEBUG,PSTR("scancompleteCallbacks %d %d"), i, callbackres);
+    } catch(const std::exception& e){
+      AddLog_P(LOG_LEVEL_ERROR,PSTR("exception in operationsCallbacks"));
+    }
+  }
 }
 
 static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
@@ -562,6 +573,10 @@ void registerForOpCallbacks(const char *tag, BLE_ESP32::OPCOMPLETE_CALLBACK* pFn
   operationsCallbacks.push_back(pFn);
 }
 
+void registerForScanCallbacks(const char *tag, BLE_ESP32::SCANCOMPLETE_CALLBACK* pFn){
+  AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: registerForScnCallbacks %s:%x"), tag, (uint32_t) pFn);
+  scancompleteCallbacks.push_back(pFn);
+}
 
 
 static void BLEPreInit(void) {
