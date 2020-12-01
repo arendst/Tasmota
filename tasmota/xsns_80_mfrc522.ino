@@ -20,6 +20,18 @@
 #ifdef USE_RC522
 /*********************************************************************************************\
  * MFRC522 - 13.56 MHz RFID reader
+ *
+ * Connections:
+ * MFRC522  ESP8266         Tasmota
+ * -------  --------------  ----------
+ *  SDA     GPIO0..5,15,16  SPI CS
+ *  SCK     GPIO14          SPI CLK
+ *  MOSI    GPIO13          SPI MOSI
+ *  MISO    GPIO12          SPI MISO
+ *  IRQ     not used
+ *  Gnd     Gnd
+ *  Rst     GPIO0..5,15,16  RC522 Rst
+ *  3V3     3V3
 \*********************************************************************************************/
 
 #define XSNS_80        80
@@ -30,8 +42,9 @@
 MFRC522 *Mfrc522;
 
 struct RC522 {
+  char uids[21];           // Number of bytes in the UID. 4, 7 or 10
   bool present = false;
-  uint8_t scantimer = 0;
+  uint8_t scantimer = 16;
 } Rc522;
 
 void RC522ScanForTag(void) {
@@ -41,8 +54,7 @@ void RC522ScanForTag(void) {
   MFRC522::PICC_Type piccType = Mfrc522->PICC_GetType(Mfrc522->uid.sak);
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("MFR: Type %s"), Mfrc522->PICC_GetTypeName(piccType));
 
-  char uids[21];  // Number of bytes in the UID. 4, 7 or 10
-  ToHex_P((unsigned char*)Mfrc522->uid.uidByte, Mfrc522->uid.size, uids, sizeof(uids));
+  ToHex_P((unsigned char*)Mfrc522->uid.uidByte, Mfrc522->uid.size, Rc522.uids, sizeof(Rc522.uids));
 
 #ifdef USE_RC522_DATA_FUNCTION
   bool didit = false;
@@ -70,15 +82,15 @@ void RC522ScanForTag(void) {
           }
         }
         didit = true;
-        ResponseTime_P(PSTR(",\"MFRC522\":{\"UID\":\"%s\",\"" D_JSON_DATA "\":\"%s\"}}"), uids, card_datas);
+        ResponseTime_P(PSTR(",\"MFRC522\":{\"UID\":\"%s\",\"" D_JSON_DATA "\":\"%s\"}}"), Rc522.uids, card_datas);
       }
     }
   }
   if (!didit) {
-    ResponseTime_P(PSTR(",\"MFRC522\":{\"UID\":\"%s\"}}"), uids);
+    ResponseTime_P(PSTR(",\"MFRC522\":{\"UID\":\"%s\"}}"), Rc522.uids);
   }
 #else
-  ResponseTime_P(PSTR(",\"MFRC522\":{\"UID\":\"%s\"}}"), uids);
+  ResponseTime_P(PSTR(",\"MFRC522\":{\"UID\":\"%s\"}}"), Rc522.uids);
 #endif
   MqttPublishTeleSensor();
 
@@ -103,10 +115,18 @@ void RC522Init(void) {
         case 0x00: case 0xFF: strcpy_P(ver, PSTR("fail")); break;
       }
       AddLog_P(LOG_LEVEL_INFO, PSTR("MFR: MFRC522 Rfid reader %s"), ver);
+      uint8_t empty_uid[4] = { 0 };
+      ToHex_P((unsigned char*)empty_uid, sizeof(empty_uid), Rc522.uids, sizeof(Rc522.uids));
       Rc522.present = true;
     }
   }
 }
+
+#ifdef USE_WEBSERVER
+void RC522Show(void) {
+  WSContentSend_PD(PSTR("{s}MFRC522 UID{m}%s {e}"), Rc522.uids);
+}
+#endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Interface
@@ -128,6 +148,11 @@ bool Xsns80(uint8_t function)
           RC522ScanForTag();
         }
         break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        RC522Show();
+        break;
+#endif  // USE_WEBSERVER
     }
   }
   return result;
