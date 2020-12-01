@@ -95,7 +95,7 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 #define XDRV_46                    46
 #define USE_MI_DECRYPTION
 
-#include <xdrv_46_BLE_ESP32.h>
+#include "xdrv_46_BLE_ESP32.h"
 #include <vector>
 #include <deque>
 #include <string.h>
@@ -114,12 +114,6 @@ namespace BLE_ESP32 {
 
 // this protects our queues, which can be accessed by multiple tasks 
 SemaphoreHandle_t  BLEOperationsMutex;
-
-
-#pragma pack(1)  // byte-aligned structures to read the sensor data
-
-#pragma pack(0)
-
 
 
 

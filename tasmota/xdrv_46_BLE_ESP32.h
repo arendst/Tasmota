@@ -99,6 +99,10 @@ namespace BLE_ESP32 {
 // generic sensor type used as during
 // connect/read/wrtie/notify operations
 // only one operation will happen at a time 
+
+#pragma pack( push, 0 )  // aligned structures for speed.  but be sepcific
+
+
 struct generic_sensor_t {
   uint16_t state;
   uint32_t opid; // incrementing id so we can find them
@@ -154,6 +158,9 @@ struct ble_advertisment_t {
     char serviceUUIDStr[40]; // longest UUID 36 chars?
   } services[5];
 };
+
+#pragma pack( pop )  // byte-aligned structures to read the sensor data
+
 ////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////
