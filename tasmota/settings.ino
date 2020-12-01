@@ -1201,6 +1201,10 @@ void SettingsDelta(void)
 //      SettingsUpdateText(SET_FRIENDLYNAME3, Settings.ex_friendlyname[2]);
 //      SettingsUpdateText(SET_FRIENDLYNAME4, Settings.ex_friendlyname[3]);
     }
+#else // UPGRADE_V8_MIN
+    if (Settings.version < 0x08000000) {
+      SettingsDefault();
+    }
 #endif // UPGRADE_V8_MIN
     if (Settings.version < 0x08020003) {
       SettingsUpdateText(SET_TEMPLATE_NAME, Settings.user_template_name);
