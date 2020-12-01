@@ -66,8 +66,8 @@ state: 1 -> starting,
 
 The driver can also be used by other drivers, using the functions:
 
-void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFn);
-void registerForOpCallbacks(OPCOMPLETE_CALLBACK* pFn);
+void registerForAdvertismentCallbacks(char *somename, ADVERTISMENT_CALLBACK* pFn);
+void registerForOpCallbacks(char *somename, OPCOMPLETE_CALLBACK* pFn);
 bool extQueueOperation(generic_sensor_t** op);
 
 These allow other code to
@@ -219,7 +219,7 @@ std::deque<BLE99::generic_sensor_t*> currentOperations;
 std::deque<BLE99::generic_sensor_t*> completedOperations;
 
 // list of registered callbacks for advertisments
-// register using void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFN);
+// register using void registerForAdvertismentCallbacks(const char *somename ADVERTISMENT_CALLBACK* pFN);
 std::deque<BLE99::ADVERTISMENT_CALLBACK*> advertismentCallbacks;
 
 std::deque<BLE99::OPCOMPLETE_CALLBACK*> operationsCallbacks;
@@ -556,11 +556,14 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
 /*********************************************************************************************\
  * init NimBLE
 \*********************************************************************************************/
-void registerForAdvertismentCallbacks(BLE99::ADVERTISMENT_CALLBACK* pFn){
+void registerForAdvertismentCallbacks(const char *tag, BLE99::ADVERTISMENT_CALLBACK* pFn){
+  AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: registerForAdvertismentCallbacks %s:%x"), tag, (uint32_t) pFn);
+
   advertismentCallbacks.push_back(pFn);
 }
 
-void registerForOpCallbacks(BLE99::OPCOMPLETE_CALLBACK* pFn){
+void registerForOpCallbacks(const char *tag, BLE99::OPCOMPLETE_CALLBACK* pFn){
+  AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: registerForOpCallbacks %s:%x"), tag, (uint32_t) pFn);
   operationsCallbacks.push_back(pFn);
 }
 
@@ -1582,11 +1585,11 @@ int myOpCallback2(BLE99::generic_sensor_t *pStruct){
 
 void installExamples(){
 #ifdef EXAMPLE_ADVERTISMENT_CALLBACK
-  BLE99::registerForAdvertismentCallbacks(&myAdvertCallback);
+  BLE99::registerForAdvertismentCallbacks((const char *)"test myOpCallback", &myAdvertCallback);
 #endif
 
 #ifdef EXAMPLE_OPERATION_CALLBACK
-  BLE99:registerForOpCallbacks(&myOpCallback);
+  BLE99:registerForOpCallbacks((const char *)"test myOpCallback", &myOpCallback);
 #endif
 }
 

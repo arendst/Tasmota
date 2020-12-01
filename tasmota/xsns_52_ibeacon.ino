@@ -41,60 +41,63 @@ uint8_t ib_upd_interval,ib_tout_interval;
 char ib_mac[14];
 
 #ifdef USE_IBEACON_ESP32
-#ifndef USE_BLE_ESP32
-#include <NimBLEDevice.h>
-#include <NimBLEAdvertisedDevice.h>
-#include "NimBLEEddystoneURL.h"
-#include "NimBLEEddystoneTLM.h"
-#include "NimBLEBeacon.h"
-
-struct {
-  union {
-    struct {
-      uint32_t init:1;
-      uint32_t runningScan:1;
-    };
-    uint32_t all = 0;
-  } mode;
-} ESP32BLE;
+  #ifndef USE_BLE_ESP32
+    #include <NimBLEDevice.h>
+    #include <NimBLEAdvertisedDevice.h>
+    #include "NimBLEEddystoneURL.h"
+    #include "NimBLEEddystoneTLM.h"
+    #include "NimBLEBeacon.h"
 
 
-BLEScan *ESP32BLEScan;
+
+    BLEScan *ESP32BLEScan;
+  #else
+    #include <xsns_99_MI_ESP32.h>
+  #endif
+
+  struct {
+    union {
+      struct {
+        uint32_t init:1;
+  #ifndef USE_BLE_ESP32
+        uint32_t runningScan:1;
+  #endif      
+      };
+      uint32_t all = 0;
+    } mode;
+  } ESP32BLE;
+
+  #define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))
+
 #else
-  #include <xsns_99_MI_ESP32.h>
-#endif
 
-#define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))
+  #include <TasmotaSerial.h>
 
-#else
+  #define TMSBSIZ52 512
 
-#include <TasmotaSerial.h>
+  #define HM17_BAUDRATE 9600
 
-#define TMSBSIZ52 512
+  #define IBEACON_DEBUG
 
-#define HM17_BAUDRATE 9600
+  // use this for Version 110
+  #define HM17_V110
 
-#define IBEACON_DEBUG
+  TasmotaSerial *IBEACON_Serial = nullptr;
 
-// use this for Version 110
-#define HM17_V110
+  uint8_t hm17_found,hm17_cmd,hm17_flag;
 
-TasmotaSerial *IBEACON_Serial = nullptr;
+  #ifdef IBEACON_DEBUG
+  uint8_t hm17_debug=0;
+  #endif
 
-uint8_t hm17_found,hm17_cmd,hm17_flag;
+  // 78 is max serial response
+  #define HM17_BSIZ 128
+  char hm17_sbuffer[HM17_BSIZ];
+  uint8_t hm17_sindex,hm17_result,hm17_scanning,hm17_connecting;
+  uint32_t hm17_lastms;
 
-#ifdef IBEACON_DEBUG
-uint8_t hm17_debug=0;
-#endif
-
-// 78 is max serial response
-#define HM17_BSIZ 128
-char hm17_sbuffer[HM17_BSIZ];
-uint8_t hm17_sindex,hm17_result,hm17_scanning,hm17_connecting;
-uint32_t hm17_lastms;
-
-enum {HM17_TEST,HM17_ROLE,HM17_IMME,HM17_DISI,HM17_IBEA,HM17_SCAN,HM17_DISC,HM17_RESET,HM17_RENEW,HM17_CON};
-#define HM17_SUCESS 99
+  enum {HM17_TEST,HM17_ROLE,HM17_IMME,HM17_DISI,HM17_IBEA,HM17_SCAN,HM17_DISC,HM17_RESET,HM17_RENEW,HM17_CON};
+  #define HM17_SUCESS 99
 
 #endif
 
@@ -355,7 +358,13 @@ void ESP32ResumeScanTask() {
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: Resumed scanner task"),"BLE");
 }
 
+
+#endif // !USE_BLE_ESP32
+
+
 void ESP32Init() {
+
+#ifndef USE_BLE_ESP32
 
   if (TasmotaGlobal.global_state.wifi_down) { return; }
 
@@ -380,9 +389,15 @@ void ESP32Init() {
     IB_UPDATE_TIME=IB_UPDATE_TIME_INTERVAL;
     IB_TIMEOUT_TIME=IB_TIMEOUT_INTERVAL;
   }
+#else
+  if (!ESP32BLE.mode.init) {
+    ESP32BLE.mode.init = 1;
+    IB_UPDATE_TIME=IB_UPDATE_TIME_INTERVAL;
+    IB_TIMEOUT_TIME=IB_TIMEOUT_INTERVAL;
+  }
+#endif
 
 }
-#endif // USE_BLE_ESP32
 
 
 #endif
@@ -391,7 +406,7 @@ void IBEACON_Init() {
 
 #ifdef USE_IBEACON_ESP32
 #ifdef USE_BLE_ESP32
-  BLE99::registerForAdvertismentCallbacks(advertismentCallback);
+  BLE99::registerForAdvertismentCallbacks((const char *)"iBeacon", advertismentCallback);
 #else
 
   ESP32BLE.mode.init = false;
@@ -1061,14 +1076,11 @@ bool Xsns52(byte function)
         IBEACON_Init();
         break;
 #ifdef USE_IBEACON_ESP32
-#ifndef USE_BLE_ESP32
-
       case FUNC_EVERY_250_MSECOND:
         if (!ESP32BLE.mode.init) {
           ESP32Init();
         }
         break;
-#endif
 #endif
       case FUNC_LOOP:
         IBEACON_loop();

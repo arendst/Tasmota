@@ -168,8 +168,9 @@ typedef int ADVERTISMENT_CALLBACK(BLE99::ble_advertisment_t *pStruct);
 // returns - 0 = let others see this, 1 = I processed this, no need to give it to the next callback, or post on MQTT
 typedef int OPCOMPLETE_CALLBACK(BLE99::generic_sensor_t *pStruct);
 
-void registerForAdvertismentCallbacks(BLE99::ADVERTISMENT_CALLBACK* pFn);
-void registerForOpCallbacks(BLE99::OPCOMPLETE_CALLBACK* pFn);
+// tag is just a name for logging
+void registerForAdvertismentCallbacks(const char *tag, BLE99::ADVERTISMENT_CALLBACK* pFn);
+void registerForOpCallbacks(const char *tag, BLE99::OPCOMPLETE_CALLBACK* pFn);
 
 int extQueueOperation(BLE99::generic_sensor_t** op);
 //
