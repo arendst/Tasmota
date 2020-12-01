@@ -201,7 +201,7 @@ void Z_Unreachable(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uin
   if (BAD_SHORTADDR != shortaddr) {
     zigbee_devices.getShortAddr(shortaddr).setReachable(false);     // mark device as reachable
     Z_attribute_list attr_list;
-    attr_list.addAttribute(F("Reachable")).setBool(false);        // "Reachable":false
+    attr_list.addAttributePMEM(PSTR("Reachable")).setBool(false);        // "Reachable":false
     // Z_postProcessAttributes(shortaddr, endpoint, attr_list);  // make sure all is updated accordingly
     zigbee_devices.jsonPublishNow(shortaddr, attr_list);
   }
@@ -394,38 +394,38 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
       case 0x00050004:      // AddScene or RemoveScene or StoreScene
         attr_list.addAttribute(command_name, PSTR("Status")).setUInt(xyz.x);
         attr_list.addAttribute(command_name, PSTR("StatusMsg")).setStr(getZigbeeStatusMessage(xyz.x).c_str());
-        attr_list.addAttribute(PSTR("GroupId"), true).setUInt(xyz.y);
-        attr_list.addAttribute(PSTR("SceneId"), true).setUInt(xyz.z);
+        attr_list.addAttributePMEM(PSTR("GroupId")).setUInt(xyz.y);
+        attr_list.addAttributePMEM(PSTR("SceneId")).setUInt(xyz.z);
         if (0x00050001 == cccc00mm) {   // ViewScene specific
-          attr_list.addAttribute(PSTR("ScenePayload"), true).setBuf(payload, 4, payload.len()-4); // remove first 4 bytes
+          attr_list.addAttributePMEM(PSTR("ScenePayload")).setBuf(payload, 4, payload.len()-4); // remove first 4 bytes
         }
         break;
       case 0x00050003:      // RemoveAllScenes
         attr_list.addAttribute(command_name, PSTR("Status")).setUInt(xyz.x);
         attr_list.addAttribute(command_name, PSTR("StatusMsg")).setStr(getZigbeeStatusMessage(xyz.x).c_str());
-        attr_list.addAttribute(PSTR("GroupId"), true).setUInt(xyz.y);
+        attr_list.addAttributePMEM(PSTR("GroupId")).setUInt(xyz.y);
         break;
       case 0x00050006:      // GetSceneMembership
         attr_list.addAttribute(command_name, PSTR("Status")).setUInt(xyz.x);
         attr_list.addAttribute(command_name, PSTR("StatusMsg")).setStr(getZigbeeStatusMessage(xyz.x).c_str());
-        attr_list.addAttribute(PSTR("Capacity"), true).setUInt(xyz.y);
-        attr_list.addAttribute(PSTR("GroupId"), true).setUInt(xyz.z);
-        attr_list.addAttribute(PSTR("ScenePayload"), true).setBuf(payload, 4, payload.len()-4); // remove first 4 bytes
+        attr_list.addAttributePMEM(PSTR("Capacity")).setUInt(xyz.y);
+        attr_list.addAttributePMEM(PSTR("GroupId")).setUInt(xyz.z);
+        attr_list.addAttributePMEM(PSTR("ScenePayload")).setBuf(payload, 4, payload.len()-4); // remove first 4 bytes
         break;
       case 0x00060040:      // Power Off With Effect
-        attr_list.addAttribute(PSTR("Power"), true).setUInt(0);
-        attr_list.addAttribute(PSTR("PowerEffect"), true).setUInt(xyz.x);
-        attr_list.addAttribute(PSTR("PowerEffectVariant"), true).setUInt(xyz.y);
+        attr_list.addAttributePMEM(PSTR("Power")).setUInt(0);
+        attr_list.addAttributePMEM(PSTR("PowerEffect")).setUInt(xyz.x);
+        attr_list.addAttributePMEM(PSTR("PowerEffectVariant")).setUInt(xyz.y);
         break;
       case 0x00060041:      // Power On With Recall Global Scene
-        attr_list.addAttribute(PSTR("Power"), true).setUInt(1);
-        attr_list.addAttribute(PSTR("PowerRecallGlobalScene"), true).setBool(true);
+        attr_list.addAttributePMEM(PSTR("Power")).setUInt(1);
+        attr_list.addAttributePMEM(PSTR("PowerRecallGlobalScene")).setBool(true);
         break;
       case 0x00060042:      // Power On With Timed Off Command
-        attr_list.addAttribute(PSTR("Power"), true).setUInt(1);
-        attr_list.addAttribute(PSTR("PowerOnlyWhenOn"), true).setUInt(xyz.x);
-        attr_list.addAttribute(PSTR("PowerOnTime"), true).setFloat(xyz.y / 10.0f);
-        attr_list.addAttribute(PSTR("PowerOffWait"), true).setFloat(xyz.z / 10.0f);
+        attr_list.addAttributePMEM(PSTR("Power")).setUInt(1);
+        attr_list.addAttributePMEM(PSTR("PowerOnlyWhenOn")).setUInt(xyz.x);
+        attr_list.addAttributePMEM(PSTR("PowerOnTime")).setFloat(xyz.y / 10.0f);
+        attr_list.addAttributePMEM(PSTR("PowerOffWait")).setFloat(xyz.z / 10.0f);
         break;
       case 0xEF000000 ... 0xEF0000FF: // any Tuya - Moes command
         if (convertTuyaSpecificCluster(attr_list, cluster, cmd, direction, shortaddr, srcendpoint, payload)) {
@@ -433,8 +433,8 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
         }
         break;
       case 0xFCCC0000:      // Terncy button (multi-)press
-        attr_list.addAttribute(PSTR("TerncyPress"), true).setUInt(xyz.y);
-        attr_list.addAttribute(PSTR("TerncyCount"), true).setUInt(xyz.x);
+        attr_list.addAttributePMEM(PSTR("TerncyPress")).setUInt(xyz.y);
+        attr_list.addAttributePMEM(PSTR("TerncyCount")).setUInt(xyz.x);
         break;
       }
     } else {  // general case

@@ -128,6 +128,7 @@ enum UserSelectablePins {
   GPIO_WE517_TX, GPIO_WE517_RX,        // ORNO WE517 Serial interface
   GPIO_AS608_TX, GPIO_AS608_RX,        // Serial interface AS608 / R503
   GPIO_SHELLY_DIMMER_BOOT0, GPIO_SHELLY_DIMMER_RST_INV,
+  GPIO_RC522_RST,                      // RC522 reset
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -235,7 +236,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MIEL_HVAC_TX "|" D_SENSOR_MIEL_HVAC_RX "|"
   D_SENSOR_WE517_TX "|" D_SENSOR_WE517_RX "|"
   D_SENSOR_AS608_TX "|" D_SENSOR_AS608_RX "|"
-  D_SENSOR_SHELLY_DIMMER_BOOT0 "|" D_SENSOR_SHELLY_DIMMER_RST_INV
+  D_SENSOR_SHELLY_DIMMER_BOOT0 "|" D_SENSOR_SHELLY_DIMMER_RST_INV "|"
+  D_SENSOR_RC522_RST
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -604,6 +606,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MIEL_HVAC
   AGPIO(GPIO_MIEL_HVAC_TX),    // Mitsubishi Electric HVAC TX pin
   AGPIO(GPIO_MIEL_HVAC_RX),    // Mitsubishi Electric HVAC RX pin
+#endif
+#ifdef USE_RC522
+  AGPIO(GPIO_RC522_RST),       // RC522 Rfid reset
 #endif
 
 /*-------------------------------------------------------------------------------------------*\

@@ -637,28 +637,30 @@ void Z_Device::jsonAddDeviceNamme(Z_attribute_list & attr_list) const {
   bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
   snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), shortaddr);
 
-  attr_list.addAttribute(F(D_JSON_ZIGBEE_DEVICE)).setStr(hex);
+  attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_DEVICE)).setStr(hex);
   if (fname) {
-    attr_list.addAttribute(F(D_JSON_ZIGBEE_NAME)).setStr(fname);
+    attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_NAME)).setStr(fname);
   }
 }
+
 // Add "IEEEAddr":"0x1234567812345678"
 void Z_Device::jsonAddIEEE(Z_attribute_list & attr_list) const {
   char hex[22];
   hex[0] = '0';   // prefix with '0x'
   hex[1] = 'x';
   Uint64toHex(longaddr, &hex[2], 64);
-  attr_list.addAttribute(F("IEEEAddr")).setStr(hex);
+  attr_list.addAttributePMEM(PSTR("IEEEAddr")).setStr(hex);
 }
 // Add "ModelId":"","Manufacturer":""
 void Z_Device::jsonAddModelManuf(Z_attribute_list & attr_list) const {
   if (modelId) {
-    attr_list.addAttribute(F(D_JSON_MODEL D_JSON_ID)).setStr(modelId);
+    attr_list.addAttributePMEM(PSTR(D_JSON_MODEL D_JSON_ID)).setStr(modelId);
   }
   if (manufacturerId) {
-    attr_list.addAttribute(F("Manufacturer")).setStr(manufacturerId);
+    attr_list.addAttributePMEM(PSTR("Manufacturer")).setStr(manufacturerId);
   }
 }
+
 // Add "Endpoints":[...]
 void Z_Device::jsonAddEndpoints(Z_attribute_list & attr_list) const {
   JsonGeneratorArray arr_ep;
@@ -667,7 +669,7 @@ void Z_Device::jsonAddEndpoints(Z_attribute_list & attr_list) const {
     if (0x00 == endpoint) { break; }
     arr_ep.add(endpoint);
   }
-  attr_list.addAttribute(F("Endpoints")).setStrRaw(arr_ep.toString().c_str());
+  attr_list.addAttributePMEM(PSTR("Endpoints")).setStrRaw(arr_ep.toString().c_str());
 }
 // Add "Config":["",""...]
 void Z_Device::jsonAddConfig(Z_attribute_list & attr_list) const {
@@ -682,7 +684,7 @@ void Z_Device::jsonAddConfig(Z_attribute_list & attr_list) const {
     key[0] = Z_Data::DataTypeToChar(data_elt.getType());
     arr_data.addStr(key);
   }
-  attr_list.addAttribute(F("Config")).setStrRaw(arr_data.toString().c_str());
+  attr_list.addAttributePMEM(PSTR("Config")).setStrRaw(arr_data.toString().c_str());
 }
 // Add All data attributes
 void Z_Device::jsonAddDataAttributes(Z_attribute_list & attr_list) const {
@@ -693,15 +695,15 @@ void Z_Device::jsonAddDataAttributes(Z_attribute_list & attr_list) const {
 }
 // Add "BatteryPercentage", "LastSeen", "LastSeenEpoch", "LinkQuality"
 void Z_Device::jsonAddDeviceAttributes(Z_attribute_list & attr_list) const {
-  attr_list.addAttribute(F("Reachable")).setBool(getReachable());
-  if (validBatteryPercent())  { attr_list.addAttribute(PSTR("BatteryPercentage")).setUInt(batterypercent); }
+  attr_list.addAttributePMEM(PSTR("Reachable")).setBool(getReachable());
+  if (validBatteryPercent())  { attr_list.addAttributePMEM(PSTR("BatteryPercentage")).setUInt(batterypercent); }
   if (validLastSeen())        {
     if (Rtc.utc_time >= last_seen) {
-      attr_list.addAttribute(PSTR("LastSeen")).setUInt(Rtc.utc_time - last_seen);
+      attr_list.addAttributePMEM(PSTR("LastSeen")).setUInt(Rtc.utc_time - last_seen);
     }
-    attr_list.addAttribute(PSTR("LastSeenEpoch")).setUInt(last_seen);
+    attr_list.addAttributePMEM(PSTR("LastSeenEpoch")).setUInt(last_seen);
   }
-  if (validLqi())             { attr_list.addAttribute(PSTR(D_CMND_ZIGBEE_LINKQUALITY)).setUInt(lqi); }
+  if (validLqi())             { attr_list.addAttributePMEM(PSTR(D_CMND_ZIGBEE_LINKQUALITY)).setUInt(lqi); }
 }
 
 
@@ -709,8 +711,8 @@ void Z_Device::jsonAddDeviceAttributes(Z_attribute_list & attr_list) const {
 void Z_Device::jsonLightState(Z_attribute_list & attr_list) const {
   if (valid()) {
     // dump all known values
-    attr_list.addAttribute(F("Reachable")).setBool(getReachable());
-    if (validPower())        { attr_list.addAttribute(F("Power")).setUInt(getPower()); }
+    attr_list.addAttributePMEM(PSTR("Reachable")).setBool(getReachable());
+    if (validPower())        { attr_list.addAttributePMEM(PSTR("Power")).setUInt(getPower()); }
     int32_t light_mode = -1;
     const Z_Data_Light & light = data.find<Z_Data_Light>(0);
     if (&light != nullptr) {
@@ -723,7 +725,7 @@ void Z_Device::jsonLightState(Z_attribute_list & attr_list) const {
         attr_list.findOrCreateAttribute(PSTR("Hue")).setUInt(light.getHue());
       }
     }
-    attr_list.addAttribute(F("Light")).setInt(light_mode);
+    attr_list.addAttributePMEM(PSTR("Light")).setInt(light_mode);
   }
 }
 
