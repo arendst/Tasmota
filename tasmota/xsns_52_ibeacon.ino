@@ -41,6 +41,12 @@ uint8_t ib_upd_interval,ib_tout_interval;
 char ib_mac[14];
 
 #ifdef USE_IBEACON_ESP32
+#ifndef USE_BLE_ESP32
+#include <NimBLEDevice.h>
+#include <NimBLEAdvertisedDevice.h>
+#include "NimBLEEddystoneURL.h"
+#include "NimBLEEddystoneTLM.h"
+#include "NimBLEBeacon.h"
 
 struct {
   union {
@@ -52,15 +58,13 @@ struct {
   } mode;
 } ESP32BLE;
 
-#include <NimBLEDevice.h>
-#include <NimBLEAdvertisedDevice.h>
-#include "NimBLEEddystoneURL.h"
-#include "NimBLEEddystoneTLM.h"
-#include "NimBLEBeacon.h"
-
-#define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))
 
 BLEScan *ESP32BLEScan;
+#else
+  #include <xsns_99_MI_ESP32.h>
+#endif
+
+#define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))
 
 #else
 
@@ -151,7 +155,83 @@ void DumpHex(const unsigned char * in, size_t insz, char * out)
   }
 }
 
+#ifdef USE_BLE_ESP32
+int advertismentCallback(BLE99::ble_advertisment_t *pStruct)
+{
+  struct IBEACON ib;
 
+  BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
+  //ESP32BLEScan->erase(advertisedDevice->getAddress());
+  if (advertisedDevice->haveManufacturerData() == true) {
+    std::string strManufacturerData = advertisedDevice->getManufacturerData();
+
+    uint8_t cManufacturerData[100];
+    strManufacturerData.copy((char *)cManufacturerData, strManufacturerData.length(), 0);
+
+    int16_t     RSSI  = advertisedDevice->getRSSI();
+    char sRSSI[6];
+    itoa(RSSI,sRSSI,10);
+
+    DumpHex(cManufacturerData,2,ib.FACID);
+
+    uint8_t MAC[6];
+    memcpy(MAC,advertisedDevice->getAddress().getNative(),6);
+    ESP32BLE_ReverseStr(MAC,6);
+
+    if (strManufacturerData.length() == 25 && cManufacturerData[0] == 0x4C && cManufacturerData[1] == 0x00)
+    {
+      BLEBeacon oBeacon = BLEBeacon();
+      oBeacon.setData(strManufacturerData);
+
+      uint8_t UUID[16];
+memcpy(UUID,oBeacon.getProximityUUID().getNative()->u128.value,16);
+      ESP32BLE_ReverseStr(UUID,16);
+
+uint16_t    Major = ENDIAN_CHANGE_U16(oBeacon.getMajor());
+      uint16_t    Minor = ENDIAN_CHANGE_U16(oBeacon.getMinor());
+
+      uint8_t     PWR   = oBeacon.getSignalPower();
+
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: MAC: %s Major: %d Minor: %d UUID: %s Power: %d RSSI: %d"),
+        "BLE",
+        advertisedDevice->getAddress().toString().c_str(),
+        Major, Minor,
+        oBeacon.getProximityUUID().toString().c_str(),
+        PWR, RSSI);
+
+      DumpHex((const unsigned char*)&UUID,16,ib.UID);
+      DumpHex((const unsigned char*)&Major,2,ib.MAJOR);
+      DumpHex((const unsigned char*)&Minor,2,ib.MINOR);
+      DumpHex((const unsigned char*)&PWR,1,ib.PWR);
+      DumpHex((const unsigned char*)&MAC,6,ib.MAC);
+      memcpy(ib.RSSI,sRSSI,4);
+      memset(ib.NAME,0x0,16);
+
+      ibeacon_add(&ib);
+
+    } else {
+
+      memset(ib.UID,'0',32);
+      memset(ib.MAJOR,'0',4);
+      memset(ib.MINOR,'0',4);
+      memset(ib.PWR,'0',2);
+      DumpHex((const unsigned char*)&MAC,6,ib.MAC);
+      memcpy(ib.RSSI,sRSSI,4);
+
+      if (advertisedDevice->haveName()) {
+        strncpy(ib.NAME,advertisedDevice->getName().c_str(),16);
+      } else {
+        memset(ib.NAME,0x0,16);
+      }
+
+      ibeacon_add(&ib);
+    }
+  }
+  return 0;
+}
+
+
+#else
 class ESP32BLEScanCallback : public BLEAdvertisedDeviceCallbacks
 {
     void onResult(BLEAdvertisedDevice *advertisedDevice)
@@ -302,16 +382,21 @@ void ESP32Init() {
   }
 
 }
+#endif // USE_BLE_ESP32
+
 
 #endif
 
 void IBEACON_Init() {
 
 #ifdef USE_IBEACON_ESP32
+#ifdef USE_BLE_ESP32
+  BLE99::registerForAdvertismentCallbacks(advertismentCallback);
+#else
 
   ESP32BLE.mode.init = false;
   ESP32BLE.mode.runningScan = false;
-
+#endif
 #else
 
   hm17_found=0;
@@ -338,7 +423,7 @@ void IBEACON_Init() {
 #ifdef USE_IBEACON_ESP32
 
 void esp32_every_second(void) {
-
+#ifndef USE_BLE_ESP32
   if (!ESP32BLE.mode.init) { return; }
 
   if (TasmotaGlobal.ota_state_flag) {
@@ -352,6 +437,7 @@ void esp32_every_second(void) {
       ESP32ResumeScanTask();
     }
   }
+#endif
 
   for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
     if (ibeacons[cnt].FLAGS) {
@@ -975,11 +1061,14 @@ bool Xsns52(byte function)
         IBEACON_Init();
         break;
 #ifdef USE_IBEACON_ESP32
+#ifndef USE_BLE_ESP32
+
       case FUNC_EVERY_250_MSECOND:
         if (!ESP32BLE.mode.init) {
           ESP32Init();
         }
         break;
+#endif
 #endif
       case FUNC_LOOP:
         IBEACON_loop();

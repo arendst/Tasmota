@@ -1,0 +1,184 @@
+/*
+  xsns_255_BLE_ESP32.ino - MI-BLE-sensors via ESP32 support for Tasmota
+
+  Copyright (C) 2020  Christian Baars and Theo Arends and Simon Hailes
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+  --------------------------------------------------------------------------------------------
+  Version yyyymmdd  Action    Description
+  --------------------------------------------------------------------------------------------
+*/
+
+/*
+  xsns_99:
+  This driver uses the ESP32 BLE functionality to hopefully provide enough
+  BLE functionality to implement specific drivers on top of it.
+
+  As a generic driver, it can:
+    Be asked to 
+      connect/write to a MAC/Service/Characteristic
+      connect/read from a MAC/Service/Characteristic
+      connect/write/awaitnotify from a MAC/Service/Characteristic/NotifyCharacteristic
+      connect/read/awaitnotify from a MAC/Service/Characteristic/NotifyCharacteristic
+
+    Cmnds:
+      BLEOp0 - requests status of operations
+      BLEOp1 MAC - create an operation in preparation, and populate it's MAC address
+      BLEOp2 Service - add a serviceUUID to the operation in preparation
+      BLEOp3 Characteristic - add a CharacteristicUUID to the operation in preparation for read/write
+      BLEOp4 writedata - optional:add data to write to the operation in preparation - hex string
+      BLEOp5 - optional:signify that a read should be done
+      BLEOp6 NotifyCharacteristic - optional:add a NotifyCharacteristicUUID to the operation in preparation to wait for a notify
+      BLEOp9 - publish the 'operation in preparation' to MQTT.
+      BLEOp10 - add the 'operation in preparation' to the queue of operations to perform.
+
+       
+
+Example:
+Write and request next notify:
+backlog BLEOp1 001A22092EE0; BLEOp2 3e135142-654f-9090-134a-a6ff5bb77046; BLEOp3 3fa4585a-ce4a-3bad-db4b-b8df8179ea09; BLEOp4 03; BLEOp6 d0e8434d-cd29-0996-af41-6c90f4e0eb2a;
+BLEOp10 -> 
+19:25:08 RSL: tele/tasmota_E89E98/SENSOR = {"BLEOperation":{"opid":"3,"state":"1,"MAC":"001A22092EE0","svc":"3e135142-654f-9090-134a-a6ff5bb77046","char":"3fa4585a-ce4a-3bad-db4b-b8df8179ea09","wrote":"03}}
+19:25:08 queued 0 sent {"BLEOperation":{"opid":"3,"state":"1,"MAC":"001A22092EE0","svc":"3e135142-654f-9090-134a-a6ff5bb77046","char":"3fa4585a-ce4a-3bad-db4b-b8df8179ea09","wrote":"03}}
+19:25:08 RSL: stat/tasmota_E89E98/RESULT = {"BLEOp":"Done"}
+.....
+19:25:11 RSL: tele/tasmota_E89E98/SENSOR = {"BLEOperation":{"opid":"3,"state":"11,"MAC":"001A22092EE0","svc":"3e135142-654f-9090-134a-a6ff5bb77046","char":"3fa4585a-ce4a-3bad-db4b-b8df8179ea09","wrote":"03","notify":"020109000428}}
+
+state: 1 -> starting, 
+7 -> read complete
+8 -> write complete 
+11 -> notify complete
+0x100 + -> failure (see GEN_STATE_FAILED_XXXX constants below.)
+
+
+The driver can also be used by other drivers, using the functions:
+
+void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFn);
+void registerForOpCallbacks(OPCOMPLETE_CALLBACK* pFn);
+bool extQueueOperation(generic_sensor_t** op);
+
+These allow other code to
+  receive advertisments
+  receive operation callbacks.
+  create and start an operation, and get a callback when done/failed.
+
+i.e. the Bluetooth of the ESP can be shared without conflict.
+
+*/
+
+
+#ifndef BLE_ESP32_H
+#define BLE_ESP32_H
+
+#ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
+
+#ifdef USE_BLE_ESP32
+
+
+#include <NimBLEDevice.h>
+#include <NimBLEAdvertisedDevice.h>
+#include "NimBLEEddystoneURL.h"
+#include "NimBLEEddystoneTLM.h"
+#include "NimBLEBeacon.h"
+
+namespace BLE99 {
+// generic sensor type used as during
+// connect/read/wrtie/notify operations
+// only one operation will happen at a time 
+struct generic_sensor_t {
+  uint16_t state;
+  uint32_t opid; // incrementing id so we can find them
+  
+  // uint8_t cancel; 
+  // uint8_t requestType; 
+  char MAC[13];
+  char serviceStr[100];
+  char characteristicStr[100];
+  char notificationCharacteristicStr[100];
+  int RSSI;
+  uint64_t notifytimer;
+  uint8_t dataToWrite[100];
+  uint8_t writelen;
+  uint8_t dataRead[100];
+  uint8_t readlen;
+  uint8_t readtruncated;
+  uint8_t dataNotify[100];
+  uint8_t notifylen;
+  uint8_t notifytruncated;
+
+  NimBLEClient *pClient;
+
+  void *callback; // OPCOMPLETE_CALLBACK function, used by external drivers
+};
+
+
+////////////////////////////////////////////////////////////////
+// structure for callbacks from other drivers from advertisments.
+struct ble_advertisment_t {
+  BLEAdvertisedDevice *advertisedDevice; // the full NimBLE advertisment, in case people need MORE info.
+
+  const uint8_t *addr;
+  int RSSI;
+  const char *name;
+
+  const uint8_t *payload;
+  uint8_t payloadLen;
+
+  const uint8_t *manufacturerData;
+  uint8_t manufacturerDataLen;
+
+  uint8_t svcdataCount;
+  struct {
+    const ble_uuid_any_t* serviceUUID;
+    char serviceUUIDStr[40]; // longest UUID 36 chars?
+    const uint8_t* serviceData;
+    uint8_t serviceDataLen;
+  } svcdata[5];
+  uint8_t serviceCount;
+  struct {
+    const ble_uuid_any_t* serviceUUID;
+    char serviceUUIDStr[40]; // longest UUID 36 chars?
+  } services[5];
+};
+////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////
+// External interface to this driver for use by others.
+//
+// callback types to be used by external drivers
+//
+// returns - 
+//  0 = let others see this, 
+//  1 = I processed this, no need to give it to the next callback
+//  2 = I want this device erased from the scan
+typedef int ADVERTISMENT_CALLBACK(BLE99::ble_advertisment_t *pStruct);
+// returns - 0 = let others see this, 1 = I processed this, no need to give it to the next callback, or post on MQTT
+typedef int OPCOMPLETE_CALLBACK(BLE99::generic_sensor_t *pStruct);
+
+void registerForAdvertismentCallbacks(BLE99::ADVERTISMENT_CALLBACK* pFn);
+void registerForOpCallbacks(BLE99::OPCOMPLETE_CALLBACK* pFn);
+
+int extQueueOperation(BLE99::generic_sensor_t** op);
+//
+///////////////////////////////////////////////////////////////////////
+
+}
+
+
+#endif
+#endif
+
+#endif

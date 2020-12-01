@@ -80,7 +80,6 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 */
 
 
-
 // TEMPORARILY define ESP32 and USE_BLE_ESP32 so VSCODE shows highlighting....
 #define VSCODE_DEV
 #ifdef VSCODE_DEV
@@ -95,13 +94,14 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 #define XSNS_99                    99
 #define USE_MI_DECRYPTION
 
-#include <NimBLEDevice.h>
+#include <xsns_99_MI_ESP32.h>
 #include <vector>
 #include <deque>
 #include <string.h>
 #ifdef USE_MI_DECRYPTION
 #include <t_bearssl.h>
 #endif //USE_MI_DECRYPTION
+
 
 
 void installExamples();
@@ -120,72 +120,14 @@ SemaphoreHandle_t  BLEOperationsMutex;
 #pragma pack(0)
 
 
-// generic sensor type used as during
-// connect/read/wrtie/notify operations
-// only one operation will happen at a time 
-struct generic_sensor_t {
-  uint16_t state;
-  uint32_t opid; // incrementing id so we can find them
-  
-  // uint8_t cancel; 
-  // uint8_t requestType; 
-  char MAC[13];
-  char serviceStr[100];
-  char characteristicStr[100];
-  char notificationCharacteristicStr[100];
-  int RSSI;
-  uint64_t notifytimer;
-  uint8_t dataToWrite[100];
-  uint8_t writelen;
-  uint8_t dataRead[100];
-  uint8_t readlen;
-  uint8_t readtruncated;
-  uint8_t dataNotify[100];
-  uint8_t notifylen;
-  uint8_t notifytruncated;
-
-  NimBLEClient *pClient;
-
-  void *callback; // OPCOMPLETE_CALLBACK function, used by external drivers
-};
-
-
-////////////////////////////////////////////////////////////////
-// structure for callbacks from other drivers from advertisments.
-struct ble_advertisment_t {
-  const uint8_t *addr;
-  int RSSI;
-  const char *name;
-
-  const uint8_t *payload;
-  uint8_t payloadLen;
-
-  const uint8_t *manufacturerData;
-  uint8_t manufacturerDataLen;
-
-  uint8_t svcdataCount;
-  struct {
-    const ble_uuid_any_t* serviceUUID;
-    char serviceUUIDStr[40]; // longest UUID 36 chars?
-    const uint8_t* serviceData;
-    uint8_t serviceDataLen;
-  } svcdata[5];
-  uint8_t serviceCount;
-  struct {
-    const ble_uuid_any_t* serviceUUID;
-    char serviceUUIDStr[40]; // longest UUID 36 chars?
-  } services[5];
-};
-////////////////////////////////////////////////////////////////
-
 
 
 
 // only run from main thread, becaus eit deletes things that were newed there...
 static void mainThreadOpCallbacks();
-void addOperation(std::deque<generic_sensor_t*> *ops, generic_sensor_t** op);
-generic_sensor_t* nextOperation(std::deque<generic_sensor_t*> *ops);
-std::string BLETriggerResponse(generic_sensor_t *toSend);
+void addOperation(std::deque<BLE99::generic_sensor_t*> *ops, BLE99::generic_sensor_t** op);
+BLE99::generic_sensor_t* nextOperation(std::deque<BLE99::generic_sensor_t*> *ops);
+std::string BLETriggerResponse(BLE99::generic_sensor_t *toSend);
 static void BLEscanEndedCB(NimBLEScanResults results);
 static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
 
@@ -195,8 +137,8 @@ static void BLEPostMQTT(bool json);
 static void BLEStartOperationTask();
 
 // these are only run from the run task
-static void runCurrentOperation(generic_sensor_t** pCurrentOperation);
-static void runTaskDoneOperation(generic_sensor_t** op);
+static void runCurrentOperation(BLE99::generic_sensor_t** pCurrentOperation);
+static void runTaskDoneOperation(BLE99::generic_sensor_t** op);
 
 
 
@@ -204,28 +146,12 @@ static void runTaskDoneOperation(generic_sensor_t** op);
 #define EXAMPLE_OPERATION_CALLBACK
 
 #ifdef EXAMPLE_ADVERTISMENT_CALLBACK
-bool myAdvertCallback(ble_advertisment_t *pStruct);
+int myAdvertCallback(BLE99::ble_advertisment_t *pStruct);
 #endif
 #ifdef EXAMPLE_OPERATION_CALLBACK
-bool myOpCallback(generic_sensor_t *pStruct);
-bool myOpCallback2(generic_sensor_t *pStruct);
+int myOpCallback(BLE99::generic_sensor_t *pStruct);
+int myOpCallback2(BLE99::generic_sensor_t *pStruct);
 #endif
-
-
-///////////////////////////////////////////////////////////////////////
-// External interface to this driver for use by others.
-//
-// callback types to be used by external drivers
-//
-typedef bool ADVERTISMENT_CALLBACK(ble_advertisment_t *pStruct);
-typedef bool OPCOMPLETE_CALLBACK(generic_sensor_t *pStruct);
-
-void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFn);
-void registerForOpCallbacks(OPCOMPLETE_CALLBACK* pFn);
-
-bool extQueueOperation(generic_sensor_t** op);
-//
-///////////////////////////////////////////////////////////////////////
 
 
 // single storage for advert callbacks....
@@ -283,20 +209,20 @@ uint32_t lastopid = 0; // incrementing uinique opid
 
 
 // operation being prepared through commands
-generic_sensor_t* prepOperation = nullptr;
+BLE99::generic_sensor_t* prepOperation = nullptr;
 
 // operations which have been queued
-std::deque<generic_sensor_t*> queuedOperations;
+std::deque<BLE99::generic_sensor_t*> queuedOperations;
 // operations in progress (at the moment, only one)
-std::deque<generic_sensor_t*> currentOperations;
+std::deque<BLE99::generic_sensor_t*> currentOperations;
 // operaitons which have completed or failed, ready to send to MQTT
-std::deque<generic_sensor_t*> completedOperations;
+std::deque<BLE99::generic_sensor_t*> completedOperations;
 
 // list of registered callbacks for advertisments
 // register using void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFN);
-std::deque<ADVERTISMENT_CALLBACK*> advertismentCallbacks;
+std::deque<BLE99::ADVERTISMENT_CALLBACK*> advertismentCallbacks;
 
-std::deque<OPCOMPLETE_CALLBACK*> operationsCallbacks;
+std::deque<BLE99::OPCOMPLETE_CALLBACK*> operationsCallbacks;
 
 
 /*********************************************************************************************\
@@ -444,9 +370,12 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
 
     memset(&BLEAdvertisment, 0, sizeof(BLEAdvertisment));
 
+    BLEAdvertisment.advertisedDevice = advertisedDevice;
+
     int RSSI = advertisedDevice->getRSSI();
     uint8_t addr[6];
-    memcpy(addr,advertisedDevice->getAddress().getNative(),6);
+    NimBLEAddress address = advertisedDevice->getAddress(); 
+    memcpy(addr, address.getNative(), 6);
     MI32_ReverseMAC(addr);
     BLEAdvertisment.addr = addr;
     BLEAdvertisment.RSSI = RSSI;
@@ -539,7 +468,15 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
       try {
         ADVERTISMENT_CALLBACK* pFN;
         pFN = advertismentCallbacks[i];
-        pFN(&BLEAdvertisment);
+        int res = pFN(&BLEAdvertisment);
+
+        // if this callback wants to stop here, then do so.
+        if (1 == res) break;
+
+        // if this callback wants to kill this device
+        if (2 == res) {
+          MI32Scan->erase(address);
+        }
       } catch(const std::exception& e){
         AddLog_P(LOG_LEVEL_ERROR,PSTR("exception in advertismentCallbacks"));
       }
@@ -619,11 +556,11 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
 /*********************************************************************************************\
  * init NimBLE
 \*********************************************************************************************/
-void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFn){
+void registerForAdvertismentCallbacks(BLE99::ADVERTISMENT_CALLBACK* pFn){
   advertismentCallbacks.push_back(pFn);
 }
 
-void registerForOpCallbacks(OPCOMPLETE_CALLBACK* pFn){
+void registerForOpCallbacks(BLE99::OPCOMPLETE_CALLBACK* pFn){
   operationsCallbacks.push_back(pFn);
 }
 
@@ -835,7 +772,7 @@ void CmndBLEOption(void){
 // moves the operation from 'currentOperations' to 'completedOperations'.
 
 // for safety's sake, only call from the run task
-static void runTaskDoneOperation(generic_sensor_t** op){
+static void runTaskDoneOperation(BLE99::generic_sensor_t** op){
   if ((*op)->pClient){
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in done"));
     try {
@@ -895,7 +832,7 @@ void addOperation(std::deque<generic_sensor_t*> *ops, generic_sensor_t** op){
 }
 
 
-bool extQueueOperation(generic_sensor_t** op){
+int extQueueOperation(BLE99::generic_sensor_t** op){
   if (!op) {
     AddLog_P(LOG_LEVEL_ERROR,PSTR("op invalid in extQueueOperation"));
     return false;
@@ -916,7 +853,7 @@ bool extQueueOperation(generic_sensor_t** op){
 
 // this runs one operation
 // if the passed pointer is empty, it tries to get a next one.
-static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
+static void runCurrentOperation(BLE99::generic_sensor_t** pCurrentOperation){
   if (!pCurrentOperation) return;
   if (!BLEScan) return;
 
@@ -1109,12 +1046,12 @@ static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
                 try {
                   op->pClient->disconnect();
                 } catch(const std::exception& e){
-                  AddLog_P(LOG_LEVEL_DEBUG,PSTR("except in disconnect"));
+                  AddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in disconnect"));
                 }
                 try {
                   NimBLEDevice::deleteClient(op->pClient);
                 } catch(const std::exception& e){
-                  AddLog_P(LOG_LEVEL_DEBUG,PSTR("except in delete"));
+                  AddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in delete"));
                 }
                 op->pClient = NULL;
               }    
@@ -1122,7 +1059,7 @@ static void runCurrentOperation(generic_sensor_t** pCurrentOperation){
             } else {
               op->state = GEN_STATE_FAILED_CONNECT;
               // failed to connect
-              AddLog_P(LOG_LEVEL_DEBUG,PSTR("fauled to connect to device"));
+              AddLog_P(LOG_LEVEL_DEBUG,PSTR("failed to connect to device"));
             }            
           } else {
             op->state = GEN_STATE_FAILED_NOSERVICE;
@@ -1556,7 +1493,7 @@ bool Xsns99(uint8_t function)
 #define ATC         12
 
 // match ADVERTISMENT_CALLBACK
-bool myAdvertCallback(BLE99::ble_advertisment_t *pStruct) {
+int myAdvertCallback(BLE99::ble_advertisment_t *pStruct) {
 
 /*
 struct ble_advertisment_t {
@@ -1596,7 +1533,7 @@ struct ble_advertisment_t {
               case MJ_HT_V1:
               case CGG1:
               case YEERC:
-                return true; // eat this, no further callbacks will be called.
+                return 1; // eat this, no further callbacks will be called.
                 break;
             }
           }
@@ -1613,7 +1550,7 @@ struct ble_advertisment_t {
 
   // indicate others can also hear this
   // to say 'I want this exclusively', return true.
-  return false;
+  return 0;
 
 }
 #endif
@@ -1628,15 +1565,15 @@ struct ble_advertisment_t {
 #ifdef EXAMPLE_OPERATION_CALLBACK
 
 // this one is used to demonstrate processing ALL operations
-bool myOpCallback(BLE99::generic_sensor_t *pStruct){
+int myOpCallback(BLE99::generic_sensor_t *pStruct){
   AddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback"));
-  return false; // return true to block MQTT broadcast
+  return 0; // return true to block MQTT broadcast
 }
 
 // this one is used to demonstrate processing of ONE specific operation
-bool myOpCallback2(BLE99::generic_sensor_t *pStruct){
+int myOpCallback2(BLE99::generic_sensor_t *pStruct){
   AddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback2"));
-  return true; // return true to block MQTT broadcast
+  return 1; // return true to block MQTT broadcast
 }
 #endif
 /*********************************************************************************************\
@@ -1673,3 +1610,5 @@ void sendExample(){
 
 #endif  
 #endif  // ESP32
+
+
