@@ -52,7 +52,7 @@ char ib_mac[14];
 
     BLEScan *ESP32BLEScan;
   #else
-    #include <xsns_99_MI_ESP32.h>
+    #include <xdrv_46_BLE_ESP32.h>
   #endif
 
   struct {
@@ -159,7 +159,7 @@ void DumpHex(const unsigned char * in, size_t insz, char * out)
 }
 
 #ifdef USE_BLE_ESP32
-int advertismentCallback(BLE99::ble_advertisment_t *pStruct)
+int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
 {
   struct IBEACON ib;
 
@@ -406,7 +406,7 @@ void IBEACON_Init() {
 
 #ifdef USE_IBEACON_ESP32
 #ifdef USE_BLE_ESP32
-  BLE99::registerForAdvertismentCallbacks((const char *)"iBeacon", advertismentCallback);
+  BLE_ESP32::registerForAdvertismentCallbacks((const char *)"iBeacon", advertismentCallback);
 #else
 
   ESP32BLE.mode.init = false;

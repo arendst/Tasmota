@@ -1,5 +1,5 @@
 /*
-  xsns_255_BLE_ESP32.ino - MI-BLE-sensors via ESP32 support for Tasmota
+  xdrv_46_BLE_ESP32.ino - BLE via ESP32 support for Tasmota
 
   Copyright (C) 2020  Christian Baars and Theo Arends and Simon Hailes
 
@@ -23,7 +23,7 @@
 */
 
 /*
-  xsns_99:
+  xdrv_46:
   This driver uses the ESP32 BLE functionality to hopefully provide enough
   BLE functionality to implement specific drivers on top of it.
 
@@ -45,7 +45,8 @@
       BLEOp9 - publish the 'operation in preparation' to MQTT.
       BLEOp10 - add the 'operation in preparation' to the queue of operations to perform.
 
-       
+  Other drivers can add callbacks to receive advertisments
+  Other drivers can add 'operations' to be performed and receive callbacks from the operation's success or failure
 
 Example:
 Write and request next notify:
@@ -66,8 +67,8 @@ state: 1 -> starting,
 
 The driver can also be used by other drivers, using the functions:
 
-void registerForAdvertismentCallbacks(char *somename, ADVERTISMENT_CALLBACK* pFn);
-void registerForOpCallbacks(char *somename, OPCOMPLETE_CALLBACK* pFn);
+void registerForAdvertismentCallbacks(char *loggingtag, ADVERTISMENT_CALLBACK* pFn);
+void registerForOpCallbacks(char *loggingtag, OPCOMPLETE_CALLBACK* pFn);
 bool extQueueOperation(generic_sensor_t** op);
 
 These allow other code to
@@ -91,10 +92,10 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 
 #ifdef USE_BLE_ESP32
 
-#define XSNS_99                    99
+#define XDRV_46                    46
 #define USE_MI_DECRYPTION
 
-#include <xsns_99_MI_ESP32.h>
+#include <xdrv_46_BLE_ESP32.h>
 #include <vector>
 #include <deque>
 #include <string.h>
@@ -108,7 +109,7 @@ void installExamples();
 void sendExample();
 
 
-namespace BLE99 {
+namespace BLE_ESP32 {
 
 
 // this protects our queues, which can be accessed by multiple tasks 
@@ -125,9 +126,9 @@ SemaphoreHandle_t  BLEOperationsMutex;
 
 // only run from main thread, becaus eit deletes things that were newed there...
 static void mainThreadOpCallbacks();
-void addOperation(std::deque<BLE99::generic_sensor_t*> *ops, BLE99::generic_sensor_t** op);
-BLE99::generic_sensor_t* nextOperation(std::deque<BLE99::generic_sensor_t*> *ops);
-std::string BLETriggerResponse(BLE99::generic_sensor_t *toSend);
+void addOperation(std::deque<BLE_ESP32::generic_sensor_t*> *ops, BLE_ESP32::generic_sensor_t** op);
+BLE_ESP32::generic_sensor_t* nextOperation(std::deque<BLE_ESP32::generic_sensor_t*> *ops);
+std::string BLETriggerResponse(BLE_ESP32::generic_sensor_t *toSend);
 static void BLEscanEndedCB(NimBLEScanResults results);
 static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
 
@@ -137,8 +138,8 @@ static void BLEPostMQTT(bool json);
 static void BLEStartOperationTask();
 
 // these are only run from the run task
-static void runCurrentOperation(BLE99::generic_sensor_t** pCurrentOperation);
-static void runTaskDoneOperation(BLE99::generic_sensor_t** op);
+static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation);
+static void runTaskDoneOperation(BLE_ESP32::generic_sensor_t** op);
 
 
 
@@ -146,11 +147,11 @@ static void runTaskDoneOperation(BLE99::generic_sensor_t** op);
 #define EXAMPLE_OPERATION_CALLBACK
 
 #ifdef EXAMPLE_ADVERTISMENT_CALLBACK
-int myAdvertCallback(BLE99::ble_advertisment_t *pStruct);
+int myAdvertCallback(BLE_ESP32::ble_advertisment_t *pStruct);
 #endif
 #ifdef EXAMPLE_OPERATION_CALLBACK
-int myOpCallback(BLE99::generic_sensor_t *pStruct);
-int myOpCallback2(BLE99::generic_sensor_t *pStruct);
+int myOpCallback(BLE_ESP32::generic_sensor_t *pStruct);
+int myOpCallback2(BLE_ESP32::generic_sensor_t *pStruct);
 #endif
 
 
@@ -209,20 +210,20 @@ uint32_t lastopid = 0; // incrementing uinique opid
 
 
 // operation being prepared through commands
-BLE99::generic_sensor_t* prepOperation = nullptr;
+BLE_ESP32::generic_sensor_t* prepOperation = nullptr;
 
 // operations which have been queued
-std::deque<BLE99::generic_sensor_t*> queuedOperations;
+std::deque<BLE_ESP32::generic_sensor_t*> queuedOperations;
 // operations in progress (at the moment, only one)
-std::deque<BLE99::generic_sensor_t*> currentOperations;
+std::deque<BLE_ESP32::generic_sensor_t*> currentOperations;
 // operaitons which have completed or failed, ready to send to MQTT
-std::deque<BLE99::generic_sensor_t*> completedOperations;
+std::deque<BLE_ESP32::generic_sensor_t*> completedOperations;
 
 // list of registered callbacks for advertisments
 // register using void registerForAdvertismentCallbacks(const char *somename ADVERTISMENT_CALLBACK* pFN);
-std::deque<BLE99::ADVERTISMENT_CALLBACK*> advertismentCallbacks;
+std::deque<BLE_ESP32::ADVERTISMENT_CALLBACK*> advertismentCallbacks;
 
-std::deque<BLE99::OPCOMPLETE_CALLBACK*> operationsCallbacks;
+std::deque<BLE_ESP32::OPCOMPLETE_CALLBACK*> operationsCallbacks;
 
 
 /*********************************************************************************************\
@@ -240,7 +241,7 @@ static void CmndBLEOperation(void);
 static void CmndBLEMode(void);
 
 void (*const BLE_Commands[])(void) PROGMEM = {
-  &BLE99::CmndBLEPeriod, &BLE99::CmndBLEOption, &BLE99::CmndBLEOperation, &BLE99::CmndBLEMode };
+  &BLE_ESP32::CmndBLEPeriod, &BLE_ESP32::CmndBLEOption, &BLE_ESP32::CmndBLEOperation, &BLE_ESP32::CmndBLEMode };
 
 /*********************************************************************************************\
  * enumerations
@@ -475,7 +476,7 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
 
         // if this callback wants to kill this device
         if (2 == res) {
-          MI32Scan->erase(address);
+          BLEScan->erase(address);
         }
       } catch(const std::exception& e){
         AddLog_P(LOG_LEVEL_ERROR,PSTR("exception in advertismentCallbacks"));
@@ -556,13 +557,13 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
 /*********************************************************************************************\
  * init NimBLE
 \*********************************************************************************************/
-void registerForAdvertismentCallbacks(const char *tag, BLE99::ADVERTISMENT_CALLBACK* pFn){
+void registerForAdvertismentCallbacks(const char *tag, BLE_ESP32::ADVERTISMENT_CALLBACK* pFn){
   AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: registerForAdvertismentCallbacks %s:%x"), tag, (uint32_t) pFn);
 
   advertismentCallbacks.push_back(pFn);
 }
 
-void registerForOpCallbacks(const char *tag, BLE99::OPCOMPLETE_CALLBACK* pFn){
+void registerForOpCallbacks(const char *tag, BLE_ESP32::OPCOMPLETE_CALLBACK* pFn){
   AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: registerForOpCallbacks %s:%x"), tag, (uint32_t) pFn);
   operationsCallbacks.push_back(pFn);
 }
@@ -577,7 +578,7 @@ static void BLEPreInit(void) {
   // this is only for testing, does nothin if examples are undefed
   installExamples();
 
-  BLE99::BLEStartOperationTask();
+  BLE_ESP32::BLEStartOperationTask();
 }
 
 static void StartBLE(void) {
@@ -636,7 +637,7 @@ static void BLEStartOperationTask(){
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: Start operations"),D_CMND_BLE);
 
     xTaskCreatePinnedToCore(
-      BLE99::BLEOperationTask,    /* Function to implement the task */
+      BLE_ESP32::BLEOperationTask,    /* Function to implement the task */
       "BLEOperationTask",  /* Name of the task */
       4096,//2048,             /* Stack size in words */
       NULL,             /* Task input parameter */
@@ -658,7 +659,7 @@ static void BLEOperationTask(void *pvParameters){
     if (BLEScan){
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("Operation loop"));
 
-      BLE99::runCurrentOperation(&currentOperation);
+      BLE_ESP32::runCurrentOperation(&currentOperation);
     }
     // come around every second
     vTaskDelay(1000/ portTICK_PERIOD_MS);
@@ -706,11 +707,11 @@ static void BLEEverySecond(bool restart){
 
   // check for application callbacks here.
   // this may remove complete items.
-  BLE99::mainThreadOpCallbacks();
+  BLE_ESP32::mainThreadOpCallbacks();
 
   // post any MQTT data if we completed anything in the last second
   if (completedOperations.size()){
-    BLE99::BLEPostMQTT(true); // send only completed
+    BLE_ESP32::BLEPostMQTT(true); // send only completed
   }
 
   if (BLEScan){
@@ -775,7 +776,7 @@ void CmndBLEOption(void){
 // moves the operation from 'currentOperations' to 'completedOperations'.
 
 // for safety's sake, only call from the run task
-static void runTaskDoneOperation(BLE99::generic_sensor_t** op){
+static void runTaskDoneOperation(BLE_ESP32::generic_sensor_t** op){
   if ((*op)->pClient){
     AddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in done"));
     try {
@@ -835,7 +836,7 @@ void addOperation(std::deque<generic_sensor_t*> *ops, generic_sensor_t** op){
 }
 
 
-int extQueueOperation(BLE99::generic_sensor_t** op){
+int extQueueOperation(BLE_ESP32::generic_sensor_t** op){
   if (!op) {
     AddLog_P(LOG_LEVEL_ERROR,PSTR("op invalid in extQueueOperation"));
     return false;
@@ -856,7 +857,7 @@ int extQueueOperation(BLE99::generic_sensor_t** op){
 
 // this runs one operation
 // if the passed pointer is empty, it tries to get a next one.
-static void runCurrentOperation(BLE99::generic_sensor_t** pCurrentOperation){
+static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation){
   if (!pCurrentOperation) return;
   if (!BLEScan) return;
 
@@ -894,7 +895,7 @@ static void runCurrentOperation(BLE99::generic_sensor_t** pCurrentOperation){
     case GEN_STATE_NOTIFIED:
       // just stay here until this is removed by the main thread
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("operation complete"));
-      BLE99::runTaskDoneOperation(pCurrentOperation);
+      BLE_ESP32::runTaskDoneOperation(pCurrentOperation);
       return;
       break;
 
@@ -911,7 +912,7 @@ static void runCurrentOperation(BLE99::generic_sensor_t** pCurrentOperation){
 
   if ((*pCurrentOperation)->state & GEN_STATE_FAILED){
     AddLog_P(LOG_LEVEL_ERROR,PSTR("operation failed"));
-    BLE99::runTaskDoneOperation(pCurrentOperation);
+    BLE_ESP32::runTaskDoneOperation(pCurrentOperation);
     return;
   }
 
@@ -968,7 +969,7 @@ static void runCurrentOperation(BLE99::generic_sensor_t** pCurrentOperation){
                   if (pNCharacteristic != nullptr) {
                     op->notifylen = 0;
                     if(pNCharacteristic->canNotify()) {
-                      if(pNCharacteristic->subscribe(true, BLE99::BLEGenNotifyCB)) {
+                      if(pNCharacteristic->subscribe(true, BLE_ESP32::BLEGenNotifyCB)) {
                         AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for notify"));
                         uint64_t now = esp_timer_get_time();
                         op->notifytimer = now;
@@ -981,7 +982,7 @@ static void runCurrentOperation(BLE99::generic_sensor_t** pCurrentOperation){
                       }
                     } else {
                       if(pNCharacteristic->canIndicate()) {
-                        if(pNCharacteristic->subscribe(false, BLE99::BLEGenNotifyCB)) {
+                        if(pNCharacteristic->subscribe(false, BLE_ESP32::BLEGenNotifyCB)) {
                           AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for indicate"));
                           op->state = GEN_STATE_WAITINDICATE;
                           uint64_t now = esp_timer_get_time();
@@ -1141,7 +1142,7 @@ void CmndBLEOperation(void){
   switch(op) {
     case 0:
       AddLog_P(LOG_LEVEL_INFO,PSTR("preview"));
-      BLE99::BLEPostMQTT(false); // show all operations, not just completed
+      BLE_ESP32::BLEPostMQTT(false); // show all operations, not just completed
       break;
     case 1:
       if (prepOperation){
@@ -1195,7 +1196,7 @@ void CmndBLEOperation(void){
 
     case 9:
       AddLog_P(LOG_LEVEL_INFO,PSTR("preview"));
-      BLE99::BLEPostMQTT(false); // show all operations, not just completed
+      BLE_ESP32::BLEPostMQTT(false); // show all operations, not just completed
       break;
     case 10:
       if (!prepOperation) {
@@ -1210,7 +1211,7 @@ void CmndBLEOperation(void){
 
       // this will set prepOperaiton to null
       addOperation(&queuedOperations, &prepOperation);
-      BLE99::BLEPostMQTT(false);
+      BLE_ESP32::BLEPostMQTT(false);
       break;
     /*case 11:
       if (!currentOperation) {
@@ -1225,7 +1226,7 @@ void CmndBLEOperation(void){
         sendExample();
 
         // dump what we have as diags
-        BLE99::BLEPostMQTT(false); // show all operations, not just completed
+        BLE_ESP32::BLEPostMQTT(false); // show all operations, not just completed
       } break;
   }
 
@@ -1436,38 +1437,38 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
  * Interface
 \*********************************************************************************************/
 
-bool Xsns99(uint8_t function)
+bool Xdrv46(uint8_t function)
 {
   if (!Settings.flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 BLE BLE
 
   bool result = false;
 
   if (FUNC_INIT == function){
-    BLE99::BLEPreInit();
+    BLE_ESP32::BLEPreInit();
   }
 
-  if (!BLE99::BLEInitState) {
+  if (!BLE_ESP32::BLEInitState) {
     if (function == FUNC_EVERY_250_MSECOND) {
-      BLE99::BLEInit();
+      BLE_ESP32::BLEInit();
     }
     return result;
   }
   switch (function) {
     case FUNC_EVERY_50_MSECOND:
-      BLE99::BLEEvery50mSecond();
+      BLE_ESP32::BLEEvery50mSecond();
       break;
     case FUNC_EVERY_SECOND:
-      BLE99::BLEEverySecond(false);
+      BLE_ESP32::BLEEverySecond(false);
       break;
     case FUNC_COMMAND:
-      result = DecodeCommand(BLE99::kBLE_Commands, BLE99::BLE_Commands);
+      result = DecodeCommand(BLE_ESP32::kBLE_Commands, BLE_ESP32::BLE_Commands);
       break;
     case FUNC_JSON_APPEND:
-      BLE99::BLEShow(1);
+      BLE_ESP32::BLEShow(1);
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:
-      BLE99::BLEShow(0);
+      BLE_ESP32::BLEShow(0);
       break;
 #endif  // USE_WEBSERVER
     }
@@ -1496,7 +1497,7 @@ bool Xsns99(uint8_t function)
 #define ATC         12
 
 // match ADVERTISMENT_CALLBACK
-int myAdvertCallback(BLE99::ble_advertisment_t *pStruct) {
+int myAdvertCallback(BLE_ESP32::ble_advertisment_t *pStruct) {
 
 /*
 struct ble_advertisment_t {
@@ -1568,13 +1569,13 @@ struct ble_advertisment_t {
 #ifdef EXAMPLE_OPERATION_CALLBACK
 
 // this one is used to demonstrate processing ALL operations
-int myOpCallback(BLE99::generic_sensor_t *pStruct){
+int myOpCallback(BLE_ESP32::generic_sensor_t *pStruct){
   AddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback"));
   return 0; // return true to block MQTT broadcast
 }
 
 // this one is used to demonstrate processing of ONE specific operation
-int myOpCallback2(BLE99::generic_sensor_t *pStruct){
+int myOpCallback2(BLE_ESP32::generic_sensor_t *pStruct){
   AddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback2"));
   return 1; // return true to block MQTT broadcast
 }
@@ -1585,27 +1586,27 @@ int myOpCallback2(BLE99::generic_sensor_t *pStruct){
 
 void installExamples(){
 #ifdef EXAMPLE_ADVERTISMENT_CALLBACK
-  BLE99::registerForAdvertismentCallbacks((const char *)"test myOpCallback", &myAdvertCallback);
+  BLE_ESP32::registerForAdvertismentCallbacks((const char *)"test myOpCallback", &myAdvertCallback);
 #endif
 
 #ifdef EXAMPLE_OPERATION_CALLBACK
-  BLE99:registerForOpCallbacks((const char *)"test myOpCallback", &myOpCallback);
+  BLE_ESP32:registerForOpCallbacks((const char *)"test myOpCallback", &myOpCallback);
 #endif
 }
 
 void sendExample(){
 #ifdef EXAMPLE_OPERATION_CALLBACK
-  BLE99::generic_sensor_t *op = new BLE99::generic_sensor_t;
-  memset(op, 0, sizeof(BLE99::generic_sensor_t));
+  BLE_ESP32::generic_sensor_t *op = new BLE_ESP32::generic_sensor_t;
+  memset(op, 0, sizeof(BLE_ESP32::generic_sensor_t));
   strncpy(op->MAC, "001A22092EE0", sizeof(op->MAC));
   strncpy(op->serviceStr, "3e135142-654f-9090-134a-a6ff5bb77046", sizeof(op->serviceStr));
   strncpy(op->characteristicStr, "3fa4585a-ce4a-3bad-db4b-b8df8179ea09", sizeof(op->characteristicStr));
   strncpy(op->notificationCharacteristicStr, "d0e8434d-cd29-0996-af41-6c90f4e0eb2a", sizeof(op->notificationCharacteristicStr));
-  op->writelen = BLE99::fromHex(op->dataToWrite, (char *)"4040", sizeof(op->dataToWrite));
+  op->writelen = BLE_ESP32::fromHex(op->dataToWrite, (char *)"4040", sizeof(op->dataToWrite));
 
   // this op will call us back on complete or failure.
   op->callback = (void *)myOpCallback2;
-  BLE99::extQueueOperation(&op);
+  BLE_ESP32::extQueueOperation(&op);
 #endif
 }
 

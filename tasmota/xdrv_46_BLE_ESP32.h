@@ -1,5 +1,5 @@
 /*
-  xsns_255_BLE_ESP32.ino - MI-BLE-sensors via ESP32 support for Tasmota
+  xdrv_46_BLE_ESP32.ino - BLE via ESP32 support for Tasmota
 
   Copyright (C) 2020  Christian Baars and Theo Arends and Simon Hailes
 
@@ -23,7 +23,7 @@
 */
 
 /*
-  xsns_99:
+  xdrv_46:
   This driver uses the ESP32 BLE functionality to hopefully provide enough
   BLE functionality to implement specific drivers on top of it.
 
@@ -45,7 +45,8 @@
       BLEOp9 - publish the 'operation in preparation' to MQTT.
       BLEOp10 - add the 'operation in preparation' to the queue of operations to perform.
 
-       
+  Other drivers can add callbacks to receive advertisments
+  Other drivers can add 'operations' to be performed and receive callbacks from the operation's success or failure
 
 Example:
 Write and request next notify:
@@ -66,8 +67,8 @@ state: 1 -> starting,
 
 The driver can also be used by other drivers, using the functions:
 
-void registerForAdvertismentCallbacks(ADVERTISMENT_CALLBACK* pFn);
-void registerForOpCallbacks(OPCOMPLETE_CALLBACK* pFn);
+void registerForAdvertismentCallbacks(char *loggingtag, ADVERTISMENT_CALLBACK* pFn);
+void registerForOpCallbacks(char *loggingtag, OPCOMPLETE_CALLBACK* pFn);
 bool extQueueOperation(generic_sensor_t** op);
 
 These allow other code to
@@ -94,7 +95,7 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 #include "NimBLEEddystoneTLM.h"
 #include "NimBLEBeacon.h"
 
-namespace BLE99 {
+namespace BLE_ESP32 {
 // generic sensor type used as during
 // connect/read/wrtie/notify operations
 // only one operation will happen at a time 
@@ -164,15 +165,15 @@ struct ble_advertisment_t {
 //  0 = let others see this, 
 //  1 = I processed this, no need to give it to the next callback
 //  2 = I want this device erased from the scan
-typedef int ADVERTISMENT_CALLBACK(BLE99::ble_advertisment_t *pStruct);
+typedef int ADVERTISMENT_CALLBACK(BLE_ESP32::ble_advertisment_t *pStruct);
 // returns - 0 = let others see this, 1 = I processed this, no need to give it to the next callback, or post on MQTT
-typedef int OPCOMPLETE_CALLBACK(BLE99::generic_sensor_t *pStruct);
+typedef int OPCOMPLETE_CALLBACK(BLE_ESP32::generic_sensor_t *pStruct);
 
 // tag is just a name for logging
-void registerForAdvertismentCallbacks(const char *tag, BLE99::ADVERTISMENT_CALLBACK* pFn);
-void registerForOpCallbacks(const char *tag, BLE99::OPCOMPLETE_CALLBACK* pFn);
+void registerForAdvertismentCallbacks(const char *tag, BLE_ESP32::ADVERTISMENT_CALLBACK* pFn);
+void registerForOpCallbacks(const char *tag, BLE_ESP32::OPCOMPLETE_CALLBACK* pFn);
 
-int extQueueOperation(BLE99::generic_sensor_t** op);
+int extQueueOperation(BLE_ESP32::generic_sensor_t** op);
 //
 ///////////////////////////////////////////////////////////////////////
 
