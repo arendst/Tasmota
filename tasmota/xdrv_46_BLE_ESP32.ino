@@ -82,7 +82,8 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 
 
 // TEMPORARILY define ESP32 and USE_BLE_ESP32 so VSCODE shows highlighting....
-#define VSCODE_DEV
+//#define VSCODE_DEV
+
 #ifdef VSCODE_DEV
 #define ESP32
 #define USE_BLE_ESP32
