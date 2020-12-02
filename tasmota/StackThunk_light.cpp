@@ -26,6 +26,7 @@
 */
 
 #include "my_user_config.h"
+#include "tasmota_configurations.h"
 
 #include <stdint.h>
 #include <stdlib.h>
