@@ -52,7 +52,7 @@ char ib_mac[14];
 
     BLEScan *ESP32BLEScan;
   #else
-    #include <xdrv_46_BLE_ESP32.h>
+    #include <xdrv_47_BLE_ESP32.h>
   #endif
 
   struct {

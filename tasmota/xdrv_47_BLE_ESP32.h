@@ -1,5 +1,5 @@
 /*
-  xdrv_46_BLE_ESP32.ino - BLE via ESP32 support for Tasmota
+  xdrv_47_BLE_ESP32.h - BLE via ESP32 support for Tasmota
 
   Copyright (C) 2020  Christian Baars and Theo Arends and Simon Hailes
 

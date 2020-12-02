@@ -1,5 +1,5 @@
 /*
-  xdrv_46_BLE_ESP32.ino - BLE via ESP32 support for Tasmota
+  xdrv_47_BLE_ESP32.ino - BLE via ESP32 support for Tasmota
 
   Copyright (C) 2020  Christian Baars and Theo Arends and Simon Hailes
 
@@ -23,7 +23,7 @@
 */
 
 /*
-  xdrv_46:
+  xdrv_47:
   This driver uses the ESP32 BLE functionality to hopefully provide enough
   BLE functionality to implement specific drivers on top of it.
 
@@ -93,10 +93,10 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 
 #ifdef USE_BLE_ESP32
 
-#define XDRV_46                    46
+#define XDRV_47                    47
 #define USE_MI_DECRYPTION
 
-#include "xdrv_46_BLE_ESP32.h"
+#include "xdrv_47_BLE_ESP32.h"
 #include <vector>
 #include <deque>
 #include <string.h>
@@ -1447,7 +1447,7 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv46(uint8_t function)
+bool Xdrv47(uint8_t function)
 {
   if (!Settings.flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 BLE BLE
 
