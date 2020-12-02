@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Support for multiple WeMo devices by Magic73 (#9208)
 - Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
 - TyuaMcu update 2/3 by Federico Leoni (#10004)
+- Optional CCloader support for CC25xx Zigbee or CC26xx BLE by Christian Baars (#9970)
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
@@ -20,12 +21,14 @@ All notable changes to this project will be documented in this file.
 - MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
 - Platformio compiler option `-free -fipa-pta` enabled (#9875)
 - IRremoteESP8266 library from v2.7.12 to v2.7.13
+- Shelly Dimmer 1 and 2 stm32 firmware from v51.4 to v51.5
 
 ### Fixed
 - KNX ESP32 UDP mulicastpackage (#9811)
 - Command ``gpio`` using non-indexed functions regression from v9.1.0 (#9962)
 - ESP32 TasmotaClient firmware upgrade (#9218)
 - Reset to defaults after 6 hours of DeepSleep (#9993)
+- Backlog timing wraparound (#9995)
 
 ### Removed
 
