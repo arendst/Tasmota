@@ -298,6 +298,7 @@ void NewHAssDiscovery(void)
   }
 
   stemp3[0] = '\0';
+  stemp4[0] = '\0';
   // Enable Discovery for Switches only if SetOption114 is enabled
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     char sname[TOPSZ];
