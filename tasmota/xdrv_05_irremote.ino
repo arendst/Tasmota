@@ -119,7 +119,6 @@ const char kIrRemoteProtocols[] PROGMEM = "UNKNOWN|RC5|RC6|NEC";
 #include <IRsend.h>
 
 IRsend *irsend = nullptr;
-bool irsend_active = false;
 
 void IrSendInit(void)
 {
@@ -185,12 +184,12 @@ void IrReceiveCheck(void)
       Uint64toHex(results.value, hvalue, 32);  // UNKNOWN is always 32 bits hash
     }
 
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value 0x%s, Decode %d"),
-              irsend_active, results.rawlen, results.overflow, results.bits, hvalue, results.decode_type);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "RawLen %d, Overflow %d, Bits %d, Value 0x%s, Decode %d"),
+              results.rawlen, results.overflow, results.bits, hvalue, results.decode_type);
 
     unsigned long now = millis();
 //    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
-    if (!irsend_active && (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE)) {
+    if (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) {
       ir_lasttime = now;
 
       char svalue[64];
@@ -291,7 +290,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (0x%s), repeat %d, protocol_code %d"),
     protocol_text, protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat, protocol_code);
 
-  irsend_active = true;
+  if (irrecv != nullptr) { irrecv->disableIRIn(); }
   switch (protocol_code) {  // Equals IRremoteESP8266.h enum decode_type_t
 #ifdef USE_IR_SEND_RC5
     case RC5:
@@ -306,9 +305,10 @@ uint32_t IrRemoteCmndIrSendJson(void)
       irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits, repeat); break;
 #endif
     default:
-      irsend_active = false;
+      if (irrecv != nullptr) { irrecv->enableIRIn(); }
       return IE_PROTO_UNSUPPORTED;
   }
+  if (irrecv != nullptr) { irrecv->enableIRIn(); }
 
   return IE_NO_ERROR;
 }
@@ -373,7 +373,6 @@ bool Xdrv05(uint8_t function)
           IrReceiveCheck();  // check if there's anything on IR side
         }
 #endif  // USE_IR_RECEIVE
-        irsend_active = false;  // re-enable IR reception
         break;
       case FUNC_COMMAND:
         if (PinUsed(GPIO_IRSEND)) {
