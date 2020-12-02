@@ -7,6 +7,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 - KNX read reply for Power (#9236, #9891)
 - Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
+- Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
+- Support for multiple WeMo devices by Magic73 (#9208)
+- Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
+- TyuaMcu update 2/3 by Federico Leoni (#10004)
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
@@ -14,10 +18,14 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Shelly Dimmer fw upgrade using WebGUI Firmware Upgrade and file from folder `tools/fw_shd_stm32/`
 - MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
+- Platformio compiler option `-free -fipa-pta` enabled (#9875)
+- IRremoteESP8266 library from v2.7.12 to v2.7.13
 
 ### Fixed
 - KNX ESP32 UDP mulicastpackage (#9811)
 - Command ``gpio`` using non-indexed functions regression from v9.1.0 (#9962)
+- ESP32 TasmotaClient firmware upgrade (#9218)
+- Reset to defaults after 6 hours of DeepSleep (#9993)
 
 ### Removed
 

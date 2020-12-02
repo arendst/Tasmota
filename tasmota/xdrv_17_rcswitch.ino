@@ -98,7 +98,7 @@ void CmndRfSend(void)
   bool error = false;
 
   if (XdrvMailbox.data_len) {
-    unsigned long data = 0;
+    unsigned long long data = 0;	// unsigned long long  => support payload >32bit
     unsigned int bits = 24;
     int protocol = 1;
     int repeat = 10;
@@ -109,7 +109,7 @@ void CmndRfSend(void)
     if (root) {
       // RFsend {"data":0x501014,"bits":24,"protocol":1,"repeat":10,"pulse":350}
       char parm_uc[10];
-      data = root.getUInt(PSTR(D_JSON_RF_DATA), data);
+      data = root.getULong(PSTR(D_JSON_RF_DATA), data);	// read payload data even >32bit
       bits = root.getUInt(PSTR(D_JSON_RF_BITS), bits);
       protocol = root.getInt(PSTR(D_JSON_RF_PROTOCOL), protocol);
       repeat = root.getInt(PSTR(D_JSON_RF_REPEAT), repeat);

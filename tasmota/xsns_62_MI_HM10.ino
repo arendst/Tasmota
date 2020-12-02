@@ -20,6 +20,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.6.0 20201127  added   - add BLOCK and OPTION command, send BLE scan via MQTT, refactoring, support negative temps
+  ---
   0.9.5.0 20201101  added   - bugfixes, better advertisement parsing, beacon, HASS-fixes, CGD1 now passive readable
   ---
   0.9.4.1 20200807  added   - add ATC, some optimizations and a bit more error handling
@@ -61,17 +63,17 @@ uint8_t  HM10_TASK_LIST[HM10_MAX_TASK_NUMBER+1][2];   // first value: kind of ta
 #pragma pack(1)  // byte-aligned structures to read the sensor data
 
 struct LYWSD0x_HT_t{
-  uint16_t temp;
+  int16_t temp;
   uint8_t hum;
   uint16_t volt;
 };
 struct CGD1_HT_t{
   uint8_t spare;
-  uint16_t temp;
+  int16_t temp;
   uint16_t hum;
 };
 struct Flora_TLMF_t{
-  uint16_t temp;
+  int16_t temp;
   uint8_t spare;
   uint32_t lux;
   uint8_t moist;
@@ -90,11 +92,11 @@ struct mi_beacon_t{
   uint8_t size;
   union {
     struct{ //0d
-      uint16_t temp;
+      int16_t temp;
       uint16_t hum;
     }HT;
     uint8_t bat; //0a
-    uint16_t temp; //04
+    int16_t temp; //04
     uint16_t hum; //06
     uint32_t lux; //07
     uint8_t moist; //08
@@ -110,7 +112,7 @@ struct mi_beacon_t{
 
 struct ATCPacket_t{
   uint8_t MAC[6];
-  int16_t temp; //sadly this is in wrong endianess
+  uint16_t temp; //sadly this is in wrong endianess
   uint8_t hum;
   uint8_t batPer;
   uint16_t batMV;
@@ -240,7 +242,9 @@ struct {
     uint32_t triggeredTele:1;
     uint32_t activeBeacon:1;
     uint32_t firstAutodiscoveryDone:1;
-  } mode;
+    uint32_t shallShowScanResult:1;
+    uint32_t shallShowBlockList:1;
+} mode;
   struct {
     uint8_t sensor;           // points to to the number 0...255
     uint8_t beaconScanCounter;
@@ -259,9 +263,14 @@ struct {
   char *rxBuffer;
 } HM10;
 
+struct MAC_t {
+  uint8_t buf[6];
+};
+
 std::vector<mi_sensor_t> MIBLEsensors;
 std::array<generic_beacon_t,4> MIBLEbeacons; // we support a fixed number
-std::vector<scan_entry_t> MINBLEscanResult;
+std::vector<scan_entry_t> MIBLEscanResult;
+std::vector<MAC_t> MIBLEBlockList;
 
 /*********************************************************************************************\
  * constants
@@ -272,7 +281,11 @@ std::vector<scan_entry_t> MINBLEscanResult;
 const char S_JSON_HM10_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_HM10 "%s\":%d}";
 const char S_JSON_HM10_COMMAND_SVALUE[] PROGMEM = "{\"" D_CMND_HM10 "%s%u\":\"%s\"}";
 const char S_JSON_HM10_COMMAND[] PROGMEM        = "{\"" D_CMND_HM10 "%s%s\"}";
-const char kHM10_Commands[] PROGMEM             = "Scan|AT|Period|Baud|Time|Auto|Page|Beacon";
+const char kHM10_Commands[] PROGMEM             = D_CMND_HM10"|"
+                                                  "Scan|AT|Period|Baud|Time|Auto|Page|Beacon|Block|Option";
+
+void (*const HM10_Commands[])(void) PROGMEM = { &CmndHM10Scan, &CmndHM10AT, &CmndHM10Period, &CmndHM10Baud, &CmndHM10Time, &CmndHM10Auto, &CmndHM10Page, &CmndHM10Beacon, &CmndHM10Block, &CmndHM10Option };
+
 
 #define FLORA       1
 #define MJ_HT_V1    2
@@ -322,17 +335,6 @@ const char * kHM10DeviceType[] PROGMEM = {kHM10DeviceType1,kHM10DeviceType2,kHM1
 /*********************************************************************************************\
  * enumerations
 \*********************************************************************************************/
-
-enum HM10_Commands {          // commands useable in console or rules
-  CMND_HM10_DISC_SCAN,        // re-scan for sensors
-  CMND_HM10_AT,               // send AT-command for debugging and special configuration
-  CMND_HM10_PERIOD,           // set period like TELE-period in seconds between read-cycles
-  CMND_HM10_BAUD,             // serial speed of ESP8266 (<-> HM10), does not change baud rate of HM10
-  CMND_HM10_TIME,             // set LYWSD02-Time from ESP8266-time
-  CMND_HM10_AUTO,             // do discovery scans permanently to receive MiBeacons in seconds between read-cycles
-  CMND_HM10_PAGE,             // sensor entries per web page, which will be shown alternated
-  CMND_HM10_BEACON            // add up to 4 beacons defined by their MAC addresses
-  };
 
 enum HM10_awaitData: uint8_t {
     none = 0,
@@ -669,7 +671,7 @@ void HM10SerialInit(void) {
 void HM10parseMiBeacon(char * _buf, uint32_t _slot){
   float _tempFloat;
   mi_beacon_t _beacon;
-  if (MIBLEsensors[_slot].type==MJ_HT_V1 || MIBLEsensors[_slot].type==CGG1){
+  if (MIBLEsensors[_slot].type==MJ_HT_V1 || MIBLEsensors[_slot].type==CGG1 || MIBLEsensors[_slot].type==YEERC){
     memcpy((uint8_t*)&_beacon+1,(uint8_t*)_buf, sizeof(_beacon)-1); // shift by one byte for the MJ_HT_V1
     memcpy((uint8_t*)&_beacon.MAC,(uint8_t*)&_beacon.MAC+1,6);    // but shift back the MAC
   }
@@ -702,7 +704,8 @@ void HM10parseMiBeacon(char * _buf, uint32_t _slot){
     case 0x01:
       MIBLEsensors[_slot].Btn=_beacon.Btn.num + (_beacon.Btn.longPress/2)*6;
       MIBLEsensors[_slot].eventType.Btn = 1;
-      // AddLog_P(LOG_LEVEL_DEBUG,PSTR("Mode 1: U16:  %u Button"), MIBLEsensors[_slot].Btn );
+      HM10.mode.shallTriggerTele = 1;
+    DEBUG_SENSOR_LOG(PSTR("Mode 1: U16:  %u Button"), MIBLEsensors[_slot].Btn );
     break;
     case 0x04:
     _tempFloat=(float)(_beacon.temp)/10.0f;
@@ -776,7 +779,7 @@ void HM10parseMiBeacon(char * _buf, uint32_t _slot){
 void HM10parseATC(char * _buf, uint32_t _slot){
   ATCPacket_t *_packet = (ATCPacket_t*)_buf;
   if(memcmp(_packet->MAC,MIBLEsensors.at(_slot).MAC,6)!=0) return; // data corruption
-  MIBLEsensors.at(_slot).temp = (float)(__builtin_bswap16(_packet->temp))/10.0f;
+  MIBLEsensors.at(_slot).temp = (float)(int16_t(__builtin_bswap16(_packet->temp)))/10.0f;
   MIBLEsensors.at(_slot).hum = (float)_packet->hum;
   MIBLEsensors.at(_slot).bat = _packet->batPer;
   MIBLEsensors[_slot].shallSendMQTT = 1;
@@ -1004,20 +1007,19 @@ void HM10HandleGenericBeacon(void){
     return;
   }
   // else handle scan
-  if(MINBLEscanResult.size()>19) {
+  if(MIBLEscanResult.size()>19) {
     AddLog_P(LOG_LEVEL_INFO,PSTR("HM10: Scan buffer full"));
     HM10.state.beaconScanCounter = 1;
     return;
   }
-  for(auto _scanResult : MINBLEscanResult){
+  for(auto _scanResult : MIBLEscanResult){
     if(memcmp(HM10.rxAdvertisement.MAC,_scanResult.MAC,6)==0){
       // AddLog_P(LOG_LEVEL_INFO,PSTR("HM10: known device"));
       return;
     }
   }
-  MINBLEscanResult.push_back(HM10.rxAdvertisement);
+  MIBLEscanResult.push_back(HM10.rxAdvertisement);
 }
-
 
 /**
  * @brief Add a beacon defined by its MAC-address, if only zeros are given, the beacon will be deactivated
@@ -1048,13 +1050,43 @@ void HM10addBeacon(uint8_t index, char* data){
  *
  */
 void HM10showScanResults(){
-  AddLog_P(LOG_LEVEL_INFO,PSTR("HM10: found %u devices in scan:"), MINBLEscanResult.size());
-  for(auto _scanResult : MINBLEscanResult){
+  size_t _size = MIBLEscanResult.size();
+  ResponseAppend_P(PSTR(",\"BLEScan\":{\"Found\":%u,\"Devices\":["), _size);
+  for(auto _scanResult : MIBLEscanResult){
     char _MAC[18];
     ToHex_P(_scanResult.MAC,6,_MAC,18,':');
-    AddLog_P(LOG_LEVEL_INFO,PSTR("MAC: %s _ CID: %04x _ SVC: %04x _ UUID: %04x _ TX: %02u _ RSSI: %d"), _MAC, _scanResult.CID, _scanResult.SVC, _scanResult.UUID, _scanResult.TX, _scanResult.RSSI);
+    ResponseAppend_P(PSTR("{\"MAC\":\"%s\",\"CID\":\"0x%04x\",\"SVC\":\"0x%04x\",\"UUID\":\"0x%04x\",\"RSSI\":%d},"), _MAC, _scanResult.CID, _scanResult.SVC, _scanResult.UUID, _scanResult.RSSI);
   }
-  MINBLEscanResult.clear();
+  if(_size != 0)TasmotaGlobal.mqtt_data[strlen(TasmotaGlobal.mqtt_data)-1] = 0; // delete last comma
+  ResponseAppend_P(PSTR("]}"));
+  MIBLEscanResult.clear();
+  HM10.mode.shallShowScanResult = 0;
+}
+
+void HM10showBlockList(){
+  ResponseAppend_P(PSTR(",\"Block\":["));
+  for(auto _scanResult : MIBLEBlockList){
+    char _MAC[18];
+    ToHex_P(_scanResult.buf,6,_MAC,18,':');
+    ResponseAppend_P(PSTR("\"%s\","), _MAC);
+  }
+  if(MIBLEBlockList.size()!=0) TasmotaGlobal.mqtt_data[strlen(TasmotaGlobal.mqtt_data)-1] = 0; // delete last comma
+  ResponseAppend_P(PSTR("]"));
+  HM10.mode.shallShowBlockList = 0;
+}
+
+bool HM10isInBlockList(uint8_t* MAC){
+  bool isBlocked = false;
+  for(auto &_blockedMAC : MIBLEBlockList){
+    if(memcmp(_blockedMAC.buf,MAC,6) == 0) isBlocked = true;
+  }
+  return isBlocked;
+}
+
+void HM10removeMIBLEsensor(uint8_t* MAC){
+  MIBLEsensors.erase( std::remove_if( MIBLEsensors.begin() , MIBLEsensors.end(), [MAC]( mi_sensor_t _sensor )->bool
+  { return (memcmp(_sensor.MAC,MAC,6) == 0); } 
+  ), end( MIBLEsensors ) );
 }
 /*********************************************************************************************\
  * handle the return value from the HM10
@@ -1119,11 +1151,6 @@ bool HM10SerialHandleFeedback(){                  // every 50 milliseconds
   if(i==0){
     if(HM10.mode.shallTriggerTele){ // let us use the spare time for other things
       HM10.mode.shallTriggerTele=0;
-      if(HM10.option.directBridgeMode){
-        HM10.mode.triggeredTele=0;
-        return success;
-      }
-      HM10.mode.triggeredTele=1;
       HM10triggerTele();
     }
     return success;
@@ -1473,7 +1500,8 @@ void HM10EverySecond(bool restart){
   if(HM10.state.beaconScanCounter!=0){
     HM10.state.beaconScanCounter--;
     if(HM10.state.beaconScanCounter==0){
-      HM10showScanResults();
+      HM10.mode.shallShowScanResult = 1;
+      HM10triggerTele();
     }
   }
 
@@ -1492,6 +1520,10 @@ void HM10EverySecond(bool restart){
   }
 
   if(_counter==0) {
+    if(MIBLEsensors.size() == 0){
+      _counter++;
+      return;
+    }
     HM10.state.sensor = _nextSensorSlot;
     _nextSensorSlot++;
     HM10.mode.pending_task = 1;
@@ -1527,127 +1559,6 @@ void HM10EverySecond(bool restart){
   }
 }
 
-/*********************************************************************************************\
- * Commands
-\*********************************************************************************************/
-
-bool HM10Cmd(void) {
-  char command[CMDSZ];
-  bool serviced = true;
-  uint8_t disp_len = strlen(D_CMND_HM10);
-
-  if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_HM10), disp_len)) {  // prefix
-    uint32_t command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + disp_len, kHM10_Commands);
-    switch (command_code) {
-      case CMND_HM10_PERIOD:
-        if (XdrvMailbox.data_len > 0) {
-          if (XdrvMailbox.payload==1) {
-            HM10EverySecond(true);
-            XdrvMailbox.payload = HM10.period;
-            }
-          else {
-            HM10.period = XdrvMailbox.payload;
-          }
-        }
-        else {
-          XdrvMailbox.payload = HM10.period;
-        }
-        Response_P(S_JSON_HM10_COMMAND_NVALUE, command, XdrvMailbox.payload);
-        break;
-      case CMND_HM10_AUTO:
-        if (XdrvMailbox.data_len > 0) {
-          if (XdrvMailbox.payload>0) {
-            HM10.mode.autoScan = 1;
-            HM10.autoScanInterval = XdrvMailbox.payload;
-          }
-          else {
-            HM10.mode.autoScan = 0;
-            HM10.autoScanInterval = 0;
-          }
-        }
-        else {
-          XdrvMailbox.payload = HM10.autoScanInterval;
-        }
-        Response_P(S_JSON_HM10_COMMAND_NVALUE, command, XdrvMailbox.payload);
-        break;
-      case CMND_HM10_BAUD:
-        if (XdrvMailbox.data_len > 0) {
-            HM10.serialSpeed = XdrvMailbox.payload;
-            HM10Serial->begin(HM10.serialSpeed);
-        }
-        else {
-          XdrvMailbox.payload = HM10.serialSpeed;
-        }
-        Response_P(S_JSON_HM10_COMMAND_NVALUE, command, XdrvMailbox.payload);
-        break;
-      case CMND_HM10_TIME:
-        if (XdrvMailbox.data_len > 0) {
-          if(MIBLEsensors.size()>XdrvMailbox.payload){
-            if(MIBLEsensors[XdrvMailbox.payload].type == LYWSD02){
-              HM10.state.sensor = XdrvMailbox.payload;
-              HM10_Time_LYWSD02();
-              }
-            }
-          }
-        Response_P(S_JSON_HM10_COMMAND_NVALUE, command, XdrvMailbox.payload);
-        break;
-      case CMND_HM10_PAGE:
-        if (XdrvMailbox.data_len > 0) {
-            if (XdrvMailbox.payload == 0) XdrvMailbox.payload = HM10.perPage; // ignore 0
-            HM10.perPage = XdrvMailbox.payload;
-          }
-        else XdrvMailbox.payload = HM10.perPage;
-        Response_P(S_JSON_HM10_COMMAND_NVALUE, command, XdrvMailbox.payload);
-        break;
-      case CMND_HM10_AT:
-        HM10Serial->write("AT");               // without an argument this will disconnect
-        if (strlen(XdrvMailbox.data)!=0) {
-          HM10Serial->write("+");
-          HM10Serial->write(XdrvMailbox.data); // pass everything without checks
-          Response_P(S_JSON_HM10_COMMAND, ":AT+",XdrvMailbox.data);
-        }
-        else Response_P(S_JSON_HM10_COMMAND, ":AT",XdrvMailbox.data);
-        break;
-      case CMND_HM10_DISC_SCAN:
-        HM10_Discovery_Scan();
-        Response_P(S_JSON_HM10_COMMAND, command, "");
-        break;
-      case CMND_HM10_BEACON:
-        if (XdrvMailbox.data_len == 0) {
-            switch(XdrvMailbox.index){
-              case 0:
-              HM10.state.beaconScanCounter = 8;
-              Response_P(S_JSON_HM10_COMMAND_SVALUE, command, XdrvMailbox.index,PSTR("scanning"));
-              break;
-              case 1: case 2: case 3: case 4:
-              char _MAC[18];
-              ToHex_P(MIBLEbeacons[XdrvMailbox.index-1].MAC,6,_MAC,18,':');
-              Response_P(S_JSON_HM10_COMMAND_SVALUE, command, XdrvMailbox.index,_MAC);
-              break;
-            }
-          }
-        else {
-            if(XdrvMailbox.data_len == 12 || XdrvMailbox.data_len == 17){ // MAC-string without or with colons
-              switch(XdrvMailbox.index){
-                case 1: case 2: case 3: case 4:
-                HM10addBeacon(XdrvMailbox.index,XdrvMailbox.data);
-                break;
-              }
-            }
-            Response_P(S_JSON_HM10_COMMAND_SVALUE, command, XdrvMailbox.index,XdrvMailbox.data);
-        }
-        break;
-      default:
-        // else for Unknown command
-        serviced = false;
-      break;
-    }
-  } else {
-    return false;
-  }
-  return serviced;
-}
-
 /**
  * @brief trigger real-time message
  *
@@ -1663,11 +1574,179 @@ void HM10triggerTele(void){
     }
 }
 
+
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+void CmndHM10Period() {
+  if (XdrvMailbox.data_len > 0) {
+    if (XdrvMailbox.payload==1) {
+      HM10EverySecond(true);
+      XdrvMailbox.payload = HM10.period;
+      }
+    else {
+      HM10.period = XdrvMailbox.payload;
+    }
+  }
+  else {
+    XdrvMailbox.payload = HM10.period;
+  }
+  ResponseCmndNumber(HM10.period);
+}
+
+void CmndHM10Auto() {
+  if (XdrvMailbox.data_len > 0) {
+    if (XdrvMailbox.payload>0) {
+      HM10.mode.autoScan = 1;
+      HM10.autoScanInterval = XdrvMailbox.payload;
+    }
+    else {
+      HM10.mode.autoScan = 0;
+      HM10.autoScanInterval = 0;
+    }
+  }
+  else {
+    XdrvMailbox.payload = HM10.autoScanInterval;
+  }
+  ResponseCmndNumber(HM10.autoScanInterval);
+}
+
+void CmndHM10Baud() {
+  if (XdrvMailbox.data_len > 0) {
+      HM10.serialSpeed = XdrvMailbox.payload;
+      HM10Serial->begin(HM10.serialSpeed);
+  }
+  else {
+    XdrvMailbox.payload = HM10.serialSpeed;
+  }
+  ResponseCmndNumber(HM10.serialSpeed);
+}
+
+void CmndHM10Time() {
+  if (XdrvMailbox.data_len > 0) {
+    if(MIBLEsensors.size()>XdrvMailbox.payload){
+      if(MIBLEsensors[XdrvMailbox.payload].type == LYWSD02){
+        HM10.state.sensor = XdrvMailbox.payload;
+        HM10_Time_LYWSD02();
+        }
+      }
+    }
+  ResponseCmndNumber(XdrvMailbox.payload);
+}
+
+void CmndHM10Page() {
+  if (XdrvMailbox.data_len > 0) {
+      if (XdrvMailbox.payload == 0) XdrvMailbox.payload = HM10.perPage; // ignore 0
+      HM10.perPage = XdrvMailbox.payload;
+    }
+  else XdrvMailbox.payload = HM10.perPage;
+  ResponseCmndNumber(HM10.perPage);
+}
+
+void CmndHM10AT() {
+  HM10Serial->write("AT");               // without an argument this will disconnect
+  if (strlen(XdrvMailbox.data)!=0) {
+    HM10Serial->write("+");
+    HM10Serial->write(XdrvMailbox.data); // pass everything without checks
+    Response_P(S_JSON_HM10_COMMAND, ":AT+",XdrvMailbox.data);
+  }
+  else Response_P(S_JSON_HM10_COMMAND, ":AT",XdrvMailbox.data);
+}
+
+void CmndHM10Scan() {
+  HM10_Discovery_Scan();
+  ResponseCmndDone();
+}
+
+void CmndHM10Beacon() {
+  if (XdrvMailbox.data_len == 0) {
+    switch(XdrvMailbox.index){
+      case 0:
+      HM10.state.beaconScanCounter = 8;
+      ResponseCmndIdxChar(PSTR("Scanning..."));
+      break;
+      case 1: case 2: case 3: case 4:
+      char _MAC[18];
+      ResponseCmndIdxChar(ToHex_P(MIBLEbeacons[XdrvMailbox.index-1].MAC, 6, _MAC, 18, ':'));
+      break;
+    }
+  } else {
+    if(XdrvMailbox.data_len == 12 || XdrvMailbox.data_len == 17){ // MAC-string without or with colons
+      switch(XdrvMailbox.index){
+        case 1: case 2: case 3: case 4:
+        HM10addBeacon(XdrvMailbox.index,XdrvMailbox.data);
+        break;
+      }
+    }
+  ResponseCmndIdxChar(XdrvMailbox.data);
+  }
+}
+
+void CmndHM10Block(void){
+  if (XdrvMailbox.data_len == 0) {
+    switch (XdrvMailbox.index) {
+      case 0:
+        MIBLEBlockList.clear();
+        // AddLog_P(LOG_LEVEL_INFO,PSTR("HM10: size of ilist: %u"), MIBLEBlockList.size());
+        ResponseCmndIdxChar(PSTR("block list cleared"));
+        break;
+      case 1:
+        ResponseCmndIdxChar(PSTR("show block list"));
+        break;  
+    }
+  }
+  else {
+    MAC_t _MACasBytes;
+    HM10HexStringToBytes(XdrvMailbox.data,_MACasBytes.buf);
+    switch (XdrvMailbox.index) {
+      case 0:
+        MIBLEBlockList.erase( std::remove_if( begin( MIBLEBlockList ), end( MIBLEBlockList ), [_MACasBytes]( MAC_t& _entry )->bool
+          { return (memcmp(_entry.buf,_MACasBytes.buf,6) == 0); } 
+          ), end( MIBLEBlockList ) );
+        ResponseCmndIdxChar(PSTR("MAC not blocked anymore"));
+        break;
+      case 1:
+        bool _notYetInList = true;
+        for (auto &_entry : MIBLEBlockList) {
+          if (memcmp(_entry.buf,_MACasBytes.buf,6) == 0){
+            _notYetInList = false;
+          }
+        }
+        if (_notYetInList) {
+          MIBLEBlockList.push_back(_MACasBytes);
+          ResponseCmndIdxChar(XdrvMailbox.data);
+          HM10removeMIBLEsensor(_MACasBytes.buf);
+        }
+        // AddLog_P(LOG_LEVEL_INFO,PSTR("HM10: size of ilist: %u"), MIBLEBlockList.size());
+        break;  
+    }
+  }
+  HM10.mode.shallShowBlockList = 1;
+  HM10triggerTele();
+}
+
+void CmndHM10Option(void){
+  bool onOff = atoi(XdrvMailbox.data);
+  switch(XdrvMailbox.index) {
+    case 0:
+      HM10.option.allwaysAggregate = onOff;
+      break;
+    case 1:
+      HM10.option.noSummary = onOff;
+      break;
+    case 2:
+      HM10.option.directBridgeMode = onOff;
+      break;
+  }
+  ResponseCmndDone();
+}
+
 /*********************************************************************************************\
  * Presentation
 \*********************************************************************************************/
 
-const char HTTP_HM10[] PROGMEM = "{s}HM10 FW%u   V0950{m}%u%s / %u{e}";
+const char HTTP_HM10[] PROGMEM = "{s}HM10 FW%u   V0960{m}%u%s / %u{e}";
 const char HTTP_HM10_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
 const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u%%{e}";
 const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
@@ -1677,6 +1756,12 @@ const char HTTP_HM10_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 void HM10Show(bool json)
 {
   if (json) {
+    if(HM10.mode.shallShowScanResult) {
+      return HM10showScanResults();
+    }
+    else if(HM10.mode.shallShowBlockList) {
+      return HM10showBlockList();
+    }
 #ifdef USE_HOME_ASSISTANT
     bool _noSummarySave = HM10.option.noSummary;
     bool _minimalSummarySave = HM10.option.minimalSummary;
@@ -1963,7 +2048,7 @@ bool Xsns62(uint8_t function)
         HM10EverySecond(false);
         break;
       case FUNC_COMMAND:
-        result = HM10Cmd();
+        result = DecodeCommand(kHM10_Commands, HM10_Commands);
         break;
       case FUNC_JSON_APPEND:
         HM10Show(1);

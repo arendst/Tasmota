@@ -687,7 +687,7 @@ void stationKeepAliveNow(void) {
 }
 
 void wifiKeepAlive(void) {
-  static uint32_t wifi_timer = 0;                            // Wifi keepalive timer
+  static uint32_t wifi_timer = millis();                     // Wifi keepalive timer
 
   uint32_t wifiTimerSec = Settings.param[P_ARP_GRATUITOUS];  // 8-bits number of seconds, or minutes if > 100
 
@@ -734,10 +734,17 @@ uint32_t WifiGetNtp(void) {
 
   IPAddress time_server_ip;
 
+  char fallback_ntp_server[16];
+  snprintf_P(fallback_ntp_server, sizeof(fallback_ntp_server), PSTR("%d.pool.ntp.org"), random(0,3));
+
   char* ntp_server;
   bool resolved_ip = false;
-  for (uint32_t i = 0; i < MAX_NTP_SERVERS; i++) {
-    ntp_server = SettingsText(SET_NTPSERVER1 + ntp_server_id);
+  for (uint32_t i = 0; i <= MAX_NTP_SERVERS; i++) {
+    if (i < MAX_NTP_SERVERS) {
+      ntp_server = SettingsText(SET_NTPSERVER1 + ntp_server_id);
+    } else {
+      ntp_server = fallback_ntp_server;
+    }
     if (strlen(ntp_server)) {
       resolved_ip = (WiFi.hostByName(ntp_server, time_server_ip) == 1);
       if (255 == time_server_ip[0]) { resolved_ip = false; }

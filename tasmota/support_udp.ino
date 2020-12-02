@@ -91,12 +91,13 @@ bool UdpConnect(void)
         udp_response_mutex = false;
         udp_connected = true;
       }
-#else // ESP32
+#endif  // ESP8266
+#ifdef ESP32
     if (PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), 1900)) {
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
       udp_response_mutex = false;
       udp_connected = true;
-#endif
+#endif  // ESP32
     }
     if (!udp_connected) {     // if connection failed
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_JOIN_FAILED));
@@ -118,13 +119,14 @@ void PollUdp(void)
       packet->buf[packet->len] = 0;   // add NULL at the end of the packer
       char * packet_buffer = (char*) &packet->buf;
       int32_t len = packet->len;
-#else // ESP32
+#endif  // ESP8266
+#ifdef ESP32
     while (PortUdp.parsePacket()) {
       char packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP/SSDP packet
 
       int32_t len = PortUdp.read(packet_buffer, UDP_BUFFER_SIZE -1);
       packet_buffer[len] = 0;
-#endif
+#endif  // ESP32
       AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
       // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
 

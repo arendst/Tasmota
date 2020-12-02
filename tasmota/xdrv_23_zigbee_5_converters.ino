@@ -757,6 +757,7 @@ public:
 
   void parseReportAttributes(Z_attribute_list& attr_list);
   void generateSyntheticAttributes(Z_attribute_list& attr_list);
+  void removeInvalidAttributes(Z_attribute_list& attr_list);
   void computeSyntheticAttributes(Z_attribute_list& attr_list);
   void generateCallBacks(Z_attribute_list& attr_list);
   void parseReadAttributes(Z_attribute_list& attr_list);
@@ -1242,6 +1243,26 @@ void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
 }
 
 //
+// Remove invalid values
+//
+void ZCLFrame::removeInvalidAttributes(Z_attribute_list& attr_list) {
+  // scan through attributes and apply specific converters
+  for (auto &attr : attr_list) {
+    if (attr.key_is_str) { continue; }    // pass if key is a name
+    uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
+
+    switch (ccccaaaa) {      // 0xccccaaaa . c=cluster, a=attribute
+      case 0x04020000:       // Temperature
+        if (attr.getInt() <= -10000) {
+          // #9978, remove temperature of -100.00°C sent by lumi.weather
+          attr_list.removeAttribute(&attr);
+        }
+        break;
+    }
+  }
+}
+
+//
 // Compute new attributes based on the standard set
 // Note: both function are now split to compute on extracted attributes
 //
@@ -1368,7 +1389,7 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
 
   uint16_t read_attr_ids[len/2];
 
-  attr_list.addAttribute(F(D_CMND_ZIGBEE_CLUSTER)).setUInt(_cluster_id);
+  attr_list.addAttributePMEM(PSTR(D_CMND_ZIGBEE_CLUSTER)).setUInt(_cluster_id);
 
   JsonGeneratorArray attr_numbers;
   Z_attribute_list attr_names;
@@ -1390,8 +1411,8 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
     }
     i += 2;
   }
-  attr_list.addAttribute(F("Read")).setStrRaw(attr_numbers.toString().c_str());
-  attr_list.addAttribute(F("ReadNames")).setStrRaw(attr_names.toString(true).c_str());
+  attr_list.addAttributePMEM(PSTR("Read")).setStrRaw(attr_numbers.toString().c_str());
+  attr_list.addAttributePMEM(PSTR("ReadNames")).setStrRaw(attr_names.toString(true).c_str());
 
   // call auto-responder
   autoResponder(read_attr_ids, len/2);
@@ -1407,8 +1428,8 @@ void ZCLFrame::parseConfigAttributes(Z_attribute_list& attr_list) {
     uint16_t attr_id = _payload.get8(i+2);
 
     Z_attribute_list attr_config_response;
-    attr_config_response.addAttribute(F("Status")).setUInt(status);
-    attr_config_response.addAttribute(F("StatusMsg")).setStr(getZigbeeStatusMessage(status).c_str());
+    attr_config_response.addAttributePMEM(PSTR("Status")).setUInt(status);
+    attr_config_response.addAttributePMEM(PSTR("StatusMsg")).setStr(getZigbeeStatusMessage(status).c_str());
 
     const __FlashStringHelper* attr_name = zigbeeFindAttributeById(_cluster_id, attr_id, nullptr, nullptr);
     if (attr_name) {
@@ -1418,7 +1439,7 @@ void ZCLFrame::parseConfigAttributes(Z_attribute_list& attr_list) {
     }
   }
 
-  Z_attribute &attr_1 = attr_list.addAttribute(F("ConfigResponse"));
+  Z_attribute &attr_1 = attr_list.addAttributePMEM(PSTR("ConfigResponse"));
   attr_1.setStrRaw(attr_config_list.toString(true).c_str());
 }
 
@@ -1427,7 +1448,7 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
   uint32_t i = 0;
   uint32_t len = _payload.len();
 
-  Z_attribute &attr_root = attr_list.addAttribute(F("ReadConfig"));
+  Z_attribute &attr_root = attr_list.addAttributePMEM(PSTR("ReadConfig"));
   Z_attribute_list attr_1;
 
   while (len >= i + 4) {
@@ -1437,7 +1458,7 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
 
     Z_attribute_list attr_2;
     if (direction) {
-      attr_2.addAttribute(F("DirectionReceived")).setBool(true);
+      attr_2.addAttributePMEM(PSTR("DirectionReceived")).setBool(true);
     }
 
     // find the attribute name
@@ -1456,15 +1477,15 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
     }
     i += 4;
     if (0 != status) {
-      attr_2.addAttribute(F("Status")).setUInt(status);
-      attr_2.addAttribute(F("StatusMsg")).setStr(getZigbeeStatusMessage(status).c_str());
+      attr_2.addAttributePMEM(PSTR("Status")).setUInt(status);
+      attr_2.addAttributePMEM(PSTR("StatusMsg")).setStr(getZigbeeStatusMessage(status).c_str());
     } else {
       // no error, decode data
       if (direction) {
         // only Timeout period is present
         uint16_t attr_timeout = _payload.get16(i);
         i += 2;
-        attr_2.addAttribute(F("TimeoutPeriod")).setUInt((0xFFFF == attr_timeout) ? -1 : attr_timeout);
+        attr_2.addAttributePMEM(PSTR("TimeoutPeriod")).setUInt((0xFFFF == attr_timeout) ? -1 : attr_timeout);
       } else {
         // direction == 0, we have a data type
         uint8_t attr_type = _payload.get8(i);
@@ -1472,11 +1493,11 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
         uint16_t attr_min_interval = _payload.get16(i+1);
         uint16_t attr_max_interval = _payload.get16(i+3);
         i += 5;
-        attr_2.addAttribute(F("MinInterval")).setUInt((0xFFFF == attr_min_interval) ? -1 : attr_min_interval);
-        attr_2.addAttribute(F("MaxInterval")).setUInt((0xFFFF == attr_max_interval) ? -1 : attr_max_interval);
+        attr_2.addAttributePMEM(PSTR("MinInterval")).setUInt((0xFFFF == attr_min_interval) ? -1 : attr_min_interval);
+        attr_2.addAttributePMEM(PSTR("MaxInterval")).setUInt((0xFFFF == attr_max_interval) ? -1 : attr_max_interval);
         if (!attr_discrete) {
           // decode Reportable Change
-          Z_attribute &attr_change = attr_2.addAttribute(F("ReportableChange"));
+          Z_attribute &attr_change = attr_2.addAttributePMEM(PSTR("ReportableChange"));
           i += parseSingleAttribute(attr_change, _payload, i, attr_type);
           if ((1 != multiplier) && (0 != multiplier)) {
             float fval = attr_change.getFloat();
@@ -1520,21 +1541,21 @@ void ZCLFrame::parseResponse(void) {
   // "Device"
   char s[12];
   snprintf_P(s, sizeof(s), PSTR("0x%04X"), _srcaddr);
-  attr_list.addAttribute(F(D_JSON_ZIGBEE_DEVICE)).setStr(s);
+  attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_DEVICE)).setStr(s);
   // "Name"
   const char * friendlyName = zigbee_devices.getFriendlyName(_srcaddr);
   if (friendlyName) {
-    attr_list.addAttribute(F(D_JSON_ZIGBEE_NAME)).setStr(friendlyName);
+    attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_NAME)).setStr(friendlyName);
   }
   // "Command"
   snprintf_P(s, sizeof(s), PSTR("%04X!%02X"), _cluster_id, cmd);
-  attr_list.addAttribute(F(D_JSON_ZIGBEE_CMD)).setStr(s);
+  attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_CMD)).setStr(s);
   // "Status"
-  attr_list.addAttribute(F(D_JSON_ZIGBEE_STATUS)).setUInt(status);
+  attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_STATUS)).setUInt(status);
   // "StatusMessage"
-  attr_list.addAttribute(F(D_JSON_ZIGBEE_STATUS_MSG)).setStr(getZigbeeStatusMessage(status).c_str());
+  attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_STATUS_MSG)).setStr(getZigbeeStatusMessage(status).c_str());
   // Add Endpoint
-  attr_list.addAttribute(F(D_CMND_ZIGBEE_ENDPOINT)).setUInt(_srcendpoint);
+  attr_list.addAttributePMEM(PSTR(D_CMND_ZIGBEE_ENDPOINT)).setUInt(_srcendpoint);
   // Add Group if non-zero
   if (_groupaddr) {     // TODO what about group zero
     attr_list.group_id = _groupaddr;
@@ -1607,11 +1628,11 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
           }
         } else if (modelId.startsWith(F("lumi.sensor_smoke"))) {   // gas leak
           if (0x64 == attrid) {
-            attr_list.addAttribute(F("SmokeDensity")).copyVal(attr);
+            attr_list.addAttributePMEM(PSTR("SmokeDensity")).copyVal(attr);
           }
         } else if (modelId.startsWith(F("lumi.sensor_natgas"))) {   // gas leak
           if (0x64 == attrid) {
-            attr_list.addAttribute(F("GasDensity")).copyVal(attr);
+            attr_list.addAttributePMEM(PSTR("GasDensity")).copyVal(attr);
           }
         } else if (modelId.startsWith(F("lumi.sensor_ht")) ||
             modelId.equals(F("lumi.sens")) ||
@@ -1810,7 +1831,7 @@ void ZCLFrame::syntheticAqaraVibration(class Z_attribute_list &attr_list, class 
           int32_t Angle_Y = 0.5f + atanf(Y/sqrtf(x*x+z*z)) * f_180pi;
           int32_t Angle_Z = 0.5f + atanf(Z/sqrtf(x*x+y*y)) * f_180pi;
           snprintf_P(temp, sizeof(temp), "[%i,%i,%i]", Angle_X, Angle_Y, Angle_Z);
-          attr_list.addAttribute(F("AqaraAngles")).setStrRaw(temp);
+          attr_list.addAttributePMEM(PSTR("AqaraAngles")).setStrRaw(temp);
         }
       }
       break;
@@ -2035,19 +2056,21 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
         case Zenum8:
         case Zmap8:
         case Zbool:
-        case Zuint8:  uval32 = *(uint8_t*)attr_address;   if (uval32 != 0xFF)        data_size = 8;   break;
+        case Zuint8:  uval32 = *(uint8_t*)attr_address;   if (uval32 !=  0x000000FF) data_size = 8;   break;
         case Zmap16:
         case Zenum16:
-        case Zuint16: uval32 = *(uint16_t*)attr_address;  if (uval32 != 0xFFFF)      data_size = 16;  break;
-        case Zuint32: uval32 = *(uint32_t*)attr_address;  if (uval32 != 0xFFFFFFFF)  data_size = 32;  break;
-        case Zint8:   ival32 = *(int8_t*)attr_address;    if (ival32 != -0x80)       data_size = -8;  break;
-        case Zint16:  ival32 = *(int16_t*)attr_address;   if (ival32 != -0x8000)     data_size = -16; break;
+        case Zuint16: uval32 = *(uint16_t*)attr_address;  if (uval32 !=  0x0000FFFF) data_size = 16;  break;
+        case Zuint32: uval32 = *(uint32_t*)attr_address;  if (uval32 !=  0xFFFFFFFF) data_size = 32;  break;
+        case Zint8:   ival32 = *(int8_t*)attr_address;    if (ival32 != -0xFFFFFF80) data_size = -8;  break;
+        case Zint16:  ival32 = *(int16_t*)attr_address;   if (ival32 != -0xFFFF8000) data_size = -16; break;
         case Zint32:  ival32 = *(int32_t*)attr_address;   if (ival32 != -0x80000000) data_size = -32; break;
       }
       if (data_size != 0) {
         Z_attribute & attr = attr_list.addAttribute(conv_name);
 
-        float fval = (data_size > 0) ? uval32 : ival32;
+        float fval;
+        if (data_size > 0) { fval = uval32; }
+        else               { fval = ival32; }
         if ((1 != multiplier) && (0 != multiplier)) {
           if (multiplier > 0) { fval =  fval * multiplier; }
           else                { fval =  fval / (-multiplier); }

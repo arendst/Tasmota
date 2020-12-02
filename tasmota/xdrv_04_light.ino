@@ -93,8 +93,8 @@
  *     1 channel  - 0:Brightness
  *     2 channels - 0:Coldwhite 1:Warmwhite
  *     3 channels - 0:Red 1:Green 2:Blue
- *     4 chennels - 0:Red 1:Green 2:Blue 3:White
- *     5 chennels - 0:Red 1:Green 2:Blue 3:ColdWhite 4:Warmwhite
+ *     4 channels - 0:Red 1:Green 2:Blue 3:White
+ *     5 channels - 0:Red 1:Green 2:Blue 3:ColdWhite 4:Warmwhite
  *
  * 3.  In LightAnimate(), final PWM values are computed at next tick.
  *  .a If color did not change since last tick - ignore.
@@ -288,6 +288,7 @@ struct LIGHT {
   bool     fade_initialized = false;      // dont't fade at startup
   bool     fade_running = false;
 #ifdef USE_DEVICE_GROUPS
+  uint8_t  device_group_index;
   uint8_t  last_scheme = 0;
   bool     devgrp_no_channels_out = false; // don't share channels with device group (e.g. if scheme set by other device)
 #ifdef USE_DGR_LIGHT_SEQUENCE
@@ -357,7 +358,7 @@ static uint32_t min3(uint32_t a, uint32_t b, uint32_t c) {
 //
 // Note:  If you want the actual RGB, you need to multiply with Bri, or use getActualRGBCW()
 // Note: all values are stored as unsigned integer, no floats.
-// Note: you can query vaules from this singleton. But to change values,
+// Note: you can query values from this singleton. But to change values,
 //   use the LightController - changing this object will have no effect on actual light.
 //
 class LightStateClass {
@@ -1180,7 +1181,7 @@ LightControllerClass light_controller = LightControllerClass(light_state);
 /*********************************************************************************************\
  * Change scales from 8 bits to 10 bits and vice versa
 \*********************************************************************************************/
-// 8 to 10 to 8 is garanteed to give the same result
+// 8 to 10 to 8 is guaranteed to give the same result
 uint16_t change8to10(uint8_t v) {
   return changeUIntScale(v, 0, 255, 0, 1023);
 }
@@ -1246,9 +1247,9 @@ void LightPwmOffset(uint32_t offset)
 
 bool LightModuleInit(void)
 {
-  TasmotaGlobal.light_type = LT_BASIC;                    // Use basic PWM control if SetOption15 = 0
+  TasmotaGlobal.light_type = LT_BASIC;                 // Use basic PWM control if SetOption15 = 0
 
-  if (Settings.flag.pwm_control) {          // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
+  if (Settings.flag.pwm_control) {                     // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
     for (uint32_t i = 0; i < MAX_PWMS; i++) {
       if (PinUsed(GPIO_PWM1, i)) { TasmotaGlobal.light_type++; }  // Use Dimmer/Color control for all PWM as SetOption15 = 1
     }
@@ -1263,16 +1264,16 @@ bool LightModuleInit(void)
     TasmotaGlobal.light_type = LT_PWM1;
   }
   else if (SONOFF_LED == TasmotaGlobal.module_type) {  // PWM Dual color led (White warm and cold)
-    if (!TasmotaGlobal.my_module.io[4]) {                 // Fix Sonoff Led instabilities
-      pinMode(4, OUTPUT);                   // Stop floating outputs
+    if (!TasmotaGlobal.my_module.io[4]) {              // Fix Sonoff Led instabilities
+      pinMode(4, OUTPUT);                              // Stop floating outputs
       digitalWrite(4, LOW);
     }
     if (!TasmotaGlobal.my_module.io[5]) {
-      pinMode(5, OUTPUT);                   // Stop floating outputs
+      pinMode(5, OUTPUT);                              // Stop floating outputs
       digitalWrite(5, LOW);
     }
     if (!TasmotaGlobal.my_module.io[14]) {
-      pinMode(14, OUTPUT);                  // Stop floating outputs
+      pinMode(14, OUTPUT);                             // Stop floating outputs
       digitalWrite(14, LOW);
     }
     TasmotaGlobal.light_type = LT_PWM2;
@@ -1295,7 +1296,7 @@ bool LightModuleInit(void)
   if (Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
     if (0 == pwm_channels) { pwm_channels = 1; }
     TasmotaGlobal.devices_present += pwm_channels - 1;    // add the pwm channels controls at the end
-  } else if ((Settings.param[P_RGB_REMAP] & 128) && (LST_RGBW <= pwm_channels)) {
+  } else if ((Settings.param[P_RGB_REMAP] & 128) && (LST_RGBW <= pwm_channels)) {  // SetOption37
     // if RGBW or RGBCW, and SetOption37 >= 128, we manage RGB and W separately, hence adding a device
     TasmotaGlobal.devices_present++;
   } else if ((Settings.flag4.virtual_ct) && (LST_RGBW == pwm_channels)) {
@@ -1340,7 +1341,7 @@ void LightInit(void)
   if (LST_RGBW <= Light.subtype) {
     // only change if RGBW or RGBCW
     // do not allow independant RGB and WC colors
-    bool ct_rgb_linked = !(Settings.param[P_RGB_REMAP] & 128);
+    bool ct_rgb_linked = !(Settings.param[P_RGB_REMAP] & 128);  // SetOption37
     light_controller.setCTRGBLinked(ct_rgb_linked);
   }
 
@@ -1353,6 +1354,12 @@ void LightInit(void)
     Light.device--;   // we take the last two devices as lights
   }
   LightCalcPWMRange();
+#ifdef USE_DEVICE_GROUPS
+  Light.device_group_index = 0;
+  if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
+    Light.device_group_index = Light.device - 1;
+  }
+#endif  // USE_DEVICE_GROUPS
 #ifdef DEBUG_LIGHT
   AddLog_P(LOG_LEVEL_DEBUG_MORE, "LightInit Light.pwm_multi_channels=%d Light.subtype=%d Light.device=%d TasmotaGlobal.devices_present=%d",
     Light.pwm_multi_channels, Light.subtype, Light.device, TasmotaGlobal.devices_present);
@@ -1372,9 +1379,10 @@ void LightInit(void)
       if (PinUsed(GPIO_PWM1, i)) {
 #ifdef ESP8266
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
         analogAttach(Pin(GPIO_PWM1, i), i);
-#endif
+#endif  // ESP32
       }
     }
     if (PinUsed(GPIO_ARIRFRCV)) {
@@ -1407,7 +1415,7 @@ void LightInit(void)
 
 void LightUpdateColorMapping(void)
 {
-  uint8_t param = Settings.param[P_RGB_REMAP] & 127;
+  uint8_t param = Settings.param[P_RGB_REMAP] & 127;  // SetOption37
   if (param > 119){ param = 0; }
 
   uint8_t tmp[] = {0,1,2,3,4};
@@ -1858,9 +1866,9 @@ void LightAnimate(void)
   // or set a maximum of PWM_MAX_SLEEP if light is on or Fade is running
   if (Light.power || Light.fade_running) {
     if (Settings.sleep > PWM_MAX_SLEEP) {
-      TasmotaGlobal.sleep = PWM_MAX_SLEEP;      // set a maxumum value of 10 milliseconds to ensure that animations are smooth
+      TasmotaGlobal.sleep = PWM_MAX_SLEEP;      // set a maximum value (in milliseconds) to sleep to ensure that animations are smooth
     } else {
-      TasmotaGlobal.sleep = Settings.sleep;     // or keep the current sleep if it's lower than 50
+      TasmotaGlobal.sleep = Settings.sleep;     // or keep the current sleep if it's low enough
     }
   } else {
     TasmotaGlobal.sleep = Settings.sleep;
@@ -1931,7 +1939,7 @@ void LightAnimate(void)
 #ifdef USE_DEVICE_GROUPS
     if (Settings.light_scheme != Light.last_scheme) {
       Light.last_scheme = Settings.light_scheme;
-      SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
+      SendDeviceGroupMessage(Light.device_group_index, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SCHEME, Settings.light_scheme);
       Light.devgrp_no_channels_out = false;
     }
 #endif  // USE_DEVICE_GROUPS
@@ -2324,11 +2332,11 @@ void LightSendDeviceGroupStatus(bool status)
       memcpy(channels, Light.new_color, LST_MAX);
       channels[LST_MAX]++;
     }
-    SendLocalDeviceGroupMessage((send_bri_update ? DGR_MSGTYP_PARTIAL_UPDATE : DGR_MSGTYP_UPDATE), DGR_ITEM_LIGHT_CHANNELS, channels);
+    SendDeviceGroupMessage(Light.device_group_index, (send_bri_update ? DGR_MSGTYP_PARTIAL_UPDATE : DGR_MSGTYP_UPDATE), DGR_ITEM_LIGHT_CHANNELS, channels);
   }
   if (send_bri_update) {
     last_bri = bri;
-    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_BRI, light_state.getBri());
+    SendDeviceGroupMessage(Light.device_group_index, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_BRI, light_state.getBri());
   }
 }
 
@@ -2337,9 +2345,10 @@ void LightHandleDevGroupItem(void)
   static bool send_state = false;
   static bool restore_power = false;
 
-#ifdef USE_PWM_DIMMER_REMOTE
-  if (!(XdrvMailbox.index & DGR_FLAG_LOCAL)) return;
-#endif  // USE_PWM_DIMMER_REMOTE
+//#ifdef USE_PWM_DIMMER_REMOTE
+//  if (!(XdrvMailbox.index & DGR_FLAG_LOCAL)) return;
+//#endif  // USE_PWM_DIMMER_REMOTE
+  if (*XdrvMailbox.topic != Light.device_group_index) return;
   bool more_to_come;
   uint32_t value = XdrvMailbox.payload;
   switch (XdrvMailbox.command_code) {
@@ -2880,7 +2889,7 @@ void CmndDimmer(void)
     uint8_t bri = light_state.getBri();
     if (bri != Settings.bri_power_on) {
       Settings.bri_power_on = bri;
-      SendLocalDeviceGroupMessage(DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
+      SendDeviceGroupMessage(Light.device_group_index, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings.bri_power_on);
     }
 #endif  // USE_PWM_DIMMER && USE_DEVICE_GROUPS
     Light.update = true;
@@ -2987,7 +2996,7 @@ void CmndFade(void)
     break;
   }
 #ifdef USE_DEVICE_GROUPS
-  if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
+  if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendDeviceGroupMessage(Light.device_group_index, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings.light_fade);
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_LIGHT
   if (!Settings.light_fade) { Light.fade_running = false; }
@@ -3012,7 +3021,7 @@ void CmndSpeed(void)
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 40)) {
     Settings.light_speed = XdrvMailbox.payload;
 #ifdef USE_DEVICE_GROUPS
-    SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
+    SendDeviceGroupMessage(Light.device_group_index, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_SPEED, Settings.light_speed);
 #endif  // USE_DEVICE_GROUPS
   }
   ResponseCmndNumber(Settings.light_speed);

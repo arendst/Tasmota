@@ -41,7 +41,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SENSOR "|" D_CMND_DRIVER
 #ifdef ESP32
    "|Info|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY "|" D_CMND_WIFI
-#endif //ESP32
+#endif  // ESP32
   ;
 
 void (* const TasmotaCommand[])(void) PROGMEM = {
@@ -68,7 +68,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndSensor, &CmndDriver
 #ifdef ESP32
   , &CmndInfo, &CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency, &CmndWifi
-#endif //ESP32
+#endif  // ESP32
   };
 
 const char kWifiConfig[] PROGMEM =
@@ -244,8 +244,8 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 
     DEBUG_CORE_LOG(PSTR("CMD: Payload %d"), payload);
 
-//    TasmotaGlobal.backlog_delay = millis() + (100 * MIN_BACKLOG_DELAY);
-    TasmotaGlobal.backlog_delay = millis() + Settings.param[P_BACKLOG_DELAY];
+//    TasmotaGlobal.backlog_timer = millis() + (100 * MIN_BACKLOG_DELAY);
+    TasmotaGlobal.backlog_timer = millis() + Settings.param[P_BACKLOG_DELAY];
 
     char command[CMDSZ] = { 0 };
     XdrvMailbox.command = command;
@@ -268,7 +268,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
         }
       }
     }
-#else //USE_SCRIPT_SUB_COMMAND
+#else  // USE_SCRIPT_SUB_COMMAND
     if (!DecodeCommand(kTasmotaCommands, TasmotaCommand)) {
       if (!XdrvCall(FUNC_COMMAND)) {
         if (!XsnsCall(FUNC_COMMAND)) {
@@ -276,7 +276,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
         }
       }
     }
-#endif //USE_SCRIPT_SUB_COMMAND
+#endif  // USE_SCRIPT_SUB_COMMAND
 
   }
 
@@ -344,7 +344,7 @@ void CmndBacklog(void)
     }
 //    ResponseCmndChar(D_JSON_APPENDED);
     ResponseClear();
-    TasmotaGlobal.backlog_delay = 0;
+    TasmotaGlobal.backlog_timer = millis();
   } else {
     bool blflag = BACKLOG_EMPTY;
 #ifdef SUPPORT_IF_STATEMENT
@@ -359,10 +359,10 @@ void CmndBacklog(void)
 void CmndDelay(void)
 {
   if ((XdrvMailbox.payload >= (MIN_BACKLOG_DELAY / 100)) && (XdrvMailbox.payload <= 3600)) {
-    TasmotaGlobal.backlog_delay = millis() + (100 * XdrvMailbox.payload);
+    TasmotaGlobal.backlog_timer = millis() + (100 * XdrvMailbox.payload);
   }
   uint32_t bl_delay = 0;
-  long bl_delta = TimePassedSince(TasmotaGlobal.backlog_delay);
+  long bl_delta = TimePassedSince(TasmotaGlobal.backlog_timer);
   if (bl_delta < 0) { bl_delay = (bl_delta *-1) / 100; }
   ResponseCmndNumber(bl_delay);
 }
@@ -483,20 +483,20 @@ void CmndStatus(void)
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\""
 #ifdef ESP32
                           D_JSON_PSRMAXMEMORY "\":%d,\"" D_JSON_PSRFREEMEMORY "\":%d,\""
-#endif
+#endif  // ESP32
                           D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"
 #ifdef ESP8266
                           ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
-#endif
+#endif  // ESP8266
                           ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":%d"),
                           ESP_getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP_getFreeHeap()/1024,
 #ifdef ESP32
                           ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
-#endif
+#endif  // ESP32
                           ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024
 #ifdef ESP8266
                           , ESP.getFlashChipId()
-#endif
+#endif  // ESP8266
                           , ESP.getFlashChipSpeed()/1000000, ESP.getFlashChipMode());
     ResponseAppendFeatures();
     XsnsDriverState();
@@ -1471,14 +1471,24 @@ void CmndLogport(void)
 void CmndIpAddress(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
-    uint32_t address;
-    if (ParseIp(&address, XdrvMailbox.data)) {
-      Settings.ip_address[XdrvMailbox.index -1] = address;
+    if (!XdrvMailbox.usridx) {
+      char stemp1[TOPSZ];
+      snprintf_P(stemp1, sizeof(stemp1), PSTR(" %s"), NetworkAddress().toString().c_str());
+      ResponseClear();
+      for (uint32_t i = 0; i < 4; i++) {
+        ResponseAppend_P(PSTR("%c\"%s%d\":\"%s%s\""), (i) ? ',' : '{', XdrvMailbox.command, i +1, IPAddress(Settings.ip_address[i]).toString().c_str(), (0 == i) ? stemp1:"");
+      }
+      ResponseJsonEnd();
+    } else {
+      uint32_t address;
+      if (ParseIp(&address, XdrvMailbox.data)) {
+        Settings.ip_address[XdrvMailbox.index -1] = address;
 //        TasmotaGlobal.restart_flag = 2;
+      }
+      char stemp1[TOPSZ];
+      snprintf_P(stemp1, sizeof(stemp1), PSTR(" %s"), NetworkAddress().toString().c_str());
+      Response_P(S_JSON_COMMAND_INDEX_SVALUE_SVALUE, XdrvMailbox.command, XdrvMailbox.index, IPAddress(Settings.ip_address[XdrvMailbox.index -1]).toString().c_str(), (1 == XdrvMailbox.index) ? stemp1:"");
     }
-    char stemp1[TOPSZ];
-    snprintf_P(stemp1, sizeof(stemp1), PSTR(" (%s)"), WiFi.localIP().toString().c_str());
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE_SVALUE, XdrvMailbox.command, XdrvMailbox.index, IPAddress(Settings.ip_address[XdrvMailbox.index -1]).toString().c_str(), (1 == XdrvMailbox.index) ? stemp1:"");
   }
 }
 
@@ -2112,4 +2122,4 @@ void CmndTouchNum(void)
 
 }
 
-#endif //ESP32
+#endif  // ESP32

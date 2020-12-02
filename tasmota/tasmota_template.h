@@ -128,6 +128,7 @@ enum UserSelectablePins {
   GPIO_WE517_TX, GPIO_WE517_RX,        // ORNO WE517 Serial interface
   GPIO_AS608_TX, GPIO_AS608_RX,        // Serial interface AS608 / R503
   GPIO_SHELLY_DIMMER_BOOT0, GPIO_SHELLY_DIMMER_RST_INV,
+  GPIO_RC522_RST,                      // RC522 reset
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -235,7 +236,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MIEL_HVAC_TX "|" D_SENSOR_MIEL_HVAC_RX "|"
   D_SENSOR_WE517_TX "|" D_SENSOR_WE517_RX "|"
   D_SENSOR_AS608_TX "|" D_SENSOR_AS608_RX "|"
-  D_SENSOR_SHELLY_DIMMER_BOOT0 "|" D_SENSOR_SHELLY_DIMMER_RST_INV
+  D_SENSOR_SHELLY_DIMMER_BOOT0 "|" D_SENSOR_SHELLY_DIMMER_RST_INV "|"
+  D_SENSOR_RC522_RST
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -605,6 +607,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MIEL_HVAC_TX),    // Mitsubishi Electric HVAC TX pin
   AGPIO(GPIO_MIEL_HVAC_RX),    // Mitsubishi Electric HVAC RX pin
 #endif
+#ifdef USE_RC522
+  AGPIO(GPIO_RC522_RST),       // RC522 Rfid reset
+#endif
 
 /*-------------------------------------------------------------------------------------------*\
  * ESP32 specifics
@@ -720,7 +725,8 @@ typedef struct MYTMPLT8266 {
   uint8_t      flag;
 } mytmplt8266;                  // 12 bytes
 
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
 
 #define MAX_GPIO_PIN       40   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
@@ -730,7 +736,7 @@ typedef struct MYTMPLT8266 {
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839
 const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOflashcFLFLolIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOIAIAIAIAIAIA";
 
-#endif  // ESP8266 or ESP32
+#endif  // ESP32
 
 //********************************************************************************************
 
@@ -2633,7 +2639,8 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
   }
 };
 
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
 
 /********************************************************************************************/
 // Supported hardware modules

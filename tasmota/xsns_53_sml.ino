@@ -471,11 +471,12 @@ const uint8_t *meter_p;
 uint8_t meter_spos[MAX_METERS];
 
 // software serial pointers
+#ifdef ESP8266
+TasmotaSerial *meter_ss[MAX_METERS];
+#endif  // ESP8266
 #ifdef ESP32
 HardwareSerial *meter_ss[MAX_METERS];
-#else
-TasmotaSerial *meter_ss[MAX_METERS];
-#endif
+#endif  // ESP32
 
 // serial buffers, may be made larger depending on telegram lenght
 #ifndef SML_BSIZ
@@ -2177,15 +2178,16 @@ init10:
           meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,1,TMSBSIZ);
         }
 #else
+#ifdef ESP8266
+        meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,0,TMSBSIZ);
+#endif  // ESP8266
 #ifdef ESP32
         meter_ss[meters] = new HardwareSerial(uart_index);
         if (uart_index==0) { ClaimSerial(); }
         uart_index--;
         if (uart_index<0) uart_index=0;
         meter_ss[meters]->setRxBufferSize(TMSBSIZ);
-#else
-        meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,0,TMSBSIZ);
-#endif
+#endif  // ESP32
 #endif
 
         SerialConfig smode = SERIAL_8N1;
@@ -2198,9 +2200,7 @@ init10:
             smode = SERIAL_8E2;
           }
         }
-#ifdef ESP32
-        meter_ss[meters]->begin(meter_desc_p[meters].params, smode, meter_desc_p[meters].srcpin, meter_desc_p[meters].trxpin);
-#else
+#ifdef ESP8266
         if (meter_ss[meters]->begin(meter_desc_p[meters].params)) {
           meter_ss[meters]->flush();
         }
@@ -2209,7 +2209,10 @@ init10:
           ClaimSerial();
           //Serial.setRxBufferSize(512);
         }
-#endif
+#endif  // ESP8266
+#ifdef ESP32
+        meter_ss[meters]->begin(meter_desc_p[meters].params, smode, meter_desc_p[meters].srcpin, meter_desc_p[meters].trxpin);
+#endif  // ESP32
     }
   }
 
@@ -2221,7 +2224,16 @@ uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
   if (meter<1 || meter>meters_used) return 0;
   meter--;
   if (!meter_ss[meter]) return 0;
-
+#ifdef ESP8266
+  if (meter_ss[meter]->begin(br)) {
+    meter_ss[meter]->flush();
+  }
+  if (meter_ss[meter]->hardwareSerial()) {
+    if (meter_desc_p[meter].type=='M') {
+      Serial.begin(br, SERIAL_8E1);
+    }
+  }
+#endif  // ESP8266
 #ifdef ESP32
   meter_ss[meter]->flush();
   meter_ss[meter]->updateBaudRate(br);
@@ -2231,16 +2243,7 @@ uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
   } else {
     meter_ss[meter]->begin(br,SERIAL_8N1,meter_desc_p[meter].srcpin,meter_desc_p[meter].trxpin);
   }*/
-#else
-  if (meter_ss[meter]->begin(br)) {
-    meter_ss[meter]->flush();
-  }
-  if (meter_ss[meter]->hardwareSerial()) {
-    if (meter_desc_p[meter].type=='M') {
-      Serial.begin(br, SERIAL_8E1);
-    }
-  }
-#endif
+#endif  // ESP32
   return 1;
 }
 

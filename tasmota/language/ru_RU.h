@@ -733,6 +733,7 @@
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
 #define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD Reset"
+#define D_SENSOR_RC522_RST     "RC522 Rst"
 
 // Units
 #define D_UNIT_AMPERE "А"

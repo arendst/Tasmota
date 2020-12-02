@@ -220,14 +220,12 @@ extern "C" {
 uint32_t EspFlashBaseAddress(void) {
   const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
   if (!partition) { return 0; }
-
   return partition->address;  // For tasmota 0x00010000 or 0x00200000
 }
 
 uint32_t EspFlashBaseEndAddress(void) {
   const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
   if (!partition) { return 0; }
-
   return partition->address + partition->size;  // For tasmota 0x00200000 or 0x003F0000
 }
 
@@ -409,18 +407,13 @@ uint32_t FlashWriteMaxSector(void) {
 uint8_t* FlashDirectAccess(void) {
   uint32_t address = FlashWriteStartSector() * SPI_FLASH_SEC_SIZE;
   uint8_t* data = EspFlashMmap(address);
-
 /*
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Flash start address 0x%08X, Mmap address 0x%08X"), address, data);
 
   uint8_t buf[32];
   memcpy(buf, data, sizeof(buf));
   AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buf, 32);
-
-  memcpy(buf, data, sizeof(buf));
-  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buf + , 32);
 */
-
   return data;
 }
 #endif  // ESP32

@@ -34,9 +34,30 @@ uint8_t sevenseg_state = 0;
 
 /*********************************************************************************************/
 
+#ifdef USE_DISPLAY_SEVENSEG_COMMON_ANODE
+void bufferStuffer(uint32_t i) {
+  uint8_t outArray[8] = {0,0,0,0,0,0,0,0};
+  uint8_t v;
+
+  for (int j = 0; j < 8; j++) {
+    for (int k = 0; k < 8; k++) {
+      v = ((sevenseg[i]->displaybuffer[j] >> k) & 1);
+      outArray[k] |= (v << j);
+    }
+  }
+
+  for (int j = 0; j < 8; j++) {
+    sevenseg[i]->displaybuffer[j] = outArray[j];
+  }
+}
+#endif
+
 void SevensegWrite(void)
 {
   for (uint32_t i = 0; i < sevensegs; i++) {
+#ifdef USE_DISPLAY_SEVENSEG_COMMON_ANODE
+    bufferStuffer(i);
+#endif
     sevenseg[i]->writeDisplay();
   }
 }
@@ -48,7 +69,6 @@ void SevensegClear(void)
   }
   SevensegWrite();
 }
-
 
 /*********************************************************************************************/
 
@@ -254,6 +274,9 @@ void SevensegDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uin
     sevenseg[unit]->writeDigitRaw(2, dots);
   }
 
+#ifdef USE_DISPLAY_SEVENSEG_COMMON_ANODE
+  bufferStuffer(unit);
+#endif
   sevenseg[unit]->writeDisplay();
 }
 
@@ -309,6 +332,9 @@ void SevensegTime(boolean time_24)
   }
 
   sevenseg[0]->writeDigitRaw(2, dots |= ((second%2) << 1));
+#ifdef USE_DISPLAY_SEVENSEG_COMMON_ANODE
+  bufferStuffer(0);
+#endif
   sevenseg[0]->writeDisplay();
 }
 

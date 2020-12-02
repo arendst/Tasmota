@@ -84,7 +84,7 @@ struct {
   uint32_t baudrate;                        // Current Serial baudrate
   uint32_t pulse_timer[MAX_PULSETIMERS];    // Power off timer
   uint32_t blink_timer;                     // Power cycle timer
-  uint32_t backlog_delay;                   // Command backlog delay
+  uint32_t backlog_timer;                   // Timer for next command in backlog
   uint32_t loop_load_avg;                   // Indicative loop load average
   uint32_t web_log_index;                   // Index in Web log buffer
   uint32_t uptime;                          // Counting every second until 4294967295 = 130 year
@@ -205,9 +205,13 @@ void setup(void) {
     RtcReboot.fast_reboot_count = 0;
   }
 #ifdef FIRMWARE_MINIMAL
-  RtcReboot.fast_reboot_count = 0;  // Disable fast reboot and quick power cycle detection
+  RtcReboot.fast_reboot_count = 0;    // Disable fast reboot and quick power cycle detection
 #else
-  RtcReboot.fast_reboot_count++;
+  if (ResetReason() == REASON_DEEP_SLEEP_AWAKE) {
+    RtcReboot.fast_reboot_count = 0;  // Disable fast reboot and quick power cycle detection
+  } else {
+    RtcReboot.fast_reboot_count++;
+  }
 #endif
   RtcRebootSave();
 
@@ -229,7 +233,6 @@ void setup(void) {
 
   if (1 == RtcReboot.fast_reboot_count) {  // Allow setting override only when all is well
     UpdateQuickPowerCycle(true);
-    XdrvCall(FUNC_SETTINGS_OVERRIDE);
   }
 
   TasmotaGlobal.seriallog_level = Settings.seriallog_level;
@@ -296,7 +299,8 @@ void setup(void) {
 
   SetPowerOnState();
 
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE), PROJECT, SettingsText(SET_DEVICENAME), TasmotaGlobal.version, TasmotaGlobal.image_name);
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
+    PROJECT, SettingsText(SET_DEVICENAME), TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
 #ifdef FIRMWARE_MINIMAL
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
@@ -319,7 +323,7 @@ void setup(void) {
 }
 
 void BacklogLoop(void) {
-  if (TimeReached(TasmotaGlobal.backlog_delay)) {
+  if (TimeReached(TasmotaGlobal.backlog_timer)) {
     if (!BACKLOG_EMPTY && !TasmotaGlobal.backlog_mutex) {
       TasmotaGlobal.backlog_mutex = true;
       bool nodelay = false;
@@ -341,7 +345,7 @@ void BacklogLoop(void) {
         ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
       }
       if (nodelay) {
-        TasmotaGlobal.backlog_delay = 0;  // Reset backlog_delay which has been set by ExecuteCommand (CommandHandler)
+        TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
       }
       TasmotaGlobal.backlog_mutex = false;
     }

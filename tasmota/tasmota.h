@@ -84,9 +84,10 @@ const uint8_t MAX_GROUP_TOPICS = 4;         // Max number of Group Topics
 const uint8_t MAX_DEV_GROUP_NAMES = 4;      // Max number of Device Group names
 #ifdef ESP8266
 const uint8_t MAX_ADCS = 1;                 // Max number of ESP8266 ADC pins
-#else
+#endif  // ESP8266
+#ifdef ESP32
 const uint8_t MAX_ADCS = 8;                 // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
-#endif
+#endif  // ESP32
 
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 const uint8_t MAX_ROTARIES = 2;             // Max number of Rotary Encoders
@@ -303,9 +304,10 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_TELEGRAM_TOKEN, SET_TELEGRAM_CHATID,
 #ifdef ESP8266
                          SET_ADC_PARAM1,
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
                          SET_ADC_PARAM1, SET_ADC_PARAM2, SET_ADC_PARAM3, SET_ADC_PARAM4, SET_ADC_PARAM5, SET_ADC_PARAM6, SET_ADC_PARAM7, SET_ADC_PARAM8,  // MAX_ADCS
-#endif
+#endif  // ESP32
                          SET_SWITCH_TXT1, SET_SWITCH_TXT2, SET_SWITCH_TXT3, SET_SWITCH_TXT4, SET_SWITCH_TXT5, SET_SWITCH_TXT6, SET_SWITCH_TXT7, SET_SWITCH_TXT8,  // MAX_SWITCHES
                          SET_SHD_PARAM,
                          SET_MAX };
@@ -335,10 +337,10 @@ enum DevGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
                      SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_SHUTTER,
-                     SRC_THERMOSTAT, SRC_CHAT, SRC_MAX };
+                     SRC_THERMOSTAT, SRC_CHAT, SRC_TCL, SRC_MAX };
 const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Serial|WebGui|WebCommand|WebConsole|PulseTimer|"
                                       "Timer|Rule|MaxPower|MaxEnergy|Overtemp|Light|Knx|Display|Wemo|Hue|Retry|Remote|Shutter|"
-                                      "Thermostat|Chat";
+                                      "Thermostat|Chat|TCL";
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 
@@ -359,7 +361,8 @@ const SerConfu8 kTasmotaSerialConfig[] PROGMEM = {
   SERIAL_5O1, SERIAL_6O1, SERIAL_7O1, SERIAL_8O1,
   SERIAL_5O2, SERIAL_6O2, SERIAL_7O2, SERIAL_8O2
 };
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
 const uint32_t kTasmotaSerialConfig[] PROGMEM = {
   SERIAL_5N1, SERIAL_6N1, SERIAL_7N1, SERIAL_8N1,
   SERIAL_5N2, SERIAL_6N2, SERIAL_7N2, SERIAL_8N2,
@@ -368,7 +371,7 @@ const uint32_t kTasmotaSerialConfig[] PROGMEM = {
   SERIAL_5O1, SERIAL_6O1, SERIAL_7O1, SERIAL_8O1,
   SERIAL_5O2, SERIAL_6O2, SERIAL_7O2, SERIAL_8O2
 };
-#endif
+#endif  // ESP32
 
 enum TuyaSupportedFunctions { TUYA_MCU_FUNC_NONE,
                               TUYA_MCU_FUNC_SWT1 = 1, TUYA_MCU_FUNC_SWT2, TUYA_MCU_FUNC_SWT3, TUYA_MCU_FUNC_SWT4,
@@ -381,6 +384,9 @@ enum TuyaSupportedFunctions { TUYA_MCU_FUNC_NONE,
                                 TUYA_MCU_FUNC_REL6_INV, TUYA_MCU_FUNC_REL7_INV, TUYA_MCU_FUNC_REL8_INV,
                               TUYA_MCU_FUNC_LOWPOWER_MODE = 51,
                               TUYA_MCU_FUNC_ENUM1 = 61, TUYA_MCU_FUNC_ENUM2, TUYA_MCU_FUNC_ENUM3, TUYA_MCU_FUNC_ENUM4,
+                              TUYA_MCU_FUNC_TEMP = 71, TUYA_MCU_FUNC_TEMPSET, TUYA_MCU_FUNC_HUM, TUYA_MCU_FUNC_HUMSET,
+                              TUYA_MCU_FUNC_LX = 75, TUYA_MCU_FUNC_TVOC, TUYA_MCU_FUNC_CO2, TUYA_MCU_FUNC_ECO2,
+                              TUYA_MCU_FUNC_TIMER1 = 81, TUYA_MCU_FUNC_TIMER2, TUYA_MCU_FUNC_TIMER3, TUYA_MCU_FUNC_TIMER4,
                               TUYA_MCU_FUNC_MOTOR_DIR = 97,
                               TUYA_MCU_FUNC_ERROR = 98,
                               TUYA_MCU_FUNC_DUMMY = 99,

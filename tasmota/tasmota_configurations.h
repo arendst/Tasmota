@@ -141,6 +141,9 @@
 //#define USE_EZORGB                             // [I2cDriver55] Enable support for EZO's RGB sensor (+0k5 code) - Shared EZO code required for any EZO device (+1k2 code)
 //#define USE_EZOPMP                             // [I2cDriver55] Enable support for EZO's PMP sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
 
+//#define USE_SPI                                // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
+//#define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
+
 #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 #ifndef CO2_LOW
@@ -455,6 +458,8 @@
 #define USE_DOMOTICZ                             // Enable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
 
+#define UPGRADE_V8_MIN                           // do not support upgrading from version below 8.0.0
+
 // -- MQTT - TLS - AWS IoT ------------------------
 #ifdef USE_ZBBRIDGE_TLS                            // Enable TLS for ZbBridge
   #define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
@@ -708,11 +713,13 @@
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_LITE
 
+
 /*********************************************************************************************\
  * [tasmota-minimal.bin]
  * Provide the smallest image possible while still enabling a webserver for intermediate image load
 \*********************************************************************************************/
 
+#ifndef FIRMWARE_MINICUSTOM
 #ifdef FIRMWARE_MINIMAL
 
 #undef CODE_IMAGE_STR
@@ -845,10 +852,35 @@
 #undef USE_PROMETHEUS                            // Disable support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
+
 #endif  // FIRMWARE_MINIMAL
+#endif  // ifndef FIRMWARE_MINICUSTOM
+
+
+/*********************************************************************************************\
+ * [tasmota-minicustom.bin]
+ * Make a small minimal custom image possible
+\*********************************************************************************************/
+
+#ifdef FIRMWARE_MINICUSTOM
+#define FIRMWARE_MINIMAL
+
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "mini-custom"
+
+#undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
+#undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
+#undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
+#undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
+#undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
+#undef FIRMWARE_IR_CUSTOM                       // Disable tasmota customizable with special marker to add all IR protocols
+
+#endif  // FIRMWARE_MINICUSTOM
+
 
 #ifdef ESP32
 #include "tasmota_configurations_ESP32.h"
 #endif  // ESP32
+
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_

@@ -112,7 +112,7 @@ void DeviceGroupsInit(void)
   // If no module set the device group count, ...
   if (!device_group_count) {
 
-    // If relays in sepaate device groups is enabled, set the device group count to highest numbered
+    // If relays in separate device groups is enabled, set the device group count to highest numbered
     // relay.
     if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
       for (uint32_t relay_index = 0; relay_index < MAX_RELAYS; relay_index++) {
@@ -128,7 +128,7 @@ void DeviceGroupsInit(void)
   }
 
   // If there are more device group names set than the number of device groups needed by the
-  // mdoule, use the device group name count as the device group count.
+  // module, use the device group name count as the device group count.
   for (; device_group_count < MAX_DEV_GROUP_NAMES; device_group_count++) {
     if (!*SettingsText(SET_DEV_GROUP_NAME1 + device_group_count)) break;
   }

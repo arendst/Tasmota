@@ -19,7 +19,7 @@
 
 #ifdef USE_DHT
 /*********************************************************************************************\
- * DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321), SI7021 - Temperature and Humidy
+ * DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321), SI7021 - Temperature and Humidity
  *
  * Reading temperature or humidity takes about 250 milliseconds!
  * Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
