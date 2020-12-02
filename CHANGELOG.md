@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - Backlog timing wraparound (#9995)
 
 ### Removed
+- PN532 define USE_PN532_CAUSE_EVENTS replaced by generic rule trigger `on pn532#uid=`
 
 ## [9.1.0.1] - 20201116
 ### Added

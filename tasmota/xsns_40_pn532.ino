@@ -485,17 +485,6 @@ void PN532_ScanForTag(void) {
 #endif  // USE_PN532_DATA_FUNCTION
     MqttPublishTeleSensor();
 
-#ifdef USE_PN532_CAUSE_EVENTS
-    // No more need as function MqttPublishTeleSensor() also triggers rules
-    char command[71];
-#ifdef USE_PN532_DATA_FUNCTION
-    sprintf(command,"backlog event PN532_UID=%s;event PN532_DATA=%s", Pn532.uids, card_datas);
-#else
-    sprintf(command,"event PN532_UID=%s", Pn532.uids);
-#endif  // USE_PN532_DATA_FUNCTION
-    ExecuteCommand(command, SRC_RULE);
-#endif  // USE_PN532_CAUSE_EVENTS
-
     Pn532.scantimer = 7; // Ignore tags found for two seconds
   }
 }
@@ -548,7 +537,7 @@ bool PN532_Command(void) {
 
 #ifdef USE_WEBSERVER
 void PN532_Show(void) {
-  WSContentSend_PD(PSTR("{s}PN532 UID{m}%s {e}"), Pn532.uids);
+  WSContentSend_PD(PSTR("{s}PN532 UID{m}%s{e}"), Pn532.uids);
 }
 #endif  // USE_WEBSERVER
 
