@@ -821,6 +821,7 @@
 
 //#define USE_SPI                                  // Add support for hardware SPI
 #define USE_MI_ESP32                             // Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+//#define USE_BLE_ESP32                             // Add support generic BLE driver on ESP32 (xdrv_46) (+9k2? mem, +292k? flash) - may be used wth USE_IBEACON but not yet USE_MI_ESP32
 //#define USE_WEBCAM                               // Add support for webcam
 
 #endif  // ESP32
