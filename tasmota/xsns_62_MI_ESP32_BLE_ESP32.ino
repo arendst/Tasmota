@@ -45,7 +45,7 @@
                     forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
 
 */
-#define VSCODE_DEV
+//#define VSCODE_DEV
 
 #ifdef VSCODE_DEV
 #define ESP32
@@ -481,14 +481,20 @@ int toggleUnit(BLE_ESP32::generic_sensor_t *op){
 }
 
 bool MI32Operation(int slot, int optype, const char *svc, const char *charactistic, const char *notifychar = nullptr, const uint8_t *data = nullptr, int datalen = 0) {
-
-  BLE_ESP32::generic_sensor_t *op = new BLE_ESP32::generic_sensor_t;
-  memset(op, 0, sizeof(BLE_ESP32::generic_sensor_t));
-  BLE_ESP32::dump(op->MAC, sizeof(op->MAC), MIBLEsensors[slot].MAC, 6) ;
-
   if (!svc || !svc[0]){
     return 0;
   }
+
+  BLE_ESP32::generic_sensor_t *op = nullptr;
+
+  // ALWAYS use this function to create a new one.
+  int res = BLE_ESP32::newOperation(&op);
+  if (!res){
+    AddLog_P(LOG_LEVEL_ERROR,PSTR("Can't get a newOperation from BLE"));
+    return 0;
+  }
+
+  BLE_ESP32::dump(op->MAC, sizeof(op->MAC), MIBLEsensors[slot].MAC, 6) ;
 
   bool havechar = false;
   
@@ -523,13 +529,22 @@ bool MI32Operation(int slot, int optype, const char *svc, const char *charactist
   uint32_t context = (optype << 24) | (MIBLEsensors[slot].type << 16) | slot;
   op->context = (void *)context;
 
-  return BLE_ESP32::extQueueOperation(&op);
+  res = BLE_ESP32::extQueueOperation(&op);
+  if (!res){
+    // if it fails to add to the queue, do please delete it
+    BLE_ESP32::freeOperation(&op);
+    AddLog_P(LOG_LEVEL_ERROR,PSTR("Failed to queue new operation - deleted"));
+  }
+
+  return res;
 }
 
 
 
 int genericBatReadFn(int slot){
   int res = 0;
+  AddLog_P(LOG_LEVEL_INFO,PSTR("Req batt read slot %d"), slot);
+
   switch(MIBLEsensors[slot].type) {
     // these use notify for battery read
     case LYWSD03MMC:
@@ -547,6 +562,10 @@ int genericBatReadFn(int slot){
       res = MI32Operation(slot, OP_BATT_READ, LYWSD02_Svc, LYWSD02_BattChar);
       break;
     case CGD1:
+      res = MI32Operation(slot, OP_BATT_READ, CGD1_Svc, CGD1_BattChar);
+      break;
+
+    case MJ_HT_V1:
       res = MI32Operation(slot, OP_BATT_READ, CGD1_Svc, CGD1_BattChar);
       break;
 
@@ -628,6 +647,9 @@ int readOneBat(){
   // if this sensor in this slot does not support battery read, just move on top the next one
   if (res < 0){
     MI32.batteryreader.slot++;
+    if (MI32.batteryreader.slot >= MIBLEsensors.size()){
+      AddLog_P(LOG_LEVEL_INFO,PSTR("Batt loop complete at %d"), MI32.batteryreader.slot);
+    }
     return 0;
   }
 
@@ -641,7 +663,9 @@ int readOneBat(){
   // and make it wait until the read/notify is complete
   // this is cleared in the response callback.
   MI32.batteryreader.active = 1;
-
+  if (MI32.batteryreader.slot >= MIBLEsensors.size()){
+    AddLog_P(LOG_LEVEL_INFO,PSTR("Batt loop will complete at %d"), MI32.batteryreader.slot);
+  }
   // started one
   return 1;
 }
@@ -732,14 +756,29 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
   char slotMAC[13];
   BLE_ESP32::dump(slotMAC, sizeof(slotMAC), MIBLEsensors[slot].MAC, 6) ;
 
+  bool fail = false;
   if (strncmp(slotMAC, op->MAC, 12)){
     // slot changed during operation?
     AddLog_P(LOG_LEVEL_ERROR,PSTR("Slot mac changed during an operation"));
-    return 0;
+    fail = true;
   }
 
   if (op->state & GEN_STATE_FAILED){
     AddLog_P(LOG_LEVEL_ERROR,PSTR("operation failed %x"), op->state);
+    fail = true;
+  }
+
+  if (fail){
+    switch(opType){
+      case OP_BATT_READ:{
+        // allow another...
+        MI32.batteryreader.active = 0;
+      } break;
+      case OP_READ_HT_LY: {
+        // allow another...
+        MI32.sensorreader.active = 0;
+      } break;
+    }
     return 0;
   }
 
@@ -762,6 +801,8 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
 
       // allow another...
       MI32.batteryreader.active = 0;
+      AddLog_P(LOG_LEVEL_INFO,PSTR("batt read slot %d done state %x"), slot, op->state);
+
     } return 0;
 
     case OP_UNIT_WRITE: // nothing more to do?
@@ -780,6 +821,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
 
     case OP_READ_HT_LY: {
       MI32notifyHT_LY(slot, (char*)op->dataNotify, op->notifylen);
+      MI32.sensorreader.active = 0;
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("HT_LY notify for %s complete"), slotMAC);
     } return 0;
 
@@ -791,7 +833,6 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
   return 0;
 }
 
-
 int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
 {
   // we will try not to use this...
@@ -802,15 +843,18 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   const uint8_t *addr = pStruct->addr;
 
   if (pStruct->svcdataCount == 0) {
+    AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("MI32Adv: no svcdata"));
     MI32HandleGenericBeacon(pStruct->payload, pStruct->payloadLen, RSSI, addr);
     return 0;
   }
 
-  if (pStruct->svcdata[0].serviceUUID->u.type == 16){
-    uint16_t UUID = pStruct->svcdata[0].serviceUUID->u16.value;
-    size_t ServiceDataLength = pStruct->svcdata[0].serviceDataLen;
-    char * ServiceData = (char *)pStruct->svcdata[0].serviceData;
-    if(UUID==0xfe95) {
+  AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("MI32Adv: svcdata[0] UUID (%s)"), pStruct->svcdata[0].serviceUUIDStr);
+  size_t ServiceDataLength = pStruct->svcdata[0].serviceDataLen;
+  char * ServiceData = (char *)pStruct->svcdata[0].serviceData;
+  uint16_t UUID = pStruct->svcdata[0].serviceUUID16;
+
+  if (UUID){
+    if(UUID == 0xfe95) {
       if(MI32isInBlockList(addr) == true) return 0;
       MI32ParseResponse(ServiceData, ServiceDataLength, addr, RSSI);
     }
@@ -826,9 +870,9 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
       if(MI32.state.beaconScanCounter!=0 || MI32.mode.activeBeacon){
         MI32HandleGenericBeacon(pStruct->payload, pStruct->payloadLen, RSSI, addr);
       }
-      // AddLog_P(LOG_LEVEL_DEBUG,PSTR("No Xiaomi Device: %x: %s Buffer: %u"), UUID, advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData(0).length());
-      // MI32Scan->erase(advertisedDevice->getAddress());
     }
+  } else {
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("MIESP32: not uuid 16: %s"), pStruct->svcdata[0].serviceUUIDStr);
   }
   return 0;
 }
@@ -1012,24 +1056,25 @@ void MI32nullifyEndOfMQTT_DATA(){
  */
 uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter){
 
-  DEBUG_SENSOR_LOG(PSTR("%s: will test ID-type: %x"),D_CMND_MI32, _type);
+  AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("%s: will test ID-type: %x"),D_CMND_MI32, _type);
   bool _success = false;
   for (uint32_t i=0;i<MI32_TYPES;i++){ // i < sizeof(kMI32DeviceID) gives compiler warning
     if(_type == kMI32DeviceID[i]){
-      DEBUG_SENSOR_LOG(PSTR("MI32: ID is type %u"), i);
+      AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("MI32: ID is type %u"), i);
       _type = i+1;
       _success = true;
+      break;
     }
     else {
-      DEBUG_SENSOR_LOG(PSTR("%s: ID-type is not: %x"),D_CMND_MI32,kMI32DeviceID[i]);
+      //DEBUG_SENSOR_LOG(PSTR("%s: ID-type is not: %x"),D_CMND_MI32,kMI32DeviceID[i]);
     }
   }
   if(!_success) return 0xff;
 
-  DEBUG_SENSOR_LOG(PSTR("%s: vector size %u"),D_CMND_MI32, MIBLEsensors.size());
+  AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("%s: vector size %u"),D_CMND_MI32, MIBLEsensors.size());
   for(uint32_t i=0; i<MIBLEsensors.size(); i++){
     if(memcmp(_MAC,MIBLEsensors[i].MAC,sizeof(_MAC))==0){
-      DEBUG_SENSOR_LOG(PSTR("%s: known sensor at slot: %u"),D_CMND_MI32, i);
+      AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("%s: known sensor at slot: %u"),D_CMND_MI32, i);
       // AddLog_P(LOG_LEVEL_DEBUG,PSTR("Counters: %x %x"),MIBLEsensors[i].lastCnt, counter);
       if(MIBLEsensors[i].lastCnt==counter) {
         // AddLog_P(LOG_LEVEL_DEBUG,PSTR("Old packet"));
@@ -1037,10 +1082,10 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
       }
       return i;
     }
-    DEBUG_SENSOR_LOG(PSTR("%s: i: %x %x %x %x %x %x"),D_CMND_MI32, MIBLEsensors[i].MAC[5], MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[2],MIBLEsensors[i].MAC[1],MIBLEsensors[i].MAC[0]);
-    DEBUG_SENSOR_LOG(PSTR("%s: n: %x %x %x %x %x %x"),D_CMND_MI32, _MAC[5], _MAC[4], _MAC[3],_MAC[2],_MAC[1],_MAC[0]);
+    AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("%s: i: %x %x %x %x %x %x"),D_CMND_MI32, MIBLEsensors[i].MAC[5], MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[2],MIBLEsensors[i].MAC[1],MIBLEsensors[i].MAC[0]);
+    AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("%s: n: %x %x %x %x %x %x"),D_CMND_MI32, _MAC[5], _MAC[4], _MAC[3],_MAC[2],_MAC[1],_MAC[0]);
   }
-  DEBUG_SENSOR_LOG(PSTR("%s: found new sensor"),D_CMND_MI32);
+  AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("%s: found new sensor"),D_CMND_MI32);
   mi_sensor_t _newSensor;
   memcpy(_newSensor.MAC,_MAC, sizeof(_MAC));
   _newSensor.type = _type;
@@ -1149,13 +1194,14 @@ void MI32Init(void) {
   MI32.option.ignoreBogusBattery = 1; // from advertisements
   MI32.option.holdBackFirstAutodiscovery = 1;
 
-  BLE_ESP32::registerForAdvertismentCallbacks((const char *)"iBeacon", MI32advertismentCallback);
-  BLE_ESP32::registerForScanCallbacks((const char *)"iBeacon", MI32scanCompleteCallback);
+  BLE_ESP32::registerForAdvertismentCallbacks((const char *)"MI32", MI32advertismentCallback);
+  BLE_ESP32::registerForScanCallbacks((const char *)"MI32", MI32scanCompleteCallback);
   // note: for operations, we will set individual callbacks in the operations we request
   //void registerForOpCallbacks(const char *tag, BLE_ESP32::OPCOMPLETE_CALLBACK* pFn);
 
   AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: init: request callbacks"));
   MI32.period = Settings.tele_period;
+  MI32.mode.init = 1;
   return;
 }
 
@@ -1639,6 +1685,10 @@ void MI32Every50mSecond(){
  */
 
 void MI32EverySecond(bool restart){
+
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("MI32: onesec"));
+
+
   // read a battery if 
   // MI32.batteryreader.slot < filled and !MI32.batteryreader.active
   readOneBat();
@@ -1648,6 +1698,8 @@ void MI32EverySecond(bool restart){
   // MI32.sensorreader.slot < filled and !MI32.sensorreader.active
   // for sensors which need to get data through notify...
   readOneSensor();
+
+
 
   if (MI32.secondsCounter >= MI32.period){
     // kick off notification sensor reading every period.
@@ -2154,8 +2206,8 @@ void MI32Show(bool json)
 
 bool Xsns62(uint8_t function)
 {
-  if (!Settings.flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 MI32 BLE
-  return false;
+//  if (!Settings.flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 MI32 BLE
+//  return false;
 
   bool result = false;
 

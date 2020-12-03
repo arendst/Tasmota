@@ -106,6 +106,7 @@ namespace BLE_ESP32 {
 // states for runTaskDoneOperation
 #define GEN_STATE_IDLE 0
 #define GEN_STATE_START 1
+#define GEN_STATE_STARTED 2
 
 #define GEN_STATE_READDONE 7
 #define GEN_STATE_WRITEDONE 8
@@ -157,9 +158,6 @@ struct generic_sensor_t {
   uint8_t notifylen;
   uint8_t notifytruncated;
 
-  NimBLEClient *pClient;
-
-
   // NOTE!!!: this callback is called DIRECTLY from the operation task, so be careful about cross-thread access of data
   // if is called after read, so that you can do a read/modify/write operation on a characteristic.
   // i.e. modify dataToWrite and writelen according to what you see in readData and readlen.
@@ -176,6 +174,7 @@ struct generic_sensor_t {
 // structure for callbacks from other drivers from advertisments.
 struct ble_advertisment_t {
   BLEAdvertisedDevice *advertisedDevice; // the full NimBLE advertisment, in case people need MORE info.
+  uint32_t totalCount; 
 
   const uint8_t *addr;
   int RSSI;
@@ -189,14 +188,14 @@ struct ble_advertisment_t {
 
   uint8_t svcdataCount;
   struct {
-    const ble_uuid_any_t* serviceUUID;
+    uint16_t serviceUUID16; // zero or a 16 bit uuid.
     char serviceUUIDStr[40]; // longest UUID 36 chars?
-    const uint8_t* serviceData;
+    uint8_t serviceData[100];
     uint8_t serviceDataLen;
   } svcdata[5];
   uint8_t serviceCount;
   struct {
-    const ble_uuid_any_t* serviceUUID;
+    uint16_t serviceUUID16; // zero or a 16 bit uuid.
     char serviceUUIDStr[40]; // longest UUID 36 chars?
   } services[5];
 };
@@ -229,8 +228,17 @@ void registerForAdvertismentCallbacks(const char *tag, BLE_ESP32::ADVERTISMENT_C
 void registerForOpCallbacks(const char *tag, BLE_ESP32::OPCOMPLETE_CALLBACK* pFn);
 void registerForScanCallbacks(const char *tag, BLE_ESP32::SCANCOMPLETE_CALLBACK* pFn);
 
+////////////////////////////////////////////////////
+// BLE oprations: these are currently 'new'ed and 'delete'ed.
+// in the future, they may be allocated from some constant menory store to avoid fragmentation.
+// so PLEASE don't create or destroy them yourselves.
+// create a new BLE operation. 
+int newOperation(BLE_ESP32::generic_sensor_t** op);
+// free a BLE operation - this should be done if you did not call extQueueOperation for some reason
+int freeOperation(BLE_ESP32::generic_sensor_t** op);
+// queue a BLE operation - it will happen some time in the future. 
+// Note: you do not need to free an operation once it have been queued.  it will be freed by the driver.
 int extQueueOperation(BLE_ESP32::generic_sensor_t** op);
-//
 ///////////////////////////////////////////////////////////////////////
 
 
