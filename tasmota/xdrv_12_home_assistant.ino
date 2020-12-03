@@ -316,12 +316,13 @@ void NewHAssDiscovery(void)
     snprintf_P(stemp5, sizeof(stemp5), PSTR("%s%s%d"), stemp5, (i > 0 ? "," : ""), (SerialButton ? 1 : (PinUsed(GPIO_KEY1, i)) & Settings.flag3.mqtt_buttons));
     SerialButton = false;
   }
-
-#ifdef USE_SHUTTER
   stemp6[0] = '\0';
+#ifdef USE_SHUTTER
   for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
     snprintf_P(stemp6, sizeof(stemp6), PSTR("%s%s%d"), stemp6, (i > 0 ? "," : ""), Settings.shutter_options[i]);
   }
+#else
+   snprintf_P(stemp6, sizeof(stemp6), PSTR("0,0,0,0"));
 #endif // USE_SHUTTER
 
   ResponseClear(); // Clear retained message
