@@ -237,7 +237,7 @@ int extQueueOperation(BLE_ESP32::generic_sensor_t** op);
 ////////////////////////////////////////////////////////////////////////
 // utilities
 // dump a binary to hex
-char * dump(char *dest, int maxchars, uint8_t *src, int len)
+char * dump(char *dest, int maxchars, uint8_t *src, int len);
 
 }
 

@@ -997,7 +997,7 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation)
                       }
                       op->state = GEN_STATE_READDONE;
                       if (op->readmodifywritecallback){
-                        READ_CALLBACK pFn = (READ_CALLBACK)op->readmodifywritecallback;
+                        READ_CALLBACK *pFn = (READ_CALLBACK *)op->readmodifywritecallback;
                         AddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic with readmodifywritecallback"));
                         pFn(op);
                       } else {

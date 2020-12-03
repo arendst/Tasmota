@@ -75,37 +75,41 @@ void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pD
 struct {
   uint16_t perPage = 4;
   uint32_t period;             // set manually in addition to TELE-period, is set to TELE-period after start
+  int secondsCounter = 0;   // counts up in MI32EverySecond to period
   union {
     struct {
       uint32_t init:1;
-      uint32_t connected:1;
-      uint32_t autoScan:1;
-      uint32_t canScan:1;
-      uint32_t runningScan:1;
-      uint32_t canConnect:1;
-      uint32_t willConnect:1;
-      uint32_t readingDone:1;
-      uint32_t shallSetTime:1;
-      uint32_t willSetTime:1;
-      uint32_t shallReadBatt:1;
-      uint32_t willReadBatt:1;
-      uint32_t shallSetUnit:1;
-      uint32_t willSetUnit:1;
-      uint32_t shallTriggerTele:1;
-      uint32_t triggeredTele:1;
       uint32_t shallClearResults:1;   // BLE scan results
       uint32_t shallShowStatusInfo:1; // react to amount of found sensors via RULES
       uint32_t firstAutodiscoveryDone:1;
       uint32_t activeBeacon:1;
       uint32_t shallShowScanResult:1;
       uint32_t shallShowBlockList:1;
+      uint32_t shallTriggerTele:1;
+      uint32_t triggeredTele:1;
     };
     uint32_t all = 0;
   } mode;
+
+  struct {
+    // the slot currently having it's battery read
+    // set to 0 to start a battery read cycle
+    uint8_t slot = 255; 
+    uint8_t active = 0; 
+  } batteryreader;
+
+  struct {
+    // the slot currently having it's battery read
+    // set to 0 to start a battery read cycle
+    uint8_t slot = 255; 
+    uint8_t active = 0; 
+  } sensorreader;
+
   struct {
     uint8_t sensor;             // points to to the number 0...255
     uint8_t beaconScanCounter;  // countdown timer in seconds
   } state;
+
   struct {
     uint32_t allwaysAggregate:1; // always show all known values of one sensor in brdigemode
     uint32_t noSummary:1;        // no sensor values at TELE-period
@@ -359,67 +363,41 @@ const char kMI32DeviceType11[] PROGMEM ="MHOC303";
 const char kMI32DeviceType12[] PROGMEM ="ATC";
 const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12};
 
-typedef int PAYLOAD_FUNCTION(int slot, uitn8_t data, int len);
 typedef int BATREAD_FUNCTION(int slot);
 typedef int UNITWRITE_FUNCTION(int slot, int unit);
 typedef int TIMEWRITE_FUNCTION(int slot);
 
-int genericPayloadFn(int slot, uitn8_t data, int len);
 int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *pStruct);
 int genericBatReadFn(int slot);
 int genericUnitWriteFn(int slot, int unit);
 int genericTimeWriteFn(int slot);
-
-struct MI_32_TYPE_DESCRIPTION {
-  char *name;
-  uint16_t deviceId;
-
-  BATREAD_FUNCTION battReadFn;
-  UNITWRITE_FUNCTION unitWriteFn;
-  TIMEWRITE_FUNCTION timeWriteFn;
-  BLE_ESP32::OPCOMPLETE_CALLBACK operationFn;
-  PAYLOAD_FUNCTION payloadFn;
-};
+int MI32scanCompleteCallback(NimBLEScanResults results);
 
 const char LYWSD02_Svc[] PROGMEM = "ebe0ccb0-7a0a-4b0c-8a1a6ff2997da3a6";
 const char LYWSD02_BattChar[] PROGMEM = "EBE0CCC4-7A0A-4B0C-8A1A6FF2997DA3A6";
 const char LYWSD02_UnitChar[] PROGMEM = "EBE0CCBE-7A0A-4B0C-8A1A6FF2997DA3A6";
 const char LYWSD02_TimeChar[] PROGMEM = "EBE0CCB7-7A0A-4B0C-8A1A6FF2997DA3A6";
+const char LYWSD02_BattNotifyChar[] PROGMEM = "ebe0ccc1-a0a-4b0c-8a1a6ff2997da3a6";
 
 
 const char *LYWSD03_Svc = LYWSD02_Svc;
-const char LYWSD03_BattNotifyChar[] PROGMEM = "ebe0ccc1-a0a-4b0c-8a1a6ff2997da3a6";
+const char *LYWSD03_BattNotifyChar = LYWSD02_BattNotifyChar;
 
 const char *MHOC303_Svc = LYWSD02_Svc;
 const char *MHOC303_UnitChar = LYWSD02_UnitChar;
 const char *MHOC303_TimeChar = LYWSD02_TimeChar;
 
 const char *MHOC401_Svc = LYWSD02_Svc;
-const char *MHOC401_BattNotifyChar = LYWSD03_BattNotifyChar;
+const char *MHOC401_BattNotifyChar = LYWSD02_BattNotifyChar;
 
 const char CGD1_Svc[] PROGMEM = "180F"; 
 const char CGD1_BattChar[] PROGMEM = "2A19"; 
 
 const char FLORA_Svc[] PROGMEM = "00001204-0000-1000-800000805f9b34fb";
-const char FLORA_BattChar[] PROGMEM = "00001a02-0000-1000-800000805f9b34fb" 
+const char FLORA_BattChar[] PROGMEM = "00001a02-0000-1000-800000805f9b34fb";
 
 
-MI_32_TYPE_DESCRIPTION MI31TypeDescriptors[] PROGMEM = {
-  { "Flora",    0x0098, genericOpCompleteFn,  genericBatReadFn,   nullptr,            nullptr,            genericPayloadFn },
-  { "MJ_HT_V1", 0x01aa, nullptr,              nullptr,            nullptr,            nullptr,            genericPayloadFn },
-  { "LYWSD02",  0x045b, genericOpCompleteFn,  genericBatReadFn,   genericUnitWriteFn, genericTimeWriteFn, genericPayloadFn },
-  { "LYWSD03",  0x055b, genericOpCompleteFn,  genericBatReadFn,   nullptr,            nullptr,            genericPayloadFn },
-  { "CGG1",     0x0347, genericOpCompleteFn,  nullptr,            nullptr,            nullptr,            genericPayloadFn },
-  { "CGD1",     0x0576, genericOpCompleteFn,  genericBatReadFn,   nullptr,            nullptr,            genericPayloadFn },
-  { "NLIGHT",   0x03dd, nullptr,              nullptr,            nullptr,            nullptr,            genericPayloadFn },
-  { "MJYD2S",   0x07f6, nullptr,              nullptr,            nullptr,            nullptr,            genericPayloadFn },
-  { "YEERC",    0x0153, nullptr,              nullptr,            nullptr,            nullptr,            genericPayloadFn },
-  { "MHOC401",  0x0387, genericOpCompleteFn,  genericBatReadFn,   nullptr,            nullptr,            genericPayloadFn },
-  { "MHOC303",  0x06d3, genericOpCompleteFn,  genericBatReadFn,   genericUnitWriteFn, genericTimeWriteFn, genericPayloadFn },
-  { "ATC",      0x0a1c, nullptr,              nullptr,            nullptr,            nullptr,            genericPayloadFn },  // ATC -> this is a fake ID
-}; 
 
-int MI32_TYPES = sizeof(MI31TypeDescriptors)/sizeof(MI_32_TYPE_DESCRIPTION);    //12
 
 
 /*********************************************************************************************\
@@ -460,6 +438,7 @@ enum MI32_MI_OP_TYPES {
   OP_UNIT_WRITE = 2,
   OP_UNIT_READ = 3,
   OP_UNIT_TOGGLE = 4,
+  OP_READ_HT_LY = 5,
 };
 
 
@@ -468,44 +447,11 @@ enum MI32_MI_OP_TYPES {
 \*********************************************************************************************/
 
 
-int genericPayloadFn(int slot, uitn8_t data, int len);
-
-
-int genericBatReadFn(int slot){
-  int res = 0;
-  switch(MIBLEsensors[slot].type) {
-    // these use notify for battery read
-    case LYWSD03MMC:
-      res = MI32Operation(slot, OP_BATT_READ, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
-      break;
-    case MHOC401:
-      res = MI32Operation(slot, OP_BATT_READ, MHOC401_Svc, nullptr, MHOC401_BattNotifyChar);
-      break;
-
-    // these read a characteristic
-    case FLORA: 
-      res = MI32Operation(slot, OP_BATT_READ, FLORA_Svc, FLORA_ReadChar);
-      break;
-    case LYWSD02: 
-      res = MI32Operation(slot, OP_BATT_READ, LYWSD02_Svc, LYWSD02_BattChar);
-      break;
-    case CGD1:
-      res = MI32Operation(slot, OP_BATT_READ, CGD1_Svc, CGD1_BattChar);
-      break;
-
-    default:
-      res = 0;
-      break;
-  }
-  return res;
-}
-
-
 // fn type READ_CALLBACK
 // NOTE!!!: this callback is called DIRECTLY from the operation task, so be careful about cross-thread access of data
 // if is called after read, so that you can do a read/modify/write operation on a characteristic.
-int toggleUnit(BLE_ESP32::generic_sensor_t *pStruct){
-  uint32_t context = (uint32_t) pStruct->context;
+int toggleUnit(BLE_ESP32::generic_sensor_t *op){
+  uint32_t context = (uint32_t) op->context;
   int opType = context >> 24;
   // we only need to op type
   int devType = (context >> 16) & 0xff;
@@ -531,7 +477,176 @@ int toggleUnit(BLE_ESP32::generic_sensor_t *pStruct){
       op->dataToWrite[0] = curUnit;
     } break;
   }
+  return 0;
 }
+
+bool MI32Operation(int slot, int optype, const char *svc, const char *charactistic, const char *notifychar = nullptr, const uint8_t *data = nullptr, int datalen = 0) {
+
+  BLE_ESP32::generic_sensor_t *op = new BLE_ESP32::generic_sensor_t;
+  memset(op, 0, sizeof(BLE_ESP32::generic_sensor_t));
+  BLE_ESP32::dump(op->MAC, sizeof(op->MAC), MIBLEsensors[slot].MAC, 6) ;
+
+  if (!svc || !svc[0]){
+    return 0;
+  }
+
+  bool havechar = false;
+  
+  strncpy(op->serviceStr, svc, sizeof(op->serviceStr));
+  if (charactistic && charactistic[0]){
+    havechar = true;
+    strncpy(op->characteristicStr, charactistic, sizeof(op->characteristicStr));
+  }
+
+  if (notifychar && notifychar[0]){
+    strncpy(op->notificationCharacteristicStr, notifychar, sizeof(op->notificationCharacteristicStr));
+  }    
+
+  if (data && datalen) {
+    op->writelen = datalen;
+    memcpy(op->dataToWrite, data, datalen);
+  } else {
+    if (!datalen && havechar){
+      op->readlen = 1; // if we don't set readlen, then it won't read
+    }
+  }
+
+
+  // the only times we intercept between read abnd write
+  if ((optype == OP_UNIT_WRITE) || (optype == OP_UNIT_TOGGLE)){
+    op->readlen = 1; // if we don't set readlen, then it won't read
+    op->readmodifywritecallback = (void *)toggleUnit;
+  }
+
+  // this op will call us back on complete or failure.
+  op->completecallback = (void *)genericOpCompleteFn;
+  uint32_t context = (optype << 24) | (MIBLEsensors[slot].type << 16) | slot;
+  op->context = (void *)context;
+
+  return BLE_ESP32::extQueueOperation(&op);
+}
+
+
+
+int genericBatReadFn(int slot){
+  int res = 0;
+  switch(MIBLEsensors[slot].type) {
+    // these use notify for battery read
+    case LYWSD03MMC:
+      res = MI32Operation(slot, OP_BATT_READ, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
+      break;
+    case MHOC401:
+      res = MI32Operation(slot, OP_BATT_READ, MHOC401_Svc, nullptr, MHOC401_BattNotifyChar);
+      break;
+
+    // these read a characteristic
+    case FLORA: 
+      res = MI32Operation(slot, OP_BATT_READ, FLORA_Svc, FLORA_BattChar);
+      break;
+    case LYWSD02: 
+      res = MI32Operation(slot, OP_BATT_READ, LYWSD02_Svc, LYWSD02_BattChar);
+      break;
+    case CGD1:
+      res = MI32Operation(slot, OP_BATT_READ, CGD1_Svc, CGD1_BattChar);
+      break;
+
+    default:
+      res = -1;
+      break;
+  }
+  return res;
+}
+
+
+
+int genericSensorReadFn(int slot){
+  int res = 0;
+  switch(MIBLEsensors[slot].type) {
+    case LYWSD02:
+      res = MI32Operation(slot, OP_READ_HT_LY, LYWSD02_Svc, nullptr, LYWSD02_BattNotifyChar);
+      break;
+    case LYWSD03MMC:
+      res = MI32Operation(slot, OP_READ_HT_LY, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
+      break;
+    case MHOC401:
+      res = MI32Operation(slot, OP_READ_HT_LY, MHOC401_Svc, nullptr, MHOC401_BattNotifyChar);
+      break;
+
+    default:
+      res = -1;
+      break;
+  }
+  return res;
+}
+
+
+// called once per second
+int readOneSensor(){
+  if (MI32.sensorreader.active){
+    return 0;
+  }
+  if (MI32.sensorreader.slot >= MIBLEsensors.size()){
+    return 0;
+  }
+
+  int res = genericSensorReadFn(MI32.sensorreader.slot);
+
+  // if this sensor in this slot does not need to be read via notify, just move on top the next one
+  if (res < 0){
+    MI32.sensorreader.slot++;
+    return 0;
+  }
+
+  if (res == 0){
+    // can't read at the moment (no operations available?)
+    return 0;
+  }
+
+  // setup next slot to read
+  MI32.sensorreader.slot++;
+  // and make it wait until the read/notify is complete
+  // this is cleared in the response callback.
+  MI32.sensorreader.active = 1;
+
+  // started one
+  return 1;
+}
+
+
+
+// called once per second
+int readOneBat(){
+  if (MI32.batteryreader.active){
+    return 0;
+  }
+  if (MI32.batteryreader.slot >= MIBLEsensors.size()){
+    return 0;
+  }
+
+  int res = genericBatReadFn(MI32.batteryreader.slot);
+
+  // if this sensor in this slot does not support battery read, just move on top the next one
+  if (res < 0){
+    MI32.batteryreader.slot++;
+    return 0;
+  }
+
+  if (res == 0){
+    // can't read at the moment (no operations available?)
+    return 0;
+  }
+
+  // setup next slot to read
+  MI32.batteryreader.slot++;
+  // and make it wait until the read/notify is complete
+  // this is cleared in the response callback.
+  MI32.batteryreader.active = 1;
+
+  // started one
+  return 1;
+}
+
+
 
 /////////////////////////////////////////////////////
 // change the unit of measurement?
@@ -552,14 +667,14 @@ int genericUnitWriteFn(int slot, int unit){
       res = MI32Operation(slot, op, MHOC303_Svc, MHOC303_UnitChar, nullptr, writeData, 1);
       break;
     default:
-      res = 0;
+      res = -1;
       break;
   }
   return res;
 }
 
 /////////////////////////////////////////////////////
-// read the unit of measurement.  response comes back to MI31TypeDescriptors[type].operationFn
+// read the unit of measurement.  genericOpCompleteFn
 int genericUnitReadFn(int slot){
   int res = 0;
   switch (MIBLEsensors[slot].type){
@@ -570,7 +685,7 @@ int genericUnitReadFn(int slot){
       res = MI32Operation(slot, OP_UNIT_READ, MHOC303_Svc, MHOC303_UnitChar);
       break;
     default:
-      res = 0;
+      res = -1;
       break;
   }
   return res;
@@ -578,8 +693,9 @@ int genericUnitReadFn(int slot){
 
 
 /////////////////////////////////////////////////////
-// write time to a device. response comes back to MI31TypeDescriptors[type].operationFn
+// write time to a device. genericOpCompleteFn
 int genericTimeWriteFn(int slot){
+  int res = 0;
   switch (MIBLEsensors[slot].type){
     case LYWSD02: {
       union {
@@ -588,7 +704,7 @@ int genericTimeWriteFn(int slot){
       } _utc;
       _utc.time = Rtc.utc_time;
       _utc.buf[4] = Rtc.time_timezone / 60;
-      res = MI32Operation(slot, op, LYWSD02_Svc, LYWSD02_TimeChar, nullptr, _utc.buf, sizeof(_utc.buf));
+      res = MI32Operation(slot, OP_TIME_WRITE, LYWSD02_Svc, LYWSD02_TimeChar, nullptr, _utc.buf, sizeof(_utc.buf));
     } break;
     case MHOC303: // actually, EXACTLY the same as above, including the sevice and characteristic...
       union {
@@ -597,10 +713,10 @@ int genericTimeWriteFn(int slot){
       } _utc;
       _utc.time = Rtc.utc_time;
       _utc.buf[4] = Rtc.time_timezone / 60;
-      res = MI32Operation(slot, op, MHOC303_Svc, MHOC303_TimeChar, nullptr, _utc.buf, sizeof(_utc.buf));
+      res = MI32Operation(slot, OP_TIME_WRITE, MHOC303_Svc, MHOC303_TimeChar, nullptr, _utc.buf, sizeof(_utc.buf));
       break;
     default:
-      res = 0;
+      res = -1;
       break;
   }
   return res;
@@ -608,7 +724,7 @@ int genericTimeWriteFn(int slot){
 
 
 int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
-  uint32_t context = (uint32_t) pStruct->context;
+  uint32_t context = (uint32_t) op->context;
   int opType = context >> 24;
   int devType = (context >> 16) & 0xff;
   int slot = (context) & 0xff;
@@ -616,13 +732,13 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
   char slotMAC[13];
   BLE_ESP32::dump(slotMAC, sizeof(slotMAC), MIBLEsensors[slot].MAC, 6) ;
 
-  if (strncmp(slotMAC, op->MAC)){
+  if (strncmp(slotMAC, op->MAC, 12)){
     // slot changed during operation?
     AddLog_P(LOG_LEVEL_ERROR,PSTR("Slot mac changed during an operation"));
     return 0;
   }
 
-  if (op->state & BLE_ESP::GEN_STATE_FAILED){
+  if (op->state & GEN_STATE_FAILED){
     AddLog_P(LOG_LEVEL_ERROR,PSTR("operation failed %x"), op->state);
     return 0;
   }
@@ -636,13 +752,16 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
       int len = 0;
       if (op->notifylen){
         data = op->dataNotify;
-        len = op.notifylen;
+        len = op->notifylen;
       }
       if (op->readlen){
         data = op->dataRead;
-        len = op.readlen;
+        len = op->readlen;
       }
       MIParseBatt(slot, data, len);
+
+      // allow another...
+      MI32.batteryreader.active = 0;
     } return 0;
 
     case OP_UNIT_WRITE: // nothing more to do?
@@ -660,7 +779,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
     } return 0;
 
     case OP_READ_HT_LY: {
-      MI32notifyHT_LY(slot, op->dataNotify, op->notifylen);
+      MI32notifyHT_LY(slot, (char*)op->dataNotify, op->notifylen);
       AddLog_P(LOG_LEVEL_DEBUG,PSTR("HT_LY notify for %s complete"), slotMAC);
     } return 0;
 
@@ -673,18 +792,18 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
 }
 
 
-int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
+int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
 {
   // we will try not to use this...
   BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
 
   // AddLog_P(LOG_LEVEL_DEBUG,PSTR("Advertised Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData(0).length());
   int RSSI = pStruct->RSSI;
-  uint8_t *addr = pStruct->addr;
+  const uint8_t *addr = pStruct->addr;
 
-  if (pStruct->svcDataCount == 0) {
+  if (pStruct->svcdataCount == 0) {
     MI32HandleGenericBeacon(pStruct->payload, pStruct->payloadLen, RSSI, addr);
-    return;
+    return 0;
   }
 
   if (pStruct->svcdata[0].serviceUUID->u.type == 16){
@@ -692,15 +811,15 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
     size_t ServiceDataLength = pStruct->svcdata[0].serviceDataLen;
     char * ServiceData = (char *)pStruct->svcdata[0].serviceData;
     if(UUID==0xfe95) {
-      if(MI32isInBlockList(addr) == true) return;
+      if(MI32isInBlockList(addr) == true) return 0;
       MI32ParseResponse(ServiceData, ServiceDataLength, addr, RSSI);
     }
     else if(UUID==0xfdcd) {
-      if(MI32isInBlockList(addr) == true) return;
+      if(MI32isInBlockList(addr) == true) return 0;
       MI32parseCGD1Packet(ServiceData, ServiceDataLength, addr, RSSI);
     }
     else if(UUID==0x181a) { //ATC
-      if(MI32isInBlockList(addr) == true) return;
+      if(MI32isInBlockList(addr) == true) return 0;
       MI32ParseATCPacket(ServiceData, ServiceDataLength, addr, RSSI);
     }
     else {
@@ -711,16 +830,9 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
       // MI32Scan->erase(advertisedDevice->getAddress());
     }
   }
+  return 0;
 }
 
-/*********************************************************************************************\
- * BLE callback functions
-\*********************************************************************************************/
-
-void MI32scanEndedCB(NimBLEScanResults results){
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("Scan ended"));
-  MI32.mode.runningScan = 0;
-}
 
 /*********************************************************************************************\
  * Helper functions
@@ -1010,17 +1122,10 @@ void MI32StatusInfo() {
  * These are called from main thread only.
 \*********************************************************************************************/
 
-int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct) {
 
-}
-
-int operationCompleteCallback(BLE_ESP32::generic_sensor_t *pStruct){
-
-}
-
-int scanCompleteCallback(NimBLEScanResults results){
+int MI32scanCompleteCallback(NimBLEScanResults results){
   AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: scancomplete"));
-
+  return 0;
 }
 
 
@@ -1044,8 +1149,8 @@ void MI32Init(void) {
   MI32.option.ignoreBogusBattery = 1; // from advertisements
   MI32.option.holdBackFirstAutodiscovery = 1;
 
-  BLE_ESP32::registerForAdvertismentCallbacks((const char *)"iBeacon", advertismentCallback);
-  BLE_ESP32::registerForScanCallbacks((const char *)"iBeacon", operationCompleteCallback);
+  BLE_ESP32::registerForAdvertismentCallbacks((const char *)"iBeacon", MI32advertismentCallback);
+  BLE_ESP32::registerForScanCallbacks((const char *)"iBeacon", MI32scanCompleteCallback);
   // note: for operations, we will set individual callbacks in the operations we request
   //void registerForOpCallbacks(const char *tag, BLE_ESP32::OPCOMPLETE_CALLBACK* pFn);
 
@@ -1060,55 +1165,13 @@ void MI32Init(void) {
 \*********************************************************************************************/
 
 
-bool MI32Operation(int slot, int optype, char *svc, char *charactistic, char *notifychar = nullptr, uint8_t *data = nullptr, int datalen = 0) {
-
-  BLE_ESP32::generic_sensor_t *op = new BLE_ESP32::generic_sensor_t;
-  memset(op, 0, sizeof(BLE_ESP32::generic_sensor_t));
-  BLE_ESP32::dump(op->MAC, sizeof(op->MAC), MIBLEsensors[slot].MAC, 6) ;
-
-  if (!svc || !svc[0]){
-    return 0;
-  }
-
-  bool havechar = false;
-  
-  strncpy(op->serviceStr, svc, sizeof(op->serviceStr));
-  if (charactistic && charactistic[0]){
-    havechar = true;
-    strncpy(op->characteristicStr, charactistic, sizeof(op->characteristicStr));
-  }
-
-  if (notifychar && notifychar[0]){
-    strncpy(op->notificationCharacteristicStr, notifychar, sizeof(op->notificationCharacteristicStr));
-  }    
-
-  if (data && datalen) {
-    op->writelen = datalen;
-    memcpy(op->dataToWrite, data, datalen);
-  } else {
-    if (!datalen && havechar){
-      op->readlen = 1; // if we don't set readlen, then it won't read
-    }
-  }
-
-
-  // the only times we intercept between read abnd write
-  if ((optype === OP_UNIT_WRITE) || (optype === OP_UNIT_TOGGLE)){
-    op->readlen = 1; // if we don't set readlen, then it won't read
-    op->readcallback = (void *)toggleUnit;
-  }
-
-  // this op will call us back on complete or failure.
-  op->completecallback = (void *)MI31TypeDescriptors[MIBLEsensors[slot].type].operationFn;
-  uint32_t context = (optype << 24) | (MIBLEsensors[slot].type << 16) | slot;
-  op->context = (void *)context;
-
-  return BLE_ESP32::extQueueOperation(&op);
-}
 
 
 int MIParseBatt(int slot, uint8_t *data, int len){
   int value = data[0];
+  char slotMAC[13];
+  BLE_ESP32::dump(slotMAC, sizeof(slotMAC), MIBLEsensors[slot].MAC, 6) ;
+
   if ((value != 0) && (value < 101)){
     MIBLEsensors[slot].bat = value;
     if(MIBLEsensors[slot].type==FLORA){
@@ -1127,6 +1190,8 @@ int MIParseBatt(int slot, uint8_t *data, int len){
   } else {
     AddLog_P(LOG_LEVEL_ERROR,PSTR("Batt read for %s complete but out of range 1-101 (%d)"), slotMAC, value);
   }
+
+  return 0;
 }
 
 /*********************************************************************************************\
@@ -1292,7 +1357,7 @@ if(decryptRet!=0){
   if(MI32.option.directBridgeMode) MI32.mode.shallTriggerTele = 1;
 }
 
-void MI32ParseATCPacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI){
+void MI32ParseATCPacket(const char * _buf, uint32_t length, const uint8_t *addr, int RSSI){
   ATCPacket_t *_packet = (ATCPacket_t*)_buf;
   uint32_t _slot = MIBLEgetSensorSlot(_packet->MAC, 0x0a1c, _packet->frameCnt); // This must be a hard-coded fake ID
   AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1],_slot);
@@ -1311,7 +1376,7 @@ void MI32ParseATCPacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI)
 
 }
 
-void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int RSSI){ // no MiBeacon
+void MI32parseCGD1Packet(const char * _buf, uint32_t length, const uint8_t *addr, int RSSI){ // no MiBeacon
   uint8_t _addr[6];
   memcpy(_addr,addr,6);
   uint32_t _slot = MIBLEgetSensorSlot(_addr, 0x0576, 0); // This must be hard-coded, no object-id in Cleargrass-packet, we have no packet counter too
@@ -1352,7 +1417,7 @@ void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int RSSI
   if(MI32.option.directBridgeMode) MI32.mode.shallTriggerTele = 1;
 }
 
-void MI32ParseResponse(char *buf, uint16_t bufsize, uint8_t addr[6], int RSSI) {
+void MI32ParseResponse(char *buf, uint16_t bufsize, const uint8_t* addr, int RSSI) {
     if(bufsize<9) {  //9 is from the NLIGHT
       return;
     }
@@ -1376,7 +1441,7 @@ void MI32ParseResponse(char *buf, uint16_t bufsize, uint8_t addr[6], int RSSI) {
  * @param SVC
  * @param UUID
  */
-void MI32ParseGenericBeacon(uint8_t* payload, size_t payloadLength, uint16_t* CID, uint16_t*SVC, uint16_t* UUID){
+void MI32ParseGenericBeacon(const uint8_t* payload, size_t payloadLength, uint16_t* CID, uint16_t*SVC, uint16_t* UUID){
   AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("MI32: Beacon:____________"));
   for (uint32_t i = 0; i<payloadLength;){
     uint32_t ADtype = payload[i+1];
@@ -1391,10 +1456,9 @@ void MI32ParseGenericBeacon(uint8_t* payload, size_t payloadLength, uint16_t* CI
         break;
       case 0x08: case 0x09:
       {
-        uint8_t _saveChar = payload[i+offset+1];
-        payload[i+offset+1] = 0;
-        AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("Name: %s"), (char*)&payload[i+2]);
-        payload[i+offset+1] = _saveChar;
+        char name[20];
+        strncpy(name, (const char*)&payload[i+2], ((offset-1)< 19)?(offset-1):19);
+        AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("Name: %s"), name);
       }
         break;
       case 0x0a:
@@ -1421,7 +1485,7 @@ void MI32ParseGenericBeacon(uint8_t* payload, size_t payloadLength, uint16_t* CI
  * @param RSSI
  * @param addr
  */
-void MI32HandleGenericBeacon(uint8_t* payload, size_t payloadLength, int RSSI, uint8_t* addr){
+void MI32HandleGenericBeacon(const uint8_t* payload, size_t payloadLength, int RSSI, const uint8_t* addr){
   if(MI32.state.beaconScanCounter==0){ //handle beacon
     for(auto &_beacon : MIBLEbeacons){
       if(memcmp(addr,_beacon.MAC,6)==0){
@@ -1510,7 +1574,7 @@ void MI32showBlockList(){
   MI32.mode.shallShowBlockList = 0;
 }
 
-bool MI32isInBlockList(uint8_t* MAC){
+bool MI32isInBlockList(const uint8_t* MAC){
   bool isBlocked = false;
   for(auto &_blockedMAC : MIBLEBlockList){
     if(memcmp(_blockedMAC.buf,MAC,6) == 0) isBlocked = true;
@@ -1549,7 +1613,6 @@ void MI32notifyHT_LY(int slot, char *_buf, int len){
     MIBLEsensors[_slot].eventType.tempHum  = 1;
     if (MIBLEsensors[_slot].type == LYWSD03MMC || MIBLEsensors[_slot].type == MHOC401){
       MIBLEsensors[_slot].bat = ((float)LYWSD0x_HT.volt-2100.0f)/12.0f;
-      MI32.mode.willReadBatt = 0;
       MIBLEsensors[_slot].eventType.bat  = 1;
     }
     MIBLEsensors[_slot].shallSendMQTT = 1;
@@ -1576,6 +1639,22 @@ void MI32Every50mSecond(){
  */
 
 void MI32EverySecond(bool restart){
+  // read a battery if 
+  // MI32.batteryreader.slot < filled and !MI32.batteryreader.active
+  readOneBat();
+
+
+  // read a sensor if 
+  // MI32.sensorreader.slot < filled and !MI32.sensorreader.active
+  // for sensors which need to get data through notify...
+  readOneSensor();
+
+  if (MI32.secondsCounter >= MI32.period){
+    // kick off notification sensor reading every period.
+    MI32.sensorreader.slot = 0;
+    MI32.secondsCounter = 0;
+  }
+
   static uint32_t _counter = MI32.period - 15;
   static uint32_t _nextSensorSlot = 0;
 
@@ -1608,87 +1687,6 @@ void MI32EverySecond(bool restart){
   if(MI32.mode.shallShowStatusInfo == 1){
     MI32StatusInfo();
   }
-
-  if(restart){
-    _counter = 0;
-    MI32.mode.canScan = 0;
-    MI32.mode.canConnect = 1;
-    MI32.mode.willReadBatt = 0;
-    MI32.mode.willConnect = 0;
-    return;
-  }
-
-  if (MI32.mode.shallSetTime) {
-    MI32.mode.canScan = 0;
-    MI32.mode.canConnect = 0;
-    if (MI32.mode.willSetTime == 0){
-      MI32.mode.willSetTime = 1;
-      MI32StartTask(MI32_TASK_TIME);
-    }
-  }
-
-  if (MI32.mode.shallSetUnit) {
-    MI32.mode.canScan = 0;
-    MI32.mode.canConnect = 0;
-    if (MI32.mode.willSetUnit == 0){
-      MI32.mode.willSetUnit = 1;
-      MI32StartTask(MI32_TASK_UNIT);
-    }
-  }
-
-  if (MI32.mode.willReadBatt) return;
-
-  if (_counter>MI32.period) {
-    _counter = 0;
-    MI32.mode.canScan = 0;
-    MI32.mode.canConnect = 1;
-  }
-
-  if(MI32.mode.connected == 1 || MI32.mode.willConnect == 1) return;
-
-  if(MIBLEsensors.size()==0) {
-    if (MI32.mode.runningScan == 0 && MI32.mode.canScan == 1) MI32StartTask(MI32_TASK_SCAN);
-    return;
-  }
-
-  if(_counter==0) {
-
-    MI32.state.sensor = _nextSensorSlot;
-    MI32.mode.canScan = 0;
-    // if (MI32.mode.runningScan|| MI32.mode.connected || MI32.mode.willConnect) return;
-    if (MI32.mode.connected || MI32.mode.willConnect) return;
-    _nextSensorSlot++;
-    MI32.mode.canConnect = 1;
-    if(MI32.mode.connected == 0) {
-      if (MI32.mode.shallReadBatt) {
-      //TODO: decide automatically, which sensor can not work without connections
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("%s: active sensor now: %u of %u"),D_CMND_MI32, MI32.state.sensor, MIBLEsensors.size()-1);
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("will connect to %s"),kMI32DeviceType[MIBLEsensors[MI32.state.sensor].type-1] );
-
-      MI32StartTask(MI32_TASK_BATT);
-      }
-#ifndef USE_MI_DECRYPTION // turn off connections, because we only listen to advertisements
-    else{
-      MI32StartTask(MI32_TASK_CONN);
-      }
-#endif //USE_MI_DECRYPTION
-    }
-    if (_nextSensorSlot>(MIBLEsensors.size()-1)) {
-      _nextSensorSlot= 0;
-      _counter++;
-      if (MI32.mode.shallReadBatt){
-        MI32.mode.shallReadBatt = 0;
-      }
-      MI32.mode.canConnect = 0;
-      MI32.mode.canScan = 1;
-    }
-  }
-  else _counter++;
-  if (MI32.state.sensor>MIBLEsensors.size()-1) {
-    _nextSensorSlot = 0;
-    MI32.mode.canScan = 1;
-  }
-  MI32StartTask(MI32_TASK_SCAN);
 }
 
 /*********************************************************************************************\
@@ -1709,14 +1707,16 @@ void CmndMi32Period(void) {
 void CmndMi32Time(void) {
   if (XdrvMailbox.data_len > 0) {
     if (MIBLEsensors.size() > XdrvMailbox.payload) {
-      if ((LYWSD02 == MIBLEsensors[XdrvMailbox.payload].type) || (MHOC303 == MIBLEsensors[XdrvMailbox.payload].type)) {
+      int res = genericTimeWriteFn(XdrvMailbox.payload);
+      if (res > 0){
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("MI32: will set Time"));
-        MI32.state.sensor = XdrvMailbox.payload;
-        MI32.mode.canScan = 0;
-        MI32.mode.canConnect = 0;
-        MI32.mode.shallSetTime = 1;
-        MI32.mode.willSetTime = 0;
         ResponseCmndNumber(XdrvMailbox.payload);
+      }
+      if (res < 0) {
+        AddLog_P(LOG_LEVEL_ERROR, PSTR("MI32: cannot set Time on sensor type"));
+      }
+      if (res == 0) {
+        AddLog_P(LOG_LEVEL_ERROR, PSTR("MI32: cannot set Time right now"));
       }
     }
   }
@@ -1729,24 +1729,28 @@ void CmndMi32Page(void) {
   ResponseCmndNumber(MI32.perPage);
 }
 
+// read ALL battery values where we can?
 void CmndMi32Battery(void) {
-  MI32EverySecond(true);
-  MI32.mode.shallReadBatt = 1;
-  MI32.mode.canConnect = 1;
+  // trigger a read cycle
+  MI32.batteryreader.slot = 0;
   ResponseCmndDone();
 }
 
 void CmndMi32Unit(void) {
   if (XdrvMailbox.data_len > 0) {
     if (MIBLEsensors.size() > XdrvMailbox.payload) {
-      if ((LYWSD02 == MIBLEsensors[XdrvMailbox.payload].type) || (MHOC303 == MIBLEsensors[XdrvMailbox.payload].type)) {
-        AddLog_P(LOG_LEVEL_DEBUG,PSTR("MI32: will set Unit"));
-        MI32.state.sensor = XdrvMailbox.payload;
-        MI32.mode.canScan = 0;
-        MI32.mode.canConnect = 0;
-        MI32.mode.shallSetUnit = 1;
-        MI32.mode.willSetUnit = 0;
+      // TOGGLE unit?
+      int res = genericUnitWriteFn(XdrvMailbox.payload, -1);
+      if (res > 0){
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("MI32: will toggle Unit"));
         ResponseCmndNumber(XdrvMailbox.payload);
+        return;
+      }
+      if (res < 0) {
+        AddLog_P(LOG_LEVEL_ERROR, PSTR("MI32: cannot toggle Unit on sensor type"));
+      }
+      if (res == 0) {
+        AddLog_P(LOG_LEVEL_ERROR, PSTR("MI32: cannot toggle Unit right now"));
       }
     }
   }
