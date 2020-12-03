@@ -1312,6 +1312,12 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
           // We create a synthetic attribute 0403/FFF0 to indicate sea level
         }
         break;
+      case 0x05000002:    // ZoneStatus
+        const Z_Data_Alarm & alarm = (const Z_Data_Alarm&) zigbee_devices.getShortAddr(_srcaddr).data.find(Z_Data_Type::Z_Alarm, _srcendpoint);
+        if (&alarm != nullptr) {
+          alarm.convertZoneStatus(attr_list, attr.getUInt());
+        }
+        break;
     }
   }
 }

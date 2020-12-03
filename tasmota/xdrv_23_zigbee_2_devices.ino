@@ -427,6 +427,8 @@ public:
     }
     return false;
   }
+
+  void convertZoneStatus(Z_attribute_list & attr_list, uint16_t val) const;
   
   // 4 bytes
   uint16_t              zone_status;      // last known state for sensor 1 & 2
@@ -446,6 +448,57 @@ public:
     // 0x0226  Glass break sensor
     // 0x0229  Security repeater*
 };
+
+void Z_Data_Alarm::convertZoneStatus(Z_attribute_list & attr_list, uint16_t val) const {
+  if (validConfig()) {
+    // indicator #1, published for false and true
+    if (isPIR()) {                  // set Occupancy
+      attr_list.addAttribute(0x0406, 0x0000).setUInt(val & 0x01 ? 1 : 0);
+    } else {                              // all other cases
+      attr_list.addAttribute(0x0500, 0xFFF0 + getConfig()).setUInt(val & 0x01 ? 1 : 0);
+    }
+    // indicator #2 published only if true
+    if (val & 0x02) {
+      if (isPIR()) {                  // set Occupancy
+        attr_list.addAttribute(0x0406, 0x0000, 2).setUInt(val & 0x02 ? 1 : 0);
+      } else {                              // all other cases
+        attr_list.addAttribute(0x0500, 0xFFF0 + getConfig(), 2).setUInt(val & 0x02 ? 1 : 0);
+      }
+    }
+    // Tamper
+    if (val & 0x04) {
+      attr_list.addAttributePMEM(PSTR("Tamper")).setUInt(1);
+    }
+    // BatteryLow
+    if (val & 0x08) {
+      attr_list.addAttributePMEM(PSTR("BatteryLow")).setUInt(1);
+    }
+    // // SupervisionReports
+    // if (val & 0x10) {
+    //   attr_list.addAttributePMEM(PSTR("SupervisionReports")).setUInt(1);
+    // }
+    // // RestoreReports
+    // if (val & 0x20) {
+    //   attr_list.addAttributePMEM(PSTR("RestoreReports")).setUInt(1);
+    // }
+    // Failure
+    if (val & 0x40) {
+      attr_list.addAttributePMEM(PSTR("Failure")).setUInt(1);
+    }
+    // MainsFault
+    if (val & 0x80) {
+      attr_list.addAttributePMEM(PSTR("MainsFault")).setUInt(1);
+    }
+    // Test
+    if (val & 0x100) {
+      attr_list.addAttributePMEM(PSTR("Test")).setUInt(1);
+    }
+    // BatteryDefect
+    if (val & 0x200) {
+      attr_list.addAttributePMEM(PSTR("BatteryDefect")).setUInt(1);
+    }
+  }
+}
 
 const uint8_t Z_Data_Type_len[] PROGMEM = {
   0,                        // 0x00 Z_Data_Type::Z_Unknown

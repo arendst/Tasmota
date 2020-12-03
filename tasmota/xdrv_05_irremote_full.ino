@@ -117,7 +117,6 @@ protected:
 \*********************************************************************************************/
 
 IRsend *irsend = nullptr;
-bool irsend_active = false;
 // some ACs send toggle messages rather than state. we need to help IRremoteESP8266 keep track of the state
 // have a flag that is a variable, can be later used to convert this functionality to an option (as in SetOptionXX)
 bool irhvac_stateful = true;
@@ -291,7 +290,7 @@ void IrReceiveCheck(void)
     uint32_t now = millis();
 
 //    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
-    if (!irsend_active && (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE)) {
+    if (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) {
       ir_lasttime = now;
       Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":%s"), sendIRJsonState(results).c_str());
 
@@ -530,11 +529,11 @@ uint32_t IrRemoteCmndIrSendJson(void)
   // AddLog_P(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
   //   protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat);
 
-  irsend_active = true;     // deactivate receive
+  if (irrecv != nullptr) { irrecv->disableIRIn(); }
   bool success = irsend->send(protocol, data, bits, repeat);
+  if (irrecv != nullptr) { irrecv->enableIRIn(); }
 
   if (!success) {
-      irsend_active = false;
       ResponseCmndChar(D_JSON_PROTOCOL_NOT_SUPPORTED);
   }
   return IE_NO_ERROR;
@@ -555,10 +554,11 @@ uint32_t IrRemoteSendGC(char ** pp, uint32_t count, uint32_t repeat) {
     GC[i] = strtol(strtok_r(nullptr, ",", pp), nullptr, 0);
     if (!GC[i]) { return IE_INVALID_RAWDATA; }
   }
-  irsend_active = true;
+  if (irrecv != nullptr) { irrecv->disableIRIn(); }
   for (uint32_t r = 0; r <= repeat; r++) {
     irsend->sendGC(GC, count+1);
   }
+  if (irrecv != nullptr) { irrecv->enableIRIn(); }
   return IE_NO_ERROR;
 }
 
@@ -609,7 +609,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
         raw_array[i++] = mark;                    // Mark
       }
     }
-    irsend_active = true;
+    if (irrecv != nullptr) { irrecv->disableIRIn(); }
     for (uint32_t r = 0; r <= repeat; r++) {
       // AddLog_P(LOG_LEVEL_DEBUG, PSTR("sendRaw count=%d, space=%d, mark=%d, freq=%d"), count, space, mark, freq);
       irsend->sendRaw(raw_array, i, freq);
@@ -617,6 +617,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
         irsend->space(40000);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
       }
     }
+    if (irrecv != nullptr) { irrecv->enableIRIn(); }
   } else if (6 == count) {                          // NEC Protocol
     // IRsend raw,0,8620,4260,544,411,1496,010101101000111011001110000000001100110000000001100000000000000010001100
     uint16_t raw_array[strlen(*pp)*2+3];            // Header + bits + end
@@ -635,7 +636,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
       }
     }
     raw_array[i++] = parm[2];                     // Trailing mark
-    irsend_active = true;
+    if (irrecv != nullptr) { irrecv->disableIRIn(); }
     for (uint32_t r = 0; r <= repeat; r++) {
       // AddLog_P(LOG_LEVEL_DEBUG, PSTR("sendRaw %d %d %d %d %d %d"), raw_array[0], raw_array[1], raw_array[2], raw_array[3], raw_array[4], raw_array[5]);
       irsend->sendRaw(raw_array, i, freq);
@@ -643,6 +644,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
         irsend->space(inter_message);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
       }
     }
+    if (irrecv != nullptr) { irrecv->enableIRIn(); }
   }
   else { return IE_INVALID_RAWDATA; }                   // Invalid number of parameters
   return IE_NO_ERROR;
@@ -711,10 +713,11 @@ uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint
   // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
   if (0 == count) { return IE_INVALID_RAWDATA; }
 
-  irsend_active = true;
+  if (irrecv != nullptr) { irrecv->disableIRIn(); }
   for (uint32_t r = 0; r <= repeat; r++) {
     irsend->sendRaw(arr, count, freq);
   }
+  if (irrecv != nullptr) { irrecv->enableIRIn(); }
 
   if (nullptr != arr) {
     free(arr);
@@ -836,7 +839,6 @@ bool Xdrv05(uint8_t function)
         if (PinUsed(GPIO_IRRECV)) {
           IrReceiveCheck();  // check if there's anything on IR side
         }
-        irsend_active = false;  // re-enable IR reception
         break;
       case FUNC_COMMAND:
         if (PinUsed(GPIO_IRSEND)) {
