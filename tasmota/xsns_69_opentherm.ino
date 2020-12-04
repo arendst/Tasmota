@@ -33,7 +33,10 @@
 #define OT_BOILER_DEFAULT 85;
 
 // Seconds before OT will make an attempt to connect to the boiler after connection error
-#define SNS_OT_DISCONNECT_COOLDOWN_SECONDS 10
+#define SNS_OT_DISCONNECT_COOLDOWN_SECONDS 4
+
+// Number of consecutive timeouts which are accepted before entering disconnect state 
+#define SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT 3
 
 // Count of the OpenThermSettingsFlags
 #define OT_FLAGS_COUNT 6
@@ -63,6 +66,7 @@ enum OpenThermConnectionStatus
 
 OpenThermConnectionStatus sns_ot_connection_status = OpenThermConnectionStatus::OTC_NONE;
 uint8_t sns_ot_disconnect_cooldown = 0;
+uint8_t sns_ot_timeout_before_disconnect = 0;
 
 OpenTherm *sns_ot_master = NULL;
 
@@ -178,11 +182,13 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
             sns_opentherm_process_success_response(&sns_ot_boiler_status, response);
         }
         sns_ot_connection_status = OpenThermConnectionStatus::OTC_READY;
+        sns_ot_timeout_before_disconnect = SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT;
         break;
 
     case OpenThermResponseStatus::INVALID:
         sns_opentherm_check_retry_request();
         sns_ot_connection_status = OpenThermConnectionStatus::OTC_READY;
+        sns_ot_timeout_before_disconnect = SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT;
         break;
 
     // Timeout may indicate not valid/supported command or connection error
@@ -191,7 +197,14 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
     // after couple of failed attempts. See sns_opentherm_check_retry_request logic
     case OpenThermResponseStatus::TIMEOUT:
         sns_opentherm_check_retry_request();
-        sns_ot_connection_status = OpenThermConnectionStatus::OTC_DISCONNECTED;
+        if (--sns_ot_timeout_before_disconnect == 0)
+        {
+            sns_ot_connection_status = OpenThermConnectionStatus::OTC_DISCONNECTED;
+        }
+        else
+        {
+            sns_ot_connection_status = OpenThermConnectionStatus::OTC_READY;
+        }
         break;
     }
 }
