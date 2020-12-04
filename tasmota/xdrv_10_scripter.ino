@@ -166,6 +166,7 @@ void Script_ticker4_end(void) {
 #include "SPIFFS.h"
 #else
 #include "FFat.h"
+//#include <LittleFS.h>
 #endif
 #else
 #include <LittleFS.h>
@@ -746,7 +747,7 @@ char *script;
     // now copy all vars
     // numbers
     glob_script_mem.fvars = (float*)script_mem;
-    uint16_t size = sizeof(float)*nvars;
+    uint16_t size = sizeof(float) * nvars;
     memcpy(script_mem, fvalues, size);
     script_mem += size;
     glob_script_mem.s_fvars = (float*)script_mem;
@@ -1942,6 +1943,12 @@ chknext:
               break;
             case 9:
               fvar = Energy.active_power[2];
+              break;
+            case 10:
+              fvar = Energy.start_energy;
+              break;
+            case 11:
+              fvar = Energy.daily;
               break;
 
             default:
@@ -3706,6 +3713,7 @@ void StopBeep( TimerHandle_t xTimer ) {
 
 void esp32_beep(int32_t freq ,uint32_t len) {
   if (freq<0) {
+    if (freq <= -64) freq = 0;
     ledcSetup(7, 500, 10);
     ledcAttachPin(-freq, 7);
     ledcWriteTone(7, 0);
@@ -3726,6 +3734,21 @@ void esp32_beep(int32_t freq ,uint32_t len) {
     xTimerChangePeriod( beep_th, ticks, 10);
   }
 }
+
+void esp32_pwm(int32_t value) {
+  if (value < 0) {
+    if (value <= -64) value = 0;
+    ledcSetup(7, 4000, 10);
+    ledcAttachPin(-value, 7);
+    ledcWrite(7, 0);
+  } else {
+    if (value > 1023) {
+      value = 1023;
+    }
+    ledcWrite(7, value);
+  }
+}
+
 #endif // ESP32
 
 //#define IFTHEN_DEBUG
@@ -4138,6 +4161,13 @@ int16_t Run_script_sub(const char *type, int8_t tlen, JsonParserObject *jo) {
               float fvar1;
               lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
               esp32_beep(fvar, fvar1);
+              lp++;
+              goto next_line;
+            }
+            else if (!strncmp(lp, "pwm(", 4)) {
+              lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
+              SCRIPT_SKIP_SPACES
+              esp32_pwm(fvar);
               lp++;
               goto next_line;
             }
@@ -6375,6 +6405,8 @@ const char SCRIPT_MSG_GTABLEa[] PROGMEM =
 
 const char SCRIPT_MSG_GTABLEd[] PROGMEM =
 "['Timeline','start','end'],";
+const char SCRIPT_MSG_GTABLEe[] PROGMEM =
+"['Timeline','Label','start','end'],";
 
 //#define CHART_EXTRA_OPTIONS ",width:'640px',height:'480px'"
 #define CHART_EXTRA_OPTIONS
@@ -6402,10 +6434,10 @@ const char SCRIPT_MSG_GOPT3[] PROGMEM =
 
 const char SCRIPT_MSG_GOPT4[] PROGMEM =
 //"hAxis:{minValue:new Date(0,1,1,0,0),maxValue:new Date(0,1,2,0,0),format:'HH:mm'}";
-"hAxis:{minValue:new Date(0,1,1,0,0),maxValue:new Date(0,1,2,0,0),format:'HH:mm'},theme: 'maximized'";
+"hAxis:{format:'HH:mm',minValue:new Date(0,0,0,0,0),maxValue:new Date(0,0,0,23,59)},theme: 'maximized'";
 
 const char SCRIPT_MSG_GOPT5[] PROGMEM =
-"new Date(0,1,1,%d,%d)";
+"new Date(0,0,0,%d,%d)";
 
 const char SCRIPT_MSG_GOPT6[] PROGMEM =
 "title:'%s',isStacked:false,vAxis:{viewWindow:{min:%d,max:%d}}%s";
@@ -6417,7 +6449,9 @@ const char SCRIPT_MSG_GTE1[] PROGMEM = "'%s'";
 #define GLIBS_GAUGE 1<<2
 #define GLIBS_TIMELINE 1<<3
 
+#ifndef MAX_GARRAY
 #define MAX_GARRAY 4
+#endif
 
 
 char *gc_get_arrays(char *lp, float **arrays, uint8_t *ranum, uint16_t *rentries, uint16_t *ipos) {
@@ -6862,25 +6896,53 @@ exgc:
               if (ctype=='T') {
                 if (anum && !(entries & 1)) {
                   WSContentSend_PD(SCRIPT_MSG_GTABLEa);
-                  WSContentSend_PD(SCRIPT_MSG_GTABLEd);
                   char label[SCRIPT_MAXSSIZE];
                   lp = GetStringArgument(lp, OPER_EQU, label, 0);
                   SCRIPT_SKIP_SPACES
+                  char lab2[SCRIPT_MAXSSIZE];
+                  lab2[0] = 0;
+                  if (*lp!=')') {
+                    lp = GetStringArgument(lp, OPER_EQU, lab2, 0);
+                    WSContentSend_PD(SCRIPT_MSG_GTABLEe);
+                  } else {
+                    WSContentSend_PD(SCRIPT_MSG_GTABLEd);
+                  }
+
                   for (uint32_t ind = 0; ind < anum; ind++) {
                     char lbl[16];
+                    float *fp = arrays[ind];
                     GetTextIndexed(lbl, sizeof(lbl), ind, label);
+                    char lbl2[16];
+                    if (lab2[0]) {
+                      GetTextIndexed(lbl2, sizeof(lbl2), ind, lab2);
+                    }
+                    uint32_t ventries = 0;
                     for (uint32_t cnt = 0; cnt < entries; cnt += 2) {
+                      if (fp[cnt]!=0 && fp[cnt+1]!=0) {
+                        ventries+=2;
+                      } else {
+                        break;
+                      }
+                    }
+
+                    for (uint32_t cnt = 0; cnt < ventries; cnt += 2) {
                       WSContentSend_PD("['%s',",lbl);
-                      float *fp = arrays[ind];
+                      if (lab2[0]) {
+                        WSContentSend_PD("'%s',",lbl2);
+                      }
                       uint32_t time = fp[cnt];
                       WSContentSend_PD(SCRIPT_MSG_GOPT5, time / 60, time % 60);
                       WSContentSend_PD(",");
                       time = fp[cnt + 1];
                       WSContentSend_PD(SCRIPT_MSG_GOPT5, time / 60, time % 60);
                       WSContentSend_PD("]");
-                      if (cnt < entries - 2) { WSContentSend_PD(","); }
+                      if (cnt < ventries - 2) { WSContentSend_PD(","); }
                     }
-                    if (ind < anum - 1) { WSContentSend_PD(","); }
+                    if (ind < anum - 1) {
+                      if (ventries) {
+                        WSContentSend_PD(",");
+                      }
+                    }
                   }
                   snprintf_P(options,sizeof(options), SCRIPT_MSG_GOPT4);
                 }
