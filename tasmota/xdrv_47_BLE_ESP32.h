@@ -242,6 +242,11 @@ int extQueueOperation(BLE_ESP32::generic_sensor_t** op);
 ///////////////////////////////////////////////////////////////////////
 
 
+// a temporay safe logging mechanism.  This has a max of 40 chars, and a max of 15 slots per 50ms
+int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...);
+
+
+
 ////////////////////////////////////////////////////////////////////////
 // utilities
 // dump a binary to hex

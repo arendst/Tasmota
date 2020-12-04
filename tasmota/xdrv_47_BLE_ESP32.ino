@@ -100,6 +100,7 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 #include <vector>
 #include <deque>
 #include <string.h>
+#include <cstdarg>
 #ifdef USE_MI_DECRYPTION
 #include <t_bearssl.h>
 #endif //USE_MI_DECRYPTION
@@ -114,9 +115,7 @@ namespace BLE_ESP32 {
 
 
 // this protects our queues, which can be accessed by multiple tasks 
-SemaphoreHandle_t  BLEOperationsMutex;
-
-
+SemaphoreHandle_t  BLEOperationsRecursiveMutex;
 
 
 // only run from main thread, becaus eit deletes things that were newed there...
@@ -229,10 +228,93 @@ uint8_t BLEMode = BLEModeActive;
 uint8_t BLENextMode = BLEModeActive;
 
 
+
+/*********************************************************************************************\
+ * Mutex protected logging - max 5 logs of 40 chars
+\*********************************************************************************************/
+
+#define MAX_SAFELOG_LEN 80
+#define MAX_SAFELOG_COUNT 30
+
+struct safelogdata {
+  int level;
+  char log_data[MAX_SAFELOG_LEN];
+};
+
+std::deque<BLE_ESP32::safelogdata*> freelogs;
+std::deque<BLE_ESP32::safelogdata*> filledlogs;
+SemaphoreHandle_t  SafeLogMutex;
+
+
+void initSafeLog(){
+  SafeLogMutex = xSemaphoreCreateMutex();
+
+  for (int i = 0; i < MAX_SAFELOG_COUNT; i++){
+    BLE_ESP32::safelogdata* logdata = new BLE_ESP32::safelogdata;
+    freelogs.push_back(logdata);
+  }
+}
+
+int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
+  int added = 0;
+
+  // if the log would not be output do nothing here.
+  if ((loglevel > Settings.weblog_level) &&
+      (loglevel > TasmotaGlobal.seriallog_level) && 
+      (loglevel > Settings.mqttlog_level) &&
+      (loglevel > TasmotaGlobal.syslog_level)){
+    return added;
+  }
+
+  // as these are'expensive', let's not bother unless they are lower than the serial log level
+  xSemaphoreTake(SafeLogMutex, portMAX_DELAY);
+  if (freelogs.size()){
+    BLE_ESP32::safelogdata* logdata = (freelogs)[0]; 
+    freelogs.pop_front();
+    va_list arg;
+    if (freelogs.size() > 1){
+      // assume this is thread safe - it may not be
+      va_start(arg, formatP);
+      vsnprintf_P(logdata->log_data, sizeof(logdata->log_data) - 5, formatP, arg);
+      va_end(arg);
+      snprintf(logdata->log_data + strlen(logdata->log_data), 5, " %d", freelogs.size());
+      logdata->level = loglevel;
+      added = 1;
+    } else {
+      logdata->level = LOG_LEVEL_ERROR;
+      strncpy(logdata->log_data, "SafeAddLog_P overflow", sizeof(logdata->log_data));
+    }
+    filledlogs.push_back(logdata);
+  } else {
+    // can't log it?
+  }
+  xSemaphoreGive(SafeLogMutex); // release mutex
+
+  return added;
+}
+
+BLE_ESP32::safelogdata* GetSafeLog() {
+  xSemaphoreTake(SafeLogMutex, portMAX_DELAY);
+  if (filledlogs.size()){
+    BLE_ESP32::safelogdata* logdata = (filledlogs)[0]; 
+    filledlogs.pop_front();
+    xSemaphoreGive(SafeLogMutex); // release mutex
+    return logdata;
+  }
+  xSemaphoreGive(SafeLogMutex); // release mutex
+  return nullptr;
+}
+
+void ReleaseSafeLog(BLE_ESP32::safelogdata* logdata){
+  xSemaphoreTake(SafeLogMutex, portMAX_DELAY);
+  freelogs.push_back(logdata);
+  xSemaphoreGive(SafeLogMutex); // release mutex
+}
+
+
 /*********************************************************************************************\
  * Helper functions
 \*********************************************************************************************/
-
 
 /**
  * @brief Simple pair of functions to dump to a hex string.
@@ -305,13 +387,13 @@ static void BLE_ReverseMAC(uint8_t _mac[]){
 // does not reallt take any action
 class BLESensorCallback : public NimBLEClientCallbacks {
   void onConnect(NimBLEClient* pClient) {
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnect"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnect"));
   }
   void onDisconnect(NimBLEClient* pClient) {
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("onDisconnect"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("onDisconnect"));
   }
   bool onConnParamsUpdateRequest(NimBLEClient* BLEClient, const ble_gap_upd_params* params) {
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnParamsUpdateRequest"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnParamsUpdateRequest"));
     if(params->itvl_min < 24) { /** 1.25ms units */
       return false;
     } else if(params->itvl_max > 40) { /** 1.25ms units */
@@ -383,9 +465,9 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     }
 
     if (svcDataCount == 0) {
-      AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("ADV:%s (%s) RSSI:%d pld:%s Mfg:%s"), addrstr, namestr, RSSI, payloadhex, mfgstr);
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("ADV:%s (%s) RSSI:%d pld:%s Mfg:%s"), addrstr, namestr, RSSI, payloadhex, mfgstr);
     } else {
-      AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("ADV:%s (%s) RSSI:%d pld:%s Mfg:%s svcdata:"), addrstr, namestr, RSSI, payloadhex, mfgstr);
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("ADV:%s (%s) RSSI:%d pld:%s Mfg:%s svcdata:"), addrstr, namestr, RSSI, payloadhex, mfgstr);
       for (int i = 0; i < svcDataCount; i++){
         NimBLEUUID UUID = advertisedDevice->getServiceDataUUID(i);//.getNative()->u16.value;
         std::string ServiceData = advertisedDevice->getServiceData(i);
@@ -418,7 +500,7 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
         }
         uint16_t UUID16 = native->u16.value;
       // AddLog_P(LOG_LEVEL_DEBUG,PSTR("UUID: %x"),UUID);
-        AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("UUIDType:%d UUID16:%x UUID:%s svcdata:%s"), native->u.type, UUID16, strUUID.c_str(), svcdatastr);
+        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("UUIDType:%d UUID16:%x UUID:%s svcdata:%s"), native->u.type, UUID16, strUUID.c_str(), svcdatastr);
       }
 
       for (int i = 0; i < svcUUIDCount; i++){
@@ -456,7 +538,7 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
           BLEScan->erase(address);
         }
       } catch(const std::exception& e){
-        AddLog_P(LOG_LEVEL_ERROR,PSTR("exception in advertismentCallbacks"));
+        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("exception in advertismentCallbacks"));
       }
     }
 
@@ -473,15 +555,15 @@ static BLESensorCallback BLESensorCB;
 
 static void BLEscanEndedCB(NimBLEScanResults results){
   BLERunningScan = 0;
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("Scan ended"));
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("Scan ended"));
 
   for (int i = 0; i < scancompleteCallbacks.size(); i++){
     try {
       SCANCOMPLETE_CALLBACK *pFn = scancompleteCallbacks[i];
       int callbackres = pFn(results);
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("scancompleteCallbacks %d %d"), i, callbackres);
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("scancompleteCallbacks %d %d"), i, callbackres);
     } catch(const std::exception& e){
-      AddLog_P(LOG_LEVEL_ERROR,PSTR("exception in operationsCallbacks"));
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("exception in operationsCallbacks"));
     }
   }
 }
@@ -489,7 +571,7 @@ static void BLEscanEndedCB(NimBLEScanResults results){
 static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
     NimBLEClient *pRClient;
 
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("Notified length: %u"),length);
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("Notified length: %u"),length);
 
     // find the operation this is associated with
     NimBLERemoteService *pSvc = pRemoteCharacteristic->getRemoteService();
@@ -515,7 +597,7 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
     pRemoteCharacteristic->unsubscribe();
 
     if (!thisop){
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("no op for notify"));
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("no op for notify"));
       return;
     }
 
@@ -564,10 +646,13 @@ void registerForScanCallbacks(const char *tag, BLE_ESP32::SCANCOMPLETE_CALLBACK*
 static void BLEPreInit(void) {
   BLEInitState = 0;
   prepOperation = nullptr;
-  BLEOperationsMutex = xSemaphoreCreateMutex();
+
+  // allow the same task to take the mutex several times...
+  BLEOperationsRecursiveMutex = xSemaphoreCreateRecursiveMutex();
 
   // this is only for testing, does nothin if examples are undefed
   installExamples();
+  initSafeLog();
 
   BLE_ESP32::BLEStartOperationTask();
 }
@@ -659,7 +744,7 @@ static void BLEOperationTask(void *pvParameters){
 
   for(;;){
     if (BLEScan){
-      AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("Operation loop"));
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("Operation loop"));
 
       BLE_ESP32::runCurrentOperation(&currentOperation, pClient);
     }
@@ -671,10 +756,10 @@ static void BLEOperationTask(void *pvParameters){
     NimBLEDevice::deleteClient(pClient);
     pClient = nullptr;
   } catch(const std::exception& e){
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in delete"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in delete"));
   }
 
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("Leave operation task"));
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("Leave operation task"));
   vTaskDelete( NULL );
 }
 
@@ -703,6 +788,16 @@ static void BLEshowScanResults(){
  */
 
 static void BLEEvery50mSecond(){
+  safelogdata* logdata = nullptr;
+  do{
+    int free = freelogs.size();
+    int filled = filledlogs.size();
+    logdata = GetSafeLog();
+    if (logdata){
+      AddLog_P(logdata->level, PSTR("SL%d-%d %s"), filled, free, logdata->log_data);
+      ReleaseSafeLog(logdata);
+    }
+  } while (logdata);
 }
 
 /**
@@ -788,14 +883,14 @@ void CmndBLEOption(void){
 
 // for safety's sake, only call from the run task
 static void runTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLEClient *pClient){
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in done"));
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in done"));
   try {
     pClient->disconnect();
   } catch(const std::exception& e){
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in disconnect"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in disconnect"));
   }
 
-  xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+  xSemaphoreTakeRecursive(BLEOperationsRecursiveMutex, portMAX_DELAY);
   // find this operation in currentOperations, and remove it.
   for (int i = 0; i < currentOperations.size(); i++){
     if (currentOperations[i]->opid == (*op)->opid){
@@ -803,10 +898,10 @@ static void runTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLEClient 
       break;
     }
   }
-  xSemaphoreGive(BLEOperationsMutex); // release mutex
+  xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
 
   // by adding it to this list, this will cause it to be sent to MQTT
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("add to completedOperations in done"));
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("add to completedOperations in done"));
   addOperation(&completedOperations, op);
   return;
 }
@@ -816,10 +911,10 @@ static void runTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLEClient 
 generic_sensor_t* nextOperation(std::deque<generic_sensor_t*> *ops){
   generic_sensor_t* op = nullptr;
   if (ops->size()){
-    xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+    xSemaphoreTakeRecursive(BLEOperationsRecursiveMutex, portMAX_DELAY);
     op = (*ops)[0]; 
     ops->pop_front();
-    xSemaphoreGive(BLEOperationsMutex); // release mutex
+    xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
   }
   return op;
 }
@@ -828,17 +923,17 @@ generic_sensor_t* nextOperation(std::deque<generic_sensor_t*> *ops){
 // it also sets the op pointer passed to null.
 int addOperation(std::deque<generic_sensor_t*> *ops, generic_sensor_t** op){
   int res = 0;
-  xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+  xSemaphoreTakeRecursive(BLEOperationsRecursiveMutex, portMAX_DELAY);
   if (ops->size() < 10){
     ops->push_back(*op);
     *op = nullptr;
     res = 1;
   }     
-  xSemaphoreGive(BLEOperationsMutex); // release mutex
+  xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
   if (res){
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("added operation"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("added operation"));
   } else {
-    AddLog_P(LOG_LEVEL_DEBUG,PSTR("added operation - no room"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("added operation - no room"));
   }
   return res;
 }
@@ -846,7 +941,7 @@ int addOperation(std::deque<generic_sensor_t*> *ops, generic_sensor_t** op){
 
 int newOperation(BLE_ESP32::generic_sensor_t** op){
   if (!op) {
-    AddLog_P(LOG_LEVEL_ERROR,PSTR("op invalid in newOperation"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("op invalid in newOperation"));
     return 0;
   }
 
@@ -896,7 +991,7 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
   if (!*pCurrentOperation) {
     *pCurrentOperation = nextOperation(&queuedOperations);
     if (*pCurrentOperation){
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("new currentOperation"));
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("new currentOperation"));
 
       generic_sensor_t* temp = *pCurrentOperation;
       //this will null it out, so save and restore.
@@ -915,7 +1010,7 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
     uint64_t diff = now - (*pCurrentOperation)->notifytimer;
     diff = diff/1000;
     if (diff > 20000){
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("notify timeout"));
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("notify timeout"));
       (*pCurrentOperation)->state = GEN_STATE_FAILED_NOTIFYTIMEOUT;
       (*pCurrentOperation)->notifytimer = 0;
     }
@@ -928,7 +1023,7 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
     case GEN_STATE_WRITEDONE:
     case GEN_STATE_NOTIFIED:
       // just stay here until this is removed by the main thread
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("operation complete"));
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("operation complete"));
       BLE_ESP32::runTaskDoneOperation(pCurrentOperation, pClient);
       return;
       break;
@@ -945,7 +1040,7 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
   if (!*pCurrentOperation) return;
 
   if ((*pCurrentOperation)->state & GEN_STATE_FAILED){
-    AddLog_P(LOG_LEVEL_ERROR,PSTR("operation failed"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("operation failed"));
     BLE_ESP32::runTaskDoneOperation(pCurrentOperation, pClient);
     return;
   }
@@ -980,7 +1075,7 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
               NimBLERemoteService *pService = pClient->getService(serviceUuid);
               
               if (pService != nullptr) {
-                AddLog_P(LOG_LEVEL_DEBUG,PSTR("got service"));
+                BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got service"));
 
                 // read or write characteristic - we always need this?
                 NimBLERemoteCharacteristic *pCharacteristic = nullptr;
@@ -999,11 +1094,11 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
                   NimBLERemoteCharacteristic *pNCharacteristic = 
                     pService->getCharacteristic(op->notificationCharacteristicStr);
                   if (pNCharacteristic != nullptr) {
-                    AddLog_P(LOG_LEVEL_DEBUG,PSTR("got notify characteristic"));
+                    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got notify characteristic"));
                     op->notifylen = 0;
                     if(pNCharacteristic->canNotify()) {
                       if(pNCharacteristic->subscribe(true, BLE_ESP32::BLEGenNotifyCB)) {
-                        AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for notify"));
+                        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for notify"));
                         uint64_t now = esp_timer_get_time();
                         op->notifytimer = now;
                         // this will get changed to read or write,
@@ -1011,18 +1106,18 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
                         newstate = GEN_STATE_WAITNOTIFY;
                         waitNotify = true;
                       } else {
-                        AddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for notify"));
+                        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for notify"));
                         newstate = GEN_STATE_FAILED_NOTIFY;
                       }
                     } else {
                       if(pNCharacteristic->canIndicate()) {
                         if(pNCharacteristic->subscribe(false, BLE_ESP32::BLEGenNotifyCB)) {
-                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for indicate"));
+                          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for indicate"));
                           newstate = GEN_STATE_WAITINDICATE;
                           uint64_t now = esp_timer_get_time();
                           op->notifytimer = now;
                         } else {
-                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for indicate"));
+                          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for indicate"));
                           newstate = GEN_STATE_FAILED_INDICATE;
                         }
                       } else {
@@ -1037,7 +1132,7 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
                 // this will only happen if you ask for a notify char which is not there?
                 if (!(newstate & GEN_STATE_FAILED)){
                   if (pCharacteristic != nullptr) {
-                    AddLog_P(LOG_LEVEL_DEBUG,PSTR("got read/write characteristic"));
+                    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got read/write characteristic"));
                     newstate = GEN_STATE_FAILED_NOREADWRITE; // overwritten on failure
 
                     if (op->readlen){
@@ -1055,10 +1150,10 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
                         }
                         if (op->readmodifywritecallback){
                           READ_CALLBACK *pFn = (READ_CALLBACK *)op->readmodifywritecallback;
-                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic with readmodifywritecallback"));
+                          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic with readmodifywritecallback"));
                           pFn(op);
                         } else {
-                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic"));
+                          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic"));
                         }
 
                         // only change it to a 'finished' state if we really are
@@ -1072,10 +1167,10 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
                       if(pCharacteristic->canWrite()) {
                         if (!pCharacteristic->writeValue(op->dataToWrite, op->writelen, true)){
                           newstate = GEN_STATE_FAILED_WRITE;
-                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic write fail"));
+                          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic write fail"));
                         } else {
                           if (!waitNotify) newstate = GEN_STATE_WRITEDONE;
-                          AddLog_P(LOG_LEVEL_DEBUG,PSTR("write characteristic"));
+                          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("write characteristic"));
                         }
                       } else {
                         newstate = GEN_STATE_FAILED_CANTWRITE;
@@ -1085,29 +1180,29 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
                     
                   } else {
                     newstate = GEN_STATE_FAILED_NO_RW_CHAR;
-                    AddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic not in service"));
+                    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic not in service"));
                   }
                 }
               }
 
               // disconnect if not waiting for notify, 
               if (!op->notifytimer){
-                AddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in runoperation"));
+                BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in runoperation"));
                 try {
                   pClient->disconnect();
                 } catch(const std::exception& e){
-                  AddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in disconnect"));
+                  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in disconnect"));
                 }
               }    
 
             } else {
               newstate = GEN_STATE_FAILED_CONNECT;
               // failed to connect
-              AddLog_P(LOG_LEVEL_DEBUG,PSTR("failed to connect to device"));
+              BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed to connect to device"));
             }            
           } else {
             newstate = GEN_STATE_FAILED_NOSERVICE;
-            AddLog_P(LOG_LEVEL_DEBUG,PSTR("service not in device"));
+            BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("service not in device"));
           }
           op->state = newstate;
           break;
@@ -1117,7 +1212,7 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
     if (i == deviceCount){
       // device not present
       op->state = GEN_STATE_FAILED_NODEVICE;
-      AddLog_P(LOG_LEVEL_DEBUG,PSTR("device not present"));
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("device not present"));
     }
   }
 }
@@ -1296,29 +1391,29 @@ void CmndBLEOperation(void){
 static void BLEPostMQTT(bool onlycompleted) {
   if (prepOperation || completedOperations.size() || queuedOperations.size() || currentOperations.size()){
     AddLog_P(LOG_LEVEL_INFO,PSTR("some to show"));
-    xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+    xSemaphoreTakeRecursive(BLEOperationsRecursiveMutex, portMAX_DELAY);
     if (prepOperation && !onlycompleted){
       std::string out = BLETriggerResponse(prepOperation);
-      xSemaphoreGive(BLEOperationsMutex); // release mutex
+      xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
       snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
       AddLog_P(LOG_LEVEL_INFO,PSTR("prep sent %s"), out.c_str());
     } else {
-      xSemaphoreGive(BLEOperationsMutex); // release mutex
+      xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
     }
   
 
     if (queuedOperations.size() && !onlycompleted){
       AddLog_P(LOG_LEVEL_INFO,PSTR("queued %d"), queuedOperations.size());
       for (int i = 0; i < queuedOperations.size(); i++){
-        xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+        xSemaphoreTakeRecursive(BLEOperationsRecursiveMutex, portMAX_DELAY);
         generic_sensor_t *toSend = queuedOperations[i];
         if (!toSend) {
-          xSemaphoreGive(BLEOperationsMutex); // release mutex
+          xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
           break;
         } else {
           std::string out = BLETriggerResponse(toSend);
-          xSemaphoreGive(BLEOperationsMutex); // release mutex
+          xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
           snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
           MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
           AddLog_P(LOG_LEVEL_INFO,PSTR("queued %d sent %s"), i, out.c_str());
@@ -1330,14 +1425,14 @@ static void BLEPostMQTT(bool onlycompleted) {
     if (currentOperations.size() && !onlycompleted){
       AddLog_P(LOG_LEVEL_INFO,PSTR("current %d"), currentOperations.size());
       for (int i = 0; i < currentOperations.size(); i++){
-        xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+        xSemaphoreTakeRecursive(BLEOperationsRecursiveMutex, portMAX_DELAY);
         generic_sensor_t *toSend = currentOperations[i];
         if (!toSend) {
-          xSemaphoreGive(BLEOperationsMutex); // release mutex
+          xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
           break;
         } else {
           std::string out = BLETriggerResponse(toSend);
-          xSemaphoreGive(BLEOperationsMutex); // release mutex
+          xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
           snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("%s"), out.c_str());
           MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
           AddLog_P(LOG_LEVEL_INFO,PSTR("curr %d sent %s"), i, out.c_str());
@@ -1375,7 +1470,7 @@ static void mainThreadOpCallbacks() {
   if (completedOperations.size()){
     //AddLog_P(LOG_LEVEL_INFO,PSTR("completed %d"), completedOperations.size());
 
-    xSemaphoreTake(BLEOperationsMutex, portMAX_DELAY);
+    xSemaphoreTakeRecursive(BLEOperationsRecursiveMutex, portMAX_DELAY);
     // find this operation in currentOperations, and remove it.
     // in reverse so we can erase them safely.
     for (int i = completedOperations.size()-1; i >= 0 ; i--){
@@ -1415,7 +1510,7 @@ static void mainThreadOpCallbacks() {
         delete op;
       }
     }
-    xSemaphoreGive(BLEOperationsMutex); // release mutex
+    xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
   }
 }
 
@@ -1591,7 +1686,7 @@ struct ble_advertisment_t {
             // skip NLIGHT
           } else {
             int type = (pStruct->svcdata[0].serviceData[3]<<8) | pStruct->svcdata[0].serviceData[2];
-            AddLog_P(LOG_LEVEL_DEBUG,PSTR("BLE: Sensor type %x"), type);
+            BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLE: Sensor type %x"), type);
             switch(type){
               case MJ_HT_V1:
               case CGG1:
@@ -1629,13 +1724,13 @@ struct ble_advertisment_t {
 
 // this one is used to demonstrate processing ALL operations
 int myOpCallback(BLE_ESP32::generic_sensor_t *pStruct){
-  AddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback"));
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback"));
   return 0; // return true to block MQTT broadcast
 }
 
 // this one is used to demonstrate processing of ONE specific operation
 int myOpCallback2(BLE_ESP32::generic_sensor_t *pStruct){
-  AddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback2"));
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO,PSTR("myOpCallback2"));
   return 1; // return true to block MQTT broadcast
 }
 #endif

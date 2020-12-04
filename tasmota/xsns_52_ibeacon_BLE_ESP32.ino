@@ -172,7 +172,7 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
       uint16_t    Minor = ENDIAN_CHANGE_U16(oBeacon.getMinor());
       uint8_t     PWR   = oBeacon.getSignalPower();
 
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: MAC: %s Major: %d Minor: %d UUID: %s Power: %d RSSI: %d"),
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG, PSTR("%s: MAC: %s Major: %d Minor: %d UUID: %s Power: %d RSSI: %d"),
         "BLE",
         advertisedDevice->getAddress().toString().c_str(),
         Major, Minor,
@@ -644,7 +644,7 @@ void IBEACON_loop() {
 
   if (hm17_cmd==99) {
    if (hm17_sindex>=HM17_BSIZ-2 || (hm17_sindex && (difftime>100))) {
-     AddLog_P(LOG_LEVEL_INFO, PSTR("%s"),hm17_sbuffer);
+     BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO, PSTR("%s"),hm17_sbuffer);
      hm17_sbclr();
    }
   }
