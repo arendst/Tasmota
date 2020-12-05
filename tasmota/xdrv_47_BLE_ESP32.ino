@@ -337,18 +337,28 @@ int addSeenDevice(const uint8_t *mac, const char *name){
 int deleteSeenDevices(int ageS = 0){
   int res = 0;
   uint64_t now = esp_timer_get_time();
-  uint64_t mintime = now - (ageS*1000*1000);
+  now = now/1000L;
+  now = now/1000L;
+  uint32_t nowS = (uint32_t)now;   
+  uint32_t mintime = nowS - ageS;
+
   xSemaphoreTakeRecursive(BLEOperationsRecursiveMutex, portMAX_DELAY);
   for (int i = seenDevices.size()-1; i >= 0; i--){
       BLE_ESP32::BLE_simple_device_t* dev = seenDevices[i];
-      if (dev->lastseen < mintime){
-        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO,PSTR("delete device by age"));
+      uint64_t lastseen = dev->lastseen/1000L;
+      lastseen = lastseen/1000L;
+      uint32_t lastseenS = (uint32_t) lastseen; 
+      uint32_t del_at = lastseenS + ageS;
+      if (del_at < nowS){
+        AddLog_P(LOG_LEVEL_INFO,PSTR("delete device by age lastseen %u + maxage %u < now %u."), 
+          lastseenS, ageS, nowS);
         seenDevices.erase(seenDevices.begin()+i);
         freeDevices.push_back(dev);
         res++;
       }
   }
   xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("BLE deleted %d devices"), res); 
   return res;
 }
 
@@ -409,7 +419,7 @@ int getSeenDevicesToJson(char *dest, int maxlen){
 
   if ((nextSeenDev == 0) || (nextSeenDev >= seenDevices.size())){
     // delete devices not seen in last 240s
-    //deleteSeenDevices(240);
+    deleteSeenDevices(240);
     nextSeenDev = 0;
   }
 
@@ -476,18 +486,7 @@ void initSafeLog(){
 }
 
 int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
-
   TaskHandle_t thistask = xTaskGetCurrentTaskHandle();
-
-  if (thistask == TasmotaMainTask){
-    // safelogp called from main thread?
-    va_list arg;
-    va_start(arg, formatP);
-    AddLog_P(loglevel, formatP, arg);
-    va_end(arg);
-    return 1;
-  }
-  
   int added = 0;
 
   // if the log would not be output do nothing here.
@@ -504,13 +503,20 @@ int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...) {
     BLE_ESP32::safelogdata* logdata = (freelogs)[0]; 
     freelogs.pop_front();
     if (freelogs.size() > 1){
+      int maxlen = sizeof(logdata->log_data);
+      if (thistask == TasmotaMainTask){
+        maxlen -= 13; // room for "-!MAINTHREAD!"
+      }
       // assume this is thread safe - it may not be
       va_list arg;
       va_start(arg, formatP);
-      vsnprintf_P(logdata->log_data, sizeof(logdata->log_data) - 5, formatP, arg);
+      vsnprintf_P(logdata->log_data, maxlen, formatP, arg);
       va_end(arg);
-      snprintf(logdata->log_data + strlen(logdata->log_data), 5, " %d", freelogs.size());
       logdata->level = loglevel;
+      if (thistask == TasmotaMainTask){
+        loglevel = LOG_LEVEL_ERROR;
+        snprintf(logdata->log_data + strlen(logdata->log_data), 13, "-!MAINTHREAD!");
+      }
       added = 1;
     } else {
       logdata->level = LOG_LEVEL_ERROR;
@@ -616,7 +622,7 @@ static void BLE_ReverseMAC(uint8_t _mac[]){
  * Advertisment details
 \*********************************************************************************************/
 
-ble_advertisment_t BLEAdvertismentDetails;
+//ble_advertisment_t BLEAdvertismentDetails;
 #define MAX_ADVERT_DETAILS 200
 char BLEAdvertismentDetailsJson[MAX_ADVERT_DETAILS];
 uint8_t BLEAdvertismentDetailsJsonSet = 0;
@@ -675,8 +681,6 @@ void setDetails(ble_advertisment_t *ad){
 
   uint8_t* payload = advertisedDevice->getPayload();
   size_t payloadlen = advertisedDevice->getPayloadLength();
-
-
   if (payloadlen  && (maxlen > 30)){ // will truncate if not enough space
     strcpy(p, ",\"p\":\"");
     p += 6;
@@ -688,6 +692,41 @@ void setDetails(ble_advertisment_t *ad){
     *(p++) = '\"'; maxlen--;
   }
 
+
+  int svcdataCount = advertisedDevice->getServiceDataCount();
+  if (svcdataCount){
+    for (int i = 0; i < svcdataCount; i++){
+      NimBLEUUID UUID = advertisedDevice->getServiceDataUUID(i);//.getNative()->u16.value;
+      std::string ServiceData = advertisedDevice->getServiceData(i);
+      
+      size_t ServiceDataLength = ServiceData.length();
+      const uint8_t *serviceData = (const uint8_t *)ServiceData.data();
+
+      //char svcuuidstr[20];
+      std::string strUUID = UUID;
+
+      int svclen = strUUID.length();
+      svclen++; // ,
+      svclen += 3; // "":
+      svclen += ServiceDataLength*2;
+      svclen += 3; // ""}
+
+      if (maxlen -10 > svclen){
+        *(p++) = ',';
+        *(p++) = '\"';
+        strcpy(p, strUUID.c_str());
+        p += strUUID.length();
+        *(p++) = '\"';
+        *(p++) = ':';
+        *(p++) = '\"';
+        dump(p, ServiceDataLength*2+2, (uint8_t*)serviceData, ServiceDataLength);
+        int len = strlen(p);
+        p += len;
+        *(p++) = '\"';
+        maxlen -= len;
+      } 
+    }
+  }
 
   *(p++) = '}'; maxlen--;
   *(p++) = '}'; maxlen--;
