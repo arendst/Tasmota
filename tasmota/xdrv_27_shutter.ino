@@ -47,7 +47,7 @@ int32_t  toBeAcc = 0;
 
 
 const uint8_t MAX_MODES = 7;
-enum Shutterposition_mode {SHT_UNDEF, SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
+enum Shutterposition_mode {SHT_UNDEF, SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME, SHT_TIME_AWNING,};
 enum Shutterswitch_mode {SHT_SWITCH, SHT_PULSE,};
 enum ShutterButtonStates { SHT_NOT_PRESSED, SHT_PRESSED_MULTI, SHT_PRESSED_HOLD, SHT_PRESSED_IMMEDIATE, SHT_PRESSED_EXT_HOLD, SHT_PRESSED_MULTI_SIMULTANEOUS, SHT_PRESSED_HOLD_SIMULTANEOUS, SHT_PRESSED_EXT_HOLD_SIMULTANEOUS,};
 
@@ -447,10 +447,13 @@ void ShutterPowerOff(uint8_t i) {
       uint8_t cur_relay = Settings.shutter_startrelay[i] + (Shutter[i].direction == 1 ? 0 : (uint8_t)(ShutterGlobal.position_mode == SHT_TIME)) ;
       // we have a momentary switch here. Needs additional pulse on same relay after the end
       if ((SRC_PULSETIMER == TasmotaGlobal.last_source || SRC_SHUTTER == TasmotaGlobal.last_source || SRC_WEBGUI == TasmotaGlobal.last_source)) {
-        ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
-        // switch off direction relay to make it power less
-        if ((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power) {
-          ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
+        //The awning stops by it self when reaching an end position. A new pulse would send it back into the opposite direction. So we don't pulse if the end-position is reached.
+        if(ShutterGlobal.position_mode != SHT_TIME_AWNING || (Shutter[i].real_position > 0 && Shutter[i].real_position < Shutter[i].open_max)) {
+          ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
+          // switch off direction relay to make it power less
+          if ((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power) {
+            ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
+          }
         }
       } else {
         TasmotaGlobal.last_source = SRC_SHUTTER;
@@ -573,6 +576,7 @@ int32_t ShutterCalculatePosition(uint32_t i)
       case SHT_TIME:
       case SHT_TIME_UP_DOWN:
       case SHT_TIME_GARAGE:
+      case SHT_TIME_AWNING:
         return Shutter[i].start_position + ( (Shutter[i].time - Shutter[i].motordelay) * (Shutter[i].direction > 0 ? RESOLUTION : -Shutter[i].close_velocity));
         break;
       case SHT_PWM_TIME:
@@ -619,7 +623,7 @@ void ShutterRelayChanged(void)
           if (Shutter[i].direction != 0 ) ShutterPowerOff(i);
       }
       switch (ShutterGlobal.position_mode) {
-        // enum Shutterposition_mode {SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
+        // enum Shutterposition_mode {SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME, SHT_TIME_AWNING,};
         case SHT_TIME_UP_DOWN:
         case SHT_COUNTER:
         case SHT_PWM_VALUE:
@@ -651,6 +655,7 @@ void ShutterRelayChanged(void)
           }
         break;
         case SHT_TIME_GARAGE:
+        case SHT_TIME_AWNING:
          switch (powerstate_local) {
            case 1:
              ShutterStartInit(i, Shutter[i].lastdirection*-1 , Shutter[i].lastdirection == 1 ?  0 : Shutter[i].open_max);
@@ -1089,6 +1094,7 @@ void CmndShutterPosition(void)
               }
             break;
             case SHT_TIME_GARAGE:
+            case SHT_TIME_AWNING:
               if (!ShutterGlobal.skip_relay_change) {
                 if (new_shutterdirection == Shutter[index].lastdirection) {
                   AddLog_P(LOG_LEVEL_INFO, PSTR("SHT: Garage not move in this direction: %d"), Shutter[index].switch_mode == SHT_PULSE);
