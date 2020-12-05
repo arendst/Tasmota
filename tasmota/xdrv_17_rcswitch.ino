@@ -16,11 +16,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <Arduino.h>
-#include "my_user_config.h"  
-
-// doesn't pickup defines while editing without this 
-// dunno if this is unique to my enviroment or everyone experiences it ..
 #ifdef USE_RC_SWITCH
 /*********************************************************************************************\
  * RF send and receive using RCSwitch library https://github.com/sui77/rc-switch/
@@ -35,12 +30,15 @@
 #define D_CMND_RFSEND "RFSend"
 #define D_JSON_RF_PULSE "Pulse"
 #define D_JSON_RF_REPEAT "Repeat"
+#define D_CMND_RFRXPROTOCOL "RfRxProtocol"
+#define D_JSON_NONE_ENABLED "None Enabled"
 
-const char kRfSendCommands[] PROGMEM = "|" D_CMND_RFSEND; // No prefix
-  
 
-void (* const RfSendCommand[])(void) PROGMEM = {
-  &CmndRfSend };
+const char kRfCommands[] PROGMEM = "|" D_CMND_RFSEND "|" D_CMND_RFRXPROTOCOL; // No prefix
+
+
+void (* const RfCommands[])(void) PROGMEM = {
+  &CmndRfSend,&CmndRfRxProtocol };
 
 #include <RCSwitch.h>
 
@@ -90,58 +88,66 @@ void RfInit(void)
   if (PinUsed(GPIO_RFRECV)) {
     pinMode( Pin(GPIO_RFRECV), INPUT);
     mySwitch.enableReceive(Pin(GPIO_RFRECV));
-  mySwitch.enabled_protocol_mask.longs.high32 =  Settings.ex_adc_param1;
-  mySwitch.enabled_protocol_mask.longs.low32 = Settings.ex_adc_param2;
+    GetMaskFromSettings();
   }
 }
-
+void GetMaskFromSettings(){
+    mySwitch.enabled_protocol_mask.longs.high32 = Settings.ex_adc_param1 ;
+    mySwitch.enabled_protocol_mask.longs.low32  = Settings.ex_adc_param2 ;
+}
+void SaveMaskToSettings(){
+    Settings.ex_adc_param1 = mySwitch.enabled_protocol_mask.longs.high32;
+    Settings.ex_adc_param2 = mySwitch.enabled_protocol_mask.longs.low32;
+    SettingsSave(1);
+}
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
 void CmndRfRxProtocol(void){
-  uint64_t thisbit;
- // AddLog_P(LOG_LEVEL_INFO, PSTR("RFR: index:%d usridx:%d data_len:%d data:%s"),XdrvMailbox.index, XdrvMailbox.usridx, XdrvMailbox.data_len,XdrvMailbox.data);
- // AddLog_P(LOG_LEVEL_INFO, PSTR("RFR: test data_len >0"));
-  //if (XdrvMailbox.data_len > 0) {
-   // AddLog_P(LOG_LEVEL_INFO, PSTR("RFR: test usridx ==1"));  
-    if (XdrvMailbox.usridx==1) {  
- //     AddLog_P(LOG_LEVEL_INFO, PSTR("RFR: test payload >=0")); 
-      if(XdrvMailbox.payload >=0){
-        thisbit = (1ULL << (XdrvMailbox.index-1) );
-        if(XdrvMailbox.payload &1){
-          mySwitch.enabled_protocol_mask.value |= thisbit;
-        }else{
-          mySwitch.enabled_protocol_mask.value &= ~thisbit;
-        }
-      }
-    }else{
-  //    AddLog_P(LOG_LEVEL_INFO, PSTR("RFR: test for a"));
-      if(XdrvMailbox.data[0]=='a'){
-  //      AddLog_P(LOG_LEVEL_INFO, PSTR("RFR: set mask all"));
-        mySwitch.enabled_protocol_mask.value=  (1ULL << mySwitch.getNumProtos())-1 ;
+  if(!PinUsed(GPIO_RFRECV))return;
+//  AddLog_P(LOG_LEVEL_INFO, PSTR("RFR:CmndRfRxProtocol:: index:%d usridx:%d data_len:%d data:\"%s\""),XdrvMailbox.index, XdrvMailbox.usridx, XdrvMailbox.data_len,XdrvMailbox.data);
+ 
+  uint64_t thisdat;
+  if (XdrvMailbox.usridx==1) {  
+    if(XdrvMailbox.payload >=0){
+      thisdat = (1ULL << (XdrvMailbox.index-1) );
+      if(XdrvMailbox.payload &1){
+        mySwitch.enabled_protocol_mask.value |= thisdat;
       }else{
-  //      AddLog_P(LOG_LEVEL_INFO, PSTR("RFR: set mask with value"));
-        mySwitch.enabled_protocol_mask.value = strtoull(XdrvMailbox.data,nullptr, 0);
+        mySwitch.enabled_protocol_mask.value &= ~thisdat;
+      }
+      SaveMaskToSettings();       
+    }else if(XdrvMailbox.data_len > 0) return;  // not a number
+  }else{
+    if(XdrvMailbox.data_len >0){
+      if(XdrvMailbox.data[0]=='a'){
+        mySwitch.enabled_protocol_mask.value=  (1ULL << mySwitch.getNumProtos())-1 ;
+        SaveMaskToSettings();
+      }else{
+        thisdat = strtoull(XdrvMailbox.data,nullptr, 0);
+        if(thisdat>0 || XdrvMailbox.data[0]=='0' ){
+          mySwitch.enabled_protocol_mask.value = thisdat;
+          SaveMaskToSettings();
+        }else return; // not a number
       }   
+      
     }
-    Settings.ex_adc_param1 = mySwitch.enabled_protocol_mask.longs.high32;
-    Settings.ex_adc_param2 = mySwitch.enabled_protocol_mask.longs.low32;
-  //}
+  }
+//  AddLog_P(LOG_LEVEL_INFO, PSTR("RFR:CmndRfRxProtocol:: Start responce"));
   ResponseClear();
   ResponseAppend_P(PSTR("{\"" D_CMND_RFRXPROTOCOL "\":"));
   ResponseAppend_P(PSTR("\""));
   bool gotone = false;
-  thisbit=1;
+  thisdat=1;
   for (int i=0;i<mySwitch.getNumProtos();i++){
-  //  ResponseAppend_P(PSTR("%s%s%d"), (i) ? "," : "",(mySwitch.enabled_protocol_mask.value & thisbit) ? "" : "!", i+1);
-    if(mySwitch.enabled_protocol_mask.value & thisbit){
+   if(mySwitch.enabled_protocol_mask.value & thisdat){
       ResponseAppend_P(PSTR("%s%d"), (gotone) ? "," : "", i+1); 
       gotone = true;
     }
-    thisbit <<=1;
+    thisdat <<=1;
   }
-  if(!gotone)ResponseAppend_P(PSTR("None Enabled"));
+  if(!gotone)ResponseAppend_P(PSTR( D_JSON_NONE_ENABLED ));
   ResponseAppend_P(PSTR("\""));
   ResponseJsonEnd();
 
@@ -149,6 +155,7 @@ void CmndRfRxProtocol(void){
 
 void CmndRfSend(void)
 {
+  if(!PinUsed(GPIO_RFSEND))return;
   bool error = false;
 
   if (XdrvMailbox.data_len) {
@@ -229,10 +236,8 @@ bool Xdrv17(uint8_t function)
         }
         break;
       case FUNC_COMMAND:
-        if (PinUsed(GPIO_RFSEND)) {
-          result = DecodeCommand(kRfSendCommands, RfSendCommand);
-        }
-        break;
+        result = DecodeCommand(kRfCommands, RfCommands);
+        break;        
       case FUNC_INIT:
         RfInit();
         break;

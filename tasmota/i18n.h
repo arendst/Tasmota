@@ -497,9 +497,6 @@
   #define D_JSON_RFRECEIVED "RfReceived"
 #define D_CMND_RFRAW "RfRaw"
 
-#define D_CMND_RFRXPROTOCOL "RfRxProtocol"
-#define D_JSON_ENABLED_MASK "Enabled-Mask"
-
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"
 #define D_CMND_SBAUDRATE "SBaudrate"
