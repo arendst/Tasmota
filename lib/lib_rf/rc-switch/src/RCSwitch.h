@@ -61,6 +61,17 @@
 // Для keeloq нужно увеличить RCSWITCH_MAX_CHANGES до 23+1+66*2+1=157
 #define RCSWITCH_MAX_CHANGES 67        // default 67
 
+typedef union __uint64
+{
+  uint64_t value;
+  struct
+  {
+    uint32_t low32;
+    uint32_t high32;
+    
+  } longs;
+} uint64_t_t;
+
 class RCSwitch {
 
   public:
@@ -93,6 +104,10 @@ class RCSwitch {
     unsigned int getReceivedDelay();
     unsigned int getReceivedProtocol();
     unsigned int* getReceivedRawdata();
+  #ifdef BAZMODS
+    uint8_t getNumProtos();
+    static uint64_t_t enabled_protocol_mask; //perhaps need function to change because used in interrupt
+  #endif  
     #endif
   
     void enableTransmit(int nTransmitterPin);
@@ -164,7 +179,9 @@ class RCSwitch {
     static void handleInterrupt();
     static bool receiveProtocol(const int p, unsigned int changeCount);
     int nReceiverInterrupt;
+    
     #endif
+    
     int nTransmitterPin;
     int nRepeatTransmit;
     
@@ -183,6 +200,8 @@ class RCSwitch {
     static unsigned int timings[RCSWITCH_MAX_CHANGES];
     // буфер длительностей последних четырех пакетов, [0] - последний
     static unsigned int buftimings[4];
+
+    
     #endif
 
     

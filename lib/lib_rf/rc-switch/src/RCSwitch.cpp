@@ -133,6 +133,7 @@ enum {
 };
 
 #if not defined( RCSwitchDisableReceiving )
+
 volatile unsigned long long RCSwitch::nReceivedValue = 0;
 volatile unsigned int RCSwitch::nReceivedBitlength = 0;
 volatile unsigned int RCSwitch::nReceivedDelay = 0;
@@ -145,6 +146,10 @@ const unsigned int RCSwitch::nSeparationLimit = 2600;    // 4300 default
 // should be set to the minimum value of pulselength * the sync signal
 unsigned int RCSwitch::timings[RCSWITCH_MAX_CHANGES];
 unsigned int RCSwitch::buftimings[4];
+#ifdef BAZMODS
+uint64_t_t RCSwitch::enabled_protocol_mask;
+
+#endif
 #endif
 
 RCSwitch::RCSwitch() {
@@ -155,9 +160,16 @@ RCSwitch::RCSwitch() {
   this->nReceiverInterrupt = -1;
   this->setReceiveTolerance(60);
   RCSwitch::nReceivedValue = 0;
+#ifdef BAZMODS
+  RCSwitch::enabled_protocol_mask.value =  (1ULL << numProto)-1 ;//pow(2,numProto)-1;
+#endif
   #endif
 }
-
+#ifdef BAZMODS
+uint8_t RCSwitch::getNumProtos(){
+  return numProto;
+}
+#endif
 /**
   * Sets the protocol to send.
   */
@@ -833,11 +845,21 @@ void RECEIVE_ATTR RCSwitch::handleInterrupt() {
       repeatCount++;
       // при приеме второго повторного начинаем анализ принятого первым
       if (repeatCount == 1) {
+ #ifdef BAZMODS
+        unsigned long long thismask = 1;
+  #endif
         for(unsigned int i = 1; i <= numProto; i++) {
-          if (receiveProtocol(i, changeCount)) {
-            // receive succeeded for protocol i
-            break;
+ #ifdef BAZMODS
+          if(enabled_protocol_mask.value & thismask){
+#endif
+            if (receiveProtocol(i, changeCount)) {
+              // receive succeeded for protocol i
+              break;
+            }
+ #ifdef BAZMODS
           }
+          thismask <<= 1;
+#endif
         }
         // очищаем количество повторных пакетов
         repeatCount = 0;

@@ -221,7 +221,8 @@
 
 #define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
 
-// Commands tasmota.ino
+// Commands tasmota.ino 
+
 #define D_CMND_BACKLOG "Backlog"
 #define D_CMND_DELAY "Delay"
 #define D_CMND_NODELAY "NoDelay"
@@ -495,6 +496,9 @@
 #define D_CMND_RFSYNC "RfSync"
   #define D_JSON_RFRECEIVED "RfReceived"
 #define D_CMND_RFRAW "RfRaw"
+
+#define D_CMND_RFRXPROTOCOL "RfRxProtocol"
+#define D_JSON_ENABLED_MASK "Enabled-Mask"
 
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"
