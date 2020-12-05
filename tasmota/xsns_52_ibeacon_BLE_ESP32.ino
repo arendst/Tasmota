@@ -153,17 +153,25 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   struct IBEACON ib;
   BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
 
-  if (pStruct->manufacturerDataLen){
-    DumpHex(pStruct->manufacturerData, 2, ib.FACID);
-    char sRSSI[6];
-    itoa(pStruct->RSSI,sRSSI,10);
-    const uint8_t *MAC = pStruct->addr;
-    if (pStruct->manufacturerDataLen == 25 && 
-        pStruct->manufacturerData[0] == 0x4C && 
-        pStruct->manufacturerData[1] == 0x00)
+  char sRSSI[6];
+  itoa(pStruct->RSSI,sRSSI,10);
+  const uint8_t *MAC = pStruct->addr;
+
+  int manufacturerDataLen = 0;
+  std::string data;
+  if (advertisedDevice->haveManufacturerData()){
+    data = advertisedDevice->getManufacturerData();
+    manufacturerDataLen = data.length();
+  }
+  if (manufacturerDataLen){
+    const uint8_t *manufacturerData = (const uint8_t *)data.data();
+    DumpHex(manufacturerData, 2, ib.FACID);
+    if (manufacturerDataLen == 25 && 
+        manufacturerData[0] == 0x4C && 
+        manufacturerData[1] == 0x00)
     {
       BLEBeacon oBeacon = BLEBeacon();
-      oBeacon.setData(std::string((char *)pStruct->manufacturerData, pStruct->manufacturerDataLen));
+      oBeacon.setData(std::string((char *)manufacturerData, manufacturerDataLen));
       uint8_t UUID[16];
       memcpy(UUID,oBeacon.getProximityUUID().getNative()->u128.value,16);
       ESP32BLE_ReverseStr(UUID,16);
@@ -188,25 +196,26 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
       memset(ib.NAME,0x0,16);
 
       ibeacon_add(&ib);
-    } else {
-      memset(ib.UID,'0',32);
-      memset(ib.MAJOR,'0',4);
-      memset(ib.MINOR,'0',4);
-      memset(ib.PWR,'0',2);
-      DumpHex((const unsigned char*)MAC,6,ib.MAC);
-      memcpy(ib.RSSI,sRSSI,4);
-
-      if (advertisedDevice->haveName()) {
-        strncpy(ib.NAME,advertisedDevice->getName().c_str(),16);
-      } else {
-        memset(ib.NAME,0x0,16);
-      }
-
-      ibeacon_add(&ib);
+      return 0;
     }
-
   }
 
+  // no manufacturer data, or not recognised.
+  // still have an RSSi....
+  memset(ib.UID,'0',32);
+  memset(ib.MAJOR,'0',4);
+  memset(ib.MINOR,'0',4);
+  memset(ib.PWR,'0',2);
+  DumpHex((const unsigned char*)MAC,6,ib.MAC);
+  memcpy(ib.RSSI,sRSSI,4);
+
+  if (advertisedDevice->haveName()) {
+    strncpy(ib.NAME,advertisedDevice->getName().c_str(),16);
+  } else {
+    memset(ib.NAME,0x0,16);
+  }
+
+  ibeacon_add(&ib);
   return 0;
 }
 

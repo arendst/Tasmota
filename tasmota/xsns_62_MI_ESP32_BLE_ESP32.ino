@@ -841,17 +841,31 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   // AddLog_P(LOG_LEVEL_DEBUG,PSTR("Advertised Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData(0).length());
   int RSSI = pStruct->RSSI;
   const uint8_t *addr = pStruct->addr;
+  int svcdataCount = advertisedDevice->getServiceDataCount();
 
-  if (pStruct->svcdataCount == 0) {
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("MI32Adv: no svcdata"));
-    MI32HandleGenericBeacon(pStruct->payload, pStruct->payloadLen, RSSI, addr);
+
+  if (svcdataCount == 0) {
+    //BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("MI32Adv: no svcdata"));
+    uint8_t* payload = advertisedDevice->getPayload();
+    size_t payloadlen = advertisedDevice->getPayloadLength();
+    MI32HandleGenericBeacon(payload, payloadlen, RSSI, addr);
     return 0;
   }
 
-  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("MI32Adv: svcdata[0] UUID (%s)"), pStruct->svcdata[0].serviceUUIDStr);
-  size_t ServiceDataLength = pStruct->svcdata[0].serviceDataLen;
-  char * ServiceData = (char *)pStruct->svcdata[0].serviceData;
-  uint16_t UUID = pStruct->svcdata[0].serviceUUID16;
+  NimBLEUUID UUIDBig = advertisedDevice->getServiceDataUUID(0);//.getNative()->u16.value;
+
+  const ble_uuid_any_t* native = UUIDBig.getNative();
+  if (native->u.type != 16){
+    //not interested in 128 bit;
+    return 0;
+  }
+  uint16_t UUID = native->u16.value;
+
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("MI32Adv: svcdata[0] UUID (%x)"), UUID);
+  std::string ServiceDataStr = advertisedDevice->getServiceData(0);
+  
+  uint32_t  ServiceDataLength = ServiceDataStr.length();
+  const char *ServiceData = (const char *)ServiceDataStr.data();
 
   if (UUID){
     if(UUID == 0xfe95) {
@@ -868,11 +882,11 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
     }
     else {
       if(MI32.state.beaconScanCounter!=0 || MI32.mode.activeBeacon){
-        MI32HandleGenericBeacon(pStruct->payload, pStruct->payloadLen, RSSI, addr);
+        uint8_t* payload = advertisedDevice->getPayload();
+        size_t payloadlen = advertisedDevice->getPayloadLength();
+        MI32HandleGenericBeacon(payload, payloadlen, RSSI, addr);
       }
     }
-  } else {
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("MIESP32: not uuid 16: %s"), pStruct->svcdata[0].serviceUUIDStr);
   }
   return 0;
 }
@@ -1244,7 +1258,7 @@ int MIParseBatt(int slot, uint8_t *data, int len){
  * parse the response from advertisements
 \*********************************************************************************************/
 
-void MI32parseMiBeacon(char * _buf, uint32_t _slot, uint16_t _bufSize){
+void MI32parseMiBeacon(const char * _buf, uint32_t _slot, uint16_t _bufSize){
   float _tempFloat;
   mi_beacon_t _beacon;
 
@@ -1463,7 +1477,7 @@ void MI32parseCGD1Packet(const char * _buf, uint32_t length, const uint8_t *addr
   if(MI32.option.directBridgeMode) MI32.mode.shallTriggerTele = 1;
 }
 
-void MI32ParseResponse(char *buf, uint16_t bufsize, const uint8_t* addr, int RSSI) {
+void MI32ParseResponse(const char *buf, uint16_t bufsize, const uint8_t* addr, int RSSI) {
     if(bufsize<9) {  //9 is from the NLIGHT
       return;
     }

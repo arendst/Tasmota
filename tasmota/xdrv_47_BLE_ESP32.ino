@@ -82,7 +82,7 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 
 
 // TEMPORARILY define ESP32 and USE_BLE_ESP32 so VSCODE shows highlighting....
-//#define VSCODE_DEV
+#define VSCODE_DEV
 
 #ifdef VSCODE_DEV
 #define ESP32
@@ -336,8 +336,8 @@ int addSeenDevice(const uint8_t *mac, const char *name){
 // set ageS to 0 to delete all...
 int deleteSeenDevices(int ageS = 0){
   int res = 0;
-  uint64_t now_ms = esp_timer_get_time()/1000;
-  uint64_t mintime = now_ms - (ageS*1000);
+  uint64_t now = esp_timer_get_time();
+  uint64_t mintime = now - (ageS*1000*1000);
   xSemaphoreTakeRecursive(BLEOperationsRecursiveMutex, portMAX_DELAY);
   for (int i = seenDevices.size()-1; i >= 0; i--){
       BLE_ESP32::BLE_simple_device_t* dev = seenDevices[i];
@@ -409,7 +409,7 @@ int getSeenDevicesToJson(char *dest, int maxlen){
 
   if ((nextSeenDev == 0) || (nextSeenDev >= seenDevices.size())){
     // delete devices not seen in last 240s
-    deleteSeenDevices(240);
+    //deleteSeenDevices(240);
     nextSeenDev = 0;
   }
 
@@ -671,11 +671,17 @@ void setDetails(ble_advertisment_t *ad){
     maxlen -= len;
   }
 
-  if (ad->payloadLen  && (maxlen > 30)){ // will truncate if not enough space
+  BLEAdvertisedDevice *advertisedDevice = ad->advertisedDevice;
+
+  uint8_t* payload = advertisedDevice->getPayload();
+  size_t payloadlen = advertisedDevice->getPayloadLength();
+
+
+  if (payloadlen  && (maxlen > 30)){ // will truncate if not enough space
     strcpy(p, ",\"p\":\"");
     p += 6;
     maxlen -= 6;
-    dump(p, maxlen-10, ad->payload, ad->payloadLen);
+    dump(p, maxlen-10, payload, payloadlen);
     int len = strlen(p);
     p += len;
     maxlen -= len;
@@ -760,19 +766,6 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     char addrstr[20];
     dump(addrstr, 20, BLEAdvertisment.addr, 6);
 
-    int svcDataCount = advertisedDevice->getServiceDataCount();
-    int svcUUIDCount = advertisedDevice->getServiceUUIDCount();
-
-    uint8_t* payload = advertisedDevice->getPayload();
-    size_t payloadlen = advertisedDevice->getPayloadLength();
-
-    memcpy(BLEAdvertisment.payload, payload, 
-      (payloadlen <= sizeof(BLEAdvertisment.payload))?payloadlen:sizeof(BLEAdvertisment.payload));
-    BLEAdvertisment.payloadLen = payloadlen;
-
-    char payloadhex[100];
-    dump(payloadhex, 100, payload, payloadlen);
-
     // this mjust survive the scope of the callbacks
     std::string name = "";
     const char *namestr = name.c_str();
@@ -785,18 +778,8 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     // log this device safely
     addSeenDevice(BLEAdvertisment.addr, BLEAdvertisment.name);
 
-    char mfgstr[100];
-    mfgstr[0] = 0;
-    if (advertisedDevice->haveManufacturerData()){
-      std::string data = advertisedDevice->getManufacturerData();
-      int len = data.length();
 
-      memcpy(BLEAdvertisment.manufacturerData, 
-        (const uint8_t *)data.data(), (len <= sizeof(BLEAdvertisment.manufacturerData))?len: sizeof(BLEAdvertisment.manufacturerData));
-      BLEAdvertisment.manufacturerDataLen = len;
-      dump(mfgstr, 100, (uint8_t*)data.data(), len);
-    }
-
+/* we don't put these fields in our structure anymore
     if (svcDataCount == 0) {
       BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("ADV:%s (%s) RSSI:%d pld:%s Mfg:%s"), addrstr, namestr, RSSI, payloadhex, mfgstr);
     } else {
@@ -855,7 +838,7 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
         BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("Svc UUID:%s"), strUUID.c_str());
       }
     }
-
+*/
 
     if (BLEDetailsRequest && !memcmp(BLEDetailsMac, BLEAdvertisment.addr, 6)){
       if (BLEDetailsRequest == 1){
@@ -2075,59 +2058,6 @@ bool Xdrv47(uint8_t function)
 
 // match ADVERTISMENT_CALLBACK
 int myAdvertCallback(BLE_ESP32::ble_advertisment_t *pStruct) {
-
-/*
-struct ble_advertisment_t {
-  uint8_t *addr;
-  int RSSI;
-  char *name;
-
-  uint8_t *payload;
-  uint8_t payloadLen;
-
-  uint8_t svcdataCount;
-  struct {
-    ble_uuid_any_t* serviceUUID;
-    char serviceUUIDStr[40]; // longest UUID 36 chars?
-    uint8_t serviceData;
-    uint8_t serviceDataLen;
-  } svcdata[5];
-  uint8_t serviceCount;
-  struct {
-    ble_uuid_any_t* serviceUUID;
-    char serviceUUIDStr[40]; // longest UUID 36 chars?
-  } services[5];
-};
-*/
-
-  if (pStruct->svcdataCount){
-    if (pStruct->svcdata[0].serviceUUID16){
-      int UUID = pStruct->svcdata[0].serviceUUID16;
-      switch(UUID){
-        case 0xfe95:{
-          if (pStruct->svcdata[0].serviceDataLen < 9){
-            // skip NLIGHT
-          } else {
-            int type = (pStruct->svcdata[0].serviceData[3]<<8) | pStruct->svcdata[0].serviceData[2];
-            BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLE: Sensor type %x"), type);
-            switch(type){
-              case MJ_HT_V1:
-              case CGG1:
-              case YEERC:
-                //return 1; // eat this, no further callbacks will be called.
-                break;
-            }
-          }
-        }break;
-        case 0xfdcd:
-          break;
-        case 0x181a:
-          break;
-        default:
-          break;
-      }
-    }
-  }
 
   // indicate others can also hear this
   // to say 'I want this exclusively', return true.

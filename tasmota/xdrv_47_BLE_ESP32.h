@@ -179,25 +179,6 @@ struct ble_advertisment_t {
   uint8_t addr[6];
   int RSSI;
   char name[20];
-
-  uint8_t payload[100];
-  uint8_t payloadLen;
-
-  uint8_t manufacturerData[100];
-  uint8_t manufacturerDataLen;
-
-  uint8_t svcdataCount;
-  struct {
-    uint16_t serviceUUID16; // zero or a 16 bit uuid.
-    char serviceUUIDStr[40]; // longest UUID 36 chars?
-    uint8_t serviceData[100];
-    uint8_t serviceDataLen;
-  } svcdata[5];
-  uint8_t serviceCount;
-  struct {
-    uint16_t serviceUUID16; // zero or a 16 bit uuid.
-    char serviceUUIDStr[40]; // longest UUID 36 chars?
-  } services[5];
 };
 
 #pragma pack( pop )  // byte-aligned structures to read the sensor data
