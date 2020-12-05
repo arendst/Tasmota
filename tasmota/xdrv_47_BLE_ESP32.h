@@ -176,14 +176,14 @@ struct ble_advertisment_t {
   BLEAdvertisedDevice *advertisedDevice; // the full NimBLE advertisment, in case people need MORE info.
   uint32_t totalCount; 
 
-  const uint8_t *addr;
+  uint8_t addr[6];
   int RSSI;
-  const char *name;
+  char name[20];
 
-  const uint8_t *payload;
+  uint8_t payload[100];
   uint8_t payloadLen;
 
-  const uint8_t *manufacturerData;
+  uint8_t manufacturerData[100];
   uint8_t manufacturerDataLen;
 
   uint8_t svcdataCount;
