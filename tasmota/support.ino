@@ -20,6 +20,11 @@
 IPAddress syslog_host_addr;      // Syslog host IP address
 uint32_t syslog_host_hash = 0;   // Syslog host name hash
 
+#ifdef ESP32
+  TaskHandle_t mainTaskHandle;
+  int logTaskMismatch = 0; 
+#endif
+
 extern "C" {
 extern struct rst_info resetInfo;
 }
@@ -75,6 +80,10 @@ void OsWatchInit(void)
   RtcSettings.oswatch_blocked_loop = 0;
   oswatch_last_loop_time = millis();
   tickerOSWatch.attach_ms(((OSWATCH_RESET_TIME / 3) * 1000), OsWatchTicker);
+
+#ifdef ESP32
+  mainTaskHandle = xTaskGetCurrentTaskHandle();
+#endif
 }
 
 void OsWatchLoop(void)
@@ -2003,8 +2012,25 @@ void PrepLog_P(uint32_t loglevel, PGM_P formatP, ...)
   TasmotaGlobal.prepped_loglevel = loglevel;
 }
 
+#ifdef ESP32
+int ThreadError(const char *reason){
+  SemaphoreHandle_t thisTaskHandle = xTaskGetCurrentTaskHandle();
+  if (thisTaskHandle != mainTaskHandle){
+    PrepLog_P(LOG_LEVEL_ERROR, PSTR("Thread error: context:%s"), reason);
+    return 1;
+  }
+  return 0;
+}
+#endif
+
 void AddLog_P(uint32_t loglevel, PGM_P formatP, ...)
 {
+#ifdef ESP32
+  if (ThreadError(formatP)){
+    return;
+  }
+#endif
+
   if (TasmotaGlobal.prepped_loglevel) {
     AddLog(TasmotaGlobal.prepped_loglevel);
   }
@@ -2019,6 +2045,11 @@ void AddLog_P(uint32_t loglevel, PGM_P formatP, ...)
 
 void AddLog_Debug(PGM_P formatP, ...)
 {
+#ifdef ESP32
+  if (ThreadError(formatP)){
+    return;
+  }
+#endif
   va_list arg;
   va_start(arg, formatP);
   vsnprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), formatP, arg);
