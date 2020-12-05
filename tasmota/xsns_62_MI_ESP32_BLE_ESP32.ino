@@ -244,11 +244,13 @@ struct mi_sensor_t{
       uint32_t motion:1;
       uint32_t noMotion:1;
       uint32_t Btn:1;
+      uint32_t PairBtn:1;
     };
     uint32_t raw;
   } eventType;
 
   int RSSI;
+  uint8_t pairing;
   uint32_t lastTime;
   uint32_t lux;
   float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
@@ -1183,7 +1185,8 @@ void MI32StatusInfo() {
 
 
 int MI32scanCompleteCallback(NimBLEScanResults results){
-  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO,PSTR("MI32: scancomplete"));
+  // we actually don't need to do anything here....
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("MI32: scancomplete"));
   return 0;
 }
 
@@ -1266,6 +1269,7 @@ void MI32parseMiBeacon(const char * _buf, uint32_t _slot, uint16_t _bufSize){
     memcpy((uint8_t*)&_beacon+1,(uint8_t*)_buf, sizeof(_beacon)-1); // shift by one byte for the MJ_HT_V1 DANGER!!!
     memcpy((uint8_t*)&_beacon.MAC,(uint8_t*)&_beacon.MAC+1,6);      // but shift back the MAC
     _beacon.counter = _buf[4];                                      // restore the counter
+    _beacon.frame = *(uint16_t*)_buf;                               // restore the frame
   }
   else{
     memcpy((char *)&_beacon, _buf, _bufSize);
@@ -1306,7 +1310,38 @@ if(decryptRet!=0){
     DEBUG_SENSOR_LOG(PSTR("CGD1 no support for MiBeacon, type %u"),MIBLEsensors[_slot].type);
     return;
   }
+
+
   BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("%s at slot %u with payload type: %02x"), kMI32DeviceType[MIBLEsensors[_slot].type-1],_slot,_beacon.type);
+  // detect 'pairing' button - tested on MJ_HT_V1
+  if (MIBLEsensors[_slot].type==MJ_HT_V1 || MIBLEsensors[_slot].type==CGG1 || MIBLEsensors[_slot].type==YEERC){
+    int trigger = 0;
+    if (_beacon.frame == 0x2271){
+      if (!MIBLEsensors[_slot].pairing){
+        trigger = 1;
+      }
+      MIBLEsensors[_slot].pairing = 1;
+      MIBLEsensors[_slot].eventType.PairBtn = 1;
+      if (trigger){
+        //MIBLEsensors[_slot].shallSendMQTT = 1;
+        MI32.mode.shallTriggerTele = 1;
+        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("PAIR"));
+      }
+    } else {
+      if (MIBLEsensors[_slot].pairing){
+        trigger = 1;
+      }
+      MIBLEsensors[_slot].pairing = 0;
+      MIBLEsensors[_slot].eventType.PairBtn = 1;
+      if (trigger){
+        //MIBLEsensors[_slot].shallSendMQTT = 1;
+        MI32.mode.shallTriggerTele = 1;
+        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("UNPAIR"));
+      }
+    }
+  }
+
+
   switch(_beacon.type){
     case 0x01:
       MIBLEsensors[_slot].Btn=_beacon.Btn.num + (_beacon.Btn.longPress/2)*6;
@@ -1928,6 +1963,8 @@ const char HTTP_NMT[] PROGMEM = "{s}%s No motion{m}> %u seconds{e}";
 const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}";
 const char HTTP_MI32_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 
+const char HTTP_PAIRING[] PROGMEM = "{s}%s Pair Button Pressed{m} {e}";
+
 void MI32Show(bool json)
 {
   if (json) {
@@ -2059,6 +2096,9 @@ void MI32Show(bool json)
             ResponseAppend_P(PSTR(",\"Btn\":%u"),MIBLEsensors[i].Btn);
           }
         }
+        if(MIBLEsensors[i].eventType.PairBtn && MIBLEsensors[i].pairing){
+            ResponseAppend_P(PSTR(",\"Pair\":%u"),MIBLEsensors[i].pairing);
+        }
       } // minimal summary
       if (MIBLEsensors[i].feature.PIR){
         if(MIBLEsensors[i].eventType.motion || !MI32.mode.triggeredTele){
@@ -2180,6 +2220,9 @@ void MI32Show(bool json)
         }
         if (MIBLEsensors[i].type==YEERC){
           WSContentSend_PD(HTTP_LASTBUTTON, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].Btn);
+        }
+        if (MIBLEsensors[i].pairing){
+          WSContentSend_PD(HTTP_PAIRING, kMI32DeviceType[MIBLEsensors[i].type-1]);
         }
       }
       _counter++;
