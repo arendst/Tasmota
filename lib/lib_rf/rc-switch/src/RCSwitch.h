@@ -104,10 +104,8 @@ class RCSwitch {
     unsigned int getReceivedDelay();
     unsigned int getReceivedProtocol();
     unsigned int* getReceivedRawdata();
-  #ifdef BAZMODS
     uint8_t getNumProtos();
-    static uint64_t_t enabled_protocol_mask; //perhaps need function to change because used in interrupt
-  #endif  
+    static uint64_t_t enabled_protocol_mask; //perhaps need function to change because used in interrupt 
     #endif
   
     void enableTransmit(int nTransmitterPin);

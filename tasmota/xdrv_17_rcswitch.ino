@@ -90,10 +90,8 @@ void RfInit(void)
   if (PinUsed(GPIO_RFRECV)) {
     pinMode( Pin(GPIO_RFRECV), INPUT);
     mySwitch.enableReceive(Pin(GPIO_RFRECV));
-#ifdef BAZMODS 
   mySwitch.enabled_protocol_mask.longs.high32 =  Settings.ex_adc_param1;
   mySwitch.enabled_protocol_mask.longs.low32 = Settings.ex_adc_param2;
-#endif
   }
 }
 
@@ -101,7 +99,6 @@ void RfInit(void)
  * Commands
 \*********************************************************************************************/
 
-#ifdef BAZMODS
 void CmndRfRxProtocol(void){
   uint64_t thisbit;
  // AddLog_P(LOG_LEVEL_INFO, PSTR("RFR: index:%d usridx:%d data_len:%d data:%s"),XdrvMailbox.index, XdrvMailbox.usridx, XdrvMailbox.data_len,XdrvMailbox.data);
@@ -149,7 +146,7 @@ void CmndRfRxProtocol(void){
   ResponseJsonEnd();
 
 }
-#endif
+
 void CmndRfSend(void)
 {
   bool error = false;
