@@ -171,7 +171,7 @@ void hreEvery50ms(void)
 
          // Start reading the data block
       case hre_read:
-         AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "sync_run:%d, sync_counter:%d"), sync_run, sync_counter);
+         AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "sync_run:%d, sync_counter:%d"), sync_run, sync_counter);
          read_counter = 0;
          parity_errors = 0;
          curr_start = TasmotaGlobal.uptime;
@@ -190,7 +190,7 @@ void hreEvery50ms(void)
 
          if (read_counter == 46)
          {
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "pe:%d, re:%d, buff:%s"),
+            AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "pe:%d, re:%d, buff:%s"),
                       parity_errors, hre_read_errors, buff);
             if (parity_errors == 0)
             {

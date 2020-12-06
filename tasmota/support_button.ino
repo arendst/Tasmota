@@ -27,7 +27,7 @@
 #ifdef ESP32
 #define TOUCH_PIN_THRESHOLD     12 // Smaller value will treated as button press
 #define TOUCH_HIT_THRESHOLD     3  // successful hits to filter out noise
-#endif // ESP32
+#endif  // ESP32
 
 const char kMultiPress[] PROGMEM =
   "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|";
@@ -47,7 +47,7 @@ struct BUTTON {
 #ifdef ESP32
   uint8_t touch_mask = 0;                    // Touch flag (1 = inverted)
   uint8_t touch_hits[MAX_KEYS] = { 0 };      // Hits in a row to filter out noise
-#endif // ESP32
+#endif  // ESP32
   uint8_t present = 0;                       // Number of buttons found flag
 } Button;
 
@@ -57,7 +57,7 @@ struct TOUCH_BUTTON {
   uint8_t hit_threshold = TOUCH_HIT_THRESHOLD;
   uint8_t calibration = 0; // Bitfield
 } TOUCH_BUTTON;
-#endif // ESP32
+#endif  // ESP32
 
 /********************************************************************************************/
 
@@ -73,7 +73,7 @@ void ButtonInvertFlag(uint32_t button_bit) {
 void ButtonTouchFlag(uint32_t button_bit) {
   bitSet(Button.touch_mask, button_bit);
 }
-#endif // ESP32
+#endif  // ESP32
 
 void ButtonInit(void) {
   Button.present = 0;
@@ -87,9 +87,10 @@ void ButtonInit(void) {
       Button.present++;
 #ifdef ESP8266
       pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : ((16 == Pin(GPIO_KEY1, i)) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
-#else  // ESP32
+#endif  // ESP8266
+#ifdef ESP32
       pinMode(Pin(GPIO_KEY1, i), bitRead(Button.no_pullup_mask, i) ? INPUT : INPUT_PULLUP);
-#endif
+#endif  // ESP32
     }
 #ifdef USE_ADC
     else if (PinUsed(GPIO_ADC_BUTTON, i) || PinUsed(GPIO_ADC_BUTTON_INV, i)) {
@@ -145,7 +146,7 @@ void ButtonHandler(void) {
     if (!button_index && ((SONOFF_DUAL == TasmotaGlobal.module_type) || (CH4 == TasmotaGlobal.module_type))) {
       button_present = 1;
       if (Button.dual_code) {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON " " D_CODE " %04X"), Button.dual_code);
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON " " D_CODE " %04X"), Button.dual_code);
         button = PRESSED;
         if (0xF500 == Button.dual_code) {                      // Button hold
           Button.hold_timer[button_index] = (loops_per_second * Settings.param[P_HOLD_TIME] / 10) -1;  // SetOption32 (40)
@@ -175,7 +176,7 @@ void ButtonHandler(void) {
           Button.touch_hits[button_index] = 0;
         }
         if (bitRead(TOUCH_BUTTON.calibration, button_index+1)) {
-          AddLog_P2(LOG_LEVEL_INFO, PSTR("PLOT: %u, %u, %u,"), button_index+1, _value, Button.touch_hits[button_index]);  // Button number (1..4), value, continuous hits under threshold
+          AddLog_P(LOG_LEVEL_INFO, PSTR("PLOT: %u, %u, %u,"), button_index+1, _value, Button.touch_hits[button_index]);  // Button number (1..4), value, continuous hits under threshold
         }
       } else
 #endif  // ESP32
@@ -205,12 +206,12 @@ void ButtonHandler(void) {
 
         bool button_pressed = false;
         if ((PRESSED == button) && (NOT_PRESSED == Button.last_state[button_index])) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), button_index +1);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), button_index +1);
           Button.hold_timer[button_index] = loops_per_second;
           button_pressed = true;
         }
         if ((NOT_PRESSED == button) && (PRESSED == Button.last_state[button_index])) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_01), button_index +1);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_01), button_index +1);
           if (!Button.hold_timer[button_index]) { button_pressed = true; }  // Do not allow within 1 second
         }
         if (button_pressed) {
@@ -229,7 +230,7 @@ void ButtonHandler(void) {
 
           if (Settings.flag.button_single) {           // SetOption13 (0) - Allow only single button press for immediate action,
             if (!Settings.flag3.mqtt_buttons) {        // SetOption73 (0) - Decouple button from relay and send just mqtt topic
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
+              AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
               if (!SendKey(KEY_BUTTON, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
                 ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
               }
@@ -238,7 +239,7 @@ void ButtonHandler(void) {
             }
           } else {
             Button.press_counter[button_index] = (Button.window_timer[button_index]) ? Button.press_counter[button_index] +1 : 1;
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_MULTI_PRESS " %d"), button_index +1, Button.press_counter[button_index]);
+            AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_MULTI_PRESS " %d"), button_index +1, Button.press_counter[button_index]);
             Button.window_timer[button_index] = loops_per_second / 2;  // 0.5 second multi press window
           }
           TasmotaGlobal.blinks = 201;
@@ -319,7 +320,7 @@ void ButtonHandler(void) {
 #endif  // ESP8266
                           if ((Button.press_counter[button_index] > 1) && valid_relay && (Button.press_counter[button_index] <= MAX_RELAY_BUTTON1)) {
                             ExecuteCommandPower(button_index + Button.press_counter[button_index], POWER_TOGGLE, SRC_BUTTON);   // Execute Toggle command internally
-//                            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Relay%d found on GPIO%d"), Button.press_counter[button_index], Pin(GPIO_REL1, Button.press_counter[button_index]-1));
+//                            AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Relay%d found on GPIO%d"), Button.press_counter[button_index], Pin(GPIO_REL1, Button.press_counter[button_index]-1));
                           }
                         }
                       }

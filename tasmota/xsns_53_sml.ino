@@ -86,6 +86,7 @@ struct METER_DESC {
   char *txmem;
   uint8_t index;
   uint8_t max_index;
+  uint8_t sopt;
 };
 
 // this descriptor method is no longer supported
@@ -117,10 +118,8 @@ struct METER_DESC {
 #if METER==SML_NO_OP
 #undef METERS_USED
 #define METERS_USED 0
-struct METER_DESC const meter_desc[1]={
-  [0]={3,'o',0,SML_BAUDRATE,"OBIS",-1,1,0}};
-const uint8_t meter[]=
-"1,1-0:1.8.0*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|";
+struct METER_DESC const meter_desc[]={};
+const uint8_t meter[]="";
 #endif
 
 
@@ -472,11 +471,12 @@ const uint8_t *meter_p;
 uint8_t meter_spos[MAX_METERS];
 
 // software serial pointers
+#ifdef ESP8266
+TasmotaSerial *meter_ss[MAX_METERS];
+#endif  // ESP8266
 #ifdef ESP32
 HardwareSerial *meter_ss[MAX_METERS];
-#else
-TasmotaSerial *meter_ss[MAX_METERS];
-#endif
+#endif  // ESP32
 
 // serial buffers, may be made larger depending on telegram lenght
 #ifndef SML_BSIZ
@@ -1583,7 +1583,7 @@ void SML_Decode(uint8_t index) {
               if (lowByte(crc)!=smltbuf[mindex][pos]) goto nextsect;
               if (highByte(crc)!=smltbuf[mindex][pos+1]) goto nextsect;
               dval=mbus_dval;
-              //AddLog_P2(LOG_LEVEL_INFO, PSTR(">> %s"),mp);
+              //AddLog_P(LOG_LEVEL_INFO, PSTR(">> %s"),mp);
               mp++;
             } else {
               if (meter_desc_p[mindex].type=='p') {
@@ -1605,7 +1605,7 @@ void SML_Decode(uint8_t index) {
 #else
           meter_vars[vindex]=dval;
 #endif
-//AddLog_P2(LOG_LEVEL_INFO, PSTR(">> %s"),mp);
+//AddLog_P(LOG_LEVEL_INFO, PSTR(">> %s"),mp);
           // get scaling factor
           double fac=CharToDouble((char*)mp);
           meter_vars[vindex]/=fac;
@@ -1898,13 +1898,13 @@ char dstbuf[SML_SRCBSIZE*2];
     Replace_Cmd_Vars(lp,1,dstbuf,sizeof(dstbuf));
     lp+=SML_getlinelen(lp)+1;
     uint32_t slen=strlen(dstbuf);
-    //AddLog_P2(LOG_LEVEL_INFO, PSTR("%d - %s"),slen,dstbuf);
+    //AddLog_P(LOG_LEVEL_INFO, PSTR("%d - %s"),slen,dstbuf);
     mlen+=slen+1;
     if (*lp=='#') break;
     if (*lp=='>') break;
     if (*lp==0) break;
   }
-  //AddLog_P2(LOG_LEVEL_INFO, PSTR("len=%d"),mlen);
+  //AddLog_P(LOG_LEVEL_INFO, PSTR("len=%d"),mlen);
   return mlen+32;
 }
 #else
@@ -1916,7 +1916,7 @@ uint32_t SML_getscriptsize(char *lp) {
       break;
     }
   }
-  //AddLog_P2(LOG_LEVEL_INFO, PSTR("len=%d"),mlen);
+  //AddLog_P(LOG_LEVEL_INFO, PSTR("len=%d"),mlen);
   return mlen;
 }
 #endif
@@ -2014,7 +2014,14 @@ dddef_exit:
           if (*lp!=',') goto next_line;
           lp++;
           script_meter_desc[index].type=*lp;
-          lp+=2;
+          lp++;
+          if (*lp!=',') {
+            script_meter_desc[index].sopt=*lp&7;
+            lp++;
+          } else {
+            script_meter_desc[index].sopt=0;
+          }
+          lp++;
           script_meter_desc[index].flag=strtol(lp,&lp,10);
           if (*lp!=',') goto next_line;
           lp++;
@@ -2071,7 +2078,7 @@ dddef_exit:
         char dstbuf[SML_SRCBSIZE*2];
         Replace_Cmd_Vars(lp,1,dstbuf,sizeof(dstbuf));
         lp+=SML_getlinelen(lp);
-        //AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),dstbuf);
+        //AddLog_P(LOG_LEVEL_INFO, PSTR("%s"),dstbuf);
         char *lp1=dstbuf;
         if (*lp1=='-' || isdigit(*lp1)) {
           //toLogEOL(">>",lp);
@@ -2171,35 +2178,41 @@ init10:
           meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,1,TMSBSIZ);
         }
 #else
+#ifdef ESP8266
+        meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,0,TMSBSIZ);
+#endif  // ESP8266
 #ifdef ESP32
         meter_ss[meters] = new HardwareSerial(uart_index);
         if (uart_index==0) { ClaimSerial(); }
         uart_index--;
         if (uart_index<0) uart_index=0;
         meter_ss[meters]->setRxBufferSize(TMSBSIZ);
-#else
-        meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,0,TMSBSIZ);
-#endif
+#endif  // ESP32
 #endif
 
-#ifdef ESP32
-        if (meter_desc_p[meters].type=='M') {
-          meter_ss[meters]->begin(meter_desc_p[meters].params, SERIAL_8E1,meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin);
-        } else {
-          meter_ss[meters]->begin(meter_desc_p[meters].params,SERIAL_8N1,meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin);
+        SerialConfig smode = SERIAL_8N1;
+        if (meter_desc_p[meters].sopt == 2) {
+          smode = SERIAL_8N2;
         }
-#else
+        if (meter_desc_p[meters].type=='M') {
+          smode = SERIAL_8E1;
+          if (meter_desc_p[meters].sopt == 2) {
+            smode = SERIAL_8E2;
+          }
+        }
+#ifdef ESP8266
         if (meter_ss[meters]->begin(meter_desc_p[meters].params)) {
           meter_ss[meters]->flush();
         }
         if (meter_ss[meters]->hardwareSerial()) {
-          if (meter_desc_p[meters].type=='M') {
-            Serial.begin(meter_desc_p[meters].params, SERIAL_8E1);
-          }
+          Serial.begin(meter_desc_p[meters].params, smode);
           ClaimSerial();
           //Serial.setRxBufferSize(512);
         }
-#endif
+#endif  // ESP8266
+#ifdef ESP32
+        meter_ss[meters]->begin(meter_desc_p[meters].params, smode, meter_desc_p[meters].srcpin, meter_desc_p[meters].trxpin);
+#endif  // ESP32
     }
   }
 
@@ -2211,7 +2224,16 @@ uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
   if (meter<1 || meter>meters_used) return 0;
   meter--;
   if (!meter_ss[meter]) return 0;
-
+#ifdef ESP8266
+  if (meter_ss[meter]->begin(br)) {
+    meter_ss[meter]->flush();
+  }
+  if (meter_ss[meter]->hardwareSerial()) {
+    if (meter_desc_p[meter].type=='M') {
+      Serial.begin(br, SERIAL_8E1);
+    }
+  }
+#endif  // ESP8266
 #ifdef ESP32
   meter_ss[meter]->flush();
   meter_ss[meter]->updateBaudRate(br);
@@ -2221,16 +2243,7 @@ uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
   } else {
     meter_ss[meter]->begin(br,SERIAL_8N1,meter_desc_p[meter].srcpin,meter_desc_p[meter].trxpin);
   }*/
-#else
-  if (meter_ss[meter]->begin(br)) {
-    meter_ss[meter]->flush();
-  }
-  if (meter_ss[meter]->hardwareSerial()) {
-    if (meter_desc_p[meter].type=='M') {
-      Serial.begin(br, SERIAL_8E1);
-    }
-  }
-#endif
+#endif  // ESP32
   return 1;
 }
 
@@ -2398,10 +2411,10 @@ void SML_Check_Send(void) {
   char *cp;
   for (uint32_t cnt=sml_desc_cnt; cnt<meters_used; cnt++) {
     if (script_meter_desc[cnt].trxpin>=0 && script_meter_desc[cnt].txmem) {
-      //AddLog_P2(LOG_LEVEL_INFO, PSTR("100 ms>> %d - %s - %d"),sml_desc_cnt,script_meter_desc[cnt].txmem,script_meter_desc[cnt].tsecs);
+      //AddLog_P(LOG_LEVEL_INFO, PSTR("100 ms>> %d - %s - %d"),sml_desc_cnt,script_meter_desc[cnt].txmem,script_meter_desc[cnt].tsecs);
       if ((sml_100ms_cnt>=script_meter_desc[cnt].tsecs)) {
         sml_100ms_cnt=0;
-        //AddLog_P2(LOG_LEVEL_INFO, PSTR("100 ms>> 2"),cp);
+        //AddLog_P(LOG_LEVEL_INFO, PSTR("100 ms>> 2"),cp);
         if (script_meter_desc[cnt].max_index>1) {
           script_meter_desc[cnt].index++;
           if (script_meter_desc[cnt].index>=script_meter_desc[cnt].max_index) {
@@ -2415,7 +2428,7 @@ void SML_Check_Send(void) {
           //SML_Send_Seq(cnt,cp);
           sml_desc_cnt++;
         }
-        //AddLog_P2(LOG_LEVEL_INFO, PSTR(">> %s"),cp);
+        //AddLog_P(LOG_LEVEL_INFO, PSTR(">> %s"),cp);
         SML_Send_Seq(cnt,cp);
         if (sml_desc_cnt>=meters_used) {
           sml_desc_cnt=0;

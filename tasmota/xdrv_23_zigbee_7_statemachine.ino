@@ -369,7 +369,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_RECV_UNEXPECTED(&ZNP_Recv_Default)
-    ZI_WAIT(10500)                             // wait for 10 seconds for Tasmota to stabilize
+    ZI_WAIT(15500)                             // wait for 15 seconds for Tasmota to stabilize
 
     //ZI_MQTT_STATE(ZIGBEE_STATUS_BOOT, "Booting")
     ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "rebooting CC2530 device")
@@ -769,9 +769,9 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_RECV_UNEXPECTED(&EZ_Recv_Default)
-    ZI_WAIT(10500)                             // wait for 10 seconds for Tasmota to stabilize
+    ZI_WAIT(15500)                             // wait for 15 seconds for Tasmota to stabilize
 
-    // Hardware reset    
+    // Hardware reset
     ZI_LOG(LOG_LEVEL_INFO, kResettingDevice)     // Log Debug: resetting EZSP device
     ZI_CALL(&EZ_Reset_Device, 0)         // LOW = reset
     ZI_WAIT(100)                        // wait for .1 second
@@ -867,10 +867,11 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
     ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
+    ZI_CALL(&Z_Prepare_EEPROM, 0)
     ZI_CALL(&Z_Load_Devices, 0)
-#ifndef USE_ZIGBEE_NO_READ_ATTRIBUTES
+    ZI_CALL(&Z_Load_Data_EEPROM, 0)
+    ZI_CALL(&Z_Set_Save_Data_Timer_EEPROM, 0)
     ZI_CALL(&Z_Query_Bulbs, 0)
-#endif
 
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
     ZI_WAIT_FOREVER()
@@ -902,7 +903,6 @@ uint8_t ZigbeeGetInstructionSize(uint8_t instr) {   // in Zigbee_Instruction lin
 
 void ZigbeeGotoLabel(uint8_t label) {
   // look for the label scanning entire code
-  uint16_t goto_pc = 0xFFFF;    // 0xFFFF means not found
   uint8_t  cur_instr = 0;
   uint8_t  cur_d8 = 0;
   uint8_t  cur_instr_len = 1;       // size of current instruction in words
@@ -911,10 +911,10 @@ void ZigbeeGotoLabel(uint8_t label) {
     const Zigbee_Instruction *cur_instr_line = &zb_prog[i];
     cur_instr = pgm_read_byte(&cur_instr_line->i.i);
     cur_d8    = pgm_read_byte(&cur_instr_line->i.d8);
-    //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("ZGB GOTO: pc %d instr %d"), i, cur_instr);
+    //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("ZGB GOTO: pc %d instr %d"), i, cur_instr);
 
     if (ZGB_INSTR_LABEL == cur_instr) {
-      //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "found label %d at pc %d"), cur_d8, i);
+      //AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "found label %d at pc %d"), cur_d8, i);
       if (label == cur_d8) {
         // label found, goto to this pc
         zigbee.pc = i;
@@ -928,12 +928,12 @@ void ZigbeeGotoLabel(uint8_t label) {
   }
 
   // no label found, abort
-  AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Goto label not found, label=%d pc=%d"), label, zigbee.pc);
+  AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Goto label not found, label=%d pc=%d"), label, zigbee.pc);
   if (ZIGBEE_LABEL_ABORT != label) {
     // if not already looking for ZIGBEE_LABEL_ABORT, goto ZIGBEE_LABEL_ABORT
     ZigbeeGotoLabel(ZIGBEE_LABEL_ABORT);
   } else {
-    AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Label Abort (%d) not present, aborting Zigbee"), ZIGBEE_LABEL_ABORT);
+    AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Label Abort (%d) not present, aborting Zigbee"), ZIGBEE_LABEL_ABORT);
     zigbee.state_machine = false;
     zigbee.active = false;
   }
@@ -951,7 +951,7 @@ void ZigbeeStateMachine_Run(void) {
     // checking if timeout expired
     if ((zigbee.next_timeout) && (now > zigbee.next_timeout)) {    // if next_timeout == 0 then wait forever
       if (!zigbee.state_no_timeout) {
-        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "timeout, goto label %d"), zigbee.on_timeout_goto);
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "timeout, goto label %d"), zigbee.on_timeout_goto);
         ZigbeeGotoLabel(zigbee.on_timeout_goto);
       } else {
         zigbee.state_waiting = false;     // simply stop waiting
@@ -967,7 +967,7 @@ void ZigbeeStateMachine_Run(void) {
     zigbee.state_no_timeout = false;   // reset the no_timeout for next instruction
 
     if (zigbee.pc > ARRAY_SIZE(zb_prog)) {
-      AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Invalid pc: %d, aborting"), zigbee.pc);
+      AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Invalid pc: %d, aborting"), zigbee.pc);
       zigbee.pc = -1;
     }
     if (zigbee.pc < 0) {
@@ -1016,7 +1016,7 @@ void ZigbeeStateMachine_Run(void) {
       case ZGB_INSTR_STOP:
         zigbee.state_machine = false;
         if (cur_d8) {
-          AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Stopping (%d)"), cur_d8);
+          AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Stopping (%d)"), cur_d8);
         }
         break;
       case ZGB_INSTR_CALL:

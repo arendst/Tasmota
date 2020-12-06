@@ -54,7 +54,7 @@ void IAQ_Read(void)
   for( uint32_t i=0; i<9; i++ ) {
     buf[i]= Wire.read();
   }
-  // AddLog_P2(LOG_LEVEL_DEBUG, "iAQ: buffer %x %x %x %x %x %x %x %x %x ", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8]);
+  // AddLog_P(LOG_LEVEL_DEBUG, "iAQ: buffer %x %x %x %x %x %x %x %x %x ", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8]);
   iAQ.pred = (buf[0]<<8) + buf[1];
   iAQ.status = buf[2];
   iAQ.resistance =  ((uint32_t)buf[3]<<24) + ((uint32_t)buf[4]<<16) + ((uint32_t)buf[5]<<8) + (uint32_t)buf[6];
@@ -80,7 +80,7 @@ void IAQ_Show(uint8_t json)
 
   if (json) {
     if (iAQ.status!=IAQ_STATUS_OK){
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("iAQ: " D_ERROR " %x" ),iAQ.status);
+      AddLog_P(LOG_LEVEL_INFO, PSTR("iAQ: " D_ERROR " %x" ),iAQ.status);
       return;
   }
   else {

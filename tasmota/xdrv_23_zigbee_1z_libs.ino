@@ -135,6 +135,7 @@ public:
     freeKey();
     freeVal();
     deepCopy(rhs);
+    return *this;
   }
 
   // Destructor, free memory that was allocated
@@ -256,6 +257,8 @@ public:
   inline Z_attribute & addAttribute(const __FlashStringHelper * name, uint8_t suffix = 0) {
     return addAttribute((const char*) name, true, suffix);
   }
+  // smaller version called often to reduce code size
+  Z_attribute & addAttributePMEM(const char * name);
 
   // Remove from list by reference, if null or not found, then do nothing
   inline void removeAttribute(const Z_attribute * attr) { remove(attr); }
@@ -295,6 +298,11 @@ public:
   // merge with secondary list, return true if ok, false if conflict
   bool mergeList(const Z_attribute_list &list2);
 };
+
+
+Z_attribute & Z_attribute_list::addAttributePMEM(const char * name) {
+  return addAttribute(name, true, 0);
+}
 
 /*********************************************************************************************\
  * 
@@ -658,6 +666,8 @@ void Z_attribute::freeVal(void) {
       break;
     case Za_type::Za_arr:
       if (val.arrval) { delete val.arrval; val.arrval = nullptr; }
+      break;
+    default:
       break;
   }
 }

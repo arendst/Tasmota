@@ -76,7 +76,7 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
     } else {
       float x_f = x / 65536.0f;
       float y_f = y / 65536.0f;
-      snprintf_P(buf, buf_size, PSTR("%s\"xy\":[%s,%s],"), buf, String(x, 5).c_str(), String(y, 5).c_str());
+      snprintf_P(buf, buf_size, PSTR("%s\"xy\":[%s,%s],"), buf, String(x_f, 5).c_str(), String(y_f, 5).c_str());
     }
     snprintf_P(buf, buf_size, PSTR("%s\"hue\":%d,\"sat\":%d,"), buf, hue16, sat);
   }
@@ -106,7 +106,7 @@ void HueLightStatus2Zigbee(uint16_t shortaddr, String *response)
               (modelId) ? EscapeJSONString(modelId).c_str() : PSTR("Unknown"),
               (manufacturerId) ? EscapeJSONString(manufacturerId).c_str() : PSTR("Tasmota"),
               GetHueDeviceId(shortaddr).c_str());
-              
+
   *response += buf;
   free(buf);
 }
@@ -169,7 +169,7 @@ void ZigbeeHueDimmer(uint16_t shortaddr, uint8_t dimmer) {
 // CT
 void ZigbeeHueCT(uint16_t shortaddr, uint16_t ct) {
   if (ct > 0xFEFF) { ct = 0xFEFF; }
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeHueCT 0x%04X - %d"), shortaddr, ct);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("ZigbeeHueCT 0x%04X - %d"), shortaddr, ct);
   char param[12];
   snprintf_P(param, sizeof(param), PSTR("%02X%02X0A00"), ct & 0xFF, ct >> 8);
   uint8_t colormode = 2;      // "ct"
@@ -208,9 +208,8 @@ void ZigbeeHueHS(uint16_t shortaddr, uint16_t hue, uint8_t sat) {
 }
 
 void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
-  uint8_t  power, colormode, bri, sat;
+  uint8_t  bri, sat;
   uint16_t ct, hue;
-  float    x, y;
   int code = 200;
 
   bool resp = false;  // is the response non null (add comma between parameters)
@@ -226,7 +225,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
 
     JsonParser parser((char*) Webserver->arg((Webserver->args())-1).c_str());
     JsonParserObject root = parser.getRootObject();
-    
+
     JsonParserToken hue_on = root[PSTR("on")];
     if (hue_on) {
       on = hue_on.getBool();
@@ -347,7 +346,7 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
   else {
     response = FPSTR(HUE_ERROR_JSON);
   }
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_JSON, response);
 
   free(buf);

@@ -113,7 +113,7 @@ protected:
 template <typename T>
 size_t LList<T>::length(void) const {
   size_t count = 0;
-  for (auto & elt : *this) {count++; }
+  for (auto & elt : *this) { (void)elt; count++; }
   return count;
 }
 

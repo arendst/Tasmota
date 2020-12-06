@@ -58,68 +58,9 @@ struct SONOFFBRIDGE {
 #include "ihx.h"
 #include "c2.h"
 
-const ssize_t RF_RECORD_NO_START_FOUND = -1;
-const ssize_t RF_RECORD_NO_END_FOUND = -2;
-
-ssize_t rf_find_hex_record_start(uint8_t *buf, size_t size)
-{
-  for (size_t i = 0; i < size; i++) {
-    if (buf[i] == ':') {
-      return i;
-    }
-  }
-  return RF_RECORD_NO_START_FOUND;
-}
-
-ssize_t rf_find_hex_record_end(uint8_t *buf, size_t size)
-{
-  for (size_t i = 0; i < size; i++) {
-    if (buf[i] == '\n') {
-      return i;
-    }
-  }
-  return RF_RECORD_NO_END_FOUND;
-}
-
-ssize_t rf_glue_remnant_with_new_data_and_write(const uint8_t *remnant_data, uint8_t *new_data, size_t new_data_len)
-{
-  ssize_t record_start;
-  ssize_t record_end;
-  ssize_t glue_record_sz;
-  uint8_t *glue_buf;
-  ssize_t result;
-
-  if (remnant_data[0] != ':') { return -8; }  // File invalid - RF Remnant data did not start with a start token
-
-  // Find end token in new data
-  record_end = rf_find_hex_record_end(new_data, new_data_len);
-  record_start = rf_find_hex_record_start(new_data, new_data_len);
-
-  // Be paranoid and check that there is no start marker before the end record
-  // If so this implies that there was something wrong with the last start marker saved
-  // in the last upload part
-  if ((record_start != RF_RECORD_NO_START_FOUND) && (record_start < record_end)) {
-    return -8;  // File invalid - Unexpected RF start marker found before RF end marker
-  }
-
-  glue_record_sz = strlen((const char *) remnant_data) + record_end;
-
-  glue_buf = (uint8_t *) malloc(glue_record_sz);
-  if (glue_buf == nullptr) { return -2; }  // Not enough space
-
-  // Assemble new glue buffer
-  memcpy(glue_buf, remnant_data, strlen((const char *) remnant_data));
-  memcpy(glue_buf + strlen((const char *) remnant_data), new_data, record_end);
-
-  result = rf_decode_and_write(glue_buf, glue_record_sz);
-  free(glue_buf);
-  return result;
-}
-
-ssize_t rf_decode_and_write(uint8_t *record, size_t size)
-{
+uint32_t rf_decode_and_write(uint8_t *record, size_t size) {
   uint8_t err = ihx_decode(record, size);
-  if (err != IHX_SUCCESS) { return -13; }  // Failed to decode RF firmware
+  if (err != IHX_SUCCESS) { return 13; }  // Failed to decode RF firmware
 
   ihx_t *h = (ihx_t *) record;
   if (h->record_type == IHX_RT_DATA) {
@@ -135,47 +76,49 @@ ssize_t rf_decode_and_write(uint8_t *record, size_t size)
     err = c2_reset();
   }
 
-  if (err != C2_SUCCESS) { return -12; }  // Failed to write to RF chip
+  if (err != C2_SUCCESS) { return 12; }  // Failed to write to RF chip
 
   return 0;
 }
 
-ssize_t rf_search_and_write(uint8_t *buf, size_t size)
-{
+uint32_t rf_search_and_write(uint8_t *data, size_t size) {
   // Binary contains a set of commands, decode and program each one
-  ssize_t rec_end;
-  ssize_t rec_start;
-  ssize_t err;
+  uint8_t buf[64];
+  uint8_t* p_data = data;
+  uint32_t addr = 0;
+  uint32_t rec_end;
+  uint32_t rec_start;
+  uint32_t rec_size;
+  uint32_t err;
 
-  for (size_t i = 0; i < size; i++) {
+  while (addr < size) {
+    memcpy(buf, p_data, sizeof(buf));  // Must load flash using memcpy on 4-byte boundary
+
     // Find starts and ends of commands
-    rec_start = rf_find_hex_record_start(buf + i, size - i);
-    if (rec_start == RF_RECORD_NO_START_FOUND) {
-      // There is nothing left to save in this buffer
-      return -8;  // File invalid
+    for (rec_start = 0; rec_start < 8; rec_start++) {
+      if (':' == buf[rec_start]) { break; }
     }
-
-    // Translate rec_start from local buffer position to chunk position
-    rec_start += i;
-    rec_end = rf_find_hex_record_end(buf + rec_start, size - rec_start);
-    if (rec_end == RF_RECORD_NO_END_FOUND) {
-      // We have found a start but not an end, save remnant
-      return rec_start;
+    if (rec_start > 7) { return 8; }  // File invalid - RF Remnant data did not start with a start token
+    for (rec_end = rec_start; rec_end < sizeof(buf); rec_end++) {
+      if ('\n' == buf[rec_end]) { break; }
     }
+    if (rec_end == sizeof(buf)) { return 9; }  // File too large - Failed to decode RF firmware
+    rec_size = rec_end - rec_start;
 
-    // Translate rec_end from local buffer position to chunk position
-    rec_end += rec_start;
+//    AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)&buf + rec_start, rec_size);
 
-    err = rf_decode_and_write(buf + rec_start, rec_end - rec_start);
-    if (err < 0) { return err; }
-    i = rec_end;
+    err = rf_decode_and_write(buf + rec_start, rec_size);
+    if (err != 0) { return err; }
+
+    addr += rec_size +1;
+    p_data += (rec_end & 0xFFFC);  // Stay on 4-byte boundary
+    delay(0);
   }
   // Buffer was perfectly aligned, start and end found without any remaining trailing characters
   return 0;
 }
 
-uint8_t rf_erase_flash(void)
-{
+uint8_t rf_erase_flash(void) {
   uint8_t err;
 
   for (uint32_t i = 0; i < 4; i++) {  // HACK: Try multiple times as the command sometimes fails (unclear why)
@@ -197,12 +140,16 @@ uint8_t rf_erase_flash(void)
   return 0;
 }
 
-uint8_t SnfBrUpdateInit(void)
-{
+uint32_t SnfBrUpdateFirmware(uint8_t* data, uint32_t size) {
   pinMode(PIN_C2CK, OUTPUT);
   pinMode(PIN_C2D, INPUT);
 
-  return rf_erase_flash();  // 10, 11
+  uint32_t error = rf_erase_flash();  // 10, 11
+  if (error) { return error; }
+
+//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RFB: Erased"));
+
+  return rf_search_and_write(data, size);
 }
 #endif  // USE_RF_FLASH
 

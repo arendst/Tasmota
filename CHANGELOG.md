@@ -9,6 +9,73 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [9.1.0.2]
+### Added
+- KNX read reply for Power (#9236, #9891)
+- Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
+- Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
+- Support for multiple WeMo devices by Magic73 (#9208)
+- Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
+- TyuaMcu update 2/3 by Federico Leoni (#10004)
+- Optional CCloader support for CC25xx Zigbee or CC26xx BLE by Christian Baars (#9970)
+- Command ``RfProtocol`` to control RcSwitch receive protocols by BBBits (#10063)
+- Support for SPI connected MFRC522 13.56MHz rfid card reader (#9916)
+
+### Breaking Changed
+- KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
+
+### Changed
+- Shelly Dimmer fw upgrade using WebGUI Firmware Upgrade and file from folder `tools/fw_shd_stm32/`
+- MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
+- Platformio compiler option `-free -fipa-pta` enabled (#9875)
+- IRremoteESP8266 library from v2.7.12 to v2.7.13
+- Shelly Dimmer 1 and 2 stm32 firmware from v51.4 to v51.5
+
+### Fixed
+- KNX ESP32 UDP mulicastpackage (#9811)
+- Command ``gpio`` using non-indexed functions regression from v9.1.0 (#9962)
+- ESP32 TasmotaClient firmware upgrade (#9218)
+- Reset to defaults after 6 hours of DeepSleep (#9993)
+- Backlog timing wraparound (#9995)
+
+### Removed
+- PN532 define USE_PN532_CAUSE_EVENTS replaced by generic rule trigger `on pn532#uid=`
+
+## [9.1.0.1] - 20201116
+### Added
+- Zigbee support for Mi Door and Contact (#9759)
+- Zigbee alarm persistence (#9785)
+- Support for EZO PMP sensors by Christopher Tremblay (#9760)
+- Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
+- Zigbee command ``ZbInfo`` and prepare support for EEPROM
+- Support for AS608 optical and R503 capacitive fingerprint sensor
+- Command ``SetOption115 1`` to enable ESP32 MiBle
+- Zigbee command ``ZbLeave`` to unpair a device
+- Command ``SetOption116 1`` to disable auto-query of zigbee light devices (avoids network storms with large groups)
+- Support for Shelly Dimmer 1 and 2 by James Turton (#9854)
+- IRremoteESP8266 library from v2.7.11 to v2.7.12
+
+### Changed
+- Core library from v2.7.4.5 to v2.7.4.7
+- Platformio compiler option `no target align` enabled (#9749)
+- Consolidate `AddLog_P` into `AddLog_P2` and rename to `AddLog_P`
+- Sonoff L1 color up scaling and color margin detection (#9545)
+
+### Fixed
+- NTP fallback server functionality (#9739)
+- Telegram group chatid not supported (#9831)
+- KNX buttons, switches and sensors detection regression from v9.1.0 (#9811)
+- GUI MqttUser and MqttPassword updates when TLS is compiled in (#9825)
+
+### Removed
+- Version compatibility check
+
+## [Released]
+
+### 9.1.0 20201105
+
+- Release Imogen
+
 ## [9.0.0.3] - 20201105
 ### Added
 - TLS in binary tasmota-zbbridge (#9635)

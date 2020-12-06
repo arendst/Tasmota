@@ -202,7 +202,7 @@ uint16_t Si1145ReadHalfWord(uint8_t reg)
   return I2cRead16LE(SI114X_ADDR, reg);
 }
 
-bool Si1145WriteByte(uint8_t reg, uint16_t val)
+void Si1145WriteByte(uint8_t reg, uint16_t val)
 {
   I2cWrite8(SI114X_ADDR, reg, val);
 }

@@ -647,19 +647,27 @@ void ResponseAppendFeatures(void)
     feature7 |= 0x00000040;  // xsns_78_ezoprs.ino
 #endif
 #if defined(USE_I2C) && defined(USE_EZOFLO)
-    feature7 |= 0x00000080;
+    feature7 |= 0x00000080;  // xsns_78_ezoflo.ino
 #endif
 #if defined(USE_I2C) && defined(USE_EZODO)
-    feature7 |= 0x00000100;
+    feature7 |= 0x00000100;  // xsns_78_ezodo.ino
 #endif
 #if defined(USE_I2C) && defined(USE_EZORGB)
-    feature7 |= 0x00000200;
+    feature7 |= 0x00000200;  // xsns_78_ezorgb.ino
 #endif
-//    feature7 |= 0x00000400;
-//    feature7 |= 0x00000800;
+#if defined(USE_I2C) && defined(USE_EZOPMP)
+    feature7 |= 0x00000400;  // xsns_78_ezopmp.ino
+#endif
+#ifdef USE_AS608
+    feature7 |= 0x00000800;  // xsns_79_as608.ino
+#endif
 
-//    feature7 |= 0x00001000;
-//    feature7 |= 0x00002000;
+#if defined(USE_SHELLY_DIMMER)
+    feature7 |= 0x00001000;  // xdrv_45_shelly_dimmer.ino
+#endif
+#ifdef USE_RC522
+    feature7 |= 0x00002000;  // xsns_80_mfrc522.ino
+#endif
 //    feature7 |= 0x00004000;
 //    feature7 |= 0x00008000;
 

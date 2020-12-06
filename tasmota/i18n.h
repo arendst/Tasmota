@@ -46,6 +46,7 @@
 #define D_JSON_CHANNEL "Channel"
 #define D_JSON_CO2 "CarbonDioxide"
 #define D_JSON_COMMAND "Command"
+#define D_JSON_CONFIDENCE "Confidence"
 #define D_JSON_CONFIG_HOLDER "CfgHolder"
 #define D_JSON_CONNECT_FAILED "Connect failed"
 #define D_JSON_COREVERSION "Core"
@@ -135,6 +136,7 @@
 #define D_JSON_PROGRAMSIZE "ProgramSize"
 #define D_JSON_PSRMAXMEMORY "PsrMax"
 #define D_JSON_PSRFREEMEMORY "PsrFree"
+#define D_JSON_PUMP "Pumped"
 #define D_JSON_RED "Red"
 #define D_JSON_REFERENCETEMPERATURE "ReferenceTemperature"
 #define D_JSON_REMAINING "Remaining"
@@ -343,7 +345,7 @@
 #define D_CMND_TOUCH_THRES "TouchThres"
 #define D_CMND_TOUCH_NUM "TouchNum"
 #define D_CMND_CPU_FREQUENCY "CpuFrequency"
-#endif //ESP32
+#endif  // ESP32
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTLOG "MqttLog"
@@ -514,11 +516,6 @@
 #define D_CMND_LATITUDE "Latitude"
 #define D_CMND_LONGITUDE "Longitude"
 
-// Commands xdrv_16_tuyadimmer.ino
-#define D_CMND_TUYA_MCU "TuyaMCU"
-#define D_CMND_TUYA_MCU_SEND_STATE "TuyaSend"
-#define D_JSON_TUYA_MCU_RECEIVED "TuyaReceived"
-
 // Commands xdrv_23_zigbee.ino
 #define D_PRFX_ZB "Zb"
 #define D_ZIGBEE_NOT_STARTED "Zigbee not started"
@@ -551,6 +548,7 @@
   #define D_JSON_ZIGBEE_MODELID "ModelId"
 #define D_CMND_ZIGBEE_PROBE "Probe"
 #define D_CMND_ZIGBEE_FORGET "Forget"
+#define D_CMND_ZIGBEE_INFO "Info"
 #define D_CMND_ZIGBEE_SAVE "Save"
   #define D_CMND_ZIGBEE_LINKQUALITY "LinkQuality"
   #define D_CMND_ZIGBEE_CLUSTER "Cluster"
@@ -567,12 +565,14 @@
 #define D_CMND_ZIGBEE_RESPONSE "Response"
   #define D_JSON_ZIGBEE_ZCL_SENT "ZbZCLSent"
 #define D_JSON_ZIGBEE_RECEIVED "ZbReceived"
+#define D_JSON_ZIGBEE_INFO "ZbInfo"
 #define D_CMND_ZIGBEE_BIND "Bind"
   #define D_JSON_ZIGBEE_BIND "ZbBind"
 #define D_CMND_ZIGBEE_UNBIND "Unbind"
   #define D_JSON_ZIGBEE_UNBIND "ZbUnbind"
 #define D_CMND_ZIGBEE_BIND_STATE "BindState"
   #define D_JSON_ZIGBEE_BIND_STATE "ZbBindState"
+#define D_CMND_ZIGBEE_LEAVE "Leave"
 #define D_CMND_ZIGBEE_MAP "Map"
   #define D_JSON_ZIGBEE_MAP "ZbMap"
 #define D_JSON_ZIGBEE_PARENT "ZbParent"
@@ -745,9 +745,6 @@ const char JSON_SNS_GNGPM[] PROGMEM = ",\"%s\":{\"" D_JSON_TOTAL_USAGE "\":%s,\"
 
 const char S_LOG_I2C_FOUND_AT[] PROGMEM = D_LOG_I2C "%s " D_FOUND_AT " 0x%x";
 
-const char S_LOG_HTTP[] PROGMEM = D_LOG_HTTP;
-const char S_LOG_WIFI[] PROGMEM = D_LOG_WIFI;
-const char S_LOG_MQTT[] PROGMEM = D_LOG_MQTT;
 const char S_RSLT_POWER[] PROGMEM = D_RSLT_POWER;
 const char S_RSLT_RESULT[] PROGMEM = D_RSLT_RESULT;
 const char S_RSLT_WARNING[] PROGMEM = D_RSLT_WARNING;
@@ -797,22 +794,7 @@ const char HTTP_SNS_DO[]            PROGMEM = "{s}%s "  D_DO                  "{
 const char HTTP_SNS_COLOR_RED[]     PROGMEM = "{s}%s "  D_COLOR_RED           "{m}%u "                            "{e}";
 const char HTTP_SNS_COLOR_GREEN[]   PROGMEM = "{s}%s "  D_COLOR_GREEN         "{m}%u "                            "{e}";
 const char HTTP_SNS_COLOR_BLUE[]    PROGMEM = "{s}%s "  D_COLOR_BLUE          "{m}%u "                            "{e}";
-
-const char S_MAIN_MENU[]              PROGMEM = D_MAIN_MENU;
-const char S_CONFIGURATION[]          PROGMEM = D_CONFIGURATION;
-const char S_CONFIGURE_TEMPLATE[]     PROGMEM = D_CONFIGURE_TEMPLATE;
-const char S_CONFIGURE_MODULE[]       PROGMEM = D_CONFIGURE_MODULE;
-const char S_CONFIGURE_WIFI[]         PROGMEM = D_CONFIGURE_WIFI;
-const char S_NO_NETWORKS_FOUND[]      PROGMEM = D_NO_NETWORKS_FOUND;
-const char S_CONFIGURE_LOGGING[]      PROGMEM = D_CONFIGURE_LOGGING;
-const char S_CONFIGURE_OTHER[]        PROGMEM = D_CONFIGURE_OTHER;
-const char S_SAVE_CONFIGURATION[]     PROGMEM = D_SAVE_CONFIGURATION;
-const char S_RESET_CONFIGURATION[]    PROGMEM = D_RESET_CONFIGURATION;
-const char S_RESTORE_CONFIGURATION[]  PROGMEM = D_RESTORE_CONFIGURATION;
-const char S_FIRMWARE_UPGRADE[]       PROGMEM = D_FIRMWARE_UPGRADE;
-const char S_CONSOLE[]                PROGMEM = D_CONSOLE;
-const char S_INFORMATION[]            PROGMEM = D_INFORMATION;
-const char S_RESTART[]                PROGMEM = D_RESTART;
+const char HTTP_SNS_MILLILITERS[]   PROGMEM = "{s}%s "  D_VOLUME              "{m}%s " D_UNIT_MILLILITERS         "{e}";
 #endif  // USE_WEBSERVER
 
 const uint32_t MARKER_START = 0x5AA55AA5;
