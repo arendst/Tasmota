@@ -700,6 +700,7 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
   const size_t      numInIndex = 11;
   const size_t      numOutIndex = 12 + numInCluster*2;
 #endif
+  bool is_tuya_protocol = false;
 
   if (0 == status) {
     // device is reachable
@@ -710,14 +711,15 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
     }
 
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                    "\"Status\":%d,\"Endpoint\":\"0x%02X\""
+                    "\"Status\":%d,\"Device\":\"0x%04X\",\"Endpoint\":\"0x%02X\""
                     ",\"ProfileId\":\"0x%04X\",\"DeviceId\":\"0x%04X\",\"DeviceVersion\":%d"
                     ",\"InClusters\":["),
-                    ZIGBEE_STATUS_SIMPLE_DESC, endpoint,
+                    ZIGBEE_STATUS_SIMPLE_DESC, nwkAddr, endpoint,
                     profileId, deviceId, deviceVersion);
     for (uint32_t i = 0; i < numInCluster; i++) {
       if (i > 0) { ResponseAppend_P(PSTR(",")); }
       ResponseAppend_P(PSTR("\"0x%04X\""), buf.get16(numInIndex + i*2));
+      if (buf.get16(numInIndex + i*2) == 0xEF00) { is_tuya_protocol = true; }   // tuya protocol
     }
     ResponseAppend_P(PSTR("],\"OutClusters\":["));
     for (uint32_t i = 0; i < numOutCluster; i++) {
@@ -727,6 +729,14 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
     ResponseAppend_P(PSTR("]}}"));
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
     XdrvRulesProcess();
+  }
+
+  // If tuya protocol, change the model information
+  if (is_tuya_protocol) {
+    Z_Device & device = zigbee_devices.getShortAddr(nwkAddr);
+    device.addEndpoint(endpoint);
+    device.data.get<Z_Data_Mode>(endpoint).setConfig(ZM_Tuya);
+    zigbee_devices.dirty();
   }
 
   return -1;
@@ -2036,7 +2046,7 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
         break;
     }
     if (!attr.isNone()) {
-      Z_parseAttributeKey(attr);
+      Z_parseAttributeKey(attr, _cluster_id);
       attr_list.addAttribute(_cluster_id, attr_id) = attr;
     }
   }

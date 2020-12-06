@@ -237,7 +237,7 @@ void ZbApplyMultiplier(double &val_d, int8_t multiplier) {
 //
 // Write Tuya-Moes attribute
 //
-bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr, uint8_t transid) {
+bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr) {
   double val_d = attr.getFloat();
   const char * val_str = attr.getStr();
 
@@ -245,14 +245,50 @@ bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr, uint8_t transid) {
   if (attr.isNum() && (1 != attr.attr_multiplier)) {
     ZbApplyMultiplier(val_d, attr.attr_multiplier);
   }
-  buf.add8(0);                      // status
-  buf.add8(transid);                // transid
-  buf.add16(attr.key.id.attr_id);   // dp
-  buf.add8(0);                      // fn
-  int32_t res = encodeSingleAttribute(buf, val_d, val_str, attr.attr_type);
-  if (res < 0) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Error for Tuya attribute type %04X/%04X '0x%02X'"), attr.key.id.cluster, attr.key.id.attr_id, attr.attr_type);
-    return false;
+  uint32_t u32 = val_d;
+  int32_t  i32 = val_d;
+
+  uint8_t tuyatype = (attr.key.id.attr_id >> 8);
+  uint8_t dpid = (attr.key.id.attr_id & 0xFF);
+  buf.add8(tuyatype);
+  buf.add8(dpid);
+
+  // the next attribute is length 16 bits in big endian
+  // high byte is always 0x00
+  buf.add8(0);
+
+  switch (tuyatype) {
+    case 0x00:      // raw
+      {
+        SBuffer buf_raw = SBuffer::SBufferFromHex(val_str, strlen(val_str));
+        if (buf_raw.len() > 255) { return false; }
+        buf.add8(buf_raw.len());
+        buf.addBuffer(buf_raw);
+      }
+      break;
+    case 0x01:      // Boolean = uint8
+    case 0x04:      // enum uint8
+      buf.add8(1);
+      buf.add8(u32);
+      break;
+    case 0x02:      // int32
+      buf.add8(4);
+      buf.add32BigEndian(i32);
+      break;
+    case 0x03:      // String
+      {
+        uint32_t s_len = strlen(val_str);
+        if (s_len > 255) { return false; }
+        buf.add8(s_len);
+        buf.addBuffer(val_str, s_len);
+      }
+      break;
+    case 0x05:      // bitmap 1/2/4 so we use 4 bytes
+      buf.add8(4);
+      buf.add32BigEndian(u32);
+      break;
+    default:
+      return false;
   }
   return true;
 }
@@ -296,13 +332,15 @@ void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZigbeeZCLSendMe
     XdrvMailbox.command = (char*) "";             // prevent a crash when calling ReponseCmndChar and there was no previous command
   }
 
+  bool tuya_protocol = zigbee_devices.isTuyaProtocol(packet.shortaddr, packet.endpoint);
+
   // iterate on keys
   for (auto key : val_pubwrite.getObject()) {
     JsonParserToken value = key.getValue();
 
     Z_attribute attr;
     attr.setKeyName(key.getStr());
-    if (Z_parseAttributeKey(attr)) {
+    if (Z_parseAttributeKey(attr, tuya_protocol ? 0xEF00 : 0xFFFF)) {   // favor tuya protocol if needed
       // Buffer ready, do some sanity checks
 
       // all attributes must use the same cluster
@@ -337,14 +375,15 @@ void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZigbeeZCLSendMe
     // Split encoding depending on message
     if (packet.cmd != ZCL_CONFIGURE_REPORTING) {
       if ((packet.cluster == 0XEF00) && (packet.cmd == ZCL_WRITE_ATTRIBUTES)) {
-        // special case of Tuya / Moes attributes
-        if (buf.len() > 0) {
-          AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Only 1 attribute allowed for Tuya"));
-          return;
+        // special case of Tuya / Moes / Lidl attributes
+        if (buf.len() == 0) {
+          // add the prefix to data
+          buf.add8(0);      // status
+          buf.add8(zigbee_devices.getNextSeqNumber(packet.shortaddr));
         }
         packet.clusterSpecific = true;
         packet.cmd = 0x00;
-        if (!ZbTuyaWrite(buf, attr, zigbee_devices.getNextSeqNumber(packet.shortaddr))) {
+        if (!ZbTuyaWrite(buf, attr)) {
           return;   // error
         }
       } else if (!ZbAppendWriteBuf(buf, attr, packet.cmd == ZCL_READ_ATTRIBUTES_RESPONSE)) { // general case
