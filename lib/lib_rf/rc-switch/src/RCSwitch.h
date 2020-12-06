@@ -10,7 +10,7 @@
   - Frank Oltmanns / <first name>.<last name>(at)gmail(dot)com
   - Max Horn / max(at)quendi(dot)de
   - Robert ter Vehn / <first name>.<last name>(at)gmail(dot)com
-  
+
   Project home: https://github.com/sui77/rc-switch/
 
   This library is free software; you can redistribute it and/or
@@ -61,22 +61,11 @@
 // Для keeloq нужно увеличить RCSWITCH_MAX_CHANGES до 23+1+66*2+1=157
 #define RCSWITCH_MAX_CHANGES 67        // default 67
 
-typedef union __uint64
-{
-  uint64_t value;
-  struct
-  {
-    uint32_t low32;
-    uint32_t high32;
-    
-  } longs;
-} uint64_t_t;
-
 class RCSwitch {
 
   public:
     RCSwitch();
-    
+
     void switchOn(int nGroupNumber, int nSwitchNumber);
     void switchOff(int nGroupNumber, int nSwitchNumber);
     void switchOn(const char* sGroup, int nSwitchNumber);
@@ -91,7 +80,7 @@ class RCSwitch {
     void sendTriState(const char* sCodeWord);
     void send(unsigned long long code, unsigned int length);
     void send(const char* sCodeWord);
-    
+
     #if not defined( RCSwitchDisableReceiving )
     void enableReceive(int interrupt);
     void enableReceive();
@@ -105,15 +94,15 @@ class RCSwitch {
     unsigned int getReceivedProtocol();
     unsigned int* getReceivedRawdata();
     uint8_t getNumProtos();
-    static uint64_t_t enabled_protocol_mask; //perhaps need function to change because used in interrupt 
     #endif
-  
+
     void enableTransmit(int nTransmitterPin);
     void disableTransmit();
     void setPulseLength(int nPulseLength);
     void setRepeatTransmit(int nRepeatTransmit);
     #if not defined( RCSwitchDisableReceiving )
     void setReceiveTolerance(int nPercent);
+    void setReceiveProtocolMask(unsigned long long mask);
     #endif
 
     /**
@@ -177,32 +166,28 @@ class RCSwitch {
     static void handleInterrupt();
     static bool receiveProtocol(const int p, unsigned int changeCount);
     int nReceiverInterrupt;
-    
     #endif
-    
     int nTransmitterPin;
     int nRepeatTransmit;
-    
     Protocol protocol;
 
     #if not defined( RCSwitchDisableReceiving )
     static int nReceiveTolerance;
     volatile static unsigned long long nReceivedValue;
+    volatile static unsigned long long nReceiveProtocolMask;
     volatile static unsigned int nReceivedBitlength;
     volatile static unsigned int nReceivedDelay;
     volatile static unsigned int nReceivedProtocol;
     const static unsigned int nSeparationLimit;
-    /* 
+    /*
      * timings[0] contains sync timing, followed by a number of bits
      */
     static unsigned int timings[RCSWITCH_MAX_CHANGES];
     // буфер длительностей последних четырех пакетов, [0] - последний
     static unsigned int buftimings[4];
-
-    
     #endif
 
-    
+
 };
 
 #endif

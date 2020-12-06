@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
 - TyuaMcu update 2/3 by Federico Leoni (#10004)
 - Optional CCloader support for CC25xx Zigbee or CC26xx BLE by Christian Baars (#9970)
+- Command ``RfProtocol`` to control RcSwitch receive protocols by BBBits (#10063)
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)

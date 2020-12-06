@@ -221,8 +221,7 @@
 
 #define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
 
-// Commands tasmota.ino 
-
+// Commands tasmota.ino
 #define D_CMND_BACKLOG "Backlog"
 #define D_CMND_DELAY "Delay"
 #define D_CMND_NODELAY "NoDelay"

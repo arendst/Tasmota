@@ -60,6 +60,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ### Added
 - Command ``SetOption115 1`` to enable ESP32 MiBle
 - Command ``SetOption116 1`` to disable auto-query of zigbee light devices (avoids network storms with large groups)
+- Command ``RfProtocol`` to control RcSwitch receive protocols by BBBits (#10063)
 - Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
 - Zigbee command ``ZbInfo`` and prepare support for EEPROM
 - Zigbee command ``ZbLeave`` to unpair a device

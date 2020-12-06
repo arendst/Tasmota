@@ -642,9 +642,14 @@ struct {
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
 
-  uint8_t       free_f5e[84];              // F5E - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f5e[72];              // F5E - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
+
+  uint64_t      rf_protocol_mask;          // FA8
+
+  uint32_t      free_fb0[1];               // FB0
+
   SysBitfield5  flag5;                     // FB4
   uint16_t      pulse_counter_debounce_low;   // FB8
   uint16_t      pulse_counter_debounce_high;  // FBA
