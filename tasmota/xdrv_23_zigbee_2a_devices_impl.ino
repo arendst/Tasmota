@@ -830,13 +830,16 @@ int32_t Z_Devices::deviceRestore(JsonParserObject json) {
     for (auto config_elt : arr_config) {
       const char * conf_str = config_elt.getStr();
       Z_Data_Type data_type;
-      uint8_t ep, config;
+      uint8_t ep = 0;
+      uint8_t config = 0xF;   // default = no config
 
       if (Z_Data::ConfigToZData(conf_str, &data_type, &ep, &config)) {
         Z_Data & data = device.data.getByType(data_type, ep);
         if (&data != nullptr) {
           data.setConfig(config);
         }
+      } else {
+        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Ignoring config '%s'"), conf_str);
       }
     }
   }
@@ -846,6 +849,17 @@ int32_t Z_Devices::deviceRestore(JsonParserObject json) {
 
 Z_Data_Light & Z_Devices::getLight(uint16_t shortaddr) {
   return getShortAddr(shortaddr).data.get<Z_Data_Light>();
+}
+
+bool Z_Devices::isTuyaProtocol(uint16_t shortaddr, uint8_t ep) const {
+  const Z_Device & device = findShortAddr(shortaddr);
+  if (device.valid()) {
+    const Z_Data_Mode & mode = device.data.getConst<Z_Data_Mode>(ep);
+    if (&mode != nullptr) {
+      return mode.isTuyaProtocol();
+    }
+  }
+  return false;
 }
 
 /*********************************************************************************************\

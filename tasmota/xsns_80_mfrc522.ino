@@ -36,7 +36,8 @@
 
 #define XSNS_80        80
 
-#define USE_RC522_DATA_FUNCTION
+//#define USE_RC522_DATA_FUNCTION              // Add support for reading data block content (+0k4 code)
+//#define USE_RC522_TYPE_INFORMATION           // Add support for showing card type (+0k4 code)
 
 #include <MFRC522.h>
 MFRC522 *Mfrc522;
@@ -52,22 +53,19 @@ void RC522ScanForTag(void) {
   if (!Mfrc522->PICC_IsNewCardPresent() || !Mfrc522->PICC_ReadCardSerial()) { return; }
 
   ToHex_P((unsigned char*)Mfrc522->uid.uidByte, Mfrc522->uid.size, Rc522.uids, sizeof(Rc522.uids));
+  ResponseTime_P(PSTR(",\"RC522\":{\"UID\":\"%s\""), Rc522.uids);
 
-  MFRC522::PICC_Type piccType = Mfrc522->PICC_GetType(Mfrc522->uid.sak);
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("MFR: UID %s, Type %s"), Rc522.uids, Mfrc522->PICC_GetTypeName(piccType));
-
+  MFRC522::PICC_Type picc_type = Mfrc522->PICC_GetType(Mfrc522->uid.sak);
 #ifdef USE_RC522_DATA_FUNCTION
-  bool didit = false;
-  if (   piccType == MFRC522::PICC_TYPE_MIFARE_MINI
-      || piccType == MFRC522::PICC_TYPE_MIFARE_1K
-      || piccType == MFRC522::PICC_TYPE_MIFARE_4K) {
+  if (   picc_type == MFRC522::PICC_TYPE_MIFARE_MINI
+      || picc_type == MFRC522::PICC_TYPE_MIFARE_1K
+      || picc_type == MFRC522::PICC_TYPE_MIFARE_4K) {
 
-    uint8_t trailerBlock = 7;
     MFRC522::MIFARE_Key key;
     for (uint32_t i = 0; i < 6; i++) {
       key.keyByte[i] = 0xFF;
     }
-    MFRC522::StatusCode status = Mfrc522->PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(Mfrc522->uid));
+    MFRC522::StatusCode status = Mfrc522->PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 1, &key, &(Mfrc522->uid));
     if (status == MFRC522::STATUS_OK) {
       uint8_t buffer[18];  // The buffer must be at least 18 bytes because a CRC_A is also returned
       uint8_t size = sizeof(buffer);
@@ -81,23 +79,21 @@ void RC522ScanForTag(void) {
             card_datas[i] = '\0';
           }
         }
-        didit = true;
-        ResponseTime_P(PSTR(",\"RC522\":{\"UID\":\"%s\",\"" D_JSON_DATA "\":\"%s\"}}"), Rc522.uids, card_datas);
+        ResponseAppend_P(PSTR(",\"" D_JSON_DATA "\":\"%s\""), card_datas);
       }
     }
   }
-  if (!didit) {
-    ResponseTime_P(PSTR(",\"RC522\":{\"UID\":\"%s\"}}"), Rc522.uids);
-  }
-#else
-  ResponseTime_P(PSTR(",\"RC522\":{\"UID\":\"%s\"}}"), Rc522.uids);
-#endif
+#endif  // USE_RC522_DATA_FUNCTION
+#ifdef USE_RC522_TYPE_INFORMATION
+  ResponseAppend_P(PSTR(",\"" D_JSON_TYPE "\":\"%s\""), Mfrc522->PICC_GetTypeName(picc_type));
+#endif  // USE_RC522_TYPE_INFORMATION
+  ResponseJsonEndEnd();
   MqttPublishTeleSensor();
 
-  // Halt PICC
-  Mfrc522->PICC_HaltA();
+  Mfrc522->PICC_HaltA();       // Halt PICC
+  Mfrc522->PCD_StopCrypto1();  // Stop encryption on PCD
 
-  Rc522.scantimer = 7;  // Ignore tags found for two seconds
+  Rc522.scantimer = 7;         // Ignore tags found for two seconds
 }
 
 void RC522Init(void) {
@@ -105,7 +101,7 @@ void RC522Init(void) {
     Mfrc522 = new MFRC522(Pin(GPIO_SPI_CS), Pin(GPIO_RC522_RST));
     SPI.begin();
     Mfrc522->PCD_Init();
-    if (Mfrc522->PCD_PerformSelfTest()) {
+//    if (Mfrc522->PCD_PerformSelfTest()) {  // Saves 0k5 code
       uint8_t v = Mfrc522->PCD_ReadRegister(Mfrc522->VersionReg);
       char ver[8] = { 0 };
       switch (v) {
@@ -118,13 +114,14 @@ void RC522Init(void) {
       ToHex_P((unsigned char*)empty_uid, sizeof(empty_uid), Rc522.uids, sizeof(Rc522.uids));
       AddLog_P(LOG_LEVEL_INFO, PSTR("MFR: RC522 Rfid Reader detected %s"), ver);
       Rc522.present = true;
-    }
+//    }
+//    Mfrc522->PCD_Init();       // Re-init as SelfTest blows init
   }
 }
 
 #ifdef USE_WEBSERVER
 void RC522Show(void) {
-  WSContentSend_PD(PSTR("{s}RC522 UID{m}%s {e}"), Rc522.uids);
+  WSContentSend_PD(PSTR("{s}RC522 UID{m}%s{e}"), Rc522.uids);
 }
 #endif  // USE_WEBSERVER
 

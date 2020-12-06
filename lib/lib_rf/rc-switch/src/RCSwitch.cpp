@@ -1,7 +1,7 @@
 /*
   RCSwitch - Arduino libary for remote control outlet switches
   Copyright (c) 2011 Suat Özgür.  All right reserved.
-  
+
   Contributors:
   - Andre Koehler / info(at)tomate-online(dot)de
   - Gordeev Andrey Vladimirovich / gordeev(at)openpyro(dot)com
@@ -13,7 +13,7 @@
   - Robert ter Vehn / <first name>.<last name>(at)gmail(dot)com
   - Johann Richard / <first name>.<last name>(at)gmail(dot)com
   - Vlad Gheorghe / <first name>.<last name>(at)gmail(dot)com https://github.com/vgheo
-  
+
   Project home: https://github.com/sui77/rc-switch/
 
   This library is free software; you can redistribute it and/or
@@ -57,13 +57,13 @@
 /* Protocol description format
  *
  * {Pulse length, Preamble, Sync bit, "0" bit, "1" bit, Inverted Signal, Guard time}
- * 
+ *
  * Pulse length: pulse duration Te in microseconds,
  *               example 350
  * Preamble: Alternating high and low levels
  *           {20, 1} means 20 alternations of 1 Te duration
  *      _   _   _   _   _   _   _   _   _   _
- *     | |_| |_| |_| |_| |_| |_| |_| |_| |_| |_ 
+ *     | |_| |_| |_| |_| |_| |_| |_| |_| |_| |_
  * Sync bit: Header and clock
  *           {1, 31} means 1 pulse long Te high and 31 low
  *      _
@@ -134,6 +134,7 @@ enum {
 
 #if not defined( RCSwitchDisableReceiving )
 volatile unsigned long long RCSwitch::nReceivedValue = 0;
+volatile unsigned long long RCSwitch::nReceiveProtocolMask;
 volatile unsigned int RCSwitch::nReceivedBitlength = 0;
 volatile unsigned int RCSwitch::nReceivedDelay = 0;
 volatile unsigned int RCSwitch::nReceivedProtocol = 0;
@@ -155,9 +156,13 @@ RCSwitch::RCSwitch() {
   this->nReceiverInterrupt = -1;
   this->setReceiveTolerance(60);
   RCSwitch::nReceivedValue = 0;
+  RCSwitch::nReceiveProtocolMask = (1ULL << numProto)-1;  //pow(2,numProto)-1;
   #endif
 }
 
+uint8_t RCSwitch::getNumProtos() {
+  return numProto;
+}
 /**
   * Sets the protocol to send.
   */
@@ -209,8 +214,12 @@ void RCSwitch::setRepeatTransmit(int nRepeatTransmit) {
 void RCSwitch::setReceiveTolerance(int nPercent) {
   RCSwitch::nReceiveTolerance = nPercent;
 }
+
+void RCSwitch::setReceiveProtocolMask(unsigned long long mask) {
+  RCSwitch::nReceiveProtocolMask = mask;
+}
 #endif
-  
+
 
 /**
  * Enable transmissions
@@ -413,7 +422,7 @@ char* RCSwitch::getCodeWordC(char sFamily, int nGroup, int nDevice, bool bStatus
   if ( nFamily < 0 || nFamily > 15 || nGroup < 1 || nGroup > 4 || nDevice < 1 || nDevice > 4) {
     return 0;
   }
-  
+
   // encode the family into four bits
   sReturn[nReturnPos++] = (nFamily & 1) ? 'F' : '0';
   sReturn[nReturnPos++] = (nFamily & 2) ? 'F' : '0';
@@ -449,7 +458,7 @@ char* RCSwitch::getCodeWordC(char sFamily, int nGroup, int nDevice, bool bStatus
  *
  * Source: http://www.the-intruder.net/funksteckdosen-von-rev-uber-arduino-ansteuern/
  *
- * @param sGroup        Name of the switch group (A..D, resp. a..d) 
+ * @param sGroup        Name of the switch group (A..D, resp. a..d)
  * @param nDevice       Number of the switch itself (1..3)
  * @param bStatus       Whether to switch on (true) or off (false)
  *
@@ -618,7 +627,7 @@ void RCSwitch::send(unsigned long long code, unsigned int length) {
 void RCSwitch::transmit(HighLow pulses) {
   uint8_t firstLogicLevel = (this->protocol.invertedSignal) ? LOW : HIGH;
   uint8_t secondLogicLevel = (this->protocol.invertedSignal) ? HIGH : LOW;
-  
+
   if (pulses.high > 0) {
     digitalWrite(this->nTransmitterPin, firstLogicLevel);
     delayMicroseconds( this->protocol.pulseLength * pulses.high);
@@ -733,7 +742,7 @@ bool RECEIVE_ATTR RCSwitch::receiveProtocol(const int p, unsigned int changeCoun
     // nReceiveTolerance = 60
     // допустимое отклонение длительностей импульсов на 60 %
     const unsigned int delayTolerance = delay * RCSwitch::nReceiveTolerance / 100;
-    
+
     // 0 - sync перед preamble или data
     // BeginData - сдвиг на 1 или 2 от sync к preamble/data
     // FirstTiming - сдвиг на preamble к header
@@ -810,7 +819,7 @@ void RECEIVE_ATTR RCSwitch::handleInterrupt() {
       changeCount == 156 ||
       (diff(RCSwitch::buftimings[3], RCSwitch::buftimings[2]) < 50 &&
         diff(RCSwitch::buftimings[2], RCSwitch::buftimings[1]) < 50 &&
-        changeCount > 25)) { 
+        changeCount > 25)) {
     // принят длинный импульс продолжительностью более nSeparationLimit (4300)
     // A long stretch without signal level change occurred. This could
     // be the gap between two transmission.
@@ -820,7 +829,7 @@ void RECEIVE_ATTR RCSwitch::handleInterrupt() {
           diff(RCSwitch::buftimings[2], RCSwitch::timings[2]) < 50 &&
           diff(RCSwitch::buftimings[1], RCSwitch::timings[3]) < 50 &&
           changeCount > 25)) {
-      // если его длительность отличается от первого импульса, 
+      // если его длительность отличается от первого импульса,
       // который приняли раньше, менее чем на +-200 (исходно 200)
       // то считаем это повторным пакетом и игнорируем его
       // This long signal is close in length to the long signal which
@@ -833,11 +842,15 @@ void RECEIVE_ATTR RCSwitch::handleInterrupt() {
       repeatCount++;
       // при приеме второго повторного начинаем анализ принятого первым
       if (repeatCount == 1) {
+        unsigned long long thismask = 1;
         for(unsigned int i = 1; i <= numProto; i++) {
-          if (receiveProtocol(i, changeCount)) {
-            // receive succeeded for protocol i
-            break;
+          if (RCSwitch::nReceiveProtocolMask & thismask) {
+            if (receiveProtocol(i, changeCount)) {
+              // receive succeeded for protocol i
+              break;
+            }
           }
+          thismask <<= 1;
         }
         // очищаем количество повторных пакетов
         repeatCount = 0;
@@ -854,7 +867,7 @@ void RECEIVE_ATTR RCSwitch::handleInterrupt() {
       changeCount = 4;
     }
   }
- 
+
   // detect overflow
   if (changeCount >= RCSWITCH_MAX_CHANGES) {
     changeCount = 0;
@@ -863,10 +876,10 @@ void RECEIVE_ATTR RCSwitch::handleInterrupt() {
 
   // заносим в массив длительность очередного принятого импульса
   if (changeCount > 0 && duration < 100) { // игнорируем шумовые всплески менее 100 мкс
-    RCSwitch::timings[changeCount-1] += duration;   
+    RCSwitch::timings[changeCount-1] += duration;
   } else {
     RCSwitch::timings[changeCount++] = duration;
   }
-  lastTime = time;  
+  lastTime = time;
 }
 #endif

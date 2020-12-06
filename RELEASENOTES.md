@@ -60,6 +60,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ### Added
 - Command ``SetOption115 1`` to enable ESP32 MiBle
 - Command ``SetOption116 1`` to disable auto-query of zigbee light devices (avoids network storms with large groups)
+- Command ``RfProtocol`` to control RcSwitch receive protocols by BBBits (#10063)
 - Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
 - Zigbee command ``ZbInfo`` and prepare support for EEPROM
 - Zigbee command ``ZbLeave`` to unpair a device
@@ -72,6 +73,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for Shelly Dimmer 1 and 2 by James Turton (#9854)
 - Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
 - Support for multiple WeMo devices by Magic73 (#9208)
+- Support for SPI connected MFRC522 13.56MHz rfid card reader (#9916)
 - KNX read reply for Power (#9236, #9891)
 - Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
 - Optional CCloader support for CC25xx Zigbee or CC26xx BLE by Christian Baars (#9970)
