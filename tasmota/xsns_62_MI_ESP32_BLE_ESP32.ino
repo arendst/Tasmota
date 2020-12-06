@@ -606,6 +606,8 @@ int readOneSensor(){
   if (MI32.sensorreader.active){
     return 0;
   }
+
+  // MI32.sensorreader.slot is reset to zero to trigger a read sequence
   if (MI32.sensorreader.slot >= MIBLEsensors.size()){
     return 0;
   }
@@ -640,6 +642,8 @@ int readOneBat(){
   if (MI32.batteryreader.active){
     return 0;
   }
+
+  //MI32.batteryreader.slot is rest to zero to trigger a read...
   if (MI32.batteryreader.slot >= MIBLEsensors.size()){
     return 0;
   }
@@ -1735,7 +1739,7 @@ void MI32Every50mSecond(){
 
 void MI32EverySecond(bool restart){
 
-  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("MI32: onesec"));
+//  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("MI32: onesec"));
 
 
   // read a battery if 
