@@ -62,7 +62,7 @@ state: 1 -> starting,
 7 -> read complete
 8 -> write complete 
 11 -> notify complete
-0x100 + -> failure (see GEN_STATE_FAILED_XXXX constants below.)
+-ve + -> failure (see GEN_STATE_FAILED_XXXX constants below.)
 
 
 The driver can also be used by other drivers, using the functions:
@@ -108,37 +108,37 @@ namespace BLE_ESP32 {
 #define GEN_STATE_START 1
 #define GEN_STATE_STARTED 2
 
-#define GEN_STATE_READDONE 7
-#define GEN_STATE_WRITEDONE 8
-#define GEN_STATE_WAITNOTIFY 9
-#define GEN_STATE_WAITINDICATE 10
+#define GEN_STATE_READDONE 3
+#define GEN_STATE_WRITEDONE 4
+#define GEN_STATE_WAITNOTIFY 5
+#define GEN_STATE_WAITINDICATE 6
 
-#define GEN_STATE_NOTIFIED 11
+#define GEN_STATE_NOTIFIED 7
 
 
 // Errors are all base on 0x100
-#define GEN_STATE_FAILED 0x100
-#define GEN_STATE_FAILED_CANTNOTIFYORINDICATE 0x101
-#define GEN_STATE_FAILED_CANTREAD 0x102
-#define GEN_STATE_FAILED_CANTWRITE 0x103
-#define GEN_STATE_FAILED_NOSERVICE 0x104
-#define GEN_STATE_FAILED_NO_RW_CHAR 0x105
-#define GEN_STATE_FAILED_NONOTIFYCHAR 0x106
-#define GEN_STATE_FAILED_NOTIFYTIMEOUT 0x107
-#define GEN_STATE_FAILED_READ 0x108
-#define GEN_STATE_FAILED_WRITE 0x109
-#define GEN_STATE_FAILED_CONNECT 0x10A
-#define GEN_STATE_FAILED_NOTIFY 0x10B
-#define GEN_STATE_FAILED_INDICATE 0x10C
-#define GEN_STATE_FAILED_NODEVICE 0x10D
-#define GEN_STATE_FAILED_NOREADWRITE 0x110
-#define GEN_STATE_FAILED_CANCEL 0x111
+#define GEN_STATE_FAILED -1
+#define GEN_STATE_FAILED_CANTNOTIFYORINDICATE -2
+#define GEN_STATE_FAILED_CANTREAD -3
+#define GEN_STATE_FAILED_CANTWRITE -4
+#define GEN_STATE_FAILED_NOSERVICE -5
+#define GEN_STATE_FAILED_NO_RW_CHAR -6
+#define GEN_STATE_FAILED_NONOTIFYCHAR -7
+#define GEN_STATE_FAILED_NOTIFYTIMEOUT -8
+#define GEN_STATE_FAILED_READ -9
+#define GEN_STATE_FAILED_WRITE -10
+#define GEN_STATE_FAILED_CONNECT -11
+#define GEN_STATE_FAILED_NOTIFY -12
+#define GEN_STATE_FAILED_INDICATE -13
+#define GEN_STATE_FAILED_NODEVICE -14
+#define GEN_STATE_FAILED_NOREADWRITE -15
+#define GEN_STATE_FAILED_CANCEL -16
 //
 /////////////////////////////////////////////////////
 
 
 struct generic_sensor_t {
-  uint16_t state;
+  int16_t state;
   uint32_t opid; // incrementing id so we can find them
   
   // uint8_t cancel; 

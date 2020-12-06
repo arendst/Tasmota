@@ -62,7 +62,7 @@ state: 1 -> starting,
 7 -> read complete
 8 -> write complete 
 11 -> notify complete
-0x100 + -> failure (see GEN_STATE_FAILED_XXXX constants below.)
+-ve + -> failure (see GEN_STATE_FAILED_XXXX constants below.)
 
 
 The driver can also be used by other drivers, using the functions:
@@ -152,8 +152,8 @@ static void runTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLEClient 
 // called from advert callback
 void setDetails(ble_advertisment_t *ad);
 
-#define EXAMPLE_ADVERTISMENT_CALLBACK
-#define EXAMPLE_OPERATION_CALLBACK
+//#define EXAMPLE_ADVERTISMENT_CALLBACK
+//#define EXAMPLE_OPERATION_CALLBACK
 
 #ifdef EXAMPLE_ADVERTISMENT_CALLBACK
 int myAdvertCallback(BLE_ESP32::ble_advertisment_t *pStruct);
@@ -241,6 +241,50 @@ static void CmndBLEScan(void);
 
 void (*const BLE_Commands[])(void) PROGMEM = {
   &BLE_ESP32::CmndBLEPeriod, &BLE_ESP32::CmndBLEAdv, &BLE_ESP32::CmndBLEOperation, &BLE_ESP32::CmndBLEMode, &BLE_ESP32::CmndBLEDetails, &BLE_ESP32::CmndBLEScan };
+
+const char *successStates[] PROGMEM = {
+  PSTR("IDLE"), // 0
+  PSTR("START"),
+  PSTR("STARTED"),
+  PSTR("READDONE"),
+  PSTR("WRITEDONE"),
+  PSTR("WAITNOTIFY"),
+  PSTR("WAITINDICATE"),
+  PSTR("NOTIFIED") // 7
+};
+
+const char *failStates[] PROGMEM = {
+  PSTR("IDLE"), //0
+  PSTR("FAILED"), //-1
+  PSTR("CANTNOTIFYORINDICATE"),
+  PSTR("CANTREAD"),
+  PSTR("CANTWRITE"),
+  PSTR("NOSERVICE"),
+  PSTR("NORWCHAR"), //-6
+  PSTR("NONOTIFYCHAR"),
+  PSTR("NOTIFYTIMEOUT"),
+  PSTR("FAILEREAD"),
+  PSTR("FAILWRITE"),
+  PSTR("FAILCONNECT"),
+  PSTR("FAILNOTIFY"),
+  PSTR("FAILINDICATE"),
+  PSTR("NODEVICE"),
+  PSTR("NOREADWRITE"),
+  PSTR("CANCEL")// -16
+};
+
+const char * getStateString(int state){
+  if ((state >= 0) && (state < sizeof(successStates)/sizeof(*successStates))){
+    return successStates[state];
+  }
+
+  state = -state;
+  if ((state >= 0) && (state < sizeof(failStates)/sizeof(*failStates))){
+    return failStates[state];
+  }
+
+  return PSTR("STATEINVALID");
+} 
 
 /*********************************************************************************************\
  * enumerations
@@ -1423,7 +1467,7 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
 
   if (!*pCurrentOperation) return;
 
-  if ((*pCurrentOperation)->state & GEN_STATE_FAILED){
+  if ((*pCurrentOperation)->state <= GEN_STATE_FAILED){
     BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("operation failed"));
     BLE_ESP32::runTaskDoneOperation(pCurrentOperation, pClient);
     return;
@@ -1514,7 +1558,7 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
                 } // no supplied notify char is ok
 
                 // this will only happen if you ask for a notify char which is not there?
-                if (!(newstate & GEN_STATE_FAILED)){
+                if (!(newstate <= GEN_STATE_FAILED)){
                   if (pCharacteristic != nullptr) {
                     BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got read/write characteristic"));
                     newstate = GEN_STATE_FAILED_NOREADWRITE; // overwritten on failure
@@ -1772,22 +1816,16 @@ void CmndBLEDetails(void){
 //////////////////////////////////////////////////////////////////////////
 
 // we expect BLEOp0 - poll state
-// we expect BLEOp1 <mac>
-// we expect BLEOp2 <service>
-// we expect BLEOp3 <characteristic>
-// we expect BLEOp4 <hex data to write>
-// we expect BLEOp5 - request a read
-// we expect BLEOp6 <notifycharacteristic> - if specified, then it waits for a notify
-// we expect BLEOp10 - trigger queue of op.  return is opid
-// we expect BLEOp11 1 - cancel op
+// we expect BLEOp1 m:MAC s:svc <c:characteristic> <n:notifychar> <w:hextowrite> <r> <go>
+// we expect BLEOp2 trigger queue of op.  return is opid
 
 // returns: Done|FailCreate|FailNoOp|FailQueue|InvalidIndex|<opid>
 
-// BLEop0/10 will cause an MQTT send of ops currently known.
+// BLEop0/1/2 will cause an MQTT send of ops currently known.
 // on op complete/op fail, a MQTT send is triggered of all known ops, and the completed/failed op removed.
 
 // example: 
-// backlog BLEOp1 001A22092CDB; BLEOp2 3e135142-654f-9090-134a-a6ff5bb77046; BLEOp3 3fa4585a-ce4a-3bad-db4b-b8df8179ea09; BLEOp4 03; BLEOp6 d0e8434d-cd29-0996-af41-6c90f4e0eb2a; bleop10;
+// BLEOp1 M:001A22092CDB s:3e135142-654f-9090-134a-a6ff5bb77046 c:3fa4585a-ce4a-3bad-db4b-b8df8179ea09 w:03 n:d0e8434d-cd29-0996-af41-6c90f4e0eb2a go
 // requests write of 03, and request wait for notify.
 
 // You may queue up operations.  they are currently processed serially.
@@ -1815,63 +1853,70 @@ void CmndBLEOperation(void){
         ResponseCmndChar("FailCreate");
         return;
       }
-      strncpy(prepOperation->MAC, XdrvMailbox.data, sizeof(prepOperation->MAC)-1);
-      AddLog_P(LOG_LEVEL_INFO,PSTR("MAC Set %s"),prepOperation->MAC);
-    } break;
-    case 2:
-      if (!prepOperation) {
-        ResponseCmndChar("FailNoOp");
-        return;      
-      }
-      strncpy(prepOperation->serviceStr, XdrvMailbox.data, sizeof(prepOperation->serviceStr)-1);
-      AddLog_P(LOG_LEVEL_INFO,PSTR("serviceStr Set %s"),prepOperation->serviceStr);
-      break;
-    case 3:
-      if (!prepOperation) {
-        ResponseCmndChar("FailNoOp");
-        return;      
-      }
-      strncpy(prepOperation->characteristicStr, XdrvMailbox.data, sizeof(prepOperation->characteristicStr)-1);
-      AddLog_P(LOG_LEVEL_INFO,PSTR("characteristicStr Set %s"),prepOperation->characteristicStr);
-      break;
-    case 4:
-      if (!prepOperation) {
-        ResponseCmndChar("FailNoOp");
-        return;      
-      }
-      prepOperation->writelen = fromHex(prepOperation->dataToWrite, XdrvMailbox.data, sizeof(prepOperation->dataToWrite));
-      AddLog_P(LOG_LEVEL_INFO,PSTR("dataToWrite Set %s"),XdrvMailbox.data);
-      break;
-    case 5:
-      if (!prepOperation) {
-        ResponseCmndChar("FailNoOp");
-        return;      
-      }
-      prepOperation->readlen = 1;
-      AddLog_P(LOG_LEVEL_INFO,PSTR("readlen Set %d"),prepOperation->readlen);
-      break;
-    case 6:
-      if (!prepOperation) {
-        ResponseCmndChar("FailNoOp");
-        return;      
-      }
-      strncpy(prepOperation->notificationCharacteristicStr, XdrvMailbox.data, sizeof(prepOperation->notificationCharacteristicStr)-1);
-      AddLog_P(LOG_LEVEL_INFO,PSTR("notififcationCharacteristicStr Set %s"),prepOperation->notificationCharacteristicStr);
-      break;
+      // expect m:MAC s:svc <c:characteristic> <n:notifychar> <w:hextowrite> <r> <go>
+      // < > are optional
+      char *p = strtok(XdrvMailbox.data, " ,");
+      bool trigger = false;
 
-    case 9:
-      AddLog_P(LOG_LEVEL_INFO,PSTR("preview"));
-      BLE_ESP32::BLEPostMQTT(false); // show all operations, not just completed
-      break;
-    case 10: {
+      while (p){
+        switch(*p | 0x20){
+          case 'm':
+            strncpy(prepOperation->MAC, p+2, sizeof(prepOperation->MAC)-1);
+            break;
+          case 's':
+            strncpy(prepOperation->serviceStr, p+2, sizeof(prepOperation->serviceStr)-1);
+            break;
+          case 'c':
+            strncpy(prepOperation->characteristicStr, p+2, sizeof(prepOperation->characteristicStr)-1);
+            break;
+          case 'n':
+            strncpy(prepOperation->notificationCharacteristicStr, p+2, sizeof(prepOperation->notificationCharacteristicStr)-1);
+            break;
+          case 'w':
+            prepOperation->writelen = fromHex(prepOperation->dataToWrite, p+2, sizeof(prepOperation->dataToWrite));
+            break;
+          case 'r':
+            prepOperation->readlen = 1;
+            break;
+          case 'g':
+            if ((*(p+1))|0x20 == 'o'){
+              trigger = true;
+            }
+            break;
+        }
+
+        p = strtok(nullptr, " ,");
+      }
+
+      if (trigger){
+        int opres = BLE_ESP32::extQueueOperation(&prepOperation);
+        if (!opres){
+          // NOTE: prepOperation will NOT have been deleted.  
+          // this means you could retry with another BLEOp10.
+          // it WOULD be deleted if you sent another BELOP1 <MAC>
+          AddLog_P(LOG_LEVEL_ERROR,PSTR("Could not queue new operation"));
+          ResponseCmndChar("FailQueue");
+          return;
+        } else {
+          // NOTE: prepOperation has been set to null if we queued sucessfully.
+          AddLog_P(LOG_LEVEL_INFO,PSTR("Operations queued:%d"), queuedOperations.size());
+          ResponseCmndNumber(lastopid-1);
+          BLE_ESP32::BLEPostMQTT(false);
+          return;
+        }
+      } else {
+        ResponseCmndDone();
+        BLE_ESP32::BLEPostMQTT(false);
+        return;
+      }
+    } break;
+
+    case 2: {
       if (!prepOperation) {
         ResponseCmndChar("FailNoOp");
         return;      
       }
       //prepOperation->requestType = atoi(XdrvMailbox.data);
-      prepOperation->state = GEN_STATE_START; // trigger request later
-      prepOperation->opid = lastopid++;
-
       int opres = BLE_ESP32::extQueueOperation(&prepOperation);
       if (!opres){
         // NOTE: prepOperation will NOT have been deleted.  
@@ -1887,21 +1932,7 @@ void CmndBLEOperation(void){
       }
       return;
     } break;
-    /*case 11:
-      if (!currentOperation) {
-        ResponseCmndNumber(res);
-        return;      
-      }
-      currentOperation->cancel = atoi(XdrvMailbox.data);
-      AddLog_P(LOG_LEVEL_INFO,PSTR("cancel Set"));
-      break;*/
 
-    case 99: { // test programatically added operation
-        sendExample();
-
-        // dump what we have as diags
-        BLE_ESP32::BLEPostMQTT(false); // show all operations, not just completed
-      } break;
     default:
       ResponseCmndChar("InvalidIndex");
       return;
@@ -2073,21 +2104,33 @@ static void BLEShow(bool json)
  */
 std::string BLETriggerResponse(generic_sensor_t *toSend){
   char temp[100];
-  char t[10];
   if (!toSend) return "";
   ResponseClear();
   std::string out = "{\"BLEOperation\":{\"opid\":\"";
-  sprintf(t, "%d", toSend->opid);
-  out = out + t;
-  out = out + "\",\"state\":\"";
+  sprintf(temp, "%d", toSend->opid); // note only 10 long!
+  out = out + temp;
+/*  out = out + "\",\"state\":\"";
   sprintf(t, "%d", toSend->state);
-  out = out + t;
-  out = out + "\",\"MAC\":\"";
-  out = out + toSend->MAC;
-  out = out + "\",\"svc\":\"";
-  out = out + toSend->serviceStr;
-  out = out + "\",\"char\":\"";
-  out = out + toSend->characteristicStr;
+  out = out + t;*/
+  out = out + "\",\"state\":\"";
+  out = out + getStateString(toSend->state);
+  
+  if (toSend->MAC[0]){
+    out = out + "\",\"MAC\":\"";
+    out = out + toSend->MAC;
+  }
+  if (toSend->serviceStr[0]){
+    out = out + "\",\"svc\":\"";
+    out = out + toSend->serviceStr;
+  }
+  if (toSend->characteristicStr[0]){
+    out = out + "\",\"char\":\"";
+    out = out + toSend->characteristicStr;
+  }
+  if (toSend->notificationCharacteristicStr[0]){
+    out = out + "\",\"notifychar\":\"";
+    out = out + toSend->notificationCharacteristicStr;
+  }
   out = out + "\"";
   if (toSend->readlen){
     dump(temp, 99, toSend->dataRead, toSend->readlen);

@@ -769,7 +769,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
     fail = true;
   }
 
-  if (op->state & GEN_STATE_FAILED){
+  if (op->state <= GEN_STATE_FAILED){
     AddLog_P(LOG_LEVEL_ERROR,PSTR("operation failed %x"), op->state);
     fail = true;
   }
