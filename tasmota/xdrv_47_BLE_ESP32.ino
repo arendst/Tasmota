@@ -174,11 +174,15 @@ TaskHandle_t TasmotaMainTask;
 
 static int BLEInitState = 0;
 static int BLERunningScan = 0;
+static uint32_t BLEScanCount = 0;
+static bool BLEScanActiveMode = true;
+
 static int BLEPublishDevices = 0; // causes MQTT publish of device list (each scan end)
 static BLEScan* BLEScan = nullptr;
 // time we last started a scan in uS using esp_timer_get_time();
 // used to setect a scan which did not call back?
-uint64_t BLEScanStartetdAt = 0; 
+uint64_t BLEScanStartedAt = 0; 
+uint64_t BLEScanToEndBefore = 0;
 int BLEScanTimeS = 20; // scan duraiton in S
 int BLEMaxTimeBetweenAdverts = 40; // we expect an advert at least this frequently, else restart BLE (in S)
 uint64_t BLEScanLastAdvertismentAt = 0;
@@ -226,16 +230,17 @@ std::deque<BLE_ESP32::SCANCOMPLETE_CALLBACK*> scancompleteCallbacks;
 #define D_CMND_BLE "BLE"
 
 const char kBLE_Commands[] PROGMEM = D_CMND_BLE "|"
-  "Period|Adv|Op|Mode|Details";
+  "Period|Adv|Op|Mode|Details|Scan";
 
 static void CmndBLEPeriod(void);
 static void CmndBLEAdv(void);
 static void CmndBLEOperation(void);
 static void CmndBLEMode(void);
 static void CmndBLEDetails(void);
+static void CmndBLEScan(void);
 
 void (*const BLE_Commands[])(void) PROGMEM = {
-  &BLE_ESP32::CmndBLEPeriod, &BLE_ESP32::CmndBLEAdv, &BLE_ESP32::CmndBLEOperation, &BLE_ESP32::CmndBLEMode, &BLE_ESP32::CmndBLEDetails };
+  &BLE_ESP32::CmndBLEPeriod, &BLE_ESP32::CmndBLEAdv, &BLE_ESP32::CmndBLEOperation, &BLE_ESP32::CmndBLEMode, &BLE_ESP32::CmndBLEDetails, &BLE_ESP32::CmndBLEScan };
 
 /*********************************************************************************************\
  * enumerations
@@ -245,14 +250,16 @@ enum BLE_Commands {          // commands useable in console or rules
   CMND_BLE_PERIOD,           // set period like TELE-period in seconds between read-cycles
   CMND_BLE_ADV,             // change advertisment options at runtime
   CMND_BLE_OP,                // connect/read/write/notify operations
-  CMND_BLE_MODE              // change mode of ble - BLE_MODES 
+  CMND_BLE_MODE,              // change mode of ble - BLE_MODES 
+  CMND_BLE_DETAILS,           // get details for one device's adverts 
+  CMND_BLE_SCAN              // Scan control
   };
 
 enum {
   BLEModeDisabled = 0, // BLE is disabled
-  BLEModeByCommand = 1, // BLE is activeated by commands only
-  BLEModeActive = 2, // BLE is scanning all the time 
-} BLE_MODES;
+  BLEModeScanByCommand = 1, // BLE is activeated by commands only
+  BLEModeRegularScan = 2, // BLE is scanning all the time 
+} BLE_SCAN_MODES;
 
 // values of BLEAdvertMode
 enum {
@@ -262,8 +269,8 @@ enum {
 } BLEADVERTMODE;
 
 
-uint8_t BLEMode = BLEModeActive;
-uint8_t BLENextMode = BLEModeActive;
+uint8_t BLEMode = BLEModeRegularScan;
+uint8_t BLENextMode = BLEModeRegularScan;
 uint8_t BLEAdvertMode = BLE_ADV_TELE;
 uint8_t BLEdeviceLimitReached = 0;
 
@@ -350,7 +357,7 @@ int deleteSeenDevices(int ageS = 0){
       uint32_t lastseenS = (uint32_t) lastseen; 
       uint32_t del_at = lastseenS + ageS;
       if (del_at < nowS){
-        AddLog_P(LOG_LEVEL_INFO,PSTR("delete device by age lastseen %u + maxage %u < now %u."), 
+        AddLog_P(LOG_LEVEL_DEBUG,PSTR("delete device by age lastseen %u + maxage %u < now %u."), 
           lastseenS, ageS, nowS);
         seenDevices.erase(seenDevices.begin()+i);
         freeDevices.push_back(dev);
@@ -358,7 +365,9 @@ int deleteSeenDevices(int ageS = 0){
       }
   }
   xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("BLE deleted %d devices"), res); 
+  if (res){
+    AddLog_P(LOG_LEVEL_INFO,PSTR("BLE deleted %d devices"), res); 
+  }
   return res;
 }
 
@@ -424,7 +433,7 @@ int getSeenDevicesToJson(char *dest, int maxlen){
   }
 
   // deliberate test of SafeAddLog_P from main thread...
-  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO,PSTR("getSeen %d"), seenDevices.size());
+  //BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO,PSTR("getSeen %d"), seenDevices.size());
 
 
   if (!maxlen) return 0;
@@ -918,6 +927,9 @@ static BLESensorCallback BLESensorCB;
 
 static void BLEscanEndedCB(NimBLEScanResults results){
   BLERunningScan = 0;
+  BLEScanToEndBefore = 0L;
+
+  BLEScanCount++;
 
   BLEPublishDevices = 1;
 
@@ -1110,7 +1122,7 @@ static void BLEOperationTask(void *pvParameters){
 
   for(;;){
     if (BLEScan){
-      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("Operation loop"));
+      //BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("Operation loop"));
 
       BLE_ESP32::runCurrentOperation(&currentOperation, pClient);
     }
@@ -1152,6 +1164,27 @@ static void BLEEvery50mSecond(){
   postAdvertismentDetails();
 }
 
+
+int StartScan(int time){
+  if (!BLEScan) return -1;
+  if (BLERunningScan) return -2;
+  if (currentOperations.size()) return -3;
+  if (BLEMode == BLEModeDisabled) return -4;
+
+  AddLog_P(LOG_LEVEL_DEBUG,PSTR("BLE Startscan"));
+  BLEScan->setInterval(70);
+  BLEScan->setWindow(50);
+  BLEScan->setAdvertisedDeviceCallbacks(&BLEScanCallbacks,true);
+  BLEScan->setActiveScan(BLEScanActiveMode);
+
+  // seems we could get the callback within the start call....
+  // so set these before starting
+  BLERunningScan = 1;
+  BLEScanStartedAt = esp_timer_get_time();
+  BLEScan->start(time, BLEscanEndedCB, true); // 20s scans, restarted when then finish
+  return 0;
+}
+
 /**
  * @brief Main loop of the driver, "high level"-loop
  *
@@ -1159,7 +1192,7 @@ static void BLEEvery50mSecond(){
 
 static void BLEEverySecond(bool restart){
   //BLEStartScanTask();
-  AddLog_P(LOG_LEVEL_DEBUG,PSTR("one sec (scanning %d) (adv count %d)"), BLERunningScan, BLEAdvertisment.totalCount);
+  //AddLog_P(LOG_LEVEL_DEBUG,PSTR("one sec (scanning %d) (adv count %d)"), BLERunningScan, BLEAdvertisment.totalCount);
 
   // check for application callbacks here.
   // this may remove complete items.
@@ -1182,39 +1215,39 @@ static void BLEEverySecond(bool restart){
     // restart scanning if it ended and we don't have any current operations in progress.
     if (!BLERunningScan && (!currentOperations.size())){
       //BLEScan->clearResults();
-      if ((BLEMode != BLEModeDisabled) && (BLEMode != BLEModeByCommand)){
-        AddLog_P(LOG_LEVEL_DEBUG,PSTR("Startscan from onesec"));
-        BLEScan->setInterval(70);
-        BLEScan->setWindow(50);
-        BLEScan->setAdvertisedDeviceCallbacks(&BLEScanCallbacks,true);
-        BLEScan->setActiveScan(true);
-
-        // seems we could get the callback within the start call....
-        // so set these before starting
-        BLERunningScan = 1;
-        BLEScanStartetdAt = esp_timer_get_time();
-        BLEScan->start(BLEScanTimeS, BLEscanEndedCB, true); // 20s scans, restarted when then finish
+      
+      if ((BLEMode != BLEModeDisabled) && (BLEMode != BLEModeScanByCommand)){
+        int res = StartScan(BLEScanTimeS);
+        if (res < 0){
+          AddLog_P(LOG_LEVEL_ERROR,PSTR("StartScan from onesec failed %d"), res);
+        }
       }
     } else {
 
       // check for a couple of possible failure modes.
+      // check if the scan SHOULD have finished, but did not
       uint64_t now = esp_timer_get_time();
-      if (BLEScanTimeS){
-        uint64_t diff = now - BLEScanStartetdAt;
-        diff = diff / 1000; // convert to ms;
-        if (diff > (BLEScanTimeS + 5) * 1000){
+      if (BLEScanToEndBefore && BLERunningScan){
+        if (now > BLEScanToEndBefore){
+          BLEScanToEndBefore = 0L;
           AddLog_P(LOG_LEVEL_ERROR,PSTR("Scan did not end on time"));
           BLERunningScan = 0;
           BLEScan->stop();
         }
       }
-      uint64_t diff = now - BLEScanLastAdvertismentAt;
-      diff = diff / 1000; // convert to ms;
-      if (diff > (BLEMaxTimeBetweenAdverts) * 1000){
-        BLEScanLastAdvertismentAt = now;
-        AddLog_P(LOG_LEVEL_ERROR,PSTR("Long time between Advertisments - restarting BLE"));
-        StopBLE();
-        StartBLE();
+
+
+      // check if the scan SHOULD have finished, but did not
+      if (BLEMode == BLEModeRegularScan) {
+        uint64_t diff = now - BLEScanLastAdvertismentAt;
+        diff = diff / 1000; // convert to ms;
+        // only check if we are running a scan regularly
+        if (diff > (BLEMaxTimeBetweenAdverts) * 1000){
+          BLEScanLastAdvertismentAt = now;
+          AddLog_P(LOG_LEVEL_ERROR,PSTR("Long time between Advertisments - restarting BLE"));
+          StopBLE();
+          StartBLE();
+        }
       }
     }
    
@@ -1602,6 +1635,56 @@ void CmndBLEAdv(void){
 
 
 //////////////////////////////////////////////////////////////
+// Scan options
+// BLEScan0 -> do a scan now if BLEMode == BLEModeScanByCommand
+// BLEScan0 <timesec> -> do a scan now if BLEMode == BLEModeScanByCommand for timesec seconds
+// BLEScan1 0 -> Scans are passive
+// BLEScan1 1 -> Scans are active
+// more options could be added...
+void CmndBLEScan(void){
+  switch(XdrvMailbox.index){
+    case 0: // do a manual scan now
+      switch (BLEMode){
+        case BLEModeScanByCommand: {
+          int time = 20;
+          if (XdrvMailbox.data_len > 0) {
+            time = XdrvMailbox.payload;
+            if (time < 2) time = 2;
+            if (time > 40) time = 40;
+          }
+          int res = StartScan(time);
+          ResponseCmndNumber(res); // -ve for fail for a few reasons
+        } break;
+        case BLEModeDisabled:
+          ResponseCmndChar("BLEDisabled");
+          break;
+        case BLEModeRegularScan:
+          ResponseCmndChar("BLEActive");
+          break;
+      }
+      break;
+    case 1:{
+      if (XdrvMailbox.data_len > 0) {
+        if(XdrvMailbox.payload){
+          BLEScanActiveMode = true;
+          ResponseCmndChar("ActiveScan");
+        } else {
+          BLEScanActiveMode = false;
+          ResponseCmndChar("PassiveScan");
+        }
+      } else {
+        ResponseCmndChar("Invalid");
+      }
+    } break;
+
+    default:
+      ResponseCmndChar("Invalid");
+      break;
+  }
+}
+
+
+//////////////////////////////////////////////////////////////
 // Determine what to do with advertismaents
 // BLEMode0 -> kill BLE completely
 // BLEMode1 -> start BLE
@@ -1618,25 +1701,31 @@ void CmndBLEMode(void){
         ResponseCmndChar("Disabled");
       }
       break;
-    case BLEModeByCommand:
-      BLENextMode = BLEModeByCommand;
+    case BLEModeScanByCommand:
+      BLENextMode = BLEModeScanByCommand;
       if (BLEMode == BLEModeDisabled){
         StartBLE();
-        BLEMode = BLEModeByCommand;
+        BLEMode = BLEModeScanByCommand;
         ResponseCmndChar("StartingBLE");
       } else {
         ResponseCmndChar("BLERunning");
       }
       break;
-    case BLEModeActive:
-      BLENextMode = BLEModeActive;
+    case BLEModeRegularScan:
+      BLENextMode = BLEModeRegularScan;
       if (BLEMode == BLEModeDisabled){
         StartBLE();
-        BLEMode = BLEModeActive;
         ResponseCmndChar("StartingBLE");
       } else {
         ResponseCmndChar("BLERunning");
       }
+      // if changing back to active, we may have been stalled for some time.
+      // don't restart BLE just because someone paused it for a while, and so no adverts came in.
+      if (BLEMode != BLEModeRegularScan){
+        uint64_t now = esp_timer_get_time();
+        BLEScanLastAdvertismentAt = now; // note the time of the last advertisment
+      }
+      BLEMode = BLEModeRegularScan;
       break;
     default:
       ResponseCmndChar("InvalidIndex");
@@ -1962,12 +2051,12 @@ static void mainThreadOpCallbacks() {
 
 static void BLEShow(bool json)
 {
-
-  AddLog_P(LOG_LEVEL_INFO,PSTR("show json %d"),json);
-
-  return;
   if (json){
+    AddLog_P(LOG_LEVEL_INFO,PSTR("show json %d"),json);
+    uint32_t totalCount = BLEAdvertisment.totalCount;
+    uint32_t deviceCount = seenDevices.size();
 
+    ResponseAppend_P(PSTR(",\"BLE\":{\"scans\":%u,\"advertisments\":%u,\"devices\":%u}"), BLEScanCount, totalCount, deviceCount);
   }
 #ifdef USE_WEBSERVER
   else {
