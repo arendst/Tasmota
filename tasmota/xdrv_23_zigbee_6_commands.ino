@@ -479,10 +479,12 @@ void parseSingleTuyaAttribute(Z_attribute & attr, const SBuffer &buf,
       attr.setUInt(buf.get32BigEndian(i));
       break;
     case 0x03:      // String (we expect it is not ended with \00)
+     {
       char str[len+1];
       strncpy(str, buf.charptr(i), len);
       str[len] = 0x00;
       attr.setStr(str);
+     }
       break;
     case 0x05:      // enum in 1/2/4 bytes, Big Endian
       if (1 == len) {
