@@ -1781,11 +1781,11 @@ void CmndBLEMode(void){
       BLENextMode = BLEModeScanByCommand;
       if (BLEMode == BLEModeDisabled){
         StartBLE();
-        BLEMode = BLEModeScanByCommand;
         ResponseCmndChar("StartingBLE");
       } else {
         ResponseCmndChar("BLERunning");
       }
+      BLEMode = BLEModeScanByCommand;
       break;
     case BLEModeRegularScan:
       BLENextMode = BLEModeRegularScan;
