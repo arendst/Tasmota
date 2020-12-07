@@ -193,6 +193,7 @@ void setup(void) {
 
   memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
+  TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
   TasmotaGlobal.temperature_celsius = NAN;
   TasmotaGlobal.blinks = 201;
   TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
@@ -229,20 +230,20 @@ void setup(void) {
 
   OsWatchInit();
 
+  TasmotaGlobal.seriallog_level = Settings.seriallog_level;
+  TasmotaGlobal.syslog_level = Settings.syslog_level;
+
   TasmotaGlobal.module_changed = (Settings.module != Settings.last_module);
   if (TasmotaGlobal.module_changed) {
     Settings.baudrate = APP_BAUDRATE / 300;
     Settings.serial_config = TS_SERIAL_8N1;
   }
-  SetSerialBegin();
+  SetSerialBaudrate(Settings.baudrate * 300);  // Reset serial interface if current baudrate is different from requested baudrate
 
-  if (1 == RtcReboot.fast_reboot_count) {  // Allow setting override only when all is well
+  if (1 == RtcReboot.fast_reboot_count) {      // Allow setting override only when all is well
     UpdateQuickPowerCycle(true);
   }
 
-  TasmotaGlobal.seriallog_level = Settings.seriallog_level;
-  TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
-  TasmotaGlobal.syslog_level = Settings.syslog_level;
   TasmotaGlobal.stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   TasmotaGlobal.save_data_counter = Settings.save_data;
   TasmotaGlobal.sleep = Settings.sleep;
@@ -304,8 +305,6 @@ void setup(void) {
 
   GetEspHardwareType();
   GpioInit();
-
-//  SetSerialBaudrate(Settings.baudrate * 300);  // Allow reset of serial interface if current baudrate is different from requested baudrate
 
   WifiConnect();
 
