@@ -287,14 +287,6 @@ void IrReceiveCheck(void)
   decode_results results;
 
   if (irrecv->decode(&results)) {
-    uint8_t min_bits = 0;
-    if(Settings.flag5.ir_rx_min_unknown_bits_8) { min_bits += 8; }
-    if(Settings.flag5.ir_rx_min_unknown_bits_16) { min_bits += 16; }
-    if(Settings.flag5.ir_rx_min_unknown_bits_32) { min_bits += 32; }
-    if (results.bits < min_bits){
-      irrecv->resume();
-      return;
-    }
     uint32_t now = millis();
 
 //    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {

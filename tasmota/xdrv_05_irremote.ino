@@ -19,7 +19,7 @@
 
 /*
 Below is the Pyhton3 code to decompress IR comact format.
-Resolve this  {"Protocol":"UNKNOWN","Bits":4,"Hash":"0xC1E490FF"}}
+
 ======================================================================
 import re
 
@@ -170,14 +170,7 @@ void IrReceiveCheck(void)
 
     iridx = results.decode_type;
     if ((iridx < 0) || (iridx > MAX_STANDARD_IR)) { iridx = 0; }  // UNKNOWN
-    uint8_t min_bits = 0;
-    if(Settings.flag5.ir_rx_min_unknown_bits_8) { min_bits += 8; }
-    if(Settings.flag5.ir_rx_min_unknown_bits_16) { min_bits += 16; }
-    if(Settings.flag5.ir_rx_min_unknown_bits_32) { min_bits += 32; }
-    if (results.bits < min_bits){
-      irrecv->resume();
-      return;
-    }
+
     if (iridx) {
       if (results.bits > 64) {
         // This emulates IRutils resultToHexidecimal and may needs a larger IR_RCV_BUFFER_SIZE
@@ -254,6 +247,7 @@ void IrReceiveCheck(void)
       }
 #endif  // USE_DOMOTICZ
     }
+
     irrecv->resume();
   }
 }
