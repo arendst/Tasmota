@@ -184,7 +184,7 @@ static BLEScan* BLEScan = nullptr;
 uint64_t BLEScanStartedAt = 0; 
 uint64_t BLEScanToEndBefore = 0;
 int BLEScanTimeS = 20; // scan duraiton in S
-int BLEMaxTimeBetweenAdverts = 40; // we expect an advert at least this frequently, else restart BLE (in S)
+int BLEMaxTimeBetweenAdverts = 120; // we expect an advert at least this frequently, else restart BLE (in S)
 uint64_t BLEScanLastAdvertismentAt = 0;
 uint32_t lastopid = 0; // incrementing uinique opid
 
@@ -660,7 +660,7 @@ int fromHex(uint8_t *dest, char *src, int maxlen){
  *
  * @param _mac a byte array of size 6 (typicalliy representing a MAC address)
  */
-static void BLE_ReverseMAC(uint8_t _mac[]){
+static void ReverseMAC(uint8_t _mac[]){
   uint8_t _reversedMAC[6];
   for (uint8_t i=0; i<6; i++){
     _reversedMAC[5-i] = _mac[i];
@@ -814,13 +814,13 @@ void postAdvertismentDetails(){
 // does not really take any action
 class BLESensorCallback : public NimBLEClientCallbacks {
   void onConnect(NimBLEClient* pClient) {
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnect"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
   }
   void onDisconnect(NimBLEClient* pClient) {
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("onDisconnect"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("onDisconnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
   }
-  bool onConnParamsUpdateRequest(NimBLEClient* BLEClient, const ble_gap_upd_params* params) {
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnParamsUpdateRequest"));
+  bool onConnParamsUpdateRequest(NimBLEClient* pClient, const ble_gap_upd_params* params) {
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("onConnParamsUpdateRequest %s"), ((std::string)pClient->getPeerAddress()).c_str());
     if(params->itvl_min < 24) { /** 1.25ms units */
       return false;
     } else if(params->itvl_max > 40) { /** 1.25ms units */
@@ -851,7 +851,7 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     int RSSI = advertisedDevice->getRSSI();
     NimBLEAddress address = advertisedDevice->getAddress(); 
     memcpy(BLEAdvertisment.addr, address.getNative(), 6);
-    MI32_ReverseMAC(BLEAdvertisment.addr);
+    ReverseMAC(BLEAdvertisment.addr);
     
     BLEAdvertisment.RSSI = RSSI;
 
@@ -1000,17 +1000,11 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
 
     pRClient = pSvc->getClient();
     NimBLEAddress devaddr = pRClient->getPeerAddress();
-    uint8_t addr[6];
-
-    memcpy(addr,devaddr.getNative(),6);
-    MI32_ReverseMAC(addr);
-    char addrstr[20];
-    dump(addrstr, 20, addr, 6);
 
     generic_sensor_t *thisop = nullptr; 
     for (int i = 0; i < currentOperations.size(); i++){
       generic_sensor_t *op = currentOperations[i];
-      if (!strcasecmp(op->MAC, addrstr)){
+      if (devaddr == op->addr){
         thisop = op;
         break;
       }
@@ -1115,6 +1109,10 @@ static void BLEInit(void) {
     uint64_t now = esp_timer_get_time();
     BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
 
+    if (BLEScan) {
+      BLEScan = nullptr;
+    }
+
     NimBLEDevice::init("");
     
     if (BLEScan == nullptr) BLEScan = NimBLEDevice::getScan();
@@ -1162,7 +1160,7 @@ static void BLEOperationTask(void *pvParameters){
    */
   pClient->setConnectionParams(12,12,0,51);
   /** Set how long we are willing to wait for the connection to complete (seconds), default is 30. */
-  pClient->setConnectTimeout(5);
+  pClient->setConnectTimeout(30);
 
   for(;;){
     if (BLEScan){
@@ -1174,14 +1172,22 @@ static void BLEOperationTask(void *pvParameters){
     vTaskDelay(1000/ portTICK_PERIOD_MS);
   }
 
+
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO,PSTR("leaving BLEOperationTask"));
+
   try {
+    if (pClient->isConnected()){
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO,PSTR("disconnecting connected client"));
+      pClient->disconnect();
+    }
     NimBLEDevice::deleteClient(pClient);
     pClient = nullptr;
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO,PSTR("deleted client"));
   } catch(const std::exception& e){
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in delete"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("BLEOperationTask leave:exception in delete client"));
   }
 
-  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("Leave operation task"));
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLEOperationTask: Left task"));
   vTaskDelete( NULL );
 }
 
@@ -1254,6 +1260,11 @@ static void BLEEverySecond(bool restart){
     }
   }
 
+  if (BLEMode != BLEModeDisabled) {
+    if (!BLEScan){
+      StartBLE();
+    }
+  }
 
   if (BLEScan){
     // restart scanning if it ended and we don't have any current operations in progress.
@@ -1281,6 +1292,7 @@ static void BLEEverySecond(bool restart){
       }
 
 
+
       // check if the scan SHOULD have finished, but did not
       if (BLEMode == BLEModeRegularScan) {
         uint64_t diff = now - BLEScanLastAdvertismentAt;
@@ -1290,12 +1302,11 @@ static void BLEEverySecond(bool restart){
           BLEScanLastAdvertismentAt = now;
           AddLog_P(LOG_LEVEL_ERROR,PSTR("Long time between Advertisments - restarting BLE"));
           StopBLE();
-          StartBLE();
         }
       }
     }
-   
   }
+
 }
 
 
@@ -1311,11 +1322,13 @@ static void BLEEverySecond(bool restart){
 
 // for safety's sake, only call from the run task
 static void runTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLEClient *pClient){
-  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in done"));
   try {
-    pClient->disconnect();
+    if (pClient->isConnected()){
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("runTaskDoneOperation: disconnecting connected client"));
+      pClient->disconnect();
+    }
   } catch(const std::exception& e){
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in disconnect"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("runTaskDoneOperation: exception in disconnect"));
   }
 
   xSemaphoreTakeRecursive(BLEOperationsRecursiveMutex, portMAX_DELAY);
@@ -1329,7 +1342,7 @@ static void runTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLEClient 
   xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
 
   // by adding it to this list, this will cause it to be sent to MQTT
-  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("add to completedOperations in done"));
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("runTaskDoneOperation: add to completedOperations"));
   addOperation(&completedOperations, op);
   return;
 }
@@ -1359,9 +1372,9 @@ int addOperation(std::deque<generic_sensor_t*> *ops, generic_sensor_t** op){
   }     
   xSemaphoreGiveRecursive(BLEOperationsRecursiveMutex); // release mutex
   if (res){
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("added operation"));
+    //BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("added operation"));
   } else {
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("added operation - no room"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("added operation - no room"));
   }
   return res;
 }
@@ -1391,11 +1404,11 @@ int freeOperation(BLE_ESP32::generic_sensor_t** op){
 
 int extQueueOperation(BLE_ESP32::generic_sensor_t** op){
   if (!op) {
-    AddLog_P(LOG_LEVEL_ERROR,PSTR("op invalid in extQueueOperation"));
+    AddLog_P(LOG_LEVEL_ERROR,PSTR("extQueueOperation: op invalid"));
     return 0;
   }
   if (!(*op)){
-    AddLog_P(LOG_LEVEL_ERROR,PSTR("*op invalid in extQueueOperation"));
+    AddLog_P(LOG_LEVEL_ERROR,PSTR("extQueueOperation: *op invalid"));
     return 0;
   }
   (*op)->state = GEN_STATE_START; // trigger request later
@@ -1403,7 +1416,7 @@ int extQueueOperation(BLE_ESP32::generic_sensor_t** op){
 
   int res = addOperation(&queuedOperations, op);
   if (!res){
-    AddLog_P(LOG_LEVEL_ERROR,PSTR("op added id %d in extQueueOperation failed"), (lastopid-1));
+    AddLog_P(LOG_LEVEL_ERROR,PSTR("extQueueOperation: op added id %d failed"), (lastopid-1));
   }
   return res;
 }
@@ -1419,7 +1432,7 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
   if (!*pCurrentOperation) {
     *pCurrentOperation = nextOperation(&queuedOperations);
     if (*pCurrentOperation){
-      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("new currentOperation"));
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("runCurrentOperation: new currentOperation"));
 
       generic_sensor_t* temp = *pCurrentOperation;
       //this will null it out, so save and restore.
@@ -1468,7 +1481,7 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
   if (!*pCurrentOperation) return;
 
   if ((*pCurrentOperation)->state <= GEN_STATE_FAILED){
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("operation failed"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("operation failed %d"), (*pCurrentOperation)->state);
     BLE_ESP32::runTaskDoneOperation(pCurrentOperation, pClient);
     return;
   }
@@ -1478,164 +1491,180 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
   }
 
 
+  // if we managed to run operations back to back with long connection timeouts,
+  // then we may NOT see advertisments.
+  // so to prevent triggering of the advert timeout restart mechanism, 
+  // set the last advert time each time we start an operation
+  uint64_t now = esp_timer_get_time();
+  BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
+
+
+  generic_sensor_t* op = *pCurrentOperation;
+
+  int newstate = GEN_STATE_STARTED;
+  op->state = GEN_STATE_STARTED;
+
+#define CONNECT_BY_ADDR
+#ifndef CONNECT_BY_ADDR
   if (BLEScan){
-    generic_sensor_t* op = *pCurrentOperation;
     NimBLEScanResults results = BLEScan->getResults();
     int deviceCount = results.getCount();
+
+    // is it necessary for the device to be in our current scan list?
     int i = 0;
     for(i = 0; i < deviceCount; i++) {
-        NimBLEAdvertisedDevice device = results.getDevice(i);
-        NimBLEAddress devaddr = device.getAddress();
-        uint8_t addr[6];
-        memcpy(addr,devaddr.getNative(),6);
-        MI32_ReverseMAC(addr);
-        char addrstr[20];
-        dump(addrstr, 20, addr, 6);
-        if (!strcasecmp(op->MAC, addrstr)){
-          int newstate = GEN_STATE_STARTED;
-          op->state = GEN_STATE_STARTED;
+      NimBLEAdvertisedDevice device = results.getDevice(i);
+      NimBLEAddress devaddr = device.getAddress();
 
-          NimBLEUUID serviceUuid(op->serviceStr);
-          if (device.isAdvertisingService(serviceUuid)) {
-            // create a client and connect
-                
-            if (pClient->connect(&device)) {
-              NimBLERemoteService *pService = pClient->getService(serviceUuid);
+      //BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("addr cmp %s == %s?"), ((std::string) op->addr).c_str(), ((std::string) devaddr).c_str());
+      if (op->addr == devaddr){
+
+
+        //NimBLEUUID serviceUuid(op->serviceStr);
+        if (device.isAdvertisingService(op->serviceUUID)) {
+          // create a client and connect
               
-              if (pService != nullptr) {
-                BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got service"));
+          // connect, but deleteAttributes.
+          if (pClient->connect(&device, true)) {
+#else      
+          if (pClient->connect(op->addr, true)) {
+#endif
 
-                // read or write characteristic - we always need this?
-                NimBLERemoteCharacteristic *pCharacteristic = nullptr;
+            NimBLERemoteService *pService = pClient->getService(op->serviceUUID);
+            
+            if (pService != nullptr) {
+              BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got service"));
 
-                if (op->characteristicStr[0]){
-                  pCharacteristic = pService->getCharacteristic(op->characteristicStr);
-                }
-
-                // pre-set to fail if no operations requested
-                //newstate = GEN_STATE_FAILED_NOREADWRITE;
-
-                int waitNotify = false;
-
-                // if we have been asked to get a notification
-                if (op->notificationCharacteristicStr[0]){
-                  NimBLERemoteCharacteristic *pNCharacteristic = 
-                    pService->getCharacteristic(op->notificationCharacteristicStr);
-                  if (pNCharacteristic != nullptr) {
-                    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got notify characteristic"));
-                    op->notifylen = 0;
-                    if(pNCharacteristic->canNotify()) {
-                      if(pNCharacteristic->subscribe(true, BLE_ESP32::BLEGenNotifyCB)) {
-                        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for notify"));
-                        uint64_t now = esp_timer_get_time();
-                        op->notifytimer = now;
-                        // this will get changed to read or write,
-                        // but here in case it's notify only (can that happen?)
-                        newstate = GEN_STATE_WAITNOTIFY;
-                        waitNotify = true;
-                      } else {
-                        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for notify"));
-                        newstate = GEN_STATE_FAILED_NOTIFY;
-                      }
-                    } else {
-                      if(pNCharacteristic->canIndicate()) {
-                        if(pNCharacteristic->subscribe(false, BLE_ESP32::BLEGenNotifyCB)) {
-                          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for indicate"));
-                          newstate = GEN_STATE_WAITINDICATE;
-                          uint64_t now = esp_timer_get_time();
-                          op->notifytimer = now;
-                        } else {
-                          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for indicate"));
-                          newstate = GEN_STATE_FAILED_INDICATE;
-                        }
-                      } else {
-                        newstate = GEN_STATE_FAILED_CANTNOTIFYORINDICATE;
-                      }
-                    }
-                  } else {
-                    newstate = GEN_STATE_FAILED_NONOTIFYCHAR;
-                  }
-                } // no supplied notify char is ok
-
-                // this will only happen if you ask for a notify char which is not there?
-                if (!(newstate <= GEN_STATE_FAILED)){
-                  if (pCharacteristic != nullptr) {
-                    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got read/write characteristic"));
-                    newstate = GEN_STATE_FAILED_NOREADWRITE; // overwritten on failure
-
-                    if (op->readlen){
-                      if(pCharacteristic->canRead()) {
-                        std::string value = pCharacteristic->readValue();
-                        op->readlen = value.length();
-                        memcpy(op->dataRead, value.data(), 
-                          (op->readlen > sizeof(op->dataRead))?
-                            sizeof(op->dataRead): 
-                            op->readlen);
-                        if (op->readlen > sizeof(op->dataRead)){
-                          op->readtruncated = 1;
-                        } else {
-                          op->readtruncated = 0;
-                        }
-                        if (op->readmodifywritecallback){
-                          READ_CALLBACK *pFn = (READ_CALLBACK *)op->readmodifywritecallback;
-                          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic with readmodifywritecallback"));
-                          pFn(op);
-                        } else {
-                          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic"));
-                        }
-
-                        // only change it to a 'finished' state if we really are
-                        if (!waitNotify && !op->writelen) newstate = GEN_STATE_READDONE;
-
-                      } else {
-                        newstate = GEN_STATE_FAILED_CANTREAD;
-                      }
-                    }
-                    if (op->writelen){
-                      if(pCharacteristic->canWrite()) {
-                        if (!pCharacteristic->writeValue(op->dataToWrite, op->writelen, true)){
-                          newstate = GEN_STATE_FAILED_WRITE;
-                          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic write fail"));
-                        } else {
-                          if (!waitNotify) newstate = GEN_STATE_WRITEDONE;
-                          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("write characteristic"));
-                        }
-                      } else {
-                        newstate = GEN_STATE_FAILED_CANTWRITE;
-                      }
-                    }
-                    // print or do whatever you need with the value
-                    
-                  } else {
-                    newstate = GEN_STATE_FAILED_NO_RW_CHAR;
-                    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic not in service"));
-                  }
-                }
+              // read or write characteristic - we always need this?
+              NimBLERemoteCharacteristic *pCharacteristic = nullptr;
+              if (op->characteristicUUID.bitSize()) {
+                pCharacteristic = pService->getCharacteristic(op->characteristicUUID);
               }
 
-              // disconnect if not waiting for notify, 
-              if (!op->notifytimer){
-                BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in runoperation"));
-                try {
-                  pClient->disconnect();
-                } catch(const std::exception& e){
-                  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in disconnect"));
-                }
-              }    
+              // pre-set to fail if no operations requested
+              //newstate = GEN_STATE_FAILED_NOREADWRITE;
 
-            } else {
-              newstate = GEN_STATE_FAILED_CONNECT;
-              // failed to connect
-              BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed to connect to device"));
-            }            
+              int waitNotify = false;
+
+              // if we have been asked to get a notification
+              if (op->notificationCharacteristicUUID.bitSize()) {
+                NimBLERemoteCharacteristic *pNCharacteristic = 
+                  pService->getCharacteristic(op->notificationCharacteristicUUID);
+                if (pNCharacteristic != nullptr) {
+                  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got notify characteristic"));
+                  op->notifylen = 0;
+                  if(pNCharacteristic->canNotify()) {
+                    if(pNCharacteristic->subscribe(true, BLE_ESP32::BLEGenNotifyCB)) {
+                      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for notify"));
+                      uint64_t now = esp_timer_get_time();
+                      op->notifytimer = now;
+                      // this will get changed to read or write,
+                      // but here in case it's notify only (can that happen?)
+                      newstate = GEN_STATE_WAITNOTIFY;
+                      waitNotify = true;
+                    } else {
+                      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for notify"));
+                      newstate = GEN_STATE_FAILED_NOTIFY;
+                    }
+                  } else {
+                    if(pNCharacteristic->canIndicate()) {
+                      if(pNCharacteristic->subscribe(false, BLE_ESP32::BLEGenNotifyCB)) {
+                        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("subscribe for indicate"));
+                        newstate = GEN_STATE_WAITINDICATE;
+                        uint64_t now = esp_timer_get_time();
+                        op->notifytimer = now;
+                      } else {
+                        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for indicate"));
+                        newstate = GEN_STATE_FAILED_INDICATE;
+                      }
+                    } else {
+                      newstate = GEN_STATE_FAILED_CANTNOTIFYORINDICATE;
+                    }
+                  }
+                } else {
+                  newstate = GEN_STATE_FAILED_NONOTIFYCHAR;
+                }
+              } // no supplied notify char is ok
+
+              // this will only happen if you ask for a notify char which is not there?
+              if (!(newstate <= GEN_STATE_FAILED)){
+                if (pCharacteristic != nullptr) {
+                  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got read/write characteristic"));
+                  newstate = GEN_STATE_FAILED_NOREADWRITE; // overwritten on failure
+
+                  if (op->readlen){
+                    if(pCharacteristic->canRead()) {
+                      std::string value = pCharacteristic->readValue();
+                      op->readlen = value.length();
+                      memcpy(op->dataRead, value.data(), 
+                        (op->readlen > sizeof(op->dataRead))?
+                          sizeof(op->dataRead): 
+                          op->readlen);
+                      if (op->readlen > sizeof(op->dataRead)){
+                        op->readtruncated = 1;
+                      } else {
+                        op->readtruncated = 0;
+                      }
+                      if (op->readmodifywritecallback){
+                        READ_CALLBACK *pFn = (READ_CALLBACK *)op->readmodifywritecallback;
+                        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic with readmodifywritecallback"));
+                        pFn(op);
+                      } else {
+                        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic"));
+                      }
+
+                      // only change it to a 'finished' state if we really are
+                      if (!waitNotify && !op->writelen) newstate = GEN_STATE_READDONE;
+
+                    } else {
+                      newstate = GEN_STATE_FAILED_CANTREAD;
+                    }
+                  }
+                  if (op->writelen){
+                    if(pCharacteristic->canWrite()) {
+                      if (!pCharacteristic->writeValue(op->dataToWrite, op->writelen, true)){
+                        newstate = GEN_STATE_FAILED_WRITE;
+                        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic write fail"));
+                      } else {
+                        if (!waitNotify) newstate = GEN_STATE_WRITEDONE;
+                        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("write characteristic"));
+                      }
+                    } else {
+                      newstate = GEN_STATE_FAILED_CANTWRITE;
+                    }
+                  }
+                  // print or do whatever you need with the value
+                  
+                } else {
+                  newstate = GEN_STATE_FAILED_NO_RW_CHAR;
+                  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic not in service"));
+                }
+              }
+            }
+
+            // disconnect if not waiting for notify, 
+            if (!op->notifytimer){
+              BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in runoperation"));
+              try {
+                pClient->disconnect();
+              } catch(const std::exception& e){
+                BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in disconnect"));
+              }
+            }    
+
           } else {
-            newstate = GEN_STATE_FAILED_NOSERVICE;
-            BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("service not in device"));
-          }
-          op->state = newstate;
-          break;
+            newstate = GEN_STATE_FAILED_CONNECT;
+            // failed to connect
+            BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed to connect to device"));
+          }            
+#ifndef CONNECT_BY_ADDR
+        } else {
+          newstate = GEN_STATE_FAILED_NOSERVICE;
+          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("service not in device"));
         }
-       
+        op->state = newstate;
+        break;
+      }
     }
     if (i == deviceCount){
       // device not present
@@ -1643,6 +1672,9 @@ static void runCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation,
       BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("device not present"));
     }
   }
+#else
+  op->state = newstate;
+#endif  
 }
 
 
@@ -1860,17 +1892,22 @@ void CmndBLEOperation(void){
 
       while (p){
         switch(*p | 0x20){
-          case 'm':
-            strncpy(prepOperation->MAC, p+2, sizeof(prepOperation->MAC)-1);
-            break;
-          case 's':
-            strncpy(prepOperation->serviceStr, p+2, sizeof(prepOperation->serviceStr)-1);
-            break;
+          case 'm':{
+            uint8_t addr[6];
+            fromHex(addr, p+2, sizeof(addr));
+            //ReverseMAC(addr);
+            prepOperation->addr = NimBLEAddress(addr);
+          } break;
+          case 's':{
+            prepOperation->serviceUUID = NimBLEUUID(p+2);
+          } break;
           case 'c':
-            strncpy(prepOperation->characteristicStr, p+2, sizeof(prepOperation->characteristicStr)-1);
+            prepOperation->characteristicUUID = NimBLEUUID(p+2);
+            //strncpy(prepOperation->characteristicStr, p+2, sizeof(prepOperation->characteristicStr)-1);
             break;
           case 'n':
-            strncpy(prepOperation->notificationCharacteristicStr, p+2, sizeof(prepOperation->notificationCharacteristicStr)-1);
+            prepOperation->notificationCharacteristicUUID = NimBLEUUID(p+2);
+            //strncpy(prepOperation->notificationCharacteristicStr, p+2, sizeof(prepOperation->notificationCharacteristicStr)-1);
             break;
           case 'w':
             prepOperation->writelen = fromHex(prepOperation->dataToWrite, p+2, sizeof(prepOperation->dataToWrite));
@@ -2115,21 +2152,25 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
   out = out + "\",\"state\":\"";
   out = out + getStateString(toSend->state);
   
-  if (toSend->MAC[0]){
+  if (toSend->addr != NimBLEAddress()){
     out = out + "\",\"MAC\":\"";
-    out = out + toSend->MAC;
+    uint8_t addrrev[6];
+    memcpy(addrrev, toSend->addr.getNative(), 6);
+    ReverseMAC(addrrev);
+    dump(temp, 13, addrrev, 6);
+    out = out + temp;
   }
-  if (toSend->serviceStr[0]){
+  if (toSend->serviceUUID.bitSize()){
     out = out + "\",\"svc\":\"";
-    out = out + toSend->serviceStr;
+    out = out + toSend->serviceUUID.toString();
   }
-  if (toSend->characteristicStr[0]){
+  if (toSend->characteristicUUID.bitSize()){
     out = out + "\",\"char\":\"";
-    out = out + toSend->characteristicStr;
+    out = out + toSend->characteristicUUID.toString();
   }
-  if (toSend->notificationCharacteristicStr[0]){
+  if (toSend->notificationCharacteristicUUID.bitSize()){
     out = out + "\",\"notifychar\":\"";
-    out = out + toSend->notificationCharacteristicStr;
+    out = out + toSend->notificationCharacteristicUUID.toString();
   }
   out = out + "\"";
   if (toSend->readlen){
@@ -2143,7 +2184,7 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
   }
   if (toSend->writelen){
     dump(temp, 99, toSend->dataToWrite, toSend->writelen);
-    out = out + ",\"wrote\":\"";
+    out = out + ",\"write\":\"";
     out = out + temp;
     out = out + "\"";
   }

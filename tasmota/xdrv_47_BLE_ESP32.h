@@ -137,24 +137,24 @@ namespace BLE_ESP32 {
 /////////////////////////////////////////////////////
 
 
+#define MAX_BLE_DATA_LEN 100
 struct generic_sensor_t {
   int16_t state;
   uint32_t opid; // incrementing id so we can find them
+  uint64_t notifytimer;
   
   // uint8_t cancel; 
   // uint8_t requestType; 
-  char MAC[13];
-  char serviceStr[100];
-  char characteristicStr[100];
-  char notificationCharacteristicStr[100];
-  int RSSI;
-  uint64_t notifytimer;
-  uint8_t dataToWrite[100];
+  NimBLEAddress addr;
+  NimBLEUUID serviceUUID;
+  NimBLEUUID characteristicUUID;
+  NimBLEUUID notificationCharacteristicUUID;
+  uint8_t dataToWrite[MAX_BLE_DATA_LEN];
   uint8_t writelen;
-  uint8_t dataRead[100];
+  uint8_t dataRead[MAX_BLE_DATA_LEN];
   uint8_t readlen;
   uint8_t readtruncated;
-  uint8_t dataNotify[100];
+  uint8_t dataNotify[MAX_BLE_DATA_LEN];
   uint8_t notifylen;
   uint8_t notifytruncated;
 

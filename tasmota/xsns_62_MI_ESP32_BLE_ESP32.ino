@@ -494,20 +494,20 @@ bool MI32Operation(int slot, int optype, const char *svc, const char *charactist
   if (!res){
     AddLog_P(LOG_LEVEL_ERROR,PSTR("Can't get a newOperation from BLE"));
     return 0;
+  } else {
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("got a newOperation from BLE"));
   }
 
-  BLE_ESP32::dump(op->MAC, sizeof(op->MAC), MIBLEsensors[slot].MAC, 6) ;
+  op->addr = NimBLEAddress(MIBLEsensors[slot].MAC);
 
   bool havechar = false;
-  
-  strncpy(op->serviceStr, svc, sizeof(op->serviceStr));
+  op->serviceUUID = NimBLEUUID(svc);
   if (charactistic && charactistic[0]){
     havechar = true;
-    strncpy(op->characteristicStr, charactistic, sizeof(op->characteristicStr));
+    op->characteristicUUID = NimBLEUUID(charactistic);
   }
-
   if (notifychar && notifychar[0]){
-    strncpy(op->notificationCharacteristicStr, notifychar, sizeof(op->notificationCharacteristicStr));
+    op->notificationCharacteristicUUID = NimBLEUUID(notifychar);
   }    
 
   if (data && datalen) {
@@ -518,7 +518,6 @@ bool MI32Operation(int slot, int optype, const char *svc, const char *charactist
       op->readlen = 1; // if we don't set readlen, then it won't read
     }
   }
-
 
   // the only times we intercept between read abnd write
   if ((optype == OP_UNIT_WRITE) || (optype == OP_UNIT_TOGGLE)){
@@ -761,9 +760,13 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
 
   char slotMAC[13];
   BLE_ESP32::dump(slotMAC, sizeof(slotMAC), MIBLEsensors[slot].MAC, 6) ;
+  uint8_t addrrev[6];
+  memcpy(addrrev, MIBLEsensors[slot].MAC, 6);
+  //BLE_ESP32::ReverseMAC(addrrev);
+  NimBLEAddress addr(addrrev);
 
   bool fail = false;
-  if (strncmp(slotMAC, op->MAC, 12)){
+  if (op->addr != addr){
     // slot changed during operation?
     AddLog_P(LOG_LEVEL_ERROR,PSTR("Slot mac changed during an operation"));
     fail = true;
