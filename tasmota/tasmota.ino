@@ -215,21 +215,26 @@ void setup(void) {
 #endif
   RtcRebootSave();
 
+  if (RtcSettingsLoad()) {
+    uint32_t baudrate = (RtcSettings.baudrate / 300) * 300;  // Make it a valid baudrate
+    if (baudrate) { TasmotaGlobal.baudrate = baudrate; }
+  }
   Serial.begin(TasmotaGlobal.baudrate);
+  Serial.println();
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
-
-  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
-  if (VERSION & 0xff) {  // Development or patched version 6.3.0.10
-    snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, VERSION & 0xff);
-  }
-  // Thehackbox inserts "release" or "commit number" before compiling using sed -i -e 's/PSTR("(%s)")/PSTR("(85cff52-%s)")/g' tasmota.ino
-  snprintf_P(TasmotaGlobal.image_name, sizeof(TasmotaGlobal.image_name), PSTR("(%s)"), CODE_IMAGE_STR);  // Results in (85cff52-tasmota) or (release-tasmota)
 
   SettingsLoad();
   SettingsDelta();
 
   OsWatchInit();
+
+  TasmotaGlobal.module_changed = (Settings.module != Settings.last_module);
+  if (TasmotaGlobal.module_changed) {
+    Settings.baudrate = APP_BAUDRATE / 300;
+    Settings.serial_config = TS_SERIAL_8N1;
+  }
+  SetSerialBegin();
 
   if (1 == RtcReboot.fast_reboot_count) {  // Allow setting override only when all is well
     UpdateQuickPowerCycle(true);
@@ -280,6 +285,13 @@ void setup(void) {
       AddLog_P(LOG_LEVEL_INFO, PSTR("FRC: " D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     }
   }
+
+  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
+  if (VERSION & 0xff) {  // Development or patched version 6.3.0.10
+    snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, VERSION & 0xff);
+  }
+  // Thehackbox inserts "release" or "commit number" before compiling using sed -i -e 's/PSTR("(%s)")/PSTR("(85cff52-%s)")/g' tasmota.ino
+  snprintf_P(TasmotaGlobal.image_name, sizeof(TasmotaGlobal.image_name), PSTR("(%s)"), CODE_IMAGE_STR);  // Results in (85cff52-tasmota) or (release-tasmota)
 
   Format(TasmotaGlobal.mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(TasmotaGlobal.mqtt_client));
   Format(TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(TasmotaGlobal.mqtt_topic));
