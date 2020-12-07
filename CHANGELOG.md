@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
 
 ### Changed
+- Core library from v2.7.4.7 to v2.7.4.9
 - Shelly Dimmer fw upgrade using WebGUI Firmware Upgrade and file from folder `tools/fw_shd_stm32/`
 - MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
 - Platformio compiler option `-free -fipa-pta` enabled (#9875)
@@ -66,8 +67,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-### 9.1.0 20201105
-
+## [9.1.0] 20201105
 - Release Imogen
 
 ## [9.0.0.3] - 20201105
