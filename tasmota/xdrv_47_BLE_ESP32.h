@@ -35,15 +35,9 @@
       connect/read/awaitnotify from a MAC/Service/Characteristic/NotifyCharacteristic
 
     Cmnds:
-      BLEOp0 - requests status of operations
-      BLEOp1 MAC - create an operation in preparation, and populate it's MAC address
-      BLEOp2 Service - add a serviceUUID to the operation in preparation
-      BLEOp3 Characteristic - add a CharacteristicUUID to the operation in preparation for read/write
-      BLEOp4 writedata - optional:add data to write to the operation in preparation - hex string
-      BLEOp5 - optional:signify that a read should be done
-      BLEOp6 NotifyCharacteristic - optional:add a NotifyCharacteristicUUID to the operation in preparation to wait for a notify
-      BLEOp9 - publish the 'operation in preparation' to MQTT.
-      BLEOp10 - add the 'operation in preparation' to the queue of operations to perform.
+      BLEOp0 - poll state
+      BLEOp1 m:MAC s:svc <c:characteristic> <n:notifychar> <w:hextowrite> <r> <go>
+      BLEOp2 trigger queue of op.  return is opid
 
   Other drivers can add callbacks to receive advertisments
   Other drivers can add 'operations' to be performed and receive callbacks from the operation's success or failure
@@ -210,7 +204,7 @@ void registerForOpCallbacks(const char *tag, BLE_ESP32::OPCOMPLETE_CALLBACK* pFn
 void registerForScanCallbacks(const char *tag, BLE_ESP32::SCANCOMPLETE_CALLBACK* pFn);
 
 ////////////////////////////////////////////////////
-// BLE oprations: these are currently 'new'ed and 'delete'ed.
+// BLE operations: these are currently 'new'ed and 'delete'ed.
 // in the future, they may be allocated from some constant menory store to avoid fragmentation.
 // so PLEASE don't create or destroy them yourselves.
 // create a new BLE operation. 
@@ -220,6 +214,7 @@ int freeOperation(BLE_ESP32::generic_sensor_t** op);
 // queue a BLE operation - it will happen some time in the future. 
 // Note: you do not need to free an operation once it have been queued.  it will be freed by the driver.
 int extQueueOperation(BLE_ESP32::generic_sensor_t** op);
+const char * getStateString(int state);
 ///////////////////////////////////////////////////////////////////////
 
 
