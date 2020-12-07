@@ -3,9 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-### 9.1.0 20201105
-
-- Release Imogen
+## [9.2.0] 202012165
+- Release Julie
 
 ## [Unreleased] - Development
 
@@ -70,10 +69,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Version compatibility check
 
-## [Released]
-
-### 9.1.0 20201105
-
+## [9.1.0] 20201105
 - Release Imogen
 
 ## [9.0.0.3] - 20201105
