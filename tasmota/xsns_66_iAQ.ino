@@ -19,6 +19,11 @@
 
 #ifdef USE_I2C
 #ifdef USE_IAQ
+/*********************************************************************************************\
+ * iAQ-Core - Indoor Air Quality Sensor
+ *
+ * I2C Address: 0x5A
+\*********************************************************************************************/
 
 #define XSNS_66            66
 #define XI2C_46            46      // See I2CDEVICES.md
@@ -35,22 +40,32 @@ struct  {
   int32_t   resistance;
   uint16_t  pred;
   uint16_t  Tvoc;
+  uint8_t   i2c_address;
   uint8_t   status;
   bool      ready;
 } iAQ;
 
-void IAQ_Init(void)
-{
+void IAQ_Init(void) {
   if (!I2cSetDevice(I2_ADR_IAQ)) { return; }
   I2cSetActiveFound(I2_ADR_IAQ, "IAQ");
+  iAQ.i2c_address = I2_ADR_IAQ;
   iAQ.ready = true;
+/*
+  for (iAQ.i2c_address = I2_ADR_IAQ; iAQ.i2c_address < I2_ADR_IAQ +5; iAQ.i2c_address++) {
+    if (I2cActive(iAQ.i2c_address)) { continue; }
+    if (I2cSetDevice(iAQ.i2c_address)) {
+      I2cSetActiveFound(iAQ.i2c_address, "IAQ");
+      iAQ.ready = true;
+      break;
+    }
+  }
+*/
 }
 
-void IAQ_Read(void)
-{
+void IAQ_Read(void) {
   uint8_t buf[9];
   buf[2] = IAQ_STATUS_I2C_ERR; // populate entry with error code
-  Wire.requestFrom((uint8_t)I2_ADR_IAQ,sizeof(buf));
+  Wire.requestFrom(iAQ.i2c_address, sizeof(buf));
   for( uint32_t i=0; i<9; i++ ) {
     buf[i]= Wire.read();
   }
