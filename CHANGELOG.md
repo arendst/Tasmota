@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - IRremoteESP8266 library from v2.7.12 to v2.7.13
 - Shelly Dimmer 1 and 2 stm32 firmware from v51.4 to v51.5
 - Force bigger Thunk Stack if 4K RSA even without EC ciphers (#10075)
+- mDNS has been disabled from all pre-compiled binaries to allow new features
 
 ### Fixed
 - KNX ESP32 UDP mulicastpackage (#9811)
