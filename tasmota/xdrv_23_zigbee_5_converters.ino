@@ -2063,8 +2063,8 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
         case Zenum16:
         case Zuint16: uval32 = *(uint16_t*)attr_address;  if (uval32 !=  0x0000FFFF) data_size = 16;  break;
         case Zuint32: uval32 = *(uint32_t*)attr_address;  if (uval32 !=  0xFFFFFFFF) data_size = 32;  break;
-        case Zint8:   ival32 = *(int8_t*)attr_address;    if (ival32 != -0xFFFFFF80) data_size = -8;  break;
-        case Zint16:  ival32 = *(int16_t*)attr_address;   if (ival32 != -0xFFFF8000) data_size = -16; break;
+        case Zint8:   ival32 = *(int8_t*)attr_address;    if (ival32 != -0x80)       data_size = -8;  break;
+        case Zint16:  ival32 = *(int16_t*)attr_address;   if (ival32 != -0x8000)     data_size = -16; break;
         case Zint32:  ival32 = *(int32_t*)attr_address;   if (ival32 != -0x80000000) data_size = -32; break;
       }
       if (data_size != 0) {
