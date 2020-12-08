@@ -912,6 +912,7 @@ public:
 
   // Dump json
   String dumpDevice(uint32_t dump_mode, const Z_Device & device) const;
+  String dumpCoordinator(void) const;
   int32_t deviceRestore(JsonParserObject json);
 
   // Hue support
@@ -950,7 +951,7 @@ public:
   void clean(void);   // avoid writing to flash the last changes
 
   // Find device by name, can be short_addr, long_addr, number_in_array or name
-  Z_Device & parseDeviceFromName(const char * param, bool short_must_be_known = false);
+  Z_Device & parseDeviceFromName(const char * param, uint16_t * parsed_shortaddr = nullptr);
 
   bool isTuyaProtocol(uint16_t shortaddr, uint8_t ep = 0) const;
 
