@@ -117,7 +117,7 @@ void CmndRfProtocol(void) {
     }
   } else {
     if (XdrvMailbox.data_len > 0) {
-      if ('a' == XdrvMailbox.data[0]) {
+      if ('A' == toupper(XdrvMailbox.data[0])) {
         Settings.rf_protocol_mask = (1ULL << mySwitch.getNumProtos()) -1;
       } else {
         thisdat = strtoull(XdrvMailbox.data, nullptr, 0);

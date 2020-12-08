@@ -24,7 +24,7 @@ While fallback or downgrading is common practice it was never supported due to S
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.7.4.7** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.4.9** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 Support of Core versions before 2.7.1 has been removed.
 
@@ -38,7 +38,7 @@ For initial configuration this release supports Webserver based **WifiManager** 
 
 ## Provided Binary Downloads
 
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.7**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.9**.
 
 - **tasmota.bin** = The Tasmota version with most drivers. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
@@ -67,6 +67,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Zigbee support for Mi Door and Contact (#9759)
 - Zigbee alarm persistence (#9785)
 - Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
+- Zigbee better support for Tuya Protocol (#10074)
 - TyuaMcu update 2/3 by Federico Leoni (#10004)
 - Support for additional EZO sensors by Christopher Tremblay
 - Support for AS608 optical and R503 capacitive fingerprint sensor
@@ -77,17 +78,20 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - KNX read reply for Power (#9236, #9891)
 - Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
 - Optional CCloader support for CC25xx Zigbee or CC26xx BLE by Christian Baars (#9970)
+- Letsencrypt R3 in addition to X3 CA (#10086)
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
 
 ### Changed
-- Core library from v2.7.4.5 to v2.7.4.7
+- Core library from v2.7.4.5 to v2.7.4.9
 - IRremoteESP8266 library from v2.7.12 to v2.7.13
 - Shelly Dimmer 1 and 2 stm32 firmware from v51.4 to v51.5
+- mDNS has been disabled from all pre-compiled binaries to allow new features
 - Platformio compiler option `no target align` enabled (#9749)
 - Sonoff L1 color up scaling and color margin detection (#9545)
 - MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
+- Force bigger Thunk Stack if 4K RSA even without EC ciphers (#10075)
 
 ### Fixed
 - Command ``gpio`` using non-indexed functions regression from v9.1.0 (#9962)
@@ -99,6 +103,8 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - ESP32 TasmotaClient firmware upgrade (#9218)
 - Reset to defaults after 6 hours of DeepSleep (#9993)
 - Backlog timing wraparound (#9995)
+- First LED in addressable string does not fade when using scheme (#10088)
+- Improved Opentherm error handling (#10055)
 
 ### Removed
 - Version compatibility check
