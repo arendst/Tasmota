@@ -87,6 +87,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Core library from v2.7.4.5 to v2.7.4.9
 - IRremoteESP8266 library from v2.7.12 to v2.7.13
 - Shelly Dimmer 1 and 2 stm32 firmware from v51.4 to v51.5
+- mDNS has been disabled from all pre-compiled binaries to allow new features
 - Platformio compiler option `no target align` enabled (#9749)
 - Sonoff L1 color up scaling and color margin detection (#9545)
 - MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
