@@ -38,6 +38,7 @@ uint32_t GetRtcSettingsCrc(void)
 
 void RtcSettingsSave(void)
 {
+  RtcSettings.baudrate = Settings.baudrate * 300;
   if (GetRtcSettingsCrc() != rtc_settings_crc) {
     RtcSettings.valid = RTC_MEM_VALID;
 #ifdef ESP8266
@@ -50,8 +51,8 @@ void RtcSettingsSave(void)
   }
 }
 
-void RtcSettingsLoad(void)
-{
+bool RtcSettingsLoad(void) {
+  bool was_read_valid = true;
 #ifdef ESP8266
   ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));  // 0x290
 #endif  // ESP8266
@@ -59,6 +60,7 @@ void RtcSettingsLoad(void)
   RtcSettings = RtcDataSettings;
 #endif  // ESP32
   if (RtcSettings.valid != RTC_MEM_VALID) {
+    was_read_valid = false;
     memset(&RtcSettings, 0, sizeof(RtcSettings));
     RtcSettings.valid = RTC_MEM_VALID;
     RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
@@ -68,9 +70,12 @@ void RtcSettingsLoad(void)
       RtcSettings.pulse_counter[i] = Settings.pulse_counter[i];
     }
     RtcSettings.power = Settings.power;
+//    RtcSettings.baudrate = Settings.baudrate * 300;
+    RtcSettings.baudrate = APP_BAUDRATE;
     RtcSettingsSave();
   }
   rtc_settings_crc = GetRtcSettingsCrc();
+  return was_read_valid;
 }
 
 bool RtcSettingsValid(void)

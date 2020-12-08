@@ -163,7 +163,7 @@ void WiFiSetSleepMode(void)
 
 void WifiBegin(uint8_t flag, uint8_t channel)
 {
-  const char kWifiPhyMode[] = " BGN";
+  const char kWifiPhyMode[] = " bgnl";
 
 #ifdef USE_EMULATION
   UdpDisconnect();
