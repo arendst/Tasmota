@@ -304,22 +304,15 @@ void Ws2812Gradient(uint32_t schemenr)
   WsColor oldColor, currentColor;
   Ws2812GradientColor(schemenr, &oldColor, range, gradRange, offset);
   currentColor = oldColor;
+  speed = speed ? speed : 1;    // should never happen, just avoid div0
   for (uint32_t i = 0; i < Settings.light_pixels; i++) {
     if (kWsRepeat[Settings.light_width] > 1) {
-      Ws2812GradientColor(schemenr, &currentColor, range, gradRange, i +offset);
+      Ws2812GradientColor(schemenr, &currentColor, range, gradRange, i + offset + 1);
     }
-    if (Settings.light_speed > 0) {
-      // Blend old and current color based on time for smooth movement.
-      c.R = map(Light.strip_timer_counter % speed, 0, speed, oldColor.red, currentColor.red);
-      c.G = map(Light.strip_timer_counter % speed, 0, speed, oldColor.green, currentColor.green);
-      c.B = map(Light.strip_timer_counter % speed, 0, speed, oldColor.blue, currentColor.blue);
-    }
-    else {
-      // No animation, just use the current color.
-      c.R = currentColor.red;
-      c.G = currentColor.green;
-      c.B = currentColor.blue;
-    }
+    // Blend old and current color based on time for smooth movement.
+    c.R = map(Light.strip_timer_counter % speed, 0, speed, oldColor.red, currentColor.red);
+    c.G = map(Light.strip_timer_counter % speed, 0, speed, oldColor.green, currentColor.green);
+    c.B = map(Light.strip_timer_counter % speed, 0, speed, oldColor.blue, currentColor.blue);
     strip->SetPixelColor(i, c);
     oldColor = currentColor;
   }
