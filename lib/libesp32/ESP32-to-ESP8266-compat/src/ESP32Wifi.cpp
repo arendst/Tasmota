@@ -19,6 +19,7 @@
 //
 #include "Arduino.h"
 #include <ESP8266WiFi.h>
+#include <esp_wifi.h>
 
 //
 // Wifi
@@ -35,7 +36,15 @@ void WiFiClass32::setSleepMode(int iSleepMode)
 
 int WiFiClass32::getPhyMode()
 {
-    return 0; // " BGN"
+  int phy_mode = 0;  // " BGNL"
+  uint8_t protocol_bitmap;
+  if (esp_wifi_get_protocol(WIFI_IF_STA, &protocol_bitmap) == ESP_OK) {
+    if (protocol_bitmap & 1) { phy_mode = 1; }  // 11b
+    if (protocol_bitmap & 2) { phy_mode = 2; }  // 11g
+    if (protocol_bitmap & 4) { phy_mode = 3; }  // 11n
+    if (protocol_bitmap & 8) { phy_mode = 4; }  // Low rate
+  }
+  return phy_mode;
 }
 
 void WiFiClass32::wps_disable()

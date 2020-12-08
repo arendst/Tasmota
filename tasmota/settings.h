@@ -683,17 +683,18 @@ typedef struct {
   uint16_t      valid;                     // 290  (RTC memory offset 100)
   uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
-  unsigned long energy_kWhtoday;              // 294
-  unsigned long energy_kWhtotal;              // 298
+  unsigned long energy_kWhtoday;           // 294
+  unsigned long energy_kWhtotal;           // 298
   volatile unsigned long pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
   power_t       power;                     // 2AC
   EnergyUsage   energy_usage;              // 2B0
   unsigned long nextwakeup;                // 2C8
-  uint8_t       free_004[4];               // 2CC
+  uint32_t      baudrate;                  // 2CC
   uint32_t      ultradeepsleep;            // 2D0
   uint16_t      deepsleep_slip;            // 2D4
 
-  uint8_t       free_022[22];              // 2D6
+  uint8_t       free_2d6[22];              // 2D6
+
                                            // 2EC - 2FF free locations
 } TRtcSettings;
 TRtcSettings RtcSettings;

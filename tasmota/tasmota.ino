@@ -193,6 +193,7 @@ void setup(void) {
 
   memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
+  TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
   TasmotaGlobal.temperature_celsius = NAN;
   TasmotaGlobal.blinks = 201;
   TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
@@ -215,29 +216,34 @@ void setup(void) {
 #endif
   RtcRebootSave();
 
+  if (RtcSettingsLoad()) {
+    uint32_t baudrate = (RtcSettings.baudrate / 300) * 300;  // Make it a valid baudrate
+    if (baudrate) { TasmotaGlobal.baudrate = baudrate; }
+  }
   Serial.begin(TasmotaGlobal.baudrate);
+  Serial.println();
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
-
-  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
-  if (VERSION & 0xff) {  // Development or patched version 6.3.0.10
-    snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, VERSION & 0xff);
-  }
-  // Thehackbox inserts "release" or "commit number" before compiling using sed -i -e 's/PSTR("(%s)")/PSTR("(85cff52-%s)")/g' tasmota.ino
-  snprintf_P(TasmotaGlobal.image_name, sizeof(TasmotaGlobal.image_name), PSTR("(%s)"), CODE_IMAGE_STR);  // Results in (85cff52-tasmota) or (release-tasmota)
 
   SettingsLoad();
   SettingsDelta();
 
   OsWatchInit();
 
-  if (1 == RtcReboot.fast_reboot_count) {  // Allow setting override only when all is well
+  TasmotaGlobal.seriallog_level = Settings.seriallog_level;
+  TasmotaGlobal.syslog_level = Settings.syslog_level;
+
+  TasmotaGlobal.module_changed = (Settings.module != Settings.last_module);
+  if (TasmotaGlobal.module_changed) {
+    Settings.baudrate = APP_BAUDRATE / 300;
+    Settings.serial_config = TS_SERIAL_8N1;
+  }
+  SetSerialBaudrate(Settings.baudrate * 300);  // Reset serial interface if current baudrate is different from requested baudrate
+
+  if (1 == RtcReboot.fast_reboot_count) {      // Allow setting override only when all is well
     UpdateQuickPowerCycle(true);
   }
 
-  TasmotaGlobal.seriallog_level = Settings.seriallog_level;
-  TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
-  TasmotaGlobal.syslog_level = Settings.syslog_level;
   TasmotaGlobal.stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   TasmotaGlobal.save_data_counter = Settings.save_data;
   TasmotaGlobal.sleep = Settings.sleep;
@@ -281,6 +287,13 @@ void setup(void) {
     }
   }
 
+  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
+  if (VERSION & 0xff) {  // Development or patched version 6.3.0.10
+    snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, VERSION & 0xff);
+  }
+  // Thehackbox inserts "release" or "commit number" before compiling using sed -i -e 's/PSTR("(%s)")/PSTR("(85cff52-%s)")/g' tasmota.ino
+  snprintf_P(TasmotaGlobal.image_name, sizeof(TasmotaGlobal.image_name), PSTR("(%s)"), CODE_IMAGE_STR);  // Results in (85cff52-tasmota) or (release-tasmota)
+
   Format(TasmotaGlobal.mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(TasmotaGlobal.mqtt_client));
   Format(TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(TasmotaGlobal.mqtt_topic));
   if (strchr(SettingsText(SET_HOSTNAME), '%') != nullptr) {
@@ -292,8 +305,6 @@ void setup(void) {
 
   GetEspHardwareType();
   GpioInit();
-
-//  SetSerialBaudrate(Settings.baudrate * 300);  // Allow reset of serial interface if current baudrate is different from requested baudrate
 
   WifiConnect();
 
