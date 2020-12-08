@@ -57,6 +57,8 @@ char ib_mac[14];
     } mode;
   } ESP32BLE;
 
+  void *beaconmutex = nullptr;
+
   #define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))
 
 #else
@@ -233,6 +235,9 @@ void ESP32Init() {
 
 void IBEACON_Init() {
 
+  BLE_ESP32::BLEAutoMutex::init(&beaconmutex);
+
+
 #ifdef USE_IBEACON_ESP32
   BLE_ESP32::registerForAdvertismentCallbacks((const char *)"iBeacon", advertismentCallback);
 #else
@@ -366,6 +371,9 @@ uint32_t ibeacon_add(struct IBEACON *ib) {
   if (!strncmp(ib->RSSI,"0",1)) {
     return 0;
   }
+
+  // 
+  BLE_ESP32::BLEAutoMutex localmutex(beaconmutex);
 
   // keyfob starts with ffff, ibeacon has valid facid
   if (!strncmp(ib->MAC,"FFFF",4) || strncmp(ib->FACID,"00000000",8)) {
@@ -624,7 +632,7 @@ hm17_v110:
 void IBEACON_loop() {
 
 #ifdef USE_IBEACON_ESP32
-
+  BLE_ESP32::BLEAutoMutex localmutex(beaconmutex);
   for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {
     if (ibeacons[cnt].FLAGS && ! ibeacons[cnt].REPORTED) {
       ibeacon_mqtt(ibeacons[cnt].MAC,ibeacons[cnt].RSSI,ibeacons[cnt].UID,ibeacons[cnt].MAJOR,ibeacons[cnt].MINOR,ibeacons[cnt].NAME);
@@ -677,6 +685,7 @@ char rssi[6];
 char uid[34];
 #ifdef USE_IBEACON_ESP32
 char name[18];
+  BLE_ESP32::BLEAutoMutex localmutex(beaconmutex);
 #endif
 
   for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) {

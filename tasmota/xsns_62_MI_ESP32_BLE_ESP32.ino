@@ -47,11 +47,14 @@
 */
 //#define VSCODE_DEV
 
+/*
 #ifdef VSCODE_DEV
 #define ESP32
 #define USE_BLE_ESP32
 #define USE_MI_ESP32
 #endif
+*/
+//#undef USE_MI_ESP32
 
 // for testing of BLE_ESP32, we remove xsns_62_MI_ESP32.ino completely, and instead add this modified xsns_52_ibeacon_BLE_ESP32.ino
 #ifdef USE_BLE_ESP32
@@ -302,7 +305,7 @@ std::array<generic_beacon_t,4> MIBLEbeacons; // we support a fixed number
 std::vector<scan_entry_t> MIBLEscanResult;
 std::vector<MAC_t> MIBLEBlockList;
 
-static BLEScan* MI32Scan;
+void *slotmutex = nullptr;
 
 /*********************************************************************************************\
  * constants
@@ -853,10 +856,13 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   int svcdataCount = advertisedDevice->getServiceDataCount();
 
 
+
   if (svcdataCount == 0) {
     //BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR("MI32Adv: no svcdata"));
     uint8_t* payload = advertisedDevice->getPayload();
     size_t payloadlen = advertisedDevice->getPayloadLength();
+    // this will take and keep the mutex until the function is over
+    BLE_ESP32::BLEAutoMutex localmutex(slotmutex);
     MI32HandleGenericBeacon(payload, payloadlen, RSSI, addr);
     return 0;
   }
@@ -877,6 +883,8 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   const char *ServiceData = (const char *)ServiceDataStr.data();
 
   if (UUID){
+    // this will take and keep the mutex until the function is over
+    BLE_ESP32::BLEAutoMutex localmutex(slotmutex);
     if(UUID == 0xfe95) {
       if(MI32isInBlockList(addr) == true) return 0;
       MI32ParseResponse(ServiceData, ServiceDataLength, addr, RSSI);
@@ -1204,6 +1212,7 @@ int MI32scanCompleteCallback(NimBLEScanResults results){
 
 
 void MI32Init(void) {
+  BLE_ESP32::BLEAutoMutex::init(&slotmutex);
   MIBLEsensors.reserve(10);
   MIBLEbindKeys.reserve(10);
   MIBLEscanResult.reserve(20);
@@ -1651,6 +1660,9 @@ void MI32addBeacon(uint8_t index, char* data){
  *
  */
 void MI32showScanResults(){
+  // this will take and keep the mutex until the function is over
+  BLE_ESP32::BLEAutoMutex localmutex(slotmutex);
+
   size_t _size = MIBLEscanResult.size();
   ResponseAppend_P(PSTR(",\"BLEScan\":{\"Found\":%u,\"Devices\":["), _size);
   for(auto _scanResult : MIBLEscanResult){
@@ -1685,6 +1697,9 @@ bool MI32isInBlockList(const uint8_t* MAC){
 }
 
 void MI32removeMIBLEsensor(uint8_t* MAC){
+  // this will take and keep the mutex until the function is over
+  BLE_ESP32::BLEAutoMutex localmutex(slotmutex);
+
   MIBLEsensors.erase( std::remove_if( MIBLEsensors.begin() , MIBLEsensors.end(), [MAC]( mi_sensor_t _sensor )->bool
   { return (memcmp(_sensor.MAC,MAC,6) == 0); } 
   ), end( MIBLEsensors ) );
@@ -1774,13 +1789,19 @@ void MI32EverySecond(bool restart){
 
   uint32_t _idx = 0;
   uint32_t _activeBeacons = 0;
-  for (auto &_beacon : MIBLEbeacons){
-    _idx++;
-    if(_beacon.active == false) continue;
-    _activeBeacons++;
-    _beacon.time++;
-    Response_P(PSTR("{\"Beacon%u\":{\"Time\":%u}}"), _idx, _beacon.time);
-    XdrvRulesProcess();
+
+
+  { // brackets to scope localmutex
+    // this will take and keep the mutex until the function is over
+    BLE_ESP32::BLEAutoMutex localmutex(slotmutex);
+    for (auto &_beacon : MIBLEbeacons){
+      _idx++;
+      if(_beacon.active == false) continue;
+      _activeBeacons++;
+      _beacon.time++;
+      Response_P(PSTR("{\"Beacon%u\":{\"Time\":%u}}"), _idx, _beacon.time);
+      XdrvRulesProcess();
+    }
   }
   if(_activeBeacons==0) MI32.mode.activeBeacon = 0;
 
@@ -1875,6 +1896,7 @@ void CmndMi32Key(void) {
 
 void CmndMi32Beacon(void) {
   if (XdrvMailbox.data_len == 0) {
+    BLE_ESP32::BLEAutoMutex localmutex(slotmutex);
     switch (XdrvMailbox.index) {
       case 0:
         MI32.state.beaconScanCounter = 8;
@@ -1900,11 +1922,12 @@ void CmndMi32Beacon(void) {
 void CmndMi32Block(void){
   if (XdrvMailbox.data_len == 0) {
     switch (XdrvMailbox.index) {
-      case 0:
+      case 0: {
+        BLE_ESP32::BLEAutoMutex localmutex(slotmutex);
         MIBLEBlockList.clear();
         // AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: size of ilist: %u"), MIBLEBlockList.size());
         ResponseCmndIdxChar(PSTR("block list cleared"));
-        break;
+      } break;
       case 1:
         ResponseCmndIdxChar(PSTR("show block list"));
         break;  
@@ -1914,13 +1937,15 @@ void CmndMi32Block(void){
     MAC_t _MACasBytes;
     MI32HexStringToBytes(XdrvMailbox.data,_MACasBytes.buf);
     switch (XdrvMailbox.index) {
-      case 0:
+      case 0: {
+        BLE_ESP32::BLEAutoMutex localmutex(slotmutex);
         MIBLEBlockList.erase( std::remove_if( begin( MIBLEBlockList ), end( MIBLEBlockList ), [_MACasBytes]( MAC_t& _entry )->bool
           { return (memcmp(_entry.buf,_MACasBytes.buf,6) == 0); } 
           ), end( MIBLEBlockList ) );
         ResponseCmndIdxChar(PSTR("MAC not blocked anymore"));
-        break;
-      case 1:
+      } break;
+      case 1: {
+        BLE_ESP32::BLEAutoMutex localmutex(slotmutex);
         bool _notYetInList = true;
         for (auto &_entry : MIBLEBlockList) {
           if (memcmp(_entry.buf,_MACasBytes.buf,6) == 0){
@@ -1933,7 +1958,7 @@ void CmndMi32Block(void){
           MI32removeMIBLEsensor(_MACasBytes.buf);
         }
         // AddLog_P(LOG_LEVEL_INFO,PSTR("MI32: size of ilist: %u"), MIBLEBlockList.size());
-        break;  
+      } break;  
     }
   }
   MI32.mode.shallShowBlockList = 1;
@@ -1974,6 +1999,10 @@ const char HTTP_PAIRING[] PROGMEM = "{s}%s Pair Button Pressed{m} {e}";
 
 void MI32Show(bool json)
 {
+  // whatever, this function access all the arrays....
+  // so block for as long as it takes.
+  BLE_ESP32::BLEAutoMutex localmutex(slotmutex);
+
   if (json) {
     if(MI32.mode.shallShowScanResult) {
       return MI32showScanResults();
@@ -2000,6 +2029,7 @@ void MI32Show(bool json)
       MI32.mode.shallClearResults=1;
       if(MI32.option.noSummary) return; // no message at TELEPERIOD
       }
+
 
     for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
       if(MI32.mode.triggeredTele && MIBLEsensors[i].eventType.raw == 0) continue;

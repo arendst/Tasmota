@@ -160,7 +160,7 @@ struct generic_sensor_t {
   void *readmodifywritecallback; // READ_CALLBACK function, used by external drivers
 
   void *completecallback; // OPCOMPLETE_CALLBACK function, used by external drivers
-  void *context; // opaque context, used by external drivers
+  void *context; // opaque context, used by external drivers, or can be set to a long for MQTT
 };
 
 
@@ -227,6 +227,30 @@ int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...);
 // utilities
 // dump a binary to hex
 char * dump(char *dest, int maxchars, uint8_t *src, int len);
+
+//////////////////////////////////////////
+// automutex.
+// create a mute in your driver with:
+// void *mutex = nullptr;
+// BLE_ESP32::BLEAutoMutex::init(&mutex);
+//
+// then protect any function with
+// BLE_ESP32::BLEAutoMutex m(mutex);
+// - it will be automagically released when the funtcion is over.
+// - the same thread can take multiple times (recursive).
+// - advanced options m.give() and m.take() allow you fine control within a function.
+class BLEAutoMutex {
+  SemaphoreHandle_t mutex;
+  bool taken;
+  public:
+    BLEAutoMutex(void * mutex, bool take=true);
+    ~BLEAutoMutex();
+    void give();
+    void take();
+    static void init(void ** ptr);
+};
+//////////////////////////////////////////
+
 
 }
 
