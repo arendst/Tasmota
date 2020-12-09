@@ -129,6 +129,7 @@ enum UserSelectablePins {
   GPIO_AS608_TX, GPIO_AS608_RX,        // Serial interface AS608 / R503
   GPIO_SHELLY_DIMMER_BOOT0, GPIO_SHELLY_DIMMER_RST_INV,
   GPIO_RC522_RST,                      // RC522 reset
+  GPIO_P9813_CLK, GPIO_P9813_DAT,      // P9813 Clock and Data
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -237,7 +238,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_WE517_TX "|" D_SENSOR_WE517_RX "|"
   D_SENSOR_AS608_TX "|" D_SENSOR_AS608_RX "|"
   D_SENSOR_SHELLY_DIMMER_BOOT0 "|" D_SENSOR_SHELLY_DIMMER_RST_INV "|"
-  D_SENSOR_RC522_RST
+  D_SENSOR_RC522_RST "|"
+  D_SENSOR_P9813_CLK "|" D_SENSOR_P9813_DAT
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -337,6 +339,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
   AGPIO(GPIO_WS2812),         // WS2812 Led string
+  AGPIO(GPIO_P9813_CLK),      // P9813 CLOCK
+  AGPIO(GPIO_P9813_DAT),      // P9813 DATA
 #endif
 #ifdef USE_ARILUX_RF
   AGPIO(GPIO_ARIRFRCV),       // AriLux RF Receive input
@@ -1001,6 +1005,8 @@ enum LegacyUserSelectablePins {
   GPI8_IEM3000_RX,     // IEM3000 Serial interface
   GPI8_ZIGBEE_RST,     // Zigbee reset
   GPI8_DYP_RX,
+  GPI8_P9813_CLK,
+  GPI8_P9813_DAT,
   GPI8_SENSOR_END };
 
 // Programmer selectable GPIO functionality

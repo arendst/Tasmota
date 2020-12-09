@@ -47,7 +47,9 @@ void (* const Ws2812Command[])(void) PROGMEM = {
 
 #include <NeoPixelBus.h>
 
-#if (USE_WS2812_CTYPE == NEO_GRB)
+#if (USE_WS2812_HARDWARE == NEO_HW_P9813)
+  typedef P9813BgrFeature selectedNeoFeatureType;
+#elif (USE_WS2812_CTYPE == NEO_GRB)
   typedef NeoGrbFeature selectedNeoFeatureType;
 #elif (USE_WS2812_CTYPE == NEO_BRG)
   typedef NeoBrgFeature selectedNeoFeatureType;
@@ -72,6 +74,8 @@ void (* const Ws2812Command[])(void) PROGMEM = {
   typedef NeoEsp8266DmaInvertedSk6812Method selectedNeoSpeedType;
 #elif (USE_WS2812_HARDWARE == NEO_HW_APA106)
   typedef NeoEsp8266DmaInvertedApa106Method selectedNeoSpeedType;
+#elif (USE_WS2812_HARDWARE == NEO_HW_P9813)
+  #error "P9813 don't support DMA"
 #else   // USE_WS2812_HARDWARE
   typedef NeoEsp8266DmaInverted800KbpsMethod selectedNeoSpeedType;
 #endif  // USE_WS2812_HARDWARE
@@ -84,6 +88,8 @@ void (* const Ws2812Command[])(void) PROGMEM = {
   typedef NeoEsp8266DmaSk6812Method selectedNeoSpeedType;
 #elif (USE_WS2812_HARDWARE == NEO_HW_APA106)
   typedef NeoEsp8266DmaApa106Method selectedNeoSpeedType;
+#elif (USE_WS2812_HARDWARE == NEO_HW_P9813)
+  #error "P9813 don't support DMA"
 #else   // USE_WS2812_HARDWARE
   typedef NeoEsp8266Dma800KbpsMethod selectedNeoSpeedType;
 #endif  // USE_WS2812_HARDWARE
@@ -99,6 +105,8 @@ void (* const Ws2812Command[])(void) PROGMEM = {
   typedef NeoEsp8266BitBangWs2812xInvertedMethod selectedNeoSpeedType;
 #elif (USE_WS2812_HARDWARE == NEO_HW_SK6812)
   typedef NeoEsp8266BitBangSk6812InvertedMethod selectedNeoSpeedType;
+#elif (USE_WS2812_HARDWARE == NEO_HW_P9813)
+  #error "P9813 don't support inverted"
 #else   // USE_WS2812_HARDWARE
   typedef NeoEsp8266BitBang400KbpsInvertedMethod selectedNeoSpeedType;
 #endif  // USE_WS2812_HARDWARE
@@ -109,6 +117,8 @@ void (* const Ws2812Command[])(void) PROGMEM = {
   typedef NeoEsp8266BitBangWs2812xMethod selectedNeoSpeedType;
 #elif (USE_WS2812_HARDWARE == NEO_HW_SK6812)
   typedef NeoEsp8266BitBangSk6812Method selectedNeoSpeedType;
+#elif (USE_WS2812_HARDWARE == NEO_HW_P9813)
+  typedef P9813Method selectedNeoSpeedType;
 #else   // USE_WS2812_HARDWARE
   typedef NeoEsp8266BitBang800KbpsMethod selectedNeoSpeedType;
 #endif  // USE_WS2812_HARDWARE
@@ -472,10 +482,15 @@ void Ws2812ShowScheme(void)
 
 void Ws2812ModuleSelected(void)
 {
+#if (USE_WS2812_HARDWARE == NEO_HW_P9813)
+  if (PinUsed(GPIO_P9813_CLK) && PinUsed(GPIO_P9813_DAT)) {  // RGB led
+    strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS, Pin(GPIO_P9813_CLK), Pin(GPIO_P9813_DAT));
+#else
   if (PinUsed(GPIO_WS2812)) {  // RGB led
-
     // For DMA, the Pin is ignored as it uses GPIO3 due to DMA hardware use.
     strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS, Pin(GPIO_WS2812));
+#endif
+
     strip->Begin();
 
     Ws2812Clear();

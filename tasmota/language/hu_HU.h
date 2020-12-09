@@ -734,6 +734,8 @@
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
 #define D_SENSOR_SHELLY_DIMMER_RST_INV "SHD Reset"
 #define D_SENSOR_RC522_RST     "RC522 Rst"
+#define D_SENSOR_P9813_CLK     "P9813 Clock"
+#define D_SENSOR_P9813_DAT     "P9813 Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
