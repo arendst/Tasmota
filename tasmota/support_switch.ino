@@ -255,10 +255,10 @@ void SwitchHandler(uint32_t mode) {
               switchflag = POWER_TOGGLE;                     // Toggle after hold
               break;
             case FOLLOWMULTI:
-              switchflag = button &1;                        // Follow wall switch state after hold
+              switchflag = ~button &1;                       // Follow wall switch state after hold
               break;
             case FOLLOWMULTI_INV:
-              switchflag = ~button &1;                       // Follow inverted wall switch state after hold
+              switchflag = button &1;                        // Follow inverted wall switch state after hold
               break;
             case PUSHHOLDMULTI:
               if (NOT_PRESSED == button) {
@@ -298,10 +298,10 @@ void SwitchHandler(uint32_t mode) {
           switchflag = POWER_TOGGLE;         // Toggle
           break;
         case FOLLOW:
-          switchflag = button &1;            // Follow wall switch state
+          switchflag = ~button &1;           // Follow wall switch state
           break;
         case FOLLOW_INV:
-          switchflag = ~button &1;           // Follow inverted wall switch state
+          switchflag = button &1;            // Follow inverted wall switch state
           break;
         case PUSHBUTTON:
           if (PRESSED == button) {
