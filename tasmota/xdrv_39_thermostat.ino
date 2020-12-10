@@ -234,9 +234,9 @@ struct THERMOSTAT {
   uint16_t time_max_action = THERMOSTAT_TIME_MAX_ACTION;                      // Maximum thermostat time per cycle in minutes
   uint16_t time_min_action = THERMOSTAT_TIME_MIN_ACTION;                      // Minimum thermostat time per cycle in minutes
   uint16_t time_min_turnoff_action = THERMOSTAT_TIME_MIN_TURNOFF_ACTION;      // Minimum turnoff time in minutes, below it the thermostat will stay on
+  int16_t temp_frost_protect = THERMOSTAT_TEMP_FROST_PROTECT;                 // Minimum temperature for frost protection, in tenths of degrees celsius
   uint8_t temp_reset_anti_windup = THERMOSTAT_TEMP_RESET_ANTI_WINDUP;         // Range where reset antiwindup is disabled, in tenths of degrees celsius
   int8_t temp_hysteresis = THERMOSTAT_TEMP_HYSTERESIS;                        // Range hysteresis for temperature PI controller, in tenths of degrees celsius
-  uint8_t temp_frost_protect = THERMOSTAT_TEMP_FROST_PROTECT;                 // Minimum temperature for frost protection, in tenths of degrees celsius
   ThermostatDiagBitfield diag;                                                // Bittfield including diagnostic flags
 #ifdef USE_PI_AUTOTUNING
   uint8_t dutycycle_step_autotune = THERMOSTAT_DUTYCYCLE_AUTOTUNE;            // Duty cycle for the step response of the autotune PI function in %
@@ -1237,7 +1237,7 @@ bool ThermostatTimerArm(uint8_t ctr_output, int16_t tempVal)
   // TempVal unit is tenths of degrees celsius
   if ((tempVal >= -1000)
     && (tempVal <= 1000)
-    && (tempVal >= (int16_t)Thermostat[ctr_output].temp_frost_protect)) {
+    && (tempVal >= Thermostat[ctr_output].temp_frost_protect)) {
       Thermostat[ctr_output].temp_target_level = tempVal;
       Thermostat[ctr_output].status.thermostat_mode = THERMOSTAT_AUTOMATIC_OP;
       result = true;
@@ -1332,7 +1332,14 @@ void ThermostatGetLocalSensor(uint8_t ctr_output) {
   JsonParser parser((char*)buf.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) {
-    JsonParserToken value_token = root[PSTR(THERMOSTAT_SENSOR_NAME)].getObject()[PSTR("Temperature")];
+    String sensor_name = THERMOSTAT_SENSOR_NAME;
+    const char* value_c;
+    if (  (THERMOSTAT_SENSOR_NUMBER > 1)
+        &&(THERMOSTAT_CONTROLLER_OUTPUTS > 1)
+        &&(ctr_output < THERMOSTAT_SENSOR_NUMBER)) {
+      sensor_name.concat("_" + (ctr_output + 1));
+    }
+    JsonParserToken value_token = root[sensor_name].getObject()[PSTR("Temperature")];
     if (value_token.isNum()) {
       int16_t value = value_token.getFloat() * 10;
       if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
@@ -1404,16 +1411,16 @@ void CmndTempFrostProtectSet(void)
       else {
         value = (int16_t)(CharToFloat(XdrvMailbox.data) * 10);
       }
-      if ( (value >= 0)
-        && (value <= 127)) {
-        Thermostat[ctr_output].temp_frost_protect = (uint8_t)value;
+      if ( (value >= -1000)
+        && (value <= 1000)) {
+        Thermostat[ctr_output].temp_frost_protect = value;
       }
     }
     if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
       value = ThermostatCelsiusToFahrenheit((int32_t)Thermostat[ctr_output].temp_frost_protect, TEMP_CONV_ABSOLUTE);
     }
     else {
-      value = (int16_t)Thermostat[ctr_output].temp_frost_protect;
+      value = Thermostat[ctr_output].temp_frost_protect;
     }
     ResponseCmndFloat((float)value / 10, 1);
   }
@@ -1575,7 +1582,7 @@ void CmndTempTargetSet(void)
       }
       if ( (value >= -1000)
         && (value <= 1000)
-        && (value >= (int16_t)Thermostat[ctr_output].temp_frost_protect)) {
+        && (value >= Thermostat[ctr_output].temp_frost_protect)) {
         Thermostat[ctr_output].temp_target_level = value;
       }
     }
