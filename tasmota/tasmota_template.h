@@ -1005,8 +1005,8 @@ enum LegacyUserSelectablePins {
   GPI8_IEM3000_RX,     // IEM3000 Serial interface
   GPI8_ZIGBEE_RST,     // Zigbee reset
   GPI8_DYP_RX,
-  GPI8_P9813_CLK,
-  GPI8_P9813_DAT,
+  GPI8_P9813_CLK,      // P9813 Clock
+  GPI8_P9813_DAT,      // P9813 Data
   GPI8_SENSOR_END };
 
 // Programmer selectable GPIO functionality
