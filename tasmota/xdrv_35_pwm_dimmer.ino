@@ -289,7 +289,9 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     // button interval had not elapsed, 
     if (button_unprocessed[button_index]) {
       mqtt_trigger = 5;
+#ifdef USE_PWM_DIMMER_REMOTE
       if (!active_remote_pwm_dimmer) mqtt_trigger += button_index;
+#endif  // USE_PWM_DIMMER_REMOTE
       button_hold_time[button_index] = now + 750;
     }
 
