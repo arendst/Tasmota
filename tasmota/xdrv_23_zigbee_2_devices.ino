@@ -717,6 +717,7 @@ public:
   // sequence number for Zigbee frames
   uint16_t              shortaddr;      // unique key if not null, or unspecified if null
   uint8_t               seqNumber;
+  bool                  is_router;         // flag used by ZbMap to distibguish routers from end-devices
   bool                  hidden;
   bool                  reachable;
   // Light information for Hue integration integration, last known values
@@ -742,6 +743,7 @@ public:
     attr_list(),
     shortaddr(_shortaddr),
     seqNumber(0),
+    is_router(false),
     hidden(false),
     reachable(false),
     data(),
@@ -767,6 +769,10 @@ public:
   inline void setReachable(bool _reachable)   { reachable = _reachable; }
   inline bool getReachable(void)        const { return reachable; }
   inline bool getPower(uint8_t ep =0)   const;
+
+  inline bool isRouter(void)            const { return is_router; }
+  inline bool isCoordinator(void)       const { return 0x0000 == shortaddr; }
+  inline void setRouter(bool router)          { is_router = router; }
 
   inline void setLQI(uint8_t _lqi)            { lqi = _lqi; }
   inline void setBatteryPercent(uint8_t bp)   { batterypercent = bp; }
