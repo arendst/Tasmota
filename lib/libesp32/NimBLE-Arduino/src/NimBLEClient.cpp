@@ -189,6 +189,8 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
 
     int rc = 0;
 
+    m_waitingToConnect = true;
+
     /* Try to connect the the advertiser.  Allow 30 seconds (30000 ms) for
      *  timeout (default value of m_connectTimeout).
      *  Loop on BLE_HS_EBUSY if the scan hasn't stopped yet.
@@ -201,6 +203,7 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
         }
     }while(rc == BLE_HS_EBUSY);
 
+    m_result = rc;
     if (rc != 0 && rc != BLE_HS_EDONE) {
         NIMBLE_LOGE(LOG_TAG, "Error: Failed to connect to device; "
                     "addr=%s, rc=%d; %s",
@@ -210,8 +213,6 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
         m_waitingToConnect = false;
         return false;
     }
-
-    m_waitingToConnect = true;
 
     // Wait for the connection to complete.
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
@@ -229,6 +230,10 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
     NIMBLE_LOGD(LOG_TAG, "<< connect()");
     return true;
 } // connect
+
+int NimBLEClient::getResult(){
+  return m_result;
+}
 
 
 /**
