@@ -229,7 +229,7 @@ void Z_Send_State_or_Map(uint16_t shortaddr, uint8_t index, uint16_t zdo_cmd) {
 // This callback is registered to send ZbMap(s) to each device one at a time
 void Z_Map(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   if (BAD_SHORTADDR != shortaddr) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "sending `ZnMap 0x%04X`"), shortaddr);
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "sending `ZbMap 0x%04X`"), shortaddr);
 #ifdef USE_ZIGBEE_ZNP
     Z_Send_State_or_Map(shortaddr, value, ZDO_MGMT_LQI_REQ);
 #endif // USE_ZIGBEE_ZNP
@@ -238,6 +238,8 @@ void Z_Map(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t end
 #endif // USE_ZIGBEE_EZSP
   } else {
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbMap done"));
+    zigbee.mapping_in_progress = false;
+    zigbee.mapping_ready = true;
   }
 }
 /*********************************************************************************************\
@@ -1110,6 +1112,27 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) 
                             TrueFalseNull(m_permitjoin & 0x02),
                             m_depth,
                             m_lqi);
+
+      // detect any router
+      Z_Device & device = zigbee_devices.findShortAddr(m_shortaddr);
+      if (device.valid()) {
+        if ((m_dev_type & 0x03) == 1) {   // it is a router
+          device.setRouter(true);
+        }
+      }
+
+      // Add information to zigbee mapper
+      // Z_Mapper_Edge::Edge_Type edge_type;
+      // switch ((m_dev_type & 0x70) >> 4) {
+      //   case 0: edge_type = Z_Mapper_Edge::Parent;       break;
+      //   case 1: edge_type = Z_Mapper_Edge::Child;        break;
+      //   case 2: edge_type = Z_Mapper_Edge::Sibling;      break;
+      //   default: edge_type = Z_Mapper_Edge::Unknown;     break;
+
+      // }
+      // Z_Mapper_Edge edge(m_shortaddr, shortaddr, m_lqi, edge_type);
+      Z_Mapper_Edge edge(m_shortaddr, shortaddr, m_lqi);
+      zigbee_mapper.addEdge(edge);
     }
 
     ResponseAppend_P(PSTR("]}}"));
