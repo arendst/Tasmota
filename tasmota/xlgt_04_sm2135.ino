@@ -56,7 +56,7 @@
 enum Sm2135Color { SM2135_WCGRB, SM2135_WCBGR };
 
 //                              RGB current         CW current
-const uint8_t SM2135_CURRENT = (SM2135_20MA << 4) | SM2135_15MA;  // See https://github.com/arendst/Tasmota/issues/6495#issuecomment-549121683
+const uint8_t SM2135_CURRENT = (SM2135_20MA << 4) | SM2135_30MA;  // See https://github.com/arendst/Tasmota/issues/6495#issuecomment-549121683
 
 struct SM2135 {
   uint8_t clk = 0;
@@ -135,27 +135,33 @@ bool Sm2135SetChannels(void) {
   uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
   uint8_t data[6];
 
-  Sm2135Start(SM2135_ADDR_MC);
-  Sm2135Write(SM2135_CURRENT);
-  if ((0 == cur_col[0]) && (0 == cur_col[1]) && (0 == cur_col[2])) {
-    Sm2135Write(SM2135_CW);
-    Sm2135Stop();
-    delay(1);
-    Sm2135Start(SM2135_ADDR_C);
-    Sm2135Write(cur_col[4]);  // Warm
-    Sm2135Write(cur_col[3]);  // Cold
+  // Set RGB
+  
+  Sm2135Start(SM2135_ADDR_MC);          // Set register address to 0 (Max currents)
+  Sm2135Write(SM2135_CURRENT);          // Write register 1, currents
+
+  Sm2135Write(SM2135_RGB);              // Select write to RGB
+  if (SM2135_WCBGR == Sm2135.model) {
+    Sm2135Write(cur_col[2]);  // Blue
+    Sm2135Write(cur_col[1]);  // Green
+    Sm2135Write(cur_col[0]);  // Red
   } else {
-    Sm2135Write(SM2135_RGB);
-    if (SM2135_WCBGR == Sm2135.model) {
-      Sm2135Write(cur_col[2]);  // Blue
-      Sm2135Write(cur_col[1]);  // Green
-      Sm2135Write(cur_col[0]);  // Red
-    } else {
-      Sm2135Write(cur_col[1]);  // Green
-      Sm2135Write(cur_col[0]);  // Red
-      Sm2135Write(cur_col[2]);  // Blue
-    }
+    Sm2135Write(cur_col[1]);  // Green
+    Sm2135Write(cur_col[0]);  // Red
+    Sm2135Write(cur_col[2]);  // Blue
   }
+  Sm2135Stop();                       // Stop
+
+  // Set CW
+  
+  Sm2135Start(SM2135_ADDR_MC);        // Set register address to 0 (Max currents)
+  Sm2135Write(SM2135_CURRENT);        // Write register 1, currents
+  Sm2135Write(SM2135_CW);             // Select write to CW
+  Sm2135Stop();
+  
+  Sm2135Start(SM2135_ADDR_C);         // Select register 5, C
+  Sm2135Write(cur_col[3]);  // Cold
+  Sm2135Write(cur_col[4]);  // Warm
   Sm2135Stop();
 
   return true;
