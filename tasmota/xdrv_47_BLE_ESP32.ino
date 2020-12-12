@@ -2643,8 +2643,6 @@ bool Xdrv47(uint8_t function)
       BLE_ESP32::BLEEvery50mSecond();
       break;
     case FUNC_EVERY_SECOND:
-      //############################# DEBUG
-      TasmotaGlobal.seriallog_timer = 0;
       BLE_ESP32::BLEEverySecond(false);
       break;
     case FUNC_COMMAND:
