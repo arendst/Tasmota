@@ -90,16 +90,16 @@ AudioGeneratorTalkie *talkie = nullptr;
 #define TWATCH_DAC_IIS_DOUT      3
 #endif  // ESP8266
 #ifdef ESP32
-#undef TWATCH_DAC_IIS_BCK
-#undef TWATCH_DAC_IIS_WS
-#undef TWATCH_DAC_IIS_DOUT
 #ifndef TWATCH_DAC_IIS_BCK
+#undef TWATCH_DAC_IIS_BCK
 #define TWATCH_DAC_IIS_BCK       26
 #endif
 #ifndef TWATCH_DAC_IIS_WS
+#undef TWATCH_DAC_IIS_WS
 #define TWATCH_DAC_IIS_WS        25
 #endif
 #ifndef TWATCH_DAC_IIS_DOUT
+#undef TWATCH_DAC_IIS_DOUT
 #define TWATCH_DAC_IIS_DOUT      33
 #endif
 #endif  // ESP32
