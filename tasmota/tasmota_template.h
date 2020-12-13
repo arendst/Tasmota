@@ -247,6 +247,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_A4988_MSS    3
 #define MAX_WEBCAM_DATA  8
 #define MAX_WEBCAM_HSD   3
+#define MAX_SM2135_DAT   4
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
@@ -352,8 +353,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SM16716_SEL),    // SM16716 SELECT
 #endif  // USE_SM16716
 #ifdef USE_SM2135
-  AGPIO(GPIO_SM2135_CLK),     // SM2135 CLOCK
-  AGPIO(GPIO_SM2135_DAT),     // SM2135 DATA
+  AGPIO(GPIO_SM2135_CLK),                    // SM2135 CLOCK
+  AGPIO(GPIO_SM2135_DAT) + MAX_SM2135_DAT,   // SM2135 DATA
 #endif  // USE_SM2135
 #ifdef USE_TUYA_MCU
   AGPIO(GPIO_TUYA_TX),        // Tuya Serial interface
