@@ -376,8 +376,12 @@ uint32_t BLEResets = 0;
 uint8_t BLEDetailsRequest = 0;
 uint8_t BLEDetailsMac[6];
 
-// triggers send fo ALL operations known about
+// triggers send for ALL operations known about
 uint8_t BLEPostMQTTTrigger = 0;
+
+
+
+
 //////////////////////////////////////////////////
 
 
@@ -505,7 +509,17 @@ uint8_t BLEdeviceLimitReached = 0;
 uint8_t BLEStop = 0;
 uint8_t BLERestartTasmota = 0;
 uint8_t BLERestartNimBLE = 0;
+const char *BLE_RESTART_TEAMOTA_REASON_UNKNOWN = PSTR("unknown");
+const char *BLE_RESTART_TEAMOTA_REASON_RESTARTING_BLE_TIMEOUT = PSTR("restarting BLE took > 5s");
+const char *BLE_RESTART_TEAMOTA_REASON_BLE_LOOP_STALLED = PSTR("BLE loop stalled > 120s");
+const char *BLE_RESTART_TEAMOTA_REASON_BLE_DISCONNECT_FAIL = PSTR("BLE disconnect taking > 60s");
+const char *BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_UNKNOWN;
 
+const char *BLE_RESTART_BLE_REASON_UNKNOWN = PSTR("unknown");
+const char *BLE_RESTART_BLE_REASON_ADVERT_BLE_TIMEOUT = PSTR("no adverts in 120s");
+const char *BLE_RESTART_BLE_REASON_CONN_LIMIT = PSTR("connect failed with connection limit reached");
+const char *BLE_RESTART_BLE_REASON_CONN_EXISTS = PSTR("connect failed with connection exists");
+const char *BLERestartBLEReason = nullptr;
 
 BLEAutoMutex::BLEAutoMutex(void * mutex, bool take){
   if(mutex){
@@ -671,9 +685,16 @@ int deleteSeenDevice(uint8_t *mac){
 // the MAX we could expect.
 #define MAX_DEV_JSON_NAME_LEN 20
 #define MAX_DEV_JSON_RSSI_LEN 3
-// "001122334455":{"n":"01234567890123456789","r":-77}\0 == 43
-#define MIN_REQUIRED_DEVJSON_LEN (1+12+1 + 1 + 1+1+1+1+1 + MAX_DEV_JSON_NAME_LEN + 2 +1+1+1+1+1 + MAX_DEV_JSON_RSSI_LEN + 2)
-int getSeenDeviceToJson(BLE_ESP32::BLE_simple_device_t* dev, char **dest, int *maxlen){
+#define MAX_DEV_JSON_INDEX_LEN 3
+// "001122334455":{"i":123,"n":"01234567890123456789","r":-77}\0
+#define MIN_REQUIRED_DEVJSON_LEN \
+  (1+12+1 + 1 + 1 + \
+  +4 + MAX_DEV_JSON_INDEX_LEN \
+  +1 + 4 + MAX_DEV_JSON_NAME_LEN + 2 \
+  +1 + 4 + MAX_DEV_JSON_RSSI_LEN + 2 \
+  +1 +1 \
+  )
+int getSeenDeviceToJson(int index, BLE_ESP32::BLE_simple_device_t* dev, char **dest, int *maxlen){
   char *p = *dest;
   if (*maxlen < MIN_REQUIRED_DEVJSON_LEN){
     return 0;
@@ -687,6 +708,13 @@ int getSeenDeviceToJson(BLE_ESP32::BLE_simple_device_t* dev, char **dest, int *m
 
   // add a structure, so we COULD add more than name later
   *((*dest)++) = '{';
+  *((*dest)++) = '"';
+  *((*dest)++) = 'i'; // index
+  *((*dest)++) = '"';
+  *((*dest)++) = ':';
+  sprintf((*dest), "%d", index);
+  (*dest) += strlen((*dest));
+  *((*dest)++) = ',';
   *((*dest)++) = '"';
   *((*dest)++) = 'n';
   *((*dest)++) = '"';
@@ -723,34 +751,47 @@ int getSeenDevicesToJson(char *dest, int maxlen){
   //BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO,PSTR("getSeen %d"), seenDevices.size());
 
 
+  int len;
   if (!maxlen) return 0;
   strcpy((dest), "{\"active\":{");
-  dest += strlen(dest);
+  len = strlen(dest);
+  dest += len;
+  maxlen -= len;
 
-  maxlen--;
   int added = 0;
   BLEAutoMutex localmutex(BLEOperationsRecursiveMutex);
-  for (int i = nextSeenDev; i < seenDevices.size(); i++){
-    if (maxlen > MIN_REQUIRED_DEVJSON_LEN - 3){
+
+  snprintf((dest), maxlen-5, "\"total\":%d", seenDevices.size());
+  len = strlen(dest);
+  dest += len;
+  maxlen -= len;
+  added = 1; // trigger ','
+
+  for (; nextSeenDev < seenDevices.size(); nextSeenDev++){
+    if (maxlen > MIN_REQUIRED_DEVJSON_LEN + 3){
       if (added){
         *(dest++) = ',';
         maxlen--;
       }
-      res += getSeenDeviceToJson(seenDevices[i], &dest, &maxlen);
+      res += getSeenDeviceToJson(nextSeenDev, seenDevices[nextSeenDev], &dest, &maxlen);
       if (res) {
         added++;
       } else {
         if (added){
-          dest--;
+          dest--; // reverse out comma it the string did not get added
           maxlen++;
+          break;
         }
       }
+    } else {
+      break;
     }
   }
   *(dest++) = '}';
   *(dest++) = '}';
   *(dest++) = 0;
-  return added;
+  int remains = (seenDevices.size() - nextSeenDev);
+  return remains;
 } 
 
 
@@ -1399,7 +1440,7 @@ static void BLEStartOperationTask(){
 static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
 
   if (*ppClient){
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO,PSTR("Stopping NimBLE"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("BLETask:Stopping NimBLE"));
 
     (*ppClient)->setClientCallbacks(nullptr, false);
 
@@ -1425,8 +1466,10 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
     vTaskDelay(1000/ portTICK_PERIOD_MS);
     NimBLEDevice::deinit(true);
   }
+  BLERunningScan = 0;
 
   if (start){
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_INFO,PSTR("BLETask:Starting NimBLE"));
     NimBLEDevice::init("BLE_ESP32");
 
     *ppClient = NimBLEDevice::createClient();
@@ -1448,7 +1491,7 @@ int BLETaskStartScan(int time){
   if (currentOperations.size()) return -3;
   if (BLEMode == BLEModeDisabled) return -4;
 
-  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLE Startscan"));
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLETask: Startscan"));
   //vTaskDelay(500/ portTICK_PERIOD_MS);
   ble32Scan->setActiveScan(BLEScanActiveMode);
 
@@ -1475,7 +1518,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
   if (!*pCurrentOperation) {
     *pCurrentOperation = nextOperation(&queuedOperations);
     if (*pCurrentOperation){
-      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("runCurrentOperation: new currentOperation"));
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLETask: new currentOperation"));
 
       generic_sensor_t* temp = *pCurrentOperation;
       //this will null it out, so save and restore.
@@ -1493,8 +1536,8 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
     uint64_t now = esp_timer_get_time();
     uint64_t diff = now - (*pCurrentOperation)->notifytimer;
     diff = diff/1000;
-    if (diff > 20000){
-      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("notify timeout"));
+    if (diff > 20000){ // 20s
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLETask: notify timeout"));
       (*pCurrentOperation)->state = GEN_STATE_FAILED_NOTIFYTIMEOUT;
       (*pCurrentOperation)->notifytimer = 0;
     }
@@ -1509,7 +1552,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
       //(*pCurrentOperation)->notifytimer == 0 at this point, so must be done
       (*pCurrentOperation)->state = GEN_STATE_NOTIFIED; 
       // just stay here until this is removed by the main thread
-      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("notify operation complete"));
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLETask: notify operation complete"));
       BLE_ESP32::BLETaskRunTaskDoneOperation(pCurrentOperation, ppClient);
       pClient = *ppClient;
       return;
@@ -1518,7 +1561,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
     case GEN_STATE_WRITEDONE:
     case GEN_STATE_NOTIFIED: // - may have completed DURING our read/write to get here
       // just stay here until this is removed by the main thread
-      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("operation complete"));
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLETask: operation complete"));
       BLE_ESP32::BLETaskRunTaskDoneOperation(pCurrentOperation, ppClient);
       pClient = *ppClient;
       return;
@@ -1536,7 +1579,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
   if (!*pCurrentOperation) return;
 
   if ((*pCurrentOperation)->state <= GEN_STATE_FAILED){
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("operation failed %d"), (*pCurrentOperation)->state);
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("BLETask: op failed %d"), (*pCurrentOperation)->state);
     BLE_ESP32::BLETaskRunTaskDoneOperation(pCurrentOperation, ppClient);
     pClient = *ppClient;
     return;
@@ -1548,7 +1591,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
   if (pClient->isConnected()){
     // don't do anything if we are still connected
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("runCurrentOperation: still connected"));
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLETask: still connected"));
     return;
   }
 
@@ -1566,10 +1609,10 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
   int newstate = GEN_STATE_STARTED;
   op->state = GEN_STATE_STARTED;
 
-  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("attempt connect %s"), ((std::string)op->addr).c_str());
+  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLETask: attempt connect %s"), ((std::string)op->addr).c_str());
   if (pClient->connect(op->addr, true)) {
 
-    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("connected %s - will getservice"), ((std::string)op->addr).c_str());
+    BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("connected %s -> getservice"), ((std::string)op->addr).c_str());
     NimBLERemoteService *pService = pClient->getService(op->serviceUUID);
     int waitNotify = false;
     int notifystate = 0;
@@ -1578,15 +1621,8 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
     if (pService != nullptr) {
       BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got service"));
 
-      // read or write characteristic - we always need this?
-      NimBLERemoteCharacteristic *pCharacteristic = nullptr;
-      if (op->characteristicUUID.bitSize()) {
-        pCharacteristic = pService->getCharacteristic(op->characteristicUUID);
-      }
-
       // pre-set to fail if no operations requested
       //newstate = GEN_STATE_FAILED_NOREADWRITE;
-
 
       ///////////////////////////////////////////////////////////////////////
       // !!!!!!!!!!@@@@@@@@@@@@@@@@
@@ -1611,7 +1647,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
               notifystate = GEN_STATE_WAITNOTIFY;
               waitNotify = true;
             } else {
-              BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for notify"));
+              BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("failed subscribe for notify"));
               newstate = GEN_STATE_FAILED_NOTIFY;
             }
           } else {
@@ -1623,15 +1659,17 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
                 op->notifytimer = now;
                 waitNotify = true;
               } else {
-                BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed subscribe for indicate"));
+                BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("failed subscribe for indicate"));
                 newstate = GEN_STATE_FAILED_INDICATE;
               }
             } else {
               newstate = GEN_STATE_FAILED_CANTNOTIFYORINDICATE;
+              BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("characteristic can't notify"));
             }
           }
         } else {
           newstate = GEN_STATE_FAILED_NONOTIFYCHAR;
+          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("notify characteristic not found"));
         }
 
         // force the 'error' of the notify coming in before the read/write for testing
@@ -1640,73 +1678,71 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
       // this will only happen if you ask for a notify char which is not there?
       if (!(newstate <= GEN_STATE_FAILED)){
-        if (pCharacteristic != nullptr) {
-          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got read/write characteristic"));
-          newstate = GEN_STATE_FAILED_NOREADWRITE; // overwritten on failure
+        if (op->characteristicUUID.bitSize()) {
+          // read or write characteristic - we always need this?
+          NimBLERemoteCharacteristic *pCharacteristic = nullptr;
 
-          if (op->readlen){
-            if(pCharacteristic->canRead()) {
-              std::string value = pCharacteristic->readValue();
-              op->readlen = value.length();
-              memcpy(op->dataRead, value.data(), 
-                (op->readlen > sizeof(op->dataRead))?
-                  sizeof(op->dataRead): 
-                  op->readlen);
-              if (op->readlen > sizeof(op->dataRead)){
-                op->readtruncated = 1;
+          pCharacteristic = pService->getCharacteristic(op->characteristicUUID);
+          if (pCharacteristic != nullptr) {
+            BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("got read/write characteristic"));
+            newstate = GEN_STATE_FAILED_NOREADWRITE; // overwritten on failure
+
+            if (op->readlen){
+              if(pCharacteristic->canRead()) {
+                std::string value = pCharacteristic->readValue();
+                op->readlen = value.length();
+                memcpy(op->dataRead, value.data(), 
+                  (op->readlen > sizeof(op->dataRead))?
+                    sizeof(op->dataRead): 
+                    op->readlen);
+                if (op->readlen > sizeof(op->dataRead)){
+                  op->readtruncated = 1;
+                } else {
+                  op->readtruncated = 0;
+                }
+                if (op->readmodifywritecallback){
+                  READ_CALLBACK *pFn = (READ_CALLBACK *)op->readmodifywritecallback;
+                  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic with readmodifywritecallback"));
+                  pFn(op);
+                } else {
+                  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic"));
+                }
+
+                // only change it to a 'finished' state if we really are
+                if (!waitNotify && !op->writelen) newstate = GEN_STATE_READDONE;
+
               } else {
-                op->readtruncated = 0;
+                newstate = GEN_STATE_FAILED_CANTREAD;
               }
-              if (op->readmodifywritecallback){
-                READ_CALLBACK *pFn = (READ_CALLBACK *)op->readmodifywritecallback;
-                BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic with readmodifywritecallback"));
-                pFn(op);
-              } else {
-                BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("read characteristic"));
-              }
-
-              // only change it to a 'finished' state if we really are
-              if (!waitNotify && !op->writelen) newstate = GEN_STATE_READDONE;
-
-            } else {
-              newstate = GEN_STATE_FAILED_CANTREAD;
             }
-          }
-          if (op->writelen){
-            if(pCharacteristic->canWrite()) {
-              if (!pCharacteristic->writeValue(op->dataToWrite, op->writelen, true)){
-                newstate = GEN_STATE_FAILED_WRITE;
-                BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic write fail"));
+            if (op->writelen){
+              if(pCharacteristic->canWrite()) {
+                if (!pCharacteristic->writeValue(op->dataToWrite, op->writelen, true)){
+                  newstate = GEN_STATE_FAILED_WRITE;
+                  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic write fail"));
+                } else {
+                  if (!waitNotify) newstate = GEN_STATE_WRITEDONE;
+                  BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("write characteristic"));
+                }
               } else {
-                if (!waitNotify) newstate = GEN_STATE_WRITEDONE;
-                BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("write characteristic"));
+                newstate = GEN_STATE_FAILED_CANTWRITE;
               }
-            } else {
-              newstate = GEN_STATE_FAILED_CANTWRITE;
             }
+            // print or do whatever you need with the value
+            
+          } else {
+            newstate = GEN_STATE_FAILED_NO_RW_CHAR;
+            BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("r/w characteristic not found"));
           }
-          // print or do whatever you need with the value
-          
-        } else {
-          newstate = GEN_STATE_FAILED_NO_RW_CHAR;
-          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("characteristic not in service"));
         }
       }
 
 
       // disconnect if not waiting for notify, 
       if (!op->notifytimer){
-/* let's always disconnect next loop, not here              
-        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("disconnect in runoperation - no notify or notify done already"));
-        try {
-          pClient->disconnect();
-        } catch(const std::exception& e){
-          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("exception in disconnect"));
-        }
-*/
         if (waitNotify){
           vTaskDelay(50/ portTICK_PERIOD_MS);
-          // must have completed during out rea/write operation
+          // must have completed during our read/write operation
           newstate = GEN_STATE_NOTIFIED;
         }
       } else {
@@ -1714,24 +1750,25 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
       } 
     } else {
       newstate = GEN_STATE_FAILED_NOSERVICE;
-      // failed to connect
+      // failed to get a service
       BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed - svc not on device?"));
     }            
 
-  } else {
+  } else { // connect itself failed
     newstate = GEN_STATE_FAILED_CONNECT;
     int rc = (*ppClient)->getResult();
 
     switch (rc){
       case (0x0200+BLE_ERR_CONN_LIMIT ):
-        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("Hit connection limit? - restarting NimBLE"));
+        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("Hit connection limit? - restarting NimBLE"));
         BLERestartNimBLE = 1;
+        BLERestartBLEReason = BLE_RESTART_BLE_REASON_CONN_LIMIT;
         break;
       case (0x0200+BLE_ERR_ACL_CONN_EXISTS):
-        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("Connection exists? - restarting NimBLE"));
+        BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("Connection exists? - restarting NimBLE"));
         BLERestartNimBLE = 1;
+        BLERestartBLEReason = BLE_RESTART_BLE_REASON_CONN_EXISTS;
         break;
-
     }
     // failed to connect
     BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("failed to connect to device %d"), rc);
@@ -1766,49 +1803,12 @@ static void BLETaskRunTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLE
           ble_gap_conn_broken(conn_id, -1);
           BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("################# kill connection manually wait disconnect %d"), waits);
         }
-        // if (waits == 120){
-        //   NimBLEDevice::deleteClient((*ppClient), true);
-        //   (*ppClient) = nullptr;
-
-        //   // try again?
-        //   NimBLEDevice::reset(0);
-        //   BLEResets++;
-        //   if (waits) BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("NimBLE Reset"), waits);
-        //   vTaskDelay(1000/ portTICK_PERIOD_MS);
-        //   (*ppClient) = NimBLEDevice::createClient();
-        //   (*ppClient)->setClientCallbacks(&clientCB, false);
-        //   /** Set initial connection parameters: These settings are 15ms interval, 0 latency, 120ms timout. 
-        //    *  These settings are safe for 3 clients to connect reliably, can go faster if you have less 
-        //    *  connections. Timeout should be a multiple of the interval, minimum is 100ms.
-        //    *  Min interval: 12 * 1.25ms = 15, Max interval: 12 * 1.25ms = 15, 0 latency, 51 * 10ms = 510ms timeout 
-        //    */
-        //   (*ppClient)->setConnectionParams(12,12,0,51);
-        //   /** Set how long we are willing to wait for the connection to complete (seconds), default is 30. */
-        //   (*ppClient)->setConnectTimeout(5);
-        // }
-/*        
-        if (waits == 12){
-          // try again?
-          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("BLE Failed, restarting Tasmota"));
+        if (waits == 60){
+          BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("################# >60s waiting -> BLE Failed, restarting Tasmota %d"), waits);
           BLEStop = 1;
-          BLERestartTasmota = 5;
-          return;
+          BLERestartTasmota = 10;
+          BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_BLE_DISCONNECT_FAIL;
         }
-        */
-
-/*
-        if (waits > 9){
-          if (waits) BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("deinit and re-init BLE %d"), waits);
-          NimBLEDevice::deleteClient(pClient);
-          NimBLEDevice::deinit(true);
-          vTaskDelay(500/ portTICK_PERIOD_MS);
-          NimBLEDevice::init("");
-          vTaskDelay(500/ portTICK_PERIOD_MS);
-          pClient = NimBLEDevice::createClient();
-          BLEScan = NimBLEDevice::getScan();
-          vTaskDelay(500/ portTICK_PERIOD_MS);
-        }
-*/
       } while ((*ppClient)->isConnected());
     }
   } catch(const std::exception& e){
@@ -1876,7 +1876,12 @@ static void BLEOperationTask(void *pvParameters){
 
     if (BLERestartNimBLE){
       BLERestartNimBLE = 0;
+      BLERestartTasmota = 10;
+      BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_RESTARTING_BLE_TIMEOUT;
+      BLE_ESP32::SafeAddLog_P(LOG_LEVEL_ERROR,PSTR("BLETask: Restarting NimBLE - will restart Tasmota if not complete in 10s"));
       BLE_ESP32::BLETaskStopStartNimBLE(&pClient);
+      BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_UNKNOWN;
+      BLERestartTasmota = 0;
     }
   }
 
@@ -1888,6 +1893,8 @@ static void BLEOperationTask(void *pvParameters){
   BLE_ESP32::SafeAddLog_P(LOG_LEVEL_DEBUG,PSTR("BLEOperationTask: Left task"));
   BLEStop = 2;
   BLERunning = false;
+  BLERunningScan = 0;
+
   vTaskDelete( NULL );
 }
 
@@ -1948,12 +1955,27 @@ static void BLEEverySecond(bool restart){
 
   // we have been asked to restart in this many seconds....
   if (BLERestartTasmota){
-    AddLog_P(LOG_LEVEL_ERROR,PSTR("BLE Failure! Restarting in %ds"), BLERestartTasmota);
     BLERestartTasmota--;
+    // 2 seconds to go, post to BLE topic on MQTT our reason
+    if (BLERestartTasmota == 2){
+      if (!BLERestartTasmotaReason) BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_UNKNOWN;
+      snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"reboot\":\"%s\"}"), BLERestartTasmotaReason);
+      MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+      AddLog_P(LOG_LEVEL_ERROR,PSTR("BLE Failure! Restarting Tasmota in %d seconds because %s"), BLERestartTasmota, BLERestartTasmotaReason);
+    }
+
     if (!BLERestartTasmota){
+      AddLog_P(LOG_LEVEL_ERROR,PSTR("BLE Failure! Restarting Tasmota because %s"), BLERestartTasmotaReason);
       // just a normal restart
       TasmotaGlobal.restart_flag = 1;
     }
+  }
+
+  if (BLERestartBLEReason){ // just use the ptr as the trigger to send MQTT
+    snprintf_P(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"blerestart\":\"%s\"}"), BLERestartBLEReason);
+    MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
+    AddLog_P(LOG_LEVEL_ERROR,PSTR("BLE Failure! Restarting BLE Stack because %s"), BLERestartBLEReason);
+    BLERestartBLEReason = nullptr;
   }
 
 }
@@ -2373,9 +2395,13 @@ void CmndBLEOperation(void){
  * Presentation
 \*********************************************************************************************/
 static void BLEPostMQTTSeenDevices() {
-  getSeenDevicesToJson(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data));
-  // no retain - this is present devices, not historic
-  MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), 0);
+  int remains = 0;
+  do {
+    nextSeenDev = 0;
+    remains = getSeenDevicesToJson(TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data));
+    // no retain - this is present devices, not historic
+    MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), 0);
+  } while (remains);
 }
 
 static void BLEPostMQTT(bool onlycompleted) {
@@ -2464,6 +2490,8 @@ static void mainThreadBLETimeouts() {
   if (BLEScanLastAdvertismentAt + adTimeout < now){
     BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
     BLERestartNimBLE = 1;
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("BLE: BLEScan stalled? no adverts > 120s, restarting BLE"));
+    BLERestartBLEReason = BLE_RESTART_BLE_REASON_ADVERT_BLE_TIMEOUT;
   }
 
   // if stuck and have not done task for 120s, something is seriously wrong.
@@ -2471,7 +2499,9 @@ static void mainThreadBLETimeouts() {
   uint64_t bleLoopTimeout = ((uint64_t)BLEMaxTaskLoopTime)*1000L*1000L;
   if (BLELastLoopTime + bleLoopTimeout < now){
     BLELastLoopTime = now; // initialise the time of the last advertisment
-    BLERestartTasmota = 1;
+    BLERestartTasmota = 10;
+    AddLog_P(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask stalled > 120s, restarting Tasmota in 10s"));
+    BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_BLE_LOOP_STALLED;
   }
 }
 
