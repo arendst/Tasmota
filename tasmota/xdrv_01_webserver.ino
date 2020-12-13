@@ -1661,6 +1661,18 @@ bool HandleRootStatusRefresh(void)
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 #endif  // USE_SONOFF_RF
+#ifdef USE_ZIGBEE
+  WebGetArg("zbj", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("ZbPermitJoin"));
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  WebGetArg("zbr", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("ZbMap"));
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+#endif // USE_ZIGBEE
   WSContentBegin(200, CT_HTML);
   WSContentSend_P(PSTR("{t}"));
   XsnsCall(FUNC_WEB_SENSOR);

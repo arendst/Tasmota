@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee better support for Tuya Protocol (#10074)
 - Support for SPI connected MFRC522 13.56MHz rfid card reader (#9916)
 - Letsencrypt R3 in addition to X3 CA (#10086)
+- Zigbee add visual map of network
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
