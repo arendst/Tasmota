@@ -255,7 +255,7 @@ int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...);
 ////////////////////////////////////////////////////////////////////////
 // utilities
 // dump a binary to hex
-char * dump(char *dest, int maxchars, uint8_t *src, int len);
+char * dump(char *dest, int maxchars, const uint8_t *src, int len);
 
 //////////////////////////////////////////
 // automutex.
@@ -906,7 +906,7 @@ void hex(char *dest, uint8_t v){
 
 // convert from binary to hex.
 // add a '+' on the end if not enough room.
-char * dump(char *dest, int maxchars, uint8_t *src, int len){
+char * dump(char *dest, int maxchars, const uint8_t *src, int len){
   int lenmax = (maxchars-1)/2;
   int actuallen = 0;
   for (actuallen = 0; actuallen < lenmax && actuallen < len; actuallen++){
@@ -922,7 +922,7 @@ char * dump(char *dest, int maxchars, uint8_t *src, int len){
 }
 
 // convert from a hex string to binary
-int fromHex(uint8_t *dest, char *src, int maxlen){
+int fromHex(uint8_t *dest, const char *src, int maxlen){
   int srclen = strlen(src)/2; 
   if (srclen > maxlen){
     return 0;
@@ -946,7 +946,7 @@ int fromHex(uint8_t *dest, char *src, int maxlen){
  *
  * @param _mac a byte array of size 6 (typicalliy representing a MAC address)
  */
-static void ReverseMAC(uint8_t _mac[]){
+void ReverseMAC(uint8_t _mac[]){
   uint8_t _reversedMAC[6];
   for (uint8_t i=0; i<6; i++){
     _reversedMAC[5-i] = _mac[i];
