@@ -75,6 +75,11 @@ void HandleMetrics(void)
   WSContentSend_P(PSTR("# TYPE energy_power_kilowatts_total counter\nenergy_power_kilowatts_total %s\n"), parameter);
 #endif
 
+  for (uint32_t device = 0; device < TasmotaGlobal.devices_present; device++) {
+    power_t mask = 1 << device;
+    WSContentSend_P(PSTR("# TYPE relay%d_state gauge\nrelay%d_state %d\n"), device+1, device+1, (TasmotaGlobal.power & mask));
+  }
+
 /*
   // Alternative method using the complete sensor JSON data
   // For prometheus it may need to be decoded to # TYPE messages
