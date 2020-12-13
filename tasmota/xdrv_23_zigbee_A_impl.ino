@@ -1943,7 +1943,7 @@ void ZigbeeShowMap(void) {
   } else {
     WSContentSend_P(PSTR(
       "<script type=\"text/javascript\" src=\"https://unpkg.com/vis-network/standalone/umd/vis-network.min.js\"></script>"
-      "<div id=\"mynetwork\" style=\"background-color:#fff;width:800px;height:400px;border:1px solid lightgray;resize:both;\"></div>"
+      "<div id=\"mynetwork\" style=\"background-color:#fff;color:#000;width:800px;height:400px;border:1px solid lightgray;resize:both;\">Unable to load vis.js</div>"
       "<script type=\"text/javascript\">"
       "var container=document.getElementById(\"mynetwork\");"
       "var options={groups:{o:{shape:\"circle\",color:\"#d55\"},r:{shape:\"box\",color:\"#fb7\"},e:{shape:\"ellipse\",color:\"#adf\"}}};"
