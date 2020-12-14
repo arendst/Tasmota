@@ -352,6 +352,8 @@ static ble_advertisment_t BLEAdvertisment;
 // general variables for running the driver
 TaskHandle_t TasmotaMainTask; 
 
+
+static int BLEMasterEnable = 0;
 static int BLEInitState = 0;
 static int BLERunningScan = 0;
 static uint32_t BLEScanCount = 0;
@@ -650,7 +652,7 @@ int deleteSeenDevices(int ageS = 0){
         lastseen = lastseen/1000L;
         uint32_t lastseenS = (uint32_t) lastseen; 
         uint32_t del_at = lastseenS + ageS;
-        if (del_at < nowS){
+        if ((del_at < nowS) || (ageS == 0)){
           AddLog_P(LOG_LEVEL_DEBUG,PSTR("delete device by age lastseen %u + maxage %u < now %u."), 
             lastseenS, ageS, nowS);
           seenDevices.erase(seenDevices.begin()+i);
@@ -1408,9 +1410,15 @@ static void BLEInit(void) {
   BLEScanLastAdvertismentAt = now; // initialise the time of the last advertisment
   BLELastLoopTime = now;
 
+  BLEInitState = 1;
+
+  // dont start of disabled
+  BLEMasterEnable = Settings.flag5.mi32_enable;
+  if (!BLEMasterEnable) return;
+
+
   StartBLE();
 
-  BLEInitState = 1;
   return;
 }
 
@@ -1894,6 +1902,7 @@ static void BLEOperationTask(void *pvParameters){
   BLEStop = 2;
   BLERunning = false;
   BLERunningScan = 0;
+  deleteSeenDevices();
 
   vTaskDelete( NULL );
 }
@@ -1929,10 +1938,25 @@ static void BLEEvery50mSecond(){
  */
 
 static void BLEEverySecond(bool restart){
+
+  if (Settings.flag5.mi32_enable != BLEMasterEnable){
+    BLEMasterEnable = Settings.flag5.mi32_enable;
+
+    if (BLEMasterEnable){
+      StartBLE();
+      AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: starting because MasterEnable changed"));
+    } else {
+      StopBLE();
+      // delete all seen devices;
+      deleteSeenDevices();
+      AddLog_P(LOG_LEVEL_INFO,PSTR("BLE: stopping because MasterEnable changed"));
+    }
+  }
+
+
   // check for application callbacks here.
   // this may remove complete items.
   BLE_ESP32::mainThreadOpCallbacks();
-  BLE_ESP32::mainThreadBLETimeouts();
 
   // post any MQTT data if we completed anything in the last second
   if (completedOperations.size()){
@@ -1976,6 +2000,12 @@ static void BLEEverySecond(bool restart){
     MqttPublishPrefixTopic_P(TELE, PSTR("BLE"), Settings.flag.mqtt_sensor_retain);
     AddLog_P(LOG_LEVEL_ERROR,PSTR("BLE Failure! Restarting BLE Stack because %s"), BLERestartBLEReason);
     BLERestartBLEReason = nullptr;
+  }
+
+
+  BLE_ESP32::mainThreadBLETimeouts();
+  if (!BLEMasterEnable){
+    return;
   }
 
 }
@@ -2646,6 +2676,98 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
   return out;
 }
 
+#ifdef USE_WEBSERVER
+
+#define WEB_HANDLE_BLE "ble"
+#define D_CONFIGURE_BLE "Configure BLE"
+#define D_BLE_PARAMETERS "Bluetooth Settings"
+#define D_MQTT_BLE_ENABLE "Enable Bluetooth"
+#define D_MQTT_BLE_ACTIVESCAN "Enable Active Scan(*)"
+#define D_BLE_DEVICES "Devices Seen"
+
+const char HTTP_BTN_MENU_BLE[] PROGMEM =
+  "<p><form action='" WEB_HANDLE_BLE "' method='get'><button>" D_CONFIGURE_BLE "</button></form></p>";
+
+const char HTTP_FORM_BLE[] PROGMEM =
+  "<fieldset><legend><b>&nbsp;" D_BLE_PARAMETERS "&nbsp;</b></legend>"
+  "<form method='get' action='" WEB_HANDLE_BLE "'>"
+  "<p><label><input id='e0' type='checkbox'%s><b>" D_MQTT_BLE_ENABLE "</b></label></p>"
+  "<p><label><input id='e1' type='checkbox'%s><b>" D_MQTT_BLE_ACTIVESCAN "</b></label></p>"
+  "<p>items marked (*) are not stored in config</p>";
+
+
+const char HTTP_BLE_DEV_STYLE[] PROGMEM = "th, td { padding-left:5px; }";
+const char HTTP_BLE_DEV_START[] PROGMEM =
+  "<fieldset><legend><b>&nbsp;" D_BLE_DEVICES "&nbsp;</b></legend><table>"
+  "<tr><th><label>mac</label></th><th><label>name</label></th><th><label>RSSI</label></th></tr>";
+const char HTTP_BLE_DEV[] PROGMEM =
+  "<tr><td><label>%s</label></td><td><label>%s</label></td><td><label>%d</label></td></tr>";
+const char HTTP_BLE_DEV_END[] PROGMEM =
+  "</table></fieldset>";
+
+void HandleBleConfiguration(void)
+{
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("HandleBleConfiguration"));
+
+
+  if (!HttpCheckPriviledgedAccess()) { 
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("!HttpCheckPriviledgedAccess()"));
+    return; 
+  }
+
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_BLE));
+
+
+  char tmp[20];
+  WebGetArg("en", tmp, sizeof(tmp));
+
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("arg en is %s"), tmp);
+
+  if (Webserver->hasArg("save")) {
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("BLE SETTINGS SAVE"));
+    Settings.flag5.mi32_enable = Webserver->hasArg("e0");  // 
+    BLEScanActiveMode = Webserver->hasArg("e1");  // 
+
+    SettingsSaveAll();
+    HandleConfiguration();
+    return;
+  }
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("!SAVE"));
+
+  char str[TOPSZ];
+
+  WSContentStart_P(PSTR(D_CONFIGURE_BLE));
+  WSContentSendStyle_P(HTTP_BLE_DEV_STYLE);
+  //WSContentSendStyle();
+  WSContentSend_P(HTTP_FORM_BLE, 
+    (Settings.flag5.mi32_enable) ? " checked" : "",
+    (BLEScanActiveMode) ? " checked" : ""
+    );
+  WSContentSend_P(HTTP_FORM_END);
+
+
+  {
+    BLEAutoMutex localmutex(BLEOperationsRecursiveMutex);
+    if (seenDevices.size()){
+      WSContentSend_P(HTTP_BLE_DEV_START);
+
+      for (int i = 0; i < seenDevices.size(); i++){
+        BLE_ESP32::BLE_simple_device_t* dev = seenDevices[i];
+        char addr[20];
+        dump(addr, 20, dev->mac, 6);
+        WSContentSend_P(HTTP_BLE_DEV, addr, dev->name, dev->RSSI);
+      }
+      WSContentSend_P(HTTP_BLE_DEV_END);
+    }
+  }
+
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
+  WSContentStop();
+
+}
+#endif
+
+
 } // end namespace BLE_ESP32
 
 /*********************************************************************************************\
@@ -2682,6 +2804,13 @@ bool Xdrv47(uint8_t function)
       BLE_ESP32::BLEShow(1);
       break;
 #ifdef USE_WEBSERVER
+    case FUNC_WEB_ADD_BUTTON:
+      WSContentSend_P(BLE_ESP32::HTTP_BTN_MENU_BLE);
+      break;
+    case FUNC_WEB_ADD_HANDLER:
+      WebServer_on(PSTR("/" WEB_HANDLE_BLE), BLE_ESP32::HandleBleConfiguration);
+      break;
+
     case FUNC_WEB_SENSOR:
       BLE_ESP32::BLEShow(0);
       break;
