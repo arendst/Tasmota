@@ -586,8 +586,22 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
       else
         SendLocalDeviceGroupMessage(DGR_MSGTYP_UPDATE, DGR_ITEM_POWER, TasmotaGlobal.power);
     }
+
+    if (device_groups && Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
+      for(int other_index=0; other_index < TasmotaGlobal.devices_present; other_index++) {
+        if (((device - 1) != other_index) &&
+            (!strcmp(device_groups[device - 1].group_name, device_groups[other_index].group_name))) {
+          uint32_t on = (TasmotaGlobal.power >> (device - 1)) & 1;
+          uint32_t other_on = (TasmotaGlobal.power >> other_index) & 1;
+          if (on != other_on) {
+            ExecuteCommandPower(other_index + 1, (on ? POWER_ON : POWER_OFF), source);
+          }
+        }
+      }
+    }
 #endif  // USE_DEVICE_GROUPS
     SetDevicePower(TasmotaGlobal.power, source);
+
 #ifdef USE_DOMOTICZ
     DomoticzUpdatePowerState(device);
 #endif  // USE_DOMOTICZ
