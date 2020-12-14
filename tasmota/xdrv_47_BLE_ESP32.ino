@@ -357,7 +357,7 @@ static int BLEMasterEnable = 0;
 static int BLEInitState = 0;
 static int BLERunningScan = 0;
 static uint32_t BLEScanCount = 0;
-static bool BLEScanActiveMode = true;
+static bool BLEScanActiveMode = false;
 
 static int BLEPublishDevices = 0; // causes MQTT publish of device list (each scan end)
 static BLEScan* ble32Scan = nullptr;
