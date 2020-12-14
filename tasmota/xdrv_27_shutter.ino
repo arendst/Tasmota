@@ -430,10 +430,6 @@ void ShutterDecellerateForStop(uint8_t i)
 void ShutterPowerOff(uint8_t i) {
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Stop Shutter %d. Switchmode %d"), i,Shutter[i].switch_mode);
   ShutterDecellerateForStop(i);
-  if (Shutter[i].direction !=0) {
-    Shutter[i].direction = 0;
-    delay(MOTOR_STOP_TIME);
-  }
   switch (Shutter[i].switch_mode) {
     case SHT_SWITCH:
       if ((1 << (Settings.shutter_startrelay[i]-1)) & TasmotaGlobal.power) {
@@ -464,6 +460,10 @@ void ShutterPowerOff(uint8_t i) {
     snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM " %d" ),Shutter[i].pwm_value);
     ExecuteCommand(scmnd, SRC_BUTTON);
     break;
+  }
+  if (Shutter[i].direction !=0) {
+    Shutter[i].direction = 0;
+    delay(MOTOR_STOP_TIME);
   }
 }
 
