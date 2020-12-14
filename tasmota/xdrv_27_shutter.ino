@@ -616,7 +616,7 @@ void ShutterRelayChanged(void)
         break;
         default:
           TasmotaGlobal.last_source = SRC_SHUTTER; // avoid switch off in the next loop
-          if (Shutter[i].direction != 0 ) ShutterPowerOff(i);
+          if (Shutter[i].direction != 0 ) ShutterUpdatePosition();
       }
       switch (ShutterGlobal.position_mode) {
         // enum Shutterposition_mode {SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
