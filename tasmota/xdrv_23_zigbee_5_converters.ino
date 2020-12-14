@@ -1583,6 +1583,9 @@ void ZCLFrame::syntheticAnalogValue(Z_attribute_list &attr_list, class Z_attribu
   if (modelId.startsWith(F("lumi.plug"))) {
     attr.setKeyId(0x0702, 0x0000);    // change to EnergyTotal
   }
+  if (modelId.startsWith(F("lumi.ctrl"))) {
+    attr.setKeyId(0x0B04, 0x050B);    // change to ActivePower
+  }
 }
 
 
@@ -1637,9 +1640,9 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
           } else if (0x66 == attrid) {
             attr_list.addAttribute(0x0403, 0x0000).setUInt((ival32 + 50) / 100);  // Pressure
           }
-        } else if (modelId.startsWith(F("lumi.plug"))) {
+        } else if (modelId.startsWith(F("lumi.plug")) || modelId.startsWith(F("lumi.ctrl"))) {
           if (0x64 == attrid) {
-            attr_list.addAttribute(0x0600, 0x0000).setInt(uval32);          // Power (on/off)
+            attr_list.addAttribute(0x0006, 0x0000).setInt(uval32);          // Power (on/off)
           } else if (0x98 == attrid) {
             attr_list.addAttribute(0x0B04, 0x050B).setInt(ival32);          // Active Power
           } else if (0x95 == attrid) {
