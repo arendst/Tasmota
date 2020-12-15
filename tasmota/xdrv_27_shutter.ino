@@ -445,7 +445,7 @@ void ShutterPowerOff(uint8_t i) {
       if ((SRC_PULSETIMER == TasmotaGlobal.last_source || SRC_SHUTTER == TasmotaGlobal.last_source || SRC_WEBGUI == TasmotaGlobal.last_source)) {
         ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
         // switch off direction relay to make it power less
-        if ((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power) {
+        if (((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power)  && Settings.shutter_startrelay[i]+1 != cur_relay) {
           ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
         }
       } else {
@@ -616,7 +616,7 @@ void ShutterRelayChanged(void)
         break;
         default:
           TasmotaGlobal.last_source = SRC_SHUTTER; // avoid switch off in the next loop
-          if (Shutter[i].direction != 0 ) ShutterUpdatePosition();
+          if (Shutter[i].direction != 0 ) Shutter[i].target_position = Shutter[i].real_position;
       }
       switch (ShutterGlobal.position_mode) {
         // enum Shutterposition_mode {SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
@@ -983,7 +983,7 @@ void CmndShutterStop(void)
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Stop moving %d: dir: %d"), XdrvMailbox.index, Shutter[i].direction);
 
         int32_t temp_realpos = ShutterCalculatePosition(i);
-        XdrvMailbox.payload = ShutterRealToPercentPosition(temp_realpos, i);
+        XdrvMailbox.payload = ShutterRealToPercentPosition(temp_realpos, i)-Shutter[i].direction;
         TasmotaGlobal.last_source = SRC_WEBGUI;
         CmndShutterPosition();
       } else {
