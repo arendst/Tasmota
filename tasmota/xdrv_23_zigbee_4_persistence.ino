@@ -419,7 +419,7 @@ void eraseZigbeeDevices(void) {
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased in %s"), PSTR("Flash"));
 #endif  // ESP8266
 #ifdef ESP32
-  ZigbeeErase();
+  ZigbeeErase(z_block_len);
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee Devices Data erased (%d bytes)"), z_block_len);
 #endif  // ESP32
 }
