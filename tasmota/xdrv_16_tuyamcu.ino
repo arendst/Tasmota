@@ -1221,7 +1221,7 @@ void TuyaSetTime(void) {
   payload_buffer[4] = RtcTime.hour;
   payload_buffer[5] = RtcTime.minute;
   payload_buffer[6] = RtcTime.second;
-  payload_buffer[7] = RtcTime.day_of_week;
+  payload_buffer[7] = RtcTime.day_of_week-1; // 1 for Monday as in TUYA Doc
 
   TuyaSendCmd(TUYA_CMD_SET_TIME, payload_buffer, payload_len);
 }
