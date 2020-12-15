@@ -445,7 +445,7 @@ void ShutterPowerOff(uint8_t i) {
       if ((SRC_PULSETIMER == TasmotaGlobal.last_source || SRC_SHUTTER == TasmotaGlobal.last_source || SRC_WEBGUI == TasmotaGlobal.last_source)) {
         ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
         // switch off direction relay to make it power less
-        if ((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power) {
+        if (((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power)  && Settings.shutter_startrelay[i]+1 != cur_relay) {
           ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
         }
       } else {
