@@ -1059,6 +1059,7 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) 
 
   // device is reachable
   zigbee_devices.deviceWasReached(shortaddr);
+  bool non_empty = false;     // check whether the response contains relevant information
 
   const char * friendlyName = zigbee_devices.getFriendlyName(shortaddr);
 
@@ -1089,6 +1090,7 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) 
       uint8_t     m_lqi       = buf.get8(idx + 21);
       idx += 22;
 
+      non_empty = true;
       if (i > 0) {
         ResponseAppend_P(PSTR(","));
       }
@@ -1161,6 +1163,7 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) 
         break;                                      // abort for any other value since we don't know the length of the field
       }
 
+      non_empty = true;
       if (i > 0) {
         ResponseAppend_P(PSTR(","));
       }
@@ -1180,7 +1183,8 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_MAP));
 
   // Check if there are more values waiting, if so re-send a new request to get other values
-  if (start + len < total) {
+  // Only send a new request if the current was non-empty. This avoids an infinite loop if the device announces more slots that it actually has.
+  if ((non_empty) && (start + len < total)) {
     // there are more values to read
 #ifdef USE_ZIGBEE_ZNP
       Z_Send_State_or_Map(shortaddr, start + len, lqi ? ZDO_MGMT_LQI_REQ : ZDO_MGMT_BIND_REQ);
