@@ -30,7 +30,7 @@ Support of Core versions before 2.7.1 has been removed.
 
 ## Support of TLS
 
-To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
+In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
 
 ## Initial configuration tools
 
@@ -114,3 +114,4 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ### Removed
 - Version compatibility check
 - PN532 define USE_PN532_CAUSE_EVENTS replaced by generic rule trigger `on pn532#uid=`
+- mDNS support in all Tasmota variants
