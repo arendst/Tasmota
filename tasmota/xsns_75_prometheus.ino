@@ -22,7 +22,7 @@
  * Prometheus support
 \*********************************************************************************************/
 
-#define XSNS_75 75
+#define XSNS_75                    75
 
 const char *UnitfromType(const char *type)
 {
@@ -81,14 +81,12 @@ const char *FormatMetricName(const char *metric)
 
 void HandleMetrics(void)
 {
-  if (!HttpCheckPriviledgedAccess())
-  {
-    return;
-  }
+  if (!HttpCheckPriviledgedAccess()) { return; }
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Prometheus"));
 
   WSContentBegin(200, CT_PLAIN);
+
 
   char parameter[FLOATSZ];
 
@@ -99,24 +97,22 @@ void HandleMetrics(void)
   WSContentSend_P(PSTR("# TYPE tasmota_boot_count counter\ntasmota_boot_count %d\n"), Settings.bootcount);
   WSContentSend_P(PSTR("# TYPE tasmota_flash_writes_total counter\ntasmota_flash_writes_total %d\n"), Settings.save_flag);
 
+
   // Pseudo-metric providing metadata about the WiFi station.
   WSContentSend_P(PSTR("# TYPE tasmota_wifi_station_info gauge\ntasmota_wifi_station_info{bssid=\"%s\",ssid=\"%s\"} 1\n"), WiFi.BSSIDstr().c_str(), WiFi.SSID().c_str());
 
   // Wi-Fi Signal strength
   WSContentSend_P(PSTR("# TYPE tasmota_wifi_station_signal_dbm gauge\ntasmota_wifi_station_signal_dbm{mac_address=\"%s\"} %d\n"), WiFi.BSSIDstr().c_str(), WiFi.RSSI());
 
-  if (!isnan(TasmotaGlobal.temperature_celsius))
-  {
+  if (!isnan(TasmotaGlobal.temperature_celsius)) {
     dtostrfd(TasmotaGlobal.temperature_celsius, Settings.flag2.temperature_resolution, parameter);
     WSContentSend_P(PSTR("# TYPE tasmotaglobal_temperature_celsius gauge\ntasmotaglobal_temperature_celsius %s\n"), parameter);
   }
-  if (TasmotaGlobal.humidity != 0)
-  {
+  if (TasmotaGlobal.humidity != 0) {
     dtostrfd(TasmotaGlobal.humidity, Settings.flag2.humidity_resolution, parameter);
     WSContentSend_P(PSTR("# TYPE tasmotaglobal_humidity gauge\ntasmotaglobal_humidity %s\n"), parameter);
   }
-  if (TasmotaGlobal.pressure_hpa != 0)
-  {
+  if (TasmotaGlobal.pressure_hpa != 0) {
     dtostrfd(TasmotaGlobal.pressure_hpa, Settings.flag2.pressure_resolution, parameter);
     WSContentSend_P(PSTR("# TYPE tasmotaglobal_pressure_hpa gauge\ntasmotaglobal_pressure_hpa %s\n"), parameter);
   }
@@ -134,10 +130,9 @@ void HandleMetrics(void)
   WSContentSend_P(PSTR("# TYPE energy_power_kilowatts_total counter\nenergy_power_kilowatts_total %s\n"), parameter);
 #endif
 
-  for (uint32_t device = 0; device < TasmotaGlobal.devices_present; device++)
-  {
+  for (uint32_t device = 0; device < TasmotaGlobal.devices_present; device++) {
     power_t mask = 1 << device;
-    WSContentSend_P(PSTR("# TYPE relay%d_state gauge\nrelay%d_state %d\n"), device + 1, device + 1, (TasmotaGlobal.power & mask));
+    WSContentSend_P(PSTR("# TYPE relay%d_state gauge\nrelay%d_state %d\n"), device+1, device+1, (TasmotaGlobal.power & mask));
   }
 
   ResponseClear();
@@ -209,8 +204,7 @@ bool Xsns75(uint8_t function)
 {
   bool result = false;
 
-  switch (function)
-  {
+  switch (function) {
   case FUNC_WEB_ADD_HANDLER:
     WebServer_on(PSTR("/metrics"), HandleMetrics);
     break;
@@ -218,4 +212,4 @@ bool Xsns75(uint8_t function)
   return result;
 }
 
-#endif // USE_PROMETHEUS
+#endif  // USE_PROMETHEUS
