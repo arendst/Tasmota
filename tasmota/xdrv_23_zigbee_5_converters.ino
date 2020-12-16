@@ -625,15 +625,15 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Ztuya1,   CxEF00, 0x0112,  Z_(TuyaWindowDetection),  Cm1, 0 },
   { Ztuya1,   CxEF00, 0x0114,  Z_(TuyaValveDetection),   Cm1, 0 },
   { Ztuya1,   CxEF00, 0x0174,  Z_(TuyaAutoLock),         Cm1, 0 },
-  { Ztuya2,   CxEF00, 0x0202,  Z_(TuyaTempTarget),       Cm_10, 0 },
-  { Ztuya2,   CxEF00, 0x0203,  Z_(LocalTemperature),     Cm_10, 0 },  // will be overwritten by actual LocalTemperature
+  { Zint16,   CxEF00, 0x0202,  Z_(TuyaTempTarget),       Cm_10, Z_MAPPING(Z_Data_Thermo, temperature_target) },
+  { Zint16,   CxEF00, 0x0203,  Z_(LocalTemperature),     Cm_10, Z_MAPPING(Z_Data_Thermo, temperature) },  // will be overwritten by actual LocalTemperature
   { Ztuya2,   CxEF00, 0x0215,  Z_(TuyaBattery),          Cm1, 0 },   // TODO check equivalent?
   { Ztuya2,   CxEF00, 0x0266,  Z_(TuyaMinTemp),          Cm1, 0 },
   { Ztuya2,   CxEF00, 0x0267,  Z_(TuyaMaxTemp),          Cm1, 0 },
   { Ztuya2,   CxEF00, 0x0269,  Z_(TuyaBoostTime),        Cm1, 0 },
   { Ztuya2,   CxEF00, 0x026B,  Z_(TuyaComfortTemp),      Cm1, 0 },
   { Ztuya2,   CxEF00, 0x026C,  Z_(TuyaEcoTemp),          Cm1, 0 },
-  { Ztuya2,   CxEF00, 0x026D,  Z_(TuyaValvePosition),    Cm1, 0 },
+  { Zuint8,   CxEF00, 0x026D,  Z_(TuyaValvePosition),    Cm1, Z_MAPPING(Z_Data_Thermo, th_setpoint) },
   { Ztuya2,   CxEF00, 0x0272,  Z_(TuyaAwayTemp),         Cm1, 0 },
   { Ztuya2,   CxEF00, 0x0275,  Z_(TuyaAwayDays),         Cm1, 0 },
   { Ztuya4,   CxEF00, 0x0404,  Z_(TuyaPreset),           Cm1, 0 },
@@ -1932,6 +1932,13 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
         uint32_t uval32 = attr.getUInt();     // call converter to uint only once
         int32_t  ival32 = attr.getInt();     // call converter to int only once
         // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) map_type, map_offset, zigbee_type, ival32);
+        switch (ccccaaaa) {
+          case 0xEF000202:
+          case 0xEF000203:    // need to convert Tuya temperatures from 1/10 to 1/00 °C
+            ival32 = ival32 * 10;
+            break;
+        }
+
         switch (zigbee_type) {
           case Zenum8:
           case Zmap8:
