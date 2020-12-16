@@ -24,7 +24,7 @@
 
 #define XSNS_75                    75
 
-const char *UnitfromType(const char *type)
+const char *UnitfromType(const char *type)  // find unit for measurment type
 {
   if (strcmp(type, "time") == 0)
   {
@@ -61,14 +61,14 @@ const char *UnitfromType(const char *type)
   return "";
 }
 
-const char *FormatMetricName(const char *metric)
+const char *FormatMetricName(const char *metric)  // cleanup spaces and uppercases for Prmetheus metrics conventions
 {
-  char *formated = (char *)malloc(strlen(metric) + 1);
+  char *formated = (char *)malloc(strlen(metric)+1);
   uint32_t cnt = 0;
-  for (cnt; cnt < strlen(metric) + 1; cnt++)
+  for (cnt; cnt < strlen(metric)+1; cnt++)
   {
     if (metric[cnt] == ' ')
-    { //replace space with
+    { 
       formated[cnt] = '_';
     }
     else
@@ -136,8 +136,8 @@ void HandleMetrics(void)
   }
 
   ResponseClear();
-  MqttShowSensor();
-  char json[strlen(TasmotaGlobal.mqtt_data) + 1];
+  MqttShowSensor(); //Pull sensor data
+  char json[strlen(TasmotaGlobal.mqtt_data)+1];
   snprintf_P(json, sizeof(json), TasmotaGlobal.mqtt_data);
   String jsonStr = json;
   JsonParser parser((char *)jsonStr.c_str());
@@ -184,8 +184,8 @@ void HandleMetrics(void)
       else
       {
         const char *value = value1.getStr(nullptr);
-        if (value != nullptr && isdigit(value[0] && strcmp(key1.getStr(), "Time") != 0))
-        { //remove false 'time' metric
+        if (value != nullptr && isdigit(value[0] && strcmp(key1.getStr(), "Time") != 0))  //remove false 'time' metric
+        { 
           const char *sensor = FormatMetricName(key1.getStr());
           WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s gauge\ntasmota_sensors{sensor=\"%s\"} %s\n"), sensor, sensor, value);
         }
@@ -205,9 +205,9 @@ bool Xsns75(uint8_t function)
   bool result = false;
 
   switch (function) {
-  case FUNC_WEB_ADD_HANDLER:
-    WebServer_on(PSTR("/metrics"), HandleMetrics);
-    break;
+    case FUNC_WEB_ADD_HANDLER:
+      WebServer_on(PSTR("/metrics"), HandleMetrics);
+      break;
   }
   return result;
 }
