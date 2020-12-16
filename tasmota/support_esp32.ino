@@ -194,8 +194,8 @@ void QPCWrite(const void *pSettings, unsigned nSettingsLen) {
 void NvsInfo(void) {
   nvs_stats_t nvs_stats;
   nvs_get_stats(NULL, &nvs_stats);
-  AddLog_P(LOG_LEVEL_INFO, PSTR("INF: NVS Used %d, Free %d, Total %d, Namspaces %d"),
-    nvs_stats.used_entries, nvs_stats.free_entries, nvs_stats.total_entries, nvs_stats.namespace_count);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("NVS: Used %d/%d entries, NameSpaces %d"),
+    nvs_stats.used_entries, nvs_stats.total_entries, nvs_stats.namespace_count);
 }
 
 void ZigbeeErase(unsigned nSettingsLen) {

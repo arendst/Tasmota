@@ -2068,6 +2068,9 @@ void CmndDriver(void)
 
 void CmndInfo(void) {
   NvsInfo();
+#ifdef USE_TFS
+  TfsInfo();
+#endif
   ResponseCmndDone();
 }
 
