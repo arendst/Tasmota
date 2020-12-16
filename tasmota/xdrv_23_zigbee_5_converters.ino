@@ -466,6 +466,13 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0201, 0x4001, Z_(ValvePosition),         Cm1, 0 },
   { Zuint8,   Cx0201, 0x4002, Z_(EurotronicErrors),      Cm1, 0 },
   { Zint16,   Cx0201, 0x4003, Z_(CurrentTemperatureSetPoint), Cm_100, 0 },
+  { Zuint24,  Cx0201, 0x4008, Z_(EurotronicHostFlags),   Cm1, 0 },
+  // below are synthetic virtual attributes used to decode EurotronicHostFlags
+  // Last byte acts as a field mask for the lowest byte value
+  { Zbool,    Cx0201, 0xF002, Z_(TRVMirrorDisplay),      Cm1, 0 },
+  { Zbool,    Cx0201, 0xF004, Z_(TRVBoost),              Cm1, 0 },
+  { Zbool,    Cx0201, 0xF010, Z_(TRVWindowOpen),         Cm1, 0 },
+  { Zbool,    Cx0201, 0xF080, Z_(TRVChildProtection),    Cm1, 0 },
   // below are virtual attributes to simplify ZbData import/export
   { Zuint8,   Cx0201, 0xFFF0,  Z_(ThSetpoint),           Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Thermo, th_setpoint) },
   { Zint16,   Cx0201, 0xFFF1,  Z_(TempTarget),        Cm_100 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Thermo, temperature_target) },
@@ -879,6 +886,11 @@ int32_t encodeSingleAttribute(class SBuffer &buf, double val_d, const char *val_
       buf.add16(u32);
       break;
     // unisgned 32
+    case Zuint24:
+      buf.add16(u32);
+      buf.add8(u32 >> 16);
+      break;
+    // unisgned 24
     case Zuint32:     // uint32
     case Zdata32:     // data32
     case Zmap32:      // map32
@@ -971,6 +983,15 @@ uint32_t parseSingleAttribute(Z_attribute & attr, const SBuffer &buf,
         // i += 2;
         if (0xFFFF != uint16_val) {
           attr.setUInt(uint16_val);
+        }
+      }
+      break;
+    case Zuint24:
+      {
+        uint32_t uint24_val = buf.get16(i) + (buf.get8(i+2) >> 16);
+        // i += 3;
+        if (0xFFFFFF != uint24_val) {
+          attr.setUInt(uint24_val);
         }
       }
       break;
@@ -1280,15 +1301,24 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
         }
         break;
       case 0x02010008:    // Pi Heating Demand - solve Eutotronic bug
+      case 0x02014008:    // Eurotronic Host Flags decoding
         {
           const char * manufacturer_c = zigbee_devices.getManufacturerId(_srcaddr);  // null if unknown
           String manufacturerId((char*) manufacturer_c);
           if (manufacturerId.equals(F("Eurotronic"))) {
-            // Eurotronic does not report 0..100 but 0..255, including 255 which is normally an ivalid value
-            uint8_t valve = attr.getUInt();
-            if (attr.isNone()) { valve = 255; }
-            uint8_t valve_100 = changeUIntScale(valve, 0, 255, 0, 100);
-            attr.setUInt(valve_100);
+            if (ccccaaaa == 0x02010008) {
+              // Eurotronic does not report 0..100 but 0..255, including 255 which is normally an ivalid value
+              uint8_t valve = attr.getUInt();
+              if (attr.isNone()) { valve = 255; }
+              uint8_t valve_100 = changeUIntScale(valve, 0, 255, 0, 100);
+              attr.setUInt(valve_100);
+            } else if (ccccaaaa == 0x02014008) {
+              uint32_t mode = attr.getUInt();
+              if (mode & 0x02) { attr_list.addAttribute(0x0201, 0xF002).setUInt(1); }
+              if (mode & 0x04) { attr_list.addAttribute(0x0201, 0xF004).setUInt(1); }
+              if (mode & 0x10) { attr_list.addAttribute(0x0201, 0xF010).setUInt(1); }
+              if (mode & 0x80) { attr_list.addAttribute(0x0201, 0xF080).setUInt(1); }
+            }
           }
         }
         break;

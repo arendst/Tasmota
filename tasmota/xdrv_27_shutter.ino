@@ -160,7 +160,7 @@ int32_t ShutterPercentToRealPosition(uint32_t percent, uint32_t index)
 	if (Settings.shutter_set50percent[index] != 50) {
     return (percent <= 5) ? Settings.shuttercoeff[2][index] * percent*10 : (Settings.shuttercoeff[1][index] * percent + (Settings.shuttercoeff[0][index]*10))*10;
 	} else {
-    uint32_t realpos;
+    int64_t realpos;
     // check against DIV 0
     for (uint32_t j = 0; j < 5; j++) {
       if (0 == Settings.shuttercoeff[j][index]) {
@@ -173,13 +173,15 @@ int32_t ShutterPercentToRealPosition(uint32_t percent, uint32_t index)
     for (uint32_t k = 0; k < 5; k++) {
       if ((percent * 10) >= Settings.shuttercoeff[k][index]) {
         realpos = SHT_DIV_ROUND(Shutter[index].open_max * calibrate_pos[k+1], 100);
-        //AddLog_P(LOG_LEVEL_DEBUG, PSTR("Realposition TEMP1: %d, %% %d, coeff %d"), realpos, percent, Settings.shuttercoeff[i][index]);
+        //AddLog_P(LOG_LEVEL_ERROR, PSTR("Realposition TEMP1: %d, %d %%, coeff %d"), realpos, percent, Settings.shuttercoeff[k][index]);
       } else {
+        //AddLog_P(LOG_LEVEL_ERROR, PSTR("Shutter[%d].open_max: %d"),index, Shutter[index].open_max);
         if (0 == k) {
-          realpos =  SHT_DIV_ROUND(SHT_DIV_ROUND(percent * Shutter[index].open_max * calibrate_pos[k+1], Settings.shuttercoeff[k][index]), 10);
+          realpos =  SHT_DIV_ROUND(SHT_DIV_ROUND(percent * Shutter[index].open_max * calibrate_pos[k+1], Settings.shuttercoeff[k][index]), 10 );
+          //AddLog_P(LOG_LEVEL_ERROR, PSTR("Realposition TEMP3: %d, %d %%, coeff %d"), realpos, percent, Settings.shuttercoeff[k][index]);
         } else {
-          //uint16_t addon = ( percent*10 - Settings.shuttercoeff[i-1][index] ) * Shutter_Open_Max[index] * (calibrate_pos[i+1] - calibrate_pos[i]) / (Settings.shuttercoeff[i][index] -Settings.shuttercoeff[i-1][index]) / 100;
-          //AddLog_P(LOG_LEVEL_DEBUG, PSTR("Realposition TEMP2: %d, %% %d, coeff %d"), addon, (calibrate_pos[i+1] - calibrate_pos[i]), (Settings.shuttercoeff[i][index] -Settings.shuttercoeff[i-1][index]));
+          //uint32_t addon = ( percent*10 - Settings.shuttercoeff[k-1][index] ) * Shutter[index].open_max * (calibrate_pos[k+1] - calibrate_pos[k]) / (Settings.shuttercoeff[k][index] -Settings.shuttercoeff[k-1][index]) / 100;
+          //AddLog_P(LOG_LEVEL_ERROR, PSTR("Realposition TEMP2: %d, %d %%, coeff %d"), addon, (calibrate_pos[k+1] - calibrate_pos[k]), (Settings.shuttercoeff[k][index] -Settings.shuttercoeff[k-1][index]));
           realpos += SHT_DIV_ROUND(SHT_DIV_ROUND((percent*10 - Settings.shuttercoeff[k-1][index] ) * Shutter[index].open_max * (calibrate_pos[k+1] - calibrate_pos[k]), Settings.shuttercoeff[k][index] - Settings.shuttercoeff[k-1][index]), 100);
         }
         break;
@@ -189,25 +191,26 @@ int32_t ShutterPercentToRealPosition(uint32_t percent, uint32_t index)
 	}
 }
 
-uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
+uint8_t ShutterRealToPercentPosition(int64_t realpos, uint32_t index)
 {
 	if (Settings.shutter_set50percent[index] != 50) {
 		return (Settings.shuttercoeff[2][index] * 5 > realpos/10) ? SHT_DIV_ROUND(realpos/10, Settings.shuttercoeff[2][index]) : SHT_DIV_ROUND(realpos/10-Settings.shuttercoeff[0][index]*10, Settings.shuttercoeff[1][index]);
 	} else {
-    uint16_t realpercent;
-
+    uint64_t realpercent;
     for (uint32_t j = 0; j < 5; j++) {
       if (realpos >= Shutter[index].open_max * calibrate_pos[j+1] / 100) {
         realpercent = SHT_DIV_ROUND(Settings.shuttercoeff[j][index], 10);
-        //AddLog_P(LOG_LEVEL_DEBUG, PSTR("Realpercent TEMP1: %d, %% %d, coeff %d"), realpercent, realpos, Shutter_Open_Max[index] * calibrate_pos[i+1] / 100);
+        //AddLog_P(LOG_LEVEL_ERROR, PSTR("Realpercent TEMP1: %d %%, %d, coeff %d"), realpercent, realpos, Shutter[index].open_max * calibrate_pos[j+1] / 100);
       } else {
+        //AddLog_P(LOG_LEVEL_ERROR, PSTR("Shutter[%d].open_max: %d"),index, Shutter[index].open_max);
         if (0 == j) {
-          realpercent  = SHT_DIV_ROUND(SHT_DIV_ROUND((realpos - SHT_DIV_ROUND(Shutter[index].open_max * calibrate_pos[j], 100)) * 10 * Settings.shuttercoeff[j][index], calibrate_pos[j+1]), Shutter[index].open_max);
+          realpercent  = SHT_DIV_ROUND(SHT_DIV_ROUND((realpos - SHT_DIV_ROUND(Shutter[index].open_max * calibrate_pos[j], 100)) * Settings.shuttercoeff[j][index], calibrate_pos[j+1]/10), Shutter[index].open_max);
+          //AddLog_P(LOG_LEVEL_ERROR, PSTR("Realpercent TEMP3: %d %%, %d, coeff %d"), realpercent, realpos, Shutter[index].open_max * calibrate_pos[j+1] / 100);
         } else {
-          //uint16_t addon = ( realpos - (Shutter_Open_Max[index] * calibrate_pos[i] / 100) ) * 10 * (Settings.shuttercoeff[i][index] - Settings.shuttercoeff[i-1][index]) / (calibrate_pos[i+1] - calibrate_pos[i])/ Shutter_Open_Max[index];
-          //uint16_t addon = ( percent*10 - Settings.shuttercoeff[i-1][index] ) * Shutter_Open_Max[index] * (calibrate_pos[i+1] - calibrate_pos[i]) / (Settings.shuttercoeff[i][index] -Settings.shuttercoeff[i-1][index]) / 100;
-          //AddLog_P(LOG_LEVEL_DEBUG, PSTR("Realpercent TEMP2: %d, delta %d,  %% %d, coeff %d"), addon,( realpos - (Shutter_Open_Max[index] * calibrate_pos[i] / 100) ) , (calibrate_pos[i+1] - calibrate_pos[i])* Shutter_Open_Max[index]/100, (Settings.shuttercoeff[i][index] -Settings.shuttercoeff[i-1][index]));
-          realpercent += SHT_DIV_ROUND(SHT_DIV_ROUND((realpos - SHT_DIV_ROUND(Shutter[index].open_max * calibrate_pos[j], 100)) * 10 * (Settings.shuttercoeff[j][index] - Settings.shuttercoeff[j-1][index]), (calibrate_pos[j+1] - calibrate_pos[j])), Shutter[index].open_max) ;
+          //uint16_t addon = ( realpos - (Shutter[index].open_max * calibrate_pos[j] / 100) ) * 10 * (Settings.shuttercoeff[j][index] - Settings.shuttercoeff[j-1][index]) / (calibrate_pos[j+1] - calibrate_pos[j])/Shutter[index].open_max;
+          //uint16_t addon = ( realpercent*10 - Settings.shuttercoeff[j-1][index] ) * Shutter[index].open_max * (calibrate_pos[j+1] - calibrate_pos[j]) / (Settings.shuttercoeff[j][index] -Settings.shuttercoeff[j-1][index]) / 100;
+          //AddLog_P(LOG_LEVEL_ERROR, PSTR("Realpercent TEMP2: %d %%, delta %d, %d, coeff %d"), addon,( realpos - (Shutter[index].open_max * calibrate_pos[j] / 100) ) , (calibrate_pos[j+1] - calibrate_pos[j])* Shutter[index].open_max/100, (Settings.shuttercoeff[j][index] -Settings.shuttercoeff[j-1][index]));
+          realpercent += SHT_DIV_ROUND(SHT_DIV_ROUND((realpos - SHT_DIV_ROUND(Shutter[index].open_max * calibrate_pos[j], 100)) * (Settings.shuttercoeff[j][index] - Settings.shuttercoeff[j-1][index]), (calibrate_pos[j+1] - calibrate_pos[j])/10), Shutter[index].open_max) ;
         }
         break;
       }

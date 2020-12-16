@@ -1154,11 +1154,15 @@ void CmndGpio(void)
         TasmotaGlobal.restart_flag = 2;
       }
     }
-    Response_P(PSTR("{"));
     bool jsflg = false;
+    bool jsflg2 = false;
     for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
       if (ValidGPIO(i, template_gp.io[i]) || ((255 == XdrvMailbox.payload) && !FlashPin(i))) {
-        if (jsflg) { ResponseAppend_P(PSTR(",")); }
+        if (!jsflg) {
+          Response_P(PSTR("{"));
+        } else {
+          ResponseAppend_P(PSTR(","));
+        }
         jsflg = true;
         uint32_t sensor_type = Settings.my_gp.io[i];
         if (!ValidGPIO(i, template_gp.io[i])) {
@@ -1183,12 +1187,16 @@ void CmndGpio(void)
           sensor_names = kSensorNamesFixed;
         }
         char stemp1[TOPSZ];
-        ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s%s\"}"),
-          i, sensor_type, GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names), sindex);
+        if ((ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s%s\"}"), i, sensor_type, GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names), sindex) > (LOGSZ - TOPSZ)) || (i == ARRAY_SIZE(Settings.my_gp.io) -1)) {
+          ResponseJsonEndEnd();
+          MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+          jsflg2 = true;
+          jsflg = false;
+        }
       }
     }
-    if (jsflg) {
-      ResponseJsonEnd();
+    if (jsflg2) {
+      ResponseClear();
     } else {
       ResponseCmndChar(D_JSON_NOT_SUPPORTED);
     }
@@ -2068,6 +2076,9 @@ void CmndDriver(void)
 
 void CmndInfo(void) {
   NvsInfo();
+#ifdef USE_TFS
+  TfsInfo();
+#endif
   ResponseCmndDone();
 }
 

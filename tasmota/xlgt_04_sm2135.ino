@@ -182,20 +182,11 @@ void Sm2135ModuleSelected(void)
     Sm2135.clk = Pin(GPIO_SM2135_CLK);
     Sm2135.data = Pin(GPIO_SM2135_DAT, GPIO_ANY);
 
-    Sm2135.model = SM2135_WCGRB;
+    Sm2135.model = GetPin(Sm2135.data) - AGPIO(GPIO_SM2135_DAT);  // 0 .. 3
     if (PinUsed(GPIO_SWT1)) {
       Sm2135.model = SM2135_WCBGR;
       pinMode(Pin(GPIO_SWT1), INPUT);             // Discard GPIO_SWT functionality
       SetPin(Pin(GPIO_SWT1), AGPIO(GPIO_NONE));
-    }
-    if (PinUsed(GPIO_SM2135_DAT, 1)) {
-      Sm2135.model = SM2135_WCBGR;
-    }
-    if (PinUsed(GPIO_SM2135_DAT, 2)) {
-      Sm2135.model = SM2135_WCGRBHI;
-    }
-    if (PinUsed(GPIO_SM2135_DAT, 3)) {
-      Sm2135.model = SM2135_WCBGRHI;
     }
 
 //                    RGB current         CW current

@@ -23,15 +23,9 @@
 
 #ifdef ESP32
 
-#define USE_TFS
-
-#ifdef USE_SCRIPT
-#undef USE_TFS
-#endif  // USE_SCRIPT
-
 #ifdef USE_TFS
 
-//#define USE_LITTLEFS            // LittleFS not tested yet
+//#define USE_LITTLEFS            // LittleFS not tested yet as currently ESP8266 only
 //#define USE_FFAT                // FFat minimal 983k partition (4096 sector size) - tested
 #define USE_SPIFFS              // SPIFFS - tested
 
@@ -64,7 +58,6 @@ bool TfsInit(void) {
     }
   }
   AddLog_P(LOG_LEVEL_INFO, PSTR("TFS: Mounted"));
-//  TfsInfo();
   FsMounted = 2;      // true
   return true;
 }
@@ -130,10 +123,12 @@ bool TfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
 }
 
 void TfsInfo(void) {
+  if (!TfsInit()) { return; }
+
+  uint32_t total_bytes = TASMOTA_FS.totalBytes();
 #ifdef USE_SPIFFS
   uint32_t used_bytes = TASMOTA_FS.usedBytes();
 #endif  // USE_SPIFFS
-  uint32_t total_bytes = TASMOTA_FS.totalBytes();
 #ifdef USE_FFAT
   uint32_t used_bytes = total_bytes - TASMOTA_FS.freeBytes();
 #endif  // USE_FFAT
