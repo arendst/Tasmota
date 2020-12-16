@@ -77,11 +77,11 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
 - Support for multiple WeMo devices by Magic73 (#9208)
 - Support for SPI connected MFRC522 13.56MHz rfid card reader (#9916)
+- Support ESP32 SPIFFS for internal use
 - KNX read reply for Power (#9236, #9891)
 - Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
 - Optional CCloader support for CC25xx Zigbee or CC26xx BLE by Christian Baars (#9970)
 - Letsencrypt R3 in addition to X3 CA (#10086)
-- ESP32 SPIFFS support
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
@@ -108,7 +108,9 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - First LED in addressable string does not fade when using scheme (#10088)
 - Improved Opentherm error handling (#10055)
 - Shutter motordelay stop issue (#10033)
+- Shutter fix overflow on runtime over 100 seconds (#9800)
 - ESP32 CC2530 heap corruption (#10121)
+- ESP32 Analog input div10 rule trigger (#10149)
 
 ### Removed
 - Version compatibility check
