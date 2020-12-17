@@ -3,7 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.1.0.2]
+## [9.2.0.1]
+
+## [Released]
+
+## [9.2.0] 20201216
+- Release Julie
+
+## [9.1.0.2] 20201216
 ### Added
 - KNX read reply for Power (#9236, #9891)
 - Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
@@ -78,8 +85,6 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Version compatibility check
-
-## [Released]
 
 ## [9.1.0] 20201105
 - Release Imogen
