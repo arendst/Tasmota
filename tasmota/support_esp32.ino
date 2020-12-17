@@ -198,28 +198,6 @@ void NvsInfo(void) {
     nvs_stats.used_entries, nvs_stats.total_entries, nvs_stats.namespace_count);
 }
 
-void ZigbeeErase(unsigned nSettingsLen) {
-//  NvmErase("zb");
-#ifdef USE_TFS
-  TfsEraseFile("/zb", nSettingsLen);
-#endif
-}
-
-void ZigbeeRead(uint8_t *pSettings, unsigned nSettingsLen) {
-//  NvmLoad("zb", "zigbee", pSettings, nSettingsLen);
-#ifdef USE_TFS
-  TfsLoadFile("/zb", pSettings, nSettingsLen);
-#endif
-}
-
-void ZigbeeWrite(const uint8_t *pSettings, unsigned nSettingsLen) {
-//  NvmSave("zb", "zigbee", pSettings, nSettingsLen);
-#ifdef USE_TFS
-  TfsSaveFile("/zb", pSettings, nSettingsLen);
-#endif
-}
-
-
 //
 // Flash memory mapping
 //
