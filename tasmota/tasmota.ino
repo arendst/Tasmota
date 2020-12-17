@@ -191,6 +191,8 @@ void setup(void) {
 #endif
 #endif
 
+  RtcPreInit();
+
   memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
   TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;

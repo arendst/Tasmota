@@ -482,3 +482,7 @@ void RtcInit(void) {
   BreakTime(Rtc.utc_time, RtcTime);
   TickerRtc.attach(1, RtcSecond);
 }
+
+void RtcPreInit(void) {
+  Rtc.millis = millis();
+}
