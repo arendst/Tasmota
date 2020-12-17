@@ -60,58 +60,59 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 ### Added
 - Command ``SetOption115 1`` to enable ESP32 MiBle
 - Command ``SetOption116 1`` to disable auto-query of zigbee light devices (avoids network storms with large groups)
-- Command ``SetOption117 1`` for light fading to be fixed duration instead of fixed slew rate (#10109)
-- Command ``RfProtocol`` to control RcSwitch receive protocols by BBBits (#10063)
-- Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` (#9769)
+- Command ``SetOption117 1`` for light fading to be fixed duration instead of fixed slew rate [#10109](https://github.com/arendst/Tasmota/issues/10109)
+- Command ``RfProtocol`` to control RcSwitch receive protocols by BBBits [#10063](https://github.com/arendst/Tasmota/issues/10063)
+- Commands ``TuyaRGB``, ``TuyaEnum`` and ``TuyaEnumList`` [#9769](https://github.com/arendst/Tasmota/issues/9769)
 - Zigbee command ``ZbInfo`` and prepare support for EEPROM
 - Zigbee command ``ZbLeave`` to unpair a device
-- Zigbee support for Mi Door and Contact (#9759)
-- Zigbee alarm persistence (#9785)
+- Zigbee support for Mi Door and Contact [#9759](https://github.com/arendst/Tasmota/issues/9759)
+- Zigbee alarm persistence [#9785](https://github.com/arendst/Tasmota/issues/9785)
 - Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
-- Zigbee better support for Tuya Protocol (#10074)
+- Zigbee better support for Tuya Protocol [#10074](https://github.com/arendst/Tasmota/issues/10074)
 - Zigbee visual map of network
-- TyuaMcu update 2/3 by Federico Leoni (#10004)
+- TyuaMcu update 2/3 by Federico Leoni [#10004](https://github.com/arendst/Tasmota/issues/10004)
 - Support for additional EZO sensors by Christopher Tremblay
 - Support for AS608 optical and R503 capacitive fingerprint sensor
-- Support for Shelly Dimmer 1 and 2 by James Turton (#9854)
-- Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo (#9963)
-- Support for multiple WeMo devices by Magic73 (#9208)
-- Support for SPI connected MFRC522 13.56MHz rfid card reader (#9916)
+- Support for Shelly Dimmer 1 and 2 by James Turton [#9854](https://github.com/arendst/Tasmota/issues/9854)
+- Support for common anode sevenseg displays by adding ``#define USE_DISPLAY_SEVENSEG_COMMON_ANODE`` by Ken Sanislo [#9963](https://github.com/arendst/Tasmota/issues/9963)
+- Support for multiple WeMo devices by Magic73 [#9208](https://github.com/arendst/Tasmota/issues/9208)
+- Support for SPI connected MFRC522 13.56MHz rfid card reader [#9916](https://github.com/arendst/Tasmota/issues/9916)
 - Support ESP32 SPIFFS for internal use
 - KNX read reply for Power (#9236, #9891)
 - Fallback NTP server from x.pool.ntp.org if no ntpservers are configured
-- Optional CCloader support for CC25xx Zigbee or CC26xx BLE by Christian Baars (#9970)
-- Letsencrypt R3 in addition to X3 CA (#10086)
+- Optional CCloader support for CC25xx Zigbee or CC26xx BLE by Christian Baars [#9970](https://github.com/arendst/Tasmota/issues/9970)
+- Letsencrypt R3 in addition to X3 CA [#10086](https://github.com/arendst/Tasmota/issues/10086)
 
 ### Breaking Changed
-- KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
+- KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato [#9811](https://github.com/arendst/Tasmota/issues/9811) [#9888](https://github.com/arendst/Tasmota/issues/9888)
 
 ### Changed
 - Core library from v2.7.4.5 to v2.7.4.9
 - IRremoteESP8266 library from v2.7.12 to v2.7.13
 - Shelly Dimmer 1 and 2 stm32 firmware from v51.4 to v51.5
 - mDNS has been disabled from all pre-compiled binaries to allow new features
-- Sonoff L1 color up scaling and color margin detection (#9545)
-- MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
-- Force bigger Thunk Stack if 4K RSA even without EC ciphers (#10075)
+- Sonoff L1 color up scaling and color margin detection [#9545](https://github.com/arendst/Tasmota/issues/9545)
+- MQTT Wifi connection timeout from 5000 to 200 mSec [#9886](https://github.com/arendst/Tasmota/issues/9886)
+- Force bigger Thunk Stack if 4K RSA even without EC ciphers [#10075](https://github.com/arendst/Tasmota/issues/10075)
 
 ### Fixed
-- Command ``gpio`` using non-indexed functions regression from v9.1.0 (#9962)
-- NTP fallback server functionality (#9739)
-- Telegram group chatid not supported (#9831)
-- KNX buttons, switches and sensors detection regression from v9.1.0 (#9811)
-- KNX ESP32 UDP mulicastpackage (#9811)
-- GUI MqttUser and MqttPassword updates when TLS is compiled in (#9825)
-- ESP32 TasmotaClient firmware upgrade (#9218)
-- Reset to defaults after 6 hours of DeepSleep (#9993)
-- Backlog timing wraparound (#9995)
-- First LED in addressable string does not fade when using scheme (#10088)
-- Improved Opentherm error handling (#10055)
-- Shutter motordelay stop issue (#10033)
-- Shutter fix overflow on runtime over 100 seconds (#9800)
-- ESP32 CC2530 heap corruption (#10121)
-- ESP32 Analog input div10 rule trigger (#10149)
+- Command ``gpio`` using non-indexed functions regression from v9.1.0 [#9962](https://github.com/arendst/Tasmota/issues/9962)
+- NTP fallback server functionality [#9739](https://github.com/arendst/Tasmota/issues/9739)
+- Telegram group chatid not supported [#9831](https://github.com/arendst/Tasmota/issues/9831)
+- KNX buttons, switches and sensors detection regression from v9.1.0 [#9811](https://github.com/arendst/Tasmota/issues/9811)
+- KNX ESP32 UDP mulicastpackage [#9811](https://github.com/arendst/Tasmota/issues/9811)
+- GUI MqttUser and MqttPassword updates when TLS is compiled in [#9825](https://github.com/arendst/Tasmota/issues/9825)
+- ESP32 TasmotaClient firmware upgrade [#9218](https://github.com/arendst/Tasmota/issues/9218)
+- Reset to defaults after 6 hours of DeepSleep [#9993](https://github.com/arendst/Tasmota/issues/9993)
+- Backlog timing wraparound [#9995](https://github.com/arendst/Tasmota/issues/9995)
+- First LED in addressable string does not fade when using scheme [#10088](https://github.com/arendst/Tasmota/issues/10088)
+- Improved Opentherm error handling [#10055](https://github.com/arendst/Tasmota/issues/10055)
+- Shutter motordelay stop issue [#10033](https://github.com/arendst/Tasmota/issues/10033)
+- Shutter fix overflow on runtime over 100 seconds [#9800](https://github.com/arendst/Tasmota/issues/9800)
+- ESP32 CC2530 heap corruption [#10121](https://github.com/arendst/Tasmota/issues/10121)
+- ESP32 Analog input div10 rule trigger [#10149](https://github.com/arendst/Tasmota/issues/10149)
 
 ### Removed
 - Version compatibility check
 - PN532 define USE_PN532_CAUSE_EVENTS replaced by generic rule trigger `on pn532#uid=`
+
