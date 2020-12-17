@@ -911,6 +911,10 @@ String GetSerialConfig(void) {
   return String(config);
 }
 
+uint32_t GetSerialBaudrate(void) {
+  return (Serial.baudRate() / 300) * 300;  // Fix ESP32 strange results like 115201
+}
+
 void SetSerialBegin(void) {
   TasmotaGlobal.baudrate = Settings.baudrate * 300;
   AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
@@ -940,7 +944,7 @@ void SetSerialConfig(uint32_t serial_config) {
 void SetSerialBaudrate(uint32_t baudrate) {
   TasmotaGlobal.baudrate = baudrate;
   Settings.baudrate = TasmotaGlobal.baudrate / 300;
-  if (Serial.baudRate() != TasmotaGlobal.baudrate) {
+  if (GetSerialBaudrate() != TasmotaGlobal.baudrate) {
     SetSerialBegin();
   }
 }
@@ -958,7 +962,7 @@ void ClaimSerial(void) {
   TasmotaGlobal.serial_local = true;
   AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
-  TasmotaGlobal.baudrate = Serial.baudRate();
+  TasmotaGlobal.baudrate = GetSerialBaudrate();
   Settings.baudrate = TasmotaGlobal.baudrate / 300;
 }
 
@@ -1948,8 +1952,10 @@ void Syslog(void)
 
 void AddLog(uint32_t loglevel)
 {
-  char mxtime[10];  // "13:45:21 "
-  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
+//  char mxtime[10];  // "13:45:21 "
+//  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
+  char mxtime[14];  // "13:45:21.999 "
+  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d.%03d "), RtcTime.hour, RtcTime.minute, RtcTime.second, RtcMillis());
 
   if ((loglevel <= TasmotaGlobal.seriallog_level) &&
       (TasmotaGlobal.masterlog_level <= TasmotaGlobal.seriallog_level)) {

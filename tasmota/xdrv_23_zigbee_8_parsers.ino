@@ -229,7 +229,7 @@ void Z_Send_State_or_Map(uint16_t shortaddr, uint8_t index, uint16_t zdo_cmd) {
 // This callback is registered to send ZbMap(s) to each device one at a time
 void Z_Map(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   if (BAD_SHORTADDR != shortaddr) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "sending `ZnMap 0x%04X`"), shortaddr);
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "sending `ZbMap 0x%04X`"), shortaddr);
 #ifdef USE_ZIGBEE_ZNP
     Z_Send_State_or_Map(shortaddr, value, ZDO_MGMT_LQI_REQ);
 #endif // USE_ZIGBEE_ZNP
@@ -238,6 +238,8 @@ void Z_Map(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t end
 #endif // USE_ZIGBEE_EZSP
   } else {
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbMap done"));
+    zigbee.mapping_in_progress = false;
+    zigbee.mapping_ready = true;
   }
 }
 /*********************************************************************************************\
@@ -700,6 +702,7 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
   const size_t      numInIndex = 11;
   const size_t      numOutIndex = 12 + numInCluster*2;
 #endif
+  bool is_tuya_protocol = false;
 
   if (0 == status) {
     // device is reachable
@@ -710,14 +713,15 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
     }
 
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                    "\"Status\":%d,\"Endpoint\":\"0x%02X\""
+                    "\"Status\":%d,\"Device\":\"0x%04X\",\"Endpoint\":\"0x%02X\""
                     ",\"ProfileId\":\"0x%04X\",\"DeviceId\":\"0x%04X\",\"DeviceVersion\":%d"
                     ",\"InClusters\":["),
-                    ZIGBEE_STATUS_SIMPLE_DESC, endpoint,
+                    ZIGBEE_STATUS_SIMPLE_DESC, nwkAddr, endpoint,
                     profileId, deviceId, deviceVersion);
     for (uint32_t i = 0; i < numInCluster; i++) {
       if (i > 0) { ResponseAppend_P(PSTR(",")); }
       ResponseAppend_P(PSTR("\"0x%04X\""), buf.get16(numInIndex + i*2));
+      if (buf.get16(numInIndex + i*2) == 0xEF00) { is_tuya_protocol = true; }   // tuya protocol
     }
     ResponseAppend_P(PSTR("],\"OutClusters\":["));
     for (uint32_t i = 0; i < numOutCluster; i++) {
@@ -727,6 +731,14 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
     ResponseAppend_P(PSTR("]}}"));
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
     XdrvRulesProcess();
+  }
+
+  // If tuya protocol, change the model information
+  if (is_tuya_protocol) {
+    Z_Device & device = zigbee_devices.getShortAddr(nwkAddr);
+    device.addEndpoint(endpoint);
+    device.data.get<Z_Data_Mode>(endpoint).setConfig(ZM_Tuya);
+    zigbee_devices.dirty();
   }
 
   return -1;
@@ -1047,6 +1059,7 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) 
 
   // device is reachable
   zigbee_devices.deviceWasReached(shortaddr);
+  bool non_empty = false;     // check whether the response contains relevant information
 
   const char * friendlyName = zigbee_devices.getFriendlyName(shortaddr);
 
@@ -1077,6 +1090,7 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) 
       uint8_t     m_lqi       = buf.get8(idx + 21);
       idx += 22;
 
+      non_empty = true;
       if (i > 0) {
         ResponseAppend_P(PSTR(","));
       }
@@ -1100,6 +1114,27 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) 
                             TrueFalseNull(m_permitjoin & 0x02),
                             m_depth,
                             m_lqi);
+
+      // detect any router
+      Z_Device & device = zigbee_devices.findShortAddr(m_shortaddr);
+      if (device.valid()) {
+        if ((m_dev_type & 0x03) == 1) {   // it is a router
+          device.setRouter(true);
+        }
+      }
+
+      // Add information to zigbee mapper
+      // Z_Mapper_Edge::Edge_Type edge_type;
+      // switch ((m_dev_type & 0x70) >> 4) {
+      //   case 0: edge_type = Z_Mapper_Edge::Parent;       break;
+      //   case 1: edge_type = Z_Mapper_Edge::Child;        break;
+      //   case 2: edge_type = Z_Mapper_Edge::Sibling;      break;
+      //   default: edge_type = Z_Mapper_Edge::Unknown;     break;
+
+      // }
+      // Z_Mapper_Edge edge(m_shortaddr, shortaddr, m_lqi, edge_type);
+      Z_Mapper_Edge edge(m_shortaddr, shortaddr, m_lqi);
+      zigbee_mapper.addEdge(edge);
     }
 
     ResponseAppend_P(PSTR("]}}"));
@@ -1128,6 +1163,7 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) 
         break;                                      // abort for any other value since we don't know the length of the field
       }
 
+      non_empty = true;
       if (i > 0) {
         ResponseAppend_P(PSTR(","));
       }
@@ -1147,7 +1183,8 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const class SBuffer &buf, boolean lqi) 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_MAP));
 
   // Check if there are more values waiting, if so re-send a new request to get other values
-  if (start + len < total) {
+  // Only send a new request if the current was non-empty. This avoids an infinite loop if the device announces more slots that it actually has.
+  if ((non_empty) && (start + len < total)) {
     // there are more values to read
 #ifdef USE_ZIGBEE_ZNP
       Z_Send_State_or_Map(shortaddr, start + len, lqi ? ZDO_MGMT_LQI_REQ : ZDO_MGMT_BIND_REQ);
@@ -2036,7 +2073,7 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
         break;
     }
     if (!attr.isNone()) {
-      Z_parseAttributeKey(attr);
+      Z_parseAttributeKey(attr, _cluster_id);
       attr_list.addAttribute(_cluster_id, attr_id) = attr;
     }
   }

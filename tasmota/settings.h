@@ -142,7 +142,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t mqtt_switches : 1;            // bit 0 (v9.0.0.3)   - SetOption114 - (Switch) Detach Switches from relays and enable MQTT action state for all the SwitchModes (1)
     uint32_t mi32_enable : 1;              // bit 1 (v9.1.0.1)   - SetOption115 - (ESP32 BLE) Enable ESP32 MI32 BLE (1)
     uint32_t zb_disable_autoquery : 1;     // bit 2 (v9.1.0.1)   - SetOption116 - (Zigbee) Disable auto-query of zigbee lights and devices (1)
-    uint32_t spare03 : 1;                  // bit 3
+    uint32_t fade_fixed_duration : 1;      // bit 3 (v9.1.0.2)   - SetOption117 - (Light) run fading at fixed duration instead of fixed slew rate
     uint32_t spare04 : 1;                  // bit 4
     uint32_t spare05 : 1;                  // bit 5
     uint32_t spare06 : 1;                  // bit 6
@@ -683,17 +683,18 @@ typedef struct {
   uint16_t      valid;                     // 290  (RTC memory offset 100)
   uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
-  unsigned long energy_kWhtoday;              // 294
-  unsigned long energy_kWhtotal;              // 298
+  unsigned long energy_kWhtoday;           // 294
+  unsigned long energy_kWhtotal;           // 298
   volatile unsigned long pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
   power_t       power;                     // 2AC
   EnergyUsage   energy_usage;              // 2B0
   unsigned long nextwakeup;                // 2C8
-  uint8_t       free_004[4];               // 2CC
+  uint32_t      baudrate;                  // 2CC
   uint32_t      ultradeepsleep;            // 2D0
   uint16_t      deepsleep_slip;            // 2D4
 
-  uint8_t       free_022[22];              // 2D6
+  uint8_t       free_2d6[22];              // 2D6
+
                                            // 2EC - 2FF free locations
 } TRtcSettings;
 TRtcSettings RtcSettings;

@@ -24,8 +24,13 @@
  *
  * Action LSC SmartLed (GreenRedBlue)
  * {"NAME":"LSC RGBCW LED","GPIO":[0,0,0,0,0,0,0,0,181,0,180,0,0],"FLAG":0,"BASE":18}
+ * {"NAME":"LSC RGBCW LED","GPIO":[0,0,0,0,0,0,0,0,4064,0,4032,0,0,0],"FLAG":0,"BASE":18}
  * Polux E14 (BlueGreenRed) - Notice GPIO00 = 9 (Switch1)
  * {"NAME":"Polux RGBCW E14","GPIO":[9,0,0,0,0,0,0,0,181,0,180,0,0],"FLAG":0,"BASE":18}
+ * Polux E14 (BlueGreenRed)
+ * {"NAME":"Polux RGBCW E14","GPIO":[0,0,0,0,0,0,0,0,4065,0,4032,0,0,0],"FLAG":0,"BASE":18}
+ * LE LampUX 907001-US
+ * {"NAME":"LE LampUX 907001-US","GPIO":[0,0,0,0,0,0,0,0,4066,0,4032,0,0,0],"FLAG":0,"BASE":18}
 \*********************************************************************************************/
 
 #define XLGT_04             4
@@ -53,14 +58,12 @@
 #define SM2135_55MA         0x09
 #define SM2135_60MA         0x0A
 
-enum Sm2135Color { SM2135_WCGRB, SM2135_WCBGR };
-
-//                              RGB current         CW current
-const uint8_t SM2135_CURRENT = (SM2135_20MA << 4) | SM2135_15MA;  // See https://github.com/arendst/Tasmota/issues/6495#issuecomment-549121683
+enum Sm2135Color { SM2135_WCGRB, SM2135_WCBGR, SM2135_WCGRBHI, SM2135_WCBGRHI };
 
 struct SM2135 {
   uint8_t clk = 0;
   uint8_t data = 0;
+  uint8_t current;
   uint8_t model = SM2135_WCGRB;
 } Sm2135;
 
@@ -135,50 +138,69 @@ bool Sm2135SetChannels(void) {
   uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
   uint8_t data[6];
 
-  Sm2135Start(SM2135_ADDR_MC);
-  Sm2135Write(SM2135_CURRENT);
-  if ((0 == cur_col[0]) && (0 == cur_col[1]) && (0 == cur_col[2])) {
-    Sm2135Write(SM2135_CW);
-    Sm2135Stop();
-    delay(1);
-    Sm2135Start(SM2135_ADDR_C);
-    Sm2135Write(cur_col[4]);  // Warm
-    Sm2135Write(cur_col[3]);  // Cold
-  } else {
+  uint32_t light_type = 3;      // RGB and CW
+  if (Sm2135.model < 2) {
+    if ((0 == cur_col[0]) && (0 == cur_col[1]) && (0 == cur_col[2])) {
+      light_type = 1;           // CW only
+    } else {
+      light_type = 2;           // RGB only
+    }
+  }
+  if (light_type &2) {          // Set RGB
+    Sm2135Start(SM2135_ADDR_MC);
+    Sm2135Write(Sm2135.current);
     Sm2135Write(SM2135_RGB);
-    if (SM2135_WCBGR == Sm2135.model) {
+    if (Sm2135.model &1) {      // SM2135_WCBGR
       Sm2135Write(cur_col[2]);  // Blue
       Sm2135Write(cur_col[1]);  // Green
       Sm2135Write(cur_col[0]);  // Red
-    } else {
+    } else {                    // SM2135_WCGRB
       Sm2135Write(cur_col[1]);  // Green
       Sm2135Write(cur_col[0]);  // Red
       Sm2135Write(cur_col[2]);  // Blue
     }
+    Sm2135Stop();
   }
-  Sm2135Stop();
+  if (light_type &1) {          // Set CW
+    Sm2135Start(SM2135_ADDR_MC);
+    Sm2135Write(Sm2135.current);
+    Sm2135Write(SM2135_CW);
+    Sm2135Stop();
+    delay(1);
+    Sm2135Start(SM2135_ADDR_C);
+    Sm2135Write(cur_col[4]);    // Warm
+    Sm2135Write(cur_col[3]);    // Cold
+    Sm2135Stop();
+  }
 
   return true;
 }
 
 void Sm2135ModuleSelected(void)
 {
-  if (PinUsed(GPIO_SM2135_CLK) && PinUsed(GPIO_SM2135_DAT)) {
+  if (PinUsed(GPIO_SM2135_CLK) && PinUsed(GPIO_SM2135_DAT, GPIO_ANY)) {
     Sm2135.clk = Pin(GPIO_SM2135_CLK);
-    Sm2135.data = Pin(GPIO_SM2135_DAT);
+    Sm2135.data = Pin(GPIO_SM2135_DAT, GPIO_ANY);
 
-    Sm2135.model = SM2135_WCGRB;
+    Sm2135.model = GetPin(Sm2135.data) - AGPIO(GPIO_SM2135_DAT);  // 0 .. 3
     if (PinUsed(GPIO_SWT1)) {
       Sm2135.model = SM2135_WCBGR;
       pinMode(Pin(GPIO_SWT1), INPUT);             // Discard GPIO_SWT functionality
       SetPin(Pin(GPIO_SWT1), AGPIO(GPIO_NONE));
     }
 
+//                    RGB current         CW current
+    Sm2135.current = (SM2135_20MA << 4) | SM2135_15MA;  // See https://github.com/arendst/Tasmota/issues/6495#issuecomment-549121683
+    if (Sm2135.model > SM2135_WCBGR) {
+      Sm2135.current = (SM2135_20MA << 4) | SM2135_30MA;
+    }
+
     Sm2135Init();
 
     TasmotaGlobal.light_type = LT_RGBWC;
     TasmotaGlobal.light_driver = XLGT_04;
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: SM2135 (%s) Found"), (SM2135_WCBGR == Sm2135.model) ? PSTR("BGR") : PSTR("GRB"));
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("LGT: SM2135 (%s-%s current) Found"),
+      (SM2135_WCBGR == (Sm2135.model &1)) ? PSTR("BGR") : PSTR("GRB"), (Sm2135.model > SM2135_WCBGR) ? PSTR("High") : PSTR("Low"));
   }
 }
 

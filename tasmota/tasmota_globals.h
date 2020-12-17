@@ -107,6 +107,12 @@ String EthernetMacAddress(void);
 #define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
 #endif  // ARDUINO_ESP32_RELEASE
 
+#define USE_TFS
+
+#ifdef USE_SCRIPT
+#undef USE_TFS
+#endif  // USE_SCRIPT
+
 // Hardware has no ESP32
 #undef USE_TUYA_DIMMER
 #undef USE_PWM_DIMMER

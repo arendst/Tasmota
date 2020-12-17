@@ -3,7 +3,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [9.1.0.2]
+## [9.2.0.1]
+### Added
+- Milliseconds to console output (#10152)
+
+## [Released]
+
+## [9.2.0] 20201216
+- Release Julie
+
+## [9.1.0.2] 20201216
 ### Added
 - KNX read reply for Power (#9236, #9891)
 - Zigbee persistence of device/sensor data in EEPROM (only ZBBridge)
@@ -13,16 +22,25 @@ All notable changes to this project will be documented in this file.
 - TyuaMcu update 2/3 by Federico Leoni (#10004)
 - Optional CCloader support for CC25xx Zigbee or CC26xx BLE by Christian Baars (#9970)
 - Command ``RfProtocol`` to control RcSwitch receive protocols by BBBits (#10063)
+- Zigbee better support for Tuya Protocol (#10074)
+- Support for SPI connected MFRC522 13.56MHz rfid card reader (#9916)
+- Letsencrypt R3 in addition to X3 CA (#10086)
+- Zigbee add visual map of network
+- Command ``SetOption117 1`` for light fading to be fixed duration instead of fixed slew rate (#10109)
+- Support ESP32 SPIFFS for internal use
 
 ### Breaking Changed
 - KNX DPT9 (16-bit float) to DPT14 (32-bit float) by Adrian Scillato (#9811, #9888)
 
 ### Changed
+- Core library from v2.7.4.7 to v2.7.4.9
 - Shelly Dimmer fw upgrade using WebGUI Firmware Upgrade and file from folder `tools/fw_shd_stm32/`
 - MQTT Wifi connection timeout from 5000 to 200 mSec (#9886)
 - Platformio compiler option `-free -fipa-pta` enabled (#9875)
 - IRremoteESP8266 library from v2.7.12 to v2.7.13
 - Shelly Dimmer 1 and 2 stm32 firmware from v51.4 to v51.5
+- Force bigger Thunk Stack if 4K RSA even without EC ciphers (#10075)
+- mDNS has been disabled from all pre-compiled binaries to allow new features
 
 ### Fixed
 - KNX ESP32 UDP mulicastpackage (#9811)
@@ -30,6 +48,13 @@ All notable changes to this project will be documented in this file.
 - ESP32 TasmotaClient firmware upgrade (#9218)
 - Reset to defaults after 6 hours of DeepSleep (#9993)
 - Backlog timing wraparound (#9995)
+- First LED in addressable string does not fade when using scheme (#10088)
+- Improved Opentherm error handling (#10055)
+- Platformio compiler option `no target align` removed fixing hardware watchdog exceptions
+- Shutter motordelay stop issue (#10033)
+- Shutter fix overflow on runtime over 100 seconds (#9800)
+- ESP32 CC2530 heap corruption (#10121)
+- ESP32 Analog input div10 rule trigger (#10149)
 
 ### Removed
 - PN532 define USE_PN532_CAUSE_EVENTS replaced by generic rule trigger `on pn532#uid=`
@@ -63,10 +88,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Version compatibility check
 
-## [Released]
-
-### 9.1.0 20201105
-
+## [9.1.0] 20201105
 - Release Imogen
 
 ## [9.0.0.3] - 20201105

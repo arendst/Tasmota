@@ -24,6 +24,61 @@
 
 #define XSNS_75                    75
 
+const char *UnitfromType(const char *type)  // find unit for measurment type
+{
+  if (strcmp(type, "time") == 0)
+  {
+    return "_seconds";
+  }
+  if (strcmp(type, "temperature") == 0 || strcmp(type, "dewpoint") == 0)
+  {
+    return "_celsius";
+  }
+  if (strcmp(type, "pressure") == 0)
+  {
+    return "_hpa";
+  }
+  if (strcmp(type, "voltage") == 0)
+  {
+    return "_volts";
+  }
+  if (strcmp(type, "current") == 0)
+  {
+    return "_amperes";
+  }
+  if (strcmp(type, "mass") == 0)
+  {
+    return "_grams";
+  }
+  if (strcmp(type, "carbondioxide") == 0)
+  {
+    return "_ppm";
+  }
+  if (strcmp(type, "humidity") == 0)
+  {
+    return "_percentage";
+  }
+  return "";
+}
+
+const char *FormatMetricName(const char *metric)  // cleanup spaces and uppercases for Prmetheus metrics conventions
+{
+  char *formated = (char *)malloc(strlen(metric)+1);
+  uint32_t cnt = 0;
+  for (cnt; cnt < strlen(metric)+1; cnt++)
+  {
+    if (metric[cnt] == ' ')
+    { 
+      formated[cnt] = '_';
+    }
+    else
+    {
+      formated[cnt] = tolower(metric[cnt]);
+    }
+  }
+  return formated;
+}
+
 void HandleMetrics(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
@@ -75,19 +130,68 @@ void HandleMetrics(void)
   WSContentSend_P(PSTR("# TYPE energy_power_kilowatts_total counter\nenergy_power_kilowatts_total %s\n"), parameter);
 #endif
 
-/*
-  // Alternative method using the complete sensor JSON data
-  // For prometheus it may need to be decoded to # TYPE messages
+  for (uint32_t device = 0; device < TasmotaGlobal.devices_present; device++) {
+    power_t mask = 1 << device;
+    WSContentSend_P(PSTR("# TYPE relay%d_state gauge\nrelay%d_state %d\n"), device+1, device+1, (TasmotaGlobal.power & mask));
+  }
+
   ResponseClear();
-  MqttShowSensor();
-  char json[strlen(TasmotaGlobal.mqtt_data) +1];
+  MqttShowSensor(); //Pull sensor data
+  char json[strlen(TasmotaGlobal.mqtt_data)+1];
   snprintf_P(json, sizeof(json), TasmotaGlobal.mqtt_data);
-
-  // Do your Prometheus specific processing here.
-  // Look at function DisplayAnalyzeJson() in file xdrv_13_display.ino as an example how to decode the JSON message
-
-  WSContentSend_P(json);
-*/
+  String jsonStr = json;
+  JsonParser parser((char *)jsonStr.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (root)
+  { // did JSON parsing went ok?
+    for (auto key1 : root)
+    {
+      JsonParserToken value1 = key1.getValue();
+      if (value1.isObject())
+      {
+        JsonParserObject Object2 = value1.getObject();
+        for (auto key2 : Object2)
+        {
+          JsonParserToken value2 = key2.getValue();
+          if (value2.isObject())
+          {
+            JsonParserObject Object3 = value2.getObject();
+            for (auto key3 : Object3)
+            {
+              const char *value = key3.getValue().getStr(nullptr);
+              if (value != nullptr && isdigit(value[0]))
+              {
+                const char *sensor = FormatMetricName(key2.getStr());                                                                                        //cleanup sensor name
+                const char *type = FormatMetricName(key3.getStr());                                                                                          //cleanup sensor type
+                const char *unit = UnitfromType(type);                                                                                                       //grab base unit corresponding to type
+                WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s%s gauge\ntasmota_sensors_%s%s{sensor=\"%s\"} %s\n"), type, unit, type, unit, sensor, value); //build metric as "# TYPE tasmota_sensors_%type%_%unit% gauge\ntasmotasensors_%type%_%unit%{sensor=%sensor%"} %value%""
+              }
+            }
+          }
+          else
+          {
+            const char *value = value2.getStr(nullptr);
+            if (value != nullptr && isdigit(value[0]))
+            {
+              const char *sensor = FormatMetricName(key1.getStr());
+              const char *type = FormatMetricName(key2.getStr());
+              const char *unit = UnitfromType(type);
+              WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s%s gauge\ntasmota_sensors_%s%s{sensor=\"%s\"} %s\n"), type, unit, type, unit, sensor, value);
+            }
+          }
+        }
+      }
+      else
+      {
+        const char *value = value1.getStr(nullptr);
+        if (value != nullptr && isdigit(value[0] && strcmp(key1.getStr(), "Time") != 0))  //remove false 'time' metric
+        { 
+          const char *sensor = FormatMetricName(key1.getStr());
+          WSContentSend_P(PSTR("# TYPE tasmota_sensors_%s gauge\ntasmota_sensors{sensor=\"%s\"} %s\n"), sensor, sensor, value);
+        }
+      }
+    }
+  }
 
   WSContentEnd();
 }

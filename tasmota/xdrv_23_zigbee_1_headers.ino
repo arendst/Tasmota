@@ -90,6 +90,10 @@ public:
   bool recv_until = false;            // ignore all messages until the received frame fully matches
   bool eeprom_present = false;        // is the ZBBridge EEPROM present?
   bool eeprom_ready = false;          // is the ZBBridge EEPROM formatted and ready?
+  // Zigbee mapping
+  bool mapping_in_progress = false;   // is there a mapping in progress
+  bool mapping_ready = false;         // do we have mapping information ready
+  uint32_t mapping_end_time = 0;
 
   uint8_t on_error_goto = ZIGBEE_LABEL_ABORT;         // on error goto label, 99 default to abort
   uint8_t on_timeout_goto = ZIGBEE_LABEL_ABORT;       // on timeout goto label, 99 default to abort

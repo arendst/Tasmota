@@ -817,8 +817,8 @@ ESP8266WebServer *Webserver;
 struct WEB {
   String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
   uint16_t upload_progress_dot_count;
+  uint16_t upload_error = 0;
   uint8_t state = HTTP_OFF;
-  uint8_t upload_error = 0;
   uint8_t upload_file_type;
   uint8_t config_block_count = 0;
   uint8_t config_xor_on = 0;
@@ -1661,6 +1661,18 @@ bool HandleRootStatusRefresh(void)
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 #endif  // USE_SONOFF_RF
+#ifdef USE_ZIGBEE
+  WebGetArg("zbj", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("ZbPermitJoin"));
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  WebGetArg("zbr", tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("ZbMap"));
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+#endif // USE_ZIGBEE
   WSContentBegin(200, CT_HTML);
   WSContentSend_P(PSTR("{t}"));
   XsnsCall(FUNC_WEB_SENSOR);
@@ -2946,8 +2958,8 @@ void HandleUploadLoop(void)
       }
 #endif  // USE_ZIGBEE_EZSP
       if (error != 0) {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Transfer error %d"), error);
-        Web.upload_error = 8;  // File invalid
+//        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Transfer error %d"), error);
+        Web.upload_error = error + (100 * Web.upload_file_type);  // Add offset to discriminate transfer errors
         return;
       }
     }

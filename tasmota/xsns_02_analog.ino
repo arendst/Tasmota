@@ -27,12 +27,15 @@
 #ifdef ESP8266
 #define ANALOG_RESOLUTION             10               // 12 = 4095, 11 = 2047, 10 = 1023
 #define ANALOG_RANGE                  1023             // 4095 = 12, 2047 = 11, 1023 = 10
+#define ANALOG_PERCENT                10               // backward compatible div10 range
 #endif  // ESP8266
 #ifdef ESP32
 #undef ANALOG_RESOLUTION
 #define ANALOG_RESOLUTION             12               // 12 = 4095, 11 = 2047, 10 = 1023
 #undef ANALOG_RANGE
 #define ANALOG_RANGE                  4095             // 4095 = 12, 2047 = 11, 1023 = 10
+#undef ANALOG_PERCENT
+#define ANALOG_PERCENT                ((ANALOG_RANGE + 50) / 100)  // approximation to 1% ADC range
 #endif  // ESP32
 
 #define TO_CELSIUS(x) ((x) - 273.15)
@@ -259,9 +262,9 @@ void AdcEvery250ms(void) {
 #endif
     if (ADC_INPUT == Adc[idx].type) {
       uint16_t new_value = AdcRead(Adc[idx].pin, 5);
-      if ((new_value < Adc[idx].last_value -10) || (new_value > Adc[idx].last_value +10)) {
+      if ((new_value < Adc[idx].last_value -ANALOG_PERCENT) || (new_value > Adc[idx].last_value +ANALOG_PERCENT)) {
         Adc[idx].last_value = new_value;
-        uint16_t value = Adc[idx].last_value / 10;
+        uint16_t value = Adc[idx].last_value / ANALOG_PERCENT;
         Response_P(PSTR("{\"ANALOG\":{\"A%ddiv10\":%d}}"), idx + offset, (value > 99) ? 100 : value);
         XdrvRulesProcess();
       }

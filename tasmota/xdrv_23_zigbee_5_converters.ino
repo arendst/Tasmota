@@ -42,9 +42,12 @@ enum Z_DataTypes {
   ZEUI64    = 0xF0, Zkey128 = 0xF1,
   Zunk      = 0xFF,
   // adding fake type for Tuya specific encodings
-  Ztuya1    = 0x80,   // 1 byte unsigned int, Big Endian when output (input is taken care of)
-  Ztuya2    = 0x81,   // 2 bytes unsigned, Big Endian when output (input is taken care of)
-  Ztuya4    = 0x82,   // 4 bytes signed, Big Endian when output (input is taken care of)
+  Ztuya0    = Zoctstr,
+  Ztuya1    = Zbool,
+  Ztuya2    = Zint32,
+  Ztuya3    = Zstring,
+  Ztuya4    = Zuint8,
+  Ztuya5    = Zuint32
 };
 
 //
@@ -65,18 +68,13 @@ uint8_t Z_getDatatypeLen(uint8_t t) {
     case Zsemi:
     case ZclusterId:
     case ZattribId:
-    case Ztuya1:
       return 2;
-    case Ztuya2:
-      return 3;
     case Zsingle:
     case ZToD:
     case Zdate:
     case ZUTC:
     case ZbacOID:
       return 4;
-    case Ztuya4:
-      return 5;
     case Zdouble:
     case ZEUI64:
       return 8;
@@ -129,7 +127,7 @@ enum Cx_cluster_short {
   Cx0010, Cx0011, Cx0012, Cx0013, Cx0014, Cx001A, Cx0020, Cx0100,
   Cx0101, Cx0102, Cx0201, Cx0300, Cx0400, Cx0401, Cx0402, Cx0403,
   Cx0404, Cx0405, Cx0406, Cx0500, Cx0702, Cx0B01, Cx0B04, Cx0B05,
-  CxEF00, CxFCCC,
+  CxEF00, CxFCC0, CxFCCC,
 };
 
 const uint16_t Cx_cluster[] PROGMEM = {
@@ -138,7 +136,7 @@ const uint16_t Cx_cluster[] PROGMEM = {
   0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x001A, 0x0020, 0x0100,
   0x0101, 0x0102, 0x0201, 0x0300, 0x0400, 0x0401, 0x0402, 0x0403,
   0x0404, 0x0405, 0x0406, 0x0500, 0x0702, 0x0B01, 0x0B04, 0x0B05,
-  0xEF00, 0xFCCC,
+  0xEF00, 0xFCC0, 0xFCCC,
 };
 
 uint16_t CxToCluster(uint8_t cx) {
@@ -468,6 +466,13 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0201, 0x4001, Z_(ValvePosition),         Cm1, 0 },
   { Zuint8,   Cx0201, 0x4002, Z_(EurotronicErrors),      Cm1, 0 },
   { Zint16,   Cx0201, 0x4003, Z_(CurrentTemperatureSetPoint), Cm_100, 0 },
+  { Zuint24,  Cx0201, 0x4008, Z_(EurotronicHostFlags),   Cm1, 0 },
+  // below are synthetic virtual attributes used to decode EurotronicHostFlags
+  // Last byte acts as a field mask for the lowest byte value
+  { Zbool,    Cx0201, 0xF002, Z_(TRVMirrorDisplay),      Cm1, 0 },
+  { Zbool,    Cx0201, 0xF004, Z_(TRVBoost),              Cm1, 0 },
+  { Zbool,    Cx0201, 0xF010, Z_(TRVWindowOpen),         Cm1, 0 },
+  { Zbool,    Cx0201, 0xF080, Z_(TRVChildProtection),    Cm1, 0 },
   // below are virtual attributes to simplify ZbData import/export
   { Zuint8,   Cx0201, 0xFFF0,  Z_(ThSetpoint),           Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Thermo, th_setpoint) },
   { Zint16,   Cx0201, 0xFFF1,  Z_(TempTarget),        Cm_100 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Thermo, temperature_target) },
@@ -603,8 +608,15 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0B05, 0x011D,  Z_(LastMessageRSSI),      Cm1, 0 },
 
   // Tuya Moes specific - 0xEF00
-  { Zoctstr,  CxEF00, 0x0070,  Z_(TuyaScheduleWorkdays), Cm1, 0 },
-  { Zoctstr,  CxEF00, 0x0071,  Z_(TuyaScheduleHolidays), Cm1, 0 },
+  // Mapping of Tuya type with internal mapping
+  // 0x00 - Zoctstr (len N)
+  // 0x01 - Ztuya1 (len 1) - equivalent to Zuint8 without invalid value handling
+  // 0x02 - Ztuya4 (len 4) - equivalent to Zint32 in big endian and without invalid value handling
+  // 0x03 - Zstr (len N)
+  // 0x04 - Ztuya1 (len 1)
+  // 0x05 - Ztuya4u (len 1/2/4) - equivalent to Zuint32
+  { Ztuya0,   CxEF00, 0x0070,  Z_(TuyaScheduleWorkdays), Cm1, 0 },
+  { Ztuya0,   CxEF00, 0x0071,  Z_(TuyaScheduleHolidays), Cm1, 0 },
   { Ztuya1,   CxEF00, 0x0101,  Z_(Power),                Cm1, 0 },
   { Ztuya1,   CxEF00, 0x0102,  Z_(Power2),               Cm1, 0 },
   { Ztuya1,   CxEF00, 0x0103,  Z_(Power3),               Cm1, 0 },
@@ -613,21 +625,24 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Ztuya1,   CxEF00, 0x0112,  Z_(TuyaWindowDetection),  Cm1, 0 },
   { Ztuya1,   CxEF00, 0x0114,  Z_(TuyaValveDetection),   Cm1, 0 },
   { Ztuya1,   CxEF00, 0x0174,  Z_(TuyaAutoLock),         Cm1, 0 },
-  { Ztuya4,   CxEF00, 0x0202,  Z_(TuyaTempTarget),       Cm_10, 0 },
-  { Ztuya4,   CxEF00, 0x0203,  Z_(LocalTemperature),     Cm_10, 0 },  // will be overwritten by actual LocalTemperature
-  { Ztuya1,   CxEF00, 0x0215,  Z_(TuyaBattery),          Cm1, 0 },   // TODO check equivalent?
-  { Ztuya4,   CxEF00, 0x0266,  Z_(TuyaMinTemp),          Cm1, 0 },
-  { Ztuya4,   CxEF00, 0x0267,  Z_(TuyaMaxTemp),          Cm1, 0 },
-  { Ztuya4,   CxEF00, 0x0269,  Z_(TuyaBoostTime),        Cm1, 0 },
-  { Ztuya4,   CxEF00, 0x026B,  Z_(TuyaComfortTemp),      Cm1, 0 },
-  { Ztuya4,   CxEF00, 0x026C,  Z_(TuyaEcoTemp),          Cm1, 0 },
-  { Ztuya1,   CxEF00, 0x026D,  Z_(TuyaValvePosition),    Cm1, 0 },
-  { Ztuya4,   CxEF00, 0x0272,  Z_(TuyaAwayTemp),         Cm1, 0 },
-  { Ztuya4,   CxEF00, 0x0275,  Z_(TuyaAwayDays),         Cm1, 0 },
-  { Ztuya1,   CxEF00, 0x0404,  Z_(TuyaPreset),           Cm1, 0 },
-  { Ztuya1,   CxEF00, 0x0405,  Z_(TuyaFanMode),          Cm1, 0 },
-  { Ztuya1,   CxEF00, 0x046A,  Z_(TuyaForceMode),        Cm1, 0 },
-  { Ztuya1,   CxEF00, 0x046F,  Z_(TuyaWeekSelect),       Cm1, 0 },
+  { Zint16,   CxEF00, 0x0202,  Z_(TuyaTempTarget),       Cm_10, Z_MAPPING(Z_Data_Thermo, temperature_target) },
+  { Zint16,   CxEF00, 0x0203,  Z_(LocalTemperature),     Cm_10, Z_MAPPING(Z_Data_Thermo, temperature) },  // will be overwritten by actual LocalTemperature
+  { Ztuya2,   CxEF00, 0x0215,  Z_(TuyaBattery),          Cm1, 0 },   // TODO check equivalent?
+  { Ztuya2,   CxEF00, 0x0266,  Z_(TuyaMinTemp),          Cm1, 0 },
+  { Ztuya2,   CxEF00, 0x0267,  Z_(TuyaMaxTemp),          Cm1, 0 },
+  { Ztuya2,   CxEF00, 0x0269,  Z_(TuyaBoostTime),        Cm1, 0 },
+  { Ztuya2,   CxEF00, 0x026B,  Z_(TuyaComfortTemp),      Cm1, 0 },
+  { Ztuya2,   CxEF00, 0x026C,  Z_(TuyaEcoTemp),          Cm1, 0 },
+  { Zuint8,   CxEF00, 0x026D,  Z_(TuyaValvePosition),    Cm1, Z_MAPPING(Z_Data_Thermo, th_setpoint) },
+  { Ztuya2,   CxEF00, 0x0272,  Z_(TuyaAwayTemp),         Cm1, 0 },
+  { Ztuya2,   CxEF00, 0x0275,  Z_(TuyaAwayDays),         Cm1, 0 },
+  { Ztuya4,   CxEF00, 0x0404,  Z_(TuyaPreset),           Cm1, 0 },
+  { Ztuya4,   CxEF00, 0x0405,  Z_(TuyaFanMode),          Cm1, 0 },
+  { Ztuya4,   CxEF00, 0x046A,  Z_(TuyaForceMode),        Cm1, 0 },
+  { Ztuya4,   CxEF00, 0x046F,  Z_(TuyaWeekSelect),       Cm1, 0 },
+
+  // Aqara Opple spacific
+  { Zbool,    CxFCC0, 0x0009,  Z_(OppleMode),            Cm1, 0 },
 
   // Terncy specific - 0xFCCC
   { Zuint16, CxFCCC, 0x001A,  Z_(TerncyDuration),        Cm1, 0 },
@@ -863,10 +878,6 @@ int32_t encodeSingleAttribute(class SBuffer &buf, double val_d, const char *val_
     case Zmap8:       // map8
       buf.add8(u32);
       break;
-    case Ztuya1:      // tuya specific 1 byte
-      buf.add8(1);    // len
-      buf.add8(u32);
-      break;
     // unsigned 16
     case Zuint16:     // uint16
     case Zenum16:     // enum16
@@ -874,10 +885,12 @@ int32_t encodeSingleAttribute(class SBuffer &buf, double val_d, const char *val_
     case Zmap16:      // map16
       buf.add16(u32);
       break;
-    case Ztuya2:
-      buf.add8(2);    // len
-      buf.add16BigEndian(u32);
     // unisgned 32
+    case Zuint24:
+      buf.add16(u32);
+      buf.add8(u32 >> 16);
+      break;
+    // unisgned 24
     case Zuint32:     // uint32
     case Zdata32:     // data32
     case Zmap32:      // map32
@@ -894,10 +907,6 @@ int32_t encodeSingleAttribute(class SBuffer &buf, double val_d, const char *val_
       break;
     case Zint32:      // int32
       buf.add32(i32);
-      break;
-    case Ztuya4:
-      buf.add8(4);    // len
-      buf.add32BigEndian(i32);
       break;
 
     case Zsingle:      // float
@@ -977,6 +986,15 @@ uint32_t parseSingleAttribute(Z_attribute & attr, const SBuffer &buf,
         }
       }
       break;
+    case Zuint24:
+      {
+        uint32_t uint24_val = buf.get16(i) + (buf.get8(i+2) >> 16);
+        // i += 3;
+        if (0xFFFFFF != uint24_val) {
+          attr.setUInt(uint24_val);
+        }
+      }
+      break;
     case Zuint32:      // uint32
     case ZUTC:      // UTC
       {
@@ -986,15 +1004,6 @@ uint32_t parseSingleAttribute(Z_attribute & attr, const SBuffer &buf,
           attr.setUInt(uint32_val);
         }
       }
-      break;
-    case Ztuya1:      // uint8 Big Endian
-      attr.setUInt(buf.get8(i+1));
-      break;
-    case Ztuya2:      // uint16  Big Endian
-      attr.setUInt(buf.get16BigEndian(i+1));
-      break;
-    case Ztuya4:
-      attr.setInt(buf.get32IBigEndian(i+1));
       break;
     // Note: uint40, uint48, uint56, uint64 are displayed as Hex
     // Note: int40, int48, int56, int64 are displayed as Hex
@@ -1292,15 +1301,24 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
         }
         break;
       case 0x02010008:    // Pi Heating Demand - solve Eutotronic bug
+      case 0x02014008:    // Eurotronic Host Flags decoding
         {
           const char * manufacturer_c = zigbee_devices.getManufacturerId(_srcaddr);  // null if unknown
           String manufacturerId((char*) manufacturer_c);
           if (manufacturerId.equals(F("Eurotronic"))) {
-            // Eurotronic does not report 0..100 but 0..255, including 255 which is normally an ivalid value
-            uint8_t valve = attr.getUInt();
-            if (attr.isNone()) { valve = 255; }
-            uint8_t valve_100 = changeUIntScale(valve, 0, 255, 0, 100);
-            attr.setUInt(valve_100);
+            if (ccccaaaa == 0x02010008) {
+              // Eurotronic does not report 0..100 but 0..255, including 255 which is normally an ivalid value
+              uint8_t valve = attr.getUInt();
+              if (attr.isNone()) { valve = 255; }
+              uint8_t valve_100 = changeUIntScale(valve, 0, 255, 0, 100);
+              attr.setUInt(valve_100);
+            } else if (ccccaaaa == 0x02014008) {
+              uint32_t mode = attr.getUInt();
+              if (mode & 0x02) { attr_list.addAttribute(0x0201, 0xF002).setUInt(1); }
+              if (mode & 0x04) { attr_list.addAttribute(0x0201, 0xF004).setUInt(1); }
+              if (mode & 0x10) { attr_list.addAttribute(0x0201, 0xF010).setUInt(1); }
+              if (mode & 0x80) { attr_list.addAttribute(0x0201, 0xF080).setUInt(1); }
+            }
           }
         }
         break;
@@ -1598,6 +1616,9 @@ void ZCLFrame::syntheticAnalogValue(Z_attribute_list &attr_list, class Z_attribu
   if (modelId.startsWith(F("lumi.plug"))) {
     attr.setKeyId(0x0702, 0x0000);    // change to EnergyTotal
   }
+  if (modelId.startsWith(F("lumi.ctrl"))) {
+    attr.setKeyId(0x0B04, 0x050B);    // change to ActivePower
+  }
 }
 
 
@@ -1652,9 +1673,9 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
           } else if (0x66 == attrid) {
             attr_list.addAttribute(0x0403, 0x0000).setUInt((ival32 + 50) / 100);  // Pressure
           }
-        } else if (modelId.startsWith(F("lumi.plug"))) {
+        } else if (modelId.startsWith(F("lumi.plug")) || modelId.startsWith(F("lumi.ctrl"))) {
           if (0x64 == attrid) {
-            attr_list.addAttribute(0x0600, 0x0000).setInt(uval32);          // Power (on/off)
+            attr_list.addAttribute(0x0006, 0x0000).setInt(uval32);          // Power (on/off)
           } else if (0x98 == attrid) {
             attr_list.addAttribute(0x0B04, 0x050B).setInt(ival32);          // Active Power
           } else if (0x95 == attrid) {
@@ -1911,6 +1932,13 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
         uint32_t uval32 = attr.getUInt();     // call converter to uint only once
         int32_t  ival32 = attr.getInt();     // call converter to int only once
         // AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) map_type, map_offset, zigbee_type, ival32);
+        switch (ccccaaaa) {
+          case 0xEF000202:
+          case 0xEF000203:    // need to convert Tuya temperatures from 1/10 to 1/00 °C
+            ival32 = ival32 * 10;
+            break;
+        }
+
         switch (zigbee_type) {
           case Zenum8:
           case Zmap8:
@@ -1960,6 +1988,39 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
   }
 }
 
+// Internal search function
+void Z_parseAttributeKey_inner(class Z_attribute & attr, uint16_t preferred_cluster) {
+  // scan attributes to find by name, and retrieve type
+  for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
+    const Z_AttributeConverter *converter = &Z_PostProcess[i];
+    uint16_t local_attr_id = pgm_read_word(&converter->attribute);
+    uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
+    uint8_t  local_type_id = pgm_read_byte(&converter->type);
+    int8_t   local_multiplier = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+    // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Try cluster = 0x%04X, attr = 0x%04X, type_id = 0x%02X"), local_cluster_id, local_attr_id, local_type_id);
+
+    if (!attr.key_is_str) {
+      if ((attr.key.id.cluster == local_cluster_id) && (attr.key.id.attr_id == local_attr_id)) {
+        attr.attr_type = local_type_id;
+        break;
+      }
+    } else if (pgm_read_word(&converter->name_offset)) {
+      const char * key = attr.key.key;
+      // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Comparing '%s' with '%s'"), attr_name, converter->name);
+      if (0 == strcasecmp_P(key, Z_strings + pgm_read_word(&converter->name_offset))) {
+        if ((preferred_cluster == 0xFFFF) ||    // any cluster
+            (local_cluster_id == preferred_cluster)) {
+          // match
+          attr.setKeyId(local_cluster_id, local_attr_id);
+          attr.attr_type = local_type_id;
+          attr.attr_multiplier = local_multiplier;
+          break;
+        }
+      }
+    }
+  }
+}
+
 //
 // Given an attribute string, retrieve all attribute details.
 // Input: the attribute has a key name, either: <cluster>/<attr> or <cluster>/<attr>%<type> or "<attribute_name>"
@@ -1976,7 +2037,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
 //   Note: the attribute value is unchanged and unparsed
 //
 // Note: if the type is specified in the key, the multiplier is not applied, no conversion happens
-bool Z_parseAttributeKey(class Z_attribute & attr) {
+bool Z_parseAttributeKey(class Z_attribute & attr, uint16_t preferred_cluster) {
   // check if the name has the format "XXXX/YYYY" where XXXX is the cluster, YYYY the attribute id
   // alternative "XXXX/YYYY%ZZ" where ZZ is the type (for unregistered attributes)
   if (attr.key_is_str) {
@@ -2002,33 +2063,11 @@ bool Z_parseAttributeKey(class Z_attribute & attr) {
   // AddLog_P(LOG_LEVEL_DEBUG, PSTR("cluster_id = 0x%04X, attr_id = 0x%04X"), cluster_id, attr_id);
 
   // do we already know the type, i.e. attribute and cluster are also known
+  if ((Zunk == attr.attr_type) && (preferred_cluster != 0xFFFF)) {
+    Z_parseAttributeKey_inner(attr, preferred_cluster);   // try to find with the selected cluster
+  }
   if (Zunk == attr.attr_type) {
-    // scan attributes to find by name, and retrieve type
-    for (uint32_t i = 0; i < ARRAY_SIZE(Z_PostProcess); i++) {
-      const Z_AttributeConverter *converter = &Z_PostProcess[i];
-      uint16_t local_attr_id = pgm_read_word(&converter->attribute);
-      uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
-      uint8_t  local_type_id = pgm_read_byte(&converter->type);
-      int8_t   local_multiplier = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
-      // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Try cluster = 0x%04X, attr = 0x%04X, type_id = 0x%02X"), local_cluster_id, local_attr_id, local_type_id);
-
-      if (!attr.key_is_str) {
-        if ((attr.key.id.cluster == local_cluster_id) && (attr.key.id.attr_id == local_attr_id)) {
-          attr.attr_type = local_type_id;
-          break;
-        }
-      } else if (pgm_read_word(&converter->name_offset)) {
-        const char * key = attr.key.key;
-        // AddLog_P(LOG_LEVEL_DEBUG, PSTR("Comparing '%s' with '%s'"), attr_name, converter->name);
-        if (0 == strcasecmp_P(key, Z_strings + pgm_read_word(&converter->name_offset))) {
-          // match
-          attr.setKeyId(local_cluster_id, local_attr_id);
-          attr.attr_type = local_type_id;
-          attr.attr_multiplier = local_multiplier;
-          break;
-        }
-      }
-    }
+    Z_parseAttributeKey_inner(attr, 0xFFFF);    // try again with any cluster
   }
   return (Zunk != attr.attr_type) ? true : false;
 }
@@ -2067,8 +2106,8 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
         case Zenum16:
         case Zuint16: uval32 = *(uint16_t*)attr_address;  if (uval32 !=  0x0000FFFF) data_size = 16;  break;
         case Zuint32: uval32 = *(uint32_t*)attr_address;  if (uval32 !=  0xFFFFFFFF) data_size = 32;  break;
-        case Zint8:   ival32 = *(int8_t*)attr_address;    if (ival32 != -0xFFFFFF80) data_size = -8;  break;
-        case Zint16:  ival32 = *(int16_t*)attr_address;   if (ival32 != -0xFFFF8000) data_size = -16; break;
+        case Zint8:   ival32 = *(int8_t*)attr_address;    if (ival32 != -0x80)       data_size = -8;  break;
+        case Zint16:  ival32 = *(int16_t*)attr_address;   if (ival32 != -0x8000)     data_size = -16; break;
         case Zint32:  ival32 = *(int32_t*)attr_address;   if (ival32 != -0x80000000) data_size = -32; break;
       }
       if (data_size != 0) {

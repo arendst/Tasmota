@@ -421,7 +421,7 @@
   // #define USE_CCLOADER                           // Enable CCLoader FW upgrade tool (for CC25xx devices)
 
 // -- mDNS ----------------------------------------
-#define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
+//#define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
   #define WEBSERVER_ADVERTISE                    // Provide access to webserver by name <Hostname>.local/
   #define MQTT_HOST_DISCOVERY                    // Find MQTT host server (overrides MQTT_HOST if found)
 
@@ -625,6 +625,9 @@
 //    #define USE_DISPLAY_SSD1351                  // [DisplayModel 9]
 //    #define USE_DISPLAY_RA8876                   // [DisplayModel 10] [I2cDriver39] (Touch)
 //  #define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
+//    #define USE_RC522_DATA_FUNCTION              // Add support for reading data block content (+0k4 code)
+//    #define USE_RC522_TYPE_INFORMATION           // Add support for showing card type (+0k4 code)
+
 #endif  // USE_SPI
 
 // -- Serial sensors ------------------------------
@@ -762,6 +765,7 @@
 //#define USE_THERMOSTAT                           // Add support for Thermostat
   #define THERMOSTAT_CONTROLLER_OUTPUTS         1         // Number of outputs to be controlled independently
   #define THERMOSTAT_SENSOR_NAME                "DS18B20" // Name of the local sensor to be used
+  #define THERMOSTAT_SENSOR_NUMBER              1         // Number of local sensors to be used
   #define THERMOSTAT_RELAY_NUMBER               1         // Default output relay number for the first controller (+i for following ones)
   #define THERMOSTAT_SWITCH_NUMBER              1         // Default input switch number for the first controller (+i for following ones)
   #define THERMOSTAT_TIME_ALLOW_RAMPUP          300       // Default time after last target update to allow ramp-up controller phase in minutes

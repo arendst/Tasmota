@@ -460,6 +460,43 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
   }
 }
 
+void parseSingleTuyaAttribute(Z_attribute & attr, const SBuffer &buf,
+                              uint32_t i, uint32_t len, int32_t attrtype) {
+
+  // fallback - enter a null value
+  attr.setNone();   // set to null by default
+
+  // now parse accordingly to attr type
+  switch (attrtype) {
+    case 0x00:      // RAW octstr
+      attr.setBuf(buf, i, len);
+      break;
+    case 0x01:      // Bool, values 0/1, len = 1
+    case 0x04:      // enum 8 bits
+      attr.setUInt(buf.get8(i));
+      break;
+    case 0x02:      // 4 bytes value (signed?)
+      attr.setUInt(buf.get32BigEndian(i));
+      break;
+    case 0x03:      // String (we expect it is not ended with \00)
+     {
+      char str[len+1];
+      strncpy(str, buf.charptr(i), len);
+      str[len] = 0x00;
+      attr.setStr(str);
+     }
+      break;
+    case 0x05:      // enum in 1/2/4 bytes, Big Endian
+      if (1 == len) {
+        attr.setUInt(buf.get8(i));
+      } else if (2 == len) {
+        attr.setUInt(buf.get16BigEndian(i));
+      } else if (4 == len) {
+        attr.setUInt(buf.get32BigEndian(i));
+      }
+  }
+}
+
 //
 // Tuya - MOES specifc cluster 0xEF00
 // See https://medium.com/@dzegarra/zigbee2mqtt-how-to-add-support-for-a-new-tuya-based-device-part-2-5492707e882d
@@ -468,21 +505,14 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
 bool convertTuyaSpecificCluster(class Z_attribute_list &attr_list, uint16_t cluster, uint8_t cmd, bool direction, uint16_t shortaddr, uint8_t srcendpoint, const SBuffer &buf) {
   // uint8_t status = buf.get8(0);
   // uint8_t transid = buf.get8(1);
-  uint16_t dp = buf.get16(2);   // decode dp as 16 bits little endian - which is not big endian as mentioned in documentation
-  // uint8_t fn = buf.get8(4);
-  uint8_t  len = buf.get8(5);   // len of payload
+  uint8_t dp = buf.get8(2);   // dpid from Tuya documentation
+  uint8_t attr_type = buf.get8(3);   // data type from Tuya documentation
+  uint16_t len = buf.get16BigEndian(4);
 
   if ((1 == cmd) || (2 == cmd)) {   // attribute report or attribute response
     // create a synthetic attribute with id 'dp'
-    Z_attribute & attr = attr_list.addAttribute(cluster, dp);
-    uint8_t attr_type;
-    switch (len) {
-      case 1:  attr_type = Ztuya1;   break;
-      case 2:  attr_type = Ztuya2;   break;
-      case 4:  attr_type = Ztuya4;   break;
-      default: attr_type = Zoctstr;  break;
-    }
-    parseSingleAttribute(attr, buf, 5, attr_type);
+    Z_attribute & attr = attr_list.addAttribute(cluster, (attr_type << 8) | dp);
+    parseSingleTuyaAttribute(attr, buf, 6, len, attr_type);
     return true;    // true = remove the original Tuya attribute
   }
   return false;

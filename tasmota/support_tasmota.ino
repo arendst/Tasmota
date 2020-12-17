@@ -1495,13 +1495,6 @@ void GpioInit(void)
   }
   SetModuleType();
 
-  TasmotaGlobal.module_changed = (Settings.module != Settings.last_module);
-  if (TasmotaGlobal.module_changed) {
-    Settings.baudrate = APP_BAUDRATE / 300;
-    Settings.serial_config = TS_SERIAL_8N1;
-    SetSerialBegin();
-  }
-
 //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
 
 #ifdef ESP8266
