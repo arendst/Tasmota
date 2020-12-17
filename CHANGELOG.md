@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [9.2.0.1]
+### Added
+- Milliseconds to console output (#10152)
 
 ## [Released]
 

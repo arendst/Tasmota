@@ -58,6 +58,7 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 
 ## Changelog v9.2.0.1
 ### Added
+- Milliseconds to console output (#10152)
 
 ### Breaking Changed
 
