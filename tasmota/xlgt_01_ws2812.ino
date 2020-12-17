@@ -47,7 +47,11 @@ void (* const Ws2812Command[])(void) PROGMEM = {
 
 #include <NeoPixelBus.h>
 
-#if (USE_WS2812_CTYPE == NEO_GRB)
+#if (USE_WS2812_HARDWARE == NEO_HW_P9813)
+  typedef P9813BgrFeature selectedNeoFeatureType;
+  #undef USE_WS2812_DMA
+  #undef USE_WS2812_INVERTED
+#elif (USE_WS2812_CTYPE == NEO_GRB)
   typedef NeoGrbFeature selectedNeoFeatureType;
 #elif (USE_WS2812_CTYPE == NEO_BRG)
   typedef NeoBrgFeature selectedNeoFeatureType;
@@ -105,7 +109,9 @@ void (* const Ws2812Command[])(void) PROGMEM = {
 
 #else  // No USE_WS2812_INVERTED
 
-#if (USE_WS2812_HARDWARE == NEO_HW_WS2812X)
+#if (USE_WS2812_HARDWARE == NEO_HW_P9813)
+  typedef P9813Method selectedNeoSpeedType;
+#elif (USE_WS2812_HARDWARE == NEO_HW_WS2812X)
   typedef NeoEsp8266BitBangWs2812xMethod selectedNeoSpeedType;
 #elif (USE_WS2812_HARDWARE == NEO_HW_SK6812)
   typedef NeoEsp8266BitBangSk6812Method selectedNeoSpeedType;
@@ -472,10 +478,14 @@ void Ws2812ShowScheme(void)
 
 void Ws2812ModuleSelected(void)
 {
+#if (USE_WS2812_HARDWARE == NEO_HW_P9813)
+  if (PinUsed(GPIO_P9813_CLK) && PinUsed(GPIO_P9813_DAT)) {  // RGB led
+    strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS, Pin(GPIO_P9813_CLK), Pin(GPIO_P9813_DAT));
+#else
   if (PinUsed(GPIO_WS2812)) {  // RGB led
-
     // For DMA, the Pin is ignored as it uses GPIO3 due to DMA hardware use.
     strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS, Pin(GPIO_WS2812));
+#endif  // NEO_HW_P9813
     strip->Begin();
 
     Ws2812Clear();

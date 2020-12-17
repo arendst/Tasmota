@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [9.2.0.1]
 ### Added
 - Milliseconds to console output (#10152)
+- Support for P9813 RGB Led MOSFET controller (#10104)
 
 ## [Released]
 
