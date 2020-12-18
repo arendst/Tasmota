@@ -3017,11 +3017,11 @@ void HandleHttpCommand(void)
   }
 
   WSContentBegin(200, CT_JSON);
-  uint32_t curridx = TasmotaGlobal.web_log_index;
+  uint32_t curridx = TasmotaGlobal.log_buffer_pointer;
   String svalue = Webserver->arg("cmnd");
   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
     ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCOMMAND);
-    if (TasmotaGlobal.web_log_index != curridx) {
+    if (TasmotaGlobal.log_buffer_pointer != curridx) {
       uint32_t counter = curridx;
       WSContentSend_P(PSTR("{"));
       bool cflg = false;
@@ -3046,7 +3046,7 @@ void HandleHttpCommand(void)
         counter++;
         counter &= 0xFF;
         if (!counter) counter++;  // Skip 0 as it is not allowed
-      } while (counter != TasmotaGlobal.web_log_index);
+      } while (counter != TasmotaGlobal.log_buffer_pointer);
       WSContentSend_P(PSTR("}"));
     } else {
       WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}"));
@@ -3094,14 +3094,14 @@ void HandleConsoleRefresh(void)
   if (strlen(stmp)) { counter = atoi(stmp); }
 
   WSContentBegin(200, CT_PLAIN);
-  WSContentSend_P(PSTR("%d}1%d}1"), TasmotaGlobal.web_log_index, Web.reset_web_log_flag);
+  WSContentSend_P(PSTR("%d}1%d}1"), TasmotaGlobal.log_buffer_pointer, Web.reset_web_log_flag);
   if (!Web.reset_web_log_flag) {
     counter = 0;
     Web.reset_web_log_flag = true;
   }
-  if (counter != TasmotaGlobal.web_log_index) {
+  if (counter != TasmotaGlobal.log_buffer_pointer) {
     if (!counter) {
-      counter = TasmotaGlobal.web_log_index;
+      counter = TasmotaGlobal.log_buffer_pointer;
       cflg = false;
     }
     do {
@@ -3120,7 +3120,7 @@ void HandleConsoleRefresh(void)
       counter++;
       counter &= 0xFF;
       if (!counter) { counter++; }  // Skip log index 0 as it is not allowed
-    } while (counter != TasmotaGlobal.web_log_index);
+    } while (counter != TasmotaGlobal.log_buffer_pointer);
   }
   WSContentSend_P(PSTR("}1"));
   WSContentEnd();

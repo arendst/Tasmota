@@ -296,7 +296,7 @@ void MqttPublishLoggingAsync(void) {
 
   if (!Settings.flag.mqtt_enabled ||  // SetOption3 - Enable MQTT
       !Settings.mqttlog_level ||
-      (counter == TasmotaGlobal.web_log_index) ||
+      (counter == TasmotaGlobal.log_buffer_pointer) ||
       TasmotaGlobal.global_state.mqtt_down) { return; }
 
   do {
@@ -314,7 +314,7 @@ void MqttPublishLoggingAsync(void) {
     counter++;
     counter &= 0xFF;
     if (!counter) { counter++; }  // Skip 0 as it is not allowed
-  } while (counter != TasmotaGlobal.web_log_index);
+  } while (counter != TasmotaGlobal.log_buffer_pointer);
 }
 
 void MqttPublish(const char* topic, bool retained)

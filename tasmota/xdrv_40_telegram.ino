@@ -289,9 +289,9 @@ void TelegramSendGetMe(void) {
 String TelegramExecuteCommand(const char *svalue) {
   String response = "";
 
-  uint32_t curridx = TasmotaGlobal.web_log_index;
+  uint32_t curridx = TasmotaGlobal.log_buffer_pointer;
   ExecuteCommand(svalue, SRC_CHAT);
-  if (TasmotaGlobal.web_log_index != curridx) {
+  if (TasmotaGlobal.log_buffer_pointer != curridx) {
     uint32_t counter = curridx;
     response = F("{");
     bool cflg = false;
@@ -317,7 +317,7 @@ String TelegramExecuteCommand(const char *svalue) {
       counter++;
       counter &= 0xFF;
       if (!counter) counter++;  // Skip 0 as it is not allowed
-    } while (counter != TasmotaGlobal.web_log_index);
+    } while (counter != TasmotaGlobal.log_buffer_pointer);
     response += F("}");
   } else {
     response = F("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");

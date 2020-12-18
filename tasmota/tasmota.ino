@@ -86,7 +86,7 @@ struct {
   uint32_t blink_timer;                     // Power cycle timer
   uint32_t backlog_timer;                   // Timer for next command in backlog
   uint32_t loop_load_avg;                   // Indicative loop load average
-  uint32_t web_log_index;                   // Index in Web log buffer
+  uint32_t log_buffer_pointer;              // Index in log buffer
   uint32_t uptime;                          // Counting every second until 4294967295 = 130 year
 
   power_t power;                            // Current copy of Settings.power
@@ -169,7 +169,7 @@ struct {
   char mqtt_topic[TOPSZ];                   // Composed MQTT topic
   char mqtt_data[MESSZ];                    // MQTT publish buffer and web page ajax buffer
   char log_data[LOGSZ];                     // Logging
-  char web_log[WEB_LOG_SIZE];               // Web log buffer
+  char log_buffer[LOG_BUFFER_SIZE];         // Web log buffer
 } TasmotaGlobal;
 
 #ifdef SUPPORT_IF_STATEMENT
