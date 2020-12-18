@@ -55,7 +55,7 @@ _Make sure your have performed every step and checked the applicable boxes befor
 
 
 ```
-- [ ] Set `weblog` to 4 and then provide the output of the Console log output when you experience your issue:
+- [ ] Set `weblog` to 4 and then, when you experience your issue, provide the output of the Console log:
 ```lua
   Console output here:
 
