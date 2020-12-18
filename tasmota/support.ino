@@ -2012,9 +2012,9 @@ void AddLog(uint32_t loglevel) {
       TasmotaGlobal.log_buffer_pointer++;  // Index 0 is not allowed as it is the end of char string
     }
   }
-  TasmotaGlobal.prepped_loglevel = 0;
+//  TasmotaGlobal.prepped_loglevel = 0;
 }
-
+/*
 void PrepLog_P(uint32_t loglevel, PGM_P formatP, ...)
 {
   va_list arg;
@@ -2024,13 +2024,14 @@ void PrepLog_P(uint32_t loglevel, PGM_P formatP, ...)
 
   TasmotaGlobal.prepped_loglevel = loglevel;
 }
-
+*/
 void AddLog_P(uint32_t loglevel, PGM_P formatP, ...)
 {
+/*
   if (TasmotaGlobal.prepped_loglevel) {
     AddLog(TasmotaGlobal.prepped_loglevel);
   }
-
+*/
   va_list arg;
   va_start(arg, formatP);
   vsnprintf_P(TasmotaGlobal.log_data, sizeof(TasmotaGlobal.log_data), formatP, arg);

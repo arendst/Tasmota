@@ -897,10 +897,11 @@ void Every100mSeconds(void)
   // As the max amount of sleep = 250 mSec this loop will shift in time...
   power_t power_now;
 
+/*
   if (TasmotaGlobal.prepped_loglevel) {
     AddLog(TasmotaGlobal.prepped_loglevel);
   }
-
+*/
   if (TasmotaGlobal.latching_relay_pulse) {
     TasmotaGlobal.latching_relay_pulse--;
     if (!TasmotaGlobal.latching_relay_pulse) SetLatchingRelay(0, 0);
