@@ -1919,6 +1919,19 @@ chknext:
           fvar = xPortGetCoreID();
           goto exit;
         }
+#ifdef USE_M5STACK_CORE2
+        if (!strncmp(vname, "c2ps(", 5)) {
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
+          while (*lp==' ') lp++;
+          float fvar1;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
+          fvar = core2_setaxppin(fvar, fvar1);
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif // USE_M5STACK_CORE2
+
 #ifdef USE_SCRIPT_TASK
         if (!strncmp(vname, "ct(", 3)) {
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, 0);
@@ -2667,7 +2680,7 @@ chknext:
           len++;
           goto exit;
         }
-#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH))
+#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2))
         if (!strncmp(vname, "pl(", 3)) {
           char path[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, path, 0);
@@ -2860,7 +2873,7 @@ chknext:
           len = 0;
           goto strexit;
         }
-#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH))
+#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2))
         if (!strncmp(vname, "say(", 4)) {
           char text[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, text, 0);
@@ -3161,7 +3174,7 @@ chknext:
           goto exit;
         }
 #endif // USE_TTGO_WATCH
-#if defined(USE_TTGO_WATCH) && defined(USE_FT5206)
+#if defined(USE_FT5206)
         if (!strncmp(vname, "wtch(", 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, 0);
           fvar = Touch_Status(fvar);
@@ -7550,7 +7563,7 @@ bool Xdrv10(uint8_t function)
       // fs on SD card
 #ifdef ESP32
       if (PinUsed(GPIO_SPI_MOSI) && PinUsed(GPIO_SPI_MISO) && PinUsed(GPIO_SPI_CLK)) {
-          SPI.begin(Pin(GPIO_SPI_CLK),Pin(GPIO_SPI_MISO),Pin(GPIO_SPI_MOSI), -1);
+          SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
       }
 #endif // ESP32
       fsp = &SD;

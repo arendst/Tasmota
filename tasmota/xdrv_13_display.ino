@@ -2089,8 +2089,8 @@ uint32_t Touch_Status(uint32_t sel) {
 
 
 #ifdef USE_TOUCH_BUTTONS
-void Touch_MQTT(uint8_t index, const char *cp) {
-  ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index+1, buttons[index]->vpower.on_off);
+void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
+  ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
   MqttPublishTeleSensor();
 }
 
@@ -2099,6 +2099,10 @@ void Touch_RDW_BUTT(uint32_t count, uint32_t pwr) {
   if (pwr) buttons[count]->vpower.on_off = 1;
   else buttons[count]->vpower.on_off = 0;
 }
+
+#ifdef USE_M5STACK_CORE2
+uint8_t tbstate[3];
+#endif
 
 // check digitizer hit
 void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
@@ -2112,6 +2116,26 @@ uint8_t vbutt=0;
     pLoc = touchp->getPoint(0);
 
     if (renderer) {
+
+#ifdef USE_M5STACK_CORE2
+      // handle  3 built in touch buttons
+      uint16_t xcenter = 80;
+#define TDELTA 30
+#define TYPOS 275
+
+      for (uint32_t tbut = 0; tbut < 3; tbut++) {
+        if (pLoc.x>(xcenter-TDELTA) && pLoc.x<(xcenter+TDELTA) && pLoc.y>(TYPOS-TDELTA) && pLoc.y<(TYPOS+TDELTA)) {
+          // hit a button
+          if (!(tbstate[tbut] & 1)) {
+              // pressed
+              tbstate[tbut] |= 1;
+              //AddLog_P(LOG_LEVEL_INFO, PSTR("tbut: %d pressed"), tbut);
+              Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
+          }
+        }
+        xcenter += 100;
+      }
+#endif
 
       rotconvert(&pLoc.x, &pLoc.y);
 
@@ -2142,7 +2166,7 @@ uint8_t vbutt=0;
                       cp="PBT";
                     }
                     buttons[count]->xdrawButton(buttons[count]->vpower.on_off);
-                    Touch_MQTT(count,cp);
+                    Touch_MQTT(count, cp, buttons[count]->vpower.on_off);
                   }
                 }
             }
@@ -2156,6 +2180,16 @@ uint8_t vbutt=0;
     }
   } else {
     // no hit
+#ifdef USE_M5STACK_CORE2
+    for (uint32_t tbut = 0; tbut < 3; tbut++) {
+      if (tbstate[tbut] & 1) {
+        // released
+        tbstate[tbut] &= 0xfe;
+        Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
+        //AddLog_P(LOG_LEVEL_INFO, PSTR("tbut: %d released"), tbut);
+      }
+    }
+#endif
     for (uint8_t count=0; count<MAXBUTTONS; count++) {
       if (buttons[count]) {
         buttons[count]->press(false);
@@ -2164,7 +2198,7 @@ uint8_t vbutt=0;
             if (buttons[count]->vpower.is_pushbutton) {
               // push button
               buttons[count]->vpower.on_off = 0;
-              Touch_MQTT(count,"PBT");
+              Touch_MQTT(count,"PBT", buttons[count]->vpower.on_off);
               buttons[count]->xdrawButton(buttons[count]->vpower.on_off);
             }
           }
