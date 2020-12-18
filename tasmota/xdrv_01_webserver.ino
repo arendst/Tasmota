@@ -3028,8 +3028,10 @@ void HandleHttpCommand(void)
       do {
         char* tmp;
         size_t len;
-        GetLog(counter, &tmp, &len);
-        if (len) {
+        uint32_t loglevel = GetLog(counter, &tmp, &len);
+        if ((len > 0) &&
+            (loglevel <= Settings.weblog_level) &&
+            (TasmotaGlobal.masterlog_level <= Settings.weblog_level)) {
           // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
           char* JSON = (char*)memchr(tmp, '{', len);
           if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
@@ -3105,8 +3107,10 @@ void HandleConsoleRefresh(void)
     do {
       char* tmp;
       size_t len;
-      GetLog(counter, &tmp, &len);
-      if (len) {
+      uint32_t loglevel = GetLog(counter, &tmp, &len);
+      if ((len > 0) &&
+          (loglevel <= Settings.weblog_level) &&
+          (TasmotaGlobal.masterlog_level <= Settings.weblog_level)) {
         if (len > sizeof(TasmotaGlobal.mqtt_data) -2) { len = sizeof(TasmotaGlobal.mqtt_data); }
         char stemp[len +1];
         strlcpy(stemp, tmp, len);

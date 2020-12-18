@@ -845,6 +845,9 @@ void PerformEverySecond(void)
     }
   }
 
+  MqttPublishLoggingAsync();
+  SyslogAsync();
+
   ResetGlobalValues();
 
   if (Settings.tele_period) {

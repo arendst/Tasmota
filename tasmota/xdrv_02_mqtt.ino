@@ -291,18 +291,30 @@ void MqttUnsubscribe(const char *topic)
   MqttUnsubscribeLib(topic);
 }
 
-void MqttPublishLogging(const char *mxtime)
-{
-  char saved_mqtt_data[strlen(TasmotaGlobal.mqtt_data) +1];
-  memcpy(saved_mqtt_data, TasmotaGlobal.mqtt_data, sizeof(saved_mqtt_data));
+void MqttPublishLoggingAsync(void) {
+  static uint32_t counter = 1;
 
-//    ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), TasmotaGlobal.log_data);  // Will fail as some messages contain JSON
-  Response_P(PSTR("%s%s"), mxtime, TasmotaGlobal.log_data);            // No JSON and ugly!!
-  char stopic[TOPSZ];
-  GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR("LOGGING"));
-  MqttPublishLib(stopic, false);
+  if (!Settings.flag.mqtt_enabled ||  // SetOption3 - Enable MQTT
+      !Settings.mqttlog_level ||
+      (counter == TasmotaGlobal.web_log_index) ||
+      TasmotaGlobal.global_state.mqtt_down) { return; }
 
-  memcpy(TasmotaGlobal.mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
+  do {
+    char* tmp;
+    size_t len;
+    uint32_t loglevel = GetLog(counter, &tmp, &len);
+    if ((len > 0) &&
+        (loglevel <= Settings.mqttlog_level) &&
+        (TasmotaGlobal.masterlog_level <= Settings.mqttlog_level)) {
+      strlcpy(TasmotaGlobal.mqtt_data, tmp, len);  // No JSON and ugly!!
+      char stopic[TOPSZ];
+      GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR("LOGGING"));
+      MqttPublishLib(stopic, false);
+    }
+    counter++;
+    counter &= 0xFF;
+    if (!counter) { counter++; }  // Skip 0 as it is not allowed
+  } while (counter != TasmotaGlobal.web_log_index);
 }
 
 void MqttPublish(const char* topic, bool retained)

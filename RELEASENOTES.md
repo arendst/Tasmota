@@ -61,10 +61,5 @@ The attached binaries can also be downloaded from http://ota.tasmota.com/tasmota
 - Milliseconds to console output (#10152)
 - Support for P9813 RGB Led MOSFET controller (#10104)
 
-### Breaking Changed
-
-### Changed
-
 ### Fixed
-
-### Removed
+- Redesign syslog and mqttlog using log buffer (#10164)

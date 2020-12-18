@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - Milliseconds to console output (#10152)
 - Support for P9813 RGB Led MOSFET controller (#10104)
 
+### Fixed
+- Redesign syslog and mqttlog using log buffer (#10164)
+
 ## [Released]
 
 ## [9.2.0] 20201216
