@@ -984,15 +984,10 @@ void CmndShutterStop(void)
       if (Shutter[i].direction != 0) {
 
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Stop moving %d: dir: %d"), XdrvMailbox.index, Shutter[i].direction);
-
-        int32_t temp_realpos = ShutterCalculatePosition(i);
-        XdrvMailbox.payload = ShutterRealToPercentPosition(temp_realpos, i)-Shutter[i].direction;
-        TasmotaGlobal.last_source = SRC_WEBGUI;
-        CmndShutterPosition();
-      } else {
-        if (XdrvMailbox.command)
-          ResponseCmndDone();
-      }
+        Shutter[i].target_position = Shutter[i].real_position;
+      } 
+      if (XdrvMailbox.command)
+        ResponseCmndDone();
     } else {
       if (XdrvMailbox.command)
         ResponseCmndIdxChar("Locked");
