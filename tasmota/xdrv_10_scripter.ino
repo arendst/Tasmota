@@ -67,8 +67,8 @@ keywords if then else endif, or, and are better readable for beginners (others m
 
 #define MAX_SARRAY_NUM 32
 
-uint32_t EncodeLightId(uint8_t relay_id);
-uint32_t DecodeLightId(uint32_t hue_id);
+//uint32_t EncodeLightId(uint8_t relay_id);
+//uint32_t DecodeLightId(uint32_t hue_id);
 
 #ifdef USE_UNISHOX_COMPRESSION
 #define USE_SCRIPT_COMPRESSION
